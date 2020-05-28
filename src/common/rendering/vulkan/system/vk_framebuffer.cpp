@@ -379,7 +379,7 @@ void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	}
 }
 
-IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()
+IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture(int numchannels)
 {
 	return new VkHardwareTexture();
 }

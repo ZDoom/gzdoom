@@ -305,7 +305,7 @@ void PolyFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	}
 }
 
-IHardwareTexture *PolyFrameBuffer::CreateHardwareTexture()
+IHardwareTexture *PolyFrameBuffer::CreateHardwareTexture(int numchannels)
 {
 	return new PolyHardwareTexture();
 }

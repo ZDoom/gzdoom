@@ -2,15 +2,15 @@
 #define __GL_SAMPLERS_H
 
 #include "gl_hwtexture.h"
+#include "textures.h"
 
 namespace OpenGLRenderer
 {
 
+
 class FSamplerManager
 {
-	// We need 6 different samplers: 4 for the different clamping modes,
-	// one for 2D-textures and one for voxel textures
-	unsigned int mSamplers[7];
+	unsigned int mSamplers[NUMSAMPLERS];
 
 	void UnbindAll();
 

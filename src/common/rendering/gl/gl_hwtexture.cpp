@@ -59,20 +59,6 @@ TexFilter_s TexFilter[]={
 	{GL_LINEAR_MIPMAP_LINEAR,		GL_NEAREST,		true},
 };
 
-int TexFormat[]={
-	GL_RGBA8,
-	GL_RGB5_A1,
-	GL_RGBA4,
-	GL_RGBA2,
-	// [BB] Added compressed texture formats.
-	GL_COMPRESSED_RGBA_ARB,
-	GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
-	GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
-	GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
-};
-
-
-
 //===========================================================================
 // 
 //	Static texture data

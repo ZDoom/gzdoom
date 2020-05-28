@@ -51,22 +51,33 @@ extern TexFilter_s TexFilter[];
 
 FSamplerManager::FSamplerManager()
 {
-	glGenSamplers(7, mSamplers);
+	glGenSamplers(NUMSAMPLERS, mSamplers);
+
+	glSamplerParameteri(mSamplers[CLAMP_X], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_Y], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_XY], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_XY], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_NOFILTER_X], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_NOFILTER_Y], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_NOFILTER_XY], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_NOFILTER_XY], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	for (int i = CLAMP_NOFILTER; i <= CLAMP_NOFILTER_XY; i++)
+	{
+		glSamplerParameteri(mSamplers[i], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glSamplerParameteri(mSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glSamplerParameterf(mSamplers[i], GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
+
+	}
+
+	glSamplerParameteri(mSamplers[CLAMP_XY_NOMIP], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(mSamplers[CLAMP_XY_NOMIP], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSamplerParameterf(mSamplers[CLAMP_XY_NOMIP], GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
+	glSamplerParameterf(mSamplers[CLAMP_CAMTEX], GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
+
 	SetTextureFilterMode();
-	glSamplerParameteri(mSamplers[5], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glSamplerParameteri(mSamplers[5], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glSamplerParameterf(mSamplers[5], GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
-	glSamplerParameterf(mSamplers[4], GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
-	glSamplerParameterf(mSamplers[6], GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
 
-	glSamplerParameteri(mSamplers[1], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glSamplerParameteri(mSamplers[2], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glSamplerParameteri(mSamplers[3], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glSamplerParameteri(mSamplers[3], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glSamplerParameteri(mSamplers[4], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glSamplerParameteri(mSamplers[4], GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < NUMSAMPLERS; i++)
 	{
 		FString name;
 		name.Format("mSamplers[%d]", i);
@@ -77,7 +88,7 @@ FSamplerManager::FSamplerManager()
 FSamplerManager::~FSamplerManager()
 {
 	UnbindAll();
-	glDeleteSamplers(7, mSamplers);
+	glDeleteSamplers(NUMSAMPLERS, mSamplers);
 }
 
 void FSamplerManager::UnbindAll()
@@ -107,10 +118,10 @@ void FSamplerManager::SetTextureFilterMode()
 		glSamplerParameteri(mSamplers[i], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 		glSamplerParameterf(mSamplers[i], GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 	}
-	glSamplerParameteri(mSamplers[4], GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
-	glSamplerParameteri(mSamplers[4], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
-	glSamplerParameteri(mSamplers[6], GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
-	glSamplerParameteri(mSamplers[6], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
+	glSamplerParameteri(mSamplers[CLAMP_XY_NOMIP], GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
+	glSamplerParameteri(mSamplers[CLAMP_XY_NOMIP], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
+	glSamplerParameteri(mSamplers[CLAMP_CAMTEX], GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
+	glSamplerParameteri(mSamplers[CLAMP_CAMTEX], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 }
 
 

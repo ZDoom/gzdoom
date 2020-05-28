@@ -104,7 +104,7 @@ public:
 			FVector3 u = normalize3(eyeCoordPos);
 			FVector3 n = normalize3(mul(Viewpoint->mNormalViewMatrix, FVector4(parmTexCoord.X, 0.0f, parmTexCoord.Y, 0.0f)));
 			FVector3 r = reflect(u, n);
-			float m = 2.0f * sqrt(r.X*r.X + r.Y*r.Y + (r.Z + 1.0f)*(r.Z + 1.0f));
+			float m = 2.0f * sqrtf(r.X*r.X + r.Y*r.Y + (r.Z + 1.0f)*(r.Z + 1.0f));
 			vTexCoord.X = r.X / m + 0.5f;
 			vTexCoord.Y = r.Y / m + 0.5f;
 		}
@@ -138,13 +138,13 @@ public:
 private:
 	static FVector3 normalize(const FVector3 &a)
 	{
-		float rcplen = 1.0f / sqrt(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
+		float rcplen = 1.0f / sqrtf(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
 		return FVector3(a.X * rcplen, a.Y * rcplen, a.Z * rcplen);
 	}
 
 	static FVector3 normalize3(const FVector4 &a)
 	{
-		float rcplen = 1.0f / sqrt(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
+		float rcplen = 1.0f / sqrtf(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
 		return FVector3(a.X * rcplen, a.Y * rcplen, a.Z * rcplen);
 	}
 

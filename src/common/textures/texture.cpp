@@ -50,7 +50,7 @@
 #include "c_cvars.h"
 
 // Wrappers to keep the definitions of these classes out of here.
-IHardwareTexture* CreateHardwareTexture();
+IHardwareTexture* CreateHardwareTexture(int numchannels);
 
 // Make sprite offset adjustment user-configurable per renderer.
 int r_spriteadjustSW, r_spriteadjustHW;
@@ -514,7 +514,7 @@ IHardwareTexture* FTexture::GetHardwareTexture(int translation, int scaleflags)
 		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, scaleflags);
 		if (hwtex == nullptr)
 	{
-			hwtex = CreateHardwareTexture();
+			hwtex = CreateHardwareTexture(4);
 			SystemTextures.AddHardwareTexture(translation, scaleflags, hwtex);
 	}
 		return hwtex;
@@ -535,7 +535,7 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Height = h;
 	Format = bits;
 	//bNoCompress = true;
-	auto hwtex = CreateHardwareTexture();
+	auto hwtex = CreateHardwareTexture(4);
 	// todo: Initialize here.
 	SystemTextures.AddHardwareTexture(0, false, hwtex);
 }

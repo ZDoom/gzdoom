@@ -29,8 +29,6 @@
 #include "c_cvars.h"
 #include "v_video.h"
 
-IHardwareTexture* CreateHardwareTexture();
-
 //===========================================================================
 //
 // Constructor

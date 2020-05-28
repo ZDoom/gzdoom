@@ -34,20 +34,21 @@ public:
 
 private:
 
-	bool forcenocompression;
+	bool forcenofilter;
 
 	unsigned int glTexID = 0;
 	unsigned int glDepthID = 0;	// only used by camera textures
 	unsigned int glBufferID = 0;
-	int glTextureBytes = 4;
+	int glTextureBytes;
 	bool mipmapped = false;
 
 	int GetDepthBuffer(int w, int h);
 
 public:
-	FHardwareTexture(bool nocompress)
+	FHardwareTexture(int numchannels = 4, bool disablefilter = false)
 	{
-		forcenocompression = nocompress;
+		forcenofilter = disablefilter;
+		glTextureBytes = numchannels;
 	}
 
 	~FHardwareTexture();

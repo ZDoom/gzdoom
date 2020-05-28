@@ -89,7 +89,7 @@ public:
 	void ImageTransitionScene(bool unknown) override;
 	void SetActiveRenderTarget() override;
 
-	IHardwareTexture *CreateHardwareTexture() override;
+	IHardwareTexture *CreateHardwareTexture(int numchannels) override;
 	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;

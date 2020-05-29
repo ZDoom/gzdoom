@@ -330,11 +330,6 @@ IDataBuffer *PolyFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bool
 
 void PolyFrameBuffer::SetTextureFilterMode()
 {
-	TextureFilterChanged();
-}
-
-void PolyFrameBuffer::TextureFilterChanged()
-{
 }
 
 void PolyFrameBuffer::BlurScene(float amount)

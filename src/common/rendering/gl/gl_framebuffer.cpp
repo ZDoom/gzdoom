@@ -340,11 +340,6 @@ IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bo
 	return new GLDataBuffer(bindingpoint, ssbo);
 }
 
-void OpenGLFrameBuffer::TextureFilterChanged()
-{
-	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();
-}
-
 void OpenGLFrameBuffer::BlurScene(float amount)
 {
 	GLRenderer->BlurScene(amount);

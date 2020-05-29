@@ -420,11 +420,6 @@ IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bo
 
 void VulkanFrameBuffer::SetTextureFilterMode()
 {
-	TextureFilterChanged();
-}
-
-void VulkanFrameBuffer::TextureFilterChanged()
-{
 	if (mSamplerManager)
 	{
 		// Destroy the texture descriptors as they used the old samplers

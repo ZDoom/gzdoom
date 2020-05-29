@@ -43,7 +43,6 @@ public:
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture(int numchannels) override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
-	void TextureFilterChanged() override;
 	void BeginFrame() override;
 	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;

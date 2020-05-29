@@ -200,7 +200,6 @@ public:
 	virtual IHardwareTexture *CreateHardwareTexture(int numchannels) { return nullptr; }
 	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
 	virtual FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags);
-	virtual void TextureFilterChanged() {}
 	virtual void BeginFrame() {}
 	virtual void SetWindowSize(int w, int h) {}
 	virtual void StartPrecaching() {}

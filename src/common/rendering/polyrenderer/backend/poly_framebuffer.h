@@ -37,7 +37,6 @@ public:
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	void SetTextureFilterMode() override;
-	void TextureFilterChanged() override;
 	void BeginFrame() override;
 	void BlurScene(float amount) override;
 	void PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) override;

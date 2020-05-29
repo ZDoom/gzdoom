@@ -77,7 +77,6 @@ public:
 	const char* DeviceName() const override;
 	int Backend() override { return 1; }
 	void SetTextureFilterMode() override;
-	void TextureFilterChanged() override;
 	void StartPrecaching() override;
 	void BeginFrame() override;
 	void BlurScene(float amount) override;

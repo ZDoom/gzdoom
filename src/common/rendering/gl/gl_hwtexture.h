@@ -1,6 +1,10 @@
+#pragma once
+class FBitmap;
+class FTexture;
 
-#ifndef __GLTEXTURE_H
-#define __GLTEXTURE_H
+#include "tarray.h"
+#include "hw_ihwtexture.h"
+
 
 #ifdef LoadImage
 #undef LoadImage
@@ -59,14 +63,18 @@ public:
 	void BindToFrameBuffer(int w, int h);
 
 	unsigned int Bind(int texunit, bool needmipmap);
-	bool BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags);
+	bool BindOrCreate(FTexture* tex, int texunit, int clampmode, int translation, int flags);
 
 	void AllocateBuffer(int w, int h, int texelsize);
-	uint8_t *MapBuffer();
+	uint8_t* MapBuffer();
 
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name);
-	unsigned int GetTextureHandle(int translation);
+	unsigned int CreateTexture(unsigned char* buffer, int w, int h, int texunit, bool mipmap, const char* name);
+	unsigned int GetTextureHandle()
+	{
+		return glTexID;
+	}
+
+	int numChannels() { return glTextureBytes; }
 };
 
 }
-#endif

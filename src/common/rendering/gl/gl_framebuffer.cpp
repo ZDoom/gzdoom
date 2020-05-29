@@ -263,6 +263,7 @@ void OpenGLFrameBuffer::Swap()
 	Finish.Unclock();
 	camtexcount = 0;
 	FHardwareTexture::UnbindAll();
+	gl_RenderState.ClearLastMaterial();
 	mDebug->Update();
 }
 
@@ -321,6 +322,7 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	}
 	// unbind everything. 
 	FHardwareTexture::UnbindAll();
+	gl_RenderState.ClearLastMaterial();
 }
 
 IVertexBuffer *OpenGLFrameBuffer::CreateVertexBuffer()

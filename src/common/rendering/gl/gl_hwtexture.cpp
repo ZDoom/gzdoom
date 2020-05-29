@@ -42,14 +42,14 @@
 #include "hw_cvars.h"
 #include "gl_debug.h"
 #include "gl_renderer.h"
-#include "gl_renderstate.h"
 #include "gl_samplers.h"
+#include "gl_hwtexture.h"
 
 namespace OpenGLRenderer
 {
 
 
-TexFilter_s TexFilter[]={
+TexFilter_s TexFilter[] = {
 	{GL_NEAREST,					GL_NEAREST,		false},
 	{GL_NEAREST_MIPMAP_NEAREST,		GL_NEAREST,		true},
 	{GL_LINEAR,						GL_LINEAR,		false},
@@ -237,11 +237,6 @@ unsigned int FHardwareTexture::Bind(int texunit, bool needmipmap)
 	return 0;
 }
 
-unsigned int FHardwareTexture::GetTextureHandle(int translation)
-{
-	return glTexID;
-}
-
 void FHardwareTexture::Unbind(int texunit)
 {
 	if (lastbound[texunit] != 0)
@@ -259,7 +254,6 @@ void FHardwareTexture::UnbindAll()
 	{
 		Unbind(texunit);
 	}
-	gl_RenderState.ClearLastMaterial();
 }
 
 //===========================================================================

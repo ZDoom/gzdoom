@@ -1759,6 +1759,15 @@ void MapLoader::LoadLineDefs (MapData * map)
 		if (Level->flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (Level->flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (Level->flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
+		// cph 2006/09/30 - fix sidedef errors right away.
+		for (int j=0; j < 2; j++)
+		{
+			if (LittleShort(mld->sidenum[j]) != NO_INDEX && mld->sidenum[j] >= Level->sides.Size())
+			{
+				mld->sidenum[j] = NO_INDEX;
+				Printf("Linedef %d has a bad sidedef\n", i);
+			}
+		}
 	}
 }
 
@@ -2180,11 +2189,11 @@ void MapLoader::LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 		// killough 4/4/98: allow sidedef texture names to be overloaded
 		// killough 4/11/98: refined to allow colormaps to work as wall
 		// textures if invalid as colormaps but valid as textures.
-
+		// cph 2006/09/30 - catch out-of-range sector numbers; use sector 0 instead
 		if ((unsigned)LittleShort(msd->sector)>=Level->sectors.Size())
 		{
 			Printf (PRINT_HIGH, "Sidedef %d has a bad sector\n", i);
-			sd->sector = sec = nullptr;
+			sd->sector = sec = &Level->sectors[0];
 		}
 		else
 		{

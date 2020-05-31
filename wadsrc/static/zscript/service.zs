@@ -3,7 +3,12 @@
  */
 class Service abstract
 {
-	virtual String Get(String request)
+	virtual play String Get(String request)
+	{
+		return "";
+	}
+
+	virtual ui String UiGet(String request)
 	{
 		return "";
 	}

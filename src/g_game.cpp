@@ -1102,7 +1102,7 @@ void G_Ticker ()
 	if (ToggleFullscreen)
 	{
 		ToggleFullscreen = false;
-		AddCommandString ("toggle fullscreen");
+		AddCommandString ("toggle vid_fullscreen");
 	}
 
 	// do things to change the game state

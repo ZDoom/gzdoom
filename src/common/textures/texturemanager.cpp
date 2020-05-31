@@ -625,8 +625,8 @@ void FTextureManager::AddHiresTextures (int wadnum)
 							auto gtex = MakeGameTexture(newtex, nullptr, ETextureType::Override);
 							gtex->SetWorldPanning(true);
 							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
-							gtex->SetOffsets(0, xs_RoundToInt(oldtex->GetDisplayLeftOffset(0) * gtex->GetScaleX()), xs_RoundToInt(oldtex->GetDisplayTopOffset(0) * gtex->GetScaleY()));
-							gtex->SetOffsets(1, xs_RoundToInt(oldtex->GetDisplayLeftOffset(1) * gtex->GetScaleX()), xs_RoundToInt(oldtex->GetDisplayTopOffset(1) * gtex->GetScaleY()));
+							gtex->SetOffsets(0, oldtex->GetTexelLeftOffset(0), oldtex->GetTexelTopOffset(0));
+							gtex->SetOffsets(1, oldtex->GetTexelLeftOffset(1), oldtex->GetTexelTopOffset(1));
 							ReplaceTexture(tlist[i], gtex, true);
 						}
 					}

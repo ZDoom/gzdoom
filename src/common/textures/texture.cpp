@@ -48,6 +48,8 @@
 #include "formats/multipatchtexture.h"
 #include "texturemanager.h"
 #include "c_cvars.h"
+#include "imagehelpers.h"
+#include "v_video.h"
 
 // Wrappers to keep the definitions of these classes out of here.
 IHardwareTexture* CreateHardwareTexture(int numchannels);
@@ -323,66 +325,82 @@ bool FTexture::ProcessData(unsigned char* buffer, int w, int h, bool ispatch)
 FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 {
 	FTextureBuffer result;
-
-	unsigned char* buffer = nullptr;
-	int W, H;
-	int isTransparent = -1;
-	bool checkonly = !!(flags & CTF_CheckOnly);
-
-	int exx = !!(flags & CTF_Expand);
-
-	W = GetWidth() + 2 * exx;
-	H = GetHeight() + 2 * exx;
-
-	if (!checkonly)
+	if (flags & CTF_Indexed)
 	{
-		buffer = new unsigned char[W * (H + 1) * 4];
-		memset(buffer, 0, W * (H + 1) * 4);
+		// Indexed textures will never be translated and never be scaled.
+		int w = GetWidth(), h = GetHeight();
 
-		auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
-		if (remap) translation = remap->Index;
-		FBitmap bmp(buffer, W * 4, W, H);
+		auto store = Get8BitPixels(false);
+		const uint8_t* p = store.Data();
 
-		int trans;
-		auto Pixels = GetBgraBitmap(remap ? remap->Palette : nullptr, &trans);
-		bmp.Blit(exx, exx, Pixels);
+		result.mBuffer = new uint8_t[w * h];
+		result.mWidth = w;
+		result.mHeight = h;
+		result.mContentId = 0;
+		ImageHelpers::FlipNonSquareBlock(result.mBuffer, p, h, w, h);
+	}
+	else
+	{
+		unsigned char* buffer = nullptr;
+		int W, H;
+		int isTransparent = -1;
+		bool checkonly = !!(flags & CTF_CheckOnly);
 
-		if (remap == nullptr)
+		int exx = !!(flags & CTF_Expand);
+
+		W = GetWidth() + 2 * exx;
+		H = GetHeight() + 2 * exx;
+
+		if (!checkonly)
 		{
-			CheckTrans(buffer, W * H, trans);
-			isTransparent = bTranslucent;
+			buffer = new unsigned char[W * (H + 1) * 4];
+			memset(buffer, 0, W * (H + 1) * 4);
+
+			auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
+			if (remap) translation = remap->Index;
+			FBitmap bmp(buffer, W * 4, W, H);
+
+			int trans;
+			auto Pixels = GetBgraBitmap(remap ? remap->Palette : nullptr, &trans);
+			bmp.Blit(exx, exx, Pixels);
+
+			if (remap == nullptr)
+			{
+				CheckTrans(buffer, W * H, trans);
+				isTransparent = bTranslucent;
+			}
+			else
+			{
+				isTransparent = 0;
+				// A translated image is not conclusive for setting the texture's transparency info.
+			}
 		}
-		else
+
+		if (GetImage())
 		{
-			isTransparent = 0;
-			// A translated image is not conclusive for setting the texture's transparency info.
+			FContentIdBuilder builder;
+			builder.id = 0;
+			builder.imageID = GetImage()->GetId();
+			builder.translation = MAX(0, translation);
+			builder.expand = exx;
+			result.mContentId = builder.id;
+		}
+		else result.mContentId = 0;	// for non-image backed textures this has no meaning so leave it at 0.
+
+		result.mBuffer = buffer;
+		result.mWidth = W;
+		result.mHeight = H;
+
+		// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
+		if (GetImage() && flags & CTF_ProcessData)
+		{
+			if (flags & CTF_Upscale) CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
+
+			if (!checkonly) ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
 		}
 	}
-
-	if (GetImage())
-	{
-		FContentIdBuilder builder;
-		builder.id = 0;
-		builder.imageID = GetImage()->GetId();
-		builder.translation = MAX(0, translation);
-		builder.expand = exx;
-		result.mContentId = builder.id;
-	}
-	else result.mContentId = 0;	// for non-image backed textures this has no meaning so leave it at 0.
-
-	result.mBuffer = buffer;
-	result.mWidth = W;
-	result.mHeight = H;
-
-	// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
-	if (GetImage() && flags & CTF_ProcessData)
-	{
-		if (flags & CTF_Upscale) CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
-
-		if (!checkonly) ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
-	}
-
 	return result;
+
 }
 
 //===========================================================================
@@ -514,7 +532,7 @@ IHardwareTexture* FTexture::GetHardwareTexture(int translation, int scaleflags)
 		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, scaleflags);
 		if (hwtex == nullptr)
 	{
-			hwtex = CreateHardwareTexture(4);
+			hwtex = screen->CreateHardwareTexture(4);
 			SystemTextures.AddHardwareTexture(translation, scaleflags, hwtex);
 	}
 		return hwtex;
@@ -535,7 +553,7 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Height = h;
 	Format = bits;
 	//bNoCompress = true;
-	auto hwtex = CreateHardwareTexture(4);
+	auto hwtex = screen->CreateHardwareTexture(4);
 	// todo: Initialize here.
 	SystemTextures.AddHardwareTexture(0, false, hwtex);
 }

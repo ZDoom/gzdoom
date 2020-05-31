@@ -83,30 +83,30 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		auto placeholder = TexMan.GameByIndex(1);
 		if (tx->Brightmap.get())
 		{
-			mTextureLayers.Push({ tx->Brightmap.get(), scaleflags });
+			mTextureLayers.Push({ tx->Brightmap.get(), scaleflags, -1 });
 			mLayerFlags |= TEXF_Brightmap;
 		}
 		else	
 		{ 
-			mTextureLayers.Push({ placeholder->GetTexture(), 0 });
+			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
 		}
 		if (tx->Detailmap.get())
 		{
-			mTextureLayers.Push({ tx->Detailmap.get(), 0 });
+			mTextureLayers.Push({ tx->Detailmap.get(), 0, CLAMP_NONE });
 			mLayerFlags |= TEXF_Detailmap;
 		}
 		else
 		{
-			mTextureLayers.Push({ placeholder->GetTexture(), 0 });
+			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
 		}
 		if (tx->Glowmap.get())
 		{
-			mTextureLayers.Push({ tx->Glowmap.get(), scaleflags });
+			mTextureLayers.Push({ tx->Glowmap.get(), scaleflags, -1 });
 			mLayerFlags |= TEXF_Glowmap;
 		}
 		else
 		{
-			mTextureLayers.Push({ placeholder->GetTexture(), 0 });
+			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
 		}
 
 		auto index = tx->GetShaderIndex();

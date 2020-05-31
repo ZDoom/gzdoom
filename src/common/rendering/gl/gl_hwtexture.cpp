@@ -42,6 +42,7 @@
 #include "hw_cvars.h"
 #include "gl_debug.h"
 #include "gl_renderer.h"
+#include "gl_renderstate.h"
 #include "gl_samplers.h"
 #include "gl_hwtexture.h"
 
@@ -302,12 +303,16 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 {
 	int usebright = false;
 
-	bool needmipmap = (clampmode <= CLAMP_XY);
+	bool needmipmap = (clampmode <= CLAMP_XY) && !forcenofilter;
 
 	// Bind it to the system.
 	if (!Bind(texunit, needmipmap))
 	{
-
+		if (flags & CTF_Indexed)
+		{
+			glTextureBytes = 1;
+			forcenofilter = true;
+		}
 		int w = 0, h = 0;
 
 		// Create this texture
@@ -331,6 +336,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 			return false;
 		}
 	}
+	if (forcenofilter && clampmode <= CLAMP_XY) clampmode += CLAMP_NOFILTER - CLAMP_NONE;
 	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
 	return true;
 }

@@ -92,6 +92,7 @@ class FGameTexture
 	FMaterial* Material[4] = {  };
 
 	// Material properties
+	FVector2 detailScale = { 1.f, 1.f };
 	float Glossiness = 10.f;
 	float SpecularLevel = 0.1f;
 	float shaderspeed = 1.f;
@@ -303,6 +304,49 @@ public:
 		{
 			if (tex != nullptr) layers.Push(tex.get());
 		}
+	}
+
+	FVector2 GetDetailScale() const
+	{
+		return detailScale;
+	}
+
+	void SetDetailScale(float x, float y)
+	{
+		detailScale.X = x;
+		detailScale.Y = y;
+	}
+
+	FTexture* GetBrightmap()
+	{
+		if (Brightmap.get() || (flags & GTexf_BrightmapChecked)) return Brightmap.get();
+		CreateDefaultBrightmap();
+		return Brightmap.get();
+	}
+	FTexture* GetGlowmap()
+	{
+		return Glowmap.get();
+	}
+	FTexture* GetDetailmap()
+	{
+		return Detailmap.get();
+	}
+
+	void SetGlowmap(FTexture *T)
+	{
+		Glowmap = T;
+	}
+	void SetDetailmap(FTexture* T)
+	{
+		Detailmap = T;
+	}
+	void SetNormalmap(FTexture* T)
+	{
+		Normal = T;
+	}
+	void SetSpecularmap(FTexture* T)
+	{
+		Specular = T;
 	}
 
 };

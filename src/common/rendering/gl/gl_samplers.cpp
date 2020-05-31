@@ -93,7 +93,7 @@ FSamplerManager::~FSamplerManager()
 
 void FSamplerManager::UnbindAll()
 {
-	for (int i = 0; i < FHardwareTexture::MAX_TEXTURES; i++)
+	for (int i = 0; i < IHardwareTexture::MAX_TEXTURES; i++)
 	{
 		glBindSampler(i, 0);
 	}

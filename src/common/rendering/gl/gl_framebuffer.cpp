@@ -56,6 +56,7 @@
 #include "gl_postprocessstate.h"
 #include "v_draw.h"
 #include "printf.h"
+#include "gl_hwtexture.h"
 
 #include "flatvertices.h"
 #include "hw_cvars.h"
@@ -87,9 +88,9 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
 	Super::SetVSync(vid_vsync);
+	FHardwareTexture::InitGlobalState();
 
 	// Make sure all global variables tracking OpenGL context state are reset..
-	FHardwareTexture::InitGlobalState();
 	gl_RenderState.Reset();
 
 	GLRenderer = nullptr;
@@ -215,7 +216,6 @@ void OpenGLFrameBuffer::CopyScreenToBuffer(int width, int height, uint8_t* scr)
 //===========================================================================
 
 void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc)
-
 {
 	GLRenderer->StartOffscreen();
 	GLRenderer->BindToFrameBuffer(tex);

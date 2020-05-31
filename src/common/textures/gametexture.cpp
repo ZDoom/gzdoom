@@ -187,7 +187,7 @@ void FGameTexture::AddAutoMaterials()
 void FGameTexture::CreateDefaultBrightmap()
 {
 	auto tex = GetTexture();
-	if (flags & GTexf_BrightmapChecked)
+	if (!(flags & GTexf_BrightmapChecked))
 	{
 		flags |= GTexf_BrightmapChecked;
 		// Check for brightmaps

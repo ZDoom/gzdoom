@@ -457,11 +457,6 @@ DEFINE_GLOBAL(CleanYfac_1)
 DEFINE_GLOBAL(CleanWidth_1)
 DEFINE_GLOBAL(CleanHeight_1)
 
-IHardwareTexture* CreateHardwareTexture(int numchannels)
-{
-	return screen->CreateHardwareTexture(numchannels);
-}
-
 //==========================================================================
 //
 // CVAR transsouls

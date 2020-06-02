@@ -141,7 +141,7 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	buildinfo.texture->SetSize(buildinfo.Width, buildinfo.Height);
 	buildinfo.texture->SetOffsets(0, buildinfo.LeftOffset[0], buildinfo.TopOffset[0]);	// These are needed for construction of other multipatch textures.
 	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
-	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.X);
+	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.Y);
 	buildinfo.texture->SetWorldPanning(buildinfo.bWorldPanning);
 	buildinfo.texture->SetNoDecals(buildinfo.bNoDecals);
 	TexMan.AddGameTexture(buildinfo.texture);

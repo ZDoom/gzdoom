@@ -625,7 +625,7 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 	auto Level = player->mo->Level;
 
 	if (Terrains[floorType].DamageAmount &&
-		!(Level->time & Terrains[floorType].DamageTimeMask))
+		!(Level->time % (Terrains[floorType].DamageTimeMask+1)))
 	{
 		AActor *ironfeet = NULL;
 

@@ -40,7 +40,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 	mShaderIndex = SHADER_Default;
 	sourcetex = tx;
 	auto imgtex = tx->GetTexture();
-	mTextureLayers.Push({ imgtex, scaleflags });
+	mTextureLayers.Push({ imgtex, scaleflags, -1 });
 
 	if (tx->GetUseType() == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(imgtex)->GetColorFormat() == 0)
 	{
@@ -52,7 +52,8 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			mShaderIndex = tx->GetShaderIndex();
 		}
-		// no brightmap for cameratexture
+		mTextureLayers.Last().clampflags = CLAMP_CAMTEX;
+		// no additional layers for cameratexture
 	}
 	else
 	{
@@ -65,7 +66,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			for (auto &texture : { tx->Normal.get(), tx->Specular.get() })
 			{
-				mTextureLayers.Push({ texture, 0 });
+				mTextureLayers.Push({ texture, 0, -1 });
 			}
 			mShaderIndex = SHADER_Specular;
 		}
@@ -73,7 +74,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			for (auto &texture : { tx->Normal.get(), tx->Metallic.get(), tx->Roughness.get(), tx->AmbientOcclusion.get() })
 			{
-				mTextureLayers.Push({ texture, 0 });
+				mTextureLayers.Push({ texture, 0, -1 });
 			}
 			mShaderIndex = SHADER_PBR;
 		}

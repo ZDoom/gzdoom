@@ -210,6 +210,8 @@ public:
 	{
 		Base->CopySize(BaseTexture->Base.get());
 		SetDisplaySize(BaseTexture->GetDisplayWidth(), BaseTexture->GetDisplayHeight());
+		SetOffsets(0, BaseTexture->GetTexelLeftOffset(0), BaseTexture->GetTexelTopOffset(0));
+		SetOffsets(1, BaseTexture->GetTexelLeftOffset(1), BaseTexture->GetTexelTopOffset(1));
 	}
 
 	// Glowing is a pure material property that should not filter down to the actual texture objects.

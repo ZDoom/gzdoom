@@ -4887,22 +4887,37 @@ void AActor::AdjustFloorClip ()
 	double shallowestclip = INT_MAX;
 	const msecnode_t *m;
 
-	// possibly standing on a 3D-floor
-	if (Sector->e->XFloor.ffloors.Size() && Z() > Sector->floorplane.ZatPoint(this)) Floorclip = 0;
-
 	// [RH] clip based on shallowest floor player is standing on
 	// If the sector has a deep water effect, then let that effect
 	// do the floorclipping instead of the terrain type.
 	for (m = touching_sectorlist; m; m = m->m_tnext)
 	{
 		DVector3 pos = PosRelative(m->m_sector);
-		sector_t *hsec = m->m_sector->GetHeightSec();
-		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == Z())
+		sector_t* hsec = m->m_sector->GetHeightSec();
+		if (hsec == NULL)
 		{
-			double clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
-			if (clip < shallowestclip)
+			if (m->m_sector->floorplane.ZatPoint(pos) == Z())
 			{
-				shallowestclip = clip;
+				double clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
+				if (clip < shallowestclip)
+				{
+					shallowestclip = clip;
+				}
+			}
+			else
+			{
+				for (auto& ff : m->m_sector->e->XFloor.ffloors)
+				{
+					if ((ff->flags & FF_SOLID) && (ff->flags & FF_EXISTS) && ff->top.plane->ZatPoint(pos) == Z())
+					{
+						double clip = Terrains[ff->top.model->GetTerrain(ff->top.isceiling)].FootClip;
+						if (clip < shallowestclip)
+						{
+							shallowestclip = clip;
+						}
+					}
+				}
+
 			}
 		}
 	}
@@ -5547,6 +5562,11 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	}
 	else if (sz == ONCEILINGZ)
 		mobj->AddZ(-mthing->pos.Z);
+
+	if (mobj->flags2 & MF2_FLOORCLIP)
+	{
+		mobj->AdjustFloorClip();
+	}
 
 	mobj->SpawnPoint = mthing->pos;
 	mobj->SpawnAngle = mthing->angle;

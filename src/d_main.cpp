@@ -3898,20 +3898,47 @@ CUSTOM_CVAR(Int, I_FriendlyWindowTitle, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_N
 
 void I_UpdateWindowTitle()
 {
+	FString titlestr;
 	switch (I_FriendlyWindowTitle)
 	{
 	case 1:
 		if (level.LevelName && level.LevelName.GetChars()[0])
 		{
-			FString titlestr;
 			titlestr.Format("%s - %s", level.LevelName.GetChars(), GameStartupInfo.Name.GetChars());
-			I_SetWindowTitle(titlestr.GetChars());
 			break;
 		}
 	case 2:
-		I_SetWindowTitle(GameStartupInfo.Name.GetChars());
+		titlestr = GameStartupInfo.Name;
 		break;
 	default:
 		I_SetWindowTitle(NULL);
+		return;
 	}
+
+	// Strip out any color escape sequences before setting a window title
+	TArray<char> copy(titlestr.Len() + 1);
+	const char* srcp = titlestr;
+	char* dstp = copy.Data();
+
+	while (*srcp != 0)
+	{
+
+		if (*srcp != TEXTCOLOR_ESCAPE)
+		{
+			*dstp++ = *srcp++;
+		}
+		else if (srcp[1] == '[')
+		{
+			srcp += 2;
+			while (*srcp != ']' && *srcp != 0) srcp++;
+			if (*srcp == ']') srcp++;
+		}
+		else
+		{
+			if (srcp[1] != 0) srcp += 2;
+			else break;
+		}
+	}
+	*dstp = 0;
+	I_SetWindowTitle(copy.Data());
 }

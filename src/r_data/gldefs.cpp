@@ -1643,6 +1643,7 @@ class GLDefsParser
 						!usershaders[i].defines.Compare(desc.defines))
 					{
 						SetShaderIndex(tex, i + FIRST_USER_SHADER);
+						tex->SetShaderLayers(mlay);		
 						return;
 					}
 				}

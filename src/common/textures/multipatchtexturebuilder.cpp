@@ -923,7 +923,10 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 			for (auto &b : BuiltTextures)
 			{
 				Printf("%s\n", b.Name.GetChars());
+				// make it hard to find but also ensure that it references valid backing data.
 				b.texture->SetUseType(ETextureType::Null);
+				b.texture->SetBase(TexMan.GameByIndex(0)->GetTexture());
+				b.texture->SetName("");
 			}
 			break;
 		}

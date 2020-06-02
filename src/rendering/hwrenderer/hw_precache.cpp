@@ -104,7 +104,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	for (int i = 1; i < TexMan.NumTextures(); i++)
 	{
 		auto gametex = TexMan.GameByIndex(i);
-		if (gametex &&
+		if (gametex && gametex->isValid() &&
 			gametex->GetTexture()->GetImage() &&	// only image textures are subject to precaching
 			gametex->GetUseType() != ETextureType::FontChar &&	// We do not want to delete font characters here as they are very likely to be needed constantly.
 			gametex->GetUseType() < ETextureType::Special)		// Any texture marked as 'special' is also out.

@@ -249,7 +249,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType,
 	auto Level = line->GetLevel();
  	int lineActivation = line->activation;
 
-	if (line->flags & ML_FIRSTSIDEONLY && side == 1)
+	if ((line->flags & ML_FIRSTSIDEONLY && side == 1) || line->special == 0)
 	{
 		return false;
 	}

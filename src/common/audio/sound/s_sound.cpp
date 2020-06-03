@@ -547,9 +547,10 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		if (chanflags & (CHANF_UI|CHANF_NOPAUSE)) startflags |= SNDF_NOPAUSE;
 		if (chanflags & CHANF_UI) startflags |= SNDF_NOREVERB;
 
+		float sfxlength = (float)GSnd->GetMSLength(sfx->data) / 1000.f;
 		startTime = (startflags & SNDF_LOOP)
-			? fmod(startTime, (float)GSnd->GetMSLength(sfx->data) / 1000.f)
-			: clamp<float>(startTime, 0.f, (float)GSnd->GetMSLength(sfx->data) / 1000.f);
+				? (sfxlength > 0 ? fmod(startTime, sfxlength) : 0)
+				: clamp<float>(startTime, 0.f, sfxlength);
 
 		if (attenuation > 0 && type != SOURCE_None)
 		{

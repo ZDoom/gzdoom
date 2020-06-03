@@ -137,7 +137,7 @@ void NetServer::BeginTic()
 
 				TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
 				AActor* mo;
-				while (mo = it.Next())
+				while ((mo = it.Next()))
 				{
 					if (mo != players[player].mo)
 					{
@@ -326,7 +326,7 @@ void NetServer::CmdBeginTic(int nodeIndex)
 
 	TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
 	AActor* mo;
-	while (mo = it.Next())
+	while ((mo = it.Next()))
 	{
 		if (mo != players[player].mo && mo->syncdata.NetID)
 		{

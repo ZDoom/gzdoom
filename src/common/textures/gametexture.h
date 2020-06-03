@@ -57,12 +57,14 @@ enum EGameTexFlags
 	GTexf_RenderFullbright = 32,			// always draw fullbright
 	GTexf_DisableFullbrightSprites = 64,	// This texture will not be displayed as fullbright sprite
 	GTexf_BrightmapChecked = 128,			// Check for a colormap-based brightmap was already done.
+	GTexf_AutoMaterialsAdded = 256,			// AddAutoMaterials has been called on this texture.
 };
 
 // Refactoring helper to allow piece by piece adjustment of the API
 class FGameTexture
 {
 	friend class FMaterial;
+	friend class GLDefsParser;	// this needs access to set up the texture properly
 
 	// Material layers. These are shared so reference counting is used.
 	RefCountedPtr<FTexture> Base;

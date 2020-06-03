@@ -1216,6 +1216,7 @@ class GLDefsParser
 		{
 			sc.ScriptMessage("Material definition refers nonexistent texture '%s'\n", sc.String);
 		}
+		else tex->AddAutoMaterials();	// We need these before setting up the texture.
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1242,14 +1243,12 @@ class GLDefsParser
 			else if (sc.Compare("glossiness"))
 			{
 				sc.MustGetFloat();
-				if (tex)
-					mlay.Glossiness = (float)sc.Float;
+				mlay.Glossiness = (float)sc.Float;
 			}
 			else if (sc.Compare("specularlevel"))
 			{
 				sc.MustGetFloat();
-				if (tex)
-					mlay.SpecularLevel = (float)sc.Float;
+				mlay.SpecularLevel = (float)sc.Float;
 			}
 			else if (sc.Compare("speed"))
 			{
@@ -1367,12 +1366,12 @@ class GLDefsParser
 		if (usershader.shader.IsNotEmpty())
 		{
 			int firstUserTexture;
-			if (mlay.Normal && mlay.Specular)
+			if ((mlay.Normal || tex->Normal.get()) && (mlay.Specular || tex->Specular.get()))
 			{
 				usershader.shaderType = SHADER_Specular;
 				firstUserTexture = 7;
 			}
-			else if (mlay.Normal && mlay.Metallic && mlay.Roughness && mlay.AmbientOcclusion)
+			else if ((mlay.Normal || tex->Normal.get()) && (mlay.Metallic || tex->Metallic.get()) && (mlay.Roughness || tex->Roughness.get()) && (mlay.AmbientOcclusion || tex->AmbientOcclusion.get()))
 			{
 				usershader.shaderType = SHADER_PBR;
 				firstUserTexture = 9;
@@ -1523,6 +1522,7 @@ class GLDefsParser
 			sc.MustGetString();
 			FTextureID no = TexMan.CheckForTexture(sc.String, type);
 			auto tex = TexMan.GetGameTexture(no);
+			if (tex) tex->AddAutoMaterials();
 			MaterialLayers mlay = { -1000, -1000 };
 
 			sc.MustGetToken('{');

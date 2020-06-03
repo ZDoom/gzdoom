@@ -114,7 +114,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		if (index >= FIRST_USER_SHADER)
 		{
 			const UserShaderDesc &usershader = usershaders[index - FIRST_USER_SHADER];
-			//if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
+			if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
 			{
 				for (auto &texture : tx->CustomShaderTextures)
 				{

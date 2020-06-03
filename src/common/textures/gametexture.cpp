@@ -149,6 +149,7 @@ void FGameTexture::AddAutoMaterials()
 	{ "materials/ao/", &FGameTexture::AmbientOcclusion }
 	};
 
+	if (flags & GTexf_AutoMaterialsAdded) return; // do this only once
 
 	bool fullname = !!(flags & GTexf_FullNameTexture);
 	FString searchname = GetName();
@@ -177,6 +178,7 @@ void FGameTexture::AddAutoMaterials()
 			}
 		}
 	}
+	flags |= GTexf_AutoMaterialsAdded;
 }
 
 //===========================================================================

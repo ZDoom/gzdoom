@@ -1994,7 +1994,7 @@ object BishopMissile
 pointlight LIGHT1
 {
     color 1.0 1.0 1.0
-    size 90
+    size 84
     offset 0 30 0
 	attenuate 1
 }
@@ -2035,12 +2035,13 @@ pointlight CLIGHT1
     color 1.0 1.0 0.0
     size 24
     offset 0 12 0
+	attenuate 1
 }
 
 pulselight CLIGHT2
 {
     color 1.0 1.0 0.0
-    size 66
+    size 72
     secondarySize 75
     interval 8.0    
     offset 0 64 0
@@ -2071,7 +2072,7 @@ pointlight TLLIGHT2
 {
     color 1.0 1.0 0.5
     size 120
-    offset 0 56 0
+    offset 0 40 0
 	attenuate 1
 }
 
@@ -2224,8 +2225,8 @@ object AlienSpiderLight
 flickerlight BBARREL
 {
     color 1.0 0.6 0.0
-    size 54
-    secondarySize 66
+    size 48
+    secondarySize 60
     chance 0.8
     offset 0 32 0
 	attenuate 1
@@ -2234,8 +2235,8 @@ flickerlight BBARREL
 flickerlight BBOWL
 {
     color 1.0 0.7 0.0
-    size 40
-    secondarySize 52
+    size 36
+    secondarySize 48
     chance 0.5
     offset 0 10 0
 	attenuate 1
@@ -2244,8 +2245,8 @@ flickerlight BBOWL
 flickerlight BBRAZIER
 {
     color 1.0 0.8 0.0
-    size 66
-    secondarySize 78
+    size 60
+    secondarySize 66
     chance 0.2
     offset 0 32 0
 	attenuate 1
@@ -2256,7 +2257,7 @@ pulselight STORCH
     color 1.0 0.6 0.0
     size 48
     secondarySize 54
-    interval 5.0    
+    interval 5.0
     offset 0 56 0
 	attenuate 1
 }
@@ -2264,8 +2265,8 @@ pulselight STORCH
 pulselight MTORCH
 {
     color 1.0 0.6 0.0
-    size 90
-    secondarySize 102
+    size 84
+    secondarySize 96
     interval 5.0    
     offset 0 64 0
 	attenuate 1
@@ -2274,8 +2275,8 @@ pulselight MTORCH
 pulselight LTORCH
 {
     color 1.0 0.8 0.0
-    size 102
-    secondarySize 114
+    size 96
+    secondarySize 108
     interval 2.0    
     offset 0 64 0
 	attenuate 1
@@ -2284,8 +2285,8 @@ pulselight LTORCH
 pulselight HTORCH
 {
     color 1.0 0.6 0.0
-    size 114
-    secondarySize 120
+    size 108
+    secondarySize 114
     interval 3.0    
     offset 0 72 0
 	attenuate 1
@@ -2405,7 +2406,7 @@ flickerlight POWCRYS_X5
 {
     color 1.0 0.7 0.27
     size 114
-    secondarySize 113
+    secondarySize 116
     chance 0.3
 }
 
@@ -2477,7 +2478,7 @@ flickerlight POWCRYS_X13
 {
     color 1.0 0.48 0.10
     size 105
-    secondarySize 106
+    secondarySize 107
     chance 0.3
 }
 
@@ -2485,37 +2486,21 @@ flickerlight POWCRYS_X14
 {
     color 1.0 0.46 0.08
     size 103
-    secondarySize 104
+    secondarySize 105
     chance 0.3
 }
 
 flickerlight POWCRYS_X15
 {
     color 1.0 0.44 0.06
-    size 102
-    secondarySize 104
+    size 101
+    secondarySize 103
     chance 0.3
 }
 
 flickerlight POWCRYS_X16
 {
     color 1.0 0.42 0.04
-    size 101
-    secondarySize 103
-    chance 0.3
-}
-
-flickerlight POWCRYS_X15
-{
-    color 1.0 0.4 0.02
-    size 100
-    secondarySize 102
-    chance 0.3
-}
-
-flickerlight POWCRYS_X16
-{
-    color 1.0 0.38 0.0
     size 99
     secondarySize 101
     chance 0.3
@@ -2523,7 +2508,7 @@ flickerlight POWCRYS_X16
 
 flickerlight POWCRYS_X17
 {
-    color 1.0 0.36 0.02
+    color 1.0 0.40 0.02
     size 98
     secondarySize 100
     chance 0.3
@@ -2531,65 +2516,65 @@ flickerlight POWCRYS_X17
 
 flickerlight POWCRYS_X18
 {
-    color 1.0 0.34 0.0
+    color 1.0 0.38 0.0
     size 97
-    secondarySize 100
+    secondarySize 99
     chance 0.3
 }
 
 flickerlight POWCRYS_X19
 {
-    color 1.0 0.32 0.0
+    color 1.0 0.36 0.0
     size 96
-    secondarySize 99
+    secondarySize 98
     chance 0.3
 }
 
 flickerlight POWCRYS_X20
 {
-    color 1.0 0.3 0.0
+    color 1.0 0.34 0.0
     size 95
-    secondarySize 98
+    secondarySize 97
     chance 0.3
 }
 
 flickerlight POWCRYS_X21
 {
-    color 1.0 0.28 0.0
+    color 1.0 0.32 0.0
     size 94
-    secondarySize 93
+    secondarySize 96
     chance 0.3
 }
 
 flickerlight POWCRYS_X22
 {
-    color 1.0 0.26 0.0
+    color 1.0 0.3 0.0
     size 93
-    secondarySize 92
+    secondarySize 95
     chance 0.3
 }
 
 flickerlight POWCRYS_X23
 {
-    color 1.0 0.24 0.0
+    color 1.0 0.28 0.0
     size 92
-    secondarySize 91
+    secondarySize 94
     chance 0.3
 }
 
 flickerlight POWCRYS_X24
 {
-    color 1.0 0.22 0.0
-    size 90
+    color 1.0 0.26 0.0
+    size 89
     secondarySize 92
     chance 0.3
 }
 
 flickerlight POWCRYS_X25
 {
-    color 1.0 0.2 0.0
+    color 1.0 0.24 0.0
     size 86
-    secondarySize 90
+    secondarySize 89
     chance 0.3
 }
 

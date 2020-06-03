@@ -78,8 +78,8 @@ void I_SetIWADInfo()
 void Mac_I_FatalError(const char* errortext);
 #endif
 
-#ifdef __linux__
-void Linux_I_FatalError(const char* errortext)
+#ifdef __unix__
+void Unix_I_FatalError(const char* errortext)
 {
 	// Close window or exit fullscreen and release mouse capture
 	SDL_Quit();
@@ -116,8 +116,8 @@ void I_ShowFatalError(const char *message)
 {
 #ifdef __APPLE__
 	Mac_I_FatalError(message);
-#elif defined __linux__
-	Linux_I_FatalError(message);
+#elif defined __unix__
+	Unix_I_FatalError(message);
 #else
 	// ???
 #endif

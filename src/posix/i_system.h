@@ -69,22 +69,6 @@ void I_StartFrame (void);
 // Can call D_PostEvent.
 void I_StartTic (void);
 
-// Asynchronous interrupt functions should maintain private queues
-// that are read by the synchronous functions
-// to be converted into events.
-
-<<<<<<< HEAD
-void I_Tactile (int on, int off, int total);
-
-void I_DebugPrint (const char *cp);
-=======
-// Either returns a null ticcmd,
-// or calls a loadable driver to build it.
-// This ticcmd will then be modified by the gameloop
-// for normal input.
-ticcmd_t *I_BaseTiccmd (void);
->>>>>>> master
-
 // Print a console string
 void I_PrintStr (const char *str);
 

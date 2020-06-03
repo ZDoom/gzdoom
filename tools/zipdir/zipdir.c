@@ -36,9 +36,7 @@
 #define stat _stat
 #else
 #include <dirent.h>
-#if !defined(__sun)
 #include <fts.h>
-#endif
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -495,97 +493,6 @@ dir_tree_t *add_dirs(char **argv)
 			break;
 		}
 		argv++;
-	}
-	return trees;
-}
-
-#elif defined(__sun)
-
-//==========================================================================
-//
-// add_dirs
-// Solaris version
-//
-// Given NULL-terminated array of directory paths, create trees for them.
-//
-//==========================================================================
-
-void add_dir(dir_tree_t *tree, char* dirpath)
-{
-	DIR *directory = opendir(dirpath);
-	if(directory == NULL)
-		return;
-
-	struct dirent *file;
-	while((file = readdir(directory)) != NULL)
-	{
-		if(file->d_name[0] == '.') //File is hidden or ./.. directory so ignore it.
-			continue;
-
-		int isDirectory = 0;
-		int time = 0;
-
-		char* fullFileName = malloc(strlen(dirpath) + strlen(file->d_name) + 1);
-		strcpy(fullFileName, dirpath);
-		strcat(fullFileName, file->d_name);
-
-		struct stat *fileStat;
-		fileStat = malloc(sizeof(struct stat));
-		stat(fullFileName, fileStat);
-		isDirectory = S_ISDIR(fileStat->st_mode);
-		time = fileStat->st_mtime;
-		free(stat);
-
-		free(fullFileName);
-
-		if(isDirectory)
-		{
-			char* newdir;
-			newdir = malloc(strlen(dirpath) + strlen(file->d_name) + 2);
-			strcpy(newdir, dirpath);
-			strcat(newdir, file->d_name);
-			strcat(newdir, "/");
-			add_dir(tree, newdir);
-			free(newdir);
-			continue;
-		}
-
-		file_entry_t *entry;
-		entry = alloc_file_entry(dirpath, file->d_name, time);
-		if (entry == NULL)
-		{
-			//no_mem = 1;
-			break;
-		}
-		entry->next = tree->files;
-		tree->files = entry;
-	}
-
-	closedir(directory);
-}
-
-dir_tree_t *add_dirs(char **argv)
-{
-	dir_tree_t *tree, *trees = NULL;
-
-	int i = 0;
-	while(argv[i] != NULL)
-	{
-		tree = alloc_dir_tree(argv[i]);
-		tree->next = trees;
-		trees = tree;
-
-		if(tree != NULL)
-		{
-			char* dirpath = malloc(sizeof(argv[i]) + 2);
-			strcpy(dirpath, argv[i]);
-			if(dirpath[strlen(dirpath)] != '/')
-				strcat(dirpath, "/");
-			add_dir(tree, dirpath);
-			free(dirpath);
-		}
-
-		i++;
 	}
 	return trees;
 }

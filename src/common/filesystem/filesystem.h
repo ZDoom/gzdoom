@@ -16,7 +16,7 @@
 
 class FResourceFile;
 struct FResourceLump;
-class FTexture;
+class FGameTexture;
 
 union LumpShortName
 {
@@ -38,7 +38,7 @@ public:
 	~FileData ();
 	void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
 	size_t GetSize () { return Block.Len(); }
-	FString GetString () { return Block; }
+	const FString &GetString () const { return Block; }
 
 private:
 	FileData (const FString &source);
@@ -124,8 +124,8 @@ public:
 	inline int CheckNumForFullName (const FString &name, int wadfile) { return CheckNumForFullName(name.GetChars(), wadfile); }
 	inline int GetNumForFullName (const FString &name) { return GetNumForFullName(name.GetChars()); }
 
-	void SetLinkedTexture(int lump, FTexture *tex);
-	FTexture *GetLinkedTexture(int lump);
+	void SetLinkedTexture(int lump, FGameTexture *tex);
+	FGameTexture *GetLinkedTexture(int lump);
 
 
 	void ReadFile (int lump, void *dest);

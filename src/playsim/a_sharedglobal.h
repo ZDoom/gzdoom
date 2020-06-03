@@ -12,7 +12,7 @@ class DBaseDecal;
 struct SpreadInfo;
 
 DBaseDecal *ShootDecal(FLevelLocals *Level, const FDecalTemplate *tpl, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
-void SprayDecal(AActor *shooter, const char *name,double distance = 172.);
+void SprayDecal(AActor *shooter, const char *name,double distance = 172., DVector3 offset = DVector3(0., 0., 0.), DVector3 direction = DVector3(0., 0., 0.) );
 
 class DBaseDecal : public DThinker
 {

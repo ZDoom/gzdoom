@@ -42,6 +42,7 @@
 #include "serialize_obj.h"
 #include "doomstat.h"
 #include "vm.h"
+#include "v_draw.h"
 
 EXTERN_CVAR(Int, con_scaletext)
 

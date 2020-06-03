@@ -62,6 +62,7 @@
 #include "utf8.h"
 #include "texturemanager.h"
 #include "v_palette.h"
+#include "v_draw.h"
 
 #include "../version.h"
 
@@ -88,6 +89,8 @@ EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
 EXTERN_CVAR(Bool, inter_subtitles)
+EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
+
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 CVAR(Bool, log_vgafont, false, CVAR_ARCHIVE)
 
@@ -95,7 +98,7 @@ DBaseStatusBar *StatusBar;
 
 extern int setblocks;
 
-FTexture *CrosshairImage;
+FGameTexture *CrosshairImage;
 static int CrosshairNum;
 
 CVAR (Int, paletteflash, 0, CVAR_ARCHIVE)
@@ -140,6 +143,87 @@ CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
 }
 
 CVAR (Bool, idmypos, false, 0);
+
+//==========================================================================
+//
+// V_DrawFrame
+//
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+//
+//==========================================================================
+
+void V_DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
+{
+	FGameTexture* p;
+	const gameborder_t* border = &gameinfo.Border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
+	int offset = border->offset;
+	int right = left + width;
+	int bottom = top + height;
+
+	float sw = drawer->GetClassicFlatScalarWidth();
+	float sh = drawer->GetClassicFlatScalarHeight();
+
+	if (!ui_screenborder_classic_scaling)
+	{
+		// Draw top and bottom sides.
+		p = TexMan.GetGameTextureByName(border->t);
+		drawer->AddFlatFill(left, top - (int)p->GetDisplayHeight(), right, top, p, true);
+		p = TexMan.GetGameTextureByName(border->b);
+		drawer->AddFlatFill(left, bottom, right, bottom + (int)p->GetDisplayHeight(), p, true);
+
+		// Draw left and right sides.
+		p = TexMan.GetGameTextureByName(border->l);
+		drawer->AddFlatFill(left - (int)p->GetDisplayWidth(), top, left, bottom, p, true);
+		p = TexMan.GetGameTextureByName(border->r);
+		drawer->AddFlatFill(right, top, right + (int)p->GetDisplayWidth(), bottom, p, true);
+
+		// Draw beveled corners.
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr), left + width, top - offset, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl), left - offset, top + height, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->br), left + width, top + height, TAG_DONE);
+	}
+	else
+	{
+		// Draw top and bottom sides.
+		p = TexMan.GetGameTextureByName(border->t);
+		drawer->AddFlatFill(left, top - (int)(p->GetDisplayHeight() / sh), right, top, p, -2);
+		p = TexMan.GetGameTextureByName(border->b);
+		drawer->AddFlatFill(left, bottom, right, bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
+
+		// Draw left and right sides.
+		p = TexMan.GetGameTextureByName(border->l);
+		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), top, left, bottom, p, -2);
+		p = TexMan.GetGameTextureByName(border->r);
+		drawer->AddFlatFill(right, top, right + (int)(p->GetDisplayWidth() / sw), bottom, p, -2);
+
+		// Draw beveled corners.
+		p = TexMan.GetGameTextureByName(border->tl);
+		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), top - (int)(p->GetDisplayHeight() / sh), left, top, p, -2);
+		p = TexMan.GetGameTextureByName(border->tr);
+		drawer->AddFlatFill(right, top - (int)(p->GetDisplayHeight() / sh), right + (int)(p->GetDisplayWidth() / sw), top, p, -2);
+		p = TexMan.GetGameTextureByName(border->bl);
+		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), bottom, left, bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
+		p = TexMan.GetGameTextureByName(border->br);
+		drawer->AddFlatFill(right, bottom, right + (int)(p->GetDisplayWidth() / sw), bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	V_DrawFrame(twod, x, y, w, h);
+	return 0;
+}
 
 //---------------------------------------------------------------------------
 //
@@ -192,7 +276,7 @@ void ST_LoadCrosshair(bool alwaysload)
 		}
 	}
 	CrosshairNum = num;
-	CrosshairImage = TexMan.GetTexture(texid);
+	CrosshairImage = TexMan.GetGameTexture(texid);
 }
 
 //---------------------------------------------------------------------------
@@ -964,7 +1048,7 @@ void DBaseStatusBar::RefreshViewBorder ()
 		DrawBorder(twod, tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
 		DrawBorder(twod, tex, 0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
 		
-		DrawFrame(twod, viewwindowx, viewwindowy, viewwidth, viewheight);
+		V_DrawFrame(twod, viewwindowx, viewwindowy, viewwidth, viewheight);
 	}
 }
 
@@ -985,6 +1069,8 @@ void DBaseStatusBar::RefreshBackground () const
 	if (x == 0 && y == twod->GetHeight()) return;
 
 	auto tex = GetBorderTexture(primaryLevel);
+
+	float sh = twod->GetClassicFlatScalarHeight();
 
 	if(!CompleteBorder)
 	{
@@ -1015,11 +1101,21 @@ void DBaseStatusBar::RefreshBackground () const
 
 		if (setblocks >= 10)
 		{
-			FTexture *p = TexMan.GetTextureByName(gameinfo.Border.b);
+			FGameTexture *p = TexMan.GetGameTextureByName(gameinfo.Border.b);
 			if (p != NULL)
 			{
-				twod->AddFlatFill(0, y, x, y + p->GetDisplayHeight(), p, true);
-				twod->AddFlatFill(x2, y, twod->GetWidth(), y + p->GetDisplayHeight(), p, true);
+				if (!ui_screenborder_classic_scaling)
+				{
+					int h = int(0.5 + p->GetDisplayHeight());
+					twod->AddFlatFill(0, y, x, y + h, p, true);
+					twod->AddFlatFill(x2, y, twod->GetWidth(), y + h, p, true);
+				}
+				else
+				{
+					int h = (int)((0.5f + p->GetDisplayHeight()) / sh);
+					twod->AddFlatFill(0, y, x, y + h, p, -2);
+					twod->AddFlatFill(x2, y, twod->GetWidth(), y + h, p, -2);
+				}
 			}
 		}
 	}
@@ -1546,10 +1642,10 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 	if (!texture.isValid())
 		return;
 
-	FTexture *tex = TexMan.GetTexture(texture, !(flags & DI_DONTANIMATE));
+	FGameTexture *tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
 
-	double texwidth = tex->GetDisplayWidthDouble() * scaleX;
-	double texheight = tex->GetDisplayHeightDouble() * scaleY;
+	double texwidth = tex->GetDisplayWidth() * scaleX;
+	double texheight = tex->GetDisplayHeight() * scaleY;
 
 	if (boxwidth > 0 || boxheight > 0)
 	{
@@ -1601,14 +1697,14 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 	{
 	case DI_ITEM_HCENTER:	x -= boxwidth / 2; break;
 	case DI_ITEM_RIGHT:		x -= boxwidth; break;
-	case DI_ITEM_HOFFSET:	x -= tex->GetDisplayLeftOffsetDouble() * boxwidth / texwidth; break;
+	case DI_ITEM_HOFFSET:	x -= tex->GetDisplayLeftOffset() * boxwidth / texwidth; break;
 	}
 
 	switch (flags & DI_ITEM_VMASK)
 	{
 	case DI_ITEM_VCENTER: y -= boxheight / 2; break;
 	case DI_ITEM_BOTTOM:  y -= boxheight; break;
-	case DI_ITEM_VOFFSET: y -= tex->GetDisplayTopOffsetDouble() * boxheight / texheight; break;
+	case DI_ITEM_VOFFSET: y -= tex->GetDisplayTopOffset() * boxheight / texheight; break;
 	}
 
 	if (!fullscreenOffsets)
@@ -1737,20 +1833,20 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		}
 
 		int width;
-		FTexture* c = font->GetChar(ch, fontcolor, &width);
+		auto c = font->GetChar(ch, fontcolor, &width);
 		if (c == NULL) //missing character.
 		{
 			continue;
 		}
 
 		if (!monospaced) //If we are monospaced lets use the offset
-			x += (c->GetDisplayLeftOffsetDouble() + 1); //ignore x offsets since we adapt to character size
+			x += (c->GetDisplayLeftOffset() + 1); //ignore x offsets since we adapt to character size
 
 		double rx, ry, rw, rh;
 		rx = x + drawOffset.X;
 		ry = y + drawOffset.Y;
-		rw = c->GetDisplayWidthDouble();
-		rh = c->GetDisplayHeightDouble();
+		rw = c->GetDisplayWidth();
+		rh = c->GetDisplayHeight();
 
 		if (monospacing == EMonospacing::CellCenter)
 			rx += (spacing - rw) / 2;
@@ -1795,7 +1891,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 
 		dx = monospaced 
 			? spacing
-			: width + spacing - (c->GetDisplayLeftOffsetDouble() + 1);
+			: width + spacing - (c->GetDisplayLeftOffset() + 1);
 
 		// Take text scale into account
 		x += dx * scaleX;

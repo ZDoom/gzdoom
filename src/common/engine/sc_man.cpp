@@ -1119,7 +1119,7 @@ void FScanner::CheckOpen()
 {
 	if (ScriptOpen == false)
 	{
-		I_FatalError ("SC_ call before SC_Open().");
+		I_Error ("SC_ call before SC_Open().");
 	}
 }
 

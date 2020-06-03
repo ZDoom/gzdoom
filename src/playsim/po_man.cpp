@@ -511,6 +511,7 @@ bool EV_MovePolyTo(FLevelLocals *Level, line_t *line, int polyNum, double speed,
 		pe->m_Speed = speed;
 		pe->m_Speedv = dist * speed;
 		pe->m_Target = poly->StartSpot.pos + dist * distlen;
+		SN_StartSequence(poly, poly->seqType, SEQ_DOOR, 0);
 		if ((pe->m_Dist / pe->m_Speed) <= 2)
 		{
 			pe->StopInterpolation();
@@ -1103,7 +1104,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						DVector2 pos = mobj->PosRelative(ld);
 						FBoundingBox box(pos.X, pos.Y, mobj->radius);
 
-						if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+						if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 						{
 							continue;
 						}

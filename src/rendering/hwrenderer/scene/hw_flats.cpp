@@ -26,6 +26,7 @@
 */
 
 #include "a_sharedglobal.h"
+#include "a_dynlight.h"
 #include "r_defs.h"
 #include "r_sky.h"
 #include "r_utility.h"
@@ -35,16 +36,17 @@
 #include "actorinlines.h"
 #include "p_lnspec.h"
 #include "matrix.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/utility/hw_cvars.h"
-#include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/utility/hw_lighting.h"
+#include "hw_dynlightdata.h"
+#include "hw_cvars.h"
+#include "hw_clock.h"
+#include "hw_lighting.h"
 #include "hw_material.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "flatvertices.h"
+#include "hw_lightbuffer.h"
 #include "hw_drawstructs.h"
 #include "hw_renderstate.h"
+#include "texturemanager.h"
 
 #ifdef _DEBUG
 CVAR(Int, gl_breaksec, -1, 0)
@@ -56,28 +58,28 @@ CVAR(Int, gl_breaksec, -1, 0)
 //
 //==========================================================================
 
-bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FMaterial * gltexture, VSMatrix &dest)
+bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FGameTexture * gltexture, VSMatrix &dest)
 {
 	// only manipulate the texture matrix if needed.
 	if (!secplane->Offs.isZero() ||
 		secplane->Scale.X != 1. || secplane->Scale.Y != 1 ||
 		secplane->Angle != 0 ||
-		gltexture->TextureWidth() != 64 ||
-		gltexture->TextureHeight() != 64)
+		gltexture->GetDisplayWidth() != 64 ||
+		gltexture->GetDisplayHeight() != 64)
 	{
-		float uoffs = secplane->Offs.X / gltexture->TextureWidth();
-		float voffs = secplane->Offs.Y / gltexture->TextureHeight();
+		float uoffs = secplane->Offs.X / gltexture->GetDisplayWidth();
+		float voffs = secplane->Offs.Y / gltexture->GetDisplayHeight();
 
 		float xscale1 = secplane->Scale.X;
 		float yscale1 = secplane->Scale.Y;
-		if (gltexture->hasCanvas())
+		if (gltexture->isHardwareCanvas())
 		{
 			yscale1 = 0 - yscale1;
 		}
 		float angle = -secplane->Angle;
 
-		float xscale2 = 64.f / gltexture->TextureWidth();
-		float yscale2 = 64.f / gltexture->TextureHeight();
+		float xscale2 = 64.f / gltexture->GetDisplayWidth();
+		float yscale2 = 64.f / gltexture->GetDisplayHeight();
 
 		dest.loadIdentity();
 		dest.scale(xscale1, yscale1, 1.0f);
@@ -88,6 +90,15 @@ bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FMaterial * glte
 	}
 	return false;
 }
+
+void SetPlaneTextureRotation(FRenderState &state, HWSectorPlane* plane, FGameTexture* texture)
+{
+	if (hw_SetPlaneTextureRotation(plane, texture, state.mTextureMatrix))
+	{
+		state.EnableTextureMatrix(true);
+	}
+}
+
 
 
 //==========================================================================
@@ -167,7 +178,7 @@ void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 		}
 
 		p.Set(plane.plane.Normal(), plane.plane.fD());
-		draw_dlightf += lightdata.GetLight(portalgroup, p, light, false);
+		draw_dlightf += GetLight(lightdata, portalgroup, p, light, false);
 		node = node->nextLight;
 	}
 
@@ -203,7 +214,7 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 
 void HWFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 {
-    state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+    state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
     
     // Draw the subsectors assigned to it due to missing textures
     auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
@@ -235,7 +246,7 @@ void HWFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 	// This requires a stencil because the projected plane interferes with
 	// the depth buffer
 
-	state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+	state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
 
 	// Draw the subsectors assigned to it due to missing textures
 	auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
@@ -323,14 +334,14 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	{
 		if (sector->special != GLSector_Skybox)
 		{
-			state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
-			state.SetPlaneTextureRotation(&plane, gltexture);
+			state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
+			SetPlaneTextureRotation(state, &plane, texture);
 			DrawSubsectors(di, state);
 			state.EnableTextureMatrix(false);
 		}
 		else if (!hacktype)
 		{
-			state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
+			state.SetMaterial(texture, UF_Texture, 0, CLAMP_XY, 0, -1);
 			state.SetLightIndex(dynlightindex);
 			state.Draw(DT_TriangleStrip,iboindex, 4);
 			flatvertices += 4;
@@ -340,7 +351,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	else
 	{
 		state.SetRenderStyle(renderstyle);
-		if (!gltexture)
+		if (!texture || !texture->isValid())
 		{
 			state.AlphaFunc(Alpha_GEqual, 0.f);
 			state.EnableTexture(false);
@@ -349,10 +360,10 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		}
 		else
 		{
-			if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+			if (!texture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 			else state.AlphaFunc(Alpha_GEqual, 0.f);
-			state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
-			state.SetPlaneTextureRotation(&plane, gltexture);
+			state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
+			SetPlaneTextureRotation(state, &plane, texture);
 			DrawSubsectors(di, state);
 			state.EnableTextureMatrix(false);
 		}
@@ -379,7 +390,7 @@ inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
 	}
 	else if (!screen->BuffersArePersistent())
 	{
-		if (di->Level->HasDynamicLights && gltexture != nullptr && !di->isFullbrightScene() && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
+		if (di->Level->HasDynamicLights && texture != nullptr && !di->isFullbrightScene() && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
 		{
 			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
 		}
@@ -405,9 +416,9 @@ void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 
 	if (!fog)
 	{
-		gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
-		if (!gltexture) return;
-		if (gltexture->tex->isFullbright()) 
+		texture =  TexMan.GetGameTexture(plane.texture, true);
+		if (!texture || !texture->isValid()) return;
+		if (texture->isFullbright()) 
 		{
 			Colormap.MakeWhite();
 			lightlevel=255;
@@ -415,7 +426,7 @@ void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 	}
 	else 
 	{
-		gltexture = NULL;
+		texture = NULL;
 		lightlevel = abs(lightlevel);
 	}
 

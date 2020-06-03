@@ -7,6 +7,7 @@
 
 class FImageSource;
 using PrecacheInfo = TMap<int, std::pair<int, int>>;
+extern FMemArena ImageArena;
 
 // Doom patch format header
 struct patch_t
@@ -38,7 +39,6 @@ class FImageSource
 	friend class FBrightmapTexture;
 protected:
 
-	static FMemArena ImageArena;
 	static TArray<FImageSource *>ImageForLump;
 	static int NextID;
 
@@ -57,6 +57,8 @@ protected:
 
 
 public:
+	virtual bool SupportRemap0() { return false; }		// Unfortunate hackery that's needed for Hexen's skies. Only the image can know about the needed parameters
+	virtual bool IsRawCompatible() { return true; }		// Same thing for mid texture compatibility handling. Can only be determined by looking at the composition data which is private to the image.
 
 	void CopySize(FImageSource &other)
 	{
@@ -169,4 +171,4 @@ protected:
 
 class FTexture;
 
-FTexture* CreateImageTexture(FImageSource* img, const char *name = nullptr) noexcept;
+FTexture* CreateImageTexture(FImageSource* img) noexcept;

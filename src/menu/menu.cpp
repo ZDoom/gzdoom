@@ -56,6 +56,7 @@
 #include "c_buttons.h"
 #include "types.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
@@ -107,7 +108,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuTime, GetMenuTime)
 	ACTION_RETURN_INT(MenuTime);
 }
 
-FGameStartup GameStartupInfo;
+FNewGameStartup NewGameStartupInfo;
 EMenuState		menuactive;
 bool			M_DemoNoPlay;
 FButtonStatus	MenuButtons[NUM_MKEYS];
@@ -381,8 +382,12 @@ void M_StartControlPanel (bool makeSound, bool scaleoverride)
 	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
-	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider;
-	else if (!scaleoverride && CurrentScaleOverrider) delete CurrentScaleOverrider;
+	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider(twod);
+	else if (!scaleoverride && CurrentScaleOverrider)
+	{
+		delete CurrentScaleOverrider;
+		CurrentScaleOverrider = nullptr;
+	}
 }
 
 //=============================================================================
@@ -457,12 +462,12 @@ void M_SetMenu(FName menu, int param)
 		break;
 	case NAME_Episodemenu:
 		// sent from the player class menu
-		GameStartupInfo.Skill = -1;
-		GameStartupInfo.Episode = -1;
-		GameStartupInfo.PlayerClass = 
+		NewGameStartupInfo.Skill = -1;
+		NewGameStartupInfo.Episode = -1;
+		NewGameStartupInfo.PlayerClass = 
 			param == -1000? nullptr :
 			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type).GetChars();
-		M_StartupEpisodeMenu(&GameStartupInfo);	// needs player class name from class menu (later)
+		M_StartupEpisodeMenu(&NewGameStartupInfo);	// needs player class name from class menu (later)
 		break;
 
 	case NAME_Skillmenu:
@@ -475,14 +480,14 @@ void M_SetMenu(FName menu, int param)
 			return;
 		}
 
-		GameStartupInfo.Episode = param;
-		M_StartupSkillMenu(&GameStartupInfo);	// needs player class name from class menu (later)
+		NewGameStartupInfo.Episode = param;
+		M_StartupSkillMenu(&NewGameStartupInfo);	// needs player class name from class menu (later)
 		break;
 
 	case NAME_StartgameConfirm:
 	{
 		// sent from the skill menu for a skill that needs to be confirmed
-		GameStartupInfo.Skill = param;
+		NewGameStartupInfo.Skill = param;
 
 		const char *msg = AllSkills[param].MustConfirmText;
 		if (*msg==0) msg = GStrings("NIGHTMARE");
@@ -493,10 +498,10 @@ void M_SetMenu(FName menu, int param)
 	case NAME_Startgame:
 		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
 		// Now we can finally start the game. Ugh...
-		GameStartupInfo.Skill = param;
+		NewGameStartupInfo.Skill = param;
 	case NAME_StartgameConfirmed:
 
-		G_DeferedInitNew (&GameStartupInfo);
+		G_DeferedInitNew (&NewGameStartupInfo);
 		if (gamestate == GS_FULLCONSOLE)
 		{
 			gamestate = GS_HIDECONSOLE;

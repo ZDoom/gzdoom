@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2004-2007 Randy Heit
+** Copyright 2005-2019 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,13 +35,14 @@
 */
 
 #include "files.h"
-#include "filesystem.h"
 #include "templates.h"
 #include "m_png.h"
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"
 #include "printf.h"
+#include "texturemanager.h"
+#include "filesystem.h"
 
 //==========================================================================
 //
@@ -58,6 +60,7 @@ public:
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
+	void SetupPalette(FileReader &lump);
 
 	uint8_t BitDepth;
 	uint8_t ColorType;
@@ -151,11 +154,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 : FImageSource(lumpnum),
   BitDepth(depth), ColorType(colortype), Interlace(interlace), HaveTrans(false)
 {
-	union
-	{
-		uint32_t palette[256];
-		uint8_t pngpal[256][3];
-	} p;
 	uint8_t trans[256];
 	uint32_t len, id;
 	int i;
@@ -209,15 +207,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 		case MAKE_ID('P','L','T','E'):
 			PaletteSize = MIN<int> (len / 3, 256);
 			StartOfPalette = (uint32_t)lump.Tell();
-			lump.Read (p.pngpal, PaletteSize * 3);
-			if (PaletteSize * 3 != (int)len)
-			{
-				lump.Seek (len - PaletteSize * 3, FileReader::SeekCur);
-			}
-			for (i = PaletteSize - 1; i >= 0; --i)
-			{
-				p.palette[i] = MAKERGB(p.pngpal[i][0], p.pngpal[i][1], p.pngpal[i][2]);
-			}
+			lump.Seek(len, FileReader::SeekCur);
 			break;
 
 		case MAKE_ID('t','R','N','S'):
@@ -247,9 +237,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 		{
 			bMasked = true;
 			PaletteSize = 256;
-			PaletteMap = (uint8_t*)ImageArena.Alloc(PaletteSize);
-			memcpy (PaletteMap, GPalette.GrayMap, 256);
-			PaletteMap[NonPaletteTrans[0]] = 0;
 		}
 		else
 		{
@@ -258,14 +245,11 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 		break;
 
 	case 3:		// Paletted
-		PaletteMap = (uint8_t*)ImageArena.Alloc(PaletteSize);
-		MakeRemap ((uint32_t*)GPalette.BaseColors, p.palette, PaletteMap, trans, PaletteSize);
 		for (i = 0; i < PaletteSize; ++i)
 		{
 			if (trans[i] == 0)
 			{
 				bMasked = true;
-				PaletteMap[i] = 0;
 			}
 		}
 		break;
@@ -278,6 +262,87 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 		bMasked = HaveTrans;
 		break;
 	}
+}
+
+void FPNGTexture::SetupPalette(FileReader &lump)
+{
+	union
+	{
+		uint32_t palette[256];
+		uint8_t pngpal[256][3];
+	} p;
+	uint8_t trans[256];
+	uint32_t len, id;
+	int i;
+
+	auto pos = lump.Tell();
+
+	memset(trans, 255, 256);
+
+	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
+	lump.Seek(33, FileReader::SeekSet);
+
+	lump.Read(&len, 4);
+	lump.Read(&id, 4);
+	while (id != MAKE_ID('I', 'D', 'A', 'T') && id != MAKE_ID('I', 'E', 'N', 'D'))
+	{
+		len = BigLong((unsigned int)len);
+		switch (id)
+		{
+		default:
+			lump.Seek(len, FileReader::SeekCur);
+			break;
+
+		case MAKE_ID('P', 'L', 'T', 'E'):
+			lump.Read(p.pngpal, PaletteSize * 3);
+			if (PaletteSize * 3 != (int)len)
+			{
+				lump.Seek(len - PaletteSize * 3, FileReader::SeekCur);
+			}
+			for (i = PaletteSize - 1; i >= 0; --i)
+			{
+				p.palette[i] = MAKERGB(p.pngpal[i][0], p.pngpal[i][1], p.pngpal[i][2]);
+			}
+			break;
+
+		case MAKE_ID('t', 'R', 'N', 'S'):
+			lump.Read(trans, len);
+			break;
+		}
+		lump.Seek(4, FileReader::SeekCur);		// Skip CRC
+		lump.Read(&len, 4);
+		id = MAKE_ID('I', 'E', 'N', 'D');
+		lump.Read(&id, 4);
+	}
+	StartOfIDAT = (uint32_t)lump.Tell() - 8;
+
+	switch (ColorType)
+	{
+	case 0:		// Grayscale
+		if (HaveTrans && NonPaletteTrans[0] < 256)
+		{
+			PaletteMap = (uint8_t*)ImageArena.Alloc(PaletteSize);
+			memcpy(PaletteMap, GPalette.GrayMap, 256);
+			PaletteMap[NonPaletteTrans[0]] = 0;
+		}
+		break;
+
+	case 3:		// Paletted
+		PaletteMap = (uint8_t*)ImageArena.Alloc(PaletteSize);
+		MakeRemap((uint32_t*)GPalette.BaseColors, p.palette, PaletteMap, trans, PaletteSize);
+		for (i = 0; i < PaletteSize; ++i)
+		{
+			if (trans[i] == 0)
+			{
+				PaletteMap[i] = 0;
+			}
+		}
+		break;
+
+	default:
+		break;
+	}
+	lump.Seek(pos, FileReader::SeekSet);
 }
 
 //==========================================================================
@@ -335,6 +400,7 @@ TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 			{
 				if (conversion != luminance)
 				{
+					if (!PaletteMap) SetupPalette(lfr);
 					ImageHelpers::FlipSquareBlockRemap (Pixels.Data(), Width, PaletteMap);
 				}
 				else if (ColorType == 0)
@@ -353,6 +419,7 @@ TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 				TArray<uint8_t> newpix(Width*Height, true);
 				if (conversion != luminance)
 				{
+					if (!PaletteMap) SetupPalette(lfr);
 					ImageHelpers::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
 				}
 				else if (ColorType == 0)
@@ -407,6 +474,7 @@ TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 			case 4:		// Grayscale + Alpha
 				pitch = Width * 2;
 				backstep = Height * pitch - 2;
+				if (!PaletteMap) SetupPalette(lfr);
 				for (x = Width; x > 0; --x)
 				{
 					for (y = Height; y > 0; --y)
@@ -573,7 +641,7 @@ class FPNGFileTexture : public FTexture
 {
 public:
 	FPNGFileTexture (FileReader &lump, int width, int height, uint8_t colortype);
-	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans);
+	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans) override;
 
 protected:
 	
@@ -589,7 +657,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
+FGameTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 {
 	if (M_FindPNGChunk(png, MAKE_ID('I','H','D','R')) == 0)
 	{
@@ -608,7 +676,7 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 	
 	// Reject anything that cannot be put into a savegame picture by GZDoom itself.
 	if (compression != 0 || filter != 0 || interlace > 0 || bitdepth != 8 || (colortype != 2 && colortype != 3)) return nullptr;
-	else return new FPNGFileTexture (png->File, width, height, colortype);
+	else return MakeGameTexture(new FPNGFileTexture (png->File, width, height, colortype), nullptr, ETextureType::Override);
 }
 
 //==========================================================================
@@ -622,6 +690,8 @@ FPNGFileTexture::FPNGFileTexture (FileReader &lump, int width, int height, uint8
 {
 	Width = width;
 	Height = height;
+	Masked = false;
+	bTranslucent = false;
 	fr = std::move(lump);
 }
 
@@ -652,7 +722,7 @@ FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 			lump->Seek (len, FileReader::SeekCur);
 		else
 		{
-			PaletteSize = MIN<int> (len / 3, 256);
+			PaletteSize = std::min<int> (len / 3, 256);
 			for(int i = 0; i < PaletteSize; i++)
 			{
 				pe[i].r = lump->ReadUInt8();
@@ -684,4 +754,4 @@ FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 		bmp.CopyPixelDataRGB(0, 0, Pixels.Data(), Width, Height, 3, pixwidth, 0, CF_RGB);
 	}
 	return bmp;
-}
+} 

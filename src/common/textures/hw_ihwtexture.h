@@ -14,10 +14,8 @@ public:
 		MAX_TEXTURES = 16
 	};
 
-	IHardwareTexture() {}
-	virtual ~IHardwareTexture() {}
-
-	virtual void DeleteDescriptors() { }
+	IHardwareTexture() = default;
+	virtual ~IHardwareTexture() = default;
 
 	virtual void AllocateBuffer(int w, int h, int texelsize) = 0;
 	virtual uint8_t *MapBuffer() = 0;

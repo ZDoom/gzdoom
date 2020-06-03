@@ -10,7 +10,7 @@ namespace swrenderer
 	class RenderWallSprite : public VisibleSprite
 	{
 	public:
-		static void Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *pic, const DVector2 &scale, int renderflags, int lightlevel, bool foggy, FDynamicColormap *basecolormap);
+		static void Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *pic, const DVector2 &scale, int renderflags, int lightlevel, bool foggy, FDynamicColormap *basecolormap);
 
 	protected:
 		bool IsWallSprite() const override { return true; }

@@ -82,6 +82,7 @@
 #include "events.h"
 #include "c_buttons.h"
 #include "d_buttons.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -1101,7 +1102,7 @@ void G_Ticker ()
 	if (ToggleFullscreen)
 	{
 		ToggleFullscreen = false;
-		AddCommandString ("toggle fullscreen");
+		AddCommandString ("toggle vid_fullscreen");
 	}
 
 	// do things to change the game state
@@ -1708,7 +1709,24 @@ void FLevelLocals::DoReborn (int playernum, bool freshbot)
 	}
 	else
 	{
-		bool isUnfriendly = players[playernum].mo && !(players[playernum].mo->flags & MF_FRIENDLY);
+		bool isUnfriendly;
+
+		PlayerSpawnPickClass(playernum);
+
+		// this condition should never be false
+		assert(players[playernum].cls != NULL);
+
+		if (players[playernum].cls != NULL)
+		{
+			isUnfriendly = !(GetDefaultByType(players[playernum].cls)->flags & MF_FRIENDLY);
+			DPrintf(DMSG_NOTIFY, "Player class IS defined: unfriendly is %i\n", isUnfriendly);
+		}
+		else
+		{
+			// we shouldn't be here, but if we are, get the player's current status
+			isUnfriendly = players[playernum].mo && !(players[playernum].mo->flags & MF_FRIENDLY);
+			DPrintf(DMSG_NOTIFY, "Player class NOT defined: unfriendly is %i\n", isUnfriendly);
+		}
 
 		// respawn at the start
 		// first disassociate the corpse
@@ -2253,56 +2271,6 @@ static void PutSaveComment (FSerializer &arc)
 	arc.AddString("Comment", comment);
 }
 
-void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown)
-{
-	PalEntry palette[256];
-	PalEntry modulateColor;
-	auto blend = V_CalcBlend(viewsector, &modulateColor);
-	int pixelsize = 1;
-	// Apply the screen blend, because the renderer does not provide this.
-	if (ssformat == SS_RGB)
-	{
-		int numbytes = width * height * 3;
-		pixelsize = 3;
-		if (modulateColor != 0xffffffff)
-		{
-			float r = modulateColor.r / 255.f;
-			float g = modulateColor.g / 255.f;
-			float b = modulateColor.b / 255.f;
-			for (int i = 0; i < numbytes; i += 3)
-			{
-				scr[i] = uint8_t(scr[i] * r);
-				scr[i + 1] = uint8_t(scr[i + 1] * g);
-				scr[i + 2] = uint8_t(scr[i + 2] * b);
-			}
-		}
-		float iblendfac = 1.f - blend.W;
-		blend.X *= blend.W;
-		blend.Y *= blend.W;
-		blend.Z *= blend.W;
-		for (int i = 0; i < numbytes; i += 3)
-		{
-			scr[i] = uint8_t(scr[i] * iblendfac + blend.X);
-			scr[i + 1] = uint8_t(scr[i + 1] * iblendfac + blend.Y);
-			scr[i + 2] = uint8_t(scr[i + 2] * iblendfac + blend.Z);
-		}
-	}
-	else
-	{
-		// Apply the screen blend to the palette. The colormap related parts get skipped here because these are already part of the image.
-		DoBlending(GPalette.BaseColors, palette, 256, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z), uint8_t(blend.W*255));
-	}
-
-	int pitch = width * pixelsize;
-	if (upsidedown)
-	{
-		scr += ((height - 1) * width * pixelsize);
-		pitch *= -1;
-	}
-
-	M_CreatePNG(file, scr, ssformat == SS_PAL? palette : nullptr, ssformat, width, height, pitch, Gamma);
-}
-
 static void PutSavePic (FileWriter *file, int width, int height)
 {
 	if (width <= 0 || height <= 0 || !storesavepic)
@@ -2313,7 +2281,7 @@ static void PutSavePic (FileWriter *file, int width, int height)
 	{
 		D_Render([&]()
 			{
-				screen->WriteSavePic(&players[consoleplayer], file, width, height);
+				WriteSavePic(&players[consoleplayer], file, width, height);
 			}, false);
 	}
 }

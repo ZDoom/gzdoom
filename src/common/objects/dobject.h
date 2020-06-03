@@ -110,7 +110,7 @@ enum EInPlace { EC_InPlace };
 
 #define DECLARE_ABSTRACT_CLASS(cls,parent) \
 public: \
-	virtual PClass *StaticType() const; \
+	PClass *StaticType() const override; \
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr; \
 	typedef parent Super; \
 private: \

@@ -51,7 +51,7 @@
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "g_levellocals.h"
 
@@ -59,14 +59,13 @@ CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR(Int, r_skymode)
 EXTERN_CVAR(Bool, cl_oldfreelooklimit)
 
+std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
+
 namespace swrenderer
 {
 	static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
 	{
-		auto tex = TexMan.GetPalettedTexture(texid, true);
-		if (tex == nullptr) return nullptr;
-		if (!allownull && !tex->isValid()) return nullptr;
-		return tex->GetSoftwareTexture();
+		return GetPalettedSWTexture(texid, true, false, true);
 	}
 
 	RenderSkyPlane::RenderSkyPlane(RenderThread *thread)
@@ -74,16 +73,14 @@ namespace swrenderer
 		Thread = thread;
 		auto Level = Thread->Viewport->Level();
 
-		auto skytex1 = TexMan.GetPalettedTexture(Level->skytexture1, true);
-		auto skytex2 = TexMan.GetPalettedTexture(Level->skytexture2, true);
+		auto sskytex1 = GetPalettedSWTexture(Level->skytexture1, true, false, true);
+		auto sskytex2 = GetPalettedSWTexture(Level->skytexture2, true, false, true);
 
-		if (skytex1 == nullptr)
+		if (sskytex1 == nullptr)
 			return;
 
-		FSoftwareTexture *sskytex1 = skytex1->GetSoftwareTexture();
-		FSoftwareTexture *sskytex2 = skytex2->GetSoftwareTexture();
 		skytexturemid = 0;
-		int skyheight = skytex1->GetDisplayHeight();
+		int skyheight = sskytex1->GetScaledHeight();
 		skyoffset = cl_oldfreelooklimit? 0 : skyheight == 256? 166 : skyheight >= 240? 150 : skyheight >= 200? 110 : 138;
 		if (skyheight >= 128 && skyheight < 200)
 		{
@@ -91,7 +88,7 @@ namespace swrenderer
 		}
 		else if (skyheight >= 200)
 		{
-			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(Level->flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
+			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(Level->flags & LEVEL_FORCETILEDSKY)) ? sskytex1->GetSkyOffset() : 0);
 		}
 
 		if (viewwidth != 0 && viewheight != 0)
@@ -207,7 +204,7 @@ namespace swrenderer
 				frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
 				if (Level->skystretch)
 				{
-					skymid = skymid * frontskytex->GetScaledHeightDouble() / (SKYSTRETCH_HEIGHT + skyoffset);
+					skymid = skymid * frontskytex->GetScaledHeight() / (SKYSTRETCH_HEIGHT + skyoffset);
 				}
 			}
 		}
@@ -263,8 +260,9 @@ namespace swrenderer
 		drawerargs.SetDest(viewport, start_x, y1);
 		drawerargs.SetCount(y2 - y1);
 		drawerargs.SetFadeSky(r_skymode == 2 && !(Level->flags & LEVEL_FORCETILEDSKY));
-		drawerargs.SetSolidTop(frontskytex->GetSkyCapColor(false));
-		drawerargs.SetSolidBottom(frontskytex->GetSkyCapColor(true));
+		auto& col = R_GetSkyCapColor(frontskytex->GetTexture());
+		drawerargs.SetSolidTop(col.first);
+		drawerargs.SetSolidBottom(col.second);
 
 		if (!backskytex)
 			drawerargs.DrawSingleSkyColumn(Thread);

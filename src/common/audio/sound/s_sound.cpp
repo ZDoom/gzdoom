@@ -494,26 +494,9 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	int seen = 0;
 	if (source != NULL && channel == CHAN_AUTO)
 	{
-		// Select a channel that isn't already playing something.
-		// Try channel 0 first, then travel from channel 7 down.
-		if (!IsChannelUsed(type, source, 0, &seen))
-		{
-			channel = 0;
-		}
-		else
-		{
-			for (channel = 7; channel > 0; --channel)
-			{
-				if (!IsChannelUsed(type, source, channel, &seen))
-				{
-					break;
-				}
-			}
-			if (channel == 0)
-			{ // Crap. No free channels.
-				return NULL;
-			}
-		}
+		// In the old sound system, 'AUTO' hijacked one of the other channels.
+		// Now, with CHANF_OVERLAP at our disposal that isn't needed anymore. Just set the flag and let all sounds play on channel 0.
+		chanflags |= CHANF_OVERLAP;
 	}
 
 	// If this actor is already playing something on the selected channel, stop it.
@@ -564,9 +547,10 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		if (chanflags & (CHANF_UI|CHANF_NOPAUSE)) startflags |= SNDF_NOPAUSE;
 		if (chanflags & CHANF_UI) startflags |= SNDF_NOREVERB;
 
+		float sfxlength = (float)GSnd->GetMSLength(sfx->data) / 1000.f;
 		startTime = (startflags & SNDF_LOOP)
-			? fmod(startTime, (float)GSnd->GetMSLength(sfx->data) / 1000.f)
-			: clamp<float>(startTime, 0.f, (float)GSnd->GetMSLength(sfx->data) / 1000.f);
+				? (sfxlength > 0 ? fmod(startTime, sfxlength) : 0)
+				: clamp<float>(startTime, 0.f, sfxlength);
 
 		if (attenuation > 0 && type != SOURCE_None)
 		{

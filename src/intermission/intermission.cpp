@@ -53,6 +53,7 @@
 #include "templates.h"
 #include "s_music.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -71,6 +72,8 @@ extern int		NoWipe;
 
 CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+CVAR(Bool, inter_classic_scaling, true, CVAR_ARCHIVE);
 
 //==========================================================================
 //
@@ -216,11 +219,11 @@ void DIntermissionScreen::Drawer ()
 	{
 		if (!mFlatfill)
 		{
-			DrawTexture(twod, TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			DrawTexture(twod, TexMan.GetGameTexture(mBackground), 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
 		{
-			twod->AddFlatFill(0,0, twod->GetWidth(), twod->GetHeight(), TexMan.GetTexture(mBackground));
+			twod->AddFlatFill(0,0, twod->GetWidth(), twod->GetHeight(), TexMan.GetGameTexture(mBackground), (inter_classic_scaling ? -1 : 0));
 		}
 	}
 	else
@@ -230,7 +233,7 @@ void DIntermissionScreen::Drawer ()
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
 		if (CheckOverlay(i))
-			DrawTexture(twod, TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
+			DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	if (mSubtitle)
 	{
@@ -287,11 +290,11 @@ void DIntermissionScreenFader::Drawer ()
 		if (mType == FADE_In) factor = 1.0 - factor;
 		int color = MAKEARGB(int(factor*255), 0,0,0);
 
-		DrawTexture(twod, TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
+		DrawTexture(twod, TexMan.GetGameTexture(mBackground), 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
 		for (unsigned i=0; i < mOverlays.Size(); i++)
 		{
 			if (CheckOverlay(i))
-				DrawTexture(twod, TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
+				DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 		}
 	}
 }
@@ -365,7 +368,7 @@ void DIntermissionScreenText::Drawer ()
 	Super::Drawer();
 	if (mTicker >= mTextDelay)
 	{
-		FTexture *pic;
+		FGameTexture *pic;
 		int w;
 		size_t count;
 		int c;
@@ -620,7 +623,6 @@ int DIntermissionScreenCast::Ticker ()
 void DIntermissionScreenCast::Drawer ()
 {
 	spriteframe_t*		sprframe;
-	FTexture*			pic;
 
 	Super::Drawer();
 
@@ -667,13 +669,13 @@ void DIntermissionScreenCast::Drawer ()
 		}
 
 		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
-		pic = TexMan.GetTexture(sprframe->Texture[0], true);
+		auto pic = TexMan.GetGameTexture(sprframe->Texture[0], true);
 
 		DrawTexture(twod, pic, 160, 170,
 			DTA_320x200, true,
 			DTA_FlipX, sprframe->Flip & 1,
-			DTA_DestHeightF, pic->GetDisplayHeightDouble() * castscale.Y,
-			DTA_DestWidthF, pic->GetDisplayWidthDouble() * castscale.X,
+			DTA_DestHeightF, pic->GetDisplayHeight() * castscale.Y,
+			DTA_DestWidthF, pic->GetDisplayWidth() * castscale.X,
 			DTA_RenderStyle, mDefaults->RenderStyle,
 			DTA_Alpha, mDefaults->Alpha,
 			DTA_TranslationIndex, casttranslation,
@@ -710,13 +712,13 @@ int DIntermissionScreenScroller::Responder (event_t *ev)
 
 void DIntermissionScreenScroller::Drawer ()
 {
-	FTexture *tex = TexMan.GetTexture(mFirstPic);
-	FTexture *tex2 = TexMan.GetTexture(mSecondPic);
+	auto tex = TexMan.GetGameTexture(mFirstPic);
+	auto tex2 = TexMan.GetGameTexture(mSecondPic);
 	if (mTicker >= mScrollDelay && mTicker < mScrollDelay + mScrollTime && tex != NULL && tex2 != NULL)
 	{
-
-		int fwidth = tex->GetDisplayWidth();
-		int fheight = tex->GetDisplayHeight();
+		// These must round down to the nearest full pixel to cover seams between the two textures.
+		int fwidth = (int)tex->GetDisplayWidth();
+		int fheight = (int)tex->GetDisplayHeight();
 
 		double xpos1 = 0, ypos1 = 0, xpos2 = 0, ypos2 = 0;
 
@@ -942,7 +944,7 @@ void DIntermissionController::OnDestroy ()
 
 void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
 {
-	ScaleOverrider s;
+	ScaleOverrider s(twod);
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Destroy();
@@ -988,7 +990,7 @@ void F_StartIntermission(FName seq, uint8_t state)
 
 bool F_Responder (event_t* ev)
 {
-	ScaleOverrider s;
+	ScaleOverrider s(twod);
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		return DIntermissionController::CurrentIntermission->Responder(ev);
@@ -1004,7 +1006,7 @@ bool F_Responder (event_t* ev)
 
 void F_Ticker ()
 {
-	ScaleOverrider s;
+	ScaleOverrider s(twod);
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Ticker();
@@ -1019,7 +1021,7 @@ void F_Ticker ()
 
 void F_Drawer ()
 {
-	ScaleOverrider s;
+	ScaleOverrider s(twod);
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Drawer();
@@ -1035,7 +1037,6 @@ void F_Drawer ()
 
 void F_EndFinale ()
 {
-	ScaleOverrider s;
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Destroy();
@@ -1051,7 +1052,7 @@ void F_EndFinale ()
 
 void F_AdvanceIntermission()
 {
-	ScaleOverrider s;
+	ScaleOverrider s(twod);
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->mAdvance = true;

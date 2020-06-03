@@ -65,7 +65,7 @@ const char *GetVersionString();
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
 // be able to migrate in FGameConfigFile::DoGlobalSetup().
-#define LASTRUNVERSION "219"
+#define LASTRUNVERSION "220"
 
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
@@ -95,6 +95,7 @@ const char *GetVersionString();
 #define BASEWAD "gzdoom.pk3"
 #define OPTIONALWAD "game_support.pk3"
 #define GZDOOM 1
+#define VR3D_ENABLED
 
 // More stuff that needs to be different for derivatives.
 #define GAMENAME "GZDoom"
@@ -108,6 +109,11 @@ const char *GetVersionString();
 #else
 #define GAME_DIR ".config/" GAMENAMELOWERCASE
 #endif
+
+const int SAVEPICWIDTH = 216;
+const int SAVEPICHEIGHT = 162;
+const int VID_MIN_WIDTH = 320;
+const int VID_MIN_HEIGHT = 200;
 
 
 #endif //__VERSION_H__

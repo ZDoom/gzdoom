@@ -9,11 +9,12 @@
 #include <memory>
 
 class FWrapperTexture;
+class DCanvas;
 
 class SWSceneDrawer
 {
 	FTexture *PaletteTexture;
-	std::unique_ptr<FWrapperTexture> FBTexture[2];
+	std::unique_ptr<FGameTexture> FBTexture[2];
 	int FBTextureIndex = 0;
 	bool FBIsTruecolor = false;
 	std::unique_ptr<DCanvas> Canvas;

@@ -46,15 +46,19 @@
 //
 //==========================================================================
 
-FMultiPatchTexture::FMultiPatchTexture(int w, int h, const TArray<TexPart> &parts, bool complex, bool textual)
+FMultiPatchTexture::FMultiPatchTexture(int w, int h, const TArray<TexPartBuild> &parts, bool complex, bool textual)
 {
 	Width = w;
 	Height = h;
 	bComplex = complex;
-	bTextual = textual;
+ 	bTextual = textual;
 	Parts = (TexPart*)ImageArena.Alloc(sizeof(TexPart) * parts.Size());
 	NumParts = parts.Size();
 	memcpy(Parts, parts.Data(), sizeof(TexPart) * parts.Size());
+	for (unsigned i = 0; i < parts.Size(); i++)
+	{
+		Parts[i].Image = parts[i].TexImage->GetImage();
+	}
 
 	bUseGamePalette = false;
 	if (!bComplex)
@@ -65,6 +69,27 @@ FMultiPatchTexture::FMultiPatchTexture(int w, int h, const TArray<TexPart> &part
 		}
 		bUseGamePalette = true;	// only if all patches use the game palette.
 	}
+}
+
+//==========================================================================
+//
+// sky remapping will only happen if
+// - the texture was defined through a TEXTUREx lump (this implies only trivial copies)
+// - all patches use the base palette.
+// - all patches are in a format that allows the remap.
+// All other cases would not be able to properly deal with this special case.
+// For textual definitions this hack isn't necessary.
+//
+//==========================================================================
+
+bool FMultiPatchTexture::SupportRemap0()
+{
+	if (bTextual || UseGamePalette()) return false;
+	for (int i = 0; i < NumParts; i++)
+	{
+		if (!Parts[i].Image->SupportRemap0()) return false;
+	}
+	return true;
 }
 
 //==========================================================================
@@ -203,11 +228,6 @@ TArray<uint8_t> FMultiPatchTexture::CreatePalettedPixels(int conversion)
 	}
 	if (conversion == noremap0)
 	{
-		// sky remapping will only happen if
-		// - the texture was defined through a TEXTUREx lump (this implies only trivial copies)
-		// - all patches use the base palette.
-		// All other cases would not be able to properly deal with this special case.
-		// For textual definitions this hack isn't necessary.
 		if (bTextual || !UseGamePalette()) conversion = normal;
 	}
 

@@ -8,7 +8,7 @@ class AActor;
 enum area_t : int;
 struct FSpriteModelFrame;
 struct HWDrawInfo;
-class FMaterial;
+class FGameTexture;
 
 
 struct WeaponPosition
@@ -29,7 +29,7 @@ struct HUDSprite
 {
 	AActor *owner;
 	DPSprite *weapon;
-	FMaterial *tex;
+	FGameTexture *texture;
 	FSpriteModelFrame *mframe;
 
 	FColormap cm;

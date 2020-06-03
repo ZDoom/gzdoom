@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MAXWIDTH 12000
+#define MAXHEIGHT 5000
+
 //
 // fixed point, 32bit as 16.16.
 //

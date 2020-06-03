@@ -7,6 +7,16 @@
 struct FTextureBuffer;
 class IHardwareTexture;
 
+enum ECreateTexBufferFlags
+{
+	CTF_Expand = 1,			// create buffer with a one-pixel wide border
+	CTF_Upscale = 2,		// Upscale the texture
+	CTF_CreateMask = 3,		// Flags that are relevant for hardware texture creation.
+	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+	CTF_CheckOnly = 8,		// Only runs the code to get a content ID but does not create a texture. Can be used to access a caching system for the hardware textures.
+	CTF_Indexed = 16		// Tell the backend to create an indexed texture.
+};
+
 class FHardwareTextureContainer
 {
 public:
@@ -20,6 +30,7 @@ private:
 	{
 		IHardwareTexture *hwTexture = nullptr;
 		int translation = 0;
+		bool precacheMarker;	// This is used to check whether a texture has been hit by the precacher, so that the cleanup code can delete the unneeded ones.
 
 		void Delete()
 		{
@@ -27,33 +38,44 @@ private:
 			hwTexture = nullptr;
 		}
 
-		void DeleteDescriptors()
-		{
-			if (hwTexture) hwTexture->DeleteDescriptors();
-		}
-		
 		~TranslatedTexture()
 		{
 			Delete();
+		}
+
+		void MarkForPrecache(bool on)
+		{
+			precacheMarker = on;
+		}
+
+		bool isMarkedForPreache() const
+		{
+			return precacheMarker;
 		}
 	};
 
 private:
 
-	TranslatedTexture hwDefTex[2];
+	TranslatedTexture hwDefTex[4];
 	TArray<TranslatedTexture> hwTex_Translated;
 	
- 	TranslatedTexture * GetTexID(int translation, bool expanded)
+ 	TranslatedTexture * GetTexID(int translation, int scaleflags)
 	{
-		auto remap = GPalette.TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->Index;
-
-		if (translation == 0)
+		// Allow negative indices to pass through unchanged. 
+		// This is needed for allowing the client to allocate slots that aren't matched to a palette, e.g. Build's indexed variants.
+		if (translation >= 0)
 		{
-			return &hwDefTex[expanded];
+			auto remap = GPalette.TranslationToTable(translation);
+			translation = remap == nullptr ? 0 : remap->Index;
+		}
+		else translation &= ~0x7fffffff;
+
+		if (translation == 0 && !(scaleflags & CTF_Upscale))
+		{
+			return &hwDefTex[scaleflags];
 		}
 
-		if (expanded) translation = -translation;
+		translation |= (scaleflags << 24);
 		// normally there aren't more than very few different 
 		// translations here so this isn't performance critical.
 		unsigned index = hwTex_Translated.FindEx([=](auto &element)
@@ -72,32 +94,22 @@ private:
 	}
 
 public:
-
-	void Clean(bool cleannormal, bool cleanexpanded)
+	void Clean()
 	{
-		if (cleannormal) hwDefTex[0].Delete();
-		if (cleanexpanded) hwDefTex[1].Delete();
-		hwDefTex[0].DeleteDescriptors();
-		hwDefTex[1].DeleteDescriptors();
-		for (int i = hwTex_Translated.Size() - 1; i >= 0; i--)
-		{
-			if (cleannormal && hwTex_Translated[i].translation > 0) hwTex_Translated.Delete(i);
-			else if (cleanexpanded && hwTex_Translated[i].translation < 0) hwTex_Translated.Delete(i);
-
-			for (unsigned int j = 0; j < hwTex_Translated.Size(); j++)
-				hwTex_Translated[j].DeleteDescriptors();
-		}
+		hwDefTex[0].Delete();
+		hwDefTex[1].Delete();
+		hwTex_Translated.Clear();
 	}
 	
-	IHardwareTexture * GetHardwareTexture(int translation, bool expanded)
+	IHardwareTexture * GetHardwareTexture(int translation, int scaleflags)
 	{
-		auto tt = GetTexID(translation, expanded);
+		auto tt = GetTexID(translation, scaleflags);
 		return tt->hwTexture;
 	}
 	
-	void AddHardwareTexture(int translation, bool expanded, IHardwareTexture *tex)
+	void AddHardwareTexture(int translation, int scaleflags, IHardwareTexture *tex)
 	{
-		auto tt = GetTexID(translation, expanded);
+		auto tt = GetTexID(translation, scaleflags);
 		tt->Delete();
 		tt->hwTexture =tex;
 	}
@@ -105,26 +117,44 @@ public:
 	//===========================================================================
 	// 
 	// Deletes all allocated resources and considers translations
-	// This will only be called for sprites
 	//
 	//===========================================================================
 
-	void CleanUnused(SpriteHits &usedtranslations, bool expanded)
+	void CleanUnused()
 	{
-		if (usedtranslations.CheckKey(0) == nullptr)
+		for (auto& tt : hwDefTex)
 		{
-			hwDefTex[expanded].Delete();
+			if (!tt.isMarkedForPreache()) tt.Delete();
 		}
-		int fac = expanded ? -1 : 1;
 		for (int i = hwTex_Translated.Size()-1; i>= 0; i--)
 		{
-			if (usedtranslations.CheckKey(hwTex_Translated[i].translation * fac) == nullptr)
+			auto& tt = hwTex_Translated[i];
+			if (!tt.isMarkedForPreache()) 
 			{
 				hwTex_Translated.Delete(i);
 			}
 		}
 	}
-	
+
+	void UnmarkAll()
+	{
+		for (auto& tt : hwDefTex)
+		{
+			if (!tt.isMarkedForPreache()) tt.MarkForPrecache(false);
+		}
+		for (auto& tt : hwTex_Translated)
+		{
+			if (!tt.isMarkedForPreache()) tt.MarkForPrecache(false);
+		}
+	}
+
+	void MarkForPrecache(int translation, int scaleflags)
+	{
+		auto tt = GetTexID(translation, scaleflags);
+		tt->MarkForPrecache(true);
+	}
+
+
 	template<class T>
 	void Iterate(T callback)
 	{

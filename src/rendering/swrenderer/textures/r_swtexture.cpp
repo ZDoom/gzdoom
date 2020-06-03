@@ -38,35 +38,46 @@
 #include "bitmap.h"
 #include "m_alloc.h"
 #include "imagehelpers.h"
+#include "texturemanager.h"
 
 
-FSoftwareTexture *FTexture::GetSoftwareTexture()
+inline EUpscaleFlags scaleFlagFromUseType(ETextureType useType)
 {
-	if (!SoftwareTexture)
+	switch (useType)
 	{
-		if (bHasCanvas) SoftwareTexture = new FSWCanvasTexture(this);
-		else if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
-		else SoftwareTexture = new FSoftwareTexture(this);
+	case ETextureType::Sprite:
+	case ETextureType::SkinSprite:
+		return UF_Sprite;
+
+	case ETextureType::FontChar:
+		return UF_Font;
+
+	default:
+		return UF_Texture;
 	}
-	return SoftwareTexture;
 }
-
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-FSoftwareTexture::FSoftwareTexture(FTexture *tex)
+FSoftwareTexture::FSoftwareTexture(FGameTexture *tex)
 {
 	mTexture = tex;
-	mSource = tex;
+	mSource = tex->GetTexture();
 
 	mBufferFlags = CTF_ProcessData;
-	auto info = tex->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
+	auto f = mBufferFlags;
+
+	if (shouldUpscale(tex, scaleFlagFromUseType(tex->GetUseType()))) f |= CTF_Upscale;
+	// calculate the real size after running the scaler.
+	auto info = mSource->CreateTexBuffer(0, CTF_CheckOnly| f);
 	mPhysicalWidth = info.mWidth;
-	mPhysicalHeight = info.mHeight;
-	mPhysicalScale = tex->Width > 0? mPhysicalWidth / tex->Width : mPhysicalWidth;
+	mPhysicalHeight = info.mHeight; 
+	mPhysicalScale = tex->GetTexelWidth() > 0 ? mPhysicalWidth / tex->GetTexelWidth() : mPhysicalWidth;
+	Scale.X = (double)tex->GetTexelWidth() / tex->GetDisplayWidth();
+	Scale.Y = (double)tex->GetTexelHeight() / tex->GetDisplayHeight();
 	CalcBitSize();
 }
 
@@ -119,7 +130,9 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 		}
 		else
 		{
-			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			auto f = mBufferFlags;
+			if (shouldUpscale(mTexture, scaleFlagFromUseType(mTexture->GetUseType()))) f |= CTF_Upscale;
+			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
 			Pixels.Resize(GetPhysicalWidth()*GetPhysicalHeight());
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			if (!style)
@@ -159,12 +172,12 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 	{
 		if (mPhysicalScale == 1)
 		{
-			FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
+			FBitmap bitmap = mSource->GetBgraBitmap(nullptr);
 			GenerateBgraFromBitmap(bitmap);
 		}
 		else
 		{
-			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
 			CreatePixelsBgraWithMipmaps();
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			for (int y = 0; y < GetPhysicalHeight(); y++)
@@ -598,8 +611,37 @@ void FSoftwareTexture::FreeAllSpans()
 	}
 }
 
-void DeleteSoftwareTexture(FSoftwareTexture* swtex)
+FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex)
 {
-	delete swtex;
+	FSoftwareTexture* SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
+	if (!SoftwareTexture)
+	{
+		if (tex->isSoftwareCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
+		else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
+		else SoftwareTexture = new FSoftwareTexture(tex);
+		tex->SetSoftwareTexture(SoftwareTexture);
+	}
+	return SoftwareTexture;
+}
+
+
+CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	// This is in case the sky texture has been substituted.
+	R_InitSkyMap();
+}
+
+FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, bool checkcompat, bool allownull)
+{
+	bool needpal = !vid_nopalsubstitutions && !V_IsTrueColor();
+	auto tex = TexMan.GetPalettedTexture(texid, true, needpal);
+	if (tex == nullptr || (!allownull && !tex->isValid())) return nullptr;
+	if (checkcompat)
+	{
+		auto rawtexid = TexMan.GetRawTexture(tex->GetID());
+		auto rawtex = TexMan.GetGameTexture(rawtexid);
+		if (rawtex) tex = rawtex;
+	}
+	return GetSoftwareTexture(tex);
 }
 

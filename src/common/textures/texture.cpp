@@ -47,64 +47,15 @@
 #include "image.h"
 #include "formats/multipatchtexture.h"
 #include "texturemanager.h"
+#include "c_cvars.h"
+#include "imagehelpers.h"
+#include "v_video.h"
 
 // Wrappers to keep the definitions of these classes out of here.
-void DeleteMaterial(FMaterial* mat);
-void DeleteSoftwareTexture(FSoftwareTexture *swtex);
-IHardwareTexture* CreateHardwareTexture();
-
-
-FTexture *CreateBrightmapTexture(FImageSource*);
+IHardwareTexture* CreateHardwareTexture(int numchannels);
 
 // Make sprite offset adjustment user-configurable per renderer.
 int r_spriteadjustSW, r_spriteadjustHW;
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-
-// Examines the lump contents to decide what type of texture to create,
-// and creates the texture.
-FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType usetype)
-{
-	if (lumpnum == -1) return nullptr;
-
-	auto image = FImageSource::GetImage(lumpnum, usetype == ETextureType::Flat);
-	if (image != nullptr)
-	{
-		FTexture *tex = new FImageTexture(image);
-		if (tex != nullptr) 
-		{
-			tex->UseType = usetype;
-			if (usetype == ETextureType::Flat) 
-			{
-				int w = tex->GetTexelWidth();
-				int h = tex->GetTexelHeight();
-
-				// Auto-scale flats with dimensions 128x128 and 256x256.
-				// In hindsight, a bad idea, but RandomLag made it sound better than it really is.
-				// Now we're stuck with this stupid behaviour.
-				if (w==128 && h==128) 
-				{
-					tex->Scale.X = tex->Scale.Y = 2;
-					tex->bWorldPanning = true;
-				}
-				else if (w==256 && h==256) 
-				{
-					tex->Scale.X = tex->Scale.Y = 4;
-					tex->bWorldPanning = true;
-				}
-			}
-			tex->Name = name;
-			tex->Name.ToUpper();
-			return tex;
-		}
-	}
-	return nullptr;
-}
 
 //==========================================================================
 //
@@ -112,58 +63,10 @@ FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType u
 //
 //==========================================================================
 
-FTexture::FTexture (const char *name, int lumpnum)
-	: 
-  Scale(1,1), SourceLump(lumpnum),
-  UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bFullNameTexture(false),
-	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
+FTexture::FTexture (int lumpnum)
+	:  SourceLump(lumpnum), bHasCanvas(false)
 {
-	bBrightmapChecked = false;
-	bGlowing = false;
-	bAutoGlowing = false;
-	bFullbright = false;
-	bDisableFullbright = false;
-	bSkybox = false;
-	bNoCompress = false;
-	bNoExpand = false;
 	bTranslucent = -1;
-
-
-	_LeftOffset[0] = _LeftOffset[1] = _TopOffset[0] = _TopOffset[1] = 0;
-	id.SetInvalid();
-	if (name != NULL)
-	{
-		Name = name;
-		Name.ToUpper();
-	}
-	else if (lumpnum < 0)
-	{
-		Name = FString();
-	}
-	else
-	{
-		fileSystem.GetFileShortName (Name, lumpnum);
-	}
-}
-
-FTexture::~FTexture ()
-{
-	FTexture *link = fileSystem.GetLinkedTexture(SourceLump);
-	if (link == this) fileSystem.SetLinkedTexture(SourceLump, nullptr);
-	if (areas != nullptr) delete[] areas;
-	areas = nullptr;
-
-	for (int i = 0; i < 2; i++)
-	{
-		if (Material[i] != nullptr) DeleteMaterial(Material[i]);
-		Material[i] = nullptr;
-	}
-	if (SoftwareTexture != nullptr)
-	{
-		DeleteSoftwareTexture(SoftwareTexture);
-		SoftwareTexture = nullptr;
-	}
 }
 
 //===========================================================================
@@ -175,116 +78,11 @@ FTexture::~FTexture ()
 //
 //===========================================================================
 
-FBitmap FTexture::GetBgraBitmap(const PalEntry *remap, int *ptrans)
+FBitmap FTexture::GetBgraBitmap(const PalEntry* remap, int* ptrans)
 {
 	FBitmap bmp;
 	bmp.Create(Width, Height);
 	return bmp;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-FTexture *FTexture::GetRawTexture()
-{
-	if (OffsetLess) return OffsetLess;
-	// Reject anything that cannot have been a single-patch multipatch texture in vanilla.
-	auto image = static_cast<FMultiPatchTexture *>(GetImage());
-	if (bMultiPatch != 1 || UseType != ETextureType::Wall || Scale.X != 1 || Scale.Y != 1 || bWorldPanning || image == nullptr || image->NumParts != 1 || _TopOffset[0] == 0)
-	{
-		OffsetLess = this;
-		return this;
-	}
-	// Set up a new texture that directly references the underlying patch.
-	// From here we cannot retrieve the original texture made for it, so just create a new one.
-	FImageSource *source = image->Parts[0].Image;
-
-	// Size must match for this to work as intended
-	if (source->GetWidth() != Width || source->GetHeight() != Height)
-	{
-		OffsetLess = this;
-		return this;
-	}
-
-
-	OffsetLess = new FImageTexture(source, "");
-	TexMan.AddTexture(OffsetLess);
-	return OffsetLess;
-}
-
-void FTexture::SetDisplaySize(int fitwidth, int fitheight)
-{
-	Scale.X = double(Width) / fitwidth;
-	Scale.Y =double(Height) / fitheight;
-	// compensate for roundoff errors
-	if (int(Scale.X * fitwidth) != Width) Scale.X += (1 / 65536.);
-	if (int(Scale.Y * fitheight) != Height) Scale.Y += (1 / 65536.);
-}
-
-//===========================================================================
-// 
-//	Gets the average color of a texture for use as a sky cap color
-//
-//===========================================================================
-
-PalEntry FTexture::averageColor(const uint32_t *data, int size, int maxout)
-{
-	int				i;
-	unsigned int	r, g, b;
-
-	// First clear them.
-	r = g = b = 0;
-	if (size == 0)
-	{
-		return PalEntry(255, 255, 255);
-	}
-	for (i = 0; i < size; i++)
-	{
-		b += BPART(data[i]);
-		g += GPART(data[i]);
-		r += RPART(data[i]);
-	}
-
-	r = r / size;
-	g = g / size;
-	b = b / size;
-
-	int maxv = MAX(MAX(r, g), b);
-
-	if (maxv && maxout)
-	{
-		r = ::Scale(r, maxout, maxv);
-		g = ::Scale(g, maxout, maxv);
-		b = ::Scale(b, maxout, maxv);
-	}
-	return PalEntry(255, r, g, b);
-}
-
-PalEntry FTexture::GetSkyCapColor(bool bottom)
-{
-	if (!bSWSkyColorDone)
-	{
-		bSWSkyColorDone = true;
-
-		FBitmap bitmap = GetBgraBitmap(nullptr);
-		int w = bitmap.GetWidth();
-		int h = bitmap.GetHeight();
-
-		const uint32_t *buffer = (const uint32_t *)bitmap.GetPixels();
-		if (buffer)
-		{
-			CeilingSkyColor = averageColor((uint32_t *)buffer, w * MIN(30, h), 0);
-			if (h>30)
-			{
-				FloorSkyColor = averageColor(((uint32_t *)buffer) + (h - 30)*w, w * 30, 0);
-			}
-			else FloorSkyColor = CeilingSkyColor;
-		}
-	}
-	return bottom ? FloorSkyColor : CeilingSkyColor;
 }
 
 //====================================================================
@@ -300,141 +98,17 @@ int FTexture::CheckRealHeight()
 {
 	auto pixels = Get8BitPixels(false);
 	
-	for(int h = GetTexelHeight()-1; h>= 0; h--)
+	for(int h = GetHeight()-1; h>= 0; h--)
 	{
-		for(int w = 0; w < GetTexelWidth(); w++)
+		for(int w = 0; w < GetWidth(); w++)
 		{
-			if (pixels[h + w * GetTexelHeight()] != 0)
+			if (pixels[h + w * GetHeight()] != 0)
 			{
-				// Scale maxy before returning it
-				h = int((h * 2) / Scale.Y);
-				h = (h >> 1) + (h & 1);
 				return h;
 			}
 		}
 	}
 	return 0;
-}
-
-//==========================================================================
-//
-// Search auto paths for extra material textures
-//
-//==========================================================================
-
-void FTexture::AddAutoMaterials()
-{
-	struct AutoTextureSearchPath
-	{
-		const char *path;
-		FTexture *FTexture::*pointer;
-	};
-
-	static AutoTextureSearchPath autosearchpaths[] =
-	{
-		{ "brightmaps/", &FTexture::Brightmap }, // For backwards compatibility, only for short names
-	{ "materials/brightmaps/", &FTexture::Brightmap },
-	{ "materials/normalmaps/", &FTexture::Normal },
-	{ "materials/specular/", &FTexture::Specular },
-	{ "materials/metallic/", &FTexture::Metallic },
-	{ "materials/roughness/", &FTexture::Roughness },
-	{ "materials/ao/", &FTexture::AmbientOcclusion }
-	};
-
-
-	int startindex = bFullNameTexture ? 1 : 0;
-	FString searchname = Name;
-
-	if (bFullNameTexture)
-	{
-		auto dot = searchname.LastIndexOf('.');
-		auto slash = searchname.LastIndexOf('/');
-		if (dot > slash) searchname.Truncate(dot);
-	}
-
-	for (size_t i = 0; i < countof(autosearchpaths); i++)
-	{
-		auto &layer = autosearchpaths[i];
-		if (this->*(layer.pointer) == nullptr)	// only if no explicit assignment had been done.
-		{
-			FStringf lookup("%s%s%s", layer.path, bFullNameTexture ? "" : "auto/", searchname.GetChars());
-			auto lump = fileSystem.CheckNumForFullName(lookup, false, ns_global, true);
-			if (lump != -1)
-			{
-				auto bmtex = TexMan.FindTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
-				if (bmtex != nullptr)
-				{
-					bmtex->bMasked = false;
-					this->*(layer.pointer) = bmtex;
-				}
-			}
-		}
-	}
-}
-
-//===========================================================================
-// 
-// Checks if the texture has a default brightmap and creates it if so
-//
-//===========================================================================
-void FTexture::CreateDefaultBrightmap()
-{
-	if (!bBrightmapChecked)
-	{
-		// Check for brightmaps
-		if (GetImage() && GetImage()->UseGamePalette() && GPalette.HasGlobalBrightmap &&
-			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
-			Brightmap == NULL && bWarped == 0)
-		{
-			// May have one - let's check when we use this texture
-			auto texbuf = Get8BitPixels(false);
-			const int white = ColorMatcher.Pick(255, 255, 255);
-
-			int size = GetTexelWidth() * GetTexelHeight();
-			for (int i = 0; i<size; i++)
-			{
-				if (GPalette.GlobalBrightmap.Remap[texbuf[i]] == white)
-				{
-					// Create a brightmap
-					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", Name.GetChars());
-					Brightmap = CreateBrightmapTexture(static_cast<FImageTexture*>(this)->GetImage());
-					bBrightmapChecked = true;
-					TexMan.AddTexture(Brightmap);
-					return;
-				}
-			}
-			// No bright pixels found
-			DPrintf(DMSG_SPAMMY, "No bright pixels found in texture '%s'\n", Name.GetChars());
-			bBrightmapChecked = true;
-		}
-		else
-		{
-			// does not have one so set the flag to 'done'
-			bBrightmapChecked = true;
-		}
-	}
-}
-
-
-//==========================================================================
-//
-// Calculates glow color for a texture
-//
-//==========================================================================
-
-void FTexture::GetGlowColor(float *data)
-{
-	if (bGlowing && GlowColor == 0)
-	{
-		auto buffer = GetBgraBitmap(nullptr);
-		GlowColor = averageColor((uint32_t*)buffer.GetPixels(), buffer.GetWidth() * buffer.GetHeight(), 153);
-
-		// Black glow equals nothing so switch glowing off
-		if (GlowColor == 0) bGlowing = false;
-	}
-	data[0] = GlowColor.r / 255.0f;
-	data[1] = GlowColor.g / 255.0f;
-	data[2] = GlowColor.b / 255.0f;
 }
 
 //===========================================================================
@@ -444,9 +118,9 @@ void FTexture::GetGlowColor(float *data)
 //
 //===========================================================================
 
-bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
+bool FTexture::FindHoles(const unsigned char* buffer, int w, int h)
 {
-	const unsigned char * li;
+	const unsigned char* li;
 	int y, x;
 	int startdraw, lendraw;
 	int gaps[5][2];
@@ -455,19 +129,18 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 
 	// already done!
 	if (areacount) return false;
-	if (UseType == ETextureType::Flat) return false;	// flats don't have transparent parts
 	areacount = -1;	//whatever happens next, it shouldn't be done twice!
 
-							// large textures are excluded for performance reasons
-	if (h>512) return false;
+							// large textures and non-images are excluded for performance reasons
+	if (h>512 || !GetImage()) return false;
 
 	startdraw = -1;
 	lendraw = 0;
-	for (y = 0; y<h; y++)
+	for (y = 0; y < h; y++)
 	{
 		li = buffer + w * y * 4 + 3;
 
-		for (x = 0; x<w; x++, li += 4)
+		for (x = 0; x < w; x++, li += 4)
 		{
 			if (*li != 0) break;
 		}
@@ -510,7 +183,7 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 
 	if (gapc > 0)
 	{
-		FloatRect * rcs = new FloatRect[gapc];
+		FloatRect* rcs = (FloatRect*)ImageArena.Alloc(gapc * sizeof(FloatRect));	// allocate this on the image arena
 
 		for (x = 0; x < gapc; x++)
 		{
@@ -533,15 +206,15 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 //
 //----------------------------------------------------------------------------
 
-void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
+void FTexture::CheckTrans(unsigned char* buffer, int size, int trans)
 {
 	if (bTranslucent == -1)
 	{
 		bTranslucent = trans;
 		if (trans == -1)
 		{
-			uint32_t * dwbuf = (uint32_t*)buffer;
-			for (int i = 0; i<size; i++)
+			uint32_t* dwbuf = (uint32_t*)buffer;
+			for (int i = 0; i < size; i++)
 			{
 				uint32_t alpha = dwbuf[i] >> 24;
 
@@ -573,13 +246,13 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 
 #define CHKPIX(ofs) (l1[(ofs)*4+MSB]==255 ? (( ((uint32_t*)l1)[0] = ((uint32_t*)l1)[ofs]&SOME_MASK), trans=true ) : false)
 
-bool FTexture::SmoothEdges(unsigned char * buffer, int w, int h)
+bool FTexture::SmoothEdges(unsigned char* buffer, int w, int h)
 {
 	int x, y;
 	bool trans = buffer[MSB] == 0; // If I set this to false here the code won't detect textures 
 								   // that only contain transparent pixels.
 	bool semitrans = false;
-	unsigned char * l1;
+	unsigned char* l1;
 
 	if (h <= 1 || w <= 1) return false;  // makes (a) no sense and (b) doesn't work with this code!
 
@@ -587,42 +260,42 @@ bool FTexture::SmoothEdges(unsigned char * buffer, int w, int h)
 
 
 	if (l1[MSB] == 0 && !CHKPIX(1)) CHKPIX(w);
-	else if (l1[MSB]<255) semitrans = true;
+	else if (l1[MSB] < 255) semitrans = true;
 	l1 += 4;
-	for (x = 1; x<w - 1; x++, l1 += 4)
+	for (x = 1; x < w - 1; x++, l1 += 4)
 	{
 		if (l1[MSB] == 0 && !CHKPIX(-1) && !CHKPIX(1)) CHKPIX(w);
-		else if (l1[MSB]<255) semitrans = true;
+		else if (l1[MSB] < 255) semitrans = true;
 	}
 	if (l1[MSB] == 0 && !CHKPIX(-1)) CHKPIX(w);
-	else if (l1[MSB]<255) semitrans = true;
+	else if (l1[MSB] < 255) semitrans = true;
 	l1 += 4;
 
-	for (y = 1; y<h - 1; y++)
+	for (y = 1; y < h - 1; y++)
 	{
 		if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(1)) CHKPIX(w);
-		else if (l1[MSB]<255) semitrans = true;
+		else if (l1[MSB] < 255) semitrans = true;
 		l1 += 4;
-		for (x = 1; x<w - 1; x++, l1 += 4)
+		for (x = 1; x < w - 1; x++, l1 += 4)
 		{
 			if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(-1) && !CHKPIX(1) && !CHKPIX(-w - 1) && !CHKPIX(-w + 1) && !CHKPIX(w - 1) && !CHKPIX(w + 1)) CHKPIX(w);
-			else if (l1[MSB]<255) semitrans = true;
+			else if (l1[MSB] < 255) semitrans = true;
 		}
 		if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(-1)) CHKPIX(w);
-		else if (l1[MSB]<255) semitrans = true;
+		else if (l1[MSB] < 255) semitrans = true;
 		l1 += 4;
 	}
 
 	if (l1[MSB] == 0 && !CHKPIX(-w)) CHKPIX(1);
-	else if (l1[MSB]<255) semitrans = true;
+	else if (l1[MSB] < 255) semitrans = true;
 	l1 += 4;
-	for (x = 1; x<w - 1; x++, l1 += 4)
+	for (x = 1; x < w - 1; x++, l1 += 4)
 	{
 		if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(-1)) CHKPIX(1);
-		else if (l1[MSB]<255) semitrans = true;
+		else if (l1[MSB] < 255) semitrans = true;
 	}
 	if (l1[MSB] == 0 && !CHKPIX(-w)) CHKPIX(-1);
-	else if (l1[MSB]<255) semitrans = true;
+	else if (l1[MSB] < 255) semitrans = true;
 
 	return trans || semitrans;
 }
@@ -633,12 +306,12 @@ bool FTexture::SmoothEdges(unsigned char * buffer, int w, int h)
 //
 //===========================================================================
 
-bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
+bool FTexture::ProcessData(unsigned char* buffer, int w, int h, bool ispatch)
 {
-	if (bMasked)
+	if (Masked)
 	{
-		bMasked = SmoothEdges(buffer, w, h);
-		if (bMasked && !ispatch) FindHoles(buffer, w, h);
+		Masked = SmoothEdges(buffer, w, h);
+		if (Masked && !ispatch) FindHoles(buffer, w, h);
 	}
 	return true;
 }
@@ -652,65 +325,82 @@ bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 {
 	FTextureBuffer result;
-
-	unsigned char * buffer = nullptr;
-	int W, H;
-	int isTransparent = -1;
-	bool checkonly = !!(flags & CTF_CheckOnly);
-
-	int exx = !!(flags & CTF_Expand);
-
-	W = GetTexelWidth() + 2 * exx;
-	H = GetTexelHeight() + 2 * exx;
-
-	if (!checkonly)
+	if (flags & CTF_Indexed)
 	{
-		buffer = new unsigned char[W*(H + 1) * 4];
-		memset(buffer, 0, W * (H + 1) * 4);
+		// Indexed textures will never be translated and never be scaled.
+		int w = GetWidth(), h = GetHeight();
 
-		auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
-		if (remap) translation = remap->Index;
-		FBitmap bmp(buffer, W * 4, W, H);
+		auto store = Get8BitPixels(false);
+		const uint8_t* p = store.Data();
 
-		int trans;
-		auto Pixels = GetBgraBitmap(remap? remap->Palette : nullptr, &trans);
-		bmp.Blit(exx, exx, Pixels);
+		result.mBuffer = new uint8_t[w * h];
+		result.mWidth = w;
+		result.mHeight = h;
+		result.mContentId = 0;
+		ImageHelpers::FlipNonSquareBlock(result.mBuffer, p, h, w, h);
+	}
+	else
+	{
+		unsigned char* buffer = nullptr;
+		int W, H;
+		int isTransparent = -1;
+		bool checkonly = !!(flags & CTF_CheckOnly);
 
-		if (remap == nullptr)
+		int exx = !!(flags & CTF_Expand);
+
+		W = GetWidth() + 2 * exx;
+		H = GetHeight() + 2 * exx;
+
+		if (!checkonly)
 		{
-			CheckTrans(buffer, W*H, trans);
-			isTransparent = bTranslucent;
+			buffer = new unsigned char[W * (H + 1) * 4];
+			memset(buffer, 0, W * (H + 1) * 4);
+
+			auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
+			if (remap) translation = remap->Index;
+			FBitmap bmp(buffer, W * 4, W, H);
+
+			int trans;
+			auto Pixels = GetBgraBitmap(remap ? remap->Palette : nullptr, &trans);
+			bmp.Blit(exx, exx, Pixels);
+
+			if (remap == nullptr)
+			{
+				CheckTrans(buffer, W * H, trans);
+				isTransparent = bTranslucent;
+			}
+			else
+			{
+				isTransparent = 0;
+				// A translated image is not conclusive for setting the texture's transparency info.
+			}
 		}
-		else
+
+		if (GetImage())
 		{
-			isTransparent = 0;
-			// A translated image is not conclusive for setting the texture's transparency info.
+			FContentIdBuilder builder;
+			builder.id = 0;
+			builder.imageID = GetImage()->GetId();
+			builder.translation = MAX(0, translation);
+			builder.expand = exx;
+			result.mContentId = builder.id;
+		}
+		else result.mContentId = 0;	// for non-image backed textures this has no meaning so leave it at 0.
+
+		result.mBuffer = buffer;
+		result.mWidth = W;
+		result.mHeight = H;
+
+		// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
+		if (GetImage() && flags & CTF_ProcessData)
+		{
+			if (flags & CTF_Upscale) CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
+
+			if (!checkonly) ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
 		}
 	}
-
-	if (GetImage())
-	{
-		FContentIdBuilder builder;
-		builder.id = 0;
-		builder.imageID = GetImage()->GetId();
-		builder.translation = MAX(0, translation);
-		builder.expand = exx;
-		result.mContentId = builder.id;
-	}
-	else result.mContentId = 0;	// for non-image backed textures this has no meaning so leave it at 0.
-
-	result.mBuffer = buffer;
-	result.mWidth = W;
-	result.mHeight = H;
-
-	// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
-	if (GetImage() && flags & CTF_ProcessData) 
-	{
-		CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
-		if (!checkonly) ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
-	}
-
 	return result;
+
 }
 
 //===========================================================================
@@ -721,15 +411,8 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 
 bool FTexture::DetermineTranslucency()
 {
-	if (!bHasCanvas)
-	{
 		// This will calculate all we need, so just discard the result.
 		CreateTexBuffer(0);
-	}
-	else
-	{
-		bTranslucent = 0;
-	}
 	return !!bTranslucent;
 }
 
@@ -747,101 +430,114 @@ TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 }
 
 //===========================================================================
-//
-// Coordinate helper.
-// The only reason this is even needed is that many years ago someone
-// was convinced that having per-texel panning on walls was a good idea.
-// If it wasn't for this relatively useless feature the entire positioning
-// code for wall textures could be a lot simpler.
-//
-//===========================================================================
-
-//===========================================================================
-//
 // 
+//  Finds empty space around the texture. 
+//  Used for sprites that got placed into a huge empty frame.
 //
 //===========================================================================
 
-float FTexCoordInfo::RowOffset(float rowoffset) const
+bool FTexture::TrimBorders(uint16_t* rect)
 {
-	float scale = fabs(mScale.Y);
-	if (scale == 1.f || mWorldPanning) return rowoffset;
-	else return rowoffset / scale;
+
+	auto texbuffer = CreateTexBuffer(0);
+	int w = texbuffer.mWidth;
+	int h = texbuffer.mHeight;
+	auto Buffer = texbuffer.mBuffer;
+
+	if (texbuffer.mBuffer == nullptr)
+	{
+		return false;
+	}
+	if (w != Width || h != Height)
+	{
+		// external Hires replacements cannot be trimmed.
+		return false;
+	}
+
+	int size = w * h;
+	if (size == 1)
+	{
+		// nothing to be done here.
+		rect[0] = 0;
+		rect[1] = 0;
+		rect[2] = 1;
+		rect[3] = 1;
+		return true;
+	}
+	int first, last;
+
+	for (first = 0; first < size; first++)
+	{
+		if (Buffer[first * 4 + 3] != 0) break;
+	}
+	if (first >= size)
+	{
+		// completely empty
+		rect[0] = 0;
+		rect[1] = 0;
+		rect[2] = 1;
+		rect[3] = 1;
+		return true;
+	}
+
+	for (last = size - 1; last >= first; last--)
+	{
+		if (Buffer[last * 4 + 3] != 0) break;
+	}
+
+	rect[1] = first / w;
+	rect[3] = 1 + last / w - rect[1];
+
+	rect[0] = 0;
+	rect[2] = w;
+
+	unsigned char* bufferoff = Buffer + (rect[1] * w * 4);
+	h = rect[3];
+
+	for (int x = 0; x < w; x++)
+	{
+		for (int y = 0; y < h; y++)
+		{
+			if (bufferoff[(x + y * w) * 4 + 3] != 0) goto outl;
+		}
+		rect[0]++;
+	}
+outl:
+	rect[2] -= rect[0];
+
+	for (int x = w - 1; rect[2] > 1; x--)
+	{
+		for (int y = 0; y < h; y++)
+		{
+			if (bufferoff[(x + y * w) * 4 + 3] != 0)
+			{
+				return true;
+			}
+		}
+		rect[2]--;
+	}
+	return true;
 }
 
 //===========================================================================
 //
-//
+// Create a hardware texture for this texture image.
 //
 //===========================================================================
 
-float FTexCoordInfo::TextureOffset(float textureoffset) const
+IHardwareTexture* FTexture::GetHardwareTexture(int translation, int scaleflags)
 {
-	float scale = fabs(mScale.X);
-	if (scale == 1.f || mWorldPanning) return textureoffset;
-	else return textureoffset / scale;
-}
-
-//===========================================================================
-//
-// Returns the size for which texture offset coordinates are used.
-//
-//===========================================================================
-
-float FTexCoordInfo::TextureAdjustWidth() const
-{
-	if (mWorldPanning)
+	//if (UseType != ETextureType::Null)
 	{
-		float tscale = fabs(mTempScale.X);
-		if (tscale == 1.f) return (float)mRenderWidth;
-		else return mWidth / fabs(tscale);
-	}
-	else return (float)mWidth;
-}
-
-
-//===========================================================================
-//
-// Retrieve texture coordinate info for per-wall scaling
-//
-//===========================================================================
-
-void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forceworldpanning)
-{
-	if (x == 1.f)
+		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, scaleflags);
+		if (hwtex == nullptr)
 	{
-		mRenderWidth = tex->GetScaledWidth();
-		mScale.X = (float)tex->Scale.X;
-		mTempScale.X = 1.f;
+			hwtex = screen->CreateHardwareTexture(4);
+			SystemTextures.AddHardwareTexture(translation, scaleflags, hwtex);
 	}
-	else
-	{
-		float scale_x = x * (float)tex->Scale.X;
-		mRenderWidth = xs_CeilToInt(tex->GetTexelWidth() / scale_x);
-		mScale.X = scale_x;
-		mTempScale.X = x;
+		return hwtex;
 	}
-
-	if (y == 1.f)
-	{
-		mRenderHeight = tex->GetScaledHeight();
-		mScale.Y = (float)tex->Scale.Y;
-		mTempScale.Y = 1.f;
-	}
-	else
-	{
-		float scale_y = y * (float)tex->Scale.Y;
-		mRenderHeight = xs_CeilToInt(tex->GetTexelHeight() / scale_y);
-		mScale.Y = scale_y;
-		mTempScale.Y = y;
-	}
-	if (tex->bHasCanvas)
-	{
-		mScale.Y = -mScale.Y;
-		mRenderHeight = -mRenderHeight;
-	}
-	mWorldPanning = tex->bWorldPanning || forceworldpanning;
-	mWidth = tex->GetTexelWidth();
+	return nullptr;
 }
 
 
@@ -856,9 +552,8 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Width = w;
 	Height = h;
 	Format = bits;
-	UseType = ETextureType::SWCanvas;
-	bNoCompress = true;
-	auto hwtex = CreateHardwareTexture();
+	//bNoCompress = true;
+	auto hwtex = screen->CreateHardwareTexture(4);
 	// todo: Initialize here.
 	SystemTextures.AddHardwareTexture(0, false, hwtex);
 }

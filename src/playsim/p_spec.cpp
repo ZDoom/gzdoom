@@ -249,7 +249,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType,
 	auto Level = line->GetLevel();
  	int lineActivation = line->activation;
 
-	if (line->flags & ML_FIRSTSIDEONLY && side == 1)
+	if ((line->flags & ML_FIRSTSIDEONLY && side == 1) || line->special == 0)
 	{
 		return false;
 	}
@@ -625,7 +625,7 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 	auto Level = player->mo->Level;
 
 	if (Terrains[floorType].DamageAmount &&
-		!(Level->time & Terrains[floorType].DamageTimeMask))
+		!(Level->time % (Terrains[floorType].DamageTimeMask+1)))
 	{
 		AActor *ironfeet = NULL;
 

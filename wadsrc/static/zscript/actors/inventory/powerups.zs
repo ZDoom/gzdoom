@@ -356,7 +356,11 @@ class PowerInvulnerable : Powerup
 		{
 			return;
 		}
-
+		Owner.bInvulnerable = true;
+		if (Mode == 'Reflective')
+		{
+			Owner.bReflective = true;
+		}
 		if (Mode == 'Ghost')
 		{
 			if (!Owner.bShadow)
@@ -565,7 +569,7 @@ class PowerInvisibility : Powerup
 		Super.DoEffect();
 		// Due to potential interference with other PowerInvisibility items
 		// the effect has to be refreshed each tic.
-		double ts = (Strength / 100) * (special1 + 1);
+		double ts = (Strength / 100.) * (special1 + 1);
 		
 		if (ts > 1.) ts = 1.;
 		let newAlpha = clamp((1. - ts), 0., 1.);

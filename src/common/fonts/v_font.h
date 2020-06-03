@@ -38,8 +38,7 @@
 #include "palentry.h"
 #include "name.h"
 
-class DCanvas;
-class FTexture;
+class FGameTexture;
 struct FRemapTable;
 
 enum EColorRange : int
@@ -77,10 +76,11 @@ enum EColorRange : int
 
 extern int NumTextColors;
 
-using GlyphSet = TMap<int, FTexture*>;
+using GlyphSet = TMap<int, FGameTexture*>;
 
 class FFont
 {
+	friend void V_LoadTranslations();
 public:
 
 	enum EFontType
@@ -97,7 +97,7 @@ public:
 	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false, bool doomtemplate = false, GlyphSet *baseGlpyphs = nullptr);
 	virtual ~FFont ();
 
-	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
+	virtual FGameTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
 	virtual int GetCharWidth (int code) const;
 	int GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
@@ -155,18 +155,18 @@ protected:
 	int TranslationType = 0;
 	int Displacement = 0;
 	char Cursor;
-	bool noTranslate;
+	bool noTranslate = false;
 	bool translateUntranslated;
 	bool MixedCase = false;
 	bool forceremap = false;
 	struct CharData
 	{
-		FTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
-		FTexture *OriginalPic = nullptr;	// Texture for use with CR_UNTRANSLATED or font colorization. 
+		FGameTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
+		FGameTexture *OriginalPic = nullptr;	// Texture for use with CR_UNTRANSLATED or font colorization. 
 		int XMove = INT_MIN;
 	};
 	TArray<CharData> Chars;
-	int ActiveColors;
+	int ActiveColors = -1;
 	TArray<int> Translations;
 	uint8_t PatchRemap[256];
 
@@ -192,5 +192,6 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 FFont *V_GetFont(const char *fontname, const char *fontlumpname = nullptr);
 void V_InitFontColors();
 char* CleanseString(char* str);
+void V_LoadTranslations();
 
 

@@ -196,7 +196,7 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 	gameaction = ga_newgame2;
 }
 
-void G_DeferedInitNew (FGameStartup *gs)
+void G_DeferedInitNew (FNewGameStartup *gs)
 {
 	if (gs->PlayerClass != NULL) playerclass = gs->PlayerClass;
 	d_mapname = AllEpisodes[gs->Episode].mEpisodeMap;
@@ -893,14 +893,10 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 		{
 			if (texids[i]->isValid() && langtable[i] != FStringTable::default_table)
 			{
-				FTexture *tex = TexMan.GetTexture(*texids[i]);
-				if (tex != nullptr)
+				FGameTexture *tex = TexMan.GetGameTexture(*texids[i]);
+				if (tex != nullptr && !tex->isUserContent())
 				{
-					int filenum = fileSystem.GetFileContainer(tex->GetSourceLump());
-					if (filenum >= 0 && filenum <= fileSystem.GetMaxIwadNum())
-					{
-						texids[i]->SetInvalid();
-					}
+					texids[i]->SetInvalid();
 				}
 			}
 		}
@@ -1576,6 +1572,7 @@ FLevelLocals::FLevelLocals() : Behaviors(this), tagManager(this)
 FLevelLocals::~FLevelLocals()
 {
 	if (localEventManager) delete localEventManager;
+	if (aabbTree) delete aabbTree;
 }
 
 //==========================================================================

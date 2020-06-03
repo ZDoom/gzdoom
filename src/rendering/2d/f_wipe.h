@@ -43,11 +43,11 @@ enum
 class Wiper
 {
 protected:
-	FTexture *startScreen = nullptr, *endScreen = nullptr;
+	FGameTexture *startScreen = nullptr, *endScreen = nullptr;
 public:
 	virtual ~Wiper();
 	virtual bool Run(int ticks) = 0;
-	virtual void SetTextures(FTexture *startscreen, FTexture *endscreen)
+	virtual void SetTextures(FGameTexture *startscreen, FGameTexture *endscreen)
 	{
 		startScreen = startscreen;
 		endScreen = endscreen;

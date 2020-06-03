@@ -41,6 +41,7 @@
 #define WEAPON_FUDGE_Y			0.375
 struct FTranslatedLineTarget;
 struct FState;
+class player_t;
 
 //
 // Overlay psprites are scaled shapes

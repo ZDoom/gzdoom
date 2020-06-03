@@ -38,23 +38,6 @@
 #include "i_system.h"
 #include "st_console.h"
 #include "v_text.h"
-<<<<<<< HEAD
-#include "x86.h"
-#include "cmdlib.h"
-
-void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
-{
-}
-
-
-ticcmd_t* I_BaseTiccmd()
-{
-	static ticcmd_t emptycmd;
-	return &emptycmd;
-}
-
-=======
->>>>>>> master
 
 
 double PerfToSec, PerfToMillisec;

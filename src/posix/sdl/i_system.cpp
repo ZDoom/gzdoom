@@ -30,22 +30,6 @@
 #include "version.h"
 #include "x86.h"
 
-<<<<<<< HEAD
-#include "d_main.h"
-#include "network/net.h"
-#include "g_game.h"
-#include "c_dispatch.h"
-
-#include "gameconfigfile.h"
-
-extern "C"
-{
-	double		SecondsPerCycle = 1e-8;
-	double		CyclesPerSecond = 1e8;
-}
-=======
->>>>>>> master
-
 #ifndef NO_GTK
 bool I_GtkAvailable ();
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
@@ -56,15 +40,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 
 double PerfToSec, PerfToMillisec;
 
-<<<<<<< HEAD
-void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
-{
-}
-
-void I_BeginRead(void)
-=======
 void I_SetIWADInfo()
->>>>>>> master
 {
 }
 

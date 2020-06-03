@@ -1641,6 +1641,7 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 	lightlevel = savelight;
 	Colormap = savecolor;
 	flags &= ~HWF_CLAMPY;
+	RenderStyle = STYLE_Normal;
 }
 
 

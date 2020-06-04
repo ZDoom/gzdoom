@@ -1010,6 +1010,12 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '775CBC35C0A58326FE87AAD638FF9E2A': // Strife1.wad map29
+			case 'A75099ACB622C7013EE737480FCB0D67': // SVE.wad map29
+				// disable teleporter that would always teleport into a blocking position.
+				ClearLineSpecial(271);
+				break;
+
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
 			{
 				// Lower floor a bit so secret switch becomes accessible

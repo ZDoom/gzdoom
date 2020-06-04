@@ -261,7 +261,7 @@ else()
 		endif ( NOT HAVE_FTS )
 		option( NO_SDL_JOYSTICK "Disable SDL joystick support" OFF )
 		if ( NO_SDL_JOYSTICK )
-            add_definitions( -DNO_SDL_JOYSTICK=1 )
+			add_definitions( -DNO_SDL_JOYSTICK=1 )
 		endif ( NO_SDL_JOYSTICK )
 	endif ( UNIX )
 

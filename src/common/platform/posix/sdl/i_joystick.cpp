@@ -300,11 +300,10 @@ static SDLInputJoystickManager *JoystickManager;
 
 void I_StartupJoysticks()
 {
-#ifdef NO_SDL_JOYSTICK
-    return;
-#endif
+#ifndef NO_SDL_JOYSTICK
 	if(SDL_InitSubSystem(SDL_INIT_JOYSTICK) >= 0)
 		JoystickManager = new SDLInputJoystickManager();
+#endif
 }
 void I_ShutdownInput()
 {
@@ -319,7 +318,8 @@ void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)
 {
 	sticks.Clear();
 
-	if (JoystickManager) JoystickManager->GetDevices(sticks);
+	if (JoystickManager)
+		JoystickManager->GetDevices(sticks);
 }
 
 void I_GetAxes(float axes[NUM_JOYAXIS])

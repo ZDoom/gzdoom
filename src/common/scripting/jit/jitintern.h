@@ -76,7 +76,7 @@ private:
 
 	IRFunctionType* GetFuncSignature();
 
-	template<typename T> IRType* GetIRType() { return ircontext->getInt8PtrTy(); }
+	template<typename T> IRType* GetIRType() { static_assert(std::is_pointer<T>::value, "Unsupported type"); return ircontext->getInt8PtrTy(); }
 	template<> IRType* GetIRType<void>() { return ircontext->getVoidTy(); }
 	template<> IRType* GetIRType<char>() { return ircontext->getInt8Ty(); }
 	template<> IRType* GetIRType<unsigned char>() { return ircontext->getInt8Ty(); }

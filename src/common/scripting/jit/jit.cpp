@@ -11,8 +11,8 @@ JITRuntime* GetJITRuntime();
 
 JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 {
-#if 0
-	if (strcmp(sfunc->PrintableName.GetChars(), "StatusScreen.drawNum") != 0)
+#if 1
+	if (strcmp(sfunc->PrintableName.GetChars(), "ListMenuItemValueText.Init") != 0)
 		return nullptr;
 #endif
 

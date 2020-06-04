@@ -1079,7 +1079,7 @@ bool FLevelLocals::CollectConnectedGroups(int startgroup, const DVector3 &positi
 
 			FBoundingBox box(position.X + disp.pos.X, position.Y + disp.pos.Y, checkradius);
 
-			if (!box.inRange(ld) || box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
+			if (!inRange(box, ld) || BoxOnLineSide(box, linkedPortals[i]->mOrigin) != -1) continue;	// not touched
 			foundPortals.Push(linkedPortals[i]);
 		}
 		bool foundone = true;
@@ -1138,7 +1138,7 @@ bool FLevelLocals::CollectConnectedGroups(int startgroup, const DVector3 &positi
 				line_t *ld;
 				while ((ld = it.Next()))
 				{
-					if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+					if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 						continue;
 
 					if (!(thisgroup & FPortalGroupArray::LOWER))

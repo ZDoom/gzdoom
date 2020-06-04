@@ -153,15 +153,13 @@ void AddTiles(const FString& pathprefix, const void* tiles, FRemapTable *remap)
 		int yoffs = (int8_t)((anm >> 16) & 255) + height / 2;
 		int size = width * height;
 		FTextureID texnum;
-		FTexture* tex;
 
 		if (width <= 0 || height <= 0) continue;
 
 		FStringf name("%sBTIL%04d", pathprefix.GetChars(), i);
-		tex = new FImageTexture(new FBuildTexture(pathprefix, i, tiledata, remap, width, height, xoffs, yoffs), name);
-		texnum = TexMan.AddTexture(tex);
+		auto tex = MakeGameTexture(new FImageTexture(new FBuildTexture(pathprefix, i, tiledata, remap, width, height, xoffs, yoffs)), name, ETextureType::Override);
+		texnum = TexMan.AddGameTexture(tex);
 		tiledata += size;
-		tex->SetUseType(ETextureType::Override);
 
 
 		// reactivate only if the texture counter works here.

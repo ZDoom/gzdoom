@@ -35,6 +35,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "cmdlib.h"
+#include "v_draw.h"
 #include "g_level.h"
 #include "r_utility.h"
 #include "d_player.h"

@@ -242,7 +242,7 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector
 
 	while ((ld = it.Next()))
 	{
-		if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+		if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 			continue;
 
 		// This line crosses through the object.
@@ -398,7 +398,7 @@ void AActor::UpdateRenderSectorList()
 				for (auto &p : Level->linePortals)
 				{
 					if (p.mType == PORTT_VISUAL) continue;
-					if (bb.inRange(p.mOrigin) && bb.BoxOnLineSide(p.mOrigin))
+					if (inRange(bb, p.mOrigin) && BoxOnLineSide(bb, p.mOrigin))
 					{
 						touching_lineportallist = P_AddPortalnode(&p, this, touching_lineportallist);
 					}

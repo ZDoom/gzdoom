@@ -171,7 +171,7 @@ public:
 
 	static void ListVars (const char *filter, bool plain);
 	
-	const char *GetDescription() const { return Description; };
+	const FString &GetDescription() const { return Description; };
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;

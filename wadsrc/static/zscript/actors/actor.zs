@@ -759,6 +759,7 @@ class Actor : Thinker native
 	native void GiveSecret(bool printmsg = true, bool playsound = true);
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
+	native void DoMissileDamage(Actor target);
 
 	//==========================================================================
 	//
@@ -1156,7 +1157,7 @@ class Actor : Thinker native
 	native bool A_SetVisibleRotation(double anglestart = 0, double angleend = 0, double pitchstart = 0, double pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetTranslation(name transname);
 	native bool A_SetSize(double newradius = -1, double newheight = -1, bool testpos = false);
-	native void A_SprayDecal(String name, double dist = 172);
+	native void A_SprayDecal(String name, double dist = 172, vector3 offset = (0, 0, 0), vector3 direction = (0, 0, 0) );
 	native void A_SetMugshotState(String name);
 	native void CopyBloodColor(Actor other);
 

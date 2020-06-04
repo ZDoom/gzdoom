@@ -42,6 +42,7 @@
 
 class player_t;
 struct FRemapTable;
+class FGameTexture;
 
 enum EHudState
 {
@@ -233,7 +234,7 @@ struct FMugShotFrame
 
 	FMugShotFrame();
 	~FMugShotFrame();
-	FTexture *GetTexture(const char *default_face, const char *skin_face, int random, int level=0,
+	FGameTexture *GetTexture(const char *default_face, const char *skin_face, int random, int level=0,
 		int direction=0, bool usesLevels=false, bool health2=false, bool healthspecial=false,
 		bool directional=false);
 };
@@ -256,7 +257,7 @@ struct FMugShotState
 	void Tick();
 	void Reset();
 	FMugShotFrame &GetCurrentFrame() { return Frames[Position]; }
-	FTexture *GetCurrentFrameTexture(const char *default_face, const char *skin_face, int level=0, int direction=0)
+	FGameTexture *GetCurrentFrameTexture(const char *default_face, const char *skin_face, int level=0, int direction=0)
 	{
 		return GetCurrentFrame().GetTexture(default_face, skin_face, Random, level, direction, bUsesLevels, bHealth2, bHealthSpecial, bDirectional);
 	}
@@ -287,7 +288,7 @@ class FMugShot
 		void Tick(player_t *player);
 		bool SetState(const char *state_name, bool wait_till_done=false, bool reset=false);
 		int UpdateState(player_t *player, StateFlags stateflags=STANDARD);
-		FTexture *GetFace(player_t *player, const char *default_face, int accuracy, StateFlags stateflags=STANDARD);
+		FGameTexture *GetFace(player_t *player, const char *default_face, int accuracy, StateFlags stateflags=STANDARD);
 
 	private:
 		FMugShotState *CurrentState;
@@ -308,7 +309,7 @@ int FindMugShotStateIndex(FName state);
 
 // Base Status Bar ----------------------------------------------------------
 
-class FTexture;
+class FGameTexture;
 
 enum
 {
@@ -525,7 +526,7 @@ DBaseStatusBar *CreateCustomStatusBar(int script=0);
 void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
 void ST_CreateStatusBar(bool bTitleLevel);
-extern FTexture *CrosshairImage;
+extern FGameTexture *CrosshairImage;
 
 int GetInventoryIcon(AActor *item, uint32_t flags, int *applyscale = nullptr);
 

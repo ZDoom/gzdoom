@@ -31,20 +31,20 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "g_levellocals.h"
-#include "r_data/models/models.h"
+#include "models.h"
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
 #include "texturemanager.h"
 
-#include "hwrenderer/models/hw_models.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hw_models.h"
+#include "hw_dynlightdata.h"
 #include "hw_material.h"
-#include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_lighting.h"
+#include "hw_cvars.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "flatvertices.h"
+#include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
 
 EXTERN_CVAR(Float, transsouls)
@@ -89,14 +89,14 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 		state.AlphaFunc(Alpha_GEqual, 0);
 
 		FHWModelRenderer renderer(this, state, huds->lightindex);
-		renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
+		RenderHUDModel(&renderer, huds->weapon, huds->mx, huds->my);
 		state.SetVertexBuffer(screen->mVertexData);
 	}
 	else
 	{
-		float thresh = (huds->tex->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
+		float thresh = (huds->texture->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
 		state.AlphaFunc(Alpha_GEqual, thresh);
-		state.SetMaterial(huds->tex, CLAMP_XY_NOMIP, (huds->weapon->Flags & PSPF_PLAYERTRANSLATED) ? huds->owner->Translation : 0, huds->OverrideShader);
+		state.SetMaterial(huds->texture, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, (huds->weapon->Flags & PSPF_PLAYERTRANSLATED) ? huds->owner->Translation : 0, huds->OverrideShader);
 		state.Draw(DT_TriangleStrip, huds->mx, 4);
 	}
 
@@ -141,7 +141,7 @@ static bool isBright(DPSprite *psp)
 		FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., nullptr);
 		if (lump.isValid())
 		{
-			FTexture * tex = TexMan.GetTexture(lump, true);
+			auto tex = TexMan.GetGameTexture(lump, true);
 			if (tex) disablefullbright = tex->isFullbrightDisabled();
 		}
 		return psp->GetState()->GetFullbright() && !disablefullbright;
@@ -417,14 +417,14 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., &mirror);
 	if (!lump.isValid()) return false;
 
-	FMaterial * tex = FMaterial::ValidateTexture(lump, true, false);
-	if (!tex) return false;
+	auto tex = TexMan.GetGameTexture(lump, false);
+	if (!tex || !tex->isValid()) return false;
+	auto& spi = tex->GetSpritePositioning(1);
 
 	float vw = (float)viewwidth;
 	float vh = (float)viewheight;
 
-	FloatRect r;
-	tex->GetSpriteRect(&r);
+	FloatRect r = spi.GetSpriteRect();
 
 	// calculate edges of the shape
 	scalex = (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * vw / 320;
@@ -452,17 +452,17 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 
 	if (!(mirror) != !(psp->Flags & (PSPF_FLIP)))
 	{
-		u2 = tex->GetSpriteUL();
-		v1 = tex->GetSpriteVT();
-		u1 = tex->GetSpriteUR();
-		v2 = tex->GetSpriteVB();
+		u2 = spi.GetSpriteUL();
+		v1 = spi.GetSpriteVT();
+		u1 = spi.GetSpriteUR();
+		v2 = spi.GetSpriteVB();
 	}
 	else
 	{
-		u1 = tex->GetSpriteUL();
-		v1 = tex->GetSpriteVT();
-		u2 = tex->GetSpriteUR();
-		v2 = tex->GetSpriteVB();
+		u1 = spi.GetSpriteUL();
+		v1 = spi.GetSpriteVT();
+		u2 = spi.GetSpriteUR();
+		v2 = spi.GetSpriteVB();
 	}
 
 	auto verts = screen->mVertexData->AllocVertices(4);
@@ -473,7 +473,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	verts.first[2].Set(x2, y1, 0, u2, v1);
 	verts.first[3].Set(x2, y2, 0, u2, v2);
 
-	this->tex = tex;
+	texture = tex;
 	return true;
 }
 

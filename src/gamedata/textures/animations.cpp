@@ -245,8 +245,8 @@ void FTextureAnimator::InitAnimated (void)
 
 				// [RH] Bit 1 set means allow decals on walls with this texture
 				bool nodecals = !(*anim_p & 2);
-				TexMan.Texture(pic2)->SetNoDecals(nodecals);
-				TexMan.Texture(pic1)->SetNoDecals(nodecals);
+				TexMan.GameTexture(pic2)->SetNoDecals(nodecals);
+				TexMan.GameTexture(pic1)->SetNoDecals(nodecals);
 			}
 			else
 			{
@@ -255,8 +255,8 @@ void FTextureAnimator::InitAnimated (void)
 					continue;
 			}
 
-			FTexture *tex1 = TexMan.Texture(pic1);
-			FTexture *tex2 = TexMan.Texture(pic2);
+			auto tex1 = TexMan.GameTexture(pic1);
+			auto tex2 = TexMan.GameTexture(pic2);
 
 			animspeed = (anim_p[19] << 0)  | (anim_p[20] << 8) |
 						(anim_p[21] << 16) | (anim_p[22] << 24);
@@ -355,7 +355,7 @@ void FTextureAnimator::InitAnimDefs ()
 				sc.MustGetNumber();
 				if (picnum.Exists())
 				{
-					TexMan.Texture(picnum)->SetSkyOffset(sc.Number);
+					TexMan.GameTexture(picnum)->SetSkyOffset(sc.Number);
 				}
 			}
 			else
@@ -408,7 +408,7 @@ void FTextureAnimator::ParseAnim (FScanner &sc, ETextureType usetype)
 	// no decals on animating textures, by default
 	if (picnum.isValid())
 	{
-		TexMan.Texture(picnum)->SetNoDecals(true);
+		TexMan.GameTexture(picnum)->SetNoDecals(true);
 	}
 
 	while (sc.GetString ())
@@ -417,7 +417,7 @@ void FTextureAnimator::ParseAnim (FScanner &sc, ETextureType usetype)
 		{
 			if (picnum.isValid())
 			{
-				TexMan.Texture(picnum)->SetNoDecals(false);
+				TexMan.GameTexture(picnum)->SetNoDecals(false);
 			}
 			continue;
 		}
@@ -439,7 +439,7 @@ void FTextureAnimator::ParseAnim (FScanner &sc, ETextureType usetype)
 		}
 		else if (sc.Compare ("range"))
 		{
-			if (picnum.Exists() && TexMan.Texture(picnum)->GetName().IsEmpty())
+			if (picnum.Exists() && TexMan.GameTexture(picnum)->GetName().IsEmpty())
 			{
 				// long texture name: We cannot do ranged anims on these because they have no defined order
 				sc.ScriptError ("You cannot use \"range\" for long texture names.");
@@ -513,7 +513,7 @@ FAnimDef *FTextureAnimator::ParseRangeAnim (FScanner &sc, FTextureID picnum, ETe
 		return NULL;		// Animation is only one frame or does not exist
 	}
 
-	if (TexMan.Texture(framenum)->GetName().IsEmpty())
+	if (TexMan.GameTexture(framenum)->GetName().IsEmpty())
 	{
 		// long texture name: We cannot do ranged anims on these because they have no defined order
 		sc.ScriptError ("You cannot use \"range\" for long texture names.");
@@ -522,7 +522,7 @@ FAnimDef *FTextureAnimator::ParseRangeAnim (FScanner &sc, FTextureID picnum, ETe
 	if (framenum < picnum)
 	{
 		type = FAnimDef::ANIM_Backward;
-		TexMan.Texture(framenum)->SetNoDecals(TexMan.Texture(picnum)->allowNoDecals());
+		TexMan.GameTexture(framenum)->SetNoDecals(TexMan.GameTexture(picnum)->allowNoDecals());
 		std::swap (framenum, picnum);
 	}
 	FAnimDef *ani = AddSimpleAnim (picnum, framenum - picnum + 1, min, max - min);
@@ -649,7 +649,7 @@ void FTextureAnimator::ParseWarp(FScanner &sc)
 	if (picnum.isValid())
 	{
 
-		FTexture *warper = TexMan.Texture(picnum);
+		auto warper = TexMan.GameTexture(picnum);
 
 		if (warper->GetName().IsEmpty())
 		{
@@ -666,7 +666,7 @@ void FTextureAnimator::ParseWarp(FScanner &sc)
 
 		if (sc.CheckFloat())
 		{
-			warper->SetSpeed(float(sc.Float));
+			warper->SetShaderSpeed(float(sc.Float));
 		}
 
 		// No decals on warping textures, by default.
@@ -699,7 +699,7 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly;
 	int width, height;
-	int fitwidth, fitheight;
+	double fitwidth, fitheight;
 	FString picname;
 
 	sc.MustGetString ();
@@ -709,10 +709,11 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 	sc.MustGetNumber ();
 	height = sc.Number;
 	FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Flat, texflags);
-	FTexture *viewer = new FCanvasTexture (picname, width, height);
+	auto canvas = new FCanvasTexture(width, height);
+	FGameTexture *viewer = MakeGameTexture(canvas, picname, ETextureType::Wall);
 	if (picnum.Exists())
 	{
-		FTexture *oldtex = TexMan.Texture(picnum);
+		auto oldtex = TexMan.GameTexture(picnum);
 		fitwidth = oldtex->GetDisplayWidth ();
 		fitheight = oldtex->GetDisplayHeight ();
 		viewer->SetUseType(oldtex->GetUseType());
@@ -723,8 +724,7 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 		fitwidth = width;
 		fitheight = height;
 		// [GRB] No need for oldtex
-		viewer->SetUseType(ETextureType::Wall);
-		TexMan.AddTexture (viewer);
+		TexMan.AddGameTexture (viewer);
 	}
 	if (sc.GetString())
 	{
@@ -751,7 +751,8 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 			sc.UnGet();
 		}
 	}
-	viewer->SetDisplaySize(fitwidth, fitheight);
+	canvas->aspectRatio = (float)fitwidth / (float)fitheight;
+	viewer->SetDisplaySize((float)fitwidth, (float)fitheight);
 }
 
 //==========================================================================
@@ -772,36 +773,18 @@ void FTextureAnimator::FixAnimations ()
 	for (i = 0; i < mAnimations.Size(); ++i)
 	{
 		FAnimDef *anim = mAnimations[i];
-		if (anim->bDiscrete)
-		{
-			if (TexMan.Texture(anim->BasePic)->IsFrontSkyLayer())
-			{
-				for (j = 0; j < anim->NumFrames; ++j)
-				{
-					TexMan.Texture(anim->Frames[j].FramePic)->SetFrontSkyLayer ();
-				}
-			}
-		}
-		else
+		if (!anim->bDiscrete)
 		{
 			bool nodecals;
 			bool noremap = false;
 			const char *name;
 
-			name = TexMan.Texture(anim->BasePic)->GetName();
-			nodecals = TexMan.Texture(anim->BasePic)->allowNoDecals();
+			name = TexMan.GameTexture(anim->BasePic)->GetName();
+			nodecals = TexMan.GameTexture(anim->BasePic)->allowNoDecals();
 			for (j = 0; j < anim->NumFrames; ++j)
 			{
-				FTexture *tex = TexMan.Texture(anim->BasePic + j);
-				noremap |= tex->IsFrontSkyLayer();
+				auto tex = TexMan.GameTexture(anim->BasePic + j);
 				tex->SetNoDecals(nodecals);
-			}
-			if (noremap)
-			{
-				for (j = 0; j < anim->NumFrames; ++j)
-				{
-					TexMan.Texture(anim->BasePic + j)->SetFrontSkyLayer ();
-				}
 			}
 		}
 	}
@@ -833,7 +816,7 @@ void FTextureAnimator::ParseAnimatedDoor(FScanner &sc)
 	}
 	else
 	{
-		TexMan.Texture(anim.BaseTexture)->SetNoDecals(true);
+		TexMan.GameTexture(anim.BaseTexture)->SetNoDecals(true);
 	}
 	while (sc.GetString())
 	{
@@ -866,7 +849,7 @@ void FTextureAnimator::ParseAnimatedDoor(FScanner &sc)
 		}
 		else if (sc.Compare("allowdecals"))
 		{
-			if (anim.BaseTexture.Exists()) TexMan.Texture(anim.BaseTexture)->SetNoDecals(false);
+			if (anim.BaseTexture.Exists()) TexMan.GameTexture(anim.BaseTexture)->SetNoDecals(false);
 		}
 		else
 		{

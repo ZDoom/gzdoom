@@ -141,6 +141,7 @@ public:
 	}
 	TArrayView<FSection> SectionsForSector(int sindex)
 	{
+		if (numberOfSectionForSectorPtr[sindex] == 0) return TArrayView<FSection>(nullptr);
 		return sindex < 0 ? TArrayView<FSection>(0) : TArrayView<FSection>(&allSections[firstSectionForSectorPtr[sindex]], numberOfSectionForSectorPtr[sindex]);
 	}
 	int SectionIndex(const FSection *sect)

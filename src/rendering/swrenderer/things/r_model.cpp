@@ -30,7 +30,7 @@
 #include "actorinlines.h"
 #include "i_time.h"
 #include "texturemanager.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_swcolormaps.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
@@ -94,7 +94,7 @@ namespace swrenderer
 		renderer.Translation = actor->Translation;
 
 		renderer.AddLights(actor);
-		renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
+		RenderModel(&renderer, x, y, z, smf, actor, r_viewpoint.TicFrac);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 #endif
 	}
@@ -109,7 +109,7 @@ namespace swrenderer
 			FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., nullptr);
 			if (lump.isValid())
 			{
-				FTexture * tex = TexMan.GetTexture(lump, true);
+				auto tex = TexMan.GetGameTexture(lump, true);
 				if (tex) disablefullbright = tex->isFullbrightDisabled();
 			}
 			return psp->GetState()->GetFullbright() && !disablefullbright;
@@ -143,7 +143,7 @@ namespace swrenderer
 		renderer.fillcolor = fullbrightSprite ? ThingColor : ThingColor.Modulate(playermo->Sector->SpecialColors[sector_t::sprites]);
 		renderer.Translation = 0xffffffff;// playermo->Translation;
 
-		renderer.RenderHUDModel(psp, ofsx, ofsy);
+		RenderHUDModel(&renderer, psp, ofsx, ofsy);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 #endif
 	}
@@ -223,7 +223,7 @@ namespace swrenderer
 		}
 	}
 
-	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
+	void SWModelRenderer::BeginDrawModel(FRenderStyale style, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 	{
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 
@@ -261,14 +261,14 @@ namespace swrenderer
 
 		SetTransform();
 
-		if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
+		if (style == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
 			PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 		PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, !(mirrored ^ MirrorWorldToClip));
 	}
 
-	void SWModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
+	void SWModelRenderer::EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf)
 	{
-		if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
+		if (style == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
 			PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 		PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, true);
 	}
@@ -314,7 +314,7 @@ namespace swrenderer
 		return objectToWorld;
 	}
 
-	void SWModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
+	void SWModelRenderer::BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored)
 	{
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 		ClipTop = {};
@@ -322,16 +322,16 @@ namespace swrenderer
 		SetTransform();
 		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
 
-		if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
+		if (style == LegacyRenderStyles[STYLE_Normal])
 			PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 		PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, !(mirrored ^ MirrorWorldToClip));
 	}
 
-	void SWModelRenderer::EndDrawHUDModel(AActor *actor)
+	void SWModelRenderer::EndDrawHUDModel(FRenderStyle style)
 	{
 		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
 
-		if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
+		if (style == LegacyRenderStyles[STYLE_Normal])
 			PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 		PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, true);
 	}

@@ -112,7 +112,5 @@ FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname);
 extern const AActor *SendItemUse, *SendItemDrop;
 extern int SendItemDropAmount;
 
-const int SAVEPICWIDTH = 216;
-const int SAVEPICHEIGHT = 162;
 
 #endif

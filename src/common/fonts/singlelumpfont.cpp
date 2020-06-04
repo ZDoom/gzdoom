@@ -167,15 +167,16 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 
 void FSingleLumpFont::CreateFontFromPic (FTextureID picnum)
 {
-	FTexture *pic = TexMan.GetTexture(picnum);
+	auto pic = TexMan.GetGameTexture(picnum);
 
-	FontHeight = pic->GetDisplayHeight ();
-	SpaceWidth = pic->GetDisplayWidth ();
+	FontHeight = (int)pic->GetDisplayHeight ();
+	SpaceWidth = (int)pic->GetDisplayWidth ();
 	GlobalKerning = 0;
 
 	FirstChar = LastChar = 'A';
 	Chars.Resize(1);
 	Chars[0].TranslatedPic = pic;
+	Chars[0].OriginalPic = pic;
 
 	// Only one color range. Don't bother with the others.
 	ActiveColors = 0;
@@ -222,7 +223,7 @@ void FSingleLumpFont::LoadTranslations()
 	for(unsigned int i = 0;i < count;++i)
 	{
 		if(Chars[i].TranslatedPic)
-			static_cast<FFontChar2*>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
+			static_cast<FFontChar2*>(Chars[i].TranslatedPic->GetTexture()->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
 	BuildTranslations (luminosity, useidentity ? identity : nullptr, ranges, ActiveColors, usepalette ? local_palette : nullptr);
@@ -255,7 +256,6 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 	LastChar = 255;	// This is to allow LoadTranslations to function. The way this is all set up really needs to be changed.
 	GlobalKerning = 0;
 	translateUntranslated = true;
-	LoadTranslations();
 	LastChar = 0x2122;
 
 	// Move the Windows-1252 characters to their proper place.
@@ -350,12 +350,13 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		if (destSize <= 0)
 		{
 			Chars[i].TranslatedPic = nullptr;
+			Chars[i].OriginalPic = nullptr;
 		}
 		else
 		{
-			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
-			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
-			TexMan.AddTexture(Chars[i].TranslatedPic);
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight)), nullptr, ETextureType::FontChar);
+			Chars[i].OriginalPic = Chars[i].TranslatedPic;
+			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 			do
 			{
 				int8_t code = *data_p++;
@@ -377,8 +378,6 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 			I_Error ("Overflow decompressing char %d (%c) of %s", i, i, FontName.GetChars());
 		}
 	}
-
-	LoadTranslations();
 }
 
 //==========================================================================
@@ -483,15 +482,15 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 		{ // Empty character: skip it.
 			continue;
 		}
-		auto tex = new FImageTexture(new FFontChar2(lump, int(chardata + chari + 6 - data),
+		auto tex = MakeGameTexture(new FImageTexture(new FFontChar2(lump, int(chardata + chari + 6 - data),
 			chardata[chari+1],	// width
 			chardata[chari+2],	// height
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
-		));
-		tex->SetUseType(ETextureType::FontChar);
+		)), nullptr, ETextureType::FontChar);
 		Chars[chardata[chari] - FirstChar].TranslatedPic = tex;
-		TexMan.AddTexture(tex);
+		Chars[chardata[chari] - FirstChar].OriginalPic = tex;
+		TexMan.AddGameTexture(tex);
 	}
 
 	// If the font did not define a space character, determine a suitable space width now.
@@ -508,7 +507,6 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 	}
 
 	FixXMoves();
-	LoadTranslations();
 }
 
 //==========================================================================
@@ -556,10 +554,10 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 
 		if(!Chars[i].TranslatedPic)
 		{
-			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
-			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight)), nullptr, ETextureType::FontChar);
+			Chars[i].OriginalPic = Chars[i].TranslatedPic;
 			Chars[i].XMove = SpaceWidth;
-			TexMan.AddTexture(Chars[i].TranslatedPic);
+			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 		}
 
 		// Advance to next char's data and count the used colors.

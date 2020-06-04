@@ -103,15 +103,14 @@ void FTextureManager::DeleteAll()
 //==========================================================================
 //
 // Flushes all hardware dependent data.
-// Thia must not, under any circumstances, delete the wipe textures, because
+// This must not, under any circumstances, delete the wipe textures, because
 // all CCMDs triggering a flush can be executed while a wipe is in progress
 //
 // This now also deletes the software textures because having the software
-// renderer use the texture scalers is a planned feature and that is the
+// renderer can also use the texture scalers and that is the
 // main reason to call this outside of the destruction code.
 //
 //==========================================================================
-void DeleteSoftwareTexture(FSoftwareTexture* swtex);
 
 void FTextureManager::FlushAll()
 {
@@ -119,11 +118,31 @@ void FTextureManager::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			Textures[i].Texture->SystemTextures.Clean(true, true);
-			DeleteSoftwareTexture(Textures[i].Texture->SoftwareTexture);
-			Textures[i].Texture->SoftwareTexture = nullptr;
+			Textures[i].Texture->CleanHardwareData();
+			delete Textures[i].Texture->GetSoftwareTexture();
+			Textures[i].Texture->SetSoftwareTexture(nullptr);
+			calcShouldUpscale(Textures[i].Texture);
 		}
 	}
+}
+
+//==========================================================================
+//
+// Examines the lump contents to decide what type of texture to create,
+// and creates the texture.
+//
+//==========================================================================
+
+static FTexture* CreateTextureFromLump(int lumpnum, bool allowflats = false)
+{
+	if (lumpnum == -1) return nullptr;
+
+	auto image = FImageSource::GetImage(lumpnum, allowflats);
+	if (image != nullptr)
+	{
+		return new FImageTexture(image);
+	}
+	return nullptr;
 }
 
 //==========================================================================
@@ -152,38 +171,39 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 
 	for(i = HashFirst[MakeKey(name) % HASH_SIZE]; i != HASH_END; i = Textures[i].HashNext)
 	{
-		const FTexture *tex = Textures[i].Texture;
+		auto tex = Textures[i].Texture;
 
 
-		if (stricmp (tex->Name, name) == 0 )
+		if (stricmp (tex->GetName(), name) == 0 )
 		{
 			// If we look for short names, we must ignore any long name texture.
-			if ((flags & TEXMAN_ShortNameOnly) && tex->bFullNameTexture)
+			if ((flags & TEXMAN_ShortNameOnly) && tex->isFullNameTexture())
 			{
 				continue;
 			}
+			auto texUseType = tex->GetUseType();
 			// The name matches, so check the texture type
 			if (usetype == ETextureType::Any)
 			{
 				// All NULL textures should actually return 0
-				if (tex->UseType == ETextureType::FirstDefined && !(flags & TEXMAN_ReturnFirst)) return 0;
-				if (tex->UseType == ETextureType::SkinGraphic && !(flags & TEXMAN_AllowSkins)) return 0;
-				return FTextureID(tex->UseType==ETextureType::Null ? 0 : i);
+				if (texUseType == ETextureType::FirstDefined && !(flags & TEXMAN_ReturnFirst)) return 0;
+				if (texUseType == ETextureType::SkinGraphic && !(flags & TEXMAN_AllowSkins)) return 0;
+				return FTextureID(texUseType==ETextureType::Null ? 0 : i);
 			}
-			else if ((flags & TEXMAN_Overridable) && tex->UseType == ETextureType::Override)
+			else if ((flags & TEXMAN_Overridable) && texUseType == ETextureType::Override)
 			{
 				return FTextureID(i);
 			}
-			else if (tex->UseType == usetype)
+			else if (texUseType == usetype)
 			{
 				return FTextureID(i);
 			}
-			else if (tex->UseType == ETextureType::FirstDefined && usetype == ETextureType::Wall)
+			else if (texUseType == ETextureType::FirstDefined && usetype == ETextureType::Wall)
 			{
 				if (!(flags & TEXMAN_ReturnFirst)) return FTextureID(0);
 				else return FTextureID(i);
 			}
-			else if (tex->UseType == ETextureType::Null && usetype == ETextureType::Wall)
+			else if (texUseType == ETextureType::Null && usetype == ETextureType::Wall)
 			{
 				// We found a NULL texture on a wall -> return 0
 				return FTextureID(0);
@@ -192,12 +212,12 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 			{
 				if (firsttype == ETextureType::Null ||
 					(firsttype == ETextureType::MiscPatch &&
-					 tex->UseType != firsttype &&
-					 tex->UseType != ETextureType::Null)
+					 texUseType != firsttype &&
+					 texUseType != ETextureType::Null)
 				   )
 				{
 					firstfound = i;
-					firsttype = tex->UseType;
+					firsttype = texUseType;
 				}
 			}
 		}
@@ -221,20 +241,20 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		// Any graphic being placed in the zip's root directory can not be found by this.
 		if (strchr(name, '/'))
 		{
-			FTexture *const NO_TEXTURE = (FTexture*)-1;
+			FGameTexture *const NO_TEXTURE = (FGameTexture*)-1;
 			int lump = fileSystem.CheckNumForFullName(name);
 			if (lump >= 0)
 			{
-				FTexture *tex = fileSystem.GetLinkedTexture(lump);
+				FGameTexture *tex = fileSystem.GetLinkedTexture(lump);
 				if (tex == NO_TEXTURE) return FTextureID(-1);
-				if (tex != NULL) return tex->id;
+				if (tex != NULL) return tex->GetID();
 				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
-				tex = FTexture::CreateTexture("", lump, ETextureType::Override);
+				tex = MakeGameTexture(CreateTextureFromLump(lump), nullptr, ETextureType::Override);
 				if (tex != NULL)
 				{
 					tex->AddAutoMaterials();
 					fileSystem.SetLinkedTexture(lump, tex);
-					return AddTexture(tex);
+					return AddGameTexture(tex);
 				}
 				else
 				{
@@ -273,12 +293,13 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list, b
 
 	while (i != HASH_END)
 	{
-		const FTexture *tex = Textures[i].Texture;
+		auto tex = Textures[i].Texture;
 
-		if (stricmp (tex->Name, name) == 0)
+		if (stricmp (tex->GetName(), name) == 0)
 		{
+			auto texUseType = tex->GetUseType();
 			// NULL textures must be ignored.
-			if (tex->UseType!=ETextureType::Null) 
+			if (texUseType!=ETextureType::Null) 
 			{
 				unsigned int j = list.Size();
 				if (!listall)
@@ -286,7 +307,7 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list, b
 					for (j = 0; j < list.Size(); j++)
 					{
 						// Check for overriding definitions from newer WADs
-						if (Textures[list[j].GetIndex()].Texture->UseType == tex->UseType) break;
+						if (Textures[list[j].GetIndex()].Texture->GetUseType() == texUseType) break;
 					}
 				}
 				if (j==list.Size()) list.Push(FTextureID(i));
@@ -331,10 +352,10 @@ FTextureID FTextureManager::GetTextureID (const char *name, ETextureType usetype
 //
 //==========================================================================
 
-FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype, BITFIELD flags)
+FGameTexture *FTextureManager::FindGameTexture(const char *texname, ETextureType usetype, BITFIELD flags)
 {
 	FTextureID texnum = CheckForTexture (texname, usetype, flags);
-	return GetTexture(texnum.GetIndex());
+	return GetGameTexture(texnum.GetIndex());
 }
 
 //==========================================================================
@@ -362,7 +383,7 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (locmode == 2) return false;
 	
 	// Mode 3 must also reject substitutions for non-IWAD content.
-	int file = fileSystem.GetFileContainer(Textures[texnum.GetIndex()].Texture->SourceLump);
+	int file = fileSystem.GetFileContainer(Textures[texnum.GetIndex()].Texture->GetSourceLump());
 	if (file > fileSystem.GetMaxIwadNum()) return true;
 
 	return false;
@@ -374,19 +395,23 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 //
 //==========================================================================
 
-FTextureID FTextureManager::AddTexture (FTexture *texture)
+FTextureID FTextureManager::AddGameTexture (FGameTexture *texture, bool addtohash)
 {
 	int bucket;
 	int hash;
 
 	if (texture == NULL) return FTextureID(-1);
 
-	// Later textures take precedence over earlier ones
+	if (texture->GetTexture())
+	{
+		// Later textures take precedence over earlier ones
+		calcShouldUpscale(texture);	// calculate this once at insertion
+	}
 
 	// Textures without name can't be looked for
-	if (texture->Name[0] != '\0')
+	if (addtohash && texture->GetName().IsNotEmpty())
 	{
-		bucket = int(MakeKey (texture->Name) % HASH_SIZE);
+		bucket = int(MakeKey (texture->GetName()) % HASH_SIZE);
 		hash = HashFirst[bucket];
 	}
 	else
@@ -395,11 +420,13 @@ FTextureID FTextureManager::AddTexture (FTexture *texture)
 		hash = -1;
 	}
 
-	TextureHash hasher = { texture, hash };
+	TextureHash hasher = { texture, -1, -1, -1, hash };
 	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
 	if (bucket >= 0) HashFirst[bucket] = trans;
-	return (texture->id = FTextureID(trans));
+	auto id = FTextureID(trans);
+	texture->SetID(id);
+	return id;
 }
 
 //==========================================================================
@@ -416,9 +443,32 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 	{
 		FString str;
 		fileSystem.GetFileShortName(str, lumpnum);
-		FTexture *out = FTexture::CreateTexture(str, lumpnum, usetype);
+		auto out = MakeGameTexture(CreateTextureFromLump(lumpnum, usetype == ETextureType::Flat), str, usetype);
 
-		if (out != NULL) return AddTexture (out);
+		if (out != NULL)
+		{
+			if (usetype == ETextureType::Flat)
+			{
+				int w = out->GetTexelWidth();
+				int h = out->GetTexelHeight();
+
+				// Auto-scale flats with dimensions 128x128 and 256x256.
+				// In hindsight, a bad idea, but RandomLag made it sound better than it really is.
+				// Now we're stuck with this stupid behaviour.
+				if (w == 128 && h == 128)
+				{
+					out->SetScale(2, 2);
+					out->SetWorldPanning(true);
+				}
+				else if (w == 256 && h == 256)
+				{
+					out->SetScale(4, 4);
+					out->SetWorldPanning(true);
+				}
+			}
+
+			return AddGameTexture(out);
+		}
 		else
 		{
 			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", fileSystem.GetFileFullPath(lumpnum).GetChars());
@@ -434,20 +484,20 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 //
 //==========================================================================
 
-void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, bool free)
+void FTextureManager::ReplaceTexture (FTextureID picnum, FGameTexture *newtexture, bool free)
 {
 	int index = picnum.GetIndex();
 	if (unsigned(index) >= Textures.Size())
 		return;
 
-	FTexture *oldtexture = Textures[index].Texture;
+	auto oldtexture = Textures[index].Texture;
 
-	newtexture->Name = oldtexture->Name;
-	newtexture->UseType = oldtexture->UseType;
+	newtexture->SetName(oldtexture->GetName());
+	newtexture->SetUseType(oldtexture->GetUseType());
 	Textures[index].Texture = newtexture;
-	newtexture->id = oldtexture->id;
-	oldtexture->Name = "";
-	AddTexture(oldtexture);
+	newtexture->SetID(oldtexture->GetID());
+	oldtexture->SetName("");
+	AddGameTexture(oldtexture);
 }
 
 //==========================================================================
@@ -465,11 +515,11 @@ bool FTextureManager::AreTexturesCompatible (FTextureID picnum1, FTextureID picn
 	if (unsigned(index1) >= Textures.Size() || unsigned(index2) >= Textures.Size())
 		return false;
 
-	FTexture *texture1 = Textures[index1].Texture;
-	FTexture *texture2 = Textures[index2].Texture;
+	auto texture1 = Textures[index1].Texture;
+	auto texture2 = Textures[index2].Texture;
 
 	// both textures must be the same type.
-	if (texture1 == NULL || texture2 == NULL || texture1->UseType != texture2->UseType)
+	if (texture1 == NULL || texture2 == NULL || texture1->GetUseType() != texture2->GetUseType())
 		return false;
 
 	// both textures must be from the same file
@@ -556,30 +606,28 @@ void FTextureManager::AddHiresTextures (int wadnum)
 				if (amount == 0)
 				{
 					// A texture with this name does not yet exist
-					FTexture * newtex = FTexture::CreateTexture (Name, firsttx, ETextureType::Any);
+					auto newtex = MakeGameTexture(CreateTextureFromLump(firsttx), Name, ETextureType::Override);
 					if (newtex != NULL)
 					{
-						newtex->UseType=ETextureType::Override;
-						AddTexture(newtex);
+						AddGameTexture(newtex);
 					}
 				}
 				else
 				{
 					for(unsigned int i = 0; i < tlist.Size(); i++)
 					{
-						FTexture * newtex = FTexture::CreateTexture ("", firsttx, ETextureType::Any);
+						FTexture * newtex = CreateTextureFromLump(firsttx);
 						if (newtex != NULL)
 						{
-							FTexture * oldtex = Textures[tlist[i].GetIndex()].Texture;
+							auto oldtex = Textures[tlist[i].GetIndex()].Texture;
 
 							// Replace the entire texture and adjust the scaling and offset factors.
-							newtex->bWorldPanning = true;
-							newtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
-							newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
-							newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
-							newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
-							newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
-							ReplaceTexture(tlist[i], newtex, true);
+							auto gtex = MakeGameTexture(newtex, nullptr, ETextureType::Override);
+							gtex->SetWorldPanning(true);
+							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
+							gtex->SetOffsets(0, oldtex->GetTexelLeftOffset(0), oldtex->GetTexelTopOffset(0));
+							gtex->SetOffsets(1, oldtex->GetTexelLeftOffset(1), oldtex->GetTexelTopOffset(1));
+							ReplaceTexture(tlist[i], gtex, true);
 						}
 					}
 				}
@@ -655,28 +703,27 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			{
 				for(unsigned int i = 0; i < tlist.Size(); i++)
 				{
-					FTexture * oldtex = Textures[tlist[i].GetIndex()].Texture;
+					auto oldtex = Textures[tlist[i].GetIndex()].Texture;
 					int sl;
 
 					// only replace matching types. For sprites also replace any MiscPatches
 					// based on the same lump. These can be created for icons.
-					if (oldtex->UseType == type || type == ETextureType::Any ||
-						(mode == TEXMAN_Overridable && oldtex->UseType == ETextureType::Override) ||
-						(type == ETextureType::Sprite && oldtex->UseType == ETextureType::MiscPatch &&
+					if (oldtex->GetUseType() == type || type == ETextureType::Any ||
+						(mode == TEXMAN_Overridable && oldtex->GetUseType() == ETextureType::Override) ||
+						(type == ETextureType::Sprite && oldtex->GetUseType() == ETextureType::MiscPatch &&
 						(sl=oldtex->GetSourceLump()) >= 0 && fileSystem.GetFileNamespace(sl) == ns_sprites)
 						)
 					{
-						FTexture * newtex = FTexture::CreateTexture ("", lumpnum, ETextureType::Any);
+						FTexture * newtex = CreateTextureFromLump(lumpnum);
 						if (newtex != NULL)
 						{
 							// Replace the entire texture and adjust the scaling and offset factors.
-							newtex->bWorldPanning = true;
-							newtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
-							newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
-							newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
-							newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
-							newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
-							ReplaceTexture(tlist[i], newtex, true);
+							auto gtex = MakeGameTexture(newtex, nullptr, ETextureType::Override);
+							gtex->SetWorldPanning(true);
+							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
+							gtex->SetOffsets(0, xs_RoundToInt(oldtex->GetDisplayLeftOffset(0) * gtex->GetScaleX()), xs_RoundToInt(oldtex->GetDisplayTopOffset(0) * gtex->GetScaleY()));
+							gtex->SetOffsets(1, xs_RoundToInt(oldtex->GetDisplayLeftOffset(1) * gtex->GetScaleX()), xs_RoundToInt(oldtex->GetDisplayTopOffset(1) * gtex->GetScaleY()));
+							ReplaceTexture(tlist[i], gtex, true);
 						}
 					}
 				}
@@ -705,21 +752,21 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 
 				if (lumpnum>=0)
 				{
-					FTexture *newtex = FTexture::CreateTexture(src, lumpnum, ETextureType::Override);
+					auto newtex = MakeGameTexture(CreateTextureFromLump(lumpnum), src, ETextureType::Override);
 
 					if (newtex != NULL)
 					{
 						// Replace the entire texture and adjust the scaling and offset factors.
-						newtex->bWorldPanning = true;
-						newtex->SetDisplaySize(width, height);
+						newtex->SetWorldPanning(true);
+						newtex->SetDisplaySize((float)width, (float)height);
 
 						FTextureID oldtex = TexMan.CheckForTexture(src, ETextureType::MiscPatch);
 						if (oldtex.isValid()) 
 						{
 							ReplaceTexture(oldtex, newtex, true);
-							newtex->UseType = ETextureType::Override;
+							newtex->SetUseType(ETextureType::Override);
 						}
-						else AddTexture(newtex);
+						else AddGameTexture(newtex);
 					}
 				}
 			}				
@@ -925,11 +972,11 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 
 		// Try to create a texture from this lump and add it.
 		// Unfortunately we have to look at everything that comes through here...
-		FTexture *out = FTexture::CreateTexture(Name, i, skin ? ETextureType::SkinGraphic : ETextureType::MiscPatch);
+		auto out = MakeGameTexture(CreateTextureFromLump(i), Name, skin ? ETextureType::SkinGraphic : ETextureType::MiscPatch);
 
 		if (out != NULL) 
 		{
-			AddTexture (out);
+			AddGameTexture (out);
 		}
 	}
 
@@ -953,7 +1000,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 
 void FTextureManager::SortTexturesByType(int start, int end)
 {
-	TArray<FTexture *> newtextures;
+	TArray<FGameTexture *> newtextures;
 
 	// First unlink all newly added textures from the hash chain
 	for (int i = 0; i < HASH_SIZE; i++)
@@ -981,9 +1028,9 @@ void FTextureManager::SortTexturesByType(int start, int end)
 	{
 		for(unsigned j = 0; j<newtextures.Size(); j++)
 		{
-			if (newtextures[j] != NULL && newtextures[j]->UseType == texturetypes[i])
+			if (newtextures[j] != NULL && newtextures[j]->GetUseType() == texturetypes[i])
 			{
-				AddTexture(newtextures[j]);
+				AddGameTexture(newtextures[j]);
 				newtextures[j] = NULL;
 			}
 		}
@@ -993,8 +1040,8 @@ void FTextureManager::SortTexturesByType(int start, int end)
 	{
 		if (newtextures[j] != NULL)
 		{
-			Printf("Texture %s has unknown type!\n", newtextures[j]->Name.GetChars());
-			AddTexture(newtextures[j]);
+			Printf("Texture %s has unknown type!\n", newtextures[j]->GetName().GetChars());
+			AddGameTexture(newtextures[j]);
 		}
 	}
 }
@@ -1032,8 +1079,8 @@ void FTextureManager::AddLocalizedVariants()
 				FTextureID tex = CheckForTexture(entry.name, ETextureType::MiscPatch);
 				if (tex.isValid())
 				{
-					FTexture *otex = GetTexture(origTex);
-					FTexture *ntex = GetTexture(tex);
+					auto otex = GetGameTexture(origTex);
+					auto ntex = GetGameTexture(tex);
 					if (otex->GetDisplayWidth() != ntex->GetDisplayWidth() || otex->GetDisplayHeight() != ntex->GetDisplayHeight())
 					{
 						Printf("Localized texture %s must be the same size as the one it replaces\n", entry.name);
@@ -1081,8 +1128,9 @@ void FTextureManager::AddLocalizedVariants()
 // FTextureManager :: Init
 //
 //==========================================================================
-FTexture *CreateShaderTexture(bool, bool);
+FGameTexture *CreateShaderTexture(bool, bool);
 void InitBuildTiles();
+FImageSource* CreateEmptyTexture();
 
 void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo&))
 {
@@ -1090,15 +1138,18 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	DeleteAll();
 	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 
-	// Texture 0 is a dummy texture used to indicate "no texture"
-	auto nulltex = new FImageTexture(nullptr, "");
-	nulltex->SetUseType(ETextureType::Null);
-	AddTexture (nulltex);
+	auto nulltex = MakeGameTexture(new FImageTexture(CreateEmptyTexture()), nullptr, ETextureType::Null);
+	AddGameTexture(nulltex);
+
+	// This is for binding to unused texture units, because accessing an unbound texture unit is undefined. It's a one pixel empty texture.
+	auto emptytex = MakeGameTexture(new FImageTexture(CreateEmptyTexture()), nullptr, ETextureType::Override);
+	emptytex->SetSize(1, 1);
+	AddGameTexture(emptytex);	
 	// some special textures used in the game.
-	AddTexture(CreateShaderTexture(false, false));
-	AddTexture(CreateShaderTexture(false, true));
-	AddTexture(CreateShaderTexture(true, false));
-	AddTexture(CreateShaderTexture(true, true));
+	AddGameTexture(CreateShaderTexture(false, false));
+	AddGameTexture(CreateShaderTexture(false, true));
+	AddGameTexture(CreateShaderTexture(true, false));
+	AddGameTexture(CreateShaderTexture(true, true));
 
 	int wadcnt = fileSystem.GetNumWads();
 
@@ -1133,6 +1184,13 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	glPart = TexMan.CheckForTexture("glstuff/glpart.png", ETextureType::MiscPatch);
 	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", ETextureType::MiscPatch);
 	AddLocalizedVariants();
+
+	// Make sure all ID's are correct by resetting them here to the proper index.
+	for (unsigned int i = 0, count = Textures.Size(); i < count; ++i)
+	{
+		Textures[i].Texture->SetID(i);
+	}
+
 }
 
 //==========================================================================
@@ -1160,17 +1218,93 @@ void FTextureManager::InitPalettedVersions()
 			FTextureID pic2 = CheckForTexture(sc.String, ETextureType::Any);
 			if (!pic2.isValid())
 			{
-				sc.ScriptMessage("Unknown texture %s to use as replacement", sc.String);
+				sc.ScriptMessage("Unknown texture %s to use as paletted replacement", sc.String);
 			}
 			if (pic1.isValid() && pic2.isValid())
 			{
-				FTexture *owner = GetTexture(pic1);
-				FTexture *owned = GetTexture(pic2);
-
-				if (owner && owned) owner->PalVersion = owned;
+				Textures[pic1.GetIndex()].Paletted = pic2.GetIndex();
 			}
 		}
 	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+FTextureID FTextureManager::GetRawTexture(FTextureID texid)
+{
+	int texidx = texid.GetIndex();
+	if ((unsigned)texidx >= Textures.Size()) return texid;
+	if (Textures[texidx].FrontSkyLayer != -1) return FSetTextureID(Textures[texidx].FrontSkyLayer);
+
+	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
+	auto tex = Textures[texidx].Texture;
+	auto ttex = tex->GetTexture();
+	auto image = ttex->GetImage();
+	// Reject anything that cannot have been a single-patch multipatch texture in vanilla.
+	if (image == nullptr || image->IsRawCompatible() || tex->GetUseType() != ETextureType::Wall || ttex->GetWidth() != tex->GetDisplayWidth() ||
+		ttex->GetHeight() != tex->GetDisplayHeight())
+	{
+		Textures[texidx].RawTexture = texidx;
+		return texid;
+	}
+
+	// Let the hackery begin
+	auto mptimage = static_cast<FMultiPatchTexture*>(image);
+	auto source = mptimage->GetImageForPart(0);
+
+	// Size must match for this to work as intended
+	if (source->GetWidth() != ttex->GetWidth() || source->GetHeight() != ttex->GetHeight())
+	{
+		Textures[texidx].RawTexture = texidx;
+		return texid;
+	}
+
+	// Todo: later this can just link to the already existing texture for this source graphic, once it can be retrieved through the image's SourceLump index
+	auto RawTexture = MakeGameTexture(new FImageTexture(source), nullptr, ETextureType::Wall);
+	texid = TexMan.AddGameTexture(RawTexture);
+	Textures[texidx].RawTexture = texid.GetIndex();
+	Textures[texid.GetIndex()].RawTexture = texid.GetIndex();
+	return texid;
+}
+
+
+//==========================================================================
+//
+// Same shit for a different hack, this time Hexen's front sky layers.
+//
+//==========================================================================
+
+FTextureID FTextureManager::GetFrontSkyLayer(FTextureID texid)
+{
+	int texidx = texid.GetIndex();
+	if ((unsigned)texidx >= Textures.Size()) return texid;
+	if (Textures[texidx].FrontSkyLayer != -1) return FSetTextureID(Textures[texidx].FrontSkyLayer);
+
+	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
+	auto tex = Textures[texidx].Texture;
+	auto ttex = tex->GetTexture();
+	auto image = ttex->GetImage();
+	if (image == nullptr || !image->SupportRemap0() || tex->GetUseType() != ETextureType::Wall || tex->useWorldPanning() || tex->GetTexelTopOffset() != 0 ||
+		ttex->GetWidth() != tex->GetDisplayWidth() || ttex->GetHeight() != tex->GetDisplayHeight())
+	{
+		Textures[texidx].FrontSkyLayer = texidx;
+		return texid;
+	}
+
+	// Set this up so that it serializes to the same info as the base texture - this is needed to restore it on load.
+	// But do not link the new texture into the hash chain!
+	auto itex = new FImageTexture(image);
+	itex->SetNoRemap0();
+	auto FrontSkyLayer = MakeGameTexture(itex, tex->GetName(), ETextureType::Wall);
+	FrontSkyLayer->SetUseType(tex->GetUseType());
+	texid = TexMan.AddGameTexture(FrontSkyLayer, false);
+	Textures[texidx].FrontSkyLayer = texid.GetIndex();
+	Textures[texid.GetIndex()].FrontSkyLayer = texid.GetIndex();	// also let it refer to itself as its front sky layer, in case for repeated InitSkyMap calls.
+	return texid;
 }
 
 //==========================================================================
@@ -1314,7 +1448,7 @@ void FTextureManager::AdjustSpriteOffsets()
 			fileSystem.GetFileShortName(str, i);
 			str[8] = 0;
 			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
-			if (texid.isValid() && fileSystem.GetFileContainer(GetTexture(texid)->SourceLump) > fileSystem.GetMaxIwadNum())
+			if (texid.isValid() && fileSystem.GetFileContainer(GetGameTexture(texid)->GetSourceLump()) > fileSystem.GetMaxIwadNum())
 			{
 				// This texture has been replaced by some PWAD.
 				memcpy(&sprid, str, 4);
@@ -1349,7 +1483,7 @@ void FTextureManager::AdjustSpriteOffsets()
 			}
 			if (texno.isValid())
 			{
-				FTexture * tex = GetTexture(texno);
+				auto tex = GetGameTexture(texno);
 
 				int lumpnum = tex->GetSourceLump();
 				// We only want to change texture offsets for sprites in the IWAD or the file this lump originated from.
@@ -1360,11 +1494,10 @@ void FTextureManager::AdjustSpriteOffsets()
 					{
 						if (wadno >= fileSystem.GetIwadNum() && wadno <= fileSystem.GetMaxIwadNum() && !forced && iwadonly)
 						{
-							memcpy(&sprid, &tex->Name[0], 4);
+							memcpy(&sprid, tex->GetName().GetChars(), 4);
 							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.
 						}
-						tex->_LeftOffset[1] = x;
-						tex->_TopOffset[1] = y;
+						tex->SetOffsets(1, x, y);
 					}
 				}
 			}
@@ -1408,3 +1541,9 @@ FTextureID FTextureID::operator +(int offset) throw()
 	if (texnum + offset >= TexMan.NumTextures()) return FTextureID(-1);
 	return FTextureID(texnum + offset);
 }
+
+CCMD(flushtextures)
+{
+	TexMan.FlushAll();
+}
+

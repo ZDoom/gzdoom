@@ -4,6 +4,9 @@
 #include "basics.h"
 #include "m_bbox.h"
 
+struct line_t;
+struct sector_t;
+
 struct FPortalGroupArray;
 struct portnode_t;
 struct subsector_t;

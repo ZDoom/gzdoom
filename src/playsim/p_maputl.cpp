@@ -2017,3 +2017,52 @@ subsector_t *FLevelLocals::PointInRenderSubsector (fixed_t x, fixed_t y)
 	return (subsector_t *)((uint8_t *)node - 1);
 }
 
+
+//==========================================================================
+//
+// FBoundingBox :: BoxOnLineSide
+//
+// Considers the line to be infinite
+// Returns side 0 or 1, -1 if box crosses the line.
+//
+//==========================================================================
+
+int BoxOnLineSide(const FBoundingBox &box, const line_t* ld)
+{
+	int p1;
+	int p2;
+
+	if (ld->Delta().X == 0)
+	{ // ST_VERTICAL
+		p1 = box.Right() < ld->v1->fX();
+		p2 = box.Left() < ld->v1->fX();
+		if (ld->Delta().Y < 0)
+		{
+			p1 ^= 1;
+			p2 ^= 1;
+		}
+	}
+	else if (ld->Delta().Y == 0)
+	{ // ST_HORIZONTAL:
+		p1 = box.Top() > ld->v1->fY();
+		p2 = box.Bottom() > ld->v1->fY();
+		if (ld->Delta().X < 0)
+		{
+			p1 ^= 1;
+			p2 ^= 1;
+		}
+	}
+	else if ((ld->Delta().X * ld->Delta().Y) >= 0)
+	{ // ST_POSITIVE:
+		p1 = P_PointOnLineSide(box.Left(), box.Top(), ld);
+		p2 = P_PointOnLineSide(box.Right(), box.Bottom(), ld);
+	}
+	else
+	{ // ST_NEGATIVE:
+		p1 = P_PointOnLineSide(box.Right(), box.Top(), ld);
+		p2 = P_PointOnLineSide(box.Left(), box.Bottom(), ld);
+	}
+
+	return (p1 == p2) ? p1 : -1;
+}
+

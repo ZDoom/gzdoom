@@ -38,6 +38,7 @@
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"
+#include "textures.h"
 
 
 class FBarShader : public FImageSource
@@ -128,9 +129,9 @@ private:
 };
 
 
-FTexture *CreateShaderTexture(bool vertical, bool reverse)
+FGameTexture *CreateShaderTexture(bool vertical, bool reverse)
 {
 	FStringf name("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
-	return CreateImageTexture(new FBarShader(vertical, reverse), name.GetChars());
+	return MakeGameTexture(CreateImageTexture(new FBarShader(vertical, reverse)), name.GetChars(), ETextureType::Override);
 
 }

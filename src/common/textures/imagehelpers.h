@@ -147,5 +147,4 @@ namespace ImageHelpers
 			}
 		}
 	}
-	
 }

@@ -1,5 +1,6 @@
 
-vec4 ProcessTexel()
+
+vec2 GetTexCoord()
 {
 	vec2 texCoord = vTexCoord.st;
 
@@ -9,8 +10,11 @@ vec4 ProcessTexel()
 	offset.y = 0.5 + sin(pi * 2.0 * (texCoord.y + timer * 0.61 + 900.0/8192.0)) + sin(pi * 2.0 * (texCoord.x * 2.0 + timer * 0.36 + 300.0/8192.0));
 	offset.x = 0.5 + sin(pi * 2.0 * (texCoord.y + timer * 0.49 + 700.0/8192.0)) + sin(pi * 2.0 * (texCoord.x * 2.0 + timer * 0.49 + 1200.0/8192.0));
 
-	texCoord += offset * 0.025;
+	return texCoord + offset * 0.025;
+}
 
-	return getTexel(texCoord);
+vec4 ProcessTexel()
+{
+	return getTexel(GetTexCoord());
 }
 

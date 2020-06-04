@@ -489,7 +489,7 @@ static inline void CheckShortestTex (FLevelLocals *Level, FTextureID texnum, dou
 {
 	if (texnum.isValid() || (texnum.isNull() && (Level->i_compatflags & COMPATF_SHORTTEX)))
 	{
-		FTexture *tex = TexMan.GetTexture(texnum);
+		auto tex = TexMan.GetGameTexture(texnum);
 		if (tex != NULL)
 		{
 			double h = tex->GetDisplayHeight();
@@ -513,7 +513,7 @@ double FindShortestTextureAround (sector_t *sec)
 			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::bottom), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.GameByIndex(0)->GetDisplayHeight();
 }
 
 //
@@ -538,7 +538,7 @@ double FindShortestUpperAround (sector_t *sec)
 			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::top), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.GameByIndex(0)->GetDisplayHeight();
 }
 
 //
@@ -1156,10 +1156,10 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
+		 auto tex = TexMan.GetGameTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetGameTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 tex->GetGlowColor(bottomglowcolor);
@@ -1201,10 +1201,10 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::ceiling].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::ceiling));
+		 auto tex = TexMan.GetGameTexture(GetTexture(sector_t::ceiling));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::ceiling), true);
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetGameTexture(GetTexture(sector_t::ceiling), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
@@ -1225,10 +1225,10 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
+		 auto tex = TexMan.GetGameTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetGameTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;

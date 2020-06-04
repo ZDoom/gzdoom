@@ -58,6 +58,7 @@
 #include "c_dispatch.h"
 #include "s_music.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -1630,7 +1631,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
-	auto tex = TexMan.ByIndex(texid);
+	auto tex = TexMan.GameByIndex(texid);
 	FString retval;
 
 	if (tex != nullptr)
@@ -1655,12 +1656,12 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 
 static int GetTextureSize(int texid, int* py)
 {
-	auto tex = TexMan.ByIndex(texid);
+	auto tex = TexMan.GameByIndex(texid);
 	int x, y;
 	if (tex != nullptr)
 	{
-		x = tex->GetDisplayWidth();
-		y = tex->GetDisplayHeight();
+		x = int(0.5 + tex->GetDisplayWidth());
+		y = int(0.5 + tex->GetDisplayHeight());
 	}
 	else x = y = -1;
 	if (py) *py = y;
@@ -1685,12 +1686,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
 //==========================================================================
 static void GetScaledSize(int texid, DVector2* pvec)
 {
-	auto tex = TexMan.ByIndex(texid);
+	auto tex = TexMan.GameByIndex(texid);
 	double x, y;
 	if (tex != nullptr)
 	{
-		x = tex->GetDisplayWidthDouble();
-		y = tex->GetDisplayHeightDouble();
+		x = tex->GetDisplayWidth();
+		y = tex->GetDisplayHeight();
 	}
 	else x = y = -1;
 	if (pvec)
@@ -1716,12 +1717,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledSize, GetScaledSize)
 //==========================================================================
 static void GetScaledOffset(int texid, DVector2* pvec)
 {
-	auto tex = TexMan.ByIndex(texid);
+	auto tex = TexMan.GameByIndex(texid);
 	double x, y;
 	if (tex != nullptr)
 	{
-		x = tex->GetDisplayLeftOffsetDouble();
-		y = tex->GetDisplayTopOffsetDouble();
+		x = tex->GetDisplayLeftOffset();
+		y = tex->GetDisplayTopOffset();
 	}
 	else x = y = -1;
 	if (pvec)
@@ -1748,7 +1749,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledOffset, GetScaledOffset)
 
 static int CheckRealHeight(int texid)
 {
-	auto tex = TexMan.ByIndex(texid);
+	auto tex = TexMan.GameByIndex(texid);
 	if (tex != nullptr) return tex->CheckRealHeight();
 	else return -1;
 }
@@ -3300,6 +3301,16 @@ DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
 }
 
 
+DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
+{
+	PARAM_PROLOGUE;
+	if (numret > 0) ret[0].SetInt(viewwindowx);
+	if (numret > 1) ret[1].SetInt(viewwindowy);
+	if (numret > 2) ret[2].SetInt(viewwidth);
+	if (numret > 3) ret[3].SetInt(viewheight);
+	return MIN(numret, 4);
+}
+
 //==========================================================================
 //
 //
@@ -3488,3 +3499,4 @@ DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 
+DEFINE_GLOBAL(generic_ui)

@@ -66,6 +66,7 @@ CVAR (Bool,		neverswitchonpickup,	false,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	movebob,				0.25f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	stillbob,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	wbobspeed,				1.f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Float,	wbobfire,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	playerclass,			"Fighter",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		classicflight,			false,		CVAR_USERINFO | CVAR_ARCHIVE);
 
@@ -81,6 +82,7 @@ enum
 	INFO_MoveBob,
 	INFO_StillBob,
 	INFO_WBobSpeed,
+	INFO_WBobFire,
 	INFO_PlayerClass,
 	INFO_ColorSet,
 	INFO_ClassicFlight,
@@ -633,7 +635,7 @@ bool D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
 	{
 		if (netgame && !players[consoleplayer].settings_controller)
 		{
-			Printf("Only setting controllers can change %s\n", cvar->GetName());
+			Printf("Only setting controllers can change server CVAR %s\n", cvar->GetName());
 			cvar->MarkSafe();
 			return true;
 		}
@@ -663,7 +665,10 @@ bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 	{
 		if (netgame && !players[consoleplayer].settings_controller)
 		{
-			if (!silent) Printf("Only setting controllers can change %s\n", cvar->GetName());
+			if (!silent)
+			{
+				Printf("Only setting controllers can change server CVAR %s\n", cvar->GetName());
+			}
 			return true;
 		}
 

@@ -11,7 +11,6 @@ void S_Start();
 void S_Shutdown();
 
 void S_UpdateSounds(AActor* listenactor);
-void S_SetSoundPaused(int state);
 
 void S_PrecacheLevel(FLevelLocals* l);
 

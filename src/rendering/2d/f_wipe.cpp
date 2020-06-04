@@ -29,6 +29,7 @@
 #include "templates.h"
 #include "bitmap.h"
 #include "hw_material.h"
+#include "v_draw.h"
 
 class FBurnTexture : public FTexture
 {
@@ -168,7 +169,7 @@ class Wiper_Burn : public Wiper
 public:
 	~Wiper_Burn();
 	bool Run(int ticks) override;
-	void SetTextures(FTexture *startscreen, FTexture *endscreen) override;
+	void SetTextures(FGameTexture *startscreen, FGameTexture *endscreen) override;
 
 private:
 	static const int WIDTH = 64, HEIGHT = 64;
@@ -307,8 +308,8 @@ bool Wiper_Melt::Run(int ticks)
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
 				
-				int w = startScreen->GetDisplayWidth();
-				int h = startScreen->GetDisplayHeight();
+				int w = startScreen->GetTexelWidth();
+				int h = startScreen->GetTexelHeight();
 				dpt.x = i * w / WIDTH;
 				dpt.y = MAX(0, y[i] * h / HEIGHT);
 				rect.left = dpt.x;
@@ -331,13 +332,13 @@ bool Wiper_Melt::Run(int ticks)
 //
 //==========================================================================
 
-void Wiper_Burn::SetTextures(FTexture *startscreen, FTexture *endscreen)
+void Wiper_Burn::SetTextures(FGameTexture *startscreen, FGameTexture *endscreen)
 {
 	startScreen = startscreen;
 	endScreen = endscreen;
 	BurnTexture = new FBurnTexture(WIDTH, HEIGHT);
 	auto mat = FMaterial::ValidateTexture(endScreen, false);
-	mat->AddTextureLayer(BurnTexture);
+	mat->AddTextureLayer(BurnTexture, false);
 }
 
 //==========================================================================
@@ -373,8 +374,8 @@ bool Wiper_Burn::Run(int ticks)
 		done = (Density < 0);
 	}
 
-	BurnTexture->SystemTextures.Clean(true, true);
-	endScreen->SystemTextures.Clean(false, false);
+	BurnTexture->CleanHardwareTextures();
+	endScreen->CleanHardwareData(false);	// this only cleans the descriptor sets for the Vulkan backend. We do not want to delete the wipe screen's hardware texture here.
 
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();

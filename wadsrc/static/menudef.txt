@@ -734,6 +734,7 @@ OptionMenu "MouseOptions" protected
 	Slider "$MOUSEMNU_STRAFESPEED",		"m_side", 0, 2.5, 0.1
 	StaticText 	""
 	Option "$MOUSEMNU_ALWAYSMOUSELOOK",	"freelook", "OnOff"
+	Option "$MOUSEMNU_INVERTMOUSEX",		"invertmousex", "OnOff"
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 	Option "$MOUSEMNU_LOOKSPRING",		"lookspring", "OnOff"
 	Option "$MOUSEMNU_LOOKSTRAFE",		"lookstrafe", "OnOff"
@@ -926,7 +927,7 @@ OptionMenu "VideoOptions" protected
 	StaticText " "
 	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 				3.0, 12.0, 1.0, 0
 
-	Slider "$DSPLYMNU_GAMMA",					"Gamma",						0.75, 3.0, 0.05, 2
+	Slider "$DSPLYMNU_GAMMA",					"vid_gamma",					0.75, 3.0, 0.05, 2
 	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
@@ -1045,6 +1046,7 @@ OptionMenu "HUDOptions" protected
 	Slider "$DSPLYMNU_MOVEBOB",				"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",			"stillbob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_BOBSPEED",			"wbobspeed", 0, 2.0, 0.1
+	Slider "$DSPLYMNU_BOBFIRE",				"wbobfire", 0, 1.0, 0.1
 	StaticText " "
 	Slider "$DSPLYMNU_MENUDIM",					"dimamount", 0, 1.0, 0.05, 2
 	ColorPicker "$DSPLYMNU_DIMCOLOR",			"dimcolor"
@@ -2216,7 +2218,7 @@ OptionMenu VideoModeMenu protected
 	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
 	StaticText " "
 	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
-	Option "$VIDMNU_FULLSCREEN",		"fullscreen", "YesNo"
+	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
 
 	IfOption(Mac)
 	{
@@ -2347,7 +2349,6 @@ OptionValue "TonemapModes"
 	1, "$OPTVAL_UNCHARTED2"
 	2, "$OPTVAL_HEJLDAWSON"
 	3, "$OPTVAL_REINHARD"
-	4, "$OPTVAL_LINEAR_3"
 	5, "$OPTVAL_PALETTE"
 }
 

@@ -47,6 +47,7 @@
 #include "engineerrors.h"
 #include "v_text.h"
 #include "findfile.h"
+#include "i_interface.h"
 
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -791,14 +792,14 @@ const FIWADInfo *FIWadManager::FindIWAD(TArray<FString> &wadfiles, const char *i
 	if (iwadType == -1) return nullptr;
 	//gameiwad = iwadType;
 	const FIWADInfo *iwad_info = &mIWadInfos[iwadType];
-	if (DoomStartupInfo.Name.IsEmpty()) DoomStartupInfo.Name = iwad_info->Name;
-	if (DoomStartupInfo.BkColor == 0 && DoomStartupInfo.FgColor == 0)
+	if (GameStartupInfo.Name.IsEmpty()) GameStartupInfo.Name = iwad_info->Name;
+	if (GameStartupInfo.BkColor == 0 && GameStartupInfo.FgColor == 0)
 	{
-		DoomStartupInfo.BkColor = iwad_info->BkColor;
-		DoomStartupInfo.FgColor = iwad_info->FgColor;
+		GameStartupInfo.BkColor = iwad_info->BkColor;
+		GameStartupInfo.FgColor = iwad_info->FgColor;
 	}
-	if (DoomStartupInfo.Type == 0) DoomStartupInfo.Type = iwad_info->StartupType;
-	if (DoomStartupInfo.Song.IsEmpty()) DoomStartupInfo.Song = iwad_info->Song;
+	if (GameStartupInfo.Type == 0) GameStartupInfo.Type = iwad_info->StartupType;
+	if (GameStartupInfo.Song.IsEmpty()) GameStartupInfo.Song = iwad_info->Song;
 	I_SetIWADInfo();
 	return iwad_info;
 }

@@ -36,7 +36,7 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "a_dynlight.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"

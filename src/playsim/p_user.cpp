@@ -94,6 +94,7 @@
 #include "v_video.h"
 #include "gstrings.h"
 #include "s_music.h"
+#include "d_main.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -633,7 +634,7 @@ void player_t::SendPitchLimits() const
 	{
 		int uppitch, downpitch;
 
-		if (V_IsSoftwareRenderer())
+		if (!V_IsHardwareRenderer())
 		{
 			uppitch = GetSoftPitch(false);
 			downpitch = GetSoftPitch(true);
@@ -788,6 +789,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobSpeed)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	ACTION_RETURN_FLOAT(self->userinfo.GetWBobSpeed());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobFire)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetWBobFire());
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetMoveBob)

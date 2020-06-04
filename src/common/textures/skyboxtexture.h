@@ -1,10 +1,11 @@
 #pragma once
 
 #include "textures.h"
+
 //-----------------------------------------------------------------------------
 //
-// This is not a real texture but will be added to the texture manager
-// so that it can be handled like any other sky.
+// Todo: Get rid of this
+// The faces can easily be stored in the material layer array
 //
 //-----------------------------------------------------------------------------
 
@@ -12,11 +13,11 @@ class FSkyBox : public FImageTexture
 {
 public:
 
-	FTexture *previous;
-	FTexture * faces[6];
+	FGameTexture* previous;
+	FGameTexture* faces[6];	// the faces need to be full materials as they can have all supported effects.
 	bool fliptop;
 
-	FSkyBox(const char *name);
+	FSkyBox(const char* name);
 	void SetSize();
 
 	bool Is3Face() const
@@ -25,6 +26,16 @@ public:
 	}
 
 	bool IsFlipped() const
+	{
+		return fliptop;
+	}
+
+	FGameTexture* GetSkyFace(int num) const 
+	{
+		return faces[num];
+	}
+
+	bool GetSkyFlip() const
 	{
 		return fliptop;
 	}

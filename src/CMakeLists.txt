@@ -159,6 +159,11 @@ else()
 		endif()
 	endif()
 
+	option( NO_SDL_JOYSTICK "Disable SDL joystick support (Not applicable to Windows)" OFF )
+	if ( NO_SDL_JOYSTICK )
+		add_definitions( -DNO_SDL_JOYSTICK=1 )
+	endif ( NO_SDL_JOYSTICK )
+
 	if( NO_GTK )
 		add_definitions( -DNO_GTK )
 	elseif( DYN_GTK )

@@ -50,7 +50,6 @@
 #include "c_cvars.h"
 #include "c_buttons.h"
 #include "findfile.h"
-#include "playsim/p_commands.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -300,6 +300,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{ // Get the variable's value
+				if (var->GetDescription().Len()) Printf("%s\n", var->GetDescription().GetChars());
 				Printf ("\"%s\" is \"%s\"\n", var->GetName(), var->GetHumanString());
 			}
 		}

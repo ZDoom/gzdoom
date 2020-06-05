@@ -5,34 +5,14 @@
 /////////////////////////////////////////////////////////////////////////////
 // String instructions.
 
-static void ConcatString(FString* to, FString* first, FString* second)
-{
-	*to = *first + *second;
-}
-
 void JitCompiler::EmitCONCAT()
 {
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*, FString*>("__ConcatString", ConcatString), { LoadS(A), LoadS(B), LoadS(C) });
-}
-
-static int StringLength(FString* str)
-{
-	return static_cast<int>(str->Len());
+	cc.CreateCall(stringPlusOperator, { LoadS(A), LoadS(B), LoadS(C) });
 }
 
 void JitCompiler::EmitLENS()
 {
-	StoreD(cc.CreateCall(GetNativeFunc<int, FString*>("__StringLength", StringLength), { LoadS(B) }), A);
-}
-
-static int StringCompareNoCase(FString* first, FString* second)
-{
-	return first->CompareNoCase(*second);
-}
-
-static int StringCompare(FString* first, FString* second)
-{
-	return first->Compare(*second);
+	StoreD(cc.CreateCall(stringLength, { LoadS(B) }), A);
 }
 
 void JitCompiler::EmitCMPS()
@@ -42,12 +22,7 @@ void JitCompiler::EmitCMPS()
 		IRValue* arg0 = static_cast<bool>(A & CMP_BK) ? ConstS(B) : LoadS(B);
 		IRValue* arg1 = static_cast<bool>(A & CMP_CK) ? ConstS(C) : LoadS(C);
 
-		IRValue* result;
-		if (static_cast<bool>(A & CMP_APPROX))
-			result = cc.CreateCall(GetNativeFunc<int, FString*, FString*>("__StringCompareNoCase", StringCompareNoCase), { arg0, arg1 });
-		else
-			result = cc.CreateCall(GetNativeFunc<int, FString*, FString*>("__StringCompare", StringCompare), { arg0, arg1 });
-
+		IRValue* result = cc.CreateCall(static_cast<bool>(A & CMP_APPROX) ? stringCompareNoCase : stringCompare, { arg0, arg1 });
 		IRValue* zero = ConstValueD(0);
 
 		int method = A & CMP_METHOD_MASK;
@@ -686,18 +661,13 @@ void JitCompiler::EmitDIVF_KR()
 	StoreF(cc.CreateFDiv(ConstF(B), LoadF(C)), A);
 }
 
-static double DoubleModF(double a, double b)
-{
-	return a - floor(a / b) * b;
-}
-
 void JitCompiler::EmitMODF_RR()
 {
 	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
 	cc.CreateCondBr(cc.CreateFCmpUEQ(LoadF(C), ConstValueF(0.0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { LoadF(B), LoadF(C) }), A);
+	StoreF(cc.CreateCall(doubleModF, { LoadF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitMODF_RK()
@@ -708,7 +678,7 @@ void JitCompiler::EmitMODF_RK()
 	}
 	else
 	{
-		StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { LoadF(B), ConstF(C) }), A);
+		StoreF(cc.CreateCall(doubleModF, { LoadF(B), ConstF(C) }), A);
 	}
 }
 
@@ -718,22 +688,22 @@ void JitCompiler::EmitMODF_KR()
 	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
 	cc.CreateCondBr(cc.CreateFCmpUEQ(LoadF(C), ConstValueF(0.0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { ConstF(B), LoadF(C) }), A);
+	StoreF(cc.CreateCall(doubleModF, { ConstF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitPOWF_RR()
 {
-	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { LoadF(B), LoadF(C) }), A);
+	StoreF(cc.CreateCall(doublePow, { LoadF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitPOWF_RK()
 {
-	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { LoadF(B), ConstF(C) }), A);
+	StoreF(cc.CreateCall(doublePow, { LoadF(B), ConstF(C) }), A);
 }
 
 void JitCompiler::EmitPOWF_KR()
 {
-	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { ConstF(B), LoadF(C) }), A);
+	StoreF(cc.CreateCall(doublePow, { ConstF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitMINF_RR()
@@ -814,7 +784,7 @@ void JitCompiler::EmitMAXF_RK()
 
 void JitCompiler::EmitATAN2()
 {
-	StoreF(cc.CreateFMul(cc.CreateCall(GetNativeFunc<double, double, double>("__g_atan2", g_atan2), { LoadF(B), LoadF(C) }), ConstValueF(180 / M_PI)), A);
+	StoreF(cc.CreateFMul(cc.CreateCall(doubleAtan2, { LoadF(B), LoadF(C) }), ConstValueF(180 / M_PI)), A);
 }
 
 void JitCompiler::EmitFLOP()
@@ -832,38 +802,36 @@ void JitCompiler::EmitFLOP()
 			v = cc.CreateFMul(v, ConstValueF(M_PI / 180));
 		}
 
-		typedef double(*FuncPtr)(double);
-		const char* funcname = "";
-		FuncPtr func = nullptr;
+		IRFunction* func = nullptr;
 		switch (C)
 		{
 		default: I_Error("Unknown OP_FLOP subfunction");
-		case FLOP_ABS:		func = fabs; funcname = "__fabs"; break;
-		case FLOP_EXP:		func = g_exp; funcname = "__g_exp"; break;
-		case FLOP_LOG:		func = g_log; funcname = "__g_log"; break;
-		case FLOP_LOG10:	func = g_log10; funcname = "__g_log10"; break;
-		case FLOP_SQRT:		func = g_sqrt; funcname = "__g_sqrt"; break;
-		case FLOP_CEIL:		func = ceil; funcname = "__ceil"; break;
-		case FLOP_FLOOR:	func = floor; funcname = "__floor"; break;
-		case FLOP_ACOS:		func = g_acos; funcname = "__g_acos"; break;
-		case FLOP_ASIN:		func = g_asin; funcname = "__g_asin"; break;
-		case FLOP_ATAN:		func = g_atan; funcname = "__g_atan"; break;
-		case FLOP_COS:		func = g_cos; funcname = "__g_cos"; break;
-		case FLOP_SIN:		func = g_sin; funcname = "__g_sin"; break;
-		case FLOP_TAN:		func = g_tan; funcname = "__g_tan"; break;
-		case FLOP_ACOS_DEG:	func = g_acos; funcname = "__g_acos"; break;
-		case FLOP_ASIN_DEG:	func = g_asin; funcname = "__g_asin"; break;
-		case FLOP_ATAN_DEG:	func = g_atan; funcname = "__g_atan"; break;
-		case FLOP_COS_DEG:	func = g_cosdeg; funcname = "__g_cosdeg"; break;
-		case FLOP_SIN_DEG:	func = g_sindeg; funcname = "__g_sindeg"; break;
-		case FLOP_TAN_DEG:	func = g_tan; funcname = "__g_tan"; break;
-		case FLOP_COSH:		func = g_cosh; funcname = "__g_cosh"; break;
-		case FLOP_SINH:		func = g_sinh; funcname = "__g_sinh"; break;
-		case FLOP_TANH:		func = g_tanh; funcname = "__g_tanh"; break;
-		case FLOP_ROUND:	func = round; funcname = "__round"; break;
+		case FLOP_ABS:		func = doubleFabs; break;
+		case FLOP_EXP:		func = doubleExp; break;
+		case FLOP_LOG:		func = doubleLog; break;
+		case FLOP_LOG10:	func = doubleLog10; break;
+		case FLOP_SQRT:		func = doubleSqrt; break;
+		case FLOP_CEIL:		func = doubleCeil; break;
+		case FLOP_FLOOR:	func = doubleFloor; break;
+		case FLOP_ACOS:		func = doubleAcos; break;
+		case FLOP_ASIN:		func = doubleAsin; break;
+		case FLOP_ATAN:		func = doubleAtan; break;
+		case FLOP_COS:		func = doubleCos; break;
+		case FLOP_SIN:		func = doubleSin; break;
+		case FLOP_TAN:		func = doubleTan; break;
+		case FLOP_ACOS_DEG:	func = doubleAcos; break;
+		case FLOP_ASIN_DEG:	func = doubleAsin; break;
+		case FLOP_ATAN_DEG:	func = doubleAtan; break;
+		case FLOP_COS_DEG:	func = doubleCosDeg; break;
+		case FLOP_SIN_DEG:	func = doubleSinDeg; break;
+		case FLOP_TAN_DEG:	func = doubleTan; break;
+		case FLOP_COSH:		func = doubleCosh; break;
+		case FLOP_SINH:		func = doubleSinh; break;
+		case FLOP_TANH:		func = doubleTanh; break;
+		case FLOP_ROUND:	func = doubleRound; break;
 		}
 
-		IRValue* result = cc.CreateCall(GetNativeFunc<double, double>(funcname, func), { v });
+		IRValue* result = cc.CreateCall(func, { v });
 
 		if (C == FLOP_ACOS_DEG || C == FLOP_ASIN_DEG || C == FLOP_ATAN_DEG)
 		{
@@ -1066,7 +1034,7 @@ void JitCompiler::EmitLENV2()
 	IRValue* x = LoadF(B);
 	IRValue* y = LoadF(B + 1);
 	IRValue* dotproduct = cc.CreateFAdd(cc.CreateFMul(x, x), cc.CreateFMul(y, y));
-	IRValue* len = cc.CreateCall(GetNativeFunc<double, double>("__g_sqrt", g_sqrt), { dotproduct });
+	IRValue* len = cc.CreateCall(doubleSqrt, { dotproduct });
 	StoreF(len, A);
 }
 
@@ -1168,7 +1136,7 @@ void JitCompiler::EmitLENV3()
 	IRValue* y = LoadF(B + 1);
 	IRValue* z = LoadF(B + 2);
 	IRValue* dotproduct = cc.CreateFAdd(cc.CreateFAdd(cc.CreateFMul(x, x), cc.CreateFMul(y, y)), cc.CreateFMul(z, z));
-	IRValue* len = cc.CreateCall(GetNativeFunc<double, double>("__g_sqrt", g_sqrt), { dotproduct });
+	IRValue* len = cc.CreateCall(doubleSqrt, { dotproduct });
 	StoreF(len, A);
 }
 

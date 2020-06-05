@@ -34,8 +34,6 @@ public:
 
 	IRFunction* Codegen();
 
-	// VMScriptFunction* GetScriptFunction() { return sfunc; }
-
 private:
 	// Declare EmitXX functions for the opcodes:
 	#define xx(op, name, mode, alt, kreg, ktype)	void Emit##op();
@@ -59,9 +57,6 @@ private:
 	void EmitThrowException(EVMAbortException reason);
 	IRBasicBlock* EmitThrowExceptionLabel(EVMAbortException reason);
 
-	static void ThrowArrayOutOfBounds(int index, int size);
-	static void ThrowException(int reason);
-
 	void Setup();
 	void CreateRegisters();
 	void IncrementVMCalls();
@@ -76,77 +71,9 @@ private:
 
 	IRFunctionType* GetFuncSignature();
 
-	template<typename T> IRType* GetIRType() { static_assert(std::is_pointer<T>::value, "Unsupported type"); return ircontext->getInt8PtrTy(); }
-	template<> IRType* GetIRType<void>() { return ircontext->getVoidTy(); }
-	template<> IRType* GetIRType<char>() { return ircontext->getInt8Ty(); }
-	template<> IRType* GetIRType<unsigned char>() { return ircontext->getInt8Ty(); }
-	template<> IRType* GetIRType<short>() { return ircontext->getInt16Ty(); }
-	template<> IRType* GetIRType<unsigned short>() { return ircontext->getInt16Ty(); }
-	template<> IRType* GetIRType<int>() { return ircontext->getInt32Ty(); }
-	template<> IRType* GetIRType<unsigned int>() { return ircontext->getInt32Ty(); }
-	template<> IRType* GetIRType<long long>() { return ircontext->getInt64Ty(); }
-	template<> IRType* GetIRType<unsigned long long>() { return ircontext->getInt64Ty(); }
-	template<> IRType* GetIRType<float>() { return ircontext->getFloatTy(); }
-	template<> IRType* GetIRType<double>() { return ircontext->getDoubleTy(); }
-
-	template<typename RetType>
-	IRFunctionType* GetFunctionType0() { return ircontext->getFunctionType(GetIRType<RetType>(), { }); }
-
-	template<typename RetType, typename P1>
-	IRFunctionType* GetFunctionType1() { return ircontext->getFunctionType(GetIRType<RetType>(), { GetIRType<P1>() }); }
-
-	template<typename RetType, typename P1, typename P2>
-	IRFunctionType* GetFunctionType2() { return ircontext->getFunctionType(GetIRType<RetType>(), { GetIRType<P1>(), GetIRType<P2>() }); }
-
-	template<typename RetType, typename P1, typename P2, typename P3>
-	IRFunctionType* GetFunctionType3() { return ircontext->getFunctionType(GetIRType<RetType>(), { GetIRType<P1>(), GetIRType<P2>(), GetIRType<P3>() }); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4>
-	IRFunctionType* GetFunctionType4() { return ircontext->getFunctionType(GetIRType<RetType>(), { GetIRType<P1>(), GetIRType<P2>(), GetIRType<P3>(), GetIRType<P4>() }); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5>
-	IRFunctionType* GetFunctionType5() { return ircontext->getFunctionType(GetIRType<RetType>(), { GetIRType<P1>(), GetIRType<P2>(), GetIRType<P3>(), GetIRType<P4>(), GetIRType<P5>() }); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
-	IRFunctionType* GetFunctionType6() { return ircontext->getFunctionType(GetIRType<RetType>(), { GetIRType<P1>(), GetIRType<P2>(), GetIRType<P3>(), GetIRType<P4>(), GetIRType<P5>(), GetIRType<P6>() }); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
-	IRFunctionType* GetFunctionType7() { return ircontext->getFunctionType(GetIRType<RetType>(), { GetIRType<P1>(), GetIRType<P2>(), GetIRType<P3>(), GetIRType<P4>(), GetIRType<P5>(), GetIRType<P6>(), GetIRType<P7>() }); }
-
-	IRFunction* GetNativeFunc(const char* name, void* ptr, IRFunctionType* functype)
-	{
-		IRFunction* func = ircontext->getFunction(name);
-		if (!func)
-		{
-			func = ircontext->createFunction(functype, name);
-			ircontext->addGlobalMapping(func, ptr);
-		}
-		return func;
-	}
-
-	template<typename RetType>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)()) { return GetNativeFunc(name, func, GetFunctionType0<RetType>()); }
-
-	template<typename RetType, typename P1>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1)) { return GetNativeFunc(name, func, GetFunctionType1<RetType, P1>()); }
-
-	template<typename RetType, typename P1, typename P2>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2)) { return GetNativeFunc(name, func, GetFunctionType2<RetType, P1, P2>()); }
-
-	template<typename RetType, typename P1, typename P2, typename P3>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3)) { return GetNativeFunc(name, func, GetFunctionType3<RetType, P1, P2, P3>()); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4)) { return GetNativeFunc(name, func, GetFunctionType4<RetType, P1, P2, P3, P4>()); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)) { return GetNativeFunc(name, func, GetFunctionType5<RetType, P1, P2, P3, P4, P5>()); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)) { return GetNativeFunc(name, func, GetFunctionType6<RetType, P1, P2, P3, P4, P5, P6>()); }
-
-	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
-	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)) { return GetNativeFunc(name, func, GetFunctionType7<RetType, P1, P2, P3, P4, P5, P6, P7>()); }
+	void GetTypes();
+	void CreateNativeFunctions();
+	IRFunction* CreateNativeFunction(IRType* returnType, std::vector<IRType*> args, const char* name, void* ptr);
 
 	template <typename Func>
 	void EmitComparisonOpcode(Func jmpFunc)
@@ -167,13 +94,13 @@ private:
 	IRValue* LoadA(int index) { return cc.CreateLoad(regA[index]); }
 	IRValue* LoadS(int index) { return cc.CreateLoad(regS[index]); }
 	IRValue* ConstD(int index) { return ircontext->getConstantInt(konstd[index]); }
-	IRValue* ConstF(int index) { return ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[index]); }
-	IRValue* ConstA(int index) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)konsta[index].v); }
-	IRValue* ConstS(int index) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)&konsts[index]); }
+	IRValue* ConstF(int index) { return ircontext->getConstantFloat(doubleTy, konstf[index]); }
+	IRValue* ConstA(int index) { return ircontext->getConstantInt(int8PtrTy, (uint64_t)konsta[index].v); }
+	IRValue* ConstS(int index) { return ircontext->getConstantInt(int8PtrTy, (uint64_t)&konsts[index]); }
 	IRValue* ConstValueD(int value) { return ircontext->getConstantInt(value); }
-	IRValue* ConstValueF(double value) { return ircontext->getConstantFloat(ircontext->getDoubleTy(), value); }
-	IRValue* ConstValueA(void* value) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)value); }
-	IRValue* ConstValueS(void* value) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)value); }
+	IRValue* ConstValueF(double value) { return ircontext->getConstantFloat(doubleTy, value); }
+	IRValue* ConstValueA(void* value) { return ircontext->getConstantInt(int8PtrTy, (uint64_t)value); }
+	IRValue* ConstValueS(void* value) { return ircontext->getConstantInt(int8PtrTy, (uint64_t)value); }
 	void StoreD(IRValue* value, int index) { cc.CreateStore(value, regD[index]); }
 	void StoreF(IRValue* value, int index) { cc.CreateStore(value, regF[index]); }
 	void StoreA(IRValue* value, int index) { cc.CreateStore(value, regA[index]); }
@@ -181,29 +108,27 @@ private:
 
 	IRValue* OffsetPtr(IRValue* ptr, IRValue* offset) { return cc.CreateGEP(ptr, { offset }); }
 	IRValue* OffsetPtr(IRValue* ptr, int offset) { return cc.CreateGEP(ptr, { ircontext->getConstantInt(offset) }); }
-	IRValue* ToInt8Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()); }
-	IRValue* ToInt8Ptr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()); }
-	IRValue* ToInt16Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt16PtrTy()); }
-	IRValue* ToInt32Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt32PtrTy()); }
-	IRValue* ToInt32Ptr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getInt32PtrTy()); }
-	IRValue* ToInt32Ptr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt32PtrTy()); }
-	IRValue* ToFloatPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getFloatPtrTy()); }
-	IRValue* ToDoublePtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getDoublePtrTy()); }
-	IRValue* ToDoublePtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getDoublePtrTy()); }
-	IRValue* ToDoublePtr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getDoublePtrTy()); }
-	IRValue* ToInt8PtrPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
-	IRValue* ToInt8PtrPtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
-	IRValue* ToInt8PtrPtr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
-	IRValue* Trunc8(IRValue* value) { return cc.CreateTrunc(value, ircontext->getInt8Ty()); }
-	IRValue* Trunc16(IRValue* value) { return cc.CreateTrunc(value, ircontext->getInt16Ty()); }
-	IRValue* FPTrunc(IRValue* value) { return cc.CreateFPTrunc(value, ircontext->getFloatTy()); }
-	IRValue* ZExt(IRValue* value) { return cc.CreateZExt(value, ircontext->getInt32Ty()); }
-	IRValue* SExt(IRValue* value) { return cc.CreateSExt(value, ircontext->getInt32Ty()); }
-	IRValue* FPExt(IRValue* value) { return cc.CreateFPExt(value, ircontext->getDoubleTy()); }
+	IRValue* ToInt8Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), int8PtrTy); }
+	IRValue* ToInt8Ptr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), int8PtrTy); }
+	IRValue* ToInt16Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), int16PtrTy); }
+	IRValue* ToInt32Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), int32PtrTy); }
+	IRValue* ToInt32Ptr(IRValue* ptr) { return cc.CreateBitCast(ptr, int32PtrTy); }
+	IRValue* ToInt32Ptr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), int32PtrTy); }
+	IRValue* ToFloatPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), floatPtrTy); }
+	IRValue* ToDoublePtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), doublePtrTy); }
+	IRValue* ToDoublePtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), doublePtrTy); }
+	IRValue* ToDoublePtr(IRValue* ptr) { return cc.CreateBitCast(ptr, doublePtrTy); }
+	IRValue* ToInt8PtrPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), int8PtrPtrTy); }
+	IRValue* ToInt8PtrPtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), int8PtrPtrTy); }
+	IRValue* ToInt8PtrPtr(IRValue* ptr) { return cc.CreateBitCast(ptr, int8PtrPtrTy); }
+	IRValue* Trunc8(IRValue* value) { return cc.CreateTrunc(value, int8Ty); }
+	IRValue* Trunc16(IRValue* value) { return cc.CreateTrunc(value, int16Ty); }
+	IRValue* FPTrunc(IRValue* value) { return cc.CreateFPTrunc(value, floatTy); }
+	IRValue* ZExt(IRValue* value) { return cc.CreateZExt(value, int32Ty); }
+	IRValue* SExt(IRValue* value) { return cc.CreateSExt(value, int32Ty); }
+	IRValue* FPExt(IRValue* value) { return cc.CreateFPExt(value, doubleTy); }
 	void Store(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
 	IRValue* Load(IRValue* ptr) { return cc.CreateLoad(ptr); }
-
-	static void CallAssignString(FString* to, FString* from) { *to = *from; }
 
 	VMScriptFunction* sfunc = nullptr;
 
@@ -242,4 +167,74 @@ private:
 	int offsetExtra = 0;
 
 	TArray<JitLabel> labels;
+
+	IRType* voidTy = nullptr;
+	IRType* int8Ty = nullptr;
+	IRType* int8PtrTy = nullptr;
+	IRType* int8PtrPtrTy = nullptr;
+	IRType* int16Ty = nullptr;
+	IRType* int16PtrTy = nullptr;
+	IRType* int32Ty = nullptr;
+	IRType* int32PtrTy = nullptr;
+	IRType* int64Ty = nullptr;
+	IRType* floatTy = nullptr;
+	IRType* floatPtrTy = nullptr;
+	IRType* doubleTy = nullptr;
+	IRType* doublePtrTy = nullptr;
+
+	IRFunction* validateCall = nullptr;
+	IRFunction* setReturnString = nullptr;
+	IRFunction* createFullVMFrame = nullptr;
+	IRFunction* popFullVMFrame = nullptr;
+	IRFunction* throwException = nullptr;
+	IRFunction* throwArrayOutOfBounds = nullptr;
+	IRFunction* stringAssignmentOperator = nullptr;
+	IRFunction* stringAssignmentOperatorCStr = nullptr;
+	IRFunction* stringPlusOperator = nullptr;
+	IRFunction* stringCompare = nullptr;
+	IRFunction* stringCompareNoCase = nullptr;
+	IRFunction* stringLength = nullptr;
+	IRFunction* readBarrier = nullptr;
+	IRFunction* writeBarrier = nullptr;
+	IRFunction* doubleModF = nullptr;
+	IRFunction* doublePow = nullptr;
+	IRFunction* doubleAtan2 = nullptr;
+	IRFunction* doubleFabs = nullptr;
+	IRFunction* doubleExp = nullptr;
+	IRFunction* doubleLog = nullptr;
+	IRFunction* doubleLog10 = nullptr;
+	IRFunction* doubleSqrt = nullptr;
+	IRFunction* doubleCeil = nullptr;
+	IRFunction* doubleFloor = nullptr;
+	IRFunction* doubleAcos = nullptr;
+	IRFunction* doubleAsin = nullptr;
+	IRFunction* doubleAtan = nullptr;
+	IRFunction* doubleCos = nullptr;
+	IRFunction* doubleSin = nullptr;
+	IRFunction* doubleTan = nullptr;
+	IRFunction* doubleCosDeg = nullptr;
+	IRFunction* doubleSinDeg = nullptr;
+	IRFunction* doubleCosh = nullptr;
+	IRFunction* doubleSinh = nullptr;
+	IRFunction* doubleTanh = nullptr;
+	IRFunction* doubleRound = nullptr;
+	IRFunction* castI2S = nullptr;
+	IRFunction* castU2S = nullptr;
+	IRFunction* castF2S = nullptr;
+	IRFunction* castV22S = nullptr;
+	IRFunction* castV32S = nullptr;
+	IRFunction* castP2S = nullptr;
+	IRFunction* castS2I = nullptr;
+	IRFunction* castS2F = nullptr;
+	IRFunction* castS2N = nullptr;
+	IRFunction* castN2S = nullptr;
+	IRFunction* castS2Co = nullptr;
+	IRFunction* castCo2S = nullptr;
+	IRFunction* castS2So = nullptr;
+	IRFunction* castSo2S = nullptr;
+	IRFunction* castSID2S = nullptr;
+	IRFunction* castTID2S = nullptr;
+	IRFunction* castB_S = nullptr;
+	IRFunction* dynCast = nullptr;
+	IRFunction* dynCastC = nullptr;
 };

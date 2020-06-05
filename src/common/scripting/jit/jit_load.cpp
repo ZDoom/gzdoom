@@ -21,7 +21,7 @@ void JitCompiler::EmitLKF()
 
 void JitCompiler::EmitLKS()
 {
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), ConstS(BC) });
+	cc.CreateCall(stringAssignmentOperator, { LoadS(A), ConstS(BC) });
 }
 
 void JitCompiler::EmitLKP()
@@ -31,25 +31,25 @@ void JitCompiler::EmitLKP()
 
 void JitCompiler::EmitLK_R()
 {
-	IRValue* base = ircontext->getConstantInt(ircontext->getInt32PtrTy(), (uint64_t)&konstd[C]);
+	IRValue* base = ircontext->getConstantInt(int32PtrTy, (uint64_t)&konstd[C]);
 	StoreD(Load(OffsetPtr(base, LoadD(B))), A);
 }
 
 void JitCompiler::EmitLKF_R()
 {
-	IRValue* base = ircontext->getConstantInt(ircontext->getDoublePtrTy(), (uint64_t)&konstf[C]);
+	IRValue* base = ircontext->getConstantInt(doublePtrTy, (uint64_t)&konstf[C]);
 	StoreF(Load(OffsetPtr(base, LoadD(B))), A);
 }
 
 void JitCompiler::EmitLKS_R()
 {
-	IRValue* base = ircontext->getConstantInt(ircontext->getInt8PtrTy()->getPointerTo(ircontext), (uint64_t)&konsts[C]);
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), Load(OffsetPtr(base, LoadD(B))) });
+	IRValue* base = ircontext->getConstantInt(int8PtrPtrTy, (uint64_t)&konsts[C]);
+	cc.CreateCall(stringAssignmentOperator, { LoadS(A), Load(OffsetPtr(base, LoadD(B))) });
 }
 
 void JitCompiler::EmitLKP_R()
 {
-	IRValue* base = ircontext->getConstantInt(ircontext->getInt8PtrTy()->getPointerTo(ircontext), (uint64_t)&konsta[C]);
+	IRValue* base = ircontext->getConstantInt(int8PtrPtrTy, (uint64_t)&konsta[C]);
 	StoreA(Load(OffsetPtr(base, LoadD(B))), A);
 }
 
@@ -174,13 +174,13 @@ void JitCompiler::EmitLDP_R()
 void JitCompiler::EmitLS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), OffsetPtr(LoadA(B), ConstD(C)) });
+	cc.CreateCall(stringAssignmentOperator, { LoadS(A), OffsetPtr(LoadA(B), ConstD(C)) });
 }
 
 void JitCompiler::EmitLS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), OffsetPtr(LoadA(B), LoadD(C)) });
+	cc.CreateCall(stringAssignmentOperator, { LoadS(A), OffsetPtr(LoadA(B), LoadD(C)) });
 }
 
 #if 0 // Inline read barrier impl
@@ -219,21 +219,16 @@ void JitCompiler::EmitLO_R()
 
 #else
 
-static DObject *ReadBarrier(DObject *p)
-{
-	return GC::ReadBarrier(p);
-}
-
 void JitCompiler::EmitLO()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreA(cc.CreateCall(GetNativeFunc<DObject*, DObject*>("__ReadBarrier", ReadBarrier), { OffsetPtr(LoadA(B), ConstD(C)) }), A);
+	StoreA(cc.CreateCall(readBarrier, { OffsetPtr(LoadA(B), ConstD(C)) }), A);
 }
 
 void JitCompiler::EmitLO_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreA(cc.CreateCall(GetNativeFunc<DObject*, DObject*>("__ReadBarrier", ReadBarrier), { OffsetPtr(LoadA(B), LoadD(C)) }), A);
+	StoreA(cc.CreateCall(readBarrier, { OffsetPtr(LoadA(B), LoadD(C)) }), A);
 }
 
 #endif
@@ -284,21 +279,16 @@ void JitCompiler::EmitLV3_R()
 	StoreF(Load(OffsetPtr(base, 2)), A + 2);
 }
 
-static void SetString(FString *to, char **from)
-{
-	*to = *from;
-}
-
 void JitCompiler::EmitLCS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.CreateCall(GetNativeFunc<void, FString*, char**>("__SetString", SetString), { LoadS(A), OffsetPtr(LoadA(B), ConstD(C)) });
+	cc.CreateCall(stringAssignmentOperatorCStr, { LoadS(A), OffsetPtr(LoadA(B), ConstD(C)) });
 }
 
 void JitCompiler::EmitLCS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.CreateCall(GetNativeFunc<void, FString*, char**>("__SetString", SetString), { LoadS(A), OffsetPtr(LoadA(B), LoadD(C)) });
+	cc.CreateCall(stringAssignmentOperatorCStr, { LoadS(A), OffsetPtr(LoadA(B), LoadD(C)) });
 }
 
 void JitCompiler::EmitLBIT()
@@ -307,6 +297,6 @@ void JitCompiler::EmitLBIT()
 	IRValue* value = Load(LoadA(B));
 	value = cc.CreateAnd(value, ircontext->getConstantInt(C));
 	value = cc.CreateICmpNE(value, ircontext->getConstantInt(0));
-	value = cc.CreateZExt(value, ircontext->getInt32Ty());
+	value = cc.CreateZExt(value, int32Ty);
 	StoreD(value, A);
 }

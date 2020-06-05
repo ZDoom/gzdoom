@@ -2,6 +2,10 @@
 #include "jit.h"
 #include "jitintern.h"
 #include "printf.h"
+#include "v_video.h"
+#include "s_soundinternal.h"
+#include "texturemanager.h"
+#include "palutil.h"
 
 extern PString *TypeString;
 extern PStruct *TypeVector2;
@@ -158,7 +162,7 @@ void JitCompiler::CheckVMFrame()
 {
 	if (!vmframe)
 	{
-		vmframe = irfunc->createAlloca(ircontext->getInt8Ty(), ircontext->getConstantInt(sfunc->StackSize), "vmframe");
+		vmframe = irfunc->createAlloca(int8Ty, ircontext->getConstantInt(sfunc->StackSize), "vmframe");
 	}
 }
 
@@ -166,7 +170,7 @@ IRValue* JitCompiler::GetCallReturns()
 {
 	if (!callReturns)
 	{
-		callReturns = irfunc->createAlloca(ircontext->getInt8Ty(), ircontext->getConstantInt(sizeof(VMReturn) * MAX_RETURNS), "callReturns");
+		callReturns = irfunc->createAlloca(int8Ty, ircontext->getConstantInt(sizeof(VMReturn) * MAX_RETURNS), "callReturns");
 	}
 	return callReturns;
 }
@@ -215,6 +219,9 @@ IRBasicBlock* JitCompiler::GetLabel(size_t pos)
 
 void JitCompiler::Setup()
 {
+	GetTypes();
+	CreateNativeFunctions();
+
 	//static const char *marks = "=======================================================";
 	//cc.comment("", 0);
 	//cc.comment(marks, 56);
@@ -226,7 +233,8 @@ void JitCompiler::Setup()
 	//cc.comment(marks, 56);
 	//cc.comment("", 0);
 
-	irfunc = ircontext->createFunction(GetFunctionType5<int, VMFunction*, void*, int, void*, int>(), sfunc->PrintableName.GetChars());
+	IRFunctionType* functype = ircontext->getFunctionType(int32Ty, { int8PtrTy, int8PtrTy, int32Ty, int8PtrTy, int32Ty });
+	irfunc = ircontext->createFunction(functype, sfunc->PrintableName.GetChars());
 	irfunc->fileInfo.push_back({ sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars() });
 
 	args = irfunc->args[1];
@@ -323,17 +331,9 @@ void JitCompiler::SetupSimpleFrame()
 		StoreA(ConstValueA(nullptr), i);
 }
 
-static VMFrameStack *CreateFullVMFrame(VMScriptFunction *func, VMValue *args, int numargs)
-{
-	VMFrameStack *stack = &GlobalVMStack;
-	VMFrame *newf = stack->AllocFrame(func);
-	VMFillParams(args, newf, numargs);
-	return stack;
-}
-
 void JitCompiler::SetupFullVMFrame()
 {
-	vmframestack = cc.CreateCall(GetNativeFunc<VMFrameStack*, VMScriptFunction*, VMValue*, int>("__CreateFullVMFrame", CreateFullVMFrame), { ConstValueA(sfunc), args, numargs });
+	vmframestack = cc.CreateCall(createFullVMFrame, { ConstValueA(sfunc), args, numargs });
 
 	IRValue* Blocks = Load(ToInt8PtrPtr(vmframestack)); // vmframestack->Blocks
 	vmframe = Load(ToInt8PtrPtr(Blocks, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
@@ -351,23 +351,18 @@ void JitCompiler::SetupFullVMFrame()
 		StoreA(Load(ToInt8PtrPtr(vmframe, offsetA + i * sizeof(void*))), i);
 }
 
-static void PopFullVMFrame(VMFrameStack * vmframestack)
-{
-	vmframestack->PopFrame();
-}
-
 void JitCompiler::EmitPopFrame()
 {
 	if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0)
 	{
-		cc.CreateCall(GetNativeFunc<void, VMFrameStack*>("__PopFullVMFrame", PopFullVMFrame), { vmframestack });
+		cc.CreateCall(popFullVMFrame, { vmframestack });
 	}
 }
 
 void JitCompiler::IncrementVMCalls()
 {
 	// VMCalls[0]++
-	IRValue* vmcallsptr = ircontext->getConstantInt(ircontext->getInt32PtrTy(), (uint64_t)VMCalls);
+	IRValue* vmcallsptr = ircontext->getConstantInt(int32PtrTy, (uint64_t)VMCalls);
 	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(vmcallsptr), ircontext->getConstantInt(1)), vmcallsptr);
 }
 
@@ -379,34 +374,30 @@ void JitCompiler::CreateRegisters()
 	regS.Resize(sfunc->NumRegS);
 
 	FString regname;
-	IRType* type;
 	IRValue* arraySize = ircontext->getConstantInt(1);
 
-	type = ircontext->getInt32Ty();
 	for (int i = 0; i < sfunc->NumRegD; i++)
 	{
 		regname.Format("regD%d", i);
-		regD[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
+		regD[i] = irfunc->createAlloca(int32Ty, arraySize, regname.GetChars());
 	}
 
-	type = ircontext->getDoubleTy();
 	for (int i = 0; i < sfunc->NumRegF; i++)
 	{
 		regname.Format("regF%d", i);
-		regF[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
+		regF[i] = irfunc->createAlloca(doubleTy, arraySize, regname.GetChars());
 	}
 
-	type = ircontext->getInt8PtrTy();
 	for (int i = 0; i < sfunc->NumRegS; i++)
 	{
 		regname.Format("regS%d", i);
-		regS[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
+		regS[i] = irfunc->createAlloca(int8PtrTy, arraySize, regname.GetChars());
 	}
 
 	for (int i = 0; i < sfunc->NumRegA; i++)
 	{
 		regname.Format("regA%d", i);
-		regA[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
+		regA[i] = irfunc->createAlloca(int8PtrTy, arraySize, regname.GetChars());
 	}
 }
 
@@ -420,13 +411,8 @@ void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 
 void JitCompiler::EmitThrowException(EVMAbortException reason)
 {
-	cc.CreateCall(GetNativeFunc<void, int>("__ThrowException", &JitCompiler::ThrowException), { ConstValueD(reason) });
+	cc.CreateCall(throwException, { ConstValueD(reason) });
 	cc.CreateRet(ConstValueD(0));
-}
-
-void JitCompiler::ThrowException(int reason)
-{
-	ThrowAbortException((EVMAbortException)reason, nullptr);
 }
 
 IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
@@ -443,4 +429,182 @@ IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
 void JitCompiler::EmitNOP()
 {
 	// The IR doesn't have a NOP instruction
+}
+
+static void ValidateCall(DObject* o, VMFunction* f, int b)
+{
+	FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
+}
+
+static void SetReturnString(VMReturn* ret, FString* str)
+{
+	ret->SetString(*str);
+}
+
+static VMFrameStack* CreateFullVMFrame(VMScriptFunction* func, VMValue* args, int numargs)
+{
+	VMFrameStack* stack = &GlobalVMStack;
+	VMFrame* newf = stack->AllocFrame(func);
+	VMFillParams(args, newf, numargs);
+	return stack;
+}
+
+static void PopFullVMFrame(VMFrameStack* vmframestack)
+{
+	vmframestack->PopFrame();
+}
+
+static void ThrowException(int reason)
+{
+	ThrowAbortException((EVMAbortException)reason, nullptr);
+}
+
+static void ThrowArrayOutOfBounds(int index, int size)
+{
+	if (index >= size)
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", size, index);
+	}
+	else
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", index);
+	}
+}
+
+static DObject* ReadBarrier(DObject* p) { return GC::ReadBarrier(p); }
+static void WriteBarrier(DObject* p) { GC::WriteBarrier(p); }
+
+static void StringAssignmentOperator(FString* to, FString* from) { *to = *from; }
+static void StringAssignmentOperatorCStr(FString* to, char** from) { *to = *from; }
+static void StringPlusOperator(FString* to, FString* first, FString* second) { *to = *first + *second; }
+static int StringLength(FString* str) { return static_cast<int>(str->Len()); }
+static int StringCompareNoCase(FString* first, FString* second) { return first->CompareNoCase(*second); }
+static int StringCompare(FString* first, FString* second) { return first->Compare(*second); }
+
+static double DoubleModF(double a, double b) { return a - floor(a / b) * b; }
+static double DoublePow(double a, double b) { return g_pow(a, b); }
+static double DoubleAtan2(double a, double b) { return g_atan2(a, b); }
+static double DoubleFabs(double a) { return fabs(a); }
+static double DoubleExp(double a) { return g_exp(a); }
+static double DoubleLog(double a) { return g_log(a); }
+static double DoubleLog10(double a) { return g_log10(a); }
+static double DoubleSqrt(double a) { return g_sqrt(a); }
+static double DoubleCeil(double a) { return ceil(a); }
+static double DoubleFloor(double a) { return floor(a); }
+static double DoubleAcos(double a) { return g_acos(a); }
+static double DoubleAsin(double a) { return g_asin(a); }
+static double DoubleAtan(double a) { return g_atan(a); }
+static double DoubleCos(double a) { return g_cos(a); }
+static double DoubleSin(double a) { return g_sin(a); }
+static double DoubleTan(double a) { return g_tan(a); }
+static double DoubleCosDeg(double a) { return g_cosdeg(a); }
+static double DoubleSinDeg(double a) { return g_sindeg(a); }
+static double DoubleCosh(double a) { return g_cosh(a); }
+static double DoubleSinh(double a) { return g_sinh(a); }
+static double DoubleTanh(double a) { return g_tanh(a); }
+static double DoubleRound(double a) { return round(a); }
+
+static void CastI2S(FString* a, int b) { a->Format("%d", b); }
+static void CastU2S(FString* a, int b) { a->Format("%u", b); }
+static void CastF2S(FString* a, double b) { a->Format("%.5f", b); }
+static void CastV22S(FString* a, double b, double b1) { a->Format("(%.5f, %.5f)", b, b1); }
+static void CastV32S(FString* a, double b, double b1, double b2) { a->Format("(%.5f, %.5f, %.5f)", b, b1, b2); }
+static void CastP2S(FString* a, void* b) { if (b == nullptr) *a = "null"; else a->Format("%p", b); }
+static int CastS2I(FString* b) { return (int)b->ToLong(); }
+static double CastS2F(FString* b) { return b->ToDouble(); }
+static int CastS2N(FString* b) { return b->Len() == 0 ? NAME_None : FName(*b).GetIndex(); }
+static void CastN2S(FString* a, int b) { FName name = FName(ENamedName(b)); *a = name.IsValidName() ? name.GetChars() : ""; }
+static int CastS2Co(FString* b) { return V_GetColor(nullptr, *b); }
+static void CastCo2S(FString* a, int b) { PalEntry c(b); a->Format("%02x %02x %02x", c.r, c.g, c.b); }
+static int CastS2So(FString* b) { return FSoundID(*b); }
+static void CastSo2S(FString* a, int b) { *a = soundEngine->GetSoundName(b); }
+static void CastSID2S(FString* a, unsigned int b) { VM_CastSpriteIDToString(a, b); }
+static void CastTID2S(FString* a, int b) { auto tex = TexMan.GetGameTexture(*(FTextureID*)&b); *a = (tex == nullptr) ? "(null)" : tex->GetName().GetChars(); }
+static int CastB_S(FString* s) { return s->Len() > 0; }
+
+static DObject* DynCast(DObject* obj, PClass* cls) { return (obj && obj->IsKindOf(cls)) ? obj : nullptr; }
+static PClass* DynCastC(PClass* cls1, PClass* cls2) { return (cls1 && cls1->IsDescendantOf(cls2)) ? cls1 : nullptr; }
+
+void JitCompiler::GetTypes()
+{
+	voidTy = ircontext->getVoidTy();
+	int8Ty = ircontext->getInt8Ty();
+	int8PtrTy = ircontext->getInt8PtrTy();
+	int8PtrPtrTy = int8PtrTy->getPointerTo(ircontext);
+	int16Ty = ircontext->getInt16Ty();
+	int16PtrTy = ircontext->getInt16PtrTy();
+	int32Ty = ircontext->getInt32Ty();
+	int32PtrTy = ircontext->getInt32PtrTy();
+	int64Ty = ircontext->getInt64Ty();
+	floatTy = ircontext->getFloatTy();
+	floatPtrTy = ircontext->getFloatPtrTy();
+	doubleTy = ircontext->getDoubleTy();
+	doublePtrTy = ircontext->getDoublePtrTy();
+}
+
+void JitCompiler::CreateNativeFunctions()
+{
+	validateCall = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy, int32Ty }, "__ValidateCall", ValidateCall);
+	setReturnString = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__SetReturnString", SetReturnString);
+	createFullVMFrame = CreateNativeFunction(int8PtrTy, { int8PtrTy, int8PtrTy, int32Ty }, "__CreateFullVMFrame", CreateFullVMFrame);
+	popFullVMFrame = CreateNativeFunction(voidTy, { int8PtrTy }, "__PopFullVMFrame", PopFullVMFrame);
+	throwException = CreateNativeFunction(voidTy, { int32Ty }, "__ThrowException", ThrowException);
+	throwArrayOutOfBounds = CreateNativeFunction(voidTy, { int32Ty, int32Ty }, "__ThrowArrayOutOfBounds", ThrowArrayOutOfBounds);
+	stringAssignmentOperator = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringAssignmentOperator", StringAssignmentOperator);
+	stringAssignmentOperatorCStr = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringAssignmentOperatorCStr", StringAssignmentOperatorCStr);
+	stringPlusOperator = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy, int8PtrTy }, "__StringPlusOperator", StringPlusOperator);
+	stringCompare = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringCompare", StringCompare);
+	stringCompareNoCase = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringCompareNoCase", StringCompareNoCase);
+	stringLength = CreateNativeFunction(int32Ty, { int8PtrTy }, "__StringLength", StringLength);
+	readBarrier = CreateNativeFunction(int8PtrTy, { int8PtrTy }, "__ReadBarrier", ReadBarrier);
+	writeBarrier = CreateNativeFunction(voidTy, { int8PtrTy }, "__WriteBarrier", WriteBarrier);
+	doubleModF = CreateNativeFunction(doubleTy, { doubleTy, doubleTy }, "__DoubleModF", DoubleModF);
+	doublePow = CreateNativeFunction(doubleTy, { doubleTy, doubleTy }, "__DoublePow", DoublePow);
+	doubleAtan2 = CreateNativeFunction(doubleTy, { doubleTy, doubleTy }, "__DoubleAtan2", DoubleAtan2);
+	doubleFabs = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleFabs", DoubleFabs);
+	doubleExp = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleExp", DoubleExp);
+	doubleLog = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleLog", DoubleLog);
+	doubleLog10 = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleLog10", DoubleLog10);
+	doubleSqrt = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleSqrt", DoubleSqrt);
+	doubleCeil = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleCeil", DoubleCeil);
+	doubleFloor = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleFloor", DoubleFloor);
+	doubleAcos = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleAcos", DoubleAcos);
+	doubleAsin = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleAsin", DoubleAsin);
+	doubleAtan = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleAtan", DoubleAtan);
+	doubleCos = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleCos", DoubleCos);
+	doubleSin = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleSin", DoubleSin);
+	doubleTan = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleTan", DoubleTan);
+	doubleCosDeg = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleCosDeg", DoubleCosDeg);
+	doubleSinDeg = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleSinDeg", DoubleSinDeg);
+	doubleCosh = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleCosh", DoubleCosh);
+	doubleSinh = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleSinh", DoubleSinh);
+	doubleTanh = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleTanh", DoubleTanh);
+	doubleRound = CreateNativeFunction(doubleTy, { doubleTy }, "__DoubleRound", DoubleRound);
+	castI2S = CreateNativeFunction(voidTy, { int8PtrTy, int32Ty }, "__CastI2S", CastI2S);
+	castU2S = CreateNativeFunction(voidTy, { int8PtrTy, int32Ty }, "__CastU2S", CastU2S);
+	castF2S = CreateNativeFunction(voidTy, { int8PtrTy, doubleTy }, "__CastF2S", CastF2S);
+	castV22S = CreateNativeFunction(voidTy, { int8PtrTy, doubleTy, doubleTy }, "__CastV22S", CastV22S);
+	castV32S = CreateNativeFunction(voidTy, { int8PtrTy, doubleTy, doubleTy, doubleTy }, "__CastV32S", CastV32S);
+	castP2S = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__CastP2S", CastP2S);
+	castS2I = CreateNativeFunction(int32Ty, { int8PtrTy }, "__CastS2I", CastS2I);
+	castS2F = CreateNativeFunction(doubleTy, { int8PtrTy }, "__CastS2F", CastS2F);
+	castS2N = CreateNativeFunction(int32Ty, { int8PtrTy }, "__CastS2N", CastS2N);
+	castN2S = CreateNativeFunction(voidTy, { int8PtrTy, int32Ty }, "__CastN2S", CastN2S);
+	castS2Co = CreateNativeFunction(int32Ty, { int8PtrTy }, "__CastS2Co", CastS2Co);
+	castCo2S = CreateNativeFunction(voidTy, { int8PtrTy, int32Ty }, "__CastCo2S", CastCo2S);
+	castS2So = CreateNativeFunction(int32Ty, { int8PtrTy }, "__CastS2So", CastS2So);
+	castSo2S = CreateNativeFunction(voidTy, { int8PtrTy, int32Ty }, "__CastSo2S", CastSo2S);
+	castSID2S = CreateNativeFunction(voidTy, { int8PtrTy, int32Ty }, "__CastSID2S", CastSID2S);
+	castTID2S = CreateNativeFunction(voidTy, { int8PtrTy, int32Ty }, "__CastTID2S", CastTID2S);
+	castB_S = CreateNativeFunction(int32Ty, { int8PtrTy }, "__CastB_S", CastB_S);
+	dynCast = CreateNativeFunction(int8PtrTy, { int8PtrTy, int8PtrTy }, "__DynCast", DynCast);
+	dynCastC = CreateNativeFunction(int8PtrTy, { int8PtrTy, int8PtrTy }, "__DynCastC", DynCastC);
+}
+
+IRFunction* JitCompiler::CreateNativeFunction(IRType* returnType, std::vector<IRType*> args, const char* name, void* ptr)
+{
+	IRFunctionType* functype = ircontext->getFunctionType(returnType, args);
+	IRFunction* func = ircontext->createFunction(functype, name);
+	ircontext->addGlobalMapping(func, ptr);
+	return func;
 }

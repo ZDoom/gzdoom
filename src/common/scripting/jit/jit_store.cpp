@@ -64,27 +64,25 @@ void JitCompiler::EmitSDP_R()
 void JitCompiler::EmitSS()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { OffsetPtr(LoadA(A), ConstD(C)), LoadS(B) });
+	cc.CreateCall(stringAssignmentOperator, { OffsetPtr(LoadA(A), ConstD(C)), LoadS(B) });
 }
 
 void JitCompiler::EmitSS_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { OffsetPtr(LoadA(A), LoadD(C)), LoadS(B) });
+	cc.CreateCall(stringAssignmentOperator, { OffsetPtr(LoadA(A), LoadD(C)), LoadS(B) });
 }
 
 void JitCompiler::EmitSO()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	typedef void(*FuncPtr)(DObject*);
-	cc.CreateCall(GetNativeFunc<void, DObject*>("__WriteBarrier", static_cast<FuncPtr>(GC::WriteBarrier)), { OffsetPtr(LoadA(A), ConstD(C)), LoadA(B) });
+	cc.CreateCall(writeBarrier, { OffsetPtr(LoadA(A), ConstD(C)), LoadA(B) });
 }
 
 void JitCompiler::EmitSO_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	typedef void(*FuncPtr)(DObject*);
-	cc.CreateCall(GetNativeFunc<void, DObject*>("__WriteBarrier", static_cast<FuncPtr>(GC::WriteBarrier)), { OffsetPtr(LoadA(A), LoadD(C)), LoadA(B) });
+	cc.CreateCall(writeBarrier, { OffsetPtr(LoadA(A), LoadD(C)), LoadA(B) });
 }
 
 void JitCompiler::EmitSP()

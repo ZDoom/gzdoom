@@ -50,23 +50,13 @@ void JitCompiler::EmitIJMP()
 	EmitThrowException(X_OTHER);
 }
 
-static void ValidateCall(DObject *o, VMFunction *f, int b)
-{
-	FScopeBarrier::ValidateCall(o->GetClass(), f, b - 1);
-}
-
 void JitCompiler::EmitSCOPE()
 {
 	auto continuebb = irfunc->createBasicBlock({});
 	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
 	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(A), ConstValueA(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateCall(GetNativeFunc<void, DObject*, VMFunction*, int>("__ValidateCall", ValidateCall), { LoadA(A), ConstA(C), ConstValueD(B) });
-}
-
-static void SetString(VMReturn* ret, FString* str)
-{
-	ret->SetString(*str);
+	cc.CreateCall(validateCall, { LoadA(A), ConstA(C), ConstValueD(B) });
 }
 
 void JitCompiler::EmitRET()
@@ -139,7 +129,7 @@ void JitCompiler::EmitRET()
 			break;
 		case REGT_STRING:
 		{
-			cc.CreateCall(GetNativeFunc<void, VMReturn*, FString*>("__SetString", SetString), { location, (regtype & REGT_KONST) ? ConstS(regnum) : LoadS(regnum) });
+			cc.CreateCall(setReturnString, { location, (regtype & REGT_KONST) ? ConstS(regnum) : LoadS(regnum) });
 			break;
 		}
 		case REGT_POINTER:
@@ -218,7 +208,7 @@ void JitCompiler::EmitBOUND()
 	IRBasicBlock* exceptionbb = irfunc->createBasicBlock({});
 	cc.CreateCondBr(cc.CreateICmpUGE(LoadD(A), ConstValueD(BC)), exceptionbb, continuebb);
 	cc.SetInsertPoint(exceptionbb);
-	cc.CreateCall(GetNativeFunc<void, int, int>("__ThrowArrayOutOfBounds", &JitCompiler::ThrowArrayOutOfBounds), { LoadD(A), ConstValueD(BC) });
+	cc.CreateCall(throwArrayOutOfBounds, { LoadD(A), ConstValueD(BC) });
 	exceptionbb->code.front()->lineNumber = sfunc->PCToLine(pc);
 	cc.CreateBr(continuebb);
 	cc.SetInsertPoint(continuebb);
@@ -230,7 +220,7 @@ void JitCompiler::EmitBOUND_K()
 	IRBasicBlock* exceptionbb = irfunc->createBasicBlock({});
 	cc.CreateCondBr(cc.CreateICmpUGE(LoadD(A), ConstD(BC)), exceptionbb, continuebb);
 	cc.SetInsertPoint(exceptionbb);
-	cc.CreateCall(GetNativeFunc<void, int, int>("__ThrowArrayOutOfBounds", &JitCompiler::ThrowArrayOutOfBounds), { LoadD(A), ConstD(BC) });
+	cc.CreateCall(throwArrayOutOfBounds, { LoadD(A), ConstD(BC) });
 	exceptionbb->code.front()->lineNumber = sfunc->PCToLine(pc);
 	cc.CreateBr(continuebb);
 	cc.SetInsertPoint(continuebb);
@@ -242,20 +232,8 @@ void JitCompiler::EmitBOUND_R()
 	IRBasicBlock* exceptionbb = irfunc->createBasicBlock({});
 	cc.CreateCondBr(cc.CreateICmpUGE(LoadD(A), LoadD(B)), exceptionbb, continuebb);
 	cc.SetInsertPoint(exceptionbb);
-	cc.CreateCall(GetNativeFunc<void, int, int>("__ThrowArrayOutOfBounds", &JitCompiler::ThrowArrayOutOfBounds), { LoadD(A), LoadD(BC) });
+	cc.CreateCall(throwArrayOutOfBounds, { LoadD(A), LoadD(BC) });
 	exceptionbb->code.front()->lineNumber = sfunc->PCToLine(pc);
 	cc.CreateBr(continuebb);
 	cc.SetInsertPoint(continuebb);
-}
-
-void JitCompiler::ThrowArrayOutOfBounds(int index, int size)
-{
-	if (index >= size)
-	{
-		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", size, index);
-	}
-	else
-	{
-		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", index);
-	}
 }

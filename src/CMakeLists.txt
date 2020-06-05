@@ -641,6 +641,7 @@ file( GLOB HEADER_FILES
 	common/scripting/backend/*.h
 	common/scripting/frontend/*.h
 	utility/*.h
+	network/*.h
 	scripting/*.h
 	scripting/backend/*.h
 	scripting/decorate/*.h

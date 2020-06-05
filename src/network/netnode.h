@@ -15,6 +15,8 @@ public:
 	void WriteMessage(const void *data, size_t size, bool unreliable);
 	void Send(doomcom_t* comm, int nodeIndex);
 	void AckPacket(uint8_t headerFlags, uint16_t serial, uint16_t ack);
+
+	FString GetStats();
 	
 private:
 	struct Message

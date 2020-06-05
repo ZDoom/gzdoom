@@ -81,6 +81,20 @@ void NetNodeOutput::AckPacket(uint8_t headerFlags, uint16_t serial, uint16_t ack
 	}
 }
 
+FString NetNodeOutput::GetStats()
+{
+	int total = 0;
+	int count = 0;
+	for (auto& msg : mMessages)
+	{
+		total += msg->size;
+		count++;
+	}
+	FString out;
+	out.Format("messages = %d, bytes = %d", count, total);
+	return out;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 bool NetNodeInput::IsMessageAvailable()

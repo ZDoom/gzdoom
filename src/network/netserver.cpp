@@ -203,6 +203,13 @@ int NetServer::GetPing(int player) const
 	return 0;
 }
 
+FString NetServer::GetStats()
+{
+	FString out;
+	out = "NetServer";
+	return out;
+}
+
 void NetServer::ListPingTimes()
 {
 #if 0

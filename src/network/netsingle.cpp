@@ -123,3 +123,8 @@ void NetSinglePlayer::ListPingTimes()
 void NetSinglePlayer::Network_Controller(int playernum, bool add)
 {
 }
+
+FString NetSinglePlayer::GetStats()
+{
+	return "Not in a multiplayer game";
+}

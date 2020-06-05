@@ -62,6 +62,7 @@ public:
 	// Statistics
 	virtual int GetPing(int player) const = 0;
 	int GetHighPingThreshold() const { return ((BACKUPTICS / 2 - 1)) * (1000 / TICRATE); }
+	virtual FString GetStats() = 0;
 
 	// CCMDs
 	virtual void ListPingTimes() = 0;

@@ -84,6 +84,14 @@ CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO | CVAR_NOSAVE)
 	}
 }
 
+ADD_STAT(net)
+{
+	if (network)
+		return network->GetStats();
+	else
+		return "Network object is null!";
+}
+
 #if 0
 CVAR(Int, net_fakelatency, 0, 0);
 

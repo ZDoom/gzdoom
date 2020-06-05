@@ -230,6 +230,13 @@ int NetClient::GetPing(int player) const
 		return 0;
 }
 
+FString NetClient::GetStats()
+{
+	FString out;
+	out.Format("Tic ping = %d, unacked outbound data (%s)", mSendTic - mReceiveTic, mOutput.GetStats().GetChars());
+	return out;
+}
+
 void NetClient::ListPingTimes()
 {
 }

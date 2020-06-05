@@ -47,6 +47,7 @@ public:
 	void WriteBotInput(int player, const ticcmd_t &cmd) override;
 
 	int GetPing(int player) const override;
+	FString GetStats() override;
 
 	void ListPingTimes() override;
 	void Network_Controller(int playernum, bool add) override;

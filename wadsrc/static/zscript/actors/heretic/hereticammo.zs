@@ -84,8 +84,8 @@ Class MaceAmmo : Ammo
 		Inventory.PickupMessage "$TXT_AMMOMACE1";
 		Inventory.Amount 20;
 		Inventory.MaxAmount 150;
-		Ammo.BackpackAmount 20;
-		Ammo.BackpackMaxAmount 300;
+		Ammo.BackpackAmount 0;
+		Ammo.BackpackMaxAmount 150;
 		Inventory.Icon "INAMLOB";
 		Tag "$AMMO_MACE";
 	}

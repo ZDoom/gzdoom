@@ -820,12 +820,10 @@ class StatusScreen abstract play version("2.5")
 			break;
 	
 		case ShowNextLoc:
+		case LeavingIntermission:	// this must still draw the screen once more for the wipe code to pick up.
 			drawShowNextLoc();
 			break;
 	
-		case LeavingIntermission:
-			break;
-
 		default:
 			drawNoState();
 			break;

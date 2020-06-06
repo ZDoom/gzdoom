@@ -332,7 +332,7 @@ void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_
 	modelMatrix.loadIdentity();
 	modelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
 
-	float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
+	float xscale = texw < 1024.f ? floorf(1024.f / float(texw)) : 1.f;
 	float yscale = 1.f;
 	auto texskyoffset = tex->GetSkyOffset() + skyoffset;
 	if (texh <= 128 && tiled)

@@ -601,7 +601,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			// placing the animations precisely where they belong on the base pic
 			animwidth = background->GetDisplayWidth();
 			animheight = background->GetDisplayHeight();
-			if (gameinfo.fullscreenautoaspect == 3 && animheight == 200 && animwidth > 320) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
+			if (gameinfo.fullscreenautoaspect > 0) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
 			DrawTexture(twod, background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
@@ -658,7 +658,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		}
 		if (a->ctr >= 0)
 			DrawTexture(twod, a->frames[a->ctr], a->loc.x, a->loc.y,
-				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
+				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, DTA_FullscreenScale, gameinfo.fullscreenautoaspect, TAG_DONE);
 	}
 
 	if (drawsplat)

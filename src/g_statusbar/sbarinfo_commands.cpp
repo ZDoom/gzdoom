@@ -1986,10 +1986,10 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 			};
 
 			int ratio = ratioTypes[0].second;
-			float distance = fabs(ratioTypes[0].first - aspect);
+			float distance = fabsf(ratioTypes[0].first - aspect);
 			for (int i = 1; ratioTypes[i].first != 0.0f; i++)
 			{
-				float d = fabs(ratioTypes[i].first - aspect);
+				float d = fabsf(ratioTypes[i].first - aspect);
 				if (d < distance)
 				{
 					ratio = ratioTypes[i].second;

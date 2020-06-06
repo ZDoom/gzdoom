@@ -178,7 +178,7 @@ class DoomStatusScreen : StatusScreen
 				statsx = max(0, (320 - allwidth) / 2);
 			}
 
-			printFont = generic_ui? IntermissionFont : BigFont;
+			printFont = generic_ui? IntermissionFont : content.mFont;
 			screen.DrawText (textFont, tcolor, statsx, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
 			screen.DrawText (textFont, tcolor, statsx, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
 			screen.DrawText (textFont, tcolor, statsx, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
@@ -240,15 +240,15 @@ class RavenStatusScreen : DoomStatusScreen
 		int countpos = gameinfo.gametype==GAME_Strife? 285:270;
 		if (sp_state >= 2)
 		{
-			drawPercent (IntermissionFont, countpos, 65, cnt_kills[0], wbs.maxkills, true, tcolor);
+			drawPercent (textFont, countpos, 65, cnt_kills[0], wbs.maxkills, true, tcolor);
 		}
 		if (sp_state >= 4)
 		{
-			drawPercent (IntermissionFont, countpos, 90, cnt_items[0], wbs.maxitems, true, tcolor);
+			drawPercent (textFont, countpos, 90, cnt_items[0], wbs.maxitems, true, tcolor);
 		}
 		if (sp_state >= 6)
 		{
-			drawPercent (IntermissionFont, countpos, 115, cnt_secret[0], wbs.maxsecret, true, tcolor);
+			drawPercent (textFont, countpos, 115, cnt_secret[0], wbs.maxsecret, true, tcolor);
 		}
 		if (sp_state >= 8)
 		{

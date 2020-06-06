@@ -399,7 +399,7 @@ bool SetTextureParms(F2DDrawer * drawer, DrawParms *parms, FGameTexture *img, do
 			auto screenratio = ActiveRatio(GetWidth(), GetHeight());
 			if (autoaspect == 3)
 			{
-				if (screenratio >= aspect || aspect < 1.4) autoaspect = 1; // screen is wider than the image -> pillarbox it. 4:3 images must also be pillarboxes if the screen is taller than the image
+				if (screenratio >= aspect || aspect < 1.4) autoaspect = 1; // screen is wider than the image -> pillarbox it. 4:3 images must also be pillarboxed if the screen is taller than the image
 				else if (screenratio > 1.32) autoaspect = 2;				// on anything 4:3 and wider crop the sides of the image.
 				else
 				{

@@ -601,6 +601,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			// placing the animations precisely where they belong on the base pic
 			animwidth = background->GetDisplayWidth();
 			animheight = background->GetDisplayHeight();
+			if (gameinfo.fullscreenautoaspect == 3 && animheight == 200 && animwidth > 320) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
 			DrawTexture(twod, background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
@@ -726,6 +727,7 @@ void WI_Drawer()
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
 			FillBorder(twod, nullptr);
+			twod->ClearClipRect();
 			VMValue self = WI_Screen;
 			VMCall(func, &self, 1, nullptr, 0);
 			twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.

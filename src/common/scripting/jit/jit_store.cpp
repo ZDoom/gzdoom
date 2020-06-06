@@ -88,13 +88,13 @@ void JitCompiler::EmitSO_R()
 void JitCompiler::EmitSP()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.CreateStore(LoadA(B), OffsetPtr(LoadA(A), ConstD(C)));
+	cc.CreateStore(LoadA(B), ToInt8PtrPtr(LoadA(A), ConstD(C)));
 }
 
 void JitCompiler::EmitSP_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.CreateStore(LoadA(B), OffsetPtr(LoadA(A), LoadD(C)));
+	cc.CreateStore(LoadA(B), ToInt8PtrPtr(LoadA(A), LoadD(C)));
 }
 
 void JitCompiler::EmitSV2()

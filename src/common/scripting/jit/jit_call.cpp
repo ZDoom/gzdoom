@@ -33,7 +33,7 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 
 	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpNE(LoadA(b), ConstValueA(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpNE(LoadA(b), ConstValueA(0)), continuebb, exceptionbb);
 	cc.SetInsertPoint(continuebb);
 
 	IRValue* ptrObject = LoadA(b);
@@ -45,7 +45,7 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 
 void JitCompiler::EmitCALL()
 {
-	EmitVMCall(LoadA(A), nullptr);
+	EmitVMCall(nullptr, nullptr);
 	pc += C; // Skip RESULTs
 }
 
@@ -81,6 +81,9 @@ void JitCompiler::EmitVMCall(IRValue* vmfunc, VMFunction* target)
 		EmitVtbl(pc - 1);
 
 	FillReturns(pc + 1, C);
+
+	if (!vmfunc)
+		vmfunc = LoadA(A);
 
 	IRValue* paramsptr = OffsetPtr(vmframe, offsetParams);
 	IRValue* scriptcall = Load(ToInt8PtrPtr(vmfunc, myoffsetof(VMScriptFunction, ScriptCall)));

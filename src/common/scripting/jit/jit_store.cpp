@@ -76,13 +76,17 @@ void JitCompiler::EmitSS_R()
 void JitCompiler::EmitSO()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.CreateCall(writeBarrier, { OffsetPtr(LoadA(A), ConstD(C)), LoadA(B) });
+	IRValue* value = LoadA(B);
+	cc.CreateStore(value, ToInt8PtrPtr(LoadA(A), ConstD(C)));
+	cc.CreateCall(writeBarrier, { value });
 }
 
 void JitCompiler::EmitSO_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	cc.CreateCall(writeBarrier, { OffsetPtr(LoadA(A), LoadD(C)), LoadA(B) });
+	IRValue* value = LoadA(B);
+	cc.CreateStore(value, ToInt8PtrPtr(LoadA(A), LoadD(C)));
+	cc.CreateCall(writeBarrier, { value });
 }
 
 void JitCompiler::EmitSP()

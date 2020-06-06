@@ -130,9 +130,8 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 		}
 		else
 		{
-			auto f = mBufferFlags;
-			if (shouldUpscale(mTexture, scaleFlagFromUseType(mTexture->GetUseType()))) f |= CTF_Upscale;
-			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
+			auto f = mBufferFlags | CTF_Upscale;
+			auto tempbuffer = mSource->CreateTexBuffer(0, f);
 			Pixels.Resize(GetPhysicalWidth()*GetPhysicalHeight());
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			if (!style)

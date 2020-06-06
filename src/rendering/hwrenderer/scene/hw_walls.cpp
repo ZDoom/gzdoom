@@ -504,11 +504,26 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 	}
 
 
+
 	bool solid;
 	if (passflag[type] == 1) solid = true;
 	else if (type == RENDERWALL_FFBLOCK) solid = texture && !texture->isMasked();
 	else solid = false;
-	if (solid) ProcessDecals(di);
+
+	bool hasDecals = solid && seg->sidedef && seg->sidedef->AttachedDecals;
+	if (hasDecals)
+	{
+		// If we want to use the light infos for the decal we cannot delay the creation until the render pass.
+		if (screen->BuffersArePersistent())
+		{
+			if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
+			{
+				SetupLights(di, lightdata);
+			}
+		}
+		ProcessDecals(di);
+	}
+
 
 	di->AddWall(this);
 

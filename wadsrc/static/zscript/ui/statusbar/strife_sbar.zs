@@ -224,32 +224,35 @@ class StrifeStatusBar : BaseStatusBar
 
 		Color red1 = Color(255, 216, 44,  44);	// light red
 		Color red2 = Color(255, 172, 28,  28);	// dark red
-
-		// Color to draw the health bar in
-		Color color1 = green1;
-		Color color2 = green2;
-
-		// Pick a different colour if health is low
-		if (health <= 10)
+		
+		if (health == 999)
 		{
-			color1 = red1;
-			color2 = red2;
+			FillBar (x, y, 0, 100, gold1, gold2);
 		}
-		else if (health <= 20)
+		else
 		{
-			color1 = gold1;
-			color2 = gold2;
-		}
-
-		// Draw the health bar
-		FillBar(x, y, 0, min(health, 100), color1, color2);
-		// Draw another health bar on top if health is above 100
-		if (health > 100)
-		{
-			// Additional health is drawn in blue
-			int stopp = min(health, 200);
-			stopp -= 100;
-			FillBar(x, y, 0, stopp, blue1, blue2);
+			if (health <= 100)
+			{
+				if (health <= 10)
+				{
+					FillBar (x, y, 0, health, red1, red2);
+				}
+				else if (health <= 20)
+				{
+					FillBar (x, y, 0, health, gold1, gold2);
+				}
+				else
+				{
+					FillBar (x, y, 0, health, green1, green2);
+				}
+				//FillBar (x, y, health, 100, 0, 0);
+			}
+			else
+			{
+				int stopp = 200 - health;
+				FillBar (x, y, 0, stopp, green1, green2);
+				FillBar (x + stopp * 2, y, stopp, 100, blue1, blue2);
+			}
 		}
 	}
 

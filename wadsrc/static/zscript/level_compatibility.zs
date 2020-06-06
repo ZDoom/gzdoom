@@ -1974,6 +1974,8 @@ class LevelCompatibility : LevelPostProcessor
 			
 			case '2499CF9A9351BE9BC4E9C66FC9F291A7': // Requiem MAP23
 			{
+				// Have arch-vile who creates ghost monsters not count as a kill
+				SetThingFlags(0, GetThingFlags(0) | MTF_NOCOUNT);
 				// Remove secret at switch that can only be scored by crouching
 				SetSectorSpecial(240, 0);
 				break;

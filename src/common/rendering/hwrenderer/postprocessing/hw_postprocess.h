@@ -530,7 +530,7 @@ struct ColormapUniforms
 class PPColormap
 {
 public:
-	void Render(PPRenderState *renderstate, int fixedcm);
+	void Render(PPRenderState *renderstate, int fixedcm, float flash);
 
 private:
 	PPShader Colormap = { "shaders/pp/colormap.fp", "", ColormapUniforms::Desc() };
@@ -841,7 +841,7 @@ public:
 
 
 	void Pass1(PPRenderState *state, int fixedcm, int sceneWidth, int sceneHeight);
-	void Pass2(PPRenderState* state, int fixedcm, int sceneWidth, int sceneHeight);
+	void Pass2(PPRenderState* state, int fixedcm, float flash, int sceneWidth, int sceneHeight);
 };
 
 extern Postprocess hw_postprocess;

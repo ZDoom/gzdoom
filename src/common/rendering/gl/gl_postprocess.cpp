@@ -52,7 +52,7 @@ void FGLRenderer::RenderScreenQuad()
 	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
-void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+void FGLRenderer::PostProcessScene(int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	int sceneWidth = mBuffers->GetSceneWidth();
 	int sceneHeight = mBuffers->GetSceneHeight();
@@ -62,7 +62,7 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 	hw_postprocess.Pass1(&renderstate, fixedcm, sceneWidth, sceneHeight);
 	mBuffers->BindCurrentFB();
 	if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D();
-	hw_postprocess.Pass2(&renderstate, fixedcm, sceneWidth, sceneHeight);
+	hw_postprocess.Pass2(&renderstate, fixedcm, flash, sceneWidth, sceneHeight);
 }
 
 //-----------------------------------------------------------------------------

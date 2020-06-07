@@ -60,7 +60,7 @@ void VkPostprocess::SetActiveRenderTarget()
 	fb->GetRenderState()->SetRenderTarget(&buffers->PipelineImage[mCurrentPipelineImage], nullptr, buffers->GetWidth(), buffers->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT);
 }
 
-void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+void VkPostprocess::PostProcessScene(int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	auto fb = GetVulkanFrameBuffer();
 	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
@@ -71,7 +71,7 @@ void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &a
 	hw_postprocess.Pass1(&renderstate, fixedcm, sceneWidth, sceneHeight);
 	SetActiveRenderTarget();
 	afterBloomDrawEndScene2D();
-	hw_postprocess.Pass2(&renderstate, fixedcm, sceneWidth, sceneHeight);
+	hw_postprocess.Pass2(&renderstate, fixedcm, flash, sceneWidth, sceneHeight);
 }
 
 void VkPostprocess::BlitSceneToPostprocess()

@@ -124,7 +124,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		DrawTexture(twod, fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 		screen->Draw2D();
 		twod->Clear();
-		screen->PostProcessScene(true, CM_DEFAULT, [&]() {
+		screen->PostProcessScene(true, CM_DEFAULT, 1.f, [&]() {
 			SWRenderer->DrawRemainingPlayerSprites();
 			screen->Draw2D();
 			twod->Clear();
@@ -140,7 +140,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		int cm = CM_DEFAULT;
 		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 		if (map) cm = (int)(ptrdiff_t)(map - SpecialColormaps.Data()) + CM_FIRSTSPECIALCOLORMAP;
-		screen->PostProcessScene(true, cm, [&]() { });
+		screen->PostProcessScene(true, cm, 1.f, [&]() { });
 
 		SWRenderer->DrawRemainingPlayerSprites();
 		screen->Draw2D();

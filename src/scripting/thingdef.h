@@ -196,7 +196,7 @@ void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &ba
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret);
-class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
+FxExpression *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PContainerType *cls, uint32_t funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags);

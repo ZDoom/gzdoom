@@ -73,7 +73,7 @@ int HWViewpointBuffer::Bind(FRenderState &di, unsigned int index)
 	return index;
 }
 
-void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height)
+void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height, int pll)
 {
 	if (width != m2DWidth || height != m2DHeight)
 	{
@@ -83,7 +83,7 @@ void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height)
 		matrices.mNormalViewMatrix.loadIdentity();
 		matrices.mViewHeight = 0;
 		matrices.mGlobVis = 1.f;
-		matrices.mPalLightLevels = 0;
+		matrices.mPalLightLevels = pll;
 		matrices.mClipLine.X = -10000000.0f;
 		matrices.mShadowmapFilter = gl_shadowmap_filter;
 

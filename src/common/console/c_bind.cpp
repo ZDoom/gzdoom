@@ -716,13 +716,8 @@ void C_SetDefaultKeys(const char* baseconfig)
 
 	while ((lump = fileSystem.FindLumpFullName(baseconfig, &lastlump)) != -1)
 	{
-		if (fileSystem.GetFileContainer(lump) > 0) break;
-		// [SW] - We need to check to see the origin of the DEFBINDS... if it
-		// Comes from an IWAD/IPK3/IPK7 allow it to override the users settings...
-		// If it comes from a user mod however, don't.
-		if (fileSystem.GetFileContainer(lump) > fileSystem.GetMaxIwadNum())
-			ReadBindings(lump, false);
-		else
+		// Read this only from the main game resources.
+		if (fileSystem.GetFileContainer(lump) <= fileSystem.GetMaxIwadNum())
 			ReadBindings(lump, true);
 	}
 
@@ -752,6 +747,13 @@ void C_BindDefaults()
 	C_SetDefaultKeys(cl_defaultconfiguration == 1 ? "engine/origbinds.txt" : cl_defaultconfiguration == 2 ? "engine/leftbinds.txt" : "engine/defbinds.txt");
 }
 
+void C_SetDefaultBindings()
+{
+	C_UnbindAll();
+	C_BindDefaults();
+}
+
+
 CCMD(controlpreset)
 {
 	if (argv.argc() < 2)
@@ -762,17 +764,11 @@ CCMD(controlpreset)
 	int v = atoi(argv[1]);
 	if (v < 0 || v > 2) return;
 	cl_defaultconfiguration = v;
-	C_BindDefaults();
+	C_SetDefaultBindings();
 }
 
 CCMD(binddefaults)
 {
-	C_BindDefaults();
-}
-
-void C_SetDefaultBindings()
-{
-	C_UnbindAll();
 	C_BindDefaults();
 }
 

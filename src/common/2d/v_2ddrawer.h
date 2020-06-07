@@ -132,6 +132,7 @@ public:
 		FRenderStyle mRenderStyle;
 		PalEntry mColor1;	// Overlay color
 		ETexMode mDrawMode;
+		uint8_t mLightLevel;
 		uint8_t mFlags;
 
 		RenderCommand()
@@ -152,6 +153,7 @@ public:
 				mRenderStyle == other.mRenderStyle &&
 				mDrawMode == other.mDrawMode &&
 				mFlags == other.mFlags &&
+				mLightLevel == other.mLightLevel &&
 				mColor1.d == other.mColor1.d;
 
 		}

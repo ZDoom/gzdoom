@@ -28,7 +28,7 @@ public:
 	~HWViewpointBuffer();
 	void Clear();
 	int Bind(FRenderState &di, unsigned int index);
-	void Set2D(FRenderState &di, int width, int height);
+	void Set2D(FRenderState &di, int width, int height, int pll = 0);
 	int SetViewpoint(FRenderState &di, HWViewpointUniforms *vp);
 	unsigned int GetBlockSize() const { return mBlockSize; }
 };

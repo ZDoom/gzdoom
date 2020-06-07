@@ -636,7 +636,7 @@ void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 
 void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
 {
-	RenderCommand dg = {};
+	RenderCommand dg;
 	int method = 0;
 
 	dg.mType = DrawTypeTriangles;

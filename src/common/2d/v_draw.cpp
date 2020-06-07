@@ -40,7 +40,6 @@
 #include "texturemanager.h"
 #include "r_videoscale.h"
 #include "c_cvars.h"
-#include "intrect.h"
 
 EXTERN_CVAR(Int, vid_aspect)
 EXTERN_CVAR(Int, uiscale)

@@ -93,7 +93,7 @@ class ConversationMenu : Menu
 	int fontScale;
 	int refwidth;
 	int refheight;
-	double fontfactor;
+	Array<double> ypositions;
 	
 	int SpeechWidth;
 	int ReplyWidth;
@@ -127,7 +127,6 @@ class ConversationMenu : Menu
 			displayWidth = CleanWidth;
 			displayHeight = CleanHeight;
 			fontScale = CleanXfac;
-			fontFactor = 1;
 			refwidth = 320;
 			refheight = 200;
 			ReplyWidth = 320-50-10;
@@ -140,7 +139,6 @@ class ConversationMenu : Menu
 		{
 			displayFont = NewSmallFont;
 			fontScale = (CleanXfac+1) / 2;
-			fontFactor = double(CleanXfac) / fontScale;
 			refwidth = 640;
 			refheight = 400;
 			ReplyWidth = 640-100-20;
@@ -365,18 +363,14 @@ class ConversationMenu : Menu
 
 		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
 		x = ((x - (screen.GetWidth() / 2)) / fontScale) + refWidth/2;
-		y = ((y - (screen.GetHeight() / 2)) / fontScale) + refHeight/2;
 		
-		int ypos = int(mYpos * FontFactor);
-
-		if (x >= 24 && x <= refWidth-24 && y >= ypos && y < ypos + fh * mResponseLines.Size())
+		if (x >= 24 && x <= refWidth-24)
 		{
-			sel = (y - ypos) / fh;
-			for(int i = 0; i < mResponses.Size(); i++)
+			for (int i = 0; i < ypositions.Size()-1; i++)
 			{
-				if (mResponses[i] > sel)
+				if (y > ypositions[i] && y <= ypositions[i+1])
 				{
-					sel = i-1;
+					sel = i;
 					break;
 				}
 			}
@@ -498,6 +492,7 @@ class ConversationMenu : Menu
 		int y = mYpos;
 
 		int response = 0;
+		ypositions.Clear();
 		for (int i = 0; i < mResponseLines.Size(); i++)
 		{
 			int width = displayFont.StringWidth(mResponseLines[i]);
@@ -506,6 +501,7 @@ class ConversationMenu : Menu
 			double sx = (x - 160.0) * CleanXfac + (screen.GetWidth() * 0.5);
 			double sy = (y - 100.0) * CleanYfac + (screen.GetHeight() * 0.5);
 
+			ypositions.Push(sy);
 
 			screen.DrawText(displayFont, Font.CR_GREEN, sx / fontScale, sy / fontScale, mResponseLines[i], DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight);
 
@@ -530,6 +526,8 @@ class ConversationMenu : Menu
 			}
 			y += ReplyLineHeight;
 		}
+		double sy = (y - 100.0) * CleanYfac + (screen.GetHeight() * 0.5);
+		ypositions.Push(sy);
 	}
 
 	virtual void DrawGold()

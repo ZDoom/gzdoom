@@ -242,7 +242,7 @@ public:
 	virtual FTexture *WipeStartScreen();
 	virtual FTexture *WipeEndScreen();
 
-	virtual void PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) { if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D(); }
+	virtual void PostProcessScene(bool swscene, int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D) { if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D(); }
 
 	void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 

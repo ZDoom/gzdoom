@@ -8,7 +8,7 @@ class VulkanDevice;
 class VkSamplerManager
 {
 	VulkanDevice *vDevice;
-	std::unique_ptr<VulkanSampler> mSamplers[7];
+	std::unique_ptr<VulkanSampler> mSamplers[NUMSAMPLERS];
 
 	//void UnbindAll();
 

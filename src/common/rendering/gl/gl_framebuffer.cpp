@@ -515,10 +515,10 @@ void OpenGLFrameBuffer::Draw2D()
 	}
 }
 
-void OpenGLFrameBuffer::PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+void OpenGLFrameBuffer::PostProcessScene(bool swscene, int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	if (!swscene) GLRenderer->mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
-	GLRenderer->PostProcessScene(fixedcm, afterBloomDrawEndScene2D);
+	GLRenderer->PostProcessScene(fixedcm, flash, afterBloomDrawEndScene2D);
 }
 
 //==========================================================================

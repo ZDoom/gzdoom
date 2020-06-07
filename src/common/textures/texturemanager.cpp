@@ -625,8 +625,12 @@ void FTextureManager::AddHiresTextures (int wadnum)
 							auto gtex = MakeGameTexture(newtex, nullptr, ETextureType::Override);
 							gtex->SetWorldPanning(true);
 							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
-							gtex->SetOffsets(0, oldtex->GetTexelLeftOffset(0), oldtex->GetTexelTopOffset(0));
-							gtex->SetOffsets(1, oldtex->GetTexelLeftOffset(1), oldtex->GetTexelTopOffset(1));
+							double xscale1 = oldtex->GetTexelLeftOffset(0) * gtex->GetScaleX() / oldtex->GetScaleX();
+							double xscale2 = oldtex->GetTexelLeftOffset(1) * gtex->GetScaleX() / oldtex->GetScaleX();
+							double yscale1 = oldtex->GetTexelTopOffset(0) * gtex->GetScaleY() / oldtex->GetScaleY();
+							double yscale2 = oldtex->GetTexelTopOffset(1) * gtex->GetScaleY() / oldtex->GetScaleY();
+							gtex->SetOffsets(0, xs_RoundToInt(xscale1), xs_RoundToInt(yscale1));
+							gtex->SetOffsets(1, xs_RoundToInt(xscale2), xs_RoundToInt(yscale2));
 							ReplaceTexture(tlist[i], gtex, true);
 						}
 					}
@@ -721,8 +725,12 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 							auto gtex = MakeGameTexture(newtex, nullptr, ETextureType::Override);
 							gtex->SetWorldPanning(true);
 							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
-							gtex->SetOffsets(0, xs_RoundToInt(oldtex->GetDisplayLeftOffset(0) * gtex->GetScaleX()), xs_RoundToInt(oldtex->GetDisplayTopOffset(0) * gtex->GetScaleY()));
-							gtex->SetOffsets(1, xs_RoundToInt(oldtex->GetDisplayLeftOffset(1) * gtex->GetScaleX()), xs_RoundToInt(oldtex->GetDisplayTopOffset(1) * gtex->GetScaleY()));
+							double xscale1 = oldtex->GetTexelLeftOffset(0) * gtex->GetScaleX() / oldtex->GetScaleX();
+							double xscale2 = oldtex->GetTexelLeftOffset(1) * gtex->GetScaleX() / oldtex->GetScaleX();
+							double yscale1 = oldtex->GetTexelTopOffset(0) * gtex->GetScaleY() / oldtex->GetScaleY();
+							double yscale2 = oldtex->GetTexelTopOffset(1) * gtex->GetScaleY() / oldtex->GetScaleY();
+							gtex->SetOffsets(0, xs_RoundToInt(xscale1), xs_RoundToInt(yscale1));
+							gtex->SetOffsets(1, xs_RoundToInt(xscale2), xs_RoundToInt(yscale2));
 							ReplaceTexture(tlist[i], gtex, true);
 						}
 					}

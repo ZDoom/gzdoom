@@ -532,20 +532,26 @@ void PPCameraExposure::UpdateTextures(int width, int height)
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPColormap::Render(PPRenderState *renderstate, int fixedcm)
+void PPColormap::Render(PPRenderState *renderstate, int fixedcm, float flash)
 {
+	ColormapUniforms uniforms;
+
 	if (fixedcm < CM_FIRSTSPECIALCOLORMAP || fixedcm >= CM_MAXCOLORMAP)
 	{
-		return;
+		if (flash == 1.f)
+			return;
+
+		uniforms.MapStart = { 0,0,0, flash };
+		uniforms.MapRange = { 0,0,0, 1.f };
 	}
+	else
+	{
+		FSpecialColormap* scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
 
-	FSpecialColormap *scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
-	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
-		scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
-
-	ColormapUniforms uniforms;
-	uniforms.MapStart = { scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f };
-	uniforms.MapRange = m;
+		uniforms.MapStart = { scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], flash };
+		uniforms.MapRange = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
+			scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
+	}
 
 	renderstate->PushGroup("colormap");
 
@@ -1117,10 +1123,10 @@ void Postprocess::Pass1(PPRenderState* state, int fixedcm, int sceneWidth, int s
 	bloom.RenderBloom(state, sceneWidth, sceneHeight, fixedcm);
 }
 
-void Postprocess::Pass2(PPRenderState* state, int fixedcm, int sceneWidth, int sceneHeight)
+void Postprocess::Pass2(PPRenderState* state, int fixedcm, float flash, int sceneWidth, int sceneHeight)
 {
 	tonemap.Render(state);
-	colormap.Render(state, fixedcm);
+	colormap.Render(state, fixedcm, flash);
 	lens.Render(state);
 	fxaa.Render(state);
 	customShaders.Run(state, "scene");

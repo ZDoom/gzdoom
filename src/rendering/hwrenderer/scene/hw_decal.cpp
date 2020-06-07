@@ -47,23 +47,13 @@
 
 void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 {
-	// calculate dynamic light effect.
-	if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gl_light_sprites)
-	{
-		// Note: This should be replaced with proper shader based lighting.
-		double x, y;
-		float out[3];
-		decal->GetXY(decal->Side, x, y);
-		di->GetDynSpriteLight(nullptr, x, y, zcenter, decal->Side->lighthead, decal->Side->sector->PortalGroup, out);
-		state.SetDynLight(out[0], out[1], out[2]);
-	}
-
 	// alpha color only has an effect when using an alpha texture.
 	if (decal->RenderStyle.Flags & (STYLEF_RedIsAlpha | STYLEF_ColorIsFixed))
 	{
 		state.SetObjectColor(decal->AlphaColor | 0xff000000);
 	}
 
+	state.SetLightIndex(dynlightindex);
 	state.SetTextureMode(decal->RenderStyle);
 	state.SetRenderStyle(decal->RenderStyle);
 	state.SetMaterial(texture, UF_Sprite, 0, CLAMP_XY, decal->Translation, -1);
@@ -133,7 +123,6 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<HWDecal *> &decals)
 	side_t *wall = nullptr;
 	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
-	state.SetLightIndex(-1);
 	for (auto gldecal : decals)
 	{
 		if (gldecal->decal->Side != wall)
@@ -167,7 +156,6 @@ void HWWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<HWD
 {
 	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
-	state.SetLightIndex(-1);
 	di->SetFog(state, lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
 	for (auto gldecal : decals)
 	{
@@ -389,11 +377,13 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	{
 		gldecal->lightlevel = 255;
 		gldecal->rellight = 0;
+		gldecal->dynlightindex = -1;
 	}
 	else
 	{
 		gldecal->lightlevel = lightlevel;
 		gldecal->rellight = rellight + getExtraLight();
+		gldecal->dynlightindex = dynlightindex;
 	}
 
 	gldecal->Colormap = Colormap;

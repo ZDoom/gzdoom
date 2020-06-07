@@ -193,6 +193,8 @@ enum DrawTextureTags
 	DTA_Monospace,			// Strings only: Use a fixed distance between characters.
 
 	DTA_FullscreenEx,		// advanced fullscreen control.
+	DTA_FullscreenScale,	// enable DTA_Fullscreen coordinate calculation for placed overlays.
+
 };
 
 class Shape2DTransform : Object native

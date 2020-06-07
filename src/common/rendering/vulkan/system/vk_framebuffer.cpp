@@ -343,10 +343,10 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 	tex->SetUpdated(true);
 }
 
-void VulkanFrameBuffer::PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+void VulkanFrameBuffer::PostProcessScene(bool swscene, int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	if (!swscene) mPostprocess->BlitSceneToPostprocess(); // Copy the resulting scene to the current post process texture
-	mPostprocess->PostProcessScene(fixedcm, afterBloomDrawEndScene2D);
+	mPostprocess->PostProcessScene(fixedcm, flash, afterBloomDrawEndScene2D);
 }
 
 const char* VulkanFrameBuffer::DeviceName() const

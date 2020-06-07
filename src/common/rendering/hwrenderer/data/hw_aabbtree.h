@@ -67,6 +67,9 @@ public:
 	size_t DynamicLinesOffset() const { return dynamicStartLine * sizeof(AABBTreeLine); }
 
 	virtual bool Update() = 0;
+
+	virtual ~LevelAABBTree() = default;
+
 protected:
 
 	TArray<int> FindNodePath(unsigned int line, unsigned int node);

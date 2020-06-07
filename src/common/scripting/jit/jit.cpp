@@ -277,7 +277,7 @@ void JitCompiler::SetupFrame()
 	offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
 	offsetExtra = (offsetD + (int)(sfunc->NumRegD * sizeof(int32_t)) + 15) & ~15;
 
-	if (sfunc->SpecialInits.Size() == 0 && sfunc->NumRegS == 0)
+	if (sfunc->SpecialInits.Size() == 0 && sfunc->NumRegS == 0 && sfunc->ExtraSpace == 0)
 	{
 		SetupSimpleFrame();
 	}

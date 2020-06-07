@@ -2698,23 +2698,23 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native void SetSubtitleNumber (int text, Sound sound_id = 0);
 	native bool Resurrect();
 
-	native String GetUserName() const;
-	native Color GetColor() const;
-	native Color GetDisplayColor() const;
-	native int GetColorSet() const;
-	native int GetPlayerClassNum() const;
-	native int GetSkin() const;
-	native bool GetNeverSwitch() const;
-	native int GetGender() const;
-	native int GetTeam() const;
-	native float GetAutoaim() const;
-	native bool GetNoAutostartMap() const;
+	native clearscope String GetUserName() const;
+	native clearscope Color GetColor() const;
+	native clearscope Color GetDisplayColor() const;
+	native clearscope int GetColorSet() const;
+	native clearscope int GetPlayerClassNum() const;
+	native clearscope int GetSkin() const;
+	native clearscope bool GetNeverSwitch() const;
+	native clearscope int GetGender() const;
+	native clearscope int GetTeam() const;
+	native clearscope float GetAutoaim() const;
+	native clearscope bool GetNoAutostartMap() const;
 	native double GetWBobSpeed() const;
 	native double GetWBobFire() const;
 	native double GetMoveBob() const;
 	native double GetStillBob() const;
 	native void SetFOV(float fov);
-	native bool GetClassicFlight() const;
+	native clearscope bool GetClassicFlight() const;
 	native void SendPitchLimits();
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
@@ -2751,7 +2751,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 		if (mo) mo.BringUpWeapon();
 	}
 	
-	bool IsTotallyFrozen()
+	clearscope bool IsTotallyFrozen() const
 	{
 		return
 			gamestate == GS_TITLELEVEL ||

@@ -1006,6 +1006,10 @@ class OptionMenuFieldBase : OptionMenuItem
 		return false;
 	}
 
+	override bool Selectable()
+	{
+		return mGrayCheck == null || mGrayCheck.GetInt() != 0;
+	}
 
 	CVar mCVar;
 	CVar mGrayCheck;

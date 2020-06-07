@@ -4866,7 +4866,8 @@ int P_LineTrace(AActor *t1, DAngle angle, double distance,
 		outdata->HitLocation = trace.HitPos;
 		outdata->HitDir = trace.HitVector;
 		outdata->Distance = trace.Distance;
-		outdata->NumPortals = TData.NumPortals;
+		// [MK] Subtract two "bogus" portal crossings used internally by trace code
+		outdata->NumPortals = TData.NumPortals-2;
 		outdata->HitType = trace.HitType;
 	}
 	return ret;

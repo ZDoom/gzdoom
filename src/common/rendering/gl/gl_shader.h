@@ -262,6 +262,9 @@ class FShader
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
+#ifdef NPOT_EMULATION
+	FBufferedUniform2f muNpotEmulation;
+#endif
 
 	int lights_index;
 	int modelmatrix_index;

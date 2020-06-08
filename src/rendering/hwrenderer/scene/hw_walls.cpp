@@ -175,6 +175,10 @@ static const uint8_t renderwalltotier[] =
 	side_t::mid,
 };
 
+#ifdef NPOT_EMULATION
+CVAR(Bool, hw_npottest, false, 0)
+#endif
+
 void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 {
 	int tmode = state.GetTextureMode();
@@ -187,6 +191,23 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		SetGlowPlanes(state, frontsector->ceilingplane, frontsector->floorplane);
 	}
 	state.SetMaterial(texture, UF_Texture, 0, flags & 3, 0, -1);
+#ifdef NPOT_EMULATION
+	// Test code, could be reactivated as a compatibility option in the unlikely event that some old vanilla map eve needs it.
+	if (hw_npottest)
+	{
+		int32_t size = xs_CRoundToInt(texture->GetDisplayHeight());
+		int32_t size2;
+		for (size2 = 1; size2 < size; size2 += size2) {}
+		if (size == size2)
+			state.SetNpotEmulation(0.f, 0.f);
+		else
+		{
+			float xOffset = 1.f / texture->GetDisplayWidth();
+			state.SetNpotEmulation((1.f * size2) / size, xOffset);
+		}
+	}
+#endif
+
 
 	if (type == RENDERWALL_M2SNF)
 	{
@@ -274,6 +295,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 
 		state.EnableSplit(false);
 	}
+	state.SetNpotEmulation(0.f, 0.f);
 	state.SetObjectColor(0xffffffff);
 	state.SetObjectColor2(0);
 	state.SetAddColor(0);

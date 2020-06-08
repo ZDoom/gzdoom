@@ -253,6 +253,7 @@ public:
 	bool isCanvas() const { return bHasCanvas; }
 	
 	int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
+	void SetSourceLump(int sl) { SourceLump  = sl; }
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 
 	void CopySize(FTexture* BaseTexture)

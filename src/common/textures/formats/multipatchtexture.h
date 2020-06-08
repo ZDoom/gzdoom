@@ -170,6 +170,6 @@ public:
 	}
 
 	void AddTexturesLumps(int lump1, int lump2, int patcheslump);
-	void ParseTexture(FScanner &sc, ETextureType usetype);
+	void ParseTexture(FScanner &sc, ETextureType usetype, int deflump);
 	void ResolveAllPatches();
 };

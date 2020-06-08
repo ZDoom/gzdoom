@@ -606,7 +606,7 @@ void FMultipatchTextureBuilder::ParsePatch(FScanner &sc, BuildInfo &info, TexPar
 //
 //==========================================================================
 
-void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType)
+void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType, int deflump)
 {
 	BuildInfo &buildinfo = BuiltTextures[BuiltTextures.Reserve(1)];
 
@@ -637,6 +637,7 @@ void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType)
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();
 	buildinfo.Height = sc.Number;
+	buildinfo.DefinitionLump = deflump;
 
 	bool offset2set = false;
 	if (sc.CheckString("{"))
@@ -911,6 +912,7 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 				{
 					auto img = new FMultiPatchTexture(buildinfo.Width, buildinfo.Height, buildinfo.Parts, buildinfo.bComplex, buildinfo.textual);
 					auto itex = new FImageTexture(img);
+					itex->SetSourceLump(buildinfo.DefinitionLump);
 					AddImageToTexture(itex, buildinfo);
 				}
 				BuiltTextures.Delete(i);

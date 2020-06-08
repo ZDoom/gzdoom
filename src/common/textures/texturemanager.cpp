@@ -782,23 +782,23 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 		}
 		else if (sc.Compare("texture"))
 		{
-			build.ParseTexture(sc, ETextureType::Override);
+			build.ParseTexture(sc, ETextureType::Override, lump);
 		}
 		else if (sc.Compare("sprite"))
 		{
-			build.ParseTexture(sc, ETextureType::Sprite);
+			build.ParseTexture(sc, ETextureType::Sprite, lump);
 		}
 		else if (sc.Compare("walltexture"))
 		{
-			build.ParseTexture(sc, ETextureType::Wall);
+			build.ParseTexture(sc, ETextureType::Wall, lump);
 		}
 		else if (sc.Compare("flat"))
 		{
-			build.ParseTexture(sc, ETextureType::Flat);
+			build.ParseTexture(sc, ETextureType::Flat, lump);
 		}
 		else if (sc.Compare("graphic"))
 		{
-			build.ParseTexture(sc, ETextureType::MiscPatch);
+			build.ParseTexture(sc, ETextureType::MiscPatch, lump);
 		}
 		else if (sc.Compare("#include"))
 		{

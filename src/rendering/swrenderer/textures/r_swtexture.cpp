@@ -176,7 +176,7 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 		}
 		else
 		{
-			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
+			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags | CTF_Upscale);
 			CreatePixelsBgraWithMipmaps();
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			for (int y = 0; y < GetPhysicalHeight(); y++)

@@ -1386,7 +1386,7 @@ FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & LUMPF_COMPRESSED))
 	{
 		int fileno = fileSystem.GetFileContainer(lump);
-		const char *filename = fileSystem.GetResourceFileName(fileno);
+		const char *filename = fileSystem.GetResourceFileFullName(fileno);
 		FileReader fr;
 		if (fr.OpenFile(filename, rl->GetFileOffset(), rl->LumpSize))
 		{

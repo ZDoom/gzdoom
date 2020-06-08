@@ -115,7 +115,8 @@ namespace swrenderer
 		else // regular flat
 		{
 			auto tex = GetPalettedSWTexture(picnum, true);
-
+			if (tex == nullptr)
+				return;
 			if (!masked && !additive)
 			{ // If we're not supposed to see through this plane, draw it opaque.
 				alpha = OPAQUE;

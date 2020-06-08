@@ -141,8 +141,8 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	int newself = self;
-	if (newself > 8) newself = 16;	// use 8 and 16 for software lighting to avoid conflicts with the bit mask
-	else if (newself > 4) newself = 8;
+	if (newself > 8) newself = 16;	// use 8 and 16 for software lighting to avoid conflicts with the bit mask ( in hindsight a bad idea.)
+	else if (newself > 5) newself = 8;
 	else if (newself < 0) newself = 0;
 	if (self != newself) self = newself;
 	else for (auto Level : AllLevels())

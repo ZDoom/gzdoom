@@ -308,6 +308,16 @@ float R_DoomLightingEquation(float light)
 	{
 		z = pixelpos.w;
 	}
+	
+	if ((uPalLightLevels >> 16) == 5) // gl_lightmode 5: Build software lighting emulation.
+	{
+		// This is a lot more primitive than Doom's lighting...
+		float numShades = float(uPalLightLevels & 255);
+		float curshade = (1.0 - light) / (numShades - 1.0);
+		float visibility = max(uGlobVis * uLightFactor * z, 0.0);
+		float shade = clamp((curshade + visibility), 0.0, numShades - 1.0);
+		return clamp(shade * uLightDist, 0.0, 1.0);
+	}
 
 	float colormap = R_DoomColormap(light, z);
 

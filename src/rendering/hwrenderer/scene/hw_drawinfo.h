@@ -314,12 +314,22 @@ public:
 
 	bool isSoftwareLighting() const
 	{
-		return lightmode >= ELightMode::ZDoomSoftware;
+		return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware || lightmode == ELightMode::Build;
+	}
+
+	bool isBuildSoftwareLighting() const
+	{
+		return lightmode == ELightMode::Build;
+	}
+
+	bool isDoomSoftwareLighting() const
+	{
+		return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware;
 	}
 
 	bool isDarkLightMode() const
 	{
-		return !!((int)lightmode & (int)ELightMode::Doom);
+		return lightmode == ELightMode::Doom || lightmode == ELightMode::DoomDark;
 	}
 
 	void SetFallbackLightMode()

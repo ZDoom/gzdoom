@@ -2141,7 +2141,7 @@ void DAutomap::drawSubsectors()
 			// is necessary in order to best reproduce Doom's original lighting.
 			double fadelevel;
 
-			if (!V_IsHardwareRenderer() || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
+			if (!V_IsHardwareRenderer() || primaryLevel->lightMode == ELightMode::DoomDark || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
 			{
 				double map = (NUMCOLORMAPS * 2.) - ((floorlight + 12) * (NUMCOLORMAPS / 128.));
 				fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);

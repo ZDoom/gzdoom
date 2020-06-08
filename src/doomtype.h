@@ -48,6 +48,7 @@ enum class ELightMode : int8_t
 	Doom = 2,
 	DoomDark = 3,
 	DoomLegacy = 4,
+	Build = 5,
 	ZDoomSoftware = 8,
 	DoomSoftware = 16
 };

@@ -85,7 +85,7 @@ Class MaceAmmo : Ammo
 		Inventory.Amount 20;
 		Inventory.MaxAmount 150;
 		Ammo.BackpackAmount 0;
-		Ammo.BackpackMaxAmount 150;
+		Ammo.BackpackMaxAmount 300;
 		Inventory.Icon "INAMLOB";
 		Tag "$AMMO_MACE";
 	}

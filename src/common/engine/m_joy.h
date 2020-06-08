@@ -1,7 +1,7 @@
 #ifndef M_JOY_H
 #define M_JOY_H
 
-#include "doomtype.h"
+#include "basics.h"
 #include "tarray.h"
 #include "c_cvars.h"
 

@@ -33,6 +33,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include "vectors.h"
 #include "m_joy.h"
 #include "gameconfigfile.h"
 #include "d_event.h"
@@ -56,7 +57,7 @@ EXTERN_CVAR(Bool, joy_xinput)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVAR(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+CUSTOM_CVARD(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "enables input from the joystick if it is present") 
 {
 #ifdef _WIN32
 	joy_ps2raw.Callback();
@@ -269,14 +270,14 @@ int Joy_XYAxesToButtons(double x, double y)
 	double rad = atan2(y, x);
 	if (rad < 0)
 	{
-		rad += 2*M_PI;
+		rad += 2*pi::pi();
 	}
 	// The circle is divided into eight segments for corresponding
 	// button combinations. Each segment is pi/4 radians wide. We offset
 	// by half this so that the segments are centered around the ideal lines
 	// their buttons represent instead of being right on the lines.
-	rad += M_PI/8;		// Offset
-	rad *= 4/M_PI;		// Convert range from [0,2pi) to [0,8)
+	rad += pi::pi()/8;		// Offset
+	rad *= 4/pi::pi();		// Convert range from [0,2pi) to [0,8)
 	return JoyAngleButtons[int(rad) & 7];
 }
 

@@ -50,6 +50,7 @@
 #include "c_cvars.h"
 #include "c_buttons.h"
 #include "findfile.h"
+#include "gstrings.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -300,7 +301,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{ // Get the variable's value
-				if (var->GetDescription().Len()) Printf("%s\n", var->GetDescription().GetChars());
+				if (var->GetDescription().Len()) Printf("%s\n", GStrings.localize(var->GetDescription()));
 				Printf ("\"%s\" is \"%s\"\n", var->GetName(), var->GetHumanString());
 			}
 		}

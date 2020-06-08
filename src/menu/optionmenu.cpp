@@ -34,6 +34,7 @@
 
 #include "v_video.h"
 #include "menu/menu.h"
+#include "vm.h"
 
 
 //=============================================================================
@@ -52,3 +53,16 @@ DMenuItemBase *DOptionMenuDescriptor::GetItem(FName name)
 	return NULL;
 }
 
+void SetCVarDescription(FBaseCVar* cvar, const FString* label)
+{
+	cvar->AddDescription(*label);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_OptionMenuItemOption, SetCVarDescription, SetCVarDescription)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(cv, FBaseCVar);
+	PARAM_STRING(label);
+	SetCVarDescription(cv, &label);
+	return 0;
+}

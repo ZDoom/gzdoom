@@ -360,10 +360,13 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 {
 	CVar mCVar;
 
+	private static native void SetCVarDescription(CVar cv, String label);
+
 	OptionMenuItemOption Init(String label, Name command, Name values, CVar graycheck = null, int center = 0)
 	{
 		Super.Init(label, command, values, graycheck, center);
 		mCVar = CVar.FindCVar(mAction);
+		if (mCVar) SetCVarDescription(mCVar, label);
 		return self;
 	}
 

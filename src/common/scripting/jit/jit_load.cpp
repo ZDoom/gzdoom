@@ -114,13 +114,13 @@ void JitCompiler::EmitLH_R()
 void JitCompiler::EmitLW()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(SExt(Load(ToInt32Ptr(LoadA(B), ConstD(C)))), A);
+	StoreD(Load(ToInt32Ptr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLW_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(SExt(Load(ToInt32Ptr(LoadA(B), LoadD(C)))), A);
+	StoreD(Load(ToInt32Ptr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLBU()

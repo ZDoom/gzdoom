@@ -6,7 +6,7 @@ void JitCompiler::EmitTEST()
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(A), ConstValueD(BC)), GetLabel(i + 2), continuebb);
+	cc.CreateCondBr(cc.CreateICmpNE(LoadD(A), ConstValueD(BC)), GetLabel(i + 2), continuebb);
 	cc.SetInsertPoint(continuebb);
 }
 
@@ -16,7 +16,7 @@ void JitCompiler::EmitTESTN()
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(A), ConstValueD(-bc)), GetLabel(i + 2), continuebb);
+	cc.CreateCondBr(cc.CreateICmpNE(LoadD(A), ConstValueD(-bc)), GetLabel(i + 2), continuebb);
 	cc.SetInsertPoint(continuebb);
 }
 

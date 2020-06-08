@@ -444,7 +444,7 @@ void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap)
 
 		for (i = 0; i < 256; ++i)
 		{
-			sortcopy[i] = BaseColors[i] | (i << 24);
+			sortcopy[i] = (BaseColors[i] & 0xffffff) | (i << 24);
 		}
 		qsort(sortcopy, 256, 4, sortforremap);
 		for (i = 255; i > 0; --i)

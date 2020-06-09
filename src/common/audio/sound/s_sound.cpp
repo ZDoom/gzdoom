@@ -378,7 +378,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
 
-	if (sound_id <= 0 || volume <= 0 || nosfx || nosound )
+	if (sound_id <= 0 || volume <= 0 || nosfx || nosound || blockNewSounds)
 		return NULL;
 
 	// prevent crashes.

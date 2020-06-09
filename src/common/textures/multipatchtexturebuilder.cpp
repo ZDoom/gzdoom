@@ -779,13 +779,10 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 			TexMan.ListTextures(buildinfo.Inits[i].TexName, list, true);
 			for (int i = list.Size() - 1; i >= 0; i--)
 			{
-				if (list[i] != buildinfo.texture->GetID())
+				auto gtex = TexMan.GetGameTexture(list[i]);
+				if (gtex && gtex != buildinfo.texture && gtex->GetTexture() && gtex->GetTexture()->GetImage() && !dynamic_cast<FMultiPatchTexture*>(gtex->GetTexture()->GetImage()))
 				{
-					auto gtex = TexMan.GetGameTexture(list[i]);
-					if (gtex && !dynamic_cast<FMultiPatchTexture*>(gtex->GetTexture()))
-					{
-						texno = list[i];
-					}
+					texno = list[i];
 					break;
 				}
 			}

@@ -306,6 +306,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		uniform sampler2D texture6;
 		uniform sampler2D texture7;
 		uniform sampler2D texture8;
+		uniform sampler2D texture9;
+		uniform sampler2D texture10;
+		uniform sampler2D texture11;
 
 		// timer data
 		uniform float timer;

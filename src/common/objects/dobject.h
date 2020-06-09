@@ -266,14 +266,12 @@ private:
 
 	void *operator new(size_t len, nonew&)
 	{
-		GC::AllocBytes += len;
 		return M_Malloc(len);
 	}
 public:
 
 	void operator delete (void *mem, nonew&)
 	{
-		GC::AllocBytes -= _msize(mem);
 		M_Free(mem);
 	}
 

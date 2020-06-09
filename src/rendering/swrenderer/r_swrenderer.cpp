@@ -241,6 +241,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewp
 	cameraViewwindow = r_viewwindow;
 
 	auto tex = GetSWCamTex(camtex);
+	if (!tex) return;
 	
 	DCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 

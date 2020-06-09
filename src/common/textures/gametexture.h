@@ -241,10 +241,6 @@ public:
 		DisplayHeight = h;
 		ScaleX = TexelWidth / w;
 		ScaleY = TexelHeight / h;
-		if (shouldUpscaleFlag < 2)
-		{
-			shouldUpscaleFlag = ScaleX < 2 && ScaleY < 2;
-		}
 
 		// compensate for roundoff errors
 		if (int(ScaleX * w) != TexelWidth) ScaleX += (1 / 65536.);
@@ -271,10 +267,6 @@ public:
 	{
 		ScaleX = x;
 		ScaleY = y;
-		if (shouldUpscaleFlag < 2)
-		{
-			shouldUpscaleFlag = ScaleX < 2 && ScaleY < 2;
-		}
 		DisplayWidth = TexelWidth / x;
 		DisplayHeight = TexelHeight / y;
 	}
@@ -374,7 +366,7 @@ enum EUpscaleFlags
 extern int upscalemask;
 void UpdateUpscaleMask();
 
-int calcShouldUpscale(FGameTexture* tex);
+void calcShouldUpscale(FGameTexture* tex);
 inline int shouldUpscale(FGameTexture* tex, EUpscaleFlags UseType)
 {
 	// This only checks the global scale mask and the texture's validation for upscaling. Everything else has been done up front elsewhere.

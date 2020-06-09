@@ -502,20 +502,21 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 //
 //===========================================================================
 
-int calcShouldUpscale(FGameTexture *tex)
+void calcShouldUpscale(FGameTexture *tex)
 {
+	tex->SetUpscaleFlag(0);
 	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
 	const int maxInputSize = gl_texture_hqresize_maxinputsize;
 	if (tex->GetTexelWidth() * tex->GetTexelHeight() > maxInputSize * maxInputSize)
-		return 0;
+		return;
 
 	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
 	if (tex->isHardwareCanvas())
-		return 0;
+		return;
 
 	// already scaled?
 	if (tex->GetScaleX() >= 2.f || tex->GetScaleY() > 2.f)
-		return 0;
+		return;
 
-	return CTF_Upscale;
+	tex->SetUpscaleFlag(1);
 }

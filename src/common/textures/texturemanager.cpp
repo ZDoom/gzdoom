@@ -106,7 +106,7 @@ void FTextureManager::DeleteAll()
 // This must not, under any circumstances, delete the wipe textures, because
 // all CCMDs triggering a flush can be executed while a wipe is in progress
 //
-// This now also deletes the software textures because having the software
+// This now also deletes the software textures because the software
 // renderer can also use the texture scalers and that is the
 // main reason to call this outside of the destruction code.
 //
@@ -120,8 +120,8 @@ void FTextureManager::FlushAll()
 		{
 			Textures[i].Texture->CleanHardwareData();
 			delete Textures[i].Texture->GetSoftwareTexture();
-			Textures[i].Texture->SetSoftwareTexture(nullptr);
 			calcShouldUpscale(Textures[i].Texture);
+			Textures[i].Texture->SetSoftwareTexture(nullptr);
 		}
 	}
 }

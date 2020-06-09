@@ -389,7 +389,7 @@ void FGameTexture::SetSpriteRect()
 
 void FGameTexture::CleanHardwareData(bool full)
 {
-	Base->CleanHardwareTextures();
+	if (full) Base->CleanHardwareTextures();
 	for (auto mat : Material) if (mat) mat->DeleteDescriptors();
 }
 

@@ -48,6 +48,11 @@ public:
 		return sourcetex;
 	}
 
+	void ClearLayers()
+	{
+		mTextureLayers.Resize(1);
+	}
+
 	void AddTextureLayer(FTexture *tex, bool allowscale)
 	{
 		mTextureLayers.Push({ tex, allowscale });

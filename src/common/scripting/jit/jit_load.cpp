@@ -222,13 +222,13 @@ void JitCompiler::EmitLO_R()
 void JitCompiler::EmitLO()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreA(cc.CreateCall(readBarrier, { OffsetPtr(LoadA(B), ConstD(C)) }), A);
+	StoreA(cc.CreateCall(readBarrier, { Load(ToInt8PtrPtr(LoadA(B), ConstD(C))) }), A);
 }
 
 void JitCompiler::EmitLO_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreA(cc.CreateCall(readBarrier, { OffsetPtr(LoadA(B), LoadD(C)) }), A);
+	StoreA(cc.CreateCall(readBarrier, { Load(ToInt8PtrPtr(LoadA(B), LoadD(C))) }), A);
 }
 
 #endif
@@ -236,13 +236,13 @@ void JitCompiler::EmitLO_R()
 void JitCompiler::EmitLP()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreA(OffsetPtr(LoadA(B), ConstD(C)), A);
+	StoreA(Load(ToInt8PtrPtr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreA(OffsetPtr(LoadA(B), LoadD(C)), A);
+	StoreA(Load(ToInt8PtrPtr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLV2()

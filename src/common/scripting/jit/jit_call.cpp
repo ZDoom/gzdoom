@@ -37,9 +37,9 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 	cc.SetInsertPoint(continuebb);
 
 	IRValue* ptrObject = LoadA(b);
-	IRValue* ptrClass = Load(ToInt8PtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
-	IRValue* ptrArray = Load(ToInt8PtrPtr(ptrClass, ConstValueD(myoffsetof(PClass, Virtuals) + myoffsetof(FArray, Array))));
-	IRValue* ptrFunc = Load(ToInt8PtrPtr(ptrArray, ConstValueD(c * (int)sizeof(void*))));
+	IRValue* ptrClass = Load(ToInt8PtrPtr(ptrObject, myoffsetof(DObject, Class)));
+	IRValue* ptrArray = Load(ToInt8PtrPtr(ptrClass, myoffsetof(PClass, Virtuals) + myoffsetof(FArray, Array)));
+	IRValue* ptrFunc = Load(ToInt8PtrPtr(ptrArray, c * (int)sizeof(void*)));
 	StoreA(ptrFunc, a);
 }
 

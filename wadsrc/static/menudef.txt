@@ -2401,6 +2401,7 @@ OptionValue "LightingModes"
 	2, "$OPTVAL_DOOM"
 	3, "$OPTVAL_DARK"
 	4, "$OPTVAL_LEGACY"
+	5, "$OPTVAL_BUILD"
 	8, "$OPTVAL_SOFTWARE"
 	16, "$OPTVAL_VANILLA"
 }

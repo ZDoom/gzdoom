@@ -135,6 +135,10 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 			float light = (float)CalcLightLevel(lightlevel, rellight, false, cmap->BlendFactor);
 			SetShaderLight(state, light, lightlevel);
 		}
+		else if (lightmode == ELightMode::Build)
+		{
+			state.SetLightParms(0.2f * fogdensity, 1.f / 31.f);
+		}
 		else
 		{
 			state.SetLightParms(1.f, 0.f);

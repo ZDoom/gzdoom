@@ -970,7 +970,8 @@ namespace swrenderer
 						bool drawSpriteShadows =
 						(
 							r_actorshadows &&
-							((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn))
+							((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
+							!(thing->flags8 & MF8_NOSPRITESHADOW)
 						);
 
 						if (drawSpriteShadows)

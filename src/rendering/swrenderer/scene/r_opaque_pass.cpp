@@ -75,6 +75,7 @@
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 EXTERN_CVAR(Bool, r_drawvoxels);
 EXTERN_CVAR(Bool, r_debug_disable_vis_filter);
+EXTERN_CVAR(Bool, r_actorshadows);
 extern uint32_t r_renderercaps;
 
 double model_distance_cull = 1e16;
@@ -964,7 +965,16 @@ namespace swrenderer
 					}
 					else
 					{
-						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap);
+						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap, false);
+
+						if (r_actorshadows)
+						{
+							DVector2 shadowScale = sprite.spriteScale;
+							shadowScale.Y *= (thing->Scale.Y * 0.1);
+							DVector3 shadowPos = sprite.pos;
+							shadowPos.Z = thing->floorz;
+							RenderSprite::Project(Thread, thing, shadowPos, sprite.tex, shadowScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap, true);
+						}
 					}
 				}
 			}

@@ -74,7 +74,7 @@ EXTERN_CVAR(Int, gl_texture_hqresize_targets)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap, bool shadowsprite)
 	{
 		auto viewport = thread->Viewport.get();
 
@@ -246,6 +246,14 @@ namespace swrenderer
 		}
 
 		vis->Light.SetColormap(thread, wallc.sz1, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
+
+		if (shadowsprite)
+		{
+			vis->RenderStyle = LegacyRenderStyles[STYLE_TranslucentStencil];
+			vis->FillColor = 0;
+			vis->Alpha *= 0.5f;
+			vis->FlatPass = true;
+		}
 
 		thread->SpriteList->Push(vis);
 	}

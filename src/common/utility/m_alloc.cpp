@@ -38,7 +38,7 @@
 #elif defined(__APPLE__)
 #include <stdlib.h>
 #include <malloc/malloc.h>
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__DragonFly__)
 #include <stdlib.h>
 #else
 #include <malloc.h>

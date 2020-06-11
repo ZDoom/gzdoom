@@ -148,10 +148,10 @@ void JitCompiler::EmitSBIT()
 
 	cc.CreateCondBr(cc.CreateICmpNE(LoadD(B), ConstValueD(0)), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(cc.CreateOr(value, ircontext->getConstantInt((int)C)), ptr);
+	cc.CreateStore(cc.CreateOr(value, ircontext->getConstantInt(int8Ty, (int)C)), ptr);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(cc.CreateAnd(value, ircontext->getConstantInt(~(int)C)), ptr);
+	cc.CreateStore(cc.CreateAnd(value, ircontext->getConstantInt(int8Ty, ~(int)C)), ptr);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }

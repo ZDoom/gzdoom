@@ -15,8 +15,8 @@ JITRuntime* GetJITRuntime();
 
 JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 {
-#if 1
-	if (strcmp(sfunc->PrintableName.GetChars(), "ListMenuItemValueText.Init") != 0)
+#if 0
+	if (strcmp(sfunc->PrintableName.GetChars(), "ListMenu.MenuEvent") != 0)
 		return nullptr;
 #endif
 
@@ -266,11 +266,11 @@ void JitCompiler::SetupFrame()
 	offsetD = offsetA + (int)(sfunc->NumRegA * sizeof(void*));
 	offsetExtra = (offsetD + (int)(sfunc->NumRegD * sizeof(int32_t)) + 15) & ~15;
 
-	if (sfunc->SpecialInits.Size() == 0 && sfunc->NumRegS == 0 && sfunc->ExtraSpace == 0)
+	/*if (sfunc->SpecialInits.Size() == 0 && sfunc->NumRegS == 0 && sfunc->ExtraSpace == 0)
 	{
 		SetupSimpleFrame();
 	}
-	else
+	else*/
 	{
 		SetupFullVMFrame();
 	}
@@ -353,7 +353,7 @@ void JitCompiler::SetupFullVMFrame()
 
 void JitCompiler::EmitPopFrame()
 {
-	if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0)
+	//if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0 || sfunc->ExtraSpace != 0)
 	{
 		cc.CreateCall(popFullVMFrame, { vmframestack });
 	}
@@ -553,8 +553,8 @@ void JitCompiler::CreateNativeFunctions()
 	stringAssignmentOperator = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringAssignmentOperator", StringAssignmentOperator);
 	stringAssignmentOperatorCStr = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringAssignmentOperatorCStr", StringAssignmentOperatorCStr);
 	stringPlusOperator = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy, int8PtrTy }, "__StringPlusOperator", StringPlusOperator);
-	stringCompare = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringCompare", StringCompare);
-	stringCompareNoCase = CreateNativeFunction(voidTy, { int8PtrTy, int8PtrTy }, "__StringCompareNoCase", StringCompareNoCase);
+	stringCompare = CreateNativeFunction(int32Ty, { int8PtrTy, int8PtrTy }, "__StringCompare", StringCompare);
+	stringCompareNoCase = CreateNativeFunction(int32Ty, { int8PtrTy, int8PtrTy }, "__StringCompareNoCase", StringCompareNoCase);
 	stringLength = CreateNativeFunction(int32Ty, { int8PtrTy }, "__StringLength", StringLength);
 	readBarrier = CreateNativeFunction(int8PtrTy, { int8PtrTy }, "__ReadBarrier", ReadBarrier);
 	writeBarrier = CreateNativeFunction(voidTy, { int8PtrTy }, "__WriteBarrier", WriteBarrier);

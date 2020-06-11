@@ -548,16 +548,16 @@ IRFunctionType* JitCompiler::GetFuncSignature()
 				break;
 			case REGT_FLOAT:
 			case REGT_FLOAT | REGT_KONST:
-				args.push_back(doublePtrTy);
+				args.push_back(doubleTy);
 				break;
 			case REGT_FLOAT | REGT_MULTIREG2:
-				args.push_back(doublePtrTy);
-				args.push_back(doublePtrTy);
+				args.push_back(doubleTy);
+				args.push_back(doubleTy);
 				break;
 			case REGT_FLOAT | REGT_MULTIREG3:
-				args.push_back(doublePtrTy);
-				args.push_back(doublePtrTy);
-				args.push_back(doublePtrTy);
+				args.push_back(doubleTy);
+				args.push_back(doubleTy);
+				args.push_back(doubleTy);
 				break;
 
 			default:
@@ -588,7 +588,7 @@ IRFunctionType* JitCompiler::GetFuncSignature()
 			rettype = int32Ty;
 			break;
 		case REGT_FLOAT:
-			rettype = doublePtrTy;
+			rettype = doubleTy;
 			break;
 		case REGT_POINTER:
 			rettype = int8PtrTy;

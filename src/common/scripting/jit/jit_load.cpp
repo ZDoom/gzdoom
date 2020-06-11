@@ -63,7 +63,7 @@ void JitCompiler::EmitMETA()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(LoadA(B), ConstValueD(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadA(B), ConstValueA(nullptr)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
 
 	IRValue* ptrObject = LoadA(B);
@@ -76,7 +76,7 @@ void JitCompiler::EmitCLSS()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(LoadA(B), ConstValueD(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadA(B), ConstValueA(nullptr)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
 
 	IRValue* ptrObject = LoadA(B);
@@ -248,7 +248,7 @@ void JitCompiler::EmitLP_R()
 void JitCompiler::EmitLV2()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	IRValue* base = ToFloatPtr(LoadA(B), ConstD(C));
+	IRValue* base = ToDoublePtr(LoadA(B), ConstD(C));
 	StoreF(Load(base), A);
 	StoreF(Load(OffsetPtr(base, 1)), A + 1);
 }
@@ -256,7 +256,7 @@ void JitCompiler::EmitLV2()
 void JitCompiler::EmitLV2_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	IRValue* base = ToFloatPtr(LoadA(B), LoadD(C));
+	IRValue* base = ToDoublePtr(LoadA(B), LoadD(C));
 	StoreF(Load(base), A);
 	StoreF(Load(OffsetPtr(base, 1)), A + 1);
 }
@@ -264,7 +264,7 @@ void JitCompiler::EmitLV2_R()
 void JitCompiler::EmitLV3()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	IRValue* base = ToFloatPtr(LoadA(B), ConstD(C));
+	IRValue* base = ToDoublePtr(LoadA(B), ConstD(C));
 	StoreF(Load(base), A);
 	StoreF(Load(OffsetPtr(base, 1)), A + 1);
 	StoreF(Load(OffsetPtr(base, 2)), A + 2);
@@ -273,7 +273,7 @@ void JitCompiler::EmitLV3()
 void JitCompiler::EmitLV3_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	IRValue* base = ToFloatPtr(LoadA(B), LoadD(C));
+	IRValue* base = ToDoublePtr(LoadA(B), LoadD(C));
 	StoreF(Load(base), A);
 	StoreF(Load(OffsetPtr(base, 1)), A + 1);
 	StoreF(Load(OffsetPtr(base, 2)), A + 2);
@@ -295,8 +295,8 @@ void JitCompiler::EmitLBIT()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	IRValue* value = Load(LoadA(B));
-	value = cc.CreateAnd(value, ircontext->getConstantInt(C));
-	value = cc.CreateICmpNE(value, ircontext->getConstantInt(0));
+	value = cc.CreateAnd(value, ircontext->getConstantInt(int8Ty, C));
+	value = cc.CreateICmpNE(value, ircontext->getConstantInt(int8Ty, 0));
 	value = cc.CreateZExt(value, int32Ty);
 	StoreD(value, A);
 }

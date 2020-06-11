@@ -2166,15 +2166,6 @@ static void AddAutoloadFiles(const char *autoname)
 	{
 		FString file;
 
-		// [RH] zvox.wad - A wad I had intended to be automatically generated
-		// from Q2's pak0.pak so the female and cyborg player could have
-		// voices. I never got around to writing the utility to do it, though.
-		// And I probably never will now. But I know at least one person uses
-		// it for something else, so this gets to stay here.
-		const char *wad = BaseFileSearch ("zvox.wad", NULL, false, GameConfig);
-		if (wad)
-			D_AddFile (allwads, wad, true, -1, GameConfig);
-	
 		// [RH] Add any .wad files in the skins directory
 #ifdef __unix__
 		file = SHARE_DIR;

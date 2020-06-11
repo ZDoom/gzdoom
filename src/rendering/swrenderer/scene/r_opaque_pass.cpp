@@ -970,9 +970,9 @@ namespace swrenderer
 						bool drawSpriteShadows =
 						(
 							r_actorshadows &&
-							((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
+							((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSHADOW)) &&
 							Thread->Viewport->viewpoint.Pos.Z > (sprite.pos.Z + 11.) &&
-							!(thing->flags8 & MF8_NOSPRITESHADOW)
+							!(thing->flags8 & MF8_DONTCASTSHADOW)
 						);
 
 						if (drawSpriteShadows)

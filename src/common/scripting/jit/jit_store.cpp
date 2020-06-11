@@ -139,19 +139,21 @@ void JitCompiler::EmitSBIT()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
 
-	IRValue* ptr = LoadA(A);
-	IRValue* value = cc.CreateLoad(ptr);
-	
 	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
 	cc.CreateCondBr(cc.CreateICmpNE(LoadD(B), ConstValueD(0)), ifbb, elsebb);
+
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(cc.CreateOr(value, ircontext->getConstantInt(int8Ty, (int)C)), ptr);
+	IRValue* ptr = LoadA(A);
+	Store(cc.CreateOr(Load(ptr), ircontext->getConstantInt(int8Ty, (int)C)), ptr);
 	cc.CreateBr(endbb);
+
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(cc.CreateAnd(value, ircontext->getConstantInt(int8Ty, ~(int)C)), ptr);
+	ptr = LoadA(A);
+	Store(cc.CreateAnd(Load(ptr), ircontext->getConstantInt(int8Ty, ~(int)C)), ptr);
 	cc.CreateBr(endbb);
+
 	cc.SetInsertPoint(endbb);
 }

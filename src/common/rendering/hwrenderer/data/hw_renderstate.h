@@ -563,6 +563,8 @@ public:
 		mMaterial.mOverrideShader = overrideshader;
 		mMaterial.mChanged = true;
 		mTextureModeFlags = mat->GetLayerFlags();
+		auto scale = mat->GetDetailScale();
+		mStreamData.uDetailParms = { scale.X, scale.Y, 0, 0 };
 	}
 
 	void SetMaterial(FGameTexture* tex, EUpscaleFlags upscalemask, int scaleflags, int clampmode, int translation, int overrideshader)

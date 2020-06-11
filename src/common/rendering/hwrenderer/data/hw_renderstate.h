@@ -155,7 +155,7 @@ struct FVector4PalEntry
 		r = newvalue.r * normScale;
 		g = newvalue.g * normScale;
 		b = newvalue.b * normScale;
-		a = 1;
+		a = newvalue.a;
 		return *this;
 	}
 

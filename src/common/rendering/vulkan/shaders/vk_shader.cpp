@@ -279,7 +279,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 	code << defines;
 	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
-	code << "#define NPOT_EMULATION\n"
+	code << "#define NPOT_EMULATION\n";
 #endif
 	code << shaderBindings;
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";

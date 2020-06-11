@@ -11,7 +11,6 @@ class FxAddSub;
 struct BuildInfo;
 class FMultipatchTextureBuilder;
 class FScanner;
-int PalCheck(int tex);
 
 // Texture manager
 class FTextureManager

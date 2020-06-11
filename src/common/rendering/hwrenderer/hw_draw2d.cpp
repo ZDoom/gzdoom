@@ -150,6 +150,9 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 			sciY = screen->ScreenToWindowY(cmd.mScissor[3]);
 			sciW = screen->ScreenToWindowX(cmd.mScissor[2]) - sciX;
 			sciH = screen->ScreenToWindowY(cmd.mScissor[1]) - sciY;
+			// If coordinates turn out negative, clip to sceen here to avoid undefined behavior. 
+			if (sciX < 0) sciW += sciX, sciX = 0;
+			if (sciY < 0) sciH += sciY, sciY = 0;
 		}
 		else
 		{

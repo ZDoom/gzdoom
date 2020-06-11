@@ -27,7 +27,7 @@ JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 		JitCompiler compiler(&context, sfunc);
 		IRFunction* func = compiler.Codegen();
 		jit->add(&context);
-		std::string text = context.getFunctionAssembly(func);
+		//std::string text = context.getFunctionAssembly(func);
 		return reinterpret_cast<JitFuncPtr>(jit->getPointerToFunction(func->name));
 	}
 	catch (...)

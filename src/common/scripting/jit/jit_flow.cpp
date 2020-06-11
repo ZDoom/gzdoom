@@ -129,7 +129,7 @@ void JitCompiler::EmitRET()
 			break;
 		case REGT_STRING:
 		{
-			cc.CreateCall(setReturnString, { location, (regtype & REGT_KONST) ? ConstS(regnum) : LoadS(regnum) });
+			cc.CreateCall(setReturnString, { OffsetPtr(ret, retnum * sizeof(VMReturn)), (regtype & REGT_KONST) ? ConstS(regnum) : LoadS(regnum) });
 			break;
 		}
 		case REGT_POINTER:

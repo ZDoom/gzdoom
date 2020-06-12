@@ -1675,6 +1675,7 @@ void MapLoader::LoadLineDefs (MapData * map)
 		
 	auto mldf = map->Read(ML_LINEDEFS);
 	int numlines = mldf.Size() / sizeof(maplinedef_t);
+	int numsides = map->Size(ML_SIDEDEFS) / sizeof(mapsidedef_t);
 	linemap.Resize(numlines);
 
 	// [RH] Count the number of sidedef references. This is the number of
@@ -1743,7 +1744,7 @@ void MapLoader::LoadLineDefs (MapData * map)
 		// cph 2006/09/30 - fix sidedef errors right away.
 		for (int j=0; j < 2; j++)
 		{
-			if (LittleShort(mld->sidenum[j]) != NO_INDEX && mld->sidenum[j] >= Level->sides.Size())
+			if (LittleShort(mld->sidenum[j]) != NO_INDEX && mld->sidenum[j] >= numsides)
 			{
 				mld->sidenum[j] = 0; // dummy sidedef
 				Printf("Linedef %d has a bad sidedef\n", i);

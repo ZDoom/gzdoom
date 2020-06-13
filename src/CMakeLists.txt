@@ -1105,6 +1105,7 @@ set (PCH_SOURCES
 	common/filesystem/file_directory.cpp
 	common/filesystem/resourcefile.cpp
 	common/engine/cycler.cpp
+	common/engine/d_event.cpp
 	common/engine/stats.cpp
 	common/engine/sc_man.cpp
 	common/engine/palettecontainer.cpp
@@ -1283,6 +1284,7 @@ include_directories( .
 	rendering/2d
 	r_data
 	sound
+	menu
 	sound/backend
 	xlat
 	utility

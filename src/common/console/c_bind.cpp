@@ -47,7 +47,7 @@
 #include "sc_man.h"
 #include "c_cvars.h"
 
-#include "d_event.h"
+#include "d_eventbase.h"
 
 extern int chatmodeon;
 

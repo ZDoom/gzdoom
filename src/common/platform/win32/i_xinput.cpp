@@ -39,7 +39,7 @@
 #include <limits.h>
 
 #include "i_input.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "m_argv.h"

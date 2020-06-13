@@ -78,7 +78,7 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	{
 		self = GameTicRate;
 	}
-	else if (vid_maxfps > 1000)
+	else if (self > 1000)
 	{
 		self = 1000;
 	}

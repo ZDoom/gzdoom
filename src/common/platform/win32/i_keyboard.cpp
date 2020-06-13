@@ -39,7 +39,7 @@
 #include <dinput.h>
 
 #include "i_input.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 
 
 // MACROS ------------------------------------------------------------------

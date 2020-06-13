@@ -58,6 +58,7 @@
 #include "v_video.h"
 #include "actorinlines.h"
 #include "v_draw.h"
+#include "doommenu.h"
 
 static FRandom pr_randomspeech("RandomSpeech");
 

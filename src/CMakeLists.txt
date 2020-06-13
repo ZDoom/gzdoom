@@ -954,6 +954,7 @@ set (PCH_SOURCES
 	maploader/renderinfo.cpp
 	maploader/compatibility.cpp
 	maploader/postprocessor.cpp
+	menu/doommenu.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

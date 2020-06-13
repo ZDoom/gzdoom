@@ -77,6 +77,11 @@ CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO | CVAR_LATCH)
 CVAR (Bool, sv_unlimited_pickup, false, CVAR_SERVERINFO)
 CVAR (Int, cl_blockcheats, 0, 0)
 
+CVAR(Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, show_messages, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, show_obituaries, true, CVAR_ARCHIVE)
+
+
 CCMD (toggleconsole)
 {
 	C_ToggleConsole();

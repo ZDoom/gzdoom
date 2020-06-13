@@ -17,6 +17,7 @@ struct SystemCallbacks
 	void (*OnScreenSizeChanged)();
 	IntRect(*GetSceneRect)();
 	FString(*GetLocationDescription)();
+	void (*MenuDim)();
 };
 
 extern SystemCallbacks *sysCallbacks;

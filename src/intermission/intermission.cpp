@@ -54,6 +54,7 @@
 #include "s_music.h"
 #include "texturemanager.h"
 #include "v_draw.h"
+#include "doommenu.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 

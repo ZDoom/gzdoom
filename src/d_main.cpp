@@ -189,9 +189,10 @@ EXTERN_CVAR(Bool, ticker)
 
 extern bool setmodeneeded;
 extern bool demorecording;
-extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
+bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
+extern FName MessageBoxClass;
 
 const char* iwad_folders[13] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/" };
 const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
@@ -2875,6 +2876,7 @@ void System_CrashInfo(char* buffer, size_t bufflen, const char *lfstr)
 	*buffer = 0;
 }
 
+void System_M_Dim();
 
 
 static void PatchTextures()
@@ -3032,6 +3034,7 @@ static int D_DoomMain_Internal (void)
 		System_OnScreenSizeChanged,
 		System_GetSceneRect,
 		System_GetLocationDescription,
+		System_M_Dim,
 	};
 	sysCallbacks = &syscb;
 	
@@ -3328,6 +3331,7 @@ static int D_DoomMain_Internal (void)
 		// [RH] Parse through all loaded mapinfo lumps
 		if (!batchrun) Printf ("G_ParseMapInfo: Load map definitions.\n");
 		G_ParseMapInfo (iwad_info->MapInfo);
+		MessageBoxClass = gameinfo.MessageBoxClass;
 		ReadStatistics();
 
 		// MUSINFO must be parsed after MAPINFO

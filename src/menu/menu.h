@@ -6,10 +6,8 @@
 
 #include "dobject.h"
 #include "d_player.h"
-#include "r_data/r_translate.h"
 #include "c_cvars.h"
 #include "v_font.h"
-#include "gi.h"
 #include "textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
@@ -207,7 +205,7 @@ public:
 		mScrollTop = 0;
 		mIndent = 0;
 		mDontDim = 0;
-		mFont = gameinfo.gametype == GAME_Doom ? BigUpper : BigFont;
+		mFont = BigUpper;
 
 	}
 	size_t PropagateMark() override;
@@ -347,7 +345,7 @@ void M_PreviousMenu ();
 void M_ParseMenuDefs();
 void M_StartupEpisodeMenu(FNewGameStartup *gs);
 void M_StartupSkillMenu(FNewGameStartup *gs);
-void M_StartControlPanel (bool makeSound, bool scaleoverride = false);
+void M_DoStartControlPanel(bool scaleoverride);
 void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);

@@ -83,6 +83,7 @@
 #include "c_buttons.h"
 #include "d_buttons.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "doommenu.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");

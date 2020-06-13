@@ -5,7 +5,6 @@
 
 
 #include "dobject.h"
-#include "d_player.h"
 #include "c_cvars.h"
 #include "v_font.h"
 #include "textures.h"
@@ -18,7 +17,6 @@ struct event_t;
 class FTexture;
 class FFont;
 enum EColorRange : int;
-class FPlayerClass;
 class FKeyBindings;
 struct FBrokenLines;
 
@@ -45,64 +43,6 @@ enum EMenuKey
 };
 
 
-struct FNewGameStartup
-{
-	const char *PlayerClass;
-	int Episode;
-	int Skill;
-};
-
-extern FNewGameStartup NewGameStartupInfo;
-
-struct FSaveGameNode
-{
-	FString SaveTitle;
-	FString Filename;
-	bool bOldVersion = false;
-	bool bMissingWads = false;
-	bool bNoDelete = false;
-};
-
-struct FSavegameManager
-{
-private:
-	TArray<FSaveGameNode*> SaveGames;
-	FSaveGameNode NewSaveNode;
-	int LastSaved = -1;
-	int LastAccessed = -1;
-	FGameTexture *SavePic = nullptr;
-
-public:
-	int WindowSize = 0;
-	FString SaveCommentString;
-	FSaveGameNode *quickSaveSlot = nullptr;
-	~FSavegameManager();
-
-private:
-	int InsertSaveNode(FSaveGameNode *node);
-public:
-	void NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave, bool forceQuicksave);
-	void ClearSaveGames();
-
-	void ReadSaveStrings();
-	void UnloadSaveData();
-
-	int RemoveSaveSlot(int index);
-	void LoadSavegame(int Selected);
-	void DoSave(int Selected, const char *savegamestring);
-	unsigned ExtractSaveData(int index);
-	void ClearSaveStuff();
-	bool DrawSavePic(int x, int y, int w, int h);
-	void DrawSaveComment(FFont *font, int cr, int x, int y, int scalefactor);
-	void SetFileInfo(int Selected);
-	unsigned SavegameCount();
-	FSaveGameNode *GetSavegame(int i);
-	void InsertNewSaveNode();
-	bool RemoveNewSaveNode();
-
-};
-
-extern FSavegameManager savegameManager;
 class DMenu;
 extern DMenu *CurrentMenu;
 extern int MenuTime;
@@ -343,8 +283,6 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_PreviousMenu ();
 void M_ParseMenuDefs();
-void M_StartupEpisodeMenu(FNewGameStartup *gs);
-void M_StartupSkillMenu(FNewGameStartup *gs);
 void M_DoStartControlPanel(bool scaleoverride);
 void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);

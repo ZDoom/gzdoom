@@ -38,6 +38,7 @@
 #include "i_video.h"
 #include "c_dispatch.h"
 #include "vm.h"
+#include "menustate.h"
 
 void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 FName MessageBoxClass = NAME_MessageBoxMenu;

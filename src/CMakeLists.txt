@@ -955,14 +955,9 @@ set (PCH_SOURCES
 	maploader/compatibility.cpp
 	maploader/postprocessor.cpp
 	menu/doommenu.cpp
-	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
-	menu/menu.cpp
 	menu/menudef.cpp
-	menu/messagebox.cpp
-	menu/optionmenu.cpp
 	menu/playermenu.cpp
-	menu/resolutionmenu.cpp
 	gamedata/textures/animations.cpp
 	gamedata/textures/anim_switches.cpp
 	gamedata/textures/buildloader.cpp
@@ -1120,6 +1115,12 @@ set (PCH_SOURCES
 	common/objects/dobject.cpp
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
+	common/menu/joystickmenu.cpp
+	common/menu/menu.cpp
+	common/menu/messagebox.cpp
+	common/menu/optionmenu.cpp
+	common/menu/resolutionmenu.cpp
+	
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp
 	common/rendering/r_thread.cpp

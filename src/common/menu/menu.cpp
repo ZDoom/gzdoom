@@ -51,6 +51,9 @@
 #include "vm.h"
 #include "gamestate.h"
 #include "i_interface.h"
+#include "menustate.h"
+#include "i_time.h"
+#include "printf.h"
 
 void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 
@@ -101,7 +104,7 @@ extern PClass *DefaultListMenuClass;
 extern PClass *DefaultOptionMenuClass;
 
 
-#define KEY_REPEAT_DELAY	(TICRATE*5/12)
+#define KEY_REPEAT_DELAY	(GameTicRate*5/12)
 #define KEY_REPEAT_RATE		(3)
 
 bool OkForLocalization(FTextureID texnum, const char* substitute);
@@ -394,11 +397,6 @@ void M_SetMenu(FName menu, int param)
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != nullptr)
 	{
-		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame && !demoplayback)
-		{
-			M_StartMessage((*desc)->mNetgameMessage, 1);
-			return;
-		}
 
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
@@ -711,8 +709,6 @@ void M_Ticker (void)
 
 void M_Drawer (void) 
 {
-	player_t *player = &players[consoleplayer];
-	AActor *camera = player->camera;
 	PalEntry fade = 0;
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 

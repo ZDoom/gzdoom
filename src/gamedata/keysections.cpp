@@ -34,12 +34,15 @@
 */
 
 
-#include "menu/menu.h"
+#include "menu.h"
 #include "gi.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
 #include "gameconfigfile.h"
 #include "filesystem.h"
+#include "gi.h"
+#include "d_player.h"
+#include "c_dispatch.h"
 
 TArray<FKeySection> KeySections;
 extern TArray<FString> KeyConfWeapons;

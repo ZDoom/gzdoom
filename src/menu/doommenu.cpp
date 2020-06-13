@@ -62,6 +62,7 @@
 #include "doommenu.h"
 #include "r_utility.h"
 #include "gameconfigfile.h"
+#include "d_player.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
 EXTERN_CVAR(Bool, m_quickexit)
@@ -190,6 +191,17 @@ bool M_SetSpecialMenu(FName menu, int param)
 		menu = NAME_NewPlayerMenu;	// redirect the old player menu to the new one.
 		break;
 	}
+
+	DMenuDescriptor** desc = MenuDescriptors.CheckKey(menu);
+	if (desc != nullptr)
+	{
+		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame && !demoplayback)
+		{
+			M_StartMessage((*desc)->mNetgameMessage, 1);
+			return false;
+		}
+	}
+
 
 	// End of special checks
 	return true;

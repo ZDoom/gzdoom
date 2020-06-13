@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "d_gui.h"
+#include "zstring.h"
 
 // Input event types.
 enum EGenericEvent

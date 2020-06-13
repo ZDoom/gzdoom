@@ -956,7 +956,6 @@ set (PCH_SOURCES
 	maploader/postprocessor.cpp
 	menu/doommenu.cpp
 	menu/loadsavemenu.cpp
-	menu/menudef.cpp
 	menu/playermenu.cpp
 	gamedata/textures/animations.cpp
 	gamedata/textures/anim_switches.cpp
@@ -1120,6 +1119,7 @@ set (PCH_SOURCES
 	common/menu/messagebox.cpp
 	common/menu/optionmenu.cpp
 	common/menu/resolutionmenu.cpp
+	common/menu/menudef.cpp
 	
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp

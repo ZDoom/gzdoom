@@ -46,7 +46,7 @@
 #include "r_state.h"
 #include "c_bind.h"
 #include "p_conversation.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "d_net.h"
 #include "g_levellocals.h"
 #include "utf8.h"

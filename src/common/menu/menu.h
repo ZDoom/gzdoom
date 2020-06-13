@@ -288,6 +288,7 @@ void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);
 void M_MarkMenus();
+FTextureID GetMenuTexture(const char* const name);
 
 
 struct IJoystickConfig;

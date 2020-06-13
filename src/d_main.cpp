@@ -57,7 +57,8 @@
 #include "f_wipe.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "menu/menu.h"
+#include "menu.h"
+#include "doommenu.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "i_sound.h"
@@ -3411,6 +3412,8 @@ static int D_DoomMain_Internal (void)
 
 		if (!batchrun) Printf("M_Init: Init menus.\n");
 		M_Init();
+		M_CreateGameMenus();
+
 
 		// clean up the compiler symbols which are not needed any longer.
 		RemoveUnusedSymbols();
@@ -3674,6 +3677,7 @@ void D_Cleanup()
 	C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 	DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
 	DeinitMenus();
+	savegameManager.ClearSaveGames();
 	LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
 	TexAnim.DeleteAll();
 	TexMan.DeleteAll();

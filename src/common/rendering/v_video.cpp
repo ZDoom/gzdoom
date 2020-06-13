@@ -53,7 +53,7 @@
 #include "cmdlib.h"
 #include "hardware.h"
 #include "m_png.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"

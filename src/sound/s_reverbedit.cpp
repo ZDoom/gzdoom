@@ -46,7 +46,7 @@
 #include "c_dispatch.h"
 #include "vm.h"
 #include "dobject.h"
-#include "menu/menu.h"
+#include "menu.h"
 
 void S_ReadReverbDef (FScanner &sc);
 

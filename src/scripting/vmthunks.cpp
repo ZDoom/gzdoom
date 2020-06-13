@@ -52,7 +52,7 @@
 #include "utf8.h"
 #include "fontinternals.h"
 #include "intermission/intermission.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "c_cvars.h"
 #include "c_bind.h"
 #include "c_dispatch.h"

@@ -14,6 +14,7 @@ struct FNewGameStartup
 extern FNewGameStartup NewGameStartupInfo;
 void M_StartupEpisodeMenu(FNewGameStartup *gs);
 void M_StartupSkillMenu(FNewGameStartup *gs);
+void M_CreateGameMenus();
 
 // The savegame manager contains too much code that is game specific. Parts are shareable but need more work first.
 struct FSaveGameNode
@@ -65,3 +66,4 @@ public:
 };
 
 extern FSavegameManager savegameManager;
+

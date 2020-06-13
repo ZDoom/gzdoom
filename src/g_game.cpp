@@ -38,7 +38,7 @@
 #include "intermission/intermission.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "m_crc32.h"
 #include "p_saveg.h"
 #include "p_tick.h"

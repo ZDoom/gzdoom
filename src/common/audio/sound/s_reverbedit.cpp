@@ -33,14 +33,14 @@
 **
 */
 
-#include "doomtype.h"
-#include "s_sound.h"
+#include "s_soundinternal.h"
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "templates.h"
 #include "filesystem.h"
 #include "i_system.h"
 #include "m_misc.h"
+#include "printf.h"
 
 #include "c_cvars.h"
 #include "c_dispatch.h"

@@ -870,7 +870,6 @@ set (PCH_SOURCES
 	rendering/r_utility.cpp
 	rendering/r_sky.cpp
 	sound/s_advsound.cpp
-	sound/s_reverbedit.cpp
 	sound/s_sndseq.cpp
 	sound/s_doomsound.cpp
 	serializer_doom.cpp
@@ -1006,6 +1005,7 @@ set (PCH_SOURCES
 	common/audio/sound/oalsound.cpp
 	common/audio/sound/s_environment.cpp
 	common/audio/sound/s_sound.cpp
+	common/audio/sound/s_reverbedit.cpp
 	common/audio/music/music_midi_base.cpp
 	common/audio/music/music.cpp
 	common/audio/music/i_music.cpp

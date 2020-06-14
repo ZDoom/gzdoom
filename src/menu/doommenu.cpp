@@ -176,6 +176,7 @@ bool M_SetSpecialMenu(FName menu, int param)
 			M_StartMessage (GStrings("SAVEDEAD"), 1);
 			return false;
 		}
+		break;
 
 	case NAME_Quitmenu:
 		// The separate menu class no longer exists but the name still needs support for existing mods.

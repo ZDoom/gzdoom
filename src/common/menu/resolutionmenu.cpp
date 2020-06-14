@@ -32,8 +32,6 @@
 **
 */
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "v_video.h"

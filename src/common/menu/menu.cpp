@@ -132,10 +132,38 @@ DEFINE_ACTION_FUNCTION_NATIVE(DMenuDescriptor, GetDescriptor, GetMenuDescriptor)
 	ACTION_RETURN_OBJECT(GetMenuDescriptor(name.GetIndex()));
 }
 
+void DListMenuDescriptor::Reset()
+{
+	// Reset the default settings (ignore all other values in the struct)
+	mSelectOfsX = 0;
+	mSelectOfsY = 0;
+	mSelector.SetInvalid();
+	mDisplayTop = 0;
+	mXpos = 0;
+	mYpos = 0;
+	mLinespacing = 0;
+	mNetgameMessage = "";
+	mFont = NULL;
+	mFontColor = CR_UNTRANSLATED;
+	mFontColor2 = CR_UNTRANSLATED;
+	mFromEngine = false;
+}
+
+
 size_t DListMenuDescriptor::PropagateMark()
 {
 	for (auto item : mItems) GC::Mark(item);
 	return 0;
+}
+
+void DOptionMenuDescriptor::Reset()
+{
+	// Reset the default settings (ignore all other values in the struct)
+	mPosition = 0;
+	mScrollTop = 0;
+	mIndent = 0;
+	mDontDim = 0;
+	mFont = BigUpper;
 }
 
 size_t DOptionMenuDescriptor::PropagateMark()

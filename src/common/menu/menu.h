@@ -89,23 +89,7 @@ public:
 	bool mCenter;
 	bool mFromEngine;
 
-	void Reset()
-	{
-		// Reset the default settings (ignore all other values in the struct)
-		mSelectOfsX = 0;
-		mSelectOfsY = 0;
-		mSelector.SetInvalid();
-		mDisplayTop = 0;
-		mXpos = 0;
-		mYpos = 0;
-		mLinespacing = 0;
-		mNetgameMessage = "";
-		mFont = NULL;
-		mFontColor = CR_UNTRANSLATED;
-		mFontColor2 = CR_UNTRANSLATED;
-		mFromEngine = false;
-	}
-	
+	void Reset();
 	size_t PropagateMark() override;
 };
 
@@ -138,20 +122,9 @@ public:
 
 	void CalcIndent();
 	DMenuItemBase *GetItem(FName name);
-	void Reset()
-	{
-		// Reset the default settings (ignore all other values in the struct)
-		mPosition = 0;
-		mScrollTop = 0;
-		mIndent = 0;
-		mDontDim = 0;
-		mFont = BigUpper;
-
-	}
+	void Reset();
 	size_t PropagateMark() override;
-	~DOptionMenuDescriptor()
-	{
-	}
+	~DOptionMenuDescriptor() = default;
 };
 						
 
@@ -289,6 +262,8 @@ void M_StartMessage(const char *message, int messagemode, FName action = NAME_No
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);
 void M_MarkMenus();
 FTextureID GetMenuTexture(const char* const name);
+void DeinitMenus();
+bool M_Active();
 
 
 struct IJoystickConfig;

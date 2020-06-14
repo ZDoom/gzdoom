@@ -1163,7 +1163,7 @@ set (PCH_SOURCES
 	common/scripting/vm/vmexec.cpp
 	common/scripting/vm/vmframe.cpp
 	common/scripting/interface/stringformat.cpp
-	#common/scripting/interface/exports.cpp
+	common/scripting/interface/vmnatives.cpp
 	common/scripting/frontend/ast.cpp
 	common/scripting/frontend/zcc_compile.cpp
 	common/scripting/frontend/zcc_parser.cpp

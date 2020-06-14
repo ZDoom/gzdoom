@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "tarray.h"
 #include "textureid.h"
+#include "textures.h"
 #include "basics.h"
 #include "texmanip.h"
 #include "name.h"

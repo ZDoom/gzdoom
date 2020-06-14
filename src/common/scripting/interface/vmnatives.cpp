@@ -46,6 +46,7 @@
 #include "vm.h"
 #include "gstrings.h"
 #include "printf.h"
+#include "s_music.h"
 
 
 //==========================================================================
@@ -73,6 +74,20 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 		}
 	}
 	ACTION_RETURN_STRING(retval);
+}
+
+static int CheckForTexture(const FString& name, int type, int flags)
+{
+	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(type);
+	PARAM_INT(flags);
+	ACTION_RETURN_INT(CheckForTexture(name, type, flags));
 }
 
 //==========================================================================
@@ -618,3 +633,11 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 	Printf("%s\n", s.GetChars());
 	return 0;
 }
+
+DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
+
+DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
+DEFINE_GLOBAL(Bindings)

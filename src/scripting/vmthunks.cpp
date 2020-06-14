@@ -1607,22 +1607,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 	return 0;
 }
 
-static int CheckForTexture(const FString& name, int type, int flags)
-{
-	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
-{
-	PARAM_PROLOGUE;
-	PARAM_STRING(name);
-	PARAM_INT(type);
-	PARAM_INT(flags);
-	ACTION_RETURN_INT(CheckForTexture(name, type, flags));
-}
-
-
-
 //=====================================================================================
 //
 // secplane_t exports
@@ -2920,12 +2904,6 @@ DEFINE_FIELD(DHUDFont, mFont);
 
 DEFINE_GLOBAL(StatusBar);
 
-DEFINE_GLOBAL(Bindings)
 DEFINE_GLOBAL(AutomapBindings)
-
-DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 
 DEFINE_GLOBAL(generic_ui)

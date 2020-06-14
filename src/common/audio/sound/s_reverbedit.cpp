@@ -39,9 +39,8 @@
 #include "templates.h"
 #include "filesystem.h"
 #include "i_system.h"
-#include "m_misc.h"
 #include "printf.h"
-
+#include "i_specialpaths.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "vm.h"

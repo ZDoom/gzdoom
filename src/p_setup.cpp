@@ -366,8 +366,8 @@ void FLevelLocals::ClearLevelData()
 	localEventManager->Shutdown();
 	if (aabbTree) delete aabbTree;
 	aabbTree = nullptr;
-	screen->SetAABBTree(nullptr);
-
+	if (screen)
+		screen->SetAABBTree(nullptr);
 }
 
 //==========================================================================

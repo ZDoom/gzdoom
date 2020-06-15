@@ -45,6 +45,7 @@
 #include "sc_man.h"
 #include "image.h"
 #include "vectors.h"
+#include "animtexture.h"
 #include "formats/multipatchtexture.h"
 
 FTextureManager TexMan;
@@ -1158,6 +1159,9 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	AddGameTexture(CreateShaderTexture(false, true));
 	AddGameTexture(CreateShaderTexture(true, false));
 	AddGameTexture(CreateShaderTexture(true, true));
+	// Add two animtexture entries so that movie playback can call functions using texture IDs.
+	AddGameTexture(MakeGameTexture(new AnimTexture(), "AnimTextureFrame1", ETextureType::Override));
+	AddGameTexture(MakeGameTexture(new AnimTexture(), "AnimTextureFrame2", ETextureType::Override));
 
 	int wadcnt = fileSystem.GetNumWads();
 

@@ -801,12 +801,6 @@ OptionMenu "JoystickConfigMenu" protected
 //
 //-------------------------------------------------------------------------------------------
 
-OptionValue ColumnMethods
-{
-	0.0, "$OPTVAL_ORIGINAL"
-	1.0, "$OPTVAL_OPTIMIZED"
-}
-
 OptionValue BlendMethods
 {
 	0.0, "$OPTVAL_CLASSIC"

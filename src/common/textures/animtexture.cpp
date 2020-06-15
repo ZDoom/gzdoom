@@ -33,6 +33,8 @@
 */
 #include "animtexture.h"
 #include "bitmap.h"
+#include "texturemanager.h"
+#include "templates.h"
 
 //==========================================================================
 //
@@ -40,17 +42,19 @@
 //
 //==========================================================================
 
-void AnimTexture::SetFrameSize(int width, int height)
+void AnimTexture::SetFrameSize(int  format, int width, int height)
 {
     FTexture::SetSize(width, height);
-    Image.Resize(width * height);
+    Image.Resize(width * height * (format == Paletted ? 1 : 3));
+    pixelformat = format;
 }
 
 void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 {
     memcpy(Palette, palette, 768);
-    memcpy(Image.Data(), data_, Width * Height);
+    memcpy(Image.Data(), data_, Width * Height * (pixelformat == Paletted ? 1 : 3));
     CleanHardwareTextures();
+    pixelformat = Paletted;
 }
 
 //===========================================================================
@@ -67,14 +71,51 @@ FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
 
     auto spix = Image.Data();
     auto dpix = bmp.GetPixels();
-    for (int i = 0; i < Width * Height; i++)
+    if (pixelformat == Paletted)
     {
-        int p = i * 4;
-        int index = spix[i];
-        dpix[p + 0] = Palette[index * 3 + 2];
-        dpix[p + 1] = Palette[index * 3 + 1];
-        dpix[p + 2] = Palette[index * 3];
-        dpix[p + 3] = 255;
+        for (int i = 0; i < Width * Height; i++)
+        {
+            int p = i * 4;
+            int index = spix[i];
+            dpix[p + 0] = Palette[index * 3 + 2];
+            dpix[p + 1] = Palette[index * 3 + 1];
+            dpix[p + 2] = Palette[index * 3];
+            dpix[p + 3] = 255;
+        }
+    }
+    else if (pixelformat == RGB)
+    {
+        for (int i = 0; i < Width * Height; i++)
+        {
+            int p = i * 4;
+            dpix[p + 0] = spix[p + 2];
+            dpix[p + 1] = spix[p + 1];
+            dpix[p + 2] = spix[p];
+            dpix[p + 3] = 255;
+        }
+    }
+    else if (pixelformat == YUV)
+    {
+        for (int i = 0; i < Width * Height; i++)
+        {
+            int p = i * 4;
+            float y = spix[p] * (1 / 255.f);
+            float u = spix[p + 1] * (1 / 255.f) - 0.5f;
+            float v = spix[p + 2] * (1 / 255.f) - 0.5f;
+
+            y = 1.1643f * (y - 0.0625f);
+
+            float r = y + 1.5958f * v;
+            float g = y - 0.39173f * u - 0.81290f * v;
+            float b = y + 2.017f * u;
+
+            dpix[p + 0] = (uint8_t)(clamp(b, 0.f, 1.f) * 255);
+            dpix[p + 1] = (uint8_t)(clamp(g, 0.f, 1.f) * 255);
+            dpix[p + 2] = (uint8_t)(clamp(r, 0.f, 1.f) * 255);
+            dpix[p + 3] = 255;
+        }
+        return bmp;
+
     }
     return bmp;
 }
@@ -88,20 +129,20 @@ FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
 AnimTextures::AnimTextures()
 {
     active = 1;
-    tex[0] = MakeGameTexture(new AnimTexture, "", ETextureType::Special);
-    tex[1] = MakeGameTexture(new AnimTexture, "", ETextureType::Special);
+    tex[0] = TexMan.FindGameTexture("AnimTextureFrame1", ETextureType::Override);
+    tex[1] = TexMan.FindGameTexture("AnimTextureFrame2", ETextureType::Override);
 }
 
 AnimTextures::~AnimTextures()
 {
-    delete tex[0];
-    delete tex[1];
+    tex[0]->CleanHardwareData(true);
+    tex[1]->CleanHardwareData(true);
 }
 
-void AnimTextures::SetSize(int width, int height)
+void AnimTextures::SetSize(int format, int width, int height)
 {
-    static_cast<AnimTexture*>(tex[0]->GetTexture())->SetFrameSize(width, height);
-    static_cast<AnimTexture*>(tex[1]->GetTexture())->SetFrameSize(width, height);
+    static_cast<AnimTexture*>(tex[0]->GetTexture())->SetFrameSize(format, width, height);
+    static_cast<AnimTexture*>(tex[1]->GetTexture())->SetFrameSize(format, width, height);
     tex[0]->SetSize(width, height);
     tex[1]->SetSize(width, height);
 }
@@ -110,9 +151,4 @@ void AnimTextures::SetFrame(const uint8_t* palette, const void* data)
 {
     active ^= 1;
     static_cast<AnimTexture*>(tex[active]->GetTexture())->SetFrame(palette, data);
-}
-
-FGameTexture* AnimTextures::GetFrame()
-{
-    return tex[active];
 }

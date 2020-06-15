@@ -922,7 +922,7 @@ void DIntermissionController::Drawer ()
 {
 	if (mScreen != NULL)
 	{
-		FillBorder(twod, nullptr);
+		twod->ClearScreen();
 		mScreen->Drawer();
 	}
 }

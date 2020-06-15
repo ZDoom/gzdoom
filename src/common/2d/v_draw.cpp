@@ -1164,55 +1164,6 @@ void VirtualToRealCoordsInt(F2DDrawer *drawer, int &x, int &y, int &w, int &h,
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-void FillBorder (F2DDrawer *drawer, FGameTexture *img)
-{
-	auto Width = drawer->GetWidth();
-	auto Height = drawer->GetHeight();
-	float myratio = ActiveRatio (Width, Height);
-
-	if (myratio >= 1.3f && myratio <= 1.4f)
-	{ // This is a 4:3 display, so no border to show
-		return;
-	}
-	int bordtop, bordbottom, bordleft, bordright, bord;
-	if (AspectTallerThanWide(myratio))
-	{ // Screen is taller than it is wide
-		bordleft = bordright = 0;
-		bord = Height - Height * AspectMultiplier(myratio) / 48;
-		bordtop = bord / 2;
-		bordbottom = bord - bordtop;
-	}
-	else
-	{ // Screen is wider than it is tall
-		bordtop = bordbottom = 0;
-		bord = Width - Width * AspectMultiplier(myratio) / 48;
-		bordleft = bord / 2;
-		bordright = bord - bordleft;
-	}
-
-	if (img != NULL)
-	{
-		int filltype = (ui_screenborder_classic_scaling) ? -1 : 0;
-		drawer->AddFlatFill(0, 0, Width, bordtop, img, filltype);										// Top
-		drawer->AddFlatFill(0, bordtop, bordleft, Height - bordbottom, img, filltype);					// Left
-		drawer->AddFlatFill(Width - bordright, bordtop, Width, Height - bordbottom, img, filltype);		// Right
-		drawer->AddFlatFill(0, Height - bordbottom, Width, Height, img, filltype);						// Bottom
-	}
-	else
-	{
-		ClearRect(drawer, 0, 0, Width, bordtop, GPalette.BlackIndex, 0);									// Top
-		ClearRect(drawer, 0, bordtop, bordleft, Height - bordbottom, GPalette.BlackIndex, 0);				// Left
-		ClearRect(drawer, Width - bordright, bordtop, Width, Height - bordbottom, GPalette.BlackIndex, 0);	// Right
-		ClearRect(drawer, 0, Height - bordbottom, Width, Height, GPalette.BlackIndex, 0);					// Bottom
-	}
-}
-
-//==========================================================================
-//
 // Draw a line
 //
 //==========================================================================

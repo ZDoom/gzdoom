@@ -726,8 +726,8 @@ void WI_Drawer()
 		ScaleOverrider s(twod);
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
-			FillBorder(twod, nullptr);
 			twod->ClearClipRect();
+			twod->ClearScreen();
 			VMValue self = WI_Screen;
 			VMCall(func, &self, 1, nullptr, 0);
 			twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.

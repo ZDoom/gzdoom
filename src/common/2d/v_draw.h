@@ -219,7 +219,6 @@ void DrawTexture(F2DDrawer* drawer, FGameTexture* img, double x, double y, int t
 
 void DoDim(F2DDrawer* drawer, PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);
 void Dim(F2DDrawer* drawer, PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);
-void FillBorder(F2DDrawer *drawer, FGameTexture* img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 
 void DrawBorder(F2DDrawer* drawer, FTextureID, int x1, int y1, int x2, int y2);
 void DrawFrame(F2DDrawer* twod, PalEntry color, int left, int top, int width, int height, int thickness);

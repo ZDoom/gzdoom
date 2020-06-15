@@ -986,6 +986,10 @@ class Inventory : Actor
 		if (!GoAway ())
 		{
 			bSpecial = false;
+			if (!bNoBlockmap || !bNoSector)	// make sure that the item no longer interacts with the world for the short rest of its life.
+			{
+				A_ChangeLinkFlags(1, 1);
+			}
 			SetStateLabel("HoldAndDestroy");
 		}
 	}

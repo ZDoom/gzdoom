@@ -54,6 +54,9 @@
 #include "m_argv.h"
 #include "i_sound.h"
 #include "i_interface.h"
+#include "v_font.h"
+#include "c_cvars.h"
+#include "palutil.h"
 
 
 #ifndef NO_GTK
@@ -65,6 +68,8 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 #endif
 
 double PerfToSec, PerfToMillisec;
+CVAR(Bool, con_printansi, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
+CVAR(Bool, con_4bitansi, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 
 void I_SetIWADInfo()
 {
@@ -129,16 +134,47 @@ void CalculateCPUSpeed()
 
 void I_PrintStr(const char *cp)
 {
-	// Strip out any color escape sequences before writing to debug output
-	TArray<char> copy(strlen(cp) + 1, true);
 	const char * srcp = cp;
-	char * dstp = copy.Data();
+	FString printData = "";
 
 	while (*srcp != 0)
 	{
-		if (*srcp != 0x1c && *srcp != 0x1d && *srcp != 0x1e && *srcp != 0x1f)
+		if (*srcp == 0x1c && con_printansi)
 		{
-			*dstp++ = *srcp++;
+			srcp += 1;
+			EColorRange range = V_ParseFontColor((const uint8_t*&)srcp, CR_UNTRANSLATED, CR_YELLOW);
+			if (range != CR_UNDEFINED)
+			{
+				PalEntry color = V_LogColorFromColorRange(range);
+				if (con_4bitansi)
+				{
+					float h, s, v, r, g, b;
+					int attrib = 0;
+
+					RGBtoHSV(color.r / 255.f, color.g / 255.f, color.b / 255.f, &h, &s, &v);
+					if (s != 0)
+					{ // color
+						HSVtoRGB(&r, &g, &b, h, 1, 1);
+						if (r == 1)  attrib  = 0x4;
+						if (g == 1)  attrib |= 0x2;
+						if (b == 1)  attrib |= 0x1;
+						if (v > 0.6) attrib |= 0x8;
+					}
+					else
+					{ // gray
+						     if (v < 0.33) attrib = 0x8;
+						else if (v < 0.90) attrib = 0x7;
+						else			   attrib = 0x15;
+					}
+					static unsigned char cga_to_ansi[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+					printData.AppendFormat("%c[%um",0x1B,((attrib & 0x8) ? 90 : 30) + (cga_to_ansi[attrib & 0x7]));
+				}
+				else printData.AppendFormat("%c[38;2;%u;%u;%um",27,color.r,color.g,color.b);
+			}
+		}
+		else if (*srcp != 0x1c && *srcp != 0x1d && *srcp != 0x1e && *srcp != 0x1f)
+		{
+			printData += *srcp++;
 		}
 		else
 		{
@@ -146,10 +182,9 @@ void I_PrintStr(const char *cp)
 			else break;
 		}
 	}
-	*dstp = 0;
-
-	fputs(copy.Data(), stdout);
-	fflush(stdout);
+	
+	fprintf(stdout,"%s",printData.GetChars());
+	fprintf(stdout,"%c[0m",0x1B);
 }
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)

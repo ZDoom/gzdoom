@@ -1006,6 +1006,18 @@ void DStaticEventHandler::PlayerEntered(int num, bool fromhub)
 	}
 }
 
+void DStaticEventHandler::PlayerSpawned(int num)
+{
+	IFVIRTUAL(DStaticEventHandler, PlayerSpawned)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FPlayerEvent e = { num, false };
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 void DStaticEventHandler::PlayerRespawned(int num)
 {
 	IFVIRTUAL(DStaticEventHandler, PlayerRespawned)

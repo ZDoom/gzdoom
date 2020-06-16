@@ -97,6 +97,7 @@ public:
 
 	//
 	void PlayerEntered(int num, bool fromhub);
+	void PlayerSpawned(int num);
 	void PlayerRespawned(int num);
 	void PlayerDied(int num);
 	void PlayerDisconnected(int num);

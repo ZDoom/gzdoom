@@ -418,6 +418,14 @@ void EventManager::PlayerEntered(int num, bool fromhub)
 		handler->PlayerEntered(num, fromhub);
 }
 
+void EventManager::PlayerSpawned(int num)
+{
+	if (ShouldCallStatic(true)) staticEventManager.PlayerSpawned(num);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->PlayerSpawned(num);
+}
+
 void EventManager::PlayerRespawned(int num)
 {
 	if (ShouldCallStatic(true)) staticEventManager.PlayerRespawned(num);

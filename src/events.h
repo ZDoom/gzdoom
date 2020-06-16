@@ -263,6 +263,8 @@ struct EventManager
 	void RenderUnderlay(EHudState state);
 	// this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
 	void PlayerEntered(int num, bool fromhub);
+	// this executes at the same time as ENTER scripts
+	void PlayerSpawned(int num);
 	// this executes when a player respawns. includes resurrect cheat.
 	void PlayerRespawned(int num);
 	// this executes when a player dies (partially duplicating worldthingdied, but whatever)

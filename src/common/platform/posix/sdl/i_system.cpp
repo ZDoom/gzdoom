@@ -155,9 +155,9 @@ void I_PrintStr(const char *cp)
 					if (s != 0)
 					{ // color
 						HSVtoRGB(&r, &g, &b, h, 1, 1);
-						if (r == 1)  attrib  = 0x4;
+						if (r == 1)  attrib  = 0x1;
 						if (g == 1)  attrib |= 0x2;
-						if (b == 1)  attrib |= 0x1;
+						if (b == 1)  attrib |= 0x4;
 						if (v > 0.6) attrib |= 0x8;
 					}
 					else
@@ -166,8 +166,8 @@ void I_PrintStr(const char *cp)
 						else if (v < 0.90) attrib = 0x7;
 						else			   attrib = 0x15;
 					}
-					static unsigned char cga_to_ansi[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-					printData.AppendFormat("%c[%um",0x1B,((attrib & 0x8) ? 90 : 30) + (cga_to_ansi[attrib & 0x7]));
+					
+					printData.AppendFormat("%c[%um",0x1B,((attrib & 0x8) ? 90 : 30) + (attrib & 0x7));
 				}
 				else printData.AppendFormat("%c[38;2;%u;%u;%um",27,color.r,color.g,color.b);
 			}

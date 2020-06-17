@@ -49,7 +49,7 @@ set(SPVREMAP_HEADERS
     SPVRemapper.h
     doc.h)
 
-add_library(SPIRV ${LIB_TYPE} ${SOURCES} ${HEADERS})
+add_library(SPIRV STATIC ${LIB_TYPE} ${SOURCES} ${HEADERS})
 set_property(TARGET SPIRV PROPERTY FOLDER glslang)
 set_property(TARGET SPIRV PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(SPIRV PUBLIC

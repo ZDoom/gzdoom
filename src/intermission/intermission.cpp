@@ -46,7 +46,7 @@
 #include "r_state.h"
 #include "c_bind.h"
 #include "p_conversation.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "d_net.h"
 #include "g_levellocals.h"
 #include "utf8.h"
@@ -54,6 +54,7 @@
 #include "s_music.h"
 #include "texturemanager.h"
 #include "v_draw.h"
+#include "doommenu.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -921,7 +922,7 @@ void DIntermissionController::Drawer ()
 {
 	if (mScreen != NULL)
 	{
-		FillBorder(twod, nullptr);
+		twod->ClearScreen();
 		mScreen->Drawer();
 	}
 }

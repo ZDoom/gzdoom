@@ -49,7 +49,7 @@
 #include "p_checkposition.h"
 #include "p_linetracedata.h"
 #include "v_font.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "teaminfo.h"
 #include "r_data/sprites.h"
 #include "serializer_doom.h"

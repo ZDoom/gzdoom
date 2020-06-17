@@ -36,8 +36,9 @@
 #include "vectors.h"
 #include "m_joy.h"
 #include "gameconfigfile.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "cmdlib.h"
+#include "printf.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -34,7 +34,7 @@
 #include "m_argv.h"
 #include "v_video.h"
 
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "d_gui.h"
 #include "c_buttons.h"
 #include "c_console.h"

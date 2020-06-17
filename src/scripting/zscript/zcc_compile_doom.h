@@ -24,7 +24,7 @@ private:
 	void DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *property, AActor *defaults, Baggage &bag);
 	void ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *prop, Baggage &bag);
 	void ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg);
-	void InitDefaults();
+	void InitDefaults() override final;
 	FxExpression *SetupActionFunction(PClass *cls, ZCC_TreeNode *af, int StateFlags);
 	void CompileStates();
 	int CheckActionKeyword(ZCC_FuncDeclarator *f, uint32_t &varflags, int useflags, ZCC_StructWork *c);

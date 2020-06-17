@@ -3,7 +3,6 @@
 #include "dobject.h"
 #include "serializer.h"
 #include "d_event.h"
-#include "d_gui.h"
 #include "sbar.h"
 
 class DStaticEventHandler;
@@ -173,39 +172,6 @@ struct FPlayerEvent
 	int PlayerNumber;
 	// we set this to true if level was reopened (RETURN scripts)
 	bool IsReturn;
-};
-
-struct FUiEvent
-{
-	// this essentially translates event_t UI events to ZScript.
-	EGUIEvent Type;
-	// for keys/chars/whatever
-	FString KeyString;
-	int KeyChar;
-	// for mouse
-	int MouseX;
-	int MouseY;
-	// global (?)
-	bool IsShift;
-	bool IsCtrl;
-	bool IsAlt;
-
-	FUiEvent(const event_t *ev);
-};
-
-struct FInputEvent
-{
-	// this translates regular event_t events to ZScript (not UI, UI events are sent via DUiEvent and only if requested!)
-	EGenericEvent Type = EV_None;
-	// for keys
-	int KeyScan;
-	FString KeyString;
-	int KeyChar;
-	// for mouse
-	int MouseX;
-	int MouseY;
-
-	FInputEvent(const event_t *ev);
 };
 
 struct FConsoleEvent 

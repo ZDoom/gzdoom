@@ -41,6 +41,9 @@
 #include <commctrl.h>
 #include <richedit.h>
 
+#include <processenv.h>
+#include <shellapi.h>
+
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
@@ -189,14 +192,21 @@ static void UnWTS (void)
 
 static int LayoutErrorPane (HWND pane, int w)
 {
-	HWND ctl;
-	RECT rectc;
+	HWND ctl, ctl_two;
+	RECT rectc, rectc_two;
 
 	// Right-align the Quit button.
 	ctl = GetDlgItem (pane, IDOK);
 	GetClientRect (ctl, &rectc);	// Find out how big it is.
 	MoveWindow (ctl, w - rectc.right - 1, 1, rectc.right, rectc.bottom, TRUE);
+
+	// Second-right-align the Restart button
+	ctl_two = GetDlgItem (pane, IDC_BUTTON1);
+	GetClientRect (ctl_two, &rectc_two);	// Find out how big it is.
+	MoveWindow (ctl_two, w - rectc.right - rectc_two.right - 2, 1, rectc.right, rectc.bottom, TRUE);
+
 	InvalidateRect (ctl, NULL, TRUE);
+	InvalidateRect (ctl_two, NULL, TRUE);
 
 	// Return the needed height for this layout
 	return rectc.bottom + 2;
@@ -545,9 +555,16 @@ INT_PTR CALLBACK ErrorPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		return TRUE;
 
 	case WM_COMMAND:
-		// There is only one button, and it's "Ok" and makes us quit.
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
+			if (LOWORD(wParam) == IDC_BUTTON1) // we pressed the restart button, so run GZDoom again
+			{
+				HMODULE hModule = GetModuleHandleW(NULL);
+				WCHAR path[MAX_PATH];
+				GetModuleFileNameW(hModule, path, MAX_PATH);
+
+				ShellExecuteW(NULL, L"open", path, GetCommandLineW(), NULL, SW_SHOWNORMAL);
+			}
 			PostQuitMessage (0);
 			return TRUE;
 		}
@@ -572,6 +589,7 @@ void I_SetWndProc()
 		SetWindowLongPtr (Window, GWLP_USERDATA, 1);
 		SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)WndProc);
 		ShowWindow (ConWindow, SW_HIDE);
+		ShowWindow(ProgressBar, SW_HIDE);
 		ConWindowHidden = true;
 		ShowWindow (GameTitleWindow, SW_HIDE);
 		I_InitInput (Window);

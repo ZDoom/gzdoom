@@ -66,6 +66,7 @@
 #include "x86.h"
 #include <vector>
 
+;
 // Use linear filtering when scaling up
 CVAR(Bool, r_magfilter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 

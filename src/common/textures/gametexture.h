@@ -103,7 +103,7 @@ class FGameTexture
 	int flags = 0;
 	uint8_t warped = 0;
 	int8_t expandSprite = -1;
-	uint16_t GlowHeight;
+	uint16_t GlowHeight = 128;
 	PalEntry GlowColor = 0;
 
 	int16_t SkyOffset = 0;

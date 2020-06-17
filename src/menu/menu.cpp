@@ -32,61 +32,43 @@
 **
 */
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "c_dispatch.h"
 #include "d_gui.h"
-#include "d_player.h"
+#include "c_buttons.h"
 #include "c_console.h"
 #include "c_bind.h"
-#include "p_tick.h"
-#include "g_game.h"
-#include "d_event.h"
-#include "hu_stuff.h"
-#include "gi.h"
+#include "d_eventbase.h"
 #include "g_input.h"
-#include "gameconfigfile.h"
+#include "configfile.h"
 #include "gstrings.h"
-#include "r_utility.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "vm.h"
-#include "events.h"
 #include "v_video.h"
 #include "i_system.h"
-#include "c_buttons.h"
 #include "types.h"
 #include "texturemanager.h"
 #include "v_draw.h"
+#include "vm.h"
+#include "gamestate.h"
+#include "i_interface.h"
+#include "menustate.h"
+#include "i_time.h"
+#include "printf.h"
+
+void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
+extern int chatmodeon;
 //
 // Todo: Move these elsewhere
 //
-CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 CVAR (Int, m_showinputgrid, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-CUSTOM_CVAR(Float, dimamount, -1.f, CVAR_ARCHIVE)
-{
-	if (self < 0.f && self != -1.f)
-	{
-		self = -1.f;
-	}
-	else if (self > 1.f)
-	{
-		self = 1.f;
-	}
-}
-CVAR(Color, dimcolor, 0xffd700, CVAR_ARCHIVE)
-
-
 
 static DMenu *GetCurrentMenu()
 {
@@ -108,9 +90,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuTime, GetMenuTime)
 	ACTION_RETURN_INT(MenuTime);
 }
 
-FNewGameStartup NewGameStartupInfo;
 EMenuState		menuactive;
-bool			M_DemoNoPlay;
 FButtonStatus	MenuButtons[NUM_MKEYS];
 int				MenuButtonTickers[NUM_MKEYS];
 bool			MenuButtonOrigin[NUM_MKEYS];
@@ -122,11 +102,9 @@ int				MenuTime;
 
 extern PClass *DefaultListMenuClass;
 extern PClass *DefaultOptionMenuClass;
-extern bool hud_toggled;
-void D_ToggleHud();
 
 
-#define KEY_REPEAT_DELAY	(TICRATE*5/12)
+#define KEY_REPEAT_DELAY	(GameTicRate*5/12)
 #define KEY_REPEAT_RATE		(3)
 
 bool OkForLocalization(FTextureID texnum, const char* substitute);
@@ -154,10 +132,38 @@ DEFINE_ACTION_FUNCTION_NATIVE(DMenuDescriptor, GetDescriptor, GetMenuDescriptor)
 	ACTION_RETURN_OBJECT(GetMenuDescriptor(name.GetIndex()));
 }
 
+void DListMenuDescriptor::Reset()
+{
+	// Reset the default settings (ignore all other values in the struct)
+	mSelectOfsX = 0;
+	mSelectOfsY = 0;
+	mSelector.SetInvalid();
+	mDisplayTop = 0;
+	mXpos = 0;
+	mYpos = 0;
+	mLinespacing = 0;
+	mNetgameMessage = "";
+	mFont = NULL;
+	mFontColor = CR_UNTRANSLATED;
+	mFontColor2 = CR_UNTRANSLATED;
+	mFromEngine = false;
+}
+
+
 size_t DListMenuDescriptor::PropagateMark()
 {
 	for (auto item : mItems) GC::Mark(item);
 	return 0;
+}
+
+void DOptionMenuDescriptor::Reset()
+{
+	// Reset the default settings (ignore all other values in the struct)
+	mPosition = 0;
+	mScrollTop = 0;
+	mIndent = 0;
+	mDontDim = 0;
+	mFont = BigUpper;
 }
 
 size_t DOptionMenuDescriptor::PropagateMark()
@@ -355,11 +361,8 @@ bool DMenu::TranslateKeyboardEvents()
 //
 //=============================================================================
 
-void M_StartControlPanel (bool makeSound, bool scaleoverride)
+void M_DoStartControlPanel (bool scaleoverride)
 {
-	if (hud_toggled)
-		D_ToggleHud();
-	
 	// intro might call this repeatedly
 	if (CurrentMenu != nullptr)
 		return;
@@ -372,14 +375,6 @@ void M_StartControlPanel (bool makeSound, bool scaleoverride)
 
 	C_HideConsole ();				// [RH] Make sure console goes bye bye.
 	menuactive = MENU_On;
-	// Pause sound effects before we play the menu switch sound.
-	// That way, it won't be paused.
-	P_CheckTickerPaused ();
-
-	if (makeSound)
-	{
-		S_Sound (CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
-	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
 	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider(twod);
@@ -421,132 +416,15 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
-EXTERN_CVAR(Int, cl_gfxlocalization)
-
+bool M_SetSpecialMenu(FName menu, int param);	// game specific checks
 
 void M_SetMenu(FName menu, int param)
 {
-	// some menus need some special treatment
-	switch (menu.GetIndex())
-	{
-	case NAME_Mainmenu:
-		if (gameinfo.gametype & GAME_DoomStrifeChex)	// Raven's games always used text based menus
-		{
-			if (gameinfo.forcetextinmenus)	// If text is forced, this overrides any check.
-			{
-				menu = NAME_MainmenuTextOnly;
-			}
-			else if (cl_gfxlocalization != 0 && !gameinfo.forcenogfxsubstitution)
-			{
-				// For these games we must check up-front if they get localized because in that case another template must be used.
-				DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Mainmenu);
-				if (desc != nullptr)
-				{
-					if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
-					{
-						DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-						if (ld->mFromEngine)
-						{
-							// This assumes that replacing one graphic will replace all of them.
-							// So this only checks the "New game" entry for localization capability.
-							FTextureID texid = TexMan.CheckForTexture("M_NGAME", ETextureType::MiscPatch);
-							if (!OkForLocalization(texid, "$MNU_NEWGAME"))
-							{
-								menu = NAME_MainmenuTextOnly;
-							}
-						}
-					}
-				}
-			}
-		}
-		break;
-	case NAME_Episodemenu:
-		// sent from the player class menu
-		NewGameStartupInfo.Skill = -1;
-		NewGameStartupInfo.Episode = -1;
-		NewGameStartupInfo.PlayerClass = 
-			param == -1000? nullptr :
-			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type).GetChars();
-		M_StartupEpisodeMenu(&NewGameStartupInfo);	// needs player class name from class menu (later)
-		break;
-
-	case NAME_Skillmenu:
-		// sent from the episode menu
-
-		if ((gameinfo.flags & GI_SHAREWARE) && param > 0)
-		{
-			// Only Doom and Heretic have multi-episode shareware versions.
-			M_StartMessage(GStrings("SWSTRING"), 1);
-			return;
-		}
-
-		NewGameStartupInfo.Episode = param;
-		M_StartupSkillMenu(&NewGameStartupInfo);	// needs player class name from class menu (later)
-		break;
-
-	case NAME_StartgameConfirm:
-	{
-		// sent from the skill menu for a skill that needs to be confirmed
-		NewGameStartupInfo.Skill = param;
-
-		const char *msg = AllSkills[param].MustConfirmText;
-		if (*msg==0) msg = GStrings("NIGHTMARE");
-		M_StartMessage (msg, 0, NAME_StartgameConfirmed);
-		return;
-	}
-
-	case NAME_Startgame:
-		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
-		// Now we can finally start the game. Ugh...
-		NewGameStartupInfo.Skill = param;
-	case NAME_StartgameConfirmed:
-
-		G_DeferedInitNew (&NewGameStartupInfo);
-		if (gamestate == GS_FULLCONSOLE)
-		{
-			gamestate = GS_HIDECONSOLE;
-			gameaction = ga_newgame;
-		}
-		M_ClearMenus ();
-		return;
-
-	case NAME_Savegamemenu:
-		if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer) || gamestate != GS_LEVEL)
-		{
-			// cannot save outside the game.
-			M_StartMessage (GStrings("SAVEDEAD"), 1);
-			return;
-		}
-
-	case NAME_VideoModeMenu:
-		break;
-
-	case NAME_Quitmenu:
-		// The separate menu class no longer exists but the name still needs support for existing mods.
-		C_DoCommand("menu_quit");
-		return;
-
-	case NAME_EndGameMenu:
-		// The separate menu class no longer exists but the name still needs support for existing mods.
-		void ActivateEndGameMenu();
-		ActivateEndGameMenu();
-		return;
-
-	case NAME_Playermenu:
-		menu = NAME_NewPlayerMenu;	// redirect the old player menu to the new one.
-		break;
-	}
-
-	// End of special checks
+	if (!M_SetSpecialMenu(menu, param)) return;
 
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != nullptr)
 	{
-		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame && !demoplayback)
-		{
-			M_StartMessage((*desc)->mNetgameMessage, 1);
-			return;
-		}
 
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
@@ -796,13 +674,6 @@ bool M_Responder (event_t *ev)
 				M_SetMenu(NAME_Mainmenu, -1);
 				return true;
 			}
-			// If devparm is set, pressing F1 always takes a screenshot no matter
-			// what it's bound to. (for those who don't bother to read the docs)
-			if (devparm && ev->data1 == KEY_F1)
-			{
-				G_ScreenShot(nullptr);
-				return true;
-			}
 			return false;
 		}
 		else if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_LButtonDown && 
@@ -858,35 +729,6 @@ void M_Ticker (void)
 	}
 }
 
-//==========================================================================
-//
-// M_Dim
-//
-// Applies a colored overlay to the entire screen, with the opacity
-// determined by the dimamount cvar.
-//
-//==========================================================================
-
-static void M_Dim()
-{
-	PalEntry dimmer;
-	float amount;
-
-	if (dimamount >= 0)
-	{
-		dimmer = PalEntry(dimcolor);
-		amount = dimamount;
-	}
-	else
-	{
-		dimmer = gameinfo.dimcolor;
-		amount = gameinfo.dimamount;
-	}
-
-	Dim(twod, dimmer, amount, 0, 0, twod->GetWidth(), twod->GetHeight());
-}
-
-
 //=============================================================================
 //
 //
@@ -895,16 +737,14 @@ static void M_Dim()
 
 void M_Drawer (void) 
 {
-	player_t *player = &players[consoleplayer];
-	AActor *camera = player->camera;
 	PalEntry fade = 0;
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		if (!CurrentMenu->DontBlur) screen->BlurScene(gameinfo.bluramount);
+		if (!CurrentMenu->DontBlur) screen->BlurScene(0);
 		if (!CurrentMenu->DontDim)
 		{
-			M_Dim();
+			if (sysCallbacks && sysCallbacks->MenuDim) sysCallbacks->MenuDim();
 		}
 		CurrentMenu->CallDrawer();
 	}
@@ -918,7 +758,6 @@ void M_Drawer (void)
 
 void M_ClearMenus()
 {
-	M_DemoNoPlay = false;
 	while (CurrentMenu != nullptr)
 	{
 		DMenu* parent = CurrentMenu->mParentMenu;
@@ -1137,58 +976,11 @@ CCMD (prevmenu)
 	M_PreviousMenu();
 }
 
-//
-//		Toggle messages on/off
-//
-CCMD (togglemessages)
-{
-	if (show_messages)
-	{
-		Printf (128, "%s\n", GStrings("MSGOFF"));
-		show_messages = false;
-	}
-	else
-	{
-		Printf (128, "%s\n", GStrings("MSGON"));
-		show_messages = true;
-	}
-}
-
-EXTERN_CVAR (Int, screenblocks)
-
-CCMD (sizedown)
-{
-	screenblocks = screenblocks - 1;
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-}
-
-CCMD (sizeup)
-{
-	screenblocks = screenblocks + 1;
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
-}
-
 CCMD(menuconsole)
 {
 	M_ClearMenus();
 	C_ToggleConsole();
 }
-
-CCMD(reset2defaults)
-{
-	C_SetDefaultBindings ();
-	C_SetCVarsToDefaults ();
-	R_SetViewSize (screenblocks);
-}
-
-CCMD(reset2saved)
-{
-	GameConfig->DoGlobalSetup ();
-	GameConfig->DoGameSetup (gameinfo.ConfigName);
-	GameConfig->DoModSetup (gameinfo.ConfigName);
-	R_SetViewSize (screenblocks);
-}
-
 
 // This really should be in the script but we can't do scripted CCMDs yet.
 CCMD(undocolorpic)

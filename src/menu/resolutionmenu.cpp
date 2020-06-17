@@ -32,12 +32,11 @@
 **
 */
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "v_video.h"
-#include "menu/menu.h"
+#include "menu.h"
+#include "printf.h"
 
 CVAR(Int, menu_resolution_custom_width, 640, 0)
 CVAR(Int, menu_resolution_custom_height, 480, 0)

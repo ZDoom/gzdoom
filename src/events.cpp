@@ -630,22 +630,6 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, NewDamage);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, IsReturn);
 
-DEFINE_FIELD_X(UiEvent, FUiEvent, Type);
-DEFINE_FIELD_X(UiEvent, FUiEvent, KeyString);
-DEFINE_FIELD_X(UiEvent, FUiEvent, KeyChar);
-DEFINE_FIELD_X(UiEvent, FUiEvent, MouseX);
-DEFINE_FIELD_X(UiEvent, FUiEvent, MouseY);
-DEFINE_FIELD_X(UiEvent, FUiEvent, IsShift);
-DEFINE_FIELD_X(UiEvent, FUiEvent, IsAlt);
-DEFINE_FIELD_X(UiEvent, FUiEvent, IsCtrl);
-
-DEFINE_FIELD_X(InputEvent, FInputEvent, Type);
-DEFINE_FIELD_X(InputEvent, FInputEvent, KeyScan);
-DEFINE_FIELD_X(InputEvent, FInputEvent, KeyString);
-DEFINE_FIELD_X(InputEvent, FInputEvent, KeyChar);
-DEFINE_FIELD_X(InputEvent, FInputEvent, MouseX);
-DEFINE_FIELD_X(InputEvent, FInputEvent, MouseY);
-
 DEFINE_FIELD_X(ConsoleEvent, FConsoleEvent, Player)
 DEFINE_FIELD_X(ConsoleEvent, FConsoleEvent, Name)
 DEFINE_FIELD_X(ConsoleEvent, FConsoleEvent, Args)
@@ -1050,46 +1034,6 @@ void DStaticEventHandler::PlayerDisconnected(int num)
 	}
 }
 
-FUiEvent::FUiEvent(const event_t *ev)
-{
-	Type = (EGUIEvent)ev->subtype;
-	KeyChar = 0;
-	IsShift = false;
-	IsAlt = false;
-	IsCtrl = false;
-	MouseX = 0;
-	MouseY = 0;
-	// we don't want the modders to remember what weird fields mean what for what events.
-	switch (ev->subtype)
-	{
-	case EV_GUI_None:
-		break;
-	case EV_GUI_KeyDown:
-	case EV_GUI_KeyRepeat:
-	case EV_GUI_KeyUp:
-		KeyChar = ev->data1;
-		KeyString = FString(char(ev->data1));
-		IsShift = !!(ev->data3 & GKM_SHIFT);
-		IsAlt = !!(ev->data3 & GKM_ALT);
-		IsCtrl = !!(ev->data3 & GKM_CTRL);
-		break;
-	case EV_GUI_Char:
-		KeyChar = ev->data1;
-		KeyString = MakeUTF8(ev->data1);
-		IsAlt = !!ev->data2; // only true for Win32, not sure about SDL
-		break;
-	default: // mouse event
-			 // note: SDL input doesn't seem to provide these at all
-			 //Printf("Mouse data: %d, %d, %d, %d\n", ev->x, ev->y, ev->data1, ev->data2);
-		MouseX = ev->data1;
-		MouseY = ev->data2;
-		IsShift = !!(ev->data3 & GKM_SHIFT);
-		IsAlt = !!(ev->data3 & GKM_ALT);
-		IsCtrl = !!(ev->data3 & GKM_CTRL);
-		break;
-	}
-}
-
 bool DStaticEventHandler::UiProcess(const event_t* ev)
 {
 	IFVIRTUAL(DStaticEventHandler, UiProcess)
@@ -1106,33 +1050,6 @@ bool DStaticEventHandler::UiProcess(const event_t* ev)
 	}
 
 	return false;
-}
-
-FInputEvent::FInputEvent(const event_t *ev)
-{
-	Type = (EGenericEvent)ev->type;
-	// we don't want the modders to remember what weird fields mean what for what events.
-	KeyScan = 0;
-	KeyChar = 0;
-	MouseX = 0;
-	MouseY = 0;
-	switch (Type)
-	{
-	case EV_None:
-		break;
-	case EV_KeyDown:
-	case EV_KeyUp:
-		KeyScan = ev->data1;
-		KeyChar = ev->data2;
-		KeyString = FString(char(ev->data1));
-		break;
-	case EV_Mouse:
-		MouseX = ev->x;
-		MouseY = ev->y;
-		break;
-	default:
-		break; // EV_DeviceChange = wat?
-	}
 }
 
 bool DStaticEventHandler::InputProcess(const event_t* ev)

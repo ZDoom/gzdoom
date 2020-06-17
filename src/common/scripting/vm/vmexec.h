@@ -360,6 +360,10 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 	OP(SS):
 		ASSERTA(a); ASSERTS(B); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);
+#ifdef _DEBUG
+		// Should never happen, if it does it indicates a compiler side problem.
+		if (((FString*)ptr)->GetChars() == nullptr) ThrowAbortException(X_OTHER, "Uninitialized string");
+#endif
 		*(FString *)ptr = reg.s[B];
 		NEXTOP;
 	OP(SS_R):

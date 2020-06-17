@@ -39,10 +39,12 @@
 #include <dinput.h>
 
 #include "i_input.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "d_gui.h"
 #include "hardware.h"
-#include "menu/menu.h"
+#include "menu.h"
+#include "menustate.h"
+#include "keydef.h"
 #include "i_interface.h"
 
 // MACROS ------------------------------------------------------------------

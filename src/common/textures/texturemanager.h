@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "tarray.h"
 #include "textureid.h"
+#include "textures.h"
 #include "basics.h"
 #include "texmanip.h"
 #include "name.h"
@@ -11,7 +12,6 @@ class FxAddSub;
 struct BuildInfo;
 class FMultipatchTextureBuilder;
 class FScanner;
-int PalCheck(int tex);
 
 // Texture manager
 class FTextureManager

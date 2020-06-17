@@ -241,7 +241,6 @@ class ColorpickerMenu : OptionMenu
 				{
 					mGridPosX = cell_x;
 					mGridPosY = cell_y;
-					//S_Sound (CHAN_VOICE, CHANF_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				}
 				mDesc.mSelectedItem = mStartItem+7;
 				if (type == MOUSE_Release)

@@ -726,7 +726,7 @@ OptionMenu "MouseOptions" protected
 	StaticText 	""
 	Slider "$MOUSEMNU_SENSITIVITY",		"mouse_sensitivity", 0.5, 2.5, 0.1
 	Option "$MOUSEMNU_NOPRESCALE",		"m_noprescale", "NoYes"
-	Option "$MOUSEMNU_SMOOTHMOUSE",		"smooth_mouse", "YesNo"
+	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
 	StaticText 	""
 	Slider "$MOUSEMNU_TURNSPEED",		"m_yaw", 0, 2.5, 0.1
 	Slider "$MOUSEMNU_MOUSELOOKSPEED",	"m_pitch", 0, 2.5, 0.1
@@ -800,12 +800,6 @@ OptionMenu "JoystickConfigMenu" protected
 // Video Menu
 //
 //-------------------------------------------------------------------------------------------
-
-OptionValue ColumnMethods
-{
-	0.0, "$OPTVAL_ORIGINAL"
-	1.0, "$OPTVAL_OPTIMIZED"
-}
 
 OptionValue BlendMethods
 {
@@ -2401,6 +2395,7 @@ OptionValue "LightingModes"
 	2, "$OPTVAL_DOOM"
 	3, "$OPTVAL_DARK"
 	4, "$OPTVAL_LEGACY"
+	5, "$OPTVAL_BUILD"
 	8, "$OPTVAL_SOFTWARE"
 	16, "$OPTVAL_VANILLA"
 }

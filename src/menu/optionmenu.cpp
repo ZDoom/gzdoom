@@ -33,7 +33,7 @@
 */
 
 #include "v_video.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "vm.h"
 
 

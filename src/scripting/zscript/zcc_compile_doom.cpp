@@ -648,7 +648,7 @@ void ZCCDoomCompiler::InitDefaults()
 			if (c->Defaults.Size()) Error(c->cls, "%s: Non-actor classes may not have defaults", c->ClassType()->TypeName.GetChars());
 			if (c->ClassType()->ParentClass)
 			{
-				auto ti = static_cast<PClassActor *>(c->ClassType());
+				auto ti = c->ClassType();
 				ti->InitializeDefaults();
 			}
 		}

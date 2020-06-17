@@ -52,12 +52,13 @@
 #include "sbar.h"
 #include "p_lnspec.h"
 #include "p_local.h"
-#include "menu/menu.h"
+#include "menu.h"
 #include "g_levellocals.h"
 #include "vm.h"
 #include "v_video.h"
 #include "actorinlines.h"
 #include "v_draw.h"
+#include "doommenu.h"
 
 static FRandom pr_randomspeech("RandomSpeech");
 

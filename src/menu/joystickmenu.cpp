@@ -32,7 +32,7 @@
 **
 */
 
-#include "menu/menu.h"
+#include "menu.h"
 #include "m_joy.h"
 #include "vm.h"
 

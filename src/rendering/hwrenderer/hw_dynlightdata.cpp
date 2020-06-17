@@ -111,10 +111,10 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 	{
 		shadowIndex = light->mShadowmapIndex + 1.0f;
 
-		// Store attenuate flag in the sign bit of the float.
-		if (light->IsAttenuated() || forceAttenuate) shadowIndex = -shadowIndex;
 	}
 	else shadowIndex = 1025.f;
+	// Store attenuate flag in the sign bit of the float.
+	if (light->IsAttenuated() || forceAttenuate) shadowIndex = -shadowIndex;
 
 	float lightType = 0.0f;
 	float spotInnerAngle = 0.0f;

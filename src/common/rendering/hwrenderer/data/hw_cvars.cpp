@@ -40,7 +40,8 @@
 #include "c_dispatch.h"
 #include "v_video.h"
 #include "hw_cvars.h"
-#include "menu/menu.h"
+#include "menu.h"
+#include "printf.h"
 
 
 CUSTOM_CVAR(Int, gl_fogmode, 1, CVAR_ARCHIVE | CVAR_NOINITCALL)

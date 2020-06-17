@@ -29,7 +29,7 @@ void Dictionary::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 
-	constexpr char key[] { "dictionary" };
+	static const char key[] = "dictionary";
 
 	if (arc.isWriting())
 	{

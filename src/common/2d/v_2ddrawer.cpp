@@ -651,7 +651,6 @@ void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigne
 
 	dg.mTexture = img;
 	dg.mTranslationId = translation;
-	dg.mColor1 = color;
 	dg.mVertCount = (int)vtcount;
 	dg.mVertIndex = (int)mVertices.Reserve(vtcount);
 	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];

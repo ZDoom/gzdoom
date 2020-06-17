@@ -77,7 +77,7 @@
 #include "s_soundinternal.h"
 #include "gameconfigfile.h"
 #include "hardware.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "v_text.h"
 #include "version.h"
 #include "engineerrors.h"

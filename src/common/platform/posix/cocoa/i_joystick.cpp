@@ -35,7 +35,7 @@
 #include <IOKit/IOMessage.h>
 #include <IOKit/hid/IOHIDLib.h>
 
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "i_system.h"
 #include "m_argv.h"
 #include "m_joy.h"

@@ -69,7 +69,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_netinf.h"
-#include "menu/menu.h"
+#include "doommenu.h"
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 #include "p_spec.h"

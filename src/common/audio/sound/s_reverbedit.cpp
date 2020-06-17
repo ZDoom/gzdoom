@@ -33,20 +33,19 @@
 **
 */
 
-#include "doomtype.h"
-#include "s_sound.h"
+#include "s_soundinternal.h"
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "templates.h"
 #include "filesystem.h"
 #include "i_system.h"
-#include "m_misc.h"
-
+#include "printf.h"
+#include "i_specialpaths.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "vm.h"
 #include "dobject.h"
-#include "menu/menu.h"
+#include "menu.h"
 
 void S_ReadReverbDef (FScanner &sc);
 

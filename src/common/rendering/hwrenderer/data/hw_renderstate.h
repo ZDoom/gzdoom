@@ -155,7 +155,7 @@ struct FVector4PalEntry
 		r = newvalue.r * normScale;
 		g = newvalue.g * normScale;
 		b = newvalue.b * normScale;
-		a = 1;
+		a = newvalue.a;
 		return *this;
 	}
 
@@ -500,6 +500,12 @@ public:
 			mStreamData.uTextureBlendColor = texfx->BlendColor;
 		}
 	}
+	void SetTextureColors(float* modColor, float* addColor, float* blendColor)
+	{
+		mStreamData.uTextureAddColor.SetFlt(addColor[0], addColor[1], addColor[2], addColor[3]);
+		mStreamData.uTextureModulateColor.SetFlt(modColor[0], modColor[1], modColor[2], modColor[3]);
+		mStreamData.uTextureBlendColor.SetFlt(blendColor[0], blendColor[1], blendColor[2], blendColor[3]);
+	}
 
 	void SetFog(PalEntry c, float d)
 	{
@@ -563,6 +569,8 @@ public:
 		mMaterial.mOverrideShader = overrideshader;
 		mMaterial.mChanged = true;
 		mTextureModeFlags = mat->GetLayerFlags();
+		auto scale = mat->GetDetailScale();
+		mStreamData.uDetailParms = { scale.X, scale.Y, 0, 0 };
 	}
 
 	void SetMaterial(FGameTexture* tex, EUpscaleFlags upscalemask, int scaleflags, int clampmode, int translation, int overrideshader)

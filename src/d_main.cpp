@@ -3151,7 +3151,6 @@ static int D_DoomMain_Internal (void)
 		gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
 		gameinfo.ConfigName = iwad_info->Configname;
 		lastIWAD = iwad;
-		endoomName = gameinfo.Endoom;
 
 
 		if ((gameinfo.flags & GI_SHAREWARE) && pwads.Size() > 0)
@@ -3333,6 +3332,7 @@ static int D_DoomMain_Internal (void)
 		if (!batchrun) Printf ("G_ParseMapInfo: Load map definitions.\n");
 		G_ParseMapInfo (iwad_info->MapInfo);
 		MessageBoxClass = gameinfo.MessageBoxClass;
+		endoomName = gameinfo.Endoom;
 		ReadStatistics();
 
 		// MUSINFO must be parsed after MAPINFO

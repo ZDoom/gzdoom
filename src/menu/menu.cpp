@@ -741,7 +741,7 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		if (!CurrentMenu->DontBlur) screen->BlurScene(0);
+		if (!CurrentMenu->DontBlur) screen->BlurScene(menuBlurAmount);
 		if (!CurrentMenu->DontDim)
 		{
 			if (sysCallbacks && sysCallbacks->MenuDim) sysCallbacks->MenuDim();

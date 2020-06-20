@@ -3333,6 +3333,7 @@ static int D_DoomMain_Internal (void)
 		G_ParseMapInfo (iwad_info->MapInfo);
 		MessageBoxClass = gameinfo.MessageBoxClass;
 		endoomName = gameinfo.Endoom;
+		menuBlurAmount = gameinfo.bluramount;
 		ReadStatistics();
 
 		// MUSINFO must be parsed after MAPINFO

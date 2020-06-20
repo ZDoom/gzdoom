@@ -920,6 +920,11 @@ static FResourceLump placeholderLump;
 
 void FileSystem::MoveLumpsInFolder(const char *path)
 {
+	if (FileInfo.Size() == 0)
+	{
+		return;
+	}
+	
 	auto len = strlen(path);
 	auto rfnum = FileInfo.Last().rfnum;
 	

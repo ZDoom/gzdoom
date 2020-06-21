@@ -167,9 +167,9 @@ void I_PrintStr(const char *cp)
 						else			   attrib = 0x15;
 					}
 					
-					printData.AppendFormat("\033[%um",((attrib & 0x8) ? 90 : 30) + (attrib & 0x7));
+					printData.AppendFormat("\e[%um",((attrib & 0x8) ? 90 : 30) + (attrib & 0x7));
 				}
-				else printData.AppendFormat("\033[38;2;%u;%u;%um",color.r,color.g,color.b);
+				else printData.AppendFormat("\e[38;2;%u;%u;%um",color.r,color.g,color.b);
 			}
 		}
 		else if (*srcp != 0x1c && *srcp != 0x1d && *srcp != 0x1e && *srcp != 0x1f)
@@ -184,7 +184,7 @@ void I_PrintStr(const char *cp)
 	}
 	
 	fputs(printData.GetChars(),stdout);
-	fputs("\033[0m",stdout);
+	fputs("\e[0m",stdout);
 }
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)

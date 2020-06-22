@@ -977,7 +977,11 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t s
 void F_StartIntermission(FName seq, uint8_t state)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
-	if (pdesc != NULL)
+	if (pdesc == nullptr)
+	{
+		gameaction = ga_nothing;
+	}
+	else
 	{
 		F_StartIntermission(*pdesc, false, state);
 	}

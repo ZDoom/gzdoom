@@ -1152,6 +1152,7 @@ void G_Ticker ()
 			break;
 		case ga_slideshow:
 			if (gamestate == GS_LEVEL) F_StartIntermission(SelectedSlideshow, FSTATE_InLevel);
+			gameaction = ga_nothing;
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();

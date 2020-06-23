@@ -452,9 +452,15 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				player->hazardtype = sector->damagetype;
 				player->hazardinterval = sector->damageinterval;
 			}
-			else if (Level->time % sector->damageinterval == 0)
+			else if ((sector->damageinterval == 0) || (Level->time % sector->damageinterval == 0))
 			{
-				if (!(player->cheats & (CF_GODMODE|CF_GODMODE2))) P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+				if (!(player->cheats & (CF_GODMODE | CF_GODMODE2)))
+				{
+					if (sector->damageinterval == 0 && sector->damageamount > 0) // level designer seems to be a bit of a sadist, we're going to just instantly kill the player if damageamount is above 0.
+						P_DamageMobj(player->mo, NULL, NULL, TELEFRAG_DAMAGE, sector->damagetype);
+					else
+						P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+				}
 				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
 				{
 					Level->ExitLevel(0, false);

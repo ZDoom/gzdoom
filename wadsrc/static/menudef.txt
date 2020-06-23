@@ -1074,6 +1074,12 @@ OptionMenu "ScalingOptions" protected
 	ScaleSlider "$SCALEMNU_ALTHUD",				"hud_althudscale", 0.0, 8.0, 1.0, "$SCALEMNU_USEUI"
 	StaticText " "
 	Option "$SCALEMNU_HUDASPECT", 				"hud_aspectscale", "OnOff"
+	StaticText " "
+	StaticText "$SCALEMNU_SCALECLASSIC", 1
+	Option "$SCALEMNU_INTER",					"inter_classic_scaling", "OnOff"
+	Option "$SCALEMNU_BORDER",					"ui_screenborder_classic_scaling", "OnOff"
+	Slider "$SCALEMNU_FACTOR",					"classic_scaling_factor", 1.0, 3.0, 0.2, 1
+	Slider "$SCALEMNU_RATIO",					"classic_scaling_pixelaspect", 1.0, 1.2, 0.2, 1
 }
 //-------------------------------------------------------------------------------------------
 //

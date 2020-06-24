@@ -85,8 +85,8 @@ enum
 
 // C++ cannot do static const floats in a class, so these need to be global...
 static const double PLAYERRADIUS = 16.;	// player radius for automap checking
-static const double M_ZOOMIN = 2; // how much zoom-in per second
-static const double M_ZOOMOUT = 0.25; // how much zoom-out per second
+static const double M_ZOOMIN = (1.02);	// how much zoom-in per tic - goes to 2x in 1 second
+static const double M_ZOOMOUT = (1 / 1.02);	// how much zoom-out per tic - pulls out to 0.5x in 1 second
 
 static FTextureID marknums[AM_NUMMARKPOINTS]; // numbers used for marking by the automap
 bool automapactive = false;
@@ -1005,7 +1005,7 @@ class DAutomap :public DAutomapBase
 	void ScrollParchment(double dmapx, double dmapy);
 	void changeWindowLoc();
 	void maxOutWindowScale();
-	void changeWindowScale(double delta);
+	void changeWindowScale();
 	void clearFB(const AMColor &color);
 	bool clipMline(mline_t *ml, fline_t *fl);
 	void drawMline(mline_t *ml, const AMColor &color);
@@ -1457,9 +1457,9 @@ bool DAutomap::Responder (event_t *ev, bool last)
 //
 //=============================================================================
 
-void DAutomap::changeWindowScale (double delta)
+void DAutomap::changeWindowScale ()
 {
-
+	// Zooming is done on a per-tick basis to avoid FPS dependency issues
 	double mtof_zoommul;
 
 	if (am_zoomdir > 0)
@@ -1472,11 +1472,11 @@ void DAutomap::changeWindowScale (double delta)
 	}
 	else if (buttonMap.ButtonDown(Button_AM_ZoomIn))
 	{
-		mtof_zoommul = (1 + (M_ZOOMIN - 1) * delta);
+		mtof_zoommul = M_ZOOMIN;
 	}
 	else if (buttonMap.ButtonDown(Button_AM_ZoomOut))
 	{
-		mtof_zoommul = (1 + (M_ZOOMOUT - 1) * delta);
+		mtof_zoommul = M_ZOOMOUT;
 	}
 	else
 	{
@@ -1543,6 +1543,23 @@ void DAutomap::Ticker ()
 		return;
 
 	amclock++;
+
+	if (!am_followplayer)
+	{
+		// Panning is done on a per-tick basis to avoid FPS dependency issues
+		m_paninc.x = m_paninc.y = 0;
+		if (buttonMap.ButtonDown(Button_AM_PanLeft)) m_paninc.x -= FTOM(F_PANINC);
+		if (buttonMap.ButtonDown(Button_AM_PanRight)) m_paninc.x += FTOM(F_PANINC);
+		if (buttonMap.ButtonDown(Button_AM_PanUp)) m_paninc.y += FTOM(F_PANINC);
+		if (buttonMap.ButtonDown(Button_AM_PanDown)) m_paninc.y -= FTOM(F_PANINC);
+	}
+
+	// Change the zoom if necessary
+	if (buttonMap.ButtonDown(Button_AM_ZoomIn) || buttonMap.ButtonDown(Button_AM_ZoomOut) || am_zoomdir != 0)
+		changeWindowScale();
+
+	// Change x,y location
+	changeWindowLoc();
 }
 
 
@@ -3159,37 +3176,14 @@ void DAutomap::drawCrosshair (const AMColor &color)
 
 void DAutomap::Drawer (int bottom)
 {
-	static uint64_t LastMS = 0;
-	// Use a delta to zoom/pan at a constant speed regardless of current FPS
-	uint64_t ms = screen->FrameTime;
-	double delta = (ms - LastMS) * 0.001;
-
 	if (!automapactive)
 		return;
 
 	if (am_followplayer)
 	{
+		// This must be done every drawn frame (rather than every tick) to follow the player smoothly
 		doFollowPlayer();
 	}
-	else
-	{
-		m_paninc.x = m_paninc.y = 0;
-		if (buttonMap.ButtonDown(Button_AM_PanLeft))
-			m_paninc.x -= FTOM(F_PANINC) * delta * TICRATE;
-		if (buttonMap.ButtonDown(Button_AM_PanRight))
-			m_paninc.x += FTOM(F_PANINC) * delta * TICRATE;
-		if (buttonMap.ButtonDown(Button_AM_PanUp))
-			m_paninc.y += FTOM(F_PANINC) * delta * TICRATE;
-		if (buttonMap.ButtonDown(Button_AM_PanDown))
-			m_paninc.y -= FTOM(F_PANINC) * delta * TICRATE;
-	}
-
-	// Change the zoom if necessary
-	if (buttonMap.ButtonDown(Button_AM_ZoomIn) || buttonMap.ButtonDown(Button_AM_ZoomOut) || am_zoomdir != 0)
-		changeWindowScale(delta);
-
-	// Change x,y location
-	changeWindowLoc();
 
 	bool allmap = (Level->flags2 & LEVEL2_ALLMAP) != 0;
 	bool allthings = allmap && players[consoleplayer].mo->FindInventory(NAME_PowerScanner, true) != nullptr;
@@ -3243,8 +3237,6 @@ void DAutomap::Drawer (int bottom)
 
 	drawMarks();
 	showSS();
-
-	LastMS = ms;
 }
 
 //=============================================================================

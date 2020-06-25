@@ -432,6 +432,10 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	auto Level = sector->Level;
 
 	// [RH] Apply any customizable damage
+
+	if (sector->damageinterval <= 0)
+		sector->damageinterval = 32; // repair invalid damageinterval values
+
 	if (sector->damageamount > 0)
 	{
 		// Allow subclasses. Better would be to implement it as armor and let that reduce
@@ -452,14 +456,11 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				player->hazardtype = sector->damagetype;
 				player->hazardinterval = sector->damageinterval;
 			}
-			else if ((sector->damageinterval == 0) || (Level->time % sector->damageinterval == 0))
+			else if (Level->time % sector->damageinterval == 0)
 			{
 				if (!(player->cheats & (CF_GODMODE | CF_GODMODE2)))
 				{
-					if (sector->damageinterval == 0) // level designer seems to be a bit of a sadist, we're going to just instantly kill the player if damageamount is above 0.
-						P_DamageMobj(player->mo, NULL, NULL, TELEFRAG_DAMAGE, sector->damagetype);
-					else
-						P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+					P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
 				}
 				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
 				{
@@ -474,11 +475,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	}
 	else if (sector->damageamount < 0)
 	{
-		if (sector->damageinterval == 0)
-		{
-			P_GiveBody(player->mo, 100, 100); // just fully heal the player
-		}
-		else if (Level->time % sector->damageinterval == 0)
+		if (Level->time % sector->damageinterval == 0)
 		{
 			P_GiveBody(player->mo, -sector->damageamount, 100);
 		}

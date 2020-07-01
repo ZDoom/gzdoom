@@ -2864,18 +2864,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetRoll)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_SetViewAngle)
+static void SetViewAngleNative(AActor* self, double angle, int flags, int ptr)
+{
+	AActor *ref = COPY_AAPTR(self, ptr);
+	if (ref != nullptr)
+	{
+		ref->SetViewAngle(angle, flags);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SetViewAngle, SetViewAngleNative)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(angle);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
-	AActor *ref = COPY_AAPTR(self, ptr);
-	if (ref != NULL)
-	{
-		ref->SetViewAngle(angle, flags);
-	}
+	SetViewAngleNative(self, angle, flags, ptr);
+
 	return 0;
 }
 
@@ -2887,19 +2893,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetViewAngle)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_SetViewPitch)
+static void SetViewPitchNative(AActor* self, double pitch, int flags, int ptr)
+{
+	AActor *ref = COPY_AAPTR(self, ptr);
+	if (ref != nullptr)
+	{
+		ref->SetViewPitch(pitch, flags);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SetViewPitch, SetViewPitchNative)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(pitch);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
-	AActor *ref = COPY_AAPTR(self, ptr);
+	SetViewPitchNative(self, pitch, flags, ptr);
 
-	if (ref != NULL)
-	{
-		ref->SetViewPitch(pitch, flags);
-	}
 	return 0;
 }
 
@@ -2911,18 +2922,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetViewPitch)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_SetViewRoll)
+static void SetViewRollNative(AActor* self, double roll, int flags, int ptr)
+{
+	AActor *ref = COPY_AAPTR(self, ptr);
+	if (ref != nullptr)
+	{
+		ref->SetViewRoll(roll, flags);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SetViewRoll, SetViewRollNative)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(roll);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
-	AActor *ref = COPY_AAPTR(self, ptr);
 
-	if (ref != NULL)
-	{
-		ref->SetViewRoll(roll, flags);
-	}
+	SetViewRollNative(self, roll, flags, ptr);
+
 	return 0;
 }
 

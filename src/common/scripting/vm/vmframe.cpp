@@ -45,7 +45,11 @@
 #include "version.h"
 
 #ifdef HAVE_VM_JIT
+#ifdef __DragonFly__
+CUSTOM_CVAR(Bool, vm_jit, false, CVAR_NOINITCALL)
+#else
 CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
+#endif
 {
 	Printf("You must restart " GAMENAME " for this change to take effect.\n");
 	Printf("This cvar is currently not saved. You must specify it on the command line.");

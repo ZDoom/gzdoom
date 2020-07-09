@@ -4,7 +4,6 @@
 #include "matrix.h"
 #include "hw_material.h"
 #include "texmanip.h"
-#include "version.h"
 
 struct FColormap;
 class IVertexBuffer;

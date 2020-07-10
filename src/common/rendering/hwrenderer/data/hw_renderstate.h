@@ -201,6 +201,8 @@ struct StreamData
 #ifdef NPOT_EMULATION
 	FVector2 uNpotEmulation;
 #endif
+
+	FVector4 uDirectionalContrast;
 };
 
 class FRenderState
@@ -295,6 +297,7 @@ public:
 #ifdef NPOT_EMULATION
 		mStreamData.uNpotEmulation = { 0,0 };
 #endif
+		mStreamData.uDirectionalContrast = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
 		ClearClipSplit();
@@ -455,6 +458,11 @@ public:
 	void SetDetailParms(float xscale, float yscale, float bias)
 	{
 		mStreamData.uDetailParms = { xscale, yscale, bias, 0 };
+	}
+
+	void SetDirectionalContrast(FVector4 dl)
+	{
+		mStreamData.uDirectionalContrast = { dl.X, dl.Y, dl.Z, dl.W };
 	}
 
 	void SetDynLight(float r, float g, float b)

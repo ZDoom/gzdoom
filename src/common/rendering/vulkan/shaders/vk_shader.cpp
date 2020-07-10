@@ -166,6 +166,8 @@ static const char *shaderBindings = R"(
 		#ifdef NPOT_EMULATION
 		vec2 uNpotEmulation;
 		#endif
+
+		vec4 uDirectionalContrast;
 	};
 
 	layout(set = 0, binding = 3, std140) uniform StreamUBO {
@@ -256,6 +258,7 @@ static const char *shaderBindings = R"(
 	#define uSplitBottomPlane data[uDataIndex].uSplitBottomPlane
 	#define uDetailParms data[uDataIndex].uDetailParms
 	#define uNpotEmulation data[uDataIndex].uNpotEmulation
+	#define uDirectionalContrast data[uDataIndex].uDirectionalContrast
 
 	#define SUPPORTS_SHADOWMAPS
 	#define VULKAN_COORDINATE_SYSTEM

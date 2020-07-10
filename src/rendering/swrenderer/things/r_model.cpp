@@ -314,7 +314,7 @@ namespace swrenderer
 		return objectToWorld;
 	}
 
-	void SWModelRenderer::BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored)
+	void SWModelRenderer::BeginDrawHUDModel(FRenderStyle style, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 	{
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 		ClipTop = {};

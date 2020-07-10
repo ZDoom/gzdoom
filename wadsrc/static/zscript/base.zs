@@ -730,12 +730,16 @@ struct LevelLocals native
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
 	native readonly float pixelstretch;
+	native readonly int8 directionalcontrastmode;
 	native readonly float MusicVolume;
 	native name deathsequence;
 	native readonly int compatflags;
 	native readonly int compatflags2;
 // level_info_t *info cannot be done yet.
 
+	native void SetDirectionalContrast(double x, double y, double z, double w);
+	native Vector3 GetDirectionalContrastVec(void);
+	native double GetDirectionalContrastStr(void);
 	native String GetUDMFString(int type, int index, Name key);
 	native int GetUDMFInt(int type, int index, Name key);
 	native double GetUDMFFloat(int type, int index, Name key);

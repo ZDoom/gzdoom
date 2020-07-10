@@ -2663,6 +2663,49 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, setFrozen, setFrozen)
 	return 0;
 }
 
+static void SetDirectionalContrast(FLevelLocals* self, double x, double y, double z, double w)
+{
+	// normalize the vector
+	DVector3 dlv = DVector3(x, y, z);
+	dlv.MakeUnit();
+	self->directionalContrast = FVector4(dlv.X, dlv.Y, dlv.Z, w);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SetDirectionalContrast, SetDirectionalContrast)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(w);
+	SetDirectionalContrast(self, x, y, z, w);
+	return 0;
+}
+
+static void GetDirectionalContrastVec(FLevelLocals* self, DVector3* result)
+{
+	*result = DVector3(self->directionalContrast.X, self->directionalContrast.Y, self->directionalContrast.Z);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetDirectionalContrastVec, GetDirectionalContrastVec)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	DVector3 result;
+	GetDirectionalContrastVec(self, &result);
+	ACTION_RETURN_VEC3(result);
+}
+
+static double GetDirectionalContrastStr(FLevelLocals* self)
+{
+	return self->directionalContrast.W;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetDirectionalContrastStr, GetDirectionalContrastStr)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_FLOAT(GetDirectionalContrastStr(self));
+}
+
 //=====================================================================================
 //
 //
@@ -2772,6 +2815,7 @@ DEFINE_FIELD(FLevelLocals, fogdensity)
 DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, directionalContrastMode)
 DEFINE_FIELD(FLevelLocals, MusicVolume)
 DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.

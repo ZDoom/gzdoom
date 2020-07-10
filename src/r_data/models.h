@@ -55,6 +55,7 @@ enum
 	MDL_BADROTATION					= 128,
 	MDL_DONTCULLBACKFACES			= 256,
 	MDL_USEROTATIONCENTER			= 512,
+	MDL_NODIRECTIONALCONTRAST		= 1024,
 };
 
 FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);

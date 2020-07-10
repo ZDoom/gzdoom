@@ -654,6 +654,7 @@ public:
 
 	FName		deathsequence;
 	float		pixelstretch;
+	int8_t		directionalContrastMode;
 	float		MusicVolume;
 
 	// Hardware render stuff that can either be set via CVAR or MAPINFO
@@ -662,6 +663,7 @@ public:
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
 	int			ImpactDecalCount;
+	FVector4	directionalContrast;
 
 	FDynamicLight *lights;
 

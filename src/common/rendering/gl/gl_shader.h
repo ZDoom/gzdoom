@@ -265,6 +265,7 @@ class FShader
 #ifdef NPOT_EMULATION
 	FBufferedUniform2f muNpotEmulation;
 #endif
+	FUniform4f muDirectionalContrast;
 
 	int lights_index;
 	int modelmatrix_index;

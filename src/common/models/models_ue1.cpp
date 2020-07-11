@@ -85,7 +85,6 @@ void FUE1Model::LoadGeometry()
 		averts = (uint32_t*)(buffer2+sizeof(a3dhead));
 		dxverts = NULL;
 	}
-	weaponPoly = -1;
 	// set counters
 	numVerts = dhead->numverts;
 	numFrames = ahead->numframes;
@@ -111,6 +110,9 @@ void FUE1Model::LoadGeometry()
 					unpackuvert(averts[j+i*numVerts],2),
 					-unpackuvert(averts[j+i*numVerts],1));
 			}
+			// refs will be set later
+			Vert.P.Reset();
+			Vert.nP = 0;
 			// push vertex (without normals, will be calculated later)
 			verts.Push(Vert);
 		}
@@ -132,23 +134,26 @@ void FUE1Model::LoadGeometry()
 			dir[0] = verts[Poly.V[1]+numVerts*j].Pos-verts[Poly.V[0]+numVerts*j].Pos;
 			dir[1] = verts[Poly.V[2]+numVerts*j].Pos-verts[Poly.V[0]+numVerts*j].Pos;
 			Poly.Normals.Push((dir[0]^dir[1]).Unit());
+			// since we're iterating frames, also set references for later
+			for ( int k=0; k<3; k++ )
+			{
+				verts[Poly.V[k]+numVerts*j].P.Push(i);
+				verts[Poly.V[k]+numVerts*j].nP++;
+			}
 		}
 		// push
 		polys.Push(Poly);
 	}
-	// compute normals for vertex arrays
-	// iterates through all polys and compute the average of all facet normals
-	// from those who use this vertex. not pretty, but does the job
+	// compute normals for vertex arrays (average of all referenced poly normals)
+	// since we have references listed from before, this saves a lot of time
+	// without having to loop through the entire model each vertex (especially true for very complex models)
 	for ( int i=0; i<numFrames; i++ )
 	{
 		for ( int j=0; j<numVerts; j++ )
 		{
 			FVector3 nsum = FVector3(0,0,0);
-			for ( int k=0; k<numPolys; k++ )
-			{
-				if ( (polys[k].V[0] != j) && (polys[k].V[1] != j) && (polys[k].V[2] != j) ) continue;
-				nsum += polys[k].Normals[i];
-			}
+			for ( int k=0; k<verts[j+numVerts*i].nP; k++ )
+				nsum += polys[verts[j+numVerts*i].P[k]].Normals[i];
 			verts[j+numVerts*i].Normal = nsum.Unit();
 		}
 	}
@@ -159,8 +164,9 @@ void FUE1Model::LoadGeometry()
 	UE1Group Group;
 	for ( int i=0; i<numPolys; i++ )
 	{
-		// while we're at it, look for the weapon triangle
-		if ( dpolys[i].type&PT_WeaponTriangle ) weaponPoly = i;
+		// while we're at it, look for attachment triangles
+		// technically only one should exist, but we ain't following the specs 100% here
+		if ( dpolys[i].type&PT_WeaponTriangle ) specialPolys.Push(i);
 		if ( curgroup == -1 )
 		{
 			// no group, create it
@@ -197,7 +203,7 @@ void FUE1Model::LoadGeometry()
 void FUE1Model::UnloadGeometry()
 {
 	mDataLoaded = false;
-	weaponPoly = -1;
+	specialPolys.Reset();
 	numVerts = 0;
 	numFrames = 0;
 	numPolys = 0;

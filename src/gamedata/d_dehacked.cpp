@@ -2191,22 +2191,18 @@ static int PatchText (int oldSize)
 	}
 	newSize = atoi (temp);
 
-	oldStr = new char[oldSize + 1];
-	newStr = new char[newSize + 1];
-
-	if (!oldStr || !newStr)
-	{
-		Printf ("Out of memory.\n");
-		goto donewithtext;
-	}
-
+	FString oldStrData, newStrData;
+	oldStr = oldStrData.LockNewBuffer(oldSize + 1);
+	newStr = newStrData.LockNewBuffer(newSize + 1);
+	
 	good = ReadChars (&oldStr, oldSize);
 	good += ReadChars (&newStr, newSize);
 
+	oldStrData.UnlockBuffer();
+	newStrData.UnlockBuffer();
+	
 	if (!good)
 	{
-		delete[] newStr;
-		delete[] oldStr;
 		Printf ("Unexpected end-of-file.\n");
 		return 0;
 	}
@@ -2271,11 +2267,11 @@ static int PatchText (int oldSize)
 	const char *str;
 	do
 	{
+		oldStrData.MergeChars(' ');
 		str = EnglishStrings.MatchString(oldStr);
 		if (str != NULL)
 		{
-			FString newname = newStr;
-			TableElement te = { LumpFileNum, { newname, newname, newname, newname } };
+			TableElement te = { LumpFileNum, { newStrData, newStrData, newStrData, newStrData } };
 			DehStrings.Insert(str, te);
 			EnglishStrings.Remove(str);	// remove entry so that it won't get found again by the next iteration or  by another replacement later
 			good = true;
@@ -2289,11 +2285,6 @@ static int PatchText (int oldSize)
 	}
 		
 donewithtext:
-	if (newStr)
-		delete[] newStr;
-	if (oldStr)
-		delete[] oldStr;
-
 	// Fetch next identifier for main loop
 	while ((result = GetLine ()) == 1)
 		;

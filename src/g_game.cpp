@@ -1464,21 +1464,21 @@ bool FLevelLocals::CheckSpot (int playernum, FPlayerStart *mthing)
 double FLevelLocals::PlayersRangeFromSpot (FPlayerStart *spot)
 {
 	double closest = INT_MAX;
-	double distance;
+	double distance_squared;
 	int i;
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i] || !players[i].mo || players[i].health <= 0)
 			continue;
+		//for now it need to find only closest player, not actual distance from spot to player
+		distance_squared = players[i].mo->Distance2DSquared(spot->pos.X, spot->pos.Y);
 
-		distance = players[i].mo->Distance2D(spot->pos.X, spot->pos.Y);
-
-		if (distance < closest)
-			closest = distance;
+		if (distance_squared < closest)
+			closest = distance_squared;
 	}
-
-	return closest;
+	//and only now, when closest player are found, calculate square root
+	return sqrt(closest);
 }
 
 // [RH] Select the deathmatch spawn spot farthest from everyone.

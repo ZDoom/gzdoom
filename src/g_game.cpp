@@ -1478,7 +1478,7 @@ double FLevelLocals::PlayersRangeFromSpot (FPlayerStart *spot)
 			closest = distance_squared;
 	}
 	//and only now, when closest player are found, calculate square root
-	return sqrt(closest);
+	return std::sqrt(closest);
 }
 
 // [RH] Select the deathmatch spawn spot farthest from everyone.

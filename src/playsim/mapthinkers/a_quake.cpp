@@ -128,7 +128,7 @@ void DEarthquake::Tick ()
 				AActor *victim = Level->Players[i]->mo;
 				double distance_squared = m_Spot->Distance2DSquared(victim, true);
 				// Check if in damage radius
-				if (distance_squared < m_DamageRadius * m_DamageRadius && victim->Z() <= victim->floorz)
+				if (distance_squared < m_DamageRadius * fabs(m_DamageRadius) && victim->Z() <= victim->floorz)
 				{
 					if (pr_quake() < 50)
 					{

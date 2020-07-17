@@ -1163,12 +1163,12 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 		fov = allaround ? 0. : 180.;
 	}
 
-	double dist = lookee->Distance2D (other);
+	double distance_squared = lookee->Distance2DSquared(other);
 
-	if (maxdist && dist > maxdist)
+	if (maxdist && distance_squared > maxdist * fabs(maxdist))
 		return false;			// [KS] too far
 
-	if (mindist && dist < mindist)
+	if (mindist && distance_squared < mindist * fabs(mindist))
 		return false;			// [KS] too close
 
 	if (fov != 0)
@@ -1179,7 +1179,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 		{
 			// if real close, react anyway
 			// [KS] but respect minimum distance rules
-			if (mindist || dist > lookee->meleerange + lookee->radius)
+			if (mindist || distance_squared > (lookee->meleerange + lookee->radius)*(lookee->meleerange + lookee->radius))
 				return false;	// outside of fov
 		}
 	}

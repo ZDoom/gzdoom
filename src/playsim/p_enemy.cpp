@@ -141,7 +141,9 @@ static void NoiseMarkSector(sector_t *sec, AActor *soundtarget, bool splash, AAc
 	for (AActor *actor = sec->thinglist; actor != NULL; actor = actor->snext)
 	{
 		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
-			(!maxdist || (actor->Distance2D(emitter) <= maxdist)))
+			//fabs is important here because maxdist is a function argument and can be negative
+			//simple multiplication can return number with the wrong sign
+			(!maxdist || (actor->Distance2DSquared(emitter) <= maxdist * fabs(maxdist))))
 		{
 			actor->LastHeard = soundtarget;
 		}

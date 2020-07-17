@@ -2065,11 +2065,11 @@ void P_FakeZMovement(AActor *mo)
 	{ // float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
 		{
-			double dist = mo->Distance2D(mo->target);
+			double distance_squared = mo->Distance2DSquared(mo->target);
 			double delta = mo->target->Center() - mo->Z();
-			if (delta < 0 && dist < -(delta * 3))
+			if (delta < 0 && distance_squared < -(delta * delta * 3 * 3))
 				mo->AddZ(-mo->FloatSpeed);
-			else if (delta > 0 && dist < (delta * 3))
+			else if (delta > 0 && distance_squared < (delta * delta * 3 * 3))
 				mo->AddZ(mo->FloatSpeed);
 		}
 	}

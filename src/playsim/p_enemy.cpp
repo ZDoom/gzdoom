@@ -944,16 +944,17 @@ void P_NewChaseDir(AActor * actor)
 		if (actor->flags3 & MF3_AVOIDMELEE)
 		{
 			bool ismeleeattacker = false;
-			double dist = actor->Distance2D(target);
+			double distance_squared = actor->Distance2DSquared(target);
 			if (target->player == NULL)
 			{
-				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
+				double melee_range = (target->meleerange + target->radius);
+				ismeleeattacker = (target->MissileState == NULL && distance_squared < melee_range*melee_range*2*2);
 			}
 			else if (target->player->ReadyWeapon != NULL)
 			{
 				// melee range of player weapon is a parameter of the action function and cannot be checked here.
 				// Add a new weapon property?
-				ismeleeattacker = ((target->player->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_MELEEWEAPON) && dist < 192);
+				ismeleeattacker = ((target->player->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_MELEEWEAPON) && distance_squared < 192*192);
 			}
 			if (ismeleeattacker)
 			{

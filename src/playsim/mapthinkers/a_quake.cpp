@@ -126,11 +126,9 @@ void DEarthquake::Tick ()
 			if (Level->PlayerInGame(i) && !(Level->Players[i]->cheats & CF_NOCLIP))
 			{
 				AActor *victim = Level->Players[i]->mo;
-				double dist;
-
-				dist = m_Spot->Distance2D(victim, true);
+				double distance_squared = m_Spot->Distance2DSquared(victim, true);
 				// Check if in damage radius
-				if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
+				if (distance_squared < m_DamageRadius * m_DamageRadius && victim->Z() <= victim->floorz)
 				{
 					if (pr_quake() < 50)
 					{

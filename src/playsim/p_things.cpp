@@ -575,7 +575,7 @@ int P_Thing_CheckProximity(FLevelLocals *Level, AActor *self, PClass *classname,
 	
 	int counter = 0;
 	int result = 0;
-	double closer = distance, farther = 0, current = distance;
+	double closer = distance * distance, farther = 0, current = distance * distance;
 	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
 	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
 
@@ -613,7 +613,7 @@ int P_Thing_CheckProximity(FLevelLocals *Level, AActor *self, PClass *classname,
 		// [MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
 		// Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
 		// Ripped from sphere checking in A_RadiusGive (along with a number of things).
-		if ((ref->Distance2D(mo) < distance &&
+		if ((ref->Distance2DSquared(mo) < distance * fabs(distance) &&
 			((flags & CPXF_NOZ) ||
 			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
 			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
@@ -633,7 +633,7 @@ int P_Thing_CheckProximity(FLevelLocals *Level, AActor *self, PClass *classname,
 			}
 			if (ptrWillChange)
 			{
-				current = ref->Distance2D(mo);
+				current = ref->Distance2DSquared(mo);
 
 				if ((flags & CPXF_CLOSEST) && (current < closer))
 				{

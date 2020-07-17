@@ -1721,7 +1721,7 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			if ((player->mo->flags & MF_SHADOW && !(actor->Level->i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
 			{
-				if (player->mo->Distance2D (actor) > 128 && player->mo->Vel.XY().LengthSquared() < 5*5)
+				if (player->mo->Distance2DSquared(actor) > 128*128 && player->mo->Vel.XY().LengthSquared() < 5*5)
 				{ // Player is sneaking - can't detect
 					continue;
 				}

@@ -1882,7 +1882,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 	PARAM_STATE	(seestate)		
 
 	AActor *targ = NULL; // Shuts up gcc
-	double dist;
+	double distance_squared;
 	if (fov == 0) fov = 180.;
 	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
@@ -1923,10 +1923,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 				}
 				else
 				{
-					dist = self->Distance2D (targ);
+					distance_squared = self->Distance2DSquared(targ);
 
 					// [KS] If the target is too far away, don't respond to the sound.
-					if (maxheardist && dist > maxheardist)
+					if (maxheardist && distance_squared > maxheardist*fabs(maxheardist))
 					{
 						targ = NULL;
 						self->LastHeard = nullptr;
@@ -1994,10 +1994,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 			{
 				if (self->flags & MF_AMBUSH)
 				{
-					dist = self->Distance2D (self->target);
+					distance_squared = self->Distance2DSquared(self->target);
 					if (P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING) &&
-						(!minseedist || dist > minseedist) &&
-						(!maxseedist || dist < maxseedist))
+						(!minseedist || distance_squared > minseedist*fabs(minseedist)) &&
+						(!maxseedist || distance_squared < maxseedist*fabs(maxseedist)))
 					{
 						goto seeyou;
 					}

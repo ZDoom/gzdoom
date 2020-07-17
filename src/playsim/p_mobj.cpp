@@ -2367,7 +2367,7 @@ void P_MonsterFallingDamage (AActor *mo)
 
 void P_ZMovement (AActor *mo, double oldfloorz)
 {
-	double dist;
+	double distance_squared;
 	double delta;
 	double oldz = mo->Z();
 	double grav = mo->GetGravity();
@@ -2479,11 +2479,11 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 	{	// float down towards target if too close
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
-			dist = mo->Distance2D (mo->target);
+			distance_squared = mo->Distance2DSquared(mo->target);
 			delta = (mo->target->Center()) - mo->Z();
-			if (delta < 0 && dist < -(delta*3))
+			if (delta < 0 && distance_squared < -(delta * fabs(delta) * 3 * 3))
 				mo->AddZ(-mo->FloatSpeed);
-			else if (delta > 0 && dist < (delta*3))
+			else if (delta > 0 && distance_squared < (delta * fabs(delta) * 3 * 3))
 				mo->AddZ(mo->FloatSpeed);
 		}
 	}

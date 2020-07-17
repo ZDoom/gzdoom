@@ -1214,7 +1214,7 @@ int P_LookForMonsters (AActor *actor)
 		{ // Not a valid monster
 			continue;
 		}
-		if (mo->Distance2D (actor) > MONS_LOOK_RANGE)
+		if (mo->Distance2DSquared(actor) > MONS_LOOK_RANGE*MONS_LOOK_RANGE)
 		{ // Out of range
 			continue;
 		}

@@ -151,7 +151,7 @@ CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	}
 }
 
-
+CVAR(Int, sv_alwaystally, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -580,6 +580,26 @@ static bool		unloading;
 
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 
+bool FLevelLocals::ShouldDoIntermission(cluster_info_t* nextcluster, cluster_info_t* thiscluster)
+{
+	// this is here to remove some code duplication
+
+	if ((sv_alwaystally == 2) || (deathmatch))
+		return true;
+
+	if ((sv_alwaystally == 0) && (flags & LEVEL_NOINTERMISSION))
+		return false;
+
+	bool withinSameCluster = (nextcluster == thiscluster);
+	bool clusterIsHub = (thiscluster->flags & CLUSTER_HUB);
+	bool hubNoIntermission = !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION);
+
+	if (withinSameCluster && clusterIsHub && hubNoIntermission)
+		return false;
+
+	return true;
+}
+
 void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags, int nextSkill)
 {
 	if (!isPrimaryLevel()) return;	// only the primary level may exit.
@@ -682,7 +702,7 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
-		if ((flags & LEVEL_NOINTERMISSION) || ((nextcluster == thiscluster) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION)))
+		if (!ShouldDoIntermission(nextcluster, thiscluster))
 			NoWipe = 35;
 		D_DrawIcon = "TELEICON";
 	}
@@ -994,9 +1014,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 
 	finishstate = mode;
 
-	if (!deathmatch &&
-		((flags & LEVEL_NOINTERMISSION) ||
-		((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION))))
+	if (!ShouldDoIntermission(nextcluster, thiscluster))
 	{
 		WorldDone ();
 		return false;

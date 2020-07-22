@@ -83,7 +83,7 @@ extern bool hud_toggled;
 FNewGameStartup NewGameStartupInfo;
 
 
-bool M_SetSpecialMenu(FName menu, int param)
+bool M_SetSpecialMenu(FName& menu, int param)
 {
 	// some menus need some special treatment
 	switch (menu.GetIndex())

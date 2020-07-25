@@ -151,7 +151,7 @@ CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	}
 }
 
-CVAR(Int, sv_alwaystally, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
+CVAR(Int, sv_alwaystally, 0, CVAR_SERVERINFO)
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 

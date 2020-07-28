@@ -347,7 +347,7 @@ class Minotaur : Actor
 		}
 		else
 		{
-			if (Floorclip > 0 && (Level.compatflags & COMPAT_MINOTAUR))
+			if (Floorclip > 0 && (Level.compatflags & COMPATF_MINOTAUR))
 			{
 				// only play the sound. 
 				A_StartSound ("minotaur/fx2hit", CHAN_WEAPON);

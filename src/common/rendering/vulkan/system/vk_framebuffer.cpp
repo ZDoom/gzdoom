@@ -53,6 +53,7 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_swapchain.h"
 #include "engineerrors.h"
+#include "c_dispatch.h"
 
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
 
@@ -67,6 +68,14 @@ int current_rendered_commandbuffers;
 extern bool gpuStatActive;
 extern bool keepGpuStatActive;
 extern FString gpuStatOutput;
+
+CCMD(vk_memstats)
+{
+	VmaStats stats = {};
+	vmaCalculateStats(GetVulkanFrameBuffer()->device->allocator, &stats);
+	Printf("Allocated objects: %d, used bytes: %d MB\n", (int)stats.total.allocationCount, (int)stats.total.usedBytes / (1024 * 1024));
+	Printf("Unused range count: %d, unused bytes: %d MB\n", (int)stats.total.unusedRangeCount, (int)stats.total.unusedBytes / (1024 * 1024));
+}
 
 VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev) : 
 	Super(hMonitor, fullscreen) 

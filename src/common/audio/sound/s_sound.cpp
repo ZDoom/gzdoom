@@ -404,6 +404,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	// the referenced sound so some additional checks are required
 	int near_limit = sfx->NearLimit;
 	float limit_range = sfx->LimitRange;
+	float defpitch = sfx->DefPitch;
 	auto pitchmask = sfx->PitchMask;
 	rolloff = &sfx->Rolloff;
 
@@ -419,6 +420,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 			{
 				near_limit = newsfx->NearLimit;
 				limit_range = newsfx->LimitRange;
+				defpitch = newsfx->DefPitch;
 			}
 			if (rolloff->MinDistance == 0)
 			{
@@ -525,7 +527,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		return NULL;
 	}
 
-	// Vary the sfx pitches.
+	// Vary the sfx pitches. Overridden by $PitchSet and A_StartSound.
 	if (pitchmask != 0)
 	{
 		pitch = DEFAULT_PITCH - (rand() & pitchmask) + (rand() & pitchmask);
@@ -596,9 +598,11 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		{
 			chan->Source = source;
 		}
-
-		if (spitch > 0.0)
+		
+		if (spitch > 0.0)				// A_StartSound has top priority over all others.
 			SetPitch(chan, spitch);
+		else if (defpitch > 0.0)	// $PitchSet overrides $PitchShift
+			SetPitch(chan, defpitch);
 	}
 
 	return chan;
@@ -1490,6 +1494,7 @@ int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitc
 	newsfx.Volume = 1;
 	newsfx.Attenuation = 1;
 	newsfx.PitchMask = CurrentPitchMask;
+	newsfx.DefPitch = 0.0;
 	newsfx.NearLimit = nearlimit;
 	newsfx.LimitRange = 256 * 256;
 	newsfx.bRandomHeader = false;

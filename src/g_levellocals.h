@@ -150,6 +150,7 @@ struct FLevelLocals
 	void Init();
 
 private:
+	bool ShouldDoIntermission(cluster_info_t* nextcluster, cluster_info_t* thiscluster);
 	line_t *FindPortalDestination(line_t *src, int tag);
 	void BuildPortalBlockmap();
 	void UpdatePortal(FLinePortal *port);

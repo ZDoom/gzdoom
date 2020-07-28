@@ -86,7 +86,9 @@ enum
 // C++ cannot do static const floats in a class, so these need to be global...
 static const double PLAYERRADIUS = 16.;	// player radius for automap checking
 static const double M_ZOOMIN = 2; // how much zoom-in per second
-static const double M_ZOOMOUT = 0.25; // how much zoom-out per second
+static const double M_ZOOMOUT = 0.2; // how much zoom-out per second
+static const double M_OLDZOOMIN = (1.02); // for am_zoom
+static const double M_OLDZOOMOUT = (1 / 1.02);
 
 static FTextureID marknums[AM_NUMMARKPOINTS]; // numbers used for marking by the automap
 bool automapactive = false;
@@ -1464,11 +1466,11 @@ void DAutomap::changeWindowScale (double delta)
 
 	if (am_zoomdir > 0)
 	{
-		mtof_zoommul = M_ZOOMIN * am_zoomdir;
+		mtof_zoommul = M_OLDZOOMIN * am_zoomdir;
 	}
 	else if (am_zoomdir < 0)
 	{
-		mtof_zoommul = M_ZOOMOUT / -am_zoomdir;
+		mtof_zoommul = M_OLDZOOMOUT / -am_zoomdir;
 	}
 	else if (buttonMap.ButtonDown(Button_AM_ZoomIn))
 	{

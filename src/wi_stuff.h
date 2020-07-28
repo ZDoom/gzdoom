@@ -29,7 +29,6 @@
 
 #include "doomdef.h"
 
-class FTexture;
 struct FLevelLocals;
 
 //

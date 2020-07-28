@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MAXWIDTH 12000
+#define MAXHEIGHT 5000
+
 //
 // fixed point, 32bit as 16.16.
 //
@@ -85,6 +88,10 @@ inline float RAD2DEG(float deg)
 	return deg * float(180. / M_PI);
 }
 
+inline double RAD2DEG(double deg)
+{
+	return deg * (180. / M_PI);
+}
 
 // Auto-registration sections for GCC.
 // Apparently, you cannot do string concatenation inside section attributes.

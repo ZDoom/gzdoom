@@ -54,6 +54,7 @@
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 #include "r_data/r_interpolate.h"
+#include "doom_aabbtree.h"
 
 //============================================================================
 //
@@ -164,6 +165,7 @@ private:
 	void ReadOnePlayer(FSerializer &arc, bool skipload);
 	void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
 	void SerializeSounds(FSerializer &arc);
+	void PlayerSpawnPickClass (int playernum);
 
 public:
 	void SnapshotLevel();
@@ -456,6 +458,7 @@ public:
 	FSectionContainer sections;
 	FCanvasTextureInfo canvasTextureInfo;
 	EventManager *localEventManager = nullptr;
+	DoomLevelAABBTree* aabbTree = nullptr;
 
 	// [ZZ] Destructible geometry information
 	TMap<int, FHealthGroup> healthGroups;

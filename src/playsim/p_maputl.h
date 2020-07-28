@@ -417,4 +417,6 @@ double P_InterceptVector(const divline_t *v2, const divline_t *v1);
 #define PT_COMPATIBLE	4
 #define PT_DELTA		8		// x2,y2 is passed as a delta, not as an endpoint
 
+int BoxOnLineSide(const FBoundingBox& box, const line_t* ld);
+
 #endif

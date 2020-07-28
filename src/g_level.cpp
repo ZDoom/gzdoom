@@ -69,7 +69,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_netinf.h"
-#include "menu/menu.h"
+#include "doommenu.h"
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 #include "p_spec.h"
@@ -141,8 +141,8 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	int newself = self;
-	if (newself > 8) newself = 16;	// use 8 and 16 for software lighting to avoid conflicts with the bit mask
-	else if (newself > 4) newself = 8;
+	if (newself > 8) newself = 16;	// use 8 and 16 for software lighting to avoid conflicts with the bit mask ( in hindsight a bad idea.)
+	else if (newself > 5) newself = 8;
 	else if (newself < 0) newself = 0;
 	if (self != newself) self = newself;
 	else for (auto Level : AllLevels())
@@ -196,7 +196,7 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 	gameaction = ga_newgame2;
 }
 
-void G_DeferedInitNew (FGameStartup *gs)
+void G_DeferedInitNew (FNewGameStartup *gs)
 {
 	if (gs->PlayerClass != NULL) playerclass = gs->PlayerClass;
 	d_mapname = AllEpisodes[gs->Episode].mEpisodeMap;
@@ -893,14 +893,10 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 		{
 			if (texids[i]->isValid() && langtable[i] != FStringTable::default_table)
 			{
-				FTexture *tex = TexMan.GetTexture(*texids[i]);
-				if (tex != nullptr)
+				FGameTexture *tex = TexMan.GetGameTexture(*texids[i]);
+				if (tex != nullptr && !tex->isUserContent())
 				{
-					int filenum = fileSystem.GetFileContainer(tex->GetSourceLump());
-					if (filenum >= 0 && filenum <= fileSystem.GetMaxIwadNum())
-					{
-						texids[i]->SetInvalid();
-					}
+					texids[i]->SetInvalid();
 				}
 			}
 		}
@@ -958,6 +954,8 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	// Intermission stats for entire hubs
 	G_LeavingHub(this, mode, thiscluster, &wminfo);
 
+	// Do not allow playing sounds in here - they'd never be able to play properly.
+	soundEngine->BlockNewSounds(true);
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
@@ -965,6 +963,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 			G_PlayerFinishLevel (i, mode, changeflags);
 		}
 	}
+	soundEngine->BlockNewSounds(false);
 
 	if (mode == FINISH_SameHub)
 	{ // Remember the level's state for re-entry.
@@ -1576,6 +1575,7 @@ FLevelLocals::FLevelLocals() : Behaviors(this), tagManager(this)
 FLevelLocals::~FLevelLocals()
 {
 	if (localEventManager) delete localEventManager;
+	if (aabbTree) delete aabbTree;
 }
 
 //==========================================================================

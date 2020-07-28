@@ -486,3 +486,4 @@ SoundHandle SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length)
 	if (data) delete[] data;
 	return retval;
 }
+

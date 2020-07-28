@@ -450,7 +450,7 @@ class Actor : Thinker native
 		return sin(fb * (180./32)) * 8;
 	}
 
-	native bool isFrozen();
+	native clearscope bool isFrozen() const;
 	virtual native void BeginPlay();
 	virtual native void Activate(Actor activator);
 	virtual native void Deactivate(Actor activator);
@@ -607,7 +607,7 @@ class Actor : Thinker native
 		
 	native clearscope string GetTag(string defstr = "") const;
 	native void SetTag(string defstr = "");
-	native double GetBobOffset(double frac = 0);
+	native clearscope double GetBobOffset(double frac = 0) const;
 	native void ClearCounters();
 	native bool GiveBody (int num, int max=0);
 	native bool HitFloor();
@@ -703,7 +703,7 @@ class Actor : Thinker native
 	native void FindFloorCeiling(int flags = 0);
 	native double, double GetFriction();
 	native bool, Actor TestMobjZ(bool quick = false);
-	native static bool InStateSequence(State newstate, State basestate);
+	native clearscope static bool InStateSequence(State newstate, State basestate);
 	
 	bool TryWalk ()
 	{
@@ -751,7 +751,7 @@ class Actor : Thinker native
 	native bool LookForEnemies(bool allaround, LookExParams params = null);
 	native bool LookForPlayers(bool allaround, LookExParams params = null);
 	native bool TeleportMove(Vector3 pos, bool telefrag, bool modifyactor = true);
-	native double DistanceBySpeed(Actor other, double speed);
+	native clearscope double DistanceBySpeed(Actor other, double speed) const;
 	native name GetSpecies();
 	native void PlayActiveSound();
 	native void Howl();
@@ -787,7 +787,7 @@ class Actor : Thinker native
 		return level.totaltime - SpawnTime;
 	}
 
-	double AccuracyFactor()
+	clearscope double AccuracyFactor() const
 	{
 		return 1. / (1 << (accuracy * 5 / 100));
 	}

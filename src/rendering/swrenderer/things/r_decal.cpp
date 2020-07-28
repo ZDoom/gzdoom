@@ -51,7 +51,7 @@
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/viewport/r_spritedrawer.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
@@ -123,13 +123,11 @@ namespace swrenderer
 			}
 		}
 
-		FTexture *tex = TexMan.GetPalettedTexture(decal->PicNum, true);
-
-		if (tex == NULL || !tex->isValid())
+		FSoftwareTexture *WallSpriteTile = GetPalettedSWTexture(decal->PicNum, true);
+		if (WallSpriteTile == NULL)
 		{
 			return;
 		}
-		FSoftwareTexture *WallSpriteTile = tex->GetSoftwareTexture();
 
 		// Determine left and right edges of sprite. Since this sprite is bound
 		// to a wall, we use the wall's angle instead of the decal's. This is

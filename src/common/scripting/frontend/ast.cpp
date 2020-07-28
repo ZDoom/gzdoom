@@ -913,6 +913,25 @@ static void PrintPropertyStmt(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintMixinDef(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_MixinDef *mdnode = (ZCC_MixinDef *)node;
+	out.Break();
+	out.Open("mixin-def");
+	out.AddName(mdnode->NodeName);
+	PrintNodes(out, mdnode->Body);
+	out.Close();
+}
+
+static void PrintMixinStmt(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_MixinStmt *msnode = (ZCC_MixinStmt *)node;
+	out.Break();
+	out.Open("mixin-stmt");
+	out.AddName(msnode->MixinName);
+	out.Close();
+}
+
 void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *) =
 {
 	PrintIdentifier,
@@ -972,6 +991,8 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintStaticArrayState,
 	PrintProperty,
 	PrintFlagDef,
+	PrintMixinDef,
+	PrintMixinStmt,
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)

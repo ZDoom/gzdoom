@@ -37,11 +37,15 @@
 #include "vm.h"
 #include "c_cvars.h"
 #include "v_draw.h"
+#include "v_video.h"
 #include "fcolormap.h"
 
-F2DDrawer* twod;
+static F2DDrawer drawer;
+F2DDrawer* twod = &drawer;
 
 EXTERN_CVAR(Float, transsouls)
+CVAR(Float, classic_scaling_factor, 1.0, CVAR_ARCHIVE)
+CVAR(Float, classic_scaling_pixelaspect, 1.2f, CVAR_ARCHIVE)
 
 IMPLEMENT_CLASS(DShape2DTransform, false, false)
 
@@ -234,7 +238,7 @@ void F2DDrawer::AddIndices(int firstvert, TArray<int> &v)
 //
 //==========================================================================
 
-bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor, RenderCommand &quad)
+bool F2DDrawer::SetStyle(FGameTexture *tex, DrawParms &parms, PalEntry &vertexcolor, RenderCommand &quad)
 {
 	FRenderStyle style = parms.style;
 	float alpha;
@@ -390,9 +394,10 @@ void F2DDrawer::SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcol
 //
 //==========================================================================
 
-void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
+void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 {
 	if (parms.style.BlendOp == STYLEOP_None) return;	// not supposed to be drawn.
+	assert(img && img->isValid());
 
 	double xscale = parms.destwidth / parms.texwidth;
 	double yscale = parms.destheight / parms.texheight;
@@ -472,7 +477,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 //
 //==========================================================================
 
-void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
+void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 {
 	// [MK] bail out if vertex/coord array sizes are mismatched
 	if ( shape->mVertices.Size() != shape->mCoords.Size() )
@@ -550,12 +555,11 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 //
 //==========================================================================
 
-void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
+void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double fadelevel,
 		uint32_t *indices, size_t indexcount)
 {
-
 	RenderCommand poly;
 
 	poly.mType = DrawTypeTriangles;
@@ -630,9 +634,9 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 //
 //==========================================================================
 
-void F2DDrawer::AddPoly(FTexture* img, FVector4* vt, size_t vtcount, unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
+void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
 {
-	RenderCommand dg = {};
+	RenderCommand dg;
 	int method = 0;
 
 	dg.mType = DrawTypeTriangles;
@@ -647,7 +651,6 @@ void F2DDrawer::AddPoly(FTexture* img, FVector4* vt, size_t vtcount, unsigned in
 
 	dg.mTexture = img;
 	dg.mTranslationId = translation;
-	dg.mColor1 = color;
 	dg.mVertCount = (int)vtcount;
 	dg.mVertIndex = (int)mVertices.Reserve(vtcount);
 	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
@@ -677,7 +680,20 @@ void F2DDrawer::AddPoly(FTexture* img, FVector4* vt, size_t vtcount, unsigned in
 //
 //==========================================================================
 
-void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
+float F2DDrawer::GetClassicFlatScalarWidth()
+{
+	float ar = 4.f / 3.f / (float)ActiveRatio((float)screen->GetWidth(), (float)screen->GetHeight());
+	float sw = 320.f * classic_scaling_factor / (float)screen->GetWidth() / ar;
+	return sw;
+}
+
+float F2DDrawer::GetClassicFlatScalarHeight()
+{
+	float sh = 240.f / classic_scaling_pixelaspect * classic_scaling_factor / (float)screen->GetHeight();
+	return sh;
+}
+
+void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin, double flatscale)
 {
 	float fU1, fU2, fV1, fV2;
 
@@ -690,27 +706,100 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 	dg.mTexture = src;
 	dg.mFlags = DTF_Wrap;
 
-	// scaling is not used here.
-	if (!local_origin)
+	float fs = 1.f / float(flatscale);
+	bool flipc = false;
+
+	float sw = GetClassicFlatScalarWidth();
+	float sh = GetClassicFlatScalarHeight();
+
+	switch (local_origin)
 	{
-		fU1 = float(left) / src->GetDisplayWidth();
-		fV1 = float(top) / src->GetDisplayHeight();
-		fU2 = float(right) / src->GetDisplayWidth();
-		fV2 = float(bottom) / src->GetDisplayHeight();
-	}
-	else
-	{
+	case 0:
+		fU1 = float(left) / (float)src->GetDisplayWidth() * fs;
+		fV1 = float(top) / (float)src->GetDisplayHeight() * fs;
+		fU2 = float(right) / (float)src->GetDisplayWidth() * fs;
+		fV2 = float(bottom) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+	case 1:
 		fU1 = 0;
 		fV1 = 0;
-		fU2 = float(right - left) / src->GetDisplayWidth();
-		fV2 = float(bottom - top) / src->GetDisplayHeight();
+		fU2 = float(right - left) / (float)src->GetDisplayWidth() * fs;
+		fV2 = float(bottom - top) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+		// The following are for drawing frames with elements of pnly one orientation
+	case 2: // flip vertically
+		fU1 = 0;
+		fV2 = 0;
+		fU2 = float(right - left) / (float)src->GetDisplayWidth() * fs;
+		fV1 = float(bottom - top) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+	case 3:	// flip horizontally
+		fU2 = 0;
+		fV1 = 0;
+		fU1 = float(right - left) / (float)src->GetDisplayWidth() * fs;
+		fV2 = float(bottom - top) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+	case 4:	// flip vertically and horizontally
+		fU2 = 0;
+		fV2 = 0;
+		fU1 = float(right - left) / (float)src->GetDisplayWidth() * fs;
+		fV1 = float(bottom - top) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+
+	case 5:	// flip coordinates
+		fU1 = 0;
+		fV1 = 0;
+		fU2 = float(bottom - top) / (float)src->GetDisplayWidth() * fs;
+		fV2 = float(right - left) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+	case 6:	// flip coordinates and vertically
+		fU2 = 0;
+		fV1 = 0;
+		fU1 = float(bottom - top) / (float)src->GetDisplayWidth() * fs;
+		fV2 = float(right - left) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+	case 7:	// flip coordinates and horizontally
+		fU1 = 0;
+		fV2 = 0;
+		fU2 = float(bottom - top) / (float)src->GetDisplayWidth() * fs;
+		fV1 = float(right - left) / (float)src->GetDisplayHeight() * fs;
+		break;
+
+	case -1: // classic flat scaling
+		fU1 = float(left) / (float)src->GetDisplayWidth() * fs * sw;
+		fV1 = float(top) / (float)src->GetDisplayHeight() * fs * sh;
+		fU2 = float(right) / (float)src->GetDisplayWidth() * fs * sw;
+		fV2 = float(bottom) / (float)src->GetDisplayHeight() * fs * sh;
+		break;
+
+	case -2: // classic scaling for screen bevel
+		fU1 = 0;
+		fV1 = 0;
+		fU2 = float(right - left) / (float)src->GetDisplayWidth() * fs * sw;
+		fV2 = float(bottom - top) / (float)src->GetDisplayHeight() * fs * sh;
+		break;
 	}
 	dg.mVertIndex = (int)mVertices.Reserve(4);
 	auto ptr = &mVertices[dg.mVertIndex];
 
 	ptr->Set(left, top, 0, fU1, fV1, 0xffffffff); ptr++;
-	ptr->Set(left, bottom, 0, fU1, fV2, 0xffffffff); ptr++;
-	ptr->Set(right, top, 0, fU2, fV1, 0xffffffff); ptr++;
+	if (local_origin < 4)
+	{
+		ptr->Set(left, bottom, 0, fU1, fV2, 0xffffffff); ptr++;
+		ptr->Set(right, top, 0, fU2, fV1, 0xffffffff); ptr++;
+	}
+	else
+	{
+		ptr->Set(left, bottom, 0, fU2, fV1, 0xffffffff); ptr++;
+		ptr->Set(right, top, 0, fU1, fV2, 0xffffffff); ptr++;
+	}
 	ptr->Set(right, bottom, 0, fU2, fV2, 0xffffffff); ptr++;
 	dg.mIndexIndex = mIndices.Size();
 	dg.mIndexCount += 6;
@@ -721,11 +810,11 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 
 //===========================================================================
 // 
-//
+// 
 //
 //===========================================================================
 
-void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, FRenderStyle *style)
+void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, FRenderStyle *style, bool prepend)
 {
 	RenderCommand dg;
 
@@ -741,7 +830,13 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 	dg.mIndexIndex = mIndices.Size();
 	dg.mIndexCount += 6;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
-	AddCommand(&dg);
+	if (!prepend) AddCommand(&dg);
+	else
+	{
+		// Only needed by Raze's fullscreen blends because they are being calculated late when half of the 2D content has already been submitted,
+		// This ensures they are below the HUD, not above it.
+		mData.Insert(0, dg);
+	}
 }
 
 void F2DDrawer::ClearScreen(PalEntry color)
@@ -755,7 +850,7 @@ void F2DDrawer::ClearScreen(PalEntry color)
 //
 //==========================================================================
 
-void F2DDrawer::AddLine(float x1, float y1, float x2, float y2, int clipx1, int clipy1, int clipx2, int clipy2, uint32_t color, uint8_t alpha)
+void F2DDrawer::AddLine(double x1, double y1, double x2, double y2, int clipx1, int clipy1, int clipx2, int clipy2, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = (PalEntry)color;
 	p.a = alpha;

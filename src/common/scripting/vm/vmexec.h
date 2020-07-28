@@ -360,6 +360,10 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 	OP(SS):
 		ASSERTA(a); ASSERTS(B); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);
+#ifdef _DEBUG
+		// Should never happen, if it does it indicates a compiler side problem.
+		if (((FString*)ptr)->GetChars() == nullptr) ThrowAbortException(X_OTHER, "Uninitialized string");
+#endif
 		*(FString *)ptr = reg.s[B];
 		NEXTOP;
 	OP(SS_R):
@@ -1848,7 +1852,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 	case CAST_TID2S:
 	{
 		ASSERTS(a); ASSERTD(b);
-		auto tex = TexMan.GetTexture(*(FTextureID*)&(reg.d[b]));
+		auto tex = TexMan.GetGameTexture(*(FTextureID*)&(reg.d[b]));
 		reg.s[a] = tex == nullptr ? "(null)" : tex->GetName().GetChars();
 		break;
 	}

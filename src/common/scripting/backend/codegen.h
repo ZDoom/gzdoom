@@ -198,7 +198,7 @@ struct ExpVal
 
 	const FString GetString() const
 	{
-		return Type == TypeString ? *(FString *)&pointer : Type == TypeName ? FString(FName(ENamedName(Int)).GetChars()) : "";
+		return Type == TypeString ? *(FString *)&pointer : Type == TypeName ? FString(FName(ENamedName(Int)).GetChars()) : FString();
 	}
 
 	bool GetBool() const

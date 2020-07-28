@@ -41,6 +41,7 @@
 #include "d_player.h"
 #include "vm.h"
 #include "g_levellocals.h"
+#include "gi.h"
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 
@@ -55,7 +56,8 @@ static FString StaticLastMessage;
 
 void PrintPickupMessage(bool localview, const FString &str)
 {
-	if (str.IsNotEmpty() && localview && (StaticLastMessageTic != gametic || StaticLastMessage.Compare(str)))
+	// [MK] merge identical messages on same tic unless disabled in gameinfo
+	if (str.IsNotEmpty() && localview && (gameinfo.nomergepickupmsg || StaticLastMessageTic != gametic || StaticLastMessage.Compare(str)))
 	{
 		StaticLastMessageTic = gametic;
 		StaticLastMessage = str;

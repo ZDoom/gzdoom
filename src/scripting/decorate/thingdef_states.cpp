@@ -476,7 +476,7 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 	// Otherwise, it's a sequence of actions.
 	if (!sc.Compare("{"))
 	{
-		FxVMFunctionCall *call = ParseAction(sc, state, statestring, bag);
+		FxExpression *call = ParseAction(sc, state, statestring, bag);
 		endswithret = true;
 		return new FxReturnStatement(call, sc);
 	}
@@ -560,14 +560,12 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 //
 //==========================================================================
 
-FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag)
+FxExpression* ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag)
 {
-	FxVMFunctionCall *call;
-
 	// Make the action name lowercase
 	strlwr (sc.String);
 
-	call = DoActionSpecials(sc, state, bag);
+	FxExpression *call = DoActionSpecials(sc, state, bag);
 	if (call != NULL)
 	{
 		return call;
@@ -580,7 +578,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 	{
 		FArgumentList args;
 		ParseFunctionParameters(sc, bag.Info, args, afd, statestring, &bag.statedef);
-		call = new FxVMFunctionCall(new FxSelf(sc), afd, args, sc, false);
+		call = new FxFunctionCall(symname, NAME_None, args, sc);
 		return call;
 	}
 	sc.ScriptError("Invalid parameter '%s'\n", sc.String);

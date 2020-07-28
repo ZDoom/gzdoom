@@ -7,7 +7,6 @@ struct FRenderer;
 extern FRenderer *SWRenderer;
 
 class FSerializer;
-class FTexture;
 class AActor;
 class player_t;
 struct sector_t;

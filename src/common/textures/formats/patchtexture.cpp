@@ -63,6 +63,7 @@ public:
 	FPatchTexture (int lumpnum, int w, int h, int lo, int to, bool isalphatex);
 	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
+	bool SupportRemap0() override { return !badflag; }
 	void DetectBadPatches();
 };
 

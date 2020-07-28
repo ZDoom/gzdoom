@@ -302,10 +302,6 @@ class MessageBoxMenu : Menu
 			{
 				sel = y >= mMouseY + fh;
 			}
-			if (sel != -1 && sel != messageSelection)
-			{
-				//S_Sound (CHAN_VOICE, CHANF_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
-			}
 			messageSelection = sel;
 			if (type == MOUSE_Release)
 			{

@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005 David HENRY
-** Copyright 2006 Christoph Oelckers
+** Copyright 2006-2019 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

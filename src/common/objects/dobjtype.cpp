@@ -922,3 +922,31 @@ unsigned GetVirtualIndex(PClass *cls, const char *funcname)
 	return VIndex;
 }
 
+
+void PClass::InitializeDefaults()
+{
+	if (VMType != nullptr)	// purely internal classes have no symbol table
+	{
+		if (bRuntimeClass)
+		{
+			// Copy parent values from the parent defaults.
+			assert(ParentClass != nullptr);
+			if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults, &PClass::SpecialInits);
+			for (const PField* field : Fields)
+			{
+				if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))
+				{
+					field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
+				}
+			}
+		}
+		if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
+		for (const PField* field : Fields)
+		{
+			if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
+			{
+				field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
+			}
+		}
+	}
+}

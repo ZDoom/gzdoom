@@ -28,6 +28,8 @@
  * unsigned int and 64-bit unsigned int in hexadecimal format.
  */
 
+#include <inttypes.h>
+
 #ifndef SFMT_H
 #define SFMT_H
 

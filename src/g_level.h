@@ -15,8 +15,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel);
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
 void G_DeferedInitNew (const char *mapname, int skill = -1);
-struct FGameStartup;
-void G_DeferedInitNew (FGameStartup *gs);
+struct FNewGameStartup;
+void G_DeferedInitNew (FNewGameStartup *gs);
 
 enum 
 {

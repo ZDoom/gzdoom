@@ -45,7 +45,7 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/line/r_fogboundary.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/scene/r_light.h"
 
 #ifdef _MSC_VER

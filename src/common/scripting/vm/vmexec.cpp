@@ -42,6 +42,7 @@
 #include "types.h"
 #include "basics.h"
 #include "texturemanager.h"
+#include "palutil.h"
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];

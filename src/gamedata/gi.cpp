@@ -440,6 +440,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
 			GAMEINFOKEY_TWODOUBLES(normforwardmove, "normforwardmove")
 			GAMEINFOKEY_TWODOUBLES(normsidemove, "normsidemove")
+			GAMEINFOKEY_BOOL(nomergepickupmsg, "nomergepickupmsg")
 
 		else
 		{
@@ -458,4 +459,11 @@ const char *gameinfo_t::GetFinalePage(unsigned int num) const
 	if (finalePages.Size() == 0) return "-NOFLAT-";
 	else if (num < 1 || num > finalePages.Size()) return finalePages[0].GetChars();
 	else return finalePages[num-1].GetChars();
+}
+
+bool CheckGame(const char* string, bool chexisdoom)
+{
+	int test = gameinfo.gametype;
+	if (test == GAME_Chex && chexisdoom) test = GAME_Doom;
+	return !stricmp(string, GameNames[test]);
 }

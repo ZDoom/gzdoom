@@ -31,11 +31,12 @@
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "r_data/sprites.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "vm.h"
 #include "texturemanager.h"
 
 void InitModels();
+void R_InitVoxels();
 
 // variables used to look up
 //	and range check thing_t sprites patches
@@ -123,7 +124,7 @@ static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool
 
 	if (frame >= MAX_SPRITE_FRAMES || rotation > 16)
 	{
-		Printf (TEXTCOLOR_RED "R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan.GetTexture(lump)->GetName().GetChars());
+		Printf (TEXTCOLOR_RED "R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan.GetGameTexture(lump)->GetName().GetChars());
 		return false;
 	}
 
@@ -287,7 +288,7 @@ void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe)
 		{
 			for (int rot = 0; rot < 16; ++rot)
 			{
-				TexMan.GetTexture(sprtemp[frame].Texture[rot])->SetRotations(framestart + frame);
+				TexMan.GetGameTexture(sprtemp[frame].Texture[rot])->SetRotations(framestart + frame);
 			}
 		}
 	}
@@ -333,7 +334,7 @@ void R_InitSpriteDefs ()
 	memset(hashes.Data(), -1, sizeof(Hasher)*smax);
 	for (i = 0; i < smax; ++i)
 	{
-		FTexture *tex = TexMan.ByIndex(i);
+		auto tex = TexMan.GameByIndex(i);
 		if (tex->GetUseType() == ETextureType::Sprite && strlen(tex->GetName()) >= 6)
 		{
 			size_t bucket = TEX_DWNAME(tex) % smax;
@@ -415,7 +416,7 @@ void R_InitSpriteDefs ()
 		int hash = hashes[intname % smax].Head;
 		while (hash != -1)
 		{
-			FTexture *tex = TexMan.GetTexture(hash);
+			auto tex = TexMan.GetGameTexture(hash);
 			if (TEX_DWNAME(tex) == intname)
 			{
 				bool res = R_InstallSpriteLump (FTextureID(hash), tex->GetName()[4] - 'A', tex->GetName()[5], false, sprtemp, maxframe);

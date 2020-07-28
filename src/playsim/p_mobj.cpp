@@ -4887,22 +4887,37 @@ void AActor::AdjustFloorClip ()
 	double shallowestclip = INT_MAX;
 	const msecnode_t *m;
 
-	// possibly standing on a 3D-floor
-	if (Sector->e->XFloor.ffloors.Size() && Z() > Sector->floorplane.ZatPoint(this)) Floorclip = 0;
-
 	// [RH] clip based on shallowest floor player is standing on
 	// If the sector has a deep water effect, then let that effect
 	// do the floorclipping instead of the terrain type.
 	for (m = touching_sectorlist; m; m = m->m_tnext)
 	{
 		DVector3 pos = PosRelative(m->m_sector);
-		sector_t *hsec = m->m_sector->GetHeightSec();
-		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == Z())
+		sector_t* hsec = m->m_sector->GetHeightSec();
+		if (hsec == NULL)
 		{
-			double clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
-			if (clip < shallowestclip)
+			if (m->m_sector->floorplane.ZatPoint(pos) == Z())
 			{
-				shallowestclip = clip;
+				double clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
+				if (clip < shallowestclip)
+				{
+					shallowestclip = clip;
+				}
+			}
+			else
+			{
+				for (auto& ff : m->m_sector->e->XFloor.ffloors)
+				{
+					if ((ff->flags & FF_SOLID) && (ff->flags & FF_EXISTS) && ff->top.plane->ZatPoint(pos) == Z())
+					{
+						double clip = Terrains[ff->top.model->GetTerrain(ff->top.isceiling)].FootClip;
+						if (clip < shallowestclip)
+						{
+							shallowestclip = clip;
+						}
+					}
+				}
+
 			}
 		}
 	}
@@ -4996,31 +5011,9 @@ void StaticPointerSubstitution(AActor* old, AActor* notOld)
 	}
 }
 
-
-
-AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
+void FLevelLocals::PlayerSpawnPickClass (int playernum)
 {
-	player_t *p;
-	AActor *mobj, *oldactor;
-	uint8_t	  state;
-	DVector3 spawn;
-	DAngle SpawnAngle;
-
-	if (mthing == NULL)
-	{
-		return NULL;
-	}
-	// not playing?
-	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !PlayerInGame(playernum) )
-		return NULL;
-
-	// Old lerp data needs to go
-	if (playernum == consoleplayer)
-	{
-		P_PredictionLerpReset();
-	}
-
-	p = Players[playernum];
+	auto p = Players[playernum];
 
 	if (p->cls == NULL)
 	{
@@ -5049,6 +5042,33 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		}
 		p->cls = PlayerClasses[p->CurrentPlayerClass].Type;
 	}
+}
+
+AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
+{
+	player_t *p;
+	AActor *mobj, *oldactor;
+	uint8_t	  state;
+	DVector3 spawn;
+	DAngle SpawnAngle;
+
+	if (mthing == NULL)
+	{
+		return NULL;
+	}
+	// not playing?
+	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !PlayerInGame(playernum) )
+		return NULL;
+
+	// Old lerp data needs to go
+	if (playernum == consoleplayer)
+	{
+		P_PredictionLerpReset();
+	}
+
+	p = Players[playernum];
+
+	PlayerSpawnPickClass(playernum);
 
 	if (( dmflags2 & DF2_SAME_SPAWN_SPOT ) &&
 		( p->playerstate == PST_REBORN ) &&
@@ -5542,6 +5562,11 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	}
 	else if (sz == ONCEILINGZ)
 		mobj->AddZ(-mthing->pos.Z);
+
+	if (mobj->flags2 & MF2_FLOORCLIP)
+	{
+		mobj->AdjustFloorClip();
+	}
 
 	mobj->SpawnPoint = mthing->pos;
 	mobj->SpawnAngle = mthing->angle;
@@ -7334,14 +7359,15 @@ void AActor::ClearCounters()
 int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive, AActor *inflictor, AActor *source, int flags)
 {
 	auto inv = Inventory;
-	while (inv != nullptr)
+	while (inv != nullptr && !(inv->ObjectFlags & OF_EuthanizeMe))
 	{
+		auto nextinv = inv->Inventory;
 		IFVIRTUALPTRNAME(inv, NAME_Inventory, ModifyDamage)
 		{
 			VMValue params[8] = { (DObject*)inv, damage, damagetype.GetIndex(), &damage, passive, inflictor, source, flags };
 			VMCall(func, params, 8, nullptr, 0);
 		}
-		inv = inv->Inventory;
+		inv = nextinv;
 	}
 	return damage;
 }

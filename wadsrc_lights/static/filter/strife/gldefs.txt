@@ -9,89 +9,100 @@
 flickerlight SPUFF1
 {
     color 1.0 1.0 0.0
-    size 6
-    secondarySize 8
+    size 9
+    secondarySize 12
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF2
 {
     color 1.0 0.8 0.0
-    size 5
-    secondarySize 6
+    size 7
+    secondarySize 9
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF3
 {
     color 1.0 0.6 0.0
-    size 8
-    secondarySize 10
+    size 12
+    secondarySize 15
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF4
 {
     color 0.8 0.8 1.0
-    size 2
-    secondarySize 4
+    size 3
+    secondarySize 6
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF5
 {
     color 0.8 0.8 1.0
-    size 4
-    secondarySize 6
+    size 6
+    secondarySize 9
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF6
 {
     color 0.6 0.6 1.0
-    size 6
-    secondarySize 8
+    size 9
+    secondarySize 12
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF7
 {
     color 0.4 0.4 0.8
-    size 7
-    secondarySize 9
+    size 10
+    secondarySize 14
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF8
 {
     color 1.0 1.0 0.0
-    size 2
-    secondarySize 4
+    size 3
+    secondarySize 6
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF9
 {
     color 1.0 0.8 0.0
-    size 3
-    secondarySize 4
+    size 4
+    secondarySize 6
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF10
 {
     color 1.0 0.6 0.0
-    size 5
-    secondarySize 6
+    size 7
+    secondarySize 9
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SPUFF11
 {
     color 1.0 0.4 0.0
-    size 7
-    secondarySize 8
+    size 10
+    secondarySize 12
     chance 0.8
+	attenuate 1
 }
 
 object StrifePuff
@@ -113,41 +124,46 @@ object StrifePuff
 flickerlight SSPARK1
 {
     color 0.5 0.5 1.0
-    size 4
-    secondarySize 6
+    size 6
+    secondarySize 9
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SSPARK2
 {
     color 0.5 0.5 1.0
-    size 6
-    secondarySize 8
+    size 9
+    secondarySize 12
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SSPARK3
 {
     color 0.4 0.4 1.0
-    size 8
-    secondarySize 10
+    size 12
+    secondarySize 15
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SSPARK4
 {
     color 0.3 0.3 1.0
-    size 6
-    secondarySize 8
+    size 9
+    secondarySize 12
     chance 0.8
+	attenuate 1
 }
 
 flickerlight SSPARK5
 {
     color 0.2 0.2 1.0
-    size 4
-    secondarySize 6
+    size 6
+    secondarySize 9
     chance 0.8
+	attenuate 1
 }
 
 object StrifeSpark
@@ -172,49 +188,55 @@ object StrifeSpark
 flickerlight ARROWZAP1
 {
     color 0.4 0.4 1.0
-    size 8
-    secondarySize 16
+    size 12
+    secondarySize 24
     chance 0.4
+	attenuate 1
 }
 
 flickerlight ARROWZAP2
 {
     color 0.45 0.45 1.0
-    size 16
-    secondarySize 24
+    size 24
+    secondarySize 36
     chance 0.4
+	attenuate 1
 }
 
 flickerlight ARROWZAP3
 {
     color 0.5 0.5 1.0
-    size 24
-    secondarySize 30
+    size 36
+    secondarySize 45
     chance 0.4
+	attenuate 1
 }
 
 flickerlight ARROWZAP4
 {
     color 0.6 0.6 1.0
-    size 30
-    secondarySize 36
+    size 45
+    secondarySize 54
     chance 0.4
+	attenuate 1
 }
 
 flickerlight ARROWZAP5
 {
     color 0.7 0.7 1.0
-    size 36
-    secondarySize 40
+    size 54
+    secondarySize 60
     chance 0.4
+	attenuate 1
 }
 
 flickerlight ARROWZAP6
 {
     color 0.8 0.8 1.0
-    size 40
-    secondarySize 42
+    size 60
+    secondarySize 43
     chance 0.4
+	attenuate 1
 }
 
 object ElectricBolt
@@ -231,64 +253,72 @@ object ElectricBolt
 pointlight MISSILE
 {
     color 1.0 0.7 0.0
-    size 56
+    size 84
     offset -40 0 0
+	attenuate 1
 }
 
 flickerlight MISSILE_X1
 {
     color 1.0 0.7 0.0
-    size 56
-    secondarySize 60
+    size 84
+    secondarySize 90
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MISSILE_X2
 {
     color 1.0 0.65 0.0
-    size 60
-    secondarySize 64
+    size 90
+    secondarySize 96
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MISSILE_X3
 {
     color 1.0 0.6 0.0
-    size 64
-    secondarySize 68
+    size 96
+    secondarySize 102
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MISSILE_X4
 {
     color 1.0 0.6 0.0
-    size 68
-    secondarySize 72
+    size 102
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MISSILE_X5
 {
     color 1.0 0.6 0.0
-    size 72
-    secondarySize 76
+    size 108
+    secondarySize 114
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MISSILE_X6
 {
     color 1.0 0.6 0.0
-    size 76
-    secondarySize 80
+    size 114
+    secondarySize 120
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MISSILE_X7
 {
     color 1.0 0.6 0.0
-    size 80
-    secondarySize 88
+    size 120
+    secondarySize 132
     chance 0.3
+	attenuate 1
 }
 
 object MiniMissile
@@ -308,37 +338,43 @@ object MiniMissile
 pointlight FLMMISSILE
 {
     color 1.0 0.7 0.0
-    size 56
+    size 84
+	attenuate 1
 }
 
 pointlight FLMMSL_X1
 {
     color 1.0 0.7 0.0
-    size 52
+    size 78
+	attenuate 1
 }
 
 pointlight FLMMSL_X2
 {
     color 0.8 0.56 0.0
-    size 46
+    size 69
+	attenuate 1
 }
 
 pointlight FLMMSL_X3
 {
     color 0.6 0.42 0.0
-    size 38
+    size 57
+	attenuate 1
 }
 
 pointlight FLMMSL_X4
 {
     color 0.4 0.28 0.0
-    size 24
+    size 36
+	attenuate 1
 }
 
 pointlight FLMMSL_X5
 {
     color 0.2 0.14 0.0
-    size 16
+    size 24
+	attenuate 1
 }
 
 object FlameMissile
@@ -358,49 +394,55 @@ object FlameMissile
 flickerlight MPUFFG
 {
     color 0.0 1.0 0.0
-    size 6
-    secondarySize 8
+    size 9
+    secondarySize 12
     chance 0.8
+	attenuate 1
 }
 
 flickerlight MPUFF1
 {
     color 1.0 1.0 1.0
-    size 6
-    secondarySize 8
+    size 9
+    secondarySize 12
     chance 0.8
+	attenuate 1
 }
 
 flickerlight MPUFF2
 {
     color 1.0 1.0 1.0
-    size 8
-    secondarySize 10
+    size 12
+    secondarySize 15
     chance 0.8
+	attenuate 1
 }
 
 flickerlight MPUFF3
 {
     color 1.0 1.0 1.0
-    size 10
-    secondarySize 12
+    size 15
+    secondarySize 18
     chance 0.8
+	attenuate 1
 }
 
 flickerlight MPUFF4
 {
     color 1.0 1.0 1.0
-    size 12
-    secondarySize 14
+    size 18
+    secondarySize 21
     chance 0.8
+	attenuate 1
 }
 
 flickerlight MPUFF5
 {
     color 1.0 1.0 1.0
-    size 14
-    secondarySize 16
+    size 21
+    secondarySize 24
     chance 0.8
+	attenuate 1
 }
 
 object MaulerPuff
@@ -417,47 +459,53 @@ object MaulerPuff
 pointlight MTORPEDO
 {
     color 0.0 1.0 0.0
-    size 80
+    size 120
+	attenuate 1
 }
 
 flickerlight MTORP_X1
 {
     color 0.5 1.0 0.5
-    size 80
-    secondarySize 84
+    size 120
+    secondarySize 126
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MTORP_X2
 {
     color 0.4 1.0 0.4
-    size 84
-    secondarySize 88
+    size 126
+    secondarySize 132
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MTORP_X3
 {
     color 0.2 1.0 0.2
-    size 88
-    secondarySize 92
+    size 132
+    secondarySize 138
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MTORP_X4
 {
     color 0.125 0.5 0.125
-    size 92
-    secondarySize 96
+    size 138
+    secondarySize 144
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MTORP_X5
 {
     color 0.0 0.25 0.0
-    size 96
-    secondarySize 100
+    size 144
+    secondarySize 150
     chance 0.3
+	attenuate 1
 }
 
 object MaulerTorpedo
@@ -474,25 +522,28 @@ object MaulerTorpedo
 flickerlight MWAVE_X1
 {
     color 0.0 1.0 0.0
-    size 112
-    secondarySize 128
+    size 168
+    secondarySize 192
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MWAVE_X2
 {
     color 0.0 0.75 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
+	attenuate 1
 }
 
 flickerlight MWAVE_X3
 {
     color 0.0 0.5 0.0
-    size 24
-    secondarySize 32
+    size 36
+    secondarySize 48
     chance 0.3
+	attenuate 1
 }
 
 object MaulerTorpedoWave
@@ -561,89 +612,100 @@ object HEGrenade
 flickerlight PHFIRE_FX1
 {
     color 1.0 0.75 0.0
-    size 28
-    secondarySize 32
+    size 42
+    secondarySize 48
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX2
 {
     color 1.0 0.7 0.0
-    size 40
-    secondarySize 48
+    size 60
+    secondarySize 72
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX3
 {
     color 1.0 0.65 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX4
 {
     color 1.0 0.55 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX5
 {
     color 1.0 0.5 0.0
-    size 66
-    secondarySize 72
+    size 99
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX6
 {
     color 1.0 0.55 0.0
-    size 66
-    secondarySize 72
+    size 99
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX7
 {
     color 1.0 0.6 0.0
-    size 66
-    secondarySize 72
+    size 99
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX8
 {
     color 1.0 0.5 0.0
-    size 60
-    secondarySize 68
+    size 90
+    secondarySize 102
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX9
 {
     color 1.0 0.4 0.0
-    size 48
-    secondarySize 52
+    size 72
+    secondarySize 78
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX10
 {
     color 1.0 0.45 0.0
-    size 44
-    secondarySize 48
+    size 66
+    secondarySize 72
     chance 0.3
+	attenuate 1
 }
 
 flickerlight PHFIRE_FX11
 {
     color 1.0 0.3 0.0
-    size 36
-    secondarySize 40
+    size 54
+    secondarySize 60
     chance 0.3
+	attenuate 1
 }
 
 object PhosphorousFire
@@ -670,65 +732,73 @@ object PhosphorousFire
 flickerlight DEGORE_X1
 {
     color 1.0 0.6 0.0
-    size 32
-    secondarySize 40
+    size 48
+    secondarySize 60
     chance 0.3
+	attenuate 1
 }
 
 flickerlight DEGORE_X2
 {
     color 1.0 0.8 0.0
-    size 40
-    secondarySize 48
+    size 60
+    secondarySize 72
     chance 0.3
+	attenuate 1
 }
 
 flickerlight DEGORE_X3
 {
     color 1.0 0.8 0.0
-    size 44
-    secondarySize 52
+    size 66
+    secondarySize 78
     chance 0.3
+	attenuate 1
 }
 
 flickerlight DEGORE_X4
 {
     color 1.0 0.75 0.0
-    size 48
-    secondarySize 56
+    size 72
+    secondarySize 84
     chance 0.3
+	attenuate 1
 }
 
 flickerlight DEGORE_X5
 {
     color 1.0 0.7 0.0
-    size 52
-    secondarySize 60
+    size 78
+    secondarySize 90
     chance 0.3
+	attenuate 1
 }
 
 flickerlight DEGORE_X6
 {
     color 1.0 0.5 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
+	attenuate 1
 }
 
 flickerlight DEGORE_X7
 {
     color 0.5 0.125 0.0
-    size 60
-    secondarySize 68
+    size 90
+    secondarySize 102
     chance 0.3
+	attenuate 1
 }
 
 flickerlight DEGORE_X8
 {
     color 0.25 0.05 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 object DegninOre
@@ -747,13 +817,15 @@ object DegninOre
 pointlight POWCOUP1
 {
     color 0.5 0.5 1.0
-    size 24
+    size 36
+	attenuate 1
 }
 
 pointlight POWCOUP2
 {
     color 0.7 0.7 1.0
-    size 32
+    size 48
+	attenuate 1
 }
 
 object PowerCoupling
@@ -766,13 +838,15 @@ object PowerCoupling
 pointlight ENERGY1
 {
     color 0.4 1.0 0.4
-    size 16
+    size 24
+	attenuate 1
 }
 
 pointlight ENERGY2
 {
     color 0.4 1.0 0.4
-    size 32
+    size 48
+	attenuate 1
 }
 
 object EnergyPod
@@ -793,10 +867,11 @@ object EnergyPack
 flickerlight2 HUMNDATK
 {
     color 1.0 0.8 0.2
-    size 48
-    secondarySize 56
+    size 72
+    secondarySize 84
     interval 1
     offset 0 40 0
+	attenuate 1
 }
 
 object Acolyte
@@ -926,64 +1001,71 @@ object StrifePlayer
 flickerlight2 CTURRETATK1
 {
     color 1.0 0.8 0.2
-    size 40
-    secondarySize 48
+    size 60
+    secondarySize 72
     interval 1
     offset 0 0 0
+	attenuate 1
 }
 
 flickerlight2 CTURRETATK2
 {
     color 1.0 0.8 0.2
-    size 48
-    secondarySize 56
+    size 72
+    secondarySize 84
     interval 1
     offset 0 0 0
+	attenuate 1
 }
 
 flickerlight2 CTURRETDTH1
 {
     color 1.0 1.0 1.0
-    size 32
-    secondarySize 36
+    size 48
+    secondarySize 54
     interval 1
     offset 0 0 0
+	attenuate 1
 }
 
 flickerlight2 CTURRETDTH2
 {
     color 0.9 0.9 0.9
-    size 36
-    secondarySize 40
+    size 54
+    secondarySize 60
     interval 1
     offset 0 0 0
+	attenuate 1
 }
 
 flickerlight2 CTURRETDTH3
 {
     color 0.7 0.7 0.7
-    size 42
-    secondarySize 46
+    size 63
+    secondarySize 69
     interval 1
     offset 0 0 0
+	attenuate 1
 }
 
 flickerlight2 CTURRETDTH4
 {
     color 0.5 0.5 0.5
-    size 48
-    secondarySize 52
+    size 72
+    secondarySize 78
     interval 1
     offset 0 0 0
+	attenuate 1
 }
 
 flickerlight2 CTURRETDTH5
 {
     color 0.3 0.3 0.3
-    size 52
-    secondarySize 56
+    size 78
+    secondarySize 84
     interval 1
     offset 0 0 0
+	attenuate 1
 }
 
 object CeilingTurret
@@ -1002,91 +1084,101 @@ object CeilingTurret
 flickerlight2 STLKATK
 {
     color 1.0 0.8 0.2
-    size 48
-    secondarySize 56
+    size 73
+    secondarySize 84
     interval 1
     offset 0 10 0
+	attenuate 1
 }
 
 flickerlight STLKDTH1
 {
     color 0.2 1.0 0.2
-    size 32
-    secondarySize 36
+    size 48
+    secondarySize 54
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH2
 {
     color 0.3 1.0 0.3
-    size 36
-    secondarySize 40
+    size 54
+    secondarySize 60
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH3
 {
     color 0.2 1.0 0.2
-    size 40
-    secondarySize 48
+    size 60
+    secondarySize 72
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH4
 {
     color 0.35 1.0 0.35
-    size 44
-    secondarySize 52
+    size 66
+    secondarySize 78
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH5
 {
     color 0.5 1.0 0.2
-    size 40
-    secondarySize 44
+    size 60
+    secondarySize 66
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH6
 {
     color 1.0 0.2 0.0
-    size 32
-    secondarySize 40
+    size 48
+    secondarySize 60
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH7
 {
     color 0.7 0.3 0.0
-    size 40
-    secondarySize 48
+    size 60
+    secondarySize 72
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH8
 {
     color 0.5 0.15 0.0
-    size 36
-    secondarySize 44
+    size 54
+    secondarySize 66
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 flickerlight STLKDTH9
 {
     color 0.35 0.05 0.0
-    size 32
-    secondarySize 36
+    size 48
+    secondarySize 54
     chance 0.3
     offset 0 15 0
+	attenuate 1
 }
 
 object Stalker
@@ -1110,19 +1202,21 @@ object Stalker
 flickerlight SNTNLDTH1
 {
     color 1.0 0.4 0.0
-    size 24
-    secondarySize 36
+    size 36
+    secondarySize 54
     chance 0.3
     offset 0 12 0
+	attenuate 1
 }
 
 flickerlight SNTNLDTH2
 {
     color 1.0 0.6 0.0
-    size 48
-    secondarySize 56
+    size 72
+    secondarySize 84
     chance 0.3
     offset 0 12 0
+	attenuate 1
 }
 
 object Sentinel
@@ -1134,43 +1228,50 @@ object Sentinel
 pointlight SNTNL_FX1
 {
     color 1.0 0.0 0.0
-    size 16
+    size 24
+	attenuate 1
 }
 
 pointlight SNTNL_FX2
 {
     color 0.5 0.0 0.0
-    size 16
+    size 24
+	attenuate 1
 }
 
 pointlight SNTNL_FX3
 {
     color 1.0 0.0 0.0
-    size 18
+    size 27
+	attenuate 1
 }
 
 pointlight SNTNL_FX4
 {
     color 0.8 0.0 0.0
-    size 20
+    size 30
+	attenuate 1
 }
 
 pointlight SNTNL_FX5
 {
     color 0.6 0.0 0.0
-    size 22
+    size 33
+	attenuate 1
 }
 
 pointlight SNTNL_FX6
 {
     color 0.4 0.0 0.0
-    size 24
+    size 36
+	attenuate 1
 }
 
 pointlight SNTNL_FX7
 {
     color 0.2 0.0 0.0
-    size 28
+    size 42
+	attenuate 1
 }
 
 object SentinelFX1
@@ -1201,46 +1302,51 @@ object SentinelFX2
 flickerlight CRSDRDTH1
 {
     color 1.0 0.5 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
     offset 0 80 0
+	attenuate 1
 }
 
 flickerlight CRSDRDTH2
 {
     color 1.0 0.8 0.0
-    size 68
-    secondarySize 74
+    size 102
+    secondarySize 111
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight CRSDRDTH3
 {
     color 1.0 0.8 0.0
-    size 72
-    secondarySize 76
+    size 108
+    secondarySize 114
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight CRSDRDTH4
 {
     color 1.0 0.9 0.0
-    size 76
-    secondarySize 80
+    size 114
+    secondarySize 120
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight CRSDRDTH5
 {
     color 1.0 0.6 0.0
-    size 80
-    secondarySize 84
+    size 120
+    secondarySize 126
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 object Crusader
@@ -1285,64 +1391,71 @@ object CrusaderMissile
 flickerlight REAV_X1
 {
     color 1.0 0.3 0.0
-    size 16
-    secondarySize 20
+    size 24
+    secondarySize 30
     chance 0.3
     offset 0 16 16
+	attenuate 1
 }
 
 flickerlight REAV_X2
 {
     color 1.0 0.2 0.0
-    size 32
-    secondarySize 40
+    size 48
+    secondarySize 60
     chance 0.3
     offset 0 32 -16
+	attenuate 1
 }
 
 flickerlight REAV_X3
 {
     color 1.0 0.6 0.0
-    size 40
-    secondarySize 44
+    size 60
+    secondarySize 66
     chance 0.3
     offset 0 12 16
+	attenuate 1
 }
 
 flickerlight REAV_X4
 {
     color 1.0 0.5 0.0
-    size 20
-    secondarySize 24
+    size 30
+    secondarySize 36
     chance 0.3
     offset 0 10 0
+	attenuate 1
 }
 
 flickerlight REAV_X5
 {
     color 1.0 0.8 0.0
-    size 28
-    secondarySize 32
+    size 42
+    secondarySize 48
     chance 0.3
     offset 0 18 0
+	attenuate 1
 }
 
 flickerlight REAV_X6
 {
     color 1.0 0.7 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
     offset 0 20 0
+	attenuate 1
 }
 
 flickerlight REAV_X7
 {
     color 0.5 0.05 0.0
-    size 52
-    secondarySize 56
+    size 78
+    secondarySize 84
     chance 0.3
     offset 0 20 0
+	attenuate 1
 }
 
 object Reaver
@@ -1362,64 +1475,71 @@ object Reaver
 flickerlight2 TEMPATK
 {
     color 0.2 1.0 0.2
-    size 48
-    secondarySize 56
+    size 72
+    secondarySize 84
     interval 1
     offset 20 40 0
+	attenuate 1
 }
 
 flickerlight TEMP_X1
 {
     color 1.0 0.8 0.2
-    size 8
-    secondarySize 12
+    size 12
+    secondarySize 18
     chance 0.3
     offset 0 20 32
+	attenuate 1
 }
 
 flickerlight TEMP_X2
 {
     color 1.0 0.5 0.0
-    size 32
-    secondarySize 36
+    size 48
+    secondarySize 54
     chance 0.3
     offset 0 20 24
+	attenuate 1
 }
 
 flickerlight TEMP_X3
 {
     color 1.0 0.75 0.1
-    size 24
-    secondarySize 28
+    size 36
+    secondarySize 42
     chance 0.3
     offset 0 20 24
+	attenuate 1
 }
 
 flickerlight TEMP_X4
 {
     color 1.0 0.65 0.1
-    size 28
-    secondarySize 32
+    size 42
+    secondarySize 48
     chance 0.3
     offset 0 20 16
+	attenuate 1
 }
 
 flickerlight TEMP_X5
 {
     color 1.0 0.6 0.0
-    size 30
-    secondarySize 34
+    size 45
+    secondarySize 51
     chance 0.3
     offset 0 20 8
+	attenuate 1
 }
 
 flickerlight TEMP_X6
 {
     color 1.0 0.5 0.0
-    size 32
-    secondarySize 36
+    size 48
+    secondarySize 54
     chance 0.3
     offset 0 20 0
+	attenuate 1
 }
 
 object Templar
@@ -1438,163 +1558,181 @@ object Templar
 flickerlight2 INQATK1
 {
     color 1.0 0.6 0.0
-    size 88
-    secondarySize 96
+    size 132
+    secondarySize 144
     interval 1
     offset 20 72 -40
+	attenuate 1
 }
 
 flickerlight2 INQATK2
 {
     color 1.0 0.6 0.0
-    size 88
-    secondarySize 96
+    size 132
+    secondarySize 144
     interval 1
     offset 20 96 0
+	attenuate 1
 }
 
 flickerlight2 INQFLY1
 {
     color 0.5 0.5 1.0
-    size 80
-    secondarySize 84
+    size 120
+    secondarySize 126
     interval 1
     offset -40 36 0
+	attenuate 1
 }
 
 flickerlight2 INQFLY2
 {
     color 0.33 0.33 1.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     interval 1
     offset -40 36 0
+	attenuate 1
 }
 
 flickerlight INQDTH1
 {
     color 1.0 0.4 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
     offset 0 72 0
+	attenuate 1
 }
 
 flickerlight INQDTH2
 {
     color 1.0 0.7 0.0
-    size 84
-    secondarySize 96
+    size 126
+    secondarySize 144
     chance 0.3
     offset 0 64 0
+	attenuate 1
 }
 
 flickerlight INQDTH3
 {
     color 1.0 0.6 0.0
-    size 92
-    secondarySize 100
+    size 138
+    secondarySize 150
     chance 0.3
     offset 0 56 0
+	attenuate 1
 }
 
 flickerlight INQDTH4
 {
     color 0.7 0.07 0.0
-    size 72
-    secondarySize 80
+    size 108
+    secondarySize 120
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight INQDTH5
 {
     color 0.3 0.0 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight INQDTH6
 {
     color 0.5 0.3 0.0
-    size 32
-    secondarySize 40
+    size 48
+    secondarySize 60
     chance 0.3
     offset 0 32 0
+	attenuate 1
 }
 
 flickerlight INQDTH7
 {
     color 1.0 0.6 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
     offset 0 32 0
+	attenuate 1
 }
 
 flickerlight INQDTH8
 {
     color 1.0 0.7 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
     offset 0 32 0
+	attenuate 1
 }
 
 flickerlight INQDTH9
 {
     color 1.0 0.7 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
     offset 0 56 0
+	attenuate 1
 }
 
 flickerlight INQDTH10
 {
     color 1.0 0.6 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
     offset 0 56 0
+	attenuate 1
 }
 
 flickerlight INQDTH11
 {
     color 1.0 0.5 0.0
-    size 100
-    secondarySize 128
+    size 150
+    secondarySize 192
     chance 0.3
     offset 0 32 0
+	attenuate 1
 }
 
 flickerlight INQDTH12
 {
     color 1.0 0.4 0.0
-    size 80
-    secondarySize 96
+    size 120
+    secondarySize 144
     chance 0.3
     offset 0 32 0
+	attenuate 1
 }
 
 flickerlight INQDTH13
 {
     color 1.0 0.3 0.0
-    size 60
-    secondarySize 72
+    size 90
+    secondarySize 108
     chance 0.3
     offset 0 24 0
+	attenuate 1
 }
 
 flickerlight INQDTH14
 {
     color 0.5 0.15 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
     offset 0 18 0
+	attenuate 1
 }
 
 object Inquisitor
@@ -1630,73 +1768,82 @@ object Inquisitor
 flickerlight INQSHOT_X1
 {
     color 1.0 0.8 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X2
 {
     color 1.0 0.7 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X3
 {
     color 0.8 0.45 0.0
-    size 72
-    secondarySize 80
+    size 108
+    secondarySize 120
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X4
 {
     color 0.5 0.3 0.0
-    size 80
-    secondarySize 84
+    size 120
+    secondarySize 126
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X5
 {
     color 1.0 0.6 0.0
-    size 56
-    secondarySize 60
+    size 84
+    secondarySize 90
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X6
 {
     color 1.0 0.7 0.0
-    size 60
-    secondarySize 64
+    size 90
+    secondarySize 96
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X7
 {
     color 1.0 0.7 0.0
-    size 64
-    secondarySize 68
+    size 96
+    secondarySize 102
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X8
 {
     color 1.0 0.6 0.0
-    size 40
-    secondarySize 48
+    size 60
+    secondarySize 72
     chance 0.3
+	attenuate 1
 }
 
 flickerlight INQSHOT_X9
 {
     color 1.0 0.4 0.0
-    size 24
-    secondarySize 32
+    size 36
+    secondarySize 48
     chance 0.3
+	attenuate 1
 }
 
 object InquisitorShot
@@ -1716,46 +1863,51 @@ object InquisitorShot
 flickerlight PROGATK1
 {
     color 0.5 0.5 1.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
     offset 0 60 0
+	attenuate 1
 }
 
 flickerlight PROGATK2
 {
     color 0.6 0.6 1.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
     offset 0 60 0
+	attenuate 1
 }
 
 flickerlight PROGATK3
 {
     color 0.8 0.8 1.0
-    size 80
-    secondarySize 96
+    size 120
+    secondarySize 144
     chance 0.3
     offset 0 60 0
+	attenuate 1
 }
 
 flickerlight PROGDTH1
 {
     color 1.0 0.4 0.0
-    size 112
-    secondarySize 128
+    size 168
+    secondarySize 192
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight PROGDTH2
 {
     color 1.0 0.6 0.0
-    size 128
-    secondarySize 140
+    size 192
+    secondarySize 210
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 object Programmer
@@ -1771,28 +1923,31 @@ object Programmer
 flickerlight BASE_X1
 {
     color 1.0 0.55 0.0
-    size 96
-    secondarySize 112
+    size 144
+    secondarySize 168
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight BASE_X2
 {
     color 1.0 0.50 0.0
-    size 80
-    secondarySize 96
+    size 120
+    secondarySize 144
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight BASE_X3
 {
     color 0.5 0.2 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
     offset 0 32 0
+	attenuate 1
 }
 
 object ProgrammerBase
@@ -1806,10 +1961,11 @@ object ProgrammerBase
 flickerlight BISHOP
 {
     color 1.0 1.0 1.0
-    size 96
-    secondarySize 108
+    size 144
+    secondarySize 162
     chance 0.3
     offset 0 120 0
+	attenuate 1
 }
 
 object StrifeBishop
@@ -1838,35 +1994,40 @@ object BishopMissile
 pointlight LIGHT1
 {
     color 1.0 1.0 1.0
-    size 56
+    size 84
     offset 0 30 0
+	attenuate 1
 }
 
 pointlight LIGHT2
 {
     color 1.0 1.0 1.0
-    size 40
+    size 60
     offset 0 72 0
+	attenuate 1
 }
 
 pointlight LIGHT3
 {
     color 1.0 1.0 1.0
-    size 64
+    size 96
+	attenuate 1
 }
 
 pointlight LIGHT4
 {
     color 1.0 1.0 1.0
-    size 64
+    size 96
     offset 0 80 0
+	attenuate 1
 }
 
 pointlight LIGHT5
 {
     color 1.0 1.0 1.0
-    size 56
+    size 84
     offset 0 72 0
+	attenuate 1
 }
 
 pointlight CLIGHT1
@@ -1874,96 +2035,108 @@ pointlight CLIGHT1
     color 1.0 1.0 0.0
     size 24
     offset 0 12 0
+	attenuate 1
 }
 
 pulselight CLIGHT2
 {
     color 1.0 1.0 0.0
-    size 48
-    secondarySize 50
+    size 72
+    secondarySize 75
     interval 8.0    
     offset 0 64 0
+	attenuate 1
 }
 
 pulselight LLIGHT
 {
     color 1.0 0.5 0.0
-    size 24
-    secondarySize 32
+    size 42
+    secondarySize 54
     interval 12.0    
     offset 0 76 0
+	attenuate 1
 }
 
 pulselight TLLIGHT1
 {
     color 0.9 0.9 1.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     interval 3.0    
     offset 0 48 0
+	attenuate 1
 }
 
 pointlight TLLIGHT2
 {
     color 1.0 1.0 0.5
-    size 80
-    offset 0 56 0
+    size 120
+    offset 0 40 0
+	attenuate 1
 }
 
 flickerlight HTECH
 {
     color 0.3 1.0 0.3
-    size 96
-    secondarySize 104
+    size 144
+    secondarySize 156
     chance 0.5
     offset 0 80 0
+	attenuate 1
 }
 
 pulselight BCOLUMN
 {
     color 0.5 1.0 0.5
-    size 120
-    secondarySize 128
+    size 180
+    secondarySize 192
     interval 10.0    
     offset 0 64 0
+	attenuate 1
 }
 
 pulselight FBUBBLE
 {
     color 0.5 1.0 0.5
-    size 60
-    secondarySize 64
+    size 90
+    secondarySize 96
     interval 10.0    
     offset 0 32 0
+	attenuate 1
 }
 
 pulselight CBUBBLE
 {
     color 0.5 1.0 0.5
-    size 60
-    secondarySize 64
+    size 90
+    secondarySize 96
     interval 10.0
+	attenuate 1
 }
 
 pointlight SPIDLGHT1
 {
     color 0.5 1.0 0.5
-    size 64
+    size 96
     offset 0 10 0
+	attenuate 1
 }
 
 pointlight SPIDLGHT2
 {
     color 0.2 0.75 0.2
-    size 56
+    size 84
     offset 0 10 0
+	attenuate 1
 }
 
 pointlight SPIDLGHT3
 {
     color 0.0 0.25 0.0
-    size 48
+    size 72
     offset 0 10 0
+	attenuate 1
 }
 
 object LightSilverFluorescent 
@@ -2052,64 +2225,71 @@ object AlienSpiderLight
 flickerlight BBARREL
 {
     color 1.0 0.6 0.0
-    size 32
-    secondarySize 40
+    size 48
+    secondarySize 60
     chance 0.8
     offset 0 32 0
+	attenuate 1
 }
 
 flickerlight BBOWL
 {
     color 1.0 0.7 0.0
-    size 24
-    secondarySize 32
+    size 36
+    secondarySize 48
     chance 0.5
     offset 0 10 0
+	attenuate 1
 }
 
 flickerlight BBRAZIER
 {
     color 1.0 0.8 0.0
-    size 40
-    secondarySize 48
+    size 60
+    secondarySize 66
     chance 0.2
     offset 0 32 0
+	attenuate 1
 }
 
 pulselight STORCH
 {
     color 1.0 0.6 0.0
-    size 28
-    secondarySize 32
-    interval 5.0    
+    size 48
+    secondarySize 54
+    interval 5.0
     offset 0 56 0
+	attenuate 1
 }
 
 pulselight MTORCH
 {
     color 1.0 0.6 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     interval 5.0    
     offset 0 64 0
+	attenuate 1
 }
 
 pulselight LTORCH
 {
     color 1.0 0.8 0.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     interval 2.0    
     offset 0 64 0
+	attenuate 1
 }
 
 pulselight HTORCH
 {
     color 1.0 0.6 0.0
-    size 72
-    secondarySize 76
+    size 108
+    secondarySize 114
     interval 3.0    
     offset 0 72 0
+	attenuate 1
 }
 
 object StrifeBurningBarrel 
@@ -2226,7 +2406,7 @@ flickerlight POWCRYS_X5
 {
     color 1.0 0.7 0.27
     size 114
-    secondarySize 113
+    secondarySize 116
     chance 0.3
 }
 
@@ -2298,7 +2478,7 @@ flickerlight POWCRYS_X13
 {
     color 1.0 0.48 0.10
     size 105
-    secondarySize 106
+    secondarySize 107
     chance 0.3
 }
 
@@ -2306,37 +2486,21 @@ flickerlight POWCRYS_X14
 {
     color 1.0 0.46 0.08
     size 103
-    secondarySize 104
+    secondarySize 105
     chance 0.3
 }
 
 flickerlight POWCRYS_X15
 {
     color 1.0 0.44 0.06
-    size 102
-    secondarySize 104
+    size 101
+    secondarySize 103
     chance 0.3
 }
 
 flickerlight POWCRYS_X16
 {
     color 1.0 0.42 0.04
-    size 101
-    secondarySize 103
-    chance 0.3
-}
-
-flickerlight POWCRYS_X15
-{
-    color 1.0 0.4 0.02
-    size 100
-    secondarySize 102
-    chance 0.3
-}
-
-flickerlight POWCRYS_X16
-{
-    color 1.0 0.38 0.0
     size 99
     secondarySize 101
     chance 0.3
@@ -2344,7 +2508,7 @@ flickerlight POWCRYS_X16
 
 flickerlight POWCRYS_X17
 {
-    color 1.0 0.36 0.02
+    color 1.0 0.40 0.02
     size 98
     secondarySize 100
     chance 0.3
@@ -2352,65 +2516,65 @@ flickerlight POWCRYS_X17
 
 flickerlight POWCRYS_X18
 {
-    color 1.0 0.34 0.0
+    color 1.0 0.38 0.0
     size 97
-    secondarySize 100
+    secondarySize 99
     chance 0.3
 }
 
 flickerlight POWCRYS_X19
 {
-    color 1.0 0.32 0.0
+    color 1.0 0.36 0.0
     size 96
-    secondarySize 99
+    secondarySize 98
     chance 0.3
 }
 
 flickerlight POWCRYS_X20
 {
-    color 1.0 0.3 0.0
+    color 1.0 0.34 0.0
     size 95
-    secondarySize 98
+    secondarySize 97
     chance 0.3
 }
 
 flickerlight POWCRYS_X21
 {
-    color 1.0 0.28 0.0
+    color 1.0 0.32 0.0
     size 94
-    secondarySize 93
+    secondarySize 96
     chance 0.3
 }
 
 flickerlight POWCRYS_X22
 {
-    color 1.0 0.26 0.0
+    color 1.0 0.3 0.0
     size 93
-    secondarySize 92
+    secondarySize 95
     chance 0.3
 }
 
 flickerlight POWCRYS_X23
 {
-    color 1.0 0.24 0.0
+    color 1.0 0.28 0.0
     size 92
-    secondarySize 91
+    secondarySize 94
     chance 0.3
 }
 
 flickerlight POWCRYS_X24
 {
-    color 1.0 0.22 0.0
-    size 90
+    color 1.0 0.26 0.0
+    size 89
     secondarySize 92
     chance 0.3
 }
 
 flickerlight POWCRYS_X25
 {
-    color 1.0 0.2 0.0
+    color 1.0 0.24 0.0
     size 86
-    secondarySize 90
+    secondarySize 89
     chance 0.3
 }
 
@@ -2455,10 +2619,11 @@ object PowerCrystal
 pulselight COMPUTER
 {
     color 0.25 1.0 0.25
-    size 112
-    secondarySize 128
+    size 168
+    secondarySize 192
     interval 0.25    
     offset 0 64 0
+	attenuate 1
 }
 
 object Computer
@@ -2473,76 +2638,85 @@ object Computer
 flickerlight BARREL_X1
 {
     color 1.0 0.6 0.1
-    size 48
-    secondarySize 56
+    size 72
+    secondarySize 84
     chance 0.3
+	attenuate 1
 }
 
 flickerlight BARREL_X2
 {
     color 1.0 0.8 0.0
-    size 56
-    secondarySize 64
+    size 84
+    secondarySize 96
     chance 0.3
+	attenuate 1
 }
 
 flickerlight BARREL_X3
 {
     color 1.0 0.7 0.0
-    size 72
-    secondarySize 80
+    size 108
+    secondarySize 120
     chance 0.3
+	attenuate 1
 }
 
 flickerlight BARREL_X4
 {
     color 1.0 0.6 0.0
-    size 80
-    secondarySize 88
+    size 120
+    secondarySize 132
     chance 0.3
+	attenuate 1
 }
 
 flickerlight BARREL_X5
 {
     color 1.0 0.5 0.0
-    size 72
-    secondarySize 76
+    size 108
+    secondarySize 114
     chance 0.3
+	attenuate 1
 }
 
 flickerlight BARREL_X6
 {
     color 1.0 0.45 0.0
-    size 56
-    secondarySize 60
+    size 84
+    secondarySize 90
     chance 0.3
+	attenuate 1
 }
 
 flickerlight BARREL_X7
 {
     color 1.0 0.4 0.0
-    size 52
-    secondarySize 56
+    size 78
+    secondarySize 84
     chance 0.3
     offset 0 24 0
+	attenuate 1
 }
 
 flickerlight BARREL_X8
 {
     color 1.0 0.35 0.0
-    size 36
-    secondarySize 40
+    size 54
+    secondarySize 60
     chance 0.3
     offset 0 40 0
+	attenuate 1
 }
 
 flickerlight BARREL_X9
 {
     color 1.0 0.3 0.0
-    size 16
-    secondarySize 24
+    size 24
+    secondarySize 36
     chance 0.3
     offset 0 56 0
+	attenuate 1
 }
 
 object ExplosiveBarrel2
@@ -2562,7 +2736,8 @@ object ExplosiveBarrel2
 pointlight KLAXON
 {
     color 1.0 0.0 0.0
-    size 24
+    size 36
+	attenuate 1
 }
 
 object KlaxonWarningLight
@@ -2606,49 +2781,55 @@ object FireDroplet
 flickerlight ZAPBALL1
 {
     color 0.8 0.8 1.0
-    size 64
-    secondarySize 72
+    size 96
+    secondarySize 108
     chance 0.3
+	attenuate 1
 }
 
 flickerlight ZAPBALL2
 {
     color 0.8 0.8 1.0
-    size 128
-    secondarySize 144
+    size 192
+    secondarySize 216
     chance 0.5
+	attenuate 1
 }
 
 flickerlight LIGHTNING1
 {
     color 0.8 0.8 1.0
-    size 72
-    secondarySize 80
+    size 108
+    secondarySize 120
     chance 0.8
+	attenuate 1
 }
 
 flickerlight LIGHTNING2
 {
     color 0.8 0.8 1.0
-    size 80
-    secondarySize 96
+    size 120
+    secondarySize 144
     chance 0.8
+	attenuate 1
 }
 
 flickerlight LIGHT_SPT
 {
     color 0.8 0.8 1.0
-    size 24
-    secondarySize 32
+    size 36
+    secondarySize 48
     chance 0.8
+	attenuate 1
 }
 
 flickerlight LGNTAIL
 {
     color 0.4 0.4 0.5
-    size 72
-    secondarySize 80
+    size 108
+    secondarySize 120
     chance 0.8
+	attenuate 1
 }
 
 object SpectralLightningBase
@@ -2814,43 +2995,49 @@ object SpectralLightningBigV2
 pointlight TFOG1
 {
     color 0.5 0.5 0.25
-    size 32
+    size 48
     offset 0 40 0
+	attenuate 1
 }
 
 pointlight TFOG2
 {
     color 0.5 0.5 0.25
-    size 40
+    size 60
     offset 0 40 0
+	attenuate 1
 }
 
 pointlight TFOG3
 {
     color 0.5 0.5 0.25
-    size 48
+    size 72
     offset 0 40 0
+	attenuate 1
 }
 
 pointlight TFOG4
 {
     color 0.5 0.5 0.25
-    size 56
+    size 84
     offset 0 40 0
+	attenuate 1
 }
 
 pointlight TFOG5
 {
     color 0.5 0.5 0.25
-    size 64
+    size 96
     offset 0 40 0
+	attenuate 1
 }
 
 pointlight TFOG6
 {
     color 0.5 0.5 0.25
-    size 72
+    size 108
     offset 0 40 0
+	attenuate 1
 }
 
 object TeleportFog

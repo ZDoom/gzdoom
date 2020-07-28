@@ -53,7 +53,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "r_voxel.h"
 #include "swrenderer/segments/r_drawsegment.h"
@@ -62,7 +62,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "a_dynlight.h"
 #include "r_data/r_vanillatrans.h"
@@ -74,10 +74,8 @@ EXTERN_CVAR(Int, gl_texture_hqresize_targets)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ttex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
-		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
-
 		auto viewport = thread->Viewport.get();
 
 		const double thingxscalemul = spriteScale.X / tex->GetScale().X;
@@ -92,8 +90,8 @@ namespace swrenderer
 			return;
 
 		// [RH] Added scaling
-		int scaled_to = tex->GetScaledTopOffsetSW();
-		int scaled_bo = scaled_to - tex->GetScaledHeight();
+		double scaled_to = tex->GetScaledTopOffsetSW();
+		double scaled_bo = scaled_to - tex->GetScaledHeight();
 		double gzt = pos.Z + spriteScale.Y * scaled_to;
 		double gzb = pos.Z + spriteScale.Y * scaled_bo;
 

@@ -238,6 +238,7 @@ protected:
 	TArray<uint8_t> S_SoundCurve;
 	TMap<int, int> ResIdMap;
 	TArray<FRandomSoundList> S_rnd;
+	bool blockNewSounds = false;
 
 private:
 	void LinkChannel(FSoundChan* chan, FSoundChan** head);
@@ -267,6 +268,11 @@ public:
 		Shutdown();
 	}
 	void EvictAllChannels();
+
+	void BlockNewSounds(bool on)
+	{
+		blockNewSounds = on;
+	}
 
 	virtual int SoundSourceIndex(FSoundChan* chan) { return 0; }
 	virtual void SetSource(FSoundChan* chan, int index) {}

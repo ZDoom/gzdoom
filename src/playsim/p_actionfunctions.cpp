@@ -845,6 +845,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusDamageSelf)
 	int 				actualDamage;
 	double 				actualDistance;
 
+	if (self->target == nullptr) return 0;
 	actualDistance = self->Distance3D(self->target);
 	if (actualDistance < distance)
 	{

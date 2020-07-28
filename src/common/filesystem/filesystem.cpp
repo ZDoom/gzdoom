@@ -57,7 +57,7 @@ extern	FILE* hashfile;
 struct FileSystem::LumpRecord
 {
 	FResourceLump *lump;
-	FTexture* linkedTexture;
+	FGameTexture* linkedTexture;
 	LumpShortName shortName;
 	FString		longName;
 	int			rfnum;
@@ -725,7 +725,7 @@ int FileSystem::GetResource (int resid, const char *type, int filenum) const
 //
 //==========================================================================
 
-void FileSystem::SetLinkedTexture(int lump, FTexture *tex)
+void FileSystem::SetLinkedTexture(int lump, FGameTexture *tex)
 {
 	if ((size_t)lump < NumEntries)
 	{
@@ -739,7 +739,7 @@ void FileSystem::SetLinkedTexture(int lump, FTexture *tex)
 //
 //==========================================================================
 
-FTexture *FileSystem::GetLinkedTexture(int lump)
+FGameTexture *FileSystem::GetLinkedTexture(int lump)
 {
 	if ((size_t)lump < NumEntries)
 	{
@@ -920,6 +920,11 @@ static FResourceLump placeholderLump;
 
 void FileSystem::MoveLumpsInFolder(const char *path)
 {
+	if (FileInfo.Size() == 0)
+	{
+		return;
+	}
+	
 	auto len = strlen(path);
 	auto rfnum = FileInfo.Last().rfnum;
 	
@@ -1386,7 +1391,7 @@ FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & LUMPF_COMPRESSED))
 	{
 		int fileno = fileSystem.GetFileContainer(lump);
-		const char *filename = fileSystem.GetResourceFileName(fileno);
+		const char *filename = fileSystem.GetResourceFileFullName(fileno);
 		FileReader fr;
 		if (fr.OpenFile(filename, rl->GetFileOffset(), rl->LumpSize))
 		{

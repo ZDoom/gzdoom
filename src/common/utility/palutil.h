@@ -30,6 +30,7 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc = nullptr);
 // Tries to get color by name, then by string
 int V_GetColor(const uint32_t* palette, const char* str, FScriptPosition* sc = nullptr);
 int V_GetColor(const uint32_t* palette, FScanner& sc);
+PalEntry averageColor(const uint32_t* data, int size, int maxout);
 
 enum
 {

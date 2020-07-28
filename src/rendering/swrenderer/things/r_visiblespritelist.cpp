@@ -32,7 +32,7 @@
 #include "p_maputl.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_visiblespritelist.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 
 namespace swrenderer
 {

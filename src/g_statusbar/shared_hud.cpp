@@ -48,6 +48,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "v_draw.h"
 
 #include <time.h>
 

@@ -32,8 +32,8 @@
 #include "g_levellocals.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawlist.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "flatvertices.h"
+#include "hw_clock.h"
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "hw_fakeflat.h"
@@ -722,7 +722,7 @@ void HWDrawList::SortWalls()
 			HWWall * w1 = walls[a.index];
 			HWWall * w2 = walls[b.index];
 
-			if (w1->gltexture != w2->gltexture) return w1->gltexture < w2->gltexture;
+			if (w1->texture != w2->texture) return w1->texture < w2->texture;
 			return (w1->flags & 3) < (w2->flags & 3);
 
 		});
@@ -737,7 +737,7 @@ void HWDrawList::SortFlats()
 		{
 			HWFlat * w1 = flats[a.index];
 			HWFlat* w2 = flats[b.index];
-			return w1->gltexture < w2->gltexture;
+			return w1->texture < w2->texture;
 		});
 	}
 }

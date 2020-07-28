@@ -45,7 +45,7 @@ public:
 	FSinglePicFont(const char *picname);
 
 	// FFont interface
-	FTexture *GetChar(int code, int translation, int *const width, bool *redirected = nullptr) const override;
+	FGameTexture *GetChar(int code, int translation, int *const width, bool *redirected = nullptr) const override;
 	int GetCharWidth (int code) const;
 
 protected:
@@ -72,11 +72,11 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 		I_FatalError ("%s is not a font or texture", picname);
 	}
 
-	FTexture *pic = TexMan.GetTexture(picnum);
+	auto pic = TexMan.GetGameTexture(picnum);
 
 	FontName = picname;
-	FontHeight = pic->GetDisplayHeight();
-	SpaceWidth = pic->GetDisplayWidth();
+	FontHeight = (int)pic->GetDisplayHeight();
+	SpaceWidth = (int)pic->GetDisplayWidth();
 	GlobalKerning = 0;
 	FirstChar = LastChar = 'A';
 	ActiveColors = 0;
@@ -94,13 +94,13 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 //
 //==========================================================================
 
-FTexture *FSinglePicFont::GetChar (int code, int translation, int *const width, bool *redirected) const
+FGameTexture *FSinglePicFont::GetChar (int code, int translation, int *const width, bool *redirected) const
 {
 	*width = SpaceWidth;
 	if (redirected) *redirected = false;
 	if (code == 'a' || code == 'A')
 	{
-		return TexMan.GetPalettedTexture(PicNum, true);
+		return TexMan.GetGameTexture(PicNum, true);
 	}
 	else
 	{

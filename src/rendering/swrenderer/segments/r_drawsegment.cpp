@@ -36,7 +36,7 @@
 #include "po_man.h"
 #include "r_data/colormaps.h"
 #include "d_net.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_opaque_pass.h"

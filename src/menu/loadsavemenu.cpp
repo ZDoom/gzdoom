@@ -33,7 +33,7 @@
 **
 */
 
-#include "menu/menu.h"
+#include "doommenu.h"
 #include "version.h"
 #include "g_game.h"
 #include "m_png.h"
@@ -45,6 +45,7 @@
 #include "i_system.h"
 #include "v_video.h"
 #include "findfile.h"
+#include "v_draw.h"
 
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24

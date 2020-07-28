@@ -22,7 +22,7 @@
 
 
 #include "r_defs.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 

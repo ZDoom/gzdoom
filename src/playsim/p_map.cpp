@@ -204,7 +204,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 {
 	line_t *ld = cres.line;
 
-	if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+	if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 		return true;
 
 	// A line has been hit
@@ -776,7 +776,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	line_t *ld = cres.line;
 	bool rail = false;
 
-	if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+	if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 		return true;
 
 	// A line has been hit
@@ -1073,7 +1073,7 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	// if in another vertical section let's just ignore it.
 	if (cres.portalflags & (FFCF_NOCEILING | FFCF_NOFLOOR)) return false;
 
-	if (!box.inRange(cres.line) || box.BoxOnLineSide(cres.line) != -1)
+	if (!inRange(box, cres.line) || BoxOnLineSide(box, cres.line) != -1)
 		return false;
 
 	line_t *lp = cres.line->getPortalDestination();
@@ -1095,7 +1095,7 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	// Check all lines at the destination
 	while ((ld = it.Next()))
 	{
-		if (!pbox.inRange(ld) || pbox.BoxOnLineSide(ld) != -1)
+		if (!inRange(pbox, ld) || BoxOnLineSide(pbox, ld) != -1)
 			continue;
 
 		if (ld->backsector == NULL) 
@@ -3473,7 +3473,7 @@ bool FSlide::BounceWall(AActor *mo)
 	movelen = mo->Vel.XY().Length() * mo->wallbouncefactor;
 
 	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
-	if (box.BoxOnLineSide(line) == -1)
+	if (BoxOnLineSide(box, line) == -1)
 	{
 		DVector2 ofs = deltaangle.ToVector(mo->radius);
 		DVector3 pos = mo->Vec3Offset(ofs.X, ofs.Y, 0.);
@@ -4866,7 +4866,8 @@ int P_LineTrace(AActor *t1, DAngle angle, double distance,
 		outdata->HitLocation = trace.HitPos;
 		outdata->HitDir = trace.HitVector;
 		outdata->Distance = trace.Distance;
-		outdata->NumPortals = TData.NumPortals;
+		// [MK] Subtract two "bogus" portal crossings used internally by trace code
+		outdata->NumPortals = TData.NumPortals-2;
 		outdata->HitType = trace.HitType;
 	}
 	return ret;

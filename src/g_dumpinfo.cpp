@@ -75,7 +75,7 @@ CCMD(listlights)
 			if (dl->target)
 			{
 				FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, 0., nullptr);
-				Printf(", frame = %s ", TexMan.GetTexture(spr)->GetName().GetChars());
+				Printf(", frame = %s ", TexMan.GetGameTexture(spr)->GetName().GetChars());
 			}
 			
 			

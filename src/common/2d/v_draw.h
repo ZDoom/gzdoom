@@ -88,6 +88,8 @@ enum
 	DTA_Monospace,			// Fonts only: Use a fixed distance between characters.
 
 	DTA_FullscreenEx,
+	DTA_FullscreenScale,
+
 };
 
 enum EMonospacing : int
@@ -152,7 +154,7 @@ struct DrawParms
 	bool fortext;
 	bool virtBottom;
 	bool burn;
-	uint8_t fsscalemode;
+	int8_t fsscalemode;
 	double srcx, srcy;
 	double srcwidth, srcheight;
 };
@@ -203,22 +205,21 @@ inline int active_con_scale(F2DDrawer *drawer)
 #endif
 
 template<class T>
-bool ParseDrawTextureTags(F2DDrawer *drawer, FTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, bool fortext);
+bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, bool fortext);
 
 template<class T>
 void DrawTextCommon(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, const T* string, DrawParms& parms);
-bool SetTextureParms(F2DDrawer *drawer, DrawParms* parms, FTexture* img, double x, double y);
+bool SetTextureParms(F2DDrawer *drawer, DrawParms* parms, FGameTexture* img, double x, double y);
 
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...);
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char32_t* string, int tag_first, ...);
 void DrawChar(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...);
-void DrawTexture(F2DDrawer* drawer, FTexture* img, double x, double y, int tags_first, ...);
+
+void DrawTexture(F2DDrawer* drawer, FGameTexture* img, double x, double y, int tags_first, ...);
 
 void DoDim(F2DDrawer* drawer, PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);
 void Dim(F2DDrawer* drawer, PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);
-void FillBorder(F2DDrawer *drawer, FTexture* img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 
-void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height);
 void DrawBorder(F2DDrawer* drawer, FTextureID, int x1, int y1, int x2, int y2);
 void DrawFrame(F2DDrawer* twod, PalEntry color, int left, int top, int width, int height, int thickness);
 
@@ -232,3 +233,39 @@ void VirtualToRealCoordsInt(F2DDrawer* drawer, int& x, int& y, int& w, int& h, i
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
+
+void V_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int* cleanx, int* cleany, int* cx1 = NULL, int* cx2 = NULL);
+
+class ScaleOverrider
+{
+	int savedxfac, savedyfac, savedwidth, savedheight;
+
+public:
+	// This is to allow certain elements to use an optimal fullscreen scale which for the menu would be too large.
+	// The old code contained far too much mess to compensate for the menus which negatively affected everything else.
+	// However, for compatibility reasons the currently used variables cannot be changed so they have to be overridden temporarily.
+	// This class provides a safe interface for this because it ensures that the values get restored afterward.
+	// Currently, the intermission and the level summary screen use this.
+	ScaleOverrider(F2DDrawer *drawer)
+	{
+		savedxfac = CleanXfac;
+		savedyfac = CleanYfac;
+		savedwidth = CleanWidth;
+		savedheight = CleanHeight;
+
+		if (drawer)
+		{
+			V_CalcCleanFacs(320, 200, drawer->GetWidth(), drawer->GetHeight(), &CleanXfac, &CleanYfac);
+			CleanWidth = drawer->GetWidth() / CleanXfac;
+			CleanHeight = drawer->GetHeight() / CleanYfac;
+		}
+	}
+
+	~ScaleOverrider()
+	{
+		CleanXfac = savedxfac;
+		CleanYfac = savedyfac;
+		CleanWidth = savedwidth;
+		CleanHeight = savedheight;
+	}
+};

@@ -110,7 +110,7 @@ enum EInPlace { EC_InPlace };
 
 #define DECLARE_ABSTRACT_CLASS(cls,parent) \
 public: \
-	virtual PClass *StaticType() const; \
+	PClass *StaticType() const override; \
 	static ClassReg RegistrationInfo, * const RegistrationInfoPtr; \
 	typedef parent Super; \
 private: \
@@ -266,14 +266,12 @@ private:
 
 	void *operator new(size_t len, nonew&)
 	{
-		GC::AllocBytes += len;
 		return M_Malloc(len);
 	}
 public:
 
 	void operator delete (void *mem, nonew&)
 	{
-		GC::AllocBytes -= _msize(mem);
 		M_Free(mem);
 	}
 

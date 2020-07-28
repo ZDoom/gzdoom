@@ -1010,6 +1010,12 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '775CBC35C0A58326FE87AAD638FF9E2A': // Strife1.wad map29
+			case 'A75099ACB622C7013EE737480FCB0D67': // SVE.wad map29
+				// disable teleporter that would always teleport into a blocking position.
+				ClearLineSpecial(271);
+				break;
+
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
 			{
 				// Lower floor a bit so secret switch becomes accessible
@@ -1968,6 +1974,8 @@ class LevelCompatibility : LevelPostProcessor
 			
 			case '2499CF9A9351BE9BC4E9C66FC9F291A7': // Requiem MAP23
 			{
+				// Have arch-vile who creates ghost monsters not count as a kill
+				SetThingFlags(0, GetThingFlags(0) | MTF_NOCOUNT);
 				// Remove secret at switch that can only be scored by crouching
 				SetSectorSpecial(240, 0);
 				break;

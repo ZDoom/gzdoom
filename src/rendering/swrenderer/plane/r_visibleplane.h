@@ -25,7 +25,7 @@
 #include <stddef.h>
 #include "r_defs.h"
 #include "r_state.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 
 struct FDynamicLight;
 struct FLightNode;

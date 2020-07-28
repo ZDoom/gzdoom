@@ -44,6 +44,7 @@
 #include "vm.h"
 #include "c_buttons.h"
 #include "d_buttons.h"
+#include "v_draw.h"
 
 enum
 {

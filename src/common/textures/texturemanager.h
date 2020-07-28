@@ -3,14 +3,15 @@
 #include <stdint.h>
 #include "tarray.h"
 #include "textureid.h"
+#include "textures.h"
 #include "basics.h"
 #include "texmanip.h"
 #include "name.h"
 
 class FxAddSub;
-class FTexture;
 struct BuildInfo;
-int PalCheck(int tex);
+class FMultipatchTextureBuilder;
+class FScanner;
 
 // Texture manager
 class FTextureManager
@@ -24,42 +25,59 @@ public:
 private:
 	int ResolveLocalizedTexture(int texnum);
 
-	FTexture *InternalGetTexture(int texnum, bool animate, bool localize, bool palettesubst)
+	int ResolveTextureIndex(int texnum, bool animate, bool localize)
 	{
-		if ((unsigned)texnum >= Textures.Size()) return nullptr;
+		if ((unsigned)texnum >= Textures.Size()) return -1;
 		if (animate) texnum = Translation[texnum];
 		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
-		if (palettesubst) texnum = PalCheck(texnum);
+		return texnum;
+	}
+
+	FGameTexture *InternalGetTexture(int texnum, bool animate, bool localize)
+	{
+		texnum = ResolveTextureIndex(texnum, animate, localize);
+		if (texnum == -1) return nullptr;
 		return Textures[texnum].Texture;
 	}
+
 public:
+	FTextureID ResolveTextureIndex(FTextureID texid, bool animate, bool localize)
+	{
+		return FSetTextureID(ResolveTextureIndex(texid.GetIndex(), animate, localize));
+	}
+
 	// This only gets used in UI code so we do not need PALVERS handling.
-	FTexture *GetTextureByName(const char *name, bool animate = false)
+	FGameTexture* GetGameTextureByName(const char *name, bool animate = false)
 	{
-		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
-		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
+		FTextureID texnum = GetTextureID(name, ETextureType::MiscPatch);
+		return InternalGetTexture(texnum.GetIndex(), animate, true);
+	}
+
+	FGameTexture* GetGameTexture(FTextureID texnum, bool animate = false)
+	{
+		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
 	
-	FTexture *GetTexture(FTextureID texnum, bool animate = false)
+	FGameTexture* GetPalettedTexture(FTextureID texnum, bool animate = false, bool allowsubstitute = true)
 	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
+		auto texid = ResolveTextureIndex(texnum.GetIndex(), animate, true);
+		if (texid == -1) return nullptr;
+		if (allowsubstitute && Textures[texid].Paletted > 0) texid = Textures[texid].Paletted;
+		return Textures[texid].Texture;
 	}
-	
-	// This is the only access function that should be used inside the software renderer.
-	FTexture *GetPalettedTexture(FTextureID texnum, bool animate)
+
+	FGameTexture* GameByIndex(int i, bool animate = false)
 	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true, true);
+		return InternalGetTexture(i, animate, true);
 	}
-	
-	FTexture *ByIndex(int i, bool animate = false)
-	{
-		return InternalGetTexture(i, animate, true, false);
-	}
-	
-	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
+
+	FGameTexture* FindGameTexture(const char* texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
+
 	bool OkForLocalization(FTextureID texnum, const char *substitute, int locnum);
 
 	void FlushAll();
+	FTextureID GetFrontSkyLayer(FTextureID);
+	FTextureID GetRawTexture(FTextureID);
 
 
 	enum
@@ -98,7 +116,7 @@ public:
 	void AddLocalizedVariants();
 
 	FTextureID CreateTexture (int lumpnum, ETextureType usetype=ETextureType::Any);	// Also calls AddTexture
-	FTextureID AddTexture (FTexture *texture);
+	FTextureID AddGameTexture(FGameTexture* texture, bool addtohash = true);
 	FTextureID GetDefaultTexture() const { return DefaultTexture; }
 
 	void LoadTextureX(int wadnum, FMultipatchTextureBuilder &build);
@@ -106,7 +124,7 @@ public:
 	void Init(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo &));
 	void DeleteAll();
 
-	void ReplaceTexture (FTextureID picnum, FTexture *newtexture, bool free);
+	void ReplaceTexture (FTextureID picnum, FGameTexture *newtexture, bool free);
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
@@ -143,7 +161,7 @@ public:
 		return BuildTileData.Last();
 	}
 
-	FTexture* Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
+	FGameTexture* GameTexture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation(FTextureID fromtexnum, FTextureID totexnum);
 
 private:
@@ -154,7 +172,10 @@ private:
 
 	struct TextureHash
 	{
-		FTexture *Texture;
+		FGameTexture* Texture;
+		int Paletted;		// redirection to paletted variant
+		int FrontSkyLayer;	// and front sky layer,
+		int RawTexture;		
 		int HashNext;
 		bool HasLocalization;
 	};
@@ -184,3 +205,4 @@ public:
 };
 
 extern FTextureManager TexMan;
+

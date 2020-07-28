@@ -39,7 +39,7 @@
 #include "r_data/colormaps.h"
 #include "d_net.h"
 #include "texturemanager.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/scene/r_3dfloors.h"
@@ -91,13 +91,7 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
-		FTexture *ttex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::mid), true);
-		if (curline->GetLevel()->i_compatflags & COMPATF_MASKEDMIDTEX)
-		{
-			ttex = ttex->GetRawTexture();
-		}
-		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
-
+		auto tex = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::mid), true, !!(curline->GetLevel()->i_compatflags & COMPATF_MASKEDMIDTEX));
 		const short *mfloorclip = ds->drawsegclip.sprbottomclip;
 		const short *mceilingclip = ds->drawsegclip.sprtopclip;
 
@@ -333,20 +327,18 @@ namespace swrenderer
 					}
 					else
 					{
-						FTexture *rw_tex = nullptr;
 						if (fover->flags & FF_UPPERTEXTURE)
 						{
-							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
+							rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::top), true);
 						}
 						else if (fover->flags & FF_LOWERTEXTURE)
 						{
-							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
+							rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 						}
 						else
 						{
-							rw_tex = TexMan.GetPalettedTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+							rw_pic = GetPalettedSWTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
 						}
-						rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 					}
 				}
 				else if (frontsector->e->XFloor.ffloors.Size())
@@ -395,20 +387,18 @@ namespace swrenderer
 				if (!rw_pic && !swimmable_found)
 				{
 					fover = nullptr;
-					FTexture *rw_tex;
 					if (rover->flags & FF_UPPERTEXTURE)
 					{
-						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
+						rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::top), true);
 					}
 					else if (rover->flags & FF_LOWERTEXTURE)
 					{
-						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
+						rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 					}
 					else
 					{
-						rw_tex = TexMan.GetPalettedTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						rw_pic = GetPalettedSWTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 					}
-					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}
 
 				if (rw_pic && !swimmable_found)
@@ -487,20 +477,18 @@ namespace swrenderer
 					}
 					else
 					{
-						FTexture *rw_tex;
 						if (fover->flags & FF_UPPERTEXTURE)
 						{
-							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
+							rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::top), true);
 						}
 						else if (fover->flags & FF_LOWERTEXTURE)
 						{
-							rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
+							rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 						}
 						else
 						{
-							rw_tex = TexMan.GetPalettedTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
+							rw_pic = GetPalettedSWTexture(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
 						}
-						rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 					}
 				}
 				else if (frontsector->e->XFloor.ffloors.Size())
@@ -546,20 +534,18 @@ namespace swrenderer
 				if (!rw_pic && !swimmable_found)
 				{
 					fover = nullptr;
-					FTexture *rw_tex;
 					if (rover->flags & FF_UPPERTEXTURE)
 					{
-						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::top), true);
+						rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::top), true);
 					}
 					else if (rover->flags & FF_LOWERTEXTURE)
 					{
-						rw_tex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::bottom), true);
+						rw_pic = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::bottom), true);
 					}
 					else
 					{
-						rw_tex = TexMan.GetPalettedTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
+						rw_pic = GetPalettedSWTexture(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 					}
-					rw_pic = rw_tex && rw_tex->isValid() ? rw_tex->GetSoftwareTexture() : nullptr;
 				}
 
 				if (rw_pic && !swimmable_found)
@@ -643,7 +629,7 @@ namespace swrenderer
 
 	void RenderDrawSegment::GetNoWrapMidTextureZ(DrawSegment* ds, FSoftwareTexture* tex, double& ceilZ, double& floorZ)
 	{
-		double texheight = tex->GetScaledHeightDouble() / fabs(curline->sidedef->GetTextureYScale(side_t::mid));
+		double texheight = tex->GetScaledHeight() / fabs(curline->sidedef->GetTextureYScale(side_t::mid));
 		double texturemid;
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 			texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;

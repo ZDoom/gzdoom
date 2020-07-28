@@ -50,7 +50,7 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/r_renderthread.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
@@ -130,7 +130,7 @@ namespace swrenderer
 		WallDrawerArgs drawerargs;
 
 		// Textures that aren't masked can use the faster opaque drawer
-		if (!pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
+		if (!pic->isMasked() && mask && alpha >= OPAQUE && !additive)
 		{
 			drawerargs.SetStyle(true, false, OPAQUE, light_list);
 		}

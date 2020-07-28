@@ -77,10 +77,11 @@
 #include "m_argv.h"
 #include "fragglescript/t_fs.h"
 #include "swrenderer/r_swrenderer.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "xlat/xlat.h"
 #include "vm.h"
 #include "texturemanager.h"
+#include "hw_vertexbuilder.h"
 
 enum
 {
@@ -1674,6 +1675,7 @@ void MapLoader::LoadLineDefs (MapData * map)
 		
 	auto mldf = map->Read(ML_LINEDEFS);
 	int numlines = mldf.Size() / sizeof(maplinedef_t);
+	int numsides = map->Size(ML_SIDEDEFS) / sizeof(mapsidedef_t);
 	linemap.Resize(numlines);
 
 	// [RH] Count the number of sidedef references. This is the number of
@@ -1701,13 +1703,6 @@ void MapLoader::LoadLineDefs (MapData * map)
 		}
 		else
 		{
-			// patch missing first sides instead of crashing out.
-			// Visual glitches are better than not being able to play.
-			if (LittleShort(mld->sidenum[0]) == NO_INDEX)
-			{
-				Printf("Line %d has no first side.\n", i);
-				mld->sidenum[0] = 0;
-			}
 			sidecount++;
 			if (LittleShort(mld->sidenum[1]) != NO_INDEX)
 				sidecount++;
@@ -1746,6 +1741,22 @@ void MapLoader::LoadLineDefs (MapData * map)
 			ProcessEDLinedef(ld, mld->tag);
 		}
 #endif
+		// cph 2006/09/30 - fix sidedef errors right away.
+		for (int j=0; j < 2; j++)
+		{
+			if (LittleShort(mld->sidenum[j]) != NO_INDEX && mld->sidenum[j] >= numsides)
+			{
+				mld->sidenum[j] = 0; // dummy sidedef
+				Printf("Linedef %d has a bad sidedef\n", i);
+			}
+		}
+		// patch missing first sides instead of crashing out.
+		// Visual glitches are better than not being able to play.
+		if (LittleShort(mld->sidenum[0]) == NO_INDEX)
+		{
+			Printf("Line %d has no first side.\n", i);
+			mld->sidenum[0] = 0;
+		}
 
 		ld->v1 = &Level->vertexes[LittleShort(mld->v1)];
 		ld->v2 = &Level->vertexes[LittleShort(mld->v2)];
@@ -2179,11 +2190,11 @@ void MapLoader::LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 		// killough 4/4/98: allow sidedef texture names to be overloaded
 		// killough 4/11/98: refined to allow colormaps to work as wall
 		// textures if invalid as colormaps but valid as textures.
-
+		// cph 2006/09/30 - catch out-of-range sector numbers; use sector 0 instead
 		if ((unsigned)LittleShort(msd->sector)>=Level->sectors.Size())
 		{
 			Printf (PRINT_HIGH, "Sidedef %d has a bad sector\n", i);
-			sd->sector = sec = nullptr;
+			sd->sector = sec = &Level->sectors[0];
 		}
 		else
 		{
@@ -3223,7 +3234,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	InitRenderInfo();				// create hardware independent renderer resources for the level. This must be done BEFORE the PolyObj Spawn!!!
 	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
-	screen->mVertexData->CreateVBO(Level->sectors);
+	CreateVBO(screen->mVertexData, Level->sectors);
 
 	for (auto &sec : Level->sectors)
 	{
@@ -3238,5 +3249,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	PO_Init();				// Initialize the polyobjs
 	if (!Level->IsReentering())
 		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
+
+	Level->aabbTree = new DoomLevelAABBTree(Level);
 }
 

@@ -73,7 +73,6 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	int i;
 	FTextureID lump;
 	char buffer[12];
-	int maxyoffs;
 	DVector2 Scale = { 1, 1 };
 
 	noTranslate = notranslate;
@@ -91,9 +90,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	translateUntranslated = false;
 	int FixedWidth = 0;
 
-	maxyoffs = 0;
-
-	TMap<int, FTexture*> charMap;
+	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;
 	int maxchar = INT_MIN;
 	
@@ -231,13 +228,13 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						Type = Multilump;
 						if (position < minchar) minchar = position;
 						if (position > maxchar) maxchar = position;
-						charMap.Insert(position, TexMan.GetTexture(lump));
+						charMap.Insert(position, TexMan.GetGameTexture(lump));
 					}
 				}
 			}
 			else
 			{
-				FTexture *texs[256] = {};
+				FGameTexture *texs[256] = {};
 				if (lcount > 256 - start) lcount = 256 - start;
 				for (i = 0; i < lcount; i++)
 				{
@@ -247,8 +244,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					TexMan.ListTextures(buffer, array, true);
 					for (auto entry : array)
 					{
-						FTexture *tex = TexMan.GetTexture(entry, false);
-						if (tex && tex->GetSourceLump() >= 0 && fileSystem.GetFileContainer(tex->GetSourceLump()) <= fileSystem.GetMaxIwadNum() && tex->GetUseType() == ETextureType::MiscPatch)
+						auto tex = TexMan.GetGameTexture(entry, false);
+						if (tex && !tex->isUserContent() && tex->GetUseType() == ETextureType::MiscPatch)
 						{
 							texs[i] = tex;
 						}
@@ -292,8 +289,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					{
 						if ((int)position < minchar) minchar = (int)position;
 						if ((int)position > maxchar) maxchar = (int)position;
-						auto tex = TexMan.GetTexture(lump);
-						tex->SetScale(Scale);
+						auto tex = TexMan.GetGameTexture(lump);
+						tex->SetScale((float)Scale.X, (float)Scale.Y);
 						charMap.Insert((int)position, tex);
 						Type = Folder;
 					}
@@ -312,17 +309,13 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			auto lump = charMap.CheckKey(FirstChar + i);
 			if (lump != nullptr)
 			{
-				FTexture *pic = *lump;
+				auto pic = *lump;
 				if (pic != nullptr)
 				{
-					int height = pic->GetDisplayHeight();
-					int yoffs = pic->GetDisplayTopOffset();
+					double fheight = pic->GetDisplayHeight();
+					double yoffs = pic->GetDisplayTopOffset();
 
-					if (yoffs > maxyoffs)
-					{
-						maxyoffs = yoffs;
-					}
-					height += abs(yoffs);
+					int height = int(fheight + abs(yoffs) + 0.5);
 					if (height > fontheight)
 					{
 						fontheight = height;
@@ -333,24 +326,24 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					}
 				}
 
-				Chars[i].OriginalPic = new FImageTexture(pic->GetImage(), "");
-				Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
-				Chars[i].OriginalPic->CopySize(pic);
-				TexMan.AddTexture(Chars[i].OriginalPic);
+				auto orig = pic->GetTexture();
+				auto tex = MakeGameTexture(orig, nullptr, ETextureType::FontChar); 
+				tex->CopySize(pic);
+				TexMan.AddGameTexture(tex);
+				Chars[i].OriginalPic = tex;
 
 				if (!noTranslate)
 				{
-					Chars[i].TranslatedPic = new FImageTexture(new FFontChar1(pic->GetImage()), "");
+					Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(orig->GetImage())), nullptr, ETextureType::FontChar);
 					Chars[i].TranslatedPic->CopySize(pic);
-					Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
-					TexMan.AddTexture(Chars[i].TranslatedPic);
+					TexMan.AddGameTexture(Chars[i].TranslatedPic);
 				}
 				else
 				{
-					Chars[i].TranslatedPic = Chars[i].OriginalPic;
+					Chars[i].TranslatedPic = tex;
 				}
 
-				Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
+				Chars[i].XMove = (int)Chars[i].TranslatedPic->GetDisplayWidth();
 			}
 			else
 			{
@@ -379,17 +372,13 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 
 		FixXMoves();
 	}
-
-	if (!noTranslate) LoadTranslations();
-
-
 }
 
 void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
 {
 	// all valid lumps must be named with a hex number that represents the Unicode character index for its first character,
-	TArray<TexPart> part(1, true);
-	TMap<int, FTexture*> charMap;
+	TArray<TexPartBuild> part(1, true);
+	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;
 	int maxchar = INT_MIN;
 	for (auto &entry : folderdata)
@@ -402,7 +391,7 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 			auto lump = TexMan.CheckForTexture(entry.name, ETextureType::MiscPatch);
 			if (lump.isValid())
 			{
-				auto tex = TexMan.GetTexture(lump);
+				auto tex = TexMan.GetGameTexture(lump);
 				int numtex_x = tex->GetTexelWidth() / width;
 				int numtex_y = tex->GetTexelHeight() / height;
 				int maxinsheet = int(position) + numtex_x * numtex_y - 1;
@@ -415,25 +404,16 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 					{
 						part[0].OriginX = -width * x;
 						part[0].OriginY = -height * y;
-						part[0].Image = tex->GetImage();
+						part[0].TexImage = static_cast<FImageTexture*>(tex->GetTexture());
 						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
-						FImageTexture *tex = new FImageTexture(image, "");
-						tex->SetUseType(ETextureType::FontChar);
-						tex->bMultiPatch = true;
-						tex->Width = width;
-						tex->Height = height;
-						tex->_LeftOffset[0] = 
-						tex->_LeftOffset[1] = 
-						tex->_TopOffset[0] = 
-						tex->_TopOffset[1] = 0;
-						tex->Scale = Scale;
-						tex->bMasked = true;
-						tex->bTranslucent = -1;
-						tex->bWorldPanning = true;
-						tex->bNoDecals = false;
-						tex->SourceLump = -1;	// We do not really care.
-						TexMan.AddTexture(tex);
-						charMap.Insert(int(position) + x + y * numtex_x, tex);
+						FImageTexture *tex = new FImageTexture(image);
+						auto gtex = MakeGameTexture(tex, nullptr, ETextureType::FontChar);
+						gtex->SetWorldPanning(true);
+						gtex->SetOffsets(0, 0, 0);
+						gtex->SetOffsets(1, 0, 0);
+						gtex->SetScale((float)Scale.X, (float)Scale.Y);
+						TexMan.AddGameTexture(gtex);
+						charMap.Insert(int(position) + x + y * numtex_x, gtex);
 					}
 				}
 			}
@@ -458,18 +438,15 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 		auto lump = charMap.CheckKey(FirstChar + i);
 		if (lump != nullptr)
 		{
-			FTexture *pic = *lump;
-
-			auto b = pic->Get8BitPixels(false);
-
-			Chars[i].OriginalPic = new FImageTexture(pic->GetImage(), "");
+			auto pic = (*lump)->GetTexture();
+			Chars[i].OriginalPic = (*lump)->GetUseType() == ETextureType::FontChar? (*lump) : MakeGameTexture(pic, nullptr, ETextureType::FontChar);
 			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
-			Chars[i].OriginalPic->CopySize(pic);
-			Chars[i].TranslatedPic = new FImageTexture(new FFontChar1(pic->GetImage()), "");
-			Chars[i].TranslatedPic->CopySize(pic);
+			Chars[i].OriginalPic->CopySize(*lump);
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(pic->GetImage())), nullptr, ETextureType::FontChar);
+			Chars[i].TranslatedPic->CopySize(*lump);
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
-			TexMan.AddTexture(Chars[i].OriginalPic);
-			TexMan.AddTexture(Chars[i].TranslatedPic);
+			if (Chars[i].OriginalPic != *lump) TexMan.AddGameTexture(Chars[i].OriginalPic);
+			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 		}
 		Chars[i].XMove = width;
 	}
@@ -619,7 +596,7 @@ void FFont::RecordAllTextureColors(uint32_t *usedcolors)
 	{
 		if (Chars[i].TranslatedPic)
 		{
-			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetTexture()->GetImage());
 			if (pic)
 			{
 				// The remap must be temporarily reset here because this can be called on an initialized font.
@@ -982,7 +959,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 //
 //==========================================================================
 
-FTexture *FFont::GetChar (int code, int translation, int *const width, bool *redirected) const
+FGameTexture *FFont::GetChar (int code, int translation, int *const width, bool *redirected) const
 {
 	code = GetCharCode(code, true);
 	int xmove = SpaceWidth;
@@ -1006,12 +983,12 @@ FTexture *FFont::GetChar (int code, int translation, int *const width, bool *red
 		if (redirected) *redirected = redirect;
 		if (redirect)
 		{
-			assert(Chars[code].OriginalPic->UseType == ETextureType::FontChar);
+			assert(Chars[code].OriginalPic->GetUseType() == ETextureType::FontChar);
 			return Chars[code].OriginalPic;
 		}
 	}
 	if (redirected) *redirected = false;
-	assert(Chars[code].TranslatedPic->UseType == ETextureType::FontChar);
+	assert(Chars[code].TranslatedPic->GetUseType() == ETextureType::FontChar);
 	return Chars[code].TranslatedPic;
 }
 
@@ -1037,11 +1014,11 @@ int FFont::GetCharWidth (int code) const
 double GetBottomAlignOffset(FFont *font, int c)
 {
 	int w;
-	FTexture *tex_zero = font->GetChar('0', CR_UNDEFINED, &w);
-	FTexture *texc = font->GetChar(c, CR_UNDEFINED, &w);
+	auto tex_zero = font->GetChar('0', CR_UNDEFINED, &w);
+	auto texc = font->GetChar(c, CR_UNDEFINED, &w);
 	double offset = 0;
-	if (texc) offset += texc->GetDisplayTopOffsetDouble();
-	if (tex_zero) offset += -tex_zero->GetDisplayTopOffsetDouble() + tex_zero->GetDisplayHeightDouble();
+	if (texc) offset += texc->GetDisplayTopOffset();
+	if (tex_zero) offset += -tex_zero->GetDisplayTopOffset() + tex_zero->GetDisplayHeight();
 	return offset;
 }
 
@@ -1200,7 +1177,7 @@ void FFont::LoadTranslations()
 	{
 		if (Chars[i].TranslatedPic)
 		{
-			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetTexture()->GetImage());
 			if (pic)
 			{
 				pic->SetSourceRemap(nullptr); // Force the FFontChar1 to return the same pixels as the base texture
@@ -1214,7 +1191,7 @@ void FFont::LoadTranslations()
 	for (unsigned int i = 0; i < count; i++)
 	{
 		if(Chars[i].TranslatedPic)
-			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
+			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetTexture()->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
 	BuildTranslations (Luminosity.Data(), identity, &TranslationParms[TranslationType][0], ActiveColors, nullptr);
@@ -1290,7 +1267,7 @@ void FFont::FixXMoves()
 		}
 		if (Chars[i].OriginalPic)
 		{
-			int ofs = Chars[i].OriginalPic->GetDisplayTopOffset();
+			int ofs = (int)Chars[i].OriginalPic->GetDisplayTopOffset();
 			if (ofs > Displacement) Displacement = ofs;
 		}
 	}

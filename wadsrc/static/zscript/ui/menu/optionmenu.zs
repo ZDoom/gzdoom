@@ -393,7 +393,6 @@ class OptionMenu : Menu
 				if (yline != mDesc.mSelectedItem)
 				{
 					mDesc.mSelectedItem = yline;
-					//S_Sound (CHAN_VOICE, CHANF_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 				}
 				mDesc.mItems[yline].MouseEvent(type, x, y);
 				return true;

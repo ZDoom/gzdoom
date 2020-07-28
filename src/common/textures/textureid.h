@@ -17,6 +17,7 @@ enum class ETextureType : uint8_t
 	SkinGraphic,
 	Null,
 	FirstDefined,
+	Special,
 	SWCanvas,
 };
 
@@ -47,6 +48,12 @@ protected:
 	FTextureID(int num) { texnum = num; }
 private:
 	int texnum;
+};
+
+class FNullTextureID : public FTextureID
+{
+public:
+	FNullTextureID() : FTextureID(0) {}
 };
 
 // This is for the script interface which needs to do casts from int to texture.

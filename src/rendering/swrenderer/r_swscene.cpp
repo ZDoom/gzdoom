@@ -36,6 +36,8 @@
 #include "image.h"
 #include "engineerrors.h"
 #include "texturemanager.h"
+#include "d_main.h"
+#include "v_draw.h"
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;
@@ -75,10 +77,11 @@ SWSceneDrawer::SWSceneDrawer()
 	auto texid = TexMan.CheckForTexture("@@palette@@", ETextureType::Any);
 	if (!texid.Exists())
 	{
-		auto tex = new FImageTexture(new FSWPaletteTexture, "@@palette@@");
-		texid = TexMan.AddTexture(tex);
+		// We need to wrap this in a game texture object to have it managed by the texture manager, even though it will never be used as a material.
+		auto tex = MakeGameTexture(new FImageTexture(new FSWPaletteTexture), "@@palette@@", ETextureType::Special);
+		texid = TexMan.AddGameTexture(tex);
 	}
-	PaletteTexture = TexMan.GetTexture(texid);
+	PaletteTexture = TexMan.GetGameTexture(texid)->GetTexture();
 }
 
 SWSceneDrawer::~SWSceneDrawer()
@@ -93,23 +96,25 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		FBTextureIndex = (FBTextureIndex + 1) % 2;
 		auto &fbtex = FBTexture[FBTextureIndex];
 
-		if (fbtex == nullptr || fbtex->GetSystemTexture() == nullptr ||
-			fbtex->GetDisplayWidth() != screen->GetWidth() || 
-			fbtex->GetDisplayHeight() != screen->GetHeight() || 
-			(V_IsTrueColor() ? 1:0) != fbtex->GetColorFormat())
+		auto GetSystemTexture = [&]() { return fbtex->GetTexture()->GetHardwareTexture(0, 0); };
+
+		if (fbtex == nullptr || GetSystemTexture() == nullptr ||
+			fbtex->GetTexelWidth() != screen->GetWidth() || 
+			fbtex->GetTexelHeight() != screen->GetHeight() || 
+			(V_IsTrueColor() ? 1:0) != static_cast<FWrapperTexture*>(fbtex->GetTexture())->GetColorFormat())
 		{
 			// This manually constructs its own material here.
 			fbtex.reset();
-			fbtex.reset(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
-			fbtex->GetSystemTexture()->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
+			fbtex.reset(MakeGameTexture(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()), nullptr, ETextureType::SWCanvas));
+			GetSystemTexture()->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 			auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
-			mat->AddTextureLayer(PaletteTexture);
+			mat->AddTextureLayer(PaletteTexture, false);
 
 			Canvas.reset();
 			Canvas.reset(new DCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
 		}
 
-		IHardwareTexture *systemTexture = fbtex->GetSystemTexture();
+		IHardwareTexture *systemTexture = GetSystemTexture();
 		auto buf = systemTexture->MapBuffer();
 		if (!buf) I_FatalError("Unable to map buffer for software rendering");
 		SWRenderer->RenderView(player, Canvas.get(), buf, systemTexture->GetBufferPitch());
@@ -118,11 +123,11 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 		DrawTexture(twod, fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 		screen->Draw2D();
-		screen->Clear2D();
-		screen->PostProcessScene(CM_DEFAULT, [&]() {
+		twod->Clear();
+		screen->PostProcessScene(true, CM_DEFAULT, 1.f, [&]() {
 			SWRenderer->DrawRemainingPlayerSprites();
 			screen->Draw2D();
-			screen->Clear2D();
+			twod->Clear();
 		});
 	}
 	else
@@ -135,11 +140,11 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		int cm = CM_DEFAULT;
 		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 		if (map) cm = (int)(ptrdiff_t)(map - SpecialColormaps.Data()) + CM_FIRSTSPECIALCOLORMAP;
-		screen->PostProcessScene(cm, [&]() { });
+		screen->PostProcessScene(true, cm, 1.f, [&]() { });
 
 		SWRenderer->DrawRemainingPlayerSprites();
 		screen->Draw2D();
-		screen->Clear2D();
+		twod->Clear();
 	}
 
 	return r_viewpoint.sector;

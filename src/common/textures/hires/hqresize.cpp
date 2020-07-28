@@ -46,6 +46,8 @@
 #include "texturemanager.h"
 #include "printf.h"
 
+int upscalemask;
+
 EXTERN_CVAR(Int, gl_texture_hqresizemult)
 CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -54,6 +56,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 	if ((gl_texture_hqresizemult > 4) && (self < 4) && (self > 0))
 		gl_texture_hqresizemult = 4;
 	TexMan.FlushAll();
+	UpdateUpscaleMask();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresizemult, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -63,6 +66,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresizemult, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 	if ((self > 4) && (gl_texture_hqresizemode < 4) && (gl_texture_hqresizemode > 0))
 		self = 4;
 	TexMan.FlushAll();
+	UpdateUpscaleMask();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -74,6 +78,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOB
 CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	TexMan.FlushAll();
+	UpdateUpscaleMask();
 }
 
 CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);
@@ -95,6 +100,13 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_mt_height, 4, CVAR_ARCHIVE | CVAR_GLOBALCON
 }
 
 CVAR(Int, xbrz_colorformat, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+void UpdateUpscaleMask()
+{
+	if (!gl_texture_hqresizemode || gl_texture_hqresizemult == 1) upscalemask = 0;
+	else upscalemask = gl_texture_hqresize_targets;
+}
+
 
 static void xbrzApplyOptions()
 {
@@ -405,41 +417,14 @@ static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int 
 //  the upsampled buffer.
 //
 //===========================================================================
+
 void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly)
 {
 	// [BB] Make sure that inWidth and inHeight denote the size of
 	// the returned buffer even if we don't upsample the input buffer.
+
 	int inWidth = texbuffer.mWidth;
 	int inHeight = texbuffer.mHeight;
-
-	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
-	const int maxInputSize = gl_texture_hqresize_maxinputsize;
-	if (inWidth * inHeight > maxInputSize * maxInputSize)
-		return;
-
-	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
-	if (bHasCanvas)
-		return;
-
-	// already scaled?
-	if (Scale.X >= 2 && Scale.Y >= 2)
-		return;
-
-	switch (UseType)
-	{
-	case ETextureType::Sprite:
-	case ETextureType::SkinSprite:
-		if (!(gl_texture_hqresize_targets & 2)) return;
-		break;
-
-	case ETextureType::FontChar:
-		if (!(gl_texture_hqresize_targets & 4)) return;
-		break;
-
-	default:
-		if (!(gl_texture_hqresize_targets & 1)) return;
-		break;
-	}
 
 	int type = gl_texture_hqresizemode;
 	int mult = gl_texture_hqresizemult;
@@ -508,4 +493,30 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 	contentId.scaler = type;
 	contentId.scalefactor = mult;
 	texbuffer.mContentId = contentId.id;
+}
+
+//===========================================================================
+// 
+// This was pulled out of the above function to allow running these
+// checks before the texture is passed to the render state.
+//
+//===========================================================================
+
+void calcShouldUpscale(FGameTexture *tex)
+{
+	tex->SetUpscaleFlag(0);
+	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
+	const int maxInputSize = gl_texture_hqresize_maxinputsize;
+	if (tex->GetTexelWidth() * tex->GetTexelHeight() > maxInputSize * maxInputSize)
+		return;
+
+	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
+	if (tex->isHardwareCanvas())
+		return;
+
+	// already scaled?
+	if (tex->GetScaleX() >= 2.f || tex->GetScaleY() > 2.f)
+		return;
+
+	tex->SetUpscaleFlag(1);
 }

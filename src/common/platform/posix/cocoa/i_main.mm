@@ -115,7 +115,7 @@ void I_DetectOS()
 			case 16: name = "macOS Big Sur";         break;
 		}
 	}
-	else if (11 = version.majorVersion)
+	else if (11 == version.majorVersion)
 	{
 		switch (version.minorVersion)
 		{

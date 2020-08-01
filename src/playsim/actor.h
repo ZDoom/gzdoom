@@ -412,6 +412,7 @@ enum ActorFlag8
 	MF8_RETARGETAFTERSLAM	= 0x00000080,	// Forces jumping to the idle state after slamming into something
 	MF8_RECREATELIGHTS	= 0x00000100,	// Internal flag that signifies that the light attachments need to be recreated at the
 	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
+	MF8_FALLDAMAGE		= 0x00000400,	// Monster will take fall damage regardless of map settings.
 };
 
 // --- mobj.renderflags ---

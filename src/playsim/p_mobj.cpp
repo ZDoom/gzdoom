@@ -2343,7 +2343,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	int damage;
 	double vel;
 
-	if (!(mo->Level->flags2 & LEVEL2_MONSTERFALLINGDAMAGE))
+	if (!(mo->Level->flags2 & LEVEL2_MONSTERFALLINGDAMAGE) && !(mo->flags8 & MF8_FALLDAMAGE))
 		return;
 	if (mo->floorsector->Flags & SECF_NOFALLINGDAMAGE)
 		return;
@@ -2357,7 +2357,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	{
 		damage = int((vel - 23)*6);
 	}
-	damage = TELEFRAG_DAMAGE;	// always kill 'em
+	if (!(mo->Level->flags3 & LEVEL3_PROPERMONSTERDAMAGE)) damage = TELEFRAG_DAMAGE;
 	P_DamageMobj (mo, NULL, NULL, damage, NAME_Falling);
 }
 

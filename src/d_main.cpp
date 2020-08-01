@@ -337,7 +337,11 @@ void D_GrabCVarDefaults()
 	{
 		// don't parse from wads
 		if (lastlump > fileSystem.GetLastEntry(fileSystem.GetMaxIwadNum()))
-			I_FatalError("Cannot load DEFCVARS from a wadfile!\n");
+		{
+			// would rather put this in a modal of some sort, but this will have to do.
+			Printf(TEXTCOLOR_RED "Cannot load DEFCVARS from a wadfile!\n");
+			break;
+		}
 
 		FScanner sc(lump);
 

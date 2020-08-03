@@ -193,7 +193,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 	else if (!pname.CompareNoCase("partime"))
 	{
 		scanner.MustGetValue(false);
-		mape->partime = TICRATE * scanner.Number;
+		mape->partime = scanner.Number;
 	}
 	else if (!pname.CompareNoCase("intertext"))
 	{

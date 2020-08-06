@@ -114,11 +114,9 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 
 namespace
 {
-	const NSInteger LEVEL_FULLSCREEN = NSMainMenuWindowLevel + 1;
 	const NSInteger LEVEL_WINDOWED   = NSNormalWindowLevel;
 
-	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
-	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+	const NSWindowStyleMask STYLE_MASK_WINDOWED   = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
 }
 
 
@@ -280,16 +278,17 @@ extern id appCtrl;
 namespace
 {
 
-CocoaWindow* CreateWindow(const NSUInteger styleMask)
+CocoaWindow *CreateWindow()
 {
 	CocoaWindow* const window = [CocoaWindow alloc];
 	[window initWithContentRect:NSMakeRect(0, 0, vid_defwidth, vid_defheight)
-					  styleMask:styleMask
+					  styleMask:STYLE_MASK_WINDOWED
 						backing:NSBackingStoreBuffered
 						  defer:NO];
 	[window setOpaque:YES];
 	[window makeFirstResponder:appCtrl];
 	[window setAcceptsMouseMovedEvents:YES];
+	[window exitAppOnClose];
 
 	NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 	[nc addObserver:window
@@ -385,7 +384,7 @@ public:
 	virtual DFrameBuffer* CreateFrameBuffer() override
 	{
 		assert(ms_window == nil);
-		ms_window = CreateWindow(STYLE_MASK_WINDOWED);
+		ms_window = CreateWindow();
 
 		const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
 		SystemBaseFrameBuffer *fb = nullptr;
@@ -589,53 +588,6 @@ int SystemBaseFrameBuffer::GetClientHeight()
 }
 
 
-void SystemBaseFrameBuffer::SetFullscreenMode()
-{
-	if (!m_fullscreen)
-	{
-		[m_window setLevel:LEVEL_FULLSCREEN];
-		[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
-
-		[m_window setHidesOnDeactivate:YES];
-	}
-
-	const NSRect screenFrame = [[m_window screen] frame];
-	[m_window setFrame:screenFrame display:YES];
-}
-
-void SystemBaseFrameBuffer::SetWindowedMode()
-{
-	if (m_fullscreen)
-	{
-		[m_window setLevel:LEVEL_WINDOWED];
-		[m_window setStyleMask:STYLE_MASK_WINDOWED];
-
-		[m_window setHidesOnDeactivate:NO];
-	}
-
-	const int minimumFrameWidth  = VID_MIN_WIDTH;
-	const int minimumFrameHeight = VID_MIN_HEIGHT + GetTitleBarHeight();
-	const NSSize minimumFrameSize = NSMakeSize(minimumFrameWidth, minimumFrameHeight);
-	[m_window setMinSize:minimumFrameSize];
-
-	const bool isFrameValid = win_x != -1 && win_y != -1
-		&& win_w >= minimumFrameWidth && win_h >= minimumFrameHeight;
-
-	if (!isFrameValid)
-	{
-		const NSRect screenSize = [[NSScreen mainScreen] frame];
-		win_x = screenSize.origin.x + screenSize.size.width  / 10;
-		win_y = screenSize.origin.y + screenSize.size.height / 10;
-		win_w = screenSize.size.width  * 8 / 10;
-		win_h = screenSize.size.height * 8 / 10 + GetTitleBarHeight();
-	}
-
-	const NSRect frameSize = NSMakeRect(win_x, win_y, win_w, win_h);
-	[m_window setFrame:frameSize display:YES];
-	[m_window enterFullscreenOnZoom];
-	[m_window exitAppOnClose];
-}
-
 void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 {
 	if ([m_window.contentView isKindOfClass:[OpenGLCocoaView class]])
@@ -650,13 +602,9 @@ void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
 	}
 
-	if (fullscreen)
+	if (fullscreen != m_fullscreen)
 	{
-		SetFullscreenMode();
-	}
-	else
-	{
-		SetWindowedMode();
+		[m_window toggleFullScreen:(nil)];
 	}
 
 	[m_window updateTitle];
@@ -742,13 +690,9 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	NSOpenGLView* const glView = [m_window contentView];
 	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
 
-	if (fullscreen)
+	if (fullscreen != m_fullscreen)
 	{
-		SetFullscreenMode();
-	}
-	else
-	{
-		SetWindowedMode();
+		[m_window toggleFullScreen:(nil)];
 	}
 
 	[m_window updateTitle];

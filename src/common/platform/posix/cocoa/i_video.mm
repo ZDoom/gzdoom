@@ -102,7 +102,7 @@ EXTERN_CVAR(Int,  vid_preferbackend)
 EXTERN_CVAR(Bool, vk_debug)
 
 CVAR(Bool, mvk_debug, false, 0)
-CVAR(Bool, vid_macfullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, vid_nativefullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -281,7 +281,7 @@ extern id appCtrl;
 namespace
 {
 
-CocoaWindow *CreateWindow()
+CocoaWindow* CreateWindow()
 {
 	CocoaWindow* const window = [CocoaWindow alloc];
 	[window initWithContentRect:NSMakeRect(0, 0, vid_defwidth, vid_defheight)
@@ -652,18 +652,18 @@ void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
 	}
 
-        if (vid_macfullscreen && fullscreen != m_fullscreen)
-        {
-        	[m_window toggleFullScreen:(nil)];
-        }
-        else if (fullscreen)
-        {
-        	SetFullscreenMode();
-        }
-        else
-        {
-        	SetWindowedMode();
-        }
+	if (vid_nativefullscreen && fullscreen != m_fullscreen)
+	{
+		[m_window toggleFullScreen:(nil)];
+	}
+	else if (fullscreen)
+	{
+		SetFullscreenMode();
+	}
+	else
+	{
+		SetWindowedMode();
+	}
 
 	[m_window updateTitle];
 
@@ -748,18 +748,18 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	NSOpenGLView* const glView = [m_window contentView];
 	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
 
-        if (vid_macfullscreen && fullscreen != m_fullscreen)
-        {
-        	[m_window toggleFullScreen:(nil)];
-        }
-        else if (fullscreen)
-        {
-        	SetFullscreenMode();
-        }
-        else
-        {
-        	SetWindowedMode();
-        }
+	if (vid_nativefullscreen && fullscreen != m_fullscreen)
+	{
+		[m_window toggleFullScreen:(nil)];
+	}
+	else if (fullscreen)
+	{
+		SetFullscreenMode();
+	}
+	else
+	{
+		SetWindowedMode();
+	}
 
 	[m_window updateTitle];
 

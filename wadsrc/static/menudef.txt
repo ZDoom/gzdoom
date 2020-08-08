@@ -2231,7 +2231,6 @@ OptionMenu VideoModeMenu protected
 
 	IfOption(Mac)
 	{
-		Option "$VIDMNU_MACFULLSCREEN", "vid_macfullscreen", "YesNo"
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
 	}
 	IfOption(Windows)

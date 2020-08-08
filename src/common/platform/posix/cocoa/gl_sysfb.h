@@ -70,6 +70,9 @@ public:
 protected:
 	SystemBaseFrameBuffer() {}
 
+	void SetFullscreenMode();
+	void SetWindowedMode();
+
 	bool m_fullscreen;
 	bool m_hiDPI;
 

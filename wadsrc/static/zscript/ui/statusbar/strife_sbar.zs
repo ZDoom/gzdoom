@@ -251,7 +251,7 @@ class StrifeStatusBar : BaseStatusBar
 			{
 				int stopp = 200 - health;
 				FillBar (x, y, 0, stopp, green1, green2);
-				FillBar (x, y, stopp, 100, blue1, blue2);
+				FillBar (x + stopp * 2, y, stopp, 100, blue1, blue2);
 			}
 		}
 	}

@@ -118,8 +118,8 @@ namespace
 	const NSInteger LEVEL_FULLSCREEN = NSMainMenuWindowLevel + 1;
 	const NSInteger LEVEL_WINDOWED   = NSNormalWindowLevel;
 
-	const NSWindowStyleMask STYLE_MASK_FULLSCREEN = NSWindowStyleMaskBorderless;
-	const NSWindowStyleMask STYLE_MASK_WINDOWED   = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
+	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
+	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
 }
 
 
@@ -281,11 +281,11 @@ extern id appCtrl;
 namespace
 {
 
-CocoaWindow* CreateWindow()
+CocoaWindow* CreateWindow(const NSUInteger styleMask)
 {
 	CocoaWindow* const window = [CocoaWindow alloc];
 	[window initWithContentRect:NSMakeRect(0, 0, vid_defwidth, vid_defheight)
-					  styleMask:STYLE_MASK_WINDOWED
+					  styleMask:styleMask
 						backing:NSBackingStoreBuffered
 						  defer:NO];
 	[window setOpaque:YES];
@@ -387,7 +387,7 @@ public:
 	virtual DFrameBuffer* CreateFrameBuffer() override
 	{
 		assert(ms_window == nil);
-		ms_window = CreateWindow();
+		ms_window = CreateWindow(STYLE_MASK_WINDOWED);
 
 		const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
 		SystemBaseFrameBuffer *fb = nullptr;
@@ -635,7 +635,6 @@ void SystemBaseFrameBuffer::SetWindowedMode()
 	const NSRect frameSize = NSMakeRect(win_x, win_y, win_w, win_h);
 	[m_window setFrame:frameSize display:YES];
 	[m_window enterFullscreenOnZoom];
-	[m_window exitAppOnClose];
 }
 
 void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)

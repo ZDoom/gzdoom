@@ -375,6 +375,8 @@ static NSString* GetArchitectureString()
 	return @"i386";
 #elif defined __x86_64__
 	return @"x86_64";
+#elif defined __aarch64__
+	return @"arm64";
 #endif
 }
 

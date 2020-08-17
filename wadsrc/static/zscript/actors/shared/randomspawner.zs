@@ -21,7 +21,7 @@ class RandomSpawner : Actor
 	{}
 
 	// NOTE: Actor WILL return null if called before PostBeginPlay can process!
-	// Wait one tic before using this function to get the actor.
+	// Wait one tic after spawn before using this function to get the actor.
 	Actor, Name GetSpawned()
 	{	return Spawned, Chosen;	}
 	
@@ -240,7 +240,10 @@ class RandomSpawner : Actor
 				newmobj.CheckMissileSpawn(0);
 			// Bouncecount is used to count how many recursions we're in.
 			if (newmobj is 'RandomSpawner')
+			{
 				newmobj.bouncecount = ++bouncecount;
+				if (bBOSS)	newmobj.bBOSS = true;
+			}
 			// If the spawned actor has either of those flags, it's a boss.
 			if (newmobj.bBossDeath || newmobj.bBoss)
 				boss = true;

@@ -6,7 +6,8 @@ class RandomSpawner : Actor
 	
 	const MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough, honestly.
 	
-	Name Chosen;
+	protected Name Chosen;
+	protected Actor Spawned;
 
 	Default
 	{
@@ -18,6 +19,11 @@ class RandomSpawner : Actor
 	
 	virtual void PostSpawn(Actor spawned)
 	{}
+
+	// NOTE: Actor WILL return null if called before PostBeginPlay can process!
+	// Wait one tic before using this function to get the actor.
+	Actor, Name GetSpawned()
+	{	return Spawned, Chosen;	}
 	
 	static bool IsMonster(DropItem di)
 	{
@@ -243,6 +249,7 @@ class RandomSpawner : Actor
 			if (rep && (rep.bBossDeath || rep.bBoss))
 				boss = true;
 
+			Spawned = newmobj;
 			PostSpawn(newmobj);
 		}
 		if (boss)

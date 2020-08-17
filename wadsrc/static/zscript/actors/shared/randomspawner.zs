@@ -6,6 +6,8 @@ class RandomSpawner : Actor
 	
 	const MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough, honestly.
 	
+	Name Chosen;
+
 	Default
 	{
 		+NOBLOCKMAP
@@ -106,6 +108,7 @@ class RandomSpawner : Actor
 	{
 		Super.BeginPlay();
 		let s = ChooseSpawn();
+		Chosen = s;
 
 		if (s == 'Unknown') // Spawn error markers immediately.
 		{
@@ -162,7 +165,7 @@ class RandomSpawner : Actor
 		}
 
 		Actor newmobj = null;
-		bool boss = false;
+		bool boss = (bBOSS || bBOSSDEATH);
 
 		if (Species == 'None')
 		{

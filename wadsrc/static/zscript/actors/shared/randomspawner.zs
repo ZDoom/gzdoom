@@ -5,7 +5,7 @@ class RandomSpawner : Actor
 {
 	
 	const MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough, honestly.
-	
+	protected bool fakeboss;
 	protected Name Chosen;
 	protected Actor Spawned;
 
@@ -171,7 +171,8 @@ class RandomSpawner : Actor
 		}
 
 		Actor newmobj = null;
-		bool boss = (bBOSS || bBOSSDEATH);
+		fakeboss = (bBOSS || bBOSSDEATH);
+		bool boss = false;
 
 		if (Species == 'None')
 		{
@@ -255,7 +256,7 @@ class RandomSpawner : Actor
 			Spawned = newmobj;
 			PostSpawn(newmobj);
 		}
-		if (boss)
+		if (boss || fakeboss)
 			tracer = newmobj;
 		else	// "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
 			Destroy();
@@ -266,7 +267,8 @@ class RandomSpawner : Actor
 		Super.Tick();
 		if (tracer == null || tracer.health <= 0)
 		{
-			A_BossDeath();
+			if (!fakeboss)
+				A_BossDeath();
 			Destroy();
 		}
 	}

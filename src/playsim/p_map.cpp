@@ -5879,7 +5879,7 @@ int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int
 //==========================================================================
 
 int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
-	int flags, int fulldamagedistance)
+	int flags, int fulldamagedistance, FName species)
 {
 	if (bombdistance <= 0)
 		return 0;
@@ -5926,6 +5926,11 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			((bombsource->flags6 & MF6_DONTHARMSPECIES) && (thing->GetSpecies() == bombsource->GetSpecies()))
 			)
 			)	continue;
+
+		if((species != NAME_None) && (thing->Species != species))
+		{
+			continue;
+		}
 
 		targets.Push(thing);
 	}

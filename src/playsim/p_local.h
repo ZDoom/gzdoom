@@ -400,7 +400,7 @@ enum
 };
 int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int fulldmgdistance, bool oldradiusdmg);
 int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
-						FName damageType, int flags, int fulldamagedistance=0);
+						FName damageType, int flags, int fulldamagedistance=0, FName species = NAME_None);
 
 void	P_DelSeclist(msecnode_t *, msecnode_t *sector_t::*seclisthead);
 void	P_DelSeclist(portnode_t *, portnode_t *FLinePortal::*seclisthead);

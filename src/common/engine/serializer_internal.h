@@ -226,15 +226,35 @@ struct FReader
 //==========================================================================
 
 template<class T>
-FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, T *base)
+FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, T *base, const int64_t count)
 {
 	assert(base != nullptr);
+	assert(count > 0);
 	if (arc.isReading() || !arc.w->inObject() || defval == nullptr || value != *defval)
 	{
-		int64_t vv = value == nullptr ? -1 : value - base;
+		int64_t vv = -1;
+		if (value != nullptr)
+		{
+			vv = value - base;
+			if (vv < 0 || vv >= count)
+				I_Error("Trying to serialize out-of-bounds array value");
+		}
 		Serialize(arc, key, vv, nullptr);
-		value = vv < 0 ? nullptr : base + vv;
+		if (vv == -1)
+			value = nullptr;
+		else if (vv < 0 || vv >= count)
+			I_Error("Trying to serialize out-of-bounds array value");
+		else
+			value = base + vv;
 	}
 	return arc;
+}
+
+template<class T>
+FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, TArray<T> &array)
+{
+	if (array.Size() == 0)
+		I_Error("Trying to serialize a value from empty array");
+	return SerializePointer(arc, key, value, defval, array.Data(), array.Size());
 }
 

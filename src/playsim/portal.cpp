@@ -540,7 +540,6 @@ unsigned FLevelLocals::GetSkyboxPortal(AActor *actor)
 		if (sectorPortals[i].mSkybox == actor) return i;
 	}
 	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
 	sectorPortals[i].mType = PORTS_SKYVIEWPOINT;
 	sectorPortals[i].mFlags = actor->GetClass()->IsDescendantOf("SkyCamCompat") ? 0 : PORTSF_SKYFLATONLY;
 	sectorPortals[i].mSkybox = actor;
@@ -565,7 +564,6 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetSkyboxPortal)
 unsigned FLevelLocals::GetPortal(int type, int plane, sector_t *from, sector_t *to, const DVector2 &displacement)
 {
 	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
 	sectorPortals[i].mType = type;
 	sectorPortals[i].mPlane = plane;
 	sectorPortals[i].mOrigin = from;
@@ -586,7 +584,6 @@ unsigned FLevelLocals::GetPortal(int type, int plane, sector_t *from, sector_t *
 unsigned FLevelLocals::GetStackPortal(AActor *point, int plane)
 {
 	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
 	sectorPortals[i].mType = PORTS_STACKEDSECTORTHING;
 	sectorPortals[i].mPlane = plane;
 	sectorPortals[i].mOrigin = point->target->Sector;

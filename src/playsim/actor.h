@@ -725,6 +725,9 @@ public:
 	virtual void Touch(AActor *toucher);
 	void CallTouch(AActor *toucher);
 
+	// Performs the CanCrossLine virtual on ZScript's side.
+	bool CanCrossLine(line_t *line, int side);
+
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	// Made a metadata property so no longer virtual
 	void Howl ();

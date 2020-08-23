@@ -959,6 +959,10 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		}
 	}
 
+	// [MC] Allow modders some capability of control on ZScript's side.
+	if (!tm.thing->CanCrossLine(ld, P_PointOnLineSide(cres.Position, ld)))
+		return false;
+
 	// If the floor planes on both sides match we should recalculate open.bottom at the actual position we are checking
 	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
 	// This should never narrow down the opening, though, only widen it.
@@ -1048,7 +1052,21 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		spec.Oldrefpos = tm.thing->PosRelative(ld);
 		portalhit.Push(spec);
 	}
+	
+	return true;
+}
 
+bool AActor::CanCrossLine(line_t *line, int side)
+{
+	IFVIRTUAL(AActor, CanCrossLine)
+	{
+		VMValue params[3] = { (DObject*)this, line, side };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		VMCall(func, params, 3, &ret, 1);
+		return retval;
+	}
 	return true;
 }
 

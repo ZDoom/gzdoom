@@ -462,6 +462,13 @@ class Actor : Thinker native
 	private native void Substitute(Actor replacement);
 	native ui void DisplayNameTag();
 
+	// Called by PIT_CheckLine after processing the line for primary cases.
+	// Returning false means the line will block.
+	virtual bool CanCrossLine(Line crossing, int side)
+	{
+		return true;
+	}
+
 	// Called by inventory items to see if this actor is capable of touching them.
 	// If true, the item will attempt to be picked up. Useful for things like
 	// allowing morphs to pick up limited items such as keys while preventing
@@ -791,8 +798,6 @@ class Actor : Thinker native
 	{
 		return 1. / (1 << (accuracy * 5 / 100));
 	}
-
-	
 	
 	protected native void DestroyAllInventory();	// This is not supposed to be called by user code!
 	native clearscope Inventory FindInventory(class<Inventory> itemtype, bool subclass = false) const;

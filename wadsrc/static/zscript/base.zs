@@ -422,6 +422,12 @@ struct GameInfoStruct native
 	native double normsidemove[2];
 }
 
+struct SystemTime ui
+{
+	native static int Now(); // This returns the epoch time
+	native static String Format(String timeForm, int timeVal); // This converts an epoch time to a local time, then uses the strftime syntax to format it
+}
+
 class Object native
 {
 	const TICRATE = 35;

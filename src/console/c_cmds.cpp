@@ -572,6 +572,115 @@ CCMD (special)
 
 //==========================================================================
 //
+// CCMD setdate
+//
+// Set the time to a specific value
+//
+//==========================================================================
+
+extern time_t epochoffset;
+CCMD(setdate)
+{
+	if (argv.argc() != 3)
+	{
+		Printf("setdate HH:MM:SS DD-MM-YYYY: Set the current date\n");
+		return;
+	}
+
+	time_t today;
+	time(&today);
+	struct tm* timeinfo = localtime(&today);
+	if (timeinfo != nullptr)
+	{
+		auto time = FString(argv[1]).Split(":");
+		auto date = FString(argv[2]).Split("-");
+		if(time.Size() != 3 || date.Size() != 3)
+		{
+			Printf("setdate HH:MM:SS DD-MM-YYYY: Set the current date\n");
+			return;
+		}
+
+		if(!time[0].IsInt())
+		{
+			Printf("Invalid hour\n");
+			return;
+		}
+		if (!time[1].IsInt())
+		{
+			Printf("Invalid minutes\n");
+			return;
+		}
+		if (!time[2].IsInt())
+		{
+			Printf("Invalid seconds\n");
+			return;
+		}
+		if (!date[0].IsInt())
+		{
+			Printf("Invalid day\n");
+			return;
+		}
+		if (!date[1].IsInt())
+		{
+			Printf("Invalid month\n");
+			return;
+		}
+		if (!date[2].IsInt())
+		{
+			Printf("Invalid year\n");
+			return;
+		}
+
+		//Set Date
+		timeinfo->tm_hour = int( time[0].ToLong() );
+		timeinfo->tm_min  = int( time[1].ToLong() );
+		timeinfo->tm_sec  = int( time[2].ToLong() );
+		timeinfo->tm_mday = int( date[0].ToLong() );
+		timeinfo->tm_mon  = int( date[1].ToLong() - 1);     // Month interally is 0 - 11
+		timeinfo->tm_year = int( date[2].ToLong() - 1900 ); // Year interally is 00 - 138
+
+		time_t newTime = mktime(timeinfo);
+		timeinfo = localtime(&today);
+		time_t oldTime = mktime(timeinfo);
+
+		if (newTime == -1 || oldTime == -1)
+		{
+			Printf("Unable to set the date\n");
+			return;
+		}
+
+		epochoffset = newTime - oldTime;
+		return;
+	}
+	else
+	{
+		Printf("Unable to set the date\n");
+		return;
+	}
+}
+
+CCMD(getdate)
+{
+	time_t now;
+	time(&now);
+	now += epochoffset;
+	struct tm* timeinfo = localtime(&now);
+	if (timeinfo != nullptr)
+	{
+		char timeString[1024];
+		if (strftime(timeString, sizeof(timeString), "%H:%M:%S %d-%m-%Y", timeinfo))
+			Printf(timeString);
+		else
+			Printf("Error Retrieving Current Date\n");
+	}
+	else
+	{
+		Printf("Error Retrieving Current Date\n");
+	}
+}
+
+//==========================================================================
+//
 // CCMD warp
 //
 // Warps to a specific location on a map

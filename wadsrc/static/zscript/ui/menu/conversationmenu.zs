@@ -515,9 +515,25 @@ class ConversationMenu : Menu
 				{
 					int colr = ((MenuTime() % 8) < 4) || GetCurrentMenu() != self ? Font.CR_RED : Font.CR_GREY;
 
+					// custom graphic cursor color
+					Color cursorTexColor;
+					if (colr == Font.CR_RED) cursorTexColor = color(0xFF, 0x00, 0x00);
+					else if (colr == Font.CR_GREY) cursorTexColor = color(0xCC, 0xCC, 0xCC);
+
 					x = (50 + 3 - 160) * CleanXfac + screen.GetWidth() / 2;
 					int yy = (y + ReplyLineHeight / 2 - 5 - 100) * CleanYfac + screen.GetHeight() / 2;
-					screen.DrawText(ConFont, colr, x, yy, "\xd", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+
+					// use a custom graphic (intentionally long-named to reduce collision with existing mods), with the ConFont version as the fallback
+					let cursorTex = TexMan.CheckForTexture("graphics/DialogReplyCursor.png", TexMan.Type_MiscPatch);
+					if (cursorTex.IsValid())
+					{
+						screen.DrawTexture(cursorTex, true, x / fontScale, yy / fontScale, DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight);
+						screen.DrawTexture(cursorTex, true, x / fontScale, yy / fontScale, DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight, DTA_FillColor, cursorTexColor, DTA_LegacyRenderStyle, STYLE_AddShaded);
+					}
+					else
+					{
+						screen.DrawText(ConFont, colr, x, yy, "\xd", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+					}
 				}
 			}
 			y += ReplyLineHeight;

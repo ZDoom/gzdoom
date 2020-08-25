@@ -1213,7 +1213,7 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_QUICKSAVEROTATION",		"quicksaverotation", "OnOff"
 	Slider "$MISCMNU_QUICKSAVECOUNT",			"quicksaverotationcount", 1, 20, 1, 0
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
-	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
+	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",		"enablescriptscreenshot", "OnOff"	Option "$MISCMNU_SETSLOTSTRICT",			"setslotstrict", "YesNo"
 	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
 	StaticText " "
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"

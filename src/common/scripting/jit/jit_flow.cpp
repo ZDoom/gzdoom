@@ -310,7 +310,7 @@ void JitCompiler::ThrowArrayOutOfBounds(int index, int size)
 {
 	if (index >= size)
 	{
-		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", size, index);
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Size = %u, current index = %u\n", size, index);
 	}
 	else
 	{

@@ -592,25 +592,25 @@ CCMD(setdate)
 	struct tm* timeinfo = localtime(&today);
 	if (timeinfo != nullptr)
 	{
-		auto time = FString(argv[1]).Split(":");
-		auto date = FString(argv[2]).Split("-");
-		if(time.Size() != 3 || date.Size() != 3)
+		auto clock = FString(argv[1]).Split(":");
+		auto date  = FString(argv[2]).Split("-");
+		if(clock.Size() != 3 || date.Size() != 3)
 		{
 			Printf("setdate HH:MM:SS DD-MM-YYYY: Set the current date\n");
 			return;
 		}
 
-		if(!time[0].IsInt())
+		if(!clock[0].IsInt())
 		{
 			Printf("Invalid hour\n");
 			return;
 		}
-		if (!time[1].IsInt())
+		if (!clock[1].IsInt())
 		{
 			Printf("Invalid minutes\n");
 			return;
 		}
-		if (!time[2].IsInt())
+		if (!clock[2].IsInt())
 		{
 			Printf("Invalid seconds\n");
 			return;
@@ -632,16 +632,16 @@ CCMD(setdate)
 		}
 
 		//Set Date
-		timeinfo->tm_hour = int( time[0].ToLong() );
-		timeinfo->tm_min  = int( time[1].ToLong() );
-		timeinfo->tm_sec  = int( time[2].ToLong() );
-		timeinfo->tm_mday = int( date[0].ToLong() );
-		timeinfo->tm_mon  = int( date[1].ToLong() - 1);     // Month interally is 0 - 11
-		timeinfo->tm_year = int( date[2].ToLong() - 1900 ); // Year interally is 00 - 138
+		timeinfo->tm_hour = int( clock[0].ToLong() );
+		timeinfo->tm_min  = int( clock[1].ToLong() );
+		timeinfo->tm_sec  = int( clock[2].ToLong() );
+		timeinfo->tm_mday = int(  date[0].ToLong() );
+		timeinfo->tm_mon  = int(  date[1].ToLong() - 1);     // Month interally is 0 - 11
+		timeinfo->tm_year = int(  date[2].ToLong() - 1900 ); // Year interally is 00 - 138
 
 		time_t newTime = mktime(timeinfo);
-		timeinfo = localtime(&today);
-		time_t oldTime = mktime(timeinfo);
+		tm* t_old = localtime(&today);
+		time_t oldTime = mktime(t_old);
 
 		if (newTime == -1 || oldTime == -1)
 		{
@@ -650,6 +650,24 @@ CCMD(setdate)
 		}
 
 		epochoffset = newTime - oldTime;
+
+		// This deals with some inconsistent display behaviour for DST
+		// In this case, we want to emulate GCC's behaviour
+		today += epochoffset;
+		struct tm* t_new = localtime(&today);
+		if (t_new != nullptr)
+		{
+			char timeString[1024];
+			if (strftime(timeString, sizeof(timeString), "%H", t_new))
+			{
+				auto hour = FString(timeString).ToLong();
+				if (hour - clock[0].ToLong() == -1 || hour - clock[0].ToLong() == 23)
+					epochoffset += 3600;
+				else if (hour - clock[0].ToLong() == 1 || hour - clock[0].ToLong() == -23)
+					epochoffset -= 3600;
+			}
+		}
+
 		return;
 	}
 	else
@@ -668,7 +686,7 @@ CCMD(getdate)
 	if (timeinfo != nullptr)
 	{
 		char timeString[1024];
-		if (strftime(timeString, sizeof(timeString), "%H:%M:%S %d-%m-%Y", timeinfo))
+		if (strftime(timeString, sizeof(timeString), "%H:%M:%S %d-%m-%Y%n", timeinfo))
 			Printf(timeString);
 		else
 			Printf("Error Retrieving Current Date\n");

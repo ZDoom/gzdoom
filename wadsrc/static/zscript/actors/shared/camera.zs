@@ -70,7 +70,10 @@ class AimingCamera : SecurityCamera
 		tracer = it.Next ();
 		if (tracer == NULL)
 		{
-			console.Printf ("AimingCamera %d: Can't find TID %d\n", tid, args[3]);
+			if (args[3] != 0)
+			{
+				console.Printf ("AimingCamera %d: Can't find TID %d\n", tid, args[3]);
+			}
 		}
 		else
 		{ // Don't try for a new target upon losing this one.

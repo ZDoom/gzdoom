@@ -263,7 +263,7 @@ template<> FSerializer &Serialize(FSerializer &ar, const char *key, line_t *&val
 template<> FSerializer &Serialize(FSerializer &ar, const char *key, vertex_t *&value, vertex_t **defval)
 {
 	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
-	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize verte without a valid level");
+	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize vertex without a valid level");
 	return SerializePointer(*arc, key, value, defval, arc->Level->vertexes);
 }
 

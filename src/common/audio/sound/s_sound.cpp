@@ -41,13 +41,14 @@
 #include "m_swap.h"
 #include "superfasthash.h"
 #include "s_music.h"
+#include "m_random.h"
 
 
 enum
 {
 	DEFAULT_PITCH = 128,
 };
-
+static FRandom pr_soundpitch ("SoundPitch");
 SoundEngine* soundEngine;
 int sfx_empty = -1;
 
@@ -405,6 +406,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	int near_limit = sfx->NearLimit;
 	float limit_range = sfx->LimitRange;
 	float defpitch = sfx->DefPitch;
+	float defpitchmax = sfx->DefPitchMax;
 	auto pitchmask = sfx->PitchMask;
 	rolloff = &sfx->Rolloff;
 
@@ -421,6 +423,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 				near_limit = newsfx->NearLimit;
 				limit_range = newsfx->LimitRange;
 				defpitch = newsfx->DefPitch;
+				defpitchmax = newsfx->DefPitchMax;
 			}
 			if (rolloff->MinDistance == 0)
 			{
@@ -602,7 +605,23 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		if (spitch > 0.0)				// A_StartSound has top priority over all others.
 			SetPitch(chan, spitch);
 		else if (defpitch > 0.0)	// $PitchSet overrides $PitchShift
+		{
+			if (defpitchmax > 0.0)
+			{
+				if (defpitchmax < defpitch)
+					std::swap(defpitch, defpitchmax);
+
+				if (defpitch != defpitchmax)
+				{
+					FRandom &rng = pr_soundpitch;
+					int random = (rng)(0x7FFF);
+					float frandom = random / float(0x7FFF);
+
+					defpitch = frandom * (defpitchmax - defpitch) + defpitch;
+				}
+			}
 			SetPitch(chan, defpitch);
+		}
 	}
 
 	return chan;
@@ -1495,6 +1514,7 @@ int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitc
 	newsfx.Attenuation = 1;
 	newsfx.PitchMask = CurrentPitchMask;
 	newsfx.DefPitch = 0.0;
+	newsfx.DefPitchMax = 0.0;
 	newsfx.NearLimit = nearlimit;
 	newsfx.LimitRange = 256 * 256;
 	newsfx.bRandomHeader = false;

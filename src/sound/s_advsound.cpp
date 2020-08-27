@@ -1039,13 +1039,21 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_PitchSet: {
-				// $pitchset <logical name> <pitch amount as float>
+				// $pitchset <logical name> <pitch amount as float> [range maximum]
 				int sfx;
 
 				sc.MustGetString();
 				sfx = soundEngine->FindSoundTentative(sc.String);
 				sc.MustGetFloat();
 				S_sfx[sfx].DefPitch = (float)sc.Float;
+				if (sc.CheckFloat())
+				{
+					S_sfx[sfx].DefPitchMax = (float)sc.Float;
+				}
+				else
+				{
+					S_sfx[sfx].DefPitchMax = 0;
+				}
 				}
 				break;
 

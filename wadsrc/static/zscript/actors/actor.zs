@@ -89,6 +89,7 @@ class Actor : Thinker native
 	native PlayerInfo Player;
 	native readonly vector3 Pos;
 	native vector3 Prev;
+	native vector2 SpriteOffset;
 	native double spriteAngle;
 	native double spriteRotation;
 	native double VisibleStartAngle;

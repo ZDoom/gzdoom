@@ -588,16 +588,19 @@ bool M_Responder (event_t *ev)
 			switch (ch)
 			{
 			case KEY_JOY1:
+			case KEY_JOY3:
+			case KEY_JOY15:
 			case KEY_PAD_A:
 				mkey = MKEY_Enter;
 				break;
 
 			case KEY_JOY2:
+			case KEY_JOY14:
 			case KEY_PAD_B:
 				mkey = MKEY_Back;
 				break;
 
-			case KEY_JOY3:
+			case KEY_JOY4:
 			case KEY_PAD_X:
 				mkey = MKEY_Clear;
 				break;
@@ -614,28 +617,28 @@ bool M_Responder (event_t *ev)
 
 			case KEY_PAD_DPAD_UP:
 			case KEY_PAD_LTHUMB_UP:
-			case KEY_JOYAXIS1MINUS:
+			case KEY_JOYAXIS2MINUS:
 			case KEY_JOYPOV1_UP:
 				mkey = MKEY_Up;
 				break;
 
 			case KEY_PAD_DPAD_DOWN:
 			case KEY_PAD_LTHUMB_DOWN:
-			case KEY_JOYAXIS1PLUS:
+			case KEY_JOYAXIS2PLUS:
 			case KEY_JOYPOV1_DOWN:
 				mkey = MKEY_Down;
 				break;
 
 			case KEY_PAD_DPAD_LEFT:
 			case KEY_PAD_LTHUMB_LEFT:
-			case KEY_JOYAXIS2MINUS:
+			case KEY_JOYAXIS1MINUS:
 			case KEY_JOYPOV1_LEFT:
 				mkey = MKEY_Left;
 				break;
 
 			case KEY_PAD_DPAD_RIGHT:
 			case KEY_PAD_LTHUMB_RIGHT:
-			case KEY_JOYAXIS2PLUS:
+			case KEY_JOYAXIS1PLUS:
 			case KEY_JOYPOV1_RIGHT:
 				mkey = MKEY_Right;
 				break;

@@ -52,6 +52,7 @@ bool I_SetCursor(FGameTexture *cursorpic)
 			return false;
 		}
 
+		SDL_ShowCursor(SDL_DISABLE);
 		if (cursorSurface == NULL)
 			cursorSurface = SDL_CreateRGBSurface (0, 32, 32, 32, MAKEARGB(0,255,0,0), MAKEARGB(0,0,255,0), MAKEARGB(0,0,0,255), MAKEARGB(255,0,0,0));
 
@@ -67,6 +68,7 @@ bool I_SetCursor(FGameTexture *cursorpic)
 			SDL_FreeCursor (cursor);
 		cursor = SDL_CreateColorCursor (cursorSurface, 0, 0);
 		SDL_SetCursor (cursor);
+		SDL_ShowCursor(SDL_ENABLE);
 	}
 	else
 	{

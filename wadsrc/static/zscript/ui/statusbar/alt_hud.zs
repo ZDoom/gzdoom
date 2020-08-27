@@ -770,13 +770,12 @@ class AltHud ui
 	// for meaning of all display modes
 	//
 	//---------------------------------------------------------------------------
-	private native static int GetRealTime();
-
 	virtual bool DrawTime(int y)
 	{
 		if (hud_showtime > 0 && hud_showtime <= 9)
 		{
 			int timeSeconds;
+			String timeString;
 
 			if (hud_showtime < 8)
 			{
@@ -787,33 +786,35 @@ class AltHud ui
 							? Level.time
 							: Level.totaltime);
 				timeSeconds = Thinker.Tics2Seconds(timeTicks);
-			}
-			else
-			{
-				timeSeconds = GetRealTime();
-			}
 
-			int hours   =  timeSeconds / 3600;
-			int minutes = (timeSeconds % 3600) / 60;
-			int seconds =  timeSeconds % 60;
+				int hours   =  timeSeconds / 3600;
+				int minutes = (timeSeconds % 3600) / 60;
+				int seconds =  timeSeconds % 60;
 
-			bool showMillis  = 1 == hud_showtime;
-			bool showSeconds = showMillis || (0 == hud_showtime % 2);
+				bool showMillis  = 1 == hud_showtime;
+				bool showSeconds = showMillis || (0 == hud_showtime % 2);
 
-			String timeString;
-
-			if (showMillis)
-			{
-				int millis  = (Level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
-				timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+				if (showMillis)
+				{
+					int millis  = (Level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
+					timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+				}
+				else if (showSeconds)
+				{
+					timeString = String.Format("%02i:%02i:%02i", hours, minutes, seconds);
+				}
+				else
+				{
+					timeString = String.Format("%02i:%02i", hours, minutes);
+				}
 			}
-			else if (showSeconds)
+			else if (hud_showtime == 8)
 			{
-				timeString = String.Format("%02i:%02i:%02i", hours, minutes, seconds);
+				timeString = SystemTime.Format("%H:%M:%S",SystemTime.Now());
 			}
-			else
+			else //if (hud_showtime == 9)
 			{
-				timeString = String.Format("%02i:%02i", hours, minutes);
+				timeString = SystemTime.Format("%H:%M",SystemTime.Now());
 			}
 
 			int characterCount = timeString.length();

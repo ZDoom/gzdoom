@@ -2456,6 +2456,79 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 
 //==========================================================================
 //
+// RenameMasterLevels
+//
+// Renames map headers and map name pictures in masterlevels.wad so as to load it
+// alongside Doom II and offer both episodes without causing conflicts.
+// MD5 checksum for MASTERLEVELS.WAD: 84cb8640f599c4a17c8eb526f90d2b7a (3479715)
+//
+//==========================================================================
+void RenameMasterLevels(FileSystem& fileSystem)
+{
+	if (gameinfo.gametype != GAME_Doom)
+		return;
+
+	const int nummasterversions = 2;
+
+	bool found = false;
+	uint8_t cksum[16];
+	static const uint8_t master[nummasterversions][16] = {
+			{ 0x84, 0xcb, 0x86, 0x40, 0xf5 0x99, 0xc4, 0xa1, 
+					0x7c, 0x8e, 0xb5, 0x26, 0xf9, 0x0d, 0x2b, 0x7a }
+	};
+	size_t mastersize[nummasterversions] = { 3479715 }; // MASTERLEVELS.WAD file size
+	int w = fileSystem.GetIwadNum();
+	while (++w < fileSystem.GetNumWads())
+	{
+		auto fr = fileSystem.GetFileReader(w);
+		int isizecheck = -1;
+		if (fr == NULL)
+		{
+			continue;
+		}
+		for (int icheck = 0; icheck < nummasterversions; icheck++)
+			if (fr->GetLength() == (long)mastersize[icheck])
+				isizecheck = icheck;
+		if (isizecheck == -1)
+		{
+			// Skip MD5 computation when there is a
+			// cheaper way to know this is not the file
+			continue;
+		}
+		fr->Seek(0, FileReader::SeekSet);
+		MD5Context md5;
+		md5Update(*fr, md5, (unsigned)fr->GetLength());
+		md5.Final(cksum);
+		if (memcmp(master[isizecheck], cksum, 16) == 0)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+		return;
+
+	for (int i = fileSystem.GetFirstEntry(w); i <= fileSystem.GetLastEntry(w); i++)
+	{
+		auto& shortName = fileSystem.GetShortName(i);
+		// Only rename the maps from MASTERLEVELS.WAD
+		if (shortName.dword == MAKE_ID('C', 'W', 'I', 'L'))
+		{
+			shortName.String[0] = 'M';
+		}
+		else if (shortName.dword == MAKE_ID('M', 'A', 'P', '0'))
+		{
+			shortName.String[6] = shortName.String[4];
+			shortName.String[5] = '0';
+			shortName.String[4] = 'R';
+			shortName.dword = MAKE_ID('M', 'A', 'S', 'T');
+		}
+	}
+}
+
+//==========================================================================
+//
 // RenameNerve
 //
 // Renames map headers and map name pictures in nerve.wad so as to load it

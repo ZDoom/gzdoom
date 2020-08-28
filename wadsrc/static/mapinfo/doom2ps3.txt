@@ -1,0 +1,205 @@
+// MAPINFO for Doom 2: PS3 Edition
+include "mapinfo/doom2"
+
+gameinfo
+{
+	titlepage = "DMENUPIC"
+}
+
+clearepisodes
+episode map01
+{
+	name = "Hell On Earth"
+	picname = "M_EPI1"
+	key = "h"
+}
+
+episode mastr01
+{
+	name = "Master Levels"
+	picname = "M_MASTER"
+	key = "m"
+	optional
+}
+
+// master levels for doom 2
+
+map MASTR01 lookup "MHUSTR_1"
+{
+    next = "MASTR02"
+    sky1 = "RSKY1"
+    music = "$MUSIC_RUNNIN"
+    cluster = 12
+}
+
+map MASTR02 lookup "MHUSTR_2"
+{
+    next = "MASTR03"
+    sky1 = "RSKY1"
+    music = "$MUSIC_STALKS"
+    cluster = 12
+}
+
+map MASTR03 lookup "MHUSTR_4"
+{
+    next = "MASTR04"
+    sky1 = "RSKY1"
+    music = "$MUSIC_COUNTD"
+    cluster = 12
+}
+
+map MASTR04 lookup "MHUSTR_4"
+{
+    next = "MASTR05"
+    sky1 = "ML_SKY1"
+    music = "$MUSIC_BETWEE"
+    cluster = 12
+}
+
+map MASTR05 lookup "MHUSTR_5"
+{
+    next = "MASTR06"
+    sky1 = "RSKY1"
+    music = "$MUSIC_DOOM"
+    cluster = 12
+}
+
+map MASTR06 lookup "MHUSTR_6"
+{
+    next = "MASTR07"
+    sky1 = "RSKY1"
+    music = "$MUSIC_THE_DA"
+    cluster = 12
+}
+
+map MASTR07 lookup "MHUSTR_7"
+{
+    next = "MASTR08"
+    sky1 = "ML_SKY2"
+    music = "$MUSIC_SHAWN"
+    cluster = 12
+}
+
+map MASTR08 lookup "MHUSTR_8"
+{
+    next = "MASTR09"
+    sky1 = "RSKY1"
+    music = "$MUSIC_DDTBLU"
+    cluster = 12
+}
+
+map MASTR09 lookup "MHUSTR_9"
+{
+    next = "MASTR10"
+    sky1 = "RSKY1"
+    music = "$MUSIC_IN_CIT"
+    cluster = 12
+}
+
+map MASTR10 lookup "MHUSTR_10"
+{
+    next = "MASTR11"
+    sky1 = "RSKY1"
+    music = "$MUSIC_DEAD"
+    cluster = 12
+}
+
+map MASTR11 lookup "MHUSTR_11"
+{
+    next = "MASTR12"
+    sky1 = "ML_SKY2"
+    music = "$MUSIC_STLKS2"
+    cluster = 12
+}
+
+map MASTR12 lookup "MHUSTR_12"
+{
+    next = "MASTR13"
+    sky1 = "ML_SKY3"
+    music = "$MUSIC_COUNTD"
+    cluster = 12
+}
+
+map MASTR13 lookup "MHUSTR_13"
+{
+    next = "MASTR14"
+    sky1 = "ML_SKY3"
+    music = "$MUSIC_DOOM"
+    cluster = 12
+}
+
+map MASTR14 lookup "MHUSTR_14"
+{
+    next = "MASTR15"
+    sky1 = "RSKY1"
+    music = "$MUSIC_SHAWN"
+    cluster = 12
+    map07special
+}
+
+map MASTR15 lookup "MHUSTR_15"
+{
+    next = "MASTR16"
+    sky1 = "RSKY1"
+    music = "$MUSIC_OPENIN"
+    cluster = 12
+    map07special
+}
+
+map MASTR16 lookup "MHUSTR_16"
+{
+    next = "MASTR17"
+    sky1 = "ML_SKY3"
+    music = "$MUSIC_SHAWN"
+    cluster = 12
+}
+
+map MASTR17 lookup "MHUSTR_17"
+{
+    next = "MASTR18"
+    sky1 = "ML_SKY3"
+    music = "$MUSIC_DDTBLU"
+    cluster = 12
+}
+
+map MASTR18 lookup "MHUSTR_18"
+{
+    next = "MASTR19"
+    sky1 = "ML_SKY3"
+    music = "$MUSIC_IN_CIT"
+    cluster = 12
+}
+
+map MASTR19 lookup "MHUSTR_19"
+{
+    next = "MASTR20"
+    sky1 = "RSKY3"
+    music = "$MUSIC_ADRIAN"
+    cluster = 12
+}
+
+map MASTR20 lookup "MHUSTR_20"
+{
+    next = "EndGameC"
+    secretnext = "MASTR21"
+    sky1 = "RSKY1"
+    music = "$MUSIC_EVIL"
+    cluster = 12
+}
+
+
+map MASTR21 lookup "MHUSTR_21"
+{
+    next = "EndGameC"
+    sky1 = "RSKY1"
+    music = "$MUSIC_ULTIMA"
+    cluster = 12
+}
+
+cluster 12
+{
+	flat = "$BGFLAT06"
+	music = "$MUSIC_READ_M"
+	exittext = lookup, "MASTERTEXT"
+}
+

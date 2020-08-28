@@ -530,6 +530,21 @@ IWad
 
 IWad
 {
+	Name = "DOOM 2: PS3 Edition"
+	Autoname = "doom.id.doom2.commercial.ps3"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "doom2.wad", 1
+	Mapinfo = "mapinfo/doom2ps3.txt"
+	Compatability = "Shorttex"
+	MustContain = "MAP01", "MAP31", "CWIVL31"
+	BannerColors = "18 18 18", "a8 a8 a8"
+	IgnoreTitlePatches = 1
+	Load = "masterlevels.wad"
+}
+
+IWad
+{
 	Name = "DOOM 2: L'Enfer sur Terre"
 	Autoname = "doom.id.doom2.commercial.french"
 	Game = "Doom"
@@ -623,6 +638,7 @@ Order	// Order in the IWAD selection box
 	"DOOM 2: XBox Edition"
 	"DOOM: Unity Edition"
 	"DOOM 2: Unity Edition"
+	"DOOM 2: PS3 Edition" // Just for PS3 Masterlevels wad
 	"Final Doom: Plutonia Experiment: Unity Edition"
 	"Final Doom: TNT - Evilution: Unity Edition"
 	"Freedoom: Phase 1"

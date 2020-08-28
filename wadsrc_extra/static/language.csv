@@ -8,6 +8,7 @@ Thy Flesh Consumed,TXT_D1E4,"The episode and levels' names in E4 are taken from 
 Proverbs 5:11",,,Tvé tělo pozřeto,Dein Leib verzehrt,Η Σάρκα σου θα Καταναλωθεί,Via Karno Konsumita,Tu Carne Consumida,,Lihasi kulutettu,Votre Chair Consumée,Húsod megemésztetik,La tua Carne Consumata,滅びし汝の身,쇠패해진 그대의 육신,Uw verbruikte vlees,Ciało Twe Zwiotczeje,No Consumir-se da Tua Carne,,Carnea ta Fără de Vlagă,Твоя плоть истощена,Твоје месо строшено
 Hell On Earth,TXT_D2E1,,,,Peklo na zemi,Hölle auf Erden,Αρμαγεδδών,Infero Sur La Tero,Infierno en la Tierra,,Helvetti maan päällä,Enfer sur Terre,Pokol a Földön,Inferno sulla Terra,第三惑星:地獄,지상에 강림한 지옥,De hel op aarde,Piekło na Ziemi,Inferno na Terra,,Iadul pe Pământ,Ад на Земле,Пакао на Земљи
 No Rest for the Living,TXT_D2E2,"References ""No rest for the wicked"" in Isaiah 48:22",,,Nemajíť živí pokoje,Keine Ruhe für die Lebenden,Καμία Ανάπαυση για τους Ζωντανούς,Nenia Ripozo por la Vivantoj,No hay Descanso para los Vivos,,Ei lepoa eläville,Pas de repos pour les vivants,Nincs békesség az élőnek,Nessun Riposo per i Vivi,休息なき生計,산 자에게 휴식은 없다,Geen rust voor de levenden,Brak Wytchnienia Dla Żywych,Não Há Descanso Para os Vivos,,Cei vii Fără de Odihnă,Нет покоя для живых,Нема одмора живима
+Master Levels, TXT_D2E3?
 The Plutonia Experiment,TXT_PLUT_EP,,,,Experiment Plutonia,Das Plutonia Experiment,Το Πείραμα Πλουτώνια,La Eksperimento de Plutonia,El Experimento Plutonia,,Plutoniakokemus,L'expérience Plutonia,A Plutonia-kísérlet,L'Esperimento di Plutonia,プルトニア記,플루토니아 익스페리먼트,Het Plutonia experiment,Eksperyment Plutonia,O Experimento Plutonia,A Experiência Plutonia,Experimentul Plutonia,Эксперимент «Плутония»,Експеримент Плутонија
 TNT: Evilution,TXT_TNT_EP,,,,TNT: Zlovoluce,,ΤΝΤ: Κακοξέλιξη,TNT: Mavalucio,TNT: Malvolución,,TNT: Paholuutio,,,TNT: Malvoluzione,TNT:邪神化,TNT: 이블루션,Tnt: Evilutie,TNT: Ewolucja Zła,TNT: Malvolução,,TNT: Diavoluția,TNT: Дьяволюция,TNT: Ђаволуција
 Chex Quest,TXT_CHEX_EP,,,,Mise Chex,,Η Περιπέτεια του Chex,Aventuro de Chex,,,Chex-seikkailu,,,,チェックス クエスト,첵스 퀘스트,,Misja Chex,,,,,Чекс Квест
@@ -97,6 +98,28 @@ Level 6: Inferno of Blood,NHUSTR_6,,,,Level 6: Krvavé inferno,Level 6: Blutiges
 Level 7: Baron's Banquet,NHUSTR_7,,,,Level 7: Baronní hostina,Level 7: Das Bankett des Barons,,Nivelo 7: Festeno de Barono,Nivel 7: Banquete del Barón,,Taso 7: Paronin pidot,NIVEAU 7: Banquet du Baron,A báró bankettje,Level 7: Il Banchetto del Barone ,Level 7: バロンの晩餐,레벨 7: 남작의 연회,Level 7: Baron's banket,Level 7: Bankiet Barona,Nível 7: O Banquete do Barão,,Nivelul 7: Banchetul baronilor,Level 7: Банкет у барона,Level 7: Баронова Гозба
 Level 8: Tomb of Malevolence,NHUSTR_8,,,,Level 8: Hrobka zlovolnosti,Level 8: Feindselige Gruft,,Nivelo 8: Tombo de Malbonvolo,Nivel 8: Tumba de Malevolencia,,Taso 8: Pahantahdon hauta,NIVEAU 8: Tombe Maléfique,A Rosszindulat sírja,Level 8: Tomba della Malevolenza,Level 8: 悪意の墓,레벨 8: 증오의 무덤,Level 8: Graf van kwaadwilligheid,Level 8: Grobowiec Zła,Nível 8: Tumba da Malevolência,Nível 8: Túmulo da Malevolência,Nivelul 8: Mormântul răutății,Level 8: Гробница злобы,Level 8: Гроб злобе
 Level 9: March of The Demons,NHUSTR_9,,,,Level 9: Pochod démonů,Level 9: Marsch der Dämonen,,Nivelo 9: Marŝo de La Demonoj,Nivel 9: Marcha de los Demonios,,Taso 9: Demonien marssi,NIVEAU 9: Marche des Démons,A démonok menete,Level 9: La Marcia dei Demoni ,Level 9: デーモンの行進,레벨 9: 악마들의 행진,Level 9: Maart van de demonen,Level 9: Marsz Demonów,Nível 9: Marcha dos Demônios,,Nivelul 9: Marșul demonilor,Level 9: Шествие демонов,Level 9: Марш демона
+,,PS3 Master Levels,,,,,,,,,,,,,,,,
+Level 1: Attack,MHUSTR_1
+Level 2: Canyon,MHUSTR_2
+Level 3: The Catwalk,MHUSTR_3
+Level 4: The Combine,MHUSTR_4
+Level 5: The Fistula,MHUSTR_5
+Level 6: The Garrison,MHUSTR_6
+Level 7: Manor,MHUSTR_7
+Level 8: Paradox,MHUSTR_8
+Level 9: SubSpace,MHUSTR_9
+Level 10: Subterra,MHUSTR_10
+Level 11: Traped on Titan,MHUSTR_11
+Level 12: Vergil's Lead,MHUSTR_12
+Level 13: Minos' Judgement,MHUSTR_13
+Level 14: Bloodsea Keep,MHUSTR_14
+Level 15: Mephisto's Maosoleum,MHUSTR_15
+Level 16: Nessus,MHUSTR_16
+Level 17: The Geryon,MHUSTR_17
+Level 18: Vesperas,MHUSTR_18
+Level 19: Black Tower,MHUSTR_19
+Level 20: The Express Elevator to Hell,MHUSTR_20
+Level 21: Bad Dream,MHUSTR_21
 ,,Plutonia,,,,,,,,,,,,,,,,,,,,,
 Level 1: Congo,PHUSTR_1,,,,Level 1: Kongo,Level 1: Kongo,,Nivelo 1: Kongo,Nivel 1: Congo,,Taso 1: Kongo,NIVEAU 1: Congo,Kongó,Level 1: Congo,Level 1: コンゴ川,레벨 1: 콩고,Level 1: Kongo,Level 1: Kongo,Nível 1: Congo,,Nivelul 1: Congo,Level 1: Конго,Level 1: Конго
 Level 2: Well of Souls,PHUSTR_2,,,,Level 2: Studna duší,Level 2: Seelenbrunnen,,Nivelo 2: Puto de Animoj,Nivel 2: Pozo de las Almas,,Taso 2: Sielujen lähde,NIVEAU 2: Puits des Ames,A lelkek kútja,Level 2: Pozzo delle Anime,Level 2: 魂の井戸,레벨 2: 영혼의 우물,Level 2: Bron van zielen,Level 2: Studnia Dusz,Nível 2: Poço das Almas,Nível 2: Poço de Almas,Nivelul 2: Fântâna sufletelor,Level 2: Колодец душ,Level 2: Бунар душа

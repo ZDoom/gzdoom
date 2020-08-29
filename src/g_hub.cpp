@@ -54,6 +54,7 @@ struct FHubInfo
 {
 	int			levelnum;
 	
+	int			totalkills;
 	int			maxkills;
 	int			maxitems;
 	int			maxsecret;
@@ -63,11 +64,12 @@ struct FHubInfo
 
 	FHubInfo &operator=(const wbstartstruct_t &wbs)
 	{
-		levelnum = wbs.finished_ep;
-		maxkills = wbs.maxkills;
-		maxsecret= wbs.maxsecret;
-		maxitems = wbs.maxitems;
-		maxfrags = wbs.maxfrags;
+		levelnum	= wbs.finished_ep;
+		totalkills	= wbs.totalkills;
+		maxkills	= wbs.maxkills;
+		maxsecret	= wbs.maxsecret;
+		maxitems	= wbs.maxitems;
+		maxfrags	= wbs.maxfrags;
 		memcpy(plyr, wbs.plyr, sizeof(plyr));
 		return *this;
 	}
@@ -107,6 +109,7 @@ void G_LeavingHub(FLevelLocals *Level, int mode, cluster_info_t * cluster, wbsta
 
 		if (mode != FINISH_SameHub)
 		{
+			wbs->totalkills = Level->killed_monsters;
 			wbs->maxkills = wbs->maxitems = wbs->maxsecret = 0;
 			for (i = 0; i < MAXPLAYERS; i++)
 			{
@@ -169,6 +172,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FHubInfo &h, FHubInfo 
 	if (arc.BeginObject(key))
 	{
 		arc("levelnum", h.levelnum)
+			("totalkills", h.totalkills)
 			("maxkills", h.maxkills)
 			("maxitems", h.maxitems)
 			("maxsecret", h.maxsecret)

@@ -30,6 +30,7 @@ struct WBStartStruct native version("2.4")
 	native TextureID	LName0;
 	native TextureID	LName1;
 
+	native int			totalkills;
 	native int			maxkills;
 	native int			maxitems;
 	native int			maxsecret;

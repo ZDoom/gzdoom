@@ -926,6 +926,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	nextlevel = wminfo.next;
 
 	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
+	wminfo.totalkills = killed_monsters;
 	wminfo.maxkills = total_monsters;
 	wminfo.maxitems = total_items;
 	wminfo.maxsecret = total_secrets;

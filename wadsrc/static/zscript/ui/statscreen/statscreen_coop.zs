@@ -36,6 +36,8 @@ class CoopStatusScreen : StatusScreen
 			dofrags += fragSum (i);
 		}
 
+		cnt_otherkills = 0;
+
 		dofrags = !!dofrags;
 	}
 
@@ -92,7 +94,14 @@ class CoopStatusScreen : StatusScreen
 				else
 					stillticking = true;
 			}
-		
+
+			cnt_otherkills += 2;
+
+			if (cnt_otherkills > otherkills)
+				cnt_otherkills = otherkills;
+			else
+				stillticking = true;
+
 			if (!stillticking)
 			{
 				PlaySound("intermission/nextstage");
@@ -215,7 +224,7 @@ class CoopStatusScreen : StatusScreen
 		int pwidth = IntermissionFont.GetCharWidth("%");
 		int icon_x, name_x, kills_x, bonus_x, secret_x;
 		int bonus_len, secret_len;
-		int missed_kills, missed_items, missed_secrets;
+		int other_kills, missed_kills, missed_items, missed_secrets;
 		float h, s, v, r, g, b;
 		int color;
 		String text_bonus, text_secret, text_kills;
@@ -258,6 +267,7 @@ class CoopStatusScreen : StatusScreen
 		drawTextScaled(displayFont, secret_x - secret_len * FontScale, y, text_secret, FontScale, textcolor);
 		y += int(height + 6 * FontScale);
 
+		other_kills = cnt_otherkills;
 		missed_kills = wbs.maxkills;
 		missed_items = wbs.maxitems;
 		missed_secrets = wbs.maxsecret;
@@ -296,8 +306,14 @@ class CoopStatusScreen : StatusScreen
 			y += lineheight + CleanYfac;
 		}
 
-		// Draw "MISSED" line
+		// Draw "OTHER" line
 		y += 3 * CleanYfac;
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_OTHER"), FontScale, Font.CR_DARKGRAY);
+		drawPercentScaled(displayFont, kills_x, y, other_kills, wbs.maxkills, FontScale, Font.CR_DARKGRAY);
+		missed_kills -= cnt_otherkills;
+
+		// Draw "MISSED" line
+		y += height + 3 * CleanYfac;
 		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_MISSED"), FontScale, Font.CR_DARKGRAY);
 		drawPercentScaled(displayFont, kills_x, y, missed_kills, wbs.maxkills, FontScale, Font.CR_DARKGRAY);
 		if (ng_state >= 4)

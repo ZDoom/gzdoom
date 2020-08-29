@@ -5571,6 +5571,13 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	if (deathmatch && info->flags & MF_NOTDMATCH)
 		return NULL;
 
+	// don't spawn extra things in coop if so desired
+	if (multiplayer && !deathmatch && (dmflags2 & DF2_NO_COOP_THING_SPAWN))
+	{
+		if ((mthing->flags & (MTF_DEATHMATCH|MTF_SINGLE)) == MTF_DEATHMATCH)
+			return NULL;
+	}
+
 	// [RH] don't spawn extra weapons in coop if so desired
 	if (multiplayer && !deathmatch && (dmflags & DF_NO_COOP_WEAPON_SPAWN))
 	{

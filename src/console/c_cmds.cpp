@@ -687,7 +687,7 @@ CCMD(getdate)
 	{
 		char timeString[1024];
 		if (strftime(timeString, sizeof(timeString), "%H:%M:%S %d-%m-%Y%n", timeinfo))
-			Printf(timeString);
+			Printf("%s\n", timeString);
 		else
 			Printf("Error Retrieving Current Date\n");
 	}

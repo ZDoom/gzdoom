@@ -2695,7 +2695,7 @@ static FString CheckStrfString(FString timeForm)
 		if (t.Len() == 0) return FString("%");
 
 		// Single Character
-		for (int i = 0; i < sizeof(validSingles)/sizeof(validSingles[0]); i++)
+		for (size_t i = 0; i < sizeof(validSingles)/sizeof(validSingles[0]); i++)
 		{
 			if (t[0] == validSingles[i])
 			{

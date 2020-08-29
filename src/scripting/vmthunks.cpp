@@ -2675,7 +2675,7 @@ static int GetEpochTime()
 {
 	time_t now;
 	time(&now);
-	return now != (time_t)(-1) ? now + epochoffset : (time_t)(-1);
+	return now != (time_t)(-1) ? int(now + epochoffset) : -1;
 }
 
 //Returns an empty string if the Strf tokens are valid, otherwise returns the problematic token

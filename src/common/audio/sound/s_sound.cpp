@@ -554,8 +554,8 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 
 		float sfxlength = (float)GSnd->GetMSLength(sfx->data) / 1000.f;
 		startTime = (startflags & SNDF_LOOP)
-				? (sfxlength > 0 ? fmod(startTime, sfxlength) : 0)
-				: clamp<float>(startTime, 0.f, sfxlength);
+				? (sfxlength > 0 ? fmodf(startTime, sfxlength) : 0.f)
+				: clamp(startTime, 0.f, sfxlength);
 
 		if (attenuation > 0 && type != SOURCE_None)
 		{

@@ -172,7 +172,7 @@ public:
 
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
-	static FString StaticGetStateName(const FState *state);
+	static FString StaticGetStateName(const FState *state, PClassActor *info = nullptr);
 	static FRandom pr_statetics;
 
 };

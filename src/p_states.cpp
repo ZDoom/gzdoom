@@ -128,9 +128,17 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 //
 //==========================================================================
 
-FString FState::StaticGetStateName(const FState *state)
+FString FState::StaticGetStateName(const FState *state, PClassActor *info)
 {
 	auto so = FState::StaticFindStateOwner(state);
+	if (so == nullptr)
+	{
+		so = FState::StaticFindStateOwner(state, info);
+	}
+	if (so == nullptr)
+	{
+		return "<unknown>";
+	}
 	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->GetStates()));
 }
 

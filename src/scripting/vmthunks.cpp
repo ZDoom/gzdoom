@@ -2682,7 +2682,7 @@ static int GetEpochTime()
 static FString CheckStrfString(FString timeForm)
 {
 	// Valid Characters after %
-	const char validSingles[] = { 'a','A','b','B','c','C','d','D','e','F','G','g','h','H','I','j','k','l','m','M','n','p','P','r','R','s','S','t','T','u','U','V','w','W','x','X','y','Y','z','Z' };
+	const char validSingles[] = { 'a','A','b','B','c','C','d','D','e','F','g','G','h','H','I','j','m','M','n','p','r','R','S','t','T','u','U','V','w','W','x','X','y','Y','z','Z' };
 
 	timeForm.Substitute("%%", "%a"); //Prevent %% from causing tokenizing problems
 	timeForm = "a" + timeForm; //Prevent %* at the beginning from causing a false error from tokenizing

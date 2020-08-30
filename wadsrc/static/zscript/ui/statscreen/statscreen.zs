@@ -515,7 +515,6 @@ class StatusScreen abstract play version("2.5")
 
 	void drawTimeScaled (Font fnt, int x, int y, int t, double scale, int color = Font.CR_UNTRANSLATED)
 	{
-		int sec = Thinker.Tics2Seconds(Plrs[me].stime);
 		if (t < 0)
 			return;
 
@@ -525,23 +524,7 @@ class StatusScreen abstract play version("2.5")
 		t -= minutes * 60;
 		int seconds = t;
 
-		String s = "";
-		if (hours > 0)
-		{
-			s = String.Format("%d", hours) .. ":";
-		}
-
-		if (hours > 0 || minutes < 10)
-		{
-			s = s .. "0";
-		}
-		s = s .. String.Format("%d", minutes) .. ":";
-
-		if (seconds < 10)
-		{
-			s = s .. "0";
-		}
-		s = s .. String.Format("%d", seconds);
+		String s = (hours > 0 ? String.Format("%d:", hours) : "") .. String.Format("%02d:%02d", minutes, seconds);
 
 		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, color);
 	}

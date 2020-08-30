@@ -184,21 +184,25 @@ class AltHud ui
 		
 		if (!deathmatch)
 		{
-			// FIXME: ZDoom doesn't preserve the player's stat counters across hubs so this doesn't
-			// work in cooperative hub games
 			if (hud_showsecrets)
 			{
-				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : Level.found_secrets, Level.total_secrets));
+				DrawStatLine(x, y, "S:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.secretcount, Level.found_secrets, Level.total_secrets)
+					: String.Format("%i/%i ", Level.found_secrets, Level.total_secrets));
 			}
 			
 			if (hud_showitems)
 			{
-				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : Level.found_items, Level.total_items));
+				DrawStatLine(x, y, "I:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.itemcount, Level.found_items, Level.total_items)
+					: String.Format("%i/%i ", Level.found_items, Level.total_items));
 			}
 			
 			if (hud_showmonsters)
 			{
-				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : Level.killed_monsters, Level.total_monsters));
+				DrawStatLine(x, y, "K:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.killcount, Level.killed_monsters, Level.total_monsters)
+					: String.Format("%i/%i ", Level.killed_monsters, Level.total_monsters));
 			}
 		}
 	}

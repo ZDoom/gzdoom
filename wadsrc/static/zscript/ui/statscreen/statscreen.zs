@@ -86,7 +86,9 @@ class StatusScreen abstract play version("2.5")
 	int				CurState;				// specifies current CurState
 	wbstartstruct	wbs;				// contains information passed into intermission
 	wbplayerstruct	Plrs[MAXPLAYERS];				// wbs.plyr[]
+	int				otherkills;
 	int				cnt;				// used for general timing
+	int				cnt_otherkills;
 	int				cnt_kills[MAXPLAYERS];
 	int				cnt_items[MAXPLAYERS];
 	int				cnt_secret[MAXPLAYERS];
@@ -881,7 +883,12 @@ class StatusScreen abstract play version("2.5")
 		acceleratestage = 0;
 		cnt = bcnt = 0;
 		me = wbs.pnum;
-		for (int i = 0; i < MAXPLAYERS; i++) Plrs[i] = wbs.plyr[i];
+		otherkills = wbs.totalkills;
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			Plrs[i] = wbs.plyr[i];
+			otherkills -= Plrs[i].skills;
+		}
 		
 		entering.Init(gameinfo.mStatscreenEnteringFont);
 		finished.Init(gameinfo.mStatscreenFinishedFont);

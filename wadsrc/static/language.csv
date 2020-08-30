@@ -1172,14 +1172,15 @@ Color,SCORE_COLOR,,,Colour,Barva,Farbe,Χρώμα,Koloro,,,Väri,Couleur,Szín,C
 Secret,SCORE_SECRET,,,,Tajemství,Geheimnis,Μυστικό,Sekreta,Secreto,,Salat,,Rejtély,Segreto,シークレット,밝혀낸 비밀,Geheim,Sekret,Segredo,,Secret,Тайники,Тајна
 Name,SCORE_NAME,,,,Jméno,Name,Όνομα,Nomo,Nombre,,Nimi,Nom,Név,Nome,名前,이름,Naam,Nazwa,Nome,,Nume,Имя,Име
 Delay (ms),SCORE_DELAY,,,,Zpoždění (ms),Verzögerung (ms),Kαθυστέρηση (μδ),Prokrasto (ms),Retraso (ms),,Viive (ms),Délai (ms),Késleltetés (ms),Ritardo (ms) ,ping,핑 (밀리초당),Vertraging (ms),Opóźnienie (ms),Atraso (ms),,Întârziere (ms),Задержка (мс),Кашњење (мс)
-Kills,SCORE_KILLS,,,,Zabití,,Σκοτομοί,Mortigoj,Asesinatos,,Tapot,Victimes,Ölések,Uccisioni,キル,킬수,Doodt,Zabójstwa,Vítimas,,Ucideri,Убийства,Убиства
+Kills,SCORE_KILLS,,,,Zabití,,Σκοτομοί,Mortigoj,Asesinatos,,Tapot,Victimes,Ölések,Uccisioni,キル,킬수,Dood,Zabójstwa,Vítimas,,Ucideri,Убийства,Убиства
 Frags,SCORE_FRAGS,,,,Fragy,,Κοματιασμοί,Ĉesoj,Bajas,,Frägit,,Fragek,Frags,フラグ,플레이어 킬수,Frags,Fragi,,,Victime,Фраги,Фрагови
-Deaths,SCORE_DEATHS,,,,Smrti,Tode,Θάνατοι,Mortoj,Muertes,,Kuolemat,Morts,Halálok,Morti,デス,사망한 횟수,Overlijden,Śmierci,Mortes,,Decese,Смерти,Смрти
+Deaths,SCORE_DEATHS,,,,Smrti,Tode,Θάνατοι,Mortoj,Muertes,,Kuolemat,Morts,Halálok,Morti,デス,사망한 횟수,Doden,Śmierci,Mortes,,Decese,Смерти,Смрти
+Other,SCORE_OTHER,,,,,Anders,,,,,Muu,Autre,,,,,Anders,,,,,,
 Missed,SCORE_MISSED,,,,Minuto,Verfehlt,Ξεχάστηκαν,Mankita,Pérdidas,,Hudit,Ratés,Kihagyva,Mancati ,ミス,놓친 수,Gemist,Ominięte,Perdido,,Ratate,Пропущено,Промашаји
 Total,SCORE_TOTAL,,,,Celkem,Gesamt,Συνολικό,Tuta,,,Yhteensä,Total,Összesen,Totale,合計,총점,Totaal,Totalne,Total,,Total,Всего,Укупно
 Level Time,SCORE_LVLTIME,,,,Čas v levelu,Levelzeit,Χρόνος Πίστας,Nivel Daŭro,Tiempo de nivel,,Tasoaika,Temps niveau,Szint Idő,Tempo Livello ,時間,레벨 시간,Niveau Tijd,Czas,Tempo de Fase,Tempo do Nível,Timp Petrecut,Время уровня,Време нивоа
 ,,Level Summary,,,,,,,,,,,,,,,,,,,,,
-Kills,TXT_IMKILLS,,,,Zabití,,Σκοτομοί,Mortigoj,Muertes,,Tapot,Morts,Áldozatok,Uccisioni,キル,킬수,Doodt,Zabójstwa,Vítimas,,Ucideri,Враги,Убиства
+Kills,TXT_IMKILLS,,,,Zabití,,Σκοτομοί,Mortigoj,Muertes,,Tapot,Morts,Áldozatok,Uccisioni,キル,킬수,Dood,Zabójstwa,Vítimas,,Ucideri,Враги,Убиства
 Items,TXT_IMITEMS,,,,Předměty,Gegenstände,Αντεικείμενα,Aĵoj,Objetos,,Esineet,Objets,Tárgyak,Oggetti,アイテム,획득한 아이템,Artikelen,Przedmioty,Itens,,Obiecte,Предметы,Ставке
 Secrets,TXT_IMSECRETS,,,,Tajemství,Geheimnisse,Μυστικά,Sekretoj,Secretos,,Salat,,Rejtekhelyek,Segreti,シークレット,밝혀낸 비밀,Geheimen,Sekrety,Segredos,,Secrete,Тайники,Тајне
 Time,TXT_IMTIME,,,,Čas,Zeit,Χρόνος,Daŭro,Tiempo,,Aika,Temps,Idő,Tempo,経過時間,소모한 시간,Tijd,Czas,Tempo,,Timp,Время,Време

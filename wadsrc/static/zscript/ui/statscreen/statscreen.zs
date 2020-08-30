@@ -511,6 +511,28 @@ class StatusScreen abstract play version("2.5")
 
 	//====================================================================
 	//
+	// Display the completed time scaled
+	//
+	//====================================================================
+
+	void drawTimeScaled (Font fnt, int x, int y, int t, double scale, int color = Font.CR_UNTRANSLATED)
+	{
+		if (t < 0)
+			return;
+
+		int hours = t / 3600;
+		t -= hours * 3600;
+		int minutes = t / 60;
+		t -= minutes * 60;
+		int seconds = t;
+
+		String s = (hours > 0 ? String.Format("%d:", hours) : "") .. String.Format("%02d:%02d", minutes, seconds);
+
+		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, color);
+	}
+
+	//====================================================================
+	//
 	// Display level completion time and par, or "sucks" message if overflow.
 	//
 	//====================================================================

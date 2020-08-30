@@ -71,6 +71,7 @@ class CoopStatusScreen : StatusScreen
 				if (dofrags)
 					cnt_frags[i] = fragSum (i);
 			}
+			cnt_otherkills = otherkills;
 			PlaySound("intermission/nextstage");
 			ng_state = 10;
 		}

@@ -53,7 +53,7 @@ class CoopStatusScreen : StatusScreen
 		bool stillticking;
 		bool autoskip = autoSkip();
 
-		if ((acceleratestage || autoskip) && ng_state != 10)
+		if ((acceleratestage || autoskip) && ng_state != 12)
 		{
 			acceleratestage = 0;
 
@@ -70,7 +70,7 @@ class CoopStatusScreen : StatusScreen
 					cnt_frags[i] = fragSum (i);
 			}
 			PlaySound("intermission/nextstage");
-			ng_state = 10;
+			ng_state = 12;
 		}
 
 		if (ng_state == 2)
@@ -146,10 +146,38 @@ class CoopStatusScreen : StatusScreen
 			if (!stillticking)
 			{
 				PlaySound("intermission/nextstage");
-				ng_state += 1 + 2*!dofrags;
+				ng_state ++;
 			}
 		}
 		else if (ng_state == 8)
+		{
+			if (!(bcnt&3))
+				PlaySound("intermission/tick");
+
+			stillticking = false;
+
+			cnt_time += 3;
+			cnt_total_time += 3;
+
+			int sec = Thinker.Tics2Seconds(Plrs[me].stime);
+			if (cnt_time > sec)
+				cnt_time = sec;
+			else
+				stillticking = true;
+
+			int tsec = Thinker.Tics2Seconds(wbs.totaltime);
+			if (cnt_total_time > tsec)
+				cnt_total_time = tsec;
+			else
+				stillticking = true;
+
+			if (!stillticking)
+			{
+				PlaySound("intermission/nextstage");
+				ng_state += 1 + 2*!dofrags;
+			}
+		}
+		else if (ng_state == 10)
 		{
 			if (!(bcnt&3))
 				PlaySound("intermission/tick");
@@ -175,7 +203,7 @@ class CoopStatusScreen : StatusScreen
 				ng_state++;
 			}
 		}
-		else if (ng_state == 10)
+		else if (ng_state == 12)
 		{
 			int i;
 			for (i = 0; i < MAXPLAYERS; i++)
@@ -320,6 +348,15 @@ class CoopStatusScreen : StatusScreen
 			{
 				drawNumScaled(displayFont, secret_x, y, FontScale, wbs.maxsecret, 0, textcolor);
 			}
+		}
+
+		y += height + 3 * CleanYfac;
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$TXT_IMTIME"), FontScale, textcolor);
+
+		if (ng_state >= 8)
+		{
+			drawTimeScaled(displayFont, kills_x, y, cnt_time, FontScale, textcolor);
+			drawTimeScaled(displayFont, secret_x, y, cnt_total_time, FontScale, textcolor);
 		}
 	}
 }

@@ -71,6 +71,10 @@ class CoopStatusScreen : StatusScreen
 				if (dofrags)
 					cnt_frags[i] = fragSum (i);
 			}
+
+			cnt_time = Thinker.Tics2Seconds(Plrs[me].stime);
+			cnt_total_time = Thinker.Tics2Seconds(wbs.totaltime);
+
 			PlaySound("intermission/nextstage");
 			ng_state = 12;
 		}

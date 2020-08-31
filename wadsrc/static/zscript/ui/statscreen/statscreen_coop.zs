@@ -175,13 +175,10 @@ class CoopStatusScreen : StatusScreen
 
 			int sec = Thinker.Tics2Seconds(Plrs[me].stime);
 			if (cnt_time > sec)
+			{
 				cnt_time = sec;
-			else
-				stillticking = true;
-
-			int tsec = Thinker.Tics2Seconds(wbs.totaltime);
-			if (cnt_total_time > tsec)
-				cnt_total_time = tsec;
+				cnt_total_time = Thinker.Tics2Seconds(wbs.totaltime);
+			}
 			else
 				stillticking = true;
 
@@ -257,7 +254,7 @@ class CoopStatusScreen : StatusScreen
 		int pwidth = IntermissionFont.GetCharWidth("%");
 		int icon_x, name_x, kills_x, bonus_x, secret_x;
 		int bonus_len, secret_len;
-		int other_kills, missed_kills, missed_items, missed_secrets;
+		int missed_kills, missed_items, missed_secrets;
 		float h, s, v, r, g, b;
 		int color;
 		String text_bonus, text_secret, text_kills;
@@ -300,7 +297,6 @@ class CoopStatusScreen : StatusScreen
 		drawTextScaled(displayFont, secret_x - secret_len * FontScale, y, text_secret, FontScale, textcolor);
 		y += int(height + 6 * FontScale);
 
-		other_kills = cnt_otherkills;
 		missed_kills = wbs.maxkills;
 		missed_items = wbs.maxitems;
 		missed_secrets = wbs.maxsecret;
@@ -342,7 +338,7 @@ class CoopStatusScreen : StatusScreen
 		// Draw "OTHER" line
 		y += 3 * CleanYfac;
 		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_OTHER"), FontScale, Font.CR_DARKGRAY);
-		drawPercentScaled(displayFont, kills_x, y, other_kills, wbs.maxkills, FontScale, Font.CR_DARKGRAY);
+		drawPercentScaled(displayFont, kills_x, y, cnt_otherkills, wbs.maxkills, FontScale, Font.CR_DARKGRAY);
 		missed_kills -= cnt_otherkills;
 
 		// Draw "MISSED" line
@@ -371,6 +367,7 @@ class CoopStatusScreen : StatusScreen
 			}
 		}
 
+		// Draw "TIME" line
 		y += height + 3 * CleanYfac;
 		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$TXT_IMTIME"), FontScale, textcolor);
 

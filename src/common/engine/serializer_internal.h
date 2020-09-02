@@ -237,13 +237,19 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 		{
 			vv = value - base;
 			if (vv < 0 || vv >= count)
-				I_Error("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli", key, vv, count);
+			{
+				Printf("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli\n", key, vv, count);
+				vv = -1;
+			}
 		}
 		Serialize(arc, key, vv, nullptr);
 		if (vv == -1)
 			value = nullptr;
 		else if (vv < 0 || vv >= count)
-			I_Error("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli", key, vv, count);
+		{
+			Printf("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli\n", key, vv, count);
+			value = nullptr;
+		}
 		else
 			value = base + vv;
 	}
@@ -254,7 +260,10 @@ template<class T>
 FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, TArray<T> &array)
 {
 	if (array.Size() == 0)
-		I_Error("Trying to serialize a value with key '%s' from empty array", key);
+	{
+		Printf("Trying to serialize a value with key '%s' from empty array\n", key);
+		return arc;
+	}
 	return SerializePointer(arc, key, value, defval, array.Data(), array.Size());
 }
 

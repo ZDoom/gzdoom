@@ -588,6 +588,11 @@ class Actor : Thinker native
 
 	// called on getting a secret, return false to disable default "secret found" message/sound
 	virtual bool OnGiveSecret(bool printmsg, bool playsound) { return true; }
+
+	// called before and after triggering a teleporter
+	// return false in PreTeleport() to cancel the action early
+	virtual bool PreTeleport( Vector3 destpos, double destangle, int flags ) { return true; }
+	virtual void PostTeleport( Vector3 destpos, double destangle, int flags ) {}
 	
 	native virtual bool OkayToSwitchTarget(Actor other);
 	native static class<Actor> GetReplacement(class<Actor> cls);

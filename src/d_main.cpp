@@ -2969,8 +2969,11 @@ static void FixUnityStatusBar()
 		FGameTexture* sbartex = TexMan.FindGameTexture("stbar", ETextureType::MiscPatch);
 		if (!sbartex)
 			return;
-		sbartex->SetOffsets(0, (sbartex->GetTexelWidth() - 320) / 2, 0);
-		sbartex->SetOffsets(1, (sbartex->GetTexelWidth() - 320) / 2, 0);
+		if (sbartex->GetTexelWidth() > 320)
+		{
+			sbartex->SetOffsets(0, (sbartex->GetTexelWidth() - 320) / 2, 0);
+			sbartex->SetOffsets(1, (sbartex->GetTexelWidth() - 320) / 2, 0);
+		}
 	}
 }
 

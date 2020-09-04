@@ -350,6 +350,7 @@ IWad
 		          "DMENUPIC"
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
+	AlwaysCenterStatusbar = 1
 }
 
 IWad
@@ -438,6 +439,7 @@ IWad
 	MustContain = "MAP01", "REDTNT2", "DMAPINFO"
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
+	AlwaysCenterStatusbar = 1
 }
 
 IWad
@@ -466,6 +468,7 @@ IWad
 	MustContain = "MAP01", "CAMO1", "DMAPINFO"
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
+	AlwaysCenterStatusbar = 1
 }
 
 IWad
@@ -510,6 +513,7 @@ IWad
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
 	Load = "nerveunity.wad"
+	AlwaysCenterStatusbar = 1
 }
 
 IWad

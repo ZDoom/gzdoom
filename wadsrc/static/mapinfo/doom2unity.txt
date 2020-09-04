@@ -3,7 +3,7 @@ include "mapinfo/doom2.txt"
 
 gameinfo
 {
-	titlepage = "DMENUPIC"
+
 }
 
 clearepisodes

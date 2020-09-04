@@ -2962,6 +2962,18 @@ static void CheckForHacks(BuildInfo& buildinfo)
 	}
 }
 
+static void FixUnityStatusBar()
+{
+	if (gameinfo.flags & GI_ALWAYSCENTERSBAR)
+	{
+		FGameTexture* sbartex = TexMan.FindGameTexture("stbar", ETextureType::MiscPatch);
+		if (!sbartex)
+			return;
+		sbartex->SetOffsets(0, (sbartex->GetTexelWidth() - 320) / 2, 0);
+		sbartex->SetOffsets(1, (sbartex->GetTexelWidth() - 320) / 2, 0);
+	}
+}
+
 //==========================================================================
 //
 //
@@ -3351,6 +3363,8 @@ static int D_DoomMain_Internal (void)
 		PatchTextures();
 		TexAnim.Init();
 		C_InitConback();
+
+		FixUnityStatusBar();
 
 		StartScreen->Progress();
 		V_InitFonts();

@@ -435,7 +435,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 			// What needs be done is to store the portal transitions of the camera actor as waypoints
 			// and then find out on which part of the path the current view lies.
 			// Needless to say, this doesn't work for chasecam mode.
-			if (!viewpoint.showviewer)
+			if (!viewpoint.showviewer && !viewpoint.InPortal)
 			{
 				double pathlen = 0;
 				double zdiff = 0;
@@ -775,8 +775,10 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		iview->Old = iview->New;
 	}
 
+	viewpoint.VPos.Zero();
 	if (player && gamestate != GS_TITLELEVEL)
 	{
+		bool ResetInterpolation = false;
 		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
 		if ((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0))
 		{
@@ -793,9 +795,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			// Note that this can still cause problems with unusually linked portals
 			if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256*256))
 			{
-				iview->otic = nowtic;
-				iview->Old = iview->New;
-				r_NoInterpolate = true;
+				ResetInterpolation = true;
 			}
 			viewpoint.ActorPos = campos;
 		}
@@ -803,58 +803,69 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		{
 			AActor *mo = viewpoint.camera;
 			DVector3 orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
-			DVector3 next = orig;
 
 			// [MC] Ignores all portal portal transitions since it's meant to be absolute.
 			// It'll be down to the modder to handle performing offsetting with the appropriate functions.
 			if (mo->flags8 & MF8_ABSVIEWPOS)
 			{
-				next = mo->ViewPos;
-				viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(next.XY())->sector;
+				viewpoint.ActorPos = iview->New.Pos = mo->ViewPos;
+				viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(viewpoint.ActorPos.XY())->sector;
 			}
 			else
 			{
-				if (mo->flags8 & MF8_VIEWPOSNOANGLES)
+				viewpoint.showviewer = false;
+				DVector3 next = orig;
+				if (mo->ViewPos.isZero())
 				{
+					// Do nothing.
+				}
+				else if ((mo->flags8 & MF8_VIEWPOSNOANGLES))
+				{
+					// No relativity added from angles.
 					next += mo->ViewPos;
 				}
 				else
 				{
 					// [MC] Do NOT handle portals here! Trace must have the unportaled (absolute) position to
 					// get the correct angle and distance. Trace automatically handles portals by itself.
-					// Also, viewpos must use the original angles, not the view angles to position the camera.
-					DAngle angle = mo->Angles.Yaw;
+					// Also, viewpos must use the original angles, not the view angles to position the camera
+
+					DAngle yaw = mo->Angles.Yaw;
 					DAngle pitch = mo->Angles.Pitch;
-					DVector3 Off = 
-					{
-						mo->ViewPos.X * pitch.Cos(),
-						mo->ViewPos.Y,
-						mo->ViewPos.Z  * -pitch.Sin()
-					};
-					next = 
-					{
-						orig.X + Off.X * angle.Cos() + Off.Y * angle.Sin(),
-						orig.Y + Off.X * angle.Sin() - Off.Y * angle.Cos(),
-						orig.Z + Off.Z
-					};
+					DAngle roll = mo->Angles.Roll;
+					DVector3 relx, rely, relz, Off = mo->ViewPos;
+					DMatrix3x3 rot =
+						DMatrix3x3(DVector3(0., 0., 1.), yaw.Cos(), yaw.Sin()) *
+						DMatrix3x3(DVector3(0., 1., 0.), pitch.Cos(), pitch.Sin()) *
+						DMatrix3x3(DVector3(1., 0., 0.), roll.Cos(), roll.Sin());
+					relx = DVector3(1., 0., 0.)*rot;
+					rely = DVector3(0., 1., 0.)*rot;
+					relz = DVector3(0., 0., 1.)*rot;
+					next += relx * Off.X + rely * Off.Y + relz * Off.Z;
 				}
-
+				
 				viewpoint.sector = mo->Sector;
-				DAngle camangle;
-				if (next != orig)
-					P_AdjustViewPos(mo, orig, next, camangle, viewpoint.sector, unlinked);
-			}
-			viewpoint.ActorPos = orig;
-			iview->New.Pos = next;
-			viewpoint.showviewer = false;
+				viewpoint.ActorPos = orig;
+				viewpoint.VPos = iview->New.Pos = next;
 
-			if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
-			{
-				iview->otic = nowtic;
-				iview->Old = iview->New;
-				r_NoInterpolate = true;
-				viewpoint.InPortal = true;
+				if (next != orig)
+				{
+					P_AdjustViewPos(mo, orig, iview->New.Pos, viewpoint.sector, unlinked);
+					viewpoint.VPos = iview->New.Pos;
+					viewpoint.InPortal = false;
+					if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
+					{
+						ResetInterpolation = viewpoint.InPortal = true;
+					}
+				}
 			}
+		}
+
+		if (ResetInterpolation)
+		{
+			iview->otic = nowtic;
+			iview->Old = iview->New;
+			r_NoInterpolate = true;
 		}
 	}
 	else

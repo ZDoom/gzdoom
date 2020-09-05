@@ -22,6 +22,7 @@ struct FRenderViewpoint
 	player_t		*player;		// For which player is this viewpoint being renderered? (can be null for camera textures)
 	DVector3		Pos;			// Camera position
 	DVector3		ActorPos;		// Camera actor's position
+	DVector3		VPos;			// Camera ViewPos offset
 	DRotator		Angles;			// Camera angles
 	FRotator		HWAngles;		// Actual rotation angles for the hardware renderer
 	DVector2		ViewVector;		// HWR only: direction the camera is facing.

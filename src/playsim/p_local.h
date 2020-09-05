@@ -395,7 +395,7 @@ void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 void	P_AimCamera (AActor *t1, DVector3 &, DAngle &, sector_t *&sec, bool &unlinked);
 
 // [MC] Aiming for viewpos.
-void	P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &, DAngle &, sector_t *&sec, bool &unlinked);
+void	P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &, sector_t *&sec, bool &unlinked);
 
 // [RH] Means of death
 enum

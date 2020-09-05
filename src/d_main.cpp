@@ -2967,8 +2967,21 @@ static void FixUnityStatusBar()
 	if (gameinfo.flags & GI_ALWAYSCENTERSBAR)
 	{
 		FGameTexture* sbartex = TexMan.FindGameTexture("stbar", ETextureType::MiscPatch);
+
+		// texture not found, we're not here to operate on a non-existent texture so just exit
 		if (!sbartex)
 			return;
+
+		// where is this texture located? if it's not in an iwad, then exit
+		int lumpnum = sbartex->GetSourceLump();
+		if (lumpnum >= 0 && lumpnum < fileSystem.GetNumEntries())
+		{
+			int wadno = fileSystem.GetFileContainer(lumpnum);
+			if (!(wadno >= fileSystem.GetIwadNum() && wadno <= fileSystem.GetMaxIwadNum()))
+				return;
+		}
+
+		// only adjust offsets if none already exist
 		if (sbartex->GetTexelWidth() > 320 &&
 			!sbartex->GetTexelLeftOffset(0) && !sbartex->GetTexelTopOffset(0))
 		{

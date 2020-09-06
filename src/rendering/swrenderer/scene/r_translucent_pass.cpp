@@ -52,6 +52,7 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_actorshadows, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 namespace swrenderer
 {
@@ -135,15 +136,35 @@ namespace swrenderer
 	{
 		RenderPortal *renderportal = Thread->Portal.get();
 		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
-
 		auto &sortedSprites = Thread->SpriteList->SortedSprites;
-		for (int i = sortedSprites.Size(); i > 0; i--)
+		int count = sortedSprites.Size();
+
+		if (r_actorshadows)
+		{
+			memcpy(Thread->clipbotcopy, Thread->clipbot, sizeof(short) * viewwidth);
+			memcpy(Thread->cliptopcopy, Thread->cliptop, sizeof(short) * viewwidth);
+			for (int i = count; i > 0; i--)
+			{
+				VisibleSprite* sprite = sortedSprites[i - 1];
+
+				if (sprite->IsCurrentPortalUniq(renderportal->CurrentPortalUniq))
+				{
+					if (sprite->FlatPass)
+						sprite->Render(Thread, clip3DFloor);
+				}
+			}
+			memcpy(Thread->clipbot, Thread->clipbotcopy, sizeof(short) * viewwidth);
+			memcpy(Thread->cliptop, Thread->cliptopcopy, sizeof(short) * viewwidth);
+		}
+
+		for (int i = count; i > 0; i--)
 		{
 			VisibleSprite *sprite = sortedSprites[i - 1];
 
 			if (sprite->IsCurrentPortalUniq(renderportal->CurrentPortalUniq))
 			{
-				sprite->Render(Thread, clip3DFloor);
+				if (!sprite->FlatPass)
+					sprite->Render(Thread, clip3DFloor);
 			}
 		}
 

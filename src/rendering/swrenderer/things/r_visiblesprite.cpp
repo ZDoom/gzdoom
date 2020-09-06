@@ -53,19 +53,22 @@ namespace swrenderer
 	{
 		if (IsModel())
 		{
-			// Draw segments behind model
-			DrawSegmentList *segmentlist = thread->DrawSegments.get();
-			RenderPortal *renderportal = thread->Portal.get();
-			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
+			if (!FlatPass)
 			{
-				DrawSegment *ds = segmentlist->TranslucentSegment(index);
-				if (ds->drawsegclip.SubsectorDepth >= SubsectorDepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
+				// Draw segments behind model
+				DrawSegmentList* segmentlist = thread->DrawSegments.get();
+				RenderPortal* renderportal = thread->Portal.get();
+				for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
 				{
-					int r1 = MAX<int>(ds->x1, 0);
-					int r2 = MIN<int>(ds->x2, viewwidth - 1);
+					DrawSegment* ds = segmentlist->TranslucentSegment(index);
+					if (ds->drawsegclip.SubsectorDepth >= SubsectorDepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
+					{
+						int r1 = MAX<int>(ds->x1, 0);
+						int r2 = MIN<int>(ds->x2, viewwidth - 1);
 
-					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, r1, r2, clip3DFloor);
+						RenderDrawSegment renderer(thread);
+						renderer.Render(ds, r1, r2, clip3DFloor);
+					}
 				}
 			}
 
@@ -315,48 +318,51 @@ namespace swrenderer
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// Render draw segments behind sprite
-		if (r_modelscene)
+		if (!FlatPass)
 		{
-			int subsectordepth = spr->SubsectorDepth;
-			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
+			if (r_modelscene)
 			{
-				DrawSegment *ds = segmentlist->TranslucentSegment(index);
-				if (ds->drawsegclip.SubsectorDepth >= subsectordepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
+				int subsectordepth = spr->SubsectorDepth;
+				for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
 				{
-					int r1 = MAX<int>(ds->x1, 0);
-					int r2 = MIN<int>(ds->x2, viewwidth - 1);
-
-					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, r1, r2, clip3DFloor);
-				}
-			}
-		}
-		else
-		{
-			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
-			{
-				DrawSegment *ds = segmentlist->TranslucentSegment(index);
-
-				if (ds->x1 >= x2 || ds->x2 <= x1)
-				{
-					continue;
-				}
-
-				float neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
-				float fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
-
-				// Check if sprite is in front of draw seg:
-				if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
-					(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
-					(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
-				{
-					if (ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
+					DrawSegment* ds = segmentlist->TranslucentSegment(index);
+					if (ds->drawsegclip.SubsectorDepth >= subsectordepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
 					{
-						int r1 = MAX<int>(ds->x1, x1);
-						int r2 = MIN<int>(ds->x2, x2);
+						int r1 = MAX<int>(ds->x1, 0);
+						int r2 = MIN<int>(ds->x2, viewwidth - 1);
 
 						RenderDrawSegment renderer(thread);
 						renderer.Render(ds, r1, r2, clip3DFloor);
+					}
+				}
+			}
+			else
+			{
+				for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
+				{
+					DrawSegment* ds = segmentlist->TranslucentSegment(index);
+
+					if (ds->x1 >= x2 || ds->x2 <= x1)
+					{
+						continue;
+					}
+
+					float neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
+					float fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
+
+					// Check if sprite is in front of draw seg:
+					if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
+						(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
+						(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
+					{
+						if (ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
+						{
+							int r1 = MAX<int>(ds->x1, x1);
+							int r2 = MIN<int>(ds->x2, x2);
+
+							RenderDrawSegment renderer(thread);
+							renderer.Render(ds, r1, r2, clip3DFloor);
+						}
 					}
 				}
 			}

@@ -725,8 +725,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (thing == camera && !vp.showviewer)
 	{
 		DVector3 thingorigin = thing->Pos();
-		if (thruportal == 1) thingorigin += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
-		if (vp.InPortal)	return;
+		if (thruportal == 1) 	thingorigin += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(thingorigin.X - vp.ActorPos.X) < 2 && fabs(thingorigin.Y - vp.ActorPos.Y) < 2) return;
 	}
 	// Thing is invisible if close to the camera.

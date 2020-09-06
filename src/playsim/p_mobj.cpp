@@ -1202,6 +1202,7 @@ bool AActor::Grind(bool items)
 				S_Sound (this, CHAN_BODY, 0, "misc/fallingsplat", 1, ATTN_IDLE);
 				Translation = BloodTranslation;
 			}
+			Level->localEventManager->WorldThingGrinded(this);
 			return false;
 		}
 		if (!(flags & MF_NOBLOOD))
@@ -1244,6 +1245,7 @@ bool AActor::Grind(bool items)
 				gib->Translation = BloodTranslation;
 			}
 			S_Sound (this, CHAN_BODY, 0, "misc/fallingsplat", 1, ATTN_IDLE);
+			Level->localEventManager->WorldThingGrinded(this);
 		}
 		if (flags & MF_ICECORPSE)
 		{

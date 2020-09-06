@@ -331,6 +331,18 @@ void EventManager::WorldThingDied(AActor* actor, AActor* inflictor)
 		handler->WorldThingDied(actor, inflictor);
 }
 
+void EventManager::WorldThingGrinded(AActor* actor)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingGrinded(actor);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingGrinded(actor);
+}
+
 void EventManager::WorldThingRevived(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
@@ -794,6 +806,20 @@ void DStaticEventHandler::WorldThingDied(AActor* actor, AActor* inflictor)
 		VMCall(func, params, 2, nullptr, 0);
 	}
 }
+
+void DStaticEventHandler::WorldThingGrinded(AActor* actor)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingGrinded)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FWorldEvent e = owner->SetupWorldEvent();
+		e.Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 
 void DStaticEventHandler::WorldThingRevived(AActor* actor)
 {

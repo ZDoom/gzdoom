@@ -398,20 +398,9 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 		NSString* executablePath = [NSString stringWithUTF8String:Args->GetArg(0)];
 
 		NSMutableArray* const arguments = [[NSMutableArray alloc] init];
-
-		// The following value shoud be equal to NSAppKitVersionNumber10_5
-		// It's hard-coded in order to build with earlier SDKs
-		const bool canSelectArchitecture = NSAppKitVersionNumber >= 949;
-
-		if (canSelectArchitecture)
-		{
-			[arguments addObject:@"-arch"];
-			[arguments addObject:GetArchitectureString()];
-			[arguments addObject:executablePath];
-
-			executablePath = @"/usr/bin/arch";
-		}
-
+		[arguments addObject:@"-arch"];
+		[arguments addObject:GetArchitectureString()];
+		[arguments addObject:executablePath];
 		[arguments addObject:@"-iwad"];
 		[arguments addObject:[NSString stringWithUTF8String:wad.Path]];
 
@@ -435,7 +424,7 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 			wordfree(&expansion);
 		}
 
-		[NSTask launchedTaskWithLaunchPath:executablePath
+		[NSTask launchedTaskWithLaunchPath:@"/usr/bin/arch"
 								 arguments:arguments];
 
 		_exit(0); // to avoid atexit()'s functions

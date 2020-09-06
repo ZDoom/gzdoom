@@ -384,13 +384,6 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 {
 	assert(nil != parameters);
 
-	defaultiwad = wad.Name;
-
-	GameConfig->ArchiveGlobalData();
-	GameConfig->WriteConfigFile();
-	delete GameConfig;
-	GameConfig = nullptr;
-
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
 	@try
@@ -403,6 +396,9 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 		[arguments addObject:executablePath];
 		[arguments addObject:@"-iwad"];
 		[arguments addObject:[NSString stringWithUTF8String:wad.Path]];
+		[arguments addObject:@"+defaultiwad"];
+		[arguments addObject:[NSString stringWithUTF8String:wad.Name]];
+		[arguments addObject:[NSString stringWithFormat:@"+osx_additional_parameters \"%@\"", parameters]];
 
 		for (int i = 1, count = Args->NumArgs(); i < count; ++i)
 		{
@@ -445,11 +441,10 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 	IWADPicker *picker = [IWADPicker alloc];
 	int ret = [picker pickIWad:wads num:numwads showWindow:showwin defaultWad:defaultiwad];
 
-	NSString* parametersToAppend = [picker commandLineParameters];
-	osx_additional_parameters = [parametersToAppend UTF8String];
-
 	if (ret >= 0)
 	{
+		NSString* parametersToAppend = [picker commandLineParameters];
+		
 		if (0 != [parametersToAppend length])
 		{
 			RestartWithParameters(wads[ret], parametersToAppend);

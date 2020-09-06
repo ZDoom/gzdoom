@@ -66,7 +66,6 @@ const float LARGE_VALUE = 1e19f;
 
 EXTERN_CVAR(Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Float, transsouls)
-EXTERN_CVAR(Bool, r_actorshadows)
 
 
 //==========================================================================
@@ -1358,13 +1357,7 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 
 					HWSprite spr;
 					// This is called from the worker thread and must not alter the fake sector cache.
-					bool drawSpriteShadows =
-					(
-						r_actorshadows &&
-						((th->flags3 & MF3_ISMONSTER) || th->IsKindOf(NAME_PlayerPawn) || (th->flags8 & MF8_CASTSPRITESHADOW)) &&
-						!(th->flags8 & MF8_NOSPRITESHADOW)
-					);
-					if (drawSpriteShadows) spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2, true);
+					if (R_ShouldDrawSpriteShadow(th)) spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2, true);
 					spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);

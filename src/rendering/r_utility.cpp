@@ -70,6 +70,7 @@
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR(Bool, r_actorshadows)
 
 // TYPES -------------------------------------------------------------------
 
@@ -1040,6 +1041,18 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	
 }
 
+//==========================================================================
+//
+// R_ShouldDrawSpriteShadow
+//
+//==========================================================================
+
+bool R_ShouldDrawSpriteShadow(AActor *thing)
+{
+	return r_actorshadows &&
+		((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
+		!(thing->flags8 & MF8_NOSPRITESHADOW);
+}
 
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)
 {

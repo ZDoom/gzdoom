@@ -75,7 +75,6 @@
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 EXTERN_CVAR(Bool, r_drawvoxels);
 EXTERN_CVAR(Bool, r_debug_disable_vis_filter);
-EXTERN_CVAR(Bool, r_actorshadows);
 extern uint32_t r_renderercaps;
 
 double model_distance_cull = 1e16;
@@ -967,14 +966,7 @@ namespace swrenderer
 					{
 						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap, false);
 
-						bool drawSpriteShadows =
-						(
-							r_actorshadows &&
-							((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
-							!(thing->flags8 & MF8_NOSPRITESHADOW)
-						);
-
-						if (drawSpriteShadows)
+						if (R_ShouldDrawSpriteShadow(thing))
 						{
 							DVector2 shadowScale = sprite.spriteScale;
 							shadowScale.Y *= (thing->Scale.Y * 0.1);

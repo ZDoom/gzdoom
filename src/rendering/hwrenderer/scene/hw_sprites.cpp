@@ -66,6 +66,7 @@ const float LARGE_VALUE = 1e19f;
 
 EXTERN_CVAR(Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Float, transsouls)
+EXTERN_CVAR(Bool, r_actorshadows)
 
 
 //==========================================================================
@@ -678,7 +679,7 @@ void HWSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 //
 //==========================================================================
 
-void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t in_area, int thruportal)
+void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t in_area, int thruportal, bool spriteIsShadow)
 {
 	sector_t rs;
 	sector_t * rendersector;
@@ -791,7 +792,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
-	z = thingpos.Z;
+	z = spriteIsShadow ? thing->floorz : thingpos.Z;
 	y = thingpos.Y;
 	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
 
@@ -897,7 +898,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
 			thing->renderflags ^= RF_XFLIP;
 
-		r.Scale(sprscale.X, sprscale.Y);
+		r.Scale(sprscale.X, spriteIsShadow ? sprscale.Y * 0.1 : sprscale.Y);
 		
 		float SpriteOffY = thing->SpriteOffset.Y;
 		float rightfac = -r.left - thing->SpriteOffset.X;
@@ -1116,6 +1117,14 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			// enhanced vision overcomes stealth!
 			if (trans < 0.5f) trans = 0.5f;
 		}
+	}
+
+	// for sprite shadow, enforce translucent stencil renderstyle
+	if (spriteIsShadow)
+	{
+		RenderStyle = STYLE_Stencil;
+		ThingColor = MAKEARGB(ColorMatcher.Pick(0, 0, 0), 0, 0, 0);
+		trans = 0.5f;
 	}
 
 	if (trans == 0.0f) return;
@@ -1349,6 +1358,13 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 
 					HWSprite spr;
 					// This is called from the worker thread and must not alter the fake sector cache.
+					bool drawSpriteShadows =
+					(
+						r_actorshadows &&
+						((th->flags3 & MF3_ISMONSTER) || th->IsKindOf(NAME_PlayerPawn) || (th->flags8 & MF8_CASTSPRITESHADOW)) &&
+						!(th->flags8 & MF8_NOSPRITESHADOW)
+					);
+					if (drawSpriteShadows) spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2, true);
 					spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);

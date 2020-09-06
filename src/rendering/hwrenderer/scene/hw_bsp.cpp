@@ -48,6 +48,7 @@
 #endif // ARCH_IA32
 
 CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Bool, r_actorshadows)
 
 thread_local bool isWorkerThread;
 ctpl::thread_pool renderPool(1);
@@ -534,7 +535,14 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 		// If this thing is in a map section that's not in view it can't possibly be visible
 		if (CurrentMapSections[thing->subsector->mapsection])
 		{
+			bool drawSpriteShadows =
+			(
+				r_actorshadows &&
+				((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
+				!(thing->flags8 & MF8_NOSPRITESHADOW)
+			);
 			HWSprite sprite;
+			if (drawSpriteShadows) sprite.Process(this, thing, sector, in_area, false, true);
 			sprite.Process(this, thing, sector, in_area, false);
 		}
 	}
@@ -553,7 +561,14 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 			}
 		}
 
+		bool drawSpriteShadows =
+		(
+			r_actorshadows &&
+			((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
+			!(thing->flags8 & MF8_NOSPRITESHADOW)
+		);
 		HWSprite sprite;
+		if (drawSpriteShadows) sprite.Process(this, thing, sector, in_area, true, true);
 		sprite.Process(this, thing, sector, in_area, true);
 	}
 }

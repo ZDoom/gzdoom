@@ -971,7 +971,6 @@ namespace swrenderer
 						(
 							r_actorshadows &&
 							((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
-							Thread->Viewport->viewpoint.Pos.Z > (sprite.pos.Z + 11.) &&
 							!(thing->flags8 & MF8_NOSPRITESHADOW)
 						);
 

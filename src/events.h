@@ -80,7 +80,7 @@ public:
 	void WorldUnloaded();
 	void WorldThingSpawned(AActor* actor);
 	void WorldThingDied(AActor* actor, AActor* inflictor);
-	void WorldThingGrinded(AActor* actor);
+	void WorldThingGround(AActor* actor);
 	void WorldThingRevived(AActor* actor);
 	void WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
 	void WorldThingDestroyed(AActor* actor);
@@ -236,7 +236,7 @@ struct EventManager
 	// called after AActor::Die of each actor.
 	void WorldThingDied(AActor* actor, AActor* inflictor);
 	// called inside AActor::Grind just before the corpse is destroyed
-	void WorldThingGrinded(AActor* actor);
+	void WorldThingGround(AActor* actor);
 	// called after AActor::Revive.
 	void WorldThingRevived(AActor* actor);
 	// called before P_DamageMobj and before AActor::DamageMobj virtuals.

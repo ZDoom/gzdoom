@@ -1111,6 +1111,26 @@ static void PrintSecretString(const char *string, bool thislevel)
 				if (foundone) colstr = TEXTCOLOR_RED;
 				else colstr = TEXTCOLOR_GREEN;
 			}
+			//items with COUNTSECRET
+			else if (string[1] == 'I' || string[1] == 'i')
+			{
+				long tid = (long)strtoll(string+2, (char**)&string, 10);
+				if (*string == ';') string++;
+				auto it = primaryLevel->GetActorIterator(tid);
+				AActor *actor;
+				bool foundone = false;
+				if (thislevel)
+				{
+					while ((actor = it.Next()))
+					{
+						if (!(actor->flags5 & MF5_COUNTSECRET)) continue;
+						foundone = true;
+						break;
+					}
+				}
+				if (foundone) colstr = TEXTCOLOR_RED;
+				else colstr = TEXTCOLOR_GREEN;
+			}
 		}
 		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, *string == '$' ? GStrings(++string) : string);
 

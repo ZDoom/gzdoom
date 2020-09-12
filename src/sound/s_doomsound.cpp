@@ -471,7 +471,8 @@ FSoundID DoomSoundEngine::ResolveSound(const void * ent, int type, FSoundID soun
 
 static bool VerifyActorSound(AActor* ent, FSoundID& sound_id, int& channel, EChanFlags flags)
 {
-	if (ent == nullptr || ent->Sector->Flags & SECF_SILENT || ent->Level != primaryLevel)
+	if (ent == nullptr || ent->ObjectFlags & OF_EuthanizeMe || ent->Sector->Flags & SECF_SILENT || 
+		ent->Level != primaryLevel)
 		return false;
 
 	if ((flags & CHANF_MAYBE_LOCAL) && (compatflags & COMPATF_SILENTPICKUP))

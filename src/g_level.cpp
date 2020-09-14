@@ -654,7 +654,8 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 		nextlevel = levelname;
 	}
 
-	NextSkill = (unsigned)nextSkill < AllSkills.Size() ? nextSkill : -1;
+	if (nextSkill != -1)
+		NextSkill = (unsigned)nextSkill < AllSkills.Size() ? nextSkill : -1;
 
 	if (inflags & CHANGELEVEL_NOINTERMISSION)
 	{

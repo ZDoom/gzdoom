@@ -231,54 +231,40 @@ template<> FSerializer &Serialize(FSerializer &ar, const char *key, FPolyObj *&v
 {
 	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
 	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize polyobject without a valid level");
-	return SerializePointer(*arc, key, value, defval, arc->Level->Polyobjects.Data());
-}
-
-template<> FSerializer &Serialize(FSerializer &ar, const char *key, const FPolyObj *&value, const FPolyObj **defval)
-{
-	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
-	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize polyobject without a valid level");
-	return SerializePointer<const FPolyObj>(*arc, key, value, defval, arc->Level->Polyobjects.Data());
+	return SerializePointer(*arc, key, value, defval, arc->Level->Polyobjects);
 }
 
 template<> FSerializer &Serialize(FSerializer &ar, const char *key, side_t *&value, side_t **defval)
 {
 	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
 	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize SIDEDEF without a valid level");
-	return SerializePointer(ar, key, value, defval, arc->Level->sides.Data());
+	return SerializePointer(*arc, key, value, defval, arc->Level->sides);
 }
 
 template<> FSerializer &Serialize(FSerializer &ar, const char *key, sector_t *&value, sector_t **defval)
 {
 	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
 	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize sector without a valid level");
-	return SerializePointer(*arc, key, value, defval, arc->Level->sectors.Data());
-}
-
-template<> FSerializer &Serialize(FSerializer &ar, const char *key, const sector_t *&value, const sector_t **defval)
-{
-	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
-	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize sector without a valid level");
-	return SerializePointer<const sector_t>(*arc, key, value, defval, arc->Level->sectors.Data());
+	return SerializePointer(*arc, key, value, defval, arc->Level->sectors);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, players);
+	return SerializePointer(arc, key, value, defval, players, MAXPLAYERS);
 }
 
 template<> FSerializer &Serialize(FSerializer &ar, const char *key, line_t *&value, line_t **defval)
 {
 	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
 	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize linedef without a valid level");
-	return SerializePointer(*arc, key, value, defval, arc->Level->lines.Data());
+	return SerializePointer(*arc, key, value, defval, arc->Level->lines);
 }
 
 template<> FSerializer &Serialize(FSerializer &ar, const char *key, vertex_t *&value, vertex_t **defval)
 {
 	auto arc = dynamic_cast<FDoomSerializer*>(&ar);
 	if (!arc || arc->Level == nullptr) I_Error("Trying to serialize vertex without a valid level");
-	return SerializePointer(*arc, key, value, defval, arc->Level->vertexes.Data());
+	return SerializePointer(*arc, key, value, defval, arc->Level->vertexes);
 }
 
 //==========================================================================

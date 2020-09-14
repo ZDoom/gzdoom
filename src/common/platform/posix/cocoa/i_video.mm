@@ -102,6 +102,7 @@ EXTERN_CVAR(Int,  vid_preferbackend)
 EXTERN_CVAR(Bool, vk_debug)
 
 CVAR(Bool, mvk_debug, false, 0)
+CVAR(Bool, vid_nativefullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -290,6 +291,7 @@ CocoaWindow* CreateWindow(const NSUInteger styleMask)
 	[window setOpaque:YES];
 	[window makeFirstResponder:appCtrl];
 	[window setAcceptsMouseMovedEvents:YES];
+	[window exitAppOnClose];
 
 	NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 	[nc addObserver:window
@@ -633,7 +635,6 @@ void SystemBaseFrameBuffer::SetWindowedMode()
 	const NSRect frameSize = NSMakeRect(win_x, win_y, win_w, win_h);
 	[m_window setFrame:frameSize display:YES];
 	[m_window enterFullscreenOnZoom];
-	[m_window exitAppOnClose];
 }
 
 void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
@@ -650,7 +651,11 @@ void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
 	}
 
-	if (fullscreen)
+	if (vid_nativefullscreen && fullscreen != m_fullscreen)
+	{
+		[m_window toggleFullScreen:(nil)];
+	}
+	else if (fullscreen)
 	{
 		SetFullscreenMode();
 	}
@@ -742,7 +747,11 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	NSOpenGLView* const glView = [m_window contentView];
 	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
 
-	if (fullscreen)
+	if (vid_nativefullscreen && fullscreen != m_fullscreen)
+	{
+		[m_window toggleFullScreen:(nil)];
+	}
+	else if (fullscreen)
 	{
 		SetFullscreenMode();
 	}

@@ -572,6 +572,133 @@ CCMD (special)
 
 //==========================================================================
 //
+// CCMD setdate
+//
+// Set the time to a specific value
+//
+//==========================================================================
+
+extern time_t epochoffset;
+CCMD(setdate)
+{
+	if (argv.argc() != 3)
+	{
+		Printf("setdate HH:MM:SS DD-MM-YYYY: Set the current date\n");
+		return;
+	}
+
+	time_t today;
+	time(&today);
+	struct tm* timeinfo = localtime(&today);
+	if (timeinfo != nullptr)
+	{
+		auto clock = FString(argv[1]).Split(":");
+		auto date  = FString(argv[2]).Split("-");
+		if(clock.Size() != 3 || date.Size() != 3)
+		{
+			Printf("setdate HH:MM:SS DD-MM-YYYY: Set the current date\n");
+			return;
+		}
+
+		if(!clock[0].IsInt())
+		{
+			Printf("Invalid hour\n");
+			return;
+		}
+		if (!clock[1].IsInt())
+		{
+			Printf("Invalid minutes\n");
+			return;
+		}
+		if (!clock[2].IsInt())
+		{
+			Printf("Invalid seconds\n");
+			return;
+		}
+		if (!date[0].IsInt())
+		{
+			Printf("Invalid day\n");
+			return;
+		}
+		if (!date[1].IsInt())
+		{
+			Printf("Invalid month\n");
+			return;
+		}
+		if (!date[2].IsInt())
+		{
+			Printf("Invalid year\n");
+			return;
+		}
+
+		//Set Date
+		timeinfo->tm_hour = int( clock[0].ToLong() );
+		timeinfo->tm_min  = int( clock[1].ToLong() );
+		timeinfo->tm_sec  = int( clock[2].ToLong() );
+		timeinfo->tm_mday = int(  date[0].ToLong() );
+		timeinfo->tm_mon  = int(  date[1].ToLong() - 1);     // Month interally is 0 - 11
+		timeinfo->tm_year = int(  date[2].ToLong() - 1900 ); // Year interally is 00 - 138
+
+		time_t newTime = mktime(timeinfo);
+		tm* t_old = localtime(&today);
+		time_t oldTime = mktime(t_old);
+
+		if (newTime == -1 || oldTime == -1)
+		{
+			Printf("Unable to set the date\n");
+			return;
+		}
+
+		epochoffset = newTime - oldTime;
+
+		// This deals with some inconsistent display behaviour for DST
+		// In this case, we want to emulate GCC's behaviour
+		today += epochoffset;
+		struct tm* t_new = localtime(&today);
+		if (t_new != nullptr)
+		{
+			char timeString[1024];
+			if (strftime(timeString, sizeof(timeString), "%H", t_new))
+			{
+				auto hour = FString(timeString).ToLong();
+				if (hour - clock[0].ToLong() == -1 || hour - clock[0].ToLong() == 23)
+					epochoffset += 3600;
+				else if (hour - clock[0].ToLong() == 1 || hour - clock[0].ToLong() == -23)
+					epochoffset -= 3600;
+			}
+		}
+
+		return;
+	}
+	else
+	{
+		Printf("Unable to set the date\n");
+		return;
+	}
+}
+
+CCMD(getdate)
+{
+	time_t now;
+	time(&now);
+	now += epochoffset;
+	struct tm* timeinfo = localtime(&now);
+	if (timeinfo != nullptr)
+	{
+		char timeString[1024];
+		if (strftime(timeString, sizeof(timeString), "%H:%M:%S %d-%m-%Y%n", timeinfo))
+			Printf("%s\n", timeString);
+		else
+			Printf("Error Retrieving Current Date\n");
+	}
+	else
+	{
+		Printf("Error Retrieving Current Date\n");
+	}
+}
+
+//==========================================================================
+//
 // CCMD warp
 //
 // Warps to a specific location on a map
@@ -985,7 +1112,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, string);
+		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, *string == '$' ? GStrings(++string) : string);
 
 		for (auto &line : brok)
 		{

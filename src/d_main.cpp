@@ -661,6 +661,7 @@ CVAR (Flag, sv_dontcheckammo,		dmflags2, DF2_DONTCHECKAMMO);
 CVAR (Flag, sv_killbossmonst,		dmflags2, DF2_KILLBOSSMONST);
 CVAR (Flag, sv_nocountendmonst,		dmflags2, DF2_NOCOUNTENDMONST);
 CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
+CVAR (Flag, sv_nothingspawn,		dmflags2, DF2_NO_COOP_THING_SPAWN);
 
 //==========================================================================
 //
@@ -2961,6 +2962,35 @@ static void CheckForHacks(BuildInfo& buildinfo)
 	}
 }
 
+static void FixUnityStatusBar()
+{
+	if (gameinfo.flags & GI_FIXUNITYSBAR)
+	{
+		FGameTexture* sbartex = TexMan.FindGameTexture("stbar", ETextureType::MiscPatch);
+
+		// texture not found, we're not here to operate on a non-existent texture so just exit
+		if (!sbartex)
+			return;
+
+		// where is this texture located? if it's not in an iwad, then exit
+		int lumpnum = sbartex->GetSourceLump();
+		if (lumpnum >= 0 && lumpnum < fileSystem.GetNumEntries())
+		{
+			int wadno = fileSystem.GetFileContainer(lumpnum);
+			if (!(wadno >= fileSystem.GetIwadNum() && wadno <= fileSystem.GetMaxIwadNum()))
+				return;
+		}
+
+		// only adjust offsets if none already exist
+		if (sbartex->GetTexelWidth() > 320 &&
+			!sbartex->GetTexelLeftOffset(0) && !sbartex->GetTexelTopOffset(0))
+		{
+			sbartex->SetOffsets(0, (sbartex->GetTexelWidth() - 320) / 2, 0);
+			sbartex->SetOffsets(1, (sbartex->GetTexelWidth() - 320) / 2, 0);
+		}
+	}
+}
+
 //==========================================================================
 //
 //
@@ -3350,6 +3380,8 @@ static int D_DoomMain_Internal (void)
 		PatchTextures();
 		TexAnim.Init();
 		C_InitConback();
+
+		FixUnityStatusBar();
 
 		StartScreen->Progress();
 		V_InitFonts();

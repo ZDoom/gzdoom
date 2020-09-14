@@ -565,7 +565,7 @@ void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDes
 		cmdbuffer->setStencilReference(VK_STENCIL_FRONT_AND_BACK, screen->stencilValue);
 	if (pushConstantsSize > 0)
 		cmdbuffer->pushConstants(passSetup->PipelineLayout.get(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantsSize, pushConstants);
-	cmdbuffer->draw(4, 1, FFlatVertexBuffer::PRESENT_INDEX, 0);
+	cmdbuffer->draw(3, 1, FFlatVertexBuffer::PRESENT_INDEX, 0);
 	cmdbuffer->endRenderPass();
 }
 

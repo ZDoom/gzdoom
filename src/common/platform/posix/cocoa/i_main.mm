@@ -101,15 +101,26 @@ void I_DetectOS()
 
 	const char* name = "Unknown version";
 	
-	if (10 == version.majorVersion) switch (version.minorVersion)
+	if (10 == version.majorVersion)
 	{
-		case  9: name = "OS X Mavericks";        break;
-		case 10: name = "OS X Yosemite";         break;
-		case 11: name = "OS X El Capitan";       break;
-		case 12: name = "macOS Sierra";          break;
-		case 13: name = "macOS High Sierra";     break;
-		case 14: name = "macOS Mojave";          break;
-		case 15: name = "macOS Catalina";        break;
+		switch (version.minorVersion)
+		{
+			case  9: name = "OS X Mavericks";        break;
+			case 10: name = "OS X Yosemite";         break;
+			case 11: name = "OS X El Capitan";       break;
+			case 12: name = "macOS Sierra";          break;
+			case 13: name = "macOS High Sierra";     break;
+			case 14: name = "macOS Mojave";          break;
+			case 15: name = "macOS Catalina";        break;
+			case 16: name = "macOS Big Sur";         break;
+		}
+	}
+	else if (11 == version.majorVersion)
+	{
+		switch (version.minorVersion)
+		{
+			case 0: name = "macOS Big Sur";          break;
+		}
 	}
 
 	char release[16] = "unknown";
@@ -124,7 +135,9 @@ void I_DetectOS()
 #ifdef __i386__
 		"32-bit Intel";
 #elif defined __x86_64__
-		"64-bit Intel";
+		"64-bit Intel";	
+#elif defined __aarch64__
+		"64-bit ARM";
 #else
 		"Unknown";
 #endif

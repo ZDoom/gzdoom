@@ -132,6 +132,9 @@ inline uint64_t rdtsc()
 	}
 	while (upper != temp);
 	return (static_cast<unsigned long long>(upper) << 32) | lower;
+#elif defined __aarch64__
+	// TODO: Implement and test on ARM64
+	return 0;
 #else // i386
 	if (CPU.bRDTSC)
 	{

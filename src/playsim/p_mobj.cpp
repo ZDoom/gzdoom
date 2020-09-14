@@ -362,9 +362,11 @@ void AActor::Serialize(FSerializer &arc)
 		A("renderhidden", RenderHidden)
 		A("renderrequired", RenderRequired)
 		A("friendlyseeblocks", friendlyseeblocks)
+		A("viewangles", ViewAngles)
 		A("spawntime", SpawnTime)
 		A("spawnorder", SpawnOrder)
 		A("friction", Friction)
+		A("SpriteOffset", SpriteOffset)
 		A("userlights", UserLights);
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
@@ -3351,52 +3353,106 @@ DEFINE_ACTION_FUNCTION(AActor, SetShade)
 	return 0;
 }
 
-void AActor::SetPitch(DAngle p, bool interpolate, bool forceclamp)
-{
-	if (player != NULL || forceclamp)
-	{ // clamp the pitch we set
-		DAngle min, max;
+// [MC] Helper function for Set(View)Pitch. 
+DAngle AActor::ClampPitch(DAngle p)
+{	
+	// clamp the pitch we set
+	DAngle min, max;
 
-		if (player != NULL)
-		{
-			min = player->MinPitch;
-			max = player->MaxPitch;
-		}
-		else
-		{
-			min = -89.;
-			max = 89.;
-		}
-		p = clamp(p, min, max);
+	if (player != nullptr)
+	{
+		min = player->MinPitch;
+		max = player->MaxPitch;
 	}
+	else
+	{
+		min = -89.;
+		max = 89.;
+	}
+	p = clamp(p, min, max);
+	return p;
+}
+
+void AActor::SetPitch(DAngle p, int fflags)
+{
+	if (player != nullptr || (fflags & SPF_FORCECLAMP))
+	{
+		p = ClampPitch(p);
+	}
+
 	if (p != Angles.Pitch)
 	{
 		Angles.Pitch = p;
-		if (player != NULL && interpolate)
+		if (player != nullptr && (fflags & SPF_INTERPOLATE))
 		{
 			player->cheats |= CF_INTERPVIEW;
 		}
 	}
+	
 }
 
-void AActor::SetAngle(DAngle ang, bool interpolate)
+void AActor::SetAngle(DAngle ang, int fflags)
 {
 	if (ang != Angles.Yaw)
 	{
 		Angles.Yaw = ang;
-		if (player != NULL && interpolate)
+		if (player != nullptr && (fflags & SPF_INTERPOLATE))
+		{
+			player->cheats |= CF_INTERPVIEW;
+		}
+	}
+	
+}
+
+void AActor::SetRoll(DAngle r, int fflags)
+{
+	if (r != Angles.Roll)
+	{
+		Angles.Roll = r;
+		if (player != nullptr && (fflags & SPF_INTERPOLATE))
 		{
 			player->cheats |= CF_INTERPVIEW;
 		}
 	}
 }
 
-void AActor::SetRoll(DAngle r, bool interpolate)
+void AActor::SetViewPitch(DAngle p, int fflags)
 {
-	if (r != Angles.Roll)
+	if (player != NULL || (fflags & SPF_FORCECLAMP))
 	{
-		Angles.Roll = r;
-		if (player != NULL && interpolate)
+		p = ClampPitch(p);
+	}
+
+	if (p != ViewAngles.Pitch)
+	{
+		ViewAngles.Pitch = p;
+		if (player != nullptr && (fflags & SPF_INTERPOLATE))
+		{
+			player->cheats |= CF_INTERPVIEW;
+		}
+	}
+
+}
+
+void AActor::SetViewAngle(DAngle ang, int fflags)
+{
+	if (ang != ViewAngles.Yaw)
+	{
+		ViewAngles.Yaw = ang;
+		if (player != nullptr && (fflags & SPF_INTERPOLATE))
+		{
+			player->cheats |= CF_INTERPVIEW;
+		}
+	}
+
+}
+
+void AActor::SetViewRoll(DAngle r, int fflags)
+{
+	if (r != ViewAngles.Roll)
+	{
+		ViewAngles.Roll = r;
+		if (player != nullptr && (fflags & SPF_INTERPOLATE))
 		{
 			player->cheats |= CF_INTERPVIEW;
 		}
@@ -5260,6 +5316,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
 			Behaviors.StartTypedScripts (SCRIPT_Enter, p->mo, true);
+			localEventManager->PlayerSpawned(PlayerNum(p));
 		}
 		else if (state == PST_REBORN)
 		{
@@ -5513,6 +5570,13 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	// don't spawn keycards and players in deathmatch
 	if (deathmatch && info->flags & MF_NOTDMATCH)
 		return NULL;
+
+	// don't spawn extra things in coop if so desired
+	if (multiplayer && !deathmatch && (dmflags2 & DF2_NO_COOP_THING_SPAWN))
+	{
+		if ((mthing->flags & (MTF_DEATHMATCH|MTF_SINGLE)) == MTF_DEATHMATCH)
+			return NULL;
+	}
 
 	// [RH] don't spawn extra weapons in coop if so desired
 	if (multiplayer && !deathmatch && (dmflags & DF_NO_COOP_WEAPON_SPAWN))

@@ -101,6 +101,7 @@ public:
 	VersionInfo		mVersion = { 0,0,0 };
 	uint8_t loadOp, storeOp, moveOp, RegType, RegCount;
 	EScopeFlags ScopeFlags = (EScopeFlags)0;
+	bool            SizeKnown = true;
 
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();

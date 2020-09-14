@@ -1214,6 +1214,7 @@ OptionMenu "MiscOptions" protected
 	Slider "$MISCMNU_QUICKSAVECOUNT",			"quicksaverotationcount", 1, 20, 1, 0
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
+	Option "$MISCMNU_SETSLOTSTRICT",			"setslotstrict", "YesNo"
 	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
 	StaticText " "
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
@@ -1663,6 +1664,7 @@ OptionMenu CoopOptions protected
 	Position -35
 	Title 	"$GMPLYMNU_COOPERATIVE"
 
+	Option "$GMPLYMNU_MULTIPLAYERTHINGS",	 	"sv_nothingspawn", "NoYes"
 	Option "$GMPLYMNU_MULTIPLAYERWEAPONS",	 	"sv_noweaponspawn", "NoYes"
 	Option "$GMPLYMNU_LOSEINVENTORY",			"sv_cooploseinventory", "YesNo"
 	Option "$GMPLYMNU_KEEPKEYS",				"sv_cooplosekeys", "NoYes"

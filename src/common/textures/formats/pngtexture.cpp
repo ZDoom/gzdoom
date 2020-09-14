@@ -360,7 +360,8 @@ void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 		uint8_t r = lump->ReadUInt8();
 		uint8_t g = lump->ReadUInt8();
 		uint8_t b = lump->ReadUInt8();
-		alpharemap[i] = PaletteMap[i] == 0 ? 0 : Luminance(r, g, b);
+		int palmap = PaletteMap ? PaletteMap[i] : i;
+		alpharemap[i] = palmap == 0 ? 0 : Luminance(r, g, b);
 	}
 	lump->Seek(p, FileReader::SeekSet);
 }

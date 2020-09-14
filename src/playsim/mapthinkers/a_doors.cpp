@@ -766,7 +766,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 		// Make sure door isn't already being animated
 		if (sec->ceilingdata != NULL )
 		{
-			if (actor->player == NULL)
+			if (actor == NULL || actor->player == NULL)
 				return false;
 
 			if (sec->ceilingdata->IsA (RUNTIME_CLASS(DAnimatedDoor)))

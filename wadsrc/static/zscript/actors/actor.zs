@@ -89,6 +89,7 @@ class Actor : Thinker native
 	native PlayerInfo Player;
 	native readonly vector3 Pos;
 	native vector3 Prev;
+	native vector2 SpriteOffset;
 	native double spriteAngle;
 	native double spriteRotation;
 	native double VisibleStartAngle;
@@ -231,6 +232,7 @@ class Actor : Thinker native
 	native uint8 fountaincolor;
 	native double CameraHeight;	// Height of camera when used as such
 	native double CameraFOV;
+	native double ViewAngle, ViewPitch, ViewRoll;
 	native double RadiusDamageFactor;		// Radius damage factor
 	native double SelfDamageFactor;
 	native double StealthAlpha;
@@ -586,6 +588,11 @@ class Actor : Thinker native
 
 	// called on getting a secret, return false to disable default "secret found" message/sound
 	virtual bool OnGiveSecret(bool printmsg, bool playsound) { return true; }
+
+	// called before and after triggering a teleporter
+	// return false in PreTeleport() to cancel the action early
+	virtual bool PreTeleport( Vector3 destpos, double destangle, int flags ) { return true; }
+	virtual void PostTeleport( Vector3 destpos, double destangle, int flags ) {}
 	
 	native virtual bool OkayToSwitchTarget(Actor other);
 	native static class<Actor> GetReplacement(class<Actor> cls);
@@ -1121,6 +1128,9 @@ class Actor : Thinker native
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVar(name varname, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserArray(name varname, int index, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVarFloat(name varname, double value);

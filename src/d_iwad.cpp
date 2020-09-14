@@ -184,6 +184,13 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					if (sc.Number) iwad->flags |= GI_IGNORETITLEPATCHES;
 					else iwad->flags &= ~GI_IGNORETITLEPATCHES;
 				}
+				else if (sc.Compare("FixUnityStatusBar"))
+				{
+				sc.MustGetStringName("=");
+				sc.MustGetNumber();
+				if (sc.Number) iwad->flags |= GI_FIXUNITYSBAR;
+				else iwad->flags &= ~GI_FIXUNITYSBAR;
+				}
 				else if (sc.Compare("Load"))
 				{
 					sc.MustGetStringName("=");

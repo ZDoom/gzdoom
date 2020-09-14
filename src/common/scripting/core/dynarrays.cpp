@@ -121,6 +121,17 @@ template<class T> unsigned int ArrayReserve(T *self, int amount)
 	return self->Reserve(amount);
 }
 
+template<> unsigned int ArrayReserve(TArray<DObject*> *self, int amount)
+{
+	const unsigned int oldSize = self->Reserve(amount);
+	const unsigned int fillCount = self->Size() - oldSize;
+
+	if (fillCount > 0)
+		memset(&(*self)[oldSize], 0, sizeof(DObject*) * fillCount);
+	
+	return oldSize;
+}
+
 template<class T> int ArrayMax(T *self)
 {
 	return self->Max();
@@ -908,7 +919,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Reserve, ArrayReserve<FDynArray_Obj
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
 	PARAM_INT(count);
-	ACTION_RETURN_INT(self->Reserve(count));
+	ACTION_RETURN_INT(ArrayReserve(self, count));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Max, ArrayMax<FDynArray_Obj>)

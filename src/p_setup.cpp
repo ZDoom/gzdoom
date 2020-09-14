@@ -279,6 +279,15 @@ void FLevelLocals::ClearPortals()
 
 void FLevelLocals::ClearLevelData()
 {
+	{
+		auto it = GetThinkerIterator<AActor>(NAME_None, STAT_TRAVELLING);
+		for (AActor *actor = it.Next(); actor != nullptr; actor = it.Next())
+		{
+			actor->BlockingLine = nullptr;
+			actor->BlockingFloor = actor->BlockingCeiling = actor->Blocking3DFloor = nullptr;
+		}
+	}
+	
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Thinkers.DestroyAllThinkers();
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.

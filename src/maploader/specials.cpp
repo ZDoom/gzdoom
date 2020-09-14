@@ -127,7 +127,6 @@ void MapLoader::SpawnLinePortal(line_t* line)
 		line->portalindex = Level->linePortals.Reserve(1);
 		FLinePortal *port = &Level->linePortals.Last();
 
-		memset(port, 0, sizeof(FLinePortal));
 		port->mOrigin = line;
 		port->mDestination = dst;
 		port->mType = uint8_t(line->args[2]);	// range check is done above.

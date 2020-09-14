@@ -63,9 +63,9 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 
 	// and this is for the postprocessing copy operation
 	vbo_shadowdata[8].Set(-1.0f, -1.0f, 0, 0.0f, 0.0f);
-	vbo_shadowdata[9].Set(-1.0f, 1.0f, 0, 0.0f, 1.f);
-	vbo_shadowdata[10].Set(1.0f, -1.0f, 0, 1.f, 0.0f);
-	vbo_shadowdata[11].Set(1.0f, 1.0f, 0, 1.f, 1.f);
+	vbo_shadowdata[9].Set(3.0f, -1.0f, 0, 2.f, 0.0f);
+	vbo_shadowdata[10].Set(-1.0f, 3.0f, 0, 0.0f, 2.f);
+	vbo_shadowdata[11].Set(3.0f, 3.0f, 0, 2.f, 2.f); // Note: not used anymore
 
 	// The next two are the stencil caps.
 	vbo_shadowdata[12].Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);

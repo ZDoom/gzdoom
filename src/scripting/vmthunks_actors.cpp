@@ -1775,6 +1775,7 @@ DEFINE_FIELD_NAMED(AActor, __Pos, pos)
 DEFINE_FIELD_NAMED(AActor, __Pos.X, x)
 DEFINE_FIELD_NAMED(AActor, __Pos.Y, y)
 DEFINE_FIELD_NAMED(AActor, __Pos.Z, z)
+DEFINE_FIELD(AActor, SpriteOffset)
 DEFINE_FIELD(AActor, Prev)
 DEFINE_FIELD(AActor, SpriteAngle)
 DEFINE_FIELD(AActor, SpriteRotation)
@@ -1942,6 +1943,9 @@ DEFINE_FIELD(AActor, RenderRequired)
 DEFINE_FIELD(AActor, friendlyseeblocks)
 DEFINE_FIELD(AActor, SpawnTime)
 DEFINE_FIELD(AActor, InventoryID)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Yaw, viewangle)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Pitch, viewpitch)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Roll, viewroll)
 
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);

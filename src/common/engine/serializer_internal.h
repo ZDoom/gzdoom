@@ -226,15 +226,44 @@ struct FReader
 //==========================================================================
 
 template<class T>
-FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, T *base)
+FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, T *base, const int64_t count)
 {
 	assert(base != nullptr);
+	assert(count > 0);
 	if (arc.isReading() || !arc.w->inObject() || defval == nullptr || value != *defval)
 	{
-		int64_t vv = value == nullptr ? -1 : value - base;
+		int64_t vv = -1;
+		if (value != nullptr)
+		{
+			vv = value - base;
+			if (vv < 0 || vv >= count)
+			{
+				Printf("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli\n", key, vv, count);
+				vv = -1;
+			}
+		}
 		Serialize(arc, key, vv, nullptr);
-		value = vv < 0 ? nullptr : base + vv;
+		if (vv == -1)
+			value = nullptr;
+		else if (vv < 0 || vv >= count)
+		{
+			Printf("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli\n", key, vv, count);
+			value = nullptr;
+		}
+		else
+			value = base + vv;
 	}
 	return arc;
+}
+
+template<class T>
+FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, TArray<T> &array)
+{
+	if (array.Size() == 0)
+	{
+		Printf("Trying to serialize a value with key '%s' from empty array\n", key);
+		return arc;
+	}
+	return SerializePointer(arc, key, value, defval, array.Data(), array.Size());
 }
 

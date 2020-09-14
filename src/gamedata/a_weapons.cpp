@@ -544,6 +544,9 @@ int FWeaponSlots::RestoreSlots(FConfigFile *config, const char *section)
 //
 //===========================================================================
 
+// Strict handling of SetSlot and ClearPlayerClasses in KEYCONF
+CVAR(Bool,setslotstrict,true,CVAR_ARCHIVE);
+
 void FWeaponSlots::PrintSettings()
 {
 	for (int i = 1; i <= NUM_WEAPON_SLOTS; ++i)
@@ -589,7 +592,12 @@ CCMD (setslot)
 	}
 	else if (PlayingKeyConf != nullptr)
 	{
-		PlayingKeyConf->ClearSlot(slot);
+		// Only clear the slot first if setslotstrict is true
+		// If not, we'll just add to the slot without clearing it
+		if(setslotstrict)
+		{
+			PlayingKeyConf->ClearSlot(slot);
+		}
 		for (int i = 2; i < argv.argc(); ++i)
 		{
 			PlayingKeyConf->AddWeapon(slot, argv[i]);

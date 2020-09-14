@@ -30,6 +30,7 @@ struct sfxinfo_t
 	int16_t		NearLimit;				// 0 means unlimited
 	float		LimitRange;				// Range for sound limiting (squared for faster computations)
 	float		DefPitch;				// A defined pitch instead of a random one the sound plays at, similar to A_StartSound.
+	float		DefPitchMax;			// Randomized range with stronger control over pitch itself.
 
 	unsigned		bRandomHeader:1;
 	unsigned		bLoadRAW:1;

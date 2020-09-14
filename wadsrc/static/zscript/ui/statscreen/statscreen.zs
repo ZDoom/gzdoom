@@ -86,7 +86,9 @@ class StatusScreen abstract play version("2.5")
 	int				CurState;				// specifies current CurState
 	wbstartstruct	wbs;				// contains information passed into intermission
 	wbplayerstruct	Plrs[MAXPLAYERS];				// wbs.plyr[]
+	int				otherkills;
 	int				cnt;				// used for general timing
+	int				cnt_otherkills;
 	int				cnt_kills[MAXPLAYERS];
 	int				cnt_items[MAXPLAYERS];
 	int				cnt_secret[MAXPLAYERS];
@@ -509,6 +511,28 @@ class StatusScreen abstract play version("2.5")
 
 	//====================================================================
 	//
+	// Display the completed time scaled
+	//
+	//====================================================================
+
+	void drawTimeScaled (Font fnt, int x, int y, int t, double scale, int color = Font.CR_UNTRANSLATED)
+	{
+		if (t < 0)
+			return;
+
+		int hours = t / 3600;
+		t -= hours * 3600;
+		int minutes = t / 60;
+		t -= minutes * 60;
+		int seconds = t;
+
+		String s = (hours > 0 ? String.Format("%d:", hours) : "") .. String.Format("%02d:%02d", minutes, seconds);
+
+		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, color);
+	}
+
+	//====================================================================
+	//
 	// Display level completion time and par, or "sucks" message if overflow.
 	//
 	//====================================================================
@@ -842,7 +866,12 @@ class StatusScreen abstract play version("2.5")
 		acceleratestage = 0;
 		cnt = bcnt = 0;
 		me = wbs.pnum;
-		for (int i = 0; i < MAXPLAYERS; i++) Plrs[i] = wbs.plyr[i];
+		otherkills = wbs.totalkills;
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			Plrs[i] = wbs.plyr[i];
+			otherkills -= Plrs[i].skills;
+		}
 		
 		entering.Init(gameinfo.mStatscreenEnteringFont);
 		finished.Init(gameinfo.mStatscreenFinishedFont);

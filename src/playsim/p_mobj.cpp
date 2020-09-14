@@ -2359,7 +2359,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	{
 		damage = int((vel - 23)*6);
 	}
-	if (!(mo->Level->flags3 & LEVEL3_PROPERMONSTERDAMAGE)) damage = TELEFRAG_DAMAGE;
+	if (!(mo->Level->flags3 & LEVEL3_PROPERMONSTERFALLINGDAMAGE)) damage = TELEFRAG_DAMAGE;
 	P_DamageMobj (mo, NULL, NULL, damage, NAME_Falling);
 }
 

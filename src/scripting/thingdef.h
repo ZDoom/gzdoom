@@ -324,7 +324,7 @@ int MatchString (const char *in, const char **strings);
 #define PROP_DOUBLE_PARM(var, no) \
 	double var = params[(no)+1].d;
 
-#define PROP_COLOR_PARM(var, no) \
-	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
+#define PROP_COLOR_PARM(var, no, scriptpos) \
+	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s, scriptpos);
 
 #endif

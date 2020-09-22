@@ -6435,7 +6435,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 			}
 			else
 			{
-				P_ExplodeMissile (th, NULL, th->BlockingMobj);
+				P_ExplodeMissile (th, th->BlockingLine, th->BlockingMobj);
 			}
 			return false;
 		}

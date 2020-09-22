@@ -371,6 +371,9 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	float sdelta, vdelta;
 	float range;
 
+	if (alttable) alttable->MakeIdentity();
+	if (pillartable) pillartable->MakeIdentity();
+
 	// Set up the base translation for this skin. If the skin was created
 	// for the current game, then this is just an identity translation.
 	// Otherwise, it remaps the colors from the skin's original palette to

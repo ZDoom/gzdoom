@@ -61,6 +61,7 @@ CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_noautostartmap, false, CVAR_USERINFO | CVAR_ARCHIVE)
 CVAR(Int, wi_autoadvance, 0, CVAR_SERVERINFO)
+EXTERN_CVAR(Bool, inter_classic_scaling)
 
 // States for the intermission
 enum EState
@@ -606,7 +607,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		}
 		else
 		{
-			twod->AddFlatFill(0, 0, twod->GetWidth(), twod->GetHeight(), background);
+			twod->AddFlatFill(0, 0, twod->GetWidth(), twod->GetHeight(), background, (inter_classic_scaling ? -1 : 0));
 		}
 	}
 	else

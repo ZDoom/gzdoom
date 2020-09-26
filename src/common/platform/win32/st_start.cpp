@@ -52,6 +52,7 @@
 #include "printf.h"
 #include "startupinfo.h"
 #include "i_interface.h"
+#include "texturemanager.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -607,6 +608,7 @@ int RunEndoom()
 
 void ST_Endoom()
 {
+	TexMan.DeleteAll();
 	int code = RunEndoom();
 	throw CExitEvent(code);
 

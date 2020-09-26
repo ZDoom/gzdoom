@@ -821,6 +821,8 @@ enum EButtons
 	BT_USER2		= 1<<22,
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
+
+	BT_RUN			= 1<<25,
 };
 
 // Flags for GetAngle

@@ -691,6 +691,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (buttonMap.ButtonDown(Button_MoveDown))		cmd->ucmd.buttons |= BT_MOVEDOWN;
 	if (buttonMap.ButtonDown(Button_MoveUp))		cmd->ucmd.buttons |= BT_MOVEUP;
 	if (buttonMap.ButtonDown(Button_ShowScores))	cmd->ucmd.buttons |= BT_SHOWSCORES;
+	if (speed) cmd->ucmd.buttons |= BT_RUN;
 
 	// Handle joysticks/game controllers.
 	float joyaxes[NUM_JOYAXIS];

@@ -371,7 +371,7 @@ void AActor::Serialize(FSerializer &arc)
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);
-
+		if (arc.isReading()) flags8 &= ~MF8_LINKEDTOWORLD;
 }
 
 #undef A

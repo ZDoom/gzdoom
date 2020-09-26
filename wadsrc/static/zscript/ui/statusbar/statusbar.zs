@@ -933,7 +933,7 @@ class BaseStatusBar native ui
 		
 		if((flags & DI_ARTIFLASH) && artiflashTick > 0)
 		{
-			DrawImage(flashimgs[artiflashTick-1], pos, flags | DI_TRANSLATABLE, alpha, boxsize);
+			DrawImage(flashimgs[artiflashTick-1], pos, flags, alpha, boxsize);
 		}
 		else if (texture.IsValid())
 		{

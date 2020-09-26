@@ -2928,6 +2928,7 @@ static void CheckForHacks(BuildInfo& buildinfo)
 	{ 
 		// This must alter the size of both the texture image and the game texture.
 		buildinfo.Height = buildinfo.Parts[0].TexImage->GetImage()->GetHeight();
+		buildinfo.texture->SetSize(buildinfo.Width, buildinfo.Height);
 		return;
 	}
 

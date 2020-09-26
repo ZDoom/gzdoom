@@ -474,7 +474,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 			continue;
 
 		// Don't let players and monsters block item teleports (all other actor types will still block.)
-		if (thing->IsKindOf(NAME_Inventory) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
+		if ((thing->IsKindOf(NAME_Inventory) || (thing->flags2 & MF2_TELESTOMP)) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
 			continue;
 
 		// monsters don't stomp things except on boss level

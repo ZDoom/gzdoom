@@ -1,3 +1,6 @@
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
+
 # Locate SDL2 library
 # This module defines
 # SDL2_LIBRARY, the name of the library to link against
@@ -56,19 +59,6 @@
 # module with the minor edit of changing "SDL" to "SDL2" where necessary. This
 # was not created for redistribution, and exists temporarily pending official
 # SDL2 CMake modules.
-
-#=============================================================================
-# Copyright 2003-2009 Kitware, Inc.
-#
-# Distributed under the OSI-approved BSD License (the "License");
-# see accompanying file Copyright.txt for details.
-#
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
-#=============================================================================
-# (To distribute this file outside of CMake, substitute the full
-#  License text for the above reference.)
 
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
   HINTS

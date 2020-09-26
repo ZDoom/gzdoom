@@ -804,6 +804,7 @@ struct LevelLocals native
 
 	native void ExitLevel(int position, bool keepFacing);
 	native void SecretExitLevel(int position);
+	native void ChangeLevel(string levelname, int position = 0, int flags = 0, int skill = -1);
 }
 
 struct StringTable native

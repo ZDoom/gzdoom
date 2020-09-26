@@ -371,6 +371,9 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	float sdelta, vdelta;
 	float range;
 
+	if (alttable) alttable->MakeIdentity();
+	if (pillartable) pillartable->MakeIdentity();
+
 	// Set up the base translation for this skin. If the skin was created
 	// for the current game, then this is just an identity translation.
 	// Otherwise, it remaps the colors from the skin's original palette to
@@ -471,21 +474,6 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 			HSVtoRGB (&r, &g, &b, h, s, v);
 			SetRemap(table, i, r, g, b);
 		}
-
-		// Build rain/lifegem translation
-		if (alttable)
-		{
-			bases = MIN (bases*1.3f, 1.f);
-			basev = MIN (basev*1.3f, 1.f);
-			for (i = 145; i <= 168; i++)
-			{
-				s = MIN (bases, 0.8965f - 0.0962f*(float)(i - 161));
-				v = MIN (1.f, (0.2102f + 0.0489f*(float)(i - 144)) * basev);
-				HSVtoRGB (&r, &g, &b, h, s, v);
-				SetRemap(alttable, i, r, g, b);
-				SetPillarRemap(pillartable, i, h, s, v);
-			}
-		}
 	}
 	else if (gameinfo.gametype == GAME_Hexen)
 	{
@@ -519,30 +507,50 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 			}
 		}
 	}
-	if (gameinfo.gametype == GAME_Hexen && alttable != NULL)
-	{
-		// Build Hexen's lifegem translation.
-		
-		// Is the player's translation range the same as the gem's and we are using a
-		// predefined translation? If so, then use the same one for the gem. Otherwise,
-		// build one as per usual.
-		if (colorset != NULL && start == 164 && end == 185)
-		{
-			*alttable = *table;
-		}
-		else
-		{
-			for (i = 164; i <= 185; ++i)
-			{
-				const PalEntry *base = &GPalette.BaseColors[i];
-				float dummy;
 
-				RGBtoHSV (base->r/255.f, base->g/255.f, base->b/255.f, &dummy, &s, &v);
-				HSVtoRGB (&r, &g, &b, h, s*bases, v*basev);
+	if (alttable != NULL)
+	{
+		if (gameinfo.gametype == GAME_Heretic)
+		{
+			// Build rain/lifegem translation
+			bases = MIN(bases * 1.3f, 1.f);
+			basev = MIN(basev * 1.3f, 1.f);
+			for (i = 145; i <= 168; i++)
+			{
+				s = MIN(bases, 0.8965f - 0.0962f * (float)(i - 161));
+				v = MIN(1.f, (0.2102f + 0.0489f * (float)(i - 144)) * basev);
+				HSVtoRGB(&r, &g, &b, h, s, v);
 				SetRemap(alttable, i, r, g, b);
+				SetPillarRemap(pillartable, i, h, s, v);
+			}
+		}
+		else if (gameinfo.gametype == GAME_Hexen)
+		{
+			// Build Hexen's lifegem translation.
+
+			// Is the player's translation range the same as the gem's and we are using a
+			// predefined translation? If so, then use the same one for the gem. Otherwise,
+			// build one as per usual.
+			if (colorset != NULL && start == 164 && end == 185)
+			{
+				*alttable = *table;
+			}
+			else
+			{
+				for (i = 164; i <= 185; ++i)
+				{
+					const PalEntry* base = &GPalette.BaseColors[i];
+					float dummy;
+
+					RGBtoHSV(base->r / 255.f, base->g / 255.f, base->b / 255.f, &dummy, &s, &v);
+					HSVtoRGB(&r, &g, &b, h, s * bases, v * basev);
+					SetRemap(alttable, i, r, g, b);
+				}
 			}
 		}
 	}
+		
+	
  }
 
 //----------------------------------------------------------------------------

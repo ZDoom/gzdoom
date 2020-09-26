@@ -371,7 +371,7 @@ void AActor::Serialize(FSerializer &arc)
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);
-
+		if (arc.isReading()) flags8 &= ~MF8_LINKEDTOWORLD;
 }
 
 #undef A
@@ -2345,7 +2345,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	int damage;
 	double vel;
 
-	if (!(mo->Level->flags2 & LEVEL2_MONSTERFALLINGDAMAGE))
+	if (!(mo->Level->flags2 & LEVEL2_MONSTERFALLINGDAMAGE) && !(mo->flags8 & MF8_FALLDAMAGE))
 		return;
 	if (mo->floorsector->Flags & SECF_NOFALLINGDAMAGE)
 		return;
@@ -2359,7 +2359,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	{
 		damage = int((vel - 23)*6);
 	}
-	damage = TELEFRAG_DAMAGE;	// always kill 'em
+	if (!(mo->Level->flags3 & LEVEL3_PROPERMONSTERFALLINGDAMAGE)) damage = TELEFRAG_DAMAGE;
 	P_DamageMobj (mo, NULL, NULL, damage, NAME_Falling);
 }
 
@@ -6435,7 +6435,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 			}
 			else
 			{
-				P_ExplodeMissile (th, NULL, th->BlockingMobj);
+				P_ExplodeMissile (th, th->BlockingLine, th->BlockingMobj);
 			}
 			return false;
 		}

@@ -654,7 +654,8 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 		nextlevel = levelname;
 	}
 
-	NextSkill = (unsigned)nextSkill < AllSkills.Size() ? nextSkill : -1;
+	if (nextSkill != -1)
+		NextSkill = (unsigned)nextSkill < AllSkills.Size() ? nextSkill : -1;
 
 	if (inflags & CHANGELEVEL_NOINTERMISSION)
 	{
@@ -736,6 +737,17 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	// Set global transition state.
 	gameaction = ga_completed;
 	::nextlevel = nextlevel;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeLevel)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_STRING(levelname);
+	PARAM_INT(position);
+	PARAM_INT(inflags);
+	PARAM_INT(nextSkill);
+	self->ChangeLevel(levelname, position, inflags, nextSkill);
+	return 0;
 }
 
 //==========================================================================

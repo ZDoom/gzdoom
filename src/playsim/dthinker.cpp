@@ -82,7 +82,7 @@ void FThinkerCollection::Link(DThinker *thinker, int statnum)
 	}
 	else
 	{
-		thinker->ObjectFlags &= ~OF_JustSpawned;
+		if (statnum != STAT_TRAVELLING) thinker->ObjectFlags &= ~OF_JustSpawned;
 		list = &Thinkers[statnum];
 	}
 	list->AddTail(thinker);

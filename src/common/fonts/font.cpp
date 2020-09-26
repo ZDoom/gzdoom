@@ -214,8 +214,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					  // Because a lot of wads with their own font seem to foolishly
 					  // copy STCFN121 and make it a '|' themselves, wads must
 					  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-						FStringf c120("%s120", nametemplate);
-						FStringf c122("%s122", nametemplate);
+						FStringf c120(nametemplate, 120);
+						FStringf c122(nametemplate, 122);
 						if (!TexMan.CheckForTexture(c120, ETextureType::MiscPatch).isValid() ||
 							!TexMan.CheckForTexture(c122, ETextureType::MiscPatch).isValid())
 						{

@@ -47,9 +47,9 @@ public:
 	}
 
 	// This only gets used in UI code so we do not need PALVERS handling.
-	FGameTexture* GetGameTextureByName(const char *name, bool animate = false)
+	FGameTexture* GetGameTextureByName(const char *name, bool animate = false, int flags = 0)
 	{
-		FTextureID texnum = GetTextureID(name, ETextureType::MiscPatch);
+		FTextureID texnum = GetTextureID(name, ETextureType::MiscPatch, flags);
 		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
 
@@ -88,7 +88,8 @@ public:
 		TEXMAN_AllowSkins = 8,
 		TEXMAN_ShortNameOnly = 16,
 		TEXMAN_DontCreate = 32,
-		TEXMAN_Localize = 64
+		TEXMAN_Localize = 64,
+		TEXMAN_ForceLookup = 128
 	};
 
 	enum

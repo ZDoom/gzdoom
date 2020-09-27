@@ -29,6 +29,7 @@ class AnimTextures
 public:
 	AnimTextures();
 	~AnimTextures();
+	void Clean();
 	void SetSize(int format, int width, int height);
 	void SetFrame(const uint8_t* palette, const void* data);
 	FGameTexture* GetFrame()

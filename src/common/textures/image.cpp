@@ -331,6 +331,7 @@ FImageSource *DDSImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PCXImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *TGAImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *StbImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *AnmImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *RawPageImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *FlatImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PatchImage_TryCreate(FileReader &, int lumpnum);
@@ -350,6 +351,7 @@ FImageSource * FImageSource::GetImage(int lumpnum, bool isflat)
 		{ PCXImage_TryCreate,			false },
 		{ StbImage_TryCreate,			false },
 		{ TGAImage_TryCreate,			false },
+		{ AnmImage_TryCreate,			false },
 		{ RawPageImage_TryCreate,		false },
 		{ FlatImage_TryCreate,			true },	// flat detection is not reliable, so only consider this for real flats.
 		{ PatchImage_TryCreate,			false },

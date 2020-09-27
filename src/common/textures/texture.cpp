@@ -528,17 +528,15 @@ outl:
 
 IHardwareTexture* FTexture::GetHardwareTexture(int translation, int scaleflags)
 {
-	//if (UseType != ETextureType::Null)
+	int indexed = scaleflags & CTF_Indexed;
+	if (indexed) translation = -1;
+	IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, scaleflags);
+	if (hwtex == nullptr)
 	{
-		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, scaleflags);
-		if (hwtex == nullptr)
-	{
-			hwtex = screen->CreateHardwareTexture(4);
-			SystemTextures.AddHardwareTexture(translation, scaleflags, hwtex);
+		hwtex = screen->CreateHardwareTexture(indexed? 1 : 4);
+		SystemTextures.AddHardwareTexture(translation, scaleflags, hwtex);
 	}
-		return hwtex;
-	}
-	return nullptr;
+	return hwtex;
 }
 
 

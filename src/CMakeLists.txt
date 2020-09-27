@@ -1041,6 +1041,7 @@ set (PCH_SOURCES
 	common/textures/skyboxtexture.cpp
 	common/textures/animtexture.cpp
 	common/textures/v_collection.cpp
+	common/textures/animlib.cpp
 	common/textures/formats/automaptexture.cpp
 	common/textures/formats/brightmaptexture.cpp
 	common/textures/formats/buildtexture.cpp
@@ -1059,6 +1060,7 @@ set (PCH_SOURCES
 	common/textures/formats/shadertexture.cpp
 	common/textures/formats/tgatexture.cpp
 	common/textures/formats/stbtexture.cpp
+	common/textures/formats/anmtexture.cpp
 	common/textures/hires/hqresize.cpp
 	common/models/models_md3.cpp
 	common/models/models_md2.cpp

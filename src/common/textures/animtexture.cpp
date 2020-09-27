@@ -44,17 +44,44 @@
 
 void AnimTexture::SetFrameSize(int  format, int width, int height)
 {
+    pixelformat = format;
     FTexture::SetSize(width, height);
     Image.Resize(width * height * (format == Paletted ? 1 : 3));
-    pixelformat = format;
+    memset(Image.Data(), 0, Image.Size());
+    CleanHardwareTextures();
 }
 
 void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 {
-    memcpy(Palette, palette, 768);
-    memcpy(Image.Data(), data_, Width * Height * (pixelformat == Paletted ? 1 : 3));
+    if (palette) memcpy(Palette, palette, 768);
+    if (data_)
+    {
+        if (pixelformat == YUV)
+        {
+            auto spix = (const uint8_t*)data_;
+            auto dpix = Image.Data();
+            for (int i = 0; i < Width * Height; i++)
+             {
+                int p = i * 4;
+                int q = i * 3;
+                float y = spix[p] * (1 / 255.f);
+                float u = spix[p + 1] * (1 / 255.f) - 0.5f;
+                float v = spix[p + 2] * (1 / 255.f) - 0.5f;
+
+                y = 1.1643f * (y - 0.0625f);
+
+                float r = y + 1.5958f * v;
+                float g = y - 0.39173f * u - 0.81290f * v;
+                float b = y + 2.017f * u;
+
+                dpix[q + 0] = (uint8_t)(clamp(r, 0.f, 1.f) * 255);
+                dpix[q + 1] = (uint8_t)(clamp(g, 0.f, 1.f) * 255);
+                dpix[q + 2] = (uint8_t)(clamp(b, 0.f, 1.f) * 255);
+            }
+        }
+        else memcpy(Image.Data(), data_, Width * Height * (pixelformat == Paletted ? 1 : 3));
+    }
     CleanHardwareTextures();
-    pixelformat = Paletted;
 }
 
 //===========================================================================
@@ -83,39 +110,17 @@ FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
             dpix[p + 3] = 255;
         }
     }
-    else if (pixelformat == RGB)
+    else if (pixelformat == RGB || pixelformat == YUV)
     {
         for (int i = 0; i < Width * Height; i++)
         {
             int p = i * 4;
-            dpix[p + 0] = spix[p + 2];
-            dpix[p + 1] = spix[p + 1];
-            dpix[p + 2] = spix[p];
+            int q = i * 3;
+            dpix[p + 0] = spix[q + 2];
+            dpix[p + 1] = spix[q + 1];
+            dpix[p + 2] = spix[q];
             dpix[p + 3] = 255;
         }
-    }
-    else if (pixelformat == YUV)
-    {
-        for (int i = 0; i < Width * Height; i++)
-        {
-            int p = i * 4;
-            float y = spix[p] * (1 / 255.f);
-            float u = spix[p + 1] * (1 / 255.f) - 0.5f;
-            float v = spix[p + 2] * (1 / 255.f) - 0.5f;
-
-            y = 1.1643f * (y - 0.0625f);
-
-            float r = y + 1.5958f * v;
-            float g = y - 0.39173f * u - 0.81290f * v;
-            float b = y + 2.017f * u;
-
-            dpix[p + 0] = (uint8_t)(clamp(b, 0.f, 1.f) * 255);
-            dpix[p + 1] = (uint8_t)(clamp(g, 0.f, 1.f) * 255);
-            dpix[p + 2] = (uint8_t)(clamp(r, 0.f, 1.f) * 255);
-            dpix[p + 3] = 255;
-        }
-        return bmp;
-
     }
     return bmp;
 }
@@ -135,8 +140,14 @@ AnimTextures::AnimTextures()
 
 AnimTextures::~AnimTextures()
 {
-    tex[0]->CleanHardwareData(true);
-    tex[1]->CleanHardwareData(true);
+    Clean();
+}
+
+void AnimTextures::Clean()
+{
+    if (tex[0]) tex[0]->CleanHardwareData(true);
+    if (tex[1]) tex[1]->CleanHardwareData(true);
+    tex[0] = tex[1] = nullptr;
 }
 
 void AnimTextures::SetSize(int format, int width, int height)

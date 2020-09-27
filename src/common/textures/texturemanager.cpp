@@ -240,7 +240,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 	{
 		// We intentionally only look for textures in subdirectories.
 		// Any graphic being placed in the zip's root directory can not be found by this.
-		if (strchr(name, '/'))
+		if (strchr(name, '/') || (flags & TEXMAN_ForceLookup))
 		{
 			FGameTexture *const NO_TEXTURE = (FGameTexture*)-1;
 			int lump = fileSystem.CheckNumForFullName(name);

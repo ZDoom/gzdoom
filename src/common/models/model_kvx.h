@@ -56,13 +56,13 @@ protected:
 public:
 	FVoxelModel(FVoxel *voxel, bool owned);
 	~FVoxelModel();
-	bool Load(const char * fn, int lumpnum, const char * buffer, int length);
+	bool Load(const char * fn, int lumpnum, const char * buffer, int length) override;
 	void Initialize();
-	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0);
-	virtual void AddSkins(uint8_t *hitlist);
+	virtual int FindFrame(const char * name) override;
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0) override;
+	virtual void AddSkins(uint8_t *hitlist) override;
 	FTextureID GetPaletteTexture() const { return mPalette; }
-	void BuildVertexBuffer(FModelRenderer *renderer);
+	void BuildVertexBuffer(FModelRenderer *renderer) override;
 	float getAspectFactor(float vscale) override;
 };
 

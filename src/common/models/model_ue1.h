@@ -13,7 +13,7 @@ public:
 		PT_TwoSided = 1,	// like normal, but don't cull backfaces
 		PT_Translucent = 2,	// additive blending
 		PT_Masked = 3,		// draw with alpha testing
-		PT_Modulated = 4,	// modulated blending (src*dest*2)
+		PT_Modulated = 4,	// overlay-like blending (rgb values below 128 darken, 128 is unchanged, and above 128 lighten)
 		// types mask
 		PT_Type = 7,
 		// flags

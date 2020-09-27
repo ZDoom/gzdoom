@@ -286,12 +286,6 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 void AActor::UnlinkFromWorld (FLinkContext *ctx)
 {
 	if (ctx != nullptr) ctx->sector_list = nullptr;
-	if (!(flags8 & MF8_LINKEDTOWORLD))
-	{
-		//assert(false);
-		return;
-	}
-	flags8 &= ~MF8_LINKEDTOWORLD;
 	if (!(flags & MF_NOSECTOR))
 	{
 		// invisible things don't need to be in sector list
@@ -449,12 +443,6 @@ bool AActor::FixMapthingPos()
 
 void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sector)
 {
-	if (flags8 & MF8_LINKEDTOWORLD) 
-	{
-		//assert(false);
-		return;
-	}
-
 	bool spawning = spawningmapthing;
 
 	if (spawning)
@@ -480,7 +468,6 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 	Sector = sector;
 	subsector = Level->PointInRenderSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
 	section = subsector->section;
-	flags8 |= MF8_LINKEDTOWORLD;
 
 	if (!(flags & MF_NOSECTOR))
 	{

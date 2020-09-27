@@ -163,7 +163,7 @@ uint8_t TransmitBuffer[TRANSMIT_SIZE];
 FString GetPlayerName(int num)
 {
 	if (sysCallbacks && sysCallbacks->GetPlayerName) return sysCallbacks->GetPlayerName(sendplayer[num]);
-	else return FStringf("Player %d", num + 1);
+	else return FStringf("Player %d", sendplayer[num] + 1);
 }
 
 //

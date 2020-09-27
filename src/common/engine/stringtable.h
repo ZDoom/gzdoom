@@ -110,6 +110,8 @@ public:
 	bool exists(const char *name);
 	void SetCallbacks(StringtableCallbacks* cb) { callbacks = cb; }
 
+	void InsertString(int lumpnum, int langid, FName label, const FString& string);
+
 private:
 
 	FString activeLanguage;
@@ -124,7 +126,6 @@ private:
 
 	bool LoadLanguageFromSpreadsheet(int lumpnum, const TArray<uint8_t> &buffer);
 	bool readMacros(int lumpnum);
-	void InsertString(int lumpnum, int langid, FName label, const FString &string);
 	void DeleteString(int langid, FName label);
 	void DeleteForLabel(int lumpnum, FName label);
 

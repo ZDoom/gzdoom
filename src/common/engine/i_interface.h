@@ -18,6 +18,7 @@ struct SystemCallbacks
 	IntRect(*GetSceneRect)();
 	FString(*GetLocationDescription)();
 	void (*MenuDim)();
+	FString(*GetPlayerName)(int i);
 };
 
 extern SystemCallbacks *sysCallbacks;

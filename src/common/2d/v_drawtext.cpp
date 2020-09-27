@@ -262,7 +262,7 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 	double scaley = parms.scaley * parms.patchscaley;
 
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
-	parms.celly *= scaley;
+	parms.celly = int (parms.celly * scaley);
 
 	bool palettetrans = (normalcolor == CR_UNDEFINED && parms.TranslationId != 0);
 

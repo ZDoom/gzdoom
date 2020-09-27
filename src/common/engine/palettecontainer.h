@@ -36,6 +36,7 @@ struct FRemapTable
 	bool Inactive = false;				// This table is inactive and should be treated as if it was passed as NULL
 	bool TwodOnly = false;				// Only used for 2D rendering 
 	bool ForFont = false;				// Mark font translations because they may require different handling than the ones for sprites-
+	bool NoTransparency = false;		// This palette has no transparent index and must be excluded from all treatment for that.
 
 private:
 };
@@ -58,19 +59,22 @@ private:
 };
 
 
-#define TRANSLATION_SHIFT 16
-#define TRANSLATION_MASK ((1<<TRANSLATION_SHIFT)-1)
-#define TRANSLATIONTYPE_MASK (255<<TRANSLATION_SHIFT)
+enum
+{
+	TRANSLATION_SHIFT = 16,
+	TRANSLATION_MASK = ((1 << TRANSLATION_SHIFT) - 1),
+	TRANSLATIONTYPE_MASK = (255 << TRANSLATION_SHIFT)
+};
 
-inline uint32_t TRANSLATION(uint8_t a, uint32_t b)
+inline constexpr uint32_t TRANSLATION(uint8_t a, uint32_t b)
 {
 	return (a << TRANSLATION_SHIFT) | b;
 }
-inline int GetTranslationType(uint32_t trans)
+inline constexpr int GetTranslationType(uint32_t trans)
 {
 	return (trans & TRANSLATIONTYPE_MASK) >> TRANSLATION_SHIFT;
 }
-inline int GetTranslationIndex(uint32_t trans)
+inline constexpr int GetTranslationIndex(uint32_t trans)
 {
 	return (trans & TRANSLATION_MASK);
 }

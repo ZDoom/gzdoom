@@ -1091,6 +1091,7 @@ set (PCH_SOURCES
 	common/utility/zstrformat.cpp
 	common/utility/name.cpp
 	common/utility/r_memory.cpp
+	common/thirdparty/base64.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp
 	common/filesystem/filesystem.cpp

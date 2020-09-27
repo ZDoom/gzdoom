@@ -41,6 +41,7 @@
 #include "utf8.h"
 #include "m_joy.h"
 #include "vm.h"
+#include "gamestate.h"
 
 bool G_Responder(event_t* ev);
 
@@ -69,6 +70,8 @@ void D_ProcessEvents (void)
 			continue;
 		if (ev->type == EV_DeviceChange)
 			UpdateJoystickMenu(I_UpdateDeviceList());
+		if (gamestate == GS_INTRO)
+			continue;
 		if (C_Responder (ev))
 			continue;				// console ate the event
 		if (M_Responder (ev))

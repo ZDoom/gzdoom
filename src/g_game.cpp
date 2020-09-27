@@ -155,13 +155,10 @@ bool 			noblit; 				// for comparative timing purposes
 
 bool	 		viewactive;
 
-bool 			netgame;				// only true if packets are broadcast 
-bool			multiplayer;
 bool			multiplayernext = false;		// [SP] Map coop/dm implementation
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
-int 			consoleplayer;			// player taking events
 int 			gametic;
 
 time_t 			epochoffset = 0;		// epoch start in seconds (0 = January 1st, 1970)

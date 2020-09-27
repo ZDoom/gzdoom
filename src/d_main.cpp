@@ -2830,6 +2830,10 @@ FString System_GetLocationDescription()
 
 }
 
+FString System_GetPlayerName(int node)
+{
+	return players[node].userinfo.GetName();
+}
 //==========================================================================
 //
 // DoomSpecificInfo
@@ -3071,6 +3075,7 @@ static int D_DoomMain_Internal (void)
 		System_GetSceneRect,
 		System_GetLocationDescription,
 		System_M_Dim,
+		System_GetPlayerName,
 	};
 	sysCallbacks = &syscb;
 	

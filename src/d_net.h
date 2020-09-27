@@ -31,67 +31,7 @@
 #include "doomtype.h"
 #include "doomdef.h"
 #include "d_protocol.h"
-
-
-//
-// Network play related stuff.
-// There is a data struct that stores network
-//	communication related stuff, and another
-//	one that defines the actual packets to
-//	be transmitted.
-//
-
-#define DOOMCOM_ID		0x12345678l
-#define MAXNETNODES		8	// max computers in a game
-#define BACKUPTICS		36	// number of tics to remember
-#define MAXTICDUP		5
-#define LOCALCMDTICS	(BACKUPTICS*MAXTICDUP)
-
-
-#ifdef DJGPP
-// The DOS drivers provide a pretty skimpy buffer.
-// Probably not enough.
-#define MAX_MSGLEN		(BACKUPTICS*10)
-#else
-#define MAX_MSGLEN		14000
-#endif
-
-#define CMD_SEND	1
-#define CMD_GET		2
-
-//
-// Network packet data.
-//
-struct doomcom_t
-{
-	uint32_t	id;				// should be DOOMCOM_ID
-	int16_t	intnum;			// DOOM executes an int to execute commands
-
-// communication between DOOM and the driver
-	int16_t	command;		// CMD_SEND or CMD_GET
-	int16_t	remotenode;		// dest for send, set by get (-1 = no packet).
-	int16_t	datalength;		// bytes in doomdata to be sent
-
-// info common to all nodes
-	int16_t	numnodes;		// console is always node 0.
-	int16_t	ticdup;			// 1 = no duplication, 2-5 = dup for slow nets
-#ifdef DJGPP
-	int16_t	pad[5];			// keep things aligned for DOS drivers
-#endif
-
-// info specific to this node
-	int16_t	consoleplayer;
-	int16_t	numplayers;
-#ifdef DJGPP
-	int16_t	angleoffset;	// does not work, but needed to preserve
-	int16_t	drone;			// alignment for DOS drivers
-#endif
-
-// packet data to be sent
-	uint8_t	data[MAX_MSGLEN];
-	
-};
-
+#include "i_net.h"
 
 class FDynamicBuffer
 {

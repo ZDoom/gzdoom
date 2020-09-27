@@ -84,6 +84,7 @@ public:
 		DTF_Wrap = 1,
 		DTF_Scissor = 2,
         DTF_Burn = 4,
+		DTF_Indexed = 8,
 	};
 
 
@@ -164,6 +165,8 @@ public:
 	TArray<RenderCommand> mData;
 	int Width, Height;
 	bool isIn2D;
+	bool locked;	// prevents clearing of the data so it can be reused multiple times (useful for screen fades)
+	float screenFade = 1.f;
 public:
 	int fullscreenautoaspect = 0;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
@@ -186,7 +189,7 @@ public:
 	void AddPoly(FGameTexture* img, FVector4 *vt, size_t vtcount, unsigned int *ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2);
 	void FillPolygon(int* rx1, int* ry1, int* xb1, int32_t npoints, int picnum, int palette, int shade, int props, const FVector2& xtex, const FVector2& ytex, const FVector2& otex,
 		int clipx1, int clipy1, int clipx2, int clipy2);
-	void AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin = false, double flatscale = 1.0);
+	void AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin = false, double flatscale = 1.0, PalEntry color = 0xffffffff);
 
 	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style = nullptr, bool prepend = false);
 	void ClearScreen(PalEntry color = 0xff000000);
@@ -199,6 +202,9 @@ public:
 	void AddPixel(int x1, int y1, uint32_t color);
 
 	void Clear();
+	void Lock() { locked = true; }
+	void SetScreenFade(float factor) { screenFade = factor; }
+	void Unlock() { locked = false; }
 	int GetWidth() const { return Width; }
 	int GetHeight() const { return Height; }
 	void SetSize(int w, int h) { Width = w; Height = h; }
@@ -209,6 +215,11 @@ public:
 	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
 	void SetClipRect(int x, int y, int w, int h);
 	void GetClipRect(int* x, int* y, int* w, int* h);
+
+	int DrawCount() const
+	{
+		return mData.Size();
+	}
 
 	bool mIsFirstPass = true;
 };

@@ -195,6 +195,20 @@ enum DrawTextureTags
 	DTA_FullscreenEx,		// advanced fullscreen control.
 	DTA_FullscreenScale,	// enable DTA_Fullscreen coordinate calculation for placed overlays.
 
+	DTA_ScaleX,
+	DTA_ScaleY,
+
+	DTA_ViewportX,			// Defines the viewport on the screen that should be rendered to.
+	DTA_ViewportY,
+	DTA_ViewportWidth,
+	DTA_ViewportHeight,
+	DTA_CenterOffsetRel,	// Apply texture offsets relative to center, instead of top left. This is standard alignment for Build's 2D content.
+	DTA_TopLeft,			// always align to top left. Added to have a boolean condition for this alignment.
+	DTA_Pin,				// Pin a non-widescreen image to the left/right edge of the screen.
+	DTA_Rotate,
+	DTA_FlipOffsets,		// Flips offsets when using DTA_FlipX and DTA_FlipY, this cannot be automatic due to unexpected behavior with unoffsetted graphics.
+	DTA_Indexed,			// Use an indexed texture combined with the given translation.
+
 };
 
 class Shape2DTransform : Object native

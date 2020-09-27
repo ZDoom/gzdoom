@@ -55,6 +55,7 @@
 #include "texturemanager.h"
 #include "v_draw.h"
 #include "doommenu.h"
+#include "sbar.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 

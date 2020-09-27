@@ -3805,7 +3805,7 @@ void I_UpdateWindowTitle()
 	switch (I_FriendlyWindowTitle)
 	{
 	case 1:
-		if (level.LevelName && level.LevelName.GetChars()[0])
+		if (level.LevelName.IsNotEmpty())
 		{
 			titlestr.Format("%s - %s", level.LevelName.GetChars(), GameStartupInfo.Name.GetChars());
 			break;

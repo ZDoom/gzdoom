@@ -450,7 +450,7 @@ void FStringTable::InsertString(int lumpnum, int langid, FName label, const FStr
 		auto replace = allMacros.CheckKey(lookupname);
 		for (int i = 0; i < 4; i++)
 		{
-			const char *replacement = replace && replace->Replacements[i] ? replace->Replacements[i].GetChars() : "";
+			const char *replacement = replace? replace->Replacements[i].GetChars() : "";
 			te.strings[i].Substitute(replacee, replacement);
 		}
 	}

@@ -2375,7 +2375,7 @@ static int DoInclude (int dummy)
 
 		// Try looking for the included file in the same directory
 		// as the patch before looking in the current file.
-		const char *lastSlash = savepatchname ? strrchr (savepatchname, '/') : NULL;
+		const char *lastSlash = strrchr(savepatchname, '/');
 		char *path = data;
 
 		if (lastSlash != NULL)

@@ -593,6 +593,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		chan->Priority = basepriority;
 		chan->DistanceScale = float(attenuation);
 		chan->SourceType = type;
+		chan->UserData = 0;
 		if (type == SOURCE_Unattached)
 		{
 			chan->Point[0] = pt->X; chan->Point[1] = pt->Y; chan->Point[2] = pt->Z;
@@ -1093,6 +1094,16 @@ int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int so
 			}
 		}
 	}
+	else
+	{
+		for (FSoundChan* chan = Channels; chan != NULL; chan = chan->NextChan)
+		{
+			if ((sourcetype == SOURCE_Any || (chan->SourceType == sourcetype &&	chan->Source == source)))
+			{
+				count++;
+			}
+		}
+	}
 	return count;
 }
 
@@ -1346,13 +1357,29 @@ void SoundEngine::ChannelEnded(FISoundChannel *ichan)
 		}
 		if (!evicted)
 		{
-			ReturnChannel(schan);
+			schan->ChanFlags &= ~CHANF_EVICTED;
 		}
 		else
 		{
 			schan->ChanFlags |= CHANF_EVICTED;
 			schan->SysChannel = NULL;
 		}
+
+	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void SoundEngine::SoundDone(FISoundChannel* ichan)
+{
+	FSoundChan* schan = static_cast<FSoundChan*>(ichan);
+	if (schan != NULL)
+	{
+		ReturnChannel(schan);
 	}
 }
 

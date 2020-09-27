@@ -3815,6 +3815,10 @@ Show Tally Screen On Level Exit,MISCMNU_ALWAYSTALLY,sv_alwaystally,,,Zobrazit v�
 Mod Defined,OPTVAL_MODDEFINED,this is '==0',,,Určeno mody,Mod-definiert,,,,,Modin määrittämä,Défini par Mod,,,Mod定義,,Volgens de mod,,Definir por mod,,,В зависимости от модификации,
 "Always, except within hubs",OPTVAL_NOTHUBS,,,,Vždy kromě hubů,"Immer, außer in Hubs",,,,,"Aina, keskustasoja lukuun ottamatta","Toujours, sauf dans les hubs",,,hubsを除き、常に,,"Altijd, behalve binnen hubs",,"Sempre, exceto em hubs",,,Всегда (кроме хаб-уровней),
 "Always, even within hubs",OPTVAL_WITHHUBS,,,,Vždy včetně hubů,"Immer, auch in Hubs",,,,,"Aina, keskustasot mukaan lukien","Toujours, même dans les hubs",,,hubs内でも、常に,,"Altijd, zelfs binnen hubs",,"Sempre, inclusive em hubs",,,Всегда (включая хаб-уровни),
+Preferred keyboard layout,CNTRLMNU_LAYOUT,,,,,Bevorzugte Tastaturbelegung,,,,,,,,,,,,,,,,,
+Classic ZDoom,OPTVAL_CLASSICZ,,,,,ZDoom klassisch,,,,,,,,,,,,,,,,,
+Modern (WASD),OPTVAL_MODERN,,,,,,,,,,,,,,,,,,,,,,
+Modern (Keypad),OPTVAL_MODERNLEFT,,,,,,,,,,,,,,,,,,,,,,
 ,USE_GENERIC_FONT,This is not a text to be translated but an engine switch for complex languages.,,,,,,,,,,,,,1,1,,,,,,,
 ,REQUIRED_CHARACTERS,This should list all uppercase characters that are REQUIRED for proper language display. If it is acceptable that accents get omitted a character should NOT be listed here!,,,ÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ,ÄÖÜẞ,ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς,ĈĜĤĴŜŬ,ÁÉÍÓÚÑÜ,,ÄÖ,ÀÂÇÉÈÊËÎÏÔŒÙÛŸ,ÁÉÍÓÖÚÜŐŰ,ÀÈÉÌÒÙ,,,"ÉËÖ
 ",ĄĆĘŁŃÓŚŹŻ,ÁÉÍÓÚÀÃÕÂÊÔÇ,,ĂÎȚÂȘ,АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ,АБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШ

@@ -169,7 +169,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		}
 		state.SetFog(cmd.mColor1, 0);
 		state.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
-		state.SetSoftLightLevel(cmd.mLightLevel);
+		if (cmd.mFlags & F2DDrawer::DTF_Indexed) state.SetSoftLightLevel(cmd.mLightLevel);
 		state.SetLightParms(0, 0);
 
 		state.AlphaFunc(Alpha_GEqual, 0.f);
@@ -232,6 +232,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	state.SetTextureMode(TM_NORMAL);
 	state.EnableFog(false);
 	state.SetScreenFade(1);
+	state.SetSoftLightLevel(255);
 	state.ResetColor();
 	drawer->mIsFirstPass = false;
 	twoD.Unclock();

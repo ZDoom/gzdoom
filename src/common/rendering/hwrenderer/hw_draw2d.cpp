@@ -130,6 +130,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	vb.UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	state.SetVertexBuffer(&vb);
 	state.EnableFog(false);
+	state.SetScreenFade(drawer->screenFade);
 
 	for(auto &cmd : commands)
 	{
@@ -168,13 +169,17 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		}
 		state.SetFog(cmd.mColor1, 0);
 		state.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
+		state.SetSoftLightLevel(cmd.mLightLevel);
+		state.SetLightParms(0, 0);
 
 		state.AlphaFunc(Alpha_GEqual, 0.f);
 
 		if (cmd.mTexture != nullptr && cmd.mTexture->isValid())
 		{
 			auto flags = cmd.mTexture->GetUseType() >= ETextureType::Special? UF_None : cmd.mTexture->GetUseType() == ETextureType::FontChar? UF_Font : UF_Texture;
-			state.SetMaterial(cmd.mTexture, flags, 0, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, cmd.mTranslationId, -1);
+
+			auto scaleflags = cmd.mFlags & F2DDrawer::DTF_Indexed ? CTF_Indexed : 0;
+			state.SetMaterial(cmd.mTexture, flags, scaleflags, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, cmd.mTranslationId, -1);
 			state.EnableTexture(true);
 
 			// Canvas textures are stored upside down
@@ -226,6 +231,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	state.EnableBrightmap(true);
 	state.SetTextureMode(TM_NORMAL);
 	state.EnableFog(false);
+	state.SetScreenFade(1);
 	state.ResetColor();
 	drawer->mIsFirstPass = false;
 	twoD.Unclock();

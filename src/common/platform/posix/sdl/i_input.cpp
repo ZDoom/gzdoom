@@ -225,10 +225,14 @@ static void MouseRead ()
 	}
 
 	SDL_GetRelativeMouseState (&x, &y);
-
+	if (!m_noprescale)
+	{
+		x *= 3;
+		y *= 2;
+	}
 	if (x | y)
 	{
-		PostMouseMove (m_noprescale ? x : x << 2, -y);
+		PostMouseMove (x, -y);
 	}
 }
 

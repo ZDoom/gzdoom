@@ -239,7 +239,7 @@ public:
 		TexelWidth = x; 
 		TexelHeight = y;
 		SetDisplaySize(float(x), float(y));
-		GetTexture()->SetSize(x, y);
+		if (GetTexture()) GetTexture()->SetSize(x, y);
 	}
 	void SetDisplaySize(float w, float h) 
 	{ 

@@ -78,9 +78,11 @@ extend class StateProvider
 				return;
 		}
 
+		int puffFlags = (flags & SF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0;
+
 		Actor puff;
 		int actualdamage;
-		[puff, actualdamage] = LineAttack (ang, range, slope, damage, 'Melee', pufftype, false, t);
+		[puff, actualdamage] = LineAttack (ang, range, slope, damage, 'Melee', pufftype, puffFlags, t);
 
 		if (!t.linetarget)
 		{

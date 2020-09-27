@@ -78,7 +78,8 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 
 static int CheckForTexture(const FString& name, int type, int flags)
 {
-	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();
+	// ForceLookup is intentionally blocked here, this flag is for internal use only.
+	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), (flags & ~FTextureManager::TEXMAN_ForceLookup)).GetIndex();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)

@@ -46,14 +46,15 @@
 static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
-int GameTicRate;
+int GameTicRate = 35;	// make sure it is not 0, even if the client doesn't set it.
 
 double TimeScale = 1.0;
 
 static uint64_t GetClockTimeNS()
 {
 	using namespace std::chrono;
-	return (uint64_t)((duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count()) * (uint64_t)(TimeScale * 1000));
+	if (TimeScale == 1.0) return (uint64_t)(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count());
+	else return (uint64_t)((duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count()) * (uint64_t)(TimeScale * 1000));
 }
 
 static uint64_t MSToNS(unsigned int ms)
@@ -71,9 +72,17 @@ static int NSToTic(uint64_t ns)
 	return static_cast<int>(ns * GameTicRate / 1'000'000'000);
 }
 
+static int NSToBuildTic(uint64_t ns)
+{
+	return static_cast<int>(ns * 120 / 1'000'000'000);
+}
 static uint64_t TicToNS(int tic)
 {
 	return static_cast<uint64_t>(tic) * 1'000'000'000 / GameTicRate;
+}
+static uint64_t BuildTicToNS(int tic)
+{
+	return static_cast<uint64_t>(tic) * 1'000'000'000 / 120;
 }
 
 void I_SetFrameTime()
@@ -142,9 +151,19 @@ uint64_t I_msTime()
 	return NSToMS(I_nsTime());
 }
 
+double I_msTimeF(void)
+{
+	return I_nsTime() / 1'000'000.;
+}
+
 uint64_t I_msTimeFS() // from "start"
 {
 	return (FirstFrameStartTime == 0) ? 0 : NSToMS(I_nsTime() - FirstFrameStartTime);
+}
+
+uint64_t I_GetTimeNS()
+{
+	return CurrentFrameStartTime - FirstFrameStartTime;
 }
 
 int I_GetTime()
@@ -152,11 +171,25 @@ int I_GetTime()
 	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime);
 }
 
+int I_GetBuildTime()
+{
+	return NSToBuildTic(CurrentFrameStartTime - FirstFrameStartTime);
+}
+
 double I_GetTimeFrac()
 {
 	int currentTic = NSToTic(CurrentFrameStartTime - FirstFrameStartTime);
 	uint64_t ticStartTime = FirstFrameStartTime + TicToNS(currentTic);
 	uint64_t ticNextTime = FirstFrameStartTime + TicToNS(currentTic + 1);
+
+	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
+}
+
+double I_GetBuildTimeFrac()
+{
+	int currentTic = NSToBuildTic(CurrentFrameStartTime - FirstFrameStartTime);
+	uint64_t ticStartTime = FirstFrameStartTime + BuildTicToNS(currentTic);
+	uint64_t ticNextTime = FirstFrameStartTime + BuildTicToNS(currentTic + 1);
 
 	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
 }

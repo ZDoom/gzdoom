@@ -49,7 +49,11 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 	auto imgtex = tx->GetTexture();
 	mTextureLayers.Push({ imgtex, scaleflags, -1 });
 
-	if ((tx->GetUseType() == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(imgtex)->GetColorFormat() == 0) || (scaleflags & CTF_Indexed))
+	if (tx->GetUseType() == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(imgtex)->GetColorFormat() == 0)
+	{
+		mShaderIndex = SHADER_Paletted;
+	}
+	else if (scaleflags & CTF_Indexed)
 	{
 		mTextureLayers[0].scaleFlags |= CTF_Indexed;
 		mShaderIndex = SHADER_Paletted;
@@ -159,7 +163,7 @@ FMaterial::~FMaterial()
 
 IHardwareTexture* FMaterial::GetLayer(int i, int translation, MaterialLayerInfo** pLayer) const
 {
-	if (mShaderIndex == SHADER_Paletted && i > 0 && layercallback)
+	if ((mScaleFlags & CTF_Indexed) && i > 0 && layercallback)
 	{
 		static MaterialLayerInfo deflayer = { nullptr, 0, CLAMP_XY };
 		if (i == 1 || i == 2)
@@ -173,7 +177,7 @@ IHardwareTexture* FMaterial::GetLayer(int i, int translation, MaterialLayerInfo*
 	{
 		auto& layer = mTextureLayers[i];
 		if (pLayer) *pLayer = &layer;
-		if (mShaderIndex == SHADER_Paletted) translation = -1;
+		if (mScaleFlags & CTF_Indexed) translation = -1;
 		if (layer.layerTexture) return layer.layerTexture->GetHardwareTexture(translation, layer.scaleFlags);
 	}
 	return nullptr;

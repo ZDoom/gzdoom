@@ -12,9 +12,9 @@ enum ECreateTexBufferFlags
 	CTF_Expand = 1,			// create buffer with a one-pixel wide border
 	CTF_Upscale = 2,		// Upscale the texture
 	CTF_CreateMask = 3,		// Flags that are relevant for hardware texture creation.
-	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+	CTF_Indexed = 4,		// Tell the backend to create an indexed texture.
 	CTF_CheckOnly = 8,		// Only runs the code to get a content ID but does not create a texture. Can be used to access a caching system for the hardware textures.
-	CTF_Indexed = 16		// Tell the backend to create an indexed texture.
+	CTF_ProcessData = 16,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
 };
 
 class FHardwareTextureContainer

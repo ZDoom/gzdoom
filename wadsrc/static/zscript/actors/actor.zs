@@ -480,7 +480,7 @@ class Actor : Thinker native
 	}
 
 	// Called by PIT_CheckLine to check if an actor can cross a line.
-	virtual bool CanCrossLine(Line crossing, int side)
+	virtual bool CanCrossLine(Line crossing, int side, Vector3 next)
 	{
 		return true;
 	}

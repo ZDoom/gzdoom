@@ -163,7 +163,7 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 // If false, the line blocks them.
 //==========================================================================
 
-bool P_CanCrossLine(AActor *mo, line_t *line, int side)
+bool P_CanCrossLine(AActor *mo, line_t *line, int side, DVector3 next)
 {
 	static unsigned VIndex = ~0u;
 	if (VIndex == ~0u)
@@ -172,7 +172,7 @@ bool P_CanCrossLine(AActor *mo, line_t *line, int side)
 		assert(VIndex != ~0u);
 	}
 
-	VMValue params[4] = { mo, line, side, false };
+	VMValue params[] = { mo, line, side, next.X, next.Y, next.Z, false };
 	VMReturn ret;
 	int retval;
 	ret.IntAt(&retval);
@@ -181,7 +181,7 @@ bool P_CanCrossLine(AActor *mo, line_t *line, int side)
 	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
 	if (func != nullptr)
 	{
-		VMCall(func, params, 4, &ret, 1);
+		VMCall(func, params, countof(params), &ret, 1);
 		return retval;
 	}
 	return true;
@@ -991,7 +991,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		}
 	}
 
-	if (!P_CanCrossLine(tm.thing, ld, P_PointOnLineSide(cres.Position, ld)))
+	if (!P_CanCrossLine(tm.thing, ld, P_PointOnLineSide(cres.Position, ld), tm.pos))
 	{
 		if (wasfit)
 			tm.thing->BlockingLine = ld;

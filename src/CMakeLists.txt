@@ -1106,6 +1106,7 @@ set (PCH_SOURCES
 	common/filesystem/file_zip.cpp
 	common/filesystem/file_pak.cpp
 	common/filesystem/file_whres.cpp
+	common/filesystem/file_ssi.cpp
 	common/filesystem/file_directory.cpp
 	common/filesystem/resourcefile.cpp
 	common/engine/cycler.cpp

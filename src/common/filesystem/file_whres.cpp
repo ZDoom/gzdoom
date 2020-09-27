@@ -148,7 +148,7 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, bool quiet, Lu
 			if (offset != checkpos || length <= 0) return nullptr;
 			checkpos += (length+4095) / 4096;
 		}
-		FResourceFile *rf = new FWHResFile(filename, file);
+		auto rf = new FWHResFile(filename, file);
 		if (rf->Open(quiet, filter)) return rf;
 		file = std::move(rf->Reader); // to avoid destruction of reader
 		delete rf;

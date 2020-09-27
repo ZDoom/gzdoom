@@ -70,8 +70,8 @@ public:
 
 	int GetNamespace() const override { return Namespace; }
 
-	int GetFileOffset() { return Position; }
-	FileReader *GetReader()
+	int GetFileOffset() override { return Position; }
+	FileReader *GetReader() override
 	{
 		if(!Compressed)
 		{
@@ -80,7 +80,7 @@ public:
 		}
 		return NULL;
 	}
-	int FillCache()
+	int FillCache() override
 	{
 		if(!Compressed)
 		{
@@ -472,7 +472,7 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet, Lump
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
-			FResourceFile *rf = new FWadFile(filename, file);
+			auto rf = new FWadFile(filename, file);
 			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

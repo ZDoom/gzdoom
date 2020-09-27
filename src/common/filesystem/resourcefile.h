@@ -164,7 +164,6 @@ public:
 	const FString &GetHash() const { return Hash; }
 
 
-	virtual bool Open(bool quiet, LumpFilterInfo* filter) = 0;
 	virtual FResourceLump *GetLump(int no) = 0;
 	FResourceLump *FindLump(const char *name);
 };

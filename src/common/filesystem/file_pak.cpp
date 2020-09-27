@@ -134,7 +134,7 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet, Lump
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PACK", 4))
 		{
-			FResourceFile *rf = new FPakFile(filename, file);
+			auto rf = new FPakFile(filename, file);
 			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

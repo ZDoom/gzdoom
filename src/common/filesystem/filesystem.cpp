@@ -1634,79 +1634,8 @@ static void PrintLastError ()
 //
 //==========================================================================
 
-FResourceLump *FileSystem::Lookup(const char *name, const char *type)
-{
-	FStringf fname("%s.%s", name, type);
-	auto lump = FindFile(fname);
-	if (lump >= 0) return FileInfo[lump].lump;
-	else return nullptr;
-}
-
-FResourceLump *FileSystem::Lookup(unsigned int id, const char *type)
-{
-	auto lump = FindResource(id, type);
-	if (lump >= 0) return FileInfo[lump].lump;
-	else return nullptr;
-}
 FResourceLump* FileSystem::GetFileAt(int no)
 {
 	return FileInfo[no].lump;
-}
-
-//==========================================================================
-//
-// Stand-ins for Blood's resource class
-//
-//==========================================================================
-
-const void *FileSystem::Lock(int lump)
-{
-	if ((size_t)lump >= FileInfo.Size()) return nullptr;
-	auto lumpp = FileInfo[lump].lump;
-	return lumpp->Lock();
-}
-
-void FileSystem::Unlock(int lump)
-{
-	if ((size_t)lump >= FileInfo.Size()) return;
-	auto lumpp = FileInfo[lump].lump;
-	lumpp->Unlock();
-}
-
-const void *FileSystem::Get(int lump)
-{
-	if ((size_t)lump >= FileInfo.Size()) return nullptr;
-	auto lumpp = FileInfo[lump].lump;
-	auto p = lumpp->Lock();
-	lumpp->RefCount = INT_MAX/2; // lock forever.
-	return p;
-}
-
-//==========================================================================
-//
-// Stand-ins for Blood's resource class
-//
-//==========================================================================
-
-const void *FileSystem::Lock(FResourceLump *lump)
-{
-	if (lump) return lump->Lock();
-	else return nullptr;
-}
-
-void FileSystem::Unlock(FResourceLump *lump)
-{
-	if (lump) lump->Unlock();
-}
-
-const void *FileSystem::Load(FResourceLump *lump)
-{
-	if (lump)
-	{
-		auto p = lump->Lock();
-		lump->RefCount = INT_MAX/2; // lock forever.
-		return p;
-	}
-	else return nullptr;
 }
 

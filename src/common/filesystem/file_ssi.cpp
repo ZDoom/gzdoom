@@ -3,7 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
-** Copyright 2005-2009 Christoph Oelckers
+** Copyright 2005-2020 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -38,41 +38,15 @@
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-struct GrpInfo
-{
-	uint32_t		Magic[3];
-	uint32_t		NumLumps;
-};
-
-struct GrpLump
-{
-	union
-	{
-		struct
-		{
-			char		Name[12];
-			uint32_t		Size;
-		};
-		char NameWithZero[13];
-	};
-};
-
-
-//==========================================================================
-//
 // Build GRP file
 //
 //==========================================================================
 
-class FGrpFile : public FUncompressedFile
+class FSSIFile : public FUncompressedFile
 {
 public:
-	FGrpFile(const char * filename, FileReader &file);
-	bool Open(bool quiet, LumpFilterInfo* filter);
+	FSSIFile(const char * filename, FileReader &file);
+	bool Open(bool quiet, int version, int lumpcount, LumpFilterInfo* filter);
 };
 
 
@@ -82,7 +56,7 @@ public:
 //
 //==========================================================================
 
-FGrpFile::FGrpFile(const char *filename, FileReader &file)
+FSSIFile::FSSIFile(const char *filename, FileReader &file)
 : FUncompressedFile(filename, file)
 {
 }
@@ -90,35 +64,47 @@ FGrpFile::FGrpFile(const char *filename, FileReader &file)
 //==========================================================================
 //
 // Open it
+// Note that SSIs can contain embedded GRPs which must be flagged accordingly.
 //
 //==========================================================================
 
-bool FGrpFile::Open(bool quiet, LumpFilterInfo*)
+bool FSSIFile::Open(bool quiet, int version, int lumpcount, LumpFilterInfo*)
 {
-	GrpInfo header;
+	NumLumps = lumpcount*2;
+	Lumps.Resize(lumpcount*2);
 
-	Reader.Read(&header, sizeof(header));
-	NumLumps = LittleLong(header.NumLumps);
-	
-	GrpLump *fileinfo = new GrpLump[NumLumps];
-	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
 
-	Lumps.Resize(NumLumps);
-
-	int Position = sizeof(GrpInfo) + NumLumps * sizeof(GrpLump);
-
-	for(uint32_t i = 0; i < NumLumps; i++)
+	int32_t j = (version == 2 ? 267 : 254) + (lumpcount * 121);
+	for (int i = 0; i < NumLumps; i+=2)
 	{
+		char fn[13];
+		int strlength = Reader.ReadUInt8();
+		if (strlength > 12) strlength = 12;
+
+		Reader.Read(fn, 12);
+		fn[strlength] = 0;
+		int flength = Reader.ReadInt32();
+
+
+		Lumps[i].LumpNameSetup(fn);
+		Lumps[i].Position = j;
+		Lumps[i].LumpSize = flength;
 		Lumps[i].Owner = this;
-		Lumps[i].Position = Position;
-		Lumps[i].LumpSize = LittleLong(fileinfo[i].Size);
-		Position += fileinfo[i].Size;
-		Lumps[i].Flags = 0;
-		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
-		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero);
+		if (strstr(fn, ".GRP")) Lumps[i].Flags |= LUMPF_EMBEDDED;
+
+		// SSI files can swap the order of the extension's characters - but there's no reliable detection for this and it can be mixed inside the same container, 
+		// so we have no choice but to create another file record for the altered name.
+		std::swap(fn[strlength - 1], fn[strlength - 3]);
+		Lumps[i+1].LumpNameSetup(fn);
+		Lumps[i+1].Position = j;
+		Lumps[i+1].LumpSize = flength;
+		Lumps[i+1].Owner = this;
+		if (strstr(fn, ".GRP")) Lumps[i+1].Flags |= LUMPF_EMBEDDED;
+
+		j += flength;
+
+		Reader.Seek(104, FileReader::SeekCur);
 	}
-	GenerateHash();
-	delete[] fileinfo;
 	return true;
 }
 
@@ -129,24 +115,41 @@ bool FGrpFile::Open(bool quiet, LumpFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile *CheckGRP(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile* CheckSSI(const char* filename, FileReader& file, bool quiet, LumpFilterInfo* filter)
 {
-	char head[12];
+	char zerobuf[72];
+	char buf[72];
+	memset(zerobuf, 0, 72);
 
+	auto skipstring = [&](int length)
+	{
+		int strlength = file.ReadUInt8();
+		if (strlength > length) return false;
+		int count = file.Read(buf, length);
+		buf[length] = 0;
+		if (count != length || strlen(buf) != strlength) return false;
+		if (length != strlength && memcmp(buf + strlength, zerobuf, length - strlength)) return false;
+		return true;
+	};
 	if (file.GetLength() >= 12)
 	{
-		file.Seek(0, FileReader::SeekSet);
-		file.Read(&head, 12);
-		file.Seek(0, FileReader::SeekSet);
-		if (!memcmp(head, "KenSilverman", 12))
+		// check if SSI
+		// this performs several checks because there is no "SSI" magic
+		int version = file.ReadInt32();
+		if (version == 1 || version == 2) // if
 		{
-			auto rf = new FGrpFile(filename, file);
-			if (rf->Open(quiet, filter)) return rf;
-
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			int numfiles = file.ReadInt32();
+			if (!skipstring(32)) return nullptr;
+			if (version == 2 && !skipstring(12)) return nullptr;
+			for (int i = 0; i < 3; i++)
+			{
+				if (!skipstring(70)) return nullptr;
+			}
+			auto ssi = new FSSIFile(filename, file);
+			if (ssi->Open(filename, version, numfiles, filter)) return ssi;
+			file = std::move(ssi->Reader); // to avoid destruction of reader
+			delete ssi;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
-

@@ -94,7 +94,7 @@ bool FLumpFile::Open(bool quiet, LumpFilterInfo*)
 FResourceFile *CheckLump(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	// always succeeds
-	FResourceFile *rf = new FLumpFile(filename, file);
+	auto rf = new FLumpFile(filename, file);
 	if (rf->Open(quiet, filter)) return rf;
 	file = std::move(rf->Reader); // to avoid destruction of reader
 	delete rf;

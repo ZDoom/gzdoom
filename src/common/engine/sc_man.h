@@ -2,6 +2,7 @@
 #define __SC_MAN_H__
 
 #include "zstring.h"
+#include "tarray.h"
 #include "name.h"
 #include "basics.h"
 
@@ -46,6 +47,16 @@ public:
 		int SavedScriptLine;
 	};
 
+	struct Symbol
+	{
+		int tokenType;
+		int64_t Number;
+		double Float;
+	};
+
+
+	TMap<FName, Symbol> symbols;
+
 	// Methods ------------------------------------------------------
 	FScanner();
 	FScanner(const FScanner &other);
@@ -70,11 +81,19 @@ public:
 	}
 
 	void SetCMode(bool cmode);
+	void SetNoOctals(bool cmode) { NoOctals = cmode; }
+	void SetNoFatalErrors(bool cmode) { NoFatalErrors = cmode; }
 	void SetEscape(bool esc);
 	void SetStateMode(bool stately);
 	void DisableStateOptions();
 	const SavedPos SavePos();
 	void RestorePos(const SavedPos &pos);
+	void AddSymbol(const char* name, int64_t value);
+	void AddSymbol(const char* name, uint64_t value);
+	inline void AddSymbol(const char* name, int32_t value) { return AddSymbol(name, int64_t(value)); }
+	inline void AddSymbol(const char* name, uint32_t value) { return AddSymbol(name, uint64_t(value)); }
+	void AddSymbol(const char* name, double value);
+	void SkipToEndOfBlock();
 
 	static FString TokenName(int token, const char *string=NULL);
 
@@ -83,30 +102,40 @@ public:
 	void MustGetStringName(const char *name);
 	bool CheckString(const char *name);
 
-	bool GetToken();
-	void MustGetAnyToken();
+	bool GetToken(bool evaluate = false);
+	void MustGetAnyToken(bool evaluate = false);
 	void TokenMustBe(int token);
-	void MustGetToken(int token);
-	bool CheckToken(int token);
+	void MustGetToken(int token, bool evaluate = false);
+	bool CheckToken(int token, bool evaluate = false);
 	bool CheckTokenId(ENamedName id);
 
-	bool GetNumber();
-	void MustGetNumber();
-	bool CheckNumber();
+	bool GetNumber(bool evaluate = false);
+	void MustGetNumber(bool evaluate = false);
+	bool CheckNumber(bool evaluate = false);
 
-	bool GetFloat();
-	void MustGetFloat();
-	bool CheckFloat();
+	bool GetFloat(bool evaluate = false);
+	void MustGetFloat(bool evaluate = false);
+	bool CheckFloat(bool evaluate = false);
+
+	double *LookupConstant(FName name)
+	{
+		return constants.CheckKey(name);
+	}
 	
 	// Token based variant
-	bool CheckValue(bool allowfloat);
-	void MustGetValue(bool allowfloat);
+	bool CheckValue(bool allowfloat, bool evaluate = true);
+	void MustGetValue(bool allowfloat, bool evaluate = true);
 	bool CheckBoolToken();
 	void MustGetBoolToken();
 
 	void UnGet();
 
 	bool Compare(const char *text);
+	inline bool Compare(const std::initializer_list<const char*>& list)
+	{
+		for (auto c : list) if (Compare(c)) return true;
+		return false;
+	}
 	int MatchString(const char * const *strings, size_t stride = sizeof(char*));
 	int MustMatchString(const char * const *strings, size_t stride = sizeof(char*));
 	int GetMessageLine();
@@ -125,17 +154,21 @@ public:
 	double Float;
 	int Line;
 	bool End;
+	bool ParseError = false;
 	bool Crossed;
 	int LumpNum;
 	FString ScriptName;
 
 protected:
+	long long mystrtoll(const char* p, char** endp, int base);
 	void PrepareScript();
 	void CheckOpen();
 	bool ScanString(bool tokens);
 
 	// Strings longer than this minus one will be dynamically allocated.
 	static const int MAX_STRING_SIZE = 128;
+
+	TMap<FName, double> constants;
 
 	bool ScriptOpen;
 	FString ScriptBuffer;
@@ -149,13 +182,15 @@ protected:
 	const char *LastGotPtr;
 	int LastGotLine;
 	bool CMode;
+	bool NoOctals = false;
+	bool NoFatalErrors = false;
 	uint8_t StateMode;
 	bool StateOptions;
 	bool Escape;
 	VersionInfo ParseVersion = { 0, 0, 0 };	// no ZScript extensions by default
 
 
-	bool ScanValue(bool allowfloat);
+	bool ScanValue(bool allowfloat, bool evaluate);
 };
 
 enum

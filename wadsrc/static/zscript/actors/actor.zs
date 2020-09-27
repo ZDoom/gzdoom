@@ -479,6 +479,12 @@ class Actor : Thinker native
 		return true;
 	}
 
+	// Called by PIT_CheckLine to check if an actor can cross a line.
+	virtual bool CanCrossLine(Line crossing, int side)
+	{
+		return true;
+	}
+
 	// Called by revival/resurrection to check if one can resurrect the other.
 	// "other" can be null when not passive.
 	virtual bool CanResurrect(Actor other, bool passive)

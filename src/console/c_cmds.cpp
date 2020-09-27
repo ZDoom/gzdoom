@@ -87,8 +87,13 @@ CCMD (toggleconsole)
 	C_ToggleConsole();
 }
 
-bool CheckCheatmode (bool printmsg)
+bool CheckCheatmode (bool printmsg, bool sponly)
 {
+	if (sponly && netgame)
+	{
+		if (printmsg) Printf("Not in a singleplayer game.\n");
+		return true;
+	}
 	if ((G_SkillProperty(SKILLP_DisableCheats) || netgame || deathmatch) && (!sv_cheats))
 	{
 		if (printmsg) Printf ("sv_cheats must be true to enable this command.\n");

@@ -1519,7 +1519,12 @@ CCMD (toggle)
 			val = var->GetGenericRep (CVAR_Bool);
 			val.Bool = !val.Bool;
 			var->SetGenericRep (val, CVAR_Bool);
-			Printf ("\"%s\" = \"%s\"\n", var->GetName(),
+			auto msg = var->GetToggleMessage(val.Bool);
+			if (msg.IsNotEmpty())
+			{
+				Printf(PRINT_NOTIFY, "%s\n", msg.GetChars());
+			}
+			else Printf ("\"%s\" = \"%s\"\n", var->GetName(),
 				val.Bool ? "true" : "false");
 		}
 	}

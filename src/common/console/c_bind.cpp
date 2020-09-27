@@ -739,7 +739,7 @@ void C_SetDefaultKeys(const char* baseconfig)
 //
 //
 //=============================================================================
-CVAR(Int, cl_defaultconfiguration, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, cl_defaultconfiguration, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 
 void C_BindDefaults()

@@ -95,6 +95,26 @@ void S_SetMusicCallbacks(MusicCallbacks* cb)
 
 static std::unique_ptr<SoundStream> musicStream;
 
+SoundStream *S_CreateCustomStream(size_t size, int samplerate, int numchannels, StreamCallback cb, void *userdata)
+{
+	int flags = 0;
+	if (numchannels < 2) flags |= SoundStream::Mono;
+	auto stream = GSnd->CreateStream(cb, size, flags, samplerate, userdata);
+	if (stream) stream->Play(true, 1);
+	return stream;
+}
+
+void S_StopCustomStream(SoundStream *stream)
+{
+	if (stream)
+	{
+		stream->Stop();
+		delete stream;
+	}
+
+}
+
+
 static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 {
 	bool written = ZMusic_FillStream(mus_playing.handle, buff, len);
@@ -122,6 +142,7 @@ void S_CreateStream()
 		if (musicStream) musicStream->Play(true, 1);
 	}
 }
+
 
 void S_PauseStream(bool paused)
 {
@@ -298,7 +319,7 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 
 	if (!force && PlayList.GetNumSongs())
 	{ // Don't change if a playlist is active
-		return false;
+		return true; // do not report an error here.
 	}
 	// Do game specific lookup.
 	FString musicname_;

@@ -91,6 +91,8 @@
 #include "i_time.h"
 #include "p_maputl.h"
 #include "s_music.h"
+#include "fragglescript/t_script.h"
+
 #include "texturemanager.h"
 
 void STAT_StartNewGame(const char *lev);
@@ -373,6 +375,8 @@ void G_NewInit ()
 		pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
 		pawn->Destroy();
 	}
+	if (primaryLevel->FraggleScriptThinker) primaryLevel->FraggleScriptThinker->Destroy();
+	primaryLevel->FraggleScriptThinker = nullptr;
 
 	G_ClearSnapshots ();
 	netgame = false;

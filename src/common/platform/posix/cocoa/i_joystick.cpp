@@ -1066,7 +1066,7 @@ void IOKitJoystickManager::UseAxesPolling(const bool axesPolling)
 
 void PostDeviceChangeEvent()
 {
-	const event_t event = { EV_DeviceChange };
+	event_t event = { EV_DeviceChange };
 	D_PostEvent(&event);
 }
 

@@ -3220,7 +3220,13 @@ Generic,ADLVLMODEL_GENERIC,,,,Standardní,Allgemein,,Komuna,Genérico,,Yleinen,G
 OPL Native,ADLVLMODEL_NATIVE,,,,Nativní OPL,OPL Nativ,,Nativa OPL,Nativo OPL,,Luontainen OPL,OPL Natif,,,OPLネイティブ,고유 OPL,OPL Inheems,Natywne OPL,Nativo OPL,,OPL propriu,Собственный OPL,OPL домаћи
 DMX,ADLVLMODEL_DMX,,,,,,,,,,,,,,,데이터 마이닝 확장,,,,,,,
 Apogee,ADLVLMODEL_APOGEE,,,,,,,,,,,,,,,어포지,,,,,,,
-Win9X-like,ADLVLMODEL_WIN9X,,,,Jako Windows 9X,Wie Windows 9X,,Kiel Win9X,Como Win9X,,Win9x-kaltainen,Comme Win9x,,,Win9X式,Win9X 같게,Win9X-achtige,Jak w Win9X,Estilo Win9X,,Similar cu Win9X,Похожая на Win9X,Као у Win9X-у
+Win9X-like (SB16),ADLVLMODEL_WIN9X,,,,Jako Windows 9X,Wie Windows 9X,,Kiel Win9X,Como Win9X,,Win9x-kaltainen,Comme Win9x,,,Win9X式,Win9X 같게,Win9X-achtige,Jak w Win9X,Estilo Win9X,,Similar cu Win9X,Похожая на Win9X (вриант SB16),Као у Win9X-у
+Win9X-like (Generic FM),ADLVLMODEL_WIN9XGENERIC,,,,,,,,,,,,,,,,,,,,,Похожая на Win9X (вриант Generic FM),
+DMX (Fixed),ADLVLMODEL_DMX_FIXED,,,,,,,,,,,,,,,,,,,,,,
+Apogee (Fixed),ADLVLMODEL_APOGEE_FIXED,,,,,,,,,,,,,,,,,,,,,,
+AIL,ADLVLMODEL_AIL,,,,,,,,,,,,,,,,,,,,,,
+HMI Sound Operating System,ADLVLMODEL_HMI,,,,,,,,,,,,,,,,,,,,,,
+HMI Sound Operating System (Old),ADLVLMODEL_HMIOLD,,,,,,,,,,,,,,,,,,,,,,
 Module Replayer Options,MODMNU_TITLE,,,,Nastavení přehrávače modulů,Modul-Spieler-Optionen,,Agordoj por Modulo-reludilo,Opciones de reproductor de módulos,,Moduulisoitinasetukset,Options Lecteur de Module,,Opzioni Module replayer,モジュールリプレイヤー オプション,모듈 재생 설정,Module Speler Opties,Opcje Odtwarzacza Modułów,Opções de Reprodutor de Módulos,,Setări de redare module,Параметры воспроизведения модулей,Подешавања модуларног реплејера
 Master volume,MODMNU_MASTERVOLUME,,,,Celková hlasitost,Grundlautstärke,,Ĉefvolumeno,Volumen maestro,,Yleisäänenvoimakkuus,Volume maître,,Volume master,全体音量,마스터 볼륨,Hoofdvolume,Całkowita głośność,Volume master,,Volum general,Общая громкость,Глацни звук
 Quality,MODMNU_QUALITY,,,,Kvalita,Qualität,,Kvaliteco,Calidad,,Laatu,Qualité,,Qualità,クオリティ,품질,Kwaliteit,Jakość,Qualidade,,Calitate,Качество,Квалитет
@@ -3394,8 +3400,12 @@ Unlimited,OPTVAL_UNLIMITED,,,,Neomezený,Unlimitiert,,Senlima,Ilimitado,,Rajoitt
 1024K,OPTVAL_1024K,,,,,,,,,,,,,,,,,,,,,1024К,
 MAME OPL2,OPTVAL_MAMEOPL2,,,,,,,,,,,,,,,마메 OPL2,,,,,,,
 MAME YM2612,OPTVAL_MAMEOPN2,,,,,,,,,,,,,,,마메 YM2612,,,,,,,
+Neko Project II Kai OPNA,OPTVAL_NP2OPNA,,,,,,,,,,,,,,,,,,,,,,
+MAME YM2608,OPTVAL_MAMEOPNA,,,,,,,,,,,,,,,마메 YM2608,,,,,,,
+PMDWin OPNA,OPTVAL_PMDWINOPNA,,,,,,,,,,,,,,,,,,,,,,
 DOSBox OPL3,OPTVAL_DOSBOXOPL3,,,,,,,,,,,,,,,도스박스 OPL3,,,,,,,
 Java OPL3,OPTVAL_JAVAOPL3,,,,,,,,,,,,,,,자바 OPL3,,,,,,,
+Opal OPL3,OPTVAL_OPALOPL3,,,,,,,,,,,,,,,,,,,,,,
 Nuked OPL3,OPTVAL_NUKEDOPL3,,,,,,,,,,,,,,,,,,,,,,
 Nuked OPL3 v1.7.4,OPTVAL_NUKEDOPL3174,,,,,,,,,,,,,,,,,,,,,,
 Nuked OPN2,OPTVAL_NUKEDOPN2,,,,,,,,,,,,,,,,,,,,,,

@@ -2134,6 +2134,12 @@ OptionMenu ModReplayerOptions protected
 	3, "$ADLVLMODEL_DMX"
 	4, "$ADLVLMODEL_APOGEE"
 	5, "$ADLVLMODEL_WIN9X"
+	6, "$ADLVLMODEL_DMX_FIXED"
+	7, "$ADLVLMODEL_APOGEE_FIXED"
+	8, "$ADLVLMODEL_AIL"
+	9, "$ADLVLMODEL_WIN9XGENERIC"
+	10, "$ADLVLMODEL_HMI"
+	11, "$ADLVLMODEL_HMIOLD"
  }
 
  OptionValue ADLOplCores
@@ -2141,6 +2147,8 @@ OptionMenu ModReplayerOptions protected
 	0, "$OPTVAL_NUKEDOPL3"
 	1, "$OPTVAL_NUKEDOPL3174"
 	2, "$OPTVAL_DOSBOXOPL3"
+	3, "$OPTVAL_OPALOPL3"
+	4, "$OPTVAL_JAVAOPL3"
  }
 
  OptionValue OpnCores
@@ -2148,6 +2156,9 @@ OptionMenu ModReplayerOptions protected
 	0, "$OPTVAL_MAMEOPN2"
 	1, "$OPTVAL_NUKEDOPN2"
 	2, "$OPTVAL_GENSOPN2"
+	4, "$OPTVAL_NP2OPNA"
+	5, "$OPTVAL_MAMEOPNA"
+	6, "$OPTVAL_PMDWINOPNA"
  }
 
  OptionMenu ADLOptions protected

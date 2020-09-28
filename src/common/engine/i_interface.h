@@ -3,6 +3,8 @@
 #include "zstring.h"
 #include "intrect.h"
 
+struct event_t;
+
 struct SystemCallbacks
 {
 	bool (*WantGuiCapture)();
@@ -19,6 +21,7 @@ struct SystemCallbacks
 	FString(*GetLocationDescription)();
 	void (*MenuDim)();
 	FString(*GetPlayerName)(int i);
+	bool (*DispatchEvent)(event_t* ev);
 };
 
 extern SystemCallbacks *sysCallbacks;

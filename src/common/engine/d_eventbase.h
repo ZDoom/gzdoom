@@ -29,9 +29,10 @@ struct event_t
 
 
 // Called by IO functions when input is detected.
-void D_PostEvent (const event_t* ev);
+void D_PostEvent (event_t* ev);
 void D_RemoveNextCharEvent();
 void D_ProcessEvents(void);
+void PostMouseMove(int x, int y);
 
 enum
 {

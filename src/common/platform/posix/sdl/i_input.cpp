@@ -54,8 +54,6 @@ bool GUICapture;
 static bool NativeMouse = true;
 
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
 extern int WaitingForKey, chatmodeon;
@@ -191,30 +189,6 @@ void I_ReleaseMouseCapture()
 	SDL_SetRelativeMouseMode (SDL_FALSE);
 }
 
-static void PostMouseMove (int x, int y)
-{
-	static int lastx = 0, lasty = 0;
-	event_t ev = { 0,0,0,0,0,0,0 };
-	
-	if (m_filter)
-	{
-		ev.x = (x + lastx) / 2;
-		ev.y = (y + lasty) / 2;
-	}
-	else
-	{
-		ev.x = x;
-		ev.y = y;
-	}
-	lastx = x;
-	lasty = y;
-	if (ev.x | ev.y)
-	{
-		ev.type = EV_Mouse;
-		D_PostEvent (&ev);
-	}
-}
-
 static void MouseRead ()
 {
 	int x, y;
@@ -225,15 +199,7 @@ static void MouseRead ()
 	}
 
 	SDL_GetRelativeMouseState (&x, &y);
-	if (!m_noprescale)
-	{
-		x *= 3;
-		y *= 2;
-	}
-	if (x | y)
-	{
-		PostMouseMove (x, -y);
-	}
+	PostMouseMove (x, y);
 }
 
 static void I_CheckNativeMouse ()

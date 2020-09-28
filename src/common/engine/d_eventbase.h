@@ -22,8 +22,8 @@ struct event_t
 	int16_t 	data1;		// keys / mouse/joystick buttons
 	int16_t		data2;
 	int16_t		data3;
-	int 		x;			// mouse/joystick x move
-	int 		y;			// mouse/joystick y move
+	float 		x;			// mouse/joystick x move
+	float 		y;			// mouse/joystick y move
 };
 
 

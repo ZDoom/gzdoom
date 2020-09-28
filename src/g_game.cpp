@@ -212,8 +212,8 @@ CVAR (Float,	m_side,			2.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 int 			turnheld;								// for accelerative turning 
  
 // mouse values are used once 
-int 			mousex;
-int 			mousey; 		
+float 			mousex;
+float 			mousey; 		
 
 FString			savegamefile;
 FString			savedescription;
@@ -721,7 +721,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	// Handle mice.
 	if (!buttonMap.ButtonDown(Button_Mlook) && !freelook)
 	{
-		forward += (int)((float)mousey * m_forward);
+		forward += xs_CRoundToInt(mousey * m_forward);
 	}
 
 	cmd->ucmd.pitch = LocalViewPitch >> 16;
@@ -733,7 +733,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	}
 
 	if (strafe || lookstrafe)
-		side += (int)((float)mousex * m_side);
+		side += xs_CRoundToInt(mousex * m_side);
 
 	mousex = mousey = 0;
 

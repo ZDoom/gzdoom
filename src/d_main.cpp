@@ -2724,7 +2724,7 @@ static bool System_DispatchEvent(event_t* ev)
 			G_AddViewAngle(turn, true);
 			ev->x = 0;
 		}
-		if ((ev->x | ev->y) == 0)
+		if (ev->x == 0 && ev->y == 0)
 		{
 			return true;
 		}

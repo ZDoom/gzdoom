@@ -155,17 +155,17 @@ void PostMouseMove(int xx, int yy)
 
 	if (m_filter)
 	{
-		ev.x = xs_CRoundToInt((x + lastx) / 2);
-		ev.y = xs_CRoundToInt((y + lasty) / 2);
+		ev.x = (x + lastx) / 2;
+		ev.y = (y + lasty) / 2;
 	}
 	else
 	{
-		ev.x = xs_CRoundToInt(x);
-		ev.y = xs_CRoundToInt(y);
+		ev.x = x;
+		ev.y = y;
 	}
 	lastx = x;
 	lasty = y;
-	if (ev.x | ev.y)
+	if (ev.x || ev.y)
 	{
 		ev.type = EV_Mouse;
 		D_PostEvent(&ev);
@@ -192,8 +192,8 @@ FInputEvent::FInputEvent(const event_t *ev)
 		KeyString = FString(char(ev->data1));
 		break;
 	case EV_Mouse:
-		MouseX = ev->x;
-		MouseY = ev->y;
+		MouseX = int(ev->x);
+		MouseY = int(ev->y);
 		break;
 	default:
 		break; // EV_DeviceChange = wat?

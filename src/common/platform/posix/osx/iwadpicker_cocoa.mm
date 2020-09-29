@@ -66,8 +66,8 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 - (void)dealloc;
 - (IWADTableData *)init:(WadStuff *) wads num:(int) numwads;
 
-- (int)numberOfRowsInTableView:(NSTableView *)aTableView;
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex;
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
+- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
 @end
 
 @implementation IWADTableData
@@ -100,12 +100,12 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	return self;
 }
 
-- (int)numberOfRowsInTableView:(NSTableView *)aTableView
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
 	return [data count];
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex
+- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
 	NSParameterAssert(rowIndex >= 0 && (unsigned int) rowIndex < [data count]);
 	NSMutableDictionary *record = [data objectAtIndex:rowIndex];

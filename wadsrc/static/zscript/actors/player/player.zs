@@ -2557,6 +2557,16 @@ class PSprite : Object native play
 	native double y;
 	native double oldx;
 	native double oldy;
+	native double px;
+	native double py;
+	native double oldpx;
+	native double oldpy;
+	native double scalex;
+	native double scaley;
+	native double oldscalex;
+	native double oldscaley;
+	native double rotation;
+	native double oldrotation;
 	native double alpha;
 	native Bool firstTic;
 	native int Tics;
@@ -2568,6 +2578,8 @@ class PSprite : Object native play
 	native bool bFlip;	
 	native bool bMirror;
 	native bool bPlayerTranslated;
+	native bool bPivotPercent;
+	native bool bPivotScreen;
 
 	native void SetState(State newstate, bool pending = false);
 

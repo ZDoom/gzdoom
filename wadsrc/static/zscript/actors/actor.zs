@@ -1181,6 +1181,9 @@ class Actor : Thinker native
 
 	action native bool A_Overlay(int layer, statelabel start = null, bool nooverride = false);
 	native void A_WeaponOffset(double wx = 0, double wy = 32, int flags = 0);
+	action native void A_OverlayScale(int layer, double wx = 1, double wy = 0, int flags = 0);
+	action native void A_OverlayRotate(int layer, double degrees = 0, int flags = 0);
+	action native void A_OverlayPivot(int layer, double wx = 0.5, double wy = 0.5, int flags = 0);
 	action native void A_OverlayOffset(int layer = PSP_WEAPON, double wx = 0, double wy = 32, int flags = 0);
 	action native void A_OverlayFlags(int layer, int flags, bool set);
 	action native void A_OverlayAlpha(int layer, double alph);

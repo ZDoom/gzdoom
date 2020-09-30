@@ -70,7 +70,9 @@ enum PSPFlags
 	PSPF_FORCEALPHA		= 1 << 7,
 	PSPF_FORCESTYLE		= 1 << 8,
 	PSPF_MIRROR			= 1 << 9,
-	PSPF_PLAYERTRANSLATED = 1 << 10
+	PSPF_PLAYERTRANSLATED = 1 << 10,
+	PSPF_PIVOTPERCENT	= 1 << 11,
+	PSPF_PIVOTSCREEN	= 1 << 12,
 };
 
 class DPSprite : public DObject
@@ -97,6 +99,14 @@ public:
 	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 	float GetYAdjust(bool fullscreen);
 
+	bool PivotScreen;		// If true, the pivot is based on the entire screen width/height instead of the image's dimensions/position.
+	bool PivotPercent;		// If true, the pivot goes between [0.0, 1.0]. Otherwise, it's a pixel position offset from the image size.
+	double px, py;			// pivot points
+	double oldpx, oldpy;	
+	double rotation;		// How much rotation to apply.
+	double oldrotation;
+	double scalex, scaley;	// Scale
+	double oldscalex, oldscaley;	
 	double x, y, alpha;
 	double oldx, oldy;
 	bool firstTic;

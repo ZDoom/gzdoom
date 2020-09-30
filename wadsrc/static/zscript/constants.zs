@@ -740,6 +740,7 @@ enum EWeaponOffsetFlags
 	WOF_ADD =		1 << 2,
 	WOF_INTERPOLATE = 1 << 3,
 	WOF_RELATIVE	= 1 << 4,
+	WOF_ZEROY		= 1 << 5,
 };
 
 // Flags for psprite layers

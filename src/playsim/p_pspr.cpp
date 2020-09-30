@@ -670,6 +670,7 @@ enum WOFFlags
 	WOF_ADD = 1 << 2,
 	WOF_INTERPOLATE = 1 << 3,
 	WOF_RELATIVE = 1 << 4,
+	WOF_ZEROY = 1 << 5,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)
@@ -680,7 +681,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)
 	PARAM_FLOAT(wy)
 	PARAM_INT(flags)
 	
-	if (!ACTION_CALL_FROM_PSPRITE())
+	if (!ACTION_CALL_FROM_PSPRITE() || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)))
 		return 0;
 
 	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
@@ -688,20 +689,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)
 	if (pspr == nullptr)
 		return 0;
 
-	if (flags & WOF_ADD)
-	{
-		if (!(flags & WOF_KEEPX))
-			pspr->scalex += wx;
-		if (!(flags & WOF_KEEPY))
-			pspr->scaley += (wy != 0.0 ? wy : wx);
-	}
-	else
-	{
-		if (!(flags & WOF_KEEPX))
-			pspr->scalex = wx;
-		if (!(flags & WOF_KEEPY))
-			pspr->scaley = (wy != 0.0 ? wy : wx);
-	}
+	if (!(flags & WOF_ZEROY) && wy == 0.0)
+		wy = wx;
+
+	if (!(flags & WOF_KEEPX))
+		pspr->scalex = (flags & WOF_ADD) ? pspr->scalex + wx : wx;
+	if (!(flags & WOF_KEEPY))
+		pspr->scaley = (flags & WOF_ADD) ? pspr->scaley + wy : wy;
 
 	if (!(flags & WOF_INTERPOLATE))
 	{
@@ -755,7 +749,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivot)
 	PARAM_FLOAT(wy)
 	PARAM_INT(flags)
 
-	if (!ACTION_CALL_FROM_PSPRITE())
+	if (!ACTION_CALL_FROM_PSPRITE() || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)))
 		return 0;
 
 	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
@@ -763,20 +757,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivot)
 	if (pspr == nullptr)
 		return 0;
 
-	if (flags & WOF_ADD)
+	if (flags & WOF_RELATIVE)
 	{
-		if (!(flags & WOF_KEEPX))
-			pspr->px += wx;
-		if (!(flags & WOF_KEEPY))
-			pspr->py += (wy != 0.0 ? wy : wx);
+		DAngle rot = pspr->rotation;
+		double c = rot.Cos(), s = rot.Sin();
+		double nx = wx * c + wy * s;
+		double ny = wx * s - wy * c;
+		wx = nx; wy = ny;
 	}
-	else
-	{
-		if (!(flags & WOF_KEEPX))
-			pspr->px = wx;
-		if (!(flags & WOF_KEEPY))
-			pspr->py = (wy != 0.0 ? wy : wx);
-	}
+
+	if (!(flags & WOF_KEEPX))
+		pspr->px = (flags & WOF_ADD) ? pspr->px + wx : wx;
+	if (!(flags & WOF_KEEPY))
+		pspr->py = (flags & WOF_ADD) ? pspr->py + wy : wy;
 
 	if (!(flags & WOF_INTERPOLATE))
 	{

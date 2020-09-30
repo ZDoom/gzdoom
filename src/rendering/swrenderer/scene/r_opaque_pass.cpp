@@ -80,6 +80,7 @@ extern uint32_t r_renderercaps;
 double model_distance_cull = 1e16;
 
 EXTERN_CVAR(Float, r_actorspriteshadowdist)
+EXTERN_CVAR(Float, r_actorspriteshadowscaley)
 
 namespace
 {
@@ -975,7 +976,7 @@ namespace swrenderer
 							if (dist <= check * check)
 							{
 								DVector2 shadowScale = sprite.spriteScale;
-								shadowScale.Y *= 0.1;
+								shadowScale.Y *= r_actorspriteshadowscaley;
 								DVector3 shadowPos = sprite.pos;
 								shadowPos.Z = thing->floorz;
 								RenderSprite::Project(Thread, thing, shadowPos, sprite.tex, shadowScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap, true);

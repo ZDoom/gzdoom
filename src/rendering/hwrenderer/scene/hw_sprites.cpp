@@ -66,6 +66,7 @@ const float LARGE_VALUE = 1e19f;
 
 EXTERN_CVAR(Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Float, transsouls)
+EXTERN_CVAR(Float, r_actorspriteshadowscaley)
 
 
 //==========================================================================
@@ -903,7 +904,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
 			thing->renderflags ^= RF_XFLIP;
 
-		r.Scale(sprscale.X, shadowsprite ? sprscale.Y * 0.1 : sprscale.Y);
+		r.Scale(sprscale.X, shadowsprite ? sprscale.Y * r_actorspriteshadowscaley : sprscale.Y);
 		
 		float SpriteOffY = thing->SpriteOffset.Y;
 		float rightfac = -r.left - thing->SpriteOffset.X;

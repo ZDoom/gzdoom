@@ -60,6 +60,13 @@ CUSTOM_CVARD(Float, r_actorspriteshadowdist, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALC
 	else if (self > 8192.f)
 		self = 8192.f;
 }
+CUSTOM_CVARD(Float, r_actorspriteshadowscaley, 0.1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "sprite shadow Y scale")
+{
+	if (self < 0.1f)
+		self = 0.1f;
+	else if (self > 0.5f)
+		self = 0.5f;
+}
 
 namespace swrenderer
 {

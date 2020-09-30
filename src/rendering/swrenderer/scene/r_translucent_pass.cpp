@@ -53,6 +53,13 @@ EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, r_actorshadows, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CUSTOM_CVARD(Float, r_spriteshadowdistance, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "how far to render sprite shadows")
+{
+	if (self < 0.f)
+		self = 0.f;
+	else if (self > 8192.f)
+		self = 8192.f;
+}
 
 namespace swrenderer
 {

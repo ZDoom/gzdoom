@@ -79,6 +79,8 @@ extern uint32_t r_renderercaps;
 
 double model_distance_cull = 1e16;
 
+EXTERN_CVAR(Float, r_spriteshadowdistance)
+
 namespace
 {
 	double sprite_distance_cull = 1e16;
@@ -968,11 +970,16 @@ namespace swrenderer
 
 						if (R_ShouldDrawSpriteShadow(thing))
 						{
-							DVector2 shadowScale = sprite.spriteScale;
-							shadowScale.Y *= 0.1;
-							DVector3 shadowPos = sprite.pos;
-							shadowPos.Z = thing->floorz;
-							RenderSprite::Project(Thread, thing, shadowPos, sprite.tex, shadowScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap, true);
+							double dist = (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared();
+							double check = r_spriteshadowdistance;
+							if (dist <= check * check)
+							{
+								DVector2 shadowScale = sprite.spriteScale;
+								shadowScale.Y *= 0.1;
+								DVector3 shadowPos = sprite.pos;
+								shadowPos.Z = thing->floorz;
+								RenderSprite::Project(Thread, thing, shadowPos, sprite.tex, shadowScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap, true);
+							}
 						}
 					}
 				}

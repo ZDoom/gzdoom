@@ -1367,8 +1367,12 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 					th->Prev += newpos - savedpos;
 
 					HWSprite spr;
+					// draw sprite shadow
+					if (R_ShouldDrawSpriteShadow(th))
+					{
+						spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2, true);
+					}
 					// This is called from the worker thread and must not alter the fake sector cache.
-					if (R_ShouldDrawSpriteShadow(th)) spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2, true);
 					spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);

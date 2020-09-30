@@ -169,17 +169,32 @@ static WeaponPosition GetWeaponPosition(player_t *player, double ticFrac)
 		{
 			w.wx = (float)w.weapon->x;
 			w.wy = (float)w.weapon->y;
+			w.sx = (float)w.weapon->scalex;
+			w.sy = (float)w.weapon->scaley;
+			w.px = (float)w.weapon->px;
+			w.py = (float)w.weapon->py;
+			w.r = (float)w.weapon->rotation;
 		}
 		else
 		{
 			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * ticFrac);
 			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * ticFrac);
+			w.px = (float)(w.weapon->oldpx + (w.weapon->px - w.weapon->oldpx) * ticFrac);
+			w.py = (float)(w.weapon->oldpy + (w.weapon->py - w.weapon->oldpy) * ticFrac);
+			w.sx = (float)(w.weapon->oldscalex + (w.weapon->scalex - w.weapon->oldscalex) * ticFrac);
+			w.sy = (float)(w.weapon->oldscaley + (w.weapon->scaley - w.weapon->oldscaley) * ticFrac);
+			w.r = (float)(w.weapon->oldrotation + (w.weapon->rotation - w.weapon->oldrotation) * ticFrac);
 		}
 	}
 	else
 	{
 		w.wx = 0;
 		w.wy = 0;
+		w.px = 0;
+		w.py = 0;
+		w.sx = 0;
+		w.sy = 0;
+		w.r = 0;
 	}
 	return w;
 }
@@ -407,7 +422,7 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 //
 //==========================================================================
 
-bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player)
+bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player, WeaponPosition *weap)
 {
 	float			tx;
 	float			scale;
@@ -470,10 +485,42 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	auto verts = screen->mVertexData->AllocVertices(4);
 	mx = verts.second;
 
-	verts.first[0].Set(x1, y1, 0, u1, v1);
-	verts.first[1].Set(x1, y2, 0, u1, v2);
-	verts.first[2].Set(x2, y1, 0, u2, v1);
-	verts.first[3].Set(x2, y2, 0, u2, v2);
+
+	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
+	{
+		double radang = psp->rotation * (pi::pi() / 180.);
+		double cosang = cos(radang);
+		double sinang = sin(radang);
+
+		double xcenter = psp->x;
+		double ycenter = psp->y;
+
+
+		double xx1 = xcenter + psp->scalex * (x1 * cosang + y1 * sinang);
+		double yy1 = ycenter + psp->scaley * (x1 * sinang - y1 * cosang);
+
+		double xx2 = xcenter + psp->scalex * (x1 * cosang + y2 * sinang);
+		double yy2 = ycenter + psp->scaley * (x1 * sinang - y2 * cosang);
+
+		double xx3 = xcenter + psp->scalex * (x2 * cosang + y1 * sinang);
+		double yy3 = ycenter + psp->scaley * (x2 * sinang - y1 * cosang);
+
+		double xx4 = xcenter + psp->scalex * (x2 * cosang + y2 * sinang);
+		double yy4 = ycenter + psp->scaley * (x2 * sinang - y2 * cosang);
+	
+		verts.first[0].Set(xx1, yy1, 0, u1, v1);
+		verts.first[1].Set(xx2, yy2, 0, u1, v2);
+		verts.first[2].Set(xx3, yy3, 0, u2, v1);
+		verts.first[3].Set(xx4, yy4, 0, u2, v2);
+	}
+	else
+	{
+
+		verts.first[0].Set(x1, y1, 0, u1, v1);
+		verts.first[1].Set(x1, y2, 0, u1, v2);
+		verts.first[2].Set(x2, y1, 0, u2, v1);
+		verts.first[3].Set(x2, y2, 0, u2, v2);
+	}
 
 	texture = tex;
 	return true;
@@ -554,12 +601,12 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		}
 		else
 		{
-			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player)) continue;
+			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player, &weap)) continue;
 		}
 		hudsprites.Push(hudsprite);
 	}
 	lightmode = oldlightmode;
-	PrepareTargeterSprites();
+	PrepareTargeterSprites(&weap);
 }
 
 
@@ -569,7 +616,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 //
 //==========================================================================
 
-void HWDrawInfo::PrepareTargeterSprites()
+void HWDrawInfo::PrepareTargeterSprites(WeaponPosition *weap)
 {
 	AActor * playermo = players[consoleplayer].camera;
 	player_t * player = playermo->player;
@@ -601,7 +648,8 @@ void HWDrawInfo::PrepareTargeterSprites()
 		if (psp->GetState() != nullptr && (psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr))
 		{
 			hudsprite.weapon = psp;
-			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player))
+			
+			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player, weap))
 			{
 				hudsprites.Push(hudsprite);
 			}

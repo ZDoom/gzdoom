@@ -155,7 +155,6 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPivotPercent, PSPF_PIVOTPERCENT)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPivotScreen, PSPF_PIVOTSCREEN)
-DEFINE_FIELD_BIT(DPSprite, Flags, bPivotOffsetRel, PSPF_PIVOTOFFSETREL)
 
 //------------------------------------------------------------------------
 //
@@ -184,8 +183,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   oldpx(.0), oldpy(.0),
   oldrotation(.0),
   PivotPercent(true),
-  PivotScreen(false),
-  PivotOffsetRel(false)
+  PivotScreen(false)
 {
 	alpha = 1;
 	Renderstyle = STYLE_Normal;
@@ -671,6 +669,7 @@ enum WOFFlags
 	WOF_KEEPY = 1 << 1,
 	WOF_ADD = 1 << 2,
 	WOF_INTERPOLATE = 1 << 3,
+	WOF_RELATIVE = 1 << 4,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)

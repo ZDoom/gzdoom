@@ -490,8 +490,8 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
 	{
 		float radang = psp->rotation * (pi::pi() / 180.);
-		float cosang = -cos(radang);
-		float sinang = -sin(radang);
+		float cosang = cos(radang);
+		float sinang = sin(radang);
 
 		float xcenter, ycenter;
 
@@ -535,16 +535,16 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		float ssy = (float)psp->scaley;
 
 		float xx1 = xcenter + ssx * (x1 * cosang + y1 * sinang);
-		float yy1 = ycenter + ssy * (x1 * sinang - y1 * cosang);
+		float yy1 = ycenter - ssy * (x1 * sinang - y1 * cosang);
 
 		float xx2 = xcenter + ssx * (x1 * cosang + y2 * sinang);
-		float yy2 = ycenter + ssy * (x1 * sinang - y2 * cosang);
+		float yy2 = ycenter - ssy * (x1 * sinang - y2 * cosang);
 
 		float xx3 = xcenter + ssx * (x2 * cosang + y1 * sinang);
-		float yy3 = ycenter + ssy * (x2 * sinang - y1 * cosang);
+		float yy3 = ycenter - ssy * (x2 * sinang - y1 * cosang);
 
 		float xx4 = xcenter + ssx * (x2 * cosang + y2 * sinang);
-		float yy4 = ycenter + ssy * (x2 * sinang - y2 * cosang);
+		float yy4 = ycenter - ssy * (x2 * sinang - y2 * cosang);
 
 		verts.first[0].Set(xx1, yy1, 0, u1, v1);
 		verts.first[1].Set(xx2, yy2, 0, u1, v2);

@@ -489,7 +489,9 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	// Big thanks to IvanDobrovski who helped me modify this.
 	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
 	{
-		float radang = psp->rotation * (pi::pi() / 180.);
+		FAngle rot = (float)psp->rotation;
+		rot.Normalized360();
+		float radang = rot.Radians();
 		float cosang = cos(radang);
 		float sinang = sin(radang);
 

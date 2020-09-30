@@ -810,6 +810,13 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 
 	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+
+	// don't bother drawing sprite shadows if this is a model (it will never look right)
+	if (modelframe && shadowsprite)
+	{
+		return;
+	}
+
 	if (!modelframe)
 	{
 		bool mirror = false;

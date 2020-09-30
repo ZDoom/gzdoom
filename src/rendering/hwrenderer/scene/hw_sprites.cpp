@@ -795,6 +795,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	y = thingpos.Y;
 	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
 
+	// snap shadow Z to the floor
 	if (shadowsprite)
 	{
 		z = thing->floorz;

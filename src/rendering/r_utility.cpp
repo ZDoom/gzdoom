@@ -1050,8 +1050,8 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 bool R_ShouldDrawSpriteShadow(AActor *thing)
 {
 	return r_actorshadows &&
-		((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->flags8 & MF8_CASTSPRITESHADOW)) &&
-		!(thing->flags8 & MF8_NOSPRITESHADOW);
+		((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->renderflags & RF_CASTSPRITESHADOW)) &&
+		!(thing->renderflags & RF_NOSPRITESHADOW);
 }
 
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)

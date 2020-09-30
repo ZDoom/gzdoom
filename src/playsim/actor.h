@@ -414,9 +414,6 @@ enum ActorFlag8
 	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
 	MF8_ABSVIEWANGLES	= 0x00000400,	// [MC] By default view angle/pitch/roll is an offset. This will make it absolute instead.
 	MF8_FALLDAMAGE		= 0x00000800,	// Monster will take fall damage regardless of map settings.
-
-	MF8_CASTSPRITESHADOW	= 0x00002000, // Sprite shadow overrides
-	MF8_NOSPRITESHADOW		= 0x00004000, // Ditto
 };
 
 // --- mobj.renderflags ---
@@ -461,7 +458,10 @@ enum ActorRenderFlag
 
 	RF_SPRITEFLIP		= 0x08000000,	// sprite flipped on x-axis
 	RF_ZDOOMTRANS		= 0x10000000,	// is not normally transparent in Vanilla Doom
-	RF_NOINTERPOLATEVIEW = 0x40000000,	// don't interpolate the view next frame if this actor is a camera.
+	RF_NOINTERPOLATEVIEW = 0x20000000,	// don't interpolate the view next frame if this actor is a camera.
+
+	RF_CASTSPRITESHADOW		= 0x40000000,
+	RF_NOSPRITESHADOW		= 0x80000000,
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

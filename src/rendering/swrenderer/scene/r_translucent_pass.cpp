@@ -52,8 +52,8 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Bool, r_actorshadows, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CUSTOM_CVARD(Float, r_spriteshadowdistance, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "how far to render sprite shadows")
+CVARD(Bool, r_actorspriteshadow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "render actor sprite shadows");
+CUSTOM_CVARD(Float, r_actorspriteshadowdist, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "how far to render sprite shadows")
 {
 	if (self < 0.f)
 		self = 0.f;
@@ -146,7 +146,7 @@ namespace swrenderer
 		auto &sortedSprites = Thread->SpriteList->SortedSprites;
 		int count = sortedSprites.Size();
 
-		if (r_actorshadows)
+		if (r_actorspriteshadow)
 		{
 			memcpy(Thread->clipbotcopy, Thread->clipbot, sizeof(short) * viewwidth);
 			memcpy(Thread->cliptopcopy, Thread->cliptop, sizeof(short) * viewwidth);

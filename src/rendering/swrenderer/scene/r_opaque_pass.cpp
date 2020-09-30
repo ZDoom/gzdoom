@@ -79,7 +79,7 @@ extern uint32_t r_renderercaps;
 
 double model_distance_cull = 1e16;
 
-EXTERN_CVAR(Float, r_spriteshadowdistance)
+EXTERN_CVAR(Float, r_actorspriteshadowdist)
 
 namespace
 {
@@ -971,7 +971,7 @@ namespace swrenderer
 						if (R_ShouldDrawSpriteShadow(thing))
 						{
 							double dist = (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared();
-							double check = r_spriteshadowdistance;
+							double check = r_actorspriteshadowdist;
 							if (dist <= check * check)
 							{
 								DVector2 shadowScale = sprite.spriteScale;

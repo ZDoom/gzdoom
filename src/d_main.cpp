@@ -366,7 +366,6 @@ void D_GrabCVarDefaults()
 			}
 
 			CurrentFindCVar = sc.String;
-
 			if (lumpversion < 220)
 			{
 				CurrentFindCVar.ToLower();
@@ -385,9 +384,17 @@ void D_GrabCVarDefaults()
 				if (strcmp(CurrentFindCVar, "cd_drive") == 0)
 					break;
 			}
+			if (lumpversion < 221)
+			{
+				// removed cvar
+				// this one doesn't matter as much, since it depended on platform-specific values,
+				// and is something the user should change anyhow, so, let's just throw this value
+				// out.
+				if (strcmp(CurrentFindCVar, "mouse_sensitivity") == 0)
+					break;
+			}
 
 			var = FindCVar(CurrentFindCVar, NULL);
-
 			if (var != NULL)
 			{
 				if (var->GetFlags() & CVAR_ARCHIVE)

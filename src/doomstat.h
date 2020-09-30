@@ -183,7 +183,6 @@ extern	bool	 		precache;
 extern bool setsizeneeded;
 
 
-EXTERN_CVAR (Float, mouse_sensitivity)
 //?
 // debug flag to cancel adaptiveness
 extern	bool	 		singletics; 	

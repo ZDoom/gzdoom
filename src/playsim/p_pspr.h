@@ -73,6 +73,7 @@ enum PSPFlags
 	PSPF_PLAYERTRANSLATED = 1 << 10,
 	PSPF_PIVOTPERCENT	= 1 << 11,
 	PSPF_PIVOTSCREEN	= 1 << 12,
+	PSPF_PIVOTOFFSETREL	= 1 << 13,
 };
 
 class DPSprite : public DObject
@@ -101,6 +102,7 @@ public:
 
 	bool PivotScreen;		// If true, the pivot is based on the entire screen width/height instead of the image's dimensions/position.
 	bool PivotPercent;		// If true, the pivot goes between [0.0, 1.0]. Otherwise, it's a pixel position offset from the image size.
+	bool PivotOffsetRel;	// If true, x & y are relative to rotation. Otherwise, x is left/right and y is up/down.
 	double px, py;			// pivot points
 	double oldpx, oldpy;	
 	double rotation;		// How much rotation to apply.

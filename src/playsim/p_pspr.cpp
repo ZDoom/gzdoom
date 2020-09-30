@@ -142,8 +142,6 @@ DEFINE_FIELD(DPSprite, oldscalex)
 DEFINE_FIELD(DPSprite, oldscaley)
 DEFINE_FIELD(DPSprite, rotation)
 DEFINE_FIELD(DPSprite, oldrotation)
-DEFINE_FIELD(DPSprite, PivotPercent)
-DEFINE_FIELD(DPSprite, PivotScreen)
 DEFINE_FIELD(DPSprite, firstTic)
 DEFINE_FIELD(DPSprite, Tics)
 DEFINE_FIELD(DPSprite, Translation)
@@ -157,6 +155,7 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPivotPercent, PSPF_PIVOTPERCENT)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPivotScreen, PSPF_PIVOTSCREEN)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPivotOffsetRel, PSPF_PIVOTOFFSETREL)
 
 //------------------------------------------------------------------------
 //
@@ -185,7 +184,8 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   oldpx(.0), oldpy(.0),
   oldrotation(.0),
   PivotPercent(true),
-  PivotScreen(false)
+  PivotScreen(false),
+  PivotOffsetRel(false)
 {
 	alpha = 1;
 	Renderstyle = STYLE_Normal;

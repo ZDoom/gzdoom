@@ -485,29 +485,67 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	auto verts = screen->mVertexData->AllocVertices(4);
 	mx = verts.second;
 
-
+	// [MC] Code copied from DTA_Rotate
+	// Big thanks to IvanDobrovski who helped me modify this.
 	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
 	{
-		double radang = psp->rotation * (pi::pi() / 180.);
-		double cosang = cos(radang);
-		double sinang = sin(radang);
+		float radang = psp->rotation * (pi::pi() / 180.);
+		float cosang = -cos(radang);
+		float sinang = -sin(radang);
 
-		double xcenter = psp->x;
-		double ycenter = psp->y;
+		float xcenter, ycenter;
 
+		float px = float(psp->px);
+		float py = float(psp->py);
 
-		double xx1 = xcenter + psp->scalex * (x1 * cosang + y1 * sinang);
-		double yy1 = ycenter + psp->scaley * (x1 * sinang - y1 * cosang);
+		if (psp->Flags & PSPF_PIVOTSCREEN)
+		{
+			if (psp->Flags & PSPF_PIVOTPERCENT)
+			{
+				xcenter = vw * psp->px + viewwindowx + psp->x;
+				ycenter = vh * psp->py + viewwindowy + psp->y;
+			}
+			else
+			{
+				xcenter = vw * 0.5 + viewwindowx + psp->x + psp->px;
+				ycenter = vh * 0.5 + viewwindowy + psp->y + psp->py;
+			}
+		}
+		else
+		{
+			if (psp->Flags & PSPF_PIVOTPERCENT)
+			{
+				xcenter = (x1 + x2) * psp->px + psp->x;
+				ycenter = (y1 + y2) * psp->py + psp->y;
+			}
+			else
+			{
+				xcenter = ((x1 + x2) * 0.5 + psp->x) + psp->px;
+				ycenter = ((x1 + x2) * 0.5 + psp->y) + psp->py;
+			}
+		}
 
-		double xx2 = xcenter + psp->scalex * (x1 * cosang + y2 * sinang);
-		double yy2 = ycenter + psp->scaley * (x1 * sinang - y2 * cosang);
+		x1 -= xcenter;
+		y1 -= ycenter;
 
-		double xx3 = xcenter + psp->scalex * (x2 * cosang + y1 * sinang);
-		double yy3 = ycenter + psp->scaley * (x2 * sinang - y1 * cosang);
+		x2 -= xcenter;
+		y2 -= ycenter;
 
-		double xx4 = xcenter + psp->scalex * (x2 * cosang + y2 * sinang);
-		double yy4 = ycenter + psp->scaley * (x2 * sinang - y2 * cosang);
-	
+		float ssx = (float)psp->scalex;
+		float ssy = (float)psp->scaley;
+
+		float xx1 = xcenter + ssx * (x1 * cosang + y1 * sinang);
+		float yy1 = ycenter + ssy * (x1 * sinang - y1 * cosang);
+
+		float xx2 = xcenter + ssx * (x1 * cosang + y2 * sinang);
+		float yy2 = ycenter + ssy * (x1 * sinang - y2 * cosang);
+
+		float xx3 = xcenter + ssx * (x2 * cosang + y1 * sinang);
+		float yy3 = ycenter + ssy * (x2 * sinang - y1 * cosang);
+
+		float xx4 = xcenter + ssx * (x2 * cosang + y2 * sinang);
+		float yy4 = ycenter + ssy * (x2 * sinang - y2 * cosang);
+
 		verts.first[0].Set(xx1, yy1, 0, u1, v1);
 		verts.first[1].Set(xx2, yy2, 0, u1, v2);
 		verts.first[2].Set(xx3, yy3, 0, u2, v1);
@@ -515,7 +553,6 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	}
 	else
 	{
-
 		verts.first[0].Set(x1, y1, 0, u1, v1);
 		verts.first[1].Set(x1, y2, 0, u1, v2);
 		verts.first[2].Set(x2, y1, 0, u2, v1);

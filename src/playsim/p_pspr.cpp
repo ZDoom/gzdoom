@@ -803,6 +803,15 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 		if (psp == nullptr)
 			return;
 
+		if (flags & WOF_RELATIVE)
+		{
+			DAngle rot = psp->rotation;
+			double c = rot.Cos(), s = rot.Sin();
+			double nx = wx * c + wy * s;
+			double ny = wx * s - wy * c;
+			wx = nx; wy = ny;
+		}
+
 		if (!(flags & WOF_KEEPX))
 		{
 			if (flags & WOF_ADD)

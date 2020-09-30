@@ -77,7 +77,6 @@ public:
 	virtual void Ungrab() = 0;
 
 protected:
-	void PostMouseMove(int x, int y);
 	void WheelMoved(int axis, int wheelmove);
 	void PostButtonEvent(int button, bool down);
 	void ClearButtonState();

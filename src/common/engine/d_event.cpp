@@ -41,12 +41,19 @@
 #include "utf8.h"
 #include "m_joy.h"
 #include "vm.h"
+#include "gamestate.h"
+#include "i_interface.h"
 
 bool G_Responder(event_t* ev);
 
 int eventhead;
 int eventtail;
 event_t events[MAXEVENTS];
+
+CVAR(Float, m_sensitivity_x, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, m_sensitivity_y, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, m_filter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 
 //==========================================================================
 //
@@ -69,6 +76,8 @@ void D_ProcessEvents (void)
 			continue;
 		if (ev->type == EV_DeviceChange)
 			UpdateJoystickMenu(I_UpdateDeviceList());
+		if (gamestate == GS_INTRO)
+			continue;
 		if (C_Responder (ev))
 			continue;				// console ate the event
 		if (M_Responder (ev))
@@ -113,6 +122,57 @@ void D_RemoveNextCharEvent()
 }
  
 
+//==========================================================================
+//
+// D_PostEvent
+//
+// Called by the I/O functions when input is detected.
+//
+//==========================================================================
+
+void D_PostEvent(event_t* ev)
+{
+	// Do not post duplicate consecutive EV_DeviceChange events.
+	if (ev->type == EV_DeviceChange && events[eventhead].type == EV_DeviceChange)
+	{
+		return;
+	}
+	if (sysCallbacks && sysCallbacks->DispatchEvent && sysCallbacks->DispatchEvent(ev))
+		return;
+
+	events[eventhead] = *ev;
+	eventhead = (eventhead + 1) & (MAXEVENTS - 1);
+}
+
+
+void PostMouseMove(int xx, int yy)
+{
+	static float lastx = 0, lasty = 0;
+	event_t ev{};
+
+	float x = float(xx) * m_sensitivity_x;
+	float y = -float(yy) * m_sensitivity_y;
+
+	if (m_filter)
+	{
+		ev.x = (x + lastx) / 2;
+		ev.y = (y + lasty) / 2;
+	}
+	else
+	{
+		ev.x = x;
+		ev.y = y;
+	}
+	lastx = x;
+	lasty = y;
+	if (ev.x || ev.y)
+	{
+		ev.type = EV_Mouse;
+		D_PostEvent(&ev);
+	}
+}
+
+
 FInputEvent::FInputEvent(const event_t *ev)
 {
 	Type = (EGenericEvent)ev->type;
@@ -132,8 +192,8 @@ FInputEvent::FInputEvent(const event_t *ev)
 		KeyString = FString(char(ev->data1));
 		break;
 	case EV_Mouse:
-		MouseX = ev->x;
-		MouseY = ev->y;
+		MouseX = int(ev->x);
+		MouseY = int(ev->y);
 		break;
 	default:
 		break; // EV_DeviceChange = wat?

@@ -474,7 +474,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 			continue;
 
 		// Don't let players and monsters block item teleports (all other actor types will still block.)
-		if (thing->IsKindOf(NAME_Inventory) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
+		if ((thing->IsKindOf(NAME_Inventory) || (thing->flags2 & MF2_TELESTOMP)) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
 			continue;
 
 		// monsters don't stomp things except on boss level
@@ -1528,7 +1528,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// MBF bouncer might have a non-0 damage value, but they must not deal damage on impact either.
 		if ((tm.thing->BounceFlags & BOUNCE_Actors) && (tm.thing->IsZeroDamage() || !(tm.thing->flags & MF_MISSILE)))
 		{
-			return ((tm.thing->target == thing && !(tm.thing->flags8 & MF8_HITOWNER)) || !(thing->flags & MF_SOLID));
+			return (((tm.thing->target == thing && !(tm.thing->flags8 & MF8_HITOWNER)) || !(thing->flags & MF_SOLID)) && 
+				(tm.thing->SpecialMissileHit(thing) != 0));
 		}
 
 		switch (tm.thing->SpecialMissileHit(thing))
@@ -5879,7 +5880,7 @@ int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int
 //==========================================================================
 
 int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
-	int flags, int fulldamagedistance)
+	int flags, int fulldamagedistance, FName species)
 {
 	if (bombdistance <= 0)
 		return 0;
@@ -5926,6 +5927,11 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			((bombsource->flags6 & MF6_DONTHARMSPECIES) && (thing->GetSpecies() == bombsource->GetSpecies()))
 			)
 			)	continue;
+
+		if((species != NAME_None) && (thing->Species != species))
+		{
+			continue;
+		}
 
 		targets.Push(thing);
 	}

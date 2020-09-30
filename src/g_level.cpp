@@ -91,6 +91,8 @@
 #include "i_time.h"
 #include "p_maputl.h"
 #include "s_music.h"
+#include "fragglescript/t_script.h"
+
 #include "texturemanager.h"
 
 void STAT_StartNewGame(const char *lev);
@@ -167,7 +169,7 @@ extern FString BackupSaveName;
 bool savegamerestore;
 int finishstate = FINISH_NoHub;
 
-extern int mousex, mousey;
+extern float mousex, mousey;
 extern bool sendpause, sendsave, sendturn180, SendLand;
 
 void *statcopy;					// for statistics driver
@@ -373,6 +375,8 @@ void G_NewInit ()
 		pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
 		pawn->Destroy();
 	}
+	if (primaryLevel->FraggleScriptThinker) primaryLevel->FraggleScriptThinker->Destroy();
+	primaryLevel->FraggleScriptThinker = nullptr;
 
 	G_ClearSnapshots ();
 	netgame = false;
@@ -654,7 +658,8 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 		nextlevel = levelname;
 	}
 
-	NextSkill = (unsigned)nextSkill < AllSkills.Size() ? nextSkill : -1;
+	if (nextSkill != -1)
+		NextSkill = (unsigned)nextSkill < AllSkills.Size() ? nextSkill : -1;
 
 	if (inflags & CHANGELEVEL_NOINTERMISSION)
 	{
@@ -736,6 +741,17 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	// Set global transition state.
 	gameaction = ga_completed;
 	::nextlevel = nextlevel;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeLevel)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_STRING(levelname);
+	PARAM_INT(position);
+	PARAM_INT(inflags);
+	PARAM_INT(nextSkill);
+	self->ChangeLevel(levelname, position, inflags, nextSkill);
+	return 0;
 }
 
 //==========================================================================
@@ -833,13 +849,14 @@ void G_DoCompleted (void)
 	// Close the conversation menu if open.
 	P_FreeStrifeConversations ();
 
+	bool playinter = primaryLevel->DoCompleted(nextlevel, staticWmInfo);
 	S_StopAllChannels();
 	for (auto Level : AllLevels())
 	{
 		SN_StopAllSequences(Level);
 	}
 
-	if (primaryLevel->DoCompleted(nextlevel, staticWmInfo))
+	if (playinter)
 	{
 		gamestate = GS_INTERMISSION;
 		viewactive = false;
@@ -1718,8 +1735,7 @@ FString CalcMapName (int episode, int level)
 	}
 	else
 	{
-		lumpname = "";
-		lumpname << 'E' << ('0' + episode) << 'M' << ('0' + level);
+		lumpname.Format("E%01dM%01d", episode, level);
 	}
 	return lumpname;
 }

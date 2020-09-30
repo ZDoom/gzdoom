@@ -504,6 +504,13 @@ ListMenu "PlayerMenu"
 //
 //-------------------------------------------------------------------------------------------
 
+OptionValue "Layouts"
+{
+	0, "$OPTVAL_MODERN"
+	1, "$OPTVAL_CLASSICZ"
+	2, "$OPTVAL_MODERNLEFT"
+}
+
 OptionMenu "CustomizeControls" protected
 {
 	Title "$CNTRLMNU_TITLE"
@@ -515,6 +522,9 @@ OptionMenu "CustomizeControls" protected
 	Submenu    "$CNTRLMNU_OTHER"       , "OtherControlsMenu"
 	Submenu    "$CNTRLMNU_POPUPS"      , "StrifeControlsMenu"
 	Submenu    "$MAPCNTRLMNU_CONTROLS" , "MapControlsMenu"
+	StaticText ""
+	Option "$CNTRLMNU_LAYOUT",			"cl_defaultconfiguration", "Layouts"
+	SafeCommand "$OPTMNU_DEFAULTS",		"resetb2defaults"
 }
 
 OptionMenu "ActionControlsMenu" protected
@@ -724,8 +734,8 @@ OptionMenu "MouseOptions" protected
 	Option "$MOUSEMNU_SHOWBACKBUTTON",	"m_show_backbutton", "Corners", "use_mouse"
 	Option "$MOUSEMNU_CURSOR",			"vid_cursor", "Cursors"
 	StaticText 	""
-	Slider "$MOUSEMNU_SENSITIVITY",		"mouse_sensitivity", 0.5, 2.5, 0.1
-	Option "$MOUSEMNU_NOPRESCALE",		"m_noprescale", "NoYes"
+	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
+	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
 	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
 	StaticText 	""
 	Slider "$MOUSEMNU_TURNSPEED",		"m_yaw", 0, 2.5, 0.1
@@ -734,7 +744,7 @@ OptionMenu "MouseOptions" protected
 	Slider "$MOUSEMNU_STRAFESPEED",		"m_side", 0, 2.5, 0.1
 	StaticText 	""
 	Option "$MOUSEMNU_ALWAYSMOUSELOOK",	"freelook", "OnOff"
-	Option "$MOUSEMNU_INVERTMOUSEX",		"invertmousex", "OnOff"
+	Option "$MOUSEMNU_INVERTMOUSEX",	"invertmousex", "OnOff"
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 	Option "$MOUSEMNU_LOOKSPRING",		"lookspring", "OnOff"
 	Option "$MOUSEMNU_LOOKSTRAFE",		"lookstrafe", "OnOff"

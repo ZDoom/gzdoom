@@ -464,7 +464,7 @@ FResourceFile *CheckZip(const char *filename, FileReader &file, bool quiet, Lump
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PK\x3\x4", 4))
 		{
-			FResourceFile *rf = new FZipFile(filename, file);
+			auto rf = new FZipFile(filename, file);
 			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

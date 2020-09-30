@@ -1,7 +1,9 @@
+// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// Copyright 1993-1996 id Software
-// Copyright 1999-2016 Randy Heit
+// $Id: i_net.c,v 1.2 1997/12/29 19:50:54 pekangas Exp $
+//
+// Copyright (C) 1993-1996 by id Software, Inc.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,7 +18,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/
 //
-//-----------------------------------------------------------------------------
+//
+//
+// Alternatively the following applies:
+//
+// This source is available for distribution and/or modification
+// only under the terms of the DOOM Source Code License as
+// published by id Software. All rights reserved.
+//
+// The source is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+// for more details.
+//
 //
 // DESCRIPTION:
 //		Low-level networking code. Uses BSD sockets for UDP networking.
@@ -53,16 +67,15 @@
 #	endif
 #endif
 
-#include "doomtype.h"
 #include "i_system.h"
-#include "d_net.h"
 #include "m_argv.h"
 #include "m_crc32.h"
-#include "d_player.h"
 #include "st_start.h"
-#include "m_misc.h"
 #include "engineerrors.h"
 #include "cmdlib.h"
+#include "printf.h"
+#include "i_interface.h"
+#include "templates.h"
 
 #include "i_net.h"
 
@@ -90,6 +103,10 @@ typedef int SOCKET;
 #ifdef __WIN32__
 typedef int socklen_t;
 #endif
+
+bool netgame, multiplayer;
+int consoleplayer; // i.e. myconnectindex in Build. 
+doomcom_t doomcom;
 
 //
 // NETWORKING
@@ -142,6 +159,12 @@ struct PreGamePacket
 };
 
 uint8_t TransmitBuffer[TRANSMIT_SIZE];
+
+FString GetPlayerName(int num)
+{
+	if (sysCallbacks && sysCallbacks->GetPlayerName) return sysCallbacks->GetPlayerName(sendplayer[num]);
+	else return FStringf("Player %d", sendplayer[num] + 1);
+}
 
 //
 // UDPsocket
@@ -272,12 +295,12 @@ void PacketGet (void)
 			if (StartScreen != NULL)
 			{
 				StartScreen->NetMessage ("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.GetName());
+					GetPlayerName(node).GetChars());
 			}
 			else
 			{
 				Printf("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.GetName());
+					GetPlayerName(node).GetChars());
 			}
 
 			doomcom.data[0] = 0x80;	// NCMD_EXIT
@@ -945,7 +968,7 @@ int I_InitNetwork (void)
 	v = Args->CheckValue ("-dup");
 	if (v)
 	{
-		doomcom.ticdup = clamp (atoi (v), 1, MAXTICDUP);
+		doomcom.ticdup = clamp<int> (atoi (v), 1, MAXTICDUP);
 	}
 	else
 	{

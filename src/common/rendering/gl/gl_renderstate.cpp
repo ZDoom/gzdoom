@@ -329,12 +329,24 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 
 	if (base->BindOrCreate(tex->GetTexture(), 0, clampmode, translation, layer->scaleFlags))
 	{
-		for (int i = 1; i<numLayers; i++)
+		if (!(layer->scaleFlags & CTF_Indexed))
 		{
-			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-			// fixme: Upscale flags must be disabled for certain layers.
-			systex->BindOrCreate(layer->layerTexture, i, clampmode, 0, layer->scaleFlags);
-			maxbound = i;
+			for (int i = 1; i < numLayers; i++)
+			{
+				auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+				// fixme: Upscale flags must be disabled for certain layers.
+				systex->BindOrCreate(layer->layerTexture, i, clampmode, 0, layer->scaleFlags);
+				maxbound = i;
+			}
+		}
+		else
+		{
+			for (int i = 1; i < 3; i++)
+			{
+				auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, translation, &layer));
+				systex->Bind(i, false);
+				maxbound = i;
+			}
 		}
 	}
 	// unbind everything from the last texture that's still active

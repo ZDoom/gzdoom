@@ -1,0 +1,7 @@
+/* Default keybindings for Strife */
+
+w "showpop 1"
+backspace invdrop
+z "showpop 3"
+s "showpop 2"
+q invquery

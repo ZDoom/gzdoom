@@ -1,0 +1,18 @@
+/* Default keybindings for all games */
+
+KP8 +forward
+KP5 +back
+KP4 +moveleft
+KP6 +moveright
+KP7 +jump
+KP1 crouch
+KP0 +use
+UpArrow +forward
+DownArrow +back
+LeftArrow +moveleft
+RightArrow +moveright
+mouse2 +altattack
+
+
+
+

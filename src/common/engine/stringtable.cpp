@@ -450,7 +450,7 @@ void FStringTable::InsertString(int lumpnum, int langid, FName label, const FStr
 		auto replace = allMacros.CheckKey(lookupname);
 		for (int i = 0; i < 4; i++)
 		{
-			const char *replacement = replace && replace->Replacements[i] ? replace->Replacements[i].GetChars() : "";
+			const char *replacement = replace? replace->Replacements[i].GetChars() : "";
 			te.strings[i].Substitute(replacee, replacement);
 		}
 	}
@@ -575,7 +575,10 @@ const char *FStringTable::GetString(const char *name, uint32_t *langtable, int g
 			if (item)
 			{
 				if (langtable) *langtable = map.first;
-				return item->strings[gender].GetChars();
+				auto c = item->strings[gender].GetChars();
+				if (c && *c == '$' && c[1] == '$')
+					return GetString(c + 2, langtable, gender);
+				return c;
 			}
 		}
 	}

@@ -786,7 +786,7 @@ void V_InitFonts()
 	}
 	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
 	{
-		if (fileSystem.CheckNumForName("WINUM0") >= 0)
+		if (TexMan.CheckForTexture("WINUM0", ETextureType::MiscPatch).isValid())
 		{
 			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
 		}

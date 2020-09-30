@@ -87,7 +87,6 @@ public:
 extern FKeyBindings Bindings;
 extern FKeyBindings DoubleBindings;
 extern FKeyBindings AutomapBindings;
-extern FKeyBindings MenuBindings;
 
 
 bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds);

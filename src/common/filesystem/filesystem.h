@@ -187,19 +187,7 @@ public:
 	int AddFromBuffer(const char* name, const char* type, char* data, int size, int id, int flags);
 	FileReader* GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 	void InitHashChains();
-
-	// Blood stuff
-	FResourceLump* Lookup(const char* name, const char* type);
-	FResourceLump* Lookup(unsigned int id, const char* type);
-
 	FResourceLump* GetFileAt(int no);
-
-	const void* Lock(int lump);
-	void Unlock(int lump);
-	const void* Get(int lump);
-	static const void* Lock(FResourceLump* lump);
-	static void Unlock(FResourceLump* lump);
-	static const void* Load(FResourceLump* lump);;
 
 protected:
 

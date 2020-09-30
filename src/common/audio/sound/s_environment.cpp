@@ -183,11 +183,22 @@ static ReverbContainer Underwater =
 	false
 };
 
-static ReverbContainer SewerPipe4 =
+static ReverbContainer SewerPipe3 =
 {
 	&Underwater,
-	"Sewer Pipe 2",
+	"Sewer Pipe 3",
 	0x1503,
+	true,
+	false,
+	{0,21,	1.7f,	0.80f, -1000,  -1000,  0,   1.54f,  0.14f, 1.0f,    200, 0.014f, 0.0f,0.0f,0.0f,  1023, 0.021f, 0.0f,0.0f,0.0f, 0.250f, 0.00f, 0.25f, 0.000f, -5.0f, 5000.0f, 250.0f, 0.0f,  80.0f,  60.0f, 0x3f },
+	false
+};
+
+static ReverbContainer SewerPipe2 =
+{
+	&SewerPipe3,
+	"Sewer Pipe 2",
+	0x1502,
 	true,
 	false,
 	{0,21,	1.7f,	0.80f, -1000,  -1000,  0,   1.81f,  0.14f, 1.0f,    229, 0.014f, 0.0f,0.0f,0.0f,  1023, 0.021f, 0.0f,0.0f,0.0f, 0.250f, 0.00f, 0.25f, 0.000f, -5.0f, 5000.0f, 250.0f, 0.0f,  80.0f,  60.0f, 0x3f },
@@ -196,7 +207,7 @@ static ReverbContainer SewerPipe4 =
 
 static ReverbContainer SewerPipe =
 {
-	&SewerPipe4,
+	&SewerPipe2,
 	"Sewer Pipe",
 	0x1500,
 	true,

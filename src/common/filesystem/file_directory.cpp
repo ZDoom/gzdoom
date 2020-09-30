@@ -254,9 +254,9 @@ int FDirectoryLump::FillCache()
 
 FResourceFile *CheckDir(const char *filename, bool quiet, bool nosubdirflag, LumpFilterInfo* filter)
 {
-	FResourceFile *rf = new FDirectory(filename, nosubdirflag);
+	auto rf = new FDirectory(filename, nosubdirflag);
 	if (rf->Open(quiet, filter)) return rf;
 	delete rf;
-	return NULL;
+	return nullptr;
 }
 

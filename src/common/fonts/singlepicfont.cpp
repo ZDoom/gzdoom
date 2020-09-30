@@ -46,7 +46,7 @@ public:
 
 	// FFont interface
 	FGameTexture *GetChar(int code, int translation, int *const width, bool *redirected = nullptr) const override;
-	int GetCharWidth (int code) const;
+	int GetCharWidth (int code) const override;
 
 protected:
 	FTextureID PicNum;

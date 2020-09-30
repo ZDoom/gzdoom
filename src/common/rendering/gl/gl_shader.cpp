@@ -246,7 +246,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		uniform vec4 uTextureBlendColor;
 		uniform vec4 uTextureModulateColor;
 		uniform vec4 uTextureAddColor;
-		uniform vec4 uBlendColor;
 		uniform vec4 uFogColor;
 		uniform float uDesaturationFactor;
 		uniform float uInterpolationFactor;

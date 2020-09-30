@@ -43,7 +43,11 @@
 #elif defined(__solaris__) || defined(__OpenBSD__) || defined(__DragonFly__)
 #define _msize(p)				(*((size_t*)(p)-1))
 #elif !defined(_WIN32)
+#ifdef __FreeBSD__
+#include <malloc_np.h>
+#else
 #include <malloc.h>
+#endif
 #define _msize(p)				malloc_usable_size(p)	// from glibc/FreeBSD
 #endif
 

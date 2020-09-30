@@ -58,7 +58,6 @@ extern "C" {
     __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;	
 }
-void GetRefreshRate(HWND hWnd);
 
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
@@ -339,7 +338,6 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen, bool initialcall)
 	}
 	m_Fullscreen = fullscreen;
 	SetSize(GetClientWidth(), GetClientHeight());
-	GetRefreshRate(Window);
 }
 
 //==========================================================================

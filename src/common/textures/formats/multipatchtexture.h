@@ -77,7 +77,7 @@ protected:
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 	void CopyToBlock(uint8_t *dest, int dwidth, int dheight, FImageSource *source, int xpos, int ypos, int rotate, const uint8_t *translation, int style);
-	void CollectForPrecache(PrecacheInfo &info, bool requiretruecolor);
+	void CollectForPrecache(PrecacheInfo &info, bool requiretruecolor) override;
 
 };
 

@@ -252,14 +252,14 @@ public:
 
 	int16_t ReadInt16()
 	{
-		uint16_t v = 0;
+		int16_t v = 0;
 		Read(&v, 2);
 		return LittleShort(v);
 	}
 
 	int16_t ReadInt16BE()
 	{
-		uint16_t v = 0;
+		int16_t v = 0;
 		Read(&v, 2);
 		return BigShort(v);
 	}
@@ -273,7 +273,7 @@ public:
 
 	int32_t ReadInt32()
 	{
-		uint32_t v = 0;
+		int32_t v = 0;
 		Read(&v, 4);
 		return LittleLong(v);
 	}
@@ -287,9 +287,17 @@ public:
 
 	int32_t ReadInt32BE()
 	{
-		uint32_t v = 0;
+		int32_t v = 0;
 		Read(&v, 4);
 		return BigLong(v);
+	}
+
+	uint64_t ReadUInt64()
+	{
+		uint64_t v = 0;
+		Read(&v, 8);
+		// Prove to me that there's a relevant 64 bit Big Endian architecture and I fix this! :P
+		return v;
 	}
 
 

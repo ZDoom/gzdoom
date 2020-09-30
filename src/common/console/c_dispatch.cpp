@@ -1123,7 +1123,7 @@ int C_RegisterFunction(const char* pszName, const char* pszDesc, int (*func)(CCm
 	{
 		if (args.argc() > 0) args.operator[](0);
 		CCmdFuncParm param = { args.argc() - 1, nname.GetChars(), (const char**)args._argv + 1, args.cmd };
-		if (func(&param) != CCMD_OK)
+		if (func(&param) != CCMD_OK && pszDesc)
 		{
 			Printf("%s\n", pszDesc);
 		}

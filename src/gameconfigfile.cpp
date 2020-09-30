@@ -68,6 +68,12 @@ EXTERN_CVAR (Int, gl_texture_hqresizemult)
 EXTERN_CVAR (Int, vid_preferbackend)
 EXTERN_CVAR (Float, vid_scale_custompixelaspect)
 EXTERN_CVAR (Bool, vid_scale_linear)
+EXTERN_CVAR(Float, m_sensitivity_x)
+EXTERN_CVAR(Float, m_sensitivity_y)
+
+#ifdef _WIN32
+EXTERN_CVAR(Int, in_mouse)
+#endif
 
 FGameConfigFile::FGameConfigFile ()
 {
@@ -295,14 +301,6 @@ void FGameConfigFile::DoGlobalSetup ()
 		if (lastver != NULL)
 		{
 			double last = atof (lastver);
-			if (last < 123.1)
-			{
-				FBaseCVar *noblitter = FindCVar ("vid_noblitter", NULL);
-				if (noblitter != NULL)
-				{
-					noblitter->ResetToDefault ();
-				}
-			}
 			if (last < 202)
 			{
 				// Make sure the Hexen hotkeys are accessible by default.
@@ -327,15 +325,6 @@ void FGameConfigFile::DoGlobalSetup ()
 					vsync->ResetToDefault ();
 				}
 			}
-			/* spc_amp no longer exists
-			if (last < 206)
-			{ // spc_amp is now a float, not an int.
-				if (spc_amp > 16)
-				{
-					spc_amp = spc_amp / 16.f;
-				}
-			}
-			*/
 			if (last < 207)
 			{ // Now that snd_midiprecache works again, you probably don't want it on.
 				FBaseCVar *precache = FindCVar ("snd_midiprecache", NULL);
@@ -575,6 +564,31 @@ void FGameConfigFile::DoGlobalSetup ()
 					UCVarValue v = var->GetGenericRep(CVAR_Bool);
 					vid_fullscreen = v.Float;
 				}
+			}
+			if (last < 221)
+			{
+				// Transfer the messed up mouse scaling config to something sane and consistent.
+#ifndef _WIN32
+				double xfact = 3, yfact = 2;
+#else
+				double xfact = in_mouse == 1? 1.5 : 4, yfact = 1;
+#endif
+				auto var = FindCVar("m_noprescale", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Bool);
+					if (v.Bool) xfact = yfact = 1;
+				}
+
+				var = FindCVar("mouse_sensitivity", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					xfact *= v.Float;
+					yfact *= v.Float;
+				}
+				m_sensitivity_x = (float)xfact;
+				m_sensitivity_y = (float)yfact;
 
 			}
 		}

@@ -140,7 +140,7 @@ FResourceFile *CheckGRP(const char *filename, FileReader &file, bool quiet, Lump
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "KenSilverman", 12))
 		{
-			FResourceFile *rf = new FGrpFile(filename, file);
+			auto rf = new FGrpFile(filename, file);
 			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

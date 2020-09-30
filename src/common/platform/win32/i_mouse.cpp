@@ -162,8 +162,6 @@ bool NativeMouse;
 bool CursorState;
 
 CVAR (Bool, use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,	m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, m_hidepointer,			true, 0)
 
 CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
@@ -312,38 +310,6 @@ FMouse::FMouse()
 	ButtonState = 0;
 	WheelMove[0] = 0;
 	WheelMove[1] = 0;
-}
-
-//==========================================================================
-//
-// FMouse :: PostMouseMove
-//
-// Posts a mouse movement event, potentially averaging it with the previous
-// movement. If there is no movement to post, then no event is generated.
-//
-//==========================================================================
-
-void FMouse::PostMouseMove(int x, int y)
-{
-	event_t ev = { 0 };
-
-	if (m_filter)
-	{
-		ev.x = (x + LastX) / 2;
-		ev.y = (y + LastY) / 2;
-	}
-	else
-	{
-		ev.x = x;
-		ev.y = y;
-	}
-	LastX = x;
-	LastY = y;
-	if (ev.x | ev.y)
-	{
-		ev.type = EV_Mouse;
-		D_PostEvent(&ev);
-	}
 }
 
 //==========================================================================
@@ -620,8 +586,8 @@ bool FRawMouse::ProcessRawInput(RAWINPUT *raw, int code)
 	{
 		WheelMoved(1, (SHORT)raw->data.mouse.usButtonData);
 	}
-	int x = m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX << 2;
-	int y = -raw->data.mouse.lLastY;
+	int x = raw->data.mouse.lLastX;
+	int y = raw->data.mouse.lLastY;
 	PostMouseMove(x, y);
 	if (x | y)
 	{
@@ -847,7 +813,7 @@ void FDInputMouse::ProcessInput()
 			}
 		}
 	}
-	PostMouseMove(m_noprescale ? dx : dx<<2, -dy);
+	PostMouseMove(dx, dy);
 }
 
 //==========================================================================
@@ -952,18 +918,13 @@ void FWin32Mouse::ProcessInput()
 	}
 
 	x = pt.x - PrevX;
-	y = PrevY - pt.y;
+	y = pt.y - PrevY;
 
-	if (!m_noprescale)
-	{
-		x *= 3;
-		y *= 2;
-	}
 	if (x | y)
 	{
 		CenterMouse(pt.x, pt.y, &PrevX, &PrevY);
 	}
-	PostMouseMove(x, y);
+	PostMouseMove(2* x, 2* y);	// The factor of 2 is needed to match this with raw mouse input.
 }
 
 //==========================================================================

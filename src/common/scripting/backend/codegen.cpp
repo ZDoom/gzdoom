@@ -81,7 +81,7 @@ static const FLOP FxFlops[] =
 	{ NAME_Round,	FLOP_ROUND,		[](double v) { return round(v);  } },
 };
 
-static bool AreCompatiblePointerTypes(PType* dest, PType* source, bool forcompare = false);
+bool AreCompatiblePointerTypes(PType* dest, PType* source, bool forcompare = false);
 
 //==========================================================================
 //
@@ -271,7 +271,7 @@ PFunction *FindBuiltinFunction(FName funcname)
 //
 //==========================================================================
 
-static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
+bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 {
 	if (dest->isPointer() && source->isPointer())
 	{
@@ -4282,13 +4282,13 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 	{
 		if (b_left==0 || b_right==0)
 		{
-			FxExpression *x = new FxConstant(true, ScriptPosition);
+			FxExpression *x = new FxConstant(false, ScriptPosition);
 			delete this;
 			return x;
 		}
 		else if (b_left==1 && b_right==1)
 		{
-			FxExpression *x = new FxConstant(false, ScriptPosition);
+			FxExpression *x = new FxConstant(true, ScriptPosition);
 			delete this;
 			return x;
 		}

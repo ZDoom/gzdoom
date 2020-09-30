@@ -58,6 +58,7 @@ enum EGameTexFlags
 	GTexf_DisableFullbrightSprites = 64,	// This texture will not be displayed as fullbright sprite
 	GTexf_BrightmapChecked = 128,			// Check for a colormap-based brightmap was already done.
 	GTexf_AutoMaterialsAdded = 256,			// AddAutoMaterials has been called on this texture.
+	GTexf_OffsetsNotForFont = 512,			// The offsets must be ignored when using this texture in a font.
 };
 
 // Refactoring helper to allow piece by piece adjustment of the API
@@ -91,7 +92,7 @@ class FGameTexture
 	SpritePositioningInfo* spi = nullptr;
 
 	ISoftwareTexture* SoftwareTexture = nullptr;
-	FMaterial* Material[4] = {  };
+	FMaterial* Material[5] = {  };
 
 	// Material properties
 	FVector2 detailScale = { 1.f, 1.f };
@@ -156,6 +157,7 @@ public:
 	void SetWorldPanning(bool on) { if (on) flags |= GTexf_WorldPanning; else flags &= ~GTexf_WorldPanning; }
 	bool allowNoDecals() const { return !!(flags & GTexf_NoDecals);	}
 	void SetNoDecals(bool on) { if (on) flags |= GTexf_NoDecals; else flags &= ~GTexf_NoDecals; }
+	void SetOffsetsNotForFont() { flags |= GTexf_OffsetsNotForFont; }
 
 	bool isValid() const { return UseType != ETextureType::Null; }
 	int isWarped() { return warped; }
@@ -208,12 +210,15 @@ public:
 	float GetGlossiness() const { return Glossiness; }
 	float GetSpecularLevel() const { return SpecularLevel; }
 
-	void CopySize(FGameTexture* BaseTexture)
+	void CopySize(FGameTexture* BaseTexture, bool forfont = false)
 	{
 		Base->CopySize(BaseTexture->Base.get());
 		SetDisplaySize(BaseTexture->GetDisplayWidth(), BaseTexture->GetDisplayHeight());
-		SetOffsets(0, BaseTexture->GetTexelLeftOffset(0), BaseTexture->GetTexelTopOffset(0));
-		SetOffsets(1, BaseTexture->GetTexelLeftOffset(1), BaseTexture->GetTexelTopOffset(1));
+		if (!forfont || !(BaseTexture->flags & GTexf_OffsetsNotForFont))
+		{
+			SetOffsets(0, BaseTexture->GetTexelLeftOffset(0), BaseTexture->GetTexelTopOffset(0));
+			SetOffsets(1, BaseTexture->GetTexelLeftOffset(1), BaseTexture->GetTexelTopOffset(1));
+		}
 	}
 
 	// Glowing is a pure material property that should not filter down to the actual texture objects.
@@ -234,6 +239,7 @@ public:
 		TexelWidth = x; 
 		TexelHeight = y;
 		SetDisplaySize(float(x), float(y));
+		if (GetTexture()) GetTexture()->SetSize(x, y);
 	}
 	void SetDisplaySize(float w, float h) 
 	{ 

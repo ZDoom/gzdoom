@@ -1527,6 +1527,16 @@ public:
 	{
 		memset(&bytes[0], on ? -1 : 0, sizeof(bytes));
 	}
+
+	// These are for utilities that need access to the raw storage. The serializer needs this to do its work, for example.
+	uint8_t* Storage()
+	{
+		return bytes;
+	}
+	unsigned StorageSize() const
+	{
+		return sizeof(bytes);
+	}
 };
 
 // A wrapper to externally stored data.

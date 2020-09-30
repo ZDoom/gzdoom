@@ -258,8 +258,13 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 	int			kerning;
 	FGameTexture *pic;
 
+	double scalex = parms.scalex * parms.patchscalex;
+	double scaley = parms.scaley * parms.patchscaley;
+
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
-	parms.celly *= parms.scaley;
+	parms.celly = int (parms.celly * scaley);
+
+	bool palettetrans = (normalcolor == CR_UNDEFINED && parms.TranslationId != 0);
 
 	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
@@ -267,7 +272,7 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 
 	PalEntry colorparm = parms.color;
 	PalEntry color = 0xffffffff;
-	trans = font->GetColorTranslation((EColorRange)normalcolor, &color);
+	trans = palettetrans? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
 	parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 
 	kerning = font->GetDefaultKerning();
@@ -311,7 +316,8 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 		bool redirected = false;
 		if (NULL != (pic = font->GetChar(c, currentcolor, &w, &redirected)))
 		{
-			parms.TranslationId = redirected? -1 : trans;
+			// if palette translation is used, font colors will be ignored.
+			if (!palettetrans) parms.TranslationId = redirected? -1 : trans;
 			SetTextureParms(drawer, &parms, pic, cx, cy);
 			if (parms.cellx)
 			{
@@ -330,11 +336,11 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 		}
 		if (parms.monospace == EMonospacing::Off)
 		{
-			cx += (w + kerning + parms.spacing) * parms.scalex;
+			cx += (w + kerning + parms.spacing) * scalex;
 		}
 		else
 		{
-			cx += (parms.spacing) * parms.scalex;
+			cx += (parms.spacing) * scalex;
 		}
 
 	}

@@ -821,6 +821,8 @@ enum EButtons
 	BT_USER2		= 1<<22,
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
+
+	BT_RUN			= 1<<25,
 };
 
 // Flags for GetAngle
@@ -1270,6 +1272,8 @@ enum SPAC
 	SPAC_MUse = 1<<8,		// monsters can use
 	SPAC_MPush = 1<<9,		// monsters can push
 	SPAC_UseBack = 1<<10,	// Can be used from the backside
+	SPAC_Damage = 1<<11,	// [ZZ] when linedef receives damage
+	SPAC_Death = 1<<12,		// [ZZ] when linedef receives damage and has 0 health
 
 	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough|SPAC_UseBack),
 };

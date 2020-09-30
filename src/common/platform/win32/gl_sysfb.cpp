@@ -109,7 +109,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen) : Syst
 //
 //==========================================================================
 EXTERN_CVAR(Bool, vid_vsync);
-CUSTOM_CVAR(Bool, gl_control_tear, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, gl_control_tear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	vid_vsync.Callback();
 }

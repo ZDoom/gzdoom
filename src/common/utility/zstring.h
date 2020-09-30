@@ -164,6 +164,10 @@ public:
 		std::swap(Chars, other.Chars);
 	}
 
+	// We do not want any implicit conversions from FString in conditionals.
+	explicit operator bool() = delete; // this is needed to render the operator const char * ineffective when used in boolean constructs.
+	bool operator !() = delete;
+
 	operator const char *() const { return Chars; }
 
 	const char *GetChars() const { return Chars; }

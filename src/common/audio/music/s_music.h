@@ -8,6 +8,12 @@
 #include <zmusic.h>
 
 class FileReader;
+class SoundStream;
+
+
+typedef bool(*StreamCallback)(SoundStream* stream, void* buff, int len, void* userdata);
+SoundStream *S_CreateCustomStream(size_t size, int samplerate, int numchannels, StreamCallback cb, void *userdata);
+void S_StopCustomStream(SoundStream* stream);
 
 struct MusicCallbacks
 {

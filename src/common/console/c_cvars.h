@@ -176,6 +176,13 @@ public:
 	static void ListVars (const char *filter, bool plain);
 	
 	const FString &GetDescription() const { return Description; };
+	const FString& GetToggleMessage(int which) { return ToggleMessages[which]; }
+	void SetToggleMessages(const char* on, const char* off)
+	{
+		ToggleMessages[0] = off;
+		ToggleMessages[1] = on;
+	}
+
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;
@@ -192,13 +199,13 @@ protected:
 	FString VarName;
 	FString SafeValue;
 	FString Description;
+	FString ToggleMessages[2];
 	uint32_t Flags;
 	bool inCallback = false;
 
 private:
 	FBaseCVar (const FBaseCVar &var) = delete;
 	FBaseCVar (const char *name, uint32_t flags);
-
 	void (*m_Callback)(FBaseCVar &);
 	FBaseCVar *m_Next;
 

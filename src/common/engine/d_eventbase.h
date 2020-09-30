@@ -22,16 +22,17 @@ struct event_t
 	int16_t 	data1;		// keys / mouse/joystick buttons
 	int16_t		data2;
 	int16_t		data3;
-	int 		x;			// mouse/joystick x move
-	int 		y;			// mouse/joystick y move
+	float 		x;			// mouse/joystick x move
+	float 		y;			// mouse/joystick y move
 };
 
 
 
 // Called by IO functions when input is detected.
-void D_PostEvent (const event_t* ev);
+void D_PostEvent (event_t* ev);
 void D_RemoveNextCharEvent();
 void D_ProcessEvents(void);
+void PostMouseMove(int x, int y);
 
 enum
 {

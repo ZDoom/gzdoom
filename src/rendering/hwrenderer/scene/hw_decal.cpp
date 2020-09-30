@@ -47,11 +47,18 @@
 
 void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 {
+	PalEntry DecalColor;
 	// alpha color only has an effect when using an alpha texture.
 	if (decal->RenderStyle.Flags & (STYLEF_RedIsAlpha | STYLEF_ColorIsFixed))
 	{
-		state.SetObjectColor(decal->AlphaColor | 0xff000000);
+		DecalColor = decal->AlphaColor | 0xff000000;
 	}
+	else
+		DecalColor = 0xffffffff;
+
+	if (!di->isFullbrightScene()) DecalColor = DecalColor.Modulate(frontsector->SpecialColors[sector_t::sprites]);
+
+	state.SetObjectColor(DecalColor);
 
 	state.SetLightIndex(dynlightindex);
 	state.SetTextureMode(decal->RenderStyle);

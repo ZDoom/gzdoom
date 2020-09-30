@@ -214,8 +214,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					  // Because a lot of wads with their own font seem to foolishly
 					  // copy STCFN121 and make it a '|' themselves, wads must
 					  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-						FStringf c120("%s120", nametemplate);
-						FStringf c122("%s122", nametemplate);
+						FStringf c120(nametemplate, 120);
+						FStringf c122(nametemplate, 122);
 						if (!TexMan.CheckForTexture(c120, ETextureType::MiscPatch).isValid() ||
 							!TexMan.CheckForTexture(c122, ETextureType::MiscPatch).isValid())
 						{
@@ -328,14 +328,14 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 
 				auto orig = pic->GetTexture();
 				auto tex = MakeGameTexture(orig, nullptr, ETextureType::FontChar); 
-				tex->CopySize(pic);
+				tex->CopySize(pic, true);
 				TexMan.AddGameTexture(tex);
 				Chars[i].OriginalPic = tex;
 
 				if (!noTranslate)
 				{
 					Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(orig->GetImage())), nullptr, ETextureType::FontChar);
-					Chars[i].TranslatedPic->CopySize(pic);
+					Chars[i].TranslatedPic->CopySize(pic, true);
 					TexMan.AddGameTexture(Chars[i].TranslatedPic);
 				}
 				else
@@ -441,9 +441,9 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 			auto pic = (*lump)->GetTexture();
 			Chars[i].OriginalPic = (*lump)->GetUseType() == ETextureType::FontChar? (*lump) : MakeGameTexture(pic, nullptr, ETextureType::FontChar);
 			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
-			Chars[i].OriginalPic->CopySize(*lump);
+			Chars[i].OriginalPic->CopySize(*lump, true);
 			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(pic->GetImage())), nullptr, ETextureType::FontChar);
-			Chars[i].TranslatedPic->CopySize(*lump);
+			Chars[i].TranslatedPic->CopySize(*lump, true);
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 			if (Chars[i].OriginalPic != *lump) TexMan.AddGameTexture(Chars[i].OriginalPic);
 			TexMan.AddGameTexture(Chars[i].TranslatedPic);
@@ -860,7 +860,7 @@ int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 		}
 		if (color != nullptr) *color = retcolor;
 	}
-	if (ActiveColors == 0)
+	if (ActiveColors == 0 || range == CR_UNDEFINED)
 		return -1;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;
@@ -977,7 +977,7 @@ FGameTexture *FFont::GetChar (int code, int translation, int *const width, bool 
 	if (code < 0) return nullptr;
 
 
-	if (translation == CR_UNTRANSLATED && !forceremap)
+	if ((translation == CR_UNTRANSLATED || translation == CR_UNDEFINED) && !forceremap)
 	{
 		bool redirect = Chars[code].OriginalPic && Chars[code].OriginalPic != Chars[code].TranslatedPic;
 		if (redirected) *redirected = redirect;

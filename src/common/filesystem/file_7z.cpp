@@ -367,7 +367,7 @@ FResourceFile *Check7Z(const char *filename, FileReader &file, bool quiet, LumpF
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, k7zSignature, k7zSignatureSize))
 		{
-			FResourceFile *rf = new F7ZFile(filename, file);
+			auto rf = new F7ZFile(filename, file);
 			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

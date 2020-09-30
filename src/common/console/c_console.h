@@ -57,6 +57,7 @@ extern constate_e ConsoleState;
 void C_InitConsole (int width, int height, bool ingame);
 void C_DeinitConsole ();
 void C_InitConback();
+void C_ClearMessages();
 
 // Adjust the console for a new screen mode
 void C_NewModeAdjust (void);
@@ -83,6 +84,7 @@ bool C_Responder (event_t *ev);
 void C_AddTabCommand (const char *name);
 void C_RemoveTabCommand (const char *name);
 void C_ClearTabCommands();		// Removes all tab commands
+void C_SetNotifyFontScale(double scale);
 
 extern const char *console_bar;
 

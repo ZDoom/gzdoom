@@ -613,7 +613,7 @@ extend class Actor
 	//
 	//==========================================================================
 
-	void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0)
+	void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0, name species = "None")
 	{
 		if (force == 0) force = 128;
 		if (distance <= 0) distance = abs(force);
@@ -628,7 +628,7 @@ extend class Actor
 				target.bNoDamageThrust = false;
 			}
 		}
-		RadiusAttack (target, force, distance, DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
+		RadiusAttack (target, force, distance, DamageType, flags | RADF_NODAMAGE, fullthrustdistance, species);
 		CheckSplash(distance);
 		if (target) target.bNoDamageThrust = nothrust;
 	}

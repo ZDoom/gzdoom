@@ -791,9 +791,14 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
-	z = shadowsprite ? thing->floorz : thingpos.Z;
+	z = thingpos.Z;
 	y = thingpos.Y;
 	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
+
+	if (shadowsprite)
+	{
+		z = thing->floorz;
+	}
 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
@@ -1124,6 +1129,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		RenderStyle = STYLE_Stencil;
 		ThingColor = MAKEARGB(ColorMatcher.Pick(0, 0, 0), 0, 0, 0);
 		trans = 0.5f;
+		hw_styleflags = STYLEHW_NoAlphaTest;
 	}
 
 	if (trans == 0.0f) return;
@@ -1132,6 +1138,10 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	actor = thing;
 	index = thing->SpawnOrder;
+	if (shadowsprite)
+	{
+		index--;
+	}
 	particle = nullptr;
 
 	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)

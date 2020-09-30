@@ -678,7 +678,7 @@ void HWSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 //
 //==========================================================================
 
-void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t in_area, int thruportal, bool spriteIsShadow)
+void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t in_area, int thruportal, bool shadowsprite)
 {
 	sector_t rs;
 	sector_t * rendersector;
@@ -791,7 +791,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
-	z = spriteIsShadow ? thing->floorz : thingpos.Z;
+	z = shadowsprite ? thing->floorz : thingpos.Z;
 	y = thingpos.Y;
 	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
 
@@ -897,7 +897,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
 			thing->renderflags ^= RF_XFLIP;
 
-		r.Scale(sprscale.X, spriteIsShadow ? sprscale.Y * 0.1 : sprscale.Y);
+		r.Scale(sprscale.X, shadowsprite ? sprscale.Y * 0.1 : sprscale.Y);
 		
 		float SpriteOffY = thing->SpriteOffset.Y;
 		float rightfac = -r.left - thing->SpriteOffset.X;
@@ -1118,8 +1118,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		}
 	}
 
-	// for sprite shadow, enforce translucent stencil renderstyle
-	if (spriteIsShadow)
+	// for sprite shadow, use a translucent stencil renderstyle
+	if (shadowsprite)
 	{
 		RenderStyle = STYLE_Stencil;
 		ThingColor = MAKEARGB(ColorMatcher.Pick(0, 0, 0), 0, 0, 0);

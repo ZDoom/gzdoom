@@ -37,6 +37,7 @@ struct WorldEvent native play version("2.4")
     native readonly vector3 DamagePosition;
     native readonly bool DamageIsRadius;
     native int NewDamage;
+    native readonly State CrushedState;
 }
 
 struct PlayerEvent native play version("2.4")

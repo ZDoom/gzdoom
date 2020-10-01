@@ -314,7 +314,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		}
 		else
 		{
-			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE);
+			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE|PSPF_PIVOTPERCENT);
 		}
 		if (layer == PSP_STRIFEHANDS)
 		{

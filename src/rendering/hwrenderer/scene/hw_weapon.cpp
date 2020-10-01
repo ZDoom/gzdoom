@@ -489,69 +489,67 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	// Big thanks to IvanDobrovski who helped me modify this.
 	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
 	{
-		FAngle rot = (float)psp->rotation;
+		FAngle rot = float(psp->rotation);
 		rot.Normalized360();
-		float radang = rot.Radians();
-		float cosang = cos(radang);
-		float sinang = sin(radang);
-
-		float xcenter, ycenter;
-
+		float cosang = rot.Cos();
+		float sinang = rot.Sin();
 		float px = float(psp->px);
 		float py = float(psp->py);
-
+		
+		float xcenter, ycenter;
+		float width = MAX(x1, x2) - MIN(x1, x2);
+		float height = MAX(y1, y2) - MIN(y1, y2);
 		if (psp->Flags & PSPF_PIVOTSCREEN)
 		{
 			if (psp->Flags & PSPF_PIVOTPERCENT)
 			{
-				xcenter = vw * psp->px + viewwindowx + psp->x;
-				ycenter = vh * psp->py + viewwindowy + psp->y;
+				xcenter = vw * px + viewwindowx;
+				ycenter = vh * py + viewwindowy;
 			}
 			else
 			{
-				xcenter = vw * 0.5 + viewwindowx + psp->x + psp->px;
-				ycenter = vh * 0.5 + viewwindowy + psp->y + psp->py;
+				xcenter = vw * 0.5 + viewwindowx + px;
+				ycenter = vh * 0.5 + viewwindowy + py;
 			}
 		}
 		else
 		{
 			if (psp->Flags & PSPF_PIVOTPERCENT)
 			{
-				xcenter = (x1 + x2) * psp->px + psp->x;
-				ycenter = (y1 + y2) * psp->py + psp->y;
+				xcenter = (x1 + width * px);
+				ycenter = (y1 + height * py);
 			}
 			else
 			{
-				xcenter = ((x1 + x2) * 0.5 + psp->x) + psp->px;
-				ycenter = ((x1 + x2) * 0.5 + psp->y) + psp->py;
+				xcenter = (x1 + width * 0.5) + px;
+				ycenter = (y1 + height * 0.5) - py;
 			}
 		}
-
 		x1 -= xcenter;
 		y1 -= ycenter;
 
 		x2 -= xcenter;
 		y2 -= ycenter;
-
-		float ssx = (float)psp->scalex;
-		float ssy = (float)psp->scaley;
+		
+		float ssx = float(psp->scalex);
+		float ssy = float(psp->scaley);
 
 		float xx1 = xcenter + ssx * (x1 * cosang + y1 * sinang);
-		float yy1 = ycenter - ssy * (x1 * sinang - y1 * cosang);
-
 		float xx2 = xcenter + ssx * (x1 * cosang + y2 * sinang);
-		float yy2 = ycenter - ssy * (x1 * sinang - y2 * cosang);
-
 		float xx3 = xcenter + ssx * (x2 * cosang + y1 * sinang);
-		float yy3 = ycenter - ssy * (x2 * sinang - y1 * cosang);
-
 		float xx4 = xcenter + ssx * (x2 * cosang + y2 * sinang);
+
+		float yy1 = ycenter - ssy * (x1 * sinang - y1 * cosang);
+		float yy2 = ycenter - ssy * (x1 * sinang - y2 * cosang);
+		float yy3 = ycenter - ssy * (x2 * sinang - y1 * cosang);
 		float yy4 = ycenter - ssy * (x2 * sinang - y2 * cosang);
+		
 
 		verts.first[0].Set(xx1, yy1, 0, u1, v1);
 		verts.first[1].Set(xx2, yy2, 0, u1, v2);
 		verts.first[2].Set(xx3, yy3, 0, u2, v1);
 		verts.first[3].Set(xx4, yy4, 0, u2, v2);
+		
 	}
 	else
 	{

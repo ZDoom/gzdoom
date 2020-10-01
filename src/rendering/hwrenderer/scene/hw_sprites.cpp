@@ -1147,10 +1147,14 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	actor = thing;
 	index = thing->SpawnOrder;
+
+	// sprite shadows should have a fixed index of -1 (ensuring they're drawn behind particles which have index 0)
+	// sorting should be irrelevant since they're always translucent
 	if (shadowsprite)
 	{
-		index--;
+		index = -1;
 	}
+
 	particle = nullptr;
 
 	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)

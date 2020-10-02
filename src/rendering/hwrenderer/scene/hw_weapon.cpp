@@ -171,16 +171,12 @@ static WeaponPosition GetWeaponPosition(player_t *player, double ticFrac)
 			w.wy = (float)w.weapon->y;
 			w.sx = (float)w.weapon->scalex;
 			w.sy = (float)w.weapon->scaley;
-			w.px = (float)w.weapon->px;
-			w.py = (float)w.weapon->py;
 			w.r = (float)w.weapon->rotation;
 		}
 		else
 		{
 			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * ticFrac);
 			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * ticFrac);
-			w.px = (float)(w.weapon->oldpx + (w.weapon->px - w.weapon->oldpx) * ticFrac);
-			w.py = (float)(w.weapon->oldpy + (w.weapon->py - w.weapon->oldpy) * ticFrac);
 			w.sx = (float)(w.weapon->oldscalex + (w.weapon->scalex - w.weapon->oldscalex) * ticFrac);
 			w.sy = (float)(w.weapon->oldscaley + (w.weapon->scaley - w.weapon->oldscaley) * ticFrac);
 			w.r = (float)(w.weapon->oldrotation + (w.weapon->rotation - w.weapon->oldrotation) * ticFrac);
@@ -190,8 +186,6 @@ static WeaponPosition GetWeaponPosition(player_t *player, double ticFrac)
 	{
 		w.wx = 0;
 		w.wy = 0;
-		w.px = 0;
-		w.py = 0;
 		w.sx = 0;
 		w.sy = 0;
 		w.r = 0;
@@ -487,8 +481,21 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 
 	// [MC] Code copied from DTA_Rotate
 	// Big thanks to IvanDobrovski who helped me modify this.
+
+	FVector2 c[4];
+	c[0] = FVector2(x1, y1);
+	c[1] = FVector2(x1, y2);
+	c[2] = FVector2(x2, y1);
+	c[3] = FVector2(x2, y2);
+
+	for (int i = 0; i < 4; i++)
+		c[i] += FVector2(psp->Coord[i].X * scalex, psp->Coord[i].Y * scale);
+
 	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
 	{
+		if (psp->scalex == 0.0 || psp->scaley == 0.0)
+			return false;
+
 		FAngle rot = float(psp->rotation);
 		rot.Normalized360();
 		float cosang = rot.Cos();
@@ -496,68 +503,61 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		float px = float(psp->px);
 		float py = float(psp->py);
 		
-		float xcenter, ycenter;
-		float width = MAX(x1, x2) - MIN(x1, x2);
-		float height = MAX(y1, y2) - MIN(y1, y2);
-		if (psp->Flags & PSPF_PIVOTSCREEN)
+		float anchorx, anchory, xcenter, ycenter;
+		float minx = MIN(x1, x2);
+		float miny = MIN(y1, y2);
+		float width = MAX(x1, x2) - minx;
+		float height = MAX(y1, y2) - miny;
+
+		switch (psp->VAlign)
 		{
-			if (psp->Flags & PSPF_PIVOTPERCENT)
-			{
-				xcenter = vw * px + viewwindowx;
-				ycenter = vh * py + viewwindowy;
-			}
-			else
-			{
-				xcenter = vw * 0.5 + viewwindowx + px;
-				ycenter = vh * 0.5 + viewwindowy + py;
-			}
+			default:
+			case PSPA_TOP:		anchory = 0.0;	break;
+			case PSPA_CENTER:	anchory = 0.5;	break;
+			case PSPA_BOTTOM:	anchory = 1.0;	break;
+		}
+
+		switch (psp->HAlign)
+		{
+			default:
+			case PSPA_LEFT:		anchorx = 0.0;	break;
+			case PSPA_CENTER:	anchorx = 0.5;	break;
+			case PSPA_RIGHT:	anchorx = 1.0;	break;
+		}
+
+		if (psp->Flags & PSPF_PIVOTPERCENT)
+		{
+			xcenter = minx + (width * anchorx + width * px);
+			ycenter = miny + (height * anchory + height * py);
 		}
 		else
 		{
-			if (psp->Flags & PSPF_PIVOTPERCENT)
-			{
-				xcenter = (x1 + width * px);
-				ycenter = (y1 + height * py);
-			}
-			else
-			{
-				xcenter = (x1 + width * 0.5) + px;
-				ycenter = (y1 + height * 0.5) - py;
-			}
+			xcenter = minx + (width * anchorx + scalex * px);
+			ycenter = miny + (height * anchory + scale * py);
 		}
+
 		x1 -= xcenter;
 		y1 -= ycenter;
 
 		x2 -= xcenter;
 		y2 -= ycenter;
-		
+
 		float ssx = float(psp->scalex);
 		float ssy = float(psp->scaley);
 
-		float xx1 = xcenter + ssx * (x1 * cosang + y1 * sinang);
-		float xx2 = xcenter + ssx * (x1 * cosang + y2 * sinang);
-		float xx3 = xcenter + ssx * (x2 * cosang + y1 * sinang);
-		float xx4 = xcenter + ssx * (x2 * cosang + y2 * sinang);
-
-		float yy1 = ycenter - ssy * (x1 * sinang - y1 * cosang);
-		float yy2 = ycenter - ssy * (x1 * sinang - y2 * cosang);
-		float yy3 = ycenter - ssy * (x2 * sinang - y1 * cosang);
-		float yy4 = ycenter - ssy * (x2 * sinang - y2 * cosang);
-		
-
-		verts.first[0].Set(xx1, yy1, 0, u1, v1);
-		verts.first[1].Set(xx2, yy2, 0, u1, v2);
-		verts.first[2].Set(xx3, yy3, 0, u2, v1);
-		verts.first[3].Set(xx4, yy4, 0, u2, v2);
-		
+		for (int i = 0; i < 4; i++)
+		{
+			c[i] -= {xcenter, ycenter};
+			float xx = xcenter + ssx * (c[i].X * cosang + c[i].Y * sinang);
+			float yy = ycenter - ssy * (c[i].X * sinang - c[i].Y * cosang);
+			c[i] = {xx, yy};
+		}
 	}
-	else
-	{
-		verts.first[0].Set(x1, y1, 0, u1, v1);
-		verts.first[1].Set(x1, y2, 0, u1, v2);
-		verts.first[2].Set(x2, y1, 0, u2, v1);
-		verts.first[3].Set(x2, y2, 0, u2, v2);
-	}
+	
+	verts.first[0].Set(c[0].X, c[0].Y, 0, u1, v1);
+	verts.first[1].Set(c[1].X, c[1].Y, 0, u1, v2);
+	verts.first[2].Set(c[2].X, c[2].Y, 0, u2, v1);
+	verts.first[3].Set(c[3].X, c[3].Y, 0, u2, v2);
 
 	texture = tex;
 	return true;

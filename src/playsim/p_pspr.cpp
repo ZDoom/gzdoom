@@ -134,17 +134,21 @@ DEFINE_FIELD(DPSprite, oldx)
 DEFINE_FIELD(DPSprite, oldy)
 DEFINE_FIELD(DPSprite, px)
 DEFINE_FIELD(DPSprite, py)
-DEFINE_FIELD(DPSprite, oldpx)
-DEFINE_FIELD(DPSprite, oldpy)
 DEFINE_FIELD(DPSprite, scalex)
 DEFINE_FIELD(DPSprite, scaley)
 DEFINE_FIELD(DPSprite, oldscalex)
 DEFINE_FIELD(DPSprite, oldscaley)
 DEFINE_FIELD(DPSprite, rotation)
 DEFINE_FIELD(DPSprite, oldrotation)
+DEFINE_FIELD_NAMED(DPSprite, Coord[0], Coord0)
+DEFINE_FIELD_NAMED(DPSprite, Coord[1], Coord1)
+DEFINE_FIELD_NAMED(DPSprite, Coord[2], Coord2)
+DEFINE_FIELD_NAMED(DPSprite, Coord[3], Coord3)
 DEFINE_FIELD(DPSprite, firstTic)
 DEFINE_FIELD(DPSprite, Tics)
 DEFINE_FIELD(DPSprite, Translation)
+DEFINE_FIELD(DPSprite, HAlign)
+DEFINE_FIELD(DPSprite, VAlign)
 DEFINE_FIELD(DPSprite, alpha)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
@@ -154,7 +158,6 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
 DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPivotPercent, PSPF_PIVOTPERCENT)
-DEFINE_FIELD_BIT(DPSprite, Flags, bPivotScreen, PSPF_PIVOTSCREEN)
 
 //------------------------------------------------------------------------
 //
@@ -180,11 +183,14 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   px(.0), py(.0),
   rotation(.0),
   oldscalex(.0), oldscaley(.0),
-  oldpx(.0), oldpy(.0),
   oldrotation(.0),
   PivotPercent(true),
-  PivotScreen(false)
+  HAlign(0),
+  VAlign(0)
 {
+	for (int i = 0; i < 4; i++)
+		Coord[i] = DVector2(0,0);
+
 	alpha = 1;
 	Renderstyle = STYLE_Normal;
 
@@ -657,11 +663,7 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponButtons)
 	return 0;
 }
 
-//---------------------------------------------------------------------------
-//
-// PROC A_OverlayScale
-//
-//---------------------------------------------------------------------------
+
 
 enum WOFFlags
 {
@@ -672,6 +674,41 @@ enum WOFFlags
 	WOF_RELATIVE = 1 << 4,
 	WOF_ZEROY = 1 << 5,
 };
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayVertexOffset
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayVertexOffset)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_INT(index)
+	PARAM_FLOAT(x)
+	PARAM_FLOAT(y)
+	PARAM_INT(flags)
+
+	if (index < 0 || index > 3 || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)) || !ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (!(flags & WOF_KEEPX))	pspr->Coord[index].X = x;
+	if (!(flags & WOF_KEEPY))	pspr->Coord[index].Y = y;
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayScale
+//
+//---------------------------------------------------------------------------
 
 DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)
 {
@@ -770,12 +807,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivot)
 		pspr->px = (flags & WOF_ADD) ? pspr->px + wx : wx;
 	if (!(flags & WOF_KEEPY))
 		pspr->py = (flags & WOF_ADD) ? pspr->py + wy : wy;
-
-	if (!(flags & WOF_INTERPOLATE))
-	{
-		pspr->oldpx = pspr->px;
-		pspr->oldpy = pspr->py;
-	}
 
 	return 0;
 }
@@ -886,6 +917,28 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 	else
 		pspr->Flags &= ~flags;
 
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivotAlign)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_INT(halign);
+	PARAM_INT(valign);
+
+	if (!ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr != nullptr)
+	{
+		if (halign >= PSPA_LEFT && halign <= PSPA_RIGHT)
+			pspr->HAlign |= halign;
+		if (valign >= PSPA_TOP && valign <= PSPA_BOTTOM)
+			pspr->VAlign |= valign;
+	}
 	return 0;
 }
 
@@ -1197,6 +1250,16 @@ void DPSprite::Serialize(FSerializer &arc)
 		("oldx", oldx)
 		("oldy", oldy)
 		("alpha", alpha)
+		("px", px)
+		("py", py)
+		("scalex", scalex)
+		("scaley", scaley)
+		("oldscalex", oldscalex)
+		("oldscaley", oldscaley)
+		("rotation", rotation)
+		("oldrotation", oldrotation)
+		("halign", HAlign)
+		("valign", VAlign)
 		("renderstyle_", Renderstyle);	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
 }
 

@@ -1664,7 +1664,11 @@ class PlayerPawn : Actor
 			if (player.ReadyWeapon != null)
 			{
 				let psp = player.GetPSprite(PSP_WEAPON);
-				if (psp) psp.y = WEAPONTOP;
+				if (psp) 
+				{
+					psp.y = WEAPONTOP;
+					player.ReadyWeapon.ResetPSprite(psp);
+				}
 				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 			}
 			return;
@@ -2559,14 +2563,17 @@ class PSprite : Object native play
 	native double oldy;
 	native double px;
 	native double py;
-	native double oldpx;
-	native double oldpy;
 	native double scalex;
 	native double scaley;
 	native double oldscalex;
 	native double oldscaley;
 	native double rotation;
 	native double oldrotation;
+	native int HAlign, VAlign;
+	native Vector2 Coord0;
+	native Vector2 Coord1;
+	native Vector2 Coord2;
+	native Vector2 Coord3;
 	native double alpha;
 	native Bool firstTic;
 	native int Tics;
@@ -2579,7 +2586,6 @@ class PSprite : Object native play
 	native bool bMirror;
 	native bool bPlayerTranslated;
 	native bool bPivotPercent;
-	native bool bPivotScreen;
 
 	native void SetState(State newstate, bool pending = false);
 

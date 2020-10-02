@@ -52,7 +52,6 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVARD(Bool, r_actorspriteshadow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "render actor sprite shadows");
 CUSTOM_CVARD(Float, r_actorspriteshadowdist, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "how far to render sprite shadows")
 {
 	if (self < 0.f)
@@ -153,23 +152,21 @@ namespace swrenderer
 		auto &sortedSprites = Thread->SpriteList->SortedSprites;
 		int count = sortedSprites.Size();
 
-		if (r_actorspriteshadow)
+		// handle sprite shadow
+		memcpy(Thread->clipbotcopy, Thread->clipbot, sizeof(short) * viewwidth);
+		memcpy(Thread->cliptopcopy, Thread->cliptop, sizeof(short) * viewwidth);
+		for (int i = count; i > 0; i--)
 		{
-			memcpy(Thread->clipbotcopy, Thread->clipbot, sizeof(short) * viewwidth);
-			memcpy(Thread->cliptopcopy, Thread->cliptop, sizeof(short) * viewwidth);
-			for (int i = count; i > 0; i--)
-			{
-				VisibleSprite* sprite = sortedSprites[i - 1];
+			VisibleSprite* sprite = sortedSprites[i - 1];
 
-				if (sprite->IsCurrentPortalUniq(renderportal->CurrentPortalUniq))
-				{
-					if (sprite->FlatPass)
-						sprite->Render(Thread, clip3DFloor);
-				}
+			if (sprite->IsCurrentPortalUniq(renderportal->CurrentPortalUniq))
+			{
+				if (sprite->FlatPass)
+					sprite->Render(Thread, clip3DFloor);
 			}
-			memcpy(Thread->clipbot, Thread->clipbotcopy, sizeof(short) * viewwidth);
-			memcpy(Thread->cliptop, Thread->cliptopcopy, sizeof(short) * viewwidth);
 		}
+		memcpy(Thread->clipbot, Thread->clipbotcopy, sizeof(short) * viewwidth);
+		memcpy(Thread->cliptop, Thread->cliptopcopy, sizeof(short) * viewwidth);
 
 		for (int i = count; i > 0; i--)
 		{

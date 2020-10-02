@@ -16,7 +16,6 @@ struct WeaponPosition
 	float wx, wy;
 	float bobx, boby;
 	float sx, sy;
-	float px, py;
 	float r;
 	DPSprite *weapon;
 };

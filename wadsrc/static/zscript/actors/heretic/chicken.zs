@@ -60,6 +60,7 @@ class Beak : Weapon
 		if (psp)
 		{
 			psp.y = WEAPONTOP;
+			ResetPSprite(psp);
 		}
 		player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 	}

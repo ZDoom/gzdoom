@@ -701,17 +701,28 @@ enum EWeaponOffsetFlags
 // Flags for psprite layers
 enum EPSpriteFlags
 {
-	PSPF_ADDWEAPON	= 1 << 0,
-	PSPF_ADDBOB		= 1 << 1,
-	PSPF_POWDOUBLE	= 1 << 2,
-	PSPF_CVARFAST	= 1 << 3,
-	PSPF_ALPHA		= 1 << 4,
-	PSPF_RENDERSTYLE= 1 << 5,
-	PSPF_FLIP		= 1 << 6,
-	PSPF_FORCEALPHA	= 1 << 7,
-	PSPF_FORCESTYLE	= 1 << 8,
-	PSPF_MIRROR		= 1 << 9,
-	PSPF_PLAYERTRANSLATED = 1 << 10
+	PSPF_ADDWEAPON		= 1 << 0,
+	PSPF_ADDBOB			= 1 << 1,
+	PSPF_POWDOUBLE		= 1 << 2,
+	PSPF_CVARFAST		= 1 << 3,
+	PSPF_ALPHA			= 1 << 4,
+	PSPF_RENDERSTYLE	= 1 << 5,
+	PSPF_FLIP			= 1 << 6,
+	PSPF_FORCEALPHA		= 1 << 7,
+	PSPF_FORCESTYLE		= 1 << 8,
+	PSPF_MIRROR			= 1 << 9,
+	PSPF_PLAYERTRANSLATED = 1 << 10,
+	PSPF_PIVOTPERCENT	= 1 << 11,
+};
+
+// Alignment constants for A_OverlayPivotAlign
+enum EPSpriteAlign
+{
+	PSPA_TOP = 0,
+	PSPA_CENTER,
+	PSPA_BOTTOM,
+	PSPA_LEFT = PSPA_TOP,
+	PSPA_RIGHT = 2
 };
 
 // Default psprite layers

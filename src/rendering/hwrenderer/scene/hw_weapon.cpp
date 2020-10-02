@@ -460,8 +460,8 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
 	y2 = y1 + (r.height * scale) + 1;
 
-
-	if (!(mirror) != !(psp->Flags & (PSPF_FLIP)))
+	const bool flip = (psp->Flags & PSPF_FLIP);
+	if (!(mirror) != !(flip))
 	{
 		u2 = spi.GetSpriteUL();
 		v1 = spi.GetSpriteVT();
@@ -479,7 +479,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	auto verts = screen->mVertexData->AllocVertices(4);
 	mx = verts.second;
 
-	// [MC] Code copied from DTA_Rotate
+	// [MC] Code copied from DTA_Rotate.
 	// Big thanks to IvanDobrovski who helped me modify this.
 
 	FVector2 c[4];
@@ -489,26 +489,18 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	c[3] = FVector2(x2, y2);
 
 	for (int i = 0; i < 4; i++)
-		c[i] += FVector2(psp->Coord[i].X * scalex, psp->Coord[i].Y * scale);
-
+	{
+		const float cx = (flip) ? -psp->Coord[i].X : psp->Coord[i].X;
+		c[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
+	}
 	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
 	{
+		// Nothing to draw in this case.
 		if (psp->scalex == 0.0 || psp->scaley == 0.0)
 			return false;
 
-		FAngle rot = float(psp->rotation);
-		rot.Normalized360();
-		float cosang = rot.Cos();
-		float sinang = rot.Sin();
-		float px = float(psp->px);
-		float py = float(psp->py);
-		
-		float anchorx, anchory, xcenter, ycenter;
-		float minx = MIN(x1, x2);
-		float miny = MIN(y1, y2);
-		float width = MAX(x1, x2) - minx;
-		float height = MAX(y1, y2) - miny;
-
+		// [MC] Sets up the alignment for starting the pivot at, in a corner.
+		float anchorx, anchory;
 		switch (psp->VAlign)
 		{
 			default:
@@ -524,32 +516,39 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 			case PSPA_CENTER:	anchorx = 0.5;	break;
 			case PSPA_RIGHT:	anchorx = 1.0;	break;
 		}
+		// Handle PSPF_FLIP.
+		if (flip) anchorx = 1.0 - anchorx;
 
+		FAngle rot = float((flip) ? -psp->rotation : psp->rotation);
+		rot.Normalized360();
+		const float cosang = rot.Cos();
+		const float sinang = rot.Sin();
+		
+		float xcenter, ycenter;
+		const float width = x2 - x1;
+		const float height = y2 - y1;
+		const float px = float((flip) ? -psp->px : psp->px);
+		const float py = float(psp->py);
+
+		// Set up the center and offset accordingly. PivotPercent changes it to be a range [0.0, 1.0]
+		// instead of pixels and is enabled by default.
 		if (psp->Flags & PSPF_PIVOTPERCENT)
 		{
-			xcenter = minx + (width * anchorx + width * px);
-			ycenter = miny + (height * anchory + height * py);
+			xcenter = x1 + (width * anchorx + width * px);
+			ycenter = y1 + (height * anchory + height * py);
 		}
 		else
 		{
-			xcenter = minx + (width * anchorx + scalex * px);
-			ycenter = miny + (height * anchory + scale * py);
+			xcenter = x1 + (width * anchorx + scalex * px);
+			ycenter = y1 + (height * anchory + scale * py);
 		}
 
-		x1 -= xcenter;
-		y1 -= ycenter;
-
-		x2 -= xcenter;
-		y2 -= ycenter;
-
-		float ssx = float(psp->scalex);
-		float ssy = float(psp->scaley);
-
+		// Now adjust the position, rotation and scale of the image based on the latter two.
 		for (int i = 0; i < 4; i++)
 		{
 			c[i] -= {xcenter, ycenter};
-			float xx = xcenter + ssx * (c[i].X * cosang + c[i].Y * sinang);
-			float yy = ycenter - ssy * (c[i].X * sinang - c[i].Y * cosang);
+			const float xx = xcenter + psp->scalex * (c[i].X * cosang + c[i].Y * sinang);
+			const float yy = ycenter - psp->scaley * (c[i].X * sinang - c[i].Y * cosang);
 			c[i] = {xx, yy};
 		}
 	}

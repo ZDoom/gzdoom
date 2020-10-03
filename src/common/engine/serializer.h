@@ -265,7 +265,8 @@ inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector2 &p, DV
 	return arc.Array<double>(key, &p[0], def? &(*def)[0] : nullptr, 2, true);
 }
 
-inline FSerializer &Serialize(FSerializer &arc, const char *key, DAngle &p, DAngle *def)
+template<class T>
+inline FSerializer &Serialize(FSerializer &arc, const char *key, TAngle<T> &p, TAngle<T> *def)
 {
 	return Serialize(arc, key, p.Degrees, def? &def->Degrees : nullptr);
 }

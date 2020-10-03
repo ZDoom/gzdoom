@@ -367,8 +367,14 @@ CCMD(listmaps)
 
 		if (map != NULL)
 		{
-			Printf("%s: '%s' (%s)\n", info->MapName.GetChars(), info->LookupLevelName().GetChars(),
-				fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum)));
+			if (argv.argc() == 1 
+			    || CheckWildcards(argv[1], info->MapName.GetChars()) 
+			    || CheckWildcards(argv[1], info->LookupLevelName().GetChars())
+			    || CheckWildcards(argv[1], fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum))))
+			{
+				Printf("%s: '%s' (%s)\n", info->MapName.GetChars(), info->LookupLevelName().GetChars(),
+					fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum)));
+			}
 			delete map;
 		}
 	}
@@ -405,4 +411,3 @@ CCMD(listsnapshots)
 		}
 	}
 }
-

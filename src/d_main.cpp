@@ -392,6 +392,8 @@ void D_GrabCVarDefaults()
 				// out.
 				if (strcmp(CurrentFindCVar, "mouse_sensitivity") == 0)
 					break;
+				if (strcmp(CurrentFindCVar, "m_noprescale") == 0)
+					break;
 			}
 
 			var = FindCVar(CurrentFindCVar, NULL);

@@ -481,7 +481,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		const float cx = (flip) ? -psp->Coord[i].X : psp->Coord[i].X;
 		Vert.v[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
 	}
-	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
+	if (psp->rotation != 0.0 || !psp->scale.isZero())
 	{
 		// [MC] Sets up the alignment for starting the pivot at, in a corner.
 		float anchorx, anchory;
@@ -503,16 +503,15 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		// Handle PSPF_FLIP.
 		if (flip) anchorx = 1.0 - anchorx;
 
-		FAngle rot = float((flip) ? -psp->rotation : psp->rotation);
-		rot.Normalized360();
+		FAngle rot = float((flip) ? -psp->rotation.Degrees : psp->rotation.Degrees);
 		const float cosang = rot.Cos();
 		const float sinang = rot.Sin();
 		
 		float xcenter, ycenter;
 		const float width = x2 - x1;
 		const float height = y2 - y1;
-		const float px = float((flip) ? -psp->px : psp->px);
-		const float py = float(psp->py);
+		const float px = float((flip) ? -psp->pivot.X : psp->pivot.X);
+		const float py = float(psp->pivot.Y);
 
 		// Set up the center and offset accordingly. PivotPercent changes it to be a range [0.0, 1.0]
 		// instead of pixels and is enabled by default.
@@ -531,14 +530,14 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		for (int i = 0; i < 4; i++)
 		{
 			Vert.v[i] -= {xcenter, ycenter};
-			const float xx = xcenter + psp->scalex * (Vert.v[i].X * cosang + Vert.v[i].Y * sinang);
-			const float yy = ycenter - psp->scaley * (Vert.v[i].X * sinang - Vert.v[i].Y * cosang);
+			const float xx = xcenter + psp->scale.X * (Vert.v[i].X * cosang + Vert.v[i].Y * sinang);
+			const float yy = ycenter - psp->scale.Y * (Vert.v[i].X * sinang - Vert.v[i].Y * cosang);
 			Vert.v[i] = {xx, yy};
 		}
 	}
 	psp->Vert = Vert;
 
-	if (psp->scalex == 0.0 || psp->scaley == 0.0)
+	if (psp->scale.X == 0.0 || psp->scale.Y == 0.0)
 		return false;
 
 	bool vertsOnScreen = false;

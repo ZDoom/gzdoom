@@ -2561,10 +2561,8 @@ class PSprite : Object native play
 	native double y;
 	native double oldx;
 	native double oldy;
-	native double px;
-	native double py;
-	native double scalex;
-	native double scaley;
+	native Vector2 pivot;
+	native Vector2 scale;
 	native double rotation;
 	native int HAlign, VAlign;
 	native Vector2 Coord0;		// [MC] Not the actual coordinates. Just the offsets by A_OverlayVertexOffset.

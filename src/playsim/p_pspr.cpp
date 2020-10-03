@@ -132,10 +132,8 @@ DEFINE_FIELD(DPSprite, x)
 DEFINE_FIELD(DPSprite, y)
 DEFINE_FIELD(DPSprite, oldx)
 DEFINE_FIELD(DPSprite, oldy)
-DEFINE_FIELD(DPSprite, px)
-DEFINE_FIELD(DPSprite, py)
-DEFINE_FIELD(DPSprite, scalex)
-DEFINE_FIELD(DPSprite, scaley)
+DEFINE_FIELD(DPSprite, pivot)
+DEFINE_FIELD(DPSprite, scale)
 DEFINE_FIELD(DPSprite, rotation)
 DEFINE_FIELD_NAMED(DPSprite, Coord[0], Coord0)
 DEFINE_FIELD_NAMED(DPSprite, Coord[1], Coord1)
@@ -178,13 +176,13 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   Frame(0),
   ID(id),
   processPending(true),
-  scalex(1.0), scaley(1.0),
-  px(.0), py(.0),
-  rotation(.0),
   HAlign(0),
   VAlign(0),
   InterpolateTic(false)
 {
+	rotation = 0.;
+	scale = {1.0, 1.0};
+	pivot = {0.0, 0.0};
 	for (int i = 0; i < 4; i++)
 	{
 		Coord[i] = DVector2(0, 0);
@@ -675,6 +673,17 @@ enum WOFFlags
 	WOF_ZEROY = 1 << 5,
 };
 
+void HandleOverlayRelative(DPSprite *psp, double *x, double *y)
+{
+	double wx = *x;
+	double wy = *y;
+
+	double c = psp->rotation.Cos(), s = psp->rotation.Sin();
+	double nx = wx * c + wy * s;
+	double ny = wx * s - wy * c;
+	*x = nx; *y = ny;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC A_OverlayVertexOffset
@@ -701,7 +710,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayVertexOffset)
 	if (!(flags & WOF_KEEPX))	pspr->Coord[index].X = (flags & WOF_ADD) ? pspr->Coord[index].X + x : x;
 	if (!(flags & WOF_KEEPY))	pspr->Coord[index].Y = (flags & WOF_ADD) ? pspr->Coord[index].Y + y : y;
 
-	if (flags & WOF_INTERPOLATE)	pspr->InterpolateTic = true;
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
 
 	return 0;
 }
@@ -731,10 +740,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)
 	if (!(flags & WOF_ZEROY) && wy == 0.0)
 		wy = wx;
 
-	if (!(flags & WOF_KEEPX))	pspr->scalex = (flags & WOF_ADD) ? pspr->scalex + wx : wx;
-	if (!(flags & WOF_KEEPY))	pspr->scaley = (flags & WOF_ADD) ? pspr->scaley + wy : wy;
+	if (!(flags & WOF_KEEPX))	pspr->scale.X = (flags & WOF_ADD) ? pspr->scale.X + wx : wx;
+	if (!(flags & WOF_KEEPY))	pspr->scale.Y = (flags & WOF_ADD) ? pspr->scale.Y + wy : wy;
 
-	if (flags & WOF_INTERPOLATE)	pspr->InterpolateTic = true;
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
 
 	return 0;
 }
@@ -749,7 +758,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayRotate)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(layer)
-	PARAM_FLOAT(degrees)
+	PARAM_ANGLE(degrees)
 	PARAM_INT(flags)
 
 	if (!ACTION_CALL_FROM_PSPRITE())
@@ -760,7 +769,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayRotate)
 	if (pspr != nullptr)
 	{
 		pspr->rotation = (flags & WOF_ADD) ? pspr->rotation + degrees : degrees;
-		if (flags & WOF_INTERPOLATE)	pspr->InterpolateTic = true;
+		if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
 	}
 
 	return 0;
@@ -790,17 +799,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivot)
 
 	if (flags & WOF_RELATIVE)
 	{
-		DAngle rot = pspr->rotation;
-		double c = rot.Cos(), s = rot.Sin();
-		double nx = wx * c + wy * s;
-		double ny = wx * s - wy * c;
-		wx = nx; wy = ny;
+		HandleOverlayRelative(pspr, &wx, &wy);
 	}
 
-	if (!(flags & WOF_KEEPX))	pspr->px = (flags & WOF_ADD) ? pspr->px + wx : wx;
-	if (!(flags & WOF_KEEPY))	pspr->py = (flags & WOF_ADD) ? pspr->py + wy : wy;
+	if (!(flags & WOF_KEEPX))	pspr->pivot.X = (flags & WOF_ADD) ? pspr->pivot.X + wx : wx;
+	if (!(flags & WOF_KEEPY))	pspr->pivot.Y = (flags & WOF_ADD) ? pspr->pivot.Y + wy : wy;
 
-	if (flags & WOF_INTERPOLATE)	pspr->InterpolateTic = true;
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
 
 	return 0;
 }
@@ -830,17 +835,13 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 
 		if (flags & WOF_RELATIVE)
 		{
-			DAngle rot = psp->rotation;
-			double c = rot.Cos(), s = rot.Sin();
-			double nx = wx * c + wy * s;
-			double ny = wx * s - wy * c;
-			wx = nx; wy = ny;
+			HandleOverlayRelative(psp, &wx, &wy);
 		}
 
 		if (!(flags & WOF_KEEPX))		psp->x = (flags & WOF_ADD) ? psp->x + wx : wx;
 		if (!(flags & WOF_KEEPY))		psp->y = (flags & WOF_ADD) ? psp->y + wy : wy;
 		
-		if (flags & WOF_INTERPOLATE)	psp->InterpolateTic = true;
+		if (flags & (WOF_ADD | WOF_INTERPOLATE))	psp->InterpolateTic = true;
 		/*
 		if (!(flags & (WOF_INTERPOLATE|WOF_ADD))) 
 		{
@@ -1237,10 +1238,8 @@ void DPSprite::Serialize(FSerializer &arc)
 		("oldx", oldx)
 		("oldy", oldy)
 		("alpha", alpha)
-		("px", px)
-		("py", py)
-		("scalex", scalex)
-		("scaley", scaley)
+		("pivot", pivot)
+		("scale", scale)
 		("rotation", rotation)
 		("halign", HAlign)
 		("valign", VAlign)

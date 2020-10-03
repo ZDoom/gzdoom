@@ -217,8 +217,10 @@ class Weapon : StateProvider
 	{
 		if (!psp)	return;
 		psp.rotation = 0;
-		psp.scalex = 1.0;
-		psp.scaley = 1.0;
+		psp.scale.x = 1;
+		psp.scale.y = 1;
+		psp.pivot.x = 0;
+		psp.pivot.y = 0;
 		psp.valign = 0;
 		psp.halign = 0;
 		psp.Coord0 = (0,0);

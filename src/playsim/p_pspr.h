@@ -114,15 +114,15 @@ public:
 	float GetYAdjust(bool fullscreen);
 
 	int HAlign, VAlign;		// Horizontal and vertical alignment
-	double px, py;			// pivot points
-	double rotation;		// How much rotation to apply.
-	double scalex, scaley;	// Scale
+	DAngle rotation;		// How much rotation to apply.
+	DVector2 pivot;			// pivot points
+	DVector2 scale;			// Scale
 	double x, y, alpha;
 	double oldx, oldy;
-	bool InterpolateTic;
-	DVector2 Coord[4];	// Offsets
-	WeaponInterp Prev;	// Interpolation
-	WeaponInterp Vert;	// Current Position
+	bool InterpolateTic;	// One tic interpolation (WOF_INTERPOLATE)
+	DVector2 Coord[4];		// Offsets
+	WeaponInterp Prev;		// Interpolation
+	WeaponInterp Vert;		// Current Position
 	bool firstTic;
 	int Tics;
 	uint32_t Translation;

@@ -39,7 +39,6 @@ struct PatchInfo play version("2.5")
 };
 
 
-// Will be made a class later, but for now needs to mirror the internal version.
 class StatusScreen abstract play version("2.5")
 {
 	enum EValues
@@ -129,6 +128,11 @@ class StatusScreen abstract play version("2.5")
 
 	int 			player_deaths[MAXPLAYERS];
 	int  			sp_state;
+	
+	int cWidth, cHeight;	// size of the canvas
+	int scalemode;
+	int wrapwidth;	// size used to word wrap level names
+	int scaleFactorX, scaleFactorY;
 
 
 	//====================================================================
@@ -140,8 +144,33 @@ class StatusScreen abstract play version("2.5")
 	int DrawCharPatch(Font fnt, int charcode, int x, int y, int translation = Font.CR_UNTRANSLATED, bool nomove = false)
 	{
 		int width = fnt.GetCharWidth(charcode);
-		screen.DrawChar(fnt, translation, x, y, charcode, nomove ? DTA_CleanNoMove : DTA_Clean, true);
+		if (scalemode == -1) screen.DrawChar(fnt, translation, x, y, charcode, nomove ? DTA_CleanNoMove : DTA_Clean, true);
+		else screen.DrawChar(fnt, translation, x, y, charcode, DTA_FullscreenScale, scalemode, DTA_VirtualWidth, cwidth, DTA_VirtualHeight, cheight);
 		return x - width;
+	}
+	
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	void DrawTexture(TextureID tex, double x, double y, bool nomove = false)
+	{
+		if (scalemode == -1) screen.DrawTexture(tex, true, x, y, nomove ? DTA_CleanNoMove : DTA_Clean, true);
+		else screen.DrawTexture(tex, true, x, y, DTA_FullscreenScale, scalemode, DTA_VirtualWidth, cwidth, DTA_VirtualHeight, cheight);
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	void DrawText(Font fnt, int color, double x, double y, String str, bool nomove = false, bool shadow = false)
+	{
+		if (scalemode == -1) screen.DrawText(fnt, color, x, y, str, nomove ? DTA_CleanNoMove : DTA_Clean, true, DTA_Shadow, shadow);
+		else screen.DrawText(fnt, color, x, y, str, DTA_FullscreenScale, scalemode, DTA_VirtualWidth, cwidth, DTA_VirtualHeight, cheight, DTA_Shadow, shadow);
 	}
 
 	//====================================================================
@@ -159,25 +188,25 @@ class StatusScreen abstract play version("2.5")
 		if (tex.isValid())
 		{
 			let size = TexMan.GetScaledSize(tex);
-			screen.DrawTexture(tex, true, (screen.GetWidth() - size.X * CleanXfac) /2, y, DTA_CleanNoMove, true);
+			DrawTexture(tex, (cwidth - size.X * scaleFactorX) /2, y, true);
 			if (size.Y > 50)
 			{ // Fix for Deus Vult II and similar wads that decide to make these hugely tall
 			  // patches with vast amounts of empty space at the bottom.
 				size.Y = TexMan.CheckRealHeight(tex);
 			}
-			return y + int(Size.Y) * CleanYfac;
+			return y + int(Size.Y) * scaleFactorY;
 		}
 		else if (levelname.Length() > 0)
 		{
 			int h = 0;
-			int lumph = mapname.mFont.GetHeight() * CleanYfac;
+			int lumph = mapname.mFont.GetHeight() * scaleFactorY;
 
-			BrokenLines lines = mapname.mFont.BreakLines(levelname, screen.GetWidth() / CleanXfac);
+			BrokenLines lines = mapname.mFont.BreakLines(levelname, wrapwidth / scaleFactorX);
 
 			int count = lines.Count();
 			for (int i = 0; i < count; i++)
 			{
-				screen.DrawText(mapname.mFont, mapname.mColor, (screen.GetWidth() - lines.StringWidth(i) * CleanXfac) / 2, y + h, lines.StringAt(i), DTA_CleanNoMove, true);
+				DrawText(mapname.mFont, mapname.mColor, (cwidth - lines.StringWidth(i) * scaleFactorX) / 2, y + h, lines.StringAt(i), true);
 				h += lumph;
 			}
 			return y + h;
@@ -187,7 +216,7 @@ class StatusScreen abstract play version("2.5")
 
 	//====================================================================
 	//
-	// Draws a level author's name with the big font
+	// Draws a level author's name with the given font
 	//
 	//====================================================================
 	
@@ -196,14 +225,14 @@ class StatusScreen abstract play version("2.5")
 		if (levelname.Length() > 0)
 		{
 			int h = 0;
-			int lumph = author.mFont.GetHeight() * CleanYfac;
+			int lumph = author.mFont.GetHeight() * scaleFactorY;
 			
-			BrokenLines lines = author.mFont.BreakLines(levelname, screen.GetWidth() / CleanXfac);
+			BrokenLines lines = author.mFont.BreakLines(levelname, wrapwidth / scaleFactorX);
 			
 			int count = lines.Count();
 			for (int i = 0; i < count; i++)
 			{
-				screen.DrawText(author.mFont, author.mColor, (screen.GetWidth() - lines.StringWidth(i) * CleanXfac) / 2, y + h, lines.StringAt(i), DTA_CleanNoMove, true);
+				DrawText(author.mFont, author.mColor, (cwidth - lines.StringWidth(i) * scaleFactorX) / 2, y + h, lines.StringAt(i), true);
 				h += lumph;
 			}
 			return y + h;
@@ -235,22 +264,21 @@ class StatusScreen abstract play version("2.5")
 	int DrawPatchOrText(int y, PatchInfo pinfo, TextureID patch, String stringname)
 	{
 		String string = Stringtable.Localize(stringname);
-		int midx = screen.GetWidth() / 2;
+		int midx = cwidth / 2;
 		
 		if (TexMan.OkForLocalization(patch, stringname))
 		{
 			let size = TexMan.GetScaledSize(patch);
-			screen.DrawTexture(patch, true, midx - size.X * CleanXfac/2, y, DTA_CleanNoMove, true);
-			return y + int(size.Y * CleanYfac);
+			DrawTexture(patch, midx - size.X * scaleFactorX/2, y, true);
+			return y + int(size.Y * scaleFactorY);
 		}
 		else
 		{
-			screen.DrawText(pinfo.mFont, pinfo.mColor, midx - pinfo.mFont.StringWidth(string) * CleanXfac/2, y, string, DTA_CleanNoMove, true);
-			return y + pinfo.mFont.GetHeight() * CleanYfac;
+			DrawText(pinfo.mFont, pinfo.mColor, midx - pinfo.mFont.StringWidth(string) * scaleFactorX/2, y, string, true);
+			return y + pinfo.mFont.GetHeight() * scaleFactorY;
 		}
 	}
 	
-
 	//====================================================================
 	//
 	// Draws "<Levelname> Finished!"
@@ -263,7 +291,7 @@ class StatusScreen abstract play version("2.5")
 	virtual int drawLF ()
 	{
 		bool ispatch = wbs.LName0.isValid();
-		int oldy = TITLEY * CleanYfac;
+		int oldy = TITLEY * scaleFactorY;
 		int h;
 		
 		if (!ispatch)
@@ -271,7 +299,7 @@ class StatusScreen abstract play version("2.5")
 			let asc = mapname.mFont.GetMaxAscender(lnametexts[1]);
 			if (asc > TITLEY - 2)
 			{
-				oldy = (asc+2) * CleanYfac;
+				oldy = (asc+2) * scaleFactorY;
 			}
 		}
 		
@@ -285,7 +313,7 @@ class StatusScreen abstract play version("2.5")
 			if (authortexts[0].length() == 0)
 			{
 				int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
-				int h2 = (y - oldy) / CleanYfac / 4;
+				int h2 = (y - oldy) / scaleFactorY / 4;
 				disp = min(h1, h2);
 				
 				if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
@@ -297,22 +325,21 @@ class StatusScreen abstract play version("2.5")
 			{
 					disp += author.mFont.GetMaxAscender(authortexts[0]);
 			}
-			y += disp * CleanYfac;
+			y += disp * scaleFactorY;
 		}
 		
 		y = DrawAuthor(y, authortexts[0]);
 		
 		// draw "Finished!"
 
-		int statsy = multiplayer? NG_STATSY : SP_STATSY * CleanYFac;
-		if (y < (statsy - finished.mFont.GetHeight()*3/4) * CleanYfac)
+		int statsy = multiplayer? NG_STATSY : SP_STATSY * scaleFactorY;
+		if (y < (statsy - finished.mFont.GetHeight()*3/4) * scaleFactorY)
 		{
 			// don't draw 'finished' if the level name is too tall
 			y = DrawPatchOrText(y, finished, finishedPatch, "$WI_FINISHED");
 		}
 		return y;
 	}
-
 
 	//====================================================================
 	//
@@ -326,14 +353,14 @@ class StatusScreen abstract play version("2.5")
 	virtual void drawEL ()
 	{
 		bool ispatch = TexMan.OkForLocalization(enteringPatch, "$WI_ENTERING");
-		int oldy = TITLEY * CleanYfac;
+		int oldy = TITLEY * scaleFactorY;
 
 		if (!ispatch)
 		{
 			let asc = entering.mFont.GetMaxAscender("$WI_ENTERING");
 			if (asc > TITLEY - 2)
 			{
-				oldy = (asc+2) * CleanYfac;
+				oldy = (asc+2) * scaleFactorY;
 			}
 		}
 
@@ -352,7 +379,7 @@ class StatusScreen abstract play version("2.5")
 			{
 				disp += mapname.mFont.GetMaxAscender(lnametexts[1]);
 			}
-			y += disp * CleanYfac;
+			y += disp * scaleFactorY;
 		}
 
 		y = DrawName(y, wbs.LName1, lnametexts[1]);
@@ -360,13 +387,12 @@ class StatusScreen abstract play version("2.5")
 		if (wbs.LName1.isValid() && authortexts[1].length() > 0) 
 		{
 			// Consdider the ascender height of the following text.
-			y += author.mFont.GetMaxAscender(authortexts[1]) * CleanYfac;
+			y += author.mFont.GetMaxAscender(authortexts[1]) * scaleFactorY;
 		}
 			
 		DrawAuthor(y, authortexts[1]);
 
 	}
-
 
 	//====================================================================
 	//
@@ -383,9 +409,9 @@ class StatusScreen abstract play version("2.5")
 		String text;
 		int len;
 
-		if (nomove)
+		if (nomove && scalemode == -1)
 		{
-			fntwidth *= CleanXfac;
+			fntwidth *= scaleFactorX;
 		}
 		text = String.Format("%d", n);
 		len = text.Length();
@@ -435,35 +461,76 @@ class StatusScreen abstract play version("2.5")
 
 		if (wi_percents)
 		{
-			if (nomove)
+			if (nomove && scalemode == -1)
 			{
-				x -= fnt.StringWidth("%") * CleanXfac;
+				x -= fnt.StringWidth("%") * scaleFactorX;
 			}
 			else
 			{
 				x -= fnt.StringWidth("%");
 			}
-			screen.DrawText(fnt, color, x, y, "%", nomove? DTA_CleanNoMove : DTA_Clean, true);
+			DrawText(fnt, color, x, y, "%", nomove);
 			if (nomove)
 			{
 				x -= 2*CleanXfac;
 			}
-			drawNum(fnt, x, y, b == 0 ? 100 : p * 100 / b, -1, false, color);
+			drawNum(fnt, x, y, b == 0 ? 100 : p * 100 / b, -1, false, color, nomove);
 		}
 		else
 		{
 			if (show_total)
 			{
-				x = drawNum(fnt, x, y, b, 2, false, color);
+				x = drawNum(fnt, x, y, b, 2, false, color, nomove);
 				x -= fnt.StringWidth("/");
-				screen.DrawText (fnt, color, x, y, "/", nomove? DTA_CleanNoMove : DTA_Clean, true);
+				DrawText (fnt, color, x, y, "/", nomove);
 			}
-			drawNum (fnt, x, y, p, -1, false, color);
+			drawNum (fnt, x, y, p, -1, false, color, nomove);
 		}
+	}
+
+
+	//====================================================================
+	//
+	// Display level completion time and par, or "sucks" message if overflow.
+	//
+	//====================================================================
+
+	void drawTimeFont (Font printFont, int x, int y, int t, int color)
+	{
+		bool sucky;
+
+		if (t < 0)
+			return;
+
+		int hours = t / 3600;
+		t -= hours * 3600;
+		int minutes = t / 60;
+		t -= minutes * 60;
+		int seconds = t;
+
+		// Why were these offsets hard coded? Half the WADs with custom patches
+		// I tested screwed up miserably in this function!
+		int num_spacing = printFont.GetCharWidth("3");
+		int colon_spacing = printFont.GetCharWidth(":");
+
+		x = drawNum (printFont, x, y, seconds, 2, true, color) - 1;
+		DrawCharPatch (printFont, ":", x -= colon_spacing, y, color);
+		x = drawNum (printFont, x, y, minutes, 2, hours!=0, color);
+		if (hours)
+		{
+			DrawCharPatch (printFont, ":", x -= colon_spacing, y, color);
+			drawNum (printFont, x, y, hours, 2, false, color);
+		}
+	}
+
+	void drawTime (int x, int y, int t, bool no_sucks=false)
+	{
+		drawTimeFont(IntermissionFont, x, y, t, Font.CR_UNTRANSLATED);
 	}
 
 	//====================================================================
 	//
+	// the 'scaled' drawers are for the multiplayer scoreboard
 	//
 	//====================================================================
 
@@ -530,46 +597,6 @@ class StatusScreen abstract play version("2.5")
 
 		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, color);
 	}
-
-	//====================================================================
-	//
-	// Display level completion time and par, or "sucks" message if overflow.
-	//
-	//====================================================================
-
-	void drawTimeFont (Font printFont, int x, int y, int t, int color)
-	{
-		bool sucky;
-
-		if (t < 0)
-			return;
-
-		int hours = t / 3600;
-		t -= hours * 3600;
-		int minutes = t / 60;
-		t -= minutes * 60;
-		int seconds = t;
-
-		// Why were these offsets hard coded? Half the WADs with custom patches
-		// I tested screwed up miserably in this function!
-		int num_spacing = printFont.GetCharWidth("3");
-		int colon_spacing = printFont.GetCharWidth(":");
-
-		x = drawNum (printFont, x, y, seconds, 2, true, color) - 1;
-		DrawCharPatch (printFont, ":", x -= colon_spacing, y, color);
-		x = drawNum (printFont, x, y, minutes, 2, hours!=0, color);
-		if (hours)
-		{
-			DrawCharPatch (printFont, ":", x -= colon_spacing, y, color);
-			drawNum (printFont, x, y, hours, 2, false, color);
-		}
-	}
-
-	void drawTime (int x, int y, int t, bool no_sucks=false)
-	{
-		drawTimeFont(IntermissionFont, x, y, t, Font.CR_UNTRANSLATED);
-	}
-		
 
 	//====================================================================
 	//
@@ -897,6 +924,12 @@ class StatusScreen abstract play version("2.5")
 		bg = InterBackground.Create(wbs);
 		noautostartmap = bg.LoadBackground(false);
 		initStats();
+		
+		wrapwidth = cwidth = screen.GetWidth();
+		cheight = screen.GetHeight();
+		scalemode = -1;
+		scaleFactorX = CleanXfac;
+		scaleFactorY = CleanYfac;
 	}
 	
 	

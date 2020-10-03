@@ -61,6 +61,7 @@ CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_noautostartmap, false, CVAR_USERINFO | CVAR_ARCHIVE)
 CVAR(Int, wi_autoadvance, 0, CVAR_SERVERINFO)
+CVAR(Bool, wi_cleantextscale, true, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, inter_classic_scaling)
 
 // States for the intermission
@@ -769,12 +770,35 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 	}
 	
 	WI_Screen = cls->CreateNew();
+
+
 	ScaleOverrider s(twod);
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{
 		VMValue val[2] = { WI_Screen, wbstartstruct };
 		VMCall(func, val, 2, nullptr, 0);
 	}
+
+	if (!wi_cleantextscale)
+	{
+		// Only modify the original single player screens. Everything else must set itself up as intended
+		if (cls->TypeName == NAME_DoomStatusScreen || cls->TypeName == NAME_RavenStatusScreen)
+		{
+			int w = screen->GetWidth();
+			int h = screen->GetHeight();
+			float ratio = ActiveRatio(w, h);
+			int pixw = int(320 * (ratio * 0.75));
+			if (pixw > 336) pixw -= 16;	// leave a bit of space at the sides.
+
+			WI_Screen->IntVar(NAME_cwidth) = 320;
+			WI_Screen->IntVar(NAME_cheight) = 200;
+			WI_Screen->IntVar(NAME_scalemode) = FSMode_ScaleToFit43;
+			WI_Screen->IntVar(NAME_scalefactorx) = 1;
+			WI_Screen->IntVar(NAME_scalefactory) = 1;
+			WI_Screen->IntVar(NAME_wrapwidth) = pixw;
+		}
+	}
+
 	GC::AddSoftRoot(WI_Screen);
 }
 

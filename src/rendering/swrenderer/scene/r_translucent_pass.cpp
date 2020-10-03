@@ -52,7 +52,7 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Bool, r_blendmethod)
 
 CVAR(Bool, r_fullbrightignoresectorcolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVARD(Bool, r_actorspriteshadow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "render actor sprite shadows");
+CVARD(Bool, r_actorspriteshadow, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "render actor sprite shadows");
 CUSTOM_CVARD(Float, r_actorspriteshadowdist, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "how far to render sprite shadows")
 {
 	if (self < 0.f)

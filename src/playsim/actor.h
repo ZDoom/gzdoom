@@ -459,7 +459,9 @@ enum ActorRenderFlag
 	RF_SPRITEFLIP		= 0x08000000,	// sprite flipped on x-axis
 	RF_ZDOOMTRANS		= 0x10000000,	// is not normally transparent in Vanilla Doom
 	RF_NOINTERPOLATEVIEW = 0x20000000,	// don't interpolate the view next frame if this actor is a camera.
-	RF_CASTSPRITESHADOW = 0x40000000,
+
+	RF_CASTSPRITESHADOW		= 0x40000000,
+	RF_NOSPRITESHADOW		= 0x80000000,
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

@@ -72,6 +72,7 @@ enum PSPFlags
 	PSPF_MIRROR			= 1 << 9,
 	PSPF_PLAYERTRANSLATED = 1 << 10,
 	PSPF_PIVOTPERCENT	= 1 << 11,
+	PSPF_INTERPOLATE	= 1 << 12,
 };
 
 enum PSPAlign
@@ -81,6 +82,11 @@ enum PSPAlign
 	PSPA_BOTTOM,
 	PSPA_LEFT = PSPA_TOP,
 	PSPA_RIGHT = 2
+};
+
+struct WeaponInterp
+{
+	FVector2 v[4];
 };
 
 class DPSprite : public DObject
@@ -102,21 +108,21 @@ public:
 	DPSprite*	GetNext()							  { return Next; }
 	AActor*		GetCaller()							  { return Caller; }
 	void		SetCaller(AActor *newcaller)		  { Caller = newcaller; }
-	void		ResetInterpolation()				  { oldx = x; oldy = y; }
+	void		ResetInterpolation()				  { oldx = x; oldy = y; Prev = Vert; InterpolateTic = false; }
 	void OnDestroy() override;
 	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 	float GetYAdjust(bool fullscreen);
 
 	int HAlign, VAlign;		// Horizontal and vertical alignment
-	bool PivotPercent;		// If true, the pivot goes between [0.0, 1.0]. Otherwise, it's a pixel position offset from the image size.
 	double px, py;			// pivot points
 	double rotation;		// How much rotation to apply.
-	double oldrotation;
 	double scalex, scaley;	// Scale
-	double oldscalex, oldscaley;	
 	double x, y, alpha;
 	double oldx, oldy;
-	DVector2 Coord[4];
+	bool InterpolateTic;
+	DVector2 Coord[4];	// Offsets
+	WeaponInterp Prev;	// Interpolation
+	WeaponInterp Vert;	// Current Position
 	bool firstTic;
 	int Tics;
 	uint32_t Translation;

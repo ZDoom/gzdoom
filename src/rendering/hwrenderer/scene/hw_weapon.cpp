@@ -169,26 +169,17 @@ static WeaponPosition GetWeaponPosition(player_t *player, double ticFrac)
 		{
 			w.wx = (float)w.weapon->x;
 			w.wy = (float)w.weapon->y;
-			w.sx = (float)w.weapon->scalex;
-			w.sy = (float)w.weapon->scaley;
-			w.r = (float)w.weapon->rotation;
 		}
 		else
 		{
 			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * ticFrac);
 			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * ticFrac);
-			w.sx = (float)(w.weapon->oldscalex + (w.weapon->scalex - w.weapon->oldscalex) * ticFrac);
-			w.sy = (float)(w.weapon->oldscaley + (w.weapon->scaley - w.weapon->oldscaley) * ticFrac);
-			w.r = (float)(w.weapon->oldrotation + (w.weapon->rotation - w.weapon->oldrotation) * ticFrac);
 		}
 	}
 	else
 	{
 		w.wx = 0;
 		w.wy = 0;
-		w.sx = 0;
-		w.sy = 0;
-		w.r = 0;
 	}
 	return w;
 }
@@ -204,8 +195,7 @@ static FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp, double ticFrac)
 	if (psp->firstTic)
 	{ // Can't interpolate the first tic.
 		psp->firstTic = false;
-		psp->oldx = psp->x;
-		psp->oldy = psp->y;
+		psp->ResetInterpolation();
 	}
 
 	float sx = float(psp->oldx + (psp->x - psp->oldx) * ticFrac);
@@ -416,7 +406,7 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 //
 //==========================================================================
 
-bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player, WeaponPosition *weap)
+bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player, double ticfrac)
 {
 	float			tx;
 	float			scale;
@@ -444,13 +434,14 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 
 	tx = (psp->Flags & PSPF_MIRROR) ? ((160 - r.width) - (sx + r.left)) : (sx - (160 - r.left));
 	x1 = tx * scalex + vw / 2;
-	if (x1 > vw)	return false; // off the right side
+	// [MC] Disabled these because vertices can be manipulated now.
+	//if (x1 > vw)	return false; // off the right side
 	x1 += viewwindowx;
 
 
 	tx += r.width;
 	x2 = tx * scalex + vw / 2;
-	if (x2 < 0) return false; // off the left side
+	//if (x2 < 0) return false; // off the left side
 	x2 += viewwindowx;
 
 	// killough 12/98: fix psprite positioning problem
@@ -476,29 +467,22 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		v2 = spi.GetSpriteVB();
 	}
 
-	auto verts = screen->mVertexData->AllocVertices(4);
-	mx = verts.second;
-
 	// [MC] Code copied from DTA_Rotate.
 	// Big thanks to IvanDobrovski who helped me modify this.
 
-	FVector2 c[4];
-	c[0] = FVector2(x1, y1);
-	c[1] = FVector2(x1, y2);
-	c[2] = FVector2(x2, y1);
-	c[3] = FVector2(x2, y2);
+	WeaponInterp Vert;
+	Vert.v[0] = FVector2(x1, y1);
+	Vert.v[1] = FVector2(x1, y2);
+	Vert.v[2] = FVector2(x2, y1);
+	Vert.v[3] = FVector2(x2, y2);
 
 	for (int i = 0; i < 4; i++)
 	{
 		const float cx = (flip) ? -psp->Coord[i].X : psp->Coord[i].X;
-		c[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
+		Vert.v[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
 	}
 	if (psp->rotation != 0.0 || psp->scalex != 1.0 || psp->scaley != 1.0)
 	{
-		// Nothing to draw in this case.
-		if (psp->scalex == 0.0 || psp->scaley == 0.0)
-			return false;
-
 		// [MC] Sets up the alignment for starting the pivot at, in a corner.
 		float anchorx, anchory;
 		switch (psp->VAlign)
@@ -546,17 +530,42 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		// Now adjust the position, rotation and scale of the image based on the latter two.
 		for (int i = 0; i < 4; i++)
 		{
-			c[i] -= {xcenter, ycenter};
-			const float xx = xcenter + psp->scalex * (c[i].X * cosang + c[i].Y * sinang);
-			const float yy = ycenter - psp->scaley * (c[i].X * sinang - c[i].Y * cosang);
-			c[i] = {xx, yy};
+			Vert.v[i] -= {xcenter, ycenter};
+			const float xx = xcenter + psp->scalex * (Vert.v[i].X * cosang + Vert.v[i].Y * sinang);
+			const float yy = ycenter - psp->scaley * (Vert.v[i].X * sinang - Vert.v[i].Y * cosang);
+			Vert.v[i] = {xx, yy};
 		}
 	}
-	
-	verts.first[0].Set(c[0].X, c[0].Y, 0, u1, v1);
-	verts.first[1].Set(c[1].X, c[1].Y, 0, u1, v2);
-	verts.first[2].Set(c[2].X, c[2].Y, 0, u2, v1);
-	verts.first[3].Set(c[3].X, c[3].Y, 0, u2, v2);
+	psp->Vert = Vert;
+
+	if (psp->scalex == 0.0 || psp->scaley == 0.0)
+		return false;
+
+	bool vertsOnScreen = false;
+	const bool interp = (psp->InterpolateTic || psp->Flags & PSPF_INTERPOLATE);
+
+	for (int i = 0; i < 4; i++)
+	{
+		FVector2 t = Vert.v[i];
+		if (interp)
+			t = psp->Prev.v[i] + (psp->Vert.v[i] - psp->Prev.v[i]) * ticfrac;
+
+		if (!vertsOnScreen)
+			vertsOnScreen = (t.X >= 0.0 && t.X <= vw);
+
+		Vert.v[i] = t;
+	}
+
+	if (!vertsOnScreen)
+		return false;
+
+	auto verts = screen->mVertexData->AllocVertices(4);
+	mx = verts.second;
+
+	verts.first[0].Set(Vert.v[0].X, Vert.v[0].Y, 0, u1, v1);
+	verts.first[1].Set(Vert.v[1].X, Vert.v[1].Y, 0, u1, v2);
+	verts.first[2].Set(Vert.v[2].X, Vert.v[2].Y, 0, u2, v1);
+	verts.first[3].Set(Vert.v[3].X, Vert.v[3].Y, 0, u2, v2);
 
 	texture = tex;
 	return true;
@@ -637,12 +646,12 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		}
 		else
 		{
-			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player, &weap)) continue;
+			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player, vp.TicFrac)) continue;
 		}
 		hudsprites.Push(hudsprite);
 	}
 	lightmode = oldlightmode;
-	PrepareTargeterSprites(&weap);
+	PrepareTargeterSprites(vp.TicFrac);
 }
 
 
@@ -652,7 +661,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 //
 //==========================================================================
 
-void HWDrawInfo::PrepareTargeterSprites(WeaponPosition *weap)
+void HWDrawInfo::PrepareTargeterSprites(double ticfrac)
 {
 	AActor * playermo = players[consoleplayer].camera;
 	player_t * player = playermo->player;
@@ -685,7 +694,7 @@ void HWDrawInfo::PrepareTargeterSprites(WeaponPosition *weap)
 		{
 			hudsprite.weapon = psp;
 			
-			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player, weap))
+			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player, ticfrac))
 			{
 				hudsprites.Push(hudsprite);
 			}

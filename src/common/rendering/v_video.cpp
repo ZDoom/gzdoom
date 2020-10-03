@@ -116,8 +116,8 @@ CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 		self = 0;
 		return;
 	}
-	if (sysCallbacks && sysCallbacks->OnScreenSizeChanged) 
-		sysCallbacks->OnScreenSizeChanged();
+	if (sysCallbacks.OnScreenSizeChanged) 
+		sysCallbacks.OnScreenSizeChanged();
 	setsizeneeded = true;
 }
 
@@ -294,8 +294,8 @@ void V_OutputResized (int width, int height)
 	twod->End();
 	setsizeneeded = true;
 	C_NewModeAdjust();
-	if (sysCallbacks && sysCallbacks->OnScreenSizeChanged) 
-		sysCallbacks->OnScreenSizeChanged();
+	if (sysCallbacks.OnScreenSizeChanged) 
+		sysCallbacks.OnScreenSizeChanged();
 }
 
 bool IVideo::SetResolution ()
@@ -392,8 +392,8 @@ void V_Init2()
 CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 {
 	setsizeneeded = true;
-	if (sysCallbacks && sysCallbacks->OnScreenSizeChanged) 
-		sysCallbacks->OnScreenSizeChanged();
+	if (sysCallbacks.OnScreenSizeChanged) 
+		sysCallbacks.OnScreenSizeChanged();
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)

@@ -119,7 +119,7 @@ void FSamplerManager::SetTextureFilterMode()
 		glBindSampler(i, 0);
 	}
 
-	int filter = sysCallbacks && sysCallbacks->DisableTextureFilter && sysCallbacks->DisableTextureFilter() ? 0 : gl_texture_filter;
+	int filter = sysCallbacks.DisableTextureFilter && sysCallbacks.DisableTextureFilter() ? 0 : gl_texture_filter;
 
 	for (int i = 0; i < 4; i++)
 	{

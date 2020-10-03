@@ -147,7 +147,7 @@ extern int chatmodeon;
 
 static void I_CheckGUICapture ()
 {
-	bool wantCapt = sysCallbacks && sysCallbacks->WantGuiCapture && sysCallbacks->WantGuiCapture();
+	bool wantCapt = sysCallbacks.WantGuiCapture && sysCallbacks.WantGuiCapture();
 
 	if (wantCapt != GUICapture)
 	{
@@ -394,7 +394,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return result;
 	}
 
-	if (message == WM_LBUTTONDOWN && sysCallbacks && sysCallbacks->WantLeftButton() && sysCallbacks->WantLeftButton())
+	if (message == WM_LBUTTONDOWN && sysCallbacks.WantLeftButton() && sysCallbacks.WantLeftButton())
 	{
 		if (GUIWndProcHook(hWnd, message, wParam, lParam, &result))
 		{
@@ -504,7 +504,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), INGAME_PRIORITY_CLASS);
 		}
-		else if (!noidle && !(sysCallbacks && sysCallbacks->NetGame && sysCallbacks->NetGame()))
+		else if (!noidle && !(sysCallbacks.NetGame && sysCallbacks.NetGame()))
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
@@ -749,7 +749,7 @@ void I_StartTic ()
 	BlockMouseMove--;
 	buttonMap.ResetButtonTriggers ();
 	I_CheckGUICapture ();
-	EventHandlerResultForNativeMouse = sysCallbacks && sysCallbacks->WantNativeMouse && sysCallbacks->WantNativeMouse();
+	EventHandlerResultForNativeMouse = sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
 }

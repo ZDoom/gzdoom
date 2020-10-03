@@ -747,7 +747,7 @@ void M_Drawer (void)
 		if (!CurrentMenu->DontBlur) screen->BlurScene(menuBlurAmount);
 		if (!CurrentMenu->DontDim)
 		{
-			if (sysCallbacks && sysCallbacks->MenuDim) sysCallbacks->MenuDim();
+			if (sysCallbacks.MenuDim) sysCallbacks.MenuDim();
 		}
 		CurrentMenu->CallDrawer();
 	}

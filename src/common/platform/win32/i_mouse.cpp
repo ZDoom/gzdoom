@@ -269,7 +269,7 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 		else
 		{
 			bool pauseState = false;
-			bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
+			bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
 			want_native = ((!m_use_mouse || menuactive != MENU_WaitKey) &&
 				(!captureModeInGame || GUICapture));
 		}

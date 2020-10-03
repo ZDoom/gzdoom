@@ -4873,19 +4873,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetVisibleRotation)
 		
 	if (!(flags & VRF_NOANGLESTART))
 	{
-		mobj->VisibleStartAngle = anglestart;
+		mobj->VisibleStartAngle = anglestart.Degrees;
 	}
 	if (!(flags & VRF_NOANGLEEND))
 	{
-		mobj->VisibleEndAngle = angleend;
+		mobj->VisibleEndAngle = angleend.Degrees;
 	}
 	if (!(flags & VRF_NOPITCHSTART))
 	{
-		mobj->VisibleStartPitch = pitchstart;
+		mobj->VisibleStartPitch = pitchstart.Degrees;
 	}
 	if (!(flags & VRF_NOPITCHEND))
 	{
-		mobj->VisibleEndPitch = pitchend;
+		mobj->VisibleEndPitch = pitchend.Degrees;
 	}
 
 	ACTION_RETURN_BOOL(true);

@@ -1000,10 +1000,10 @@ bool AActor::IsInsideVisibleAngles() const
 	if (p == nullptr || p->camera == nullptr)
 		return true;
 	
-	DAngle anglestart = VisibleStartAngle;
-	DAngle angleend = VisibleEndAngle;
-	DAngle pitchstart = VisibleStartPitch;
-	DAngle pitchend = VisibleEndPitch;
+	DAngle anglestart = VisibleStartAngle.Degrees;
+	DAngle angleend = VisibleEndAngle.Degrees;
+	DAngle pitchstart = VisibleStartPitch.Degrees;
+	DAngle pitchend = VisibleEndPitch.Degrees;
 	
 	if (anglestart > angleend)
 	{

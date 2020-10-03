@@ -1157,6 +1157,7 @@ public:
 
 	double MaxDropOffHeight;
 	double MaxStepHeight;
+	double MaxSlopeSteepness;
 
 	int32_t Mass;
 	int16_t PainChance;

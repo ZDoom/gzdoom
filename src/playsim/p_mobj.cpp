@@ -293,6 +293,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("meleestate", MeleeState)
 		A("missilestate", MissileState)
 		A("maxdropoffheight", MaxDropOffHeight)
+		A("maxslopesteepness", MaxSlopeSteepness)
 		A("maxstepheight", MaxStepHeight)
 		A("bounceflags", BounceFlags)
 		A("bouncefactor", bouncefactor)
@@ -3909,18 +3910,18 @@ void AActor::Tick ()
 			// Check 3D floors as well
 			floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
 
-			if (floorplane.fC() < STEEPSLOPE &&
+			if (floorplane.fC() < MaxSlopeSteepness &&
 				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
 
-				if (floorplane.fC() > STEEPSLOPE*2/3)
+				if (floorplane.fC() > MaxSlopeSteepness*2/3)
 				{
 					for (node = touching_sectorlist; node; node = node->m_tnext)
 					{
 						const sector_t *sec = node->m_sector;
-						if (sec->floorplane.fC() >= STEEPSLOPE)
+						if (sec->floorplane.fC() >= MaxSlopeSteepness)
 						{
 							if (floorplane.ZatPoint(PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
 							{

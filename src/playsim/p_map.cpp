@@ -952,7 +952,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	if (!(tm.thing->flags & MF_DROPOFF) &&
 		!(tm.thing->flags & (MF_NOGRAVITY | MF_NOCLIP)))
 	{
-		if ((open.frontfloorplane.fC() < STEEPSLOPE) != (open.backfloorplane.fC() < STEEPSLOPE))
+		if ((open.frontfloorplane.fC() < tm.thing->MaxSlopeSteepness) != (open.backfloorplane.fC() < tm.thing->MaxSlopeSteepness))
 		{
 			// on the boundary of a steep slope
 			return false;
@@ -3255,7 +3255,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 		if (t < 0)
 		{ // Desired location is behind (below) the plane
 			// (i.e. Walking up the plane)
-			if (plane->fC() < STEEPSLOPE)
+			if (plane->fC() < actor->MaxSlopeSteepness)
 			{ // Can't climb up slopes of ~45 degrees or more
 				if (actor->flags & MF_NOCLIP)
 				{
@@ -3266,12 +3266,12 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 					const msecnode_t *node;
 					bool dopush = true;
 
-					if (plane->fC() > STEEPSLOPE * 2 / 3)
+					if (plane->fC() > actor->MaxSlopeSteepness * 2 / 3)
 					{
 						for (node = actor->touching_sectorlist; node; node = node->m_tnext)
 						{
 							sector_t *sec = node->m_sector;
-							if (sec->floorplane.fC() >= STEEPSLOPE)
+							if (sec->floorplane.fC() >= actor->MaxSlopeSteepness)
 							{
 								DVector3 pos = actor->PosRelative(sec) +move;
 

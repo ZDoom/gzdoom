@@ -93,10 +93,10 @@ class Actor : Thinker native
 	native vector2 SpriteOffset;
 	native double spriteAngle;
 	native double spriteRotation;
-	native double VisibleStartAngle;
-	native double VisibleStartPitch;
-	native double VisibleEndAngle;
-	native double VisibleEndPitch;
+	native float VisibleStartAngle;
+	native float VisibleStartPitch;
+	native float VisibleEndAngle;
+	native float VisibleEndPitch;
 	native double Angle;
 	native double Pitch;
 	native double Roll;
@@ -150,7 +150,7 @@ class Actor : Thinker native
 	native int StartHealth;
 	native uint8 WeaveIndexXY;
 	native uint8 WeaveIndexZ;
-	native int skillrespawncount;
+	native uint16 skillrespawncount;
 	native int Args[5];
 	native int Mass;
 	native int Special;

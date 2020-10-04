@@ -70,6 +70,7 @@ EXTERN_CVAR (Float, vid_scale_custompixelaspect)
 EXTERN_CVAR (Bool, vid_scale_linear)
 EXTERN_CVAR(Float, m_sensitivity_x)
 EXTERN_CVAR(Float, m_sensitivity_y)
+EXTERN_CVAR(Int, adl_volume_model)
 
 #ifdef _WIN32
 EXTERN_CVAR(Int, in_mouse)
@@ -590,6 +591,7 @@ void FGameConfigFile::DoGlobalSetup ()
 				m_sensitivity_x = (float)xfact;
 				m_sensitivity_y = (float)yfact;
 
+				adl_volume_model = 0;
 			}
 		}
 	}

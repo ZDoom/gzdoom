@@ -366,6 +366,28 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			sc.MustGetString();
 			desc->mNetgameMessage = sc.String;
 		}
+		else if (sc.Compare("size"))
+		{
+			if (sc.CheckNumber())
+			{
+				desc->mVirtWidth = sc.Number;
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				desc->mVirtHeight = sc.Number;
+			}
+			else
+			{
+				sc.MustGetString();
+				if (sc.Compare("clean"))
+				{
+					desc->mVirtWidth = -1;
+				}
+				if (sc.Compare("optclean"))
+				{
+					desc->mVirtWidth = -2;
+				}
+			}
+		}
 		else
 		{
 			bool success = false;
@@ -631,6 +653,7 @@ static void ParseListMenu(FScanner &sc)
 	sc.MustGetString();
 
 	DListMenuDescriptor *desc = Create<DListMenuDescriptor>();
+	desc->Reset();
 	desc->mMenuName = sc.String;
 	desc->mSelectedItem = -1;
 	desc->mAutoselect = -1;

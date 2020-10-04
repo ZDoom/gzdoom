@@ -2,6 +2,11 @@
 
 class ListMenuDescriptor : MenuDescriptor native
 {
+	enum
+	{
+		CleanScale = -1,
+		OptCleanScale = -2
+	};
 	native Array<ListMenuItem> mItems;
 	native int mSelectedItem;
 	native double mSelectOfsX;
@@ -16,21 +21,18 @@ class ListMenuDescriptor : MenuDescriptor native
 	native int mFontColor;
 	native int mFontColor2;
 	native bool mCenter;
+	native int mVirtWidth, mVirtHeight;
 
-	void Reset()
+	native void Reset();
+	int DisplayWidth()
 	{
-		// Reset the default settings (ignore all other values in the struct)
-		mSelectOfsX = 0;
-		mSelectOfsY = 0;
-		mSelector.SetInvalid();
-		mDisplayTop = 0;
-		mXpos = 0;
-		mYpos = 0;
-		mLinespacing = 0;
-		mNetgameMessage = "";
-		mFont = NULL;
-		mFontColor = Font.CR_UNTRANSLATED;
-		mFontColor2 = Font.CR_UNTRANSLATED;
+		if (mVirtWidth == OptCleanScale) return m_cleanscale ? CleanScale : 320;
+		return mVirtWidth;
+	}
+	int DisplayHeight()
+	{
+		if (mVirtWidth == OptCleanScale) return m_cleanscale ? CleanScale : 200;
+		return mVirtHeight;
 	}
 }
 

@@ -99,8 +99,6 @@ class Menu : Object native ui version("2.4")
 	native static void SetMouseCapture(bool on);
 	native void Close();
 	native void ActivateMenu();
-	native static void UpdateColorsets(PlayerClass cls);
-	native static void UpdateSkinOptions(PlayerClass cls);
 	
 	//=============================================================================
 	//

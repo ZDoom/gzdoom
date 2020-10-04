@@ -433,15 +433,7 @@ class OptionMenu : Menu
 		let font = generic_ui || !mDesc.mFont ? NewSmallFont : mDesc.mFont;
 		if (font && mDesc.mTitle.Length() > 0)
 		{
-			let font = generic_ui || !mDesc.mFont ? NewSmallFont : mDesc.mFont;
-			if (drawit)
-			{
-				let tt = Stringtable.Localize(title);
-				screen.DrawText(font, OptionMenuSettings.mTitleColor,
-					(screen.GetWidth() - font.StringWidth(tt) * CleanXfac_1) / 2, 10 * CleanYfac_1,
-					tt, DTA_CleanNoMove_1, true);
-			}
-			return y + font.GetHeight();
+			return menuCustomizer.DrawCaption(title, font, y, drawit);
 		}
 		else
 		{

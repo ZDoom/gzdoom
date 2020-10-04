@@ -100,6 +100,8 @@ float			BackbuttonAlpha;
 static bool		MenuEnabled = true;
 DMenu			*CurrentMenu;
 int				MenuTime;
+DObject*		menuCustomizer;
+
 
 extern PClass *DefaultListMenuClass;
 extern PClass *DefaultOptionMenuClass;
@@ -190,7 +192,9 @@ void M_MarkMenus()
 		GC::Mark(pair->Value);
 	}
 	GC::Mark(CurrentMenu);
+	GC::Mark(menuCustomizer);
 }
+
 //============================================================================
 //
 // DMenu base class
@@ -884,6 +888,7 @@ DEFINE_GLOBAL(menuactive)
 DEFINE_GLOBAL(BackbuttonTime)
 DEFINE_GLOBAL(BackbuttonAlpha)
 DEFINE_GLOBAL(GameTicRate)
+DEFINE_GLOBAL(menuCustomizer)
 
 DEFINE_FIELD(DMenu, mParentMenu)
 DEFINE_FIELD(DMenu, mMouseCapture);

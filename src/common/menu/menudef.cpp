@@ -151,6 +151,11 @@ void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
+	if (menuCustomizer)
+	{
+		menuCustomizer->Destroy();
+		menuCustomizer = nullptr;
+	}
 }
 
 FTextureID GetMenuTexture(const char* const name)

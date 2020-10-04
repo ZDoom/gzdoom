@@ -50,6 +50,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly @MusPlayingInfo musplaying;
 	native readonly bool generic_ui;
 	native readonly int GameTicRate;
+	native MenuCustomize menuCustomizer;
 
 // sandbox state in multi-level setups:
 

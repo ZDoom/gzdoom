@@ -1261,6 +1261,9 @@ void SetDefaultMenuColors()
 	OptionSettings.mFontColorHeader = V_FindFontColor(gameinfo.mFontColorHeader);
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
+
+	auto cls = PClass::FindClass("MenuCustomize");
+	menuCustomizer = cls->CreateNew();
 }
 
 CCMD (menu_main)

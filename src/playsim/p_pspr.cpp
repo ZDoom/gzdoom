@@ -134,6 +134,7 @@ DEFINE_FIELD(DPSprite, oldx)
 DEFINE_FIELD(DPSprite, oldy)
 DEFINE_FIELD(DPSprite, firstTic)
 DEFINE_FIELD(DPSprite, Tics)
+DEFINE_FIELD(DPSprite, Translation)
 DEFINE_FIELD(DPSprite, alpha)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
@@ -154,6 +155,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   oldx(.0), oldy(.0),
   firstTic(true),
   Tics(0),
+  Translation(0),
   Flags(0),
   Caller(caller),
   Owner(owner),
@@ -744,6 +746,30 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 
 //---------------------------------------------------------------------------
 //
+// PROC A_OverlayTranslation
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayTranslation)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_UINT(trans);
+
+	if (!ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite* pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+	if (pspr != nullptr)
+	{
+		pspr->Translation = trans;
+	}
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC OverlayX/Y
 // Action function to return the X/Y of an overlay.
 //---------------------------------------------------------------------------
@@ -1017,6 +1043,7 @@ void DPSprite::Serialize(FSerializer &arc)
 		("flags", Flags)
 		("state", State)
 		("tics", Tics)
+		("translation", Translation)
 		.Sprite("sprite", Sprite, nullptr)
 		("frame", Frame)
 		("id", ID)

@@ -270,6 +270,8 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 
 static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 {
+	bool sizeset = false;
+	bool sizecompatible = true;
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
@@ -303,6 +305,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 				sc.ScriptError("Unknown menu class '%s'", sc.String);
 			}
 			desc->mClass = cls;
+			sizecompatible = false;
 		}
 		else if (sc.Compare("Selector"))
 		{
@@ -382,14 +385,23 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 				{
 					desc->mVirtWidth = -1;
 				}
-				if (sc.Compare("optclean"))
+				else if (sc.Compare("optclean"))
 				{
 					desc->mVirtWidth = -2;
+				}
+				else
+				{
+					sc.ScriptError("Invalid value '%s' for 'size'", sc.String);
 				}
 			}
 		}
 		else
 		{
+			// all item classes from which we know that they support sized scaling.
+			// If anything else comes through here the option to swich scaling mode is disabled for this menu.
+			static const char*  const compatibles[] = { "StaticPatch", "StaticText", "StaticTextCentered", "TextItem", "PatchItem", "PlayerDisplay", nullptr };
+			if (sc.MatchString(compatibles) < 0) sizecompatible = false;
+
 			bool success = false;
 			FStringf buildname("ListMenuItem%s", sc.String);
 			PClass *cls = PClass::FindClass(buildname);
@@ -520,6 +532,10 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
+	}
+	if (!sizeset && sizecompatible) // allow unclean scaling on this menu
+	{
+		desc->mVirtWidth = -2;
 	}
 	for (auto &p : desc->mItems)
 	{

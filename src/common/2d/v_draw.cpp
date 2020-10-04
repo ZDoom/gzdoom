@@ -410,6 +410,29 @@ void CalcFullscreenScale(DrawParms *parms, double srcwidth, double srcheight, in
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, GetFullscreenRect)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(virtw);
+	PARAM_FLOAT(virth);
+	PARAM_INT(fsmode);
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	DrawParms parms;
+	DoubleRect rect;
+	parms.viewport.width = twod->GetWidth();
+	parms.viewport.height = twod->GetHeight();
+	CalcFullscreenScale(&parms, virtw, virth, fsmode, rect);
+	if (numret >= 1) ret[0].SetFloat(rect.left);
+	if (numret >= 2) ret[1].SetFloat(rect.top);
+	if (numret >= 3) ret[2].SetFloat(rect.width);
+	if (numret >= 4) ret[3].SetFloat(rect.height);
+	return MIN(numret, 4);
+}
+
+
+
 //==========================================================================
 //
 // Draw parameter parsing
@@ -456,6 +479,13 @@ bool SetTextureParms(F2DDrawer * drawer, DrawParms *parms, FGameTexture *img, do
 		case DTA_Clean:
 			parms->x = (parms->x - 160.0) * CleanXfac + (GetWidth() * 0.5);
 			parms->y = (parms->y - 100.0) * CleanYfac + (GetHeight() * 0.5);
+			parms->destwidth = parms->texwidth * CleanXfac;
+			parms->destheight = parms->texheight * CleanYfac;
+			break;
+
+		case DTA_CleanTop:
+			parms->x = (parms->x - 160.0) * CleanXfac + (GetWidth() * 0.5);
+			parms->y = (parms->y) * CleanYfac;
 			parms->destwidth = parms->texwidth * CleanXfac;
 			parms->destheight = parms->texheight * CleanYfac;
 			break;
@@ -716,6 +746,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			break;
 
 		case DTA_Clean:
+		case DTA_CleanTop:
 			boolval = ListGetInt(tags);
 			if (boolval)
 			{

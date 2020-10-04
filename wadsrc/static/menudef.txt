@@ -231,7 +231,6 @@ ListMenu "EpisodeMenu"
 
 ListMenu "SkillMenu"
 {
-
 	IfGame(Doom, Chex)
 	{
 		StaticPatch 96, 14, "M_NEWG", 0, "$MNU_NEWGAME"
@@ -289,6 +288,7 @@ ListMenu "LoadGameMenu"
 	StaticTextCentered 160, -10, "$MNU_LOADGAME"
 	Position 80,54
 	Class "LoadMenu"	// uses its own implementation
+	Size Clean
 }
 
 //-------------------------------------------------------------------------------------------
@@ -302,6 +302,7 @@ ListMenu "SaveGameMenu"
 	StaticTextCentered 160, -10, "$MNU_SAVEGAME"
 	Position 80,54
 	Class "SaveMenu"	// uses its own implementation
+	Size Clean
 }
 
 //-------------------------------------------------------------------------------------------

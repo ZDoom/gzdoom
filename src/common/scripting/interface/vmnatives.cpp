@@ -659,3 +659,4 @@ DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 
 DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
 DEFINE_GLOBAL(Bindings)
+DEFINE_GLOBAL(AutomapBindings)

@@ -38,3 +38,6 @@ struct WadStuff
 extern FString endoomName;
 extern bool batchrun;
 extern float menuBlurAmount;
+extern bool generic_ui;
+
+void UpdateGenericUI(bool cvar);

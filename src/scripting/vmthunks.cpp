@@ -2967,4 +2967,3 @@ DEFINE_FIELD(DBaseStatusBar, itemflashFade);
 DEFINE_FIELD(DHUDFont, mFont);
 
 DEFINE_GLOBAL(StatusBar);
-DEFINE_GLOBAL(generic_ui)

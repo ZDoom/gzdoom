@@ -666,3 +666,5 @@ const char *StringMap::MatchString (const char *string) const
 }
 
 FStringTable GStrings;
+
+

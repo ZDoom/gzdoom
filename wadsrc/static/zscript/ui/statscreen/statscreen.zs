@@ -137,6 +137,22 @@ class StatusScreen abstract play version("2.5")
 
 	//====================================================================
 	//
+	// Set fixed size mode.
+	//
+	//====================================================================
+
+	void SetSize(int width, int height, int wrapw = -1, int scalemode = FSMode_ScaleToFit43)
+	{
+		cwidth = width;
+		cheight = height;
+		scalemode = FSMode_ScaleToFit43;
+		scalefactorx = 1;
+		scalefactory = 1;
+		wrapwidth = wrapw == -1 ? width : wrapw;;
+	}
+
+	//====================================================================
+	//
 	// Draws a single character with a shadow
 	//
 	//====================================================================

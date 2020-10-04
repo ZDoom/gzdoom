@@ -1262,3 +1262,157 @@ void SetDefaultMenuColors()
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
 }
+
+CCMD (menu_main)
+{
+	M_StartControlPanel(true);
+	M_SetMenu(NAME_Mainmenu, -1);
+}
+
+CCMD (menu_load)
+{	// F3
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Loadgamemenu, -1);
+}
+
+CCMD (menu_save)
+{	// F2
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Savegamemenu, -1);
+}
+
+CCMD (menu_help)
+{	// F1
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Readthismenu, -1);
+}
+
+CCMD (menu_game)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Playerclassmenu, -1);	// The playerclass menu is the first in the 'start game' chain
+}
+								
+CCMD (menu_options)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Optionsmenu, -1);
+}
+
+CCMD (menu_player)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_Playermenu, -1);
+}
+
+CCMD (menu_messages)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_MessageOptions, -1);
+}
+
+CCMD (menu_automap)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_AutomapOptions, -1);
+}
+
+CCMD (menu_scoreboard)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_ScoreboardOptions, -1);
+}
+
+CCMD (menu_mapcolors)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_MapColorMenu, -1);
+}
+
+CCMD (menu_keys)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_CustomizeControls, -1);
+}
+
+CCMD (menu_gameplay)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_GameplayOptions, -1);
+}
+
+CCMD (menu_compatibility)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_CompatibilityOptions, -1);
+}
+
+CCMD (menu_mouse)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_MouseOptions, -1);
+}
+
+CCMD (menu_joystick)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_JoystickOptions, -1);
+}
+
+CCMD (menu_sound)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_SoundOptions, -1);
+}
+
+CCMD (menu_advsound)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_AdvSoundOptions, -1);
+}
+
+CCMD (menu_modreplayer)
+{
+	M_StartControlPanel(true);
+	M_SetMenu(NAME_ModReplayerOptions, -1);
+}
+
+CCMD (menu_display)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_VideoOptions, -1);
+}
+
+CCMD (menu_video)
+{
+	M_StartControlPanel (true);
+	M_SetMenu(NAME_VideoModeMenu, -1);
+}
+
+
+#ifdef _WIN32
+EXTERN_CVAR(Bool, vr_enable_quadbuffered)
+#endif
+
+void UpdateVRModes(bool considerQuadBuffered)
+{
+	FOptionValues** pVRModes = OptionValues.CheckKey("VRMode");
+	if (pVRModes == nullptr) return;
+
+	TArray<FOptionValues::Pair>& vals = (*pVRModes)->mValues;
+	TArray<FOptionValues::Pair> filteredValues;
+	int cnt = vals.Size();
+	for (int i = 0; i < cnt; ++i) {
+		auto const& mode = vals[i];
+		if (mode.Value == 7) {  // Quad-buffered stereo
+#ifdef _WIN32
+			if (!vr_enable_quadbuffered) continue;
+#else
+			continue;  // Remove quad-buffered option on Mac and Linux
+#endif
+			if (!considerQuadBuffered) continue;  // Probably no compatible screen mode was found
+		}
+		filteredValues.Push(mode);
+	}
+	vals = filteredValues;
+}

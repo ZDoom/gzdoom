@@ -191,9 +191,25 @@ class ListMenu : Menu
 	{
 		int sel = -1;
 
-		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
-		x = ((x - (screen.GetWidth() / 2)) / CleanXfac) + 160;
-		y = ((y - (screen.GetHeight() / 2)) / CleanYfac) + 100;
+		int w = desc.DisplayWidth();
+		double sx, sy;
+		if (w == ListMenuDescriptor.CleanScale)
+		{
+			// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
+			x = ((x - (screen.GetWidth() / 2)) / CleanXfac) + 160;
+			y = ((y - (screen.GetHeight() / 2)) / CleanYfac) + 100;
+		}
+		else
+		{
+			// for fullscreen scale, transform coordinates so that for the given rect the coordinates are within (0, 0, w, h)
+			int h = desc.DisplayHeight();
+			double fx, fy, fw, fh;
+			[fx, fy, fw, fh] = Screen.GetFullscreenRect(w, h, FSMode_ScaleToFit43);
+			
+			x = int((x - fx) * w / fw);
+			y = int((y - fy) * h / fh);
+		}
+
 
 		if (mFocusControl != NULL)
 		{

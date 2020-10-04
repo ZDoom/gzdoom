@@ -880,6 +880,8 @@ int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 
 int FFont::GetCharCode(int code, bool needpic) const
 {
+	int newcode;
+
 	if (code < 0 && code >= -128)
 	{
 		// regular chars turn negative when the 8th bit is set.
@@ -905,8 +907,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 			}
 		}
 		// Try stripping accents from accented characters.
-		int newcode = stripaccent(code);
-		if (newcode != code)
+		while ((newcode = stripaccent(code)) != code)
 		{
 			code = newcode;
 			if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].TranslatedPic != nullptr))
@@ -918,7 +919,6 @@ int FFont::GetCharCode(int code, bool needpic) const
 	else
 	{
 		int originalcode = code;
-		int newcode;
 
 		// Try stripping accents from accented characters. This may repeat to allow multi-step fallbacks.
 		while ((newcode = stripaccent(code)) != code)

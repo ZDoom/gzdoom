@@ -502,14 +502,14 @@ class OptionMenuItemControlBase : OptionMenuItem
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, mWaiting? OptionMenuSettings.mFontColorHighlight: 
-			(selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor));
+		drawLabel(indent, y, mWaiting ? OptionMenuSettings.mFontColorHighlight :
+			(selected ? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor));
 
 		String description;
-		int Key1, Key2;
+		Array<int> keys;
 
-		[Key1, Key2] = mBindings.GetKeysForCommand(mAction);
-		description = KeyBindings.NameKeys (Key1, Key2);
+		mBindings.GetAllKeysForCommand(keys, mAction);
+		description = KeyBindings.NameAllKeys(keys);
 		if (description.Length() > 0)
 		{
 			drawValue(indent, y, Font.CR_WHITE, description);

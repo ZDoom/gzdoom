@@ -569,6 +569,14 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, NameKeys)
 	ACTION_RETURN_STRING(buffer);
 }
 
+DEFINE_ACTION_FUNCTION(FKeyBindings, NameAllKeys)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(array, TArray<int>);
+	auto buffer = C_NameKeys(array->Data(), array->Size(), true);
+	ACTION_RETURN_STRING(buffer);
+}
+
 DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
@@ -578,6 +586,15 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
 	if (numret > 0) ret[0].SetInt(k1);
 	if (numret > 1) ret[1].SetInt(k2);
 	return MIN(numret, 2);
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, GetAllKeysForCommand)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_POINTER(array, TArray<int>);
+	PARAM_STRING(cmd);
+	*array = self->GetKeysForCommand(cmd);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)

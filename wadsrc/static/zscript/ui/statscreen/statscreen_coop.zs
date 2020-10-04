@@ -23,7 +23,7 @@ class CoopStatusScreen : StatusScreen
 		FontScale = max(screen.GetHeight() / 400, 1);
 		RowHeight = int(max((displayFont.GetHeight() + 1) * FontScale, 1));
 
-		cnt_pause = Thinker.TICRATE;
+		cnt_pause = GameTicRate;
 
 		for (int i = 0; i < MAXPLAYERS; i++)
 		{
@@ -236,7 +236,7 @@ class CoopStatusScreen : StatusScreen
 			if (!--cnt_pause)
 			{
 				ng_state++;
-				cnt_pause = Thinker.TICRATE;
+				cnt_pause = GameTicRate;
 			}
 		}
 	}

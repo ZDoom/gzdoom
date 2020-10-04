@@ -191,7 +191,7 @@ class Menu : Object native ui version("2.4")
 		}
 		else if (ev.type == UIEvent.Type_MouseMove)
 		{
-			BackbuttonTime = 4*Thinker.TICRATE;
+			BackbuttonTime = 4*GameTicRate;
 			if (mMouseCapture || m_use_mouse == 1)
 			{
 				res = MouseEventBack(MOUSE_Move, ev.MouseX, y);

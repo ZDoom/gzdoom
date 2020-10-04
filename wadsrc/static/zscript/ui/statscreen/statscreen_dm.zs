@@ -33,7 +33,7 @@ class DeathmatchStatusScreen : StatusScreen
 		total_deaths = 0;
 
 		ng_state = 1;
-		cnt_pause = Thinker.TICRATE;
+		cnt_pause = GameTicRate;
 
 		for (i=0 ; i<MAXPLAYERS ; i++)
 		{
@@ -144,7 +144,7 @@ class DeathmatchStatusScreen : StatusScreen
 			if (!--cnt_pause)
 			{
 				ng_state++;
-				cnt_pause = Thinker.TICRATE;
+				cnt_pause = GameTicRate;
 			}
 		}
 	}

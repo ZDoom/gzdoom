@@ -11,7 +11,7 @@ class DoomStatusScreen : StatusScreen
 		sp_state = 1;
 		cnt_kills[0] = cnt_items[0] = cnt_secret[0] = -1;
 		cnt_time = cnt_par = -1;
-		cnt_pause = Thinker.TICRATE;
+		cnt_pause = GameTicRate;
 	
 		cnt_total_time = -1;
 	}
@@ -28,7 +28,7 @@ class DoomStatusScreen : StatusScreen
 			cnt_items[0] = Plrs[me].sitems;
 			cnt_secret[0] = Plrs[me].ssecret;
 			cnt_time = Thinker.Tics2Seconds(Plrs[me].stime);
-			cnt_par = wbs.partime / Thinker.TICRATE;
+			cnt_par = wbs.partime / GameTicRate;
 			cnt_total_time = Thinker.Tics2Seconds(wbs.totaltime);
 		}
 
@@ -100,7 +100,7 @@ class DoomStatusScreen : StatusScreen
 			if (!intermissioncounter || cnt_total_time >= tsec)
 				cnt_total_time = tsec;
 
-			int psec = wbs.partime / Thinker.TICRATE;
+			int psec = wbs.partime / GameTicRate;
 			if (!intermissioncounter || cnt_par >= psec)
 			{
 				cnt_par = psec;
@@ -126,7 +126,7 @@ class DoomStatusScreen : StatusScreen
 			if (!--cnt_pause)
 			{
 				sp_state++;
-				cnt_pause = Thinker.TICRATE;
+				cnt_pause = GameTicRate;
 			}
 		}
 	}

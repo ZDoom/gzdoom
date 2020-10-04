@@ -23,6 +23,7 @@ struct SystemCallbacks
 	FString(*GetPlayerName)(int i);
 	bool (*DispatchEvent)(event_t* ev);
 	bool (*CheckGame)(const char* nm);
+	int (*GetGender)();
 };
 
 extern SystemCallbacks sysCallbacks;

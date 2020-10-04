@@ -50,13 +50,6 @@
 #include "name.h"
 
 
-struct StringtableCallbacks
-{
-	// These two functions would create a dependency on the game code so they are installed as callbacks.
-	bool (*ValidFilter)(const char* str);
-	int (*GetPlayerGender)();
-};
-
 struct TableElement
 {
 	int filenum;
@@ -108,7 +101,6 @@ public:
 		return GetString(name, nullptr);
 	}
 	bool exists(const char *name);
-	void SetCallbacks(StringtableCallbacks* cb) { callbacks = cb; }
 
 	void InsertString(int lumpnum, int langid, FName label, const FString& string);
 
@@ -118,8 +110,7 @@ private:
 	StringMacroMap allMacros;
 	LangMap allStrings;
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
-	StringtableCallbacks* callbacks = nullptr;
-
+	
 	void LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer);
 	TArray<TArray<FString>> parseCSV(const TArray<uint8_t> &buffer);
 	bool ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer);

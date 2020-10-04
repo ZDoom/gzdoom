@@ -39,6 +39,7 @@
 #include "filesystem.h"
 #include "sc_man.h"
 #include "printf.h"
+#include "i_interface.h"
 
 //==========================================================================
 //
@@ -237,12 +238,12 @@ bool FStringTable::ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer)
 				if (filterstr.IsNotEmpty())
 				{
 					bool ok = false;
-					if (callbacks && callbacks->ValidFilter)
+					if (sysCallbacks.CheckGame)
 					{
 						auto filter = filterstr.Split(" ", FString::TOK_SKIPEMPTY);
 						for (auto& entry : filter)
 						{
-							if (callbacks->ValidFilter(entry))
+							if (sysCallbacks.CheckGame(entry))
 							{
 								ok = true;
 								break;
@@ -356,7 +357,7 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 				sc.MustGetStringName("ifgame");
 				sc.MustGetStringName("(");
 				sc.MustGetString();
-				skip |= (!callbacks || !callbacks->ValidFilter || !callbacks->ValidFilter(sc.String));
+				skip |= (!sysCallbacks.CheckGame || !sysCallbacks.CheckGame(sc.String));
 				sc.MustGetStringName(")");
 				sc.MustGetString();
 
@@ -564,7 +565,7 @@ const char *FStringTable::GetString(const char *name, uint32_t *langtable, int g
 	{
 		return nullptr;
 	}
-	if (gender == -1 && callbacks && callbacks->GetPlayerGender) gender = callbacks->GetPlayerGender();
+	if (gender == -1 && sysCallbacks.GetGender) gender = sysCallbacks.GetGender();
 	if (gender < 0 || gender > 3) gender = 0;
 	FName nm(name, true);
 	if (nm != NAME_None)
@@ -597,7 +598,7 @@ const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable
 	{
 		return nullptr;
 	}
-	if (gender == -1 && callbacks && callbacks->GetPlayerGender) gender = callbacks->GetPlayerGender();
+	if (gender == -1 && sysCallbacks.GetGender) gender = sysCallbacks.GetGender();
 	if (gender < 0 || gender > 3) gender = 0;
 	FName nm(name, true);
 	if (nm != NAME_None)

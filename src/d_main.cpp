@@ -2741,11 +2741,6 @@ static bool System_DispatchEvent(event_t* ev)
 	return false;
 }
 
-static bool System_CheckGame(const char* name)
-{
-	return CheckGame(name, false);
-}
-
 bool System_NetGame()
 {
 	return netgame;
@@ -3055,13 +3050,6 @@ static int D_DoomMain_Internal (void)
 	buttonMap.GetButton(Button_Mlook)->bReleaseLock = true;
 	buttonMap.GetButton(Button_Klook)->bReleaseLock = true;
 
-	static StringtableCallbacks stblcb =
-	{
-		StrTable_ValidFilter,
-		StrTable_GetGender
-	};
-	GStrings.SetCallbacks(&stblcb);
-
 	sysCallbacks = {
 		System_WantGuiCapture,
 		System_WantLeftButton,
@@ -3078,7 +3066,9 @@ static int D_DoomMain_Internal (void)
 		System_M_Dim,
 		System_GetPlayerName,
 		System_DispatchEvent,
-		System_CheckGame,
+		StrTable_ValidFilter,
+		StrTable_GetGender
+
 	};
 
 	

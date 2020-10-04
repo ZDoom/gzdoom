@@ -2741,6 +2741,11 @@ static bool System_DispatchEvent(event_t* ev)
 	return false;
 }
 
+static bool System_CheckGame(const char* name)
+{
+	return CheckGame(name, false);
+}
+
 bool System_NetGame()
 {
 	return netgame;
@@ -3073,6 +3078,7 @@ static int D_DoomMain_Internal (void)
 		System_M_Dim,
 		System_GetPlayerName,
 		System_DispatchEvent,
+		System_CheckGame,
 	};
 
 	

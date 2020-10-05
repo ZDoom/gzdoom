@@ -1206,13 +1206,17 @@ void D_Display ()
 
 void D_ErrorCleanup ()
 {
+	bool aux;
+
 	savegamerestore = false;
 	primaryLevel->BotInfo.RemoveAllBots (primaryLevel, true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
 	Net_ClearBuffers ();
+	aux = netgame; // for NetServerInfo
 	G_NewInit ();
+	netgame = aux;
 	M_ClearMenus ();
 	singletics = false;
 	playeringame[0] = 1;

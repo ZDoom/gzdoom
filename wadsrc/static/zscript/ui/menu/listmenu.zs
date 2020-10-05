@@ -191,7 +191,7 @@ class ListMenu : Menu
 	{
 		int sel = -1;
 
-		int w = desc.DisplayWidth();
+		int w = mDesc.DisplayWidth();
 		double sx, sy;
 		if (w == ListMenuDescriptor.CleanScale)
 		{
@@ -202,7 +202,7 @@ class ListMenu : Menu
 		else
 		{
 			// for fullscreen scale, transform coordinates so that for the given rect the coordinates are within (0, 0, w, h)
-			int h = desc.DisplayHeight();
+			int h = mDesc.DisplayHeight();
 			double fx, fy, fw, fh;
 			[fx, fy, fw, fh] = Screen.GetFullscreenRect(w, h, FSMode_ScaleToFit43);
 			

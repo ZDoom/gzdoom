@@ -417,8 +417,6 @@ DEFINE_ACTION_FUNCTION(_Screen, GetFullscreenRect)
 	PARAM_FLOAT(virth);
 	PARAM_INT(fsmode);
 
-	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-
 	DrawParms parms;
 	DoubleRect rect;
 	parms.viewport.width = twod->GetWidth();

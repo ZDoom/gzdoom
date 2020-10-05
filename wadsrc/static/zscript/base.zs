@@ -1,4 +1,145 @@
 
+
+// constants for A_PlaySound
+enum ESoundFlags
+{
+	CHAN_AUTO = 0,
+	CHAN_WEAPON = 1,
+	CHAN_VOICE = 2,
+	CHAN_ITEM = 3,
+	CHAN_BODY = 4,
+	CHAN_5 = 5,
+	CHAN_6 = 6,
+	CHAN_7 = 7,
+	
+	// modifier flags
+	CHAN_LISTENERZ = 8,
+	CHAN_MAYBE_LOCAL = 16,
+	CHAN_UI = 32,
+	CHAN_NOPAUSE = 64,
+	CHAN_LOOP = 256,
+	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL), // Do not use this with A_StartSound! It would not do what is expected.
+	CHAN_NOSTOP = 4096,
+	CHAN_OVERLAP = 8192,
+
+	// Same as above, with an F appended to allow better distinction of channel and channel flags.
+	CHANF_DEFAULT = 0,	// just to make the code look better and avoid literal 0's.
+	CHANF_LISTENERZ = 8,
+	CHANF_MAYBE_LOCAL = 16,
+	CHANF_UI = 32,
+	CHANF_NOPAUSE = 64,
+	CHANF_LOOP = 256,
+	CHANF_NOSTOP = 4096,
+	CHANF_OVERLAP = 8192,
+	CHANF_LOCAL = 16384,
+
+
+	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
+
+};
+
+// sound attenuation values
+const ATTN_NONE = 0;
+const ATTN_NORM = 1;
+const ATTN_IDLE = 1.001;
+const ATTN_STATIC = 3;
+
+
+enum ERenderStyle
+{
+	STYLE_None,				// Do not draw
+	STYLE_Normal,			// Normal; just copy the image to the screen
+	STYLE_Fuzzy,			// Draw silhouette using "fuzz" effect
+	STYLE_SoulTrans,		// Draw translucent with amount in r_transsouls
+	STYLE_OptFuzzy,			// Draw as fuzzy or translucent, based on user preference
+	STYLE_Stencil,			// Fill image interior with alphacolor
+	STYLE_Translucent,		// Draw translucent
+	STYLE_Add,				// Draw additive
+	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
+	STYLE_TranslucentStencil,
+	STYLE_Shadow,
+	STYLE_Subtract,			// Actually this is 'reverse subtract' but this is what normal people would expect by 'subtract'.
+	STYLE_AddStencil,		// Fill image interior with alphacolor
+	STYLE_AddShaded,		// Treat patch data as alpha values for alphacolor
+	STYLE_Multiply,			// Multiply source with destination (HW renderer only.)
+	STYLE_InverseMultiply,	// Multiply source with inverse of destination (HW renderer only.)
+	STYLE_ColorBlend,		// Use color intensity as transparency factor
+	STYLE_Source,			// No blending (only used internally)
+	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
+
+};
+
+
+enum EGameState
+{
+	GS_LEVEL,
+	GS_INTERMISSION,
+	GS_FINALE,
+	GS_DEMOSCREEN,
+	GS_MENUSCREEN = GS_DEMOSCREEN,
+	GS_FULLCONSOLE,
+	GS_HIDECONSOLE,
+	GS_STARTUP,
+	GS_TITLELEVEL,
+}
+
+const TEXTCOLOR_BRICK			= "\034A";
+const TEXTCOLOR_TAN				= "\034B";
+const TEXTCOLOR_GRAY			= "\034C";
+const TEXTCOLOR_GREY			= "\034C";
+const TEXTCOLOR_GREEN			= "\034D";
+const TEXTCOLOR_BROWN			= "\034E";
+const TEXTCOLOR_GOLD			= "\034F";
+const TEXTCOLOR_RED				= "\034G";
+const TEXTCOLOR_BLUE			= "\034H";
+const TEXTCOLOR_ORANGE			= "\034I";
+const TEXTCOLOR_WHITE			= "\034J";
+const TEXTCOLOR_YELLOW			= "\034K";
+const TEXTCOLOR_UNTRANSLATED	= "\034L";
+const TEXTCOLOR_BLACK			= "\034M";
+const TEXTCOLOR_LIGHTBLUE		= "\034N";
+const TEXTCOLOR_CREAM			= "\034O";
+const TEXTCOLOR_OLIVE			= "\034P";
+const TEXTCOLOR_DARKGREEN		= "\034Q";
+const TEXTCOLOR_DARKRED			= "\034R";
+const TEXTCOLOR_DARKBROWN		= "\034S";
+const TEXTCOLOR_PURPLE			= "\034T";
+const TEXTCOLOR_DARKGRAY		= "\034U";
+const TEXTCOLOR_CYAN			= "\034V";
+const TEXTCOLOR_ICE				= "\034W";
+const TEXTCOLOR_FIRE			= "\034X";
+const TEXTCOLOR_SAPPHIRE		= "\034Y";
+const TEXTCOLOR_TEAL			= "\034Z";
+
+const TEXTCOLOR_NORMAL			= "\034-";
+const TEXTCOLOR_BOLD			= "\034+";
+
+const TEXTCOLOR_CHAT			= "\034*";
+const TEXTCOLOR_TEAMCHAT		= "\034!";
+
+
+enum EMonospacing
+{
+	Mono_Off = 0,
+	Mono_CellLeft = 1,
+	Mono_CellCenter = 2,
+	Mono_CellRight = 3
+};
+
+enum EPrintLevel
+{
+	PRINT_LOW,		// pickup messages
+	PRINT_MEDIUM,	// death messages
+	PRINT_HIGH,		// critical messages
+	PRINT_CHAT,		// chat messages
+	PRINT_TEAMCHAT,	// chat messages from a teammate
+	PRINT_LOG,		// only to logfile
+	PRINT_BOLD = 200,				// What Printf_Bold used
+	PRINT_TYPES = 1023,		// Bitmask.
+	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
+	PRINT_NOLOG = 2048,		// Flag - do not print to log file
+};
+
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
@@ -90,18 +231,12 @@ struct TexMan
 	};
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
-	deprecated("3.8", "Use Level.ReplaceTextures() instead") static void ReplaceTextures(String from, String to, int flags)
-	{
-		level.ReplaceTextures(from, to, flags);
-	}
 	native static String GetName(TextureID tex);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
 	native static Vector2 GetScaledOffset(TextureID tex);
 	native static int CheckRealHeight(TextureID tex);
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
-
-	native static void SetCameraToTexture(Actor viewpoint, String texture, double fov);
 }
 
 enum EScaleMode
@@ -255,7 +390,6 @@ struct Screen native
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
 	native static void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
 	native static void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
-	native static void DrawFrame(int x, int y, int w, int h);
 	native static Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
 	native static double GetAspectRatio();
 	native static void SetClipRect(int x, int y, int w, int h);
@@ -263,14 +397,6 @@ struct Screen native
 	native static int, int, int, int GetClipRect();
 	native static int, int, int, int GetViewWindow();
 	native static double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
-
-	
-	
-	// This is a leftover of the abandoned Inventory.DrawPowerup method.
-	deprecated("2.5", "Use StatusBar.DrawTexture() instead") static ui void DrawHUDTexture(TextureID tex, double x, double y)
-	{
-		statusBar.DrawTexture(tex, (x, y), BaseStatusBar.DI_SCREEN_RIGHT_TOP, 1., (32, 32));
-	}
 }
 
 struct Font native
@@ -358,29 +484,11 @@ struct Font native
 	native BrokenLines BreakLines(String text, int maxlen);
 }
 
-struct Translation version("2.4")
-{
-	Color colors[256];
-	
-	native int AddTranslation();
-	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
-	native static int GetID(Name transname);
-	static int MakeID(int group, int num)
-	{
-		return (group << 16) + num;
-	}
-}
-
 struct Console native
 {
 	native static void HideConsole();
 	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
 	native static vararg void Printf(string fmt, ...);
-}
-
-struct DamageTypeDefinition native
-{
-	native static bool IgnoreArmor(Name type);
 }
 
 struct CVar native
@@ -395,7 +503,6 @@ struct CVar native
 	};
 
 	native static CVar FindCVar(Name name);
-	native static CVar GetCVar(Name name, PlayerInfo player = null);
 	bool GetBool() { return GetInt(); }
 	native int GetInt();
 	native double GetFloat();
@@ -416,31 +523,9 @@ struct GIFont version("2.4")
 
 struct GameInfoStruct native
 {
-	// will be extended as needed.
-	native Name backpacktype;
-	native double Armor2Percent;
-	native String ArmorIcon1;
-	native String ArmorIcon2;
 	native int gametype;
-	native bool norandomplayerclass;
-	native Array<Name> infoPages;
 	native String mBackButton;
-	native GIFont mStatscreenMapNameFont;
-	native GIFont mStatscreenEnteringFont;
-	native GIFont mStatscreenFinishedFont;
-	native GIFont mStatscreenContentFont;
-	native GIFont mStatscreenAuthorFont;
-	native double gibfactor;
-	native bool intermissioncounter;
 	native Name mSliderColor;
-	native Color defaultbloodcolor;
-	native double telefogheight;
-	native int defKickback;
-	native int defaultdropstyle;
-	native TextureID healthpic;
-	native TextureID berserkpic;
-	native double normforwardmove[2];
-	native double normsidemove[2];
 }
 
 struct SystemTime
@@ -456,36 +541,13 @@ class Object native
 
 	// These must be defined in some class, so that the compiler can find them. Object is just fine, as long as they are private to external code.
 	private native static Object BuiltinNew(Class<Object> cls, int outerclass, int compatibility);
-	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
 	private native static int BuiltinRandom(voidptr rng, int min, int max);
 	private native static double BuiltinFRandom(voidptr rng, double min, double max);
 	private native static int BuiltinRandom2(voidptr rng, int mask);
 	private native static void BuiltinRandomSeed(voidptr rng, int seed);
-	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
-	// These really should be global functions...
-	native static String G_SkillName();
-	native static int G_SkillPropertyInt(int p);
-	native static double G_SkillPropertyFloat(int p);
-	deprecated("3.8", "Use Level.PickDeathMatchStart() instead") static vector3, int G_PickDeathmatchStart()
-	{
-		return level.PickDeathmatchStart();
-	}
-	deprecated("3.8", "Use Level.PickPlayerStart() instead") static vector3, int G_PickPlayerStart(int pnum, int flags = 0)
-	{
-		return level.PickPlayerStart(pnum, flags);
-	}
-	deprecated("4.3", "Use S_StartSound() instead") native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
-	native static void S_StartSound (Sound sound_id, int channel, int flags = 0, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0, float startTime = 0.0);
-	native static void S_PauseSound (bool notmusic, bool notsfx);
-	native static void S_ResumeSound (bool notsfx);
-	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
-	native static float S_GetLength(Sound sound_id);
-	native static void MarkSound(Sound snd);
-	native static uint BAM(double angle);
-	native static void SetMusicVolume(float vol);
 	native static uint MSTime();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
@@ -502,375 +564,12 @@ class BrokenLines : Object native version("2.4")
 	native String StringAt(int line);
 }
 
-class Thinker : Object native play
-{
-	enum EStatnums
-	{
- 		// Thinkers that don't actually think
-		STAT_INFO,								// An info queue
-		STAT_DECAL,								// A decal
-		STAT_AUTODECAL,							// A decal that can be automatically deleted
-		STAT_CORPSEPOINTER,						// An entry in Hexen's corpse queue
-		STAT_TRAVELLING,						// An actor temporarily travelling to a new map
-		STAT_STATIC,
-
-		// Thinkers that do think
-		STAT_FIRST_THINKING=32,
-		STAT_SCROLLER=STAT_FIRST_THINKING,		// A DScroller thinker
-		STAT_PLAYER,							// A player actor
-		STAT_BOSSTARGET,						// A boss brain target
-		STAT_LIGHTNING,							// The lightning thinker
-		STAT_DECALTHINKER,						// An object that thinks for a decal
-		STAT_INVENTORY,							// An inventory item
-		STAT_LIGHT,								// A sector light effect
-		STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects.
-		STAT_EARTHQUAKE,						// Earthquake actors
-		STAT_MAPMARKER,							// Map marker actors
-		STAT_DLIGHT,							// Dynamic lights
-
-		STAT_USER = 70,
-		STAT_USER_MAX = 90,
-
-		STAT_DEFAULT = 100,						// Thinkers go here unless specified otherwise.
-		STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
-		STAT_ACTORMOVER,						// actor movers
-		STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors called PostBeginPlay
-		STAT_BOT,								// Bot thinker
-		MAX_STATNUM = 127
-	}
-
-
-	native LevelLocals Level;
-	
-	virtual native void Tick();
-	virtual native void PostBeginPlay();
-	native void ChangeStatNum(int stat);
-	
-	static clearscope int Tics2Seconds(int tics)
-	{
-		return int(tics / TICRATE);
-	}
-
-}
-
-class ThinkerIterator : Object native
-{
-	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
-	native Thinker Next(bool exact = false);
-	native void Reinit();
-}
-
-class ActorIterator : Object native
-{
-	deprecated("3.8", "Use Level.CreateActorIterator() instead") static ActorIterator Create(int tid, class<Actor> type = "Actor")
-	{
-		return level.CreateActorIterator(tid, type);
-	}
-	native Actor Next();
-	native void Reinit();
-}
-
-class BlockThingsIterator : Object native
-{
-	native Actor thing;
-	native Vector3 position;
-	native int portalflags;
-	
-	native static BlockThingsIterator Create(Actor origin, double checkradius = -1, bool ignorerestricted = false);
-	native static BlockThingsIterator CreateFromPos(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted);
-	native bool Next();
-}
-
-class BlockLinesIterator : Object native
-{
-	native Line CurLine;
-	native Vector3 position;
-	native int portalflags;
-	
-	native static BlockLinesIterator Create(Actor origin, double checkradius = -1);
-	native static BlockLinesIterator CreateFromPos(Vector3 pos, double checkh, double checkradius, Sector sec = null);
-	native bool Next();
-}
-
-enum ETraceStatus
-{
-	TRACE_Stop,		// stop the trace, returning this hit
-	TRACE_Continue,		// continue the trace, returning this hit if there are none further along
-	TRACE_Skip,		// continue the trace; do not return this hit
-	TRACE_Abort		// stop the trace, returning no hits
-}
-
-enum ETraceFlags
-{
-	TRACE_NoSky		= 0x0001,	// Hitting the sky returns TRACE_HitNone
-	//TRACE_PCross		= 0x0002,	// Trigger SPAC_PCROSS lines
-	//TRACE_Impact		= 0x0004,	// Trigger SPAC_IMPACT lines
-	TRACE_PortalRestrict	= 0x0008,	// Cannot go through portals without a static link offset.
-	TRACE_ReportPortals	= 0x0010,	// Report any portal crossing to the TraceCallback
-	//TRACE_3DCallback	= 0x0020,	// [ZZ] use TraceCallback to determine whether we need to go through a line to do 3D floor check, or not. without this, only line flag mask is used
-	TRACE_HitSky		= 0x0040	// Hitting the sky returns TRACE_HasHitSky
-}
-
-
-enum ETraceResult
-{
-	TRACE_HitNone,
-	TRACE_HitFloor,
-	TRACE_HitCeiling,
-	TRACE_HitWall,
-	TRACE_HitActor,
-	TRACE_CrossingPortal,
-	TRACE_HasHitSky
-}
-
-enum ELineTier
-{
-	TIER_Middle,
-	TIER_Upper,
-	TIER_Lower,
-	TIER_FFloor
-}
-
-struct TraceResults native
-{
-	native Sector HitSector; // originally called "Sector". cannot be named like this in ZScript.
-	native TextureID HitTexture;
-	native vector3 HitPos;
-	native vector3 HitVector;
-	native vector3 SrcFromTarget;
-	native double SrcAngleFromTarget;
-
-	native double Distance;
-	native double Fraction;
-
-	native Actor HitActor;		// valid if hit an actor. // originally called "Actor".
-
-	native Line HitLine;		// valid if hit a line // originally called "Line".
-	native uint8 Side;
-	native uint8 Tier;		// see Tracer.ELineTier
-	native bool unlinked;		// passed through a portal without static offset.
-
-	native ETraceResult HitType;
-	native F3DFloor ffloor;
-
-	native Sector CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
-	native vector3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
-	native Sector Crossed3DWater;		// For 3D floor-based deep water
-	native vector3 Crossed3DWaterPos;
-}
-
-class LineTracer : Object native
-{
-	native @TraceResults Results;
-	native bool Trace(vector3 start, Sector sec, vector3 direction, double maxDist, ETraceFlags traceFlags);
-
-	virtual ETraceStatus TraceCallback()
-	{
-		// Normally you would examine Results.HitType (for ETraceResult), and determine either:
-		//  - stop tracing and return the entity that was found (return TRACE_Stop)
-		//  - ignore some object, like noclip, e.g. only count solid walls and floors, and ignore actors (return TRACE_Skip)
-		//  - find last object of some type (return TRACE_Continue)
-		//  - stop tracing entirely and assume we found nothing (return TRACE_Abort)
-		// TRACE_Abort and TRACE_Continue are of limited use in scripting.
-
-		return TRACE_Stop; // default callback returns first hit, whatever it is.
-	}
-}
-
-struct DropItem native
-{
-	native readonly DropItem Next;
-	native readonly name Name;
-	native readonly int Probability;
-	native readonly int Amount;
-}
-
-struct LevelLocals native
-{
-	enum EUDMF
-	{
-		UDMF_Line,
-		UDMF_Side,
-		UDMF_Sector,
-		//UDMF_Thing // not implemented
-	};
-	
-	const CLUSTER_HUB = 0x00000001;	// Cluster uses hub behavior
-
-
-	native Array<@Sector> Sectors;
-	native Array<@Line> Lines;
-	native Array<@Side> Sides;
-	native readonly Array<@Vertex> Vertexes;
-	native internal Array<@SectorPortal> SectorPortals;
-	
-	native readonly int time;
-	native readonly int maptime;
-	native readonly int totaltime;
-	native readonly int starttime;
-	native readonly int partime;
-	native readonly int sucktime;
-	native readonly int cluster;
-	native readonly int clusterflags;
-	native readonly int levelnum;
-	native readonly String LevelName;
-	native readonly String MapName;
-	native String NextMap;
-	native String NextSecretMap;
-	native readonly String F1Pic;
-	native readonly int maptype;
-	native readonly String AuthorName;
-	native readonly String Music;
-	native readonly int musicorder;
-	native readonly TextureID skytexture1;
-	native readonly TextureID skytexture2;
-	native float skyspeed1;
-	native float skyspeed2;
-	native int total_secrets;
-	native int found_secrets;
-	native int total_items;
-	native int found_items;
-	native int total_monsters;
-	native int killed_monsters;
-	native play double gravity;
-	native play double aircontrol;
-	native play double airfriction;
-	native play int airsupply;
-	native readonly double teamdamage;
-	native readonly bool noinventorybar;
-	native readonly bool monsterstelefrag;
-	native readonly bool actownspecial;
-	native readonly bool sndseqtotalctrl;
-	native bool allmap;
-	native readonly bool missilesactivateimpact;
-	native readonly bool monsterfallingdamage;
-	native readonly bool checkswitchrange;
-	native readonly bool polygrind;
-	native readonly bool nomonsters;
-	native readonly bool allowrespawn;
-	deprecated("3.8", "Use Level.isFrozen() instead") native bool frozen;
-	native readonly bool infinite_flight;
-	native readonly bool no_dlg_freeze;
-	native readonly bool keepfullinventory;
-	native readonly bool removeitems;
-	native readonly int fogdensity;
-	native readonly int outsidefogdensity;
-	native readonly int skyfog;
-	native readonly float pixelstretch;
-	native readonly float MusicVolume;
-	native name deathsequence;
-	native readonly int compatflags;
-	native readonly int compatflags2;
-// level_info_t *info cannot be done yet.
-
-	native String GetUDMFString(int type, int index, Name key);
-	native int GetUDMFInt(int type, int index, Name key);
-	native double GetUDMFFloat(int type, int index, Name key);
-	native play int ExecuteSpecial(int special, Actor activator, line linedef, bool lineside, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0);
-	native void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
-	native void StartSlideshow(Name whichone = 'none');
-	native static void MakeScreenShot();
-	native static void MakeAutoSave();
-	native void WorldDone();
-	deprecated("3.8", "This function does nothing") static void RemoveAllBots(bool fromlist) { /* intentionally left as no-op. */ }
-	native ui Vector2 GetAutomapPosition();
-	native void SetInterMusic(String nextmap);
-	native String FormatMapName(int mapnamecolor);
-	native bool IsJumpingAllowed() const;
-	native bool IsCrouchingAllowed() const;
-	native bool IsFreelookAllowed() const;
-	native void StartIntermission(Name type, int state) const;
-	native play SpotState GetSpotState(bool create = true);
-	native int FindUniqueTid(int start = 0, int limit = 0);
-	native uint GetSkyboxPortal(Actor actor);
-	native void ReplaceTextures(String from, String to, int flags);
-    clearscope native HealthGroup FindHealthGroup(int id);
-	native vector3, int PickDeathmatchStart();
-	native vector3, int PickPlayerStart(int pnum, int flags = 0);
-	native int isFrozen() const;
-	native void setFrozen(bool on);
-
-	native clearscope Sector PointInSector(Vector2 pt) const;
-
-	native clearscope bool IsPointInLevel(vector3 p) const;
-	deprecated("3.8", "Use Level.IsPointInLevel() instead") clearscope static bool IsPointInMap(vector3 p)
-	{
-		return level.IsPointInLevel(p);
-	}
-
-	native clearscope vector2 Vec2Diff(vector2 v1, vector2 v2) const;
-	native clearscope vector3 Vec3Diff(vector3 v1, vector3 v2) const;
-	native clearscope vector3 SphericalCoords(vector3 viewpoint, vector3 targetPos, vector2 viewAngles = (0, 0), bool absolute = false) const;
-	
-	native clearscope vector2 Vec2Offset(vector2 pos, vector2 dir, bool absolute = false) const;
-	native clearscope vector3 Vec2OffsetZ(vector2 pos, vector2 dir, double atz, bool absolute = false) const;
-	native clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false) const;
-
-	native String GetChecksum() const;
-
-	native void ChangeSky(TextureID sky1, TextureID sky2 );
-
-	native SectorTagIterator CreateSectorTagIterator(int tag, line defline = null);
-	native LineIdIterator CreateLineIdIterator(int tag);
-	native ActorIterator CreateActorIterator(int tid, class<Actor> type = "Actor");
-
-	String TimeFormatted(bool totals = false)
-	{
-		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 
-		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
-	}
-
-	native play bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = 0 /*Floor.crushDoom*/);
-	native play bool CreateFloor(sector sec, int floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false);
-
-	native void ExitLevel(int position, bool keepFacing);
-	native void SecretExitLevel(int position);
-	native void ChangeLevel(string levelname, int position = 0, int flags = 0, int skill = -1);
-}
-
 struct StringTable native
 {
 	native static String Localize(String val, bool prefixed = true);
 }
 
-// a few values of this need to be readable by the play code.
-// Most are handled at load time and are omitted here.
-struct DehInfo native
-{
-	native readonly int MaxSoulsphere;
-	native readonly uint8 ExplosionStyle;
-	native readonly double ExplosionAlpha;
-	native readonly int NoAutofreeze;
-	native readonly int BFGCells;
-	native readonly int BlueAC;
-	native readonly int MaxHealth;
-}
-
-struct State native
-{
-	native readonly State NextState;
-	native readonly int sprite;
-	native readonly int16 Tics;
-	native readonly uint16 TicRange;
-	native readonly uint8 Frame;		
-	native readonly uint8 UseFlags;	
-	native readonly int Misc1;
-	native readonly int Misc2;
-	native readonly uint16 bSlow;
-	native readonly uint16 bFast;
-	native readonly bool bFullbright;
-	native readonly bool bNoDelay;
-	native readonly bool bSameFrame;
-	native readonly bool bCanRaise;
-	native readonly bool bDehacked;
-	
-	native int DistanceTo(state other);
-	native bool ValidateSpriteFrame();
-	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0));
-	native bool InStateSequence(State base);
-}
-
-struct Wads
+struct Wads	// todo: make FileSystem an alias to 'Wads'
 {
 	enum WadNamespace
 	{
@@ -915,32 +614,6 @@ struct Wads
 	native static int GetLumpNamespace(int lump);
 }
 
-struct TerrainDef native
-{
-	native Name TerrainName;
-	native int Splash;
-	native int DamageAmount;
-	native Name DamageMOD;
-	native int DamageTimeMask;
-	native double FootClip;
-	native float StepVolume;
-	native int WalkStepTics;
-	native int RunStepTics;
-	native Sound LeftStepSound;
-	native Sound RightStepSound;
-	native bool IsLiquid;
-	native bool AllowProtection;
-	native bool DamageOnLand;
-	native double Friction;
-	native double MoveFactor;
-};
-
-enum EPickStart
-{
-	PPS_FORCERANDOM			= 1,
-	PPS_NOBLOCKINGCHECK		= 2,
-}
-
 enum EmptyTokenType
 {
 	TOK_SKIPEMPTY = 0,
@@ -979,158 +652,3 @@ struct StringStruct native
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
 }
-
-class SectorEffect : Thinker native
-{
-	native protected Sector m_Sector;
-
-	native Sector GetSector();
-}
-
-class Mover : SectorEffect native
-{}
-
-class MovingFloor : Mover native
-{}
-
-class MovingCeiling : Mover native
-{}
-
-class Floor : MovingFloor native
-{
-	// only here so that some constants and functions can be added. Not directly usable yet.
-	enum EFloor
-	{
-		floorLowerToLowest,
-		floorLowerToNearest,
-		floorLowerToHighest,
-		floorLowerByValue,
-		floorRaiseByValue,
-		floorRaiseToHighest,
-		floorRaiseToNearest,
-		floorRaiseAndCrush,
-		floorRaiseAndCrushDoom,
-		floorCrushStop,
-		floorLowerInstant,
-		floorRaiseInstant,
-		floorMoveToValue,
-		floorRaiseToLowestCeiling,
-		floorRaiseByTexture,
-
-		floorLowerAndChange,
-		floorRaiseAndChange,
-
-		floorRaiseToLowest,
-		floorRaiseToCeiling,
-		floorLowerToLowestCeiling,
-		floorLowerByTexture,
-		floorLowerToCeiling,
-
-		donutRaise,
-
-		buildStair,
-		waitStair,
-		resetStair,
-
-		// Not to be used as parameters to DoFloor()
-		genFloorChg0,
-		genFloorChgT,
-		genFloorChg
-	};
-
-	deprecated("3.8", "Use Level.CreateFloor() instead") static bool CreateFloor(sector sec, int floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false)
-	{
-		return level.CreateFloor(sec, floortype, ln, speed, height, crush, change, crushmode, hereticlower);
-	}
-}
-
-class Ceiling : MovingCeiling native
-{
-	enum ECeiling
-	{
-		ceilLowerByValue,
-		ceilRaiseByValue,
-		ceilMoveToValue,
-		ceilLowerToHighestFloor,
-		ceilLowerInstant,
-		ceilRaiseInstant,
-		ceilCrushAndRaise,
-		ceilLowerAndCrush,
-		ceil_placeholder,
-		ceilCrushRaiseAndStay,
-		ceilRaiseToNearest,
-		ceilLowerToLowest,
-		ceilLowerToFloor,
-
-		// The following are only used by Generic_Ceiling
-		ceilRaiseToHighest,
-		ceilLowerToHighest,
-		ceilRaiseToLowest,
-		ceilLowerToNearest,
-		ceilRaiseToHighestFloor,
-		ceilRaiseToFloor,
-		ceilRaiseByTexture,
-		ceilLowerByTexture,
-
-		genCeilingChg0,
-		genCeilingChgT,
-		genCeilingChg
-	}
-
-	enum ECrushMode
-	{
-		crushDoom = 0,
-		crushHexen = 1,
-		crushSlowdown = 2
-	}
-	
-	deprecated("3.8", "Use Level.CreateCeiling() instead") static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom)
-	{
-		return level.CreateCeiling(sec, type, ln, speed, speed2, height, crush, silent, change, crushmode);
-	}
-	
-}
-
-struct LookExParams
-{
-	double Fov;
-	double minDist;
-	double maxDist;
-	double maxHeardist;
-	int flags;
-	State seestate;
-};
-
-class Lighting : SectorEffect native
-{
-}
-
-struct Shader native
-{
-	native clearscope static void SetEnabled(PlayerInfo player, string shaderName, bool enable);
-	native clearscope static void SetUniform1f(PlayerInfo player, string shaderName, string uniformName, float value);
-	native clearscope static void SetUniform2f(PlayerInfo player, string shaderName, string uniformName, vector2 value);
-	native clearscope static void SetUniform3f(PlayerInfo player, string shaderName, string uniformName, vector3 value);
-	native clearscope static void SetUniform1i(PlayerInfo player, string shaderName, string uniformName, int value);
-}
-
-struct FRailParams
-{
-	native int damage;
-	native double offset_xy;
-	native double offset_z;
-	native int color1, color2;
-	native double maxdiff;
-	native int flags;
-	native Class<Actor> puff;
-	native double angleoffset;
-	native double pitchoffset;
-	native double distance;
-	native int duration;
-	native double sparsity;
-	native double drift;
-	native Class<Actor> spawnclass;
-	native int SpiralOffset;
-	native int limit;
-};	// [RH] Shoot a railgun
-

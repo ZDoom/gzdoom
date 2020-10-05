@@ -1,5 +1,6 @@
 version "4.5"
 #include "zscript/base.zs"
+#include "zscript/doombase.zs"
 #include "zscript/sounddata.zs"
 #include "zscript/mapdata.zs"
 #include "zscript/dynarrays.zs"

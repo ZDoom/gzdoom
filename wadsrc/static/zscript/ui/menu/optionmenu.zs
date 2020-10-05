@@ -235,7 +235,7 @@ class OptionMenu : Menu
 				if (mDesc.mSelectedItem < 0) 
 				{
 					// Figure out how many lines of text fit on the menu
-					int y = mDesc.mPosition; 
+					int y = mDesc.mPosition;
 
 					if (y <= 0)
 					{

@@ -2,22 +2,13 @@
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
-	native readonly Array<class<Actor> > AllActorClasses;
-	native readonly Array<@PlayerClass> PlayerClasses;
-	native readonly Array<@PlayerSkin> PlayerSkins;
-	native readonly Array<@Team> Teams;
-	native int validcount;
 	native readonly bool multiplayer;
 	native @KeyBindings Bindings;
 	native @KeyBindings AutomapBindings;
-	native play @DehInfo deh;
 	native readonly @GameInfoStruct gameinfo;
 	native readonly ui bool netgame;
-
-	native readonly bool automapactive;
 	native readonly uint gameaction;
 	native readonly int gamestate;
-	native readonly TextureID skyflatnum;
 	native readonly Font smallfont;
 	native readonly Font smallfont2;
 	native readonly Font bigfont;
@@ -38,27 +29,14 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int CleanHeight_1;
 	native ui int menuactive;
 	native readonly @FOptionMenuSettings OptionMenuSettings;
-	native readonly int gametic;
 	native readonly bool demoplayback;
 	native ui int BackbuttonTime;
 	native ui float BackbuttonAlpha;
-	native readonly int Net_Arbitrator;
-	native ui BaseStatusBar StatusBar;
-	native readonly Weapon WP_NOCHANGE;
-	deprecated("3.8", "Use Actor.isFrozen() or Level.isFrozen() instead") native readonly bool globalfreeze;
-	native int LocalViewPitch;
 	native readonly @MusPlayingInfo musplaying;
 	native readonly bool generic_ui;
 	native readonly int GameTicRate;
 	native MenuCustomize menuCustomizer;
-
-// sandbox state in multi-level setups:
-
-	native play @PlayerInfo players[MAXPLAYERS];
-	native readonly bool playeringame[MAXPLAYERS];
 	native readonly int consoleplayer;
-	native play LevelLocals Level;
-
 }
 
 struct MusPlayingInfo native

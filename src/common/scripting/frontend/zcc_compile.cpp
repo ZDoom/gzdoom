@@ -377,8 +377,30 @@ void ZCCCompiler::ProcessMixin(ZCC_MixinDef *cnode, PSymbolTreeNode *treenode)
 
 void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZCC_Class *outer)
 {
-	Structs.Push(new ZCC_StructWork(static_cast<ZCC_Struct *>(cnode), treenode, outer));
-	ZCC_StructWork *cls = Structs.Last();
+	ZCC_StructWork* cls = nullptr;
+
+	// If this is a struct extension, put the new node directly into the existing class.
+	if (cnode->Flags == ZCC_Extension)
+	{
+		for (auto strct : Structs)
+		{
+			if (strct->NodeName() == cnode->NodeName)
+			{
+				cls = strct;
+				break;
+			}
+		}
+		if (cls == nullptr)
+		{
+			Error(cnode, "Struct %s cannot be found in the current translation unit.", FName(cnode->NodeName).GetChars());
+			return;
+		}
+	}
+	else
+	{
+		Structs.Push(new ZCC_StructWork(static_cast<ZCC_Struct*>(cnode), treenode, outer));
+		cls = Structs.Last();
+	}
 
 	auto node = cnode->Body;
 	PSymbolTreeNode *childnode;
@@ -494,7 +516,15 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 					ProcessClass(static_cast<ZCC_Class *>(node), tnode);
 					break;
 				}
+				goto common;
 			case AST_Struct:
+				if (static_cast<ZCC_Class*>(node)->Flags == ZCC_Extension)
+				{
+					ProcessStruct(static_cast<ZCC_Struct*>(node), tnode, nullptr);
+					break;
+				}
+
+			common:
 			case AST_ConstantDef:
 			case AST_Enum:
 				if ((tnode = AddTreeNode(static_cast<ZCC_NamedNode *>(node)->NodeName, node, GlobalTreeNodes)))

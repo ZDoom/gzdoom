@@ -841,14 +841,8 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 		if (!(flags & WOF_KEEPX))		psp->x = (flags & WOF_ADD) ? psp->x + wx : wx;
 		if (!(flags & WOF_KEEPY))		psp->y = (flags & WOF_ADD) ? psp->y + wy : wy;
 		
-		if (flags & (WOF_ADD | WOF_INTERPOLATE))	psp->InterpolateTic = true;
-		/*
-		if (!(flags & (WOF_INTERPOLATE|WOF_ADD))) 
-		{
-			psp->oldx = psp->x;
-			psp->oldy = psp->y;
-		}
-		*/
+		if (!(flags & (WOF_ADD | WOF_INTERPOLATE)))
+			psp->ResetInterpolation();
 	}
 }
 

@@ -161,8 +161,6 @@ bool			playeringame[MAXPLAYERS];
 
 int 			gametic;
 
-time_t 			epochoffset = 0;		// epoch start in seconds (0 = January 1st, 1970)
-
 CVAR(Bool, demo_compress, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 FString			newdemoname;
 FString			newdemomap;

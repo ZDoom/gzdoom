@@ -96,7 +96,7 @@ void FinalizeClass(PClass *ccls, FStateDefinitions &statedef)
 		def->flags |= MF_SPECIAL;
 	}
 
-	if (cls->IsDescendantOf(NAME_Weapon))
+	if (cls->IsDescendantOf(NAME_Weapon) && !cls->bAbstract)
 	{
 		FState *ready = def->FindState(NAME_Ready);
 		FState *select = def->FindState(NAME_Select);

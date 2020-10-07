@@ -652,3 +652,12 @@ struct StringStruct native
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
 }
+
+struct Translation version("2.4")
+{
+	static int MakeID(int group, int num)
+	{
+		return (group << 16) + num;
+	}
+}
+

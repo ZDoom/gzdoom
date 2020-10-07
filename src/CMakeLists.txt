@@ -1125,6 +1125,7 @@ set (PCH_SOURCES
 	common/menu/optionmenu.cpp
 	common/menu/resolutionmenu.cpp
 	common/menu/menudef.cpp
+	common/menu/savegamemanager.cpp
 	
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp

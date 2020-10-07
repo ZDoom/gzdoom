@@ -440,6 +440,7 @@ menu/invalid			dsoof		// Menu not available
 menu/dismiss			dsswtchx	// Dismiss a prompt message
 menu/choose			dspistol	// Choose a menu item
 menu/clear			dsswtchx	// Close top menu
+$alias menu/advance menu/choose	// Open a submenu
 
 $random menu/quit1 { player/male/death1 demon/pain grunt/pain misc/gibbed misc/teleport grunt/sight1 grunt/sight3 demon/melee }
 $random menu/quit2 { vile/active misc/p_pkup brain/cube misc/gibbed skeleton/swing knight/death baby/active demon/melee  }

@@ -42,17 +42,13 @@ extend struct Screen
 	}
 }
 
-struct Translation version("2.4")
+extend struct Translation
 {
 	Color colors[256];
 	
 	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
 	native static int GetID(Name transname);
-	static int MakeID(int group, int num)
-	{
-		return (group << 16) + num;
-	}
 }
 
 struct DamageTypeDefinition native

@@ -230,7 +230,7 @@ struct TexMan
 		NOT_FLAT			= 24
 	};
 
-	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
+	native static TextureID CheckForTexture(String name, int usetype = Type_Any, int flags = TryAny);
 	native static String GetName(TextureID tex);
 	native static int, int GetSize(TextureID tex);
 	native static Vector2 GetScaledSize(TextureID tex);
@@ -389,6 +389,7 @@ struct Screen native
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
 	native static void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
+	native static void DrawLineFrame(Color color, int x0, int y0, int w, int h, int thickness = 1);
 	native static void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
 	native static Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
 	native static double GetAspectRatio();
@@ -482,6 +483,7 @@ struct Font native
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
 	native BrokenLines BreakLines(String text, int maxlen);
+	native int GetGlyphHeight(int code);
 }
 
 struct Console native

@@ -172,7 +172,7 @@ class ListMenu : Menu
 		case MKEY_Enter:
 			if (mDesc.mSelectedItem >= 0 && mDesc.mItems[mDesc.mSelectedItem].Activate())
 			{
-				MenuSound("menu/choose");
+				MenuSound("menu/advance");
 			}
 			return true;
 
@@ -265,10 +265,13 @@ class ListMenu : Menu
 	{
 		for(int i=0;i<mDesc.mItems.Size(); i++)
 		{
-			if (mDesc.mItems[i].mEnabled > 0) mDesc.mItems[i].Draw(mDesc.mSelectedItem == i, mDesc);
+			if (mDesc.mItems[i].mEnabled) mDesc.mItems[i].Draw(mDesc.mSelectedItem == i, mDesc);
 		}
 		if (mDesc.mSelectedItem >= 0 && mDesc.mSelectedItem < mDesc.mItems.Size())
-			mDesc.mItems[mDesc.mSelectedItem].DrawSelector(mDesc.mSelectOfsX, mDesc.mSelectOfsY, mDesc.mSelector, mDesc);
+		{
+			if (!menuDelegate.DrawSelector(mDesc))
+				mDesc.mItems[mDesc.mSelectedItem].DrawSelector(mDesc.mSelectOfsX, mDesc.mSelectOfsY, mDesc.mSelector, mDesc);
+		}
 		Super.Drawer();
 	}
 	

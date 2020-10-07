@@ -129,9 +129,13 @@ class Menu : Object native ui version("2.4")
 		switch (mkey)
 		{
 		case MKEY_Back:
+		{
 			Close();
-			MenuSound (GetCurrentMenu() != null? "menu/backup" : "menu/clear");
+			let m = GetCurrentMenu();
+			MenuSound(m != null ? "menu/backup" : "menu/clear");
+			if (!m) menuDelegate.MenuDismissed();
 			return true;
+		}
 		}
 		return false;
 	}
@@ -283,9 +287,9 @@ class Menu : Object native ui version("2.4")
 	//
 	//=============================================================================
 
-	static void MenuSound(Sound snd)
+	static void MenuSound(Name snd)
 	{
-		S_StartSound (snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHAN_UI, snd_menuvolume, ATTN_NONE);
+		menuDelegate.PlaySound(snd);
 	}
 	
 	deprecated("4.0") static void DrawConText (int color, int x, int y, String str)

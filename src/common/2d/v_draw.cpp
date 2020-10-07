@@ -1529,6 +1529,19 @@ void DrawFrame(F2DDrawer* twod, PalEntry color, int left, int top, int width, in
 	twod->AddColorOnlyQuad(right, top - offset, offset, height + 2 * offset, color);
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, DrawLineFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_COLOR(color);
+	PARAM_INT(left);
+	PARAM_INT(top);
+	PARAM_INT(width);
+	PARAM_INT(height);
+	PARAM_INT(thickness);
+	DrawFrame(twod, color, left, top, width, height, thickness);
+	return 0;
+}
+
 void V_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int* cleanx, int* cleany, int* _cx1, int* _cx2)
 {
 	if (designheight < 240 && realheight >= 480) designheight = 240;

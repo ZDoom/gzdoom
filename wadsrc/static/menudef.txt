@@ -285,8 +285,8 @@ ListMenu "LoadGameMenu"
 	{
 		NetgameMessage "$CLOADNET"
 	}
-	StaticTextCentered 160, -10, "$MNU_LOADGAME"
-	Position 80,54
+	CaptionItem "$MNU_LOADGAME"
+	Position 80,40
 	Class "LoadMenu"	// uses its own implementation
 	Size Clean
 }
@@ -299,8 +299,8 @@ ListMenu "LoadGameMenu"
 
 ListMenu "SaveGameMenu"
 {
-	StaticTextCentered 160, -10, "$MNU_SAVEGAME"
-	Position 80,54
+	CaptionItem "$MNU_SAVEGAME"
+	Position 80,40
 	Class "SaveMenu"	// uses its own implementation
 	Size Clean
 }

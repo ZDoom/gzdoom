@@ -456,9 +456,8 @@ class OptionMenu : Menu
 		{
 			y = DrawCaption(mDesc.mTitle, -y, true);
 		}
-		mDesc.mDrawTop = y;
+		mDesc.mDrawTop = y / CleanYfac_1; // mouse checks are done in clean space.
 		int fontheight = OptionMenuSettings.mLinespacing * CleanYfac_1;
-		y *= CleanYfac_1;
 
 		int indent = GetIndent();
 

@@ -224,7 +224,7 @@ class ListMenuItemSelectable : ListMenuItem
 	
 	override bool Selectable()
 	{
-		return mEnabled;
+		return mEnabled > 0;
 	}
 
 	override bool CheckHotkey(int c)

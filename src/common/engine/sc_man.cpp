@@ -1044,8 +1044,8 @@ bool FScanner::ScanValue(bool allowfloat, bool evaluate)
 		auto d = constants.CheckKey(String);
 		if (!d) return false;
 		if (!allowfloat && int64_t(*d) != *d) return false;
-		BigNumber = *d;
-		Number = *d;
+		BigNumber = int64_t(*d);
+		Number = int(*d);
 		Float = *d;
 	}
 	if (neg)
@@ -1231,8 +1231,8 @@ void FScanner::AddSymbol(const char *name, int64_t value)
 {
 	Symbol sym;
 	sym.tokenType = TK_IntConst;
-	sym.Number = value;
-	sym.Float = value;
+	sym.Number = int(value);
+	sym.Float = double(value);
 	symbols.Insert(name, sym);
 }
 

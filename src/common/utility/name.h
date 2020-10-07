@@ -40,8 +40,10 @@
 enum ENamedName
 {
 #define xx(n) NAME_##n,
+#define xy(n, s) NAME_##n,
 #include "namedef.h"
 #undef xx
+#undef xy
 };
 
 class FString;

@@ -8,7 +8,7 @@ class MenuItemBase : Object native ui version("2.4")
 {
 	protected native double mXpos, mYpos;
 	protected native Name mAction;
-	native bool mEnabled;
+	native int mEnabled;
 
 	void Init(double xpos = 0, double ypos = 0, Name actionname = 'None')
 	{

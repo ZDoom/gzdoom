@@ -99,7 +99,7 @@ SoundStream *S_CreateCustomStream(size_t size, int samplerate, int numchannels, 
 {
 	int flags = 0;
 	if (numchannels < 2) flags |= SoundStream::Mono;
-	auto stream = GSnd->CreateStream(cb, size, flags, samplerate, userdata);
+	auto stream = GSnd->CreateStream(cb, int(size), flags, samplerate, userdata);
 	if (stream) stream->Play(true, 1);
 	return stream;
 }

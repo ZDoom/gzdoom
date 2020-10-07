@@ -100,7 +100,7 @@ float			BackbuttonAlpha;
 static bool		MenuEnabled = true;
 DMenu			*CurrentMenu;
 int				MenuTime;
-DObject*		menuCustomizer;
+DObject*		menuDelegate;
 
 
 extern PClass *DefaultListMenuClass;
@@ -192,8 +192,60 @@ void M_MarkMenus()
 		GC::Mark(pair->Value);
 	}
 	GC::Mark(CurrentMenu);
-	GC::Mark(menuCustomizer);
+	GC::Mark(menuDelegate);
 }
+
+
+//============================================================================
+//
+// Transition animation
+//
+//============================================================================
+
+static MenuTransition transition;
+
+bool MenuTransition::StartTransition(DMenu* from, DMenu* to, MenuTransitionType animtype)
+{
+	if (!from->canAnimate() || !to->canAnimate() || animtype == MA_None)
+	{
+		return false;
+	}
+	else
+	{
+		start = I_GetTimeNS() * (120. / 1'000'000'000.);
+		length = 30;
+		dir = animtype == MA_Advance ? 1 : -1;
+		previous = from;
+		current = to;
+		if (from) GC::AddSoftRoot(from);
+		if (to) GC::AddSoftRoot(to);
+		return true;
+	}
+}
+
+bool MenuTransition::Draw()
+{
+	double now = I_GetTimeNS() * (120. / 1'000'000'000);
+	if (now < start + length)
+	{
+		double factor = 120 * screen->GetWidth() / screen->GetHeight();
+		double phase = (now - start) / double(length) * M_PI + M_PI / 2;
+		DVector2 origin;
+
+		origin.Y = 0;
+		origin.X = factor * dir * (sin(phase) - 1.);
+		twod->SetOffset(origin);
+		previous->CallDrawer();
+		origin.X = factor * dir * (sin(phase) + 1.);
+		twod->SetOffset(origin);
+		current->CallDrawer();
+		return true;
+	}
+	if (previous) GC::DelSoftRoot(previous);
+	if (current) GC::DelSoftRoot(current);
+	return false;
+}
+
 
 //============================================================================
 //
@@ -299,20 +351,28 @@ void DMenu::Close ()
 	if (CurrentMenu == nullptr) return;	// double closing can happen in the save menu.
 	assert(CurrentMenu == this);
 	CurrentMenu = mParentMenu;
-	Destroy();
-	if (CurrentMenu != nullptr)
-	{
-		GC::WriteBarrier(CurrentMenu);
-		IFVIRTUALPTR(CurrentMenu, DMenu, OnReturn)
-		{
-			VMValue params[] = { CurrentMenu };
-			VMCall(func, params, 1, nullptr, 0);
-		}
 
+	if (false)// todo: && mParentMenu && transition.StartTransition(this, mParentMenu, MA_Return))
+	{
+		return;
 	}
 	else
 	{
-		M_ClearMenus ();
+		Destroy();
+		if (CurrentMenu != nullptr)
+		{
+			GC::WriteBarrier(CurrentMenu);
+			IFVIRTUALPTR(CurrentMenu, DMenu, OnReturn)
+			{
+				VMValue params[] = { CurrentMenu };
+				VMCall(func, params, 1, nullptr, 0);
+			}
+
+		}
+		else
+		{
+			M_ClearMenus();
+		}
 	}
 }
 
@@ -407,10 +467,14 @@ void M_DoStartControlPanel (bool scaleoverride)
 void M_ActivateMenu(DMenu *menu)
 {
 	if (menuactive == MENU_Off) menuactive = MENU_On;
-	if (CurrentMenu != nullptr && CurrentMenu->mMouseCapture)
+	if (CurrentMenu != nullptr)
 	{
-		CurrentMenu->mMouseCapture = false;
-		I_ReleaseMouseCapture();
+		if (CurrentMenu->mMouseCapture)
+		{
+			CurrentMenu->mMouseCapture = false;
+			I_ReleaseMouseCapture();
+		}
+		//transition.StartTransition(CurrentMenu, menu, MA_Advance);
 	}
 	CurrentMenu = menu;
 	GC::WriteBarrier(CurrentMenu);
@@ -888,7 +952,7 @@ DEFINE_GLOBAL(menuactive)
 DEFINE_GLOBAL(BackbuttonTime)
 DEFINE_GLOBAL(BackbuttonAlpha)
 DEFINE_GLOBAL(GameTicRate)
-DEFINE_GLOBAL(menuCustomizer)
+DEFINE_GLOBAL(menuDelegate)
 
 DEFINE_FIELD(DMenu, mParentMenu)
 DEFINE_FIELD(DMenu, mMouseCapture);
@@ -1022,6 +1086,17 @@ DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotke
 	FString keystr = FString(char(hotkey));
 	FString textstr = text;
 	VMValue params[] = { p, x, y, height, &keystr, &textstr, font, int(color1.d), int(color2.d), command.GetIndex(), param };
+	auto f = dyn_cast<PFunction>(c->FindSymbol("InitDirect", false));
+	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
+	return (DMenuItemBase*)p;
+}
+
+DMenuItemBase* CreateListMenuItemStaticText(double x, double y, const char* text, FFont* font, PalEntry color, bool centered)
+{
+	auto c = PClass::FindClass("ListMenuItemStaticText");
+	auto p = c->CreateNew();
+	FString textstr = text;
+	VMValue params[] = { p, x, y, &textstr, font, int(color.d), centered };
 	auto f = dyn_cast<PFunction>(c->FindSymbol("InitDirect", false));
 	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
 	return (DMenuItemBase*)p;

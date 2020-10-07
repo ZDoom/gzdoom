@@ -433,7 +433,7 @@ class OptionMenu : Menu
 		let font = generic_ui || !mDesc.mFont ? NewSmallFont : mDesc.mFont;
 		if (font && mDesc.mTitle.Length() > 0)
 		{
-			return menuCustomizer.DrawCaption(title, font, y, drawit);
+			return menuDelegate.DrawCaption(title, font, y, drawit);
 		}
 		else
 		{

@@ -47,7 +47,7 @@ class DMenu;
 extern DMenu *CurrentMenu;
 extern int MenuTime;
 class DMenuItemBase;
-extern DObject* menuCustomizer;
+extern DObject* menuDelegate;
 
 //=============================================================================
 //
@@ -165,6 +165,31 @@ struct FMenuRect
 };
 
 
+enum MenuTransitionType
+{ // Note: This enum is for logical categories, not visual types.
+	MA_None,
+	MA_Return,
+	MA_Advance,
+};
+
+class DMenu;
+
+struct MenuTransition
+{
+	DMenu* previous;
+	DMenu* current;
+
+	double start;
+	int32_t length;
+	int32_t dir;
+
+	bool StartTransition(DMenu* from, DMenu* to, MenuTransitionType animtype);
+	bool Draw();
+
+};
+
+
+
 class DMenu : public DObject
 {
 	DECLARE_CLASS (DMenu, DObject)
@@ -195,6 +220,7 @@ public:
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	void CallTicker();
 	void CallDrawer();
+	bool canAnimate() { return false; }
 };
 
 //=============================================================================
@@ -209,7 +235,7 @@ class DMenuItemBase : public DObject
 public:
 	double mXpos, mYpos;
 	FName mAction;
-	bool mEnabled;
+	int mEnabled;
 
 	bool Activate();
 	bool SetString(int i, const char *s);
@@ -277,6 +303,7 @@ DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickCo
 DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param);
 DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool centered = false);
+DMenuItemBase* CreateListMenuItemStaticText(double x, double y, const char* text, FFont* font, PalEntry color, bool centered = false);
 
 void UpdateVRModes(bool considerQuadBuffered=true);
 

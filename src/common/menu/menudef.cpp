@@ -151,10 +151,10 @@ void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
-	if (menuCustomizer)
+	if (menuDelegate)
 	{
-		menuCustomizer->Destroy();
-		menuCustomizer = nullptr;
+		menuDelegate->Destroy();
+		menuDelegate = nullptr;
 	}
 }
 

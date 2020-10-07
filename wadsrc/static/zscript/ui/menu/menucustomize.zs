@@ -1,6 +1,6 @@
 // This class allows global customization of certain menu aspects, e.g. replacing the menu caption.
 
-class MenuCustomize
+class MenuDelegateBase
 {
 	virtual int DrawCaption(String title, Font fnt, int y, bool drawit)
 	{

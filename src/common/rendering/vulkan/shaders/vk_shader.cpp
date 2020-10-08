@@ -311,7 +311,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	{
 		if (material_lump[0] != '#')
 		{
-			FString pp_code = LoadPublicShaderLump(material_lump);
+			FString pp_code = RemoveVersionDeclaration(LoadPublicShaderLump(material_lump));
 
 			if (pp_code.IndexOf("ProcessMaterial") < 0 && pp_code.IndexOf("SetupMaterial") < 0)
 			{

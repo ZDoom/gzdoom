@@ -267,6 +267,28 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 	return code;
 }
 
+FString RemoveVersionDeclaration(FString code)
+{
+	long length = code.Len();
+	char* chars = code.LockBuffer();
+	// Find #version
+	long matchIndex = code.IndexOf("#version");
+	if (matchIndex >= 0)
+	{
+		long endIndex = matchIndex + 8;
+		// Find end-of-line
+		while(chars[endIndex++] != '\n' && endIndex < length);
+		// Replace with spaces
+		for(long i = matchIndex; i < endIndex; i++)
+		{
+			chars[i] = ' ';
+		}
+	}
+	code.UnlockBuffer();
+	return code;
+	
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 // Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.

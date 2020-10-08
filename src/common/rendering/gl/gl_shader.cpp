@@ -417,14 +417,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 					int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultmat2.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat2.fp");
 					FileData pl_data = fileSystem.ReadFile(pl_lump);
-					fp_comb << "\n" << pl_data.GetString().GetChars();
+					fp_comb << "\n" << RemoveVersionDeclaration(pl_data.GetString()).GetChars();
 				}
 				else
 				{
 					int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultmat.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat.fp");
 					FileData pl_data = fileSystem.ReadFile(pl_lump);
-					fp_comb << "\n" << pl_data.GetString().GetChars();
+					fp_comb << "\n" << RemoveVersionDeclaration(pl_data.GetString()).GetChars();
 
 					if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
 					{
@@ -451,7 +451,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 				int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultlight.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultlight.fp");
 				FileData pl_data = fileSystem.ReadFile(pl_lump);
-				fp_comb << "\n" << pl_data.GetString().GetChars();
+				fp_comb << "\n" << RemoveVersionDeclaration(pl_data.GetString()).GetChars();
 			}
 
 			// ProcessMaterial must be considered broken because it requires the user to fill in data they possibly cannot know all about.

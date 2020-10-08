@@ -220,7 +220,7 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	do
 	{
 		sc.MustGetString();
-		if (CheckSkipGameOptionBlock(sc)) filter = true;
+		if (sysCallbacks.CheckMenudefOption && sysCallbacks.CheckMenudefOption(sc.String)) filter = true;
 		else if (sc.Compare("Windows"))
 		{
 			#ifdef _WIN32

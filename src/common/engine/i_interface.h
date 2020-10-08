@@ -24,6 +24,8 @@ struct SystemCallbacks
 	bool (*DispatchEvent)(event_t* ev);
 	bool (*CheckGame)(const char* nm);
 	int (*GetGender)();
+	void (*MenuClosed)();
+	bool (*CheckMenudefOption)(const char* opt);
 };
 
 extern SystemCallbacks sysCallbacks;

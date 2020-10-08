@@ -458,6 +458,7 @@ void M_DoStartControlPanel (bool scaleoverride)
 		delete CurrentScaleOverrider;
 		CurrentScaleOverrider = nullptr;
 	}
+
 }
 
 //=============================================================================
@@ -869,6 +870,7 @@ void M_ClearMenus()
 	menuactive = MENU_Off;
 	if (CurrentScaleOverrider)  delete CurrentScaleOverrider;
 	CurrentScaleOverrider = nullptr;
+	if (sysCallbacks.MenuClosed) sysCallbacks.MenuClosed();
 }
 
 //=============================================================================

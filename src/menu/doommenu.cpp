@@ -1244,11 +1244,11 @@ bool OkForLocalization(FTextureID texnum, const char* substitute)
 	return TexMan.OkForLocalization(texnum, substitute, cl_gfxlocalization);
 }
 
-bool CheckSkipGameOptionBlock(FScanner &sc)
+bool  CheckSkipGameOptionBlock(const char *str)
 {
 	bool filter = false;
-	if (sc.Compare("ReadThis")) filter |= gameinfo.drawreadthis;
-	else if (sc.Compare("Swapmenu")) filter |= gameinfo.swapmenu;
+	if (!stricmp(str, "ReadThis")) filter |= gameinfo.drawreadthis;
+	else if (!stricmp(str, "Swapmenu")) filter |= gameinfo.swapmenu;
 	return filter;
 }
 

@@ -458,7 +458,6 @@ void M_DoStartControlPanel (bool scaleoverride)
 		delete CurrentScaleOverrider;
 		CurrentScaleOverrider = nullptr;
 	}
-
 }
 
 //=============================================================================

@@ -366,7 +366,8 @@ enum EUpscaleFlags
 	UF_None = 0,
 	UF_Texture = 1,
 	UF_Sprite = 2,
-	UF_Font = 4
+	UF_Font = 4,
+	UF_Skin = 8
 };
 
 extern int upscalemask;

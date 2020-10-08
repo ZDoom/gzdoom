@@ -1097,3 +1097,6 @@ xy(menu_clear, "menu/clear")
 xy(menu_dismiss, "menu/dismiss")
 xy(menu_change, "menu/change")
 xy(menu_advance, "menu/advance")
+
+xx(zoomsize)
+

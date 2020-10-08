@@ -101,6 +101,7 @@ static bool		MenuEnabled = true;
 DMenu			*CurrentMenu;
 int				MenuTime;
 DObject*		menuDelegate;
+static MenuTransition transition;
 
 
 extern PClass *DefaultListMenuClass;
@@ -193,6 +194,8 @@ void M_MarkMenus()
 	}
 	GC::Mark(CurrentMenu);
 	GC::Mark(menuDelegate);
+	GC::Mark(transition.previous);
+	GC::Mark(transition.current);
 }
 
 
@@ -201,8 +204,6 @@ void M_MarkMenus()
 // Transition animation
 //
 //============================================================================
-
-static MenuTransition transition;
 
 bool MenuTransition::StartTransition(DMenu* from, DMenu* to, MenuTransitionType animtype)
 {
@@ -215,10 +216,11 @@ bool MenuTransition::StartTransition(DMenu* from, DMenu* to, MenuTransitionType 
 		start = I_GetTimeNS() * (120. / 1'000'000'000.);
 		length = 30;
 		dir = animtype == MA_Advance ? 1 : -1;
+		destroyprev = animtype == MA_Return;
 		previous = from;
 		current = to;
-		if (from) GC::AddSoftRoot(from);
-		if (to) GC::AddSoftRoot(to);
+		if (from) GC::WriteBarrier(from);
+		if (to) GC::WriteBarrier(to);
 		return true;
 	}
 }
@@ -228,7 +230,7 @@ bool MenuTransition::Draw()
 	double now = I_GetTimeNS() * (120. / 1'000'000'000);
 	if (now < start + length)
 	{
-		double factor = 120 * screen->GetWidth() / screen->GetHeight();
+		double factor = screen->GetWidth()/2;
 		double phase = (now - start) / double(length) * M_PI + M_PI / 2;
 		DVector2 origin;
 
@@ -239,10 +241,13 @@ bool MenuTransition::Draw()
 		origin.X = factor * dir * (sin(phase) + 1.);
 		twod->SetOffset(origin);
 		current->CallDrawer();
+		origin = { 0,0 };
+		twod->SetOffset(origin);
 		return true;
 	}
-	if (previous) GC::DelSoftRoot(previous);
-	if (current) GC::DelSoftRoot(current);
+	if (destroyprev && previous) previous->Destroy();
+	previous = nullptr;
+	current = nullptr;
 	return false;
 }
 
@@ -352,27 +357,24 @@ void DMenu::Close ()
 	assert(CurrentMenu == this);
 	CurrentMenu = mParentMenu;
 
-	if (false)// todo: && mParentMenu && transition.StartTransition(this, mParentMenu, MA_Return))
+	if (CurrentMenu != nullptr)
 	{
-		return;
+		GC::WriteBarrier(CurrentMenu);
+		IFVIRTUALPTR(CurrentMenu, DMenu, OnReturn)
+		{
+			VMValue params[] = { CurrentMenu };
+			VMCall(func, params, 1, nullptr, 0);
+		}
+		if (transition.StartTransition(this, CurrentMenu, MA_Return))
+		{
+			return;
+		}
 	}
-	else
-	{
-		Destroy();
-		if (CurrentMenu != nullptr)
-		{
-			GC::WriteBarrier(CurrentMenu);
-			IFVIRTUALPTR(CurrentMenu, DMenu, OnReturn)
-			{
-				VMValue params[] = { CurrentMenu };
-				VMCall(func, params, 1, nullptr, 0);
-			}
 
-		}
-		else
-		{
-			M_ClearMenus();
-		}
+	Destroy();
+	if (CurrentMenu == nullptr)
+	{
+		M_ClearMenus();
 	}
 }
 
@@ -474,7 +476,7 @@ void M_ActivateMenu(DMenu *menu)
 			CurrentMenu->mMouseCapture = false;
 			I_ReleaseMouseCapture();
 		}
-		//transition.StartTransition(CurrentMenu, menu, MA_Advance);
+		transition.StartTransition(CurrentMenu, menu, MA_Advance);
 	}
 	CurrentMenu = menu;
 	GC::WriteBarrier(CurrentMenu);
@@ -826,9 +828,24 @@ void M_Drawer (void)
 		{
 			if (sysCallbacks.MenuDim) sysCallbacks.MenuDim();
 		}
-		CurrentMenu->CallDrawer();
+		bool going = false;
+		if (transition.previous)
+		{
+			going = transition.Draw();
+			if (!going)
+			{
+				if (transition.dir == -1) delete transition.previous;
+				transition.previous = nullptr;
+				transition.current = nullptr;
+			}
+		}
+		if (!going)
+		{
+			CurrentMenu->CallDrawer();
+		}
 	}
 }
+
 
 //=============================================================================
 //
@@ -838,6 +855,11 @@ void M_Drawer (void)
 
 void M_ClearMenus()
 {
+	if (menuactive == MENU_Off) return;
+
+	transition.previous = transition.current = nullptr;
+	transition.dir = 0;
+
 	while (CurrentMenu != nullptr)
 	{
 		DMenu* parent = CurrentMenu->mParentMenu;
@@ -959,6 +981,7 @@ DEFINE_FIELD(DMenu, mMouseCapture);
 DEFINE_FIELD(DMenu, mBackbuttonSelected);
 DEFINE_FIELD(DMenu, DontDim);
 DEFINE_FIELD(DMenu, DontBlur);
+DEFINE_FIELD(DMenu, AnimatedTransition);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
@@ -984,6 +1007,7 @@ DEFINE_FIELD(DListMenuDescriptor, mAutoselect)
 DEFINE_FIELD(DListMenuDescriptor, mFont)
 DEFINE_FIELD(DListMenuDescriptor, mFontColor)
 DEFINE_FIELD(DListMenuDescriptor, mFontColor2)
+DEFINE_FIELD(DListMenuDescriptor, mAnimatedTransition)
 DEFINE_FIELD(DListMenuDescriptor, mCenter)
 DEFINE_FIELD(DListMenuDescriptor, mVirtWidth)
 DEFINE_FIELD(DListMenuDescriptor, mVirtHeight)

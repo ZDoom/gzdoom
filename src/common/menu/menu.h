@@ -89,6 +89,8 @@ public:
 	EColorRange mFontColor2;
 	bool mCenter;
 	bool mFromEngine;
+	bool mAnimated;
+	bool mAnimatedTransition;
 	int mVirtWidth;
 	int mVirtHeight;
 
@@ -181,7 +183,8 @@ struct MenuTransition
 
 	double start;
 	int32_t length;
-	int32_t dir;
+	int8_t dir;
+	bool destroyprev;
 
 	bool StartTransition(DMenu* from, DMenu* to, MenuTransitionType animtype);
 	bool Draw();
@@ -210,6 +213,7 @@ public:
 	bool mBackbuttonSelected;
 	bool DontDim;
 	bool DontBlur;
+	bool AnimatedTransition;
 	static int InMenu;
 
 	DMenu(DMenu *parent = NULL);
@@ -220,7 +224,7 @@ public:
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	void CallTicker();
 	void CallDrawer();
-	bool canAnimate() { return false; }
+	bool canAnimate() { return AnimatedTransition; }
 };
 
 //=============================================================================

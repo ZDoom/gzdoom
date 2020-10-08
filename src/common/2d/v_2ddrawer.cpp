@@ -439,6 +439,9 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 		std::swap(v1, v2);
 	}
 
+	auto osave = offset;
+	if (parms.nooffset) offset = { 0,0 };
+
 	if (parms.rotateangle == 0)
 	{
 		double x = parms.x - parms.left * xscale;
@@ -521,6 +524,7 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	dg.mIndexCount += 6;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
 	AddCommand(&dg);
+	offset = osave;
 }
 
 //==========================================================================
@@ -561,6 +565,9 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->dirty = false;
 	}
 
+	auto osave = offset;
+	if (parms.nooffset) offset = { 0,0 };
+
 	double minx = 16383, miny = 16383, maxx = -16384, maxy = -16384;
 	for ( int i=0; i<dg.mVertCount; i++ )
 	{
@@ -599,6 +606,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		AddIndices(dg.mVertIndex, 3, shape->mIndices[i], shape->mIndices[i+1], shape->mIndices[i+2]);
 	}
 	AddCommand(&dg);
+	offset = osave;
 }
 
 //==========================================================================

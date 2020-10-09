@@ -20,3 +20,12 @@ episode level01
 	key = "n"
 	optional
 }
+
+skill hardplus
+{
+	SpawnFilter = Hard
+	Name = "$SKILL_HARDPLUS"
+	Key = "u"
+	FastMonsters
+	SpawnMulti
+}

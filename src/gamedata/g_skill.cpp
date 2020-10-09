@@ -76,6 +76,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.RespawnLimit = 0;
 	skill.Aggressiveness = 1.;
 	skill.SpawnFilter = 0;
+	skill.SpawnMulti = false;
 	skill.ACSReturn = 0;
 	skill.MustConfirm = false;
 	skill.Shortcut = 0;
@@ -191,6 +192,10 @@ void FMapInfoParser::ParseSkill ()
 				else if (sc.Compare("hard")) skill.SpawnFilter |= 8;
 				else if (sc.Compare("nightmare")) skill.SpawnFilter |= 16;
 			}
+		}
+		else if (sc.Compare ("spawnmulti"))
+		{
+			skill.SpawnMulti = true;
 		}
 		else if (sc.Compare("ACSReturn"))
 		{
@@ -395,6 +400,8 @@ int G_SkillProperty(ESkillProperty prop)
 
 		case SKILLP_PlayerRespawn:
 			return AllSkills[gameskill].PlayerRespawn;
+		case SKILLP_SpawnMulti:
+			return AllSkills[gameskill].SpawnMulti;
 		}
 	}
 	return 0;

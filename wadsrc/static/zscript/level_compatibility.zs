@@ -2107,6 +2107,12 @@ class LevelCompatibility : LevelPostProcessor
 				SetSectorSpecial (97, 0);
 				break;
 			}
+
+			case 'A50AC05CCE4F07413A0C4883C5E24215': // dbimpact.wad e1m7
+			{
+				SetLineFlags(1461, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(1468, Line.ML_REPEAT_SPECIAL);
+			}
 		}
 	}
 }

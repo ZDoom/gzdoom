@@ -5347,7 +5347,6 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	return mobj;
 }
 
-
 //
 // P_SpawnMapThing
 // The fields of the mapthing should
@@ -5359,6 +5358,8 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	PClassActor *i;
 	int mask;
 	AActor *mobj;
+
+	bool spawnmulti = G_SkillProperty(SKILLP_SpawnMulti) || multiplayer;
 
 	if (mthing->EdNum == 0 || mthing->EdNum == -1)
 		return NULL;
@@ -5430,12 +5431,13 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 
 	if (pnum == -1 || (flags & LEVEL_FILTERSTARTS))
 	{
+
 		// check for appropriate game type
 		if (deathmatch) 
 		{
 			mask = MTF_DEATHMATCH;
 		}
-		else if (multiplayer)
+		else if (spawnmulti)
 		{
 			mask = MTF_COOPERATIVE;
 		}
@@ -5573,14 +5575,14 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 		return NULL;
 
 	// don't spawn extra things in coop if so desired
-	if (multiplayer && !deathmatch && (dmflags2 & DF2_NO_COOP_THING_SPAWN))
+	if (spawnmulti && !deathmatch && (dmflags2 & DF2_NO_COOP_THING_SPAWN))
 	{
 		if ((mthing->flags & (MTF_DEATHMATCH|MTF_SINGLE)) == MTF_DEATHMATCH)
 			return NULL;
 	}
 
 	// [RH] don't spawn extra weapons in coop if so desired
-	if (multiplayer && !deathmatch && (dmflags & DF_NO_COOP_WEAPON_SPAWN))
+	if (spawnmulti && !deathmatch && (dmflags & DF_NO_COOP_WEAPON_SPAWN))
 	{
 		if (GetDefaultByType(i)->flags7 & MF7_WEAPONSPAWN)
 		{

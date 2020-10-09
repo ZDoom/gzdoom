@@ -60,9 +60,6 @@ CUSTOM_CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // [RH] Feature control cvars
 CVAR(Bool, var_friction, true, CVAR_SERVERINFO);
 
-// Option Search
-CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE);
-
 CUSTOM_CVAR (Int, turnspeedwalkfast, 640, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self <= 0) self = 1;

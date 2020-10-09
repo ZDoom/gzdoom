@@ -66,7 +66,7 @@ public:
 	bool mProtected = false;
 	TArray<DMenuItemBase *> mItems;
 
-	virtual size_t PropagateMark() { return 0;  }
+	size_t PropagateMark() override;
 };
 
 
@@ -95,7 +95,6 @@ public:
 	int mVirtHeight;
 
 	void Reset();
-	size_t PropagateMark() override;
 };
 
 struct FOptionMenuSettings
@@ -128,10 +127,22 @@ public:
 	void CalcIndent();
 	DMenuItemBase *GetItem(FName name);
 	void Reset();
-	size_t PropagateMark() override;
 	~DOptionMenuDescriptor() = default;
 };
-						
+
+class DImageScrollerDescriptor : public DMenuDescriptor
+{
+	DECLARE_CLASS(DOptionMenuDescriptor, DMenuDescriptor)
+public:
+	FTextureID textBackground;
+	PalEntry textBackgroundBrightness;
+
+	FFont *textFont;
+	double textScale;
+	bool mAnimatedTransition;
+	int virtWidth, virtHeight;
+
+};
 
 typedef TMap<FName, DMenuDescriptor *> MenuDescriptorList;
 
@@ -213,6 +224,7 @@ public:
 	bool mBackbuttonSelected;
 	bool DontDim;
 	bool DontBlur;
+	bool Animated;
 	bool AnimatedTransition;
 	static int InMenu;
 
@@ -297,6 +309,7 @@ void M_MarkMenus();
 FTextureID GetMenuTexture(const char* const name);
 void DeinitMenus();
 bool M_Active();
+bool M_IsAnimated();
 
 
 struct IJoystickConfig;

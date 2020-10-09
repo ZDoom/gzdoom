@@ -70,6 +70,9 @@ CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, m_cleanscale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+// Option Search
+CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 
 static DMenu *GetCurrentMenu()
 {
@@ -122,6 +125,7 @@ bool OkForLocalization(FTextureID texnum, const char* substitute);
 IMPLEMENT_CLASS(DMenuDescriptor, false, false)
 IMPLEMENT_CLASS(DListMenuDescriptor, false, false)
 IMPLEMENT_CLASS(DOptionMenuDescriptor, false, false)
+IMPLEMENT_CLASS(DImageScrollerDescriptor, false, false)
 
 DMenuDescriptor *GetMenuDescriptor(int name)
 {
@@ -135,6 +139,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(DMenuDescriptor, GetDescriptor, GetMenuDescriptor)
 	PARAM_NAME(name);
 	ACTION_RETURN_OBJECT(GetMenuDescriptor(name.GetIndex()));
 }
+
+size_t DMenuDescriptor::PropagateMark()
+{
+	for (auto item : mItems) GC::Mark(item);
+	return 0;
+}
+
 
 void DListMenuDescriptor::Reset()
 {
@@ -162,12 +173,6 @@ DEFINE_ACTION_FUNCTION(DListMenuDescriptor, Reset)
 }
 
 
-size_t DListMenuDescriptor::PropagateMark()
-{
-	for (auto item : mItems) GC::Mark(item);
-	return 0;
-}
-
 void DOptionMenuDescriptor::Reset()
 {
 	// Reset the default settings (ignore all other values in the struct)
@@ -176,12 +181,6 @@ void DOptionMenuDescriptor::Reset()
 	mIndent = 0;
 	mDontDim = 0;
 	mFont = BigUpper;
-}
-
-size_t DOptionMenuDescriptor::PropagateMark()
-{
-	for (auto item : mItems) GC::Mark(item);
-	return 0;
 }
 
 void M_MarkMenus()
@@ -460,6 +459,17 @@ void M_DoStartControlPanel (bool scaleoverride)
 	}
 }
 
+
+bool M_IsAnimated()
+{
+	if (ConsoleState == c_down) return false;
+	if (!CurrentMenu) return false;
+	if (CurrentMenu->Animated) return true;
+	if (transition.previous) return true;
+	return false;
+}
+
+
 //=============================================================================
 //
 //
@@ -537,6 +547,21 @@ void M_SetMenu(FName menu, int param)
 
 			DMenu *newmenu = (DMenu*)cls->CreateNew();
 			IFVIRTUALPTRNAME(newmenu, "OptionMenu", Init)
+			{
+				VMValue params[3] = { newmenu, CurrentMenu, ld };
+				VMCall(func, params, 3, nullptr, 0);
+			}
+			M_ActivateMenu(newmenu);
+		}
+		else if ((*desc)->IsKindOf(RUNTIME_CLASS(DImageScrollerDescriptor)))
+		{
+			auto ld = static_cast<DImageScrollerDescriptor*>(*desc);
+			PClass* cls = ld->mClass;
+			if (cls == nullptr) cls = DefaultOptionMenuClass;
+			if (cls == nullptr) cls = PClass::FindClass("ImageScrollerMenu");
+
+			DMenu* newmenu = (DMenu*)cls->CreateNew();
+			IFVIRTUALPTRNAME(newmenu, "ImageScrollerMenu", Init)
 			{
 				VMValue params[3] = { newmenu, CurrentMenu, ld };
 				VMCall(func, params, 3, nullptr, 0);
@@ -983,6 +1008,7 @@ DEFINE_FIELD(DMenu, mBackbuttonSelected);
 DEFINE_FIELD(DMenu, DontDim);
 DEFINE_FIELD(DMenu, DontBlur);
 DEFINE_FIELD(DMenu, AnimatedTransition);
+DEFINE_FIELD(DMenu, Animated);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
@@ -1032,6 +1058,15 @@ DEFINE_FIELD(FOptionMenuSettings, mFontColorHeader)
 DEFINE_FIELD(FOptionMenuSettings, mFontColorHighlight)
 DEFINE_FIELD(FOptionMenuSettings, mFontColorSelection)
 DEFINE_FIELD(FOptionMenuSettings, mLinespacing)
+
+DEFINE_FIELD(DImageScrollerDescriptor, mItems)
+DEFINE_FIELD(DImageScrollerDescriptor, textBackground)
+DEFINE_FIELD(DImageScrollerDescriptor, textBackgroundBrightness)
+DEFINE_FIELD(DImageScrollerDescriptor,textFont)
+DEFINE_FIELD(DImageScrollerDescriptor, textScale)
+DEFINE_FIELD(DImageScrollerDescriptor, mAnimatedTransition)
+DEFINE_FIELD(DImageScrollerDescriptor, virtWidth)
+DEFINE_FIELD(DImageScrollerDescriptor, virtHeight)
 
 
 struct IJoystickConfig;

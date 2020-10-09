@@ -1389,6 +1389,7 @@ OptionMenu MapControlsMenu protected
 	StaticText ""
 	MapControl "$MAPCNTRLMNU_TOGGLEZOOM",		"am_gobig"
 	MapControl "$MAPCNTRLMNU_TOGGLEFOLLOW",		"am_togglefollow"
+	MapControl "$MAPCNTRLMNU_TOGGLEROTATE",		"toggle am_rotate"
 	MapControl "$MAPCNTRLMNU_TOGGLEGRID",		"am_togglegrid"
 	MapControl "$MAPCNTRLMNU_TOGGLETEXTURE",	"am_toggletexture"
 
@@ -1517,6 +1518,7 @@ OptionMenu MessageOptions protected
 	Option "$MSGMNU_MESSAGELEVEL", 				"msg", "MessageLevels"
 	Option "$MSGMNU_DEVELOPER", 				"developer", "DevMessageLevels"
 	Option "$MSGMNU_CENTERMESSAGES",			"con_centernotify", "OnOff"
+	Option "$MSGMNU_PULSEMESSAGES",				"con_pulsetext", "OnOff"
 	Option "$MSGMNU_SUBTITLES",					"inter_subtitles", "OnOff"
 	StaticText " "
 	StaticText "$MSGMNU_MESSAGECOLORS", 1
@@ -2011,12 +2013,6 @@ OptionMenu OPNMIDICustomBanksMenu protected
  *
  *=======================================*/
 
-OptionValue ModReplayers
-{
-	0.0, "$OPTVAL_SOUNDSYSTEM"
-	1.0, "$OPTVAL_FOO_DUMB"
-}
-
 
 OptionValue ModQuality
 {
@@ -2244,6 +2240,18 @@ OptionValue CropAspect
 	1, "$OPTVAL_LETTERBOX"
 }
 
+OptionValue MaxFps
+{
+	0, "$OPTVAL_UNLIMITED"
+	60, "$OPTVAL_60FPS"
+	75, "$OPTVAL_75FPS"
+	90, "$OPTVAL_90FPS"
+	120, "$OPTVAL_120FPS"
+	144, "$OPTVAL_144FPS"
+	200, "$OPTVAL_200FPS"
+}
+
+
 OptionMenu VideoModeMenu protected
 {
 	Title "$VIDMNU_TITLE"
@@ -2269,6 +2277,7 @@ OptionMenu VideoModeMenu protected
 
 	StaticText " "
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
+	Option "$VIDMNU_MAXFPS",					"vid_maxfps", "MaxFps"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
 	
 	StaticText ""
@@ -2453,17 +2462,6 @@ OptionValue "DitherModes"
 	8, "8 BPC"
 	10, "10 BPC"
 	12, "12 BPC"
-}
-
-OptionValue "Hz"
-{
-	0, "$OPTVAL_OPTIMAL"
-	60, "$OPTVAL_60"
-	70, "$OPTVAL_70"
-	72, "$OPTVAL_72"
-	75, "$OPTVAL_75"
-	85, "$OPTVAL_85"
-	100, "$OPTVAL_100"
 }
 
 OptionValue "BillboardModes"

@@ -348,6 +348,7 @@ enum DrawTextureTags
 	DTA_FlipOffsets,		// Flips offsets when using DTA_FlipX and DTA_FlipY, this cannot be automatic due to unexpected behavior with unoffsetted graphics.
 	DTA_Indexed,			// Use an indexed texture combined with the given translation.
 	DTA_CleanTop,			// Like DTA_Clean but aligns to the top of the screen instead of the center.
+	DTA_NoOffset,			// Ignore 2D drawer's offset.
 
 };
 
@@ -398,6 +399,7 @@ struct Screen native
 	native static int, int, int, int GetClipRect();
 	native static int, int, int, int GetViewWindow();
 	native static double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
+	native static Vector2 SetOffset(double x, double y);
 }
 
 struct Font native

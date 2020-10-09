@@ -82,52 +82,52 @@ static const char *BeginSounds[] =
 
 static const SoundAndString WorldKillSounds[] =
 {
-	{ "BBA_EXCREMENT",	"VO7.SFX" },		// Excrement
-	{ "BBA_HAMBURGER",	"VO8.SFX" },		// Hamburger
-	{ "BBA_SCROTUM",	"VO9.SFX" },		// Scrotum separation
+	{ "TXT_SELFOBIT1",	"VO7.SFX" },		// Excrement
+	{ "TXT_SELFOBIT2",	"VO8.SFX" },		// Hamburger
+	{ "TXT_SELFOBIT3",	"VO9.SFX" },		// Scrotum separation
 };
 
 static const SoundAndString SuicideSounds[] =
 {
-	{ "BBA_SUICIDE",	"VO13.SFX" },		// Unassisted death
-	{ "BBA_SUICIDE",	"VO5.SFX" },		// Kevorkian approves
-	{ "BBA_POPULATION",	"VO12.SFX" },		// Population control
-	{ "BBA_DARWIN",		"VO16.SFX" }		// Darwin award
+	{ "TXT_SELFOBIT5",	"VO13.SFX" },		// Unassisted death
+	{ "TXT_SELFOBIT5",	"VO5.SFX" },		// Kevorkian approves
+	{ "TXT_SELFOBIT4",	"VO12.SFX" },		// Population control
+	{ "TXT_SELFOBIT6",	"VO16.SFX" }		// Darwin award
 };
 
 static const SoundAndString KillSounds[] =
 {
-	{ "BBA_BONED",		"BONED.SFX" },		// Boned
-	{ "BBA_CREAMED",	"CREAMED.SFX" },	// Creamed
-	{ "BBA_DECIMAT",	"DECIMAT.SFX" },	// Decimated
-	{ "BBA_DESTRO",		"DESTRO.SFX" },		// Destroyed
-	{ "BBA_DICED",		"DICED.SFX" },		// Diced
-	{ "BBA_DISEMBO",	"DISEMBO.SFX" },	// Disembowled
-	{ "BBA_FLATTE",		"FLATTE.SFX" },		// Flattened
-	{ "BBA_JUSTICE",	"JUSTICE.SFX" },	// Justice
-	{ "BBA_MADNESS",	"MADNESS.SFX" },	// Madness
-	{ "BBA_KILLED",		"KILLED.SFX" },		// Killed
-	{ "BBA_MINCMEAT",	"MINCMEAT.SFX" },	// Mincemeat
-	{ "BBA_MASSACR",	"MASSACR.SFX" },	// Massacred
-	{ "BBA_MUTILA",		"MUTILA.SFX" },		// Mutilated
-	{ "BBA_REAMED",		"REAMED.SFX" },		// Reamed
-	{ "BBA_RIPPED",		"RIPPED.SFX" },		// Ripped
-	{ "BBA_SLAUGHT",	"SLAUGHT.SFX" },	// Slaughtered
-	{ "BBA_SMASHED",	"SMASHED.SFX" },	// Smashed
-	{ "BBA_SODOMIZ",	"SODOMIZ.SFX" },	// Sodomized
-	{ "BBA_SPLATT",		"SPLATT.SFX" },		// Splattered
-	{ "BBA_SQUASH",		"SQUASH.SFX" },		// Squashed
-	{ "BBA_THROTTL",	"THROTTL.SFX" },	// Throttled
-	{ "BBA_WASTED",		"WASTED.SFX" },		// Wasted
-	{ "BBA_BODYBAG",	"VO10.SFX" },		// Body bagged
-	{ "BBA_HOSED",		"VO25.SFX" },		// Hosed
-	{ "BBA_TOAST",		"VO27.SFX" },		// Toasted
-	{ "BBA_HELL",		"VO28.SFX" },		// Sent to hell
-	{ "BBA_SPRAYED",	"VO35.SFX" },		// Sprayed
-	{ "BBA_DOGMEAT",	"VO36.SFX" },		// Dog meat
-	{ "BBA_BEATEN",		"VO39.SFX" },		// Beaten like a cur
-	{ "BBA_SNUFF",		"VO41.SFX" },		// Snuffed
-	{ "BBA_CASTRA",		"CASTRA.SFX" },		// Castrated
+	{ "TXT_OBITUARY1",	"BONED.SFX" },		// Boned
+	{ "TXT_OBITUARY3",	"CREAMED.SFX" },	// Creamed
+	{ "TXT_OBITUARY4",	"DECIMAT.SFX" },	// Decimated
+	{ "TXT_OBITUARY5",	"DESTRO.SFX" },		// Destroyed
+	{ "TXT_OBITUARY6",	"DICED.SFX" },		// Diced
+	{ "TXT_OBITUARY7",	"DISEMBO.SFX" },	// Disembowled
+	{ "TXT_OBITUARY8",	"FLATTE.SFX" },		// Flattened
+	{ "TXT_OBITUARY9",	"JUSTICE.SFX" },	// Justice
+	{ "TXT_OBITUARY10",	"MADNESS.SFX" },	// Madness
+	{ "TXT_OBITUARY11",	"KILLED.SFX" },		// Killed
+	{ "TXT_OBITUARY12",	"MINCMEAT.SFX" },	// Mincemeat
+	{ "TXT_OBITUARY13",	"MASSACR.SFX" },	// Massacred
+	{ "TXT_OBITUARY14",	"MUTILA.SFX" },		// Mutilated
+	{ "TXT_OBITUARY15",	"REAMED.SFX" },		// Reamed
+	{ "TXT_OBITUARY16",	"RIPPED.SFX" },		// Ripped
+	{ "TXT_OBITUARY17",	"SLAUGHT.SFX" },	// Slaughtered
+	{ "TXT_OBITUARY18",	"SMASHED.SFX" },	// Smashed
+	{ "TXT_OBITUARY19",	"SODOMIZ.SFX" },	// Sodomized
+	{ "TXT_OBITUARY20",	"SPLATT.SFX" },		// Splattered
+	{ "TXT_OBITUARY21",	"SQUASH.SFX" },		// Squashed
+	{ "TXT_OBITUARY22",	"THROTTL.SFX" },	// Throttled
+	{ "TXT_OBITUARY23",	"WASTED.SFX" },		// Wasted
+	{ "TXT_OBITUARY24",	"VO10.SFX" },		// Body bagged
+	{ "TXT_OBITUARY28",	"VO25.SFX" },		// Hosed
+	{ "TXT_OBITUARY26",	"VO27.SFX" },		// Toasted
+	{ "TXT_OBITUARY25",	"VO28.SFX" },		// Sent to hell
+	{ "TXT_OBITUARY29",	"VO35.SFX" },		// Sprayed
+	{ "TXT_OBITUARY30",	"VO36.SFX" },		// Dog meat
+	{ "TXT_OBITUARY31",	"VO39.SFX" },		// Beaten like a cur
+	{ "TXT_OBITUARY27",	"VO41.SFX" },		// Snuffed
+	{ "TXT_OBITUARY2",	"CASTRA.SFX" },		// Castrated
 };
 
 static const char *GoodJobSounds[] =

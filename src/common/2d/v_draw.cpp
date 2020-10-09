@@ -1553,3 +1553,11 @@ void V_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realh
 	*cleanx = *cleany = std::min(realwidth / designwidth, realheight / designheight);
 }
 
+
+DEFINE_ACTION_FUNCTION(_Screen, SetOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	ACTION_RETURN_VEC2(twod->SetOffset(DVector2(x, y)));
+}

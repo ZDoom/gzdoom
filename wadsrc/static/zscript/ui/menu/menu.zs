@@ -95,6 +95,7 @@ class Menu : Object native ui version("2.4")
 	native bool DontDim;
 	native bool DontBlur;
 	native bool AnimatedTransition;
+	native bool Animated;
 
 	native static int MenuTime();
 	native static Menu GetCurrentMenu();
@@ -118,6 +119,7 @@ class Menu : Object native ui version("2.4")
 		DontDim = false;
 		DontBlur = false;
 		AnimatedTransition = false;
+		Animated = false;
 	}
 	
 	//=============================================================================

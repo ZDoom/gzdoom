@@ -414,7 +414,8 @@ enum ActorFlag8
 	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
 	MF8_ABSVIEWANGLES	= 0x00000400,	// [MC] By default view angle/pitch/roll is an offset. This will make it absolute instead.
 	MF8_FALLDAMAGE		= 0x00000800,	// Monster will take fall damage regardless of map settings.
-
+	MF8_VIEWPOSNOANGLES	= 0x00001000,	// [MC] View position takes no angles into account
+	MF8_ABSVIEWPOS		= 0x00002000,	// [MC] Absolute position, so the actor must update it manually.
 };
 
 // --- mobj.renderflags ---
@@ -968,7 +969,8 @@ public:
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
 	DRotator		Angles;
-	DRotator		ViewAngles;			// Offsets for cameras
+	DRotator		ViewAngles;			// Angle offsets for cameras
+	DVector3		ViewPos;			// Position offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 

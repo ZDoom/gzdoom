@@ -44,6 +44,8 @@ struct FRenderViewpoint
 	int				extralight;		// extralight to be added to this viewpoint
 	bool			showviewer;		// show the camera actor?
 
+	bool			InPortal;		// disable actor rendering if the camera viewpos is separated by portal.
+
 
 	void SetViewAngle(const FViewWindow &viewwindow);
 

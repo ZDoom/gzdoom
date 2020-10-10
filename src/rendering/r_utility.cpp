@@ -775,28 +775,87 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		iview->Old = iview->New;
 	}
 
-	if (player != NULL && gamestate != GS_TITLELEVEL &&
-		((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0)))
+	if (player && gamestate != GS_TITLELEVEL)
 	{
 		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
-		// [RH] Use chasecam view
-		DVector3 campos;
-		DAngle camangle;
-		P_AimCamera (viewpoint.camera, campos, camangle, viewpoint.sector, unlinked);	// fixme: This needs to translate the angle, too.
-		iview->New.Pos = campos;
-		iview->New.Angles.Yaw = camangle;
-		
-		viewpoint.showviewer = true;
-		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
-		// it's probably best to just reset the interpolation for this move.
-		// Note that this can still cause problems with unusually linked portals
-		if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256*256))
+		if ((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0))
 		{
-			iview->otic = nowtic;
-			iview->Old = iview->New;
-			r_NoInterpolate = true;
+			// [RH] Use chasecam view
+			DVector3 campos;
+			DAngle camangle;
+			P_AimCamera (viewpoint.camera, campos, camangle, viewpoint.sector, unlinked);	// fixme: This needs to translate the angle, too.
+			iview->New.Pos = campos;
+			iview->New.Angles.Yaw = camangle;
+		
+			viewpoint.showviewer = true;
+			// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
+			// it's probably best to just reset the interpolation for this move.
+			// Note that this can still cause problems with unusually linked portals
+			if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256*256))
+			{
+				iview->otic = nowtic;
+				iview->Old = iview->New;
+				r_NoInterpolate = true;
+			}
+			viewpoint.ActorPos = campos;
 		}
-		viewpoint.ActorPos = campos;
+		else // No chase/death cam and player is alive.
+		{
+			AActor *mo = viewpoint.camera;
+			DVector3 orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
+			DVector3 next = orig;
+
+			// [MC] Ignores all portal portal transitions since it's meant to be absolute.
+			// It'll be down to the modder to handle performing offsetting with the appropriate functions.
+			if (mo->flags8 & MF8_ABSVIEWPOS)
+			{
+				next = mo->ViewPos;
+				viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(next.XY())->sector;
+			}
+			else
+			{
+				if (mo->flags8 & MF8_VIEWPOSNOANGLES)
+				{
+					next += mo->ViewPos;
+				}
+				else
+				{
+					// [MC] Do NOT handle portals here! Trace must have the unportaled (absolute) position to
+					// get the correct angle and distance. Trace automatically handles portals by itself.
+					// Also, viewpos must use the original angles, not the view angles to position the camera.
+					DAngle angle = mo->Angles.Yaw;
+					DAngle pitch = mo->Angles.Pitch;
+					DVector3 Off = 
+					{
+						mo->ViewPos.X * pitch.Cos(),
+						mo->ViewPos.Y,
+						mo->ViewPos.Z  * -pitch.Sin()
+					};
+					next = 
+					{
+						orig.X + Off.X * angle.Cos() + Off.Y * angle.Sin(),
+						orig.Y + Off.X * angle.Sin() - Off.Y * angle.Cos(),
+						orig.Z + Off.Z
+					};
+				}
+
+				viewpoint.sector = mo->Sector;
+				DAngle camangle;
+				if (next != orig)
+					P_AdjustViewPos(mo, orig, next, camangle, viewpoint.sector, unlinked);
+			}
+			viewpoint.ActorPos = orig;
+			iview->New.Pos = next;
+			viewpoint.showviewer = false;
+
+			if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
+			{
+				iview->otic = nowtic;
+				iview->Old = iview->New;
+				r_NoInterpolate = true;
+				viewpoint.InPortal = true;
+			}
+		}
 	}
 	else
 	{

@@ -235,6 +235,7 @@ class Actor : Thinker native
 	native double CameraHeight;	// Height of camera when used as such
 	native double CameraFOV;
 	native double ViewAngle, ViewPitch, ViewRoll;
+	native Vector3 ViewPos;
 	native double RadiusDamageFactor;		// Radius damage factor
 	native double SelfDamageFactor;
 	native double StealthAlpha;

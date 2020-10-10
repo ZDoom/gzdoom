@@ -1202,6 +1202,7 @@ decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc
 decl_flag(X) ::= INTERNAL(T).	{ X.Int = ZCC_Internal; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= ABSTRACT(T).	{ X.Int = ZCC_Abstract; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VARARG(T).     { X.Int = ZCC_VarArg; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= UI(T).			{ X.Int = ZCC_UIFlag; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= PLAY(T).		{ X.Int = ZCC_Play; X.SourceLoc = T.SourceLoc; }

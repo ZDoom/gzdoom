@@ -115,12 +115,17 @@ class LoadSaveMenu : ListMenu
 	override void Init(Menu parent, ListMenuDescriptor desc)
 	{
 		Super.Init(parent, desc);
+		manager = SavegameManager.GetManager();
+		manager.ReadSaveStrings();
+		SetWindows();
+	}
+	
+	private void SetWindows()
+	{
 		bool aspect43 = true;
 		int Width43 = screen.GetHeight() * 4 / 3;
 		int Left43 = (screen.GetWidth() - Width43) / 2;
 		
-		manager = SavegameManager.GetManager();
-		manager.ReadSaveStrings();
 		double wScale = Width43 / 640.;
 
 		savepicLeft = Left43 + int(20 * wScale);
@@ -186,6 +191,7 @@ class LoadSaveMenu : ListMenu
 			return;
 		}
 
+		SetWindows();
 		DrawFrame(savepicLeft, savepicTop, savepicWidth, savepicHeight);
 		if (!manager.DrawSavePic(savepicLeft, savepicTop, savepicWidth, savepicHeight))
 		{
@@ -196,9 +202,9 @@ class LoadSaveMenu : ListMenu
 				if (Selected >= manager.SavegameCount()) Selected = 0;
 				String text = (Selected == -1 || !manager.GetSavegame(Selected).bOldVersion)? Stringtable.Localize("$MNU_NOPICTURE") : Stringtable.Localize("$MNU_DIFFVERSION");
 				int textlen = NewSmallFont.StringWidth(text);
-
-				screen.DrawText (NewSmallFont, Font.CR_GOLD, (savepicLeft+(savepicWidth-textlen)/2) / FontScale,
-					(savepicTop+(savepicHeight-rowHeight)/2) / FontScale, text, DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
+				
+				screen.DrawText (NewSmallFont, Font.CR_GOLD, (savepicLeft + savepicWidth / 2) / FontScale - textlen/2,
+					(savepicTop+(savepicHeight-rowHeight)/2) / FontScale, text, DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 			}
 		}
 

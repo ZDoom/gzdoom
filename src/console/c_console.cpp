@@ -71,6 +71,7 @@
 
 
 #include "gi.h"
+#include "c_commandbuffer.h"
 
 #define LEFTMARGIN 8
 #define RIGHTMARGIN 8
@@ -88,13 +89,6 @@ CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 FConsoleBuffer *conbuffer;
 
-static void C_TabComplete (bool goForward);
-static bool C_TabCompleteList ();
-static bool TabbedLast;		// True if last key pressed was tab
-static bool TabbedList;		// True if tab list was shown
-CVAR(Bool, con_notablist, false, CVAR_ARCHIVE)
-
-
 static FTextureID conback;
 static uint32_t conshade;
 static bool conline;
@@ -106,7 +100,6 @@ extern bool		advancedemo;
 extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 
-unsigned	ConCols;
 int			ConWidth;
 bool		vidactive = false;
 bool		cursoron = false;
@@ -115,6 +108,8 @@ uint64_t	CursorTicker;
 constate_e	ConsoleState = c_up;
 
 double NotifyFontScale = 1;
+
+DEFINE_GLOBAL(NotifyFontScale)
 
 void C_SetNotifyFontScale(double scale)
 {
@@ -174,344 +169,6 @@ struct History
 	struct History *Newer;
 	FString String;
 };
-
-struct FCommandBuffer
-{
-private:
-	std::u32string Text;
-	unsigned CursorPos = 0;
-	unsigned StartPos = 0;	// First character to display
-	unsigned CursorPosCells = 0;
-	unsigned StartPosCells = 0;
-
-	std::u32string YankBuffer;	// Deleted text buffer
-
-public:
-	bool AppendToYankBuffer = false;	// Append consecutive deletes to buffer
-
-	FCommandBuffer() = default;
-
-	FCommandBuffer(const FCommandBuffer &o)
-	{
-		Text = o.Text;
-		CursorPos = o.CursorPos;
-		StartPos = o.StartPos;
-	}
-
-	FString GetText() const
-	{
-		FString build;
-		for (auto chr : Text) build.AppendCharacter(chr);
-		return build;
-	}
-
-	size_t TextLength() const
-	{
-		return Text.length();
-	}
-
-	void Draw(int x, int y, int scale, bool cursor)
-	{
-		if (scale == 1)
-		{
-			DrawChar(twod, CurrentConsoleFont, CR_ORANGE, x, y, '\x1c', TAG_DONE);
-			DrawText(twod, CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
-				&Text[StartPos], TAG_DONE);
-
-			if (cursor)
-			{
-				DrawChar(twod, CurrentConsoleFont, CR_YELLOW,
-					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosCells - StartPosCells) * CurrentConsoleFont->GetCharWidth(0xb),
-					y, '\xb', TAG_DONE);
-			}
-		}
-		else
-		{
-			DrawChar(twod, CurrentConsoleFont, CR_ORANGE, x, y, '\x1c',
-				DTA_VirtualWidth, twod->GetWidth() / scale,
-				DTA_VirtualHeight, twod->GetHeight() / scale,
-				DTA_KeepRatio, true, TAG_DONE);
-
-			DrawText(twod, CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
-				&Text[StartPos],
-				DTA_VirtualWidth, twod->GetWidth() / scale,
-				DTA_VirtualHeight, twod->GetHeight() / scale,
-				DTA_KeepRatio, true, TAG_DONE);
-
-			if (cursor)
-			{
-				DrawChar(twod, CurrentConsoleFont, CR_YELLOW,
-					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosCells - StartPosCells) * CurrentConsoleFont->GetCharWidth(0xb),
-					y, '\xb',
-					DTA_VirtualWidth, twod->GetWidth() / scale,
-					DTA_VirtualHeight, twod->GetHeight() / scale,
-					DTA_KeepRatio, true, TAG_DONE);
-			}
-		}
-	}
-
-	unsigned CalcCellSize(unsigned length)
-	{
-		unsigned cellcount = 0;
-		for (unsigned i = 0; i < length; i++)
-		{
-			int w;
-			NewConsoleFont->GetChar(Text[i], CR_UNTRANSLATED, &w);
-			cellcount += w / 9;
-		}
-		return cellcount;
-
-	}
-
-	unsigned CharsForCells(unsigned cellin, bool *overflow)
-	{
-		unsigned chars = 0;
-		int cells = cellin;
-		while (cells > 0)
-		{
-			int w;
-			NewConsoleFont->GetChar(Text[chars++], CR_UNTRANSLATED, &w);
-			cells -= w / 9;
-		}
-		*overflow = (cells < 0);
-		return chars;
-	}
-
-
-	void MakeStartPosGood()
-	{
-		// Make sure both values point to something valid.
-		if (CursorPos > Text.length()) CursorPos = (unsigned)Text.length();
-		if (StartPos > Text.length()) StartPos = (unsigned)Text.length();
-
-		CursorPosCells = CalcCellSize(CursorPos);
-		StartPosCells = CalcCellSize(StartPos);
-		unsigned LengthCells = CalcCellSize((unsigned)Text.length());
-
-		int n = StartPosCells;
-		unsigned cols = ConCols / active_con_scale(twod);
-
-		if (StartPosCells >= LengthCells)
-		{ // Start of visible line is beyond end of line
-			n = CursorPosCells - cols + 2;
-		}
-		if ((CursorPosCells - StartPosCells) >= cols - 2)
-		{ // The cursor is beyond the visible part of the line
-			n = CursorPosCells - cols + 2;
-		}
-		if (StartPosCells > CursorPosCells)
-		{ // The cursor is in front of the visible part of the line
-			n = CursorPosCells;
-		}
-		StartPosCells = std::max(0, n);
-		bool overflow;
-		StartPos = CharsForCells(StartPosCells, &overflow);
-		if (overflow)
-		{
-			// We ended up in the middle of a double cell character, so set the start to the following character.
-			StartPosCells++;
-			StartPos = CharsForCells(StartPosCells, &overflow);
-		}
-	}
-
-	void CursorStart()
-	{
-		CursorPos = 0;
-		StartPos = 0;
-		CursorPosCells = 0;
-		StartPosCells = 0;
-	}
-
-	void CursorEnd()
-	{
-		CursorPos = (unsigned)Text.length();
-		MakeStartPosGood();
-	}
-
-private:
-	void MoveCursorLeft()
-	{
-		CursorPos--;
-	}
-
-	void MoveCursorRight()
-	{
-		CursorPos++;
-	}
-
-public:
-	void CursorLeft()
-	{
-		if (CursorPos > 0)
-		{
-			MoveCursorLeft();
-			MakeStartPosGood();
-		}
-	}
-
-	void CursorRight()
-	{
-		if (CursorPos < Text.length())
-		{
-			MoveCursorRight();
-			MakeStartPosGood();
-		}
-	}
-
-	void CursorWordLeft()
-	{
-		if (CursorPos > 0)
-		{
-			do MoveCursorLeft();
-			while (CursorPos > 0 && Text[CursorPos - 1] != ' ');
-			MakeStartPosGood();
-		}
-	}
-
-	void CursorWordRight()
-	{
-		if (CursorPos < Text.length())
-		{
-			do MoveCursorRight();
-			while (CursorPos < Text.length() && Text[CursorPos] != ' ');
-			MakeStartPosGood();
-		}
-	}
-
-	void DeleteLeft()
-	{
-		if (CursorPos > 0)
-		{
-			MoveCursorLeft();
-			Text.erase(CursorPos, 1);
-			MakeStartPosGood();
-		}
-	}
-
-	void DeleteRight()
-	{
-		if (CursorPos < Text.length())
-		{
-			Text.erase(CursorPos, 1);
-			MakeStartPosGood();
-		}
-	}
-
-	void DeleteWordLeft()
-	{
-		if (CursorPos > 0)
-		{
-			auto now = CursorPos;
-
-			CursorWordLeft();
-
-			if (AppendToYankBuffer) {
-				YankBuffer = Text.substr(CursorPos, now - CursorPos) + YankBuffer;
-			} else {
-				YankBuffer = Text.substr(CursorPos, now - CursorPos);
-			}
-			Text.erase(CursorPos, now - CursorPos);
-			MakeStartPosGood();
-		}
-	}
-
-	void DeleteLineLeft()
-	{
-		if (CursorPos > 0)
-		{
-			if (AppendToYankBuffer) {
-				YankBuffer = Text.substr(0, CursorPos) + YankBuffer;
-			} else {
-				YankBuffer = Text.substr(0, CursorPos);
-			}
-			Text.erase(0, CursorPos);
-			CursorStart();
-		}
-	}
-
-	void DeleteLineRight()
-	{
-		if (CursorPos < Text.length())
-		{
-			if (AppendToYankBuffer) {
-				YankBuffer += Text.substr(CursorPos, Text.length() - CursorPos);
-			} else {
-				YankBuffer = Text.substr(CursorPos, Text.length() - CursorPos);
-			}
-			Text.resize(CursorPos);
-			CursorEnd();
-		}
-	}
-
-	void AddChar(int character)
-	{
-		if (Text.length() == 0)
-		{
-			Text += character;
-		}
-		else
-		{
-			Text.insert(CursorPos, 1, character);
-		}
-		CursorPos++;
-		MakeStartPosGood();
-	}
-
-	void AddString(FString clip)
-	{
-		if (clip.IsNotEmpty())
-		{
-			// Only paste the first line.
-			long brk = clip.IndexOfAny("\r\n\b");
-			std::u32string build;
-			if (brk >= 0)
-			{
-				clip.Truncate(brk);
-			}
-			auto strp = (const uint8_t*)clip.GetChars();
-			while (auto chr = GetCharFromString(strp)) build += chr;
-			
-			if (Text.length() == 0)
-			{
-				Text = build;
-			}
-			else
-			{
-				Text.insert(CursorPos, build);
-			}
-			CursorPos += (unsigned)build.length();
-			MakeStartPosGood();
-		}
-	}
-
-	void SetString(const FString &str)
-	{
-		Text.clear();
-		auto strp = (const uint8_t*)str.GetChars();
-		while (auto chr = GetCharFromString(strp)) Text += chr;
-
-		CursorEnd();
-		MakeStartPosGood();
-	}
-
-	void AddYankBuffer()
-	{
-		if (YankBuffer.length() > 0)
-		{
-			if (Text.length() == 0)
-			{
-				Text = YankBuffer;
-			}
-			else
-			{
-				Text.insert(CursorPos, YankBuffer);
-			}
-			CursorPos += (unsigned)YankBuffer.length();
-			MakeStartPosGood();
-		}
-	}
-};
-static FCommandBuffer CmdLine;
 
 #define MAXHISTSIZE 50
 static struct History *HistHead = NULL, *HistTail = NULL, *HistPos = NULL;
@@ -628,7 +285,7 @@ void C_InitConsole (int width, int height, bool ingame)
 		cwidth = cheight = 8;
 	}
 	ConWidth = (width - LEFTMARGIN - RIGHTMARGIN);
-	ConCols = ConWidth / cwidth;
+	CmdLine.ConCols = ConWidth / cwidth;
 
 	if (conbuffer == NULL) conbuffer = new FConsoleBuffer;
 }
@@ -1187,20 +844,27 @@ void C_DrawConsole ()
 	else if (ConBottom)
 	{
 		int visheight;
-		FGameTexture *conpic = TexMan.GetGameTexture(conback);
 
 		visheight = ConBottom;
 
-		DrawTexture(twod, conpic, 0, visheight - twod->GetHeight(),
-			DTA_DestWidth, twod->GetWidth(),
-			DTA_DestHeight, twod->GetHeight(),
-			DTA_ColorOverlay, conshade,
-			DTA_Alpha, (gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
-			DTA_Masked, false,
-			TAG_DONE);
-		if (conline && visheight < twod->GetHeight())
+		if (conback.isValid())
 		{
-			ClearRect(twod, 0, visheight, twod->GetWidth(), visheight+1, 0, 0);
+			DrawTexture (twod, TexMan.GetGameTexture(conback), 0, visheight - screen->GetHeight(),
+				DTA_DestWidth, twod->GetWidth(),
+				DTA_DestHeight, twod->GetHeight(),
+				DTA_ColorOverlay, conshade,
+				DTA_Alpha, (gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
+				DTA_Masked, false,
+				TAG_DONE);
+		}
+		else
+		{
+			PalEntry pe((uint8_t)(con_alpha * 255), 0, 0, 0);
+			twod->AddColorOnlyQuad(0, 0, screen->GetWidth(), visheight, pe);
+		}
+		if (conline && visheight < screen->GetHeight())
+		{
+			twod->AddColorOnlyQuad(0, visheight, screen->GetWidth(), 1, 0xff000000);
 		}
 
 		if (ConBottom >= 12)
@@ -1765,6 +1429,11 @@ CCMD (echo)
 	}
 }
 
+CCMD(toggleconsole)
+{
+	C_ToggleConsole();
+}
+
 /* Printing in the middle of the screen */
 
 CVAR(Float, con_midtime, 3.f, CVAR_ARCHIVE)
@@ -1800,276 +1469,3 @@ void C_MidPrint (FFont *font, const char *msg, bool bold)
 	}
 }
 
-/****** Tab completion code ******/
-
-struct TabData
-{
-	int UseCount;
-	FName TabName;
-
-	TabData()
-	: UseCount(0), TabName(NAME_None)
-	{
-	}
-
-	TabData(const char *name)
-	: UseCount(1), TabName(name)
-	{
-	}
-
-	TabData(const TabData &other) = default;
-};
-
-static TArray<TabData> TabCommands (TArray<TabData>::NoInit);
-static int TabPos;				// Last TabCommand tabbed to
-static int TabStart;			// First char in CmdLine to use for tab completion
-static int TabSize;				// Size of tab string
-
-static bool FindTabCommand (const char *name, int *stoppos, int len)
-{
-	FName aname(name);
-	unsigned int i;
-	int cval = 1;
-
-	for (i = 0; i < TabCommands.Size(); i++)
-	{
-		if (TabCommands[i].TabName == aname)
-		{
-			*stoppos = i;
-			return true;
-		}
-		cval = strnicmp (TabCommands[i].TabName.GetChars(), name, len);
-		if (cval >= 0)
-			break;
-	}
-
-	*stoppos = i;
-
-	return (cval == 0);
-}
-
-void C_AddTabCommand (const char *name)
-{
-	int pos;
-
-	if (FindTabCommand (name, &pos, INT_MAX))
-	{
-		TabCommands[pos].UseCount++;
-	}
-	else
-	{
-		TabData tab(name);
-		TabCommands.Insert (pos, tab);
-	}
-}
-
-void C_RemoveTabCommand (const char *name)
-{
-	if (TabCommands.Size() == 0)
-	{
-		// There are no tab commands that can be removed.
-		// This is important to skip construction of aname 
-		// in case the NameManager has already been destroyed.
-		return;
-	}
-
-	FName aname(name, true);
-
-	if (aname == NAME_None)
-	{
-		return;
-	}
-	for (unsigned int i = 0; i < TabCommands.Size(); ++i)
-	{
-		if (TabCommands[i].TabName == aname)
-		{
-			if (--TabCommands[i].UseCount == 0)
-			{
-				TabCommands.Delete(i);
-			}
-			break;
-		}
-	}
-}
-
-void C_ClearTabCommands ()
-{
-	TabCommands.Clear();
-}
-
-static int FindDiffPoint (FName name1, const char *str2)
-{
-	const char *str1 = name1.GetChars();
-	int i;
-
-	for (i = 0; tolower(str1[i]) == tolower(str2[i]); i++)
-		if (str1[i] == 0 || str2[i] == 0)
-			break;
-
-	return i;
-}
-
-static void C_TabComplete (bool goForward)
-{
-	unsigned i;
-	int diffpoint;
-
-	auto CmdLineText = CmdLine.GetText();
-	if (!TabbedLast)
-	{
-		bool cancomplete;
-
-
-		// Skip any spaces at beginning of command line
-		for (i = 0; i < CmdLineText.Len(); ++i)
-		{
-			if (CmdLineText[i] != ' ')
-				break;
-		}
-		if (i == CmdLineText.Len())
-		{ // Line was nothing but spaces
-			return;
-		}
-		TabStart = i;
-
-		TabSize = (int)CmdLineText.Len() - TabStart;
-
-		if (!FindTabCommand(&CmdLineText[TabStart], &TabPos, TabSize))
-			return;		// No initial matches
-
-		// Show a list of possible completions, if more than one.
-		if (TabbedList || con_notablist)
-		{
-			cancomplete = true;
-		}
-		else
-		{
-			cancomplete = C_TabCompleteList ();
-			TabbedList = true;
-		}
-
-		if (goForward)
-		{ // Position just before the list of completions so that when TabPos
-		  // gets advanced below, it will be at the first one.
-			--TabPos;
-		}
-		else
-		{ // Find the last matching tab, then go one past it.
-			while (++TabPos < (int)TabCommands.Size())
-			{
-				if (FindDiffPoint(TabCommands[TabPos].TabName, &CmdLineText[TabStart]) < TabSize)
-				{
-					break;
-				}
-			}
-		}
-		TabbedLast = true;
-		if (!cancomplete)
-		{
-			return;
-		}
-	}
-
-	if ((goForward && ++TabPos == (int)TabCommands.Size()) ||
-		(!goForward && --TabPos < 0))
-	{
-		TabbedLast = false;
-		CmdLineText.Truncate(TabSize);
-	}
-	else
-	{
-		diffpoint = FindDiffPoint(TabCommands[TabPos].TabName, &CmdLineText[TabStart]);
-
-		if (diffpoint < TabSize)
-		{
-			// No more matches
-			TabbedLast = false;
-			CmdLineText.Truncate(TabSize - TabStart);
-		}
-		else
-		{
-			CmdLineText.Truncate(TabStart);
-			CmdLineText << TabCommands[TabPos].TabName.GetChars() << ' ';
-		}
-	}
-	CmdLine.SetString(CmdLineText);
-	CmdLine.MakeStartPosGood();
-}
-
-static bool C_TabCompleteList ()
-{
-	int nummatches, i;
-	size_t maxwidth;
-	int commonsize = INT_MAX;
-
-	nummatches = 0;
-	maxwidth = 0;
-
-	auto CmdLineText = CmdLine.GetText();
-	for (i = TabPos; i < (int)TabCommands.Size(); ++i)
-	{
-		if (FindDiffPoint (TabCommands[i].TabName, &CmdLineText[TabStart]) < TabSize)
-		{
-			break;
-		}
-		else
-		{
-			if (i > TabPos)
-			{
-				// This keeps track of the longest common prefix for all the possible
-				// completions, so we can fill in part of the command for the user if
-				// the longest common prefix is longer than what the user already typed.
-				int diffpt = FindDiffPoint (TabCommands[i-1].TabName, TabCommands[i].TabName.GetChars());
-				if (diffpt < commonsize)
-				{
-					commonsize = diffpt;
-				}
-			}
-			nummatches++;
-			maxwidth = std::max (maxwidth, strlen (TabCommands[i].TabName.GetChars()));
-		}
-	}
-	if (nummatches > 1)
-	{
-		size_t x = 0;
-		maxwidth += 3;
-		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLineText.GetChars());
-		for (i = TabPos; nummatches > 0; ++i, --nummatches)
-		{
-			// [Dusk] Print console commands blue, CVars green, aliases red.
-			const char* colorcode = "";
-			FConsoleCommand* ccmd;
-			if (FindCVar (TabCommands[i].TabName.GetChars(), NULL))
-				colorcode = TEXTCOLOR_GREEN;
-			else if ((ccmd = FConsoleCommand::FindByName (TabCommands[i].TabName.GetChars())) != NULL)
-			{
-				if (ccmd->IsAlias())
-					colorcode = TEXTCOLOR_RED;
-				else
-					colorcode = TEXTCOLOR_LIGHTBLUE;
-			}
-
-			Printf ("%s%-*s", colorcode, int(maxwidth), TabCommands[i].TabName.GetChars());
-			x += maxwidth;
-			if (x > ConCols / active_con_scale(twod) - maxwidth)
-			{
-				x = 0;
-				Printf ("\n");
-			}
-		}
-		if (x != 0)
-		{
-			Printf ("\n");
-		}
-		// Fill in the longest common prefix, if it's longer than what was typed.
-		if (TabSize != commonsize)
-		{
-			TabSize = commonsize;
-			CmdLineText.Truncate(TabStart);
-			CmdLineText.AppendCStrPart(TabCommands[TabPos].TabName.GetChars(), commonsize);
-			CmdLine.SetString(CmdLineText);
-		}
-		return false;
-	}
-	return true;
-}

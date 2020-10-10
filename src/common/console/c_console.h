@@ -36,6 +36,7 @@
 
 #include <stdarg.h>
 #include "basics.h"
+#include "c_tabcomplete.h"
 
 struct event_t;
 
@@ -81,9 +82,6 @@ void C_MidPrint (FFont *font, const char *message, bool bold = false);
 
 bool C_Responder (event_t *ev);
 
-void C_AddTabCommand (const char *name);
-void C_RemoveTabCommand (const char *name);
-void C_ClearTabCommands();		// Removes all tab commands
 void C_SetNotifyFontScale(double scale);
 
 extern const char *console_bar;

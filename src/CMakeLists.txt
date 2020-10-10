@@ -1069,6 +1069,8 @@ set (PCH_SOURCES
 	common/console/c_consolebuffer.cpp
 	common/console/c_cvars.cpp
 	common/console/c_dispatch.cpp
+	common/console/c_commandbuffer.cpp
+	common/console/c_tabcomplete.cpp
 	common/console/c_expr.cpp
 	common/utility/engineerrors.cpp
 	common/utility/i_module.cpp

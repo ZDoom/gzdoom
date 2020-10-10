@@ -81,11 +81,6 @@ CVAR(Bool, show_messages, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, show_obituaries, true, CVAR_ARCHIVE)
 
 
-CCMD (toggleconsole)
-{
-	C_ToggleConsole();
-}
-
 bool CheckCheatmode (bool printmsg, bool sponly)
 {
 	if (sponly && netgame)

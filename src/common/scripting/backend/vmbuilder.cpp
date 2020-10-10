@@ -767,13 +767,16 @@ FFunctionBuildList FunctionBuildList;
 
 VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo &ver, PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
 {
-	auto func = code->GetDirectFunction(functype, ver);
-	if (func != nullptr)
+	if (code != nullptr)
 	{
-		delete code;
+		auto func = code->GetDirectFunction(functype, ver);
+		if (func != nullptr)
+		{
+			delete code;
 
 
-		return func;
+			return func;
+		}
 	}
 
 	//Printf("Adding %s\n", name.GetChars());
@@ -815,6 +818,10 @@ void FFunctionBuildList::Build()
 
 	for (auto &item : mItems)
 	{
+		// [Player701] Do not emit code for abstract functions
+		bool isAbstract = item.Func->Variants[0].Implementation->VarFlags & VARF_Abstract;
+		if (isAbstract) continue;
+
 		assert(item.Code != NULL);
 
 		// We don't know the return type in advance for anonymous functions.

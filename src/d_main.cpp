@@ -3146,16 +3146,6 @@ static int D_DoomMain_Internal (void)
 
 	// reinit from here
 
-	ConsoleCallbacks cb = {
-		D_UserInfoChanged,
-		D_SendServerInfoChange,
-		D_SendServerFlagChange,
-		G_GetUserCVar,
-		[]() { return gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP; }
-	};
-
-	C_InstallHandlers(&cb);
-
 	do
 	{
 		PClass::StaticInit();
@@ -3642,6 +3632,17 @@ int GameMain()
 {
 	int ret = 0;
 	GameTicRate = TICRATE;
+
+	ConsoleCallbacks cb = {
+		D_UserInfoChanged,
+		D_SendServerInfoChange,
+		D_SendServerFlagChange,
+		G_GetUserCVar,
+		[]() { return gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP; }
+	};
+
+	C_InstallHandlers(&cb);
+
 	try
 	{
 		ret = D_DoomMain_Internal();

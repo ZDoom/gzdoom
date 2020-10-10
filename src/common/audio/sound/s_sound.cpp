@@ -50,7 +50,6 @@ enum
 };
 static FRandom pr_soundpitch ("SoundPitch");
 SoundEngine* soundEngine;
-int sfx_empty = -1;
 
 //==========================================================================
 //
@@ -713,10 +712,9 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 	{
 		unsigned int i;
 
-		// If the sound doesn't exist, replace it with the empty sound.
-		if (sfx->lumpnum == -1)
+		if (sfx->lumpnum == sfx_empty)
 		{
-			sfx->lumpnum = sfx_empty;
+			return sfx;
 		}
 		
 		// See if there is another sound already initialized with this lump. If so,
@@ -1532,31 +1530,12 @@ int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitc
 	S_sfx.Reserve(1);
 	sfxinfo_t &newsfx = S_sfx.Last();
 
-	newsfx.data.Clear();
 	newsfx.name = logicalname;
 	newsfx.lumpnum = lump;
 	newsfx.next = 0;
-	newsfx.index = 0;
-	newsfx.Volume = 1;
-	newsfx.Attenuation = 1;
 	newsfx.PitchMask = CurrentPitchMask;
-	newsfx.DefPitch = 0.0;
-	newsfx.DefPitchMax = 0.0;
 	newsfx.NearLimit = nearlimit;
-	newsfx.LimitRange = 256 * 256;
-	newsfx.bRandomHeader = false;
-	newsfx.bLoadRAW = false;
-	newsfx.b16bit = false;
-	newsfx.bUsed = false;
-	newsfx.bSingular = false;
-	newsfx.bTentative = false;
 	newsfx.ResourceId = resid;
-	newsfx.RawRate = 0;
-	newsfx.link = sfxinfo_t::NO_LINK;
-	newsfx.Rolloff.RolloffType = ROLLOFF_Doom;
-	newsfx.Rolloff.MinDistance = 0;
-	newsfx.Rolloff.MaxDistance = 0;
-	newsfx.LoopStart = -1;
 
 	if (resid >= 0) ResIdMap[resid] = S_sfx.Size() - 1;
 	return (int)S_sfx.Size()-1;

@@ -766,7 +766,6 @@ void S_ParseSndInfo (bool redefine)
 
 	S_ShrinkPlayerSoundLists ();
 
-	sfx_empty = fileSystem.CheckNumForName ("dsempty", ns_sounds);
 	S_CheckIntegrity();
 }
 
@@ -1669,19 +1668,6 @@ int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedn
 		id = name;
 	}
 	return S_FindSkinnedSound (actor, id);
-}
-
-//==========================================================================
-//
-// sfxinfo_t :: MarkUsed
-//
-// Marks this sound for precaching.
-//
-//==========================================================================
-
-void sfxinfo_t::MarkUsed()
-{
-	bUsed = true;
 }
 
 //==========================================================================

@@ -2560,6 +2560,7 @@ class PSprite : Object native play
 	native double alpha;
 	native Bool firstTic;
 	native int Tics;
+	native uint Translation;
 	native bool bAddWeapon;
 	native bool bAddBob;
 	native bool bPowDouble;

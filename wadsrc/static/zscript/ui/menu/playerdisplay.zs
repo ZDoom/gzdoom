@@ -282,7 +282,7 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 				DTA_Color, c,
 				DTA_Masked, true);
 
-			Screen.DrawFrame (x, y, 72*sx, 80*sy-1);
+			Screen.DrawFrame (x, y, int(72*sx), int(80*sy-1));
 
 			if (mPlayerState != NULL)
 			{

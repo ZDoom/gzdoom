@@ -1,0 +1,4 @@
+// this file has the simplified menu here.
+// this file is *only* for options that are relevant to a novice user of GZDoom
+// this file needs to be regularly pruned, with options coalesced as much as possible. any and all verbosity should go to the classic menus.
+

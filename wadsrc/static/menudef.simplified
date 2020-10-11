@@ -2,3 +2,56 @@
 // this file is *only* for options that are relevant to a novice user of GZDoom
 // this file needs to be regularly pruned, with options coalesced as much as possible. any and all verbosity should go to the classic menus.
 
+OptionMenu "OptionsMenuSimple" protected
+{
+	Title "$OPTMNU_TITLE"
+	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
+	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
+	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
+	StaticText " "
+	Submenu "$OPTMNU_SOUND",			"SoundOptionsSimple"
+	Submenu "$OPTMNU_DISPLAY",			"VideoOptionsSimple"
+	StaticText " "
+	Submenu "$OS_TITLE", "os_Menu"
+	StaticText " "
+	Submenu "$OMS_CLASSIC", "OptionsMenu"
+	StaticText " "
+	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
+	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
+	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	StaticText " "
+}
+
+OptionMenu SoundOptionsSimple protected
+{
+	Title "$SNDMNU_TITLE"
+	Slider "$MODMNU_MASTERVOLUME",		"snd_mastervolume", 0, 1, 0.05, 2
+	StaticText " "
+	Slider "$SNDMNU_SFXVOLUME",			"snd_sfxvolume", 0, 1, 0.05, 2
+	Slider "$SNDMNU_MUSICVOLUME",		"snd_musicvolume", 0, 1, 0.05, 2
+	StaticText " "
+	Slider "$SNDMNU_MENUVOLUME",		"snd_menuvolume", 0, 1, 0.05, 2
+	StaticText " "
+	Option "$SNDMNU_MIDIDEVICE",		"snd_mididevice", "MidiDevices"
+	Command "$SNDMNU_RESTART",			"snd_reset"
+}
+
+OptionMenu VideoOptionsSimple protected
+{
+	Title "$VIDMNU_TITLE"
+
+	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
+	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
+	IfOption(Mac)
+	{
+		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
+	}
+	StaticText " "
+	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
+
+	StaticText " "
+	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
+	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
+	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
+}

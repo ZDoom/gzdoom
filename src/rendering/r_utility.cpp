@@ -70,7 +70,7 @@
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
-EXTERN_CVAR(Bool, r_actorspriteshadow)
+EXTERN_CVAR(Int, r_actorspriteshadow)
 
 // TYPES -------------------------------------------------------------------
 
@@ -1049,9 +1049,32 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 bool R_ShouldDrawSpriteShadow(AActor *thing)
 {
-	return r_actorspriteshadow &&
-		((thing->flags3 & MF3_ISMONSTER) || thing->IsKindOf(NAME_PlayerPawn) || (thing->renderflags & RF_CASTSPRITESHADOW)) &&
-		!(thing->renderflags & RF_NOSPRITESHADOW);
+	bool ret = false;
+
+	bool isLivingThing = (thing->flags3 & MF3_ISMONSTER) || (thing->IsKindOf(NAME_PlayerPawn));
+	bool castSpriteShadowFlag = (thing->renderflags & RF_CASTSPRITESHADOW);
+	bool noSpriteShadowFlag = (thing->renderflags & RF_NOSPRITESHADOW);
+
+	switch (r_actorspriteshadow)
+	{
+	case 1:
+		if (castSpriteShadowFlag)
+		{
+			ret = true;
+		}
+		break;
+	case 2:
+		if ((isLivingThing && !noSpriteShadowFlag) || castSpriteShadowFlag)
+		{
+			ret = true;
+		}
+		break;
+	case 0:
+	default:
+		break;
+	}
+
+	return ret;
 }
 
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)

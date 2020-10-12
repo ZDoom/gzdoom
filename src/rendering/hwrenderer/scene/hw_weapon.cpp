@@ -540,7 +540,6 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	if (psp->scale.X == 0.0 || psp->scale.Y == 0.0)
 		return false;
 
-	bool vertsOnScreen = false;
 	const bool interp = (psp->InterpolateTic || psp->Flags & PSPF_INTERPOLATE);
 
 	for (int i = 0; i < 4; i++)
@@ -549,15 +548,23 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		if (interp)
 			t = psp->Prev.v[i] + (psp->Vert.v[i] - psp->Prev.v[i]) * ticfrac;
 
-		if (!vertsOnScreen)
-			vertsOnScreen = (t.X >= 0.0 && t.X <= vw);
-
 		Vert.v[i] = t;
 	}
-
-	if (!vertsOnScreen)
+	
+	// [MC] If this is absolutely necessary, uncomment it. It just checks if all the vertices 
+	// are all off screen either to the right or left, but is it honestly needed?
+	/*
+	if ((
+		Vert.v[0].X > 0.0 &&
+		Vert.v[1].X > 0.0 &&
+		Vert.v[2].X > 0.0 &&
+		Vert.v[3].X > 0.0) || (
+		Vert.v[0].X < vw &&
+		Vert.v[1].X < vw &&
+		Vert.v[2].X < vw &&
+		Vert.v[3].X < vw))
 		return false;
-
+	*/
 	auto verts = screen->mVertexData->AllocVertices(4);
 	mx = verts.second;
 

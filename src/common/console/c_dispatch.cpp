@@ -302,7 +302,8 @@ void C_DoCommand (const char *cmd, int keynum)
 			else
 			{ // Get the variable's value
 				if (var->GetDescription().Len()) Printf("%s\n", GStrings.localize(var->GetDescription()));
-				Printf ("\"%s\" is \"%s\"\n", var->GetName(), var->GetHumanString());
+				Printf ("\"%s\" is \"%s\" ", var->GetName(), var->GetHumanString());
+				Printf ("(default: \"%s\")\n", var->GetHumanStringDefault());
 			}
 		}
 		else

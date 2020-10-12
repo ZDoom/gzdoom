@@ -99,9 +99,9 @@ CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 	FORWARD_STRING_CVAR(adl_custom_bank);
 }
 
-CUSTOM_CVAR(Int, adl_volume_model, 3/*ADLMIDI_VolumeModel_DMX*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Int, adl_volume_model, 0 /*ADLMIDI_VolumeModel_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	FORWARD_CVAR(adl_bank);
+	FORWARD_CVAR(adl_volume_model);
 }
 #endif
 //==========================================================================

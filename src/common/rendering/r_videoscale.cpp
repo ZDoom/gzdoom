@@ -107,7 +107,7 @@ namespace
 		static bool lastspecialUI = false;
 		bool isInActualMenu = false;
 
-		bool specialUI = sysCallbacks && (!sysCallbacks->IsSpecialUI || sysCallbacks->IsSpecialUI());
+		bool specialUI = (!sysCallbacks.IsSpecialUI || sysCallbacks.IsSpecialUI());
 
 		if (specialUI == lastspecialUI)
 			return;

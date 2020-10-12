@@ -69,6 +69,7 @@ CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, m_cleanscale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 static DMenu *GetCurrentMenu()
 {
@@ -147,6 +148,14 @@ void DListMenuDescriptor::Reset()
 	mFontColor = CR_UNTRANSLATED;
 	mFontColor2 = CR_UNTRANSLATED;
 	mFromEngine = false;
+	mVirtWidth = mVirtHeight = -1;	// default to clean scaling
+}
+
+DEFINE_ACTION_FUNCTION(DListMenuDescriptor, Reset)
+{
+	PARAM_SELF_PROLOGUE(DListMenuDescriptor);
+	self->Reset();
+	return 0;
 }
 
 
@@ -747,7 +756,7 @@ void M_Drawer (void)
 		if (!CurrentMenu->DontBlur) screen->BlurScene(menuBlurAmount);
 		if (!CurrentMenu->DontDim)
 		{
-			if (sysCallbacks && sysCallbacks->MenuDim) sysCallbacks->MenuDim();
+			if (sysCallbacks.MenuDim) sysCallbacks.MenuDim();
 		}
 		CurrentMenu->CallDrawer();
 	}
@@ -1034,6 +1043,8 @@ DEFINE_FIELD(DListMenuDescriptor, mFont)
 DEFINE_FIELD(DListMenuDescriptor, mFontColor)
 DEFINE_FIELD(DListMenuDescriptor, mFontColor2)
 DEFINE_FIELD(DListMenuDescriptor, mCenter)
+DEFINE_FIELD(DListMenuDescriptor, mVirtWidth)
+DEFINE_FIELD(DListMenuDescriptor, mVirtHeight)
 
 DEFINE_FIELD(DOptionMenuDescriptor, mItems)
 DEFINE_FIELD(DOptionMenuDescriptor, mTitle)

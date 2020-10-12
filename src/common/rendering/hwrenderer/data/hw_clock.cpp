@@ -166,7 +166,7 @@ void CheckBench()
 
 		FString compose;
 
-		if (sysCallbacks && sysCallbacks->GetLocationDescription) compose = sysCallbacks->GetLocationDescription();
+		if (sysCallbacks.GetLocationDescription) compose = sysCallbacks.GetLocationDescription();
 	
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);

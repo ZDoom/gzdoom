@@ -366,7 +366,6 @@ void D_GrabCVarDefaults()
 			}
 
 			CurrentFindCVar = sc.String;
-
 			if (lumpversion < 220)
 			{
 				CurrentFindCVar.ToLower();
@@ -385,9 +384,19 @@ void D_GrabCVarDefaults()
 				if (strcmp(CurrentFindCVar, "cd_drive") == 0)
 					break;
 			}
+			if (lumpversion < 221)
+			{
+				// removed cvar
+				// this one doesn't matter as much, since it depended on platform-specific values,
+				// and is something the user should change anyhow, so, let's just throw this value
+				// out.
+				if (strcmp(CurrentFindCVar, "mouse_sensitivity") == 0)
+					break;
+				if (strcmp(CurrentFindCVar, "m_noprescale") == 0)
+					break;
+			}
 
 			var = FindCVar(CurrentFindCVar, NULL);
-
 			if (var != NULL)
 			{
 				if (var->GetFlags() & CVAR_ARCHIVE)
@@ -3048,8 +3057,7 @@ static int D_DoomMain_Internal (void)
 	};
 	GStrings.SetCallbacks(&stblcb);
 
-	static SystemCallbacks syscb =
-	{
+	sysCallbacks = {
 		System_WantGuiCapture,
 		System_WantLeftButton,
 		System_NetGame,
@@ -3066,7 +3074,7 @@ static int D_DoomMain_Internal (void)
 		System_GetPlayerName,
 		System_DispatchEvent,
 	};
-	sysCallbacks = &syscb;
+
 	
 	std::set_new_handler(NewFailure);
 	const char *batchout = Args->CheckValue("-errorlog");
@@ -3137,16 +3145,6 @@ static int D_DoomMain_Internal (void)
 	GameConfig->DoAutoloadSetup(iwad_man);
 
 	// reinit from here
-
-	ConsoleCallbacks cb = {
-		D_UserInfoChanged,
-		D_SendServerInfoChange,
-		D_SendServerFlagChange,
-		G_GetUserCVar,
-		[]() { return gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP; }
-	};
-
-	C_InstallHandlers(&cb);
 
 	do
 	{
@@ -3634,6 +3632,17 @@ int GameMain()
 {
 	int ret = 0;
 	GameTicRate = TICRATE;
+
+	ConsoleCallbacks cb = {
+		D_UserInfoChanged,
+		D_SendServerInfoChange,
+		D_SendServerFlagChange,
+		G_GetUserCVar,
+		[]() { return gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP; }
+	};
+
+	C_InstallHandlers(&cb);
+
 	try
 	{
 		ret = D_DoomMain_Internal();

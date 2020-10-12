@@ -408,6 +408,9 @@ class OptionMenuItemPlayerSwitchOnPickupItem : OptionMenuItemOptionBase
 
 class NewPlayerMenu : OptionMenu
 {
+	protected native static void UpdateColorsets(PlayerClass cls);
+	protected native static void UpdateSkinOptions(PlayerClass cls);
+
 	PlayerClass mPlayerClass;
 	int mRotation;
 	PlayerMenuPlayerDisplay mPlayerDisplay;

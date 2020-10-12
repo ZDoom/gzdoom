@@ -87,7 +87,7 @@ FArgs *Args;
 
 static int GetCrashInfo (char *buffer, char *end)
 {
-	if (sysCallbacks && sysCallbacks->CrashInfo) sysCallbacks->CrashInfo(buffer, end - buffer, "\n");
+	if (sysCallbacks.CrashInfo) sysCallbacks.CrashInfo(buffer, end - buffer, "\n");
 	return strlen(buffer);
 }
 

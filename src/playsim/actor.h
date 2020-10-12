@@ -998,10 +998,10 @@ public:
 	double			Floorclip;		// value to use for floor clipping
 	double			radius, Height;		// for movement checking
 
-	DAngle			VisibleStartAngle;
-	DAngle			VisibleStartPitch;
-	DAngle			VisibleEndAngle;
-	DAngle			VisibleEndPitch;
+	FAngle			VisibleStartAngle;
+	FAngle			VisibleStartPitch;
+	FAngle			VisibleEndAngle;
+	FAngle			VisibleEndPitch;
 
 	DVector3		OldRenderPos;
 	DVector3		Vel;
@@ -1054,6 +1054,7 @@ public:
 	int8_t			visdir;
 	int16_t			movecount;		// when 0, select a new dir
 	int16_t			strafecount;	// for MF3_AVOIDMELEE
+	uint16_t			SpawnAngle;
 	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)
 									// also the originator for missiles
 	TObjPtr<AActor*>	lastenemy;		// Last known enemy -- killough 2/15/98
@@ -1066,11 +1067,10 @@ public:
 	player_t		*player;		// only valid if type of PlayerPawn
 	TObjPtr<AActor*>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	DVector3		SpawnPoint; 	// For nightmare respawn
-	uint16_t			SpawnAngle;
 	int				StartHealth;
 	uint8_t			WeaveIndexXY;	// Separated from special2 because it's used by globally accessible functions.
 	uint8_t			WeaveIndexZ;
-	int				skillrespawncount;
+	uint16_t		skillrespawncount;
 	int				TIDtoHate;			// TID of things to hate (0 if none)
 	FName		Species;		// For monster families
 	TObjPtr<AActor*>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
@@ -1098,11 +1098,11 @@ public:
 	double			maxtargetrange;	// any target farther away cannot be attacked
 	double			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	double			wallbouncefactor;	// The bounce factor for walls can be different.
-	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	double			Gravity;		// [GRB] Gravity factor
 	double			Friction;
-	int 			FastChaseStrafeCount;
 	double			pushfactor;
+	int				bouncecount;	// Strife's grenades only bounce twice before exploding
+	int 			FastChaseStrafeCount;
 	int				lastpush;
 	int				activationtype;	// How the thing behaves when activated with USESPECIAL or BUMPSPECIAL
 	int				lastbump;		// Last time the actor was bumped, used to control BUMPSPECIAL
@@ -1141,8 +1141,8 @@ public:
 
 	uint8_t smokecounter;
 	uint8_t FloatBobPhase;
-	double FloatBobStrength;
 	uint8_t FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
+	double FloatBobStrength;
 	PalEntry BloodColor;
 	uint32_t BloodTranslation;
 
@@ -1159,6 +1159,7 @@ public:
 
 	double MaxDropOffHeight;
 	double MaxStepHeight;
+	double MaxSlopeSteepness;
 
 	int32_t Mass;
 	int16_t PainChance;
@@ -1176,14 +1177,14 @@ public:
 	int RipLevelMin;
 	int RipLevelMax;
 
+	int ConversationRoot;				// THe root of the current dialogue
+	FStrifeDialogueNode* Conversation;	// [RH] The dialogue to show when this actor is "used."
+
 	FState *SpawnState;
 	FState *SeeState;
 	FState *MeleeState;
 	FState *MissileState;
 
-	
-	int ConversationRoot;				// THe root of the current dialogue
-	FStrifeDialogueNode *Conversation;	// [RH] The dialogue to show when this actor is "used."
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;

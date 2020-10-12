@@ -1066,6 +1066,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 
 	unsigned numsectors = lumplen / sizeof(mapsector_t);
 	Level->sectors.Alloc(numsectors);
+	Level->extsectors.Alloc(numsectors);
 	auto sectors = &Level->sectors[0];
 	memset (sectors, 0, numsectors*sizeof(sector_t));
 
@@ -1078,12 +1079,9 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	ms = (mapsector_t*)msp.Data();
 	ss = sectors;
 	
-	// Extended properties
-	sectors[0].e = new extsector_t[numsectors];
-
 	for (unsigned i = 0; i < numsectors; i++, ss++, ms++)
 	{
-		ss->e = &sectors[0].e[i];
+		ss->e = &Level->extsectors[i];
 		ss->Level = Level;
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
 		ss->SetPlaneTexZ(sector_t::floor, (double)LittleShort(ms->floorheight));

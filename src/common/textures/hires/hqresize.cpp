@@ -75,7 +75,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOB
 	TexMan.FlushAll();
 }
 
-CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 15, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	TexMan.FlushAll();
 	UpdateUpscaleMask();
@@ -84,6 +84,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFI
 CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);
 CVAR (Flag, gl_texture_hqresize_sprites, gl_texture_hqresize_targets, 2);
 CVAR (Flag, gl_texture_hqresize_fonts, gl_texture_hqresize_targets, 4);
+CVAR (Flag, gl_texture_hqresize_skins, gl_texture_hqresize_targets, 8);
 
 CVAR(Bool, gl_texture_hqresize_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 

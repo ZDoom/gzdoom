@@ -61,6 +61,7 @@ CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_noautostartmap, false, CVAR_USERINFO | CVAR_ARCHIVE)
 CVAR(Int, wi_autoadvance, 0, CVAR_SERVERINFO)
+CVAR(Bool, wi_cleantextscale, false, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, inter_classic_scaling)
 
 // States for the intermission
@@ -210,7 +211,7 @@ private:
 	//
 	//====================================================================
 
-	void drawOnLnode(int   n, FGameTexture * c[], int numc)
+	void drawOnLnode(int   n, FGameTexture * c[], int numc, double backwidth, double backheight)
 	{
 		int   i;
 		for (i = 0; i<numc; i++)
@@ -230,7 +231,7 @@ private:
 
 			if (left >= 0 && right < 320 && top >= 0 && bottom < 200)
 			{
-				DrawTexture(twod, c[i], lnodes[n].x, lnodes[n].y, DTA_320x200, true, TAG_DONE);
+				DrawTexture(twod, c[i], lnodes[n].x, lnodes[n].y, DTA_FullscreenScale, FSMode_ScaleToFit43, DTA_VirtualWidthF, backwidth, DTA_VirtualHeightF, backheight, TAG_DONE);
 				break;
 			}
 		}
@@ -602,8 +603,8 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			// placing the animations precisely where they belong on the base pic
 			animwidth = background->GetDisplayWidth();
 			animheight = background->GetDisplayHeight();
-			if (gameinfo.fullscreenautoaspect > 0) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
-			DrawTexture(twod, background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			if (animheight == 200) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
+			DrawTexture(twod, background, 0, 0, DTA_FullscreenEx, FSMode_ScaleToFit43, TAG_DONE);
 		}
 		else
 		{
@@ -659,7 +660,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		}
 		if (a->ctr >= 0)
 			DrawTexture(twod, a->frames[a->ctr], a->loc.x, a->loc.y,
-				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, DTA_FullscreenScale, gameinfo.fullscreenautoaspect, TAG_DONE);
+				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, DTA_FullscreenScale, FSMode_ScaleToFit43, TAG_DONE);
 	}
 
 	if (drawsplat)
@@ -667,7 +668,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		for (i = 0; i<lnodes.Size(); i++)
 		{
 			level_info_t * li = FindLevelInfo(lnodes[i].Level);
-			if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1);  // draw a splat on taken cities.
+			if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1, animwidth, animheight);  // draw a splat on taken cities.
 		}
 	}
 
@@ -676,7 +677,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	{
 		unsigned int v = MapToIndex(wbs->next);
 		// Draw only if it points to a valid level on the current screen!
-		if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size());
+		if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size(), animwidth, animheight);
 	}
 }
 
@@ -769,12 +770,35 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 	}
 	
 	WI_Screen = cls->CreateNew();
+
+
 	ScaleOverrider s(twod);
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{
 		VMValue val[2] = { WI_Screen, wbstartstruct };
 		VMCall(func, val, 2, nullptr, 0);
 	}
+
+	if (!wi_cleantextscale)
+	{
+		// Only modify the original single player screens. Everything else must set itself up as intended
+		if (cls->TypeName == NAME_DoomStatusScreen || cls->TypeName == NAME_RavenStatusScreen)
+		{
+			int w = screen->GetWidth();
+			int h = screen->GetHeight();
+			float ratio = ActiveRatio(w, h);
+			int pixw = int(320 * (ratio * 0.75));
+			if (pixw > 336) pixw -= 16;	// leave a bit of space at the sides.
+
+			WI_Screen->IntVar(NAME_cwidth) = 320;
+			WI_Screen->IntVar(NAME_cheight) = 200;
+			WI_Screen->IntVar(NAME_scalemode) = FSMode_ScaleToFit43;
+			WI_Screen->IntVar(NAME_scalefactorx) = 1;
+			WI_Screen->IntVar(NAME_scalefactory) = 1;
+			WI_Screen->IntVar(NAME_wrapwidth) = pixw;
+		}
+	}
+
 	GC::AddSoftRoot(WI_Screen);
 }
 

@@ -73,7 +73,7 @@ size_t s_skipMouseMoves;
 
 void CheckGUICapture()
 {
-	bool wantCapt = sysCallbacks && sysCallbacks->WantGuiCapture && sysCallbacks->WantGuiCapture();
+	bool wantCapt = sysCallbacks.WantGuiCapture && sysCallbacks.WantGuiCapture();
 
 	if (wantCapt != GUICapture)
 	{
@@ -149,7 +149,7 @@ void CheckNativeMouse()
 		}
 		else
 		{
-			bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
+			bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
 			wantNative = (!m_use_mouse || MENU_WaitKey != menuactive)
 				&& (!captureModeInGame || GUICapture);
 		}
@@ -161,7 +161,7 @@ void CheckNativeMouse()
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
 
-	if (!wantNative && sysCallbacks && sysCallbacks->WantNativeMouse && sysCallbacks->WantNativeMouse())
+	if (!wantNative && sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse())
 		wantNative = true;
 
 	I_SetNativeMouse(wantNative);

@@ -165,7 +165,7 @@ static const TMap<SDL_Scancode, uint8_t> KeyScanToDIK(InitKeyScanMap());
 
 static void I_CheckGUICapture ()
 {
-	bool wantCapt = sysCallbacks && sysCallbacks->WantGuiCapture && sysCallbacks->WantGuiCapture();
+	bool wantCapt = sysCallbacks.WantGuiCapture && sysCallbacks.WantGuiCapture();
 
 	if (wantCapt != GUICapture)
 	{
@@ -206,10 +206,10 @@ static void I_CheckNativeMouse ()
 {
 	bool focus = SDL_GetKeyboardFocus() != NULL;
 	
-	bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
+	bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
 	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame);
 
-	if (!wantNative && sysCallbacks && sysCallbacks->WantNativeMouse && sysCallbacks->WantNativeMouse())
+	if (!wantNative && sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse())
 		wantNative = true;
 
 	if (wantNative != NativeMouse)

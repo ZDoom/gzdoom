@@ -70,6 +70,8 @@ EXTERN_CVAR (Float, vid_scale_custompixelaspect)
 EXTERN_CVAR (Bool, vid_scale_linear)
 EXTERN_CVAR(Float, m_sensitivity_x)
 EXTERN_CVAR(Float, m_sensitivity_y)
+EXTERN_CVAR(Int, adl_volume_model)
+EXTERN_CVAR (Int, gl_texture_hqresize_targets)
 
 #ifdef _WIN32
 EXTERN_CVAR(Int, in_mouse)
@@ -590,6 +592,12 @@ void FGameConfigFile::DoGlobalSetup ()
 				m_sensitivity_x = (float)xfact;
 				m_sensitivity_y = (float)yfact;
 
+				adl_volume_model = 0;
+
+				// if user originally wanted the in-game textures resized, set model skins to resize too
+				int old_targets = gl_texture_hqresize_targets;
+				old_targets |= (old_targets & 1) ? 8 : 0;
+				gl_texture_hqresize_targets = old_targets;
 			}
 		}
 	}

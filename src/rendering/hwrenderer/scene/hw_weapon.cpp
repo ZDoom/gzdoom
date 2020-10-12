@@ -96,7 +96,9 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	{
 		float thresh = (huds->texture->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
 		state.AlphaFunc(Alpha_GEqual, thresh);
-		state.SetMaterial(huds->texture, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, (huds->weapon->Flags & PSPF_PLAYERTRANSLATED) ? huds->owner->Translation : 0, huds->OverrideShader);
+		uint32_t trans = huds->weapon->GetTranslation() != 0 ? huds->weapon->GetTranslation() : 0;
+		if ((huds->weapon->Flags & PSPF_PLAYERTRANSLATED)) trans = huds->owner->Translation;
+		state.SetMaterial(huds->texture, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, trans, huds->OverrideShader);
 		state.Draw(DT_TriangleStrip, huds->mx, 4);
 	}
 

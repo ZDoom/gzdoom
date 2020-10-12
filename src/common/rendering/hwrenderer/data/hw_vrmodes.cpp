@@ -61,7 +61,7 @@ static VRMode vrmi_checker = { 2, isqrt2, isqrt2, 1.f,{ { -.5f, 1.f },{ .5f, 1.f
 const VRMode *VRMode::GetVRMode(bool toscreen)
 {
 #ifdef VR3D_ENABLED
-	int mode = !toscreen || (sysCallbacks && sysCallbacks->DisableTextureFilter && sysCallbacks->DisableTextureFilter()) ? 0 : vr_mode;
+	int mode = !toscreen || (sysCallbacks.DisableTextureFilter && sysCallbacks.DisableTextureFilter()) ? 0 : vr_mode;
 
 	switch (mode)
 	{

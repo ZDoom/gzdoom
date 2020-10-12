@@ -200,7 +200,7 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	mScreenViewport.height = screenHeight;
 
 	// Viewport for the 3D scene
-	if (sysCallbacks && sysCallbacks->GetSceneRect) mSceneViewport = sysCallbacks->GetSceneRect();
+	if (sysCallbacks.GetSceneRect) mSceneViewport = sysCallbacks.GetSceneRect();
 	else mSceneViewport = mScreenViewport;
 
 	// Scale viewports to fit letterbox

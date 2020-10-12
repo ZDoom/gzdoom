@@ -88,6 +88,8 @@ public:
 	EColorRange mFontColor2;
 	bool mCenter;
 	bool mFromEngine;
+	int mVirtWidth;
+	int mVirtHeight;
 
 	void Reset();
 	size_t PropagateMark() override;

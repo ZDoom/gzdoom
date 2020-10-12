@@ -24,7 +24,7 @@ struct SystemCallbacks
 	bool (*DispatchEvent)(event_t* ev);
 };
 
-extern SystemCallbacks *sysCallbacks;
+extern SystemCallbacks sysCallbacks;
 
 struct WadStuff
 {

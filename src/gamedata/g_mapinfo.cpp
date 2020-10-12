@@ -198,6 +198,14 @@ void G_ClearSnapshots (void)
 	{
 		wadlevelinfos[i].Snapshot.Clean();
 	}
+
+	// Clear current levels' snapshots just in case they are not defined via MAPINFO,
+	// so they were not handled by the loop above
+	if (primaryLevel && primaryLevel->info)
+		primaryLevel->info->Snapshot.Clean();
+	if (currentVMLevel && currentVMLevel->info)
+		currentVMLevel->info->Snapshot.Clean();
+
 	// Since strings are only locked when snapshotting a level, unlock them
 	// all now, since we got rid of all the snapshots that cared about them.
 	GlobalACSStrings.UnlockAll();

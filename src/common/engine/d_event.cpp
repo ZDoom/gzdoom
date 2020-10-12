@@ -137,7 +137,7 @@ void D_PostEvent(event_t* ev)
 	{
 		return;
 	}
-	if (sysCallbacks && sysCallbacks->DispatchEvent && sysCallbacks->DispatchEvent(ev))
+	if (sysCallbacks.DispatchEvent && sysCallbacks.DispatchEvent(ev))
 		return;
 
 	events[eventhead] = *ev;

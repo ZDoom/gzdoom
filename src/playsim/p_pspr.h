@@ -83,15 +83,16 @@ public:
 	static void NewTick();
 	void SetState(FState *newstate, bool pending = false);
 
-	int			GetID()		const { return ID; }
-	int			GetSprite()	const { return Sprite; }
-	int			GetFrame()	const { return Frame; }
-	int			GetTics()   const {	return Tics; }
-	FState*		GetState()	const { return State; }
-	DPSprite*	GetNext()	      { return Next; }
-	AActor*		GetCaller()	      { return Caller; }
-	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
-	void		ResetInterpolation() { oldx = x; oldy = y; }
+	int			GetID()							const { return ID; }
+	int			GetSprite()						const { return Sprite; }
+	int			GetFrame()						const { return Frame; }
+	int			GetTics()						const {	return Tics; }
+	uint32_t	GetTranslation()					  { return Translation; }
+	FState*		GetState()						const { return State; }
+	DPSprite*	GetNext()							  { return Next; }
+	AActor*		GetCaller()							  { return Caller; }
+	void		SetCaller(AActor *newcaller)		  { Caller = newcaller; }
+	void		ResetInterpolation()				  { oldx = x; oldy = y; }
 	void OnDestroy() override;
 	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 	float GetYAdjust(bool fullscreen);
@@ -100,6 +101,7 @@ public:
 	double oldx, oldy;
 	bool firstTic;
 	int Tics;
+	uint32_t Translation;
 	int Flags;
 	FRenderStyle Renderstyle;
 

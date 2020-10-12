@@ -228,7 +228,7 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 	//
 	//=============================================================================
 
-	override void Drawer(bool selected)
+	override void Draw(bool selected, ListMenuDescriptor desc)
 	{
 		if (mMode == 0 && !UpdatePlayerClass())
 		{
@@ -241,12 +241,31 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 		if (portrait != 'None' && !mNoportrait)
 		{
 			TextureID texid = TexMan.CheckForTexture(portrait, TexMan.Type_MiscPatch);
-			screen.DrawTexture (texid, true, mXpos, mYpos, DTA_Clean, true);
+			DrawTexture (desc, texid, mXpos, mYpos);
 		}
 		else
 		{
-			int x = int(mXpos - 160) * CleanXfac + (screen.GetWidth() >> 1);
-			int y = int(mYpos - 100) * CleanYfac + (screen.GetHeight() >> 1);
+			// Here we need to calculate the coordinates manually because Screen.DrawFrame only works in window coordinates and have to match the rest to it.
+			int x, y;
+			int w = desc.DisplayWidth();
+			int h = desc.DisplayHeight();
+			double sx, sy;
+			if (w == ListMenuDescriptor.CleanScale)
+			{
+				x = int(mXpos - 160) * CleanXfac + (screen.GetWidth() >> 1);
+				y = int(mYpos - 100) * CleanYfac + (screen.GetHeight() >> 1);
+				sx = CleanXfac;
+				sy = CleanYfac;
+			}
+			else
+			{
+				double fx, fy, fw, fh;
+				[fx, fy, fw, fh] = Screen.GetFullscreenRect(w, h, FSMode_ScaleToFit43);
+				sx = fw / w;
+				sy = fh / h;
+				x = int(fx + mXpos * sx);
+				y = int(fy + mYpos * sy);
+			}
 
 			int r = mBaseColor.r + mAddColor.r;
 			int g = mBaseColor.g + mAddColor.g;
@@ -258,12 +277,12 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 			Color c = Color(255, r, g, b);
 			
 			screen.DrawTexture(mBackdrop, false, x, y - 1,
-				DTA_DestWidth, 72 * CleanXfac,
-				DTA_DestHeight, 80 * CleanYfac,
+				DTA_DestWidthF, 72. * sx,
+				DTA_DestHeightF, 80. * sy,
 				DTA_Color, c,
 				DTA_Masked, true);
 
-			Screen.DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
+			Screen.DrawFrame (x, y, int(72*sx), int(80*sy-1));
 
 			if (mPlayerState != NULL)
 			{
@@ -277,11 +296,11 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 				{
 					int trans = mTranslate? Translation.MakeID(TRANSLATION_Players, MAXPLAYERS) : 0;
 					let tscale = TexMan.GetScaledSize(sprite);
-					Scale.X *= CleanXfac * tscale.X;
-					Scale.Y *= CleanYfac * tscale.Y;
+					Scale.X *= sx * tscale.X;
+					Scale.Y *= sy * tscale.Y;
 					
 					screen.DrawTexture (sprite, false,
-						x + 36*CleanXfac, y + 71*CleanYfac,
+						x + 36*sx, y + 71*sy,
 						DTA_DestWidthF, Scale.X, DTA_DestHeightF, Scale.Y,
 						DTA_TranslationIndex, trans,
 						DTA_FlipX, flip);

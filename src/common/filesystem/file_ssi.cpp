@@ -75,7 +75,7 @@ bool FSSIFile::Open(bool quiet, int version, int lumpcount, LumpFilterInfo*)
 
 
 	int32_t j = (version == 2 ? 267 : 254) + (lumpcount * 121);
-	for (int i = 0; i < NumLumps; i+=2)
+	for (uint32_t i = 0; i < NumLumps; i+=2)
 	{
 		char fn[13];
 		int strlength = Reader.ReadUInt8();
@@ -121,11 +121,11 @@ FResourceFile* CheckSSI(const char* filename, FileReader& file, bool quiet, Lump
 	char buf[72];
 	memset(zerobuf, 0, 72);
 
-	auto skipstring = [&](int length)
+	auto skipstring = [&](size_t length)
 	{
-		int strlength = file.ReadUInt8();
+		size_t strlength = file.ReadUInt8();
 		if (strlength > length) return false;
-		int count = file.Read(buf, length);
+		size_t count = file.Read(buf, length);
 		buf[length] = 0;
 		if (count != length || strlen(buf) != strlength) return false;
 		if (length != strlength && memcmp(buf + strlength, zerobuf, length - strlength)) return false;

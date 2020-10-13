@@ -414,7 +414,7 @@ enum ActorFlag8
 	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
 	MF8_ABSVIEWANGLES	= 0x00000400,	// [MC] By default view angle/pitch/roll is an offset. This will make it absolute instead.
 	MF8_FALLDAMAGE		= 0x00000800,	// Monster will take fall damage regardless of map settings.
-
+	MF8_THRUACTORLEVEL	= 0x00001000,	// Actors with the same ThruActorLevel can pass through each other.
 };
 
 // --- mobj.renderflags ---
@@ -1174,6 +1174,9 @@ public:
 	int RipperLevel;
 	int RipLevelMin;
 	int RipLevelMax;
+	int16_t ThruActorLevel;
+	int16_t ThruActorLevelMin;
+	int16_t ThruActorLevelMax;
 
 	int ConversationRoot;				// THe root of the current dialogue
 	FStrifeDialogueNode* Conversation;	// [RH] The dialogue to show when this actor is "used."

@@ -396,6 +396,8 @@ CCMD(ffcf)
 //
 //==========================================================================
 
+static bool CheckThruActorLevel(AActor *first, AActor *second);
+
 bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor) 
 {
 	FCheckPosition tmf;
@@ -447,11 +449,11 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if (th == thing)
 			continue;
 
-		double blockdist = th->radius + tmf.thing->radius;
-		if (fabs(th->X() - cres2.Position.X) >= blockdist || fabs(th->Y() - cres2.Position.Y) >= blockdist)
+		if (CheckThruActorLevel(th, tmf.thing))
 			continue;
 
-		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)
+		double blockdist = th->radius + tmf.thing->radius;
+		if (fabs(th->X() - cres2.Position.X) >= blockdist || fabs(th->Y() - cres2.Position.Y) >= blockdist)
 			continue;
 
 		if (tmf.thing->flags6 & MF6_THRUSPECIES && tmf.thing->GetSpecies() == th->GetSpecies())
@@ -1156,6 +1158,66 @@ static bool CheckRipLevel(AActor *victim, AActor *projectile)
 	return true;
 }
 
+//==========================================================================
+// 
+// ThruActorLevel
+// 
+// [MC] Actors with a TA level inside the min/max range of another actor, or
+// have +THRUACTORLEVEL flag and have the same TA level as another can pass
+// through each other.
+// 
+// Based similarly off of ripper levels.
+//==========================================================================
+
+struct ThruActLev
+{
+	bool TAFlag; // +THRUACTORLEVEL flag
+	int16_t TALevel, TAMin, TAMax;
+
+	ThruActLev(AActor *mo) :
+	TAFlag(false), TALevel(0), TAMin(1), TAMax(32767)
+	{
+		if (mo)
+		{
+			TAFlag = !!(mo->flags8 & MF8_THRUACTORLEVEL);
+			TALevel = mo->ThruActorLevel;
+			TAMin = mo->ThruActorLevelMin;
+			TAMax = mo->ThruActorLevelMax;
+		}
+	}
+
+	ThruActLev () = default;
+};
+
+// This version is for those that don't have any actors or just one actor to check.
+// Needed for information collecting in LineAttack and RailAttack.
+static bool CheckThruActorLev(ThruActLev *l1, ThruActLev *l2)
+{
+	if (!l1 || !l2)
+		return false;
+
+	// Actor has the +THRUACTORLEVEL flag, can pass through the other if they share the same level.
+	if (l1->TAFlag || l2->TAFlag)
+	{
+		if (l1->TALevel == l2->TALevel)
+			return true;
+	}
+
+	// If one actor meets the min/max of the other, they can pass through.
+	if (l1->TALevel >= l2->TAMin && l1->TALevel <= l2->TAMax)	return true;
+	if (l2->TALevel >= l1->TAMin && l2->TALevel <= l1->TAMax)	return true;
+	return false;
+}
+
+static bool CheckThruActorLevel(AActor *first, AActor *second)
+{
+	if ((first->flags2 | second->flags2) & MF2_THRUACTORS)
+		return true;
+
+	ThruActLev l1 = {first}, l2 = {second};
+	return CheckThruActorLev(&l1, &l2);
+}
+
 
 //==========================================================================
 //
@@ -1298,7 +1360,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if (thing == tm.thing)
 		return true;
 
-	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)
+	if (CheckThruActorLevel(thing, tm.thing))
 		return true;
 
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
@@ -1985,21 +2047,21 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 	{
 		AActor *thing = cres.thing;
 
-		double blockdist = thing->radius + actor->radius;
-		if (fabs(thing->X() - cres.Position.X) >= blockdist || fabs(thing->Y() - cres.Position.Y) >= blockdist)
+		if (CheckThruActorLevel(actor, thing))
 		{
 			continue;
 		}
-		if ((actor->flags2 | thing->flags2) & MF2_THRUACTORS)
-		{
+		if (!(thing->flags & MF_SOLID))
+		{ // Can't hit thing
 			continue;
 		}
 		if ((actor->flags6 & MF6_THRUSPECIES) && (thing->GetSpecies() == actor->GetSpecies()))
 		{
 			continue;
 		}
-		if (!(thing->flags & MF_SOLID))
-		{ // Can't hit thing
+		double blockdist = thing->radius + actor->radius;
+		if (fabs(thing->X() - cres.Position.X) >= blockdist || fabs(thing->Y() - cres.Position.Y) >= blockdist)
+		{
 			continue;
 		}
 		if (thing->flags & (MF_SPECIAL | MF_NOCLIP))
@@ -4382,6 +4444,8 @@ struct Origin
 	bool MThruSpecies;
 	bool ThruSpecies;
 	bool ThruActors;
+	bool ThruActorLevelCheck;
+	ThruActLev ThruActorInfo;
 };
 
 static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
@@ -4407,6 +4471,13 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 		return TRACE_Skip;
 	}
 
+	if (data->ThruActorLevelCheck)
+	{
+		ThruActLev l2 = {res.Actor};
+
+		if (CheckThruActorLev(&data->ThruActorInfo, &l2))
+			return TRACE_Skip;
+	}
 	return TRACE_Stop;
 }
 
@@ -4477,7 +4548,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 	// [MC] To prevent possible mod breakage, this flag is pretty much necessary.
 	// Somewhere, someone is relying on these to spawn on actors and move through them.
-
+	TData.ThruActorLevelCheck = false;
 	if ((puffDefaults->flags7 & MF7_ALLOWTHRUFLAGS))
 	{
 		TData.ThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_THRUSPECIES));
@@ -4493,6 +4564,12 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		if (tempuff != NULL)
 		{
 			TData.PuffSpecies = tempuff->GetSpecies();
+
+			if (!TData.ThruActors)
+			{
+				TData.ThruActorInfo = { tempuff };
+				TData.ThruActorLevelCheck = true;
+			}
 			tempuff->Destroy();
 		}
 	}
@@ -5095,7 +5172,9 @@ struct RailData
 	AActor *Caller;
 	TArray<SRailHit> RailHits;
 	TArray<SPortalHit> PortalHits;
+	ThruActLev ThruActorInfo;
 	FName PuffSpecies;
+	bool ThruActorLevelCheck;
 	bool StopAtOne;
 	bool StopAtInvul;
 	bool ThruGhosts;
@@ -5138,6 +5217,13 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 		return TRACE_Skip;
 	}
 
+	if (data->ThruActorLevelCheck)
+	{
+		ThruActLev l2 =	{res.Actor};
+
+		if (CheckThruActorLev(&data->ThruActorInfo, &l2))
+			return TRACE_Skip;
+	}
 	// Invulnerable things completely block the shot
 	if (data->StopAtInvul && res.Actor->flags2 & MF2_INVULNERABLE)
 	{
@@ -5228,18 +5314,28 @@ void P_RailAttack(FRailParams *p)
 		rail_data.ThruGhosts = !!(puffDefaults->flags2 & MF2_THRUGHOST);
 		rail_data.ThruSpecies = !!(puffDefaults->flags6 & MF6_THRUSPECIES);
 		rail_data.ThruActors = !!(puffDefaults->flags2 & MF2_THRUACTORS);
+		rail_data.ThruActorLevelCheck = true;
 	}
 	else
 	{
 		rail_data.ThruGhosts = false;
 		rail_data.MThruSpecies = false;
 		rail_data.ThruActors = false;
+		rail_data.ThruActorLevelCheck = false;
 	}
 	// used as damage inflictor
-	AActor *thepuff = NULL;
-	
-	if (puffclass != NULL) thepuff = Spawn(source->Level, puffclass, source->Pos(), ALLOW_REPLACE);
-		rail_data.PuffSpecies = (thepuff != NULL) ? thepuff->GetSpecies() : NAME_None;
+	AActor *thepuff = nullptr;
+	rail_data.PuffSpecies = NAME_None;
+	if (puffclass != nullptr) 
+	{
+		thepuff = Spawn(source->Level, puffclass, source->Pos(), ALLOW_REPLACE);
+		if (thepuff)
+		{
+			rail_data.PuffSpecies = thepuff->GetSpecies();
+			if (!rail_data.ThruActors && rail_data.ThruActorLevelCheck)
+				rail_data.ThruActorInfo = { thepuff };
+		}
+	}
 
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
 
@@ -6313,6 +6409,8 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		// Should there be MF2_THRUGHOST / MF3_GHOST checks there too for consistency?
 		// Or would that risk breaking established behavior? THRUGHOST, like MTHRUSPECIES,
 		// is normally for projectiles which would have exploded by now anyway...
+		if (CheckThruActorLevel(thing, intersect))
+			continue;
 		if (thing->flags6 & MF6_THRUSPECIES && thing->GetSpecies() == intersect->GetSpecies())
 			continue;
 		if ((thing->flags & MF_MISSILE) && (intersect->flags2 & MF2_REFLECTIVE) && (intersect->flags7 & MF7_THRUREFLECT))

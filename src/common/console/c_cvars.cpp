@@ -1497,19 +1497,17 @@ CCMD (unset)
 	}
 }
 
-CCMD (reset)
+CCMD (resetcvar)
 {
 	if (argv.argc() != 2)
 	{
-		Printf ("usage: reset <variable>\n");
+		Printf ("usage: resetcvar <variable>\n");
 	}
 	else
 	{
 		FBaseCVar *var = FindCVar (argv[1], NULL);
-		if (var == NULL)
-			var = new FStringCVar (argv[1], NULL, CVAR_AUTO | CVAR_UNSETTABLE | cvar_defflags);
-
-		var->ResetToDefault();
+		if (var != NULL)
+			var->ResetToDefault();
 	}
 }
 

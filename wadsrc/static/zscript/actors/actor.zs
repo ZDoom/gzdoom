@@ -90,6 +90,7 @@ class Actor : Thinker native
 	native PlayerInfo Player;
 	native readonly vector3 Pos;
 	native vector3 Prev;
+	native uint ThruBits;
 	native vector2 SpriteOffset;
 	native double spriteAngle;
 	native double spriteRotation;
@@ -337,6 +338,7 @@ class Actor : Thinker native
 	property RenderHidden: RenderHidden;
 	property RenderRequired: RenderRequired;
 	property FriendlySeeBlocks: FriendlySeeBlocks;
+	property ThruBits: ThruBits;
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;

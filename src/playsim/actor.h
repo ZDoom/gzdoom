@@ -1008,6 +1008,7 @@ public:
 	double			FloatSpeed;
 
 // interaction info
+	uint32_t		ThruBits;
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;

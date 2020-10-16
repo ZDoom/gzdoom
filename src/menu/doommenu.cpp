@@ -1262,7 +1262,7 @@ void SetDefaultMenuColors()
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
 
-	auto cls = PClass::FindClass("MenuDelegateBase");
+	auto cls = PClass::FindClass("DoomMenuDelegate");
 	menuDelegate = cls->CreateNew();
 }
 

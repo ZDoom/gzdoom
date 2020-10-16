@@ -63,3 +63,12 @@ class VideoModeMenu : OptionMenu
 		return false;
 	}
 }
+
+class DoomMenuDelegate : MenuDelegateBase
+{
+	override void PlaySound(Name snd)
+	{
+		String s = snd;
+		S_StartSound (s, CHAN_VOICE, CHANF_UI, snd_menuvolume); 	
+	}
+} 

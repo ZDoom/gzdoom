@@ -42,6 +42,7 @@
 
 #include <unistd.h>
 #include <fnmatch.h>
+#include <sys/stat.h>
 
 #include "cmdlib.h"
 
@@ -203,6 +204,52 @@ bool D_AddFile(TArray<FString>& wadfiles, const char* file, bool check, int posi
 	{
 		return false;
 	}
+#ifdef __unix__
+	// Confirm file exists in filesystem.
+	struct stat info;
+	bool found = stat(file, &info) == 0;
+	if (!found)
+	{
+		// File not found, so split file into path and filename so we can enumerate the path for the file.
+		FString fullpath = file;
+		auto lastindex = fullpath.LastIndexOf("/");
+		FString basepath = fullpath.Left(lastindex);
+		FString filename = fullpath.Right(fullpath.Len() - lastindex - 1);
+
+		// Proceed only if locating a file (i.e. `file` isn't a path to just a directory.)
+		if (filename.IsNotEmpty())
+		{
+			DIR *d;
+			struct dirent *dir;
+			d = opendir(basepath.GetChars());
+			if (d)
+			{
+				while ((dir = readdir(d)) != NULL)
+				{
+					if (filename.CompareNoCase(dir->d_name) == 0)
+					{
+						found = true;
+						filename = dir->d_name;
+						fullpath = basepath << "/" << filename;
+						file = fullpath.GetChars();
+						break;
+					}
+				}
+				closedir(d);
+				if (!found)
+				{
+					Printf("Can't find file '%s' in '%s'\n", filename.GetChars(), basepath.GetChars());
+					return false;
+				}
+			}
+			else
+			{
+				Printf("Can't open directory '%s'\n", basepath.GetChars());
+				return false;
+			}
+		}
+	}
+#endif
 
 	if (check && !DirEntryExists(file))
 	{

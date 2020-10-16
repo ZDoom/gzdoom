@@ -357,6 +357,7 @@ protected:
 	void SetFromImage();
 public:
 	FImageTexture(FImageSource* image) noexcept;
+	~FImageTexture();
 	TArray<uint8_t> Get8BitPixels(bool alphatex) override;
 
 	void SetImage(FImageSource* img)

@@ -1446,7 +1446,7 @@ const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
 
 	name = Files[rfnum]->FileName;
 	slash = strrchr (name, '/');
-	return slash != NULL ? slash+1 : name;
+	return (slash != NULL && slash[1] != 0) ? slash+1 : name;
 }
 
 //==========================================================================

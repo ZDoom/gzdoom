@@ -880,8 +880,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Delete, ArrayDelete<FDynArray_Obj>)
 
 void ObjArrayInsert(FDynArray_Obj *self,int index, DObject *obj)
 {
+	int oldSize = self->Size();
 	GC::WriteBarrier(obj);
 	self->Insert(index, obj);
+	for (unsigned i = oldSize; i < self->Size() - 1; i++) (*self)[i] = nullptr;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Insert, ObjArrayInsert)

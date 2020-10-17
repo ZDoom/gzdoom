@@ -147,7 +147,7 @@ class ListMenu : Menu
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
 		int oldSelect = mDesc.mSelectedItem;
-		int startedAt = mDesc.mSelectedItem;
+		int startedAt = max(0, mDesc.mSelectedItem);
 
 		switch (mkey)
 		{

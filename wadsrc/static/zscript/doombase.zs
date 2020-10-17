@@ -46,6 +46,7 @@ extend struct Translation
 {
 	Color colors[256];
 	
+	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
 	native static int GetID(Name transname);
 }

@@ -129,7 +129,7 @@ class LoadSaveMenu : ListMenu
 		double wScale = Width43 / 640.;
 
 		savepicLeft = Left43 + int(20 * wScale);
-		savepicTop = mDesc.mYpos * screen.GetHeight() / 200 ;
+		savepicTop = int(mDesc.mYpos * screen.GetHeight() / 200);
 		savepicWidth = int(240 * wScale);
 		savepicHeight = int(180 * wScale);
 

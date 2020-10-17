@@ -89,7 +89,7 @@ class MessageBoxMenu : Menu
 		int mr2 = destWidth/2 + 10 + textFont.StringWidth(Stringtable.Localize("$TXT_NO"));
 		mMouseRight = MAX(mr1, mr2);
 		mParentMenu = parent;
-		mMessage = textFont.BreakLines(Stringtable.Localize(message), 300/NotifyFontScale);
+		mMessage = textFont.BreakLines(Stringtable.Localize(message), int(300/NotifyFontScale));
 		mMessageMode = messagemode;
 		if (playsound)
 		{
@@ -106,8 +106,9 @@ class MessageBoxMenu : Menu
 
 	override void Drawer ()
 	{
-		int i, y;
-		int fontheight = textFont.GetHeight() * NotifyFontScale;
+		int i;
+		double y;
+		let fontheight = textFont.GetHeight() * NotifyFontScale;
 
 		y = destHeight / 2;
 

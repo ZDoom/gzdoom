@@ -942,7 +942,7 @@ DEFINE_PROPERTY(gravity, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
 
-	if (i < 0) I_Error ("Gravity must not be negative.");
+	//if (i < 0) I_Error ("Gravity must not be negative.");
 	defaults->Gravity = i;
 }
 

@@ -83,7 +83,7 @@ struct Side native play
 	native void SetTextureYScale(int which, double scale);
 	native double GetTextureYScale(int which);
 	native void MultiplyTextureYScale(int which, double delta);
-	native void SetSpecialColor(int tier, int position, Color scolor);
+	native void SetSpecialColor(int tier, int position, Color scolor, bool useowncolor = true);
 	native Color GetAdditiveColor(int tier);
 	native void SetAdditiveColor(int tier, Color color);
 	native void EnableAdditiveColor(int tier, bool enable);

@@ -1320,15 +1320,21 @@ struct side_t
 		textures[which].yScale *= delta;
 	}
 
-	void SetSpecialColor(int which, int slot, int r, int g, int b)
+	void SetSpecialColor(int which, int slot, int r, int g, int b, bool useown = true)
 	{
 		textures[which].SpecialColors[slot] = PalEntry(255, r, g, b);
+		if (useown) textures[which].flags |= part::UseOwnSpecialColors;
+		else  textures[which].flags &= ~part::UseOwnSpecialColors;
+		Flags |= WALLF_EXTCOLOR;
 	}
 
-	void SetSpecialColor(int which, int slot, PalEntry rgb)
+	void SetSpecialColor(int which, int slot, PalEntry rgb, bool useown = true)
 	{
 		rgb.a = 255;
 		textures[which].SpecialColors[slot] = rgb;
+		if (useown) textures[which].flags |= part::UseOwnSpecialColors;
+		else  textures[which].flags &= ~part::UseOwnSpecialColors;
+		Flags |= WALLF_EXTCOLOR;
 	}
 
 	// Note that the sector being passed in here may not be the actual sector this sidedef belongs to

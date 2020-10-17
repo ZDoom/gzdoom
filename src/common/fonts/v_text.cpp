@@ -276,7 +276,18 @@ void UpdateGenericUI(bool cvar)
 			AlternativeSmallFont = NewSmallFont;
 		}
 
-		// Todo: Do the same for the BigFont
+		if (CheckFontComplete(BigFont))
+		{
+			AlternativeBigFont = BigFont;
+		}
+		else if (OriginalBigFont && CheckFontComplete(OriginalBigFont))
+		{
+			AlternativeBigFont = OriginalBigFont;
+		}
+		else
+		{
+			AlternativeBigFont = NewSmallFont;
+		}
 	}
 }
 

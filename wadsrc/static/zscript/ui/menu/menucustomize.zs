@@ -22,4 +22,11 @@ class MenuDelegateBase ui
 		// overriding this allows to execute special actions when the menu closes
 	}
 	
+	virtual Font PickFont(Font fnt)
+	{
+		if (generic_ui || !fnt) return NewSmallFont;
+		if (fnt == SmallFont) return AlternativeSmallFont;
+		if (fnt == BigFont) return AlternativeBigFont;
+		return fnt;
+	}
 }

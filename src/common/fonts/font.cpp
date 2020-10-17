@@ -579,6 +579,7 @@ void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors)
 	{
 		usedcolors[pixels[x]]++;
 	}
+
 }
 
 //==========================================================================

@@ -293,13 +293,13 @@ class ListMenuItemTextItem : ListMenuItemSelectable
 	
 	override void Draw(bool selected, ListMenuDescriptor desc)
 	{
-		let font = generic_ui ? NewSmallFont : mFont;
+		let font = menuDelegate.PickFont(mFont);
 		DrawText(desc, font, selected ? mColorSelected : mColor, mXpos, mYpos, mText);
 	}
-	
+
 	override int GetWidth()
 	{
-		let font = generic_ui? NewSmallFont : mFont;
+		let font = menuDelegate.PickFont(mFont);
 		return max(1, font.StringWidth(StringTable.Localize(mText))); 
 	}
 }
@@ -360,7 +360,7 @@ class ListMenuItemCaptionItem : ListMenuItem
 	
 	override void Draw(bool selected, ListMenuDescriptor desc)
 	{
-		let font = generic_ui || !desc.mFont ? NewSmallFont : desc.mFont;
+		let font = menuDelegate.PickFont(desc.mFont);
 		if (font && mText.Length() > 0)
 		{
 			menuDelegate.DrawCaption(mText, font, 0, true);

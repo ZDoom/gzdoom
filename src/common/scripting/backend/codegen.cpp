@@ -6055,6 +6055,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	if (compileEnvironment.CheckSpecialGlobalIdentifier)
+	{
+		auto result = compileEnvironment.CheckSpecialGlobalIdentifier(this, ctx);
+		if (result != this) return result;
+	}
+
 	if (auto *cvar = FindCVar(Identifier.GetChars(), nullptr))
 	{
 		if (cvar->GetFlags() & CVAR_USERINFO)

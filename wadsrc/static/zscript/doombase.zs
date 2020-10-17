@@ -46,9 +46,25 @@ extend struct Translation
 {
 	Color colors[256];
 	
-	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
 	native static int GetID(Name transname);
+}
+
+// This is needed because Actor contains a field named 'translation' which shadows the above.
+struct Translate version("4.5")
+{
+	static int MakeID(int group, int num)
+	{
+		return (group << 16) + num;
+	}
+	static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass)
+	{
+		return Translation.SetPlayerTranslation(group, num, plrnum, pclass);
+	}
+	static int GetID(Name transname)
+	{
+		return Translation.GetID(transname);
+	}
 }
 
 struct DamageTypeDefinition native

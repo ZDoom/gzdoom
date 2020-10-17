@@ -1042,7 +1042,7 @@ PName::PName()
 {
 	mDescriptiveName = "Name";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(FName) == alignof(FName));
+	static_assert(sizeof(FName) == alignof(FName), "Name not properly aligned");
 }
 
 //==========================================================================
@@ -1172,7 +1172,7 @@ PTextureID::PTextureID()
 {
 	mDescriptiveName = "TextureID";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(FTextureID) == alignof(FTextureID));
+	static_assert(sizeof(FTextureID) == alignof(FTextureID), "TextureID not properly aligned");
 }
 
 //==========================================================================
@@ -1214,7 +1214,7 @@ PSound::PSound()
 {
 	mDescriptiveName = "Sound";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(FSoundID) == alignof(FSoundID));
+	static_assert(sizeof(FSoundID) == alignof(FSoundID), "SoundID not properly aligned");
 }
 
 //==========================================================================
@@ -1263,7 +1263,7 @@ PColor::PColor()
 {
 	mDescriptiveName = "Color";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(PalEntry) == alignof(PalEntry));
+	static_assert(sizeof(PalEntry) == alignof(PalEntry), "PalEntry not properly aligned");
 }
 
 /* PStateLabel *****************************************************************/

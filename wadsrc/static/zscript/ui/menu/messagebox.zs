@@ -125,7 +125,7 @@ class MessageBoxMenu : Menu
 		if (mMessageMode == 0)
 		{
 			y += fontheight;
-			mMouseY = y;
+			mMouseY = int(y);
 			screen.DrawText(textFont, messageSelection == 0? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, destWidth / 2, y, Stringtable.Localize("$TXT_YES"), DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, 	true, DTA_ScaleX, NotifyFontScale, DTA_ScaleY, NotifyFontScale);
 			screen.DrawText(textFont, messageSelection == 1? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, destWidth / 2, y + fontheight, Stringtable.Localize("$TXT_NO"), DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, true, DTA_ScaleX, NotifyFontScale, DTA_ScaleY, NotifyFontScale);
 

@@ -1247,7 +1247,7 @@ void FScanner::AddSymbol(const char* name, uint64_t value)
 	Symbol sym;
 	sym.tokenType = TK_UIntConst;
 	sym.Number = value;
-	sym.Float = value;
+	sym.Float = (double)value;
 	symbols.Insert(name, sym);
 }
 

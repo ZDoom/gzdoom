@@ -23,12 +23,6 @@ jobs:
             build_type: "Debug"
           }
         - {
-            name: "Visual Studio 32-bit",
-            os: windows-latest,
-            extra_options: "-A Win32 -DFORCE_INTERNAL_ZLIB=ON",
-            build_type: "Release"
-          }
-        - {
             name: "macOS",
             os: macos-latest,
             extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
@@ -39,14 +33,6 @@ jobs:
             name: "macOS",
             os: macos-latest,
             build_type: "Debug"
-          }
-        - {
-            name: "Linux GCC 5",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-5 -DCMAKE_CXX_COMPILER=/usr/bin/g++-5 \
-                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "sudo apt update && sudo apt install g++-5 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
-            build_type: "MinSizeRel"
           }
         - {
             name: "Linux GCC 7",

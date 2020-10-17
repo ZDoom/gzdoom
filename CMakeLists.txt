@@ -132,13 +132,13 @@ else()
 endif()
 
 # Replacement variables for a possible long list of C/C++ compilers compatible with GCC
-if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" MATCHES "Clang" )
 	set( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE TRUE )
 else()
 	set( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE FALSE )
 endif()
 
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
 	set( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE TRUE )
 else()
 	set( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE FALSE )
@@ -272,12 +272,7 @@ else()
 
 	if( APPLE )
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
-		if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-			# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
-			# C++11 support using SDKs 10.7 and 10.8.
-			set( CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}" )
-			set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
-		elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+		if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 			# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
 			set( ALL_C_FLAGS "-static-libgcc" )
 		endif()

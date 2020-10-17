@@ -1008,7 +1008,6 @@ public:
 	double			FloatSpeed;
 
 // interaction info
-	uint32_t		ThruBits;
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;
@@ -1016,11 +1015,13 @@ public:
 	double			floorz, ceilingz;	// closest together of contacted secs
 	double			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
-	struct sector_t	*floorsector;
+	uint32_t		ThruBits;
 	FTextureID		floorpic;			// contacted sec floorpic
 	int				floorterrain;
-	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
+
+	struct sector_t	*floorsector;
+	struct sector_t	*ceilingsector;
 	double			renderradius;
 
 	double			projectilepassheight;	// height for clipping projectile movement against this actor

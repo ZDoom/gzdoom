@@ -87,11 +87,12 @@ template<class T> void ArrayDelete(T *self, int index, int count)
 
 template<class T, class U, int fill = 1> void ArrayInsert(T *self, int index, U val)
 {
-	//int oldSize = self->Size();
+	int oldSize = self->Size();
 	self->Insert(index, static_cast<typename T::value_type>(val));
-	// Is this even necessary? All Insert does is inserting one defined element into the array and moving the rest.
-	// It never creates empty tailing entries. fillcount in the macro will always be 0
-	//if (fill) { DYNARRAY_FILL_ITEMS_SKIP(1); }
+	if constexpr (fill) 
+	{
+		for (unsigned i = oldSize; i < self->Size() - 1; i++) (*self)[i] = 0;
+	}
 }
 
 template<class T> void ArrayShrinkToFit(T *self)

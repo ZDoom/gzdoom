@@ -1025,8 +1025,8 @@ bool AActor::IsInsideVisibleAngles() const
 
 	if (mo != nullptr)
 	{
-		
-		DVector3 diffang = r_viewpoint.Pos - Pos();
+		DVector2 offset = Level->Displacements.getOffset(r_viewpoint.sector->PortalGroup, Sector->PortalGroup);
+		DVector3 diffang = r_viewpoint.Pos + offset - Pos();
 		DAngle to = diffang.Angle();
 
 		if (!(renderflags & RF_ABSMASKANGLE)) 

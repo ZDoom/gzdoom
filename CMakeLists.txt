@@ -146,6 +146,13 @@ endif()
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
+
+	if( CMAKE_CXX_STANDARD )
+		# By default, try_compile() invocations ignore CXX_STANDARD value
+		# CMake 3.8 and newer have CMP0067 policy that fixes the issue, but it should be enabled explicitly
+		# Older versions require manual specification of the corresponding command line option
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}" )
+	endif()
 endif()
 
 # Fast math flags, required by some subprojects

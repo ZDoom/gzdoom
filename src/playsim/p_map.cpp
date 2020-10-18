@@ -2467,6 +2467,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				P_FindFloorCeiling(thing);
 				portalcrossed = true;
 				tm.portalstep = false;
+				tm.pos += port->mDisplacement;
 			}
 			else if (!portalcrossed)
 			{

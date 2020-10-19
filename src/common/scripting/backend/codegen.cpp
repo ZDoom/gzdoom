@@ -8546,6 +8546,13 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		if (!result) return nullptr;
 	}
 
+	// [Player701] Catch attempts to call abstract functions directly at compile time
+	if (NoVirtual && Function->Variants[0].Implementation->VarFlags & VARF_Abstract)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot call abstract function %s", Function->Variants[0].Implementation->PrintableName.GetChars());
+		delete this;
+		return nullptr;
+	}
 
 	CallingFunction = ctx.Function;
 	if (ArgList.Size() > 0)

@@ -450,7 +450,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)
 			continue;
 
-		if (((th->flags8 | tmf.thing->flags8) & MF8_THRUBITS) && th->ThruBits & tmf.thing->ThruBits)
+		if ((th->ThruBits & tmf.thing->ThruBits) && ((th->flags8 | tmf.thing->flags8) & MF8_ALLOWTHRUBITS))
 			continue;
 
 		double blockdist = th->radius + tmf.thing->radius;
@@ -1304,7 +1304,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)
 		return true;
 
-	if (((thing->flags8 | tm.thing->flags8) & MF8_THRUBITS) && thing->ThruBits & tm.thing->ThruBits)
+	if ((thing->ThruBits & tm.thing->ThruBits) && ((thing->flags8 | tm.thing->flags8) & MF8_ALLOWTHRUBITS))
 		return true;
 
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
@@ -2000,7 +2000,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
-		if (((actor->flags8 | thing->flags8) & MF8_THRUBITS) && actor->ThruBits & thing->ThruBits)
+		if ((actor->ThruBits & thing->ThruBits) && ((actor->flags8 | thing->flags8) & MF8_ALLOWTHRUBITS))
 		{
 			continue;
 		}
@@ -4509,7 +4509,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		if (tempuff != NULL)
 		{
 			TData.PuffSpecies = tempuff->GetSpecies();
-			TData.UseThruBits = tempuff->flags8 & MF8_THRUBITS;
+			TData.UseThruBits = tempuff->flags8 & MF8_ALLOWTHRUBITS;
 			TData.ThruBits = tempuff->ThruBits;
 			tempuff->Destroy();
 		}
@@ -5269,7 +5269,7 @@ void P_RailAttack(FRailParams *p)
 	{
 		rail_data.ThruBits = thepuff->ThruBits;
 		if (rail_data.UseThruBits)
-			rail_data.UseThruBits = (thepuff->flags8 & MF8_THRUBITS);
+			rail_data.UseThruBits = !!(thepuff->flags8 & MF8_ALLOWTHRUBITS);
 	}
 
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);

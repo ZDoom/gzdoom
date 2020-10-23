@@ -450,7 +450,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)
 			continue;
 
-		if (th->ThruBits & tmf.thing->ThruBits)
+		if (((th->flags8 | tmf.thing->flags8) & MF8_THRUBITS) && th->ThruBits & tmf.thing->ThruBits)
 			continue;
 
 		double blockdist = th->radius + tmf.thing->radius;
@@ -1304,7 +1304,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)
 		return true;
 
-	if (thing->ThruBits & tm.thing->ThruBits)
+	if (((thing->flags8 | tm.thing->flags8) & MF8_THRUBITS) && thing->ThruBits & tm.thing->ThruBits)
 		return true;
 
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
@@ -2000,7 +2000,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
-		if (actor->ThruBits & thing->ThruBits)
+		if (((actor->flags8 | thing->flags8) & MF8_THRUBITS) && actor->ThruBits & thing->ThruBits)
 		{
 			continue;
 		}
@@ -4498,7 +4498,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		TData.ThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_THRUSPECIES));
 		TData.ThruActors = (puffDefaults && (puffDefaults->flags2 & MF2_THRUACTORS));
-		TData.UseThruBits = true;
+		
 		// [MC] Because this is a one-hit trace event, we need to spawn the puff, get the species
 		// and destroy it. Assume there is no species unless tempuff isn't NULL. We cannot get
 		// a proper species the same way as puffDefaults flags it appears...
@@ -4509,6 +4509,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		if (tempuff != NULL)
 		{
 			TData.PuffSpecies = tempuff->GetSpecies();
+			TData.UseThruBits = tempuff->flags8 & MF8_THRUBITS;
 			TData.ThruBits = tempuff->ThruBits;
 			tempuff->Destroy();
 		}
@@ -5265,7 +5266,11 @@ void P_RailAttack(FRailParams *p)
 		rail_data.PuffSpecies = (thepuff != NULL) ? thepuff->GetSpecies() : NAME_None;
 
 	if (thepuff)
+	{
 		rail_data.ThruBits = thepuff->ThruBits;
+		if (rail_data.UseThruBits)
+			rail_data.UseThruBits = (thepuff->flags8 & MF8_THRUBITS);
+	}
 
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
 

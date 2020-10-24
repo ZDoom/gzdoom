@@ -418,7 +418,7 @@ void GetFullscreenRect(double width, double height, int fsmode, DoubleRect* rect
 	CalcFullscreenScale(&parms, width, height, fsmode, *rect);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(_Screen, GetFullscreenRect, GetFullscreenRect)
+DEFINE_ACTION_FUNCTION(_Screen, GetFullscreenRect)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(virtw);

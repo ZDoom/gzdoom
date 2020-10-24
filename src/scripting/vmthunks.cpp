@@ -1399,6 +1399,33 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 ACTION_RETURN_POINTER(self->V2());
  }
 
+ static int GetTextureFlags(side_t* self, int tier)
+ {
+	 return self->GetTextureFlags(tier);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureFlags, GetTextureFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 ACTION_RETURN_INT(self->GetTextureFlags(tier));
+}
+
+ static void ChangeTextureFlags(side_t* self, int tier, int And, int Or)
+ {
+	 self->ChangeTextureFlags(tier, And, Or);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, ChangeTextureFlags, ChangeTextureFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_INT(a);
+	 PARAM_INT(o);
+	 ChangeTextureFlags(self, tier, a, o);
+	 return 0;
+ }
+
  static void SetSideSpecialColor(side_t *self, int tier, int position, int color, int useown)
  {
 	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)

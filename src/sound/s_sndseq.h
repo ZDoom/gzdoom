@@ -5,6 +5,8 @@
 #include "dobject.h"
 #include "s_sound.h"
 
+#define MAX_SNDSEQS			(4096)
+
 enum
 {
 	// Sound channel aliases for sound sequences.

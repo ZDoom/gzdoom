@@ -183,7 +183,7 @@ class DoomStatusScreen : StatusScreen
 			DrawText (textFont, tcolor, statsx, SP_STATSY+lh, "$TXT_IMITEMS");
 			DrawText (textFont, tcolor, statsx, SP_STATSY+2*lh, "$TXT_IMSECRETS");
 			DrawText (textFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMTIME");
-			if (wbs.partime) screen.DrawText (textFont, tcolor, 160 + SP_TIMEX, SP_TIMEY, "$TXT_IMPAR");
+			if (wbs.partime) DrawText (textFont, tcolor, 160 + SP_TIMEX, SP_TIMEY, "$TXT_IMPAR");
 		}
 			 
 		drawPercent (printFont, 320 - statsx, SP_STATSY, cnt_kills[0], wbs.maxkills, true, tcolor);

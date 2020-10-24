@@ -1320,6 +1320,17 @@ struct side_t
 		textures[which].yScale *= delta;
 	}
 
+	int GetTextureFlags(int which)
+	{
+		return textures[which].flags;
+	}
+
+	void ChangeTextureFlags(int which, int And, int Or)
+	{
+		textures[which].flags &= ~And;
+		textures[which].flags |= Or;
+	}
+
 	void SetSpecialColor(int which, int slot, int r, int g, int b, bool useown = true)
 	{
 		textures[which].SpecialColors[slot] = PalEntry(255, r, g, b);

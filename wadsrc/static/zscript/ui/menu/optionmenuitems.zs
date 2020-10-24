@@ -1234,3 +1234,65 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	
 }
 
+//=============================================================================
+//
+// Flag option by Accensus
+//
+//=============================================================================
+
+class OptionMenuItemFlagOption : OptionMenuItemOption
+{
+	int mBitShift;
+
+	OptionMenuItemFlagOption Init(String label, Name command, Name values, int bitShift, CVar greycheck = null, int center = 0)
+	{
+		Super.Init(label, command, values, greycheck, center);
+		mBitShift = bitShift;
+
+		return self;
+	}
+
+	override int GetSelection()
+	{
+		int Selection = 0;
+		int cnt = OptionValues.GetCount(mValues);
+		if (cnt > 0 && mCVar != null)
+		{
+			if (OptionValues.GetTextValue(mValues, 0).Length() == 0)
+			{
+				int CurrentFlags = mCVar.GetInt();
+
+				for (int i = 0; i < cnt; i++)
+				{
+					int OptionValue = int(OptionValues.GetValue(mValues, i));
+					if (CurrentFlags & (OptionValue << mBitShift))
+					{
+						Selection = i;
+						break;
+					}
+				}
+			}
+		}
+		return Selection;
+	}
+
+	override void SetSelection(int Selection)
+	{
+		int cnt = OptionValues.GetCount(mValues);
+		if (cnt > 0 && mCVar != null)
+		{
+			if (OptionValues.GetTextValue(mValues, 0).Length() == 0)
+			{
+				int OptionValue = int(OptionValues.GetValue(mValues, Selection));
+				int CurrentFlags = mCVar.GetInt();
+
+				switch (OptionValue)
+				{
+				case 0: CurrentFlags &= ~(1 << mBitShift); break;
+				case 1: CurrentFlags |= (1 << mBitShift); break;
+				}
+				mCVar.SetInt(CurrentFlags);
+			}
+		}
+	}
+}

@@ -529,7 +529,7 @@ bool FScanner::ScanString (bool tokens)
 	LastGotLine = Line;
 
 	// In case the generated scanner does not use marker, avoid compiler warnings.
-	marker;
+	// marker;
 #include "sc_man_scanner.h"
 	LastGotToken = tokens;
 	return return_val;

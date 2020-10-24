@@ -410,7 +410,15 @@ void CalcFullscreenScale(DrawParms *parms, double srcwidth, double srcheight, in
 	}
 }
 
-DEFINE_ACTION_FUNCTION(_Screen, GetFullscreenRect)
+void GetFullscreenRect(double width, double height, int fsmode, DoubleRect* rect)
+{
+	DrawParms parms;
+	parms.viewport.width = twod->GetWidth();
+	parms.viewport.height = twod->GetHeight();
+	CalcFullscreenScale(&parms, width, height, fsmode, *rect);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Screen, GetFullscreenRect, GetFullscreenRect)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(virtw);

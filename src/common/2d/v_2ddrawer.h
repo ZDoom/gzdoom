@@ -169,7 +169,7 @@ public:
 	float screenFade = 1.f;
 	DVector2 offset;
 public:
-	int fullscreenautoaspect = 0;
+	int fullscreenautoaspect = 3;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
 	
 	int AddCommand(const RenderCommand *data);

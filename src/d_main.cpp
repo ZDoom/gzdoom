@@ -2968,8 +2968,8 @@ static void FixWideStatusBar()
 {
 	FGameTexture* sbartex = TexMan.FindGameTexture("stbar", ETextureType::MiscPatch);
 
-	// only adjust offsets if none already exist
-	if (sbartex && sbartex->GetTexelWidth() > 320 &&
+	// only adjust offsets if none already exist and if the texture is not scaled. For scaled textures a proper offset is needed.
+	if (sbartex && sbartex->GetTexelWidth() > 320 && sbartex->GetScaleX() == 1 &&
 		!sbartex->GetTexelLeftOffset(0) && !sbartex->GetTexelTopOffset(0))
 	{
 		sbartex->SetOffsets(0, (sbartex->GetTexelWidth() - 320) / 2, 0);

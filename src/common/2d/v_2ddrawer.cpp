@@ -753,14 +753,14 @@ float F2DDrawer::GetClassicFlatScalarHeight()
 	return sh;
 }
 
-void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin, double flatscale, PalEntry color)
+void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin, double flatscale, PalEntry color, ERenderStyle style)
 {
 	float fU1, fU2, fV1, fV2;
 
 	RenderCommand dg;
 
 	dg.mType = DrawTypeTriangles;
-	dg.mRenderStyle = DefaultRenderStyle();
+	dg.mRenderStyle = LegacyRenderStyles[style];
 	dg.mTexture = src;
 	dg.mVertCount = 4;
 	dg.mTexture = src;

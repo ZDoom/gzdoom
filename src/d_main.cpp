@@ -3366,7 +3366,7 @@ static int D_DoomMain_Internal (void)
 		TexMan.Init([]() { StartScreen->Progress(); }, CheckForHacks);
 		PatchTextures();
 		TexAnim.Init();
-		C_InitConback();
+		C_InitConback(TexMan.CheckForTexture(gameinfo.BorderFlat, ETextureType::Flat), true);
 
 		FixWideStatusBar();
 

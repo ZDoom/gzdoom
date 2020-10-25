@@ -37,6 +37,7 @@
 #include <stdarg.h>
 #include "basics.h"
 #include "c_tabcomplete.h"
+#include "textureid.h"
 
 struct event_t;
 
@@ -57,7 +58,7 @@ extern constate_e ConsoleState;
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);
 void C_DeinitConsole ();
-void C_InitConback();
+void C_InitConback(FTextureID fallback, bool tile);
 
 // Adjust the console for a new screen mode
 void C_NewModeAdjust (void);

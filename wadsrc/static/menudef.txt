@@ -78,11 +78,11 @@ LISTMENU "MainMenu"
 		{
 			PatchItem "M_LOADG", "l", "LoadGameMenu", 0
 			PatchItem "M_SAVEG", "s", "SaveGameMenu",0
-			PatchItem "M_OPTION","o", "OptionsMenuSimple", 0
+			PatchItem "M_OPTION","o", "OptionsMenu", 0
 		}
 		else
 		{
-			PatchItem "M_OPTION","o", "OptionsMenuSimple", 0
+			PatchItem "M_OPTION","o", "OptionsMenu", 0
 			PatchItem "M_LOADG", "l", "LoadGameMenu", 0
 			PatchItem "M_SAVEG", "s", "SaveGameMenu", 0
 		}
@@ -96,7 +96,7 @@ LISTMENU "MainMenu"
 	IfGame(Heretic, Hexen)
 	{
 		TextItem "$MNU_NEWGAME", "n", "PlayerclassMenu"
-		TextItem "$MNU_OPTIONS", "o", "OptionsMenuSimple"
+		TextItem "$MNU_OPTIONS", "o", "OptionsMenu"
 		TextItem "$MNU_GAMEFILES", "g", "GameFilesMenu"
 		TextItem "$MNU_INFO", "i", "ReadThisMenu"
 		TextItem "$MNU_QUITGAME", "q", "QuitMenu"
@@ -382,6 +382,8 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
 	Submenu "$OS_TITLE", "os_Menu"
+	Option "$OPTMNU_SIMPLEON",			"m_simpleoptions", "OnOff"
+	
 	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"

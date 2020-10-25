@@ -14,7 +14,7 @@ OptionMenu "OptionsMenuSimple" protected
 	StaticText " "
 	Submenu "$OS_TITLE", "os_Menu"
 	StaticText " "
-	Submenu "$OMS_OLDGZDOOM", "OptionsMenu"
+	Submenu "$OPTMNU_FULLOPTIONS", "OptionsMenuFull"
 	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"

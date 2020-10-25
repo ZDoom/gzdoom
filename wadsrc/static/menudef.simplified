@@ -17,8 +17,9 @@ OptionMenu "OptionsMenuSimple" protected
 	StaticText " "
 	Submenu "$OPTMNU_FULLOPTIONS", "OptionsMenuFull"
 	StaticText " "
-	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
+	SafeCommand	"$OPTMNU_DEFAULTS",		"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
+	SafeCommand	"$OPTMNU_WRITEINI",		"writeini"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
 	StaticText " "
 }

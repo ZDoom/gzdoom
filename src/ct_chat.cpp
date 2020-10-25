@@ -52,8 +52,6 @@ enum
 };
 
 
-EXTERN_CVAR (Int, con_scaletext)
-
 EXTERN_CVAR (Bool, sb_cooperative_enable)
 EXTERN_CVAR (Bool, sb_deathmatch_enable)
 EXTERN_CVAR (Bool, sb_teamdeathmatch_enable)

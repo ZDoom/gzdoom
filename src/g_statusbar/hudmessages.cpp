@@ -45,8 +45,6 @@
 #include "c_console.h"
 #include "v_draw.h"
 
-EXTERN_CVAR(Int, con_scaletext)
-
 IMPLEMENT_CLASS(DHUDMessageBase, false, true)
 IMPLEMENT_POINTERS_START(DHUDMessageBase)
 IMPLEMENT_POINTER(Next)

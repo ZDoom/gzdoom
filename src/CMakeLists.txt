@@ -803,6 +803,7 @@ set (PCH_SOURCES
 	bbannouncer.cpp
 	console/c_cmds.cpp
 	console/c_console.cpp
+	console/c_notifybuffer.cpp
 	console/c_functions.cpp
 	ct_chat.cpp
 	d_iwad.cpp
@@ -1046,6 +1047,7 @@ set (PCH_SOURCES
 	common/console/c_cvars.cpp
 	common/console/c_dispatch.cpp
 	common/console/c_commandbuffer.cpp
+	common/console/c_notifybufferbase.cpp
 	common/console/c_tabcomplete.cpp
 	common/console/c_expr.cpp
 	common/utility/engineerrors.cpp

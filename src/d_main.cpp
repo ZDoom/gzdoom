@@ -151,6 +151,7 @@ void P_Shutdown();
 void M_SaveDefaultsFinal();
 void R_Shutdown();
 void I_ShutdownInput();
+void SetConsoleNotifyBuffer();
 
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -3636,6 +3637,7 @@ int GameMain()
 	};
 
 	C_InstallHandlers(&cb);
+	SetConsoleNotifyBuffer();
 
 	try
 	{

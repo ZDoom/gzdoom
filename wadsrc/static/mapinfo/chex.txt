@@ -16,7 +16,7 @@ gameinfo
 	finalepage = "CREDIT", "VICTORY2", "ENDPIC"
 	infopage = "HELP1", "CREDIT"
 	quitsound = "menu/quit1"
-	borderflat = "FLOOR7_2"
+	borderflat = "CEIL5_1"
 	border = DoomBorder
 	telefogheight = 0
 	defkickback = 100

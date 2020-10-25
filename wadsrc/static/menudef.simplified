@@ -11,6 +11,7 @@ OptionMenu "OptionsMenuSimple" protected
 	StaticText " "
 	Submenu "$OPTMNU_SOUND",			"SoundOptionsSimple"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptionsSimple"
+	Submenu "$HUDMNU_SCALEOPT",				"ScalingOptionsSimple"
 	StaticText " "
 	Submenu "$OS_TITLE", "os_Menu"
 	StaticText " "
@@ -47,11 +48,38 @@ OptionMenu VideoOptionsSimple protected
 	{
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
 	}
-	StaticText " "
-	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
 
+	StaticText " "
+	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
+	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
 	StaticText " "
 	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
 	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
+	StaticText " "
+	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
+	Option "$VIDMNU_MAXFPS",					"vid_maxfps", "MaxFps"
+	StaticText " "
+	Slider "$DSPLYMNU_GAMMA",					"vid_gamma",					0.75, 3.0, 0.05, 2
+	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
+	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
+	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
+
+	// commenting this out for now, this menu is so general purpose I am not sure it makes sense, but I'm leaving it here just in case
+	// the "full" menu doesn't have some of the options that are in this one.
+	//StaticText " "
+	//Submenu "$OPTMNU_FULLOPTIONS", "VideoModeMenu"
+}
+
+OptionMenu ScalingOptionsSimple protected
+{
+	Title "$SCALEMNU_TITLE"
+	StaticText "$OPTMNU_HUD"
+	ScaleSlider "$HUDMNU_UISCALE",				"uiscale", 0.0, 8.0, 1.0, "$SCALEMNU_ADAPT"
+	Option "$SCALEMNU_HUDASPECT", 				"hud_aspectscale", "OnOff"
+	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 				3.0, 12.0, 1.0, 0
+	StaticText " "
+	StaticText "$VIDMNU_TITLE"
+	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
+	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
 }

@@ -221,12 +221,12 @@ void C_InitConback(FTextureID fallback, bool tile)
 		conback.SetInvalid();
 		conshade = MAKEARGB(175,0,0,0);
 		conline = true;
+		if (!tile) conback = fallback;
 	}
 	else
 	{
 		conshade = 0;
 		conline = false;
-		if (!tile) conback = fallback;
 	}
 }
 

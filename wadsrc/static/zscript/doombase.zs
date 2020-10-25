@@ -42,6 +42,11 @@ extend struct Screen
 	}
 }
 
+extend struct Console
+{
+	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
+}
+
 extend struct Translation
 {
 	Color colors[256];

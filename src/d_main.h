@@ -33,6 +33,10 @@
 #include "startupinfo.h"
 #include "c_cvars.h"
 
+extern bool		advancedemo;
+extern bool hud_toggled;
+void D_ToggleHud();
+
 struct event_t;
 
 //

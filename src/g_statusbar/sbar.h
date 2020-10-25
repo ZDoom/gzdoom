@@ -540,6 +540,10 @@ extern FGameTexture *CrosshairImage;
 
 int GetInventoryIcon(AActor *item, uint32_t flags, int *applyscale = nullptr);
 
+class FFont;
+void C_MidPrint(FFont* font, const char* message, bool bold = false);
+
+
 
 enum DI_Flags
 {

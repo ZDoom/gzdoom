@@ -37,7 +37,7 @@
 #include "templates.h"
 #include "p_local.h"
 #include "t_script.h"
-#include "c_console.h"
+#include "sbar.h"
 #include "c_dispatch.h"
 #include "d_player.h"
 #include "filesystem.h"

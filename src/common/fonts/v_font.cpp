@@ -819,6 +819,7 @@ void V_InitFonts()
 		BigFont = OriginalBigFont;
 	}
 	AlternativeSmallFont = OriginalSmallFont;
+	AlternativeBigFont = OriginalBigFont;
 }
 
 void V_LoadTranslations()

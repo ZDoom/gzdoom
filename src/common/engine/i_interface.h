@@ -26,6 +26,7 @@ struct SystemCallbacks
 	int (*GetGender)();
 	void (*MenuClosed)();
 	bool (*CheckMenudefOption)(const char* opt);
+	void (*ConsoleToggled)(int state);
 };
 
 extern SystemCallbacks sysCallbacks;

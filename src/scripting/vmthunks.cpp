@@ -2738,6 +2738,19 @@ DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
 	return MIN(numret, 4);
 }
 
+DEFINE_ACTION_FUNCTION(_Console, MidPrint)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_STRING(text);
+	PARAM_BOOL(bold);
+
+	const char* txt = text[0] == '$' ? GStrings(&text[1]) : text.GetChars();
+	C_MidPrint(fnt, txt, bold);
+	return 0;
+}
+
+
 //==========================================================================
 //
 //

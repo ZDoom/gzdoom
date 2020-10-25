@@ -1080,6 +1080,7 @@ void D_Display ()
 		switch (gamestate)
 		{
 			case GS_FULLCONSOLE:
+				D_PageDrawer();
 				C_DrawConsole ();
 				M_Drawer ();
 				End2DAndUpdate ();
@@ -2831,6 +2832,13 @@ FString System_GetPlayerName(int node)
 {
 	return players[node].userinfo.GetName();
 }
+
+void System_ConsoleToggled(int state)
+{
+	if (state == c_falling && hud_toggled)
+		D_ToggleHud();
+}
+
 //==========================================================================
 //
 // DoomSpecificInfo
@@ -3057,6 +3065,7 @@ static int D_DoomMain_Internal (void)
 		StrTable_GetGender,
 		nullptr,
 		CheckSkipGameOptionBlock,
+		System_ConsoleToggled,
 	};
 
 	

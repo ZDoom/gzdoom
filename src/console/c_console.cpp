@@ -68,6 +68,7 @@
 #include "i_time.h"
 #include "texturemanager.h"
 #include "v_draw.h"
+#include "i_interface.h"
 
 
 #include "gi.h"
@@ -76,10 +77,6 @@
 #define LEFTMARGIN 8
 #define RIGHTMARGIN 8
 #define BOTTOMARGIN 12
-
-extern bool hud_toggled;
-void D_ToggleHud();
-
 
 CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -95,7 +92,6 @@ static bool conline;
 
 extern int		gametic;
 extern bool		automapactive;	// in AM_map.c
-extern bool		advancedemo;
 
 extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
@@ -847,7 +843,7 @@ void C_DrawConsole ()
 
 		visheight = ConBottom;
 
-		if (conback.isValid())
+		if (conback.isValid() && gamestate != GS_FULLCONSOLE)
 		{
 			DrawTexture (twod, TexMan.GetGameTexture(conback), 0, visheight - screen->GetHeight(),
 				DTA_DestWidth, twod->GetWidth(),
@@ -862,6 +858,7 @@ void C_DrawConsole ()
 			PalEntry pe((uint8_t)(con_alpha * 255), 0, 0, 0);
 			twod->AddColorOnlyQuad(0, 0, screen->GetWidth(), visheight, pe);
 		}
+
 		if (conline && visheight < screen->GetHeight())
 		{
 			twod->AddColorOnlyQuad(0, visheight, screen->GetWidth(), 1, 0xff000000);
@@ -947,35 +944,25 @@ void C_DrawConsole ()
 
 void C_FullConsole ()
 {
-	if (hud_toggled)
-		D_ToggleHud();
-	if (demoplayback)
-		G_CheckDemoStatus ();
-	D_QuitNetGame ();
-	advancedemo = false;
 	ConsoleState = c_down;
 	HistPos = NULL;
 	TabbedLast = false;
 	TabbedList = false;
-	if (gamestate != GS_STARTUP)
-	{
-		gamestate = GS_FULLCONSOLE;
-		primaryLevel->Music = "";
-		S_Start ();
-		S_StopMusic(true);
-		P_FreeLevelData ();
-	}
-	else
-	{
-		C_AdjustBottom ();
-	}
+	gamestate = GS_FULLCONSOLE;
+	C_AdjustBottom ();
 }
 
 void C_ToggleConsole ()
 {
-	if (gamestate == GS_DEMOSCREEN || demoplayback)
+	int togglestate;
+	if (gamestate == GS_INTRO) // blocked
+	{
+		return;
+	}
+	if (gamestate == GS_MENUSCREEN)
 	{
 		gameaction = ga_fullconsole;
+		togglestate = c_down;
 	}
 	else if (!chatmodeon && (ConsoleState == c_up || ConsoleState == c_rising) && menuactive == MENU_Off)
 	{
@@ -983,14 +970,17 @@ void C_ToggleConsole ()
 		HistPos = NULL;
 		TabbedLast = false;
 		TabbedList = false;
-		if (hud_toggled)
-			D_ToggleHud();
+		togglestate = c_falling;
 	}
 	else if (gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP)
 	{
 		ConsoleState = c_rising;
-		C_FlushDisplay ();
+		C_FlushDisplay();
+		togglestate = c_rising;
 	}
+	else return;
+	// This must be done as an event callback because the client code does not control the console toggling.
+	if (sysCallbacks.ConsoleToggled) sysCallbacks.ConsoleToggled(togglestate);
 }
 
 void C_HideConsole ()
@@ -1432,40 +1422,5 @@ CCMD (echo)
 CCMD(toggleconsole)
 {
 	C_ToggleConsole();
-}
-
-/* Printing in the middle of the screen */
-
-CVAR(Float, con_midtime, 3.f, CVAR_ARCHIVE)
-
-const char *console_bar = "----------------------------------------";
-
-void C_MidPrint (FFont *font, const char *msg, bool bold)
-{
-	if (StatusBar == nullptr || screen == nullptr)
-		return;
-
-	// [MK] allow the status bar to take over MidPrint
-	IFVIRTUALPTR(StatusBar, DBaseStatusBar, ProcessMidPrint)
-	{
-		FString msgstr = msg;
-		VMValue params[] = { (DObject*)StatusBar, font, &msgstr, bold };
-		int rv;
-		VMReturn ret(&rv);
-		VMCall(func, params, countof(params), &ret, 1);
-		if (!!rv) return;
-	}
-
-	if (msg != nullptr)
-	{
-		auto color = (EColorRange)PrintColors[bold? PRINTLEVELS+1 : PRINTLEVELS];
-		Printf(PRINT_HIGH|PRINT_NONOTIFY, TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", color, console_bar, msg, console_bar);
-
-		StatusBar->AttachMessage (Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0, color, con_midtime), MAKE_ID('C','N','T','R'));
-	}
-	else
-	{
-		StatusBar->DetachMessage (MAKE_ID('C','N','T','R'));
-	}
 }
 

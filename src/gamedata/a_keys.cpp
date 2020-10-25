@@ -36,7 +36,7 @@
 #include "gi.h"
 #include "gstrings.h"
 #include "d_player.h"
-#include "c_console.h"
+#include "sbar.h"
 #include "filesystem.h"
 #include "v_font.h"
 #include "vm.h"

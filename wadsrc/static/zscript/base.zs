@@ -493,7 +493,6 @@ struct Font native
 struct Console native
 {
 	native static void HideConsole();
-	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
 	native static vararg void Printf(string fmt, ...);
 }
 

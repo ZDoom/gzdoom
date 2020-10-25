@@ -75,6 +75,8 @@
 #include "i_system.h"
 #include "p_conversation.h"
 #include "v_palette.h"
+#include "s_music.h"
+#include "p_setup.h"
 
 #include "v_video.h"
 #include "g_hub.h"
@@ -1048,6 +1050,29 @@ bool G_Responder (event_t *ev)
 			ev->type == EV_Mouse);
 }
 
+
+static void G_FullConsole()
+{
+	int oldgs = gamestate;
+
+	if (hud_toggled)
+		D_ToggleHud();
+	if (demoplayback)
+		G_CheckDemoStatus();
+	D_QuitNetGame();
+	advancedemo = false;
+	C_FullConsole();
+
+	if (oldgs != GS_STARTUP)
+	{
+		primaryLevel->Music = "";
+		S_Start();
+		S_StopMusic(true);
+		P_FreeLevelData();
+	}
+
+}
+
 //==========================================================================
 //
 // FRandom :: StaticSumSeeds
@@ -1158,7 +1183,7 @@ void G_Ticker ()
 			gameaction = ga_nothing;
 			break;
 		case ga_fullconsole:
-			C_FullConsole ();
+			G_FullConsole ();
 			gameaction = ga_nothing;
 			break;
 		case ga_togglemap:

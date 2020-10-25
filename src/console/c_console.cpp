@@ -90,8 +90,6 @@ static FTextureID conback;
 static uint32_t conshade;
 static bool conline;
 
-extern int		gametic;
-extern bool		automapactive;	// in AM_map.c
 
 extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
@@ -187,7 +185,17 @@ public:
 	FNotifyBuffer();
 	void AddString(int printlevel, FString source);
 	void Shift(int maxlines);
-	void Clear() { Text.Clear(); }
+	void Clear() 
+	{ 
+		Text.Clear(); 
+		if (StatusBar == nullptr) return;
+		IFVIRTUALPTR(StatusBar, DBaseStatusBar, FlushNotify)
+		{
+			VMValue params[] = { (DObject*)StatusBar };
+			VMCall(func, params, countof(params), nullptr, 1);
+		}
+	
+	}
 	void Tick();
 	void Draw();
 
@@ -205,7 +213,7 @@ CUSTOM_CVAR(Int, con_notifylines, NUMNOTIFIES, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 }
 
 
-int PrintColors[PRINTLEVELS+2] = { CR_RED, CR_GOLD, CR_GRAY, CR_GREEN, CR_GREEN, CR_GOLD };
+int PrintColors[PRINTLEVELS+2] = { CR_UNTRANSLATED, CR_GOLD, CR_GRAY, CR_GREEN, CR_GREEN, CR_UNTRANSLATED };
 
 static void setmsgcolor (int index, int color);
 
@@ -214,37 +222,37 @@ FILE *Logfile = NULL;
 
 FIntCVar msglevel ("msg", 0, CVAR_ARCHIVE);
 
-CUSTOM_CVAR (Int, msg0color, 6, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, msg0color, CR_UNTRANSLATED, CVAR_ARCHIVE)
 {
 	setmsgcolor (0, self);
 }
 
-CUSTOM_CVAR (Int, msg1color, 5, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, msg1color, CR_GOLD, CVAR_ARCHIVE)
 {
 	setmsgcolor (1, self);
 }
 
-CUSTOM_CVAR (Int, msg2color, 2, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, msg2color, CR_GRAY, CVAR_ARCHIVE)
 {
 	setmsgcolor (2, self);
 }
 
-CUSTOM_CVAR (Int, msg3color, 3, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, msg3color, CR_GREEN, CVAR_ARCHIVE)
 {
 	setmsgcolor (3, self);
 }
 
-CUSTOM_CVAR (Int, msg4color, 3, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, msg4color, CR_GREEN, CVAR_ARCHIVE)
 {
 	setmsgcolor (4, self);
 }
 
-CUSTOM_CVAR (Int, msgmidcolor, 5, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, msgmidcolor, CR_UNTRANSLATED, CVAR_ARCHIVE)
 {
 	setmsgcolor (PRINTLEVELS, self);
 }
 
-CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, msgmidcolor2, CR_BROWN, CVAR_ARCHIVE)
 {
 	setmsgcolor (PRINTLEVELS+1, self);
 }
@@ -435,7 +443,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 	TArray<FBrokenLines> lines;
 	int width;
 
-	if ((printlevel != 128 && !show_messages) ||
+	if (!show_messages ||
 		source.IsEmpty() ||
 		gamestate == GS_FULLCONSOLE ||
 		gamestate == GS_DEMOSCREEN ||
@@ -648,12 +656,6 @@ int DPrintf (int level, const char *format, ...)
 void C_FlushDisplay ()
 {
 	NotifyStrings.Clear();
-	if (StatusBar == nullptr) return;
-	IFVIRTUALPTR(StatusBar, DBaseStatusBar, FlushNotify)
-	{
-		VMValue params[] = { (DObject*)StatusBar };
-		VMCall(func, params, countof(params), nullptr, 1);
-	}
 }
 
 void C_AdjustBottom ()
@@ -765,9 +767,6 @@ void FNotifyBuffer::Draw()
 		j = notify.TimeOut - notify.Ticker;
 		if (j > 0)
 		{
-			if (!show_messages && notify.PrintLevel != 128)
-				continue;
-
 			double alpha = (j < NOTIFYFADETIME) ? 1. * j / NOTIFYFADETIME : 1;
 			if (con_pulsetext)
 			{

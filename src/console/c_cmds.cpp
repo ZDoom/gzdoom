@@ -77,7 +77,7 @@ CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO | CVAR_LATCH)
 CVAR (Bool, sv_unlimited_pickup, false, CVAR_SERVERINFO)
 CVAR (Int, cl_blockcheats, 0, 0)
 
-CVAR(Bool, show_messages, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVARD(Bool, show_messages, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enable/disable showing messages")
 CVAR(Bool, show_obituaries, true, CVAR_ARCHIVE)
 
 

@@ -58,7 +58,7 @@ extern constate_e ConsoleState;
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);
 void C_DeinitConsole ();
-void C_InitConback(FTextureID fallback, bool tile);
+void C_InitConback(FTextureID fallback, bool tile, double lightlevel = 1.);
 
 // Adjust the console for a new screen mode
 void C_NewModeAdjust (void);

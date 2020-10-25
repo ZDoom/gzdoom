@@ -212,14 +212,14 @@ CUSTOM_CVAR (Int, msgmidcolor2, CR_BROWN, CVAR_ARCHIVE)
 	setmsgcolor (PRINTLEVELS+1, self);
 }
 
-void C_InitConback(FTextureID fallback, bool tile)
+void C_InitConback(FTextureID fallback, bool tile, double brightness)
 {
 	conback = TexMan.CheckForTexture ("CONBACK", ETextureType::MiscPatch);
 	conflat = fallback;
 	if (!conback.isValid())
 	{
 		conback.SetInvalid();
-		conshade = MAKEARGB(175,0,0,0);
+		conshade = MAKEARGB(uint8_t(255 - 255*brightness),0,0,0);
 		conline = true;
 		if (!tile) conback = fallback;
 	}
@@ -616,7 +616,8 @@ void C_DrawConsole ()
 		{
 			if (conflat.isValid())
 			{
-				PalEntry pe((uint8_t(255 * con_alpha)), 64, 64, 64);
+				int conbright = 255 - APART(conshade);
+				PalEntry pe((uint8_t(255 * con_alpha)), conbright, conbright, conbright);
 				twod->AddFlatFill(0, visheight - screen->GetHeight(), screen->GetWidth(), visheight, TexMan.GetGameTexture(conflat), 1, CleanXfac, pe, STYLE_Shaded);
 			}
 			else

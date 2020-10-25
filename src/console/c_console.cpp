@@ -748,9 +748,6 @@ void FNotifyBuffer::Draw()
 	int line, lineadv, color, j;
 	bool canskip;
 	
-	if (gamestate == GS_FULLCONSOLE || gamestate == GS_DEMOSCREEN)
-		return;
-
 	FFont* font = generic_ui ? NewSmallFont : AlternativeSmallFont;
 
 	line = Top + font->GetDisplacement();
@@ -832,7 +829,8 @@ void C_DrawConsole ()
 
 	oldbottom = ConBottom;
 
-	if (ConsoleState == c_up)
+	if (ConsoleState == c_up && gamestate != GS_INTRO && gamestate != GS_INTERMISSION && 
+		gamestate != GS_FULLCONSOLE && gamestate == GS_MENUSCREEN)
 	{
 		NotifyStrings.Draw();
 		return;

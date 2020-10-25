@@ -539,6 +539,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	RespawnLimit= other.RespawnLimit;
 	Aggressiveness= other.Aggressiveness;
 	SpawnFilter = other.SpawnFilter;
+	SpawnMulti = other.SpawnMulti;
 	ACSReturn = other.ACSReturn;
 	MenuName = other.MenuName;
 	PicName = other.PicName;

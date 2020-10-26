@@ -267,10 +267,8 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 //
 //=============================================================================
 
-static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
+static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &sizeset, bool &sizecompatible)
 {
-	bool sizeset = false;
-	bool sizecompatible = true;
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
@@ -284,7 +282,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			if (!CheckSkipGameBlock(sc))
 			{
 				// recursively parse sub-block
-				ParseListMenuBody(sc, desc);
+				ParseListMenuBody(sc, desc, sizeset, sizecompatible);
 			}
 		}
 		else if (sc.Compare("ifnotgame"))
@@ -292,7 +290,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			if (!CheckSkipGameBlock(sc, false))
 			{
 				// recursively parse sub-block
-				ParseListMenuBody(sc, desc);
+				ParseListMenuBody(sc, desc, sizeset, sizecompatible);
 			}
 		}
 		else if (sc.Compare("ifoption"))
@@ -300,7 +298,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			if (!CheckSkipOptionBlock(sc))
 			{
 				// recursively parse sub-block
-				ParseListMenuBody(sc, desc);
+				ParseListMenuBody(sc, desc, sizeset, sizecompatible);
 			}
 		}
 		else if (sc.Compare("Class"))
@@ -382,6 +380,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 		}
 		else if (sc.Compare("size"))
 		{
+			sizeset = true;
 			if (sc.CheckNumber())
 			{
 				desc->mVirtWidth = sc.Number;
@@ -544,10 +543,6 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			}
 		}
 	}
-	if (!sizeset && sizecompatible) // allow unclean scaling on this menu
-	{
-		desc->mVirtWidth = -2;
-	}
 	for (auto &p : desc->mItems)
 	{
 		GC::WriteBarrier(p);
@@ -700,8 +695,16 @@ static void ParseListMenu(FScanner &sc)
 	desc->mWRight = 0;
 	desc->mCenter = false;
 	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
+	desc->mVirtWidth = -2;
 
-	ParseListMenuBody(sc, desc);
+	bool sizeset = false;
+	bool sizecompatible = true;
+	ParseListMenuBody(sc, desc, sizeset, sizecompatible);
+	if (!sizeset && sizecompatible) // allow unclean scaling on this menu
+	{
+		desc->mVirtWidth = -2;
+	}
+
 	ReplaceMenu(sc, desc);
 }
 
@@ -1296,7 +1299,8 @@ void M_ParseMenuDefs()
 			}
 			else if (sc.Compare("DEFAULTLISTMENU"))
 			{
-				ParseListMenuBody(sc, DefaultListMenuSettings);
+				bool s = false;
+				ParseListMenuBody(sc, DefaultListMenuSettings, s, s);
 				if (DefaultListMenuSettings->mItems.Size() > 0)
 				{
 					I_FatalError("You cannot add menu items to the menu default settings.");

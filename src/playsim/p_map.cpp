@@ -4888,6 +4888,7 @@ int P_LineTrace(AActor *t1, DAngle angle, double distance,
 				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[2].texture;
 				break;
 			case TIER_FFloor:
+				outdata->LinePart = 1;	// act as if middle was hit
 				txpart = (trace.ffloor->flags & FF_UPPERTEXTURE) ? 0 : (trace.ffloor->flags & FF_LOWERTEXTURE) ? 2 : 1;
 				outdata->HitTexture = trace.ffloor->master->sidedef[0]->textures[txpart].texture;
 				break;

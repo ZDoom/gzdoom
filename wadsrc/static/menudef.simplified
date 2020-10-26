@@ -11,7 +11,9 @@ OptionMenu "OptionsMenuSimple" protected
 	StaticText " "
 	Submenu "$OPTMNU_SOUND",			"SoundOptionsSimple"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptionsSimple"
-	Submenu "$HUDMNU_SCALEOPT",				"ScalingOptionsSimple"
+	Submenu "$HUDMNU_SCALEOPT",			"ScalingOptionsSimple"
+	StaticText " "
+	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptionsSimple"	
 	StaticText " "
 	Submenu "$OS_TITLE", "os_Menu"
 	StaticText " "
@@ -82,4 +84,16 @@ OptionMenu ScalingOptionsSimple protected
 	StaticText "$VIDMNU_TITLE"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
+}
+
+OptionMenu MiscOptionsSimple protected
+{
+	Title "$MISCMNU_TITLE"
+	Option "$MISCMNU_QUERYIWAD",				"queryiwad", "OnOff"
+	Option "$MISCMNU_NOCHEATS",					"nocheats", "OnOff"
+	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
+	Option "$MISCMNU_ENABLEAUTOSAVES",			"disableautosave", "Autosave"
+	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
+	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
+	Option "$OPTMNU_LANGUAGE",					"language", "LanguageOptions"
 }

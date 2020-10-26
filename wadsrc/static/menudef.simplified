@@ -41,7 +41,7 @@ OptionMenu SoundOptionsSimple protected
 
 OptionMenu VideoOptionsSimple protected
 {
-	Title "$VIDMNU_TITLE"
+	Title "$DSPLYMNU_TITLE"
 
 	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
 	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"

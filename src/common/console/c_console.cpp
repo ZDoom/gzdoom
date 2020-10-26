@@ -614,7 +614,7 @@ void C_DrawConsole ()
 		}
 		else
 		{
-			if (conflat.isValid())
+			if (conflat.isValid() && gamestate != GS_FULLCONSOLE)
 			{
 				int conbright = 255 - APART(conshade);
 				PalEntry pe((uint8_t(255 * con_alpha)), conbright, conbright, conbright);

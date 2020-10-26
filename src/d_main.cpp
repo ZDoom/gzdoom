@@ -1937,6 +1937,11 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetNumber();
 			GameStartupInfo.LoadBrightmaps = !!sc.Number;
 		}
+		else if (!nextKey.CompareNoCase("LOADWIDESCREEN"))
+		{
+			sc.MustGetNumber();
+			GameStartupInfo.LoadWidescreen = !!sc.Number;
+		}
 		else
 		{
 			// Silently ignore unknown properties
@@ -2071,7 +2076,7 @@ static void AddAutoloadFiles(const char *autoname)
 			if (bmwad)
 				D_AddFile (allwads, bmwad, true, -1, GameConfig);
 		}
-		if (autoloadwidescreen)
+		if (GameStartupInfo.LoadWidescreen == 1 || (GameStartupInfo.LoadWidescreen != 0 && autoloadwidescreen))
 		{
 			const char *wswad = BaseFileSearch ("game_widescreen_gfx.pk3", NULL, false, GameConfig);
 			if (wswad)
@@ -3730,7 +3735,7 @@ void D_Cleanup()
 	// delete GameStartupInfo data
 	GameStartupInfo.Name = "";
 	GameStartupInfo.BkColor = GameStartupInfo.FgColor = GameStartupInfo.Type = 0;
-	GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
+	GameStartupInfo.LoadWidescreen = GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
 	
 	GC::FullGC();					// clean up before taking down the object list.
 	

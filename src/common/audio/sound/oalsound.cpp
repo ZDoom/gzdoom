@@ -556,6 +556,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");
 	ALC.SOFT_HRTF = !!alcIsExtensionPresent(Device, "ALC_SOFT_HRTF");
 	ALC.SOFT_pause_device = !!alcIsExtensionPresent(Device, "ALC_SOFT_pause_device");
+	ALC.SOFT_pause_device = !!alcIsExtensionPresent(Device, "ALC_SOFT_pause_device");
+	ALC.SOFT_output_limiter = !!alcIsExtensionPresent(Device, "ALC_SOFT_output_limiter");
 
 	const ALCchar *current = NULL;
 	if(alcIsExtensionPresent(Device, "ALC_ENUMERATE_ALL_EXT"))
@@ -591,6 +593,11 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 			attribs.Push(ALC_TRUE);
 		else
 			attribs.Push(ALC_DONT_CARE_SOFT);
+	}
+	if (ALC.SOFT_output_limiter)
+	{
+		attribs.Push(ALC_OUTPUT_LIMITER_SOFT);
+		attribs.Push(ALC_TRUE /* or ALC_FALSE or ALC_DONT_CARE_SOFT */);
 	}
 	// Other attribs..?
 	attribs.Push(0);

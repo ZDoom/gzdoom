@@ -1,0 +1,3 @@
+[submodule "wadsrc_widescreen/static"]
+	path = wadsrc_widescreen/static
+	url = https://github.com/nashmuhandes/WidePix

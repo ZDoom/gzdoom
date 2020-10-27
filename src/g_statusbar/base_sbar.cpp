@@ -42,6 +42,7 @@
 #include "cmdlib.h"
 #include "texturemanager.h"
 #include "c_cvars.h"
+#include "vm.h"
 
 FGameTexture* CrosshairImage;
 static int CrosshairNum;
@@ -195,4 +196,48 @@ void ST_DrawCrosshair(int phealth, double xpos, double ypos, double scale)
 		TAG_DONE);
 }
 
+
+//---------------------------------------------------------------------------
+//
+//
+//
+//---------------------------------------------------------------------------
+
+enum ENumFlags
+{
+	FNF_WHENNOTZERO = 0x1,
+	FNF_FILLZEROS = 0x2,
+};
+
+void FormatNumber(int number, int minsize, int maxsize, int flags, const FString& prefix, FString* result)
+{
+	static int maxvals[] = { 1, 9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999 };
+
+	if (number == 0 && (flags & FNF_WHENNOTZERO))
+	{
+		*result = "";
+		return;
+	}
+	if (maxsize > 0 && maxsize < 10)
+	{
+		number = clamp(number, -maxvals[maxsize - 1], maxvals[maxsize]);
+	}
+	FString& fmt = *result;
+	if (minsize <= 1) fmt.Format("%s%d", prefix.GetChars(), number);
+	else if (flags & FNF_FILLZEROS) fmt.Format("%s%0*d", prefix.GetChars(), minsize, number);
+	else fmt.Format("%s%*d", prefix.GetChars(), minsize, number);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, FormatNumber, FormatNumber)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(number);
+	PARAM_INT(minsize);
+	PARAM_INT(maxsize);
+	PARAM_INT(flags);
+	PARAM_STRING(prefix);
+	FString fmt;
+	FormatNumber(number, minsize, maxsize, flags, prefix, &fmt);
+	ACTION_RETURN_STRING(fmt);
+}
 

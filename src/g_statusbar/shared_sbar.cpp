@@ -1092,10 +1092,6 @@ void DBaseStatusBar::RefreshBackground () const
 
 void DBaseStatusBar::DrawCrosshair ()
 {
-	uint32_t color;
-	double size;
-	int w, h;
-
 	if (!crosshairon)
 	{
 		return;
@@ -1949,31 +1945,6 @@ static DObject *InitObject(PClass *type, int paramnum, VM_ARGS)
 }
 
 
-
-enum ENumFlags
-{
-	FNF_WHENNOTZERO = 0x1,
-	FNF_FILLZEROS = 0x2,
-};
-
-void FormatNumber(int number, int minsize, int maxsize, int flags, const FString &prefix, FString *result)
-{
-	static int maxvals[] = { 1, 9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999 };
-
-	if (number == 0 && (flags & FNF_WHENNOTZERO))
-	{
-		*result = "";
-		return;
-	}
-	if (maxsize > 0 && maxsize < 10)
-	{
-		number = clamp(number, -maxvals[maxsize - 1], maxvals[maxsize]);
-	}
-	FString &fmt = *result;
-	if (minsize <= 1) fmt.Format("%s%d", prefix.GetChars(), number);
-	else if (flags & FNF_FILLZEROS) fmt.Format("%s%0*d", prefix.GetChars(), minsize, number);
-	else fmt.Format("%s%*d", prefix.GetChars(), minsize, number);
-}
 
 //---------------------------------------------------------------------------
 //

@@ -1,5 +1,6 @@
 class StatusBarCore native
 {
+	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
 }
 
 struct MugShot
@@ -354,7 +355,6 @@ class BaseStatusBar : StatusBarCore native ui
 	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4, Vector2 scale = (1, 1));
 	native double, double, double, double TransformRect(double x, double y, double w, double h, int flags = 0);
 	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
-	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
 	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
 	native int GetTopOfStatusBar();
 	native void SetClipRect(double x, double y, double w, double h, int flags = 0);

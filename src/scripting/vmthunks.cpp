@@ -2295,21 +2295,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayValue, GetGlobalA
 	ACTION_RETURN_INT(ACS_GlobalArrays[arrayno][index]);
 }
 
-void FormatNumber(int number, int minsize, int maxsize, int flags, const FString &prefix, FString *result);
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, FormatNumber, FormatNumber)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(number);
-	PARAM_INT(minsize);
-	PARAM_INT(maxsize);
-	PARAM_INT(flags);
-	PARAM_STRING(prefix);
-	FString fmt;
-	FormatNumber(number, minsize, maxsize, flags, prefix, &fmt);
-	ACTION_RETURN_STRING(fmt);
-}
-
 static void ReceivedWeapon(DBaseStatusBar *self)
 {
 	self->mugshot.Grin();

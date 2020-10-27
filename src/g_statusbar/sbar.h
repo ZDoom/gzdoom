@@ -35,7 +35,7 @@
 #ifndef __SBAR_H__
 #define __SBAR_H__
 
-#include "dobject.h"
+#include "base_sbar.h"
 #include "v_collection.h"
 #include "v_text.h"
 #include "renderstyle.h"
@@ -356,10 +356,10 @@ public:
 };
 
 
-class DBaseStatusBar : public DObject
+class DBaseStatusBar : public DStatusBarCore
 {
 	friend class DSBarInfo;
-	DECLARE_CLASS (DBaseStatusBar, DObject)
+	DECLARE_CLASS (DBaseStatusBar, DStatusBarCore)
 	HAS_OBJECT_POINTERS
 public:
 	// Popup screens for Strife's status bar
@@ -536,7 +536,6 @@ DBaseStatusBar *CreateCustomStatusBar(int script=0);
 void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
 void ST_CreateStatusBar(bool bTitleLevel);
-extern FGameTexture *CrosshairImage;
 
 int GetInventoryIcon(AActor *item, uint32_t flags, int *applyscale = nullptr);
 

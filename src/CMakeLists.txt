@@ -905,6 +905,7 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
+	g_statusbar/base_sbar.cpp
 	rendering/2d/f_wipe.cpp
 	rendering/2d/v_blend.cpp
 	rendering/hwrenderer/hw_entrypoint.cpp

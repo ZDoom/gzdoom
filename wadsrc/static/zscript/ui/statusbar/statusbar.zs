@@ -1,3 +1,6 @@
+class StatusBarCore native
+{
+}
 
 struct MugShot
 {
@@ -108,7 +111,7 @@ class HUDMessageBase native ui
 	virtual native void Draw(int bottom, int visibility);
 }
 
-class BaseStatusBar native ui
+class BaseStatusBar : StatusBarCore native ui
 {
 	enum EPop
 	{

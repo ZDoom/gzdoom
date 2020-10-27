@@ -42,19 +42,24 @@
 #include "cmdlib.h"
 #include "texturemanager.h"
 #include "c_cvars.h"
+#include "v_font.h"
+#include "utf8.h"
+#include "v_text.h"
 #include "vm.h"
 
 FGameTexture* CrosshairImage;
 static int CrosshairNum;
 
 
-IMPLEMENT_CLASS(DStatusBarCore, false, false)
+IMPLEMENT_CLASS(DStatusBarCore, true, false)
+IMPLEMENT_CLASS(DHUDFont, true, false);
 
 
 CVAR(Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
 CVAR(Int, crosshairhealth, 1, CVAR_ARCHIVE);
 CVAR(Float, crosshairscale, 1.0, CVAR_ARCHIVE);
 CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
+EXTERN_CVAR(Bool, vid_fps)
 
 
 
@@ -228,16 +233,437 @@ void FormatNumber(int number, int minsize, int maxsize, int flags, const FString
 	else fmt.Format("%s%*d", prefix.GetChars(), minsize, number);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, FormatNumber, FormatNumber)
+void DStatusBarCore::ValidateResolution(int& hres, int& vres) const
 {
-	PARAM_PROLOGUE;
-	PARAM_INT(number);
-	PARAM_INT(minsize);
-	PARAM_INT(maxsize);
-	PARAM_INT(flags);
-	PARAM_STRING(prefix);
-	FString fmt;
-	FormatNumber(number, minsize, maxsize, flags, prefix, &fmt);
-	ACTION_RETURN_STRING(fmt);
+	if (hres == 0)
+	{
+		static const int HORIZONTAL_RESOLUTION_DEFAULT = 320;
+		hres = HORIZONTAL_RESOLUTION_DEFAULT;
+	}
+
+	if (vres == 0)
+	{
+		static const int VERTICAL_RESOLUTION_DEFAULT = 200;
+		vres = VERTICAL_RESOLUTION_DEFAULT;
+	}
 }
+
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DStatusBarCore::StatusbarToRealCoords(double& x, double& y, double& w, double& h) const
+{
+	if (SBarScale.X == -1 || ForcedScale)
+	{
+		int hres = HorizontalResolution;
+		int vres = VerticalResolution;
+		ValidateResolution(hres, vres);
+
+		VirtualToRealCoords(twod, x, y, w, h, hres, vres, true, true);
+	}
+	else
+	{
+		x = ST_X + x * SBarScale.X;
+		y = ST_Y + y * SBarScale.Y;
+		w *= SBarScale.X;
+		h *= SBarScale.Y;
+	}
+}
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY)
+{
+	if (!texture.isValid())
+		return;
+
+	FGameTexture* tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
+
+	double texwidth = tex->GetDisplayWidth() * scaleX;
+	double texheight = tex->GetDisplayHeight() * scaleY;
+
+	if (boxwidth > 0 || boxheight > 0)
+	{
+		if (!(flags & DI_FORCEFILL))
+		{
+			double scale1 = 1., scale2 = 1.;
+
+			if (boxwidth > 0 && (boxwidth < texwidth || (flags & DI_FORCESCALE)))
+			{
+				scale1 = boxwidth / texwidth;
+			}
+			if (boxheight != -1 && (boxheight < texheight || (flags & DI_FORCESCALE)))
+			{
+				scale2 = boxheight / texheight;
+			}
+
+			if (flags & DI_FORCESCALE)
+			{
+				if (boxwidth <= 0 || (boxheight > 0 && scale2 < scale1))
+					scale1 = scale2;
+			}
+			else scale1 = MIN(scale1, scale2);
+
+			boxwidth = texwidth * scale1;
+			boxheight = texheight * scale1;
+		}
+	}
+	else
+	{
+		boxwidth = texwidth;
+		boxheight = texheight;
+	}
+
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	Alpha *= this->Alpha;
+	if (Alpha <= 0) return;
+	x += drawOffset.X;
+	y += drawOffset.Y;
+
+	switch (flags & DI_ITEM_HMASK)
+	{
+	case DI_ITEM_HCENTER:	x -= boxwidth / 2; break;
+	case DI_ITEM_RIGHT:		x -= boxwidth; break;
+	case DI_ITEM_HOFFSET:	x -= tex->GetDisplayLeftOffset() * boxwidth / texwidth; break;
+	}
+
+	switch (flags & DI_ITEM_VMASK)
+	{
+	case DI_ITEM_VCENTER: y -= boxheight / 2; break;
+	case DI_ITEM_BOTTOM:  y -= boxheight; break;
+	case DI_ITEM_VOFFSET: y -= tex->GetDisplayTopOffset() * boxheight / texheight; break;
+	}
+
+	if (!fullscreenOffsets)
+	{
+		StatusbarToRealCoords(x, y, boxwidth, boxheight);
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+
+		DVector2 Scale = GetHUDScale();
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		boxwidth *= Scale.X;
+		boxheight *= Scale.Y;
+		x += orgx;
+		y += orgy;
+	}
+	DrawTexture(twod, tex, x, y,
+		DTA_TopOffset, 0,
+		DTA_LeftOffset, 0,
+		DTA_DestWidthF, boxwidth,
+		DTA_DestHeightF, boxheight,
+		DTA_TranslationIndex, (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
+		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
+		DTA_Alpha, Alpha,
+		DTA_AlphaChannel, !!(flags & DI_ALPHAMAPPED),
+		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
+		DTA_FlipX, !!(flags & DI_MIRROR),
+		TAG_DONE);
+}
+
+
+//============================================================================
+//
+// draw a string
+//
+//============================================================================
+
+void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY, double scaleX, double scaleY)
+{
+	bool monospaced = monospacing != EMonospacing::Off;
+	double dx = 0;
+	int spacingparm = monospaced ? -spacing : spacing;
+
+	switch (flags & DI_TEXT_ALIGN)
+	{
+	default:
+		break;
+	case DI_TEXT_ALIGN_RIGHT:
+		dx = font->StringWidth(cstring, spacingparm);
+		break;
+	case DI_TEXT_ALIGN_CENTER:
+		dx = font->StringWidth(cstring, spacingparm) / 2;
+		break;
+	}
+
+	// Take text scale into account
+	x -= dx * scaleX;
+
+	const uint8_t* str = (const uint8_t*)cstring.GetChars();
+	const EColorRange boldTranslation = EColorRange(translation ? translation - 1 : NumTextColors - 1);
+	int fontcolor = translation;
+	double orgx = 0, orgy = 0;
+	DVector2 Scale;
+
+	if (fullscreenOffsets)
+	{
+		Scale = GetHUDScale();
+		shadowX *= (int)Scale.X;
+		shadowY *= (int)Scale.Y;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+	}
+	else
+	{
+		Scale = { 1.,1. };
+	}
+	int ch;
+	while (ch = GetCharFromString(str), ch != '\0')
+	{
+		if (ch == ' ')
+		{
+			x += monospaced ? spacing : font->GetSpaceWidth() + spacing;
+			continue;
+		}
+		else if (ch == TEXTCOLOR_ESCAPE)
+		{
+			EColorRange newColor = V_ParseFontColor(str, translation, boldTranslation);
+			if (newColor != CR_UNDEFINED)
+				fontcolor = newColor;
+			continue;
+		}
+
+		int width;
+		auto c = font->GetChar(ch, fontcolor, &width);
+		if (c == NULL) //missing character.
+		{
+			continue;
+		}
+
+		if (!monospaced) //If we are monospaced lets use the offset
+			x += (c->GetDisplayLeftOffset() + 1); //ignore x offsets since we adapt to character size
+
+		double rx, ry, rw, rh;
+		rx = x + drawOffset.X;
+		ry = y + drawOffset.Y;
+		rw = c->GetDisplayWidth();
+		rh = c->GetDisplayHeight();
+
+		if (monospacing == EMonospacing::CellCenter)
+			rx += (spacing - rw) / 2;
+		else if (monospacing == EMonospacing::CellRight)
+			rx += (spacing - rw);
+
+		if (!fullscreenOffsets)
+		{
+			StatusbarToRealCoords(rx, ry, rw, rh);
+		}
+		else
+		{
+			rx *= Scale.X;
+			ry *= Scale.Y;
+			rw *= Scale.X;
+			rh *= Scale.Y;
+
+			rx += orgx;
+			ry += orgy;
+		}
+
+		// Apply text scale
+		rw *= scaleX;
+		rh *= scaleY;
+
+		// This is not really such a great way to draw shadows because they can overlap with previously drawn characters.
+		// This may have to be changed to draw the shadow text up front separately.
+		if ((shadowX != 0 || shadowY != 0) && !(flags & DI_NOSHADOW))
+		{
+			DrawChar(twod, font, CR_UNTRANSLATED, rx + shadowX, ry + shadowY, ch,
+				DTA_DestWidthF, rw,
+				DTA_DestHeightF, rh,
+				DTA_Alpha, (Alpha * 0.4),
+				DTA_FillColor, 0,
+				TAG_DONE);
+		}
+		DrawChar(twod, font, fontcolor, rx, ry, ch,
+			DTA_DestWidthF, rw,
+			DTA_DestHeightF, rh,
+			DTA_Alpha, Alpha,
+			TAG_DONE);
+
+		dx = monospaced
+			? spacing
+			: width + spacing - (c->GetDisplayLeftOffset() + 1);
+
+		// Take text scale into account
+		x += dx * scaleX;
+	}
+}
+
+void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY)
+{
+	if (font == nullptr) ThrowAbortException(X_READ_NIL, nullptr);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	if (wrapwidth > 0)
+	{
+		auto brk = V_BreakLines(font->mFont, int(wrapwidth * scaleX), string, true);
+		for (auto& line : brk)
+		{
+			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY);
+			y += (font->mFont->GetHeight() + linespacing) * scaleY;
+		}
+	}
+	else
+	{
+		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY);
+	}
+}
+
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DStatusBarCore::TransformRect(double& x, double& y, double& w, double& h, int flags)
+{
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	x += drawOffset.X;
+	y += drawOffset.Y;
+
+	if (!fullscreenOffsets)
+	{
+		StatusbarToRealCoords(x, y, w, h);
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+
+		DVector2 Scale = GetHUDScale();
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		w *= Scale.X;
+		h *= Scale.Y;
+		x += orgx;
+		y += orgy;
+	}
+}
+
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DStatusBarCore::Fill(PalEntry color, double x, double y, double w, double h, int flags)
+{
+	double Alpha = color.a * this->Alpha / 255;
+	if (Alpha <= 0) return;
+
+	TransformRect(x, y, w, h, flags);
+
+	int x1 = int(x);
+	int y1 = int(y);
+	int ww = int(x + w - x1);	// account for scaling to non-integers. Truncating the values separately would fail for cases like 
+	int hh = int(y + h - y1);	// y=3.5, height = 5.5 where adding both values gives a larger integer than adding the two integers.
+
+	Dim(twod, color, float(Alpha), x1, y1, ww, hh);
+}
+
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DStatusBarCore::SetClipRect(double x, double y, double w, double h, int flags)
+{
+	TransformRect(x, y, w, h, flags);
+	int x1 = int(x);
+	int y1 = int(y);
+	int ww = int(x + w - x1);	// account for scaling to non-integers. Truncating the values separately would fail for cases like 
+	int hh = int(y + h - y1); // y=3.5, height = 5.5 where adding both values gives a larger integer than adding the two integers.
+	twod->SetClipRect(x1, y1, ww, hh);
+}
+
 

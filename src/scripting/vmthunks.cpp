@@ -2160,7 +2160,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawImage, SBar_DrawImage)
 	return 0;
 }
 
-void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY);
+void SBar_DrawString(DStatusBarCore *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY);
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawString, SBar_DrawString)
 {
@@ -2240,6 +2240,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
 	self->SetClipRect(x, y, w, h, flags);
 	return 0;
 }
+
+void FormatNumber(int number, int minsize, int maxsize, int flags, const FString& prefix, FString* result);
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, FormatNumber, FormatNumber)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(number);
+	PARAM_INT(minsize);
+	PARAM_INT(maxsize);
+	PARAM_INT(flags);
+	PARAM_STRING(prefix);
+	FString fmt;
+	FormatNumber(number, minsize, maxsize, flags, prefix, &fmt);
+	ACTION_RETURN_STRING(fmt);
+}
+
 
 static void GetGlobalACSString(int index, FString *result)
 {

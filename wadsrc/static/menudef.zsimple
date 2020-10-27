@@ -1,6 +1,6 @@
 // this file has the simplified menu here.
 // this file is *only* for options that are relevant to a novice user of GZDoom
-// this file needs to be regularly pruned, with options coalesced as much as possible. any and all verbosity should go to the classic menus.
+// this file needs to be regularly pruned, with options coalesced as much as possible. any and all verbosity should go to the "full" menus.
 
 OptionMenu "OptionsMenuSimple" protected
 {
@@ -19,8 +19,9 @@ OptionMenu "OptionsMenuSimple" protected
 	StaticText " "
 	Submenu "$OPTMNU_FULLOPTIONS", "OptionsMenuFull"
 	StaticText " "
-	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
+	SafeCommand	"$OPTMNU_DEFAULTS",		"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
+	SafeCommand	"$OPTMNU_WRITEINI",		"writeini"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
 	StaticText " "
 }

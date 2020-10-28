@@ -321,6 +321,9 @@ spider/attack			dsshotgn
 spider/death			dsspidth
 spider/walk			dsmetal
 
+$limit spider/sight 4
+$limit spider/death 4
+
 // Arachnotron
 
 baby/sight			dsbspsit
@@ -341,6 +344,8 @@ cyber/pain			dsdmpain
 cyber/death			dscybdth
 cyber/hoof			dshoof
 
+$limit cyber/sight 4
+$limit cyber/death 4
 // Pain Elemental
 
 pain/sight			dspesit

@@ -234,7 +234,7 @@ private:
 	bool CheckSingular(int sound_id);
 	virtual TArray<uint8_t> ReadSound(int lumpnum) = 0;
 protected:
-	virtual bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel);
+	virtual bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel, float attenuation);
 	virtual FSoundID ResolveSound(const void *ent, int srctype, FSoundID soundid, float &attenuation);
 
 public:

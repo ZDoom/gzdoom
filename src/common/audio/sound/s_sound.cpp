@@ -463,7 +463,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	}
 
 	// If this sound doesn't like playing near itself, don't play it if that's what would happen.
-	if (near_limit > 0 && CheckSoundLimit(sfx, pos, near_limit, limit_range, type, source, channel))
+	if (near_limit > 0 && CheckSoundLimit(sfx, pos, near_limit, limit_range, type, source, channel, attenuation))
 	{
 		chanflags |= CHANF_EVICTED;
 	}
@@ -675,7 +675,7 @@ void SoundEngine::RestartChannel(FSoundChan *chan)
 
 		// If this sound doesn't like playing near itself, don't play it if
 		// that's what would happen.
-		if (chan->NearLimit > 0 && CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange, 0, NULL, 0))
+		if (chan->NearLimit > 0 && CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange, 0, NULL, 0, chan->DistanceScale))
 		{
 			return;
 		}
@@ -816,7 +816,7 @@ bool SoundEngine::CheckSingular(int sound_id)
 //==========================================================================
 
 bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range,
-	int sourcetype, const void *actor, int channel)
+	int sourcetype, const void *actor, int channel, float attenuation)
 {
 	FSoundChan *chan;
 	int count;
@@ -835,7 +835,9 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 			}
 
 			CalcPosVel(chan, &chanorigin, NULL);
-			if ((chanorigin - pos).LengthSquared() <= limit_range)
+			// scale the limit distance with the attenuation. An attenuation of 0 means the limit distance is infinite and all sounds within the level are inside the limit.
+			float attn = std::min(chan->DistanceScale, attenuation);
+			if (attn <= 0 || (chanorigin - pos).LengthSquared() <= limit_range / attn)
 			{
 				count++;
 			}

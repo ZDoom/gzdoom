@@ -220,6 +220,89 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, FormatNumber, FormatNumber)
 	ACTION_RETURN_STRING(fmt);
 }
 
+static void SBar_SetSize(DStatusBarCore* self, int rt, int vw, int vh, int hvw, int hvh)
+{
+	self->SetSize(rt, vw, vh, hvw, hvh);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, SetSize, SBar_SetSize)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_INT(rt);
+	PARAM_INT(vw);
+	PARAM_INT(vh);
+	PARAM_INT(hvw);
+	PARAM_INT(hvh);
+	self->SetSize(rt, vw, vh, hvw, hvh);
+	return 0;
+}
+
+static void SBar_GetHUDScale(DStatusBarCore* self, DVector2* result)
+{
+	*result = self->GetHUDScale();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, GetHUDScale, SBar_GetHUDScale)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	ACTION_RETURN_VEC2(self->GetHUDScale());
+}
+
+static void BeginStatusBar(DStatusBarCore* self, bool fs, int w, int h, int r)
+{
+	self->BeginStatusBar(w, h, r, fs);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, BeginStatusBar, BeginStatusBar)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	PARAM_INT(r);
+	self->BeginStatusBar(w, h, r, fs);
+	return 0;
+}
+
+static void BeginHUD(DStatusBarCore* self, double a, bool fs, int w, int h)
+{
+	self->BeginHUD(w, h, a, fs);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, BeginHUD, BeginHUD)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_FLOAT(a);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	self->BeginHUD(w, h, a, fs);
+	return 0;
+}
+
+
+//=====================================================================================
+//
+// 
+//
+//=====================================================================================
+
+DHUDFont* CreateHudFont(FFont* fnt, int spac, int mono, int sx, int sy)
+{
+	return (Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_INT(spac);
+	PARAM_INT(mono);
+	PARAM_INT(sx);
+	PARAM_INT(sy);
+	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
+}
+
 
 
 
@@ -835,3 +918,14 @@ DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
 DEFINE_GLOBAL(Bindings)
 DEFINE_GLOBAL(AutomapBindings)
 DEFINE_GLOBAL(generic_ui)
+
+DEFINE_FIELD(DStatusBarCore, RelTop);
+DEFINE_FIELD(DStatusBarCore, HorizontalResolution);
+DEFINE_FIELD(DStatusBarCore, VerticalResolution);
+DEFINE_FIELD(DStatusBarCore, CompleteBorder);
+DEFINE_FIELD(DStatusBarCore, Alpha);
+DEFINE_FIELD(DStatusBarCore, drawOffset);
+DEFINE_FIELD(DStatusBarCore, drawClip);
+DEFINE_FIELD(DStatusBarCore, fullscreenOffsets);
+DEFINE_FIELD(DStatusBarCore, defaultScale);
+DEFINE_FIELD(DHUDFont, mFont);

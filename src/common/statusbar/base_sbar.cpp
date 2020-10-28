@@ -52,7 +52,7 @@ static int CrosshairNum;
 
 
 IMPLEMENT_CLASS(DStatusBarCore, true, false)
-IMPLEMENT_CLASS(DHUDFont, true, false);
+IMPLEMENT_CLASS(DHUDFont, false, false);
 
 
 CVAR(Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);

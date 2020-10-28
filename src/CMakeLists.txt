@@ -588,6 +588,7 @@ file( GLOB HEADER_FILES
 	common/utility/*.h
 	common/engine/*.h
 	common/menu/*.h
+	common/statusbar/*.h
 	common/fonts/*.h
 	common/objects/*.h
 	common/filesystem/*.h
@@ -905,7 +906,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	g_statusbar/base_sbar.cpp
 	rendering/2d/f_wipe.cpp
 	rendering/2d/v_blend.cpp
 	rendering/hwrenderer/hw_entrypoint.cpp
@@ -1107,6 +1107,7 @@ set (PCH_SOURCES
 	common/menu/resolutionmenu.cpp
 	common/menu/menudef.cpp
 	common/menu/savegamemanager.cpp
+	common/statusbar/base_sbar.cpp
 	
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp
@@ -1245,6 +1246,7 @@ include_directories( .
 	common/console
 	common/engine
 	common/menu
+	common/statusbar
 	common/fonts
 	common/objects
 	common/rendering

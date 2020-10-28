@@ -51,8 +51,11 @@ enum DI_Flags
 	DI_SCREEN_LEFT_TOP = DI_SCREEN_TOP | DI_SCREEN_LEFT,
 	DI_SCREEN_RIGHT_TOP = DI_SCREEN_TOP | DI_SCREEN_RIGHT,
 	DI_SCREEN_LEFT_BOTTOM = DI_SCREEN_BOTTOM | DI_SCREEN_LEFT,
+	DI_SCREEN_LEFT_CENTER = DI_SCREEN_VCENTER | DI_SCREEN_LEFT,
 	DI_SCREEN_RIGHT_BOTTOM = DI_SCREEN_BOTTOM | DI_SCREEN_RIGHT,
+	DI_SCREEN_RIGHT_CENTER = DI_SCREEN_VCENTER | DI_SCREEN_RIGHT,
 	DI_SCREEN_CENTER = DI_SCREEN_VCENTER | DI_SCREEN_HCENTER,
+	DI_SCREEN_CENTER_TOP = DI_SCREEN_TOP | DI_SCREEN_HCENTER,
 	DI_SCREEN_CENTER_BOTTOM = DI_SCREEN_BOTTOM | DI_SCREEN_HCENTER,
 	DI_SCREEN_OFFSETS = DI_SCREEN_HOFFSET | DI_SCREEN_VOFFSET,
 
@@ -101,10 +104,10 @@ enum DI_Flags
 //
 //============================================================================
 
-class DHUDFont : public DObject
+class DHUDFont : public DObject 
 {
 	// this blocks CreateNew on this class which is the intent here.
-	DECLARE_ABSTRACT_CLASS(DHUDFont, DObject);
+	DECLARE_CLASS(DHUDFont, DObject);
 
 public:
 	FFont* mFont;
@@ -112,6 +115,8 @@ public:
 	EMonospacing mMonospacing;
 	int mShadowX;
 	int mShadowY;
+
+	DHUDFont() = default;
 
 	DHUDFont(FFont* f, int sp, EMonospacing ms, int sx, int sy)
 		: mFont(f), mSpacing(sp), mMonospacing(ms), mShadowX(sx), mShadowY(sy)

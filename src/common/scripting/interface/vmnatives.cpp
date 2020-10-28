@@ -289,7 +289,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, BeginHUD, BeginHUD)
 
 DHUDFont* CreateHudFont(FFont* fnt, int spac, int mono, int sx, int sy)
 {
-	return (Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
+	return Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
@@ -300,7 +300,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
 	PARAM_INT(mono);
 	PARAM_INT(sx);
 	PARAM_INT(sy);
-	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
+	ACTION_RETURN_POINTER(CreateHudFont(fnt, spac, mono, sy, sy));
 }
 
 

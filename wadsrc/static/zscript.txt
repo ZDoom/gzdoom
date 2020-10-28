@@ -259,6 +259,7 @@ version "4.5"
 #include "zscript/ui/menu/reverbedit.zs"
 #include "zscript/ui/menu/textentermenu.zs"
 #include "zscript/ui/menu/menucustomize.zs"
+#include "zscript/ui/menu/imagescroller.zs"
 
 #include "zscript/ui/menu/search/menu.zs"
 #include "zscript/ui/menu/search/searchfield.zs"

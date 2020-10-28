@@ -369,7 +369,6 @@ public:
 
 
 	DBaseStatusBar ();
-	void SetSize(int reltop = 32, int hres = 320, int vres = 200, int hhres = -1, int hvres = -1);
 	void OnDestroy() override;
 
 	void AttachMessage (DHUDMessageBase *msg, uint32_t id=0, int layer=HUDMSGLayer_Default);
@@ -407,8 +406,6 @@ public:
 	void CreateAltHUD();
 	void DrawAltHUD();
 
-	void BeginStatusBar(int resW, int resH, int relTop, bool forceScaled);
-	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
 	bool ForceHUDScale(bool on) { std::swap(ForcedScale, on); return on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
 	int GetTopOfStatusbar() const
 	{
@@ -433,11 +430,9 @@ public:
 
 	// Sizing info for ths status bar.
 	bool Scaled;							// This needs to go away.
-	DVector2 defaultScale;					// factor for fully scaled fullscreen display.
 
 	bool Centering;
 	bool FixedOrigin;
-	bool CompleteBorder;
 	double CrosshairSize;
 	double Displacement;
 	bool ShowLog;
@@ -453,16 +448,8 @@ private:
 	void DrawMessages (int layer, int bottom);
 	void DrawConsistancy () const;
 	void DrawWaiting () const;
-	void SetDrawSize(int reltop, int hres, int vres);
 
 	TObjPtr<DHUDMessageBase*> Messages[NUM_HUDMSGLAYERS];
-
-	int BaseRelTop;
-	int BaseSBarHorizontalResolution;
-	int BaseSBarVerticalResolution;
-	int BaseHUDHorizontalResolution;
-	int BaseHUDVerticalResolution;
-
 };
 
 extern DBaseStatusBar *StatusBar;

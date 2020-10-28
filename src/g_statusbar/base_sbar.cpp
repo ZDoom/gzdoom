@@ -56,12 +56,12 @@ IMPLEMENT_CLASS(DHUDFont, true, false);
 
 
 CVAR(Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
-CVAR(Int, crosshairhealth, 1, CVAR_ARCHIVE);
+CVAR(Int, crosshairhealth, 2, CVAR_ARCHIVE);
 CVAR(Float, crosshairscale, 1.0, CVAR_ARCHIVE);
 CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
 EXTERN_CVAR(Bool, vid_fps)
 
-
+EXTERN_CVAR(Float, hud_scalefactor)
 
 void ST_LoadCrosshair(int num, bool alwaysload)
 {
@@ -251,6 +251,178 @@ void DStatusBarCore::ValidateResolution(int& hres, int& vres) const
 
 //============================================================================
 //
+//
+//
+//============================================================================
+
+void DStatusBarCore::SetSize(int reltop, int hres, int vres, int hhres, int hvres)
+{
+	ValidateResolution(hres, vres);
+
+	BaseRelTop = reltop;
+	BaseSBarHorizontalResolution = hres;
+	BaseSBarVerticalResolution = vres;
+	BaseHUDHorizontalResolution = hhres < 0 ? hres : hhres;
+	BaseHUDVerticalResolution = hvres < 0 ? vres : hvres;
+	SetDrawSize(reltop, hres, vres);
+}
+
+//============================================================================
+//
+// calculates a clean scale for the status bar
+//
+//============================================================================
+
+static void ST_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int* cleanx, int* cleany)
+{
+	float ratio;
+	int cwidth;
+	int cheight;
+	int cx1, cy1, cx2, cy2;
+
+	ratio = ActiveRatio(realwidth, realheight);
+	if (AspectTallerThanWide(ratio))
+	{
+		cwidth = realwidth;
+		cheight = realheight * AspectMultiplier(ratio) / 48;
+	}
+	else
+	{
+		cwidth = realwidth * AspectMultiplier(ratio) / 48;
+		cheight = realheight;
+	}
+	// Use whichever pair of cwidth/cheight or width/height that produces less difference
+	// between CleanXfac and CleanYfac.
+	cx1 = MAX(cwidth / designwidth, 1);
+	cy1 = MAX(cheight / designheight, 1);
+	cx2 = MAX(realwidth / designwidth, 1);
+	cy2 = MAX(realheight / designheight, 1);
+	if (abs(cx1 - cy1) <= abs(cx2 - cy2) || MAX(cx1, cx2) >= 4)
+	{ // e.g. 640x360 looks better with this.
+		*cleanx = cx1;
+		*cleany = cy1;
+	}
+	else
+	{ // e.g. 720x480 looks better with this.
+		*cleanx = cx2;
+		*cleany = cy2;
+	}
+
+	if (*cleanx < *cleany)
+		*cleany = *cleanx;
+	else
+		*cleanx = *cleany;
+}
+
+//============================================================================
+//
+//
+//
+//============================================================================
+
+void DStatusBarCore::SetDrawSize(int reltop, int hres, int vres)
+{
+	ValidateResolution(hres, vres);
+
+	RelTop = reltop;
+	HorizontalResolution = hres;
+	VerticalResolution = vres;
+
+	int x, y;
+	ST_CalcCleanFacs(hres, vres, twod->GetWidth(), twod->GetHeight(), &x, &y);
+	defaultScale = { (double)x, (double)y };
+
+	SetScale();	// recalculate positioning info.
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC SetScaled
+//
+//---------------------------------------------------------------------------
+
+void DStatusBarCore::SetScale()
+{
+	ValidateResolution(HorizontalResolution, VerticalResolution);
+
+	int w = twod->GetWidth();
+	int h = twod->GetHeight();
+	double refw, refh;
+
+	int horz = HorizontalResolution;
+	int vert = VerticalResolution;
+	double refaspect = horz / double(vert);
+	double screenaspect = w / double(h);
+
+	if ((horz == 320 && vert == 200) || (horz == 640 && vert == 400))
+	{
+		refaspect = 1.333;
+	}
+
+	if (screenaspect < refaspect)
+	{
+		refw = w;
+		refh = w / refaspect;
+	}
+	else
+	{
+		refh = h;
+		refw = h * refaspect;
+	}
+	refw *= hud_scalefactor;
+	refh *= hud_scalefactor;
+
+	int sby = VerticalResolution - RelTop;
+	// Use full pixels for destination size.
+
+	ST_X = xs_CRoundToInt((w - refw) / 2);
+	ST_Y = xs_CRoundToInt(h - refh);
+	SBarTop = Scale(sby, h, VerticalResolution);
+	SBarScale.X = refw / horz;
+	SBarScale.Y = refh / vert;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC GetHUDScale
+//
+//---------------------------------------------------------------------------
+
+DVector2 DStatusBarCore::GetHUDScale() const
+{
+	return SBarScale;
+}
+
+//---------------------------------------------------------------------------
+//
+//  
+//
+//---------------------------------------------------------------------------
+
+void DStatusBarCore::BeginStatusBar(int resW, int resH, int relTop, bool forceScaled)
+{
+	SetDrawSize(relTop < 0 ? BaseRelTop : relTop, resW < 0 ? BaseSBarHorizontalResolution : resW, resH < 0 ? BaseSBarVerticalResolution : resH);
+	ForcedScale = forceScaled;
+	fullscreenOffsets = false;
+}
+
+//---------------------------------------------------------------------------
+//
+//  
+//
+//---------------------------------------------------------------------------
+
+void DStatusBarCore::BeginHUD(int resW, int resH, double Alpha, bool forcescaled)
+{
+	SetDrawSize(RelTop, resW < 0 ? BaseHUDHorizontalResolution : resW, resH < 0 ? BaseHUDVerticalResolution : resH);
+	this->Alpha = Alpha;
+	ForcedScale = forcescaled;
+	CompleteBorder = false;
+	fullscreenOffsets = true;
+}
+
+//============================================================================
+//
 // draw stuff
 //
 //============================================================================
@@ -280,15 +452,22 @@ void DStatusBarCore::StatusbarToRealCoords(double& x, double& y, double& w, doub
 //
 //============================================================================
 
-void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY)
+void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, double rotate, ERenderStyle style)
 {
 	if (!texture.isValid())
 		return;
 
 	FGameTexture* tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
+	DrawGraphic(tex, x, y, flags, Alpha, boxwidth, boxheight, scaleX, scaleY, color, translation, rotate, style);
+}
 
+void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, double rotate, ERenderStyle style)
+{
 	double texwidth = tex->GetDisplayWidth() * scaleX;
 	double texheight = tex->GetDisplayHeight() * scaleY;
+	double texleftoffs = tex->GetDisplayLeftOffset() * scaleY;
+	double textopoffs = tex->GetDisplayTopOffset() * scaleY;
+	double boxleftoffs, boxtopoffs;
 
 	if (boxwidth > 0 || boxheight > 0)
 	{
@@ -314,12 +493,16 @@ void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int fla
 
 			boxwidth = texwidth * scale1;
 			boxheight = texheight * scale1;
+			boxleftoffs = texleftoffs * scale1;
+			boxtopoffs = textopoffs * scale1;
 		}
 	}
 	else
 	{
 		boxwidth = texwidth;
 		boxheight = texheight;
+		boxleftoffs = texleftoffs;
+		boxtopoffs = textopoffs;
 	}
 
 	// resolve auto-alignment before making any adjustments to the position values.
@@ -336,18 +519,28 @@ void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int fla
 	x += drawOffset.X;
 	y += drawOffset.Y;
 
-	switch (flags & DI_ITEM_HMASK)
+	if (flags & DI_ITEM_RELCENTER)
 	{
-	case DI_ITEM_HCENTER:	x -= boxwidth / 2; break;
-	case DI_ITEM_RIGHT:		x -= boxwidth; break;
-	case DI_ITEM_HOFFSET:	x -= tex->GetDisplayLeftOffset() * boxwidth / texwidth; break;
+		if (flags & DI_MIRROR) boxleftoffs = -boxleftoffs;
+		if (flags & DI_MIRRORY)	boxtopoffs = -boxtopoffs;
+		x -= boxwidth / 2 + boxleftoffs;
+		y -= boxheight / 2 + boxtopoffs;
 	}
-
-	switch (flags & DI_ITEM_VMASK)
+	else
 	{
-	case DI_ITEM_VCENTER: y -= boxheight / 2; break;
-	case DI_ITEM_BOTTOM:  y -= boxheight; break;
-	case DI_ITEM_VOFFSET: y -= tex->GetDisplayTopOffset() * boxheight / texheight; break;
+		switch (flags & DI_ITEM_HMASK)
+		{
+		case DI_ITEM_HCENTER:	x -= boxwidth / 2; break;
+		case DI_ITEM_RIGHT:		x -= boxwidth; break;
+		case DI_ITEM_HOFFSET:	x -= boxleftoffs; break;
+		}
+
+		switch (flags & DI_ITEM_VMASK)
+		{
+		case DI_ITEM_VCENTER: y -= boxheight / 2; break;
+		case DI_ITEM_BOTTOM:  y -= boxheight; break;
+		case DI_ITEM_VOFFSET: y -= boxtopoffs; break;
+		}
 	}
 
 	if (!fullscreenOffsets)
@@ -389,12 +582,16 @@ void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int fla
 		DTA_LeftOffset, 0,
 		DTA_DestWidthF, boxwidth,
 		DTA_DestHeightF, boxheight,
-		DTA_TranslationIndex, (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
+		DTA_Color, color,
+		DTA_TranslationIndex, translation? translation : (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
 		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
 		DTA_Alpha, Alpha,
 		DTA_AlphaChannel, !!(flags & DI_ALPHAMAPPED),
 		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
 		DTA_FlipX, !!(flags & DI_MIRROR),
+		DTA_FlipY, !!(flags& DI_MIRRORY),
+		DTA_Rotate, rotate,
+		DTA_LegacyRenderStyle, style,
 		TAG_DONE);
 }
 
@@ -476,11 +673,12 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 		}
 
 		int width;
-		auto c = font->GetChar(ch, fontcolor, &width);
+		FGameTexture* c = font->GetChar(ch, fontcolor, &width);
 		if (c == NULL) //missing character.
 		{
 			continue;
 		}
+		width += font->GetDefaultKerning();
 
 		if (!monospaced) //If we are monospaced lets use the offset
 			x += (c->GetDisplayLeftOffset() + 1); //ignore x offsets since we adapt to character size

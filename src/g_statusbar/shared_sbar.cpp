@@ -92,6 +92,7 @@ EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
 
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 CVAR(Bool, log_vgafont, false, CVAR_ARCHIVE)
+CVAR(Bool, hud_oldscale, true, CVAR_ARCHIVE)
 
 DBaseStatusBar *StatusBar;
 
@@ -102,6 +103,18 @@ CVAR (Flag, pf_hexenweaps,	paletteflash, PF_HEXENWEAPONS)
 CVAR (Flag, pf_poison,		paletteflash, PF_POISON)
 CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
 CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
+
+CUSTOM_CVARD(Float, hud_scalefactor, 1, CVAR_ARCHIVE, "changes the hud scale")
+{
+	if (self < 0.36f) self = 0.36f;
+	else if (self > 1) self = 1;
+	else if (StatusBar)
+	{
+		StatusBar->SetScale();
+		setsizeneeded = true;
+	}
+}
+
 
 // Stretch status bar to full screen width?
 CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
@@ -400,74 +413,6 @@ DBaseStatusBar::DBaseStatusBar ()
 	CreateAltHUD();
 }
 
-void DBaseStatusBar::SetSize(int reltop, int hres, int vres, int hhres, int hvres)
-{
-	ValidateResolution(hres, vres);
-
-	BaseRelTop = reltop;
-	BaseSBarHorizontalResolution = hres;
-	BaseSBarVerticalResolution = vres;
-	BaseHUDHorizontalResolution = hhres < 0? hres : hhres;
-	BaseHUDVerticalResolution = hvres < 0? vres : hvres;
-	SetDrawSize(reltop, hres, vres);
-}
-
-static void ST_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany)
-{
-	float ratio;
-	int cwidth;
-	int cheight;
-	int cx1, cy1, cx2, cy2;
-
-	ratio = ActiveRatio(realwidth, realheight);
-	if (AspectTallerThanWide(ratio))
-	{
-		cwidth = realwidth;
-		cheight = realheight * AspectMultiplier(ratio) / 48;
-	}
-	else
-	{
-		cwidth = realwidth * AspectMultiplier(ratio) / 48;
-		cheight = realheight;
-	}
-	// Use whichever pair of cwidth/cheight or width/height that produces less difference
-	// between CleanXfac and CleanYfac.
-	cx1 = MAX(cwidth / designwidth, 1);
-	cy1 = MAX(cheight / designheight, 1);
-	cx2 = MAX(realwidth / designwidth, 1);
-	cy2 = MAX(realheight / designheight, 1);
-	if (abs(cx1 - cy1) <= abs(cx2 - cy2) || MAX(cx1, cx2) >= 4)
-	{ // e.g. 640x360 looks better with this.
-		*cleanx = cx1;
-		*cleany = cy1;
-	}
-	else
-	{ // e.g. 720x480 looks better with this.
-		*cleanx = cx2;
-		*cleany = cy2;
-	}
-
-	if (*cleanx < *cleany)
-		*cleany = *cleanx;
-	else
-		*cleanx = *cleany;
-}
-
-void DBaseStatusBar::SetDrawSize(int reltop, int hres, int vres)
-{
-	ValidateResolution(hres, vres);
-
-	RelTop = reltop;
-	HorizontalResolution = hres;
-	VerticalResolution = vres;
-	int x, y;
-	ST_CalcCleanFacs(hres, vres, twod->GetWidth(), twod->GetHeight(), &x, &y);
-	defaultScale = { (double)x, (double)y };
-
-	SetScale();	// recalculate positioning info.
-}
-
-
 //---------------------------------------------------------------------------
 //
 // PROP Destroy
@@ -500,6 +445,12 @@ void DBaseStatusBar::OnDestroy ()
 
 void DBaseStatusBar::SetScale ()
 {
+	if (!hud_oldscale)
+	{
+		Super::SetScale();
+		return;
+	}
+
 	ValidateResolution(HorizontalResolution, VerticalResolution);
 
 	int w = twod->GetWidth();
@@ -561,6 +512,11 @@ void DBaseStatusBar::SetScale ()
 
 DVector2 DBaseStatusBar::GetHUDScale() const
 {
+	if (!hud_oldscale)
+	{
+		return Super::GetHUDScale();
+	}
+
 	int scale;
 	if (hud_scale < 0 || ForcedScale)	// a negative value is the equivalent to the old boolean hud_scale. This can yield different values for x and y for higher resolutions.
 	{
@@ -577,34 +533,6 @@ DVector2 DBaseStatusBar::GetHUDScale() const
 	// the resulting scaling factor needs to be reduced accordingly.
 	int realscale = MAX<int>(1, (320 * scale) / hres);
 	return{ double(realscale), double(realscale * (hud_aspectscale ? 1.2 : 1.)) };
-}
-
-//---------------------------------------------------------------------------
-//
-//  
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::BeginStatusBar(int resW, int resH, int relTop, bool forceScaled)
-{
-	SetDrawSize(relTop < 0? BaseRelTop : relTop, resW < 0? BaseSBarHorizontalResolution : resW, resH < 0? BaseSBarVerticalResolution : resH);
-	ForcedScale = forceScaled;
-	fullscreenOffsets = false;
-}
-
-//---------------------------------------------------------------------------
-//
-//  
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled)
-{
-	SetDrawSize(RelTop, resW < 0? BaseHUDHorizontalResolution : resW, resH < 0? BaseHUDVerticalResolution : resH);	
-	this->Alpha = Alpha;
-	ForcedScale = forcescaled;
-	CompleteBorder = false;
-	fullscreenOffsets = true;
 }
 
 //============================================================================

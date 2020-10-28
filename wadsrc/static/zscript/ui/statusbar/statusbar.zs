@@ -1,6 +1,19 @@
 class StatusBarCore native
 {
 	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
+	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
+	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
+	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
+	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4, Vector2 scale = (1, 1));
+	native double, double, double, double TransformRect(double x, double y, double w, double h, int flags = 0);
+	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
+	native void SetClipRect(double x, double y, double w, double h, int flags = 0);
+	
+	void ClearClipRect()
+	{
+		screen.ClearClipRect();
+	}
+	
 }
 
 struct MugShot
@@ -347,23 +360,11 @@ class BaseStatusBar : StatusBarCore native ui
 	virtual bool DrawChat(String txt) { return false; }
 
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
-	
+	native int GetTopOfStatusBar();
+
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
-	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
-	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
-	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4, Vector2 scale = (1, 1));
-	native double, double, double, double TransformRect(double x, double y, double w, double h, int flags = 0);
-	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
-	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
-	native int GetTopOfStatusBar();
-	native void SetClipRect(double x, double y, double w, double h, int flags = 0);
-	
-	void ClearClipRect()
-	{
-		screen.ClearClipRect();
-	}
-	
+
 	//---------------------------------------------------------------------------
 	//
 	// ValidateInvFirst

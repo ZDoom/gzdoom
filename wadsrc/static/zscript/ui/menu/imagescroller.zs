@@ -110,7 +110,7 @@ class ImageScrollerPageTextItem : ImageScrollerPage
 		virtWidth = desc.virtWidth;
 		virtHeight = desc.virtHeight;
 		
-		mText = mFont.BreakLines(Stringtable.Localize(txt.Filter()), virtWidth / mTextScale);
+		mText = mFont.BreakLines(Stringtable.Localize(txt.Filter()), int(virtWidth / mTextScale));
 		mYpos = y >= 0? y : virtHeight / 2 - mText.Count() * mFont.GetHeight() * mTextScale / 2;
 		
 	} 
@@ -119,7 +119,7 @@ class ImageScrollerPageTextItem : ImageScrollerPage
 	{
 		Screen.DrawTexture(mTexture, true, 0, 0, DTA_FullscreenEx, FSMode_ScaleToFit43, DTA_LegacyRenderStyle, STYLE_Normal, DTA_Color, mBrightness);
 		
-		int fontheight = mFont.GetHeight() * mTextScale;
+		let fontheight = mFont.GetHeight() * mTextScale;
 		let y = mYpos;
 		let c = mText.Count();
 		for (int i = 0; i < c; i++)

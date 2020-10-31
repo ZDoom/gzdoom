@@ -127,6 +127,7 @@ void DPlat::Tick ()
 						// better use a flag to avoid problems elsewhere. For example,
 						// keeping the thinker would make tagwait wait indefinitely.
 						m_Sector->planes[sector_t::floor].Flags |= PLANEF_BLOCKED; 
+						[[fallthrough]];
 					case platRaiseAndStay:
 					case platDownByValue:
 					case platDownWaitUpStay:
@@ -282,6 +283,7 @@ bool FLevelLocals::EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, doub
 		{
 		case DPlat::platToggle:
 			rtn = true;
+			[[fallthrough]];
 		case DPlat::platPerpetualRaise:
 			ActivateInStasisPlat (tag);
 			break;

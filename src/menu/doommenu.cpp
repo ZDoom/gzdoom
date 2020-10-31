@@ -157,6 +157,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
 		// Now we can finally start the game. Ugh...
 		NewGameStartupInfo.Skill = param;
+		[[fallthrough]];
 	case NAME_StartgameConfirmed:
 
 		G_DeferedInitNew (&NewGameStartupInfo);

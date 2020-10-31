@@ -1345,6 +1345,7 @@ void ParseDecorate (FScanner &sc, PNamespace *ns)
 				ParseDamageDefinition(sc);
 				break;
 			}
+			[[fallthrough]];
 		default:
 			sc.RestorePos(pos);
 			ParseOldDecoration(sc, DEF_Decoration, ns);

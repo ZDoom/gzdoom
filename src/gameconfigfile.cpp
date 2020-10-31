@@ -542,6 +542,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					case 1:
 						newvalue.Int = 0;
 						var->SetGenericRep(newvalue, CVAR_Int);
+						[[fallthrough]];
 					case 3:
 					case 4:
 						vid_scale_linear = true;

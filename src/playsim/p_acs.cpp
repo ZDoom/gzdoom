@@ -6299,7 +6299,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				int tid1 = 0, tid2 = 0;
 				switch (argCount)
 				{
-				case 4: tid2 = args[3];
+				case 4: tid2 = args[3]; [[fallthrough]];
 				case 3: tid1 = args[2];
 				}
 
@@ -8109,6 +8109,7 @@ int DLevelScript::RunScript()
 
 		case PCD_SETRESULTVALUE:
 			resultValue = STACK(1);
+			[[fallthrough]];
 		case PCD_DROP: //fall through.
 			sp--;
 			break;

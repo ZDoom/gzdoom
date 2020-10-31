@@ -1543,6 +1543,7 @@ void D_DoAdvanceDemo (void)
 			break;
 		}
 		// fall through to case 1 if no advisory notice
+		[[fallthrough]];
 
 	case 1:
 		Advisory = NULL;
@@ -1564,6 +1565,7 @@ void D_DoAdvanceDemo (void)
 				break;
 			}
 		}
+		[[fallthrough]];
 
 	default:
 	case 0:
@@ -3822,6 +3824,7 @@ void I_UpdateWindowTitle()
 			titlestr.Format("%s - %s", level.LevelName.GetChars(), GameStartupInfo.Name.GetChars());
 			break;
 		}
+		[[fallthrough]];
 	case 2:
 		titlestr = GameStartupInfo.Name;
 		break;

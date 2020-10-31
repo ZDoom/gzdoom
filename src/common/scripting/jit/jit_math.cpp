@@ -963,7 +963,7 @@ void JitCompiler::EmitFLOP()
 		FuncPtr func = nullptr;
 		switch (C)
 		{
-		default: I_Error("Unknown OP_FLOP subfunction");
+		default: I_Error("Unknown OP_FLOP subfunction"); break;
 		case FLOP_ABS:		func = fabs; break;
 		case FLOP_EXP:		func = g_exp; break;
 		case FLOP_LOG:		func = g_log; break;

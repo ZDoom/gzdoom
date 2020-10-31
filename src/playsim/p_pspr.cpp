@@ -163,8 +163,11 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bInterpolate, PSPF_INTERPOLATE)
 //------------------------------------------------------------------------
 
 DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
-: x(.0), y(.0),
+: HAlign(0),
+  VAlign(0),
+  x(.0), y(.0),
   oldx(.0), oldy(.0),
+  InterpolateTic(false),
   firstTic(true),
   Tics(0),
   Translation(0),
@@ -175,10 +178,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   Sprite(0),
   Frame(0),
   ID(id),
-  processPending(true),
-  HAlign(0),
-  VAlign(0),
-  InterpolateTic(false)
+  processPending(true)
 {
 	rotation = 0.;
 	scale = {1.0, 1.0};

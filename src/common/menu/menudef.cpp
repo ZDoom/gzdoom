@@ -769,8 +769,8 @@ static int GetInsertIndex(FScanner& sc, DMenuDescriptor* desc)
 		// Find an existing menu item to use as insertion point
 		sc.MustGetString();
 
-		auto n = desc->mItems.Size();
-		for (unsigned int i = 0; i < n; i++)
+		int n = desc->mItems.Size();
+		for (int i = 0; i < n; i++)
 		{
 			auto item = desc->mItems[i];
 

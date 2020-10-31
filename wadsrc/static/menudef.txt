@@ -1397,7 +1397,7 @@ OptionMenu MapControlsMenu protected
 	StaticText ""
 	MapControl "$MAPCNTRLMNU_TOGGLEZOOM",		"am_gobig"
 	MapControl "$MAPCNTRLMNU_TOGGLEFOLLOW",		"am_togglefollow"
-	MapControl "$MAPCNTRLMNU_TOGGLEROTATE",		"toggle am_rotate"
+	MapControl "$MAPCNTRLMNU_ROTATE",			"toggle am_rotate"
 	MapControl "$MAPCNTRLMNU_TOGGLEGRID",		"am_togglegrid"
 	MapControl "$MAPCNTRLMNU_TOGGLETEXTURE",	"am_toggletexture"
 

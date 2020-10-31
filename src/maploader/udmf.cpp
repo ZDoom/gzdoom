@@ -1410,12 +1410,14 @@ public:
 				break;
 
 			case NAME_useowncoloradd_top:
-				Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnAdditiveColor, key);
-				sd->Flags |= WALLF_EXTCOLOR;
+				if (Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnAdditiveColor, key))
+					sd->Flags |= WALLF_EXTCOLOR;
+				break;
 
 			case NAME_useowncoloradd_mid:
 				if (Flag(sd->textures[side_t::mid].flags, side_t::part::UseOwnAdditiveColor, key))
 					sd->Flags |= WALLF_EXTCOLOR;
+				break;
 
 			case NAME_useowncoloradd_bottom:
 				if (Flag(sd->textures[side_t::bottom].flags, side_t::part::UseOwnAdditiveColor, key))

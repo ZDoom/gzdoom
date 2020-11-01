@@ -627,7 +627,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	double x = 0, yy = 0, w = HorizontalResolution, h = 0;
 	StatusbarToRealCoords(x, yy, w, h);
 
-	IFVIRTUAL(DBaseStatusBar, GetProtrusion)
+	IFVIRTUAL(DStatusBarCore, GetProtrusion)
 	{
 		int prot = 0;
 		VMValue params[] = { this, double(finalwidth * scale / w) };

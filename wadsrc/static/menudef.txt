@@ -1247,7 +1247,7 @@ OptionMenu "MiscOptions" protected
 		Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
 	}
 	StaticText " "
-	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OnOff"
+	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OffOn"
 	Option "$MISCMNU_CLEANSTAT",				"wi_cleantextscale", "OnOff"
 	Option "$MISCMNU_WIPERCENT",				"wi_percents", "OnOff"
 

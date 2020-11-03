@@ -22,8 +22,6 @@ class Service abstract
  * @code
  * ServiceIterator i = ServiceIterator.Find("MyService");
  *
- * if (!i.ServiceExists()) { return; }
- *
  * Service s;
  * while (s = i.Next())
  * {
@@ -33,41 +31,27 @@ class Service abstract
  * }
  * @endcode
  *
- * ServiceExists() call is optional and is provided for convenience.
- *
  * If no services are found, the all calls to Next() will return NULL.
  */
 class ServiceIterator
 {
 	/**
-	 * @param serviceType class name of service to find.
+	 * Creates a Service iterator for a service name. It will iterate over all existing Services
+	 * with names that match @a serviceName or have it as a part of their names.
+	 *
+	 * Matching is case-independent.
+	 *
+	 * @param serviceName class name of service to find.
 	 */
-	static ServiceIterator Find(String serviceType)
+	static ServiceIterator Find(String serviceName)
 	{
 		let result = new("ServiceIterator");
 
-		result.mType = serviceType;
-
-		if (result.ServiceExists())
-		{
-			result.mClassIndex = 0;
-			result.FindNextService();
-		}
-		else
-		{
-			// Class doesn't exist, don't even try to find it.
-			result.mClassIndex = AllClasses.Size();
-		}
+		result.mServiceName = serviceName;
+		result.mClassIndex = 0;
+		result.FindNextService();
 
 		return result;
-	}
-
-	/**
-	 * @returns true if the requested service exists, false otherwise.
-	 */
-	bool ServiceExists()
-	{
-		return (mType != NULL);
 	}
 
 	/**
@@ -85,7 +69,7 @@ class ServiceIterator
 			: Service(new(AllClasses[mClassIndex]));
 
 		++mClassIndex;
-		findNextService();
+		FindNextService();
 
 		return result;
 	}
@@ -93,12 +77,23 @@ class ServiceIterator
 	private void FindNextService()
 	{
 		uint classesNumber = AllClasses.size();
-		while (mClassIndex < classesNumber && !(AllClasses[mClassIndex] is mType))
+		while (mClassIndex < classesNumber && !ServiceNameContains(AllClasses[mClassIndex], mServiceName))
 		{
 			++mClassIndex;
 		}
 	}
 
-	private class<Service> mType;
+	private static bool ServiceNameContains(class aClass, String substring)
+	{
+		if (!(aClass is "Service")) return false;
+
+		String className = aClass.GetClassName();
+		String lowerClassName = className.MakeLower();
+		String lowerSubstring = substring.MakeLower();
+		bool result = lowerClassName.IndexOf(lowerSubstring) != -1;
+		return result;
+	}
+
+	private String mServiceName;
 	private uint mClassIndex;
 }

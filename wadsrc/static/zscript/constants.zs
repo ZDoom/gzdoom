@@ -962,6 +962,7 @@ enum ESkillProperty
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 	SKILLP_PlayerRespawn,
+	SKILLP_SpawnMulti,
 };
 enum EFSkillProperty	// floating point properties
 {

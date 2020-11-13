@@ -194,17 +194,14 @@ void InitImports()
 	AFTable.Clear();
 	if (AFTable.Size() == 0)
 	{
-		FAutoSegIterator probe(ARegHead, ARegTail);
-
-		while (*++probe != NULL)
+		AutoSegs::ActionFunctons.ForEach([](AFuncDesc *afunc)
 		{
-			AFuncDesc *afunc = (AFuncDesc *)*probe;
 			assert(afunc->VMPointer != NULL);
 			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->FuncName);
 			(*(afunc->VMPointer))->PrintableName.Format("%s.%s [Native]", afunc->ClassName+1, afunc->FuncName);
 			(*(afunc->VMPointer))->DirectNativeCall = afunc->DirectNative;
 			AFTable.Push(*afunc);
-		}
+		});
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 	}
@@ -212,13 +209,10 @@ void InitImports()
 	FieldTable.Clear();
 	if (FieldTable.Size() == 0)
 	{
-		FAutoSegIterator probe(FRegHead, FRegTail);
-
-		while (*++probe != NULL)
+		AutoSegs::ClassFields.ForEach([](FieldDesc *afield)
 		{
-			FieldDesc *afield = (FieldDesc *)*probe;
 			FieldTable.Push(*afield);
-		}
+		});
 		FieldTable.ShrinkToFit();
 		qsort(&FieldTable[0], FieldTable.Size(), sizeof(FieldTable[0]), fieldcmp);
 	}

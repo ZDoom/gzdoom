@@ -206,13 +206,10 @@ void PClass::StaticInit ()
 {
 	Namespaces.GlobalNamespace = Namespaces.NewNamespace(0);
 
-	FAutoSegIterator probe(CRegHead, CRegTail);
-
-	while (*++probe != nullptr)
+	AutoSegs::TypeInfos.ForEach([](ClassReg* typeInfo)
 	{
-		((ClassReg *)*probe)->RegisterClass ();
-	}
-	probe.Reset();
+		typeInfo->RegisterClass();
+	});
 
 	// Keep built-in classes in consistant order. I did this before, though
 	// I'm not sure if this is really necessary to maintain any sort of sync.
@@ -268,14 +265,10 @@ void PClass::StaticShutdown ()
 	AllClasses.Clear();
 	ClassMap.Clear();
 
-	FAutoSegIterator probe(CRegHead, CRegTail);
-
-	while (*++probe != nullptr)
+	AutoSegs::TypeInfos.ForEach([](ClassReg* typeInfo)
 	{
-		auto cr = ((ClassReg *)*probe);
-		cr->MyClass = nullptr;
-	}
-	
+		typeInfo->MyClass = nullptr;
+	});
 }
 
 //==========================================================================

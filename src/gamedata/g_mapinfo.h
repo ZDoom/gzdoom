@@ -34,6 +34,7 @@
 #ifndef __G_LEVEL_H__
 #define __G_LEVEL_H__
 
+#include "autosegs.h"
 #include "doomtype.h"
 #include "vectors.h"
 #include "sc_man.h"
@@ -44,8 +45,8 @@ struct cluster_info_t;
 class FSerializer;
 
 #if defined(_MSC_VER)
-#pragma section(".yreg$u",read)
-#define MSVC_YSEG __declspec(allocate(".yreg$u"))
+#pragma section(SECTION_YREG,read)
+#define MSVC_YSEG __declspec(allocate(SECTION_YREG))
 #define GCC_YSEG
 #else
 #define MSVC_YSEG

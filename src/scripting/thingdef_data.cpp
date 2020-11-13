@@ -733,14 +733,12 @@ void InitThingdef()
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
 
-	FAutoSegIterator probe(CRegHead, CRegTail);
-
-	while (*++probe != NULL)
+	AutoSegs::TypeInfos.ForEach([](ClassReg* typeInfo)
 	{
-		if (((ClassReg *)*probe)->InitNatives)
-			((ClassReg *)*probe)->InitNatives();
-	}
-
+		if (typeInfo->InitNatives)
+			typeInfo->InitNatives();
+	});
+	
 	// Sort the flag lists
 	for (size_t i = 0; i < NUM_FLAG_LISTS; ++i)
 	{
@@ -750,12 +748,11 @@ void InitThingdef()
 	// Create a sorted list of properties
 	if (properties.Size() == 0)
 	{
-		FAutoSegIterator probe(GRegHead, GRegTail);
-
-		while (*++probe != NULL)
+		AutoSegs::Properties.ForEach([](FPropertyInfo* propertyInfo)
 		{
-			properties.Push((FPropertyInfo *)*probe);
-		}
+			properties.Push(propertyInfo);
+		});
+
 		properties.ShrinkToFit();
 		qsort(&properties[0], properties.Size(), sizeof(properties[0]), propcmp);
 	}

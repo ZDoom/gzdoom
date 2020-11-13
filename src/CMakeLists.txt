@@ -1097,6 +1097,7 @@ set (PCH_SOURCES
 	common/engine/serializer.cpp
 	common/engine/m_joy.cpp
 	common/engine/m_random.cpp
+	common/objects/autosegs.cpp
 	common/objects/dobject.cpp
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
@@ -1182,7 +1183,6 @@ endif()
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
-	__autostart.cpp
 	${SYSTEM_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
@@ -1208,7 +1208,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	common/thirdparty/math/tan.c
 	common/thirdparty/math/tanh.c
 	common/thirdparty/math/fastsin.cpp
-	zzautozend.cpp
 )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )

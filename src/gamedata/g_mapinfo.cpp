@@ -1839,23 +1839,24 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 		}
 		else
 		{
-			FAutoSegIterator probe(YRegHead, YRegTail);
 			bool success = false;
 
-			while (*++probe != NULL)
+			AutoSegs::MapInfoOptions.ForEach([this, &success, &info](FMapOptInfo* option)
 			{
-				if (sc.Compare(((FMapOptInfo *)(*probe))->name))
+				if (sc.Compare(option->name))
 				{
-					if (!((FMapOptInfo *)(*probe))->old && format_type != FMT_New)
+					if (!option->old && format_type != FMT_New)
 					{
 						sc.ScriptError("MAPINFO option '%s' requires the new MAPINFO format", sc.String);
 					}
-					((FMapOptInfo *)(*probe))->handler(*this, &info);
+					option->handler(*this, &info);
 					success = true;
-					break;
+					return false;  // break
 				}
-			}
-
+				
+				return true;  // continue
+			});
+			
 			if (!success)
 			{
 				if (!ParseCloseBrace())

@@ -49,6 +49,7 @@
 #include <dbghelp.h>
 #elif defined __MACH__
 #include <mach-o/getsect.h>
+#include <mach-o/ldsyms.h>
 #endif
 
 
@@ -101,10 +102,12 @@ void FAutoSeg::Initialize()
 
 #elif defined __MACH__
 
-	if (const struct section_64 *const section = getsectbyname(AUTOSEG_MACH_SEGMENT, name))
+	unsigned long size;
+
+	if (uint8_t *const section = getsectiondata(&_mh_execute_header, AUTOSEG_MACH_SEGMENT, name, &size))
 	{
-		begin = reinterpret_cast<void **>(section->addr);
-		end = reinterpret_cast<void **>(section->addr + section->size);
+		begin = reinterpret_cast<void **>(section);
+		end = reinterpret_cast<void **>(section + size);
 	}
 
 #else // Linux and others with ELF executables

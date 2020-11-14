@@ -310,7 +310,6 @@ public:
 	double		viewz = 0;					// focal origin above r.z
 	double		viewheight = 0;				// base height above floor for viewz
 	double		deltaviewheight = 0;		// squat speed.
-	float       prevbob = 0;                // Previous value of "bob"
 	double		bob = 0;					// bounded/scaled total velocity
 
 	// killough 10/98: used for realistic bobbing (i.e. not simply overall speed)

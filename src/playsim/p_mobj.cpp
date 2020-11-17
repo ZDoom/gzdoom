@@ -3242,8 +3242,11 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 
 int AActor::AbsorbDamage(int damage, FName dmgtype, AActor *inflictor, AActor *source, int flags)
 {
-	for (AActor *item = Inventory; item != nullptr; item = item->Inventory)
+	AActor *next;
+	for (AActor *item = Inventory; item != nullptr; item = next)
 	{
+		// [Player701] Remember the next item now in case the current item is destroyed later
+		next = item->Inventory;
 		IFVIRTUALPTRNAME(item, NAME_Inventory, AbsorbDamage)
 		{
 			VMValue params[7] = { item, damage, dmgtype.GetIndex(), &damage, inflictor, source, flags };

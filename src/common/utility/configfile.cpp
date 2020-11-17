@@ -39,6 +39,9 @@
 #include "configfile.h"
 #include "files.h"
 
+#include <filesystem>
+#include "engineerrors.h"
+
 #define READBUFFERSIZE	256
 
 //====================================================================
@@ -601,10 +604,13 @@ void FConfigFile::LoadConfigFile ()
 	FileReader file;
 	bool succ;
 
-	FileExisted = false;
+	if (!std::filesystem::exists(PathName.GetChars()))
+		FileExisted = false;
+
 	if (!file.OpenFile (PathName))
 	{
-		return;
+		if (!FileExisted) return;
+		else I_Error ("Could not Open Config file.\n");
 	}
 
 	succ = ReadConfig (&file);

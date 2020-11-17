@@ -766,13 +766,13 @@ class OptionMenuSliderBase : OptionMenuItem
 
 		if (!mSliderShort)
 		{
-			DrawSliderElement(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12", grayed);
+			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderBackColor), x, cy, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12", grayed);
 			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 78) / range)) * 2 * CleanXfac_1), cy, "\x13", grayed);
 		}
 		else
 		{
 			// On 320x200 we need a shorter slider
-			DrawSliderElement(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x12", grayed);
+			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderBackColor), x, cy, "\x10\x11\x11\x11\x11\x11\x12", grayed);
 			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 38) / range)) * 2 * CleanXfac_1), cy, "\x13", grayed);
 			right -= 5*8*CleanXfac;
 		}

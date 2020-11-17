@@ -39,6 +39,7 @@ gameinfo
 	dimamount = 0.5
 	bluramount = 0.0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1

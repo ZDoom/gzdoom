@@ -531,6 +531,7 @@ struct GameInfoStruct native
 	native int gametype;
 	native String mBackButton;
 	native Name mSliderColor;
+	native Name mSliderBackColor;
 }
 
 struct SystemTime

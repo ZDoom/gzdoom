@@ -35,7 +35,7 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 bool FileExists (const char *filename);
 bool DirExists(const char *filename);
 bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
-bool GetFileInfo(const char* pathname, size_t* size, time_t* time);
+bool GetFileInfo(const char* pathname, size_t* size);
 
 extern	FString progdir;
 

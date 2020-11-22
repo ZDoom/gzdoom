@@ -150,6 +150,10 @@ void ReplaceString (char **ptr, const char *str)
 */
 
 
+#ifdef _WIN32
+int my_wstat64(const wchar_t *path, struct _stat64 *buffer);
+#endif
+
 //==========================================================================
 //
 // FileExists
@@ -201,7 +205,7 @@ bool DirEntryExists(const char *pathname, bool *isdir)
 	// Windows must use the wide version of stat to preserve non-standard paths.
 	auto wstr = WideString(pathname);
 	struct _stat64 info;
-	bool res = _wstat64(wstr.c_str(), &info) == 0;
+	bool res = my_wstat64(wstr.c_str(), &info) == 0;
 #endif
 	if (isdir) *isdir = !!(info.st_mode & S_IFDIR);
 	return res;
@@ -209,9 +213,9 @@ bool DirEntryExists(const char *pathname, bool *isdir)
 
 //==========================================================================
 //
-// DirEntryExists
+// GetFileInfo
 //
-// Returns true if the given path exists, be it a directory or a file.
+// Returns true if the file info can be retrieved.
 //
 //==========================================================================
 
@@ -227,7 +231,7 @@ bool GetFileInfo(const char* pathname, size_t *size, time_t *time)
 	// Windows must use the wide version of stat to preserve non-standard paths.
 	auto wstr = WideString(pathname);
 	struct _stat64 info;
-	bool res = _wstat64(wstr.c_str(), &info) == 0;
+	bool res = my_wstat64(wstr.c_str(), &info) == 0;
 #endif
 	if (!res || (info.st_mode & S_IFDIR)) return false;
 	if (size) *size = info.st_size;

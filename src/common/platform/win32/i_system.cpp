@@ -977,18 +977,15 @@ FString I_GetLongPathName(const FString &shortpath)
 	return longpath;
 }
 
-#ifdef _USING_V110_SDK71_
 //==========================================================================
 //
-// _stat64i32
+// _stat64
 //
-// Work around an issue where stat() function doesn't work 
-// with Windows XP compatible toolset.
-// It uses GetFileInformationByHandleEx() which requires Windows Vista.
+// Work around an issue where _stat() function doesn't work.
 //
 //==========================================================================
 
-int _wstat64i32(const wchar_t *path, struct _stat64i32 *buffer)
+int my_wstat64(const wchar_t *path, struct _stat64 *buffer)
 {
 	WIN32_FILE_ATTRIBUTE_DATA data;
 	if(!GetFileAttributesExW(path, GetFileExInfoStandard, &data))
@@ -1001,13 +998,12 @@ int _wstat64i32(const wchar_t *path, struct _stat64i32 *buffer)
 	buffer->st_nlink = 1;
 	buffer->st_uid = 0;
 	buffer->st_gid = 0;
-	buffer->st_size = data.nFileSizeLow;
+	buffer->st_size = ((uint64_t)data.nFileSizeHigh << 32) + data.nFileSizeLow;
 	buffer->st_atime = (*(uint64_t*)&data.ftLastAccessTime) / 10000000 - 11644473600LL;
 	buffer->st_mtime = (*(uint64_t*)&data.ftLastWriteTime) / 10000000 - 11644473600LL;
 	buffer->st_ctime = (*(uint64_t*)&data.ftCreationTime) / 10000000 - 11644473600LL;
 	return 0;
 }
-#endif
 
 struct NumaNode
 {

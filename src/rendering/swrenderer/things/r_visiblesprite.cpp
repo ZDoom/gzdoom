@@ -239,7 +239,6 @@ namespace swrenderer
 		// killough 3/27/98: end special clipping for deep water / fake ceilings
 		else if (!spr->IsVoxel() && spr->floorclip)
 		{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
-		  //int clip = ((FLOAT2FIXED(CenterY) - FixedMul (spr->texturemid - (spr->pic->GetHeight() << FRACBITS) + spr->floorclip, spr->yscale)) >> FRACBITS);
 			int clip = xs_RoundToInt(viewport->CenterY - (spr->texturemid - spr->pic->GetHeight() + spr->floorclip) * spr->yscale);
 			if (clip < botclip)
 			{

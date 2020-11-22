@@ -91,17 +91,17 @@ const double			r_Yaspect = 200.0;		// Why did I make this a variable? It's never
 //
 //==========================================================================
 
-inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
+inline constexpr int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
 {
-	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
+	return DMulScale (y-node->y, node->dx, node->x-x, node->dy, 32) > 0;
 }
 inline int R_PointOnSide(double x, double y, const node_t *node)
 {
-	return DMulScale32(FLOAT2FIXED(y) - node->y, node->dx, node->x - FLOAT2FIXED(x), node->dy) > 0;
+	return DMulScale(FLOAT2FIXED(y) - node->y, node->dx, node->x - FLOAT2FIXED(x), node->dy, 32) > 0;
 }
 inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
 {
-	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
+	return DMulScale(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy, 32) > 0;
 }
 
 // Used for interpolation waypoints.

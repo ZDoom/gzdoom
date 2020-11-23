@@ -6267,7 +6267,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 
 	if ((cpos->crushchange > 0) && !(thing->Level->maptime & 3))
 	{
-		int newdam = P_DamageMobj(thing, NULL, NULL, cpos->crushchange, NAME_Crush);
+		int newdam = P_DamageMobj(thing, NULL, NULL, cpos->crushchange, NAME_Crush, DMG_SECTOR);
 
 		// spray blood in a random direction
 		if (!(thing->flags2&(MF2_INVULNERABLE | MF2_DORMANT)))

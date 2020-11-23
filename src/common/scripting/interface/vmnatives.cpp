@@ -124,7 +124,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawImage, SBar_DrawImage)
 	return 0;
 }
 
-void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY);
+void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY, int translation);
 
 DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawString, SBar_DrawString)
 {
@@ -140,7 +140,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawString, SBar_DrawString)
 	PARAM_INT(linespacing);
 	PARAM_FLOAT(scaleX);
 	PARAM_FLOAT(scaleY);
-	SBar_DrawString(self, font, string, x, y, flags, trans, alpha, wrapwidth, linespacing, scaleX, scaleY);
+	PARAM_INT(pt);
+	SBar_DrawString(self, font, string, x, y, flags, trans, alpha, wrapwidth, linespacing, scaleX, scaleY, pt);
 	return 0;
 }
 

@@ -57,7 +57,7 @@ IMPLEMENT_CLASS(DHUDFont, false, false);
 
 CVAR(Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
 CVAR(Int, crosshairhealth, 2, CVAR_ARCHIVE);
-CVAR(Float, crosshairscale, 1.0, CVAR_ARCHIVE);
+CVARD(Float, crosshairscale, 0.5, CVAR_ARCHIVE, "changes the size of the crosshair");
 CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
 EXTERN_CVAR(Bool, vid_fps)
 
@@ -602,7 +602,7 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 //
 //============================================================================
 
-void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY, double scaleX, double scaleY)
+void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY, double scaleX, double scaleY, int pt)
 {
 	bool monospaced = monospacing != EMonospacing::Off;
 	double dx = 0;
@@ -724,10 +724,11 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 				DTA_FillColor, 0,
 				TAG_DONE);
 		}
-		DrawChar(twod, font, fontcolor, rx, ry, ch,
+		DrawChar(twod, font, pt == 0? fontcolor : CR_UNDEFINED, rx, ry, ch,
 			DTA_DestWidthF, rw,
 			DTA_DestHeightF, rh,
 			DTA_Alpha, Alpha,
+			DTA_TranslationIndex, pt,
 			TAG_DONE);
 
 		dx = monospaced
@@ -739,7 +740,7 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 	}
 }
 
-void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY)
+void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY, int pt)
 {
 	if (font == nullptr) ThrowAbortException(X_READ_NIL, nullptr);
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
@@ -758,13 +759,13 @@ void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string
 		auto brk = V_BreakLines(font->mFont, int(wrapwidth * scaleX), string, true);
 		for (auto& line : brk)
 		{
-			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY);
+			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY, pt);
 			y += (font->mFont->GetHeight() + linespacing) * scaleY;
 		}
 	}
 	else
 	{
-		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY);
+		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY, pt);
 	}
 }
 

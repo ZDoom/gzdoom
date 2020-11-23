@@ -1271,7 +1271,7 @@ bool AActor::Grind(bool items)
 	if (flags6 & MF6_TOUCHY && (flags6 & MF6_ARMED || IsSentient()))
     {
 		flags6 &= ~MF6_ARMED; // Disarm
-		P_DamageMobj (this, NULL, NULL, health, NAME_Crush, DMG_FORCED);  // kill object
+		P_DamageMobj (this, NULL, NULL, health, NAME_Crush, DMG_FORCED|DMG_SECTOR);  // kill object
 		return true;   // keep checking
     }
 
@@ -6329,7 +6329,7 @@ bool P_HitFloor (AActor *thing)
 	if (thing->flags6 & MF6_TOUCHY && ((thing->flags6 & MF6_ARMED) || thing->IsSentient()) && thing->Vel.Z < -5)
 	{
 		thing->flags6 &= ~MF6_ARMED; // Disarm
-		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED);  // kill object
+		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED|DMG_SECTOR);  // kill object
 		return false;
 	}
 

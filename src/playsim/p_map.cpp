@@ -837,7 +837,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 		if (tm.thing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
+			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee, DMG_SECTOR);
 		}
 		if (wasfit)
 		{
@@ -914,7 +914,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			{
 				if (tm.thing->flags2 & MF2_BLASTED)
 				{
-					P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
+					P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee, DMG_SECTOR);
 				}
 				if (wasfit)
 				{
@@ -2672,7 +2672,7 @@ pushline:
 
 		if (tm.thing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
+			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee, DMG_SECTOR);
 		}
 		numSpecHitTemp = (int)spechit.Size();
 		while (numSpecHitTemp > 0)

@@ -107,6 +107,7 @@ extend struct GameInfoStruct
 	native TextureID berserkpic;
 	native double normforwardmove[2];
 	native double normsidemove[2];
+	native bool mHideParTimes;
 }
 
 extend class Object

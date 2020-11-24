@@ -208,6 +208,7 @@ struct gameinfo_t
 	double normsidemove[2];
 	int fullscreenautoaspect = 3;
 	bool nomergepickupmsg;
+	bool mHideParTimes;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

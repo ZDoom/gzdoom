@@ -915,6 +915,13 @@ class StatusScreen abstract play version("2.5")
 			Plrs[i] = wbs.plyr[i];
 			otherkills -= Plrs[i].skills;
 		}
+
+		if (gameinfo.mHideParTimes)
+		{
+			// par time and suck time are not displayed if zero.
+			wbs.partime = 0;
+			wbs.sucktime = 0;
+		}
 		
 		entering.Init(gameinfo.mStatscreenEnteringFont);
 		finished.Init(gameinfo.mStatscreenFinishedFont);

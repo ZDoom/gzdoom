@@ -875,9 +875,9 @@ class Actor : Thinker native
 		return SpawnMissileAngleZSpeed (pos.z + 32 + GetBobOffset(), type, angle, vz, GetDefaultSpeed (type));
 	}
 
-	Actor SpawnMissileAngleZ (double z, class<Actor> type, double angle, double vz)
+	Actor SpawnMissileAngleZ (double z, class<Actor> type, double angle, double vz, Actor owner = null)
 	{
-		return SpawnMissileAngleZSpeed (z, type, angle, vz, GetDefaultSpeed (type));
+		return SpawnMissileAngleZSpeed (z, type, angle, vz, GetDefaultSpeed (type), owner);
 	}
 	
 

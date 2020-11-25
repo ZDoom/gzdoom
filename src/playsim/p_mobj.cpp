@@ -6705,24 +6705,6 @@ DEFINE_ACTION_FUNCTION(AActor, OldSpawnMissile)
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type, DAngle angle, double vz)
-{
-	if (source == nullptr || type == nullptr)
-	{
-		return NULL;
-	}
-	return P_SpawnMissileAngleZSpeed (source, source->Z() + 32 + source->GetBobOffset(), type, angle, vz, GetDefaultSpeed (type));
-}
-
-AActor *P_SpawnMissileAngleZ (AActor *source, double z, PClassActor *type, DAngle angle, double vz)
-{
-	if (type == nullptr)
-	{
-		return nullptr;
-	}
-	return P_SpawnMissileAngleZSpeed (source, z, type, angle, vz, GetDefaultSpeed (type));
-}
-
 AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActor *type)
 {
 	if (source == nullptr || type == nullptr)

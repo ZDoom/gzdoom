@@ -24,6 +24,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "dobjgc.h"
 #include "p_local.h"
 #include "p_effect.h"
 #include "c_console.h"
@@ -109,6 +110,7 @@ void P_Ticker (void)
 				}
 			}
 		}
+		GC::FullGC();
 		return;
 	}
 

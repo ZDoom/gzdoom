@@ -270,5 +270,6 @@ DEFINE_SPECIAL(Floor_MoveToValueAndCrush, 279, 4, 5, 5)
 DEFINE_SPECIAL(Ceiling_MoveToValueAndCrush, 280, 4, 5, 5)
 DEFINE_SPECIAL(Line_SetAutomapFlags, 281, 3, 3, 3)
 DEFINE_SPECIAL(Line_SetAutomapStyle, 282, 2, 2, 2)
+DEFINE_SPECIAL(Polyobj_StopSound, 283, 1, 1, 1)
 
 #undef DEFINE_SPECIAL

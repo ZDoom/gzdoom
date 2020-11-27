@@ -2112,6 +2112,94 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				SetLineFlags(1461, Line.ML_REPEAT_SPECIAL);
 				SetLineFlags(1468, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+
+			case '50E394239FF64264950D11883E933553': // 1024.wad map05
+			{
+				// Change duplicate player 2 start to player 3 start
+				SetThingEdNum(59, 3);
+				break;
+			}
+
+			case '02140759002C3F68ECD0C4EC08667026': // 1024.wad map10
+			{
+				// These monsters cannot teleport out because there are no triggers to lower the teleporters
+
+				// 2 chaingun guys
+				SetThingFlags(162, 0);
+				SetThingFlags(163, 0);
+
+				// 6 shotgun guys
+				for (int i = 123; i <= 128; i++)
+				{
+					SetThingFlags(i, 0);
+				}
+
+				break;
+			}
+
+			case '1E29380A2D08D68D707E7FE7A0671941': // 1024.wad map13
+			{
+				// These monsters cannot teleport out because there is no sector with the corresponding tag
+				for (int i = 230; i <= 237; i++)
+				{
+					SetThingFlags(i, 0);
+				}
+
+				// Fix zombieman not appearing on any difficulty
+				SetThingSkills(18, 3);
+
+				// Fix missing texture
+				SetWallTexture(2406, Line.front, Side.mid, "DOORTRAK");
+				SetLineFlags(2406, Line.ML_DONTPEGBOTTOM);
+
+				break;
+			}
+
+			case '754A9A1D7C36A97D43640526E9CF2E69': // 1024.wad map15
+			{
+				// Duplicate red key does not disappear upon grabbing the real red key
+				ClearSectorTags(226);
+				AddSectorTag(226, 701);
+				SetThingSpecial(6, Floor_LowerToLowest);
+				SetThingArgument(6, 0, 701);
+				SetThingArgument(6, 1, 8);
+				break;
+			}
+
+			case '90D8469CBAC34A6EF0ABBFEDD7EFA188': // 1024.wad map23
+			{
+				// Remove inaccessible berserk pack and clear secret flag from its closet
+				// The closet doesn't serve any other purpose, so let's prevent it from being opened as well
+				SetThingFlags(169, 0);
+				SetSectorSpecial(569, 0);
+				SetLineSpecial(1193, 0);
+
+				// Fix BFG secret
+				// 1) Remove secret special from sector (it's too narrow to land on)
+				SetSectorSpecial(561, 0);
+
+				// 2) Add secret trigger
+				int secTrigger = AddThing(9046, (800, 188, 0));
+				SetThingId(secTrigger, 701);
+
+				// 3) Add sector action to activate the trigger when the BFG sector is entered
+				int secEnter = AddThing(9998, (800, 188, 0));
+				SetThingSpecial(secEnter, Thing_Activate);
+				SetThingArgument(secEnter, 0, 701);
+
+				// Remove inaccessible imp
+				SetThingFlags(100, 0);
+
+				break;
+			}
+
+			case '9B94D90DCD4F74F4B4D6E7B2A341AE44': // 1024.wad map27
+			{
+				// Fix switch not requiring blue key
+				SetLineSpecial(632, Door_LockedRaise, 7, 64, 0, 130);
+				break;
 			}
 		}
 	}

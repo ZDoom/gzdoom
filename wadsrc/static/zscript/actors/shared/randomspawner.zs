@@ -227,7 +227,7 @@ class RandomSpawner : Actor
 				}
 				newmobj.AddZ(SpawnPoint.Z);
 			}
-			if (newmobj.bMissile)
+			if (newmobj.bMissile && !(newmobj is 'RandomSpawner'))
 				newmobj.CheckMissileSpawn(0);
 			// Bouncecount is used to count how many recursions we're in.
 			if (newmobj is 'RandomSpawner')

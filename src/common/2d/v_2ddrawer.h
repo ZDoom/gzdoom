@@ -1,6 +1,7 @@
 #ifndef __2DDRAWER_H
 #define __2DDRAWER_H
 
+#include "buffers.h"
 #include "tarray.h"
 #include "vectors.h"
 #include "textures.h"
@@ -31,6 +32,8 @@ enum EClearWhich
 	C_Indices = 4,
 };
 
+class F2DVertexBuffer;
+
 class DShape2D : public DObject
 {
 
@@ -41,16 +44,21 @@ public:
 		transform.Identity();
 	}
 
+	~DShape2D();
+
 	TArray<int> mIndices;
 	TArray<DVector2> mVertices;
 	TArray<DVector2> mCoords;
 
+	double minx = 0.0;
+	double maxx = 0.0;
+	double miny = 0.0;
+	double maxy = 0.0;
+
 	DMatrix3x3 transform;
 
-	// dirty stores whether we need to re-apply the transformation
-	// otherwise it uses the cached values
-	bool dirty = true;
-	TArray<DVector2> mTransformedVertices;
+	F2DVertexBuffer* buf;
+	bool needsVertexUpload = true;
 };
 
 struct F2DPolygons
@@ -66,6 +74,7 @@ struct F2DPolygons
 	}
 
 };
+
 
 class F2DDrawer
 {
@@ -136,6 +145,11 @@ public:
 		uint8_t mLightLevel;
 		uint8_t mFlags;
 
+		bool useTransform;
+		DMatrix3x3 transform;
+
+		DShape2D* shape2D;
+
 		RenderCommand()
 		{
 			memset(this, 0, sizeof(*this));
@@ -144,6 +158,7 @@ public:
 		// If these fields match, two draw commands can be batched.
 		bool isCompatible(const RenderCommand &other) const
 		{
+			if (shape2D != nullptr || other.shape2D != nullptr) return false;
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
 				mTranslationId == other.mTranslationId &&
@@ -155,8 +170,16 @@ public:
 				mDrawMode == other.mDrawMode &&
 				mFlags == other.mFlags &&
 				mLightLevel == other.mLightLevel &&
-				mColor1.d == other.mColor1.d;
-
+				mColor1.d == other.mColor1.d &&
+				useTransform == other.useTransform &&
+				(
+					!useTransform ||
+					(
+						transform[0] == other.transform[0] &&
+						transform[1] == other.transform[1] &&
+						transform[2] == other.transform[2]
+					)
+				);
 		}
 	};
 
@@ -236,6 +259,40 @@ public:
 	}
 
 	bool mIsFirstPass = true;
+};
+
+//===========================================================================
+// 
+// Vertex buffer for 2D drawer
+//
+//===========================================================================
+
+class F2DVertexBuffer
+{
+	IVertexBuffer *mVertexBuffer;
+	IIndexBuffer *mIndexBuffer;
+
+
+public:
+
+	F2DVertexBuffer();
+
+	~F2DVertexBuffer()
+	{
+		delete mIndexBuffer;
+		delete mVertexBuffer;
+	}
+
+	void UploadData(F2DDrawer::TwoDVertex *vertices, int vertcount, int *indices, int indexcount)
+	{
+		mVertexBuffer->SetData(vertcount * sizeof(*vertices), vertices, false);
+		mIndexBuffer->SetData(indexcount * sizeof(unsigned int), indices, false);
+	}
+
+	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
+	{
+		return std::make_pair(mVertexBuffer, mIndexBuffer);
+	}
 };
 
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tarray.h"
 #include "vectors.h"
 #include "matrix.h"
 #include "hw_material.h"

@@ -57,8 +57,9 @@ public:
 
 	DMatrix3x3 transform;
 
-	F2DVertexBuffer* buf;
+	TArray<F2DVertexBuffer*> buffers;
 	bool needsVertexUpload = true;
+	int bufIndex = 0;
 };
 
 struct F2DPolygons
@@ -149,6 +150,8 @@ public:
 		DMatrix3x3 transform;
 
 		DShape2D* shape2D;
+		int shape2DBufIndex;
+		int shape2DIndexCount;
 
 		RenderCommand()
 		{

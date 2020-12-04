@@ -176,7 +176,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 		if (cmd.shape2D != nullptr)
 		{
-			state.SetVertexBuffer(cmd.shape2D->buffers[cmd.shape2DBufIndex]);
+			state.SetVertexBuffer(&cmd.shape2D->buffers[cmd.shape2DBufIndex]);
 			state.DrawIndexed(DT_Triangles, 0, cmd.shape2DIndexCount);
 			state.SetVertexBuffer(&vb);
 			if (cmd.shape2D->bufIndex > 1) {

@@ -44,8 +44,6 @@ public:
 		transform.Identity();
 	}
 
-	~DShape2D();
-
 	TArray<int> mIndices;
 	TArray<DVector2> mVertices;
 	TArray<DVector2> mCoords;
@@ -57,7 +55,7 @@ public:
 
 	DMatrix3x3 transform;
 
-	TArray<F2DVertexBuffer*> buffers;
+	TArray<F2DVertexBuffer> buffers;
 	bool needsVertexUpload = true;
 	int bufIndex = 0;
 };

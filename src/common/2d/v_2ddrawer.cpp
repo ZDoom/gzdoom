@@ -183,11 +183,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
 	return 0;
 }
 
-DShape2D::~DShape2D() {
-	for (auto b : this->buffers) delete b;
-	this->buffers.Clear();
-}
-
 //==========================================================================
 //
 //
@@ -608,11 +603,10 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	if (shape->needsVertexUpload)
 	{
 		if (shape->bufIndex == 0) {
-			for (auto b : shape->buffers) delete b;
 			shape->buffers.Clear();
 		}
-		shape->buffers.Push(new F2DVertexBuffer);
-		auto buf = shape->buffers[shape->bufIndex];
+		shape->buffers.Reserve(1);
+		auto buf = &shape->buffers[shape->bufIndex];
 
 		auto verts = TArray<TwoDVertex>(dg.mVertCount, true);
 		for ( int i=0; i<dg.mVertCount; i++ )

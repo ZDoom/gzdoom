@@ -57,7 +57,7 @@ public:
 
 	TArray<F2DVertexBuffer> buffers;
 	bool needsVertexUpload = true;
-	int bufIndex = 0;
+	int bufIndex = -1;
 };
 
 struct F2DPolygons

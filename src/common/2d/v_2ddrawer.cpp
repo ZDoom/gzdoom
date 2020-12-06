@@ -598,13 +598,11 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	dg.transform.Cells[0][2] += offset.X;
 	dg.transform.Cells[1][2] += offset.Y;
 	dg.shape2D = shape;
-	dg.shape2DBufIndex = shape->bufIndex;
 	dg.shape2DIndexCount = shape->mIndices.Size();
 	if (shape->needsVertexUpload)
 	{
-		if (shape->bufIndex == 0) {
-			shape->buffers.Clear();
-		}
+		shape->bufIndex += 1;
+
 		shape->buffers.Reserve(1);
 		auto buf = &shape->buffers[shape->bufIndex];
 
@@ -626,9 +624,8 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 
 		buf->UploadData(&verts[0], dg.mVertCount, &shape->mIndices[0], shape->mIndices.Size());
 		shape->needsVertexUpload = false;
-
-		shape->bufIndex += 1;
 	}
+	dg.shape2DBufIndex = shape->bufIndex;
 	AddCommand(&dg);
 	offset = osave;
 }

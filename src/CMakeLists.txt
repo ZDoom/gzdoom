@@ -97,7 +97,6 @@ if( WIN32 )
 	endif()
 
 	set( ZDOOM_LIBS
-		opengl32
 		wsock32
 		winmm
 		"${DX_dinput8_LIBRARY}"

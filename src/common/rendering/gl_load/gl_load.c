@@ -67,10 +67,51 @@ static int TestPointer(const PROC pTest)
 	return 1;
 }
 
+static HMODULE opengl32dll;
+static HGLRC(WINAPI* createcontext)(HDC);
+static BOOL(WINAPI* deletecontext)(HGLRC);
+static BOOL(WINAPI* makecurrent)(HDC, HGLRC);
+static PROC(WINAPI* getprocaddress)(LPCSTR name);
+static void CheckOpenGL(void)
+{
+    if (opengl32dll == 0)
+    {
+        opengl32dll = LoadLibrary(L"OpenGL32.DLL");
+        createcontext = (HGLRC(WINAPI*)(HDC)) GetProcAddress(opengl32dll, "wglCreateContext");
+        deletecontext = (BOOL(WINAPI*)(HGLRC)) GetProcAddress(opengl32dll, "wglDeleteContext");
+        makecurrent = (BOOL(WINAPI*)(HDC, HGLRC)) GetProcAddress(opengl32dll, "wglMakeCurrent");
+        getprocaddress = (PROC(WINAPI*)(LPCSTR)) GetProcAddress(opengl32dll, "wglGetProcAddress");
+    }
+}
+
+HGLRC zd_wglCreateContext(HDC dc)
+{
+    CheckOpenGL();
+    return createcontext(dc);
+}
+
+BOOL zd_wglDeleteContext(HGLRC context)
+{
+    CheckOpenGL();
+    return deletecontext(context);
+}
+
+BOOL zd_wglMakeCurrent(HDC dc, HGLRC context)
+{
+    CheckOpenGL();
+    return makecurrent(dc, context);
+}
+
+PROC zd_wglGetProcAddress(LPCSTR name)
+{
+    CheckOpenGL();
+    return getprocaddress(name);
+}
+
 static PROC WinGetProcAddress(const char *name)
 {
 	HMODULE glMod = NULL;
-	PROC pFunc = wglGetProcAddress((LPCSTR)name);
+	PROC pFunc = zd_wglGetProcAddress((LPCSTR)name);
 	if(TestPointer(pFunc))
 	{
 		return pFunc;

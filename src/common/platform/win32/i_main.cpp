@@ -1076,7 +1076,9 @@ void CALLBACK ExitFatally (ULONG_PTR dummy)
 	SetUnhandledExceptionFilter (ExitMessedUp);
 	I_ShutdownGraphics ();
 	RestoreConView ();
+#ifndef _M_ARM64
 	DisplayCrashLog ();
+#endif
 	exit(-1);
 }
 

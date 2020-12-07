@@ -52,6 +52,8 @@
 
 extern HWND			Window;
 
+extern "C" PROC zd_wglGetProcAddress(LPCSTR name);
+
 PFNWGLSWAPINTERVALEXTPROC myWglSwapIntervalExtProc;
 
 //==========================================================================
@@ -78,15 +80,15 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen) : Syst
 	HDC hDC = GetDC(Window);
 	const char *wglext = nullptr;
 
-	myWglSwapIntervalExtProc = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-	auto myWglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
+	myWglSwapIntervalExtProc = (PFNWGLSWAPINTERVALEXTPROC)zd_wglGetProcAddress("wglSwapIntervalEXT");
+	auto myWglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)zd_wglGetProcAddress("wglGetExtensionsStringARB");
 	if (myWglGetExtensionsStringARB)
 	{
 		wglext = myWglGetExtensionsStringARB(hDC);
 	}
 	else
 	{
-		auto myWglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
+		auto myWglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)zd_wglGetProcAddress("wglGetExtensionsStringEXT");
 		if (myWglGetExtensionsStringEXT)
 		{
 			wglext = myWglGetExtensionsStringEXT();

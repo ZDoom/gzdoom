@@ -559,7 +559,8 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	auto osave = offset;
 	if (parms.nooffset) offset = { 0,0 };
 
-	if (shape->needsVertexUpload) {
+	if (shape->needsVertexUpload)
+	{
 		shape->minx = 16383;
 		shape->miny = 16383;
 		shape->maxx = -16384;
@@ -1036,7 +1037,8 @@ void F2DDrawer::Clear()
 	screenFade = 1.f;
 }
 
-F2DVertexBuffer::F2DVertexBuffer() {
+F2DVertexBuffer::F2DVertexBuffer()
+{
 	mVertexBuffer = screen->CreateVertexBuffer();
 	mIndexBuffer = screen->CreateIndexBuffer();
 

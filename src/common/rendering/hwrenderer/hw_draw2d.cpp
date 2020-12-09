@@ -129,19 +129,23 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 		state.AlphaFunc(Alpha_GEqual, 0.f);
 
-		if (cmd.useTransform) {
+		if (cmd.useTransform)
+		{
 			FLOATTYPE m[16] = {
 				0.0, 0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0, 0.0,
 				0.0, 0.0, 1.0, 0.0,
 				0.0, 0.0, 0.0, 1.0
 			};
-			for (size_t i = 0; i < 2; i++) {
-				for (size_t j = 0; j < 2; j++) {
+			for (size_t i = 0; i < 2; i++)
+			{
+				for (size_t j = 0; j < 2; j++)
+				{
 					m[4 * j + i] = (FLOATTYPE) cmd.transform.Cells[i][j];
 				}
 			}
-			for (size_t i = 0; i < 2; i++) {
+			for (size_t i = 0; i < 2; i++)
+			{
 				m[4 * 3 + i] = (FLOATTYPE) cmd.transform.Cells[i][2];
 			}
 			state.mModelMatrix.loadMatrix(m);

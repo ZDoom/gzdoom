@@ -1076,10 +1076,13 @@ void CALLBACK ExitFatally (ULONG_PTR dummy)
 	SetUnhandledExceptionFilter (ExitMessedUp);
 	I_ShutdownGraphics ();
 	RestoreConView ();
+#ifndef _M_ARM64
 	DisplayCrashLog ();
+#endif
 	exit(-1);
 }
 
+#ifndef _M_ARM64
 //==========================================================================
 //
 // CatchAllExceptions
@@ -1132,6 +1135,7 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	}
 	return EXCEPTION_CONTINUE_EXECUTION;
 }
+#endif // !_M_ARM64
 
 //==========================================================================
 //
@@ -1155,7 +1159,11 @@ static void infiniterecursion(int foo)
 // which offers the very important feature to open a debugger and see the crash in context right away.
 CUSTOM_CVAR(Bool, disablecrashlog, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
+#ifndef _M_ARM64
 	SetUnhandledExceptionFilter(!*self ? CatchAllExceptions : nullptr);
+#else
+	SetUnhandledExceptionFilter(nullptr);
+#endif
 }
 
 //==========================================================================
@@ -1217,7 +1225,9 @@ int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE nothing, LPWSTR cmdline, int
 #ifndef _DEBUG
 	if (MainThread != INVALID_HANDLE_VALUE)
 	{
+#ifndef _M_ARM64
 		SetUnhandledExceptionFilter (CatchAllExceptions);
+#endif
 
 #ifdef _M_X64
 		static bool setJumpResult = false;

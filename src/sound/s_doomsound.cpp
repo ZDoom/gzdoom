@@ -192,7 +192,9 @@ static FileReader OpenMusic(const char* musicname)
 	if (!FileExists(musicname))
 	{
 		int lumpnum;
-		if ((lumpnum = fileSystem.CheckNumForFullName(musicname, true, ns_music)) == -1)
+		lumpnum = fileSystem.CheckNumForFullName(musicname);
+		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, ns_music);
+		if (lumpnum == -1)
 		{
 			Printf("Music \"%s\" not found\n", musicname);
 		}

@@ -1851,11 +1851,7 @@ void TryRunTics (void)
 	int 		counts;
 	int 		numplaying;
 
-	// If paused, do not eat more CPU time than we need, because it
-	// will all be wasted anyway.
-	if (pauseext) 
-		r_NoInterpolate = true;
-	bool doWait = cl_capfps || r_NoInterpolate /*|| netgame*/;
+	bool doWait = (cl_capfps || pauseext || (r_NoInterpolate && !M_IsAnimated() /*&& gamestate != GS_INTERMISSION && gamestate != GS_INTRO*/));
 
 	// get real tics
 	if (doWait)

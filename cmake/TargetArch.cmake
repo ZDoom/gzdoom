@@ -48,6 +48,8 @@ set(archdetect_c_code "
     #elif defined(__ARM_ARCH_5TEJ__) \\
         || (defined(__TARGET_ARCH_ARM) && __TARGET_ARCH_ARM-0 >= 5)
         #error cmake_ARCH armv5
+    #elif defined(_M_ARM64) || defined (__aarch64__)
+        #error cmake_ARCH arm64
     #else
         #error cmake_ARCH arm
     #endif

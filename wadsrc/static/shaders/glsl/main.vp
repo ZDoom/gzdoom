@@ -80,13 +80,13 @@ void main()
 
 		#ifdef HAS_UNIFORM_VERTEX_DATA
 			if ((useVertexData & 2) == 0)
-				vWorldNormal = NormalModelMatrix * vec4(uVertexNormal.xyz, 1.0);
+				vWorldNormal = NormalModelMatrix * vec4(normalize(uVertexNormal.xyz), 1.0);
 			else
 				vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
 		#else
 			vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
 		#endif
-		vEyeNormal = NormalViewMatrix * vWorldNormal;
+		vEyeNormal = NormalViewMatrix * vec4(normalize(vWorldNormal.xyz), 1.0);
 	#endif
 	
 	#ifdef SPHEREMAP

@@ -1428,17 +1428,17 @@ TAngle<T> clampangle(const TAngle<T> &ang, const TAngle<T> &min, const TAngle<T>
 	{
 		if (mindiff < maxdiff)
 		{
-			return max;
+			return max.Normalized180();
 		}
-		return min;
+		return min.Normalized180();
 	}
 	if (maxdiff < 0)
 	{
-		return max;
+		return max.Normalized180();
 	}
 	else if (mindiff < 0)
 	{
-		return min;
+		return min.Normalized180();
 	}
 	return ang.Normalized180();
 }

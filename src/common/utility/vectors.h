@@ -1418,6 +1418,31 @@ inline TAngle<T> absangle(const TAngle<T> &a1, double a2)
 	return fabs((a1 - a2).Normalized180());
 }
 
+// Angles need special handling
+template<typename T>
+TAngle<T> clampangle(const TAngle<T> &ang, const TAngle<T> &min, const TAngle<T> &max)
+{
+	TAngle<T> maxdiff = deltaangle(ang, max);
+	TAngle<T> mindiff = deltaangle(min, ang);
+	if (mindiff < 0 && maxdiff < 0)
+	{
+		if (mindiff < maxdiff)
+		{
+			return max;
+		}
+		return min;
+	}
+	if (maxdiff < 0)
+	{
+		return max;
+	}
+	else if (mindiff < 0)
+	{
+		return min;
+	}
+	return ang.Normalized180();
+}
+
 inline TAngle<double> VecToAngle(double x, double y)
 {
 	return g_atan2(y, x) * (180.0 / pi::pi());

@@ -240,6 +240,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, absangle, absangleDbl)	// should this be g
 	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
 }
 
+// Angles need special handling
+static double clampangleDbl(double ang, double min, double max)
+{
+	return clampangle(DAngle(ang), DAngle(min), DAngle(max)).Degrees;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, clampangle, clampangleDbl)	// should this be global?
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(ang);
+	PARAM_FLOAT(min);
+	PARAM_FLOAT(max);
+	ACTION_RETURN_FLOAT(clampangle(DAngle(ang), DAngle(min), DAngle(max)).Degrees);
+}
+
 static double Distance2DSquared(AActor *self, AActor *other)
 {
 	return self->Distance2DSquared(PARAM_NULLCHECK(other, other));

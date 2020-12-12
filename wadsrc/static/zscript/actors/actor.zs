@@ -429,6 +429,7 @@ class Actor : Thinker native
 	// 'parked' global functions.
 	native clearscope static double deltaangle(double ang1, double ang2);
 	native clearscope static double absangle(double ang1, double ang2);
+	native clearscope static double clampangle(double angle, double min, double max);
 	native clearscope static Vector2 AngleToVector(double angle, double length = 1);
 	native clearscope static Vector2 RotateVector(Vector2 vec, double angle);
 	native clearscope static double Normalize180(double ang);

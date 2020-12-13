@@ -29,7 +29,7 @@
 # "There are many more known variants/revisions that we do not handle/detect."
 
 set(archdetect_c_code "
-#if defined(__arm__) || defined(__TARGET_ARCH_ARM) || defined(_M_ARM64)
+#if defined(__arm__) || defined(__TARGET_ARCH_ARM) || defined(_M_ARM64) || defined (__aarch64__)
     #if defined(__ARM_ARCH_7__) \\
         || defined(__ARM_ARCH_7A__) \\
         || defined(__ARM_ARCH_7R__) \\

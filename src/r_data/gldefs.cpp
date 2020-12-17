@@ -144,6 +144,8 @@ static const char *LightTags[]=
    "dontlightactors",
    "spot",
    "noshadowmap",
+   "dontlightothers",
+   "dontlightmap",
    nullptr
 };
 
@@ -168,6 +170,8 @@ enum {
    LIGHTTAG_DONTLIGHTACTORS,
    LIGHTTAG_SPOT,
    LIGHTTAG_NOSHADOWMAP,
+   LIGHTTAG_DONTLIGHTOTHERS,
+   LIGHTTAG_DONTLIGHTMAP,
 };
 
 //==========================================================================
@@ -468,6 +472,12 @@ class GLDefsParser
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
 					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
+					break;
 				case LIGHTTAG_SPOT:
 					{
 						float innerAngle = ParseFloat(sc);
@@ -563,6 +573,12 @@ class GLDefsParser
 					break;
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_SPOT:
 					{
@@ -663,6 +679,12 @@ class GLDefsParser
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
 					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
+					break;
 				case LIGHTTAG_SPOT:
 					{
 						float innerAngle = ParseFloat(sc);
@@ -761,6 +783,12 @@ class GLDefsParser
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
 					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
+					break;
 				case LIGHTTAG_SPOT:
 					{
 						float innerAngle = ParseFloat(sc);
@@ -855,6 +883,12 @@ class GLDefsParser
 					break;
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_SPOT:
 					{

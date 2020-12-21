@@ -122,22 +122,8 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 //		%o -> other (victim)
 //		%k -> killer
 //
-void PronounMessage (const char *from, char *to, int pronoun, const char *victim, const char *killer)
+void PronounMessage (const char *from, char *to, FPronouns pronouns, const char *victim, const char *killer)
 {
-	static const char *pronouns[GENDER_MAX][5] =
-	{
-		{ "he",   "him",  "his",   "his",    "he's"    },
-		{ "she",  "her",  "her",   "hers",   "she's"   },
-		{ "they", "them", "their", "theirs", "they're" },
-		{ "it",   "it",   "its",   "its'",   "it's"    }
-	};
-	static const int pronounshift[GENDER_MAX][5] =
-	{
-		{ 2, 3, 3, 3, 4 },
-		{ 3, 3, 3, 4, 5 },
-		{ 4, 4, 5, 6, 7 },
-		{ 2, 2, 3, 4, 4 }
-	};
 	const char *substitute = NULL;
 
 	do
@@ -174,8 +160,8 @@ void PronounMessage (const char *from, char *to, int pronoun, const char *victim
 			}
 			else
 			{
-				strcpy (to, pronouns[pronoun][grammarcase]);
-				to += pronounshift[pronoun][grammarcase];
+				strcpy (to, pronouns[grammarcase]);
+				to += pronouns[grammarcase].Len();
 				from++;
 			}
 		}
@@ -288,7 +274,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	if (message == NULL || strlen(message) <= 0)
 		return;
 		
-	PronounMessage (message, gendermessage, self->player->userinfo.GetGender(),
+	PronounMessage (message, gendermessage, self->player->userinfo.GetPronouns(),
 		self->player->userinfo.GetName(), attacker->player->userinfo.GetName());
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
 }
@@ -425,7 +411,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				if (deathmatch && player->spreecount >= 5 && cl_showsprees)
 				{
 					PronounMessage (GStrings("SPREEKILLSELF"), buff,
-						player->userinfo.GetGender(), player->userinfo.GetName(),
+						player->userinfo.GetPronouns(), player->userinfo.GetName(),
 						player->userinfo.GetName());
 					StatusBar->AttachMessage (Create<DHUDMessageFadeOut>(nullptr, buff,
 							1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
@@ -482,7 +468,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					{
 						if (!AnnounceSpreeLoss (this))
 						{
-							PronounMessage (GStrings("SPREEOVER"), buff, player->userinfo.GetGender(),
+							PronounMessage (GStrings("SPREEOVER"), buff, player->userinfo.GetPronouns(),
 								player->userinfo.GetName(), source->player->userinfo.GetName());
 							StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (nullptr, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
@@ -492,7 +478,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					{
 						if (!AnnounceSpree (source))
 						{
-							PronounMessage (spreemsg, buff, player->userinfo.GetGender(),
+							PronounMessage (spreemsg, buff, player->userinfo.GetPronouns(),
 								player->userinfo.GetName(), source->player->userinfo.GetName());
 							StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (nullptr, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
@@ -542,7 +528,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 
 							if (!AnnounceMultikill (source))
 							{
-								PronounMessage (multimsg, buff, player->userinfo.GetGender(),
+								PronounMessage (multimsg, buff, player->userinfo.GetPronouns(),
 									player->userinfo.GetName(), source->player->userinfo.GetName());
 								StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (nullptr, buff,
 									1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));

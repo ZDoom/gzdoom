@@ -2760,6 +2760,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native clearscope int GetSkin() const;
 	native clearscope bool GetNeverSwitch() const;
 	native clearscope int GetGender() const;
+	native clearscope String GetPronouns() const;
 	native clearscope int GetTeam() const;
 	native clearscope float GetAutoaim() const;
 	native clearscope bool GetNoAutostartMap() const;

@@ -235,6 +235,12 @@ void FPronouns::BuildString()
 	);
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPronouns)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_STRING(self->userinfo.GetPronouns());
+}
+
 //===========================================================================
 //
 // GetDisplayName

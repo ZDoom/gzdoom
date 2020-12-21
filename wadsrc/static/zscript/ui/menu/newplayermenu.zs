@@ -406,6 +406,135 @@ class OptionMenuItemPlayerSwitchOnPickupItem : OptionMenuItemOptionBase
 //
 //=============================================================================
 
+class OptionMenuItemPlayerPronounsItem : OptionMenuItemOptionBase
+{
+	OptionMenuItemPlayerPronounsItem Init(String label, Name values)
+	{
+		Super.Init(label, 'none', values, null, false);
+		return self;
+	}
+
+	//=============================================================================
+	override int GetSelection()
+	{
+		let pronounsStr = players[consoleplayer].GetPronouns();
+		Array<String> pronouns;
+		pronounsStr.Split(pronouns, "/");
+
+		let pronoun = "Custom";
+		for(int i = 0; i < PRONOUN_MAX; i++)
+		{
+			bool matched = true;
+			for(int j = 0; j < pronouns.Size(); j++)
+			{
+				if (!(pronouns[j] ~== PlayerInfo.DefaultPronouns[i * PRONOUN_SET_SIZE + j]))
+				{
+					matched = false;
+					break;
+				}
+			}
+
+			if (matched)
+			{
+				pronoun = PlayerInfo.DefaultPronouns[i * PRONOUN_SET_SIZE];
+				break;
+			}
+		}
+
+		int Selection = -1;
+		int cnt = OptionValues.GetCount(mValues);
+		if (cnt > 0)
+		{
+			for(int i = 0; i < cnt; i++)
+			{
+				if (pronoun ~== OptionValues.GetText(mValues, i))
+				{
+					Selection = i;
+					break;
+				}
+			}
+		}
+		return Selection;
+	}
+
+	override void SetSelection(int Selection)
+	{
+		int cnt = OptionValues.GetCount(mValues);
+		if (cnt > 0)
+		{
+			// Don't select 'Custom'
+			if (OptionValues.GetText(mValues, Selection) == "Custom")
+			{
+				Selection = GetSelection() > 1? 1 : cnt - 1;
+			}
+
+			let val = OptionValues.GetText(mValues, Selection);
+			PlayerMenu.PronounsChanged(val.MakeLower());
+		}
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuItemPlayerPronounField : OptionMenuItemTextField
+{
+	int mPronoun;
+
+	OptionMenuItemPlayerPronounField Init(String label, int pronoun)
+	{
+		Super.Init(label, "");
+		mPronoun = pronoun;
+		return self;
+	}
+
+	override bool, String GetString (int i)
+	{
+		if (i == 0)
+		{
+			let pronounsStr = players[consoleplayer].GetPronouns();
+			Array<String> pronouns;
+			pronounsStr.Split(pronouns, "/");
+
+			return true, pronouns[mPronoun];
+		}
+		return false, "";
+	}
+
+	override bool SetString (int i, String s)
+	{
+		if (i == 0)
+		{
+			let slash = s.IndexOf("/");
+			if (slash != -1) s = s.Left(slash);
+
+			let pronounsStr = players[consoleplayer].GetPronouns();
+			Array<String> pronouns;
+			pronounsStr.Split(pronouns, "/");
+			pronouns[mPronoun] = s;
+
+			pronounsStr = pronouns[0];
+			for(int j = 1; j < pronouns.Size(); j++)
+			{
+				pronounsStr.AppendFormat("/%s", pronouns[j]);
+			}
+
+			PlayerMenu.PronounsChanged(pronounsStr);
+			return true;
+		}
+		return false;
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 class NewPlayerMenu : OptionMenu
 {
 	protected native static void UpdateColorsets(PlayerClass cls);

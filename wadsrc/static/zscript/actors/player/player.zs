@@ -2649,6 +2649,17 @@ enum EPlayerGender
 	GENDER_OTHER
 }
 
+enum EPlayerDefaultPronouns
+{
+	PRONOUN_THEY,
+	PRONOUN_SHE,
+	PRONOUN_HE,
+	PRONOUN_IT,
+	PRONOUN_MAX
+}
+
+const PRONOUN_SET_SIZE = 6;
+
 struct PlayerInfo native play	// self is what internally is known as player_t
 {
 	// technically engine constants but the only part of the playsim using them is the player.
@@ -2740,6 +2751,14 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native @WeaponSlots weapons;
 	native @UserCmd cmd;
 	native readonly @UserCmd original_cmd;
+
+	static const String DefaultPronouns[] =
+	{
+		"they", "them", "their", "theirs", "themself", "they're",
+		"she",  "her",  "her",   "hers",   "herself",  "she's",
+		"he",   "him",  "his",   "his",    "himself",  "he's",
+		"it",   "it",   "its",   "its",    "itself",   "it's"
+	};
 
 	native bool PoisonPlayer(Actor poisoner, Actor source, int poison);
 	native void PoisonDamage(Actor source, int damage, bool playPainSound);

@@ -76,25 +76,59 @@ void FGLRenderer::PresentAnaglyph(bool r, bool g, bool b)
 //
 //==========================================================================
 
-void FGLRenderer::PresentSideBySide()
+void FGLRenderer::PresentSideBySide(int vrmode)
 {
-	mBuffers->BindOutputFB();
-	ClearBorders();
+	if (vrmode == VR_SIDEBYSIDEFULL || vrmode == VR_SIDEBYSIDESQUISHED)
+	{
+		mBuffers->BindOutputFB();
+		ClearBorders();
 
-	// Compute screen regions to use for left and right eye views
-	int leftWidth = screen->mOutputLetterbox.width / 2;
-	int rightWidth = screen->mOutputLetterbox.width - leftWidth;
-	IntRect leftHalfScreen = screen->mOutputLetterbox;
-	leftHalfScreen.width = leftWidth;
-	IntRect rightHalfScreen = screen->mOutputLetterbox;
-	rightHalfScreen.width = rightWidth;
-	rightHalfScreen.left += leftWidth;
+		// Compute screen regions to use for left and right eye views
+		int leftWidth = screen->mOutputLetterbox.width / 2;
+		int rightWidth = screen->mOutputLetterbox.width - leftWidth;
+		IntRect leftHalfScreen = screen->mOutputLetterbox;
+		leftHalfScreen.width = leftWidth;
+		IntRect rightHalfScreen = screen->mOutputLetterbox;
+		rightHalfScreen.width = rightWidth;
+		rightHalfScreen.left += leftWidth;
 
-	mBuffers->BindEyeTexture(0, 0);
-	DrawPresentTexture(leftHalfScreen, true);
+		mBuffers->BindEyeTexture(0, 0);
+		DrawPresentTexture(leftHalfScreen, true);
 
-	mBuffers->BindEyeTexture(1, 0);
-	DrawPresentTexture(rightHalfScreen, true);
+		mBuffers->BindEyeTexture(1, 0);
+		DrawPresentTexture(rightHalfScreen, true);
+	}
+	else if (vrmode == VR_SIDEBYSIDELETTERBOX)
+	{
+		mBuffers->BindOutputFB();
+		screen->mOutputLetterbox.top = screen->mOutputLetterbox.height;
+
+		ClearBorders();
+		screen->mOutputLetterbox.top = 0;  //reset so screenshots can be taken
+
+		// Compute screen regions to use for left and right eye views
+		int leftWidth = screen->mOutputLetterbox.width / 2;
+		int rightWidth = screen->mOutputLetterbox.width - leftWidth;
+		//cut letterbox height in half
+		int height = screen->mOutputLetterbox.height / 2;
+		int top = height * .5;
+		IntRect leftHalfScreen = screen->mOutputLetterbox;
+		leftHalfScreen.width = leftWidth;
+		leftHalfScreen.height = height;
+		leftHalfScreen.top = top;
+		IntRect rightHalfScreen = screen->mOutputLetterbox;
+		rightHalfScreen.width = rightWidth;
+		rightHalfScreen.left += leftWidth;
+		//give it those cinematic black bars on top and bottom
+		rightHalfScreen.height = height;
+		rightHalfScreen.top = top;
+
+		mBuffers->BindEyeTexture(0, 0);
+		DrawPresentTexture(leftHalfScreen, true);
+
+		mBuffers->BindEyeTexture(1, 0);
+		DrawPresentTexture(rightHalfScreen, true);
+	}
 }
 
 
@@ -360,7 +394,8 @@ void FGLRenderer::PresentStereo()
 
 	case VR_SIDEBYSIDEFULL:
 	case VR_SIDEBYSIDESQUISHED:
-		PresentSideBySide();
+	case VR_SIDEBYSIDELETTERBOX:
+		PresentSideBySide(vr_mode);
 		break;
 
 	case VR_TOPBOTTOM:

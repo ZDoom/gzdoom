@@ -144,7 +144,7 @@ public:
 
 private:
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-	FixedSizeVector<VkDescriptorSetLayoutBinding, 8> bindings;
+	FixedSizeVector<VkDescriptorSetLayoutBinding, 16> bindings;
 };
 
 class DescriptorPoolBuilder

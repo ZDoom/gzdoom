@@ -175,6 +175,27 @@ TArray<FString> I_GetGogPaths()
 		result.Push(path);	// directly in install folder
 	}
 
+	// Look for Heretic: SOTSR
+	gamepath = gogregistrypath + L"\\1290366318";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
+	{
+		result.Push(path);	// directly in install folder
+	}
+	
+	// Look for Hexen: Beyond Heretic
+	gamepath = gogregistrypath + L"\\1247951670";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
+	{
+		result.Push(path);	// directly in install folder
+	}
+
+	// Look for Hexen: Death Kings
+	gamepath = gogregistrypath + L"\\1983497091";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
+	{
+		result.Push(path);	// directly in install folder
+	}
+
 	return result;
 }
 

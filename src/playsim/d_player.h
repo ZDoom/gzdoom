@@ -175,7 +175,7 @@ extern TArray<FPlayerClass> PlayerClasses;
 
 // Custom pronouns
 struct FPronouns {
-	FString pronoun[5];
+	FString pronoun[6];
 	FString string;
 
 	FPronouns() {}
@@ -202,10 +202,10 @@ enum
 };
 
 const struct FPronouns DefaultPronouns[PRONOUN_MAX] = {
-	{"they", "them", "their", "theirs", "they're"},
-	{"she",  "her",  "her",   "hers",   "she's"  },
-	{"he",   "him",  "his",   "his",    "he's"   },
-	{"it",   "it",   "its",   "its",    "it's"   }
+	{"they", "them", "their", "theirs", "themself", "they're"},
+	{"she",  "her",  "her",   "hers",   "herself",  "she's"  },
+	{"he",   "him",  "his",   "his",    "himself",  "he's"   },
+	{"it",   "it",   "its",   "its",    "itself",   "it's"   }
 };
 
 // User info (per-player copies of each CVAR_USERINFO cvar)

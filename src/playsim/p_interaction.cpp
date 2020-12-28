@@ -142,7 +142,7 @@ void PronounMessage (const char *from, char *to, FPronouns pronouns, const char 
 			case 'h': grammarcase = 1; break; // Object
 			case 'p': grammarcase = 2; break; // Possessive Determiner
 			case 's': grammarcase = 3; break; // Possessive Pronoun
-			case 'r': grammarcase = 4; break; // Perfective
+			case 'r': grammarcase = 5; break; // Perfective
 			case 'o': substitute = victim; break;
 			case 'k': substitute = killer; break;
 			}
@@ -160,6 +160,12 @@ void PronounMessage (const char *from, char *to, FPronouns pronouns, const char 
 			}
 			else
 			{
+				if (grammarcase == 1 && !strncmp(from + 2, "self", 4))
+				{
+					grammarcase = 4;
+					from += 4;
+				}
+
 				strcpy (to, pronouns[grammarcase]);
 				to += pronouns[grammarcase].Len();
 				from++;

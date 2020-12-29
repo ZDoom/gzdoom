@@ -480,12 +480,12 @@ CCMD (togglemessages)
 {
 	if (show_messages)
 	{
-		Printf("%s\n", GStrings("MSGOFF"));
+		Printf(128, "%s\n", GStrings("MSGOFF"));
 		show_messages = false;
 	}
 	else
 	{
-		Printf("%s\n", GStrings("MSGON"));
+		Printf(128, "%s\n", GStrings("MSGON"));
 		show_messages = true;
 	}
 }

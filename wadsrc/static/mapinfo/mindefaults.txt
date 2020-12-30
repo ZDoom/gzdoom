@@ -61,6 +61,7 @@ gameinfo
 	statscreen_contentfont = "*BigFont"
 	statscreen_authorFont = "*SmallFont"
 	messageboxclass = "MessageBoxMenu"
+	enableskyboxao
 }
 
 DoomEdNums

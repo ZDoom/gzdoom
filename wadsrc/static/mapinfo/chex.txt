@@ -76,6 +76,7 @@ gameinfo
 	messageboxclass = "MessageBoxMenu"
 	normforwardmove = 0x19, 0x32
 	normsidemove = 0x18, 0x28
+	enableskyboxao
 }
 
 DoomEdNums

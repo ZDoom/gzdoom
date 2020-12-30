@@ -77,6 +77,7 @@ public:
     virtual line_t *ClipLine() { return nullptr; }
 	virtual void * GetSource() const = 0;	// GetSource MUST be implemented!
 	virtual const char *GetName() = 0;
+	virtual bool AllowSSAO() { return true; }
 	virtual bool IsSky() { return false; }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
@@ -258,6 +259,7 @@ protected:
 	virtual void * GetSource() const { return portal; }
 	virtual bool IsSky() { return true; }
 	virtual const char *GetName();
+	virtual bool AllowSSAO() override;
 
 public:
 

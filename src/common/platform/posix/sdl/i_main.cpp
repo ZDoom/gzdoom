@@ -50,7 +50,7 @@
 #include "engineerrors.h"
 #include "i_system.h"
 #include "i_interface.h"
-#include "v_text.h"
+#include "printf.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -96,11 +96,11 @@ static int GetCrashInfo (char *buffer, char *end)
 void I_DetectOS()
 {
 #if !defined (__APPLE__)
-	auto unameInfo = new utsname;
-	int unameRes = uname(unameInfo);
+	utsname unameInfo;
+	int unameRes = uname(&unameInfo);
 	if (unameRes != -1)
 	{
-		Printf("OS: %s %s on %s\n", &unameInfo->sysname[0], &unameInfo->release[0],&unameInfo->machine[0]);
+		Printf("OS: %s %s on %s\n", unameInfo.sysname, unameInfo.release, unameInfo.machine);
 	}
 #endif
 }

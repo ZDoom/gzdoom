@@ -40,6 +40,7 @@
 #include <new>
 #include <sys/param.h>
 #include <locale.h>
+#include <sys/utsname.h>
 
 #include "engineerrors.h"
 #include "m_argv.h"

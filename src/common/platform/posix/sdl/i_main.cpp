@@ -40,6 +40,7 @@
 #include <new>
 #include <sys/param.h>
 #include <locale.h>
+#include <sys/utsname.h>
 
 #include "engineerrors.h"
 #include "m_argv.h"
@@ -49,6 +50,7 @@
 #include "engineerrors.h"
 #include "i_system.h"
 #include "i_interface.h"
+#include "printf.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -93,7 +95,12 @@ static int GetCrashInfo (char *buffer, char *end)
 
 void I_DetectOS()
 {
-	// The POSIX version never implemented this.
+	utsname unameInfo;
+	int unameRes = uname(&unameInfo);
+	if (unameRes != -1)
+	{
+		Printf("OS: %s %s on %s\n", unameInfo.sysname, unameInfo.release, unameInfo.machine);
+	}
 }
 
 void I_StartupJoysticks();

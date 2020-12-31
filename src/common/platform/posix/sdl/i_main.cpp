@@ -95,14 +95,12 @@ static int GetCrashInfo (char *buffer, char *end)
 
 void I_DetectOS()
 {
-#if !defined (__APPLE__)
 	utsname unameInfo;
 	int unameRes = uname(&unameInfo);
 	if (unameRes != -1)
 	{
 		Printf("OS: %s %s on %s\n", unameInfo.sysname, unameInfo.release, unameInfo.machine);
 	}
-#endif
 }
 
 void I_StartupJoysticks();

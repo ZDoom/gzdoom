@@ -49,6 +49,7 @@
 #include "engineerrors.h"
 #include "i_system.h"
 #include "i_interface.h"
+#include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -93,7 +94,14 @@ static int GetCrashInfo (char *buffer, char *end)
 
 void I_DetectOS()
 {
-	// The POSIX version never implemented this.
+#if !defined (__APPLE__)
+	auto unameInfo = new utsname;
+	int unameRes = uname(unameInfo);
+	if (unameRes != -1)
+	{
+		Printf("OS: %s %s on %s\n", &unameInfo->sysname[0], &unameInfo->release[0],&unameInfo->machine[0]);
+	}
+#endif
 }
 
 void I_StartupJoysticks();

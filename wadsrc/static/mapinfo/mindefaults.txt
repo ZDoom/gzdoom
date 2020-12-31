@@ -61,6 +61,10 @@ gameinfo
 	statscreen_contentfont = "*BigFont"
 	statscreen_authorFont = "*SmallFont"
 	messageboxclass = "MessageBoxMenu"
+}
+
+gamedefaults
+{
 	enableskyboxao
 }
 

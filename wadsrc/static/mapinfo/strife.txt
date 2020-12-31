@@ -75,7 +75,6 @@ gameinfo
 	messageboxclass = "MessageBoxMenu"
 	normforwardmove = 0x19, 0x32
 	normsidemove = 0x18, 0x28
-	enableskyboxao
 }
 
 DoomEdNums
@@ -613,6 +612,7 @@ gamedefaults
 	nointermission
 	clipmidtextures
 	noinfighting
+	enableskyboxao
 }
 
 map MAP01 LOOKUP "TXT_STRIFE_MAP01"

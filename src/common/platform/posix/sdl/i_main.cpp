@@ -99,7 +99,37 @@ void I_DetectOS()
 	int unameRes = uname(&unameInfo);
 	if (unameRes != -1)
 	{
-		Printf("OS: %s %s on %s\n", unameInfo.sysname, unameInfo.release, unameInfo.machine);
+		Printf("OS: %s %s on %s", unameInfo.sysname, unameInfo.release, unameInfo.machine);
+#ifdef __linux__
+		// Get Linux distribution name if /etc/os-release exists.
+		FILE* osRelFile = fopen("/etc/os-release","r");
+		if (osRelFile)
+		{
+			char* lineOfFile = (char*)malloc(512);
+			size_t sizeOfLine = 512;
+			FString distribution_name = "";
+			while (getdelim(&lineOfFile,&sizeOfLine,'\n',osRelFile) != -1)
+			{
+				if (lineOfFile != NULL)
+				{
+					if (strncmp(lineOfFile,"PRETTY_NAME",11) == 0)
+					{
+						distribution_name = lineOfFile + 12;
+						distribution_name.StripChars("\"\n");
+						free(lineOfFile);
+						lineOfFile = NULL;
+						break;
+					}
+					free(lineOfFile);
+					lineOfFile = NULL;
+				}
+			}
+			if (distribution_name.Len() > 1) Printf(" (%s)",distribution_name.GetChars());
+			delete[] lineOfFile;
+			fclose(osRelFile);
+		}
+#endif
+		Printf("\n");
 	}
 }
 

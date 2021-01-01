@@ -103,29 +103,37 @@ void I_DetectOS()
 #ifdef __linux__
 		// Get Linux distribution name if /etc/os-release exists.
 		FILE* osRelFile = fopen("/etc/os-release","r");
+		if (!osRelFile) osRelFile = fopen("/usr/lib/os-release","r");
 		if (osRelFile)
 		{
-			char* lineOfFile = (char*)malloc(512);
+			char lineOfFile[512];
 			size_t sizeOfLine = 512;
 			FString distribution_name = "";
-			while (getdelim(&lineOfFile,&sizeOfLine,'\n',osRelFile) != -1)
+			while (fgets(lineOfFile,sizeOfLine,osRelFile) != NULL)
 			{
-				if (lineOfFile != NULL)
+				if (strncmp(lineOfFile,"PRETTY_NAME", 11) == 0)
 				{
-					if (strncmp(lineOfFile,"PRETTY_NAME",11) == 0)
+					distribution_name = lineOfFile;
+					if (distribution_name.Len() <= 11)
 					{
-						distribution_name = lineOfFile + 12;
-						distribution_name.StripChars("\"\n");
-						free(lineOfFile);
-						lineOfFile = NULL;
+						distribution_name.Remove(0,distribution_name.Len());
 						break;
 					}
-					free(lineOfFile);
-					lineOfFile = NULL;
+					long indexOfEqualSign;
+					if ((indexOfEqualSign = distribution_name.IndexOf('=')) == -1) { distribution_name.Remove(0,distribution_name.Len()); break;}
+					distribution_name.Remove(0,indexOfEqualSign + 1);
+					while (distribution_name[0] == ' ' && distribution_name.Len() > 1)
+					{
+						distribution_name.Remove(0,1);
+					}
+					// Remove quotes at the start and end of string.
+					if (distribution_name[0] == '\"') distribution_name.Remove(0,1);
+					if (distribution_name[distribution_name.Len() - 1] == '\n') distribution_name.Truncate(distribution_name.Len() - 1);
+					if (distribution_name[distribution_name.Len() - 1] == '\"') distribution_name.Truncate(distribution_name.Len() - 1);
+					break;
 				}
 			}
 			if (distribution_name.Len() > 1) Printf(" (%s)",distribution_name.GetChars());
-			free(lineOfFile);
 			fclose(osRelFile);
 		}
 #endif

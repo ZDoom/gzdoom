@@ -125,7 +125,7 @@ void I_DetectOS()
 				}
 			}
 			if (distribution_name.Len() > 1) Printf(" (%s)",distribution_name.GetChars());
-			delete[] lineOfFile;
+			free(lineOfFile);
 			fclose(osRelFile);
 		}
 #endif

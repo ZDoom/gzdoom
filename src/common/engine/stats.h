@@ -36,7 +36,7 @@
 
 #include "zstring.h"
 
-#if !defined _WIN32 && !defined __APPLE__ || (defined _WIN32 && !defined _M_ARM64)
+#if !defined _WIN32 && !defined __APPLE__
 
 #ifdef NO_CLOCK_GETTIME
 class cycle_t

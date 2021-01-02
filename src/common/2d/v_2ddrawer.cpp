@@ -34,6 +34,8 @@
 
 #include <stdarg.h>
 #include "templates.h"
+#include "v_2ddrawer.h"
+#include "vectors.h"
 #include "vm.h"
 #include "c_cvars.h"
 #include "v_draw.h"
@@ -107,7 +109,6 @@ IMPLEMENT_CLASS(DShape2D, false, false)
 static void Shape2D_SetTransform(DShape2D* self, DShape2DTransform *transform)
 {
 	self->transform = transform->transform;
-	self->dirty = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, SetTransform, Shape2D_SetTransform)
@@ -120,13 +121,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, SetTransform, Shape2D_SetTransform)
 
 static void Shape2D_Clear(DShape2D* self, int which)
 {
-	if (which & C_Verts)
-	{
-		self->mVertices.Clear();
-		self->dirty = true;
-	}
+	if (which & C_Verts) self->mVertices.Clear();
 	if (which & C_Coords) self->mCoords.Clear();
 	if (which & C_Indices) self->mIndices.Clear();
+	self->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, Clear, Shape2D_Clear)
@@ -140,7 +138,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, Clear, Shape2D_Clear)
 static void Shape2D_PushVertex(DShape2D* self, double x, double y)
 {
 	self->mVertices.Push(DVector2(x, y));
-	self->dirty = true;
+	self->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushVertex, Shape2D_PushVertex)
@@ -155,6 +153,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushVertex, Shape2D_PushVertex)
 static void Shape2D_PushCoord(DShape2D* self, double u, double v)
 {
 	self->mCoords.Push(DVector2(u, v));
+	self->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushCoord, Shape2D_PushCoord)
@@ -171,6 +170,7 @@ static void Shape2D_PushTriangle(DShape2D* self, int a, int b, int c)
 	self->mIndices.Push(a);
 	self->mIndices.Push(b);
 	self->mIndices.Push(c);
+	self->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
@@ -556,26 +556,33 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	if (!img->isHardwareCanvas() && parms.TranslationId != -1)
 		dg.mTranslationId = parms.TranslationId;
 
-	if (shape->dirty) {
-		if (shape->mVertices.Size() != shape->mTransformedVertices.Size())
-			shape->mTransformedVertices.Resize(shape->mVertices.Size());
-		for (int i = 0; i < dg.mVertCount; i++) {
-			shape->mTransformedVertices[i] = (shape->transform * DVector3(shape->mVertices[i], 1.0)).XY();
-		}
-		shape->dirty = false;
-	}
-
 	auto osave = offset;
 	if (parms.nooffset) offset = { 0,0 };
 
-	double minx = 16383, miny = 16383, maxx = -16384, maxy = -16384;
-	for ( int i=0; i<dg.mVertCount; i++ )
+	if (shape->needsVertexUpload)
 	{
-		if ( shape->mTransformedVertices[i].X < minx ) minx = shape->mTransformedVertices[i].X;
-		if ( shape->mTransformedVertices[i].Y < miny ) miny = shape->mTransformedVertices[i].Y;
-		if ( shape->mTransformedVertices[i].X > maxx ) maxx = shape->mTransformedVertices[i].X;
-		if ( shape->mTransformedVertices[i].Y > maxy ) maxy = shape->mTransformedVertices[i].Y;
+		shape->minx = 16383;
+		shape->miny = 16383;
+		shape->maxx = -16384;
+		shape->maxy = -16384;
+		for ( int i=0; i<dg.mVertCount; i++ )
+		{
+			if ( shape->mVertices[i].X < shape->minx ) shape->minx = shape->mVertices[i].X;
+			if ( shape->mVertices[i].Y < shape->miny ) shape->miny = shape->mVertices[i].Y;
+			if ( shape->mVertices[i].X > shape->maxx ) shape->maxx = shape->mVertices[i].X;
+			if ( shape->mVertices[i].Y > shape->maxy ) shape->maxy = shape->mVertices[i].Y;
+		}
 	}
+	auto tCorners = {
+		(shape->transform * DVector3(shape->minx, shape->miny, 1.0)).XY(),
+		(shape->transform * DVector3(shape->minx, shape->maxy, 1.0)).XY(),
+		(shape->transform * DVector3(shape->maxx, shape->miny, 1.0)).XY(),
+		(shape->transform * DVector3(shape->maxx, shape->maxy, 1.0)).XY()
+	};
+	double minx = std::min_element(tCorners.begin(), tCorners.end(), [] (auto d0, auto d1) { return d0.X < d1.X; })->X;
+	double maxx = std::max_element(tCorners.begin(), tCorners.end(), [] (auto d0, auto d1) { return d0.X < d1.X; })->X;
+	double miny = std::min_element(tCorners.begin(), tCorners.end(), [] (auto d0, auto d1) { return d0.Y < d1.Y; })->Y;
+	double maxy = std::max_element(tCorners.begin(), tCorners.end(), [] (auto d0, auto d1) { return d0.Y < d1.Y; })->Y;
 	if (minx < (double)parms.lclip || miny < (double)parms.uclip || maxx >(double)parms.rclip || maxy >(double)parms.dclip)
 	{
 		dg.mScissor[0] = parms.lclip + int(offset.X);
@@ -587,24 +594,39 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	else
 		memset(dg.mScissor, 0, sizeof(dg.mScissor));
 
-	dg.mVertIndex = (int)mVertices.Reserve(dg.mVertCount);
-	TwoDVertex *ptr = &mVertices[dg.mVertIndex];
-	for ( int i=0; i<dg.mVertCount; i++ )
-		Set(&ptr[i], shape->mTransformedVertices[i].X, shape->mTransformedVertices[i].Y, 0, shape->mCoords[i].X, shape->mCoords[i].Y, vertexcolor);
-	dg.mIndexIndex = mIndices.Size();
-	dg.mIndexCount += shape->mIndices.Size();
-	for ( int i=0; i<int(shape->mIndices.Size()); i+=3 )
+	dg.useTransform = true;
+	dg.transform = shape->transform;
+	dg.transform.Cells[0][2] += offset.X;
+	dg.transform.Cells[1][2] += offset.Y;
+	dg.shape2D = shape;
+	dg.shape2DIndexCount = shape->mIndices.Size();
+	if (shape->needsVertexUpload)
 	{
-		// [MK] bail out if any indices are out of bounds
-		for ( int j=0; j<3; j++ )
+		shape->bufIndex += 1;
+
+		shape->buffers.Reserve(1);
+		auto buf = &shape->buffers[shape->bufIndex];
+
+		auto verts = TArray<TwoDVertex>(dg.mVertCount, true);
+		for ( int i=0; i<dg.mVertCount; i++ )
+			verts[i].Set(shape->mVertices[i].X, shape->mVertices[i].Y, 0, shape->mCoords[i].X, shape->mCoords[i].Y, vertexcolor);
+
+		for ( int i=0; i<int(shape->mIndices.Size()); i+=3 )
 		{
-			if ( shape->mIndices[i+j] < 0 )
-				ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u is negative: %i\n", i/3, j, shape->mIndices[i+j]);
-			if ( shape->mIndices[i+j] >= dg.mVertCount )
-				ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u: %u, max: %u\n", i/3, j, shape->mIndices[i+j], dg.mVertCount-1);
+			// [MK] bail out if any indices are out of bounds
+			for ( int j=0; j<3; j++ )
+			{
+				if ( shape->mIndices[i+j] < 0 )
+					ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u is negative: %i\n", i/3, j, shape->mIndices[i+j]);
+				if ( shape->mIndices[i+j] >= dg.mVertCount )
+					ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u: %u, max: %u\n", i/3, j, shape->mIndices[i+j], dg.mVertCount-1);
+			}
 		}
-		AddIndices(dg.mVertIndex, 3, shape->mIndices[i], shape->mIndices[i+1], shape->mIndices[i+2]);
+
+		buf->UploadData(&verts[0], dg.mVertCount, &shape->mIndices[0], shape->mIndices.Size());
+		shape->needsVertexUpload = false;
 	}
+	dg.shape2DBufIndex = shape->bufIndex;
 	AddCommand(&dg);
 	offset = osave;
 }
@@ -1013,4 +1035,17 @@ void F2DDrawer::Clear()
 		mIsFirstPass = true;
 	}
 	screenFade = 1.f;
+}
+
+F2DVertexBuffer::F2DVertexBuffer()
+{
+	mVertexBuffer = screen->CreateVertexBuffer();
+	mIndexBuffer = screen->CreateIndexBuffer();
+
+	static const FVertexBufferAttribute format[] = {
+		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(F2DDrawer::TwoDVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(F2DDrawer::TwoDVertex, u) },
+		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(F2DDrawer::TwoDVertex, color0) }
+	};
+	mVertexBuffer->SetFormat(1, 3, sizeof(F2DDrawer::TwoDVertex), format);
 }

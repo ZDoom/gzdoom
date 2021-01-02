@@ -1076,9 +1076,7 @@ void CALLBACK ExitFatally (ULONG_PTR dummy)
 	SetUnhandledExceptionFilter (ExitMessedUp);
 	I_ShutdownGraphics ();
 	RestoreConView ();
-#ifndef _M_ARM64
 	DisplayCrashLog ();
-#endif
 	exit(-1);
 }
 
@@ -1135,6 +1133,12 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	}
 	return EXCEPTION_CONTINUE_EXECUTION;
 }
+#else // !_M_ARM64
+// stub this function for ARM64
+LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
+{
+	return EXCEPTION_CONTINUE_EXECUTION;
+}
 #endif // !_M_ARM64
 
 //==========================================================================
@@ -1159,11 +1163,7 @@ static void infiniterecursion(int foo)
 // which offers the very important feature to open a debugger and see the crash in context right away.
 CUSTOM_CVAR(Bool, disablecrashlog, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-#ifndef _M_ARM64
 	SetUnhandledExceptionFilter(!*self ? CatchAllExceptions : nullptr);
-#else
-	SetUnhandledExceptionFilter(nullptr);
-#endif
 }
 
 //==========================================================================

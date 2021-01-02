@@ -40,6 +40,7 @@
 #include <new>
 #include <sys/param.h>
 #include <locale.h>
+#include <sys/stat.h>
 #include <sys/utsname.h>
 
 #include "engineerrors.h"
@@ -95,12 +96,50 @@ static int GetCrashInfo (char *buffer, char *end)
 
 void I_DetectOS()
 {
-	utsname unameInfo;
-	int unameRes = uname(&unameInfo);
-	if (unameRes != -1)
+	FString operatingSystem;
+
+	const char *paths[] = {"/etc/os-release", "/usr/lib/os-release"};
+
+	for (const char *path : paths)
 	{
-		Printf("OS: %s %s on %s\n", unameInfo.sysname, unameInfo.release, unameInfo.machine);
+		struct stat dummy;
+
+		if (stat(path, &dummy) != 0)
+			continue;
+
+		char cmdline[256];
+		snprintf(cmdline, sizeof cmdline, ". %s && echo ${PRETTY_NAME}", path);
+
+		FILE *proc = popen(cmdline, "r");
+
+		if (proc == nullptr)
+			continue;
+
+		char distribution[256] = {};
+		fread(distribution, sizeof distribution - 1, 1, proc);
+
+		const size_t length = strlen(distribution);
+
+		if (length > 1)
+		{
+			distribution[length - 1] = '\0';
+			operatingSystem = distribution;
+		}
+
+		pclose(proc);
+		break;
 	}
+
+	utsname unameInfo;
+
+	if (uname(&unameInfo) == 0)
+	{
+		const char* const separator = operatingSystem.Len() > 0 ? ", " : "";
+		operatingSystem.AppendFormat("%s%s %s on %s", separator, unameInfo.sysname, unameInfo.release, unameInfo.machine);
+	}
+
+	if (operatingSystem.Len() > 0)
+		Printf("OS: %s\n", operatingSystem.GetChars());
 }
 
 void I_StartupJoysticks();

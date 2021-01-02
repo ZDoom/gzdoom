@@ -294,8 +294,7 @@ class USDFParser : public UDMFParserBase
 				check.Item = CheckInventoryActorType(key);
 				break;
 
-			case NAME_Count:
-				// Not yet implemented in the engine. Todo later
+			case NAME_Amount:
 				check.Amount = CheckInt(key);
 				break;
 			}

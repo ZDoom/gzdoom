@@ -1359,6 +1359,10 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		{
 			player->damagecount = 100;	// teleport stomp does 10k points...
 		}
+		if (player->damagecount < 0)
+		{
+			player->damagecount = 100;	// teleport stomp does 10k points...
+		}
 		temp = damage < 100 ? damage : 100;
 		if (player == target->Level->GetConsolePlayer() )
 		{

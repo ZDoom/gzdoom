@@ -141,7 +141,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 
 	if (painFlash.a != 0)
 	{
-		cnt = DamageToAlpha[MIN (113, CPlayer->damagecount * painFlash.a / 255)];
+		cnt = DamageToAlpha[MIN (CPlayer->damagecount * painFlash.a / 255, (uint32_t)113)];
 
 		// [BC] Allow users to tone down the intensity of the blood on the screen.
 		cnt = (int)( cnt * blood_fade_scalar );

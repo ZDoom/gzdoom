@@ -1176,7 +1176,7 @@ static void S_AddSNDINFO (int lump)
 					// do not set the alias if a later WAD defines its own music of this name
 					int file = fileSystem.GetFileContainer(lump);
 					int sndifile = fileSystem.GetFileContainer(sc.LumpNum);
-					if (file > sndifile)
+					if (!(sndifile == 1 && file <= fileSystem.GetIwadNum()) && (file > sndifile))
 					{
 						sc.MustGetString();
 						continue;

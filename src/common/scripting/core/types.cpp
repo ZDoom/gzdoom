@@ -451,7 +451,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	else
 	{
 		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Min, this, 0u));
-		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Max, this, (1u << ((8 * size) - 1))));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Max, this, (uint32_t) (((uint64_t) 1u << (size * 8)) - 1uL)));
 	}
 	SetOps();
 }

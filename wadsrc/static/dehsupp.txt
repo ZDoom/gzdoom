@@ -536,7 +536,7 @@ SoundMap
 	"brain/sight",
 	"brain/pain",
 	"brain/death",
-	"fatso/attack",
+	"fatso/raiseguns",
 	"fatso/death",
 	"wolfss/sight",
 	"wolfss/death",

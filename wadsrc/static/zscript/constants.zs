@@ -963,6 +963,7 @@ enum ESkillProperty
 	SKILLP_Infight,
 	SKILLP_PlayerRespawn,
 	SKILLP_SpawnMulti,
+	SKILLP_InstantReaction,
 };
 enum EFSkillProperty	// floating point properties
 {

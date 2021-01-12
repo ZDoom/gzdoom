@@ -183,6 +183,7 @@ skill nightmare
 {
 	AmmoFactor = 2
 	FastMonsters
+	InstantReaction
 	DisableCheats
 	RespawnTime = 12
 	SpawnFilter = Nightmare

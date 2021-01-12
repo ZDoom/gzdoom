@@ -315,6 +315,7 @@ skill nightmare
 	AmmoFactor = 1.5
 	DoubleAmmoFactor = 1.5
 	FastMonsters
+	InstantReaction
 	DisableCheats
 	SpawnFilter = Nightmare
 	Name = "$MNU_BLACKPLAGUE"

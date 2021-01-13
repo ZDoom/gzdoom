@@ -555,6 +555,7 @@ CVAR (Flag, sv_cooplosearmor,	dmflags, DF_COOP_LOSE_ARMOR);
 CVAR (Flag, sv_cooplosepowerups,	dmflags, DF_COOP_LOSE_POWERUPS);
 CVAR (Flag, sv_cooploseammo,	dmflags, DF_COOP_LOSE_AMMO);
 CVAR (Flag, sv_coophalveammo,	dmflags, DF_COOP_HALVE_AMMO);
+CVAR (Flag, sv_instantreaction,	dmflags, DF_INSTANT_REACTION);
 
 // Some (hopefully cleaner) interface to these settings.
 CVAR (Mask, sv_crouch,			dmflags, DF_NO_CROUCH|DF_YES_CROUCH);

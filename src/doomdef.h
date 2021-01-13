@@ -136,6 +136,7 @@ enum
 	DF_COOP_LOSE_POWERUPS	= 1 << 28,	// Lose powerups when respawning in coop
 	DF_COOP_LOSE_AMMO		= 1 << 29,	// Lose ammo when respawning in coop
 	DF_COOP_HALVE_AMMO		= 1 << 30,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
+	DF_INSTANT_REACTION		= 1 << 31,	// Monsters react instantly
 };
 
 // [BC] More dmflags. w00p!

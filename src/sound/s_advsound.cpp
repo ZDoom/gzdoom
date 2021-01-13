@@ -1174,9 +1174,11 @@ static void S_AddSNDINFO (int lump)
 				if (lump >= 0)
 				{
 					// do not set the alias if a later WAD defines its own music of this name
+					// internal files (up to and including iwads) can always be set for musicalias
 					int file = fileSystem.GetFileContainer(lump);
 					int sndifile = fileSystem.GetFileContainer(sc.LumpNum);
-					if (!(sndifile == 1 && file <= fileSystem.GetIwadNum()) && (file > sndifile))
+					if ( (file > sndifile) &&
+						!(sndifile <= fileSystem.GetIwadNum() && file <= fileSystem.GetIwadNum()) )
 					{
 						sc.MustGetString();
 						continue;

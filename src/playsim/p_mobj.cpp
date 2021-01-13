@@ -4477,7 +4477,8 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 
 	FRandom &rng = Level->BotInfo.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
-	if (!!G_SkillProperty(SKILLP_InstantReaction) && actor->flags3 & MF3_ISMONSTER)
+	if (!!(G_SkillProperty(SKILLP_InstantReaction) || !!(dmflags & DF_INSTANT_REACTION))
+		&& actor->flags3 & MF3_ISMONSTER)
 		actor->reactiontime = 0;
 
 	if (actor->flags3 & MF3_ISMONSTER)

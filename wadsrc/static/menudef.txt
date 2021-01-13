@@ -1641,6 +1641,7 @@ OptionMenu GameplayOptions protected
 	Option "$GMPLYMNU_ITEMSRESPAWN",			"sv_itemrespawn", "YesNo"
 	Option "$GMPLYMNU_SUPERRESPAWN",			"sv_respawnsuper", "YesNo"
 	Option "$GMPLYMNU_FASTMONSTERS",			"sv_fastmonsters", "YesNo"
+	Option "$GMPLYMNU_INSTANTREACTION",			"sv_instantreaction", "YesNo"
 	Option "$GMPLYMNU_DEGENERATION",			"sv_degeneration", "YesNo"
 	Option "$GMPLYMNU_NOAUTOAIM",				"sv_noautoaim", "NoYes"
 	Option "$GMPLYMNU_ALLOWSUICIDE",			"sv_disallowsuicide", "NoYes"

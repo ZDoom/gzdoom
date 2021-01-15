@@ -34,32 +34,6 @@ enum EClearWhich
 
 class F2DVertexBuffer;
 
-class DShape2D : public DObject
-{
-
-	DECLARE_CLASS(DShape2D,DObject)
-public:
-	DShape2D()
-	{
-		transform.Identity();
-	}
-
-	TArray<int> mIndices;
-	TArray<DVector2> mVertices;
-	TArray<DVector2> mCoords;
-
-	double minx = 0.0;
-	double maxx = 0.0;
-	double miny = 0.0;
-	double maxy = 0.0;
-
-	DMatrix3x3 transform;
-
-	TArray<F2DVertexBuffer> buffers;
-	bool needsVertexUpload = true;
-	int bufIndex = -1;
-};
-
 struct F2DPolygons
 {
 	TArray<FVector4> vertices;
@@ -74,6 +48,7 @@ struct F2DPolygons
 
 };
 
+class DShape2D;
 
 class F2DDrawer
 {
@@ -150,6 +125,7 @@ public:
 		DShape2D* shape2D;
 		int shape2DBufIndex;
 		int shape2DIndexCount;
+		bool shapeLastCmd;
 
 		RenderCommand()
 		{
@@ -261,6 +237,39 @@ public:
 
 	bool mIsFirstPass = true;
 };
+
+class DShape2D : public DObject
+{
+
+	DECLARE_CLASS(DShape2D,DObject)
+public:
+	DShape2D()
+	{
+		transform.Identity();
+	}
+
+	TArray<int> mIndices;
+	TArray<DVector2> mVertices;
+	TArray<DVector2> mCoords;
+
+	double minx = 0.0;
+	double maxx = 0.0;
+	double miny = 0.0;
+	double maxy = 0.0;
+
+	DMatrix3x3 transform;
+
+	TArray<F2DVertexBuffer> buffers;
+	bool needsVertexUpload = true;
+	int bufIndex = -1;
+	F2DDrawer::RenderCommand* lastCommand = nullptr;
+
+	bool uploadedOnce = false;
+	DrawParms* lastParms;
+
+	~DShape2D();
+};
+
 
 //===========================================================================
 // 

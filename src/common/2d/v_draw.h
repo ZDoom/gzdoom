@@ -206,6 +206,17 @@ struct DrawParms
 	double patchscalex, patchscaley;
 	double rotateangle;
 	IntRect viewport;
+
+	bool vertexColorChange(const DrawParms& other) {
+		return
+			this->Alpha         != other.Alpha         ||
+			this->fillcolor     != other.fillcolor     ||
+			this->colorOverlay  != other.colorOverlay  ||
+			this->color         != other.color         ||
+			this->style.Flags   != other.style.Flags   ||
+			this->style.BlendOp != other.style.BlendOp ||
+			this->desaturate    != other.desaturate;
+	}
 };
 
 struct Va_List

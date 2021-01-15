@@ -527,6 +527,10 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	offset = osave;
 }
 
+DShape2D::~DShape2D() {
+	delete lastParms;
+}
+
 //==========================================================================
 //
 //
@@ -552,6 +556,20 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 
 	dg.mTranslationId = 0;
 	SetStyle(img, parms, vertexcolor, dg);
+
+	if (shape->lastParms == nullptr) {
+		shape->lastParms = new DrawParms(parms);
+	}
+	else if (shape->lastParms->vertexColorChange(parms)) {
+		shape->needsVertexUpload = true;
+		if (!shape->uploadedOnce) {
+			shape->bufIndex = -1;
+			shape->buffers.Clear();
+			shape->lastCommand = nullptr;
+		}
+		delete shape->lastParms;
+		shape->lastParms = new DrawParms(parms);
+	}
 
 	if (!img->isHardwareCanvas() && parms.TranslationId != -1)
 		dg.mTranslationId = parms.TranslationId;
@@ -605,6 +623,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->bufIndex += 1;
 
 		shape->buffers.Reserve(1);
+
 		auto buf = &shape->buffers[shape->bufIndex];
 
 		auto verts = TArray<TwoDVertex>(dg.mVertCount, true);
@@ -625,9 +644,15 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 
 		buf->UploadData(&verts[0], dg.mVertCount, &shape->mIndices[0], shape->mIndices.Size());
 		shape->needsVertexUpload = false;
+		shape->uploadedOnce = true;
 	}
 	dg.shape2DBufIndex = shape->bufIndex;
-	AddCommand(&dg);
+	dg.shapeLastCmd = true;
+	if (shape->lastCommand != nullptr) {
+		shape->lastCommand->shapeLastCmd = false;
+	}
+	auto c = AddCommand(&dg);
+	shape->lastCommand = &mData[c];
 	offset = osave;
 }
 

@@ -562,7 +562,10 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	}
 	else if (shape->lastParms->vertexColorChange(parms)) {
 		shape->needsVertexUpload = true;
-		if (!shape->uploadedOnce) shape->bufIndex = -1;
+		if (!shape->uploadedOnce) {
+			shape->bufIndex = -1;
+			shape->buffers.Clear();
+		}
 		delete shape->lastParms;
 		shape->lastParms = new DrawParms(parms);
 	}

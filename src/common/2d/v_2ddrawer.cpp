@@ -565,6 +565,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		if (!shape->uploadedOnce) {
 			shape->bufIndex = -1;
 			shape->buffers.Clear();
+			shape->lastCommand = -1;
 		}
 		delete shape->lastParms;
 		shape->lastParms = new DrawParms(parms);

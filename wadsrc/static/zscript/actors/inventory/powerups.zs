@@ -763,6 +763,7 @@ class PowerIronFeet : Powerup
 	{
 		Powerup.Duration -60;
 		Powerup.Color "00 ff 00", 0.125;
+		Powerup.Mode "Normal";
 	}
 	
 	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)

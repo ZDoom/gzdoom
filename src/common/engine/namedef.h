@@ -27,6 +27,10 @@ xx(Spray)
 xx(Ghost)
 xx(Reflective)
 
+// Iron Feet types
+//xx(Normal)	// defined below
+xx(Full)
+
 // Invisibility types
 xx(Additive)
 xx(Cumulative)

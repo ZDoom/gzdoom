@@ -45,6 +45,16 @@ EXTERN_CVAR(Int, vid_aspect)
 EXTERN_CVAR(Int, uiscale)
 CVAR(Bool, ui_screenborder_classic_scaling, true, CVAR_ARCHIVE)
 
+// vid_allowtrueultrawide - preserve the classic behavior of stretching screen elements to 16:9 when false
+// Defaults to "true" now because "21:9" (actually actually 64:27) screens are becoming more common, it's
+// nonsense that graphics should not be able to actually use that extra screen space.
+
+extern bool setsizeneeded;
+CUSTOM_CVAR(Bool, vid_allowtrueultrawide, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	setsizeneeded = true;
+}
+
 static void VirtualToRealCoords(F2DDrawer* drawer, double Width, double Height, double& x, double& y, double& w, double& h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect);
 
@@ -79,7 +89,7 @@ float ActiveRatio(int width, int height, float* trueratio)
 		17 / 10.0f,
 		5 / 4.0f,
 		17 / 10.0f,
-		21 / 9.0f
+		64 / 27.0f	// 21:9 is actually 64:27 in reality - pow(4/3, 3.0) - https://en.wikipedia.org/wiki/21:9_aspect_ratio
 	};
 
 	float ratio = width / (float)height;
@@ -1255,7 +1265,7 @@ static void VirtualToRealCoords(F2DDrawer *drawer, double Width, double Height, 
 
     // if 21:9 AR, map to 16:9 for all callers.
     // this allows for black bars and stops the stretching of fullscreen images
-    if (myratio > 1.7f) {
+    if ((myratio > 1.7f) && !vid_allowtrueultrawide) {
         myratio = 16.0f / 9.0f;
     }
 

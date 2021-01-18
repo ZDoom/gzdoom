@@ -53,7 +53,7 @@ Acquired: Grenade launcher.,GOTLAUNCHER,,,,Získán granátomet.,Erhalten: Grana
 Entropy thrower!,GOTPLASMA,,,,Vrhač entropie!,Entropiewerfer,,Entropi-ĵetilon!,¡Lanzador de Entropía!,,Entropianheitin!,Acquis: Lanceur d'Entropie!,,Lancia entropia!,エントロピースロワー!,획득: 엔트로피 방사기!,Entropiewerper!,Miotacz Entropii!,Lançador de entropia!,,Aruncător entropic!,Энтропиемёт!,
 Acquired: Shotgun.,GOTSHOTGUN,,,,Získána brokovnice.,Erhalten: Schrotflinte,,Akiris: Ĉaspafilon.,Adquirido: Escopeta.,,Saatu: haulikko.,Acquis: Fusil à pompe.,,Acquisito: Fucile.,シュトク: ショットガン,획득: 산탄총.,Verworven: Shotgun.,Zdobyto: Strzelbę.,Pegou uma espingarda.,,Achiziționat: Pușcă.,Получен: Дробовик.,
 God Mode ON,STSTR_DQDON,,,,Nesmrtelnost ZAP,Gott-Modus AN,,Dio-Reĝimo AKTIVA,Modo Dios ACTIVADO,,Kuolemattomuustila PÄÄLLÄ,Mode invulnérable ON,,Modo Dio ATTIVADA,ゴッドモード オン,무적 치트: ON,God Modus AAN,Tryb Boga WŁĄCZONY,Modo Deus LIGADO,,Modul Invincibil PORNIT,Режим Бога вкл.,
-God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,Dio-Reĝimo MALAKTIVA,Modo Dios DESACTIVADO,,Kuolemattomuustila POIS PÄÄLTÄ,Mode invulnérable OFF,,Modo Dio DISATTIVADA,ゴッドモード オフ,무적 치트: OFF,God Modus UIT,Tryb Boga WYŁĄCZONY,Modo Deus DESLIGADO,,Modul Invincibil OPRIT,Режим Бога откл.,
+God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,Dio-Reĝimo NEAKTIVA,Modo Dios DESACTIVADO,,Kuolemattomuustila POIS PÄÄLTÄ,Mode invulnérable OFF,,Modo Dio DISATTIVADA,ゴッドモード オフ,무적 치트: OFF,God Modus UIT,Tryb Boga WYŁĄCZONY,Modo Deus DESLIGADO,,Modul Invincibil OPRIT,Режим Бога откл.,
 All weapons/ ammo/ keys,STSTR_KFAADDED,,,,Všechny zbraně/munice/klíče,"Alle Waffen, Munition und Schlüssel",,Ĉiuj armiloj/municioj/ŝlosiloj,Todas las armas/municiones/llaves,,Kaikki aseet/ ammukset/ avaimet,Toutes les armes/munitions/clés,,Tutte le armi / munizioni / chiavi,スベテノ ブキ/カギ/ダンヤク,추가: 모든 무기/탄약/열쇠 치트,Alle wapens / munitie / sleutels,Wszystkie bronie/amunicja/klucze,Todas as armas/munição/chaves,,Toate armele/muniție/chei,Всё оружие/боеприпасы/ключи,
 All weapons and ammo,STSTR_FAADDED,,,,Všechny zbraně a munice,Alle Waffen und Munition,,Ĉiuj armiloj kaj municioj,Todas las armas y municiones,,Kaikki aseet ja ammukset,Toutes les armes et munitions,,Tutte le armi e le munizioni,スベテノ ブキ/ダンヤク,추가: 모든 무기/탄약 치트,Alle wapens en munitie,Wszystkie bronie i amunicja,Todas as armas e munição completa,,Toate armele și muniție,Всё оружие и боеприпасы,
 Abduction,TXT_HARMMAP01,,,,Únos,Entführung,,Forkapto,Abducción,,Sieppaus,Enlèvement,,Il rapimento,アブダクション,유괴,Ontvoering,Porwanie,Abdução,,Răpire,Похищение,
@@ -302,7 +302,7 @@ Te aduni...
 Îi vei face să plătească pentru că te-au făcut să
 îți omori prietena...
 
-""Iadul nu are furie precum o femeie batjocorită!""
+""Infernul nu are furie precum o femeie batjocorită!""
 
               = S F Â R Ș I T =","Вы почувствовали тошноту,
 присмотревшись к лицу королевы

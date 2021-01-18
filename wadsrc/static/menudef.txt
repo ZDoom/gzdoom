@@ -2332,6 +2332,7 @@ OptionMenu CustomResolutionMenu protected
 	Command "1440x900", "menu_resolution_set_custom 1440 900"
 	Command "1680x1050", "menu_resolution_set_custom 1680 1050"
 	Command "1920x1200", "menu_resolution_set_custom 1920 1200"
+	StaticText ""
 	StaticText "$VIDMNU_ASPECT219"
 	Command "1920x810", "menu_resolution_set_custom 1920 810"
 	Command "2560x1080", "menu_resolution_set_custom 2560 1080"

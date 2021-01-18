@@ -415,8 +415,7 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 	PARAM_FLOAT(volume);
 	PARAM_FLOAT(attn);
 	PARAM_FLOAT(pitch);
-	PARAM_FLOAT(startTime);
-	S_SoundPitch(channel & 7, EChanFlags::FromInt(channel & ~7), id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
+	S_SoundPitch(channel & 7, EChanFlags::FromInt(channel & ~7), id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), 0.0f);
 	return 0;
 }
 

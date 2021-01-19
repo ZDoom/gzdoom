@@ -4394,6 +4394,7 @@ struct Origin
 	bool ThruSpecies;
 	bool ThruActors;
 	bool UseThruBits;
+	bool Spectral;
 	uint32_t ThruBits;
 };
 
@@ -4407,12 +4408,14 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 	Origin *data = (Origin *)userdata;
 
 	// Skip actors if the puff has:
-	// 1. THRUACTORS or SPECTRAL
-	// 2. MTHRUSPECIES on puff and the shooter has same species as the hit actor
-	// 3. THRUSPECIES on puff and the puff has same species as the hit actor
-	// 4. THRUGHOST on puff and the GHOST flag on the hit actor
+	// 1. THRUACTORS 
+	// 2. SPECTRAL (unless the puff has SPECTRAL)
+	// 3. MTHRUSPECIES on puff and the shooter has same species as the hit actor
+	// 4. THRUSPECIES on puff and the puff has same species as the hit actor
+	// 5. THRUGHOST on puff and the GHOST flag on the hit actor
 
-	if ((data->ThruActors) || (res.Actor->flags4 & MF4_SPECTRAL) ||
+	if ((data->ThruActors) || 
+		(!(data->Spectral) && res.Actor->flags4 & MF4_SPECTRAL) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST))
@@ -4490,6 +4493,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	spawnSky = (puffDefaults && (puffDefaults->flags3 & MF3_SKYEXPLODE));
 	TData.MThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_MTHRUSPECIES));
 	TData.PuffSpecies = NAME_None;
+	TData.Spectral = (puffDefaults && (puffDefaults->flags4 & MF4_SPECTRAL));
 
 	// [MC] To prevent possible mod breakage, this flag is pretty much necessary.
 	// Somewhere, someone is relying on these to spawn on actors and move through them.

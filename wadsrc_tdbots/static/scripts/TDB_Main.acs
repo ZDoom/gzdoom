@@ -1,0 +1,330 @@
+//TDBots: The fast-performing bots
+//
+//(C) 2021 Moises Aguirre "TDRR"
+//
+//Licensed under the MIT license
+
+#library "TDB_Main"
+#include "zcommon.acs"
+
+#include "TDB_Defn.acs"
+
+#include "TDB_Chat.acs"
+#include "TDB_Zan.acs"
+#include "TDB_Inv.acs"
+#include "TDB_RA.acs"
+#include "TDB_Misc.acs"
+
+#include "TDB_Node.acs"
+						
+//Internal variables, i recommend you don't change these.
+bool LightRoam = TRUE;
+					
+int Gamemode;
+
+bool BotNeeded;
+bool OtherBotAssisted;
+
+Script "TDBots_TeleportBotGiver" ENTER
+{
+	if(GameType() == GAME_NET_DEATHMATCH) {terminate;}
+	if(PlayerIsBot(PlayerNumber()) == FALSE)
+	{
+		if(GetCVAR("tdbots_allowteleport") == TRUE)
+		{GiveInventory("TDBot_TeleportCall", 1);}
+	}
+}
+
+Script "TDBots_TeleportBotGiver2" RESPAWN
+{
+	TakeInventory("TDBot_DoNotAllowTeleport", 1);
+	ACS_NamedExecuteAlways("TDBots_TeleportBotGiver", 0);
+}
+
+function bool TDB_AnyBotConnected(void)
+{
+	for (int i = 0; i < 64; i++)
+	{
+		if (PlayerIsBot(i))
+		{return TRUE;}
+	}
+	return FALSE;
+}
+
+Script "TDBots_NeedSomeHelp" (void)
+{
+	int delayamount = GetCVAR("tdbots_teleportdelaytime")*35;
+	if(delayamount < 35*5) {delayamount = 35*5;}
+	else if(delayamount > 35*120) {delayamount = 35*120;}
+	else if(delayamount == 0) {delayamount = 35*30;}
+	if(BotNeeded == FALSE)
+	{
+		if(TDB_AnyBotConnected() == TRUE)
+		{
+			BotNeeded = TRUE;
+			ACS_NamedExecuteAlways("TDBots_BotNeededWait",0);
+			SetResultValue(TRUE);
+			GiveInventory("TDBot_DoNotAllowTeleport", 1);
+			delay(delayamount);
+			TakeInventory("TDBot_DoNotAllowTeleport", 1);
+			terminate;
+		}
+		else
+		{
+			Print(s:"No bot is currently connected.");
+			SetResultValue(FALSE);
+		}
+	}
+	else
+	{
+		Print(s:"Can't call a bot at the same time\nas another player!");
+		SetResultValue(FALSE);
+	}
+}
+
+Script "TDBots_BotNeededWait" (void)
+{
+	delay(35*5);
+	BotNeeded = FALSE;
+}
+
+Script "TDBots_IsAlly" (void)
+{
+	//will be 255 in Co-op, so bots should still avoid shooting players as
+	//they'll have the same teamid.
+	int team = GetPlayerInfo(PlayerNumber(), PLAYERINFO_TEAM);
+	
+	//if regular deathmach, nothing to do here, shoot every living thing on sight
+	if( (Gametype() == GAME_NET_DEATHMATCH) && (!GetCVAR("teamplay")))
+	{
+		SetResultValue(FALSE);
+		terminate;
+	}
+	
+	SetActivatorToTarget(0);
+	
+	if(PlayerNumber() >= 0) //is player
+	{
+		SetResultValue( (team == GetPlayerInfo(PlayerNumber(), PLAYERINFO_TEAM)) );
+		terminate;
+	}
+	else
+	{
+		SetResultValue(CheckFlag(0, "FRIENDLY"));
+		terminate;
+	}
+	SetResultValue(FALSE); //just in case.
+}
+
+Script "TDBots_TeleportBot" (void)
+{
+	int ImWhoAssisted;
+	delay(random(0,16));
+	while(GetActorProperty(0, APROP_HEALTH) > 0)
+	{
+		delay(60);
+		if(BotNeeded == TRUE)
+		{
+			if(OtherBotAssisted == FALSE || ImWhoAssisted == TRUE)
+			{
+				OtherBotAssisted = TRUE;
+				ImWhoAssisted = TRUE;
+				if(SetActorPosition(0,GetActorX(TELTID), GetActorY(TELTID), GetActorZ(TELTID), TRUE))
+				{
+					delay(1);
+					Thing_Remove(TELTID);
+					BotNeeded = FALSE;
+					OtherBotAssisted = FALSE;
+					ImWhoAssisted = FALSE;
+				}
+				else
+				{
+					delay(1);
+					SpawnForced("Bot_TeleportSpot", GetActorX(TELTID), GetActorY(TELTID), GetActorZ(TELTID), TELTID);
+					Thing_Remove(TELTID);
+				}
+			}
+		}
+	}
+}
+
+Script "TDBots_WalkNoding" (void)
+{
+	if(PlayerIsBot(PlayerNumber()) || GetCVAR("tdbots_playerbot")) {terminate;}
+	if(GetCVAR("sv_forcerespawn") == FALSE)
+	{ACS_NamedExecuteAlways("TDBots_ZandronumCommands",0);}
+	if(Gametype() > GAME_NET_COOPERATIVE) {terminate;} //Can't follow in competitive gamemodes
+	if(!GetCVAR("tdbots_follow")) {terminate;}
+	
+	int TID;
+	
+	while(GetActorProperty(0, APROP_HEALTH) > 0)
+	{
+		for(int i = 0; i < MAX_FOLLOW_NODES; i++)
+		{
+			TID = UniqueTID();
+			
+			delay(16);
+			SpawnForced("TDBots_TempNode", GetActorX(0), GetActorY(0), GetActorZ(0), TID);
+			
+			PlayerFollowTID[PlayerNumber()][i] = TID;
+			PlayerLocation[PlayerNumber()][0] = GetActorX(0);
+			PlayerLocation[PlayerNumber()][1] = GetActorY(0);
+			PlayerLocation[PlayerNumber()][2] = GetActorZ(0);
+		}
+	}
+}
+
+Script "TDBots_BotAnimation" (void)
+{
+	int tics;
+	while(TDBotDead() == FALSE)
+	{
+		if(tics % 4 == 0) //if 16 tics have passed
+		{
+			if(CheckInventory("BotAttack") == FALSE) {AnimateTDBot("See");}
+		}
+		delay(4);
+		if(TDBotDead() == TRUE) {terminate;}
+		tics++;
+	}
+}
+
+Script "TDBots_BotThink" (void)
+{
+	int firetime;
+	int tics;
+	
+	if(TDBotDead() == TRUE) {terminate;}
+	
+	if(TDB_Custom_Roam1 == TRUE) {Codepointer("TDBots_Custom_RoamLoop1");}
+	if(TDB_Custom_Roam2 == TRUE) {Codepointer("TDBots_Custom_RoamLoop2");}
+	
+	if(LightRoam == TRUE) 
+	{Codepointer("BotFunc_LightRoam"); LightRoam = FALSE;}
+	else
+	{Codepointer("BotFunc_Roam"); LightRoam = TRUE;}
+	Delay(3);
+	
+	TDB_FollowNode();
+	
+	if(TDBotDead() == TRUE) {terminate;}
+	if(random(0, 256) == 1) {TDBots_Chat(MSG_ROAM);}
+	
+	Codepointer("BotFunc_CheckLOS"); delay(1);
+	
+	TDB_RandomWeapon();
+	
+	for(firetime = 0; firetime < random(26, 52); firetime++)
+	{
+		if(CheckInventory("BotAttack") == TRUE)
+		{
+			if(firetime == 0) 	
+			{
+				if(GetCVAR("tdbots_reactiontime") <= 70)
+				{
+					if(GetCVAR("tdbots_reactiontime") >= 0)
+					{Delay(GetCVAR("tdbots_reactiontime"));}
+					else {Delay(1);}
+				}
+				else 
+				{Delay(70);}
+			}
+			
+			if(TDB_Custom_Attk1 == TRUE) {Codepointer("TDBots_Custom_AttackLoop1");}
+			Codepointer("BotFunc_AimDodge");
+			ACS_NamedExecuteAlways("TDBots_UseItems", 0, FALSE);
+			if(TDB_Custom_Attk2 == TRUE) {Codepointer("TDBots_Custom_AttackLoop2");}
+			AnimateTDBot("Missile");
+			
+			if(random(0,256) <= 128)
+			{
+				Codepointer("BotFunc_Strafe");
+				Codepointer("BotFunc_Aim");
+				if(TDB_IsZandronum() == TRUE)
+				{
+					for(tics = 0; tics <= 16; tics++)
+					{
+						if(tics % 2 == 0)
+						{if(TDBotDead() == TRUE) {terminate;}}
+						
+						if(tics % 4 == 0)
+						{Codepointer("BotFunc_Strafe");}
+						
+						Codepointer("BotFunc_Aim"); delay(2);
+					}
+				}
+				else
+				{
+					for(tics = 0; tics <= 32; tics++)
+					{
+						if(tics % 4 == 0)
+						{if(TDBotDead() == TRUE) {terminate;}}
+						
+						if(tics % 8 == 0)
+						{Codepointer("BotFunc_Strafe");}
+						
+						Codepointer("BotFunc_Aim"); delay(1);
+					}
+				}
+			}
+			else if(random(0,256) <= 168)
+			{
+				Codepointer("BotFunc_Strafe2");
+				Codepointer("BotFunc_Aim");
+				if(TDB_IsZandronum() == TRUE)
+				{
+					for(tics = 0; tics <= 16; tics++)
+					{
+						if(tics % 2 == 0)
+						{if(TDBotDead() == TRUE) {terminate;}}
+						
+						if(tics % 4 == 0)
+						{Codepointer("BotFunc_Strafe2");}
+						
+						Codepointer("BotFunc_Aim"); delay(2);
+					}
+				}
+				else
+				{
+					for(tics = 0; tics <= 32; tics++)
+					{
+						if(tics % 4 == 0)
+						{if(TDBotDead() == TRUE) {terminate;}}
+						
+						if(tics % 8 == 0)
+						{Codepointer("BotFunc_Strafe2");}
+						
+						Codepointer("BotFunc_Aim"); delay(1);
+					}
+				}
+			}
+		}
+		else
+		{
+			Codepointer("BotFunc_Roam");
+			Delay(4);
+			break;
+		}
+		Delay(1);
+		if(TDBotDead() == TRUE) {terminate;}
+	}
+	firetime = 0;
+	Codepointer("BotFunc_FireStop");
+	if(GetActorProperty(0, APROP_HEALTH) > 0) {restart;}
+}
+
+Script "TDBots_BotDeath" DEATH
+{
+	TakeInventory("TDBot_DoNotAllowTeleport",9999);
+	if(GetCVAR("sv_forcerespawn") == FALSE)
+	{ACS_NamedExecuteAlways("TDBots_ZandronumCommands",0);}
+	if(PlayerIsBot(PlayerNumber()) == TRUE || GetCVAR("tdbots_playerbot") == TRUE)
+	{
+		if(GetCVAR("tdbots_enable") == TRUE || PlayerIsBot(PlayerNumber()) == FALSE)
+		{
+		if(random(0, 100) < 12) 
+		{TDBots_Chat(MSG_DEATH);}
+		}
+	}
+}

@@ -1,0 +1,33 @@
+int CurrentGame;
+bool VanillaDoom = FALSE;
+
+//stupid ACS why can't you be normal with strings
+str DummyWorkaroundString = "lol get bugged";
+
+#DEFINE MAX_PLAYERS 64 
+
+#DEFINE BOTSPEED 30
+
+#DEFINE GAME_DOOM 0		//Also the default for modded games
+#DEFINE GAME_HERETIC 1
+#DEFINE GAME_HEXEN 2
+#DEFINE GAME_STRIFE 3
+
+#DEFINE GAME_COOP 0
+#DEFINE GAME_DM 1
+
+#DEFINE AXIS_X 0
+#DEFINE AXIS_Y 1
+#DEFINE AXIS_Z 2
+#DEFINE NODETYPE 3
+
+#define NODE_NORMAL 0
+#define NODE_JUMP 1
+#define NODE_PRECISE 2
+
+#DEFINE MSG_ENTER 0
+#DEFINE MSG_ENTERCOOP 1
+#DEFINE MSG_ROAM 2
+#DEFINE MSG_DEATH 3
+
+#DEFINE TELTID 16231

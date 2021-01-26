@@ -1,0 +1,25 @@
+//Cosmetic options
+server bool tdbots_chat = true;
+server bool tdbots_roamchat = true;
+
+//Difficulty options
+server bool tdbots_easymode = false;
+server bool tdbots_buff = false;
+server bool tdbots_lessfov = false;
+server int tdbots_reactiontime = 0;
+server int tdbots_weaponize = 0;
+
+//Other options
+server noarchive bool tdbots_enable = true;
+server noarchive bool tdbots_playerbot = false;
+server bool tdbots_follow = true;
+server bool tdbots_usenodes = true;
+server bool tdbots_allowteleport = false;
+server int tdbots_teleportdelaytime = 30;
+server bool tdbots_learnfromplayer = true;
+
+//Gameplay modifiers
+server noarchive bool tdbots_rocketarena = false;
+
+//Info CVARs (Not intended to be modified by players)
+server noarchive int tdbots_currentgame = -1;

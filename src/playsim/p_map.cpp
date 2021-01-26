@@ -2374,21 +2374,6 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			thing->flags6 &= ~MF6_INTRYMOVE;
 			return false;
 		}
-
-		//Added by MC: To prevent bot from getting into dangerous sectors.
-		if (thing->player && thing->player->Bot != NULL && thing->flags & MF_SHOOTABLE)
-		{
-			if (tm.sector != thing->Sector
-				&& thing->Level->BotInfo.IsDangerous(tm.sector))
-			{
-				thing->player->Bot->prev = thing->player->Bot->dest;
-				thing->player->Bot->dest = nullptr;
-				thing->Vel.X = thing->Vel.Y = 0;
-				thing->SetZ(oldz);
-				thing->flags6 &= ~MF6_INTRYMOVE;
-				return false;
-			}
-		}
 	}
 
 	// [RH] Check status of eyes against fake floor/ceiling in case

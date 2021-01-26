@@ -476,11 +476,11 @@ void FCajunMaster::ForgetBots ()
 
 #if defined _WIN32 || defined __APPLE__
 
-FString M_GetCajunPath(const char* botfilename)
+FString M_GetBotPath(const char* botfilename)
 {
 	FString path;
 
-	path << progdir << "zcajun/" << botfilename;
+	path << progdir << botfilename;
 	if (!FileExists(path))
 	{
 		path = "";
@@ -490,7 +490,7 @@ FString M_GetCajunPath(const char* botfilename)
 
 #else
 
-FString M_GetCajunPath(const char* botfilename)
+FString M_GetBotPath(const char* botfilename)
 {
 	FString path;
 
@@ -519,7 +519,7 @@ bool FCajunMaster::LoadBots ()
 	int loaded_bots = 0;
 
 	ForgetBots ();
-	tmp = M_GetCajunPath(BOTFILENAME);
+	tmp = M_GetBotPath(BOTFILENAME);
 	if (tmp.IsEmpty())
 	{
 		DPrintf (DMSG_ERROR, "No " BOTFILENAME ", so no bots\n");

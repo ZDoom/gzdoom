@@ -1,0 +1,29 @@
+This file was made to help me not mess changelogs up as i'm writing down things
+here as i make them.
+
+v27 THE WE'RE ONE UPDATE
+
+-Merged both the GZDoom and Zandronum version into one, so now Zandronum
+	players can play using the normal version.
+	(The bots still work much better in Zandronum vs GZDoom, please use it
+	if you can)
+
+-Bots will no longer shoot neither friendly monsters nor players in co-op, and
+	they also won't shoot players in their own team (in team-based modes).
+	Yes, for real this time, and it works in Zandronum too.
+
+-Bots can now follow players in Zandronum too, and they'll pick the closest
+	player to follow online.
+
+-Bots now switch between weapons they have in vanilla.
+
+-tdbots_usenodes no longer needs to be enabled for following the player, or
+	learning the map.
+
+-Slightly cleaned up the TDBot_Main script (less duplicate code).
+
+-Removed the ability for bots to seek items. The only place where this was
+	even remotely useful, was in bot-only matches, other than that the
+	map learning renders it obsolete, and it stops bots from eating up your
+	ammo in co-op. This change was done as it was the only feature left that
+	the Zandronum version didn't have, and it wasn't worth keeping the split.

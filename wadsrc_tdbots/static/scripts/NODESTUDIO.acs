@@ -1,0 +1,288 @@
+//TDBots: Node Studio
+//
+//(C) 2019 Moises Aguirre "TDRR"
+//
+//Licensed under the MIT license
+
+#library "NODESTUDIO"
+#include "zcommon.acs"
+
+str IfSomethingBreaksThisAppears = "lol TDRR fix this you moron";
+
+//==============================================================================
+//
+//							Start of Node Studio
+//
+//==============================================================================
+
+//The nodelist is assembled on the fly into this value, and saved to a CVAR 
+//whenever needed.
+str NodeList = "";
+str LastListEntry = "";
+int LastNodeTID;
+int NodeAmount;
+bool NodeListVersion = 0;
+int NodeType;
+
+#define NODE_NORMAL 0
+#define NODE_JUMP 1
+#define NODE_PRECISE 2
+
+//Save node to the nodelist, based on TID of the node.
+function void SaveToNodeList (int TID)
+{
+	str NewString;
+	int X = GetActorX(TID);
+	int Y = GetActorY(TID);
+	int Z = GetActorZ(TID);
+	
+	if(NodeListVersion == 0)
+	{
+		NewString = StrParam(i:X/65536,s:";",i:Y/65536,s:";",i:Z/65536,s:";");
+	}
+	else
+	{
+		NewString = StrParam(i:X/65536,s:";",i:Y/65536,s:";",i:Z/65536,s:";",i:NodeType,s:";");
+	}
+	
+	NodeAmount++;
+	str stringtosave = StrParam(s:NodeList, s:NewString);
+	NodeList = StringToSave;
+	LastListEntry = NewString;
+	LastNodeTID = TID;
+}
+
+//Removes last node placed, and removes it from the nodelist.
+function void DeleteLastNode (void)
+{
+	if(LastNodeTID == 0) {return;}
+	str NodeListTemp;
+	int LastListLength = StrLen(LastListEntry);
+	int ListLength = StrLen(NodeList);
+	if(ListLength == 0) {return;}
+	if(LastListLength == 0) {return;}
+	Thing_Remove(LastNodeTID);
+	NodeListTemp = StrLeft(NodeList, ListLength-LastListLength);
+	NodeList = NodeListTemp;
+	NodeAmount--;
+	LastNodeTID = 0;
+}
+
+Script "TDBots_NodeStudio_VersionChoice" (void)
+{
+	SetHUDSize(640, 480, TRUE);
+	SetFont("BIGFONT");
+	
+	HUDMessage(s:"Press the use key to DELETE all your player stats!",
+	s:"Press any other key to KEEP all your player stats!";
+	HUDMSG_PLAIN, 13046, CR_YELLOW, 320.0, 240.0, 0);
+	
+	delay(16);
+	
+	while(GetPlayerInput(-1, INPUT_BUTTONS) == 0)
+	{
+		delay(1);
+	}
+	
+	if(GetPlayerInput(-1, INPUT_BUTTONS) == BT_USE)
+	{
+		int pnum = PlayerNumber();
+		SetUserCVAR(pnum, "vd_player_mapsbeat", 0);
+		SetUserCVAR(pnum, "vd_player_secrets", 0);
+		SetUserCVAR(pnum, "vd_player_kills", 0);
+		SetUserCVAR(pnum, "vd_player_maxkills", 0);
+		SetUserCVAR(pnum, "vd_player_sandboxkills", 0);
+		SetUserCVAR(pnum, "vd_player_sandboxbeat", 0);
+	}
+	
+	HUDMessage(s:"";HUDMSG_PLAIN, 13046, CR_UNTRANSLATED, 0, 0, 0);
+}
+
+Script "tdbots_chnodetype" (void)
+{
+	NodeType++;
+	if(NodeType > NODE_PRECISE) {NodeType = NODE_NORMAL;}
+	if(NodelistVersion != 0)
+	switch(NodeType)
+	{
+		case NODE_NORMAL:
+		Print(s:"Node type: Normal (purple)");
+		break;
+		
+		case NODE_JUMP:
+		Print(s:"Node type: Jump (green)");
+		break;
+		
+		case NODE_PRECISE:
+		Print(s:"Node type: Precision (red)");
+		break;
+	}
+}
+
+Script "TDBots_NodeStudio_Startup" (void)
+{
+	if(PlayerCount() > 1)
+	{Print(s:"Node studio can be only used offline!"); terminate;}
+	if(GetCVAR("sv_freelook") == 1)
+	{Print(s:"Node studio requires freelook!"); terminate;}
+	
+	SetHUDSize(640, 480, TRUE);
+	SetFont("BIGFONT");
+	
+	HUDMessage(s:"Press the use key to use version 1\n",
+	s:"Press any other key to use version 0\n",
+	s:"v1 allows use of jump and precision nodes\n",
+	s:"while v0 only has the basic node type";
+	HUDMSG_PLAIN, 13076, CR_YELLOW, 320.0, 240.0, 0);
+	
+	delay(16);
+	
+	while(GetPlayerInput(-1, INPUT_BUTTONS) == 0)
+	{
+		delay(1);
+	}
+	
+	if(GetPlayerInput(-1, INPUT_BUTTONS) == BT_USE)
+	{
+		NodeListVersion = 1;
+	}
+	else
+	{
+		NodeListVersion = 0;
+	}
+	
+	HUDMessage(s:"";HUDMSG_PLAIN, 13076, CR_UNTRANSLATED, 0, 0, 0);
+	
+	Print(s:"Welcome to node studio.\nPress Weapon Reload for help with controls");
+	ClearInventory(); Thing_Destroy(0);
+	ACS_NamedExecuteAlways("TDBots_NodeStudio_InputLoop",0);
+	SetPlayerProperty(1, TRUE, PROP_FLY);
+	SetPlayerProperty(1, 2, PROP_INVULNERABILITY);
+	SetActorFlag(0, "PICKUP", FALSE);
+	GiveInventory("TDBots_NodeStudio_Editor", 1);
+}
+
+Script "TDBots_NodeStudio_InputLoop" (void)
+{
+	int buttons;
+	while(TRUE)
+	{
+		buttons = GetPlayerInput(-1, INPUT_BUTTONS);
+		
+		if(buttons & BT_RELOAD) {GiveInventory("TDB_NS_Reload",1);}
+		else 					{TakeInventory("TDB_NS_Reload",1);}
+		
+		if(buttons & BT_ZOOM) 	{GiveInventory("TDB_NS_Zoom",1);}
+		else 					{TakeInventory("TDB_NS_Zoom",1);}
+		
+		delay(1);
+	}
+}
+
+Script "TDBots_NodeStudio_PlaceNode" (void)
+{
+	if(NodeAmount == 512) {Print(s:"Limit of 512 nodes reached."); terminate;}
+	int NodeX = GetActorX(0);
+	int NodeY = GetActorY(0);
+	int NodeZ = GetActorZ(0);
+	int TID = UniqueTID();
+	/*PrintBold(s:"NodeX = ", i:NodeX);
+	PrintBold(s:"NodeY = ", i:NodeY);
+	PrintBold(s:"NodeZ = ", i:NodeZ);
+	PrintBold(s:"TID = ", i:TID);*/
+	if(NodeListVersion == 0)
+	{
+		SpawnForced("TDBots_NodeStudio_FakeNode", NodeX, NodeY, NodeZ, TID);
+	}
+	else
+	{
+		switch(NodeType)
+		{
+			case NODE_NORMAL:
+			SpawnForced("TDBots_NodeStudio_FakeNode", NodeX, NodeY, NodeZ, TID);
+			break;
+			
+			case NODE_JUMP:
+			SpawnForced("TDBots_NodeStudio_FakeJumpNode", NodeX, NodeY, NodeZ, TID);
+			break;
+			
+			case NODE_PRECISE:
+			SpawnForced("TDBots_NodeStudio_FakePreciseNode", NodeX, NodeY, NodeZ, TID);
+			break;
+		}
+	}
+	SaveToNodeList(TID);
+}
+
+Script "TDBots_NodeStudio_Undo" (void) {DeleteLastNode();}
+
+Script "TDBots_NodeStudio_Help" (void)
+{
+	Print(s:"Instructions have been printed to the console.");
+	
+	Log(s:"You will move in the direction you look to,");
+	Log(s:"Including Up and Down. A Mouse is recommended");
+	Log(s:"For easy operation of Node Studio.");
+	Log(s:"");
+	Log(s:"Attack/Fire = Place Node on crosshair");
+	Log(s:"Alt Attack = Undo last placed node");
+	Log(s:"Weapon Zoom = Save Nodelist");
+	Log(s:"Weapon Ready = These Instructions");
+	Log(s:"Change Node Type = Change node type (v1 only)");
+	Log(s:"The Change node type key is not bound by default, go bind it!");
+}
+
+Script "TDBots_NodeStudio_Save" (void)
+{
+	int MapLmp = StrParam(n:PRINTNAME_LEVEL);
+	str cvartocheck;
+	if(NodeListVersion == 0)
+	{
+		cvartocheck = StrParam(s:MapLmp, s:"Nodes");
+	}
+	else
+	{
+		cvartocheck = StrParam(s:MapLmp, s:"NodesNew");
+	}
+	str LastListCharacter;
+	int NodeListLength = StrLen(NodeList);
+	str NodeListToSave;
+	//Print(s:"Saving to .ini file...");
+	
+	NodeListToSave = NodeList;
+	
+	//Chop off the last ; on the list, because it can cause parsing errors.
+	if(NodeListLength > 0)
+	{
+		LastListCharacter = StrRight(NodeList, 1);
+		if(StrCmp(LastListCharacter, ";") == 0)
+		{NodeListToSave = StrLeft(NodeList, NodeListLength-1);}
+	}
+	
+	//SetCVARString(cvartocheck, NodeList);
+	Print(s:"The nodelist has been printed to the console.\nAlong with some instructions.");
+	Log(s:"===START OF HELP===");
+	Log(s:"If you don't have a logfile active,");
+	Log(s:"type logfile nodeoutput.txt in the console");
+	Log(s:"and press this button again.");
+	Log(s:"");
+	Log(s:"Then, a text file called nodeoutput should be");
+	Log(s:"In your ZDoom directory, so open it with");
+	Log(s:"Notepad++, copy the line between the");
+	Log(s:"COPY THIS markers, and paste it in another text");
+	Log(s:"file, and name it whatever you want without spaces.");
+	Log(s:"");
+	Log(s:"Finally, to load it from ZDoom, type in the console");
+	Log(s:"exec nameoffile.txt");
+	Log(s:"====END OF HELP====");
+	Log(s:"===COPY NEXT LINE===");
+	Log(s:"set \"", 
+	s:cvartocheck, s:"\" \"", s:NodeListToSave, s:"\"");
+	Log(s:"===COPY PREVIOUS LINE==");
+}
+
+//==============================================================================
+//
+//							End of Node Studio
+//
+//==============================================================================

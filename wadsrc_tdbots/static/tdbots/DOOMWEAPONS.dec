@@ -1,0 +1,468 @@
+// --------------------------------------------------------------------------
+//
+// Fist 
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotFist : Weapon
+{
+	Game Doom
+	Weapon.SlotNumber 1
+	Weapon.SelectionOrder 3700
+	Weapon.Kickback 100
+	Obituary "$OB_MPFIST"
+	Tag "$TAG_FIST"
+	+WEAPON.WIMPY_WEAPON
+	+WEAPON.MELEEWEAPON
+	States
+	{
+	Ready:
+		PUNG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotMeleeWeapon")
+		PUNG A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotMeleeWeapon")
+		PUNG A 1 A_Raise
+		Loop
+	Fire:
+		PUNG B 4
+		PUNG C 4 A_Punch
+		PUNG D 5
+		PUNG C 4
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		PUNG B 5 A_ReFire
+		Goto Ready
+	}
+}
+	
+
+// --------------------------------------------------------------------------
+//
+// Pistol 
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotPistol : DoomWeapon replaces Pistol
+{
+	Game Doom
+	Weapon.SlotNumber 2
+	Weapon.SelectionOrder 1900
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 0
+	Weapon.AmmoType "Clip"
+	Obituary "$OB_MPPISTOL"
+	+WEAPON.WIMPY_WEAPON
+	Inventory.Pickupmessage "$PICKUP_PISTOL_DROPPED"
+	Tag "$TAG_PISTOL"
+	States
+	{
+	Ready:
+		PISG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotForceInacc")
+		PISG A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotForceInacc")
+		PISG A 1 A_Raise
+		Loop
+	Fire:
+		PISG A 4
+		PISG B 6 A_FirePistol
+		PISG C 4
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "BotRefire")
+		PISG B 5 A_ReFire
+		Goto Ready
+	BotRefire:
+		TNT1 A 0 A_JumpIfNoAmmo("Deselect")
+		Goto Fire
+	Flash:
+		PISF A 7 Bright A_Light1
+		Goto LightDone
+		PISF A 7 Bright A_Light1
+		Goto LightDone
+ 	Spawn:
+		PIST A -1
+		Stop
+	}
+}
+		
+// --------------------------------------------------------------------------
+//
+// Chainsaw
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotChainsaw : Weapon replaces Chainsaw
+{
+	Game Doom
+	SpawnID 32
+	Weapon.SlotNumber 1
+	Weapon.Kickback 0
+	Weapon.SelectionOrder 2200
+	Weapon.UpSound "weapons/sawup"
+	Weapon.ReadySound "weapons/sawidle"
+	Inventory.PickupMessage "$GOTCHAINSAW"
+	Obituary "$OB_MPCHAINSAW"
+	Tag "$TAG_CHAINSAW"
+	+WEAPON.MELEEWEAPON		
+	States
+	{
+	Ready:
+		SAWG C 4 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		SAWG D 4 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotMeleeWeapon")
+		SAWG C 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotMeleeWeapon")
+		SAWG C 1 A_Raise
+		Loop
+	Fire:
+		SAWG AB 4 A_Saw
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		SAWG B 0 A_ReFire
+		Goto Ready
+	Spawn:
+		CSAW A -1
+		Stop
+	}
+}
+	
+
+// --------------------------------------------------------------------------
+//
+// Shotgun
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotShotgun : DoomWeapon replaces Shotgun
+{
+	Game Doom
+	SpawnID 27
+	Weapon.SlotNumber 3
+	Weapon.SelectionOrder 1300
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 8
+	Weapon.AmmoType "Shell"
+	Inventory.PickupMessage "$GOTSHOTGUN"
+	Obituary "$OB_MPSHOTGUN"
+	Tag "$TAG_SHOTGUN"
+	States
+	{
+	Ready:
+		SHTG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotCloseRange")
+		SHTG A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotCloseRange")
+		SHTG A 1 A_Raise
+		Loop
+	Fire:
+		SHTG A 3
+		SHTG A 7 A_FireShotgun
+		SHTG BC 5
+		SHTG D 4
+		SHTG CB 5
+		SHTG A 3
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "BotReFire")
+		SHTG A 7 A_ReFire
+		Goto Ready
+	BotRefire:
+		TNT1 A 0 A_JumpIfNoAmmo("Deselect")
+		Goto Fire
+	Flash:
+		SHTF A 4 Bright A_Light1
+		SHTF B 3 Bright A_Light2
+		Goto LightDone
+	Spawn:
+		SHOT A -1
+		Stop
+	}
+}	
+
+// --------------------------------------------------------------------------
+//
+// Shotgun
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotSuperShotgun : DoomWeapon replaces SuperShotgun
+{
+	Game Doom
+	SpawnID 33
+	Weapon.SlotNumber 3
+	Weapon.SelectionOrder 400
+	Weapon.AmmoUse 2
+	Weapon.AmmoGive 8
+	Weapon.AmmoType "Shell"
+	Inventory.PickupMessage "$GOTSHOTGUN2"
+	Obituary "$OB_MPSSHOTGUN"
+	Tag "$TAG_SUPERSHOTGUN"
+	States
+	{
+	Ready:
+		SHT2 A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotCloseRange")
+		SHT2 A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotCloseRange")
+		SHT2 A 1 A_Raise
+		Loop
+	Fire:
+		SHT2 A 3
+		SHT2 A 7 A_FireShotgun2
+		SHT2 B 7
+		SHT2 C 7 A_CheckReload
+		SHT2 D 7 A_OpenShotgun2
+		SHT2 E 7
+		SHT2 F 7 A_LoadShotgun2
+		SHT2 G 6
+		SHT2 H 6 A_CloseShotgun2
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "BotRefire")
+		SHT2 A 5 A_ReFire
+		Goto Ready
+	// unused states
+		SHT2 B 7
+		SHT2 A 3
+		Goto Deselect
+	BotRefire:
+		TNT1 A 0 A_JumpIfNoAmmo("Deselect")
+		Goto Fire
+	Flash:
+		SHT2 I 4 Bright A_Light1
+		SHT2 J 3 Bright A_Light2
+		Goto LightDone
+	Spawn:
+		SGN2 A -1
+		Stop
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// Chaingun
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotChaingun : DoomWeapon replaces Chaingun
+{
+	Game Doom
+	SpawnID 28
+	Weapon.SlotNumber 4
+	Weapon.SelectionOrder 700
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 20
+	Weapon.AmmoType "Clip"
+	Inventory.PickupMessage "$GOTCHAINGUN"
+	Obituary "$OB_MPCHAINGUN"
+	Tag "$TAG_CHAINGUN"
+	States
+	{
+	Ready:
+		CHGG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotForceInacc")
+		CHGG A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotForceInacc")
+		CHGG A 1 A_Raise
+		Loop
+	Fire:
+		CHGG AB 4 A_FireCGun
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "BotRefire")
+		CHGG B 0 A_ReFire
+		Goto Ready
+	BotRefire:
+		TNT1 A 0 A_JumpIfNoAmmo("Deselect")
+		Goto Fire
+	Flash:
+		CHGF A 5 Bright A_Light1
+		Goto LightDone
+		CHGF B 5 Bright A_Light2
+		Goto LightDone
+	Spawn:
+		MGUN A -1
+		Stop
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// Rocket launcher
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotRocketLauncher : DoomWeapon replaces RocketLauncher
+{
+	Game Doom
+	SpawnID 29
+	Weapon.SlotNumber 5
+	Weapon.SelectionOrder 2500
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 2
+	Weapon.AmmoType "RocketAmmo"
+	+WEAPON.NOAUTOFIRE
+	Inventory.PickupMessage "$GOTLAUNCHER"
+	Tag "$TAG_ROCKETLAUNCHER"
+	States
+	{
+	Ready:
+		MISG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotExplosiveWeapon")
+		MISG A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotExplosiveWeapon")
+		MISG A 1 A_Raise
+		Loop
+	Fire:
+		MISG B 8 A_GunFlash
+		MISG B 12 A_FireMissile
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "BotRefire")
+		MISG B 0 A_ReFire
+		Goto Ready
+	BotRefire:
+		TNT1 A 0 A_JumpIfNoAmmo("Deselect")
+		Goto Fire
+	Flash:
+		MISF A 3 Bright A_Light1
+		MISF B 4 Bright
+		MISF CD 4 Bright A_Light2
+		Goto LightDone
+	Spawn:
+		LAUN A -1
+		Stop
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// Plasma rifle
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotPlasmaRifle : DoomWeapon replaces PlasmaRifle
+{
+	Game Doom
+	SpawnID 30
+	Weapon.SlotNumber 6
+	Weapon.SelectionOrder 100
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 40
+	Weapon.AmmoType "Cell"
+	Inventory.PickupMessage "$GOTPLASMA"
+	Tag "$TAG_PLASMARIFLE"
+	States
+	{
+	Ready:
+		PLSG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotForceInacc")
+		PLSG A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotForceInacc")
+		PLSG A 1 A_Raise
+		Loop
+	Fire:
+		PLSG A 3 A_FirePlasma
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "BotRefire")
+		PLSG B 20 A_ReFire
+		Goto Ready
+	BotRefire:
+		TNT1 A 0 A_JumpIfNoAmmo("Deselect")
+		Goto Fire
+	Flash:
+		PLSF A 4 Bright A_Light1
+		Goto LightDone
+		PLSF B 4 Bright A_Light1
+		Goto LightDone
+	Spawn:
+		PLAS A -1
+		Stop
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// BFG 9000
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotBFG9000 : DoomWeapon replaces BFG9000
+{
+	Game Doom
+	Height 20
+	SpawnID 31
+	Weapon.SlotNumber 7
+	Weapon.SelectionOrder 2800
+	Weapon.AmmoUse 40
+	Weapon.AmmoGive 40
+	Weapon.AmmoType "Cell"
+	+WEAPON.NOAUTOFIRE
+	Inventory.PickupMessage "$GOTBFG9000"
+	Tag "$TAG_BFG9000"
+	States
+	{
+	Ready:
+		BFGG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		BFGG A 1 A_Lower
+		Loop
+	Select:
+		BFGG A 1 A_Raise
+		Loop
+	Fire:
+		BFGG A 20 A_BFGsound
+		BFGG B 10 A_GunFlash
+		BFGG B 10 A_FireBFG
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "BotRefire")
+		BFGG B 20 A_ReFire
+		Goto Ready
+	BotRefire:
+		TNT1 A 0 A_JumpIfNoAmmo("Deselect")
+		Goto Fire
+	Flash:
+		BFGF A 11 Bright A_Light1
+		BFGF B 6 Bright A_Light2
+		Goto LightDone
+	Spawn:
+		BFUG A -1
+		Stop
+	OldFire:
+		BFGG A 10 A_BFGsound
+		BFGG BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 1 A_FireOldBFG
+		BFGG B 0 A_Light0
+		BFGG B 20 A_ReFire
+		Goto Ready
+	}
+}

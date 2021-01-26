@@ -1,0 +1,322 @@
+//These bots don't do anything at all, and that's exactly what i want!
+clearbots
+
+{
+	name = "Mact Man"
+	color = "00 00 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Slayer"
+	color = "ff ff ff"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Larry"
+	color = "50 50 60"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Karen"
+	color = "00 00 ff"
+	gender = "female"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Joel"
+	color = "40 cf 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Gustavo"
+	color = "ff ff ff"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "James"
+	color = "b0 b0 b0"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Tyler"
+	color = "ff ff ff"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Thomas"
+	color = "ff ff 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Kyle"
+	color = "ff af 3f"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Louis"
+	color = "40 cf 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Robert"
+	color = "50 50 60"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Jean Romero"
+	color = "8f 00 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Steve"
+	color = "b0 b0 b0"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Gaz"
+	color = "00 00 7f"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Josh"
+	color = "8f 00 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Alex"
+	color = "bf 00 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Patrick"
+	color = "ff 00 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Sarah"
+	color = "ff 00 00"
+	gender = "female"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Sgt. Nigel"
+	color = "b0 b0 b0"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Flynn"
+	color = "00 ff 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Richard"
+	color = "00 ff 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Carl"
+	color = "ff ff 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Illucia"
+	color = "ff ff 00"
+	gender = "female"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Nitroactive"
+	color = "00 ff 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Javier"
+	color = "00 00 ff"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Procyon"
+	color = "ff ff 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Seenas"
+	color = "ff 00 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Oscar"
+	color = "bf 8f 5f"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Synas"
+	color = "00 b0 ff"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "Linguica"
+	color = "ff 00 00"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}
+
+{
+	name = "TheLegend27"
+	color = "8f 01 ff"
+	gender = "male"
+	class = "random"
+	chatfrequency = 0
+	revealed = true
+	script = ""
+}

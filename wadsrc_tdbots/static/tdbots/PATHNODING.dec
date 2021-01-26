@@ -1,0 +1,177 @@
+ACTOR TDBots_IDoExist : Inventory {}
+
+/*==============================================================================
+
+		Normal Path Node, does nothing special to the bot following it
+	
+==============================================================================*/
+ACTOR TDBots_PathNode : CustomInventory 2401
+{
+	+INVISIBLE
+	
+	+INVENTORY.NOSCREENFLASH
+	+INVENTORY.NEVERRESPAWN
+	Inventory.MaxAmount 99999
+	Inventory.PickupMessage ""
+	Inventory.PickupSound ""
+	Scale 3.0
+	states
+	{
+	Spawn:
+		"####" "#" 0 NoDelay A_GiveInventory("TDBots_IDoExist")
+		"####" "#" 0 A_SpawnItemEx("TDBots_NodeRespawn",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,tid)
+		TBND B -1
+		Stop
+	Pickup:
+		TNT1 A 0 A_TakeInventory("BotPrecisionMode")
+		TNT1 A 0 A_JumpIfInventory("TDBots_IsBot", 1, "DoPickup")
+		Fail
+	DoPickup:
+		TNT1 A 0 A_RailWait
+		Stop
+	}
+}
+
+ACTOR TDBots_NodeRespawn
+{
+	+INVISIBLE
+	
+	Scale 4.0
+	+NOBLOCKMAP
+	+NOCLIP
+	+ISMONSTER
+	-SHOOTABLE
+	-SOLID
+	
+	var int user_ntid;
+	states
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_SetUserVar("user_ntid", tid)
+		TNT1 A 0 Thing_ChangeTID(0,0)
+		TNT1 A 0 ACS_NamedExecuteWithResult("TDBots_SetTarget", user_ntid)
+	Idle:
+		TNT1 A 1
+		TNT1 A 0 A_JumpIfInventory("TDBots_IDoExist", 1, "Idle", AAPTR_TARGET)
+	RespawnNode:
+		TBND Z 0
+		"####" "#####" 35
+		TNT1 A 0 A_SpawnItemEx("TDBots_PathNode",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,user_ntid)
+		Stop
+	}
+}
+
+/*==============================================================================
+
+		Jump Node, makes the bot jump in the direction it was moving
+		when touching it.
+	
+==============================================================================*/
+ACTOR TDBots_JumpNode : TDBots_PathNode 2402
+{
+	states
+	{
+	Spawn:
+		"####" "#" 0 NoDelay A_GiveInventory("TDBots_IDoExist")
+		"####" "#" 0 A_SpawnItemEx("TDBots_JNodeRespawn",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,tid)
+		TBND C -1
+		Stop
+	Pickup:
+		TNT1 A 0 A_TakeInventory("BotPrecisionMode")
+		TNT1 A 0 A_JumpIfInventory("TDBots_IsBot", 1, "DoPickup")
+		Fail
+	DoPickup:
+		TNT1 A 0 ACS_NamedExecuteAlways("TDBots_Jump")
+		TNT1 A 0 A_Jump(256, "DoPickup2")
+		Stop
+	DoPickup2:
+		TNT1 A 0 A_RailWait
+		Stop
+		
+	}
+}
+
+ACTOR TDBots_JNodeRespawn : TDBots_NodeRespawn
+{
+	states
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_SetUserVar("user_ntid", tid)
+		TNT1 A 0 Thing_ChangeTID(0,0)
+		TNT1 A 0 ACS_NamedExecuteWithResult("TDBots_SetTarget", user_ntid)
+	Idle:
+		TNT1 A 1
+		TNT1 A 0 A_JumpIfInventory("TDBots_IDoExist", 1, "Idle", AAPTR_TARGET)
+	RespawnNode:
+		TBND Z 0
+		"####" "#####" 35
+		TNT1 A 0 A_SpawnItemEx("TDBots_JumpNode",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,user_ntid)
+		Stop
+	}
+}
+
+/*==============================================================================
+
+		Precision Node, once touched, makes the bot completely stop
+		dodging attacks when in attacking state, to avoid falling down
+		accidentally.
+	
+==============================================================================*/
+ACTOR TDBots_PrecisionNode : TDBots_PathNode
+{
+	states
+	{
+	Spawn:
+		"####" "#" 0 NoDelay A_GiveInventory("TDBots_IDoExist")
+		"####" "#" 0 A_SpawnItemEx("TDBots_PNodeRespawn",0,0,0,0,0,0,0,SXF_SETMASTER|SXF_NOCHECKPOSITION,0,tid)
+		TBND D -1
+		Stop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("BotPrecisionMode")
+		TNT1 A 0 A_JumpIfInventory("TDBots_IsBot", 1, "DoPickup")
+		Fail
+	DoPickup:
+		TNT1 A 0 A_RailWait
+		Stop
+	}
+}
+
+ACTOR TDBots_PNodeRespawn : TDBots_NodeRespawn
+{
+	states
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_SetUserVar("user_ntid", tid)
+		TNT1 A 0 Thing_ChangeTID(0,0)
+		TNT1 A 0 ACS_NamedExecuteWithResult("TDBots_SetTarget", user_ntid)
+	Idle:
+		TNT1 A 1
+		TNT1 A 0 A_JumpIfInventory("TDBots_IDoExist", 1, "Idle", AAPTR_TARGET)
+	RespawnNode:
+		TBND Z 0
+		"####" "#####" 35
+		TNT1 A 0 A_SpawnItemEx("TDBots_PrecisionNode",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,user_ntid)
+		Stop
+	}
+}
+
+ACTOR TDBots_TempNode : TDBots_PathNode
+{
+	states
+	{
+	Spawn:
+		TNT1 AAAAA 35
+		Stop
+	}
+}
+
+ACTOR TDBots_AutoNoder
+{
+	+NOINTERACTION
+	+INVISIBLE
+	states
+	{
+	Spawn:
+		Goto Null
+	}
+}

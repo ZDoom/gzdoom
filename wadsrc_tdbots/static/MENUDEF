@@ -1,0 +1,103 @@
+optionmenu TDBOTS_OPTIONS
+{
+	Title "TDBots options"
+	StaticText "Bot and map Management options"
+	StaticText ""
+	Command "Add one bot", "addbot"
+	StaticText ""
+	Command "Remove all bots", "removebots"
+	StaticText ""
+	Command "Start deathmatch on MAP01", "tdbots_startdmmap01"
+	StaticText ""
+	Command "Start deathmatch on E1M1", "tdbots_startdmE1M1"
+	StaticText ""
+	Command "Start NodeStudio", "NStudio_Start"
+	StaticText ""
+	Command "Go to Next Map", "nextmap"
+	StaticText ""
+	StaticText "Gameplay modifiers"
+	StaticText ""
+	Option "Rocket Arena mode", "tdbots_rocketarena", "OnOff"
+	StaticText "Rocket Arena consists of every player starting",1
+	StaticText "out with all weapons, full ammo, full health",1
+	StaticText "and full armor. Works with most mods.",1
+	StaticText ""
+	StaticText "Cosmetic bot options"
+	StaticText ""
+	Option "TDBots can chat", "tdbots_chat", "OnOff"
+	StaticText ""
+	Option "TDBots chat when idle", "tdbots_roamchat", "OnOff"
+	StaticText ""
+	StaticText "General bot options"
+	StaticText ""
+	Option "Enable TDBots AI", "tdbots_enable", "OnOff"
+	StaticText "When disabled, reverts back to ZDoom's ZCajun AI.",1
+	StaticText "And they are terrible so i don't recommend doing so!",1
+	StaticText "On Zandronum, this causes the bots to stand still.",1
+	StaticText ""
+	Option "Learn the map from players", "tdbots_learnfromplayer", "OnOff"
+	StaticText "If no waypoints are found, the TDBots will instead",1
+	StaticText "try to learn the map from your exploration of it.",1
+	StaticText "May take up to 1 minute before the bots use the info.",1
+	StaticText ""
+	Option "Use waypoints", "tdbots_usenodes", "OnOff"
+	StaticText "If enabled, makes the bots use the loaded waypoint file.",1
+	StaticText "Only useful if you are using a waypoint pack with the bots,",1
+	//StaticText "if not, leave this off or the bots won't search for items.",1
+	StaticText ""
+	Option "Player is a TDBot", "tdbots_playerbot", "OnOff"
+	StaticText "If on, you will also move exactly like a TDBot does.",1
+	StaticText "Type sv_forcerespawn 1 in the console so you respawn",1
+	StaticText "automatically too.",1
+	StaticText ""
+	Option "TDBots follow players", "tdbots_follow", "OnOff"
+	StaticText "When on, bots follow you on cooperative modes.",1
+	StaticText "Automatically disabled for deathmatch.",1
+	StaticText ""
+	Option "Allow teleport call", "tdbots_allowteleport", "OnOff"
+	StaticText "When enabled, you can press the teleport call key",1
+	StaticText "to make a random bot currently in-game teleport to",1
+	StaticText "your location.",1
+	StaticText ""
+	Slider "Teleport cooldown time", "tdbots_teleportdelaytime", 5.0, 120.0, 1.0, 0
+	StaticText "Amount of time in seconds until you can teleport",1
+	StaticText "a bot to your location again.",1
+	StaticText ""
+	StaticText "Bot difficulty options"
+	StaticText ""
+	StaticText "Most options will take effect once the"
+	StaticText "bot dies and then respawns."
+	StaticText ""
+	Option "Health and Ammo regeneration", "tdbots_buff", "OnOff"
+	StaticText "A fair warning: very overpowered. Don't put this on",1
+	StaticText "for Deathmatch, or the bots will be very hard to kill",1
+	StaticText "Instead, use it for Co-op so the bots don't take your ammo.",1
+	StaticText ""
+	Option "Easy mode", "tdbots_easymode", "OnOff"
+	StaticText "Makes the bot's aim significantly worse, use it if",1
+	StaticText "the bot keeps beating you too much on Deathmatch.",1
+	StaticText ""
+	Slider "Reaction time", "tdbots_reactiontime", 0.0, 70.0, 1.0, 0
+	StaticText "The higher the value, the more time the bots take to react.",1
+	StaticText "35 equals one second, so 70 equals two seconds.",1
+	StaticText "Don't set it very high or the bots may stop attacking suddenly.",1
+	StaticText ""
+	Slider "Weapons the bot starts with", "tdbots_weaponize", 0.0, 6.0, 1.0, 0
+	StaticText "The higher, the better weapons the bot spawns with.",1
+	StaticText "In Hexen, try not to set this higher than 2, or the",1
+	StaticText "TDBots will spawn with the best weapon!",1
+	StaticText ""
+	Option "Reduced field of view", "tdbots_lessfov", "OnOff"
+	StaticText "When on, TDBots have a reduced fov of 120",1
+	StaticText "Turn this on if you don't like bots being able",1
+	StaticText "to see behind their back.",1
+	StaticText ""
+	StaticText "TDBot difficulty presets:"
+	Command "Can i play, daddy?", "tdbots_veryeasypreset"
+	Command "I'm too young to die", "tdbots_easypreset"
+	Command "Hurt me plenty", "tdbots_mediumpreset"
+	Command "Bring it on!", "tdbots_hardpreset"
+	Command "Damn i'm good!", "tdbots_veryhardpreset"
+	Command "BFG SPAMMER", "tdbots_maxpreset"
+	StaticText "Note: BFG SPAMMER is a joke skill, and may not be fair at all",1
+}

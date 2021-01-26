@@ -1,0 +1,173 @@
+//Bot talking arrays, you should customize them to fit your mod/game.
+
+#DEFINE MAXMSGS_ENTER 55
+str BotSpeak_Enter[MAXMSGS_ENTER] =
+{
+	"Time to rack up some frags!",
+	"Another fight? Oh well.",
+	"Ready for heated combat!",
+	"One battle, hundreds of frags!",
+	"What, wanna lose again? Okay!",
+	"I'm putting all my effort in this fight.",
+	"Hey, want to watch your death counter go up?",
+	"Only the best will win, and that's me.",
+	"Got plans for you all, more pain!",
+	"Look at the time, It's time to kill!",
+	"h3y l00z3rs t1m3 2 g3t p0wn3d",
+	"Hey this isn't OpenArena!",
+	"Hola, no se hablar ingles.",
+	"We all know what happens, i win, you lose.",
+	"I am ready to roll!",
+	"Ohoho, this'll be good!",
+	"Ah, the site of one of my gest kills.",
+	"Back in my old stomping ground.",
+	"Let's get started.",
+	"Now, THIS is my kind of place!",
+	"Reporting for duty.",
+	"Here comes a new challenger!",
+	"I never thought I'd see this place again.",
+	"It's pay-back time!",
+	"Hi there",
+	"Hello",
+	"I bet you missed me",
+	"G'day",
+	"Yo! i'm in the house!",
+	"Wassup",
+	"Run in fear, i'm here!",
+	"Let's get it on!",
+	"Crap. Losers in here again!",
+	"Yessss! Fresh victims!",
+	"I'm back!",
+	"Showtime!",
+	"Let's rock and roll",
+	"Great! Easy frags ahead.",
+	"It's party time!",
+	"Let's kick it",
+	"Time for some fireworks",
+	"I'm here. There will be no survivors!",
+	"Guess its time to mow the grass",
+	"I am so ready for this",
+	"It's time for 'Bowling for Morons'",
+	"Fresh meat!",
+	"Howdy!",
+	"Let's get it ON!",
+	"Let's do it!",
+	"No Prisoners!",
+	"It's time for me to lay down the law here.",
+	"Hey, little kitty-cat, I have a treat for you.",
+	"Time to settle some scores!",
+	"Make this a good day, cuz it'll be your last.",
+	"I'm gonna kick your sorry butt into the next county."
+};
+					
+#DEFINE MAXMSGS_ENTERCOOP 12
+str BotSpeak_EnterCoop[MAXMSGS_ENTERCOOP+1] =
+{
+	"Let's get them.",
+	"Lock and load!",
+	"I hear some monsters, let's kill them!",
+	"I wonder if this map has any keys?",
+	"This place makes me feel nervous.",
+	"Time to complete this operation.",
+	"I heard this place is really dangerous.",
+	"Okay, let's go, but don't steal all the ammo.",
+	"I am ready to roll!",
+	"Ohoho, this'll be good!",
+	"Let's get started.",
+	"I never thought I'd see this place again."
+};
+
+#DEFINE MAXMSGS_ROAM 29
+str BotSpeak_Roam[MAXMSGS_ROAM+1] =
+{
+	"Stop hiding, i can smell fear!",
+	"Come out, i'm coming for you.",
+	"What's the matter, scared?",
+	"One, two, three, ready or not, here i come!",
+	"This map is pretty nice.",
+	"This battle has been quite lenghty, huh?",
+	"All this fighting is getting me hungry.",
+	"Could you please stop camping? Thanks.",
+	"Come out and play!",
+	"Come on, I hate waiting.",
+	"...Okay, come on, maybe just burn a little something?",
+	"Party time! Need some fireworks?",
+	"Come on, show yourself.",
+	"A single death can change everything.",
+	"What's an aimbot?",
+	"The world could always use more heroes!",
+	"I don't like this standing around.",
+	"Make every second count!",
+	"Come on, i don't have all day",
+	"Lot of memories of this place. They weren't all bad.",
+	"Rocket jump? That sounds dangerous.",
+	"You're going to come with me, dead or alive.",
+	"Don't just stand around, do something.",
+	"Hm. This place is to my liking.",
+	"Come over here!",
+	"Staying out of trouble?",
+	"You might be fast, but you ain't faster than a bullet.",
+	"So many targets, so little time.",
+	"Old soldiers are hard to kill."
+};
+						
+#DEFINE MAXMSGS_DEATH 30
+str BotSpeak_Die[MAXMSGS_DEATH] =
+{
+	"ARGH, YOU WILL PAY FOR THAT!",
+	"Alright, no more letting you win!",
+	"Nice shot, have you been practicing?",
+	"Dang, i better get some frags!",
+	"That was a lucky shot.",
+	"You fooled with the wrong person!",
+	"Beginner luck, but that's it!",
+	"Now you will see what i'm made of!",
+	"If at first you don't succeed... Blow it up again!",
+	"You won't get rid of me that easily.",
+	"Think you can do better than me?",
+	"Well that just happened.",
+	"Back to work!",
+	"That could have gone better.",
+	"This fight is not over yet!",
+	"Don't get me angry.",
+	"It's just a scratch.",
+	"Knock me down, and I'll keep getting back up.",
+	"A speedy recovery.",
+	"Where'd you learn to shoot like that?",
+	"Repetition teaches the smart.",
+	"Heh ... I had the safety on ...",
+	"I'm taking off the kid gloves now!",
+	"Okay, now I start fighting for real!",
+	"Enjoy that one. Your luck is about to run out",
+	"Now the match gets serious.",
+	"This was tragic",
+	"I will accept this as yet another learning experience",
+	"Ouch. That hurt",
+	"There will be some serious payback for this"
+};						
+
+function void TDBots_Chat (int type)
+{
+	if(GetCVAR("tdbots_chat") == FALSE)
+	{return;}
+	
+	if(type == MSG_ENTER)
+	{Log(s:"\c*", n:0, s:"\c*: ", s:BotSpeak_Enter[random(0,MAXMSGS_ENTER-1)]);}
+	
+	else if(type == MSG_ENTERCOOP)
+	{Log(s:"\c*", n:0, s:"\c*: ", s:BotSpeak_EnterCoop[random(0,MAXMSGS_ENTERCOOP-1)]);}
+	
+	else if(type == MSG_ROAM)
+	{
+		if(GetCVAR("tdbots_roamchat") == FALSE) {return;}
+		Log(s:"\c*", n:0, s:"\c*: ", s:BotSpeak_Roam[random(0,MAXMSGS_ROAM-1)]);
+	}
+	
+	else if(type == MSG_DEATH)
+	{Log(s:"\c*", n:0, s:"\c*: ", s:BotSpeak_Die[random(0,MAXMSGS_DEATH-1)]);}
+
+	else
+	{Log(s:"\c*", n:0, s:"\cg: Unknown message type ", i:type);}
+	
+	AmbientSound("misc/chat", 127);
+}

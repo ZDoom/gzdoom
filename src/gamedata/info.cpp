@@ -55,7 +55,6 @@
 #include "texturemanager.h"
 
 extern void LoadActors ();
-extern void InitBotStuff();
 extern void ClearStrifeTypes();
 
 TArray<PClassActor *> PClassActor::AllActorClasses;
@@ -402,7 +401,6 @@ void PClassActor::StaticInit()
 	}
 
 	LoadAltHudStuff();
-	InitBotStuff();
 
 	// reinit GLOBAL static stuff from gameinfo, once classes are loaded.
 	staticEventManager.InitStaticHandlers(primaryLevel, false);

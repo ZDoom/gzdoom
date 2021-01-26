@@ -1,0 +1,327 @@
+//NOTE: The sigil weapon is not included, because it relies on hardcoded
+//behavior. To be more clear, hardcoded behavior i don't understand and thus
+//can't recreate reliably.
+
+// --------------------------------------------------------------------------
+//
+// Dagger
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotPunchDagger : PunchDagger replaces PunchDagger
+{
+	Weapon.SlotNumber 1
+	States
+	{
+	Ready:
+		PNCH A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotMeleeWeapon")
+		PNCH A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotMeleeWeapon")
+		PNCH A 1 A_Raise
+		Loop
+	Fire:
+		PNCH B 4
+		PNCH C 4 A_JabDagger
+		PNCH D 5
+		PNCH C 4
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		PNCH B 5 A_ReFire
+		Goto Ready
+	}
+
+}
+
+// --------------------------------------------------------------------------
+//
+// Strife's crossbow
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotStrifeCrossbow : StrifeCrossbow replaces StrifeCrossbow
+{
+	Weapon.SlotNumber 2
+	Weapon.SisterWeapon "BotStrifeCrossbow2"
+	states
+	{
+	Ready:
+		XBOW A 0 A_ShowElectricFlash
+	Ready2:
+		XBOW A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Fire:
+		XBOW A 3 A_ClearFlash
+		XBOW B 6 A_FireArrow("ElectricBolt")
+		XBOW C 4
+		XBOW D 6
+		XBOW E 3
+		XBOW F 5
+		XBOW G 0 A_ShowElectricFlash
+		XBOW G 5 A_CheckReload
+		Goto Ready+1
+	}
+}
+
+
+ACTOR BotStrifeCrossbow2 : StrifeCrossbow2 replaces StrifeCrossbow2
+{
+	Weapon.SlotNumber 2
+	Weapon.SisterWeapon "BotStrifeCrossbow"
+	States
+	{
+	Ready:
+		XBOW H 1 A_WeaponReady
+		Loop
+	Fire:
+		XBOW H 3
+		XBOW B 6 A_FireArrow("PoisonBolt")
+		XBOW C 4
+		XBOW D 6
+		XBOW E 3
+		XBOW I 5
+		XBOW J 5 A_CheckReload
+		Goto Ready
+	Flash:
+		Stop
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// Assault gun
+//
+// --------------------------------------------------------------------------
+
+actor BotAssaultGun : AssaultGun replaces AssaultGun
+{
+	Weapon.SlotNumber 3
+	States
+	{
+	Ready:
+		RIFG A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Fire:
+		RIFF AB 3 A_FireAssaultGun
+		RIFG D 3 A_FireAssaultGun
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		RIFG C 0 A_ReFire
+		RIFG B 2 A_Light0
+		Goto Ready
+	}
+}
+
+
+// --------------------------------------------------------------------------
+//
+// Assault Gun (standing variant)
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotAssaultGunStanding : AssaultGunStanding replaces AssaultGunStanding {}
+
+// --------------------------------------------------------------------------
+//
+// Mini-Missile Launcher
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotMiniMissileLauncher : MiniMissileLauncher replaces MiniMissileLauncher
+{
+	Weapon.SlotNumber 4
+	States
+	{
+	Ready:
+		MMIS A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotExplosiveWeapon")
+		MMIS A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotExplosiveWeapon")
+		MMIS A 1 A_Raise
+		Loop
+	Fire:
+		MMIS A 4 A_FireMiniMissile
+		MMIS B 4 A_Light1
+		MMIS C 5 Bright
+		MMIS D 2 Bright A_Light2
+		MMIS E 2 Bright
+		MMIS F 2 Bright A_Light0
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MMIS F 0 A_ReFire
+		Goto Ready
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// Flame thrower
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotFlameThrower : FlameThrower replaces FlameThrower
+{
+	Weapon.SlotNumber 6
+	States
+	{
+	Ready:
+		FLMT A 3 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		FLMT B 3 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Fire:
+		FLMF A 2 A_FireFlamer
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		FLMF B 3 A_ReFire
+		Goto Ready
+	}
+}
+
+// Mauler -------------------------------------------------------------------
+// The scatter version
+
+ACTOR BotMauler : Mauler replaces Mauler
+{
+	Weapon.SlotNumber 7
+	Weapon.SisterWeapon "BotMauler2"
+	States
+	{
+	Ready:
+		MAUL F 6 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MAUL G 6 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MAUL H 6 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MAUL A 6 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Fire:
+		BLSF A 5 Bright A_FireMauler1
+		MAUL B 3 Bright A_Light1
+		MAUL C 2 A_Light2
+		MAUL DE 2
+		MAUL A 7 A_Light0
+		MAUL H 7
+		MAUL G 7 A_CheckReload
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Goto Ready
+	}
+}
+
+
+// --------------------------------------------------------------------------
+//
+// Mauler (torpedo version)
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotMauler2 : Mauler2 replaces Mauler2
+{
+	Weapon.SlotNumber 7
+	Weapon.SisterWeapon "BotMauler"
+	States
+	{
+	Ready:
+		MAUL I 7 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MAUL J 7 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MAUL K 7 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MAUL L 7 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Fire:
+		MAUL I 20 A_FireMauler2Pre
+		MAUL J 10 A_Light1
+		BLSF A 10 Bright A_FireMauler2
+		MAUL B 10 Bright A_Light2
+		MAUL C 2
+		MAUL D 2 A_Light0
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		MAUL E 2 A_ReFire
+		Goto Ready
+	}
+}
+
+// --------------------------------------------------------------------------
+//
+// HE-Grenade Launcher
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotStrifeGrenadeLauncher : StrifeGrenadeLauncher replaces StrifeGrenadeLauncher
+{
+	Weapon.SlotNumber 5
+	Weapon.SisterWeapon "BotStrifeGrenadeLauncher2"
+	States
+	{
+	Ready:
+		GREN A 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotExplosiveWeapon")
+		GREN A 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotExplosiveWeapon")
+		GREN A 1 A_Raise
+		Loop
+	Fire:
+		GREN A 5 A_FireGrenade("HEGrenade", -90, "Flash")
+		GREN B 10
+		GREN A 5 A_FireGrenade("HEGrenade",  90, "Flash2")
+		GREN C 10
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		GREN A 0 A_ReFire
+		Goto Ready
+	}
+
+}
+
+// --------------------------------------------------------------------------
+//
+// White phosphorus Grenade Launcher
+//
+// --------------------------------------------------------------------------
+
+ACTOR BotStrifeGrenadeLauncher2 : StrifeGrenadeLauncher2 replaces StrifeGrenadeLauncher2
+{
+	Weapon.SlotNumber 5
+	Weapon.SisterWeapon "BotStrifeGrenadeLauncher"
+	States
+	{
+	Ready:
+		GREN D 1 A_WeaponReady
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		Loop
+	Deselect:
+		TNT1 A 0 A_TakeInventory("BotExplosiveWeapon")
+		GREN D 1 A_Lower
+		Loop
+	Select:
+		TNT1 A 0 A_GiveInventory("BotExplosiveWeapon")
+		GREN D 1 A_Raise
+		Loop
+	Fire:
+		GREN D 5 A_FireGrenade("PhosphorousGrenade", -90, "Flash")
+		GREN E 10
+		GREN D 5 A_FireGrenade("PhosphorousGrenade",  90, "Flash2")
+		GREN F 10
+		TNT1 A 0 A_JumpIfInventory("BotAttack", 1, "Fire")
+		GREN A 0 A_ReFire
+		Goto Ready
+	}
+}

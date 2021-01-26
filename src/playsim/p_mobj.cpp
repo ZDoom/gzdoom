@@ -3760,12 +3760,6 @@ void AActor::Tick ()
 			}
 		}
 
-		if (Level->BotInfo.botnum && !demoplayback &&
-			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
-		{
-			Level->BotInfo.BotTick(this);
-		}
-
 		// [RH] Consider carrying sectors here
 		DVector2 cumm(0, 0);
 

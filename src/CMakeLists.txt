@@ -815,8 +815,6 @@ set (PCH_SOURCES
 	playsim/bots/b_bot.cpp
 	playsim/bots/b_func.cpp
 	playsim/bots/b_game.cpp
-	playsim/bots/b_move.cpp
-	playsim/bots/b_think.cpp
 	bbannouncer.cpp
 	console/c_cmds.cpp
 	console/c_notifybuffer.cpp

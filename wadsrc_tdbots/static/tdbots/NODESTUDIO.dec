@@ -1,0 +1,115 @@
+Actor TDBots_NodeStudio_Editor : Weapon
+{
+	+WEAPON.NOAUTOFIRE
+	+WEAPON.NOLMS
+	+WEAPON.CHEATNOTWEAPON
+	const int FLAGS = FBF_NORANDOMPUFFZ|FBF_NORANDOM|FBF_NOFLASH;
+	states
+	{
+	Select:
+		TNT1 AA 0 A_Raise
+		TNT1 A 1 A_Raise
+		Loop
+	Deselect:
+		TNT1 A 1 A_Lower
+		Loop
+	Ready:
+		TNT1 A 1 A_FireBullets(0,0,1,0,"TDBots_NodeStudio_Marker",FLAGS)
+		TNT1 A 0 A_WeaponReady(WRF_NOSWITCH)
+		TNT1 A 0 A_JumpIfInventory("TDB_NS_Reload",1,"Reload")
+		TNT1 A 0 A_JumpIfInventory("TDB_NS_Zoom",1,"Zoom")
+		Loop
+	Zoom:
+		TNT1 A 1 ACS_NamedExecuteAlways("TDBots_NodeStudio_Save",0)
+		TNT1 A 0 A_JumpIfInventory("TDB_NS_Zoom",1,"ZR_Done")
+		Goto Ready
+	Reload:
+		TNT1 A 1 ACS_NamedExecuteAlways("TDBots_NodeStudio_Help",0)
+		TNT1 A 0 A_JumpIfInventory("TDB_NS_Reload",1,"ZR_Done")
+		Goto Ready
+	Fire:
+		TNT1 A 0
+		TNT1 A 1 A_FireBullets(0,0,1,0,"TDBots_NodeStudio_Node",FLAGS)
+		TNT1 A 0 A_Refire("Done")
+		Goto Ready
+	AltFire:
+		TNT1 A 1 ACS_NamedExecuteAlways("TDBots_NodeStudio_Undo",0)
+		TNT1 A 0 A_Refire("Done")
+		Goto Ready
+	Done:
+		TNT1 A 1 A_FireBullets(0,0,1,0,"TDBots_NodeStudio_Marker",FLAGS)
+		TNT1 A 0 A_Refire("Done")
+		Goto Ready
+	ZR_Done:
+		TNT1 A 1 A_FireBullets(0,0,1,0,"TDBots_NodeStudio_Marker",FLAGS)
+		TNT1 A 0 A_JumpIfInventory("TDB_NS_Reload",1,"ZR_Done")
+		TNT1 A 0 A_JumpIfInventory("TDB_NS_Zoom",1,"ZR_Done")
+		Goto Ready
+	}
+}
+
+Actor TDB_NS_Reload : Inventory {}
+Actor TDB_NS_Zoom : Inventory {}
+
+Actor TDBots_NodeStudio_Marker : BulletPuff
+{
+	+FORCEXYBILLBOARD
+	+CLIENTSIDEONLY
+	+PUFFONACTORS
+	-RANDOMIZE
+	states
+	{
+	Spawn:
+	Melee:
+		TBND A 2 BRIGHT
+		Stop
+	}
+}
+
+Actor TDBots_NodeStudio_Node : TDBots_NodeStudio_Marker
+{
+	-CLIENTSIDEONLY
+	states
+	{
+	Spawn:
+	Melee:
+		TNT1 A 0
+		TNT1 A 0 ACS_NamedExecuteAlways("TDBots_NodeStudio_PlaceNode",0)
+		TBND A 2 BRIGHT
+		Stop
+	}
+}
+
+Actor TDBots_NodeStudio_FakeNode
+{
+	Scale 3.0
+	states
+	{
+	Spawn:
+		TNT1 AA 0 A_Stop
+		TBND B -1 BRIGHT
+		Stop
+	}
+}
+
+Actor TDBots_NodeStudio_FakeJumpNode : TDBots_NodeStudio_FakeNode
+{
+	states
+	{
+	Spawn:
+		TNT1 AA 0 A_Stop
+		TBND C -1 BRIGHT
+		Stop
+	}
+}
+
+Actor TDBots_NodeStudio_FakePreciseNode : TDBots_NodeStudio_FakeNode
+{
+	states
+	{
+	Spawn:
+		TNT1 AA 0 A_Stop
+		TBND D -1 BRIGHT
+		Stop
+	}
+}

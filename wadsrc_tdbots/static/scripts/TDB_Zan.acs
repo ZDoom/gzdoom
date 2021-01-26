@@ -1,0 +1,25 @@
+//Because GetPlayerAccountName doesn't quite work with else statements, i had to
+//do this.
+function bool TDB_IsZandronum (void)
+{
+	if(GetPlayerAccountName(0) != 0)
+		return TRUE;
+	return FALSE;
+}
+
+Script "TDBots_ZandronumCommands" OPEN
+{
+	if(TDB_IsZandronum() == TRUE)
+	{
+		consolecommand("bot_allowchat 0");
+		
+		if(GetCVAR("alwaysapplydmflags") == FALSE)
+		{consolecommand("alwaysapplydmflags 1");}
+		
+		if(GetCVAR("bot_allowchat") == TRUE)
+		{consolecommand("bot_allowchat 0");}
+		
+		if(GetCVAR("sv_forcerespawn") == FALSE)
+		{consolecommand("sv_forcerespawn 1");}
+	}
+}

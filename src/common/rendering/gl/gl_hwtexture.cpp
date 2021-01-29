@@ -312,6 +312,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		{
 			glTextureBytes = 1;
 			forcenofilter = true;
+			needmipmap = false;
 		}
 		int w = 0, h = 0;
 

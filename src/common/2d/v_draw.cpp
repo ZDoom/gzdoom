@@ -41,6 +41,7 @@
 #include "r_videoscale.h"
 #include "c_cvars.h"
 
+CVAR (Int, ui_linethickness, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 EXTERN_CVAR(Int, vid_aspect)
 EXTERN_CVAR(Int, uiscale)
 CVAR(Bool, ui_screenborder_classic_scaling, true, CVAR_ARCHIVE)
@@ -1351,7 +1352,19 @@ void VirtualToRealCoordsInt(F2DDrawer *drawer, int &x, int &y, int &w, int &h,
 static void DrawLine(int x0, int y0, int x1, int y1, uint32_t realcolor, int alpha)
 {
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	twod->AddLine((float)x0, (float)y0, (float)x1, (float)y1, -1, -1, INT_MAX, INT_MAX, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
+	if (ui_linethickness)
+	{
+		int i1, i2;
+		for (i2 = -ui_linethickness; i2 < ui_linethickness; i2++)
+		{
+			for (i1 = -ui_linethickness; i1 < ui_linethickness; i1++)
+			{
+				twod->AddLine((float)(x0 + i1), (float)(y0 + i2), (float)(x1 + i1), (float)(y1 + i2), -1, -1, INT_MAX, INT_MAX, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
+			}
+		}
+	}
+	else
+		twod->AddLine((float)x0, (float)y0, (float)x1, (float)y1, -1, -1, INT_MAX, INT_MAX, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)

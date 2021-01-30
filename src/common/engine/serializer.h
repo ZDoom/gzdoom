@@ -215,14 +215,14 @@ public:
 };
 
 FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* defval);
+FSerializer& Serialize(FSerializer& arc, const char* key, unsigned char& value, unsigned char* defval);
+FSerializer& Serialize(FSerializer& arc, const char* key, signed char& value, signed char* defval);
 
 FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, int64_t &value, int64_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, uint64_t &value, uint64_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, int32_t &value, int32_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, uint32_t &value, uint32_t *defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, int8_t &value, int8_t *defval);
-FSerializer &Serialize(FSerializer &arc, const char *key, uint8_t &value, uint8_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, int16_t &value, int16_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, uint16_t &value, uint16_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double *defval);

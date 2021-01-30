@@ -987,28 +987,24 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint32_t &value, uint3
 
 FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* defval)
 {
-	int32_t vv = value;
-	int32_t vvd = defval ? *defval : value - 1;
-	Serialize(arc, key, vv, &vvd);
-	value = (int8_t)vv;
-	return arc;
+	return std::numeric_limits<char>::is_signed ? Serialize(arc, key, (signed char&)value, (signed char*)defval) : Serialize(arc, key, (unsigned char&)value, (unsigned char*)defval);
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, int8_t &value, int8_t *defval)
+FSerializer &Serialize(FSerializer &arc, const char *key, signed char &value, signed char *defval)
 {
 	int32_t vv = value;
 	int32_t vvd = defval? *defval : value-1;
 	Serialize(arc, key, vv, &vvd);
-	value = (int8_t)vv;
+	value = (signed char)vv;
 	return arc;
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, uint8_t &value, uint8_t *defval)
+FSerializer &Serialize(FSerializer &arc, const char *key, unsigned char &value, unsigned char *defval)
 {
 	uint32_t vv = value;
 	uint32_t vvd = defval ? *defval : value - 1;
 	Serialize(arc, key, vv, &vvd);
-	value = (uint8_t)vv;
+	value = (unsigned char)vv;
 	return arc;
 }
 

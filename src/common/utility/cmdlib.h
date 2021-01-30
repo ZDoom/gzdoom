@@ -99,5 +99,7 @@ inline void fillshort(void* buff, size_t count, uint16_t clear)
 	}
 }
 
+template<typename T> inline constexpr T Sgn(const T& val) { return (val > 0) - (val < 0); }
+
 
 #endif

@@ -520,8 +520,8 @@ struct FDynamicColormap;
 
 struct FLinkedSector
 {
-	sector_t *Sector;
-	int Type;
+	sector_t *Sector = nullptr;
+	int Type = 0;
 };
 
 

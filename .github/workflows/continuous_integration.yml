@@ -51,14 +51,14 @@ jobs:
         - {
             name: "Linux Clang 6",
             os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-6.0 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-6.0",
+            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0",
             deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev",
             build_type: "Debug"
           }
         - {
             name: "Linux Clang 9",
             os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-9 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-9 \
+            extra_options: "-DCMAKE_C_COMPILER=clang-9 -DCMAKE_CXX_COMPILER=clang++-9 \
                             -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
             deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
             build_type: "Release"

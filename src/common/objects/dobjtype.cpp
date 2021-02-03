@@ -706,6 +706,9 @@ int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction 
 						if (!(parentfunc->Variants[0].ArgFlags[a] & VARF_Optional)) return -1;
 					}
 
+
+					proto = variant->Proto = NewPrototype(proto->ReturnTypes, proto->ArgumentTypes);
+
 					// Todo: extend the prototype
 					for (unsigned a = proto->ArgumentTypes.Size(); a < vproto->ArgumentTypes.Size(); a++)
 					{

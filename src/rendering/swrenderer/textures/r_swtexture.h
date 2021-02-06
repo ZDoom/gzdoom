@@ -104,7 +104,7 @@ public:
 	void GenerateBgraFromBitmap(const FBitmap &bitmap);
 	void CreatePixelsBgraWithMipmaps();
 	void GenerateBgraMipmaps();
-	void GenerateBgraMipmapsFast();
+	void GenerateBgraMipmapsFast(uint32_t *src = nullptr);
 	int MipmapLevels();
 	
 	// Returns true if GetPixelsBgra includes mipmaps

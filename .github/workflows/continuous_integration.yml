@@ -42,9 +42,9 @@ jobs:
             build_type: "RelWithDebInfo"
           }
         - {
-            name: "Linux GCC 9",
+            name: "Linux GCC 10",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-9",
+            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-10 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10",
             deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk-3-dev",
             build_type: "Debug"
           }

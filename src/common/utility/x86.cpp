@@ -252,6 +252,9 @@ FString DumpCPUInfo(const CPUInfo *cpu)
 		if (cpu->bSSSE3)		out += (" SSSE3");
 		if (cpu->bSSE41)		out += (" SSE4.1");
 		if (cpu->bSSE42)		out += (" SSE4.2");
+		if (cpu->bAVX)			out += (" AVX");
+		if (cpu->bF16C)			out += (" F16C");
+		if (cpu->bFMA3)			out += (" FMA3");
 		if (cpu->b3DNow)		out += (" 3DNow!");
 		if (cpu->b3DNowPlus)	out += (" 3DNow!+");
 		if (cpu->HyperThreading)	out += (" HyperThreading");

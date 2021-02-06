@@ -128,7 +128,6 @@ struct CPUInfo	// 92 bytes
 
 
 extern CPUInfo CPU;
-struct PalEntry;
 
 void CheckCPUID (CPUInfo *cpu);
 FString DumpCPUInfo (const CPUInfo *cpu);

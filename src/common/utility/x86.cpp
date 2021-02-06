@@ -81,50 +81,6 @@ void CheckCPUID(CPUInfo *cpu)
 
 	cpu->DataL1LineSize = 32;	// Assume a 32-byte cache line
 
-#if !defined(_M_IX86) && !defined(__i386__) && !defined(_M_X64) && !defined(__amd64__)
-	return;
-#else
-
-#if defined(_M_IX86) || defined(__i386__)
-	// Old 486s do not have CPUID, so we must test for its presence.
-	// This code is adapted from the samples in AMD's document
-	// entitled "AMD-K6 MMX Processor Multimedia Extensions."
-#ifndef __GNUC__
-	__asm
-	{
-		pushfd				// save EFLAGS
-		pop eax				// store EFLAGS in EAX
-		mov ecx,eax			// save in ECX for later testing
-		xor eax,0x00200000	// toggle bit 21
-		push eax			// put to stack
-		popfd				// save changed EAX to EFLAGS
-		pushfd				// push EFLAGS to TOS
-		pop eax				// store EFLAGS in EAX
-		cmp eax,ecx			// see if bit 21 has changed
-		jne haveid			// if no change, then no CPUID
-	}
-	return;
-haveid:
-#else
-	int oldfd, newfd;
-
-	__asm__ __volatile__("\t"
-		"pushf\n\t"
-		"popl %0\n\t"
-		"movl %0,%1\n\t"
-		"xorl $0x200000,%0\n\t"
-		"pushl %0\n\t"
-		"popf\n\t"
-		"pushf\n\t"
-		"popl %0\n\t"
-		: "=r" (newfd), "=r" (oldfd));
-	if (oldfd == newfd)
-	{
-		return;
-	}
-#endif
-#endif
-
 	// Get vendor ID
 	__cpuid(foo, 0);
 	cpu->dwVendorID[0] = foo[1];
@@ -198,7 +154,6 @@ haveid:
 			cpu->FeatureFlags[3] = foo[3];	// AMD feature flags
 		}
 	}
-#endif
 }
 
 FString DumpCPUInfo(const CPUInfo *cpu)

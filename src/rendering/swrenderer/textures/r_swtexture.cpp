@@ -546,53 +546,6 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 
 //==========================================================================
 //
-// 
-//
-//==========================================================================
-
-void FSoftwareTexture::GenerateBgraMipmapsFast()
-{
-	uint32_t *src = PixelsBgra.Data();
-	uint32_t *dest = src + GetPhysicalWidth() * GetPhysicalHeight();
-	int levels = MipmapLevels();
-	for (int i = 1; i < levels; i++)
-	{
-		int srcw = MAX(GetPhysicalWidth() >> (i - 1), 1);
-		int srch = MAX(GetPhysicalHeight() >> (i - 1), 1);
-		int w = MAX(GetPhysicalWidth() >> i, 1);
-		int h = MAX(GetPhysicalHeight() >> i, 1);
-
-		for (int x = 0; x < w; x++)
-		{
-			int sx0 = x * 2;
-			int sx1 = MIN((x + 1) * 2, srcw - 1);
-
-			for (int y = 0; y < h; y++)
-			{
-				int sy0 = y * 2;
-				int sy1 = MIN((y + 1) * 2, srch - 1);
-
-				uint32_t src00 = src[sy0 + sx0 * srch];
-				uint32_t src01 = src[sy1 + sx0 * srch];
-				uint32_t src10 = src[sy0 + sx1 * srch];
-				uint32_t src11 = src[sy1 + sx1 * srch];
-
-				uint32_t alpha = (APART(src00) + APART(src01) + APART(src10) + APART(src11) + 2) / 4;
-				uint32_t red = (RPART(src00) + RPART(src01) + RPART(src10) + RPART(src11) + 2) / 4;
-				uint32_t green = (GPART(src00) + GPART(src01) + GPART(src10) + GPART(src11) + 2) / 4;
-				uint32_t blue = (BPART(src00) + BPART(src01) + BPART(src10) + BPART(src11) + 2) / 4;
-
-				dest[y + x * h] = (alpha << 24) | (red << 16) | (green << 8) | blue;
-			}
-		}
-
-		src = dest;
-		dest += w * h;
-	}
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================

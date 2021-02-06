@@ -24,7 +24,6 @@
 #include "templates.h"
 #include "poly_thread.h"
 #include "screen_scanline_setup.h"
-#include "x86.h"
 #include <cmath>
 
 #ifndef NO_SSE

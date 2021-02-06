@@ -40,7 +40,6 @@
 
 #include "gl_sysfb.h"
 #include "hardware.h"
-#include "x86.h"
 #include "templates.h"
 #include "version.h"
 #include "c_console.h"

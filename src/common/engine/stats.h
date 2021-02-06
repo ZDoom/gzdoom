@@ -97,9 +97,6 @@ private:
 #else
 
 // Windows and macOS
-#ifndef _M_ARM
-#include "x86.h"
-#endif
 
 extern double PerfToSec, PerfToMillisec;
 

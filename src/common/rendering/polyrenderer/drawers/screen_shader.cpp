@@ -24,7 +24,6 @@
 #include "templates.h"
 #include "poly_thread.h"
 #include "screen_scanline_setup.h"
-#include "x86.h"
 #include <cmath>
 
 static uint32_t SampleTexture(uint32_t u, uint32_t v, const void* texPixels, int texWidth, int texHeight, bool texBgra)

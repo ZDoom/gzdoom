@@ -48,7 +48,6 @@
 #include <sys/ioctl.h>
 
 #include <SDL.h>
-#include "x86.h"
 
 #include "version.h"
 #include "cmdlib.h"

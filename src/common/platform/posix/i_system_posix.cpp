@@ -37,7 +37,6 @@
 #include "cmdlib.h"
 #include "i_system.h"
 #include "gameconfigfile.h"
-#include "x86.h"
 
 
 bool I_WriteIniFailed()

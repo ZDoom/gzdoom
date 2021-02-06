@@ -28,7 +28,6 @@
 #include "model.h"
 #include "poly_thread.h"
 #include "screen_triangle.h"
-#include "x86.h"
 
 #ifndef NO_SSE
 #include <immintrin.h>

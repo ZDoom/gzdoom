@@ -63,7 +63,6 @@
 
 #include "gi.h"
 #include "stats.h"
-#include "x86.h"
 #include <vector>
 
 ;

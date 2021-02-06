@@ -30,7 +30,6 @@
 #include "screen_blend.h"
 #include "screen_scanline_setup.h"
 #include "screen_shader.h"
-#include "x86.h"
 #include <cmath>
 
 static void WriteDepth(int y, int x0, int x1, PolyTriangleThreadData* thread)

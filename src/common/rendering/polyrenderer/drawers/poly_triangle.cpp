@@ -29,7 +29,6 @@
 #include "poly_triangle.h"
 #include "poly_thread.h"
 #include "screen_triangle.h"
-#include "x86.h"
 
 /////////////////////////////////////////////////////////////////////////////
 

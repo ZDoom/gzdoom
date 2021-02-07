@@ -133,7 +133,7 @@ void I_DetectOS()
 
 	struct utsname unameInfo;
 
-	if (uname(&unameInfo) == 0)
+	if (uname(&unameInfo) >= 0)
 	{
 		const char* const separator = operatingSystem.Len() > 0 ? ", " : "";
 		operatingSystem.AppendFormat("%s%s %s on %s", separator, unameInfo.sysname, unameInfo.release, unameInfo.machine);

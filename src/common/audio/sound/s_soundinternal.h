@@ -209,7 +209,7 @@ protected:
 
 	// the complete set of sound effects
 	TArray<sfxinfo_t> S_sfx;
-	FRolloffInfo S_Rolloff;
+	FRolloffInfo S_Rolloff{};
 	TArray<uint8_t> S_SoundCurve;
 	TMap<int, int> ResIdMap;
 	TArray<FRandomSoundList> S_rnd;

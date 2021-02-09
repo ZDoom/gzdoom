@@ -20,10 +20,11 @@ extern TArray<FSpriteModelFrame> SpriteModelFrames;
 
 struct FSpriteModelFrame
 {
-	int modelIDs[MAX_MODELS_PER_FRAME];
-	FTextureID skinIDs[MAX_MODELS_PER_FRAME];
-	FTextureID surfaceskinIDs[MAX_MODELS_PER_FRAME][MD3_MAX_SURFACES];
-	int modelframes[MAX_MODELS_PER_FRAME];
+	uint8_t modelsAmount = 0;
+	TArray<int> modelIDs;
+	TArray<FTextureID> skinIDs;
+	TArray<FTextureID> surfaceskinIDs;
+	TArray<int> modelframes;
 	float xscale, yscale, zscale;
 	// [BB] Added zoffset, rotation parameters and flags.
 	// Added xoffset, yoffset

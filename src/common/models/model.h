@@ -15,7 +15,6 @@ void FlushModels();
 extern TDeletingArray<FModel*> Models;
 extern TArray<FSpriteModelFrame> SpriteModelFrames;
 
-#define MAX_MODELS_PER_FRAME 4
 #define MD3_MAX_SURFACES	32
 
 struct FSpriteModelFrame

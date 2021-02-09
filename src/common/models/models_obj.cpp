@@ -670,7 +670,7 @@ void FOBJModel::AddSkins(uint8_t* hitlist)
 {
 	for (size_t i = 0; i < surfaces.Size(); i++)
 	{
-		int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
+		size_t ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
 		if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
 		{
 			// Precache skins manually reassigned by the user.

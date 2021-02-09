@@ -267,8 +267,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			}
 		}
 	}
-
-	for (int i = 0; i< smf->modelsAmount; i++)
+	for (int i = 0; i < smf->modelsAmount; i++)
 	{
 		if (smf->modelIDs[i] != -1)
 		{
@@ -318,11 +317,16 @@ void InitModels()
 		memset(&smf, 0, sizeof(smf));
 		smf.isVoxel = true;
 
+		smf.modelsAmount = 1;
+		smf.modelframes.Alloc(1);
+		smf.modelframes[0] = -1;
+
 		smf.modelIDs.Alloc(1);
 		smf.modelIDs[0] = VoxelDefs[i]->Voxel->VoxelIndex;
 
 		smf.skinIDs.Alloc(1);
 		smf.skinIDs[0] = md->GetPaletteTexture();
+
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
 		if (VoxelDefs[i]->PlacedSpin != 0)
@@ -348,6 +352,7 @@ void InitModels()
 			}
 			SpriteModelFrames.Push(smf);
 		}
+		
 	}
 
 	int Lump;
@@ -411,7 +416,6 @@ static void ParseModelDefLump(int Lump)
 					smf.modelsAmount = index + 1;
 				}
 			}
-
 			smf.modelIDs.Alloc(smf.modelsAmount);
 			smf.skinIDs.Alloc(smf.modelsAmount);
 			smf.surfaceskinIDs.Alloc(smf.modelsAmount * MD3_MAX_SURFACES);

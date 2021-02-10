@@ -231,7 +231,6 @@ namespace swrenderer
 	{
 		auto vis = this;
 
-		int spacing;
 		uint8_t color = vis->Light.BaseColormap->Maps[vis->startfrac];
 		int yl = vis->y1;
 		int ycount = vis->y2 - yl + 1;
@@ -250,33 +249,18 @@ namespace swrenderer
 		uint32_t alpha = fglevel * 256 / FRACUNIT;
 		
 		auto viewport = thread->Viewport.get();
-
-		spacing = viewport->RenderTarget->GetPitch();
+		auto drawers = thread->Drawers(viewport);
 
 		uint32_t fracstepx = PARTICLE_TEXTURE_SIZE * FRACUNIT / countbase;
 		uint32_t fracposx = fracstepx / 2;
 
 		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
-		if (viewport->RenderTarget->IsBgra())
+		for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 		{
-			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
-			{
-				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
-					continue;
-				uint32_t *dest = (uint32_t*)viewport->GetDest(x, yl);
-				thread->DrawQueue->Push<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
-			}
-		}
-		else
-		{
-			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
-			{
-				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
-					continue;
-				uint8_t *dest = viewport->GetDest(x, yl);
-				thread->DrawQueue->Push<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
-			}
+			if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
+				continue;
+			drawers->DrawParticleColumn(x, yl, ycount, fg, alpha, fracposx);
 		}
 	}
 

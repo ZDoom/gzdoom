@@ -47,12 +47,10 @@ namespace swrenderer
 	}
 
 	template<typename BlendT>
-	class DrawWall32T : public DrawWallCommand
+	class DrawWall32T
 	{
 	public:
-		DrawWall32T(const WallDrawerArgs &drawerargs) : DrawWallCommand(drawerargs) { }
-
-		void DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args) override
+		static void DrawColumn(const WallColumnDrawerArgs& args)
 		{
 			using namespace DrawWall32TModes;
 
@@ -62,23 +60,26 @@ namespace swrenderer
 			if (shade_constants.simple_shade)
 			{
 				if (is_nearest_filter)
-					Loop<SimpleShade, NearestFilter>(thread, args, shade_constants);
+					Loop<SimpleShade, NearestFilter>(args, shade_constants);
 				else
-					Loop<SimpleShade, LinearFilter>(thread, args, shade_constants);
+					Loop<SimpleShade, LinearFilter>(args, shade_constants);
 			}
 			else
 			{
 				if (is_nearest_filter)
-					Loop<AdvancedShade, NearestFilter>(thread, args, shade_constants);
+					Loop<AdvancedShade, NearestFilter>(args, shade_constants);
 				else
-					Loop<AdvancedShade, LinearFilter>(thread, args, shade_constants);
+					Loop<AdvancedShade, LinearFilter>(args, shade_constants);
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		FORCEINLINE void Loop(DrawerThread *thread, const WallColumnDrawerArgs& args, ShadeConstants shade_constants)
+		FORCEINLINE static void Loop(const WallColumnDrawerArgs& args, ShadeConstants shade_constants)
 		{
 			using namespace DrawWall32TModes;
+
+			int count = args.Count();
+			if (count <= 0) return;
 
 			const uint32_t *source = (const uint32_t*)args.TexturePixels();
 			const uint32_t *source2 = (const uint32_t*)args.TexturePixels2();
@@ -115,7 +116,6 @@ namespace swrenderer
 				desaturate = 0;
 			}
 
-			int count = args.Count();
 			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			uint32_t fracstep = args.TextureVStep();
 			uint32_t frac = args.TextureVPos();
@@ -125,15 +125,8 @@ namespace swrenderer
 
 			auto lights = args.dc_lights;
 			auto num_lights = args.dc_num_lights;
-			float viewpos_z = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
-			float step_viewpos_z = args.dc_viewpos_step.Z * thread->num_cores;
-
-			count = thread->count_for_thread(dest_y, count);
-			if (count <= 0) return;
-			frac += thread->skipped_by_thread(dest_y) * fracstep;
-			dest = thread->dest_for_thread(dest_y, pitch, dest);
-			fracstep *= thread->num_cores;
-			pitch *= thread->num_cores;
+			float viewpos_z = args.dc_viewpos.Z;
+			float step_viewpos_z = args.dc_viewpos_step.Z;
 
 			if (FilterModeT::Mode == (int)FilterModes::Linear)
 			{
@@ -167,7 +160,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT>
-		FORCEINLINE BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
+		FORCEINLINE static BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
 		{
 			using namespace DrawWall32TModes;
 
@@ -203,7 +196,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		FORCEINLINE BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_z)
+		FORCEINLINE static BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -225,7 +218,7 @@ namespace swrenderer
 			return AddLights(material, fgcolor, lights, num_lights, viewpos_z);
 		}
 
-		FORCEINLINE BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_z)
+		FORCEINLINE static BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -277,7 +270,7 @@ namespace swrenderer
 			return fgcolor;
 		}
 
-		FORCEINLINE BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, unsigned int ifgcolor, uint32_t srcalpha, uint32_t destalpha)
+		FORCEINLINE static BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, unsigned int ifgcolor, uint32_t srcalpha, uint32_t destalpha)
 		{
 			using namespace DrawWall32TModes;
 

@@ -51,14 +51,9 @@ namespace swrenderer
 	}
 
 	template<typename BlendT>
-	class DrawSpan32T : public DrawerCommand
+	class DrawSpan32T
 	{
-	protected:
-		SpanDrawerArgs args;
-
 	public:
-		DrawSpan32T(const SpanDrawerArgs &drawerargs) : args(drawerargs) { }
-
 		struct TextureData
 		{
 			uint32_t width;
@@ -72,12 +67,10 @@ namespace swrenderer
 			const uint32_t *source;
 		};
 
-		void Execute(DrawerThread *thread) override
+		static void DrawColumn(const SpanDrawerArgs& args)
 		{
 			using namespace DrawSpan32TModes;
 
-			if (thread->line_skipped_by_thread(args.DestY())) return;
-			
 			TextureData texdata;
 			texdata.width = args.TextureWidth();
 			texdata.height = args.TextureHeight();
@@ -119,16 +112,16 @@ namespace swrenderer
 				if (is_nearest_filter)
 				{
 					if (is_64x64)
-						Loop<SimpleShade, NearestFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<SimpleShade, NearestFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<SimpleShade, NearestFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<SimpleShade, NearestFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 				else
 				{
 					if (is_64x64)
-						Loop<SimpleShade, LinearFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<SimpleShade, LinearFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<SimpleShade, LinearFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<SimpleShade, LinearFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 			}
 			else
@@ -136,22 +129,22 @@ namespace swrenderer
 				if (is_nearest_filter)
 				{
 					if (is_64x64)
-						Loop<AdvancedShade, NearestFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, NearestFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<AdvancedShade, NearestFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, NearestFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 				else
 				{
 					if (is_64x64)
-						Loop<AdvancedShade, LinearFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, LinearFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<AdvancedShade, LinearFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, LinearFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT, typename TextureSizeT>
-		FORCEINLINE void Loop(DrawerThread *thread, TextureData texdata, ShadeConstants shade_constants)
+		FORCEINLINE static void Loop(const SpanDrawerArgs& args, TextureData texdata, ShadeConstants shade_constants)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -229,7 +222,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT, typename TextureSizeT>
-		FORCEINLINE uint32_t Sample(uint32_t width, uint32_t height, uint32_t xone, uint32_t yone, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, const uint32_t *source)
+		FORCEINLINE static uint32_t Sample(uint32_t width, uint32_t height, uint32_t xone, uint32_t yone, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, const uint32_t *source)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -291,7 +284,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		FORCEINLINE BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_x)
+		FORCEINLINE static BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_x)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -313,7 +306,7 @@ namespace swrenderer
 			return AddLights(material, fgcolor, lights, num_lights, viewpos_x);
 		}
 
-		FORCEINLINE BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_x)
+		FORCEINLINE static BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_x)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -365,7 +358,7 @@ namespace swrenderer
 			return fgcolor;
 		}
 
-		FORCEINLINE BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t srcalpha, uint32_t destalpha, unsigned int ifgcolor)
+		FORCEINLINE static BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t srcalpha, uint32_t destalpha, unsigned int ifgcolor)
 		{
 			using namespace DrawSpan32TModes;
 

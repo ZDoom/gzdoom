@@ -53,6 +53,7 @@
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "r_memory.h"
+#include "common/rendering/polyrenderer/drawers/poly_thread.h"
 
 namespace swrenderer
 {
@@ -63,7 +64,6 @@ namespace swrenderer
 		FrameMemory.reset(new RenderMemory());
 		Viewport.reset(new RenderViewport());
 		Light.reset(new LightVisibility());
-		DrawQueue.reset(new DrawerCommandQueue(FrameMemory.get()));
 		OpaquePass.reset(new RenderOpaquePass(this));
 		TranslucentPass.reset(new RenderTranslucentPass(this));
 		SpriteList.reset(new VisibleSpriteList());
@@ -73,8 +73,9 @@ namespace swrenderer
 		PlaneList.reset(new VisiblePlaneList(this));
 		DrawSegments.reset(new DrawSegmentList(this));
 		ClipSegments.reset(new RenderClipSegment());
-		tc_drawers.reset(new SWTruecolorDrawers(DrawQueue));
-		pal_drawers.reset(new SWPalDrawers(DrawQueue));
+		Poly.reset(new PolyTriangleThreadData(0, 1, 0, 1, 0, screen->GetHeight()));
+		tc_drawers.reset(new SWTruecolorDrawers(this));
+		pal_drawers.reset(new SWPalDrawers(this));
 	}
 
 	RenderThread::~RenderThread()

@@ -73,7 +73,7 @@ bool r_modelscene = false;
 
 namespace swrenderer
 {
-	cycle_t WallCycles, PlaneCycles, MaskedCycles, DrawerWaitCycles;
+	cycle_t WallCycles, PlaneCycles, MaskedCycles;
 	
 	RenderScene::RenderScene()
 	{
@@ -131,7 +131,6 @@ namespace swrenderer
 				for (int i = 0; i < size; i++)
 					dest[i] = bgracolor.d;
 			}
-			DrawerThreads::ResetDebugDrawPos();
 		}
 
 		RenderActorView(player->mo, true, false);
@@ -141,11 +140,8 @@ namespace swrenderer
 			auto copyqueue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
 			copyqueue->Push<MemcpyCommand>(videobuffer, bufferpitch, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
 			DrawerThreads::Execute(copyqueue);
+			DrawerThreads::WaitForWorkers();
 		}
-
-		DrawerWaitCycles.Clock();
-		DrawerThreads::WaitForWorkers();
-		DrawerWaitCycles.Unclock();
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool renderPlayerSprites, bool dontmaplines)
@@ -153,7 +149,6 @@ namespace swrenderer
 		WallCycles.Reset();
 		PlaneCycles.Reset();
 		MaskedCycles.Reset();
-		DrawerWaitCycles.Reset();
 		
 		R_SetupFrame(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, actor);
 
@@ -194,14 +189,7 @@ namespace swrenderer
 
 	void RenderScene::RenderPSprites()
 	{
-		// Player sprites needs to be rendered after all the slices because they may be hardware accelerated.
-		// If they are not hardware accelerated the drawers must run after all sliced drawers finished.
-		DrawerWaitCycles.Clock();
-		DrawerThreads::WaitForWorkers();
-		DrawerWaitCycles.Unclock();
-		MainThread()->DrawQueue->Clear();
 		MainThread()->PlayerSprites->Render();
-		DrawerThreads::Execute(MainThread()->DrawQueue);
 	}
 
 	void RenderScene::RenderThreadSlices()
@@ -267,7 +255,6 @@ namespace swrenderer
 
 	void RenderScene::RenderThreadSlice(RenderThread *thread)
 	{
-		thread->DrawQueue->Clear();
 		thread->FrameMemory->Clear();
 		thread->Clip3D->Cleanup();
 		thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
@@ -305,8 +292,6 @@ namespace swrenderer
 
 			thread->TranslucentPass->Render();
 		}
-
-		DrawerThreads::Execute(thread->DrawQueue);
 	}
 
 	void RenderScene::StartThreads(size_t numThreads)
@@ -390,9 +375,6 @@ namespace swrenderer
 
 		// Render:
 		RenderActorView(actor, false, dontmaplines);
-		DrawerWaitCycles.Clock();
-		DrawerThreads::WaitForWorkers();
-		DrawerWaitCycles.Unclock();
 
 		viewport->RenderingToCanvas = false;
 
@@ -418,12 +400,12 @@ namespace swrenderer
 	ADD_STAT(fps)
 	{
 		FString out;
-		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  drawers=%04.1f ms",
-			FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS(), DrawerWaitCycles.TimeMS());
+		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
+			FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
 		return out;
 	}
 
-	static double f_acc, w_acc, p_acc, m_acc, drawer_acc;
+	static double f_acc, w_acc, p_acc, m_acc;
 	static int acc_c;
 
 	ADD_STAT(fps_accumulated)
@@ -432,11 +414,10 @@ namespace swrenderer
 		w_acc += WallCycles.TimeMS();
 		p_acc += PlaneCycles.TimeMS();
 		m_acc += MaskedCycles.TimeMS();
-		drawer_acc += DrawerWaitCycles.TimeMS();
 		acc_c++;
 		FString out;
-		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  drawers=%04.1f ms  %d counts",
-			f_acc / acc_c, w_acc / acc_c, p_acc / acc_c, m_acc / acc_c, drawer_acc / acc_c, acc_c);
+		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  %d counts",
+			f_acc / acc_c, w_acc / acc_c, p_acc / acc_c, m_acc / acc_c, acc_c);
 		Printf(PRINT_LOG, "%s\n", out.GetChars());
 		return out;
 	}

@@ -25,9 +25,8 @@
 #include <memory>
 #include <thread>
 
-class DrawerCommandQueue;
-typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 class RenderMemory;
+class PolyTriangleThreadData;
 struct FDynamicLight;
 
 EXTERN_CVAR(Bool, r_models);
@@ -51,6 +50,7 @@ namespace swrenderer
 	class SWPixelFormatDrawers;
 	class SWTruecolorDrawers;
 	class SWPalDrawers;
+	class WallColumnDrawerArgs;
 
 	class RenderThread
 	{
@@ -75,7 +75,7 @@ namespace swrenderer
 		std::unique_ptr<RenderClipSegment> ClipSegments;
 		std::unique_ptr<RenderViewport> Viewport;
 		std::unique_ptr<LightVisibility> Light;
-		DrawerCommandQueuePtr DrawQueue;
+		std::unique_ptr<PolyTriangleThreadData> Poly;
 
 		TArray<FDynamicLight*> AddedLightsArray;
 

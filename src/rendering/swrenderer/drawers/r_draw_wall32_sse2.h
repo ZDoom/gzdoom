@@ -47,12 +47,10 @@ namespace swrenderer
 	}
 
 	template<typename BlendT>
-	class DrawWall32T : public DrawWallCommand
+	class DrawWall32T
 	{
 	public:
-		DrawWall32T(const WallDrawerArgs &drawerargs) : DrawWallCommand(drawerargs) { }
-
-		void DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args) override
+		static void DrawColumn(const WallColumnDrawerArgs& args)
 		{
 			using namespace DrawWall32TModes;
 
@@ -62,21 +60,21 @@ namespace swrenderer
 			if (shade_constants.simple_shade)
 			{
 				if (is_nearest_filter)
-					Loop<SimpleShade, NearestFilter>(thread, args, shade_constants);
+					Loop<SimpleShade, NearestFilter>(args, shade_constants);
 				else
-					Loop<SimpleShade, LinearFilter>(thread, args, shade_constants);
+					Loop<SimpleShade, LinearFilter>(args, shade_constants);
 			}
 			else
 			{
 				if (is_nearest_filter)
-					Loop<AdvancedShade, NearestFilter>(thread, args, shade_constants);
+					Loop<AdvancedShade, NearestFilter>(args, shade_constants);
 				else
-					Loop<AdvancedShade, LinearFilter>(thread, args, shade_constants);
+					Loop<AdvancedShade, LinearFilter>(args, shade_constants);
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		FORCEINLINE void VECTORCALL Loop(DrawerThread *thread, const WallColumnDrawerArgs& args, ShadeConstants shade_constants)
+		FORCEINLINE static void VECTORCALL Loop(const WallColumnDrawerArgs& args, ShadeConstants shade_constants)
 		{
 			using namespace DrawWall32TModes;
 
@@ -110,6 +108,8 @@ namespace swrenderer
 			}
 
 			int count = args.Count();
+			if (count <= 0) return;
+
 			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			uint32_t fracstep = args.TextureVStep();
 			uint32_t frac = args.TextureVPos();
@@ -119,17 +119,10 @@ namespace swrenderer
 
 			auto lights = args.dc_lights;
 			auto num_lights = args.dc_num_lights;
-			float vpz = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
-			float stepvpz = args.dc_viewpos_step.Z * thread->num_cores;
+			float vpz = args.dc_viewpos.Z;
+			float stepvpz = args.dc_viewpos_step.Z;
 			__m128 viewpos_z = _mm_setr_ps(vpz, vpz + stepvpz, 0.0f, 0.0f);
 			__m128 step_viewpos_z = _mm_set1_ps(stepvpz * 2.0f);
-
-			count = thread->count_for_thread(dest_y, count);
-			if (count <= 0) return;
-			frac += thread->skipped_by_thread(dest_y) * fracstep;
-			dest = thread->dest_for_thread(dest_y, pitch, dest);
-			fracstep *= thread->num_cores;
-			pitch *= thread->num_cores;
 
 			if (FilterModeT::Mode == (int)FilterModes::Linear)
 			{
@@ -203,7 +196,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT>
-		FORCEINLINE unsigned int VECTORCALL Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
+		FORCEINLINE static unsigned int VECTORCALL Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
 		{
 			using namespace DrawWall32TModes;
 
@@ -239,7 +232,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		FORCEINLINE __m128i VECTORCALL Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
+		FORCEINLINE static __m128i VECTORCALL Shade(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -271,7 +264,7 @@ namespace swrenderer
 			return AddLights(material, fgcolor, lights, num_lights, viewpos_z);
 		}
 
-		FORCEINLINE __m128i VECTORCALL AddLights(__m128i material, __m128i fgcolor, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
+		FORCEINLINE static __m128i VECTORCALL AddLights(__m128i material, __m128i fgcolor, const DrawerLight *lights, int num_lights, __m128 viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -320,7 +313,7 @@ namespace swrenderer
 			return fgcolor;
 		}
 
-		FORCEINLINE __m128i VECTORCALL Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, uint32_t srcalpha, uint32_t destalpha)
+		FORCEINLINE static __m128i VECTORCALL Blend(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, uint32_t srcalpha, uint32_t destalpha)
 		{
 			using namespace DrawWall32TModes;
 

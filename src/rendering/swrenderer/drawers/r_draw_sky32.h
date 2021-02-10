@@ -27,16 +27,10 @@
 
 namespace swrenderer
 {
-
-	class DrawSkySingle32Command : public DrawerCommand
+	class DrawSkySingle32Command
 	{
-	protected:
-		SkyDrawerArgs args;
-		
 	public:
-		DrawSkySingle32Command(const SkyDrawerArgs &args) : args(args) { }
-		
-		void Execute(DrawerThread *thread) override
+		static void DrawColumn(const SkyDrawerArgs& args)
 		{
 			uint32_t *dest = (uint32_t *)args.Dest();
 			int pitch = args.Viewport()->RenderTarget->GetPitch();
@@ -50,9 +44,7 @@ namespace swrenderer
 			uint32_t solid_bottom = args.SolidBottomColor();
 			bool fadeSky = args.FadeSky();
 
-			int num_cores = thread->num_cores;
-			int skipped = thread->skipped_by_thread(args.DestY());
-			int count = skipped + thread->count_for_thread(args.DestY(), args.Count()) * num_cores;
+			int count = args.Count();
 
 			// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 			int start_fade = 2; // How fast it should fade out
@@ -66,15 +58,8 @@ namespace swrenderer
 			start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
 			end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
-			dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-			frac += fracstep * skipped;
-			fracstep *= num_cores;
-			pitch *= num_cores;
-
 			if (!fadeSky)
 			{
-				int count = thread->count_for_thread(args.DestY(), args.Count());
-
 				for (int index = 0; index < count; index++)
 				{
 					uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
@@ -89,7 +74,7 @@ namespace swrenderer
 			BgraColor solid_top_fill = solid_top;
 			BgraColor solid_bottom_fill = solid_bottom;
 
-			int index = skipped;
+			int index = 0;
 
 			// Top solid color:
 			while (index < start_fadetop_y)
@@ -97,7 +82,7 @@ namespace swrenderer
 				*dest = solid_top;
 				dest += pitch;
 				frac += fracstep;
-				index += num_cores;
+				index++;
 			}
 
 			// Top fade:
@@ -117,7 +102,7 @@ namespace swrenderer
 
 				frac += fracstep;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 
 			// Textured center:
@@ -128,7 +113,7 @@ namespace swrenderer
 
 				frac += fracstep;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 
 			// Fade bottom:
@@ -148,7 +133,7 @@ namespace swrenderer
 
 				frac += fracstep;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 
 			// Bottom solid color:
@@ -156,20 +141,15 @@ namespace swrenderer
 			{
 				*dest = solid_bottom;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 		}
 	};
 	
-	class DrawSkyDouble32Command : public DrawerCommand
+	class DrawSkyDouble32Command
 	{
-	protected:
-		SkyDrawerArgs args;
-		
 	public:
-		DrawSkyDouble32Command(const SkyDrawerArgs &args) : args(args) { }
-		
-		void Execute(DrawerThread *thread) override
+		static void DrawColumn(const SkyDrawerArgs& args)
 		{
 			uint32_t *dest = (uint32_t *)args.Dest();
 			int pitch = args.Viewport()->RenderTarget->GetPitch();
@@ -181,9 +161,7 @@ namespace swrenderer
 			int32_t frac = args.TextureVPos();
 			int32_t fracstep = args.TextureVStep();
 
-			int num_cores = thread->num_cores;
-			int skipped = thread->skipped_by_thread(args.DestY());
-			int count = skipped + thread->count_for_thread(args.DestY(), args.Count()) * num_cores;
+			int count = args.Count();
 
 			uint32_t solid_top = args.SolidTopColor();
 			uint32_t solid_bottom = args.SolidBottomColor();
@@ -201,15 +179,8 @@ namespace swrenderer
 			start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
 			end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
 
-			dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-			frac += fracstep * skipped;
-			fracstep *= num_cores;
-			pitch *= num_cores;
-
 			if (!fadeSky)
 			{
-				count = thread->count_for_thread(args.DestY(), count);
-
 				for (int index = 0; index < count; index++)
 				{
 					uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
@@ -231,7 +202,7 @@ namespace swrenderer
 			BgraColor solid_top_fill = solid_top;
 			BgraColor solid_bottom_fill = solid_bottom;
 
-			int index = skipped;
+			int index = 0;
 
 			// Top solid color:
 			while (index < start_fadetop_y)
@@ -239,7 +210,7 @@ namespace swrenderer
 				*dest = solid_top;
 				dest += pitch;
 				frac += fracstep;
-				index += num_cores;
+				index++;
 			}
 
 			// Top fade:
@@ -262,7 +233,7 @@ namespace swrenderer
 
 				frac += fracstep;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 
 			// Textured center:
@@ -279,7 +250,7 @@ namespace swrenderer
 
 				frac += fracstep;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 
 			// Fade bottom:
@@ -302,7 +273,7 @@ namespace swrenderer
 
 				frac += fracstep;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 
 			// Bottom solid color:
@@ -310,7 +281,7 @@ namespace swrenderer
 			{
 				*dest = solid_bottom;
 				dest += pitch;
-				index += num_cores;
+				index++;
 			}
 		}
 	};

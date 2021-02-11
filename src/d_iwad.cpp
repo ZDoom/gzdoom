@@ -577,6 +577,12 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	// -iwad not found or not specified. Revert back to standard behavior.
 	if (mFoundWads.Size() == numFoundWads) iwadparm = nullptr;
 
+	// Check for symbolic links leading to non-existent files.
+	for (unsigned int i = 0; i < mFoundWads.Size(); i++)
+	{
+		if (!FileExists(mFoundWads[i].mFullPath)) mFoundWads.Delete(i);
+	}
+
 	// Now check if what got collected actually is an IWAD.
 	ValidateIWADs();
 

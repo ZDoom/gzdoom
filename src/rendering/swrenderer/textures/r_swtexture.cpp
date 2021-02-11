@@ -39,7 +39,7 @@
 #include "m_alloc.h"
 #include "imagehelpers.h"
 #include "texturemanager.h"
-
+#include <mutex>
 
 inline EUpscaleFlags scaleFlagFromUseType(ETextureType useType)
 {
@@ -562,15 +562,23 @@ void FSoftwareTexture::FreeAllSpans()
 	}
 }
 
+// Note: this function needs to be thread safe
 FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex)
 {
 	FSoftwareTexture* SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
 	if (!SoftwareTexture)
 	{
-		if (tex->isSoftwareCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
-		else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
-		else SoftwareTexture = new FSoftwareTexture(tex);
-		tex->SetSoftwareTexture(SoftwareTexture);
+		static std::mutex loadmutex;
+		std::unique_lock<std::mutex> lock(loadmutex);
+
+		SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
+		if (!SoftwareTexture)
+		{
+			if (tex->isSoftwareCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
+			else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
+			else SoftwareTexture = new FSoftwareTexture(tex);
+			tex->SetSoftwareTexture(SoftwareTexture);
+		}
 	}
 	return SoftwareTexture;
 }
@@ -582,6 +590,7 @@ CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	R_InitSkyMap();
 }
 
+// Note: this function needs to be thread safe
 FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, bool checkcompat, bool allownull)
 {
 	bool needpal = !vid_nopalsubstitutions && !V_IsTrueColor();

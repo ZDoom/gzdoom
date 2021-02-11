@@ -91,7 +91,8 @@ namespace swrenderer
 	}
 
 	static std::mutex loadmutex;
-	void RenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)	{
+	void RenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)
+	{
 		if (texture == nullptr)
 			return;
 
@@ -116,7 +117,7 @@ namespace swrenderer
 			bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
 			texture->GetPixels(alpha);
 			texture->GetColumn(alpha, 0, &spans);
-	}
+		}
 	}
 
 	static std::mutex polyobjmutex;

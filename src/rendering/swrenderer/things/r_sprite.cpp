@@ -262,8 +262,7 @@ namespace swrenderer
 		{
 			RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 			short portalfloorclip[MAXWIDTH];
-			int x2 = wallc.sx2;
-			for (int x = wallc.sx1; x < x2; x++)
+			for (int x = x1; x < x2; x++)
 			{
 				if (translucentPass->ClipSpriteColumnWithPortals(x, this))
 					portalfloorclip[x] = mceilingclip[x];

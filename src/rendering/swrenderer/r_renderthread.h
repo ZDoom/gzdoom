@@ -92,6 +92,9 @@ namespace swrenderer
 
 		// Setup poly object in a threadsafe manner
 		void PreparePolyObject(subsector_t *sub);
+
+		// Retrieve skycap color in a threadsafe way
+		std::pair<PalEntry, PalEntry> GetSkyCapColor(FSoftwareTexture* tex);
 		
 	private:
 		std::unique_ptr<SWTruecolorDrawers> tc_drawers;

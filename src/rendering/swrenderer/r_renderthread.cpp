@@ -55,6 +55,8 @@
 #include "r_memory.h"
 #include "common/rendering/polyrenderer/drawers/poly_thread.h"
 
+std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
+
 namespace swrenderer
 {
 	RenderThread::RenderThread(RenderScene *scene, bool mainThread)
@@ -118,6 +120,13 @@ namespace swrenderer
 			texture->GetPixels(alpha);
 			texture->GetColumn(alpha, 0, &spans);
 		}
+	}
+
+	std::pair<PalEntry, PalEntry> RenderThread::GetSkyCapColor(FSoftwareTexture* tex)
+	{
+		std::unique_lock<std::mutex> lock(loadmutex);
+		std::pair<PalEntry, PalEntry> colors = R_GetSkyCapColor(tex->GetTexture());
+		return colors;
 	}
 
 	static std::mutex polyobjmutex;

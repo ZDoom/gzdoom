@@ -178,7 +178,8 @@ bool FileReadable(const char *filename)
 #ifndef _WIN32
 	return access (filename, R_OK) == 0;
 #else
-	return _access (filename, 4) == 0;
+	auto wstr = WideString(filename);
+	return _waccess (wstr.c_str(), 4) == 0;
 #endif
 }
 

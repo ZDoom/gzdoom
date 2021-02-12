@@ -2646,7 +2646,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void SWPalDrawers::DrawTiltedSpan(const SpanDrawerArgs& args, const FVector3& plane_sz, const FVector3& plane_su, const FVector3& plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap* basecolormap)
+	void SWPalDrawers::DrawTiltedSpan(const SpanDrawerArgs& args, const FVector3& plane_sz, const FVector3& plane_su, const FVector3& plane_sv, bool is_planeshaded, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap* basecolormap)
 	{
 		int y = args.DestY();
 		int x1 = args.DestX1();
@@ -2670,11 +2670,11 @@ namespace swrenderer
 		iz = plane_sz[2] + plane_sz[1] * (viewport->viewwindow.centery - y) + plane_sz[0] * (x1 - viewport->viewwindow.centerx);
 
 		// Lighting is simple. It's just linear interpolation from start to end
-		if (plane_shade)
+		if (is_planeshaded)
 		{
 			uz = (iz + plane_sz[0] * width) * planelightfloat;
 			vz = iz * planelightfloat;
-			CalcTiltedLighting(vz, uz, width, plane_shade, basecolormapdata);
+			CalcTiltedLighting(vz, uz, width, planeshade, basecolormapdata);
 		}
 		else
 		{

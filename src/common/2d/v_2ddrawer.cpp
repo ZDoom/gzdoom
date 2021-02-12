@@ -746,6 +746,8 @@ void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigne
 	RenderCommand dg;
 	int method = 0;
 
+	if (!img->isValid()) return;
+
 	dg.mType = DrawTypeTriangles;
 	if (clipx1 > 0 || clipy1 > 0 || clipx2 < GetWidth() - 1 || clipy2 < GetHeight() - 1)
 	{

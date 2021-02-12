@@ -877,6 +877,8 @@ namespace swrenderer
 	template<typename DrawerT>
 	void SWTruecolorDrawers::DrawWallColumns(const WallDrawerArgs& wallargs)
 	{
+		wallcolargs.wallargs = &wallargs;
+
 		bool haslights = r_dynlights && wallargs.lightlist;
 		if (haslights)
 		{

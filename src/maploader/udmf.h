@@ -15,20 +15,26 @@ protected:
 
 	void Skip();
 	FName ParseKey(bool checkblock = false, bool *isblock = NULL);
-	int CheckInt(const char *key);
-	double CheckFloat(const char *key);
-	double CheckCoordinate(const char *key);
-	DAngle CheckAngle(const char *key);
-	bool CheckBool(const char *key);
-	const char *CheckString(const char *key);
+	int CheckInt(FName key);
+	double CheckFloat(FName key);
+	double CheckCoordinate(FName key);
+	DAngle CheckAngle(FName key);
+	bool CheckBool(FName key);
+	const char *CheckString(FName key);
 
 	template<typename T>
-	void Flag(T &value, int mask, const char *key)
+	bool Flag(T &value, int mask, FName key)
 	{
 		if (CheckBool(key))
+		{
 			value |= mask;
+			return true;
+		}
 		else
+		{
 			value &= ~mask;
+			return false;
+		}
 	}
 
 };

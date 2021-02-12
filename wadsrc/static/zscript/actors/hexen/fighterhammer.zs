@@ -152,7 +152,7 @@ class HammerMissile : Actor
 	{
 	Spawn:
 		FHFX A 2 Bright;
-		FHFX B 2 Bright A_PlaySound ("FighterHammerContinuous");
+		FHFX B 2 Bright A_StartSound ("FighterHammerContinuous");
 		FHFX CDEFGH 2 Bright;
 		Loop;
 	Death:

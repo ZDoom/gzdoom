@@ -36,7 +36,7 @@
 #include <assert.h>
 #include "templates.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "v_video.h"
 #include "p_lnspec.h"
@@ -60,6 +60,8 @@ static cluster_info_t TheDefaultClusterInfo;
 TArray<FEpisode> AllEpisodes;
 
 extern TMap<int, FString> HexenMusic;
+
+TArray<int> ParsedLumps(8);
 
 //==========================================================================
 //
@@ -196,6 +198,14 @@ void G_ClearSnapshots (void)
 	{
 		wadlevelinfos[i].Snapshot.Clean();
 	}
+
+	// Clear current levels' snapshots just in case they are not defined via MAPINFO,
+	// so they were not handled by the loop above
+	if (primaryLevel && primaryLevel->info)
+		primaryLevel->info->Snapshot.Clean();
+	if (currentVMLevel && currentVMLevel->info)
+		currentVMLevel->info->Snapshot.Clean();
+
 	// Since strings are only locked when snapshotting a level, unlock them
 	// all now, since we got rid of all the snapshots that cared about them.
 	GlobalACSStrings.UnlockAll();
@@ -241,6 +251,7 @@ void level_info_t::Reset()
 	flags3 = 0;
 	Music = "";
 	LevelName = "";
+	AuthorName = "";
 	FadeTable = "COLORMAP";
 	WallHorizLight = -8;
 	WallVertLight = +8;
@@ -848,12 +859,12 @@ void FMapInfoParser::ParseCluster()
 	// Remap Hexen's CLUS?MSG lumps to the string table, if applicable. The code here only checks what can actually be in an IWAD.
 	if (clusterinfo->flags & CLUSTER_EXITTEXTINLUMP)
 	{
-		int lump = Wads.CheckNumForFullName(clusterinfo->ExitText, true);
+		int lump = fileSystem.CheckNumForFullName(clusterinfo->ExitText, true);
 		if (lump > 0)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
-			int fileno = Wads.GetLumpFile(lump);
-			auto fn = Wads.GetWadName(fileno);
+			int fileno = fileSystem.GetFileContainer(lump);
+			auto fn = fileSystem.GetResourceFileName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText.GetChars());
@@ -898,7 +909,7 @@ void FMapInfoParser::ParseNextMap(FString &mapname)
 		FName seq = CheckEndSequence();
 		if (seq != NAME_None)
 		{
-			mapname.Format("enDSeQ%04x", int(seq));
+			mapname.Format("enDSeQ%04x", seq.GetIndex());
 		}
 	}
 }
@@ -920,6 +931,13 @@ DEFINE_MAP_OPTION(next, true)
 {
 	parse.ParseAssign();
 	parse.ParseNextMap(info->NextMap);
+}
+
+DEFINE_MAP_OPTION(author, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->AuthorName = parse.sc.String;
 }
 
 DEFINE_MAP_OPTION(secretnext, true)
@@ -967,7 +985,7 @@ DEFINE_MAP_OPTION(sky1, true)
 		{
 			parse.sc.Float /= 256;
 		}
-		info->skyspeed1 = float(parse.sc.Float * (35. / 1000.));
+		info->skyspeed1 = float(parse.sc.Float * (TICRATE / 1000.));
 	}
 }
 
@@ -981,7 +999,7 @@ DEFINE_MAP_OPTION(sky2, true)
 		{
 			parse.sc.Float /= 256;
 		}
-		info->skyspeed2 = float(parse.sc.Float * (35. / 1000.));
+		info->skyspeed2 = float(parse.sc.Float * (TICRATE / 1000.));
 	}
 }
 
@@ -1011,6 +1029,15 @@ DEFINE_MAP_OPTION(titlepatch, true)
 {
 	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->PName);
+	if (parse.format_type == FMapInfoParser::FMT_New)
+	{
+		if (parse.sc.CheckString(","))
+		{
+			parse.sc.MustGetNumber();
+			if (parse.sc.Number) info->flags3 |= LEVEL3_HIDEAUTHORNAME;
+			else info->flags3 &= ~LEVEL3_HIDEAUTHORNAME;
+		}
+	}
 }
 
 DEFINE_MAP_OPTION(partime, true)
@@ -1619,10 +1646,15 @@ MapFlagHandlers[] =
 	{ "rememberstate",					MITYPE_CLRFLAG2,	LEVEL2_FORGETSTATE, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "spawnwithweaponraised",			MITYPE_SETFLAG2,	LEVEL2_PRERAISEWEAPON, 0 },
+	{ "needclustertext",				MITYPE_SETFLAG2,	LEVEL2_NEEDCLUSTERTEXT, 0 },
+	{ "noclustertext",					MITYPE_SETFLAG2,	LEVEL2_NOCLUSTERTEXT, 0 },	// Normally there shouldn't be a need to explicitly set this 
 	{ "forcefakecontrast",				MITYPE_SETFLAG3,	LEVEL3_FORCEFAKECONTRAST, 0 },
 	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
 	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
 	{ "forceworldpanning",				MITYPE_SETFLAG3,	LEVEL3_FORCEWORLDPANNING, 0 },
+	{ "propermonsterfallingdamage",			MITYPE_SETFLAG3,	LEVEL3_PROPERMONSTERFALLINGDAMAGE, 0 },
+	{ "enableskyboxao",				MITYPE_SETFLAG3,	LEVEL3_SKYBOXAO, 0 },
+	{ "disableskyboxao",				MITYPE_CLRFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
@@ -1663,6 +1695,7 @@ MapFlagHandlers[] =
 	{ "compat_explode1",				MITYPE_COMPATFLAG, 0, COMPATF2_EXPLODE1 },
 	{ "compat_explode2",				MITYPE_COMPATFLAG, 0, COMPATF2_EXPLODE2 },
 	{ "compat_railing",					MITYPE_COMPATFLAG, 0, COMPATF2_RAILING },
+	{ "compat_scriptwait",				MITYPE_COMPATFLAG, 0, COMPATF2_SCRIPTWAIT },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
@@ -1808,23 +1841,24 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 		}
 		else
 		{
-			FAutoSegIterator probe(YRegHead, YRegTail);
 			bool success = false;
 
-			while (*++probe != NULL)
+			AutoSegs::MapInfoOptions.ForEach([this, &success, &info](FMapOptInfo* option)
 			{
-				if (sc.Compare(((FMapOptInfo *)(*probe))->name))
+				if (sc.Compare(option->name))
 				{
-					if (!((FMapOptInfo *)(*probe))->old && format_type != FMT_New)
+					if (!option->old && format_type != FMT_New)
 					{
 						sc.ScriptError("MAPINFO option '%s' requires the new MAPINFO format", sc.String);
 					}
-					((FMapOptInfo *)(*probe))->handler(*this, &info);
+					option->handler(*this, &info);
 					success = true;
-					break;
+					return false;  // break
 				}
-			}
-
+				
+				return true;  // continue
+			});
+			
 			if (!success)
 			{
 				if (!ParseCloseBrace())
@@ -1903,7 +1937,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 		sc.MustGetString();
 		mapname = sc.String;
 	}
-	int levelindex = FindWadLevelInfo (mapname);
+	int levelindex = FindWadLevelInfo (mapname.GetChars());
 	if (levelindex == -1)
 	{
 		levelindex = wadlevelinfos.Reserve(1);
@@ -1929,7 +1963,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 
 	}
 
-	levelinfo->MapName = mapname;
+	levelinfo->MapName = mapname.GetChars();
 	levelinfo->MapName.ToUpper();
 	sc.MustGetString ();
 	if (sc.String[0] == '$')
@@ -1964,8 +1998,8 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 				if (HexenHack)
 				{
 					// Try to localize Hexen's map names. This does not use the above feature to allow these names to be unique.
-					int fileno = Wads.GetLumpFile(sc.LumpNum);
-					auto fn = Wads.GetWadName(fileno);
+					int fileno = fileSystem.GetFileContainer(sc.LumpNum);
+					auto fn = fileSystem.GetResourceFileName(fileno);
 					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
 						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
@@ -2140,17 +2174,6 @@ void FMapInfoParser::ParseEpisodeInfo ()
 
 //==========================================================================
 //
-// Clears episode definitions
-//
-//==========================================================================
-
-void ClearEpisodes()
-{
-	AllEpisodes.Clear();
-}
-
-//==========================================================================
-//
 // SetLevelNum
 // Avoid duplicate levelnums. The level being set always has precedence.
 //
@@ -2181,23 +2204,32 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 	defaultinfo = gamedefaults;
 	HexenHack = false;
 
+	if (ParsedLumps.Find(lump) != ParsedLumps.Size())
+	{
+		sc.ScriptMessage("MAPINFO file is processed more than once\n");
+	}
+	else
+	{
+		ParsedLumps.Push(lump);
+	}
+
 	while (sc.GetString ())
 	{
 		if (sc.Compare("include"))
 		{
 			sc.MustGetString();
-			int inclump = Wads.CheckNumForFullName(sc.String, true);
+			int inclump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (inclump < 0)
 			{
 				sc.ScriptError("include file '%s' not found", sc.String);
 			}
-			if (Wads.GetLumpFile(sc.LumpNum) != Wads.GetLumpFile(inclump))
+			if (fileSystem.GetFileContainer(sc.LumpNum) != fileSystem.GetFileContainer(inclump))
 			{
 				// Do not allow overriding includes from the default MAPINFO
-				if (Wads.GetLumpFile(sc.LumpNum) == 0)
+				if (fileSystem.GetFileContainer(sc.LumpNum) == 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						Wads.GetWadFullName(Wads.GetLumpFile(inclump)), sc.String);
+						fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(inclump)), sc.String);
 				}
 			}
 			FScanner saved_sc = sc;
@@ -2245,7 +2277,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 		}
 		else if (sc.Compare("clearepisodes"))
 		{
-			ClearEpisodes();
+			AllEpisodes.Clear();
 		}
 		else if (sc.Compare("skill"))
 		{
@@ -2355,16 +2387,17 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 
 void DeinitIntermissions();
 
-static void ClearMapinfo()
+void G_ClearMapinfo()
 {
 	wadclusterinfos.Clear();
 	wadlevelinfos.Clear();
-	ClearEpisodes();
+	AllEpisodes.Clear();
 	AllSkills.Clear();
 	DefaultSkill = -1;
 	DeinitIntermissions();
 	primaryLevel->info = nullptr;
 	primaryLevel->F1Pic = "";
+	ParsedLumps.Clear();
 }
 
 //==========================================================================
@@ -2380,19 +2413,16 @@ void G_ParseMapInfo (FString basemapinfo)
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
 
-	ClearMapinfo();
-	atterm(ClearMapinfo);
-
 	// Parse the default MAPINFO for the current game. This lump *MUST* come from zdoom.pk3.
 	if (basemapinfo.IsNotEmpty())
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
-		int baselump = Wads.GetNumForFullName(basemapinfo);
-		if (Wads.GetLumpFile(baselump) > 0)
+		int baselump = fileSystem.GetNumForFullName(basemapinfo);
+		if (fileSystem.GetFileContainer(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 
-				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo.GetChars());
+				fileSystem.GetResourceFileName(fileSystem.GetFileContainer(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}
@@ -2401,25 +2431,25 @@ void G_ParseMapInfo (FString basemapinfo)
 	int nindex;
 
 	// Parse any extra MAPINFOs.
-	while ((lump = Wads.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
+	while ((lump = fileSystem.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
 	{
 		if (nindex == 0)
 		{
 			// If this lump is named MAPINFO we need to check if the same WAD contains a ZMAPINFO lump.
 			// If that exists we need to skip this one.
 
-			int wad = Wads.GetLumpFile(lump);
-			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int wad = fileSystem.GetFileContainer(lump);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
 
 			if (altlump >= 0) continue;
 		}
 		else if (nindex == 2)
 		{
 			// MAPINFO and ZMAPINFO will override UMAPINFO if in the same WAD.
-			int wad = Wads.GetLumpFile(lump);
-			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int wad = fileSystem.GetFileContainer(lump);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
 			if (altlump >= 0) continue;
-			altlump = Wads.CheckNumForName("MAPINFO", ns_global, wad, true);
+			altlump = fileSystem.CheckNumForName("MAPINFO", ns_global, wad, true);
 			if (altlump >= 0) continue;
 		}
 		if (nindex != 2)

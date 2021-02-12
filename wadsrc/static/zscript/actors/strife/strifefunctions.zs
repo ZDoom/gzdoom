@@ -9,13 +9,13 @@ extend class Actor
 	{
 		if (ActiveSound != 0 && !(Level.maptime & 7))
 		{
-			A_PlaySound (ActiveSound, CHAN_VOICE);
+			A_StartSound (ActiveSound, CHAN_VOICE);
 		}
 	}
 
 	void A_LoopActiveSound()
 	{
-		A_PlaySound(ActiveSound, CHAN_VOICE, 1, true);
+		A_StartSound(ActiveSound, CHAN_VOICE, CHANF_LOOPING);
 	}
 
 	//============================================================================
@@ -80,7 +80,7 @@ extend class Actor
 	void A_ShootGun()
 	{
 		if (!target) return;
-		A_PlaySound ("monsters/rifle", CHAN_WEAPON);
+		A_StartSound ("monsters/rifle", CHAN_WEAPON);
 		A_FaceTarget ();
 		double pitch = AimLineAttack (angle, MISSILERANGE);
 		LineAttack (Angle + Random2[ShootGun]() * (11.25 / 256), MISSILERANGE, pitch, 3*random[ShootGun](1, 5), 'Hitscan', "StrifePuff");
@@ -115,7 +115,7 @@ extend class Actor
 		bInCombat = true;
 		if (random[HurtMe](0, 4) == 0)
 		{
-			A_PlaySound (PainSound, CHAN_VOICE);
+			A_StartSound (PainSound, CHAN_VOICE);
 			health--;
 		}
 		if (health <= 0)
@@ -188,7 +188,7 @@ extend class Actor
 
 	void A_RocketInFlight()
 	{
-		A_PlaySound ("misc/missileinflight", CHAN_VOICE);
+		A_StartSound ("misc/missileinflight", CHAN_VOICE);
 		SpawnPuff ("MiniMissilePuff", Pos, Angle - 180, Angle - 180, 2, PF_HITTHING);
 		Actor trail = Spawn("RocketTrail", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
 		if (trail != null)

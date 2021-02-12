@@ -29,6 +29,7 @@ gameinfo
 	dimamount = 0.8
 	bluramount = 0.0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -57,7 +58,14 @@ gameinfo
 	statscreen_mapnamefont = "*BigFont"
 	statscreen_finishedfont = "*BigFont"
 	statscreen_enteringfont = "*BigFont"
+	statscreen_contentfont = "*BigFont"
+	statscreen_authorFont = "*SmallFont"
 	messageboxclass = "MessageBoxMenu"
+}
+
+gamedefaults
+{
+	enableskyboxao
 }
 
 DoomEdNums

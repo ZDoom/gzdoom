@@ -70,6 +70,12 @@ enum
 	TELEFRAG_DAMAGE = 1000000
 };
 
+inline int Tics2Seconds(int tics)
+{
+	return tics / TICRATE;
+}
+
+
 
 typedef float skill_t;
 
@@ -93,127 +99,7 @@ enum ESkillLevels
 // a mode 1 keyboard scan code.
 //
 
-#define KEY_PAUSE				0xc5	// DIK_PAUSE
-#define KEY_RIGHTARROW			0xcd	// DIK_RIGHT
-#define KEY_LEFTARROW			0xcb	// DIK_LEFT
-#define KEY_UPARROW 			0xc8	// DIK_UP
-#define KEY_DOWNARROW			0xd0	// DIK_DOWN
-#define KEY_ESCAPE				0x01	// DIK_ESCAPE
-#define KEY_ENTER				0x1c	// DIK_RETURN
-#define KEY_SPACE				0x39	// DIK_SPACE
-#define KEY_TAB 				0x0f	// DIK_TAB
-#define KEY_F1					0x3b	// DIK_F1
-#define KEY_F2					0x3c	// DIK_F2
-#define KEY_F3					0x3d	// DIK_F3
-#define KEY_F4					0x3e	// DIK_F4
-#define KEY_F5					0x3f	// DIK_F5
-#define KEY_F6					0x40	// DIK_F6
-#define KEY_F7					0x41	// DIK_F7
-#define KEY_F8					0x42	// DIK_F8
-#define KEY_F9					0x43	// DIK_F9
-#define KEY_F10 				0x44	// DIK_F10
-#define KEY_F11 				0x57	// DIK_F11
-#define KEY_F12 				0x58	// DIK_F12
-#define KEY_GRAVE				0x29	// DIK_GRAVE
-
-#define KEY_BACKSPACE			0x0e	// DIK_BACK
-
-#define KEY_EQUALS				0x0d	// DIK_EQUALS
-#define KEY_MINUS				0x0c	// DIK_MINUS
-
-#define KEY_LSHIFT				0x2A	// DIK_LSHIFT
-#define KEY_LCTRL				0x1d	// DIK_LCONTROL
-#define KEY_LALT				0x38	// DIK_LMENU
-
-#define	KEY_RSHIFT				KEY_LSHIFT
-#define KEY_RCTRL				KEY_LCTRL
-#define KEY_RALT				KEY_LALT
-
-#define KEY_INS 				0xd2	// DIK_INSERT
-#define KEY_DEL 				0xd3	// DIK_DELETE
-#define KEY_END 				0xcf	// DIK_END
-#define KEY_HOME				0xc7	// DIK_HOME
-#define KEY_PGUP				0xc9	// DIK_PRIOR
-#define KEY_PGDN				0xd1	// DIK_NEXT
-
-#define KEY_MOUSE1				0x100
-#define KEY_MOUSE2				0x101
-#define KEY_MOUSE3				0x102
-#define KEY_MOUSE4				0x103
-#define KEY_MOUSE5				0x104
-#define KEY_MOUSE6				0x105
-#define KEY_MOUSE7				0x106
-#define KEY_MOUSE8				0x107
-
-#define KEY_FIRSTJOYBUTTON		0x108
-#define KEY_JOY1				(KEY_FIRSTJOYBUTTON+0)
-#define KEY_JOY2				(KEY_FIRSTJOYBUTTON+1)
-#define KEY_JOY3				(KEY_FIRSTJOYBUTTON+2)
-#define KEY_JOY4				(KEY_FIRSTJOYBUTTON+3)
-#define KEY_JOY5				(KEY_FIRSTJOYBUTTON+4)
-#define KEY_JOY6				(KEY_FIRSTJOYBUTTON+5)
-#define KEY_JOY7				(KEY_FIRSTJOYBUTTON+6)
-#define KEY_JOY8				(KEY_FIRSTJOYBUTTON+7)
-#define KEY_LASTJOYBUTTON		0x187
-#define KEY_JOYPOV1_UP			0x188
-#define KEY_JOYPOV1_RIGHT		0x189
-#define KEY_JOYPOV1_DOWN		0x18a
-#define KEY_JOYPOV1_LEFT		0x18b
-#define KEY_JOYPOV2_UP			0x18c
-#define KEY_JOYPOV3_UP			0x190
-#define KEY_JOYPOV4_UP			0x194
-
-#define KEY_MWHEELUP			0x198
-#define KEY_MWHEELDOWN			0x199
-#define KEY_MWHEELRIGHT			0x19A
-#define KEY_MWHEELLEFT			0x19B
-
-#define KEY_JOYAXIS1PLUS		0x19C
-#define KEY_JOYAXIS1MINUS		0x19D
-#define KEY_JOYAXIS2PLUS		0x19E
-#define KEY_JOYAXIS2MINUS		0x19F
-#define KEY_JOYAXIS3PLUS		0x1A0
-#define KEY_JOYAXIS3MINUS		0x1A1
-#define KEY_JOYAXIS4PLUS		0x1A2
-#define KEY_JOYAXIS4MINUS		0x1A3
-#define KEY_JOYAXIS5PLUS		0x1A4
-#define KEY_JOYAXIS5MINUS		0x1A5
-#define KEY_JOYAXIS6PLUS		0x1A6
-#define KEY_JOYAXIS6MINUS		0x1A7
-#define KEY_JOYAXIS7PLUS		0x1A8
-#define KEY_JOYAXIS7MINUS		0x1A9
-#define KEY_JOYAXIS8PLUS		0x1AA
-#define KEY_JOYAXIS8MINUS		0x1AB
-#define NUM_JOYAXISBUTTONS		8
-
-#define KEY_PAD_LTHUMB_RIGHT	0x1AC
-#define KEY_PAD_LTHUMB_LEFT		0x1AD
-#define KEY_PAD_LTHUMB_DOWN		0x1AE
-#define KEY_PAD_LTHUMB_UP		0x1AF
-
-#define KEY_PAD_RTHUMB_RIGHT	0x1B0
-#define KEY_PAD_RTHUMB_LEFT		0x1B1
-#define KEY_PAD_RTHUMB_DOWN		0x1B2
-#define KEY_PAD_RTHUMB_UP		0x1B3
-
-#define KEY_PAD_DPAD_UP			0x1B4
-#define KEY_PAD_DPAD_DOWN		0x1B5
-#define KEY_PAD_DPAD_LEFT		0x1B6
-#define KEY_PAD_DPAD_RIGHT		0x1B7
-#define KEY_PAD_START			0x1B8
-#define KEY_PAD_BACK			0x1B9
-#define KEY_PAD_LTHUMB			0x1BA
-#define KEY_PAD_RTHUMB			0x1BB
-#define KEY_PAD_LSHOULDER		0x1BC
-#define KEY_PAD_RSHOULDER		0x1BD
-#define KEY_PAD_LTRIGGER		0x1BE
-#define KEY_PAD_RTRIGGER		0x1BF
-#define KEY_PAD_A				0x1C0
-#define KEY_PAD_B				0x1C1
-#define KEY_PAD_X				0x1C2
-#define KEY_PAD_Y				0x1C3
-
-#define NUM_KEYS				0x1C4
+#include "keydef.h"
 
 // [RH] dmflags bits (based on Q2's)
 enum
@@ -250,12 +136,13 @@ enum
 	DF_COOP_LOSE_POWERUPS	= 1 << 28,	// Lose powerups when respawning in coop
 	DF_COOP_LOSE_AMMO		= 1 << 29,	// Lose ammo when respawning in coop
 	DF_COOP_HALVE_AMMO		= 1 << 30,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
+	DF_INSTANT_REACTION		= 1 << 31,	// Monsters react instantly
 };
 
 // [BC] More dmflags. w00p!
 enum
 {
-//	DF2_YES_IMPALING		= 1 << 0,	// Player gets implaed on MF2_IMPALE items
+//	DF2_YES_IMPALING		= 1 << 0,	// Player gets impaled on MF2_IMPALE items
 	DF2_YES_WEAPONDROP		= 1 << 1,	// Drop current weapon upon death
 //	DF2_NO_RUNES			= 1 << 2,	// Don't spawn runes
 //	DF2_INSTANT_RETURN		= 1 << 3,	// Instantly return flags and skulls when player carrying it dies (ST/CTF)
@@ -283,6 +170,8 @@ enum
 	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
+	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
+	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
 };
 
 // [RH] Compatibility flags.
@@ -332,6 +221,7 @@ enum : unsigned int
 	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
+	COMPATF2_SCRIPTWAIT		= 1 << 11,	// Use old scriptwait implementation where it doesn't wait on a non-running script.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -347,7 +237,7 @@ enum
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
 	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
-	BCOMPATF_CLIPMIDTEX		= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps)
+	BCOMPATF_CLIPMIDTEX			= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps, has no effect in the hardware renderer)
 };
 
 // phares 3/20/98:
@@ -364,11 +254,5 @@ enum
 
 
 #define BLINKTHRESHOLD (4*32)
-
-#ifndef __BIG_ENDIAN__
-#define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
-#else
-#define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
-#endif
 
 #endif	// __DOOMDEF_H__

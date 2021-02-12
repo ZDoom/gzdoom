@@ -26,6 +26,18 @@ class DynamicLight : Actor
 	   LIGHT_SCALE = 3,
 	};
 
+	// These are for use in A_AttachLight calls.
+	enum LightFlag
+	{
+		LF_SUBTRACTIVE = 1,
+		LF_ADDITIVE = 2,
+		LF_DONTLIGHTSELF = 4,
+		LF_ATTENUATE = 8,
+		LF_NOSHADOWMAP = 16,
+		LF_DONTLIGHTACTORS = 32,
+		LF_SPOT = 64
+	};
+
 	enum ELightType
 	{
 		PointLight,
@@ -72,12 +84,12 @@ class DynamicLight : Actor
 	override void BeginPlay()
 	{
 		ChangeStatNum(STAT_DLIGHT);
-		AttachLight();
 	}
 
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
+		AttachLight();
 		
 		if (!(SpawnFlags & MTF_DORMANT))
 		{

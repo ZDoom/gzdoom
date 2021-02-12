@@ -331,6 +331,18 @@ void EventManager::WorldThingDied(AActor* actor, AActor* inflictor)
 		handler->WorldThingDied(actor, inflictor);
 }
 
+void EventManager::WorldThingGround(AActor* actor, FState* st)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingGround(actor, st);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingGround(actor, st);
+}
+
 void EventManager::WorldThingRevived(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
@@ -418,6 +430,14 @@ void EventManager::PlayerEntered(int num, bool fromhub)
 		handler->PlayerEntered(num, fromhub);
 }
 
+void EventManager::PlayerSpawned(int num)
+{
+	if (ShouldCallStatic(true)) staticEventManager.PlayerSpawned(num);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->PlayerSpawned(num);
+}
+
 void EventManager::PlayerRespawned(int num)
 {
 	if (ShouldCallStatic(true)) staticEventManager.PlayerRespawned(num);
@@ -446,6 +466,25 @@ bool EventManager::Responder(const event_t* ev)
 {
 	bool uiProcessorsFound = false;
 
+	// FIRST, check if there are UI processors
+	// if there are, block mouse input
+	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
+	{
+		if (handler->IsUiProcessor)
+		{
+			uiProcessorsFound = true;
+			break;
+		}
+	}
+
+	// if this was an input mouse event (occasionally happens) we need to block it without showing it to the modder.
+	bool isUiMouseEvent = (ev->type == EV_GUI_Event && ev->subtype >= EV_GUI_FirstMouseEvent && ev->subtype <= EV_GUI_LastMouseEvent);
+	bool isInputMouseEvent = (ev->type == EV_Mouse) || // input mouse movement
+		((ev->type == EV_KeyDown || ev->type == EV_KeyUp) && ev->data1 >= KEY_MOUSE1 && ev->data1 <= KEY_MOUSE8); // or input mouse click
+
+	if (isInputMouseEvent && uiProcessorsFound)
+		return true; // block event from propagating
+
 	if (ev->type == EV_GUI_Event)
 	{
 		// iterate handlers back to front by order, and give them this event.
@@ -453,7 +492,8 @@ bool EventManager::Responder(const event_t* ev)
 		{
 			if (handler->IsUiProcessor)
 			{
-				uiProcessorsFound = true;
+				if (isUiMouseEvent && !handler->RequireMouse)
+					continue; // don't provide mouse event if not requested
 				if (handler->UiProcess(ev))
 					return true; // event was processed
 			}
@@ -464,15 +504,16 @@ bool EventManager::Responder(const event_t* ev)
 		// not sure if we want to handle device changes, but whatevs.
 		for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 		{
+			// do not process input events for UI
 			if (handler->IsUiProcessor)
-				uiProcessorsFound = true;
+				continue;
 			if (handler->InputProcess(ev))
 				return true; // event was processed
 		}
 	}
 	if (ShouldCallStatic(false)) uiProcessorsFound = staticEventManager.Responder(ev);
 
-	return (uiProcessorsFound && (ev->type == EV_Mouse)); // mouse events are eaten by the event system if there are any uiprocessors.
+	return false;
 }
 
 void EventManager::Console(int player, FString name, int arg1, int arg2, int arg3, bool manual)
@@ -489,6 +530,14 @@ void EventManager::RenderOverlay(EHudState state)
 
 	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->RenderOverlay(state);
+}
+
+void EventManager::RenderUnderlay(EHudState state)
+{
+	if (ShouldCallStatic(false)) staticEventManager.RenderUnderlay(state);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->RenderUnderlay(state);
 }
 
 bool EventManager::CheckUiProcessors()
@@ -597,25 +646,10 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageLineSide);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamagePosition);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageIsRadius);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, NewDamage);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, CrushedState);
 
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, IsReturn);
-
-DEFINE_FIELD_X(UiEvent, FUiEvent, Type);
-DEFINE_FIELD_X(UiEvent, FUiEvent, KeyString);
-DEFINE_FIELD_X(UiEvent, FUiEvent, KeyChar);
-DEFINE_FIELD_X(UiEvent, FUiEvent, MouseX);
-DEFINE_FIELD_X(UiEvent, FUiEvent, MouseY);
-DEFINE_FIELD_X(UiEvent, FUiEvent, IsShift);
-DEFINE_FIELD_X(UiEvent, FUiEvent, IsAlt);
-DEFINE_FIELD_X(UiEvent, FUiEvent, IsCtrl);
-
-DEFINE_FIELD_X(InputEvent, FInputEvent, Type);
-DEFINE_FIELD_X(InputEvent, FInputEvent, KeyScan);
-DEFINE_FIELD_X(InputEvent, FInputEvent, KeyString);
-DEFINE_FIELD_X(InputEvent, FInputEvent, KeyChar);
-DEFINE_FIELD_X(InputEvent, FInputEvent, MouseX);
-DEFINE_FIELD_X(InputEvent, FInputEvent, MouseY);
 
 DEFINE_FIELD_X(ConsoleEvent, FConsoleEvent, Player)
 DEFINE_FIELD_X(ConsoleEvent, FConsoleEvent, Name)
@@ -773,6 +807,21 @@ void DStaticEventHandler::WorldThingDied(AActor* actor, AActor* inflictor)
 		VMCall(func, params, 2, nullptr, 0);
 	}
 }
+
+void DStaticEventHandler::WorldThingGround(AActor* actor, FState* st)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingGround)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FWorldEvent e = owner->SetupWorldEvent();
+		e.Thing = actor;
+		e.CrushedState = st;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 
 void DStaticEventHandler::WorldThingRevived(AActor* actor)
 {
@@ -960,6 +1009,19 @@ void DStaticEventHandler::RenderOverlay(EHudState state)
 	}
 }
 
+void DStaticEventHandler::RenderUnderlay(EHudState state)
+{
+	IFVIRTUAL(DStaticEventHandler, RenderUnderlay)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FRenderEvent e = owner->SetupRenderEvent();
+		e.HudState = int(state);
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 void DStaticEventHandler::PlayerEntered(int num, bool fromhub)
 {
 	IFVIRTUAL(DStaticEventHandler, PlayerEntered)
@@ -967,6 +1029,18 @@ void DStaticEventHandler::PlayerEntered(int num, bool fromhub)
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
 		FPlayerEvent e = { num, fromhub };
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::PlayerSpawned(int num)
+{
+	IFVIRTUAL(DStaticEventHandler, PlayerSpawned)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FPlayerEvent e = { num, false };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
@@ -1008,46 +1082,6 @@ void DStaticEventHandler::PlayerDisconnected(int num)
 	}
 }
 
-FUiEvent::FUiEvent(const event_t *ev)
-{
-	Type = (EGUIEvent)ev->subtype;
-	KeyChar = 0;
-	IsShift = false;
-	IsAlt = false;
-	IsCtrl = false;
-	MouseX = 0;
-	MouseY = 0;
-	// we don't want the modders to remember what weird fields mean what for what events.
-	switch (ev->subtype)
-	{
-	case EV_GUI_None:
-		break;
-	case EV_GUI_KeyDown:
-	case EV_GUI_KeyRepeat:
-	case EV_GUI_KeyUp:
-		KeyChar = ev->data1;
-		KeyString = FString(char(ev->data1));
-		IsShift = !!(ev->data3 & GKM_SHIFT);
-		IsAlt = !!(ev->data3 & GKM_ALT);
-		IsCtrl = !!(ev->data3 & GKM_CTRL);
-		break;
-	case EV_GUI_Char:
-		KeyChar = ev->data1;
-		KeyString = MakeUTF8(ev->data1);
-		IsAlt = !!ev->data2; // only true for Win32, not sure about SDL
-		break;
-	default: // mouse event
-			 // note: SDL input doesn't seem to provide these at all
-			 //Printf("Mouse data: %d, %d, %d, %d\n", ev->x, ev->y, ev->data1, ev->data2);
-		MouseX = ev->data1;
-		MouseY = ev->data2;
-		IsShift = !!(ev->data3 & GKM_SHIFT);
-		IsAlt = !!(ev->data3 & GKM_ALT);
-		IsCtrl = !!(ev->data3 & GKM_CTRL);
-		break;
-	}
-}
-
 bool DStaticEventHandler::UiProcess(const event_t* ev)
 {
 	IFVIRTUAL(DStaticEventHandler, UiProcess)
@@ -1064,33 +1098,6 @@ bool DStaticEventHandler::UiProcess(const event_t* ev)
 	}
 
 	return false;
-}
-
-FInputEvent::FInputEvent(const event_t *ev)
-{
-	Type = (EGenericEvent)ev->type;
-	// we don't want the modders to remember what weird fields mean what for what events.
-	KeyScan = 0;
-	KeyChar = 0;
-	MouseX = 0;
-	MouseY = 0;
-	switch (Type)
-	{
-	case EV_None:
-		break;
-	case EV_KeyDown:
-	case EV_KeyUp:
-		KeyScan = ev->data1;
-		KeyChar = ev->data2;
-		KeyString = FString(char(ev->data1));
-		break;
-	case EV_Mouse:
-		MouseX = ev->x;
-		MouseY = ev->y;
-		break;
-	default:
-		break; // EV_DeviceChange = wat?
-	}
 }
 
 bool DStaticEventHandler::InputProcess(const event_t* ev)
@@ -1222,7 +1229,8 @@ void DStaticEventHandler::NewGame()
 //
 void DStaticEventHandler::OnDestroy()
 {
-	owner->UnregisterHandler(this);
+	if (owner)
+		owner->UnregisterHandler(this);
 	Super::OnDestroy();
 }
 

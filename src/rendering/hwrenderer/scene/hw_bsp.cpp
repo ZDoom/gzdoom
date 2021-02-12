@@ -33,13 +33,15 @@
 #include "po_man.h"
 #include "m_fixed.h"
 #include "ctpl.h"
+#include "texturemanager.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "hw_clock.h"
+#include "flatvertices.h"
+#include "hw_vertexbuilder.h"
 
 #ifdef ARCH_IA32
 #include <immintrin.h>
@@ -288,7 +290,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 		{
 			if (!seg->linedef->isVisualPortal())
 			{
-				FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
+				auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::mid), true);
 				if (!tex || !tex->isValid()) 
 				{
 					// nothing to do here!
@@ -627,7 +629,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 	if (sector->validcount != validcount)
 	{
-		screen->mVertexData->CheckUpdate(sector);
+		CheckUpdate(screen->mVertexData, sector);
 	}
 
 	// [RH] Add particles

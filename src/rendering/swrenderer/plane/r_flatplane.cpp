@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <float.h>
 #include "templates.h"
-#include "doomerrors.h"
-#include "w_wad.h"
+#include "engineerrors.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -50,7 +50,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer

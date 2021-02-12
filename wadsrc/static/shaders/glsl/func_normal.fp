@@ -1,8 +1,5 @@
 
-Material ProcessMaterial()
+void SetupMaterial(inout Material material)
 {
-	Material material;
-	material.Base = getTexel(vTexCoord.st);
-	material.Normal = ApplyNormalMap(vTexCoord.st);
-	return material;
+	SetMaterialProps(material, vTexCoord.st);
 }

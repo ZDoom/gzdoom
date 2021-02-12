@@ -25,7 +25,7 @@
 
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -37,7 +37,8 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "a_dynlight.h"
-#include "swrenderer/r_memory.h"
+#include "texturemanager.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
@@ -113,14 +114,9 @@ namespace swrenderer
 		}
 		else // regular flat
 		{
-			FTexture *ttex = TexMan.GetPalettedTexture(picnum, true);
-
-			if (!ttex->isValid())
-			{
+			auto tex = GetPalettedSWTexture(picnum, true);
+			if (tex == nullptr)
 				return;
-			}
-			FSoftwareTexture *tex = ttex->GetSoftwareTexture();
-
 			if (!masked && !additive)
 			{ // If we're not supposed to see through this plane, draw it opaque.
 				alpha = OPAQUE;

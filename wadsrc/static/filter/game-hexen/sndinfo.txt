@@ -165,10 +165,12 @@ $alias menu/invalid		DoorCloseMetal	// Hexen does not use this, but I do
 $alias menu/dismiss		PlatformStop
 $alias menu/choose		DoorCloseLight
 $alias menu/clear		PlatformStop
+$alias menu/advance menu/choose
 
 // Hexen does not have ripslop sound like Heretic
 misc/ripslop			dsempty
 misc/netnotch			blddrp1
+misc/secret			dssecret
 
 $alias				intermission/cooptotal		*death
 $alias				intermission/nextstage		DoorCloseLight

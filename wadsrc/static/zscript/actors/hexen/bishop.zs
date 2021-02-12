@@ -88,7 +88,7 @@ class Bishop : Actor
 		{
 			return;
 		}
-		A_PlaySound (AttackSound, CHAN_BODY);
+		A_StartSound (AttackSound, CHAN_BODY);
 		if (CheckMeleeRange())
 		{
 			int damage = random[BishopAttack](1, 8) * 4;
@@ -158,7 +158,7 @@ class Bishop : Actor
 		{ // Thrust forward
 			Thrust(11);
 		}
-		A_PlaySound ("BishopBlur", CHAN_BODY);
+		A_StartSound ("BishopBlur", CHAN_BODY);
 	}
 
 	//============================================================================

@@ -26,17 +26,19 @@
 */
 
 #include "a_sharedglobal.h"
+#include "a_dynlight.h"
 #include "r_utility.h"
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "texturemanager.h"
 
 #include "hw_drawinfo.h"
 #include "hw_drawstructs.h"
-#include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_clock.h"
+#include "hw_dynlightdata.h"
+#include "flatvertices.h"
+#include "hw_lightbuffer.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_fakeflat.h"
 
@@ -127,7 +129,7 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 			iter_dlightf++;
 
 			p.Set(plane->Normal(), plane->fD());
-			draw_dlightf += lightdata.GetLight(sub->sector->PortalGroup, p, light, true);
+			draw_dlightf += GetLight(lightdata, sub->sector->PortalGroup, p, light, true);
 			node = node->nextLight;
 		}
 
@@ -350,7 +352,7 @@ bool HWDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez, area_t in_
 			if (sec->GetPlaneTexZ(sector_t::ceiling) == Planez)
 			{
 				// If there's a texture abort
-				FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top));
+				auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::top));
 				if (!tex || !tex->isValid()) continue;
 				else return false;
 			}
@@ -408,7 +410,7 @@ bool HWDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez, area_t in_
 			if (sec->GetPlaneTexZ(sector_t::floor) == Planez)
 			{
 				// If there's a texture abort
-				FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom));
+				auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom));
 				if (!tex || !tex->isValid()) continue;
 				else return false;
 			}

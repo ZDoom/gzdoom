@@ -191,16 +191,12 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PContainerType *cls, const char * string);
-FieldDesc *FindField(PContainerType *cls, const char * string);
-
-
 FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, PNamespace *resolvenspc = nullptr);
 void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret);
-class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
+FxExpression *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
 void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PContainerType *cls, uint32_t funcflags, int useflags);
 PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags);
@@ -244,9 +240,9 @@ enum EDefinitionType
 };
 
 #if defined(_MSC_VER)
-#pragma section(".greg$u",read)
+#pragma section(SECTION_GREG,read)
 
-#define MSVC_PSEG __declspec(allocate(".greg$u"))
+#define MSVC_PSEG __declspec(allocate(SECTION_GREG))
 #define GCC_PSEG
 #else
 #define MSVC_PSEG
@@ -328,7 +324,7 @@ int MatchString (const char *in, const char **strings);
 #define PROP_DOUBLE_PARM(var, no) \
 	double var = params[(no)+1].d;
 
-#define PROP_COLOR_PARM(var, no) \
-	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
+#define PROP_COLOR_PARM(var, no, scriptpos) \
+	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s, scriptpos);
 
 #endif

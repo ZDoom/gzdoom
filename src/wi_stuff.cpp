@@ -38,7 +38,7 @@
 #include "m_random.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "s_sound.h"
 #include "doomstat.h"
@@ -54,11 +54,15 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "texturemanager.h"
+#include "v_draw.h"
 
 CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_noautostartmap, false, CVAR_USERINFO | CVAR_ARCHIVE)
 CVAR(Int, wi_autoadvance, 0, CVAR_SERVERINFO)
+CVAR(Bool, wi_cleantextscale, false, CVAR_ARCHIVE)
+EXTERN_CVAR(Bool, inter_classic_scaling)
 
 // States for the intermission
 enum EState
@@ -137,7 +141,7 @@ class DInterBackground : public DObject
 		int 		period;	// period in tics between animations
 		yahpt_t 	loc;	// location of animation
 		int 		data;	// ALWAYS: n/a, RANDOM: period deviation (<256)
-		TArray<FTexture*>	frames;	// actual graphics for frames of animations
+		TArray<FGameTexture*>	frames;	// actual graphics for frames of animations
 
 									// following must be initialized to zero before use!
 		int 		nexttic;	// next value of bcnt (used in conjunction with period)
@@ -160,9 +164,9 @@ private:
 	TArray<lnode_t> lnodes;
 	TArray<in_anim_t> anims;
 	int				bcnt = 0;				// used for timing of background animation
-	TArray<FTexture *> yah; 		// You Are Here graphic
-	FTexture* 		splat = nullptr;		// splat
-	FTexture		*background = nullptr;
+	TArray<FGameTexture *> yah; 		// You Are Here graphic
+	FGameTexture* 	splat = nullptr;		// splat
+	FGameTexture	*background = nullptr;
 	wbstartstruct_t *wbs;
 	level_info_t	*exitlevel;
 	
@@ -207,15 +211,15 @@ private:
 	//
 	//====================================================================
 
-	void drawOnLnode(int   n, FTexture * c[], int numc)
+	void drawOnLnode(int   n, FGameTexture * c[], int numc, double backwidth, double backheight)
 	{
 		int   i;
 		for (i = 0; i<numc; i++)
 		{
-			int            left;
-			int            top;
-			int            right;
-			int            bottom;
+			double            left;
+			double            top;
+			double            right;
+			double            bottom;
 
 
 			right = c[i]->GetDisplayWidth();
@@ -227,7 +231,7 @@ private:
 
 			if (left >= 0 && right < 320 && top >= 0 && bottom < 200)
 			{
-				screen->DrawTexture(c[i], lnodes[n].x, lnodes[n].y, DTA_320x200, true, TAG_DONE);
+				DrawTexture(twod, c[i], lnodes[n].x, lnodes[n].y, DTA_FullscreenScale, FSMode_ScaleToFit43, DTA_VirtualWidthF, backwidth, DTA_VirtualHeightF, backheight, TAG_DONE);
 				break;
 			}
 		}
@@ -369,7 +373,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	}
 	else
 	{
-		int lumpnum = Wads.CheckNumForFullName(lumpname + 1, true);
+		int lumpnum = fileSystem.CheckNumForFullName(lumpname + 1, true);
 		if (lumpnum >= 0)
 		{
 			FScanner sc(lumpnum);
@@ -386,13 +390,13 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 				case 1:		// Splat
 					sc.MustGetString();
-					splat = TexMan.GetTextureByName(sc.String);
+					splat = TexMan.GetGameTextureByName(sc.String);
 					break;
 
 				case 2:		// Pointers
 					while (sc.GetString() && !sc.Crossed)
 					{
-						yah.Push(TexMan.GetTextureByName(sc.String));
+						yah.Push(TexMan.GetGameTextureByName(sc.String));
 					}
 					if (sc.Crossed)
 						sc.UnGet();
@@ -457,6 +461,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					an.LevelName = sc.String;
 					sc.MustGetString();
 					caseval = sc.MustMatchString(WI_Cmd);
+					[[fallthrough]];
 
 				default:
 					switch (caseval)
@@ -484,14 +489,14 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						if (!sc.CheckString("{"))
 						{
 							sc.MustGetString();
-							an.frames.Push(TexMan.GetTextureByName(sc.String));
+							an.frames.Push(TexMan.GetGameTextureByName(sc.String));
 						}
 						else
 						{
 							while (!sc.CheckString("}"))
 							{
 								sc.MustGetString();
-								an.frames.Push(TexMan.GetTextureByName(sc.String));
+								an.frames.Push(TexMan.GetGameTextureByName(sc.String));
 							}
 						}
 						an.ctr = -1;
@@ -506,7 +511,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						an.loc.y = sc.Number;
 						sc.MustGetString();
 						an.frames.Reserve(1);	// allocate exactly one element
-						an.frames[0] = TexMan.GetTextureByName(sc.String);
+						an.frames[0] = TexMan.GetGameTextureByName(sc.String);
 						anims.Push(an);
 						break;
 
@@ -522,7 +527,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			texture = TexMan.GetTextureID("INTERPIC", ETextureType::MiscPatch);
 		}
 	}
-	background = TexMan.GetTexture(texture);
+	background = TexMan.GetGameTexture(texture);
 	return noautostartmap;
 }
 
@@ -597,19 +602,19 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			// scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetDisplayWidthDouble();
-			animheight = background->GetDisplayHeightDouble();
-			screen->FillBorder(NULL);
-			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			animwidth = background->GetDisplayWidth();
+			animheight = background->GetDisplayHeight();
+			if (animheight == 200) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
+			DrawTexture(twod, background, 0, 0, DTA_FullscreenEx, FSMode_ScaleToFit43, TAG_DONE);
 		}
 		else
 		{
-			screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background);
+			twod->AddFlatFill(0, 0, twod->GetWidth(), twod->GetHeight(), background, (inter_classic_scaling ? -1 : 0));
 		}
 	}
 	else
 	{
-		screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+		ClearRect(twod, 0, 0, twod->GetWidth(), twod->GetHeight(), 0, 0);
 	}
 
 	for (i = 0; i<anims.Size(); i++)
@@ -655,8 +660,8 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			break;
 		}
 		if (a->ctr >= 0)
-			screen->DrawTexture(a->frames[a->ctr], a->loc.x, a->loc.y,
-				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
+			DrawTexture(twod, a->frames[a->ctr], a->loc.x, a->loc.y,
+				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, DTA_FullscreenScale, FSMode_ScaleToFit43, TAG_DONE);
 	}
 
 	if (drawsplat)
@@ -664,7 +669,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		for (i = 0; i<lnodes.Size(); i++)
 		{
 			level_info_t * li = FindLevelInfo(lnodes[i].Level);
-			if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1);  // draw a splat on taken cities.
+			if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1, animwidth, animheight);  // draw a splat on taken cities.
 		}
 	}
 
@@ -673,7 +678,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	{
 		unsigned int v = MapToIndex(wbs->next);
 		// Draw only if it points to a valid level on the current screen!
-		if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size());
+		if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size(), animwidth, animheight);
 	}
 }
 
@@ -701,7 +706,7 @@ void WI_Ticker()
 {
 	if (WI_Screen)
 	{
-		ScaleOverrider s;
+		ScaleOverrider s(twod);
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
 		{
 			VMValue self = WI_Screen;
@@ -721,12 +726,14 @@ void WI_Drawer()
 {
 	if (WI_Screen)
 	{
-		ScaleOverrider s;
+		ScaleOverrider s(twod);
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
+			twod->ClearClipRect();
+			twod->ClearScreen();
 			VMValue self = WI_Screen;
 			VMCall(func, &self, 1, nullptr, 0);
-			screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
+			twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 
 			// The internal handling here is somewhat poor. After being set to 'LeavingIntermission'
 			// the screen is needed for one more draw operation so we cannot delete it right away but only here.
@@ -763,18 +770,36 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 	
-	S_StopAllChannels();
-	for (auto Level : AllLevels())
-	{
-		SN_StopAllSequences(Level);
-	}
 	WI_Screen = cls->CreateNew();
-	ScaleOverrider s;
+
+
+	ScaleOverrider s(twod);
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{
 		VMValue val[2] = { WI_Screen, wbstartstruct };
 		VMCall(func, val, 2, nullptr, 0);
 	}
+
+	if (!wi_cleantextscale)
+	{
+		// Only modify the original single player screens. Everything else must set itself up as intended
+		if (cls->TypeName == NAME_DoomStatusScreen || cls->TypeName == NAME_RavenStatusScreen)
+		{
+			int w = screen->GetWidth();
+			int h = screen->GetHeight();
+			float ratio = ActiveRatio(w, h);
+			int pixw = int(320 * (ratio * 0.75));
+			if (pixw > 336) pixw -= 16;	// leave a bit of space at the sides.
+
+			WI_Screen->IntVar(NAME_cwidth) = 320;
+			WI_Screen->IntVar(NAME_cheight) = 200;
+			WI_Screen->IntVar(NAME_scalemode) = FSMode_ScaleToFit43;
+			WI_Screen->IntVar(NAME_scalefactorx) = 1;
+			WI_Screen->IntVar(NAME_scalefactory) = 1;
+			WI_Screen->IntVar(NAME_wrapwidth) = pixw;
+		}
+	}
+
 	GC::AddSoftRoot(WI_Screen);
 }
 
@@ -860,8 +885,11 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, current);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextname);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, thisname);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextauthor);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, thisauthor);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName0);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName1);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, totalkills);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxkills);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxitems);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxsecret);

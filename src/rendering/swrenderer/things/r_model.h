@@ -23,8 +23,8 @@
 #pragma once
 
 #include "polyrenderer/drawers/poly_triangle.h"
-#include "r_data/matrix.h"
-#include "r_data/models/models.h"
+#include "matrix.h"
+#include "models.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 
@@ -49,10 +49,11 @@ namespace swrenderer
 		float x, y, z;
 		FSpriteModelFrame *smf;
 		AActor *actor;
-		Mat4f WorldToClip;
+		VSMatrix WorldToClip;
 		bool MirrorWorldToClip;
 	};
 
+#if 0
 	class SWModelRenderer : public FModelRenderer
 	{
 	public:
@@ -62,12 +63,12 @@ namespace swrenderer
 
 		ModelRendererType GetType() const override { return SWModelRendererType; }
 
-		void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
-		void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
+		void BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
+		void EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf) override;
 		IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
 		VSMatrix GetViewToWorldMatrix() override;
-		void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
-		void EndDrawHUDModel(AActor *actor) override;
+		void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
+		void EndDrawHUDModel(FRenderStyle style) override;
 		void SetInterpolation(double interpolation) override;
 		void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) override;
 		void DrawArrays(int start, int count) override;
@@ -90,8 +91,6 @@ namespace swrenderer
 		Mat4f ObjectToWorld;
 		PolyClipPlane ClipTop, ClipBottom;
 		FTexture *SkinTexture = nullptr;
-		unsigned int *IndexBuffer = nullptr;
-		FModelVertex *VertexBuffer = nullptr;
 		float InterpolationFactor = 0.0;
 		Mat4f *WorldToClip = nullptr;
 		bool MirrorWorldToClip = false;
@@ -117,4 +116,5 @@ namespace swrenderer
 		TArray<FModelVertex> mVertexBuffer;
 		TArray<unsigned int> mIndexBuffer;
 	};
+#endif
 }

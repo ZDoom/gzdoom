@@ -67,7 +67,7 @@ class Blaster : HereticWeapon
 			ang += Random2[FireBlaster]() * (5.625 / 256);
 		}
 		LineAttack (ang, PLAYERMISSILERANGE, pitch, damage, 'Hitscan', "BlasterPuff");
-		A_PlaySound ("weapons/blastershoot", CHAN_WEAPON);
+		A_StartSound ("weapons/blastershoot", CHAN_WEAPON);
 	}
 }
 

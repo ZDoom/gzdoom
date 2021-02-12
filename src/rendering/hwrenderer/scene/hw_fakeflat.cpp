@@ -33,8 +33,9 @@
 #include "r_sky.h"
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "r_utility.h"
+#include "texturemanager.h"
 
 static sector_t **fakesectorbuffer;
 
@@ -117,7 +118,7 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	// now check for closed sectors!
 	if (bs_ceilingheight1 <= fs_floorheight1 && bs_ceilingheight2 <= fs_floorheight2)
 	{
-		FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::top), true);
+		auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::top), true);
 		if (!tex || !tex->isValid()) return false;
 		if (backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 			frontsector->GetTexture(sector_t::ceiling) == skyflatnum) return false;
@@ -126,7 +127,7 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 
 	if (fs_ceilingheight1 <= bs_floorheight1 && fs_ceilingheight2 <= bs_floorheight2)
 	{
-		FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::bottom), true);
+		auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::bottom), true);
 		if (!tex || !tex->isValid()) return false;
 
 		// properly render skies (consider door "open" if both floors are sky):
@@ -140,12 +141,12 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 		// preserve a kind of transparent door/lift special effect:
 		if (bs_ceilingheight1 < fs_ceilingheight1 || bs_ceilingheight2 < fs_ceilingheight2)
 		{
-			FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::top), true);
+			auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::top), true);
 			if (!tex || !tex->isValid()) return false;
 		}
 		if (bs_floorheight1 > fs_floorheight1 || bs_floorheight2 > fs_floorheight2)
 		{
-			FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::bottom), true);
+			auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::bottom), true);
 			if (!tex || !tex->isValid()) return false;
 		}
 		if (backsector->GetTexture(sector_t::ceiling) == skyflatnum &&

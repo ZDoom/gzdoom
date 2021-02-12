@@ -40,6 +40,7 @@ gameinfo
 	dimamount = 0.5
 	bluramount = 0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 25
 	defaultrespawntime = 16
 	defaultdropstyle = 2
@@ -65,6 +66,8 @@ gameinfo
 	statscreen_mapnamefont = "*BigFont"
 	statscreen_finishedfont = "*BigFont", "white"
 	statscreen_enteringfont = "*BigFont", "white"
+	statscreen_contentfont = "*BigFont"
+	statscreen_authorFont = "*SmallFont"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"
@@ -609,6 +612,7 @@ gamedefaults
 	nointermission
 	clipmidtextures
 	noinfighting
+	enableskyboxao
 }
 
 map MAP01 LOOKUP "TXT_STRIFE_MAP01"

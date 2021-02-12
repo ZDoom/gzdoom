@@ -45,8 +45,8 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "m_png.h"
-#include "doomerrors.h"
-#include "w_wad.h"
+#include "engineerrors.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "p_setup.h"
 #include "s_sound.h"
@@ -456,10 +456,10 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap, false);
 			if (map != NULL)
 			{
-				wad = Wads.GetLumpFile(map->lumpnum);
+				wad = fileSystem.GetFileContainer(map->lumpnum);
 				delete map;
 			}
-			const char * name = Wads.GetWadName(wad);
+			const char * name = fileSystem.GetResourceFileName(wad);
 			FString section = ExtractFileBase(name) + "." + StartEpisode->mEpisodeMap;
 			section.ToUpper();
 
@@ -598,4 +598,14 @@ ADD_STAT(statistics)
 {
 	StoreLevelStats(primaryLevel);	// Refresh the current level's results.
 	return GetStatString();
+}
+
+ADD_STAT(velocity)
+{
+	FString compose;
+	if (players[consoleplayer].mo != NULL && gamestate == GS_LEVEL) {
+		compose.AppendFormat("Current velocity: %.2f\n", players[consoleplayer].mo->Vel.Length());
+		compose.AppendFormat("Level %s - Velocity Max: %.2f, Velocity Average: %.2f\n", primaryLevel->MapName.GetChars(), primaryLevel->max_velocity, primaryLevel->avg_velocity);
+	}
+	return compose;
 }

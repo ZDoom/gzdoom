@@ -24,7 +24,7 @@
 #include <float.h>
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -45,7 +45,7 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/line/r_fogboundary.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/scene/r_light.h"
 
 #ifdef _MSC_VER
@@ -54,7 +54,7 @@
 
 namespace swrenderer
 {
-	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, const short *uclip, const short *dclip, const ProjectedWallLight &wallLight)
+	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, const short* uclip, const short* dclip, const ProjectedWallLight &wallLight)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that

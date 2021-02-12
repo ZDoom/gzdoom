@@ -34,7 +34,7 @@
 #include "d_player.h"
 #include "m_argv.h"
 #include "g_game.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "p_effect.h"
 #include "p_terrain.h"
@@ -44,7 +44,7 @@
 #include "p_acs.h"
 #include "announcer.h"
 #include "wi_stuff.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "gi.h"
 #include "p_conversation.h"
 #include "a_keys.h"
@@ -56,7 +56,7 @@
 #include "cmdlib.h"
 #include "md5.h"
 #include "po_man.h"
-#include "r_renderer.h"
+#include "swrenderer/r_renderer.h"
 #include "p_blockmap.h"
 #include "r_utility.h"
 #include "p_spec.h"
@@ -67,7 +67,7 @@
 #include "p_destructible.h"
 #include "types.h"
 #include "i_time.h"
-#include "scripting/vm/vm.h"
+#include "vm.h"
 #include "a_specialspot.h"
 #include "maploader/maploader.h"
 #include "p_acs.h"
@@ -75,12 +75,16 @@
 #include "i_system.h"
 #include "v_video.h"
 #include "fragglescript/t_script.h"
+#include "s_music.h"
+#include "animations.h"
+#include "texturemanager.h"
+#include "p_lnspec.h"
+#include "d_main.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
 extern unsigned int R_OldBlend;
 
-static void P_Shutdown ();
 
 //===========================================================================
 //
@@ -96,31 +100,47 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 	if (hitlist[texid.GetIndex()] & bitmask) return;	// already done, no need to process everything again.
 	hitlist[texid.GetIndex()] |= (uint8_t)bitmask;
 
-	for (auto anim : TexMan.mAnimations)
+	const auto addAnimations = [hitlist, bitmask](const FTextureID texid)
 	{
-		if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
+		for (auto anim : TexAnim.GetAnimations())
 		{
-			for (int i = anim->BasePic.GetIndex(); i < anim->BasePic.GetIndex() + anim->NumFrames; i++)
+			if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
 			{
-				hitlist[i] |= (uint8_t)bitmask;
+				for (int i = anim->BasePic.GetIndex(); i < anim->BasePic.GetIndex() + anim->NumFrames; i++)
+				{
+					hitlist[i] |= (uint8_t)bitmask;
+				}
 			}
 		}
-	}
+	};
 
-	auto switchdef = TexMan.FindSwitch(texid);
+	addAnimations(texid);
+
+	auto switchdef = TexAnim.FindSwitch(texid);
 	if (switchdef)
 	{
-		for (int i = 0; i < switchdef->NumFrames; i++)
+		const FSwitchDef *const pair = switchdef->PairDef;
+		const uint16_t numFrames = switchdef->NumFrames;
+		const uint16_t pairNumFrames = pair->NumFrames;
+
+		for (int i = 0; i < numFrames; i++)
 		{
 			hitlist[switchdef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
 		}
-		for (int i = 0; i < switchdef->PairDef->NumFrames; i++)
+		for (int i = 0; i < pairNumFrames; i++)
 		{
-			hitlist[switchdef->PairDef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
+			hitlist[pair->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
+		}
+
+		if (numFrames == 1 && pairNumFrames == 1)
+		{
+			// Switch can still be animated via BOOM binary definition from ANIMATED lump
+			addAnimations(switchdef->frames[0].Texture);
+			addAnimations(pair->frames[0].Texture);
 		}
 	}
 
-	auto adoor = TexMan.FindAnimatedDoor(texid);
+	auto adoor = TexAnim.FindAnimatedDoor(texid);
 	if (adoor)
 	{
 		for (int i = 0; i < adoor->NumTextureFrames; i++)
@@ -170,9 +190,13 @@ static void PrecacheLevel(FLevelLocals *Level)
 
 	for (i = Level->sides.Size() - 1; i >= 0; i--)
 	{
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::top), FTextureManager::HIT_Wall);
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::mid), FTextureManager::HIT_Wall);
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::bottom), FTextureManager::HIT_Wall);
+		auto &sd = Level->sides[i];
+		int hitflag = FTextureManager::HIT_Wall;
+		// Only precache skyboxes when this is actually used as a sky transfer.
+		if (sd.linedef->sidedef[0] == &sd && sd.linedef->special == Static_Init && sd.linedef->args[1] == Init_TransferSky) hitflag |= FTextureManager::HIT_Sky;
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::top), hitflag);
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::mid), FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::bottom), hitflag);
 	}
 
 
@@ -255,12 +279,23 @@ void FLevelLocals::ClearPortals()
 
 void FLevelLocals::ClearLevelData()
 {
+	{
+		auto it = GetThinkerIterator<AActor>(NAME_None, STAT_TRAVELLING);
+		for (AActor *actor = it.Next(); actor != nullptr; actor = it.Next())
+		{
+			actor->BlockingLine = nullptr;
+			actor->BlockingFloor = actor->BlockingCeiling = actor->Blocking3DFloor = nullptr;
+		}
+	}
+	
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Thinkers.DestroyAllThinkers();
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 
 	total_monsters = total_items = total_secrets =
 	killed_monsters = found_items = found_secrets = 0;
+
+	max_velocity = avg_velocity = 0;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -279,11 +314,6 @@ void FLevelLocals::ClearLevelData()
 	DialogueRoots.Clear();
 	ClassRoots.Clear();
 
-	// delete allocated data in the level arrays.
-	if (sectors.Size() > 0)
-	{
-		delete[] sectors[0].e;
-	}
 	for (auto &sub : subsectors)
 	{
 		if (sub.BSP != nullptr) delete sub.BSP;
@@ -300,6 +330,7 @@ void FLevelLocals::ClearLevelData()
 	canvasTextureInfo.EmptyList();
 	sections.Clear();
 	segs.Clear();
+	extsectors.Clear();
 	sectors.Clear();
 	linebuffer.Clear();
 	subsectorbuffer.Clear();
@@ -338,6 +369,10 @@ void FLevelLocals::ClearLevelData()
 	if (automap) automap->Destroy();
 	Behaviors.UnloadModules();
 	localEventManager->Shutdown();
+	if (aabbTree) delete aabbTree;
+	aabbTree = nullptr;
+	if (screen)
+		screen->SetAABBTree(nullptr);
 }
 
 //==========================================================================
@@ -388,17 +423,8 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		Level->Players[i]->mo = nullptr;
 	}
-	// [RH] Clear any scripted translation colors the previous level may have set.
-	for (i = 0; i < int(translationtables[TRANSLATION_LevelScripted].Size()); ++i)
-	{
-		FRemapTable *table = translationtables[TRANSLATION_LevelScripted][i];
-		if (table != nullptr)
-		{
-			delete table;
-			translationtables[TRANSLATION_LevelScripted][i] = nullptr;
-		}
-	}
-	translationtables[TRANSLATION_LevelScripted].Clear();
+	GPalette.ClearTranslationSlot(TRANSLATION_LevelScripted);
+
 
 	// Initial height of PointOfView will be set by player think.
 	auto p = Level->GetConsolePlayer();
@@ -406,6 +432,14 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start();
+	S_ResetMusic();
+
+	// Don't start the music if loading a savegame, because the music is stored there.
+	// Don't start the music if revisiting a level in a hub for the same reason.
+	if (!primaryLevel->IsReentering())
+	{
+		primaryLevel->SetMusic();
+	}
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);
@@ -560,6 +594,13 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 		Level->StartLightning();
 	}
 
+	auto it = Level->GetThinkerIterator<AActor>();
+	AActor* ac;
+	// Initial setup of the dynamic lights.
+	while ((ac = it.Next()))
+	{
+		ac->SetDynamicLights();
+	}
 }
 
 //
@@ -567,15 +608,13 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 //
 void P_Init ()
 {
-	atterm (P_Shutdown);
-
 	P_InitEffects ();		// [RH]
 	P_InitTerrainTypes ();
 	P_InitKeyMessages ();
 	R_InitSprites ();
 }
 
-static void P_Shutdown ()
+void P_Shutdown ()
 {
 	for (auto Level : AllLevels())
 	{

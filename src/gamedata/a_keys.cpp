@@ -36,8 +36,8 @@
 #include "gi.h"
 #include "gstrings.h"
 #include "d_player.h"
-#include "c_console.h"
-#include "w_wad.h"
+#include "sbar.h"
+#include "filesystem.h"
 #include "v_font.h"
 #include "vm.h"
 
@@ -422,7 +422,7 @@ void P_InitKeyMessages()
 	lastlump = 0;
 
 	ClearLocks();
-	while ((lump = Wads.FindLump ("LOCKDEFS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("LOCKDEFS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetString ())
@@ -506,7 +506,7 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 				int snd = S_FindSkinnedSound(owner, failsound[i]);
 				if (snd != 0)
 				{
-					S_Sound (owner, CHAN_VOICE, snd, 1, ATTN_NORM);
+					S_Sound (owner, CHAN_VOICE, 0, snd, 1, ATTN_NORM);
 					break;
 				}
 			}

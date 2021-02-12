@@ -4,7 +4,7 @@
 #include <tarray.h>
 
 #include "s_sound.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 struct FStrifeDialogueReply;
 class FTexture;
@@ -29,7 +29,7 @@ struct FStrifeDialogueNode
 
 	PClassActor *SpeakerType = nullptr;
 	FString SpeakerName;
-	FSoundID SpeakerVoice;
+	FSoundID SpeakerVoice = 0;
 	FString Backdrop;
 	FString Dialogue;
 	FString Goodbye; // must init to null for binary scripts to work as intended

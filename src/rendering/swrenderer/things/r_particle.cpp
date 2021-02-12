@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -47,7 +47,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
@@ -62,7 +62,7 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
@@ -298,7 +298,7 @@ namespace swrenderer
 			if ((siz2 - siz1) * ((x2 + x1) / 2 - ds->WallC.sx1) / (ds->WallC.sx2 - ds->WallC.sx1) + siz1 < idepth)
 			{
 				// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
-				if (ds->CurrentPortalUniq == CurrentPortalUniq)
+				if (ds->drawsegclip.CurrentPortalUniq == CurrentPortalUniq)
 				{
 					RenderDrawSegment renderer(thread);
 					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2), clip3DFloor);

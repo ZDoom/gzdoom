@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "swrenderer/things/r_playersprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -52,23 +52,27 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
+#include "texturemanager.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "g_levellocals.h"
+#include "v_draw.h"
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+
+CVAR(Bool, r_noaccel, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 namespace swrenderer
 {
@@ -205,7 +209,7 @@ namespace swrenderer
 		spriteframe_t*		sprframe;
 		FTextureID			picnum;
 		uint16_t				flip;
-		FTexture*			tex;
+		FGameTexture*			tex;
 		bool				noaccel;
 		double				alpha = owner->Alpha;
 
@@ -225,7 +229,7 @@ namespace swrenderer
 
 		picnum = sprframe->Texture[0];
 		flip = sprframe->Flip & 1;
-		tex = TexMan.GetTexture(picnum);
+		tex = TexMan.GetGameTexture(picnum);
 
 		if (!tex->isValid())
 			return;
@@ -264,7 +268,7 @@ namespace swrenderer
 		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
 		double pspritexiscale = 1 / pspritexscale;
 
-		int tleft = tex->GetDisplayLeftOffset();
+		int tleft = tex->GetDisplayLeftOffset(0);
 		int twidth = tex->GetDisplayWidth();
 
 		// calculate edges of the shape
@@ -287,7 +291,7 @@ namespace swrenderer
 
 		vis.renderflags = owner->renderflags;
 
-		FSoftwareTexture *stex = tex->GetSoftwareTexture();
+		FSoftwareTexture* stex = GetSoftwareTexture(tex);
 		vis.texturemid = (BASEYCENTER - sy) * stex->GetScale().Y + stex->GetTopOffset(0);
 
 		// Force it to use software rendering when drawing to a canvas texture.
@@ -309,6 +313,10 @@ namespace swrenderer
 		vis.yscale = float(pspriteyscale / stex->GetScale().Y);
 		vis.pic = stex;
 
+		uint32_t trans = pspr->GetTranslation() != 0 ? pspr->GetTranslation() : 0;
+		if ((pspr->Flags & PSPF_PLAYERTRANSLATED)) trans = owner->Translation;
+		vis.Translation = trans;
+
 		// If flip is used, provided that it's not already flipped (that would just invert itself)
 		// (It's an XOR...)
 		if (!(flip) != !(pspr->Flags & PSPF_FLIP))
@@ -325,7 +333,7 @@ namespace swrenderer
 		if (vis.x1 > x1)
 			vis.startfrac += vis.xiscale*(vis.x1 - x1);
 
-		noaccel = false;
+		noaccel = r_noaccel;
 		FDynamicColormap *colormap_to_use = nullptr;
 		if (pspr->GetID() < PSP_TARGETCENTER)
 		{
@@ -375,7 +383,7 @@ namespace swrenderer
 
 				if (visstyle.Invert)
 				{
-					vis.Light.BaseColormap = &SpecialSWColormaps[INVERSECOLORMAP];
+					vis.Light.BaseColormap = &SpecialSWColormaps[REALINVERSECOLORMAP];
 					vis.Light.ColormapNum = 0;
 					noaccel = true;
 				}
@@ -430,6 +438,8 @@ namespace swrenderer
 				accelSprite.x1 = x1;
 				accelSprite.flip = vis.xiscale < 0;
 
+				accelSprite.Translation = trans;
+
 				if (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
 					vis.Light.BaseColormap < &SpecialSWColormaps[SpecialColormaps.Size()])
 				{
@@ -459,7 +469,7 @@ namespace swrenderer
 	{
 		for (const HWAccelPlayerSprite &sprite : AcceleratedSprites)
 		{
-			screen->DrawTexture(sprite.pic->GetTexture(),
+			DrawTexture(twod, sprite.pic->GetTexture(),
 				viewwindowx + sprite.x1,
 				viewwindowy + viewheight / 2 - sprite.texturemid * sprite.yscale - 0.5,
 				DTA_DestWidthF, FIXED2DBL(sprite.pic->GetWidth() * sprite.xscale),
@@ -489,46 +499,23 @@ namespace swrenderer
 
 	void NoAccelPlayerSprite::Render(RenderThread *thread)
 	{
-		if (xscale == 0 || fabs(yscale) < (1.0f / 32000.0f))
-		{ // scaled to 0; can't see
-			return;
-		}
-
 		SpriteDrawerArgs drawerargs;
 		bool visible = drawerargs.SetStyle(thread->Viewport.get(), RenderStyle, Alpha, Translation, FillColor, Light);
 		if (!visible)
 			return;
 
-		double spryscale = yscale;
-		bool sprflipvert = false;
-		fixed_t iscale = FLOAT2FIXED(1 / yscale);
-		
-		auto viewport = thread->Viewport.get();
-
-		double sprtopscreen;
+		double centerY = viewheight / 2;
+		double y1, y2;
 		if (renderflags & RF_YFLIP)
 		{
-			sprflipvert = true;
-			spryscale = -spryscale;
-			iscale = -iscale;
-			sprtopscreen = viewport->CenterY + (texturemid - pic->GetHeight()) * spryscale;
+			y1 = centerY + (texturemid - pic->GetHeight()) * (-yscale);
+			y2 = y1 + pic->GetHeight() * (-yscale);
 		}
 		else
 		{
-			sprflipvert = false;
-			sprtopscreen = viewport->CenterY - texturemid * spryscale;
+			y1 = centerY - texturemid * yscale;
+			y2 = y1 + pic->GetHeight() * yscale;
 		}
-
-		// clip to screen bounds
-		short *mfloorclip = screenheightarray;
-		short *mceilingclip = zeroarray;
-
-		fixed_t frac = startfrac;
-		thread->PrepareTexture(pic, RenderStyle);
-		for (int x = x1; x < x2; x++)
-		{
-			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac + xiscale / 2, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, RenderStyle, false);
-			frac += xiscale;
-		}
+		drawerargs.DrawMasked2D(thread, x1, x2, y1, y2, pic, RenderStyle);
 	}
 }

@@ -2,18 +2,20 @@
 
 #include "tarray.h"
 #include "r_utility.h"
+#include "r_sections.h"
 #include "actor.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hw_renderstate.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
+class FSkyBox;
 
 struct HWSkyInfo
 {
 	float x_offset[2];
 	float y_offset;		// doubleskies don't have a y-offset
-	FMaterial * texture[2];
+	FGameTexture * texture[2];
 	FTextureID skytexno1;
 	bool mirrored;
 	bool doublesky;
@@ -75,6 +77,7 @@ public:
     virtual line_t *ClipLine() { return nullptr; }
 	virtual void * GetSource() const = 0;	// GetSource MUST be implemented!
 	virtual const char *GetName() = 0;
+	virtual bool AllowSSAO() { return true; }
 	virtual bool IsSky() { return false; }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
@@ -127,6 +130,8 @@ struct FPortalSceneState
 	void RenderPortal(HWPortal *p, FRenderState &state, bool usestencil, HWDrawInfo *outer_di);
 };
 
+extern FPortalSceneState portalState;
+
     
 class HWScenePortalBase : public HWPortal
 {
@@ -142,7 +147,7 @@ public:
 	{
 		if (Setup(di, state, di->mClipper))
 		{
-			di->DrawScene(di, DM_PORTAL);
+			di->DrawScene(DM_PORTAL);
 			Shutdown(di, state);
 		}
 		else state.ClearScreen();
@@ -254,6 +259,7 @@ protected:
 	virtual void * GetSource() const { return portal; }
 	virtual bool IsSky() { return true; }
 	virtual const char *GetName();
+	virtual bool AllowSSAO() override;
 
 public:
 
@@ -356,10 +362,6 @@ struct HWSkyPortal : public HWPortal
 	HWSkyInfo * origin;
 	FSkyVertexBuffer *vertexBuffer;
 	friend struct HWEEHorizonPortal;
-
-	void RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply = true);
-	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FMaterial * gltex, float x_offset, bool sky2);
-	void RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode);
 
 protected:
 	virtual void DrawContents(HWDrawInfo *di, FRenderState &state);

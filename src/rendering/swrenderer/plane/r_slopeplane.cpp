@@ -24,7 +24,7 @@
 #include <float.h>
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -50,7 +50,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/plane/r_visibleplane.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 #ifdef _MSC_VER

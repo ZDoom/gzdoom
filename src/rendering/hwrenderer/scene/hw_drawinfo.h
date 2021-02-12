@@ -179,8 +179,6 @@ struct HWDrawInfo
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
 	bool multithread;
 
-	std::function<void(HWDrawInfo *, int)> DrawScene = nullptr;
-
 private:
     // For ProcessLowerMiniseg
     bool inview;
@@ -246,6 +244,7 @@ public:
 	void SetViewArea();
 	int SetFullbrightFlags(player_t *player);
 
+	void DrawScene(int drawmode);
 	void CreateScene(bool drawpsprites);
 	void RenderScene(FRenderState &state);
 	void RenderTranslucent(FRenderState &state);
@@ -253,7 +252,7 @@ public:
 	void EndDrawScene(sector_t * viewsector, FRenderState &state);
 	void DrawEndScene2D(sector_t * viewsector, FRenderState &state);
 	void Set3DViewport(FRenderState &state);
-	void ProcessScene(bool toscreen, const std::function<void(HWDrawInfo *, int)> &drawScene);
+	void ProcessScene(bool toscreen);
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);
@@ -292,7 +291,7 @@ public:
 	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
 
 	void PreparePlayerSprites(sector_t * viewsector, area_t in_area);
-	void PrepareTargeterSprites();
+	void PrepareTargeterSprites(double ticfrac);
 
 	void UpdateCurrentMapSection();
 	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
@@ -315,12 +314,22 @@ public:
 
 	bool isSoftwareLighting() const
 	{
-		return lightmode >= ELightMode::ZDoomSoftware;
+		return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware || lightmode == ELightMode::Build;
+	}
+
+	bool isBuildSoftwareLighting() const
+	{
+		return lightmode == ELightMode::Build;
+	}
+
+	bool isDoomSoftwareLighting() const
+	{
+		return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware;
 	}
 
 	bool isDarkLightMode() const
 	{
-		return !!((int)lightmode & (int)ELightMode::Doom);
+		return lightmode == ELightMode::Doom || lightmode == ELightMode::DoomDark;
 	}
 
 	void SetFallbackLightMode()
@@ -329,4 +338,10 @@ public:
 	}
 
 };
+
+void CleanSWDrawer();
+sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
+void WriteSavePic(player_t* player, FileWriter* file, int width, int height);
+sector_t* RenderView(player_t* player);
+
 

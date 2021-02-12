@@ -68,7 +68,7 @@ class Templar : Actor
 	{
 		if (target != null)
 		{
-			A_PlaySound ("templar/shoot", CHAN_WEAPON);
+			A_StartSound ("templar/shoot", CHAN_WEAPON);
 			A_FaceTarget ();
 			double pitch = AimLineAttack (angle, MISSILERANGE);
 

@@ -62,7 +62,7 @@ class MageBoss : Actor
 		MAGE Y 1 A_FreezeDeathChunks;
 		Wait;
 	Burn:
-		FDTH E 5 Bright A_PlaySound("PlayerMageBurnDeath");
+		FDTH E 5 Bright A_StartSound("PlayerMageBurnDeath");
 		FDTH F 4 Bright;
 		FDTH G 5 Bright;
 		FDTH H 4 Bright A_Scream;
@@ -114,7 +114,7 @@ class MageBoss : Actor
 		MStaffSpawn2(angle);
 		MStaffSpawn2(angle - 5);
 		MStaffSpawn2(angle + 5);
-		A_PlaySound("MageStaffFire", CHAN_WEAPON);
+		A_StartSound("MageStaffFire", CHAN_WEAPON);
 	}
 	
 }

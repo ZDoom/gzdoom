@@ -244,12 +244,12 @@ namespace swrenderer
 	public:
 		using SWPixelFormatDrawers::SWPixelFormatDrawers;
 		
-		void DrawWallColumn(const WallDrawerArgs &args) override;
-		void DrawWallMaskedColumn(const WallDrawerArgs &args) override;
-		void DrawWallAddColumn(const WallDrawerArgs &args) override;
-		void DrawWallAddClampColumn(const WallDrawerArgs &args) override;
-		void DrawWallSubClampColumn(const WallDrawerArgs &args) override;
-		void DrawWallRevSubClampColumn(const WallDrawerArgs &args) override;
+		void DrawWall(const WallDrawerArgs &args) override;
+		void DrawWallMasked(const WallDrawerArgs &args) override;
+		void DrawWallAdd(const WallDrawerArgs &args) override;
+		void DrawWallAddClamp(const WallDrawerArgs &args) override;
+		void DrawWallSubClamp(const WallDrawerArgs &args) override;
+		void DrawWallRevSubClamp(const WallDrawerArgs &args) override;
 		void DrawSingleSkyColumn(const SkyDrawerArgs &args) override;
 		void DrawDoubleSkyColumn(const SkyDrawerArgs &args) override;
 		void DrawColumn(const SpriteDrawerArgs &args) override;

@@ -8,7 +8,7 @@ class AActor;
 enum area_t : int;
 struct FSpriteModelFrame;
 struct HWDrawInfo;
-class FMaterial;
+class FGameTexture;
 
 
 struct WeaponPosition
@@ -29,7 +29,7 @@ struct HUDSprite
 {
 	AActor *owner;
 	DPSprite *weapon;
-	FMaterial *tex;
+	FGameTexture *texture;
 	FSpriteModelFrame *mframe;
 
 	FColormap cm;
@@ -47,6 +47,6 @@ struct HUDSprite
 
 	void SetBright(bool isbelow);
 	bool GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *viewsector, WeaponLighting &light);
-	bool GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player);
+	bool GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player, double ticfrac);
 
 };

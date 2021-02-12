@@ -56,7 +56,12 @@ class Beak : Weapon
 		{
 			return;
 		}
-		player.GetPSprite(PSP_WEAPON).y = WEAPONTOP;
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (psp)
+		{
+			psp.y = WEAPONTOP;
+			ResetPSprite(psp);
+		}
 		player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 	}
 
@@ -83,9 +88,13 @@ class Beak : Weapon
 		{
 			angle = t.angleFromSource;
 		}
-		A_PlaySound ("chicken/peck", CHAN_VOICE);
+		A_StartSound ("chicken/peck", CHAN_VOICE);
 		player.chickenPeck = 12;
-		player.GetPSprite(PSP_WEAPON).Tics -= random[BeakAtk](0,7);
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (psp)
+		{
+			psp.Tics -= random[BeakAtk](0,7);
+		}
 	}
 }
 
@@ -131,9 +140,13 @@ class BeakPowered : Beak
 		{
 			angle = t.angleFromSource;
 		}
-		A_PlaySound ("chicken/peck", CHAN_VOICE);
+		A_StartSound ("chicken/peck", CHAN_VOICE);
 		player.chickenPeck = 12;
-		player.GetPSprite(PSP_WEAPON).Tics -= random[BeakAtk](0,3);
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (psp)
+		{
+			psp.Tics -= random[BeakAtk](0,3);
+		}
 	}
 	
 }
@@ -225,7 +238,7 @@ class ChickenPlayer : PlayerPawn
 		}
 		if (random[ChickenPlayerThink]() < 48)
 		{ // Just noise
-			A_PlaySound ("chicken/active", CHAN_VOICE);
+			A_StartSound ("chicken/active", CHAN_VOICE);
 		}
 	}
 

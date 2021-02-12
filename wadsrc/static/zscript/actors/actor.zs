@@ -46,19 +46,19 @@ struct FLineTraceData
 		TRACE_HasHitSky
 	};
 
-	Actor HitActor;
-	Line HitLine;
-	Sector HitSector;
-	F3DFloor Hit3DFloor;
-	TextureID HitTexture;
-	Vector3 HitLocation;
-	Vector3 HitDir;
-	double Distance;
-	int NumPortals;
-	int LineSide;
-	int LinePart;
-	int SectorPlane;
-	int HitType;
+	native Actor HitActor;
+	native Line HitLine;
+	native Sector HitSector;
+	native F3DFloor Hit3DFloor;
+	native TextureID HitTexture;
+	native Vector3 HitLocation;
+	native Vector3 HitDir;
+	native double Distance;
+	native int NumPortals;
+	native int LineSide;
+	native int LinePart;
+	native int SectorPlane;
+	native int HitType;
 }
 
 struct LinkContext
@@ -73,6 +73,7 @@ class Actor : Thinker native
 	const DEFAULT_HEALTH = 1000;
 	const ONFLOORZ = -2147483648.0;
 	const ONCEILINGZ = 2147483647.0;
+	const STEEPSLOPE = (46342./65536.);	// [RH] Minimum floorplane.c value for walking
 	const FLOATRANDZ = ONCEILINGZ-1;
 	const TELEFRAG_DAMAGE = 1000000;
 	const MinVel = 1./65536;
@@ -89,12 +90,14 @@ class Actor : Thinker native
 	native PlayerInfo Player;
 	native readonly vector3 Pos;
 	native vector3 Prev;
+	native uint ThruBits;
+	native vector2 SpriteOffset;
 	native double spriteAngle;
 	native double spriteRotation;
-	native double VisibleStartAngle;
-	native double VisibleStartPitch;
-	native double VisibleEndAngle;
-	native double VisibleEndPitch;
+	native float VisibleStartAngle;
+	native float VisibleStartPitch;
+	native float VisibleEndAngle;
+	native float VisibleEndPitch;
 	native double Angle;
 	native double Pitch;
 	native double Roll;
@@ -148,7 +151,7 @@ class Actor : Thinker native
 	native int StartHealth;
 	native uint8 WeaveIndexXY;
 	native uint8 WeaveIndexZ;
-	native int skillrespawncount;
+	native uint16 skillrespawncount;
 	native int Args[5];
 	native int Mass;
 	native int Special;
@@ -216,6 +219,7 @@ class Actor : Thinker native
 	native sound CrushPainSound;
 	native double MaxDropoffHeight;
 	native double MaxStepHeight;
+	native double MaxSlopeSteepness;
 	native int16 PainChance;
 	native name PainType;
 	native name DeathType;
@@ -231,6 +235,7 @@ class Actor : Thinker native
 	native uint8 fountaincolor;
 	native double CameraHeight;	// Height of camera when used as such
 	native double CameraFOV;
+	native double ViewAngle, ViewPitch, ViewRoll;
 	native double RadiusDamageFactor;		// Radius damage factor
 	native double SelfDamageFactor;
 	native double StealthAlpha;
@@ -311,6 +316,7 @@ class Actor : Thinker native
 	property MinMissileChance: MinMissileChance;
 	property MaxStepHeight: MaxStepHeight;
 	property MaxDropoffHeight: MaxDropoffHeight;
+	property MaxSlopeSteepness: MaxSlopeSteepness;
 	property PoisonDamageType: PoisonDamageType;
 	property RadiusDamageFactor: RadiusDamageFactor;
 	property SelfDamageFactor: SelfDamageFactor;
@@ -332,6 +338,7 @@ class Actor : Thinker native
 	property RenderHidden: RenderHidden;
 	property RenderRequired: RenderRequired;
 	property FriendlySeeBlocks: FriendlySeeBlocks;
+	property ThruBits: ThruBits;
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
@@ -339,17 +346,17 @@ class Actor : Thinker native
 	//int ConversationRoot; // THe root of the current dialogue
 
 	// deprecated things.
-	native readonly deprecated("2.3") double X;
-	native readonly deprecated("2.3") double Y;
-	native readonly deprecated("2.3") double Z;
-	native readonly deprecated("2.3") double VelX;
-	native readonly deprecated("2.3") double VelY;
-	native readonly deprecated("2.3") double VelZ;
-	native readonly deprecated("2.3") double MomX;
-	native readonly deprecated("2.3") double MomY;
-	native readonly deprecated("2.3") double MomZ;
-	native deprecated("2.3") double ScaleX;
-	native deprecated("2.3") double ScaleY;
+	native readonly deprecated("2.3", "Use Pos.X instead") double X;
+	native readonly deprecated("2.3", "Use Pos.Y instead") double Y;
+	native readonly deprecated("2.3", "Use Pos.Z instead") double Z;
+	native readonly deprecated("2.3", "Use Vel.X instead") double VelX;
+	native readonly deprecated("2.3", "Use Vel.Y instead") double VelY;
+	native readonly deprecated("2.3", "Use Vel.Z instead") double VelZ;
+	native readonly deprecated("2.3", "Use Vel.X instead") double MomX;
+	native readonly deprecated("2.3", "Use Vel.Y instead") double MomY;
+	native readonly deprecated("2.3", "Use Vel.Z instead") double MomZ;
+	native deprecated("2.3", "Use Scale.X instead") double ScaleX;
+	native deprecated("2.3", "Use Scale.Y instead") double ScaleY;
 
 	//FStrifeDialogueNode *Conversation; // [RH] The dialogue to show when this actor is used.;
 	
@@ -369,6 +376,7 @@ class Actor : Thinker native
 		MeleeRange 64 - 20;
 		MaxDropoffHeight 24;
 		MaxStepHeight 24;
+		MaxSlopeSteepness STEEPSLOPE;
 		BounceFactor 0.7;
 		WallBounceFactor 0.75;
 		BounceCount -1;
@@ -436,6 +444,8 @@ class Actor : Thinker native
 		MarkSound(BounceSound);
 		MarkSound(WallBounceSound);
 		MarkSound(CrushPainSound);
+		MarkSound(HowlSound);
+		MarkSound(MeleeSound);
 	}
 
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)
@@ -448,7 +458,7 @@ class Actor : Thinker native
 		return sin(fb * (180./32)) * 8;
 	}
 
-	native bool isFrozen();
+	native clearscope bool isFrozen() const;
 	virtual native void BeginPlay();
 	virtual native void Activate(Actor activator);
 	virtual native void Deactivate(Actor activator);
@@ -457,7 +467,7 @@ class Actor : Thinker native
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0, Name MeansOfDeath = 'none');
 	virtual native bool Slam(Actor victim);
 	virtual native void Touch(Actor toucher);
-	native void Substitute(Actor replacement);
+	private native void Substitute(Actor replacement);
 	native ui void DisplayNameTag();
 
 	// Called by inventory items to see if this actor is capable of touching them.
@@ -584,6 +594,11 @@ class Actor : Thinker native
 
 	// called on getting a secret, return false to disable default "secret found" message/sound
 	virtual bool OnGiveSecret(bool printmsg, bool playsound) { return true; }
+
+	// called before and after triggering a teleporter
+	// return false in PreTeleport() to cancel the action early
+	virtual bool PreTeleport( Vector3 destpos, double destangle, int flags ) { return true; }
+	virtual void PostTeleport( Vector3 destpos, double destangle, int flags ) {}
 	
 	native virtual bool OkayToSwitchTarget(Actor other);
 	native static class<Actor> GetReplacement(class<Actor> cls);
@@ -594,7 +609,7 @@ class Actor : Thinker native
 	native static int ApplyDamageFactors(class<Inventory> itemcls, Name damagetype, int damage, int defdamage);
 	native void RemoveFromHash();
 	native void ChangeTid(int newtid);
-	deprecated("3.8") static int FindUniqueTid(int start = 0, int limit = 0)
+	deprecated("3.8", "Use Level.FindUniqueTid() instead") static int FindUniqueTid(int start = 0, int limit = 0)
 	{
 		return level.FindUniqueTid(start, limit);
 	}
@@ -605,7 +620,7 @@ class Actor : Thinker native
 		
 	native clearscope string GetTag(string defstr = "") const;
 	native void SetTag(string defstr = "");
-	native double GetBobOffset(double frac = 0);
+	native clearscope double GetBobOffset(double frac = 0) const;
 	native void ClearCounters();
 	native bool GiveBody (int num, int max=0);
 	native bool HitFloor();
@@ -701,7 +716,7 @@ class Actor : Thinker native
 	native void FindFloorCeiling(int flags = 0);
 	native double, double GetFriction();
 	native bool, Actor TestMobjZ(bool quick = false);
-	native static bool InStateSequence(State newstate, State basestate);
+	native clearscope static bool InStateSequence(State newstate, State basestate);
 	
 	bool TryWalk ()
 	{
@@ -749,7 +764,7 @@ class Actor : Thinker native
 	native bool LookForEnemies(bool allaround, LookExParams params = null);
 	native bool LookForPlayers(bool allaround, LookExParams params = null);
 	native bool TeleportMove(Vector3 pos, bool telefrag, bool modifyactor = true);
-	native double DistanceBySpeed(Actor other, double speed);
+	native clearscope double DistanceBySpeed(Actor other, double speed) const;
 	native name GetSpecies();
 	native void PlayActiveSound();
 	native void Howl();
@@ -757,6 +772,7 @@ class Actor : Thinker native
 	native void GiveSecret(bool printmsg = true, bool playsound = true);
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
+	native void DoMissileDamage(Actor target);
 
 	//==========================================================================
 	//
@@ -784,7 +800,7 @@ class Actor : Thinker native
 		return level.totaltime - SpawnTime;
 	}
 
-	double AccuracyFactor()
+	clearscope double AccuracyFactor() const
 	{
 		return 1. / (1 << (accuracy * 5 / 100));
 	}
@@ -859,9 +875,9 @@ class Actor : Thinker native
 		return SpawnMissileAngleZSpeed (pos.z + 32 + GetBobOffset(), type, angle, vz, GetDefaultSpeed (type));
 	}
 
-	Actor SpawnMissileAngleZ (double z, class<Actor> type, double angle, double vz)
+	Actor SpawnMissileAngleZ (double z, class<Actor> type, double angle, double vz, Actor owner = null)
 	{
-		return SpawnMissileAngleZSpeed (z, type, angle, vz, GetDefaultSpeed (type));
+		return SpawnMissileAngleZSpeed (z, type, angle, vz, GetDefaultSpeed (type), owner);
 	}
 	
 
@@ -904,7 +920,7 @@ class Actor : Thinker native
 		return true;
 	}
 
-	deprecated("2.3") void A_FaceConsolePlayer(double MaxTurnAngle = 0) {}
+	deprecated("2.3", "This function does nothing and is only for Zandronum compatibility") void A_FaceConsolePlayer(double MaxTurnAngle = 0) {}
 
 	void A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0)
 	{
@@ -1050,14 +1066,19 @@ class Actor : Thinker native
 	native void A_Wander(int flags = 0);
 	native void A_Look2();
 
-	deprecated("2.3") native void A_BulletAttack();
+	deprecated("2.3", "Use A_CustomBulletAttack() instead") native void A_BulletAttack();
 	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", double snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, double runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
-	native clearscope void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false);
+	deprecated("4.3", "Use A_StartSound() instead") native clearscope void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false, double pitch = 0.0);
+	native clearscope void A_StartSound(sound whattoplay, int slot = CHAN_BODY, int flags = 0, double volume = 1.0, double attenuation = ATTN_NORM, double pitch = 0.0, double startTime = 0.0);
 	native void A_SoundVolume(int slot, double volume);
-	deprecated("2.3") void A_PlayWeaponSound(sound whattoplay) { A_PlaySound(whattoplay, CHAN_WEAPON); }
+	native void A_SoundPitch(int slot, double pitch);
+	deprecated("2.3", "Use A_StartSound(<sound>, CHAN_WEAPON) instead") void A_PlayWeaponSound(sound whattoplay) { A_StartSound(whattoplay, CHAN_WEAPON); }
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
-	deprecated("2.3") native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
-	deprecated("2.3") native void A_StopSoundEx(name slot);
+	void A_StopAllSounds()	{	A_StopSounds(0,0);	}
+	native void A_StopSounds(int chanmin, int chanmax);
+	deprecated("2.3", "Use A_StartSound() instead") native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
+	deprecated("2.3", "Use A_StopSound() instead") native void A_StopSoundEx(name slot);
+	native clearscope bool IsActorPlayingSound(int channel, Sound snd = 0);
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	native action state A_Jump(int chance, statelabel label, ...);
 	native Actor A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);
@@ -1073,11 +1094,11 @@ class Actor : Thinker native
 	native void A_FadeOut(double reduce = 0.1, int flags = 1); //bool remove == true
 	native void A_FadeTo(double target, double amount = 0.1, int flags = 0);
 	native void A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, double mult_h = 1, double mult_v = 1);
-	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, double size = 1, double angle = 0, double xoff = 0, double yoff = 0, double zoff = 0, double velx = 0, double vely = 0, double velz = 0, double accelx = 0, double accely = 0, double accelz = 0, double startalphaf = 1, double fadestepf = -1, double sizestep = 0);
+	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = TICRATE, double size = 1, double angle = 0, double xoff = 0, double yoff = 0, double zoff = 0, double velx = 0, double vely = 0, double velz = 0, double accelx = 0, double accely = 0, double accelz = 0, double startalphaf = 1, double fadestepf = -1, double sizestep = 0);
 	native void A_ExtChase(bool usemelee, bool usemissile, bool playactive = true, bool nightmarefast = false);
 	native void A_DropInventory(class<Inventory> itemtype, int amount = -1);
 	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0, double alpha2 = 0.);
-	deprecated("2.3") native void A_ChangeFlag(string flagname, bool value);
+	deprecated("2.3", "Use 'b<FlagName> = [true/false]' instead") native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
 	native void A_RaiseMaster(int flags = 0);
 	native void A_RaiseChildren(int flags = 0);
@@ -1101,7 +1122,7 @@ class Actor : Thinker native
 	native void A_Burst(class<Actor> chunktype);
 	native void A_RadiusDamageSelf(int damage = 128, double distance = 128, int flags = 0, class<Actor> flashtype = null);
 	native int GetRadiusDamage(Actor thing, int damage, int distance, int fulldmgdistance = 0, bool oldradiusdmg = false);
-	native int RadiusAttack(Actor bombsource, int bombdamage, int bombdistance, Name bombmod = 'none', int flags = RADF_HURTSOURCE, int fulldamagedistance = 0);
+	native int RadiusAttack(Actor bombsource, int bombdamage, int bombdistance, Name bombmod = 'none', int flags = RADF_HURTSOURCE, int fulldamagedistance = 0, name species = "None");
 	
 	native void A_Respawn(int flags = 1);
 	native void A_RestoreSpecialPosition();
@@ -1113,10 +1134,13 @@ class Actor : Thinker native
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
-	deprecated("2.3") native void A_SetUserVar(name varname, int value);
-	deprecated("2.3") native void A_SetUserArray(name varname, int index, int value);
-	deprecated("2.3") native void A_SetUserVarFloat(name varname, double value);
-	deprecated("2.3") native void A_SetUserArrayFloat(name varname, int index, double value);
+	native void A_SetViewAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVar(name varname, int value);
+	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserArray(name varname, int index, int value);
+	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVarFloat(name varname, double value);
+	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserArrayFloat(name varname, int index, double value);
 	native void A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, double mulWaveX = 1, double mulWaveY = 1, double mulWaveZ = 1, int falloff = 0, int highpoint = 0, double rollIntensity = 0, double rollWave = 0);
 	action native void A_SetTics(int tics);
@@ -1149,8 +1173,9 @@ class Actor : Thinker native
 	native bool A_SetVisibleRotation(double anglestart = 0, double angleend = 0, double pitchstart = 0, double pitchend = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetTranslation(name transname);
 	native bool A_SetSize(double newradius = -1, double newheight = -1, bool testpos = false);
-	native void A_SprayDecal(String name, double dist = 172);
+	native void A_SprayDecal(String name, double dist = 172, vector3 offset = (0, 0, 0), vector3 direction = (0, 0, 0) );
 	native void A_SetMugshotState(String name);
+	native void CopyBloodColor(Actor other);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	native void A_TransferPointer(int ptr_source, int ptr_recipient, int sourcefield, int recipientfield=AAPTR_DEFAULT, int flags=0);
@@ -1158,10 +1183,20 @@ class Actor : Thinker native
 
 	action native bool A_Overlay(int layer, statelabel start = null, bool nooverride = false);
 	native void A_WeaponOffset(double wx = 0, double wy = 32, int flags = 0);
+	action native void A_OverlayScale(int layer, double wx = 1, double wy = 0, int flags = 0);
+	action native void A_OverlayRotate(int layer, double degrees = 0, int flags = 0);
+	action native void A_OverlayPivot(int layer, double wx = 0.5, double wy = 0.5, int flags = 0);
+	action native void A_OverlayPivotAlign(int layer, int halign, int valign);
+	action native void A_OverlayVertexOffset(int layer, int index, double x, double y, int flags = 0);
 	action native void A_OverlayOffset(int layer = PSP_WEAPON, double wx = 0, double wy = 32, int flags = 0);
 	action native void A_OverlayFlags(int layer, int flags, bool set);
 	action native void A_OverlayAlpha(int layer, double alph);
 	action native void A_OverlayRenderStyle(int layer, int style);
+	action native void A_OverlayTranslation(int layer, name trname);
+	
+	native bool A_AttachLightDef(Name lightid, Name lightdef);
+	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
+	native bool A_RemoveLight(Name lightid);
 
 	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
 	{
@@ -1206,20 +1241,20 @@ class Actor : Thinker native
 	{
 		if (DeathSound)
 		{
-			A_PlaySound(DeathSound, CHAN_VOICE, 1, false, bBoss? ATTN_NONE : ATTN_NORM);
+			A_StartSound(DeathSound, CHAN_VOICE, CHANF_DEFAULT, 1, bBoss? ATTN_NONE : ATTN_NORM);
 		}
 	}
 
 	void A_XScream()
 	{
-		A_PlaySound(player? Sound("*gibbed") : Sound("misc/gibbed"), CHAN_VOICE);
+		A_StartSound(player? Sound("*gibbed") : Sound("misc/gibbed"), CHAN_VOICE);
 	}
 
 	void A_ActiveSound()
 	{
 		if (ActiveSound)
 		{
-			A_PlaySound(ActiveSound, CHAN_VOICE);
+			A_StartSound(ActiveSound, CHAN_VOICE);
 		}
 	}
 	

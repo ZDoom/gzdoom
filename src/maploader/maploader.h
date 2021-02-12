@@ -131,7 +131,7 @@ private:
 	TArray<int32_t> KnownPolySides;
 
 	FName CheckCompatibility(MapData *map);
-	void SetCompatibilityParams(FName checksum);
+	void PostProcessLevel(FName checksum);
 
 	// Slopes
 	void SlopeLineToPoint(int lineid, const DVector3 &pos, bool slopeCeil);
@@ -221,7 +221,6 @@ private:
 	void LoadZSegs(FileReader &data);
 	void LoadZNodes(FileReader &data, int glnodes);
 
-	int DetermineTranslucency(int lumpnum);
 	void SetLineID(int i, line_t *ld);
 	void SaveLineSpecial(line_t *ld);
 	void FinishLoadingLineDef(line_t *ld, int alpha);

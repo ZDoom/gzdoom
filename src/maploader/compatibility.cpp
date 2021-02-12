@@ -47,13 +47,13 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "p_tags.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "textures.h"
 #include "g_levellocals.h"
-#include "vm.h"
 #include "actor.h"
 #include "p_setup.h"
 #include "maploader/maploader.h"
+#include "types.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -168,6 +168,7 @@ static FCompatOption Options[] =
 	{ "explode1",				COMPATF2_EXPLODE1, SLOT_COMPAT2 },
 	{ "explode2",				COMPATF2_EXPLODE2, SLOT_COMPAT2 },
 	{ "railing",				COMPATF2_RAILING, SLOT_COMPAT2 },
+	{ "scriptwait",				COMPATF2_SCRIPTWAIT, SLOT_COMPAT2 },
 	{ NULL, 0, 0 }
 };
 
@@ -206,7 +207,7 @@ void ParseCompatibility()
 
 	// The contents of this file are not cumulative, as it should not
 	// be present in user-distributed maps.
-	FScanner sc(Wads.GetNumForFullName("compatibility.txt"));
+	FScanner sc(fileSystem.GetNumForFullName("compatibility.txt"));
 
 	while (sc.GetString())	// Get MD5 signature
 	{
@@ -290,7 +291,7 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
 	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
-	if (Wads.GetLumpFile(map->lumpnum) == Wads.GetIwadNum() && (gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
+	if (fileSystem.GetFileContainer(map->lumpnum) == fileSystem.GetIwadNum() && (gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
 	{
 		Level->ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
 		if (gameinfo.flags & GI_COMPATSTAIRS) Level->ii_compatflags |= COMPATF_STAIRINDEX;
@@ -338,199 +339,3 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	}
 	return FName(hash, true);	// if this returns NAME_None it means there is no scripted compatibility handler.
 }
-
-//==========================================================================
-//
-// SetCompatibilityParams
-//
-//==========================================================================
-
-class DLevelCompatibility : public DObject
-{
-	DECLARE_ABSTRACT_CLASS(DLevelCompatibility, DObject)
-public:
-	MapLoader *loader;
-	FLevelLocals *Level;
-};
-IMPLEMENT_CLASS(DLevelCompatibility, true, false);
-
-
-void MapLoader::SetCompatibilityParams(FName checksum)
-{
-	auto lc = Create<DLevelCompatibility>();
-	lc->loader = this;
-	lc->Level = Level;
-	for(auto cls : PClass::AllClasses)
-	{
-		if (cls->IsDescendantOf(RUNTIME_CLASS(DLevelCompatibility)))
-		{
-			PFunction *const func = dyn_cast<PFunction>(cls->FindSymbol("Apply", false));
-			if (func != nullptr)
-			{
-				VMValue param[] = { lc, checksum.GetIndex(), &Level->MapName };
-				VMCall(func->Variants[0].Implementation, param, 3, nullptr, 0);
-			}
-		}
-	}
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, OffsetSectorPlane)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(sector);
-	PARAM_INT(planeval);
-	PARAM_FLOAT(delta);
-
-	if ((unsigned)sector < self->Level->sectors.Size())
-	{
-		sector_t *sec = &self->Level->sectors[sector];
-		secplane_t& plane = sector_t::floor == planeval? sec->floorplane : sec->ceilingplane;
-		plane.ChangeHeight(delta);
-		sec->ChangePlaneTexZ(planeval, delta);
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearSectorTags)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(sector);
-	self->Level->tagManager.RemoveSectorTags(sector);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddSectorTag)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(sector);
-	PARAM_INT(tag);
-
-	if ((unsigned)sector < self->Level->sectors.Size())
-	{
-		self->Level->tagManager.AddSectorTag(sector, tag);
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearLineIDs)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(line);
-	self->Level->tagManager.RemoveLineIDs(line);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddLineID)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(line);
-	PARAM_INT(tag);
-	
-	if ((unsigned)line < self->Level->lines.Size())
-	{
-		self->Level->tagManager.AddLineID(line, tag);
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingSkills)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(thing);
-	PARAM_INT(skillmask);
-
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
-	{
-		self->loader->MapThingsConverted[thing].SkillFilter = skillmask;
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingXY)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(thing);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
-	{
-		auto& pos = self->loader->MapThingsConverted[thing].pos;
-		pos.X = x;
-		pos.Y = y;
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingZ)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(thing);
-	PARAM_FLOAT(z);
-
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
-	{
-		self->loader->MapThingsConverted[thing].pos.Z = z;
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingFlags)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_INT(thing);
-	PARAM_INT(flags);
-
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
-	{
-		self->loader->MapThingsConverted[thing].flags = flags;
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetVertex)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_UINT(vertex);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-
-	if (vertex < self->Level->vertexes.Size())
-	{
-		self->Level->vertexes[vertex].p = DVector2(x, y);
-	}
-	self->loader->ForceNodeBuild = true;
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetLineSectorRef)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_UINT(lineidx);
-	PARAM_UINT(sideidx);
-	PARAM_UINT(sectoridx);
-
-	if (   sideidx < 2
-		&& lineidx < self->Level->lines.Size()
-		&& sectoridx < self->Level->sectors.Size())
-	{
-		line_t *line = &self->Level->lines[lineidx];
-		side_t *side = line->sidedef[sideidx];
-		side->sector = &self->Level->sectors[sectoridx];
-		if (sideidx == 0) line->frontsector = side->sector;
-		else line->backsector = side->sector;
-	}
-	self->loader->ForceNodeBuild = true;
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(DLevelCompatibility, GetDefaultActor)
-{
-	PARAM_SELF_PROLOGUE(DLevelCompatibility);
-	PARAM_NAME(actorclass);
-	ACTION_RETURN_OBJECT(GetDefaultByName(actorclass));
-}
-
-
-DEFINE_FIELD(DLevelCompatibility, Level);
-

@@ -142,7 +142,7 @@ class MummyFX1 : Actor
 	States
 	{
 	Spawn:
-		FX15 A 5 Bright A_PlaySound("mummy/head");
+		FX15 A 5 Bright A_StartSound("mummy/head");
 		FX15 B 5 Bright A_SeekerMissile(10,20);
 		FX15 C 5 Bright;
 		FX15 B 5 Bright A_SeekerMissile(10,20);

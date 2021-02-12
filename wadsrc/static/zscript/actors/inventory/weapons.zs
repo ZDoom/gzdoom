@@ -163,7 +163,7 @@ class Weapon : StateProvider
 	{
 		if (UpSound)
 		{
-			origin.A_PlaySound(UpSound, CHAN_WEAPON);
+			origin.A_StartSound(UpSound, CHAN_WEAPON);
 		}
 	}
 	
@@ -213,6 +213,22 @@ class Weapon : StateProvider
 	//
 	//---------------------------------------------------------------------------
 
+	action void ResetPSprite(PSprite psp)
+	{
+		if (!psp)	return;
+		psp.rotation = 0;
+		psp.scale.x = 1;
+		psp.scale.y = 1;
+		psp.pivot.x = 0;
+		psp.pivot.y = 0;
+		psp.valign = 0;
+		psp.halign = 0;
+		psp.Coord0 = (0,0);
+		psp.Coord1 = (0,0);
+		psp.Coord2 = (0,0);
+		psp.Coord3 = (0,0);
+	}
+
 	action void A_Lower(int lowerspeed = 6)
 	{
 		let player = player;
@@ -227,6 +243,7 @@ class Weapon : StateProvider
 			return;
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
+		if (!psp) return;
 		if (player.morphTics || player.cheats & CF_INSTANTWEAPSWITCH)
 		{
 			psp.y = WEAPONBOTTOM;
@@ -239,6 +256,8 @@ class Weapon : StateProvider
 		{ // Not lowered all the way yet
 			return;
 		}
+		ResetPSprite(psp);
+		
 		if (player.playerstate == PST_DEAD)
 		{ // Player is dead, so don't bring up a pending weapon
 			// Player is dead, so keep the weapon off screen
@@ -276,12 +295,19 @@ class Weapon : StateProvider
 			return;
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
+		if (!psp) return;
+
+		if (psp.y <= WEAPONBOTTOM)
+		{
+			ResetPSprite(psp);
+		}
 		psp.y -= raisespeed;
 		if (psp.y > WEAPONTOP)
 		{ // Not raised all the way yet
 			return;
 		}
 		psp.y = WEAPONTOP;
+		
 		psp.SetState(player.ReadyWeapon.GetReadyState());
 		return;
 	}
@@ -341,11 +367,12 @@ class Weapon : StateProvider
 		}
 
 		// Play ready sound, if any.
-		if (weapon.ReadySound && player.GetPSprite(PSP_WEAPON).curState == weapon.FindState('Ready'))
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (weapon.ReadySound && psp && psp.curState == weapon.FindState('Ready'))
 		{
 			if (!weapon.bReadySndHalf || random[WpnReadySnd]() < 128)
 			{
-				pawn.A_PlaySound(weapon.ReadySound, CHAN_WEAPON);
+				pawn.A_StartSound(weapon.ReadySound, CHAN_WEAPON);
 			}
 		}
 
@@ -361,8 +388,11 @@ class Weapon : StateProvider
 			// Prepare for bobbing action.
 			player.WeaponState |= WF_WEAPONBOBBING;
 			let pspr = player.GetPSprite(PSP_WEAPON);
-			pspr.x = 0;
-			pspr.y = WEAPONTOP;
+			if (pspr)
+			{
+				pspr.x = 0;
+				pspr.y = WEAPONTOP;
+			}
 		}
 	}
 
@@ -865,9 +895,12 @@ class Weapon : StateProvider
 		p.refire = 0;
 
 		let pspr = p.GetPSprite(PSP_WEAPON);
-		pspr.y = WEAPONBOTTOM;
-		pspr.ResetInterpolation();
-		pspr.SetState(GetUpState());
+		if (pspr)
+		{
+			pspr.y = WEAPONBOTTOM;
+			pspr.ResetInterpolation();
+			pspr.SetState(GetUpState());
+		}
 	}
 
 	//===========================================================================

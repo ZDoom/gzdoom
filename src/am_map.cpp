@@ -34,20 +34,21 @@
 #include "st_stuff.h"
 #include "p_local.h"
 #include "p_lnspec.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "a_sharedglobal.h"
 #include "d_event.h"
 #include "gi.h"
 #include "p_setup.h"
 #include "c_bind.h"
-#include "serializer.h"
-#include "r_renderer.h"
+#include "serializer_doom.h"
 #include "r_sky.h"
 #include "sbar.h"
 #include "d_player.h"
 #include "p_blockmap.h"
 #include "g_game.h"
 #include "v_video.h"
+#include "d_main.h"
+#include "v_draw.h"
 
 #include "m_cheat.h"
 #include "c_dispatch.h"
@@ -66,6 +67,9 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "earcut.hpp"
+#include "c_buttons.h"
+#include "d_buttons.h"
+#include "texturemanager.h"
 
 
 //=============================================================================
@@ -81,8 +85,10 @@ enum
 
 // C++ cannot do static const floats in a class, so these need to be global...
 static const double PLAYERRADIUS = 16.;	// player radius for automap checking
-static const double M_ZOOMIN = (1.02);	// how much zoom-in per tic - goes to 2x in 1 second
-static const double M_ZOOMOUT = (1 / 1.02);	// how much zoom-out per tic - pulls out to 0.5x in 1 second
+static const double M_ZOOMIN = 2; // how much zoom-in per second
+static const double M_ZOOMOUT = 0.2; // how much zoom-out per second
+static const double M_OLDZOOMIN = (1.02); // for am_zoom
+static const double M_OLDZOOMOUT = (1 / 1.02);
 
 static FTextureID marknums[AM_NUMMARKPOINTS]; // numbers used for marking by the automap
 bool automapactive = false;
@@ -125,6 +131,7 @@ struct islope_t
 //=============================================================================
 
 CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
+CVAR(Bool, am_thingrenderstyles, true, CVAR_ARCHIVE)
 CVAR(Int, am_showsubsector, -1, 0);
 
 
@@ -317,30 +324,26 @@ CVAR (Color, am_ovportalcolor,			0x004022,	CVAR_ARCHIVE);
 
 struct AMColor
 {
-	int Index;
 	uint32_t RGB;
 
 	void FromCVar(FColorCVar & cv)
 	{
-		Index = cv.GetIndex();
 		RGB = uint32_t(cv) | MAKEARGB(255, 0, 0, 0);
 	}
 
 	void FromRGB(int r,int g, int b)
 	{
 		RGB = MAKEARGB(255, r, g, b);
-		Index = ColorMatcher.Pick(r, g, b);
 	}
 
 	void setInvalid()
 	{
-		Index = -1;
-		RGB = -1;
+		RGB = 0;
 	}
 
 	bool isValid() const
 	{
-		return Index > -1;
+		return RGB != 0;
 	}
 };
 
@@ -831,7 +834,7 @@ static void AM_ParseArrow(TArray<mline_t> &Arrow, const char *lumpname)
 {
 	const int R = int((8 * PLAYERRADIUS) / 7);
 	FScanner sc;
-	int lump = Wads.CheckNumForFullName(lumpname, true);
+	int lump = fileSystem.CheckNumForFullName(lumpname, true);
 	if (lump >= 0)
 	{
 		sc.OpenLumpNum(lump);
@@ -989,7 +992,7 @@ class DAutomap :public DAutomapBase
 
 	void calcMinMaxMtoF();
 
-	void DrawMarker(FTexture *tex, double x, double y, int yadjust,
+	void DrawMarker(FGameTexture *tex, double x, double y, int yadjust,
 		INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle);
 
 	void rotatePoint(double *x, double *y);
@@ -1004,7 +1007,7 @@ class DAutomap :public DAutomapBase
 	void ScrollParchment(double dmapx, double dmapy);
 	void changeWindowLoc();
 	void maxOutWindowScale();
-	void changeWindowScale();
+	void changeWindowScale(double delta);
 	void clearFB(const AMColor &color);
 	bool clipMline(mline_t *ml, fline_t *fl);
 	void drawMline(mline_t *ml, const AMColor &color);
@@ -1188,11 +1191,11 @@ void DAutomap::findMinMaxBoundaries ()
 void DAutomap::calcMinMaxMtoF()
 {
 	const double safe_frame = 1.0 - am_emptyspacemargin / 100.0;
-	double a = safe_frame * (SCREENWIDTH / max_w);
+	double a = safe_frame * (twod->GetWidth() / max_w);
 	double b = safe_frame * (StatusBar->GetTopOfStatusbar() / max_h);
 
 	min_scale_mtof = a < b ? a : b;
-	max_scale_mtof = SCREENHEIGHT / (2*PLAYERRADIUS);
+	max_scale_mtof = twod->GetHeight() / (2*PLAYERRADIUS);
 }
 
 //=============================================================================
@@ -1236,12 +1239,12 @@ void DAutomap::ScrollParchment (double dmapx, double dmapy)
 
 	if (mapback.isValid())
 	{
-		FTexture *backtex = TexMan.GetTexture(mapback);
+		auto backtex = TexMan.GetGameTexture(mapback);
 
 		if (backtex != nullptr)
 		{
-			int pwidth = backtex->GetDisplayWidth();
-			int pheight = backtex->GetDisplayHeight();
+			int pwidth = int(backtex->GetDisplayWidth() * CleanXfac);
+			int pheight = int(backtex->GetDisplayHeight() * CleanYfac);
 
 			while(mapxstart > 0)
 				mapxstart -= pwidth;
@@ -1275,11 +1278,11 @@ void DAutomap::changeWindowLoc ()
 	incx = m_paninc.x;
 	incy = m_paninc.y;
 
-	oincx = incx = m_paninc.x * SCREENWIDTH / 320;
-	oincy = incy = m_paninc.y * SCREENHEIGHT / 200;
+	oincx = incx = m_paninc.x * twod->GetWidth() / 320;
+	oincy = incy = m_paninc.y * twod->GetHeight() / 200;
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		rotate(&incx, &incy, players[consoleplayer].camera->Angles.Yaw - 90.);
+		rotate(&incx, &incy, players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.);
 	}
 
 	m_x += incx;
@@ -1306,8 +1309,8 @@ void DAutomap::startDisplay()
 	m_paninc.x = m_paninc.y = 0;
 	mtof_zoommul = 1.;
 
-	m_w = FTOM(SCREENWIDTH);
-	m_h = FTOM(SCREENHEIGHT);
+	m_w = FTOM(twod->GetWidth());
+	m_h = FTOM(twod->GetHeight());
 
 	// find player to center on initially
 	if (!playeringame[pnum = consoleplayer])
@@ -1413,7 +1416,7 @@ void DAutomap::NewResolution()
 		minOutWindowScale();
 	else if (scale_mtof > max_scale_mtof)
 		maxOutWindowScale();
-	f_w = screen->GetWidth();
+	f_w = twod->GetWidth();
 	f_h = StatusBar->GetTopOfStatusbar();
 	activateNewScale();
 }
@@ -1433,7 +1436,7 @@ bool DAutomap::Responder (event_t *ev, bool last)
 		{
 			// check for am_pan* and ignore in follow mode
 			const char *defbind = AutomapBindings.GetBind(ev->data1);
-			if (!strnicmp(defbind, "+am_pan", 7)) return false;
+			if (defbind && !strnicmp(defbind, "+am_pan", 7)) return false;
 		}
 
 		bool res = C_DoKey(ev, &AutomapBindings, nullptr);
@@ -1442,7 +1445,7 @@ bool DAutomap::Responder (event_t *ev, bool last)
 			// If this is a release event we also need to check if it released a button in the main Bindings
 			// so that that button does not get stuck.
 			const char *defbind = Bindings.GetBind(ev->data1);
-			return (defbind[0] != '+'); // Let G_Responder handle button releases
+			return (!defbind || defbind[0] != '+'); // Let G_Responder handle button releases
 		}
 		return res;
 	}
@@ -1456,25 +1459,26 @@ bool DAutomap::Responder (event_t *ev, bool last)
 //
 //=============================================================================
 
-void DAutomap::changeWindowScale ()
+void DAutomap::changeWindowScale (double delta)
 {
+
 	double mtof_zoommul;
 
 	if (am_zoomdir > 0)
 	{
-		mtof_zoommul = M_ZOOMIN * am_zoomdir;
+		mtof_zoommul = M_OLDZOOMIN * am_zoomdir;
 	}
 	else if (am_zoomdir < 0)
 	{
-		mtof_zoommul = M_ZOOMOUT / -am_zoomdir;
+		mtof_zoommul = M_OLDZOOMOUT / -am_zoomdir;
 	}
-	else if (Button_AM_ZoomIn.bDown)
+	else if (buttonMap.ButtonDown(Button_AM_ZoomIn))
 	{
-		mtof_zoommul = M_ZOOMIN;
+		mtof_zoommul = (1 + (M_ZOOMIN - 1) * delta);
 	}
-	else if (Button_AM_ZoomOut.bDown)
+	else if (buttonMap.ButtonDown(Button_AM_ZoomOut))
 	{
-		mtof_zoommul = M_ZOOMOUT;
+		mtof_zoommul = (1 + (M_ZOOMOUT - 1) * delta);
 	}
 	else
 	{
@@ -1505,7 +1509,7 @@ void DAutomap::doFollowPlayer ()
 	if (cam != nullptr)
 	{
 		double delta = cam->player ? cam->player->viewz - cam->Z() : cam->GetCameraHeight();
-		DVector3 ampos = cam->GetPortalTransition(delta);
+		DVector3 ampos = cam->InterpolatedPosition(r_viewpoint.TicFrac);
 
 		if (f_oldloc.x != ampos.X || f_oldloc.y != ampos.Y)
 		{
@@ -1519,7 +1523,7 @@ void DAutomap::doFollowPlayer ()
 			sy = (f_oldloc.y - ampos.Y);
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
-				rotate(&sx, &sy, cam->Angles.Yaw - 90);
+				rotate(&sx, &sy, cam->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90);
 			}
 			ScrollParchment(sx, sy);
 
@@ -1541,27 +1545,6 @@ void DAutomap::Ticker ()
 		return;
 
 	amclock++;
-
-	if (am_followplayer)
-	{
-		doFollowPlayer();
-	}
-	else
-	{
-		m_paninc.x = m_paninc.y = 0;
-		if (Button_AM_PanLeft.bDown) m_paninc.x -= FTOM(F_PANINC);
-		if (Button_AM_PanRight.bDown) m_paninc.x += FTOM(F_PANINC);
-		if (Button_AM_PanUp.bDown) m_paninc.y += FTOM(F_PANINC);
-		if (Button_AM_PanDown.bDown) m_paninc.y -= FTOM(F_PANINC);
-	}
-
-	// Change the zoom if necessary
-	if (Button_AM_ZoomIn.bDown || Button_AM_ZoomOut.bDown || am_zoomdir != 0)
-		changeWindowScale();
-
-	// Change x,y location
-	//if (m_paninc.x || m_paninc.y)
-	changeWindowLoc();
 }
 
 
@@ -1585,15 +1568,15 @@ void DAutomap::clearFB (const AMColor &color)
 
 	if (!drawback)
 	{
-		screen->Clear (0, 0, f_w, f_h, color.Index, color.RGB);
+		ClearRect(twod, 0, 0, f_w, f_h, -1, color.RGB);
 	}
 	else
 	{
-		FTexture *backtex = TexMan.GetTexture(mapback);
+		auto backtex = TexMan.GetGameTexture(mapback);
 		if (backtex != nullptr)
 		{
-			int pwidth = backtex->GetDisplayWidth();
-			int pheight = backtex->GetDisplayHeight();
+			int pwidth = int(backtex->GetDisplayWidth() * CleanXfac);
+			int pheight = int(backtex->GetDisplayHeight() * CleanYfac);
 			int x, y;
 
 			//blit the automap background to the screen.
@@ -1601,7 +1584,7 @@ void DAutomap::clearFB (const AMColor &color)
 			{
 				for (x = int(mapxstart); x < f_w; x += pwidth)
 				{
-					screen->DrawTexture (backtex, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, TAG_DONE);
+					DrawTexture(twod, backtex, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, DTA_DestWidth, pwidth, DTA_DestHeight, pheight, TAG_DONE);
 				}
 			}
 		}
@@ -1752,7 +1735,7 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 
 	if (clipMline (ml, &fl))
 	{
-		screen->DrawLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, color.Index, color.RGB);
+		twod->AddLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, -1, -1, INT_MAX, INT_MAX, color.RGB);
 	}
 }
 
@@ -1841,7 +1824,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 {
 	if (sec->GetHeightSec() == nullptr) return sec;
 
-	DVector3 pos = viewer->Pos();
+	DVector3 pos = viewer->InterpolatedPosition(r_viewpoint.TicFrac);
 	
 	if (viewer->player)
 	{
@@ -2058,10 +2041,10 @@ void DAutomap::drawSubsectors()
 				if (roverz < cmpz)
 				{
 					maptex = *(rover->top.texture);
-					flatcolor = *(rover->top.flatcolor);
 					floorplane = rover->top.plane;
 					sector_t *model = rover->top.model;
 					int selector = (rover->flags & FF_INVERTPLANES) ? sector_t::floor : sector_t::ceiling;
+					flatcolor = model->SpecialColors[selector];
 					rotation = -model->GetAngle(selector);
 					scalex = model->GetXScale(selector);
 					scaley = model->GetYScale(selector);
@@ -2088,7 +2071,7 @@ void DAutomap::drawSubsectors()
 		// Apply the automap's rotation to the texture origin.
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			rotation = rotation + 90. - players[consoleplayer].camera->Angles.Yaw;
+			rotation = rotation + 90. - players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 			rotatePoint(&originpt.x, &originpt.y);
 		}
 		originx = f_x + ((originpt.x - m_x) * scale);
@@ -2133,7 +2116,25 @@ void DAutomap::drawSubsectors()
 			}
 			else indices.clear();
 
-			screen->FillSimplePoly(TexMan.GetTexture(maptex, true),
+			// Use an equation similar to player sprites to determine shade
+
+			// Convert a light level into an unbounded colormap index (shade). 
+			// Why the +12? I wish I knew, but experimentation indicates it
+			// is necessary in order to best reproduce Doom's original lighting.
+			double fadelevel;
+
+			if (!V_IsHardwareRenderer() || primaryLevel->lightMode == ELightMode::DoomDark || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
+			{
+				double map = (NUMCOLORMAPS * 2.) - ((floorlight + 12) * (NUMCOLORMAPS / 128.));
+				fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);
+			}
+			else
+			{
+				// The hardware renderer's light modes 0, 1 and 4 use a linear light scale which must be used here as well. Otherwise the automap gets too dark.
+				fadelevel = 1. - clamp(floorlight, 0, 255) / 255.f;
+			}
+
+			twod->AddPoly(TexMan.GetGameTexture(maptex, true),
 				&points[0], points.Size(),
 				originx, originy,
 				scale / scalex,
@@ -2141,8 +2142,7 @@ void DAutomap::drawSubsectors()
 				rotation,
 				colormap,
 				flatcolor,
-				floorlight,
-				f_y + f_h,
+				fadelevel,
 				indices.data(), indices.size());
 		}
 	}
@@ -2667,7 +2667,7 @@ void DAutomap::rotatePoint (double *x, double *y)
 	double pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	rotate (x, y, -players[consoleplayer].camera->Angles.Yaw + 90.);
+	rotate (x, y, -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.);
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2742,7 +2742,7 @@ void DAutomap::drawPlayers ()
 		int numarrowlines;
 
 		double vh = players[consoleplayer].viewheight;
-		DVector2 pos = am_portaloverlay? players[consoleplayer].camera->GetPortalTransition(vh) : players[consoleplayer].camera->Pos();
+		DVector2 pos = players[consoleplayer].camera->InterpolatedPosition(r_viewpoint.TicFrac);
 		pt.x = pos.X;
 		pt.y = pos.Y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
@@ -2752,7 +2752,7 @@ void DAutomap::drawPlayers ()
 		}
 		else
 		{
-			angle = players[consoleplayer].camera->Angles.Yaw;
+			angle = players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 		}
 		
 		if (am_cheat != 0 && CheatMapArrow.Size() > 0)
@@ -2810,12 +2810,12 @@ void DAutomap::drawPlayers ()
 			pt.x = pos.X;
 			pt.y = pos.Y;
 
-			angle = p->mo->Angles.Yaw;
+			angle = p->mo->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				rotatePoint (&pt.x, &pt.y);
-				angle -= players[consoleplayer].camera->Angles.Yaw - 90.;
+				angle -= players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.;
 			}
 
 			drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
@@ -2844,12 +2844,12 @@ void DAutomap::drawKeys ()
 		p.x = pos.X;
 		p.y = pos.Y;
 
-		angle = key->Angles.Yaw;
+		angle = key->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			rotatePoint (&p.x, &p.y);
-			angle += -players[consoleplayer].camera->Angles.Yaw + 90.;
+			angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.;
 		}
 
 		if (key->flags & MF_SPECIAL)
@@ -2883,15 +2883,16 @@ void DAutomap::drawThings ()
 		t = sec.thinglist;
 		while (t)
 		{
-			if (am_cheat > 0 || !(t->flags6 & MF6_NOTONAUTOMAP))
+			if (am_cheat > 0 || !(t->flags6 & MF6_NOTONAUTOMAP)
+				|| (am_thingrenderstyles && !(t->renderflags & RF_INVISIBLE) && !(t->flags6 & MF6_NOTONAUTOMAP)))
 			{
-				DVector3 pos = t->PosRelative(MapPortalGroup);
+				DVector3 pos = t->InterpolatedPosition(r_viewpoint.TicFrac) + t->Level->Displacements.getOffset(sec.PortalGroup, MapPortalGroup);
 				p.x = pos.X;
 				p.y = pos.Y;
 
 				if (am_showthingsprites > 0 && t->sprite > 0)
 				{
-					FTexture *texture = nullptr;
+					FGameTexture *texture = nullptr;
 					spriteframe_t *frame;
 					int rotation = 0;
 
@@ -2902,16 +2903,16 @@ void DAutomap::drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						DAngle angle = 270. + 22.5 - t->Angles.Yaw;
+						DAngle angle = 270. + 22.5 - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 						if (frame->Texture[0] != frame->Texture[1]) angle += 180. / 16;
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{
-							angle += players[consoleplayer].camera->Angles.Yaw - 90.;
+							angle += players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.;
 						}
 						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
 
 						const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
-						texture = TexMan.GetTexture(textureID, true);
+						texture = TexMan.GetGameTexture(textureID, true);
 					}
 
 					if (texture == nullptr) goto drawTriangle;	// fall back to standard display if no sprite can be found.
@@ -2919,18 +2920,20 @@ void DAutomap::drawThings ()
 					const double spriteXScale = (t->Scale.X * (10. / 16.) * scale_mtof);
 					const double spriteYScale = (t->Scale.Y * (10. / 16.) * scale_mtof);
 
-					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
+					if (am_thingrenderstyles) DrawMarker(texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
+						spriteXScale, spriteYScale, t->Translation, t->Alpha, t->fillcolor, t->RenderStyle);
+					else DrawMarker(texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
 						spriteXScale, spriteYScale, t->Translation, 1., 0, LegacyRenderStyles[STYLE_Normal]);
 				}
 				else
 				{
 			drawTriangle:
-					angle = t->Angles.Yaw;
+					angle = t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
 						rotatePoint (&p.x, &p.y);
-						angle += -players[consoleplayer].camera->Angles.Yaw + 90.;
+						angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.;
 					}
 
 					color = AMColors[AMColors.ThingColor];
@@ -2952,7 +2955,7 @@ void DAutomap::drawThings ()
 							if (G_SkillProperty(SKILLP_EasyKey) || am_showkeys_always)
 							{
 								// Already drawn by AM_drawKeys(), so don't draw again
-								color.Index = -1;
+								color.RGB = 0;
 							}
 							else if (am_showkeys)
 							{
@@ -2961,7 +2964,7 @@ void DAutomap::drawThings ()
 								if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 								else color = AMColors[AMColors.ThingColor_CountItem];
 								drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0., color, p.x, p.y);
-								color.Index = -1;
+								color.RGB = 0;
 							}
 							else
 							{
@@ -2974,7 +2977,7 @@ void DAutomap::drawThings ()
 							color = AMColors[AMColors.ThingColor_Item];
 					}
 
-					if (color.Index != -1)
+					if (color.isValid())
 					{
 						drawLineCharacter(thintriangle_guy.data(), thintriangle_guy.size(), 16, angle, color, p.x, p.y);
 					}
@@ -2989,7 +2992,7 @@ void DAutomap::drawThings ()
 							{ { -1,  1 }, { -1, -1 } },
 						};
 
-						drawLineCharacter (box, 4, t->radius, angle - t->Angles.Yaw, color, p.x, p.y);
+						drawLineCharacter (box, 4, t->radius, angle - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw, color, p.x, p.y);
 					}
 				}
 			}
@@ -3004,7 +3007,7 @@ void DAutomap::drawThings ()
 //
 //=============================================================================
 
-void DAutomap::DrawMarker (FTexture *tex, double x, double y, int yadjust,
+void DAutomap::DrawMarker (FGameTexture *tex, double x, double y, int yadjust,
 	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
 {
 	if (tex == nullptr || !tex->isValid())
@@ -3015,9 +3018,9 @@ void DAutomap::DrawMarker (FTexture *tex, double x, double y, int yadjust,
 	{
 		rotatePoint (&x, &y);
 	}
-	screen->DrawTexture (tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
-		DTA_DestWidthF, tex->GetDisplayWidthDouble() * CleanXfac * xscale,
-		DTA_DestHeightF, tex->GetDisplayHeightDouble() * CleanYfac * yscale,
+	DrawTexture(twod, tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
+		DTA_DestWidthF, tex->GetDisplayWidth() * CleanXfac * xscale,
+		DTA_DestHeightF, tex->GetDisplayHeight() * CleanYfac * yscale,
 		DTA_ClipTop, f_y,
 		DTA_ClipBottom, f_y + f_h,
 		DTA_ClipLeft, f_x,
@@ -3053,7 +3056,7 @@ void DAutomap::drawMarks ()
 
 			if (font == nullptr)
 			{
-				DrawMarker(TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
+				DrawMarker(TexMan.GetGameTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
 					1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
 			}
 			else
@@ -3067,7 +3070,7 @@ void DAutomap::drawMarks ()
 					rotatePoint (&x, &y);
 				}
 
-				screen->DrawText(font, am_markcolor, CXMTOF(x), CYMTOF(y), numstr, TAG_DONE);
+				DrawText(twod, font, am_markcolor, CXMTOF(x), CYMTOF(y), numstr, TAG_DONE);
 			}
 		}
 	}
@@ -3095,18 +3098,18 @@ void DAutomap::drawAuthorMarkers ()
 		}
 
 		FTextureID picnum;
-		FTexture *tex;
+		FGameTexture *tex;
 		uint16_t flip = 0;
 
 		if (mark->picnum.isValid())
 		{
-			tex = TexMan.GetTexture(mark->picnum, true);
+			tex = TexMan.GetGameTexture(mark->picnum, true);
 			if (tex->GetRotations() != 0xFFFF)
 			{
 				spriteframe_t *sprframe = &SpriteFrames[tex->GetRotations()];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan.GetTexture(picnum);
+				tex = TexMan.GetGameTexture(picnum);
 			}
 		}
 		else
@@ -3121,7 +3124,7 @@ void DAutomap::drawAuthorMarkers ()
 				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + mark->frame];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan.GetTexture(picnum);
+				tex = TexMan.GetGameTexture(picnum);
 			}
 		}
 		auto it = Level->GetActorIterator(mark->args[0]);
@@ -3147,7 +3150,7 @@ void DAutomap::drawAuthorMarkers ()
 
 void DAutomap::drawCrosshair (const AMColor &color)
 {
-	screen->DrawPixel(f_w/2, (f_h+1)/2, color.Index, color.RGB);
+	twod->AddPixel(f_w/2, (f_h+1)/2, color.RGB);
 }
 
 //=============================================================================
@@ -3158,8 +3161,37 @@ void DAutomap::drawCrosshair (const AMColor &color)
 
 void DAutomap::Drawer (int bottom)
 {
+	static uint64_t LastMS = 0;
+	// Use a delta to zoom/pan at a constant speed regardless of current FPS
+	uint64_t ms = screen->FrameTime;
+	double delta = (ms - LastMS) * 0.001;
+
 	if (!automapactive)
 		return;
+
+	if (am_followplayer)
+	{
+		doFollowPlayer();
+	}
+	else
+	{
+		m_paninc.x = m_paninc.y = 0;
+		if (buttonMap.ButtonDown(Button_AM_PanLeft))
+			m_paninc.x -= FTOM(F_PANINC) * delta * TICRATE;
+		if (buttonMap.ButtonDown(Button_AM_PanRight))
+			m_paninc.x += FTOM(F_PANINC) * delta * TICRATE;
+		if (buttonMap.ButtonDown(Button_AM_PanUp))
+			m_paninc.y += FTOM(F_PANINC) * delta * TICRATE;
+		if (buttonMap.ButtonDown(Button_AM_PanDown))
+			m_paninc.y -= FTOM(F_PANINC) * delta * TICRATE;
+	}
+
+	// Change the zoom if necessary
+	if (buttonMap.ButtonDown(Button_AM_ZoomIn) || buttonMap.ButtonDown(Button_AM_ZoomOut) || am_zoomdir != 0)
+		changeWindowScale(delta);
+
+	// Change x,y location
+	changeWindowLoc();
 
 	bool allmap = (Level->flags2 & LEVEL2_ALLMAP) != 0;
 	bool allthings = allmap && players[consoleplayer].mo->FindInventory(NAME_PowerScanner, true) != nullptr;
@@ -3179,7 +3211,7 @@ void DAutomap::Drawer (int bottom)
 		// [RH] Set f_? here now to handle automap overlaying
 		// and view size adjustments.
 		f_x = f_y = 0;
-		f_w = screen->GetWidth ();
+		f_w = twod->GetWidth ();
 		f_h = bottom;
 
 		clearFB(AMColors[AMColors.Background]);
@@ -3213,6 +3245,8 @@ void DAutomap::Drawer (int bottom)
 
 	drawMarks();
 	showSS();
+
+	LastMS = ms;
 }
 
 //=============================================================================
@@ -3338,12 +3372,12 @@ void AM_ToggleMap()
 	if (!automapactive)
 	{
 		// Reset AM buttons
-		Button_AM_PanLeft.Reset();
-		Button_AM_PanRight.Reset();
-		Button_AM_PanUp.Reset();
-		Button_AM_PanDown.Reset();
-		Button_AM_ZoomIn.Reset();
-		Button_AM_ZoomOut.Reset();
+		buttonMap.ClearButton(Button_AM_PanLeft);
+		buttonMap.ClearButton(Button_AM_PanRight);
+		buttonMap.ClearButton(Button_AM_PanUp);
+		buttonMap.ClearButton(Button_AM_PanDown);
+		buttonMap.ClearButton(Button_AM_ZoomIn);
+		buttonMap.ClearButton(Button_AM_ZoomOut);
 
 		primaryLevel->automap->startDisplay();
 		automapactive = true;

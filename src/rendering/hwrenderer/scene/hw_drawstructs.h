@@ -5,8 +5,8 @@
 //
 //==========================================================================
 #include "r_defs.h"
-#include "r_data/renderstyle.h"
-#include "textures/textures.h"
+#include "renderstyle.h"
+#include "textures.h"
 #include "r_data/colormaps.h"
 
 #ifdef _MSC_VER
@@ -128,7 +128,8 @@ public:
 		HWF_NOSPLITUPPER=16,
 		HWF_NOSPLITLOWER=32,
 		HWF_NOSPLIT=64,
-		HWF_TRANSLUCENT = 128
+		HWF_TRANSLUCENT = 128,
+		HWF_NOSLICE = 256
 	};
 
 	enum
@@ -151,7 +152,7 @@ public:
 	friend class HWPortal;
 
 	vertex_t * vertexes[2];				// required for polygon splitting
-	FMaterial *gltexture;
+	FGameTexture *texture;
 	TArray<lightlist_t> *lightlist;
 
 	HWSeg glseg;
@@ -164,9 +165,9 @@ public:
 	
 	float ViewDistance;
 
-	int lightlevel;
+	short lightlevel;
+	uint16_t flags;
 	uint8_t type;
-	uint8_t flags;
 	short rellight;
 
 	float topglowcolor[4];
@@ -295,9 +296,10 @@ class HWFlat
 public:
 	sector_t * sector;
 	FSection *section;
-	float z; // the z position of the flat (only valid for non-sloped planes)
-	FMaterial *gltexture;
+	FGameTexture *texture;
+	TextureManipulation* TextureFx;
 
+	float z; // the z position of the flat (only valid for non-sloped planes)
 	FColormap Colormap;	// light and fog
 	PalEntry FlatColor;
 	PalEntry AddColor;
@@ -353,7 +355,7 @@ public:
 
 	int translation;
 	int index;
-	int depth;
+	float depth;
 	int vertexindex;
 
 	float topclip;
@@ -365,15 +367,15 @@ public:
 	float vt,vb;
 	float x1,y1,z1;
 	float x2,y2,z2;
-
-	FMaterial *gltexture;
 	float trans;
+	int dynlightindex;
+
+	FGameTexture *texture;
 	AActor * actor;
 	particle_t * particle;
 	TArray<lightlist_t> *lightlist;
 	DRotator Angles;
 
-	int dynlightindex;
 
 	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
@@ -400,7 +402,7 @@ struct DecalVertex
 
 struct HWDecal
 {
-	FMaterial *gltexture;
+	FGameTexture *texture;
 	TArray<lightlist_t> *lightlist;
 	DBaseDecal *decal;
 	DecalVertex dv[4];
@@ -412,6 +414,7 @@ struct HWDecal
 	int rellight;
 	float alpha;
 	FColormap Colormap;
+	int dynlightindex;
 	sector_t *frontsector;
 	FVector3 Normal;
 
@@ -425,7 +428,13 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 	return sqrtf((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
 }
 
-bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
+bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FGameTexture * gltexture, VSMatrix &mat);
 void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata);
 
 extern const float LARGE_VALUE;
+
+struct FDynLightData;
+struct FDynamicLight;
+bool GetLight(FDynLightData& dld, int group, Plane& p, FDynamicLight* light, bool checkside);
+void AddLightToList(FDynLightData &dld, int group, FDynamicLight* light, bool forceAttenuate);
+void SetSplitPlanes(FRenderState& state, const secplane_t& top, const secplane_t& bottom);

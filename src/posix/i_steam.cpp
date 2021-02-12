@@ -38,7 +38,7 @@
 #include "m_misc.h"
 #endif // __APPLE__
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "d_main.h"
 #include "sc_man.h"
 #include "cmdlib.h"

@@ -79,6 +79,7 @@ map MAP06 lookup "PHUSTR_6"
 	cluster = 5
 	par = 150
 	music = "$MUSIC_THE_DA"
+	needclustertext
 }
 
 map MAP07 lookup "PHUSTR_7"
@@ -135,6 +136,7 @@ map MAP11 lookup "PHUSTR_11"
 	cluster = 6
 	par = 210
 	music = "$MUSIC_STLKS2"
+	needclustertext
 }
 
 map MAP12 lookup "PHUSTR_12"
@@ -179,6 +181,7 @@ map MAP15 lookup "PHUSTR_15"
 	cluster = 7
 	par = 210
 	music = "$MUSIC_RUNNI2"
+	needclustertext
 }
 
 map MAP16 lookup "PHUSTR_16"
@@ -234,6 +237,7 @@ map MAP20 lookup "PHUSTR_20"
 	cluster = 7
 	par = 150
 	music = "$MUSIC_MESSAG"
+	needclustertext
 }
 
 map MAP21 lookup "PHUSTR_21"
@@ -345,6 +349,7 @@ map MAP30 lookup "PHUSTR_30"
 	par = 180
 	allowmonstertelefrags
 	music = "$MUSIC_OPENIN"
+	needclustertext
 }
 
 map MAP31 lookup "PHUSTR_31"
@@ -356,6 +361,7 @@ map MAP31 lookup "PHUSTR_31"
 	cluster = 9
 	par = 120
 	music = "$MUSIC_EVIL"
+	needclustertext
 }
 
 map MAP32 lookup "PHUSTR_32"

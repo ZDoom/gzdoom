@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -53,7 +53,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "r_voxel.h"
 #include "swrenderer/segments/r_drawsegment.h"
@@ -62,48 +62,39 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "a_dynlight.h"
 #include "r_data/r_vanillatrans.h"
 
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, gl_light_sprites)
+EXTERN_CVAR(Int, gl_texture_hqresizemult)
+EXTERN_CVAR(Int, gl_texture_hqresizemode)
+EXTERN_CVAR(Int, gl_texture_hqresize_targets)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ttex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
-		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
-		// transform the origin point
-		double tr_x = pos.X - thread->Viewport->viewpoint.Pos.X;
-		double tr_y = pos.Y - thread->Viewport->viewpoint.Pos.Y;
+		auto viewport = thread->Viewport.get();
 
-		double tz = tr_x * thread->Viewport->viewpoint.TanCos + tr_y * thread->Viewport->viewpoint.TanSin;
+		const double thingxscalemul = spriteScale.X / tex->GetScale().X;
 
-		// thing is behind view plane?
-		if (tz < MINZ)
+		// Calculate billboard line for the sprite
+		double SpriteOffX = (thing) ? thing->SpriteOffset.X : 0.;
+		DVector2 dir = { viewport->viewpoint.Sin, -viewport->viewpoint.Cos };
+		DVector2 trs = pos.XY() - viewport->viewpoint.Pos.XY();
+		trs = { trs.X + SpriteOffX * dir.X, trs.Y + SpriteOffX * dir.Y };
+		DVector2 pt1 = trs - dir * (((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul);
+		DVector2 pt2 = pt1 + dir * (tex->GetWidth() * thingxscalemul);
+
+		FWallCoords wallc;
+		if (wallc.Init(thread, pt1, pt2))
 			return;
-
-		double tx = tr_x * thread->Viewport->viewpoint.Sin - tr_y * thread->Viewport->viewpoint.Cos;
-
-		// [RH] Flip for mirrors
-		RenderPortal *renderportal = thread->Portal.get();
-		if (renderportal->MirrorFlags & RF_XFLIP)
-		{
-			tx = -tx;
-		}
-		//tx2 = tx >> 4;
-
-		// too far off the side?
-		if (fabs(tx / 64) > fabs(tz))
-		{
-			return;
-		}
 
 		// [RH] Added scaling
-		int scaled_to = tex->GetScaledTopOffsetSW();
-		int scaled_bo = scaled_to - tex->GetScaledHeight();
+		double scaled_to = tex->GetScaledTopOffsetSW();
+		double scaled_bo = scaled_to - tex->GetScaledHeight();
 		double gzt = pos.Z + spriteScale.Y * scaled_to;
 		double gzb = pos.Z + spriteScale.Y * scaled_bo;
 
@@ -134,86 +125,47 @@ namespace swrenderer
 			}
 		}
 		
-		auto viewport = thread->Viewport.get();
-
-		double xscale = viewport->CenterX / tz;
-
-		// [RH] Reject sprites that are off the top or bottom of the screen
-		if (viewport->globaluclip * tz > viewport->viewpoint.Pos.Z - gzb || viewport->globaldclip * tz < viewport->viewpoint.Pos.Z - gzt)
-		{
-			return;
-		}
 
 		// [RH] Flip for mirrors
+		auto renderportal = thread->Portal.get();
 		renderflags ^= renderportal->MirrorFlags & RF_XFLIP;
 
 		// [SP] SpriteFlip
 		if (thing->renderflags & RF_SPRITEFLIP)
 			renderflags ^= RF_XFLIP;
 
-		// calculate edges of the shape
-		const double thingxscalemul = spriteScale.X / tex->GetScale().X;
+		double yscale, origyscale;
+		int resizeMult = gl_texture_hqresizemult;
 
-		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul;
-		double dtx1 = tx * xscale;
-		int x1 = viewport->viewwindow.centerx + xs_RoundToInt(dtx1);
-
-		// off the right side?
-		if (x1 >= renderportal->WindowRight)
-			return;
-
-		tx += tex->GetWidth() * thingxscalemul;
-		int x2 = viewport->viewwindow.centerx + xs_RoundToInt(tx * xscale);
-
-		// off the left side or too small?
-		if ((x2 < renderportal->WindowLeft || x2 <= x1))
-			return;
-
-		xscale = spriteScale.X * xscale / tex->GetScale().X;
-		fixed_t iscale = (fixed_t)(FRACUNIT / xscale); // Round towards zero to avoid wrapping in edge cases
-
-		double yscale = spriteScale.Y / tex->GetScale().Y;
+		origyscale = spriteScale.Y / tex->GetScale().Y;
+		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1 || !(gl_texture_hqresize_targets & 2))
+			resizeMult = 1;
+		yscale = origyscale / resizeMult;
 
 		// store information in a vissprite
 		RenderSprite *vis = thread->FrameMemory->NewObject<RenderSprite>();
 
+		vis->wallc = wallc;
+		vis->SpriteScale = yscale;
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
-		vis->xscale = FLOAT2FIXED(xscale);
-		vis->yscale = float(viewport->InvZtoScale * yscale / tz);
-		vis->idepth = float(1 / tz);
-		vis->floorclip = thing->Floorclip / yscale;
-		vis->texturemid = tex->GetTopOffsetSW() - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip) / yscale;
-		vis->x1 = x1 < renderportal->WindowLeft ? renderportal->WindowLeft : x1;
-		vis->x2 = x2 > renderportal->WindowRight ? renderportal->WindowRight : x2;
-		//vis->Angle = thing->Angles.Yaw;
-
-		if (renderflags & RF_XFLIP)
-		{
-			vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
-			vis->xiscale = -iscale;
-		}
-		else
-		{
-			vis->startfrac = 0;
-			vis->xiscale = iscale;
-		}
-
-		vis->startfrac += (fixed_t)(vis->xiscale * (vis->x1 - viewport->viewwindow.centerx + 0.5 - dtx1));
-
-		// killough 3/27/98: save sector for special clipping later
+		vis->yscale = float(viewport->InvZtoScale * yscale / wallc.sz1);
+		vis->idepth = float(1 / wallc.sz1);
+		vis->floorclip = thing->Floorclip / origyscale;
+		vis->texturemid = tex->GetTopOffsetSW() - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip / resizeMult) / yscale;
+		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
+		vis->x2 = wallc.sx2 > renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;
 		vis->heightsec = heightsec;
 		vis->sector = thing->Sector;
 		vis->section = thing->section;
-
-		vis->depth = (float)tz;
+		vis->depth = (float)wallc.sz1;
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
-		vis->gzb = (float)gzb;		// [RH] use gzb, not thing->z
-		vis->gzt = (float)gzt;		// killough 3/27/98
+		vis->gzb = (float)gzb;
+		vis->gzt = (float)gzt;
 		vis->deltax = float(pos.X - viewport->viewpoint.Pos.X);
 		vis->deltay = float(pos.Y - viewport->viewpoint.Pos.Y);
 		vis->renderflags = renderflags;
 		if (thing->flags5 & MF5_BRIGHT)
-			vis->renderflags |= RF_FULLBRIGHT; // kg3D
+			vis->renderflags |= RF_FULLBRIGHT;
 		vis->RenderStyle = thing->RenderStyle;
 		if (r_UseVanillaTransparency)
 		{
@@ -226,11 +178,7 @@ namespace swrenderer
 		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;
 		vis->fakeceiling = fakeceiling;
-		//vis->bInMirror = renderportal->MirrorFlags & RF_XFLIP;
-		//vis->bSplitSprite = false;
-
 		vis->pic = tex;
-
 		vis->foggy = foggy;
 
 		// The software renderer cannot invert the source without inverting the overlay
@@ -300,74 +248,36 @@ namespace swrenderer
 			vis->dynlightcolor = 0;
 		}
 
-		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
+		vis->Light.SetColormap(thread, wallc.sz1, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
 
 		thread->SpriteList->Push(vis);
 	}
 
 	void RenderSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int, Fake3DTranslucent)
 	{
-		auto vis = this;
-
-		fixed_t 		frac;
-		FSoftwareTexture		*tex;
-		int				x2;
-		fixed_t			xiscale;
-
-		double spryscale, sprtopscreen;
-		bool sprflipvert;
-
-		if (vis->xscale == 0 || fabs(vis->yscale) < (1.0f / 32000.0f))
-		{ // scaled to 0; can't see
-			return;
-		}
-
 		SpriteDrawerArgs drawerargs;
 		drawerargs.SetDynamicLight(dynlightcolor);
-		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, vis->Light);
-
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), RenderStyle, Alpha, Translation, FillColor, Light);
 		if (visible)
 		{
-			tex = vis->pic;
-			spryscale = vis->yscale;
-			sprflipvert = false;
-			fixed_t iscale = FLOAT2FIXED(1 / vis->yscale);
-			frac = vis->startfrac;
-			xiscale = vis->xiscale;
-			double texturemid = vis->texturemid;
-
-			auto viewport = thread->Viewport.get();
-
-			if (vis->renderflags & RF_YFLIP)
+			RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
+			short portalfloorclip[MAXWIDTH];
+			int x2 = wallc.sx2;
+			for (int x = wallc.sx1; x < x2; x++)
 			{
-				sprflipvert = true;
-				spryscale = -spryscale;
-				iscale = -iscale;
-				texturemid -= vis->pic->GetHeight();
-				sprtopscreen = viewport->CenterY + texturemid * spryscale;
-			}
-			else
-			{
-				sprflipvert = false;
-				sprtopscreen = viewport->CenterY - texturemid * spryscale;
+				if (translucentPass->ClipSpriteColumnWithPortals(x, this))
+					portalfloorclip[x] = mceilingclip[x];
+				else
+					portalfloorclip[x] = mfloorclip[x];
 			}
 
-			int x = vis->x1;
-			x2 = vis->x2;
+			thread->PrepareTexture(pic, RenderStyle);
 
-			if (x < x2)
-			{
-				RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
+			ProjectedWallLight mlight;
+			mlight.SetSpriteLight();
 
-				thread->PrepareTexture(tex, vis->RenderStyle);
-				while (x < x2)
-				{
-					if (!translucentPass->ClipSpriteColumnWithPortals(x, vis))
-						drawerargs.DrawMaskedColumn(thread, x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, vis->RenderStyle, false);
-					x++;
-					frac += xiscale;
-				}
-			}
+			drawerargs.SetBaseColormap(Light.BaseColormap);
+			drawerargs.DrawMasked(thread, gzt - floorclip, SpriteScale, renderflags & RF_XFLIP, renderflags & RF_YFLIP, wallc, x1, x2, mlight, pic, portalfloorclip, mceilingclip, RenderStyle);
 		}
 	}
 }

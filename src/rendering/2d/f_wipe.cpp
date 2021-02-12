@@ -27,8 +27,9 @@
 #include "m_random.h"
 #include "f_wipe.h"
 #include "templates.h"
-#include "textures/bitmap.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "bitmap.h"
+#include "hw_material.h"
+#include "v_draw.h"
 
 class FBurnTexture : public FTexture
 {
@@ -41,7 +42,7 @@ public:
 		Height = h;
 	}
 	
-	FBitmap GetBgraBitmap(PalEntry*, int *trans) override
+	FBitmap GetBgraBitmap(const PalEntry*, int *trans) override
 	{
 		FBitmap bmp;
 		bmp.Create(Width, Height);
@@ -168,7 +169,7 @@ class Wiper_Burn : public Wiper
 public:
 	~Wiper_Burn();
 	bool Run(int ticks) override;
-	void SetTextures(FTexture *startscreen, FTexture *endscreen) override;
+	void SetTextures(FGameTexture *startscreen, FGameTexture *endscreen) override;
 
 private:
 	static const int WIDTH = 64, HEIGHT = 64;
@@ -236,8 +237,8 @@ Wiper::~Wiper()
 bool Wiper_Crossfade::Run(int ticks)
 {
 	Clock += ticks;
-	screen->DrawTexture(startScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
-	screen->DrawTexture(endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, DTA_Alpha, clamp(Clock / 32.f, 0.f, 1.f), TAG_DONE);
+	DrawTexture(twod, startScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
+	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, DTA_Alpha, clamp(Clock / 32.f, 0.f, 1.f), TAG_DONE);
 	return Clock >= 32;
 }
 
@@ -272,7 +273,7 @@ Wiper_Melt::Wiper_Melt()
 bool Wiper_Melt::Run(int ticks)
 {
 	bool done;
-	screen->DrawTexture(endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false,  TAG_DONE);
+	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false,  TAG_DONE);
 	
 	// Copy the old screen in vertical strips on top of the new one.
 	while (ticks--)
@@ -307,8 +308,8 @@ bool Wiper_Melt::Run(int ticks)
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
 				
-				int w = startScreen->GetDisplayWidth();
-				int h = startScreen->GetDisplayHeight();
+				int w = startScreen->GetTexelWidth();
+				int h = startScreen->GetTexelHeight();
 				dpt.x = i * w / WIDTH;
 				dpt.y = MAX(0, y[i] * h / HEIGHT);
 				rect.left = dpt.x;
@@ -317,7 +318,7 @@ bool Wiper_Melt::Run(int ticks)
 				rect.bottom = h - dpt.y;
 				if (rect.bottom > rect.top)
 				{
-					screen->DrawTexture(startScreen, 0, dpt.y, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_ClipLeft, rect.left, DTA_ClipRight, rect.right, DTA_Masked, false, TAG_DONE);
+					DrawTexture(twod, startScreen, 0, dpt.y, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_ClipLeft, rect.left, DTA_ClipRight, rect.right, DTA_Masked, false, TAG_DONE);
 				}
 			}
 		}
@@ -331,13 +332,14 @@ bool Wiper_Melt::Run(int ticks)
 //
 //==========================================================================
 
-void Wiper_Burn::SetTextures(FTexture *startscreen, FTexture *endscreen)
+void Wiper_Burn::SetTextures(FGameTexture *startscreen, FGameTexture *endscreen)
 {
 	startScreen = startscreen;
 	endScreen = endscreen;
 	BurnTexture = new FBurnTexture(WIDTH, HEIGHT);
 	auto mat = FMaterial::ValidateTexture(endScreen, false);
-	mat->AddTextureLayer(BurnTexture);
+	mat->ClearLayers();
+	mat->AddTextureLayer(BurnTexture, false);
 }
 
 //==========================================================================
@@ -373,8 +375,8 @@ bool Wiper_Burn::Run(int ticks)
 		done = (Density < 0);
 	}
 
-	BurnTexture->SystemTextures.Clean(true, true);
-	endScreen->SystemTextures.Clean(false, false);
+	BurnTexture->CleanHardwareTextures();
+	endScreen->CleanHardwareData(false);	// this only cleans the descriptor sets for the Vulkan backend. We do not want to delete the wipe screen's hardware texture here.
 
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();
@@ -387,8 +389,8 @@ bool Wiper_Burn::Run(int ticks)
 		}
 	}
 
-	screen->DrawTexture(startScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
-	screen->DrawTexture(endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Burn, true, DTA_Masked, false, TAG_DONE);
+	DrawTexture(twod, startScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
+	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Burn, true, DTA_Masked, false, TAG_DONE);
 	
 	// The fire may not always stabilize, so the wipe is forced to end
 	// after an arbitrary maximum time.

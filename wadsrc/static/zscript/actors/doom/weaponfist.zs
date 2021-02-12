@@ -72,7 +72,7 @@ extend class Actor
 		// turn to face target
 		if (t.linetarget)
 		{
-			A_PlaySound ("*fist", CHAN_WEAPON);
+			A_StartSound ("*fist", CHAN_WEAPON);
 			angle = t.angleFromSource;
 		}
 	}

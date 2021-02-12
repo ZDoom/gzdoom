@@ -16,7 +16,7 @@ gameinfo
 	finalepage = "CREDIT", "VICTORY2", "ENDPIC"
 	infopage = "HELP1", "CREDIT"
 	quitsound = "menu/quit1"
-	borderflat = "FLOOR7_2"
+	borderflat = "CEIL5_1"
 	border = DoomBorder
 	telefogheight = 0
 	defkickback = 100
@@ -40,6 +40,7 @@ gameinfo
 	dimamount = 0.5
 	bluramount = 0.0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -65,14 +66,21 @@ gameinfo
 	defaultendsequence = "Inter_Pic1"
 	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
 	statscreen_mapnamefont = "*BigFont"
-	statscreen_finishedfont = "*BigFont", "green"
-	statscreen_enteringfont = "*BigFont", "green"
+	statscreen_finishedfont = "*BigFont"
+	statscreen_enteringfont = "*BigFont"
+	statscreen_contentfont = "*BigFont"
+	statscreen_authorFont = "*SmallFont", "gray"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "DoomStatusScreen"
 	messageboxclass = "MessageBoxMenu"
 	normforwardmove = 0x19, 0x32
 	normsidemove = 0x18, 0x28
+}
+
+gamedefaults
+{
+	enableskyboxao
 }
 
 DoomEdNums
@@ -175,6 +183,7 @@ skill nightmare
 {
 	AmmoFactor = 2
 	FastMonsters
+	InstantReaction
 	DisableCheats
 	RespawnTime = 12
 	SpawnFilter = Nightmare
@@ -256,6 +265,7 @@ map E1M5 lookup "CHUSTR_E1M5"
 	cluster = 1
 	par = 165
 	music = "$MUSIC_E1M5"
+	needclustertext
 }
 
 // Clusters (correspond with same-numbered episode)

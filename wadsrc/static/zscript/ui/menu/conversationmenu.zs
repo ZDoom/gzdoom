@@ -77,6 +77,8 @@ class ConversationMenu : Menu
 	Array<String> mResponseLines;
 	Array<uint> mResponses;
 	bool mShowGold;
+	bool mHasBackdrop;
+	bool mConfineTextToBackdrop;
 	StrifeDialogueNode mCurNode;
 	int mYpos;
 	PlayerInfo mPlayer;
@@ -85,11 +87,13 @@ class ConversationMenu : Menu
 	int LineHeight;
 	int ReplyLineHeight;
 	Font displayFont;
+	int speechDisplayWidth;
 	int displayWidth;
 	int displayHeight;
 	int fontScale;
 	int refwidth;
 	int refheight;
+	Array<double> ypositions;
 	
 	int SpeechWidth;
 	int ReplyWidth;
@@ -101,7 +105,7 @@ class ConversationMenu : Menu
 
 	//=============================================================================
 	//
-	// returns the y position of the replies boy for positioning the terminal response.
+	// returns the y position of the replies box for positioning the terminal response.
 	//
 	//=============================================================================
 
@@ -112,7 +116,12 @@ class ConversationMenu : Menu
 		mShowGold = false;
 		ConversationPauseTic = gametic + 20;
 		DontDim = true;
-		if (!generic_ui)
+		
+		let tex = TexMan.CheckForTexture (CurNode.Backdrop, TexMan.Type_MiscPatch);
+		mHasBackdrop = tex.isValid();
+		DontBlur = !mHasBackdrop;
+		
+		if (!generic_ui && !dlg_vgafont)
 		{
 			displayFont = SmallFont;
 			displayWidth = CleanWidth;
@@ -123,17 +132,32 @@ class ConversationMenu : Menu
 			ReplyWidth = 320-50-10;
 			SpeechWidth = screen.GetWidth()/CleanXfac - 24*2;
 			ReplyLineHeight = LineHeight = displayFont.GetHeight();
+			mConfineTextToBackdrop = false;
+			speechDisplayWidth = displayWidth;
 		}
 		else
 		{
 			displayFont = NewSmallFont;
 			fontScale = (CleanXfac+1) / 2;
-			displayWidth = screen.GetWidth() / fontScale;
-			displayHeight = screen.GetHeight() / fontScale;
 			refwidth = 640;
 			refheight = 400;
 			ReplyWidth = 640-100-20;
-			SpeechWidth = screen.GetWidth()/fontScale - (24*2 * CleanXfac / fontScale);
+			displayWidth = screen.GetWidth() / fontScale;
+			displayHeight = screen.GetHeight() / fontScale;
+			let aspect = Screen.GetAspectRatio();
+			if (!mHasBackdrop || aspect <= 1.3334)
+			{
+				SpeechWidth = screen.GetWidth()/fontScale - (24*3 * CleanXfac / fontScale);
+				mConfineTextToBackdrop = false;
+				speechDisplayWidth = displayWidth;
+			}
+			else
+			{
+				speechDisplayWidth = int(Screen.GetHeight() * 1.3333 / fontScale);
+				SpeechWidth = speechDisplayWidth - (24*3 * CleanXfac / fontScale);
+				mConfineTextToBackdrop = true;
+			}
+			
 			LineHeight = displayFont.GetHeight() + 2;
 			ReplyLineHeight = LineHeight * fontScale / CleanYfac;
 		}
@@ -254,8 +278,8 @@ class ConversationMenu : Menu
 
 	override void OnDestroy()
 	{
-		mDialogueLines.Destroy();
-		SetMusicVolume (1);
+		if (mDialogueLines != null) mDialogueLines.Destroy();
+		SetMusicVolume (Level.MusicVolume);
 		Super.OnDestroy();
 	}
 
@@ -339,23 +363,17 @@ class ConversationMenu : Menu
 
 		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
 		x = ((x - (screen.GetWidth() / 2)) / fontScale) + refWidth/2;
-		y = ((y - (screen.GetHeight() / 2)) / fontScale) + refHeight/2;
-
-		if (x >= 24 && x <= refWidth-24 && y >= mYpos && y < mYpos + fh * mResponseLines.Size())
+		
+		if (x >= 24 && x <= refWidth-24)
 		{
-			sel = (y - mYpos) / fh;
-			for(int i = 0; i < mResponses.Size(); i++)
+			for (int i = 0; i < ypositions.Size()-1; i++)
 			{
-				if (mResponses[i] > sel)
+				if (y > ypositions[i] && y <= ypositions[i+1])
 				{
-					sel = i-1;
+					sel = i;
 					break;
 				}
 			}
-		}
-		if (sel != -1 && sel != mSelection)
-		{
-			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		mSelection = sel;
 		if (type == MOUSE_Release)
@@ -442,13 +460,13 @@ class ConversationMenu : Menu
 
 		if (speakerName.Length() > 0)
 		{
-			screen.DrawText(displayFont, Font.CR_WHITE, x / fontScale, y / fontScale, speakerName, DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight);
+			screen.DrawText(displayFont, Font.CR_WHITE, x / fontScale, y / fontScale, speakerName, DTA_KeepRatio, !mConfineTextToBackdrop, DTA_VirtualWidth, speechDisplayWidth, DTA_VirtualHeight, displayHeight);
 			y += linesize * 3 / 2;
 		}
 		x = 24 * screen.GetWidth() / 320;
 		for (int i = 0; i < cnt; ++i)
 		{
-			screen.DrawText(displayFont, Font.CR_UNTRANSLATED, x / fontScale, y / fontScale, mDialogueLines.StringAt(i), DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight);
+			screen.DrawText(displayFont, Font.CR_UNTRANSLATED, x / fontScale, y / fontScale, mDialogueLines.StringAt(i), DTA_KeepRatio, !mConfineTextToBackdrop, DTA_VirtualWidth, speechDisplayWidth, DTA_VirtualHeight, displayHeight);
 			y += linesize;
 		}
 	}
@@ -470,6 +488,7 @@ class ConversationMenu : Menu
 		int y = mYpos;
 
 		int response = 0;
+		ypositions.Clear();
 		for (int i = 0; i < mResponseLines.Size(); i++)
 		{
 			int width = displayFont.StringWidth(mResponseLines[i]);
@@ -478,6 +497,7 @@ class ConversationMenu : Menu
 			double sx = (x - 160.0) * CleanXfac + (screen.GetWidth() * 0.5);
 			double sy = (y - 100.0) * CleanYfac + (screen.GetHeight() * 0.5);
 
+			ypositions.Push(sy);
 
 			screen.DrawText(displayFont, Font.CR_GREEN, sx / fontScale, sy / fontScale, mResponseLines[i], DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight);
 
@@ -495,13 +515,31 @@ class ConversationMenu : Menu
 				{
 					int colr = ((MenuTime() % 8) < 4) || GetCurrentMenu() != self ? Font.CR_RED : Font.CR_GREY;
 
+					// custom graphic cursor color
+					Color cursorTexColor;
+					if (colr == Font.CR_RED) cursorTexColor = color(0xFF, 0x00, 0x00);
+					else if (colr == Font.CR_GREY) cursorTexColor = color(0xCC, 0xCC, 0xCC);
+
 					x = (50 + 3 - 160) * CleanXfac + screen.GetWidth() / 2;
 					int yy = (y + ReplyLineHeight / 2 - 5 - 100) * CleanYfac + screen.GetHeight() / 2;
-					screen.DrawText(ConFont, colr, x, yy, "\xd", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+
+					// use a custom graphic (intentionally long-named to reduce collision with existing mods), with the ConFont version as the fallback
+					let cursorTex = TexMan.CheckForTexture("graphics/DialogReplyCursor.png", TexMan.Type_MiscPatch);
+					if (cursorTex.IsValid())
+					{
+						screen.DrawTexture(cursorTex, true, x / fontScale, yy / fontScale, DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight);
+						screen.DrawTexture(cursorTex, true, x / fontScale, yy / fontScale, DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight, DTA_FillColor, cursorTexColor, DTA_LegacyRenderStyle, STYLE_AddShaded);
+					}
+					else
+					{
+						screen.DrawText(ConFont, colr, x, yy, "\xd", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+					}
 				}
 			}
 			y += ReplyLineHeight;
 		}
+		double sy = (y - 100.0) * CleanYfac + (screen.GetHeight() * 0.5);
+		ypositions.Push(sy);
 	}
 
 	virtual void DrawGold()

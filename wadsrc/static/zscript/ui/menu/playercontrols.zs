@@ -505,7 +505,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 		x = (x - 160) * CleanXfac + screen.GetWidth() / 2;
 		y = (y - 100) * CleanYfac + screen.GetHeight() / 2;
 
-		screen.DrawText (ConFont, Font.CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+		screen.DrawText (ConFont, Font.FindFontColor(gameinfo.mSliderBackColor), x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
 		screen.DrawText (ConFont, Font.FindFontColor(gameinfo.mSliderColor), x + (5 + (int)((cur * 78) / range)) * CleanXfac, y, "\x13", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
 	}
 

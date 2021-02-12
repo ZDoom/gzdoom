@@ -115,7 +115,7 @@ class Wizard : Actor
 		A_GhostOff();
 		let targ = target;
 		if (!targ) return;
-		A_PlaySound (AttackSound, CHAN_WEAPON);
+		A_StartSound (AttackSound, CHAN_WEAPON);
 		if (CheckMeleeRange())
 		{
 			int damage = random[WizAtk3](1, 8) * 4;

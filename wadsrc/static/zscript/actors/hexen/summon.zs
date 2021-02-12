@@ -105,7 +105,7 @@ class SummoningDoll : Actor
 
 			// Make smoke puff
 			Spawn("MinotaurSmoke", Pos, ALLOW_REPLACE);
-			A_PlaySound(mo.ActiveSound, CHAN_VOICE);
+			A_StartSound(mo.ActiveSound, CHAN_VOICE);
 		}
 	}
 	

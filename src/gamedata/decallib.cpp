@@ -34,7 +34,7 @@
 
 #include "decallib.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "cmdlib.h"
 #include "m_random.h"
@@ -47,6 +47,7 @@
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "a_decalfx.h"
+#include "texturemanager.h"
 
 FDecalLib DecalLibrary;
 
@@ -174,6 +175,7 @@ static const char *DecalKeywords[] =
 	"colors",
 	"animator",
 	"lowerdecal",
+	"opaqueblood",
 	NULL
 };
 
@@ -194,7 +196,8 @@ enum
 	DECAL_SHADE,
 	DECAL_COLORS,
 	DECAL_ANIMATOR,
-	DECAL_LOWERDECAL
+	DECAL_LOWERDECAL,
+	DECAL_OPAQUEBLOOD,
 };
 
 const FDecalTemplate *FDecalBase::GetDecal () const
@@ -262,7 +265,7 @@ void FDecalLib::ReadAllDecals ()
 
 	DecalLibrary.Clear();
 
-	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("DECALDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		ReadDecals (sc);
@@ -281,7 +284,7 @@ void FDecalLib::ReadAllDecals ()
 		FName v = ENamedName(intptr_t(def->DecalGenerator));
 		if (v.IsValidName())
 		{
-			def->DecalGenerator = ScanTreeForName (v, Root);
+			def->DecalGenerator = ScanTreeForName (v.GetChars(), Root);
 		}
 	}
 }
@@ -389,7 +392,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_PIC:
 			sc.MustGetString ();
 			picnum = TexMan.CheckForTexture (sc.String, ETextureType::Any);
-			if (!picnum.Exists() && (lumpnum = Wads.CheckNumForName (sc.String, ns_graphics)) >= 0)
+			if (!picnum.Exists() && (lumpnum = fileSystem.CheckNumForName (sc.String, ns_graphics)) >= 0)
 			{
 				picnum = TexMan.CreateTexture (lumpnum, ETextureType::Decal);
 			}
@@ -472,6 +475,11 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_LOWERDECAL:
 			sc.MustGetString ();
 			newdecal.LowerDecal = GetDecalByName (sc.String);
+			break;
+
+		case DECAL_OPAQUEBLOOD:
+			newdecal.RenderStyle = STYLE_Normal;
+			newdecal.opaqueBlood = true;
 			break;
 		}
 	}
@@ -802,7 +810,7 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 	// Check if this decal already exists.
 	while (node != NULL)
 	{
-		int lexx = stricmp (decal->Name, node->Name);
+		int lexx = stricmp (decal->Name.GetChars(), node->Name.GetChars());
 		if (lexx == 0)
 		{
 			break;
@@ -903,7 +911,7 @@ FDecalBase *FDecalLib::ScanTreeForName (const char *name, FDecalBase *root)
 {
 	while (root != NULL)
 	{
-		int lexx = stricmp (name, root->Name);
+		int lexx = stricmp (name, root->Name.GetChars());
 		if (lexx == 0)
 		{
 			break;
@@ -1138,7 +1146,7 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 
 	for (i = (int)Animators.Size ()-1; i >= 0; --i)
 	{
-		if (stricmp (name, Animators[i]->Name) == 0)
+		if (stricmp (name, Animators[i]->Name.GetChars()) == 0)
 		{
 			return Animators[i];
 		}

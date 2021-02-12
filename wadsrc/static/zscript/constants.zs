@@ -36,6 +36,7 @@ enum ESawFlags
 	SF_NOPULLIN = 32,
 	SF_NOTURN = 64,
 	SF_STEALARMOR = 128,
+	SF_NORANDOMPUFFZ = 256,
 };
 
 // Flags for A_BFGSpray
@@ -399,36 +400,6 @@ enum ETakeFlags
 {
 	TIF_NOTAKEINFINITE = 1
 };
-
-// constants for A_PlaySound
-enum ESoundFlags
-{
-	CHAN_AUTO = 0,
-	CHAN_WEAPON = 1,
-	CHAN_VOICE = 2,
-	CHAN_ITEM = 3,
-	CHAN_BODY = 4,
-	CHAN_5 = 5,
-	CHAN_6 = 6,
-	CHAN_7 = 7,
-	
-	// modifier flags
-	CHAN_LISTENERZ = 8,
-	CHAN_MAYBE_LOCAL = 16,
-	CHAN_UI = 32,
-	CHAN_NOPAUSE = 64,
-	CHAN_LOOP = 256,
-	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL),
-	CHAN_NOSTOP = 4096
-
-};
-
-// sound attenuation values
-const ATTN_NONE = 0;
-const ATTN_NORM = 1;
-const ATTN_IDLE = 1.001;
-const ATTN_STATIC = 3;
-
 // For SetPlayerProperty action special
 enum EPlayerProperties
 {
@@ -723,21 +694,36 @@ enum EWeaponOffsetFlags
 	WOF_KEEPY =		1 << 1,
 	WOF_ADD =		1 << 2,
 	WOF_INTERPOLATE = 1 << 3,
+	WOF_RELATIVE	= 1 << 4,
+	WOF_ZEROY		= 1 << 5,
 };
 
 // Flags for psprite layers
 enum EPSpriteFlags
 {
-	PSPF_ADDWEAPON	= 1 << 0,
-	PSPF_ADDBOB		= 1 << 1,
-	PSPF_POWDOUBLE	= 1 << 2,
-	PSPF_CVARFAST	= 1 << 3,
-	PSPF_ALPHA		= 1 << 4,
-	PSPF_RENDERSTYLE= 1 << 5,
-	PSPF_FLIP		= 1 << 6,
-	PSPF_FORCEALPHA	= 1 << 7,
-	PSPF_FORCESTYLE	= 1 << 8,
-	PSPF_MIRROR		= 1 << 9,
+	PSPF_ADDWEAPON		= 1 << 0,
+	PSPF_ADDBOB			= 1 << 1,
+	PSPF_POWDOUBLE		= 1 << 2,
+	PSPF_CVARFAST		= 1 << 3,
+	PSPF_ALPHA			= 1 << 4,
+	PSPF_RENDERSTYLE	= 1 << 5,
+	PSPF_FLIP			= 1 << 6,
+	PSPF_FORCEALPHA		= 1 << 7,
+	PSPF_FORCESTYLE		= 1 << 8,
+	PSPF_MIRROR			= 1 << 9,
+	PSPF_PLAYERTRANSLATED = 1 << 10,
+	PSPF_PIVOTPERCENT	= 1 << 11,
+	PSPF_INTERPOLATE	= 1 << 12,
+};
+
+// Alignment constants for A_OverlayPivotAlign
+enum EPSpriteAlign
+{
+	PSPA_TOP = 0,
+	PSPA_CENTER,
+	PSPA_BOTTOM,
+	PSPA_LEFT = PSPA_TOP,
+	PSPA_RIGHT = 2
 };
 
 // Default psprite layers
@@ -805,6 +791,8 @@ enum EButtons
 	BT_USER2		= 1<<22,
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
+
+	BT_RUN			= 1<<25,
 };
 
 // Flags for GetAngle
@@ -832,25 +820,6 @@ enum EMaskRotationFlags
 	VRF_NOANGLE = VRF_NOANGLESTART|VRF_NOANGLEEND,
 	VRF_NOPITCH = VRF_NOPITCHSTART|VRF_NOPITCHEND,
 };
-
-enum ERenderStyle
-{
-	STYLE_None,
-	STYLE_Normal,
-	STYLE_Fuzzy,
-	STYLE_SoulTrans,
-	STYLE_OptFuzzy,
-	STYLE_Stencil,
-	STYLE_Translucent,
-	STYLE_Add,
-	STYLE_Shaded,
-	STYLE_TranslucentStencil,
-	STYLE_Shadow,
-	STYLE_Subtract,
-	STYLE_AddStencil,
-	STYLE_AddShaded,
-};
-
 // Type definition for the implicit 'callingstate' parameter that gets passed to action functions.
 enum EStateType
 {
@@ -975,6 +944,7 @@ enum EMapThingFlags
 
 	MTF_SECRET			= 0x080000,	// Secret pickup
 	MTF_NOINFIGHTING	= 0x100000,
+	MTF_NOCOUNT			= 0x200000,	// Removes COUNTKILL/COUNTITEM
 };
 
 enum ESkillProperty
@@ -992,6 +962,8 @@ enum ESkillProperty
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 	SKILLP_PlayerRespawn,
+	SKILLP_SpawnMulti,
+	SKILLP_InstantReaction,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -1086,18 +1058,6 @@ enum PaletteFlashFlags
 	PF_HAZARD			= 8,
 };
 
-enum EGameState
-{
-	GS_LEVEL,
-	GS_INTERMISSION,
-	GS_FINALE,
-	GS_DEMOSCREEN,
-	GS_FULLCONSOLE,
-	GS_HIDECONSOLE,
-	GS_STARTUP,
-	GS_TITLELEVEL,
-}
-
 enum EGameAction
 {
 	ga_nothing,
@@ -1163,40 +1123,6 @@ enum EPlayerCheats
 	CF_INFINITEAMMO		= 0,
 };
 
-const TEXTCOLOR_BRICK			= "\034A";
-const TEXTCOLOR_TAN				= "\034B";
-const TEXTCOLOR_GRAY			= "\034C";
-const TEXTCOLOR_GREY			= "\034C";
-const TEXTCOLOR_GREEN			= "\034D";
-const TEXTCOLOR_BROWN			= "\034E";
-const TEXTCOLOR_GOLD			= "\034F";
-const TEXTCOLOR_RED				= "\034G";
-const TEXTCOLOR_BLUE			= "\034H";
-const TEXTCOLOR_ORANGE			= "\034I";
-const TEXTCOLOR_WHITE			= "\034J";
-const TEXTCOLOR_YELLOW			= "\034K";
-const TEXTCOLOR_UNTRANSLATED	= "\034L";
-const TEXTCOLOR_BLACK			= "\034M";
-const TEXTCOLOR_LIGHTBLUE		= "\034N";
-const TEXTCOLOR_CREAM			= "\034O";
-const TEXTCOLOR_OLIVE			= "\034P";
-const TEXTCOLOR_DARKGREEN		= "\034Q";
-const TEXTCOLOR_DARKRED			= "\034R";
-const TEXTCOLOR_DARKBROWN		= "\034S";
-const TEXTCOLOR_PURPLE			= "\034T";
-const TEXTCOLOR_DARKGRAY		= "\034U";
-const TEXTCOLOR_CYAN			= "\034V";
-const TEXTCOLOR_ICE				= "\034W";
-const TEXTCOLOR_FIRE			= "\034X";
-const TEXTCOLOR_SAPPHIRE		= "\034Y";
-const TEXTCOLOR_TEAL			= "\034Z";
-
-const TEXTCOLOR_NORMAL			= "\034-";
-const TEXTCOLOR_BOLD			= "\034+";
-
-const TEXTCOLOR_CHAT			= "\034*";
-const TEXTCOLOR_TEAMCHAT		= "\034!";
-
 enum EWeaponState
 {
 	WF_WEAPONREADY		= 1 << 0,		// [RH] Weapon is in the ready state and can fire its primary attack
@@ -1247,6 +1173,8 @@ enum SPAC
 	SPAC_MUse = 1<<8,		// monsters can use
 	SPAC_MPush = 1<<9,		// monsters can push
 	SPAC_UseBack = 1<<10,	// Can be used from the backside
+	SPAC_Damage = 1<<11,	// [ZZ] when linedef receives damage
+	SPAC_Death = 1<<12,		// [ZZ] when linedef receives damage and has 0 health
 
 	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough|SPAC_UseBack),
 };
@@ -1343,12 +1271,4 @@ enum ECompatFlags
 	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
-};
-
-enum EMonospacing
-{
-	Mono_Off = 0,
-	Mono_CellLeft = 1,
-	Mono_CellCenter = 2,
-	Mono_CellRight = 3
 };

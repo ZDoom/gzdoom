@@ -22,6 +22,7 @@ struct Material
 {
 	vec4 Base;
 	vec4 Bright;
+	vec4 Glow;
 	vec3 Normal;
 	vec3 Specular;
 	float Glossiness;
@@ -33,9 +34,16 @@ struct Material
 
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
-Material ProcessMaterial();
+Material ProcessMaterial(); // note that this is deprecated. Use SetupMaterial!
+void SetupMaterial(inout Material mat);
 vec4 ProcessLight(Material mat, vec4 color);
 vec3 ProcessMaterialLight(Material material, vec3 color);
+vec2 GetTexCoord();
+
+// These get Or'ed into uTextureMode because it only uses its 3 lowermost bits.
+const int TEXF_Brightmap = 0x10000;
+const int TEXF_Detailmap = 0x20000;
+const int TEXF_Glowmap = 0x40000;
 
 //===========================================================================
 //
@@ -54,17 +62,94 @@ float grayscale(vec4 color)
 //
 //===========================================================================
 
-vec4 desaturate(vec4 texel)
+vec4 dodesaturate(vec4 texel, float factor)
 {
-	if (uDesaturationFactor > 0.0)
+	if (factor != 0.0)
 	{
 		float gray = grayscale(texel);
-		return mix (texel, vec4(gray,gray,gray,texel.a), uDesaturationFactor);
+		return mix (texel, vec4(gray,gray,gray,texel.a), factor);
 	}
 	else
 	{
 		return texel;
 	}
+}
+
+//===========================================================================
+//
+// Desaturate a color
+//
+//===========================================================================
+
+vec4 desaturate(vec4 texel)
+{
+	return dodesaturate(texel, uDesaturationFactor);
+}
+
+//===========================================================================
+//
+// Texture tinting code originally from JFDuke but with a few more options
+//
+//===========================================================================
+
+const int Tex_Blend_Alpha = 1;
+const int Tex_Blend_Screen = 2;
+const int Tex_Blend_Overlay = 3;
+const int Tex_Blend_Hardlight = 4;
+ 
+ vec4 ApplyTextureManipulation(vec4 texel, int blendflags)
+ {
+	// Step 1: desaturate according to the material's desaturation factor. 
+	texel = dodesaturate(texel, uTextureModulateColor.a);
+	
+	// Step 2: Invert if requested
+	if ((blendflags & 8) != 0)
+	{
+		texel.rgb = vec3(1.0 - texel.r, 1.0 - texel.g, 1.0 - texel.b);
+	}
+	
+	// Step 3: Apply additive color
+	texel.rgb += uTextureAddColor.rgb;
+	
+	// Step 4: Colorization, including gradient if set.
+	texel.rgb *= uTextureModulateColor.rgb;
+	
+	// Before applying the blend the value needs to be clamped to [0..1] range.
+	texel.rgb = clamp(texel.rgb, 0.0, 1.0);
+	
+	// Step 5: Apply a blend. This may just be a translucent overlay or one of the blend modes present in current Build engines.
+	if ((blendflags & 7) != 0)
+	{
+		vec3 tcol = texel.rgb * 255.0;	// * 255.0 to make it easier to reuse the integer math.
+		vec4 tint = uTextureBlendColor * 255.0;
+
+		switch (blendflags & 7)
+		{
+			default:
+				tcol.b = tcol.b * (1.0 - uTextureBlendColor.a) + tint.b * uTextureBlendColor.a;
+				tcol.g = tcol.g * (1.0 - uTextureBlendColor.a) + tint.g * uTextureBlendColor.a;
+				tcol.r = tcol.r * (1.0 - uTextureBlendColor.a) + tint.r * uTextureBlendColor.a;
+				break;
+			// The following 3 are taken 1:1 from the Build engine
+			case Tex_Blend_Screen:
+				tcol.b = 255.0 - (((255.0 - tcol.b) * (255.0 - tint.r)) / 256.0);
+				tcol.g = 255.0 - (((255.0 - tcol.g) * (255.0 - tint.g)) / 256.0);
+				tcol.r = 255.0 - (((255.0 - tcol.r) * (255.0 - tint.b)) / 256.0);
+				break;
+			case Tex_Blend_Overlay:
+				tcol.b = tcol.b < 128.0? (tcol.b * tint.b) / 128.0 : 255.0 - (((255.0 - tcol.b) * (255.0 - tint.b)) / 128.0);
+				tcol.g = tcol.g < 128.0? (tcol.g * tint.g) / 128.0 : 255.0 - (((255.0 - tcol.g) * (255.0 - tint.g)) / 128.0);
+				tcol.r = tcol.r < 128.0? (tcol.r * tint.r) / 128.0 : 255.0 - (((255.0 - tcol.r) * (255.0 - tint.r)) / 128.0);
+				break;
+			case Tex_Blend_Hardlight:
+				tcol.b = tint.b < 128.0 ? (tcol.b * tint.b) / 128.0 : 255.0 - (((255.0 - tcol.b) * (255.0 - tint.b)) / 128.0);
+				tcol.g = tint.g < 128.0 ? (tcol.g * tint.g) / 128.0 : 255.0 - (((255.0 - tcol.g) * (255.0 - tint.g)) / 128.0);
+				tcol.r = tint.r < 128.0 ? (tcol.r * tint.r) / 128.0 : 255.0 - (((255.0 - tcol.r) * (255.0 - tint.r)) / 128.0);
+				break;
+		}
+		texel.rgb = tcol / 255.0;
+	}
+	return texel;
 }
 
 //===========================================================================
@@ -80,7 +165,7 @@ vec4 getTexel(vec2 st)
 	//
 	// Apply texture modes
 	//
-	switch (uTextureMode)
+	switch (uTextureMode & 0xffff)
 	{
 		case 1:	// TM_STENCIL
 			texel.rgb = vec3(1.0,1.0,1.0);
@@ -116,12 +201,22 @@ vec4 getTexel(vec2 st)
 			return texel;
 
 	}
+	
+	// Apply the texture modification colors.
+	int blendflags = int(uTextureAddColor.a);	// this alpha is unused otherwise
+	if (blendflags != 0)	
+	{
+		// only apply the texture manipulation if it contains something.
+		texel = ApplyTextureManipulation(texel, blendflags);
+	}
 
+	// Apply the Doom64 style material colors on top of everything from the texture modification settings.
+	// This may be a bit redundant in terms of features but the data comes from different sources so this is unavoidable.
 	texel.rgb += uAddColor.rgb;
-
 	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
 	else texel *= mix(uObjectColor, uObjectColor2, gradientdist.z);
 
+	// Last but not least apply the desaturation from the sector's light.
 	return desaturate(texel);
 }
 
@@ -212,6 +307,16 @@ float R_DoomLightingEquation(float light)
 	else 
 	{
 		z = pixelpos.w;
+	}
+	
+	if ((uPalLightLevels >> 16) == 5) // gl_lightmode 5: Build software lighting emulation.
+	{
+		// This is a lot more primitive than Doom's lighting...
+		float numShades = float(uPalLightLevels & 255);
+		float curshade = (1.0 - light) * (numShades - 1.0);
+		float visibility = max(uGlobVis * uLightFactor * z, 0.0);
+		float shade = clamp((curshade + visibility), 0.0, numShades - 1.0);
+		return clamp(shade * uLightDist, 0.0, 1.0);
 	}
 
 	float colormap = R_DoomColormap(light, z);
@@ -439,6 +544,41 @@ vec3 ApplyNormalMap(vec2 texcoord)
 
 //===========================================================================
 //
+// Sets the common material properties.
+//
+//===========================================================================
+
+void SetMaterialProps(inout Material material, vec2 texCoord)
+{
+#ifdef NPOT_EMULATION
+	if (uNpotEmulation.y != 0.0)
+	{
+		float period = floor(texCoord.t / uNpotEmulation.y);
+		texCoord.s += uNpotEmulation.x * floor(mod(texCoord.t, uNpotEmulation.y));
+		texCoord.t = period + mod(texCoord.t, uNpotEmulation.y);
+	}
+#endif	
+	material.Base = getTexel(texCoord.st); 
+	material.Normal = ApplyNormalMap(texCoord.st);
+
+// OpenGL doesn't care, but Vulkan pukes all over the place if these texture samplings are included in no-texture shaders, even though never called.
+#ifndef NO_LAYERS
+	if ((uTextureMode & TEXF_Brightmap) != 0)
+		material.Bright = texture(brighttexture, texCoord.st);
+		
+	if ((uTextureMode & TEXF_Detailmap) != 0)
+	{
+		vec4 Detail = texture(detailtexture, texCoord.st * uDetailParms.xy) * uDetailParms.z;
+		material.Base *= Detail;
+	}
+	
+	if ((uTextureMode & TEXF_Glowmap) != 0)
+		material.Glow = texture(glowtexture, texCoord.st);
+#endif
+}
+
+//===========================================================================
+//
 // Calculate light
 //
 // It is important to note that the light color is not desaturated
@@ -487,8 +627,21 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	}
 	color = min(color, 1.0);
 
+	// these cannot be safely applied by the legacy format where the implementation cannot guarantee that the values are set.
+#ifndef LEGACY_USER_SHADER
 	//
-	// apply brightmaps (or other light manipulation by custom shaders.
+	// apply glow 
+	//
+	color.rgb = mix(color.rgb, material.Glow.rgb, material.Glow.a);
+
+	//
+	// apply brightmaps 
+	//
+	color.rgb = min(color.rgb + material.Bright.rgb, 1.0);
+#endif
+	
+	//
+	// apply other light manipulation by custom shaders, default is a NOP.
 	//
 	color = ProcessLight(material, color);
 
@@ -548,7 +701,23 @@ void main()
 	if (ClipDistanceA.x < 0 || ClipDistanceA.y < 0 || ClipDistanceA.z < 0 || ClipDistanceA.w < 0 || ClipDistanceB.x < 0) discard;
 #endif
 
+#ifndef LEGACY_USER_SHADER
+	Material material;
+	
+	material.Base = vec4(0.0);
+	material.Bright = vec4(0.0);
+	material.Glow = vec4(0.0);
+	material.Normal = vec3(0.0);
+	material.Specular = vec3(0.0);
+	material.Glossiness = 0.0;
+	material.SpecularLevel = 0.0;
+	material.Metallic = 0.0;
+	material.Roughness = 0.0;
+	material.AO = 0.0;
+	SetupMaterial(material);
+#else
 	Material material = ProcessMaterial();
+#endif
 	vec4 frag = material.Base;
 	
 #ifndef NO_ALPHATEST
@@ -576,9 +745,10 @@ void main()
 			fogfactor = exp2 (uFogDensity * fogdist);
 		}
 		
-		if (uTextureMode != 7)
+		if ((uTextureMode & 0xffff) != 7)
 		{
 			frag = getLightColor(material, fogdist, fogfactor);
+
 			//
 			// colored fog
 			//
@@ -594,7 +764,7 @@ void main()
 	}
 	else // simple 2D (uses the fog color to add a color overlay)
 	{
-		if (uTextureMode == 7)
+		if ((uTextureMode & 0xffff) == 7)
 		{
 			float gray = grayscale(frag);
 			vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;

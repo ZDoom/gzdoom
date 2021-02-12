@@ -44,7 +44,7 @@ class AltHud ui
 	const POWERUPICONSIZE = 32;
 
 	
-	void Init()
+	virtual void Init()
 	{
 		switch (gameinfo.gametype)
 		{
@@ -68,7 +68,7 @@ class AltHud ui
 		if (IndexFont == NULL) IndexFont = ConFont;	// Emergency fallback
 
 		invgem_left = TexMan.CheckForTexture("INVGEML1", TexMan.Type_MiscPatch);
-		invgem_left = TexMan.CheckForTexture("INVGEMR1", TexMan.Type_MiscPatch);
+		invgem_right = TexMan.CheckForTexture("INVGEMR1", TexMan.Type_MiscPatch);
 		tnt1a0 = TexMan.CheckForTexture("TNT1A0", TexMan.Type_Sprite);
 		fragpic = TexMan.CheckForTexture("HU_FRAGS", TexMan.Type_MiscPatch);
 		statspace = SmallFont.StringWidth("Ac:");
@@ -131,7 +131,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	 void DrawHudNumber(Font fnt, int color, int num, int x, int y, double trans = 0.75)
+	void DrawHudNumber(Font fnt, int color, int num, int x, int y, double trans = 0.75)
 	{
 		DrawHudText(fnt, color, String.Format("%d", num), x, y, trans);
 	}
@@ -142,7 +142,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	void DrawTimeString(Font fnt, int color, int timer, int x, int y, double trans = 0.75)
+	virtual void DrawTimeString(Font fnt, int color, int timer, int x, int y, double trans = 0.75)
 	{
 		let seconds = Thinker.Tics2Seconds(timer);
 		String s = String.Format("%02i:%02i:%02i", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
@@ -156,7 +156,7 @@ class AltHud ui
 	//
 	//===========================================================================
 
-	void DrawStatLine(int x, in out int y, String prefix, String text)
+	virtual void DrawStatLine(int x, in out int y, String prefix, String text)
 	{
 		y -= SmallFont.GetHeight()-1;
 		screen.DrawText(SmallFont, hudcolor_statnames, x, y, prefix, 
@@ -168,7 +168,7 @@ class AltHud ui
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75);
 	}
 
-	void DrawStatus(PlayerInfo CPlayer, int x, int y)
+	virtual void DrawStatus(PlayerInfo CPlayer, int x, int y)
 	{
 		let mo = CPlayer.mo;
 		if (hud_showscore)
@@ -184,21 +184,25 @@ class AltHud ui
 		
 		if (!deathmatch)
 		{
-			// FIXME: ZDoom doesn't preserve the player's stat counters across hubs so this doesn't
-			// work in cooperative hub games
 			if (hud_showsecrets)
 			{
-				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : Level.found_secrets, Level.total_secrets));
+				DrawStatLine(x, y, "S:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.secretcount, Level.found_secrets, Level.total_secrets)
+					: String.Format("%i/%i ", Level.found_secrets, Level.total_secrets));
 			}
 			
 			if (hud_showitems)
 			{
-				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : Level.found_items, Level.total_items));
+				DrawStatLine(x, y, "I:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.itemcount, Level.found_items, Level.total_items)
+					: String.Format("%i/%i ", Level.found_items, Level.total_items));
 			}
 			
 			if (hud_showmonsters)
 			{
-				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : Level.killed_monsters, Level.total_monsters));
+				DrawStatLine(x, y, "K:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.killcount, Level.killed_monsters, Level.total_monsters)
+					: String.Format("%i/%i ", Level.killed_monsters, Level.total_monsters));
 			}
 		}
 	}
@@ -209,7 +213,7 @@ class AltHud ui
 	//
 	//===========================================================================
 
-	void DrawHealth(PlayerInfo CPlayer, int x, int y)
+	virtual void DrawHealth(PlayerInfo CPlayer, int x, int y)
 	{
 		int health = CPlayer.health;
 
@@ -235,7 +239,7 @@ class AltHud ui
 	//
 	//===========================================================================
 
-	void DrawArmor(BasicArmor barmor, HexenArmor harmor, int x, int y)
+	virtual void DrawArmor(BasicArmor barmor, HexenArmor harmor, int x, int y)
 	{
 		int ap = 0;
 		int bestslot = 4;
@@ -304,7 +308,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	bool DrawOneKey(int xo, int x, int y, in out int c, Key inv)
+	virtual bool DrawOneKey(int xo, int x, int y, in out int c, Key inv)
 	{
 		TextureID icon;
 		
@@ -340,7 +344,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	int DrawKeys(PlayerInfo CPlayer, int x, int y)
+	virtual int DrawKeys(PlayerInfo CPlayer, int x, int y)
 	{
 		int yo = y;
 		int xo = x;
@@ -445,7 +449,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	int DrawAmmo(PlayerInfo CPlayer, int x, int y)
+	virtual int DrawAmmo(PlayerInfo CPlayer, int x, int y)
 	{
 
 		int i,j,k;
@@ -558,7 +562,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	void DrawOneWeapon(PlayerInfo CPlayer, int x, in out int y, Weapon weapon)
+	virtual void DrawOneWeapon(PlayerInfo CPlayer, int x, in out int y, Weapon weapon)
 	{
 		double trans;
 
@@ -594,7 +598,7 @@ class AltHud ui
 	}
 
 
-	void DrawWeapons(PlayerInfo CPlayer, int x, int y)
+	virtual void DrawWeapons(PlayerInfo CPlayer, int x, int y)
 	{
 		int k,j;
 		Inventory inv;
@@ -631,7 +635,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	void DrawInventory(PlayerInfo CPlayer, int x,int y)
+	virtual void DrawInventory(PlayerInfo CPlayer, int x,int y)
 	{
 		Inventory rover;
 		int numitems = (hudwidth - 2*x) / 32;
@@ -690,7 +694,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	void DrawFrags(PlayerInfo CPlayer, int x, int y)
+	virtual void DrawFrags(PlayerInfo CPlayer, int x, int y)
 	{
 		DrawImageToBox(fragpic, x, y, 31, 17);
 		DrawHudNumber(HudFont, Font.CR_GRAY, CPlayer.fragcount, x + 33, y + 17);
@@ -709,7 +713,7 @@ class AltHud ui
 						 DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 	}
 
-	void DrawCoordinates(PlayerInfo CPlayer, bool withmapname)
+	virtual void DrawCoordinates(PlayerInfo CPlayer, bool withmapname)
 	{
 		Vector3 pos;
 		String coordstr;
@@ -731,7 +735,7 @@ class AltHud ui
 
 		if (withmapname)
 		{
-			let font = generic_ui? NewSmallFont : SmallFont;
+			let font = generic_ui? NewSmallFont : SmallFont.CanPrint(Level.LevelName)? SmallFont : OriginalSmallFont;
 			int hh = font.GetHeight();
 
 			screen.DrawText(font, hudcolor_titl, hudwidth - 6 - font.StringWidth(Level.MapName), ypos, Level.MapName,
@@ -770,13 +774,12 @@ class AltHud ui
 	// for meaning of all display modes
 	//
 	//---------------------------------------------------------------------------
-	private native static int GetRealTime();
-
-	bool DrawTime(int y)
+	virtual bool DrawTime(int y)
 	{
 		if (hud_showtime > 0 && hud_showtime <= 9)
 		{
 			int timeSeconds;
+			String timeString;
 
 			if (hud_showtime < 8)
 			{
@@ -787,33 +790,35 @@ class AltHud ui
 							? Level.time
 							: Level.totaltime);
 				timeSeconds = Thinker.Tics2Seconds(timeTicks);
-			}
-			else
-			{
-				timeSeconds = GetRealTime();
-			}
 
-			int hours   =  timeSeconds / 3600;
-			int minutes = (timeSeconds % 3600) / 60;
-			int seconds =  timeSeconds % 60;
+				int hours   =  timeSeconds / 3600;
+				int minutes = (timeSeconds % 3600) / 60;
+				int seconds =  timeSeconds % 60;
 
-			bool showMillis  = 1 == hud_showtime;
-			bool showSeconds = showMillis || (0 == hud_showtime % 2);
+				bool showMillis  = 1 == hud_showtime;
+				bool showSeconds = showMillis || (0 == hud_showtime % 2);
 
-			String timeString;
-
-			if (showMillis)
-			{
-				int millis  = (Level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
-				timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+				if (showMillis)
+				{
+					int millis  = (Level.time % GameTicRate) * 1000 / GameTicRate;
+					timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+				}
+				else if (showSeconds)
+				{
+					timeString = String.Format("%02i:%02i:%02i", hours, minutes, seconds);
+				}
+				else
+				{
+					timeString = String.Format("%02i:%02i", hours, minutes);
+				}
 			}
-			else if (showSeconds)
+			else if (hud_showtime == 8)
 			{
-				timeString = String.Format("%02i:%02i:%02i", hours, minutes, seconds);
+				timeString = SystemTime.Format("%H:%M:%S",SystemTime.Now());
 			}
-			else
+			else //if (hud_showtime == 9)
 			{
-				timeString = String.Format("%02i:%02i", hours, minutes);
+				timeString = SystemTime.Format("%H:%M",SystemTime.Now());
 			}
 
 			int characterCount = timeString.length();
@@ -833,7 +838,7 @@ class AltHud ui
 	//---------------------------------------------------------------------------
 	native static int, int, int GetLatency();
 
-	bool DrawLatency(int y)
+	virtual bool DrawLatency(int y)
 	{
 		if ((hud_showlag == 1 && netgame) || hud_showlag == 2)
 		{
@@ -858,7 +863,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	void DrawPowerups(PlayerInfo CPlayer, int y)
+	virtual void DrawPowerups(PlayerInfo CPlayer, int y)
 	{
 		// Each icon gets a 32x32 block to draw itself in.
 		int x, y;
@@ -953,7 +958,10 @@ class AltHud ui
 			DrawTimeString(font, hudcolor_ltim, Level.maptime, hudwidth-2, bottom, 1);
 		}
 
-		screen.DrawText(font, Font.CR_BRICK, 2, hudheight - fonth - 1, Level.FormatMapName(hudcolor_titl),
+		let amstr = Level.FormatMapName(hudcolor_titl);
+		font = generic_ui? NewSmallFont : SmallFont.CanPrint(amstr)? SmallFont : OriginalSmallFont;
+
+		screen.DrawText(font, Font.CR_BRICK, 2, hudheight - fonth - 1, amstr,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 
@@ -966,7 +974,7 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 
-	void Draw(PlayerInfo CPlayer, int w, int h)
+	virtual void Draw(PlayerInfo CPlayer, int w, int h)
 	{
 		hudwidth = w;
 		hudheight = h;

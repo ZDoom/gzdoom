@@ -1,0 +1,22 @@
+// MAPINFO for Doom 2: 2019 Edition
+include "mapinfo/doom2.txt"
+
+gameinfo
+{
+
+}
+
+clearepisodes
+episode map01
+{
+	name = "Hell On Earth"
+	picname = "M_EPI1"
+	key = "h"
+}
+
+episode level01
+{
+	name = "$TXT_D2E2"
+	key = "n"
+	optional
+}

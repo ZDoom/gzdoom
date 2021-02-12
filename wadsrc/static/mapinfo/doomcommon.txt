@@ -40,6 +40,7 @@ gameinfo
 	dimamount = 0.5
 	bluramount = 0.0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -67,12 +68,20 @@ gameinfo
 	statscreen_mapnamefont = "*BigFont"
 	statscreen_finishedfont = "*BigFont", "red"
 	statscreen_enteringfont = "*BigFont", "red"
+	statscreen_contentfont = "*BigFont", "red"
+	statscreen_authorFont = "*SmallFont", "brick"
+
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "DoomStatusScreen"
 	messageboxclass = "MessageBoxMenu"
 	normforwardmove = 0x19, 0x32
 	normsidemove = 0x18, 0x28
+}
+
+gamedefaults
+{
+	enableskyboxao
 }
 
 spawnnums
@@ -208,6 +217,7 @@ skill nightmare
 {
 	AmmoFactor = 2
 	FastMonsters
+	InstantReaction
 	DisableCheats
 	RespawnTime = 12
 	SpawnFilter = Nightmare

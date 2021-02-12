@@ -93,10 +93,6 @@ EXTERN_CVAR(Int, gl_particles_style)
 
 namespace swrenderer
 {
-	PalWall1Command::PalWall1Command(const WallDrawerArgs &args) : args(args)
-	{
-	}
-
 	uint8_t PalWall1Command::AddLights(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
 	{
 		uint32_t lit_r = 0;
@@ -150,7 +146,7 @@ namespace swrenderer
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
 
-	void DrawWall1PalCommand::Execute(DrawerThread *thread)
+	void DrawWall1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
@@ -160,7 +156,7 @@ namespace swrenderer
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		DrawerLight *dynlights = args.dc_lights;
+		const DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
 		float step_viewpos_z = args.dc_viewpos_step.Z;
@@ -201,7 +197,7 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallMasked1PalCommand::Execute(DrawerThread *thread)
+	void DrawWallMasked1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
@@ -211,7 +207,7 @@ namespace swrenderer
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		DrawerLight *dynlights = args.dc_lights;
+		const DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
 		float step_viewpos_z = args.dc_viewpos_step.Z;
@@ -260,7 +256,7 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallAdd1PalCommand::Execute(DrawerThread *thread)
+	void DrawWallAdd1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
@@ -322,7 +318,7 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallAddClamp1PalCommand::Execute(DrawerThread *thread)
+	void DrawWallAddClamp1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
@@ -332,7 +328,7 @@ namespace swrenderer
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		DrawerLight *dynlights = args.dc_lights;
+		const DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
 		float step_viewpos_z = args.dc_viewpos_step.Z;
@@ -396,7 +392,7 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallSubClamp1PalCommand::Execute(DrawerThread *thread)
+	void DrawWallSubClamp1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
@@ -406,7 +402,7 @@ namespace swrenderer
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		DrawerLight *dynlights = args.dc_lights;
+		const DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
 		float step_viewpos_z = args.dc_viewpos_step.Z;
@@ -469,7 +465,7 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallRevSubClamp1PalCommand::Execute(DrawerThread *thread)
+	void DrawWallRevSubClamp1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
 	{
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
@@ -479,7 +475,7 @@ namespace swrenderer
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		DrawerLight *dynlights = args.dc_lights;
+		const DrawerLight *dynlights = args.dc_lights;
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
 		float step_viewpos_z = args.dc_viewpos_step.Z;

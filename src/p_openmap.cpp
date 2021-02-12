@@ -37,9 +37,14 @@
 #include "p_setup.h"
 
 #include "cmdlib.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "md5.h"
 #include "g_levellocals.h"
+#include "cmdlib.h"
+
+#define IWAD_ID		MAKE_ID('I','W','A','D')
+#define PWAD_ID		MAKE_ID('P','W','A','D')
+
 
 inline bool P_IsBuildMap(MapData *map)
 {
@@ -132,16 +137,16 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		// Check for both *.wad and *.map in order to load Build maps
 		// as well. The higher one will take precedence.
 		// Names with more than 8 characters will only be checked as .wad and .map.
-		if (strlen(mapname) <= 8) lump_name = Wads.CheckNumForName(mapname);
+		if (strlen(mapname) <= 8) lump_name = fileSystem.CheckNumForName(mapname);
 		fmt.Format("maps/%s.wad", mapname);
-		lump_wad = Wads.CheckNumForFullName(fmt);
+		lump_wad = fileSystem.CheckNumForFullName(fmt);
 		fmt.Format("maps/%s.map", mapname);
-		lump_map = Wads.CheckNumForFullName(fmt);
+		lump_map = fileSystem.CheckNumForFullName(fmt);
 		
 		if (lump_name > lump_wad && lump_name > lump_map && lump_name != -1)
 		{
-			int lumpfile = Wads.GetLumpFile(lump_name);
-			int nextfile = Wads.GetLumpFile(lump_name+1);
+			int lumpfile = fileSystem.GetFileContainer(lump_name);
+			int nextfile = fileSystem.GetFileContainer(lump_name+1);
 
 			map->lumpnum = lump_name;
 
@@ -149,7 +154,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
+				map->MapLumps[0].Reader = fileSystem.ReopenFileReader(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -160,30 +165,19 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
-			strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(lump_name), 8);
-			map->Encrypted = Wads.IsEncryptedFile(lump_name);
+			map->MapLumps[0].Reader = fileSystem.ReopenFileReader(lump_name);
+			strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(lump_name), 8);
 			map->InWad = true;
-
-			if (map->Encrypted)
-			{ // If it's encrypted, then it's a Blood file, presumably a map.
-				if (!P_IsBuildMap(map))
-				{
-					delete map;
-					return NULL;
-				}
-				return map;
-			}
 
 			int index = 0;
 
-			if (stricmp(Wads.GetLumpFullName(lump_name + 1), "TEXTMAP") != 0)
+			if (stricmp(fileSystem.GetFileFullName(lump_name + 1), "TEXTMAP") != 0)
 			{
 				for(int i = 1;; i++)
 				{
 					// Since levels must be stored in WADs they can't really have full
 					// names and for any valid level lump this always returns the short name.
-					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
+					const char * lumpname = fileSystem.GetFileFullName(lump_name + i);
 					try
 					{
 						index = GetMapIndex(mapname, index, lumpname, !justcheck);
@@ -203,17 +197,17 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 					// The next lump is not part of this map anymore
 					if (index < 0) break;
 
-					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
+					map->MapLumps[index].Reader = fileSystem.ReopenFileReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
 			else
 			{
 				map->isText = true;
-				map->MapLumps[1].Reader = Wads.ReopenLumpReader(lump_name + 1);
+				map->MapLumps[1].Reader = fileSystem.ReopenFileReader(lump_name + 1);
 				for(int i = 2;; i++)
 				{
-					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
+					const char * lumpname = fileSystem.GetFileFullName(lump_name + i);
 
 					if (lumpname == NULL)
 					{
@@ -246,7 +240,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						break;
 					}
 					else continue;
-					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
+					map->MapLumps[index].Reader = fileSystem.ReopenFileReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -264,8 +258,8 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				return NULL;
 			}
 			map->lumpnum = lump_wad;
-			auto reader = Wads.ReopenLumpReader(lump_wad);
-			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), reader, true);
+			auto reader = fileSystem.ReopenFileReader(lump_wad);
+			map->resource = FResourceFile::OpenResourceFile(fileSystem.GetFileFullName(lump_wad), reader, true);
 			wadReader = map->resource->GetReader();
 		}
 	}
@@ -282,11 +276,11 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		int index=0;
 
 		map->MapLumps[0].Reader = map->resource->GetLump(0)->NewReader();
-		strncpy(map->MapLumps[0].Name, map->resource->GetLump(0)->Name, 8);
+		uppercopy(map->MapLumps[0].Name, map->resource->GetLump(0)->getName());
 
 		for(uint32_t i = 1; i < map->resource->LumpCount(); i++)
 		{
-			const char* lumpname = map->resource->GetLump(i)->Name;
+			const char* lumpname = map->resource->GetLump(i)->getName();
 
 			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
 			{
@@ -295,7 +289,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				strncpy(map->MapLumps[ML_TEXTMAP].Name, lumpname, 8);
 				for(int i = 2;; i++)
 				{
-					lumpname = map->resource->GetLump(i)->Name;
+					lumpname = map->resource->GetLump(i)->getName();
 					if (!strnicmp(lumpname, "ZNODES",8))
 					{
 						index = ML_GLZNODES;
@@ -395,19 +389,19 @@ void MapData::GetChecksum(uint8_t cksum[16])
 
 	if (isText)
 	{
-		md5.Update(Reader(ML_TEXTMAP), Size(ML_TEXTMAP));
+		md5Update(Reader(ML_TEXTMAP), md5, Size(ML_TEXTMAP));
 	}
 	else
 	{
-		md5.Update(Reader(ML_LABEL), Size(ML_LABEL));
-		md5.Update(Reader(ML_THINGS), Size(ML_THINGS));
-		md5.Update(Reader(ML_LINEDEFS), Size(ML_LINEDEFS));
-		md5.Update(Reader(ML_SIDEDEFS), Size(ML_SIDEDEFS));
-		md5.Update(Reader(ML_SECTORS), Size(ML_SECTORS));
+		md5Update(Reader(ML_LABEL), md5, Size(ML_LABEL));
+		md5Update(Reader(ML_THINGS), md5, Size(ML_THINGS));
+		md5Update(Reader(ML_LINEDEFS), md5, Size(ML_LINEDEFS));
+		md5Update(Reader(ML_SIDEDEFS), md5, Size(ML_SIDEDEFS));
+		md5Update(Reader(ML_SECTORS), md5, Size(ML_SECTORS));
 	}
 	if (HasBehavior)
 	{
-		md5.Update(Reader(ML_BEHAVIOR), Size(ML_BEHAVIOR));
+		md5Update(Reader(ML_BEHAVIOR), md5, Size(ML_BEHAVIOR));
 	}
 	md5.Final(cksum);
 }

@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
 #include "swrenderer/things/r_visiblesprite.h"
@@ -44,7 +44,7 @@
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/line/r_renderdrawsegment.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Int, r_drawfuzz)
@@ -114,7 +114,7 @@ namespace swrenderer
 		for (DrawSegment *seg : portaldrawsegs)
 		{
 			// ignore segs from other portals
-			if (seg->CurrentPortalUniq != renderportal->CurrentPortalUniq)
+			if (seg->drawsegclip.CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
 
 			// (all checks that are already done in R_CollectPortals have been removed for performance reasons.)
@@ -154,20 +154,16 @@ namespace swrenderer
 			DrawSegment *ds = drawseglist->Segment(index);
 
 			// [ZZ] the same as above
-			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
+			if (ds->drawsegclip.CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
-			if (ds->maskedtexturecol || ds->bFogBoundary)
+
+			if (ds->HasTranslucentMidTexture() || ds->Has3DFloorWalls() || ds->HasFogBoundary())
 			{
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2, clip3DFloor);
-				if (renew && ds->bFogBoundary) // don't draw fogboundary again
-					ds->bFogBoundary = false;
 
-				if (renew && ds->sprclipped)
-				{
-					memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * sizeof(short));
-					ds->sprclipped = false;
-				}
+				if (renew)
+					ds->drawsegclip.SetRangeUndrawn(ds->x1, ds->x2);
 			}
 		}
 	}

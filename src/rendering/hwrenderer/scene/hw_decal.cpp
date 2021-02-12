@@ -29,14 +29,15 @@
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
-#include "hwrenderer/textures/hw_material.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_material.h"
+#include "hw_cvars.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "hw_lighting.h"
+#include "hw_clock.h"
+#include "flatvertices.h"
 #include "hw_renderstate.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //
@@ -46,28 +47,23 @@
 
 void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 {
-	auto tex = gltexture;
-
-	// calculate dynamic light effect.
-	if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gl_light_sprites)
-	{
-		// Note: This should be replaced with proper shader based lighting.
-		double x, y;
-		float out[3];
-		decal->GetXY(decal->Side, x, y);
-		di->GetDynSpriteLight(nullptr, x, y, zcenter, decal->Side->lighthead, decal->Side->sector->PortalGroup, out);
-		state.SetDynLight(out[0], out[1], out[2]);
-	}
-
+	PalEntry DecalColor;
 	// alpha color only has an effect when using an alpha texture.
 	if (decal->RenderStyle.Flags & (STYLEF_RedIsAlpha | STYLEF_ColorIsFixed))
 	{
-		state.SetObjectColor(decal->AlphaColor | 0xff000000);
+		DecalColor = decal->AlphaColor | 0xff000000;
 	}
+	else
+		DecalColor = 0xffffffff;
 
+	if (!di->isFullbrightScene()) DecalColor = DecalColor.Modulate(frontsector->SpecialColors[sector_t::sprites]);
+
+	state.SetObjectColor(DecalColor);
+
+	state.SetLightIndex(dynlightindex);
 	state.SetTextureMode(decal->RenderStyle);
 	state.SetRenderStyle(decal->RenderStyle);
-	state.SetMaterial(tex, CLAMP_XY, decal->Translation, -1);
+	state.SetMaterial(texture, UF_Sprite, 0, CLAMP_XY, decal->Translation, -1);
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold
@@ -105,11 +101,11 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				int thisll = lightlist[k].caster != nullptr ? hw_ClampLight(*lightlist[k].p_lightlevel) : lightlevel;
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
-				thiscm.CopyFrom3DLight(&lightlist[k]);
+				CopyFrom3DLight(thiscm, &lightlist[k]);
 				di->SetColor(state, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
 				if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
 				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);
-				state.SetSplitPlanes(lightlist[k].plane, lowplane);
+				SetSplitPlanes(state, lightlist[k].plane, lowplane);
 
 				state.Draw(DT_TriangleStrip, vertindex, 4);
 			}
@@ -134,7 +130,6 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<HWDecal *> &decals)
 	side_t *wall = nullptr;
 	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
-	state.SetLightIndex(-1);
 	for (auto gldecal : decals)
 	{
 		if (gldecal->decal->Side != wall)
@@ -168,7 +163,6 @@ void HWWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<HWD
 {
 	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
-	state.SetLightIndex(-1);
 	di->SetFog(state, lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
 	for (auto gldecal : decals)
 	{
@@ -199,7 +193,7 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	
 	
 	if (decal->RenderFlags & RF_INVISIBLE) return;
-	if (type == RENDERWALL_FFBLOCK && gltexture->isMasked()) return;	// No decals on 3D floors with transparent textures.
+	if (type == RENDERWALL_FFBLOCK && texture->isMasked()) return;	// No decals on 3D floors with transparent textures.
 	if (seg == nullptr) return;
 	
 	
@@ -208,7 +202,7 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	flipy = !!(decal->RenderFlags & RF_YFLIP);
 
 	
-	FTexture *texture = TexMan.GetTexture(decalTile);
+	auto texture = TexMan.GetGameTexture(decalTile);
 	if (texture == NULL) return;
 
 	
@@ -264,14 +258,13 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 				zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 			}
 	}
-	FMaterial *tex = FMaterial::ValidateTexture(texture, false);
 
 	// now clip the decal to the actual polygon
 
-	float decalwidth = tex->TextureWidth()  * decal->ScaleX;
-	float decalheight = tex->TextureHeight() * decal->ScaleY;
-	float decallefto = tex->GetLeftOffset() * decal->ScaleX;
-	float decaltopo = tex->GetTopOffset()  * decal->ScaleY;
+	float decalwidth = texture->GetDisplayWidth()  * decal->ScaleX;
+	float decalheight = texture->GetDisplayHeight() * decal->ScaleY;
+	float decallefto = texture->GetDisplayLeftOffset() * decal->ScaleX;
+	float decaltopo = texture->GetDisplayTopOffset()  * decal->ScaleY;
 	
 	float leftedge = glseg.fracleft * side->TexelLength;
 	float linelength = glseg.fracright * side->TexelLength - leftedge;
@@ -328,11 +321,12 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	
 	dv[UL].z = dv[UR].z = zpos;
 	dv[LL].z = dv[LR].z = dv[UL].z - decalheight;
-	dv[UL].v = dv[UR].v = tex->GetVT();
+	dv[UL].v = dv[UR].v = 0.f;
 	
-	dv[UL].u = dv[LL].u = tex->GetU(lefttex / decal->ScaleX);
-	dv[LR].u = dv[UR].u = tex->GetU(righttex / decal->ScaleX);
-	dv[LL].v = dv[LR].v = tex->GetVB();
+	float decalscale = float(decal->ScaleX * texture->GetDisplayWidth());
+	dv[UL].u = dv[LL].u = lefttex / decalscale;
+	dv[LR].u = dv[UR].u = righttex / decalscale;
+	dv[LL].v = dv[LR].v = 1.f;
 	
 	// now clip to the top plane
 	float vzt = (ztop[UL] - ztop[LL]) / linelength;
@@ -375,28 +369,28 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	
 	if (flipx)
 	{
-		float ur = tex->GetUR();
-		for (i = 0; i < 4; i++) dv[i].u = ur - dv[i].u;
+		for (i = 0; i < 4; i++) dv[i].u = 1.f - dv[i].u;
 	}
 	if (flipy)
 	{
-		float vb = tex->GetVB();
-		for (i = 0; i < 4; i++) dv[i].v = vb - dv[i].v;
+		for (i = 0; i < 4; i++) dv[i].v = 1.f - dv[i].v;
 	}
 
 	HWDecal *gldecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
-	gldecal->gltexture = tex;
+	gldecal->texture = texture;
 	gldecal->decal = decal;
 
 	if (decal->RenderFlags & RF_FULLBRIGHT)
 	{
 		gldecal->lightlevel = 255;
 		gldecal->rellight = 0;
+		gldecal->dynlightindex = -1;
 	}
 	else
 	{
 		gldecal->lightlevel = lightlevel;
 		gldecal->rellight = rellight + getExtraLight();
+		gldecal->dynlightindex = dynlightindex;
 	}
 
 	gldecal->Colormap = Colormap;

@@ -35,7 +35,7 @@
 #define __P_TERRAIN_H__
 
 #include "s_sound.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 class PClass;
 
@@ -115,6 +115,7 @@ struct FTerrainDef
 	FSoundID RightStepSound;
 	bool IsLiquid;
 	bool AllowProtection;
+	bool DamageOnLand;
 	double Friction;
 	double MoveFactor;
 };

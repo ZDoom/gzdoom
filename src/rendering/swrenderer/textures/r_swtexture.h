@@ -1,7 +1,8 @@
 #pragma once
-#include "textures/textures.h"
+#include "textures.h"
 #include "v_video.h"
 #include "g_levellocals.h"
+#include "d_main.h"
 
 
 struct FSoftwareTextureSpan
@@ -12,14 +13,15 @@ struct FSoftwareTextureSpan
 
 
 // For now this is just a minimal wrapper around FTexture. Once the software renderer no longer accesses FTexture directly, it is time for cleaning up.
-class FSoftwareTexture
+class FSoftwareTexture : public ISoftwareTexture
 {
 protected:
-	FTexture *mTexture;
+	FGameTexture *mTexture;
 	FTexture *mSource;
 	TArray<uint8_t> Pixels;
 	TArray<uint32_t> PixelsBgra;
 	FSoftwareTextureSpan **Spandata[3] = { };
+	DVector2 Scale;
 	uint8_t WidthBits = 0, HeightBits = 0;
 	uint16_t WidthMask = 0;
 	int mPhysicalWidth, mPhysicalHeight;
@@ -32,14 +34,14 @@ protected:
 	void CalcBitSize();
 
 public:
-	FSoftwareTexture(FTexture *tex);
+	FSoftwareTexture(FGameTexture *tex);
 	
 	virtual ~FSoftwareTexture()
 	{
 		FreeAllSpans();
 	}
 
-	FTexture *GetTexture() const
+	FGameTexture *GetTexture() const
 	{
 		return mTexture;
 	}
@@ -47,34 +49,32 @@ public:
 	// The feature from hell... :(
 	bool useWorldPanning(FLevelLocals *Level) const
 	{
-		return mTexture->bWorldPanning || (Level->flags3 & LEVEL3_FORCEWORLDPANNING);
+		return mTexture->useWorldPanning() || (Level->flags3 & LEVEL3_FORCEWORLDPANNING);
 	}
 
 	bool isMasked()
 	{
-		return mTexture->bMasked;
+		return mTexture->isMasked();
+	}
+
+	uint16_t GetRotations() const
+	{
+		return mTexture->GetRotations();
 	}
 	
 	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
-	PalEntry GetSkyCapColor(bool bottom) const { return mTexture->GetSkyCapColor(bottom); }
 	
-	int GetWidth () { return mTexture->GetWidth(); }
-	int GetHeight () { return mTexture->GetHeight(); }
+	int GetWidth () { return mTexture->GetTexelWidth(); }
+	int GetHeight () { return mTexture->GetTexelHeight(); }
 	int GetWidthBits() { return WidthBits; }
 	int GetHeightBits() { return HeightBits; }
 
-	int GetScaledWidth () { return mTexture->GetScaledWidth(); }
-	int GetScaledHeight () { return mTexture->GetScaledHeight(); }
-	double GetScaledWidthDouble () { return mTexture->GetScaledWidthDouble(); }
-	double GetScaledHeightDouble () { return mTexture->GetScaledHeightDouble(); }
-	
+	double GetScaledWidth () { return mTexture->GetDisplayWidth(); }
+	double GetScaledHeight () { return mTexture->GetDisplayHeight(); }
+
 	// Now with improved offset adjustment.
-	int GetLeftOffset(int adjusted) { return mTexture->GetLeftOffset(adjusted); }
-	int GetTopOffset(int adjusted) { return mTexture->GetTopOffset(adjusted); }
-	int GetScaledLeftOffset (int adjusted) { return mTexture->GetScaledLeftOffset(adjusted); }
-	int GetScaledTopOffset (int adjusted) { return mTexture->GetScaledTopOffset(adjusted); }
-	double GetScaledLeftOffsetDouble(int adjusted) { return mTexture->GetScaledLeftOffsetDouble(adjusted); }
-	double GetScaledTopOffsetDouble(int adjusted) { return mTexture->GetScaledTopOffsetDouble(adjusted); }
+	int GetLeftOffset(int adjusted) { return mTexture->GetTexelLeftOffset(adjusted); }
+	int GetTopOffset(int adjusted) { return mTexture->GetTexelTopOffset(adjusted); }
 	
 	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
 	// should use these, so that if changes are needed, this is the only place to edit.
@@ -82,16 +82,10 @@ public:
 	// For the original software renderer
 	int GetLeftOffsetSW() { return GetLeftOffset(r_spriteadjustSW); }
 	int GetTopOffsetSW() { return GetTopOffset(r_spriteadjustSW); }
-	int GetScaledLeftOffsetSW() { return GetScaledLeftOffset(r_spriteadjustSW); }
-	int GetScaledTopOffsetSW() { return GetScaledTopOffset(r_spriteadjustSW); }
+	double GetScaledLeftOffsetSW() { return mTexture->GetDisplayLeftOffset(r_spriteadjustSW); }
+	double GetScaledTopOffsetSW() { return mTexture->GetDisplayTopOffset(r_spriteadjustSW); }
 	
-	// For the softpoly renderer, in case it wants adjustment
-	int GetLeftOffsetPo() { return GetLeftOffset(r_spriteadjustSW); }
-	int GetTopOffsetPo() { return GetTopOffset(r_spriteadjustSW); }
-	int GetScaledLeftOffsetPo() { return GetScaledLeftOffset(r_spriteadjustSW); }
-	int GetScaledTopOffsetPo() { return GetScaledTopOffset(r_spriteadjustSW); }
-	
-	DVector2 GetScale() const { return mTexture->Scale; }
+	DVector2 GetScale() const { return Scale; }
 	int GetPhysicalWidth() { return mPhysicalWidth; }
 	int GetPhysicalHeight() { return mPhysicalHeight; }
 	int GetPhysicalScale() const { return mPhysicalScale; }
@@ -110,7 +104,6 @@ public:
 	void GenerateBgraFromBitmap(const FBitmap &bitmap);
 	void CreatePixelsBgraWithMipmaps();
 	void GenerateBgraMipmaps();
-	void GenerateBgraMipmapsFast();
 	int MipmapLevels();
 	
 	// Returns true if GetPixelsBgra includes mipmaps
@@ -159,11 +152,12 @@ class FWarpTexture : public FSoftwareTexture
 	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 
 public:
-	FWarpTexture (FTexture *source, int warptype);
+	FWarpTexture (FGameTexture *source, int warptype);
 
 	const uint32_t *GetPixelsBgra() override;
 	const uint8_t *GetPixels(int style) override;
 	bool CheckModified (int which) override;
+	void GenerateBgraMipmapsFast();
 
 private:
 
@@ -181,7 +175,7 @@ class FSWCanvasTexture : public FSoftwareTexture
 
 public:
 
-	FSWCanvasTexture(FTexture *source) : FSoftwareTexture(source) {}
+	FSWCanvasTexture(FGameTexture* source);
 	~FSWCanvasTexture();
 
 	// Returns the whole texture, stored in column-major order
@@ -196,3 +190,6 @@ public:
 	bool Mipmapped() override { return false; }
 
 };
+
+FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex);
+FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, bool checkcompat = false, bool allownull = false);

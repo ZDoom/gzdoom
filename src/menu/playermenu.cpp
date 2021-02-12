@@ -1,6 +1,6 @@
 /*
 ** playermenu.cpp
-** The player setup menu
+** The player setup menu's setters. These are native for security purposes.
 **
 **---------------------------------------------------------------------------
 ** Copyright 2001-2010 Randy Heit
@@ -33,12 +33,13 @@
 **
 */
 
-#include "menu/menu.h"
+#include "menu.h"
 #include "gi.h"
 #include "c_dispatch.h"
 #include "teaminfo.h"
 #include "r_state.h"
 #include "vm.h"
+#include "d_player.h"
 
 EXTERN_CVAR(Int, team)
 EXTERN_CVAR(Float, autoaim)

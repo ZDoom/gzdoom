@@ -40,7 +40,7 @@
 #include "teaminfo.h"
 #include "v_font.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "vm.h"
 
 // MACROS ------------------------------------------------------------------
@@ -133,7 +133,7 @@ void FTeam::ParseTeamInfo ()
 	int iLump, iLastLump = 0;
 
 	Teams.Clear();
-	while ((iLump = Wads.FindLump ("TEAMINFO", &iLastLump)) != -1)
+	while ((iLump = fileSystem.FindLump ("TEAMINFO", &iLastLump)) != -1)
 	{
 		FScanner Scan (iLump);
 

@@ -142,12 +142,30 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeSoundVolume)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSounds, S_StopActorSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(chanmin);
+	PARAM_INT(chanmax);
+	S_StopActorSounds(self, chanmin, chanmax);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeActorSoundPitch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_FLOAT(pitch);
+	S_ChangeActorSoundPitch(self, channel, pitch);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeActorSoundVolume)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);
 	PARAM_FLOAT(volume);
-	S_ChangeSoundVolume(self, channel, volume);
+	S_ChangeActorSoundVolume(self, channel, volume);
 	return 0;
 }
 
@@ -160,8 +178,31 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_BOOL(looping);
 	PARAM_FLOAT(attenuation);
 	PARAM_BOOL(local);
-	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local);
+	PARAM_FLOAT(pitch);
+	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_FLOAT(attenuation);
+	PARAM_FLOAT(pitch);
+	PARAM_FLOAT(startTime);
+	A_StartSound(self, soundid, channel, flags, volume, attenuation, pitch, startTime);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_SOUND(soundid);
+	ACTION_RETURN_BOOL(S_IsActorPlayingSomething(self, channel, soundid));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
@@ -852,13 +893,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, isTeammate, isTeammate)
 
 static int GetSpecies(AActor *self)
 {
-	return self->GetSpecies();
+	return self->GetSpecies().GetIndex();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpecies, GetSpecies)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->GetSpecies());
+	ACTION_RETURN_INT(GetSpecies(self));
 }
 
 static int isFriend(AActor *self, AActor *other)
@@ -1202,9 +1243,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetRadiusDamage, P_GetRadiusDamage)
 	ACTION_RETURN_INT(P_GetRadiusDamage(self, thing, damage, distance, fulldmgdistance, oldradiusdmg));
 }
 
-static int RadiusAttack(AActor *self, AActor *bombsource, int bombdamage, int bombdistance, int damagetype, int flags, int fulldamagedistance)
+static int RadiusAttack(AActor *self, AActor *bombsource, int bombdamage, int bombdistance, int damagetype, int flags, int fulldamagedistance, int species)
 {
-	return P_RadiusAttack(self, bombsource, bombdamage, bombdistance, ENamedName(damagetype), flags, fulldamagedistance);
+	return P_RadiusAttack(self, bombsource, bombdamage, bombdistance, ENamedName(damagetype), flags, fulldamagedistance, ENamedName(species));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, RadiusAttack, RadiusAttack)
@@ -1216,7 +1257,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RadiusAttack, RadiusAttack)
 	PARAM_INT(damagetype);
 	PARAM_INT(flags);
 	PARAM_INT(fulldamagedistance);
-	ACTION_RETURN_INT(RadiusAttack(self, bombsource, bombdamage, bombdistance, damagetype, flags, fulldamagedistance));
+	PARAM_INT(species);
+	ACTION_RETURN_INT(RadiusAttack(self, bombsource, bombdamage, bombdistance, damagetype, flags, fulldamagedistance, species));
 }
 
 static int ZS_GetSpriteIndex(int sprt)
@@ -1565,11 +1607,27 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_BossDeath, A_BossDeath)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, DObject::StaticPointerSubstitution)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, StaticPointerSubstitution)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(replace, AActor);
-	DObject::StaticPointerSubstitution(self, replace);
+	StaticPointerSubstitution(self, replace);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_PlayerPawn, Substitute, StaticPointerSubstitution)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
+	StaticPointerSubstitution(self, replace);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_MorphedMonster, Substitute, StaticPointerSubstitution)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
+	StaticPointerSubstitution(self, replace);
 	return 0;
 }
 
@@ -1585,6 +1643,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_NoBlocking, A_Unblock)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(drop);
 	A_Unblock(self, drop);
+	return 0;
+}
+
+static void CopyBloodColor(AActor* self, AActor* other)
+{
+	if (self && other)
+	{
+		self->BloodColor = other->BloodColor;
+		self->BloodTranslation = other->BloodTranslation;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CopyBloodColor, CopyBloodColor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	CopyBloodColor(self, other);
 	return 0;
 }
 
@@ -1701,6 +1776,7 @@ DEFINE_FIELD_NAMED(AActor, __Pos, pos)
 DEFINE_FIELD_NAMED(AActor, __Pos.X, x)
 DEFINE_FIELD_NAMED(AActor, __Pos.Y, y)
 DEFINE_FIELD_NAMED(AActor, __Pos.Z, z)
+DEFINE_FIELD(AActor, SpriteOffset)
 DEFINE_FIELD(AActor, Prev)
 DEFINE_FIELD(AActor, SpriteAngle)
 DEFINE_FIELD(AActor, SpriteRotation)
@@ -1840,6 +1916,7 @@ DEFINE_FIELD(AActor, WallBounceSound)
 DEFINE_FIELD(AActor, CrushPainSound)
 DEFINE_FIELD(AActor, MaxDropOffHeight)
 DEFINE_FIELD(AActor, MaxStepHeight)
+DEFINE_FIELD(AActor, MaxSlopeSteepness)
 DEFINE_FIELD(AActor, PainChance)
 DEFINE_FIELD(AActor, PainType)
 DEFINE_FIELD(AActor, DeathType)
@@ -1868,6 +1945,10 @@ DEFINE_FIELD(AActor, RenderRequired)
 DEFINE_FIELD(AActor, friendlyseeblocks)
 DEFINE_FIELD(AActor, SpawnTime)
 DEFINE_FIELD(AActor, InventoryID)
+DEFINE_FIELD(AActor, ThruBits)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Yaw, viewangle)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Pitch, viewpitch)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Roll, viewroll)
 
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);
@@ -1916,11 +1997,10 @@ DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitDir);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LinePart);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, SectorPlane);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitType);
-
-

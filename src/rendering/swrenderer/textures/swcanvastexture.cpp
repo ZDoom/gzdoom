@@ -39,6 +39,21 @@
 #include "m_alloc.h"
 #include "imagehelpers.h"
 
+static TMap<FCanvasTexture*, FSWCanvasTexture*> canvasMap;
+
+FSWCanvasTexture* GetSWCamTex(FCanvasTexture* camtex)
+{
+	auto p = canvasMap.CheckKey(camtex);
+	return p ? *p : nullptr;
+}
+
+FSWCanvasTexture::FSWCanvasTexture(FGameTexture* source) : FSoftwareTexture(source) 
+{
+	// The SW renderer needs to link the canvas textures, but let's do that outside the texture manager.
+	auto camtex = static_cast<FCanvasTexture*>(source->GetTexture());
+	canvasMap.Insert(camtex, this);
+}
+
 
 FSWCanvasTexture::~FSWCanvasTexture()
 {
@@ -64,7 +79,7 @@ FSWCanvasTexture::~FSWCanvasTexture()
 
 const uint8_t *FSWCanvasTexture::GetPixels(int style)
 {
-	static_cast<FCanvasTexture*>(mTexture)->NeedUpdate();
+	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (Canvas == nullptr)
 	{
 		MakeTexture();
@@ -81,7 +96,7 @@ const uint8_t *FSWCanvasTexture::GetPixels(int style)
 
 const uint32_t *FSWCanvasTexture::GetPixelsBgra()
 {
-	static_cast<FCanvasTexture*>(mTexture)->NeedUpdate();
+	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (CanvasBgra == nullptr)
 	{
 		MakeTextureBgra();
@@ -153,23 +168,15 @@ void FSWCanvasTexture::Unload ()
 void FSWCanvasTexture::UpdatePixels(bool truecolor)
 {
 
-	if (Canvas->IsBgra())
-	{
-		ImageHelpers::FlipNonSquareBlock(PixelsBgra.Data(), (const uint32_t*)Canvas->GetPixels(), GetWidth(), GetHeight(), Canvas->GetPitch());
-	}
-	else
-	{
-		ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), Canvas->GetPixels(), GetWidth(), GetHeight(), Canvas->GetPitch(), GPalette.Remap);
-	}
-
 	if (truecolor)
 	{
+		ImageHelpers::FlipNonSquareBlock(PixelsBgra.Data(), (const uint32_t*)CanvasBgra->GetPixels(), GetWidth(), GetHeight(), CanvasBgra->GetPitch());
 		// True color render still sometimes uses palette textures (for sprites, mostly).
 		// We need to make sure that both pixel buffers contain data:
 		int width = GetWidth();
 		int height = GetHeight();
-		uint8_t *palbuffer = const_cast<uint8_t*>(GetPixels(0));
-		const uint32_t *bgrabuffer = GetPixelsBgra();
+		uint8_t* palbuffer = const_cast<uint8_t*>(GetPixels(0));
+		const uint32_t* bgrabuffer = GetPixelsBgra();
 		for (int x = 0; x < width; x++)
 		{
 			for (int y = 0; y < height; y++)
@@ -184,6 +191,10 @@ void FSWCanvasTexture::UpdatePixels(bool truecolor)
 			bgrabuffer += height;
 		}
 	}
+	else
+	{
+		ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), Canvas->GetPixels(), GetWidth(), GetHeight(), Canvas->GetPitch(), GPalette.Remap);
+	}
 
-	static_cast<FCanvasTexture*>(mTexture)->SetUpdated(false);
+	static_cast<FCanvasTexture*>(mSource)->SetUpdated(false);
 }

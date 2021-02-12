@@ -36,6 +36,7 @@
 #include "r_state.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "serializer.h"
 
 
 //==========================================================================
@@ -63,11 +64,59 @@ int AttenuationIsSet = -1;
 //
 //-----------------------------------------------------------------------------
 
-FLightDefaults::FLightDefaults(FName name, ELightType type)
+FSerializer &Serialize(FSerializer &arc, const char *key, FLightDefaults &value, FLightDefaults *def)
 {
-	m_Name = name;
-	m_type = type;
+	if (arc.BeginObject(key))
+	{
+		arc("name", value.m_Name)
+			.Array("args", value.m_Args, 5)
+			("param", value.m_Param)
+			("pos", value.m_Pos)
+			("type", value.m_type)
+			("attenuate", value.m_attenuate)
+			("flags", value.m_lightFlags)
+			("swapped", value.m_swapped)
+			("spot", value.m_spot)
+			("explicitpitch", value.m_explicitPitch)
+			("spotinner", value.m_spotInnerAngle)
+			("spotouter", value.m_spotOuterAngle)
+			("pitch", value.m_pitch)
+		.EndObject();
+	}
+	return arc;
 }
+
+FSerializer &Serialize(FSerializer &arc, const char *key, TDeletingArray<FLightDefaults *> &value, TDeletingArray<FLightDefaults *> *def)
+{
+	if (arc.isWriting())
+	{
+		if (value.Size() == 0) return arc;	// do not save empty arrays
+	}
+	bool res = arc.BeginArray(key);
+	if (arc.isReading())
+	{
+		if (!res)
+		{
+			value.Clear();
+			return arc;
+		}
+		value.Resize(arc.ArraySize());
+		for (auto &entry : value) entry = new FLightDefaults(NAME_None);
+	}
+	for (unsigned i = 0; i < value.Size(); i++)
+	{
+		Serialize(arc, nullptr, *value[i], nullptr);
+	}
+	arc.EndArray();
+	return arc;
+}
+
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
 void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 {

@@ -87,7 +87,7 @@ class FastProjectile : Actor
 			// force some lateral movement so that collision detection works as intended.
 			if (bMissile && Vel.X == 0 && Vel.Y == 0 && !IsZeroDamage())
 			{
-				Vel.X = MinVel;
+				VelFromAngle(MinVel);
 			}
 
 			Vector3 frac = Vel / count;

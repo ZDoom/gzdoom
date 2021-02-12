@@ -162,11 +162,6 @@ AF40D0E49BD1B76D4B1AADD8212ADC46 // MAP01 (the wad that shall not be named =P)
 	limitpain
 }
 
-7C1913DEE396BA26CFF22A0E9369B7D2 // Nuke Mine, e1m2
-{
-	pointonline
-}
-
 920F8D876ECD96D8C2A978FF1AB2B401 // Darken2.wad map01 - Nodes go out of bounds/beyond normal sector boundaries
 CFEDB7FA89885E24856CAC9A2FB3CE58 // Darken2.wad map03 - GZDoomBuilder crashes when displaying Nodes
 8E961FA7029761D5FAB3932C40F10CD2 // Darken2.wad map04 - Nodes go out of bounds/beyond normal sector boundaries
@@ -198,6 +193,11 @@ EDA5CE7C462BD171BF8110AC56B67857 // pl2.wad map11
 A9A9A728E689266939C1B71655F320CA // pl2.wad map25
 62CA74092FC88C1E7FE2D0B1A8034E29 // pl2.wad map29
 19E1CFD717FC6BBA9371F0F529B4CDFF // ur_final.wad map27
+836E09559FF22A7A37C2587F7EAFF1EE // Requiem MAP29 - Incorrect sector lighting and vanishing items
+35F80C968E1D41D37E543AF74F862A31 // Memento Mori map15
+F73A74BD9346AD3B6AF8246F7B389A1E // Memento Mori map20
+9D7288F7235157D8478E409CD7AE9F68 // akeldama.wad map26
+DEABADC01FE74273B7616F744EDF66D0 // dbimpact.wad e1m3
 {
 	rebuildnodes
 }
@@ -253,6 +253,10 @@ C98F79709BD7E0E4C19026AB9575EC6F // cc-cod.zip:codlev.wad map07
 
 D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 19D03FFC875589E21EDBB7AB74EF4AEF // Return to Hadron, e1m9, 2016.01.03 update
+5BDA34DA60C0530794CC1EA2DA017976 // doom2.wad map14
+5B3F118B337BFBFB8D5C81E98AF7B71D // Ancient Aliens map23
+7C1913DEE396BA26CFF22A0E9369B7D2 // Nuke Mine, e1m2
+BFC69170CCE3550A0A53C4A556E7FD69 // btsx_e2a.wad map06
 {
 	pointonline
 }
@@ -285,4 +289,9 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 {
 	clipmidtex
 	checkswitchrange
+}
+
+F50C91A05E1A1E646690517641F0D1DD // daedalus.wad map19
+{
+	scriptwait
 }

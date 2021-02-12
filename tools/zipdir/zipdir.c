@@ -781,6 +781,8 @@ void write_zip(const char *zipname, dir_tree_t *trees, int update)
 			if (central_dir == NULL)
 			{
 				fprintf(stderr, "Could not read central directory from %s. (Is it a zipfile?)\n", zipname);
+				fclose(ozip);
+				ozip = NULL;
 				update = 0;
 			}
 		}

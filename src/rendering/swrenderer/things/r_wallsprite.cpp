@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -53,7 +53,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
@@ -64,16 +64,13 @@
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
-
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ppic, const DVector2 &scale, int renderflags, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *pic, const DVector2 &scale, int renderflags, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
-		FSoftwareTexture *pic = ppic->GetSoftwareTexture();
 		FWallCoords wallc;
 		double x1, x2;
 		DVector2 left, right;
@@ -96,7 +93,7 @@ namespace swrenderer
 		right.Y = left.Y + x2 * angsin;
 
 		// Is it off-screen?
-		if (wallc.Init(thread, left, right, TOO_CLOSE_Z))
+		if (wallc.Init(thread, left, right))
 			return;
 			
 		RenderPortal *renderportal = thread->Portal.get();
@@ -108,8 +105,8 @@ namespace swrenderer
 		// but right now, I just want to get them drawing.
 		tz = (pos.X - thread->Viewport->viewpoint.Pos.X) * thread->Viewport->viewpoint.TanCos + (pos.Y - thread->Viewport->viewpoint.Pos.Y) * thread->Viewport->viewpoint.TanSin;
 
-		int scaled_to = pic->GetScaledTopOffsetSW();
-		int scaled_bo = scaled_to - pic->GetScaledHeight();
+		double scaled_to = pic->GetScaledTopOffsetSW();
+		double scaled_bo = scaled_to - pic->GetScaledHeight();
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;
 
@@ -141,7 +138,19 @@ namespace swrenderer
 		vis->wallc = wallc;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, false, false, false, false, false);
+		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && basecolormap->Fade != 0)
+		{
+			basecolormap = GetSpecialLights(basecolormap->Color, 0, basecolormap->Desaturate);
+		}
+		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
+
+		bool invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
+		if (vis->RenderStyle.Flags & STYLEF_InvertSource)
+			invertcolormap = !invertcolormap;
+
+		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
+
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
 
 		thread->SpriteList->Push(vis);
 	}
@@ -150,32 +159,10 @@ namespace swrenderer
 	{
 		auto spr = this;
 
-		int x1, x2;
-		double iyscale;
-		bool sprflipvert;
-
-		x1 = MAX<int>(spr->x1, spr->wallc.sx1);
-		x2 = MIN<int>(spr->x2, spr->wallc.sx2);
+		int x1 = MAX<int>(spr->x1, spr->wallc.sx1);
+		int x2 = MIN<int>(spr->x2, spr->wallc.sx2);
 		if (x1 >= x2)
 			return;
-
-		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(thread, &spr->wallc);
-
-		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
-
-		iyscale = 1 / spr->yscale;
-		double texturemid = (spr->gzt - thread->Viewport->viewpoint.Pos.Z) * iyscale;
-		if (spr->renderflags & RF_XFLIP)
-		{
-			int right = (spr->pic->GetWidth() << FRACBITS) - 1;
-
-			for (int i = x1; i < x2; i++)
-			{
-				walltexcoords.UPos[i] = right - walltexcoords.UPos[i];
-			}
-		}
 
 		// Prepare lighting
 
@@ -192,57 +179,25 @@ namespace swrenderer
 		if (!visible)
 			return;
 
-		float lightleft = float(thread->Light->WallVis(spr->wallc.sz1, foggy));
-		float lightstep = float((thread->Light->WallVis(spr->wallc.sz2, foggy) - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
-		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
-		CameraLight *cameraLight = CameraLight::Instance();
-		bool calclighting = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap();
+		ProjectedWallLight mlight;
+		mlight.SetLightLeft(thread, wallc);
 
 		// Draw it
 		auto WallSpriteTile = spr->pic;
-		if (spr->renderflags & RF_YFLIP)
-		{
-			sprflipvert = true;
-			iyscale = -iyscale;
-			texturemid -= spr->pic->GetHeight();
-		}
-		else
-		{
-			sprflipvert = false;
-		}
-
-		float maskedScaleY = (float)iyscale;
-
-		int x = x1;
-
-		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
 		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
-		while (x < x2)
+
+		RenderTranslucentPass* translucentPass = thread->TranslucentPass.get();
+		short floorclip[MAXWIDTH];
+		for (int x = x1; x < x2; x++)
 		{
-			if (calclighting)
-			{
-				drawerargs.SetLight(light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
-			}
-			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
-				DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
-			light += lightstep;
-			x++;
+			if (translucentPass->ClipSpriteColumnWithPortals(x, spr))
+				floorclip[x] = mceilingclip[x];
+			else
+				floorclip[x] = mfloorclip[x];
 		}
-	}
 
-	void RenderWallSprite::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
-	{
-		auto viewport = thread->Viewport.get();
-		
-		float iscale = walltexcoords.VStep[x] * maskedScaleY;
-		double spryscale = 1 / iscale;
-		double sprtopscreen;
-		if (sprflipvert)
-			sprtopscreen = viewport->CenterY + texturemid * spryscale;
-		else
-			sprtopscreen = viewport->CenterY - texturemid * spryscale;
-
-		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
+		drawerargs.SetBaseColormap(spr->Light.BaseColormap);
+		drawerargs.DrawMasked(thread, spr->gzt, spr->yscale, spr->renderflags & RF_XFLIP, spr->renderflags & RF_YFLIP, spr->wallc, x1, x2, mlight, WallSpriteTile, floorclip, mceilingclip, spr->RenderStyle);
 	}
 }

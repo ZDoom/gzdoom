@@ -29,7 +29,6 @@
 
 #include "doomdef.h"
 
-class FTexture;
 struct FLevelLocals;
 
 //
@@ -56,10 +55,13 @@ struct wbstartstruct_t
 	FString		next;		// next level, [RH] actual map name
 	FString		nextname;	// printable name for next level.
 	FString		thisname;	// printable name for next level.
+	FString		nextauthor;	// printable name for next level.
+	FString		thisauthor;	// printable name for next level.
 
 	FTextureID	LName0;
 	FTextureID	LName1;
 
+	int			totalkills;
 	int			maxkills;
 	int			maxitems;
 	int			maxsecret;

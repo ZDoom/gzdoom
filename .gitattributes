@@ -12,10 +12,10 @@
 *.asm		text
 *.S		text
 
-*.vcproj	text eol=crlf
-*.sln		text eol=crlf
-*.bat		text eol=crlf
-*.rc		text eol=crlf
+*.vcproj	text
+*.sln		text
+*.bat		text
+*.rc		text
 
 *.txt		text
 language.*	text

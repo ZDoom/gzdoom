@@ -72,7 +72,7 @@ class FlameSmall : SwitchableDecoration
 	States
 	{
 	Active:
-		FFSM A 0 Bright A_PlaySound("Ignite");
+		FFSM A 0 Bright A_StartSound("Ignite");
 	Spawn:
 		FFSM A 3 Bright;
 		FFSM A 3 Bright A_UnHideThing;
@@ -106,7 +106,7 @@ class FlameLarge : SwitchableDecoration
 	States
 	{
 	Active:
-		FFLG A 0 Bright A_PlaySound("Ignite");
+		FFLG A 0 Bright A_StartSound("Ignite");
 	Spawn:
 		FFLG A 2 Bright;
 		FFLG A 2 Bright A_UnHideThing;

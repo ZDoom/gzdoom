@@ -34,8 +34,9 @@
 #ifndef __GI_H__
 #define __GI_H__
 
-#include "basictypes.h"
+#include "basics.h"
 #include "zstring.h"
+#include "name.h"
 
 // Flags are not user configurable and only depend on the standard IWADs
 enum
@@ -111,6 +112,7 @@ struct gameinfo_t
 	FString ConfigName;
 
 	FString TitlePage;
+	bool nokeyboardcheats;
 	bool drawreadthis;
 	bool noloopfinalemusic;
 	bool intermissioncounter;
@@ -157,6 +159,7 @@ struct gameinfo_t
 	FString statusbar;
 	int statusbarfile = -1;
 	FName statusbarclass;
+	FName althudclass;
 	int statusbarclassfile = -1;
 	FName MessageBoxClass;
 	FName backpacktype;
@@ -179,6 +182,7 @@ struct gameinfo_t
 	FName mFontColorHighlight;
 	FName mFontColorSelection;
 	FName mSliderColor;
+	FName mSliderBackColor;
 	FString mBackButton;
 	double gibfactor;
 	int TextScreenX;
@@ -191,6 +195,8 @@ struct gameinfo_t
 	FGIFont mStatscreenMapNameFont;
 	FGIFont mStatscreenFinishedFont;
 	FGIFont mStatscreenEnteringFont;
+	FGIFont mStatscreenContentFont;
+	FGIFont mStatscreenAuthorFont;
 	bool norandomplayerclass;
 	bool forcekillscripts;
 	FName statusscreen_single;
@@ -200,6 +206,9 @@ struct gameinfo_t
 	int berserkpic;
 	double normforwardmove[2];
 	double normsidemove[2];
+	int fullscreenautoaspect = 3;
+	bool nomergepickupmsg;
+	bool mHideParTimes;
 
 	const char *GetFinalePage(unsigned int num) const;
 };
@@ -212,11 +221,6 @@ inline const char *GameTypeName()
 	return GameNames[gameinfo.gametype];
 }
 
-inline bool CheckGame(const char *string, bool chexisdoom)
-{
-	int test = gameinfo.gametype;
-	if (test == GAME_Chex && chexisdoom) test = GAME_Doom;
-	return !stricmp(string, GameNames[test]);
-}
+bool CheckGame(const char *string, bool chexisdoom);
 
 #endif //__GI_H__

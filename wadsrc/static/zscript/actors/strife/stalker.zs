@@ -128,7 +128,7 @@ class Stalker : Actor
 
 	void A_StalkerWalk ()
 	{
-		A_PlaySound ("stalker/walk", CHAN_BODY);
+		A_StartSound ("stalker/walk", CHAN_BODY);
 		A_Chase ();
 	}
 

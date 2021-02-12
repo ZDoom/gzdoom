@@ -25,7 +25,7 @@
 
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -36,6 +36,7 @@
 #include "c_dispatch.h"
 #include "cmdlib.h"
 #include "d_net.h"
+#include "v_draw.h"
 #include "g_level.h"
 #include "r_utility.h"
 #include "d_player.h"
@@ -87,7 +88,7 @@ namespace swrenderer
 		// [RH] Inverse light for shooting the Sigil
 		if (fixedcolormap == nullptr && viewpoint.extralight == INT_MIN)
 		{
-			fixedcolormap = &SpecialSWColormaps[INVERSECOLORMAP];
+			fixedcolormap = &SpecialSWColormaps[REALINVERSECOLORMAP];
 			viewpoint.extralight = 0;
 		}
 	}
@@ -205,7 +206,10 @@ namespace swrenderer
 
 			int shade = LightVisibility::LightLevelToShade(lightlevel, foggy, thread->Viewport.get());
 			if (psprite)
+			{
+				visibility = 0;
 				shade -= 24 * FRACUNIT;
+			}
 
 			BaseColormap = basecolormap;
 			ColormapNum = GETPALOOKUP(visibility, shade);

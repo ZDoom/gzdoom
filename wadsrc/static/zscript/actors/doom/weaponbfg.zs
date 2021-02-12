@@ -60,7 +60,7 @@ extend class StateProvider
 {
 	action void A_BFGsound() 
 	{ 
-		A_PlaySound("weapons/bfgf", CHAN_WEAPON); 
+		A_StartSound("weapons/bfgf", CHAN_WEAPON); 
 	}
 	
 
@@ -167,6 +167,7 @@ class BFGExtra : Actor
 	{
 		+NOBLOCKMAP
 		+NOGRAVITY
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 0.75;
 		DamageType "BFGSplash";

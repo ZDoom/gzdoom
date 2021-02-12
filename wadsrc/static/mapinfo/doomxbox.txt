@@ -1,0 +1,25 @@
+// MAPINFO for Doom: XBox Edition
+include "mapinfo/ultdoom.txt"
+
+map E1M1 lookup "HUSTR_E1M1"
+{
+	levelnum = 1
+	titlepatch = "WILV00"
+	next = "E1M2"
+	secretnext = "E1M10"
+	sky1 = "SKY1"
+	cluster = 1
+	par = 30
+	music = "$MUSIC_E1M1"
+}
+
+map E1M10 lookup "HUSTR_E1M10"
+{
+	titlepatch = "SEWERS"
+	next = "E1M2"
+	secretnext = "E1M2"
+	sky1 = "SKY1"
+	cluster = 1
+	music = "$MUSIC_E2M1"
+}
+

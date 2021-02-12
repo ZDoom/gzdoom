@@ -41,14 +41,16 @@
 #include "v_video.h"
 #include "utf8.h"
 #include "gstrings.h"
+#include "vm.h"
+#include "c_buttons.h"
+#include "d_buttons.h"
+#include "v_draw.h"
 
 enum
 {
 	QUEUESIZE = 128
 };
 
-
-EXTERN_CVAR (Int, con_scaletext)
 
 EXTERN_CVAR (Bool, sb_cooperative_enable)
 EXTERN_CVAR (Bool, sb_deathmatch_enable)
@@ -232,21 +234,44 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
+	auto drawer = twod;
 	FFont *displayfont = NewConsoleFont;
+
+	if (players[consoleplayer].camera != NULL &&
+		(buttonMap.ButtonDown(Button_ShowScores) ||
+		 players[consoleplayer].camera->health <= 0 ||
+		 SB_ForceActive) &&
+		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
+		 gamestate != GS_INTERMISSION)
+	{
+		HU_DrawScores (&players[consoleplayer]);
+	}
 	if (chatmodeon)
 	{
+		// [MK] allow the status bar to take over chat prompt drawing
+		bool skip = false;
+		IFVIRTUALPTR(StatusBar, DBaseStatusBar, DrawChat)
+		{
+			FString txt = ChatQueue;
+			VMValue params[] = { (DObject*)StatusBar, &txt };
+			int rv;
+			VMReturn ret(&rv);
+			VMCall(func, params, countof(params), &ret, 1);
+			if (!!rv) return;
+		}
+
 		FStringf prompt("%s ", GStrings("TXT_SAY"));
 		int x, scalex, y, promptwidth;
 
 		y = (viewactive || gamestate != GS_LEVEL) ? -displayfont->GetHeight()-2 : -displayfont->GetHeight() - 22;
 
 		scalex = 1;
-		int scale = active_con_scaletext(true);
-		int screen_width = SCREENWIDTH / scale;
-		int screen_height= SCREENHEIGHT / scale;
+		int scale = active_con_scaletext(drawer);
+		int screen_width = twod->GetWidth() / scale;
+		int screen_height= twod->GetHeight() / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;
 
-		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
+		y += ((twod->GetHeight() == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
 		promptwidth = displayfont->StringWidth (prompt) * scalex;
 		x = displayfont->GetCharWidth (displayfont->GetCursor()) * scalex * 2 + promptwidth;
@@ -263,20 +288,10 @@ void CT_Drawer (void)
 		}
 		printstr += displayfont->GetCursor();
 
-		screen->DrawText (displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
+		DrawText(drawer, displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		screen->DrawText (displayfont, CR_GREY, promptwidth, y, printstr, 
+		DrawText(drawer, displayfont, CR_GREY, promptwidth, y, printstr,
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-	}
-
-	if (players[consoleplayer].camera != NULL &&
-		(Button_ShowScores.bDown ||
-		 players[consoleplayer].camera->health <= 0 ||
-		 SB_ForceActive) &&
-		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
-		 gamestate != GS_INTERMISSION)
-	{
-		HU_DrawScores (&players[consoleplayer]);
 	}
 }
 
@@ -413,7 +428,7 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 				else
 				{
-					out += weapon->GetClass()->TypeName;
+					out += weapon->GetClass()->TypeName.GetChars();
 				}
 			}
 		}
@@ -491,6 +506,7 @@ CCMD (messagemode)
 {
 	if (menuactive == MENU_Off)
 	{
+		buttonMap.ResetButtonStates();
 		chatmodeon = 1;
 		C_HideConsole ();
 		CT_ClearChatMessage ();
@@ -513,6 +529,7 @@ CCMD (messagemode2)
 {
 	if (menuactive == MENU_Off)
 	{
+		buttonMap.ResetButtonStates();
 		chatmodeon = 2;
 		C_HideConsole ();
 		CT_ClearChatMessage ();

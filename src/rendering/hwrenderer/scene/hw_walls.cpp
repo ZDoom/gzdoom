@@ -22,6 +22,7 @@
 
 #include "p_local.h"
 #include "p_lnspec.h"
+#include "a_dynlight.h"
 #include "a_sharedglobal.h"
 #include "r_defs.h"
 #include "r_sky.h"
@@ -30,17 +31,47 @@
 #include "doomdata.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/textures/hw_material.h"
-#include "hwrenderer/utility/hw_cvars.h"
-#include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/utility/hw_lighting.h"
+#include "texturemanager.h"
+#include "hw_dynlightdata.h"
+#include "hw_material.h"
+#include "hw_cvars.h"
+#include "hw_clock.h"
+#include "hw_lighting.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
 #include "hw_skydome.h"
+
+
+void SetGlowPlanes(FRenderState &state, const secplane_t& top, const secplane_t& bottom)
+{
+	auto& tn = top.Normal();
+	auto& bn = bottom.Normal();
+	FVector4 tp = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+	FVector4 bp = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	state.SetGlowPlanes(tp, bp);
+}
+
+void SetGradientPlanes(FRenderState& state, const secplane_t& top, const secplane_t& bottom)
+{
+	auto& tn = top.Normal();
+	auto& bn = bottom.Normal();
+	FVector4 tp = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+	FVector4 bp = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	state.SetGradientPlanes(tp, bp);
+}
+
+void SetSplitPlanes(FRenderState& state, const secplane_t& top, const secplane_t& bottom)
+{
+	auto& tn = top.Normal();
+	auto& bn = bottom.Normal();
+	FVector4 tp = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+	FVector4 bp = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	state.SetSplitPlanes(tp, bp);
+}
+
 
 //==========================================================================
 //
@@ -102,8 +133,8 @@ void HWWall::RenderMirrorSurface(HWDrawInfo *di, FRenderState &state)
 	state.SetRenderStyle(STYLE_Add);
 	state.AlphaFunc(Alpha_Greater, 0);
 
-	FMaterial * pat = FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
-	state.SetMaterial(pat, CLAMP_NONE, 0, -1);
+	auto tex = TexMan.GetGameTexture(TexMan.mirrorTexture, false);
+	state.SetMaterial(tex, UF_None, 0, CLAMP_NONE, 0, -1); // do not upscale the mirror texture.
 
 	flags &= ~HWWall::HWF_GLOW;
 	RenderWall(di, state, HWWall::RWF_BLANK);
@@ -144,6 +175,10 @@ static const uint8_t renderwalltotier[] =
 	side_t::mid,
 };
 
+#ifdef NPOT_EMULATION
+CVAR(Bool, hw_npottest, false, 0)
+#endif
+
 void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 {
 	int tmode = state.GetTextureMode();
@@ -153,9 +188,26 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	{
 		state.EnableGlow(true);
 		state.SetGlowParams(topglowcolor, bottomglowcolor);
-		state.SetGlowPlanes(frontsector->ceilingplane, frontsector->floorplane);
+		SetGlowPlanes(state, frontsector->ceilingplane, frontsector->floorplane);
 	}
-	state.SetMaterial(gltexture, flags & 3, 0, -1);
+	state.SetMaterial(texture, UF_Texture, 0, flags & 3, 0, -1);
+#ifdef NPOT_EMULATION
+	// Test code, could be reactivated as a compatibility option in the unlikely event that some old vanilla map eve needs it.
+	if (hw_npottest)
+	{
+		int32_t size = xs_CRoundToInt(texture->GetDisplayHeight());
+		int32_t size2;
+		for (size2 = 1; size2 < size; size2 += size2) {}
+		if (size == size2)
+			state.SetNpotEmulation(0.f, 0.f);
+		else
+		{
+			float xOffset = 1.f / texture->GetDisplayWidth();
+			state.SetNpotEmulation((1.f * size2) / size, xOffset);
+		}
+	}
+#endif
+
 
 	if (type == RENDERWALL_M2SNF)
 	{
@@ -168,36 +220,42 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	if (type != RENDERWALL_COLOR && seg->sidedef != nullptr)
 	{
 		auto side = seg->sidedef;
-		auto tierndx = renderwalltotier[type];
-		auto &tier = side->textures[tierndx];
-		PalEntry color1 = side->GetSpecialColor(tierndx, side_t::walltop, frontsector);
-		PalEntry color2 = side->GetSpecialColor(tierndx, side_t::wallbottom, frontsector);
-		state.SetObjectColor(color1);
-		state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
-		state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
-		if (color1 != color2)
+		if (seg->sidedef->Flags & WALLF_EXTCOLOR) // this block incurs a costly cache miss, so only process if needed.
 		{
-			// Do gradient setup only if there actually is a gradient.
 
-			state.EnableGradient(true);
-			if ((tier.flags & side_t::part::ClampGradient) && backsector)
+			auto tierndx = renderwalltotier[type];
+			auto& tier = side->textures[tierndx];
+			PalEntry color1 = side->GetSpecialColor(tierndx, side_t::walltop, frontsector);
+			PalEntry color2 = side->GetSpecialColor(tierndx, side_t::wallbottom, frontsector);
+			state.SetObjectColor(color1);
+			state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
+			state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
+			state.ApplyTextureManipulation(&tier.TextureFx);
+
+			if (color1 != color2)
 			{
-				if (tierndx == side_t::top)
+				// Do gradient setup only if there actually is a gradient.
+
+				state.EnableGradient(true);
+				if ((tier.flags & side_t::part::ClampGradient) && backsector)
 				{
-					state.SetGradientPlanes(frontsector->ceilingplane, backsector->ceilingplane);
+					if (tierndx == side_t::top)
+					{
+						SetGradientPlanes(state, frontsector->ceilingplane, backsector->ceilingplane);
+					}
+					else if (tierndx == side_t::mid)
+					{
+						SetGradientPlanes(state, backsector->ceilingplane, backsector->floorplane);
+					}
+					else // side_t::bottom:
+					{
+						SetGradientPlanes(state, backsector->floorplane, frontsector->floorplane);
+					}
 				}
-				else if (tierndx == side_t::mid)
+				else
 				{
-					state.SetGradientPlanes(backsector->ceilingplane, backsector->floorplane);
+					SetGradientPlanes(state, frontsector->ceilingplane, frontsector->floorplane);
 				}
-				else // side_t::bottom:
-				{
-					state.SetGradientPlanes(backsector->floorplane, frontsector->floorplane);
-				}
-			}
-			else
-			{
-				state.SetGradientPlanes(frontsector->ceilingplane, frontsector->floorplane);
 			}
 		}
 	}
@@ -226,10 +284,10 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.FogDensity = Colormap.FogDensity;
-				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+				CopyFrom3DLight(thiscm, &(*lightlist)[i]);
 				di->SetColor(state, thisll, rel, false, thiscm, absalpha);
 				if (type != RENDERWALL_M2SNF) di->SetFog(state, thisll, rel, false, &thiscm, RenderStyle == STYLE_Add);
-				state.SetSplitPlanes((*lightlist)[i].plane, lowplane);
+				SetSplitPlanes(state, (*lightlist)[i].plane, lowplane);
 				RenderWall(di, state, rflags);
 			}
 			if (low1 <= zbottom[0] && low2 <= zbottom[1]) break;
@@ -237,12 +295,14 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 
 		state.EnableSplit(false);
 	}
+	state.SetNpotEmulation(0.f, 0.f);
 	state.SetObjectColor(0xffffffff);
 	state.SetObjectColor2(0);
 	state.SetAddColor(0);
 	state.SetTextureMode(tmode);
 	state.EnableGlow(false);
 	state.EnableGradient(false);
+	state.ApplyTextureManipulation(nullptr);
 }
 
 //==========================================================================
@@ -254,9 +314,9 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 void HWWall::RenderTranslucentWall(HWDrawInfo *di, FRenderState &state)
 {
 	state.SetRenderStyle(RenderStyle);
-	if (gltexture)
+	if (texture)
 	{
-		if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+		if (!texture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 		else state.AlphaFunc(Alpha_GEqual, 0.f);
 		RenderTexturedWall(di, state, HWWall::RWF_TEXTURED | HWWall::RWF_NOSPLIT);
 	}
@@ -281,7 +341,7 @@ void HWWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 	if (screen->BuffersArePersistent())
 	{
-		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
+		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
 		{
 			SetupLights(di, lightdata);
 		}
@@ -404,7 +464,7 @@ void HWWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 				}
 				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
 				{
-					draw_dlight += lightdata.GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true);
+					draw_dlight += GetLight(lightdata, seg->frontsector->PortalGroup, p, node->lightsource, true);
 				}
 			}
 		}
@@ -434,7 +494,7 @@ const char HWWall::passflag[] = {
 //==========================================================================
 void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 {
-	if (gltexture && gltexture->tex->GetTranslucency() && passflag[type] == 2)
+	if (texture && texture->GetTranslucency() && passflag[type] == 2)
 	{
 		translucent = true;
 	}
@@ -447,16 +507,18 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 	if (di->isFullbrightScene())
 	{
 		// light planes don't get drawn with fullbright rendering
-		if (gltexture == NULL) return;
+		if (texture == NULL) return;
 		Colormap.Clear();
 	}
     
-    if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
-        flags &= ~HWF_GLOW;
+	if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
+	{
+		flags &= ~HWF_GLOW;
+	}
     
 	if (!screen->BuffersArePersistent())
 	{
-		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
+		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
 		{
 			SetupLights(di, lightdata);
 		}
@@ -464,11 +526,26 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 	}
 
 
+
 	bool solid;
 	if (passflag[type] == 1) solid = true;
-	else if (type == RENDERWALL_FFBLOCK) solid = gltexture && !gltexture->isMasked();
+	else if (type == RENDERWALL_FFBLOCK) solid = texture && !texture->isMasked();
 	else solid = false;
-	if (solid) ProcessDecals(di);
+
+	bool hasDecals = solid && seg->sidedef && seg->sidedef->AttachedDecals;
+	if (hasDecals)
+	{
+		// If we want to use the light infos for the decal we cannot delay the creation until the render pass.
+		if (screen->BuffersArePersistent())
+		{
+			if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
+			{
+				SetupLights(di, lightdata);
+			}
+		}
+		ProcessDecals(di);
+	}
+
 
 	di->AddWall(this);
 
@@ -487,7 +564,6 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 
 void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 {
-	auto pstate = screen->mPortalState;
 	HWPortal * portal = nullptr;
 
 	MakeVertices(di, false);
@@ -496,11 +572,11 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		// portals don't go into the draw list.
 		// Instead they are added to the portal manager
 	case PORTALTYPE_HORIZON:
-		horizon = pstate->UniqueHorizons.Get(horizon);
+		horizon = portalState.UniqueHorizons.Get(horizon);
 		portal = di->FindPortal(horizon);
 		if (!portal)
 		{
-			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint);
+			portal = new HWHorizonPortal(&portalState, horizon, di->Viewpoint);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -511,10 +587,10 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal);
+			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(&portalState, secportal);
 			else
 			{
-				portal = new HWSkyboxPortal(pstate, secportal);
+				portal = new HWSkyboxPortal(&portalState, secportal);
 				di->Portals.Push(portal);
 			}
 		}
@@ -525,20 +601,20 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		portal = di->FindPortal(this->portal);
 		if (!portal)
 		{
-			portal = new HWSectorStackPortal(pstate, this->portal);
+			portal = new HWSectorStackPortal(&portalState, this->portal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
 		break;
 
 	case PORTALTYPE_PLANEMIRROR:
-		if (pstate->PlaneMirrorMode * planemirror->fC() <= 0)
+		if (portalState.PlaneMirrorMode * planemirror->fC() <= 0)
 		{
-			planemirror = pstate->UniquePlaneMirrors.Get(planemirror);
+			planemirror = portalState.UniquePlaneMirrors.Get(planemirror);
 			portal = di->FindPortal(planemirror);
 			if (!portal)
 			{
-				portal = new HWPlaneMirrorPortal(pstate, planemirror);
+				portal = new HWPlaneMirrorPortal(&portalState, planemirror);
 				di->Portals.Push(portal);
 			}
 			portal->AddLine(this);
@@ -549,7 +625,7 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		portal = di->FindPortal(seg->linedef);
 		if (!portal)
 		{
-			portal = new HWMirrorPortal(pstate, seg->linedef);
+			portal = new HWMirrorPortal(&portalState, seg->linedef);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -571,18 +647,18 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 			{
 				di->ProcessActorsInPortal(otherside->getPortal()->mGroup, di->in_area);
 			}
-			portal = new HWLineToLinePortal(pstate, lineportal);
+			portal = new HWLineToLinePortal(&portalState, lineportal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
 		break;
 
 	case PORTALTYPE_SKY:
-		sky = pstate->UniqueSkies.Get(sky);
+		sky = portalState.UniqueSkies.Get(sky);
 		portal = di->FindPortal(sky);
 		if (!portal)
 		{
-			portal = new HWSkyPortal(screen->mSkyData, pstate, sky);
+			portal = new HWSkyPortal(screen->mSkyData, &portalState, sky);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -611,7 +687,7 @@ void HWWall::Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent
 	}
 	// relative light won't get changed here. It is constant across the entire wall.
 
-	Colormap.CopyFrom3DLight(lightlist);
+	CopyFrom3DLight(Colormap, lightlist);
 	PutWall(di, translucent);
 }
 
@@ -906,7 +982,7 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	float l_ul;
 	float texlength;
 
-	if (gltexture)
+	if (texture)
 	{
 		float length = seg->sidedef ? seg->sidedef->TexelLength : Dist2(glseg.x1, glseg.y1, glseg.x2, glseg.y2);
 
@@ -999,10 +1075,10 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	tcs[UPLFT].u = tcs[LOLFT].u = l_ul + texlength * glseg.fracleft;
 	tcs[UPRGT].u = tcs[LORGT].u = l_ul + texlength * glseg.fracright;
 
-	if (gltexture != NULL)
+	if (texture != NULL)
 	{
 		bool normalize = false;
-		if (gltexture->tex->isHardwareCanvas()) normalize = true;
+		if (texture->isHardwareCanvas()) normalize = true;
 		else if (flags & HWF_CLAMPY)
 		{
 			// for negative scales we can get negative coordinates here.
@@ -1031,7 +1107,7 @@ void HWWall::CheckTexturePosition(FTexCoordInfo *tci)
 {
 	float sub;
 
-	if (gltexture->tex->isHardwareCanvas()) return;
+	if (texture->isHardwareCanvas()) return;
 
 	// clamp texture coordinates to a reasonable range.
 	// Extremely large values can cause visual problems
@@ -1096,9 +1172,9 @@ void HWWall::CheckTexturePosition(FTexCoordInfo *tci)
 }
 
 
-static void GetTexCoordInfo(FMaterial *tex, FTexCoordInfo *tci, side_t *side, int texpos)
+static void GetTexCoordInfo(FGameTexture *tex, FTexCoordInfo *tci, side_t *side, int texpos)
 {
-	tci->GetFromTexture(tex->tex, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos), !!(side->GetLevel()->flags3 & LEVEL3_FORCEWORLDPANNING));
+	tci->GetFromTexture(tex, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos), !!(side->GetLevel()->flags3 & LEVEL3_FORCEWORLDPANNING));
 }
 
 //==========================================================================
@@ -1135,7 +1211,7 @@ void HWWall::DoTexture(HWDrawInfo *di, int _type,seg_t * seg, int peg,
 
 	FTexCoordInfo tci;
 
-	GetTexCoordInfo(gltexture, &tci, seg->sidedef, texpos);
+	GetTexCoordInfo(texture, &tci, seg->sidedef, texpos);
 
 	type = _type;
 
@@ -1191,12 +1267,12 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 	// Get the base coordinates for the texture
 	//
 	//
-	if (gltexture)
+	if (texture)
 	{
 		// Align the texture to the ORIGINAL sector's height!!
 		// At this point slopes don't matter because they don't affect the texture's z-position
 
-		GetTexCoordInfo(gltexture, &tci, seg->sidedef, side_t::mid);
+		GetTexCoordInfo(texture, &tci, seg->sidedef, side_t::mid);
 		if (tci.mRenderHeight < 0)
 		{
 			mirrory = true;
@@ -1230,7 +1306,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Set up the top
 		//
 		//
-		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top), true);
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::top), true);
 		if (!tex || !tex->isValid())
 		{
 			if (front->GetTexture(sector_t::ceiling) == skyflatnum &&
@@ -1266,7 +1342,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Set up the bottom
 		//
 		//
-		tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+		tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 		if (!tex || !tex->isValid())
 		{
 			// texture is missing - use the lower plane
@@ -1323,7 +1399,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 	// 
 	float t_ofs = seg->sidedef->GetTextureXOffset(side_t::mid);
 
-	if (gltexture)
+	if (texture)
 	{
 		// First adjust the texture offset so that the left edge of the linedef is inside the range [0..1].
 		float texwidth = tci.TextureAdjustWidth();
@@ -1365,6 +1441,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 	{
 		tci.mRenderHeight = -tci.mRenderHeight;
 		tci.mScale.Y = -tci.mScale.Y;
+		flags |= HWF_NOSLICE;
 	}
 	SetWallCoordinates(seg, &tci, texturetop, topleft, topright, bottomleft, bottomright, t_ofs);
 
@@ -1377,15 +1454,15 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 	{
 		flags |= HWF_NOSPLITUPPER|HWF_NOSPLITLOWER;
 		type=RENDERWALL_FOGBOUNDARY;
-		FMaterial *savetex = gltexture;
-		gltexture = NULL;
+		auto savetex = texture;
+		texture = NULL;
 		PutWall(di, true);
 		if (!savetex) 
 		{
 			flags &= ~(HWF_NOSPLITUPPER|HWF_NOSPLITLOWER);
 			return;
 		}
-		gltexture = savetex;
+		texture = savetex;
 		type=RENDERWALL_M2SNF;
 	}
 	else type=RENDERWALL_M2S;
@@ -1404,7 +1481,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		case 0:
 			RenderStyle=STYLE_Translucent;
 			alpha = seg->linedef->alpha;
-			translucent =alpha < 1. || (gltexture && gltexture->tex->GetTranslucency());
+			translucent =alpha < 1. || (texture && texture->GetTranslucency());
 			break;
 
 		case ML_ADDTRANS:
@@ -1423,9 +1500,9 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		//
 		//
 		FloatRect *splitrect;
-		int v = gltexture->GetAreas(&splitrect);
+		int v = texture->GetAreas(&splitrect);
 		if (seg->frontsector == seg->backsector) flags |= HWF_NOSPLIT;	// we don't need to do vertex splits if a line has both sides in the same sector
-		if (v>0 && !drawfogboundary && !(seg->linedef->flags&ML_WRAP_MIDTEX))
+		if (v>0 && !drawfogboundary && !(seg->linedef->flags&ML_WRAP_MIDTEX) && !(flags & HWF_NOSLICE))
 		{
 			// split the poly!
 			int i,t=0;
@@ -1524,7 +1601,7 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 			Colormap.LightColor = light->extra_colormap.FadeColor;
 			// the fog plane defines the light di->Level->, not the front sector
 			lightlevel = hw_ClampLight(*light->p_lightlevel);
-			gltexture = NULL;
+			texture = NULL;
 			type = RENDERWALL_FFBLOCK;
 		}
 		else return;
@@ -1534,21 +1611,21 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 
 		if (rover->flags&FF_UPPERTEXTURE)
 		{
-			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::top), false, true);
-			if (!gltexture) return;
-			GetTexCoordInfo(gltexture, &tci, seg->sidedef, side_t::top);
+			texture = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::top), true);
+			if (!texture || !texture->isValid()) return; 
+			GetTexCoordInfo(texture, &tci, seg->sidedef, side_t::top);
 		}
 		else if (rover->flags&FF_LOWERTEXTURE)
 		{
-			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::bottom), false, true);
-			if (!gltexture) return;
-			GetTexCoordInfo(gltexture, &tci, seg->sidedef, side_t::bottom);
+			texture = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+			if (!texture || !texture->isValid()) return;
+			GetTexCoordInfo(texture, &tci, seg->sidedef, side_t::bottom);
 		}
 		else
 		{
-			gltexture = FMaterial::ValidateTexture(mastersd->GetTexture(side_t::mid), false, true);
-			if (!gltexture) return;
-			GetTexCoordInfo(gltexture, &tci, mastersd, side_t::mid);
+			texture = TexMan.GetGameTexture(mastersd->GetTexture(side_t::mid), true);
+			if (!texture || !texture->isValid()) return;
+			GetTexCoordInfo(texture, &tci, mastersd, side_t::mid);
 		}
 
 		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ? 0 : tci.TextureOffset(mastersd->GetTextureXOffset(side_t::mid));
@@ -1584,7 +1661,7 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 		alpha = rover->alpha / 255.0f;
 		RenderStyle = (rover->flags&FF_ADDITIVETRANS) ? STYLE_Add : STYLE_Translucent;
 		translucent = true;
-		type = gltexture ? RENDERWALL_M2S : RENDERWALL_COLOR;
+		type = texture ? RENDERWALL_M2S : RENDERWALL_COLOR;
 	}
 	else
 	{
@@ -1602,6 +1679,7 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 	lightlevel = savelight;
 	Colormap = savecolor;
 	flags &= ~HWF_CLAMPY;
+	RenderStyle = STYLE_Normal;
 }
 
 
@@ -1951,7 +2029,7 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 	alpha = 1.0f;
 	RenderStyle = STYLE_Normal;
-	gltexture = NULL;
+	texture = NULL;
 
 
 	if (frontsector->GetWallGlow(topglowcolor, bottomglowcolor)) flags |= HWF_GLOW;
@@ -1991,8 +2069,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		else
 		{
 			// normal texture
-			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::mid), false, true);
-			if (gltexture)
+			texture = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::mid), true);
+			if (texture && texture->isValid())
 			{
 				DoTexture(di, RENDERWALL_M1S, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
 					crefz, frefz,	// must come from the original!
@@ -2016,8 +2094,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 			float bch1a = bch1, bch2a = bch2;
 			if (frontsector->GetTexture(sector_t::floor) != skyflatnum || backsector->GetTexture(sector_t::floor) != skyflatnum)
 			{
-				// the back sector's floor obstructs part of this wall				
-				if (ffh1 > bch1 && ffh2 > bch2)
+				// the back sector's floor obstructs part of this wall
+				if (ffh1 > bch1 && ffh2 > bch2 && (seg->linedef->flags & ML_DRAWFULLHEIGHT) == 0)
 				{
 					bch2a = ffh2;
 					bch1a = ffh1;
@@ -2026,8 +2104,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 			if (bch1a < fch1 || bch2a < fch2)
 			{
-				gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::top), false, true);
-				if (gltexture)
+				texture = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::top), true);
+				if (texture && texture->isValid())
 				{
 					DoTexture(di, RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
 						crefz, realback->GetPlaneTexZ(sector_t::ceiling),
@@ -2039,8 +2117,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 						frontsector->GetTexture(sector_t::ceiling) != skyflatnum &&
 						backsector->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
-						gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::ceiling), false, true);
-						if (gltexture)
+						texture = TexMan.GetGameTexture(frontsector->GetTexture(sector_t::ceiling), true);
+						if (texture && texture->isValid())
 						{
 							DoTexture(di, RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
 								crefz, realback->GetPlaneTexZ(sector_t::ceiling),
@@ -2065,18 +2143,20 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
 		bool drawfogboundary = !di->isFullbrightScene() && di->CheckFog(frontsector, backsec);
-		FTexture *tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
-		if (tex != NULL)
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::mid), true);
+		if (tex != NULL && tex->isValid())
 		{
 			if (di->Level->i_compatflags & COMPATF_MASKEDMIDTEX)
 			{
-				tex = tex->GetRawTexture();
+				auto rawtexid = TexMan.GetRawTexture(tex->GetID());
+				auto rawtex = TexMan.GetGameTexture(rawtexid);
+				if (rawtex) tex = rawtex;
 			}
-			gltexture = FMaterial::ValidateTexture(tex, false);
+			texture = tex;
 		}
-		else gltexture = NULL;
+		else texture = nullptr;
 
-		if (gltexture || drawfogboundary)
+		if (texture || drawfogboundary)
 		{
 			DoMidTexture(di, seg, drawfogboundary, frontsector, backsector, realfront, realback,
 				fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
@@ -2098,7 +2178,7 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 		/* bottom texture */
 		// the back sector's ceiling obstructs part of this wall (specially important for sky sectors)
-		if (fch1 < bfh1 && fch2 < bfh2)
+		if (fch1 < bfh1 && fch2 < bfh2 && (seg->linedef->flags & ML_DRAWFULLHEIGHT) == 0)
 		{
 			bfh1 = fch1;
 			bfh2 = fch2;
@@ -2106,8 +2186,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 		if (bfh1 > ffh1 || bfh2 > ffh2)
 		{
-			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::bottom), false, true);
-			if (gltexture)
+			texture = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+			if (texture && texture->isValid())
 			{
 				DoTexture(di, RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
 					realback->GetPlaneTexZ(sector_t::floor), frefz,
@@ -2125,8 +2205,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 					// render it anyway with the sector's floor texture. With a background sky
 					// there are ugly holes otherwise and slopes are simply not precise enough
 					// to mach in any case.
-					gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::floor), false, true);
-					if (gltexture)
+					texture = TexMan.GetGameTexture(frontsector->GetTexture(sector_t::floor), true);
+					if (texture && texture->isValid())
 					{
 						DoTexture(di, RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
 							realback->GetPlaneTexZ(sector_t::floor), frefz,
@@ -2195,13 +2275,13 @@ void HWWall::ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t * frontsec
 
 		zfloor[0] = zfloor[1] = ffh;
 
-		gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::floor), false, true);
+		texture = TexMan.GetGameTexture(frontsector->GetTexture(sector_t::floor), true);
 
-		if (gltexture)
+		if (texture && texture->isValid())
 		{
 			FTexCoordInfo tci;
 			type = RENDERWALL_BOTTOM;
-			tci.GetFromTexture(gltexture->tex, 1, 1, false);
+			tci.GetFromTexture(texture, 1, 1, false);
 			SetWallCoordinates(seg, &tci, bfh, bfh, bfh, ffh, ffh, 0);
 			PutWall(di, false);
 		}

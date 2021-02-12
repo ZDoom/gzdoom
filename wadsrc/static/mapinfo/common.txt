@@ -4,6 +4,7 @@ Gameinfo
 {
 	CheatKey = "maparrows/key.txt"
 	EasyKey = "maparrows/ravenkey.txt"
+	PrecacheSounds = "misc/secret", "misc/teleport", "misc/fallingsplat", "misc/ripslop"
 }
 
 DoomEdNums
@@ -358,7 +359,6 @@ Intermission Inter_Bunny
 
 Intermission TheEnd
 {
-	// no backgrounds are set here so this will reuse the previous one.
 	Image
 	{
 		Draw = "END0", 108, 68

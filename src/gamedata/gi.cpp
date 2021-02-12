@@ -36,7 +36,7 @@
 #include "info.h"
 #include "gi.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "g_level.h"
 #include "vm.h"
@@ -59,12 +59,15 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mBackButton)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenMapNameFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenEnteringFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenFinishedFont)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenContentFont)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenAuthorFont)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gibfactor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, intermissioncounter)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_single)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_coop)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_dm)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderColor)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderBackColor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultbloodcolor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, telefogheight)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defKickback)
@@ -73,6 +76,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, berserkpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultdropstyle)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normforwardmove)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normsidemove)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mHideParTimes)
 
 const char *GameNames[17] =
 {
@@ -113,6 +117,7 @@ const char* GameInfoBorders[] =
 	"StrifeBorder",
 	NULL
 };
+
 
 #define GAMEINFOKEY_CSTRING(key, variable, length) \
 	else if(nextKey.CompareNoCase(variable) == 0) \
@@ -168,7 +173,7 @@ const char* GameInfoBorders[] =
 	{ \
 		sc.MustGetToken(TK_StringConst); \
 		gameinfo.key = sc.String; \
-		gameinfo.stampvar = Wads.GetLumpFile(sc.LumpNum); \
+		gameinfo.stampvar = fileSystem.GetFileContainer(sc.LumpNum); \
 	}
 
 #define GAMEINFOKEY_INT(key, variable) \
@@ -380,6 +385,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_DOUBLE(telefogheight, "telefogheight")
 			GAMEINFOKEY_DOUBLE(gibfactor, "gibfactor")
 			GAMEINFOKEY_INT(defKickback, "defKickback")
+			GAMEINFOKEY_INT(fullscreenautoaspect, "fullscreenautoaspect")
 			GAMEINFOKEY_STRING(SkyFlatName, "SkyFlatName")
 			GAMEINFOKEY_STRING(translator, "translator")
 			GAMEINFOKEY_COLOR(pickupcolor, "pickupcolor")
@@ -388,6 +394,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_STRING(backpacktype, "backpacktype")
 			GAMEINFOKEY_STRING_STAMPED(statusbar, "statusbar", statusbarfile)
 			GAMEINFOKEY_STRING_STAMPED(statusbarclass, "statusbarclass", statusbarclassfile)
+			GAMEINFOKEY_STRING(althudclass, "althudclass")
 			GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
 			GAMEINFOKEY_STRING(CursorPic, "CursorPic")
 			GAMEINFOKEY_STRING(MessageBoxClass, "MessageBoxClass")
@@ -404,6 +411,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_FLOAT(dimamount, "dimamount")
 			GAMEINFOKEY_FLOAT(bluramount, "bluramount")
 			GAMEINFOKEY_STRING(mSliderColor, "menuslidercolor")
+			GAMEINFOKEY_STRING(mSliderBackColor, "menusliderbackcolor")
 			GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
 			GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 			GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
@@ -425,6 +433,8 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_FONT(mStatscreenMapNameFont, "statscreen_mapnamefont")
 			GAMEINFOKEY_FONT(mStatscreenFinishedFont, "statscreen_finishedfont")
 			GAMEINFOKEY_FONT(mStatscreenEnteringFont, "statscreen_enteringfont")
+			GAMEINFOKEY_FONT(mStatscreenContentFont, "statscreen_contentfont")
+			GAMEINFOKEY_FONT(mStatscreenAuthorFont, "statscreen_authorfont")
 			GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 			GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
 			GAMEINFOKEY_STRING(Dialogue, "dialogue")
@@ -433,6 +443,8 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
 			GAMEINFOKEY_TWODOUBLES(normforwardmove, "normforwardmove")
 			GAMEINFOKEY_TWODOUBLES(normsidemove, "normsidemove")
+			GAMEINFOKEY_BOOL(nomergepickupmsg, "nomergepickupmsg")
+			GAMEINFOKEY_BOOL(mHideParTimes, "hidepartimes")
 
 		else
 		{
@@ -449,6 +461,13 @@ void FMapInfoParser::ParseGameInfo()
 const char *gameinfo_t::GetFinalePage(unsigned int num) const
 {
 	if (finalePages.Size() == 0) return "-NOFLAT-";
-	else if (num < 1 || num > finalePages.Size()) return finalePages[0];
-	else return finalePages[num-1];
+	else if (num < 1 || num > finalePages.Size()) return finalePages[0].GetChars();
+	else return finalePages[num-1].GetChars();
+}
+
+bool CheckGame(const char* string, bool chexisdoom)
+{
+	int test = gameinfo.gametype;
+	if (test == GAME_Chex && chexisdoom) test = GAME_Doom;
+	return !stricmp(string, GameNames[test]);
 }

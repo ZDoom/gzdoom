@@ -38,7 +38,8 @@
 #include "r_data/r_interpolate.h"
 #include "p_local.h"
 #include "po_man.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 //==========================================================================
@@ -355,7 +356,8 @@ int DInterpolation::DelRef(bool force)
 
 void DInterpolation::UnlinkFromMap()
 {
-	Level->interpolator.RemoveInterpolation(this);
+	if (Level)
+		Level->interpolator.RemoveInterpolation(this);
 	refcount = 0;
 }
 

@@ -58,7 +58,7 @@ class ClericBoss : Actor
 		CLER \ 1 A_FreezeDeathChunks;
 		Wait;
 	Burn:
-		CLER C 5 Bright A_PlaySound("PlayerClericBurnDeath");
+		CLER C 5 Bright A_StartSound("PlayerClericBurnDeath");
 		FDTH D 4 Bright ;
 		FDTH G 5 Bright ;
 		FDTH H 4 Bright A_Scream;
@@ -91,6 +91,6 @@ class ClericBoss : Actor
 
 		Actor missile = SpawnMissileZ (pos.z + 40., target, "HolyMissile");
 		if (missile != null) missile.tracer = null;	// No initial target
-		A_PlaySound ("HolySymbolFire", CHAN_WEAPON);
+		A_StartSound ("HolySymbolFire", CHAN_WEAPON);
 	}
 }

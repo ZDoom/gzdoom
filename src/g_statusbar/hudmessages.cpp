@@ -38,11 +38,12 @@
 #include "c_cvars.h"
 #include "v_video.h"
 #include "cmdlib.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "doomstat.h"
 #include "vm.h"
-
-EXTERN_CVAR(Int, con_scaletext)
+#include "c_console.h"
+#include "v_draw.h"
 
 IMPLEMENT_CLASS(DHUDMessageBase, false, true)
 IMPLEMENT_POINTERS_START(DHUDMessageBase)
@@ -297,12 +298,12 @@ void DHUDMessage::CalcClipCoords(int hudheight)
 	{ // No clipping rectangle set; use the full screen.
 		ClipLeft = 0;
 		ClipTop = 0;
-		ClipRight = screen->GetWidth();
-		ClipBot = screen->GetHeight();
+		ClipRight = twod->GetWidth();
+		ClipBot = twod->GetHeight();
 	}
 	else
 	{
-		screen->VirtualToRealCoordsInt(x, y, w, h,
+		VirtualToRealCoordsInt(twod, x, y, w, h,
 			HUDWidth, hudheight, false, HandleAspect);
 		ClipLeft = x;
 		ClipTop = y;
@@ -327,7 +328,7 @@ void DHUDMessage::ResetText (const char *text)
 	}
 	else
 	{
-		width = SCREENWIDTH / active_con_scaletext();
+		width = twod->GetWidth() / active_con_scaletext(twod);
 	}
 
 	Lines = V_BreakLines (Font, NoWrap ? INT_MAX : width, (uint8_t *)text);
@@ -382,12 +383,12 @@ void DHUDMessage::Draw (int bottom, int visibility)
 
 	DrawSetup ();
 
-	int screen_width = SCREENWIDTH;
-	int screen_height = SCREENHEIGHT;
+	int screen_width = twod->GetWidth();
+	int screen_height = twod->GetHeight();
 	xscale = yscale = 1;
 	if (HUDWidth == 0)
 	{
-		int scale = active_con_scaletext();
+		int scale = active_con_scaletext(twod);
 		screen_width /= scale;
 		screen_height /= scale;
 		bottom /= scale;
@@ -491,10 +492,10 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 {
 	if (hudheight == 0)
 	{
-		int scale = active_con_scaletext();
-		screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-			DTA_VirtualWidth, SCREENWIDTH / scale,
-			DTA_VirtualHeight, SCREENHEIGHT / scale,
+		int scale = active_con_scaletext(twod);
+		DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
+			DTA_VirtualWidth, twod->GetWidth() / scale,
+			DTA_VirtualHeight, twod->GetHeight() / scale,
 			DTA_Alpha, Alpha,
 			DTA_RenderStyle, Style,
 			DTA_KeepRatio, true,
@@ -502,7 +503,7 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 	}
 	else
 	{
-		screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+		DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 			DTA_VirtualWidth, HUDWidth,
 			DTA_VirtualHeight, hudheight,
 			DTA_ClipLeft, ClipLeft,
@@ -584,10 +585,10 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 		float trans = float(Alpha * -(Tics - FadeOutTics) / FadeOutTics);
 		if (hudheight == 0)
 		{
-			int scale = active_con_scaletext();
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-				DTA_VirtualWidth, SCREENWIDTH / scale,
-				DTA_VirtualHeight, SCREENHEIGHT / scale,
+			int scale = active_con_scaletext(twod);
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
+				DTA_VirtualWidth, twod->GetWidth() / scale,
+				DTA_VirtualHeight, twod->GetHeight() / scale,
 				DTA_Alpha, trans,
 				DTA_RenderStyle, Style,
 				DTA_KeepRatio, true,
@@ -595,7 +596,7 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 		}
 		else
 		{
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, HUDWidth,
 				DTA_VirtualHeight, hudheight,
 				DTA_ClipLeft, ClipLeft,
@@ -673,10 +674,10 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 		float trans = float(Alpha * Tics / FadeInTics);
 		if (hudheight == 0)
 		{
-			int scale = active_con_scaletext();
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-				DTA_VirtualWidth, SCREENWIDTH / scale,
-				DTA_VirtualHeight, SCREENHEIGHT / scale,
+			int scale = active_con_scaletext(twod);
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
+				DTA_VirtualWidth, twod->GetWidth() / scale,
+				DTA_VirtualHeight, twod->GetHeight() / scale,
 				DTA_Alpha, trans,
 				DTA_RenderStyle, Style,
 				DTA_KeepRatio, true,
@@ -684,7 +685,7 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 		}
 		else
 		{
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, HUDWidth,
 				DTA_VirtualHeight, hudheight,
 				DTA_ClipLeft, ClipLeft,
@@ -857,10 +858,10 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 		{
 			if (hudheight == 0)
 			{
-				int scale = active_con_scaletext();
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_VirtualWidth, SCREENWIDTH / scale,
-					DTA_VirtualHeight, SCREENHEIGHT / scale,
+				int scale = active_con_scaletext(twod);
+				DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
+					DTA_VirtualWidth, twod->GetWidth() / scale,
+					DTA_VirtualHeight, twod->GetHeight() / scale,
 					DTA_KeepRatio, true,
 					DTA_TextLen, LineVisible,
 					DTA_Alpha, Alpha,
@@ -869,7 +870,7 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 			}
 			else
 			{
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+				DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_VirtualWidth, HUDWidth,
 					DTA_VirtualHeight, hudheight,
 					DTA_ClipLeft, ClipLeft,
@@ -888,3 +889,39 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 		DHUDMessageFadeOut::DoDraw (linenum, x, y, clean, hudheight);
 	}
 }
+
+/* Printing in the middle of the screen */
+
+CVAR(Float, con_midtime, 3.f, CVAR_ARCHIVE)
+
+const char* console_bar = "----------------------------------------";
+
+void C_MidPrint(FFont* font, const char* msg, bool bold)
+{
+	if (StatusBar == nullptr || screen == nullptr)
+		return;
+
+	// [MK] allow the status bar to take over MidPrint
+	IFVIRTUALPTR(StatusBar, DBaseStatusBar, ProcessMidPrint)
+	{
+		FString msgstr = msg;
+		VMValue params[] = { (DObject*)StatusBar, font, &msgstr, bold };
+		int rv;
+		VMReturn ret(&rv);
+		VMCall(func, params, countof(params), &ret, 1);
+		if (!!rv) return;
+	}
+
+	if (msg != nullptr)
+	{
+		auto color = (EColorRange)PrintColors[bold ? PRINTLEVELS + 1 : PRINTLEVELS];
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", color, console_bar, msg, console_bar);
+
+		StatusBar->AttachMessage(Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0, color, con_midtime), MAKE_ID('C', 'N', 'T', 'R'));
+	}
+	else
+	{
+		StatusBar->DetachMessage(MAKE_ID('C', 'N', 'T', 'R'));
+	}
+}
+

@@ -26,15 +26,17 @@
 */
 
 #include "c_dispatch.h"
+#include "a_dynlight.h" 
 #include "p_local.h"
 #include "p_effect.h"
 #include "g_level.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/dynlights/hw_shadowmap.h"
+#include "hw_dynlightdata.h"
+#include "hw_shadowmap.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "r_data/models/models.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "models.h"
 
 template<class T>
 T smoothstep(const T edge0, const T edge1, const T x)
@@ -104,7 +106,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 					frac *= (float)smoothstep(light->pSpotOuterAngle->Cos(), light->pSpotInnerAngle->Cos(), cosDir);
 				}
 
-				if (frac > 0 && (!light->shadowmapped || screen->mShadowMap.ShadowTest(light, { x, y, z })))
+				if (frac > 0 && (!light->shadowmapped || (light->GetRadius() > 0 && screen->mShadowMap.ShadowTest(light->Pos, { x, y, z }))))
 				{
 					lr = light->GetRed() / 255.0f;
 					lg = light->GetGreen() / 255.0f;
@@ -182,7 +184,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							modellightdata.AddLightToList(group, light, true);
+							AddLightToList(modellightdata, group, light, true);
 							addedLights.Push(light);
 						}
 					}

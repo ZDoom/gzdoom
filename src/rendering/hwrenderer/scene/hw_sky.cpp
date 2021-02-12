@@ -27,11 +27,12 @@
 #include "doomdata.h"
 #include "g_levellocals.h"
 #include "p_lnspec.h"
+#include "texturemanager.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_lighting.h"
+#include "hw_material.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 
@@ -60,8 +61,9 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 		}
 
 		FTextureID texno = s->GetTexture(pos);
-		texture[0] = FMaterial::ValidateTexture(texno, false, true);
-		if (!texture[0] || !texture[0]->tex->isValid()) goto normalsky;
+		auto tex = TexMan.GetGameTexture(texno, true);
+		if (!tex || !tex->isValid()) goto normalsky;
+		texture[0] = tex;
 		skytexno1 = texno;
 		x_offset[0] = s->GetTextureXOffset(pos) * (360.f/65536.f);
 		y_offset = s->GetTextureYOffset(pos);
@@ -72,7 +74,8 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 	normalsky:
 		if (di->Level->flags&LEVEL_DOUBLESKY)
 		{
-			texture[1] = FMaterial::ValidateTexture(di->Level->skytexture1, false, true);
+			auto tex1 = TexMan.GetGameTexture(di->Level->skytexture1, true);
+			texture[1] = tex1;
 			x_offset[1] = di->Level->hw_sky1pos;
 			doublesky = true;
 		}
@@ -80,14 +83,14 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 		if ((di->Level->flags&LEVEL_SWAPSKIES || (sky1 == PL_SKYFLAT) || (di->Level->flags&LEVEL_DOUBLESKY)) &&
 			di->Level->skytexture2 != di->Level->skytexture1)	// If both skies are equal use the scroll offset of the first!
 		{
-			texture[0] = FMaterial::ValidateTexture(di->Level->skytexture2, false, true);
+			texture[0] = TexMan.GetGameTexture(di->Level->skytexture2, true);
 			skytexno1 = di->Level->skytexture2;
 			sky2 = true;
 			x_offset[0] = di->Level->hw_sky2pos;
 		}
 		else if (!doublesky)
 		{
-			texture[0] = FMaterial::ValidateTexture(di->Level->skytexture1, false, true);
+			texture[0] = TexMan.GetGameTexture(di->Level->skytexture1, true);
 			skytexno1 = di->Level->skytexture1;
 			x_offset[0] = di->Level->hw_sky1pos;
 		}
@@ -230,8 +233,8 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
-		if (bs->special == GLSector_NoSkyDraw) return;
-		if (bs->GetTexture(sector_t::ceiling)==skyflatnum) 
+		if (bs->special == GLSector_NoSkyDraw || (bs->MoreFlags & SECMF_NOSKYWALLS) != 0 || (seg->linedef->flags & ML_NOSKYWALLS) != 0) return;
+		if (bs->GetTexture(sector_t::ceiling)==skyflatnum)
 		{
 			// if the back sector is closed the sky must be drawn!
 			if (bs->ceilingplane.ZatPoint(v1) > bs->floorplane.ZatPoint(v1) ||
@@ -243,13 +246,13 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 			{
 				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+1.)
 				{
-					FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+					auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 					if (!tex || !tex->isValid()) return;
 
 					// very, very, very ugly special case (See Icarus MAP14)
 					// It is VERY important that this is only done for a floor height difference of 1
 					// or it will cause glitches elsewhere.
-					tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
+					tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::mid), true);
 					if (tex != NULL && !(seg->linedef->flags & ML_DONTPEGTOP) &&
 						seg->sidedef->GetTextureYOffset(side_t::mid) > 0)
 					{
@@ -265,7 +268,7 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 
 		ztop[0]=ztop[1]=32768.0f;
 
-		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top), true);
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::top), true);
 		if (bs->GetTexture(sector_t::ceiling) != skyflatnum)
 
 		{
@@ -324,8 +327,8 @@ void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
-		if (bs->special == GLSector_NoSkyDraw) return;
-		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+		if (bs->special == GLSector_NoSkyDraw || (bs->MoreFlags & SECMF_NOSKYWALLS) != 0 || (seg->linedef->flags & ML_NOSKYWALLS) != 0) return;
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 		
 		// For lower skies the normal logic only applies to walls with no lower texture.
 		if (!tex->isValid())

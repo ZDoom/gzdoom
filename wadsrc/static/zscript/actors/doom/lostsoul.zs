@@ -15,7 +15,7 @@ class LostSoul : Actor
 		Damage 3;
 		PainChance 256;
 		Monster;
-		+FLOAT +NOGRAVITY +MISSILEMORE +DONTFALL +NOICEDEATH +ZDOOMTRANS;
+		+FLOAT +NOGRAVITY +MISSILEMORE +DONTFALL +NOICEDEATH +ZDOOMTRANS +RETARGETAFTERSLAM
 		AttackSound "skull/melee";
 		PainSound "skull/pain";
 		DeathSound "skull/death";
@@ -100,7 +100,7 @@ extend class Actor
 		if (skullspeed <= 0) skullspeed = DEFSKULLSPEED;
 
 		bSkullfly = true;
-		A_PlaySound(AttackSound, CHAN_VOICE);
+		A_StartSound(AttackSound, CHAN_VOICE);
 		A_FaceTarget();
 		VelFromAngle(skullspeed);
 		Vel.Z = (target.pos.Z + target.Height/2 - pos.Z) / DistanceBySpeed(target, skullspeed);
@@ -110,7 +110,7 @@ extend class Actor
 	{
 		if (target == null || target.GetSpecies() == self.GetSpecies()) return;
 
-		A_PlaySound(AttackSound, CHAN_WEAPON);
+		A_StartSound(AttackSound, CHAN_WEAPON);
 		A_FaceTarget();
 		
 		int damage = GetMissileDamage(7,1);

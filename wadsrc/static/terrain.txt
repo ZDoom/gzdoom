@@ -143,6 +143,7 @@ terrain Lava
 	damageamount	5
 	damagetype		lava
 	damagetimemask	31
+	damageonland
 }
 
 terrain Ice

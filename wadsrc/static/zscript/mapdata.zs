@@ -32,7 +32,7 @@ struct SectorPortal native play
 struct Vertex native play
 {
 	native readonly Vector2 p;
-	native int Index();
+	native clearscope int Index();
 }
 
 struct Side native play
@@ -62,12 +62,20 @@ struct Side native play
 		WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
 	};
 
+	enum EPartFlags
+	{
+		NoGradient = 1,
+		FlipGradient = 2,
+		ClampGradient = 4,
+		UseOwnSpecialColors = 8,
+		UseOwnAdditiveColor = 16,
+	};
 
 	native readonly Sector sector;			// Sector the SideDef is facing.
 	//DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
 	native readonly Line linedef;
 	native int16	Light;
-	native uint8	Flags;
+	native uint16	Flags;
 
 	native TextureID GetTexture(int which);
 	native void SetTexture(int which, TextureID tex);
@@ -83,17 +91,20 @@ struct Side native play
 	native void SetTextureYScale(int which, double scale);
 	native double GetTextureYScale(int which);
 	native void MultiplyTextureYScale(int which, double delta);
-	native void SetSpecialColor(int tier, int position, Color scolor);
+	native int GetTextureFlags(int tier);
+	native void ChangeTextureFlags(int tier, int And, int Or);
+	native void SetSpecialColor(int tier, int position, Color scolor, bool useowncolor = true);
 	native Color GetAdditiveColor(int tier);
 	native void SetAdditiveColor(int tier, Color color);
 	native void EnableAdditiveColor(int tier, bool enable);
+	native void SetColorization(int tier, Name cname);
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 
 	native clearscope Vertex V1();
 	native clearscope Vertex V2();
 
-	native int Index();
+	native clearscope int Index();
 	
 	int GetUDMFInt(Name nm)
 	{
@@ -158,7 +169,7 @@ struct Line native play
 	native uint						activation;	// activation type
 	native int						special;
 	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
-	native double					alpha;		// <--- translucency (0=invisible, FRACUNIT=opaque)
+	native double					alpha;		// <--- translucency (0=invisible, 1.0=opaque)
 	native readonly Side			sidedef[2];
 	native readonly double			bbox[4];	// bounding box, for the extent of the LineDef.
 	native readonly Sector			frontsector, backsector;
@@ -174,7 +185,7 @@ struct Line native play
 	native bool isVisualPortal();
 	native Line getPortalDestination();
 	native int getPortalAlignment();
-	native int Index();
+	native clearscope int Index();
 	native bool Activate(Actor activator, int side, int type);
 	native bool RemoteActivate(Actor activator, int side, int type, Vector3 pos);
 	
@@ -210,6 +221,56 @@ struct SecPlane native play
 	native double GetChangedHeight(double hdiff) const;
 	native double HeightDiff(double oldd, double newd = 1e37) const;
 	native double PointToDist(Vector2 xy, double z) const;
+}
+
+struct F3DFloor native play
+{
+	enum EF3DFloorFlags
+	{
+		FF_EXISTS        = 0x1,    //MAKE SURE IT'S VALID
+		FF_SOLID         = 0x2,    //Does it clip things?
+		FF_RENDERSIDES   = 0x4,    //Render the sides?
+		FF_RENDERPLANES  = 0x8,    //Render the floor/ceiling?
+		FF_RENDERALL     = 0xC,    //Render everything?
+		FF_SWIMMABLE     = 0x10,   //Can we swim?
+		FF_NOSHADE       = 0x20,   //Does it mess with the lighting?
+		FF_BOTHPLANES    = 0x200,  //Render both planes all the time?
+		FF_TRANSLUCENT   = 0x800,  //See through!
+		FF_FOG           = 0x1000, //Fog "brush"?
+		FF_INVERTPLANES  = 0x2000, //Reverse the plane visibility rules?
+		FF_ALLSIDES      = 0x4000, //Render inside and outside sides?
+		FF_INVERTSIDES   = 0x8000, //Only render inside sides?
+		FF_DOUBLESHADOW  = 0x10000,//Make two lightlist entries to reset light?
+		FF_UPPERTEXTURE	 = 0x20000,
+		FF_LOWERTEXTURE  = 0x40000,
+		FF_THINFLOOR     = 0x80000,	// EDGE
+		FF_SCROLLY       = 0x100000,  // old leftover definition
+		FF_NODAMAGE      = 0x100000,  // no damage transfers
+		FF_FIX           = 0x200000,  // use floor of model sector as floor and floor of real sector as ceiling
+		FF_INVERTSECTOR  = 0x400000,	// swap meaning of sector planes
+		FF_DYNAMIC       = 0x800000,	// created by partitioning another 3D-floor due to overlap
+		FF_CLIPPED       = 0x1000000,	// split into several dynamic ffloors
+		FF_SEETHROUGH    = 0x2000000,
+		FF_SHOOTTHROUGH  = 0x4000000,
+		FF_FADEWALLS     = 0x8000000,	// Applies real fog to walls and doesn't blend the view		
+		FF_ADDITIVETRANS = 0x10000000, // Render this floor with additive translucency
+		FF_FLOOD         = 0x20000000, // extends towards the next lowest flooding or solid 3D floor or the bottom of the sector
+		FF_THISINSIDE    = 0x40000000, // hack for software 3D with FF_BOTHPLANES
+		FF_RESET         = 0x80000000, // light effect is completely reset, once interrupted  
+	};
+
+	native readonly secplane bottom;
+	native readonly secplane top;
+
+	native readonly uint flags;
+	native readonly Line master;
+
+	native readonly Sector model;
+	native readonly Sector target;
+
+	native readonly int alpha;
+
+	native TextureID GetTexture(int pos);
 }
 
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
@@ -362,13 +423,18 @@ struct Sector native play
 
 	native readonly int			sectornum;
 
-	native int Index();
+	native clearscope int Index();
 
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
 
+	native F3DFloor Get3DFloor(int index);
+	native int Get3DFloorCount();
+	native Sector GetAttached(int index);
+	native int GetAttachedCount();
+
 	native void RemoveForceField();
-	deprecated("3.8") static clearscope Sector PointInSector(Vector2 pt)
+	deprecated("3.8", "Use Level.PointInSector instead") static clearscope Sector PointInSector(Vector2 pt)
 	{
 		return level.PointInSector(pt);
 	}
@@ -415,6 +481,7 @@ struct Sector native play
 	native void SetGlowColor(int pos, color color);
 	native void SetSpecialColor(int pos, color color);
 	native void SetAdditiveColor(int pos, Color color);
+	native void SetColorization(int tier, Name cname);
 	
 	native TextureID GetTexture(int pos);
 	native void SetTexture(int pos, TextureID tex, bool floorclip = true);
@@ -532,7 +599,7 @@ struct Sector native play
 
 class SectorTagIterator : Object native
 {
-	deprecated("3.8") static SectorTagIterator Create(int tag, line defline = null)
+	deprecated("3.8", "Use Level.CreateSectorTagIterator() instead") static SectorTagIterator Create(int tag, line defline = null)
 	{
 		return level.CreateSectorTagIterator(tag, defline);
 	}
@@ -542,7 +609,7 @@ class SectorTagIterator : Object native
 
 class LineIdIterator : Object native
 {
-	deprecated("3.8") static LineIdIterator Create(int tag)
+	deprecated("3.8", "Use Level.CreateLineIdIterator() instead") static LineIdIterator Create(int tag)
 	{
 		return level.CreateLineIdIterator(tag);
 	}

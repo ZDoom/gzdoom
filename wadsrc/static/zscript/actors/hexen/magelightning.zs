@@ -59,7 +59,7 @@ class MWeapLightning : MageWeapon
 		A_WeaponReady();
 		if (random[LightningReady]() < 160)
 		{
-			A_PlaySound ("MageLightningReady", CHAN_WEAPON);
+			A_StartSound ("MageLightningReady", CHAN_WEAPON);
 		}
 	}
 
@@ -85,7 +85,7 @@ class MWeapLightning : MageWeapon
 			cmo.lastenemy = fmo;
 			cmo.A_LightningZap();
 		}
-		A_PlaySound ("MageLightningFire", CHAN_BODY);
+		A_StartSound ("MageLightningFire", CHAN_BODY);
 
 		if (player != NULL)
 		{
@@ -124,7 +124,7 @@ class Lightning : Actor
 			if ((!thing.player && !thing.bBoss) || !(Level.maptime & 1))
 			{
 				thing.DamageMobj(self, target, 3, 'Electric');
-				A_PlaySound(AttackSound, CHAN_WEAPON|CHAN_NOSTOP, 1, false);
+				A_StartSound(AttackSound, CHAN_WEAPON, CHANF_NOSTOP, 1);
 				if (thing.bIsMonster && random[LightningHit]() < 64)
 				{
 					thing.Howl ();
@@ -289,7 +289,7 @@ class LightningCeiling : Lightning
 		}
 		if (bFloorHugger && random[LightningZap]() < 160)
 		{
-			A_PlaySound (ActiveSound, CHAN_BODY);
+			A_StartSound (ActiveSound, CHAN_BODY);
 		}
 	}
 

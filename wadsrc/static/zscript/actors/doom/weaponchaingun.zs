@@ -63,16 +63,20 @@ extend class StateProvider
 			if (!weap.DepleteAmmo (weap.bAltFire, true, 1))
 				return;
 
-			A_PlaySound ("weapons/chngun", CHAN_WEAPON);
+			A_StartSound ("weapons/chngun", CHAN_WEAPON);
 
 			State flash = weap.FindState('Flash');
 			if (flash != null)
 			{
 				// Removed most of the mess that was here in the C++ code because SetSafeFlash already does some thorough validation.
 				State atk = weap.FindState('Fire');
-				State cur = player.GetPSprite(PSP_WEAPON).CurState;
-				int theflash = atk == cur? 0:1;
-				player.SetSafeFlash(weap, flash, theflash);
+				let psp = player.GetPSprite(PSP_WEAPON);
+				if (psp) 
+				{
+					State cur = psp.CurState;
+					int theflash = atk == cur? 0:1;
+					player.SetSafeFlash(weap, flash, theflash);
+				}
 			}
 		}
 		player.mo.PlayAttacking2 ();

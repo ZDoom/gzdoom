@@ -47,11 +47,11 @@
 #include "m_argv.h"
 #include "c_dispatch.h"
 #include "m_swap.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "nodebuild.h"
 #include "doomstat.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "p_setup.h"
 #include "version.h"
 #include "md5.h"
@@ -206,6 +206,8 @@ bool MapLoader::LoadGLVertexes(FileReader &lump)
 	lump.Seek(0, FileReader::SeekSet);
 	auto glbuf = lump.Read();
 	auto gllen=lump.GetLength();
+	if (gllen < 4)
+		return false;
 	auto gldata = glbuf.Data();
 
 	if (*(int *)gldata == gNd5) 
@@ -279,28 +281,51 @@ bool MapLoader::LoadGLSegs(FileReader &lump)
 	lump.Seek(0, FileReader::SeekSet);
 	auto data = lump.Read();
 	int numsegs = (int)lump.GetLength();
+	if (numsegs < 4)
+		return false;
 	auto &segs = Level->segs;
+	const unsigned numverts = Level->vertexes.Size();
+	const unsigned numlines = Level->lines.Size(); 
 
 	if (!format5 && memcmp(data.Data(), "gNd3", 4))
 	{
 		numsegs/=sizeof(glseg_t);
-		Level->segs.Alloc(numsegs);
+		segs.Alloc(numsegs);
 		memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 		glseg_t * ml = (glseg_t*)data.Data();
 		for(i = 0; i < numsegs; i++)
 		{		
 			// check for gl-vertices
-			segs[i].v1 = &Level->vertexes[checkGLVertex(LittleShort(ml->v1))];
-			segs[i].v2 = &Level->vertexes[checkGLVertex(LittleShort(ml->v2))];
-			segs[i].PartnerSeg = ml->partner == 0xFFFF ? nullptr : &segs[LittleShort(ml->partner)];
+			const unsigned v1idx = checkGLVertex(LittleShort(ml->v1));
+			if (v1idx >= numverts) 
+				return false;
+			segs[i].v1 = &Level->vertexes[v1idx];
+
+			const unsigned v2idx = checkGLVertex(LittleShort(ml->v2));
+			if (v2idx >= numverts) 
+				return false;
+			segs[i].v2 = &Level->vertexes[v2idx];
+
+			const int partner = LittleShort(ml->partner);
+			if (partner == 0xFFFF)
+				segs[i].PartnerSeg = nullptr;
+			else if (partner >= numsegs) 
+				return false;
+			else 
+				segs[i].PartnerSeg = &segs[partner];
+
 			if(ml->linedef != 0xffff)
 			{
-				ldef = &Level->lines[LittleShort(ml->linedef)];
-				segs[i].linedef = ldef;
-	
+				const unsigned lineidx = LittleShort(ml->linedef);
+				if (lineidx >= numlines) 
+					return false;
+				ldef = &Level->lines[lineidx];
+				segs[i].linedef = ldef;	
 					
 				ml->side=LittleShort(ml->side);
+				if (ml->side > 1) 
+					return false;
 				segs[i].sidedef = ldef->sidedef[ml->side];
 				if (ldef->sidedef[ml->side] != nullptr)
 				{
@@ -336,25 +361,42 @@ bool MapLoader::LoadGLSegs(FileReader &lump)
 	{
 		if (!format5) numsegs-=4;
 		numsegs/=sizeof(glseg3_t);
-		Level->segs.Alloc(numsegs);
+		segs.Alloc(numsegs);
 		memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 		glseg3_t * ml = (glseg3_t*)(data.Data() + (format5? 0:4));
 		for(i = 0; i < numsegs; i++)
 		{							// check for gl-vertices
-			segs[i].v1 = &Level->vertexes[checkGLVertex3(LittleLong(ml->v1))];
-			segs[i].v2 = &Level->vertexes[checkGLVertex3(LittleLong(ml->v2))];
+			const unsigned v1idx = checkGLVertex3(LittleLong(ml->v1));
+			if (v1idx >= numverts)
+				return false;
+			segs[i].v1 = &Level->vertexes[v1idx];
+
+			const unsigned v2idx = checkGLVertex3(LittleLong(ml->v2));
+			if (v2idx >= numverts)
+				return false;
+			segs[i].v2 = &Level->vertexes[v2idx];
 
 			const uint32_t partner = LittleLong(ml->partner);
-			segs[i].PartnerSeg = UINT_MAX == partner ? nullptr : &segs[partner];
+			if (partner == UINT_MAX)
+				segs[i].PartnerSeg = nullptr;
+			else if (partner >= (uint32_t)numsegs) 
+				return false;
+			else 
+				segs[i].PartnerSeg = &segs[partner];
 	
 			if(ml->linedef != 0xffff) // skip minisegs 
 			{
-				ldef = &Level->lines[LittleLong(ml->linedef)];
+				const unsigned lineidx = LittleShort(ml->linedef);
+				if (lineidx >= numlines)
+					return false;
+				ldef = &Level->lines[lineidx];
 				segs[i].linedef = ldef;
 	
 					
 				ml->side=LittleShort(ml->side);
+				if (ml->side > 1)
+					return false;
 				segs[i].sidedef = ldef->sidedef[ml->side];
 				if (ldef->sidedef[ml->side] != nullptr)
 				{
@@ -400,8 +442,11 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 	int  i;
 
 	int numsubsectors = (int)lump.GetLength();
+	if (numsubsectors < 4)
+		return false;
 	lump.Seek(0, FileReader::SeekSet);
 	auto datab = lump.Read();
+	const unsigned numsegs = Level->segs.Size();
 	
 	if (numsubsectors == 0)
 	{
@@ -419,12 +464,15 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleShort(data[i].numsegs );
-			subsectors[i].firstline = &Level->segs[LittleShort(data[i].firstseg)];
-
 			if (subsectors[i].numlines == 0)
 			{
 				return false;
 			}
+
+			const unsigned firstseg = LittleShort(data[i].firstseg);
+			if (firstseg >= numsegs)
+				return false;
+			subsectors[i].firstline = &Level->segs[firstseg];
 		}
 	}
 	else
@@ -438,12 +486,15 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleLong(data[i].numsegs );
-			subsectors[i].firstline = &Level->segs[LittleLong(data[i].firstseg)];
-
 			if (subsectors[i].numlines == 0)
 			{
 				return false;
 			}
+
+			const unsigned firstseg = LittleLong(data[i].firstseg);
+			if (firstseg >= numsegs)
+				return false;
+			subsectors[i].firstline = &Level->segs[firstseg];
 		}
 	}
 
@@ -678,31 +729,31 @@ static bool MatchHeader(const char * label, const char * hdata)
 
 static int FindGLNodesInWAD(int labellump)
 {
-	int wadfile = Wads.GetLumpFile(labellump);
+	int wadfile = fileSystem.GetFileContainer(labellump);
 	FString glheader;
 
-	glheader.Format("GL_%s", Wads.GetLumpFullName(labellump));
+	glheader.Format("GL_%s", fileSystem.GetFileFullName(labellump));
 	if (glheader.Len()<=8)
 	{
-		int gllabel = Wads.CheckNumForName(glheader, ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName(glheader, ns_global, wadfile);
 		if (gllabel >= 0) return gllabel;
 	}
 	else
 	{
 		// Before scanning the entire WAD directory let's check first whether
 		// it is necessary.
-		int gllabel = Wads.CheckNumForName("GL_LEVEL", ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", ns_global, wadfile);
 
 		if (gllabel >= 0)
 		{
 			int lastlump=0;
 			int lump;
-			while ((lump=Wads.FindLump("GL_LEVEL", &lastlump))>=0)
+			while ((lump=fileSystem.FindLump("GL_LEVEL", &lastlump))>=0)
 			{
-				if (Wads.GetLumpFile(lump)==wadfile)
+				if (fileSystem.GetFileContainer(lump)==wadfile)
 				{
-					FMemLump mem = Wads.ReadLump(lump);
-					if (MatchHeader(Wads.GetLumpFullName(labellump), (const char *)mem.GetMem())) return lump;
+					FileData mem = fileSystem.ReadFile(lump);
+					if (MatchHeader(fileSystem.GetFileFullName(labellump), (const char *)mem.GetMem())) return lump;
 				}
 			}
 		}
@@ -741,7 +792,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 	{
 		for(uint32_t i=0;i<numentries-4;i++)
 		{
-			if (!strnicmp(f->GetLump(i)->Name, glheader, 8))
+			if (!strnicmp(f->GetLump(i)->getName(), glheader, 8))
 			{
 				if (mustcheck)
 				{
@@ -774,7 +825,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		const int idcheck1b = MAKE_ID('X','G','L','N');
 		const int idcheck2b = MAKE_ID('X','G','L','2');
 		const int idcheck3b = MAKE_ID('X','G','L','3');
-		int id;
+		int id = 0;
 
 		auto &file = map->Reader(ML_GLZNODES);
 		file.Read (&id, 4);
@@ -803,11 +854,11 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		FileReader gwalumps[4];
 		char path[256];
 		int li;
-		int lumpfile = Wads.GetLumpFile(map->lumpnum);
+		int lumpfile = fileSystem.GetFileContainer(map->lumpnum);
 		bool mapinwad = map->InWad;
 		FResourceFile * f_gwa = map->resource;
 
-		const char * name = Wads.GetWadFullName(lumpfile);
+		const char * name = fileSystem.GetResourceFileFullName(lumpfile);
 
 		if (mapinwad)
 		{
@@ -818,7 +869,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 				// GL nodes are loaded with a WAD
 				for(int i=0;i<4;i++)
 				{
-					gwalumps[i]=Wads.ReopenLumpReader(li+i+1);
+					gwalumps[i]=fileSystem.ReopenFileReader(li+i+1);
 				}
 				return DoLoadGLNodes(gwalumps);
 			}
@@ -835,7 +886,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					f_gwa = FResourceFile::OpenResourceFile(path, true);
 					if (f_gwa==nullptr) return false;
 
-					strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(map->lumpnum), 8);
+					strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(map->lumpnum), 8);
 				}
 			}
 		}
@@ -848,7 +899,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				if (strnicmp(f_gwa->GetLump(li+i+1)->Name, check[i], 8))
+				if (strnicmp(f_gwa->GetLump(li+i+1)->getName(), check[i], 8))
 				{
 					result=false;
 					break;
@@ -949,7 +1000,7 @@ typedef TArray<uint8_t> MemFile;
 static FString CreateCacheName(MapData *map, bool create)
 {
 	FString path = M_GetCachePath(create);
-	FString lumpname = Wads.GetLumpFullPath(map->lumpnum);
+	FString lumpname = fileSystem.GetFileFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
 	if (create) CreatePath(path);
@@ -1151,13 +1202,9 @@ UNSAFE_CCMD(clearnodecache)
 	FString path = M_GetCachePath(false);
 	path += "/";
 
-	try
+	if (!ScanDirectory(list, path))
 	{
-		ScanDirectory(list, path);
-	}
-	catch (CRecoverableError &err)
-	{
-		Printf("%s\n", err.GetMessage());
+		Printf("Unable to scan node cache directory %s\n", path.GetChars());
 		return;
 	}
 

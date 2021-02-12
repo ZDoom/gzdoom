@@ -50,6 +50,7 @@ struct FActorInfo;
 class FIntCVar;
 class FStateDefinitions;
 class FInternalLightAssociation;
+struct FState;
 
 enum EStateDefineFlags
 {
@@ -71,14 +72,6 @@ enum EStateFlags
 	STF_SAMEFRAME = 16,	// Ignore Frame (except when spawning actor)
 	STF_CANRAISE = 32,	// Allows a monster to be resurrected without waiting for an infinate frame
 	STF_DEHACKED = 64,	// Modified by Dehacked
-};
-
-enum EStateUseFlags
-{
-	SUF_ACTOR = 1,
-	SUF_OVERLAY = 2,
-	SUF_WEAPON = 4,
-	SUF_ITEM = 8,
 };
 
 enum EStateType : int // this must ensure proper alignment.
@@ -179,7 +172,7 @@ public:
 
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
-	static FString StaticGetStateName(const FState *state);
+	static FString StaticGetStateName(const FState *state, PClassActor *info = nullptr);
 	static FRandom pr_statetics;
 
 };
@@ -267,7 +260,7 @@ struct FActorInfo
 
 	uint8_t DefaultStateUsage = 0; // state flag defaults for blocks without a qualifier.
 
-	FActorInfo() {}
+	FActorInfo() = default;
 	FActorInfo(const FActorInfo & other)
 	{
 		// only copy the fields that get inherited
@@ -306,6 +299,7 @@ public:
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	bool SetReplacement(FName replaceName);
+	void InitializeDefaults();
 
 	FActorInfo *ActorInfo() const
 	{

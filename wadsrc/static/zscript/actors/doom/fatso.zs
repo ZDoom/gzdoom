@@ -108,7 +108,7 @@ extend class Actor
 	void A_FatRaise()
 	{
 		A_FaceTarget();
-		A_PlaySound("fatso/raiseguns", CHAN_WEAPON);
+		A_StartSound("fatso/raiseguns", CHAN_WEAPON);
 	}
 
 	//

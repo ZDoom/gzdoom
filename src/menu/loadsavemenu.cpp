@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2001-2010 Randy Heit
-** Copyright 2010-2017 Christoph Oelckers
+** Copyright 2010-2020 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,113 +33,22 @@
 **
 */
 
-#include "menu/menu.h"
+#include "doommenu.h"
 #include "version.h"
 #include "g_game.h"
 #include "m_png.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "gstrings.h"
 #include "serializer.h"
 #include "vm.h"
 #include "i_system.h"
+#include "v_video.h"
+#include "findfile.h"
+#include "v_draw.h"
 
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24
-
-//=============================================================================
-//
-// Save data maintenance 
-//
-//=============================================================================
-
-void FSavegameManager::ClearSaveGames()
-{
-	for (unsigned i = 0; i<SaveGames.Size(); i++)
-	{
-		if (!SaveGames[i]->bNoDelete)
-			delete SaveGames[i];
-	}
-	SaveGames.Clear();
-}
-
-FSavegameManager::~FSavegameManager()
-{
-	ClearSaveGames();
-}
-
-//=============================================================================
-//
-// Save data maintenance 
-//
-//=============================================================================
-
-int FSavegameManager::RemoveSaveSlot(int index)
-{
-	int listindex = SaveGames[0]->bNoDelete ? index - 1 : index;
-	if (listindex < 0) return index;
-
-	remove(SaveGames[index]->Filename.GetChars());
-	UnloadSaveData();
-
-	FSaveGameNode *file = SaveGames[index];
-
-	if (quickSaveSlot == SaveGames[index])
-	{
-		quickSaveSlot = nullptr;
-	}
-	if (!file->bNoDelete) delete file;
-
-	if (LastSaved == listindex) LastSaved = -1;
-	else if (LastSaved > listindex) LastSaved--;
-	if (LastAccessed == listindex) LastAccessed = -1;
-	else if (LastAccessed > listindex) LastAccessed--;
-
-	SaveGames.Delete(index);
-	if ((unsigned)index >= SaveGames.Size()) index--;
-	ExtractSaveData(index);
-	return index;
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveSaveSlot)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_INT(sel);
-	ACTION_RETURN_INT(self->RemoveSaveSlot(sel));
-}
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-int FSavegameManager::InsertSaveNode(FSaveGameNode *node)
-{
-	if (SaveGames.Size() == 0)
-	{
-		return SaveGames.Push(node);
-	}
-
-	if (node->bOldVersion)
-	{ // Add node at bottom of list
-		return SaveGames.Push(node);
-	}
-	else
-	{	// Add node at top of list
-		unsigned int i;
-		for (i = 0; i < SaveGames.Size(); i++)
-		{
-			if (SaveGames[i]->bOldVersion || node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0)
-			{
-				break;
-			}
-		}
-		SaveGames.Insert(i, node);
-		return i;
-	}
-}
 
 //=============================================================================
 //
@@ -168,7 +77,7 @@ void FSavegameManager::ReadSaveStrings()
 				// I_FindName only returns the file's name and not its full path
 				FString filepath = G_BuildSaveName(I_FindName(&c_file), -1);
 
-				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, true, true);
+				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(filepath, true, true));
 				if (savegame != nullptr)
 				{
 					bool oldVer = false;
@@ -177,11 +86,10 @@ void FSavegameManager::ReadSaveStrings()
 					if (info == nullptr)
 					{
 						// savegame info not found. This is not a savegame so leave it alone.
-						delete savegame;
 						continue;
 					}
-					void *data = info->CacheLump();
-					FSerializer arc(nullptr);
+					void *data = info->Lock();
+					FSerializer arc;
 					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
 						int savever = 0;
@@ -195,7 +103,6 @@ void FSavegameManager::ReadSaveStrings()
 						{
 							// different engine or newer version:
 							// not our business. Leave it alone.
-							delete savegame;
 							continue;
 						}
 
@@ -204,14 +111,13 @@ void FSavegameManager::ReadSaveStrings()
 							// old, incompatible savegame. List as not usable.
 							oldVer = true;
 						}
-						else if (iwad.CompareNoCase(Wads.GetWadName(Wads.GetIwadNum())) == 0)
+						else if (iwad.CompareNoCase(fileSystem.GetResourceFileName(fileSystem.GetIwadNum())) == 0)
 						{
 							missing = !G_CheckSaveGameWads(arc, false);
 						}
 						else
 						{
 							// different game. Skip this.
-							delete savegame;
 							continue;
 						}
 
@@ -221,7 +127,6 @@ void FSavegameManager::ReadSaveStrings()
 						node->bMissingWads = missing;
 						node->SaveTitle = title;
 						InsertSaveNode(node);
-						delete savegame;
 					}
 
 				}
@@ -304,88 +209,15 @@ void FSavegameManager::ReadSaveStrings()
 	}
 }
 
-DEFINE_ACTION_FUNCTION(FSavegameManager, ReadSaveStrings)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	self->ReadSaveStrings();
-	return 0;
-}
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void FSavegameManager::NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave)
-{
-	FSaveGameNode *node;
-
-	if (file.IsEmpty())
-		return;
-
-	ReadSaveStrings();
-
-	// See if the file is already in our list
-	for (unsigned i = 0; i<SaveGames.Size(); i++)
-	{
-		FSaveGameNode *node = SaveGames[i];
-#ifdef __unix__
-		if (node->Filename.Compare(file) == 0)
-#else
-		if (node->Filename.CompareNoCase(file) == 0)
-#endif
-		{
-			node->SaveTitle = title;
-			node->bOldVersion = false;
-			node->bMissingWads = false;
-			if (okForQuicksave)
-			{
-				if (quickSaveSlot == nullptr) quickSaveSlot = node;
-				LastAccessed = LastSaved = i;
-			}
-			return;
-		}
-	}
-
-	node = new FSaveGameNode;
-	node->SaveTitle = title;
-	node->Filename = file;
-	node->bOldVersion = false;
-	node->bMissingWads = false;
-	int index = InsertSaveNode(node);
-
-	if (okForQuicksave)
-	{
-		if (quickSaveSlot == nullptr) quickSaveSlot = node;
-		LastAccessed = LastSaved = index;
-	}
-}
-
 //=============================================================================
 //
 // Loads the savegame
 //
 //=============================================================================
 
-void FSavegameManager::LoadSavegame(int Selected)
+void FSavegameManager::PerformLoadGame(const char *fn, bool flag)
 {
-	G_LoadGame(SaveGames[Selected]->Filename.GetChars(), true);
-	if (quickSaveSlot == (FSaveGameNode*)1)
-	{
-		quickSaveSlot = SaveGames[Selected];
-	}
-	M_ClearMenus();
-	LastAccessed = Selected;
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, LoadSavegame)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_INT(sel);
-	self->LoadSavegame(sel);
-	return 0;
+	G_LoadGame(fn, flag);
 }
 
 //=============================================================================
@@ -394,39 +226,9 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, LoadSavegame)
 //
 //=============================================================================
 
-void FSavegameManager::DoSave(int Selected, const char *savegamestring)
+void FSavegameManager::PerformSaveGame(const char *fn, const char *savegamestring)
 {
-	if (Selected != 0)
-	{
-		auto node = SaveGames[Selected];
-		G_SaveGame(node->Filename.GetChars(), savegamestring);
-	}
-	else
-	{
-		// Find an unused filename and save as that
-		FString filename;
-		int i;
-
-		for (i = 0;; ++i)
-		{
-			filename = G_BuildSaveName("save", i);
-			if (!FileExists(filename))
-			{
-				break;
-			}
-		}
-		G_SaveGame(filename, savegamestring);
-	}
-	M_ClearMenus();
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_INT(sel);
-	PARAM_STRING(name);
-	self->DoSave(sel, name);
-	return 0;
+	G_SaveGame(fn, savegamestring);
 }
 
 //=============================================================================
@@ -435,89 +237,22 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
 //
 //=============================================================================
 
-unsigned FSavegameManager::ExtractSaveData(int index)
+FString FSavegameManager::ExtractSaveComment(FSerializer &arc)
 {
-	FResourceFile *resf;
-	FSaveGameNode *node;
+	FString comment;
 
-	if (index == -1)
-	{
-		if (SaveGames.Size() > 0 && SaveGames[0]->bNoDelete)
-		{
-			index = LastSaved + 1;
-		}
-		else
-		{
-			index = LastAccessed < 0? 0 : LastAccessed;
-		}
-	}
+	FString time = arc.GetString("Creation Time");
+	FString pcomment = arc.GetString("Comment");
 
-	UnloadSaveData();
-
-	if ((unsigned)index < SaveGames.Size() &&
-		(node = SaveGames[index]) &&
-		!node->Filename.IsEmpty() &&
-		!node->bOldVersion &&
-		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
-	{
-		FResourceLump *info = resf->FindLump("info.json");
-		if (info == nullptr)
-		{
-			// this should not happen because the file has already been verified.
-			return index;
-		}
-		void *data = info->CacheLump();
-		FSerializer arc(nullptr);
-		if (arc.OpenReader((const char *)data, info->LumpSize))
-		{
-			FString comment;
-
-			FString time = arc.GetString("Creation Time");
-			FString pcomment = arc.GetString("Comment");
-
-			comment = time;
-			if (time.Len() > 0) comment += "\n";
-			comment += pcomment;
-			SaveCommentString = comment;
-
-			// Extract pic
-			FResourceLump *pic = resf->FindLump("savepic.png");
-			if (pic != nullptr)
-			{
-				FileReader picreader;
-
-				picreader.OpenMemoryArray([=](TArray<uint8_t> &array)
-				{
-					auto cache = pic->CacheLump();
-					array.Resize(pic->LumpSize);
-					memcpy(&array[0], cache, pic->LumpSize);
-					pic->ReleaseCache();
-					return true;
-				});
-				PNGHandle *png = M_VerifyPNG(picreader);
-				if (png != nullptr)
-				{
-					SavePic = PNGTexture_CreateFromFile(png, node->Filename);
-					delete png;
-					if (SavePic && SavePic->GetDisplayWidth() == 1 && SavePic->GetDisplayHeight() == 1)
-					{
-						delete SavePic;
-						SavePic = nullptr;
-						SavePicData.Clear();
-					}
-				}
-			}
-		}
-		delete resf;
-	}
-	return index;
+	comment = time;
+	if (time.Len() > 0) comment += "\n";
+	comment += pcomment;
+	return comment;
 }
 
-DEFINE_ACTION_FUNCTION(FSavegameManager, ExtractSaveData)
+FString FSavegameManager::BuildSaveName(const char* prefix, int slot)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_INT(sel);
-	ACTION_RETURN_INT(self->ExtractSaveData(sel));
+	return G_BuildSaveName(prefix, slot);
 }
 
 //=============================================================================
@@ -525,171 +260,6 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, ExtractSaveData)
 //
 //
 //=============================================================================
-
-void FSavegameManager::UnloadSaveData()
-{
-	if (SavePic != nullptr)
-	{
-		delete SavePic;
-	}
-
-	SaveCommentString = "";
-	SavePic = nullptr;
-	SavePicData.Clear();
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, UnloadSaveData)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	self->UnloadSaveData();
-	return 0;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void FSavegameManager::ClearSaveStuff()
-{
-	UnloadSaveData();
-	if (quickSaveSlot == (FSaveGameNode*)1)
-	{
-		quickSaveSlot = nullptr;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, ClearSaveStuff)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	self->ClearSaveStuff();
-	return 0;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool FSavegameManager::DrawSavePic(int x, int y, int w, int h)
-{
-	if (SavePic == nullptr) return false;
-	screen->DrawTexture(SavePic, x, y, 	DTA_DestWidth, w, DTA_DestHeight, h, DTA_Masked, false,	TAG_DONE);
-	return true;
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, DrawSavePic)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_INT(x);
-	PARAM_INT(y);
-	PARAM_INT(w);
-	PARAM_INT(h);
-	ACTION_RETURN_BOOL(self->DrawSavePic(x, y, w, h));
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void FSavegameManager::SetFileInfo(int Selected)
-{
-	if (!SaveGames[Selected]->Filename.IsEmpty())
-	{
-		SaveCommentString.Format("File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
-	}
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, SetFileInfo)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_INT(i);
-	self->SetFileInfo(i);
-	return 0;
-}
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-unsigned FSavegameManager::SavegameCount()
-{
-	return SaveGames.Size();
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, SavegameCount)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	ACTION_RETURN_INT(self->SavegameCount());
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-FSaveGameNode *FSavegameManager::GetSavegame(int i)
-{
-	return SaveGames[i];
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, GetSavegame)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_INT(i);
-	ACTION_RETURN_POINTER(self->GetSavegame(i));
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void FSavegameManager::InsertNewSaveNode()
-{
-	NewSaveNode.SaveTitle = GStrings["NEWSAVE"];
-	NewSaveNode.bNoDelete = true;
-	SaveGames.Insert(0, &NewSaveNode);
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, InsertNewSaveNode)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	self->InsertNewSaveNode();
-	return 0;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool FSavegameManager::RemoveNewSaveNode()
-{
-	if (SaveGames[0] == &NewSaveNode)
-	{
-		SaveGames.Delete(0);
-		return true;
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveNewSaveNode)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	ACTION_RETURN_INT(self->RemoveNewSaveNode());
-}
-
 
 FSavegameManager savegameManager;
 
@@ -698,16 +268,4 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, GetManager)
 	PARAM_PROLOGUE;
 	ACTION_RETURN_POINTER(&savegameManager);
 }
-
-
-
-DEFINE_FIELD(FSaveGameNode, SaveTitle);
-DEFINE_FIELD(FSaveGameNode, Filename);
-DEFINE_FIELD(FSaveGameNode, bOldVersion);
-DEFINE_FIELD(FSaveGameNode, bMissingWads);
-DEFINE_FIELD(FSaveGameNode, bNoDelete);
-
-DEFINE_FIELD(FSavegameManager, WindowSize);
-DEFINE_FIELD(FSavegameManager, quickSaveSlot);
-DEFINE_FIELD(FSavegameManager, SaveCommentString);
 

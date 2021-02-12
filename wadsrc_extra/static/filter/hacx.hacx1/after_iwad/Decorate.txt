@@ -1,0 +1,44 @@
+// fix some broken definitions in the IWAD.
+
+actor HacxRoamingMine2 : HacxRoamingMine replaces WolfensteinSS
+{
+	+noblood
+	states
+	{
+		Melee:
+		Pain:
+			SSWV N 0 A_Die
+			stop
+	}
+}
+
+actor HacxGlass2 : HacxGlass replaces Cacodemon
+{
+	+noblood
+	-COUNTKILL
+	-ISMONSTER
+}
+
+actor HacxDMan2 : HacxDMan replaces LostSoul
+{
+	+COUNTKILL
+}
+
+actor HacxSamuraiStatue2 : HacxSamuraiStatue replaces Candlestick
+{
+	-SHOOTABLE
+}
+
+actor HacxMummy2 : HacxMummy replaces BrainStem
+{
+	seesound "fatso/sight"
+	attacksound "imp/melee"
+	painsound "fatso/pain"
+	deathsound "fatso/death"
+	activesound "skeleton/death"
+}
+
+actor HacxENKBlind2 : HacxENKBlind replaces BlurSphere
+{
+	-VISIBILITYPULSE
+}

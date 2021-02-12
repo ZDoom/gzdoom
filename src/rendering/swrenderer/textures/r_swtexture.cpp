@@ -38,37 +38,45 @@
 #include "bitmap.h"
 #include "m_alloc.h"
 #include "imagehelpers.h"
+#include "texturemanager.h"
 
-EXTERN_CVAR(Bool, gl_texture_usehires)
 
-
-FSoftwareTexture *FTexture::GetSoftwareTexture()
+inline EUpscaleFlags scaleFlagFromUseType(ETextureType useType)
 {
-	if (!SoftwareTexture)
+	switch (useType)
 	{
-		if (bHasCanvas) SoftwareTexture = new FSWCanvasTexture(this);
-		else if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
-		else SoftwareTexture = new FSoftwareTexture(this);
+	case ETextureType::Sprite:
+	case ETextureType::SkinSprite:
+		return UF_Sprite;
+
+	case ETextureType::FontChar:
+		return UF_Font;
+
+	default:
+		return UF_Texture;
 	}
-	return SoftwareTexture;
 }
-
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-FSoftwareTexture::FSoftwareTexture(FTexture *tex)
+FSoftwareTexture::FSoftwareTexture(FGameTexture *tex)
 {
 	mTexture = tex;
-	mSource = tex;
+	mSource = tex->GetTexture();
 
-	mBufferFlags = (gl_texture_usehires && !tex->isScaled() && tex->GetImage() && !tex->isSprite() ) ? CTF_CheckHires|CTF_ProcessData : CTF_ProcessData;
-	auto info = tex->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
+	mBufferFlags = CTF_ProcessData;
+
+	if (shouldUpscale(tex, scaleFlagFromUseType(tex->GetUseType()))) mBufferFlags |= CTF_Upscale;
+	// calculate the real size after running the scaler.
+	auto info = mSource->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
 	mPhysicalWidth = info.mWidth;
-	mPhysicalHeight = info.mHeight;
-	mPhysicalScale = mPhysicalWidth / tex->Width;
+	mPhysicalHeight = info.mHeight; 
+	mPhysicalScale = tex->GetTexelWidth() > 0 ? mPhysicalWidth / tex->GetTexelWidth() : mPhysicalWidth;
+	Scale.X = (double)tex->GetTexelWidth() / tex->GetDisplayWidth();
+	Scale.Y = (double)tex->GetTexelHeight() / tex->GetDisplayHeight();
 	CalcBitSize();
 }
 
@@ -121,7 +129,8 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 		}
 		else
 		{
-			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			auto f = mBufferFlags;
+			auto tempbuffer = mSource->CreateTexBuffer(0, f);
 			Pixels.Resize(GetPhysicalWidth()*GetPhysicalHeight());
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			if (!style)
@@ -161,12 +170,12 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 	{
 		if (mPhysicalScale == 1)
 		{
-			FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
+			FBitmap bitmap = mSource->GetBgraBitmap(nullptr);
 			GenerateBgraFromBitmap(bitmap);
 		}
 		else
 		{
-			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
 			CreatePixelsBgraWithMipmaps();
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			for (int y = 0; y < GetPhysicalHeight(); y++)
@@ -537,53 +546,6 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 
 //==========================================================================
 //
-// 
-//
-//==========================================================================
-
-void FSoftwareTexture::GenerateBgraMipmapsFast()
-{
-	uint32_t *src = PixelsBgra.Data();
-	uint32_t *dest = src + GetPhysicalWidth() * GetPhysicalHeight();
-	int levels = MipmapLevels();
-	for (int i = 1; i < levels; i++)
-	{
-		int srcw = MAX(GetPhysicalWidth() >> (i - 1), 1);
-		int srch = MAX(GetPhysicalHeight() >> (i - 1), 1);
-		int w = MAX(GetPhysicalWidth() >> i, 1);
-		int h = MAX(GetPhysicalHeight() >> i, 1);
-
-		for (int x = 0; x < w; x++)
-		{
-			int sx0 = x * 2;
-			int sx1 = MIN((x + 1) * 2, srcw - 1);
-
-			for (int y = 0; y < h; y++)
-			{
-				int sy0 = y * 2;
-				int sy1 = MIN((y + 1) * 2, srch - 1);
-
-				uint32_t src00 = src[sy0 + sx0 * srch];
-				uint32_t src01 = src[sy1 + sx0 * srch];
-				uint32_t src10 = src[sy0 + sx1 * srch];
-				uint32_t src11 = src[sy1 + sx1 * srch];
-
-				uint32_t alpha = (APART(src00) + APART(src01) + APART(src10) + APART(src11) + 2) / 4;
-				uint32_t red = (RPART(src00) + RPART(src01) + RPART(src10) + RPART(src11) + 2) / 4;
-				uint32_t green = (GPART(src00) + GPART(src01) + GPART(src10) + GPART(src11) + 2) / 4;
-				uint32_t blue = (BPART(src00) + BPART(src01) + BPART(src10) + BPART(src11) + 2) / 4;
-
-				dest[y + x * h] = (alpha << 24) | (red << 16) | (green << 8) | blue;
-			}
-		}
-
-		src = dest;
-		dest += w * h;
-	}
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -598,5 +560,39 @@ void FSoftwareTexture::FreeAllSpans()
 			Spandata[i] = nullptr;
 		}
 	}
+}
+
+FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex)
+{
+	FSoftwareTexture* SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
+	if (!SoftwareTexture)
+	{
+		if (tex->isSoftwareCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
+		else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
+		else SoftwareTexture = new FSoftwareTexture(tex);
+		tex->SetSoftwareTexture(SoftwareTexture);
+	}
+	return SoftwareTexture;
+}
+
+
+CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	// This is in case the sky texture has been substituted.
+	R_InitSkyMap();
+}
+
+FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, bool checkcompat, bool allownull)
+{
+	bool needpal = !vid_nopalsubstitutions && !V_IsTrueColor();
+	auto tex = TexMan.GetPalettedTexture(texid, true, needpal);
+	if (tex == nullptr || (!allownull && !tex->isValid())) return nullptr;
+	if (checkcompat)
+	{
+		auto rawtexid = TexMan.GetRawTexture(tex->GetID());
+		auto rawtex = TexMan.GetGameTexture(rawtexid);
+		if (rawtex) tex = rawtex;
+	}
+	return GetSoftwareTexture(tex);
 }
 

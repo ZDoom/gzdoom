@@ -37,16 +37,17 @@
 #include "cmdlib.h"
 #include "doomstat.h"
 #include "i_system.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "sc_man.h"
 #include "v_video.h"
 #include "gameconfigfile.h"
-#include "resourcefiles/resourcefile.h"
 #include "version.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "v_text.h"
+#include "findfile.h"
+#include "i_interface.h"
 
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -125,6 +126,10 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetStringName("=");
 					sc.MustGetString();
 					iwad->MapInfo = sc.String;
+				}
+				else if (sc.Compare("NoKeyboardCheats"))
+				{
+					iwad->nokeyboardcheats = true;
 				}
 				else if (sc.Compare("Compatibility"))
 				{
@@ -259,29 +264,25 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 // Look for IWAD definition lump
 //
 //==========================================================================
+extern const char* iwad_folders[13];
+extern const char* iwad_reserved[12];
 
-FIWadManager::FIWadManager(const char *fn)
+FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
-	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, true);
-	if (resfile != NULL)
-	{
-		uint32_t cnt = resfile->LumpCount();
-		for(int i=cnt-1; i>=0; i--)
-		{
-			FResourceLump *lmp = resfile->GetLump(i);
+	FileSystem check;
+	TArray<FString> fns;
+	fns.Push(firstfn);
+	if (optfn) fns.Push(optfn);
 
-			if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "IWADINFO"))
-			{
-				// Found one!
-				ParseIWadInfo(resfile->FileName, (const char*)lmp->CacheLump(), lmp->LumpSize);
-				break;
-			}
-		}
-		delete resfile;
-	}
-	if (mIWadNames.Size() == 0 || mIWadInfos.Size() == 0)
+	check.InitMultipleFiles(fns, true);
+	if (check.GetNumEntries() > 0)
 	{
-		I_FatalError("No IWAD definitions found");
+		int num = check.CheckNumForName("IWADINFO");
+		if (num >= 0)
+		{
+			auto data = check.GetFileData(num);
+			ParseIWadInfo("IWADINFO", (const char*)data.Data(), data.Size());
+		}
 	}
 }
 
@@ -295,11 +296,12 @@ FIWadManager::FIWadManager(const char *fn)
 
 int FIWadManager::ScanIWAD (const char *iwad)
 {
-	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, true);
+	FileSystem check;
+	check.InitSingleFile(iwad, true);
 
 	mLumpsFound.Resize(mIWadInfos.Size());
 
-	auto CheckLumpName = [=](const char *name)
+	auto CheckFileName = [=](const char *name)
 	{
 		for (unsigned i = 0; i< mIWadInfos.Size(); i++)
 		{
@@ -313,24 +315,20 @@ int FIWadManager::ScanIWAD (const char *iwad)
 		}
 	};
 
-	if (iwadfile != NULL)
+	if (check.GetNumEntries() > 0)
 	{
 		memset(&mLumpsFound[0], 0, mLumpsFound.Size() * sizeof(mLumpsFound[0]));
-		for(uint32_t ii = 0; ii < iwadfile->LumpCount(); ii++)
+		for(int ii = 0; ii < check.GetNumEntries(); ii++)
 		{
-			FResourceLump *lump = iwadfile->GetLump(ii);
 
-			CheckLumpName(lump->Name);
-			if (lump->FullName.IsNotEmpty())
+			CheckFileName(check.GetFileShortName(ii));
+			auto full = check.GetFileFullName(ii, false);
+			if (full && strnicmp(full, "maps/", 5) == 0)
 			{
-				if (strnicmp(lump->FullName, "maps/", 5) == 0)
-				{
-					FString mapname(&lump->FullName[5], strcspn(&lump->FullName[5], "."));
-					CheckLumpName(mapname);
-				}
+				FString mapname(&full[5], strcspn(&full[5], "."));
+				CheckFileName(mapname);
 			}
 		}
-		delete iwadfile;
 	}
 	for (unsigned i = 0; i< mIWadInfos.Size(); i++)
 	{
@@ -349,46 +347,46 @@ int FIWadManager::ScanIWAD (const char *iwad)
 //
 //==========================================================================
 
-int FIWadManager::CheckIWADInfo(const char *fn)
+int FIWadManager::CheckIWADInfo(const char* fn)
 {
-	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, true);
-	if (resfile != NULL)
+	FileSystem check;
+
+	LumpFilterInfo lfi;
+	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
+	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+
+	TArray<FString> filenames;
+	filenames.Push(fn);
+	check.InitMultipleFiles(filenames, true, &lfi);
+	if (check.GetNumEntries() > 0)
 	{
-		uint32_t cnt = resfile->LumpCount();
-		for (int i = cnt - 1; i >= 0; i--)
+		int num = check.CheckNumForName("IWADINFO");
+		if (num >= 0)
 		{
-			FResourceLump *lmp = resfile->GetLump(i);
-
-			if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "IWADINFO"))
+			try
 			{
-				// Found one!
-				try
-				{
-					FIWADInfo result;
-					ParseIWadInfo(resfile->FileName, (const char*)lmp->CacheLump(), lmp->LumpSize, &result);
-					delete resfile;
 
-					for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)
+				FIWADInfo result;
+				auto data = check.GetFileData(num);
+				ParseIWadInfo(fn, (const char*)data.Data(), data.Size(), &result);
+
+				for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)
+				{
+					if (mIWadInfos[i].Name == result.Name)
 					{
-						if (mIWadInfos[i].Name == result.Name)
-						{
-							return i;
-						}
+						return i;
 					}
+				}
 
-					mOrderNames.Push(result.Name);
-					return mIWadInfos.Push(result);
-				}
-				catch (CRecoverableError &err)
-				{
-					delete resfile;
-					Printf(TEXTCOLOR_RED "%s: %s\nFile has been removed from the list of IWADs\n", fn, err.GetMessage());
-					return -1;
-				}
-				break;
+				mOrderNames.Push(result.Name);
+				return mIWadInfos.Push(result);
+			}
+			catch (CRecoverableError & err)
+			{
+				Printf(TEXTCOLOR_RED "%s: %s\nFile has been removed from the list of IWADs\n", fn, err.what());
+				return -1;
 			}
 		}
-		delete resfile;
 		Printf(TEXTCOLOR_RED "%s: Unable to find IWADINFO\nFile has been removed from the list of IWADs\n", fn);
 		return -1;
 	}
@@ -579,6 +577,12 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	// -iwad not found or not specified. Revert back to standard behavior.
 	if (mFoundWads.Size() == numFoundWads) iwadparm = nullptr;
 
+	// Check for symbolic links leading to non-existent files and for files that are unreadable.
+	for (unsigned int i = 0; i < mFoundWads.Size(); i++)
+	{
+		if (!FileExists(mFoundWads[i].mFullPath) || !FileReadable(mFoundWads[i].mFullPath)) mFoundWads.Delete(i);
+	}
+
 	// Now check if what got collected actually is an IWAD.
 	ValidateIWADs();
 
@@ -724,7 +728,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 				}
 				else
 				{
-					exit(0);
+					return -1;
 				}
 				havepicked = true;
 			}
@@ -733,37 +737,49 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
 	wadfiles.Clear();
-	D_AddFile (wadfiles, zdoom_wad);
+	D_AddFile (wadfiles, zdoom_wad, true, -1, GameConfig);
 
 	// [SP] Load non-free assets if available. This must be done before the IWAD.
-	if (D_AddFile(wadfiles, optional_wad))
-		Wads.SetIwadNum(2);
+	int iwadnum;
+	if (D_AddFile(wadfiles, optional_wad, true, -1, GameConfig))
+		iwadnum = 2;
 	else
-		Wads.SetIwadNum(1);
+		iwadnum = 1;
 
+	fileSystem.SetIwadNum(iwadnum);
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{
-		D_AddFile (wadfiles, picks[pick].mRequiredPath);
+		D_AddFile (wadfiles, picks[pick].mRequiredPath, true, -1, GameConfig);
+		iwadnum++;
 	}
-	D_AddFile (wadfiles, picks[pick].mFullPath);
+	D_AddFile (wadfiles, picks[pick].mFullPath, true, -1, GameConfig);
+	fileSystem.SetMaxIwadNum(iwadnum);
 
 	auto info = mIWadInfos[picks[pick].mInfoIndex];
 	// Load additional resources from the same directory as the IWAD itself.
 	for (unsigned i=0; i < info.Load.Size(); i++)
 	{
-		long lastslash = picks[pick].mFullPath.LastIndexOf ('/');
 		FString path;
-
-		if (lastslash == -1)
+		if (info.Load[i][0] != ':')
 		{
-			path = "";//  wads[pickwad].Path;
+			long lastslash = picks[pick].mFullPath.LastIndexOf('/');
+
+			if (lastslash == -1)
+			{
+				path = "";//  wads[pickwad].Path;
+			}
+			else
+			{
+				path = FString(picks[pick].mFullPath.GetChars(), lastslash + 1);
+			}
+			path += info.Load[i];
+			D_AddFile(wadfiles, path, true, -1, GameConfig);
 		}
 		else
 		{
-			path = FString (picks[pick].mFullPath.GetChars(), lastslash + 1);
+			auto wad = BaseFileSearch(info.Load[i].GetChars() + 1, NULL, true, GameConfig);
+			if (wad) D_AddFile(wadfiles, wad, true, -1, GameConfig);
 		}
-		path += info.Load[i];
-		D_AddFile (wadfiles, path);
 
 	}
 	return picks[pick].mInfoIndex;
@@ -779,16 +795,17 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 const FIWADInfo *FIWadManager::FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad)
 {
 	int iwadType = IdentifyVersion(wadfiles, iwad, basewad, optionalwad);
+	if (iwadType == -1) return nullptr;
 	//gameiwad = iwadType;
 	const FIWADInfo *iwad_info = &mIWadInfos[iwadType];
-	if (DoomStartupInfo.Name.IsEmpty()) DoomStartupInfo.Name = iwad_info->Name;
-	if (DoomStartupInfo.BkColor == 0 && DoomStartupInfo.FgColor == 0)
+	if (GameStartupInfo.Name.IsEmpty()) GameStartupInfo.Name = iwad_info->Name;
+	if (GameStartupInfo.BkColor == 0 && GameStartupInfo.FgColor == 0)
 	{
-		DoomStartupInfo.BkColor = iwad_info->BkColor;
-		DoomStartupInfo.FgColor = iwad_info->FgColor;
+		GameStartupInfo.BkColor = iwad_info->BkColor;
+		GameStartupInfo.FgColor = iwad_info->FgColor;
 	}
-	if (DoomStartupInfo.Type == 0) DoomStartupInfo.Type = iwad_info->StartupType;
-	if (DoomStartupInfo.Song.IsEmpty()) DoomStartupInfo.Song = iwad_info->Song;
+	if (GameStartupInfo.Type == 0) GameStartupInfo.Type = iwad_info->StartupType;
+	if (GameStartupInfo.Song.IsEmpty()) GameStartupInfo.Song = iwad_info->Song;
 	I_SetIWADInfo();
 	return iwad_info;
 }

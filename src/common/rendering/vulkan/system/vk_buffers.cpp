@@ -68,6 +68,8 @@ void VKBuffer::SetData(size_t size, const void *data, bool staticdata)
 {
 	auto fb = GetVulkanFrameBuffer();
 
+	size = std::max(size, (size_t)16); // For supporting zero byte buffers
+
 	if (staticdata)
 	{
 		mPersistent = false;
@@ -122,6 +124,8 @@ void VKBuffer::SetData(size_t size, const void *data, bool staticdata)
 
 void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 {
+	size = std::max(size, (size_t)16); // For supporting zero byte buffers
+
 	auto fb = GetVulkanFrameBuffer();
 	if (mStaging)
 	{
@@ -141,6 +145,8 @@ void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 
 void VKBuffer::Resize(size_t newsize)
 {
+	newsize = std::max(newsize, (size_t)16); // For supporting zero byte buffers
+
 	auto fb = GetVulkanFrameBuffer();
 
 	// Grab old buffer
@@ -187,6 +193,8 @@ void VKBuffer::Unmap()
 
 void *VKBuffer::Lock(unsigned int size)
 {
+	size = std::max(size, (unsigned int)16); // For supporting zero byte buffers
+
 	if (!mBuffer)
 	{
 		// The model mesh loaders lock multiple non-persistent buffers at the same time. This is not allowed in vulkan.

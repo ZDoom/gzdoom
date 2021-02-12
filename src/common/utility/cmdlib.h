@@ -33,6 +33,7 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
 
 bool FileExists (const char *filename);
+bool FileReadable (const char *filename);
 bool DirExists(const char *filename);
 bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
 bool GetFileInfo(const char* pathname, size_t* size, time_t* time);

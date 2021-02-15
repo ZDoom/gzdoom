@@ -1790,7 +1790,7 @@ void G_DoPlayerPop(int playernum)
 {
 	playeringame[playernum] = false;
 
-	FString message = GStrings(deathmatch? "TXT_LEFTWITHFRAGS" : "TXT_LEFTTHEGAME");
+	FString message = GStrings(deathmatch ? "TXT_LEFTWITHFRAGS" : "TXT_LEFTTHEGAME");
 	message.Substitute("%s", players[playernum].userinfo.GetName());
 	message.Substitute("%d", FStringf("%d", players[playernum].fragcount));
 

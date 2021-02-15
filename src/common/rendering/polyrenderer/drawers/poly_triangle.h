@@ -111,6 +111,7 @@ struct PolyPushConstants
 
 	// dynamic lights
 	int uLightIndex;
+	FVector4 uDynLightColor; // [GEC]
 };
 
 class PolyInputAssembly

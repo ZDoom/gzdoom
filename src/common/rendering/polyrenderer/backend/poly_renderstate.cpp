@@ -292,6 +292,7 @@ void PolyRenderState::Apply()
 	constants.uAlphaThreshold = mAlphaThreshold;
 	constants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 	constants.uLightIndex = mLightIndex;
+	constants.uDynLightColor = mStreamData.uDynLightColor; // [GEC]
 
 	mDrawCommands->PushStreamData(mStreamData, constants);
 	ApplyMatrices();

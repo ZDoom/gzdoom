@@ -292,6 +292,38 @@ namespace swrenderer
 
 			thread->TranslucentPass->Render();
 		}
+
+#if 0 // shows the render slice edges
+		if (thread->Viewport->RenderTarget->IsBgra())
+		{
+			uint32_t* left = (uint32_t*)thread->Viewport->GetDest(thread->X1, 0);
+			uint32_t* right = (uint32_t*)thread->Viewport->GetDest(thread->X2 - 1, 0);
+			int pitch = thread->Viewport->RenderTarget->GetPitch();
+			uint32_t c = MAKEARGB(255, 0, 0, 0);
+			for (int i = 0; i < viewheight; i++)
+			{
+				*left = c;
+				*right = c;
+				left += pitch;
+				right += pitch;
+			}
+		}
+		else
+		{
+			uint8_t* left = (uint8_t*)thread->Viewport->GetDest(thread->X1, 0);
+			uint8_t* right = (uint8_t*)thread->Viewport->GetDest(thread->X2 - 1, 0);
+			int pitch = thread->Viewport->RenderTarget->GetPitch();
+			int r = 0, g = 0, b = 0;
+			uint8_t c = RGB32k.RGB[(r >> 3)][(g >> 3)][(b >> 3)];
+			for (int i = 0; i < viewheight; i++)
+			{
+				*left = c;
+				*right = c;
+				left += pitch;
+				right += pitch;
+			}
+		}
+#endif
 	}
 
 	void RenderScene::StartThreads(size_t numThreads)

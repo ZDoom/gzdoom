@@ -32,8 +32,6 @@ namespace swrenderer
 
 	void SpanDrawerArgs::SetTexture(RenderThread *thread, FSoftwareTexture *tex)
 	{
-		thread->PrepareTexture(tex, DefaultRenderStyle());
-
 		ds_texwidth = tex->GetPhysicalWidth();
 		ds_texheight = tex->GetPhysicalHeight();
 		ds_xbits = tex->GetWidthBits();

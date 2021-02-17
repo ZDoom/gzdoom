@@ -92,35 +92,7 @@ namespace swrenderer
 			return pal_drawers.get();
 	}
 
-	static std::mutex loadmutex;
-	void RenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)
-	{
-		if (texture == nullptr)
-			return;
-
-		// Textures may not have loaded/refreshed yet. The shared code doing
-		// this is not thread safe. By calling GetPixels in a mutex lock we
-		// make sure that only one thread is loading a texture at any given
-		// time.
-		//
-		// It is critical that this function is called before any direct
-		// calls to GetPixels for this to work.
-
-		std::unique_lock<std::mutex> lock(loadmutex);
-
-		const FSoftwareTextureSpan *spans;
-		if (Viewport->RenderTarget->IsBgra())
-		{
-			texture->GetPixelsBgra();
-			texture->GetColumnBgra(0, &spans);
-		}
-		else
-		{
-			bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
-			texture->GetPixels(alpha);
-			texture->GetColumn(alpha, 0, &spans);
-		}
-	}
+	std::mutex loadmutex;
 
 	std::pair<PalEntry, PalEntry> RenderThread::GetSkyCapColor(FSoftwareTexture* tex)
 	{

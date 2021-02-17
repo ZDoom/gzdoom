@@ -270,8 +270,6 @@ namespace swrenderer
 					portalfloorclip[x] = mfloorclip[x];
 			}
 
-			thread->PrepareTexture(pic, RenderStyle);
-
 			ProjectedWallLight mlight;
 			mlight.SetSpriteLight();
 

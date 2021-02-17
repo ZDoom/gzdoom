@@ -356,7 +356,7 @@ IWad
 IWad
 {
 	Name = "DOOM: Complete: WadSmoosh"
-	Autoname = "doom.id.doom2.wadsmoosh"
+	Autoname = "doom.id.wadsmoosh"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"

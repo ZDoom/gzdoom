@@ -219,6 +219,7 @@ namespace swrenderer
 			Threads[i]->X2 = viewwidth * (i + 1) / numThreads;
 		}
 		run_id++;
+		FSoftwareTexture::CurrentUpdate = run_id;
 		start_lock.unlock();
 
 		// Notify threads to run

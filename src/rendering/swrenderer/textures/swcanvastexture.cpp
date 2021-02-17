@@ -77,7 +77,7 @@ FSWCanvasTexture::~FSWCanvasTexture()
 //
 //==========================================================================
 
-const uint8_t *FSWCanvasTexture::GetPixels(int style)
+const uint8_t *FSWCanvasTexture::GetPixelsLocked(int style)
 {
 	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (Canvas == nullptr)
@@ -94,7 +94,7 @@ const uint8_t *FSWCanvasTexture::GetPixels(int style)
 //
 //==========================================================================
 
-const uint32_t *FSWCanvasTexture::GetPixelsBgra()
+const uint32_t *FSWCanvasTexture::GetPixelsBgraLocked()
 {
 	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (CanvasBgra == nullptr)

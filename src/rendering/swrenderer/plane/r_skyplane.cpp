@@ -214,9 +214,6 @@ namespace swrenderer
 
 		drawerargs.SetStyle();
 
-		Thread->PrepareTexture(frontskytex, DefaultRenderStyle());
-		Thread->PrepareTexture(backskytex, DefaultRenderStyle());
-
 		DrawSky(pl);
 	}
 

@@ -81,8 +81,6 @@ namespace swrenderer
 		mLight.SetColormap(lightsector, curline);
 		mLight.SetLightLeft(Thread, WallC);
 
-		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
-
 		CameraLight* cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedColormap() || cameraLight->FixedLightLevel() >= 0 || !(lightsector->e && lightsector->e->XFloor.lightlist.Size()))
 		{

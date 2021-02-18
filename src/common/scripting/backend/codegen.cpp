@@ -8256,6 +8256,14 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			return x->Resolve(ctx);
 		}
 	}
+	if (MethodName == NAME_IsAbstract && Self->ValueType->isClassPointer())
+	{
+		if (CheckArgSize(NAME_IsAbstract, ArgList, 0, 0, ScriptPosition))
+		{
+			auto x = new FxIsAbstract(Self);
+			return x->Resolve(ctx);
+		}
+	}
 
 	if (Self->ValueType->isRealPointer())
 	{
@@ -9244,6 +9252,47 @@ ExpEmit FxGetClassName::Emit(VMFunctionBuilder *build)
 	}
 	ExpEmit to(build, REGT_INT);
 	build->Emit(OP_LW, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, TypeName)));
+	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxIsAbstract::FxIsAbstract(FxExpression *self)
+	:FxExpression(EFX_IsAbstract, self->ScriptPosition)
+{
+	Self = self;
+}
+
+FxIsAbstract::~FxIsAbstract()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxIsAbstract::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+
+	if (!Self->ValueType->isClassPointer())
+	{
+		ScriptPosition.Message(MSG_ERROR, "IsAbstract() requires a class pointer");
+		delete this;
+		return nullptr;
+	}
+	ValueType = TypeBool;
+	return this;
+}
+
+ExpEmit FxIsAbstract::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op = Self->Emit(build);
+	op.Free(build);
+
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_LBU, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, bAbstract)));
+
 	return to;
 }
 

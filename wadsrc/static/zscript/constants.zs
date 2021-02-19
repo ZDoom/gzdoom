@@ -732,6 +732,9 @@ enum EPSPLayers
 	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
+	PSP_TARGETCENTER = int.max - 2,
+	PSP_TARGETLEFT,
+	PSP_TARGETRIGHT
 };
 
 enum EInputFlags

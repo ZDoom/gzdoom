@@ -527,12 +527,13 @@ void BlendColorColormap(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 
-	uint32_t startR = (int)((thread->mainVertexShader.Data.uObjectColor.r) * 255.0f);
-	uint32_t startG = (int)((thread->mainVertexShader.Data.uObjectColor.g) * 255.0f);
-	uint32_t startB = (int)((thread->mainVertexShader.Data.uObjectColor.b) * 255.0f);
-	uint32_t rangeR = (int)((thread->mainVertexShader.Data.uAddColor.r) * 255.0f) - startR;
-	uint32_t rangeG = (int)((thread->mainVertexShader.Data.uAddColor.g) * 255.0f) - startG;
-	uint32_t rangeB = (int)((thread->mainVertexShader.Data.uAddColor.b) * 255.0f) - startB;
+	// [GEC] I leave the default floating values.
+	float startR = thread->mainVertexShader.Data.uObjectColor.r;
+	float startG = thread->mainVertexShader.Data.uObjectColor.g;
+	float startB = thread->mainVertexShader.Data.uObjectColor.b;
+	float rangeR = thread->mainVertexShader.Data.uAddColor.r - startR;
+	float rangeG = thread->mainVertexShader.Data.uAddColor.g - startG;
+	float rangeB = thread->mainVertexShader.Data.uAddColor.b - startB;
 
 	int sseend = x0;
 	for (int x = sseend; x < x1; x++)
@@ -547,15 +548,22 @@ void BlendColorColormap(int y, int x0, int x1, PolyTriangleThreadData* thread)
 		uint32_t gray = (r * 77 + g * 143 + b * 37) >> 8;
 		gray += (gray >> 7); // gray*=256/255
 
-		r = (startR + ((gray * rangeR) >> 8)) << 1;
-		g = (startG + ((gray * rangeG) >> 8)) << 1;
-		b = (startB + ((gray * rangeB) >> 8)) << 1;
+		// [GEC] I use the same method as in shaders using floating values.
+		// This avoids errors in the invulneravility colormap in Doom and Heretic.
+		float fgray = (float)(gray / 255.f);
+		float fr = (startR + (fgray * rangeR)) * 2;
+		float fg = (startG + (fgray * rangeG)) * 2;
+		float fb = (startB + (fgray * rangeB)) * 2;
 
-		r = MIN(r, (uint32_t)255);
-		g = MIN(g, (uint32_t)255);
-		b = MIN(b, (uint32_t)255);
+		fr = clamp<float>(fr, 0.0f, 1.0f);
+		fg = clamp<float>(fg, 0.0f, 1.0f);
+		fb = clamp<float>(fb, 0.0f, 1.0f);
 
-		line[x] = MAKEARGB(a, r, g, b);
+		r = (uint32_t)(fr * 255.f);
+		g = (uint32_t)(fg * 255.f);
+		b = (uint32_t)(fb * 255.f);
+
+		line[x] = MAKEARGB(a, (uint8_t)r, (uint8_t)g, (uint8_t)b);
 	}
 }
 

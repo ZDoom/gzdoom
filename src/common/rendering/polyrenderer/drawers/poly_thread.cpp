@@ -388,7 +388,7 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 
 ShadedTriVertex PolyTriangleThreadData::ShadeVertex(int index)
 {
-	inputAssembly->Load(this, vertices, index);
+	inputAssembly->Load(this, vertices, frame0, frame1, index);
 	mainVertexShader.SIMPLE = (SpecialEffect == EFF_BURN) || (SpecialEffect == EFF_STENCIL);
 	mainVertexShader.SPHEREMAP = (SpecialEffect == EFF_SPHEREMAP);
 	mainVertexShader.main();

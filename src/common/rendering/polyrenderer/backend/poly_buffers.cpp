@@ -105,16 +105,37 @@ void PolyVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *vertices, int index)
+void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *vertices, int frame0, int frame1, int index)
 {
-	const uint8_t *vertex = static_cast<const uint8_t*>(vertices) + mStride * index;
-	const float *attrVertex = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_VERTEX]);
+	uint8_t* buff = (uint8_t*)vertices;
+
+	// [GEC] finds the right frame.
+	uint32_t offsets[2] = { static_cast<uint32_t>(frame0 * Stride), static_cast<uint32_t>(frame1 * Stride) };
+	uint8_t* vertexBuffers[2] = { buff + offsets[0], buff + offsets[1] };
+
+	const uint8_t* vertex = static_cast<const uint8_t*>(vertexBuffers[0]) + mStride * index;
+	const float* attrVertex = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_VERTEX]);
+
+	const uint8_t* vertex2 = static_cast<const uint8_t*>(vertexBuffers[1]) + mStride * index;
+	const float* attrVertex2 = reinterpret_cast<const float*>(vertex2 + mOffsets[VATTR_VERTEX]);
+
 	const float *attrTexcoord = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_TEXCOORD]);
 	const uint8_t *attrColor = reinterpret_cast<const uint8_t*>(vertex + mOffsets[VATTR_COLOR]);
 	const uint32_t* attrNormal = reinterpret_cast<const uint32_t*>(vertex + mOffsets[VATTR_NORMAL]);
 	const uint32_t* attrNormal2 = reinterpret_cast<const uint32_t*>(vertex + mOffsets[VATTR_NORMAL2]);
 
-	thread->mainVertexShader.aPosition = { attrVertex[0], attrVertex[1], attrVertex[2], 1.0f };
+	// [GEC] Apply the formula for model interpolation
+
+	float newVertex[3];
+
+	float t = thread->mainVertexShader.Data.uInterpolationFactor;
+	float invt = 1.0f - t;
+
+	newVertex[0] = (invt * attrVertex[0]) + (t * attrVertex2[0]);
+	newVertex[1] = (invt * attrVertex[1]) + (t * attrVertex2[1]);
+	newVertex[2] = (invt * attrVertex[2]) + (t * attrVertex2[2]);
+
+	thread->mainVertexShader.aPosition = { newVertex[0], newVertex[1], newVertex[2], 1.0f };
 	thread->mainVertexShader.aTexCoord = { attrTexcoord[0], attrTexcoord[1] };
 
 	if ((UseVertexData & 1) == 0)

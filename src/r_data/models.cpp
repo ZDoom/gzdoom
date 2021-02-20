@@ -735,20 +735,14 @@ FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, boo
 
 bool IsHUDModelForPlayerAvailable (player_t * player)
 {
-	if (player == nullptr || player->ReadyWeapon == nullptr)
+	if (player == nullptr || player->psprites == nullptr)
 		return false;
 
-	// [MK] allow the Strife burning hands to be a model...
-	DPSprite *psp = player->FindPSprite(PSP_STRIFEHANDS);
-
-	// [MK] ...otherwise, check for the weapon psprite as per usual
-	if (psp == nullptr)
-		psp = player->FindPSprite(PSP_WEAPON);
-
-	if (psp == nullptr)
-		return false;
-
-	FSpriteModelFrame *smf = FindModelFrame(psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
-	return ( smf != nullptr );
+	// [MK] check that at least one psprite uses models
+	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
+	{
+		FSpriteModelFrame *smf = FindModelFrame(psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
+		if ( smf != nullptr ) return true;
+	}
+	return false;
 }
-

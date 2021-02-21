@@ -73,8 +73,10 @@ bool FName::NameManager::Inited;
 static const char *PredefinedNames[] =
 {
 #define xx(n) #n,
+#define xy(n, s) s,
 #include "namedef.h"
 #undef xx
+#undef xy
 };
 
 // CODE --------------------------------------------------------------------

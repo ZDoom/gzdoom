@@ -1653,6 +1653,8 @@ MapFlagHandlers[] =
 	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
 	{ "forceworldpanning",				MITYPE_SETFLAG3,	LEVEL3_FORCEWORLDPANNING, 0 },
 	{ "propermonsterfallingdamage",			MITYPE_SETFLAG3,	LEVEL3_PROPERMONSTERFALLINGDAMAGE, 0 },
+	{ "enableskyboxao",				MITYPE_SETFLAG3,	LEVEL3_SKYBOXAO, 0 },
+	{ "disableskyboxao",				MITYPE_CLRFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
@@ -1839,23 +1841,24 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 		}
 		else
 		{
-			FAutoSegIterator probe(YRegHead, YRegTail);
 			bool success = false;
 
-			while (*++probe != NULL)
+			AutoSegs::MapInfoOptions.ForEach([this, &success, &info](FMapOptInfo* option)
 			{
-				if (sc.Compare(((FMapOptInfo *)(*probe))->name))
+				if (sc.Compare(option->name))
 				{
-					if (!((FMapOptInfo *)(*probe))->old && format_type != FMT_New)
+					if (!option->old && format_type != FMT_New)
 					{
 						sc.ScriptError("MAPINFO option '%s' requires the new MAPINFO format", sc.String);
 					}
-					((FMapOptInfo *)(*probe))->handler(*this, &info);
+					option->handler(*this, &info);
 					success = true;
-					break;
+					return false;  // break
 				}
-			}
-
+				
+				return true;  // continue
+			});
+			
 			if (!success)
 			{
 				if (!ParseCloseBrace())

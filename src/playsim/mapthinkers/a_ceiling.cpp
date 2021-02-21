@@ -252,6 +252,7 @@ bool FLevelLocals::CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t 
 	case DCeiling::ceilCrushAndRaise:
 	case DCeiling::ceilCrushRaiseAndStay:
 		ceiling->m_TopHeight = sec->ceilingplane.fD();
+		[[fallthrough]];
 	case DCeiling::ceilLowerAndCrush:
 		targheight = FindHighestFloorPoint (sec, &spot);
 		targheight += height;

@@ -165,7 +165,7 @@ static bool CheckForCustomAddition(FxAddSub *func, FCompileContext &ctx)
 //
 //==========================================================================
 
-static FxExpression* CheckForDefault(FxIdentifier *func, FCompileContext &ctx)
+static FxExpression* CheckForDefault(FxIdentifier* func, FCompileContext& ctx)
 {
 	auto& ScriptPosition = func->ScriptPosition;
 
@@ -190,11 +190,17 @@ static FxExpression* CheckForDefault(FxIdentifier *func, FCompileContext &ctx)
 			return nullptr;
 		}
 
-		FxExpression * x = new FxClassDefaults(new FxSelf(ScriptPosition), ScriptPosition);
+		FxExpression* x = new FxClassDefaults(new FxSelf(ScriptPosition), ScriptPosition);
 		delete func;
 		return x->Resolve(ctx);
 	}
-	
+	return func;
+}
+
+static FxExpression* CheckForLineSpecial(FxIdentifier* func, FCompileContext& ctx)
+{
+	auto& ScriptPosition = func->ScriptPosition;
+
 	// and line specials
 	int num;
 	if ((num = P_FindLineSpecial(func->Identifier.GetChars(), nullptr, nullptr)))
@@ -215,6 +221,7 @@ static FxExpression* CheckForDefault(FxIdentifier *func, FCompileContext &ctx)
 
 static FxExpression *ResolveForDefault(FxIdentifier *expr, FxExpression*& object, PContainerType* objtype, FCompileContext &ctx)
 {
+
 	if (expr->Identifier == NAME_Default)
 	{
 		if (!isActor(objtype))
@@ -953,6 +960,7 @@ void SetDoomCompileEnvironment()
 	compileEnvironment.SpecialTypeCast = CustomTypeCast;
 	compileEnvironment.CheckForCustomAddition = CheckForCustomAddition;
 	compileEnvironment.CheckSpecialIdentifier = CheckForDefault;
+	compileEnvironment.CheckSpecialGlobalIdentifier = CheckForLineSpecial;
 	compileEnvironment.ResolveSpecialIdentifier = ResolveForDefault;
 	compileEnvironment.CheckSpecialMember = CheckForMemberDefault;
 	compileEnvironment.ResolveSpecialFunction = AJumpProcessing;

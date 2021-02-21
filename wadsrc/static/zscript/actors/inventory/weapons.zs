@@ -213,6 +213,22 @@ class Weapon : StateProvider
 	//
 	//---------------------------------------------------------------------------
 
+	action void ResetPSprite(PSprite psp)
+	{
+		if (!psp)	return;
+		psp.rotation = 0;
+		psp.scale.x = 1;
+		psp.scale.y = 1;
+		psp.pivot.x = 0;
+		psp.pivot.y = 0;
+		psp.valign = 0;
+		psp.halign = 0;
+		psp.Coord0 = (0,0);
+		psp.Coord1 = (0,0);
+		psp.Coord2 = (0,0);
+		psp.Coord3 = (0,0);
+	}
+
 	action void A_Lower(int lowerspeed = 6)
 	{
 		let player = player;
@@ -240,6 +256,8 @@ class Weapon : StateProvider
 		{ // Not lowered all the way yet
 			return;
 		}
+		ResetPSprite(psp);
+		
 		if (player.playerstate == PST_DEAD)
 		{ // Player is dead, so don't bring up a pending weapon
 			// Player is dead, so keep the weapon off screen
@@ -278,12 +296,18 @@ class Weapon : StateProvider
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
 		if (!psp) return;
+
+		if (psp.y <= WEAPONBOTTOM)
+		{
+			ResetPSprite(psp);
+		}
 		psp.y -= raisespeed;
 		if (psp.y > WEAPONTOP)
 		{ // Not raised all the way yet
 			return;
 		}
 		psp.y = WEAPONTOP;
+		
 		psp.SetState(player.ReadyWeapon.GetReadyState());
 		return;
 	}

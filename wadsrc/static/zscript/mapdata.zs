@@ -62,6 +62,14 @@ struct Side native play
 		WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
 	};
 
+	enum EPartFlags
+	{
+		NoGradient = 1,
+		FlipGradient = 2,
+		ClampGradient = 4,
+		UseOwnSpecialColors = 8,
+		UseOwnAdditiveColor = 16,
+	};
 
 	native readonly Sector sector;			// Sector the SideDef is facing.
 	//DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
@@ -83,7 +91,9 @@ struct Side native play
 	native void SetTextureYScale(int which, double scale);
 	native double GetTextureYScale(int which);
 	native void MultiplyTextureYScale(int which, double delta);
-	native void SetSpecialColor(int tier, int position, Color scolor);
+	native int GetTextureFlags(int tier);
+	native void ChangeTextureFlags(int tier, int And, int Or);
+	native void SetSpecialColor(int tier, int position, Color scolor, bool useowncolor = true);
 	native Color GetAdditiveColor(int tier);
 	native void SetAdditiveColor(int tier, Color color);
 	native void EnableAdditiveColor(int tier, bool enable);

@@ -4,6 +4,9 @@
 #include "intrect.h"
 
 struct event_t;
+class FRenderState;
+class FGameTexture;
+enum EUpscaleFlags : int;
 
 struct SystemCallbacks
 {
@@ -22,6 +25,13 @@ struct SystemCallbacks
 	void (*MenuDim)();
 	FString(*GetPlayerName)(int i);
 	bool (*DispatchEvent)(event_t* ev);
+	bool (*CheckGame)(const char* nm);
+	int (*GetGender)();
+	void (*MenuClosed)();
+	bool (*CheckMenudefOption)(const char* opt);
+	void (*ConsoleToggled)(int state);
+	bool (*PreBindTexture)(FRenderState* state, FGameTexture*& tex, EUpscaleFlags& flags, int& scaleflags, int& clampmode, int& translation, int& overrideshader);
+	void (*FontCharCreated)(FGameTexture* base, FGameTexture* untranslated, FGameTexture* translated);
 };
 
 extern SystemCallbacks sysCallbacks;
@@ -36,3 +46,6 @@ struct WadStuff
 extern FString endoomName;
 extern bool batchrun;
 extern float menuBlurAmount;
+extern bool generic_ui;
+
+void UpdateGenericUI(bool cvar);

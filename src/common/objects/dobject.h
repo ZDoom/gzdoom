@@ -41,6 +41,7 @@
 #include "name.h"
 #include "palentry.h"
 #include "textureid.h"
+#include "autosegs.h"
 
 class PClass;
 class PType;
@@ -134,8 +135,8 @@ public: \
 	static const size_t PointerOffsets[];
 
 #if defined(_MSC_VER)
-#	pragma section(".creg$u",read)
-#	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg * const cls::RegistrationInfoPtr = &cls::RegistrationInfo;
+#	pragma section(SECTION_CREG,read)
+#	define _DECLARE_TI(cls) __declspec(allocate(SECTION_CREG)) ClassReg * const cls::RegistrationInfoPtr = &cls::RegistrationInfo;
 #else
 #	define _DECLARE_TI(cls) ClassReg * const cls::RegistrationInfoPtr __attribute__((section(SECTION_CREG))) = &cls::RegistrationInfo;
 #endif
@@ -266,7 +267,7 @@ private:
 
 	void *operator new(size_t len, nonew&)
 	{
-		return M_Malloc(len);
+		return M_Calloc(len, 1);
 	}
 public:
 

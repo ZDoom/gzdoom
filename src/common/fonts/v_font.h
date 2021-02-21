@@ -127,7 +127,7 @@ public:
 	void SetCursor(char c) { Cursor = c; }
 	void SetKerning(int c) { GlobalKerning = c; }
 	bool NoTranslate() const { return noTranslate; }
-	void RecordAllTextureColors(uint32_t *usedcolors);
+	virtual void RecordAllTextureColors(uint32_t *usedcolors);
 	virtual void SetDefaultTranslation(uint32_t *colors);
 	void CheckCase();
 
@@ -182,7 +182,7 @@ protected:
 };
 
 
-extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
+extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont, *AlternativeBigFont;
 
 void V_InitFonts();
 void V_ClearFonts();

@@ -766,7 +766,6 @@ void S_ParseSndInfo (bool redefine)
 
 	S_ShrinkPlayerSoundLists ();
 
-	sfx_empty = fileSystem.CheckNumForName ("dsempty", ns_sounds);
 	S_CheckIntegrity();
 }
 
@@ -1175,9 +1174,11 @@ static void S_AddSNDINFO (int lump)
 				if (lump >= 0)
 				{
 					// do not set the alias if a later WAD defines its own music of this name
+					// internal files (up to and including iwads) can always be set for musicalias
 					int file = fileSystem.GetFileContainer(lump);
 					int sndifile = fileSystem.GetFileContainer(sc.LumpNum);
-					if (file > sndifile)
+					if ( (file > sndifile) &&
+						!(sndifile <= fileSystem.GetIwadNum() && file <= fileSystem.GetIwadNum()) )
 					{
 						sc.MustGetString();
 						continue;
@@ -1669,19 +1670,6 @@ int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedn
 		id = name;
 	}
 	return S_FindSkinnedSound (actor, id);
-}
-
-//==========================================================================
-//
-// sfxinfo_t :: MarkUsed
-//
-// Marks this sound for precaching.
-//
-//==========================================================================
-
-void sfxinfo_t::MarkUsed()
-{
-	bUsed = true;
 }
 
 //==========================================================================

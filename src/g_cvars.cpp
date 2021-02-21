@@ -41,6 +41,7 @@
 #include "v_font.h"
 #include "utf8.h"
 #include "gi.h"
+#include "i_interface.h"
 
 void I_UpdateWindowTitle();
 
@@ -50,17 +51,8 @@ CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
 
-// Show developer messages if true.
-CUSTOM_CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	FScriptPosition::Developer = self;
-}
-
 // [RH] Feature control cvars
 CVAR(Bool, var_friction, true, CVAR_SERVERINFO);
-
-// Option Search
-CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE);
 
 CUSTOM_CVAR (Int, turnspeedwalkfast, 640, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -156,48 +148,7 @@ CUSTOM_CVAR(Float, teamdamage, 0.f, CVAR_SERVERINFO | CVAR_NOINITCALL)
 	}
 }
 
-bool generic_ui;
-EXTERN_CVAR(String, language)
-
-bool CheckFontComplete(FFont *font)
-{
-	// Also check if the SmallFont contains all characters this language needs.
-	// If not, switch back to the original one.
-	return font->CanPrint(GStrings["REQUIRED_CHARACTERS"]);
-}
-
-void UpdateGenericUI(bool cvar)
-{
-	auto switchstr = GStrings["USE_GENERIC_FONT"];
-	generic_ui = (cvar || (switchstr && strtoll(switchstr, nullptr, 0)) || ((gameinfo.gametype & GAME_Raven) && !strnicmp(language, "el", 2)));
-	if (!generic_ui)
-	{
-		// Use the mod's SmallFont if it is complete.
-		// Otherwise use the stock Smallfont if it is complete.
-		// If none is complete, fall back to the VGA font.
-		// The font being set here will be used in 3 places: Notifications, centered messages and menu confirmations.
-		if (CheckFontComplete(SmallFont))
-		{
-			AlternativeSmallFont = SmallFont;
-		}
-		else if (OriginalSmallFont && CheckFontComplete(OriginalSmallFont))
-		{
-			AlternativeSmallFont = OriginalSmallFont;
-		}
-		else
-		{
-			AlternativeSmallFont = NewSmallFont;
-		}
-
-		// Todo: Do the same for the BigFont
-	}
-}
-
-CUSTOM_CVAR(Bool, ui_generic, false, CVAR_NOINITCALL) // This is for allowing to test the generic font system with all languages
-{
-	UpdateGenericUI(self);
-}
-
+EXTERN_CVAR(Bool, ui_generic)
 
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 {

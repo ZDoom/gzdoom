@@ -44,31 +44,81 @@
 
 #include "autosegs.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <dbghelp.h>
+#elif defined __MACH__
+#include <mach-o/getsect.h>
+#include <mach-o/ldsyms.h>
+#endif
+
+
+#if defined _WIN32 || defined __MACH__
+
+#define AUTOSEG_VARIABLE(name, autoseg) namespace AutoSegs{ FAutoSeg name{ AUTOSEG_STR(autoseg) }; }
+
+#else // Linux and others with ELF executables
+
+#define AUTOSEG_START(name) __start_##name
+#define AUTOSEG_STOP(name) __stop_##name
+#define AUTOSEG_VARIABLE(name, autoseg) \
+	void* name##DummyPointer __attribute__((section(AUTOSEG_STR(autoseg)))) __attribute__((used)); \
+	extern void* AUTOSEG_START(autoseg); \
+	extern void* AUTOSEG_STOP(autoseg); \
+	namespace AutoSegs { FAutoSeg name{ &AUTOSEG_START(autoseg), &AUTOSEG_STOP(autoseg) }; }
+
+#endif
+
+AUTOSEG_VARIABLE(ActionFunctons, AUTOSEG_AREG)
+AUTOSEG_VARIABLE(TypeInfos, AUTOSEG_CREG)
+AUTOSEG_VARIABLE(ClassFields, AUTOSEG_FREG)
+AUTOSEG_VARIABLE(Properties, AUTOSEG_GREG)
+AUTOSEG_VARIABLE(MapInfoOptions, AUTOSEG_YREG)
+
+#undef AUTOSEG_VARIABLE
+#undef AUTOSEG_STOP
+#undef AUTOSEG_START
+
+
+void FAutoSeg::Initialize()
+{
+#ifdef _WIN32
+
+	const HMODULE selfModule = GetModuleHandle(nullptr);
+	const SIZE_T baseAddress = reinterpret_cast<SIZE_T>(selfModule);
+
+	const PIMAGE_NT_HEADERS header = ImageNtHeader(selfModule);
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(header);
+
+	for (WORD i = 0; i < header->FileHeader.NumberOfSections; ++i, ++section)
+	{
+		if (strncmp(reinterpret_cast<char *>(section->Name), name, IMAGE_SIZEOF_SHORT_NAME) == 0)
+		{
+			begin = reinterpret_cast<void **>(baseAddress + section->VirtualAddress);
+			end = reinterpret_cast<void **>(baseAddress + section->VirtualAddress + section->SizeOfRawData);
+			break;
+		}
+	}
+
+#elif defined __MACH__
+
+	unsigned long size;
+
+	if (uint8_t *const section = getsectiondata(&_mh_execute_header, AUTOSEG_MACH_SEGMENT, name, &size))
+	{
+		begin = reinterpret_cast<void **>(section);
+		end = reinterpret_cast<void **>(section + size);
+	}
+
+#else // Linux and others with ELF executables
+
+	assert(false);
+
+#endif
+}
+
+
 #if defined(_MSC_VER)
-
-// The various reg sections are used to group pointers spread across multiple
-// source files into cohesive arrays in the final executable. We don't
-// actually care about these sections themselves and merge them all into
-// a single section during the final link. (.rdata is the standard section
-// for initialized read-only data.)
-
-#pragma comment(linker, "/merge:.areg=.rdata /merge:.creg=.rdata /merge:.freg=.rdata")
-#pragma comment(linker, "/merge:.greg=.rdata /merge:.yreg=.rdata")
-
-#pragma section(".areg$a",read)
-__declspec(allocate(".areg$a")) void *const ARegHead = 0;
-
-#pragma section(".creg$a",read)
-__declspec(allocate(".creg$a")) void *const CRegHead = 0;
-
-#pragma section(".freg$a",read)
-__declspec(allocate(".freg$a")) void *const FRegHead = 0;
-
-#pragma section(".greg$a",read)
-__declspec(allocate(".greg$a")) void *const GRegHead = 0;
-
-#pragma section(".yreg$a",read)
-__declspec(allocate(".yreg$a")) void *const YRegHead = 0;
 
 // We want visual styles support under XP
 #if defined _M_IX86
@@ -88,24 +138,5 @@ __declspec(allocate(".yreg$a")) void *const YRegHead = 0;
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #endif
-
-#elif defined(__GNUC__)
-
-#include "doomtype.h"
-
-// I don't know of an easy way to merge sections together with the GNU linker,
-// so GCC users will see all of these sections appear in the final executable.
-// (There are linker scripts, but that apparently involves extracting the
-// default script from ld and then modifying it.)
-
-void *const ARegHead __attribute__((section(SECTION_AREG))) = 0;
-void *const CRegHead __attribute__((section(SECTION_CREG))) = 0;
-void *const FRegHead __attribute__((section(SECTION_FREG))) = 0;
-void *const GRegHead __attribute__((section(SECTION_GREG))) = 0;
-void *const YRegHead __attribute__((section(SECTION_YREG))) = 0;
-
-#else
-
-#error Please fix autostart.cpp for your compiler
 
 #endif

@@ -54,6 +54,8 @@ namespace swrenderer
 		auto viewport = thread->Viewport.get();
 		RenderPortal* renderportal = thread->Portal.get();
 
+		// Rotate to view direction:
+
 		tleft.X = float(pt1.X * viewport->viewpoint.Sin - pt1.Y * viewport->viewpoint.Cos);
 		tright.X = float(pt2.X * viewport->viewpoint.Sin - pt2.Y * viewport->viewpoint.Cos);
 
@@ -67,6 +69,8 @@ namespace swrenderer
 			tright.X = t;
 			std::swap(tleft.Y, tright.Y);
 		}
+
+		// Edge clip:
 
 		float fsx1, fsz1, fsx2, fsz2;
 
@@ -112,23 +116,20 @@ namespace swrenderer
 		if (fsz2 < TOO_CLOSE_Z)
 			return true;
 
+		// Find screen range covered by the line:
+
 		sx1 = xs_RoundToInt(fsx1);
 		sx2 = xs_RoundToInt(fsx2);
-
-		float delta = fsx2 - fsx1;
-		float t1 = (sx1 + 0.5f - fsx1) / delta;
-		float t2 = (sx2 + 0.5f - fsx1) / delta;
-		float invZ1 = 1.0f / fsz1;
-		float invZ2 = 1.0f / fsz2;
-		sz1 = 1.0f / (invZ1 * (1.0f - t1) + invZ2 * t1);
-		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
 
 		if (sx2 <= sx1)
 			return true;
 
+		// Remap texture coordinates to the part covered by the line segment:
+
 		if (lineseg && lineseg->linedef)
 		{
 			line_t* line = lineseg->linedef;
+			float t1, t2;
 			if (fabs(line->delta.X) > fabs(line->delta.Y))
 			{
 				t1 = (lineseg->v1->fX() - line->v1->fX()) / line->delta.X;
@@ -149,6 +150,23 @@ namespace swrenderer
 			tx1 = t1 + tx1 * (t2 - t1);
 			tx2 = t1 + tx2 * (t2 - t1);
 		}
+
+		// Calculate screen depths for the start and end points (resulting values are at the pixel center):
+
+		float delta = fsx2 - fsx1;
+		float t1 = (sx1 + 0.5f - fsx1) / delta;
+		float t2 = (sx2 + 0.5f - fsx1) / delta;
+		float invZ1 = 1.0f / fsz1;
+		float invZ2 = 1.0f / fsz2;
+		sz1 = 1.0f / (invZ1 * (1.0f - t1) + invZ2 * t1);
+		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
+
+		// Adjust texture coordinates to also be at the pixel centers:
+
+		float ftx1 = tx1 * invZ1;
+		float ftx2 = tx2 * invZ2;
+		tx1 = (ftx1 * (1.0f - t1) + ftx2 * t1) * sz1;
+		tx2 = (ftx1 * (1.0f - t2) + ftx2 * t2) * sz2;
 
 		return false;
 	}

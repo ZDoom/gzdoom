@@ -70,9 +70,6 @@ namespace swrenderer
 			iscale = -iscale;
 		float vstepY = iscale / WallC.sz1 / (viewport->InvZtoScale / WallC.sz1);
 
-		wpos += wstepX * 0.5f;
-		upos += ustepX * 0.5f;
-
 		int x1 = MAX<int>(WallC.sx1, clipx1);
 		int x2 = MIN<int>(WallC.sx2, clipx2);
 		if (x1 >= x2)
@@ -165,7 +162,7 @@ namespace swrenderer
 		}
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread* thread, int x, int y1, int cliptop, int clipbottom, uint32_t texelX, uint32_t texelStepX, uint32_t texelStepY, float scaleV, bool flipY, FSoftwareTexture* tex, int texwidth, int texheight, bool bgra, FRenderStyle style)
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread* thread, int x, float y1, int cliptop, int clipbottom, uint32_t texelX, uint32_t texelStepX, uint32_t texelStepY, float scaleV, bool flipY, FSoftwareTexture* tex, int texwidth, int texheight, bool bgra, FRenderStyle style)
 	{
 		const FSoftwareTextureSpan* span;
 		if (bgra)
@@ -230,8 +227,8 @@ namespace swrenderer
 				const int top = span->TopOffset;
 
 				// calculate unclipped screen coordinates for post
-				dc_yl = (int)(y1 + top / scaleV + 0.5f);
-				dc_yh = (int)(y1 + (top + length) / scaleV + 0.5f);
+				dc_yl = xs_RoundToInt(y1 + top / scaleV);
+				dc_yh = xs_RoundToInt(y1 + (top + length) / scaleV);
 
 				if (flipY)
 					std::swap(dc_yl, dc_yh);
@@ -268,8 +265,8 @@ namespace swrenderer
 				const int top = span->TopOffset;
 
 				// calculate unclipped screen coordinates for post
-				dc_yl = (int)(y1 + top / scaleV + 0.5f);
-				dc_yh = (int)(y1 + (top + length) / scaleV + 0.5f);
+				dc_yl = xs_RoundToInt(y1 + top / scaleV);
+				dc_yh = xs_RoundToInt(y1 + (top + length) / scaleV);
 
 				if (flipY)
 					std::swap(dc_yl, dc_yh);

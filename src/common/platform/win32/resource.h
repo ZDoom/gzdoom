@@ -153,6 +153,7 @@
 #define IDC_WELCOME_NOAUTOLOAD          4023
 #define IDC_WELCOME_LIGHTS              4024
 #define IDC_WELCOME_BRIGHTMAPS          4025
+#define IDC_WELCOME_WIDESCREEN          1087
 #define IDC_WELCOME_VULKAN              4026
 #define IDC_WELCOME_VULKAN1             4026
 

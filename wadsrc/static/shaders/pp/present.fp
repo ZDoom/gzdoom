@@ -31,7 +31,7 @@ vec4 Dither(vec4 c)
 
 vec4 sRGBtoLinear(vec4 c)
 {
-	return vec4(mix(pow((c.rgb + 0.055) / 1.055, vec3(2.4)), c.rgb / 12.92, step(c.rgb, vec3(0.04045))), c.a);
+	return vec4(mix(c.rgb / 12.92, pow((c.rgb + 0.055) / 1.055, vec3(2.4)), step(c.rgb, vec3(0.04045))), c.a);
 }
 
 vec4 ApplyHdrMode(vec4 c)

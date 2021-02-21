@@ -52,8 +52,6 @@ enum
 };
 
 
-EXTERN_CVAR (Int, con_scaletext)
-
 EXTERN_CVAR (Bool, sb_cooperative_enable)
 EXTERN_CVAR (Bool, sb_deathmatch_enable)
 EXTERN_CVAR (Bool, sb_teamdeathmatch_enable)
@@ -508,6 +506,7 @@ CCMD (messagemode)
 {
 	if (menuactive == MENU_Off)
 	{
+		buttonMap.ResetButtonStates();
 		chatmodeon = 1;
 		C_HideConsole ();
 		CT_ClearChatMessage ();
@@ -530,6 +529,7 @@ CCMD (messagemode2)
 {
 	if (menuactive == MENU_Off)
 	{
+		buttonMap.ResetButtonStates();
 		chatmodeon = 2;
 		C_HideConsole ();
 		CT_ClearChatMessage ();

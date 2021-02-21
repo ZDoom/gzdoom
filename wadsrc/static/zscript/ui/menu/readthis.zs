@@ -74,7 +74,7 @@ class ReadThisMenu : GenericMenu
 		}
 
 		screen.Dim(0, 1.0, 0,0, screen.GetWidth(), screen.GetHeight());
-		alpha = MIN((gametic - mInfoTic) * (3. / Thinker.TICRATE), 1.);
+		alpha = MIN((gametic - mInfoTic) * (3. / GameTicRate), 1.);
 		if (alpha < 1. && prevpic.IsValid())
 		{
 			screen.DrawTexture (prevpic, false, 0, 0, DTA_Fullscreen, true);

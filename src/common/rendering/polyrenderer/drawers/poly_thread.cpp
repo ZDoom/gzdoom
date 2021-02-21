@@ -28,7 +28,6 @@
 #include "model.h"
 #include "poly_thread.h"
 #include "screen_triangle.h"
-#include "x86.h"
 
 #ifndef NO_SSE
 #include <immintrin.h>
@@ -389,7 +388,7 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 
 ShadedTriVertex PolyTriangleThreadData::ShadeVertex(int index)
 {
-	inputAssembly->Load(this, vertices, index);
+	inputAssembly->Load(this, vertices, frame0, frame1, index);
 	mainVertexShader.SIMPLE = (SpecialEffect == EFF_BURN) || (SpecialEffect == EFF_STENCIL);
 	mainVertexShader.SPHEREMAP = (SpecialEffect == EFF_SPHEREMAP);
 	mainVertexShader.main();

@@ -43,51 +43,6 @@
 #include "r_videoscale.h"
 #include "v_draw.h"
 
-
-//===========================================================================
-// 
-// Vertex buffer for 2D drawer
-//
-//===========================================================================
-
-class F2DVertexBuffer
-{
-	IVertexBuffer *mVertexBuffer;
-	IIndexBuffer *mIndexBuffer;
-
-
-public:
-
-	F2DVertexBuffer()
-	{
-		mVertexBuffer = screen->CreateVertexBuffer();
-		mIndexBuffer = screen->CreateIndexBuffer();
-
-		static const FVertexBufferAttribute format[] = {
-			{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(F2DDrawer::TwoDVertex, x) },
-			{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(F2DDrawer::TwoDVertex, u) },
-			{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(F2DDrawer::TwoDVertex, color0) }
-		};
-		mVertexBuffer->SetFormat(1, 3, sizeof(F2DDrawer::TwoDVertex), format);
-	}
-	~F2DVertexBuffer()
-	{
-		delete mIndexBuffer;
-		delete mVertexBuffer;
-	}
-
-	void UploadData(F2DDrawer::TwoDVertex *vertices, int vertcount, int *indices, int indexcount)
-	{
-		mVertexBuffer->SetData(vertcount * sizeof(*vertices), vertices, false);
-		mIndexBuffer->SetData(indexcount * sizeof(unsigned int), indices, false);
-	}
-
-	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
-	{
-		return std::make_pair(mVertexBuffer, mIndexBuffer);
-	}
-};
-
 //===========================================================================
 // 
 // Draws the 2D stuff. This is the version for OpenGL 3 and later.
@@ -174,6 +129,29 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 		state.AlphaFunc(Alpha_GEqual, 0.f);
 
+		if (cmd.useTransform)
+		{
+			FLOATTYPE m[16] = {
+				0.0, 0.0, 0.0, 0.0,
+				0.0, 0.0, 0.0, 0.0,
+				0.0, 0.0, 1.0, 0.0,
+				0.0, 0.0, 0.0, 1.0
+			};
+			for (size_t i = 0; i < 2; i++)
+			{
+				for (size_t j = 0; j < 2; j++)
+				{
+					m[4 * j + i] = (FLOATTYPE) cmd.transform.Cells[i][j];
+				}
+			}
+			for (size_t i = 0; i < 2; i++)
+			{
+				m[4 * 3 + i] = (FLOATTYPE) cmd.transform.Cells[i][2];
+			}
+			state.mModelMatrix.loadMatrix(m);
+			state.EnableModelMatrix(true);
+		}
+
 		if (cmd.mTexture != nullptr && cmd.mTexture->isValid())
 		{
 			auto flags = cmd.mTexture->GetUseType() >= ETextureType::Special? UF_None : cmd.mTexture->GetUseType() == ETextureType::FontChar? UF_Font : UF_Texture;
@@ -200,26 +178,44 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 			state.EnableTexture(false);
 		}
 
-		switch (cmd.mType)
+		if (cmd.shape2D != nullptr)
 		{
-		default:
-		case F2DDrawer::DrawTypeTriangles:
-			state.DrawIndexed(DT_Triangles, cmd.mIndexIndex, cmd.mIndexCount);
-			break;
+			state.SetVertexBuffer(&cmd.shape2D->buffers[cmd.shape2DBufIndex]);
+			state.DrawIndexed(DT_Triangles, 0, cmd.shape2DIndexCount);
+			state.SetVertexBuffer(&vb);
+			if (cmd.shape2D->bufIndex > 0 && cmd.shapeLastCmd)
+			{
+				cmd.shape2D->needsVertexUpload = true;
+				cmd.shape2D->buffers.Clear();
+				cmd.shape2D->lastCommand = nullptr;
+				cmd.shape2D->bufIndex = -1;
+			}
+			cmd.shape2D->uploadedOnce = false;
+		}
+		else
+		{
+			switch (cmd.mType)
+			{
+			default:
+			case F2DDrawer::DrawTypeTriangles:
+				state.DrawIndexed(DT_Triangles, cmd.mIndexIndex, cmd.mIndexCount);
+				break;
 
-		case F2DDrawer::DrawTypeLines:
-			state.Draw(DT_Lines, cmd.mVertIndex, cmd.mVertCount);
-			break;
+			case F2DDrawer::DrawTypeLines:
+				state.Draw(DT_Lines, cmd.mVertIndex, cmd.mVertCount);
+				break;
 
-		case F2DDrawer::DrawTypePoints:
-			state.Draw(DT_Points, cmd.mVertIndex, cmd.mVertCount);
-			break;
+			case F2DDrawer::DrawTypePoints:
+				state.Draw(DT_Points, cmd.mVertIndex, cmd.mVertCount);
+				break;
 
+			}
 		}
 		state.SetObjectColor(0xffffffff);
 		state.SetObjectColor2(0);
 		state.SetAddColor(0);
 		state.EnableTextureMatrix(false);
+		state.EnableModelMatrix(false);
 		state.SetEffect(EFF_NONE);
 
 	}

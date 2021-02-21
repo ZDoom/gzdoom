@@ -87,6 +87,7 @@ class FSingleLumpFont : public FFont
 {
 public:
 	FSingleLumpFont (const char *fontname, int lump);
+	void RecordAllTextureColors(uint32_t* usedcolors) override;
 
 protected:
 	void CheckFON1Chars (double *luminosity);
@@ -648,6 +649,32 @@ void FSingleLumpFont::FixupPalette (uint8_t *identity, double *luminosity, const
 		luminosity[i] = (luminosity[i] - minlum) * diver;
 	}
 }
+
+//==========================================================================
+//
+// RecordAllTextureColors
+//
+// Given a 256 entry buffer, sets every entry that corresponds to a color
+// used by the font.
+//
+//==========================================================================
+
+void FSingleLumpFont::RecordAllTextureColors(uint32_t* usedcolors)
+{
+	double luminosity[256];
+	uint8_t identity[256];
+	PalEntry local_palette[256];
+
+	if (FontType == BMFFONT || FontType == FONT2)
+	{
+		FixupPalette(identity, luminosity, PaletteData, RescalePalette, local_palette);
+		for (int i = 0; i < 256; i++)
+		{
+			if (identity[i] != 0) usedcolors[identity[i]]++;
+		}
+	}
+}
+
 
 FFont *CreateSingleLumpFont (const char *fontname, int lump)
 {

@@ -34,6 +34,7 @@
 #ifndef __G_LEVEL_H__
 #define __G_LEVEL_H__
 
+#include "autosegs.h"
 #include "doomtype.h"
 #include "vectors.h"
 #include "sc_man.h"
@@ -44,8 +45,8 @@ struct cluster_info_t;
 class FSerializer;
 
 #if defined(_MSC_VER)
-#pragma section(".yreg$u",read)
-#define MSVC_YSEG __declspec(allocate(".yreg$u"))
+#pragma section(SECTION_YREG,read)
+#define MSVC_YSEG __declspec(allocate(SECTION_YREG))
 #define GCC_YSEG
 #else
 #define MSVC_YSEG
@@ -250,6 +251,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_FORCEWORLDPANNING	= 0x00000080,	// Forces the world panning flag for all textures, even those without it explicitly set.
 	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
 	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
+	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
 };
 
 
@@ -473,6 +475,8 @@ enum ESkillProperty
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 	SKILLP_PlayerRespawn,
+	SKILLP_SpawnMulti,
+	SKILLP_InstantReaction,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -516,6 +520,8 @@ struct FSkillInfo
 	int RespawnLimit;
 	double Aggressiveness;
 	int SpawnFilter;
+	bool SpawnMulti;
+	bool InstantReaction;
 	int ACSReturn;
 	FString MenuName;
 	FString PicName;

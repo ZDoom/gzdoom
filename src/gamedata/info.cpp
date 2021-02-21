@@ -777,11 +777,6 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 			Printf ("Unknown actor '%s'\n", argv[1]);
 			return;
 		}
-		if (type->bAbstract)
-		{
-			Printf("Cannot instantiate abstract class %s\n", argv[1]);
-			return;
-		}
 		Net_WriteByte (argv.argc() > 2 ? command2 : command);
 		Net_WriteString (type->TypeName.GetChars());
 

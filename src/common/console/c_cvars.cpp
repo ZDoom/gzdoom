@@ -1497,6 +1497,26 @@ CCMD (unset)
 	}
 }
 
+CCMD (resetcvar)
+{
+	if (argv.argc() != 2)
+	{
+		Printf ("usage: resetcvar <variable>\n");
+	}
+	else
+	{
+		FBaseCVar *var = FindCVar (argv[1], NULL);
+		if (var != NULL)
+		{
+			var->ResetToDefault();
+		}
+		else
+		{
+			Printf ("No such variable: %s\n", argv[1]);
+		}
+	}
+}
+
 CCMD (get)
 {
 	FBaseCVar *var, *prev;

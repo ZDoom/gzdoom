@@ -47,6 +47,264 @@
 #include "gstrings.h"
 #include "printf.h"
 #include "s_music.h"
+#include "i_interface.h"
+#include "base_sbar.h"
+
+//==========================================================================
+//
+// status bar exports
+//
+//==========================================================================
+
+static double StatusbarToRealCoords(DStatusBarCore* self, double x, double y, double w, double h, double* py, double* pw, double* ph)
+{
+	self->StatusbarToRealCoords(x, y, w, h);
+	*py = y;
+	*pw = w;
+	*ph = h;
+	return x;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, StatusbarToRealCoords, StatusbarToRealCoords)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	self->StatusbarToRealCoords(x, y, w, h);
+	if (numret > 0) ret[0].SetFloat(x);
+	if (numret > 1) ret[1].SetFloat(y);
+	if (numret > 2) ret[2].SetFloat(w);
+	if (numret > 3) ret[3].SetFloat(h);
+	return MIN(4, numret);
+}
+
+void SBar_DrawTexture(DStatusBarCore* self, int texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
+{
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawTexture, SBar_DrawTexture)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_INT(texid);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(flags);
+	PARAM_FLOAT(alpha);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
+	SBar_DrawTexture(self, texid, x, y, flags, alpha, w, h, scaleX, scaleY);
+	return 0;
+}
+
+void SBar_DrawImage(DStatusBarCore* self, const FString& texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
+{
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawImage, SBar_DrawImage)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_STRING(texid);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(flags);
+	PARAM_FLOAT(alpha);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
+	SBar_DrawImage(self, texid, x, y, flags, alpha, w, h, scaleX, scaleY);
+	return 0;
+}
+
+void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY, int translation);
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawString, SBar_DrawString)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_POINTER_NOT_NULL(font, DHUDFont);
+	PARAM_STRING(string);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(flags);
+	PARAM_INT(trans);
+	PARAM_FLOAT(alpha);
+	PARAM_INT(wrapwidth);
+	PARAM_INT(linespacing);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
+	PARAM_INT(pt);
+	SBar_DrawString(self, font, string, x, y, flags, trans, alpha, wrapwidth, linespacing, scaleX, scaleY, pt);
+	return 0;
+}
+
+static double SBar_TransformRect(DStatusBarCore* self, double x, double y, double w, double h, int flags, double* py, double* pw, double* ph)
+{
+	self->TransformRect(x, y, w, h, flags);
+	*py = y;
+	*pw = w;
+	*ph = h;
+	return x;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, TransformRect, SBar_TransformRect)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT(flags);
+	self->TransformRect(x, y, w, h, flags);
+	if (numret > 0) ret[0].SetFloat(x);
+	if (numret > 1) ret[1].SetFloat(y);
+	if (numret > 2) ret[2].SetFloat(w);
+	if (numret > 3) ret[3].SetFloat(h);
+	return MIN(4, numret);
+}
+
+static void SBar_Fill(DStatusBarCore* self, int color, double x, double y, double w, double h, int flags)
+{
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	self->Fill(color, x, y, w, h, flags);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, Fill, SBar_Fill)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_COLOR(color);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT(flags);
+	SBar_Fill(self, color, x, y, w, h, flags);
+	return 0;
+}
+
+static void SBar_SetClipRect(DStatusBarCore* self, double x, double y, double w, double h, int flags)
+{
+	self->SetClipRect(x, y, w, h, flags);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, SetClipRect, SBar_SetClipRect)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
+	PARAM_INT(flags);
+	self->SetClipRect(x, y, w, h, flags);
+	return 0;
+}
+
+void FormatNumber(int number, int minsize, int maxsize, int flags, const FString& prefix, FString* result);
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, FormatNumber, FormatNumber)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(number);
+	PARAM_INT(minsize);
+	PARAM_INT(maxsize);
+	PARAM_INT(flags);
+	PARAM_STRING(prefix);
+	FString fmt;
+	FormatNumber(number, minsize, maxsize, flags, prefix, &fmt);
+	ACTION_RETURN_STRING(fmt);
+}
+
+static void SBar_SetSize(DStatusBarCore* self, int rt, int vw, int vh, int hvw, int hvh)
+{
+	self->SetSize(rt, vw, vh, hvw, hvh);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, SetSize, SBar_SetSize)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_INT(rt);
+	PARAM_INT(vw);
+	PARAM_INT(vh);
+	PARAM_INT(hvw);
+	PARAM_INT(hvh);
+	self->SetSize(rt, vw, vh, hvw, hvh);
+	return 0;
+}
+
+static void SBar_GetHUDScale(DStatusBarCore* self, DVector2* result)
+{
+	*result = self->GetHUDScale();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, GetHUDScale, SBar_GetHUDScale)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	ACTION_RETURN_VEC2(self->GetHUDScale());
+}
+
+static void BeginStatusBar(DStatusBarCore* self, bool fs, int w, int h, int r)
+{
+	self->BeginStatusBar(w, h, r, fs);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, BeginStatusBar, BeginStatusBar)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	PARAM_INT(r);
+	self->BeginStatusBar(w, h, r, fs);
+	return 0;
+}
+
+static void BeginHUD(DStatusBarCore* self, double a, bool fs, int w, int h)
+{
+	self->BeginHUD(w, h, a, fs);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, BeginHUD, BeginHUD)
+{
+	PARAM_SELF_PROLOGUE(DStatusBarCore);
+	PARAM_FLOAT(a);
+	PARAM_BOOL(fs);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	self->BeginHUD(w, h, a, fs);
+	return 0;
+}
+
+
+//=====================================================================================
+//
+// 
+//
+//=====================================================================================
+
+DHUDFont* CreateHudFont(FFont* fnt, int spac, int mono, int sx, int sy)
+{
+	return Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_INT(spac);
+	PARAM_INT(mono);
+	PARAM_INT(sx);
+	PARAM_INT(sy);
+	ACTION_RETURN_POINTER(CreateHudFont(fnt, spac, mono, sy, sy));
+}
+
+
 
 
 //==========================================================================
@@ -354,6 +612,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCursor, GetCursor)
 	ACTION_RETURN_STRING(FString(self->GetCursor()));
 }
 
+static int GetGlyphHeight(FFont* fnt, int code)
+{
+	auto glyph = fnt->GetChar(code, CR_UNTRANSLATED, nullptr);
+	return glyph ? (int)glyph->GetDisplayHeight() : 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetGlyphHeight, GetGlyphHeight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_INT(GetGlyphHeight(self, code));
+}
 //==========================================================================
 //
 // file system
@@ -624,18 +894,6 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Console, MidPrint)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(fnt, FFont);
-	PARAM_STRING(text);
-	PARAM_BOOL(bold);
-
-	const char* txt = text[0] == '$' ? GStrings(&text[1]) : text.GetChars();
-	C_MidPrint(fnt, txt, bold);
-	return 0;
-}
-
 DEFINE_ACTION_FUNCTION(_Console, HideConsole)
 {
 	C_HideConsole();
@@ -659,3 +917,16 @@ DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 
 DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
 DEFINE_GLOBAL(Bindings)
+DEFINE_GLOBAL(AutomapBindings)
+DEFINE_GLOBAL(generic_ui)
+
+DEFINE_FIELD(DStatusBarCore, RelTop);
+DEFINE_FIELD(DStatusBarCore, HorizontalResolution);
+DEFINE_FIELD(DStatusBarCore, VerticalResolution);
+DEFINE_FIELD(DStatusBarCore, CompleteBorder);
+DEFINE_FIELD(DStatusBarCore, Alpha);
+DEFINE_FIELD(DStatusBarCore, drawOffset);
+DEFINE_FIELD(DStatusBarCore, drawClip);
+DEFINE_FIELD(DStatusBarCore, fullscreenOffsets);
+DEFINE_FIELD(DStatusBarCore, defaultScale);
+DEFINE_FIELD(DHUDFont, mFont);

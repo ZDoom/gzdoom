@@ -90,6 +90,7 @@ class Actor : Thinker native
 	native PlayerInfo Player;
 	native readonly vector3 Pos;
 	native vector3 Prev;
+	native uint ThruBits;
 	native vector2 SpriteOffset;
 	native double spriteAngle;
 	native double spriteRotation;
@@ -337,6 +338,7 @@ class Actor : Thinker native
 	property RenderHidden: RenderHidden;
 	property RenderRequired: RenderRequired;
 	property FriendlySeeBlocks: FriendlySeeBlocks;
+	property ThruBits: ThruBits;
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
@@ -873,9 +875,9 @@ class Actor : Thinker native
 		return SpawnMissileAngleZSpeed (pos.z + 32 + GetBobOffset(), type, angle, vz, GetDefaultSpeed (type));
 	}
 
-	Actor SpawnMissileAngleZ (double z, class<Actor> type, double angle, double vz)
+	Actor SpawnMissileAngleZ (double z, class<Actor> type, double angle, double vz, Actor owner = null)
 	{
-		return SpawnMissileAngleZSpeed (z, type, angle, vz, GetDefaultSpeed (type));
+		return SpawnMissileAngleZSpeed (z, type, angle, vz, GetDefaultSpeed (type), owner);
 	}
 	
 
@@ -1181,11 +1183,16 @@ class Actor : Thinker native
 
 	action native bool A_Overlay(int layer, statelabel start = null, bool nooverride = false);
 	native void A_WeaponOffset(double wx = 0, double wy = 32, int flags = 0);
+	action native void A_OverlayScale(int layer, double wx = 1, double wy = 0, int flags = 0);
+	action native void A_OverlayRotate(int layer, double degrees = 0, int flags = 0);
+	action native void A_OverlayPivot(int layer, double wx = 0.5, double wy = 0.5, int flags = 0);
+	action native void A_OverlayPivotAlign(int layer, int halign, int valign);
+	action native void A_OverlayVertexOffset(int layer, int index, double x, double y, int flags = 0);
 	action native void A_OverlayOffset(int layer = PSP_WEAPON, double wx = 0, double wy = 32, int flags = 0);
 	action native void A_OverlayFlags(int layer, int flags, bool set);
 	action native void A_OverlayAlpha(int layer, double alph);
 	action native void A_OverlayRenderStyle(int layer, int style);
-	action native void A_OverlayTranslation(int layer, int trans);
+	action native void A_OverlayTranslation(int layer, name trname);
 	
 	native bool A_AttachLightDef(Name lightid, Name lightdef);
 	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);

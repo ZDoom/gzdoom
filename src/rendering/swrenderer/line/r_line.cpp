@@ -314,8 +314,6 @@ namespace swrenderer
 
 		if (markportal)
 		{
-			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
-			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, Thread->OpaquePass->floorclip);
 			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 		}
 		else if (!mBackSector)

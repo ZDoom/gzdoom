@@ -837,6 +837,7 @@ void FileSystem::InitHashChains (void)
 {
 	unsigned int i, j;
 
+	NumEntries = FileInfo.Size();
 	Hashes.Resize(8 * NumEntries);
 	// Mark all buckets as empty
 	memset(Hashes.Data(), -1, Hashes.Size() * sizeof(Hashes[0]));
@@ -1446,7 +1447,7 @@ const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
 
 	name = Files[rfnum]->FileName;
 	slash = strrchr (name, '/');
-	return slash != NULL ? slash+1 : name;
+	return (slash != NULL && slash[1] != 0) ? slash+1 : name;
 }
 
 //==========================================================================
@@ -1522,10 +1523,11 @@ const char *FileSystem::GetResourceFileFullName (int rfnum) const noexcept
 
 bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 {
-	FString name2, type2, path;
+	FString name2=name, type2, path;
 
 	// The old code said 'filename' and ignored the path, this looked like a bug.
-	auto lump = FindFile(name);
+	FixPathSeperator(name2);
+	auto lump = FindFile(name2);
 	if (lump < 0) return false;		// Does not exist.
 
 	auto oldlump = FileInfo[lump];

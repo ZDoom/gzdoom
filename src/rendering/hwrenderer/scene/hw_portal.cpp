@@ -718,6 +718,7 @@ void HWSkyboxPortal::Shutdown(HWDrawInfo *di, FRenderState &rstate)
 }
 
 const char *HWSkyboxPortal::GetName() { return "Skybox"; }
+bool HWSkyboxPortal::AllowSSAO() { return false; }	// [MK] sector skyboxes don't allow SSAO by default
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

@@ -2967,6 +2967,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 		case '/':
 			// For division, the vector must be the first operand.
 			if (right->IsVector()) goto error;
+			[[fallthrough]];
 
 		case '*':
 			if (left->IsVector() && right->IsNumeric())
@@ -6055,6 +6056,12 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	if (compileEnvironment.CheckSpecialGlobalIdentifier)
+	{
+		auto result = compileEnvironment.CheckSpecialGlobalIdentifier(this, ctx);
+		if (result != this) return result;
+	}
+
 	if (auto *cvar = FindCVar(Identifier.GetChars(), nullptr))
 	{
 		if (cvar->GetFlags() & CVAR_USERINFO)
@@ -8249,6 +8256,14 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			return x->Resolve(ctx);
 		}
 	}
+	if (MethodName == NAME_IsAbstract && Self->ValueType->isClassPointer())
+	{
+		if (CheckArgSize(NAME_IsAbstract, ArgList, 0, 0, ScriptPosition))
+		{
+			auto x = new FxIsAbstract(Self);
+			return x->Resolve(ctx);
+		}
+	}
 
 	if (Self->ValueType->isRealPointer())
 	{
@@ -8540,6 +8555,13 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		if (!result) return nullptr;
 	}
 
+	// [Player701] Catch attempts to call abstract functions directly at compile time
+	if (NoVirtual && Function->Variants[0].Implementation->VarFlags & VARF_Abstract)
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot call abstract function %s", Function->Variants[0].Implementation->PrintableName.GetChars());
+		delete this;
+		return nullptr;
+	}
 
 	CallingFunction = ctx.Function;
 	if (ArgList.Size() > 0)
@@ -9000,7 +9022,6 @@ FxExpression *FxFlopFunctionCall::Resolve(FCompileContext& ctx)
 
 ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType == ArgList[0]->ValueType);
 	ExpEmit from = ArgList[0]->Emit(build);
 	ExpEmit to;
 	assert(from.Konst == 0);
@@ -9231,6 +9252,47 @@ ExpEmit FxGetClassName::Emit(VMFunctionBuilder *build)
 	}
 	ExpEmit to(build, REGT_INT);
 	build->Emit(OP_LW, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, TypeName)));
+	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxIsAbstract::FxIsAbstract(FxExpression *self)
+	:FxExpression(EFX_IsAbstract, self->ScriptPosition)
+{
+	Self = self;
+}
+
+FxIsAbstract::~FxIsAbstract()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxIsAbstract::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+
+	if (!Self->ValueType->isClassPointer())
+	{
+		ScriptPosition.Message(MSG_ERROR, "IsAbstract() requires a class pointer");
+		delete this;
+		return nullptr;
+	}
+	ValueType = TypeBool;
+	return this;
+}
+
+ExpEmit FxIsAbstract::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op = Self->Emit(build);
+	op.Free(build);
+
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_LBU, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, bAbstract)));
+
 	return to;
 }
 

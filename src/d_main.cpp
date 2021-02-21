@@ -151,6 +151,7 @@ void P_Shutdown();
 void M_SaveDefaultsFinal();
 void R_Shutdown();
 void I_ShutdownInput();
+void SetConsoleNotifyBuffer();
 
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -286,6 +287,7 @@ CUSTOM_CVAR (String, vid_cursor, "None", CVAR_ARCHIVE | CVAR_NOINITCALL)
 CVAR (Bool, disableautoload, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+CVAR (Bool, autoloadwidescreen, true, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, r_debug_disable_vis_filter, false, 0)
 CVAR(Bool, vid_fps, false, 0)
 CVAR(Int, vid_showpalette, 0, 0)
@@ -553,6 +555,7 @@ CVAR (Flag, sv_cooplosearmor,	dmflags, DF_COOP_LOSE_ARMOR);
 CVAR (Flag, sv_cooplosepowerups,	dmflags, DF_COOP_LOSE_POWERUPS);
 CVAR (Flag, sv_cooploseammo,	dmflags, DF_COOP_LOSE_AMMO);
 CVAR (Flag, sv_coophalveammo,	dmflags, DF_COOP_HALVE_AMMO);
+CVAR (Flag, sv_instantreaction,	dmflags, DF_INSTANT_REACTION);
 
 // Some (hopefully cleaner) interface to these settings.
 CVAR (Mask, sv_crouch,			dmflags, DF_NO_CROUCH|DF_YES_CROUCH);
@@ -632,6 +635,7 @@ CVAR (Flag, sv_killbossmonst,		dmflags2, DF2_KILLBOSSMONST);
 CVAR (Flag, sv_nocountendmonst,		dmflags2, DF2_NOCOUNTENDMONST);
 CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
 CVAR (Flag, sv_nothingspawn,		dmflags2, DF2_NO_COOP_THING_SPAWN);
+CVAR (Flag, sv_alwaysspawnmulti,	dmflags2, DF2_ALWAYS_SPAWN_MULTI);
 
 //==========================================================================
 //
@@ -1080,6 +1084,7 @@ void D_Display ()
 		switch (gamestate)
 		{
 			case GS_FULLCONSOLE:
+				D_PageDrawer();
 				C_DrawConsole ();
 				M_Drawer ();
 				End2DAndUpdate ();
@@ -1539,6 +1544,7 @@ void D_DoAdvanceDemo (void)
 			break;
 		}
 		// fall through to case 1 if no advisory notice
+		[[fallthrough]];
 
 	case 1:
 		Advisory = NULL;
@@ -1560,6 +1566,7 @@ void D_DoAdvanceDemo (void)
 				break;
 			}
 		}
+		[[fallthrough]];
 
 	default:
 	case 0:
@@ -1933,6 +1940,11 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetNumber();
 			GameStartupInfo.LoadBrightmaps = !!sc.Number;
 		}
+		else if (!nextKey.CompareNoCase("LOADWIDESCREEN"))
+		{
+			sc.MustGetNumber();
+			GameStartupInfo.LoadWidescreen = !!sc.Number;
+		}
 		else
 		{
 			// Silently ignore unknown properties
@@ -2057,15 +2069,21 @@ static void AddAutoloadFiles(const char *autoname)
 	{
 		if (GameStartupInfo.LoadLights == 1 || (GameStartupInfo.LoadLights != 0 && autoloadlights))
 		{
-			const char *lightswad = BaseFileSearch ("lights.pk3", NULL, false, GameConfig);
+			const char *lightswad = BaseFileSearch ("lights.pk3", NULL, true, GameConfig);
 			if (lightswad)
 				D_AddFile (allwads, lightswad, true, -1, GameConfig);
 		}
 		if (GameStartupInfo.LoadBrightmaps == 1 || (GameStartupInfo.LoadBrightmaps != 0 && autoloadbrightmaps))
 		{
-			const char *bmwad = BaseFileSearch ("brightmaps.pk3", NULL, false, GameConfig);
+			const char *bmwad = BaseFileSearch ("brightmaps.pk3", NULL, true, GameConfig);
 			if (bmwad)
 				D_AddFile (allwads, bmwad, true, -1, GameConfig);
+		}
+		if (GameStartupInfo.LoadWidescreen == 1 || (GameStartupInfo.LoadWidescreen != 0 && autoloadwidescreen))
+		{
+			const char *wswad = BaseFileSearch ("game_widescreen_gfx.pk3", NULL, true, GameConfig);
+			if (wswad)
+				D_AddFile (allwads, wswad, true, -1, GameConfig);
 		}
 	}
 
@@ -2440,7 +2458,7 @@ void RenameNerve(FileSystem& fileSystem)
 	if (gameinfo.gametype != GAME_Doom)
 		return;
 
-	const int numnerveversions = 2;
+	const int numnerveversions = 4;
 
 	bool found = false;
 	uint8_t cksum[16];
@@ -2448,9 +2466,13 @@ void RenameNerve(FileSystem& fileSystem)
 			{ 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
 				0x62, 0x12, 0xae, 0x1b, 0x60, 0x5d, 0xa3, 0xb0 },
 			{ 0x42, 0x14, 0xc4, 0x76, 0x51, 0xb6, 0x3e, 0xe2,
-				0x25, 0x7b, 0x1c, 0x24, 0x90, 0xa5, 0x18, 0xc9 }
+				0x25, 0x7b, 0x1c, 0x24, 0x90, 0xa5, 0x18, 0xc9 },
+			{ 0x35, 0x44, 0xe1, 0x90, 0x30, 0x91, 0xc5, 0x0b,
+				0xa5, 0x00, 0x49, 0xdb, 0x74, 0xcd, 0x7d, 0x25 },
+			{ 0x91, 0x43, 0xb3, 0x92, 0x39, 0x2a, 0x7a, 0xc8,
+				0x70, 0xc2, 0xca, 0x36, 0xac, 0x65, 0xaf, 0x45 }
 	};
-	size_t nervesize[numnerveversions] = { 3819855, 3821966 }; // NERVE.WAD's file size
+	size_t nervesize[numnerveversions] = { 3819855, 3821966, 3821885, 4003409 }; // NERVE.WAD's file size
 	int w = fileSystem.GetIwadNum();
 	while (++w < fileSystem.GetNumWads())
 	{
@@ -2831,6 +2853,13 @@ FString System_GetPlayerName(int node)
 {
 	return players[node].userinfo.GetName();
 }
+
+void System_ConsoleToggled(int state)
+{
+	if (state == c_falling && hud_toggled)
+		D_ToggleHud();
+}
+
 //==========================================================================
 //
 // DoomSpecificInfo
@@ -2964,32 +2993,16 @@ static void CheckForHacks(BuildInfo& buildinfo)
 	}
 }
 
-static void FixUnityStatusBar()
+static void FixWideStatusBar()
 {
-	if (gameinfo.flags & GI_FIXUNITYSBAR)
+	FGameTexture* sbartex = TexMan.FindGameTexture("stbar", ETextureType::MiscPatch);
+
+	// only adjust offsets if none already exist and if the texture is not scaled. For scaled textures a proper offset is needed.
+	if (sbartex && sbartex->GetTexelWidth() > 320 && sbartex->GetScaleX() == 1 &&
+		!sbartex->GetTexelLeftOffset(0) && !sbartex->GetTexelTopOffset(0))
 	{
-		FGameTexture* sbartex = TexMan.FindGameTexture("stbar", ETextureType::MiscPatch);
-
-		// texture not found, we're not here to operate on a non-existent texture so just exit
-		if (!sbartex)
-			return;
-
-		// where is this texture located? if it's not in an iwad, then exit
-		int lumpnum = sbartex->GetSourceLump();
-		if (lumpnum >= 0 && lumpnum < fileSystem.GetNumEntries())
-		{
-			int wadno = fileSystem.GetFileContainer(lumpnum);
-			if (!(wadno >= fileSystem.GetIwadNum() && wadno <= fileSystem.GetMaxIwadNum()))
-				return;
-		}
-
-		// only adjust offsets if none already exist
-		if (sbartex->GetTexelWidth() > 320 &&
-			!sbartex->GetTexelLeftOffset(0) && !sbartex->GetTexelTopOffset(0))
-		{
-			sbartex->SetOffsets(0, (sbartex->GetTexelWidth() - 320) / 2, 0);
-			sbartex->SetOffsets(1, (sbartex->GetTexelWidth() - 320) / 2, 0);
-		}
+		sbartex->SetOffsets(0, (sbartex->GetTexelWidth() - 320) / 2, 0);
+		sbartex->SetOffsets(1, (sbartex->GetTexelWidth() - 320) / 2, 0);
 	}
 }
 
@@ -3025,6 +3038,9 @@ static void GC_MarkGameRoots()
 	// NextToThink must not be freed while thinkers are ticking.
 	GC::Mark(NextToThink);
 }
+
+bool  CheckSkipGameOptionBlock(const char* str);
+
 //==========================================================================
 //
 // D_DoomMain
@@ -3050,13 +3066,6 @@ static int D_DoomMain_Internal (void)
 	buttonMap.GetButton(Button_Mlook)->bReleaseLock = true;
 	buttonMap.GetButton(Button_Klook)->bReleaseLock = true;
 
-	static StringtableCallbacks stblcb =
-	{
-		StrTable_ValidFilter,
-		StrTable_GetGender
-	};
-	GStrings.SetCallbacks(&stblcb);
-
 	sysCallbacks = {
 		System_WantGuiCapture,
 		System_WantLeftButton,
@@ -3073,6 +3082,11 @@ static int D_DoomMain_Internal (void)
 		System_M_Dim,
 		System_GetPlayerName,
 		System_DispatchEvent,
+		StrTable_ValidFilter,
+		StrTable_GetGender,
+		nullptr,
+		CheckSkipGameOptionBlock,
+		System_ConsoleToggled,
 	};
 
 	
@@ -3193,7 +3207,8 @@ static int D_DoomMain_Internal (void)
 		// Process automatically executed files
 		FExecList *exec;
 		FArgs *execFiles = new FArgs;
-		GameConfig->AddAutoexec(execFiles, gameinfo.ConfigName);
+		if (!(Args->CheckParm("-noautoexec")))
+			GameConfig->AddAutoexec(execFiles, gameinfo.ConfigName);
 		exec = D_MultiExec(execFiles, NULL);
 		delete execFiles;
 
@@ -3372,9 +3387,9 @@ static int D_DoomMain_Internal (void)
 		TexMan.Init([]() { StartScreen->Progress(); }, CheckForHacks);
 		PatchTextures();
 		TexAnim.Init();
-		C_InitConback();
+		C_InitConback(TexMan.CheckForTexture(gameinfo.BorderFlat, ETextureType::Flat), true, 0.25);
 
-		FixUnityStatusBar();
+		FixWideStatusBar();
 
 		StartScreen->Progress();
 		V_InitFonts();
@@ -3441,6 +3456,7 @@ static int D_DoomMain_Internal (void)
 		FinishDehPatch();
 
 		if (!batchrun) Printf("M_Init: Init menus.\n");
+		SetDefaultMenuColors();
 		M_Init();
 		M_CreateGameMenus();
 
@@ -3642,6 +3658,7 @@ int GameMain()
 	};
 
 	C_InstallHandlers(&cb);
+	SetConsoleNotifyBuffer();
 
 	try
 	{
@@ -3726,17 +3743,15 @@ void D_Cleanup()
 	// delete GameStartupInfo data
 	GameStartupInfo.Name = "";
 	GameStartupInfo.BkColor = GameStartupInfo.FgColor = GameStartupInfo.Type = 0;
-	GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
+	GameStartupInfo.LoadWidescreen = GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
 	
 	GC::FullGC();					// clean up before taking down the object list.
 	
 	// Delete the reference to the VM functions here which were deleted and will be recreated after the restart.
-	FAutoSegIterator probe(ARegHead, ARegTail);
-	while (*++probe != NULL)
+	AutoSegs::ActionFunctons.ForEach([](AFuncDesc *afunc)
 	{
-		AFuncDesc *afunc = (AFuncDesc *)*probe;
 		*(afunc->VMPointer) = NULL;
-	}
+	});
 	
 	GC::DelSoftRootHead();
 	
@@ -3813,6 +3828,7 @@ void I_UpdateWindowTitle()
 			titlestr.Format("%s - %s", level.LevelName.GetChars(), GameStartupInfo.Name.GetChars());
 			break;
 		}
+		[[fallthrough]];
 	case 2:
 		titlestr = GameStartupInfo.Name;
 		break;

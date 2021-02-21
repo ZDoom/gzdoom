@@ -1,3 +1,37 @@
+/*
+** menu.zs
+** The menu engine core
+**
+**---------------------------------------------------------------------------
+** Copyright 2010-2020 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 
 struct KeyBindings native version("2.4")
 {
@@ -94,6 +128,8 @@ class Menu : Object native ui version("2.4")
 	native bool mBackbuttonSelected;
 	native bool DontDim;
 	native bool DontBlur;
+	native bool AnimatedTransition;
+	native bool Animated;
 
 	native static int MenuTime();
 	native static Menu GetCurrentMenu();
@@ -116,6 +152,8 @@ class Menu : Object native ui version("2.4")
 		mBackbuttonSelected = false;
 		DontDim = false;
 		DontBlur = false;
+		AnimatedTransition = false;
+		Animated = false;
 	}
 	
 	//=============================================================================
@@ -129,9 +167,13 @@ class Menu : Object native ui version("2.4")
 		switch (mkey)
 		{
 		case MKEY_Back:
+		{
 			Close();
-			MenuSound (GetCurrentMenu() != null? "menu/backup" : "menu/clear");
+			let m = GetCurrentMenu();
+			MenuSound(m != null ? "menu/backup" : "menu/clear");
+			if (!m) menuDelegate.MenuDismissed();
 			return true;
+		}
 		}
 		return false;
 	}
@@ -191,7 +233,7 @@ class Menu : Object native ui version("2.4")
 		}
 		else if (ev.type == UIEvent.Type_MouseMove)
 		{
-			BackbuttonTime = 4*Thinker.TICRATE;
+			BackbuttonTime = 4*GameTicRate;
 			if (mMouseCapture || m_use_mouse == 1)
 			{
 				res = MouseEventBack(MOUSE_Move, ev.MouseX, y);
@@ -237,11 +279,11 @@ class Menu : Object native ui version("2.4")
 				int y = (!(m_show_backbutton&2))? 0:screen.GetHeight() - h;
 				if (mBackbuttonSelected && (mMouseCapture || m_use_mouse == 1))
 				{
-					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, Color(40, 255,255,255));
+					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, Color(40, 255,255,255), DTA_NOOFFSET, true);
 				}
 				else
 				{
-					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha);
+					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, DTA_NOOFFSET, true);
 				}
 			}
 		}
@@ -283,9 +325,9 @@ class Menu : Object native ui version("2.4")
 	//
 	//=============================================================================
 
-	static void MenuSound(Sound snd)
+	static void MenuSound(Name snd)
 	{
-		S_StartSound (snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHAN_UI, snd_menuvolume, ATTN_NONE);
+		menuDelegate.PlaySound(snd);
 	}
 	
 	deprecated("4.0") static void DrawConText (int color, int x, int y, String str)

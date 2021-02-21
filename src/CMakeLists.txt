@@ -20,6 +20,8 @@ else()
 	find_package( ZMusic REQUIRED )
 endif()
 
+message("Building for target architecture: ${ZDOOM_TARGET_ARCH}")
+
 if( MSVC AND NOT ZMUSIC_FOUND )
 	# Use prebuilt library
 	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
@@ -27,6 +29,8 @@ if( MSVC AND NOT ZMUSIC_FOUND )
 	set( ZMUSIC_LIBRARIES zmusic )
 	if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
 		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
+	elseif( ${ZDOOM_TARGET_ARCH} MATCHES "arm" )
+		link_directories( ${ZMUSIC_ROOT_PATH}/arm64 )
 	else()
 		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
 	endif()
@@ -97,7 +101,6 @@ if( WIN32 )
 	endif()
 
 	set( ZDOOM_LIBS
-		opengl32
 		wsock32
 		winmm
 		"${DX_dinput8_LIBRARY}"
@@ -307,7 +310,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_C_FLAGS "-Wno-unused-result ${CMAKE_C_FLAGS}" )
 		set( CMAKE_CXX_FLAGS "-Wno-unused-result ${CMAKE_CXX_FLAGS}" )
 	endif()
-	if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+	if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
 		if( APPLE OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "3.6" )
 			set( CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override ${CMAKE_CXX_FLAGS}" )
 		endif()
@@ -315,44 +318,10 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_C_FLAGS}" )
 	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_CXX_FLAGS}" )
 
-	# ARM processors (Raspberry Pi, et al) - enable ARM NEON support.
-	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-		set (USE_ARMV8 0 CACHE BOOL "Use ARMv8 instructions - Raspberry Pi 3")
-		if (USE_ARMV8)
-			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mtune=cortex-a53 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
-		else ()
-			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a7 -mfpu=neon-vfpv4 -mtune=cortex-a7 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
-		endif ()
-	endif ()
-
 	if( NOT X64 AND NOT CAN_DO_MFPMATH )
 		set( CMAKE_C_FLAGS "-DNO_SSE ${CMAKE_C_FLAGS}" )
 		set( CMAKE_CXX_FLAGS "-DNO_SSE ${CMAKE_CXX_FLAGS}" )
 	endif()
-
-	# Use the highest C++ standard available since VS2015 compiles with C++14
-	# but we only require C++11.  The recommended way to do this in CMake is to
-	# probably to use target_compile_features, but I don't feel like maintaining
-	# a list of features we use.
-	CHECK_CXX_COMPILER_FLAG( "-std=gnu++14" CAN_DO_CPP14 )
-	if ( CAN_DO_CPP14 )
-		set ( CMAKE_CXX_FLAGS "-std=gnu++14 ${CMAKE_CXX_FLAGS}" )
-	else ()
-		CHECK_CXX_COMPILER_FLAG( "-std=gnu++1y" CAN_DO_CPP1Y )
-		if ( CAN_DO_CPP1Y )
-			set ( CMAKE_CXX_FLAGS "-std=gnu++1y ${CMAKE_CXX_FLAGS}" )
-		else ()
-			CHECK_CXX_COMPILER_FLAG( "-std=gnu++11" CAN_DO_CPP11 )
-			if ( CAN_DO_CPP11 )
-				set ( CMAKE_CXX_FLAGS "-std=gnu++11 ${CMAKE_CXX_FLAGS}" )
-			else ()
-				CHECK_CXX_COMPILER_FLAG( "-std=gnu++0x" CAN_DO_CPP0X )
-				if ( CAN_DO_CPP0X )
-					set ( CMAKE_CXX_FLAGS "-std=gnu++0x ${CMAKE_CXX_FLAGS}" )
-				endif ()
-			endif ()
-		endif ()
-	endif ()
 
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
@@ -449,7 +418,6 @@ endif()
 set( PLAT_WIN32_SOURCES
 	win32/i_steam.cpp
 	common/platform/win32/hardware.cpp
-	common/platform/win32/i_crash.cpp
 	common/platform/win32/i_input.cpp
 	common/platform/win32/i_keyboard.cpp
 	common/platform/win32/i_mouse.cpp
@@ -469,6 +437,16 @@ set( PLAT_WIN32_SOURCES
 
 if (HAVE_VULKAN)
 	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/win32vulkanvideo.cpp )
+endif()
+
+# todo: implement an actual crash catcher for ARM
+# for now this is purely experimental
+if (NOT ${ZDOOM_TARGET_ARCH} MATCHES "arm" )
+	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/i_crash.cpp )
+endif()
+if (MSVC AND ${ZDOOM_TARGET_ARCH} MATCHES "arm")
+	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/i_crash_arm.cpp )
+	add_definitions( -DNO_SSE -D__ARM__ -DRAPIDJSON_ENDIAN=RAPIDJSON_LITTLEENDIAN)
 endif()
 	
 set( PLAT_POSIX_SOURCES
@@ -612,6 +590,7 @@ file( GLOB HEADER_FILES
 	common/utility/*.h
 	common/engine/*.h
 	common/menu/*.h
+	common/statusbar/*.h
 	common/fonts/*.h
 	common/objects/*.h
 	common/filesystem/*.h
@@ -826,7 +805,7 @@ set (PCH_SOURCES
 	playsim/bots/b_think.cpp
 	bbannouncer.cpp
 	console/c_cmds.cpp
-	console/c_console.cpp
+	console/c_notifybuffer.cpp
 	console/c_functions.cpp
 	ct_chat.cpp
 	d_iwad.cpp
@@ -952,15 +931,9 @@ set (PCH_SOURCES
 	maploader/renderinfo.cpp
 	maploader/compatibility.cpp
 	maploader/postprocessor.cpp
-	menu/joystickmenu.cpp
-	menu/menu.cpp
-	menu/messagebox.cpp
-	menu/optionmenu.cpp
-	menu/resolutionmenu.cpp
 	menu/doommenu.cpp
 	menu/loadsavemenu.cpp
 	menu/playermenu.cpp
-	menu/menudef.cpp
 	gamedata/textures/animations.cpp
 	gamedata/textures/anim_switches.cpp
 	gamedata/textures/buildloader.cpp
@@ -1075,6 +1048,10 @@ set (PCH_SOURCES
 	common/console/c_consolebuffer.cpp
 	common/console/c_cvars.cpp
 	common/console/c_dispatch.cpp
+	common/console/c_commandbuffer.cpp
+	common/console/c_console.cpp
+	common/console/c_notifybufferbase.cpp
+	common/console/c_tabcomplete.cpp
 	common/console/c_expr.cpp
 	common/utility/engineerrors.cpp
 	common/utility/i_module.cpp
@@ -1110,6 +1087,7 @@ set (PCH_SOURCES
 	common/filesystem/resourcefile.cpp
 	common/engine/cycler.cpp
 	common/engine/d_event.cpp
+	common/engine/date.cpp
 	common/engine/stats.cpp
 	common/engine/sc_man.cpp
 	common/engine/palettecontainer.cpp
@@ -1121,9 +1099,18 @@ set (PCH_SOURCES
 	common/engine/serializer.cpp
 	common/engine/m_joy.cpp
 	common/engine/m_random.cpp
+	common/objects/autosegs.cpp
 	common/objects/dobject.cpp
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
+	common/menu/joystickmenu.cpp
+	common/menu/menu.cpp
+	common/menu/messagebox.cpp
+	common/menu/optionmenu.cpp
+	common/menu/resolutionmenu.cpp
+	common/menu/menudef.cpp
+	common/menu/savegamemanager.cpp
+	common/statusbar/base_sbar.cpp
 	
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp
@@ -1198,7 +1185,6 @@ endif()
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
-	__autostart.cpp
 	${SYSTEM_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
@@ -1224,7 +1210,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	common/thirdparty/math/tan.c
 	common/thirdparty/math/tanh.c
 	common/thirdparty/math/fastsin.cpp
-	zzautozend.cpp
 )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
@@ -1262,6 +1247,7 @@ include_directories( .
 	common/console
 	common/engine
 	common/menu
+	common/statusbar
 	common/fonts
 	common/objects
 	common/rendering

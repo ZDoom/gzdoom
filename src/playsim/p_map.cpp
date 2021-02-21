@@ -447,11 +447,14 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if (th == thing)
 			continue;
 
-		double blockdist = th->radius + tmf.thing->radius;
-		if (fabs(th->X() - cres2.Position.X) >= blockdist || fabs(th->Y() - cres2.Position.Y) >= blockdist)
+		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)
 			continue;
 
-		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)
+		if ((th->ThruBits & tmf.thing->ThruBits) && ((th->flags8 | tmf.thing->flags8) & MF8_ALLOWTHRUBITS))
+			continue;
+
+		double blockdist = th->radius + tmf.thing->radius;
+		if (fabs(th->X() - cres2.Position.X) >= blockdist || fabs(th->Y() - cres2.Position.Y) >= blockdist)
 			continue;
 
 		if (tmf.thing->flags6 & MF6_THRUSPECIES && tmf.thing->GetSpecies() == th->GetSpecies())
@@ -1301,6 +1304,9 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)
 		return true;
 
+	if ((thing->ThruBits & tm.thing->ThruBits) && ((thing->flags8 | tm.thing->flags8) & MF8_ALLOWTHRUBITS))
+		return true;
+
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
 		return true;	// can't hit thing
 
@@ -1994,6 +2000,10 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
+		if ((actor->ThruBits & thing->ThruBits) && ((actor->flags8 | thing->flags8) & MF8_ALLOWTHRUBITS))
+		{
+			continue;
+		}
 		if ((actor->flags6 & MF6_THRUSPECIES) && (thing->GetSpecies() == actor->GetSpecies()))
 		{
 			continue;
@@ -2457,6 +2467,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				P_FindFloorCeiling(thing);
 				portalcrossed = true;
 				tm.portalstep = false;
+				tm.pos += port->mDisplacement;
 			}
 			else if (!portalcrossed)
 			{
@@ -4382,6 +4393,9 @@ struct Origin
 	bool MThruSpecies;
 	bool ThruSpecies;
 	bool ThruActors;
+	bool UseThruBits;
+	bool Spectral;
+	uint32_t ThruBits;
 };
 
 static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
@@ -4394,18 +4408,23 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 	Origin *data = (Origin *)userdata;
 
 	// Skip actors if the puff has:
-	// 1. THRUACTORS or SPECTRAL
-	// 2. MTHRUSPECIES on puff and the shooter has same species as the hit actor
-	// 3. THRUSPECIES on puff and the puff has same species as the hit actor
-	// 4. THRUGHOST on puff and the GHOST flag on the hit actor
+	// 1. THRUACTORS 
+	// 2. SPECTRAL (unless the puff has SPECTRAL)
+	// 3. MTHRUSPECIES on puff and the shooter has same species as the hit actor
+	// 4. THRUSPECIES on puff and the puff has same species as the hit actor
+	// 5. THRUGHOST on puff and the GHOST flag on the hit actor
 
-	if ((data->ThruActors) || (res.Actor->flags4 & MF4_SPECTRAL) ||
+	if ((data->ThruActors) || 
+		(!(data->Spectral) && res.Actor->flags4 & MF4_SPECTRAL) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST))
 	{
 		return TRACE_Skip;
 	}
+
+	if (data->UseThruBits && (data->ThruBits & res.Actor->ThruBits))
+		return TRACE_Skip;
 
 	return TRACE_Stop;
 }
@@ -4474,6 +4493,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	spawnSky = (puffDefaults && (puffDefaults->flags3 & MF3_SKYEXPLODE));
 	TData.MThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_MTHRUSPECIES));
 	TData.PuffSpecies = NAME_None;
+	TData.Spectral = (puffDefaults && (puffDefaults->flags4 & MF4_SPECTRAL));
 
 	// [MC] To prevent possible mod breakage, this flag is pretty much necessary.
 	// Somewhere, someone is relying on these to spawn on actors and move through them.
@@ -4482,7 +4502,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		TData.ThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_THRUSPECIES));
 		TData.ThruActors = (puffDefaults && (puffDefaults->flags2 & MF2_THRUACTORS));
-
+		
 		// [MC] Because this is a one-hit trace event, we need to spawn the puff, get the species
 		// and destroy it. Assume there is no species unless tempuff isn't NULL. We cannot get
 		// a proper species the same way as puffDefaults flags it appears...
@@ -4493,6 +4513,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		if (tempuff != NULL)
 		{
 			TData.PuffSpecies = tempuff->GetSpecies();
+			TData.UseThruBits = tempuff->flags8 & MF8_ALLOWTHRUBITS;
+			TData.ThruBits = tempuff->ThruBits;
 			tempuff->Destroy();
 		}
 	}
@@ -4500,6 +4522,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		TData.ThruSpecies = false;
 		TData.ThruActors = false;
+		TData.UseThruBits = false;
 	}
 	// if the puff uses a non-standard damage type, this will override default, hitscan and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.
@@ -4869,6 +4892,7 @@ int P_LineTrace(AActor *t1, DAngle angle, double distance,
 				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[2].texture;
 				break;
 			case TIER_FFloor:
+				outdata->LinePart = 1;	// act as if middle was hit
 				txpart = (trace.ffloor->flags & FF_UPPERTEXTURE) ? 0 : (trace.ffloor->flags & FF_LOWERTEXTURE) ? 2 : 1;
 				outdata->HitTexture = trace.ffloor->master->sidedef[0]->textures[txpart].texture;
 				break;
@@ -5102,6 +5126,8 @@ struct RailData
 	bool ThruSpecies;
 	bool MThruSpecies;
 	bool ThruActors;
+	bool UseThruBits;
+	uint32_t ThruBits;
 	int limit;
 	int count;
 };
@@ -5131,6 +5157,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	// 4. THRUGHOST on puff and the GHOST flag on the hit actor
 
 	if ((data->ThruActors) ||
+		(data->UseThruBits && (data->ThruBits & res.Actor->ThruBits)) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST))
@@ -5228,18 +5255,27 @@ void P_RailAttack(FRailParams *p)
 		rail_data.ThruGhosts = !!(puffDefaults->flags2 & MF2_THRUGHOST);
 		rail_data.ThruSpecies = !!(puffDefaults->flags6 & MF6_THRUSPECIES);
 		rail_data.ThruActors = !!(puffDefaults->flags2 & MF2_THRUACTORS);
+		rail_data.UseThruBits = true;
 	}
 	else
 	{
 		rail_data.ThruGhosts = false;
 		rail_data.MThruSpecies = false;
 		rail_data.ThruActors = false;
+		rail_data.UseThruBits = false;
 	}
 	// used as damage inflictor
 	AActor *thepuff = NULL;
 	
 	if (puffclass != NULL) thepuff = Spawn(source->Level, puffclass, source->Pos(), ALLOW_REPLACE);
 		rail_data.PuffSpecies = (thepuff != NULL) ? thepuff->GetSpecies() : NAME_None;
+
+	if (thepuff)
+	{
+		rail_data.ThruBits = thepuff->ThruBits;
+		if (rail_data.UseThruBits)
+			rail_data.UseThruBits = !!(thepuff->flags8 & MF8_ALLOWTHRUBITS);
+	}
 
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
 

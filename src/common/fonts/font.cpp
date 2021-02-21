@@ -55,6 +55,7 @@
 #include "fontchars.h"
 #include "multipatchtexture.h"
 #include "texturemanager.h"
+#include "i_interface.h"
 
 #include "fontinternals.h"
 
@@ -342,6 +343,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				{
 					Chars[i].TranslatedPic = tex;
 				}
+				if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(pic, Chars[i].OriginalPic, Chars[i].TranslatedPic);
 
 				Chars[i].XMove = (int)Chars[i].TranslatedPic->GetDisplayWidth();
 			}

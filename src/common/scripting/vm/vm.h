@@ -620,11 +620,11 @@ struct AFuncDesc
 };
 
 #if defined(_MSC_VER)
-#pragma section(".areg$u",read)
-#pragma section(".freg$u",read)
+#pragma section(SECTION_AREG,read)
+#pragma section(SECTION_FREG,read)
 
-#define MSVC_ASEG __declspec(allocate(".areg$u"))
-#define MSVC_FSEG __declspec(allocate(".freg$u"))
+#define MSVC_ASEG __declspec(allocate(SECTION_AREG))
+#define MSVC_FSEG __declspec(allocate(SECTION_FREG))
 #define GCC_ASEG
 #define GCC_FSEG
 #else

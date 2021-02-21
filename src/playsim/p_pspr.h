@@ -70,7 +70,23 @@ enum PSPFlags
 	PSPF_FORCEALPHA		= 1 << 7,
 	PSPF_FORCESTYLE		= 1 << 8,
 	PSPF_MIRROR			= 1 << 9,
-	PSPF_PLAYERTRANSLATED = 1 << 10
+	PSPF_PLAYERTRANSLATED = 1 << 10,
+	PSPF_PIVOTPERCENT	= 1 << 11,
+	PSPF_INTERPOLATE	= 1 << 12,
+};
+
+enum PSPAlign
+{
+	PSPA_TOP = 0,
+	PSPA_CENTER,
+	PSPA_BOTTOM,
+	PSPA_LEFT = PSPA_TOP,
+	PSPA_RIGHT = 2
+};
+
+struct WeaponInterp
+{
+	FVector2 v[4];
 };
 
 class DPSprite : public DObject
@@ -92,13 +108,21 @@ public:
 	DPSprite*	GetNext()							  { return Next; }
 	AActor*		GetCaller()							  { return Caller; }
 	void		SetCaller(AActor *newcaller)		  { Caller = newcaller; }
-	void		ResetInterpolation()				  { oldx = x; oldy = y; }
+	void		ResetInterpolation()				  { oldx = x; oldy = y; Prev = Vert; InterpolateTic = false; }
 	void OnDestroy() override;
 	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 	float GetYAdjust(bool fullscreen);
 
+	int HAlign, VAlign;		// Horizontal and vertical alignment
+	DAngle rotation;		// How much rotation to apply.
+	DVector2 pivot;			// pivot points
+	DVector2 scale;			// Scale
 	double x, y, alpha;
 	double oldx, oldy;
+	bool InterpolateTic;	// One tic interpolation (WOF_INTERPOLATE)
+	DVector2 Coord[4];		// Offsets
+	WeaponInterp Prev;		// Interpolation
+	WeaponInterp Vert;		// Current Position
 	bool firstTic;
 	int Tics;
 	uint32_t Translation;

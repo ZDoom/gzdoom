@@ -529,7 +529,7 @@ bool FScanner::ScanString (bool tokens)
 	LastGotLine = Line;
 
 	// In case the generated scanner does not use marker, avoid compiler warnings.
-	marker;
+	// marker;
 #include "sc_man_scanner.h"
 	LastGotToken = tokens;
 	return return_val;
@@ -1044,8 +1044,8 @@ bool FScanner::ScanValue(bool allowfloat, bool evaluate)
 		auto d = constants.CheckKey(String);
 		if (!d) return false;
 		if (!allowfloat && int64_t(*d) != *d) return false;
-		BigNumber = *d;
-		Number = *d;
+		BigNumber = int64_t(*d);
+		Number = int(*d);
 		Float = *d;
 	}
 	if (neg)
@@ -1231,8 +1231,8 @@ void FScanner::AddSymbol(const char *name, int64_t value)
 {
 	Symbol sym;
 	sym.tokenType = TK_IntConst;
-	sym.Number = value;
-	sym.Float = value;
+	sym.Number = int(value);
+	sym.Float = double(value);
 	symbols.Insert(name, sym);
 }
 
@@ -1247,7 +1247,7 @@ void FScanner::AddSymbol(const char* name, uint64_t value)
 	Symbol sym;
 	sym.tokenType = TK_UIntConst;
 	sym.Number = value;
-	sym.Float = value;
+	sym.Float = (double)value;
 	symbols.Insert(name, sym);
 }
 

@@ -144,7 +144,7 @@ public:
 
 private:
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-	FixedSizeVector<VkDescriptorSetLayoutBinding, 8> bindings;
+	TArray<VkDescriptorSetLayoutBinding> bindings;
 };
 
 class DescriptorPoolBuilder
@@ -636,10 +636,10 @@ inline void DescriptorSetLayoutBuilder::addBinding(int index, VkDescriptorType t
 	binding.descriptorCount = arrayCount;
 	binding.stageFlags = stageFlags;
 	binding.pImmutableSamplers = nullptr;
-	bindings.push_back(binding);
+	bindings.Push(binding);
 
-	layoutInfo.bindingCount = (uint32_t)bindings.size();
-	layoutInfo.pBindings = bindings.data();
+	layoutInfo.bindingCount = (uint32_t)bindings.Size();
+	layoutInfo.pBindings = &bindings[0];
 }
 
 inline std::unique_ptr<VulkanDescriptorSetLayout> DescriptorSetLayoutBuilder::create(VulkanDevice *device)

@@ -296,6 +296,7 @@ void ZCCDoomCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pr
 
 			case 'C':	// this parser accepts colors only in string form.
 				pref.i = 1;
+				[[fallthrough]];
 			case 'S':
 			case 'T': // a filtered string (ZScript only parses filtered strings so there's nothing to do here.)
 				conv.s = GetStringConst(ex, ctx);

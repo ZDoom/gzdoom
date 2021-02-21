@@ -91,14 +91,11 @@ class LoadSaveMenu : ListMenu
 	int listboxRows;
 	int listboxHeight;
 	int listboxRight;
-	int listboxBottom;
 
 	int commentLeft;
 	int commentTop;
 	int commentWidth;
 	int commentHeight;
-	int commentRight;
-	int commentBottom;
 	int commentRows;
 
 	bool mEntering;
@@ -120,31 +117,37 @@ class LoadSaveMenu : ListMenu
 		Super.Init(parent, desc);
 		manager = SavegameManager.GetManager();
 		manager.ReadSaveStrings();
+		SetWindows();
+	}
+	
+	private void SetWindows()
+	{
+		bool aspect43 = true;
+		int Width43 = screen.GetHeight() * 4 / 3;
+		int Left43 = (screen.GetWidth() - Width43) / 2;
+		
+		double wScale = Width43 / 640.;
 
-		savepicLeft = 10;
-		savepicTop = 54*CleanYfac;
-		savepicWidth = 216*screen.GetWidth() / 640;
-		savepicHeight = 135*screen.GetHeight() / 400;
+		savepicLeft = Left43 + int(20 * wScale);
+		savepicTop = int(mDesc.mYpos * screen.GetHeight() / 200);
+		savepicWidth = int(240 * wScale);
+		savepicHeight = int(180 * wScale);
 
 		FontScale = max(screen.GetHeight() / 480, 1);
 		rowHeight = int(max((NewConsoleFont.GetHeight() + 1) * FontScale, 1));
 		
-		listboxLeft = savepicLeft + savepicWidth + 14;
+		listboxLeft = savepicLeft + savepicWidth + int(20*wScale);
 		listboxTop = savepicTop;
-		listboxWidth = screen.GetWidth() - listboxLeft - 10;
-		int listboxHeight1 = screen.GetHeight() - listboxTop - 10;
+		listboxWidth = Width43 + Left43 - listboxLeft - int(30 * wScale);
+		int listboxHeight1 = screen.GetHeight() - listboxTop - int(20*wScale);
 		listboxRows = (listboxHeight1 - 1) / rowHeight;
 		listboxHeight = listboxRows * rowHeight + 1;
 		listboxRight = listboxLeft + listboxWidth;
-		listboxBottom = listboxTop + listboxHeight;
 
 		commentLeft = savepicLeft;
-		commentTop = savepicTop + savepicHeight + 16;
+		commentTop = savepicTop + savepicHeight + int(16 * wScale);
 		commentWidth = savepicWidth;
-		//commentHeight = (51+(screen.GetHeight()>200?10:0))*CleanYfac;
-		commentHeight = listboxHeight - savepicHeight - 16;
-		commentRight = commentLeft + commentWidth;
-		commentBottom = commentTop + commentHeight;
+		commentHeight = listboxHeight - savepicHeight - int(16 * wScale);
 		commentRows = commentHeight / rowHeight;
 	}
 
@@ -167,6 +170,12 @@ class LoadSaveMenu : ListMenu
 	//
 	//=============================================================================
 
+	virtual void DrawFrame(int left, int top, int width, int height)
+	{
+		let framecolor = Color(255, 80, 80, 80);
+		Screen.DrawLineFrame(framecolor, left, top, width, height, screen.GetHeight() / 240);
+	}
+
 	override void Drawer ()
 	{
 		Super.Drawer();
@@ -182,24 +191,26 @@ class LoadSaveMenu : ListMenu
 			return;
 		}
 
-		Screen.DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
+		SetWindows();
+		DrawFrame(savepicLeft, savepicTop, savepicWidth, savepicHeight);
 		if (!manager.DrawSavePic(savepicLeft, savepicTop, savepicWidth, savepicHeight))
 		{
-			screen.Clear (savepicLeft, savepicTop, savepicLeft+savepicWidth, savepicTop+savepicHeight, 0, 0);
+			screen.Dim(0, 0.6, savepicLeft, savepicTop, savepicWidth, savepicHeight);
 
 			if (manager.SavegameCount() > 0)
 			{
+				if (Selected >= manager.SavegameCount()) Selected = 0;
 				String text = (Selected == -1 || !manager.GetSavegame(Selected).bOldVersion)? Stringtable.Localize("$MNU_NOPICTURE") : Stringtable.Localize("$MNU_DIFFVERSION");
-				int textlen = NewSmallFont.StringWidth(text) * CleanXfac;
-
-				screen.DrawText (NewSmallFont, Font.CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
-					savepicTop+(savepicHeight-rowHeight)/2, text, DTA_CleanNoMove, true);
+				int textlen = NewSmallFont.StringWidth(text);
+				
+				screen.DrawText (NewSmallFont, Font.CR_GOLD, (savepicLeft + savepicWidth / 2) / FontScale - textlen/2,
+					(savepicTop+(savepicHeight-rowHeight)/2) / FontScale, text, DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 			}
 		}
 
 		// Draw comment area
-		Screen.DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
-		screen.Clear (commentLeft, commentTop, commentRight, commentBottom, 0, 0);
+		DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
+		screen.Dim(0, 0.6, commentLeft, commentTop, commentWidth, commentHeight);
 
 		int numlinestoprint = min(commentRows, BrokenSaveComment? BrokenSaveComment.Count() : 0);
 		for(int i = 0; i < numlinestoprint; i++)
@@ -210,8 +221,8 @@ class LoadSaveMenu : ListMenu
 		
 
 		// Draw file area
-		Screen.DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
-		screen.Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
+		DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
+		screen.Dim(0, 0.6, listboxLeft, listboxTop, listboxWidth, listboxHeight);
 
 		if (manager.SavegameCount() == 0)
 		{

@@ -5261,7 +5261,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 			if (rettype == TypeSInt32 || rettype == TypeBool || rettype == TypeColor || rettype == TypeName || rettype == TypeSound)
 			{
 				VMReturn ret(&retval);
-				VMCall(func, &params[0], params.Size(), &ret, 1);
+				VMCallWithDefaults(func, params, &ret, 1);
 				if (rettype == TypeName)
 				{
 					retval = GlobalACSStrings.AddString(FName(ENamedName(retval)).GetChars());
@@ -6299,7 +6299,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				int tid1 = 0, tid2 = 0;
 				switch (argCount)
 				{
-				case 4: tid2 = args[3];
+				case 4: tid2 = args[3]; [[fallthrough]];
 				case 3: tid1 = args[2];
 				}
 
@@ -8109,6 +8109,7 @@ int DLevelScript::RunScript()
 
 		case PCD_SETRESULTVALUE:
 			resultValue = STACK(1);
+			[[fallthrough]];
 		case PCD_DROP: //fall through.
 			sp--;
 			break;
@@ -9049,15 +9050,19 @@ scriptwait:
 			break;
 
 		case PCD_FIXEDMUL:
-			STACK(2) = FixedMul (STACK(2), STACK(1));
+			STACK(2) = MulScale(STACK(2), STACK(1), 16);
 			sp--;
 			break;
 
 		case PCD_FIXEDDIV:
-			STACK(2) = FixedDiv (STACK(2), STACK(1));
+		{
+			int a = STACK(2), b = STACK(1);
+			// Overflow check.
+			if ((uint32_t)abs(a) >> (31 - 16) >= (uint32_t)abs(b)) STACK(2) = (a ^ b) < 0 ? FIXED_MIN : FIXED_MAX;
+			else STACK(2) = DivScale(STACK(2), STACK(1), 16);
 			sp--;
 			break;
-
+		}
 		case PCD_SETGRAVITY:
 			Level->gravity = ACSToDouble(STACK(1));
 			sp--;

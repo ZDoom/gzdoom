@@ -37,7 +37,7 @@
 #include "templates.h"
 #include "p_local.h"
 #include "t_script.h"
-#include "c_console.h"
+#include "sbar.h"
 #include "c_dispatch.h"
 #include "d_player.h"
 #include "filesystem.h"
@@ -1879,7 +1879,7 @@ void FParser::SF_FloorTexture(void)
 		
 		t_return.type = svt_string;
 		auto tex = TexMan.GetGameTexture(sector->GetTexture(sector_t::floor));
-		t_return.string = tex? tex->GetName() : "";
+		t_return.string = tex? tex->GetName() : FString();
 	}
 }
 
@@ -1969,7 +1969,7 @@ void FParser::SF_CeilingTexture(void)
 		
 		t_return.type = svt_string;
 		auto tex = TexMan.GetGameTexture(sector->GetTexture(sector_t::ceiling));
-		t_return.string = tex? tex->GetName() : "";
+		t_return.string = tex? tex->GetName() : FString();
 	}
 }
 

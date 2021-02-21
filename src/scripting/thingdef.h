@@ -240,9 +240,9 @@ enum EDefinitionType
 };
 
 #if defined(_MSC_VER)
-#pragma section(".greg$u",read)
+#pragma section(SECTION_GREG,read)
 
-#define MSVC_PSEG __declspec(allocate(".greg$u"))
+#define MSVC_PSEG __declspec(allocate(SECTION_GREG))
 #define GCC_PSEG
 #else
 #define MSVC_PSEG

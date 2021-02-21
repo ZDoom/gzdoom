@@ -44,6 +44,7 @@
 #include "vm.h"
 #include "printf.h"
 
+
 int ListGetInt(VMVa_List &tags);
 
 
@@ -185,8 +186,9 @@ void DrawChar(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double 
 		{
 			return;
 		}
+		bool palettetrans = (normalcolor == CR_UNDEFINED && parms.TranslationId != 0);
 		PalEntry color = 0xffffffff;
-		parms.TranslationId = redirected ? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
+		if (!palettetrans) parms.TranslationId = redirected ? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		drawer->AddTexture(pic, parms);
 	}
@@ -210,8 +212,9 @@ void DrawChar(F2DDrawer *drawer,  FFont *font, int normalcolor, double x, double
 		uint32_t tag = ListGetInt(args);
 		bool res = ParseDrawTextureTags(drawer, pic, x, y, tag, args, &parms, false);
 		if (!res) return;
+		bool palettetrans = (normalcolor == CR_UNDEFINED && parms.TranslationId != 0);
 		PalEntry color = 0xffffffff;
-		parms.TranslationId = redirected ? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
+		if (!palettetrans) parms.TranslationId = redirected ? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		drawer->AddTexture(pic, parms);
 	}

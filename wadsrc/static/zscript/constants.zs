@@ -400,51 +400,6 @@ enum ETakeFlags
 {
 	TIF_NOTAKEINFINITE = 1
 };
-
-// constants for A_PlaySound
-enum ESoundFlags
-{
-	CHAN_AUTO = 0,
-	CHAN_WEAPON = 1,
-	CHAN_VOICE = 2,
-	CHAN_ITEM = 3,
-	CHAN_BODY = 4,
-	CHAN_5 = 5,
-	CHAN_6 = 6,
-	CHAN_7 = 7,
-	
-	// modifier flags
-	CHAN_LISTENERZ = 8,
-	CHAN_MAYBE_LOCAL = 16,
-	CHAN_UI = 32,
-	CHAN_NOPAUSE = 64,
-	CHAN_LOOP = 256,
-	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL), // Do not use this with A_StartSound! It would not do what is expected.
-	CHAN_NOSTOP = 4096,
-	CHAN_OVERLAP = 8192,
-
-	// Same as above, with an F appended to allow better distinction of channel and channel flags.
-	CHANF_DEFAULT = 0,	// just to make the code look better and avoid literal 0's.
-	CHANF_LISTENERZ = 8,
-	CHANF_MAYBE_LOCAL = 16,
-	CHANF_UI = 32,
-	CHANF_NOPAUSE = 64,
-	CHANF_LOOP = 256,
-	CHANF_NOSTOP = 4096,
-	CHANF_OVERLAP = 8192,
-	CHANF_LOCAL = 16384,
-
-
-	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
-
-};
-
-// sound attenuation values
-const ATTN_NONE = 0;
-const ATTN_NORM = 1;
-const ATTN_IDLE = 1.001;
-const ATTN_STATIC = 3;
-
 // For SetPlayerProperty action special
 enum EPlayerProperties
 {
@@ -739,22 +694,36 @@ enum EWeaponOffsetFlags
 	WOF_KEEPY =		1 << 1,
 	WOF_ADD =		1 << 2,
 	WOF_INTERPOLATE = 1 << 3,
+	WOF_RELATIVE	= 1 << 4,
+	WOF_ZEROY		= 1 << 5,
 };
 
 // Flags for psprite layers
 enum EPSpriteFlags
 {
-	PSPF_ADDWEAPON	= 1 << 0,
-	PSPF_ADDBOB		= 1 << 1,
-	PSPF_POWDOUBLE	= 1 << 2,
-	PSPF_CVARFAST	= 1 << 3,
-	PSPF_ALPHA		= 1 << 4,
-	PSPF_RENDERSTYLE= 1 << 5,
-	PSPF_FLIP		= 1 << 6,
-	PSPF_FORCEALPHA	= 1 << 7,
-	PSPF_FORCESTYLE	= 1 << 8,
-	PSPF_MIRROR		= 1 << 9,
-	PSPF_PLAYERTRANSLATED = 1 << 10
+	PSPF_ADDWEAPON		= 1 << 0,
+	PSPF_ADDBOB			= 1 << 1,
+	PSPF_POWDOUBLE		= 1 << 2,
+	PSPF_CVARFAST		= 1 << 3,
+	PSPF_ALPHA			= 1 << 4,
+	PSPF_RENDERSTYLE	= 1 << 5,
+	PSPF_FLIP			= 1 << 6,
+	PSPF_FORCEALPHA		= 1 << 7,
+	PSPF_FORCESTYLE		= 1 << 8,
+	PSPF_MIRROR			= 1 << 9,
+	PSPF_PLAYERTRANSLATED = 1 << 10,
+	PSPF_PIVOTPERCENT	= 1 << 11,
+	PSPF_INTERPOLATE	= 1 << 12,
+};
+
+// Alignment constants for A_OverlayPivotAlign
+enum EPSpriteAlign
+{
+	PSPA_TOP = 0,
+	PSPA_CENTER,
+	PSPA_BOTTOM,
+	PSPA_LEFT = PSPA_TOP,
+	PSPA_RIGHT = 2
 };
 
 // Default psprite layers
@@ -763,6 +732,9 @@ enum EPSPLayers
 	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
+	PSP_TARGETCENTER = int.max - 2,
+	PSP_TARGETLEFT,
+	PSP_TARGETRIGHT
 };
 
 enum EInputFlags
@@ -851,31 +823,6 @@ enum EMaskRotationFlags
 	VRF_NOANGLE = VRF_NOANGLESTART|VRF_NOANGLEEND,
 	VRF_NOPITCH = VRF_NOPITCHSTART|VRF_NOPITCHEND,
 };
-
-enum ERenderStyle
-{
-	STYLE_None,				// Do not draw
-	STYLE_Normal,			// Normal; just copy the image to the screen
-	STYLE_Fuzzy,			// Draw silhouette using "fuzz" effect
-	STYLE_SoulTrans,		// Draw translucent with amount in r_transsouls
-	STYLE_OptFuzzy,			// Draw as fuzzy or translucent, based on user preference
-	STYLE_Stencil,			// Fill image interior with alphacolor
-	STYLE_Translucent,		// Draw translucent
-	STYLE_Add,				// Draw additive
-	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
-	STYLE_TranslucentStencil,
-	STYLE_Shadow,
-	STYLE_Subtract,			// Actually this is 'reverse subtract' but this is what normal people would expect by 'subtract'.
-	STYLE_AddStencil,		// Fill image interior with alphacolor
-	STYLE_AddShaded,		// Treat patch data as alpha values for alphacolor
-	STYLE_Multiply,			// Multiply source with destination (HW renderer only.)
-	STYLE_InverseMultiply,	// Multiply source with inverse of destination (HW renderer only.)
-	STYLE_ColorBlend,		// Use color intensity as transparency factor
-	STYLE_Source,			// No blending (only used internally)
-	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
-
-};
-
 // Type definition for the implicit 'callingstate' parameter that gets passed to action functions.
 enum EStateType
 {
@@ -1018,6 +965,8 @@ enum ESkillProperty
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 	SKILLP_PlayerRespawn,
+	SKILLP_SpawnMulti,
+	SKILLP_InstantReaction,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -1112,18 +1061,6 @@ enum PaletteFlashFlags
 	PF_HAZARD			= 8,
 };
 
-enum EGameState
-{
-	GS_LEVEL,
-	GS_INTERMISSION,
-	GS_FINALE,
-	GS_DEMOSCREEN,
-	GS_FULLCONSOLE,
-	GS_HIDECONSOLE,
-	GS_STARTUP,
-	GS_TITLELEVEL,
-}
-
 enum EGameAction
 {
 	ga_nothing,
@@ -1188,40 +1125,6 @@ enum EPlayerCheats
 	CF_DOUBLEFIRINGSPEED= 0,
 	CF_INFINITEAMMO		= 0,
 };
-
-const TEXTCOLOR_BRICK			= "\034A";
-const TEXTCOLOR_TAN				= "\034B";
-const TEXTCOLOR_GRAY			= "\034C";
-const TEXTCOLOR_GREY			= "\034C";
-const TEXTCOLOR_GREEN			= "\034D";
-const TEXTCOLOR_BROWN			= "\034E";
-const TEXTCOLOR_GOLD			= "\034F";
-const TEXTCOLOR_RED				= "\034G";
-const TEXTCOLOR_BLUE			= "\034H";
-const TEXTCOLOR_ORANGE			= "\034I";
-const TEXTCOLOR_WHITE			= "\034J";
-const TEXTCOLOR_YELLOW			= "\034K";
-const TEXTCOLOR_UNTRANSLATED	= "\034L";
-const TEXTCOLOR_BLACK			= "\034M";
-const TEXTCOLOR_LIGHTBLUE		= "\034N";
-const TEXTCOLOR_CREAM			= "\034O";
-const TEXTCOLOR_OLIVE			= "\034P";
-const TEXTCOLOR_DARKGREEN		= "\034Q";
-const TEXTCOLOR_DARKRED			= "\034R";
-const TEXTCOLOR_DARKBROWN		= "\034S";
-const TEXTCOLOR_PURPLE			= "\034T";
-const TEXTCOLOR_DARKGRAY		= "\034U";
-const TEXTCOLOR_CYAN			= "\034V";
-const TEXTCOLOR_ICE				= "\034W";
-const TEXTCOLOR_FIRE			= "\034X";
-const TEXTCOLOR_SAPPHIRE		= "\034Y";
-const TEXTCOLOR_TEAL			= "\034Z";
-
-const TEXTCOLOR_NORMAL			= "\034-";
-const TEXTCOLOR_BOLD			= "\034+";
-
-const TEXTCOLOR_CHAT			= "\034*";
-const TEXTCOLOR_TEAMCHAT		= "\034!";
 
 enum EWeaponState
 {
@@ -1373,24 +1276,16 @@ enum ECompatFlags
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
 };
 
-enum EMonospacing
-{
-	Mono_Off = 0,
-	Mono_CellLeft = 1,
-	Mono_CellCenter = 2,
-	Mono_CellRight = 3
-};
-
-enum EPrintLevel
-{
-	PRINT_LOW,		// pickup messages
-	PRINT_MEDIUM,	// death messages
-	PRINT_HIGH,		// critical messages
-	PRINT_CHAT,		// chat messages
-	PRINT_TEAMCHAT,	// chat messages from a teammate
-	PRINT_LOG,		// only to logfile
-	PRINT_BOLD = 200,				// What Printf_Bold used
-	PRINT_TYPES = 1023,		// Bitmask.
-	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
-	PRINT_NOLOG = 2048,		// Flag - do not print to log file
-};
+const M_E        = 2.7182818284590452354;  // e
+const M_LOG2E    = 1.4426950408889634074;  // log_2 e
+const M_LOG10E   = 0.43429448190325182765; // log_10 e
+const M_LN2      = 0.69314718055994530942; // log_e 2
+const M_LN10     = 2.30258509299404568402; // log_e 10
+const M_PI       = 3.14159265358979323846; // pi
+const M_PI_2     = 1.57079632679489661923; // pi/2
+const M_PI_4     = 0.78539816339744830962; // pi/4
+const M_1_PI     = 0.31830988618379067154; // 1/pi
+const M_2_PI     = 0.63661977236758134308; // 2/pi
+const M_2_SQRTPI = 1.12837916709551257390; // 2/sqrt(pi)
+const M_SQRT2    = 1.41421356237309504880; // sqrt(2)
+const M_SQRT1_2  = 0.70710678118654752440; // 1/sqrt(2)

@@ -33,6 +33,7 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
 
 bool FileExists (const char *filename);
+bool FileReadable (const char *filename);
 bool DirExists(const char *filename);
 bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
 bool GetFileInfo(const char* pathname, size_t* size, time_t* time);
@@ -89,5 +90,17 @@ struct MD5Context;
 
 void md5Update(FileReader& file, MD5Context& md5, unsigned len);
 void uppercopy(char* to, const char* from);
+
+inline void fillshort(void* buff, size_t count, uint16_t clear)
+{
+	int16_t* b2 = (int16_t*)buff;
+	for (size_t i = 0; i < count; ++i)
+	{
+		b2[i] = clear;
+	}
+}
+
+template<typename T> inline constexpr T Sgn(const T& val) { return (val > 0) - (val < 0); }
+
 
 #endif

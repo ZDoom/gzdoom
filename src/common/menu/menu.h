@@ -47,6 +47,7 @@ class DMenu;
 extern DMenu *CurrentMenu;
 extern int MenuTime;
 class DMenuItemBase;
+extern DObject* menuDelegate;
 
 //=============================================================================
 //
@@ -65,7 +66,7 @@ public:
 	bool mProtected = false;
 	TArray<DMenuItemBase *> mItems;
 
-	virtual size_t PropagateMark() { return 0;  }
+	size_t PropagateMark() override;
 };
 
 
@@ -88,11 +89,13 @@ public:
 	EColorRange mFontColor2;
 	bool mCenter;
 	bool mFromEngine;
+	bool mAnimated;
+	bool mAnimatedTransition;
 	int mVirtWidth;
 	int mVirtHeight;
+	bool mCustomSizeSet;
 
 	void Reset();
-	size_t PropagateMark() override;
 };
 
 struct FOptionMenuSettings
@@ -125,10 +128,22 @@ public:
 	void CalcIndent();
 	DMenuItemBase *GetItem(FName name);
 	void Reset();
-	size_t PropagateMark() override;
 	~DOptionMenuDescriptor() = default;
 };
-						
+
+class DImageScrollerDescriptor : public DMenuDescriptor
+{
+	DECLARE_CLASS(DOptionMenuDescriptor, DMenuDescriptor)
+public:
+	FTextureID textBackground;
+	PalEntry textBackgroundBrightness;
+
+	FFont *textFont;
+	double textScale;
+	bool mAnimatedTransition;
+	int virtWidth, virtHeight;
+
+};
 
 typedef TMap<FName, DMenuDescriptor *> MenuDescriptorList;
 
@@ -164,6 +179,32 @@ struct FMenuRect
 };
 
 
+enum MenuTransitionType
+{ // Note: This enum is for logical categories, not visual types.
+	MA_None,
+	MA_Return,
+	MA_Advance,
+};
+
+class DMenu;
+
+struct MenuTransition
+{
+	DMenu* previous;
+	DMenu* current;
+
+	double start;
+	int32_t length;
+	int8_t dir;
+	bool destroyprev;
+
+	bool StartTransition(DMenu* from, DMenu* to, MenuTransitionType animtype);
+	bool Draw();
+
+};
+
+
+
 class DMenu : public DObject
 {
 	DECLARE_CLASS (DMenu, DObject)
@@ -184,6 +225,8 @@ public:
 	bool mBackbuttonSelected;
 	bool DontDim;
 	bool DontBlur;
+	bool Animated;
+	bool AnimatedTransition;
 	static int InMenu;
 
 	DMenu(DMenu *parent = NULL);
@@ -194,6 +237,7 @@ public:
 	bool CallMenuEvent(int mkey, bool fromcontroller);
 	void CallTicker();
 	void CallDrawer();
+	bool canAnimate() { return AnimatedTransition; }
 };
 
 //=============================================================================
@@ -208,7 +252,7 @@ class DMenuItemBase : public DObject
 public:
 	double mXpos, mYpos;
 	FName mAction;
-	bool mEnabled;
+	int mEnabled;
 
 	bool Activate();
 	bool SetString(int i, const char *s);
@@ -266,6 +310,7 @@ void M_MarkMenus();
 FTextureID GetMenuTexture(const char* const name);
 void DeinitMenus();
 bool M_Active();
+bool M_IsAnimated();
 
 
 struct IJoystickConfig;
@@ -276,6 +321,7 @@ DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickCo
 DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param);
 DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool centered = false);
+DMenuItemBase* CreateListMenuItemStaticText(double x, double y, const char* text, FFont* font, PalEntry color, bool centered = false);
 
 void UpdateVRModes(bool considerQuadBuffered=true);
 

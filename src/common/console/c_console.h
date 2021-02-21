@@ -36,6 +36,8 @@
 
 #include <stdarg.h>
 #include "basics.h"
+#include "c_tabcomplete.h"
+#include "textureid.h"
 
 struct event_t;
 
@@ -56,8 +58,7 @@ extern constate_e ConsoleState;
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);
 void C_DeinitConsole ();
-void C_InitConback();
-void C_ClearMessages();
+void C_InitConback(FTextureID fallback, bool tile, double lightlevel = 1.);
 
 // Adjust the console for a new screen mode
 void C_NewModeAdjust (void);
@@ -75,15 +76,13 @@ void C_FullConsole (void);
 void C_HideConsole (void);
 void C_AdjustBottom (void);
 void C_FlushDisplay (void);
+class FNotifyBufferBase;
+void C_SetNotifyBuffer(FNotifyBufferBase *nbb);
 
-class FFont;
-void C_MidPrint (FFont *font, const char *message, bool bold = false);
 
 bool C_Responder (event_t *ev);
 
-void C_AddTabCommand (const char *name);
-void C_RemoveTabCommand (const char *name);
-void C_ClearTabCommands();		// Removes all tab commands
+extern double NotifyFontScale;
 void C_SetNotifyFontScale(double scale);
 
 extern const char *console_bar;

@@ -126,6 +126,12 @@ public:
 	}
 
 	template<class T>
+	FSerializer& operator()(const char* key, T& obj, T* def)
+	{
+		return Serialize(*this, key, obj, !def || save_full ? nullptr : def);
+	}
+
+	template<class T>
 	FSerializer &Array(const char *key, T *obj, int count, bool fullcompare = false)
 	{
 		if (!save_full && fullcompare && isWriting() && nullcmp(obj, count * sizeof(T)))
@@ -166,6 +172,29 @@ public:
 			for (int i = 0; i < count; i++)
 			{
 				Serialize(*this, nullptr, obj[i], def ? &def[i] : nullptr);
+			}
+			EndArray();
+		}
+		return *this;
+	}
+
+	template<class T, class Map>
+	FSerializer &SparseArray(const char *key, T *obj, int count, const Map &map, bool fullcompare = false)
+	{
+		if (BeginArray(key))
+		{
+			int max = count;
+			if (isReading())
+			{
+				max = ArraySize();
+			}
+			for (int i = 0; i < count; i++)
+			{
+				if (map[i])
+				{
+					Serialize(*this, nullptr, obj[i], (T*)nullptr);
+					if (--max < 0) break;
+				}
 			}
 			EndArray();
 		}

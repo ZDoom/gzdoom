@@ -48,10 +48,13 @@
 #define GetData(a)			(int32_t(a) >> 8 )
 #define GetFloatData(a)		float((int32_t(a) >> 8 )/65536.f)
 #define MakeCommand(a,b)	((a) | ((b) << 8))
-#define HexenPlatSeq(a)		(a)
-#define HexenDoorSeq(a)		((a) | 0x40)
-#define HexenEnvSeq(a)		((a) | 0x80)
-#define HexenLastSeq		(0xff)
+#define HexenPlatSeqStart	(0)
+#define HexenDoorSeqStart	(MAX_SNDSEQS)
+#define HexenEnvSeqStart	(MAX_SNDSEQS << 1)
+#define HexenPlatSeq(a)		((a) | (HexenPlatSeqStart))
+#define HexenDoorSeq(a)		((a) | (HexenDoorSeqStart))
+#define HexenEnvSeq(a)		((a) | (HexenEnvSeqStart))
+#define HexenLastSeq		((MAX_SNDSEQS << 2) - 1)
 
 // TYPES -------------------------------------------------------------------
 
@@ -106,7 +109,7 @@ typedef enum
 struct hexenseq_t
 {
 	ENamedName	Name;
-	uint8_t		Seqs[4];
+	uint16_t	Seqs[4];
 };
 
 class DSeqActorNode : public DSeqNode
@@ -282,7 +285,7 @@ static const hexenseq_t HexenSequences[] = {
 	{ NAME_None, {0} }
 };
 
-static int SeqTrans[64*3];
+static int SeqTrans[MAX_SNDSEQS*3];
 
 static FRandom pr_sndseq ("SndSeq");
 
@@ -491,7 +494,7 @@ static void AssignTranslations (FScanner &sc, int seq, seqtype_t type)
 	{
 		if (IsNum(sc.String))
 		{
-			SeqTrans[(atoi(sc.String) & 63) + type * 64] = seq;
+			SeqTrans[(atoi(sc.String) & (MAX_SNDSEQS - 1)) + type * MAX_SNDSEQS] = seq;
 		}
 	}
 	sc.UnGet();
@@ -521,16 +524,16 @@ static void AssignHexenTranslations (void)
 		{
 			int trans;
 
-			if (HexenSequences[i].Seqs[j] & 0x40)
+			if (HexenSequences[i].Seqs[j] & HexenDoorSeqStart)
 			{
-				trans = 64 * SEQ_DOOR;
+				trans = MAX_SNDSEQS * SEQ_DOOR;
 			}
-			else if (HexenSequences[i].Seqs[j] & 0x80)
-				trans = 64 * SEQ_ENVIRONMENT;
+			else if (HexenSequences[i].Seqs[j] & HexenEnvSeqStart)
+				trans = MAX_SNDSEQS * SEQ_ENVIRONMENT;
 			else
-				trans = 64 * SEQ_PLATFORM;
+				trans = MAX_SNDSEQS * SEQ_PLATFORM;
 
-			SeqTrans[trans + (HexenSequences[i].Seqs[j] & 0x3f)] = seq;
+			SeqTrans[trans + (HexenSequences[i].Seqs[j] & (MAX_SNDSEQS - 1))] = seq;
 		}
 	}
 }
@@ -860,9 +863,9 @@ static bool TwiddleSeqNum (int &sequence, seqtype_t type)
 	{
 		// [GrafZahl] Needs some range checking:
 		// Sector_ChangeSound doesn't do it so this makes invalid sequences play nothing.
-		if (sequence >= 0 && sequence < 64)
+		if (sequence >= 0 && sequence < MAX_SNDSEQS)
 		{
-			sequence = SeqTrans[sequence + type * 64];
+			sequence = SeqTrans[sequence + type * MAX_SNDSEQS];
 		}
 		else
 		{

@@ -453,8 +453,8 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 
 					if (PointOnSide (center.fixX(), center.fixY(), v1->x, v1->y, dx, dy) <= 0)
 					{
-						fixed_t t = DivScale30 (center.fixY() - v1->y, dy);
-						fixed_t sx = v1->x + MulScale30 (dx, t);
+						fixed_t t = DivScale (center.fixY() - v1->y, dy, 30);
+						fixed_t sx = v1->x + MulScale(dx, t, 30);
 						fixed_t dist = sx - spot->x;
 
 						if (dist < closestdist && dist >= 0)

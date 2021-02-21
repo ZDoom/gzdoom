@@ -67,6 +67,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_single)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_coop)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_dm)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderColor)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderBackColor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultbloodcolor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, telefogheight)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defKickback)
@@ -75,6 +76,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, berserkpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultdropstyle)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normforwardmove)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normsidemove)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mHideParTimes)
 
 const char *GameNames[17] =
 {
@@ -409,6 +411,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_FLOAT(dimamount, "dimamount")
 			GAMEINFOKEY_FLOAT(bluramount, "bluramount")
 			GAMEINFOKEY_STRING(mSliderColor, "menuslidercolor")
+			GAMEINFOKEY_STRING(mSliderBackColor, "menusliderbackcolor")
 			GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
 			GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 			GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
@@ -441,6 +444,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_TWODOUBLES(normforwardmove, "normforwardmove")
 			GAMEINFOKEY_TWODOUBLES(normsidemove, "normsidemove")
 			GAMEINFOKEY_BOOL(nomergepickupmsg, "nomergepickupmsg")
+			GAMEINFOKEY_BOOL(mHideParTimes, "hidepartimes")
 
 		else
 		{

@@ -1,291 +1,40 @@
 
-struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
+extend struct _
 {
-	native readonly Array<class> AllClasses;
 	native readonly Array<class<Actor> > AllActorClasses;
 	native readonly Array<@PlayerClass> PlayerClasses;
 	native readonly Array<@PlayerSkin> PlayerSkins;
 	native readonly Array<@Team> Teams;
 	native int validcount;
-	native readonly bool multiplayer;
-	native @KeyBindings Bindings;
-	native @KeyBindings AutomapBindings;
 	native play @DehInfo deh;
-	native readonly @GameInfoStruct gameinfo;
-	native readonly ui bool netgame;
-
 	native readonly bool automapactive;
-	native readonly uint gameaction;
-	native readonly int gamestate;
 	native readonly TextureID skyflatnum;
-	native readonly Font smallfont;
-	native readonly Font smallfont2;
-	native readonly Font bigfont;
-	native readonly Font confont;
-	native readonly Font NewConsoleFont;
-	native readonly Font NewSmallFont;
-	native readonly Font AlternativeSmallFont;
-	native readonly Font OriginalSmallFont;
-	native readonly Font OriginalBigFont;
-	native readonly Font intermissionfont;
-	native readonly int CleanXFac;
-	native readonly int CleanYFac;
-	native readonly int CleanWidth;
-	native readonly int CleanHeight;
-	native readonly int CleanXFac_1;
-	native readonly int CleanYFac_1;
-	native readonly int CleanWidth_1;
-	native readonly int CleanHeight_1;
-	native ui int menuactive;
-	native readonly @FOptionMenuSettings OptionMenuSettings;
 	native readonly int gametic;
-	native readonly bool demoplayback;
-	native ui int BackbuttonTime;
-	native ui float BackbuttonAlpha;
 	native readonly int Net_Arbitrator;
 	native ui BaseStatusBar StatusBar;
 	native readonly Weapon WP_NOCHANGE;
 	deprecated("3.8", "Use Actor.isFrozen() or Level.isFrozen() instead") native readonly bool globalfreeze;
 	native int LocalViewPitch;
-	native readonly @MusPlayingInfo musplaying;
-	native readonly bool generic_ui;
-
-// sandbox state in multi-level setups:
-
+	
+	// sandbox state in multi-level setups:
 	native play @PlayerInfo players[MAXPLAYERS];
 	native readonly bool playeringame[MAXPLAYERS];
-	native readonly int consoleplayer;
 	native play LevelLocals Level;
 
 }
 
-struct MusPlayingInfo native
+extend struct TexMan
 {
-	native String name;
-	native int baseorder;
-	native bool loop;
-};
-
-struct TexMan
-{
-	enum EUseTypes
-	{
-		Type_Any,
-		Type_Wall,
-		Type_Flat,
-		Type_Sprite,
-		Type_WallPatch,
-		Type_Build,
-		Type_SkinSprite,
-		Type_Decal,
-		Type_MiscPatch,
-		Type_FontChar,
-		Type_Override,	// For patches between TX_START/TX_END
-		Type_Autopage,	// Automap background - used to enable the use of FAutomapTexture
-		Type_SkinGraphic,
-		Type_Null,
-		Type_FirstDefined,
-	};
-
-	enum EFlags
-	{
-		TryAny = 1,
-		Overridable = 2,
-		ReturnFirst = 4,
-		AllowSkins = 8,
-		ShortNameOnly = 16,
-		DontCreate = 32,
-		Localize = 64
-	};
-	
-	enum ETexReplaceFlags
-	{
-		NOT_BOTTOM			= 1,
-		NOT_MIDDLE			= 2,
-		NOT_TOP				= 4,
-		NOT_FLOOR			= 8,
-		NOT_CEILING			= 16,
-		NOT_WALL			= 7,
-		NOT_FLAT			= 24
-	};
-
-	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
+	native static void SetCameraToTexture(Actor viewpoint, String texture, double fov);
 	deprecated("3.8", "Use Level.ReplaceTextures() instead") static void ReplaceTextures(String from, String to, int flags)
 	{
 		level.ReplaceTextures(from, to, flags);
 	}
-	native static String GetName(TextureID tex);
-	native static int, int GetSize(TextureID tex);
-	native static Vector2 GetScaledSize(TextureID tex);
-	native static Vector2 GetScaledOffset(TextureID tex);
-	native static int CheckRealHeight(TextureID tex);
-	native static bool OkForLocalization(TextureID patch, String textSubstitute);
-
-	native static void SetCameraToTexture(Actor viewpoint, String texture, double fov);
 }
 
-enum EScaleMode
+extend struct Screen
 {
-	FSMode_None = 0,
-	FSMode_ScaleToFit = 1,
-	FSMode_ScaleToFill = 2,
-	FSMode_ScaleToFit43 = 3,
-	FSMode_ScaleToScreen = 4,
-	FSMode_ScaleToFit43Top = 5,
-	FSMode_ScaleToFit43Bottom = 6,
-	FSMode_ScaleToHeight = 7,
-
-
-	FSMode_Max,
-
-	// These all use ScaleToFit43, their purpose is to cut down on verbosity because they imply the virtual screen size.
-	FSMode_Predefined = 1000,
-	FSMode_Fit320x200 = 1000,
-	FSMode_Fit320x240,
-	FSMode_Fit640x400,
-	FSMode_Fit640x480,
-	FSMode_Fit320x200Top,
-	FSMode_Predefined_Max,
-};
-
-enum DrawTextureTags
-{
-	TAG_USER = (1<<30),
-	DTA_Base = TAG_USER + 5000,
-	DTA_DestWidth,		// width of area to draw to
-	DTA_DestHeight,		// height of area to draw to
-	DTA_Alpha,			// alpha value for translucency
-	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
-	DTA_TranslationIndex, // translation table to recolor the source
-	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
-	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
-	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
-	DTA_Bottom320x200,	// bool: same as DTA_320x200 but centers virtual screen on bottom for 1280x1024 targets
-	DTA_CleanNoMove,	// bool: like DTA_Clean but does not reposition output position
-	DTA_CleanNoMove_1,	// bool: like DTA_CleanNoMove, but uses Clean[XY]fac_1 instead
-	DTA_FlipX,			// bool: flip image horizontally	//FIXME: Does not work with DTA_Window(Left|Right)
-	DTA_ShadowColor,	// color of shadow
-	DTA_ShadowAlpha,	// alpha of shadow
-	DTA_Shadow,			// set shadow color and alphas to defaults
-	DTA_VirtualWidth,	// pretend the canvas is this wide
-	DTA_VirtualHeight,	// pretend the canvas is this tall
-	DTA_TopOffset,		// override texture's top offset
-	DTA_LeftOffset,		// override texture's left offset
-	DTA_CenterOffset,	// bool: override texture's left and top offsets and set them for the texture's middle
-	DTA_CenterBottomOffset,// bool: override texture's left and top offsets and set them for the texture's bottom middle
-	DTA_WindowLeft,		// don't draw anything left of this column (on source, not dest)
-	DTA_WindowRight,	// don't draw anything at or to the right of this column (on source, not dest)
-	DTA_ClipTop,		// don't draw anything above this row (on dest, not source)
-	DTA_ClipBottom,		// don't draw anything at or below this row (on dest, not source)
-	DTA_ClipLeft,		// don't draw anything to the left of this column (on dest, not source)
-	DTA_ClipRight,		// don't draw anything at or to the right of this column (on dest, not source)
-	DTA_Masked,			// true(default)=use masks from texture, false=ignore masks
-	DTA_HUDRules,		// use fullscreen HUD rules to position and size textures
-	DTA_HUDRulesC,		// only used internally for marking HUD_HorizCenter
-	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
-	DTA_RenderStyle,	// same as render style for actors
-	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
-	DTA_Internal1,
-	DTA_Internal2,
-	DTA_Desaturate,		// explicit desaturation factor (does not do anything in Legacy OpenGL)
-	DTA_Fullscreen,		// Draw image fullscreen (same as DTA_VirtualWidth/Height with graphics size.)
-
-	// floating point duplicates of some of the above:
-	DTA_DestWidthF,
-	DTA_DestHeightF,
-	DTA_TopOffsetF,
-	DTA_LeftOffsetF,
-	DTA_VirtualWidthF,
-	DTA_VirtualHeightF,
-	DTA_WindowLeftF,
-	DTA_WindowRightF,
-
-	// For DrawText calls only:
-	DTA_TextLen,		// stop after this many characters, even if \0 not hit
-	DTA_CellX,			// horizontal size of character cell
-	DTA_CellY,			// vertical size of character cell
-
-	DTA_Color,
-	DTA_FlipY,			// bool: flip image vertically
-	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
-	DTA_SrcY,
-	DTA_SrcWidth,
-	DTA_SrcHeight,
-	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
-	DTA_Internal3,
-	DTA_Spacing,			// Strings only: Additional spacing between characters
-	DTA_Monospace,			// Strings only: Use a fixed distance between characters.
-
-	DTA_FullscreenEx,		// advanced fullscreen control.
-	DTA_FullscreenScale,	// enable DTA_Fullscreen coordinate calculation for placed overlays.
-
-	DTA_ScaleX,
-	DTA_ScaleY,
-
-	DTA_ViewportX,			// Defines the viewport on the screen that should be rendered to.
-	DTA_ViewportY,
-	DTA_ViewportWidth,
-	DTA_ViewportHeight,
-	DTA_CenterOffsetRel,	// Apply texture offsets relative to center, instead of top left. This is standard alignment for Build's 2D content.
-	DTA_TopLeft,			// always align to top left. Added to have a boolean condition for this alignment.
-	DTA_Pin,				// Pin a non-widescreen image to the left/right edge of the screen.
-	DTA_Rotate,
-	DTA_FlipOffsets,		// Flips offsets when using DTA_FlipX and DTA_FlipY, this cannot be automatic due to unexpected behavior with unoffsetted graphics.
-	DTA_Indexed,			// Use an indexed texture combined with the given translation.
-	DTA_CleanTop,			// Like DTA_Clean but aligns to the top of the screen instead of the center.
-
-};
-
-class Shape2DTransform : Object native
-{
-	native void Clear();
-	native void Rotate(double angle);
-	native void Scale(Vector2 scaleVec);
-	native void Translate(Vector2 translateVec);
-}
-
-class Shape2D : Object native
-{
-	enum EClearWhich
-	{
-		C_Verts = 1,
-		C_Coords = 2,
-		C_Indices = 4,
-	};
-
-	native void SetTransform(Shape2DTransform transform);
-
-	native void Clear( int which = C_Verts|C_Coords|C_Indices );
-	native void PushVertex( Vector2 v );
-	native void PushCoord( Vector2 c );
-	native void PushTriangle( int a, int b, int c );
-}
-
-struct Screen native
-{
-	native static Color PaletteColor(int index);
-	native static int GetWidth();
-	native static int GetHeight();
-	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
-	native static void Dim(Color col, double amount, int x, int y, int w, int h);
-
-	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
-	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
-	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
-	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
-	native static void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
-	native static void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
 	native static void DrawFrame(int x, int y, int w, int h);
-	native static Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
-	native static double GetAspectRatio();
-	native static void SetClipRect(int x, int y, int w, int h);
-	native static void ClearClipRect();
-	native static int, int, int, int GetClipRect();
-	native static int, int, int, int GetViewWindow();
-	native static double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
-
-	
-	
 	// This is a leftover of the abandoned Inventory.DrawPowerup method.
 	deprecated("2.5", "Use StatusBar.DrawTexture() instead") static ui void DrawHUDTexture(TextureID tex, double x, double y)
 	{
@@ -293,109 +42,35 @@ struct Screen native
 	}
 }
 
-struct Font native
+extend struct Console
 {
-	enum EColorRange
-	{
-		CR_UNDEFINED = -1,
-		CR_BRICK,
-		CR_TAN,
-		CR_GRAY,
-		CR_GREY = CR_GRAY,
-		CR_GREEN,
-		CR_BROWN,
-		CR_GOLD,
-		CR_RED,
-		CR_BLUE,
-		CR_ORANGE,
-		CR_WHITE,
-		CR_YELLOW,
-		CR_UNTRANSLATED,
-		CR_BLACK,
-		CR_LIGHTBLUE,
-		CR_CREAM,
-		CR_OLIVE,
-		CR_DARKGREEN,
-		CR_DARKRED,
-		CR_DARKBROWN,
-		CR_PURPLE,
-		CR_DARKGRAY,
-		CR_CYAN,
-		CR_ICE,
-		CR_FIRE,
-		CR_SAPPHIRE,
-		CR_TEAL,
-		NUM_TEXT_COLORS
-	};
-	
-	const TEXTCOLOR_BRICK			= "\034A";
-	const TEXTCOLOR_TAN				= "\034B";
-	const TEXTCOLOR_GRAY			= "\034C";
-	const TEXTCOLOR_GREY			= "\034C";
-	const TEXTCOLOR_GREEN			= "\034D";
-	const TEXTCOLOR_BROWN			= "\034E";
-	const TEXTCOLOR_GOLD			= "\034F";
-	const TEXTCOLOR_RED				= "\034G";
-	const TEXTCOLOR_BLUE			= "\034H";
-	const TEXTCOLOR_ORANGE			= "\034I";
-	const TEXTCOLOR_WHITE			= "\034J";
-	const TEXTCOLOR_YELLOW			= "\034K";
-	const TEXTCOLOR_UNTRANSLATED	= "\034L";
-	const TEXTCOLOR_BLACK			= "\034M";
-	const TEXTCOLOR_LIGHTBLUE		= "\034N";
-	const TEXTCOLOR_CREAM			= "\034O";
-	const TEXTCOLOR_OLIVE			= "\034P";
-	const TEXTCOLOR_DARKGREEN		= "\034Q";
-	const TEXTCOLOR_DARKRED			= "\034R";
-	const TEXTCOLOR_DARKBROWN		= "\034S";
-	const TEXTCOLOR_PURPLE			= "\034T";
-	const TEXTCOLOR_DARKGRAY		= "\034U";
-	const TEXTCOLOR_CYAN			= "\034V";
-	const TEXTCOLOR_ICE				= "\034W";
-	const TEXTCOLOR_FIRE			= "\034X";
-	const TEXTCOLOR_SAPPHIRE		= "\034Y";
-	const TEXTCOLOR_TEAL			= "\034Z";
-
-	const TEXTCOLOR_NORMAL			= "\034-";
-	const TEXTCOLOR_BOLD			= "\034+";
-
-	const TEXTCOLOR_CHAT			= "\034*";
-	const TEXTCOLOR_TEAMCHAT		= "\034!";
-	
-
-	native int GetCharWidth(int code);
-	native int StringWidth(String code);
-	native int GetMaxAscender(String code);
-	native bool CanPrint(String code);
-	native int GetHeight();
-	native int GetDisplacement();
-	native String GetCursor();
-
-	native static int FindFontColor(Name color);
-	native double GetBottomAlignOffset(int code);
-	native static Font FindFont(Name fontname);
-	native static Font GetFont(Name fontname);
-	native BrokenLines BreakLines(String text, int maxlen);
+	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
 }
 
-struct Translation version("2.4")
+extend struct Translation
 {
 	Color colors[256];
 	
 	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
 	native static int GetID(Name transname);
+}
+
+// This is needed because Actor contains a field named 'translation' which shadows the above.
+struct Translate version("4.5")
+{
 	static int MakeID(int group, int num)
 	{
 		return (group << 16) + num;
 	}
-}
-
-struct Console native
-{
-	native static void HideConsole();
-	native static void MidPrint(Font fontname, string textlabel, bool bold = false);
-	native static vararg void Printf(string fmt, ...);
+	static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass)
+	{
+		return Translation.SetPlayerTranslation(group, num, plrnum, pclass);
+	}
+	static int GetID(Name transname)
+	{
+		return Translation.GetID(transname);
+	}
 }
 
 struct DamageTypeDefinition native
@@ -403,48 +78,20 @@ struct DamageTypeDefinition native
 	native static bool IgnoreArmor(Name type);
 }
 
-struct CVar native
+extend struct CVar
 {
-	enum ECVarType
-	{
-		CVAR_Bool,
-		CVAR_Int,
-		CVAR_Float,
-		CVAR_String,
-		CVAR_Color,
-	};
-
-	native static CVar FindCVar(Name name);
 	native static CVar GetCVar(Name name, PlayerInfo player = null);
-	bool GetBool() { return GetInt(); }
-	native int GetInt();
-	native double GetFloat();
-	native String GetString();
-	void SetBool(bool b) { SetInt(b); }
-	native void SetInt(int v);
-	native void SetFloat(double v);
-	native void SetString(String s);
-	native int GetRealType();
-	native int ResetToDefault();
 }
 
-struct GIFont version("2.4")
-{
-	Name fontname;
-	Name color;
-};
-
-struct GameInfoStruct native
+extend struct GameInfoStruct
 {
 	// will be extended as needed.
 	native Name backpacktype;
 	native double Armor2Percent;
 	native String ArmorIcon1;
 	native String ArmorIcon2;
-	native int gametype;
 	native bool norandomplayerclass;
 	native Array<Name> infoPages;
-	native String mBackButton;
 	native GIFont mStatscreenMapNameFont;
 	native GIFont mStatscreenEnteringFont;
 	native GIFont mStatscreenFinishedFont;
@@ -452,7 +99,6 @@ struct GameInfoStruct native
 	native GIFont mStatscreenAuthorFont;
 	native double gibfactor;
 	native bool intermissioncounter;
-	native Name mSliderColor;
 	native Color defaultbloodcolor;
 	native double telefogheight;
 	native int defKickback;
@@ -461,30 +107,13 @@ struct GameInfoStruct native
 	native TextureID berserkpic;
 	native double normforwardmove[2];
 	native double normsidemove[2];
+	native bool mHideParTimes;
 }
 
-struct SystemTime
+extend class Object
 {
-	native static ui int Now(); // This returns the epoch time
-	native static clearscope String Format(String timeForm, int timeVal); // This converts an epoch time to a local time, then uses the strftime syntax to format it
-}
-
-class Object native
-{
-	const TICRATE = 35;
-	native bool bDestroyed;
-
-	// These must be defined in some class, so that the compiler can find them. Object is just fine, as long as they are private to external code.
-	private native static Object BuiltinNew(Class<Object> cls, int outerclass, int compatibility);
 	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
-	private native static int BuiltinRandom(voidptr rng, int min, int max);
-	private native static double BuiltinFRandom(voidptr rng, double min, double max);
-	private native static int BuiltinRandom2(voidptr rng, int mask);
-	private native static void BuiltinRandomSeed(voidptr rng, int seed);
 	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
-	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
-	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
-	
 	// These really should be global functions...
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
@@ -497,7 +126,7 @@ class Object native
 	{
 		return level.PickPlayerStart(pnum, flags);
 	}
-	deprecated("4.3", "Use S_StartSound() instead") native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
+	deprecated("4.3", "Use S_StartSound() instead") native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0, float startTime = 0.0);
 	native static void S_StartSound (Sound sound_id, int channel, int flags = 0, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0, float startTime = 0.0);
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
@@ -506,20 +135,6 @@ class Object native
 	native static void MarkSound(Sound snd);
 	native static uint BAM(double angle);
 	native static void SetMusicVolume(float vol);
-	native static uint MSTime();
-	native vararg static void ThrowAbortException(String fmt, ...);
-
-	native virtualscope void Destroy();
-
-	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
-	virtual virtualscope void OnDestroy() {}
-}
-
-class BrokenLines : Object native version("2.4")
-{
-	native int Count();
-	native int StringWidth(int line);
-	native String StringAt(int line);
 }
 
 class Thinker : Object native play
@@ -848,11 +463,6 @@ struct LevelLocals native
 	native void ChangeLevel(string levelname, int position = 0, int flags = 0, int skill = -1);
 }
 
-struct StringTable native
-{
-	native static String Localize(String val, bool prefixed = true);
-}
-
 // a few values of this need to be readable by the play code.
 // Most are handled at load time and are omitted here.
 struct DehInfo native
@@ -890,51 +500,6 @@ struct State native
 	native bool InStateSequence(State base);
 }
 
-struct Wads
-{
-	enum WadNamespace
-	{
-		ns_hidden = -1,
-
-		ns_global = 0,
-		ns_sprites,
-		ns_flats,
-		ns_colormaps,
-		ns_acslibrary,
-		ns_newtextures,
-		ns_bloodraw,
-		ns_bloodsfx,
-		ns_bloodmisc,
-		ns_strifevoices,
-		ns_hires,
-		ns_voxels,
-
-		ns_specialzipdirectory,
-		ns_sounds,
-		ns_patches,
-		ns_graphics,
-		ns_music,
-
-		ns_firstskin,
-	}
-
-	enum FindLumpNamespace
-	{
-		GlobalNamespace = 0,
-		AnyNamespace = 1,
-	}
-
-	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
-	native static int CheckNumForFullName(string name);
-	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
-	native static string ReadLump(int lump);
-
-	native static int GetNumLumps();
-	native static string GetLumpName(int lump);
-	native static string GetLumpFullName(int lump);
-	native static int GetLumpNamespace(int lump);
-}
-
 struct TerrainDef native
 {
 	native Name TerrainName;
@@ -961,44 +526,6 @@ enum EPickStart
 	PPS_NOBLOCKINGCHECK		= 2,
 }
 
-enum EmptyTokenType
-{
-	TOK_SKIPEMPTY = 0,
-	TOK_KEEPEMPTY = 1,
-}
-
-// Although String is a builtin type, this is a convenient way to attach methods to it.
-struct StringStruct native
-{
-	native static vararg String Format(String fmt, ...);
-	native vararg void AppendFormat(String fmt, ...);
-
-	native void Replace(String pattern, String replacement);
-	native String Left(int len) const;
-	native String Mid(int pos = 0, int len = 2147483647) const;
-	native void Truncate(int newlen);
-	native void Remove(int index, int remlen);
-	deprecated("4.1", "use Left() or Mid() instead") native String CharAt(int pos) const;
-	deprecated("4.1", "use ByteAt() instead") native int CharCodeAt(int pos) const;
-	native int ByteAt(int pos) const;
-	native String Filter();
-	native int IndexOf(String substr, int startIndex = 0) const;
-	deprecated("3.5.1", "use RightIndexOf() instead") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
-	native int RightIndexOf(String substr, int endIndex = 2147483647) const;
-	deprecated("4.1", "use MakeUpper() instead") native void ToUpper();
-	deprecated("4.1", "use MakeLower() instead") native void ToLower();
-	native String MakeUpper() const;
-	native String MakeLower() const;
-	native static int CharUpper(int ch);
-	native static int CharLower(int ch);
-	native int ToInt(int base = 0) const;
-	native double ToDouble() const;
-	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
-	native void AppendCharacter(int c);
-	native void DeleteLastCharacter();
-	native int CodePointCount() const;
-	native int, int GetNextCodePoint(int position) const;
-}
 
 class SectorEffect : Thinker native
 {

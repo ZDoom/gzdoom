@@ -158,6 +158,9 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 
 void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels)
 {
+	if (w <= 0 || h <= 0)
+		throw CVulkanError("Trying to create zero size texture");
+
 	auto fb = GetVulkanFrameBuffer();
 
 	int totalSize = w * h * pixelsize;

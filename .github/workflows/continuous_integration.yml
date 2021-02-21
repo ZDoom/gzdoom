@@ -12,67 +12,53 @@ jobs:
         config:
         - {
             name: "Visual Studio 64-bit",
-            os: windows-latest,
+            os: windows-2019,
             extra_options: "-A x64",
             build_type: "Release"
           }
         - {
             name: "Visual Studio 64-bit",
-            os: windows-latest,
+            os: windows-2019,
             extra_options: "-A x64",
             build_type: "Debug"
           }
         - {
-            name: "Visual Studio 32-bit",
-            os: windows-latest,
-            extra_options: "-A Win32 -DFORCE_INTERNAL_ZLIB=ON",
-            build_type: "Release"
-          }
-        - {
             name: "macOS",
-            os: macos-latest,
+            os: macos-10.15,
             extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
             deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
             build_type: "Release"
           }
         - {
             name: "macOS",
-            os: macos-latest,
+            os: macos-10.15,
             build_type: "Debug"
           }
         - {
-            name: "Linux GCC 5",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-5 -DCMAKE_CXX_COMPILER=/usr/bin/g++-5 \
-                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "sudo apt update && sudo apt install g++-5 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
-            build_type: "MinSizeRel"
-          }
-        - {
             name: "Linux GCC 7",
-            os: ubuntu-latest,
+            os: ubuntu-20.04,
             extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7",
             deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk2.0-dev",
             build_type: "RelWithDebInfo"
           }
         - {
-            name: "Linux GCC 9",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-9",
+            name: "Linux GCC 10",
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-10 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10",
             deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk-3-dev",
             build_type: "Debug"
           }
         - {
             name: "Linux Clang 6",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-6.0 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-6.0",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev",
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0",
+            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev",
             build_type: "Debug"
           }
         - {
-            name: "Linux Clang 9",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-9 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-9 \
+            name: "Linux Clang 10",
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 \
                             -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
             deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
             build_type: "Release"

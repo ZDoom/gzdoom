@@ -558,7 +558,7 @@ FUNC(LS_Generic_Floor)
 	}
 
 	return Level->EV_DoFloor (type, ln, arg0, SPEED(arg1), arg2,
-					   (arg4 & 16) ? 20 : -1, arg4 & 7, false);
+					   (arg4 & 16) ? 20 : -1, arg4 & 7, true);
 					   
 }
 

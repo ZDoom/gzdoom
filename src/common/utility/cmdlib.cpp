@@ -167,6 +167,24 @@ bool FileExists (const char *filename)
 
 //==========================================================================
 //
+// FileReadable
+//
+// Returns true if the file can be read.
+//
+//==========================================================================
+
+bool FileReadable(const char *filename)
+{
+#ifndef _WIN32
+	return access (filename, R_OK) == 0;
+#else
+	auto wstr = WideString(filename);
+	return _waccess (wstr.c_str(), 4) == 0;
+#endif
+}
+
+//==========================================================================
+//
 // DirExists
 //
 // Returns true if the given path exists and is a directory.
@@ -590,7 +608,7 @@ int strbin (char *str)
 	while ( (c = *p++) ) {
 		if (c != '\\') {
 			*str++ = c;
-		} else {
+		} else if (*p != 0) {
 			switch (*p) {
 				case 'a':
 					*str++ = '\a';
@@ -693,7 +711,7 @@ FString strbin1 (const char *start)
 	while ( (c = *p++) ) {
 		if (c != '\\') {
 			result << c;
-		} else {
+		} else if (*p) {
 			switch (*p) {
 				case 'a':
 					result << '\a';

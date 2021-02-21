@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
-** Copyright 2009 CHristoph Oelckers
+** Copyright 2009 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -183,13 +183,6 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetNumber();
 					if (sc.Number) iwad->flags |= GI_IGNORETITLEPATCHES;
 					else iwad->flags &= ~GI_IGNORETITLEPATCHES;
-				}
-				else if (sc.Compare("FixUnityStatusBar"))
-				{
-				sc.MustGetStringName("=");
-				sc.MustGetNumber();
-				if (sc.Number) iwad->flags |= GI_FIXUNITYSBAR;
-				else iwad->flags &= ~GI_FIXUNITYSBAR;
 				}
 				else if (sc.Compare("Load"))
 				{
@@ -583,6 +576,12 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	}
 	// -iwad not found or not specified. Revert back to standard behavior.
 	if (mFoundWads.Size() == numFoundWads) iwadparm = nullptr;
+
+	// Check for symbolic links leading to non-existent files and for files that are unreadable.
+	for (unsigned int i = 0; i < mFoundWads.Size(); i++)
+	{
+		if (!FileExists(mFoundWads[i].mFullPath) || !FileReadable(mFoundWads[i].mFullPath)) mFoundWads.Delete(i);
+	}
 
 	// Now check if what got collected actually is an IWAD.
 	ValidateIWADs();

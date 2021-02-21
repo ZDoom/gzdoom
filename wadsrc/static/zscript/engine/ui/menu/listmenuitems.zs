@@ -219,12 +219,12 @@ class ListMenuItemSelectable : ListMenuItem
 	
 	override bool CheckCoordinate(int x, int y)
 	{
-		return mEnabled && y >= mYpos && y < mYpos + mHeight;	// no x check here
+		return mEnabled > 0 && y >= mYpos && y < mYpos + mHeight;	// no x check here
 	}
 	
 	override bool Selectable()
 	{
-		return mEnabled;
+		return mEnabled > 0;
 	}
 
 	override bool CheckHotkey(int c)
@@ -293,13 +293,13 @@ class ListMenuItemTextItem : ListMenuItemSelectable
 	
 	override void Draw(bool selected, ListMenuDescriptor desc)
 	{
-		let font = generic_ui ? NewSmallFont : mFont;
+		let font = menuDelegate.PickFont(mFont);
 		DrawText(desc, font, selected ? mColorSelected : mColor, mXpos, mYpos, mText);
 	}
-	
+
 	override int GetWidth()
 	{
-		let font = generic_ui? NewSmallFont : mFont;
+		let font = menuDelegate.PickFont(mFont);
 		return max(1, font.StringWidth(StringTable.Localize(mText))); 
 	}
 }
@@ -338,5 +338,33 @@ class ListMenuItemPatchItem : ListMenuItemSelectable
 		return TexMan.GetSize(mTexture);
 	}
 	
+}
+
+//=============================================================================
+//
+// caption - draws a text using the customizer's caption hook
+//
+//=============================================================================
+
+class ListMenuItemCaptionItem : ListMenuItem
+{
+	String mText;
+	Font mFont;
+
+	void Init(ListMenuDescriptor desc, String text, String fnt = "BigFont")
+	{
+		Super.Init(0, 0);
+		mText = text;
+		mFont = Font.FindFont(fnt);
+	}
+	
+	override void Draw(bool selected, ListMenuDescriptor desc)
+	{
+		let font = menuDelegate.PickFont(desc.mFont);
+		if (font && mText.Length() > 0)
+		{
+			menuDelegate.DrawCaption(mText, font, 0, true);
+		}
+	}
 }
 

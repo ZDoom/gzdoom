@@ -633,7 +633,7 @@ class StatusScreen abstract play version("2.5")
 
 	bool autoSkip()
 	{
-		return wi_autoadvance > 0 && bcnt > (wi_autoadvance * Thinker.TICRATE);
+		return wi_autoadvance > 0 && bcnt > (wi_autoadvance * GameTicRate);
 	}
 
 	//====================================================================
@@ -703,7 +703,7 @@ class StatusScreen abstract play version("2.5")
 
 		CurState = ShowNextLoc;
 		acceleratestage = 0;
-		cnt = SHOWNEXTLOCDELAY * Thinker.TICRATE;
+		cnt = SHOWNEXTLOCDELAY * GameTicRate;
 		noautostartmap = bg.LoadBackground(true);
 	}
 
@@ -914,6 +914,13 @@ class StatusScreen abstract play version("2.5")
 		{
 			Plrs[i] = wbs.plyr[i];
 			otherkills -= Plrs[i].skills;
+		}
+
+		if (gameinfo.mHideParTimes)
+		{
+			// par time and suck time are not displayed if zero.
+			wbs.partime = 0;
+			wbs.sucktime = 0;
 		}
 		
 		entering.Init(gameinfo.mStatscreenEnteringFont);

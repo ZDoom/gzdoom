@@ -97,11 +97,10 @@ private:
 #else
 
 // Windows and macOS
-#include "x86.h"
 
 extern double PerfToSec, PerfToMillisec;
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(_M_ARM64)
 // Trying to include intrin.h here results in some bizarre errors, so I'm just
 // going to duplicate the function prototype instead.
 //#include <intrin.h>
@@ -110,6 +109,12 @@ extern "C" unsigned __int64 __rdtsc(void);
 inline unsigned __int64 rdtsc()
 {
 	return __rdtsc();
+}
+#elif defined(_MSC_VER) && defined(_M_ARM64)
+#include <intrin.h>
+inline unsigned __int64 rdtsc()
+{
+	return _ReadStatusReg(ARM64_SYSREG(0b11, 0b011, 0b1001, 0b1101, 0b000)); //_ReadStatusReg(PMCCNTR_EL0);
 }
 #elif defined __APPLE__ && (defined __i386__ || defined __x86_64__)
 inline uint64_t rdtsc()

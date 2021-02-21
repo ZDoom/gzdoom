@@ -1,3 +1,37 @@
+/*
+** listmenu.zs
+** The main menu class
+**
+**---------------------------------------------------------------------------
+** Copyright 2010-2020 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 
 
 class ListMenuDescriptor : MenuDescriptor native
@@ -21,6 +55,7 @@ class ListMenuDescriptor : MenuDescriptor native
 	native int mFontColor;
 	native int mFontColor2;
 	native bool mCenter;
+	native bool mAnimatedTransition;
 	native int mVirtWidth, mVirtHeight;
 
 	native void Reset();
@@ -51,6 +86,7 @@ class ListMenu : Menu
 	{
 		Super.Init(parent);
 		mDesc = desc;
+		AnimatedTransition = mDesc.mAnimatedTransition;
 		if (desc.mCenter)
 		{
 			double center = 160;
@@ -145,7 +181,7 @@ class ListMenu : Menu
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
 		int oldSelect = mDesc.mSelectedItem;
-		int startedAt = mDesc.mSelectedItem;
+		int startedAt = max(0, mDesc.mSelectedItem);
 
 		switch (mkey)
 		{
@@ -172,7 +208,7 @@ class ListMenu : Menu
 		case MKEY_Enter:
 			if (mDesc.mSelectedItem >= 0 && mDesc.mItems[mDesc.mSelectedItem].Activate())
 			{
-				MenuSound("menu/choose");
+				MenuSound("menu/advance");
 			}
 			return true;
 
@@ -268,7 +304,10 @@ class ListMenu : Menu
 			if (mDesc.mItems[i].mEnabled) mDesc.mItems[i].Draw(mDesc.mSelectedItem == i, mDesc);
 		}
 		if (mDesc.mSelectedItem >= 0 && mDesc.mSelectedItem < mDesc.mItems.Size())
-			mDesc.mItems[mDesc.mSelectedItem].DrawSelector(mDesc.mSelectOfsX, mDesc.mSelectOfsY, mDesc.mSelector, mDesc);
+		{
+			if (!menuDelegate.DrawSelector(mDesc))
+				mDesc.mItems[mDesc.mSelectedItem].DrawSelector(mDesc.mSelectOfsX, mDesc.mSelectOfsY, mDesc.mSelector, mDesc);
+		}
 		Super.Drawer();
 	}
 	

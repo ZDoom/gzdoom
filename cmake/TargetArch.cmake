@@ -29,7 +29,7 @@
 # "There are many more known variants/revisions that we do not handle/detect."
 
 set(archdetect_c_code "
-#if defined(__arm__) || defined(__TARGET_ARCH_ARM)
+#if defined(__arm__) || defined(__TARGET_ARCH_ARM) || defined(_M_ARM64) || defined (__aarch64__)
     #if defined(__ARM_ARCH_7__) \\
         || defined(__ARM_ARCH_7A__) \\
         || defined(__ARM_ARCH_7R__) \\
@@ -48,6 +48,8 @@ set(archdetect_c_code "
     #elif defined(__ARM_ARCH_5TEJ__) \\
         || (defined(__TARGET_ARCH_ARM) && __TARGET_ARCH_ARM-0 >= 5)
         #error cmake_ARCH armv5
+    #elif defined(_M_ARM64) || defined (__aarch64__)
+        #error cmake_ARCH arm64
     #else
         #error cmake_ARCH arm
     #endif

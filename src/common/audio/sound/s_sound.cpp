@@ -42,6 +42,7 @@
 #include "superfasthash.h"
 #include "s_music.h"
 #include "m_random.h"
+#include "printf.h"
 
 
 enum
@@ -50,7 +51,6 @@ enum
 };
 static FRandom pr_soundpitch ("SoundPitch");
 SoundEngine* soundEngine;
-int sfx_empty = -1;
 
 //==========================================================================
 //
@@ -183,7 +183,10 @@ void SoundEngine::CacheSound (sfxinfo_t *sfx)
 void SoundEngine::UnloadSound (sfxinfo_t *sfx)
 {
 	if (sfx->data.isValid())
+	{
 		GSnd->UnloadSound(sfx->data);
+		DPrintf(DMSG_NOTIFY, "Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+	}
 	sfx->data.Clear();
 }
 
@@ -464,7 +467,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	}
 
 	// If this sound doesn't like playing near itself, don't play it if that's what would happen.
-	if (near_limit > 0 && CheckSoundLimit(sfx, pos, near_limit, limit_range, type, source, channel))
+	if (near_limit > 0 && CheckSoundLimit(sfx, pos, near_limit, limit_range, type, source, channel, attenuation))
 	{
 		chanflags |= CHANF_EVICTED;
 	}
@@ -676,7 +679,7 @@ void SoundEngine::RestartChannel(FSoundChan *chan)
 
 		// If this sound doesn't like playing near itself, don't play it if
 		// that's what would happen.
-		if (chan->NearLimit > 0 && CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange, 0, NULL, 0))
+		if (chan->NearLimit > 0 && CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange, 0, NULL, 0, chan->DistanceScale))
 		{
 			return;
 		}
@@ -713,10 +716,9 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 	{
 		unsigned int i;
 
-		// If the sound doesn't exist, replace it with the empty sound.
-		if (sfx->lumpnum == -1)
+		if (sfx->lumpnum == sfx_empty)
 		{
-			sfx->lumpnum = sfx_empty;
+			return sfx;
 		}
 		
 		// See if there is another sound already initialized with this lump. If so,
@@ -726,7 +728,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 			if (S_sfx[i].data.isValid() && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum &&
 				(!sfx->bLoadRAW || (sfx->RawRate == S_sfx[i].RawRate)))	// Raw sounds with different sample rates may not share buffers, even if they use the same source data.
 			{
-				//DPrintf (DMSG_NOTIFY, "Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
+				DPrintf (DMSG_NOTIFY, "Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
 				sfx->link = i;
 				// This is necessary to avoid using the rolloff settings of the linked sound if its
 				// settings are different.
@@ -735,7 +737,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 			}
 		}
 
-		//DPrintf(DMSG_NOTIFY, "Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+		DPrintf(DMSG_NOTIFY, "Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
 		auto sfxdata = ReadSound(sfx->lumpnum);
 		int size = sfxdata.Size();
@@ -818,7 +820,7 @@ bool SoundEngine::CheckSingular(int sound_id)
 //==========================================================================
 
 bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range,
-	int sourcetype, const void *actor, int channel)
+	int sourcetype, const void *actor, int channel, float attenuation)
 {
 	FSoundChan *chan;
 	int count;
@@ -837,7 +839,9 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 			}
 
 			CalcPosVel(chan, &chanorigin, NULL);
-			if ((chanorigin - pos).LengthSquared() <= limit_range)
+			// scale the limit distance with the attenuation. An attenuation of 0 means the limit distance is infinite and all sounds within the level are inside the limit.
+			float attn = std::min(chan->DistanceScale, attenuation);
+			if (attn <= 0 || (chanorigin - pos).LengthSquared() <= limit_range / attn)
 			{
 				count++;
 			}
@@ -1532,31 +1536,13 @@ int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitc
 	S_sfx.Reserve(1);
 	sfxinfo_t &newsfx = S_sfx.Last();
 
-	newsfx.data.Clear();
 	newsfx.name = logicalname;
 	newsfx.lumpnum = lump;
 	newsfx.next = 0;
-	newsfx.index = 0;
-	newsfx.Volume = 1;
-	newsfx.Attenuation = 1;
 	newsfx.PitchMask = CurrentPitchMask;
-	newsfx.DefPitch = 0.0;
-	newsfx.DefPitchMax = 0.0;
 	newsfx.NearLimit = nearlimit;
-	newsfx.LimitRange = 256 * 256;
-	newsfx.bRandomHeader = false;
-	newsfx.bLoadRAW = false;
-	newsfx.b16bit = false;
-	newsfx.bUsed = false;
-	newsfx.bSingular = false;
-	newsfx.bTentative = false;
 	newsfx.ResourceId = resid;
-	newsfx.RawRate = 0;
-	newsfx.link = sfxinfo_t::NO_LINK;
-	newsfx.Rolloff.RolloffType = ROLLOFF_Doom;
-	newsfx.Rolloff.MinDistance = 0;
-	newsfx.Rolloff.MaxDistance = 0;
-	newsfx.LoopStart = -1;
+	newsfx.bTentative = false;
 
 	if (resid >= 0) ResIdMap[resid] = S_sfx.Size() - 1;
 	return (int)S_sfx.Size()-1;

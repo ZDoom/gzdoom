@@ -115,16 +115,24 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 	uint8_t filter = data.ReadUInt8();
 	uint8_t interlace = data.ReadUInt8();
 
+	// NOTICE: GZDoom is the ONLY program in the typical development stack (GIMP, Slade, UDB) which does not support these formats
+	// As such, the average developer will have no other way to figure out what's going wrong without these: these CANNOT be allowed to fail silently.
+	// As things like PNG-compression and 64-bit color become more common in royalty-free PBR materials, support should be an eventual target.
+	// Even then, these warnings should remain to prevent this from being an issue the next time things change.
+
 	if (compression != 0 || filter != 0 || interlace > 1)
 	{
+		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the compression, filter, or interlace is not supported!\n", fileSystem.GetFileFullName(lumpnum));
 		return NULL;
 	}
 	if (!((1 << colortype) & 0x5D))
 	{
+		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the colortype (%u) is not supported!\n", fileSystem.GetFileFullName(lumpnum), colortype);
 		return NULL;
 	}
 	if (!((1 << bitdepth) & 0x116))
 	{
+		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the bit-depth (%u) is not supported!\n", fileSystem.GetFileFullName(lumpnum), bitdepth);
 		return NULL;
 	}
 
@@ -133,9 +141,9 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 	data.Read (first4bytes.b, 4);
 	if (first4bytes.dw == 0)
 	{
-		data.Read (first4bytes.b, 4);
-		if (first4bytes.dw == MAKE_ID('I','E','N','D'))
+		if (data.Read(first4bytes.b, 4) != 4 || first4bytes.dw == MAKE_ID('I','E','N','D'))
 		{
+			Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the file ends immediately after the IHDR.\n", fileSystem.GetFileFullName(lumpnum));
 			return NULL;
 		}
 	}

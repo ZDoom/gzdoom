@@ -46,6 +46,7 @@
 #include "gstrings.h"
 #include "vm.h"
 #include "serializer.h"
+#include "c_cvars.h"
 
 //==========================================================================
 //
@@ -239,4 +240,58 @@ DEFINE_ACTION_FUNCTION(FFont, BreakLines)
 
 	auto broken = V_BreakLines(self, maxwidth, text, true);
 	ACTION_RETURN_OBJECT(Create<DBrokenLines>(broken));
+}
+
+
+bool generic_ui;
+EXTERN_CVAR(String, language)
+
+bool CheckFontComplete(FFont* font)
+{
+	// Also check if the SmallFont contains all characters this language needs.
+	// If not, switch back to the original one.
+	return font->CanPrint(GStrings["REQUIRED_CHARACTERS"]);
+}
+
+void UpdateGenericUI(bool cvar)
+{
+	auto switchstr = GStrings["USE_GENERIC_FONT"];
+	generic_ui = (cvar || (switchstr && strtoll(switchstr, nullptr, 0)));
+	if (!generic_ui)
+	{
+		// Use the mod's SmallFont if it is complete.
+		// Otherwise use the stock Smallfont if it is complete.
+		// If none is complete, fall back to the VGA font.
+		// The font being set here will be used in 3 places: Notifications, centered messages and menu confirmations.
+		if (CheckFontComplete(SmallFont))
+		{
+			AlternativeSmallFont = SmallFont;
+		}
+		else if (OriginalSmallFont && CheckFontComplete(OriginalSmallFont))
+		{
+			AlternativeSmallFont = OriginalSmallFont;
+		}
+		else
+		{
+			AlternativeSmallFont = NewSmallFont;
+		}
+
+		if (CheckFontComplete(BigFont))
+		{
+			AlternativeBigFont = BigFont;
+		}
+		else if (OriginalBigFont && CheckFontComplete(OriginalBigFont))
+		{
+			AlternativeBigFont = OriginalBigFont;
+		}
+		else
+		{
+			AlternativeBigFont = NewSmallFont;
+		}
+	}
+}
+
+CUSTOM_CVAR(Bool, ui_generic, false, CVAR_NOINITCALL) // This is for allowing to test the generic font system with all languages
+{
+	UpdateGenericUI(self);
 }

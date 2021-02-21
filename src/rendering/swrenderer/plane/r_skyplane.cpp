@@ -222,6 +222,8 @@ namespace swrenderer
 		DrawSky(pl);
 	}
 
+	static uint32_t UMulScale16(uint32_t a, uint32_t b) { return (uint32_t)(((uint64_t)a * b) >> 16); }
+
 	void RenderSkyPlane::DrawSkyColumnStripe(int start_x, int y1, int y2, double scale, double texturemid, double yrepeat)
 	{
 		RenderPortal *renderportal = Thread->Portal.get();

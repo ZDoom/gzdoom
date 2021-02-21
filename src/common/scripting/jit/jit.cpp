@@ -333,8 +333,29 @@ void JitCompiler::SetupSimpleFrame()
 		}
 	}
 
-	if (sfunc->NumArgs != argsPos || regd > sfunc->NumRegD || regf > sfunc->NumRegF || rega > sfunc->NumRegA)
-		I_FatalError("JIT: sfunc->NumArgs != argsPos || regd > sfunc->NumRegD || regf > sfunc->NumRegF || rega > sfunc->NumRegA");
+	const char *errorDetails = nullptr;
+
+	if (sfunc->NumArgs != argsPos)
+	{
+		errorDetails = "arguments";
+	}
+	else if (regd > sfunc->NumRegD)
+	{
+		errorDetails = "integer registers";
+	}
+	else if (regf > sfunc->NumRegF)
+	{
+		errorDetails = "floating point registers";
+	}
+	else if (rega > sfunc->NumRegA)
+	{
+		errorDetails = "address registers";
+	}
+
+	if (errorDetails)
+	{
+		I_FatalError("JIT: inconsistent number of %s for function %s", errorDetails, sfunc->PrintableName.GetChars());
+	}
 
 	for (int i = regd; i < sfunc->NumRegD; i++)
 		cc.xor_(regD[i], regD[i]);

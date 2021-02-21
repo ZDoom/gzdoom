@@ -284,7 +284,6 @@ namespace swrenderer
 			ProjectedWallLight mlight;
 			mlight.SetSpriteLight();
 
-			drawerargs.SetBaseColormap(Light.BaseColormap);
 			drawerargs.DrawMasked(thread, gzt - floorclip, SpriteScale, renderflags & RF_XFLIP, renderflags & RF_YFLIP, wallc, x1, x2, mlight, pic, portalfloorclip, mceilingclip, RenderStyle);
 		}
 	}

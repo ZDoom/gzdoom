@@ -132,10 +132,20 @@ DEFINE_FIELD(DPSprite, x)
 DEFINE_FIELD(DPSprite, y)
 DEFINE_FIELD(DPSprite, oldx)
 DEFINE_FIELD(DPSprite, oldy)
+DEFINE_FIELD(DPSprite, pivot)
+DEFINE_FIELD(DPSprite, scale)
+DEFINE_FIELD(DPSprite, rotation)
+DEFINE_FIELD_NAMED(DPSprite, Coord[0], Coord0)
+DEFINE_FIELD_NAMED(DPSprite, Coord[1], Coord1)
+DEFINE_FIELD_NAMED(DPSprite, Coord[2], Coord2)
+DEFINE_FIELD_NAMED(DPSprite, Coord[3], Coord3)
 DEFINE_FIELD(DPSprite, firstTic)
 DEFINE_FIELD(DPSprite, Tics)
 DEFINE_FIELD(DPSprite, Translation)
+DEFINE_FIELD(DPSprite, HAlign)
+DEFINE_FIELD(DPSprite, VAlign)
 DEFINE_FIELD(DPSprite, alpha)
+DEFINE_FIELD(DPSprite, InterpolateTic)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
@@ -143,6 +153,8 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bCVarFast, PSPF_CVARFAST)
 DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
 DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPivotPercent, PSPF_PIVOTPERCENT)
+DEFINE_FIELD_BIT(DPSprite, Flags, bInterpolate, PSPF_INTERPOLATE)
 
 //------------------------------------------------------------------------
 //
@@ -151,8 +163,11 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 //------------------------------------------------------------------------
 
 DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
-: x(.0), y(.0),
+: HAlign(0),
+  VAlign(0),
+  x(.0), y(.0),
   oldx(.0), oldy(.0),
+  InterpolateTic(false),
   firstTic(true),
   Tics(0),
   Translation(0),
@@ -165,6 +180,15 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   ID(id),
   processPending(true)
 {
+	rotation = 0.;
+	scale = {1.0, 1.0};
+	pivot = {0.0, 0.0};
+	for (int i = 0; i < 4; i++)
+	{
+		Coord[i] = DVector2(0, 0);
+		Prev.v[i] = Vert.v[i] = FVector2(0,0);
+	}
+	
 	alpha = 1;
 	Renderstyle = STYLE_Normal;
 
@@ -192,7 +216,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
 		Next->Destroy(); // Replace it.
 
 	if (Caller->IsKindOf(NAME_Weapon) || Caller->IsKindOf(NAME_PlayerPawn))
-		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST);
+		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST|PSPF_PIVOTPERCENT);
 }
 
 //------------------------------------------------------------------------
@@ -294,7 +318,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		}
 		else
 		{
-			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE);
+			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE|PSPF_PIVOTPERCENT);
 		}
 		if (layer == PSP_STRIFEHANDS)
 		{
@@ -637,18 +661,160 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponButtons)
 	return 0;
 }
 
+
+
+enum WOFFlags
+{
+	WOF_KEEPX = 1,
+	WOF_KEEPY = 1 << 1,
+	WOF_ADD = 1 << 2,
+	WOF_INTERPOLATE = 1 << 3,
+	WOF_RELATIVE = 1 << 4,
+	WOF_ZEROY = 1 << 5,
+};
+
+void HandleOverlayRelative(DPSprite *psp, double *x, double *y)
+{
+	double wx = *x;
+	double wy = *y;
+
+	double c = psp->rotation.Cos(), s = psp->rotation.Sin();
+	double nx = wx * c + wy * s;
+	double ny = wx * s - wy * c;
+	*x = nx; *y = ny;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayVertexOffset
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayVertexOffset)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_INT(index)
+	PARAM_FLOAT(x)
+	PARAM_FLOAT(y)
+	PARAM_INT(flags)
+
+	if (index < 0 || index > 3 || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)) || !ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (!(flags & WOF_KEEPX))	pspr->Coord[index].X = (flags & WOF_ADD) ? pspr->Coord[index].X + x : x;
+	if (!(flags & WOF_KEEPY))	pspr->Coord[index].Y = (flags & WOF_ADD) ? pspr->Coord[index].Y + y : y;
+
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayScale
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_FLOAT(wx)
+	PARAM_FLOAT(wy)
+	PARAM_INT(flags)
+	
+	if (!ACTION_CALL_FROM_PSPRITE() || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)))
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (!(flags & WOF_ZEROY) && wy == 0.0)
+		wy = wx;
+
+	if (!(flags & WOF_KEEPX))	pspr->scale.X = (flags & WOF_ADD) ? pspr->scale.X + wx : wx;
+	if (!(flags & WOF_KEEPY))	pspr->scale.Y = (flags & WOF_ADD) ? pspr->scale.Y + wy : wy;
+
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayRotate
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayRotate)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_ANGLE(degrees)
+	PARAM_INT(flags)
+
+	if (!ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr != nullptr)
+	{
+		pspr->rotation = (flags & WOF_ADD) ? pspr->rotation + degrees : degrees;
+		if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+	}
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayPivot
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivot)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_FLOAT(wx)
+	PARAM_FLOAT(wy)
+	PARAM_INT(flags)
+
+	if (!ACTION_CALL_FROM_PSPRITE() || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)))
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (flags & WOF_RELATIVE)
+	{
+		HandleOverlayRelative(pspr, &wx, &wy);
+	}
+
+	if (!(flags & WOF_KEEPX))	pspr->pivot.X = (flags & WOF_ADD) ? pspr->pivot.X + wx : wx;
+	if (!(flags & WOF_KEEPY))	pspr->pivot.Y = (flags & WOF_ADD) ? pspr->pivot.Y + wy : wy;
+
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC A_OverlayOffset
 //
 //---------------------------------------------------------------------------
-enum WOFFlags
-{
-	WOF_KEEPX =		1,
-	WOF_KEEPY =		1 << 1,
-	WOF_ADD =		1 << 2,
-	WOF_INTERPOLATE = 1 << 3,
-};
 
 void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 {
@@ -667,30 +833,16 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 		if (psp == nullptr)
 			return;
 
-		if (!(flags & WOF_KEEPX))
+		if (flags & WOF_RELATIVE)
 		{
-			if (flags & WOF_ADD)
-			{
-				psp->x += wx;
-			}
-			else
-			{
-				psp->x = wx;
-				if (!(flags & WOF_INTERPOLATE)) psp->oldx = psp->x;
-			}
+			HandleOverlayRelative(psp, &wx, &wy);
 		}
-		if (!(flags & WOF_KEEPY))
-		{
-			if (flags & WOF_ADD)
-			{
-				psp->y += wy;
-			}
-			else
-			{
-				psp->y = wy;
-				if (!(flags & WOF_INTERPOLATE)) psp->oldy = psp->y;
-			}
-		}
+
+		if (!(flags & WOF_KEEPX))		psp->x = (flags & WOF_ADD) ? psp->x + wx : wx;
+		if (!(flags & WOF_KEEPY))		psp->y = (flags & WOF_ADD) ? psp->y + wy : wy;
+		
+		if (!(flags & (WOF_ADD | WOF_INTERPOLATE)))
+			psp->ResetInterpolation();
 	}
 }
 
@@ -739,8 +891,36 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 	if (set)
 		pspr->Flags |= flags;
 	else
+	{
 		pspr->Flags &= ~flags;
 
+		// This is the only way to shut off the temporary interpolation tic
+		// in the event another mod is causing potential interference
+		if (flags & PSPF_INTERPOLATE)
+			pspr->ResetInterpolation();
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivotAlign)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_INT(halign);
+	PARAM_INT(valign);
+
+	if (!ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr != nullptr)
+	{
+		if (halign >= PSPA_LEFT && halign <= PSPA_RIGHT)
+			pspr->HAlign |= halign;
+		if (valign >= PSPA_TOP && valign <= PSPA_BOTTOM)
+			pspr->VAlign |= valign;
+	}
 	return 0;
 }
 
@@ -754,7 +934,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayTranslation)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_INT(layer);
-	PARAM_UINT(trans);
+	PARAM_NAME(trname);
 
 	if (!ACTION_CALL_FROM_PSPRITE())
 		return 0;
@@ -762,7 +942,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayTranslation)
 	DPSprite* pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
 	if (pspr != nullptr)
 	{
-		pspr->Translation = trans;
+		// There is no constant for the empty name...
+		if (trname.GetChars()[0] == 0)
+		{
+			// an empty string resets to the default
+			// (unlike AActor::SetTranslation, there is no Default block for PSprites, so just set the translation to 0)
+			pspr->Translation = 0;
+			return 0;
+		}
+
+		int tnum = R_FindCustomTranslation(trname);
+		if (tnum >= 0)
+		{
+			pspr->Translation = tnum;
+		}
+		// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 	}
 
 	return 0;
@@ -1052,6 +1246,11 @@ void DPSprite::Serialize(FSerializer &arc)
 		("oldx", oldx)
 		("oldy", oldy)
 		("alpha", alpha)
+		("pivot", pivot)
+		("scale", scale)
+		("rotation", rotation)
+		("halign", HAlign)
+		("valign", VAlign)
 		("renderstyle_", Renderstyle);	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
 }
 

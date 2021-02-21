@@ -40,7 +40,6 @@
 
 #include "gl_sysfb.h"
 #include "hardware.h"
-#include "x86.h"
 #include "templates.h"
 #include "version.h"
 #include "c_console.h"
@@ -54,6 +53,13 @@
 #include "win32glvideo.h"
 
 #include "gl_framebuffer.h"
+
+extern "C" {
+HGLRC zd_wglCreateContext(HDC Arg1);
+BOOL zd_wglDeleteContext(HGLRC Arg1);
+BOOL zd_wglMakeCurrent(HDC Arg1, HGLRC Arg2);
+PROC zd_wglGetProcAddress(LPCSTR name);
+}
 
 EXTERN_CVAR(Int, vid_adapter)
 EXTERN_CVAR(Bool, vid_hdr)
@@ -74,7 +80,7 @@ CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFI
 extern bool vid_hdr_active;
 
 // these get used before GLEW is initialized so we have to use separate pointers with different names
-PFNWGLCHOOSEPIXELFORMATARBPROC myWglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+PFNWGLCHOOSEPIXELFORMATARBPROC myWglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)zd_wglGetProcAddress("wglChoosePixelFormatARB");
 PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
 
 
@@ -224,15 +230,15 @@ bool Win32GLVideo::SetPixelFormat()
 
 	::SetPixelFormat(hDC, pixelFormat, &pfd);
 
-	hRC = wglCreateContext(hDC);
-	wglMakeCurrent(hDC, hRC);
+	hRC = zd_wglCreateContext(hDC);
+	zd_wglMakeCurrent(hDC, hRC);
 
-	myWglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	myWglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+	myWglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)zd_wglGetProcAddress("wglChoosePixelFormatARB");
+	myWglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)zd_wglGetProcAddress("wglCreateContextAttribsARB");
 	// any extra stuff here?
 
-	wglMakeCurrent(NULL, NULL);
-	wglDeleteContext(hRC);
+	zd_wglMakeCurrent(NULL, NULL);
+	zd_wglDeleteContext(hRC);
 	ReleaseDC(dummy, hDC);
 	ShutdownDummy(dummy);
 
@@ -436,7 +442,7 @@ bool Win32GLVideo::InitHardware(HWND Window, int multisample)
 
 		if (m_hRC == NULL && prof == WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
 		{
-			m_hRC = wglCreateContext(m_hDC);
+			m_hRC = zd_wglCreateContext(m_hDC);
 			if (m_hRC == NULL)
 			{
 				I_Error("R_OPENGL: Unable to create an OpenGL render context.\n");
@@ -446,7 +452,7 @@ bool Win32GLVideo::InitHardware(HWND Window, int multisample)
 
 		if (m_hRC != NULL)
 		{
-			wglMakeCurrent(m_hDC, m_hRC);
+			zd_wglMakeCurrent(m_hDC, m_hRC);
 			return true;
 		}
 	}
@@ -465,8 +471,8 @@ void Win32GLVideo::Shutdown()
 {
 	if (m_hRC)
 	{
-		wglMakeCurrent(0, 0);
-		wglDeleteContext(m_hRC);
+		zd_wglMakeCurrent(0, 0);
+		zd_wglDeleteContext(m_hRC);
 	}
 	if (m_hDC) ReleaseDC(m_Window, m_hDC);
 }

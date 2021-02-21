@@ -298,6 +298,7 @@ enum EFxType
 	EFX_GetClass,
 	EFX_GetParentClass,
 	EFX_GetClassName,
+	EFX_IsAbstract,
 	EFX_StrLen,
 	EFX_ColorLiteral,
 	EFX_GetDefaultByType,
@@ -1665,6 +1666,24 @@ public:
 
 //==========================================================================
 //
+//	FxIsAbstract
+//
+//==========================================================================
+
+class FxIsAbstract : public FxExpression
+{
+	FxExpression* Self;
+
+public:
+
+	FxIsAbstract(FxExpression* self);
+	~FxIsAbstract();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder* build);
+};
+
+//==========================================================================
+//
 //	FxColorLiteral
 //
 //==========================================================================
@@ -2131,6 +2150,7 @@ struct CompileEnvironment
 	FxExpression* (*SpecialTypeCast)(FxTypeCast* func, FCompileContext& ctx);
 	bool (*CheckForCustomAddition)(FxAddSub* func, FCompileContext& ctx);
 	FxExpression* (*CheckSpecialIdentifier)(FxIdentifier* func, FCompileContext& ctx);
+	FxExpression* (*CheckSpecialGlobalIdentifier)(FxIdentifier* func, FCompileContext& ctx);
 	FxExpression* (*ResolveSpecialIdentifier)(FxIdentifier* func, FxExpression*& object, PContainerType* objtype, FCompileContext& ctx);
 	FxExpression* (*CheckSpecialMember)(FxStructMember* func, FCompileContext& ctx);
 	FxExpression* (*CheckCustomGlobalFunctions)(FxFunctionCall* func, FCompileContext& ctx);

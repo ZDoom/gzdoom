@@ -75,6 +75,8 @@
 #include "i_system.h"
 #include "p_conversation.h"
 #include "v_palette.h"
+#include "s_music.h"
+#include "p_setup.h"
 
 #include "v_video.h"
 #include "g_hub.h"
@@ -160,8 +162,6 @@ player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
 int 			gametic;
-
-time_t 			epochoffset = 0;		// epoch start in seconds (0 = January 1st, 1970)
 
 CVAR(Bool, demo_compress, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 FString			newdemoname;
@@ -1050,6 +1050,29 @@ bool G_Responder (event_t *ev)
 			ev->type == EV_Mouse);
 }
 
+
+static void G_FullConsole()
+{
+	int oldgs = gamestate;
+
+	if (hud_toggled)
+		D_ToggleHud();
+	if (demoplayback)
+		G_CheckDemoStatus();
+	D_QuitNetGame();
+	advancedemo = false;
+	C_FullConsole();
+
+	if (oldgs != GS_STARTUP)
+	{
+		primaryLevel->Music = "";
+		S_Start();
+		S_StopMusic(true);
+		P_FreeLevelData();
+	}
+
+}
+
 //==========================================================================
 //
 // FRandom :: StaticSumSeeds
@@ -1120,6 +1143,7 @@ void G_Ticker ()
 			G_CheckDemoStatus();
 			G_RecordDemo(newdemoname);
 			G_BeginRecording(newdemomap);
+			[[fallthrough]];
 		case ga_newgame2:	// Silence GCC (see above)
 		case ga_newgame:
 			G_DoNewGame ();
@@ -1160,7 +1184,7 @@ void G_Ticker ()
 			gameaction = ga_nothing;
 			break;
 		case ga_fullconsole:
-			C_FullConsole ();
+			G_FullConsole ();
 			gameaction = ga_nothing;
 			break;
 		case ga_togglemap:
@@ -1769,6 +1793,7 @@ void G_DoPlayerPop(int playernum)
 	FString message = GStrings(deathmatch? "TXT_LEFTWITHFRAGS" : "TXT_LEFTTHEGAME");
 	message.Substitute("%s", players[playernum].userinfo.GetName());
 	message.Substitute("%d", FStringf("%d", players[playernum].fragcount));
+	Printf("%s\n", message.GetChars());
 
 	// [RH] Revert each player to their own view if spying through the player who left
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
@@ -2043,6 +2068,8 @@ void G_DoLoadGame ()
 
 	primaryLevel->BotInfo.RemoveAllBots(primaryLevel, true);
 
+	savegamerestore = true;		// Use the player actors in the savegame
+
 	FString cvar;
 	arc("importantcvars", cvar);
 	if (!cvar.IsEmpty())
@@ -2068,7 +2095,6 @@ void G_DoLoadGame ()
 	G_ReadVisited(arc);
 
 	// load a base level
-	savegamerestore = true;		// Use the player actors in the savegame
 	bool demoplaybacksave = demoplayback;
 	G_InitNew(map, false);
 	demoplayback = demoplaybacksave;

@@ -136,6 +136,7 @@ enum
 	DF_COOP_LOSE_POWERUPS	= 1 << 28,	// Lose powerups when respawning in coop
 	DF_COOP_LOSE_AMMO		= 1 << 29,	// Lose ammo when respawning in coop
 	DF_COOP_HALVE_AMMO		= 1 << 30,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
+	DF_INSTANT_REACTION		= 1 << 31,	// Monsters react instantly
 };
 
 // [BC] More dmflags. w00p!
@@ -170,6 +171,7 @@ enum
 	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
 	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
+	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
 };
 
 // [RH] Compatibility flags.

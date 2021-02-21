@@ -42,9 +42,8 @@
 #include "serialize_obj.h"
 #include "doomstat.h"
 #include "vm.h"
+#include "c_console.h"
 #include "v_draw.h"
-
-EXTERN_CVAR(Int, con_scaletext)
 
 IMPLEMENT_CLASS(DHUDMessageBase, false, true)
 IMPLEMENT_POINTERS_START(DHUDMessageBase)
@@ -890,3 +889,39 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 		DHUDMessageFadeOut::DoDraw (linenum, x, y, clean, hudheight);
 	}
 }
+
+/* Printing in the middle of the screen */
+
+CVAR(Float, con_midtime, 3.f, CVAR_ARCHIVE)
+
+const char* console_bar = "----------------------------------------";
+
+void C_MidPrint(FFont* font, const char* msg, bool bold)
+{
+	if (StatusBar == nullptr || screen == nullptr)
+		return;
+
+	// [MK] allow the status bar to take over MidPrint
+	IFVIRTUALPTR(StatusBar, DBaseStatusBar, ProcessMidPrint)
+	{
+		FString msgstr = msg;
+		VMValue params[] = { (DObject*)StatusBar, font, &msgstr, bold };
+		int rv;
+		VMReturn ret(&rv);
+		VMCall(func, params, countof(params), &ret, 1);
+		if (!!rv) return;
+	}
+
+	if (msg != nullptr)
+	{
+		auto color = (EColorRange)PrintColors[bold ? PRINTLEVELS + 1 : PRINTLEVELS];
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", color, console_bar, msg, console_bar);
+
+		StatusBar->AttachMessage(Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0, color, con_midtime), MAKE_ID('C', 'N', 'T', 'R'));
+	}
+	else
+	{
+		StatusBar->DetachMessage(MAKE_ID('C', 'N', 'T', 'R'));
+	}
+}
+

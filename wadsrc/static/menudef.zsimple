@@ -1,0 +1,100 @@
+// this file has the simplified menu here.
+// this file is *only* for options that are relevant to a novice user of GZDoom
+// this file needs to be regularly pruned, with options coalesced as much as possible. any and all verbosity should go to the "full" menus.
+
+OptionMenu "OptionsMenuSimple" protected
+{
+	Title "$OPTMNU_TITLE"
+	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
+	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
+	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
+	StaticText " "
+	Submenu "$OPTMNU_SOUND",			"SoundOptionsSimple"
+	Submenu "$OPTMNU_DISPLAY",			"VideoOptionsSimple"
+	Submenu "$HUDMNU_SCALEOPT",			"ScalingOptionsSimple"
+	StaticText " "
+	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptionsSimple"	
+	StaticText " "
+	Submenu "$OS_TITLE", "os_Menu"
+	StaticText " "
+	Submenu "$OPTMNU_FULLOPTIONS", "OptionsMenuFull"
+	StaticText " "
+	SafeCommand	"$OPTMNU_DEFAULTS",		"reset2defaults"
+	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
+	SafeCommand	"$OPTMNU_WRITEINI",		"writeini"
+	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	StaticText " "
+}
+
+OptionMenu SoundOptionsSimple protected
+{
+	Title "$SNDMNU_TITLE"
+	Slider "$MODMNU_MASTERVOLUME",		"snd_mastervolume", 0, 1, 0.05, 2
+	StaticText " "
+	Slider "$SNDMNU_SFXVOLUME",			"snd_sfxvolume", 0, 1, 0.05, 2
+	Slider "$SNDMNU_MUSICVOLUME",		"snd_musicvolume", 0, 1, 0.05, 2
+	StaticText " "
+	Slider "$SNDMNU_MENUVOLUME",		"snd_menuvolume", 0, 1, 0.05, 2
+	StaticText " "
+	Option "$SNDMNU_MIDIDEVICE",		"snd_mididevice", "MidiDevices"
+	Command "$SNDMNU_RESTART",			"snd_reset"
+}
+
+OptionMenu VideoOptionsSimple protected
+{
+	Title "$DSPLYMNU_TITLE"
+
+	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
+	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
+	IfOption(Mac)
+	{
+		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
+	}
+
+	StaticText " "
+	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
+	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
+	StaticText " "
+	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
+	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
+	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
+	StaticText " "
+	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
+	Option "$VIDMNU_MAXFPS",					"vid_maxfps", "MaxFps"
+	StaticText " "
+	Slider "$DSPLYMNU_GAMMA",					"vid_gamma",					0.75, 3.0, 0.05, 2
+	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
+	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
+	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
+
+	// commenting this out for now, this menu is so general purpose I am not sure it makes sense, but I'm leaving it here just in case
+	// the "full" menu doesn't have some of the options that are in this one.
+	//StaticText " "
+	//Submenu "$OPTMNU_FULLOPTIONS", "VideoModeMenu"
+}
+
+OptionMenu ScalingOptionsSimple protected
+{
+	Title "$SCALEMNU_TITLE"
+	StaticText "$OPTMNU_HUD"
+	ScaleSlider "$HUDMNU_UISCALE",				"uiscale", 0.0, 8.0, 1.0, "$SCALEMNU_ADAPT"
+	Option "$SCALEMNU_HUDASPECT", 				"hud_aspectscale", "OnOff"
+	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 				3.0, 12.0, 1.0, 0
+	StaticText " "
+	StaticText "$VIDMNU_TITLE"
+	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
+	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
+}
+
+OptionMenu MiscOptionsSimple protected
+{
+	Title "$MISCMNU_TITLE"
+	Option "$MISCMNU_QUERYIWAD",				"queryiwad", "OnOff"
+	Option "$MISCMNU_NOCHEATS",					"nocheats", "OnOff"
+	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
+	Option "$MISCMNU_ENABLEAUTOSAVES",			"disableautosave", "Autosave"
+	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
+	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
+	Option "$OPTMNU_LANGUAGE",					"language", "LanguageOptions"
+}

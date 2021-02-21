@@ -40,6 +40,7 @@ gameinfo
 	dimamount = 0.5
 	bluramount = 0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 16
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -74,6 +75,11 @@ gameinfo
 	messageboxclass = "MessageBoxMenu"
 	normforwardmove = 0x19, 0x32
 	normsidemove = 0x18, 0x28
+}
+
+gamedefaults
+{
+	enableskyboxao
 }
 
 DoomEdNums
@@ -309,6 +315,7 @@ skill nightmare
 	AmmoFactor = 1.5
 	DoubleAmmoFactor = 1.5
 	FastMonsters
+	InstantReaction
 	DisableCheats
 	SpawnFilter = Nightmare
 	Name = "$MNU_BLACKPLAGUE"

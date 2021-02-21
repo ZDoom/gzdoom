@@ -348,7 +348,7 @@ public:
 	short		inconsistant = 0;
 	bool		waiting = 0;
 	int			killcount = 0, itemcount = 0, secretcount = 0;		// for intermission
-	int			damagecount = 0, bonuscount = 0;// for screen flashing
+	uint32_t	damagecount = 0, bonuscount = 0;// for screen flashing
 	int			hazardcount = 0;			// for delayed Strife damage
 	int			hazardinterval = 0;			// Frequency of damage infliction
 	FName		hazardtype = NAME_None;				// Damage type of last hazardous damage encounter.

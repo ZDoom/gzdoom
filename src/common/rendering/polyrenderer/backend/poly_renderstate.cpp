@@ -258,7 +258,10 @@ void PolyRenderState::Apply()
 
 	ApplyMaterial();
 
-	if (mVertexBuffer) mDrawCommands->SetVertexBuffer(mVertexBuffer->Memory());
+	if (mVertexBuffer)
+	{
+		mDrawCommands->SetVertexBuffer(mVertexBuffer->Memory(), mVertexOffsets[0], mVertexOffsets[1]); // [GEC] Add offset params
+	}
 	if (mIndexBuffer) mDrawCommands->SetIndexBuffer(mIndexBuffer->Memory());
 	mDrawCommands->SetInputAssembly(static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
 	mDrawCommands->SetRenderStyle(mRenderStyle);
@@ -292,6 +295,7 @@ void PolyRenderState::Apply()
 	constants.uAlphaThreshold = mAlphaThreshold;
 	constants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 	constants.uLightIndex = mLightIndex;
+	constants.uDynLightColor = mStreamData.uDynLightColor; // [GEC]
 
 	mDrawCommands->PushStreamData(mStreamData, constants);
 	ApplyMatrices();

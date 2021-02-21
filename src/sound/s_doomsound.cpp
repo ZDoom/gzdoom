@@ -95,10 +95,10 @@ class DoomSoundEngine : public SoundEngine
 		S_sfx[ndx].UserData[0] = 0;
 		return ndx;
 	}
-	bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel) override
+	bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel, float attenuation) override
 	{
 		if (sourcetype != SOURCE_Actor) actor = nullptr; //ZDoom did this.
-		return SoundEngine::CheckSoundLimit(sfx, pos, near_limit, limit_range, sourcetype, actor, channel);
+		return SoundEngine::CheckSoundLimit(sfx, pos, near_limit, limit_range, sourcetype, actor, channel, attenuation);
 	}
 
 
@@ -192,7 +192,9 @@ static FileReader OpenMusic(const char* musicname)
 	if (!FileExists(musicname))
 	{
 		int lumpnum;
-		if ((lumpnum = fileSystem.CheckNumForFullName(musicname, true, ns_music)) == -1)
+		lumpnum = fileSystem.CheckNumForFullName(musicname);
+		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, ns_music);
+		if (lumpnum == -1)
 		{
 			Printf("Music \"%s\" not found\n", musicname);
 		}

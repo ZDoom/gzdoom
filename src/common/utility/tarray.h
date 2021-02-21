@@ -98,8 +98,7 @@ public:
 	T& operator[](difference_type i) { return m_ptr[i]; }
 	const T& operator[](difference_type i) const { return m_ptr[i]; }
 
-	T &operator*() { return *m_ptr; }
-	const T &operator*() const { return *m_ptr; }
+	T &operator*() const { return *m_ptr; }
 	T* operator->() { return m_ptr; }
 
 protected:

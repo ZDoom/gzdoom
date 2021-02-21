@@ -1080,6 +1080,7 @@ void CALLBACK ExitFatally (ULONG_PTR dummy)
 	exit(-1);
 }
 
+#ifndef _M_ARM64
 //==========================================================================
 //
 // CatchAllExceptions
@@ -1132,6 +1133,13 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	}
 	return EXCEPTION_CONTINUE_EXECUTION;
 }
+#else // !_M_ARM64
+// stub this function for ARM64
+LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
+{
+	return EXCEPTION_CONTINUE_EXECUTION;
+}
+#endif // !_M_ARM64
 
 //==========================================================================
 //
@@ -1217,7 +1225,9 @@ int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE nothing, LPWSTR cmdline, int
 #ifndef _DEBUG
 	if (MainThread != INVALID_HANDLE_VALUE)
 	{
+#ifndef _M_ARM64
 		SetUnhandledExceptionFilter (CatchAllExceptions);
+#endif
 
 #ifdef _M_X64
 		static bool setJumpResult = false;

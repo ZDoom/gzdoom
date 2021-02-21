@@ -361,7 +361,7 @@ inline FGameTexture* MakeGameTexture(FTexture* tex, const char *name, ETextureTy
 	return t;
 }
 
-enum EUpscaleFlags
+enum EUpscaleFlags : int
 {
 	UF_None = 0,
 	UF_Texture = 1,

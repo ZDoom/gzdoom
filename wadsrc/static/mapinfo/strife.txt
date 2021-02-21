@@ -40,6 +40,7 @@ gameinfo
 	dimamount = 0.5
 	bluramount = 0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 25
 	defaultrespawntime = 16
 	defaultdropstyle = 2
@@ -611,6 +612,7 @@ gamedefaults
 	nointermission
 	clipmidtextures
 	noinfighting
+	enableskyboxao
 }
 
 map MAP01 LOOKUP "TXT_STRIFE_MAP01"

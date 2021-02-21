@@ -40,7 +40,7 @@
 static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 {
 #if COMPGOTO
-	static const void * const ops[256] =
+	static void * const ops[256] =
 	{
 #define xx(op,sym,mode,alt,kreg,ktype) &&op,
 #include "vmops.h"

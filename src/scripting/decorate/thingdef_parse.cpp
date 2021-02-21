@@ -78,6 +78,19 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 	{
 		sc.Message(MSG_ERROR, "Parent class %s of %s not accessible to DECORATE", parent->TypeName.GetChars(), typeName.GetChars());
 	}
+	else
+	{
+		// [Player701] Parent class must not have abstract functions
+		for (auto v : parent->Virtuals)
+		{
+			if (v->VarFlags & VARF_Abstract)
+			{
+				sc.Message(MSG_ERROR, "Parent class %s of %s cannot have abstract functions.", parent->TypeName.GetChars(), typeName.GetChars());
+				break;
+			}
+		}
+	}
+
 	bool newlycreated;
 	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size, &newlycreated));
 	if (type == nullptr)
@@ -1332,6 +1345,7 @@ void ParseDecorate (FScanner &sc, PNamespace *ns)
 				ParseDamageDefinition(sc);
 				break;
 			}
+			[[fallthrough]];
 		default:
 			sc.RestorePos(pos);
 			ParseOldDecoration(sc, DEF_Decoration, ns);

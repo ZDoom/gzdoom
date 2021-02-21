@@ -48,6 +48,8 @@
 #define ALC_NUM_HRTF_SPECIFIERS_SOFT             0x1994
 #define ALC_HRTF_SPECIFIER_SOFT                  0x1995
 #define ALC_HRTF_ID_SOFT                         0x1996
+#define ALC_OUTPUT_LIMITER_SOFT                  0x199A 
+
 typedef const ALCchar* (ALC_APIENTRY*LPALCGETSTRINGISOFT)(ALCdevice *device, ALCenum paramName, ALCsizei index);
 typedef ALCboolean (ALC_APIENTRY*LPALCRESETDEVICESOFT)(ALCdevice *device, const ALCint *attribs);
 #ifdef AL_ALEXT_PROTOTYPES
@@ -181,6 +183,7 @@ private:
         bool EXT_disconnect;
         bool SOFT_HRTF;
         bool SOFT_pause_device;
+		bool SOFT_output_limiter;
     } ALC;
     struct {
         bool EXT_source_distance_model;

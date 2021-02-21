@@ -45,6 +45,16 @@ EXTERN_CVAR(Int, vid_aspect)
 EXTERN_CVAR(Int, uiscale)
 CVAR(Bool, ui_screenborder_classic_scaling, true, CVAR_ARCHIVE)
 
+// vid_allowtrueultrawide - preserve the classic behavior of stretching screen elements to 16:9 when false
+// Defaults to "true" now because "21:9" (actually actually 64:27) screens are becoming more common, it's
+// nonsense that graphics should not be able to actually use that extra screen space.
+
+extern bool setsizeneeded;
+CUSTOM_CVAR(Bool, vid_allowtrueultrawide, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	setsizeneeded = true;
+}
+
 static void VirtualToRealCoords(F2DDrawer* drawer, double Width, double Height, double& x, double& y, double& w, double& h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect);
 
@@ -79,7 +89,7 @@ float ActiveRatio(int width, int height, float* trueratio)
 		17 / 10.0f,
 		5 / 4.0f,
 		17 / 10.0f,
-		21 / 9.0f
+		64 / 27.0f	// 21:9 is actually 64:27 in reality - pow(4/3, 3.0) - https://en.wikipedia.org/wiki/21:9_aspect_ratio
 	};
 
 	float ratio = width / (float)height;
@@ -350,9 +360,9 @@ void CalcFullscreenScale(DrawParms *parms, double srcwidth, double srcheight, in
 	}
 
 	double aspect;
-	if (srcheight == 200) aspect = srcwidth / 240.;
-	else if (srcheight == 400) aspect = srcwidth / 480;
-	else aspect = srcwidth / srcheight;
+	if (srcheight == 200) srcheight = 240.;
+	else if (srcheight == 400) srcheight = 480;
+	aspect = srcwidth / srcheight;
 	rect.left = rect.top = 0;
 	auto screenratio = ActiveRatio(GetWidth(), GetHeight());
 	if (autoaspect == FSMode_ScaleToFit43 || autoaspect == FSMode_ScaleToFit43Top || autoaspect == FSMode_ScaleToFit43Bottom)
@@ -366,7 +376,7 @@ void CalcFullscreenScale(DrawParms *parms, double srcwidth, double srcheight, in
 			double width4_3 = srcheight * (4. / 3.);
 			rect.width = (double)GetWidth() * srcwidth / width4_3;
 			rect.height = GetHeight() * screenratio * (3. / 4.);	// use 4:3 for the image
-			rect.left = -(srcwidth - width4_3) / 2;
+			rect.left = (double)GetWidth() * (-(srcwidth - width4_3) / 2) / width4_3;
 			switch (oautoaspect)
 			{
 			default:
@@ -408,6 +418,14 @@ void CalcFullscreenScale(DrawParms *parms, double srcwidth, double srcheight, in
 			break;
 		}
 	}
+}
+
+void GetFullscreenRect(double width, double height, int fsmode, DoubleRect* rect)
+{
+	DrawParms parms;
+	parms.viewport.width = twod->GetWidth();
+	parms.viewport.height = twod->GetHeight();
+	CalcFullscreenScale(&parms, width, height, fsmode, *rect);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, GetFullscreenRect)
@@ -703,6 +721,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 	parms->rotateangle = 0;
 	parms->flipoffsets = false;
 	parms->indexed = false;
+	parms->nooffset = false;
 
 	// Parse the tag list for attributes. (For floating point attributes,
 	// consider that the C ABI dictates that all floats be promoted to
@@ -912,6 +931,10 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 
 		case DTA_FlipOffsets:
 			parms->flipoffsets = ListGetInt(tags);
+			break;
+
+		case DTA_NoOffset:
+			parms->nooffset = ListGetInt(tags);
 			break;
 
 		case DTA_SrcX:
@@ -1242,7 +1265,7 @@ static void VirtualToRealCoords(F2DDrawer *drawer, double Width, double Height, 
 
     // if 21:9 AR, map to 16:9 for all callers.
     // this allows for black bars and stops the stretching of fullscreen images
-    if (myratio > 1.7f) {
+    if ((myratio > 1.7f) && !vid_allowtrueultrawide) {
         myratio = 16.0f / 9.0f;
     }
 
@@ -1529,9 +1552,30 @@ void DrawFrame(F2DDrawer* twod, PalEntry color, int left, int top, int width, in
 	twod->AddColorOnlyQuad(right, top - offset, offset, height + 2 * offset, color);
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, DrawLineFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_COLOR(color);
+	PARAM_INT(left);
+	PARAM_INT(top);
+	PARAM_INT(width);
+	PARAM_INT(height);
+	PARAM_INT(thickness);
+	DrawFrame(twod, color, left, top, width, height, thickness);
+	return 0;
+}
+
 void V_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int* cleanx, int* cleany, int* _cx1, int* _cx2)
 {
 	if (designheight < 240 && realheight >= 480) designheight = 240;
 	*cleanx = *cleany = std::min(realwidth / designwidth, realheight / designheight);
 }
 
+
+DEFINE_ACTION_FUNCTION(_Screen, SetOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	ACTION_RETURN_VEC2(twod->SetOffset(DVector2(x, y)));
+}

@@ -291,7 +291,7 @@ public:
 	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
 
 	void PreparePlayerSprites(sector_t * viewsector, area_t in_area);
-	void PrepareTargeterSprites();
+	void PrepareTargeterSprites(double ticfrac);
 
 	void UpdateCurrentMapSection();
 	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);

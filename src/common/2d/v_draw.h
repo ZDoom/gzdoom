@@ -131,6 +131,7 @@ enum
 	DTA_FlipOffsets,		// Flips offsets when using DTA_FlipX and DTA_FlipY, this cannot be automatic due to unexpected behavior with unoffsetted graphics.
 	DTA_Indexed,			// Use an indexed texture combined with the given translation.
 	DTA_CleanTop,			// Like DTA_Clean but aligns to the top of the screen instead of the center.
+	DTA_NoOffset,			// Ignore 2D drawer's offset.
 
 };
 
@@ -198,12 +199,24 @@ struct DrawParms
 	bool burn;
 	bool flipoffsets;
 	bool indexed;
+	bool nooffset;
 	int8_t fsscalemode;
 	double srcx, srcy;
 	double srcwidth, srcheight;
 	double patchscalex, patchscaley;
 	double rotateangle;
 	IntRect viewport;
+
+	bool vertexColorChange(const DrawParms& other) {
+		return
+			this->Alpha         != other.Alpha         ||
+			this->fillcolor     != other.fillcolor     ||
+			this->colorOverlay  != other.colorOverlay  ||
+			this->color         != other.color         ||
+			this->style.Flags   != other.style.Flags   ||
+			this->style.BlendOp != other.style.BlendOp ||
+			this->desaturate    != other.desaturate;
+	}
 };
 
 struct Va_List
@@ -251,6 +264,8 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double
 template<class T>
 void DrawTextCommon(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, const T* string, DrawParms& parms);
 bool SetTextureParms(F2DDrawer *drawer, DrawParms* parms, FGameTexture* img, double x, double y);
+
+void GetFullscreenRect(double width, double height, int fsmode, DoubleRect* rect);
 
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...);
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char32_t* string, int tag_first, ...);

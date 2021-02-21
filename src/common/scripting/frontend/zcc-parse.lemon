@@ -234,6 +234,7 @@ class_head(X) ::= EXTEND CLASS(T) IDENTIFIER(A).
 	X = head;
 }
 
+
 class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 {
 	NEW_AST_NODE(Class,head,T);
@@ -391,6 +392,17 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body
 	def->Symbol = nullptr;
 	def->Version = S.Version;
 	def->Flags = S.Flags;
+	X = def;
+}
+
+struct_def(X) ::= EXTEND STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
+{
+	NEW_AST_NODE(Struct,def,T);
+	def->NodeName = A.Name();
+	def->Body = B;
+	def->Type = nullptr;
+	def->Symbol = nullptr;
+	def->Flags = ZCC_Extension;
 	X = def;
 }
 
@@ -1202,6 +1214,7 @@ decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc
 decl_flag(X) ::= INTERNAL(T).	{ X.Int = ZCC_Internal; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= ABSTRACT(T).	{ X.Int = ZCC_Abstract; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VARARG(T).     { X.Int = ZCC_VarArg; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= UI(T).			{ X.Int = ZCC_UIFlag; X.SourceLoc = T.SourceLoc; }
 decl_flag(X) ::= PLAY(T).		{ X.Int = ZCC_Play; X.SourceLoc = T.SourceLoc; }

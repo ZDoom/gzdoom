@@ -351,13 +351,12 @@ IWad
 	Load = "extras.wad", "soundtrack"
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
-	FixUnityStatusBar = 1
 }
 
 IWad
 {
 	Name = "DOOM: Complete: WadSmoosh"
-	Autoname = "doom.id.doom2.wadsmoosh"
+	Autoname = "doom.id.wadsmoosh"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
@@ -366,7 +365,6 @@ IWad
 	MustContain = "SMOOSHED", "ANIMDEFS", "LANGUAGE", "MAPINFO", "ENDOOM", "M_DOOM", "TITLEPIC", "TEXTURES"
 	BannerColors = "a8 00 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
-	FixUnityStatusBar = 1
 }
 
 IWad
@@ -442,7 +440,6 @@ IWad
 	MustContain = "MAP01", "REDTNT2", "DMAPINFO"
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
-	FixUnityStatusBar = 1
 }
 
 IWad
@@ -471,7 +468,6 @@ IWad
 	MustContain = "MAP01", "CAMO1", "DMAPINFO"
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
-	FixUnityStatusBar = 1
 }
 
 IWad
@@ -516,7 +512,6 @@ IWad
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
 	Load = "nerveunity.wad", "extras.wad", "soundtrack"
-	FixUnityStatusBar = 1
 }
 
 IWad

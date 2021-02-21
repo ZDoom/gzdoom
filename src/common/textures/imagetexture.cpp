@@ -57,6 +57,11 @@ FImageTexture::FImageTexture(FImageSource *img) noexcept
 	}
 }
 
+FImageTexture::~FImageTexture()
+{
+	delete mImage;
+}
+
 void FImageTexture::SetFromImage()
 {
 	auto img = mImage;

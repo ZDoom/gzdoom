@@ -49,11 +49,11 @@
 #include <zmusic.h>
 #include "texturemanager.h"
 #include "printf.h"
+#include "i_interface.h"
+#include "templates.h"
 
 
-bool CheckGame(const char* string, bool chexisdoom);
 bool CheckSkipGameOptionBlock(FScanner& sc);
-void SetDefaultMenuColors();
 
 MenuDescriptorList MenuDescriptors;
 static DListMenuDescriptor *DefaultListMenuSettings;	// contains common settings for all list menus
@@ -152,6 +152,11 @@ void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
+	if (menuDelegate)
+	{
+		menuDelegate->Destroy();
+		menuDelegate = nullptr;
+	}
 }
 
 FTextureID GetMenuTexture(const char* const name)
@@ -175,13 +180,7 @@ FTextureID GetMenuTexture(const char* const name)
 static void SkipSubBlock(FScanner &sc)
 {
 	sc.MustGetStringName("{");
-	int depth = 1;
-	while (depth > 0)
-	{
-		sc.MustGetString();
-		if (sc.Compare("{")) depth++;
-		if (sc.Compare("}")) depth--;
-	}
+	sc.SkipToEndOfBlock();
 }
 
 //=============================================================================
@@ -190,18 +189,18 @@ static void SkipSubBlock(FScanner &sc)
 //
 //=============================================================================
 
-static bool CheckSkipGameBlock(FScanner &sc)
+static bool CheckSkipGameBlock(FScanner &sc, bool yes = true)
 {
 	bool filter = false;
 	sc.MustGetStringName("(");
 	do
 	{
 		sc.MustGetString();
-		filter |= CheckGame(sc.String, false);
+		if (sysCallbacks.CheckGame) filter |= sysCallbacks.CheckGame(sc.String);
 	}
 	while (sc.CheckString(","));
 	sc.MustGetStringName(")");
-	if (!filter)
+	if (filter != yes)
 	{
 		SkipSubBlock(sc);
 		return !sc.CheckString("else");
@@ -222,7 +221,7 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	do
 	{
 		sc.MustGetString();
-		if (CheckSkipGameOptionBlock(sc)) filter = true;
+		if (sysCallbacks.CheckMenudefOption && sysCallbacks.CheckMenudefOption(sc.String)) filter = true;
 		else if (sc.Compare("Windows"))
 		{
 			#ifdef _WIN32
@@ -268,10 +267,8 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 //
 //=============================================================================
 
-static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
+static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &sizecompatible, int insertIndex)
 {
-	bool sizeset = false;
-	bool sizecompatible = true;
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
@@ -285,7 +282,15 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			if (!CheckSkipGameBlock(sc))
 			{
 				// recursively parse sub-block
-				ParseListMenuBody(sc, desc);
+				DoParseListMenuBody(sc, desc, sizecompatible, insertIndex);
+			}
+		}
+		else if (sc.Compare("ifnotgame"))
+		{
+			if (!CheckSkipGameBlock(sc, false))
+			{
+				// recursively parse sub-block
+				DoParseListMenuBody(sc, desc, sizecompatible, insertIndex);
 			}
 		}
 		else if (sc.Compare("ifoption"))
@@ -293,7 +298,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			if (!CheckSkipOptionBlock(sc))
 			{
 				// recursively parse sub-block
-				ParseListMenuBody(sc, desc);
+				DoParseListMenuBody(sc, desc, sizecompatible, insertIndex);
 			}
 		}
 		else if (sc.Compare("Class"))
@@ -335,6 +340,10 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 		{
 			desc->mCenter = true;
 		}
+		else if (sc.Compare("animatedtransition"))
+		{
+			desc->mAnimatedTransition = true;
+		}
 		else if (sc.Compare("MouseWindow"))
 		{
 			sc.MustGetNumber();
@@ -371,6 +380,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 		}
 		else if (sc.Compare("size"))
 		{
+			desc->mCustomSizeSet = true;
 			if (sc.CheckNumber())
 			{
 				desc->mVirtWidth = sc.Number;
@@ -407,6 +417,17 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("ListMenuItem"))
 			{
+				bool inserting = insertIndex >= 0;
+				bool isSelectable = cls->IsDescendantOf("ListMenuItemSelectable");
+				double oldYpos = desc->mYpos;
+
+				// [Player701] If this is a selectable item and we're inserting in the middle,
+				// set the Y position of the descriptor to the Y of the item we're inserting before.
+				if (isSelectable && inserting)
+				{
+					desc->mYpos = desc->mItems[insertIndex]->mYpos;
+				}
+
 				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
 				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protected init method.
 				{
@@ -517,11 +538,36 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
 					VMCallWithDefaults(func->Variants[0].Implementation, params, nullptr, 0);
-					desc->mItems.Push((DMenuItemBase*)item);
 
-					if (cls->IsDescendantOf("ListMenuItemSelectable"))
+					if (!inserting)
 					{
-						desc->mYpos += desc->mLinespacing;
+						desc->mItems.Push(item);
+					}
+					else
+					{
+						// [Player701] Insert item in between
+						desc->mItems.Insert(insertIndex, item);
+						insertIndex++;
+					}
+
+					if (isSelectable)
+					{
+						if (inserting)
+						{
+							// [Player701] If we've inserted a selectable item, 
+							// shift all following selectable items downwards
+							// NB: index has been incremented, so we're not affecting the newly inserted item here.
+							for (unsigned int i = insertIndex; i < desc->mItems.Size(); i++)
+							{
+								auto item = desc->mItems[i];
+								if (item->GetClass()->IsDescendantOf("ListMenuItemSelectable"))
+								{
+									desc->mItems[i]->mYpos += desc->mLinespacing;
+								}
+							}
+						}
+
+						desc->mYpos = oldYpos + desc->mLinespacing;
 						if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size() - 1;
 					}
 					success = true;
@@ -533,13 +579,21 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			}
 		}
 	}
-	if (!sizeset && sizecompatible) // allow unclean scaling on this menu
-	{
-		desc->mVirtWidth = -2;
-	}
 	for (auto &p : desc->mItems)
 	{
 		GC::WriteBarrier(p);
+	}
+}
+
+static void ParseListMenuBody(FScanner& sc, DListMenuDescriptor* desc, int insertIndex)
+{
+	bool sizecompatible = true;
+	DoParseListMenuBody(sc, desc, sizecompatible, insertIndex);
+	if (!desc->mCustomSizeSet && !sizecompatible)
+	{
+		// No custom size and incompatible items, 
+		// so force clean scaling for this menu
+		desc->mVirtWidth = -1;
 	}
 }
 
@@ -619,7 +673,7 @@ static bool ReplaceMenu(FScanner &sc, DMenuDescriptor *desc)
 		{
 			// If this tries to replace an option menu with an option menu, let's append all new entries to the old menu.
 			// Otherwise bail out because for list menus it's not that simple.
-			if (desc->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)) || (*pOld)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
+			if (!desc->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)) || !(*pOld)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 			{
 				sc.ScriptMessage("Cannot replace protected menu %s.", desc->mMenuName.GetChars());
 				return true;
@@ -689,9 +743,71 @@ static void ParseListMenu(FScanner &sc)
 	desc->mWRight = 0;
 	desc->mCenter = false;
 	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
+	desc->mVirtWidth = -2;
+	desc->mCustomSizeSet = false;
 
-	ParseListMenuBody(sc, desc);
+	ParseListMenuBody(sc, desc, -1);
 	ReplaceMenu(sc, desc);
+}
+
+//=============================================================================
+//
+// [Player701] Common function for figuring out where to insert items
+// for AddListMenu and AddOptionMenu
+//
+//=============================================================================
+
+static int GetInsertIndex(FScanner& sc, DMenuDescriptor* desc)
+{
+	bool before = sc.CheckString("BEFORE");
+	bool after = sc.CheckString("AFTER");
+
+	int insertIndex = -1;
+
+	if (before || after)
+	{
+		// Find an existing menu item to use as insertion point
+		sc.MustGetString();
+
+		int n = desc->mItems.Size();
+		for (int i = 0; i < n; i++)
+		{
+			auto item = desc->mItems[i];
+
+			if (item->mAction == sc.String)
+			{
+				insertIndex = before ? i : i + 1;
+				break;
+			}
+		}
+
+		// Inserting after the last item is the same as inserting at the end
+		if (insertIndex == n) insertIndex = -1;
+
+		// Don't error out if we haven't found a suitable item
+		// to avoid backwards compatibility issues.
+	}
+
+	return insertIndex;
+}
+
+//=============================================================================
+//
+// [Player701] Allow extending list menus
+//
+//=============================================================================
+
+static void ParseAddListMenu(FScanner& sc)
+{
+	sc.MustGetString();
+
+	DMenuDescriptor** pOld = MenuDescriptors.CheckKey(sc.String);
+	if (pOld == nullptr || *pOld == nullptr || !(*pOld)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
+	{
+		sc.ScriptError("%s is not a list menu that can be extended", sc.String);
+		return;
+	}
+	ParseListMenuBody(sc, (DListMenuDescriptor*)(*pOld), GetInsertIndex(sc, *pOld));
 }
 
 //=============================================================================
@@ -779,6 +895,14 @@ static void ParseOptionSettings(FScanner &sc)
 				ParseOptionSettings(sc);
 			}
 		}
+		else if (sc.Compare("ifnotgame"))
+		{
+			if (!CheckSkipGameBlock(sc, false))
+			{
+				// recursively parse sub-block
+				ParseOptionSettings(sc);
+			}
+		}
 		else if (sc.Compare("Linespacing"))
 		{
 			sc.MustGetNumber();
@@ -802,7 +926,7 @@ static void ParseOptionSettings(FScanner &sc)
 //
 //=============================================================================
 
-static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
+static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int insertIndex)
 {
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
@@ -817,7 +941,15 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			if (!CheckSkipGameBlock(sc))
 			{
 				// recursively parse sub-block
-				ParseOptionMenuBody(sc, desc);
+				ParseOptionMenuBody(sc, desc, insertIndex);
+			}
+		}
+		else if (sc.Compare("ifnotgame"))
+		{
+			if (!CheckSkipGameBlock(sc, false))
+			{
+				// recursively parse sub-block
+				ParseOptionMenuBody(sc, desc, insertIndex);
 			}
 		}
 		else if (sc.Compare("ifoption"))
@@ -825,7 +957,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			if (!CheckSkipOptionBlock(sc))
 			{
 				// recursively parse sub-block
-				ParseOptionMenuBody(sc, desc);
+				ParseOptionMenuBody(sc, desc, insertIndex);
 			}
 		}
 		else if (sc.Compare("Class"))
@@ -838,7 +970,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			}
 			desc->mClass = cls;
 		}
-		else if (sc.Compare("Title"))
+		else if (sc.Compare({ "Title", "Caption" }))
 		{
 			sc.MustGetString();
 			desc->mTitle = sc.String;
@@ -963,7 +1095,16 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
 					VMCallWithDefaults(func->Variants[0].Implementation, params, nullptr, 0);
-					desc->mItems.Push((DMenuItemBase*)item);
+
+					if (insertIndex == -1)
+					{
+						desc->mItems.Push(item);
+					}
+					else
+					{
+						desc->mItems.Insert(insertIndex, item);
+						insertIndex++;
+					}
 
 					success = true;
 				}
@@ -1002,7 +1143,7 @@ static void ParseOptionMenu(FScanner &sc)
 	desc->mDontDim =  DefaultOptionMenuSettings->mDontDim;
 	desc->mProtected = sc.CheckString("protected");
 
-	ParseOptionMenuBody(sc, desc);
+	ParseOptionMenuBody(sc, desc, -1);
 	ReplaceMenu(sc, desc);
 }
 
@@ -1021,8 +1162,220 @@ static void ParseAddOptionMenu(FScanner &sc)
 	if (pOld == nullptr || *pOld == nullptr || !(*pOld)->IsKindOf(RUNTIME_CLASS(DOptionMenuDescriptor)))
 	{
 		sc.ScriptError("%s is not an option menu that can be extended", sc.String);
+		return;
 	}
-	ParseOptionMenuBody(sc, (DOptionMenuDescriptor*)(*pOld));
+	ParseOptionMenuBody(sc, (DOptionMenuDescriptor*)(*pOld), GetInsertIndex(sc, *pOld));
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
+{
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
+		sc.MustGetString();
+		if (sc.Compare("else"))
+		{
+			SkipSubBlock(sc);
+		}
+		else if (sc.Compare("ifgame"))
+		{
+			if (!CheckSkipGameBlock(sc))
+			{
+				// recursively parse sub-block
+				ParseImageScrollerBody(sc, desc);
+			}
+		}
+		else if (sc.Compare("ifnotgame"))
+		{
+			if (!CheckSkipGameBlock(sc, false))
+			{
+				// recursively parse sub-block
+				ParseImageScrollerBody(sc, desc);
+			}
+		}
+		else if (sc.Compare("ifoption"))
+		{
+			if (!CheckSkipOptionBlock(sc))
+			{
+				// recursively parse sub-block
+				ParseImageScrollerBody(sc, desc);
+			}
+		}
+		else if (sc.Compare("animatedtransition"))
+		{
+			desc->mAnimatedTransition = true;
+		}
+		else if (sc.Compare("textBackground"))
+		{
+			sc.MustGetString();
+			desc->textBackground = GetMenuTexture(sc.String);
+		}
+		else if (sc.Compare("textBackgroundBrightness"))
+		{
+			sc.MustGetFloat();
+			int bb = clamp(int(sc.Float * 255), 0, 255);
+			desc->textBackgroundBrightness = PalEntry(255, bb, bb, bb);
+		}
+		else if (sc.Compare("textScale"))
+		{
+			sc.MustGetFloat();
+			desc->textScale = sc.Float;
+		}
+		else if (sc.Compare("textFont"))
+		{
+			sc.MustGetString();
+			FFont* newfont = V_GetFont(sc.String);
+			if (newfont != nullptr) desc->textFont = newfont;
+		}
+		else
+		{
+			bool success = false;
+			FStringf buildname("ImageScrollerPage%s", sc.String);
+			// Handle one special case: MapControl maps to Control with one parameter different
+			PClass* cls = PClass::FindClass(buildname);
+			if (cls != nullptr && cls->IsDescendantOf("ImageScrollerPage"))
+			{
+				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
+				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protected init method.
+				{
+					auto& args = func->Variants[0].Proto->ArgumentTypes;
+					TArray<VMValue> params;
+
+					int start = 1;
+
+					params.Push(0);
+					if (args.Size() > 1 && args[1] == NewPointer(PClass::FindClass("ImageScrollerDescriptor")))
+					{
+						params.Push(desc);
+						start = 2;
+					}
+					auto TypeCVar = NewPointer(NewStruct("CVar", nullptr, true));
+
+					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
+					TArray<FString> strings(args.Size());
+					for (unsigned i = start; i < args.Size(); i++)
+					{
+						sc.MustGetString();
+						if (args[i] == TypeString)
+						{
+							strings.Push(sc.String);
+							params.Push(&strings.Last());
+						}
+						else if (args[i] == TypeName)
+						{
+							params.Push(FName(sc.String).GetIndex());
+						}
+						else if (args[i] == TypeColor)
+						{
+							params.Push(V_GetColor(nullptr, sc));
+						}
+						else if (args[i]->isIntCompatible())
+						{
+							char* endp;
+							int v = (int)strtoll(sc.String, &endp, 0);
+							if (*endp != 0)
+							{
+								// special check for font color ranges.
+								v = V_FindFontColor(sc.String);
+								if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+								{
+									// todo: check other data types that may get used.
+									sc.ScriptError("Integer expected, got %s", sc.String);
+								}
+							}
+							if (args[i] == TypeBool) v = !!v;
+							params.Push(v);
+						}
+						else if (args[i]->isFloat())
+						{
+							char* endp;
+							double v = strtod(sc.String, &endp);
+							if (*endp != 0)
+							{
+								sc.ScriptError("Float expected, got %s", sc.String);
+							}
+							params.Push(v);
+						}
+						else if (args[i] == TypeCVar)
+						{
+							auto cv = FindCVar(sc.String, nullptr);
+							if (cv == nullptr && *sc.String)
+							{
+								if (func->Variants[0].ArgFlags[i] & VARF_Optional)
+									sc.ScriptMessage("Unknown CVar %s", sc.String);
+								else
+									sc.ScriptError("Unknown CVar %s", sc.String);
+							}
+							params.Push(cv);
+						}
+						else
+						{
+							sc.ScriptError("Invalid parameter type %s for image page", args[i]->DescriptiveName());
+						}
+						if (sc.CheckString(","))
+						{
+							if (i == args.Size() - 1)
+							{
+								sc.ScriptError("Too many parameters for %s", cls->TypeName.GetChars());
+							}
+						}
+						else
+						{
+							if (i < args.Size() - 1 && !(func->Variants[0].ArgFlags[i + 1] & VARF_Optional))
+							{
+								sc.ScriptError("Insufficient parameters for %s", cls->TypeName.GetChars());
+							}
+							break;
+						}
+					}
+
+					DMenuItemBase* item = (DMenuItemBase*)cls->CreateNew();
+					params[0] = item;
+					VMCallWithDefaults(func->Variants[0].Implementation, params, nullptr, 0);
+					desc->mItems.Push((DMenuItemBase*)item);
+
+					success = true;
+				}
+			}
+			if (!success)
+			{
+				sc.ScriptError("Unknown keyword '%s'", sc.String);
+			}
+		}
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void ParseImageScroller(FScanner& sc)
+{
+	sc.MustGetString();
+
+	DImageScrollerDescriptor* desc = Create<DImageScrollerDescriptor>();
+
+	desc->mMenuName = sc.String;
+	desc->textBackground.SetInvalid();
+	desc->textBackgroundBrightness = 0xffffffff;
+	desc->textFont = SmallFont;
+	desc->textScale = 1;
+	desc->mAnimatedTransition = false;
+	desc->virtWidth = 320;
+	desc->virtHeight = 200;
+
+	ParseImageScrollerBody(sc, desc);
+	bool scratch = ReplaceMenu(sc, desc);
+	if (scratch) delete desc;
 }
 
 
@@ -1036,7 +1389,6 @@ void M_ParseMenuDefs()
 {
 	int lump, lastlump = 0;
 
-	SetDefaultMenuColors();
 	// these are supposed to get GC'd after parsing is complete.
 	DefaultListMenuSettings = Create<DListMenuDescriptor>();
 	DefaultOptionMenuSettings = Create<DOptionMenuDescriptor>();
@@ -1059,11 +1411,16 @@ void M_ParseMenuDefs()
 			}
 			else if (sc.Compare("DEFAULTLISTMENU"))
 			{
-				ParseListMenuBody(sc, DefaultListMenuSettings);
+				bool s = false;
+				DoParseListMenuBody(sc, DefaultListMenuSettings, s, -1);
 				if (DefaultListMenuSettings->mItems.Size() > 0)
 				{
 					I_FatalError("You cannot add menu items to the menu default settings.");
 				}
+			}
+			else if (sc.Compare("ADDLISTMENU"))
+			{
+				ParseAddListMenu(sc);
 			}
 			else if (sc.Compare("OPTIONVALUE"))
 			{
@@ -1087,11 +1444,15 @@ void M_ParseMenuDefs()
 			}
 			else if (sc.Compare("DEFAULTOPTIONMENU"))
 			{
-				ParseOptionMenuBody(sc, DefaultOptionMenuSettings);
+				ParseOptionMenuBody(sc, DefaultOptionMenuSettings, -1);
 				if (DefaultOptionMenuSettings->mItems.Size() > 0)
 				{
 					I_FatalError("You cannot add menu items to the menu default settings.");
 				}
+			}
+			else if (sc.Compare("IMAGESCROLLER"))
+			{
+				ParseImageScroller(sc);
 			}
 			else
 			{
@@ -1199,31 +1560,3 @@ void M_CreateMenus()
 }
 
 
-
-
-#ifdef _WIN32
-EXTERN_CVAR(Bool, vr_enable_quadbuffered)
-#endif
-
-void UpdateVRModes(bool considerQuadBuffered)
-{
-	FOptionValues ** pVRModes = OptionValues.CheckKey("VRMode");
-	if (pVRModes == nullptr) return;
-
-	TArray<FOptionValues::Pair> & vals = (*pVRModes)->mValues;
-	TArray<FOptionValues::Pair> filteredValues;
-	int cnt = vals.Size();
-	for (int i = 0; i < cnt; ++i) {
-		auto const & mode = vals[i];
-		if (mode.Value == 7) {  // Quad-buffered stereo
-#ifdef _WIN32
-			if (!vr_enable_quadbuffered) continue;
-#else
-			continue;  // Remove quad-buffered option on Mac and Linux
-#endif
-			if (!considerQuadBuffered) continue;  // Probably no compatible screen mode was found
-		}
-		filteredValues.Push(mode);
-	}
-	vals = filteredValues;
-}

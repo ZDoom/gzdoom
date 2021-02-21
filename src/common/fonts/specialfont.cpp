@@ -38,6 +38,7 @@
 #include "image.h"
 #include "fontchars.h"
 #include "texturemanager.h"
+#include "i_interface.h"
 
 #include "fontinternals.h"
 
@@ -116,6 +117,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture
 			}
 			else Chars[i].TranslatedPic = Chars[i].OriginalPic;
 			Chars[i].XMove = (int)Chars[i].TranslatedPic->GetDisplayWidth();
+			if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(pic, Chars[i].OriginalPic, Chars[i].TranslatedPic);
 		}
 		else
 		{

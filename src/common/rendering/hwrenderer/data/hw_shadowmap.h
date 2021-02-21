@@ -36,8 +36,11 @@ public:
 
 	void SetAABBTree(hwrenderer::LevelAABBTree* tree)
 	{
-		mAABBTree = tree;
-		mNewTree = true;
+		if (mAABBTree != tree)
+		{
+			mAABBTree = tree;
+			mNewTree = true;
+		}
 	}
 
 	void SetCollectLights(std::function<void()> func)

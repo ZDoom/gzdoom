@@ -451,7 +451,7 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	else
 	{
 		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Min, this, 0u));
-		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Max, this, (1u << ((8 * size) - 1))));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Max, this, (uint32_t) (((uint64_t) 1u << (size * 8)) - 1uL)));
 	}
 	SetOps();
 }
@@ -1042,7 +1042,7 @@ PName::PName()
 {
 	mDescriptiveName = "Name";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(FName) == alignof(FName));
+	static_assert(sizeof(FName) == alignof(FName), "Name not properly aligned");
 }
 
 //==========================================================================
@@ -1172,7 +1172,7 @@ PTextureID::PTextureID()
 {
 	mDescriptiveName = "TextureID";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(FTextureID) == alignof(FTextureID));
+	static_assert(sizeof(FTextureID) == alignof(FTextureID), "TextureID not properly aligned");
 }
 
 //==========================================================================
@@ -1214,7 +1214,7 @@ PSound::PSound()
 {
 	mDescriptiveName = "Sound";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(FSoundID) == alignof(FSoundID));
+	static_assert(sizeof(FSoundID) == alignof(FSoundID), "SoundID not properly aligned");
 }
 
 //==========================================================================
@@ -1263,7 +1263,7 @@ PColor::PColor()
 {
 	mDescriptiveName = "Color";
 	Flags |= TYPE_IntNotInt;
-	assert(sizeof(PalEntry) == alignof(PalEntry));
+	static_assert(sizeof(PalEntry) == alignof(PalEntry), "PalEntry not properly aligned");
 }
 
 /* PStateLabel *****************************************************************/

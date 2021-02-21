@@ -136,11 +136,11 @@ const T MAX (const T a, const T b)
 // Clamps in to the range [min,max].
 //==========================================================================
 
-template<class T>
-inline
-T clamp (const T in, const T min, const T max)
+template<typename T, typename X, typename Y>
+inline constexpr
+T clamp (const T in, const X min, const Y max)
 {
-	return in <= min ? min : in >= max ? max : in;
+	return in <= (T) min ? (T) min : in >= (T) max ? (T) max : in;
 }
 
 #endif //__TEMPLATES_H__

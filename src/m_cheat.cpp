@@ -114,6 +114,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			player->health = deh.GodHealth;
 		}
 		// fall through to CHT_GOD
+		[[fallthrough]];
 	case CHT_GOD:
 		player->cheats ^= CF_GODMODE;
 		if (player->cheats & CF_GODMODE)

@@ -1049,32 +1049,22 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 bool R_ShouldDrawSpriteShadow(AActor *thing)
 {
-	bool ret = false;
-
-	bool isLivingThing = (thing->flags3 & MF3_ISMONSTER) || (thing->IsKindOf(NAME_PlayerPawn));
-	bool castSpriteShadowFlag = (thing->renderflags & RF_CASTSPRITESHADOW);
-	bool noSpriteShadowFlag = (thing->renderflags & RF_NOSPRITESHADOW);
-
 	switch (r_actorspriteshadow)
 	{
 	case 1:
-		if (castSpriteShadowFlag)
-		{
-			ret = true;
-		}
-		break;
-	case 2:
-		if ((isLivingThing && !noSpriteShadowFlag) || castSpriteShadowFlag)
-		{
-			ret = true;
-		}
-		break;
-	case 0:
-	default:
-		break;
-	}
+		return (thing->renderflags & RF_CASTSPRITESHADOW);
 
-	return ret;
+	case 2:
+		if (thing->renderflags & RF_CASTSPRITESHADOW)
+		{
+			return true;
+		}
+		return (thing->renderflags & RF_CASTSPRITESHADOW) || (!(thing->renderflags & RF_NOSPRITESHADOW) && ((thing->flags3 & MF3_ISMONSTER) || thing->player != nullptr));
+
+	default:
+	case 0:
+		return false;
+	}
 }
 
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)

@@ -448,6 +448,10 @@ SDLVideo::SDLVideo ()
 	if (Priv::softpolyEnabled)
 	{
 		Priv::CreateWindow(SDL_WINDOW_HIDDEN);
+		if (Priv::window == nullptr)
+		{
+			I_FatalError("Could not create SoftPoly window:\n%s\n",SDL_GetError());
+		}
 	}
 #endif
 }
@@ -666,6 +670,10 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
 		{
 			break;
 		}
+	}
+	if (Priv::window == nullptr)
+	{
+		I_FatalError("Could not create OpenGL window:\n%s\n",SDL_GetError());
 	}
 }
 

@@ -267,8 +267,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			}
 		}
 	}
-
-	for (int i = 0; i<MAX_MODELS_PER_FRAME; i++)
+	for (int i = 0; i < smf->modelsAmount; i++)
 	{
 		if (smf->modelIDs[i] != -1)
 		{
@@ -317,9 +316,17 @@ void InitModels()
 		FSpriteModelFrame smf;
 		memset(&smf, 0, sizeof(smf));
 		smf.isVoxel = true;
-		smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
+
+		smf.modelsAmount = 1;
+		smf.modelframes.Alloc(1);
+		smf.modelframes[0] = -1;
+
+		smf.modelIDs.Alloc(1);
 		smf.modelIDs[0] = VoxelDefs[i]->Voxel->VoxelIndex;
+
+		smf.skinIDs.Alloc(1);
 		smf.skinIDs[0] = md->GetPaletteTexture();
+
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
 		if (VoxelDefs[i]->PlacedSpin != 0)
@@ -345,6 +352,7 @@ void InitModels()
 			}
 			SpriteModelFrames.Push(smf);
 		}
+		
 	}
 
 	int Lump;
@@ -370,6 +378,7 @@ void InitModels()
 static void ParseModelDefLump(int Lump)
 {
 	FScanner sc(Lump);
+
 	while (sc.GetString())
 	{
 		if (sc.Compare("model"))
@@ -380,7 +389,6 @@ static void ParseModelDefLump(int Lump)
 
 			FSpriteModelFrame smf;
 			memset(&smf, 0, sizeof(smf));
-			smf.modelIDs[0] = smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
 			smf.xscale=smf.yscale=smf.zscale=1.f;
 
 			auto type = PClass::FindClass(sc.String);
@@ -389,6 +397,32 @@ static void ParseModelDefLump(int Lump)
 				sc.ScriptError("MODELDEF: Unknown actor type '%s'\n", sc.String);
 			}
 			smf.type = type;
+
+		
+			FScanner::SavedPos scPos = sc.SavePos();
+
+			sc.MustGetStringName("{");
+			while (!sc.CheckString("}"))
+			{
+				sc.MustGetString();
+				if (sc.Compare("model"))
+				{
+					sc.MustGetNumber();
+					index = sc.Number;
+					if (index < 0)
+					{
+						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
+					}
+					smf.modelsAmount = index + 1;
+				}
+			}
+			smf.modelIDs.Alloc(smf.modelsAmount);
+			smf.skinIDs.Alloc(smf.modelsAmount);
+			smf.surfaceskinIDs.Alloc(smf.modelsAmount * MD3_MAX_SURFACES);
+			smf.modelframes.Alloc(smf.modelsAmount);
+
+			sc.RestorePos(scPos);
+
 			sc.MustGetStringName("{");
 			while (!sc.CheckString("}"))
 			{
@@ -404,17 +438,19 @@ static void ParseModelDefLump(int Lump)
 				{
 					sc.MustGetNumber();
 					index = sc.Number;
-					if (index < 0 || index >= MAX_MODELS_PER_FRAME)
+					if (index < 0 || index >= smf.modelsAmount)
 					{
 						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}
 					sc.MustGetString();
 					FixPathSeperator(sc.String);
+					
 					smf.modelIDs[index] = FindModel(path.GetChars(), sc.String);
 					if (smf.modelIDs[index] == -1)
 					{
 						Printf("%s: model not found in %s\n", sc.String, path.GetChars());
 					}
+					
 				}
 				else if (sc.Compare("scale"))
 				{
@@ -529,7 +565,7 @@ static void ParseModelDefLump(int Lump)
 				{
 					sc.MustGetNumber();
 					index=sc.Number;
-					if (index<0 || index>=MAX_MODELS_PER_FRAME)
+					if (index<0 || index>= smf.modelsAmount)
 					{
 						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}
@@ -556,7 +592,7 @@ static void ParseModelDefLump(int Lump)
 					sc.MustGetNumber();
 					surface = sc.Number;
 
-					if (index<0 || index >= MAX_MODELS_PER_FRAME)
+					if (index<0 || index >= smf.modelsAmount)
 					{
 						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}
@@ -568,14 +604,15 @@ static void ParseModelDefLump(int Lump)
 
 					sc.MustGetString();
 					FixPathSeperator(sc.String);
+					int ssIndex = surface + index * MD3_MAX_SURFACES;
 					if (sc.Compare(""))
 					{
-						smf.surfaceskinIDs[index][surface] = FNullTextureID();
+						smf.surfaceskinIDs[ssIndex] = FNullTextureID();
 					}
 					else
 					{
-						smf.surfaceskinIDs[index][surface] = LoadSkin(path.GetChars(), sc.String);
-						if (!smf.surfaceskinIDs[index][surface].isValid())
+						smf.surfaceskinIDs[ssIndex] = LoadSkin(path.GetChars(), sc.String);
+						if (!smf.surfaceskinIDs[ssIndex].isValid())
 						{
 							Printf("Surface Skin '%s' not found in '%s'\n",
 								sc.String, type->TypeName.GetChars());
@@ -610,7 +647,7 @@ static void ParseModelDefLump(int Lump)
 
 					sc.MustGetNumber();
 					index=sc.Number;
-					if (index<0 || index>=MAX_MODELS_PER_FRAME)
+					if (index<0 || index>= smf.modelsAmount)
 					{
 						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}

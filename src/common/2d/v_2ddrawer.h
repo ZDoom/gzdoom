@@ -125,7 +125,7 @@ public:
 		DShape2D* shape2D;
 		int shape2DBufIndex;
 		int shape2DIndexCount;
-		bool shapeLastCmd;
+		int shape2DCommandCounter;
 
 		RenderCommand()
 		{
@@ -262,7 +262,7 @@ public:
 	TArray<F2DVertexBuffer> buffers;
 	bool needsVertexUpload = true;
 	int bufIndex = -1;
-	F2DDrawer::RenderCommand* lastCommand = nullptr;
+	int lastCommand = -1;
 
 	bool uploadedOnce = false;
 	DrawParms* lastParms;

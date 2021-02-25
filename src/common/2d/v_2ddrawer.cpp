@@ -565,7 +565,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		if (!shape->uploadedOnce) {
 			shape->bufIndex = -1;
 			shape->buffers.Clear();
-			shape->lastCommand = nullptr;
+			shape->lastCommand = -1;
 		}
 		delete shape->lastParms;
 		shape->lastParms = new DrawParms(parms);
@@ -647,12 +647,9 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->uploadedOnce = true;
 	}
 	dg.shape2DBufIndex = shape->bufIndex;
-	dg.shapeLastCmd = true;
-	if (shape->lastCommand != nullptr) {
-		shape->lastCommand->shapeLastCmd = false;
-	}
-	auto c = AddCommand(&dg);
-	shape->lastCommand = &mData[c];
+	shape->lastCommand += 1;
+	dg.shape2DCommandCounter = shape->lastCommand;
+	AddCommand(&dg);
 	offset = osave;
 }
 

@@ -99,6 +99,8 @@ script << 0 >> (int type, int tag)
 			{
 				LocalAmbientSound ("svox/voc128", 127);
 			}
+			// The following item is responsible for showing the Entity's subtitles
+			GiveInventory ("EntityGreetingSubtitles", 1);
 			clearlinespecial ();
 		}
 		break;

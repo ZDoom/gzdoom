@@ -702,6 +702,32 @@ class OpenDoor224 : DummyStrifeItem
 	
 }
 
+// Displays subtitles just before the Entity boss fight ---------------------
+
+class EntityGreetingSubtitles : DummyStrifeItem
+{
+	override bool TryPickup(in out Actor toucher)
+	{
+		Inventory qi24 = toucher.FindInventory("QuestItem24");
+		Inventory qi28 = toucher.FindInventory("QuestItem28");
+		if (!qi24 && !qi28) return false;
+		if (qi24)
+		{
+			if (qi28)
+			{
+				toucher.player.SetSubTitleNumber(130, "svox/voc130");
+			}
+			else
+			{
+				toucher.player.SetSubTitleNumber(128, "svox/voc128");
+			}
+			GoAwayAndDie();
+			return true;
+		}
+		return false;
+	}
+}
+
 // Ammo ---------------------------------------------------------------------
 
 class AmmoFillup : DummyStrifeItem

@@ -162,7 +162,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 			FSpriteModelFrame * smf = FindModelFrame(cls, state.sprite, state.Frame, false);
 			if (smf != NULL)
 			{
-				for (int i = 0; i < smf->modelsAmount; i++)
+				for (int i = 0; i < MAX_MODELS_PER_FRAME; i++)
 				{
 					if (smf->skinIDs[i].isValid())
 					{

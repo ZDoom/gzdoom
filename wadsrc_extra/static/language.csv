@@ -1,6 +1,6 @@
 default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cs,de,el,eo,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fi,fr,hu,it,jp,ko,nl,pl,pt,ptg,ro,ru,sr
 ,,Doom Episode names,,,,,,,,,,,,,,,,,"As long as there is no other Portuguese variant, the language ID should be two letters only!",,,,
-Knee-Deep in the Dead,TXT_D1E1,,,,Po kolena v mrtvých,Knietief im Tod,Βουτηγμένος στους Νεκρούς μέχρι τα γόνατα,Ĝisgenue en La Mortintoj,Hasta las Rodillas entre Muertos,,Polvia myöten vainajissa,Plongé dans la Mort,Térdig a halálban,Nella morte fino al collo,膝元迫る亡者,끝없이 밀려오는 죽음,Knie-diep in de Doden,Po kolana w trupach,Corpos até os Joelhos,,Îngropat printre Cadavre,По колено в трупах,До колена у лешевима
+Knee-Deep in the Dead,TXT_D1E1,,,,Po kolena v mrtvých,Knietief im Tod,Βουτηγμένος στους Νεκρούς μέχρι τα γόνατα,Ĝisgenue en la Mortintoj,Hasta las Rodillas entre Muertos,,Polvia myöten vainajissa,Plongé dans la Mort,Térdig a halálban,Nella morte fino al collo,膝元迫る亡者,끝없이 밀려오는 죽음,Knie-diep in de Doden,Po kolana w trupach,Corpos até os Joelhos,,Îngropat printre Cadavre,По колено в трупах,До колена у лешевима
 The Shores of Hell,TXT_D1E2,,,,Břehy pekla,Die Ufer der Hölle,Οι Ακτές της Κόλασης,La Bordoj de Infero,Las Orillas del Infierno,,Hornan rannat,Les Portes de l'Enfer,A pokol tornáca,Le rive dell'Inferno,地獄の瀬戸際,지옥의 해변,De Oevers van de Hel,Przedsionek Piekieł,As Margens do Inferno,,Țărmurile Iadului,Берега Ада,Обале пакла
 Inferno,TXT_D1E3,,,,,,Πυρ το Εξώτερον,,,,,,,,インフェルノ,연옥,,Piekło,,,Infernul,Инферно,Инферно
 Thy Flesh Consumed,TXT_D1E4,"The episode and levels' names in E4 are taken from the Bible.
@@ -53,7 +53,7 @@ E4M9: Fear,HUSTR_E4M9,,,,E4M9: Strach,E4M9: Angst,E4Χ9: Τρόμος,E4M9: Timo
 ,,Doom 2,,,,,,,,,,,,,,,,,,,,,
 Level 1: Entryway,HUSTR_1,"Note that the ""LEVEL"" part of the string will be stripped so it shouldn't be translated",,,Level 1: Vchod,Level 1: Eingangshalle,Επίπεδο 1: Είσοδος,Nivelo 1: Enirejo,Nivel 1: Entrada,,Taso 1: Eteiskäytävä,NIVEAU 1: Hall D'Entrée,Bejárat,Level 1: Ingresso,Level 1: 入口,레벨 1: 초입,Level 1: Ingang,Level 1: Wejście,Nível 1: Entrada,,Nivelul 1: Intrarea,Level 1: Вход,Level 1: Улаз
 Level 2: Underhalls,HUSTR_2,,,,Level 2: Podzemí,Level 2: Kellergewölbe,,Nivelo 2: Subtervojoj,Nivel 2: Salones subterráneos,,Taso 2: Maanalaiset käytävät,NIVEAU 2: Souterrains,Alagutak,Level 2: Sotterranei,Level 2: 下水道,레벨 2: 지하수로,Level 2: Onderhallen,Level 2: Podziemia,Nível 2: Subterrâneo,,Nivelul 2: Pasaje subterane,Level 2: Подземные ходы,Level 2: Подземни ходници
-Level 3: The Gantlet,HUSTR_3,“a form of punishment in which a person is forced to run between two lines of men facing each other and armed with clubs or whips to beat the victim”,,,Level 3: Trest,Level 3: Spießrutenlauf,,Nivelo 3: La Spaliroj de Doloro,Nivel 3: El Guantelete,,Taso 3: Kujanjuoksu,NIVEAU 3: Parcours du Combatant,Vesszőfutás,Level 3: Le fustigazioni,Level 3: ガントレット,레벨 3: 건틀릿,Level 3: De gantlet,Level 3: Praszczęta,Nível 3: A Punição,,Nivelul 3: Stroiul,Level 3: Вызов брошен,Level 3: Казна
+Level 3: The Gantlet,HUSTR_3,“a form of punishment in which a person is forced to run between two lines of men facing each other and armed with clubs or whips to beat the victim”,,,Level 3: Trest,Level 3: Spießrutenlauf,,Nivelo 3: La Spaliro,Nivel 3: El Guantelete,,Taso 3: Kujanjuoksu,NIVEAU 3: Parcours du Combatant,Vesszőfutás,Level 3: Le fustigazioni,Level 3: ガントレット,레벨 3: 건틀릿,Level 3: De gantlet,Level 3: Praszczęta,Nível 3: A Punição,,Nivelul 3: Stroiul,Level 3: Вызов брошен,Level 3: Казна
 Level 4: The Focus,HUSTR_4,,,,Level 4: Ohnisko,Level 4: Der Fokus,,Nivelo 4: La Fokuso,Nivel 4: El Foco,,Taso 4: Polttopiste,NIVEAU 4: Le Focus,A középpont,Level 4: L'Epicentro,Level 4: フォーカス,레벨 4: 초점,Level 4: De focus,Level 4: Skupisko,Nível 4: O Foco,,Nivelul 4: Focarul,Level 4: Средоточие,Level 4: Средиште
 Level 5: The Waste Tunnels,HUSTR_5,,,,Level 5: Odpadní tunely,Level 5: Die Abfall-Tunnel,Επίπεδο 5: Οι Σήραγγες Αποβλήτων,Nivelo 5: La Rubtuneloj,Nivel 5: Los Túneles de Desechos,,Taso 5: Jätetunnelit,NIVEAU 5: Les Egouts,Hulladékalagutak,Level 5: I Tunnel dei Rifiuti,Level 5: 廃棄トンネル,레벨 5: 하수도,Level 5: De afvaltunnels,Level 5: Kanały,Nível 5: Os Túneis de Resíduos,,Nivelul 5: Tuneluri pentru deșeuri,Level 5: Сточные туннели,Level 5: Отпадни тунели
 Level 6: The Crusher,HUSTR_6,,,,Level 6: Drtička,Level 6: Die Presse,Επίπεδο 6: Ο Συνθλιπτής,Nivelo 6: La Dispistilo,Nivel 6: La Trituradora,,Taso 6: Murskaaja,NIVEAU 6: Le Broyeur,A zúzda,Level 6: La Pressa,Level 6: クラッシャー,레벨 6: 분쇄기,Level 6: De maalmachine,Level 6: Zgniatarka,Nível 6: O Esmagador,,Nivelul 6: Zdrobitorul,Level 6: Пресс,Level 6: Разбијач
@@ -110,7 +110,7 @@ Level 9: Abattoire,PHUSTR_9,,,,Level 9: Jatka,Level 9: Schlachthaus,,Nivelo 9: B
 Level 10: Onslaught,PHUSTR_10,,,,Level 10: Nájezd,Level 10: Angriff,,Nivelo 10: Buĉado,Nivel 10: Arremetida,,Taso 10: Ryntäys,NIVEAU 10: Assaut,Támadás,Level 10: Assalto,Level 10: 猛襲,레벨 10: 맹공격,Level 10: Aanval,Level 10: Szturm,Nível 10: Investida,,Nivelul 10: Năvala,Level 10: Натиск,Level 10: Јуриш
 Level 11: Hunted,PHUSTR_11,,,,Level 11: Loven,Level 11: Gehetzt,,Nivelo 11: Ĉasata,Nivel 11: Cazado,,Taso 11: Metsästetty,NIVEAU 11: Traque,Üldözve,Level 11: Braccato,Level 11: 逃走,레벨 11: 사냥당함,Level 11: Gejaagd,Level 11: Nawiedzony,Nível 11: Perseguição,,Nivelul 11: Vânătoarea,Level 11: Преследуемый,Level 11: Уловљен
 Level 12: Speed,PHUSTR_12,,,,Level 12: Rychlost,Level 12: Tempo,,Nivelo 12: Rapido,Nivel 12: Velocidad,,Taso 12: Vauhti,NIVEAU 12: Vitesse,Iram,Level 12: Velocità,Level 12: スピード,레벨 12: 스피드,Level 12: Haast,Level 12: Pęd,Nível 12: Velocidade,,Nivelul 12: Viteză,Level 12: Скорость,Level 12: Брзина
-Level 13: The Crypt,PHUSTR_13,,,,Level 13: Krypta,Level 13: Die Gruft,,Nivelo 13: Tombokelo,Nivel 13: La Cripta,,Taso 13: Krypta,NIVEAU 13: La Crypte,A kripta,Level 13: La Cripta,Level 13: 地下聖堂,레벨 13: 봉안당,Level 13: De crypte,Level 13: Krypta,Nível 13: A Cripta,,Nivelul 13: Cripta,Level 13: Склеп,Level 13: Гробница
+Level 13: The Crypt,PHUSTR_13,,,,Level 13: Krypta,Level 13: Die Gruft,,Nivelo 13: La Kripto,Nivel 13: La Cripta,,Taso 13: Krypta,NIVEAU 13: La Crypte,A kripta,Level 13: La Cripta,Level 13: 地下聖堂,레벨 13: 봉안당,Level 13: De crypte,Level 13: Krypta,Nível 13: A Cripta,,Nivelul 13: Cripta,Level 13: Склеп,Level 13: Гробница
 Level 14: Genesis,PHUSTR_14,,,,,,,Nivelo 14: Genezo,Nivel 14: Génesis,,Taso 14: Luominen,NIVEAU 14: Genèse,Teremtés,Level 14: Genesi,Level 14: 創世記,레벨 14: 창세기,,Level 14: Geneza,Nível 14: Gênese,,Nivelul 14: Geneza,Level 14: Зарождение,Level 14: Постанак
 Level 15: The Twilight,PHUSTR_15,,,,Level 15: Soumrak,Level 15: Zwielicht,,Nivelo 15: La Krepusko,Nivel 15: El Ocaso,,Taso 15: Hämärä,NIVEAU 15: Le Crépuscule,Alkonyat,Level 15: Il crepuscolo,Level 15: 黄昏,레벨 15: 황혼,Level 15: De schemering,Level 15: Zmierzch,Nível 15: O Crepúsculo,,Nivelul 15: Amurgul,Level 15: Сумерки,Level 15: Сумрак
 Level 16: The Omen,PHUSTR_16,,,,Level 16: Znamení,Level 16: Das Omen,,Nivelo 16: La Aŭguro,Nivel 16: El Presagio,,Taso 16: Enne,NIVEAU 16: Le Présage,Ómen,Level 16: Il presagio,Level 16: 予兆,레벨 16: 징조,Level 16: De omen,Level 16: Omen,Nível 16: O Presságio,,Nivelul 16: Prevestirea,Level 16: Предзнаменование,Level 16: Знамење
@@ -128,12 +128,12 @@ Level 27: Anti-christ,PHUSTR_27,,,,Level 27: Antikrist,Level 27: Antichrist,,Niv
 Level 28: The Sewers,PHUSTR_28,,,,Level 28: Kanály,Level 28: Kanäle,,Nivelo 28: La Kanalo,Nivel 28: Las Alcantarillas,,Taso 28: Viemärit,NIVEAU 28: Les Egouts,A csatornák,Level 28: Le Fogne,Level 28: 下水道,레벨 28: 하수구,Level 28: De rioleringen,Level 28: Ścieki,Nível 28: Os Esgotos,,Nivelul 28: Canalizarea,Level 28: Канализация,Level 28: Канализација
 Level 29: Odyssey of Noises,PHUSTR_29,,,,Level 29: Odysea křiku,Level 29: Odyssee der Geräusche,,Nivelo 29: Vojaĝo de Sonoj,Nivel 29: Odisea de Ruidos,,Taso 29: Äänten harharetki,NIVEAU 29: Odysée de Bruits,A zajok bolyongása,Level 29: Odissea di Rumori,Level 29: オデッセイのノイズ,레벨 29: 속삭임의 여정,Level 29: Odyssee van geluiden,Level 29: Odyseja Wrzawy,Nível 29: Odisséia de Ruidos,,Nivelul 29: Odiseea zgomotelor,Level 29: Одиссея шумов,Level 29: Одисеја шумова
 Level 30: The Gateway of Hell,PHUSTR_30,,,,Level 30: Brána pekla,Level 30: Tor zur Hölle,,Nivelo 30: La Pordego de Inferno,Nivel 30: La Puerta del Infierno,,Taso 30: Helvetin porttikäytävä,NIVEAU 30: La Porte des Enfers,Átjáró a pokolba,Level 30: La Porta dell'Inferno,Level 30: 地獄の関門,레벨 30: 지옥의 차원문,Level 30: De poort van de hel,Level 30: Brama Piekieł,Nível 30: O Portão do Inferno,,Nivelul 30: Poarta spre infern,Level 30: Врата ада,Level 30: Пролаз пакла
-Level 31: Cyberden,PHUSTR_31,,,,Level 31: Kyberdoupě,Level 31: Cyberbau,,Nivelo 31: Cibornesto,Nivel 31: Ciber-guarida,,Taso 31: Kyberpesä,NIVEAU 31: Cyber-Antre,Kiberodú,Level 31: Cybergabbia,Level 31: サイバーの巣,레벨 31: 사이버소굴,,Level 31: Cybernora,Nível 31: Ciberantro,,Nivelul 31: Cibervizuină,Level 31: Киберлогово,Level 31: Сајбер-јазбина
-Level 32: Go 2 It,PHUSTR_32,,,,Level 32: Jdi do toho,,,Nivelo 32: 2m Muĝo!,Nivel 32: ¡Ve A x Ello!,Nivel 32: ¡Ve Adelante!,Taso 32: Iske kii,NIVEAU 32: Go 2 It,Menj oda!,Level 32: Dacci Dentro,Level 32: 逝ってこい,레벨 32: 함 해 봐,Level 32: Ga ervoor,Level 32: Do Dzieła,Nível 32: Vai Fundo,Nível 32: Siga em Frente,Nivelul 32: Du-te la ei,Level 32: Иди к сему,Level 32: Иди ка њему
+Level 31: Cyberden,PHUSTR_31,,,,Level 31: Kyberdoupě,Level 31: Cyberbau,,Nivelo 31: Cibernesto,Nivel 31: Ciber-guarida,,Taso 31: Kyberpesä,NIVEAU 31: Cyber-Antre,Kiberodú,Level 31: Cybergabbia,Level 31: サイバーの巣,레벨 31: 사이버소굴,,Level 31: Cybernora,Nível 31: Ciberantro,,Nivelul 31: Cibervizuină,Level 31: Киберлогово,Level 31: Сајбер-јазбина
+Level 32: Go 2 It,PHUSTR_32,,,,Level 32: Jdi do toho,,,Nivelo 32: Iru Al Ĝi!,Nivel 32: ¡Ve A x Ello!,Nivel 32: ¡Ve Adelante!,Taso 32: Iske kii,NIVEAU 32: Go 2 It,Menj oda!,Level 32: Dacci Dentro,Level 32: 逝ってこい,레벨 32: 함 해 봐,Level 32: Ga ervoor,Level 32: Do Dzieła,Nível 32: Vai Fundo,Nível 32: Siga em Frente,Nivelul 32: Du-te la ei,Level 32: Иди к сему,Level 32: Иди ка њему
 ,,TNT: Evilution,,,,,,,,,,,,,,,,,,,,,
-Level 1: System Control,THUSTR_1,,,,Level 1: Administrace,Level 1: Systemkontrolle,,Nivelo 1: Sistemregilo,Nivel 1: Control del Sistema,,Taso 1: Järjestelmäohjaamo,NIVEAU 1: Système de Contrôle,Rendszervezérlés,Level 1: Controllo del Sistema,Level 1: 制御システム,레벨 1: 시스템 제어시설,Level 1: Systeemcontrole,Level 1: Kontrola Systemu,Nível 1: Controle do Sistema,Nível 1: Controlo de Sistema,Nivelul 1: Control sisteme,Level 1: Центр управления системой,Level 1: Контролна система
+Level 1: System Control,THUSTR_1,,,,Level 1: Administrace,Level 1: Systemkontrolle,,Nivelo 1: Sistema Kontrolo,Nivel 1: Control del Sistema,,Taso 1: Järjestelmäohjaamo,NIVEAU 1: Système de Contrôle,Rendszervezérlés,Level 1: Controllo del Sistema,Level 1: 制御システム,레벨 1: 시스템 제어시설,Level 1: Systeemcontrole,Level 1: Kontrola Systemu,Nível 1: Controle do Sistema,Nível 1: Controlo de Sistema,Nivelul 1: Control sisteme,Level 1: Центр управления системой,Level 1: Контролна система
 Level 2: Human BBQ,THUSTR_2,,,,Level 2: Člověčí grilovačka,Level 2: Menschliches Barbecue,,Nivelo 2: Homo-Kradrostado,Nivel 2: Barbacoa Humana,,Taso 2: Ihmisgrilli,NIVEAU 2: Barbecue Humain,Emberi barbecue,Level 2: Barbecue Umano,Level 2: 人肉晩餐会,레벨 2: 인간 바비큐,Level 2: Menselijke BBQ,Level 2: Ludzki Grill,Nível 2: Churrasco Humano,,Nivelul 2: Oameni la grătar,Level 2: Барбекю из человечины,Level 2: Људски роштиљ
-Level 3: Power Control,THUSTR_3,,,,Level 3: Napájecí vedení,Level 3: Energiekontrolle,,Nivelo 3: Energiregilo,Nivel 3: Control de Energía,,Taso 3: Voimalan ohjaamo,NIVEAU 3: Contrôle Energétique,Energiavezérlés,Level 3: Centrale Energetica,Level 3: 制御室,레벨 3: 전력 통제소,Level 3: Machtscontrole,Level 3: Kontrola Zasilania,Nível 3: Controle de Energia,Nível 3: Controlo Energético,Nivelul 3: Uzina,Level 3: Центр управления питанием,Level 3: Контролна моћ
+Level 3: Power Control,THUSTR_3,,,,Level 3: Napájecí vedení,Level 3: Energiekontrolle,,Nivelo 3: Energia Kontrolo,Nivel 3: Control de Energía,,Taso 3: Voimalan ohjaamo,NIVEAU 3: Contrôle Energétique,Energiavezérlés,Level 3: Centrale Energetica,Level 3: 制御室,레벨 3: 전력 통제소,Level 3: Machtscontrole,Level 3: Kontrola Zasilania,Nível 3: Controle de Energia,Nível 3: Controlo Energético,Nivelul 3: Uzina,Level 3: Центр управления питанием,Level 3: Контролна моћ
 Level 4: Wormhole,THUSTR_4,,,,Level 4: Červí díra,Level 4: Wurmloch,,Nivelo 4: Vermtruo,Nivel 4: Agujero de Gusano,,Taso 4: Madonreikä,NIVEAU 4: Trou de Ver,Féreglyuk,Level 4: Wormhole,Level 4: 虫喰い穴,레벨 4: 웜홀,Level 4: Wormgat,Level 4: Tunel,Nível 4: Buraco de Minhoca,,Nivelul 4: Gaura de vierme,Level 4: Червоточина,Level 4: Црвоточина
 Level 5: Hanger,THUSTR_5,,,,Level 5: Hangár,Level 5: Hangar,,Nivelo 5: Hangaro,Nivel 5: Hangar,Nivel 5: Colgador,Taso 5: Lentoalushalli,NIVEAU 5: Hangar,Horog,Level 5: Gancio,Level 5: 格納庫,레벨 5: 격납고,Level 5: Hangar,Level 5: Hangar,Nível 5: Hangar,,Nivelul 5: Hangar,Level 5: Виселица,Level 5: Вешалица
 Level 6: Open Season,THUSTR_6,,,,Level 6: Lovecká sezóna,Level 6: Jagdsaison,,Nivelo 6: Ĉasosezono,Nivel 6: Temporada Abierta,,Taso 6: Avoin sesonki,NIVEAU 6: La Chasse Est Ouverte,Vadászszezon,Level 6: Stagione Aperta,Level 6: 狩猟解禁,레벨 6: 사냥철,Level 6: Open seizoen,Level 6: Otwarty Sezon,Nível 6: Temporada Aberta,Nível 6: Época Aberta,Nivelul 6: Sezon deschis,Level 6: Открытый сезон,Level 6: Отворена сезона
@@ -141,25 +141,25 @@ Level 7: Prison,THUSTR_7,,,,Level 7: Vězení,Level 7: Gefängnis,,Nivelo 7: Mal
 Level 8: Metal,THUSTR_8,,,,Level 8: Kov,Level 8: Metall,,Nivelo 8: Metalo,Nivel 8: Metal,,Taso 8: Metalli,NIVEAU 8: Métal,Fém,Level 8: Metallo,Level 8: メタル,레벨 8: 강철,Level 8: Metaal,Level 8: Metal,Nível 8: Metal,,Nivelul 8: Metal,Level 8: Металл,Level 8: Метал
 Level 9: Stronghold,THUSTR_9,,,,Level 9: Pevnost,Level 9: Festung,,Nivelo 9: Fuorto,Nivel 9: Fortaleza,,Taso 9: Linnake,NIVEAU 9: Forteresse,Erőd,Level 9: Fortezza,Level 9: 牙城,레벨 9: 요새,Level 9: Vesting,Level 9: Warownia,Nível 9: Fortaleza,,Nivelul 9: Bastion,Level 9: Крепость,Level 9: Упориште
 Level 10: Redemption,THUSTR_10,,,,Level 10: Vykoupení,Level 10: Erlösung,,Nivelo 10: Elaĉeto,Nivel 10: Redención,,Taso 10: Lunastus,NIVEAU 10: Rédemption,Megváltás,Level 10: Redenzione,Level 10: 償還,레벨 10: 구원,Level 10: Aflossing,Level 10: Odkupienie,Nível 10: Redenção,,Nivelul 10: Răscumpărare,Level 10: Искупление,Level 10: Искупљење
-Level 11: Storage Facility,THUSTR_11,,,,Level 11: Skladiště,Level 11: Lagerstätte,,Nivelo 11: Konservejo,Nivel 11: Complejo de Almacenes,,Taso 11: Varastolaitos,NIVEAU 11: Complexe de Stockage,Raktárépület,Level 11: Impianto di Stoccaggio,Level 11: 貯蔵施設,레벨 11: 저장소,Level 11: Opslagfaciliteit,Level 11: Magazyn,Nível 11: Instalação de Armazenamento,,Nivelul 11: Stația de depozitare,Level 11: Склад,Level 11: Складиште
+Level 11: Storage Facility,THUSTR_11,,,,Level 11: Skladiště,Level 11: Lagerstätte,,Nivelo 11: Stokejo,Nivel 11: Complejo de Almacenes,,Taso 11: Varastolaitos,NIVEAU 11: Complexe de Stockage,Raktárépület,Level 11: Impianto di Stoccaggio,Level 11: 貯蔵施設,레벨 11: 저장소,Level 11: Opslagfaciliteit,Level 11: Magazyn,Nível 11: Instalação de Armazenamento,,Nivelul 11: Stația de depozitare,Level 11: Склад,Level 11: Складиште
 Level 12: Crater,THUSTR_12,,,,Level 12: Kráter,Level 12: Krater,,Nivelo 12: Kratero,Nivel 12: Cráter,,Taso 12: Kraateri,NIVEAU 12: Cratère,Kráter,Level 12: Cratere,Level 12: 火口,레벨 12: 분화구,Level 12: Krater,Level 12: Krater,Nível 12: Cratera,,Nivelul 12: Crater,Level 12: Кратер,Level 12: Кратер
-Level 13: Nukage Processing,THUSTR_13,,,,Level 13: Jaderné zpracování,Level 13: Nuklearverarbeitung,,Nivelo 13: Nukleaĵo-traktejo,Nivel 13: Procesamiento Nuclear,,Taso 13: Ydinjätekäsittely,NIVEAU 13: Traitement Nucléaire,Atomhulladék-feldolgozó,Level 13: Trattamento Nucleare,Level 13: 核廃棄物加工所,레벨 13: 폐기물 처리소,Level 13: Nucleaire verwerking,Level 13: Przetwórstwo Jądrowe,Nível 13: Processamento Nuclear,,Nivelul 13: Prelucrarea deșeurilor nucleare,Level 13: Переработка ядерных отходов,0
+Level 13: Nukage Processing,THUSTR_13,,,,Level 13: Jaderné zpracování,Level 13: Nuklearverarbeitung,,Nivelo 13: Nukleaĵo-Traktejo,Nivel 13: Procesamiento Nuclear,,Taso 13: Ydinjätekäsittely,NIVEAU 13: Traitement Nucléaire,Atomhulladék-feldolgozó,Level 13: Trattamento Nucleare,Level 13: 核廃棄物加工所,레벨 13: 폐기물 처리소,Level 13: Nucleaire verwerking,Level 13: Przetwórstwo Jądrowe,Nível 13: Processamento Nuclear,,Nivelul 13: Prelucrarea deșeurilor nucleare,Level 13: Переработка ядерных отходов,0
 Level 14: Steel Works,THUSTR_14,,,,Level 14: Ocelárna,Level 14: Stahlwerk,,Nivelo 14: Ŝtalejo,Nivel 14: Siderúrgica,,Taso 14: Terästehdas,NIVEAU 14: Aciérie,Acélművek,Level 14: Acciaieria,Level 14: 製鉄所,레벨 14: 제강소,Level 14: Staalfabrieken,Level 14: Huta,Nível 14: Siderúrgica,,Nivelul 14: Oțelărie,Level 14: Сталелитейный завод,Level 14: Челичана
-Level 15: Dead Zone,THUSTR_15,,,,Level 15: Mrtvá zóna,Level 15: Tote Zone,,Nivelo 15: Mortzono,Nivel 15: Zona Muerta,,Taso 15: Kuollut alue,NIVEAU 15: Zone Morte,A holtak zónája,Level 15: Zona Morta,Level 15: 危険地帯,레벨 15: 사각지대,Level 15: Dode zone,Level 15: Martwa Strefa,Nível 15: Zona Morta,,Nivelul 15: Zona moartă,Level 15: Мёртвая зона,Level 15: Зона смрти
+Level 15: Dead Zone,THUSTR_15,,,,Level 15: Mrtvá zóna,Level 15: Tote Zone,,Nivelo 15: Senvivzono,Nivel 15: Zona Muerta,,Taso 15: Kuollut alue,NIVEAU 15: Zone Morte,A holtak zónája,Level 15: Zona Morta,Level 15: 危険地帯,레벨 15: 사각지대,Level 15: Dode zone,Level 15: Martwa Strefa,Nível 15: Zona Morta,,Nivelul 15: Zona moartă,Level 15: Мёртвая зона,Level 15: Зона смрти
 Level 16: Deepest Reaches,THUSTR_16,,,,Level 16: Nejhlubší sluje,Level 16: Tiefe,,Nivelo 16: Plejsubejo,Nivel 16: Recodos profundos,,Taso 16: Syvyydet,NIVEAU 16: Profondeurs,Mélység,Level 16: Profondità,Level 16: 最深部,레벨 16: 깊숙한 강,Level 16: Diepste reiken,Level 16: Głębiny,Nível 16: Profundezas,,Nivelul 16: În adâncuri,Level 16: Глубочайшие достижения,Level 16: Најдубља дубина
-Level 17: Processing Area,THUSTR_17,,,,Level 17: Kombinát,Level 17: Verarbeitungsbereich,,Nivelo 17: Traktregiono,Nivel 17: Área de Procesamiento,,Taso 17: Käsittelyalue,NIVEAU 17: Zone de Traitement,Feldolgozó,Level 17: Area di Elaborazione,Level 17: 処理地帯,레벨 17: 처리 구역,Level 17: Verwerkingsgebied,Level 17: Strefa Przerobowa,Nível 17: Área de Processamento,,Nivelul 17: Aria de procesare,Level 17: Зона обработки,Level 17: Подручје обраде
+Level 17: Processing Area,THUSTR_17,,,,Level 17: Kombinát,Level 17: Verarbeitungsbereich,,Nivelo 17: Traktadareo,Nivel 17: Área de Procesamiento,,Taso 17: Käsittelyalue,NIVEAU 17: Zone de Traitement,Feldolgozó,Level 17: Area di Elaborazione,Level 17: 処理地帯,레벨 17: 처리 구역,Level 17: Verwerkingsgebied,Level 17: Strefa Przerobowa,Nível 17: Área de Processamento,,Nivelul 17: Aria de procesare,Level 17: Зона обработки,Level 17: Подручје обраде
 Level 18: Mill,THUSTR_18,,,,Level 18: Mlýn,Level 18: Mühle,,Nivelo 18: Muelejo,Nivel 18: Molino,,Taso 18: Mylly,NIVEAU 18: Fonderie,Malom,Level 18: Fonderia,Level 18: 製粉所,레벨 18: 제분소,Level 18: Molen,Level 18: Młyn,Nível 18: Moinho,,Nivelul 18: Moara,Level 18: Завод,Level 18: Млин
 Level 19: Shipping/respawning,THUSTR_19,,,,Level 19: Přeprava,Level 19: Versandlager,,Nivelo 19: Ekspedo/Revivado,Nivel 19: Enviando/Reapareciendo,,Taso 19: Huolinta/Ylösnostatus,NIVEAU 19: Envoi/Réapparition,Szállítás/újraéledés,Level 19: Consegna/Respawn,Level 19: 出荷と再生成,레벨 19: 운송/리스폰 장소,Level 19: Verzendingscentrum,Level 19: Wysyłka/Reprodukcja,Nível 19: Expedição/reaparecimento,,Nivelul 19: Livrare/reapariție,Level 19: Погрузка/отправка,Level 19: Отпремање/оживљавање
-Level 20: Central Processing,THUSTR_20,,,,Level 20: Centrální zpracování,Level 20: Zentralverarbeitung,,Nivelo 20: Centra Traktejo,Nivel 20: Procesamiento Central,,Taso 20: Käsittelykeskus,NIVEAU 20: Organisme Central,Központi feldolgozó,Level 20: Centrale di Elaborazione,Level 20: 中央処理所,레벨 20: 중앙 처리소,Level 20: Centrale verwerking,Level 20: Centralny Proces,Nível 20: Processamento Central,,Nivelul 20: Prelucrare centrală,Level 20: Центральный пункт обработки,Level 20: Централна обрада
-Level 21: Administration Center,THUSTR_21,,,,Level 21: Administrativní centrum,Level 21: Verwaltungszentrum,,Nivelo 21: Administracicentro,Nivel 21: Centro de Administración,,Taso 21: Keskushallinto,NIVEAU 21: Centre Administratif,Adminisztrációs központ,Level 21: Centro Amministrativo,Level 21: 行政センター,레벨 21: 관리 센터,Level 21: Administratief centrum,Level 21: Centrum Administracyjne,Nível 21: Centro de Administração,,Nivelul 21: Centru administrativ,Level 21: Административный центр,Level 21: Административни центар
+Level 20: Central Processing,THUSTR_20,,,,Level 20: Centrální zpracování,Level 20: Zentralverarbeitung,,Nivelo 20: Centra Eskpedado,Nivel 20: Procesamiento Central,,Taso 20: Käsittelykeskus,NIVEAU 20: Organisme Central,Központi feldolgozó,Level 20: Centrale di Elaborazione,Level 20: 中央処理所,레벨 20: 중앙 처리소,Level 20: Centrale verwerking,Level 20: Centralny Proces,Nível 20: Processamento Central,,Nivelul 20: Prelucrare centrală,Level 20: Центральный пункт обработки,Level 20: Централна обрада
+Level 21: Administration Center,THUSTR_21,,,,Level 21: Administrativní centrum,Level 21: Verwaltungszentrum,,Nivelo 21: Administracia Centro,Nivel 21: Centro de Administración,,Taso 21: Keskushallinto,NIVEAU 21: Centre Administratif,Adminisztrációs központ,Level 21: Centro Amministrativo,Level 21: 行政センター,레벨 21: 관리 센터,Level 21: Administratief centrum,Level 21: Centrum Administracyjne,Nível 21: Centro de Administração,,Nivelul 21: Centru administrativ,Level 21: Административный центр,Level 21: Административни центар
 Level 22: Habitat,THUSTR_22,,,,,,,Nivelo 22: Habitato,Nivel 22: Hábitat,,Taso 22: Asuinpaikka,NIVEAU 22: Habitat,Élőhely,Level 22: Habitat,Level 22: 生息地,레벨 22: 서식지,,Level 22: Siedlisko,Nível 22: Habitat,,Nivelul 22: Habitat,Level 22: Обиталище,Level 22: Станиште
-Level 23: Lunar Mining Project,THUSTR_23,,,,Level 23: Lunární těžební projekt,Level 23: Mondbergbauprojekt,,Nivelo 23: Luna Mino-projekto,Nivel 23: Proyecto de Minería Lunar,,Taso 23: Kuukaivosprojekti,NIVEAU 23: Projet Minier Lunaire,Holdbánya-projekt,Level 23: Progetto Minerario Lunare,Level 23: 月面探鉱計画,레벨 23: 월석 채광 계획,Level 23: Maanmijnbouw project,Level 23: Projekt Księżycowe Górnictwo,Nível 23: Projeto de Mineração Lunar,Nível 23: Projeto de Escavação Lunar,Nivelul 23: Proiect minier satelitar,Level 23: Лунный горный проект,Level 23: Пројекат лунарног рударства
+Level 23: Lunar Mining Project,THUSTR_23,,,,Level 23: Lunární těžební projekt,Level 23: Mondbergbauprojekt,,Nivelo 23: Luna Mino-Projekto,Nivel 23: Proyecto de Minería Lunar,,Taso 23: Kuukaivosprojekti,NIVEAU 23: Projet Minier Lunaire,Holdbánya-projekt,Level 23: Progetto Minerario Lunare,Level 23: 月面探鉱計画,레벨 23: 월석 채광 계획,Level 23: Maanmijnbouw project,Level 23: Projekt Księżycowe Górnictwo,Nível 23: Projeto de Mineração Lunar,Nível 23: Projeto de Escavação Lunar,Nivelul 23: Proiect minier satelitar,Level 23: Лунный горный проект,Level 23: Пројекат лунарног рударства
 Level 24: Quarry,THUSTR_24,,,,Level 24: Lom,Level 24: Steinbruch,,Nivelo 24: Ŝtonejo,Nivel 24: Cantera,,Taso 24: Louhos,NIVEAU 24: Carrière,Kőbánya,Level 24: Caccia,Level 24: 採石場,레벨 24: 채석장,Level 24: Steengroeve,Level 24: Kamieniołom,Nível 24: Pedreira,,Nivelul 24: Carieră,Level 24: Карьер,Level 24: Каменолом
 Level 25: Baron's Den,THUSTR_25,,,,Level 25: Baronovo doupě,Level 25: Der Bau des Barons,,Nivelo 25: Nestego de Barono,Nivel 25: Guarida del Barón,,Taso 25: Paronin pesä,NIVEAU 25: l'Antre des Barons,A báró odúja,Level 25: Antro del Barone,Level 25: バロンの巣窟,레벨 25: 남작의 소굴,Level 25: Het baron's gebouw,Level 25: Legowisko Barona,Nível 25: Covil do Barão,,Nivelul 25: Cuibul Baronului,Level 25: Логово барона,Level 25: Баронова јазбина
 Level 26: Ballistyx,THUSTR_26,,,,Level 26: Balistika,,,Nivelo 26: Balistikso,Nivel 26: Balístige,,Taso 26: Ballistyks,NIVEAU 26: Ballistyx,Ballisztüx,Level 26: Ballistige,Level 26: バリステュクス,레벨 26: 탄도스틱스,,Level 26: Balistyka,Nível 26: Ballistige,,Nivelul 26: Ballistyx,Level 26: Баллистикс,Level 26: Билистичкикс
-Level 27: Mount Pain,THUSTR_27,,,,Level 27: Hora bolesti,Level 27: Berg des Schmerzes,,Nivelo 27: Monto Doloro,Nivel 27: Monte Dolor,,Taso 27: Tuskavuori,NIVEAU 27: Mont Souffrance,Szenvedés-hegy,Level 27: Monte del Dolore,Level 27: 苦しみの山,레벨 27: 등신같은 등산,Level 27: Pijn in de bergen,Level 27: Góra Bólu,Nível 27: Monte Dor,,Nivelul 27: Muntele Durerii,Level 27: Гора боль,Level 27: Планина боли
-Level 28: Heck,THUSTR_28,,,,Level 28: Sakra,Level 28: Zum Teufel,,Nivelo 28: Fek',Nivel 28: Diablos,,Taso 28: Hemmetti,NIVEAU 28: Que Diable?,Rosseb,Level 28: Grata,Level 28: 苛立ち,레벨 28: 젠장함,,Level 28: Do Diabła,Nível 28: Capeta,Nível 28: Inferno,Nivelul 28: Naiba,Level 28: Чертовщина,Level 28: Пакао
-Level 29: River Styx,THUSTR_29,,,,Level 29: Řeka Styx,Level 29: Fluss Styx,,Nivelo 29: Rivero Stikso,Nivel 29: Río Estige,,Taso 29: Styksjoki,NIVEAU 29: Fleuve Styx,A Sztüx folyó,Level 29: Fiume Stige,Level 29: 三途の川,레벨 29: 스틱스 강,Level 29: Rivier Styx,Level 29: Styks,Nível 29: Rio Estige,,Nivelul 29: Râul Styx,Level 29: Река стикс,Level 29: Река Стикс
+Level 27: Mount Pain,THUSTR_27,,,,Level 27: Hora bolesti,Level 27: Berg des Schmerzes,,Nivelo 27: Monto de Doloro,Nivel 27: Monte Dolor,,Taso 27: Tuskavuori,NIVEAU 27: Mont Souffrance,Szenvedés-hegy,Level 27: Monte del Dolore,Level 27: 苦しみの山,레벨 27: 등신같은 등산,Level 27: Pijn in de bergen,Level 27: Góra Bólu,Nível 27: Monte Dor,,Nivelul 27: Muntele Durerii,Level 27: Гора боль,Level 27: Планина боли
+Level 28: Heck,THUSTR_28,,,,Level 28: Sakra,Level 28: Zum Teufel,,Nivelo 28: Diable,Nivel 28: Diablos,,Taso 28: Hemmetti,NIVEAU 28: Que Diable?,Rosseb,Level 28: Grata,Level 28: 苛立ち,레벨 28: 젠장함,,Level 28: Do Diabła,Nível 28: Capeta,Nível 28: Inferno,Nivelul 28: Naiba,Level 28: Чертовщина,Level 28: Пакао
+Level 29: River Styx,THUSTR_29,,,,Level 29: Řeka Styx,Level 29: Fluss Styx,,Nivelo 29: Rivero de Stikso,Nivel 29: Río Estige,,Taso 29: Styksjoki,NIVEAU 29: Fleuve Styx,A Sztüx folyó,Level 29: Fiume Stige,Level 29: 三途の川,레벨 29: 스틱스 강,Level 29: Rivier Styx,Level 29: Styks,Nível 29: Rio Estige,,Nivelul 29: Râul Styx,Level 29: Река стикс,Level 29: Река Стикс
 Level 30: Last Call,THUSTR_30,,,,Level 30: Poslední mise,Level 30: Letzter Aufruf,,Nivelo 30: Fina Voko,Nivel 30: Última Llamada,,Taso 30: Viimeinen koollehuuto,NIVEAU 30: Dernier Appel,Utolsó lehetőség,Level 30: Ultima Chiamata,Level 30: 最終指令,레벨 30: 최후의 호출,Level 30: Laatste oproep,Level 30: Ostatni Zew,Nível 30: Última Chamada,,Nivelul 30: Ultimul apel,Level 30: Последний вызов,Level 30: Последњи позив
 Level 31: Pharaoh,THUSTR_31,,,,Level 31: Faraón,Level 31: Pharao,,Nivelo 31: Faraono,Nivel 31: Faraón,,Taso 31: Faarao,NIVEAU 31: Pharaon,Fáraó,Level 31: Faraone,Level 31: ファラオ,레벨 31: 파라오,Level 31: Farao,Level 31: Faraon,Nível 31: Faraó,,Nivelul 31: Faraon,Level 31: Фараон,Level 31: Фараон
 Level 32: Caribbean,THUSTR_32,,,,Level 32: Karibik,Level 32: Karibik,,Nivelo 32: Karibio,Nivel 32: Caribeño,,Taso 32: Karibia,NIVEAU 32: Caraïbes,Karib-térség,Level 32: Caraibi,Level 32: カリビアン,레벨 32: 카리브해,Level 32: Caribisch,Level 32: Karaiby,Nível 32: Caribe,Nível 32: Caraíbas,Nivelul 32: Caraibe,Level 32: Карибы,Level 32: Кариби
@@ -171,7 +171,7 @@ The Guard Tower,HHUSTR_E1M4,,,,Strážní věž,Der Wachturm,,La Gardturo,La Tor
 The Citadel,HHUSTR_E1M5,,,,Citadela,Die Festung,,La Citadelo,La Ciudadela,,Linnake,La Citadelle,A Citadella,La Cittadella,要塞,거점,De citadel,Cytadela,A Cidadela,,Cetatea,Цитадель,Цитадела
 The Cathedral,HHUSTR_E1M6,,,,Katedrála,Die Kathedrale,,La Katedralo,La Catedral,,Katedraali,La Cathédrale,A Katedrális,La Cattedrale,大聖堂,대성당,De kathedraal,Katedra,A Catedral,,Catedrala,Кафедральный собор,Катедрала
 The Crypts,HHUSTR_E1M7,,,,Krypty,Die Krypten,,La Kriptoj,Las Criptas,,Kryptat,La Crypte,A Kripták,Le Cripte,地下聖堂,지하 묘실,De grafkelders,Krypty,As Criptas,,Criptele,Склепы,Крипта
-Hell's Maw,HHUSTR_E1M8,,,,Chřtán pekla,Der Höllenschlund,,La Faŭko de Infero,Fauces del Infierno,,Helvetin kita,La Geule de l'Enfer,A Pokol Szája,La Bocca dell'Inferno,地獄の肚,지옥의 목구멍,De helmouth,Paszcza Piekieł,A Boca do Inferno,,Gura iadului,Адская утроба,Паклено ждрело
+Hell's Maw,HHUSTR_E1M8,,,,Chřtán pekla,Der Höllenschlund,,Faŭko de Infero,Fauces del Infierno,,Helvetin kita,La Geule de l'Enfer,A Pokol Szája,La Bocca dell'Inferno,地獄の肚,지옥의 목구멍,De helmouth,Paszcza Piekieł,A Boca do Inferno,,Gura iadului,Адская утроба,Паклено ждрело
 The Graveyard,HHUSTR_E1M9,,,,Hřbitov,Der Friedhof,,La Tombejo,El Cementerio,,Hautausmaa,Le Cimetière,A Temető,Il Cimitero,墓場,공동묘지,De begraafplaats,Cmentarz,O Cemitério,,Cimitirul,Кладбище,Гробље
 The Crater,HHUSTR_E2M1,,,,Kráter,Der Krater,,La Kratero,El Cráter,,Kraateri,Le Cratère,A Kráter,Il Cratere,噴火口,깊은 혈,De krater,Krater,A Cratera,,Craterul,Кратер,Кратер
 The Lava Pits,HHUSTR_E2M2,,,,Lávové jámy,Die Lavagruben,,La Lafo-Fosaĵo,Las Canteras de Lava,,Laavamontut,Les Puits de Lave,A Lávagödrök,I Pozzi della Lava,溶岩の竪穴,용암 구덩이,De lavaputten,Szyb Lawy,Os Fossos de Lava,,Gropile cu lavă,Лавовые очаги,Понор лаве
@@ -195,12 +195,12 @@ Catafalque,HHUSTR_E4M1,,,,Katafalk,Katafalk,,Katafalko,Catafalco,,Katafalkki,Le 
 Blockhouse,HHUSTR_E4M2,,,,Tvrzka,Blockhaus,,Blokhaŭso,Fortín,,Linnoitus,Le Fortin,Gerendaház,Blocco di Case,丸太小屋,특화점,Blokhuis,Blokhauz,O Forte,,Fort,Укрытие,Бункер
 Ambulatory,HHUSTR_E4M3,,,,Ochoz,Wandelgang,,Ĥorĉirkaŭirejo,Ambulatorio,,Kuorikäytävä,Le Déambulatoire,Kerengő,Ambulatorio,遊歩道,유보장,Kloostergang,Krużganek,Ambulatório,,Clinică,Монастырская галерея,Амбуланта
 Sepulcher,HHUSTR_E4M4,,,,Hrobka,Grabstätte,,Tombo,Sepulcro,,Hautakammio,Le Sépulcre,Síremlék,Sepolcro,埋葬所,매장소,Grafsteen,Grób,Sepulcro,,Sepulcru,Гробница,Гробница
-Great Stair,HHUSTR_E4M5,,,,Velké schody,Große Treppe,,Granda Ŝtupo,Gran Escalera,,Suuret portaat,Le Grand Escalier,Nagy Lépcső,Grande Scala,大階段,특급 계단,Grote trap,Wielka Gwiazda,Grande Escada,,Scara cea mare,Великая лестница,Велики степеник
+Great Stair,HHUSTR_E4M5,,,,Velké schody,Große Treppe,,Granda Ŝtuparo,Gran Escalera,,Suuret portaat,Le Grand Escalier,Nagy Lépcső,Grande Scala,大階段,특급 계단,Grote trap,Wielka Gwiazda,Grande Escada,,Scara cea mare,Великая лестница,Велики степеник
 Halls of the Apostate,HHUSTR_E4M6,,,,Chodby odpadlictví,Halle des Abtrünnigen,,Haloj de la Apostato,Salas de los Apóstatas,,Luopioiden salit,Les Halls de l'Apôtre,A Hitehagyott Átjárója,Sale dell'Apostata,背教者の館,배교자의 회관,Zalen van de afvallige,Korytarze Odszczepieńca,Os Salões dos Apóstatas,,Sălile apostatului,Залы отступников,Дворана апостола
 Ramparts of Perdition,HHUSTR_E4M7,,,,Náspy zatracení,Wälle der Verdammnis,,Muregoj de Pereo,Murallas de la Perdición,,Kadotuksen vallit,Les Remparts de la Perdition,A Kárhozat Támasza,Torrioni della Perdizione,破滅の塁壁,파멸의 성벽,Wallen van de verdoemenis,Wał Potępienia,Muralhas da Perdição,,Meterezele pierzaniei,Твердыни погибели,Бедем пропасти
 Shattered Bridge,HHUSTR_E4M8,,,,Rozbitý most,Zerstörte Brücke,,Frakasita Ponto,Puente Destrozado,,Särkynyt silta,Le Pont effondré,A Szétesett Híd,Ponte Distrutto,崩落の橋,붕괴된 다리,Verbrijzelde brug,Zniszczony Most,Ponte Despedaçada,,Podul dărâmat,Разрушенный мост,Поломљен мост
 Mausoleum,HHUSTR_E4M9,,,,Mauzoleum,,,Maŭzoleo,Mausoleo,,Mausoleumi,Le Mausolée,Mauzóleum,Mausoleo,霊廟,대영묘,,Mauzoleum,Mausoléu,,Mausoleu,Мавзолей,Маузолеј
-Ochre Cliffs,HHUSTR_E5M1,,,,Okrové útesy,Ockerfarbene Klippen,,Okro-Klifoj,Acantilados Ocres,,Okrajyrkänteet,Les Falaises Ochre,Okker Szakadékok,Colline Ocra,黄土絶壁,황토 산맥,Okerkliffen,Ochrowe Klify,Penhascos Ocres,,Stâncile de ocru,Охровые утёсы,Окер брда
+Ochre Cliffs,HHUSTR_E5M1,,,,Okrové útesy,Ockerfarbene Klippen,,Klifoj de Okro,Acantilados Ocres,,Okrajyrkänteet,Les Falaises Ochre,Okker Szakadékok,Colline Ocra,黄土絶壁,황토 산맥,Okerkliffen,Ochrowe Klify,Penhascos Ocres,,Stâncile de ocru,Охровые утёсы,Окер брда
 Rapids,HHUSTR_E5M2,,,,Peřeje,Stromschnellen,,Rapidfluoj,Rápidos,,Koski,Les Rapides,Zuhatagok,Rapide,奔流,여울,Stroomversnellingen,Katarakty,Corredeiras,,Ape repezi,Стремнина,Брзак
 Quay,HHUSTR_E5M3,,,,Nábřeží,Kai,,Kajo,Muelle,,Satamalaituri,Le Quai,Rakpart,Banchina,岸壁,부두,Kade,Wir,Cais,,Chei,Причал,10
 Courtyard,HHUSTR_E5M4,,,,Nádvoří,Schlosshof,,Korto,Patio,,Linnanpiha,La Cour,Pitvar,Cortile,中庭,안마당,Binnenplaats,Dziedziniec,Pátio,,Curte,Внутренний двор,Двориште
@@ -256,59 +256,59 @@ Seven Portals,TXT_HEXEN_MAP02,,,,Sedmero portálů,Sieben Portale,,Sep Portaloj,
 Guardian of Ice,TXT_HEXEN_MAP03,,,,Strážce ledu,Wächter des Eises,,Gardanto de Glacio,Guardián de Hielo,,Jään vartija,Gardien de Glace,A Jég Őre,Guardiano del Ghiaccio,氷の守護者,얼음의 수호자,Bewaker van ijs,Strażnik Lodu,Guardião de Gelo,,Străjerul Gheții,Страж льда,Чувар леда
 Guardian of Fire,TXT_HEXEN_MAP04,,,,Strážce ohně,Wächter des Feuers,,Gardanto de Fajro,Guardián de Fuego,,Tulen vartija,Gardien de Feu,A Tűz Őre,Guardiano del Fuoco,炎の守護者,화염의 수호자,Bewaker van vuur,Strażnik Ognia,Guardião de Fogo,,Străjerul Focului,Страж огня,Чувар огња
 Guardian of Steel,TXT_HEXEN_MAP05,,,,Strážce oceli,Wächter des Stahls,,Gardanto de Ŝtalo,Guardián de Acero,,Teräksen vartija,Gardien d'Acier,Az Acél Őre,Guardiano dell'Acciaio,鋼の守護者,강철의 수호자,Bewaker van staal,Strażnik Stali,Guardião de Aço,,Străjerul Oțelului,Страж стали,Чувар челика
-Bright Crucible,TXT_HEXEN_MAP06,,,,Světlý očistec,Glänzende Feuerprobe,,Luma Krisolo,Crisol de Luz,,Kirkas tulikoe,Creuset Radiant,,Crogiolo Luminoso,光の坩堝,빛나는 고난,Heldere beproeving,Próba Światła,Crisol de Luz,,Creuzet Luminos,Испытание света,Испит светла
+Bright Crucible,TXT_HEXEN_MAP06,,,,Světlý očistec,Glänzende Feuerprobe,,Luma Krisolo,Crisol de Luz,,Kirkas tulikoe,Creuset Radiant,Fényes Ketrec,Crogiolo Luminoso,光の坩堝,빛나는 고난,Heldere beproeving,Próba Światła,Crisol de Luz,,Creuzet Luminos,Испытание света,Испит светла
 Shadow Wood,TXT_HEXEN_MAP13,,,,Temný hvozd,Schattenwald,,Ombro-Arbareto,Bosque de la Sombra,,Varjosalo,Forêt des Ombres,Árnyék Erdő,Foresta Oscura,陰影樹,그림자 숲,Schaduwbos,Las Cieni,Floresta das Sombras,,Pădurea Umbrelor,Лес теней,Шума сенки
-Darkmere,TXT_HEXEN_MAP08,,,,Černý močál,Düstersee,,Malluma Marĉo,Pantano,,Pikiräme,Marais Noir,,Palude Nera,暗黒の地,흙빛호수,Sombermeer,Mroczne Bagno,Pantâno Negro,,Mlaștinile Întunecate,Болотная топь,Мочварна земља
+Darkmere,TXT_HEXEN_MAP08,,,,Černý močál,Düstersee,,Malluma Marĉo,Pantano,,Pikiräme,Marais Noir,Fekete Mocsár,Palude Nera,暗黒の地,흙빛호수,Sombermeer,Mroczne Bagno,Pantâno Negro,,Mlaștinile Întunecate,Болотная топь,Мочварна земља
 Caves of Circe,TXT_HEXEN_MAP09,,,,Kirčiny jeskyně,Circes Höhle,,Kavernoj de Circe,Cuevas de Circe,,Circeluolat,Caves de Circé,Körök Barlangja,Grotte di Circe,キルケーの洞窟,키르케의 동굴,Grotten van Circe,Jaskinie Kirke,Cavernas de Circe,,Peșterile lui Circe,Пещеры цирцеи,Киркине пећине
 Wastelands,TXT_HEXEN_MAP10,,,,Pustiny,Ödland,,Senvivejo,Yermo,,Erämaat,Terres Ruinées,Senkiföldje,Terre in rovina,荒野,황무지,Woestenij,Pustkowia,Terras Desoladas,,Tărâmurile Pustii,Пустоши,Пустоши
-Sacred Grove,TXT_HEXEN_MAP11,,,,Posvátný háj,Heiliger Hain,,Sankta Bosketo,Arboleda Sagrada,,Pyhä metsikkö,Bosquet Sacré,,Boschetto Sacro,神聖なる園,성스러운 수풀,Heilig bosje,Święty Gaj,Bosque Sagrado,,Crângul Sacru,Священная роща,Свети шумарак
+Sacred Grove,TXT_HEXEN_MAP11,,,,Posvátný háj,Heiliger Hain,,Sankta Bosketo,Arboleda Sagrada,,Pyhä metsikkö,Bosquet Sacré,Szent Liget,Boschetto Sacro,神聖なる園,성스러운 수풀,Heilig bosje,Święty Gaj,Bosque Sagrado,,Crângul Sacru,Священная роща,Свети шумарак
 Hypostyle,TXT_HEXEN_MAP12,,,,Hypostyl,Säulenhalle,,Kolonejo,Hipóstila,,Hypostyyli,Hypostyle,,Ipostilo,多柱の間,다주실,Zuilenhal,Hypostyl,Hipostilo,,Hipostil,Гипостильный зал,Хипостил
-Heresiarch's Seminary,TXT_HEXEN_MAP27,,,,Arcikacířův alumnát,Seminar des Erzketzers,,Seminario de Ĉefherezulo,Seminario del Heresiarca,,Kerettiarkin seminaari,Séminaire de l'Hérésiarche,,Seminario dell'Heresiarch,ヘレシアークの神学舎,헤러시아크의 신학교,Seminarie van ketterij,Seminarium Herezjarchy,Seminário do Heresiarca,,Seminarul Ereziarhului,Семинария Ересиарха,Јересијархов семинар
+Heresiarch's Seminary,TXT_HEXEN_MAP27,,,,Arcikacířův alumnát,Seminar des Erzketzers,,Seminario de Ĉefherezulo,Seminario del Heresiarca,,Kerettiarkin seminaari,Séminaire de l'Hérésiarche,A Főeretnek Szemináriuma,Seminario dell'Heresiarch,ヘレシアークの神学舎,헤러시아크의 신학교,Seminarie van ketterij,Seminarium Herezjarchy,Seminário do Heresiarca,,Seminarul Ereziarhului,Семинария Ересиарха,Јересијархов семинар
 Dragon Chapel,TXT_HEXEN_MAP28,,,,Dračí kaple,Drachenkapelle,,Drakkapelo,Capilla Dragón,,Lohikäärmekappeli,Chapelle du Dragon,Sárkány Szentély,Cappella del Drago,ドラゴンの庵寺,드래곤 예배실,Drakenkapel,Kaplica Smoka,Capela do Dragão,,Capela dragonilor,Часовня дракона,Капела змајева
 Griffin Chapel,TXT_HEXEN_MAP30,,,,Gryfova kaple,Greifenkapelle,,Grifkapelo,Capilla Grifo,,Aarnikotkakappeli,Chapelle du Grifon,Griff Szentély,Cappella del Grifone,グリフィンの庵寺,그리핀 예배실,Griffioenenkapel,Kaplica Gryfa,Capela do Grifo,,Capela grifonilor,Часовня грифона,Капела грифонова
-Deathwind Chapel,TXT_HEXEN_MAP31,,,,Kaple mrakosmrtě,Todeswindkapelle,,Mortvento-Kapelo,Capilla Viento de Muerte,,Kuolontuulikappeli,Chapelle du Vent Tueur,,Cappella del Vento Assassino,デスウィンドの庵寺,죽음바람 예배실,Dodenwind kapel,Kaplica Wiatru Śmierci,Capela do Vento da Morte,,Capela suflului morții,Часовня ветра смерти,Капела ветра смрти
-Orchard of Lamentations,TXT_HEXEN_MAP32,,,,Sad nářků,Garten der Wehklagen,,Horto de Lamentoj,Huerto de los Lamentos,,Valitusvirtten tarha,Verger des Lamentations,,Frutteto delle Lamentazioni,哀悼茂る園,통탄의 과수원,Boomgaard van klaagliederen,Płaczący Sad,Pomar das Lamentações,,Livada amărăciunii,Сады плача,Воћњак плача
-Silent Refectory,TXT_HEXEN_MAP33,,,,Tichý refektář,Stilles Refektorium,,Silenta Manĝejo,Refectorio Silencioso,,Hiljainen ruokasali,Réfectoire Silencieux,,Refettorio silenzioso,寡黙なる食堂,침묵의 식당,Stil refectory,Cichy Refektarz,Refeitório Silencioso,,Refectoriul tăcerii,Безмолвная трапезная,Безгласна трпезарија
+Deathwind Chapel,TXT_HEXEN_MAP31,,,,Kaple mrakosmrtě,Todeswindkapelle,,Mortvento-Kapelo,Capilla Viento de Muerte,,Kuolontuulikappeli,Chapelle du Vent Tueur,Halál Szentély,Cappella del Vento Assassino,デスウィンドの庵寺,죽음바람 예배실,Dodenwind kapel,Kaplica Wiatru Śmierci,Capela do Vento da Morte,,Capela suflului morții,Часовня ветра смерти,Капела ветра смрти
+Orchard of Lamentations,TXT_HEXEN_MAP32,,,,Sad nářků,Garten der Wehklagen,,Horto de Lamentoj,Huerto de los Lamentos,,Valitusvirtten tarha,Verger des Lamentations,Siránkozás Kertje,Frutteto delle Lamentazioni,哀悼茂る園,통탄의 과수원,Boomgaard van klaagliederen,Płaczący Sad,Pomar das Lamentações,,Livada amărăciunii,Сады плача,Воћњак плача
+Silent Refectory,TXT_HEXEN_MAP33,,,,,Stilles Refektorium,,Silenta Manĝejo,Refectorio Silencioso,,Hiljainen ruokasali,Réfectoire Silencieux,Néma Refektórium,Refettorio silenzioso,寡黙なる食堂,침묵의 식당,Stil refectory,Cichy Refektarz,Refeitório Silencioso,,Refectoriul tăcerii,Безмолвная трапезная,Безгласна трпезарија
 Wolf Chapel,TXT_HEXEN_MAP34,,,,Vlčí kaple,Wolfskapelle,,Lupkapelo,Capilla Lobo,,Susikappeli,Chapelle du Loup,Farkas Szentély,Cappella del Lupo,狼の庵寺,늑대 예배실,Wolvenkapel,Kaplica Wilka,Capela do Lobo,,Capela lupilor,Часовня волка,Капела вучја
-Forsaken Outpost,TXT_HEXEN_MAP21,,,,Opuštěné stanoviště,Verlassener Vorposten,,Forlasita Posteno,Puesto de Avanzada Abandonado,,Hylätty etuvartio,Base Abandonnée,,Avamposto Abbandonato,荒れ果てた前哨地,버려진 초소,Verwaarloosde buitenpost,Opuszczony Posterunek,Posto Abandonado,,Avanpostul părăsit,Покинутая застава,Напуштена постаја
-Castle of Grief,TXT_HEXEN_MAP22,,,,Hrad smutku,Leidensburg,,Kastelo de Funebro,Castillo del Pesar,,Surulinna,Château de la Souffrance,,Castello della Sofferenza,嘆きの城,비탄의 성,Kasteel van verdriet,Zamek Smutku,Castelo da Aflição,,Castelul întristării,Замок скорби,Замак жалости
-Gibbet,TXT_HEXEN_MAP23,,,,Šibenice,Richtstätte,,Pendigilo,Horca,,Hirsipuu,Gibet,,Forca,晒し台,교수대,,Szubienica,Forca,,Eșafodul,Виселица,Вешала
+Forsaken Outpost,TXT_HEXEN_MAP21,,,,Opuštěné stanoviště,Verlassener Vorposten,,Forlasita Posteno,Puesto de Avanzada Abandonado,,Hylätty etuvartio,Base Abandonnée,Elhagyott Őrség,Avamposto Abbandonato,荒れ果てた前哨地,버려진 초소,Verwaarloosde buitenpost,Opuszczony Posterunek,Posto Abandonado,,Avanpostul părăsit,Покинутая застава,Напуштена постаја
+Castle of Grief,TXT_HEXEN_MAP22,,,,Hrad smutku,Leidensburg,,Kastelo de Funebro,Castillo del Pesar,,Surulinna,Château de la Souffrance,A Gyász Kastélya,Castello della Sofferenza,嘆きの城,비탄의 성,Kasteel van verdriet,Zamek Smutku,Castelo da Aflição,,Castelul întristării,Замок скорби,Замак жалости
+Gibbet,TXT_HEXEN_MAP23,,,,Šibenice,Richtstätte,,Pendigilo,Horca,,Hirsipuu,Gibet,Akasztófa,Forca,晒し台,교수대,,Szubienica,Forca,,Eșafodul,Виселица,Вешала
 Effluvium,TXT_HEXEN_MAP24,,,,Výpary,Effluvium,,Efluvo,Efluvio,,Katku,Effluvium,,Effluvio,腐臭漂う残骸,악취,,Odór,Eflúvio,,Efluviu,Зловонный сток,Воњави одвод
 Dungeons,TXT_HEXEN_MAP25,,,,Žalář,Kerker,,Karceroj,Calabozos,,Tyrmät,Donjons,Kazamaták,I Dungeon,地下牢,지하감옥,Kerkers,Lochy,Masmorras,,Temnițe,Подземелья,Лагуми
-Desolate Garden,TXT_HEXEN_MAP26,,,,Zpustošená zahrada,Verwildeter Garten,,Dezerta Ĝardeno,Jardín Desolado,,Autio puutarha,Jardin de la Désolation,,Giardino Desolato,荒涼とした庭,황폐한 정원,Woeste tuin,Spustoszały Ogród,Jardim Desolado,,Grădina dezolantă,Заброшенный сад,Напуштени врт
-Necropolis,TXT_HEXEN_MAP35,,,,Nekropole,Nekropole,,Nekropolo,Necrópolis,,Nekropoli,Nécropole,Halottak Városa,Necropoli,ネクロポリス,망자의 도시,,Nekropolia,Necrópole,,Necropola,Некрополь,Некропола
+Desolate Garden,TXT_HEXEN_MAP26,,,,Zpustošená zahrada,Verwildeter Garten,,Dezerta Ĝardeno,Jardín Desolado,,Autio puutarha,Jardin de la Désolation,Magányos Kert,Giardino Desolato,荒涼とした庭,황폐한 정원,Woeste tuin,Spustoszały Ogród,Jardim Desolado,,Grădina dezolantă,Заброшенный сад,Напуштени врт
+Necropolis,TXT_HEXEN_MAP35,,,,Nekropole,Nekropole,,Nekropolo,Necrópolis,,Nekropoli,Nécropole,Nekropolisz,Necropoli,ネクロポリス,망자의 도시,,Nekropolia,Necrópole,,Necropola,Некрополь,Некропола
 Zedek's Tomb,TXT_HEXEN_MAP36,,,,Zedekova hrobka,Zedeks Gruft,,Tombo de Zedek,Tumba de Zedek,,Sedekin hauta,Tombeau de Zedek,Zedek Sírja,Tomba di Zedek,ゼデクの墓,제닥의 무덤,Zedek's graf,Grobowiec Zedeka,Tumba de Zedek,Túmulo de Zedek,Mormântul lui Zedek,Гробница Зедека,Гробница Зедекова
 Menelkir's Tomb,TXT_HEXEN_MAP37,,,,Menelkirova hrobka,Menelkirs Gruft,,Tombo de Menelkir,Tumba de Menelkir,,Menelkirin hauta,Tombeau de Menelkir,Menelkir Sírja,Tomba di Menelkir,メネルキルの墓,메넬키어의 무덤,Menelkir's graf,Grobowiec Menelkira,Tumba de Menelkir,Túmulo de Menelkir,Mormântul lui Menelkir,Гробница Менелкира,Гробница Менелкирова
 Traductus' Tomb,TXT_HEXEN_MAP38,,,,Traduktova hrobka,Traductus' Gruft,,Tombo de Traductus,Tumba de Traductus,,Traduktuksen hauta,Tombeau de Traductus,Traductus Sírja,Tomba di Traductus,トダクティスの墓,트라닥투스의 무덤,Traductus' graf,Grobowiec Traductusa,Tumba de Traductus,Túmulo de Traductus,Mormântul lui Traductus,Гробница Традактуса,Гробница Традуктусова
 Vivarium,TXT_HEXEN_MAP39,,,,Vivárium,Vivarium,,Vivario,Vivario,,Vivaario,Vivarium,Vivárium,Vivario,ビバリウム,사육장,,Wiwarium,Viveiro,,Vivariu,Виварий,Виваријум
-Dark Crucible,TXT_HEXEN_MAP40,,,,Temný očistec,Dunkle Feuerprobe,,Malluma Krisolo,Crisol de Oscuridad,,Pimeä tulikoe,Creuset Sombre,,Crogiolo Buio,"暗黒の坩堝
+Dark Crucible,TXT_HEXEN_MAP40,,,,Temný očistec,Dunkle Feuerprobe,,Malluma Krisolo,Crisol de Oscuridad,,Pimeä tulikoe,Creuset Sombre,Sötét Ketrec,Crogiolo Buio,"暗黒の坩堝
 ",어두운 고난,Donkere beproeving,Próba Mroku,Crisol das Trevas,,Creuzet Întunecat,Испытание тьмы,Испит таме
 ,,Hexen Deathkings,,,,,,,,,,,,,,,,,,,,,
 Ruined Village,TXT_HEXDD_MAP41,,,,Zničená vesnice,Zerstörtes Dorf,,Ruiniga Vilaĝo,Pueblo en Ruinas,,Rauniokylä,Village en Ruines,Az Elpusztult Falu,Villagio in Rovine,廃村,파괴된 마을,Ruïneerd dorp,Zrujnowana Wioska,Aldeia Destruída,Aldeia em Ruinas,Sat ruinat,Разрушенная деревня,Уништено село
-Blight,TXT_HEXDD_MAP42,,,,Pohroma,Fäule,,Pesto,Decaimiento,,Turmelus,Peste,,Peste,疫病,황폐화,Ziekte,Zaraza,Peste,,Cotropit,Упадок,Пошаст
-Sump,TXT_HEXDD_MAP43,,,,Žumpa,Sumpf,,Fekaĵputo,Pozo de Barro,,Likakaivo,Puisard,,Pozzetto,汚水槽,웅덩이,Moeras,Studzienka,Poço de Lama,,Joampă,Грязеотстойник,Сливник
-Catacomb,TXT_HEXDD_MAP44,,,,Katakomby,Katakombe,,Katakombo,Catacumba,,Katakombi,Catacombe,,Catacombe,カタコンベ,지하 묘실,Katacombe,Katakumba,Catacumba,,Catacombă,Катакомба,Катакомба
-Badlands,TXT_HEXDD_MAP45,,,,Pustiny,Ödland,,Mislando,Páramos,,Autiomaa,Terres Sauvages,,Terre Selvagge,不毛地帯,불모지,Woestijn,Nieurodzaj,Ermo,,Deșert,Бесплодные земли,Пустош
-Brackenwood,TXT_HEXDD_MAP46,,,,Prales,Moorwald,,Pteridejo,Brackenwood,,Saniaissalo,Forêt de Bracken,,Foresta di Felce,ワラビの樹,고사리숲,Moorbos,Las Paproci,Floresta de Samambaias,,Pădure de ferigi,Брекенвуд,Папрат
-Pyre,TXT_HEXDD_MAP47,,,,Hranice,Scheiterhaufen,,Kremaciejo,Pira Funeraria,,Rovio,Brasier,,Pira,火葬薪,화장,Brandstapel,Stos,Pira,,Rug,Погребальный костёр,Ломача
-Constable's Gate,TXT_HEXDD_MAP48,,,,Konstáblova brána,Wachtor,,Pordego de Ĝendarmo,Puerta del Alguacil,,Konstaapelin portti,Portail du Constable,,Porta del Conestabile,城守達の門,무관장의 문,Constable's poort,Brama Posterunkowego,Portão do Condestável,,Poarta ofițerului,Комендантские врата,Чиновникова капија
-Treasury,TXT_HEXDD_MAP49,,,,Pokladnice,Schatzkammer,,Trezorejo,Tesorería,,Rahasto,Trésorerie,,Tesoreria,宝庫,국고,Schatkist,Skarbiec,Tesouraria,,Vistierie,Сокровищница,Трезор
-Market Place,TXT_HEXDD_MAP50,,,,Tržnice,Marktplatz,,Foirejo,Plaza del Mercado,,Markkinat,Place du Marché,,Piazza del Mercato,市場,시장,Markt,Rynek,Feira,,Piață,Рыночная площадь,Пијаца
+Blight,TXT_HEXDD_MAP42,,,,Pohroma,Fäule,,Pesto,Decaimiento,,Turmelus,Peste,Penész,Peste,疫病,황폐화,Ziekte,Zaraza,Peste,,Cotropit,Упадок,Пошаст
+Sump,TXT_HEXDD_MAP43,,,,Žumpa,Sumpf,,Olekuvo,Pozo de Barro,,Likakaivo,Puisard,Tócsa,Pozzetto,汚水槽,웅덩이,Moeras,Studzienka,Poço de Lama,,Joampă,Грязеотстойник,Сливник
+Catacomb,TXT_HEXDD_MAP44,,,,Katakomby,Katakombe,,Katakombo,Catacumba,,Katakombi,Catacombe,Katakomba,Catacombe,カタコンベ,지하 묘실,Katacombe,Katakumba,Catacumba,,Catacombă,Катакомба,Катакомба
+Badlands,TXT_HEXDD_MAP45,,,,Pustiny,Ödland,,Badlandoj,Páramos,,Autiomaa,Terres Sauvages,Terméketlen Föld,Terre Selvagge,不毛地帯,불모지,Woestijn,Nieurodzaj,Ermo,,Deșert,Бесплодные земли,Пустош
+Brackenwood,TXT_HEXDD_MAP46,,,,Prales,Moorwald,,Pteridejo,Brackenwood,,Saniaissalo,Forêt de Bracken,Páfrány Erdő,Foresta di Felce,ワラビの樹,고사리숲,Moorbos,Las Paproci,Floresta de Samambaias,,Pădure de ferigi,Брекенвуд,Папрат
+Pyre,TXT_HEXDD_MAP47,,,,Hranice,Scheiterhaufen,,Kremaciejo,Pira Funeraria,,Rovio,Brasier,Máglya,Pira,火葬薪,화장,Brandstapel,Stos,Pira,,Rug,Погребальный костёр,Ломача
+Constable's Gate,TXT_HEXDD_MAP48,,,,Konstáblova brána,Wachtor,,Pordego de Ĝendarmo,Puerta del Alguacil,,Konstaapelin portti,Portail du Constable,Csendőr Kapu,Porta del Conestabile,城守達の門,무관장의 문,Constable's poort,Brama Posterunkowego,Portão do Condestável,,Poarta ofițerului,Комендантские врата,Чиновникова капија
+Treasury,TXT_HEXDD_MAP49,,,,Pokladnice,Schatzkammer,,Trezorejo,Tesorería,,Rahasto,Trésorerie,Kincstár,Tesoreria,宝庫,국고,Schatkist,Skarbiec,Tesouraria,,Vistierie,Сокровищница,Трезор
+Market Place,TXT_HEXDD_MAP50,,,,Tržnice,Marktplatz,,Foirejo,Plaza del Mercado,,Markkinat,Place du Marché,Piactér,Piazza del Mercato,市場,시장,Markt,Rynek,Feira,,Piață,Рыночная площадь,Пијаца
 Locus Requiescat,TXT_HEXDD_MAP51,,,,,Locus Requiescat,,Locus Requiescat,Lugar de Descanso Eterno,,,Locus Requiescat,,,祈祷師の軌跡,명복의 장소,,Locus Requiescat,,,,Место вечного упокоения,Место починка
-Ordeal,TXT_HEXDD_MAP52,,,,Utrpení,Heimsuchung,,Provo Per Aflikto,Prueba,,Koettelemus,Supplice,,Supplizio,試練,시죄의 시련,Orde,Męka,Suplício,,Supliciu,Испытание,Изазов
+Ordeal,TXT_HEXDD_MAP52,,,,Utrpení,Heimsuchung,,Provo Per Aflikto,Prueba,,Koettelemus,Supplice,Megpróbáltatás,Supplizio,試練,시죄의 시련,Orde,Męka,Suplício,,Supliciu,Испытание,Изазов
 Armory,TXT_HEXDD_MAP53,,,Armoury,Zbrojnice,Waffenkammer,,Armilejo,Armería,,Asehuone,Amurerie,Fegyverraktár,Armeria,武器庫,무기고,Wapenkamer,Zbrojownia,Arsenal,,Arsenal,Оружейная,Оружарница
-Nave,TXT_HEXDD_MAP54,,,,Chrámová loď,Kirchenschiff,,Navo,La Nave,,Laiva,Nef,,Navata,身廊,본당,Naaf,Nawa,,,Naos,Неф,Брод
-Chantry,TXT_HEXDD_MAP55,,,,Modlitebna,Kantorei,,Kapelo,Capilla,,Kappeli,Chapelle,,Cappella,小礼拝堂,예배당,,Kaplica Wotywna,Capela,,Capelă,Часовня,Капела
-Abattoir,TXT_HEXDD_MAP56,,,,Jatka,Schlachthaus,,Buĉejo,Matadero,,Teurastamo,Abbatoire,,Mattatoio,屠殺場,도살장,Slachthuis,Rzeźnia,Matadouro,,Abator,Бойня,Кланица
-Dark Watch,TXT_HEXDD_MAP57,,,,Tmavá hlídka,Dunkle Wache,,Gardisto Ombra,Guardia Oscura,,Pimeä vartio,Garde Noire,,Guardia Oscura,闇の刻計,어둠의 감시초소,Donkere horloge,Ciemna Straż,Guarda Negra,,Gardian întunecat,Тёмный страж,Мрачни чувар
-Cloaca,TXT_HEXDD_MAP58,,,,Kloaka,Kloake,,Cloaca,Cloaca,,Kloaakki,Cloaque,,,排泄腔,하수구,,Kloaka,,,,Клоака,Клоака
-Ice Hold,TXT_HEXDD_MAP59,,,,Ledová pevnost,Eiskammer,,Fuorto el Glacio,Tierra de Hielo,,Jääsäilö,Fort de Glace,,Fortezza di Ghiaccio,氷結,빙고,Ijskamer,Lodowa Twierdza,Fortaleza de Gelo,,Fort glaciar,Ледяная твердь,Ледена утврда
-Dark Citadel,TXT_HEXDD_MAP60,,,,Temná citadela,Dunkle Festung,,Citadelo Ombra,Fortaleza Oscura,,Pimeä linnake,Citadelle Sombre,,Cittadella Oscura,暗黒の城塞,어둠의 요새,Donkere citadel,Mroczna Cytadela,Cidadela Negra,,Cetatea întunecată,Тёмная цитадель,Мрачна цитадела
-Transit,TXT_HEXDD_MAP33,,,,Převoz,,,Vojo,Sala de Espera,,Läpikulku,Transit,,Passaggio,変遷,통로,Doorvoer,Tranzyt,Sala de Espera,,Tranzit,Комната ожидания,Прелаз
-Over'n Under,TXT_HEXDD_MAP34,,,,Nad a Pod,Drunter und Drüber,,Sub kaj Supre,Arriba y Abajo,,Yli ja ali,Sens Dessus Dessous,,Sopra e Sotto,天と地,높낮이,Over'n under,Nad I Pod,Sobre e Sob,,Mai sus și Mai jos,Выше и ниже,Изнад и испод
+Nave,TXT_HEXDD_MAP54,,,,Chrámová loď,Kirchenschiff,,Navo,La Nave,,Laiva,Nef,Hajó,Navata,身廊,본당,Naaf,Nawa,,,Naos,Неф,Брод
+Chantry,TXT_HEXDD_MAP55,,,,Modlitebna,Kantorei,,Kapelo,Capilla,,Kappeli,Chapelle,Gyászmise,Cappella,小礼拝堂,예배당,,Kaplica Wotywna,Capela,,Capelă,Часовня,Капела
+Abattoir,TXT_HEXDD_MAP56,,,,Jatka,Schlachthaus,,Buĉejo,Matadero,,Teurastamo,Abbatoire,Vágóhíd,Mattatoio,屠殺場,도살장,Slachthuis,Rzeźnia,Matadouro,,Abator,Бойня,Кланица
+Dark Watch,TXT_HEXDD_MAP57,,,,Tmavá hlídka,Dunkle Wache,,Ombra Gardisto,Guardia Oscura,,Pimeä vartio,Garde Noire,Éjjeli Őrség,Guardia Oscura,闇の刻計,어둠의 감시초소,Donkere horloge,Ciemna Straż,Guarda Negra,,Gardian întunecat,Тёмный страж,Мрачни чувар
+Cloaca,TXT_HEXDD_MAP58,,,,Kloaka,Kloake,,Kloako,Cloaca,,Kloaakki,Cloaque,Kloáka,,排泄腔,하수구,,Kloaka,,,,Клоака,Клоака
+Ice Hold,TXT_HEXDD_MAP59,,,,Ledová pevnost,Eiskammer,,Fuorto el Glacio,Tierra de Hielo,,Jääsäilö,Fort de Glace,Jégtorony,Fortezza di Ghiaccio,氷結,빙고,Ijskamer,Lodowa Twierdza,Fortaleza de Gelo,,Fort glaciar,Ледяная твердь,Ледена утврда
+Dark Citadel,TXT_HEXDD_MAP60,,,,Temná citadela,Dunkle Festung,,Ombra Citadelo,Fortaleza Oscura,,Pimeä linnake,Citadelle Sombre,Sötét Torony,Cittadella Oscura,暗黒の城塞,어둠의 요새,Donkere citadel,Mroczna Cytadela,Cidadela Negra,,Cetatea întunecată,Тёмная цитадель,Мрачна цитадела
+Transit,TXT_HEXDD_MAP33,,,,Převoz,,,Vojo,Sala de Espera,,Läpikulku,Transit,Tranzit,Passaggio,変遷,통로,Doorvoer,Tranzyt,Sala de Espera,,Tranzit,Комната ожидания,Прелаз
+Over'n Under,TXT_HEXDD_MAP34,,,,Nad a Pod,Drunter und Drüber,,Sub kaj Supre,Arriba y Abajo,,Yli ja ali,Sens Dessus Dessous,Fent és Lent,Sopra e Sotto,天と地,높낮이,Over'n under,Nad I Pod,Sobre e Sob,,Mai sus și Mai jos,Выше и ниже,Изнад и испод
 Deathfog,TXT_HEXDD_MAP35,,,,Mha skonu,Todesnebel,,Mortnebulo,Niebla de Muerte,,Kuolonsumu,Brume Mortelle,Halálköd,Nebbia di Morte,死の霧,죽음의 안개,Dodenmist,Mgła Śmierci,Névoa da Morte,,Ceața morții,Туман смерти,Магла смрти
-Castle of Pain,TXT_HEXDD_MAP36,,,,Hrad bolesti,Burg der Angst,,Kastelo de Doloro,Castillo del Dolor,,Tuskan linna,Château de la Douleur,,Castello del Dolore,苦しみの城,고통의 성,Kasteel van pijn,Zamek Bólu,Castelo da Dor,,Castelul durerii,Замок боли,Тврђава бола
-Sewer Pit,TXT_HEXDD_MAP37,,,,Odpadní jáma,Kanalgrube,,Fekaĵputo,Pozo de Residuos,,Viemärimonttu,Trou d'Egout,,Fossa della Fogna,地下溝穴,하수도,Rioolput,Ściek,Fossa de Esgoto,,Groapa de scurgere,Сточная яма,Канализациона јама
+Castle of Pain,TXT_HEXDD_MAP36,,,,Hrad bolesti,Burg der Angst,,Kastelo de Doloro,Castillo del Dolor,,Tuskan linna,Château de la Douleur,Fájdalom Kastélya,Castello del Dolore,苦しみの城,고통의 성,Kasteel van pijn,Zamek Bólu,Castelo da Dor,,Castelul durerii,Замок боли,Тврђава бола
+Sewer Pit,TXT_HEXDD_MAP37,,,,Odpadní jáma,Kanalgrube,,Fekaĵputo,Pozo de Residuos,,Viemärimonttu,Trou d'Egout,Pöcegödör,Fossa della Fogna,地下溝穴,하수도,Rioolput,Ściek,Fossa de Esgoto,,Groapa de scurgere,Сточная яма,Канализациона јама
 The Rose,TXT_HEXDD_MAP38,,,,Růže,Die Rose,,La Rozo,La Rosa,,Ruusu,La Rose,A Rózsa,La Rosa,薔薇,장밋빛,De roos,Róża,A Rosa,,Roza,Роза,Ружа
 ,,Intermission texts,,,,,,,,,,,,,,,,,,,,,
 "Once you beat the big badasses and
@@ -621,13 +621,13 @@ Nun geht es weiter zum letzten Kapitel von
 DOOM - Inferno.",,"Vi sukcesis! La malbelega ciberdemono-lordo,
 kiu regis la perditan Dejmo-lunbazon,
 estis mortigita kaj vi estas triumfa!
-Sed ... kie vi estas? Vi suprenrampas al la 
+Sed... kie vi estas? Vi suprenrampas al la 
 rando de la luno kaj rigardas malsupren
 por vidi la malbonegan veron.
 
 Dejmo flosas super Infero mem!
 Vi neniam sciiĝis pri iu ajn eskapanta
-el Infero, sed vi igos bedaŭri la bastardojn,
+el Infero, sed vi igos la bastardojn bedaŭri,
 ke ili iam sciiĝis pri vi! Rapide, vi absejlas
 malsupren al la surfaco de Infero.
 
@@ -887,16 +887,16 @@ da morto, havis ĝian pugon piedbatita
 por ĉiam.
 
 Kaŝita pordo malfermiĝas kaj vi eniras.
-Vi pruvis, ke vi estas tro forta
-por Infero deteni vin, kaj nun Infero
-fine ludas juste -- ĉar vi eliras el la pordo
+Vi pruvis, ke vi estas tro forta por
+Infero deteni vin, kaj nun Infero fine
+ludas honeste -- ĉar vi eliras el la pordo
 por vidi la verdajn kampojn de la Tero!
-Ĉe hejm' fine.
+Hejme fine.
 
-Vi pensas pri tio, kio okazis sur la Tero
-dum vi bataladis malbonon deĉenigitan.
-Bonas, ke neniu inferido povus veni
-tra la pordo kun vi...","El abominable demonio arácnido que orquestó
+Vi scivolas, kio okazis sur la Tero dum vi
+bataladis malbonon deĉenigitan. Bonas,
+ke neniu Inferido povintus veni tra la
+pordo kun vi...","El abominable demonio arácnido que orquestó
 la invasión de las bases lunares y causó
 innumerables muertes ha recibido una patada
 en el trasero para siempre.
@@ -1153,12 +1153,12 @@ Nächster Halt, Hölle auf Erden!",,"La elektraraneo-mastro verŝajne sendis
 siajn legiojn de inferidoj antaŭ via fina
 konflikto kun tiu terura bestaĉo el
 Infero. Sed vi paŝis antaŭen kaj venigis
-eternan damnon kaj suferadon al la hordo,
-kiel vera heroo farus, kiam frontanta ion
-tiel peka.
+eternan damnon kaj suferadon sur la
+hordon, kiel vera heroo farus, kiam fronte
+al io tiel malbona.
 
-Cetere, iu pagos pro tio, kio okazis al Daisy,
-via dombesta kuniklo.
+Cetere, iu devis pagi pro tio, kio okazis al
+Daisy, via dombesta kuniklo.
 
 Sed nun, vi vidas, sternite antaŭ vi, pli
 eblan doloron kaj buĉadon, dum popolo
@@ -1414,12 +1414,12 @@ eine befestigte Zone. Wenn du daran vorbei
 kommst, kannst du in das Herz der
 Basis eindringen und den Schalter finden,
 der die Menschheit als Geiseln hält.",,"Vi eniris profunde en la infestitan kosmo-
-havenon, sed io estas misa. La monstroj
+havenon. Sed io estas misa. La monstroj
 alportis sian propran realon kun ili, kaj
 la teknologio de la kosmo-haveno estas
 subfosata de ilia ĉeesto.
 
-Antaŭe, vi vidas postenon de infero —
+Antaŭe, vi vidas antaŭpostenon de infero,
 fortika regiono. Se vi povus iri preter ĝi,
 vi povus penetri en la hantitan koron de
 la kosmo-bazo kaj trovi la kontrolŝaltilon,
@@ -1637,18 +1637,18 @@ weiteres Eindringen blockieren. Die Basis
 liegt im Herzen von deiner Heimatstadt, 
 nicht weit vom Hafen.“
 Langsam und schmerzerfüllt kommst
-du hoch und gehst zurück in den Kampf.",,"Vi gajnis! Via venko ebligis al la homaron
-evakui la Teron kaj eskapi el la teruro.
+du hoch und gehst zurück in den Kampf.",,"Vi gajnis! Via venko ebligis al la homaro
+evakui la Teron kaj eskapi el la teruraĵo.
 Nun vi estas la sola homo sur la supraĵo
 de la Tero. Kanibalaj mutaciuloj, 
-karnovoraj eksterteranoj, kaj malvirtaj
-fantomoj estas viaj nur najbaroj. Vi
-sidas kaj atendas morton, kontenta ĉar
-vi savis vian specion.
+karnovoraj eksterteranoj, kaj malbonaj
+fantomoj estas viaj nur najbaroj.
+Vi sidas kaj atendas morton, kontenta,
+ke vi savis vian specion.
 
-Sed tiam, la kontrolcentro transsendas
-mesaĝon el kosmo: ""Sensiloj trovis la
-fonton de la ekstertera invado.
+Sed tiam, la Tero-Kontrolcentro
+transsendas mesaĝon el kosmo: ""Sensiloj
+trovis la fonton de la ekstertera invado.
 Se vi irus tien, vi eble povas bari ilian
 eniron. La ekstertera bazo estas en la
 koro de via propra hejmurbo, ne fora
@@ -1926,7 +1926,7 @@ dafür durch die Hölle gehen musst!",,"Vi estas ĉe la malvirta koro de la urbo
 ĉirkaŭita de la kadavroj de viaj malamikoj.
 Vi vidas nenian manieron por detrui la
 enirejon de la estaĵoj ĉe tiu ĉi flanko, do vi
-grincigas la dentojn kaj plonĝas tra ĝi.
+kunpremas la dentojn kaj plonĝas tra ĝi.
 
 Devas esti maniero por fermi ĝin
 ĉe la alia flanko. Kial vi zorgu, ĉu vi
@@ -2094,20 +2094,20 @@ Du wischst den Schweiß von deiner Stirn und
 begibst dich auf den langen Weg nach Hause.
 Der Wiederaufbau der Erde dürfte
 erfreulicher sein, als ihre Zerstörung.",,"La horora vizaĝo de la plej granda
-demono, kiun vi iam ajn vidis,
-pecetiĝas antaŭ vi, post vi pumpis la
-raketojn en lian nudan cerbon. La
-monstro ŝrumpas kaj mortas, ĝiaj
-draŝantaj membroj ruinigas nenombreblajn
+demono, kiun vi iam ajn vidis, pecetiĝas
+antaŭ vi, post vi pumpis la raketojn
+en lian nudan cerbon. La monstro
+ŝrumpas kaj mortas, ĝiaj draŝantaj
+membroj ruinigante nenombreblajn
 kilometrojn de la supraĵo de Infero.
 
 Vi sukcesis. La invado estas finita.
 La Tero estas savita. Infero estas ruino.
-Vi pripensas, kien malbonuloj nun iros,
+Vi scivolas, kien malbonuloj nun iros,
 kiam ili mortos. Forviŝante la ŝviton de 
-via frunto, vi komencas la longan vojaĝon
+la frunto, vi komencas la longan vojaĝon
 hejmen. Rekonstrui la Teron devus esti 
-multe pli amuze ol kiel estis ruinigi ĝin.","El horrendo rostro del demonio más grande
+multe pli amuze ol ruinigi ĝin.","El horrendo rostro del demonio más grande
 que hayas visto se derrumba ante ti,
 después de bombear tus cohetes en su
 cerebro expuesto. El monstruo se
@@ -2319,7 +2319,7 @@ Du fragst dich, wer wohl in diesem
 Bereich der Hölle zuhause ist.
 ",,"Gratulon! Vi trovis la sekretan nivelon!
 Ŝajnas, ke ĝi estis konstruita de homoj
-anstataŭ demonoj. Vi pripensas, kiuj estos
+anstataŭ demonoj. Vi scivolas, kiuj estos
 la loĝantoj de ĉi tiu angulo de Infero.","¡Enhorabuena, has encontrado el nivel
 secreto! Parece que fue creado por
 seres humanos, en lugar de demonios.
@@ -2384,7 +2384,7 @@ Super-Geheimlevel gefunden.
 Sieh zu, dass du hier schnellstens
 rauskommst!
 ",,"Gratulon! Vi trovis la super-sekretan
-nivelon! Vi devus kuri tra ĉi tiu!","¡Enorabuena, has encontrado el nivel
+nivelon! Prefere kuru tra ĉi tiu!","¡Enorabuena, has encontrado el nivel
 súper secreto! ¡Será mejor que eches
 lumbre a través de este!","¡Felicitaciones, has encontrado el nivel
 súper secreto! ¡Será mejor que eches
@@ -2449,12 +2449,12 @@ weiter, kämpfe weiter, töte weiter.
 Und ja, lebe auch weiter.",,"Vi ĝojaĉas super la vaporanta kadavro de La
 Gardinto. Per ĝia morto, vi eltiris La Akcelilon
 el la fetoraj krifoj de Infero. Vi ripozas kaj 
-ĉirkaŭrigardas la ĉambron. Diable! Devis esti
+ĉirkaŭrigardas la ĉambron. Damne! Devis esti
 almenaŭ unu funkcia prototipo, sed vi ne
 vidas ĝin. La demonoj verŝajne prenis ĝin.
 
 Vi bezonas trovi la prototipon, alie viaj
-baraktoj estos tute neefikaj. daŭru iri, daŭru
+baraktoj estos vanitaj. Daŭru iri, daŭru
 batali, daŭru mortigi.
 Ho jes, ankaŭ daŭru vivi.","Te regocijas sobre el cadáver humeante del
 Guardián. Con su muerte, has arrebatado
@@ -2643,7 +2643,7 @@ den Beschleuniger-Prototypen erreicht,
 der kurz darauf effizient und dauerhaft
 deaktiviert ist.
 
-Darin bist du gut.",,"Eĉ la mortiga labirinto de Ĉeffiuloj ne
+Darin bist du gut.",,"Eĉ la mortiga labirinto de Ĉef-Fiuloj ne
 povis haltigi vin, kaj vi iris al la prototipa
 Akcelilo, kiu estas rapide kaj neripareble
 malaktivigita.
@@ -2753,13 +2753,13 @@ Ausrüstung und machst dich bereit, dem
 Bastard einen höllischen Empfang zu
 bereiten.
 ",,"Vi bategis kaj disbatis vian vojon en la koron
-de la diablujo. Trovado-detruado-misio
-tempas, celante La Cerberon, kies aĉaj idoj
+de la diablujo. Tempas por Trovado-Detruado-
+Mision, celante La Cerberon, kies aĉaj idoj
 dispeliĝas al La Tero. Jes, li estas mava, sed
 vi konas iun pli mavan!
 
 Grimacante malice, vi kontrolas vian ilaron,
-kaj pretas doni al la bastardo iom da Infero
+kaj pretiĝas doni al la bastardo iom da Infero
 de via farado mem!","Has golpeado y vapuleado tú camino al
 corazón de la colmena diabólica. Es 
 hora de una misión de búsqueda y
@@ -2920,12 +2920,12 @@ eine letzte Reinigung vornehmen kannst...",,"La mava vizaĝo de La Cerbero estas
 ŝprucetiga ĉirkaŭe. Dum ĝia disŝirita
 kadavro disfalas, inversa pasejo formiĝas
 kaj sorbas la nemultajn ceterajn demonojn.
-Vi finis. La Infero rekomencis pisti mavajn
-mortajn uloj, anstataŭ bonajn vivajn ulojn.
+Vi finis. Infero rekomencis pisti mavajn
+mortintojn, anstataŭ bonajn vivulojn.
 Memoru peti viajn genepojn meti
 raketlanĉilon en vian ĉerkon. Sed vi iros al
-La Infero, kiam vi mortos, vi bezonos ĝin
-por kelka purigado...","El malvado rostro del guardián del
+Infero, kiam vi mortos, vi bezonos ĝin
+por kelka fina purigado...","El malvado rostro del guardián del
 portal está repartido por todo el
 lugar. Conforme su andrajoso 
 cadáver se desmorona, se forma un
@@ -3145,7 +3145,7 @@ Ven se nikdo živ nedostane.","Du hast dich sicher gefragt, was denn nun
 der schwerste Level ist, nicht wahr?
 Jetzt weißt du es - niemand kommt hier
 lebend raus!
-",,"Mi vetis, ke vi scivolis, kio ja estas la plej
+",,"Mi vetis, ke vi scivolis, kio JA estas la plej
 malfacila nivelo, kiun ni pretigis por vi.
 Nun vi scias. Neniu eskapas vive.","¿Apostamos a que te preguntabas
 cuál SERÍA el nivel más difícil que 
@@ -3228,10 +3228,11 @@ maldungadoj, certe malfacilas aĉeti por
 kompatinda UAC korporacian sanasekuron
 nuntempe...
 
-Antaŭe situas la militkomplekso, nun plena
-de malsanaj abomenoj atendantaj manĝi vin.
-Per iomete da fortuno, la komplekso ankoraŭ
-havas militan artilerion ĉirkaŭkuŝantan.","Has luchado por salir de los infestados
+Antaŭe situas la militkomplekso, nun
+svarmante kun malsanaj abomenoj atendantaj
+mordi vin. Per iomete da fortuno, la komplekso
+ankoraŭ havas kelkan militan artilerion
+ĉirkaŭkuŝantan.","Has luchado por salir de los infestados
 laboratorios experimentales. Parece
 que la UAC una vez más ha vuelto a
 estropearlo todo. Con la alta rotación
@@ -3398,7 +3399,7 @@ Du wirst es ihnen nicht einfach machen.",,"Vi aŭdas la grincadon de amasa maŝi
 antaŭe. Vi certe esperas, ke ili ne fabrikas
 novajn inferidojn, sed vi pretas alezi tutan
 brutaron, se vi bezonas. Ili eble planas
-sangfestenon, sed vi sentas proksimume
+sangfestenon, sed vi sentas vin proksimume
 aĉa, kiel du mil frenezuloj pakitaj en unu
 rabian mortiganton.
 
@@ -3541,12 +3542,12 @@ nachdenkst, desto wütender wirst du.
 Also du deine Waffe bereitmachst, überzieht
 ein böses Grinsen dein Gesicht.
 Zeit um aufzuräumen.
-",,"La malfermo antaŭe aspektas tre diable
-kutima. Ĝi ankaŭ odoras familiare, kiel
-fritita fekon. Vi ne ŝatis tiun placon
+",,"La vidaĵo malfermante antaŭe aspektas tre 
+diable familiara. Ĝi ankaŭ odoras familiare,
+kiel fritita fekon. Vi ne ŝatis tiun placon
 antaŭe, kaj vi diable certe ne planos nun
-ŝati ĝin. Ju pli vi cerbumas, des vi fariĝas
-pli kolera. Levante vian pafilon, malica
+ŝati ĝin. Ju pli vi cerbumas, des pli vi fariĝas
+freneza. Levante vian pafilon, malica
 grimaco gutetas sur vian vizaĝon.
 Tempas por eltiri la rubon.","El paisaje que tienes ante tus ojos te 
 resulta demasiado familiar. Incluso el
@@ -3690,12 +3691,12 @@ gewonnen?
 
 In der Ferne rumpelt etwas.
 Ein blaues Licht beginnt im Inneren 
-des Schädels zu leuchten.",,"Ĉio subite silentas de unu horizonto al
-la alia. La agoniantaj eĥoj de La Infero
+des Schädels zu leuchten.",,"Subite, ĉio silentas, de unu horizonto al
+la alia. La agonianta eĥo de Infero
 malaperas, la inkub-ĉielo fariĝas blua,
 la amaso da monstro-kadavroj komencas
-vaporiĝi kun la mava odoro, kiu plenigis
-la aeron. Ho, eble vi sukcesis.
+vaporiĝi kune kun la mava odoro, kiu
+plenigis la aeron. Ho, eble vi sukcesis.
 Ĉu vi vere gajnis?
 
 Io vibrosonas malproksime. Blua lumo
@@ -3846,7 +3847,7 @@ Oder vielleicht ist es besser, die
 schlafenden Götter ruhen zu lassen ..",,"Nun kio? Aspektas tute malsame, iom
 kiel la loĝejo de Reĝo Tut. Nu, kio ajn
 estas ĉi tie ne povas esti pli malbona
-ol kutime, ĉu ne? Aŭ eble bonas
+ol kutime, ĉu ne? Aŭ eble plibonas
 lasi dormantajn diojn kuŝi...","¿Y ahora qué? Esto se ve totalmente
 diferente. Se parece a la choza del
 rey Tut. Bueno, sea lo que sea no
@@ -3942,12 +3943,12 @@ Höllenkreaturen.
 Als du den Transporter verlässt, hörst du
 das Stampfen eines Cyberdämonen.",,"Tempas ferio. Vi kreviĝis la internaĵoj
 de Infero, kaj ve, vi estas preta paŭzi.
-Vi murmuras al vi, ke iu alia eble pugbatos
-de Infero venontfoje. Antaŭen kuŝas kvieta
-urbeto kun trankvila flua akvo, bonstrangaj
-arkitekturo, kaj supozeble, nenioj inferidoj.
+Vi murmuras al vi mem, ke iu alia eble
+pugbatos Inferon venontfoje. Antaŭe kuŝas
+kvieta urbeto, kun trankvila flua akvo, kuriozaj
+konstruaĵoj, kaj supozeble, neniuj inferidoj.
 
-Dum vi eliras la veturilo, vi aŭdas la 
+Dum vi eliras el la veturilo, vi aŭdas la 
 laŭtan paŝon de fera ŝuo de ciberdemono.","Hora de tomarse unas vacaciones.
 Arrasaste con las entrañas del
 Infierno y por Dios que estás 
@@ -5437,7 +5438,7 @@ l'espoir de trouver une sortie, quelque
 part, dans la plus sombre partie du
 royaume de D'Sparil.
 Sa garde personnelle attend votre
-arrivée ...","Azt hitter D'Sparil halála után
+arrivée ...","Azt hitte D'Sparil halála után
 visszatérhetsz a saját világodba,
 de az utolsó erejével az ős saját
 szintjére száműzött. Te itt beléptél
@@ -8168,7 +8169,7 @@ One sixth of the puzzle has been solved,TXT_ACS_MAP10_6_ONESI,,,,Jedna šestina 
 on the Shadow Wood,TXT_ACS_MAP10_7_ONTHE,,,,v Temném hvozdu.,Im Schattenwald,,en la Ombro-Arbareto.,En el Bosque de Sombras,,Varjosalossa,dans le Bois des Ombres.,A Sötét Erdőben,Nel Bosco d'Ombra,陰影樹 に少し影響を与えた,... 그림자 숲에서,op het Schaduwbos,w Lesie Cieni,na Floresta das Sombras,,în Pădurea Umbrelor,в Лесу теней,у Шуми сенки
 \ ettins left,TXT_ACS_MAP11_0_ETTIN,"rus
 Нужно придумать что-то получше.",,,\ etinů zbývá.,\ Ettins übrig,,\ gigantaĉoj ceteraj,\ Ettins restantes,,\ ettiniä jäljellä,\ ettins restants,\ az ettonek feladják,\ Ettins rimasti,\ 匹のエティンが残っている,\ 마리 에틴이 남았음,\ overgebleven Ettins,\ pozostałych ettinów,\ ettins restantes,,\ etini rămași,\ оставшихся эттинов,Остало је \ еттина
-"You waited too long, now you die!",TXT_ACS_MAP11_1_YOUWA,,,,"Čekal@[ao_cs] jsi moc dlouho, teď zemřeš!","Du hast zu lange gewartet, jetzt stirbst du!",,"Vi atendis tro longe, nun vi mortu!","Esperaste demasiado, ¡ahora morirás!",,"Odotit liian pitkään, nyt kuolet!","Vous avez attendu trop longtemps, maintenant, mourrez!","Sokáig vártál, most meghalsz!","Hai atteso troppo a lungo, ora muori!",長居をしたな、命を奪うには十分な程に!,시간을 너무 오래 끌었다. 이제 죽어라!,"Je hebt te lang gewacht, nu ga je dood!",Czekałeś zbyt długo. Teraz giń!,Você esperou demais. Agora morrerá!,,"Ți-a luat prea mult, acum mori!",Слишком долго! Готовься к смерти!,Предуго! Припреми се за смрт!
+"You waited too long, now you die!",TXT_ACS_MAP11_1_YOUWA,,,,"Čekal@[ao_cs] jsi moc dlouho, teď zemřeš!","Du hast zu lange gewartet, jetzt stirbst du!",,"Vi atendis tro longe, nun vi mortas!","Esperaste demasiado, ¡ahora morirás!",,"Odotit liian pitkään, nyt kuolet!","Vous avez attendu trop longtemps, maintenant, mourrez!","Sokáig vártál, most meghalsz!","Hai atteso troppo a lungo, ora muori!",長居をしたな、命を奪うには十分な程に!,시간을 너무 오래 끌었다. 이제 죽어라!,"Je hebt te lang gewacht, nu ga je dood!",Czekałeś zbyt długo. Teraz giń!,Você esperou demais. Agora morrerá!,,"Ți-a luat prea mult, acum mori!",Слишком долго! Готовься к смерти!,Предуго! Припреми се за смрт!
 A door opened on the Forsaken Outpost,TXT_ACS_MAP11_7_ADOOR,,,,Dveře se otevřely na Opuštěném stanovišti.,Eine Tür im verlassenen Vorposten hat sich geöffnet,,Pordo malfermiĝis ĉe la Forlasita Posteno.,Una puerta se abrió en el Puesto de Avanzada Abandonado,,Ovi avautui hylätyssä etuvartiossa,Une porte s'est ouverte dans la base abandonnée.,Az Elhagyot Őrállás ajtaja kinyilt.,Una porta è stata aperta nell'Avamposto Abbandonato,荒れ果てた前哨地 への扉が開いた,버려진 초소에서 문이 열렸다,Een deur opende een deur op de Verwaarloosde buitenpost,Drzwi przy Opuszczonym Posterunku otworzyły się,Uma porta se abriu no Posto Abandonado,,O ușă s-a deschis pe Avanpostul Părăsit,Дверь открылась на покинутой заставе,Врата су се отворила у Напуштеној постаји
 This door won't open yet,TXT_ACS_MAP12_9_THISD,,,,Tyto dveře se ještě neotevřou.,Die Tür öffnet sich noch nicht,,Ĉi tiu pordo ne jam malfermiĝos.,Esta puerta no se abrirá todavía,,Tämä ovi ei aukea vielä,Cette porte ne s'ouvre pas pour l'instant.,Ez az ajtó még nem fog kitárulni.,Questa porta non è aperta ancora,扉はまだ開かない,이 문은 아직 열 수 없다,Deze deur gaat nog niet open.,Te drzwi jeszcze się nie otwierają,Esta porta não se abrirá ainda,,Ușa n-o să se deschidă încă,Сейчас эта дверь закрыта,Ова врата су тренутно закључана
 "My servants can smell your blood, human",TXT_ACS_MAP13_11_MYSER,,,,"Mí služebníci cítí tvou krev, člověče.","Meine Diener riechen dein Blut, Menschling",,"Miajn servantoj povas flari vian sangon, homo.","Mis sirvientes pueden oler tu sangre, humano",,"Palvelijani voivat haistaa veresi, ihminen","Mes servants peuvent sentir votre sang, humain.","Szolgáim érzik a véred szagát, ember","I miei servi possono annusare il tuo sangue, umano",我が下僕が貴様の血を嗅ぎ付けた様だぞ、小童,"이 몸의 하인들은 네 피 냄새를 맏고 따라온다, 인간.","Mijn bedienden kunnen jouw bloed ruiken, mens",Moje sługi czują twą krew śmiertelniku,"Meus servos sentem o cheiro do seu sangue, human@[ao_ptb]",,"Servitorii mei îți pot adulmeca sângele, muritorule","Мои прислужники чуют твою кровь, человек","Моје слуге миришу твоју крв, човече"
@@ -8192,7 +8193,7 @@ The door is barred from the inside,TXT_ACS_MAP35_3_THEDO,,,,Dveře jsou zatarase
 Are you strong enough,TXT_ACS_MAP35_12_AREYO,,,,Jsi dost siln@[adj_cs],Bist du stark genug,,Ĉu vi estas sufiĉe forta,Eres lo suficientemente fuerte,,Olet riittävän vahva,Etes vous suffisamment fort,Elég erős vagy,Sei forte abbastanza,お前がどれだけ強かろうと,네 놈은 주인들을 대면할 힘이...,Ben je sterk genoeg,Czy jesteś wystarczająco silny,Você é forte o suficiente,,Ești întradevăr suficient de puternic,"Достаточно ли ты силён,",Јеси ли довољно снажан
 To face your own masters?,TXT_ACS_MAP35_14_TOFAC,,,,čelit svým vlastním pánům?,Dich deinen eigenen Meistern zu stellen?,,por stari kontraŭ viaj propraj mastroj?,¿Para enfrentarte a tus maestros?,,kohtaamaan omat mestarisi?,pour faire face à vos maîtres?,Hogy saját mestereiddel nézz szembe?,Per affrontare i tuoi stessi maestri?,お前の師に立ち向かえるのか?,진심으로 있는 것인가?,Om je eigen meesters onder ogen te komen?,By stawić czoła swoim mistrzom?,Para enfrentar os seus próprios mestres?,,Să îți înfrunți proprii stăpâni?,чтобы сразиться со своими наставниками?,да се суочиш са својим господарима?
 ,,Hexen: Deathkings script texts,,,,,,,,,,,,,,,,,,,,,
-You dare battle in the ready room?,TXT_ACS_MAP33_6_YOUDA,,,,Ty si dovoluješ rvát se v přípravné místnosti?,Du wagst es im Bereitschaftsraum zu kämpfen?,,Vi aŭdacas batali en la pretĉambro?,¿Te atreves a luchar en la sala de preparación?,,Kuinka kehtaat taistella valmistautumishuoneessa?,Vous osez faire escarmouche dans la salle de préparation?,,Hai il coraggio di combattere nella sala di aspetto?,挑戦する準備は整ったか?,감히 준비의 방에서 전투를 벌이다니...,Durf jij te vechten in de readyroom?,Śmiesz walczyć w pokoju przygotowań?,Como ousa batalhar na sala de espera?,,Îndrăznești să lupți în camera de așteptare?,Ты посмел сражаться в комнате ожидания?,Усуђујеш се борити у припремној соби?
+You dare battle in the ready room?,TXT_ACS_MAP33_6_YOUDA,,,,Ty si dovoluješ rvát se v přípravné místnosti?,Du wagst es im Bereitschaftsraum zu kämpfen?,,Vi aŭdacas batali en la pretĉambro?,¿Te atreves a luchar en la sala de preparación?,,Kuinka kehtaat taistella valmistautumishuoneessa?,Vous osez faire escarmouche dans la salle de préparation?,Hogy merészelsz harcolni a váróteremben?,Hai il coraggio di combattere nella sala di aspetto?,挑戦する準備は整ったか?,감히 준비의 방에서 전투를 벌이다니...,Durf jij te vechten in de readyroom?,Śmiesz walczyć w pokoju przygotowań?,Como ousa batalhar na sala de espera?,,Îndrăznești să lupți în camera de așteptare?,Ты посмел сражаться в комнате ожидания?,Усуђујеш се борити у припремној соби?
 "For that, you shall die!",TXT_ACS_MAP33_7_FORTH,,,,Pro to zemřeš!,Dafür sollst du sterben!,,"Pro tio, vi mortos!","Por eso, ¡Deberás morir!",,Siitä hyvästä kuolet!,"Pour cette insulte, vous trépasserez!",Ezért meghalsz!,"Per quello, morirai!",ならば、死へ進め!,죽어서 값을 치러라!,Daarvoor zal je sterven!,Umrzesz za to!,"Por causa disso, deverá morrer!",,"Pentru asta, vei muri!",Так умри же!,За то ћеш умрети!
 The waterfall is open,TXT_ACS_MAP41_6_THEWA,,,,Vodopád je otevřen.,Der Wasserfall ist geöffnet,,La akvofalo estas malferma.,La cascada se ha abierto,,Vesiputous on auki,La cascade s'est ouverte.,A vizesés nyitva,La cascata è aperta,滝 は開いた,폭포가 멈췄다,De waterval is open,Wodospad jest otwarty,A cascata está aberta,,Cascada e deschisă,Поток воды остановлен,Водопад је отворен
 The waterfall is blocked,TXT_ACS_MAP41_7_THEWA,,,,Vodopád je zatarasen.,Der Wasserfall ist blockiert,,La akvofalo estas barita.,La cascada está bloqueada,,Vesiputous on tukittu,La cascade est bloquée.,A vizesés zárva,La cascata è bloccata,滝 は塞がっている,폭포에 의해 막혔다,De waterval is geblokkeerd,Wodospad jest zablokowany,A cascata está bloqueada,,Cascada e închisă,Поток воды преграждает путь,Водопад је блокиран
@@ -8221,21 +8222,21 @@ The door won't open from this side,TXT_ACS_MAP48_2_THEDO,,,,Dveře se z této st
 The door is barred from the outside,TXT_ACS_MAP50_1_THEDO,,,,Dveře jsou zatarasené zvenku.,Die Tür ist von außen verriegelt,,La pordo estas barita ekstere.,La puerta está atrancada por fuera,,Ovi on teljetty ulkopuolelta,Cette porte est bloquée de l'extérieur.,Az ajtó kívülről van eltorlaszolva.,La porta è sbarrata da fuori,この扉は外側から塞がれている,이 문은 바깥에 빗장이 걸려있다,De deur is van buitenaf uitgesloten,Drzwi są zabarykadowane od zewnątrz,A porta está barrada por fora,,Ușa e încuiată pe dinafară,Дверь заблокирована снаружи,Врата су блокирана споља
 Sacrilege !,TXT_ACS_MAP51_5_SACRI,,,,Svatokrádež!,Gotteslästerung!,,Sakrilegio !,¡Sacrilegio!,,Pyhäinhäväistys !,Sacrilège!,,Sacrilegio !,罰当たりが!,신성모독이다!,Heiligschennis!,Świętokradztwo !,Sacrilégio!,,Sacrilegiu!,Святотатство !,Светогрђе !
 You have defiled Eric's tomb !!,TXT_ACS_MAP51_6_YOUHA,,,,Znesvětil@[ao_cs] jsi Erikovu hrobku!!,Du hast Erics Gruft entehrt!!,,Vi malpurigis la tombon de Eric !!,¡Has profanado la tumba de Erick!,,Olet turmellut Ericin haudan !!,Vous avez vandalisé la tombe d'Eric!,Megszentségtelenítetted Eric sírját !!,Adesso hai profanato la tomba di eric !!,貴様はエリックの墓を荒らしたな!!,네 놈은 성 에릭의 무덤을 더렵혔다!!,Je hebt Eric's graf bevlekt!!,Zhańbiłeś grób Erica !!,Você violou a tumba de Eric!,,Ai profanat mormântul lui Eric!!,Ты осквернил могилу Эрика !!,Оскрнавио си Ерикову гробницу !!
-And now you die !!!,TXT_ACS_MAP51_7_ANDNO,,,,Teď zemřeš!!!,Und nun stirbst du!,,Kaj nun vi mortu !!!,¡Y ahora muere!,¡Y ahora morirás!,Ja nyt sinä kuolet !!!,"Pour cela, vous allez mourir!",És most meghalsz !!!,E ora muori !!!,万死に値する!!!,그 댓가로 목숨을 바쳐라!!!,En nu ga je dood!!!!!,I teraz zginiesz !!!,E agora você morrerá!!!,,"Iar acum, mori!!",И умрёшь за это страшной смертью !!!,И сада умиреш !!!
+And now you die !!!,TXT_ACS_MAP51_7_ANDNO,,,,Teď zemřeš!!!,Und nun stirbst du!,,Kaj nun vi mortas !!!,¡Y ahora muere!,¡Y ahora morirás!,Ja nyt sinä kuolet !!!,"Pour cela, vous allez mourir!",És most meghalsz !!!,E ora muori !!!,万死に値する!!!,그 댓가로 목숨을 바쳐라!!!,En nu ga je dood!!!!!,I teraz zginiesz !!!,E agora você morrerá!!!,,"Iar acum, mori!!",И умрёшь за это страшной смертью !!!,И сада умиреш !!!
 One third of the puzzle is solved,TXT_ACS_MAP51_8_ONETH,,,,Jedna třetina rébusu je vyřešena.,Ein Drittel des Rätsels ist gelöst,,Unu triono de la puzlo estas solvita.,Un tercio del acertijo se ha resuelto,,Kolmannes pulmasta on ratkaistu,Un tiers du puzzle à été résolu,A rejtvény egyharmada megoldva,Un terzo del puzzle è stato risolto,パズルの 三分の一 が解かれた,수수께끼의 3분의 1이 풀렸다,Een derde van de puzzel is opgelost.,Jedna trzecia zagadki rozwiązana,Um terço do quebra-cabeça foi resolvido,,O treime din puzzle e rezolvată,Одна треть головоломки разгадана,Трећина загонетке је решена
 Two thirds of the puzzle is solved,TXT_ACS_MAP51_9_TWOTH,,,,Dvě třetiny rébusu jsou vyřešeny.,Zwei Drittel des Rätsels sind gelöst,,Du trionoj de la puzlo estas solvita.,Dos tercios del acertijo se han resuelto,,Kaksi kolmannesta pulmasta on ratkaistu,deux tiers du puzzle ont été résolus,A rejtvény kétharmada megoldva,Due terzi del puzzle è stato risolto,パズルの 三分の二 が解かれた,수수께끼의 3분의 2가 풀렸다,Tweederde van de puzzel is opgelost,Dwie trzecie zagadki rozwiązane,Dois terços do quebra-cabeça foi resolvido,,Două treimi din puzzle sunt rezolvate,Две трети головоломки разгаданы,Две трећине загонетке су решене
 The crypt is open,TXT_ACS_MAP51_10_THECR,,,,Krypta je otevřena.,Die Gruft ist offen,,La kripto estas malfermita.,La cripta ahora está abierta,,Krypta on auki,La crypte est ouverte,A kripta nyitva,La cripta è aperta,地下聖堂 が開いた,지하 묘실의 입구가 열렸다.,De crypte is open,Krypta jest otwarta,A cripta está aberta,,Cripta e deschisă,Склеп открыт,Гробница је отворена
-Beware the spider's tomb,TXT_ACS_MAP51_11_BEWAR,,,,Vyvaruj se pavoučí hrobky.,Hüte dich vor dem Grab der Spinne,,Singardu en la tombo de la araneo.,Cuidado con la tumba de la araña,,Varo hämähäkin hautaa,Attention à la tombe de l'araignée.,,Attento alla tomba del ragno,スパイダーの墓,거미의 무덤을 조심하라,Pas op voor het graf van de spin,Strzeż się grobowca pająków,Cuidado com a tumba da aranha,,Păzește-te de mormântul păianjenului,Опасайся гробницы паука,Чувај се паукове гробнице
+Beware the spider's tomb,TXT_ACS_MAP51_11_BEWAR,,,,Vyvaruj se pavoučí hrobky.,Hüte dich vor dem Grab der Spinne,,Singardu en la tombo de la araneo.,Cuidado con la tumba de la araña,,Varo hämähäkin hautaa,Attention à la tombe de l'araignée.,Emint van a pók sírja,Attento alla tomba del ragno,スパイダーの墓,거미의 무덤을 조심하라,Pas op voor het graf van de spin,Strzeż się grobowca pająków,Cuidado com a tumba da aranha,,Păzește-te de mormântul păianjenului,Опасайся гробницы паука,Чувај се паукове гробнице
 You hear a platform rise outside,TXT_ACS_MAP51_13_YOUHE,,,,Slyšíš zvenku zvedající se platformu.,"Du hörst, wie sich draußen eine Plattform erhebt",,Vi aŭdas plataĵon leviĝantan ekstere.,Escuchas una plataforma erguirse afuera,,Kuulet lavan kohoavan ulkopuolella,Vous entendez une platforme s'élever dehors,Egy emelvényt hallasz emelkedni odakinn,Senti una piattaforma alzarsi a distanza,外で昇降機の音が聞こえる,밖에서 보행판이 올라오는 소리가 들려왔다,Je hoort een platform buiten opstijgen,Słyszysz odgłos unoszącej się na zewnątrz platformy,Você ouve uma plataforma subir lá fora,,Auzi o platformă ridicându-se în afară,"Снаружи слышен звук
 поднимающегося камня",Чујете како се платформа диже споља
 Do you feel lucky?,TXT_ACS_MAP51_14_DOYOU,,,,"Zdá se ti, že máš štěstí?",Denkst du das heute dein Glückstag ist?,,Ĉu vi sentas vin bonŝanca?,¿Te sientes afortunado?,,Tunnetko olosi onnekkaaksi?,Vous pensez être chanceux?,Szerencsésnek érzed magad?,Ti senti fortunato?,運が良かったと思うか?,그대는 운수가 좋은가?,Heb je geluk?,Masz szczęście?,Está se sentindo com sorte?,,Te simți norocos?,Чувствуешь ли ты себя везучим?,Да ли се осећаш срећним?
 You guessed wrong!,TXT_ACS_MAP51_15_YOUGU,,,,To máš smůlu!,Du hast falsch geraten!,,Vi divenis malĝuste!,¡Adivinaste incorrectamente!,,Arvasi väärin!,Et bien non!,Hát rosszul érzed!,Non hai indovinato!,それは違うな!,잘못된 판단이다!,Je hebt het verkeerd geraden!,Źle zgadłeś!,Adivinhou errado!,,N-ai ghicit!,Неправильное предположение!,Погодио си погрешно!
 Good guess,TXT_ACS_MAP51_16_GOODG,,,,Dobré zdání.,Gut geraten,,Bona diveno.,¡Buena elección!,,Hyvä arvaus,Vous avez deviné!,Jól sejtetted,Hai indovinato,良い推測だ,옳은 판단이다,Goede gok,Dobrze zgadłeś,Certa resposta,,Ai ghicit,Правильное предположение,Добар погодак
 Can you do all the scripting for my level?,TXT_ACS_MAP51_17_CANYO,,,,Můžeš všechno skriptování udělat za mě?,Kannst du die Skripte für all meine Level schreiben?,,Ĉu vi povas fari ĉiom da la skriptoj por mia nivelo?,¿Podrías hacer todo el script para mi nivel?,,Voitko tehdä kaikki tasoni skriptaukset?,Vous pouvez faire tout le script de mon niveau?,Meg tudnád csinálni az egészt scriptelést a pályámhoz?,Puoi fare tutto lo scripting per il mio livello?,この階層を全て書き換える事は可能かな?,어쩔 수 없이 살아간다. 태어났기 때문에...,Kun je al het scripten doen voor mijn niveau?,Czy możesz zrobić cały skrypt do mojego poziomu?,Poderia fazer todo o scripting da minha fase?,,Te poți ocupa de scripting pentru nivelul meu?,Можешь написать за меня все скрипты?,Можеш ли да напишеш све скриптове за мој ниво?
-Don't touch my gloppy,TXT_ACS_MAP51_18_DONTT,,,,Nesahej mi na slimáka!,Berühr mein Ding nicht!,,Ne tuŝas mian gloppy-on.,No toques mi gloppy,,Älä koske mönjääni,Ne touche pas mon gloppy,,Non toccare la mia caramella,汚らしい手で触れるな,"에틴을 쳐죽인 것까지 신경 쓰다간, 걸을 수도 없을걸.",Raak mijn gloppy niet aan,Nie ruszaj moich słodyczy,Não toca no meu docinho!,,Nu-mi atinge bomboana,Не трогай мою вкусняшку,Не дирај мој слаткиш
+Don't touch my gloppy,TXT_ACS_MAP51_18_DONTT,,,,Nesahej mi na slimáka!,Berühr mein Ding nicht!,,Ne tuŝas mian gloppy-on.,No toques mi gloppy,,Älä koske mönjääni,Ne touche pas mon gloppy,Ne nyúlj a bizémhez,Non toccare la mia caramella,汚らしい手で触れるな,"에틴을 쳐죽인 것까지 신경 쓰다간, 걸을 수도 없을걸.",Raak mijn gloppy niet aan,Nie ruszaj moich słodyczy,Não toca no meu docinho!,,Nu-mi atinge bomboana,Не трогай мою вкусняшку,Не дирај мој слаткиш
 Vorpal ?!?!?!,TXT_ACS_MAP51_19_VORPA,,,,Šaršoun?!?!?!,Tödlich ?!?!?!,,Vorpal ?!?!?!,¡¿¡¿¡¿ Vorpal ?!?!?!,,Tappava ?!?!?!,,,,ボーパル ?!?!?!,드래곤 슬레이어 인가?!,,Śmiercionośny ?!?!?!,,,Vorpal?!?!?!,Остренько ?!?!?!,Вајтолни мач ?!?!?!
-"Gimme some sugar, baby",TXT_ACS_MAP51_20_GIMME,,,,"Dej mi trochu cukru, zlato.","Gib mir etwas Zucker, Baby",,"Donu al mi iom da sukeron, knanjo.","Dame un poco de azúcar, baby","Dame algo de azúcar, bebe","Anna vähän sokeria, beibi",,,,砂糖が欲しいかい、ベイビー,등짝을 보자!...,"Geef me wat suiker, schatje.",Daj mi torchę cukru skarbie,"Me dá um pouco de açúcar, baby",,"Dă-mi niște zahăr, dulceață","Подай-ка мне сахар, детка","Дај ми мало шећера, душо"
-Duh-uhhh...,TXT_ACS_MAP51_21_DUHUH,,,,A jéje.,,,Da-aaaa...,,,Daa-aaa....,,,,えぇーとぉー...,낙원이란 있을 수 없는거야.,,Coooooo...,Dãããã-ããã...,,,Ага-а-а-а...,Дух-уххх...
+"Gimme some sugar, baby",TXT_ACS_MAP51_20_GIMME,,,,"Dej mi trochu cukru, zlato.","Gib mir etwas Zucker, Baby",,"Donu al mi iom da sukeron, knanjo.","Dame un poco de azúcar, baby","Dame algo de azúcar, bebe","Anna vähän sokeria, beibi",,"Tégy a magadévá, édes",,砂糖が欲しいかい、ベイビー,등짝을 보자!...,"Geef me wat suiker, schatje.",Daj mi torchę cukru skarbie,"Me dá um pouco de açúcar, baby",,"Dă-mi niște zahăr, dulceață","Подай-ка мне сахар, детка","Дај ми мало шећера, душо"
+Duh-uhhh...,TXT_ACS_MAP51_21_DUHUH,,,,A jéje.,,,Da-aaaa...,,,Daa-aaa....,,Még jó...,,えぇーとぉー...,낙원이란 있을 수 없는거야.,,Coooooo...,Dãããã-ããã...,,,Ага-а-а-а...,Дух-уххх...
 Film in an hour?,TXT_ACS_MAP51_22_FILMI,,,,Film za hodinu?,Film in einer Stunde?,,Kino post horo?,¿Película en una hora?,¿Una película en una hora?,Filmi tunnissa?,Un film dans une heure?,,Un film in un'ora?,数時間のフィルム?,신은 운명을 주셨죠. 만남이라는 운명을.,Film in een uur?,Za godzinę film?,Quer ver um filme daqui a pouco?,,Film într-o oră?,Фильм на час?,Снимамо за сат времена?
 I don't even get my own tombstone - cf,TXT_ACS_MAP51_23_IDONT,,,,Ani nemám svůj vlastní náhrobek. -CF,Ich bekomme noch nicht einmal meinen eigenen Grabstein - cf,,Mi ne eĉ ekhavis mian propran tombŝtonon. - cf,Ni siquiera tengo mi propia lápida - cf,,En saa edes omaa hautakiveäni - cf,J'ai même pas le droit à ma propre tombe - cf,,Non ho potuto avere la mia pietra tombale - cf,私は自分の墓標すら得られない - cf,내 묘비를 세우지도 않았네 -cf,Ik krijg niet eens mijn eigen grafsteen – cf,Nawet nie dostałem swojego nagrobka - cf,Eu nem ganhei a minha própria lápide - cf,,Nici măcar nu primesc propria piatră de mormânt - cf,У меня даже нет своего надгробия (к.ф.),Ја чак и не добијам свој надгробни споменик - cf
 Let no blood be spilt,TXT_ACS_MAP51_24_LETNO,,,,Nechť není prolita žádná krev.,Lass kein Blut vergossen sein,,Lasu neniom da sango elflui.,Que no se derrame sangre,,Älköön yhtään verta vuodatettako,Qu'aucune goutte de sang ne soit tirée,,Si cerchi di non spargere sangue,血を零さないように,피 한 방울도 흘리지 말라,Laat geen bloed worden vergoten,Nie pozwól by krew została przelana,Que sangue nenhum seja derramado,,Fie ca sângele să nu fie vărsat,Да не прольётся кровь,Нека се не пролије крв

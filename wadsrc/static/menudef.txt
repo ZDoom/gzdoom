@@ -737,6 +737,10 @@ OptionMenu "MouseOptions" protected
 	Option "$MOUSEMNU_ENABLEMOUSE",		"use_mouse", "YesNo"
 	Option "$MOUSEMNU_MOUSEINMENU",		"m_use_mouse", "MenuMouse", "use_mouse"
 	Option "$MOUSEMNU_SHOWBACKBUTTON",	"m_show_backbutton", "Corners", "use_mouse"
+	IfOption(Windows)
+	{
+		Option "$MOUSEMNU_SWAPBUTTONS", "m_swapbuttons", "YesNo"
+	}
 	Option "$MOUSEMNU_CURSOR",			"vid_cursor", "Cursors"
 	StaticText 	""
 	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25

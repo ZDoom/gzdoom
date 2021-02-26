@@ -687,7 +687,7 @@ namespace swrenderer
 		}
 	}
 
-	void ProjectedWallLight::SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit)
+	void ProjectedWallLight::SetColormap(const sector_t *frontsector, seg_t *lineseg, int tier, lightlist_t *lit)
 	{
 		if (!lit)
 		{
@@ -695,7 +695,7 @@ namespace swrenderer
 			foggy = frontsector->Level->fadeto || frontsector->Colormap.FadeColor || (frontsector->Level->flags & LEVEL_HASFADETABLE);
 
 			if (!(lineseg->sidedef->Flags & WALLF_POLYOBJ))
-				lightlevel = lineseg->sidedef->GetLightLevel(foggy, frontsector->lightlevel);
+				lightlevel = lineseg->sidedef->GetLightLevel(foggy, frontsector->lightlevel, tier);
 			else
 				lightlevel = frontsector->GetLightLevel();
 		}
@@ -703,7 +703,7 @@ namespace swrenderer
 		{
 			basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
 			foggy = frontsector->Level->fadeto || basecolormap->Fade || (frontsector->Level->flags & LEVEL_HASFADETABLE);
-			lightlevel = lineseg->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+			lightlevel = lineseg->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, tier, lit->lightsource != nullptr);
 		}
 	}
 }

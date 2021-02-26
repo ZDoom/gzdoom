@@ -1151,15 +1151,20 @@ class DBaseDecal;
 
 enum
 {
-	WALLF_ABSLIGHTING	 = 1,	// Light is absolute instead of relative
-	WALLF_NOAUTODECALS	 = 2,	// Do not attach impact decals to this wall
-	WALLF_NOFAKECONTRAST = 4,	// Don't do fake contrast for this wall in side_t::GetLightLevel
-	WALLF_SMOOTHLIGHTING = 8,   // Similar to autocontrast but applies to all angles.
-	WALLF_CLIP_MIDTEX	 = 16,	// Like the line counterpart, but only for this side.
-	WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
-	WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
-	WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
-	WALLF_EXTCOLOR		 = 256,	// enables the extended color options (flagged to allow the renderer to easily skip the relevant code)
+	WALLF_ABSLIGHTING			= 1,	// Light is absolute instead of relative
+	WALLF_NOAUTODECALS			= 2,	// Do not attach impact decals to this wall
+	WALLF_NOFAKECONTRAST		= 4,	// Don't do fake contrast for this wall in side_t::GetLightLevel
+	WALLF_SMOOTHLIGHTING		= 8,	// Similar to autocontrast but applies to all angles.
+	WALLF_CLIP_MIDTEX			= 16,	// Like the line counterpart, but only for this side.
+	WALLF_WRAP_MIDTEX			= 32,	// Like the line counterpart, but only for this side.
+	WALLF_POLYOBJ				= 64,	// This wall belongs to a polyobject.
+	WALLF_LIGHT_FOG				= 128,	// This wall's Light is used even in fog.
+	WALLF_EXTCOLOR				= 256,	// enables the extended color options (flagged to allow the renderer to easily skip the relevant code)
+
+	WALLF_ABSLIGHTING_TIER		= 512,	// Per-tier absolute lighting flags
+	WALLF_ABSLIGHTING_TOP		= WALLF_ABSLIGHTING_TIER << 0, 	// Top tier light is absolute instead of relative
+	WALLF_ABSLIGHTING_MID		= WALLF_ABSLIGHTING_TIER << 1, 	// Mid tier light is absolute instead of relative
+	WALLF_ABSLIGHTING_BOTTOM 	= WALLF_ABSLIGHTING_TIER << 2,	// Bottom tier light is absolute instead of relative
 };
 
 struct side_t
@@ -1216,6 +1221,7 @@ struct side_t
 	uint32_t	LeftSide, RightSide;	// [RH] Group walls into loops
 	uint16_t	TexelLength;
 	int16_t		Light;
+	int16_t		TierLights[3];	// per-tier light levels
 	uint16_t	Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
@@ -1224,12 +1230,18 @@ struct side_t
 	int numsegs;
 	int sidenum;
 
-	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
+	int GetLightLevel (bool foggy, int baselight, int which, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
 	void SetLight(int16_t l)
 	{
 		Light = l;
 	}
+
+	void SetLight(int16_t l, int which)
+	{
+		TierLights[which] = l;
+	}
+
 
 	FLevelLocals *GetLevel()
 	{

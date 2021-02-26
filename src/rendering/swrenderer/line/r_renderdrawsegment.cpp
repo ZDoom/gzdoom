@@ -195,7 +195,7 @@ namespace swrenderer
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, true, additive, alpha);
+		renderWallpart.Render(lightsector, curline, side_t::mid, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, true, additive, alpha);
 	}
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
@@ -216,7 +216,7 @@ namespace swrenderer
 		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC, rw_pic);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
+		renderWallpart.Render(lightsector, curline, side_t::top, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
 
 		RenderDecal::RenderDecals(Thread, ds, curline, lightsector, wallupper.ScreenY, walllower.ScreenY, true);
 	}
@@ -580,7 +580,7 @@ namespace swrenderer
 		const sector_t* lightsector = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		ProjectedWallLight walllight;
-		walllight.SetColormap(lightsector, curline);
+		walllight.SetColormap(lightsector, curline, side_t::mid);
 		walllight.SetLightLeft(Thread, ds->WallC);
 
 		RenderFogBoundary renderfog;

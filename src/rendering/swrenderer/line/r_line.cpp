@@ -873,7 +873,7 @@ namespace swrenderer
 		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mTopTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::top, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -885,7 +885,7 @@ namespace swrenderer
 		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC, mMiddleTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::mid, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -898,6 +898,6 @@ namespace swrenderer
 		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mBottomTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::bottom, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 }

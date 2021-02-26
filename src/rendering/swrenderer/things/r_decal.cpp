@@ -157,6 +157,8 @@ namespace swrenderer
 		if (x1 >= clipper->x2 || x2 <= clipper->x1)
 			return;
 
+		int tier = side_t::mid;
+
 		if (drawsegPass)
 		{
 			uint32_t clipMode = decal->RenderFlags & RF_CLIPMASK;
@@ -203,6 +205,7 @@ namespace swrenderer
 				break;
 
 			case RF_CLIPUPPER:
+				tier = side_t::top;
 				mceilingclip = walltop;
 				mfloorclip = thread->OpaquePass->ceilingclip;
 				break;
@@ -211,6 +214,7 @@ namespace swrenderer
 				return;
 
 			case RF_CLIPLOWER:
+				tier = side_t::bottom;
 				mceilingclip = thread->OpaquePass->floorclip;
 				mfloorclip = wallbottom;
 				break;
@@ -219,7 +223,7 @@ namespace swrenderer
 
 		// Prepare lighting
 		ProjectedWallLight light;
-		light.SetColormap(lightsector, curline);
+		light.SetColormap(lightsector, curline, tier);
 		light.SetLightLeft(thread, WallC);
 		usecolormap = light.GetBaseColormap();
 

@@ -156,31 +156,40 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
    sidedef
    {
-      scalex_top = <float>;         // X scale for upper texture, Default = 1.0.
-      scaley_top = <float>;         // y scale for upper texture, Default = 1.0.
-      scalex_mid = <float>;         // X scale for mid texture, Default = 1.0.
-      scaley_mid = <float>;         // y scale for mid texture, Default = 1.0.
-      scalex_bottom = <float>;      // X scale for lower texture, Default = 1.0.
-      scaley_bottom = <float>;      // y scale for lower texture, Default = 1.0.
-      offsetx_top = <float>;        // X offset for upper texture, Default = 0.0.
-      offsety_top = <float>;        // y offset for upper texture, Default = 0.0.
-      offsetx_mid = <float>;        // X offset for mid texture, Default = 0.0.
-      offsety_mid = <float>;        // y offset for mid texture, Default = 0.0.
-      offsetx_bottom = <float>;     // X offset for lower texture, Default = 0.0.
-      offsety_bottom = <float>;     // y offset for lower texture, Default = 0.0.
-                                    // When global texture offsets are used they will
-                                    // be added on top of these values.
-      light = <integer>;            // This side's light level. Default is 0.
-      lightabsolute = <bool>;       // true = 'light' is an absolute value. Default is 
-                                    // relative to the owning sector's light level.
-      lightfog = <bool>;            // true = This side's relative lighting is used even in
-                                    // foggy sectors. Default is to disable relative
-                                    // lighting in foggy sectors.
-      nofakecontrast = <bool>;      // Disables use of fake contrast on this sidedef.
-      smoothlighting = <bool>;      // Use smooth fake contrast.
-      clipmidtex = <bool>;          // Side's mid textures are clipped to floor and ceiling.
-      wrapmidtex = <bool>;          // Side's mid textures are wrapped.
-      nodecals = <bool>;            // Disables decals on the sidedef.
+      scalex_top = <float>;            // X scale for upper texture, Default = 1.0.
+      scaley_top = <float>;            // Y scale for upper texture, Default = 1.0.
+      scalex_mid = <float>;            // X scale for mid texture, Default = 1.0.
+      scaley_mid = <float>;            // Y scale for mid texture, Default = 1.0.
+      scalex_bottom = <float>;         // X scale for lower texture, Default = 1.0.
+      scaley_bottom = <float>;         // Y scale for lower texture, Default = 1.0.
+      offsetx_top = <float>;           // X offset for upper texture, Default = 0.0.
+      offsety_top = <float>;           // Y offset for upper texture, Default = 0.0.
+      offsetx_mid = <float>;           // X offset for mid texture, Default = 0.0.
+      offsety_mid = <float>;           // Y offset for mid texture, Default = 0.0.
+      offsetx_bottom = <float>;        // X offset for lower texture, Default = 0.0.
+      offsety_bottom = <float>;        // Y offset for lower texture, Default = 0.0.
+                                       // When global texture offsets are used they will
+                                       // be added on top of these values.
+      light = <integer>;               // This side's light level. Default is 0.
+      lightabsolute = <bool>;          // true = 'light' is an absolute value. Default is 
+                                       // relative to the owning sector's light level.
+      light_top = <integer>;           // This side's top tier light level. Default is 0.
+      lightabsolute_top = <bool>;      // true = 'light_top' is an absolute value. Default is
+                                       // relative to the sidedef's resulting light level.
+      light_mid = <integer>;           // This side's mid tier light level. Default is 0.
+      lightabsolute_mid = <bool>;      // true = 'light_mid' is an absolute value. Default is
+                                       // relative to the sidedef's resulting light level.
+      light_bottom = <integer>;        // This side's bottom tier light level. Default is 0.
+      lightabsolute_bottom = <bool>;   // true = 'light_bottom' is an absolute value. Default is
+                                       // relative to the sidedef's resulting light level.
+      lightfog = <bool>;               // true = This side's relative lighting is used even in
+                                       // foggy sectors. Default is to disable relative
+                                       // lighting in foggy sectors.
+      nofakecontrast = <bool>;         // Disables use of fake contrast on this sidedef.
+      smoothlighting = <bool>;         // Use smooth fake contrast.
+      clipmidtex = <bool>;             // Side's mid textures are clipped to floor and ceiling.
+      wrapmidtex = <bool>;             // Side's mid textures are wrapped.
+      nodecals = <bool>;               // Disables decals on the sidedef.
 	  
 	  nogradient_top = <bool>;	    // disables color gradient on upper tier. (Hardware rendering only.)
 	  flipgradient_top = <bool>;    // flips gradient colors on upper tier. (Hardware rendering only.)
@@ -509,6 +518,9 @@ Coloriation options added
 
 1.32 28.06.2021
 Blocklandmonsters MBF21 flag
+
+1.33 06.11.2021
+Added separate light levels for sidedef tiers (top/mid/bottom)
 
 ===============================================================================
 EOF

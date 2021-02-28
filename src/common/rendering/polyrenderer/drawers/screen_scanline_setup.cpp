@@ -70,11 +70,13 @@ void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangle
 		mposW = _mm_add_ps(mposW, mstepW);
 	}
 
-	posW += ssecount * stepW;
+	mstepW = _mm_set_ss(stepW);
 	for (int x = sseend; x < x1; x++)
 	{
-		w[x] = 1.0f / posW;
-		posW += stepW;
+		__m128 res = _mm_rcp_ss(mposW);
+		__m128 muls = _mm_mul_ss(mposW, _mm_mul_ss(res, res));
+		_mm_store_ss(w + x, _mm_sub_ss(_mm_add_ss(res, res), muls));
+		mposW = _mm_add_ss(mposW, mstepW);
 	}
 }
 #endif

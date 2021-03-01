@@ -186,13 +186,8 @@ void PolyTriangleThreadData::SetDepthFunc(int func)
 
 void PolyTriangleThreadData::SetDepthRange(float min, float max)
 {
-	// The only two variants used by hwrenderer layer
-	if (min == 0.0f && max == 1.0f)
-	{
-	}
-	else if (min == 1.0f && max == 1.0f)
-	{
-	}
+	DepthRangeStart = min;
+	DepthRangeScale = max - min;
 }
 
 void PolyTriangleThreadData::SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor)
@@ -210,19 +205,18 @@ void PolyTriangleThreadData::SetStencil(int stencilRef, int op)
 	StencilTestValue = stencilRef;
 	if (op == SOP_Increment)
 	{
-		WriteStencil = StencilTest;
 		StencilWriteValue = MIN(stencilRef + 1, (int)255);
 	}
 	else if (op == SOP_Decrement)
 	{
-		WriteStencil = StencilTest;
 		StencilWriteValue = MAX(stencilRef - 1, (int)0);
 	}
 	else // SOP_Keep
 	{
-		WriteStencil = false;
 		StencilWriteValue = stencilRef;
 	}
+
+	WriteStencil = StencilTest && (StencilTestValue != StencilWriteValue);
 }
 
 void PolyTriangleThreadData::SetCulling(int mode)

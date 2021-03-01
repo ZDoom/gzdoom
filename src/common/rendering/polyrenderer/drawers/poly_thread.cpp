@@ -165,6 +165,7 @@ void PolyTriangleThreadData::SetViewpointUniforms(const HWViewpointUniforms *uni
 
 void PolyTriangleThreadData::SetDepthClamp(bool on)
 {
+	DepthClamp = on;
 }
 
 void PolyTriangleThreadData::SetDepthMask(bool on)
@@ -430,8 +431,16 @@ void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
 		clipd[1] = v.gl_Position.W - v.gl_Position.X;
 		clipd[2] = v.gl_Position.Y + v.gl_Position.W;
 		clipd[3] = v.gl_Position.W - v.gl_Position.Y;
-		clipd[4] = v.gl_Position.Z + v.gl_Position.W;
-		clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		if (DepthClamp)
+		{
+			clipd[4] = 1.0f;
+			clipd[5] = 1.0f;
+		}
+		else
+		{
+			clipd[4] = v.gl_Position.Z + v.gl_Position.W;
+			clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		}
 		clipd[6] = v.gl_ClipDistance[0];
 		clipd[7] = v.gl_ClipDistance[1];
 		clipd[8] = v.gl_ClipDistance[2];
@@ -684,8 +693,16 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 		clipd[1] = v.gl_Position.W - v.gl_Position.X;
 		clipd[2] = v.gl_Position.Y + v.gl_Position.W;
 		clipd[3] = v.gl_Position.W - v.gl_Position.Y;
-		clipd[4] = v.gl_Position.Z + v.gl_Position.W;
-		clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		if (DepthClamp)
+		{
+			clipd[4] = 1.0f;
+			clipd[5] = 1.0f;
+		}
+		else
+		{
+			clipd[4] = v.gl_Position.Z + v.gl_Position.W;
+			clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		}
 		clipd[6] = v.gl_ClipDistance[0];
 		clipd[7] = v.gl_ClipDistance[1];
 		clipd[8] = v.gl_ClipDistance[2];
@@ -709,8 +726,8 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 	__m128 clipd1 = _mm_sub_ps(mw, mx);
 	__m128 clipd2 = _mm_add_ps(my, mw);
 	__m128 clipd3 = _mm_sub_ps(mw, my);
-	__m128 clipd4 = _mm_add_ps(mz, mw);
-	__m128 clipd5 = _mm_sub_ps(mw, mz);
+	__m128 clipd4 = DepthClamp ? _mm_set1_ps(1.0f) : _mm_add_ps(mz, mw);
+	__m128 clipd5 = DepthClamp ? _mm_set1_ps(1.0f) : _mm_sub_ps(mw, mz);
 	__m128 clipd6 = _mm_setr_ps(verts[0]->gl_ClipDistance[0], verts[1]->gl_ClipDistance[0], verts[2]->gl_ClipDistance[0], 0.0f);
 	__m128 clipd7 = _mm_setr_ps(verts[0]->gl_ClipDistance[1], verts[1]->gl_ClipDistance[1], verts[2]->gl_ClipDistance[1], 0.0f);
 	__m128 clipd8 = _mm_setr_ps(verts[0]->gl_ClipDistance[2], verts[1]->gl_ClipDistance[2], verts[2]->gl_ClipDistance[2], 0.0f);

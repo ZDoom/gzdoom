@@ -138,6 +138,9 @@ DEFINE_SPECIAL(Floor_Waggle, 138, 5, 5, 5)
 DEFINE_SPECIAL(Thing_SpawnFacing, 139, 2, 4, 4)
 DEFINE_SPECIAL(Sector_ChangeSound, 140, 2, 2, 2)
 
+DEFINE_SPECIAL(Line_SetHealth, 150, 2, 2, 2)
+DEFINE_SPECIAL(Sector_SetHealth, 151, 3, 3, 3)
+
 DEFINE_SPECIAL(Teleport_NoStop, 154, 2, 3, 3)
 // portal specials
 DEFINE_SPECIAL(Line_SetPortal, 156, -1, -1, 4)
@@ -152,8 +155,6 @@ DEFINE_SPECIAL(Sector_Set3DFloor, 160, -1, -1, 5)
 DEFINE_SPECIAL(Sector_SetContents, 161, -1, -1, 3)
 
 // [RH] Begin new specials for ZDoom
-DEFINE_SPECIAL(Line_SetHealth, 150, 2, 2, 2)
-DEFINE_SPECIAL(Sector_SetHealth, 151, 3, 3, 3)
 DEFINE_SPECIAL(Ceiling_CrushAndRaiseDist, 168, 3, 5, 5)
 DEFINE_SPECIAL(Generic_Crusher2, 169, 5, 5, 5)
 DEFINE_SPECIAL(Sector_SetCeilingScale2, 170, 3, 3, 3)
@@ -270,5 +271,7 @@ DEFINE_SPECIAL(Floor_MoveToValueAndCrush, 279, 4, 5, 5)
 DEFINE_SPECIAL(Ceiling_MoveToValueAndCrush, 280, 4, 5, 5)
 DEFINE_SPECIAL(Line_SetAutomapFlags, 281, 3, 3, 3)
 DEFINE_SPECIAL(Line_SetAutomapStyle, 282, 2, 2, 2)
+
+DEFINE_SPECIAL(Line_QuickPortal, 301, -1, -1, 1)
 
 #undef DEFINE_SPECIAL

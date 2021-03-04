@@ -452,16 +452,16 @@ void DStatusBarCore::StatusbarToRealCoords(double& x, double& y, double& w, doub
 //
 //============================================================================
 
-void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, double rotate, ERenderStyle style)
+void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style, double clipwidth)
 {
 	if (!texture.isValid())
 		return;
 
 	FGameTexture* tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
-	DrawGraphic(tex, x, y, flags, Alpha, boxwidth, boxheight, scaleX, scaleY, color, translation, rotate, style);
+	DrawGraphic(tex, x, y, flags, Alpha, boxwidth, boxheight, scaleX, scaleY, color, translation, style);
 }
 
-void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, double rotate, ERenderStyle style)
+void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style, double clipwidth)
 {
 	double texwidth = tex->GetDisplayWidth() * scaleX;
 	double texheight = tex->GetDisplayHeight() * scaleY;
@@ -582,6 +582,10 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 		DTA_LeftOffset, 0,
 		DTA_DestWidthF, boxwidth,
 		DTA_DestHeightF, boxheight,
+		DTA_ClipLeft, 0,
+		DTA_ClipTop, 0,
+		DTA_ClipBottom, twod->GetHeight(),
+		DTA_ClipRight, clipwidth < 0? twod->GetWidth() : int(x + boxwidth * clipwidth),
 		DTA_Color, color,
 		DTA_TranslationIndex, translation? translation : (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
 		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
@@ -590,7 +594,96 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
 		DTA_FlipX, !!(flags & DI_MIRROR),
 		DTA_FlipY, !!(flags& DI_MIRRORY),
-		DTA_Rotate, rotate,
+		DTA_LegacyRenderStyle, style,
+		TAG_DONE);
+}
+
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DStatusBarCore::DrawRotated(FTextureID texture, double x, double y, double angle, int flags, double Alpha, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style)
+{
+	if (!texture.isValid())
+		return;
+
+	FGameTexture* tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
+	DrawRotated(tex, x, y, angle, flags, Alpha, scaleX, scaleY, color, translation, style);
+}
+
+void DStatusBarCore::DrawRotated(FGameTexture* tex, double x, double y, int flags, double angle, double Alpha, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style)
+{
+	double texwidth = tex->GetDisplayWidth() * scaleX;
+	double texheight = tex->GetDisplayHeight() * scaleY;
+	double texleftoffs = tex->GetDisplayLeftOffset() * scaleY;
+	double textopoffs = tex->GetDisplayTopOffset() * scaleY;
+
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	Alpha *= this->Alpha;
+	if (Alpha <= 0) return;
+	x += drawOffset.X;
+	y += drawOffset.Y;
+	DVector2 Scale = GetHUDScale();
+
+	scaleX = 1 / scaleX;
+	scaleY = 1 / scaleY;
+
+	if (!fullscreenOffsets)
+	{
+		StatusbarToRealCoords(x, y, texwidth, texheight);
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		scaleX *= Scale.X;
+		scaleY *= Scale.Y;
+		x += orgx;
+		y += orgy;
+	}
+	DrawTexture(twod, tex, x, y,
+		DTA_ScaleX, scaleX,
+		DTA_ScaleY, scaleY,
+		DTA_Color, color,
+		DTA_CenterOffsetRel, !!(flags & DI_ITEM_RELCENTER),
+		DTA_Rotate, angle,
+		DTA_TranslationIndex, translation ? translation : (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
+		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
+		DTA_Alpha, Alpha,
+		DTA_AlphaChannel, !!(flags & DI_ALPHAMAPPED),
+		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
+		DTA_FlipX, !!(flags & DI_MIRROR),
+		DTA_FlipY, !!(flags & DI_MIRRORY),
 		DTA_LegacyRenderStyle, style,
 		TAG_DONE);
 }

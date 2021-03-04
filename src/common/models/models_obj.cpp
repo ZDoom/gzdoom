@@ -636,7 +636,7 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		OBJSurface *surf = &surfaces[i];
 
 		FGameTexture *userSkin = skin;
-		if (!userSkin)
+		if (!userSkin && curSpriteMDLFrame)
 		{
 			if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 			{
@@ -669,7 +669,7 @@ void FOBJModel::AddSkins(uint8_t* hitlist)
 {
 	for (size_t i = 0; i < surfaces.Size(); i++)
 	{
-		if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+		if (curSpriteMDLFrame && i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 		{
 			// Precache skins manually reassigned by the user.
 			// On OBJs with lots of skins, such as Doom map OBJs exported from GZDB,

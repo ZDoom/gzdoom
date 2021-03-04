@@ -37,6 +37,7 @@
 #include "texturemanager.h"
 #include "palettecontainer.h"
 #include "textures.h"
+#include "imagehelpers.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -99,6 +100,7 @@ TArray<uint8_t> FVoxelTexture::CreatePalettedPixels(int conversion)
 			pe.b = (pp[2] << 2) | (pp[2] >> 4);
 			// Alphatexture handling is just for completeness, but rather unlikely to be used ever.
 			Pixels[i] = conversion == luminance ? pe.r : ColorMatcher.Pick(pe);
+			
 		}
 	}
 	else 
@@ -108,6 +110,7 @@ TArray<uint8_t> FVoxelTexture::CreatePalettedPixels(int conversion)
 			Pixels[i] = (uint8_t)i;
 		}
 	}  
+	ImageHelpers::FlipSquareBlock(Pixels.Data(), Width);
 	return Pixels;
 }
 

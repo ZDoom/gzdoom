@@ -761,6 +761,10 @@ public:
 					ReadUserKey(ukey);
 					loader->MapThingsUserData.Push(ukey);
 				}
+				else
+				{
+					DPrintf(DMSG_WARNING, "Unknown UDMF thing key %s\n", key.GetChars());
+				}
 				break;
 			}
 		}
@@ -1111,6 +1115,7 @@ public:
 				break;
 
 			default:
+				DPrintf(DMSG_WARNING, "Unknown UDMF linedef key %s\n", key.GetChars());
 				break;
 			}
 
@@ -1425,6 +1430,7 @@ public:
 				break;
 
 			default:
+				DPrintf(DMSG_WARNING, "Unknown UDMF sidedef key %s\n", key.GetChars());
 				break;
 
 			}
@@ -1929,6 +1935,7 @@ public:
 					break;
 					
 				default:
+					DPrintf(DMSG_WARNING, "Unknown UDMF sector key %s\n", key.GetChars());
 					break;
 			}
 			if ((namespace_bits & (Zd | Zdt)) && !strnicmp("user_", key.GetChars(), 5))
@@ -2179,6 +2186,7 @@ public:
 			switch(namespc.GetIndex())
 			{
 			case NAME_ZDoom:
+			case NAME_Eternity:
 				namespace_bits = Zd;
 				isTranslated = false;
 				break;

@@ -208,10 +208,10 @@ bool D_AddFile(TArray<FString>& wadfiles, const char* file, bool check, int posi
 	// Confirm file exists in filesystem.
 	struct stat info;
 	bool found = stat(file, &info) == 0;
+	FString fullpath = file;
 	if (!found)
 	{
 		// File not found, so split file into path and filename so we can enumerate the path for the file.
-		FString fullpath = file;
 		auto lastindex = fullpath.LastIndexOf("/");
 		FString basepath = fullpath.Left(lastindex);
 		FString filename = fullpath.Right(fullpath.Len() - lastindex - 1);

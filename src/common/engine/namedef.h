@@ -525,6 +525,7 @@ xx(ZDoom)
 xx(ZDoomTranslated)
 xx(Vavoom)
 xx(GZDoom)
+xx(Eternity)
 
 xx(Xpanningfloor)
 xx(Ypanningfloor)

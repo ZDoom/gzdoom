@@ -306,7 +306,7 @@ void FMD3Model::AddSkins(uint8_t *hitlist)
 {
 	for (unsigned i = 0; i < Surfaces.Size(); i++)
 	{
-		if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+		if (curSpriteMDLFrame && curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 		{
 			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].GetIndex()] |= FTextureManager::HIT_Flat;
 		}
@@ -357,13 +357,16 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		FGameTexture *surfaceSkin = skin;
 		if (!surfaceSkin)
 		{
-			if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+			if (curSpriteMDLFrame)
 			{
-				surfaceSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i], true);
-			}
-			else if (surf->numSkins > 0 && surf->Skins[0].isValid())
-			{
-				surfaceSkin = TexMan.GetGameTexture(surf->Skins[0], true);
+				if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+				{
+					surfaceSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i], true);
+				}
+				else if (surf->numSkins > 0 && surf->Skins[0].isValid())
+				{
+					surfaceSkin = TexMan.GetGameTexture(surf->Skins[0], true);
+				}
 			}
 
 			if (!surfaceSkin)

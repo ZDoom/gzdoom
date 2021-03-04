@@ -2318,10 +2318,10 @@ public:
 		// Create the real sectors
 		Level->sectors.Alloc(ParsedSectors.Size());
 		memcpy(&Level->sectors[0], &ParsedSectors[0], Level->sectors.Size() * sizeof(sector_t));
-		Level->sectors[0].e = new extsector_t[Level->sectors.Size()];
+		Level->extsectors.Alloc(Level->sectors.Size());
 		for(unsigned i = 0; i < Level->sectors.Size(); i++)
 		{
-			Level->sectors[i].e = &Level->sectors[0].e[i];
+			Level->sectors[i].e = &Level->extsectors[i];
 		}
 		// Now create the scrollers.
 		for (auto &scroll : UDMFScrollers)

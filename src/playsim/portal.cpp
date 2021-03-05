@@ -175,7 +175,7 @@ void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 //
 //============================================================================
 
-line_t *FLevelLocals::FindPortalDestination(line_t *src, int tag)
+line_t *FLevelLocals::FindPortalDestination(line_t *src, int tag, int matchtype)
 {
 	if (tag)
 	{
@@ -184,7 +184,7 @@ line_t *FLevelLocals::FindPortalDestination(line_t *src, int tag)
 
 		while ((lineno = it.Next()) >= 0)
 		{
-			if (&lines[lineno] != src)
+			if (&lines[lineno] != src && (matchtype == -1 || matchtype == lines[lineno].special))
 			{
 				return &lines[lineno];
 			}

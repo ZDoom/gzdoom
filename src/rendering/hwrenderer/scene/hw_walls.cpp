@@ -1443,6 +1443,11 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		tci.mScale.Y = -tci.mScale.Y;
 		flags |= HWF_NOSLICE;
 	}
+	if (seg->linedef->isVisualPortal())
+	{
+		// mid textures on portal lines need the same offsetting as mid textures on sky lines
+		flags |= HWF_SKYHACK;
+	}
 	SetWallCoordinates(seg, &tci, texturetop, topleft, topright, bottomleft, bottomright, t_ofs);
 
 	//
@@ -2165,6 +2170,12 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 			zbottom[0] = bfh1;
 			zbottom[1] = bfh2;
 			PutPortal(di, PORTALTYPE_LINETOLINE, -1);
+
+			if (texture && seg->backsector != nullptr)
+			{
+				DoMidTexture(di, seg, drawfogboundary, frontsector, backsector, realfront, realback,
+					fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
+			}
 		}
 		else
 		{

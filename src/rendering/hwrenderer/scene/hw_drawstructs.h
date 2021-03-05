@@ -234,7 +234,7 @@ public:
 					  sector_t * front, sector_t * back,
 					  sector_t * realfront, sector_t * realback,
 					  float fch1, float fch2, float ffh1, float ffh2,
-					  float bch1, float bch2, float bfh1, float bfh2);
+					  float bch1, float bch2, float bfh1, float bfh2, float zalign);
 
 	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
 

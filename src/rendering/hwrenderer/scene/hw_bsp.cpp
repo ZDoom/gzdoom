@@ -147,10 +147,16 @@ void HWDrawInfo::WorkerThread()
 			{
 				auto portal = seg->linedef->getPortal();
 				backsector = portal->mDestination->frontsector;
+				back = hw_FakeFlat(backsector, in_area, true);
+				if (front->floorplane.isSlope() || front->ceilingplane.isSlope() || back->floorplane.isSlope() || back->ceilingplane.isSlope())
+				{
+					// Having a one-sided portal like this with slopes is too messy so let's ignore that case.
+					back = nullptr;
+				}
 			}
-			if (backsector)
+			else if (backsector)
 			{
-				if (front->sectornum == backsector->sectornum || ((seg->sidedef->Flags & WALLF_POLYOBJ) && !seg->linedef->isVisualPortal()))
+				if (front->sectornum == backsector->sectornum || (seg->sidedef->Flags & WALLF_POLYOBJ))
 				{
 					back = front;
 				}

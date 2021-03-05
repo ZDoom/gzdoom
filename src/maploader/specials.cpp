@@ -124,7 +124,7 @@ void MapLoader::SpawnLinePortal(line_t* line)
 	{
 		int type = (line->special != Line_QuickPortal) ? line->args[2] : line->args[0] == 0 ? PORTT_LINKED : PORTT_VISUAL;
 		int tag = (line->special == Line_QuickPortal) ? Level->tagManager.GetFirstLineID(line) : line->args[0];
-		dst = Level->FindPortalDestination(line, tag);
+		dst = Level->FindPortalDestination(line, tag, line->special == Line_QuickPortal? Line_QuickPortal : -1);
 
 		line->portalindex = Level->linePortals.Reserve(1);
 		FLinePortal *port = &Level->linePortals.Last();

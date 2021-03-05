@@ -142,15 +142,21 @@ void HWDrawInfo::WorkerThread()
 
 			front = hw_FakeFlat(job->sub->sector, in_area, false);
 			auto seg = job->seg;
-			if (seg->backsector)
+			auto backsector = seg->backsector;
+			if (!backsector && seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0]) // For one-sided portals use the portal's destination sector as backsector.
 			{
-				if (front->sectornum == seg->backsector->sectornum || (seg->sidedef->Flags & WALLF_POLYOBJ))
+				auto portal = seg->linedef->getPortal();
+				backsector = portal->mDestination->frontsector;
+			}
+			if (backsector)
+			{
+				if (front->sectornum == backsector->sectornum || ((seg->sidedef->Flags & WALLF_POLYOBJ) && !seg->linedef->isVisualPortal()))
 				{
 					back = front;
 				}
 				else
 				{
-					back = hw_FakeFlat(seg->backsector, in_area, true);
+					back = hw_FakeFlat(backsector, in_area, true);
 				}
 			}
 			else back = nullptr;

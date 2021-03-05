@@ -2046,14 +2046,16 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		return;
 	}
 
+	bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
+
 	//return;
 	// [GZ] 3D middle textures are necessarily two-sided, even if they lack the explicit two-sided flag
-	if (!backsector || !(seg->linedef->flags&(ML_TWOSIDED | ML_3DMIDTEX))) // one sided
+	if (!backsector || (!(seg->linedef->flags&(ML_TWOSIDED | ML_3DMIDTEX)) && !isportal)) // one sided
 	{
 		// sector's sky
 		SkyNormal(di, frontsector, v1, v2);
 
-		if (seg->linedef->isVisualPortal())
+		if (isportal)
 		{
 			lineportal = seg->linedef->getPortal()->mGroup;
 			ztop[0] = zceil[0];
@@ -2139,7 +2141,6 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 
 		/* mid texture */
-		bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
 		bool drawfogboundary = !di->isFullbrightScene() && di->CheckFog(frontsector, backsec);
@@ -2156,12 +2157,6 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		}
 		else texture = nullptr;
 
-		if (texture || drawfogboundary)
-		{
-			DoMidTexture(di, seg, drawfogboundary, frontsector, backsector, realfront, realback,
-				fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
-		}
-
 		if (isportal)
 		{
 			lineportal = seg->linedef->getPortal()->mGroup;
@@ -2171,9 +2166,18 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 			zbottom[1] = bfh2;
 			PutPortal(di, PORTALTYPE_LINETOLINE, -1);
 		}
-		else if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
+		else
 		{
-			DoFFloorBlocks(di, seg, frontsector, backsector, fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
+			if (texture || drawfogboundary)
+			{
+				DoMidTexture(di, seg, drawfogboundary, frontsector, backsector, realfront, realback,
+					fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
+			}
+
+			if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
+			{
+				DoFFloorBlocks(di, seg, frontsector, backsector, fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
+			}
 		}
 
 		/* bottom texture */

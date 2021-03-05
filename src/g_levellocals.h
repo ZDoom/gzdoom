@@ -801,19 +801,19 @@ inline FLevelLocals *line_t::GetLevel() const
 }
 inline FLinePortal *line_t::getPortal() const
 {
-	return portalindex >= GetLevel()->linePortals.Size() ? (FLinePortal*)nullptr : &GetLevel()->linePortals[portalindex];
+	return portalindex == UINT_MAX && portalindex >= GetLevel()->linePortals.Size() ? (FLinePortal*)nullptr : &GetLevel()->linePortals[portalindex];
 }
 
 // returns true if the portal is crossable by actors
 inline bool line_t::isLinePortal() const
 {
-	return portalindex >= GetLevel()->linePortals.Size() ? false : !!(GetLevel()->linePortals[portalindex].mFlags & PORTF_PASSABLE);
+	return portalindex == UINT_MAX && portalindex >= GetLevel()->linePortals.Size() ? false : !!(GetLevel()->linePortals[portalindex].mFlags & PORTF_PASSABLE);
 }
 
 // returns true if the portal needs to be handled by the renderer
 inline bool line_t::isVisualPortal() const
 {
-	return portalindex >= GetLevel()->linePortals.Size() ? false : !!(GetLevel()->linePortals[portalindex].mFlags & PORTF_VISIBLE);
+	return portalindex == UINT_MAX && portalindex >= GetLevel()->linePortals.Size() ? false : !!(GetLevel()->linePortals[portalindex].mFlags & PORTF_VISIBLE);
 }
 
 inline line_t *line_t::getPortalDestination() const

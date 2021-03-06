@@ -243,7 +243,7 @@ void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int f
 		if ( !sskin )
 		{
 			int ssIndex = groups[i].texNum + curMDLIndex * MD3_MAX_SURFACES;
-			if (curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+			if (curSpriteMDLFrame && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
 				sskin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[ssIndex], true);
 			if ( !sskin )
 			{
@@ -306,7 +306,7 @@ void FUE1Model::AddSkins( uint8_t *hitlist )
 	for (int i = 0; i < numGroups; i++)
 	{
 		int ssIndex = groups[i].texNum + curMDLIndex * MD3_MAX_SURFACES;
-		if (curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+		if (curSpriteMDLFrame && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
 			hitlist[curSpriteMDLFrame->surfaceskinIDs[ssIndex].GetIndex()] |= FTextureManager::HIT_Flat;
 	}
 }

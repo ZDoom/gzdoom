@@ -408,10 +408,10 @@ static void ParseModelDefLump(int Lump)
 					smf.modelsAmount = index + 1;
 				}
 			}
-			//Make sure modelsAmount is at least equal to MD3_MIN_MODELS(4) to ensure compatibility with old mods
-			if (smf.modelsAmount < MD3_MIN_MODELS)
+			//Make sure modelsAmount is at least equal to MIN_MODELS(4) to ensure compatibility with old mods
+			if (smf.modelsAmount < MIN_MODELS)
 			{
-				smf.modelsAmount = MD3_MIN_MODELS;
+				smf.modelsAmount = MIN_MODELS;
 			}
 			//Allocate TArrays
 			smf.modelIDs.Alloc(smf.modelsAmount);

@@ -16,7 +16,7 @@ extern TDeletingArray<FModel*> Models;
 extern TArray<FSpriteModelFrame> SpriteModelFrames;
 
 #define MD3_MAX_SURFACES	32
-#define MD3_MIN_MODELS	4
+#define MIN_MODELS	4
 
 struct FSpriteModelFrame
 {

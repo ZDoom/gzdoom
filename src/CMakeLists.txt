@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8.7 )
+cmake_minimum_required( VERSION 3.1.0 )
 
 include(precompiled_headers)
 
@@ -1190,6 +1190,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${PCH_SOURCES}
 	common/utility/x86.cpp
 	common/thirdparty/strnatcmp.c
+	common/thirdparty/gain_analysis.c
 	common/utility/zstring.cpp
 	common/utility/findfile.cpp
 	common/thirdparty/math/asin.c

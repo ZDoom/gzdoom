@@ -4779,6 +4779,7 @@ enum EACSFunctions
 	ACSF_StartSlideshow,
 	ACSF_GetSectorHealth,
 	ACSF_GetLineHealth,
+	ACSF_SetSubtitleNumber,
 
 		// Eternity's
 	ACSF_GetLineX = 300,
@@ -6697,6 +6698,27 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			}
 			return DoubleToACS(result);
 		}
+
+		case ACSF_SetSubtitleNumber:
+			if (argCount >= 2)
+			{
+				// only players allowed as activator
+				if (activator != nullptr && activator->player != nullptr)
+				{
+					int logNum = args[0];
+					FSoundID sid = 0;
+
+					const char* lookup = Level->Behaviors.LookupString(args[1]);
+					if (lookup != nullptr)
+					{
+						sid = lookup;
+					}
+
+					activator->player->SetSubtitle(logNum, sid);
+				}
+			}
+			break;
+
 		default:
 			break;
 	}

@@ -1620,7 +1620,11 @@ static const char *GetSoundClass(AActor *pp)
 	}
 	auto sclass = player? pp->NameVar(NAME_SoundClass) : NAME_None;
 
-	sclass != NAME_None ? pp->player->SoundClass = sclass.GetChars() : (FString)"player";
+	if (sclass != NAME_None)
+		pp->player->SoundClass = sclass.GetChars();
+	else
+		pp->player->SoundClass = "Player";
+
 	return sclass != NAME_None ? sclass.GetChars() : "player";
 }
 
@@ -1638,7 +1642,7 @@ int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 
 	if (actor != nullptr)
 	{
-		pclass = actor->player->SoundClass;
+		if (actor->player != nullptr) pclass = actor->player->SoundClass;
 		if (actor->player != nullptr) gender = actor->player->userinfo.GetGender();
 	}
 	else

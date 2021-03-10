@@ -1833,7 +1833,6 @@ OptionMenu "CompatSoundMenu" protected
 OptionValue SampleRates
 {
 	0,		"$OPTVAL_DEFAULT"
-	4000,	"$OPTVAL_4000HZ"
 	8000,	"$OPTVAL_8000HZ"
 	11025,	"$OPTVAL_11025HZ"
 	22050,	"$OPTVAL_22050HZ"

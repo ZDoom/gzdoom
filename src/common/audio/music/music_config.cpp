@@ -453,6 +453,11 @@ CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CV
 
 CUSTOM_CVAR(Int,  mod_samplerate,				0,	   CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
+	if (self != 0 && self != 11025 && self != 22050 && self != 44100 && self != 48000)
+	{
+		self = 0;
+		return;
+	}
 	FORWARD_CVAR(mod_samplerate);
 }
 

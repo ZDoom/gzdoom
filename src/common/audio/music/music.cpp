@@ -81,6 +81,7 @@ static MusicCallbacks mus_cb = { nullptr, DefaultOpenMusic };
 
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+EXTERN_CVAR(Int, snd_mididevice)
 
 CVAR(Bool, mus_calcgain, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
 CVAR(Bool, mus_usereplaygain, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
@@ -353,8 +354,21 @@ bool S_StartMusic (const char *m_id)
 //==========================================================================
 static TMap<FString, float> gainMap;
 
-static FString ReplayGainHash(ZMusicCustomReader* reader, int flength, int playertype, const char* playparam)
+EXTERN_CVAR(String, fluid_patchset)
+EXTERN_CVAR(String, timidity_config)
+EXTERN_CVAR(String, midi_config)
+EXTERN_CVAR(String, wildmidi_config)
+EXTERN_CVAR(String, adl_custom_bank)
+EXTERN_CVAR(Int, adl_bank)
+EXTERN_CVAR(Bool, adl_use_custom_bank)
+EXTERN_CVAR(String, opn_custom_bank)
+EXTERN_CVAR(Bool, opn_use_custom_bank)
+EXTERN_CVAR(Int, opl_core)
+
+static FString ReplayGainHash(ZMusicCustomReader* reader, int flength, int playertype, const char* _playparam)
 {
+	std::string playparam = _playparam;
+
 	uint8_t buffer[50000];	// for performance reasons only hash the start of the file. If we wanted to do this to large waveform songs it'd cause noticable lag.
 	uint8_t digest[16];
 	char digestout[33];
@@ -373,11 +387,41 @@ static FString ReplayGainHash(ZMusicCustomReader* reader, int flength, int playe
 
 	auto type = ZMusic_IdentifyMIDIType((uint32_t*)buffer, 32);
 	if (type == MIDI_NOTMIDI) return FStringf("%d:%s", flength, digestout);
+
+	// get the default for MIDI synth
 	if (playertype == -1)
 	{
-		// todo: get the defaults for MIDI synth and used sound font.
+		switch (snd_mididevice)
+		{
+		case -1:		playertype = MDEV_FLUIDSYNTH; break;
+		case -2:		playertype = MDEV_TIMIDITY; break;
+		case -3:		playertype = MDEV_OPL; break;
+		case -4:		playertype = MDEV_GUS; break;
+		case -5:		playertype = MDEV_FLUIDSYNTH; break;
+		case -6:		playertype = MDEV_WILDMIDI; break;
+		case -7:		playertype = MDEV_ADL; break;
+		case -8:		playertype = MDEV_OPN; break;
+		default:		return "";
+		}
 	}
-	return FStringf("%d:%s:%d:%s", flength, digestout, playertype, playparam);
+	else if (playertype == MDEV_SNDSYS) return "";
+
+	// get the default for used sound font.
+	if (playparam.empty())
+	{
+		switch (playertype)
+		{
+		case MDEV_FLUIDSYNTH:		playparam = fluid_patchset; break;
+		case MDEV_TIMIDITY:			playparam = timidity_config; break;
+		case MDEV_GUS:				playparam = midi_config; break;
+		case MDEV_WILDMIDI:			playparam = wildmidi_config; break;
+		case MDEV_ADL:				playparam = adl_use_custom_bank ? *adl_custom_bank : std::to_string(adl_bank); break;
+		case MDEV_OPN:				playparam = opn_use_custom_bank ? *opn_custom_bank : ""; break;
+		case MDEV_OPL:				playparam = std::to_string(opl_core); break;
+
+		}
+	}
+	return FStringf("%d:%s:%d:%s", flength, digestout, playertype, playparam.c_str()).MakeUpper();
 }
 
 static void SaveGains()
@@ -453,6 +497,7 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 
 	ReadGains();
 	auto hash = ReplayGainHash(mreader, flength, playertype, playparam);
+	if (hash.IsEmpty()) return; // got nothing to measure.
 	mus_playing.hash = hash;
 	auto entry = gainMap.CheckKey(hash);
 	if (entry)

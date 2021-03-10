@@ -391,13 +391,10 @@ public:
 	float		BlendB = 0;
 	float		BlendA = 0;
 
-	//FString		SoundClass = "player";
 	FString		SoundClass = "player";
 	FString		LogText;	// [RH] Log for Strife
 	FString		SubtitleText;
 	int			SubtitleCounter;
-
-	//SoundClass != nullptr ? mo->StringVar(NAME_SoundClass) : "player";
 
 	DAngle			MinPitch = 0.;	// Viewpitch limits (negative is up, positive is down)
 	DAngle			MaxPitch = 0.;

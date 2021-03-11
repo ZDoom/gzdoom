@@ -45,13 +45,14 @@
 #include "textures.h"
 #include "texturemanager.h"
 #include "printf.h"
+#include "templates.h"
 
 int upscalemask;
 
 EXTERN_CVAR(Int, gl_texture_hqresizemult)
 CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 6)
+	if (self < 0 || self > 7)
 		self = 0;
 	if ((gl_texture_hqresizemult > 4) && (self < 4) && (self > 0))
 		gl_texture_hqresizemult = 4;
@@ -412,6 +413,157 @@ static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int 
 }
 
 
+namespace MMPXAlgorithm
+{
+	inline static uint32_t luma(uint32_t color) {
+		const uint32_t alpha = (color & 0xFF000000) >> 24;
+		return (((color & 0x00FF0000) >> 16) + ((color & 0x0000FF00) >> 8) + (color & 0x000000FF) + 1) * (256 - alpha);
+	}
+
+	inline static bool all_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
+		return ((B ^ A0) | (B ^ A1)) == 0;
+	}
+
+	inline static bool all_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
+		return ((B ^ A0) | (B ^ A1) | (B ^ A2)) == 0;
+	}
+
+	inline static bool all_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
+		return ((B ^ A0) | (B ^ A1) | (B ^ A2) | (B ^ A3)) == 0;
+	}
+
+	inline static bool any_eq3(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2) {
+		return B == A0 || B == A1 || B == A2;
+	}
+
+	inline static bool none_eq2(uint32_t B, uint32_t A0, uint32_t A1) {
+		return (B != A0) && (B != A1);
+	}
+
+	inline static bool none_eq4(uint32_t B, uint32_t A0, uint32_t A1, uint32_t A2, uint32_t A3) {
+		return B != A0 && B != A1 && B != A2 && B != A3;
+	}
+}
+
+static unsigned char* mmpx(unsigned char* inputBuffer, const int srcWidth, const int srcHeight, int& outWidth, int& outHeight)
+{
+	outWidth = 2 * srcWidth;
+	outHeight = 2 * srcHeight;
+	unsigned char* newBuffer = new unsigned char[outWidth * outHeight * 4];
+
+	uint32_t* const inBuffer = reinterpret_cast<uint32_t*>(inputBuffer);
+	uint32_t* const outBuffer = reinterpret_cast<uint32_t*>(newBuffer);
+
+	const uint32_t srcMaxX = srcWidth - 1;
+	const uint32_t srcMaxY = srcHeight - 1;
+
+	const auto src = [inBuffer, srcWidth, srcMaxX, srcMaxY](int x, int y)
+	{
+		// Clamp to border
+		if (uint32_t(x) > uint32_t(srcMaxX) || uint32_t(y) > uint32_t(srcMaxY))
+		{
+			x = clamp(x, 0, srcMaxX);
+			y = clamp(y, 0, srcMaxY);
+		}
+
+		return inBuffer[y * srcWidth + x];
+	};
+
+	using namespace MMPXAlgorithm;
+
+	for (int srcY = 0; srcY < srcHeight; ++srcY) {
+		int srcX = 0;
+
+		// Inputs carried along rows
+		uint32_t A = src(srcX - 1, srcY - 1);
+		uint32_t B = src(srcX, srcY - 1);
+		uint32_t C = src(srcX + 1, srcY - 1);
+
+		uint32_t D = src(srcX - 1, srcY);
+		uint32_t E = src(srcX, srcY);
+		uint32_t F = src(srcX + 1, srcY);
+
+		uint32_t G = src(srcX - 1, srcY + 1);
+		uint32_t H = src(srcX, srcY + 1);
+		uint32_t I = src(srcX + 1, srcY + 1);
+
+		uint32_t Q = src(srcX - 2, srcY);
+		uint32_t R = src(srcX + 2, srcY);
+
+		for (srcX = 0; srcX < srcWidth; ++srcX) {
+			// Outputs
+			uint32_t J = E, K = E, L = E, M = E;
+
+			if (((A ^ E) | (B ^ E) | (C ^ E) | (D ^ E) | (F ^ E) | (G ^ E) | (H ^ E) | (I ^ E)) != 0) {
+				uint32_t P = src(srcX, srcY - 2), S = src(srcX, srcY + 2);
+				uint32_t Bl = luma(B), Dl = luma(D), El = luma(E), Fl = luma(F), Hl = luma(H);
+
+				// 1:1 slope rules
+				{
+					if ((D == B && D != H && D != F) && (El >= Dl || E == A) && any_eq3(E, A, C, G) && ((El < Dl) || A != D || E != P || E != Q)) J = D;
+					if ((B == F && B != D && B != H) && (El >= Bl || E == C) && any_eq3(E, A, C, I) && ((El < Bl) || C != B || E != P || E != R)) K = B;
+					if ((H == D && H != F && H != B) && (El >= Hl || E == G) && any_eq3(E, A, G, I) && ((El < Hl) || G != H || E != S || E != Q)) L = H;
+					if ((F == H && F != B && F != D) && (El >= Fl || E == I) && any_eq3(E, C, G, I) && ((El < Fl) || I != H || E != R || E != S)) M = F;
+				}
+
+				// Intersection rules
+				{
+					if ((E != F && all_eq4(E, C, I, D, Q) && all_eq2(F, B, H)) && (F != src(srcX + 3, srcY))) K = M = F;
+					if ((E != D && all_eq4(E, A, G, F, R) && all_eq2(D, B, H)) && (D != src(srcX - 3, srcY))) J = L = D;
+					if ((E != H && all_eq4(E, G, I, B, P) && all_eq2(H, D, F)) && (H != src(srcX, srcY + 3))) L = M = H;
+					if ((E != B && all_eq4(E, A, C, H, S) && all_eq2(B, D, F)) && (B != src(srcX, srcY - 3))) J = K = B;
+					if (Bl < El && all_eq4(E, G, H, I, S) && none_eq4(E, A, D, C, F)) J = K = B;
+					if (Hl < El && all_eq4(E, A, B, C, P) && none_eq4(E, D, G, I, F)) L = M = H;
+					if (Fl < El && all_eq4(E, A, D, G, Q) && none_eq4(E, B, C, I, H)) K = M = F;
+					if (Dl < El && all_eq4(E, C, F, I, R) && none_eq4(E, B, A, G, H)) J = L = D;
+				}
+
+				// 2:1 slope rules
+				{
+					if (H != B) {
+						if (H != A && H != E && H != C) {
+							if (all_eq3(H, G, F, R) && none_eq2(H, D, src(srcX + 2, srcY - 1))) L = M;
+							if (all_eq3(H, I, D, Q) && none_eq2(H, F, src(srcX - 2, srcY - 1))) M = L;
+						}
+
+						if (B != I && B != G && B != E) {
+							if (all_eq3(B, A, F, R) && none_eq2(B, D, src(srcX + 2, srcY + 1))) J = K;
+							if (all_eq3(B, C, D, Q) && none_eq2(B, F, src(srcX - 2, srcY + 1))) K = J;
+						}
+					} // H !== B
+
+					if (F != D) {
+						if (D != I && D != E && D != C) {
+							if (all_eq3(D, A, H, S) && none_eq2(D, B, src(srcX + 1, srcY + 2))) J = L;
+							if (all_eq3(D, G, B, P) && none_eq2(D, H, src(srcX + 1, srcY - 2))) L = J;
+						}
+
+						if (F != E && F != A && F != G) {
+							if (all_eq3(F, C, H, S) && none_eq2(F, B, src(srcX - 1, srcY + 2))) K = M;
+							if (all_eq3(F, I, B, P) && none_eq2(F, H, src(srcX - 1, srcY - 2))) M = K;
+						}
+					} // F !== D
+				} // 2:1 slope
+			}
+
+			int dstIndex = ((srcX + srcX) + (srcY << 2) * srcWidth) >> 0;
+			uint32_t* dstPacked = outBuffer + dstIndex;
+
+			*dstPacked = J; dstPacked++;
+			*dstPacked = K; dstPacked += srcWidth + srcMaxX;
+			*dstPacked = L; dstPacked++;
+			*dstPacked = M;
+
+			A = B; B = C; C = src(srcX + 2, srcY - 1);
+			Q = D; D = E; E = F; F = R; R = src(srcX + 3, srcY);
+			G = H; H = I; I = src(srcX + 2, srcY + 1);
+		} // X
+	} // Y
+
+	delete[] inputBuffer;
+	return newBuffer;
+}
+
 //===========================================================================
 // 
 // [BB] Upsamples the texture in texbuffer.mBuffer, frees texbuffer.mBuffer and returns
@@ -437,7 +589,7 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 	}
 #endif
 	// These checks are to ensure consistency of the content ID.
-	if (mult < 2 || mult > 6 || type < 1 || type > 6) return;
+	if (mult < 2 || mult > 6 || type < 1 || type > 7) return;
 	if (type < 4 && mult > 4) mult = 4;
 
 	if (!checkonly)
@@ -480,6 +632,8 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 			texbuffer.mBuffer = xbrzHelper(xbrzOldScale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
 		else if (type == 6)
 			texbuffer.mBuffer = normalNx(mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+		else if (type == 7)
+			texbuffer.mBuffer = mmpx(texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
 		else
 			return;
 	}

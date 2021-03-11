@@ -2505,6 +2505,7 @@ OptionValue "HqResizeModes"
    4, "$OPTVAL_NXBRZ"
    5, "$OPTVAL_OLD_NXBRZ"
    6, "$OPTVAL_NORMALNX"
+   7, "MMPX"
 }
 
 OptionValue "HqResizeMultipliers"

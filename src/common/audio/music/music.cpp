@@ -84,7 +84,7 @@ static MusicCallbacks mus_cb = { nullptr, DefaultOpenMusic };
 EXTERN_CVAR(Int, snd_mididevice)
 
 CVAR(Bool, mus_calcgain, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
-CVAR(Bool, mus_usereplaygain, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
+CVAR(Bool, mus_usereplaygain, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
 CUSTOM_CVAR(Float, mus_gainoffset, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // for customizing the base volume
 {
 	if (self > 10.f) self = 10.f;

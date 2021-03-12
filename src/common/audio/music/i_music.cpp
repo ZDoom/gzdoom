@@ -272,6 +272,22 @@ void I_SetMusicVolume (double factor)
 
 //==========================================================================
 //
+// test a relative music volume
+//
+//==========================================================================
+
+CCMD(testmusicvol)
+{
+	if (argv.argc() > 1) 
+	{
+		I_SetRelativeVolume((float)strtod(argv[1], nullptr));
+	}
+	else
+		Printf("Current relative volume is %1.2f\n", relative_volume);
+}
+
+//==========================================================================
+//
 // STAT music
 //
 //==========================================================================

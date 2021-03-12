@@ -73,8 +73,12 @@ struct MusPlayingInfo
 	FString name;
 	ZMusic_MusicStream handle;
 	int   baseorder;
+	float replayGain;
+	float replayGainFactor;
 	bool  loop;
+	bool isfloat;
 	FString	 LastSong;			// last music that was played
+	FString hash;				// for setting replay gain while playing.
 };
 
 extern MusPlayingInfo mus_playing;

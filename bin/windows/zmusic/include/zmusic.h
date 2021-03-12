@@ -29,7 +29,8 @@ typedef enum EMIDIType_
 	MIDI_MIDI,
 	MIDI_HMI,
 	MIDI_XMI,
-	MIDI_MUS
+	MIDI_MUS,
+	MIDI_MIDS
 } EMIDIType;
 
 typedef enum EMidiDevice_
@@ -313,6 +314,7 @@ extern "C"
 	DLL_IMPORT void ZMusic_Close(ZMusic_MusicStream song);
 	DLL_IMPORT zmusic_bool ZMusic_SetSubsong(ZMusic_MusicStream song, int subsong);
 	DLL_IMPORT zmusic_bool ZMusic_IsLooping(ZMusic_MusicStream song);
+	DLL_IMPORT int ZMusic_GetDeviceType(ZMusic_MusicStream song);
 	DLL_IMPORT zmusic_bool ZMusic_IsMIDI(ZMusic_MusicStream song);
 	DLL_IMPORT void ZMusic_VolumeChanged(ZMusic_MusicStream song);
 	DLL_IMPORT zmusic_bool ZMusic_WriteSMF(ZMusic_MidiSource source, const char* fn, int looplimit);

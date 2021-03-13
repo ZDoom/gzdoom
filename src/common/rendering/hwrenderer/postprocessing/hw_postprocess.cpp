@@ -28,7 +28,6 @@
 #include "texturemanager.h"
 #include "templates.h"
 #include "stats.h"
-#include "colormaps.h"
 
 Postprocess hw_postprocess;
 

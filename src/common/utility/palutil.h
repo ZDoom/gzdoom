@@ -63,3 +63,13 @@ int AddSpecialColormap(PalEntry *pe, float r1, float g1, float b1, float r2, flo
 void InitSpecialColormaps(PalEntry* pe);
 void UpdateSpecialColormap(PalEntry* BaseColors, unsigned int index, float r1, float g1, float b1, float r2, float g2, float b2);
 int ReadPalette(int lumpnum, uint8_t* buffer);
+
+enum EColorManipulation
+{
+	CM_PLAIN2D = -2,			// regular 2D drawing.
+	CM_INVALID = -1,
+	CM_DEFAULT = 0,					// untranslated
+	CM_FIRSTSPECIALCOLORMAP,		// first special fixed colormap
+};
+
+#define CM_MAXCOLORMAP int(CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size())

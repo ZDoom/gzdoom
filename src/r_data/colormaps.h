@@ -43,13 +43,4 @@ inline uint32_t MakeSpecialColormap(int index)
 	return index | SPECIALCOLORMAP_MASK;
 }
 
-enum EColorManipulation
-{
-	CM_DEFAULT = 0,					// untranslated
-	CM_FIRSTSPECIALCOLORMAP,		// first special fixed colormap
-};
-
-#define CM_MAXCOLORMAP int(CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size())
-
-
 #endif

@@ -28,7 +28,6 @@
 #include "v_text.h"
 #include "i_video.h"
 #include "v_draw.h"
-#include "colormaps.h"
 
 #include "hw_clock.h"
 #include "hw_vrmodes.h"

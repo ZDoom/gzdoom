@@ -248,7 +248,11 @@ static void SaveStatistics(const char *fn, TArray<FStatistics> &statlist)
 	unsigned int j;
 
 	FileWriter *fw = FileWriter::Open(fn);
-	if (fw == nullptr) return;
+	if (fw == nullptr)
+	{
+		Printf(PRINT_HIGH, "Unable to save statistics to %s\n", fn);
+		return;
+	}
 
 	qsort(&statlist[0], statlist.Size(), sizeof(statlist[0]), compare_episode_names);
 	for(unsigned i=0;i<statlist.Size ();i++)

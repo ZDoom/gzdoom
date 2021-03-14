@@ -303,30 +303,6 @@ void FGameConfigFile::DoGlobalSetup ()
 		if (lastver != NULL)
 		{
 			double last = atof (lastver);
-			if (last < 202)
-			{
-				// Make sure the Hexen hotkeys are accessible by default.
-				if (SetSection ("Hexen.Bindings"))
-				{
-					SetValueForKey ("\\", "use ArtiHealth");
-					SetValueForKey ("scroll", "+showscores");
-					SetValueForKey ("0", "useflechette");
-					SetValueForKey ("9", "use ArtiBlastRadius");
-					SetValueForKey ("8", "use ArtiTeleport");
-					SetValueForKey ("7", "use ArtiTeleportOther");
-					SetValueForKey ("6", "use ArtiPork");
-					SetValueForKey ("5", "use ArtiInvulnerability2");
-				}
-			}
-			if (last < 204)
-			{ // The old default for vsync was true, but with an unlimited framerate
-			  // now, false is a better default.
-				FBaseCVar *vsync = FindCVar ("vid_vsync", NULL);
-				if (vsync != NULL)
-				{
-					vsync->ResetToDefault ();
-				}
-			}
 			if (last < 207)
 			{ // Now that snd_midiprecache works again, you probably don't want it on.
 				FBaseCVar *precache = FindCVar ("snd_midiprecache", NULL);

@@ -600,6 +600,16 @@ void FGameConfigFile::DoGlobalSetup ()
 				old_targets |= (old_targets & 1) ? 8 : 0;
 				gl_texture_hqresize_targets = old_targets;
 			}
+			if (last < 222)
+			{
+				auto var = FindCVar("mod_dumb_mastervolume", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					v.Float /= 4.f;
+					if (v.Float < 1.f) v.Float = 1.f;
+				}
+			}
 		}
 	}
 }

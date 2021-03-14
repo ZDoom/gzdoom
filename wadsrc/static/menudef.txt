@@ -2052,7 +2052,7 @@ OptionValue ModVolumeRamps
 OptionMenu ModReplayerOptions protected
 {
 	Title "$MODMNU_TITLE"
-	Slider "$MODMNU_MASTERVOLUME",			"mod_dumb_mastervolume", 1, 16, 0.5, 1
+	Slider "$MODMNU_MASTERVOLUME",			"mod_dumb_mastervolume", 0.25, 4, 0.5, 1
 	Option "$ADVSNDMNU_SAMPLERATE",			"mod_samplerate", "SampleRates"
 	Option "$MODMNU_QUALITY",				"mod_interp", "ModQuality"
 	Option "$MODMNU_VOLUMERAMPING",			"mod_volramp", "ModVolumeRamps"

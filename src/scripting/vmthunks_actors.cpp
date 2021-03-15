@@ -814,6 +814,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetTag, GetTag)
 	ACTION_RETURN_STRING(res);
 }
 
+static void GetCharacterName(AActor *self, FString *result)
+{
+	*result = self->GetCharacterName();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetCharacterName, GetCharacterName)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	FString res;
+	GetCharacterName(self, &res);
+	ACTION_RETURN_STRING(res);
+}
+
 static void SetTag(AActor *self, const FString &def)
 {
 	if (def.IsEmpty()) self->Tag = nullptr;

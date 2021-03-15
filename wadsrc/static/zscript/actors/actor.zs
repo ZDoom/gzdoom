@@ -619,6 +619,7 @@ class Actor : Thinker native
 	protected native void CheckPortalTransition(bool linked = true);
 		
 	native clearscope string GetTag(string defstr = "") const;
+	native clearscope string GetCharacterName() const;
 	native void SetTag(string defstr = "");
 	native clearscope double GetBobOffset(double frac = 0) const;
 	native void ClearCounters();

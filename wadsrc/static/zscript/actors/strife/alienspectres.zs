@@ -15,6 +15,7 @@ class AlienSpectre1 : SpectralMonster
 		MinMissileChance 150;
 		RenderStyle "Translucent";
 		Alpha 0.666;
+		Tag "$TAG_ALIENSPECTRE";
 		SeeSound "alienspectre/sight";
 		AttackSound "alienspectre/blade";
 		PainSound "alienspectre/pain";

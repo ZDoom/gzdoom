@@ -25,6 +25,7 @@ class Programmer : Actor
 		+NOTARGETSWITCH
 		DamageFactor "Fire", 0.5;
 		MinMissileChance 150;
+		Tag "$TAG_PROGRAMMER";
 		AttackSound "programmer/attack";
 		PainSound "programmer/pain";
 		DeathSound "programmer/death";

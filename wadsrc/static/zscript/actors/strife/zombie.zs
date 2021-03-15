@@ -19,6 +19,7 @@ class Zombie : StrifeHumanoid
 		MaxStepHeight 16;
 		MaxDropOffHeight 32;
 		Translation 0;
+		Tag "$TAG_STRIFEZOMBIE";
 		DeathSound "zombie/death";
 		CrushPainSound "misc/pcrush";
 	}

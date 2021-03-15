@@ -44,6 +44,7 @@ class CeilingTurret : Actor
 		+NOSPLASHALERT
 		+DONTFALL
 		MinMissileChance 150;
+		Tag "$TAG_CEILINGTURRET";
 		DeathSound "turret/death";
 	}
 	States

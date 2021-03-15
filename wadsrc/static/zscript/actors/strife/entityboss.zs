@@ -91,7 +91,7 @@ class EntityBoss : SpectralMonster
 		MinMissileChance 150;
 		RenderStyle "Translucent";
 		Alpha 0.5;
-		TAG "$TAG_ENTITY";
+		Tag "$TAG_ENTITY";
 		SeeSound "entity/sight";
 		AttackSound "entity/melee";
 		PainSound "entity/pain";
@@ -242,6 +242,7 @@ class EntitySecond : SpectralMonster
 		MinMissileChance 150;
 		RenderStyle "Translucent";
 		Alpha 0.25;
+		Tag "$TAG_ENTITY";
 		SeeSound "alienspectre/sight";
 		AttackSound "alienspectre/blade";
 		PainSound "alienspectre/pain";

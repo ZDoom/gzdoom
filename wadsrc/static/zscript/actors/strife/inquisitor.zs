@@ -19,6 +19,7 @@ class Inquisitor : Actor
 		+NORADIUSDMG
 		MaxDropOffHeight 32;
 		MinMissileChance 150;
+		Tag "$TAG_INQUISITOR";
 		SeeSound "inquisitor/sight";
 		DeathSound "inquisitor/death";
 		ActiveSound "inquisitor/active";

@@ -22,6 +22,7 @@ class Sentinel : Actor
 		+LOOKALLAROUND
 		+NEVERRESPAWN
 		MinMissileChance 150;
+		Tag "$TAG_SENTINEL";
 		SeeSound "sentinel/sight";
 		DeathSound "sentinel/death";
 		ActiveSound "sentinel/active";

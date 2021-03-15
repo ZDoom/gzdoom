@@ -950,6 +950,7 @@ public:
 	bool IsSentient() const;
 	const char *GetTag(const char *def = NULL) const;
 	void SetTag(const char *def);
+	const char *GetCharacterName() const;
 
 	// Triggers SECSPAC_Exit/SECSPAC_Enter and related events if oldsec != current sector
 	void CheckSectorTransition(sector_t *oldsec);

@@ -7399,6 +7399,19 @@ void AActor::SetTag(const char *def)
 	else Tag = mStringPropertyData.Alloc(def);
 }
 
+const char *AActor::GetCharacterName() const
+{
+	if (Conversation && Conversation->SpeakerName.Len() != 0)
+	{
+		const char *cname = Conversation->SpeakerName.GetChars();
+		if (cname[0] == '$')
+		{
+			return GStrings(cname + 1);
+		}
+		else return cname;
+	}
+	return GetTag();
+}
 
 void AActor::ClearCounters()
 {

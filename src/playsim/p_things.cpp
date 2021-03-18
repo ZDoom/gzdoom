@@ -175,6 +175,7 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 {
 	if (targ == nullptr || mobj == nullptr)	return;
 
+	DVector3 prevel = mobj->Vel;
 	DVector3 aim = mobj->Vec3To(targ);
 	aim.Z += targ->Height / 2;
 
@@ -198,6 +199,10 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 			if (targ->Vel.X == 0 && targ->Vel.Y == 0)
 			{
 				InterceptDefaultAim(mobj, targ, aim, speed);
+				if (oldvel)
+				{
+					mobj->Vel = prevel;
+				}
 				return;
 			}
 		}
@@ -207,7 +212,6 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 		double a = g_acos(clamp(ydotx / targspeed / dist, -1.0, 1.0));
 		double multiplier = double(pr_leadtarget.Random2())*0.1 / 255 + 1.1;
 		double sinb = -clamp(targspeed*multiplier * g_sin(a) / speed, -1.0, 1.0);
-		DVector3 prevel = mobj->Vel;
 		// Use the cross product of two of the triangle's sides to get a
 		// rotation vector.
 		DVector3 rv(tvel ^ aim);
@@ -221,10 +225,6 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 		// And make the projectile follow that vector at the desired speed.
 		mobj->Vel = aimvec * (speed / dist);
 		mobj->AngleFromVel();
-		if (oldvel)
-		{
-			mobj->Vel = prevel;
-		}
 		if (aimpitch) // [MC] Ripped right out of A_FaceMovementDirection
 		{
 			const DVector2 velocity = mobj->Vel.XY();
@@ -234,6 +234,10 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 	else
 	{
 		InterceptDefaultAim(mobj, targ, aim, speed);
+	}
+	if (oldvel)
+	{
+		mobj->Vel = prevel;
 	}
 }
 

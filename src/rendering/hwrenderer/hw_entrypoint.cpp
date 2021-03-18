@@ -343,7 +343,7 @@ sector_t* RenderView(player_t* player)
 					screen->RenderTextureView(camtex, [=](IntRect& bounds)
 						{
 							FRenderViewpoint texvp;
-							float ratio = camtex->aspectRatio;
+							float ratio = camtex->aspectRatio / Level->info->pixelstretch;
 							RenderViewpoint(texvp, camera, &bounds, fov, ratio, ratio, false, false);
 						});
 				});

@@ -832,7 +832,7 @@ static void ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int
 		return;
 
 	player_t *player = target->player;
-	if (player)
+	if (player && player->mo)
 	{
 		if ((player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NOPAIN) ||
 			((player->cheats & CF_GODMODE) && damage < TELEFRAG_DAMAGE))
@@ -1195,7 +1195,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 
 
 	//[RC] Backported from the Zandronum source.. Mostly.
-	if( target->player  &&
+	if( target->player && target->player->mo &&
 		damage > 0 &&
 		source &&
 		mod != NAME_Reflection &&
@@ -1266,7 +1266,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	//
 	// player specific
 	//
-	if (player)
+	if (player && player->mo)
 	{
 		// Don't allow DMG_FORCED to work on ultimate degreeslessness/buddha and nodamage.
 		if ((player->cheats & (CF_GODMODE2 | CF_BUDDHA2)) || (player->mo->flags5 & MF5_NODAMAGE))
@@ -1365,7 +1365,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			//I_Tactile (40,10,40+temp*2);
 		}
 	}
-	else
+	else if (!player)
 	{
 		// Armor for monsters.
 		if (!(flags & (DMG_NO_ARMOR|DMG_FORCED)) && target->Inventory != NULL && damage > 0)

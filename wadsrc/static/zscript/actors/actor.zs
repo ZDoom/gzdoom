@@ -751,7 +751,7 @@ class Actor : Thinker native
 	native clearscope vector2 Vec2Angle(double length, double angle, bool absolute = false) const;
 	native clearscope vector2 Vec2Offset(double x, double y, bool absolute = false) const;
 	native clearscope vector3 Vec2OffsetZ(double x, double y, double atz, bool absolute = false) const;
-	native void VelIntercept(Actor targ, double speed = -1, bool aimpitch = true, bool oldvel = false);
+	native void VelIntercept(Actor targ, double speed = -1, bool aimpitch = true, bool oldvel = false, bool resetvel = false);
 	native void VelFromAngle(double speed = 1e37, double angle = 1e37);
 	native void Vel3DFromAngle(double speed, double angle, double pitch);
 	native void Thrust(double speed = 1e37, double angle = 1e37);

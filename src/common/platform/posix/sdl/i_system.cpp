@@ -175,10 +175,11 @@ void I_PrintStr(const char *cp)
 {
 	const char * srcp = cp;
 	FString printData = "";
+	bool terminal = isatty(STDOUT_FILENO);
 
 	while (*srcp != 0)
 	{
-		if (*srcp == 0x1c && con_printansi)
+		if (*srcp == 0x1c && con_printansi && terminal)
 		{
 			srcp += 1;
 			EColorRange range = V_ParseFontColor((const uint8_t*&)srcp, CR_UNTRANSLATED, CR_YELLOW);
@@ -224,7 +225,7 @@ void I_PrintStr(const char *cp)
 	
 	if (StartScreen) CleanProgressBar();
 	fputs(printData.GetChars(),stdout);
-	fputs("\033[0m",stdout);
+	if (terminal) fputs("\033[0m",stdout);
 	if (StartScreen) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
 }
 

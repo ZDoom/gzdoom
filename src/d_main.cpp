@@ -3158,6 +3158,19 @@ static int D_DoomMain_Internal (void)
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
 
+	// Prevent the game from starting if the savegame passed to -loadgame is invalid
+	v = Args->CheckValue("-loadgame");
+	if (v)
+	{
+		FString file(v);
+		FixPathSeperator(file);
+		DefaultExtension(file, "." SAVEGAME_EXT);
+		if (!FileExists(file))
+		{
+			I_FatalError("Cannot find savegame %s", file.GetChars());
+		}
+	}
+
 	// reinit from here
 
 	do

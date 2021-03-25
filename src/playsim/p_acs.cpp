@@ -6054,7 +6054,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
             }
 
 		case ACSF_SpawnDecal:
-			// int SpawnDecal(int tid, str decalname, int flags, fixed angle, int zoffset, int distance)
+			// int SpawnDecal(int tid, str decalname, int flags, fixed angle, fixed zoffset, int distance)
 			// Returns number of decals spawned (not including spreading)
 			{
 				int count = 0;
@@ -6063,7 +6063,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				{
 					int flags = (argCount > 2) ? args[2] : 0;
 					DAngle angle = ACSToAngle((argCount > 3) ? args[3] : 0);
-					int zoffset = (argCount > 4) ? args[4]: 0;
+					double zoffset = (argCount > 4) ? ACSToDouble(args[4]): 0;
 					int distance = (argCount > 5) ? args[5] : 64;
 
 					if (args[0] == 0)

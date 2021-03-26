@@ -20,11 +20,6 @@ protected:
 	FTexture *mSource;
 	TArray<uint8_t> Pixels;
 	TArray<uint32_t> PixelsBgra;
-	struct
-	{
-		const void* Pixels = nullptr;
-		int LastUpdate = -1;
-	} Unlockeddata[3];
 	FSoftwareTextureSpan **Spandata[3] = { };
 	DVector2 Scale;
 	uint8_t WidthBits = 0, HeightBits = 0;
@@ -99,7 +94,6 @@ public:
 	{
 		Pixels.Reset();
 		PixelsBgra.Reset();
-		for (auto& d : Unlockeddata) d = {};
 	}
 	
 	// Returns true if the next call to GetPixels() will return an image different from the
@@ -116,69 +110,16 @@ public:
 	virtual bool Mipmapped() { return true; }
 
 	// Returns a single column of the texture
-	const uint8_t* GetColumn(int style, unsigned int column, const FSoftwareTextureSpan** spans_out)
-	{
-		column = WrapColumn(column);
-		const uint8_t* pixels = GetPixels(style);
-		if (spans_out)
-			*spans_out = Spandata[style][column];
-		return pixels + column * GetPhysicalHeight();
-	}
+	virtual const uint8_t *GetColumn(int style, unsigned int column, const FSoftwareTextureSpan **spans_out);
 
 	// Returns a single column of the texture, in BGRA8 format
-	const uint32_t* GetColumnBgra(unsigned int column, const FSoftwareTextureSpan** spans_out)
-	{
-		column = WrapColumn(column);
-		const uint32_t* pixels = GetPixelsBgra();
-		if (spans_out)
-			*spans_out = Spandata[2][column];
-		return pixels + column * GetPhysicalHeight();
-	}
-
-	unsigned int WrapColumn(unsigned int column)
-	{
-		if ((unsigned)column >= (unsigned)GetPhysicalWidth())
-		{
-			if (WidthMask + 1 == GetPhysicalWidth())
-			{
-				column &= WidthMask;
-			}
-			else
-			{
-				column %= GetPhysicalWidth();
-			}
-		}
-		return column;
-	}
+	virtual const uint32_t *GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out);
 
 	// Returns the whole texture, stored in column-major order, in BGRA8 format
-	const uint32_t* GetPixelsBgra()
-	{
-		int style = 2;
-		if (Unlockeddata[2].LastUpdate == CurrentUpdate)
-		{
-			return static_cast<const uint32_t*>(Unlockeddata[style].Pixels);
-		}
-		else
-		{
-			UpdatePixels(style);
-			return static_cast<const uint32_t*>(Unlockeddata[style].Pixels);
-		}
-	}
+	virtual const uint32_t *GetPixelsBgra();
 
 	// Returns the whole texture, stored in column-major order
-	const uint8_t* GetPixels(int style)
-	{
-		if (Unlockeddata[style].LastUpdate == CurrentUpdate)
-		{
-			return static_cast<const uint8_t*>(Unlockeddata[style].Pixels);
-		}
-		else
-		{
-			UpdatePixels(style);
-			return static_cast<const uint8_t*>(Unlockeddata[style].Pixels);
-		}
-	}
+	virtual const uint8_t *GetPixels(int style);
 
 	const uint8_t *GetPixels(FRenderStyle style)
 	{
@@ -198,11 +139,6 @@ public:
 		return GetColumn(alpha, column, spans_out);
 	}
 
-	static int CurrentUpdate;
-	void UpdatePixels(int style);
-
-	virtual const uint32_t* GetPixelsBgraLocked();
-	virtual const uint8_t* GetPixelsLocked(int style);
 };
 
 // A texture that returns a wiggly version of another texture.
@@ -218,8 +154,8 @@ class FWarpTexture : public FSoftwareTexture
 public:
 	FWarpTexture (FGameTexture *source, int warptype);
 
-	const uint32_t *GetPixelsBgraLocked() override;
-	const uint8_t *GetPixelsLocked(int style) override;
+	const uint32_t *GetPixelsBgra() override;
+	const uint8_t *GetPixels(int style) override;
 	bool CheckModified (int which) override;
 	void GenerateBgraMipmapsFast();
 
@@ -243,8 +179,8 @@ public:
 	~FSWCanvasTexture();
 
 	// Returns the whole texture, stored in column-major order
-	const uint32_t *GetPixelsBgraLocked() override;
-	const uint8_t *GetPixelsLocked(int style) override;
+	const uint32_t *GetPixelsBgra() override;
+	const uint8_t *GetPixels(int style) override;
 
 	virtual void Unload() override;
 	void UpdatePixels(bool truecolor);

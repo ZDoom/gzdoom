@@ -176,6 +176,8 @@ namespace swrenderer
 		// Draw it
 		auto WallSpriteTile = spr->pic;
 
+		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
+
 		RenderTranslucentPass* translucentPass = thread->TranslucentPass.get();
 		short floorclip[MAXWIDTH];
 		for (int x = x1; x < x2; x++)

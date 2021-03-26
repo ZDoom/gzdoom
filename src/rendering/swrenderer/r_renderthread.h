@@ -25,8 +25,9 @@
 #include <memory>
 #include <thread>
 
+class DrawerCommandQueue;
+typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 class RenderMemory;
-class PolyTriangleThreadData;
 struct FDynamicLight;
 
 EXTERN_CVAR(Bool, r_models);
@@ -50,7 +51,6 @@ namespace swrenderer
 	class SWPixelFormatDrawers;
 	class SWTruecolorDrawers;
 	class SWPalDrawers;
-	class WallColumnDrawerArgs;
 
 	class RenderThread
 	{
@@ -75,7 +75,7 @@ namespace swrenderer
 		std::unique_ptr<RenderClipSegment> ClipSegments;
 		std::unique_ptr<RenderViewport> Viewport;
 		std::unique_ptr<LightVisibility> Light;
-		std::unique_ptr<PolyTriangleThreadData> Poly;
+		DrawerCommandQueuePtr DrawQueue;
 
 		TArray<FDynamicLight*> AddedLightsArray;
 
@@ -87,11 +87,11 @@ namespace swrenderer
 
 		SWPixelFormatDrawers *Drawers(RenderViewport *viewport);
 
+		// Make sure texture can accessed safely
+		void PrepareTexture(FSoftwareTexture *texture, FRenderStyle style);
+
 		// Setup poly object in a threadsafe manner
 		void PreparePolyObject(subsector_t *sub);
-
-		// Retrieve skycap color in a threadsafe way
-		std::pair<PalEntry, PalEntry> GetSkyCapColor(FSoftwareTexture* tex);
 		
 	private:
 		std::unique_ptr<SWTruecolorDrawers> tc_drawers;

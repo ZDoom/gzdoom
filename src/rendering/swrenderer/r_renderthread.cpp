@@ -53,6 +53,9 @@
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "r_memory.h"
+#include "common/rendering/polyrenderer/drawers/poly_thread.h"
+
+std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
 
 namespace swrenderer
 {
@@ -63,7 +66,6 @@ namespace swrenderer
 		FrameMemory.reset(new RenderMemory());
 		Viewport.reset(new RenderViewport());
 		Light.reset(new LightVisibility());
-		DrawQueue.reset(new DrawerCommandQueue(FrameMemory.get()));
 		OpaquePass.reset(new RenderOpaquePass(this));
 		TranslucentPass.reset(new RenderTranslucentPass(this));
 		SpriteList.reset(new VisibleSpriteList());
@@ -73,8 +75,9 @@ namespace swrenderer
 		PlaneList.reset(new VisiblePlaneList(this));
 		DrawSegments.reset(new DrawSegmentList(this));
 		ClipSegments.reset(new RenderClipSegment());
-		tc_drawers.reset(new SWTruecolorDrawers(DrawQueue));
-		pal_drawers.reset(new SWPalDrawers(DrawQueue));
+		Poly.reset(new PolyTriangleThreadData(0, 1, 0, 1, 0, screen->GetHeight()));
+		tc_drawers.reset(new SWTruecolorDrawers(this));
+		pal_drawers.reset(new SWPalDrawers(this));
 	}
 
 	RenderThread::~RenderThread()
@@ -89,33 +92,13 @@ namespace swrenderer
 			return pal_drawers.get();
 	}
 
-	static std::mutex loadmutex;
-	void RenderThread::PrepareTexture(FSoftwareTexture *texture, FRenderStyle style)	{
-		if (texture == nullptr)
-			return;
+	std::mutex loadmutex;
 
-		// Textures may not have loaded/refreshed yet. The shared code doing
-		// this is not thread safe. By calling GetPixels in a mutex lock we
-		// make sure that only one thread is loading a texture at any given
-		// time.
-		//
-		// It is critical that this function is called before any direct
-		// calls to GetPixels for this to work.
-
+	std::pair<PalEntry, PalEntry> RenderThread::GetSkyCapColor(FSoftwareTexture* tex)
+	{
 		std::unique_lock<std::mutex> lock(loadmutex);
-
-		const FSoftwareTextureSpan *spans;
-		if (Viewport->RenderTarget->IsBgra())
-		{
-			texture->GetPixelsBgra();
-			texture->GetColumnBgra(0, &spans);
-		}
-		else
-		{
-			bool alpha = !!(style.Flags & STYLEF_RedIsAlpha);
-			texture->GetPixels(alpha);
-			texture->GetColumn(alpha, 0, &spans);
-	}
+		std::pair<PalEntry, PalEntry> colors = R_GetSkyCapColor(tex->GetTexture());
+		return colors;
 	}
 
 	static std::mutex polyobjmutex;

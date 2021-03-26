@@ -54,14 +54,10 @@ namespace swrenderer
 	}
 
 	template<typename BlendT, typename SamplerT>
-	class DrawSprite32T : public DrawerCommand
+	class DrawSprite32T
 	{
 	public:
-		SpriteDrawerArgs args;
-
-		DrawSprite32T(const SpriteDrawerArgs &drawerargs) : args(drawerargs) { }
-
-		void Execute(DrawerThread *thread) override
+		static void DrawColumn(const SpriteDrawerArgs& args)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -74,33 +70,33 @@ namespace swrenderer
 				if (shade_constants.simple_shade)
 				{
 					if (is_nearest_filter)
-						Loop<SimpleShade, NearestFilter>(thread, shade_constants);
+						Loop<SimpleShade, NearestFilter>(args, shade_constants);
 					else
-						Loop<SimpleShade, LinearFilter>(thread, shade_constants);
+						Loop<SimpleShade, LinearFilter>(args, shade_constants);
 				}
 				else
 				{
 					if (is_nearest_filter)
-						Loop<AdvancedShade, NearestFilter>(thread, shade_constants);
+						Loop<AdvancedShade, NearestFilter>(args, shade_constants);
 					else
-						Loop<AdvancedShade, LinearFilter>(thread, shade_constants);
+						Loop<AdvancedShade, LinearFilter>(args, shade_constants);
 				}
 			}
 			else // no linear filtering for translated, shaded or fill
 			{
 				if (shade_constants.simple_shade)
 				{
-					Loop<SimpleShade, NearestFilter>(thread, shade_constants);
+					Loop<SimpleShade, NearestFilter>(args, shade_constants);
 				}
 				else
 				{
-					Loop<AdvancedShade, NearestFilter>(thread, shade_constants);
+					Loop<AdvancedShade, NearestFilter>(args, shade_constants);
 				}
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		FORCEINLINE void Loop(DrawerThread *thread, ShadeConstants shade_constants)
+		FORCEINLINE static void Loop(const SpriteDrawerArgs& args, ShadeConstants shade_constants)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -171,19 +167,14 @@ namespace swrenderer
 			}
 
 			int count = args.Count();
+			if (count <= 0) return;
+
 			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			uint32_t fracstep = args.TextureVStep();
 			uint32_t frac = args.TextureVPos();
 			uint32_t texturefracx = args.TextureUPos();
 			uint32_t *dest = (uint32_t*)args.Dest();
 			int dest_y = args.DestY();
-
-			count = thread->count_for_thread(dest_y, count);
-			if (count <= 0) return;
-			frac += thread->skipped_by_thread(dest_y) * fracstep;
-			dest = thread->dest_for_thread(dest_y, pitch, dest);
-			fracstep *= thread->num_cores;
-			pitch *= thread->num_cores;
 
 			if (FilterModeT::Mode == (int)FilterModes::Linear)
 			{
@@ -220,7 +211,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT>
-		FORCEINLINE BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, const uint32_t *translation, int textureheight, uint32_t one, uint32_t texturefracx, uint32_t color, uint32_t srccolor)
+		FORCEINLINE static BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, const uint32_t *translation, int textureheight, uint32_t one, uint32_t texturefracx, uint32_t color, uint32_t srccolor)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -269,7 +260,7 @@ namespace swrenderer
 			}
 		}
 
-		FORCEINLINE uint32_t SampleShade(uint32_t frac, const uint32_t *source, const uint8_t *colormap)
+		FORCEINLINE static uint32_t SampleShade(uint32_t frac, const uint32_t *source, const uint8_t *colormap)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -286,7 +277,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		FORCEINLINE BgraColor Shade(BgraColor fgcolor, BgraColor mlight, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, BgraColor lightcontrib)
+		FORCEINLINE static BgraColor Shade(BgraColor fgcolor, BgraColor mlight, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, BgraColor lightcontrib)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -316,7 +307,7 @@ namespace swrenderer
 			}
 		}
 
-		FORCEINLINE BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t ifgcolor, uint32_t ifgshade, uint32_t srcalpha, uint32_t destalpha)
+		FORCEINLINE static BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t ifgcolor, uint32_t ifgshade, uint32_t srcalpha, uint32_t destalpha)
 		{
 			using namespace DrawSprite32TModes;
 

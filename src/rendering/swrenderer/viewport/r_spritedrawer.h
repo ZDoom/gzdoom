@@ -111,7 +111,7 @@ namespace swrenderer
 
 		RenderViewport *dc_viewport = nullptr;
 
-		friend class DrawVoxelBlocksRGBACommand;
-		friend class DrawVoxelBlocksPalCommand;
+		friend class SWTruecolorDrawers;
+		friend class SWPalDrawers;
 	};
 }

@@ -93,7 +93,7 @@ EXTERN_CVAR(Int, gl_particles_style)
 
 namespace swrenderer
 {
-	uint8_t PalWall1Command::AddLights(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
+	uint8_t SWPalDrawers::AddLightsColumn(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material)
 	{
 		uint32_t lit_r = 0;
 		uint32_t lit_g = 0;
@@ -146,12 +146,16 @@ namespace swrenderer
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
 
-	void DrawWall1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
+	template<>
+	void SWPalDrawers::DrawWallColumn<DrawWallModeNormal>(const WallColumnDrawerArgs& args)
 	{
+		int count = args.Count();
+		if (count <= 0)
+			return;
+
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
 		uint8_t *colormap = args.Colormap(args.Viewport());
-		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
@@ -160,15 +164,6 @@ namespace swrenderer
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
 		float step_viewpos_z = args.dc_viewpos_step.Z;
-
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
 
 		if (num_dynlights == 0)
 		{
@@ -184,12 +179,9 @@ namespace swrenderer
 			float viewpos_z = args.dc_viewpos.Z;
 			float step_viewpos_z = args.dc_viewpos_step.Z;
 
-			viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
-			step_viewpos_z *= thread->num_cores;
-
 			do
 			{
-				*dest = AddLights(dynlights, num_dynlights, viewpos_z, colormap[source[frac >> bits]], source[frac >> bits]);
+				*dest = AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[source[frac >> bits]], source[frac >> bits]);
 				viewpos_z += step_viewpos_z;
 				frac += fracstep;
 				dest += pitch;
@@ -197,12 +189,16 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallMasked1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
+	template<>
+	void SWPalDrawers::DrawWallColumn<DrawWallModeMasked>(const WallColumnDrawerArgs& args)
 	{
+		int count = args.Count();
+		if (count <= 0)
+			return;
+
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
 		uint8_t *colormap = args.Colormap(args.Viewport());
-		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
@@ -211,15 +207,6 @@ namespace swrenderer
 		int num_dynlights = args.dc_num_lights;
 		float viewpos_z = args.dc_viewpos.Z;
 		float step_viewpos_z = args.dc_viewpos_step.Z;
-
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
 
 		if (num_dynlights == 0)
 		{
@@ -239,15 +226,12 @@ namespace swrenderer
 			float viewpos_z = args.dc_viewpos.Z;
 			float step_viewpos_z = args.dc_viewpos_step.Z;
 
-			viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
-			step_viewpos_z *= thread->num_cores;
-
 			do
 			{
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					*dest = AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix);
+					*dest = AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix);
 				}
 				viewpos_z += step_viewpos_z;
 				frac += fracstep;
@@ -256,12 +240,16 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallAdd1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
+	template<>
+	void SWPalDrawers::DrawWallColumn<DrawWallModeAdd>(const WallColumnDrawerArgs& args)
 	{
+		int count = args.Count();
+		if (count <= 0)
+			return;
+
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
 		uint8_t *colormap = args.Colormap(args.Viewport());
-		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
@@ -269,15 +257,6 @@ namespace swrenderer
 
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
-
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
 
 		if (!r_blendmethod)
 		{
@@ -318,12 +297,16 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallAddClamp1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
+	template<>
+	void SWPalDrawers::DrawWallColumn<DrawWallModeAddClamp>(const WallColumnDrawerArgs& args)
 	{
+		int count = args.Count();
+		if (count <= 0)
+			return;
+
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
 		uint8_t *colormap = args.Colormap(args.Viewport());
-		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
@@ -336,17 +319,6 @@ namespace swrenderer
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
 
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
-		viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
-		step_viewpos_z *= thread->num_cores;
-
 		if (!r_blendmethod)
 		{
 			do
@@ -354,7 +326,7 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = num_dynlights != 0 ? AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
 
 					uint32_t a = fg2rgb[lit] + bg2rgb[*dest];
 					uint32_t b = a;
@@ -378,7 +350,7 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = num_dynlights != 0 ? AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
 
 					uint32_t r = MIN(GPalette.BaseColors[lit].r + GPalette.BaseColors[*dest].r, 255);
 					uint32_t g = MIN(GPalette.BaseColors[lit].g + GPalette.BaseColors[*dest].g, 255);
@@ -392,12 +364,16 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallSubClamp1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
+	template<>
+	void SWPalDrawers::DrawWallColumn<DrawWallModeSubClamp>(const WallColumnDrawerArgs& args)
 	{
+		int count = args.Count();
+		if (count <= 0)
+			return;
+
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
 		uint8_t *colormap = args.Colormap(args.Viewport());
-		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
@@ -410,17 +386,6 @@ namespace swrenderer
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
 
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
-		viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
-		step_viewpos_z *= thread->num_cores;
-
 		if (!r_blendmethod)
 		{
 			do
@@ -428,7 +393,7 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = num_dynlights != 0 ? AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
 
 					uint32_t a = (fg2rgb[lit] | 0x40100400) - bg2rgb[*dest];
 					uint32_t b = a;
@@ -451,7 +416,7 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = num_dynlights != 0 ? AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
 
 					int r = clamp(-GPalette.BaseColors[lit].r + GPalette.BaseColors[*dest].r, 0, 255);
 					int g = clamp(-GPalette.BaseColors[lit].g + GPalette.BaseColors[*dest].g, 0, 255);
@@ -465,12 +430,16 @@ namespace swrenderer
 		}
 	}
 
-	void DrawWallRevSubClamp1PalCommand::DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args)
+	template<>
+	void SWPalDrawers::DrawWallColumn<DrawWallModeRevSubClamp>(const WallColumnDrawerArgs& args)
 	{
+		int count = args.Count();
+		if (count <= 0)
+			return;
+
 		uint32_t fracstep = args.TextureVStep();
 		uint32_t frac = args.TextureVPos();
 		uint8_t *colormap = args.Colormap(args.Viewport());
-		int count = args.Count();
 		const uint8_t *source = args.TexturePixels();
 		uint8_t *dest = args.Dest();
 		int bits = args.TextureFracBits();
@@ -483,17 +452,6 @@ namespace swrenderer
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
 
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
-		viewpos_z += step_viewpos_z * thread->skipped_by_thread(args.DestY());
-		step_viewpos_z *= thread->num_cores;
-
 		if (!r_blendmethod)
 		{
 			do
@@ -501,7 +459,7 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = num_dynlights != 0 ? AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
 
 					uint32_t a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[lit];
 					uint32_t b = a;
@@ -524,7 +482,7 @@ namespace swrenderer
 				uint8_t pix = source[frac >> bits];
 				if (pix != 0)
 				{
-					uint8_t lit = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
+					uint8_t lit = num_dynlights != 0 ? AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
 
 					int r = clamp(GPalette.BaseColors[lit].r - GPalette.BaseColors[*dest].r, 0, 255);
 					int g = clamp(GPalette.BaseColors[lit].g - GPalette.BaseColors[*dest].g, 0, 255);
@@ -540,11 +498,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSkyCommand::PalSkyCommand(const SkyDrawerArgs &args) : args(args)
-	{
-	}
-
-	void DrawSingleSky1PalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSingleSkyColumn(const SkyDrawerArgs& args)
 	{
 		uint8_t *dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
@@ -554,9 +508,20 @@ namespace swrenderer
 		int32_t frac = args.TextureVPos();
 		int32_t fracstep = args.TextureVStep();
 
-		int num_cores = thread->num_cores;
-		int skipped = thread->skipped_by_thread(args.DestY());
-		int count = skipped + thread->count_for_thread(args.DestY(), args.Count()) * num_cores;
+		int count = args.Count();
+
+		if (!args.FadeSky())
+		{
+			for (int index = 0; index < count; index++)
+			{
+				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
+				*dest = source0[sample_index];
+				dest += pitch;
+				frac += fracstep;
+			}
+
+			return;
+		}
 
 		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
 		int start_fade = 2; // How fast it should fade out
@@ -569,26 +534,6 @@ namespace swrenderer
 		end_fadetop_y = clamp(end_fadetop_y, 0, count);
 		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
 		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * skipped;
-		fracstep *= num_cores;
-		pitch *= num_cores;
-
-		if (!args.FadeSky())
-		{
-			count = thread->count_for_thread(args.DestY(), args.Count());
-
-			for (int index = 0; index < count; index++)
-			{
-				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
-				*dest = source0[sample_index];
-				dest += pitch;
-				frac += fracstep;
-			}
-
-			return;
-		}
 
 		uint32_t solid_top = args.SolidTopColor();
 		uint32_t solid_bottom = args.SolidBottomColor();
@@ -604,7 +549,7 @@ namespace swrenderer
 
 		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
 
-		int index = skipped;
+		int index = 0;
 
 		// Top solid color:
 		while (index < start_fadetop_y)
@@ -612,7 +557,7 @@ namespace swrenderer
 			*dest = solid_top_fill;
 			dest += pitch;
 			frac += fracstep;
-			index += num_cores;
+			index++;
 		}
 
 		// Top fade:
@@ -634,7 +579,7 @@ namespace swrenderer
 
 			frac += fracstep;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 
 		// Textured center:
@@ -645,7 +590,7 @@ namespace swrenderer
 
 			frac += fracstep;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 
 		// Fade bottom:
@@ -667,7 +612,7 @@ namespace swrenderer
 
 			frac += fracstep;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 
 		// Bottom solid color:
@@ -675,11 +620,11 @@ namespace swrenderer
 		{
 			*dest = solid_bottom_fill;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 	}
 
-	void DrawDoubleSky1PalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawDoubleSkyColumn(const SkyDrawerArgs& args)
 	{
 		uint8_t *dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
@@ -691,31 +636,9 @@ namespace swrenderer
 		int32_t frac = args.TextureVPos();
 		int32_t fracstep = args.TextureVStep();
 
-		int num_cores = thread->num_cores;
-		int skipped = thread->skipped_by_thread(args.DestY());
-		int count = skipped + thread->count_for_thread(args.DestY(), args.Count()) * num_cores;
-
-		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
-		int start_fade = 2; // How fast it should fade out
-		int fade_length = (1 << (24 - start_fade));
-		int start_fadetop_y = (-frac) / fracstep;
-		int end_fadetop_y = (fade_length - frac) / fracstep;
-		int start_fadebottom_y = ((2 << 24) - fade_length - frac) / fracstep;
-		int end_fadebottom_y = ((2 << 24) - frac) / fracstep;
-		start_fadetop_y = clamp(start_fadetop_y, 0, count);
-		end_fadetop_y = clamp(end_fadetop_y, 0, count);
-		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
-		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * skipped;
-		fracstep *= num_cores;
-		pitch *= num_cores;
-
+		int count = args.Count();
 		if (!args.FadeSky())
 		{
-			count = thread->count_for_thread(args.DestY(), count);
-
 			for (int index = 0; index < count; index++)
 			{
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
@@ -734,6 +657,18 @@ namespace swrenderer
 			return;
 		}
 
+		// Find bands for top solid color, top fade, center textured, bottom fade, bottom solid color:
+		int start_fade = 2; // How fast it should fade out
+		int fade_length = (1 << (24 - start_fade));
+		int start_fadetop_y = (-frac) / fracstep;
+		int end_fadetop_y = (fade_length - frac) / fracstep;
+		int start_fadebottom_y = ((2 << 24) - fade_length - frac) / fracstep;
+		int end_fadebottom_y = ((2 << 24) - frac) / fracstep;
+		start_fadetop_y = clamp(start_fadetop_y, 0, count);
+		end_fadetop_y = clamp(end_fadetop_y, 0, count);
+		start_fadebottom_y = clamp(start_fadebottom_y, 0, count);
+		end_fadebottom_y = clamp(end_fadebottom_y, 0, count);
+
 		uint32_t solid_top = args.SolidTopColor();
 		uint32_t solid_bottom = args.SolidBottomColor();
 
@@ -748,7 +683,7 @@ namespace swrenderer
 
 		const uint32_t *palette = (const uint32_t *)GPalette.BaseColors;
 
-		int index = skipped;
+		int index = 0;
 
 		// Top solid color:
 		while (index < start_fadetop_y)
@@ -756,7 +691,7 @@ namespace swrenderer
 			*dest = solid_top_fill;
 			dest += pitch;
 			frac += fracstep;
-			index += num_cores;
+			index++;
 		}
 
 		// Top fade:
@@ -783,7 +718,7 @@ namespace swrenderer
 
 			frac += fracstep;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 
 		// Textured center:
@@ -800,7 +735,7 @@ namespace swrenderer
 
 			frac += fracstep;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 
 		// Fade bottom:
@@ -827,7 +762,7 @@ namespace swrenderer
 
 			frac += fracstep;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 
 		// Bottom solid color:
@@ -835,17 +770,13 @@ namespace swrenderer
 		{
 			*dest = solid_bottom_fill;
 			dest += pitch;
-			index += num_cores;
+			index++;
 		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalColumnCommand::PalColumnCommand(const SpriteDrawerArgs &args) : args(args)
-	{
-	}
-
-	uint8_t PalColumnCommand::AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b)
+	uint8_t SWPalDrawers::AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b)
 	{
 		if (lit_r == 0 && lit_g == 0 && lit_b == 0)
 			return fg;
@@ -861,7 +792,7 @@ namespace swrenderer
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
 
-	void DrawColumnPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawColumn(const SpriteDrawerArgs& args)
 	{
 		int count;
 		uint8_t *dest;
@@ -869,6 +800,8 @@ namespace swrenderer
 		fixed_t fracstep;
 
 		count = args.Count();
+		if (count <= 0)
+			return;
 
 		// Framebuffer destination address.
 		dest = args.Dest();
@@ -878,15 +811,7 @@ namespace swrenderer
 		fracstep = args.TextureVStep();
 		frac = args.TextureVPos();
 
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
 
 		// [RH] Get local copies of these variables so that the compiler
 		//		has a better chance of optimizing this well.
@@ -931,21 +856,15 @@ namespace swrenderer
 		}
 	}
 
-	void FillColumnPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::FillColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
+
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		pitch *= thread->num_cores;
 
 		uint8_t color = args.SolidColor();
 		do
@@ -955,26 +874,17 @@ namespace swrenderer
 		} while (--count);
 	}
 
-	void FillColumnAddPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::FillAddColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-
-		count = args.Count();
-		dest = args.Dest();
-		uint32_t *bg2rgb;
-		uint32_t fg;
-
-		bg2rgb = args.DestBlend();
-		fg = args.SrcColorIndex();
-		int pitch = args.Viewport()->RenderTarget->GetPitch();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		pitch *= thread->num_cores;
+		uint8_t* dest = args.Dest();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+
+		uint32_t *bg2rgb = args.DestBlend();
+		uint32_t fg = args.SrcColorIndex();
 
 		const PalEntry* pal = GPalette.BaseColors;
 
@@ -1007,12 +917,14 @@ namespace swrenderer
 		}
 	}
 
-	void FillColumnAddClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::FillAddClampColumn(const SpriteDrawerArgs& args)
 	{
 		int count;
 		uint8_t *dest;
 
 		count = args.Count();
+		if (count <= 0)
+			return;
 
 		dest = args.Dest();
 		uint32_t *bg2rgb;
@@ -1021,13 +933,6 @@ namespace swrenderer
 		bg2rgb = args.DestBlend();
 		fg = args.SrcColorIndex();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		pitch *= thread->num_cores;
 
 		const PalEntry* pal = GPalette.BaseColors;
 
@@ -1066,25 +971,17 @@ namespace swrenderer
 		}
 	}
 
-	void FillColumnSubClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::FillSubClampColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-
-		count = args.Count();
-
-		dest = args.Dest();
-		uint32_t *bg2rgb = args.DestBlend();
-		uint32_t fg = args.SrcColorIndex();
-
-		int pitch = args.Viewport()->RenderTarget->GetPitch();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		pitch *= thread->num_cores;
+		uint8_t* dest = args.Dest();
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+
+		uint32_t *bg2rgb = args.DestBlend();
+		uint32_t fg = args.SrcColorIndex();
 
 		const PalEntry* palette = GPalette.BaseColors;
 
@@ -1124,27 +1021,17 @@ namespace swrenderer
 		}
 	}
 
-	void FillColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::FillRevSubClampColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-
-		count = args.Count();
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
-		dest = args.Dest();
-		uint32_t *bg2rgb = args.DestBlend();
-		uint32_t fg = args.SrcColorIndex();
-
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
 
-		count = thread->count_for_thread(args.DestY(), count);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		pitch *= thread->num_cores;
+		uint32_t *bg2rgb = args.DestBlend();
+		uint32_t fg = args.SrcColorIndex();
 
 		const PalEntry *palette = GPalette.BaseColors;
 
@@ -1184,28 +1071,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnAddPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawAddColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1247,29 +1123,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnTranslatedPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawTranslatedColumn(const SpriteDrawerArgs& args)
 	{
-		int 				count;
-		uint8_t*				dest;
-		fixed_t 			frac;
-		fixed_t 			fracstep;
-
-		count = args.Count();
-
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		// [RH] Local copies of global vars to improve compiler optimizations
 		const uint8_t *colormap = args.Colormap(args.Viewport());
@@ -1285,28 +1149,17 @@ namespace swrenderer
 		} while (--count);
 	}
 
-	void DrawColumnTlatedAddPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawTranslatedAddColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		uint32_t *fg2rgb = args.SrcBlend();
 		uint32_t *bg2rgb = args.DestBlend();
@@ -1349,27 +1202,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnShadedPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawShadedColumn(const SpriteDrawerArgs& args)
 	{
-		int  count;
-		uint8_t *dest;
-		fixed_t frac, fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *source = args.TexturePixels();
 		const uint8_t *colormap = args.Colormap(args.Viewport());
@@ -1413,27 +1256,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnAddClampShadedPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawAddClampShadedColumn(const SpriteDrawerArgs& args)
 	{
-		int  count;
-		uint8_t *dest;
-		fixed_t frac, fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *source = args.TexturePixels();
 		const uint8_t *colormap = args.Colormap(args.Viewport());
@@ -1455,28 +1288,17 @@ namespace swrenderer
 		} while (--count);
 	}
 
-	void DrawColumnAddClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawAddClampColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
@@ -1519,28 +1341,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnAddClampTranslatedPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawAddClampTranslatedColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *translation = args.TranslationMap();
 		const uint8_t *colormap = args.Colormap(args.Viewport());
@@ -1584,28 +1395,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnSubClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSubClampColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
@@ -1647,28 +1447,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSubClampTranslatedColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *translation = args.TranslationMap();
 		const uint8_t *colormap = args.Colormap(args.Viewport());
@@ -1711,28 +1500,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnRevSubClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawRevSubClampColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *colormap = args.Colormap(args.Viewport());
 		const uint8_t *source = args.TexturePixels();
@@ -1774,28 +1552,17 @@ namespace swrenderer
 		}
 	}
 
-	void DrawColumnRevSubClampTranslatedPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs& args)
 	{
-		int count;
-		uint8_t *dest;
-		fixed_t frac;
-		fixed_t fracstep;
-
-		count = args.Count();
-		dest = args.Dest();
-
-		fracstep = args.TextureVStep();
-		frac = args.TextureVPos();
-
-		count = thread->count_for_thread(args.DestY(), count);
+		int count = args.Count();
 		if (count <= 0)
 			return;
 
+		uint8_t* dest = args.Dest();
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
-		dest = thread->dest_for_thread(args.DestY(), pitch, dest);
-		frac += fracstep * thread->skipped_by_thread(args.DestY());
-		fracstep *= thread->num_cores;
-		pitch *= thread->num_cores;
+
+		fixed_t fracstep = args.TextureVStep();
+		fixed_t frac = args.TextureVPos();
 
 		const uint8_t *translation = args.TranslationMap();
 		const uint8_t *colormap = args.Colormap(args.Viewport());
@@ -1840,24 +1607,21 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawScaledFuzzColumnPalCommand::DrawScaledFuzzColumnPalCommand(const SpriteDrawerArgs &drawerargs)
+	void SWPalDrawers::DrawScaledFuzzColumn(const SpriteDrawerArgs& args)
 	{
-		_x = drawerargs.FuzzX();
-		_yl = drawerargs.FuzzY1();
-		_yh = drawerargs.FuzzY2();
-		_destorg = drawerargs.Viewport()->GetDest(0, 0);
-		_pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
-		_fuzzpos = fuzzpos;
-		_fuzzviewheight = fuzzviewheight;
-	}
+		int _yl = args.FuzzY1();
+		int _yh = args.FuzzY2();
+		int _x = args.FuzzX();
+		uint8_t* _destorg = args.Viewport()->GetDest(0, 0);
+		int _pitch = args.Viewport()->RenderTarget->GetPitch();
+		int _fuzzpos = fuzzpos;
+		int _fuzzviewheight = fuzzviewheight;
 
-	void DrawScaledFuzzColumnPalCommand::Execute(DrawerThread *thread)
-	{
 		int x = _x;
 		int yl = MAX(_yl, 1);
 		int yh = MIN(_yh, _fuzzviewheight);
 
-		int count = thread->count_for_thread(yl, yh - yl + 1);
+		int count = yh - yl + 1;
 		if (count <= 0) return;
 
 		int pitch = _pitch;
@@ -1868,14 +1632,7 @@ namespace swrenderer
 
 		fixed_t fuzzstep = (200 << FRACBITS) / _fuzzviewheight;
 		fixed_t fuzzcount = FUZZTABLE << FRACBITS;
-		fixed_t fuzz = (fuzz_x << FRACBITS) + yl * fuzzstep;
-
-		dest = thread->dest_for_thread(yl, pitch, dest);
-		pitch *= thread->num_cores;
-
-		fuzz += fuzzstep * thread->skipped_by_thread(yl);
-		fuzz %= fuzzcount;
-		fuzzstep *= thread->num_cores;
+		fixed_t fuzz = ((fuzz_x << FRACBITS) + yl * fuzzstep) % fuzzcount;
 
 		uint8_t *map = NormalLight.Maps;
 
@@ -1894,34 +1651,30 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const SpriteDrawerArgs &args)
+	void SWPalDrawers::DrawUnscaledFuzzColumn(const SpriteDrawerArgs& args)
 	{
-		_yl = args.FuzzY1();
-		_yh = args.FuzzY2();
-		_x = args.FuzzX();
-		_destorg = args.Viewport()->GetDest(0, 0);
-		_pitch = args.Viewport()->RenderTarget->GetPitch();
-		_fuzzpos = fuzzpos;
-		_fuzzviewheight = fuzzviewheight;
-	}
+		int _yl = args.FuzzY1();
+		int _yh = args.FuzzY2();
+		int _x = args.FuzzX();
+		uint8_t* _destorg = args.Viewport()->GetDest(0, 0);
+		int _pitch = args.Viewport()->RenderTarget->GetPitch();
+		int _fuzzpos = fuzzpos;
+		int _fuzzviewheight = fuzzviewheight;
 
-	void DrawFuzzColumnPalCommand::Execute(DrawerThread *thread)
-	{
 		int yl = MAX(_yl, 1);
 		int yh = MIN(_yh, _fuzzviewheight);
 
-		int count = thread->count_for_thread(yl, yh - yl + 1);
+		int count = yh - yl + 1;
 
 		// Zero length.
 		if (count <= 0)
 			return;
 
 		int pitch = _pitch;
-		uint8_t *dest = thread->dest_for_thread(yl, pitch, yl * pitch + _x + _destorg);
+		uint8_t *dest = yl * pitch + _x + _destorg;
 
-		pitch = pitch * thread->num_cores;
-		int fuzzstep = thread->num_cores;
-		int fuzz = (_fuzzpos + thread->skipped_by_thread(yl)) % FUZZTABLE;
+		int fuzzstep = 1;
+		int fuzz = _fuzzpos % FUZZTABLE;
 
 #ifndef ORIGINAL_FUZZ
 
@@ -1951,8 +1704,6 @@ namespace swrenderer
 #else
 
 		uint8_t *map = &NormalLight.Maps[6 * 256];
-
-		yl += thread->skipped_by_thread(yl);
 
 		// Handle the case where we would go out of bounds at the top:
 		if (yl < fuzzstep)
@@ -2010,32 +1761,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	PalSpanCommand::PalSpanCommand(const SpanDrawerArgs &args)
-	{
-		_source = args.TexturePixels();
-		_colormap = args.Colormap(args.Viewport());
-		_xfrac = args.TextureUPos();
-		_yfrac = args.TextureVPos();
-		_y = args.DestY();
-		_x1 = args.DestX1();
-		_x2 = args.DestX2();
-		_dest = args.Viewport()->GetDest(_x1, _y);
-		_xstep = args.TextureUStep();
-		_ystep = args.TextureVStep();
-		_srcwidth = args.TextureWidth();
-		_srcheight = args.TextureHeight();
-		_srcblend = args.SrcBlend();
-		_destblend = args.DestBlend();
-		_color = args.SolidColor();
-		_srcalpha = args.SrcAlpha();
-		_destalpha = args.DestAlpha();
-		_dynlights = args.dc_lights;
-		_num_dynlights = args.dc_num_lights;
-		_viewpos_x = args.dc_viewpos.X;
-		_step_viewpos_x = args.dc_viewpos_step.X;
-	}
-
-	uint8_t PalSpanCommand::AddLights(const DrawerLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material)
+	uint8_t SWPalDrawers::AddLightsSpan(const DrawerLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material)
 	{
 		uint32_t lit_r = 0;
 		uint32_t lit_g = 0;
@@ -2088,10 +1814,29 @@ namespace swrenderer
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
 
-	void DrawSpanPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSpan(const SpanDrawerArgs& args)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		const uint8_t* _source = args.TexturePixels();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint32_t _xfrac = args.TextureUPos();
+		uint32_t _yfrac = args.TextureVPos();
+		int _y = args.DestY();
+		int _x1 = args.DestX1();
+		int _x2 = args.DestX2();
+		uint8_t* _dest = args.Viewport()->GetDest(_x1, _y);
+		uint32_t _xstep = args.TextureUStep();
+		uint32_t _ystep = args.TextureVStep();
+		int _srcwidth = args.TextureWidth();
+		int _srcheight = args.TextureHeight();
+		uint32_t* _srcblend = args.SrcBlend();
+		uint32_t* _destblend = args.DestBlend();
+		int _color = args.SolidColor();
+		fixed_t _srcalpha = args.SrcAlpha();
+		fixed_t _destalpha = args.DestAlpha();
+		DrawerLight* _dynlights = args.dc_lights;
+		int _num_dynlights = args.dc_num_lights;
+		float _viewpos_x = args.dc_viewpos.X;
+		float _step_viewpos_x = args.dc_viewpos_step.X;
 
 		uint32_t xfrac;
 		uint32_t yfrac;
@@ -2145,7 +1890,7 @@ namespace swrenderer
 
 				// Lookup pixel from flat texture tile,
 				//  re-index using light/colormap.
-				*dest++ = AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]);
+				*dest++ = AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]);
 
 				// Next step in u,v.
 				xfrac += xstep;
@@ -2165,7 +1910,7 @@ namespace swrenderer
 
 				// Lookup pixel from flat texture tile,
 				//  re-index using light/colormap.
-				*dest++ = AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]);
+				*dest++ = AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]);
 
 				// Next step in u,v.
 				xfrac += xstep;
@@ -2175,10 +1920,29 @@ namespace swrenderer
 		}
 	}
 
-	void DrawSpanMaskedPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSpanMasked(const SpanDrawerArgs& args)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		const uint8_t* _source = args.TexturePixels();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint32_t _xfrac = args.TextureUPos();
+		uint32_t _yfrac = args.TextureVPos();
+		int _y = args.DestY();
+		int _x1 = args.DestX1();
+		int _x2 = args.DestX2();
+		uint8_t* _dest = args.Viewport()->GetDest(_x1, _y);
+		uint32_t _xstep = args.TextureUStep();
+		uint32_t _ystep = args.TextureVStep();
+		int _srcwidth = args.TextureWidth();
+		int _srcheight = args.TextureHeight();
+		uint32_t* _srcblend = args.SrcBlend();
+		uint32_t* _destblend = args.DestBlend();
+		int _color = args.SolidColor();
+		fixed_t _srcalpha = args.SrcAlpha();
+		fixed_t _destalpha = args.DestAlpha();
+		DrawerLight* _dynlights = args.dc_lights;
+		int _num_dynlights = args.dc_num_lights;
+		float _viewpos_x = args.dc_viewpos.X;
+		float _step_viewpos_x = args.dc_viewpos_step.X;
 
 		uint32_t xfrac;
 		uint32_t yfrac;
@@ -2216,7 +1980,7 @@ namespace swrenderer
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					*dest = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+					*dest = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 				}
 				dest++;
 				xfrac += xstep;
@@ -2237,7 +2001,7 @@ namespace swrenderer
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					*dest = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+					*dest = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 				}
 				dest++;
 				xfrac += xstep;
@@ -2247,10 +2011,29 @@ namespace swrenderer
 		}
 	}
 
-	void DrawSpanTranslucentPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSpanTranslucent(const SpanDrawerArgs& args)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		const uint8_t* _source = args.TexturePixels();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint32_t _xfrac = args.TextureUPos();
+		uint32_t _yfrac = args.TextureVPos();
+		int _y = args.DestY();
+		int _x1 = args.DestX1();
+		int _x2 = args.DestX2();
+		uint8_t* _dest = args.Viewport()->GetDest(_x1, _y);
+		uint32_t _xstep = args.TextureUStep();
+		uint32_t _ystep = args.TextureVStep();
+		int _srcwidth = args.TextureWidth();
+		int _srcheight = args.TextureHeight();
+		uint32_t* _srcblend = args.SrcBlend();
+		uint32_t* _destblend = args.DestBlend();
+		int _color = args.SolidColor();
+		fixed_t _srcalpha = args.SrcAlpha();
+		fixed_t _destalpha = args.DestAlpha();
+		DrawerLight* _dynlights = args.dc_lights;
+		int _num_dynlights = args.dc_num_lights;
+		float _viewpos_x = args.dc_viewpos.X;
+		float _step_viewpos_x = args.dc_viewpos_step.X;
 
 		uint32_t xfrac;
 		uint32_t yfrac;
@@ -2289,7 +2072,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					fg = fg2rgb[fg];
 					bg = bg2rgb[bg];
@@ -2308,7 +2091,7 @@ namespace swrenderer
 				do
 				{
 					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					fg = fg2rgb[fg];
 					bg = bg2rgb[bg];
@@ -2328,7 +2111,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2348,7 +2131,7 @@ namespace swrenderer
 				do
 				{
 					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2363,10 +2146,29 @@ namespace swrenderer
 		}
 	}
 
-	void DrawSpanMaskedTranslucentPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSpanMaskedTranslucent(const SpanDrawerArgs& args)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		const uint8_t* _source = args.TexturePixels();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint32_t _xfrac = args.TextureUPos();
+		uint32_t _yfrac = args.TextureVPos();
+		int _y = args.DestY();
+		int _x1 = args.DestX1();
+		int _x2 = args.DestX2();
+		uint8_t* _dest = args.Viewport()->GetDest(_x1, _y);
+		uint32_t _xstep = args.TextureUStep();
+		uint32_t _ystep = args.TextureVStep();
+		int _srcwidth = args.TextureWidth();
+		int _srcheight = args.TextureHeight();
+		uint32_t* _srcblend = args.SrcBlend();
+		uint32_t* _destblend = args.DestBlend();
+		int _color = args.SolidColor();
+		fixed_t _srcalpha = args.SrcAlpha();
+		fixed_t _destalpha = args.DestAlpha();
+		DrawerLight* _dynlights = args.dc_lights;
+		int _num_dynlights = args.dc_num_lights;
+		float _viewpos_x = args.dc_viewpos.X;
+		float _step_viewpos_x = args.dc_viewpos_step.X;
 
 		uint32_t xfrac;
 		uint32_t yfrac;
@@ -2410,7 +2212,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						fg = fg2rgb[fg];
 						bg = bg2rgb[bg];
@@ -2436,7 +2238,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						fg = fg2rgb[fg];
 						bg = bg2rgb[bg];
@@ -2463,7 +2265,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2489,7 +2291,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2505,10 +2307,29 @@ namespace swrenderer
 		}
 	}
 
-	void DrawSpanAddClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSpanAddClamp(const SpanDrawerArgs& args)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		const uint8_t* _source = args.TexturePixels();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint32_t _xfrac = args.TextureUPos();
+		uint32_t _yfrac = args.TextureVPos();
+		int _y = args.DestY();
+		int _x1 = args.DestX1();
+		int _x2 = args.DestX2();
+		uint8_t* _dest = args.Viewport()->GetDest(_x1, _y);
+		uint32_t _xstep = args.TextureUStep();
+		uint32_t _ystep = args.TextureVStep();
+		int _srcwidth = args.TextureWidth();
+		int _srcheight = args.TextureHeight();
+		uint32_t* _srcblend = args.SrcBlend();
+		uint32_t* _destblend = args.DestBlend();
+		int _color = args.SolidColor();
+		fixed_t _srcalpha = args.SrcAlpha();
+		fixed_t _destalpha = args.DestAlpha();
+		DrawerLight* _dynlights = args.dc_lights;
+		int _num_dynlights = args.dc_num_lights;
+		float _viewpos_x = args.dc_viewpos.X;
+		float _step_viewpos_x = args.dc_viewpos_step.X;
 
 		uint32_t xfrac;
 		uint32_t yfrac;
@@ -2546,7 +2367,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 					uint32_t b = a;
 
@@ -2569,7 +2390,7 @@ namespace swrenderer
 				do
 				{
 					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 					uint32_t b = a;
 
@@ -2593,7 +2414,7 @@ namespace swrenderer
 				do
 				{
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2613,7 +2434,7 @@ namespace swrenderer
 				do
 				{
 					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
-					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
+					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2628,10 +2449,29 @@ namespace swrenderer
 		}
 	}
 
-	void DrawSpanMaskedAddClampPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawSpanMaskedAddClamp(const SpanDrawerArgs& args)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		const uint8_t* _source = args.TexturePixels();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint32_t _xfrac = args.TextureUPos();
+		uint32_t _yfrac = args.TextureVPos();
+		int _y = args.DestY();
+		int _x1 = args.DestX1();
+		int _x2 = args.DestX2();
+		uint8_t* _dest = args.Viewport()->GetDest(_x1, _y);
+		uint32_t _xstep = args.TextureUStep();
+		uint32_t _ystep = args.TextureVStep();
+		int _srcwidth = args.TextureWidth();
+		int _srcheight = args.TextureHeight();
+		uint32_t* _srcblend = args.SrcBlend();
+		uint32_t* _destblend = args.DestBlend();
+		int _color = args.SolidColor();
+		fixed_t _srcalpha = args.SrcAlpha();
+		fixed_t _destalpha = args.DestAlpha();
+		DrawerLight* _dynlights = args.dc_lights;
+		int _num_dynlights = args.dc_num_lights;
+		float _viewpos_x = args.dc_viewpos.X;
+		float _step_viewpos_x = args.dc_viewpos_step.X;
 
 		uint32_t xfrac;
 		uint32_t yfrac;
@@ -2674,7 +2514,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 						uint32_t b = a;
 	
@@ -2704,7 +2544,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 						uint32_t b = a;
 	
@@ -2735,7 +2575,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2761,7 +2601,7 @@ namespace swrenderer
 					texdata = source[spot];
 					if (texdata != 0)
 					{
-						uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
+						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
 						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
 						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
@@ -2777,37 +2617,49 @@ namespace swrenderer
 		}
 	}
 
-	void FillSpanPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::FillSpan(const SpanDrawerArgs& args)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		const uint8_t* _source = args.TexturePixels();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint32_t _xfrac = args.TextureUPos();
+		uint32_t _yfrac = args.TextureVPos();
+		int _y = args.DestY();
+		int _x1 = args.DestX1();
+		int _x2 = args.DestX2();
+		uint8_t* _dest = args.Viewport()->GetDest(_x1, _y);
+		uint32_t _xstep = args.TextureUStep();
+		uint32_t _ystep = args.TextureVStep();
+		int _srcwidth = args.TextureWidth();
+		int _srcheight = args.TextureHeight();
+		uint32_t* _srcblend = args.SrcBlend();
+		uint32_t* _destblend = args.DestBlend();
+		int _color = args.SolidColor();
+		fixed_t _srcalpha = args.SrcAlpha();
+		fixed_t _destalpha = args.DestAlpha();
+		DrawerLight* _dynlights = args.dc_lights;
+		int _num_dynlights = args.dc_num_lights;
+		float _viewpos_x = args.dc_viewpos.X;
+		float _step_viewpos_x = args.dc_viewpos_step.X;
 
 		memset(_dest, _color, _x2 - _x1 + 1);
 	}
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawTiltedSpanPalCommand::DrawTiltedSpanPalCommand(const SpanDrawerArgs &args, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap)
-		: plane_sz(plane_sz), plane_su(plane_su), plane_sv(plane_sv), plane_shade(plane_shade), planeshade(planeshade), planelightfloat(planelightfloat), pviewx(pviewx), pviewy(pviewy)
+	void SWPalDrawers::DrawTiltedSpan(const SpanDrawerArgs& args, const FVector3& plane_sz, const FVector3& plane_su, const FVector3& plane_sv, bool is_planeshaded, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap* basecolormap)
 	{
-		y = args.DestY();
-		x1 = args.DestX1();
-		x2 = args.DestX2();
-		viewport = args.Viewport();
-		_colormap = args.Colormap(args.Viewport());
-		_dest = args.Viewport()->GetDest(x1, y);
-		_ybits = args.TextureHeightBits();
-		_xbits = args.TextureWidthBits();
-		_source = args.TexturePixels();
-		basecolormapdata = basecolormap->Maps;
-	}
+		int y = args.DestY();
+		int x1 = args.DestX1();
+		int x2 = args.DestX2();
+		RenderViewport* viewport = args.Viewport();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint8_t* _dest = args.Viewport()->GetDest(x1, y);
+		int _ybits = args.TextureHeightBits();
+		int _xbits = args.TextureWidthBits();
+		const uint8_t* _source = args.TexturePixels();
+		uint8_t* basecolormapdata = basecolormap->Maps;
 
-	void DrawTiltedSpanPalCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->line_skipped_by_thread(y))
-			return;
-
-		const uint8_t **tiltlighting = thread->tiltlighting;
+		const uint8_t **tiltlighting = this->tiltlighting;
 
 		int width = x2 - x1;
 		double iz, uz, vz;
@@ -2818,11 +2670,11 @@ namespace swrenderer
 		iz = plane_sz[2] + plane_sz[1] * (viewport->viewwindow.centery - y) + plane_sz[0] * (x1 - viewport->viewwindow.centerx);
 
 		// Lighting is simple. It's just linear interpolation from start to end
-		if (plane_shade)
+		if (is_planeshaded)
 		{
 			uz = (iz + plane_sz[0] * width) * planelightfloat;
 			vz = iz * planelightfloat;
-			CalcTiltedLighting(vz, uz, width, thread);
+			CalcTiltedLighting(vz, uz, width, planeshade, basecolormapdata);
 		}
 		else
 		{
@@ -2939,9 +2791,9 @@ namespace swrenderer
 
 	// Calculates the lighting for one row of a tilted plane. If the definition
 	// of GETPALOOKUP changes, this needs to change, too.
-	void DrawTiltedSpanPalCommand::CalcTiltedLighting(double lstart, double lend, int width, DrawerThread *thread)
+	void SWPalDrawers::CalcTiltedLighting(double lstart, double lend, int width, int planeshade, uint8_t* basecolormapdata)
 	{
-		const uint8_t **tiltlighting = thread->tiltlighting;
+		const uint8_t **tiltlighting = this->tiltlighting;
 
 		uint8_t *lightstart = basecolormapdata + (GETPALOOKUP(lstart, planeshade) << COLORMAPSHIFT);
 		uint8_t *lightend = basecolormapdata + (GETPALOOKUP(lend, planeshade) << COLORMAPSHIFT);
@@ -2967,38 +2819,25 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanPalCommand::DrawColoredSpanPalCommand(const SpanDrawerArgs &args) : PalSpanCommand(args)
+	void SWPalDrawers::DrawColoredSpan(const SpanDrawerArgs& args)
 	{
-		y = args.DestY();
-		x1 = args.DestX1();
-		x2 = args.DestX2();
-		color = args.SolidColor();
-		dest = args.Viewport()->GetDest(x1, y);
-	}
-
-	void DrawColoredSpanPalCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->line_skipped_by_thread(y))
-			return;
-
+		int y = args.DestY();
+		int x1 = args.DestX1();
+		int x2 = args.DestX2();
+		int color = args.SolidColor();
+		uint8_t* _dest = args.Viewport()->GetDest(0, y);
 		memset(_dest, color, x2 - x1 + 1);
 	}
 
 	/////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLinePalCommand::DrawFogBoundaryLinePalCommand(const SpanDrawerArgs &args) : PalSpanCommand(args)
+	void SWPalDrawers::DrawFogBoundaryLine(const SpanDrawerArgs& args)
 	{
-		y = args.DestY();
-		x1 = args.DestX1();
-		x2 = args.DestX2();
-		_colormap = args.Colormap(args.Viewport());
-		_dest = args.Viewport()->GetDest(0, y);
-	}
-
-	void DrawFogBoundaryLinePalCommand::Execute(DrawerThread *thread)
-	{
-		if (thread->line_skipped_by_thread(y))
-			return;
+		int y = args.DestY();
+		int x1 = args.DestX1();
+		int x2 = args.DestX2();
+		const uint8_t* _colormap = args.Colormap(args.Viewport());
+		uint8_t* _dest = args.Viewport()->GetDest(0, y);
 
 		const uint8_t *colormap = _colormap;
 		uint8_t *dest = _dest;
@@ -3011,34 +2850,21 @@ namespace swrenderer
 	
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawParticleColumnPalCommand::DrawParticleColumnPalCommand(uint8_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx)
+	void SWPalDrawers::DrawParticleColumn(int x, int _dest_y, int _count, uint32_t _fg, uint32_t _alpha, uint32_t _fracposx)
 	{
-		_dest = dest;
-		_pitch = pitch;
-		_count = count;
-		_fg = fg;
-		_alpha = alpha;
-		_fracposx = fracposx;
-		_dest_y = dest_y;
-	}
+		uint8_t* dest = thread->Viewport->GetDest(x, _dest_y);
+		int pitch = thread->Viewport->RenderTarget->GetPitch();
 
-	void DrawParticleColumnPalCommand::Execute(DrawerThread *thread)
-	{
-		int count = thread->count_for_thread(_dest_y, _count);
+		int count = _count;
 		if (count <= 0)
 			return;
-
-		int pitch = _pitch;
-		uint8_t *dest = thread->dest_for_thread(_dest_y, pitch, _dest);
-		pitch = pitch * thread->num_cores;
 
 		int particle_texture_index = MIN<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
 		const uint32_t *source = &particle_texture[particle_texture_index][(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
 		uint32_t particle_alpha = _alpha;
 
 		uint32_t fracstep = PARTICLE_TEXTURE_SIZE * FRACUNIT / _count;
-		uint32_t fracpos = fracstep * thread->skipped_by_thread(_dest_y) + fracstep / 2;
-		fracstep *= thread->num_cores;
+		uint32_t fracpos = fracstep / 2;
 
 		uint32_t fg_red = (_fg >> 16) & 0xff;
 		uint32_t fg_green = (_fg >> 8) & 0xff;
@@ -3066,11 +2892,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawVoxelBlocksPalCommand::DrawVoxelBlocksPalCommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) : args(args), blocks(blocks), blockcount(blockcount)
-	{
-	}
-
-	void DrawVoxelBlocksPalCommand::Execute(DrawerThread *thread)
+	void SWPalDrawers::DrawVoxelBlocks(const SpriteDrawerArgs& args, const VoxelBlock* blocks, int blockcount)
 	{
 		int destpitch = args.Viewport()->RenderTarget->GetPitch();
 		uint8_t *destorig = args.Viewport()->RenderTarget->GetPixels();
@@ -3088,12 +2910,6 @@ namespace swrenderer
 			int width = block.width;
 			int pitch = destpitch;
 			uint8_t *dest = destorig + (block.x + block.y * pitch);
-
-			count = thread->count_for_thread(block.y, count);
-			dest = thread->dest_for_thread(block.y, pitch, dest);
-			fracpos += iscale * thread->skipped_by_thread(block.y);
-			iscale *= thread->num_cores;
-			pitch *= thread->num_cores;
 
 			if (width == 1)
 			{
@@ -3158,6 +2974,166 @@ namespace swrenderer
 					fracpos += iscale;
 					count--;
 				}
+			}
+		}
+	}
+
+	template<typename DrawerT>
+	void SWPalDrawers::DrawWallColumns(const WallDrawerArgs& wallargs)
+	{
+		wallcolargs.wallargs = &wallargs;
+
+		bool haslights = r_dynlights && wallargs.lightlist;
+		if (haslights)
+		{
+			float dx = wallargs.WallC.tright.X - wallargs.WallC.tleft.X;
+			float dy = wallargs.WallC.tright.Y - wallargs.WallC.tleft.Y;
+			float length = sqrt(dx * dx + dy * dy);
+			wallcolargs.dc_normal.X = dy / length;
+			wallcolargs.dc_normal.Y = -dx / length;
+			wallcolargs.dc_normal.Z = 0.0f;
+		}
+
+		wallcolargs.SetTextureFracBits(wallargs.fracbits);
+
+		float curlight = wallargs.lightpos;
+		float lightstep = wallargs.lightstep;
+		int shade = wallargs.Shade();
+
+		if (wallargs.fixedlight)
+		{
+			curlight = wallargs.FixedLight();
+			lightstep = 0;
+		}
+
+		float upos = wallargs.texcoords.upos, ustepX = wallargs.texcoords.ustepX, ustepY = wallargs.texcoords.ustepY;
+		float vpos = wallargs.texcoords.vpos, vstepX = wallargs.texcoords.vstepX, vstepY = wallargs.texcoords.vstepY;
+		float wpos = wallargs.texcoords.wpos, wstepX = wallargs.texcoords.wstepX, wstepY = wallargs.texcoords.wstepY;
+		float startX = wallargs.texcoords.startX;
+
+		int x1 = wallargs.x1;
+		int x2 = wallargs.x2;
+
+		upos += ustepX * (x1 + 0.5f - startX);
+		vpos += vstepX * (x1 + 0.5f - startX);
+		wpos += wstepX * (x1 + 0.5f - startX);
+
+		float centerY = wallargs.CenterY;
+		centerY -= 0.5f;
+
+		auto uwal = wallargs.uwal;
+		auto dwal = wallargs.dwal;
+		for (int x = x1; x < x2; x++)
+		{
+			int y1 = uwal[x];
+			int y2 = dwal[x];
+			if (y2 > y1)
+			{
+				wallcolargs.SetLight(curlight, shade);
+				if (haslights)
+					SetLights(wallcolargs, x, y1, wallargs);
+				else
+					wallcolargs.dc_num_lights = 0;
+
+				float dy = (y1 - centerY);
+				float u = upos + ustepY * dy;
+				float v = vpos + vstepY * dy;
+				float w = wpos + wstepY * dy;
+				float scaleU = ustepX;
+				float scaleV = vstepY;
+				w = 1.0f / w;
+				u *= w;
+				v *= w;
+				scaleU *= w;
+				scaleV *= w;
+
+				uint32_t texelX = (uint32_t)(int64_t)((u - std::floor(u)) * 0x1'0000'0000LL);
+				uint32_t texelY = (uint32_t)(int64_t)((v - std::floor(v)) * 0x1'0000'0000LL);
+				uint32_t texelStepX = (uint32_t)(int64_t)(scaleU * 0x1'0000'0000LL);
+				uint32_t texelStepY = (uint32_t)(int64_t)(scaleV * 0x1'0000'0000LL);
+
+				DrawWallColumn8<DrawerT>(wallcolargs, x, y1, y2, texelX, texelY, texelStepY);
+			}
+
+			upos += ustepX;
+			vpos += vstepX;
+			wpos += wstepX;
+			curlight += lightstep;
+		}
+
+		if (r_modelscene)
+		{
+			for (int x = x1; x < x2; x++)
+			{
+				int y1 = uwal[x];
+				int y2 = dwal[x];
+				if (y2 > y1)
+				{
+					int count = y2 - y1;
+
+					float w1 = 1.0f / wallargs.WallC.sz1;
+					float w2 = 1.0f / wallargs.WallC.sz2;
+					float t = (x - wallargs.WallC.sx1 + 0.5f) / (wallargs.WallC.sx2 - wallargs.WallC.sx1);
+					float wcol = w1 * (1.0f - t) + w2 * t;
+					float zcol = 1.0f / wcol;
+					float zbufferdepth = 1.0f / (zcol / wallargs.FocalTangent);
+
+					wallcolargs.SetDest(x, y1);
+					wallcolargs.SetCount(count);
+					DrawDepthColumn(wallcolargs, zbufferdepth);
+				}
+			}
+		}
+	}
+
+	template<typename DrawerT>
+	void SWPalDrawers::DrawWallColumn8(WallColumnDrawerArgs& drawerargs, int x, int y1, int y2, uint32_t texelX, uint32_t texelY, uint32_t texelStepY)
+	{
+		auto& wallargs = *drawerargs.wallargs;
+		int texwidth = wallargs.texwidth;
+		int texheight = wallargs.texheight;
+		int fracbits = wallargs.fracbits;
+		uint32_t uv_max = texheight << fracbits;
+
+		const uint8_t* pixels = static_cast<const uint8_t*>(wallargs.texpixels) + (((texelX >> 16) * texwidth) >> 16) * texheight;
+
+		texelY = (static_cast<uint64_t>(texelY) * texheight) >> (32 - fracbits);
+		texelStepY = (static_cast<uint64_t>(texelStepY) * texheight) >> (32 - fracbits);
+
+		drawerargs.SetTexture(pixels, nullptr, texheight);
+		drawerargs.SetTextureVStep(texelStepY);
+
+		if (uv_max == 0 || texelStepY == 0) // power of two
+		{
+			int count = y2 - y1;
+
+			drawerargs.SetDest(x, y1);
+			drawerargs.SetCount(count);
+			drawerargs.SetTextureVPos(texelY);
+			DrawWallColumn<DrawerT>(drawerargs);
+		}
+		else
+		{
+			uint32_t left = y2 - y1;
+			int y = y1;
+			while (left > 0)
+			{
+				uint32_t available = uv_max - texelY;
+				uint32_t next_uv_wrap = available / texelStepY;
+				if (available % texelStepY != 0)
+					next_uv_wrap++;
+				uint32_t count = MIN(left, next_uv_wrap);
+
+				drawerargs.SetDest(x, y);
+				drawerargs.SetCount(count);
+				drawerargs.SetTextureVPos(texelY);
+				DrawWallColumn<DrawerT>(drawerargs);
+
+				y += count;
+				left -= count;
+				texelY += texelStepY * count;
+				if (texelY >= uv_max)
+					texelY -= uv_max;
 			}
 		}
 	}

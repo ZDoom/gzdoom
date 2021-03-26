@@ -39,7 +39,7 @@
 #include "m_alloc.h"
 #include "imagehelpers.h"
 #include "texturemanager.h"
-
+#include <mutex>
 
 inline EUpscaleFlags scaleFlagFromUseType(ETextureType useType)
 {
@@ -119,7 +119,7 @@ void FSoftwareTexture::CalcBitSize ()
 //
 //==========================================================================
 
-const uint8_t *FSoftwareTexture::GetPixels(int style)
+const uint8_t *FSoftwareTexture::GetPixelsLocked(int style)
 {
 	if (Pixels.Size() == 0 || CheckModified(style))
 	{
@@ -158,13 +158,7 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 	return Pixels.Data();
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint32_t *FSoftwareTexture::GetPixelsBgra()
+const uint32_t *FSoftwareTexture::GetPixelsBgraLocked()
 {
 	if (PixelsBgra.Size() == 0 || CheckModified(2))
 	{
@@ -197,60 +191,31 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 //
 //==========================================================================
 
-const uint8_t *FSoftwareTexture::GetColumn(int index, unsigned int column, const FSoftwareTextureSpan **spans_out)
+int FSoftwareTexture::CurrentUpdate = 0;
+namespace swrenderer { extern std::mutex loadmutex; }
+
+void FSoftwareTexture::UpdatePixels(int index)
 {
-	auto Pixeldata = GetPixels(index);
-	if ((unsigned)column >= (unsigned)GetPhysicalWidth())
+	std::unique_lock<std::mutex> lock(swrenderer::loadmutex);
+	if (Unlockeddata[index].LastUpdate != CurrentUpdate)
 	{
-		if (WidthMask + 1 == GetPhysicalWidth())
+		if (index != 2)
 		{
-			column &= WidthMask;
+			const uint8_t* Pixeldata = GetPixelsLocked(index);
+			if (Spandata[index] == nullptr)
+				Spandata[index] = CreateSpans(Pixeldata);
+			Unlockeddata[index].Pixels = Pixeldata;
+			Unlockeddata[index].LastUpdate = CurrentUpdate;
 		}
 		else
 		{
-			column %= GetPhysicalWidth();
+			const uint32_t* Pixeldata = GetPixelsBgraLocked();
+			if (Spandata[index] == nullptr)
+				Spandata[index] = CreateSpans(Pixeldata);
+			Unlockeddata[index].Pixels = Pixeldata;
+			Unlockeddata[index].LastUpdate = CurrentUpdate;
 		}
 	}
-	if (spans_out != nullptr)
-	{
-		if (Spandata[index] == nullptr)
-		{
-			Spandata[index] = CreateSpans(Pixeldata);
-		}
-		*spans_out = Spandata[index][column];
-	}
-	return Pixeldata + column * GetPhysicalHeight();
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-const uint32_t *FSoftwareTexture::GetColumnBgra(unsigned int column, const FSoftwareTextureSpan **spans_out)
-{
-	auto Pixeldata = GetPixelsBgra();
-	if ((unsigned)column >= (unsigned)GetPhysicalWidth())
-	{
-		if (WidthMask + 1 == GetPhysicalWidth())
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= GetPhysicalWidth();
-		}
-	}
-	if (spans_out != nullptr)
-	{
-		if (Spandata[2] == nullptr)
-		{
-			Spandata[2] = CreateSpans(Pixeldata);
-		}
-		*spans_out = Spandata[2][column];
-	}
-	return Pixeldata + column * GetPhysicalHeight();
 }
 
 //==========================================================================
@@ -562,15 +527,23 @@ void FSoftwareTexture::FreeAllSpans()
 	}
 }
 
+// Note: this function needs to be thread safe
 FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex)
 {
 	FSoftwareTexture* SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
 	if (!SoftwareTexture)
 	{
-		if (tex->isSoftwareCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
-		else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
-		else SoftwareTexture = new FSoftwareTexture(tex);
-		tex->SetSoftwareTexture(SoftwareTexture);
+		static std::mutex loadmutex;
+		std::unique_lock<std::mutex> lock(loadmutex);
+
+		SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
+		if (!SoftwareTexture)
+		{
+			if (tex->isSoftwareCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
+			else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
+			else SoftwareTexture = new FSoftwareTexture(tex);
+			tex->SetSoftwareTexture(SoftwareTexture);
+		}
 	}
 	return SoftwareTexture;
 }
@@ -582,6 +555,7 @@ CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	R_InitSkyMap();
 }
 
+// Note: this function needs to be thread safe
 FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, bool checkcompat, bool allownull)
 {
 	bool needpal = !vid_nopalsubstitutions && !V_IsTrueColor();

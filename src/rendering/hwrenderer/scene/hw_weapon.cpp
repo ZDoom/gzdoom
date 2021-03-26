@@ -476,12 +476,31 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	Vert.v[2] = FVector2(x2, y1);
 	Vert.v[3] = FVector2(x2, y2);
 
+	
+
+	DVector2 Scale =	psp->scale;
+	DVector2 Pivot =	psp->pivot;
+	DAngle Rotation =	psp->rotation;
+
+	DPSprite *parent = psp->GetParent();
+	DPSprite *par = parent;
+
+	while (par)
+	{
+		double flipper = (par->Flags & PSPF_FLIP) ? -1. : 1.;
+		Scale = { Scale.X * par->scale.X, Scale.Y * par->scale.Y };
+		Pivot = { Pivot.X + par->pivot.X * flipper, Pivot.Y + par->pivot.Y };
+		Rotation += par->rotation * flipper;
+		par = par->GetParent();
+	}
+
+
 	for (int i = 0; i < 4; i++)
 	{
 		const float cx = (flip) ? -psp->Coord[i].X : psp->Coord[i].X;
 		Vert.v[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
 	}
-	if (psp->rotation != 0.0 || !psp->scale.isZero())
+	if (Rotation != 0.0 && !Scale.isZero())
 	{
 		// [MC] Sets up the alignment for starting the pivot at, in a corner.
 		float anchorx, anchory;
@@ -503,19 +522,19 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		// Handle PSPF_FLIP.
 		if (flip) anchorx = 1.0 - anchorx;
 
-		FAngle rot = float((flip) ? -psp->rotation.Degrees : psp->rotation.Degrees);
+		FAngle rot = float((flip) ? -Rotation.Degrees : Rotation.Degrees);
 		const float cosang = rot.Cos();
 		const float sinang = rot.Sin();
 		
 		float xcenter, ycenter;
 		const float width = x2 - x1;
 		const float height = y2 - y1;
-		const float px = float((flip) ? -psp->pivot.X : psp->pivot.X);
-		const float py = float(psp->pivot.Y);
+		const float px = float((flip) ? -Pivot.X : Pivot.X);
+		const float py = float(Pivot.Y);
 
 		// Set up the center and offset accordingly. PivotPercent changes it to be a range [0.0, 1.0]
 		// instead of pixels and is enabled by default.
-		if (psp->Flags & PSPF_PIVOTPERCENT)
+		if ((psp->Flags & PSPF_PIVOTPERCENT) && !parent)
 		{
 			xcenter = x1 + (width * anchorx + width * px);
 			ycenter = y1 + (height * anchory + height * py);
@@ -530,41 +549,24 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		for (int i = 0; i < 4; i++)
 		{
 			Vert.v[i] -= {xcenter, ycenter};
-			const float xx = xcenter + psp->scale.X * (Vert.v[i].X * cosang + Vert.v[i].Y * sinang);
-			const float yy = ycenter - psp->scale.Y * (Vert.v[i].X * sinang - Vert.v[i].Y * cosang);
+			const float xx = xcenter + Scale.X * (Vert.v[i].X * cosang + Vert.v[i].Y * sinang);
+			const float yy = ycenter - Scale.Y * (Vert.v[i].X * sinang - Vert.v[i].Y * cosang);
 			Vert.v[i] = {xx, yy};
 		}
 	}
 	psp->Vert = Vert;
 
-	if (psp->scale.X == 0.0 || psp->scale.Y == 0.0)
+	if (Scale.X == 0.0 || Scale.Y == 0.0)
 		return false;
 
-	const bool interp = (psp->InterpolateTic || psp->Flags & PSPF_INTERPOLATE);
-
-	for (int i = 0; i < 4; i++)
+	if (psp->InterpolateTic || psp->Flags & PSPF_INTERPOLATE)
 	{
-		FVector2 t = Vert.v[i];
-		if (interp)
-			t = psp->Prev.v[i] + (psp->Vert.v[i] - psp->Prev.v[i]) * ticfrac;
-
-		Vert.v[i] = t;
+		for (int i = 0; i < 4; i++)
+		{
+			Vert.v[i] = psp->Prev.v[i] + (psp->Vert.v[i] - psp->Prev.v[i]) * ticfrac;
+		}
 	}
-	
-	// [MC] If this is absolutely necessary, uncomment it. It just checks if all the vertices 
-	// are all off screen either to the right or left, but is it honestly needed?
-	/*
-	if ((
-		Vert.v[0].X > 0.0 &&
-		Vert.v[1].X > 0.0 &&
-		Vert.v[2].X > 0.0 &&
-		Vert.v[3].X > 0.0) || (
-		Vert.v[0].X < vw &&
-		Vert.v[1].X < vw &&
-		Vert.v[2].X < vw &&
-		Vert.v[3].X < vw))
-		return false;
-	*/
+
 	auto verts = screen->mVertexData->AllocVertices(4);
 	mx = verts.second;
 

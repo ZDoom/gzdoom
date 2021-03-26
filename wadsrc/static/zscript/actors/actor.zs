@@ -1202,6 +1202,7 @@ class Actor : Thinker native
 	action native void A_OverlayAlpha(int layer, double alph);
 	action native void A_OverlayRenderStyle(int layer, int style);
 	action native void A_OverlayTranslation(int layer, name trname);
+	action native void A_OverlayParent(int layer, int pid, bool keep = true);
 	
 	native bool A_AttachLightDef(Name lightid, Name lightdef);
 	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);

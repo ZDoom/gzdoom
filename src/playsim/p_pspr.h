@@ -99,6 +99,10 @@ public:
 	static void NewTick();
 	void SetState(FState *newstate, bool pending = false);
 
+	int			GetParentID()					const { return ParentID; }
+	void		SetParentID(int pid)				  { ParentID = pid; }
+	int			GetChildID()					const { return ChildID; }
+	void		SetChildID(int pid)					  { ChildID = pid; }
 	int			GetID()							const { return ID; }
 	int			GetSprite()						const { return Sprite; }
 	int			GetFrame()						const { return Frame; }
@@ -106,12 +110,19 @@ public:
 	uint32_t	GetTranslation()					  { return Translation; }
 	FState*		GetState()						const { return State; }
 	DPSprite*	GetNext()							  { return Next; }
+	
 	AActor*		GetCaller()							  { return Caller; }
 	void		SetCaller(AActor *newcaller)		  { Caller = newcaller; }
 	void		ResetInterpolation()				  { oldx = x; oldy = y; Prev = Vert; InterpolateTic = false; }
 	void OnDestroy() override;
 	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 	float GetYAdjust(bool fullscreen);
+
+	void SetParent(DPSprite* par, bool keep);
+	void SetChild(DPSprite* ch);
+	DPSprite* GetParent();
+	DPSprite* GetChild();
+	
 
 	int HAlign, VAlign;		// Horizontal and vertical alignment
 	DAngle rotation;		// How much rotation to apply.
@@ -136,9 +147,10 @@ private:
 
 public:	// must be public to be able to generate the field export tables. Grrr...
 	TObjPtr<AActor*> Caller;
-	TObjPtr<DPSprite*> Next;
+	TObjPtr<DPSprite*> Next, Parent, Child;
 	player_t *Owner;
 	FState *State;
+	int ParentID, ChildID;
 	int Sprite;
 	int Frame;
 	int ID;

@@ -178,6 +178,10 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   Sprite(0),
   Frame(0),
   ID(id),
+  ParentID(0),
+  Parent(nullptr),
+  ChildID(0),
+  Child(nullptr),
   processPending(true)
 {
 	rotation = 0.;
@@ -1205,6 +1209,177 @@ DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 
 //------------------------------------------------------------------------
 //
+// SetParent
+//
+// Sets the passed PSprite as the parent of the calling PSprite. Performs
+// important checks that handles safety for the engine (infinite recursion
+// prevention), which means the Parent/Child(ID) properties cannot be
+// exposed, but this function is.
+//
+//------------------------------------------------------------------------
+
+void DPSprite::SetParent(DPSprite* par, bool keep = true)
+{
+	// No parent desired.
+	if (!par)
+	{
+		if (!keep)
+		{
+			if (Parent)
+				Parent->SetChild(nullptr);
+			Parent = nullptr;
+			ParentID = 0;	
+		}
+		return;
+	}
+
+	// Don't allow self pointers.
+	if (par == this)
+		return;
+
+	// Safety checks. Make sure we're not recursively parenting.
+	auto *pare = par;
+	while (pare)
+	{
+		// Found a recursion so abort.
+		if (pare->GetParentID() == ID)
+		{
+			if (!keep) // Keep the old parent if desired, should it fail.
+			{
+				Parent = nullptr;
+				ParentID = 0;
+			}
+			return;
+		}
+		pare = pare->GetParent();
+	}
+	Parent = par;
+	ParentID = Parent->GetID();
+	Parent->SetChild(this);
+}
+
+// [MC] Unlike parent setting, the child is only really used for traversal purposes.
+// This isn't exported to ZScript because of redundancy and SetParent will handle everything.
+void DPSprite::SetChild(DPSprite* ch)
+{
+	if (ch == this)
+		return;
+
+	Child = ch;
+	ChildID = (Child) ? Child->GetID() : 0;
+}
+
+// [MC] Gets the parented overlay. Used for allowing offsets to piggy back off the parent.
+DPSprite* DPSprite::GetParent()
+{
+	// Don't allow setting parents to self.
+	if (ParentID == 0 || ParentID == ID)
+	{
+		SetParent(nullptr);
+		return nullptr;
+	}
+
+	// Legitimate parent and ID match. Nothing else needed.
+	if (Parent && Parent->GetID() == ParentID && Parent->Child == this)
+		return Parent;
+
+	// Parent needs to match the ID. If there isn't any, clear the ID.
+	if (Owner)
+	{
+		Parent = Owner->FindPSprite(ParentID);
+
+		// Be strict about this and ensure consistency.
+		if (!Parent || Parent->GetID() != ParentID || Parent->Child != this)
+		{
+			Parent = nullptr;
+			SetParentID(0);
+		}
+		return Parent;
+	}
+
+	return nullptr;
+}
+
+DPSprite* DPSprite::GetChild()
+{
+	if (ChildID == 0 || ChildID == ID)
+	{
+		SetChild(nullptr);
+		return nullptr;
+	}
+
+	if (Child && Child->GetID() == ChildID && Child->Parent == this)
+		return Child;
+	
+	if (Owner)
+	{
+		Child = Owner->FindPSprite(ChildID);
+
+		if (!Child || Child->GetID() != ChildID || Child->Parent != this)
+		{
+			Child = nullptr;
+			SetChildID(0);
+		}
+	}
+	return Child;
+}
+
+DEFINE_ACTION_FUNCTION(DPSprite, GetChild)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(DPSprite);
+	ACTION_RETURN_OBJECT(self->GetChild());
+}
+
+DEFINE_ACTION_FUNCTION(DPSprite, GetParent)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(DPSprite);
+	ACTION_RETURN_OBJECT(self->GetParent());
+}
+
+DEFINE_ACTION_FUNCTION(DPSprite, SetParent)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(DPSprite);
+	PARAM_POINTER(layer, DPSprite);
+	PARAM_BOOL(keep);
+	self->SetParent(layer, keep);
+	return 0;
+}
+
+// Generalized and easy-to-use function.
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayParent)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_INT(pid);
+	PARAM_BOOL(keep);
+
+	// No player to find the psprite or trying to parent to self layer.
+	if (!self->player || layer == pid)
+		return 0;
+
+	layer = (layer == 0) ? stateinfo->mPSPIndex : layer;
+
+	if (layer == 0)
+		return 0;	
+
+	DPSprite *pspr = self->player->FindPSprite(layer);
+
+	if (pspr != nullptr)
+	{
+		if (pid == 0)
+		{
+			pspr->SetParent(nullptr);
+			return 0;
+		}
+
+		DPSprite *psparent = self->player->FindPSprite(pid);
+		pspr->SetParent(psparent, keep);
+	}
+	return 0;
+}
+
+//------------------------------------------------------------------------
+//
 // PROC P_SetupPsprites
 //
 // Called at start of level for each player
@@ -1251,7 +1426,11 @@ void DPSprite::Serialize(FSerializer &arc)
 		("rotation", rotation)
 		("halign", HAlign)
 		("valign", VAlign)
-		("renderstyle_", Renderstyle);	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
+		("renderstyle_", Renderstyle)	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
+		("child", Child)
+		("childid", ChildID)
+		("parent", Parent)
+		("parentid", ParentID);
 }
 
 //------------------------------------------------------------------------
@@ -1268,6 +1447,8 @@ void player_t::DestroyPSprites()
 	{
 		DPSprite *next = pspr->Next;
 		pspr->Next = nullptr;
+		pspr->Parent = pspr->Child = nullptr;
+		pspr->ParentID =  pspr->ChildID = 0;
 		pspr->Destroy();
 		pspr = next;
 	}
@@ -1362,6 +1543,12 @@ void DPSprite::OnDestroy()
 			GC::WriteBarrier(Next);
 		}
 	}
+	if (Parent && Parent->Child == this)
+		Parent->SetChild(nullptr);
+	
+	if (Child && Child->Parent == this)
+		Child->SetParent(nullptr);
+	
 	Super::OnDestroy();
 }
 
@@ -1391,6 +1578,8 @@ float DPSprite::GetYAdjust(bool fullscreen)
 	}
 	return 0;
 }
+
+
 
 //------------------------------------------------------------------------
 //

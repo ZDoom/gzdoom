@@ -2603,6 +2603,12 @@ class PSprite : Object native play
 
 	native void SetState(State newstate, bool pending = false);
 
+	// [MC] These functions handle Parent/ChildIDs internally and are not exposed to avoid
+	// modding mishaps and inconsistencies with fetching either of the two.
+	native PSprite GetParent();
+	native PSprite GetChild();
+	native void SetParent(PSprite layer, bool keep = true);
+
 	//------------------------------------------------------------------------
 	//
 	//

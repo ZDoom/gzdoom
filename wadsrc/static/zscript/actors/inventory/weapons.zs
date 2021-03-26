@@ -227,6 +227,7 @@ class Weapon : StateProvider
 		psp.Coord1 = (0,0);
 		psp.Coord2 = (0,0);
 		psp.Coord3 = (0,0);
+		psp.x = 0;
 	}
 
 	action void A_Lower(int lowerspeed = 6)

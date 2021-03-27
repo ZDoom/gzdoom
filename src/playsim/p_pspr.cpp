@@ -1233,8 +1233,8 @@ void DPSprite::SetParent(DPSprite* par, bool keep = true)
 		return;
 	}
 
-	// Don't allow self pointers.
-	if (par == this)
+	// Don't allow self pointers. Do nothing if already established.
+	if (par == this || par == Parent)
 		return;
 
 	// Safety checks. Make sure we're not recursively parenting.
@@ -1246,6 +1246,8 @@ void DPSprite::SetParent(DPSprite* par, bool keep = true)
 		{
 			if (!keep) // Keep the old parent if desired, should it fail.
 			{
+				if (Parent)
+					Parent->SetChild(nullptr);
 				Parent = nullptr;
 				ParentID = 0;
 			}
@@ -1253,6 +1255,11 @@ void DPSprite::SetParent(DPSprite* par, bool keep = true)
 		}
 		pare = pare->GetParent();
 	}
+
+	// Detatch the old parent from child...
+	Parent->SetChild(nullptr);
+
+	// ...and attach the new one.
 	Parent = par;
 	ParentID = Parent->GetID();
 	Parent->SetChild(this);
@@ -1262,7 +1269,8 @@ void DPSprite::SetParent(DPSprite* par, bool keep = true)
 // This isn't exported to ZScript because of redundancy and SetParent will handle everything.
 void DPSprite::SetChild(DPSprite* ch)
 {
-	if (ch == this)
+	// Prevent self pointing, and do nothing if it's the same.
+	if (ch == this || ch == Child)
 		return;
 
 	Child = ch;

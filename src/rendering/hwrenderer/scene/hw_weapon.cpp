@@ -408,6 +408,9 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 
 bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player, double ticfrac)
 {
+	if (psp->scale.X == 0.0 || psp->scale.Y == 0.0)
+		return false;
+
 	float			tx;
 	float			scale;
 	float			scalex;
@@ -478,9 +481,15 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 
 	
 
+
+	
+	DVector2 Pos =		{ sx, sy };
 	DVector2 Scale =	psp->scale;
 	DVector2 Pivot =	psp->pivot;
 	DAngle Rotation =	psp->rotation;
+
+	Matrix3x4 mat;
+	mat.MakeIdentity();
 
 	DPSprite *parent = psp->GetParent();
 	DPSprite *par = parent;
@@ -488,20 +497,28 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	while (par)
 	{
 		double flipper = (par->Flags & PSPF_FLIP) ? -1. : 1.;
-		Scale = { Scale.X * par->scale.X, Scale.Y * par->scale.Y };
-		Pivot = { Pivot.X + par->pivot.X * flipper, Pivot.Y + par->pivot.Y };
 		Rotation += par->rotation * flipper;
+		Pivot = { Pivot.X + par->pivot.X * flipper, Pivot.Y + par->pivot.Y };
+		Scale = { Scale.X * par->scale.X, Scale.Y * par->scale.Y };
+		Pos = { Pos.X + par->x, Pos.Y + par->y };
+
+		if (Scale.X == 0.0 || Scale.Y == 0.0)
+			return false;
+
 		par = par->GetParent();
 	}
 
-
+	
+	/*
 	for (int i = 0; i < 4; i++)
 	{
 		const float cx = (flip) ? -psp->Coord[i].X : psp->Coord[i].X;
 		Vert.v[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
 	}
-	if (Rotation != 0.0 && !Scale.isZero())
+	*/
+	if (Rotation != 0.0)
 	{
+		
 		// [MC] Sets up the alignment for starting the pivot at, in a corner.
 		float anchorx, anchory;
 		switch (psp->VAlign)
@@ -544,20 +561,35 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 			xcenter = x1 + (width * anchorx + scalex * px);
 			ycenter = y1 + (height * anchory + scale * py);
 		}
-
+		
+		mat.Translate(xcenter, ycenter, 0);
+		mat.Scale(Scale.X, Scale.Y, 0);
+		mat.Rotate(cosang, -sinang, 0, rot.Degrees);
+		mat.Translate(-xcenter, -ycenter, 0);
+		
+		Vert.v[0] = mat * FVector3(x1, y1, 0);
+		Vert.v[1] = mat * FVector3(x1, y2, 0);
+		Vert.v[2] = mat * FVector3(x2, y1, 0);
+		Vert.v[3] = mat * FVector3(x2, y2, 0);
+		
+		
 		// Now adjust the position, rotation and scale of the image based on the latter two.
+		/*
 		for (int i = 0; i < 4; i++)
 		{
 			Vert.v[i] -= {xcenter, ycenter};
-			const float xx = xcenter + Scale.X * (Vert.v[i].X * cosang + Vert.v[i].Y * sinang);
-			const float yy = ycenter - Scale.Y * (Vert.v[i].X * sinang - Vert.v[i].Y * cosang);
+			const float xx = xcenter + Scale.X * ((Vert.v[i].X + Pos.X) * cosang + (Vert.v[i].Y + Pos.Y) * sinang);
+			const float yy = ycenter - Scale.Y * ((Vert.v[i].X + Pos.X) * sinang - (Vert.v[i].Y + Pos.Y) * cosang);
 			Vert.v[i] = {xx, yy};
-		}
-	}
-	psp->Vert = Vert;
 
-	if (Scale.X == 0.0 || Scale.Y == 0.0)
-		return false;
+
+		}
+		*/
+	}
+
+	
+
+	psp->Vert = Vert;
 
 	if (psp->InterpolateTic || psp->Flags & PSPF_INTERPOLATE)
 	{

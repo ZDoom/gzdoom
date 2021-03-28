@@ -84,17 +84,17 @@ CUSTOM_CVAR(Bool, adl_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUA
 	FORWARD_BOOL_CVAR(adl_fullpan);
 }
 
-CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_VIRTUAL)
 {
 	FORWARD_CVAR(adl_bank);
 }
 
-CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(adl_use_custom_bank);
 }
 
-CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL)
 {
 	FORWARD_STRING_CVAR(adl_custom_bank);
 }
@@ -251,12 +251,12 @@ CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUA
 	FORWARD_BOOL_CVAR(opn_fullpan);
 }
 
-CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(opn_use_custom_bank);
 }
 
-CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL)
 {
 	FORWARD_STRING_CVAR(opn_custom_bank);
 }

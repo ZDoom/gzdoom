@@ -281,7 +281,7 @@ std::unique_ptr<VulkanRenderPass> VkRenderPassSetup::CreateRenderPass(int clearT
 {
 	auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 
-	VkFormat drawBufferFormats[] = { VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_A2R10G10B10_UNORM_PACK32 };
+	VkFormat drawBufferFormats[] = { VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM, buffers->SceneNormalFormat };
 
 	RenderPassBuilder builder;
 
@@ -420,7 +420,8 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	builder.setTopology(vktopology[key.DrawType]);
 	builder.setDepthStencilEnable(key.DepthTest, key.DepthWrite, key.StencilTest);
 	builder.setDepthFunc(depthfunc2vk[key.DepthFunc]);
-	builder.setDepthClampEnable(key.DepthClamp);
+	if (fb->device->UsedDeviceFeatures.depthClamp)
+		builder.setDepthClampEnable(key.DepthClamp);
 	builder.setDepthBias(key.DepthBias, 0.0f, 0.0f, 0.0f);
 
 	// Note: CCW and CW is intentionally swapped here because the vulkan and opengl coordinate systems differ.

@@ -24,6 +24,7 @@ public:
 	VkTextureImage SceneFog;
 
 	VkFormat SceneDepthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+	VkFormat SceneNormalFormat = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
 
 	static const int NumPipelineImages = 2;
 	VkTextureImage PipelineImage[NumPipelineImages];

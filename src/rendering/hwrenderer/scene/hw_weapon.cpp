@@ -545,6 +545,19 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 			}
 		}
 		// Now adjust the position, rotation and scale of the image based on the latter two.
+		
+		Matrix3x4 mat;
+		mat.MakeIdentity();
+
+		mat.Translate(xcenter, ycenter, 0);
+		mat.Scale(psp->scale.X, psp->scale.Y, 0);
+		mat.Rotate(0, 0, 1, -rot.Degrees);
+		mat.Translate(-xcenter, -ycenter, 0);
+
+		for (int i = 0; i < 4; i++)
+			Vert.v[i] = mat * FVector3(Vert.v[i], 0);
+		
+		/*
 		for (int i = 0; i < 4; i++)
 		{
 			Vert.v[i] -= {xcenter, ycenter};
@@ -552,6 +565,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 			const float yy = ycenter - psp->scale.Y * (Vert.v[i].X * sinang - Vert.v[i].Y * cosang);
 			Vert.v[i] = {xx, yy};
 		}
+		*/
 	}
 	psp->Vert = Vert;
 

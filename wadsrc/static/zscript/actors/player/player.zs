@@ -2584,6 +2584,7 @@ class PSprite : Object native play
 	native bool bPlayerTranslated;
 	native bool bPivotPercent;
 	native bool bInterpolate;
+	native bool bPivotScreen;
 
 	native void SetState(State newstate, bool pending = false);
 

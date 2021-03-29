@@ -714,6 +714,7 @@ enum EPSpriteFlags
 	PSPF_PLAYERTRANSLATED = 1 << 10,
 	PSPF_PIVOTPERCENT	= 1 << 11,
 	PSPF_INTERPOLATE	= 1 << 12,
+	PSPF_PIVOTSCREEN	= 1 << 13,
 };
 
 // Alignment constants for A_OverlayPivotAlign

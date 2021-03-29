@@ -155,6 +155,7 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPivotPercent, PSPF_PIVOTPERCENT)
 DEFINE_FIELD_BIT(DPSprite, Flags, bInterpolate, PSPF_INTERPOLATE)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPivotScreen, PSPF_PIVOTSCREEN)
 
 //------------------------------------------------------------------------
 //

@@ -408,6 +408,9 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 
 bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player, double ticfrac)
 {
+	if (psp->scale.X == 0.0 || psp->scale.Y == 0.0)
+		return false;
+
 	float			tx;
 	float			scale;
 	float			scalex;
@@ -481,7 +484,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		const float cx = (flip) ? -psp->Coord[i].X : psp->Coord[i].X;
 		Vert.v[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
 	}
-	if (psp->rotation != 0.0 || !psp->scale.isZero())
+
 	{
 		// [MC] Sets up the alignment for starting the pivot at, in a corner.
 		float anchorx, anchory;
@@ -508,24 +511,39 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		const float sinang = rot.Sin();
 		
 		float xcenter, ycenter;
-		const float width = x2 - x1;
-		const float height = y2 - y1;
+		const float width = (psp->Flags & PSPF_PIVOTSCREEN) ? vw : (x2 - x1);
+		const float height = (psp->Flags & PSPF_PIVOTSCREEN) ? vh : (y2 - y1);
 		const float px = float((flip) ? -psp->pivot.X : psp->pivot.X);
 		const float py = float(psp->pivot.Y);
 
 		// Set up the center and offset accordingly. PivotPercent changes it to be a range [0.0, 1.0]
 		// instead of pixels and is enabled by default.
-		if (psp->Flags & PSPF_PIVOTPERCENT)
+		if (psp->Flags & PSPF_PIVOTSCREEN)
 		{
-			xcenter = x1 + (width * anchorx + width * px);
-			ycenter = y1 + (height * anchory + height * py);
+			if (psp->Flags & PSPF_PIVOTPERCENT)
+			{
+				xcenter = width * anchorx + width * px;
+				ycenter = height * anchory + height * py;
+			}
+			else
+			{
+				xcenter = anchorx + px;
+				ycenter = anchory + py;
+			}
 		}
 		else
 		{
-			xcenter = x1 + (width * anchorx + scalex * px);
-			ycenter = y1 + (height * anchory + scale * py);
+			if (psp->Flags & PSPF_PIVOTPERCENT)
+			{
+				xcenter = x1 + (width * anchorx + width * px);
+				ycenter = y1 + (height * anchory + height * py);
+			}
+			else
+			{
+				xcenter = x1 + (width * anchorx + scalex * px);
+				ycenter = y1 + (height * anchory + scale * py);
+			}
 		}
-
 		// Now adjust the position, rotation and scale of the image based on the latter two.
 		for (int i = 0; i < 4; i++)
 		{
@@ -537,34 +555,10 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	}
 	psp->Vert = Vert;
 
-	if (psp->scale.X == 0.0 || psp->scale.Y == 0.0)
-		return false;
-
-	const bool interp = (psp->InterpolateTic || psp->Flags & PSPF_INTERPOLATE);
-
-	for (int i = 0; i < 4; i++)
-	{
-		FVector2 t = Vert.v[i];
-		if (interp)
-			t = psp->Prev.v[i] + (psp->Vert.v[i] - psp->Prev.v[i]) * ticfrac;
-
-		Vert.v[i] = t;
-	}
+	if (psp->InterpolateTic || psp->Flags & PSPF_INTERPOLATE)
+		for (int i = 0; i < 4; i++)
+			Vert.v[i] = psp->Prev.v[i] + (psp->Vert.v[i] - psp->Prev.v[i]) * ticfrac;
 	
-	// [MC] If this is absolutely necessary, uncomment it. It just checks if all the vertices 
-	// are all off screen either to the right or left, but is it honestly needed?
-	/*
-	if ((
-		Vert.v[0].X > 0.0 &&
-		Vert.v[1].X > 0.0 &&
-		Vert.v[2].X > 0.0 &&
-		Vert.v[3].X > 0.0) || (
-		Vert.v[0].X < vw &&
-		Vert.v[1].X < vw &&
-		Vert.v[2].X < vw &&
-		Vert.v[3].X < vw))
-		return false;
-	*/
 	auto verts = screen->mVertexData->AllocVertices(4);
 	mx = verts.second;
 

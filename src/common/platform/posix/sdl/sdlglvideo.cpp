@@ -51,6 +51,12 @@
 #include "gl_renderer.h"
 #include "gl_framebuffer.h"
 
+// This isn't needed on macOS.
+#ifndef __APPLE__
+#include "posix/zdoom.xpm" // For icon.
+static SDL_Surface* iconsurface = NULL;
+#endif
+
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
 #endif
@@ -175,6 +181,96 @@ namespace Priv
 		{
 			// Enforce minimum size limit
 			SDL_SetWindowMinimumSize(Priv::window, VID_MIN_WIDTH, VID_MIN_HEIGHT);
+#ifndef __APPLE__
+			if (iconsurface == NULL)
+			{
+				int icon_width, icon_height, icon_colors, icon_chars_per_pixel;
+				sscanf(zdoom_xpm[0],"%d %d %d %d", &icon_width, &icon_height, &icon_colors, &icon_chars_per_pixel);
+				const char** colorlist = zdoom_xpm + 1;
+				std::string pixmapcharacters, colorspec;
+				std::map<std::string, uint32_t> chartocolormaps;
+				for (int colorindex = 0; colorindex < icon_colors; colorindex++)
+				{
+					char colorstrbuffer[128];
+					char colorspecbuffer[7] = {'0','0','0','0','0','0','\0'};
+					memset(colorstrbuffer,0,sizeof(colorstrbuffer));
+					pixmapcharacters = std::string(colorlist[colorindex],icon_chars_per_pixel);
+					// Non-color images are not supported.
+					if (strchr(colorlist[colorindex] + icon_chars_per_pixel, 'c') == NULL) return;
+
+					if (strchr(colorlist[colorindex] + icon_chars_per_pixel, '#')) strcpy(colorstrbuffer,strchr(colorlist[colorindex] + icon_chars_per_pixel, '#'));
+					else sscanf(strchr(colorlist[colorindex] + icon_chars_per_pixel,'c') + 1, "%s", colorstrbuffer);
+					
+					if (colorstrbuffer[0] == '#')
+					{
+						int sizeofspec = strlen(colorstrbuffer);
+						switch (sizeofspec)
+						{
+						case 4: // RGB444 color
+							colorspecbuffer[0] = colorspecbuffer[1] = colorstrbuffer[1];
+							colorspecbuffer[2] = colorspecbuffer[3] = colorstrbuffer[2];
+							colorspecbuffer[4] = colorspecbuffer[5] = colorstrbuffer[3];
+							break;
+						case 7: // RGB888 color
+							memcpy(colorspecbuffer,colorstrbuffer + 1,6);
+							break;
+						case 12: // Same as above but two whitespaces between each two hexadecimal characters.
+							colorspecbuffer[0] = colorstrbuffer[1];
+							colorspecbuffer[1] = colorstrbuffer[2];
+							colorspecbuffer[2] = colorstrbuffer[5];
+							colorspecbuffer[3] = colorstrbuffer[6];
+							colorspecbuffer[4] = colorstrbuffer[9];
+							colorspecbuffer[5] = colorstrbuffer[10];
+							break;
+						}
+
+						chartocolormaps.emplace(pixmapcharacters,0xFF000000 | (unsigned int)strtoul(colorspecbuffer,NULL,16));
+					}
+					else
+					{
+						static const struct xpmX11colormaps
+						{
+							const char* known;
+							uint32_t argb;
+						}
+						known[] =
+						{
+							{ "none",  0x00000000 },
+							{ "red",   0xFFFF0000 },
+							{ "green", 0xFF00FF00 },
+							{ "blue",  0xFF0000FF },
+							{ "black", 0xFF000000 },
+							{ "white", 0xFFFFFFFF }
+						};
+						for (unsigned int i = 0; i < sizeof(known) / sizeof(known[0]); i++)
+						{
+							if (strncasecmp(known[i].known,colorstrbuffer,strlen(colorstrbuffer)) == 0)
+							{
+								chartocolormaps.emplace(pixmapcharacters,known[i].argb);
+								break;
+							}
+						}
+					}
+				}
+				const char** pixels = &colorlist[icon_colors];
+				iconsurface = SDL_CreateRGBSurface(0, icon_width, icon_height, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+				if (iconsurface == NULL) return;
+				SDL_FillRect(iconsurface, NULL, 0);
+				uint32_t* imagePixels = (uint32_t*)iconsurface->pixels;
+				for (int y = 0; y < icon_height; y++)
+				{
+					for (int x = 0; x < icon_width; x++)
+					{
+						auto color = chartocolormaps[std::string(&pixels[y][x * icon_chars_per_pixel],icon_chars_per_pixel)];
+						if (color != 0)
+						{
+							imagePixels[y * icon_width + x] = color;
+						}
+					}
+				}
+			}
+			if (iconsurface) SDL_SetWindowIcon(Priv::window, iconsurface);
+#endif
 		}
 	}
 
@@ -460,6 +556,9 @@ SDLVideo::~SDLVideo ()
 {
 #ifdef HAVE_VULKAN
 	delete device;
+#endif
+#ifndef __APPLE__
+	if (iconsurface) { SDL_FreeSurface(iconsurface); iconsurface = NULL; };
 #endif
 }
 

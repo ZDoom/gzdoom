@@ -1,5 +1,5 @@
 /* XPM */
-static char * zdoom_xpm[] = {
+static const char * zdoom_xpm[] = {
 "256 256 8354 2",
 "  	c None",
 ". 	c #161616",

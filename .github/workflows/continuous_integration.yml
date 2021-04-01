@@ -25,42 +25,42 @@ jobs:
         - {
             name: "macOS",
             os: macos-10.15,
-            extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
             build_type: "Release"
           }
         - {
             name: "macOS",
             os: macos-10.15,
+            extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
             build_type: "Debug"
           }
         - {
             name: "Linux GCC 7",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk2.0-dev",
+            extra_options: "-DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7",
+            deps_cmdline: "sudo apt update && sudo apt install g++-7 libsdl2-dev libgtk2.0-dev",
             build_type: "RelWithDebInfo"
           }
         - {
             name: "Linux GCC 10",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-10 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk-3-dev",
-            build_type: "Debug"
+            extra_options: "-DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10",
+            deps_cmdline: "sudo apt update && sudo apt install g++-10 libsdl2-dev libgtk-3-dev",
+            build_type: "MinSizeRel"
           }
         - {
             name: "Linux Clang 6",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0",
-            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev",
+            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 \
+                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
             build_type: "Debug"
           }
         - {
-            name: "Linux Clang 10",
+            name: "Linux Clang 11",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 \
-                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
+            extra_options: "-DCMAKE_C_COMPILER=clang-11 -DCMAKE_CXX_COMPILER=clang++-11",
+            deps_cmdline: "sudo apt update && sudo apt install clang-11 libsdl2-dev libvpx-dev",
             build_type: "Release"
           }
 
@@ -78,7 +78,7 @@ jobs:
         cd build
         git clone https://github.com/coelckers/ZMusic.git
         cd ZMusic
-        git checkout 1.1.0
+        git checkout 1.1.6
         cd ..
         cmake -B zmusic_build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_INSTALL_PREFIX=`pwd`/zmusic_install ${{ matrix.config.extra_options }} ZMusic
         cmake --build zmusic_build --target install --parallel 3

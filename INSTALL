@@ -1,0 +1,77 @@
+GZDoom installation Guide
+
+This file contains instructions for building GZDoom. Currently this
+guide only contains instructions for Gnu/Linux but it is possible the
+steps is applicable to other operating systems as well.
+
+1.  Install the required dependencies. Depending on your distro they
+    may have different package names. These are:
+
+    Required
+      - gcc 4.8 or later
+      - make
+      - cmake 2.8.7 or later
+      - SDL 2.0.2 or later
+      - libGL and libGLU (SDL or libSDL pull in libGLU) or any other
+        GL implementation provider.
+      - ZMusic (See below)
+    Recommended
+      - GTK3 or GTK2
+      - git (needed in order to download the source and compile in
+        commit meta data)
+      - nasm 0.98.39 or later (x86-32 only)
+    Optional
+      - zlib (GZDoom has a copy of it and will be statically compiled
+        in if not found)
+      - libbzip2 (possibly static)
+      - libjpeg (possibly static)
+      - libgme or game-music-emu (possibly static)
+      - SDL 1.2.8 or later 1.2.x versions (for GZDoom 1.x)
+      - libglew (for GZDoom 1.x)
+      - FMOD Ex 4.36.x or later or FMOD Studio (for GZDoom 1.x and
+        2.x) Runtime
+      - gxmessage (optional - needed to show the crash log in a
+        window)
+      - kdialog (optional - for KDE users)
+      - fluidsynth (optional - for MIDI playback)
+
+    In addition to or instead of FMOD, OpenAL can be used for sound in
+    which case the following are required:
+
+      - libopenal
+      - libmpg123
+      - libsndfile
+
+1a. Make sure ZMusic is installed, either through your package manager
+    or by building it yourself.
+
+	$ git clone --depth 1 -b 1.1.6 https://github.com/coelckers/ZMusic.git
+	$ cd ZMusic
+	$ mkdir build
+	$ cd build
+	$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=`pwd`/../build_install ..
+
+2.  Build GZDoom.
+
+    If you acquired GZDOOM through git you may want to checkout the
+    stable version, which as of time of writing is 4.5.0:
+
+	$ git checkout g4.5.0
+
+    If you built ZMusic yourself, set CMAKE_PREFIX_PATH to the full
+    path of the build_install directory set above, otherwise remove
+    the option entirely.
+
+	$ cd GZDoom
+	$ mkdir build
+	$ cd build
+	$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=../ZMusic/build/build_install/ ..
+	$ make
+
+3.  If all works you should have a executable program in build/gzdoom.
+
+	$ build/gzdoom
+
+4.  (Optional) You may want to move GZDoom to its installation directories.
+
+	# make install

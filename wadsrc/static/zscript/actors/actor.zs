@@ -1101,6 +1101,14 @@ class Actor : Thinker native
 	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0, double alpha2 = 0.);
 	deprecated("2.3", "Use 'b<FlagName> = [true/false]' instead") native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
+
+	void A_SetFriendly (bool set)
+	{
+		if (CountsAsKill() && health > 0) level.total_monsters--;
+		bFriendly = set;
+		if (CountsAsKill() && health > 0) level.total_monsters++;
+	}
+
 	native void A_RaiseMaster(int flags = 0);
 	native void A_RaiseChildren(int flags = 0);
 	native void A_RaiseSiblings(int flags = 0);

@@ -63,6 +63,8 @@
 #include "v_draw.h"
 #include "templates.h"
 
+#include "common/rendering/vulkan/system/vk_device.h"
+
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
 
@@ -300,19 +302,27 @@ void V_OutputResized (int width, int height)
 
 bool IVideo::SetResolution ()
 {
-	DFrameBuffer *buff = CreateFrameBuffer();
-
-	if (buff == NULL)	// this cannot really happen
+	try
 	{
+		DFrameBuffer *buff = CreateFrameBuffer();
+
+		if (buff == NULL)	// this cannot really happen
+		{
+			return false;
+		}
+
+		screen = buff;
+		screen->InitializeState();
+
+		V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
+
+		return true;
+	}
+	catch (const CVulkanError& e)
+	{
+		I_FatalError("Vulkan Error: %s\n", e.what());
 		return false;
 	}
-
-	screen = buff;
-	screen->InitializeState();
-
-	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
-
-	return true;
 }
 
 //

@@ -720,9 +720,12 @@ set( NOT_COMPILED_SOURCE_FILES
 	common/scripting/frontend/zcc-parse.lemon
 	zcc-parse.c
 	zcc-parse.h
-	sdlicon.h
 	common/platform/win32/zutil.natvis
 )
+
+if( NOT WIN32 AND NOT APPLE )
+    set( NOT_COMPILED_SOURCE_FILES ${NOT_COMPILED_SOURCE_FILES} sdlicon.h)
+endif()
 
 set( VM_JIT_SOURCES
 	common/scripting/jit/jit.cpp

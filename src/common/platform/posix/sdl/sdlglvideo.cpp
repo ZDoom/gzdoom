@@ -51,6 +51,12 @@
 #include "gl_renderer.h"
 #include "gl_framebuffer.h"
 
+// This isn't needed on macOS.
+#if !defined __APPLE__ && __has_include("sdlicon.h")
+#include "sdlicon.h"
+static SDL_Surface* iconsurface = NULL;
+#endif
+
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
 #endif
@@ -175,6 +181,10 @@ namespace Priv
 		{
 			// Enforce minimum size limit
 			SDL_SetWindowMinimumSize(Priv::window, VID_MIN_WIDTH, VID_MIN_HEIGHT);
+#if !defined __APPLE__ && __has_include("sdlicon.h")
+			iconsurface = SDL_CreateRGBSurfaceFrom((void*)iconpixeldata, icon_width, icon_height, 32,4 * icon_width,icon_red_mask,icon_green_mask, icon_blue_mask, icon_alpha_mask);
+			if (iconsurface) SDL_SetWindowIcon(Priv::window, iconsurface);
+#endif
 		}
 	}
 
@@ -460,6 +470,9 @@ SDLVideo::~SDLVideo ()
 {
 #ifdef HAVE_VULKAN
 	delete device;
+#endif
+#if !defined __APPLE__ && __has_include("sdlicon.h")
+	if (iconsurface) { SDL_FreeSurface(iconsurface); iconsurface = NULL; };
 #endif
 }
 

@@ -25,9 +25,7 @@ steps is applicable to other operating systems as well.
       - libbzip2 (possibly static)
       - libjpeg (possibly static)
       - libgme or game-music-emu (possibly static)
-      - libglew (for GZDoom 1.x)
-      - FMOD Ex 4.36.x or later or FMOD Studio (for GZDoom 1.x and
-        2.x) Runtime
+      - FMOD Ex 4.36.x or later
       - gxmessage (optional - needed to show the crash log in a
         window)
       - kdialog (optional - for KDE users)
@@ -43,11 +41,12 @@ steps is applicable to other operating systems as well.
 1a. Make sure ZMusic is installed, either through your package manager
     or by building it yourself.
 
-	$ git clone --depth 1 -b 1.1.6 https://github.com/coelckers/ZMusic.git
+	$ git clone https://github.com/coelckers/ZMusic.git
 	$ cd ZMusic
 	$ mkdir build
 	$ cd build
 	$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=`pwd`/../build_install ..
+        $ make -j
 
 2.  Build GZDoom.
 

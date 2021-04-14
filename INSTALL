@@ -46,19 +46,21 @@ steps is applicable to other operating systems as well.
 	$ mkdir build
 	$ cd build
 	$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=`pwd`/../build_install ..
-        $ make -j
+        $ make -j 4
 
 2.  Build GZDoom.
 
     If you built ZMusic yourself, set CMAKE_PREFIX_PATH to the full
     path of the build_install directory set above, otherwise remove
-    the option entirely.
+    the option entirely. The "-j 4" flag sets how many jobs to run
+    simultaneously. Set it too low and it will take needlessly long
+    time to build. Set it too high and you might run out of RAM.
 
 	$ cd GZDoom
 	$ mkdir build
 	$ cd build
 	$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=../ZMusic/build/build_install/ ..
-	$ make -j
+	$ make -j 4
 
 3.  If all works you should have a executable program in build/gzdoom.
 

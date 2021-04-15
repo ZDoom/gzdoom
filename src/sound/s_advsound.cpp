@@ -1608,27 +1608,21 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 //
 //===========================================================================
 
-static const char *GetSoundClass(AActor *pp)
+const char *GetSoundClass(AActor *pp)
 {
 	auto player = pp->player;
-
-	/*I couldn't just init SoundClass to NAME_SoundClass, GZDoom won't launch at all. Probably because that info is not parsed by the time the variable is initialized.
-	So I just SoundClass to NAME_SoundClass here if NAME_SoundClass is not null and the current SoundClass is player*/
-	if (strcmp(pp->player->SoundClass.GetChars(), "player") == 0 && pp->NameVar(NAME_SoundClass) != NAME_None)
-		pp->player->SoundClass = pp->NameVar(NAME_SoundClass).GetChars();
-
-	FString sclass = player ? pp->player->SoundClass.GetChars() : "player";
 
 	if (player != nullptr &&
 		(player->mo == nullptr || !(player->mo->flags4 &MF4_NOSKIN)) &&
 		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size() &&
 		(unsigned)player->userinfo.GetSkin() < Skins.Size() &&
-		strcmp(pp->player->SoundClass.GetChars(),sclass) == 0)
+		player->SoundClass.IsEmpty())
 	{
 		return Skins[player->userinfo.GetSkin()].Name.GetChars();
 	}
+	auto sclass = player->SoundClass.IsEmpty() ? pp->NameVar(NAME_SoundClass).GetChars() : player->SoundClass.GetChars();
 
-	return sclass;
+	return sclass ? sclass : "player";
 }
 
 //==========================================================================

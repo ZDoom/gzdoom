@@ -460,6 +460,11 @@ int FKeyBindings::GetKeysForCommand (const char *cmd, int *first, int *second)
 
 	*first = *second = c = i = 0;
 
+	if (cmd[0] == '\0')
+	{
+		return 0;
+	}
+
 	while (i < NUM_KEYS && c < 2)
 	{
 		if (stricmp (cmd, Binds[i]) == 0)

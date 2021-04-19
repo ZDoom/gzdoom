@@ -8601,7 +8601,7 @@ scriptwait:
 			lookup = Level->Behaviors.LookupString (STACK(1));
 			if (lookup != NULL)
 			{
-				int key1 = 0, key2 = 0;
+				int key1, key2;
 
 				Bindings.GetKeysForCommand ((char *)lookup, &key1, &key2);
 

@@ -85,7 +85,6 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	vb.UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	state.SetVertexBuffer(&vb);
 	state.EnableFog(false);
-	state.SetScreenFade(drawer->screenFade);
 
 	for(auto &cmd : commands)
 	{
@@ -94,6 +93,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		state.SetRenderStyle(cmd.mRenderStyle);
 		state.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
 		state.EnableFog(2);	// Special 2D mode 'fog'.
+		state.SetScreenFade(cmd.mScreenFade);
 
 		state.SetTextureMode(cmd.mDrawMode);
 

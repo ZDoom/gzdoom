@@ -605,13 +605,13 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 //
 //============================================================================
 
-void DStatusBarCore::DrawRotated(FTextureID texture, double x, double y, double angle, int flags, double Alpha, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style)
+void DStatusBarCore::DrawRotated(FTextureID texture, double x, double y, int flags, double angle, double Alpha, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style)
 {
 	if (!texture.isValid())
 		return;
 
 	FGameTexture* tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
-	DrawRotated(tex, x, y, angle, flags, Alpha, scaleX, scaleY, color, translation, style);
+	DrawRotated(tex, x, y, flags, angle, Alpha, scaleX, scaleY, color, translation, style);
 }
 
 void DStatusBarCore::DrawRotated(FGameTexture* tex, double x, double y, int flags, double angle, double Alpha, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style)

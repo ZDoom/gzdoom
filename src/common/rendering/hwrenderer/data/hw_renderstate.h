@@ -200,9 +200,8 @@ struct StreamData
 	FVector4 uSplitBottomPlane;
 
 	FVector4 uDetailParms;
-#ifdef NPOT_EMULATION
-	FVector2 uNpotEmulation;
-#endif
+	FVector4 uNpotEmulation;
+	FVector4 padding1, padding2, padding3;
 };
 
 class FRenderState
@@ -295,7 +294,7 @@ public:
 		mStreamData.uDynLightColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		mStreamData.uDetailParms = { 0.0f, 0.0f, 0.0f, 0.0f };
 #ifdef NPOT_EMULATION
-		mStreamData.uNpotEmulation = { 0,0 };
+		mStreamData.uNpotEmulation = { 0,0,0,0 };
 #endif
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
@@ -490,7 +489,7 @@ public:
 	void SetNpotEmulation(float factor, float offset)
 	{
 #ifdef NPOT_EMULATION
-		mStreamData.uNpotEmulation = { offset, factor };
+		mStreamData.uNpotEmulation = { offset, factor, 0, 0 };
 #endif
 	}
 

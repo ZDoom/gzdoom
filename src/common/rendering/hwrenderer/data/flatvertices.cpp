@@ -80,6 +80,8 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 
 	mVertexBuffer = screen->CreateVertexBuffer();
 	mIndexBuffer = screen->CreateIndexBuffer();
+	int data[4] = {};
+	mIndexBuffer->SetData(4, data); // On Vulkan this may not be empty, so set some dummy defaults to avoid crashes.
 
 	unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 	mVertexBuffer->SetData(bytesize, nullptr, false);

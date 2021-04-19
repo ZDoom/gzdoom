@@ -76,14 +76,14 @@ struct FileSystem::LumpRecord
 			shortName.String[8] = 0;
 			longName = "";
 			Namespace = lump->GetNamespace();
-			resourceId = 0;
+			resourceId = -1;
 		}
 		else if ((lump->Flags & LUMPF_EMBEDDED) || !lump->getName() || !*lump->getName())
 		{
 			shortName.qword = 0;
 			longName = "";
 			Namespace = ns_hidden;
-			resourceId = 0;
+			resourceId = -1;
 		}
 		else
 		{

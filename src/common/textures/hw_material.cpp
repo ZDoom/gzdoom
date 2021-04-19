@@ -30,6 +30,7 @@
 #include "v_video.h"
 
 static IHardwareTexture* (*layercallback)(int layer, int translation);
+TArray<UserShaderDesc> usershaders;
 
 void FMaterial::SetLayerCallback(IHardwareTexture* (*cb)(int layer, int translation))
 {

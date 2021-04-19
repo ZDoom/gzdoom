@@ -293,7 +293,7 @@ bool F7ZFile::Open(bool quiet, LumpFilterInfo *filter)
 		lump_p->Owner = this;
 		lump_p->Flags = LUMPF_FULLPATH|LUMPF_COMPRESSED;
 		lump_p->Position = i;
-		lump_p->CheckEmbedded();
+		lump_p->CheckEmbedded(filter);
 		lump_p++;
 	}
 	// Resize the lump record array to its actual size

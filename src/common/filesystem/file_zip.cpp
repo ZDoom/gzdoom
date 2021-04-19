@@ -233,12 +233,14 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		}
 
 		name.ToLower();
+		if (name.IndexOf("__macosx") == 0) 
+			continue; // skip Apple garbage. At this stage only the root folder matters,
 		if (i == 0)
 		{
 			// check for special names, if one of these gets found this must be treated as a normal zip.
 			bool isspecial = name.IndexOf("/") < 0 || (filter && filter->reservedFolders.Find(name) < filter->reservedFolders.Size());
 			if (isspecial) break;
-			name0 = name;
+			name0 = name.Left(name.LastIndexOf("/")+1);
 		}
 		else
 		{
@@ -252,7 +254,7 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 				// at least one of the more common definition lumps must be present.
 				for (auto &p : filter->requiredPrefixes)
 				{ 
-					if (name.IndexOf(name0 + p) == 0)
+					if (name.IndexOf(name0 + p) == 0 || name.LastIndexOf(p) == name.Len() - strlen(p))
 					{
 						foundspeciallump = true;
 						break;
@@ -272,7 +274,6 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 
 		int len = LittleShort(zip_fh->NameLength);
 		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
-		if (name0.IsNotEmpty()) name = name.Mid(name0.Len());
 		dirptr += sizeof(FZipCentralDirectoryInfo) + 
 				  LittleShort(zip_fh->NameLength) + 
 				  LittleShort(zip_fh->ExtraLength) + 
@@ -284,7 +285,14 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 			if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Central directory corrupted.", FileName.GetChars());
 			return false;
 		}
-		
+
+		if (name.IndexOf("__macosx") == 0 || name.IndexOf("__MACOSX") == 0)
+		{
+			skipped++;
+			continue; // Weed out Apple's resource fork garbage right here because it interferes with safe operation.
+		}
+		if (name0.IsNotEmpty()) name = name.Mid(name0.Len());
+
 		// skip Directories
 		if (name.IsEmpty() || (name.Back() == '/' && LittleLong(zip_fh->UncompressedSize) == 0))
 		{
@@ -329,7 +337,7 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		lump_p->CRC32 = zip_fh->CRC32;
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
 		lump_p->Position = LittleLong(zip_fh->LocalHeaderOffset);
-		lump_p->CheckEmbedded();
+		lump_p->CheckEmbedded(filter);
 
 		lump_p++;
 	}

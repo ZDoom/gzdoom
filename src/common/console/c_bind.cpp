@@ -696,6 +696,12 @@ void ReadBindings(int lump, bool override)
 			dest = &AutomapBindings;
 			sc.MustGetString();
 		}
+		else if (sc.Compare("unbind"))
+		{
+			sc.MustGetString();
+			dest->UnbindKey(sc.String);
+			continue;
+		}
 		key = GetConfigKeyFromName(sc.String);
 		sc.MustGetString();
 		dest->SetBind(key, sc.String, override);

@@ -24,7 +24,7 @@ class VkHardwareTexture : public IHardwareTexture
 {
 	friend class VkMaterial;
 public:
-	VkHardwareTexture();
+	VkHardwareTexture(int numchannels);
 	~VkHardwareTexture();
 
 	static void ResetAll();
@@ -45,7 +45,7 @@ public:
 private:
 	void CreateImage(FTexture *tex, int translation, int flags);
 
-	void CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels);
+	void CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels, bool mipmap);
 	static int GetMipLevels(int w, int h);
 
 	static VkHardwareTexture *First;

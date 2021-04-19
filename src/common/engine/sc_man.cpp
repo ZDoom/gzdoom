@@ -1289,6 +1289,42 @@ void FScanner::AddSymbol(const char* name, double value)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+int FScanner::StartBraces(FScanner::SavedPos* braceend)
+{
+	if (CheckString("{"))
+	{
+		auto here = SavePos();
+		SkipToEndOfBlock();
+		*braceend = SavePos();
+		RestorePos(here);
+		return 0;
+	}
+	else
+	{
+		ScriptError("'{' expected");
+		return -1;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool FScanner::FoundEndBrace(FScanner::SavedPos& braceend)
+{
+	auto here = SavePos();
+	return here.SavedScriptPtr >= braceend.SavedScriptPtr;
+}
+
+
+//==========================================================================
+//
 // a class that remembers a parser position
 //
 //==========================================================================

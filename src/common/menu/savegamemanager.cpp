@@ -232,6 +232,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, LoadSavegame)
 
 void FSavegameManagerBase::DoSave(int Selected, const char *savegamestring)
 {
+	RemoveNewSaveNode();
 	if (Selected != 0)
 	{
 		auto node = SaveGames[Selected];

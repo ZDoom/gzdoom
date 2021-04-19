@@ -103,4 +103,14 @@ inline void fillshort(void* buff, size_t count, uint16_t clear)
 template<typename T> inline constexpr T Sgn(const T& val) { return (val > 0) - (val < 0); }
 
 
+inline int sizeToBits(int w)
+{
+	int j = 15;
+
+	while ((j > 1) && ((1 << j) > w))
+		j--;
+	return j;
+}
+
+
 #endif

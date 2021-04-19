@@ -31,6 +31,7 @@ enum EChanFlag
 	CHANF_OVERLAP = 8192, // [MK] Does not stop any sounds in the channel and instead plays over them.
 	CHANF_LOCAL = 16384,	// only plays locally for the calling actor
 	CHANF_TRANSIENT = 32768,	// Do not record in savegames - used for sounds that get restarted outside the sound system (e.g. ambients in SW and Blood)
+	CHANF_FORCE = 65536,		// Start, even if sound is paused.
 };
 
 typedef TFlags<EChanFlag> EChanFlags;

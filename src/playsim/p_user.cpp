@@ -1698,7 +1698,7 @@ void player_t::Serialize(FSerializer &arc)
 		("onground", onground)
 		("musinfoactor", MUSINFOactor)
 		("musinfotics", MUSINFOtics)
-		("SoundClass", SoundClass);
+		("soundclass", SoundClass);
 
 	if (arc.isWriting ())
 	{

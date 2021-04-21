@@ -678,7 +678,7 @@ void HWSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 //
 //==========================================================================
 
-void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t in_area, int thruportal)
+void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t in_area, int thruportal, bool isSpriteShadow)
 {
 	sector_t rs;
 	sector_t * rendersector;
@@ -795,6 +795,12 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	y = thingpos.Y;
 	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
 
+	// snap shadow Z to the floor
+	if (isSpriteShadow)
+	{
+		z = thing->floorz;
+	}
+
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
 	{
@@ -803,6 +809,13 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 
 	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+
+	// don't bother drawing sprite shadows if this is a model (it will never look right)
+	if (modelframe && isSpriteShadow)
+	{
+		return;
+	}
+
 	if (!modelframe)
 	{
 		bool mirror = false;
@@ -897,7 +910,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
 			thing->renderflags ^= RF_XFLIP;
 
-		r.Scale(sprscale.X, sprscale.Y);
+		r.Scale(sprscale.X, isSpriteShadow ? sprscale.Y * 0.15 : sprscale.Y);
 		
 		float SpriteOffY = thing->SpriteOffset.Y;
 		float rightfac = -r.left - thing->SpriteOffset.X;
@@ -1118,12 +1131,29 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		}
 	}
 
+	// for sprite shadow, use a translucent stencil renderstyle
+	if (isSpriteShadow)
+	{
+		RenderStyle = STYLE_Stencil;
+		ThingColor = MAKEARGB(ColorMatcher.Pick(0, 0, 0), 0, 0, 0);
+		trans = 0.5f;
+		hw_styleflags = STYLEHW_NoAlphaTest;
+	}
+
 	if (trans == 0.0f) return;
 
 	// end of light calculation
 
 	actor = thing;
 	index = thing->SpawnOrder;
+
+	// sprite shadows should have a fixed index of -1 (ensuring they're drawn behind particles which have index 0)
+	// sorting should be irrelevant since they're always translucent
+	if (isSpriteShadow)
+	{
+		index = -1;
+	}
+
 	particle = nullptr;
 
 	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)
@@ -1348,6 +1378,13 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 					th->Prev += newpos - savedpos;
 
 					HWSprite spr;
+
+					// [Nash] draw sprite shadow
+					if (R_ShouldDrawSpriteShadow(th))
+					{
+						spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2, true);
+					}
+
 					// This is called from the worker thread and must not alter the fake sector cache.
 					spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
 					th->Angles.Yaw = savedangle;

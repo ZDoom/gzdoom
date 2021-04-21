@@ -72,6 +72,7 @@ EXTERN_CVAR(Float, m_sensitivity_x)
 EXTERN_CVAR(Float, m_sensitivity_y)
 EXTERN_CVAR(Int, adl_volume_model)
 EXTERN_CVAR (Int, gl_texture_hqresize_targets)
+EXTERN_CVAR(Int, wipetype)
 
 #ifdef _WIN32
 EXTERN_CVAR(Int, in_mouse)
@@ -622,6 +623,11 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		SetRavenDefaults (gameinfo.gametype == GAME_Hexen);
 	}
 
+	if (gameinfo.gametype & GAME_Strife)
+	{
+		SetStrifeDefaults ();
+	}
+
 	// The NetServerInfo section will be read and override anything loaded
 	// here when it's determined that a netgame is being played.
 	strncpy (subsection, "LocalServerInfo", sublen);
@@ -923,6 +929,9 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 	val.Int = 0x734323;
 	am_cdwallcolor.SetGenericRepDefault (val, CVAR_Int);
 
+	val.Int = 0;
+	wipetype.SetGenericRepDefault(val, CVAR_Int);
+
 	// Fix the Heretic/Hexen automap colors so they are correct.
 	// (They were wrong on older versions.)
 	if (*am_wallcolor == 0x2c1808 && *am_fdwallcolor == 0x887058 && *am_cdwallcolor == 0x4c3820)
@@ -937,6 +946,13 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 		val.Int = 0x3f6040;
 		color.SetGenericRepDefault (val, CVAR_Int);
 	}
+}
+
+void FGameConfigFile::SetStrifeDefaults ()
+{
+	UCVarValue val;
+	val.Int = 3;
+	wipetype.SetGenericRepDefault(val, CVAR_Int);
 }
 
 CCMD (whereisini)

@@ -32,6 +32,7 @@
 #include "vm.h"
 #include "r_defs.h"
 #include "g_levellocals.h"
+#include "gamedata/g_mapinfo.h"
 #include "s_sound.h"
 #include "p_local.h"
 #include "v_font.h"
@@ -2503,12 +2504,150 @@ DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 	return 0;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static int isValid( level_info_t *info )
+{
+	return info->isValid();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, isValid, isValid)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(level_info_t);
+	ACTION_RETURN_BOOL(isValid(self));
+}
+
+static void LookupLevelName( level_info_t *info, FString *result )
+{
+	*result = info->LookupLevelName();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, LookupLevelName, LookupLevelName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(level_info_t);
+	FString rets;
+	LookupLevelName(self,&rets);
+	ACTION_RETURN_STRING(rets);
+}
+
+static int GetLevelInfoCount()
+{
+	return wadlevelinfos.Size();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, GetLevelInfoCount, GetLevelInfoCount)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(GetLevelInfoCount());
+}
+
+static level_info_t* GetLevelInfo( unsigned int index )
+{
+	if ( index >= wadlevelinfos.Size() )
+		return nullptr;
+	return &wadlevelinfos[index];
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, GetLevelInfo, GetLevelInfo)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	ACTION_RETURN_POINTER(GetLevelInfo(index));
+}
+
+static level_info_t* ZFindLevelInfo( const FString &mapname )
+{
+	return FindLevelInfo(mapname.GetChars());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, FindLevelInfo, ZFindLevelInfo)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(mapname);
+	ACTION_RETURN_POINTER(ZFindLevelInfo(mapname));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, FindLevelByNum, FindLevelByNum)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(num);
+	ACTION_RETURN_POINTER(FindLevelByNum(num));
+}
+
+static int MapExists( const FString &mapname )
+{
+	return P_CheckMapData(mapname.GetChars());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, MapExists, MapExists)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(mapname);
+	ACTION_RETURN_BOOL(MapExists(mapname));
+}
+
+DEFINE_ACTION_FUNCTION(_LevelInfo, MapChecksum)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(mapname);
+	char md5string[33] = "";
+	MapData *map = P_OpenMapData(mapname.GetChars(), true);
+	if (map != nullptr)
+	{
+		uint8_t cksum[16];
+		map->GetChecksum(cksum);
+		for (int j = 0; j < 16; ++j)
+		{
+			sprintf(md5string + j * 2, "%02x", cksum[j]);
+		}
+		delete map;
+	}
+	ACTION_RETURN_STRING((const char *)md5string);
+}
 
 //==========================================================================
 //
 //
 //
 //==========================================================================
+DEFINE_FIELD_X(LevelInfo, level_info_t, levelnum)
+DEFINE_FIELD_X(LevelInfo, level_info_t, MapName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, NextMap)
+DEFINE_FIELD_X(LevelInfo, level_info_t, NextSecretMap)
+DEFINE_FIELD_X(LevelInfo, level_info_t, SkyPic1)
+DEFINE_FIELD_X(LevelInfo, level_info_t, SkyPic2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, F1Pic)
+DEFINE_FIELD_X(LevelInfo, level_info_t, cluster)
+DEFINE_FIELD_X(LevelInfo, level_info_t, partime)
+DEFINE_FIELD_X(LevelInfo, level_info_t, sucktime)
+DEFINE_FIELD_X(LevelInfo, level_info_t, flags)
+DEFINE_FIELD_X(LevelInfo, level_info_t, flags2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, flags3)
+DEFINE_FIELD_X(LevelInfo, level_info_t, Music)
+DEFINE_FIELD_X(LevelInfo, level_info_t, LevelName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, AuthorName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, musicorder)
+DEFINE_FIELD_X(LevelInfo, level_info_t, skyspeed1)
+DEFINE_FIELD_X(LevelInfo, level_info_t, skyspeed2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, cdtrack)
+DEFINE_FIELD_X(LevelInfo, level_info_t, gravity)
+DEFINE_FIELD_X(LevelInfo, level_info_t, aircontrol)
+DEFINE_FIELD_X(LevelInfo, level_info_t, airsupply)
+DEFINE_FIELD_X(LevelInfo, level_info_t, compatflags)
+DEFINE_FIELD_X(LevelInfo, level_info_t, compatflags2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, deathsequence)
+DEFINE_FIELD_X(LevelInfo, level_info_t, fogdensity)
+DEFINE_FIELD_X(LevelInfo, level_info_t, outsidefogdensity)
+DEFINE_FIELD_X(LevelInfo, level_info_t, skyfog)
+DEFINE_FIELD_X(LevelInfo, level_info_t, pixelstretch)
+DEFINE_FIELD_X(LevelInfo, level_info_t, RedirectType)
+DEFINE_FIELD_X(LevelInfo, level_info_t, RedirectMapName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, teamdamage)
+
 DEFINE_GLOBAL_NAMED(currentVMLevel, level)
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
@@ -2557,6 +2696,7 @@ DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags, compatflags)
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags2, compatflags2)
+DEFINE_FIELD(FLevelLocals, info);
 
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)

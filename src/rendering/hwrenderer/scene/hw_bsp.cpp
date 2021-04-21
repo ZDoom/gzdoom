@@ -49,6 +49,8 @@
 
 CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+EXTERN_CVAR(Float, r_actorspriteshadowdist)
+
 thread_local bool isWorkerThread;
 ctpl::thread_pool renderPool(1);
 bool inited = false;
@@ -547,6 +549,18 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 		if (CurrentMapSections[thing->subsector->mapsection])
 		{
 			HWSprite sprite;
+
+			// [Nash] draw sprite shadow
+			if (R_ShouldDrawSpriteShadow(thing))
+			{
+				double dist = (thing->Pos() - vp.Pos).LengthSquared();
+				double check = r_actorspriteshadowdist;
+				if (dist <= check * check)
+				{
+					sprite.Process(this, thing, sector, in_area, false, true);
+				}
+			}
+
 			sprite.Process(this, thing, sector, in_area, false);
 		}
 	}
@@ -566,6 +580,18 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 		}
 
 		HWSprite sprite;
+
+		// [Nash] draw sprite shadow
+		if (R_ShouldDrawSpriteShadow(thing))
+		{
+			double dist = (thing->Pos() - vp.Pos).LengthSquared();
+			double check = r_actorspriteshadowdist;
+			if (dist <= check * check)
+			{
+				sprite.Process(this, thing, sector, in_area, true, true);
+			}
+		}
+
 		sprite.Process(this, thing, sector, in_area, true);
 	}
 }

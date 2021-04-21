@@ -74,7 +74,7 @@ EXTERN_CVAR(Int, gl_texture_hqresize_targets)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap, bool isSpriteShadow)
 	{
 		auto viewport = thread->Viewport.get();
 
@@ -195,7 +195,14 @@ namespace swrenderer
 
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
-		
+
+		if (isSpriteShadow)
+		{
+			vis->RenderStyle = LegacyRenderStyles[STYLE_TranslucentStencil];
+			vis->FillColor = 0;
+			vis->Alpha *= 0.5;
+		}
+
 		if (r_dynlights && gl_light_sprites)
 		{
 			float lit_red = 0;

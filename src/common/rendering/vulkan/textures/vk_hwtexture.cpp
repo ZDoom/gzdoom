@@ -270,7 +270,9 @@ uint8_t *VkHardwareTexture::MapBuffer()
 
 unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
-	CreateTexture(w, h, mTexelsize, mTexelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM, buffer, mipmap);
+	// CreateTexture is used by the software renderer to create a screen output but without any screen data.
+	if (buffer)
+		CreateTexture(w, h, mTexelsize, mTexelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM, buffer, mipmap);
 	return 0;
 }
 

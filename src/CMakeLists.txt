@@ -178,20 +178,18 @@ else()
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
 		find_package( SDL2 REQUIRED CONFIG )
-		include_directories( "${SDL2_INCLUDE_DIRS}" )
-		set(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}" "${SDL2_INCLUDE_DIRS}")
-		CHECK_CXX_SOURCE_COMPILES("#include <SDL_version.h>
 
-		int main()
-		{
-			#if !SDL_VERSION_ATLEAST(2, 0, 6)
-			#error \"Only SDL 2.0.6 or later is supported.\"
-			#endif
-			return 0;
-		}" SDL2_MIN_VERSION )
-		if (NOT SDL2_MIN_VERSION)
-			message(SEND_ERROR "Only SDL 2.0.6 or later is supported.")
+		set( CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}" "${SDL2_INCLUDE_DIRS}" )
+		CHECK_CXX_SOURCE_COMPILES( "#include <SDL_version.h>
+			#if SDL_VERSION_ATLEAST(2, 0, 6)
+			int main() {}
+			#endif" SDL2_MIN_VERSION )
+		
+		if ( NOT SDL2_MIN_VERSION )
+			message( SEND_ERROR "Only SDL 2.0.6 or later is supported." )
 		endif()
+		
+		include_directories( "${SDL2_INCLUDE_DIRS}" )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARIES}" )
 	endif()
 

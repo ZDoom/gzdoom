@@ -50,7 +50,7 @@ CVAR(Bool, ui_screenborder_classic_scaling, true, CVAR_ARCHIVE)
 // nonsense that graphics should not be able to actually use that extra screen space.
 
 extern bool setsizeneeded;
-CUSTOM_CVAR(Bool, vid_allowtrueultrawide, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_allowtrueultrawide, 1, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	setsizeneeded = true;
 }
@@ -1263,11 +1263,20 @@ static void VirtualToRealCoords(F2DDrawer *drawer, double Width, double Height, 
 {
 	float myratio = float(handleaspect ? ActiveRatio (Width, Height) : (4.0 / 3.0));
 
-    // if 21:9 AR, map to 16:9 for all callers.
-    // this allows for black bars and stops the stretching of fullscreen images
-    if ((myratio > 1.7f) && !vid_allowtrueultrawide) {
-        myratio = 16.0f / 9.0f;
-    }
+	// if 21:9 AR, map to 16:9 for all callers.
+	// this allows for black bars and stops the stretching of fullscreen images
+
+	switch (vid_allowtrueultrawide)
+	{
+	case 1:
+	default:
+		myratio = MIN(64.0f / 27.0f, myratio);
+		break;
+	case 0:
+		myratio = MIN(16.0f / 9.0f, myratio);
+	case -1:
+		break;
+	}
 
 	double right = x + w;
 	double bottom = y + h;

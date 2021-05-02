@@ -177,9 +177,9 @@ else()
 
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-		find_package( SDL2 REQUIRED )
-		include_directories( "${SDL2_INCLUDE_DIR}" )
-		set(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}" "${SDL2_INCLUDE_DIR}")
+		find_package( SDL2 REQUIRED CONFIG )
+		include_directories( "${SDL2_INCLUDE_DIRS}" )
+		set(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}" "${SDL2_INCLUDE_DIRS}")
 		CHECK_CXX_SOURCE_COMPILES("#include <SDL_version.h>
 
 		int main()
@@ -192,7 +192,7 @@ else()
 		if (NOT SDL2_MIN_VERSION)
 			message(SEND_ERROR "Only SDL 2.0.6 or later is supported.")
 		endif()
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARY}" )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARIES}" )
 	endif()
 
 	find_path( FPU_CONTROL_DIR fpu_control.h )

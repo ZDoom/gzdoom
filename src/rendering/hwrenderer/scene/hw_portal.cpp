@@ -127,42 +127,13 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 	HWPortal * best = nullptr;
 	unsigned bestindex = 0;
 
-	// Find the one with the highest amount of lines.
-	// Normally this is also the one that saves the largest amount
-	// of time by drawing it before the scene itself.
-	auto &portals = outer_di->Portals;
-	for (int i = portals.Size() - 1; i >= 0; --i)
-	{
-		p = portals[i];
-		if (p->lines.Size() > 0 && p->IsSky())
-		{
-			// Cannot clear the depth buffer inside a portal recursion
-			if (recursion && p->NeedDepthBuffer()) continue;
+	if (recursion > 0 || outer_di->Portals.Size() != 1 || !outer_di->Portals[0]->IsSky()) return false;
 
-			if (!best || p->lines.Size() > best->lines.Size())
-			{
-				best = p;
-				bestindex = i;
-			}
-
-			// If the portal area contains the current camera viewpoint, let's always use it because it's likely to give the largest area.
-			if (p->boundingBox.contains(outer_di->Viewpoint.Pos))
-			{
-				best = p;
-				bestindex = i;
-				break;
-			}
-		}
-	}
-
-	if (best)
-	{
-		portals.Delete(bestindex);
-		RenderPortal(best, state, false, outer_di);
-		delete best;
-		return true;
-	}
-	return false;
+	best = outer_di->Portals[0];
+	outer_di->Portals.Clear();
+	RenderPortal(best, state, false, outer_di);
+	delete best;
+	return true;
 }
 
 

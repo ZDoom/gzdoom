@@ -184,8 +184,8 @@ public:
 	virtual void SetScale();
 	void ValidateResolution(int& hres, int& vres) const;
 	void StatusbarToRealCoords(double& x, double& y, double& w, double& h) const;
-	void DrawGraphic(FGameTexture* texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, ERenderStyle style, PalEntry color = 0xffffffff, int translation = 0, double clipwidth = -1.0);
-	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, ERenderStyle style, PalEntry color = 0xffffffff, int translation = 0, double clipwidth = -1.0);
+	void DrawGraphic(FGameTexture* texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, ERenderStyle style = STYLE_Translucent, PalEntry color = 0xffffffff, int translation = 0, double clipwidth = -1.0);
+	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, ERenderStyle style = STYLE_Translucent, PalEntry color = 0xffffffff, int translation = 0, double clipwidth = -1.0);
 	void DrawRotated(FTextureID texture, double x, double y, int flags, double angle, double Alpha, double scaleX, double scaleY, PalEntry color = 0xffffffff, int translation = 0, ERenderStyle style = STYLE_Translucent);
 	void DrawRotated(FGameTexture* tex, double x, double y, int flags, double angle, double Alpha, double scaleX, double scaleY, PalEntry color = 0xffffffff, int translation = 0, ERenderStyle style = STYLE_Translucent);
 	void DrawString(FFont* font, const FString& cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY, double scaleX, double scaleY, int pt, int style);

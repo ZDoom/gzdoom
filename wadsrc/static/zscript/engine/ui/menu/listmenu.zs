@@ -246,7 +246,6 @@ class ListMenu : Menu
 			y = int((y - fy) * h / fh);
 		}
 
-
 		if (mFocusControl != NULL)
 		{
 			mFocusControl.MouseEvent(type, x, y);

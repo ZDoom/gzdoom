@@ -122,6 +122,13 @@ public:
 		return true;
 	}
 
+	bool GetNumber(int64_t& var, bool evaluate = false)
+	{
+		if (!GetNumber(evaluate)) return false;
+		var = BigNumber;
+		return true;
+	}
+
 	bool GetString(FString& var)
 	{
 		if (!GetString()) return false;

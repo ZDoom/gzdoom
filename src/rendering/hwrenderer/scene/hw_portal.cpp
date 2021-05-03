@@ -123,7 +123,6 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di, FRenderState &state)
 //-----------------------------------------------------------------------------
 bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di, FRenderState &state)
 {
-	HWPortal * p;
 	HWPortal * best = nullptr;
 	unsigned bestindex = 0;
 

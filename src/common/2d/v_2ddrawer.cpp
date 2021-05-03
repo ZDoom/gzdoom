@@ -787,7 +787,7 @@ void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, const u
 		mIndices.Reserve(vtcount);
 		for (size_t i = 0; i < vtcount; i++)
 		{
-			mIndices[dg.mIndexIndex + i] = i + dg.mVertIndex;
+			mIndices[dg.mIndexIndex + i] = int(i + dg.mVertIndex);
 		}
 		dg.mIndexCount = (int)vtcount;
 

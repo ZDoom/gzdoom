@@ -37,6 +37,7 @@
 #include "dobject.h"
 #include "vm.h"
 #include "types.h"
+#include "v_draw.h"
 
 // We need one specific type for each of the 8 integral VM types and instantiate the needed functions for each of them.
 // Dynamic arrays cannot hold structs because for every type there'd need to be an internal implementation which is impossible.
@@ -410,6 +411,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Push, ArrayPush<FDynArray_I32 COMMA
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
 	PARAM_INT(val);
 	ACTION_RETURN_INT(self->Push(val));
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_I32, PushV)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
+	PARAM_VA_POINTER(va_reginfo);	// Get the hidden type information array
+	VMVa_List args = { param + 1, 0, numparam - 2, va_reginfo + 1 };
+	while (args.curindex < args.numargs)
+	{
+		if (args.reginfo[args.curindex] == REGT_INT)
+		{
+			self->Push(args.args[args.curindex++].i);
+		}
+		else if (args.reginfo[args.curindex] == REGT_FLOAT)
+		{
+			self->Push(int(args.args[args.curindex++].f));
+		}
+		else ThrowAbortException(X_OTHER, "Invalid parameter in pushv, int expected");
+	}
+
+
+	ACTION_RETURN_INT(self->Size()-1);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Pop, ArrayPop<FDynArray_I32>)

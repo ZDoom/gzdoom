@@ -187,6 +187,8 @@ struct MusPlayingInfo native
 	native String name;
 	native int baseorder;
 	native bool loop;
+	native voidptr handle;
+	
 };
 
 struct TexMan
@@ -218,7 +220,9 @@ struct TexMan
 		AllowSkins = 8,
 		ShortNameOnly = 16,
 		DontCreate = 32,
-		Localize = 64
+		Localize = 64,
+		ForceLookup = 128,
+		NoAlias = 256
 	};
 	
 	enum ETexReplaceFlags
@@ -239,6 +243,7 @@ struct TexMan
 	native static Vector2 GetScaledOffset(TextureID tex);
 	native static int CheckRealHeight(TextureID tex);
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
+	native static bool UseGamePalette(TextureID tex);
 }
 
 enum EScaleMode
@@ -402,6 +407,8 @@ struct Screen native
 	native static int, int, int, int GetViewWindow();
 	native static double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
 	native static Vector2 SetOffset(double x, double y);
+	native static void ClearScreen(color col = 0);
+	native static void SetScreenFade(double factor);
 }
 
 struct Font native
@@ -657,6 +664,7 @@ struct StringStruct native
 	native void DeleteLastCharacter();
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
+	native void Substitute(String str, String replace);
 }
 
 struct Translation version("2.4")

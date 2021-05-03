@@ -8706,7 +8706,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 				bool writable;
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// must be resolved before the address is requested.
 
-				if (ArgList[i]->ValueType->isRealPointer())
+				if (ArgList[i] && ArgList[i]->ValueType->isRealPointer())
 				{
 					auto pointedType = ArgList[i]->ValueType->toPointer()->PointedType;
 					if (pointedType && pointedType->isDynArray())

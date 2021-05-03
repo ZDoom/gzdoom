@@ -50,6 +50,7 @@ struct DynArray_I32 native
 	native void Append (DynArray_I32 other);
 	native uint Find(int item) const;
 	native uint Push (int item);
+	native vararg uint PushV (int item, ...);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
 	native void Insert (uint index, int item);

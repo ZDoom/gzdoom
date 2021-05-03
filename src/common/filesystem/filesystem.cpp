@@ -63,12 +63,14 @@ struct FileSystem::LumpRecord
 	int			rfnum;
 	int			Namespace;
 	int			resourceId;
+	int			flags;
 
 	void SetFromLump(int filenum, FResourceLump* lmp)
 	{
 		lump = lmp;
 		rfnum = filenum;
 		linkedTexture = nullptr;
+		flags = 0;
 
 		if (lump->Flags & LUMPF_SHORTNAME)
 		{
@@ -487,7 +489,7 @@ int FileSystem::CheckNumForName (const char *name, int space)
 			// from a Zip return that. WADs don't know these namespaces and single lumps must
 			// work as well.
 			if (space > ns_specialzipdirectory && lump.Namespace == ns_global && 
-				!(lump.lump->Flags & LUMPF_FULLPATH)) break;
+				!((lump.lump->Flags ^lump.flags) & LUMPF_FULLPATH)) break;
 		}
 		i = NextLumpIndex[i];
 	}
@@ -796,7 +798,7 @@ int FileSystem::GetFileFlags (int lump)
 		return 0;
 	}
 
-	return FileInfo[lump].lump->Flags;
+	return FileInfo[lump].lump->Flags ^ FileInfo[lump].flags;
 }
 
 //==========================================================================
@@ -1532,11 +1534,18 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 
 	auto oldlump = FileInfo[lump];
 	int slash = oldlump.longName.LastIndexOf('/');
-	if (slash == -1) return true;	// already is pathless.
+
+	if (slash == -1)
+	{
+		FileInfo[lump].flags = LUMPF_FULLPATH;
+		return true;	// already is pathless.
+	}
+
 
 	// just create a new reference to the original data with a different name.
 	oldlump.longName = oldlump.longName.Mid(slash + 1);
 	oldlump.resourceId = id;
+	oldlump.flags = LUMPF_FULLPATH;
 	FileInfo.Push(oldlump);
 	return true;
 }

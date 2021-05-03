@@ -138,6 +138,10 @@ void S_StopCustomStream(SoundStream *stream)
 
 void S_PauseAllCustomStreams(bool on)
 {
+	static bool paused = false;
+
+	if (paused == on) return;
+	paused = on;
 	for (auto s : customStreams)
 	{
 		s->SetPaused(on);

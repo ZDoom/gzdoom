@@ -49,6 +49,7 @@
 #include "s_music.h"
 #include "i_interface.h"
 #include "base_sbar.h"
+#include "image.h"
 
 //==========================================================================
 //
@@ -339,8 +340,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 
 static int CheckForTexture(const FString& name, int type, int flags)
 {
-	// ForceLookup is intentionally blocked here, this flag is for internal use only.
-	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), (flags & ~FTextureManager::TEXMAN_ForceLookup)).GetIndex();
+	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
@@ -480,6 +480,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization_)
 	ACTION_RETURN_INT(OkForLocalization_(name, subst));
 }
 
+static int UseGamePalette(int index)
+{
+	auto tex = TexMan.GameByIndex(index, false);
+	if (!tex) return false;
+	auto image = tex->GetTexture()->GetImage();
+	return image ? image->UseGamePalette() : false;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, UseGamePalette, UseGamePalette)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	ACTION_RETURN_INT(UseGamePalette(texid));
+}
 
 //=====================================================================================
 //
@@ -870,6 +884,13 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, GetAllKeysForCommand)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FKeyBindings, GetBinding)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_INT(key);
+	ACTION_RETURN_STRING(self->GetBinding(key));
+}
+
 DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
@@ -917,6 +938,7 @@ DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, handle);
 
 DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
 DEFINE_GLOBAL(Bindings)

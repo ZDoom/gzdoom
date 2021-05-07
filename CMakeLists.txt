@@ -317,6 +317,9 @@ if (HAVE_VULKAN)
 	add_subdirectory( libraries/glslang/glslang)
 	add_subdirectory( libraries/glslang/spirv )
 	add_subdirectory( libraries/glslang/OGLCompilersDLL )
+	# Add our own copy of glslang's include directory
+	# to the list of include search paths to avoid issues.
+	include_directories( "libraries/glslang" )
 endif()
 
 if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )

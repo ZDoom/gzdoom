@@ -594,7 +594,7 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
 		DTA_FlipX, !!(flags & DI_MIRROR),
 		DTA_FlipY, !!(flags& DI_MIRRORY),
-		DTA_LegacyRenderStyle, style,
+		DTA_LegacyRenderStyle, (flags & DI_ALPHAMAPPED) ? STYLE_Shaded : style,
 		TAG_DONE);
 }
 

@@ -115,7 +115,9 @@ class Deh_Actor_250 : Actor
 		PLAY Q 5 A_Fall;
 		PLAY RSTUV 5;
 		PLAY W -1;							// 1084
-		BLD2 AAAAAAAAAAAAAAAA 0;			// 1100
+
+		TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; Wait; TNT1 A -1; Wait; 
+		TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; Wait; TNT1 A -1; Wait; 
 
 		TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait;
 		TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait; TNT1 A -1; Wait;

@@ -449,13 +449,14 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 			device = new VulkanDevice();
 			fb = new VulkanFrameBuffer(nullptr, vid_fullscreen, device);
 		}
-		catch (CVulkanError const&)
+		catch (CVulkanError const &error)
 		{
 			if (Priv::window != nullptr)
 			{
 				Priv::DestroyWindow();
 			}
 
+			Printf(TEXTCOLOR_RED "Initialization of Vulkan failed: %s\n", error.what());
 			Priv::vulkanEnabled = false;
 		}
 	}

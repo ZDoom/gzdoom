@@ -1135,7 +1135,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (isSpriteShadow)
 	{
 		RenderStyle = STYLE_Stencil;
-		ThingColor = MAKEARGB(ColorMatcher.Pick(0, 0, 0), 0, 0, 0);
+		ThingColor = MAKEARGB(255, 0, 0, 0);
 		trans = 0.5f;
 		hw_styleflags = STYLEHW_NoAlphaTest;
 	}

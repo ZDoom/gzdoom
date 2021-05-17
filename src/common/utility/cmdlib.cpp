@@ -331,13 +331,8 @@ FString ExtractFileBase (const char *path, bool include_extension)
 		}
 #endif
 
-		if (!include_extension)
+		if (!include_extension && (dot = strrchr(src, '.')))
 		{
-			dot = src;
-			while (*dot && *dot != '.')
-			{
-				dot++;
-			}
 			return FString(src, dot - src);
 		}
 		else

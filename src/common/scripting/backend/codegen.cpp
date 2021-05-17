@@ -5261,7 +5261,6 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 				else
 				{
 					ExpVal value = static_cast<FxConstant *>(choices[j])->GetValue();
-					assert(value.Type == ValueType);
 					if (Type == NAME_Min)
 					{
 						if (value.Type->GetRegType() == REGT_FLOAT)

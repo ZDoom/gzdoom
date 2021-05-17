@@ -2652,7 +2652,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native double bob;
 	native vector2 vel;
 	native bool centering;
-	native int turnticks;
+	native uint8 turnticks;
 	native bool attackdown;
 	native bool usedown;
 	native uint oldbuttons;
@@ -2670,7 +2670,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native PSprite psprites;
 	native int cheats;
 	native int timefreezer;
-	native int refire;
+	native int16 refire;
 	native int16 inconsistent;
 	native bool waiting;
 	native int killcount;

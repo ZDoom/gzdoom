@@ -2145,9 +2145,9 @@ FxExpression *FxPreIncrDecr::Resolve(FCompileContext &ctx)
 
 	ValueType = Base->ValueType;
 
-	if (!Base->IsNumeric() || Base->ValueType->Size != 4)
+	if (!Base->IsNumeric())
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric 32 bit type expected");
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
 		return nullptr;
 	}
@@ -2170,7 +2170,6 @@ FxExpression *FxPreIncrDecr::Resolve(FCompileContext &ctx)
 ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 {
 	assert(Token == TK_Incr || Token == TK_Decr);
-	assert(ValueType == Base->ValueType && IsNumeric());
 
 	int zero = build->GetConstantInt(0);
 	int regtype = ValueType->GetRegType();
@@ -2232,9 +2231,9 @@ FxExpression *FxPostIncrDecr::Resolve(FCompileContext &ctx)
 
 	ValueType = Base->ValueType;
 
-	if (!Base->IsNumeric() || ValueType->Size != 4)
+	if (!Base->IsNumeric())
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric 32 bit type expected");
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
 		return nullptr;
 	}
@@ -2257,7 +2256,6 @@ FxExpression *FxPostIncrDecr::Resolve(FCompileContext &ctx)
 ExpEmit FxPostIncrDecr::Emit(VMFunctionBuilder *build)
 {
 	assert(Token == TK_Incr || Token == TK_Decr);
-	assert(ValueType == Base->ValueType && IsNumeric());
 
 	int zero = build->GetConstantInt(0);
 	int regtype = ValueType->GetRegType();

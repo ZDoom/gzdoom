@@ -4920,7 +4920,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 
 	if (self->Z() == sec->floorplane.ZatPoint(self) && sec->PortalBlocksMovement(sector_t::floor))
 	{
-		if (sec->special == Damage_InstantDeath)
+		if (sec->damageamount >= TELEFRAG_DAMAGE)
 		{
 			P_DamageMobj(self, NULL, NULL, 999, NAME_InstantDeath);
 		}

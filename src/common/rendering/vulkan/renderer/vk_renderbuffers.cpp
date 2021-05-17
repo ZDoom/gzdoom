@@ -239,8 +239,13 @@ void VkRenderBuffers::CreateShadowmap()
 
 	ImageBuilder builder;
 	builder.setSize(gl_shadowmap_quality, 1024);
-	builder.setFormat(VK_FORMAT_R32_SFLOAT);
+	builder.setFormat(SceneNormalFormat);
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (!builder.isFormatSupported(fb->device, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+	{
+		SceneNormalFormat = VK_FORMAT_R8G8B8A8_UNORM;
+		builder.setFormat(SceneNormalFormat);
+	}
 	Shadowmap.Image = builder.create(fb->device);
 	Shadowmap.Image->SetDebugName("VkRenderBuffers.Shadowmap");
 

@@ -406,7 +406,7 @@ class StateProvider : Inventory
 		if ((player.cmd.buttons & BT_ATTACK)
 			&& !player.ReadyWeapon.bAltFire && !pending && player.health > 0)
 		{
-			player.refire = player.refire + 1;
+			player.refire++;
 			player.mo.FireWeapon(ResolveState(flash));
 		}
 		else if ((player.cmd.buttons & BT_ALTATTACK)

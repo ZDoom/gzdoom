@@ -218,7 +218,8 @@ class FireDemon : Actor
 		// Normal movement
 		if (!fdstrafecount)
 		{
-			if (--movecount<0 || !MonsterMove ())
+			movecount = movecount - 1;
+			if (movecount < 0 || !MonsterMove ())
 			{
 				NewChaseDir ();
 			}

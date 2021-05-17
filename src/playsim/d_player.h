@@ -318,8 +318,8 @@ public:
 	// This avoids anomalies with such things as Boom ice and conveyors.
 	DVector2 Vel = { 0,0 };
 
+	int		turnticks = 0;
 	bool		centering = false;
-	uint8_t		turnticks = 0;
 
 
 	bool		attackdown = false;
@@ -344,7 +344,7 @@ public:
 
 	int			cheats = 0;					// bit flags
 	int			timefreezer = 0;			// Player has an active time freezer
-	short		refire = 0;					// refired shots are less accurate
+	int			refire = 0;					// refired shots are less accurate
 	short		inconsistant = 0;
 	bool		waiting = 0;
 	int			killcount = 0, itemcount = 0, secretcount = 0;		// for intermission

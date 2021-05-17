@@ -2145,9 +2145,9 @@ FxExpression *FxPreIncrDecr::Resolve(FCompileContext &ctx)
 
 	ValueType = Base->ValueType;
 
-	if (!Base->IsNumeric())
+	if (!Base->IsNumeric() || Base->ValueType->Size != 4)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		ScriptPosition.Message(MSG_ERROR, "Numeric 32 bit type expected");
 		delete this;
 		return nullptr;
 	}
@@ -2232,9 +2232,9 @@ FxExpression *FxPostIncrDecr::Resolve(FCompileContext &ctx)
 
 	ValueType = Base->ValueType;
 
-	if (!Base->IsNumeric())
+	if (!Base->IsNumeric() || ValueType->Size != 4)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		ScriptPosition.Message(MSG_ERROR, "Numeric 32 bit type expected");
 		delete this;
 		return nullptr;
 	}

@@ -929,12 +929,7 @@ void SoundEngine::StopSound(int sourcetype, const void* actor, int channel, int 
 void SoundEngine::StopActorSounds(int sourcetype, const void* actor, int chanmin, int chanmax)
 {
 	const bool all = (chanmin == 0 && chanmax == 0);
-	if (!all && chanmax > chanmin)
-	{
-		const int temp = chanmax;
-		chanmax = chanmin;
-		chanmin = temp;
-	}
+	if (chanmax < chanmin) std::swap(chanmin, chanmax);
 
 	FSoundChan* chan = Channels;
 	while (chan != nullptr)

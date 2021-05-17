@@ -535,8 +535,6 @@ size_t FStringTable::ProcessEscapes (char *iptr)
 			}
 			else if (c == '\n')
 				continue;
-
-
 		}
 		*optr++ = c;
 	}

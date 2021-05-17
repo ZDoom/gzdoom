@@ -89,8 +89,8 @@ TArray<uint8_t> base64_encode(unsigned char const* bytes_to_encode, size_t in_le
     while((i++ < 3))
       reta.Push('=');
 
-    reta.Push(0);
   }
+  reta.Push(0);
 
   return reta;
 

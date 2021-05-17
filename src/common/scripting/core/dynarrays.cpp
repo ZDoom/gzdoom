@@ -1006,6 +1006,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Push, ArrayPush<FDynArray_String
 	ACTION_RETURN_INT(self->Push(val));
 }
 
+DEFINE_ACTION_FUNCTION(FDynArray_String, PushV)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
+	PARAM_VA_POINTER(va_reginfo);	// Get the hidden type information array
+	VMVa_List args = { param + 1, 0, numparam - 2, va_reginfo + 1 };
+	while (args.curindex < args.numargs)
+	{
+		if (args.reginfo[args.curindex] == REGT_STRING)
+		{
+			self->Push(args.args[args.curindex++].s());
+		}
+		else ThrowAbortException(X_OTHER, "Invalid parameter in pushv, string expected");
+	}
+	ACTION_RETURN_INT(self->Size() - 1);
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Pop, ArrayPop<FDynArray_String>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);

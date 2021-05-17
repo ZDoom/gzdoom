@@ -110,6 +110,10 @@ class StatusBarCore native ui
 	native double, double, double, double StatusbarToRealCoords(double x, double y=0, double w=0, double h=0);
 	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1), ERenderStyle style = STYLE_Translucent, Color col = 0xffffffff, int translation = 0, double clipwidth = -1);
 	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1), ERenderStyle style = STYLE_Translucent, Color col = 0xffffffff, int translation = 0, double clipwidth = -1);
+
+	native void DrawTextureRotated(TextureID texid, Vector2 pos, int flags, double angle, double alpha = 1, Vector2 scale = (1, 1), ERenderStyle style = STYLE_Translucent, Color col = 0xffffffff, int translation = 0);
+	native void DrawImageRotated(String texid, Vector2 pos, int flags, double angle, double alpha = 1, Vector2 scale = (1, 1), ERenderStyle style = STYLE_Translucent, Color col = 0xffffffff, int translation = 0);
+
 	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4, Vector2 scale = (1, 1), int pt = 0, ERenderStyle style = STYLE_Translucent);
 	native double, double, double, double TransformRect(double x, double y, double w, double h, int flags = 0);
 	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);

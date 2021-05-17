@@ -145,6 +145,12 @@ public:
 		return true;
 	}
 
+	bool GetFloat(float& var, bool evaluate = false)
+	{
+		if (!GetFloat(evaluate)) return false;
+		var = float(Float);
+		return true;
+	}
 
 	void MustGetFloat(bool evaluate = false);
 	bool CheckFloat(bool evaluate = false);

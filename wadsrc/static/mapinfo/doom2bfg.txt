@@ -9,14 +9,14 @@ gameinfo
 clearepisodes
 episode map01
 {
-	name = "Hell On Earth"
+	name = "$TXT_D2E1"
 	picname = "M_EPI1"
 	key = "h"
 }
 
 episode level01
 {
-	name = "No Rest for the Living"
+	name = "$TXT_D2E2"
 	picname = "M_EPI2"
 	key = "n"
 	optional

@@ -9,7 +9,7 @@ gameinfo
 clearepisodes
 episode map01
 {
-	name = "Hell On Earth"
+	name = "$TXT_D2E1"
 	picname = "M_EPI1"
 	key = "h"
 }

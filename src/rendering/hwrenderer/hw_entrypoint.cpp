@@ -291,7 +291,7 @@ static void CheckTimer(FRenderState &state, uint64_t ShaderStartTime)
 	// if firstFrame is not yet initialized, initialize it to current time
 	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
 	if ((state.firstFrame == 0) || (screen->FrameTime - state.firstFrame >= 1 << 24) || ShaderStartTime >= state.firstFrame)
-		state.firstFrame = screen->FrameTime;
+		state.firstFrame = screen->FrameTime - 1;
 }
 
 

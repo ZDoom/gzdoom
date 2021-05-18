@@ -5005,7 +5005,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
 	PARAM_FLOAT(direction_x);
 	PARAM_FLOAT(direction_y);
 	PARAM_FLOAT(direction_z);
-	SprayDecal(self, name, dist, DVector3(offset_x, offset_y, offset_z), DVector3(direction_x, direction_y, direction_z) );
+	PARAM_BOOL(useBloodColor);
+	PARAM_COLOR(decalColor);
+	SprayDecal(self, name, dist, DVector3(offset_x, offset_y, offset_z), DVector3(direction_x, direction_y, direction_z), useBloodColor, decalColor);
 	return 0;
 }
 

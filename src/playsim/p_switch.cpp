@@ -257,13 +257,13 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *q
 	{
 		texture = side_t::top;
 	}
+	else if ((Switch = TexAnim.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
+	{
+		texture = side_t::mid;
+	}
 	else if ((Switch = TexAnim.FindSwitch (side->GetTexture(side_t::bottom))) != NULL)
 	{
 		texture = side_t::bottom;
-	}
-	else if ((Switch = TexAnim.FindSwitch (side->GetTexture(side_t::mid))) != NULL)
-	{
-		texture = side_t::mid;
 	}
 	else
 	{

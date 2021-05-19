@@ -10,7 +10,6 @@ clearepisodes
 episode map01
 {
 	name = "$TXT_D2E1"
-	picname = "M_EPI1"
 	key = "h"
 }
 

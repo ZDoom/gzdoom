@@ -1608,6 +1608,7 @@ void D_DoAdvanceDemo (void)
 
 void D_StartTitle (void)
 {
+	playedtitlemusic = false;
 	gameaction = ga_nothing;
 	demosequence = -1;
 	D_AdvanceDemo ();

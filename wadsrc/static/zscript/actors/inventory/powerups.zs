@@ -1133,22 +1133,12 @@ class PowerWeaponLevel2 : Powerup
 		Super.EndEffect();
 		if (Owner == null) return;
 		let player = Owner.player;
-		if (player != NULL)
+		if (player != NULL && player.mo != null)
 		{
-			if (player.ReadyWeapon != NULL && player.ReadyWeapon.bPowered_Up)
-			{
-				player.ReadyWeapon.EndPowerup ();
-			}
-			if (player.PendingWeapon != NULL && player.PendingWeapon != WP_NOCHANGE &&
-				player.PendingWeapon.bPowered_Up &&
-				player.PendingWeapon.SisterWeapon != NULL)
-			{
-				player.PendingWeapon = player.PendingWeapon.SisterWeapon;
-			}
+			player.mo.bWeaponLevel2Ended = true;
 		}
 	}
 
-	
 }
 
 //===========================================================================

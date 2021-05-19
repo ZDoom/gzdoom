@@ -74,6 +74,7 @@ protected:
 	uint32_t StartOfPalette = 0;
 };
 
+FImageSource* StbImage_TryCreate(FileReader& file, int lumpnum);
 
 //==========================================================================
 //
@@ -127,6 +128,46 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 	}
 	if (!((1 << bitdepth) & 0x116))
 	{
+		// Try STBImage for 16 bit PNGs.
+		auto tex = StbImage_TryCreate(data, lumpnum);
+		if (tex)
+		{
+			// STBImage does not handle grAb, so do that here and insert the data into the texture.
+			data.Seek(33, FileReader::SeekSet);
+
+			int len = data.ReadInt32BE();
+			int id = data.ReadInt32();
+			while (id != MAKE_ID('I', 'D', 'A', 'T') && id != MAKE_ID('I', 'E', 'N', 'D'))
+			{
+				if (id != MAKE_ID('g', 'r', 'A', 'b'))
+				{
+					data.Seek(len, FileReader::SeekCur);
+				}
+				else
+				{
+					int ihotx = data.ReadInt32BE();
+					int ihoty = data.ReadInt32BE();
+					if (ihotx < -32768 || ihotx > 32767)
+					{
+						Printf("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName(lumpnum), ihotx, ihotx);
+						ihotx = 0;
+					}
+					if (ihoty < -32768 || ihoty > 32767)
+					{
+						Printf("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName(lumpnum), ihoty, ihoty);
+						ihoty = 0;
+					}
+					tex->SetOffsets(ihotx, ihoty);
+				}
+
+				data.Seek(4, FileReader::SeekCur);		// Skip CRC
+				len = data.ReadInt32BE();
+				id = MAKE_ID('I', 'E', 'N', 'D');
+				id = data.ReadInt32();
+			}
+			return tex;
+		}
+
 		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the bit-depth (%u) is not supported!\n", fileSystem.GetFileFullName(lumpnum), bitdepth);
 		return NULL;
 	}
@@ -185,13 +226,8 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 		case MAKE_ID('g','r','A','b'):
 			// This is like GRAB found in an ILBM, except coordinates use 4 bytes
 			{
-				uint32_t hotx, hoty;
-				int ihotx, ihoty;
-				
-				lump.Read(&hotx, 4);
-				lump.Read(&hoty, 4);
-				ihotx = BigLong((int)hotx);
-				ihoty = BigLong((int)hoty);
+				int ihotx = lump.ReadInt32BE();
+				int ihoty = lump.ReadInt32BE();
 				if (ihotx < -32768 || ihotx > 32767)
 				{
 					Printf ("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName (lumpnum), ihotx, ihotx);

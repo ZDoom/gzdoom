@@ -821,7 +821,7 @@ class Actor : Thinker native
 	native clearscope int GetSpawnHealth() const;
 	native double GetCrouchFactor(int ptr = AAPTR_PLAYER1);
 	native double GetCVar(string cvar);
-	native double GetCVarString(string cvar);
+	native string GetCVarString(string cvar);
 	native int GetPlayerInput(int inputnum, int ptr = AAPTR_DEFAULT);
 	native int CountProximity(class<Actor> classname, double distance, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native int GetMissileDamage(int mask, int add, int ptr = AAPTR_DEFAULT);

@@ -89,6 +89,7 @@ class StateProvider : Inventory
 		double bangle;
 		double bslope = 0.;
 		int laflags = (flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+		FTranslatedLineTarget t;
 
 		if ((flags & FBF_USEAMMO) && weapon &&  stateinfo != null && stateinfo.mStateType == STATE_Psprite)
 		{
@@ -117,7 +118,7 @@ class StateProvider : Inventory
 			if (!(flags & FBF_NORANDOM))
 				damage *= random[cabullet](1, 3);
 
-			let puff = LineAttack(bangle, range, bslope, damage, 'Hitscan', pufftype, laflags);
+			let puff = LineAttack(bangle, range, bslope, damage, 'Hitscan', pufftype, laflags, t);
 
 			if (missile != null)
 			{
@@ -130,9 +131,17 @@ class StateProvider : Inventory
 					if (!puff)
 					{
 						temp = true;
-						puff = LineAttack(bangle, range, bslope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT);
+						puff = LineAttack(bangle, range, bslope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT, t);
 					}
 					AimBulletMissile(proj, puff, flags, temp, false);
+					if (t.unlinked)
+					{
+						// Arbitary portals will make angle and pitch calculations unreliable.
+						// So use the angle and pitch we passed instead.
+						proj.Angle = bangle;
+						proj.Pitch = bslope;
+						proj.Vel3DFromAngle(proj.Speed, proj.Angle, proj.Pitch);
+					}
 				}
 			}
 		}
@@ -161,7 +170,7 @@ class StateProvider : Inventory
 				if (!(flags & FBF_NORANDOM))
 					damage *= random[cabullet](1, 3);
 
-				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags);
+				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags, t);
 
 				if (missile != null)
 				{
@@ -174,9 +183,17 @@ class StateProvider : Inventory
 						if (!puff)
 						{
 							temp = true;
-							puff = LineAttack(bangle, range, bslope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT);
+							puff = LineAttack(bangle, range, bslope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT, t);
 						}
 						AimBulletMissile(proj, puff, flags, temp, false);
+						if (t.unlinked)
+						{
+							// Arbitary portals will make angle and pitch calculations unreliable.
+							// So use the angle and pitch we passed instead.
+							proj.Angle = bangle;
+							proj.Pitch = bslope;
+							proj.Vel3DFromAngle(proj.Speed, proj.Angle, proj.Pitch);
+						}
 					}
 				}
 			}

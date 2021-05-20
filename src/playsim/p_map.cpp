@@ -4604,7 +4604,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			}
 
 			P_GeometryLineAttack(trace, t1, damage, damageType);
-
+			if (victim != NULL) victim->unlinked = trace.unlinked;
 
 			// position a bit closer for puffs
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))

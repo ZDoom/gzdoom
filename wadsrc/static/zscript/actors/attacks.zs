@@ -55,6 +55,7 @@ extend class Actor
 		double bangle;
 		double bslope = 0.;
 		int laflags = (flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+		FTranslatedLineTarget t;
 
 		if (ref != NULL || (flags & CBAF_AIMFACING))
 		{
@@ -89,7 +90,7 @@ extend class Actor
 				if (!(flags & CBAF_NORANDOM))
 					damage *= random[cwbullet](1, 3);
 
-				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags);
+				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags, t);
 				if (missile != null && pufftype != null)
 				{
 					double ang = pangle - 90;
@@ -104,11 +105,19 @@ extend class Actor
 						bool temp = (puff == null);
 						if (!puff)
 						{
-							puff = LineAttack(pangle, range, slope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT);
+							puff = LineAttack(pangle, range, slope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT, t);
 						}
 						if (puff)
 						{			
 							AimBulletMissile(proj, puff, flags, temp, true);
+							if (t.unlinked)
+							{
+								// Arbitary portals will make angle and pitch calculations unreliable.
+								// So use the angle and pitch we passed instead.
+								proj.Angle = pangle;
+								proj.Pitch = bslope;
+								proj.Vel3DFromAngle(proj.Speed, proj.Angle, proj.Pitch);
+							}
 						}
 					}
 				}

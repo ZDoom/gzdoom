@@ -48,10 +48,6 @@
 #include "vm.h"
 #include "printf.h"
 
-#ifdef _WIN32
-#pragma comment(lib, "legacy_stdio_definitions.lib")
-#endif
-
 class MoviePlayer
 {
 protected:

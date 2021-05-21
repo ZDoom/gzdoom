@@ -14,30 +14,7 @@ include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
 
-if( MSVC )
-	find_package( ZMusic )
-else()
-	find_package( ZMusic REQUIRED )
-endif()
-
-message("Building for target architecture: ${ZDOOM_TARGET_ARCH}")
-
-if( MSVC AND NOT ZMUSIC_FOUND )
-	# Use prebuilt library
-	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
-	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
-	set( ZMUSIC_LIBRARIES zmusic )
-	if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
-		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
-	elseif( ${ZDOOM_TARGET_ARCH} MATCHES "arm" )
-		link_directories( ${ZMUSIC_ROOT_PATH}/arm64 )
-	else()
-		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
-	endif()
-	set( ZMUSIC_FOUND TRUE )
-endif()
-
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
 	# instead of the separate strip utility.
@@ -50,16 +27,24 @@ if( APPLE )
     option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
 endif()
 
-if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
+target_architecture(TARGET_ARCHITECTURE)
+message(STATUS "Architecture is ${TARGET_ARCHITECTURE}")
+
+if ( ${TARGET_ARCHITECTURE} MATCHES "arm64" )
+	set (ARM64 aarch64)
+endif()
+
+# Right now only 64 bit is supported.
+if( ${TARGET_ARCHITECTURE} MATCHES "x86_64" )
 	set( X64 64 )
 endif()
 
-if( X64 OR ${ZDOOM_TARGET_ARCH} MATCHES "i386" )
+if( X64 OR ${TARGET_ARCHITECTURE} MATCHES "i386" )
 	add_definitions( -DARCH_IA32 )
 endif()
 
-if( NOT ZDOOM_LIBS )
-	set( ZDOOM_LIBS "" )
+if( NOT PROJECT_LIBRARIES )
+	set( PROJECT_LIBRARIES "" )
 endif()
 
 if( WIN32 )
@@ -74,33 +59,9 @@ if( WIN32 )
 	add_definitions( -D_WIN32 )
 
 
-	if( MSVC )	# For VS 2017 and later.
-		# for modern Windows SDKs the DirectX headers should be available by default.
-		set( DX_dinput8_LIBRARY dinput8 )
-	else()
+	set( DX_dinput8_LIBRARY dinput8 )
 
-		find_library( DX_dinput8_LIBRARY dinput8
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-		find_library( DX_dxguid_LIBRARY dxguid
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-
-		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
-		# CMake cannot find these libraries via find_library.
-		if( NOT DX_dinput8_LIBRARY )
-			# If we got this far, assume dinput8.lib is in the system library path.
-			set( DX_dinput8_LIBRARY dinput8 )
-		endif()
-
-		# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
-		# were moved to dinput8.lib.
-		if( NOT DX_dxguid_LIBRARY )
-			message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
-		endif()
-	endif()
-
-	set( ZDOOM_LIBS
+	set( PROJECT_LIBRARIES
 		wsock32
 		winmm
 		"${DX_dinput8_LIBRARY}"
@@ -112,17 +73,18 @@ if( WIN32 )
 		ws2_32
 		setupapi
 		oleaut32
-		dbghelp )
+		dbghelp
+		legacy_stdio_definitions )
 
-	if( NOT ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
+	if( NOT DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} DelayImp )
 	endif()
 
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		if( DX_dxguid_LIBRARY )
-			list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
+			list( APPEND PROJECT_LIBRARIES "${DX_dxguid_LIBRARY}" )
 		endif()
-		list( APPEND ZDOOM_LIBS d3d9 )
+		list( APPEND PROJECT_LIBRARIES d3d9 )
 	endif()
 else()
 	if( APPLE )
@@ -143,7 +105,7 @@ else()
 			pkg_check_modules( GTK3 gtk+-3.0 )
 			if( GTK3_FOUND )
 				if( NOT DYN_GTK )
-					set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK3_LIBRARIES} )
+					set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${GTK3_LIBRARIES} )
 				endif()
 				include_directories( ${GTK3_INCLUDE_DIRS} )
 				link_directories( ${GTK3_LIBRARY_DIRS} )
@@ -151,7 +113,7 @@ else()
 				pkg_check_modules( GTK2 gtk+-2.0 )
 				if( GTK2_FOUND )
 					if( NOT DYN_GTK )
-						set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
+						set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${GTK2_LIBRARIES} )
 					endif()
 					include_directories( ${GTK2_INCLUDE_DIRS} )
 					link_directories( ${GTK2_LIBRARY_DIRS} )
@@ -162,10 +124,12 @@ else()
 		endif()
 	endif()
 
-	option( NO_SDL_JOYSTICK "Disable SDL joystick support (Not applicable to Windows)" OFF )
-	if ( NO_SDL_JOYSTICK )
-		add_definitions( -DNO_SDL_JOYSTICK=1 )
-	endif ( NO_SDL_JOYSTICK )
+	if ( NOT WIN32 )
+		option( NO_SDL_JOYSTICK "Disable SDL joystick support (Not applicable to Windows)" OFF )
+		if ( NO_SDL_JOYSTICK )
+			add_definitions( -DNO_SDL_JOYSTICK=1 )
+		endif()
+	endif()
 
 	if( NO_GTK )
 		add_definitions( -DNO_GTK )
@@ -179,7 +143,7 @@ else()
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
 		find_package( SDL2 REQUIRED )
 		include_directories( "${SDL2_INCLUDE_DIR}" )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARY}" )
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${SDL2_LIBRARY}" )
 	endif()
 
 	find_path( FPU_CONTROL_DIR fpu_control.h )
@@ -197,7 +161,7 @@ if( NOT NO_OPENAL )
 			include_directories( ${OPENAL_INCLUDE_DIR} )
 			mark_as_advanced(CLEAR OPENAL_LIBRARY)
 			if( OPENAL_LIBRARY )
-				set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
+				set( PROJECT_LIBRARIES ${OPENAL_LIBRARY} ${PROJECT_LIBRARIES} )
 			else()
 				set( NO_OPENAL ON )
 			endif()
@@ -233,9 +197,9 @@ if( X64 )
 else( X64 )
 	set( SAFE_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmmx")
-	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	endif( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 	CHECK_CXX_SOURCE_COMPILES("#include <mmintrin.h>
 		int main(void) { __m64 v = _m_from_int(0); }"
@@ -261,7 +225,7 @@ endif (MSVC)
 
 # Set up flags for GCC
 
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	if( PROFILE )
 		set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg" )
 		set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg" )
@@ -387,7 +351,7 @@ if( UNIX )
 			add_definitions( -DNO_CLOCK_GETTIME )
 		endif()
 	else()
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} rt )
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} rt )
 	endif()
 endif()
 
@@ -400,12 +364,39 @@ add_custom_target( revision_check ALL
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-# Libraries ZDoom needs
+# required libraries
 
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" "${DRPC_LIBRARIES}")
+set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" "${DRPC_LIBRARIES}")
 if (HAVE_VULKAN)
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "glslang" "SPIRV" "OGLCompiler")
 endif()
+
+# ZMUSIC
+
+if( MSVC )
+	find_package( ZMusic )
+else()
+	find_package( ZMusic REQUIRED )
+endif()
+
+message("Building for target architecture: ${TARGET_ARCHITECTURE}")
+
+if( MSVC AND NOT ZMUSIC_FOUND )
+	# Use prebuilt library
+	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
+	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
+	set( ZMUSIC_LIBRARIES zmusic )
+	if( X64 )
+		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
+	elseif( ARM64 )
+		link_directories( ${ZMUSIC_ROOT_PATH}/arm64 )
+	else()
+		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
+	endif()
+	set( ZMUSIC_FOUND TRUE )
+endif()
+
+
 # VPX
 
 if( MSVC AND NOT VPX_FOUND )
@@ -415,8 +406,12 @@ if( MSVC AND NOT VPX_FOUND )
 	set( VPX_LIBRARIES libvpx libcompat-to-msvc )
 	if( ARM64 )
 		link_directories( ${VPX_ROOT_PATH}/lib/arm64 )
-	else()
+	elseif( X64 )
 		link_directories( ${VPX_ROOT_PATH}/lib/64 )
+	else()
+		link_directories( ${VPX_ROOT_PATH}/lib/32 )
+		# Workaround for "error LNK2026: module unsafe for SAFESEH image."
+		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO" )
 	endif()
 	set( VPX_FOUND TRUE )
 endif()
@@ -424,7 +419,7 @@ endif()
 if( VPX_FOUND )
 	add_definitions( "-DUSE_LIBVPX=1" )
 	include_directories( "${VPX_INCLUDE_DIR}" )
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${VPX_LIBRARIES} )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${VPX_LIBRARIES} )
 else()
 	message( SEND_ERROR "Could not find libvpx" )
 endif()
@@ -434,7 +429,7 @@ include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUD
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
 	include_directories( "${ASMJIT_INCLUDE_DIR}" )
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ASMJIT_LIBRARIES}")
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ASMJIT_LIBRARIES}")
 endif()
 
 # Start defining source files for ZDoom
@@ -464,10 +459,10 @@ endif()
 
 # todo: implement an actual crash catcher for ARM
 # for now this is purely experimental
-if (NOT ${ZDOOM_TARGET_ARCH} MATCHES "arm" )
+if (NOT ${TARGET_ARCHITECTURE} MATCHES "arm" )
 	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/i_crash.cpp )
 endif()
-if (MSVC AND ${ZDOOM_TARGET_ARCH} MATCHES "arm")
+if (MSVC AND ${TARGET_ARCHITECTURE} MATCHES "arm")
 	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/i_crash_arm.cpp )
 	add_definitions( -DNO_SSE -D__ARM__ -DRAPIDJSON_ENDIAN=RAPIDJSON_LITTLEENDIAN)
 endif()
@@ -538,14 +533,14 @@ if( HAVE_MMX )
 		common/textures/hires/hqnx_asm/hq4x_asm.cpp
 		common/textures/hires/hqnx_asm/hqnx_asm_Image.cpp)
 
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set_source_files_properties(
 			common/textures/hires/hqnx_asm/hq2x_asm.cpp
 			common/textures/hires/hqnx_asm/hq3x_asm.cpp
 			common/textures/hires/hqnx_asm/hq4x_asm.cpp
 			common/textures/hires/hqresize.cpp
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
-	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	endif( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
 
 if( HAVE_PARALLEL_FOR )
@@ -1280,17 +1275,17 @@ set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# [BL] Solaris requires these to be explicitly linked.
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} nsl socket)
 endif()
 
 if( UNIX )
 	find_package( Backtrace )
 	if(Backtrace_FOUND)
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} ${Backtrace_LIBRARIES} )
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${Backtrace_LIBRARIES} )
 	endif()
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma ${ZMUSIC_LIBRARIES} )
+target_link_libraries( zdoom ${PROJECT_LIBRARIES} gdtoa lzma ${ZMUSIC_LIBRARIES} )
 
 include_directories( .
 	common/audio/sound
@@ -1429,7 +1424,7 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	# GCC misoptimizes this file
 	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
 endif()
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
 	set_property( SOURCE
 		common/rendering/polyrenderer/poly_all.cpp

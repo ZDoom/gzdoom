@@ -129,8 +129,8 @@ class HexenStatusBar : BaseStatusBar
 		int inthealth =  mHealthInterpolator2.GetValue();
 		DrawGem(Chain, Gem, inthealth, CPlayer.mo.GetMaxHealth(true), (30, 193), -23, 49, 15, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 
 		
-		DrawImage("LFEDGE", (0, 192), DI_ITEM_OFFSETS);
-		DrawImage("RTEDGE", (277, 192), DI_ITEM_OFFSETS);
+		DrawImage("LFEDGE", (0, 193), DI_ITEM_OFFSETS);
+		DrawImage("RTEDGE", (277, 193), DI_ITEM_OFFSETS);
 		
 		if (!automapactive)
 		{

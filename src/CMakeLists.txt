@@ -406,6 +406,29 @@ set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_L
 if (HAVE_VULKAN)
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
 endif()
+# VPX
+
+if( MSVC AND NOT VPX_FOUND )
+	# Use prebuilt library
+	set( VPX_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/Windows/vpx" )
+	set( VPX_INCLUDE_DIR ${VPX_ROOT_PATH}/include )
+	set( VPX_LIBRARIES libvpx libcompat-to-msvc )
+	if( ARM64 )
+		link_directories( ${VPX_ROOT_PATH}/lib/arm64 )
+	else()
+		link_directories( ${VPX_ROOT_PATH}/lib/64 )
+	endif()
+	set( VPX_FOUND TRUE )
+endif()
+
+if( VPX_FOUND )
+	add_definitions( "-DUSE_LIBVPX=1" )
+	include_directories( "${VPX_INCLUDE_DIR}" )
+	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${VPX_LIBRARIES} )
+else()
+	message( SEND_ERROR "Could not find libvpx" )
+endif()
+
 include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
 
 if( ${HAVE_VM_JIT} )
@@ -587,6 +610,7 @@ file( GLOB HEADER_FILES
 	common/audio/music/*.h*
 	common/2d/*.h
 	common/console/*.h
+	common/cutscenes/*.h
 	common/utility/*.h
 	common/engine/*.h
 	common/menu/*.h
@@ -605,6 +629,7 @@ file( GLOB HEADER_FILES
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
 	common/thirdparty/math/*h
+	common/thirdparty/libsmackerdec/include/*.h
 	common/rendering/*.h
 	common/rendering/gl_load/*.h
 	common/rendering/gles/*.h
@@ -624,6 +649,7 @@ file( GLOB HEADER_FILES
 	common/scripting/interface/*.h
 	common/scripting/backend/*.h
 	common/scripting/frontend/*.h
+
 	utility/*.h
 	scripting/*.h
 	scripting/backend/*.h
@@ -1077,6 +1103,9 @@ set (PCH_SOURCES
 	common/console/c_notifybufferbase.cpp
 	common/console/c_tabcomplete.cpp
 	common/console/c_expr.cpp
+	common/cutscenes/playmve.cpp
+	common/cutscenes/movieplayer.cpp
+	common/cutscenes/screenjob.cpp
 	common/utility/engineerrors.cpp
 	common/utility/i_module.cpp
 	common/utility/m_alloc.cpp
@@ -1096,6 +1125,11 @@ set (PCH_SOURCES
 	common/thirdparty/base64.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp
+	common/thirdparty/libsmackerdec/src/BitReader.cpp
+	common/thirdparty/libsmackerdec/src/FileStream.cpp
+	common/thirdparty/libsmackerdec/src/HuffmanVLC.cpp
+	common/thirdparty/libsmackerdec/src/LogError.cpp
+	common/thirdparty/libsmackerdec/src/SmackerDecoder.cpp
 	common/filesystem/filesystem.cpp
 	common/filesystem/ancientzip.cpp
 	common/filesystem/file_7z.cpp
@@ -1262,6 +1296,8 @@ include_directories( .
 	common/audio/sound
 	common/audio/music
 	common/2d
+	common/cutscenes
+	common/thirdparty/libsmackerdec/include
 	common/thirdparty
 	common/textures
 	common/textures/formats

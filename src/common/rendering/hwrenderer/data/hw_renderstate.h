@@ -555,18 +555,28 @@ public:
 		mRenderStyle = rs;
 	}
 
+	auto GetDepthBias()
+	{
+		return mBias;
+	}
+
 	void SetDepthBias(float a, float b)
 	{
+		mBias.mChanged = mBias.mFactor != a || mBias.mUnits != b;
 		mBias.mFactor = a;
 		mBias.mUnits = b;
-		mBias.mChanged = true;
+	}
+
+	void SetDepthBias(FDepthBiasState& bias)
+	{
+		SetDepthBias(bias.mFactor, bias.mUnits);
 	}
 
 	void ClearDepthBias()
 	{
+		mBias.mChanged = mBias.mFactor != 0 || mBias.mUnits != 0;
 		mBias.mFactor = 0;
 		mBias.mUnits = 0;
-		mBias.mChanged = true;
 	}
 
 private:

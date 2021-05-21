@@ -51,10 +51,10 @@
 #include "s_music.h"
 #include "m_argv.h"
 
-static DObject* runner;
-static PClass* runnerclass;
-static PType* runnerclasstype;
-static CompletionFunc completion;
+DObject* runner;
+PClass* runnerclass;
+PType* runnerclasstype;
+CompletionFunc completion;
 static int ticks;
 int intermissiondelay;
 
@@ -83,7 +83,7 @@ void Job_Init()
 //
 //=============================================================================
 
-static VMFunction* LookupFunction(const char* qname, bool validate = true)
+VMFunction* LookupFunction(const char* qname, bool validate)
 {
 	size_t p = strcspn(qname, ".");
 	if (p == 0) I_Error("Call to undefined function %s", qname);
@@ -122,7 +122,7 @@ void CallCreateFunction(const char* qname, DObject* runner)
 //
 //=============================================================================
 
-DObject* CreateRunner(bool clearbefore = true)
+DObject* CreateRunner(bool clearbefore)
 {
 	auto obj = runnerclass->CreateNew();
 	auto func = LookupFunction("ScreenJobRunner.Init", false);

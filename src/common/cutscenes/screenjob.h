@@ -36,8 +36,20 @@ void DeleteScreenJob();
 bool ScreenJobResponder(event_t* ev);
 bool ScreenJobTick();
 void ScreenJobDraw();
+bool ScreenJobValidate();
 
 struct CutsceneDef;
 bool StartCutscene(const char* s, int flags, const CompletionFunc& completion);
+bool StartCutscene(CutsceneDef& cs, int flags, const CompletionFunc& completion_);
+
+VMFunction* LookupFunction(const char* qname, bool validate = true);
+void CallCreateFunction(const char* qname, DObject* runner);
+DObject* CreateRunner(bool clearbefore = true);
+void AddGenericVideo(DObject* runner, const FString& fn, int soundid, int fps);
+
 
 extern int intermissiondelay;
+extern DObject* runner;
+extern PClass* runnerclass;
+extern PType* runnerclasstype;
+extern CompletionFunc completion;

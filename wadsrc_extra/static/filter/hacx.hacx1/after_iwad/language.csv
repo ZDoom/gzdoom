@@ -1,5 +1,4 @@
 default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cs,de,el,eo,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fi,fr,hu,it,jp,ko,nl,pl,pt,ptg,ro,ru,sr
-,,,,,,,,,,,,,,,,,,,,,,,
 These bugs too tough for ya?,QUITMSG1,,,,Jsou ty bugy na tebe moc tvrdé?,Sind diese Bugs zu viel für dich?,,Ĉu ĉi tiuj cimoj estas tro forta por vi?,¿Son estos bichos demasiado duros para ti?,,Taitavat nämä ötökät olla liikaa sulle?,Ces bestioles sont trop fortes pour vous?,,Questi errori sono troppo difficili per te?,テメェにはあんなバグ 厳しかないだろ?,고작 버그들 상대하는 것도 버거운 건가?,Zijn deze bugs te hard voor je?,To robactwo jest za ciężkie dla ciebie?,"Tá achando difícil eliminar esses bugs, é?",,Sunt prea duri gândacii pentru tine?,Эти баги крутоваты для тебя?,
 Are you sure you want to\njack out of the action?,QUITMSG,,,,"Jsi si jistý, že se chceš
 zdáchnout z akce?","Bist du sicher, dass du den\nStecker ziehen willst?",,"Ĉu vi certas, ke vi volas
@@ -68,7 +67,7 @@ Guess it's time to make like the 'net and split!,QUITMSG13,,,,"Hádám, že je �
 %o spontaneously expired.,OB_DEFAULT,,,,%o samovolně vypršel@[ao_cs].,%o hörte spontan auf zu existieren.,,%o spontane finiĝis.,%o tuvo una muerte espontánea.,,%o spontaanisti kupsahti.,%o a spontanément expiré.,,%o ha smesso spontaneamente di esistere.,%o の有効期限が自発的に切れた,%o 은(는) 파란만장하게 사라졌다.,%o is spontaan verlopen.,%o spontanicznie umarł@[ao_pl].,%o pereceu expontâneamente.,,%o a expirat în mod spontan.,Время игрока %o неожиданно вышло.,
 You grab a NUKER! Suck on this!,GOTNUKER,,,,Sebral@[ao_cs] jsi ATOMOVKÁTOR! Pojď na to!,Ein NUKER! Verschluck dich daran.,,Vi prenis NUKER! Jen havu!,¡Has pillado un NUKER! ¡Chupaos esa!,¡Has recogido un NUKER! ¡Chúpate esa!,%Kahmaiset YDÄRIN! Ime tätä!,Vous découvrez le NUKER! Ca va en chier!,,Prendi un NUKER! Succhia su questo!,NUEKR を奪った! 覚悟しろ!,누커 획득! 한바탕 쓸어볼까!,Je pakt een NUKER! Zuig hier maar aan!,Podniosłeś ATOMÓWKĘ! Ssijcie to!,Você pegou um NUKER! Chupa essa manga!,,Ai ridicat Lansatorul Nuclear! Ia de-aici!,Заполучен ЯДЕРНЫЙ ГРАНАТОМЁТ! Отсосите!,
 You got an UZI!!,GOTUZI,,,,Získal@[ao_cs] jsi UZI!,UZI genommen!,,Vi prenis UZI!!,¡¡Has obtenido una UZI!!,,Sait UZIn!!,Vous chopez un UZI!,,Hai un UZI !!,UZI をゲットした!!,우지 기관단총 획득!,Je hebt een UZI!!,Zdobyłeś UZI!!,Você pegou uma UZI!!,,Ai ridicat un UZI!!,Заполучен УЗИ!,
-A HOIG Reznator - FRY some butt,GOTREZNATOR,,,,HOIG Reznátor - pár jich upeč,Ein HOIG Reznator.,,HOIG-Reznilo - FRITU pugon!,Un Reznator HOIG. ¡Hora de freir traseros!,,HOIG-reznaattori - KÄRISTÄ takamuksia,"Un Reznator HOIG, allez frire du monde!",,Un Reignator HOIG - friggere un po 'di carne,HOIGレジネイター - ぶっ潰してやれ,HOIG 전자무력기 획득! 전기 통구이를 만들자고!,Een HOIG Reznator – FRY sommige kont,Reznator HOIG - skop trochę tyłków,Um Reznador HOIG - Hora de fritar,,Un Rezonator HOIG - Arde-i!,ХОЙГ Резнатор,
+A HOIG Reznator - FRY some butt,GOTREZNATOR,,,,HOIG Reznátor - pár jich upeč,Ein HOIG Reznator.,,HOIG-Reznilo - FRITU pugon!,Un Reznator HOIG. ¡Hora de freir traseros!,,HOIG-reznaattori - KÄRISTÄ takamuksia,"Un Reznator HOIG, allez frire du monde!",,Un Reignator HOIG - friggere un po 'di carne,HOIGレジネイター - ぶっ潰してやれ,HOIG 전자무력기 획득! 전기 통구이를 만들자고!,Een HOIG Reznator - FRY sommige kont,Reznator HOIG - skop trochę tyłków,Um Reznador HOIG - Hora de fritar,,Un Rezonator HOIG - Arde-i!,ХОЙГ Резнатор,
 You got a Photon 'Zooka!,GOTPHOTONZOOKA,,,,Sebral@[ao_cs] jsi Fotonovou bazuku!,Photonen-'zooka genommen!,,Vi prenis Fotonbazukon!,¡Has obtenido un Bazooka de Fotones!,,Sait fotonisingon!,Vous récupérez un Bazooka Photonique!,,Hai un cannone Photon!,フォトン'ゾーカ をゲットした!,광자 바주카 획득!,Je hebt een Photon 'Zooka!,Zdobyłeś Fotonozukę!,Você pegou uma Bazuca de Fótons!,,Ai ridicat o Bazooka Fotonică!,Заполучена Фотон-базука!,
 You carry a Big Stick!,GOTBIGSTICK,,,,Nosíš velkou bouchačku!,Du trägst einen langen Stock.,,Vi portas grandan bastonon!,¡Llevas un Gran Palo!,,Kannat isoa keppiä!,Vous avez un gros bâton!,,Porti un grosso bastone!,ビッグスティック を手に取った!,반물질 봉 획득!,Je draagt een Big Stick!,Podnosisz Wielką Pałkę!,Você pegou um Grande Bastão!,,Ai ridicat un Băț Lung!,Заполучена Длинная палка!,
 You got a Tazer!!,GOTTAZER,,,,Získal@[ao_cs] jsi tazer!,Tazer genommen!,,Vi prenis Elektropafilon!!,¡¡Has obtenido un Taser!!,,Sait etälamauttimen!!,Vous trouvez un Taser!,,Hai un Taser !!,テイザー をゲットした!,테이져 획득!,Je hebt een Tazer!!,Zdobyłeś Tazer!!,Você pegou um Tazer!!,,Ai ridicat un Taser!!,"Заполучен Тазер!
@@ -748,7 +747,7 @@ Iar aurul? La naiba cu el, asta e din partea casei.
 .....(va urma).....","Цивилизация, которую ты знал, исчезла!
 
 Ни друзей, ни родных. Не осталось никого.
-Нормальных людей – точно.
+Нормальных людей — точно.
 
 Осталось только одно существо. ДЖИНН!
 Ты надерёшь зад этому уроду, даже если 
@@ -758,7 +757,7 @@ Iar aurul? La naiba cu el, asta e din partea casei.
 Что насчёт золота? К чёрту, это не ради
 денег.
 
-.....(продолжение следует)..…
+.....(продолжение следует).....
 ",
 "You're alive!
 
@@ -974,7 +973,7 @@ Druk op Y om te sterven.","Na pewno? Nie dasz
 sobie rady hakerze!
 
 Wciśnij Y by zginąć.","Tem certeza? Você não vai conseguir
-lidar com essa dificuldade, hacker!
+aguentar essa dificuldade, hacker!
 
 Aperte Y para morrer.","Tem certeza? Você não pode lidar
 essa habilidade, hacker!

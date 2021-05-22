@@ -16,7 +16,7 @@ hij_ze_nl,nl,hij,ze,hij,hij
 zijn_haar_nl,nl,zijn,haar,zijn,zijn
 ao_pl,pl,,a,o,o
 adj_pl,pl,y,a,e,e
-irreg_1_pl,pl,szedł 	,eszła,eszło,eszło
+irreg_1_pl,pl,szedł         ,eszła,eszło,eszło
 irreg_2_pl,pl,ął,ęła,ęło,ęło
 irreg_3_pl,pl,eś,aś,eś,eś
 irreg_4_pl,pl,ógł,ogła,ogło,ogło
@@ -37,3 +37,8 @@ ao_3_sr,sr,ог,у,ог,ог
 adj_1_sr,sr,,а,о,о
 adj_2_sr,sr,ан,на,но,но
 adj_3_sr,sr,ар,ра,ро,ро
+pro_gr,gr,τον,την,τον,το
+pro2_gr,gr,Τον,Την,Τον,Το
+pro3_gr,gr,στον,στην,στο,στο
+art_gr,gr,Ο,Η,Το,Το
+pro4_gr,gr,του,της,του,του

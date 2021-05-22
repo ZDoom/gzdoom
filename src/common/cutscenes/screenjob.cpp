@@ -50,6 +50,7 @@
 #include "c_dispatch.h"
 #include "s_music.h"
 #include "m_argv.h"
+#include "i_interface.h"
 
 CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -316,7 +317,7 @@ bool StartCutscene(CutsceneDef& cs, int flags, const CompletionFunc& completion_
 			}
 			if (flags & SJ_DELAY) intermissiondelay = 10;	// need to wait a bit at the start to let the timer catch up.
 			else intermissiondelay = 0;
-			gameaction = (flags & SJ_BLOCKUI) ? ga_intro : ga_intermission;
+			if (sysCallbacks.StartCutscene) sysCallbacks.StartCutscene(flags & SJ_BLOCKUI);
 		}
 		catch (...)
 		{

@@ -77,6 +77,7 @@
 #include "v_palette.h"
 #include "s_music.h"
 #include "p_setup.h"
+#include "d_event.h"
 
 #include "v_video.h"
 #include "g_hub.h"

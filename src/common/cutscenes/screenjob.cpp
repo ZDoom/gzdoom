@@ -51,6 +51,8 @@
 #include "s_music.h"
 #include "m_argv.h"
 
+CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 DObject* runner;
 PClass* runnerclass;
 PType* runnerclasstype;

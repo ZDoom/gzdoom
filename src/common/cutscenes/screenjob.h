@@ -6,6 +6,9 @@
 #include "s_soundinternal.h"
 #include "gamestate.h"
 #include "zstring.h"
+#include "c_cvars.h"
+
+EXTERN_CVAR(Bool, inter_subtitles)
 
 using CompletionFunc = std::function<void(bool)>;
 

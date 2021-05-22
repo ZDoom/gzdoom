@@ -56,6 +56,8 @@
 #include "v_draw.h"
 #include "doommenu.h"
 #include "sbar.h"
+#include "screenjob.h"
+#include "vm.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -73,9 +75,16 @@ IMPLEMENT_POINTERS_END
 extern int		NoWipe;
 
 CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 CVAR(Bool, inter_classic_scaling, true, CVAR_ARCHIVE);
+
+DEFINE_ACTION_FUNCTION(_Screen, GetTextScreenSize)
+{
+	auto scale = active_con_scaletext(twod, generic_ui);
+	int hudwidth = twod->GetWidth() / scale;
+	int hudheight = twod->GetHeight() / scale;
+	ACTION_RETURN_VEC2(DVector2(hudwidth, hudheight));
+}
 
 //==========================================================================
 //
@@ -376,7 +385,6 @@ void DIntermissionScreenText::Drawer ()
 	Super::Drawer();
 	if (mTicker >= mTextDelay)
 	{
-		FGameTexture *pic;
 		int w;
 		size_t count;
 		int c;
@@ -446,7 +454,7 @@ void DIntermissionScreenText::Drawer ()
 				continue;
 			}
 
-			pic = font->GetChar (c, mTextColor, &w);
+			w = font->GetCharWidth(c);
 			w += kerning;
 			w *= fontscale;
 			if (cx + w > twod->GetWidth())

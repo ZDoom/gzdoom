@@ -478,10 +478,6 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	Vert.v[1] = FVector2(x1, y2);
 	Vert.v[2] = FVector2(x2, y1);
 	Vert.v[3] = FVector2(x2, y2);
-
-	
-
-
 	
 	DVector2 Pos =		{ sx, sy };
 	DVector2 Scale =	psp->scale;
@@ -498,7 +494,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	{
 		double flipper = (par->Flags & PSPF_FLIP) ? -1. : 1.;
 		Rotation += par->rotation * flipper;
-		Pivot = { Pivot.X + par->pivot.X * flipper, Pivot.Y + par->pivot.Y };
+		Pivot = { (Pivot.X + par->pivot.X) * flipper, (Pivot.Y + par->pivot.Y) };
 		Scale = { Scale.X * par->scale.X, Scale.Y * par->scale.Y };
 		Pos = { Pos.X + par->x, Pos.Y + par->y };
 
@@ -516,78 +512,70 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		Vert.v[i] += FVector2(cx * scalex, psp->Coord[i].Y * scale);
 	}
 	*/
-	if (Rotation != 0.0)
+		
+	// [MC] Sets up the alignment for starting the pivot at, in a corner.
+	float anchorx, anchory;
+	switch (psp->VAlign)
 	{
-		
-		// [MC] Sets up the alignment for starting the pivot at, in a corner.
-		float anchorx, anchory;
-		switch (psp->VAlign)
-		{
-			default:
-			case PSPA_TOP:		anchory = 0.0;	break;
-			case PSPA_CENTER:	anchory = 0.5;	break;
-			case PSPA_BOTTOM:	anchory = 1.0;	break;
-		}
-
-		switch (psp->HAlign)
-		{
-			default:
-			case PSPA_LEFT:		anchorx = 0.0;	break;
-			case PSPA_CENTER:	anchorx = 0.5;	break;
-			case PSPA_RIGHT:	anchorx = 1.0;	break;
-		}
-		// Handle PSPF_FLIP.
-		if (flip) anchorx = 1.0 - anchorx;
-
-		FAngle rot = float((flip) ? -Rotation.Degrees : Rotation.Degrees);
-		const float cosang = rot.Cos();
-		const float sinang = rot.Sin();
-		
-		float xcenter, ycenter;
-		const float width = x2 - x1;
-		const float height = y2 - y1;
-		const float px = float((flip) ? -Pivot.X : Pivot.X);
-		const float py = float(Pivot.Y);
-
-		// Set up the center and offset accordingly. PivotPercent changes it to be a range [0.0, 1.0]
-		// instead of pixels and is enabled by default.
-		if ((psp->Flags & PSPF_PIVOTPERCENT) && !parent)
-		{
-			xcenter = x1 + (width * anchorx + width * px);
-			ycenter = y1 + (height * anchory + height * py);
-		}
-		else
-		{
-			xcenter = x1 + (width * anchorx + scalex * px);
-			ycenter = y1 + (height * anchory + scale * py);
-		}
-		
-		mat.Translate(xcenter, ycenter, 0);
-		mat.Scale(Scale.X, Scale.Y, 0);
-		mat.Rotate(cosang, -sinang, 0, rot.Degrees);
-		mat.Translate(-xcenter, -ycenter, 0);
-		
-		Vert.v[0] = mat * FVector3(x1, y1, 0);
-		Vert.v[1] = mat * FVector3(x1, y2, 0);
-		Vert.v[2] = mat * FVector3(x2, y1, 0);
-		Vert.v[3] = mat * FVector3(x2, y2, 0);
-		
-		
-		// Now adjust the position, rotation and scale of the image based on the latter two.
-		/*
-		for (int i = 0; i < 4; i++)
-		{
-			Vert.v[i] -= {xcenter, ycenter};
-			const float xx = xcenter + Scale.X * ((Vert.v[i].X + Pos.X) * cosang + (Vert.v[i].Y + Pos.Y) * sinang);
-			const float yy = ycenter - Scale.Y * ((Vert.v[i].X + Pos.X) * sinang - (Vert.v[i].Y + Pos.Y) * cosang);
-			Vert.v[i] = {xx, yy};
-
-
-		}
-		*/
+		default:
+		case PSPA_TOP:		anchory = 0.0;	break;
+		case PSPA_CENTER:	anchory = 0.5;	break;
+		case PSPA_BOTTOM:	anchory = 1.0;	break;
 	}
 
-	
+	switch (psp->HAlign)
+	{
+		default:
+		case PSPA_LEFT:		anchorx = 0.0;	break;
+		case PSPA_CENTER:	anchorx = 0.5;	break;
+		case PSPA_RIGHT:	anchorx = 1.0;	break;
+	}
+	// Handle PSPF_FLIP.
+	if (flip) anchorx = 1.0 - anchorx;
+
+	FAngle rot = float((flip) ? -Rotation.Degrees : Rotation.Degrees);
+	const float cosang = rot.Cos();
+	const float sinang = rot.Sin();
+		
+	float xcenter, ycenter;
+	const float width = x2 - x1;
+	const float height = y2 - y1;
+	const float px = float((flip) ? -Pivot.X : Pivot.X);
+	const float py = float(Pivot.Y);
+
+	// Set up the center and offset accordingly. PivotPercent changes it to be a range [0.0, 1.0]
+	// instead of pixels and is enabled by default.
+	if ((psp->Flags & PSPF_PIVOTPERCENT) && !parent)
+	{
+		xcenter = x1 + (width * anchorx + width * px);
+		ycenter = y1 + (height * anchory + height * py);
+	}
+	else
+	{
+		xcenter = x1 + (width * anchorx + scalex * px);
+		ycenter = y1 + (height * anchory + scale * py);
+	}
+		
+	mat.Translate(xcenter, ycenter, 0);
+	mat.Scale(Scale.X, Scale.Y, 0);
+	mat.Rotate(0, 0, 1, -rot.Degrees);
+	mat.Translate(-xcenter, -ycenter, 0);
+
+	// Now adjust the position, rotation and scale of the image based on the latter two.
+	/*
+	for (int i = 0; i < 4; i++)
+	{
+		Vert.v[i] -= {xcenter, ycenter};
+		const float xx = xcenter + Scale.X * ((Vert.v[i].X + Pos.X) * cosang + (Vert.v[i].Y + Pos.Y) * sinang);
+		const float yy = ycenter - Scale.Y * ((Vert.v[i].X + Pos.X) * sinang - (Vert.v[i].Y + Pos.Y) * cosang);
+		Vert.v[i] = {xx, yy};
+	}
+	*/
+		
+	Vert.v[0] = mat * FVector3(x1, y1, 0);
+	Vert.v[1] = mat * FVector3(x1, y2, 0);
+	Vert.v[2] = mat * FVector3(x2, y1, 0);
+	Vert.v[3] = mat * FVector3(x2, y2, 0);
 
 	psp->Vert = Vert;
 

@@ -73,20 +73,22 @@ jobs:
         if [[ ! -z "${{ matrix.config.deps_cmdline }}" ]]; then
           eval ${{ matrix.config.deps_cmdline }}
         fi
-        # Build and install ZMusic
         mkdir build
-        cd build
-        git clone https://github.com/coelckers/ZMusic.git
-        cd ZMusic
-        git checkout 1.1.6
-        cd ..
-        cmake -B zmusic_build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_INSTALL_PREFIX=`pwd`/zmusic_install ${{ matrix.config.extra_options }} ZMusic
-        cmake --build zmusic_build --target install --parallel 3
+        if [[ "${{ runner.os }}" == 'macOS' ]]; then
+          export ZMUSIC_PACKAGE=zmusic-1.1.7-macos.tar.bz2
+        elif [[ "${{ runner.os }}" == 'Linux' ]]; then
+          export ZMUSIC_PACKAGE=zmusic-1.1.7-linux.tar.bz2
+        fi
+        if [[ ! -z "${ZMUSIC_PACKAGE}" ]]; then
+          cd build
+          wget -q "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${ZMUSIC_PACKAGE}"
+          tar -xf "${ZMUSIC_PACKAGE}"
+        fi
 
     - name: Configure
       shell: bash
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_PREFIX_PATH=`pwd`/build/zmusic_install ${{ matrix.config.extra_options }} .
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_PREFIX_PATH=`pwd`/build/zmusic ${{ matrix.config.extra_options }} .
 
     - name: Build
       shell: bash

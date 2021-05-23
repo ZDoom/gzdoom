@@ -121,6 +121,20 @@ CUSTOM_CVARD(Float, r_actorspriteshadowdist, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALC
 	else if (self > 8192.f)
 		self = 8192.f;
 }
+CUSTOM_CVARD(Float, r_actorspriteshadowalpha, 0.5, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "maximum sprite shadow opacity, only effective with hardware renderers (0.0 = fully transparent, 1.0 = opaque)")
+{
+	if (self < 0.f)
+		self = 0.f;
+	else if (self > 1.f)
+		self = 1.f;
+}
+CUSTOM_CVARD(Float, r_actorspriteshadowfadeheight, 0.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "distance over which sprite shadows should fade, only effective with hardware renderers (0 = infinite)")
+{
+	if (self < 0.f)
+		self = 0.f;
+	else if (self > 8192.f)
+		self = 8192.f;
+}
 
 int 			viewwindowx;
 int 			viewwindowy;

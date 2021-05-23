@@ -105,12 +105,12 @@ CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	else if (self > 1.f) self = 1.f;
 }
 
-CUSTOM_CVARD(Int, r_actorspriteshadow, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "render actor sprite shadows. 0 = off, 1 = default, 2 = always on")
+CUSTOM_CVARD(Int, r_actorspriteshadow, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "render actor sprite shadows. 0 = off, 1 = default, 2 = monsters and players, 3 = everything (can be slow)")
 {
 	if (self < 0)
 		self = 0;
-	else if (self > 2)
-		self = 2;
+	else if (self > 3)
+		self = 3;
 }
 CUSTOM_CVARD(Float, r_actorspriteshadowdist, 1500.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "how far sprite shadows should be rendered")
 {
@@ -1077,18 +1077,25 @@ bool R_ShouldDrawSpriteShadow(AActor *thing)
 {
 	switch (r_actorspriteshadow)
 	{
-	case 1:
+	case 1: // default
 		return (thing->renderflags & RF_CASTSPRITESHADOW);
 
-	case 2:
+	case 2: // monsters and players
 		if (thing->renderflags & RF_CASTSPRITESHADOW)
 		{
 			return true;
 		}
 		return (thing->renderflags & RF_CASTSPRITESHADOW) || (!(thing->renderflags & RF_NOSPRITESHADOW) && ((thing->flags3 & MF3_ISMONSTER) || thing->player != nullptr));
 
+	case 3: // everything (can be slow)
+		if (thing->renderflags & RF_CASTSPRITESHADOW)
+		{
+			return true;
+		}
+		return (thing->renderflags & RF_CASTSPRITESHADOW) || (!(thing->renderflags & RF_NOSPRITESHADOW));
+
 	default:
-	case 0:
+	case 0: // off
 		return false;
 	}
 }

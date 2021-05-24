@@ -43,72 +43,19 @@
 
 //==========================================================================
 //
-// FFontChar1 :: FFontChar1
-//
-// Used by fonts made from textures.
-//
-//==========================================================================
-
-FFontChar1::FFontChar1 (FImageSource *sourcelump)
-: BaseTexture(sourcelump), SourceRemap (nullptr)
-{
-	// now copy all the properties from the base texture
-	assert(BaseTexture != nullptr);
-	CopySize(*BaseTexture);
-	bUseGamePalette = false;
-}
-
-//==========================================================================
-//
-// FFontChar1 :: GetPixels
-//
-// Render style is not relevant for fonts. This must not use it!
-//
-//==========================================================================
-
-TArray<uint8_t> FFontChar1::CreatePalettedPixels (int)
-{
-	// Make the texture as normal, then remap it so that all the colors
-	// are at the low end of the palette
-	// Why? It only creates unnecessary work!
-	auto Pixels = BaseTexture->GetPalettedPixels(normal);
-
-	if (SourceRemap)
-	{
-		for (int x = 0; x < Width*Height; ++x)
-		{
-			Pixels[x] = SourceRemap[Pixels[x]];
-		}
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
 // FFontChar2 :: FFontChar2
 //
 // Used by FON1 and FON2 fonts.
 //
 //==========================================================================
 
-FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs, int topofs)
-: SourceLump (sourcelump), SourcePos (sourcepos), SourceRemap(nullptr)
+FFontChar2::FFontChar2(int sourcelump, int sourcepos, int width, int height, int leftofs, int topofs)
+	: SourceLump(sourcelump), SourcePos(sourcepos)
 {
 	Width = width;
 	Height = height;
 	LeftOffset = leftofs;
 	TopOffset = topofs;
-}
-
-//==========================================================================
-//
-// FFontChar2 :: SetSourceRemap
-//
-//==========================================================================
-
-void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
-{
-	SourceRemap = sourceremap;
 }
 
 //==========================================================================
@@ -121,7 +68,7 @@ void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
 
 TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 {
-	auto lump = fileSystem.OpenFileReader (SourceLump);
+	auto lump = fileSystem.OpenFileReader(SourceLump);
 	int destSize = Width * Height;
 	uint8_t max = 255;
 	bool rle = true;
@@ -129,23 +76,23 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 	// This is to "fix" bad fonts
 	{
 		uint8_t buff[16];
-		lump.Read (buff, 4);
+		lump.Read(buff, 4);
 		if (buff[3] == '2')
 		{
-			lump.Read (buff, 7);
+			lump.Read(buff, 7);
 			max = buff[6];
-			lump.Seek (SourcePos - 11, FileReader::SeekCur);
+			lump.Seek(SourcePos - 11, FileReader::SeekCur);
 		}
 		else if (buff[3] == 0x1A)
 		{
 			lump.Read(buff, 13);
 			max = buff[12] - 1;
-			lump.Seek (SourcePos - 17, FileReader::SeekCur);
+			lump.Seek(SourcePos - 17, FileReader::SeekCur);
 			rle = false;
 		}
 		else
 		{
-			lump.Seek (SourcePos - 4, FileReader::SeekCur);
+			lump.Seek(SourcePos - 4, FileReader::SeekCur);
 		}
 	}
 
@@ -153,7 +100,7 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 
 	int runlen = 0, setlen = 0;
 	uint8_t setval = 0;  // Shut up, GCC!
-	uint8_t *dest_p = Pixels.Data();
+	uint8_t* dest_p = Pixels.Data();
 	int dest_adv = Height;
 	int dest_rew = destSize - 1;
 
@@ -166,11 +113,7 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 				if (runlen != 0)
 				{
 					uint8_t color = lump.ReadUInt8();
-					color = MIN (color, max);
-					if (SourceRemap != nullptr)
-					{
-						color = SourceRemap[color];
-					}
+					color = MIN(color, max);
 					*dest_p = color;
 					dest_p += dest_adv;
 					x--;
@@ -194,11 +137,7 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 					{
 						uint8_t color = lump.ReadUInt8();
 						setlen = (-code) + 1;
-						setval = MIN (color, max);
-						if (SourceRemap != nullptr)
-						{
-							setval = SourceRemap[setval];
-						}
+						setval = MIN(color, max);
 					}
 				}
 			}
@@ -216,10 +155,6 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 				{
 					color = max;
 				}
-				if (SourceRemap != nullptr)
-				{
-					color = SourceRemap[color];
-				}
 				*dest_p = color;
 				dest_p += dest_adv;
 			}
@@ -230,10 +165,17 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 	if (destSize < 0)
 	{
 		char name[9];
-		fileSystem.GetFileShortName (name, SourceLump);
+		fileSystem.GetFileShortName(name, SourceLump);
 		name[8] = 0;
-		I_FatalError ("The font %s is corrupt", name);
+		I_FatalError("The font %s is corrupt", name);
 	}
 	return Pixels;
 }
 
+int FFontChar2::CopyPixels(FBitmap* bmp, int conversion)
+{
+	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
+	auto ppix = CreatePalettedPixels(conversion);
+	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, SourceRemap, nullptr);
+	return 0;
+}

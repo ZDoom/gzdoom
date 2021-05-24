@@ -198,6 +198,11 @@ public:
 		return Pitch;
 	}
 
+	int GetBufferSize() const
+	{
+		return Pitch * Height;
+	}
+
 	const uint8_t *GetPixels() const
 	{
 		return data;

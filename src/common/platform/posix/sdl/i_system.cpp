@@ -59,6 +59,8 @@
 #include "palutil.h"
 #include "st_start.h"
 
+#include "imguiconsole/st_console.h"
+
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();
@@ -106,6 +108,10 @@ void Unix_I_FatalError(const char* errortext)
 		I_ShowFatalError_Gtk(errortext);
 	}
 #endif
+	else if (FConsoleWindow::InstanceExists())
+	{
+		FConsoleWindow::GetInstance().ShowFatalError(errortext);
+	}
 	else
 	{
 		FString title;
@@ -144,7 +150,8 @@ void CleanProgressBar()
 	fflush(stdout);
 }
 
-static int ProgressBarCurPos, ProgressBarMaxPos;
+int ProgressBarCurPos, ProgressBarMaxPos;
+bool netinited = false;
 
 void RedrawProgressBar(int CurPos, int MaxPos)
 {
@@ -173,6 +180,7 @@ void RedrawProgressBar(int CurPos, int MaxPos)
 
 void I_PrintStr(const char *cp)
 {
+	if (FConsoleWindow::InstanceExists()) FConsoleWindow::GetInstance().AddText(cp);
 	const char * srcp = cp;
 	FString printData = "";
 	bool terminal = isatty(STDOUT_FILENO);
@@ -223,10 +231,10 @@ void I_PrintStr(const char *cp)
 		}
 	}
 	
-	if (StartScreen) CleanProgressBar();
+	if (StartScreen && !netinited) CleanProgressBar();
 	fputs(printData.GetChars(),stdout);
 	if (terminal) fputs("\033[0m",stdout);
-	if (StartScreen) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
+	if (StartScreen && !netinited) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
 }
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
@@ -301,6 +309,10 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 #ifdef __APPLE__
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
 #endif
+	if (FConsoleWindow::InstanceExists())
+	{
+		return FConsoleWindow::GetInstance().PickIWad (wads, numwads, showwin, defaultiwad);
+	}
 	
 	if (!isatty(fileno(stdin)))
 	{

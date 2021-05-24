@@ -42,6 +42,7 @@
 #include "i_system.h"
 #include "c_cvars.h"
 #include "engineerrors.h"
+#include "imguiconsole/st_console.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -104,6 +105,7 @@ static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
 
 FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
+	if (FConsoleWindow::InstanceExists()) return new FBasicStartupScreen(max_progress, true);
 	return new FTTYStartupScreen(max_progress);
 }
 

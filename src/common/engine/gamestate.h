@@ -26,4 +26,3 @@ enum gamestate_t : int
 
 
 extern	gamestate_t 	gamestate;
-extern int intermissiondelay;

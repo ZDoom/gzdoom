@@ -59,7 +59,6 @@ PClass* runnerclass;
 PType* runnerclasstype;
 CompletionFunc completion;
 static int ticks;
-int intermissiondelay;
 
 //=============================================================================
 //
@@ -287,6 +286,7 @@ bool ScreenJobValidate()
 			VMValue parm[] = { runner };
 			VMReturn ret(&res);
 			VMCall(func, parm, 1, &ret, 1);
+			I_ResetFrameTime();
 			return res;
 		}
 	}
@@ -315,8 +315,6 @@ bool StartCutscene(CutsceneDef& cs, int flags, const CompletionFunc& completion_
 				runner = nullptr;
 				return false;
 			}
-			if (flags & SJ_DELAY) intermissiondelay = 10;	// need to wait a bit at the start to let the timer catch up.
-			else intermissiondelay = 0;
 			if (sysCallbacks.StartCutscene) sysCallbacks.StartCutscene(flags & SJ_BLOCKUI);
 		}
 		catch (...)

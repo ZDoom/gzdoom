@@ -17,7 +17,6 @@ void Job_Init();
 enum
 {
 	SJ_BLOCKUI = 1,
-	SJ_DELAY = 2,
 };
 
 struct CutsceneDef
@@ -51,7 +50,6 @@ DObject* CreateRunner(bool clearbefore = true);
 void AddGenericVideo(DObject* runner, const FString& fn, int soundid, int fps);
 
 
-extern int intermissiondelay;
 extern DObject* runner;
 extern PClass* runnerclass;
 extern PType* runnerclasstype;

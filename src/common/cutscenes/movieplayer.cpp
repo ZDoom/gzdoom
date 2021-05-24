@@ -797,7 +797,9 @@ DEFINE_ACTION_FUNCTION(_MoviePlayer, Create)
 DEFINE_ACTION_FUNCTION(_MoviePlayer, Start)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(MoviePlayer);
+	I_FreezeTime(true);
 	self->Start();
+	I_FreezeTime(false);
 	return 0;
 }
 

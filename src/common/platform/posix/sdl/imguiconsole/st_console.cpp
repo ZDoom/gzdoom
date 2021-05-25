@@ -99,7 +99,7 @@ FConsoleWindow::FConsoleWindow()
     {
         throw std::runtime_error("Failed to create console window, falling back to terminal-only\n");
     }
-    m_renderer = SDL_CreateRenderer(m_window, -1, strncmp(SDL_GetCurrentVideoDriver(), "KMSDRM", sizeof("KMSDRM")) == 0 ? SDL_RENDERER_SOFTWARE : SDL_RENDERER_ACCELERATED);
+    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
     ImGuiSDL::Initialize(m_renderer, 512, 384);
     ImGui_ImplSDL2_Init(m_window);
     m_texts.Append(savedtexts);
@@ -173,7 +173,9 @@ void FConsoleWindow::ShowFatalError(const char *message)
     m_netinit = false;
     AddText(TEXTCOLOR_RED "Execution could not continue.\n");
     AddText("\n");
-    AddText(message);
+    FString fmtstring;
+    fmtstring.Format(TEXTCOLOR_YELLOW "%s", message);
+    AddText(fmtstring);
     m_error = true;
     while (m_error)
     {
@@ -208,6 +210,11 @@ int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defa
         autoloadwidescreen = m_iwadparams.widescreenload;
         disableautoload = m_iwadparams.noautoload;
     }
+    else
+    {
+        FConsoleWindow::DeleteInstance();
+        return -1;
+    }
     return m_iwadparams.currentiwad;
 }
 
@@ -221,9 +228,10 @@ void FConsoleWindow::RunImguiRenderLoop()
     ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(70, 70, 70, 255));
     ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::PushTextWrapPos();
-    for (auto& curText : m_texts)
+    for (unsigned int i = 0; i < m_texts.Size(); i++)
     {
-        ImGui::TextAnsiColored(ImVec4(224, 224, 224, 255), curText.GetChars());
+        auto& curText = m_texts[i];
+        ImGui::TextAnsiColored(ImVec4(224, 224, 224, 255), "%s", curText.GetChars());
     }
     if (m_netinit)
     {

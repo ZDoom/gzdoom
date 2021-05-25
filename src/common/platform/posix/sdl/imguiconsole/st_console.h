@@ -79,6 +79,7 @@ private:
 	{
 		WadStuff *wads;
 		int numwads, defaultiwad, currentiwad, curbackend;
+		bool lightsload, brightmapsload, widescreenload, noautoload;
 		TArray<const char *> wadnames;
 	} m_iwadparams;
 

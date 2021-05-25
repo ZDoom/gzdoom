@@ -48,7 +48,11 @@ extern FStartupScreen* StartScreen;
 extern int ProgressBarCurPos, ProgressBarMaxPos;
 static TArray<FString> savedtexts;
 
-EXTERN_CVAR(Int, vid_preferbackend)
+EXTERN_CVAR (Bool, disableautoload)
+EXTERN_CVAR (Bool, autoloadlights)
+EXTERN_CVAR (Bool, autoloadbrightmaps)
+EXTERN_CVAR (Bool, autoloadwidescreen)
+EXTERN_CVAR (Int, vid_preferbackend)
 
 void FConsoleWindow::CreateInstance()
 {
@@ -184,6 +188,10 @@ int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defa
     m_iwadparams.numwads = numwads;
     m_iwadparams.currentiwad = defaultiwad;
     m_iwadparams.curbackend = vid_preferbackend;
+    m_iwadparams.lightsload = autoloadlights;
+    m_iwadparams.brightmapsload = autoloadbrightmaps;
+    m_iwadparams.widescreenload = autoloadwidescreen;
+    m_iwadparams.noautoload = disableautoload;
     for (int i = 0; i < numwads; i++)
     {
         m_iwadparams.wadnames.Push(wads[i].Name.GetChars());
@@ -195,6 +203,10 @@ int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defa
     if (m_iwadparams.currentiwad != -1)
     {
         vid_preferbackend = m_iwadparams.curbackend;
+        autoloadlights = m_iwadparams.lightsload;
+        autoloadbrightmaps = m_iwadparams.brightmapsload;
+        autoloadwidescreen = m_iwadparams.widescreenload;
+        disableautoload = m_iwadparams.noautoload;
     }
     return m_iwadparams.currentiwad;
 }
@@ -259,6 +271,10 @@ void FConsoleWindow::RunImguiRenderLoop()
 #ifdef HAVE_SOFTPOLY
         ImGui::RadioButton("Softpoly", &m_iwadparams.curbackend, 2);
 #endif
+        ImGui::Checkbox("Lights", &m_iwadparams.lightsload);
+        ImGui::Checkbox("Brightmaps", &m_iwadparams.brightmapsload);
+        ImGui::Checkbox("Widescreen", &m_iwadparams.widescreenload);
+        ImGui::Checkbox("Disable autoload", &m_iwadparams.noautoload);
         if (ImGui::Button("OK"))
         {
             m_iwadselect = false;

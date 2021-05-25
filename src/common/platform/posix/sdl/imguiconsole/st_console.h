@@ -75,6 +75,8 @@ private:
 	int m_playercount;
 	int m_iwadselect;
 	bool m_netprogflash;
+	float m_maxscroll;
+	unsigned int m_errorframe;
 	struct
 	{
 		WadStuff *wads;

@@ -88,7 +88,8 @@ void FConsoleWindow::DeleteInstance()
 }
 
 FConsoleWindow::FConsoleWindow()
-: io(ImGui::GetIO()), ProgBar(false), m_netinit(false), m_exitreq(false), m_error(false), m_iwadselect(false)
+: io(ImGui::GetIO()), ProgBar(false), m_netinit(false), m_exitreq(false),
+ m_error(false), m_iwadselect(false), m_maxscroll(0)
 {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
     FString windowtitle;
@@ -173,7 +174,6 @@ void FConsoleWindow::ShowFatalError(const char *message)
     AddText(TEXTCOLOR_RED "Execution could not continue.\n");
     AddText("\n");
     AddText(message);
-
     m_error = true;
     while (m_error)
     {
@@ -216,12 +216,12 @@ void FConsoleWindow::RunImguiRenderLoop()
     ImGui_ImplSDL2_NewFrame(m_window);
     ImGui::NewFrame();
 
-    static auto maxscroll = 0.f;
-    ImGui::SetNextWindowScroll(ImVec2(0, maxscroll));
+    if (m_errorframe <= 2) ImGui::SetNextWindowScroll(ImVec2(0, m_maxscroll));
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(512, 370));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(70, 70, 70, 255));
     ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::PushTextWrapPos();
     for (auto& curText : m_texts)
     {
         ImGui::TextAnsiColored(ImVec4(224, 224, 224, 255), curText.GetChars());
@@ -232,8 +232,9 @@ void FConsoleWindow::RunImguiRenderLoop()
         ImGui::ProgressBar(std::clamp(m_netMaxPos == 0 ? (double)m_netCurPos / 100. : (double)m_netCurPos / (double)m_netMaxPos, 0., 1.), ImVec2(-1, 0), m_nettext.GetChars());
         ImGui::PopStyleColor();
     }
-    maxscroll = ImGui::GetScrollMaxY();
+    m_maxscroll = ImGui::GetScrollMaxY();
     ImGui::PopStyleColor();
+    ImGui::PopTextWrapPos();
     
     if (m_error)
     {
@@ -241,6 +242,8 @@ void FConsoleWindow::RunImguiRenderLoop()
         {
             m_error = false;
         }
+        m_maxscroll = ImGui::GetScrollMaxY();
+        m_errorframe++;
     }
     else if (m_iwadselect)
     {

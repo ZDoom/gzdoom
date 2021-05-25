@@ -2113,6 +2113,13 @@ class LevelCompatibility : LevelPostProcessor
 				SetLineFlags(1461, Line.ML_REPEAT_SPECIAL);
 				SetLineFlags(1468, Line.ML_REPEAT_SPECIAL);
 			}
+			
+			case 'E0D747B9EE58A0CB74B9AD54423AC15C': // return01.wad e1m2
+			{
+				// fix broken switch to raise the exit bridge
+				SetLineSpecial(1248, Floor_RaiseByValue, 39, 8, 512);
+				break;
+			}			
 		}
 	}
 }

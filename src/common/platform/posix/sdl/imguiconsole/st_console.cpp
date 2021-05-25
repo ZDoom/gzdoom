@@ -89,7 +89,7 @@ void FConsoleWindow::DeleteInstance()
 
 FConsoleWindow::FConsoleWindow()
 : io(ImGui::GetIO()), ProgBar(false), m_netinit(false), m_exitreq(false),
- m_error(false), m_iwadselect(false), m_maxscroll(0)
+ m_error(false), m_iwadselect(false), m_maxscroll(0), m_errorframe(0)
 {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
     FString windowtitle;
@@ -99,7 +99,7 @@ FConsoleWindow::FConsoleWindow()
     {
         throw std::runtime_error("Failed to create console window, falling back to terminal-only\n");
     }
-    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_SOFTWARE);
+    m_renderer = SDL_CreateRenderer(m_window, -1, strncmp(SDL_GetCurrentVideoDriver(), "KMSDRM", sizeof("KMSDRM")) == 0 ? SDL_RENDERER_SOFTWARE : SDL_RENDERER_ACCELERATED);
     ImGuiSDL::Initialize(m_renderer, 512, 384);
     ImGui_ImplSDL2_Init(m_window);
     m_texts.Append(savedtexts);
@@ -216,7 +216,6 @@ void FConsoleWindow::RunImguiRenderLoop()
     ImGui_ImplSDL2_NewFrame(m_window);
     ImGui::NewFrame();
 
-    if (m_errorframe <= 2) ImGui::SetNextWindowScroll(ImVec2(0, m_maxscroll));
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(512, 370));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(70, 70, 70, 255));
@@ -232,7 +231,6 @@ void FConsoleWindow::RunImguiRenderLoop()
         ImGui::ProgressBar(std::clamp(m_netMaxPos == 0 ? (double)m_netCurPos / 100. : (double)m_netCurPos / (double)m_netMaxPos, 0., 1.), ImVec2(-1, 0), m_nettext.GetChars());
         ImGui::PopStyleColor();
     }
-    m_maxscroll = ImGui::GetScrollMaxY();
     ImGui::PopStyleColor();
     ImGui::PopTextWrapPos();
     
@@ -242,7 +240,6 @@ void FConsoleWindow::RunImguiRenderLoop()
         {
             m_error = false;
         }
-        m_maxscroll = ImGui::GetScrollMaxY();
         m_errorframe++;
     }
     else if (m_iwadselect)
@@ -293,6 +290,7 @@ void FConsoleWindow::RunImguiRenderLoop()
         ImGui::EndPopup();
     }
 
+    if (m_errorframe <= 2) ImGui::SetScrollHereY(1.0f);
     ImGui::End();
     ImGui::Render();
 }

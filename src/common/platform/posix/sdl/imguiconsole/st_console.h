@@ -78,7 +78,7 @@ private:
 	struct
 	{
 		WadStuff *wads;
-		int numwads, defaultiwad, currentiwad;
+		int numwads, defaultiwad, currentiwad, curbackend;
 		TArray<const char *> wadnames;
 	} m_iwadparams;
 

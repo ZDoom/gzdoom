@@ -48,6 +48,8 @@ extern FStartupScreen* StartScreen;
 extern int ProgressBarCurPos, ProgressBarMaxPos;
 static TArray<FString> savedtexts;
 
+EXTERN_CVAR(Int, vid_preferbackend)
+
 void FConsoleWindow::CreateInstance()
 {
     ImGui::CreateContext();
@@ -181,6 +183,7 @@ int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defa
     m_iwadparams.wads = wads;
     m_iwadparams.numwads = numwads;
     m_iwadparams.currentiwad = defaultiwad;
+    m_iwadparams.curbackend = vid_preferbackend;
     for (int i = 0; i < numwads; i++)
     {
         m_iwadparams.wadnames.Push(wads[i].Name.GetChars());
@@ -188,6 +191,10 @@ int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defa
     while (m_iwadselect)
     {
         RunLoop();
+    }
+    if (m_iwadparams.currentiwad != -1)
+    {
+        vid_preferbackend = m_iwadparams.curbackend;
     }
     return m_iwadparams.currentiwad;
 }
@@ -244,6 +251,14 @@ void FConsoleWindow::RunImguiRenderLoop()
             ImGui::ListBoxFooter();
         }
         ImGui::PopItemWidth();
+        ImGui::Text("Renderer: ");
+        ImGui::RadioButton("OpenGL", &m_iwadparams.curbackend, 0);
+#ifdef HAVE_VULKAN
+        ImGui::RadioButton("Vulkan", &m_iwadparams.curbackend, 1);
+#endif
+#ifdef HAVE_SOFTPOLY
+        ImGui::RadioButton("Softpoly", &m_iwadparams.curbackend, 2);
+#endif
         if (ImGui::Button("OK"))
         {
             m_iwadselect = false;

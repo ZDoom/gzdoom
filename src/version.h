@@ -103,6 +103,7 @@ const char *GetVersionString();
 #define GAMENAMELOWERCASE "gzdoom"
 #define FORUM_URL "http://forum.zdoom.org/"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"
+#define APPSTREAMID "org.zdoom.GZDoom"
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME

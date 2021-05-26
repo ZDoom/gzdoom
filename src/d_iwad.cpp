@@ -684,6 +684,11 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 					  "1. Place one or more of these wads in ~/Library/Application Support/" GAMENAMELOWERCASE "/\n"
 					  "2. Edit your ~/Library/Preferences/" GAMENAMELOWERCASE ".ini and add the directories\n"
 					  "of your iwads to the list beneath [IWADSearch.Directories]");
+#elif defined (FLATPAK_BUNDLE)
+					  "1. Place one or more of these wads in ~/.var/app/" APPSTREAMID "/.config/" GAMENAMELOWERCASE "/\n"
+					  "2. Edit your ~/.var/app/" APPSTREAMID "/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini and\n"
+					  "     add the directories of your iwads to the list beneath [IWADSearch.Directories]\n"
+					  "3. Validate your Flatpak permissions, so that Flatpak has access to your directories with wads");
 #else
 					  "1. Place one or more of these wads in ~/.config/" GAMENAMELOWERCASE "/.\n"
 					  "2. Edit your ~/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini and add the directories of your\n"

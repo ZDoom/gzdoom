@@ -32,7 +32,7 @@
  **
  */
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "imgui.h"
 #include "imgui_sdl.h"
 #include "v_palette.h"
@@ -70,8 +70,11 @@ private:
     ImGuiIO& io;
 	TArray<FString> m_texts;
 	bool ProgBar, m_netinit, m_exitreq, m_error;
+	bool m_renderiwadtitle, m_graphicalstartscreen;
+	uint32_t m_iwadtitlebgcol, m_iwadtitletextcol;
 	int m_netCurPos, m_netMaxPos;
-	FString m_nettext;
+	int m_consolewidth, m_consoleheight;
+	FString m_nettext, m_iwadtitle;
 	int m_playercount;
 	int m_iwadselect;
 	bool m_netprogflash;

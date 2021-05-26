@@ -190,7 +190,8 @@ int main (int argc, char **argv)
 	}
 	
 	I_StartupJoysticks();
-	FConsoleWindow::CreateInstance();
+	// -nostartup will disable the console too.
+	if (!Args->CheckParm("-nostartup")) FConsoleWindow::CreateInstance();
 
 	const int result = GameMain();
 

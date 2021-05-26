@@ -60,7 +60,7 @@ void I_ShutdownGraphics ()
 	if (Video)
 		delete Video, Video = NULL;
 
-	SDL_QuitSubSystem (SDL_INIT_VIDEO);
+	if (!FConsoleWindow::InstanceExists()) SDL_QuitSubSystem (SDL_INIT_VIDEO);
 }
 
 void I_InitGraphics ()

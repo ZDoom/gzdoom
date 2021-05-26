@@ -34,6 +34,7 @@
 
 #include "st_console.h"
 #include "st_start.h"
+#include "startupinfo.h"
 #include "engineerrors.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_colored_text.h"
@@ -89,7 +90,8 @@ void FConsoleWindow::DeleteInstance()
 
 FConsoleWindow::FConsoleWindow()
 : io(ImGui::GetIO()), ProgBar(false), m_netinit(false), m_exitreq(false),
- m_error(false), m_iwadselect(false), m_maxscroll(0), m_errorframe(0)
+ m_error(false), m_renderiwadtitle(false), m_graphicalstartscreen(false),
+ m_consolewidth(512), m_consoleheight(384), m_iwadselect(false), m_maxscroll(0), m_errorframe(0)
 {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
     FString windowtitle;
@@ -100,7 +102,8 @@ FConsoleWindow::FConsoleWindow()
         throw std::runtime_error("Failed to create console window, falling back to terminal-only\n");
     }
     m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
-    ImGuiSDL::Initialize(m_renderer, 512, 384);
+    SDL_GetRendererOutputSize(m_renderer, &m_consolewidth, &m_consoleheight);
+    ImGuiSDL::Initialize(m_renderer, m_consolewidth, m_consoleheight);
     ImGui_ImplSDL2_Init(m_window);
     m_texts.Append(savedtexts);
     savedtexts.Clear();
@@ -177,10 +180,26 @@ void FConsoleWindow::ShowFatalError(const char *message)
     fmtstring.Format(TEXTCOLOR_YELLOW "%s", message);
     AddText(fmtstring);
     m_error = true;
+    m_renderiwadtitle = false;
+    m_graphicalstartscreen = false;
     while (m_error)
     {
         RunLoop();
     }
+}
+
+void FConsoleWindow::SetTitleText()
+{
+    if (GameStartupInfo.FgColor == GameStartupInfo.BkColor)
+	{
+		GameStartupInfo.FgColor = ~GameStartupInfo.FgColor;
+	}
+    m_renderiwadtitle = true;
+    m_iwadtitle = GameStartupInfo.Name;
+    auto iwadtitletextcol = PalEntry(GameStartupInfo.FgColor);
+    auto iwadtitlebgcol = PalEntry(GameStartupInfo.BkColor);
+    m_iwadtitletextcol = IM_COL32(iwadtitletextcol.r, iwadtitletextcol.g, iwadtitletextcol.b, 255);
+    m_iwadtitlebgcol = IM_COL32(iwadtitlebgcol.r, iwadtitlebgcol.g, iwadtitlebgcol.b, 255);
 }
 
 int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
@@ -210,11 +229,6 @@ int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defa
         autoloadwidescreen = m_iwadparams.widescreenload;
         disableautoload = m_iwadparams.noautoload;
     }
-    else
-    {
-        FConsoleWindow::DeleteInstance();
-        return -1;
-    }
     return m_iwadparams.currentiwad;
 }
 
@@ -222,84 +236,101 @@ void FConsoleWindow::RunImguiRenderLoop()
 {
     ImGui_ImplSDL2_NewFrame(m_window);
     ImGui::NewFrame();
+    if (!m_graphicalstartscreen)
+    {
+        ImGui::SetNextWindowPos(ImVec2(0, m_renderiwadtitle ? 32.f : 0));
+        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, m_consoleheight - (ProgBar ? 14.f : 0.f)));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(70, 70, 70, 255));
+        ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(512, 370));
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(70, 70, 70, 255));
-    ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    ImGui::PushTextWrapPos();
-    for (unsigned int i = 0; i < m_texts.Size(); i++)
-    {
-        auto& curText = m_texts[i];
-        ImGui::TextAnsiColored(ImVec4(224, 224, 224, 255), "%s", curText.GetChars());
-    }
-    if (m_netinit)
-    {
-        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(0,127,0,255));
-        ImGui::ProgressBar(std::clamp(m_netMaxPos == 0 ? (double)m_netCurPos / 100. : (double)m_netCurPos / (double)m_netMaxPos, 0., 1.), ImVec2(-1, 0), m_nettext.GetChars());
+        ImGui::PushTextWrapPos();
+        for (unsigned int i = 0; i < m_texts.Size(); i++)
+        {
+            auto& curText = m_texts[i];
+            ImGui::TextAnsiColored(ImVec4(224, 224, 224, 255), "%s", curText.GetChars());
+        }
+        if (m_netinit)
+        {
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(0,127,0,255));
+            ImGui::ProgressBar(std::clamp(m_netMaxPos == 0 ? (double)m_netCurPos / 100. : (double)m_netCurPos / (double)m_netMaxPos, 0., 1.), ImVec2(-1, 0), m_nettext.GetChars());
+            ImGui::PopStyleColor();
+        }
         ImGui::PopStyleColor();
-    }
-    ImGui::PopStyleColor();
-    ImGui::PopTextWrapPos();
-    
-    if (m_error)
-    {
-        if (ImGui::Button("Quit"))
+        ImGui::PopTextWrapPos();
+        if (m_error)
         {
-            m_error = false;
-        }
-        m_errorframe++;
-    }
-    else if (m_iwadselect)
-    {
-        if (!ImGui::IsPopupOpen("Game selection"))
-        {
-            ImGui::OpenPopup("Game selection");
-        }
-        ImGui::BeginPopupModal("Game selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Text(GAMENAME " found more than one game\nSelect from the list below to\ndetermine which one to use:");
-        ImGui::PushItemWidth(-1);
-        if (ImGui::ListBoxHeader(""))
-        {
-            for (int i = 0; i < m_iwadparams.numwads; i++)
+            if (ImGui::Button("Quit"))
             {
-                if (ImGui::Selectable(m_iwadparams.wads[i].Name.GetChars(), i == m_iwadparams.currentiwad))
-                {
-                    m_iwadparams.currentiwad = i;
-                }
+                m_error = false;
             }
-            ImGui::ListBoxFooter();
+            m_errorframe++;
         }
-        ImGui::PopItemWidth();
-        ImGui::Text("Renderer: ");
-        ImGui::RadioButton("OpenGL", &m_iwadparams.curbackend, 0);
+        else if (m_iwadselect)
+        {
+            if (!ImGui::IsPopupOpen("Game selection"))
+            {
+                ImGui::OpenPopup("Game selection");
+            }
+            ImGui::BeginPopupModal("Game selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text(GAMENAME " found more than one game\nSelect from the list below to\ndetermine which one to use:");
+            ImGui::PushItemWidth(-1);
+            if (ImGui::ListBoxHeader(""))
+            {
+                for (int i = 0; i < m_iwadparams.numwads; i++)
+                {
+                    if (ImGui::Selectable(m_iwadparams.wads[i].Name.GetChars(), i == m_iwadparams.currentiwad))
+                    {
+                        m_iwadparams.currentiwad = i;
+                    }
+                }
+                ImGui::ListBoxFooter();
+            }
+            ImGui::PopItemWidth();
+            ImGui::Text("Renderer: ");
+            ImGui::RadioButton("OpenGL", &m_iwadparams.curbackend, 0);
 #ifdef HAVE_VULKAN
-        ImGui::RadioButton("Vulkan", &m_iwadparams.curbackend, 1);
+            ImGui::RadioButton("Vulkan", &m_iwadparams.curbackend, 1);
 #endif
 #ifdef HAVE_SOFTPOLY
-        ImGui::RadioButton("Softpoly", &m_iwadparams.curbackend, 2);
+            ImGui::RadioButton("Softpoly", &m_iwadparams.curbackend, 2);
 #endif
-        ImGui::Checkbox("Lights", &m_iwadparams.lightsload);
-        ImGui::Checkbox("Brightmaps", &m_iwadparams.brightmapsload);
-        ImGui::Checkbox("Widescreen", &m_iwadparams.widescreenload);
-        ImGui::Checkbox("Disable autoload", &m_iwadparams.noautoload);
-        if (ImGui::Button("OK"))
-        {
-            m_iwadselect = false;
-            ImGui::CloseCurrentPopup();
+            ImGui::Checkbox("Lights", &m_iwadparams.lightsload);
+            ImGui::Checkbox("Brightmaps", &m_iwadparams.brightmapsload);
+            ImGui::Checkbox("Widescreen", &m_iwadparams.widescreenload);
+            ImGui::Checkbox("Disable autoload", &m_iwadparams.noautoload);
+            if (ImGui::Button("OK"))
+            {
+                m_iwadselect = false;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel"))
+            {
+                m_iwadparams.currentiwad = -1;
+                m_iwadselect = false;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel"))
-        {
-            m_iwadparams.currentiwad = -1;
-            m_iwadselect = false;
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
-    }
 
-    if (m_errorframe <= 2) ImGui::SetScrollHereY(1.0f);
-    ImGui::End();
+        if (m_errorframe <= 2) ImGui::SetScrollHereY(1.0f);
+        ImGui::End();
+    }
+    if (m_renderiwadtitle)
+    {
+        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, 32.f));
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        if (ImGui::Begin("IWADInfo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
+        {
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, m_iwadtitlebgcol);
+            ImGui::PushStyleColor(ImGuiCol_Text, m_iwadtitletextcol);
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+            ImGui::ProgressBar(1.0f, ImVec2(-1,0), m_iwadtitle.GetChars());
+            ImGui::PopStyleColor(2);
+            ImGui::PopStyleVar();
+        }
+        ImGui::End();
+    }
     ImGui::Render();
 }
 
@@ -317,6 +348,11 @@ void FConsoleWindow::RunLoop()
         {
             m_exitreq = true;
         }
+        if (e.type == SDL_WINDOWEVENT_RESIZED)
+        {
+            m_consolewidth = e.window.data1;
+            m_consoleheight = e.window.data2;
+        }
     }
     if (m_exitreq && !ProgBar && !m_netinit)
     {
@@ -328,7 +364,7 @@ void FConsoleWindow::RunLoop()
     ImGuiSDL::Render(ImGui::GetDrawData());
     if (ProgBar)
     {
-        SDL_FRect rect = {0.f, 370.f, 512.f * ((float)ProgressBarCurPos / (float)ProgressBarMaxPos), 14.f};
+        SDL_FRect rect = {0.f, m_consoleheight - 14.f, m_consolewidth * ((float)ProgressBarCurPos / (float)ProgressBarMaxPos), 14.f};
         SDL_SetRenderDrawColor(m_renderer, 0, 127, 0, 255);
         SDL_RenderFillRectF(m_renderer, &rect);
     }

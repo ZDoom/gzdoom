@@ -78,6 +78,10 @@ extern FStartupScreen *StartScreen;
 
 void I_SetIWADInfo()
 {
+	if (FConsoleWindow::InstanceExists())
+	{
+		FConsoleWindow::GetInstance().SetTitleText();
+	}
 }
 
 //
@@ -95,7 +99,11 @@ void Unix_I_FatalError(const char* errortext)
 	if (!FConsoleWindow::InstanceExists()) SDL_Quit();
 
 	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if (FConsoleWindow::InstanceExists())
+	{
+		FConsoleWindow::GetInstance().ShowFatalError(errortext);
+	}
+	else if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
 		FString cmd;
 		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
@@ -108,10 +116,6 @@ void Unix_I_FatalError(const char* errortext)
 		I_ShowFatalError_Gtk(errortext);
 	}
 #endif
-	else if (FConsoleWindow::InstanceExists())
-	{
-		FConsoleWindow::GetInstance().ShowFatalError(errortext);
-	}
 	else
 	{
 		FString title;
@@ -246,6 +250,11 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		return defaultiwad;
 	}
 
+	if (FConsoleWindow::InstanceExists())
+	{
+		return FConsoleWindow::GetInstance().PickIWad (wads, numwads, showwin, defaultiwad);
+	}
+
 #ifndef __APPLE__
 	const char *str;
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
@@ -309,10 +318,6 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 #ifdef __APPLE__
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
 #endif
-	if (FConsoleWindow::InstanceExists())
-	{
-		return FConsoleWindow::GetInstance().PickIWad (wads, numwads, showwin, defaultiwad);
-	}
 	
 	if (!isatty(fileno(stdin)))
 	{

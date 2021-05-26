@@ -2112,6 +2112,7 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				SetLineFlags(1461, Line.ML_REPEAT_SPECIAL);
 				SetLineFlags(1468, Line.ML_REPEAT_SPECIAL);
+				break;
 			}
 			
 			case 'E0D747B9EE58A0CB74B9AD54423AC15C': // return01.wad e1m2

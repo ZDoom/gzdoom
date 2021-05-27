@@ -141,6 +141,17 @@ void FSpecialFont::LoadTranslations()
 {
 	FFont::LoadTranslations();
 
+	bool empty = true;
+	for (auto& c : Chars)
+	{
+		if (c.OriginalPic != nullptr)
+		{
+			empty = false;
+			break;
+		}
+	}
+	if (empty) return; // Font has no characters.
+
 	bool needsnotrans = false;
 	// exclude the non-translated colors from the translation calculation
 	for (int i = 0; i < 256; i++)

@@ -656,6 +656,10 @@ int FFont::GetLuminosity (uint32_t *colorsused, TArray<double> &Luminosity, int*
 
 int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
+	// Single pic fonts don not set up their translation table and must always return 0.
+	if (Translations.Size() == 0) return 0;
+	assert(Translations.Size() == NumTextColors);
+
 	if (noTranslate)
 	{
 		PalEntry retcolor = PalEntry(255, 255, 255, 255);

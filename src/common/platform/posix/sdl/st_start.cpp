@@ -39,6 +39,7 @@
 #include <termios.h>
 
 #include "st_start.h"
+#include "startupinfo.h"
 #include "i_system.h"
 #include "c_cvars.h"
 #include "engineerrors.h"
@@ -105,8 +106,23 @@ static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
 
 FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
-	if (FConsoleWindow::InstanceExists()) return new FBasicStartupScreen(max_progress, true);
-	return new FTTYStartupScreen(max_progress);
+	FStartupScreen* stscreen = nullptr;
+	long hr;
+	if (FConsoleWindow::InstanceExists())
+	{
+		if (GameStartupInfo.Type == FStartupInfo::HexenStartup)
+		{
+			stscreen = new FHexenStartupScreen(max_progress, hr);
+			if (hr == -1)
+			{
+				delete stscreen;
+				stscreen = new FBasicStartupScreen(max_progress, true);
+			}
+		}
+		else stscreen = new FBasicStartupScreen(max_progress, true);
+	}
+	if (!stscreen) stscreen = new FTTYStartupScreen(max_progress);
+	return stscreen;
 }
 
 //===========================================================================

@@ -2,6 +2,7 @@
  ** st_console.cpp
  **
  **---------------------------------------------------------------------------
+ ** Copyright 2006-2007 Randy Heit
  ** Copyright 2015 Alexey Lysiuk
  ** Copyright 2021 Cacodemon345
  ** All rights reserved.
@@ -42,7 +43,22 @@
 #include "i_interface.h"
 #include "i_specialpaths.h"
 #include "version.h"
+#include "filesystem.h"
+#include "s_music.h"
 #include <stdexcept>
+
+// Hexen startup screen
+#define ST_MAX_NOTCHES			32
+#define ST_NOTCH_WIDTH			16
+#define ST_NOTCH_HEIGHT			23
+#define ST_PROGRESS_X			64			// Start of notches x screen pos.
+#define ST_PROGRESS_Y			441			// Start of notches y screen pos.
+
+#define ST_NETPROGRESS_X		288
+#define ST_NETPROGRESS_Y		32
+#define ST_NETNOTCH_WIDTH		4
+#define ST_NETNOTCH_HEIGHT		16
+#define ST_MAX_NETNOTCHES		8
 
 static FConsoleWindow* m_console;
 extern FStartupScreen* StartScreen;
@@ -54,6 +70,51 @@ EXTERN_CVAR (Bool, autoloadlights)
 EXTERN_CVAR (Bool, autoloadbrightmaps)
 EXTERN_CVAR (Bool, autoloadwidescreen)
 EXTERN_CVAR (Int, vid_preferbackend)
+
+
+//==========================================================================
+//
+// ST_Util_PlanarToChunky4
+//
+// Convert a 4-bpp planar image to chunky pixels.
+//
+//==========================================================================
+
+void ST_Util_PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int height)
+{
+	int y, x;
+	const uint8_t* src1, * src2, * src3, * src4;
+	size_t plane_size = width / 8 * height;
+
+	src1 = src;
+	src2 = src1 + plane_size;
+	src3 = src2 + plane_size;
+	src4 = src3 + plane_size;
+
+	for (y = height; y > 0; --y)
+	{
+		for (x = width; x > 0; x -= 8)
+		{
+			// Pixels 0 and 1
+			dest[0] = (*src4 & 0x80) | ((*src3 & 0x80) >> 1) | ((*src2 & 0x80) >> 2) | ((*src1 & 0x80) >> 3) |
+				((*src4 & 0x40) >> 3) | ((*src3 & 0x40) >> 4) | ((*src2 & 0x40) >> 5) | ((*src1 & 0x40) >> 6);
+			// Pixels 2 and 3
+			dest[1] = ((*src4 & 0x20) << 2) | ((*src3 & 0x20) << 1) | ((*src2 & 0x20)) | ((*src1 & 0x20) >> 1) |
+				((*src4 & 0x10) >> 1) | ((*src3 & 0x10) >> 2) | ((*src2 & 0x10) >> 3) | ((*src1 & 0x10) >> 4);
+			// Pixels 4 and 5
+			dest[2] = ((*src4 & 0x08) << 4) | ((*src3 & 0x08) << 3) | ((*src2 & 0x08) << 2) | ((*src1 & 0x08) << 1) |
+				((*src4 & 0x04) << 1) | ((*src3 & 0x04)) | ((*src2 & 0x04) >> 1) | ((*src1 & 0x04) >> 2);
+			// Pixels 6 and 7
+			dest[3] = ((*src4 & 0x02) << 6) | ((*src3 & 0x02) << 5) | ((*src2 & 0x02) << 4) | ((*src1 & 0x02) << 3) |
+				((*src4 & 0x01) << 3) | ((*src3 & 0x01) << 2) | ((*src2 & 0x01) << 1) | ((*src1 & 0x01));
+			dest += 4;
+			src1 += 1;
+			src2 += 1;
+			src3 += 1;
+			src4 += 1;
+		}
+	}
+}
 
 void FConsoleWindow::CreateInstance()
 {
@@ -115,6 +176,7 @@ FConsoleWindow::~FConsoleWindow()
     {
         savedtexts.Append(m_texts);
         m_texts.Clear();
+        SetStartupType(StartupType::StartupTypeNormal);
         ImGuiSDL::Deinitialize();
         ImGui_ImplSDL2_Shutdown();
         SDL_DestroyRenderer(m_renderer);
@@ -170,6 +232,145 @@ void FConsoleWindow::NetDone()
     m_nettext = "";
 }
 
+void FConsoleWindow::InitGraphicalMode()
+{
+    m_graphicalstartscreen = true;
+}
+
+FConsoleWindow::StartupType FConsoleWindow::GetStartupType()
+{
+    return m_startuptype;
+}
+
+// Convert 4-bit pixels to 8-bit ones.
+void ST_Util_Chunky4ToChunky8(uint8_t* dest, const uint8_t* src, int width, int height)
+{
+    for (int i = 0; i < (width * height) / 2; i++)
+    {
+        dest[i * 2 + 1] = src[i] & 0xF;
+        dest[i * 2] = (src[i] >> 4) & 0xF;
+    }
+}
+
+void FConsoleWindow::SetStartupType(StartupType type)
+{
+    switch (type)
+    {
+        case StartupType::StartupTypeNormal:
+        {
+            SDL_SetWindowMinimumSize(m_window, m_consolewidth, m_consoleheight);
+            SDL_SetWindowSize(m_window, m_consolewidth, m_consoleheight);
+            SDL_RenderSetLogicalSize(m_renderer, m_consolewidth, m_consoleheight);
+
+            if (m_hexenpic) SDL_DestroyTexture(m_hexenpic);
+            if (m_hexennetnotchpic) SDL_DestroyTexture(m_hexennetnotchpic);
+            if (m_hexennotchpic) SDL_DestroyTexture(m_hexennotchpic);
+        }
+        break;
+
+        case StartupType::StartupTypeHexen:
+        {
+            if (m_consolewidth != 640 && m_consoleheight != 480)
+            {
+                SDL_SetWindowSize(m_window, 640, 480);
+                SDL_SetWindowMinimumSize(m_window, 640, 480);
+                SDL_RenderSetLogicalSize(m_renderer, 640, 480);
+            }
+
+            auto hexenpixels = SDL_CreateRGBSurface(0, 640, 480, 8, 0, 0, 0, 0);
+            auto hexennotchpixels = SDL_CreateRGBSurface(0, ST_NOTCH_WIDTH, ST_NOTCH_HEIGHT, 8, 0, 0, 0, 0);
+            auto hexennetnotchpixels = SDL_CreateRGBSurface(0, ST_NETNOTCH_WIDTH, ST_NETNOTCH_HEIGHT, 8, 0, 0, 0, 0);
+            
+            if (!hexenpixels || !hexennotchpixels || !hexennetnotchpixels)
+            {
+                SDL_FreeSurface(hexenpixels);
+                SDL_FreeSurface(hexennotchpixels);
+                SDL_FreeSurface(hexennetnotchpixels);
+                return;
+            }
+
+          	int startup_lump = fileSystem.CheckNumForName("STARTUP");
+	        int netnotch_lump = fileSystem.CheckNumForName("NETNOTCH");
+	        int notch_lump = fileSystem.CheckNumForName("NOTCH");
+            if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 153648 ||
+    		    netnotch_lump < 0 || fileSystem.FileLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
+	    	    notch_lump < 0 || fileSystem.FileLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
+            {
+                return;
+            }
+            uint8_t* startupcontents = new uint8_t[153648];
+            uint8_t* startup4bitchunky = new uint8_t[(640 * 480) / 2];
+            uint8_t* notch4bit = new uint8_t[ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT];
+            uint8_t* netnotch4bit = new uint8_t[ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT];
+            fileSystem.ReadFile(startup_lump, startupcontents);
+            fileSystem.ReadFile(notch_lump, notch4bit);
+            fileSystem.ReadFile(netnotch_lump, netnotch4bit);
+
+            // Convert to 4-bit chunky pixels.
+            ST_Util_PlanarToChunky4((uint8_t*)startup4bitchunky, startupcontents + 48, 640, 480);
+            // Convert the graphics to 8-bit pixels.
+            ST_Util_Chunky4ToChunky8((uint8_t*)hexenpixels->pixels, startup4bitchunky, 640, 480);
+            ST_Util_Chunky4ToChunky8((uint8_t*)hexennotchpixels->pixels, notch4bit, ST_NOTCH_WIDTH, ST_NOTCH_HEIGHT);
+            ST_Util_Chunky4ToChunky8((uint8_t*)hexennetnotchpixels->pixels, netnotch4bit, ST_NETNOTCH_WIDTH, ST_NETNOTCH_HEIGHT);
+            delete[] notch4bit;
+            delete[] netnotch4bit;
+            delete[] startup4bitchunky;
+            // Load the palette.
+            auto palette4bit = SDL_AllocPalette(256);
+            if (!palette4bit) return;
+            auto colorpalette = new SDL_Color[256];
+            for (int i = 0; i < 16; i++)
+            {
+                colorpalette[i].r = startupcontents[i * 3] << 2;
+                colorpalette[i].g = startupcontents[i * 3 + 1] << 2;
+                colorpalette[i].b = startupcontents[i * 3 + 2] << 2;
+                colorpalette[i].a = 255;
+            }
+            for (int i = 16; i < 256; i++)
+            {
+                colorpalette[i].r = 0;
+                colorpalette[i].g = 0;
+                colorpalette[i].b = 0;
+                colorpalette[i].a = 255;
+            }
+            SDL_SetPaletteColors(palette4bit, colorpalette, 0, 256);
+            SDL_SetSurfacePalette(hexenpixels, palette4bit);
+            SDL_SetSurfacePalette(hexennotchpixels, palette4bit);
+            SDL_SetSurfacePalette(hexennetnotchpixels, palette4bit);
+            delete[] startupcontents;
+            delete[] colorpalette;
+
+            m_hexenpic = SDL_CreateTextureFromSurface(m_renderer, hexenpixels);
+            m_hexennotchpic = SDL_CreateTextureFromSurface(m_renderer, hexennotchpixels);
+            m_hexennetnotchpic = SDL_CreateTextureFromSurface(m_renderer, hexennetnotchpixels);
+            if (!m_hexennetnotchpic) return;
+            if (!m_hexenpic) return;
+            if (!m_hexennotchpic) return;
+            SDL_FreeSurface(hexenpixels);
+            SDL_FreeSurface(hexennotchpixels);
+            SDL_FreeSurface(hexennetnotchpixels);
+            if (!batchrun)
+            {
+                if (GameStartupInfo.Song.IsNotEmpty())
+                {
+                    S_ChangeMusic(GameStartupInfo.Song.GetChars(), true, true);
+                }
+                else
+                {
+                    S_ChangeMusic("orb", true, true);
+                }
+            }
+        }
+        break;
+    }
+    m_startuptype = type;
+}
+
+void FConsoleWindow::DeinitGraphicalMode()
+{
+    m_graphicalstartscreen = false;
+}
+
 void FConsoleWindow::ShowFatalError(const char *message)
 {
     SetProgressBar(false);
@@ -182,6 +383,7 @@ void FConsoleWindow::ShowFatalError(const char *message)
     m_error = true;
     m_renderiwadtitle = false;
     m_graphicalstartscreen = false;
+    SetStartupType(StartupType::StartupTypeNormal);
     while (m_error)
     {
         RunLoop();
@@ -315,28 +517,73 @@ void FConsoleWindow::RunImguiRenderLoop()
 
         if (m_errorframe <= 2) ImGui::SetScrollHereY(1.0f);
         ImGui::End();
-    }
-    if (m_renderiwadtitle)
-    {
-        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, 32.f));
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
-        if (ImGui::Begin("IWADInfo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
+        if (m_renderiwadtitle)
         {
-            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, m_iwadtitlebgcol);
-            ImGui::PushStyleColor(ImGuiCol_Text, m_iwadtitletextcol);
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
-            ImGui::ProgressBar(1.0f, ImVec2(-1,0), m_iwadtitle.GetChars());
-            ImGui::PopStyleColor(2);
-            ImGui::PopStyleVar();
+            ImGui::SetNextWindowSize(ImVec2(m_consolewidth, 32.f));
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            if (ImGui::Begin("IWADInfo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
+            {
+                ImGui::PushStyleColor(ImGuiCol_PlotHistogram, m_iwadtitlebgcol);
+                ImGui::PushStyleColor(ImGuiCol_Text, m_iwadtitletextcol);
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+                ImGui::ProgressBar(1.0f, ImVec2(-1,0), m_iwadtitle.GetChars());
+                ImGui::PopStyleColor(2);
+                ImGui::PopStyleVar();
+            }
+            ImGui::End();
         }
-        ImGui::End();
     }
+
     ImGui::Render();
 }
 
 bool FConsoleWindow::NetUserExitRequested()
 {
     return m_netinit && m_exitreq;
+}
+
+void FConsoleWindow::RunHexenSubLoop()
+{
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_RenderClear(m_renderer);
+    SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+    SDL_RenderCopy(m_renderer, m_hexenpic, NULL, NULL);
+    static int notch_pos = 0;
+    if (notch_pos != (ProgressBarCurPos * ST_MAX_NOTCHES) / ProgressBarMaxPos)
+    {
+        notch_pos = (ProgressBarCurPos * ST_MAX_NOTCHES) / ProgressBarMaxPos;
+        if (sysCallbacks.PlayStartupSound) sysCallbacks.PlayStartupSound("StartupTick");
+    }
+    for (int i = 0; i < notch_pos; i++)
+    {
+        SDL_Rect dstrect;
+        dstrect.x = ST_PROGRESS_X + ST_NOTCH_WIDTH * i;
+        dstrect.y = ST_PROGRESS_Y;
+        dstrect.w = ST_NOTCH_WIDTH;
+        dstrect.h = ST_NOTCH_HEIGHT;
+        SDL_Rect srcrect = (SDL_Rect){0, 0, ST_NOTCH_WIDTH, ST_NOTCH_HEIGHT};
+        SDL_RenderCopy(m_renderer, m_hexennotchpic, &srcrect, &dstrect);
+    }
+    if (m_netinit)
+    {
+        static int netnotch_pos = 0;
+        if (netnotch_pos != (m_netCurPos * ST_MAX_NETNOTCHES) / m_netMaxPos)
+        {
+            netnotch_pos = (m_netCurPos * ST_MAX_NETNOTCHES) / m_netMaxPos;
+            if (sysCallbacks.PlayStartupSound) sysCallbacks.PlayStartupSound("misc/netnotch");
+        }
+        for (int i = 0; i < netnotch_pos; i++)
+        {
+            SDL_Rect dstrect;
+            dstrect.x = ST_NETPROGRESS_X + ST_NETNOTCH_WIDTH * i;
+            dstrect.y = ST_NETPROGRESS_Y;
+            dstrect.w = ST_NETNOTCH_WIDTH;
+            dstrect.h = ST_NETNOTCH_HEIGHT;
+            SDL_Rect srcrect = (SDL_Rect){0, 0, ST_NETNOTCH_WIDTH, ST_NETNOTCH_HEIGHT};
+            SDL_RenderCopy(m_renderer, m_hexennetnotchpic, &srcrect, &dstrect);
+        }
+    }
+    SDL_RenderPresent(m_renderer);
 }
 
 void FConsoleWindow::RunLoop()
@@ -357,6 +604,16 @@ void FConsoleWindow::RunLoop()
     if (m_exitreq && !ProgBar && !m_netinit)
     {
         throw CExitEvent(0);
+    }
+    if (m_startuptype != StartupType::StartupTypeNormal)
+    {
+        switch(m_startuptype)
+        {
+        case StartupType::StartupTypeHexen:
+            RunHexenSubLoop();
+            break;
+        }
+        return;
     }
     RunImguiRenderLoop();
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);

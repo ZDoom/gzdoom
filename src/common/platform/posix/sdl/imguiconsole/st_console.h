@@ -40,6 +40,13 @@
 class FConsoleWindow
 {
 public:
+	enum class StartupType
+	{
+		StartupTypeNormal,
+		StartupTypeHexen,
+		StartupTypeHeretic,
+		StartupTypeStrife,
+	};
 	static FConsoleWindow& GetInstance();
 
 	static void CreateInstance();
@@ -55,6 +62,10 @@ public:
 
 	void SetTitleText();
 	void SetProgressBar(bool visible);
+	void InitGraphicalMode();
+	void DeinitGraphicalMode();
+	void SetStartupType(StartupType type);
+	StartupType GetStartupType();
 
 	// FStartupScreen functionality
 	void Progress(int current, int maximum);
@@ -80,6 +91,13 @@ private:
 	bool m_netprogflash;
 	float m_maxscroll;
 	unsigned int m_errorframe;
+	StartupType m_startuptype = StartupType::StartupTypeNormal;
+	SDL_Texture* m_hexenpic = nullptr;
+	SDL_Texture* m_hexennotchpic = nullptr;
+	SDL_Texture* m_hexennetnotchpic = nullptr;
+	SDL_Texture* m_strifepic = nullptr;
+	SDL_Texture* m_strifebotpic = nullptr;
+	SDL_Texture* m_strifepeasantpic = nullptr;
 	struct
 	{
 		WadStuff *wads;
@@ -90,6 +108,8 @@ private:
 
     void AddText(const PalEntry& color, const char* message);
 	void RunImguiRenderLoop();
+	void RunHexenSubLoop();
+	void RunStrifeSubLoop();
 
 	FConsoleWindow();	
 	~FConsoleWindow();

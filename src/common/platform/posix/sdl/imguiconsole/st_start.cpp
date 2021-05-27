@@ -44,6 +44,7 @@ extern bool netinited;
 FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
 : FStartupScreen(max_progress)
 {
+	ProgressBarMaxPos = max_progress;
     FConsoleWindow::GetInstance().SetProgressBar(true);
 }
 
@@ -52,13 +53,6 @@ FBasicStartupScreen::~FBasicStartupScreen()
 	NetDone();
 	FConsoleWindow::GetInstance().SetProgressBar(false);
 }
-
-#if 0
-FStartupScreen *FStartupScreen::CreateInstance(const int maxProgress)
-{
-	return new FBasicStartupScreen(maxProgress, true);
-}
-#endif
 
 void FBasicStartupScreen::NetInit(const char* const message, const int playerCount)
 {
@@ -127,4 +121,46 @@ bool FBasicStartupScreen::NetLoop(bool (*timerCallback)(void*), void* const user
 	}
 
 	return true;
+}
+
+FGraphicalStartupScreen::FGraphicalStartupScreen(int max_progress)
+: FBasicStartupScreen(max_progress, true)
+{
+	FConsoleWindow::GetInstance().InitGraphicalMode();
+}
+
+FGraphicalStartupScreen::~FGraphicalStartupScreen()
+{
+	FConsoleWindow::GetInstance().DeinitGraphicalMode();
+}
+
+FHexenStartupScreen::FHexenStartupScreen(int max_progress, long &hr)
+: FGraphicalStartupScreen(max_progress)
+{
+	FConsoleWindow::GetInstance().SetStartupType(FConsoleWindow::StartupType::StartupTypeHexen);
+	if (FConsoleWindow::GetInstance().GetStartupType() != FConsoleWindow::StartupType::StartupTypeHexen)
+	{
+		hr = -1;
+		return;
+	}
+}
+
+FHexenStartupScreen::~FHexenStartupScreen()
+{
+	FConsoleWindow::GetInstance().SetStartupType(FConsoleWindow::StartupType::StartupTypeNormal);
+}
+
+void FHexenStartupScreen::Progress()
+{
+	FGraphicalStartupScreen::Progress();
+}
+
+void FHexenStartupScreen::NetProgress(int count)
+{
+	FConsoleWindow::GetInstance().NetProgress(count);
+}
+
+void FHexenStartupScreen::NetDone()
+{
+	FConsoleWindow::GetInstance().NetDone();
 }

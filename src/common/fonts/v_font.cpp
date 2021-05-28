@@ -714,13 +714,16 @@ static void CalcDefaultTranslation(FFont* base, int index)
 		{
 			int index = int(lum * 255);
 			remap[index] = GPalette.BaseColors[i];
+			remap[index].a = 255;
 		}
 	}
 
 	// todo: fill the gaps.
-	remap[0] = 0;
+	//remap[0] = 0;
 	int lowindex = 0;
-	int highindex = 1;
+	while (lowindex < 255 && remap[lowindex].a == 0) lowindex++;
+	lowindex++;
+	int highindex = lowindex + 1;
 
 	while (lowindex < 255)
 	{

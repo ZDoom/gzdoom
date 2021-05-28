@@ -250,6 +250,7 @@ void FConsoleWindow::NetInit(const char* message, int playerCount)
     m_netMaxPos = playerCount;
     m_netCurPos = 0;
     SetProgressBar(false);
+	SDL_GetRendererOutputSize(m_renderer, &m_consolewidth, &m_consoleheight);
     AddText(TEXTCOLOR_GREEN "Press Q to abort network game synchronization.\n");
 }
 
@@ -606,100 +607,98 @@ void FConsoleWindow::RunImguiRenderLoop()
 {
     ImGui_ImplSDL2_NewFrame(m_window);
     ImGui::NewFrame();
-    if (!m_graphicalstartscreen)
-    {
-        ImGui::SetNextWindowPos(ImVec2(0, m_renderiwadtitle ? 32.f : 0));
-        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, m_consoleheight - (ProgBar ? 14.f : 0.f) - (m_renderiwadtitle ? 32.f : 0)));
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(70, 70, 70, 255));
-        ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
-        ImGui::PushTextWrapPos();
-        for (unsigned int i = 0; i < m_texts.Size(); i++)
-        {
-            auto& curText = m_texts[i];
-            ImGui::TextAnsiColored(ImVec4(224, 224, 224, 255), "%s", curText.GetChars());
-        }
-        if (m_netinit)
-        {
-            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(0,127,0,255));
-            ImGui::ProgressBar(std::clamp(m_netMaxPos == 0 ? (double)m_netCurPos / 100. : (double)m_netCurPos / (double)m_netMaxPos, 0., 1.), ImVec2(-1, 0), m_nettext.GetChars());
-            ImGui::PopStyleColor();
-        }
+    ImGui::SetNextWindowPos(ImVec2(0, m_renderiwadtitle ? 32.f : 0));
+    ImGui::SetNextWindowSize(ImVec2(m_consolewidth, m_consoleheight - (ProgBar ? 14.f : 0.f) - (m_renderiwadtitle ? 32.f : 0)));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_netinit && m_startuptype != StartupType::StartupTypeNormal ? IM_COL32(0,0,0,100) : IM_COL32(70, 70, 70, 255));
+    ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+    ImGui::PushTextWrapPos();
+    for (unsigned int i = 0; i < m_texts.Size(); i++)
+    {
+        auto& curText = m_texts[i];
+        ImGui::TextAnsiColored(ImVec4(224, 224, 224, 255), "%s", curText.GetChars());
+    }
+    if (m_netinit)
+    {
+        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(0,127,0,255));
+        ImGui::ProgressBar(std::clamp(m_netMaxPos == 0 ? (double)m_netCurPos / 100. : (double)m_netCurPos / (double)m_netMaxPos, 0., 1.), ImVec2(-1, 0), m_nettext.GetChars());
         ImGui::PopStyleColor();
-        ImGui::PopTextWrapPos();
-        if (m_error)
+    }
+    ImGui::PopStyleColor();
+    ImGui::PopTextWrapPos();
+    if (m_error)
+    {
+        if (ImGui::Button("Quit"))
         {
-            if (ImGui::Button("Quit"))
-            {
-                m_error = false;
-            }
-            m_errorframe++;
+            m_error = false;
         }
-        else if (m_iwadselect)
+   		m_errorframe++;
+    }
+    else if (m_iwadselect)
+    {
+        if (!ImGui::IsPopupOpen("Game selection"))
         {
-            if (!ImGui::IsPopupOpen("Game selection"))
+            ImGui::OpenPopup("Game selection");
+        }
+        ImGui::BeginPopupModal("Game selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text(GAMENAME " found more than one game\nSelect from the list below to\ndetermine which one to use:");
+        ImGui::PushItemWidth(-1);
+        if (ImGui::ListBoxHeader(""))
+        {
+            for (int i = 0; i < m_iwadparams.numwads; i++)
             {
-                ImGui::OpenPopup("Game selection");
-            }
-            ImGui::BeginPopupModal("Game selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-            ImGui::Text(GAMENAME " found more than one game\nSelect from the list below to\ndetermine which one to use:");
-            ImGui::PushItemWidth(-1);
-            if (ImGui::ListBoxHeader(""))
-            {
-                for (int i = 0; i < m_iwadparams.numwads; i++)
+                if (ImGui::Selectable(m_iwadparams.wads[i].Name.GetChars(), i == m_iwadparams.currentiwad))
                 {
-                    if (ImGui::Selectable(m_iwadparams.wads[i].Name.GetChars(), i == m_iwadparams.currentiwad))
-                    {
-                        m_iwadparams.currentiwad = i;
-                    }
+                    m_iwadparams.currentiwad = i;
                 }
-                ImGui::ListBoxFooter();
             }
-            ImGui::PopItemWidth();
-            ImGui::Text("Renderer: ");
-            ImGui::RadioButton("OpenGL", &m_iwadparams.curbackend, 0);
+            ImGui::ListBoxFooter();
+        }
+        ImGui::PopItemWidth();
+        ImGui::Text("Renderer: ");
+        ImGui::RadioButton("OpenGL", &m_iwadparams.curbackend, 0);
 #ifdef HAVE_VULKAN
-            ImGui::RadioButton("Vulkan", &m_iwadparams.curbackend, 1);
+        ImGui::RadioButton("Vulkan", &m_iwadparams.curbackend, 1);
 #endif
 #ifdef HAVE_SOFTPOLY
-            ImGui::RadioButton("Softpoly", &m_iwadparams.curbackend, 2);
+        ImGui::RadioButton("Softpoly", &m_iwadparams.curbackend, 2);
 #endif
-            ImGui::Checkbox("Lights", &m_iwadparams.lightsload);
-            ImGui::Checkbox("Brightmaps", &m_iwadparams.brightmapsload);
-            ImGui::Checkbox("Widescreen", &m_iwadparams.widescreenload);
-            ImGui::Checkbox("Disable autoload", &m_iwadparams.noautoload);
-            if (ImGui::Button("OK"))
-            {
-                m_iwadselect = false;
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
-            {
-                m_iwadparams.currentiwad = -1;
-                m_iwadselect = false;
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::EndPopup();
-        }
-
-        if (m_errorframe <= 2) ImGui::SetScrollHereY(1.0f);
-        ImGui::End();
-        if (m_renderiwadtitle)
+        ImGui::Checkbox("Lights", &m_iwadparams.lightsload);
+        ImGui::Checkbox("Brightmaps", &m_iwadparams.brightmapsload);
+        ImGui::Checkbox("Widescreen", &m_iwadparams.widescreenload);
+        ImGui::Checkbox("Disable autoload", &m_iwadparams.noautoload);
+        if (ImGui::Button("OK"))
         {
-            ImGui::SetNextWindowSize(ImVec2(m_consolewidth, 32.f));
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            if (ImGui::Begin("IWADInfo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
-            {
-                ImGui::PushStyleColor(ImGuiCol_PlotHistogram, m_iwadtitlebgcol);
-                ImGui::PushStyleColor(ImGuiCol_Text, m_iwadtitletextcol);
-                ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
-                ImGui::ProgressBar(1.0f, ImVec2(-1,0), m_iwadtitle.GetChars());
-                ImGui::PopStyleColor(2);
-                ImGui::PopStyleVar();
-            }
-            ImGui::End();
+            m_iwadselect = false;
+            ImGui::CloseCurrentPopup();
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            m_iwadparams.currentiwad = -1;
+            m_iwadselect = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if (m_errorframe <= 2) ImGui::SetScrollHereY(1.0f);
+    ImGui::End();
+    if (m_renderiwadtitle)
+    {
+        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, 32.f));
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        if (ImGui::Begin("IWADInfo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
+        {
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, m_iwadtitlebgcol);
+            ImGui::PushStyleColor(ImGuiCol_Text, m_iwadtitletextcol);
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+            ImGui::ProgressBar(1.0f, ImVec2(-1,0), m_iwadtitle.GetChars());
+            ImGui::PopStyleColor(2);
+            ImGui::PopStyleVar();
+        }
+        ImGui::End();
     }
 
     ImGui::Render();
@@ -805,6 +804,11 @@ void FConsoleWindow::RunHereticSubLoop()
         SDL_RenderCopy(m_renderer, m_vgatextpic, &srcrect, &progrect);
         progrect.x += 8;
     }
+	if (m_netinit)
+	{
+		RunImguiRenderLoop();
+		ImGuiSDL::Render(ImGui::GetDrawData());
+	}
     SDL_RenderPresent(m_renderer);
 }
 
@@ -833,7 +837,7 @@ void FConsoleWindow::RunHexenSubLoop()
     if (m_netinit)
     {
         static int netnotch_pos = 0;
-        if (netnotch_pos != m_netCurPos)
+        if (netnotch_pos != m_netCurPos && m_netMaxPos != 0)
         {
             netnotch_pos = m_netCurPos;
             if (sysCallbacks.PlayStartupSound) sysCallbacks.PlayStartupSound("misc/netnotch");
@@ -849,6 +853,11 @@ void FConsoleWindow::RunHexenSubLoop()
             SDL_RenderCopy(m_renderer, m_hexennetnotchpic, &srcrect, &dstrect);
         }
     }
+	if (m_netinit)
+	{
+		RunImguiRenderLoop();
+		ImGuiSDL::Render(ImGui::GetDrawData());
+	}
     SDL_RenderPresent(m_renderer);
 }
 

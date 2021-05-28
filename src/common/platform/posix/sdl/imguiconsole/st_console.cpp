@@ -833,9 +833,9 @@ void FConsoleWindow::RunHexenSubLoop()
     if (m_netinit)
     {
         static int netnotch_pos = 0;
-        if (netnotch_pos != (m_netCurPos * ST_MAX_NETNOTCHES) / m_netMaxPos)
+        if (netnotch_pos != m_netCurPos)
         {
-            netnotch_pos = (m_netCurPos * ST_MAX_NETNOTCHES) / m_netMaxPos;
+            netnotch_pos = m_netCurPos;
             if (sysCallbacks.PlayStartupSound) sysCallbacks.PlayStartupSound("misc/netnotch");
         }
         for (int i = 0; i < netnotch_pos; i++)

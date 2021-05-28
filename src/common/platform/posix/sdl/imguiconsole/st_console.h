@@ -66,6 +66,8 @@ public:
 	void DeinitGraphicalMode();
 	void SetStartupType(StartupType type);
 	StartupType GetStartupType();
+	void AddStatusText(const char* message, int colors);
+	void AppendStatusLine(FString status);
 
 	// FStartupScreen functionality
 	void Progress(int current, int maximum);
@@ -98,6 +100,14 @@ private:
 	SDL_Texture* m_strifepic = nullptr;
 	SDL_Texture* m_strifebotpic = nullptr;
 	SDL_Texture* m_strifepeasantpic = nullptr;
+	SDL_Texture* m_vgatextpic = nullptr;
+	SDL_Texture* m_loadingpic = nullptr;
+	uint8_t m_textloadingscreen[4000] = { 0 };
+	TArray<FString> m_statustexts;
+	TArray<uint8_t> m_statuscolors;
+	FString m_statusline;
+	int m_vgatextheight;
+	unsigned int m_thermx, m_thermy, m_thermwidth, m_thermheight;
 	struct
 	{
 		WadStuff *wads;
@@ -109,7 +119,10 @@ private:
     void AddText(const PalEntry& color, const char* message);
 	void RunImguiRenderLoop();
 	void RunHexenSubLoop();
+	void RunHereticSubLoop();
+	static void GetANSITextColors(uint8_t attrib, SDL_Color& fgcol, SDL_Color& bgcol);
 	void RunStrifeSubLoop();
+	SDL_Texture* CreateTextureFromFont(const uint8_t* font);
 
 	FConsoleWindow();	
 	~FConsoleWindow();

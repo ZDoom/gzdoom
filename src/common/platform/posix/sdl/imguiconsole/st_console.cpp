@@ -60,6 +60,41 @@
 #define ST_NETNOTCH_HEIGHT		16
 #define ST_MAX_NETNOTCHES		8
 
+// Heretic startup screen
+#define HERETIC_MINOR_VERSION	'3'			// Since we're based on Heretic 1.3
+
+#define THERM_X					14
+#define THERM_Y					14
+#define THERM_LEN				51
+#define THERM_COLOR				0xAA		// light green
+
+#define TEXT_FONT_NAME			"vga-rom-font.16"
+
+// Text mode color values
+#define LO						 85
+#define MD						170
+#define HI						255
+static const RgbQuad TextModePalette[16] =
+{
+	{  0,  0,  0, 0 },		// 0 black
+	{ MD,  0,  0, 0 },		// 1 blue
+	{  0, MD,  0, 0 },		// 2 green
+	{ MD, MD,  0, 0 },		// 3 cyan
+	{  0,  0, MD, 0 },		// 4 red
+	{ MD,  0, MD, 0 },		// 5 magenta
+	{  0, LO, MD, 0 },		// 6 brown
+	{ MD, MD, MD, 0 },		// 7 light gray
+
+	{ LO, LO, LO, 0 },		// 8 dark gray
+	{ HI, LO, LO, 0 },		// 9 light blue
+	{ LO, HI, LO, 0 },		// A light green
+	{ HI, HI, LO, 0 },		// B light cyan
+	{ LO, LO, HI, 0 },		// C light red
+	{ HI, LO, HI, 0 },		// D light magenta
+	{ LO, HI, HI, 0 },		// E yellow
+	{ HI, HI, HI, 0 },		// F white
+};
+
 static FConsoleWindow* m_console;
 extern FStartupScreen* StartScreen;
 extern int ProgressBarCurPos, ProgressBarMaxPos;
@@ -162,7 +197,7 @@ FConsoleWindow::FConsoleWindow()
     {
         throw std::runtime_error("Failed to create console window, falling back to terminal-only\n");
     }
-    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
+    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
     SDL_GetRendererOutputSize(m_renderer, &m_consolewidth, &m_consoleheight);
     ImGuiSDL::Initialize(m_renderer, m_consolewidth, m_consoleheight);
     ImGui_ImplSDL2_Init(m_window);
@@ -247,9 +282,84 @@ void ST_Util_Chunky4ToChunky8(uint8_t* dest, const uint8_t* src, int width, int 
 {
     for (int i = 0; i < (width * height) / 2; i++)
     {
-        dest[i * 2 + 1] = src[i] & 0xF;
         dest[i * 2] = (src[i] >> 4) & 0xF;
+        dest[i * 2 + 1] = src[i] & 0xF;
     }
+}
+
+//==========================================================================
+//
+// ST_Util_LoadFont
+//
+// Loads a monochrome fixed-width font. Every character is one byte
+// (eight pixels) wide, so we can deduce the height of each character
+// by looking at the size of the font data.
+//
+//==========================================================================
+
+uint8_t* ST_Util_LoadFont(const char* filename)
+{
+	int lumpnum, lumplen, height;
+	uint8_t* font;
+
+	lumpnum = fileSystem.CheckNumForFullName(filename);
+	if (lumpnum < 0)
+	{ // font not found
+		return NULL;
+	}
+	lumplen = fileSystem.FileLength(lumpnum);
+	height = lumplen / 256;
+	if (height * 256 != lumplen)
+	{ // font is a bad size
+		return NULL;
+	}
+	if (height < 6 || height > 36)
+	{ // let's be reasonable here
+		return NULL;
+	}
+	font = new uint8_t[lumplen + 1];
+	font[0] = height;	// Store font height in the first byte.
+	fileSystem.ReadFile(lumpnum, font + 1);
+	return font;
+}
+
+SDL_Texture* FConsoleWindow::CreateTextureFromFont(const uint8_t* font)
+{
+    uint8_t height = font[0];
+    // Extract the bits into a byte array.
+    auto texfont = new uint8_t[8 * height * 256];
+    for (int i = 1; i < height * 256 + 1; i++)
+    {
+        texfont[(i - 1) * 8 + 7] = font[i] & 1;
+        texfont[(i - 1) * 8 + 6] = (font[i] >> 1) & 1;
+        texfont[(i - 1) * 8 + 5] = (font[i] >> 2) & 1;
+        texfont[(i - 1) * 8 + 4] = (font[i] >> 3) & 1;
+        texfont[(i - 1) * 8 + 3] = (font[i] >> 4) & 1;
+        texfont[(i - 1) * 8 + 2] = (font[i] >> 5) & 1;
+        texfont[(i - 1) * 8 + 1] = (font[i] >> 6) & 1;
+        texfont[(i - 1) * 8 + 0] = (font[i] >> 7) & 1;
+    }
+    SDL_Surface* texsurface = SDL_CreateRGBSurfaceWithFormat(0, 8, height * 256, 8, SDL_PIXELFORMAT_INDEX8);
+    if (!texsurface)
+    {
+        delete[] texfont;
+        return nullptr;
+    }
+    SDL_Color binarycolor = {0,0,0,0};
+    SDL_Palette* palette = SDL_AllocPalette(256);
+    if (!palette) { SDL_FreeSurface(texsurface); return NULL; }
+    SDL_SetPaletteColors(palette, &binarycolor, 0, 1);
+    SDL_SetSurfacePalette(texsurface, palette);
+    memcpy(texsurface->pixels, texfont, 8 * height * 256);
+    SDL_Texture* tex = SDL_CreateTextureFromSurface(m_renderer, texsurface);
+    SDL_FreeSurface(texsurface);
+    SDL_FreePalette(palette);
+    return tex;
+}
+
+void ST_Util_FreeFont(uint8_t* font)
+{
+    delete[] font;
 }
 
 void FConsoleWindow::SetStartupType(StartupType type)
@@ -265,6 +375,61 @@ void FConsoleWindow::SetStartupType(StartupType type)
             if (m_hexenpic) SDL_DestroyTexture(m_hexenpic);
             if (m_hexennetnotchpic) SDL_DestroyTexture(m_hexennetnotchpic);
             if (m_hexennotchpic) SDL_DestroyTexture(m_hexennotchpic);
+            if (m_vgatextpic) SDL_DestroyTexture(m_vgatextpic);
+        }
+        break;
+
+        case StartupType::StartupTypeHeretic:
+        {
+            uint8_t* vgafont = ST_Util_LoadFont(TEXT_FONT_NAME);
+            if (!vgafont) return;
+            m_vgatextpic = CreateTextureFromFont(vgafont);
+            ST_Util_FreeFont(vgafont);
+            if (!m_vgatextpic) return;
+            memset(m_textloadingscreen, 0, 4000);
+            int loading_lump = fileSystem.CheckNumForName("LOADING");
+            if (loading_lump < 0 || fileSystem.FileLength(loading_lump) != 4000)
+            {
+                return;
+            }
+            fileSystem.ReadFile(loading_lump, m_textloadingscreen);
+            int width = 8;
+            int height = 0;
+            SDL_QueryTexture(m_vgatextpic, NULL, NULL, NULL, &height);
+            height /= 256;
+            SDL_SetWindowMinimumSize(m_window, width * 80, height * 25);
+            SDL_SetWindowSize(m_window, width * 80, height * 25);
+            SDL_RenderSetLogicalSize(m_renderer, width * 80, height * 25);
+            m_thermwidth = THERM_LEN;
+            m_textloadingscreen[2 * 160 + 49 * 2] = HERETIC_MINOR_VERSION;
+            m_vgatextheight = height;
+            m_loadingpic = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width * 80, height * 25);
+            if (m_loadingpic)
+            {
+                SDL_SetRenderTarget(m_renderer, m_loadingpic);
+                SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+                SDL_RenderClear(m_renderer);
+                SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+                for (int i = 0; i < 80; i++)
+                {
+                    for (int j = 0; j < 25; j++)
+                    {
+                        SDL_Color fgcol, bgcol;
+                        GetANSITextColors(m_textloadingscreen[(i * 2 + j * 160) + 1], fgcol, bgcol);
+                        SDL_SetRenderDrawColor(m_renderer, bgcol.r, bgcol.g, bgcol.b, 255);
+                        SDL_Rect bgrect = {i * 8, j * m_vgatextheight, 8, m_vgatextheight};
+                        SDL_RenderFillRect(m_renderer, &bgrect);
+                        SDL_Rect srcrect = {0, m_vgatextheight * m_textloadingscreen[i * 2 + j * 160], 8, m_vgatextheight};
+                        SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+                        SDL_SetTextureColorMod(m_vgatextpic, fgcol.r, fgcol.g, fgcol.b);
+                        SDL_SetTextureAlphaMod(m_vgatextpic, 255);
+                        SDL_SetTextureBlendMode(m_vgatextpic, SDL_BlendMode::SDL_BLENDMODE_BLEND);
+                        SDL_RenderCopy(m_renderer, m_vgatextpic, &srcrect, &bgrect);
+                    }
+                }
+                SDL_RenderPresent(m_renderer);
+                SDL_SetRenderTarget(m_renderer, nullptr);
+            }
         }
         break;
 
@@ -343,12 +508,15 @@ void FConsoleWindow::SetStartupType(StartupType type)
             m_hexenpic = SDL_CreateTextureFromSurface(m_renderer, hexenpixels);
             m_hexennotchpic = SDL_CreateTextureFromSurface(m_renderer, hexennotchpixels);
             m_hexennetnotchpic = SDL_CreateTextureFromSurface(m_renderer, hexennetnotchpixels);
-            if (!m_hexennetnotchpic) return;
-            if (!m_hexenpic) return;
-            if (!m_hexennotchpic) return;
+
             SDL_FreeSurface(hexenpixels);
             SDL_FreeSurface(hexennotchpixels);
             SDL_FreeSurface(hexennetnotchpixels);
+            SDL_FreePalette(palette4bit);
+            if (!m_hexennetnotchpic) return;
+            if (!m_hexenpic) return;
+            if (!m_hexennotchpic) return;
+
             if (!batchrun)
             {
                 if (GameStartupInfo.Song.IsNotEmpty())
@@ -441,7 +609,7 @@ void FConsoleWindow::RunImguiRenderLoop()
     if (!m_graphicalstartscreen)
     {
         ImGui::SetNextWindowPos(ImVec2(0, m_renderiwadtitle ? 32.f : 0));
-        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, m_consoleheight - (ProgBar ? 14.f : 0.f)));
+        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, m_consoleheight - (ProgBar ? 14.f : 0.f) - (m_renderiwadtitle ? 32.f : 0)));
         ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(70, 70, 70, 255));
         ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
@@ -542,6 +710,104 @@ bool FConsoleWindow::NetUserExitRequested()
     return m_netinit && m_exitreq;
 }
 
+void FConsoleWindow::GetANSITextColors(uint8_t attrib, SDL_Color& fgcol, SDL_Color& bgcol)
+{
+    fgcol.r = TextModePalette[attrib & 0xF].rgbRed;
+    fgcol.g = TextModePalette[attrib & 0xF].rgbGreen;
+    fgcol.b = TextModePalette[attrib & 0xF].rgbBlue;
+    fgcol.a = 255;
+    bgcol.r = TextModePalette[(attrib & 0xF0) >> 4].rgbRed;
+    bgcol.g = TextModePalette[(attrib & 0xF0) >> 4].rgbGreen;
+    bgcol.b = TextModePalette[(attrib & 0xF0) >> 4].rgbBlue;
+    bgcol.a = 255;
+}
+
+void FConsoleWindow::AddStatusText(const char* message, int colors)
+{
+    m_statustexts.Push(FString(message));
+    m_statuscolors.Push((uint8_t)colors);
+}
+
+void FConsoleWindow::AppendStatusLine(FString status)
+{
+    m_statusline += status;
+    RunLoop();
+}
+
+void FConsoleWindow::RunHereticSubLoop()
+{
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_RenderClear(m_renderer);
+    SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+
+    if (m_loadingpic) SDL_RenderCopy(m_renderer, m_loadingpic, nullptr, nullptr);
+    else
+    {
+        for (int i = 0; i < 80; i++)
+        {
+            for (int j = 0; j < 25; j++)
+            {
+                SDL_Color fgcol, bgcol;
+                GetANSITextColors(m_textloadingscreen[(i * 2 + j * 160) + 1], fgcol, bgcol);
+                SDL_SetRenderDrawColor(m_renderer, bgcol.r, bgcol.g, bgcol.b, 255);
+                SDL_Rect bgrect = {i * 8, j * m_vgatextheight, 8, m_vgatextheight};
+                SDL_RenderFillRect(m_renderer, &bgrect);
+                SDL_Rect srcrect = {0, m_vgatextheight * m_textloadingscreen[i * 2 + j * 160], 8, m_vgatextheight};
+                SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+                SDL_SetTextureColorMod(m_vgatextpic, fgcol.r, fgcol.g, fgcol.b);
+                SDL_SetTextureAlphaMod(m_vgatextpic, 255);
+                SDL_SetTextureBlendMode(m_vgatextpic, SDL_BlendMode::SDL_BLENDMODE_BLEND);
+                SDL_RenderCopy(m_renderer, m_vgatextpic, &srcrect, &bgrect);
+            }
+        }
+    }
+
+    // Draw the status texts.
+    assert(m_statustexts.Size() == m_statuscolors.Size());
+    for (unsigned int i = 0; i < m_statustexts.Size(); i++)
+    {
+        SDL_Color fgcol, bgcol;
+        GetANSITextColors(m_statuscolors[i], fgcol, bgcol);
+        SDL_SetRenderDrawColor(m_renderer, bgcol.r, bgcol.g, bgcol.b, bgcol.a);
+        SDL_Rect bgrect = {17 * 8, int((7 + i) * m_vgatextheight), 8 * (int)m_statustexts[i].Len(), m_vgatextheight};
+        SDL_RenderFillRect(m_renderer, &bgrect);
+        bgrect.w = 8;
+        for (unsigned int j = 0; j < m_statustexts[i].Len(); j++)
+        {
+            SDL_Rect srcrect = {0, m_statustexts[i][j] * m_vgatextheight, 8, m_vgatextheight};
+            bgrect.x += 8;
+            SDL_SetTextureColorMod(m_vgatextpic, fgcol.r, fgcol.g, fgcol.b);
+            SDL_RenderCopy(m_renderer, m_vgatextpic, &srcrect, &bgrect);
+        }
+    }
+
+    // Draw the progress bar.
+    static unsigned int notch_pos = 0;
+    if (notch_pos != ((double)ProgressBarCurPos / (double)ProgressBarMaxPos) * THERM_LEN)
+    {
+        notch_pos = ((double)ProgressBarCurPos / (double)ProgressBarMaxPos) * THERM_LEN;
+    }
+    SDL_Rect progrect = {THERM_X * 8, THERM_Y * m_vgatextheight, int(notch_pos) * 8, m_vgatextheight};
+    SDL_Color fgcol, bgcol;
+    GetANSITextColors(THERM_COLOR, fgcol, bgcol);
+    SDL_SetRenderDrawColor(m_renderer, bgcol.r, bgcol.g, bgcol.b, 255);
+    SDL_RenderFillRect(m_renderer, &progrect);
+
+    // Draw the status line.
+    GetANSITextColors(0x1f, fgcol, bgcol);
+    progrect = {8, 24 * m_vgatextheight, (int)m_statusline.Len() * 8, m_vgatextheight};
+    SDL_SetRenderDrawColor(m_renderer, bgcol.r, bgcol.g, bgcol.b, 255);
+    SDL_RenderFillRect(m_renderer, &progrect);
+    progrect.w = 8;
+    for (int i = 0; i < m_statusline.Len(); i++)
+    {
+        SDL_Rect srcrect = {0, m_statusline[i] * m_vgatextheight, 8, m_vgatextheight};
+        SDL_RenderCopy(m_renderer, m_vgatextpic, &srcrect, &progrect);
+        progrect.x += 8;
+    }
+    SDL_RenderPresent(m_renderer);
+}
+
 void FConsoleWindow::RunHexenSubLoop()
 {
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
@@ -611,6 +877,9 @@ void FConsoleWindow::RunLoop()
         {
         case StartupType::StartupTypeHexen:
             RunHexenSubLoop();
+            break;
+        case StartupType::StartupTypeHeretic:
+            RunHereticSubLoop();
             break;
         }
         return;

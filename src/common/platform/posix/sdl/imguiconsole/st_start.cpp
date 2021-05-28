@@ -132,6 +132,7 @@ FGraphicalStartupScreen::FGraphicalStartupScreen(int max_progress)
 FGraphicalStartupScreen::~FGraphicalStartupScreen()
 {
 	FConsoleWindow::GetInstance().DeinitGraphicalMode();
+	FConsoleWindow::GetInstance().SetStartupType(FConsoleWindow::StartupType::StartupTypeNormal);
 }
 
 FHexenStartupScreen::FHexenStartupScreen(int max_progress, long &hr)
@@ -143,6 +144,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long &hr)
 		hr = -1;
 		return;
 	}
+	hr = 0;
 }
 
 FHexenStartupScreen::~FHexenStartupScreen()
@@ -164,3 +166,31 @@ void FHexenStartupScreen::NetDone()
 {
 	FConsoleWindow::GetInstance().NetDone();
 }
+
+FHereticStartupScreen::FHereticStartupScreen(int max_progress, long &hr)
+: FGraphicalStartupScreen(max_progress)
+{
+	FConsoleWindow::GetInstance().SetStartupType(FConsoleWindow::StartupType::StartupTypeHeretic);
+	if (FConsoleWindow::GetInstance().GetStartupType() != FConsoleWindow::StartupType::StartupTypeHeretic)
+	{
+		hr = -1;
+		return;
+	}
+	hr = 0;
+}
+
+void FHereticStartupScreen::Progress()
+{
+	FBasicStartupScreen::Progress();
+}
+
+void FHereticStartupScreen::LoadingStatus(const char *message, int colors)
+{
+	FConsoleWindow::GetInstance().AddStatusText(message, colors);
+}
+
+void FHereticStartupScreen::AppendStatusLine(const char *status)
+{
+	FConsoleWindow::GetInstance().AppendStatusLine(FString(status));
+}
+

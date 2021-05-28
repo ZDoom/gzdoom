@@ -107,19 +107,22 @@ static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
 FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
 	FStartupScreen* stscreen = nullptr;
-	long hr;
+	long hr = -1;
 	if (FConsoleWindow::InstanceExists())
 	{
 		if (GameStartupInfo.Type == FStartupInfo::HexenStartup)
 		{
 			stscreen = new FHexenStartupScreen(max_progress, hr);
-			if (hr == -1)
-			{
-				delete stscreen;
-				stscreen = new FBasicStartupScreen(max_progress, true);
-			}
 		}
-		else stscreen = new FBasicStartupScreen(max_progress, true);
+		else if (GameStartupInfo.Type == FStartupInfo::HereticStartup)
+		{
+			stscreen = new FHereticStartupScreen(max_progress, hr);
+		}
+		if (hr == -1 && stscreen)
+		{
+			delete stscreen;
+			stscreen = new FBasicStartupScreen(max_progress, true);
+		}
 	}
 	if (!stscreen) stscreen = new FTTYStartupScreen(max_progress);
 	return stscreen;

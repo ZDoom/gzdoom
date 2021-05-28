@@ -606,6 +606,8 @@ int FConsoleWindow::PickIWad(WadStuff *wads, int numwads, bool showwin, int defa
 void FConsoleWindow::RunImguiRenderLoop()
 {
     ImGui_ImplSDL2_NewFrame(m_window);
+	ImGui::GetIO().DisplaySize.x = m_consolewidth;
+	ImGui::GetIO().DisplaySize.y = m_consoleheight;
     ImGui::NewFrame();
 
     ImGui::SetNextWindowPos(ImVec2(0, m_renderiwadtitle ? 32.f : 0));
@@ -875,6 +877,10 @@ void FConsoleWindow::RunLoop()
             m_consolewidth = e.window.data1;
             m_consoleheight = e.window.data2;
         }
+		if (m_startuptype == StartupType::StartupTypeNormal || m_netinit)
+		{
+			ImGui_ImplSDL2_ProcessEvent(&e);
+		}
     }
     if (m_exitreq && !ProgBar && !m_netinit)
     {

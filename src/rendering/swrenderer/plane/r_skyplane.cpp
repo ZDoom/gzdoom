@@ -74,7 +74,7 @@ namespace swrenderer
 		auto sskytex1 = GetPalettedSWTexture(Level->skytexture1, true, false, true);
 		auto sskytex2 = GetPalettedSWTexture(Level->skytexture2, true, false, true);
 
-		if (sskytex1 == nullptr)
+		if (sskytex1 == nullptr || sskytex2 == nullptr)
 			return;
 
 		skytexturemid = 0;

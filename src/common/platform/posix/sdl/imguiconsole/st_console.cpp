@@ -721,7 +721,7 @@ void FConsoleWindow::RunImguiRenderLoop()
     ImGui::NewFrame();
 
     ImGui::SetNextWindowPos(ImVec2(0, m_renderiwadtitle ? 32.f : 0));
-    ImGui::SetNextWindowSize(ImVec2(m_consolewidth, m_consoleheight - (ProgBar ? 14.f : 0.f) - (m_renderiwadtitle ? 32.f : 0)));
+    ImGui::SetNextWindowSize(ImVec2(m_consolewidth, m_consoleheight - (ProgBar && !m_netinit ? 32.f : 0.f) - (m_renderiwadtitle ? 32.f : 0)));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, m_netinit && m_startuptype != StartupType::StartupTypeNormal ? IM_COL32(0,0,0,100) : IM_COL32(70, 70, 70, 255));
     ImGui::Begin("Console", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
@@ -809,6 +809,18 @@ void FConsoleWindow::RunImguiRenderLoop()
             ImGui::ProgressBar(1.0f, ImVec2(-1,0), m_iwadtitle.GetChars());
             ImGui::PopStyleColor(2);
             ImGui::PopStyleVar();
+        }
+        ImGui::End();
+    }
+    if (ProgBar && !m_netinit)
+    {
+        ImGui::SetNextWindowSize(ImVec2(m_consolewidth, 32.f));
+        ImGui::SetNextWindowPos(ImVec2(0, m_consoleheight - 32.f));
+        if (ImGui::Begin("ProgBar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+        {
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(0,127,0,255));
+            ImGui::ProgressBar((double)ProgressBarCurPos / (double)ProgressBarMaxPos, ImVec2(-1, 0), "");
+            ImGui::PopStyleColor();
         }
         ImGui::End();
     }
@@ -1044,11 +1056,5 @@ void FConsoleWindow::RunLoop()
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
     ImGuiSDL::Render(ImGui::GetDrawData());
-    if (ProgBar)
-    {
-        SDL_FRect rect = {0.f, m_consoleheight - 14.f, m_consolewidth * ((float)ProgressBarCurPos / (float)ProgressBarMaxPos), 14.f};
-        SDL_SetRenderDrawColor(m_renderer, 0, 127, 0, 255);
-        SDL_RenderFillRectF(m_renderer, &rect);
-    }
     SDL_RenderPresent(m_renderer);
 }

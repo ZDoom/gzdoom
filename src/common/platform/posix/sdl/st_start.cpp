@@ -118,9 +118,13 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 		{
 			stscreen = new FHereticStartupScreen(max_progress, hr);
 		}
-		if (hr == -1 && stscreen)
+		else if (GameStartupInfo.Type == FStartupInfo::StrifeStartup)
 		{
-			delete stscreen;
+			stscreen = new FStrifeStartupScreen(max_progress, hr);
+		}
+		if (hr == -1)
+		{
+			if (stscreen) delete stscreen;
 			stscreen = new FBasicStartupScreen(max_progress, true);
 		}
 	}

@@ -97,9 +97,8 @@ private:
 	SDL_Texture* m_hexenpic = nullptr;
 	SDL_Texture* m_hexennotchpic = nullptr;
 	SDL_Texture* m_hexennetnotchpic = nullptr;
-	SDL_Texture* m_strifepic = nullptr;
-	SDL_Texture* m_strifebotpic = nullptr;
-	SDL_Texture* m_strifepeasantpic = nullptr;
+	SDL_Texture* m_strifepics[4 + 2 + 1];
+	SDL_Texture* m_strifestartuppic = nullptr;
 	SDL_Texture* m_vgatextpic = nullptr;
 	SDL_Texture* m_loadingpic = nullptr;
 	uint8_t m_textloadingscreen[4000] = { 0 };

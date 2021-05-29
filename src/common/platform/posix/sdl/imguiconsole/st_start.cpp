@@ -45,7 +45,7 @@ FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
 : FStartupScreen(max_progress)
 {
 	ProgressBarMaxPos = max_progress;
-    FConsoleWindow::GetInstance().SetProgressBar(true);
+    FConsoleWindow::GetInstance().SetProgressBar(show_bar);
 }
 
 FBasicStartupScreen::~FBasicStartupScreen()
@@ -154,7 +154,7 @@ FHexenStartupScreen::~FHexenStartupScreen()
 
 void FHexenStartupScreen::Progress()
 {
-	FGraphicalStartupScreen::Progress();
+	FBasicStartupScreen::Progress();
 }
 
 void FHexenStartupScreen::NetProgress(int count)
@@ -194,3 +194,24 @@ void FHereticStartupScreen::AppendStatusLine(const char *status)
 	FConsoleWindow::GetInstance().AppendStatusLine(FString(status));
 }
 
+FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long &hr)
+: FGraphicalStartupScreen(max_progress)
+{
+	FConsoleWindow::GetInstance().SetStartupType(FConsoleWindow::StartupType::StartupTypeStrife);
+	if (FConsoleWindow::GetInstance().GetStartupType() != FConsoleWindow::StartupType::StartupTypeStrife)
+	{
+		hr = -1;
+		return;
+	}
+	hr = 0;
+}
+
+FStrifeStartupScreen::~FStrifeStartupScreen()
+{
+	FConsoleWindow::GetInstance().SetStartupType(FConsoleWindow::StartupType::StartupTypeNormal);
+}
+
+void FStrifeStartupScreen::Progress()
+{
+	FBasicStartupScreen::Progress();
+}

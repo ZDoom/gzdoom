@@ -70,6 +70,27 @@
 
 #define TEXT_FONT_NAME			"vga-rom-font.16"
 
+// Strife startup screen
+#define PEASANT_INDEX			0
+#define LASER_INDEX				4
+#define BOT_INDEX				6
+
+#define ST_LASERSPACE_X			60
+#define ST_LASERSPACE_Y			156
+#define ST_LASERSPACE_WIDTH		200
+#define ST_LASER_WIDTH			16
+#define ST_LASER_HEIGHT			16
+
+#define ST_BOT_X				14
+#define ST_BOT_Y				138
+#define ST_BOT_WIDTH			48
+#define ST_BOT_HEIGHT			48
+
+#define ST_PEASANT_X			262
+#define ST_PEASANT_Y			136
+#define ST_PEASANT_WIDTH		32
+#define ST_PEASANT_HEIGHT		64
+
 // Text mode color values
 #define LO						 85
 #define MD						170
@@ -93,6 +114,19 @@ static const RgbQuad TextModePalette[16] =
 	{ HI, LO, HI, 0 },		// D light magenta
 	{ LO, HI, HI, 0 },		// E yellow
 	{ HI, HI, HI, 0 },		// F white
+};
+
+static const char* StrifeStartupPicNames[4 + 2 + 1] =
+{
+	"STRTPA1", "STRTPB1", "STRTPC1", "STRTPD1",
+	"STRTLZ1", "STRTLZ2",
+	"STRTBOT"
+};
+static const int StrifeStartupPicSizes[4 + 2 + 1] =
+{
+	2048, 2048, 2048, 2048,
+	256, 256,
+	2304
 };
 
 static FConsoleWindow* m_console;
@@ -203,6 +237,7 @@ FConsoleWindow::FConsoleWindow()
     ImGui_ImplSDL2_Init(m_window);
     m_texts.Append(savedtexts);
     savedtexts.Clear();
+    memset(m_strifepics, 0, sizeof(m_strifepics));
 }
 
 FConsoleWindow::~FConsoleWindow()
@@ -377,6 +412,11 @@ void FConsoleWindow::SetStartupType(StartupType type)
             if (m_hexennetnotchpic) SDL_DestroyTexture(m_hexennetnotchpic);
             if (m_hexennotchpic) SDL_DestroyTexture(m_hexennotchpic);
             if (m_vgatextpic) SDL_DestroyTexture(m_vgatextpic);
+            if (m_loadingpic) SDL_DestroyTexture(m_loadingpic);
+            for (int i = 0; i < 4 + 2 + 1; i++)
+            {
+                if (m_strifepics[i]) SDL_DestroyTexture(m_strifepics[i]);
+            }
         }
         break;
 
@@ -431,6 +471,76 @@ void FConsoleWindow::SetStartupType(StartupType type)
                 SDL_RenderPresent(m_renderer);
                 SDL_SetRenderTarget(m_renderer, nullptr);
             }
+        }
+        break;
+
+        case StartupType::StartupTypeStrife:
+        {
+            SDL_Surface* strifestartuppic = SDL_CreateRGBSurface(0, 320, 200, 8, 0, 0, 0, 0);
+            if (!strifestartuppic) return;
+            SDL_Color* colorpalette = new SDL_Color[256];
+            uint8_t* playpal = new uint8_t[768];
+            ReadPalette(fileSystem.GetNumForName("PLAYPAL"), playpal);
+            for (int i = 0; i < 256; i++)
+            {
+                colorpalette[i].r = playpal[i * 3];
+                colorpalette[i].g = playpal[i * 3 + 1];
+                colorpalette[i].b = playpal[i * 3 + 2];
+                colorpalette[i].a = 255;
+            }
+            delete[] playpal;
+            SDL_Palette* palette = SDL_AllocPalette(256);
+            if (!palette)
+            {
+                delete[] colorpalette;
+                return;
+            }
+            SDL_SetPaletteColors(palette, colorpalette, 0, 256);
+            SDL_SetSurfacePalette(strifestartuppic, palette);
+            delete[] colorpalette;
+            memset(strifestartuppic->pixels, 240, 320 * 200);
+            int startup_lump = fileSystem.CheckNumForName("STARTUP0");
+            if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 64000)
+            {
+                SDL_FreeSurface(strifestartuppic);
+                return;
+            }
+            auto lumpr = fileSystem.OpenFileReader(startup_lump);
+	        lumpr.Seek(57 * 320, FileReader::SeekSet);
+	        lumpr.Read((uint8_t*)strifestartuppic->pixels + 41 * 320, 95 * 320);
+            m_strifestartuppic = SDL_CreateTextureFromSurface(m_renderer, strifestartuppic);
+            SDL_FreeSurface(strifestartuppic);
+            if (!m_strifestartuppic)
+            {
+                return;
+            }
+
+            // Load the animated overlays.
+            for (int i = 0; i < 4 + 2 + 1; ++i)
+            {
+                int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i]);
+                int lumplen;
+
+                if (lumpnum >= 0 && (lumplen = fileSystem.FileLength(lumpnum)) == StrifeStartupPicSizes[i])
+                {
+                    auto lumpr = fileSystem.OpenFileReader(lumpnum);
+                    int width = 0, height = 0;
+                    if (i < 4) { width = ST_PEASANT_WIDTH; height = ST_PEASANT_HEIGHT; }
+                    else if (i < 4 + 2) { width = ST_LASER_WIDTH; height = ST_LASER_HEIGHT; }
+                    else if (i < 4 + 2 + 1) { width = ST_BOT_WIDTH; height = ST_BOT_HEIGHT; }
+                    SDL_Surface* surface = SDL_CreateRGBSurface(0, width, height, 8, 0, 0, 0, 0);
+                    if (!surface) return;
+                    SDL_SetSurfacePalette(surface, palette);
+                    lumpr.Read(surface->pixels, lumplen);
+                    m_strifepics[i] = SDL_CreateTextureFromSurface(m_renderer, surface);
+                    SDL_FreeSurface(surface);
+                    if (!m_strifepics[i]) return;
+                    SDL_SetTextureBlendMode(m_strifepics[i], SDL_BLENDMODE_ADD);
+                }
+            }
+            SDL_SetWindowSize(m_window, 640, 400);
+            SDL_SetWindowMinimumSize(m_window, 640, 400);
+            SDL_RenderSetLogicalSize(m_renderer, 320, 200);
         }
         break;
 
@@ -800,7 +910,7 @@ void FConsoleWindow::RunHereticSubLoop()
     SDL_SetRenderDrawColor(m_renderer, bgcol.r, bgcol.g, bgcol.b, 255);
     SDL_RenderFillRect(m_renderer, &progrect);
     progrect.w = 8;
-    for (int i = 0; i < m_statusline.Len(); i++)
+    for (size_t i = 0; i < m_statusline.Len(); i++)
     {
         SDL_Rect srcrect = {0, m_statusline[i] * m_vgatextheight, 8, m_vgatextheight};
         SDL_RenderCopy(m_renderer, m_vgatextpic, &srcrect, &progrect);
@@ -863,6 +973,31 @@ void FConsoleWindow::RunHexenSubLoop()
     SDL_RenderPresent(m_renderer);
 }
 
+void FConsoleWindow::RunStrifeSubLoop()
+{
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_RenderClear(m_renderer);
+    SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+    SDL_RenderCopy(m_renderer, m_strifestartuppic, NULL, NULL);
+    int notch_pos = (ProgressBarCurPos * (ST_LASERSPACE_WIDTH - ST_LASER_WIDTH)) / ProgressBarMaxPos;
+    SDL_Rect peasantrect = {0, 0, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT};
+    SDL_Rect destpeasantrect = {ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT};
+    SDL_RenderCopy(m_renderer, m_strifepics[PEASANT_INDEX + ((notch_pos >> 1) & 3)], &peasantrect, &destpeasantrect);
+    SDL_Rect botrect = {0, 0, ST_BOT_WIDTH, ST_BOT_HEIGHT};
+    SDL_Rect destbotrect = {ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, ST_BOT_HEIGHT};
+    SDL_RenderCopy(m_renderer, m_strifepics[BOT_INDEX], &botrect, &destbotrect);
+    int laserx = ((double)ProgressBarCurPos / (double)ProgressBarMaxPos) * ST_LASERSPACE_WIDTH;
+    SDL_Rect laserrect = {0, 0, ST_LASER_WIDTH, ST_LASER_HEIGHT};
+    SDL_Rect laserdestrect = {ST_LASERSPACE_X + laserx, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT};
+    SDL_RenderCopy(m_renderer, m_strifepics[LASER_INDEX + (notch_pos & 1)], &laserrect, &laserdestrect);
+    if (m_netinit)
+	{
+		RunImguiRenderLoop();
+		ImGuiSDL::Render(ImGui::GetDrawData());
+	}
+    SDL_RenderPresent(m_renderer);
+}
+
 void FConsoleWindow::RunLoop()
 {
     SDL_Event e;
@@ -895,6 +1030,12 @@ void FConsoleWindow::RunLoop()
             break;
         case StartupType::StartupTypeHeretic:
             RunHereticSubLoop();
+            break;
+        case StartupType::StartupTypeStrife:
+            RunStrifeSubLoop();
+            break;
+        case StartupType::StartupTypeNormal:
+            assert(false);
             break;
         }
         return;

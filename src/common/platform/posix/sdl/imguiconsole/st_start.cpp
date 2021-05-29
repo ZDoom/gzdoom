@@ -90,11 +90,15 @@ void FBasicStartupScreen::Progress()
 	
 	extern void RedrawProgressBar(int CurPos, int MaxPos);
 	RedrawProgressBar(ProgressBarCurPos, ProgressBarMaxPos);
-	static int ticks = SDL_GetTicks();
-	if (SDL_GetTicks() - ticks > 250)
+	if (FConsoleWindow::GetInstance().GetStartupType() != FConsoleWindow::StartupType::StartupTypeNormal) FConsoleWindow::GetInstance().RunLoop();
+	else
 	{
-		ticks = SDL_GetTicks();
-		FConsoleWindow::GetInstance().RunLoop();
+		static int ticks = SDL_GetTicks();
+		if (SDL_GetTicks() - ticks > 250)
+		{
+			ticks = SDL_GetTicks();
+			FConsoleWindow::GetInstance().RunLoop();
+		}
 	}
 }
 

@@ -224,6 +224,7 @@ FConsoleWindow::FConsoleWindow()
  m_consolewidth(512), m_consoleheight(384), m_iwadselect(false), m_maxscroll(0), m_errorframe(0)
 {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
+    SDL_InitSubSystem(SDL_INIT_TIMER);
     FString windowtitle;
     windowtitle.Format("%s %s", GAMENAME, GetGitDescription());
     m_window = SDL_CreateWindow(windowtitle.GetChars(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 512, 384, SDL_WINDOW_OPENGL);
@@ -253,6 +254,7 @@ FConsoleWindow::~FConsoleWindow()
         SDL_DestroyWindow(m_window);
         ImGui::DestroyContext();
         SDL_QuitSubSystem(SDL_INIT_VIDEO);
+        SDL_QuitSubSystem(SDL_INIT_TIMER);
     }
 }
 
@@ -992,15 +994,15 @@ void FConsoleWindow::RunStrifeSubLoop()
     SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
     SDL_RenderCopy(m_renderer, m_strifestartuppic, NULL, NULL);
     int notch_pos = (ProgressBarCurPos * (ST_LASERSPACE_WIDTH - ST_LASER_WIDTH)) / ProgressBarMaxPos;
-    SDL_Rect peasantrect = {0, 0, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT};
-    SDL_Rect destpeasantrect = {ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT};
+    SDL_Rect peasantrect = { 0, 0, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT };
+    SDL_Rect destpeasantrect = { ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT };
     SDL_RenderCopy(m_renderer, m_strifepics[PEASANT_INDEX + ((notch_pos >> 1) & 3)], &peasantrect, &destpeasantrect);
-    SDL_Rect botrect = {0, 0, ST_BOT_WIDTH, ST_BOT_HEIGHT};
-    SDL_Rect destbotrect = {ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, ST_BOT_HEIGHT};
+    SDL_Rect botrect = { 0, 0, ST_BOT_WIDTH, ST_BOT_HEIGHT };
+    SDL_Rect destbotrect = { ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, ST_BOT_HEIGHT };
     SDL_RenderCopy(m_renderer, m_strifepics[BOT_INDEX], &botrect, &destbotrect);
     int laserx = ((double)ProgressBarCurPos / (double)ProgressBarMaxPos) * ST_LASERSPACE_WIDTH;
-    SDL_Rect laserrect = {0, 0, ST_LASER_WIDTH, ST_LASER_HEIGHT};
-    SDL_Rect laserdestrect = {ST_LASERSPACE_X + laserx, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT};
+    SDL_Rect laserrect = { 0, 0, ST_LASER_WIDTH, ST_LASER_HEIGHT };
+    SDL_Rect laserdestrect = { ST_LASERSPACE_X + laserx, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT };
     SDL_RenderCopy(m_renderer, m_strifepics[LASER_INDEX + (notch_pos & 1)], &laserrect, &laserdestrect);
     if (m_netinit)
 	{

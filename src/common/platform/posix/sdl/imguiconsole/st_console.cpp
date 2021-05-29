@@ -897,6 +897,7 @@ void FConsoleWindow::RunHereticSubLoop()
         SDL_Rect bgrect = {17 * 8, int((7 + i) * m_vgatextheight), 8 * (int)m_statustexts[i].Len(), m_vgatextheight};
         SDL_RenderFillRect(m_renderer, &bgrect);
         bgrect.w = 8;
+        bgrect.x -= 8;
         for (unsigned int j = 0; j < m_statustexts[i].Len(); j++)
         {
             SDL_Rect srcrect = {0, m_statustexts[i][j] * m_vgatextheight, 8, m_vgatextheight};

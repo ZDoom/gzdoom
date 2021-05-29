@@ -133,6 +133,8 @@ public:
 	int GetDisplacement() const { return Displacement; }
 
 	static int GetLuminosity(uint32_t* colorsused, TArray<double>& Luminosity, int* minlum = nullptr, int* maxlum = nullptr);
+	EFontType GetType() const { return Type; }
+
 
 protected:
 	FFont (int lump);

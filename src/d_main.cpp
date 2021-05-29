@@ -117,6 +117,7 @@
 #include "texturemanager.h"
 #include "hw_clock.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "doomfont.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -3409,6 +3410,7 @@ static int D_DoomMain_Internal (void)
 
 		StartScreen->Progress();
 		V_InitFonts();
+		InitDoomFonts();
 		V_LoadTranslations();
 		UpdateGenericUI(false);
 

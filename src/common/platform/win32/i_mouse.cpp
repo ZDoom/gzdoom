@@ -380,9 +380,18 @@ void FMouse::WheelMoved(int axis, int wheelmove)
 //
 //==========================================================================
 
+CVAR(Bool, m_swapbuttons, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 void FMouse::PostButtonEvent(int button, bool down)
 {
 	event_t ev = { 0 };
+
+	// Neither RawInput nor DirectInput check the GUI setting for swapped mouse buttons so we have to do our own implementation...
+	if (m_swapbuttons && button < 2)
+	{
+		button = 1 - button;
+	}
+
 	int mask = 1 << button;
 
 	ev.data1 = KEY_MOUSE1 + button;

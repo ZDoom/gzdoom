@@ -291,7 +291,7 @@ static void CheckTimer(FRenderState &state, uint64_t ShaderStartTime)
 	// if firstFrame is not yet initialized, initialize it to current time
 	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
 	if ((state.firstFrame == 0) || (screen->FrameTime - state.firstFrame >= 1 << 24) || ShaderStartTime >= state.firstFrame)
-		state.firstFrame = screen->FrameTime;
+		state.firstFrame = screen->FrameTime - 1;
 }
 
 
@@ -343,7 +343,7 @@ sector_t* RenderView(player_t* player)
 					screen->RenderTextureView(camtex, [=](IntRect& bounds)
 						{
 							FRenderViewpoint texvp;
-							float ratio = camtex->aspectRatio;
+							float ratio = camtex->aspectRatio / Level->info->pixelstretch;
 							RenderViewpoint(texvp, camera, &bounds, fov, ratio, ratio, false, false);
 						});
 				});

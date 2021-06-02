@@ -85,7 +85,6 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	vb.UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	state.SetVertexBuffer(&vb);
 	state.EnableFog(false);
-	state.SetScreenFade(drawer->screenFade);
 
 	for(auto &cmd : commands)
 	{
@@ -94,6 +93,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		state.SetRenderStyle(cmd.mRenderStyle);
 		state.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
 		state.EnableFog(2);	// Special 2D mode 'fog'.
+		state.SetScreenFade(cmd.mScreenFade);
 
 		state.SetTextureMode(cmd.mDrawMode);
 
@@ -183,12 +183,17 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 			state.SetVertexBuffer(&cmd.shape2D->buffers[cmd.shape2DBufIndex]);
 			state.DrawIndexed(DT_Triangles, 0, cmd.shape2DIndexCount);
 			state.SetVertexBuffer(&vb);
-			if (cmd.shape2D->bufIndex > 0 && cmd.shape2DBufIndex == cmd.shape2D->bufIndex)
+			if (cmd.shape2DCommandCounter == cmd.shape2D->lastCommand)
 			{
-				cmd.shape2D->needsVertexUpload = true;
-				cmd.shape2D->buffers.Clear();
-				cmd.shape2D->bufIndex = -1;
+				cmd.shape2D->lastCommand = -1;
+				if (cmd.shape2D->bufIndex > 0)
+				{
+					cmd.shape2D->needsVertexUpload = true;
+					cmd.shape2D->buffers.Clear();
+					cmd.shape2D->bufIndex = -1;
+				}
 			}
+			cmd.shape2D->uploadedOnce = false;
 		}
 		else
 		{

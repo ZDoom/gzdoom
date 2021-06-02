@@ -371,7 +371,6 @@ SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 	SetWindowLong(Window, GWL_STYLE, WS_VISIBLE | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW);
 	SetWindowLong(Window, GWL_EXSTYLE, WS_EX_WINDOWEDGE);
 	SetWindowPos(Window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-	I_GetEvent();
 
 	static_cast<Win32BaseVideo *>(Video)->Shutdown();
 }

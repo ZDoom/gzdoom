@@ -117,6 +117,7 @@
 #include "texturemanager.h"
 #include "hw_clock.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "doomfont.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -200,7 +201,7 @@ const char* iwad_folders[13] = { "flats/", "textures/", "hires/", "sprites/", "v
 const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 
 
-CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
+CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL | CVAR_VIRTUAL)
 {
 	if (netgame)
 	{
@@ -316,6 +317,7 @@ FStartupInfo GameStartupInfo;
 FString lastIWAD;
 int restart = 0;
 bool AppActive = true;
+bool playedtitlemusic;
 
 cycle_t FrameCycles;
 
@@ -1574,7 +1576,8 @@ void D_DoAdvanceDemo (void)
 		gamestate = GS_DEMOSCREEN;
 		pagename = gameinfo.TitlePage;
 		pagetic = (int)(gameinfo.titleTime * TICRATE);
-		S_ChangeMusic (gameinfo.titleMusic, gameinfo.titleOrder, false);
+		if (!playedtitlemusic) S_ChangeMusic (gameinfo.titleMusic, gameinfo.titleOrder, false);
+		playedtitlemusic = true;
 		demosequence = 3;
 		pagecount = 0;
 		C_HideConsole ();
@@ -1607,6 +1610,7 @@ void D_DoAdvanceDemo (void)
 
 void D_StartTitle (void)
 {
+	playedtitlemusic = false;
 	gameaction = ga_nothing;
 	demosequence = -1;
 	D_AdvanceDemo ();
@@ -3170,6 +3174,19 @@ static int D_DoomMain_Internal (void)
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
 
+	// Prevent the game from starting if the savegame passed to -loadgame is invalid
+	v = Args->CheckValue("-loadgame");
+	if (v)
+	{
+		FString file(v);
+		FixPathSeperator(file);
+		DefaultExtension(file, "." SAVEGAME_EXT);
+		if (!FileExists(file))
+		{
+			I_FatalError("Cannot find savegame %s", file.GetChars());
+		}
+	}
+
 	// reinit from here
 
 	do
@@ -3219,7 +3236,8 @@ static int D_DoomMain_Internal (void)
 		// Process automatically executed files
 		FExecList *exec;
 		FArgs *execFiles = new FArgs;
-		GameConfig->AddAutoexec(execFiles, gameinfo.ConfigName);
+		if (!(Args->CheckParm("-noautoexec")))
+			GameConfig->AddAutoexec(execFiles, gameinfo.ConfigName);
 		exec = D_MultiExec(execFiles, NULL);
 		delete execFiles;
 
@@ -3404,6 +3422,7 @@ static int D_DoomMain_Internal (void)
 
 		StartScreen->Progress();
 		V_InitFonts();
+		InitDoomFonts();
 		V_LoadTranslations();
 		UpdateGenericUI(false);
 

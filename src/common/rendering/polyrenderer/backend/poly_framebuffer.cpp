@@ -28,7 +28,6 @@
 #include "v_text.h"
 #include "i_video.h"
 #include "v_draw.h"
-#include "colormaps.h"
 
 #include "hw_clock.h"
 #include "hw_vrmodes.h"
@@ -153,6 +152,10 @@ void PolyFrameBuffer::FlushDrawCommands()
 	}
 }
 
+EXTERN_CVAR(Float, vid_brightness)
+EXTERN_CVAR(Float, vid_contrast)
+EXTERN_CVAR(Float, vid_saturation)
+
 void PolyFrameBuffer::Update()
 {
 	twoD.Reset();
@@ -178,8 +181,9 @@ void PolyFrameBuffer::Update()
 		if (dst)
 		{
 #if 1
+			// [GEC] with the help of dpJudas a new system of copying and applying gamma in the video buffer
 			auto copyqueue = std::make_shared<DrawerCommandQueue>(&mFrameMemory);
-			copyqueue->Push<MemcpyCommand>(dst, pitch / pixelsize, src, w, h, w, pixelsize);
+			copyqueue->Push<CopyAndApplyGammaCommand>(dst, pitch / pixelsize, src, w, h, w, vid_gamma, vid_contrast, vid_brightness, vid_saturation);
 			DrawerThreads::Execute(copyqueue);
 #else
 			for (int y = 0; y < h; y++)
@@ -367,6 +371,40 @@ FTexture *PolyFrameBuffer::WipeEndScreen()
 
 TArray<uint8_t> PolyFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma)
 {
+	// [GEC] Really necessary to apply gamma, brightness, contrast and saturation for screenshot
+
+	std::vector<uint8_t> gammatablebuf(256);
+	uint8_t* gammatable = gammatablebuf.data();
+
+	float InvGamma = 1.0f / clamp<float>(vid_gamma, 0.1f, 4.f);
+	float Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
+	float Contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
+	float Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);
+
+	for (int x = 0; x < 256; x++)
+	{
+		float ramp = (float)(x / 255.f);
+		// Apply Contrast
+		// vec4 finalColor = vec4((((originalColor.rgb - vec3(0.5)) * Contrast) + vec3(0.5)), 1.0);
+		if(vid_contrast != 1.0f)
+			ramp = (((ramp - 0.5f) * Contrast) + 0.5f);
+
+		// Apply Brightness
+		// vec4 finalColor = vec4(originalColor.rgb + Brightness, 1.0);
+		if (vid_brightness != 0.0f)
+			ramp += (Brightness / 2.0f);
+
+		// Apply Gamma
+		// FragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
+		if (vid_gamma != 1.0f)
+			ramp = pow(ramp, InvGamma);
+
+		// Clamp ramp
+		ramp = clamp<float>(ramp, 0.0f, 1.f);
+
+		gammatable[x] = (uint8_t)(ramp * 255);
+	}
+
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 
@@ -381,9 +419,44 @@ TArray<uint8_t> PolyFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_
 
 		for (int x = 0; x < w; x++)
 		{
-			ScreenshotBuffer[dindex    ] = pixels[sindex + 2];
-			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
-			ScreenshotBuffer[dindex + 2] = pixels[sindex    ];
+			uint32_t red = pixels[sindex + 2];
+			uint32_t green = pixels[sindex + 1];
+			uint32_t blue = pixels[sindex];
+
+			if (vid_saturation != 1.0f)
+			{
+				float NewR = (float)(red / 255.f);
+				float NewG = (float)(green / 255.f);
+				float NewB = (float)(blue / 255.f);
+
+				// Apply Saturation
+				// float luma = dot(In, float3(0.2126729, 0.7151522, 0.0721750));
+				// Out =  luma.xxx + Saturation.xxx * (In - luma.xxx);
+				//float luma = (NewR * 0.2126729f) + (NewG * 0.7151522f) + (NewB * 0.0721750f); // Rec. 709
+				float luma = (NewR * 0.299f) + (NewG * 0.587f) + (NewB * 0.114f); //Rec. 601
+				NewR = luma + (Saturation * (NewR - luma));
+				NewG = luma + (Saturation * (NewG - luma));
+				NewB = luma + (Saturation * (NewB - luma));
+
+				// Clamp All
+				NewR = clamp<float>(NewR, 0.0f, 1.f);
+				NewG = clamp<float>(NewG, 0.0f, 1.f);
+				NewB = clamp<float>(NewB, 0.0f, 1.f);
+
+				red = (uint32_t)(NewR * 255.f);
+				green = (uint32_t)(NewG * 255.f);
+				blue = (uint32_t)(NewB * 255.f);
+			}
+
+			// Apply Contrast / Brightness / Gamma
+			red = gammatable[red];
+			green = gammatable[green];
+			blue = gammatable[blue];
+
+			ScreenshotBuffer[dindex    ] = red;
+			ScreenshotBuffer[dindex + 1] = green;
+			ScreenshotBuffer[dindex + 2] = blue;
+
 			dindex += 3;
 			sindex += 4;
 		}

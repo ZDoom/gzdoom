@@ -41,7 +41,7 @@ public:
 	int Explode(unsigned char *out, unsigned int outsize, FileReader &in, unsigned int insize, int flags);
 };
 
-class CExplosionError : CRecoverableError
+class CExplosionError : public CRecoverableError
 {
 public:
 	CExplosionError(const char *message) : CRecoverableError(message) {}

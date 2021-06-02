@@ -14,6 +14,7 @@ class SoundStream;
 typedef bool(*StreamCallback)(SoundStream* stream, void* buff, int len, void* userdata);
 SoundStream *S_CreateCustomStream(size_t size, int samplerate, int numchannels, StreamCallback cb, void *userdata);
 void S_StopCustomStream(SoundStream* stream);
+void S_PauseAllCustomStreams(bool on);
 
 struct MusicCallbacks
 {
@@ -73,8 +74,12 @@ struct MusPlayingInfo
 	FString name;
 	ZMusic_MusicStream handle;
 	int   baseorder;
+	float replayGain;
+	float replayGainFactor;
 	bool  loop;
+	bool isfloat;
 	FString	 LastSong;			// last music that was played
+	FString hash;				// for setting replay gain while playing.
 };
 
 extern MusPlayingInfo mus_playing;

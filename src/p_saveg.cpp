@@ -812,7 +812,7 @@ void FLevelLocals::ReadMultiplePlayers(FSerializer &arc, int numPlayers, int num
 	}
 	else
 	{
-		for (i = 0; i < MAXPLAYERS; ++i)
+		for (i = 0; i < numPlayers; ++i)
 		{
 			players[i].mo = playertemp[i].mo;
 		}

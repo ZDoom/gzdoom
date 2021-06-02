@@ -1,6 +1,8 @@
 #pragma once
 #include "hw_aabbtree.h"
 
+struct FLevelLocals;
+
 // Axis aligned bounding box tree used for ray testing treelines.
 class DoomLevelAABBTree : public hwrenderer::LevelAABBTree
 {

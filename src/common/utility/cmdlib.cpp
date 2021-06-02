@@ -167,6 +167,24 @@ bool FileExists (const char *filename)
 
 //==========================================================================
 //
+// FileReadable
+//
+// Returns true if the file can be read.
+//
+//==========================================================================
+
+bool FileReadable(const char *filename)
+{
+#ifndef _WIN32
+	return access (filename, R_OK) == 0;
+#else
+	auto wstr = WideString(filename);
+	return _waccess (wstr.c_str(), 4) == 0;
+#endif
+}
+
+//==========================================================================
+//
 // DirExists
 //
 // Returns true if the given path exists and is a directory.
@@ -313,13 +331,8 @@ FString ExtractFileBase (const char *path, bool include_extension)
 		}
 #endif
 
-		if (!include_extension)
+		if (!include_extension && (dot = strrchr(src, '.')))
 		{
-			dot = src;
-			while (*dot && *dot != '.')
-			{
-				dot++;
-			}
 			return FString(src, dot - src);
 		}
 		else

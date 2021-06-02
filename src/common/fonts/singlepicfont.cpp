@@ -45,7 +45,7 @@ public:
 	FSinglePicFont(const char *picname);
 
 	// FFont interface
-	FGameTexture *GetChar(int code, int translation, int *const width, bool *redirected = nullptr) const override;
+	FGameTexture *GetChar(int code, int translation, int *const width) const override;
 	int GetCharWidth (int code) const override;
 
 protected:
@@ -79,7 +79,6 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 	SpaceWidth = (int)pic->GetDisplayWidth();
 	GlobalKerning = 0;
 	FirstChar = LastChar = 'A';
-	ActiveColors = 0;
 	PicNum = picnum;
 
 	Next = FirstFont;
@@ -94,10 +93,9 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 //
 //==========================================================================
 
-FGameTexture *FSinglePicFont::GetChar (int code, int translation, int *const width, bool *redirected) const
+FGameTexture *FSinglePicFont::GetChar (int code, int translation, int *const width) const
 {
 	*width = SpaceWidth;
-	if (redirected) *redirected = false;
 	if (code == 'a' || code == 'A')
 	{
 		return TexMan.GetGameTexture(PicNum, true);

@@ -2486,6 +2486,8 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							{
 								newfunc->ArgFlags.Push(sym->Variants[0].ArgFlags[i]);
 							}
+
+							newfunc->Proto = sym->Variants[0].Proto;
 						}
 					}
 				}

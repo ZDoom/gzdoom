@@ -76,6 +76,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, berserkpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultdropstyle)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normforwardmove)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normsidemove)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mHideParTimes)
 
 const char *GameNames[17] =
 {
@@ -437,12 +438,14 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 			GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
 			GAMEINFOKEY_STRING(Dialogue, "dialogue")
+			GAMEINFOKEY_STRINGARRAY(AddDialogues, "adddialogues", 0, false)
 			GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
 			GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")
 			GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
 			GAMEINFOKEY_TWODOUBLES(normforwardmove, "normforwardmove")
 			GAMEINFOKEY_TWODOUBLES(normsidemove, "normsidemove")
 			GAMEINFOKEY_BOOL(nomergepickupmsg, "nomergepickupmsg")
+			GAMEINFOKEY_BOOL(mHideParTimes, "hidepartimes")
 
 		else
 		{

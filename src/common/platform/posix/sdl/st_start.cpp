@@ -68,6 +68,9 @@ class FTTYStartupScreen : public FStartupScreen
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+extern void RedrawProgressBar(int CurPos, int MaxPos);
+extern void CleanProgressBar();
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -139,13 +142,15 @@ FTTYStartupScreen::~FTTYStartupScreen()
 //
 // FTTYStartupScreen :: Progress
 //
-// If there was a progress bar, this would move it. But the basic TTY
-// startup screen doesn't have one, so this function does nothing.
-//
 //===========================================================================
 
 void FTTYStartupScreen::Progress()
 {
+	if (CurPos < MaxPos)
+	{
+		++CurPos;
+	}
+	RedrawProgressBar(CurPos, MaxPos);
 }
 
 //===========================================================================
@@ -163,6 +168,7 @@ void FTTYStartupScreen::NetInit(const char *message, int numplayers)
 	{
 		termios rawtermios;
 
+		CleanProgressBar();
 		fprintf (stderr, "Press 'Q' to abort network game synchronization.");
 		// Set stdin to raw mode so we can get keypresses in ST_CheckNetAbort()
 		// immediately without waiting for an EOL.
@@ -197,14 +203,15 @@ void FTTYStartupScreen::NetInit(const char *message, int numplayers)
 //===========================================================================
 
 void FTTYStartupScreen::NetDone()
-{
+{	
+	CleanProgressBar();
 	// Restore stdin settings
 	if (DidNetInit)
 	{
 		tcsetattr (STDIN_FILENO, TCSANOW, &OldTermIOS);
 		printf ("\n");
 		DidNetInit = false;
-	}
+	}	
 }
 
 //===========================================================================

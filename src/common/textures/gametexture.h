@@ -231,6 +231,7 @@ public:
 	void SetFullbright() { flags |= GTexf_RenderFullbright;  }
 	void SetDisableFullbright(bool on) { if (on) flags |= GTexf_DisableFullbrightSprites; else flags &= ~GTexf_DisableFullbrightSprites; }
 	void SetGlowing(PalEntry color) { flags = (flags & ~GTexf_AutoGlowing) | GTexf_Glowing; GlowColor = color; }
+	void SetDisableBrightmap() { flags |= GTexf_BrightmapChecked; Brightmap = nullptr; }
 
 	bool isUserContent() const;
 	int CheckRealHeight() { return xs_RoundToInt(Base->CheckRealHeight() / ScaleY); }

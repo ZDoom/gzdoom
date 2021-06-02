@@ -737,6 +737,10 @@ OptionMenu "MouseOptions" protected
 	Option "$MOUSEMNU_ENABLEMOUSE",		"use_mouse", "YesNo"
 	Option "$MOUSEMNU_MOUSEINMENU",		"m_use_mouse", "MenuMouse", "use_mouse"
 	Option "$MOUSEMNU_SHOWBACKBUTTON",	"m_show_backbutton", "Corners", "use_mouse"
+	IfOption(Windows)
+	{
+		Option "$MOUSEMNU_SWAPBUTTONS", "m_swapbuttons", "YesNo"
+	}
 	Option "$MOUSEMNU_CURSOR",			"vid_cursor", "Cursors"
 	StaticText 	""
 	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
@@ -941,6 +945,7 @@ OptionMenu "VideoOptions" protected
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
 	StaticText " "
+	Option "$DSPLYMNU_SPRITESHADOW",			"r_actorspriteshadow", "SpriteShadowModes"
 	Option "$DSPLYMNU_CUSTOMINVERTMAP",			"cl_customizeinvulmap", "OnOff"
 	ColorPicker "$DSPLYMNU_CUSTOMINVERTC1",		"cl_custominvulmapcolor1"
 	ColorPicker "$DSPLYMNU_CUSTOMINVERTC2",		"cl_custominvulmapcolor2"
@@ -1829,7 +1834,6 @@ OptionMenu "CompatSoundMenu" protected
 OptionValue SampleRates
 {
 	0,		"$OPTVAL_DEFAULT"
-	4000,	"$OPTVAL_4000HZ"
 	8000,	"$OPTVAL_8000HZ"
 	11025,	"$OPTVAL_11025HZ"
 	22050,	"$OPTVAL_22050HZ"
@@ -2049,7 +2053,7 @@ OptionValue ModVolumeRamps
 OptionMenu ModReplayerOptions protected
 {
 	Title "$MODMNU_TITLE"
-	Slider "$MODMNU_MASTERVOLUME",			"mod_dumb_mastervolume", 1, 16, 0.5, 1
+	Slider "$MODMNU_MASTERVOLUME",			"mod_dumb_mastervolume", 0.25, 4, 0.1, 1
 	Option "$ADVSNDMNU_SAMPLERATE",			"mod_samplerate", "SampleRates"
 	Option "$MODMNU_QUALITY",				"mod_interp", "ModQuality"
 	Option "$MODMNU_VOLUMERAMPING",			"mod_volramp", "ModVolumeRamps"
@@ -2819,4 +2823,11 @@ OptionMenu "vkoptions"
 	StaticText ""
 	TextField "$VKMNU_DEVICE",			vk_device
 	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
+}
+
+OptionValue "SpriteShadowModes"
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_DEFAULT"
+	2, "$OPTVAL_SPRSHADALWAYS"
 }

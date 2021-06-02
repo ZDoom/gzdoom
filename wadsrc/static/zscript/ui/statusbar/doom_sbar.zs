@@ -176,8 +176,10 @@ class DoomStatusBar : BaseStatusBar
 		{
 			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (-3, 1), DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD);
 		}
-		
-		DrawFullscreenKeys();
+		else
+		{
+			DrawFullscreenKeys();
+		}
 		
 		if (isInventoryBarVisible())
 		{

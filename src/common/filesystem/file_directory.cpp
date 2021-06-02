@@ -154,13 +154,28 @@ int FDirectory::AddDirectory(const char *dirpath)
 			}
 			else
 			{
-				if (strstr(fi, ".orig") || strstr(fi, ".bak"))
+				if (strstr(fi, ".orig") || strstr(fi, ".bak") || strstr(fi, ".cache"))
 				{
 					// We shouldn't add backup files to the file system
 					continue;
 				}
 				size_t size = 0;
 				FString fn = FString(dirpath) + fi;
+
+				// The next one is courtesy of EDuke32. :(
+				// Putting cache files in the application directory is very bad style.
+				// Unfortunately, having a garbage file named "texture" present will cause serious problems down the line.
+				if (!stricmp(fi, "textures"))
+				{
+					FILE* f = fopen(fn, "rb");
+					if (f)
+					{
+						char check[3]{};
+						fread(check, 1, 3, f);
+						if (!memcmp(check, "LZ4", 3)) continue;
+					}
+				}
+
 				if (GetFileInfo(fn, &size, nullptr))
 				{
 					AddEntry(fn, (int)size);
@@ -209,7 +224,7 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 	lump_p->LumpSize = size;
 	lump_p->Owner = this;
 	lump_p->Flags = 0;
-	lump_p->CheckEmbedded();
+	lump_p->CheckEmbedded(nullptr);
 }
 
 

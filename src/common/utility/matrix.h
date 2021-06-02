@@ -33,9 +33,7 @@ class VSMatrix {
 
 	public:
 
-		VSMatrix()
-		{
-		}
+		VSMatrix() = default;
 		
 		VSMatrix(int)
 		{

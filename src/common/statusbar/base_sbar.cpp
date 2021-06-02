@@ -51,7 +51,7 @@ FGameTexture* CrosshairImage;
 static int CrosshairNum;
 
 
-IMPLEMENT_CLASS(DStatusBarCore, true, false)
+IMPLEMENT_CLASS(DStatusBarCore, false, false)
 IMPLEMENT_CLASS(DHUDFont, false, false);
 
 
@@ -452,16 +452,16 @@ void DStatusBarCore::StatusbarToRealCoords(double& x, double& y, double& w, doub
 //
 //============================================================================
 
-void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, double rotate, ERenderStyle style)
+void DStatusBarCore::DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, ERenderStyle style, PalEntry color, int translation, double clipwidth)
 {
 	if (!texture.isValid())
 		return;
 
 	FGameTexture* tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
-	DrawGraphic(tex, x, y, flags, Alpha, boxwidth, boxheight, scaleX, scaleY, color, translation, rotate, style);
+	DrawGraphic(tex, x, y, flags, Alpha, boxwidth, boxheight, scaleX, scaleY, style, color, translation, clipwidth);
 }
 
-void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, PalEntry color, int translation, double rotate, ERenderStyle style)
+void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY, ERenderStyle style, PalEntry color, int translation, double clipwidth)
 {
 	double texwidth = tex->GetDisplayWidth() * scaleX;
 	double texheight = tex->GetDisplayHeight() * scaleY;
@@ -582,6 +582,10 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 		DTA_LeftOffset, 0,
 		DTA_DestWidthF, boxwidth,
 		DTA_DestHeightF, boxheight,
+		DTA_ClipLeft, 0,
+		DTA_ClipTop, 0,
+		DTA_ClipBottom, twod->GetHeight(),
+		DTA_ClipRight, clipwidth < 0? twod->GetWidth() : int(x + boxwidth * clipwidth),
 		DTA_Color, color,
 		DTA_TranslationIndex, translation? translation : (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
 		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
@@ -590,7 +594,96 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
 		DTA_FlipX, !!(flags & DI_MIRROR),
 		DTA_FlipY, !!(flags& DI_MIRRORY),
-		DTA_Rotate, rotate,
+		DTA_LegacyRenderStyle, (flags & DI_ALPHAMAPPED) ? STYLE_Shaded : style,
+		TAG_DONE);
+}
+
+
+//============================================================================
+//
+// draw stuff
+//
+//============================================================================
+
+void DStatusBarCore::DrawRotated(FTextureID texture, double x, double y, int flags, double angle, double Alpha, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style)
+{
+	if (!texture.isValid())
+		return;
+
+	FGameTexture* tex = TexMan.GetGameTexture(texture, !(flags & DI_DONTANIMATE));
+	DrawRotated(tex, x, y, flags, angle, Alpha, scaleX, scaleY, color, translation, style);
+}
+
+void DStatusBarCore::DrawRotated(FGameTexture* tex, double x, double y, int flags, double angle, double Alpha, double scaleX, double scaleY, PalEntry color, int translation, ERenderStyle style)
+{
+	double texwidth = tex->GetDisplayWidth() * scaleX;
+	double texheight = tex->GetDisplayHeight() * scaleY;
+	double texleftoffs = tex->GetDisplayLeftOffset() * scaleY;
+	double textopoffs = tex->GetDisplayTopOffset() * scaleY;
+
+	// resolve auto-alignment before making any adjustments to the position values.
+	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
+	{
+		if (x < 0) flags |= DI_SCREEN_RIGHT;
+		else flags |= DI_SCREEN_LEFT;
+		if (y < 0) flags |= DI_SCREEN_BOTTOM;
+		else flags |= DI_SCREEN_TOP;
+	}
+
+	Alpha *= this->Alpha;
+	if (Alpha <= 0) return;
+	x += drawOffset.X;
+	y += drawOffset.Y;
+	DVector2 Scale = GetHUDScale();
+
+	scaleX = 1 / scaleX;
+	scaleY = 1 / scaleY;
+
+	if (!fullscreenOffsets)
+	{
+		StatusbarToRealCoords(x, y, texwidth, texheight);
+	}
+	else
+	{
+		double orgx, orgy;
+
+		switch (flags & DI_SCREEN_HMASK)
+		{
+		default: orgx = 0; break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
+		}
+
+		switch (flags & DI_SCREEN_VMASK)
+		{
+		default: orgy = 0; break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
+		}
+
+		// move stuff in the top right corner a bit down if the fps counter is on.
+		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
+
+		x *= Scale.X;
+		y *= Scale.Y;
+		scaleX *= Scale.X;
+		scaleY *= Scale.Y;
+		x += orgx;
+		y += orgy;
+	}
+	DrawTexture(twod, tex, x, y,
+		DTA_ScaleX, scaleX,
+		DTA_ScaleY, scaleY,
+		DTA_Color, color,
+		DTA_CenterOffsetRel, !!(flags & DI_ITEM_RELCENTER),
+		DTA_Rotate, angle,
+		DTA_TranslationIndex, translation ? translation : (flags & DI_TRANSLATABLE) ? GetTranslation() : 0,
+		DTA_ColorOverlay, (flags & DI_DIM) ? MAKEARGB(170, 0, 0, 0) : 0,
+		DTA_Alpha, Alpha,
+		DTA_AlphaChannel, !!(flags & DI_ALPHAMAPPED),
+		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
+		DTA_FlipX, !!(flags & DI_MIRROR),
+		DTA_FlipY, !!(flags & DI_MIRRORY),
 		DTA_LegacyRenderStyle, style,
 		TAG_DONE);
 }
@@ -602,7 +695,7 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 //
 //============================================================================
 
-void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY, double scaleX, double scaleY, int pt)
+void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY, double scaleX, double scaleY, int pt, int style)
 {
 	bool monospaced = monospacing != EMonospacing::Off;
 	double dx = 0;
@@ -729,6 +822,7 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 			DTA_DestHeightF, rh,
 			DTA_Alpha, Alpha,
 			DTA_TranslationIndex, pt,
+			DTA_LegacyRenderStyle, ERenderStyle(style),
 			TAG_DONE);
 
 		dx = monospaced
@@ -740,7 +834,7 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 	}
 }
 
-void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY, int pt)
+void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY, int pt, int style)
 {
 	if (font == nullptr) ThrowAbortException(X_READ_NIL, nullptr);
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
@@ -759,13 +853,13 @@ void SBar_DrawString(DStatusBarCore* self, DHUDFont* font, const FString& string
 		auto brk = V_BreakLines(font->mFont, int(wrapwidth * scaleX), string, true);
 		for (auto& line : brk)
 		{
-			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY, pt);
+			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY, pt, style);
 			y += (font->mFont->GetHeight() + linespacing) * scaleY;
 		}
 	}
 	else
 	{
-		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY, pt);
+		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY, pt, style);
 	}
 }
 

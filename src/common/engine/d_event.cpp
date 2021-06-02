@@ -76,12 +76,15 @@ void D_ProcessEvents (void)
 			continue;
 		if (ev->type == EV_DeviceChange)
 			UpdateJoystickMenu(I_UpdateDeviceList());
-		if (gamestate == GS_INTRO)
-			continue;
-		if (C_Responder (ev))
-			continue;				// console ate the event
-		if (M_Responder (ev))
-			continue;				// menu ate the event
+
+		if (gamestate != GS_INTRO) // GS_INTRO blocks the UI.
+		{
+			if (C_Responder(ev))
+				continue;				// console ate the event
+			if (M_Responder(ev))
+				continue;				// menu ate the event
+		}
+
 		G_Responder (ev);
 	}
 }

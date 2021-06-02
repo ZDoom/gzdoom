@@ -164,28 +164,17 @@ namespace swrenderer
 		if (x1 >= x2)
 			return;
 
-		// Prepare lighting
-
-		// Decals that are added to the scene must fade to black.
-		ColormapLight cmlight;
-		if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && cmlight.BaseColormap->Fade != 0)
-		{
-			cmlight.BaseColormap = GetSpecialLights(cmlight.BaseColormap->Color, 0, cmlight.BaseColormap->Desaturate);
-		}
-
 		SpriteDrawerArgs drawerargs;
 
-		bool visible = drawerargs.SetStyle(thread->Viewport.get(), spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, cmlight);
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, Light);
 		if (!visible)
 			return;
 
 		ProjectedWallLight mlight;
-		mlight.SetLightLeft(thread, wallc);
+		mlight.SetSpriteLight();
 
 		// Draw it
 		auto WallSpriteTile = spr->pic;
-
-		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
 
 		RenderTranslucentPass* translucentPass = thread->TranslucentPass.get();
 		short floorclip[MAXWIDTH];

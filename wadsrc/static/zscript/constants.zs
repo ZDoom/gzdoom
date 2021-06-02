@@ -732,6 +732,9 @@ enum EPSPLayers
 	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
+	PSP_TARGETCENTER = int.max - 2,
+	PSP_TARGETLEFT,
+	PSP_TARGETRIGHT
 };
 
 enum EInputFlags
@@ -1224,6 +1227,113 @@ enum EChangeLevelFlags
 	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
+enum ELevelFlags
+{
+	LEVEL_NOINTERMISSION		= 0x00000001,
+	LEVEL_NOINVENTORYBAR		= 0x00000002,	// This effects Doom only, since it's the only one without a standard inventory bar.
+	LEVEL_DOUBLESKY				= 0x00000004,
+	LEVEL_HASFADETABLE			= 0x00000008,	// Level uses Hexen's fadetable mapinfo to get fog
+
+	LEVEL_MAP07SPECIAL			= 0x00000010,
+	LEVEL_BRUISERSPECIAL		= 0x00000020,
+	LEVEL_CYBORGSPECIAL			= 0x00000040,
+	LEVEL_SPIDERSPECIAL			= 0x00000080,
+
+	LEVEL_SPECLOWERFLOOR		= 0x00000100,
+	LEVEL_SPECOPENDOOR			= 0x00000200,
+	LEVEL_SPECLOWERFLOORTOHIGHEST=0x00000300,
+	LEVEL_SPECACTIONSMASK		= 0x00000300,
+
+	LEVEL_MONSTERSTELEFRAG		= 0x00000400,
+	LEVEL_ACTOWNSPECIAL			= 0x00000800,
+	LEVEL_SNDSEQTOTALCTRL		= 0x00001000,
+	LEVEL_FORCETILEDSKY		= 0x00002000,
+
+	LEVEL_CROUCH_NO				= 0x00004000,
+	LEVEL_JUMP_NO				= 0x00008000,
+	LEVEL_FREELOOK_NO			= 0x00010000,
+	LEVEL_FREELOOK_YES			= 0x00020000,
+
+	// The absence of both of the following bits means that this level does not
+	// use falling damage (though damage can be forced with dmflags,.
+	LEVEL_FALLDMG_ZD			= 0x00040000,	// Level uses ZDoom's falling damage
+	LEVEL_FALLDMG_HX			= 0x00080000,	// Level uses Hexen's falling damage
+
+	LEVEL_HEADSPECIAL			= 0x00100000,	// Heretic episode 1/4
+	LEVEL_MINOTAURSPECIAL		= 0x00200000,	// Heretic episode 2/5
+	LEVEL_SORCERER2SPECIAL		= 0x00400000,	// Heretic episode 3
+	LEVEL_SPECKILLMONSTERS		= 0x00800000,
+
+	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
+	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
+	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
+	LEVEL_USEPLAYERSTARTZ		= 0x08000000,	// Use the Z position of player starts
+
+	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
+	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
+	LEVEL_CHANGEMAPCHEAT		= 0x40000000,	// Don't display cluster messages
+	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
+
+	// The flags uint64_t is now split into 2 DWORDs 
+	LEVEL2_RANDOMPLAYERSTARTS	= 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
+	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
+
+	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
+	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
+
+	LEVEL2_MISSILESACTIVATEIMPACT=0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
+	LEVEL2_NEEDCLUSTERTEXT		= 0x00000020,	// A map with this flag needs to retain its cluster intermission texts when being redefined in UMAPINFO
+
+	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
+
+	LEVEL2_PRERAISEWEAPON		= 0x00000080,	// players should spawn with their weapons fully raised (but not when respawning it multiplayer)
+	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
+	LEVEL2_CLIPMIDTEX			= 0x00000200,
+	LEVEL2_WRAPMIDTEX			= 0x00000400,
+
+	LEVEL2_CHECKSWITCHRANGE		= 0x00000800,	
+
+	LEVEL2_PAUSE_MUSIC_IN_MENUS	= 0x00001000,
+	LEVEL2_TOTALINFIGHTING		= 0x00002000,
+	LEVEL2_NOINFIGHTING			= 0x00004000,
+
+	LEVEL2_NOMONSTERS			= 0x00008000,
+	LEVEL2_INFINITE_FLIGHT		= 0x00010000,
+
+	LEVEL2_ALLOWRESPAWN			= 0x00020000,
+
+	LEVEL2_FORCETEAMPLAYON		= 0x00040000,
+	LEVEL2_FORCETEAMPLAYOFF		= 0x00080000,
+
+	LEVEL2_CONV_SINGLE_UNFREEZE	= 0x00100000,
+	LEVEL2_NOCLUSTERTEXT		= 0x00200000,	// ignore intermission texts fro clusters. This gets set when UMAPINFO is used to redefine its properties.
+	LEVEL2_DUMMYSWITCHES		= 0x00400000,
+	LEVEL2_HEXENHACK			= 0x00800000,	// Level was defined in a Hexen style MAPINFO
+
+	LEVEL2_SMOOTHLIGHTING		= 0x01000000,	// Level uses the smooth lighting feature.
+	LEVEL2_POLYGRIND			= 0x02000000,	// Polyobjects grind corpses to gibs.
+	LEVEL2_RESETINVENTORY		= 0x04000000,	// Resets player inventory when starting this level (unless in a hub)
+	LEVEL2_RESETHEALTH			= 0x08000000,	// Resets player health when starting this level (unless in a hub)
+
+	LEVEL2_NOSTATISTICS			= 0x10000000,	// This level should not have statistics collected
+	LEVEL2_ENDGAME				= 0x20000000,	// This is an epilogue level that cannot be quit.
+	LEVEL2_NOAUTOSAVEHINT		= 0x40000000,	// tell the game that an autosave for this level does not need to be kept
+	LEVEL2_FORGETSTATE			= 0x80000000,	// forget this map's state in a hub
+	
+	// More flags!
+	LEVEL3_FORCEFAKECONTRAST	= 0x00000001,	// forces fake contrast even with fog enabled
+	LEVEL3_REMOVEITEMS			= 0x00000002,	// kills all INVBAR items on map change.
+	LEVEL3_ATTENUATE			= 0x00000004,	// attenuate lights?
+	LEVEL3_NOLIGHTFADE			= 0x00000008,	// no light fading to black.
+	LEVEL3_NOCOLOREDSPRITELIGHTING = 0x00000010,	// draw sprites only with color-less light
+	LEVEL3_EXITNORMALUSED		= 0x00000020,
+	LEVEL3_EXITSECRETUSED		= 0x00000040,
+	LEVEL3_FORCEWORLDPANNING	= 0x00000080,	// Forces the world panning flag for all textures, even those without it explicitly set.
+	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
+	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
+	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
+};
+
 // [RH] Compatibility flags.
 enum ECompatFlags
 {
@@ -1272,3 +1382,17 @@ enum ECompatFlags
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
 };
+
+const M_E        = 2.7182818284590452354;  // e
+const M_LOG2E    = 1.4426950408889634074;  // log_2 e
+const M_LOG10E   = 0.43429448190325182765; // log_10 e
+const M_LN2      = 0.69314718055994530942; // log_e 2
+const M_LN10     = 2.30258509299404568402; // log_e 10
+const M_PI       = 3.14159265358979323846; // pi
+const M_PI_2     = 1.57079632679489661923; // pi/2
+const M_PI_4     = 0.78539816339744830962; // pi/4
+const M_1_PI     = 0.31830988618379067154; // 1/pi
+const M_2_PI     = 0.63661977236758134308; // 2/pi
+const M_2_SQRTPI = 1.12837916709551257390; // 2/sqrt(pi)
+const M_SQRT2    = 1.41421356237309504880; // sqrt(2)
+const M_SQRT1_2  = 0.70710678118654752440; // 1/sqrt(2)

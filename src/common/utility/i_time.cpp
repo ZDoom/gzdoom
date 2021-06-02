@@ -185,15 +185,6 @@ double I_GetTimeFrac()
 	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
 }
 
-double I_GetBuildTimeFrac()
-{
-	int currentTic = NSToBuildTic(CurrentFrameStartTime - FirstFrameStartTime);
-	uint64_t ticStartTime = FirstFrameStartTime + BuildTicToNS(currentTic);
-	uint64_t ticNextTime = FirstFrameStartTime + BuildTicToNS(currentTic + 1);
-
-	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
-}
-
 void I_FreezeTime(bool frozen)
 {
 	if (frozen)

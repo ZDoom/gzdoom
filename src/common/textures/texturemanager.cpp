@@ -496,6 +496,11 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FGameTexture *newtextur
 	if (unsigned(index) >= Textures.Size())
 		return;
 
+	if (newtexture->GetTexture())
+	{
+		calcShouldUpscale(newtexture);	// calculate this once at insertion
+	}
+
 	auto oldtexture = Textures[index].Texture;
 
 	newtexture->SetName(oldtexture->GetName());

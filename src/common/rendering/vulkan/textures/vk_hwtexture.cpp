@@ -37,8 +37,9 @@
 
 VkHardwareTexture *VkHardwareTexture::First = nullptr;
 
-VkHardwareTexture::VkHardwareTexture()
+VkHardwareTexture::VkHardwareTexture(int numchannels)
 {
+	mTexelsize = numchannels;
 	Next = First;
 	First = this;
 	if (Next) Next->Prev = this;
@@ -126,7 +127,8 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 	if (!tex->isHardwareCanvas())
 	{
 		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
-		CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);
+		bool indexed = flags & CTF_Indexed;
+		CreateTexture(texbuffer.mWidth, texbuffer.mHeight,indexed? 1 : 4, indexed? VK_FORMAT_R8_UNORM : VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer, !indexed);
 	}
 	else
 	{
@@ -156,8 +158,11 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 	}
 }
 
-void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels)
+void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels, bool mipmap)
 {
+	if (w <= 0 || h <= 0)
+		throw CVulkanError("Trying to create zero size texture");
+
 	auto fb = GetVulkanFrameBuffer();
 
 	int totalSize = w * h * pixelsize;
@@ -174,7 +179,7 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 
 	ImageBuilder imgbuilder;
 	imgbuilder.setFormat(format);
-	imgbuilder.setSize(w, h, GetMipLevels(w, h));
+	imgbuilder.setSize(w, h, !mipmap ? 1 : GetMipLevels(w, h));
 	imgbuilder.setUsage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	mImage.Image = imgbuilder.create(fb->device);
 	mImage.Image->SetDebugName("VkHardwareTexture.mImage");
@@ -200,7 +205,7 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 
 	fb->FrameDeleteList.Buffers.push_back(std::move(stagingBuffer));
 
-	mImage.GenerateMipmaps(cmdbuffer);
+	if (mipmap) mImage.GenerateMipmaps(cmdbuffer);
 }
 
 int VkHardwareTexture::GetMipLevels(int w, int h)
@@ -265,6 +270,9 @@ uint8_t *VkHardwareTexture::MapBuffer()
 
 unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
+	// CreateTexture is used by the software renderer to create a screen output but without any screen data.
+	if (buffer)
+		CreateTexture(w, h, mTexelsize, mTexelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM, buffer, mipmap);
 	return 0;
 }
 
@@ -368,10 +376,6 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	int clampmode = state.mClampMode;
 	int translation = state.mTranslation;
 
-	auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
-	if (remap) 
-		translation = remap->Index;
-
 	clampmode = base->GetClampMode(clampmode);
 
 	for (auto& set : mDescriptorSets)
@@ -392,10 +396,23 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	MaterialLayerInfo *layer;
 	auto systex = static_cast<VkHardwareTexture*>(GetLayer(0, state.mTranslation, &layer));
 	update.addCombinedImageSampler(descriptor.get(), 0, systex->GetImage(layer->layerTexture, state.mTranslation, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
-	for (int i = 1; i < numLayers; i++)
+
+	if (!(layer->scaleFlags & CTF_Indexed))
 	{
-		auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
-		update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+		for (int i = 1; i < numLayers; i++)
+		{
+			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
+			update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+		}
+	}
+	else
+	{
+		for (int i = 1; i < 3; i++)
+		{
+			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, translation, &layer));
+			update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+		}
+		numLayers = 3;
 	}
 
 	auto dummyImage = fb->GetRenderPassManager()->GetNullTextureView();

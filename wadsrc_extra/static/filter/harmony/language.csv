@@ -1,5 +1,4 @@
 default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cs,de,el,eo,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fi,fr,hu,it,jp,ko,nl,pl,pt,ptg,ro,ru,sr
-,,,,,,,,,,,,,,,,,,,,,,,
 Do you really think you can handle that?\n\npress 'Y' or 'N'...,NIGHTMARE,,,,"Opravdu si myslíš, že to zvládneš?
 
 Zmáčkni Y nebo N.","Bist du sicher, dass du das bewältigen kannst?
@@ -19,9 +18,7 @@ Y키, 아니면 N키를 누르시오...","Denk je echt dat je dat aankunt?
 
 Druk op 'Y' of 'N'...","Czy ty naprawdę myślisz, że temu podołasz?
 
-Wciśnij 'Y' lub 'N'...","Você acha que é capaz de aguentar?
-
-Aperte Y ou N...",,Chiar crezi că poți face față?\n\napasă 'Y' sau 'N'...,"Уверены, что справитесь?\n\nНажмите «Y» или «N»...",
+Wciśnij 'Y' lub 'N'...",Você acha que dá conta?\n\nAperte Y ou N...,,Chiar crezi că poți face față?\n\napasă 'Y' sau 'N'...,"Уверены, что справитесь?\n\nНажмите «Y» или «N»...",
 Spot marked,AMSTR_MARKEDSPOT,,,,Bod označen,Punkt markiert,,Punkto markita,Punto marcado,,Paikka merkitty,Repère marqué.,Hely megjelölve.,Posizione segnata,スポットヲ マーク シタ,마커 표시함,Vlek gemarkeerd,Miejsce zaznaczone,Posição marcada,,Loc marcat,Отметка,Означено место
 Requires the GREEN keycard,PD_BLUEO,,,,Vyžaduje ZELENOU kartu,Benötigt die GRÜNE Schlüsselkarte,,Bezonas la VERDAN ŝlosilkarton,Requiere la tarjeta llave VERDE,,Tarvitsee VIHREÄN avainkortin,Carte VERTE demandée.,,Richiede la card d'accesso VERDE,グリーン キーカード ガ ヒツヨウダ,필요함: 초록색 키카드,Vereist de GROENE sleutelkaart,Wymaga ZIELONEJ karty,Você precisa do cartão de passe VERDE,,Necesită cardul VERDE,Требуется ЗЕЛЁНАЯ ключ-карта,
 Requires the PURPLE keycard,PD_REDO,,,,Vyžaduje FIALOVOU kartu,Benötigt die VIOLETTE Schlüsselkarte,,Bezonas la PURPURAN ŝlosilkarton,Requiere la tarjeta llave VIOLETA,,Tarvitsee VIOLETIN avainkortin,Carte VIOLETTE demandée.,,Richiede la card d'accesso VIOLA,イエロー キーカード ガ ヒツヨウダ,필요함: 보라색 키카드,Vereist de PAARSE sleutelkaart,Wymaga FIOLETOWEJ karty,Você precisa do cartão de passe ROXO,,Necesită cardul MOV,Требуется ФИОЛЕТОВАЯ ключ-карта,
@@ -307,7 +304,7 @@ Te aduni...
               = S F Â R Ș I T =","Вы почувствовали тошноту,
 присмотревшись к лицу королевы
 мутантов.
-Эта тварь. Когда-то она была… вашей
+Эта тварь. Когда-то она была... вашей
 подругой Амирой!
 
 Эти монстры смогли изменить её. Они
@@ -320,7 +317,7 @@ Te aduni...
 Они заставили вас убить свою подругу, и
 они поплатятся за это!
 
-«Ад – ничто в сравнении с отвергнутой
+«Ад — ничто в сравнении с отвергнутой
 женщиной!»
 
      = К О Н Е Ц =
@@ -333,4 +330,4 @@ Medium,SKILL_NORMAL,,,,Střední,Mittel,,Meza,Medio,,Keskivaikea,Moyen,Normál,M
 Hard,SKILL_HARD,,,,Obtížný,Schwer,,Malfacila,Difícil,,Vaikea,Difficile,Nehéz,Difficile,ハード,어려움,Moeilijk,Trudny,Difícil,,Greu,Тяжёлый,
 Very Hard,SKILL_NIGHTMARE,,,,Velmi obtížné,Sehr schwer,,Tre Malfacila,Muy difícil,,Erittäin vaikea,Très difficile,Nagyon nehéz,Molto difficile,ベリーハード,아주 어려윰,Zeer moeilijk,Bardzo Trudny,Muito difícil,,Foarte Greu,Очень тяжёлый,
 Thanks for playing,HARMQUITMSG,,,,Díky za hraní,Danke fürs Spielen,,Dankon pro ludado,Gracias por jugar,,Kiitos pelaamisesta,Merci d'avoir joué,"Köszönjük, hogy játszottál!",Grazie per aver giocato,プレイ シテクレテ カンシャスル,플레이 해주셔서 감사드립니다,Bedankt voor het spelen,Dziękuję za grę,Obrigado por jogar,,Mulțumim că ai jucat,"Спасибо, что сыграли в Harmony",
-Harmony,TXT_D2E1,,,,,,,Harmonio,,,Harmonia,,,,,,,,,,,,
+Harmony,TXT_D2E1,,,,,,,Harmonio,,,Harmonia,,,,,,,Harmonia,,,,,

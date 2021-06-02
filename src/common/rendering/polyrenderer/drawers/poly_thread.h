@@ -44,7 +44,7 @@ public:
 	void SetTwoSided(bool value) { twosided = value; }
 
 	void SetInputAssembly(PolyInputAssembly *input) { inputAssembly = input; }
-	void SetVertexBuffer(const void *data) { vertices = data; }
+	void SetVertexBuffer(const void *data, int offset0, int offset1) { vertices = data; frame0 = offset0; frame1 = offset1;} //[GEC] Save frame params
 	void SetIndexBuffer(const void *data) { elements = (const unsigned int *)data; }
 	void SetLightBuffer(const void *data) { lights = (const FVector4 *)data; }
 	void SetViewpointUniforms(const HWViewpointUniforms *uniforms);
@@ -145,6 +145,10 @@ public:
 	uint32_t AlphaThreshold = 0x7f000000;
 	const PolyPushConstants* PushConstants = nullptr;
 
+	// [GEC] Add frame params, necessary to project frames and model interpolation correctly
+	int frame0 = 0;
+	int frame1 = 0;
+
 	const void *vertices = nullptr;
 	const unsigned int *elements = nullptr;
 	const FVector4 *lights = nullptr;
@@ -170,6 +174,9 @@ public:
 	bool WriteDepth = true;
 	uint8_t StencilTestValue = 0;
 	uint8_t StencilWriteValue = 0;
+	float DepthRangeStart = 0.0f;
+	float DepthRangeScale = 1.0f;
+	bool DepthClamp = true;
 
 	void (*FragmentShader)(int x0, int x1, PolyTriangleThreadData* thread) = nullptr;
 	void (*WriteColorFunc)(int y, int x0, int x1, PolyTriangleThreadData* thread) = nullptr;

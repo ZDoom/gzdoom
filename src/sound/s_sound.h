@@ -70,6 +70,7 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2);
 bool S_AreSoundsEquivalent (AActor *actor, const char *name1, const char *name2);
 int S_LookupPlayerSound (const char *playerclass, int gender, const char *logicalname);
 int S_LookupPlayerSound (const char *playerclass, int gender, FSoundID refid);
+const char *S_GetSoundClass(AActor *pp);
 int S_FindSkinnedSound (AActor *actor, FSoundID refid);
 int S_FindSkinnedSoundEx (AActor *actor, const char *logicalname, const char *extendedname);
 int S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc=NULL);	// Add sound by lumpname

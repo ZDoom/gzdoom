@@ -94,6 +94,8 @@ public:
 	inline void AddSymbol(const char* name, uint32_t value) { return AddSymbol(name, uint64_t(value)); }
 	void AddSymbol(const char* name, double value);
 	void SkipToEndOfBlock();
+	int StartBraces(FScanner::SavedPos* braceend);
+	bool FoundEndBrace(FScanner::SavedPos& braceend);
 
 	static FString TokenName(int token, const char *string=NULL);
 
@@ -113,7 +115,43 @@ public:
 	void MustGetNumber(bool evaluate = false);
 	bool CheckNumber(bool evaluate = false);
 
+	bool GetNumber(int& var, bool evaluate = false)
+	{
+		if (!GetNumber(evaluate)) return false;
+		var = Number;
+		return true;
+	}
+
+	bool GetNumber(int64_t& var, bool evaluate = false)
+	{
+		if (!GetNumber(evaluate)) return false;
+		var = BigNumber;
+		return true;
+	}
+
+	bool GetString(FString& var)
+	{
+		if (!GetString()) return false;
+		var = String;
+		return true;
+	}
+
 	bool GetFloat(bool evaluate = false);
+
+	bool GetFloat(double& var, bool evaluate = false)
+	{
+		if (!GetFloat(evaluate)) return false;
+		var = Float;
+		return true;
+	}
+
+	bool GetFloat(float& var, bool evaluate = false)
+	{
+		if (!GetFloat(evaluate)) return false;
+		var = float(Float);
+		return true;
+	}
+
 	void MustGetFloat(bool evaluate = false);
 	bool CheckFloat(bool evaluate = false);
 

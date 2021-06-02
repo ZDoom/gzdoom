@@ -269,6 +269,32 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, 
 	return arc;
 }
 
+template<class T>
+FSerializer& Serialize(FSerializer& arc, const char* key, TPointer<T>& value, TPointer<T>* def)
+{
+	if (arc.isWriting())
+	{
+		if (value.Data() == nullptr && key) return arc;
+	}
+	bool res = arc.BeginArray(key);
+	if (arc.isReading())
+	{
+		if (!res || arc.ArraySize() == 0)
+		{
+			value.Clear();
+			return arc;
+		}
+		value.Alloc();
+	}
+	if (value.Data())
+	{
+		Serialize(arc, nullptr, *value, def ? def->Data() : nullptr);
+	}
+	arc.EndArray();
+	return arc;
+}
+
+
 template<int size> 
 FSerializer& Serialize(FSerializer& arc, const char* key, FixedBitArray<size>& value, FixedBitArray<size>* def)
 {

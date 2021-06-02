@@ -4,8 +4,6 @@
 #include "tarray.h"
 #include "vectors.h"
 
-struct FLevelLocals;
-
 namespace hwrenderer
 {
 

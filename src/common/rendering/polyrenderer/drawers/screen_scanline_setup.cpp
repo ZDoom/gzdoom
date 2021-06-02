@@ -24,7 +24,6 @@
 #include "templates.h"
 #include "poly_thread.h"
 #include "screen_scanline_setup.h"
-#include "x86.h"
 #include <cmath>
 
 #ifndef NO_SSE
@@ -71,11 +70,13 @@ void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangle
 		mposW = _mm_add_ps(mposW, mstepW);
 	}
 
-	posW += ssecount * stepW;
+	mstepW = _mm_set_ss(stepW);
 	for (int x = sseend; x < x1; x++)
 	{
-		w[x] = 1.0f / posW;
-		posW += stepW;
+		__m128 res = _mm_rcp_ss(mposW);
+		__m128 muls = _mm_mul_ss(mposW, _mm_mul_ss(res, res));
+		_mm_store_ss(w + x, _mm_sub_ss(_mm_add_ss(res, res), muls));
+		mposW = _mm_add_ss(mposW, mstepW);
 	}
 }
 #endif
@@ -261,7 +262,23 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 				uint32_t b = vColorB[x];
 				uint32_t a = vColorA[x];
 
-				lightarray[x] = MAKEARGB(a, (r * l) >> 8, (g * l) >> 8, (b * l) >> 8);
+				// [GEC] DynLightColor On Sprite
+				r = (r * l) >> 8;
+				g = (g * l) >> 8;
+				b = (b * l) >> 8;
+
+				if (constants->uLightIndex == -1)
+				{
+					r += (uint32_t)(constants->uDynLightColor.X * 255.0f);
+					g += (uint32_t)(constants->uDynLightColor.Y * 255.0f);
+					b += (uint32_t)(constants->uDynLightColor.Z * 255.0f);
+
+					r = MIN<uint32_t>(r, 255);
+					g = MIN<uint32_t>(g, 255);
+					b = MIN<uint32_t>(b, 255);
+				}
+
+				lightarray[x] = MAKEARGB(a, r, g, b);
 				lightpos += lightstep;
 			}
 		}
@@ -276,7 +293,23 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 				uint32_t b = vColorB[x];
 				uint32_t a = vColorA[x];
 
-				lightarray[x] = MAKEARGB(a, (r * l) >> 8, (g * l) >> 8, (b * l) >> 8);
+				// [GEC] DynLightColor On Sprite
+				r = (r * l) >> 8;
+				g = (g * l) >> 8;
+				b = (b * l) >> 8;
+
+				if (constants->uLightIndex == -1)
+				{
+					r += (uint32_t)(constants->uDynLightColor.X * 255.0f);
+					g += (uint32_t)(constants->uDynLightColor.Y * 255.0f);
+					b += (uint32_t)(constants->uDynLightColor.Z * 255.0f);
+
+					r = MIN<uint32_t>(r, 255);
+					g = MIN<uint32_t>(g, 255);
+					b = MIN<uint32_t>(b, 255);
+				}
+
+				lightarray[x] = MAKEARGB(a, r, g, b);
 				lightpos += lightstep;
 			}
 		}
@@ -324,6 +357,19 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 			uint32_t r = thread->scanline.vColorR[x];
 			uint32_t g = thread->scanline.vColorG[x];
 			uint32_t b = thread->scanline.vColorB[x];
+
+			// [GEC] DynLightColor On Weapon 
+			if (constants->uLightIndex == -1)
+			{
+				r += (uint32_t)(constants->uDynLightColor.X * 255.0f);
+				g += (uint32_t)(constants->uDynLightColor.Y * 255.0f);
+				b += (uint32_t)(constants->uDynLightColor.Z * 255.0f);
+
+				r = MIN<uint32_t>(r, 255);
+				g = MIN<uint32_t>(g, 255);
+				b = MIN<uint32_t>(b, 255);
+			}
+
 			lightarray[x] = MAKEARGB(a, r, g, b);
 		}
 	}

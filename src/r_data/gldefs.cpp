@@ -54,7 +54,6 @@ void AddLightAssociation(const char *actor, const char *frame, const char *light
 void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
 void ParseColorization(FScanner& sc);
 
-TArray<UserShaderDesc> usershaders;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern int AttenuationIsSet;
 

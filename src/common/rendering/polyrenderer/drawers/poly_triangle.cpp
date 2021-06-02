@@ -29,7 +29,6 @@
 #include "poly_triangle.h"
 #include "poly_thread.h"
 #include "screen_triangle.h"
-#include "x86.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -187,11 +186,14 @@ private:
 class PolySetVertexBufferCommand : public PolyDrawerCommand
 {
 public:
-	PolySetVertexBufferCommand(const void* vertices) : vertices(vertices) { }
-	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetVertexBuffer(vertices); }
+	PolySetVertexBufferCommand(const void* vertices, int offset0, int offset1) : vertices(vertices), offset0(offset0), offset1(offset1){ }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetVertexBuffer(vertices, offset0, offset1); }
 
 private:
 	const void* vertices;
+	// [GEC] Add offset params, necessary to project frames and model interpolation correctly
+	int offset0; 
+	int offset1;
 };
 
 class PolySetIndexBufferCommand : public PolyDrawerCommand
@@ -346,9 +348,9 @@ void PolyCommandBuffer::SetInputAssembly(PolyInputAssembly *input)
 	mQueue->Push<PolySetInputAssemblyCommand>(input);
 }
 
-void PolyCommandBuffer::SetVertexBuffer(const void *vertices)
+void PolyCommandBuffer::SetVertexBuffer(const void *vertices, int offset0, int offset1)
 {
-	mQueue->Push<PolySetVertexBufferCommand>(vertices);
+	mQueue->Push<PolySetVertexBufferCommand>(vertices, offset0, offset1);
 }
 
 void PolyCommandBuffer::SetIndexBuffer(const void *elements)

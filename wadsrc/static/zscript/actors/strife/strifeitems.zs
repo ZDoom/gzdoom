@@ -559,10 +559,10 @@ class PrisonPass : Key
 	
 	override bool TryPickup (in out Actor toucher)
 	{
-		Super.TryPickup (toucher);
+		bool res = Super.TryPickup (toucher);
 		Door_Open(223, 16);
 		toucher.GiveInventoryType ("QuestItem10");
-		return true;
+		return res;
 	}
 
 	//============================================================================

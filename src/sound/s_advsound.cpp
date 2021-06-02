@@ -1608,19 +1608,20 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 //
 //===========================================================================
 
-static const char *GetSoundClass(AActor *pp)
+const char *S_GetSoundClass(AActor *pp)
 {
 	auto player = pp->player;
+	const char *defaultsoundclass = pp->NameVar(NAME_SoundClass) == NAME_None ? "player" : pp->NameVar(NAME_SoundClass).GetChars();
 	if (player != nullptr &&
 		(player->mo == nullptr || !(player->mo->flags4 &MF4_NOSKIN)) &&
 		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size() &&
-		(unsigned)player->userinfo.GetSkin() < Skins.Size())
+		(unsigned)player->userinfo.GetSkin() < Skins.Size() &&
+		player->SoundClass.IsEmpty())
 	{
 		return Skins[player->userinfo.GetSkin()].Name.GetChars();
 	}
-	auto sclass = player? pp->NameVar(NAME_SoundClass) : NAME_None;
-
-	return sclass != NAME_None ? sclass.GetChars() : "player";
+		
+	return player->SoundClass.IsEmpty() ? defaultsoundclass : player->SoundClass.GetChars();
 }
 
 //==========================================================================
@@ -1637,7 +1638,7 @@ int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 
 	if (actor != nullptr)
 	{
-		pclass = GetSoundClass (actor);
+		if (actor->player != nullptr) pclass = S_GetSoundClass(actor);
 		if (actor->player != nullptr) gender = actor->player->userinfo.GetGender();
 	}
 	else
@@ -1682,7 +1683,7 @@ int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedn
 
 void S_MarkPlayerSounds (AActor *player)
 {
-	const char *playerclass = GetSoundClass(player);
+	const char *playerclass = S_GetSoundClass(player);
 	int classidx = S_FindPlayerClass(playerclass);
 	if (classidx < 0)
 	{
@@ -1696,6 +1697,7 @@ void S_MarkPlayerSounds (AActor *player)
 			PlayerSounds[listidx].MarkUsed();
 		}
 	}
+	
 }
 
 //==========================================================================

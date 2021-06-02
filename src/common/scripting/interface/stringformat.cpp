@@ -550,7 +550,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToDouble, StringToDbl)
 	ACTION_RETURN_FLOAT(self->ToDouble());
 }
 
-static void StringSplit(FString *self, TArray<FString> *tokens, const FString &delimiter, int keepEmpty)
+static void StringSubst(FString *self, const FString &substr, const FString& replc)
+{
+	self->Substitute(substr, replc);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Substitute, StringSubst)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_STRING(replc);
+	StringSubst(self, substr, replc);
+	return 0;
+}
+
+static void StringSplit(FString* self, TArray<FString>* tokens, const FString& delimiter, int keepEmpty)
 {
 	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
 }

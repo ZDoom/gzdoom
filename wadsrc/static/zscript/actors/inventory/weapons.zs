@@ -848,9 +848,10 @@ class Weapon : StateProvider
 			{
 				if (player.PendingWeapon == NULL ||	player.PendingWeapon == WP_NOCHANGE)
 				{
-					player.PendingWeapon = SisterWeapon;
+					player.refire = 0;
+					player.ReadyWeapon = SisterWeapon;
+					player.SetPsprite(PSP_WEAPON, SisterWeapon.GetReadyState());
 				}
-				player.WeaponState |= WF_REFIRESWITCHOK;
 			}
 			else
 			{
@@ -866,9 +867,10 @@ class Weapon : StateProvider
 					if (player.PendingWeapon == NULL || player.PendingWeapon == WP_NOCHANGE)
 					{
 						// Something went wrong. Initiate a regular weapon change.
-						player.PendingWeapon = SisterWeapon;
+						player.refire = 0;
+						player.ReadyWeapon = SisterWeapon;
+						player.SetPsprite(PSP_WEAPON, SisterWeapon.GetReadyState());
 					}
-					player.WeaponState |= WF_REFIRESWITCHOK;
 				}
 			}
 		}

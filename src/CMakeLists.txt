@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8.7 )
+cmake_minimum_required( VERSION 3.1.0 )
 
 include(precompiled_headers)
 
@@ -317,20 +317,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	endif()
 	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_C_FLAGS}" )
 	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_CXX_FLAGS}" )
-
-	# ARM processors (Raspberry Pi, et al) - enable ARM NEON support.
-	if(${ZDOOM_TARGET_ARCH} MATCHES "arm" AND NOT APPLE)
-		set (USE_LINUX_ARM 1 CACHE BOOL "Compile for ARM - Linux")
-	endif ()
-
-	if (USE_LINUX_ARM)
-		set (USE_ARMV8 0 CACHE BOOL "Use ARMv8 instructions - Raspberry Pi 3")
-		if (USE_ARMV8)
-			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mtune=cortex-a53 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
-		else ()
-			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a7 -mfpu=neon-vfpv4 -mtune=cortex-a7 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
-		endif ()
-	endif ()
 
 	if( NOT X64 AND NOT CAN_DO_MFPMATH )
 		set( CMAKE_C_FLAGS "-DNO_SSE ${CMAKE_C_FLAGS}" )
@@ -1004,6 +990,7 @@ set (PCH_SOURCES
 	common/2d/v_2ddrawer.cpp
 	common/2d/v_drawtext.cpp
 	common/2d/v_draw.cpp
+	common/thirdparty/gain_analysis.cpp
 	common/thirdparty/sfmt/SFMT.cpp
 	common/fonts/singlelumpfont.cpp
 	common/fonts/singlepicfont.cpp

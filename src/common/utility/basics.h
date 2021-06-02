@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <algorithm>
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -101,3 +102,6 @@ enum EStateUseFlags
 	SUF_WEAPON = 4,
 	SUF_ITEM = 8,
 };
+
+using std::min;
+using std::max;

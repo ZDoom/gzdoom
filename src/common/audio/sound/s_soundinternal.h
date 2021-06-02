@@ -209,7 +209,7 @@ protected:
 
 	// the complete set of sound effects
 	TArray<sfxinfo_t> S_sfx;
-	FRolloffInfo S_Rolloff;
+	FRolloffInfo S_Rolloff{};
 	TArray<uint8_t> S_SoundCurve;
 	TMap<int, int> ResIdMap;
 	TArray<FRandomSoundList> S_rnd;
@@ -254,6 +254,11 @@ public:
 
 	virtual void StopChannel(FSoundChan* chan);
 	sfxinfo_t* LoadSound(sfxinfo_t* sfx);
+	const sfxinfo_t* GetSfx(unsigned snd)
+	{
+		if (snd >= S_sfx.Size()) return nullptr;
+		return &S_sfx[snd];
+	}
 
 	// Initializes sound stuff, including volume
 	// Sets channels, SFX and music volume,

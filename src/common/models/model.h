@@ -15,15 +15,16 @@ void FlushModels();
 extern TDeletingArray<FModel*> Models;
 extern TArray<FSpriteModelFrame> SpriteModelFrames;
 
-#define MAX_MODELS_PER_FRAME 4
 #define MD3_MAX_SURFACES	32
+#define MIN_MODELS	4
 
 struct FSpriteModelFrame
 {
-	int modelIDs[MAX_MODELS_PER_FRAME];
-	FTextureID skinIDs[MAX_MODELS_PER_FRAME];
-	FTextureID surfaceskinIDs[MAX_MODELS_PER_FRAME][MD3_MAX_SURFACES];
-	int modelframes[MAX_MODELS_PER_FRAME];
+	uint8_t modelsAmount = 0;
+	TArray<int> modelIDs;
+	TArray<FTextureID> skinIDs;
+	TArray<FTextureID> surfaceskinIDs;
+	TArray<int> modelframes;
 	float xscale, yscale, zscale;
 	// [BB] Added zoffset, rotation parameters and flags.
 	// Added xoffset, yoffset

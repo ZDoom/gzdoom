@@ -5,6 +5,7 @@ version "4.5"
 #include "zscript/engine/dynarrays.zs"
 #include "zscript/engine/dictionary.zs"
 #include "zscript/engine/inputevents.zs"
+#include "zscript/engine/service.zs"
 
 #include "zscript/engine/ui/menu/colorpickermenu.zs"
 #include "zscript/engine/ui/menu/joystickmenu.zs"

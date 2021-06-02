@@ -40,7 +40,6 @@
 #include "i_video.h"
 #include "c_dispatch.h"
 #include "st_stuff.h"
-#include "x86.h"
 #include "g_levellocals.h"
 #include "m_png.h"
 #include "v_colortables.h"

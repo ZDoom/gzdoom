@@ -30,24 +30,32 @@
 #include "screen_blend.h"
 #include "screen_scanline_setup.h"
 #include "screen_shader.h"
-#include "x86.h"
 #include <cmath>
 
 static void WriteDepth(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
-	size_t pitch = thread->depthstencil->Width();
-	float* line = thread->depthstencil->DepthValues() + pitch * y;
-	float* w = thread->scanline.W;
-	for (int x = x0; x < x1; x++)
+	float* line = thread->depthstencil->DepthValues() + (size_t)thread->depthstencil->Width() * y;
+
+	if (thread->DepthRangeScale != 0.0f)
 	{
-		line[x] = w[x];
+		float* w = thread->scanline.W;
+		for (int x = x0; x < x1; x++)
+		{
+			line[x] = w[x];
+		}
+	}
+	else // portal fills always uses DepthRangeStart = 1 and DepthRangeScale = 0
+	{
+		for (int x = x0; x < x1; x++)
+		{
+			line[x] = 65536.0f;
+		}
 	}
 }
 
 static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
-	size_t pitch = thread->depthstencil->Width();
-	uint8_t* line = thread->depthstencil->StencilValues() + pitch * y;
+	uint8_t* line = thread->depthstencil->StencilValues() + (size_t)thread->depthstencil->Width() * y;
 	uint8_t value = thread->StencilWriteValue;
 	for (int x = x0; x < x1; x++)
 	{
@@ -55,11 +63,16 @@ static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
-static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+static void RunFragmentShader(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	WriteVaryings(y, x0, x1, args, thread);
-
 	thread->FragmentShader(x0, x1, thread);
+}
+
+static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+{
+	if (thread->WriteColor || thread->AlphaTest)
+		RunFragmentShader(y, x0, x1, args, thread);
 
 	if (!thread->AlphaTest)
 	{
@@ -93,88 +106,83 @@ static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 	}
 }
 
-template<typename OptT>
-static void TestSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+static void NoTestSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+{
+	WriteW(y, x0, x1, args, thread);
+	DrawSpan(y, x0, x1, args, thread);
+}
+
+static void DepthTestSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	WriteW(y, x0, x1, args, thread);
 
-	if ((OptT::Flags & SWTRI_DepthTest) || (OptT::Flags & SWTRI_StencilTest))
+	float* zbufferLine = thread->depthstencil->DepthValues() + (size_t)thread->depthstencil->Width() * y;
+	float* w = thread->scanline.W;
+	float depthbias = thread->depthbias;
+
+	int x = x0;
+	int xend = x1;
+	while (x < xend)
 	{
-		size_t pitch = thread->depthstencil->Width();
+		int xstart = x;
 
-		uint8_t* stencilbuffer;
-		uint8_t* stencilLine;
-		uint8_t stencilTestValue;
-		if (OptT::Flags & SWTRI_StencilTest)
+		while (zbufferLine[x] >= w[x] + depthbias && x < xend)
+			x++;
+
+		if (x > xstart)
 		{
-			stencilbuffer = thread->depthstencil->StencilValues();
-			stencilLine = stencilbuffer + pitch * y;
-			stencilTestValue = thread->StencilTestValue;
+			DrawSpan(y, xstart, x, args, thread);
 		}
 
-		float* zbuffer;
-		float* zbufferLine;
-		float* w;
-		float depthbias;
-		if (OptT::Flags & SWTRI_DepthTest)
-		{
-			zbuffer = thread->depthstencil->DepthValues();
-			zbufferLine = zbuffer + pitch * y;
-			w = thread->scanline.W;
-			depthbias = thread->depthbias;
-		}
-
-		int x = x0;
-		int xend = x1;
-		while (x < xend)
-		{
-			int xstart = x;
-
-			if ((OptT::Flags & SWTRI_DepthTest) && (OptT::Flags & SWTRI_StencilTest))
-			{
-				while (zbufferLine[x] >= w[x] + depthbias && stencilLine[x] == stencilTestValue && x < xend)
-					x++;
-			}
-			else if (OptT::Flags & SWTRI_DepthTest)
-			{
-				while (zbufferLine[x] >= w[x] + depthbias && x < xend)
-					x++;
-			}
-			else if (OptT::Flags & SWTRI_StencilTest)
-			{
-				while (stencilLine[x] == stencilTestValue && x < xend)
-					x++;
-			}
-			else
-			{
-				x = xend;
-			}
-
-			if (x > xstart)
-			{
-				DrawSpan(y, xstart, x, args, thread);
-			}
-
-			if ((OptT::Flags & SWTRI_DepthTest) && (OptT::Flags & SWTRI_StencilTest))
-			{
-				while ((zbufferLine[x] < w[x] + depthbias || stencilLine[x] != stencilTestValue) && x < xend)
-					x++;
-			}
-			else if (OptT::Flags & SWTRI_DepthTest)
-			{
-				while (zbufferLine[x] < w[x] + depthbias && x < xend)
-					x++;
-			}
-			else if (OptT::Flags & SWTRI_StencilTest)
-			{
-				while (stencilLine[x] != stencilTestValue && x < xend)
-					x++;
-			}
-		}
+		while (zbufferLine[x] < w[x] + depthbias && x < xend)
+			x++;
 	}
-	else
+}
+
+static void DepthStencilTestSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+{
+	uint8_t* stencilLine = thread->depthstencil->StencilValues() + (size_t)thread->depthstencil->Width() * y;
+	uint8_t stencilTestValue = thread->StencilTestValue;
+
+	int x = x0;
+	int xend = x1;
+	while (x < xend)
 	{
-		DrawSpan(y, x0, x1, args, thread);
+		int xstart = x;
+		while (stencilLine[x] == stencilTestValue && x < xend)
+			x++;
+
+		if (x > xstart)
+		{
+			DepthTestSpan(y, xstart, x, args, thread);
+		}
+
+		while (stencilLine[x] != stencilTestValue && x < xend)
+			x++;
+	}
+}
+
+static void StencilTestSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+{
+	uint8_t* stencilLine = thread->depthstencil->StencilValues() + (size_t)thread->depthstencil->Width() * y;
+	uint8_t stencilTestValue = thread->StencilTestValue;
+
+	int x = x0;
+	int xend = x1;
+	while (x < xend)
+	{
+		int xstart = x;
+		while (stencilLine[x] == stencilTestValue && x < xend)
+			x++;
+
+		if (x > xstart)
+		{
+			WriteW(y, x0, x1, args, thread);
+			DrawSpan(y, xstart, x, args, thread);
+		}
+
+		while (stencilLine[x] != stencilTestValue && x < xend)
+			x++;
 	}
 }
 
@@ -288,8 +296,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs* args, PolyTriangleThreadDat
 
 void(*ScreenTriangle::TestSpanOpts[])(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread) =
 {
-	&TestSpan<TestSpanOpt0>,
-	&TestSpan<TestSpanOpt1>,
-	&TestSpan<TestSpanOpt2>,
-	&TestSpan<TestSpanOpt3>
+	&NoTestSpan,
+	&DepthTestSpan,
+	&StencilTestSpan,
+	&DepthStencilTestSpan
 };

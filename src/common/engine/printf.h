@@ -1,4 +1,5 @@
 #pragma once
+#include <stdarg.h>
 
 #if defined __GNUC__ || defined __clang__
 # define ATTRIBUTE(attrlist) __attribute__(attrlist)
@@ -86,6 +87,7 @@ int Printf (int printlevel, const char *format, ...) ATTRIBUTE((format(printf,2,
 int Printf (const char *format, ...) ATTRIBUTE((format(printf,1,2)));
 int DPrintf (int level, const char *format, ...) ATTRIBUTE((format(printf,2,3)));
 
+void I_DebugPrint(const char* cp);
 void debugprintf(const char* f, ...);	// Prints to the debugger's log.
 
 // flag to silence non-error output

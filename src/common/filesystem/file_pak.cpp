@@ -109,7 +109,7 @@ bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
 		Lumps[i].Owner = this;
 		Lumps[i].Position = LittleLong(fileinfo[i].filepos);
 		Lumps[i].LumpSize = LittleLong(fileinfo[i].filelen);
-		Lumps[i].CheckEmbedded();
+		Lumps[i].CheckEmbedded(filter);
 	}
 	GenerateHash();
 	PostProcessArchive(&Lumps[0], sizeof(Lumps[0]), filter);

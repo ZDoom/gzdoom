@@ -12,55 +12,55 @@ jobs:
         config:
         - {
             name: "Visual Studio 64-bit",
-            os: windows-latest,
+            os: windows-2019,
             extra_options: "-A x64",
             build_type: "Release"
           }
         - {
             name: "Visual Studio 64-bit",
-            os: windows-latest,
+            os: windows-2019,
             extra_options: "-A x64",
             build_type: "Debug"
           }
         - {
             name: "macOS",
-            os: macos-latest,
-            extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
+            os: macos-10.15,
             build_type: "Release"
           }
         - {
             name: "macOS",
-            os: macos-latest,
+            os: macos-10.15,
+            extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
             build_type: "Debug"
           }
         - {
             name: "Linux GCC 7",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk2.0-dev",
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7",
+            deps_cmdline: "sudo apt update && sudo apt install g++-7 libsdl2-dev libgtk2.0-dev",
             build_type: "RelWithDebInfo"
           }
         - {
-            name: "Linux GCC 9",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-9",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk-3-dev",
-            build_type: "Debug"
+            name: "Linux GCC 11",
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11",
+            deps_cmdline: "sudo apt update && sudo apt install g++-11 libsdl2-dev libgtk-3-dev",
+            build_type: "MinSizeRel"
           }
         - {
             name: "Linux Clang 6",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-6.0 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-6.0",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev",
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 \
+                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            deps_cmdline: "sudo apt update && sudo apt remove gcc-11 libgcc-11-dev g++-11 libstdc++-11-dev && sudo apt install clang-6.0 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
             build_type: "Debug"
           }
         - {
-            name: "Linux Clang 9",
-            os: ubuntu-latest,
-            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-9 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-9 \
-                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
+            name: "Linux Clang 11",
+            os: ubuntu-20.04,
+            extra_options: "-DCMAKE_C_COMPILER=clang-11 -DCMAKE_CXX_COMPILER=clang++-11",
+            deps_cmdline: "sudo apt update && sudo apt install clang-11 libsdl2-dev libvpx-dev",
             build_type: "Release"
           }
 
@@ -73,20 +73,22 @@ jobs:
         if [[ ! -z "${{ matrix.config.deps_cmdline }}" ]]; then
           eval ${{ matrix.config.deps_cmdline }}
         fi
-        # Build and install ZMusic
         mkdir build
-        cd build
-        git clone https://github.com/coelckers/ZMusic.git
-        cd ZMusic
-        git checkout 1.1.0
-        cd ..
-        cmake -B zmusic_build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_INSTALL_PREFIX=`pwd`/zmusic_install ${{ matrix.config.extra_options }} ZMusic
-        cmake --build zmusic_build --target install --parallel 3
+        if [[ "${{ runner.os }}" == 'macOS' ]]; then
+          export ZMUSIC_PACKAGE=zmusic-1.1.7-macos.tar.bz2
+        elif [[ "${{ runner.os }}" == 'Linux' ]]; then
+          export ZMUSIC_PACKAGE=zmusic-1.1.7-linux.tar.bz2
+        fi
+        if [[ ! -z "${ZMUSIC_PACKAGE}" ]]; then
+          cd build
+          wget -q "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${ZMUSIC_PACKAGE}"
+          tar -xf "${ZMUSIC_PACKAGE}"
+        fi
 
     - name: Configure
       shell: bash
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_PREFIX_PATH=`pwd`/build/zmusic_install ${{ matrix.config.extra_options }} .
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_PREFIX_PATH=`pwd`/build/zmusic -DPK3_QUIET_ZIPDIR=ON ${{ matrix.config.extra_options }} .
 
     - name: Build
       shell: bash

@@ -189,8 +189,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
 //
 //==========================================================================
 
-int F2DDrawer::AddCommand(const RenderCommand *data) 
+int F2DDrawer::AddCommand(RenderCommand *data) 
 {
+	data->mScreenFade = screenFade;
 	if (mData.Size() > 0 && data->isCompatible(mData.Last()))
 	{
 		// Merge with the last command.
@@ -527,6 +528,10 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	offset = osave;
 }
 
+DShape2D::~DShape2D() {
+	delete lastParms;
+}
+
 //==========================================================================
 //
 //
@@ -552,6 +557,20 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 
 	dg.mTranslationId = 0;
 	SetStyle(img, parms, vertexcolor, dg);
+
+	if (shape->lastParms == nullptr) {
+		shape->lastParms = new DrawParms(parms);
+	}
+	else if (shape->lastParms->vertexColorChange(parms)) {
+		shape->needsVertexUpload = true;
+		if (!shape->uploadedOnce) {
+			shape->bufIndex = -1;
+			shape->buffers.Clear();
+			shape->lastCommand = -1;
+		}
+		delete shape->lastParms;
+		shape->lastParms = new DrawParms(parms);
+	}
 
 	if (!img->isHardwareCanvas() && parms.TranslationId != -1)
 		dg.mTranslationId = parms.TranslationId;
@@ -605,6 +624,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->bufIndex += 1;
 
 		shape->buffers.Reserve(1);
+
 		auto buf = &shape->buffers[shape->bufIndex];
 
 		auto verts = TArray<TwoDVertex>(dg.mVertCount, true);
@@ -625,8 +645,11 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 
 		buf->UploadData(&verts[0], dg.mVertCount, &shape->mIndices[0], shape->mIndices.Size());
 		shape->needsVertexUpload = false;
+		shape->uploadedOnce = true;
 	}
 	dg.shape2DBufIndex = shape->bufIndex;
+	shape->lastCommand += 1;
+	dg.shape2DCommandCounter = shape->lastCommand;
 	AddCommand(&dg);
 	offset = osave;
 }
@@ -716,10 +739,12 @@ void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 //
 //==========================================================================
 
-void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
+void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, const unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
 {
 	RenderCommand dg;
 	int method = 0;
+
+	if (!img || !img->isValid()) return;
 
 	dg.mType = DrawTypeTriangles;
 	if (clipx1 > 0 || clipy1 > 0 || clipx2 < GetWidth() - 1 || clipy2 < GetHeight() - 1)
@@ -745,14 +770,28 @@ void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigne
 		Set(ptr, vt[i].X, vt[i].Y, 0.f, vt[i].Z, vt[i].W, color);
 		ptr++;
 	}
-
 	dg.mIndexIndex = mIndices.Size();
-	mIndices.Reserve(idxcount);
-	for (size_t i = 0; i < idxcount; i++)
+
+	if (idxcount > 0)
 	{
-		mIndices[dg.mIndexIndex + i] = ind[i] + dg.mVertIndex;
+		mIndices.Reserve(idxcount);
+		for (size_t i = 0; i < idxcount; i++)
+		{
+			mIndices[dg.mIndexIndex + i] = ind[i] + dg.mVertIndex;
+		}
+		dg.mIndexCount = (int)idxcount;
 	}
-	dg.mIndexCount = (int)idxcount;
+	else
+	{
+		// If we have no index buffer, treat this as an unindexed list of triangles.
+		mIndices.Reserve(vtcount);
+		for (size_t i = 0; i < vtcount; i++)
+		{
+			mIndices[dg.mIndexIndex + i] = int(i + dg.mVertIndex);
+		}
+		dg.mIndexCount = (int)vtcount;
+
+	}
 	AddCommand(&dg);
 }
 
@@ -917,6 +956,7 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 	{
 		// Only needed by Raze's fullscreen blends because they are being calculated late when half of the 2D content has already been submitted,
 		// This ensures they are below the HUD, not above it.
+		dg.mScreenFade = screenFade;
 		mData.Insert(0, dg);
 	}
 }

@@ -63,7 +63,7 @@ class Bishop : Actor
 		BISH J 5 BRIGHT A_Explode(random[BishopBoom](25,40));
 		BISH K 5 Bright;
 		BISH LM 4 Bright;
-		BISH N 4 A_SpawnItemEx("BishopPuff", 0,0,40, 0,0,-0.5);
+		BISH N 4 A_SpawnItemEx("BishopPuff", 0,0,40, 0,0,0.5);
 		BISH O 4 A_QueueCorpse;
 		BISH P -1;
 		Stop;

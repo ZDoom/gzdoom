@@ -49,6 +49,8 @@
 
 CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+EXTERN_CVAR(Float, r_actorspriteshadowdist)
+
 thread_local bool isWorkerThread;
 ctpl::thread_pool renderPool(1);
 bool inited = false;
@@ -142,15 +144,27 @@ void HWDrawInfo::WorkerThread()
 
 			front = hw_FakeFlat(job->sub->sector, in_area, false);
 			auto seg = job->seg;
-			if (seg->backsector)
+			auto backsector = seg->backsector;
+			if (!backsector && seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0]) // For one-sided portals use the portal's destination sector as backsector.
 			{
-				if (front->sectornum == seg->backsector->sectornum || (seg->sidedef->Flags & WALLF_POLYOBJ))
+				auto portal = seg->linedef->getPortal();
+				backsector = portal->mDestination->frontsector;
+				back = hw_FakeFlat(backsector, in_area, true);
+				if (front->floorplane.isSlope() || front->ceilingplane.isSlope() || back->floorplane.isSlope() || back->ceilingplane.isSlope())
+				{
+					// Having a one-sided portal like this with slopes is too messy so let's ignore that case.
+					back = nullptr;
+				}
+			}
+			else if (backsector)
+			{
+				if (front->sectornum == backsector->sectornum || (seg->sidedef->Flags & WALLF_POLYOBJ))
 				{
 					back = front;
 				}
 				else
 				{
-					back = hw_FakeFlat(seg->backsector, in_area, true);
+					back = hw_FakeFlat(backsector, in_area, true);
 				}
 			}
 			else back = nullptr;
@@ -535,6 +549,18 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 		if (CurrentMapSections[thing->subsector->mapsection])
 		{
 			HWSprite sprite;
+
+			// [Nash] draw sprite shadow
+			if (R_ShouldDrawSpriteShadow(thing))
+			{
+				double dist = (thing->Pos() - vp.Pos).LengthSquared();
+				double check = r_actorspriteshadowdist;
+				if (dist <= check * check)
+				{
+					sprite.Process(this, thing, sector, in_area, false, true);
+				}
+			}
+
 			sprite.Process(this, thing, sector, in_area, false);
 		}
 	}
@@ -554,6 +580,18 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 		}
 
 		HWSprite sprite;
+
+		// [Nash] draw sprite shadow
+		if (R_ShouldDrawSpriteShadow(thing))
+		{
+			double dist = (thing->Pos() - vp.Pos).LengthSquared();
+			double check = r_actorspriteshadowdist;
+			if (dist <= check * check)
+			{
+				sprite.Process(this, thing, sector, in_area, true, true);
+			}
+		}
+
 		sprite.Process(this, thing, sector, in_area, true);
 	}
 }

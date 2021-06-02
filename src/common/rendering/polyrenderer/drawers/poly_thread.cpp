@@ -28,7 +28,6 @@
 #include "model.h"
 #include "poly_thread.h"
 #include "screen_triangle.h"
-#include "x86.h"
 
 #ifndef NO_SSE
 #include <immintrin.h>
@@ -166,6 +165,7 @@ void PolyTriangleThreadData::SetViewpointUniforms(const HWViewpointUniforms *uni
 
 void PolyTriangleThreadData::SetDepthClamp(bool on)
 {
+	DepthClamp = on;
 }
 
 void PolyTriangleThreadData::SetDepthMask(bool on)
@@ -187,13 +187,8 @@ void PolyTriangleThreadData::SetDepthFunc(int func)
 
 void PolyTriangleThreadData::SetDepthRange(float min, float max)
 {
-	// The only two variants used by hwrenderer layer
-	if (min == 0.0f && max == 1.0f)
-	{
-	}
-	else if (min == 1.0f && max == 1.0f)
-	{
-	}
+	DepthRangeStart = min;
+	DepthRangeScale = max - min;
 }
 
 void PolyTriangleThreadData::SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor)
@@ -211,19 +206,18 @@ void PolyTriangleThreadData::SetStencil(int stencilRef, int op)
 	StencilTestValue = stencilRef;
 	if (op == SOP_Increment)
 	{
-		WriteStencil = StencilTest;
 		StencilWriteValue = MIN(stencilRef + 1, (int)255);
 	}
 	else if (op == SOP_Decrement)
 	{
-		WriteStencil = StencilTest;
 		StencilWriteValue = MAX(stencilRef - 1, (int)0);
 	}
 	else // SOP_Keep
 	{
-		WriteStencil = false;
 		StencilWriteValue = stencilRef;
 	}
+
+	WriteStencil = StencilTest && (StencilTestValue != StencilWriteValue);
 }
 
 void PolyTriangleThreadData::SetCulling(int mode)
@@ -389,7 +383,7 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 
 ShadedTriVertex PolyTriangleThreadData::ShadeVertex(int index)
 {
-	inputAssembly->Load(this, vertices, index);
+	inputAssembly->Load(this, vertices, frame0, frame1, index);
 	mainVertexShader.SIMPLE = (SpecialEffect == EFF_BURN) || (SpecialEffect == EFF_STENCIL);
 	mainVertexShader.SPHEREMAP = (SpecialEffect == EFF_SPHEREMAP);
 	mainVertexShader.main();
@@ -437,8 +431,16 @@ void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
 		clipd[1] = v.gl_Position.W - v.gl_Position.X;
 		clipd[2] = v.gl_Position.Y + v.gl_Position.W;
 		clipd[3] = v.gl_Position.W - v.gl_Position.Y;
-		clipd[4] = v.gl_Position.Z + v.gl_Position.W;
-		clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		if (DepthClamp)
+		{
+			clipd[4] = 1.0f;
+			clipd[5] = 1.0f;
+		}
+		else
+		{
+			clipd[4] = v.gl_Position.Z + v.gl_Position.W;
+			clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		}
 		clipd[6] = v.gl_ClipDistance[0];
 		clipd[7] = v.gl_ClipDistance[1];
 		clipd[8] = v.gl_ClipDistance[2];
@@ -691,8 +693,16 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 		clipd[1] = v.gl_Position.W - v.gl_Position.X;
 		clipd[2] = v.gl_Position.Y + v.gl_Position.W;
 		clipd[3] = v.gl_Position.W - v.gl_Position.Y;
-		clipd[4] = v.gl_Position.Z + v.gl_Position.W;
-		clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		if (DepthClamp)
+		{
+			clipd[4] = 1.0f;
+			clipd[5] = 1.0f;
+		}
+		else
+		{
+			clipd[4] = v.gl_Position.Z + v.gl_Position.W;
+			clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		}
 		clipd[6] = v.gl_ClipDistance[0];
 		clipd[7] = v.gl_ClipDistance[1];
 		clipd[8] = v.gl_ClipDistance[2];
@@ -716,8 +726,8 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 	__m128 clipd1 = _mm_sub_ps(mw, mx);
 	__m128 clipd2 = _mm_add_ps(my, mw);
 	__m128 clipd3 = _mm_sub_ps(mw, my);
-	__m128 clipd4 = _mm_add_ps(mz, mw);
-	__m128 clipd5 = _mm_sub_ps(mw, mz);
+	__m128 clipd4 = DepthClamp ? _mm_set1_ps(1.0f) : _mm_add_ps(mz, mw);
+	__m128 clipd5 = DepthClamp ? _mm_set1_ps(1.0f) : _mm_sub_ps(mw, mz);
 	__m128 clipd6 = _mm_setr_ps(verts[0]->gl_ClipDistance[0], verts[1]->gl_ClipDistance[0], verts[2]->gl_ClipDistance[0], 0.0f);
 	__m128 clipd7 = _mm_setr_ps(verts[0]->gl_ClipDistance[1], verts[1]->gl_ClipDistance[1], verts[2]->gl_ClipDistance[1], 0.0f);
 	__m128 clipd8 = _mm_setr_ps(verts[0]->gl_ClipDistance[2], verts[1]->gl_ClipDistance[2], verts[2]->gl_ClipDistance[2], 0.0f);

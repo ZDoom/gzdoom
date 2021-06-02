@@ -390,7 +390,7 @@ void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 
 IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture(int numchannels)
 {
-	return new VkHardwareTexture();
+	return new VkHardwareTexture(numchannels);
 }
 
 FMaterial* VulkanFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)

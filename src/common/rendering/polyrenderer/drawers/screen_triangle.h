@@ -122,8 +122,3 @@ enum SWTestSpan
 	SWTRI_DepthTest = 1,
 	SWTRI_StencilTest = 2
 };
-
-struct TestSpanOpt0 { static const int Flags = 0; };
-struct TestSpanOpt1 { static const int Flags = 1; };
-struct TestSpanOpt2 { static const int Flags = 2; };
-struct TestSpanOpt3 { static const int Flags = 3; };

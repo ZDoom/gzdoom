@@ -163,9 +163,8 @@ static const char *shaderBindings = R"(
 		vec4 uSplitBottomPlane;
 
 		vec4 uDetailParms;
-		#ifdef NPOT_EMULATION
-		vec2 uNpotEmulation;
-		#endif
+		vec4 uNpotEmulation;
+		vec4 padding1, padding2, padding3;
 	};
 
 	layout(set = 0, binding = 3, std140) uniform StreamUBO {
@@ -297,6 +296,9 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	code << defines;
 	code << "\n$placeholder$";	// here the code can later add more needed #defines.
 	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+#ifdef NPOT_EMULATION
+	code << "#define NPOT_EMULATION\n";
+#endif
 	code << shaderBindings;
 	FString placeholder = "\n";
 

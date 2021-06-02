@@ -97,7 +97,7 @@ public:
 	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false, bool doomtemplate = false, GlyphSet *baseGlpyphs = nullptr);
 	virtual ~FFont ();
 
-	virtual FGameTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
+	virtual FGameTexture *GetChar (int code, int translation, int *const width) const;
 	virtual int GetCharWidth (int code) const;
 	int GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
@@ -128,21 +128,18 @@ public:
 	void SetKerning(int c) { GlobalKerning = c; }
 	bool NoTranslate() const { return noTranslate; }
 	virtual void RecordAllTextureColors(uint32_t *usedcolors);
-	virtual void SetDefaultTranslation(uint32_t *colors);
 	void CheckCase();
 
 	int GetDisplacement() const { return Displacement; }
+
+	static int GetLuminosity(uint32_t* colorsused, TArray<double>& Luminosity, int* minlum = nullptr, int* maxlum = nullptr);
+	EFontType GetType() const { return Type; }
 
 
 protected:
 	FFont (int lump);
 
-	void BuildTranslations (const double *luminosity, const uint8_t *identity,
-		const void *ranges, int total_colors, const PalEntry *palette, std::function<void(FRemapTable*)> post = nullptr);
 	void FixXMoves();
-
-	static int SimpleTranslation (uint32_t *colorsused, uint8_t *translation,
-		uint8_t *identity, TArray<double> &Luminosity);
 
 	void ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale);
 
@@ -161,12 +158,10 @@ protected:
 	bool forceremap = false;
 	struct CharData
 	{
-		FGameTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
-		FGameTexture *OriginalPic = nullptr;	// Texture for use with CR_UNTRANSLATED or font colorization. 
+		FGameTexture *OriginalPic = nullptr;
 		int XMove = INT_MIN;
 	};
 	TArray<CharData> Chars;
-	int ActiveColors = -1;
 	TArray<int> Translations;
 	uint8_t PatchRemap[256];
 
@@ -192,6 +187,8 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 FFont *V_GetFont(const char *fontname, const char *fontlumpname = nullptr);
 void V_InitFontColors();
 char* CleanseString(char* str);
+void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size);
 void V_LoadTranslations();
+class FBitmap;
 
 

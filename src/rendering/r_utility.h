@@ -135,5 +135,6 @@ double R_ClampVisibility(double vis);
 extern void R_FreePastViewers ();
 extern void R_ClearPastViewer (AActor *actor);
 
+bool R_ShouldDrawSpriteShadow(AActor *thing);
 
 #endif

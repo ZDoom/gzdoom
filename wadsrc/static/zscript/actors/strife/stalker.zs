@@ -20,6 +20,7 @@ class Stalker : Actor
 		+NOVERTICALMELEERANGE
 		MaxDropOffHeight 32;
 		MinMissileChance 150;
+		Tag "$TAG_STALKER";
 		SeeSound "stalker/sight";
 		AttackSound "stalker/attack";
 		PainSound "stalker/pain";

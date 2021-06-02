@@ -321,7 +321,7 @@ RetailOnly		= 121
 207 = USE|REP,		Door_Animated (tag, 4, 3*35)
 214 = USE|REP,		Plat_DownWaitUpStayLip (tag, 8, 1050, 0, 1)
 229 = USE|REP,		ACS_ExecuteWithResult (0, 229, tag)
-233 = USE|REP,		ACS_ExecuteWithResult (0, 233, tag)
+233 = USE,			ACS_ExecuteWithResult (0, 233, tag)
 234 = USE|REP,		ACS_ExecuteWithResult (0, 234, tag)
 
 sector bitmask 0xf000 clear;

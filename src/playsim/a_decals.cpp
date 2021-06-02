@@ -831,7 +831,7 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 //
 //----------------------------------------------------------------------------
 
-void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 offset, DVector3 direction)
+void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 offset, DVector3 direction, bool useBloodColor, uint32_t decalColor)
 {
 	//just in case
 	if (!shooter)
@@ -859,12 +859,14 @@ void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 off
 	else
 		dir = direction;
 
+	uint32_t bloodTrans = useBloodColor ? shooter->BloodTranslation : 0;
+	PalEntry entry = !useBloodColor ? (PalEntry)decalColor : shooter->BloodColor;
 
 	if (Trace(off, shooter->Sector, dir, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
 	{
 		if (trace.HitType == TRACE_HitWall)
 		{
-			DImpactDecal::StaticCreate(shooter->Level, name, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
+			DImpactDecal::StaticCreate(shooter->Level, name, trace.HitPos, trace.Line->sidedef[trace.Side], NULL, entry, bloodTrans);
 		}
 	}
 }

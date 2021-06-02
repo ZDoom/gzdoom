@@ -62,13 +62,7 @@
 #include "hw_renderstate.h"
 #include "v_video.h"
 #include "hwrenderer/data/buffers.h"
-
-// 57 world units roughly represent one sky texel for the glTranslate call.
-enum
-{
-	skyoffsetfactor = 57
-};
-
+#include "version.h"
 
 //-----------------------------------------------------------------------------
 //
@@ -150,7 +144,7 @@ FSkyVertexBuffer::~FSkyVertexBuffer()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
+void FSkyVertexBuffer::SkyVertexDoom(int r, int c, bool zflip)
 {
 	static const FAngle maxSideAngle = 60.f;
 	static const float scale = 10000.;
@@ -187,6 +181,37 @@ void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 	mVertices.Push(vert);
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::SkyVertexBuild(int r, int c, bool zflip)
+{
+	static const FAngle maxSideAngle = 60.f;
+	static const float scale = 10000.;
+
+	FAngle topAngle = (c / (float)mColumns * 360.f);
+	FVector2 pos = topAngle.ToVector(scale);
+	float z = (!zflip) ? (mRows - r) * 4000.f : -(mRows - r) * 4000.f;
+
+	FSkyVertex vert;
+
+	vert.color = r == 0 ? 0xffffff : 0xffffffff;
+
+	// And the texture coordinates.
+	if (zflip) r = mRows * 2 - r;
+	vert.u = 0.5f + (-c / (float)mColumns);
+	vert.v = (r / (float)(2*mRows));
+
+	// And finally the vertex.
+	vert.x = pos.X;
+	vert.y = z - 1.f;
+	vert.z = pos.Y;
+
+	mVertices.Push(vert);
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -194,27 +219,58 @@ void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::CreateSkyHemisphere(int hemi)
+void FSkyVertexBuffer::CreateSkyHemisphereDoom(int hemi)
 {
 	int r, c;
 	bool zflip = !!(hemi & SKYHEMI_LOWER);
 
-	mPrimStart.Push(mVertices.Size());
+	mPrimStartDoom.Push(mVertices.Size());
 
 	for (c = 0; c < mColumns; c++)
 	{
-		SkyVertex(1, c, zflip);
+		SkyVertexDoom(1, c, zflip);
 	}
 
 	// The total number of triangles per hemisphere can be calculated
 	// as follows: rows * columns * 2 + 2 (for the top cap).
 	for (r = 0; r < mRows; r++)
 	{
-		mPrimStart.Push(mVertices.Size());
+		mPrimStartDoom.Push(mVertices.Size());
 		for (c = 0; c <= mColumns; c++)
 		{
-			SkyVertex(r + zflip, c, zflip);
-			SkyVertex(r + 1 - zflip, c, zflip);
+			SkyVertexDoom(r + zflip, c, zflip);
+			SkyVertexDoom(r + 1 - zflip, c, zflip);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::CreateSkyHemisphereBuild(int hemi)
+{
+	int r, c;
+	bool zflip = !!(hemi & SKYHEMI_LOWER);
+
+	mPrimStartBuild.Push(mVertices.Size());
+
+	for (c = 0; c < mColumns; c++)
+	{
+		SkyVertexBuild(1, c, zflip);
+	}
+
+	// The total number of triangles per hemisphere can be calculated
+	// as follows: rows * columns * 2 + 2 (for the top cap).
+	for (r = 0; r < mRows; r++)
+	{
+		mPrimStartBuild.Push(mVertices.Size());
+		for (c = 0; c <= mColumns; c++)
+		{
+			SkyVertexBuild(r + zflip, c, zflip);
+			SkyVertexBuild(r + 1 - zflip, c, zflip);
 		}
 	}
 }
@@ -248,9 +304,13 @@ void FSkyVertexBuffer::CreateDome()
 
 	mColumns = 128;
 	mRows = 4;
-	CreateSkyHemisphere(SKYHEMI_UPPER);
-	CreateSkyHemisphere(SKYHEMI_LOWER);
-	mPrimStart.Push(mVertices.Size());
+	CreateSkyHemisphereDoom(SKYHEMI_UPPER);
+	CreateSkyHemisphereDoom(SKYHEMI_LOWER);
+	mPrimStartDoom.Push(mVertices.Size());
+
+	CreateSkyHemisphereBuild(SKYHEMI_UPPER);
+	CreateSkyHemisphereBuild(SKYHEMI_LOWER);
+	mPrimStartBuild.Push(mVertices.Size());
 
 	mSideStart = mVertices.Size();
 	mFaceStart[0] = mSideStart + 10;
@@ -324,7 +384,7 @@ void FSkyVertexBuffer::CreateDome()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix, bool tiled)
+void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix, bool tiled, float xscale, float yscale)
 {
 	float texw = tex->GetDisplayWidth();
 	float texh = tex->GetDisplayHeight();
@@ -332,37 +392,46 @@ void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_
 	modelMatrix.loadIdentity();
 	modelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
 
-	float xscale = texw < 1024.f ? floorf(1024.f / float(texw)) : 1.f;
-	float yscale = 1.f;
+	if (xscale == 0) xscale = texw < 1024.f ? floorf(1024.f / float(texw)) : 1.f;
 	auto texskyoffset = tex->GetSkyOffset() + skyoffset;
-	if (texh <= 128 && tiled)
+	if (yscale == 0)
 	{
-		modelMatrix.translate(0.f, (-40 + texskyoffset)*skyoffsetfactor, 0.f);
-		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
-		yscale = 240.f / texh;
-	}
-	else if (texh < 128)
-	{
-		// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
-		modelMatrix.translate(0.f, -1250.f, 0.f);
-		modelMatrix.scale(1.f, 128 / 230.f, 1.f);
-		yscale = float(128 / texh);	// intentionally left as integer.
-	}
-	else if (texh < 200)
-	{
-		modelMatrix.translate(0.f, -1250.f, 0.f);
-		modelMatrix.scale(1.f, texh / 230.f, 1.f);
-	}
-	else if (texh <= 240)
-	{
-		modelMatrix.translate(0.f, (200 - texh + texskyoffset)*skyoffsetfactor, 0.f);
-		modelMatrix.scale(1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
+		if (texh <= 128 && tiled)
+		{
+			modelMatrix.translate(0.f, (-40 + texskyoffset) * skyoffsetfactor, 0.f);
+			modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
+			yscale = 240.f / texh;
+		}
+		else if (texh < 128)
+		{
+			// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
+			modelMatrix.translate(0.f, -1250.f, 0.f);
+			modelMatrix.scale(1.f, 128 / 230.f, 1.f);
+			yscale = float(128 / texh);	// intentionally left as integer.
+		}
+		else if (texh < 200)
+		{
+			modelMatrix.translate(0.f, -1250.f, 0.f);
+			modelMatrix.scale(1.f, texh / 230.f, 1.f);
+			yscale = 1.f;
+		}
+		else if (texh <= 240)
+		{
+			modelMatrix.translate(0.f, (200 - texh + texskyoffset) * skyoffsetfactor, 0.f);
+			modelMatrix.scale(1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
+			yscale = 1.f;
+		}
+		else
+		{
+			modelMatrix.translate(0.f, (-40 + texskyoffset) * skyoffsetfactor, 0.f);
+			modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
+			yscale = 240.f / texh;
+		}
 	}
 	else
 	{
-		modelMatrix.translate(0.f, (-40 + texskyoffset)*skyoffsetfactor, 0.f);
-		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
-		yscale = 240.f / texh;
+		modelMatrix.translate(0.f, (-40 + texskyoffset) * skyoffsetfactor, 0.f);
+		modelMatrix.scale(1.f, 0.8f * 1.17f, 1.f);
 	}
 	textureMatrix.loadIdentity();
 	textureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
@@ -375,7 +444,7 @@ void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderRow(FRenderState& state, EDrawType prim, int row, bool apply)
+void FSkyVertexBuffer::RenderRow(FRenderState& state, EDrawType prim, int row, TArray<unsigned int>& mPrimStart, bool apply)
 {
 	state.Draw(prim, mPrimStart[row], mPrimStart[row + 1] - mPrimStart[row]);
 }
@@ -386,36 +455,35 @@ void FSkyVertexBuffer::RenderRow(FRenderState& state, EDrawType prim, int row, b
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled)
+void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which)
 {
-	if (tex)
+	auto& primStart = which ? mPrimStartBuild : mPrimStartDoom;
+	if (tex && tex->isValid())
 	{
 		state.SetMaterial(tex, UF_Texture, 0, CLAMP_NONE, 0, -1);
 		state.EnableModelMatrix(true);
 		state.EnableTextureMatrix(true);
-
-		SetupMatrices(tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix, tiled);
 	}
 
 	int rc = mRows + 1;
 
 	// The caps only get drawn for the main layer but not for the overlay.
-	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != NULL)
+	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != nullptr)
 	{
 		auto& col = R_GetSkyCapColor(tex);
 		state.SetObjectColor(col.first);
 		state.EnableTexture(false);
-		RenderRow(state, DT_TriangleFan, 0);
+		RenderRow(state, DT_TriangleFan, 0, primStart);
 
 		state.SetObjectColor(col.second);
-		RenderRow(state, DT_TriangleFan, rc);
+		RenderRow(state, DT_TriangleFan, rc, primStart);
 		state.EnableTexture(true);
 	}
 	state.SetObjectColor(0xffffffff);
 	for (int i = 1; i <= mRows; i++)
 	{
-		RenderRow(state, DT_TriangleStrip, i, i == 1);
-		RenderRow(state, DT_TriangleStrip, rc + i, false);
+		RenderRow(state, DT_TriangleStrip, i, primStart, i == 1);
+		RenderRow(state, DT_TriangleStrip, rc + i, primStart, false);
 	}
 
 	state.EnableTextureMatrix(false);
@@ -425,11 +493,27 @@ void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float 
 
 //-----------------------------------------------------------------------------
 //
+// This is only for Doom-style skies.
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale, float yscale)
+{
+	if (tex)
+	{
+		SetupMatrices(tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix, tiled, xscale, yscale);
+	}
+	RenderDome(state, tex, mode, false);
+}
+
+
+//-----------------------------------------------------------------------------
+//
 //
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderBox(FRenderState& state, FTextureID texno, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2)
+void FSkyVertexBuffer::RenderBox(FRenderState& state, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2)
 {
 	int faces;
 

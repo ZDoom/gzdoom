@@ -375,3 +375,12 @@ THRWE0, 6, 16, iwad
 THRWF0, 8, 19, iwad
 THRWG0, 8, 19, iwad
 THRWH0, 11, 19, iwad
+WFR1A0, 6, 50, iwad
+WFR2A0, 10, 28, iwad
+WFR3A0, 6, 28, iwad
+WMS1A0, 6, 28, iwad
+WMS2A0, 6, 35, iwad
+WMS3A0, 6, 32, iwad
+WCH1A0, 15, 29, iwad
+WCH2A0, 9, 30, iwad
+WCH3A0, 11, 30, iwad

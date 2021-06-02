@@ -57,7 +57,7 @@ bool FWarpTexture::CheckModified (int style)
 	return screen->FrameTime != GenTime[style];
 }
 
-const uint32_t *FWarpTexture::GetPixelsBgra()
+const uint32_t *FWarpTexture::GetPixelsBgraLocked()
 {
 	uint64_t time = screen->FrameTime;
 	uint64_t resizeMult = gl_texture_hqresizemult;
@@ -67,7 +67,7 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1 || !(gl_texture_hqresize_targets & 1))
 			resizeMult = 1;
 
-		auto otherpix = FSoftwareTexture::GetPixelsBgra();
+		auto otherpix = FSoftwareTexture::GetPixelsBgraLocked();
 		WarpedPixelsRgba.Resize(unsigned(GetWidth() * GetHeight() * resizeMult * resizeMult * 4 / 3 + 1));
 		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, int(GetWidth() * resizeMult), int(GetHeight() * resizeMult), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->GetShaderSpeed(), bWarped);
 		GenerateBgraMipmapsFast();
@@ -78,7 +78,7 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 }
 
 
-const uint8_t *FWarpTexture::GetPixels(int index)
+const uint8_t *FWarpTexture::GetPixelsLocked(int index)
 {
 	uint64_t time = screen->FrameTime;
 	uint64_t resizeMult = gl_texture_hqresizemult;
@@ -88,7 +88,7 @@ const uint8_t *FWarpTexture::GetPixels(int index)
 		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1 || !(gl_texture_hqresize_targets & 1))
 			resizeMult = 1;
 
-		const uint8_t *otherpix = FSoftwareTexture::GetPixels(index);
+		const uint8_t *otherpix = FSoftwareTexture::GetPixelsLocked(index);
 		WarpedPixels[index].Resize(unsigned(GetWidth() * GetHeight() * resizeMult * resizeMult));
 		WarpBuffer(WarpedPixels[index].Data(), otherpix, int(GetWidth() * resizeMult), int(GetHeight() * resizeMult), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->GetShaderSpeed(), bWarped);
 		FreeAllSpans();

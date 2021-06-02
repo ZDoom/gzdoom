@@ -154,6 +154,9 @@ class DoomStatusScreen : StatusScreen
 		Font textFont = generic_ui? NewSmallFont : content.mFont;
 		int statsx = SP_STATSX;
 
+		int timey = SP_TIMEY;
+		if (wi_showtotaltime)
+			timey = min(SP_TIMEY, 200 - 2 * lh);
 
 		if (useGfx)
 		{
@@ -161,8 +164,8 @@ class DoomStatusScreen : StatusScreen
 			DrawTexture (Kills, statsx, SP_STATSY);
 			DrawTexture (Items, statsx, SP_STATSY+lh);
 			DrawTexture (P_secret, statsx, SP_STATSY+2*lh);
-			DrawTexture (Timepic, SP_TIMEX, SP_TIMEY);
-			if (wbs.partime) DrawTexture (Par, 160 + SP_TIMEX, SP_TIMEY);
+			DrawTexture (Timepic, SP_TIMEX, timey);
+			if (wbs.partime) DrawTexture (Par, 160 + SP_TIMEX, timey);
 		}
 		else
 		{
@@ -182,14 +185,14 @@ class DoomStatusScreen : StatusScreen
 			DrawText (textFont, tcolor, statsx, SP_STATSY, "$TXT_IMKILLS");
 			DrawText (textFont, tcolor, statsx, SP_STATSY+lh, "$TXT_IMITEMS");
 			DrawText (textFont, tcolor, statsx, SP_STATSY+2*lh, "$TXT_IMSECRETS");
-			DrawText (textFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMTIME");
-			if (wbs.partime) DrawText (textFont, tcolor, 160 + SP_TIMEX, SP_TIMEY, "$TXT_IMPAR");
+			DrawText (textFont, tcolor, SP_TIMEX, timey, "$TXT_IMTIME");
+			if (wbs.partime) DrawText (textFont, tcolor, 160 + SP_TIMEX, timey, "$TXT_IMPAR");
 		}
 			 
 		drawPercent (printFont, 320 - statsx, SP_STATSY, cnt_kills[0], wbs.maxkills, true, tcolor);
 		drawPercent (printFont, 320 - statsx, SP_STATSY+lh, cnt_items[0], wbs.maxitems, true, tcolor);
 		drawPercent (printFont, 320 - statsx, SP_STATSY+2*lh, cnt_secret[0], wbs.maxsecret, true, tcolor);
-		drawTimeFont (printFont, 160 - SP_TIMEX, SP_TIMEY, cnt_time, tcolor);
+		drawTimeFont (printFont, 160 - SP_TIMEX, timey, cnt_time, tcolor);
 			 
 		// This really sucks - not just by its message - and should have been removed long ago!
 		// To avoid problems here, the "sucks" text only gets printed if the lump is present, this even applies to the text replacement.
@@ -197,7 +200,7 @@ class DoomStatusScreen : StatusScreen
 		if (cnt_time >= wbs.sucktime * 60 * 60 && wbs.sucktime > 0 && Sucks.IsValid())
 		{ // "sucks"
 			int x = 160 - SP_TIMEX;
-			int y = SP_TIMEY;
+			int y = timey;
 			if (useGfx && TexMan.OkForLocalization(Sucks, "$TXT_IMSUCKS"))
 			{
 				let size = TexMan.GetScaledSize(Sucks);
@@ -211,12 +214,12 @@ class DoomStatusScreen : StatusScreen
 
 		if (wi_showtotaltime)
 		{
-			 drawTimeFont (printFont, 160 - SP_TIMEX, SP_TIMEY + lh, cnt_total_time, tcolor);
+			 drawTimeFont (printFont, 160 - SP_TIMEX, timey + lh, cnt_total_time, tcolor);
 		}
 
 		if (wbs.partime)
 		{
-			drawTimeFont (printFont, 320 - SP_TIMEX, SP_TIMEY, cnt_par, tcolor);
+			drawTimeFont (printFont, 320 - SP_TIMEX, timey, cnt_par, tcolor);
 		}
 	}
 }

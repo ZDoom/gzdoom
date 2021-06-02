@@ -108,26 +108,18 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture
 			Chars[i].OriginalPic = MakeGameTexture(pic->GetTexture(), nullptr, ETextureType::FontChar);
 			Chars[i].OriginalPic->CopySize(pic, true);
 			TexMan.AddGameTexture(Chars[i].OriginalPic);
-
-			if (!noTranslate)
-			{
-				Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1 (charlumps[i]->GetTexture()->GetImage())), nullptr, ETextureType::FontChar);
-				Chars[i].TranslatedPic->CopySize(charlumps[i], true);
-				TexMan.AddGameTexture(Chars[i].TranslatedPic);
-			}
-			else Chars[i].TranslatedPic = Chars[i].OriginalPic;
-			Chars[i].XMove = (int)Chars[i].TranslatedPic->GetDisplayWidth();
-			if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(pic, Chars[i].OriginalPic, Chars[i].TranslatedPic);
+			Chars[i].XMove = (int)Chars[i].OriginalPic->GetDisplayWidth();
+			if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(pic, Chars[i].OriginalPic, Chars[i].OriginalPic);
 		}
 		else
 		{
-			Chars[i].TranslatedPic = nullptr;
+			Chars[i].OriginalPic = nullptr;
 			Chars[i].XMove = INT_MIN;
 		}
 	}
 
 	// Special fonts normally don't have all characters so be careful here!
-	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].TranslatedPic != nullptr)
+	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].OriginalPic != nullptr)
 	{
 		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}
@@ -137,11 +129,6 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture
 	}
 
 	FixXMoves();
-
-	if (noTranslate)
-	{
-		ActiveColors = 0;
-	}
 }
 
 //==========================================================================
@@ -152,65 +139,67 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture
 
 void FSpecialFont::LoadTranslations()
 {
-	int count = LastChar - FirstChar + 1;
-	uint32_t usedcolors[256] = {};
-	uint8_t identity[256];
-	TArray<double> Luminosity;
-	int TotalColors;
-	int i;
+	FFont::LoadTranslations();
 
-	for (i = 0; i < count; i++)
+	bool empty = true;
+	for (auto& c : Chars)
 	{
-		if (Chars[i].TranslatedPic)
+		if (c.OriginalPic != nullptr)
 		{
-			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetTexture()->GetImage());
-			if (pic)
-			{
-				pic->SetSourceRemap(nullptr); // Force the FFontChar1 to return the same pixels as the base texture
-				RecordTextureColors(pic, usedcolors);
-			}
+			empty = false;
+			break;
 		}
 	}
+	if (empty) return; // Font has no characters.
 
+	bool needsnotrans = false;
 	// exclude the non-translated colors from the translation calculation
-	for (i = 0; i < 256; i++)
-		if (notranslate[i])
-			usedcolors[i] = false;
-
-	TotalColors = ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, Luminosity);
-
-	// Map all untranslated colors into the table of used colors
-	for (i = 0; i < 256; i++) 
-	{
+	for (int i = 0; i < 256; i++)
 		if (notranslate[i])
 		{
-			PatchRemap[i] = TotalColors;
-			identity[TotalColors] = i;
-			TotalColors++;
+			needsnotrans = true;
+			break;
 		}
-	}
 
-	for (i = 0; i < count; i++)
+	// If we have no non-translateable colors, we can use the base data as-is.
+	if (!needsnotrans)
 	{
-		if(Chars[i].TranslatedPic)
-			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetTexture()->GetImage())->SetSourceRemap(PatchRemap);
+		return;
 	}
 
-	BuildTranslations(Luminosity.Data(), identity, &TranslationParms[0][0], TotalColors, nullptr, [=](FRemapTable* remap)
-		{
-			// add the untranslated colors to the Ranges tables
-			if (ActiveColors < TotalColors)
-			{
-				for (int j = ActiveColors; j < TotalColors; ++j)
-				{
-					remap->Remap[j] = identity[j];
-					remap->Palette[j] = GPalette.BaseColors[identity[j]];
-					remap->Palette[j].a = 0xff;
-				}
-			}
-		});
+	// we only need to add special handling if there's colors that should not be translated.
+	// Obviously 'notranslate' should only be used on data that uses the base palette, otherwise results are undefined!
+	for (auto &trans : Translations)
+	{
+		if (!IsLuminosityTranslation(trans)) continue; // this should only happen for CR_UNTRANSLATED.
 
-	ActiveColors = TotalColors;
+		FRemapTable remap(256);
+		remap.ForFont = true;
+
+		uint8_t workpal[1024];
+		for (int i = 0; i < 256; i++)
+		{
+			workpal[i * 4 + 0] = GPalette.BaseColors[i].b;
+			workpal[i * 4 + 1] = GPalette.BaseColors[i].g;
+			workpal[i * 4 + 2] = GPalette.BaseColors[i].r;
+			workpal[i * 4 + 3] = GPalette.BaseColors[i].a;
+		}
+		V_ApplyLuminosityTranslation(trans, workpal, 256);
+		for (int i = 0; i < 256; i++)
+		{
+			if (!notranslate[i])
+			{
+				remap.Palette[i] = PalEntry(workpal[i * 4 + 3], workpal[i * 4 + 2], workpal[i * 4 + 1], workpal[i * 4 + 0]);
+				remap.Remap[i] = ColorMatcher.Pick(remap.Palette[i]);
+			}
+			else
+			{
+				remap.Palette[i] = GPalette.BaseColors[i];
+				remap.Remap[i] = i;
+			}
+		}
+		trans = GPalette.StoreTranslation(TRANSLATION_Internal, &remap);
+	}
 }
 
 FFont *CreateSpecialFont (const char *name, int first, int count, FGameTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) 

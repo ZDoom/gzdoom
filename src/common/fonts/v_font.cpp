@@ -60,16 +60,6 @@
 
 #define DEFAULT_LOG_COLOR	PalEntry(223,223,223)
 
-//
-// Globally visible constants.
-//
-#define HU_FONTSTART	uint8_t('!')		// the first font characters
-#define HU_FONTEND		uint8_t('\377')	// the last font characters
-
-// Calculate # of glyphs in font.
-#define HU_FONTSIZE		(HU_FONTEND - HU_FONTSTART + 1)
-
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -158,7 +148,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		}
 		if (folderdata.Size() > 0)
 		{
-			font = new FFont(name, nullptr, name, HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			font = new FFont(name, nullptr, name, 0, 0, 1, -1);
 			if (translationsLoaded) font->LoadTranslations();
 			return font;
 		}
@@ -588,6 +578,179 @@ EColorRange V_FindFontColor (FName name)
 
 //==========================================================================
 //
+// CreateLuminosityTranslationRanges
+//
+// Create universal remap ranges for hardware rendering.
+//
+//==========================================================================
+static PalEntry* paletteptr;
+
+static void CreateLuminosityTranslationRanges()
+{
+	paletteptr = (PalEntry*)ImageArena.Alloc(256 * ((NumTextColors * 2)) * sizeof(PalEntry));
+	for (int l = 0; l < 2; l++)
+	{
+		auto parmstart = &TranslationParms[l][0];
+		// Put the data into the image arena where it gets deleted with the rest of the texture data.
+		for (int p = 0; p < NumTextColors; p++)
+		{
+			// Intended storage order is Range 1, variant 1 - Range 1, variant 2, Range 2, variant 1, and so on.
+			// The storage of the ranges forces us to go through this differently...
+			PalEntry* palette = paletteptr + p * 512 + l * 256;
+			for (int v = 0; v < 256; v++)
+			{
+				palette[v].b = palette[v].g = palette[v].r = (uint8_t)v;
+			}
+			if (p != CR_UNTRANSLATED) // This table skips the untranslated entry. Do I need to say that the stored data format is garbage? >)
+			{
+				for (int v = 0; v < 256; v++)
+				{
+					// Find the color range that this luminosity value lies within.
+					const TranslationParm* parms = parmstart - 1;
+					do
+					{
+						parms++;
+						if (parms->RangeStart <= v && parms->RangeEnd >= v)
+							break;
+					} while (parms[1].RangeStart > parms[0].RangeEnd);
+
+					// Linearly interpolate to find out which color this luminosity level gets.
+					int rangev = ((v - parms->RangeStart) << 8) / (parms->RangeEnd - parms->RangeStart);
+					int r = ((parms->Start[0] << 8) + rangev * (parms->End[0] - parms->Start[0])) >> 8; // red
+					int g = ((parms->Start[1] << 8) + rangev * (parms->End[1] - parms->Start[1])) >> 8; // green
+					int b = ((parms->Start[2] << 8) + rangev * (parms->End[2] - parms->Start[2])) >> 8; // blue
+					palette[v].r = (uint8_t)clamp(r, 0, 255);
+					palette[v].g = (uint8_t)clamp(g, 0, 255);
+					palette[v].b = (uint8_t)clamp(b, 0, 255);
+				}
+				// Advance to the next color range.
+				while (parmstart[1].RangeStart > parmstart[0].RangeEnd)
+				{
+					parmstart++;
+				}
+				parmstart++;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// V_ApplyLuminosityTranslation
+//
+// Applies the translation to a bitmap for texture generation.
+//
+//==========================================================================
+
+void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size)
+{
+	int colorrange = (translation >> 16) & 0x3fff;
+	if (colorrange >= NumTextColors * 2) return;
+	int lum_min = (translation >> 8) & 0xff;
+	int lum_max = translation & 0xff;
+	int lum_range = (lum_max - lum_min + 1);
+	PalEntry* remap = paletteptr + colorrange * 256;
+
+	for (int i = 0; i < size; i++, pixel += 4)
+	{
+		// we must also process the transparent pixels here to ensure proper filtering on the characters' edges.
+		int gray = PalEntry(255, pixel[2], pixel[1], pixel[0]).Luminance();
+		int lumadjust = (gray - lum_min) * 255 / lum_range;
+		int index = clamp(lumadjust, 0, 255);
+		PalEntry newcol = remap[index];
+		// extend the range if we find colors outside what initial analysis provided.
+		if (gray < lum_min)
+		{
+			newcol.r = newcol.r * gray / lum_min;
+			newcol.g = newcol.g * gray / lum_min;
+			newcol.b = newcol.b * gray / lum_min;
+		}
+		else if (gray > lum_max)
+		{
+			newcol.r = clamp(newcol.r * gray / lum_max, 0, 255);
+			newcol.g = clamp(newcol.g * gray / lum_max, 0, 255);
+			newcol.b = clamp(newcol.b * gray / lum_max, 0, 255);
+		}
+		pixel[0] = newcol.b;
+		pixel[1] = newcol.g;
+		pixel[2] = newcol.r;
+	}
+}
+
+//==========================================================================
+//
+// SetDefaultTranslation
+//
+// Builds a translation to map the stock font to a mod provided replacement.
+// This probably won't work that well if the original font is extremely colorful.
+//
+//==========================================================================
+
+static void CalcDefaultTranslation(FFont* base, int index)
+{
+	uint32_t othercolors[256] = {};
+	base->RecordAllTextureColors(othercolors);
+
+	TArray<double> otherluminosity;
+	base->GetLuminosity(othercolors, otherluminosity);
+
+	PalEntry *remap = &paletteptr[index * 256];
+	memset(remap, 0, 1024);
+
+	for (unsigned i = 0; i < 256; i++)
+	{
+		auto lum = otherluminosity[i];
+		if (lum >= 0 && lum <= 1)
+		{
+			int index = int(lum * 255);
+			remap[index] = GPalette.BaseColors[i];
+			remap[index].a = 255;
+		}
+	}
+
+	// todo: fill the gaps.
+	//remap[0] = 0;
+	int lowindex = 0;
+	while (lowindex < 255 && remap[lowindex].a == 0) lowindex++;
+	lowindex++;
+	int highindex = lowindex + 1;
+
+	while (lowindex < 255)
+	{
+		while (highindex <= 255 && remap[highindex].a == 0) highindex++;
+		if (lowindex == 0)
+		{
+			for (int i = 0; i < highindex; i++) remap[i] = remap[highindex];
+			lowindex = highindex++;
+		}
+		else if (highindex > 256)
+		{
+			for (int i = lowindex + 1; i < highindex; i++) remap[i] = remap[lowindex];
+			break;
+		}
+		else
+		{
+			for (int i = lowindex + 1; i < highindex; i++)
+			{
+				PalEntry color1 = remap[lowindex];
+				PalEntry color2 = remap[highindex];
+				double weight = (i - lowindex) / double(highindex - lowindex);
+				int r = int(color1.r + weight * (color2.r - color1.r));
+				int g = int(color1.g + weight * (color2.g - color1.g));
+				int b = int(color1.b + weight * (color2.b - color1.b));
+				r = clamp(r, 0, 255);
+				g = clamp(g, 0, 255);
+				b = clamp(b, 0, 255);
+				remap[i] = PalEntry(255, r, g, b);
+			}
+			lowindex = highindex++;
+		}
+	}
+	
+}
+
+//==========================================================================
+//
 // V_LogColorFromColorRange
 //
 // Returns the color to use for text in the startup/error log window.
@@ -676,6 +839,7 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 
 void V_InitFonts()
 {
+	CreateLuminosityTranslationRanges();
 	V_InitCustomFonts();
 
 	FFont *CreateHexLumpFont(const char *fontname, int lump);
@@ -686,140 +850,7 @@ void V_InitFonts()
 	NewConsoleFont = CreateHexLumpFont("NewConsoleFont", lump);
 	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
 	CurrentConsoleFont = NewConsoleFont;
-
-	// load the heads-up font
-	if (!(SmallFont = V_GetFont("SmallFont", "SMALLFNT")))
-	{
-		if (fileSystem.CheckNumForName("FONTA_S") >= 0)
-		{
-			int wadfile = -1;
-			auto a = fileSystem.CheckNumForName("FONTA33", ns_graphics);
-			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetIwadNum())
-			{
-				// The font has been replaced, so we need to create a copy of the original as well.
-				SmallFont = new FFont("SmallFont", "FONTA%02u", nullptr, HU_FONTSTART, HU_FONTSIZE, 1, -1);
-				SmallFont->SetCursor('[');
-			}
-			else
-			{
-				SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-				SmallFont->SetCursor('[');
-			}
-		}
-		else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
-		{
-			int wadfile = -1;
-			auto a = fileSystem.CheckNumForName("STCFN065", ns_graphics);
-			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetIwadNum())
-			{
-				// The font has been replaced, so we need to create a copy of the original as well.
-				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);
-			}
-			else
-			{
-				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);
-			}
-		}
-	}
-
-	// Create the original small font as a fallback for incomplete definitions.
-	if (fileSystem.CheckNumForName("FONTA_S") >= 0)
-	{
-		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-		OriginalSmallFont->SetCursor('[');
-	}
-	else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
-	{
-		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
-	}
-
-
-	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
-	{
-		if (fileSystem.CheckNumForName("STBFN033", ns_graphics) >= 0)
-		{
-			SmallFont2 = new FFont("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
-		}
-	}
-
-	//This must be read before BigFont so that it can be properly substituted.
-	BigUpper = V_GetFont("BigUpper");
-
-	if (!(BigFont = V_GetFont("BigFont")))
-	{
-		if (fileSystem.CheckNumForName("FONTB_S") >= 0)
-		{
-			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-		}
-	}
-	
-	if (!BigFont)
-	{
-		// Load the generic fallback if no BigFont is found.
-		BigFont = V_GetFont("BigFont", "ZBIGFONT");
-	}
-
-	if (fileSystem.CheckNumForName("FONTB_S") >= 0)
-	{
-		OriginalBigFont = new FFont("OriginalBigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-	}
-	else
-	{
-		OriginalBigFont = new FFont("OriginalBigFont", nullptr, "bigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-	}
-
-	// let PWAD BIGFONTs override the stock BIGUPPER font. (This check needs to be made smarter.)
-	if (BigUpper && BigFont->Type != FFont::Folder && BigUpper->Type == FFont::Folder)
-	{
-		delete BigUpper;
-		BigUpper = BigFont;
-	}
-
-	if (BigUpper == nullptr)
-	{
-		BigUpper = BigFont;
-	}
-	if (!(ConFont = V_GetFont("ConsoleFont", "CONFONT")))
-	{
-		ConFont = SmallFont;
-	}
-	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
-	{
-		if (TexMan.CheckForTexture("WINUM0", ETextureType::MiscPatch).isValid())
-		{
-			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
-		}
-		if (IntermissionFont == nullptr)
-		{
-			IntermissionFont = BigFont;
-		}
-	}
-	// This can only happen if gzdoom.pk3 is corrupted. ConFont should always be present.
-	if (ConFont == nullptr)
-	{
-		I_FatalError("Console font not found.");
-	}
-	// SmallFont and SmallFont2 have no default provided by the engine. BigFont only has in non-Raven games.
-	if (OriginalSmallFont == nullptr)
-	{
-		OriginalSmallFont = ConFont;
-	}
-	if (SmallFont == nullptr)
-	{
-		SmallFont = OriginalSmallFont;
-	}
-	if (SmallFont2 == nullptr)
-	{
-		SmallFont2 = SmallFont;
-	}
-	if (BigFont == nullptr)
-	{
-		BigFont = OriginalBigFont;
-	}
-	AlternativeSmallFont = OriginalSmallFont;
-	AlternativeBigFont = OriginalBigFont;
+	ConFont = V_GetFont("ConsoleFont", "CONFONT");
 }
 
 void V_LoadTranslations()
@@ -827,23 +858,43 @@ void V_LoadTranslations()
 	for (auto font = FFont::FirstFont; font; font = font->Next)
 	{
 		if (!font->noTranslate) font->LoadTranslations();
-		else font->ActiveColors = 0;
 	}
+
 	if (BigFont)
 	{
-		uint32_t colors[256] = {};
-		BigFont->RecordAllTextureColors(colors);
-		if (OriginalBigFont != nullptr) OriginalBigFont->SetDefaultTranslation(colors);
+		CalcDefaultTranslation(BigFont, CR_UNTRANSLATED * 2 + 1);
+		if (OriginalBigFont != nullptr && OriginalBigFont != BigFont)
+		{
+			int sometrans = OriginalBigFont->Translations[0];
+			sometrans &= ~(0x3fff << 16);
+			sometrans |= (CR_UNTRANSLATED * 2 + 1) << 16;
+			OriginalBigFont->Translations[CR_UNTRANSLATED] = sometrans;
+			OriginalBigFont->forceremap = true;
+		}
 	}
 	if (SmallFont)
 	{
-		uint32_t colors[256] = {};
-		SmallFont->RecordAllTextureColors(colors);
-		if (OriginalSmallFont != nullptr) OriginalSmallFont->SetDefaultTranslation(colors);
-		NewSmallFont->SetDefaultTranslation(colors);
+		CalcDefaultTranslation(SmallFont, CR_UNTRANSLATED * 2);
+		if (OriginalSmallFont != nullptr && OriginalSmallFont != SmallFont)
+		{
+			int sometrans = OriginalSmallFont->Translations[0];
+			sometrans &= ~(0x3fff << 16);
+			sometrans |= (CR_UNTRANSLATED * 2) << 16;
+			OriginalSmallFont->Translations[CR_UNTRANSLATED] = sometrans;
+			OriginalSmallFont->forceremap = true;
+		}
+		if (NewSmallFont != nullptr)
+		{
+			int sometrans = NewSmallFont->Translations[0];
+			sometrans &= ~(0x3fff << 16);
+			sometrans |= (CR_UNTRANSLATED * 2) << 16;
+			NewSmallFont->Translations[CR_UNTRANSLATED] = sometrans;
+			NewSmallFont->forceremap = true;
+		}
 	}
 	translationsLoaded = true;
 }
+
 
 void V_ClearFonts()
 {

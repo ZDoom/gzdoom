@@ -354,6 +354,8 @@ int getAlternative(int code)
 		default:
 			return code;
 			
+		case '{': return '(';
+		case '}': return ')';
 		case 0x17f:	return 's';	// The 'long s' can be safely remapped to the regular variant, not that this gets used in any real text...
 		case 0x218:	return 0x15e; // Romanian S with comma below may get remapped to S with cedilla.
 		case 0x219:	return 0x15f;

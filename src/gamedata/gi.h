@@ -192,6 +192,7 @@ struct gameinfo_t
 	FString mMapArrow, mCheatMapArrow;
 	FString mEasyKey, mCheatKey;
 	FString Dialogue;
+	TArray<FString> AddDialogues;
 	FGIFont mStatscreenMapNameFont;
 	FGIFont mStatscreenFinishedFont;
 	FGIFont mStatscreenEnteringFont;
@@ -208,6 +209,7 @@ struct gameinfo_t
 	double normsidemove[2];
 	int fullscreenautoaspect = 3;
 	bool nomergepickupmsg;
+	bool mHideParTimes;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

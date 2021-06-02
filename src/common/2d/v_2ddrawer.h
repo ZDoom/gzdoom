@@ -34,32 +34,6 @@ enum EClearWhich
 
 class F2DVertexBuffer;
 
-class DShape2D : public DObject
-{
-
-	DECLARE_CLASS(DShape2D,DObject)
-public:
-	DShape2D()
-	{
-		transform.Identity();
-	}
-
-	TArray<int> mIndices;
-	TArray<DVector2> mVertices;
-	TArray<DVector2> mCoords;
-
-	double minx = 0.0;
-	double maxx = 0.0;
-	double miny = 0.0;
-	double maxy = 0.0;
-
-	DMatrix3x3 transform;
-
-	TArray<F2DVertexBuffer> buffers;
-	bool needsVertexUpload = true;
-	int bufIndex = -1;
-};
-
 struct F2DPolygons
 {
 	TArray<FVector4> vertices;
@@ -74,6 +48,7 @@ struct F2DPolygons
 
 };
 
+class DShape2D;
 
 class F2DDrawer
 {
@@ -143,6 +118,7 @@ public:
 		ETexMode mDrawMode;
 		uint8_t mLightLevel;
 		uint8_t mFlags;
+		float mScreenFade;
 
 		bool useTransform;
 		DMatrix3x3 transform;
@@ -150,6 +126,7 @@ public:
 		DShape2D* shape2D;
 		int shape2DBufIndex;
 		int shape2DIndexCount;
+		int shape2DCommandCounter;
 
 		RenderCommand()
 		{
@@ -173,6 +150,7 @@ public:
 				mLightLevel == other.mLightLevel &&
 				mColor1.d == other.mColor1.d &&
 				useTransform == other.useTransform &&
+				mScreenFade == other.mScreenFade &&
 				(
 					!useTransform ||
 					(
@@ -196,7 +174,7 @@ public:
 	int fullscreenautoaspect = 3;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
 	
-	int AddCommand(const RenderCommand *data);
+	int AddCommand(RenderCommand *data);
 	void AddIndices(int firstvert, int count, ...);
 private:
 	void AddIndices(int firstvert, TArray<int> &v);
@@ -211,7 +189,7 @@ public:
 	void AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double lightlevel, uint32_t *indices, size_t indexcount);
-	void AddPoly(FGameTexture* img, FVector4 *vt, size_t vtcount, unsigned int *ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2);
+	void AddPoly(FGameTexture* img, FVector4 *vt, size_t vtcount, const unsigned int *ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2);
 	void FillPolygon(int* rx1, int* ry1, int* xb1, int32_t npoints, int picnum, int palette, int shade, int props, const FVector2& xtex, const FVector2& ytex, const FVector2& otex,
 		int clipx1, int clipy1, int clipx2, int clipy2);
 	void AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin = false, double flatscale = 1.0, PalEntry color = 0xffffffff, ERenderStyle rs = STYLE_Normal);
@@ -261,6 +239,39 @@ public:
 
 	bool mIsFirstPass = true;
 };
+
+class DShape2D : public DObject
+{
+
+	DECLARE_CLASS(DShape2D,DObject)
+public:
+	DShape2D()
+	{
+		transform.Identity();
+	}
+
+	TArray<int> mIndices;
+	TArray<DVector2> mVertices;
+	TArray<DVector2> mCoords;
+
+	double minx = 0.0;
+	double maxx = 0.0;
+	double miny = 0.0;
+	double maxy = 0.0;
+
+	DMatrix3x3 transform;
+
+	TArray<F2DVertexBuffer> buffers;
+	bool needsVertexUpload = true;
+	int bufIndex = -1;
+	int lastCommand = -1;
+
+	bool uploadedOnce = false;
+	DrawParms* lastParms;
+
+	~DShape2D();
+};
+
 
 //===========================================================================
 // 

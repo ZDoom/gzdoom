@@ -309,6 +309,15 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	Super::Init(desc, first);
 	mText = static_cast<FIntermissionActionTextscreen*>(desc)->mText;
 	if (mText[0] == '$') mText = GStrings(&mText[1]);
+
+	auto lines = mText.Split("\n");
+	mText = "";
+	for (auto& line : lines)
+	{
+		line.StripRight();
+		mText << line << "\n";
+	}
+
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
 	usesDefault = mTextX < 0;

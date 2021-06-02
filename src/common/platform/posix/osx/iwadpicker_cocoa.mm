@@ -389,6 +389,8 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 	@try
 	{
 		NSString* executablePath = [NSString stringWithUTF8String:Args->GetArg(0)];
+		NSString* escapedParameters = [parameters stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+		NSString* cvarArgument = [NSString stringWithFormat:@"+osx_additional_parameters \"%@\"", escapedParameters];
 
 		NSMutableArray* const arguments = [[NSMutableArray alloc] init];
 		[arguments addObject:@"-arch"];
@@ -398,7 +400,7 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 		[arguments addObject:[NSString stringWithUTF8String:wad.Path]];
 		[arguments addObject:@"+defaultiwad"];
 		[arguments addObject:[NSString stringWithUTF8String:wad.Name]];
-		[arguments addObject:[NSString stringWithFormat:@"+osx_additional_parameters \"%@\"", parameters]];
+		[arguments addObject:cvarArgument];
 
 		for (int i = 1, count = Args->NumArgs(); i < count; ++i)
 		{

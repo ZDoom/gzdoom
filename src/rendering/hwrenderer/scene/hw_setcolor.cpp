@@ -106,7 +106,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 		fogdensity = 70;
 		fogcolor = 0x808080;
 	}
-	else if (cmap != NULL && !fullbright)
+	else if (cmap != nullptr && !fullbright)
 	{
 		fogcolor = cmap->FadeColor;
 		fogdensity = GetFogDensity(lightlevel, fogcolor, cmap->FogDensity, cmap->BlendFactor);
@@ -130,7 +130,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 	}
 	else
 	{
-		if ((lightmode == ELightMode::Doom || (isSoftwareLighting() && cmap->BlendFactor > 0)) && fogcolor == 0)
+		if ((lightmode == ELightMode::Doom || (isSoftwareLighting() && cmap && cmap->BlendFactor > 0)) && fogcolor == 0)
 		{
 			float light = (float)CalcLightLevel(lightlevel, rellight, false, cmap->BlendFactor);
 			SetShaderLight(state, light, lightlevel);
@@ -155,7 +155,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 		state.SetFog(fogcolor, fogdensity);
 
 		// Korshun: fullbright fog like in software renderer.
-		if (isSoftwareLighting() && cmap->BlendFactor == 0 && Level->brightfog && fogdensity != 0 && fogcolor != 0)
+		if (isSoftwareLighting() && cmap && cmap->BlendFactor == 0 && Level->brightfog && fogdensity != 0 && fogcolor != 0)
 		{
 			state.SetSoftLightLevel(255);
 		}

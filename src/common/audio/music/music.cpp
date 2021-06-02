@@ -49,6 +49,10 @@
 #include "s_music.h"
 #include "filereadermusicinterface.h"
 #include <zmusic.h>
+#include "md5.h"
+#include "gain_analysis.h"
+#include "gameconfigfile.h"
+#include "i_specialpaths.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -77,6 +81,18 @@ static MusicCallbacks mus_cb = { nullptr, DefaultOpenMusic };
 
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+EXTERN_CVAR(Int, snd_mididevice)
+EXTERN_CVAR(Float, mod_dumb_mastervolume)
+EXTERN_CVAR(Float, fluid_gain)
+
+
+CVAR(Bool, mus_calcgain, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
+CVAR(Bool, mus_usereplaygain, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
+CUSTOM_CVAR(Float, mus_gainoffset, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // for customizing the base volume
+{
+	if (self > 10.f) self = 10.f;
+	mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+}
 
 // CODE --------------------------------------------------------------------
 
@@ -94,13 +110,18 @@ void S_SetMusicCallbacks(MusicCallbacks* cb)
 //==========================================================================
 
 static std::unique_ptr<SoundStream> musicStream;
+static TArray<SoundStream*> customStreams;
 
 SoundStream *S_CreateCustomStream(size_t size, int samplerate, int numchannels, StreamCallback cb, void *userdata)
 {
 	int flags = 0;
 	if (numchannels < 2) flags |= SoundStream::Mono;
 	auto stream = GSnd->CreateStream(cb, int(size), flags, samplerate, userdata);
-	if (stream) stream->Play(true, 1);
+	if (stream)
+	{
+		stream->Play(true, 1);
+		customStreams.Push(stream);
+	}
 	return stream;
 }
 
@@ -109,15 +130,51 @@ void S_StopCustomStream(SoundStream *stream)
 	if (stream)
 	{
 		stream->Stop();
+		auto f = customStreams.Find(stream);
+		if (f < customStreams.Size()) customStreams.Delete(f);
 		delete stream;
 	}
-
 }
 
+void S_PauseAllCustomStreams(bool on)
+{
+	static bool paused = false;
 
+	if (paused == on) return;
+	paused = on;
+	for (auto s : customStreams)
+	{
+		s->SetPaused(on);
+	}
+}
+
+static TArray<int16_t> convert;
 static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 {
-	bool written = ZMusic_FillStream(mus_playing.handle, buff, len);
+	bool written;
+	if (mus_playing.isfloat)
+	{
+		written = ZMusic_FillStream(mus_playing.handle, buff, len);
+		if (mus_playing.replayGainFactor != 1.f)
+		{
+			float* fbuf = (float*)buff;
+			for (int i = 0; i < len / 4; i++)
+			{
+				fbuf[i] *= mus_playing.replayGainFactor;
+			}
+		}
+	}
+	else
+	{
+		// To apply replay gain we need floating point streaming data, so 16 bit input needs to be converted here.
+		convert.Resize(len / 2);
+		written = ZMusic_FillStream(mus_playing.handle, convert.Data(), len/2);
+		float* fbuf = (float*)buff;
+		for (int i = 0; i < len / 4; i++)
+		{
+			fbuf[i] = convert[i] * mus_playing.replayGainFactor * (1.f/32768.f);
+		}
+	}
 	
 	if (!written)
 	{
@@ -133,9 +190,12 @@ void S_CreateStream()
 	if (!mus_playing.handle) return;
 	SoundStreamInfo fmt;
 	ZMusic_GetStreamInfo(mus_playing.handle, &fmt);
+	// always create a floating point streaming buffer so we can apply replay gain without risk of integer overflows.
+	mus_playing.isfloat = fmt.mNumChannels > 0;
+	if (!mus_playing.isfloat) fmt.mBufferSize *= 2;
 	if (fmt.mBufferSize > 0) // if buffer size is 0 the library will play the song itself (e.g. Windows system synth.)
 	{
-		int flags = fmt.mNumChannels < 0 ? 0 : SoundStream::Float;
+		int flags = SoundStream::Float;
 		if (abs(fmt.mNumChannels) < 2) flags |= SoundStream::Mono;
 
 		musicStream.reset(GSnd->CreateStream(FillStream, fmt.mBufferSize, flags, fmt.mSampleRate, nullptr));
@@ -167,13 +227,16 @@ void S_StopStream()
 
 static bool S_StartMusicPlaying(ZMusic_MusicStream song, bool loop, float rel_vol, int subsong)
 {
-	if (rel_vol > 0.f)
+	if (rel_vol > 0.f && !mus_usereplaygain)
 	{
 		float factor = relative_volume / saved_relative_volume;
 		saved_relative_volume = rel_vol;
 		I_SetRelativeVolume(saved_relative_volume * factor);
 	}
 	ZMusic_Stop(song);
+	// make sure the volume modifiers update properly in case replay gain settings have changed.
+	fluid_gain.Callback();
+	mod_dumb_mastervolume.Callback();
 	if (!ZMusic_Start(song, subsong, loop))
 	{
 		return false;
@@ -312,6 +375,257 @@ bool S_StartMusic (const char *m_id)
 // initiates playback of a song
 //
 //==========================================================================
+static TMap<FString, float> gainMap;
+
+EXTERN_CVAR(String, fluid_patchset)
+EXTERN_CVAR(String, timidity_config)
+EXTERN_CVAR(String, midi_config)
+EXTERN_CVAR(String, wildmidi_config)
+EXTERN_CVAR(String, adl_custom_bank)
+EXTERN_CVAR(Int, adl_bank)
+EXTERN_CVAR(Bool, adl_use_custom_bank)
+EXTERN_CVAR(String, opn_custom_bank)
+EXTERN_CVAR(Bool, opn_use_custom_bank)
+EXTERN_CVAR(Int, opl_core)
+
+static FString ReplayGainHash(ZMusicCustomReader* reader, int flength, int playertype, const char* _playparam)
+{
+	std::string playparam = _playparam;
+
+	uint8_t buffer[50000];	// for performance reasons only hash the start of the file. If we wanted to do this to large waveform songs it'd cause noticable lag.
+	uint8_t digest[16];
+	char digestout[33];
+	auto length = reader->read(reader, buffer, 50000);
+	reader->seek(reader, 0, SEEK_SET);
+	MD5Context md5;
+	md5.Init();
+	md5.Update(buffer, (int)length);
+	md5.Final(digest);
+
+	for (size_t j = 0; j < sizeof(digest); ++j)
+	{
+		sprintf(digestout + (j * 2), "%02X", digest[j]);
+	}
+	digestout[32] = 0;
+
+	auto type = ZMusic_IdentifyMIDIType((uint32_t*)buffer, 32);
+	if (type == MIDI_NOTMIDI) return FStringf("%d:%s", flength, digestout);
+
+	// get the default for MIDI synth
+	if (playertype == -1)
+	{
+		switch (snd_mididevice)
+		{
+		case -1:		playertype = MDEV_FLUIDSYNTH; break;
+		case -2:		playertype = MDEV_TIMIDITY; break;
+		case -3:		playertype = MDEV_OPL; break;
+		case -4:		playertype = MDEV_GUS; break;
+		case -5:		playertype = MDEV_FLUIDSYNTH; break;
+		case -6:		playertype = MDEV_WILDMIDI; break;
+		case -7:		playertype = MDEV_ADL; break;
+		case -8:		playertype = MDEV_OPN; break;
+		default:		return "";
+		}
+	}
+	else if (playertype == MDEV_SNDSYS) return "";
+
+	// get the default for used sound font.
+	if (playparam.empty())
+	{
+		switch (playertype)
+		{
+		case MDEV_FLUIDSYNTH:		playparam = fluid_patchset; break;
+		case MDEV_TIMIDITY:			playparam = timidity_config; break;
+		case MDEV_GUS:				playparam = midi_config; break;
+		case MDEV_WILDMIDI:			playparam = wildmidi_config; break;
+		case MDEV_ADL:				playparam = adl_use_custom_bank ? *adl_custom_bank : std::to_string(adl_bank); break;
+		case MDEV_OPN:				playparam = opn_use_custom_bank ? *opn_custom_bank : ""; break;
+		case MDEV_OPL:				playparam = std::to_string(opl_core); break;
+
+		}
+	}
+	return FStringf("%d:%s:%d:%s", flength, digestout, playertype, playparam.c_str()).MakeUpper();
+}
+
+static void SaveGains()
+{
+	auto path = M_GetAppDataPath(true);
+	path << "/replaygain.ini";
+	FConfigFile gains(path);
+	TMap<FString, float>::Iterator it(gainMap);
+	TMap<FString, float>::Pair* pair;
+
+	if (gains.SetSection("Gains", true))
+	{
+		while (it.NextPair(pair))
+		{
+			gains.SetValueForKey(pair->Key, std::to_string(pair->Value).c_str());
+		}
+	}
+	gains.WriteConfigFile();
+}
+
+static void ReadGains()
+{
+	static bool done = false;
+	if (done) return;
+	done = true;
+	auto path = M_GetAppDataPath(true);
+	path << "/replaygain.ini";
+	FConfigFile gains(path);
+	if (gains.SetSection("Gains"))
+	{
+		const char* key;
+		const char* value;
+
+		while (gains.NextInSection(key, value))
+		{
+			gainMap.Insert(key, (float)strtod(value, nullptr));
+		}
+	}
+}
+
+CCMD(setreplaygain)
+{
+	// sets replay gain for current song to a fixed value
+	if (!mus_playing.handle || mus_playing.hash.IsEmpty())
+	{
+		Printf("setreplaygain needs some music playing\n");
+		return;
+	}
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: setreplaygain {dB}\n");
+		Printf("Current replay gain is %f dB\n", mus_playing.replayGain);
+		return;
+	}
+	float dB = (float)strtod(argv[1], nullptr);
+	if (dB > 10) dB = 10; // don't blast the speakers. Values above 2 or 3 are very rare.
+	gainMap.Insert(mus_playing.hash, dB);
+	SaveGains();
+	mus_playing.replayGain = dB;
+	mus_playing.replayGainFactor = (float)dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+}
+
+static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const char *playparam)
+{
+	mus_playing.replayGain = 0.f;
+	mus_playing.replayGainFactor = dBToAmplitude(mus_gainoffset);
+	fluid_gain.Callback();
+	mod_dumb_mastervolume.Callback();
+	if (!mus_usereplaygain) return;
+
+	FileReader reader = mus_cb.OpenMusic(musicname);
+	if (!reader.isOpen()) return;
+	int flength = (int)reader.GetLength();
+	auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
+
+	ReadGains();
+	auto hash = ReplayGainHash(mreader, flength, playertype, playparam);
+	if (hash.IsEmpty()) return; // got nothing to measure.
+	mus_playing.hash = hash;
+	auto entry = gainMap.CheckKey(hash);
+	if (entry)
+	{
+		mus_playing.replayGain = *entry;
+		mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+		return;
+	}
+	if (!mus_calcgain) return;
+
+	auto handle = ZMusic_OpenSong(mreader, playertype, playparam);
+	if (handle == nullptr) return; // not a music file
+
+	if (!ZMusic_Start(handle, 0, false))
+	{
+		ZMusic_Close(handle);
+		return; // unable to open
+	}
+
+	SoundStreamInfo fmt;
+	ZMusic_GetStreamInfo(handle, &fmt);
+	if (fmt.mBufferSize == 0)
+	{
+		ZMusic_Close(handle);
+		return; // external player.
+	}
+
+	int flags = SoundStream::Float;
+	if (abs(fmt.mNumChannels) < 2) flags |= SoundStream::Mono;
+
+	TArray<uint8_t> readbuffer(fmt.mBufferSize, true);
+	TArray<float> lbuffer;
+	TArray<float> rbuffer;
+	while (ZMusic_FillStream(handle, readbuffer.Data(), fmt.mBufferSize))
+	{
+		unsigned index;
+		// 4 cases, all with different preparation needs.
+		if (fmt.mNumChannels == -2) // 16 bit stereo
+		{
+			int16_t* sbuf = (int16_t*)readbuffer.Data();
+			int numsamples = fmt.mBufferSize / 4;
+			index = lbuffer.Reserve(numsamples);
+			rbuffer.Reserve(numsamples);
+
+			for (int i = 0; i < numsamples; i++)
+			{
+				lbuffer[index + i] = sbuf[i * 2];
+				rbuffer[index + i] = sbuf[i * 2 + 1];
+			}
+		}
+		else if (fmt.mNumChannels == -1) // 16 bit mono
+		{
+			int16_t* sbuf = (int16_t*)readbuffer.Data();
+			int numsamples = fmt.mBufferSize / 2;
+			index = lbuffer.Reserve(numsamples);
+
+			for (int i = 0; i < numsamples; i++)
+			{
+				lbuffer[index + i] = sbuf[i];
+			}
+		}
+		else if (fmt.mNumChannels == 1) // float mono
+		{
+			float* sbuf = (float*)readbuffer.Data();
+			int numsamples = fmt.mBufferSize / 4;
+			index = lbuffer.Reserve(numsamples);
+			for (int i = 0; i < numsamples; i++)
+			{
+				lbuffer[index + i] = sbuf[i] * 32768.f;
+			}
+		}
+		else if (fmt.mNumChannels == 2) // float stereo
+		{
+			float* sbuf = (float*)readbuffer.Data();
+			int numsamples = fmt.mBufferSize / 8;
+			auto index = lbuffer.Reserve(numsamples);
+			rbuffer.Reserve(numsamples);
+
+			for (int i = 0; i < numsamples; i++)
+			{
+				lbuffer[index + i] = sbuf[i * 2] * 32768.f;
+				rbuffer[index + i] = sbuf[i * 2 + 1] * 32768.f;
+			}
+		}
+		float accTime = lbuffer.Size() / (float)fmt.mSampleRate;
+		if (accTime > 8 * 60) break; // do at most 8 minutes, if the song forces a loop.
+	}
+	ZMusic_Close(handle);
+
+	GainAnalyzer analyzer;
+	analyzer.InitGainAnalysis(fmt.mSampleRate);
+	int result = analyzer.AnalyzeSamples(lbuffer.Data(), rbuffer.Size() == 0 ? nullptr : rbuffer.Data(), lbuffer.Size(), rbuffer.Size() == 0? 1: 2);
+	if (result == GAIN_ANALYSIS_OK)
+	{
+		auto gain = analyzer.GetTitleGain();
+		Printf("Calculated replay gain for %s at %f dB\n", hash.GetChars(), gain);
+
+		gainMap.Insert(hash, gain);
+		mus_playing.replayGain = gain;
+		mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+		SaveGains();
+	}
+}
 
 bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 {
@@ -397,6 +711,8 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	}
 	else
 	{
+
+		CheckReplayGain(musicname, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
 		auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
 		mus_playing.handle = ZMusic_OpenSong(mreader, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
 		if (mus_playing.handle == nullptr)

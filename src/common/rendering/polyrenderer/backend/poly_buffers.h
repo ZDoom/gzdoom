@@ -48,7 +48,7 @@ public:
 	std::vector<FVertexBufferAttribute> Attrs;
 	int UseVertexData;
 
-	void Load(PolyTriangleThreadData *thread, const void *vertices, int index) override;
+	void Load(PolyTriangleThreadData *thread, const void *vertices, int frame0, int frame1, int index) override;
 };
 
 class PolyVertexBuffer : public IVertexBuffer, public PolyBuffer

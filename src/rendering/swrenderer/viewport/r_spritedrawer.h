@@ -69,7 +69,7 @@ namespace swrenderer
 		RenderViewport *Viewport() const { return dc_viewport; }
 
 	private:
-		void DrawMaskedColumn(RenderThread* thread, int x, int y1, int cliptop, int clipbottom, uint32_t texelX, uint32_t texelStepX, uint32_t texelStepY, float scaleV, bool flipY, FSoftwareTexture* tex, int texwidth, int texheight, bool bgra, FRenderStyle style);
+		void DrawMaskedColumn(RenderThread* thread, int x, float y1, int cliptop, int clipbottom, uint32_t texelX, uint32_t texelStepX, uint32_t texelStepY, float scaleV, bool flipY, FSoftwareTexture* tex, int texwidth, int texheight, bool bgra, FRenderStyle style);
 
 		void SetDest(RenderViewport* viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
@@ -111,7 +111,7 @@ namespace swrenderer
 
 		RenderViewport *dc_viewport = nullptr;
 
-		friend class DrawVoxelBlocksRGBACommand;
-		friend class DrawVoxelBlocksPalCommand;
+		friend class SWTruecolorDrawers;
+		friend class SWPalDrawers;
 	};
 }

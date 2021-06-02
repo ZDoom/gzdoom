@@ -50,6 +50,8 @@ struct HexDataSource
 	TArray<uint8_t> glyphdata;
 	unsigned glyphmap[65536] = {};
 
+	PalEntry ConsolePal[18], SmallPal[18];
+
 	//==========================================================================
 	//
 	// parse a HEX font
@@ -83,6 +85,17 @@ struct HexDataSource
 				if (codepoint > LastChar) LastChar = codepoint;
 			}
 		}
+
+		ConsolePal[0] = SmallPal[0] = 0;
+		for (int i = 1; i < 18; i++)
+		{
+			double lum = i == 1 ? 0.01 : 0.5 + (i - 2) * (0.5 / 17.);
+			uint8_t lumb = (uint8_t(lum * 255));
+
+			ConsolePal[i] = PalEntry(255, lumb, lumb, lumb);
+			lumb = i * 255 / 17;
+			SmallPal[i] = PalEntry(255, lumb, lumb, lumb);
+		}
 	}
 };
 
@@ -95,6 +108,7 @@ public:
 	FHexFontChar(uint8_t *sourcedata, int swidth, int width, int height);
 
 	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap* bmp, int conversion);
 
 protected:
 	int SourceWidth;
@@ -159,12 +173,23 @@ TArray<uint8_t> FHexFontChar::CreatePalettedPixels(int)
 	return Pixels;
 }
 
+int FHexFontChar::CopyPixels(FBitmap* bmp, int conversion)
+{
+	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
+	PalEntry* palette = hexdata.ConsolePal;
+	auto ppix = CreatePalettedPixels(conversion);
+	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
+	return 0;
+
+}
+
 class FHexFontChar2 : public FHexFontChar
 {
 public:
 	FHexFontChar2(uint8_t *sourcedata, int swidth, int width, int height);
 
 	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap* bmp, int conversion);
 };
 
 
@@ -228,6 +253,15 @@ TArray<uint8_t> FHexFontChar2::CreatePalettedPixels(int)
 	return Pixels;
 }
 
+int FHexFontChar2::CopyPixels(FBitmap* bmp, int conversion)
+{
+	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
+	PalEntry* palette = hexdata.SmallPal;
+	auto ppix = CreatePalettedPixels(conversion);
+	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
+	return 0;
+}
+
 
 
 class FHexFont : public FFont
@@ -267,10 +301,9 @@ public:
 			{
 				auto offset = hexdata.glyphmap[i];
 				int size = hexdata.glyphdata[offset] / 16;
-				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar(&hexdata.glyphdata[offset + 1], size, size * 9, 16)), nullptr, ETextureType::FontChar);
-				Chars[i - FirstChar].OriginalPic = Chars[i - FirstChar].TranslatedPic;
+				Chars[i - FirstChar].OriginalPic = MakeGameTexture(new FImageTexture(new FHexFontChar(&hexdata.glyphdata[offset + 1], size, size * 9, 16)), nullptr, ETextureType::FontChar);
 				Chars[i - FirstChar].XMove = size * spacing;
-				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
+				TexMan.AddGameTexture(Chars[i - FirstChar].OriginalPic);
 			}
 			else Chars[i - FirstChar].XMove = spacing;
 
@@ -285,18 +318,15 @@ public:
 
 	void LoadTranslations()
 	{
-		double luminosity[256];
+		int minlum = hexdata.ConsolePal[1].r;
+		int maxlum = hexdata.ConsolePal[17].r;
 
-		memset (PatchRemap, 0, 256);
-		for (int i = 0; i < 18; i++) 
-		{	
-			// Create a gradient similar to the old console font.
-			PatchRemap[i] = i;
-			luminosity[i] = i == 1? 0.01 : 0.5 + (i-2) * (0.5 / 17.);
+		Translations.Resize(NumTextColors);
+		for (int i = 0; i < NumTextColors; i++)
+		{
+			if (i == CR_UNTRANSLATED) Translations[i] = 0;
+			else Translations[i] = LuminosityTranslation(i * 2 + 1, minlum, maxlum);
 		}
-		ActiveColors = 18;
-		
-		BuildTranslations (luminosity, nullptr, &TranslationParms[1][0], ActiveColors, nullptr);
 	}
 	
 };
@@ -338,10 +368,9 @@ public:
 			{
 				auto offset = hexdata.glyphmap[i];
 				int size = hexdata.glyphdata[offset] / 16;
-				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar2(&hexdata.glyphdata[offset + 1], size, 2 + size * 8, 18)), nullptr, ETextureType::FontChar);
-				Chars[i - FirstChar].OriginalPic = Chars[i - FirstChar].TranslatedPic;
+				Chars[i - FirstChar].OriginalPic = MakeGameTexture(new FImageTexture(new FHexFontChar2(&hexdata.glyphdata[offset + 1], size, 2 + size * 8, 18)), nullptr, ETextureType::FontChar);
 				Chars[i - FirstChar].XMove = size * spacing;
-				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
+				TexMan.AddGameTexture(Chars[i - FirstChar].OriginalPic);
 			}
 			else Chars[i - FirstChar].XMove = spacing;
 
@@ -356,71 +385,16 @@ public:
 
 	void LoadTranslations() override
 	{
-		double luminosity[256];
+		int minlum = hexdata.SmallPal[1].r;
+		int maxlum = hexdata.SmallPal[17].r;
 
-		memset(PatchRemap, 0, 256);
-		for (int i = 0; i < 18; i++)
+		Translations.Resize(NumTextColors);
+		for (int i = 0; i < NumTextColors; i++)
 		{
-			// Create a gradient similar to the old console font.
-			PatchRemap[i] = i;
-			luminosity[i] = i / 17.;
+			if (i == CR_UNTRANSLATED) Translations[i] = 0;
+			else Translations[i] = LuminosityTranslation(i * 2, minlum, maxlum);
 		}
-		ActiveColors = 18;
-
-		BuildTranslations(luminosity, nullptr, &TranslationParms[0][0], ActiveColors, nullptr);
 	}
-
-	void SetDefaultTranslation(uint32_t *colors) override
-	{
-		double myluminosity[18];
-
-		myluminosity[0] = 0;
-		for (int i = 1; i < 18; i++)
-		{
-			myluminosity[i] = (i - 1) / 16.;
-		}
-
-		uint8_t othertranslation[256], otherreverse[256];
-		TArray<double> otherluminosity;
-
-		SimpleTranslation(colors, othertranslation, otherreverse, otherluminosity);
-
-		FRemapTable remap(ActiveColors);
-		remap.Remap[0] = 0;
-		remap.Palette[0] = 0;
-		remap.ForFont = true;
-
-		for (unsigned l = 1; l < 18; l++)
-		{
-			for (unsigned o = 1; o < otherluminosity.Size() - 1; o++)	// luminosity[0] is for the transparent color
-			{
-				if (myluminosity[l] >= otherluminosity[o] && myluminosity[l] <= otherluminosity[o + 1])
-				{
-					PalEntry color1 = GPalette.BaseColors[otherreverse[o]];
-					PalEntry color2 = GPalette.BaseColors[otherreverse[o + 1]];
-					double weight = 0;
-					if (otherluminosity[o] != otherluminosity[o + 1])
-					{
-						weight = (myluminosity[l] - otherluminosity[o]) / (otherluminosity[o + 1] - otherluminosity[o]);
-					}
-					int r = int(color1.r + weight * (color2.r - color1.r));
-					int g = int(color1.g + weight * (color2.g - color1.g));
-					int b = int(color1.b + weight * (color2.b - color1.b));
-
-					r = clamp(r, 0, 255);
-					g = clamp(g, 0, 255);
-					b = clamp(b, 0, 255);
-					remap.Remap[l] = ColorMatcher.Pick(r, g, b);
-					remap.Palette[l] = PalEntry(255, r, g, b);
-					break;
-				}
-			}
-		}
-		Translations[CR_UNTRANSLATED] = GPalette.StoreTranslation(TRANSLATION_Internal, &remap);
-		forceremap = true;
-
-	}
-
 };
 
 

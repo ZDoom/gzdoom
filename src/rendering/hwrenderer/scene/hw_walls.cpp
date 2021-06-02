@@ -1251,7 +1251,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 						  sector_t * front, sector_t * back,
 						  sector_t * realfront, sector_t * realback,
 						  float fch1, float fch2, float ffh1, float ffh2,
-						  float bch1, float bch2, float bfh1, float bfh2)
+						  float bch1, float bch2, float bfh1, float bfh2, float zalign)
 								
 {
 	FTexCoordInfo tci;
@@ -1282,12 +1282,12 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
 		if ((seg->linedef->flags & ML_DONTPEGBOTTOM) >0)
 		{
-			texturebottom = MAX(realfront->GetPlaneTexZ(sector_t::floor), realback->GetPlaneTexZ(sector_t::floor)) + rowoffset;
+			texturebottom = MAX(realfront->GetPlaneTexZ(sector_t::floor), realback->GetPlaneTexZ(sector_t::floor) + zalign) + rowoffset;
 			texturetop = texturebottom + tci.mRenderHeight;
 		}
 		else
 		{
-			texturetop = MIN(realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling)) + rowoffset;
+			texturetop = MIN(realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling) + zalign) + rowoffset;
 			texturebottom = texturetop - tci.mRenderHeight;
 		}
 	}
@@ -1442,6 +1442,11 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		tci.mRenderHeight = -tci.mRenderHeight;
 		tci.mScale.Y = -tci.mScale.Y;
 		flags |= HWF_NOSLICE;
+	}
+	if (seg->linedef->isVisualPortal())
+	{
+		// mid textures on portal lines need the same offsetting as mid textures on sky lines
+		flags |= HWF_SKYHACK;
 	}
 	SetWallCoordinates(seg, &tci, texturetop, topleft, topright, bottomleft, bottomright, t_ofs);
 
@@ -2046,14 +2051,16 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		return;
 	}
 
+	bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
+
 	//return;
 	// [GZ] 3D middle textures are necessarily two-sided, even if they lack the explicit two-sided flag
-	if (!backsector || !(seg->linedef->flags&(ML_TWOSIDED | ML_3DMIDTEX))) // one sided
+	if (!backsector || (!(seg->linedef->flags&(ML_TWOSIDED | ML_3DMIDTEX)) && !isportal)) // one sided
 	{
 		// sector's sky
 		SkyNormal(di, frontsector, v1, v2);
 
-		if (seg->linedef->isVisualPortal())
+		if (isportal)
 		{
 			lineportal = seg->linedef->getPortal()->mGroup;
 			ztop[0] = zceil[0];
@@ -2084,9 +2091,42 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		float bfh2 = segback->floorplane.ZatPoint(v2);
 		float bch1 = segback->ceilingplane.ZatPoint(v1);
 		float bch2 = segback->ceilingplane.ZatPoint(v2);
+		float zalign = 0.f;
 
-		SkyTop(di, seg, frontsector, backsector, v1, v2);
-		SkyBottom(di, seg, frontsector, backsector, v1, v2);
+
+		if (isportal && seg->backsector == nullptr)
+		{
+			SkyNormal(di, frontsector, v1, v2); // For sky rendering purposes this needs to be treated as a one-sided wall.
+
+			// If this is a one-sided portal and we got floor or ceiling alignment, the upper/lower texture position needs to be adjusted for that.
+			// (We assume that this portal won't involve slopes!)
+			switch (seg->linedef->getPortalAlignment())
+			{
+			case PORG_FLOOR:
+				zalign = ffh1 - bfh1;
+				bch1 += zalign;
+				bch2 += zalign;
+				bfh1 += zalign;
+				bfh2 += zalign;
+				return;
+
+			case PORG_CEILING:
+				zalign = fch1 - bch1;
+				bch1 += zalign;
+				bch2 += zalign;
+				bfh1 += zalign;
+				bfh2 += zalign;
+				return;
+
+			default:
+				break;
+			}
+		}
+		else
+		{
+			SkyTop(di, seg, frontsector, backsector, v1, v2);
+			SkyBottom(di, seg, frontsector, backsector, v1, v2);
+		}
 
 		// upper texture
 		if (frontsector->GetTexture(sector_t::ceiling) != skyflatnum || backsector->GetTexture(sector_t::ceiling) != skyflatnum)
@@ -2139,7 +2179,6 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 
 
 		/* mid texture */
-		bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
 		bool drawfogboundary = !di->isFullbrightScene() && di->CheckFog(frontsector, backsec);
@@ -2156,12 +2195,6 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		}
 		else texture = nullptr;
 
-		if (texture || drawfogboundary)
-		{
-			DoMidTexture(di, seg, drawfogboundary, frontsector, backsector, realfront, realback,
-				fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
-		}
-
 		if (isportal)
 		{
 			lineportal = seg->linedef->getPortal()->mGroup;
@@ -2170,10 +2203,25 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 			zbottom[0] = bfh1;
 			zbottom[1] = bfh2;
 			PutPortal(di, PORTALTYPE_LINETOLINE, -1);
+
+			if (texture && seg->backsector != nullptr)
+			{
+				DoMidTexture(di, seg, drawfogboundary, frontsector, backsector, realfront, realback,
+					fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2, zalign);
+			}
 		}
-		else if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
+		else
 		{
-			DoFFloorBlocks(di, seg, frontsector, backsector, fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
+			if (texture || drawfogboundary)
+			{
+				DoMidTexture(di, seg, drawfogboundary, frontsector, backsector, realfront, realback,
+					fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2, zalign);
+			}
+
+			if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
+			{
+				DoFFloorBlocks(di, seg, frontsector, backsector, fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
+			}
 		}
 
 		/* bottom texture */

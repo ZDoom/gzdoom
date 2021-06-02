@@ -58,18 +58,11 @@ FString DumpCPUInfo(const CPUInfo *cpu)
 
 
 #ifdef __GNUC__
-#if defined(__i386__) && defined(__PIC__)
-// %ebx may by the PIC register. */
-#define __cpuid(output, func) \
-	__asm__ __volatile__("xchgl\t%%ebx, %1\n\t" \
-						 "cpuid\n\t" \
-						 "xchgl\t%%ebx, %1\n\t" \
-		: "=a" ((output)[0]), "=r" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) \
-		: "a" (func));
-#else
-#define __cpuid(output, func) __asm__ __volatile__("cpuid" : "=a" ((output)[0]),\
-	"=b" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) : "a" (func));
-#endif
+#define __cpuidex(output, func, subfunc) \
+	__asm__ __volatile__("cpuid" \
+	: "=a" ((output)[0]), "=b" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) \
+	: "a" (func), "c" (subfunc));
+#define __cpuid(output, func) __cpuidex(output, func, 0)
 #endif
 
 void CheckCPUID(CPUInfo *cpu)
@@ -81,52 +74,9 @@ void CheckCPUID(CPUInfo *cpu)
 
 	cpu->DataL1LineSize = 32;	// Assume a 32-byte cache line
 
-#if !defined(_M_IX86) && !defined(__i386__) && !defined(_M_X64) && !defined(__amd64__)
-	return;
-#else
-
-#if defined(_M_IX86) || defined(__i386__)
-	// Old 486s do not have CPUID, so we must test for its presence.
-	// This code is adapted from the samples in AMD's document
-	// entitled "AMD-K6 MMX Processor Multimedia Extensions."
-#ifndef __GNUC__
-	__asm
-	{
-		pushfd				// save EFLAGS
-		pop eax				// store EFLAGS in EAX
-		mov ecx,eax			// save in ECX for later testing
-		xor eax,0x00200000	// toggle bit 21
-		push eax			// put to stack
-		popfd				// save changed EAX to EFLAGS
-		pushfd				// push EFLAGS to TOS
-		pop eax				// store EFLAGS in EAX
-		cmp eax,ecx			// see if bit 21 has changed
-		jne haveid			// if no change, then no CPUID
-	}
-	return;
-haveid:
-#else
-	int oldfd, newfd;
-
-	__asm__ __volatile__("\t"
-		"pushf\n\t"
-		"popl %0\n\t"
-		"movl %0,%1\n\t"
-		"xorl $0x200000,%0\n\t"
-		"pushl %0\n\t"
-		"popf\n\t"
-		"pushf\n\t"
-		"popl %0\n\t"
-		: "=r" (newfd), "=r" (oldfd));
-	if (oldfd == newfd)
-	{
-		return;
-	}
-#endif
-#endif
-
 	// Get vendor ID
 	__cpuid(foo, 0);
+	const int maxid = foo[0];
 	cpu->dwVendorID[0] = foo[1];
 	cpu->dwVendorID[1] = foo[3];
 	cpu->dwVendorID[2] = foo[2];
@@ -198,7 +148,17 @@ haveid:
 			cpu->FeatureFlags[3] = foo[3];	// AMD feature flags
 		}
 	}
-#endif
+
+	if (maxid >= 7)
+	{
+		__cpuidex(foo, 7, 0);
+		cpu->FeatureFlags[4] = foo[1];
+		cpu->FeatureFlags[5] = foo[2];
+		cpu->FeatureFlags[6] = foo[3];
+
+		__cpuidex(foo, 7, 1);
+		cpu->FeatureFlags[7] = foo[0];
+	}
 }
 
 FString DumpCPUInfo(const CPUInfo *cpu)
@@ -252,8 +212,13 @@ FString DumpCPUInfo(const CPUInfo *cpu)
 		if (cpu->bSSSE3)		out += (" SSSE3");
 		if (cpu->bSSE41)		out += (" SSE4.1");
 		if (cpu->bSSE42)		out += (" SSE4.2");
-		if (cpu->b3DNow)		out += (" 3DNow!");
-		if (cpu->b3DNowPlus)	out += (" 3DNow!+");
+		if (cpu->bAVX)			out += (" AVX");
+		if (cpu->bAVX2)			out += (" AVX2");
+		if (cpu->bAVX512_F)		out += (" AVX512");
+		if (cpu->bF16C)			out += (" F16C");
+		if (cpu->bFMA3)			out += (" FMA3");
+		if (cpu->bBMI1)			out += (" BMI1");
+		if (cpu->bBMI2)			out += (" BMI2");
 		if (cpu->HyperThreading)	out += (" HyperThreading");
 		out += ("\n");
 	}

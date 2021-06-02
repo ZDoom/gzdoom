@@ -234,7 +234,7 @@ public:
 					  sector_t * front, sector_t * back,
 					  sector_t * realfront, sector_t * realback,
 					  float fch1, float fch2, float ffh1, float ffh2,
-					  float bch1, float bch2, float bfh1, float bfh2);
+					  float bch1, float bch2, float bfh1, float bfh2, float zalign);
 
 	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
 
@@ -385,7 +385,7 @@ public:
 
 	void CreateVertices(HWDrawInfo *di);
 	void PutSprite(HWDrawInfo *di, bool translucent);
-	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false);
+	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false, bool isSpriteShadow = false);
 	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 
 	void DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent);

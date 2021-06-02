@@ -391,6 +391,7 @@ public:
 	float		BlendB = 0;
 	float		BlendA = 0;
 
+	FString		SoundClass;
 	FString		LogText;	// [RH] Log for Strife
 	FString		SubtitleText;
 	int			SubtitleCounter;

@@ -50,7 +50,7 @@ public:
 
 	void SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthStencil, bool topdown);
 	void SetInputAssembly(PolyInputAssembly *input);
-	void SetVertexBuffer(const void *vertices);
+	void SetVertexBuffer(const void *vertices, int offset0, int offset1); // [GEC] Add offset params
 	void SetIndexBuffer(const void *elements);
 	void SetLightBuffer(const void *lights);
 	void SetViewpointUniforms(const HWViewpointUniforms *uniforms);
@@ -111,10 +111,11 @@ struct PolyPushConstants
 
 	// dynamic lights
 	int uLightIndex;
+	FVector4 uDynLightColor; // [GEC]
 };
 
 class PolyInputAssembly
 {
 public:
-	virtual void Load(PolyTriangleThreadData *thread, const void *vertices, int index) = 0;
+	virtual void Load(PolyTriangleThreadData *thread, const void *vertices, int frame0, int frame1, int index) = 0; // [GEC] Add frame params
 };

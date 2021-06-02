@@ -45,7 +45,6 @@
 #include "hw_shadowmap.h"
 
 
-struct sector_t;
 struct FPortalSceneState;
 class FSkyVertexBuffer;
 class IIndexBuffer;
@@ -147,7 +146,7 @@ public:
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;
 	IntRect mOutputLetterbox;
-	float mSceneClearColor[4];
+	float mSceneClearColor[4]{ 0,0,0,255 };
 
 public:
 	DFrameBuffer (int width=1, int height=1);

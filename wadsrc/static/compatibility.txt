@@ -295,3 +295,8 @@ F50C91A05E1A1E646690517641F0D1DD // daedalus.wad map19
 {
 	scriptwait
 }
+
+41C12F740CD7635E4595D3661237992F // obtic.wad map01 (untested)
+{
+	shorttex
+}

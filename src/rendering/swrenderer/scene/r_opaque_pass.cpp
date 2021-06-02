@@ -79,6 +79,8 @@ extern uint32_t r_renderercaps;
 
 double model_distance_cull = 1e16;
 
+EXTERN_CVAR(Float, r_actorspriteshadowdist)
+
 namespace
 {
 	double sprite_distance_cull = 1e16;
@@ -965,6 +967,25 @@ namespace swrenderer
 					else
 					{
 						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap);
+
+						// [Nash] draw sprite shadow
+						if (R_ShouldDrawSpriteShadow(thing))
+						{
+							double dist = (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared();
+							double distCheck = r_actorspriteshadowdist;
+							if (dist <= distCheck * distCheck)
+							{
+								// squash Y scale
+								DVector2 shadowScale = sprite.spriteScale;
+								shadowScale.Y *= 0.15;
+
+								// snap to floor Z
+								DVector3 shadowPos = sprite.pos;
+								shadowPos.Z = thing->floorz;
+
+								RenderSprite::Project(Thread, thing, shadowPos, sprite.tex, shadowScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thinglightlevel, foggy, thingColormap, true);
+							}
+						}
 					}
 				}
 			}

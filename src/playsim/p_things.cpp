@@ -171,10 +171,11 @@ void InterceptDefaultAim(AActor *mobj, AActor *targ, DVector3 aim, double speed)
 
 // [MC] Was part of P_Thing_Projectile, now its own function for use in ZScript.
 // Aims mobj at targ based on speed and targ's velocity.
-static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch = false, bool oldvel = false, bool leadtarget = true)
+static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch = false, bool oldvel = false, bool resetvel = false, bool leadtarget = true)
 {
 	if (targ == nullptr || mobj == nullptr)	return;
 
+	DVector3 prevel = mobj->Vel;
 	DVector3 aim = mobj->Vec3To(targ);
 	aim.Z += targ->Height / 2;
 
@@ -198,6 +199,10 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 			if (targ->Vel.X == 0 && targ->Vel.Y == 0)
 			{
 				InterceptDefaultAim(mobj, targ, aim, speed);
+				if (resetvel)
+				{
+					mobj->Vel = prevel;
+				}
 				return;
 			}
 		}
@@ -207,7 +212,6 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 		double a = g_acos(clamp(ydotx / targspeed / dist, -1.0, 1.0));
 		double multiplier = double(pr_leadtarget.Random2())*0.1 / 255 + 1.1;
 		double sinb = -clamp(targspeed*multiplier * g_sin(a) / speed, -1.0, 1.0);
-		DVector3 prevel = mobj->Vel;
 		// Use the cross product of two of the triangle's sides to get a
 		// rotation vector.
 		DVector3 rv(tvel ^ aim);
@@ -235,6 +239,10 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 	{
 		InterceptDefaultAim(mobj, targ, aim, speed);
 	}
+	if (resetvel)
+	{
+		mobj->Vel = prevel;
+	}
 }
 
 DEFINE_ACTION_FUNCTION(AActor, VelIntercept)
@@ -244,8 +252,9 @@ DEFINE_ACTION_FUNCTION(AActor, VelIntercept)
 	PARAM_FLOAT(speed);
 	PARAM_BOOL(aimpitch);
 	PARAM_BOOL(oldvel);
+	PARAM_BOOL(resetvel);
 	if (speed < 0)	speed = self->Speed;
-	VelIntercept(targ, self, speed, aimpitch, oldvel);
+	VelIntercept(targ, self, speed, aimpitch, oldvel, resetvel);
 	return 0;
 }
 
@@ -331,7 +340,7 @@ bool FLevelLocals::EV_Thing_Projectile (int tid, AActor *source, int type, const
 
 					if (targ != nullptr)
 					{
-						VelIntercept(targ, mobj, speed, false, false, leadTarget);
+						VelIntercept(targ, mobj, speed, false, false, false, leadTarget);
 
 						if (mobj->flags2 & MF2_SEEKERMISSILE)
 						{

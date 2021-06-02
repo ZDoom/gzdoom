@@ -48,7 +48,6 @@ void AnimTexture::SetFrameSize(int  format, int width, int height)
     FTexture::SetSize(width, height);
     Image.Resize(width * height * (format == Paletted ? 1 : 3));
     memset(Image.Data(), 0, Image.Size());
-    CleanHardwareTextures();
 }
 
 void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
@@ -81,7 +80,6 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
         }
         else memcpy(Image.Data(), data_, Width * Height * (pixelformat == Paletted ? 1 : 3));
     }
-    CleanHardwareTextures();
 }
 
 //===========================================================================
@@ -156,10 +154,13 @@ void AnimTextures::SetSize(int format, int width, int height)
     static_cast<AnimTexture*>(tex[1]->GetTexture())->SetFrameSize(format, width, height);
     tex[0]->SetSize(width, height);
     tex[1]->SetSize(width, height);
+    tex[0]->CleanHardwareData();
+    tex[1]->CleanHardwareData();
 }
 
 void AnimTextures::SetFrame(const uint8_t* palette, const void* data)
 {
     active ^= 1;
     static_cast<AnimTexture*>(tex[active]->GetTexture())->SetFrame(palette, data);
+    tex[active]->CleanHardwareData();
 }

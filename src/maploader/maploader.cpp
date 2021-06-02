@@ -746,6 +746,11 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 			catch (const CRecoverableError& err)
 			{
 				Printf("Error loading nodes: %s.\n", err.what());
+
+				ForceNodeBuild = true;
+				Level->subsectors.Clear();
+				Level->segs.Clear();
+				Level->nodes.Clear();
 				return false;
 			}
 		}
@@ -758,7 +763,8 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 	catch (CRecoverableError &error)
 	{
 		Printf("Error loading nodes: %s\n", error.GetMessage());
-		
+
+		ForceNodeBuild = true;
 		Level->subsectors.Clear();
 		Level->segs.Clear();
 		Level->nodes.Clear();

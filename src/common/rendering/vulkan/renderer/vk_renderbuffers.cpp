@@ -212,13 +212,18 @@ void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlag
 	ImageBuilder builder;
 	builder.setSize(width, height);
 	builder.setSamples(samples);
-	builder.setFormat(VK_FORMAT_A2R10G10B10_UNORM_PACK32);
+	builder.setFormat(SceneNormalFormat);
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (!builder.isFormatSupported(fb->device, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+	{
+		SceneNormalFormat = VK_FORMAT_R8G8B8A8_UNORM;
+		builder.setFormat(SceneNormalFormat);
+	}
 	SceneNormal.Image = builder.create(fb->device);
 	SceneNormal.Image->SetDebugName("VkRenderBuffers.SceneNormal");
 
 	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(SceneNormal.Image.get(), VK_FORMAT_A2R10G10B10_UNORM_PACK32);
+	viewbuilder.setImage(SceneNormal.Image.get(), SceneNormalFormat);
 	SceneNormal.View = viewbuilder.create(fb->device);
 	SceneNormal.View->SetDebugName("VkRenderBuffers.SceneNormalView");
 }
@@ -234,8 +239,13 @@ void VkRenderBuffers::CreateShadowmap()
 
 	ImageBuilder builder;
 	builder.setSize(gl_shadowmap_quality, 1024);
-	builder.setFormat(VK_FORMAT_R32_SFLOAT);
+	builder.setFormat(SceneNormalFormat);
 	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (!builder.isFormatSupported(fb->device, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+	{
+		SceneNormalFormat = VK_FORMAT_R8G8B8A8_UNORM;
+		builder.setFormat(SceneNormalFormat);
+	}
 	Shadowmap.Image = builder.create(fb->device);
 	Shadowmap.Image->SetDebugName("VkRenderBuffers.Shadowmap");
 

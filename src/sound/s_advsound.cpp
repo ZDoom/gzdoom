@@ -1636,10 +1636,10 @@ int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 	const char *pclass;
 	int gender = 0;
 
-	if (actor != nullptr)
+	if (actor != nullptr && actor->player != nullptr) 
 	{
-		if (actor->player != nullptr) pclass = S_GetSoundClass(actor);
-		if (actor->player != nullptr) gender = actor->player->userinfo.GetGender();
+		pclass = S_GetSoundClass(actor);
+		gender = actor->player->userinfo.GetGender();
 	}
 	else
 	{

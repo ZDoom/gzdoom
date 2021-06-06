@@ -800,9 +800,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		z = thing->floorz;
 	}
-
 	// [RH] Make floatbobbing a renderer-only effect.
-	if (thing->flags2 & MF2_FLOATBOB)
+	else if (thing->flags2 & MF2_FLOATBOB)
 	{
 		float fz = thing->GetBobOffset(vp.TicFrac);
 		z += fz;

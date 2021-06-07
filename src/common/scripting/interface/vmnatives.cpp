@@ -964,10 +964,16 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
 // This is only accessible to the special menu item to run CCMDs.
 DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 {
-	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
 	PARAM_BOOL(unsafe);
+
+	// Only menus are allowed to execute CCMDs.
+	if (DMenu::InMenu == 0)
+	{
+		I_FatalError("Attempt to execute CCMD '%s' outside of menu code", cmd.GetChars());
+	}
+
 	UnsafeExecutionScope scope(unsafe);
 	C_DoCommand(cmd);
 	return 0;

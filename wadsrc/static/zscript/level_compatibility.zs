@@ -2120,7 +2120,14 @@ class LevelCompatibility : LevelPostProcessor
 				// fix broken switch to raise the exit bridge
 				SetLineSpecial(1248, Floor_RaiseByValue, 39, 8, 512);
 				break;
-			}			
+			}
+
+			case '1C35384B22BD805F51B3B2C9D17D62E4': // 007ltsd.wad E4M7
+			{
+				// Fix impassable exit line
+				SetLineFlags(6842, 0, Line.ML_BLOCKING); 
+				break;
+			}
 		}
 	}
 }

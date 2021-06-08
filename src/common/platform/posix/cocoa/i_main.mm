@@ -101,8 +101,9 @@ void I_DetectOS()
 
 	const char* name = "Unknown version";
 	
-	if (10 == version.majorVersion)
+	switch (version.majorVersion)
 	{
+	case 10:
 		switch (version.minorVersion)
 		{
 			case  9: name = "OS X Mavericks";        break;
@@ -114,13 +115,13 @@ void I_DetectOS()
 			case 15: name = "macOS Catalina";        break;
 			case 16: name = "macOS Big Sur";         break;
 		}
-	}
-	else if (11 == version.majorVersion)
-	{
-		switch (version.minorVersion)
-		{
-			case 0: name = "macOS Big Sur";          break;
-		}
+		break;
+	case 11:
+		name = "macOS Big Sur";
+		break;
+	case 12:
+		name = "macOS Monterey";
+		break;
 	}
 
 	char release[16] = "unknown";

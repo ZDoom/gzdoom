@@ -25,6 +25,10 @@
 #include "modelrenderer.h"
 #include "printf.h"
 #include "textureid.h"
+#include "vectors.h"
+
+// Avoid memory issues according to AddressSanitizer
+template<> void FOBJModel::ParseVector<FVector2, 2>(TArray<FVector2> &array);
 
 /**
  * Load an OBJ model
@@ -247,6 +251,18 @@ template<typename T, size_t L> void FOBJModel::ParseVector(TArray<T> &array)
 		coord[axis] = (float)sc.Float;
 	}
 	T vec(coord);
+	array.Push(vec);
+}
+
+// Avoid memory issues according to AddressSanitizer
+template<> void FOBJModel::ParseVector<FVector2, 2>(TArray<FVector2> &array)
+{
+	float x, y;
+	sc.MustGetFloat();
+	x = (float)sc.Float;
+	sc.MustGetFloat();
+	y = (float)sc.Float;
+	FVector2 vec(x, y);
 	array.Push(vec);
 }
 

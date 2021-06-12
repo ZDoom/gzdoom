@@ -140,6 +140,31 @@ enum EPrintLevel
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
+/*
+// These are here to document the intrinsic methods and fields available on
+// the built-in ZScript types
+class Vector2
+{
+	double x;
+	double y;
+	native double Length();
+	native Vector2 Unit();
+}
+
+class Vector3 : Vector2
+{
+	double z;
+	Vector2 xy;
+	native double Length();
+	native Vector3 Unit();
+}
+
+class Array<T>
+{
+	native int Size();
+}
+*/
+
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
@@ -245,6 +270,18 @@ struct TexMan
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
 	native static bool UseGamePalette(TextureID tex);
 }
+
+/*
+// Intrinsic TextureID methods
+struct TextureID
+{
+	native bool IsValid();
+	native bool IsNull();
+	native bool Exists();
+	native void SetInvalid();
+	native void SetNull();
+}
+*/
 
 enum EScaleMode
 {
@@ -568,6 +605,8 @@ class Object native
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
 	virtual virtualscope void OnDestroy() {}
+	// clearscope Object GetParentClass(); // Intrinsic - Get the parent class of this object
+	// clearscope Name GetClassName(); // Intrinsic - Get the name of this object's class
 }
 
 class BrokenLines : Object native version("2.4")
@@ -638,7 +677,8 @@ struct StringStruct native
 {
 	native static vararg String Format(String fmt, ...);
 	native vararg void AppendFormat(String fmt, ...);
-
+	// native int Length();  // Intrinsic
+	// bool operator~==(String other)  // Case-insensitive equality comparison
 	native void Replace(String pattern, String replacement);
 	native String Left(int len) const;
 	native String Mid(int pos = 0, int len = 2147483647) const;

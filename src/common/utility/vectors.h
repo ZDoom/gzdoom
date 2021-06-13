@@ -82,6 +82,11 @@ struct TVector2
 	{
 	}
 
+	TVector2(vec_t *o)
+		: X(o[0]), Y(o[1])
+	{
+	}
+
 	void Zero()
 	{
 		Y = X = 0;

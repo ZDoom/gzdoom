@@ -240,13 +240,12 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
  */
 template<typename T, size_t L> void FOBJModel::ParseVector(TArray<T> &array)
 {
-	float coord[L];
-	for (size_t axis = 0; axis < L; axis++)
+	T vec;
+	for (unsigned axis = 0; axis < L; axis++)
 	{
 		sc.MustGetFloat();
-		coord[axis] = (float)sc.Float;
+		vec[axis] = (float)sc.Float;
 	}
-	T vec(coord);
 	array.Push(vec);
 }
 

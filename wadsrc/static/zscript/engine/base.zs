@@ -296,6 +296,7 @@ struct TexMan
 
 /*
 // Intrinsic TextureID methods
+// This isn't really a class, and can be used as an integer
 struct TextureID
 {
 	native bool IsValid();
@@ -303,6 +304,19 @@ struct TextureID
 	native bool Exists();
 	native void SetInvalid();
 	native void SetNull();
+}
+
+// 32-bit RGBA color - each component is one byte, or 8-bit
+// This isn't really a class, and can be used as an integer
+class Color
+{
+	// Constructor - alpha channel is optional
+	Color(int alpha, int red, int green, int blue);
+	Color(int red, int green, int blue); // Alpha is 0 if omitted
+	int r; // Red
+	int g; // Green
+	int b; // Blue
+	int a; // Alpha
 }
 */
 
@@ -634,6 +648,7 @@ class Object native
 	virtual virtualscope void OnDestroy() {}
 	// clearscope Object GetParentClass(); // Intrinsic - Get the parent class of this object
 	// clearscope Name GetClassName(); // Intrinsic - Get the name of this object's class
+	// clearscope Class<Object> GetClass(); // Intrinsic - Get the object's class
 }
 
 class BrokenLines : Object native version("2.4")
@@ -700,12 +715,14 @@ enum EmptyTokenType
 }
 
 // Although String is a builtin type, this is a convenient way to attach methods to it.
+// All of these methods, except for the static ones, are available on instances of String
 struct StringStruct native
 {
 	native static vararg String Format(String fmt, ...);
 	native vararg void AppendFormat(String fmt, ...);
 	// native int Length();  // Intrinsic
-	// bool operator~==(String other)  // Case-insensitive equality comparison
+	// native bool operator~==(String other)  // Case-insensitive equality comparison
+	// native String operator..(String other)  // Concatenate with another String
 	native void Replace(String pattern, String replacement);
 	native String Left(int len) const;
 	native String Mid(int pos = 0, int len = 2147483647) const;

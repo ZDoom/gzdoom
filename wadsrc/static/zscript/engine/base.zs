@@ -318,6 +318,21 @@ class Color
 	int b; // Blue
 	int a; // Alpha
 }
+
+// Name - a string with an integer ID
+class Name
+{
+	Name(Name name);
+	Name(String name);
+}
+
+// Sound ID - can be created by casting from a string (name from SNDINFO) or an
+// integer (sound ID as integer).
+class Sound
+{
+	Sound(String soundName);
+	Sound(int id);
+}
 */
 
 enum EScaleMode
@@ -646,9 +661,53 @@ class Object native
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
 	virtual virtualscope void OnDestroy() {}
+	//
+	//
 	// clearscope Object GetParentClass(); // Intrinsic - Get the parent class of this object
 	// clearscope Name GetClassName(); // Intrinsic - Get the name of this object's class
 	// clearscope Class<Object> GetClass(); // Intrinsic - Get the object's class
+	// clearscope static Object new(class<Object> type); // Intrinsic - Create a new object with this class. This is only valid for thinkers and plain objects, except menus. For actors, use Actor.Spawn();
+	//
+	//
+	// Intrinsic random number generation functions. Note that the square
+	// bracket syntax for specifying an RNG ID is only available for these
+	// functions.
+	// clearscope static void SetRandomSeed[Name rngId = 'None'](int seed); // Intrinsic - Set the seed for the given RNG.
+	// clearscope static int Random[Name rngId = 'None'](int min, int max); // Intrinsic - Use the given RNG to generate a random integer number in the range (min, max) inclusive.
+	// clearscope static int Random2[Name rngId = 'None'](int mask); // Intrinsic - Use the given RNG to generate a random integer number, and do a "union" (bitwise AND, AKA &) operation with the bits in the mask integer.
+	// clearscope static int FRandom[Name rngId = 'None'](double min, double max); // Intrinsic - Use the given RNG to generate a random real number in the range (min, max) inclusive.
+	// clearscope static int RandomPick[Name rngId = 'None'](int choices...); // Intrinsic - Use the given RNG to generate a random integer from the given choices.
+	// clearscope static double FRandomPick[Name rngId = 'None'](double choices...); // Intrinsic - Use the given RNG to generate a random real number from the given choices.
+	//
+	//
+	// Intrinsic math functions - the argument and return types for these
+	// functions depend on the arguments given. Other than that, they work the
+	// same way similarly-named functions in other programming languages work.
+	// Note that trigonometric functions work with degrees instead of radians
+	// clearscope static T abs(T x);
+	// clearscope static T atan2(T y, T x); // NOTE: Returns a value in degrees instead of radians
+	// clearscope static T vectorangle(T x, T y); // Same as Atan2 with the arguments in a different order
+	// clearscope static T min(T x...);
+	// clearscope static T max(T x...);
+	// clearscope static T clamp(T x, T min, T max);
+	//
+	// These math functions only work with doubles - they are defined in FxFlops
+	// clearscope static double exp(double x);
+	// clearscope static double log(double x);
+	// clearscope static double log10(double x);
+	// clearscope static double sqrt(double x);
+	// clearscope static double ceil(double x);
+	// clearscope static double floor(double x);
+	// clearscope static double acos(double x);
+	// clearscope static double asin(double x);
+	// clearscope static double atan(double x);
+	// clearscope static double cos(double x);
+	// clearscope static double sin(double x);
+	// clearscope static double tan(double x);
+	// clearscope static double cosh(double x);
+	// clearscope static double sinh(double x);
+	// clearscope static double tanh(double x);
+	// clearscope static double round(double x);
 }
 
 class BrokenLines : Object native version("2.4")

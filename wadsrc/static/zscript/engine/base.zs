@@ -143,23 +143,29 @@ enum EPrintLevel
 /*
 // These are here to document the intrinsic methods and fields available on
 // the built-in ZScript types
-class Vector2
+struct Vector2
 {
 	double x;
 	double y;
 	native double Length();
 	native Vector2 Unit();
+	// The dot product of two vectors can be calculated like this:
+	// double d = a dot b;
 }
 
-class Vector3 : Vector2
+struct Vector3 : Vector2
 {
 	double z;
 	Vector2 xy;
 	native double Length();
 	native Vector3 Unit();
+	// The dot product of two vectors can be calculated like this:
+	// double d = a dot b;
+	// The cross product of two vectors can be calculated like this:
+	// Vector3 d = a cross b;
 }
 
-class Array<T>
+struct Array<T>
 {
 	native int Size();
 }
@@ -285,7 +291,7 @@ struct TextureID
 
 // 32-bit RGBA color - each component is one byte, or 8-bit
 // This isn't really a class, and can be used as an integer
-class Color
+struct Color
 {
 	// Constructor - alpha channel is optional
 	Color(int alpha, int red, int green, int blue);
@@ -297,7 +303,7 @@ class Color
 }
 
 // Name - a string with an integer ID
-class Name
+struct Name
 {
 	Name(Name name);
 	Name(String name);
@@ -305,7 +311,7 @@ class Name
 
 // Sound ID - can be created by casting from a string (name from SNDINFO) or an
 // integer (sound ID as integer).
-class Sound
+struct Sound
 {
 	Sound(String soundName);
 	Sound(int id);
@@ -545,7 +551,8 @@ struct Font native
 
 	const TEXTCOLOR_CHAT			= "\034*";
 	const TEXTCOLOR_TEAMCHAT		= "\034!";
-	
+	// native Font(const String name);  // String/name to font casts
+	// native Font(const Name name);
 
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
@@ -636,6 +643,7 @@ class Object native
 	virtual virtualscope void OnDestroy() {}
 	//
 	//
+	// clearscope bool IsAbstract(); // Intrinsic - Query whether or not the class is abstract
 	// clearscope Object GetParentClass(); // Intrinsic - Get the parent class of this object
 	// clearscope Name GetClassName(); // Intrinsic - Get the name of this object's class
 	// clearscope Class<Object> GetClass(); // Intrinsic - Get the object's class
@@ -747,7 +755,7 @@ enum EmptyTokenType
 }
 
 // Although String is a builtin type, this is a convenient way to attach methods to it.
-// All of these methods, except for the static ones, are available on instances of String
+// All of these methods are available on strings
 struct StringStruct native
 {
 	native static vararg String Format(String fmt, ...);

@@ -395,7 +395,7 @@ void DSeqNode::OnDestroy()
 		m_ParentSeqNode->m_ChildSeqNode = nullptr;
 		m_ParentSeqNode = nullptr;
 	}
-	if (Level->SequenceListHead == this)
+	if (Level && Level->SequenceListHead == this)
 	{
 		Level->SequenceListHead = m_Next;
 		GC::WriteBarrier(m_Next);

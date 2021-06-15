@@ -35,6 +35,7 @@
 #include "s_soundinternal.h"
 
 #include <sys/sysctl.h>
+#include <sys/stat.h>
 
 #include "c_console.h"
 #include "c_cvars.h"
@@ -89,14 +90,76 @@ struct NSOperatingSystemVersion
 
 #endif // before 10.10
 
+static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 110000
+	// The version returned by macOS depends on the SDK which the software has been built against.
+	// When built against the 10.15 SDK or earlier, Big Sur returns 10.16 for compatibility with previous numbering.
+	// When built against the 11.0 SDK, it returns 11.0 for forward compatibility.
+	// https://eclecticlight.co/2020/08/13/macos-version-numbering-isnt-so-simple/
+
+	// It's impossible to load real SystemVersion.plist when linking with old SDK, i.e. when building for Intel CPU
+	// Any attempt to read this file is redirected to SystemVersionCompat.plist silently
+	// Workaround with the external process is needed in order to report correct macOS version
+
+	const char *const plistPath = "/System/Library/CoreServices/SystemVersion.plist";
+	struct stat dummy;
+
+	if (stat(plistPath, &dummy) != 0)
+		return false;
+	
+	char commandLine[1024] = {};
+	snprintf(commandLine, sizeof commandLine, "defaults read %s ProductVersion", plistPath);
+	
+	FILE *const versionFile = popen(commandLine, "r");
+
+	if (versionFile == nullptr)
+		return false;
+
+	NSOperatingSystemVersion plistVersion = {};
+	char versionString[256] = {};
+
+	if (fgets(versionString, sizeof versionString, versionFile))
+	{
+		plistVersion.majorVersion = atoi(versionString);
+
+		if (const char *minorVersionString = strstr(versionString, "."))
+		{
+			minorVersionString++;
+			plistVersion.minorVersion = atoi(minorVersionString);
+
+			if (const char *patchVersionString = strstr(minorVersionString, "."))
+			{
+				patchVersionString++;
+				plistVersion.patchVersion = atoi(minorVersionString);
+			}
+		}
+	}
+
+	fclose(versionFile);
+
+	if (plistVersion.majorVersion != 0)
+	{
+		version = plistVersion;
+		return true;
+	}
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED < 110000
+
+	return false;
+}
+
 void I_DetectOS()
 {
 	NSOperatingSystemVersion version = {};
-	NSProcessInfo* const processInfo = [NSProcessInfo processInfo];
 
-	if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+	if (!ReadSystemVersionFromPlist(version))
 	{
-		version = [processInfo operatingSystemVersion];
+		NSProcessInfo *const processInfo = [NSProcessInfo processInfo];
+
+		if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+		{
+			version = [processInfo operatingSystemVersion];
+		}
 	}
 
 	const char* name = "Unknown version";

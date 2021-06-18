@@ -148,18 +148,19 @@ enum EPrintLevel
 // the built-in ZScript types
 struct Vector2
 {
-	double x;
-	double y;
+	Vector2(x, y);
+	double x, y;
 	native double Length();
 	native Vector2 Unit();
 	// The dot product of two vectors can be calculated like this:
 	// double d = a dot b;
 }
 
-struct Vector3 : Vector2
+struct Vector3
 {
-	double z;
-	Vector2 xy;
+	Vector3(x, y, z);
+	double x, y, z;
+	Vector2 xy; // Convenient access to the X and Y coordinates of a 3D vector
 	native double Length();
 	native Vector3 Unit();
 	// The dot product of two vectors can be calculated like this:
@@ -168,9 +169,11 @@ struct Vector3 : Vector2
 	// Vector3 d = a cross b;
 }
 
+// See https://zdoom.org/wiki/Dynamic_arrays for more details
 struct Array<T>
 {
 	native int Size();
+	native void Copy(Array<T> other);
 }
 */
 

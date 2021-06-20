@@ -472,6 +472,21 @@ class OptionMenuItemPlayerPronounsItem : OptionMenuItemOptionBase
 			PlayerMenu.PronounsChanged(val.MakeLower());
 		}
 	}
+
+	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
+	{
+		if (Selectable())
+		{
+			return super.Draw(desc, y, indent, selected);
+		}
+		return indent;
+	}
+
+	override bool Selectable()
+	{
+		// auto falls back to enu
+		return language == "auto" || language.Left(2) == "en";
+	}
 }
 
 //=============================================================================
@@ -567,6 +582,21 @@ class OptionMenuItemPlayerPronounField : OptionMenuItemTextField
 			return true;
 		}
 		return false;
+	}
+
+	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
+	{
+		if (Selectable())
+		{
+			return super.Draw(desc, y, indent, selected);
+		}
+		return indent;
+	}
+
+	override bool Selectable()
+	{
+		// auto falls back to enu
+		return language == "auto" || language.Left(2) == "en";
 	}
 }
 

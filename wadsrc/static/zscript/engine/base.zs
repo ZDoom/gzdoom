@@ -673,6 +673,8 @@ class Object native
 	virtual virtualscope void OnDestroy() {}
 	//
 	//
+	// The static methods below cannot be called using Object.method(); For example, you don't call
+	// abs(x) using Object.abs(x); Just use abs(x);
 	// clearscope bool IsAbstract(); // Intrinsic - Query whether or not the class is abstract
 	// clearscope Object GetParentClass(); // Intrinsic - Get the parent class of this object
 	// clearscope Name GetClassName(); // Intrinsic - Get the name of this object's class

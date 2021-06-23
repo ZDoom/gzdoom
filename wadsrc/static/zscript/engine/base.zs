@@ -165,13 +165,6 @@ struct Vector3
 	// The cross product of two vectors can be calculated like this:
 	// Vector3 d = a cross b;
 }
-
-// See https://zdoom.org/wiki/Dynamic_arrays for more details
-struct Array<T>
-{
-	native int Size();
-	native void Copy(Array<T> other);
-}
 */
 
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.

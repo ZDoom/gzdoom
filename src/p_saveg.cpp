@@ -75,6 +75,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *
 	if (arc.BeginObject(key))
 	{
 		arc("flags", line.flags, def->flags)
+			("flags2", line.flags2, def->flags2)
 			("activation", line.activation, def->activation)
 			("special", line.special, def->special)
 			("alpha", line.alpha, def->alpha)

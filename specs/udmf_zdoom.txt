@@ -393,7 +393,6 @@ Note: All <bool> fields default to false unless mentioned otherwise.
    Bit 5 (Value  32): midtex3d
    Bit 6 (Value  64): checkswitchrange
    Bit 7 (Value 128): firstsideonly
-
    When used in special 208 this arg should be cleared afterward.
 
    Special 121 is not being used by UDMF maps in ZDoom and should be completely
@@ -507,6 +506,9 @@ Replaced tabs with spaces.
 
 1.31 22.12.2019
 Coloriation options added
+
+1.32 28.06.2021
+Blocklandmonsters MBF21 flag
 
 ===============================================================================
 EOF

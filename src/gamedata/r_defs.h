@@ -1438,7 +1438,7 @@ struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
 	DVector2	delta;		// precalculated v2 - v1 for side checking
-	uint32_t	flags;
+	uint32_t	flags, flags2;
 	uint32_t	activation;	// activation type
 	int			special;
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)

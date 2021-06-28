@@ -928,6 +928,12 @@ public:
 				Flag(ld->flags, ML_BLOCK_FLOATERS, key); 
 				continue;
 
+			case NAME_Blocklandmonsters:
+				// This is from MBF21 so it may later be needed for a lower level namespace.
+				CHECK_N(St | Zd | Zdt | Va)
+				Flag(ld->flags2, ML2_BLOCKLANDMONSTERS, key);
+				continue;
+
 			case NAME_Translucent:
 				CHECK_N(St | Zd | Zdt | Va)
 				strifetrans = CheckBool(key); 

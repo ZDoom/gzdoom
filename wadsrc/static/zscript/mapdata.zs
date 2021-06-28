@@ -162,10 +162,15 @@ struct Line native play
 		ML_3DMIDTEX_IMPASS			= 0x10000000,	// [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
 	};
 
+	enum ELineFlags2
+	{
+		ML2_BLOCKLANDMONSTERS = 1,
+	}
 
 	native readonly vertex			v1, v2;		// vertices, from v1 to v2
 	native readonly Vector2			delta;		// precalculated v2 - v1 for side checking
 	native uint						flags;
+	native uint						flags2;
 	native uint						activation;	// activation type
 	native int						special;
 	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)

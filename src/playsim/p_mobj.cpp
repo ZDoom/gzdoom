@@ -4097,12 +4097,20 @@ void AActor::Tick ()
 	}
 	if (!CheckNoDelay())
 		return; // freed itself
-	// cycle through states, calling action functions at transitions
 
 	UpdateRenderSectorList();
 
+	if (Sector->Flags & SECF_KILLMONSTERS && Z() == floorz &&
+		player == nullptr && (flags & MF_SHOOTABLE) && !(flags & MF_FLOAT))
+	{
+		P_DamageMobj(this, nullptr, nullptr, TELEFRAG_DAMAGE, NAME_InstantDeath);
+		// must have been removed
+		if (ObjectFlags & OF_EuthanizeMe) return;
+	}
+
 	if (tics != -1)
 	{
+		// cycle through states, calling action functions at transitions
 		// [RH] Use tics <= 0 instead of == 0 so that spawnstates
 		// of 0 tics work as expected.
 		if (--tics <= 0)

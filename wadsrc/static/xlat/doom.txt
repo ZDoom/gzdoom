@@ -1,8 +1,8 @@
 include "xlat/base.txt"
 
 
-sector bitmask 0xf000 clear;
-sector bitmask 0xfe0 <<= 3;
+sector bitmask 0xc000 clear;
+sector bitmask 0x3fe0 <<= 3;
 
 sector 1 = dLight_Flicker;
 sector 2 = dLight_StrobeFast;

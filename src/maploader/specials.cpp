@@ -449,7 +449,7 @@ void MapLoader::SpawnSkybox(AActor *origin)
 static void SetupSectorDamage(sector_t *sector, int damage, int interval, int leakchance, FName type, int flags)
 {
 	// Only set if damage is not yet initialized. This ensures that UDMF takes precedence over sector specials.
-	if (sector->damageamount == 0)
+	if (sector->damageamount == 0 && !(sector->Flags & (SECF_EXIT1|SECF_EXIT2)))
 	{
 		sector->damageamount = damage;
 		sector->damageinterval = MAX(1, interval);
@@ -484,17 +484,43 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 	{
 		sector->Flags |= SECF_PUSH;
 	}
-	if ((sector->special & DAMAGE_MASK) == 0x100)
+	if (sector->special & KILL_MONSTERS_MASK)
 	{
-		SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+		sector->Flags |= SECF_KILLMONSTERS;
 	}
-	else if ((sector->special & DAMAGE_MASK) == 0x200)
+	if (!(sector->special & DEATH_MASK))
 	{
-		SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		if ((sector->special & DAMAGE_MASK) == 0x100)
+		{
+			SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x200)
+		{
+			SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x300)
+		{
+			SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		}
 	}
-	else if ((sector->special & DAMAGE_MASK) == 0x300)
+	else
 	{
-		SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		if ((sector->special & DAMAGE_MASK) == 0x100)
+		{
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE, 0, 0, NAME_InstantDeath, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x200)
+		{
+			sector->Flags |= SECF_EXIT1;
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x300)
+		{
+			sector->Flags |= SECF_EXIT2;
+		}
+		else // 0
+		{
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE-1, 0, 0, NAME_InstantDeath, 0);
+		}
 	}
 	sector->special &= 0xff;
 

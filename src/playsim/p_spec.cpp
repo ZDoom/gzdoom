@@ -436,6 +436,18 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	if (sector->damageinterval <= 0)
 		sector->damageinterval = 32; // repair invalid damageinterval values
 
+	if (sector->Flags & (SECF_EXIT1 | SECF_EXIT2))
+	{
+		for (int i = 0; i < MAXPLAYERS; i++)
+			if (playeringame[i])
+				P_DamageMobj(players[i].mo, nullptr, nullptr, TELEFRAG_DAMAGE, NAME_InstantDeath);
+		if (sector->Flags & SECF_EXIT2)
+			Level->SecretExitLevel(0);
+		else 
+			Level->ExitLevel(0, false);
+		return;
+	}
+
 	if (sector->damageamount > 0)
 	{
 		// Allow subclasses. Better would be to implement it as armor and let that reduce

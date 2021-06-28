@@ -199,7 +199,7 @@ void I_DetectOS(void)
 		}
 		else if (info.dwMajorVersion == 10)
 		{
-			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 2016 (or higher)";
+			osname = (info.wProductType == VER_NT_WORKSTATION) ? (info.dwBuildNumber >= 22000 ? "11 (or higher)" : "10") : "Server 2016 (or higher)";
 			sys_ostype = 3; // modern OS
 		}
 		break;

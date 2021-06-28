@@ -528,8 +528,13 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	offset = osave;
 }
 
-DShape2D::~DShape2D() {
-	delete lastParms;
+void DShape2D::OnDestroy() {
+	if (lastParms) delete lastParms;
+	lastParms = nullptr;
+	mIndices.Reset();
+	mVertices.Reset();
+	mCoords.Reset();
+	buffers.Reset();
 }
 
 //==========================================================================

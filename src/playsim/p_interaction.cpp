@@ -1600,19 +1600,25 @@ bool AActor::OkayToSwitchTarget(AActor *other)
 	if (!(other->flags & MF_SHOOTABLE))
 		return false;		// Don't attack things that can't be hurt
 
-	if ((flags4 & MF4_NOTARGETSWITCH) && target != NULL)
+	if ((flags4 & MF4_NOTARGETSWITCH) && target != nullptr)
 		return false;		// Don't switch target if not allowed
 
-	if ((master != NULL && other->IsA(master->GetClass())) ||		// don't attack your master (or others of its type)
-		(other->master != NULL && IsA(other->master->GetClass())))	// don't attack your minion (or those of others of your type)
+	if ((master != nullptr && other->IsA(master->GetClass())) ||		// don't attack your master (or others of its type)
+		(other->master != nullptr && IsA(other->master->GetClass())))	// don't attack your minion (or those of others of your type)
 	{
-		if (!IsHostile (other) &&								// allow target switch if other is considered hostile
+		if (!IsHostile(other) &&								// allow target switch if other is considered hostile
 			(other->tid != TIDtoHate || TIDtoHate == 0) &&		// or has the tid we hate
 			other->TIDtoHate == TIDtoHate)						// or has different hate information
 		{
 			return false;
 		}
 	}
+
+	// MBF21 support.
+	auto mygroup = GetClass()->ActorInfo()->infighting_group;
+	auto othergroup = other->GetClass()->ActorInfo()->infighting_group;
+	if (mygroup != 0 && mygroup == othergroup)
+		return false;
 
 	if ((flags7 & MF7_NOINFIGHTSPECIES) && GetSpecies() == other->GetSpecies())
 		return false;		// Don't fight own species.

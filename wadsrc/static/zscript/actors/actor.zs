@@ -266,6 +266,11 @@ class Actor : Thinker native
 	meta Name MissileName;
 	meta double FastSpeed;		// speed in fast mode
 
+	// todo: implement access to native meta properties.
+	// native meta int infighting_group;
+	// native meta int projectile_group;
+	// native meta int splash_group;
+
 	Property prefix: none;
 	Property Obituary: Obituary;
 	Property HitObituary: HitObituary;

@@ -949,20 +949,32 @@ static int PatchThing (int thingy)
 				hadStyle = true;
 			}
 		}
+		else if (linelen == 12 && stricmp(Line1, "No Ice Death") == 0)
+		{
+			if (val)
+			{
+				info->flags4 |= MF4_NOICEDEATH;
+			}
+			else
+			{
+				info->flags4 &= ~MF4_NOICEDEATH;
+			}
+		}
+		else if (linelen == 16 && stricmp(Line1, "infighting group") == 0)
+		{
+			stripwhite(Line2);
+			int grp = atoi(Line2);
+			if (grp < 0)
+			{
+				Printf("Infighting groups must be >= 0 (check your dehacked)\n");
+				grp = 0;
+			}
+			type->ActorInfo()->infighting_group = grp;
+		}
+
 		else if (linelen > 6)
 		{
-			if (linelen == 12 && stricmp (Line1, "No Ice Death") == 0)
-			{
-				if (val)
-				{
-					info->flags4 |= MF4_NOICEDEATH;
-				}
-				else
-				{
-					info->flags4 &= ~MF4_NOICEDEATH;
-				}
-			}
-			else if (stricmp (Line1 + linelen - 6, " frame") == 0)
+			if (stricmp (Line1 + linelen - 6, " frame") == 0)
 			{
 				FState *state = FindState (val);
 

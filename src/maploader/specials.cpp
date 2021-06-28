@@ -1372,11 +1372,33 @@ void MapLoader::SpawnScrollers()
 		}
 
 		case Scroll_Texture_Offsets:
+		{
 			// killough 3/2/98: scroll according to sidedef offsets
-			side = Level->lines[i].sidedef[0];
-			Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
-				side->GetTextureYOffset(side_t::mid), nullptr, nullptr, side, accel, SCROLLTYPE(l->args[0]));
+			side = l->sidedef[0];
+			if (l->args[2] & 3)
+			{
+				// if 1, then displacement
+				// if 2, then accelerative (also if 3)
+				control = l->sidedef[0]->sector;
+				if (l->args[2] & 2)
+					accel = 1;
+			}
+			if (l->args[1] == 0)
+			{
+				Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
+					side->GetTextureYOffset(side_t::mid), control, nullptr, side, accel, SCROLLTYPE(l->args[0]));
+			}
+			else
+			{
+				auto it = Level->GetLineIdIterator(l->args[1]);
+				while (int ln = it.Next())
+				{
+					Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
+						side->GetTextureYOffset(side_t::mid), control, nullptr, Level->lines[ln].sidedef[0], accel, SCROLLTYPE(l->args[0]));
+				}
+			}
 			break;
+		}
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.

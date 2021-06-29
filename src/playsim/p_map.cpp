@@ -1157,6 +1157,29 @@ static bool CheckRipLevel(AActor *victim, AActor *projectile)
 //
 //==========================================================================
 
+static bool P_ProjectileImmune(AActor* target, AActor* source)
+{
+	// This one's directly taken from DSDA.
+	auto targetgroup = target->GetClass()->ActorInfo()->projectile_group;
+	auto sourcegroup = source->GetClass()->ActorInfo()->projectile_group;
+
+	return
+		( // PG_GROUPLESS means no immunity, even to own species
+			targetgroup != -1/*PG_GROUPLESS*/ ||
+			target == source
+			) &&
+		(
+			( // target type has default behaviour, and things are the same type
+				targetgroup == 0/*PG_DEFAULT*/ &&
+				(source->GetSpecies() == target->GetSpecies() && !(target->flags6 & MF6_DOHARMSPECIES))
+				) ||
+			( // target type has special behaviour, and things have the same group
+				targetgroup != 0/*PG_DEFAULT*/ &&
+				targetgroup == sourcegroup
+				)
+			);
+}
+
 static bool CanAttackHurt(AActor *victim, AActor *shooter)
 {
 	// players are never subject to infighting settings and are always allowed
@@ -1204,7 +1227,8 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 					// [RH] Don't hurt monsters that hate the same victim as you do
 					return false;
 				}
-				if (victim->GetSpecies() == shooter->GetSpecies() && !(victim->flags6 & MF6_DOHARMSPECIES))
+
+				if (P_ProjectileImmune(victim, shooter))
 				{
 					// Don't hurt same species or any relative -
 					// but only if the target isn't one's hostile.

@@ -1039,6 +1039,19 @@ DEFINE_PROPERTY(infightinggroup, I, Actor)
 }
 
 //==========================================================================
+// MBF21
+//==========================================================================
+DEFINE_PROPERTY(projectilegroup, I, Actor)
+{
+	PROP_INT_PARM(i, 0);
+	if (i < -1)
+	{
+		I_Error("Projectile groups must be >= -1.");
+	}
+	info->ActorInfo()->projectile_group = i;
+}
+
+//==========================================================================
 // [BB]
 //==========================================================================
 DEFINE_PROPERTY(visibletoteam, I, Actor)

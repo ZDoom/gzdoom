@@ -971,6 +971,13 @@ static int PatchThing (int thingy)
 			}
 			type->ActorInfo()->infighting_group = grp;
 		}
+		else if (linelen == 16 && stricmp(Line1, "projectile group") == 0)
+		{
+			stripwhite(Line2);
+			int grp = atoi(Line2);
+			if (grp < 0) grp = -1;
+			type->ActorInfo()->projectile_group = grp;
+		}
 
 		else if (linelen > 6)
 		{

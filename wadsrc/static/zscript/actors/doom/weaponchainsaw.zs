@@ -64,7 +64,7 @@ extend class StateProvider
 		}
 		if (range == 0)
 		{ 
-			range = SAWRANGE;
+			range = MeleeRange + (1. / 65536.); // MBF21 SAWRANGE;
 		}
 
 		double ang = angle + spread_xy * (Random2[Saw]() / 255.);

@@ -65,9 +65,9 @@ extend class Actor
 			damage *= 10;
 
 		double ang = angle + Random2[Punch]() * (5.625 / 256);
-		double pitch = AimLineAttack (ang, DEFMELEERANGE, null, 0., ALF_CHECK3D);
+		double pitch = AimLineAttack (ang, MeleeRange, null, 0., ALF_CHECK3D);
 
-		LineAttack (ang, DEFMELEERANGE, pitch, damage, 'Melee', "BulletPuff", LAF_ISMELEEATTACK, t);
+		LineAttack (ang, MeleeRange, pitch, damage, 'Melee', "BulletPuff", LAF_ISMELEEATTACK, t);
 
 		// turn to face target
 		if (t.linetarget)

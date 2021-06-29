@@ -1004,34 +1004,81 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 16 && stricmp(Line1, "infighting group") == 0)
 		{
-			stripwhite(Line2);
-			int grp = atoi(Line2);
-			if (grp < 0)
+			if (val < 0)
 			{
 				Printf("Infighting groups must be >= 0 (check your dehacked)\n");
-				grp = 0;
+				val = 0;
 			}
-			type->ActorInfo()->infighting_group = grp;
+			type->ActorInfo()->infighting_group = val;
 		}
 		else if (linelen == 16 && stricmp(Line1, "projectile group") == 0)
 		{
-			stripwhite(Line2);
-			int grp = atoi(Line2);
-			if (grp < 0) grp = -1;
-			type->ActorInfo()->projectile_group = grp;
+			if (val < 0) val = -1;
+			type->ActorInfo()->projectile_group = val;
 		}
 		else if (linelen == 12 && stricmp(Line1, "splash group") == 0)
 		{
-			stripwhite(Line2);
-			int grp = atoi(Line2);
-			if (grp < 0)
+			if (val < 0)
 			{
 				Printf("Splash groups must be >= 0 (check your dehacked)\n");
-				grp = 0;
+				val = 0;
 			}
-			type->ActorInfo()->splash_group = grp;
+			type->ActorInfo()->splash_group = val;
 		}
+		else if (linelen == 10 && stricmp(Line1, "fast speed") == 0)
+		{
+			double fval = val >= 256 ? DEHToDouble(val) : val;
+			info->FloatVar(NAME_FastSpeed) = fval;
+		}
+		else if (linelen == 11 && stricmp(Line1, "melee range") == 0)
+		{
+			info->meleerange = DEHToDouble(val);
+		}
+		else if (linelen == 10 && stricmp(Line1, "MBF21 Bits") == 0)
+		{
+			uint32_t value = 0;
+			bool vchanged = false;
 
+			char* strval;
+
+			for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
+			{
+				if (IsNum(strval))
+				{
+					value |= (unsigned long)strtoll(strval, NULL, 10);
+					vchanged = true;
+				}
+				else
+				{
+					unsigned i;
+					for (i = 0; i < countof(deh_mobjflags_mbf21); i++)
+					{
+						if (!stricmp(strval, deh_mobjflags_mbf21[i].name))
+						{
+							vchanged = true;
+							value |= 1 << i;
+							break;
+						}
+					}
+					if (i == countof(deh_mobjflags_mbf21))
+					{
+						DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
+					}
+				}
+			}
+			if (vchanged)
+			{
+				ClearBits2Stuff(info);
+				for (size_t i = 0; i < countof(deh_mobjflags_mbf21); i++)
+				{
+					if (value & (1 << i))
+					{
+						deh_mobjflags_mbf21[i].setter(info);
+					}
+				}
+			}
+			DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->flags.GetValue(), info->flags.GetValue());
+		}
 		else if (linelen > 6)
 		{
 			if (stricmp (Line1 + linelen - 6, " frame") == 0)
@@ -1100,6 +1147,9 @@ static int PatchThing (int thingy)
 					info->DeathSound = snd;
 				else if (!strnicmp (Line1, "Action", 6))
 					info->ActiveSound = snd;
+				else if (!strnicmp(Line1, "Rip", 3))
+					info->SoundVar(NAME_RipSound) = snd;
+
 			}
 		}
 		else if (linelen == 4)
@@ -1306,51 +1356,6 @@ static int PatchThing (int thingy)
 				}
 				DPrintf (DMSG_SPAMMY, "Bits: %d,%d (0x%08x,0x%08x)\n", info->flags.GetValue(), info->flags2.GetValue(),
 													      info->flags.GetValue(), info->flags2.GetValue());
-			}
-			else if (stricmp(Line1, "MBF21 Bits") == 0)
-			{
-				uint32_t value = 0;
-				bool vchanged = false;
-
-				char* strval;
-
-				for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
-				{
-					if (IsNum(strval))
-					{
-						value |= (unsigned long)strtoll(strval, NULL, 10);
-						vchanged = true;
-					}
-					else
-					{
-						unsigned i;
-						for (i = 0; i < countof(deh_mobjflags_mbf21); i++)
-						{
-							if (!stricmp(strval, deh_mobjflags_mbf21[i].name))
-							{
-								vchanged = true;
-								value |= 1 << i;
-								break;
-							}
-						}
-						if (i == countof(deh_mobjflags_mbf21))
-						{
-							DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
-						}
-					}
-				}
-				if (vchanged)
-				{
-					ClearBits2Stuff(info);
-					for (size_t i = 0; i < countof(deh_mobjflags_mbf21); i++)
-					{
-						if (value & (1 << i))
-						{
-							deh_mobjflags_mbf21[i].setter(info);
-						}
-					}
-				}
-				DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->flags.GetValue(), info->flags.GetValue());
 			}
 			else if (stricmp (Line1, "ID #") == 0)
 			{

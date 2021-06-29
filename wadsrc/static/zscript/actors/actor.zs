@@ -262,6 +262,7 @@ class Actor : Thinker native
 	meta int ExplosionDamage;
 	meta int MeleeDamage;
 	meta Sound MeleeSound;
+	meta Sound RipSound;
 	meta double MissileHeight;
 	meta Name MissileName;
 	meta double FastSpeed;		// speed in fast mode
@@ -340,6 +341,7 @@ class Actor : Thinker native
 	property Ripperlevel: RipperLevel;
 	property RipLevelMin: RipLevelMin;
 	property RipLevelMax: RipLevelMax;
+	property RipSound: RipSound;
 	property RenderHidden: RenderHidden;
 	property RenderRequired: RenderRequired;
 	property FriendlySeeBlocks: FriendlySeeBlocks;
@@ -403,6 +405,7 @@ class Actor : Thinker native
 		RipperLevel 0;
 		RipLevelMin 0;
 		RipLevelMax 0;
+		RipSound "misc/ripslop";
 		DefThreshold 100;
 		BloodType "Blood", "BloodSplatter", "AxeBlood";
 		ExplosionDamage 128;

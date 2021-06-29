@@ -812,6 +812,48 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 	}
 }
 
+struct DehFlags2
+{
+	const char* name;
+	void (*setter)(AActor* defaults);
+};
+
+// not all of these map to real flags so this table needs handler callbacks.
+static const struct DehFlags2 deh_mobjflags_mbf21[] = {
+  {"LOGRAV",         [](AActor* defaults) { defaults->Gravity = 1. / 8.; }}, // low gravity
+  {"SHORTMRANGE",    [](AActor* defaults) { defaults->maxtargetrange = 896.; }}, // short missile range
+  {"DMGIGNORED",     [](AActor* defaults) { defaults->flags3 |= MF3_NOTARGET; }}, // other things ignore its attacks
+  {"NORADIUSDMG",    [](AActor* defaults) { defaults->flags3 |= MF3_NORADIUSDMG; }}, // doesn't take splash damage
+  {"FORCERADIUSDMG", [](AActor* defaults) { defaults->flags4 |= MF4_FORCERADIUSDMG; }}, // causes splash damage even if target immune
+  {"HIGHERMPROB",    [](AActor* defaults) { defaults->MinMissileChance = 160; }}, // higher missile attack probability
+  {"RANGEHALF",      [](AActor* defaults) { defaults->flags4 |= MF4_MISSILEMORE; }}, // use half distance for missile attack probability
+  {"NOTHRESHOLD",    [](AActor* defaults) { defaults->flags4 |= MF4_QUICKTORETALIATE; }}, // no targeting threshold
+  {"LONGMELEE",      [](AActor* defaults) { defaults->meleethreshold = 196; }}, // long melee range
+  {"BOSS",           [](AActor* defaults) { defaults->flags2 |= MF2_BOSS; }}, // full volume see / death sound + splash immunity
+  {"MAP07BOSS1",     [](AActor* defaults) { defaults->flags8 |= MF8_MAP07BOSS1; }}, // Tag 666 "boss" on doom 2 map 7
+  {"MAP07BOSS2",     [](AActor* defaults) { defaults->flags8 |= MF8_MAP07BOSS2; }}, // Tag 667 "boss" on doom 2 map 7
+  {"E1M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E1M8BOSS; }}, // E1M8 boss
+  {"E2M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E2M8BOSS; }}, // E2M8 boss
+  {"E3M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E3M8BOSS; }}, // E3M8 boss
+  {"E4M6BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E4M6BOSS; }}, // E4M6 boss
+  {"E4M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E4M8BOSS; }}, // E4M8 boss
+  {"RIP",            [](AActor* defaults) { defaults->flags2 |= MF2_RIP;  }}, // projectile rips through targets
+  {"FULLVOLSOUNDS",  [](AActor* defaults) { defaults->flags8 |= MF8_FULLVOLSEE; defaults->flags3 |= MF3_FULLVOLDEATH; } }, // full volume see / death sound
+};
+
+static void ClearBits2Stuff(AActor* defaults)
+{
+	defaults->Gravity = 1.;
+	defaults->maxtargetrange = 0;
+	defaults->MinMissileChance = 200;
+	defaults->meleethreshold = 0;
+	defaults->flags2 &= ~(MF2_BOSS | MF2_RIP);
+	defaults->flags3 &= ~(MF3_NOTARGET | MF3_NORADIUSDMG | MF3_FULLVOLDEATH);
+	defaults->flags4 &= ~(MF4_MISSILEMORE | MF4_QUICKTORETALIATE | MF4_FORCERADIUSDMG);
+	defaults->flags8 &= ~(MF8_E1M8BOSS | MF8_E2M8BOSS | MF8_E3M8BOSS | MF8_E4M8BOSS | MF8_E4M6BOSS | MF8_MAP07BOSS1 | MF8_MAP07BOSS2 | MF8_FULLVOLSEE);
+}
+
+
 static int PatchThing (int thingy)
 {
 	enum
@@ -1264,6 +1306,51 @@ static int PatchThing (int thingy)
 				}
 				DPrintf (DMSG_SPAMMY, "Bits: %d,%d (0x%08x,0x%08x)\n", info->flags.GetValue(), info->flags2.GetValue(),
 													      info->flags.GetValue(), info->flags2.GetValue());
+			}
+			else if (stricmp(Line1, "MBF21 Bits") == 0)
+			{
+				uint32_t value = 0;
+				bool vchanged = false;
+
+				char* strval;
+
+				for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
+				{
+					if (IsNum(strval))
+					{
+						value |= (unsigned long)strtoll(strval, NULL, 10);
+						vchanged = true;
+					}
+					else
+					{
+						unsigned i;
+						for (i = 0; i < countof(deh_mobjflags_mbf21); i++)
+						{
+							if (!stricmp(strval, deh_mobjflags_mbf21[i].name))
+							{
+								vchanged = true;
+								value |= 1 << i;
+								break;
+							}
+						}
+						if (i == countof(deh_mobjflags_mbf21))
+						{
+							DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
+						}
+					}
+				}
+				if (vchanged)
+				{
+					ClearBits2Stuff(info);
+					for (size_t i = 0; i < countof(deh_mobjflags_mbf21); i++)
+					{
+						if (value & (1 << i))
+						{
+							deh_mobjflags_mbf21[i].setter(info);
+						}
+					}
+				}
+				DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->flags.GetValue(), info->flags.GetValue());
 			}
 			else if (stricmp (Line1, "ID #") == 0)
 			{

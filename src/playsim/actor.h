@@ -414,7 +414,15 @@ enum ActorFlag8
 	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
 	MF8_ABSVIEWANGLES	= 0x00000400,	// [MC] By default view angle/pitch/roll is an offset. This will make it absolute instead.
 	MF8_FALLDAMAGE		= 0x00000800,	// Monster will take fall damage regardless of map settings.
-	MF8_ALLOWTHRUBITS		= 0x00008000,	// [MC] Enable ThruBits property
+	MF8_ALLOWTHRUBITS	= 0x00008000,	// [MC] Enable ThruBits property
+	MF8_FULLVOLSEE		= 0x00010000,	// Play see sound at full volume
+	MF8_E1M8BOSS		= 0x00020000,	// MBF21 boss death.
+	MF8_E2M8BOSS		= 0x00040000,	// MBF21 boss death.
+	MF8_E3M8BOSS		= 0x00080000,	// MBF21 boss death.
+	MF8_E4M8BOSS		= 0x00100000,	// MBF21 boss death.
+	MF8_E4M6BOSS		= 0x00200000,	// MBF21 boss death.
+	MF8_MAP07BOSS1		= 0x00400000,	// MBF21 boss death.
+	MF8_MAP07BOSS2		= 0x00800000,	// MBF21 boss death.
 };
 
 // --- mobj.renderflags ---

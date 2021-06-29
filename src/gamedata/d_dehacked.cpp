@@ -978,6 +978,17 @@ static int PatchThing (int thingy)
 			if (grp < 0) grp = -1;
 			type->ActorInfo()->projectile_group = grp;
 		}
+		else if (linelen == 12 && stricmp(Line1, "splash group") == 0)
+		{
+			stripwhite(Line2);
+			int grp = atoi(Line2);
+			if (grp < 0)
+			{
+				Printf("Splash groups must be >= 0 (check your dehacked)\n");
+				grp = 0;
+			}
+			type->ActorInfo()->splash_group = grp;
+		}
 
 		else if (linelen > 6)
 		{

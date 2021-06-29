@@ -5956,6 +5956,11 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			continue;
 		}
 
+		// MBF21
+		auto targetgroup = thing->GetClass()->ActorInfo()->splash_group;
+		auto sourcegroup = bombspot->GetClass()->ActorInfo()->splash_group;
+		if (targetgroup != 0 && targetgroup == sourcegroup) continue;
+
 		// a much needed option: monsters that fire explosive projectiles cannot 
 		// be hurt by projectiles fired by a monster of the same type.
 		// Controlled by the DONTHARMCLASS and DONTHARMSPECIES flags.

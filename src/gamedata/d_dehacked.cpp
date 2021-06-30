@@ -165,6 +165,13 @@ struct AmmoPerAttack
 	VMFunction *ptr;
 };
 
+struct DehBits
+{
+	const char* name;
+	int value;
+};
+
+
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
 	{ NAME_A_Punch, 0},
@@ -1488,6 +1495,11 @@ static int PatchSound (int soundNum)
 	return result;
 }
 
+DehBits sbits[] = {
+	{ "SKILL5FAST", STF_FAST }
+};
+
+
 static int PatchFrame (int frameNum)
 {
 	int result;
@@ -1571,6 +1583,55 @@ static int PatchFrame (int frameNum)
 		{
 			frame = val;
 		}
+		else if (stricmp(Line1, "MBF21 Bits") == 0)
+		{
+			uint32_t value = 0;
+			bool vchanged = false;
+
+			char* strval;
+
+			for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
+			{
+				if (IsNum(strval))
+				{
+					value |= (unsigned long)strtoll(strval, NULL, 10);
+					vchanged = true;
+				}
+				else
+				{
+					unsigned i;
+					for (i = 0; i < countof(sbits); i++)
+					{
+						if (!stricmp(strval, sbits[i].name))
+						{
+							vchanged = true;
+							value |= 1 << i;
+							break;
+						}
+					}
+					if (i == countof(sbits))
+					{
+						DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
+					}
+				}
+			}
+			if (vchanged)
+			{
+				int flags = 0;
+				int mask = 0;
+				for (size_t i = 0; i < countof(sbits); i++)
+				{
+					mask |= sbits[i].value;
+					if (value & (1 << i))
+					{
+						flags |= sbits[i].value;
+					}
+				}
+				info->StateFlags = (info->StateFlags & ~mask) | flags;
+			}
+			DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->StateFlags, info->StateFlags);
+		}
+
 		else
 		{
 			Printf (unknown_str, Line1, "Frame", frameNum);
@@ -1718,13 +1779,7 @@ static int PatchAmmo (int ammoNum)
 	return result;
 }
 
-struct DehWeaponBits
-{
-	const char* name;
-	int value;
-};
-
-DehWeaponBits wbits[] = {
+DehBits wbits[] = {
 	{ "NOTHRUST", -1 },	// i.e. set kickback to 0
 	{ "SILENT", WIF_NOALERT },
 	{ "NOAUTOFIRE", WIF_NOAUTOFIRE },

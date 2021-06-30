@@ -697,7 +697,7 @@ public:
 	void AlterWeaponSprite(visstyle_t *vis);
 
 	// Returns true if this actor is within melee range of its target
-	bool CheckMeleeRange();
+	bool CheckMeleeRange(double range = -1);
 
 	bool CheckNoDelay();
 

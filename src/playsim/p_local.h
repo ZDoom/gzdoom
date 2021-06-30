@@ -228,8 +228,9 @@ enum PCM
 };
 
 
+int P_CheckFov(AActor* t1, AActor* t2, double fov);
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
-AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false, bool frontonly = false);
+AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false, bool frontonly = false, double fov = 0);
 
 //
 // P_MAP

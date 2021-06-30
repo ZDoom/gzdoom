@@ -333,8 +333,8 @@ class PlayerPawn : Actor
 			(player.ReadyWeapon == NULL || player.ReadyWeapon.bWimpy_Weapon))
 		{
 			let best = BestWeapon (ammotype);
-			if (best != NULL && && !best.bNoAutoSwitchTo && (player.ReadyWeapon == NULL ||
-				best.SelectionOrder < player.ReadyWeapon.SelectionOrder))
+			if (best != NULL && !best.bNoAutoSwitchTo && 
+				(player.ReadyWeapon == NULL || best.SelectionOrder < player.ReadyWeapon.SelectionOrder))
 			{
 				player.PendingWeapon = best;
 			}

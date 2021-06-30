@@ -397,6 +397,7 @@ static FFlagDef MoreFlagDefs[] =
 	DEFINE_DEPRECATED_FLAG(HERETICBOUNCE),
 	DEFINE_DEPRECATED_FLAG(HEXENBOUNCE),
 	DEFINE_DEPRECATED_FLAG(DOOMBOUNCE),
+	DEFINE_DEPRECATED_FLAG(HIGHERMPROB),
 
 	// Deprecated flags with no more existing functionality.
 	DEFINE_DUMMY_FLAG(FASTER, true),				// obsolete, replaced by 'Fast' state flag

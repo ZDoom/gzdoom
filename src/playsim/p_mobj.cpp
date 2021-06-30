@@ -3306,7 +3306,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 	// its target; and for a summoned minion, its tracer.
 	AActor * Friend;
 	if (flags5 & MF5_SUMMONEDMONSTER)					Friend = tracer;
-	else if (flags2 & MF2_SEEKERMISSILE)				Friend = target;
+	else if (flags & MF_MISSILE)						Friend = target;
 	else if ((flags & MF_FRIENDLY) && FriendPlayer)		Friend = Level->Players[FriendPlayer-1]->mo;
 	else												Friend = this;
 

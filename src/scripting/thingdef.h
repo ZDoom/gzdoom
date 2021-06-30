@@ -228,6 +228,7 @@ enum
 	DEPF_HEXENBOUNCE = 10,
 	DEPF_DOOMBOUNCE = 11,
 	DEPF_INTERHUBSTRIP = 12,
+	DEPF_HIGHERMPROB = 13,
 };
 
 // Types of old style decorations

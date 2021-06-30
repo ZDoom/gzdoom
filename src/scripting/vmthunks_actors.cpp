@@ -59,6 +59,7 @@
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
 void PrintPickupMessage(bool localview, const FString &str);
+bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = 0);
 
 // FCheckPosition requires explicit construction and destruction when used in the VM
 
@@ -327,6 +328,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetDamage, SetDamage)
 	self->SetDamage(dmg);
 	return 0;
 }
+
+static double PitchFromVel(AActor* self)
+{
+	return self->Vel.Pitch().Degrees;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, PitchFromVel, PitchFromVel)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_FLOAT(PitchFromVel(self));
+}
+
 
 // This combines all 3 variations of the internal function
 static void VelFromAngle(AActor *self, double speed, double angle)
@@ -1373,7 +1386,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RoughMonsterSearch, P_RoughMonsterSearch)
 	PARAM_INT(distance);
 	PARAM_BOOL(onlyseekable);
 	PARAM_BOOL(frontonly);
-	ACTION_RETURN_OBJECT(P_RoughMonsterSearch(self, distance, onlyseekable, frontonly));
+	PARAM_FLOAT(fov);
+	ACTION_RETURN_OBJECT(P_RoughMonsterSearch(self, distance, onlyseekable, frontonly, fov));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckSight, P_CheckSight)
@@ -1576,15 +1590,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_ExtChase, A_ExtChase)
 	return 0;
 }
 
-int CheckForResurrection(AActor *self)
+int CheckForResurrection(AActor *self, FState* state, int sound)
 {
-	return P_CheckForResurrection(self, false);
+	return P_CheckForResurrection(self, false, state, sound);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_CheckForResurrection, CheckForResurrection)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_CheckForResurrection(self, false));
+	PARAM_STATE(state);
+	PARAM_INT(sound);
+	ACTION_RETURN_BOOL(P_CheckForResurrection(self, false, state, sound));
 }
 
 static void ZS_Face(AActor *self, AActor *faceto, double max_turn, double max_pitch, double ang_offset, double pitch_offset, int flags, double z_add)

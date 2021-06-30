@@ -1185,13 +1185,27 @@ WeaponNames
 // when parsing a DEHACKED lump. 
 Aliases
 {
-	A_Mushroom,		A_Mushroom,				5,
-	A_Spawn,		A_SpawnItem,			5,
-	A_Turn,			A_Turn,					1,
-	A_Face,			A_SetAngle,				1,
-	A_Scratch,		A_CustomMeleeAttack,	5,	// 19 characters for "A_CustomMeleeAttack"!
-	A_PlaySound,	A_PlaySound,			5,	// A function name any longer and the definition
-	A_RandomJump,	A_Jump,					3,	// for CodePointerAlias would need to be updated.
-	A_LineEffect,	A_LineEffect,			2,
-	A_NailBomb,		A_Explode,				7,
+	A_Mushroom,		A_Mushroom,			
+	A_Spawn,		A_SpawnItem,		
+	A_Turn,			A_Turn,				
+	A_Face,			A_SetAngle,			
+	A_Scratch,		A_CustomMeleeAttack,
+	A_PlaySound,	A_PlaySound,
+	A_RandomJump,	A_Jump,
+	A_LineEffect,	A_LineEffect,
+	A_NailBomb,		A_Explode,			
+	A_SpawnObject,	MBF21_SpawnObject,
+	A_MonsterProjectile, MBF21_MonsterProjectile,
+	A_MonsterBulletAttack, MBF21_MonsterBulletAttack,
+	A_MonsterMeleeAttack, MBF21_MonsterMeleeAttack
+	A_RadiusDamage,	A_Explode,
+	A_NoiseAlert,	SoundAlert,
+	A_HealChase,	MBF21_HealChase,
+	A_SeekTracer,	A_SeekerMissile,
+	A_FindTracer,	A_FindTracer,
+	A_JumpIfHealthBelow, MBF21_JumpIfHealthBelow,
+	A_JumpIfTracerInSight, MBF21_JumpIfTracerInSight,
+	A_JumpIfTracerCloser, MBF21_JumpIfTracerCloser,
+	A_JumpIfTracerInSight, MBF21_JumpIfTracerInSight,
+	A_JumpIfTracerCloser, MBF21_JumpIfTracerCloser,
 };

@@ -46,6 +46,7 @@ version "4.5"
 #include "zscript/actors/actions.zs"
 #include "zscript/actors/attacks.zs"
 #include "zscript/actors/morph.zs"
+#include "zscript/actors/mbf21.zs"
 
 #include "zscript/actors/inventory/inventory.zs"
 #include "zscript/actors/inventory/inv_misc.zs"

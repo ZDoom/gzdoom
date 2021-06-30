@@ -260,7 +260,7 @@ void P_NoiseAlert (AActor *emitter, AActor *target, bool splash, double maxdist)
 //
 //----------------------------------------------------------------------------
 
-bool AActor::CheckMeleeRange ()
+bool AActor::CheckMeleeRange (double range)
 {
 	AActor *pl = target;
 
@@ -270,8 +270,9 @@ bool AActor::CheckMeleeRange ()
 		return false;
 				
 	dist = Distance2D (pl);
+	if (range < 0) range = meleerange;
 
-	if (dist >= meleerange + pl->radius)
+	if (dist >= range + pl->radius)
 		return false;
 
 	// [RH] If moving toward goal, then we've reached it.
@@ -300,7 +301,8 @@ bool AActor::CheckMeleeRange ()
 DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->CheckMeleeRange());
+	PARAM_FLOAT(range);
+	ACTION_RETURN_INT(self->CheckMeleeRange(range));
 }
 
 //=============================================================================
@@ -2616,7 +2618,7 @@ bool P_CanResurrect(AActor *raiser, AActor *thing)
 //
 //==========================================================================
 
-bool P_CheckForResurrection(AActor *self, bool usevilestates)
+bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = 0)
 {
 	const AActor *info;
 	AActor *temp;
@@ -2702,8 +2704,8 @@ bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				self->target = temp;
 
 				// Make the state the monster enters customizable.
-				FState * state = self->FindState(NAME_Heal);
-				if (state != NULL)
+				if (state == nullptr) state = self->FindState(NAME_Heal);
+				if (state != nullptr)
 				{
 					self->SetState(state);
 				}
@@ -2711,13 +2713,14 @@ bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				{
 					// For Dehacked compatibility this has to use the Arch Vile's
 					// heal state as a default if the actor doesn't define one itself.
-					PClassActor *archvile = PClass::FindActor("Archvile");
+					PClassActor *archvile = PClass::FindActor(NAME_Archvile);
 					if (archvile != NULL)
 					{
 						self->SetState(archvile->FindState(NAME_Heal));
 					}
 				}
-				S_Sound(corpsehit, CHAN_BODY, 0, "vile/raise", 1, ATTN_IDLE);
+				if (sound == 0) sound = "vile/raise";
+				S_Sound(corpsehit, CHAN_BODY, 0, sound, 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
 				if (GetTranslationType(corpsehit->Translation) == TRANSLATION_Blood)

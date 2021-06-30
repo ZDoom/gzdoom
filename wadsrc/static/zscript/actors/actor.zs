@@ -682,10 +682,11 @@ class Actor : Thinker native
 	native Actor SpawnSubMissile(Class<Actor> type, Actor target);
 	native Actor, Actor SpawnPlayerMissile(class<Actor> type, double angle = 1e37, double x = 0, double y = 0, double z = 0, out FTranslatedLineTarget pLineTarget = null, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
 	native void SpawnTeleportFog(Vector3 pos, bool beforeTele, bool setTarget);
-	native Actor RoughMonsterSearch(int distance, bool onlyseekable = false, bool frontonly = false);
+	native Actor RoughMonsterSearch(int distance, bool onlyseekable = false, bool frontonly = false, double fov = 0);
 	native int ApplyDamageFactor(Name damagetype, int damage);
 	native int GetModifiedDamage(Name damagetype, int damage, bool passive, Actor inflictor = null, Actor source = null, int flags = 0);
 	native bool CheckBossDeath();
+	native bool CheckFov(Actor target, double fov);
 
 	void A_Light(int extralight) { if (player) player.extralight = clamp(extralight, -20, 20); }
 	void A_Light0() { if (player) player.extralight = 0; }
@@ -706,7 +707,7 @@ class Actor : Thinker native
 	native void TraceBleedAngle(int damage, double angle, double pitch);
 
 	native void SetIdle(bool nofunction = false);
-	native bool CheckMeleeRange();
+	native bool CheckMeleeRange(double range = -1);
 	native bool TriggerPainChance(Name mod, bool forcedPain = false);
 	native virtual int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
 	native void PoisonMobj (Actor inflictor, Actor source, int damage, int duration, int period, Name type);
@@ -759,6 +760,7 @@ class Actor : Thinker native
 	native clearscope vector2 Vec2Angle(double length, double angle, bool absolute = false) const;
 	native clearscope vector2 Vec2Offset(double x, double y, bool absolute = false) const;
 	native clearscope vector3 Vec2OffsetZ(double x, double y, double atz, bool absolute = false) const;
+	native double PitchFromVel();
 	native void VelIntercept(Actor targ, double speed = -1, bool aimpitch = true, bool oldvel = false, bool resetvel = false);
 	native void VelFromAngle(double speed = 1e37, double angle = 1e37);
 	native void Vel3DFromAngle(double speed, double angle, double pitch);
@@ -1061,7 +1063,7 @@ class Actor : Thinker native
 	native void A_Look();
 	native void A_Chase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0);
 	native void A_VileChase();
-	native bool A_CheckForResurrection();
+	native bool A_CheckForResurrection(State state = null, Sound snd = 0);
 	native void A_BossDeath();
 	bool A_CallSpecial(int special, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0)
 	{

@@ -325,6 +325,10 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->IntVar(NAME_InterHubAmount) = set ? 0 : 1;
 		break;
 
+	case DEPF_HIGHERMPROB:
+		defaults->MinMissileChance = set ? 160 : 200;
+		break;
+
 	default:
 		break;	// silence GCC
 	}
@@ -384,6 +388,9 @@ bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
 
 	case DEPF_INTERHUBSTRIP:
 		return !(actor->IntVar(NAME_InterHubAmount));
+
+	case DEPF_HIGHERMPROB:
+		return actor->MinMissileChance <= 160;
 	}
 
 	return false; // Any entirely unknown flag is not set

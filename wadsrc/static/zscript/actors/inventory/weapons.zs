@@ -80,6 +80,7 @@ class Weapon : StateProvider
 	flagdef NoDeathDeselect: WeaponFlags, 16;	// Don't jump to the Deselect state when the player dies
 	flagdef NoDeathInput: WeaponFlags, 17;		// The weapon cannot be fired/reloaded/whatever when the player is dead
 	flagdef CheatNotWeapon: WeaponFlags, 18;	// Give cheat considers this not a weapon (used by Sigil)
+	flagdef NoAutoSwitchTo : WeaponFlags, 19;	// do not auto switch to this weapon ever!
 
 	// no-op flags
 	flagdef NoLMS: none, 0;

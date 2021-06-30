@@ -1964,7 +1964,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 				}
 
 				// Let the self wander around aimlessly looking for a fight
-                if (!(self->flags & MF_INCHASE))
+                if (!(self->flags7 & MF7_INCHASE))
                 {
                     if (seestate)
                     {
@@ -2040,7 +2040,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 		}
 	}
 
-	if (self->target && !(self->flags & MF_INCHASE))
+	if (self->target && !(self->flags7 & MF7_INCHASE))
 	{
         if (!(flags & LOF_NOJUMP))
         {
@@ -2204,15 +2204,14 @@ nosee:
 
 void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
-
 	if (actor->flags5 & MF5_INCONVERSATION)
 		return;
 
-	if (actor->flags & MF_INCHASE)
+	if (actor->flags7 & MF7_INCHASE)
 	{
 		return;
 	}
-	actor->flags |= MF_INCHASE;
+	actor->flags7 |= MF7_INCHASE;
 
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
@@ -2325,7 +2324,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 		if (P_LookForPlayers (actor, true, NULL) && actor->target != actor->goal)
 		{ // got a new target
-			actor->flags &= ~MF_INCHASE;
+			actor->flags7 &= ~MF7_INCHASE;
 			return;
 		}
 		if (actor->target == NULL)
@@ -2336,14 +2335,14 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				if (actor->target == NULL)
 				{
 					if (!dontmove) A_Wander(actor);
-					actor->flags &= ~MF_INCHASE;
+					actor->flags7 &= ~MF7_INCHASE;
 					return;
 				}
 			}
 			else
 			{
 				actor->SetIdle();
-				actor->flags &= ~MF_INCHASE;
+				actor->flags7 &= ~MF7_INCHASE;
 				return;
 			}
 		}
@@ -2362,7 +2361,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		//over and over again.
 		if (flags & CHF_STOPIFBLOCKED)
 			actor->movecount = pr_trywalk() & 15;
-		actor->flags &= ~MF_INCHASE;
+		actor->flags7 &= ~MF7_INCHASE;
 		return;
 	}
 	
@@ -2410,7 +2409,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				actor->flags4 |= MF4_INCOMBAT;
 				actor->SetIdle();
 			}
-			actor->flags &= ~MF_INCHASE;
+			actor->flags7 &= ~MF7_INCHASE;
 			actor->goal = newgoal;
 			return;
 		}
@@ -2461,7 +2460,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				S_Sound (actor, CHAN_WEAPON, 0, actor->AttackSound, 1, ATTN_NORM);
 
 			actor->SetState (meleestate);
-			actor->flags &= ~MF_INCHASE;
+			actor->flags7 &= ~MF7_INCHASE;
 			return;
 		}
 		
@@ -2479,7 +2478,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			actor->SetState (missilestate);
 			actor->flags |= MF_JUSTATTACKED;
 			actor->flags4 |= MF4_INCOMBAT;
-			actor->flags &= ~MF_INCHASE;
+			actor->flags7 &= ~MF7_INCHASE;
 			return;
 		}
 	}
@@ -2505,7 +2504,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 		if (gotNew && actor->target != oldtarget)
 		{
-			actor->flags &= ~MF_INCHASE;
+			actor->flags7 &= ~MF7_INCHASE;
 			return; 	// got a new target
 		}
 	}
@@ -2555,7 +2554,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		actor->PlayActiveSound ();
 	}
 
-	actor->flags &= ~MF_INCHASE;
+	actor->flags7 &= ~MF7_INCHASE;
 }
 
 //==========================================================================

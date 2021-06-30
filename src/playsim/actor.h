@@ -142,7 +142,7 @@ enum ActorFlag
 	MF_DROPOFF			= 0x00000400,	// allow jumps from high places
 	MF_PICKUP			= 0x00000800,	// for players to pick up items
 	MF_NOCLIP			= 0x00001000,	// player cheat
-	MF_INCHASE			= 0x00002000,	// [RH] used by A_Chase and A_Look to avoid recursion
+	MF_SLIDE			= 0x00002000,	// Not used anymore but needed for MBF21 flag checkers.
 	MF_FLOAT			= 0x00004000,	// allow moves to any height, no gravity
 	MF_TELEPORT			= 0x00008000,	// don't cross lines or look at heights
 	MF_MISSILE			= 0x00010000,	// don't hit same species, explode on block
@@ -167,9 +167,6 @@ enum ActorFlag
 	MF_NOLIFTDROP		= 0x20000000,	// [RH] Used with MF_NOGRAVITY to avoid dropping with lifts
 	MF_STEALTH			= 0x40000000,	// [RH] Andy Baker's stealth monsters
 	MF_ICECORPSE		= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
-
-	// --- dummies for unknown/unimplemented Strife flags ---
-	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW
 };
 
 // --- mobj.flags2 ---
@@ -399,6 +396,7 @@ enum ActorFlag7
 	MF7_FORCEZERORADIUSDMG = 0x10000000,	// passes zero radius damage on to P_DamageMobj, this is necessary in some cases where DoSpecialDamage gets overrideen.
 	MF7_NOINFIGHTSPECIES = 0x20000000,	// don't start infights with one's own species.
 	MF7_FORCEINFIGHTING	= 0x40000000,	// overrides a map setting of 'no infighting'.
+	MF7_INCHASE			= 0x80000000,	// [RH] used by A_Chase and A_Look to avoid recursion
 };
 enum ActorFlag8
 {

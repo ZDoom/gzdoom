@@ -81,7 +81,7 @@ extern float			BackbuttonAlpha;
 // internal flags. These do not get exposed to actor definitions but scripts need to be able to access them as variables.
 static FFlagDef InternalActorFlagDefs[]=
 {
-	DEFINE_FLAG(MF, INCHASE, AActor, flags),
+	DEFINE_FLAG(MF7, INCHASE, AActor, flags7),
 	DEFINE_FLAG(MF, UNMORPHED, AActor, flags),
 	DEFINE_FLAG(MF2, FLY, AActor, flags2),
 	DEFINE_FLAG(MF2, ONMOBJ, AActor, flags2),

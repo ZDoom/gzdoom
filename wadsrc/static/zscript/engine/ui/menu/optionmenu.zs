@@ -218,6 +218,11 @@ class OptionMenu : Menu
 					break;
 				}
 			}
+			if (mDesc.mSelectedItem <= mDesc.mScrollTop + mDesc.mScrollPos
+				|| mDesc.mSelectedItem >= VisBottom)
+			{
+				mDesc.mScrollPos = MAX(mDesc.mSelectedItem - mDesc.mScrollTop - 1, 0);
+			}
 		}
 		return Super.OnUIEvent(ev);
 	}

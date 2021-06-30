@@ -1718,6 +1718,21 @@ static int PatchAmmo (int ammoNum)
 	return result;
 }
 
+struct DehWeaponBits
+{
+	const char* name;
+	int value;
+};
+
+DehWeaponBits wbits[] = {
+	{ "NOTHRUST", -1 },	// i.e. set kickback to 0
+	{ "SILENT", WIF_NOALERT },
+	{ "NOAUTOFIRE", WIF_NOAUTOFIRE },
+	{ "FLEEMELEE", WIF_MELEEWEAPON },
+	{ "AUTOSWITCHFROM", WIF_WIMPY_WEAPON },	// ugh, I wish I could change this stupid name...
+	{ "NOAUTOSWITCHTO", WIF_NOAUTOSWITCHTO }
+};
+
 static int PatchWeapon (int weapNum)
 {
 	int result;
@@ -1819,6 +1834,57 @@ static int PatchWeapon (int weapNum)
 		{
 			if (info) info->IntVar(NAME_MinSelAmmo1) = val;
 		}
+		else if (stricmp(Line1, "MBF21 Bits") == 0)
+		{
+			uint32_t value = 0;
+			bool vchanged = false;
+
+			char* strval;
+
+			for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
+			{
+				if (IsNum(strval))
+				{
+					value |= (unsigned long)strtoll(strval, NULL, 10);
+					vchanged = true;
+				}
+				else
+				{
+					unsigned i;
+					for (i = 0; i < countof(wbits); i++)
+					{
+						if (!stricmp(strval, wbits[i].name))
+						{
+							vchanged = true;
+							value |= 1 << i;
+							break;
+						}
+					}
+					if (i == countof(wbits))
+					{
+						DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
+					}
+				}
+			}
+			if (vchanged)
+			{
+				int kickback = 100;
+				int flags = 0;
+				for (size_t i = 0; i < countof(wbits); i++)
+				{
+					if (value & (1 << i))
+					{
+						int val = wbits[i].value;
+						if (val == -1) kickback = 0;
+						else flags |= wbits[i].value;
+					}
+				}
+				info->IntVar(NAME_Kickback) = kickback;
+				info->IntVar(NAME_WeaponFlags) = flags;
+			}
+			DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->flags.GetValue(), info->flags.GetValue());
+		}
+
 		else
 		{
 			Printf (unknown_str, Line1, "Weapon", weapNum);

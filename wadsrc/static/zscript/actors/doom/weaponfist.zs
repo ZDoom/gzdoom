@@ -14,6 +14,7 @@ class Fist : Weapon
 		Tag "$TAG_FIST";
 		+WEAPON.WIMPY_WEAPON
 		+WEAPON.MELEEWEAPON
+		+WEAPON.NOAUTOSWITCHTO
 	}
 	States
 	{

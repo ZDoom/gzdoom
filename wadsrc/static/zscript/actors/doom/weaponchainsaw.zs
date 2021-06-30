@@ -16,6 +16,7 @@ class Chainsaw : Weapon
 		Obituary "$OB_MPCHAINSAW";
 		Tag "$TAG_CHAINSAW";
 		+WEAPON.MELEEWEAPON		
+		+WEAPON.NOAUTOSWITCHTO
 	}
 	States
 	{

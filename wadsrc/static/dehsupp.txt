@@ -1208,4 +1208,13 @@ Aliases
 	A_JumpIfTracerCloser, MBF21_JumpIfTracerCloser,
 	A_JumpIfTracerInSight, MBF21_JumpIfTracerInSight,
 	A_JumpIfTracerCloser, MBF21_JumpIfTracerCloser,
+	A_WeaponProjectile, MBF21_WeaponProjectile,
+	A_WeaponBulletAttack, MBF21_WeaponBulletAttack,
+	A_WeaponMeleeAttack, MBF21_WeaponMeleeAttack,
+	A_WeaponSound, A_PlayWeaponSound,
+	A_WeaponJump, MBF21_WeaponJump,
+	A_ConsumeAmmo, MBF21_ConsumeAmmo,
+	A_CheckAmmo, MBF21_CheckAmmo, 
+	A_RefireTo, MBF21_RefireTo,
+	A_GunFlashTo, MBF21_GunFlashTo,
 };

@@ -169,6 +169,15 @@ extend class Actor
 	}
 
 	//
+	// A_NoiseAlert
+	// Alerts nearby monsters (via sound) to the calling actor's target's presence.
+	//
+	void A_NoiseAlert()
+	{
+		if (target) SoundAlert(target);
+	}
+
+	//
 	// A_HealChase
 	// A parameterized version of A_VileChase.
 	//   args[0]: State to jump to on the calling actor when resurrecting a corpse
@@ -285,4 +294,214 @@ extend class Actor
 	deprecated("2.3", "for Dehacked use only") native void MBF21_JumpIfFlagsSet(State tstate, int flags, int flags2);
 	deprecated("2.3", "for Dehacked use only") native void MBF21_AddFlags(int flags, int flags2);
 	deprecated("2.3", "for Dehacked use only") native void MBF21_RemoveFlags(int flags, int flags2);
+}
+
+extend class Weapon
+{
+	//
+	// A_WeaponProjectile
+	// A parameterized player weapon projectile attack. Does not consume ammo.
+	//   args[0]: Type of actor to spawn
+	//   args[1]: Angle (degrees, in fixed point), relative to calling player's angle
+	//   args[2]: Pitch (degrees, in fixed point), relative to calling player's pitch; approximated
+	//   args[3]: X/Y spawn offset, relative to calling player's angle
+	//   args[4]: Z spawn offset, relative to player's default projectile fire height
+	//
+	deprecated("2.3", "for Dehacked use only")
+	void MBF21_WeaponProjectile(class<Actor> type, double angle, double pitch, double Spawnofs_xy, double Spawnofs_z)
+	{
+		if (!player || !type)
+			return;
+
+		FTranslatedLineTarget t;
+
+		angle += self.angle;
+		double x = Spawnofs_xy * cos(angle);
+		double y = Spawnofs_xy * sin(angle);
+		let pos = self.Vec3Offset(x, y, Spawnofs_z);
+
+		let mo = SpawnPlayerMissile(type, angle, pos.X, pos.Y, pos.Z, pLineTarget: t);
+		if (!mo) return;
+
+		Pitch += mo.PitchFromVel();
+		mo.Vel3DFromAngle(mo.Speed, mo.angle, Pitch);
+
+		// set tracer to the player's autoaim target,
+		// so player seeker missiles prioritizing the
+		// baddie the player is actually aiming at. ;)
+		mo.tracer = t.linetarget;
+	}
+
+	//
+	// A_WeaponBulletAttack
+	// A parameterized player weapon bullet attack. Does not consume ammo.
+	//   args[0]: Horizontal spread (degrees, in fixed point)
+	//   args[1]: Vertical spread (degrees, in fixed point)
+	//   args[2]: Number of bullets to fire; if not set, defaults to 1
+	//   args[3]: Base damage of attack (e.g. for 5d3, customize the 5); if not set, defaults to 5
+	//   args[4]: Attack damage modulus (e.g. for 5d3, customize the 3); if not set, defaults to 3
+	//
+	deprecated("2.3", "for Dehacked use only")
+	void MBF21_WeaponBulletAttack(double hspread, double vspread, int numbullets, int damagebase, int damagemod)
+	{
+		let bangle = angle;
+		let slope = BulletSlope();
+
+		for (int i = 0; i < numbullets; i++)
+		{
+			int damage = (random[mbf21]() % damagemod + 1) * damagebase;
+			let pangle = bangle + hspread * Random2[mbf21]() / 255.;
+			let pslope = slope + vspread * Random2[mbf21]() / 255.;
+			LineAttack(pangle, PLAYERMISSILERANGE, pslope, damage, "Hitscan", "Bulletpuff");
+		}
+	}
+
+
+	//
+	// A_WeaponMeleeAttack
+	// A parameterized player weapon melee attack.
+	//   args[0]: Base damage of attack (e.g. for 2d10, customize the 2); if not set, defaults to 2
+	//   args[1]: Attack damage modulus (e.g. for 2d10, customize the 10); if not set, defaults to 10
+	//   args[2]: Berserk damage multiplier (fixed point); if not set, defaults to 1.0 (no change).
+	//   args[3]: Sound to play if attack hits
+	//   args[4]: Range (fixed point); if not set, defaults to player mobj's melee range
+	//
+	deprecated("2.3", "for Dehacked use only")
+	void MBF21_WeaponMeleeAttack(int damagebase, int damagemod, double zerkfactor, Sound hitsound, double range)
+	{
+		if (range == 0)
+			range = meleerange;
+
+		int damage = (Random[mbf21]() % damagemod + 1) * damagebase;
+		if (FindInventory("PowerStrength"))
+			damage = int(damage * zerkfactor);
+
+		// slight randomization; weird vanillaism here. :P
+		FTranslatedLineTarget t;
+		double ang = angle + Random2[mbf21]() * (5.625 / 256);
+		double pitch = AimLineAttack(ang, MeleeRange, t, 0., ALF_CHECK3D);
+		LineAttack(ang, range, pitch, damage, 'Melee', "BulletPuff", LAF_ISMELEEATTACK, t);
+
+		// turn to face target
+		if (t.linetarget)
+		{
+			A_StartSound(hitsound, CHAN_WEAPON);
+			angle = t.angleFromSource;
+		}
+	}
+
+	//
+	// A_WeaponAlert
+	// Alerts monsters to the player's presence. Handy when combined with WPF_SILENT.
+	//
+	void A_WeaponAlert()
+	{
+		SoundAlert(self);
+	}
+
+	//
+	// A_WeaponJump
+	// Jumps to the specified state, with variable random chance.
+	// Basically the same as A_RandomJump, but for weapons.
+	//   args[0]: State number
+	//   args[1]: Chance, out of 255, to make the jump
+	//
+	deprecated("2.3", "for Dehacked use only")
+	action void MBF21_WeaponJump(State tstate, int chance)
+	{
+		if (stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			let player = self.player;
+			if (player == null) return;
+			if (random[mbf21]() < chance)
+				player.SetPSprite(stateinfo.mPSPIndex, tstate);
+		}
+	}
+
+	//
+	// A_ConsumeAmmo
+	// Subtracts ammo from the player's "inventory". 'Nuff said.
+	//   args[0]: Amount of ammo to consume. If zero, use the weapon's ammo-per-shot amount.
+	//
+	deprecated("2.3", "for Dehacked use only")
+	void MBF21_ConsumeAmmo(int consume)
+	{
+		let player = self.player;
+		if (!player) return;
+		let weap = player.ReadyWeapon;
+		if (!weap) return;
+
+		if (consume == 0) consume = -1;
+		weap.DepleteAmmo(weap.bAltFire, false, consume);
+	}
+
+	//
+	// A_CheckAmmo
+	// Jumps to a state if the player's ammo is lower than the specified amount.
+	//   args[0]: State to jump to
+	//   args[1]: Minimum required ammo to NOT jump. If zero, use the weapon's ammo-per-shot amount.
+	//
+	deprecated("2.3", "for Dehacked use only")
+	action void MBF21_CheckAmmo(State tstate, int amount)
+	{
+		if (stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			let player = self.player;
+			if (player == null) return;
+			let weap = player.ReadyWeapon;
+			if (!weap) return;
+
+			if (amount == 0) amount = -1;
+			if (!weap.CheckAmmo(weap.bAltFire ? AltFire : PrimaryFire, false, false, amount))
+				player.SetPSprite(stateinfo.mPSPIndex, tstate);
+		}
+	}
+
+	//
+	// A_RefireTo
+	// Jumps to a state if the player is holding down the fire button
+	//   args[0]: State to jump to
+	//   args[1]: If nonzero, skip the ammo check
+	//
+	deprecated("2.3", "for Dehacked use only")
+	action void MBF21_RefireTo(State tstate, int skipcheck)
+	{
+		if (stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			let player = self.player;
+			if (player == null) return;
+			let weap = player.ReadyWeapon;
+			if (!weap) return;
+
+			let pending = player.PendingWeapon != WP_NOCHANGE && (player.WeaponState & WF_REFIRESWITCHOK);
+
+			if (!skipcheck && !weap.CheckAmmo(weap.bAltFire ? AltFire : PrimaryFire, false, false)) return;
+
+			if ((player.cmd.buttons & BT_ATTACK)
+				&& !player.ReadyWeapon.bAltFire && !pending && player.health > 0)
+			{
+				player.SetPSprite(stateinfo.mPSPIndex, tstate);
+			}
+		}
+	}
+
+	//
+	// A_GunFlashTo
+	// Sets the weapon flash layer to the specified state.
+	//   args[0]: State number
+	//   args[1]: If nonzero, don't change the player actor state
+	//
+	deprecated("2.3", "for Dehacked use only")
+	void MBF21_GunFlashTo(State tstate, int dontchangeplayer)
+	{
+		let player = self.player;
+		if (player == null) return;
+		Weapon weapon = player.ReadyWeapon;
+		if (!weapon) return;
+
+		if (!dontchangeplayer) player.mo.PlayAttacking2();
+		player.SetPsprite(PSP_FLASH, tstate);
+	}
+
+
 }

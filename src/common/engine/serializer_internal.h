@@ -238,7 +238,7 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 			vv = value - base;
 			if (vv < 0 || vv >= count)
 			{
-				Printf("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli\n", key, vv, count);
+				Printf("Trying to serialize out-of-bounds array value with key '%s', index = %" PRId64 ", size = %" PRId64 "\n", key, vv, count);
 				vv = -1;
 			}
 		}
@@ -247,7 +247,7 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 			value = nullptr;
 		else if (vv < 0 || vv >= count)
 		{
-			Printf("Trying to serialize out-of-bounds array value with key '%s', index = %lli, size = %lli\n", key, vv, count);
+			Printf("Trying to serialize out-of-bounds array value with key '%s', index = %" PRId64 ", size = %" PRId64 "\n", key, vv, count);
 			value = nullptr;
 		}
 		else

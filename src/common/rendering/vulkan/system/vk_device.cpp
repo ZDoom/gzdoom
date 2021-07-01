@@ -27,6 +27,7 @@
 #undef min
 #endif
 
+#include <inttypes.h>
 #include <vector>
 #include <array>
 #include <set>
@@ -361,7 +362,7 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 		if (callbackData->pObjects[i].pObjectName)
 		{
 			FString hexname;
-			hexname.Format("0x%llx", callbackData->pObjects[i].objectHandle);
+			hexname.Format("0x%" PRIx64, callbackData->pObjects[i].objectHandle);
 			msg.Substitute(hexname.GetChars(), callbackData->pObjects[i].pObjectName);
 		}
 	}

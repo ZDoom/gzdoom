@@ -1688,7 +1688,7 @@ int P_CheckFov(AActor* t1, AActor* t2, double fov)
 	return absangle(t1->AngleTo(t2), t1->Angles.Yaw) <= fov;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, CheckFov, P_CheckFov)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFov, P_CheckFov)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(t, AActor);

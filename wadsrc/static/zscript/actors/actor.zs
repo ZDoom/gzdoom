@@ -1083,7 +1083,7 @@ class Actor : Thinker native
 	native clearscope void A_StartSound(sound whattoplay, int slot = CHAN_BODY, int flags = 0, double volume = 1.0, double attenuation = ATTN_NORM, double pitch = 0.0, double startTime = 0.0);
 	native void A_SoundVolume(int slot, double volume);
 	native void A_SoundPitch(int slot, double pitch);
-	deprecated("2.3", "Use A_StartSound(<sound>, CHAN_WEAPON) instead") void A_PlayWeaponSound(sound whattoplay) { A_StartSound(whattoplay, CHAN_WEAPON); }
+	deprecated("2.3", "Use A_StartSound(<sound>, CHAN_WEAPON) instead") void A_PlayWeaponSound(sound whattoplay, bool fullvol = false) { A_StartSound(whattoplay, CHAN_WEAPON, 0, 1, fullvol? ATTN_NONE : ATTN_NORM); }
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	void A_StopAllSounds()	{	A_StopSounds(0,0);	}
 	native void A_StopSounds(int chanmin, int chanmax);

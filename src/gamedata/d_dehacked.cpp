@@ -148,6 +148,7 @@ struct MBFArgs
 	int argsused;
 };
 static TMap<FState*, MBFArgs> stateargs;
+static FState* FindState(int statenum);
 
 // DeHackEd trickery to support MBF-style parameters
 // List of states that are hacked to use a codepointer
@@ -155,7 +156,48 @@ struct MBFParamState
 {
 	FState *state;
 	int pointer;
-	MBFArgs args;
+	int argsused;
+	int64_t* args;
+
+	PClassActor* GetTypeArg(int i)
+	{
+		PClassActor* type = nullptr;
+		int num = (int)args[i];
+		if (num > 0 && num < int(InfoNames.Size())) type = InfoNames[num-1];	// Dehacked is 1-based.
+		return type;
+	}
+
+	FState* GetStateArg(int i)
+	{
+		int num = (int)args[i];
+		return FindState(num);
+	}
+
+
+	int GetIntArg(int i, int def = 0)
+	{
+		return argsused & (1 << i)? (int)args[i] : def;
+	}
+
+	int GetSoundArg(int i, int def = 0)
+	{
+		int num = argsused & (1 << i) ? (int)args[i] : def;
+		if (num > 0 && num < int(SoundMap.Size())) return SoundMap[num];
+		return 0;
+	}
+
+	double GetFloatArg(int i, double def = 0)
+	{
+		return argsused & (1 << i) ? FixedToFloat((fixed_t)args[i]) : def;
+	}
+
+	void ValidateArgCount(int num, const char* function)
+	{
+		if (argsused >= (1 << num))
+		{
+			Printf("Too many args for %s\n", function); // got no line number... :(
+		}
+	}
 };
 static TArray<MBFParamState> MBFParamStates;
 // Data on how to correctly modify the codepointers
@@ -736,14 +778,156 @@ static void CreateNailBombFunc(FunctionCallEmitter &emitters, int value1, int va
 	emitters.AddParameterIntConst(NAME_None);	// damage type
 }
 
-static PClassActor* GetDehType(int num)
+static void CreateSpawnObjectFunc(FunctionCallEmitter& emitters, int value1, int value2, MBFParamState* state)
 {
-	PClassActor* type = nullptr;
-	if (num >= 0 && num < int(InfoNames.Size())) type = InfoNames[num];
-	if (type == nullptr) type = RUNTIME_CLASS(AActor);
+	state->ValidateArgCount(8, "A_SpawnObject");
+	emitters.AddParameterPointerConst(state->GetTypeArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
+	emitters.AddParameterFloatConst(state->GetFloatArg(5));
+	emitters.AddParameterFloatConst(state->GetFloatArg(6));
+	emitters.AddParameterFloatConst(state->GetFloatArg(7));
+}
+
+static void CreateMonsterProjectileFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_MonsterProjectile");
+	emitters.AddParameterPointerConst(state->GetTypeArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
+}
+
+static void CreateMonsterBulletAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_MonsterBulletAttack");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterIntConst(state->GetIntArg(2, 1));
+	emitters.AddParameterIntConst(state->GetIntArg(3, 3));
+	emitters.AddParameterIntConst(state->GetIntArg(4, 5));
+}
+
+static void CreateMonsterMeleeAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(4, "A_MonsterMeleeAttack");
+	emitters.AddParameterIntConst(state->GetIntArg(0, 3));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 8));
+	emitters.AddParameterIntConst(state->GetIntArg(2, 0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
 
 }
 
+static void CreateRadiusDamageFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_RadiusDamage");
+	emitters.AddParameterIntConst(state->GetIntArg(0, 0));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 0));
+}
+
+static void CreateHealChaseFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_HealChase");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetSoundArg(1));
+}
+
+static void CreateSeekTracerFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_SeekTracer");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0, 0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1, 0));
+}
+
+static void CreateFindTracerFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_FindTracer");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 10));
+}
+
+static void CreateJumpIfHealthBelowFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_JumpIfHealthBelow");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateJumpIfFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_JumpIf..");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+}
+
+static void CreateJumpIfFlagSetFunc(FunctionCallEmitter& emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_JumpIfFlagsSet");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+	emitters.AddParameterIntConst(state->GetIntArg(2));
+}
+
+static void CreateFlagSetFunc(FunctionCallEmitter& emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_...Flags");
+	emitters.AddParameterIntConst(state->GetIntArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateWeaponProjectileFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_WeaponProjectile");
+	emitters.AddParameterPointerConst(state->GetTypeArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
+}
+
+static void CreateWeaponBulletAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_WeaponBulletAttack");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterIntConst(state->GetIntArg(2, 1));
+	emitters.AddParameterIntConst(state->GetIntArg(3, 5));
+	emitters.AddParameterIntConst(state->GetIntArg(4, 3));
+}
+
+static void CreateWeaponMeleeAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_WeaponBulletAttack");
+	emitters.AddParameterIntConst(state->GetIntArg(0, 2));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 10));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2, 1));
+	emitters.AddParameterIntConst(state->GetIntArg(3));
+	emitters.AddParameterIntConst(state->GetIntArg(4));
+}
+
+static void CreateWeaponSoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_WeaponSound");
+	emitters.AddParameterIntConst(state->GetSoundArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateWeaponJumpFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_WeaponJump");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateConsumeAmmoFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(1, "A_ConsumeAmmo");
+	emitters.AddParameterIntConst(state->GetIntArg(0));
+
+}
 
 // This array must be in sync with the Aliases array in DEHSUPP.
 static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int, MBFParamState*) =
@@ -760,6 +944,30 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int, MBFPara
 	CreateRandomJumpFunc,
 	CreateLineEffectFunc,
 	CreateNailBombFunc,
+	CreateSpawnObjectFunc,
+	CreateMonsterProjectileFunc,
+	CreateMonsterBulletAttackFunc,
+	CreateMonsterMeleeAttackFunc,
+	CreateRadiusDamageFunc,
+	CreateHealChaseFunc,
+	CreateSeekTracerFunc,
+	CreateFindTracerFunc,
+	CreateJumpIfHealthBelowFunc,
+	CreateJumpIfFunc,
+	CreateJumpIfFunc,
+	CreateJumpIfFunc,
+	CreateJumpIfFunc,
+	CreateWeaponProjectileFunc,
+	CreateWeaponBulletAttackFunc,
+	CreateWeaponMeleeAttackFunc,
+	CreateWeaponSoundFunc,
+	CreateWeaponJumpFunc,
+	CreateConsumeAmmoFunc,
+	CreateWeaponJumpFunc,
+	CreateWeaponJumpFunc,
+	CreateWeaponJumpFunc,
+	CreateJumpIfFlagSetFunc,
+	CreateFlagSetFunc
 };
 
 // Creates new functions for the given state so as to convert MBF-args (misc1 and misc2) into real args.
@@ -790,6 +998,12 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 	}
 	else
 	{
+		MBFArgs scratchargs{};
+		auto args = stateargs.CheckKey(pstate->state);
+		if (!args) args = &scratchargs;
+		pstate->args = args->args;
+		pstate->argsused = args->argsused;
+
 		int numargs = sym->GetImplicitArgs();
 		auto funcsym = CreateAnonymousFunction(RUNTIME_CLASS(AActor)->VMType, returnsState? (PType*)TypeState : TypeVoid, numargs==3? SUF_ACTOR|SUF_WEAPON : SUF_ACTOR);
 		VMFunctionBuilder buildit(numargs);

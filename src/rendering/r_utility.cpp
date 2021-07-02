@@ -1075,6 +1075,13 @@ CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)
 
 bool R_ShouldDrawSpriteShadow(AActor *thing)
 {
+	auto rs = thing->RenderStyle;
+	rs.CheckFuzz();
+	// For non-standard render styles, draw no shadows. This will always look weird.
+	if (rs.BlendOp != STYLEOP_Add && rs.BlendOp != STYLEOP_Shadow) return false;
+	if (rs.DestAlpha != STYLEALPHA_Zero && rs.DestAlpha != STYLEALPHA_InvSrc) return false;
+	if (thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) return false;	// for wall and flat sprites the shadow math does not work.
+
 	switch (r_actorspriteshadow)
 	{
 	case 1:

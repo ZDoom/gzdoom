@@ -1075,27 +1075,37 @@ CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)
 
 bool R_ShouldDrawSpriteShadow(AActor *thing)
 {
-	auto rs = thing->RenderStyle;
-	rs.CheckFuzz();
-	// For non-standard render styles, draw no shadows. This will always look weird.
-	if (rs.BlendOp != STYLEOP_Add && rs.BlendOp != STYLEOP_Shadow) return false;
-	if (rs.DestAlpha != STYLEALPHA_Zero && rs.DestAlpha != STYLEALPHA_InvSrc) return false;
-	if (thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) return false;	// for wall and flat sprites the shadow math does not work.
+	int rf = thing->renderflags;
+	// for wall and flat sprites the shadow math does not work so these must be unconditionally skipped.
+	if (rf & (RF_FLATSPRITE | RF_WALLSPRITE)) return false;	
 
+	bool doit = false;
 	switch (r_actorspriteshadow)
 	{
 	case 1:
-		return (thing->renderflags & RF_CASTSPRITESHADOW);
+		doit = (rf & RF_CASTSPRITESHADOW);
+		break;
 
 	case 2:
-		if (thing->renderflags & RF_CASTSPRITESHADOW)
-		{
-			return true;
-		}
-		return (thing->renderflags & RF_CASTSPRITESHADOW) || (!(thing->renderflags & RF_NOSPRITESHADOW) && ((thing->flags3 & MF3_ISMONSTER) || thing->player != nullptr));
+		doit = (rf & RF_CASTSPRITESHADOW) || (!(rf & RF_NOSPRITESHADOW) && ((thing->flags3 & MF3_ISMONSTER) || thing->player != nullptr));
+		break;
 
 	default:
-	case 0:
-		return false;
+		break;
 	}
+
+	if (doit)
+	{
+		auto rs = thing->RenderStyle;
+		rs.CheckFuzz();
+		// For non-standard render styles, draw no shadows. This will always look weird. However, if the sprite forces shadows, render them anyway.
+		if (!(rf & RF_CASTSPRITESHADOW))
+		{
+			if (rs.BlendOp != STYLEOP_Add && rs.BlendOp != STYLEOP_Shadow) return false;
+			if (rs.DestAlpha != STYLEALPHA_Zero && rs.DestAlpha != STYLEALPHA_InvSrc) return false;
+		}
+	}
+	return doit;
+
+
 }

@@ -1154,8 +1154,7 @@ static int PatchThing (int thingy)
 	while ((result = GetLine ()) == 1)
 	{
 		char *endptr;
-		uint64_t val64 = strtoull (Line2, &endptr, 10);
-		uint32_t val = (uint32_t)val64;
+		uint32_t val = (uint32_t)strtoull (Line2, &endptr, 10);
 		size_t linelen = strlen (Line1);
 
 		if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
@@ -1174,6 +1173,7 @@ static int PatchThing (int thingy)
 		{
 			info->Alpha = DEHToDouble(val);
 			info->RenderStyle = STYLE_Translucent;
+			info->renderflags &= ~RF_ZDOOMTRANS;
 			hadTranslucency = true;
 			hadStyle = true;
 		}
@@ -1474,10 +1474,10 @@ static int PatchThing (int thingy)
 						// This is different from BOUNCE_Heretic behavior as in Heretic the missiles
 						// die when they bounce, while in MBF they will continue to bounce until they
 						// collide with a wall or a solid actor.
-						if (value[0] & MF_MISSILE) info->BounceFlags = BOUNCE_Classic;
+						if (value[0] & MF_MISSILE) info->BounceFlags = BOUNCE_Classic | BOUNCE_DEH;
 						// MBF bouncing actors that do not have the missile flag will also rebound on
 						// walls, and this does correspond roughly to the ZDoom bounce style.
-						else info->BounceFlags = BOUNCE_Grenade;
+						else info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
 
 						// MBF grenades are dehacked rockets that gain the BOUNCES flag but
 						// lose the MISSILE flag, so they can be identified here easily.
@@ -1487,27 +1487,13 @@ static int PatchThing (int thingy)
 							info->effects |= FX_GRENADE;	// by grenade trail
 						}
 
-						// MBF bounce factors depend on flag combos:
-						const double MBF_BOUNCE_NOGRAVITY = 1;				// With NOGRAVITY: full momentum
-						const double MBF_BOUNCE_FLOATDROPOFF = 0.85;		// With FLOAT and DROPOFF: 85%
-						const double MBF_BOUNCE_FLOAT = 0.7;				// With FLOAT alone: 70%
-						const double MBF_BOUNCE_DEFAULT = 0.45;				// Without the above flags: 45%
-						const double MBF_BOUNCE_WALL = 0.5;					// Bouncing off walls: 50%
+						// bounce factors are dynamic, we only set some defaults here.
+						info->bouncefactor = 0.45;
+						info->wallbouncefactor = 0.85;
 
-						info->bouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY
-							: (value[0] & MF_FLOAT) ? (value[0] & MF_DROPOFF) ? MBF_BOUNCE_FLOATDROPOFF
-							: MBF_BOUNCE_FLOAT : MBF_BOUNCE_DEFAULT);
-
-						info->wallbouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY : MBF_BOUNCE_WALL);
-
-						// MBF sentient actors with BOUNCE and FLOAT are able to "jump" by floating up.
-						if (info->IsSentient())
+						if (!info->IsSentient())
 						{
-							if (value[0] & MF_FLOAT) info->flags6 |= MF6_CANJUMP;
-						}
-						// Non sentient actors can be damaged but they shouldn't bleed.
-						else
-						{
+							// Non sentient actors can be damaged but they shouldn't bleed.
 							value[0] |= MF_NOBLOOD;
 						}
 					}
@@ -1581,6 +1567,7 @@ static int PatchThing (int thingy)
 						else if (value[2] & 4)
 							info->Alpha = 0.75;
 						info->RenderStyle = STYLE_Translucent;
+						info->renderflags &= ~RF_ZDOOMTRANS;
 					}
 					if (value[2] & 8)
 						info->renderflags |= RF_INVISIBLE;
@@ -3652,6 +3639,7 @@ struct FlagHandler
 #define F2(flag) { [](AActor* a) { a->flags2 |= flag; }, [](AActor* a) { a->flags2 &= ~flag; }, [](AActor* a)->bool { return a->flags2 & flag; } }
 #define F3(flag) { [](AActor* a) { a->flags3 |= flag; }, [](AActor* a) { a->flags3 &= ~flag; }, [](AActor* a)->bool { return a->flags3 & flag; } }
 #define F4(flag) { [](AActor* a) { a->flags4 |= flag; }, [](AActor* a) { a->flags4 &= ~flag; }, [](AActor* a)->bool { return a->flags4 & flag; } }
+#define F6(flag) { [](AActor* a) { a->flags6 |= flag; }, [](AActor* a) { a->flags6 &= ~flag; }, [](AActor* a)->bool { return a->flags6 & flag; } }
 #define F8(flag) { [](AActor* a) { a->flags8 |= flag; }, [](AActor* a) { a->flags8 &= ~flag; }, [](AActor* a)->bool { return a->flags8 & flag; } }
 #define DEPF(flag) { [](AActor* a) { HandleDeprecatedFlags(a, nullptr, true, flag); }, [](AActor* a) { HandleDeprecatedFlags(a, nullptr, false, flag); }, [](AActor* a)->bool { return CheckDeprecatedFlags(a, nullptr, flag); } }
 
@@ -3741,6 +3729,99 @@ void ClearFullVol(AActor* a)
 	a->flags3 &= ~MF3_FULLVOLDEATH;
 }
 
+void SetTranslucent(AActor* a)
+{
+	a->RenderStyle = STYLE_Translucent;
+	a->Alpha = 0.5;
+	a->renderflags &= ~RF_ZDOOMTRANS;
+}
+
+void ClearTranslucent(AActor* a)
+{
+	a->RenderStyle = STYLE_Normal;
+	a->Alpha = 1;
+	a->renderflags &= ~RF_ZDOOMTRANS;
+}
+
+bool CheckTranslucent(AActor* a)
+{
+	// This is solely for MBF21. It will treat all objects with ZDOOMTRANS as non-translucent to ensure consistent results.
+	// This also means that all translucency changes via Dehacked need to clear this flag.
+	return !(a->renderflags & RF_ZDOOMTRANS) && a->Alpha < 1 - FLT_EPSILON;
+}
+
+constexpr int t0 = 0;
+constexpr int t1 = TRANSLATION(TRANSLATION_Standard, 0);
+constexpr int t2 = TRANSLATION(TRANSLATION_Standard, 1);
+constexpr int t3 = TRANSLATION(TRANSLATION_Standard, 2);
+
+void SetTranslation1(AActor* a)
+{
+	if (a->Translation == t2 || a->Translation == t3) a->Translation = t3;
+	else a->Translation = t1;
+}
+
+void ClearTranslation1(AActor* a)
+{
+	if (a->Translation == t3 || a->Translation == t2) a->Translation = t2;
+	else a->Translation = t0;
+}
+
+bool CheckTranslation1(AActor* a)
+{
+	return a->Translation == t1 || a->Translation == t3;
+}
+
+void SetTranslation2(AActor* a)
+{
+	if (a->Translation == t1 || a->Translation == t3) a->Translation = t3;
+	else a->Translation = t2;
+}
+
+void ClearTranslation2(AActor* a)
+{
+	if (a->Translation == t3 || a->Translation == t1) a->Translation = t1;
+	else a->Translation = t0;
+}
+
+bool CheckTranslation2(AActor* a)
+{
+	return a->Translation == t2 || a->Translation == t3;
+}
+
+// Bounces is very complex...
+void SetBounces(AActor* info)
+{
+	info->flags6 |= MF6_VULNERABLE;
+	info->flags3 |= MF3_NOBLOCKMONST;
+	info->flags4 |= (MF4_FORCERADIUSDMG | MF4_DONTHARMCLASS);
+	info->effects &= ~FX_ROCKET;	// disable rocket trail if set.
+
+	if (info->flags & MF_MISSILE) info->BounceFlags = BOUNCE_Classic | BOUNCE_DEH;
+	else info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
+
+}
+
+void ClearBounces(AActor* info)
+{
+	info->flags6 &= ~MF6_VULNERABLE;
+	info->flags3 &= ~MF3_NOBLOCKMONST;
+	info->flags4 &= ~(MF4_FORCERADIUSDMG | MF4_DONTHARMCLASS);
+	info->BounceFlags = 0;
+}
+
+// The missile flag affects the bouncing mode.
+void SetMissile(AActor* info)
+{
+	info->flags |= MF_MISSILE;
+	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Classic | BOUNCE_DEH;
+}
+
+void ClearMissile(AActor* info)
+{
+	info->flags &= ~MF_MISSILE;
+	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
+}
 
 static FlagHandler flag1handlers[32] = {
 	F(MF_SPECIAL),
@@ -3759,7 +3840,7 @@ static FlagHandler flag1handlers[32] = {
 	F(MF_SLIDE),
 	F(MF_FLOAT),
 	F(MF_TELEPORT),
-	F(MF_MISSILE),
+	{ SetMissile, ClearMissile, [](AActor* a)->bool { return a->flags & MF_MISSILE; } },
 	F(MF_DROPPED),
 	F(MF_SHADOW),
 	F(MF_NOBLOOD),
@@ -3769,7 +3850,12 @@ static FlagHandler flag1handlers[32] = {
 	{ SetCountitem, ClearCountitem, [](AActor* a)->bool { return a->flags & MF_COUNTITEM; } },
 	F(MF_SKULLFLY),
 	F(MF_NOTDMATCH),
-	// translation, unused and translucent are no longer checkable in any way. Pity.
+	{ SetTranslation1, ClearTranslation1, CheckTranslation1 },
+	{ SetTranslation2, ClearTranslation2, CheckTranslation2 },
+	F6(MF6_TOUCHY),
+	{ SetBounces, ClearBounces, [](AActor* a)->bool { return a->BounceFlags & BOUNCE_DEH; } },
+	F(MF_FRIENDLY),
+	{ SetTranslucent, ClearTranslucent, CheckTranslucent }
 };
 
 static FlagHandler flag2handlers[32] = {

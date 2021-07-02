@@ -3486,7 +3486,7 @@ bool FSlide::BounceWall(AActor *mo)
 	deltaangle = (lineangle * 2) - moveangle;
 	mo->Angles.Yaw = deltaangle;
 
-	movelen = mo->Vel.XY().Length() * mo->wallbouncefactor;
+	movelen = mo->Vel.XY().Length() * GetWallBounceFactor(mo);
 
 	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
 	if (BoxOnLineSide(box, line) == -1)
@@ -3573,7 +3573,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		if (!ontop)
 		{
 			DAngle angle = BlockingMobj->AngleTo(mo) + ((pr_bounce() % 16) - 8);
-			double speed = mo->VelXYToSpeed() * mo->wallbouncefactor; // [GZ] was 0.75, using wallbouncefactor seems more consistent
+			double speed = mo->VelXYToSpeed() * GetWallBounceFactor(mo); // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			if (fabs(speed) < EQUAL_EPSILON) speed = 0;
 			mo->Angles.Yaw = angle;
 			mo->VelFromAngle(speed);
@@ -3595,7 +3595,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 				}
 				else
 				{
-					mo->Vel.Z *= mo->bouncefactor;
+					mo->Vel.Z *= GetMBFBounceFactor(mo);
 				}
 			}
 			else // Don't run through this for MBF-style bounces

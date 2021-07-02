@@ -1608,7 +1608,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 			flags &= ~MF_INBOUNCE;
 			return false;
 		}
-		else Vel.Z *= bouncefactor;
+		else Vel.Z *= GetMBFBounceFactor(this);
 	}
 	else // Don't run through this for MBF-style bounces
 	{
@@ -2551,7 +2551,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 				if (mo->BounceFlags & BOUNCE_Floors)
 				{
 					mo->FloorBounceMissile (mo->floorsector->floorplane);
-					/* if (!(mo->flags6 & MF6_CANJUMP)) */ return;
+					/* if (!CanJump(mo)) */ return;
 				}
 				else if (mo->flags3 & MF3_NOEXPLODEFLOOR)
 				{
@@ -2660,7 +2660,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
 				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
-				/*if (!(mo->flags6 & MF6_CANJUMP))*/ return;
+				/* if (!CanJump(mo)) */ return;
 			}
 			if (mo->flags & MF_SKULLFLY)
 			{	// the skull slammed into something

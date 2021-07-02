@@ -208,3 +208,38 @@ inline bool P_IsBlockedByLine(AActor* actor, line_t* line)
 
 	return false;
 }
+
+// For Dehacked modified actors we need to dynamically check the bounce factors because MBF didn't bother to implement this properly and with other flags changing this must adjust.
+inline double GetMBFBounceFactor(AActor* actor)
+{
+	if (actor->BounceFlags & BOUNCE_DEH) // only when modified through Dehacked. 
+	{
+		constexpr double MBF_BOUNCE_NOGRAVITY = 1;				// With NOGRAVITY: full momentum
+		constexpr double MBF_BOUNCE_FLOATDROPOFF = 0.85;		// With FLOAT and DROPOFF: 85%
+		constexpr double MBF_BOUNCE_FLOAT = 0.7;				// With FLOAT alone: 70%
+		constexpr double MBF_BOUNCE_DEFAULT = 0.45;				// Without the above flags: 45%
+
+		if (actor->flags & MF_NOGRAVITY) return MBF_BOUNCE_NOGRAVITY;
+		if (actor->flags & MF_FLOAT) return (actor->flags & MF_DROPOFF) ? MBF_BOUNCE_FLOATDROPOFF : MBF_BOUNCE_FLOAT;
+		return MBF_BOUNCE_DEFAULT;
+	}
+	return actor->bouncefactor;
+}
+
+inline double GetWallBounceFactor(AActor* actor)
+{
+	if (actor->BounceFlags & BOUNCE_DEH) // only when modified through Dehacked. 
+	{
+		constexpr double MBF_BOUNCE_NOGRAVITY = 1;				// With NOGRAVITY: full momentum
+		constexpr double MBF_BOUNCE_WALL = 0.5;					// Bouncing off walls: 50%
+		return ((actor->flags & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY : MBF_BOUNCE_WALL);
+	}
+	return actor->wallbouncefactor;
+}
+
+// Yet another hack for MBF...
+inline bool CanJump(AActor* actor)
+{
+	return (actor->flags6 & MF6_CANJUMP) || (
+		(actor->BounceFlags & BOUNCE_MBF) && actor->IsSentient() && (actor->flags & MF_FLOAT));
+}

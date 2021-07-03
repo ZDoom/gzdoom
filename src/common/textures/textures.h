@@ -320,6 +320,8 @@ public:
 	void NeedUpdate() { bNeedsUpdate = true; }
 	void SetUpdated(bool rendertype) { bNeedsUpdate = false; bFirstUpdate = false; bLastUpdateType = rendertype; }
 
+	void SetAspectRatio(double aspectScale, bool useTextureRatio) { aspectRatio = aspectScale * (useTextureRatio? ((float)Width / Height) : 1); }
+
 protected:
 
 	bool bLastUpdateType = false;

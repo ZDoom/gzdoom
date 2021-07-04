@@ -1373,6 +1373,7 @@ void MapLoader::SpawnScrollers()
 
 		case Scroll_Texture_Offsets:
 		{
+			double divider = max(1, l->args[3]);
 			// killough 3/2/98: scroll according to sidedef offsets
 			side = l->sidedef[0];
 			if (l->args[2] & 3)
@@ -1383,18 +1384,18 @@ void MapLoader::SpawnScrollers()
 				if (l->args[2] & 2)
 					accel = 1;
 			}
+			double dx = -side->GetTextureXOffset(side_t::mid) / divider;
+			double dy = side->GetTextureYOffset(side_t::mid) / divider;
 			if (l->args[1] == 0)
 			{
-				Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
-					side->GetTextureYOffset(side_t::mid), control, nullptr, side, accel, SCROLLTYPE(l->args[0]));
+				Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, side, accel, SCROLLTYPE(l->args[0]));
 			}
 			else
 			{
 				auto it = Level->GetLineIdIterator(l->args[1]);
 				while (int ln = it.Next())
 				{
-					Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
-						side->GetTextureYOffset(side_t::mid), control, nullptr, Level->lines[ln].sidedef[0], accel, SCROLLTYPE(l->args[0]));
+					Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, Level->lines[ln].sidedef[0], accel, SCROLLTYPE(l->args[0]));
 				}
 			}
 			break;

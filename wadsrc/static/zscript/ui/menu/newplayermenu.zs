@@ -491,6 +491,54 @@ class OptionMenuItemPlayerPronounField : OptionMenuItemTextField
 		return self;
 	}
 
+	static clearscope String BuildPronounsString(Array<String> pronouns, int count = -1)
+	{
+		if (count < 0) count = pronouns.Size();
+
+		let pronounsStr = pronouns[0];
+		for(int j = 1; j < count; j++)
+		{
+			pronounsStr.AppendFormat("/%s", pronouns[j]);
+		}
+
+		return pronounsStr;
+	}
+
+	static clearscope String ShortestUniqueMatch(Array<String> pronouns)
+	{
+		bool notMatching[PRONOUN_MAX];
+		int matchCount = PRONOUN_MAX;
+		int uniqueMatchEnd = -1;
+
+		for(int i = 0; i < pronouns.Size(); i++)
+		{
+			for(int j = 0; j < PRONOUN_MAX; j++)
+			{
+				if (notMatching[j]) continue;
+
+				if (PlayerInfo.DefaultPronouns[j * PRONOUN_SET_SIZE + i] != pronouns[i])
+				{
+					notMatching[j] = true;
+					matchCount--;
+
+					if (matchCount == 1 && uniqueMatchEnd < 0)
+					{
+						// Only one match left - unique match ends here
+						uniqueMatchEnd = i;
+					}
+					else if (matchCount == 0)
+					{
+						// Didn't match any defaults - return the whole thing
+						return BuildPronounsString(pronouns);
+					}
+				}
+			}
+		}
+
+		// Fully matched a default pronoun set - return it
+		return BuildPronounsString(pronouns, uniqueMatchEnd);
+	}
+
 	override bool, String GetString (int i)
 	{
 		if (i == 0)
@@ -511,18 +559,11 @@ class OptionMenuItemPlayerPronounField : OptionMenuItemTextField
 			let slash = s.IndexOf("/");
 			if (slash != -1) s = s.Left(slash);
 
-			let pronounsStr = players[consoleplayer].GetPronouns();
 			Array<String> pronouns;
-			pronounsStr.Split(pronouns, "/");
+			players[consoleplayer].GetPronouns().Split(pronouns, "/");
 			pronouns[mPronoun] = s;
 
-			pronounsStr = pronouns[0];
-			for(int j = 1; j < pronouns.Size(); j++)
-			{
-				pronounsStr.AppendFormat("/%s", pronouns[j]);
-			}
-
-			PlayerMenu.PronounsChanged(pronounsStr);
+			PlayerMenu.PronounsChanged(ShortestUniqueMatch(pronouns));
 			return true;
 		}
 		return false;

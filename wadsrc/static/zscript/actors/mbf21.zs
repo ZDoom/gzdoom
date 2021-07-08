@@ -53,7 +53,7 @@ extend class Actor
 		if (mo.bMissile || mo.bMbfBouncer)
 		{
 			// if spawner is also a missile, copy 'em
-			if (defaults.bMissile || defaults.bMbfBouncer)
+			if (default.bMissile || default.bMbfBouncer)
 			{
 				mo.target = self.target;
 				mo.tracer = self.tracer;

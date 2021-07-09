@@ -3753,8 +3753,6 @@ void AActor::Tick ()
 			}
 		}
 
-		double oldz = Z();
-
 		// [RH] Give the pain elemental vertical friction
 		// This used to be in APainElemental::Tick but in order to use
 		// A_PainAttack with other monsters it has to be here

@@ -744,6 +744,7 @@ class Actor : Thinker native
 	native void RandomChaseDir();
 	native bool CheckMissileRange();
 	native bool SetState(state st, bool nofunction = false);
+	native bool AdvanceState();
 	clearscope native state FindState(statelabel st, bool exact = false) const;
 	bool SetStateLabel(statelabel st, bool nofunction = false) { return SetState(FindState(st), nofunction); }
 	native action state ResolveState(statelabel st);	// this one, unlike FindState, is context aware.

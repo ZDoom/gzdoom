@@ -596,6 +596,46 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
 };
 
+//==========================================================================
+//
+// AActor::AdvanceState
+//
+// Advance actor through its states
+// Returned bool specify state state, tautology
+//
+//==========================================================================
+
+bool AActor::AdvanceState()
+{
+	assert (state != NULL);
+	if (state == NULL)
+	{
+		Destroy();
+		return false;
+	}
+	if (!CheckNoDelay())
+		return false;// freed itself
+
+	if (tics != -1)
+	{
+		// cycle through states, calling action functions at transitions
+		// [RH] Use tics <= 0 instead of == 0 so that spawnstates
+		// of 0 tics work as expected.
+		if (--tics <= 0)
+		{
+			if (!SetState(state->GetNextState()))
+				return false;// freed itself
+		}
+	}
+
+	return true;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, AdvanceState)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(self->AdvanceState());
+};
 
 //============================================================================
 //
@@ -4089,14 +4129,6 @@ void AActor::Tick ()
 		}
 	}
 
-	assert (state != NULL);
-	if (state == NULL)
-	{
-		Destroy();
-		return;
-	}
-	if (!CheckNoDelay())
-		return; // freed itself
 
 	UpdateRenderSectorList();
 
@@ -4108,17 +4140,8 @@ void AActor::Tick ()
 		if (ObjectFlags & OF_EuthanizeMe) return;
 	}
 
-	if (tics != -1)
-	{
-		// cycle through states, calling action functions at transitions
-		// [RH] Use tics <= 0 instead of == 0 so that spawnstates
-		// of 0 tics work as expected.
-		if (--tics <= 0)
-		{
-			if (!SetState(state->GetNextState()))
-				return; 		// freed itself
-		}
-	}
+	if(!AdvanceState() )
+		return;
 
 	if (tics == -1 || state->GetCanRaise())
 	{

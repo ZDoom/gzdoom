@@ -9,6 +9,8 @@ OptionMenu "OptionsMenuSimple" protected
 	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
 	StaticText " "
+	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
+	StaticText " "
 	Submenu "$OPTMNU_SOUND",			"SoundOptionsSimple"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptionsSimple"
 	Submenu "$HUDMNU_SCALEOPT",			"ScalingOptionsSimple"

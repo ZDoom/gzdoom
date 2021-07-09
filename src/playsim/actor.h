@@ -964,7 +964,7 @@ public:
 	const char *GetCharacterName() const;
 
 	DVector2 CarryingSectorsHandling();
-
+	void RespawnHandling();
 	// Triggers SECSPAC_Exit/SECSPAC_Enter and related events if oldsec != current sector
 	void CheckSectorTransition(sector_t *oldsec);
 	void UpdateRenderSectorList();

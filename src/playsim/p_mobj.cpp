@@ -3810,6 +3810,53 @@ DEFINE_ACTION_FUNCTION(AActor, CarryingSectorsHandling)
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_VEC2(self->CarryingSectorsHandling());
 }
+
+//============================================================================
+//
+// AActor :: RespawnHandling
+//
+// Control how monsters should be respawned on nightmare difficulty
+// 
+//============================================================================
+
+void AActor::RespawnHandling()
+{
+	if (tics == -1 || state->GetCanRaise())
+	{
+		int respawn_monsters = G_SkillProperty(SKILLP_Respawn);
+		// check for nightmare respawn
+		if (!(flags5 & MF5_ALWAYSRESPAWN))
+		{
+			if (!respawn_monsters || !(flags3 & MF3_ISMONSTER) || (flags2 & MF2_DORMANT) || (flags5 & MF5_NEVERRESPAWN))
+				return;
+
+			int limit = G_SkillProperty (SKILLP_RespawnLimit);
+			if (limit > 0 && skillrespawncount >= limit)
+				return;
+		}
+
+		movecount++;
+
+		if (movecount < respawn_monsters)
+			return;
+
+		if (Level->time & 31)
+			return;
+
+		if (pr_nightmarerespawn() > 4)
+			return;
+
+		P_NightmareRespawn (this);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, RespawnHandling)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->RespawnHandling();
+	return 0;
+}
+
 //
 // P_MobjThinker
 //
@@ -4180,33 +4227,7 @@ void AActor::Tick ()
 	if(!AdvanceState() )
 		return;
 
-	if (tics == -1 || state->GetCanRaise())
-	{
-		int respawn_monsters = G_SkillProperty(SKILLP_Respawn);
-		// check for nightmare respawn
-		if (!(flags5 & MF5_ALWAYSRESPAWN))
-		{
-			if (!respawn_monsters || !(flags3 & MF3_ISMONSTER) || (flags2 & MF2_DORMANT) || (flags5 & MF5_NEVERRESPAWN))
-				return;
-
-			int limit = G_SkillProperty (SKILLP_RespawnLimit);
-			if (limit > 0 && skillrespawncount >= limit)
-				return;
-		}
-
-		movecount++;
-
-		if (movecount < respawn_monsters)
-			return;
-
-		if (Level->time & 31)
-			return;
-
-		if (pr_nightmarerespawn() > 4)
-			return;
-
-		P_NightmareRespawn (this);
-	}
+	RespawnHandling();
 }
 
 //==========================================================================

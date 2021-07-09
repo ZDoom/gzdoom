@@ -786,7 +786,7 @@ class Actor : Thinker native
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
 	native void DoMissileDamage(Actor target);
-
+	native void RespawnHandling();
 	//==========================================================================
 	//
 	// AActor :: GetLevelSpawnTime

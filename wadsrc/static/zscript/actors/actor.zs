@@ -788,6 +788,7 @@ class Actor : Thinker native
 	native void DoMissileDamage(Actor target);
 	native void RespawnHandling();
 	native void BotThink();
+	native void SlopedFloorHandling();
 	//==========================================================================
 	//
 	// AActor :: GetLevelSpawnTime

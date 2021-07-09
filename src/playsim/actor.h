@@ -717,6 +717,8 @@ public:
 
 	void BotThink();
 
+	void SlopedFloorHandling();
+
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0, FName MeansOfDeath = NAME_None);
 	void CallDie(AActor *source, AActor *inflictor, int dmgflags = 0, FName MeansOfDeath = NAME_None);

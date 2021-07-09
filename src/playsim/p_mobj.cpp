@@ -3873,6 +3873,55 @@ DEFINE_ACTION_FUNCTION(AActor, BotThink)
 	return 0;
 }
 
+void AActor::SlopedFloorHandling()
+{
+	// [RH] If standing on a steep slope, fall down it
+	if ((flags & MF_SOLID) && !(flags & (MF_NOCLIP|MF_NOGRAVITY)) &&
+		!(flags & MF_NOBLOCKMAP) &&
+		Vel.Z <= 0 &&
+		floorz == Z())
+	{
+		secplane_t floorplane;
+
+		// Check 3D floors as well
+		floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
+
+		if (floorplane.fC() < MaxSlopeSteepness &&
+			floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
+		{
+			const msecnode_t *node;
+			bool dopush = true;
+
+			if (floorplane.fC() > MaxSlopeSteepness*2/3)
+			{
+				for (node = touching_sectorlist; node; node = node->m_tnext)
+				{
+					const sector_t *sec = node->m_sector;
+					if (sec->floorplane.fC() >= MaxSlopeSteepness)
+					{
+						if (floorplane.ZatPoint(PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
+						{
+							dopush = false;
+							break;
+						}
+					}
+				}
+			}
+			if (dopush)
+			{
+				Vel += floorplane.Normal().XY();
+			}
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SlopedFloorHandling)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->SlopedFloorHandling();
+	return 0;
+}
+
 
 //
 // P_MobjThinker
@@ -4042,44 +4091,7 @@ void AActor::Tick ()
 		// [RH] Consider carrying sectors here
 		DVector2 cumm = CarryingSectorsHandling();
 
-		// [RH] If standing on a steep slope, fall down it
-		if ((flags & MF_SOLID) && !(flags & (MF_NOCLIP|MF_NOGRAVITY)) &&
-			!(flags & MF_NOBLOCKMAP) &&
-			Vel.Z <= 0 &&
-			floorz == Z())
-		{
-			secplane_t floorplane;
-
-			// Check 3D floors as well
-			floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
-
-			if (floorplane.fC() < MaxSlopeSteepness &&
-				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
-			{
-				const msecnode_t *node;
-				bool dopush = true;
-
-				if (floorplane.fC() > MaxSlopeSteepness*2/3)
-				{
-					for (node = touching_sectorlist; node; node = node->m_tnext)
-					{
-						const sector_t *sec = node->m_sector;
-						if (sec->floorplane.fC() >= MaxSlopeSteepness)
-						{
-							if (floorplane.ZatPoint(PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
-							{
-								dopush = false;
-								break;
-							}
-						}
-					}
-				}
-				if (dopush)
-				{
-					Vel += floorplane.Normal().XY();
-				}
-			}
-		}
+		SlopedFloorHandling();
 
 		// [RH] Missiles moving perfectly vertical need some X/Y movement, or they
 		// won't hurt anything. Don't do this if damage is 0! That way, you can

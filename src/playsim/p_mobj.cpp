@@ -3922,14 +3922,138 @@ DEFINE_ACTION_FUNCTION(AActor, SlopedFloorHandling)
 	return 0;
 }
 
+void AActor::FullAxisMovement(DVector2 carryoffset)
+{
+	AActor *onmo;
+
+	BlockingMobj = nullptr;
+	sector_t* oldBlockingCeiling = BlockingCeiling;
+	sector_t* oldBlockingFloor = BlockingFloor;
+	Blocking3DFloor = nullptr;
+	BlockingFloor = nullptr;
+	BlockingCeiling = nullptr;
+	double oldfloorz = P_XYMovement (this, carryoffset);
+	if (ObjectFlags & OF_EuthanizeMe)
+	{ // actor was destroyed
+		return;
+	}
+	// [ZZ] trigger hit floor/hit ceiling actions from XY movement
+	if (BlockingFloor && BlockingFloor != oldBlockingFloor && (!player || !(player->cheats & CF_PREDICTING)) && BlockingFloor->SecActTarget)
+		BlockingFloor->TriggerSectorActions(this, SECSPAC_HitFloor);
+	if (BlockingCeiling && BlockingCeiling != oldBlockingCeiling && (!player || !(player->cheats & CF_PREDICTING)) && BlockingCeiling->SecActTarget)
+		BlockingCeiling->TriggerSectorActions(this, SECSPAC_HitCeiling);
+	if (Vel.X == 0 && Vel.Y == 0) // Actors at rest
+	{
+		if (flags2 & MF2_BLASTED)
+		{ // Reset to not blasted when velocities are gone
+			flags2 &= ~MF2_BLASTED;
+		}
+		if ((flags6 & MF6_TOUCHY) && !IsSentient())
+		{ // Arm a mine which has come to rest
+			flags6 |= MF6_ARMED;
+		}
+
+	}
+
+	if (Vel.Z != 0 || BlockingMobj || Z() != floorz)
+	{	// Handle Z velocity and gravity
+		if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
+		{
+			if (!(onmo = P_CheckOnmobj (this)))
+			{
+				P_ZMovement (this, oldfloorz);
+				flags2 &= ~MF2_ONMOBJ;
+			}
+			else
+			{
+				if (player)
+				{
+					if (Vel.Z < Level->gravity * Sector->gravity * (-1./100)// -655.36f)
+						&& !(flags&MF_NOGRAVITY))
+					{
+						PlayerLandedOnThing (this, onmo);
+					}
+				}
+				if (onmo->Top() - Z() <= MaxStepHeight)
+				{
+					if (player && player->mo == this)
+					{
+						player->viewheight -= onmo->Top() - Z();
+						double deltaview = player->GetDeltaViewHeight();
+						if (deltaview > player->deltaviewheight)
+						{
+							player->deltaviewheight = deltaview;
+						}
+					} 
+					SetZ(onmo->Top());
+				}
+				// Check for MF6_BUMPSPECIAL
+				// By default, only players can activate things by bumping into them
+				// We trigger specials as long as we are on top of it and not just when
+				// we land on it. This could be considered as gravity making us continually
+				// bump into it, but it also avoids having to worry about walking on to
+				// something without dropping and not triggering anything.
+				if ((onmo->flags6 & MF6_BUMPSPECIAL) && ((player != NULL)
+					|| ((onmo->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
+					|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
+					) && (Level->maptime > onmo->lastbump)) // Leave the bumper enough time to go away
+				{
+					if (player == NULL || !(player->cheats & CF_PREDICTING))
+					{
+						if (P_ActivateThingSpecial(onmo, this))
+							onmo->lastbump = Level->maptime + TICRATE;
+					}
+				}
+				if (Vel.Z != 0 && (BounceFlags & BOUNCE_Actors))
+				{
+					bool res = P_BounceActor(this, onmo, true);
+					// If the bouncer is a missile and has hit the other actor it needs to be exploded here
+					// to be in line with the case when an actor's side is hit.
+					if (!res && (flags & MF_MISSILE))
+					{
+						P_DoMissileDamage(this, onmo);
+						P_ExplodeMissile(this, nullptr, onmo);
+					}
+				}
+				else
+				{
+					flags2 |= MF2_ONMOBJ;
+					Vel.Z = 0;
+					Crash();
+				}
+			}
+		}
+		else
+		{
+			P_ZMovement (this, oldfloorz);
+		}
+
+		if (ObjectFlags & OF_EuthanizeMe)
+			return;		// actor was destroyed
+	}
+	else if (Z() <= floorz)
+	{
+		Crash();
+		if (ObjectFlags & OF_EuthanizeMe)
+			return;		// actor was destroyed
+	}
+
+}
+
+DEFINE_ACTION_FUNCTION(AActor, FullAxisMovement)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	self->FullAxisMovement( DVector2(x, y));
+	return 0;
+}
 
 //
 // P_MobjThinker
 //
 void AActor::Tick ()
 {
-	AActor *onmo;
-
 	//assert (state != NULL);
 	if (state == NULL)
 	{
@@ -4103,117 +4227,8 @@ void AActor::Tick ()
 			VelFromAngle(MinVel);
 		}
 
-		// Handle X and Y velocities
-		BlockingMobj = nullptr;
-		sector_t* oldBlockingCeiling = BlockingCeiling;
-		sector_t* oldBlockingFloor = BlockingFloor;
-		Blocking3DFloor = nullptr;
-		BlockingFloor = nullptr;
-		BlockingCeiling = nullptr;
-		double oldfloorz = P_XYMovement (this, cumm);
-		if (ObjectFlags & OF_EuthanizeMe)
-		{ // actor was destroyed
-			return;
-		}
-		// [ZZ] trigger hit floor/hit ceiling actions from XY movement
-		if (BlockingFloor && BlockingFloor != oldBlockingFloor && (!player || !(player->cheats & CF_PREDICTING)) && BlockingFloor->SecActTarget)
-			BlockingFloor->TriggerSectorActions(this, SECSPAC_HitFloor);
-		if (BlockingCeiling && BlockingCeiling != oldBlockingCeiling && (!player || !(player->cheats & CF_PREDICTING)) && BlockingCeiling->SecActTarget)
-			BlockingCeiling->TriggerSectorActions(this, SECSPAC_HitCeiling);
-		if (Vel.X == 0 && Vel.Y == 0) // Actors at rest
-		{
-			if (flags2 & MF2_BLASTED)
-			{ // Reset to not blasted when velocities are gone
-				flags2 &= ~MF2_BLASTED;
-			}
-			if ((flags6 & MF6_TOUCHY) && !IsSentient())
-			{ // Arm a mine which has come to rest
-				flags6 |= MF6_ARMED;
-			}
-
-		}
-		if (Vel.Z != 0 || BlockingMobj || Z() != floorz)
-		{	// Handle Z velocity and gravity
-			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
-			{
-				if (!(onmo = P_CheckOnmobj (this)))
-				{
-					P_ZMovement (this, oldfloorz);
-					flags2 &= ~MF2_ONMOBJ;
-				}
-				else
-				{
-					if (player)
-					{
-						if (Vel.Z < Level->gravity * Sector->gravity * (-1./100)// -655.36f)
-							&& !(flags&MF_NOGRAVITY))
-						{
-							PlayerLandedOnThing (this, onmo);
-						}
-					}
-					if (onmo->Top() - Z() <= MaxStepHeight)
-					{
-						if (player && player->mo == this)
-						{
-							player->viewheight -= onmo->Top() - Z();
-							double deltaview = player->GetDeltaViewHeight();
-							if (deltaview > player->deltaviewheight)
-							{
-								player->deltaviewheight = deltaview;
-							}
-						} 
-						SetZ(onmo->Top());
-					}
-					// Check for MF6_BUMPSPECIAL
-					// By default, only players can activate things by bumping into them
-					// We trigger specials as long as we are on top of it and not just when
-					// we land on it. This could be considered as gravity making us continually
-					// bump into it, but it also avoids having to worry about walking on to
-					// something without dropping and not triggering anything.
-					if ((onmo->flags6 & MF6_BUMPSPECIAL) && ((player != NULL)
-						|| ((onmo->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
-						|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
-						) && (Level->maptime > onmo->lastbump)) // Leave the bumper enough time to go away
-					{
-						if (player == NULL || !(player->cheats & CF_PREDICTING))
-						{
-							if (P_ActivateThingSpecial(onmo, this))
-								onmo->lastbump = Level->maptime + TICRATE;
-						}
-					}
-					if (Vel.Z != 0 && (BounceFlags & BOUNCE_Actors))
-					{
-						bool res = P_BounceActor(this, onmo, true);
-						// If the bouncer is a missile and has hit the other actor it needs to be exploded here
-						// to be in line with the case when an actor's side is hit.
-						if (!res && (flags & MF_MISSILE))
-						{
-							P_DoMissileDamage(this, onmo);
-							P_ExplodeMissile(this, nullptr, onmo);
-						}
-					}
-					else
-					{
-						flags2 |= MF2_ONMOBJ;
-						Vel.Z = 0;
-						Crash();
-					}
-				}
-			}
-			else
-			{
-				P_ZMovement (this, oldfloorz);
-			}
-
-			if (ObjectFlags & OF_EuthanizeMe)
-				return;		// actor was destroyed
-		}
-		else if (Z() <= floorz)
-		{
-			Crash();
-			if (ObjectFlags & OF_EuthanizeMe)
-				return;		// actor was destroyed
-		}
+		// Handle X, Y and Z velocities
+		FullAxisMovement(cumm);
 
 		CheckPortalTransition(true);
 

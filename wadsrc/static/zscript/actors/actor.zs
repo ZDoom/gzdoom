@@ -789,6 +789,8 @@ class Actor : Thinker native
 	native void RespawnHandling();
 	native void BotThink();
 	native void SlopedFloorHandling();
+	native void FullAxisMovement(vector2 carryoffset);
+
 	//==========================================================================
 	//
 	// AActor :: GetLevelSpawnTime

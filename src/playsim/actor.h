@@ -718,6 +718,8 @@ public:
 	void BotThink();
 
 	void SlopedFloorHandling();
+	//carry offset is additional velocity produced from standing in carrying sectors
+	void FullAxisMovement(DVector2 carryoffset = DVector2(0.0, 0.0) );
 
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0, FName MeansOfDeath = NAME_None);

@@ -771,6 +771,8 @@ public:
 	// Tosses an item out of the inventory.
 	AActor *DropInventory (AActor *item, int amt = -1);
 
+	void ApplyPowerups();
+
 	// Removes all items from the inventory.
 	void ClearInventory();
 

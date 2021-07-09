@@ -816,6 +816,41 @@ void AActor::ClearInventory()
 
 //============================================================================
 //
+// AActor :: ApplyPowerups
+//
+// Iterate through actors inventory, calling each item DoEffect function
+//
+//============================================================================
+
+void AActor::ApplyPowerups()
+{
+	if (!player || !(player->cheats & CF_PREDICTING))
+	{
+		// Handle powerup effects here so that the order is controlled
+		// by the order in the inventory, not the order in the thinker table
+		AActor *item = Inventory;
+		
+		while (item != NULL)
+		{
+			IFVIRTUALPTRNAME(item, NAME_Inventory, DoEffect)
+			{
+				VMValue params[1] = { item };
+				VMCall(func, params, 1, nullptr, 0);
+			}
+			item = item->Inventory;
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, ApplyPowerups)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ApplyPowerups();
+	return 0;
+}
+
+//============================================================================
+//
 // AActor :: CopyFriendliness
 //
 // Makes this actor hate (or like) the same things another actor does.
@@ -3667,22 +3702,7 @@ void AActor::Tick ()
 	else
 	{
 
-		if (!player || !(player->cheats & CF_PREDICTING))
-		{
-			// Handle powerup effects here so that the order is controlled
-			// by the order in the inventory, not the order in the thinker table
-			AActor *item = Inventory;
-			
-			while (item != NULL)
-			{
-				IFVIRTUALPTRNAME(item, NAME_Inventory, DoEffect)
-				{
-					VMValue params[1] = { item };
-					VMCall(func, params, 1, nullptr, 0);
-				}
-				item = item->Inventory;
-			}
-		}
+		ApplyPowerups();
 
 		if (flags & MF_UNMORPHED)
 		{

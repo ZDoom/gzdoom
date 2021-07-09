@@ -822,6 +822,7 @@ class Actor : Thinker native
 	protected native void DestroyAllInventory();	// This is not supposed to be called by user code!
 	native clearscope Inventory FindInventory(class<Inventory> itemtype, bool subclass = false) const;
 	native Inventory GiveInventoryType(class<Inventory> itemtype);
+	native void ApplyPowerups();
 	native bool UsePuzzleItem(int PuzzleItemType);
 
 	action native void SetCamera(Actor cam, bool revert = false);

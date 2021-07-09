@@ -3637,10 +3637,15 @@ DEFINE_ACTION_FUNCTION(AActor, CheckPortalTransition)
 	return 0;
 }
 
+//============================================================================
 //
-// P_MobjThinker
+// AActor :: CarryingSectorsHandling
 //
-void AActor::Tick ()
+// Accumulate abd return total actor displacement caused by carrying sectors
+// 
+//============================================================================
+
+DVector2 AActor::CarryingSectorsHandling()
 {
 	// [RH] Data for Heretic/Hexen scrolling sectors
 	static const int8_t HexenCompatSpeeds[] = {-25, 0, -10, -5, 0, 5, 10, 0, 25 };
@@ -3659,7 +3664,157 @@ void AActor::Tick ()
 	static const uint8_t HereticScrollDirs[4] = { 6, 9, 1, 4 };
 	static const uint8_t HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
 
+	DVector2 displacement(0,0);
 
+	if ((((flags8 & MF8_INSCROLLSEC) && Level->Scrolls.Size() > 0) || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
+	{
+		double height, waterheight;	// killough 4/4/98: add waterheight
+		const msecnode_t *node;
+		int countx, county;
+
+		// Clear the flag for the next frame.
+		flags8 &= ~MF8_INSCROLLSEC;
+
+		// killough 3/7/98: Carry things on floor
+		// killough 3/20/98: use new sector list which reflects true members
+		// killough 3/27/98: fix carrier bug
+		// killough 4/4/98: Underwater, carry things even w/o gravity
+
+		// Move objects only if on floor or underwater,
+		// non-floating, and clipped.
+
+		countx = county = 0;
+
+		for (node = touching_sectorlist; node; node = node->m_tnext)
+		{
+			sector_t *sec = node->m_sector;
+			DVector2 scrollv;
+
+			if (Level->Scrolls.Size() > unsigned(sec->Index()))
+			{
+				scrollv = Level->Scrolls[sec->Index()];
+			}
+			else
+			{
+				scrollv.Zero();
+			}
+
+			if (player != NULL)
+			{
+				int scrolltype = sec->special;
+
+				if (scrolltype >= Scroll_North_Slow &&
+					scrolltype <= Scroll_SouthWest_Fast)
+				{ // Hexen scroll special
+					scrolltype -= Scroll_North_Slow;
+					if (Level->i_compatflags&COMPATF_RAVENSCROLL)
+					{
+						scrollv.X -= HexenCompatSpeeds[HexenScrollies[scrolltype][0]+4] * (1. / (32 * CARRYFACTOR));
+						scrollv.Y += HexenCompatSpeeds[HexenScrollies[scrolltype][1]+4] * (1. / (32 * CARRYFACTOR));
+
+					}
+					else
+					{
+						// Use speeds that actually match the scrolling textures!
+						scrollv.X -= HexenScrollies[scrolltype][0] * 0.5;
+						scrollv.Y += HexenScrollies[scrolltype][1] * 0.5;
+					}
+				}
+				else if (scrolltype >= Carry_East5 &&
+							scrolltype <= Carry_West35)
+				{ // Heretic scroll special
+					scrolltype -= Carry_East5;
+					uint8_t dir = HereticScrollDirs[scrolltype / 5];
+					double carryspeed = HereticSpeedMuls[scrolltype % 5] * (1. / (32 * CARRYFACTOR));
+					if (scrolltype < 5 && !(Level->i_compatflags&COMPATF_RAVENSCROLL))
+					{
+						// Use speeds that actually match the scrolling textures!
+						carryspeed = (1 << ((scrolltype % 5) + 15)) / 65536.;
+					}
+					scrollv.X += carryspeed * ((dir & 3) - 1);
+					scrollv.Y += carryspeed * (((dir & 12) >> 2) - 1);
+				}
+				else if (scrolltype == dScroll_EastLavaDamage)
+				{ // Special Heretic scroll special
+					if (Level->i_compatflags&COMPATF_RAVENSCROLL)
+					{
+						scrollv.X += 28. / (32*CARRYFACTOR);
+					}
+					else
+					{
+						// Use a speed that actually matches the scrolling texture!
+						scrollv.X += 12. / (32 * CARRYFACTOR);
+					}
+				}
+				else if (scrolltype == Scroll_StrifeCurrent)
+				{ // Strife scroll special
+					int anglespeed = Level->GetFirstSectorTag(sec) - 100;
+					double carryspeed = (anglespeed % 10) / (16 * CARRYFACTOR);
+					DAngle angle = ((anglespeed / 10) * 45.);
+					scrollv += angle.ToVector(carryspeed);
+				}
+			}
+
+			if (scrollv.isZero())
+			{
+				continue;
+			}
+			sector_t *heightsec = sec->GetHeightSec();
+			if (flags & MF_NOGRAVITY && heightsec == NULL)
+			{
+				continue;
+			}
+			DVector3 pos = PosRelative(sec);
+			height = sec->floorplane.ZatPoint (pos);
+			double height2 = sec->floorplane.ZatPoint(this);
+			if (isAbove(height))
+			{
+				if (heightsec == NULL)
+				{
+					continue;
+				}
+
+				waterheight = heightsec->floorplane.ZatPoint (pos);
+				if (waterheight > height && Z() >= waterheight)
+				{
+					continue;
+				}
+			}
+
+			displacement += scrollv;
+			if (scrollv.X) countx++;
+			if (scrollv.Y) county++;
+		}
+
+		// Some levels designed with Boom in mind actually want things to accelerate
+		// at neighboring scrolling sector boundaries. But it is only important for
+		// non-player objects.
+		if (player != NULL || !(Level->i_compatflags & COMPATF_BOOMSCROLL))
+		{
+			if (countx > 1)
+			{
+				displacement.X /= countx;
+			}
+			if (county > 1)
+			{
+				displacement.Y /= county;
+			}
+		}
+	}
+
+	return displacement;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CarryingSectorsHandling)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_VEC2(self->CarryingSectorsHandling());
+}
+//
+// P_MobjThinker
+//
+void AActor::Tick ()
+{
 	AActor *onmo;
 
 	//assert (state != NULL);
@@ -3825,143 +3980,7 @@ void AActor::Tick ()
 		}
 
 		// [RH] Consider carrying sectors here
-		DVector2 cumm(0, 0);
-
-		if ((((flags8 & MF8_INSCROLLSEC) && Level->Scrolls.Size() > 0) || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
-		{
-			double height, waterheight;	// killough 4/4/98: add waterheight
-			const msecnode_t *node;
-			int countx, county;
-
-			// Clear the flag for the next frame.
-			flags8 &= ~MF8_INSCROLLSEC;
-
-			// killough 3/7/98: Carry things on floor
-			// killough 3/20/98: use new sector list which reflects true members
-			// killough 3/27/98: fix carrier bug
-			// killough 4/4/98: Underwater, carry things even w/o gravity
-
-			// Move objects only if on floor or underwater,
-			// non-floating, and clipped.
-
-			countx = county = 0;
-
-			for (node = touching_sectorlist; node; node = node->m_tnext)
-			{
-				sector_t *sec = node->m_sector;
-				DVector2 scrollv;
-
-				if (Level->Scrolls.Size() > unsigned(sec->Index()))
-				{
-					scrollv = Level->Scrolls[sec->Index()];
-				}
-				else
-				{
-					scrollv.Zero();
-				}
-
-				if (player != NULL)
-				{
-					int scrolltype = sec->special;
-
-					if (scrolltype >= Scroll_North_Slow &&
-						scrolltype <= Scroll_SouthWest_Fast)
-					{ // Hexen scroll special
-						scrolltype -= Scroll_North_Slow;
-						if (Level->i_compatflags&COMPATF_RAVENSCROLL)
-						{
-							scrollv.X -= HexenCompatSpeeds[HexenScrollies[scrolltype][0]+4] * (1. / (32 * CARRYFACTOR));
-							scrollv.Y += HexenCompatSpeeds[HexenScrollies[scrolltype][1]+4] * (1. / (32 * CARRYFACTOR));
-
-						}
-						else
-						{
-							// Use speeds that actually match the scrolling textures!
-							scrollv.X -= HexenScrollies[scrolltype][0] * 0.5;
-							scrollv.Y += HexenScrollies[scrolltype][1] * 0.5;
-						}
-					}
-					else if (scrolltype >= Carry_East5 &&
-							 scrolltype <= Carry_West35)
-					{ // Heretic scroll special
-						scrolltype -= Carry_East5;
-						uint8_t dir = HereticScrollDirs[scrolltype / 5];
-						double carryspeed = HereticSpeedMuls[scrolltype % 5] * (1. / (32 * CARRYFACTOR));
-						if (scrolltype < 5 && !(Level->i_compatflags&COMPATF_RAVENSCROLL))
-						{
-							// Use speeds that actually match the scrolling textures!
-							carryspeed = (1 << ((scrolltype % 5) + 15)) / 65536.;
-						}
-						scrollv.X += carryspeed * ((dir & 3) - 1);
-						scrollv.Y += carryspeed * (((dir & 12) >> 2) - 1);
-					}
-					else if (scrolltype == dScroll_EastLavaDamage)
-					{ // Special Heretic scroll special
-						if (Level->i_compatflags&COMPATF_RAVENSCROLL)
-						{
-							scrollv.X += 28. / (32*CARRYFACTOR);
-						}
-						else
-						{
-							// Use a speed that actually matches the scrolling texture!
-							scrollv.X += 12. / (32 * CARRYFACTOR);
-						}
-					}
-					else if (scrolltype == Scroll_StrifeCurrent)
-					{ // Strife scroll special
-						int anglespeed = Level->GetFirstSectorTag(sec) - 100;
-						double carryspeed = (anglespeed % 10) / (16 * CARRYFACTOR);
-						DAngle angle = ((anglespeed / 10) * 45.);
-						scrollv += angle.ToVector(carryspeed);
-					}
-				}
-
-				if (scrollv.isZero())
-				{
-					continue;
-				}
-				sector_t *heightsec = sec->GetHeightSec();
-				if (flags & MF_NOGRAVITY && heightsec == NULL)
-				{
-					continue;
-				}
-				DVector3 pos = PosRelative(sec);
-				height = sec->floorplane.ZatPoint (pos);
-				double height2 = sec->floorplane.ZatPoint(this);
-				if (isAbove(height))
-				{
-					if (heightsec == NULL)
-					{
-						continue;
-					}
-
-					waterheight = heightsec->floorplane.ZatPoint (pos);
-					if (waterheight > height && Z() >= waterheight)
-					{
-						continue;
-					}
-				}
-
-				cumm += scrollv;
-				if (scrollv.X) countx++;
-				if (scrollv.Y) county++;
-			}
-
-			// Some levels designed with Boom in mind actually want things to accelerate
-			// at neighboring scrolling sector boundaries. But it is only important for
-			// non-player objects.
-			if (player != NULL || !(Level->i_compatflags & COMPATF_BOOMSCROLL))
-			{
-				if (countx > 1)
-				{
-					cumm.X /= countx;
-				}
-				if (county > 1)
-				{
-					cumm.Y /= county;
-				}
-			}
-		}
+		DVector2 cumm = CarryingSectorsHandling();
 
 		// [RH] If standing on a steep slope, fall down it
 		if ((flags & MF_SOLID) && !(flags & (MF_NOCLIP|MF_NOGRAVITY)) &&

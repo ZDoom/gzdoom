@@ -740,6 +740,7 @@ class Actor : Thinker native
 	
 	native bool TryMove(vector2 newpos, int dropoff, bool missilecheck = false, FCheckPosition tm = null);
 	native bool CheckMove(vector2 newpos, int flags = 0, FCheckPosition tm = null);
+	native vector2 CarryingSectorsHandling();
 	native void NewChaseDir();
 	native void RandomChaseDir();
 	native bool CheckMissileRange();

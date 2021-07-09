@@ -715,6 +715,8 @@ public:
 	virtual void Deactivate(AActor *activator);
 	void CallDeactivate(AActor *activator);
 
+	void BotThink();
+
 	// Called when actor dies
 	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0, FName MeansOfDeath = NAME_None);
 	void CallDie(AActor *source, AActor *inflictor, int dmgflags = 0, FName MeansOfDeath = NAME_None);

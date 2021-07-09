@@ -3857,6 +3857,23 @@ DEFINE_ACTION_FUNCTION(AActor, RespawnHandling)
 	return 0;
 }
 
+void AActor::BotThink()
+{
+	if (Level->BotInfo.botnum && !demoplayback &&
+	((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
+	{
+		Level->BotInfo.BotTick(this);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, BotThink)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->BotThink();
+	return 0;
+}
+
+
 //
 // P_MobjThinker
 //
@@ -4020,11 +4037,7 @@ void AActor::Tick ()
 			}
 		}
 
-		if (Level->BotInfo.botnum && !demoplayback &&
-			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
-		{
-			Level->BotInfo.BotTick(this);
-		}
+		BotThink();
 
 		// [RH] Consider carrying sectors here
 		DVector2 cumm = CarryingSectorsHandling();

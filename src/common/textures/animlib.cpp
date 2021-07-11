@@ -188,6 +188,9 @@ static void renderframe(anim_t *anim, uint16_t framenumber, uint16_t *pagepointe
 
     while (frame--) offset += LittleShort(pagepointer[frame]);
 
+	if (offset >= anim->curlp->nBytes)
+		return;
+
     uint8_t *ppointer = (uint8_t *)(pagepointer) + anim->curlp->nRecords*2 + offset + 4;
 
     if ((ppointer-4)[1])

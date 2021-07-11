@@ -206,6 +206,7 @@ public:
 	FTextureID glPart2;
 	FTextureID glPart;
 	FTextureID mirrorTexture;
+	bool usefullnames;
 
 };
 

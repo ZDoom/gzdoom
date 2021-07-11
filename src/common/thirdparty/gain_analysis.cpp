@@ -251,6 +251,7 @@ GainAnalyzer::ResetSampleFrequency(int samplefreq) {
             freqindex = 9;
             break;
         case 11025:
+        case 11111: // SW shareware tries to play a VOC with this frequency as music. This is close enough to 11025 to use the same table.
             freqindex = 10;
             break;
         case 8000:

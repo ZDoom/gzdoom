@@ -70,6 +70,7 @@
 //==========================================================================
 
 FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate, bool iwadonly, bool doomtemplate, GlyphSet *baseGlyphs)
+	: FFont(fdlump, name)
 {
 	int i;
 	FTextureID lump;
@@ -77,17 +78,9 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	DVector2 Scale = { 1, 1 };
 
 	noTranslate = notranslate;
-	Lump = fdlump;
 	GlobalKerning = false;
-	FontName = name;
-	Next = FirstFont;
-	FirstFont = this;
-	Cursor = '_';
 	SpaceWidth = 0;
 	FontHeight = 0;
-	uint8_t pp = 0;
-	for (auto &p : PatchRemap) p = pp++;
-	translateUntranslated = false;
 	int FixedWidth = 0;
 
 	TMap<int, FGameTexture*> charMap;
@@ -126,6 +119,11 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						sc.MustGetValue(false);
 						GlobalKerning = sc.Number;
 					}
+					if (sc.Compare("Altfont"))
+					{
+						sc.MustGetString();
+						AltFontName = sc.String;
+					}
 					else if (sc.Compare("Scale"))
 					{
 						sc.MustGetValue(true);
@@ -153,6 +151,16 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						sc.MustGetToken(',');
 						sc.MustGetValue(false);
 						FontHeight = sc.Number;
+					}
+					else if (sc.Compare("minluminosity"))
+					{
+						sc.MustGetValue(false);
+						MinLum = (int16_t)clamp(sc.Number, 0, 255);
+					}
+					else if (sc.Compare("maxluminosity"))
+					{
+						sc.MustGetValue(false);
+						MaxLum = (int16_t)clamp(sc.Number, 0, 255);
 					}
 					else if (sc.Compare("Translationtype"))
 					{
@@ -302,7 +310,6 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		auto count = maxchar - minchar + 1;
 		Chars.Resize(count);
 		int fontheight = 0;
-		int asciiheight = 0;
 
 		for (i = 0; i < count; i++)
 		{
@@ -320,10 +327,6 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					{
 						fontheight = height;
 					}
-					if (height > asciiheight && FirstChar + 1 < 128)
-					{
-						asciiheight = height;
-					}
 				}
 
 				auto orig = pic->GetTexture();
@@ -332,7 +335,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				TexMan.AddGameTexture(tex);
 				Chars[i].OriginalPic = tex;
 
-				if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(pic, Chars[i].OriginalPic, Chars[i].OriginalPic);
+				if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(pic, Chars[i].OriginalPic);
 
 				Chars[i].XMove = (int)Chars[i].OriginalPic->GetDisplayWidth();
 			}
@@ -359,7 +362,6 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			}
 		}
 		if (FontHeight == 0) FontHeight = fontheight;
-		if (AsciiHeight == 0) AsciiHeight = asciiheight;
 
 		FixXMoves();
 	}
@@ -656,7 +658,7 @@ int FFont::GetLuminosity (uint32_t *colorsused, TArray<double> &Luminosity, int*
 
 int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
-	// Single pic fonts don not set up their translation table and must always return 0.
+	// Single pic fonts do not set up their translation table and must always return 0.
 	if (Translations.Size() == 0) return 0;
 	assert(Translations.Size() == NumTextColors);
 
@@ -966,10 +968,11 @@ int FFont::GetMaxAscender(const uint8_t* string) const
 
 void FFont::LoadTranslations()
 {
-	unsigned int count = LastChar - FirstChar + 1;
+	unsigned int count = min<unsigned>(Chars.Size(), LastChar - FirstChar + 1);
 	uint32_t usedcolors[256] = {};
 	TArray<double> Luminosity;
 
+	if (count == 0) return;
 	for (unsigned int i = 0; i < count; i++)
 	{
 		if (Chars[i].OriginalPic)
@@ -981,6 +984,8 @@ void FFont::LoadTranslations()
 
 	int minlum = 0, maxlum = 0;
 	GetLuminosity (usedcolors, Luminosity, &minlum, &maxlum);
+	if (MinLum >= 0 && MinLum < minlum) minlum = MinLum;
+	if (MaxLum > maxlum) maxlum = MaxLum;
 
 	// Here we can set everything to a luminosity translation.
 
@@ -999,14 +1004,15 @@ void FFont::LoadTranslations()
 //
 //==========================================================================
 
-FFont::FFont (int lump)
+FFont::FFont (int lump, FName nm)
 {
+	FirstChar = LastChar = 0;
+	Next = FirstFont;
+	FirstFont = this;
 	Lump = lump;
-	FontName = NAME_None;
+	FontName = nm;
 	Cursor = '_';
 	noTranslate = false;
-	uint8_t pp = 0;
-	for (auto &p : PatchRemap) p = pp++;
 }
 
 //==========================================================================
@@ -1070,3 +1076,7 @@ void FFont::FixXMoves()
 }
 
 
+void FFont::ClearOffsets()
+{
+	for (auto& c : Chars) if (c.OriginalPic) c.OriginalPic->SetOffsets(0, 0);
+}

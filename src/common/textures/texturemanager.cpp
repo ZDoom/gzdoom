@@ -448,7 +448,13 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 	if (lumpnum != -1)
 	{
 		FString str;
-		fileSystem.GetFileShortName(str, lumpnum);
+		if (!usefullnames)
+			fileSystem.GetFileShortName(str, lumpnum);
+		else
+		{
+			auto fn = fileSystem.GetFileFullName(lumpnum);
+			str = ExtractFileBase(fn);
+		}
 		auto out = MakeGameTexture(CreateTextureFromLump(lumpnum, usetype == ETextureType::Flat), str, usetype);
 
 		if (out != NULL)
@@ -557,30 +563,44 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 	int lasttx = fileSystem.GetLastEntry(wadnum);
 	FString Name;
 
-	// Go from first to last so that ANIMDEFS work as expected. However,
-	// to avoid duplicates (and to keep earlier entries from overriding
-	// later ones), the texture is only inserted if it is the one returned
-	// by doing a check by name in the list of wads.
-
-	for (; firsttx <= lasttx; ++firsttx)
+	if (!usefullnames)
 	{
-		if (fileSystem.GetFileNamespace(firsttx) == ns)
-		{
-			fileSystem.GetFileShortName (Name, firsttx);
+		// Go from first to last so that ANIMDEFS work as expected. However,
+		// to avoid duplicates (and to keep earlier entries from overriding
+		// later ones), the texture is only inserted if it is the one returned
+		// by doing a check by name in the list of wads.
 
-			if (fileSystem.CheckNumForName (Name, ns) == firsttx)
-			{
-				CreateTexture (firsttx, usetype);
-			}
-			progressFunc();
-		}
-		else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & LUMPF_MAYBEFLAT)
+		for (; firsttx <= lasttx; ++firsttx)
 		{
-			if (fileSystem.CheckNumForName (Name, ns) < firsttx)
+			if (fileSystem.GetFileNamespace(firsttx) == ns)
 			{
-				CreateTexture (firsttx, usetype);
+				fileSystem.GetFileShortName(Name, firsttx);
+
+				if (fileSystem.CheckNumForName(Name, ns) == firsttx)
+				{
+					CreateTexture(firsttx, usetype);
+				}
+				progressFunc();
 			}
-			progressFunc();
+			else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & LUMPF_MAYBEFLAT)
+			{
+				if (fileSystem.CheckNumForName(Name, ns) < firsttx)
+				{
+					CreateTexture(firsttx, usetype);
+				}
+				progressFunc();
+			}
+		}
+	}
+	else
+	{
+		// The duplicate check does not work with this (yet.)
+		for (; firsttx <= lasttx; ++firsttx)
+		{
+			if (fileSystem.GetFileNamespace(firsttx) == ns)
+			{
+				CreateTexture(firsttx, usetype);
+			}
 		}
 	}
 }

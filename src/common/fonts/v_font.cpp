@@ -673,10 +673,6 @@ void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size)
 	int lum_range = (lum_max - lum_min + 1);
 	PalEntry* remap = paletteptr + colorrange * 256;
 
-	// why was this ever allowed to divide by zero?
-	if (!lum_max)
-		lum_max++;
-
 	for (int i = 0; i < size; i++, pixel += 4)
 	{
 		// we must also process the transparent pixels here to ensure proper filtering on the characters' edges.
@@ -685,13 +681,13 @@ void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size)
 		int index = clamp(lumadjust, 0, 255);
 		PalEntry newcol = remap[index];
 		// extend the range if we find colors outside what initial analysis provided.
-		if (gray < lum_min)
+		if (gray < lum_min && lum_min != 0)
 		{
 			newcol.r = newcol.r * gray / lum_min;
 			newcol.g = newcol.g * gray / lum_min;
 			newcol.b = newcol.b * gray / lum_min;
 		}
-		else if (gray > lum_max)
+		else if (gray > lum_max && lum_max != 0)
 		{
 			newcol.r = clamp(newcol.r * gray / lum_max, 0, 255);
 			newcol.g = clamp(newcol.g * gray / lum_max, 0, 255);

@@ -1652,8 +1652,10 @@ MapFlagHandlers[] =
 	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
 	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
 	{ "forceworldpanning",				MITYPE_SETFLAG3,	LEVEL3_FORCEWORLDPANNING, 0 },
-	{ "propermonsterfallingdamage",			MITYPE_SETFLAG3,	LEVEL3_PROPERMONSTERFALLINGDAMAGE, 0 },
-	{ "enableskyboxao",				MITYPE_SETFLAG3,	LEVEL3_SKYBOXAO, 0 },
+	{ "propermonsterfallingdamage",		MITYPE_SETFLAG3,	LEVEL3_PROPERMONSTERFALLINGDAMAGE, 0 },
+	{ "disableshadowmap",				MITYPE_SETFLAG3,	LEVEL3_NOSHADOWMAP, 0 },
+	{ "enableshadowmap",				MITYPE_CLRFLAG3,	LEVEL3_NOSHADOWMAP, 0 },
+	{ "enableskyboxao",					MITYPE_SETFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "disableskyboxao",				MITYPE_CLRFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },

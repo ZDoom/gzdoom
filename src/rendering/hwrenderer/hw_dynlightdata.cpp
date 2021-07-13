@@ -107,10 +107,9 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 	}
 
 	float shadowIndex;
-	if (gl_light_shadowmap)
+	if (gl_light_shadowmap) // note: with gl_light_shadowmap switched off, we cannot rely on properly set indices anymore.
 	{
 		shadowIndex = light->mShadowmapIndex + 1.0f;
-
 	}
 	else shadowIndex = 1025.f;
 	// Store attenuate flag in the sign bit of the float.

@@ -252,6 +252,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
 	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
 	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
+	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
 };
 
 

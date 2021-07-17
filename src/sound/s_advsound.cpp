@@ -1621,7 +1621,7 @@ const char *S_GetSoundClass(AActor *pp)
 		return Skins[player->userinfo.GetSkin()].Name.GetChars();
 	}
 		
-	return player->SoundClass.IsEmpty() ? defaultsoundclass : player->SoundClass.GetChars();
+	return (!player || player->SoundClass.IsEmpty()) ? defaultsoundclass : player->SoundClass.GetChars();
 }
 
 //==========================================================================

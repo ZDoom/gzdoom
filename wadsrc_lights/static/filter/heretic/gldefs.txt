@@ -1774,7 +1774,7 @@ object ActivatedTimeBomb
     frame XPL1A { light TIMEBOMB_X1 }
     frame XPL1B { light TIMEBOMB_X2 }
     frame XPL1C { light TIMEBOMB_X3 }
-    frame XPL1D { light TIMEBOMB_X12 }
+    frame XPL1D { light TIMEBOMB_X4 }
     frame XPL1E { light TIMEBOMB_X5 }
     frame XPL1F { light TIMEBOMB_X5 }
 }

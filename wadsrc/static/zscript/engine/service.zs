@@ -32,6 +32,16 @@ class Service abstract
 	{
 		return 0.0;
 	}
+
+	virtual play Object GetObject(String request, Object ob = null)
+	{
+		return null;
+	}
+
+	virtual ui Object UIGetObject(String request, Object ob = null)
+	{
+		return null;
+	}
 }
 
 /**

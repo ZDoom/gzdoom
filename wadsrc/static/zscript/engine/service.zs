@@ -3,42 +3,42 @@
  */
 class Service abstract
 {
-	virtual play String Get(String request)
+	virtual play String Get(String request, String str1 = "", String str2 = "", String str3 = "")
 	{
 		return "";
 	}
 
-	virtual ui String UiGet(String request)
+	virtual ui String UiGet(String request, String str1 = "", String str2 = "", String str3 = "")
 	{
 		return "";
 	}
 
-	virtual play int GetInt(String request, int num = 0)
+	virtual play int GetInt(String request, int num1 = 0, int num2 = 0, int num3 = 0)
 	{
 		return 0;
 	}
 
-	virtual ui int UIGetInt(String request, int num = 0)
+	virtual ui int UIGetInt(String request, int num1 = 0, int num2 = 0, int num3 = 0)
 	{
 		return 0;
 	}
 
-	virtual play double GetDouble(String request, double num = 0.0)
+	virtual play double GetDouble(String request, double num1 = 0.0, double num2 = 0.0, double num3 = 0.0)
 	{
 		return 0.0;
 	}
 
-	virtual ui double UIGetDouble(String request, double num = 0.0)
+	virtual ui double UIGetDouble(String request, double num1 = 0.0, double num2 = 0.0, double num3 = 0.0)
 	{
 		return 0.0;
 	}
 
-	virtual play Object GetObject(String request, Object ob = null)
+	virtual play Object GetObject(String request, Object ob1 = null, Object ob2 = null, Object ob3 = null)
 	{
 		return null;
 	}
 
-	virtual ui Object UIGetObject(String request, Object ob = null)
+	virtual ui Object UIGetObject(String request, Object ob1 = null, Object ob2 = null, Object ob3 = null)
 	{
 		return null;
 	}

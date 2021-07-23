@@ -12,6 +12,26 @@ class Service abstract
 	{
 		return "";
 	}
+
+	virtual play int GetInt(String request, int num = 0)
+	{
+		return 0;
+	}
+
+	virtual ui int UIGetInt(String request, int num = 0)
+	{
+		return 0;
+	}
+
+	virtual play double GetDouble(String request, double num = 0.0)
+	{
+		return 0.0;
+	}
+
+	virtual ui double UIGetDouble(String request, double num = 0.0)
+	{
+		return 0.0;
+	}
 }
 
 /**

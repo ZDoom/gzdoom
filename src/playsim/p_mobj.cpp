@@ -369,7 +369,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("spawnorder", SpawnOrder)
 		A("friction", Friction)
 		A("SpriteOffset", SpriteOffset)
-		A("userlights", UserLights);
+		A("userlights", UserLights)
+		A("WorldOffset", WorldOffset);
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);

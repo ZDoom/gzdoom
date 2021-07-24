@@ -100,6 +100,7 @@ class Actor : Thinker native
 	native vector3 Prev;
 	native uint ThruBits;
 	native vector2 SpriteOffset;
+	native vector3 WorldOffset;
 	native double spriteAngle;
 	native double spriteRotation;
 	native float VisibleStartAngle;

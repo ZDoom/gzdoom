@@ -3,12 +3,22 @@
  */
 class Service abstract
 {
-	virtual play String Get(String request, String str1 = "", String str2 = "", String str3 = "")
+	deprecated("4.6", "Use GetString() instead") virtual play String Get(String request)
 	{
 		return "";
 	}
 
-	virtual ui String UiGet(String request, String str1 = "", String str2 = "", String str3 = "")
+	deprecated("4.6", "Use UIGetString() instead") virtual ui String UiGet(String request)
+	{
+		return "";
+	}
+
+	virtual play String GetString(String request, String str1 = "", String str2 = "", String str3 = "")
+	{
+		return "";
+	}
+
+	virtual ui String UiGetString(String request, String str1 = "", String str2 = "", String str3 = "")
 	{
 		return "";
 	}

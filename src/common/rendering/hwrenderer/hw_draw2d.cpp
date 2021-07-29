@@ -178,22 +178,22 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 			state.EnableTexture(false);
 		}
 
-		if (cmd.shape2D != nullptr)
+		if (cmd.shape2DBufInfo != nullptr)
 		{
-			state.SetVertexBuffer(&cmd.shape2D->buffers[cmd.shape2DBufIndex]);
+			state.SetVertexBuffer(&cmd.shape2DBufInfo->buffers[cmd.shape2DBufIndex]);
 			state.DrawIndexed(DT_Triangles, 0, cmd.shape2DIndexCount);
 			state.SetVertexBuffer(&vb);
-			if (cmd.shape2DCommandCounter == cmd.shape2D->lastCommand)
+			if (cmd.shape2DCommandCounter == cmd.shape2DBufInfo->lastCommand)
 			{
-				cmd.shape2D->lastCommand = -1;
-				if (cmd.shape2D->bufIndex > 0)
+				cmd.shape2DBufInfo->lastCommand = -1;
+				if (cmd.shape2DBufInfo->bufIndex > 0)
 				{
-					cmd.shape2D->needsVertexUpload = true;
-					cmd.shape2D->buffers.Clear();
-					cmd.shape2D->bufIndex = -1;
+					cmd.shape2DBufInfo->needsVertexUpload = true;
+					cmd.shape2DBufInfo->buffers.Clear();
+					cmd.shape2DBufInfo->bufIndex = -1;
 				}
 			}
-			cmd.shape2D->uploadedOnce = false;
+			cmd.shape2DBufInfo->uploadedOnce = false;
 		}
 		else
 		{

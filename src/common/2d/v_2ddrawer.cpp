@@ -534,7 +534,7 @@ void DShape2D::OnDestroy() {
 	mIndices.Reset();
 	mVertices.Reset();
 	mCoords.Reset();
-	bufferInfo = nullptr;
+	bufferInfo.reset();
 }
 
 //==========================================================================

@@ -133,7 +133,7 @@ public:
 		RenderCommand()
 		{
 			memset(this, 0, sizeof(*this));
-			shape2DBufInfo = nullptr;
+			shape2DBufInfo.reset();
 		}
 
 		// If these fields match, two draw commands can be batched.

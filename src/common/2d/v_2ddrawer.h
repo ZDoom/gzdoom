@@ -7,6 +7,7 @@
 #include "textures.h"
 #include "renderstyle.h"
 #include "dobject.h"
+#include <memory>
 
 struct DrawParms;
 struct FColormap;
@@ -49,6 +50,7 @@ struct F2DPolygons
 };
 
 class DShape2D;
+class DShape2DBufferInfo;
 
 class F2DDrawer
 {
@@ -123,7 +125,7 @@ public:
 		bool useTransform;
 		DMatrix3x3 transform;
 
-		DShape2D* shape2D;
+		std::shared_ptr<DShape2DBufferInfo> shape2DBufInfo;
 		int shape2DBufIndex;
 		int shape2DIndexCount;
 		int shape2DCommandCounter;
@@ -131,12 +133,13 @@ public:
 		RenderCommand()
 		{
 			memset(this, 0, sizeof(*this));
+			shape2DBufInfo.reset();
 		}
 
 		// If these fields match, two draw commands can be batched.
 		bool isCompatible(const RenderCommand &other) const
 		{
-			if (shape2D != nullptr || other.shape2D != nullptr) return false;
+			if (shape2DBufInfo != nullptr || other.shape2DBufInfo != nullptr) return false;
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
 				mTranslationId == other.mTranslationId &&
@@ -240,6 +243,16 @@ public:
 	bool mIsFirstPass = true;
 };
 
+class DShape2DBufferInfo
+{
+public:
+	TArray<F2DVertexBuffer> buffers;
+	bool needsVertexUpload = true;
+	int bufIndex = -1;
+	int lastCommand = -1;
+	bool uploadedOnce = false;
+};
+
 class DShape2D : public DObject
 {
 
@@ -247,6 +260,7 @@ class DShape2D : public DObject
 public:
 	DShape2D()
 	{
+		bufferInfo = std::make_shared<DShape2DBufferInfo>();
 		transform.Identity();
 	}
 
@@ -261,12 +275,8 @@ public:
 
 	DMatrix3x3 transform;
 
-	TArray<F2DVertexBuffer> buffers;
-	bool needsVertexUpload = true;
-	int bufIndex = -1;
-	int lastCommand = -1;
+	std::shared_ptr<DShape2DBufferInfo> bufferInfo;
 
-	bool uploadedOnce = false;
 	DrawParms* lastParms;
 
 	void OnDestroy() override;

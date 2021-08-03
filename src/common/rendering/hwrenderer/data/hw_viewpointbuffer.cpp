@@ -33,13 +33,19 @@
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
 
-HWViewpointBuffer::HWViewpointBuffer()
+HWViewpointBuffer::HWViewpointBuffer(int pipelineNbr):
+	mPipelineNbr(pipelineNbr)
 {
 	mBufferSize = INITIAL_BUFFER_SIZE;
 	mBlockAlign = ((sizeof(HWViewpointUniforms) / screen->uniformblockalignment) + 1) * screen->uniformblockalignment;
 	mByteSize = mBufferSize * mBlockAlign;
-	mBuffer = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false, true);
-	mBuffer->SetData(mByteSize, nullptr, false);
+
+	for (int n = 0; n < mPipelineNbr; n++)
+	{
+		mBufferPipeline[n] = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false, true);
+		mBufferPipeline[n]->SetData(mByteSize, nullptr, false);
+	}
+
 	Clear();
 	mLastMappedIndex = UINT_MAX;
 	mClipPlaneInfo.Push(0);
@@ -57,7 +63,10 @@ void HWViewpointBuffer::CheckSize()
 	{
 		mBufferSize *= 2;
 		mByteSize *= 2;
-		mBuffer->Resize(mByteSize);
+		for (int n = 0; n < mPipelineNbr; n++)
+		{
+			mBufferPipeline[n]->Resize(mByteSize);
+		}
 		m2DHeight = m2DWidth = -1;
 	}
 }
@@ -89,9 +98,14 @@ void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height, int pll)
 
 		matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 		matrices.CalcDependencies();
-		mBuffer->Map();
-		memcpy(mBuffer->Memory(), &matrices, sizeof(matrices));
-		mBuffer->Unmap();
+		
+		for (int n = 0; n < mPipelineNbr; n++)
+		{
+			mBufferPipeline[n]->Map();
+			memcpy(mBufferPipeline[n]->Memory(), &matrices, sizeof(matrices));
+			mBufferPipeline[n]->Unmap();
+		}
+
 		m2DWidth = width;
 		m2DHeight = height;
 		mLastMappedIndex = -1;
@@ -115,5 +129,10 @@ void HWViewpointBuffer::Clear()
 	// Index 0 is reserved for the 2D projection.
 	mUploadIndex = 1;
 	mClipPlaneInfo.Resize(1);
+
+	mPipelinePos++;
+	mPipelinePos %= mPipelineNbr;
+
+	mBuffer = mBufferPipeline[mPipelinePos];
 }
 

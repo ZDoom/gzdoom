@@ -98,7 +98,7 @@ bool IShadowMap::PerformUpdate()
 	LightsProcessed = 0;
 	LightsShadowmapped = 0;
 
-	if (gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && CollectLights != nullptr)
+	if (gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && screen->mPipelineType == 0 && CollectLights != nullptr)
 	{
 		UpdateCycles.Clock();
 		UploadAABBTree();

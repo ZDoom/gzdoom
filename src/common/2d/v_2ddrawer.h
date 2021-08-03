@@ -7,7 +7,7 @@
 #include "textures.h"
 #include "renderstyle.h"
 #include "dobject.h"
-#include <memory>
+#include "refcounted.h"
 
 struct DrawParms;
 struct FColormap;
@@ -50,7 +50,7 @@ struct F2DPolygons
 };
 
 class DShape2D;
-class DShape2DBufferInfo;
+struct DShape2DBufferInfo;
 
 class F2DDrawer
 {
@@ -125,7 +125,7 @@ public:
 		bool useTransform;
 		DMatrix3x3 transform;
 
-		std::shared_ptr<DShape2DBufferInfo> shape2DBufInfo;
+		RefCountedPtr<DShape2DBufferInfo> shape2DBufInfo;
 		int shape2DBufIndex;
 		int shape2DIndexCount;
 		int shape2DCommandCounter;
@@ -133,7 +133,6 @@ public:
 		RenderCommand()
 		{
 			memset(this, 0, sizeof(*this));
-			shape2DBufInfo.reset();
 		}
 
 		// If these fields match, two draw commands can be batched.
@@ -243,9 +242,8 @@ public:
 	bool mIsFirstPass = true;
 };
 
-class DShape2DBufferInfo
+struct DShape2DBufferInfo : NoVirtualRefCountedBase
 {
-public:
 	TArray<F2DVertexBuffer> buffers;
 	bool needsVertexUpload = true;
 	int bufIndex = -1;
@@ -259,8 +257,8 @@ class DShape2D : public DObject
 	DECLARE_CLASS(DShape2D,DObject)
 public:
 	DShape2D()
+	: bufferInfo(new DShape2DBufferInfo)
 	{
-		bufferInfo = std::make_shared<DShape2DBufferInfo>();
 		transform.Identity();
 	}
 
@@ -275,7 +273,7 @@ public:
 
 	DMatrix3x3 transform;
 
-	std::shared_ptr<DShape2DBufferInfo> bufferInfo;
+	RefCountedPtr<DShape2DBufferInfo> bufferInfo;
 
 	DrawParms* lastParms;
 

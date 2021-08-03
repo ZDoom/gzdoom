@@ -195,9 +195,16 @@ void I_FreezeTime(bool frozen)
 	else
 	{
 		assert(FreezeTime != 0);
-		FirstFrameStartTime += GetClockTimeNS() - FreezeTime;
+		if (FirstFrameStartTime != 0) FirstFrameStartTime += GetClockTimeNS() - FreezeTime;
 		FreezeTime = 0;
 		I_SetFrameTime();
 	}
 }
 
+void I_ResetFrameTime()
+{
+	// Reset the starting point of the current frame to now. For use after lengthy operations that should not result in tic accumulation.
+	auto ft = CurrentFrameStartTime;
+	I_SetFrameTime();
+	FirstFrameStartTime += (CurrentFrameStartTime - ft);
+}

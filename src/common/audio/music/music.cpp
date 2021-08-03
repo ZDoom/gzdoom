@@ -102,6 +102,11 @@ void S_SetMusicCallbacks(MusicCallbacks* cb)
 	if (mus_cb.OpenMusic == nullptr) mus_cb.OpenMusic = DefaultOpenMusic;	// without this we are dead in the water.
 }
 
+int MusicEnabled() // int return is for scripting
+{
+	return mus_enabled && !nomusic;
+} 
+
 //==========================================================================
 //
 // 
@@ -632,7 +637,7 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 
 bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 {
-	if (nomusic) return false;	// skip the entire procedure if music is globally disabled.
+	if (!MusicEnabled()) return false;	// skip the entire procedure if music is globally disabled.
 
 	if (!force && PlayList.GetNumSongs())
 	{ // Don't change if a playlist is active
@@ -854,7 +859,7 @@ void S_StopMusic (bool force)
 
 CCMD (changemus)
 {
-	if (!nomusic)
+	if (MusicEnabled())
 	{
 		if (argv.argc() > 1)
 		{

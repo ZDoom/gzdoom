@@ -43,7 +43,14 @@
 #include "s_music.h"
 #include "m_random.h"
 #include "printf.h"
+#include "c_cvars.h"
 
+CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
+
+int SoundEnabled()
+{
+	return snd_enabled && !nosound && !nosfx;
+}
 
 enum
 {
@@ -382,7 +389,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
 
-	if (sound_id <= 0 || volume <= 0 || nosfx || nosound || blockNewSounds)
+	if (sound_id <= 0 || volume <= 0 || nosfx || !SoundEnabled() || blockNewSounds)
 		return NULL;
 
 	// prevent crashes.

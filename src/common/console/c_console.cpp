@@ -592,8 +592,7 @@ void C_DrawConsole ()
 
 	oldbottom = ConBottom;
 
-	if (ConsoleState == c_up && gamestate != GS_INTRO && gamestate != GS_INTERMISSION && 
-		gamestate != GS_FULLCONSOLE && gamestate != GS_MENUSCREEN)
+	if (ConsoleState == c_up && gamestate == GS_LEVEL)
 	{
 		if (NotifyStrings) NotifyStrings->Draw();
 		return;
@@ -731,7 +730,7 @@ void C_ToggleConsole ()
 	}
 	if (gamestate == GS_MENUSCREEN)
 	{
-		gameaction = ga_fullconsole;
+		if (sysCallbacks.ToggleFullConsole) sysCallbacks.ToggleFullConsole();
 		togglestate = c_down;
 	}
 	else if (!chatmodeon && (ConsoleState == c_up || ConsoleState == c_rising) && menuactive == MENU_Off)

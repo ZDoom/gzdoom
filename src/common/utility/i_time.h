@@ -38,3 +38,6 @@ uint64_t I_msTimeFS();
 
 // Nanosecond-accurate time
 uint64_t I_nsTime();
+
+// Reset the timer after a lengthy operation
+void I_ResetFrameTime();

@@ -635,7 +635,7 @@ int FileSystem::GetNumForFullName (const char *name)
 //
 // FindFile
 //
-// Looks up a file by name, either eith or without path and extension
+// Looks up a file by name, either with or without path and extension
 //
 //==========================================================================
 

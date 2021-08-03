@@ -50,6 +50,8 @@
 #include "i_interface.h"
 #include "base_sbar.h"
 #include "image.h"
+#include "s_soundinternal.h"
+#include "i_time.h"
 
 //==========================================================================
 //
@@ -696,6 +698,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetGlyphHeight, GetGlyphHeight)
 	PARAM_INT(code);
 	ACTION_RETURN_INT(GetGlyphHeight(self, code));
 }
+
+static int GetDefaultKerning(FFont* font)
+{
+	return font->GetDefaultKerning();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDefaultKerning, GetDefaultKerning)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_INT(self->GetDefaultKerning());
+}
+
 //==========================================================================
 //
 // file system
@@ -994,6 +1008,58 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 	Printf("%s\n", s.GetChars());
 	return 0;
 }
+
+static void StopAllSounds()
+{
+	soundEngine->StopAllChannels();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, StopAllSounds, StopAllSounds)
+{
+	StopAllSounds();
+	return 0;
+}
+
+static int PlayMusic(const FString& musname, int order, int looped)
+{
+	return S_ChangeMusic(musname, order, !!looped, true);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, PlayMusic, PlayMusic)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(order);
+	PARAM_BOOL(looped);
+	ACTION_RETURN_BOOL(PlayMusic(name, order, looped));
+}
+
+static void Mus_Stop()
+{
+	S_StopMusic(true);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, StopMusic, Mus_Stop)
+{
+	Mus_Stop();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, SoundEnabled, SoundEnabled)
+{
+	ACTION_RETURN_INT(SoundEnabled());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, MusicEnabled, MusicEnabled)
+{
+	ACTION_RETURN_INT(MusicEnabled());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, GetTimeFrac, I_GetTimeFrac)
+{
+	ACTION_RETURN_FLOAT(I_GetTimeFrac());
+}
+
 
 DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);

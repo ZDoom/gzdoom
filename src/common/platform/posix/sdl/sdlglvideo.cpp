@@ -115,8 +115,6 @@ CCMD(vid_list_sdl_render_drivers)
 
 namespace Priv
 {
-	static const uint32_t VulkanWindowFlag = SDL_WINDOW_VULKAN;
-
 	SDL_Window *window;
 	bool vulkanEnabled;
 	bool softpolyEnabled;
@@ -408,7 +406,7 @@ SDLVideo::SDLVideo ()
 
 	if (Priv::vulkanEnabled)
 	{
-		Priv::CreateWindow(Priv::VulkanWindowFlag | SDL_WINDOW_HIDDEN);
+		Priv::CreateWindow(SDL_WINDOW_VULKAN | SDL_WINDOW_HIDDEN | (vid_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
 		if (Priv::window == nullptr)
 		{

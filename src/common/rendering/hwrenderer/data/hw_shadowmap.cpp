@@ -85,7 +85,7 @@ CUSTOM_CVAR(Int, gl_shadowmap_quality, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 bool IShadowMap::ShadowTest(const DVector3 &lpos, const DVector3 &pos)
 {
-	if (mAABBTree)
+	if (mAABBTree && gl_light_shadowmap)
 		return mAABBTree->RayTest(lpos, pos) >= 1.0f;
 	else
 		return true;
@@ -98,7 +98,7 @@ bool IShadowMap::PerformUpdate()
 	LightsProcessed = 0;
 	LightsShadowmapped = 0;
 
-	if (CollectLights != nullptr)
+	if (gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && CollectLights != nullptr)
 	{
 		UpdateCycles.Clock();
 		UploadAABBTree();

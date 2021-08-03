@@ -31,10 +31,20 @@ public:
     {
         if (ptr) ptr->IncRef();
     }
- 
+
+	RefCountedPtr(const RefCountedPtr& r) : ptr(r.ptr)
+	{
+		if (ptr) ptr->IncRef();
+	}
+
+	RefCountedPtr(RefCountedPtr&& r) : ptr(r.ptr)
+	{
+		r.ptr = nullptr;
+	}
+
     RefCountedPtr & operator=(const RefCountedPtr& r) 
     {
-		if (ptr != r.ptr)
+		if (this != &r)
 		{
             if (ptr) ptr->DecRef();
 			ptr = r.ptr;
@@ -54,11 +64,14 @@ public:
         return *this;
     }
 
-    RefCountedPtr & operator=(const RefCountedPtr&& r)
+    RefCountedPtr & operator=(RefCountedPtr&& r)
     {
-        if (ptr) ptr->DecRef();
-        ptr = r.ptr;
-		r.ptr = nullptr;
+		if (this != &r)
+		{
+			if (ptr) ptr->DecRef();
+			ptr = r.ptr;
+			r.ptr = nullptr;
+		}
         return *this;
     }
 

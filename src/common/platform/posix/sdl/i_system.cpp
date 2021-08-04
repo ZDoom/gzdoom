@@ -204,7 +204,7 @@ void I_PrintStr(const char *cp)
 					{ // gray
 						     if (v < 0.33) attrib = 0x8;
 						else if (v < 0.90) attrib = 0x7;
-						else			   attrib = 0x15;
+						else			   attrib = 0xF;
 					}
 					
 					printData.AppendFormat("\033[%um",((attrib & 0x8) ? 90 : 30) + (attrib & 0x7));

@@ -595,7 +595,7 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
 	
-	if ((uPalLightLevels >> 16) >= 5) // gl_lightmode >= 5 are software lighting modes.
+	if (uLightLevel >= 0.0)
 	{
 		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel);
 		color.rgb *= newlightlevel;

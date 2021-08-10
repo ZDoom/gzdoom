@@ -209,6 +209,7 @@ ListMenu "EpisodeMenu"
 	{
 		Position 48, 63
 		StaticPatch 54, 38, "M_EPISOD", 0 , "$MNU_EPISODE"
+		linespacing 16
 	}
 	IfGame(Strife)
 	{
@@ -234,6 +235,7 @@ ListMenu "SkillMenu"
 	IfGame(Doom, Chex)
 	{
 		StaticPatch 96, 14, "M_NEWG", 0, "$MNU_NEWGAME"
+		linespacing 16
 	}
 	IfGame(Strife)
 	{

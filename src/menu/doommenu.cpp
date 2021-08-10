@@ -64,6 +64,7 @@
 #include "gameconfigfile.h"
 #include "d_player.h"
 #include "teaminfo.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
 EXTERN_CVAR(Bool, m_quickexit)
@@ -295,6 +296,7 @@ CCMD (menu_quit)
 {	// F10
 	if (m_quickexit)
 	{
+		CleanSWDrawer();
 		ST_Endoom();
 	}
 
@@ -326,6 +328,7 @@ CCMD (menu_quit)
 				I_WaitVBL(105);
 			}
 		}
+		CleanSWDrawer();
 		ST_Endoom();
 	});
 

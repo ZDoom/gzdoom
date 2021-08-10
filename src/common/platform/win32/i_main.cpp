@@ -979,6 +979,8 @@ int DoMain (HINSTANCE hInstance)
 	atexit (UnCOM);
 	
 	int ret = GameMain ();
+	CheckForRestart();
+
 	DestroyCustomCursor();
 	if (ret == 1337) // special exit code for 'norun'.
 	{

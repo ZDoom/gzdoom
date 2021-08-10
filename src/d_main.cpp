@@ -3716,10 +3716,6 @@ int GameMain()
 	DeleteStartupScreen();
 	delete Args;
 	Args = nullptr;
-#ifdef _WIN32
-	void CheckForRestart();
-	CheckForRestart();
-#endif
 	return ret;
 }
 

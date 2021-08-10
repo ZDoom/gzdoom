@@ -1848,6 +1848,7 @@ AActor *P_RoughMonsterSearch(AActor *mo, int distance, bool onlyseekable, bool f
 {
 	BlockCheckInfo info;
 	info.onlyseekable = onlyseekable;
+	info.fov = fov;
 	if ((info.frontonly = frontonly))
 	{
 		info.frontline.x = mo->X();

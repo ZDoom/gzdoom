@@ -234,6 +234,8 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		}
 
 		name.ToLower();
+		if (name.IndexOf("filter/") == 0)
+			continue; // 'filter' is a reserved name of the file system.
 		if (name.IndexOf("__macosx") == 0) 
 			continue; // skip Apple garbage. At this stage only the root folder matters.
 		if (!foundprefix)

@@ -903,6 +903,7 @@ static void End2DAndUpdate()
 	twod->End();
 	CheckBench();
 	screen->Update();
+	twod->OnFrameDone();
 }
 
 //==========================================================================

@@ -42,6 +42,7 @@
 #include "v_text.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "v_video.h"
 
 
 static int ThinkCount;
@@ -124,11 +125,14 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		for (auto light = Level->lights; light;)
+		if (gl_lights)
 		{
-			auto next = light->next;
-			light->Tick();
-			light = next;
+			for (auto light = Level->lights; light;)
+			{
+				auto next = light->next;
+				light->Tick();
+				light = next;
+			}
 		}
 	}
 	else
@@ -150,7 +154,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		if (Level->lights)
+		if (Level->lights && gl_lights)
 		{
 			// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 			auto &prof = Profiles[NAME_InternalDynamicLight];

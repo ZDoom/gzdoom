@@ -25,7 +25,6 @@
 #include "hw_dynlightdata.h"
 #include "buffers.h"
 #include "shaderuniforms.h"
-#include "g_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
 /*

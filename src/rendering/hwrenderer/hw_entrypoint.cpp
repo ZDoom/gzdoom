@@ -40,6 +40,7 @@
 #include "flatvertices.h"
 #include "v_palette.h"
 #include "d_main.h"
+#include "g_cvars.h"
 
 #include "hw_lightbuffer.h"
 #include "hw_cvars.h"
@@ -107,7 +108,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 	R_SetupFrame(mainvp, r_viewwindow, camera);
 
-	if (mainview && toscreen && !(camera->Level->flags3 & LEVEL3_NOSHADOWMAP) && gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER))
+	if (mainview && toscreen && !(camera->Level->flags3 & LEVEL3_NOSHADOWMAP) && gl_lights && gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER))
 	{
 		screen->SetAABBTree(camera->Level->aabbTree);
 		screen->mShadowMap.SetCollectLights([=] {

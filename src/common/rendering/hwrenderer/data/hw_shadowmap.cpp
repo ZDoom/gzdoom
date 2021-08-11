@@ -25,6 +25,7 @@
 #include "hw_dynlightdata.h"
 #include "buffers.h"
 #include "shaderuniforms.h"
+#include "g_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
 /*
@@ -98,7 +99,7 @@ bool IShadowMap::PerformUpdate()
 	LightsProcessed = 0;
 	LightsShadowmapped = 0;
 
-	if (gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && CollectLights != nullptr)
+	if (gl_lights && gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && CollectLights != nullptr)
 	{
 		UpdateCycles.Clock();
 		UploadAABBTree();

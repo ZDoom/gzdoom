@@ -107,6 +107,25 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 
 	ThinkCycles.Clock();
 
+	auto recreateLights = [=]() {
+		auto it = Level->GetThinkerIterator<AActor>();
+
+		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
+		while (auto ac = it.Next())
+		{
+			if (ac->flags8 & MF8_RECREATELIGHTS)
+			{
+				ac->flags8 &= ~MF8_RECREATELIGHTS;
+				ac->SetDynamicLights();
+			}
+			// This was merged from P_RunEffects to eliminate the costly duplicate ThinkerIterator loop.
+			if ((ac->effects || ac->fountaincolor) && !Level->isFrozen())
+			{
+				P_RunEffect(ac, ac->effects);
+			}
+		}
+	};
+
 	if (!profilethinkers)
 	{
 		// Tick every thinker left from last time
@@ -127,6 +146,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 
 		if (Level->HasDynamicLights)
 		{
+			recreateLights();
 			for (auto light = Level->lights; light;)
 			{
 				auto next = light->next;
@@ -156,6 +176,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 
 		if (Level->lights && Level->HasDynamicLights)
 		{
+			recreateLights();
 			// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 			auto &prof = Profiles[NAME_InternalDynamicLight];
 			prof.timer.Clock();

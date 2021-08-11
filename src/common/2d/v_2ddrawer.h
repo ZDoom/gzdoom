@@ -216,6 +216,7 @@ public:
 	void Begin(int w, int h) { isIn2D = true; Width = w; Height = h; }
 	void End() { isIn2D = false; }
 	bool HasBegun2D() { return isIn2D; }
+	void OnFrameDone();
 
 	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
 	void SetClipRect(int x, int y, int w, int h);

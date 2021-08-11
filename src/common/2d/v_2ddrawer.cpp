@@ -528,13 +528,15 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	offset = osave;
 }
 
+static TArray<RefCountedPtr<DShape2DBufferInfo>> buffersToDestroy;
+
 void DShape2D::OnDestroy() {
 	if (lastParms) delete lastParms;
 	lastParms = nullptr;
 	mIndices.Reset();
 	mVertices.Reset();
 	mCoords.Reset();
-	bufferInfo = nullptr;
+	buffersToDestroy.Push(std::move(bufferInfo));
 }
 
 //==========================================================================
@@ -1080,6 +1082,17 @@ void F2DDrawer::Clear()
 		mIsFirstPass = true;
 	}
 	screenFade = 1.f;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void F2DDrawer::OnFrameDone()
+{
+	buffersToDestroy.Clear();
 }
 
 F2DVertexBuffer::F2DVertexBuffer()

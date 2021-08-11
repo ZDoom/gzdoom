@@ -125,7 +125,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		if (gl_lights)
+		if (Level->HasDynamicLights)
 		{
 			for (auto light = Level->lights; light;)
 			{
@@ -154,7 +154,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		if (Level->lights && gl_lights)
+		if (Level->lights && Level->HasDynamicLights)
 		{
 			// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 			auto &prof = Profiles[NAME_InternalDynamicLight];

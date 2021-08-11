@@ -98,7 +98,8 @@ bool IShadowMap::PerformUpdate()
 	LightsProcessed = 0;
 	LightsShadowmapped = 0;
 
-	if (gl_lights && gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && CollectLights != nullptr)
+	// CollectLights will be null if the calling code decides that shadowmaps are not needed.
+	if (CollectLights != nullptr)
 	{
 		UpdateCycles.Clock();
 		UploadAABBTree();

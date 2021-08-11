@@ -90,8 +90,8 @@ static int FindGFXFile(FString & fn)
 	if (lump != -1) return lump;
 
 	int best = -1;
-	int dot = fn.LastIndexOf('.');
-	int slash = fn.LastIndexOf('/');
+	auto dot = fn.LastIndexOf('.');
+	auto slash = fn.LastIndexOf('/');
 	if (dot > slash) fn.Truncate(dot);
 
 	static const char * extensions[] = { ".png", ".jpg", ".tga", ".pcx", nullptr };

@@ -808,12 +808,12 @@ FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPositi
 {
 	FName scopename = NAME_None;
 	FString statestring = _statestring;
-	int scopeindex = statestring.IndexOf("::");
+	auto scopeindex = statestring.IndexOf("::");
 
 	if (scopeindex >= 0)
 	{
 		scopename = FName(statestring, scopeindex, false);
-		statestring = statestring.Right(statestring.Len() - scopeindex - 2);
+		statestring = statestring.Right((ptrdiff_t)statestring.Len() - scopeindex - 2);
 	}
 	names = MakeStateNameList(statestring);
 	names.Insert(0, scopename);

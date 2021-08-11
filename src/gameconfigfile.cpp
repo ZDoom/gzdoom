@@ -255,7 +255,7 @@ void FGameConfigFile::DoAutoloadSetup (FIWadManager *iwad_man)
 			{
 				FString section = workname + ".Autoload";
 				CreateSectionAtStart(section.GetChars());
-				long dotpos = workname.LastIndexOf('.');
+				auto dotpos = workname.LastIndexOf('.');
 				if (dotpos < 0) break;
 				workname.Truncate(dotpos);
 			}

@@ -435,7 +435,7 @@ void FStringTable::InsertString(int lumpnum, int langid, FName label, const FStr
 {
 	const char *strlangid = (const char *)&langid;
 	TableElement te = { fileSystem.GetFileContainer(lumpnum), { string, string, string, string } };
-	long index;
+	ptrdiff_t index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{
 		auto endindex = te.strings[0].IndexOf(']', index);

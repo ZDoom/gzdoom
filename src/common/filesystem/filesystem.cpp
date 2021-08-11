@@ -1546,7 +1546,7 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 	if (lump < 0) return false;		// Does not exist.
 
 	auto oldlump = FileInfo[lump];
-	int slash = oldlump.longName.LastIndexOf('/');
+	ptrdiff_t slash = oldlump.longName.LastIndexOf('/');
 
 	if (slash == -1)
 	{

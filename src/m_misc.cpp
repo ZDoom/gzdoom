@@ -635,7 +635,7 @@ void M_ScreenShot (const char *filename)
 
 		if (!screenshot_quiet)
 		{
-			int slash = -1;
+			ptrdiff_t slash = -1;
 			if (!longsavemessages) slash = autoname.LastIndexOfAny(":/\\");
 			Printf ("Captured %s\n", autoname.GetChars()+slash+1);
 		}

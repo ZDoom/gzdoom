@@ -2122,8 +2122,8 @@ static void AddAutoloadFiles(const char *autoname)
 		// Add common (global) wads
 		D_AddConfigFiles(allwads, "Global.Autoload", "*.wad", GameConfig);
 
-		long len;
-		int lastpos = -1;
+		ptrdiff_t len;
+		ptrdiff_t lastpos = -1;
 
 		while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
 		{

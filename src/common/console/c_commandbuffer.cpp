@@ -291,7 +291,7 @@ void FCommandBuffer::AddString(FString clip)
 	if (clip.IsNotEmpty())
 	{
 		// Only paste the first line.
-		long brk = clip.IndexOfAny("\r\n\b");
+		auto brk = clip.IndexOfAny("\r\n\b");
 		std::u32string build;
 		if (brk >= 0)
 		{

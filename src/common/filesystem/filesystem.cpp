@@ -113,7 +113,20 @@ struct FileSystem::LumpRecord
 			if (Namespace == ns_hidden) shortName.qword = 0;
 			else
 			{
-				long slash = longName.LastIndexOf('/');
+				ptrdiff_t encodedResID = longName.LastIndexOf(".{");
+				if (resourceId == -1 && encodedResID >= 0)
+				{
+					const char* p = longName.GetChars() + encodedResID;
+					char* q;
+					int id = (int)strtoull(p+2, &q, 10);	// only decimal numbers allowed here.
+					if (q[0] == '}' && (q[1] == '.' || q[1] == 0))
+					{
+						FString toDelete(p, q - p + 1);
+						longName.Substitute(toDelete, "");
+						resourceId = id;
+					}
+				}
+				ptrdiff_t slash = longName.LastIndexOf('/');
 				FString base = (slash >= 0) ? longName.Mid(slash + 1) : longName;
 				auto dot = base.LastIndexOf('.');
 				if (dot >= 0) base.Truncate(dot);
@@ -1533,7 +1546,7 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 	if (lump < 0) return false;		// Does not exist.
 
 	auto oldlump = FileInfo[lump];
-	int slash = oldlump.longName.LastIndexOf('/');
+	ptrdiff_t slash = oldlump.longName.LastIndexOf('/');
 
 	if (slash == -1)
 	{

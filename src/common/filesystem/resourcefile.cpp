@@ -348,8 +348,8 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterI
 	uint32_t max = NumLumps;
 	max -= FilterLumpsByGameType(filter, lumps, lumpsize, max);
 
-	long len;
-	int lastpos = -1;
+	ptrdiff_t len;
+	ptrdiff_t lastpos = -1;
 	FString file;
 	FString LumpFilter = filter->dotFilter;
 	while ((len = LumpFilter.IndexOf('.', lastpos+1)) > 0)

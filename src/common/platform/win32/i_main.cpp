@@ -545,6 +545,20 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 //
 //==========================================================================
 
+bool restartrequest;
+
+void CheckForRestart()
+{
+	if (restartrequest)
+	{
+		HMODULE hModule = GetModuleHandleW(NULL);
+		WCHAR path[MAX_PATH];
+		GetModuleFileNameW(hModule, path, MAX_PATH);
+		ShellExecuteW(NULL, L"open", path, GetCommandLineW(), NULL, SW_SHOWNORMAL);
+	}
+	restartrequest = false;
+}
+
 INT_PTR CALLBACK ErrorPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
@@ -559,11 +573,7 @@ INT_PTR CALLBACK ErrorPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		{
 			if (LOWORD(wParam) == IDC_BUTTON1) // we pressed the restart button, so run GZDoom again
 			{
-				HMODULE hModule = GetModuleHandleW(NULL);
-				WCHAR path[MAX_PATH];
-				GetModuleFileNameW(hModule, path, MAX_PATH);
-
-				ShellExecuteW(NULL, L"open", path, GetCommandLineW(), NULL, SW_SHOWNORMAL);
+				restartrequest = true;
 			}
 			PostQuitMessage (0);
 			return TRUE;
@@ -969,6 +979,8 @@ int DoMain (HINSTANCE hInstance)
 	atexit (UnCOM);
 	
 	int ret = GameMain ();
+	CheckForRestart();
+
 	DestroyCustomCursor();
 	if (ret == 1337) // special exit code for 'norun'.
 	{

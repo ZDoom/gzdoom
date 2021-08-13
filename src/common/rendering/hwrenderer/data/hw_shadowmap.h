@@ -57,6 +57,11 @@ public:
 		mLights[index + 3] = r;
 	}
 
+	bool Enabled() const
+	{
+		return mAABBTree != nullptr;
+	}
+
 protected:
 	// Upload the AABB-tree to the GPU
 	void UploadAABBTree();

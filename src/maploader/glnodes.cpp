@@ -1001,13 +1001,13 @@ static FString CreateCacheName(MapData *map, bool create)
 {
 	FString path = M_GetCachePath(create);
 	FString lumpname = fileSystem.GetFileFullPath(map->lumpnum);
-	int separator = lumpname.IndexOf(':');
+	auto separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
 	if (create) CreatePath(path);
 
 	lumpname.ReplaceChars('/', '%');
 	lumpname.ReplaceChars(':', '$');
-	path << '/' << lumpname.Right(lumpname.Len() - separator - 1) << ".gzc";
+	path << '/' << lumpname.Right((ptrdiff_t)lumpname.Len() - separator - 1) << ".gzc";
 	return path;
 }
 

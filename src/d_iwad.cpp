@@ -762,7 +762,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		FString path;
 		if (info.Load[i][0] != ':')
 		{
-			long lastslash = picks[pick].mFullPath.LastIndexOf('/');
+			auto lastslash = picks[pick].mFullPath.LastIndexOf('/');
 
 			if (lastslash == -1)
 			{

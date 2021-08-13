@@ -9823,14 +9823,14 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 
+	SAFE_RESOLVE(Condition, ctx);
+
 	if (WhenTrue == nullptr && WhenFalse == nullptr)
 	{ // We don't do anything either way, so disappear
 		delete this;
 		ScriptPosition.Message(MSG_WARNING, "empty if statement");
 		return new FxNop(ScriptPosition);
 	}
-
-	SAFE_RESOLVE(Condition, ctx);
 
 	if (Condition->ValueType != TypeBool)
 	{

@@ -910,13 +910,13 @@ FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l, int _minx, int _miny
 	Reset();
 }
 
-void FBlockThingsIterator::init(const FBoundingBox &box)
+void FBlockThingsIterator::init(const FBoundingBox &box, bool clearhash)
 {
 	maxy = Level->blockmap.GetBlockY(box.Top());
 	miny = Level->blockmap.GetBlockY(box.Bottom());
 	maxx = Level->blockmap.GetBlockX(box.Right());
 	minx = Level->blockmap.GetBlockX(box.Left());
-	ClearHash();
+	if (clearhash) ClearHash();
 	Reset();
 }
 
@@ -1139,7 +1139,7 @@ void FMultiBlockThingsIterator::startIteratorForGroup(int group)
 	offset.X += checkpoint.X;
 	offset.Y += checkpoint.Y;
 	bbox.setBox(offset.X, offset.Y, checkpoint.Z);
-	blockIterator.init(bbox);
+	blockIterator.init(bbox, false);
 }
 
 //===========================================================================
@@ -1153,6 +1153,7 @@ void FMultiBlockThingsIterator::Reset()
 	index = -1;
 	portalflags = 0;
 	startIteratorForGroup(basegroup);
+	blockIterator.ClearHash();
 }
 
 //===========================================================================
@@ -1847,6 +1848,7 @@ AActor *P_RoughMonsterSearch(AActor *mo, int distance, bool onlyseekable, bool f
 {
 	BlockCheckInfo info;
 	info.onlyseekable = onlyseekable;
+	info.fov = fov;
 	if ((info.frontonly = frontonly))
 	{
 		info.frontline.x = mo->X();

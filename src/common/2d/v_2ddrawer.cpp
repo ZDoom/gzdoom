@@ -124,7 +124,7 @@ static void Shape2D_Clear(DShape2D* self, int which)
 	if (which & C_Verts) self->mVertices.Clear();
 	if (which & C_Coords) self->mCoords.Clear();
 	if (which & C_Indices) self->mIndices.Clear();
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, Clear, Shape2D_Clear)
@@ -138,7 +138,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, Clear, Shape2D_Clear)
 static void Shape2D_PushVertex(DShape2D* self, double x, double y)
 {
 	self->mVertices.Push(DVector2(x, y));
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushVertex, Shape2D_PushVertex)
@@ -153,7 +153,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushVertex, Shape2D_PushVertex)
 static void Shape2D_PushCoord(DShape2D* self, double u, double v)
 {
 	self->mCoords.Push(DVector2(u, v));
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushCoord, Shape2D_PushCoord)
@@ -170,7 +170,7 @@ static void Shape2D_PushTriangle(DShape2D* self, int a, int b, int c)
 	self->mIndices.Push(a);
 	self->mIndices.Push(b);
 	self->mIndices.Push(c);
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
@@ -528,13 +528,15 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	offset = osave;
 }
 
+static TArray<RefCountedPtr<DShape2DBufferInfo>> buffersToDestroy;
+
 void DShape2D::OnDestroy() {
 	if (lastParms) delete lastParms;
 	lastParms = nullptr;
 	mIndices.Reset();
 	mVertices.Reset();
 	mCoords.Reset();
-	buffers.Reset();
+	buffersToDestroy.Push(std::move(bufferInfo));
 }
 
 //==========================================================================
@@ -567,11 +569,11 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->lastParms = new DrawParms(parms);
 	}
 	else if (shape->lastParms->vertexColorChange(parms)) {
-		shape->needsVertexUpload = true;
-		if (!shape->uploadedOnce) {
-			shape->bufIndex = -1;
-			shape->buffers.Clear();
-			shape->lastCommand = -1;
+		shape->bufferInfo->needsVertexUpload = true;
+		if (!shape->bufferInfo->uploadedOnce) {
+			shape->bufferInfo->bufIndex = -1;
+			shape->bufferInfo->buffers.Clear();
+			shape->bufferInfo->lastCommand = -1;
 		}
 		delete shape->lastParms;
 		shape->lastParms = new DrawParms(parms);
@@ -583,7 +585,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	auto osave = offset;
 	if (parms.nooffset) offset = { 0,0 };
 
-	if (shape->needsVertexUpload)
+	if (shape->bufferInfo->needsVertexUpload)
 	{
 		shape->minx = 16383;
 		shape->miny = 16383;
@@ -622,15 +624,15 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	dg.transform = shape->transform;
 	dg.transform.Cells[0][2] += offset.X;
 	dg.transform.Cells[1][2] += offset.Y;
-	dg.shape2D = shape;
+	dg.shape2DBufInfo = shape->bufferInfo;
 	dg.shape2DIndexCount = shape->mIndices.Size();
-	if (shape->needsVertexUpload)
+	if (shape->bufferInfo->needsVertexUpload)
 	{
-		shape->bufIndex += 1;
+		shape->bufferInfo->bufIndex += 1;
 
-		shape->buffers.Reserve(1);
+		shape->bufferInfo->buffers.Reserve(1);
 
-		auto buf = &shape->buffers[shape->bufIndex];
+		auto buf = &shape->bufferInfo->buffers[shape->bufferInfo->bufIndex];
 
 		auto verts = TArray<TwoDVertex>(dg.mVertCount, true);
 		for ( int i=0; i<dg.mVertCount; i++ )
@@ -649,12 +651,12 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		}
 
 		buf->UploadData(&verts[0], dg.mVertCount, &shape->mIndices[0], shape->mIndices.Size());
-		shape->needsVertexUpload = false;
-		shape->uploadedOnce = true;
+		shape->bufferInfo->needsVertexUpload = false;
+		shape->bufferInfo->uploadedOnce = true;
 	}
-	dg.shape2DBufIndex = shape->bufIndex;
-	shape->lastCommand += 1;
-	dg.shape2DCommandCounter = shape->lastCommand;
+	dg.shape2DBufIndex = shape->bufferInfo->bufIndex;
+	shape->bufferInfo->lastCommand += 1;
+	dg.shape2DCommandCounter = shape->bufferInfo->lastCommand;
 	AddCommand(&dg);
 	offset = osave;
 }
@@ -1080,6 +1082,17 @@ void F2DDrawer::Clear()
 		mIsFirstPass = true;
 	}
 	screenFade = 1.f;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void F2DDrawer::OnFrameDone()
+{
+	buffersToDestroy.Clear();
 }
 
 F2DVertexBuffer::F2DVertexBuffer()

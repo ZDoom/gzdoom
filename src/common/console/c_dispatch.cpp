@@ -533,7 +533,7 @@ FString BuildString (int argc, FString *argv)
 			else if (strchr(argv[arg], '"'))
 			{ // If it contains one or more quotes, we need to escape them.
 				buf << '"';
-				long substr_start = 0, quotepos;
+				ptrdiff_t substr_start = 0, quotepos;
 				while ((quotepos = argv[arg].IndexOf('"', substr_start)) >= 0)
 				{
 					if (substr_start < quotepos)

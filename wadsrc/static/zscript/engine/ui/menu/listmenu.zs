@@ -328,6 +328,36 @@ class ListMenu : Menu
 	{
 		mFocusControl = NULL;
 	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	void ChangeLineSpacing(int newspace)
+	{
+		double top = -32767;
+
+		for (int i = 0; i < mDesc.mItems.Size(); i++)
+		{
+			let selitem = ListMenuItemSelectable(mDesc.mItems[i]);
+			if (selitem)
+			{
+				let y = mDesc.mItems[i].GetY();
+				if (top == -32767)
+				{
+					top = y;
+				}
+				else
+				{
+					let newy = top + (y - top) / mDesc.mLineSpacing * newspace;
+					mDesc.mItems[i].SetY(newy);
+				}
+			}
+		}
+		mDesc.mLineSpacing = newspace;
+	}
 }
 
 

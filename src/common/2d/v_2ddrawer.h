@@ -7,6 +7,7 @@
 #include "textures.h"
 #include "renderstyle.h"
 #include "dobject.h"
+#include "refcounted.h"
 
 struct DrawParms;
 struct FColormap;
@@ -49,6 +50,7 @@ struct F2DPolygons
 };
 
 class DShape2D;
+struct DShape2DBufferInfo;
 
 class F2DDrawer
 {
@@ -123,7 +125,7 @@ public:
 		bool useTransform;
 		DMatrix3x3 transform;
 
-		DShape2D* shape2D;
+		RefCountedPtr<DShape2DBufferInfo> shape2DBufInfo;
 		int shape2DBufIndex;
 		int shape2DIndexCount;
 		int shape2DCommandCounter;
@@ -136,7 +138,7 @@ public:
 		// If these fields match, two draw commands can be batched.
 		bool isCompatible(const RenderCommand &other) const
 		{
-			if (shape2D != nullptr || other.shape2D != nullptr) return false;
+			if (shape2DBufInfo != nullptr || other.shape2DBufInfo != nullptr) return false;
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
 				mTranslationId == other.mTranslationId &&
@@ -214,6 +216,7 @@ public:
 	void Begin(int w, int h) { isIn2D = true; Width = w; Height = h; }
 	void End() { isIn2D = false; }
 	bool HasBegun2D() { return isIn2D; }
+	void OnFrameDone();
 
 	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
 	void SetClipRect(int x, int y, int w, int h);
@@ -240,12 +243,22 @@ public:
 	bool mIsFirstPass = true;
 };
 
+struct DShape2DBufferInfo : NoVirtualRefCountedBase
+{
+	TArray<F2DVertexBuffer> buffers;
+	bool needsVertexUpload = true;
+	int bufIndex = -1;
+	int lastCommand = -1;
+	bool uploadedOnce = false;
+};
+
 class DShape2D : public DObject
 {
 
 	DECLARE_CLASS(DShape2D,DObject)
 public:
 	DShape2D()
+	: bufferInfo(new DShape2DBufferInfo)
 	{
 		transform.Identity();
 	}
@@ -261,12 +274,8 @@ public:
 
 	DMatrix3x3 transform;
 
-	TArray<F2DVertexBuffer> buffers;
-	bool needsVertexUpload = true;
-	int bufIndex = -1;
-	int lastCommand = -1;
+	RefCountedPtr<DShape2DBufferInfo> bufferInfo;
 
-	bool uploadedOnce = false;
 	DrawParms* lastParms;
 
 	void OnDestroy() override;

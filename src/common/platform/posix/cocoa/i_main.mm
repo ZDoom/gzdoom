@@ -131,7 +131,7 @@ static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 			if (const char *patchVersionString = strstr(minorVersionString, "."))
 			{
 				patchVersionString++;
-				plistVersion.patchVersion = atoi(minorVersionString);
+				plistVersion.patchVersion = atoi(patchVersionString);
 			}
 		}
 	}

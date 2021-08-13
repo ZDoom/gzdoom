@@ -29,6 +29,7 @@
 #include "a_dynlight.h"
 #include "hw_dynlightdata.h"
 #include"hw_cvars.h"
+#include "v_video.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 
 // If we want to share the array to avoid constant allocations it needs to be thread local unless it'd be littered with expensive synchronization.
@@ -107,7 +108,7 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 	}
 
 	float shadowIndex;
-	if (gl_light_shadowmap) // note: with gl_light_shadowmap switched off, we cannot rely on properly set indices anymore.
+	if (screen->mShadowMap.Enabled()) // note: with shadowmaps switched off, we cannot rely on properly set indices anymore.
 	{
 		shadowIndex = light->mShadowmapIndex + 1.0f;
 	}

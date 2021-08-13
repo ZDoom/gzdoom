@@ -437,7 +437,7 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 			Chars[i].OriginalPic->CopySize(*lump, true);
 			if (Chars[i].OriginalPic != *lump) TexMan.AddGameTexture(Chars[i].OriginalPic);
 		}
-		Chars[i].XMove = width;
+		Chars[i].XMove = int(width / Scale.X);
 	}
 
 	if (map1252)

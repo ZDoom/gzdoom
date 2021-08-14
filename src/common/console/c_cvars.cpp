@@ -839,11 +839,11 @@ int FColorCVar::ToInt2 (UCVarValue value, ECVarType type)
 
 		if (string.IsNotEmpty())
 		{
-			ret = V_GetColorFromString (NULL, string);
+			ret = V_GetColorFromString (string);
 		}
 		else
 		{
-			ret = V_GetColorFromString (NULL, value.String);
+			ret = V_GetColorFromString (value.String);
 		}
 	}
 	else

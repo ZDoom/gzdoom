@@ -415,19 +415,19 @@ void V_InitFontColors ()
 				else if (sc.Compare ("Flat:"))
 				{
 					sc.MustGetString();
-					logcolor = V_GetColor (nullptr, sc);
+					logcolor = V_GetColor (sc);
 				}
 				else
 				{
 					// Get first color
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.Start[0] = RPART(c);
 					tparm.Start[1] = GPART(c);
 					tparm.Start[2] = BPART(c);
 
 					// Get second color
 					sc.MustGetString();
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.End[0] = RPART(c);
 					tparm.End[1] = GPART(c);
 					tparm.End[2] = BPART(c);

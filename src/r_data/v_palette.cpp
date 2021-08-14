@@ -98,11 +98,11 @@ CCMD (testblend)
 	{
 		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
 		{
-			color = V_GetColorFromString (NULL, colorstring);
+			color = V_GetColorFromString (colorstring);
 		}
 		else
 		{
-			color = V_GetColorFromString (NULL, argv[1]);
+			color = V_GetColorFromString (argv[1]);
 		}
 		amt = (float)atof (argv[2]);
 		if (amt > 1.0f)

@@ -523,7 +523,7 @@ PalEntry averageColor(const uint32_t* data, int size, int maxout)
 //
 //==========================================================================
 
-int V_GetColorFromString(const uint32_t* palette, const char* cstr, FScriptPosition* sc)
+int V_GetColorFromString(const char* cstr, FScriptPosition* sc)
 {
 	int c[3], i, p;
 	char val[3];
@@ -609,10 +609,7 @@ int V_GetColorFromString(const uint32_t* palette, const char* cstr, FScriptPosit
 			}
 		}
 	}
-	if (palette)
-		return BestColor(palette, c[0], c[1], c[2]);
-	else
-		return MAKERGB(c[0], c[1], c[2]);
+	return MAKERGB(c[0], c[1], c[2]);
 }
 
 //==========================================================================
@@ -715,26 +712,26 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc)
 //
 //==========================================================================
 
-int V_GetColor(const uint32_t* palette, const char* str, FScriptPosition* sc)
+int V_GetColor(const char* str, FScriptPosition* sc)
 {
 	FString string = V_GetColorStringByName(str, sc);
 	int res;
 
 	if (!string.IsEmpty())
 	{
-		res = V_GetColorFromString(palette, string, sc);
+		res = V_GetColorFromString(string, sc);
 	}
 	else
 	{
-		res = V_GetColorFromString(palette, str, sc);
+		res = V_GetColorFromString(str, sc);
 	}
 	return res;
 }
 
-int V_GetColor(const uint32_t* palette, FScanner& sc)
+int V_GetColor(FScanner& sc)
 {
 	FScriptPosition scc = sc;
-	return V_GetColor(palette, sc.String, &scc);
+	return V_GetColor(sc.String, &scc);
 }
 
 //==========================================================================

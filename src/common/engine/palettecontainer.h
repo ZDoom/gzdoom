@@ -116,7 +116,7 @@ private:
 	FMemArena remapArena;
 	TArray<TAutoGrowArray<FRemapTablePtr, FRemapTable*>> TranslationTables;
 public:
-	void Init(int numslots);	// This cannot be a constructor!!!
+	void Init(int numslots, const uint8_t *indexmap);	// This cannot be a constructor!!!
 	void SetPalette(const uint8_t* colors, int transparent_index = -1);
 	void Clear();
 	int DetermineTranslucency(FileReader& file);

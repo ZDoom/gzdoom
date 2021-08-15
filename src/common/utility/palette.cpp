@@ -46,7 +46,7 @@
 /* Palette management stuff */
 /****************************/
 
-int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
+int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num, const uint8_t* indexmap)
 {
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	int bestcolor = first;
@@ -54,17 +54,18 @@ int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
 
 	for (int color = first; color < num; color++)
 	{
-		int x = r - pal[color].r;
-		int y = g - pal[color].g;
-		int z = b - pal[color].b;
+		int co = indexmap ? indexmap[color] : color;
+		int x = r - pal[co].r;
+		int y = g - pal[co].g;
+		int z = b - pal[co].b;
 		int dist = x*x + y*y + z*z;
 		if (dist < bestdist)
 		{
 			if (dist == 0)
-				return color;
+				return co;
 
 			bestdist = dist;
-			bestcolor = color;
+			bestcolor = co;
 		}
 	}
 	return bestcolor;

@@ -51,7 +51,7 @@ extern uint8_t IcePalette[16][3];
 //
 //----------------------------------------------------------------------------
 
-void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
+void PaletteContainer::Init(int numslots, const uint8_t* indexmap)	// This cannot be a constructor!!!
 {
 	if (numslots < 1) numslots = 1;
 	Clear();
@@ -63,6 +63,7 @@ void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
 	TranslationTables.Resize(numslots);
 	StoreTranslation(0, &remap);	// make sure that translation ID 0 is the identity.
 	ColorMatcher.SetPalette(BaseColors);
+	ColorMatcher.SetIndexMap(indexmap);
 }
 
 void PaletteContainer::SetPalette(const uint8_t* colors, int transparent_index)

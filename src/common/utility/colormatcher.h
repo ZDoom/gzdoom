@@ -42,23 +42,21 @@
 
 #include "palutil.h"
 
-int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num);
+int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num, const uint8_t* indexmap);
 
 class FColorMatcher
 {
 public:
-	FColorMatcher () = default;
-	FColorMatcher (const uint32_t *palette) { Pal = reinterpret_cast<const PalEntry*>(palette); }
-	FColorMatcher (const FColorMatcher &other) = default;
 
 	void SetPalette(PalEntry* palette) { Pal = palette; }
 	void SetPalette (const uint32_t *palette) { Pal = reinterpret_cast<const PalEntry*>(palette); }
+	void SetIndexMap(const uint8_t* index) { indexmap = index; startindex = index ? 0 : 1; }
 	uint8_t Pick (int r, int g, int b)
 	{
 		if (Pal == nullptr)
 			return 1;
 
-		return (uint8_t)BestColor ((uint32_t *)Pal, r, g, b, 1, 255);
+		return (uint8_t)BestColor ((uint32_t *)Pal, r, g, b, startindex, 255, indexmap);
 	}
 	
 	uint8_t Pick (PalEntry pe)
@@ -66,10 +64,10 @@ public:
 		return Pick(pe.r, pe.g, pe.b);
 	}
 
-	FColorMatcher &operator= (const FColorMatcher &other) = default;
-
 private:
-	const PalEntry *Pal;
+	const PalEntry *Pal = nullptr;
+	const uint8_t* indexmap = nullptr;
+	int startindex = 1;
 };
 
 extern FColorMatcher ColorMatcher;

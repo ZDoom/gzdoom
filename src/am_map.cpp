@@ -791,7 +791,7 @@ void FMapInfoParser::ParseAMColors(bool overlay)
 					FString color = sc.String;
 					FString colorName = V_GetColorStringByName(color);
 					if(!colorName.IsEmpty()) color = colorName;
-					int colorval = V_GetColorFromString(nullptr, color);
+					int colorval = V_GetColorFromString(color);
 					cset.c[i].FromRGB(RPART(colorval), GPART(colorval), BPART(colorval)); 
 					colorset = true;
 					break;

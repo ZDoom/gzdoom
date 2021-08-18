@@ -542,7 +542,7 @@ void FMultipatchTextureBuilder::ParsePatch(FScanner &sc, BuildInfo &info, TexPar
 				if (!sc.CheckNumber())
 				{
 					sc.MustGetString();
-					part.Blend = V_GetColor(NULL, sc);
+					part.Blend = V_GetColor(sc);
 				}
 				else
 				{

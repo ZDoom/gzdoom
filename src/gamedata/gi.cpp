@@ -215,7 +215,7 @@ const char* GameInfoBorders[] =
 		FString colorName = V_GetColorStringByName(color); \
 		if(!colorName.IsEmpty()) \
 			color = colorName; \
-		gameinfo.key = V_GetColorFromString(NULL, color); \
+		gameinfo.key = V_GetColorFromString(color); \
 	}
 
 #define GAMEINFOKEY_BOOL(key, variable) \

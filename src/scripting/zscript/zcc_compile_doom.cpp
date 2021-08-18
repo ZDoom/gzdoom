@@ -471,7 +471,7 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 		}
 		else if (f->Type == TypeColor && ex->ValueType == TypeString)	// colors can also be specified as ints.
 		{
-			*(PalEntry*)addr = V_GetColor(nullptr, GetStringConst(ex, ctx), &ex->ScriptPosition);
+			*(PalEntry*)addr = V_GetColor(GetStringConst(ex, ctx), &ex->ScriptPosition);
 		}
 		else if (f->Type->isIntCompatible())
 		{

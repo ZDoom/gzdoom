@@ -1015,14 +1015,14 @@ DEFINE_MAP_OPTION(fade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->fadeto = V_GetColor(NULL, parse.sc);
+	info->fadeto = V_GetColor(parse.sc);
 }
 
 DEFINE_MAP_OPTION(outsidefog, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->outsidefog = V_GetColor(NULL, parse.sc);
+	info->outsidefog = V_GetColor(parse.sc);
 }
 
 DEFINE_MAP_OPTION(titlepatch, true)
@@ -1398,14 +1398,14 @@ DEFINE_MAP_OPTION(hazardcolor, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->hazardcolor = V_GetColor(NULL, parse.sc);
+	info->hazardcolor = V_GetColor(parse.sc);
 }
 
 DEFINE_MAP_OPTION(hazardflash, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->hazardflash = V_GetColor(NULL, parse.sc);
+	info->hazardflash = V_GetColor(parse.sc);
 }
 
 DEFINE_MAP_OPTION(fogdensity, false)

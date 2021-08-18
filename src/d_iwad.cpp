@@ -172,10 +172,10 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 				{
 					sc.MustGetStringName("=");
 					sc.MustGetString();
-					iwad->FgColor = V_GetColor(NULL, sc);
+					iwad->FgColor = V_GetColor(sc);
 					sc.MustGetStringName(",");
 					sc.MustGetString();
-					iwad->BkColor = V_GetColor(NULL, sc);
+					iwad->BkColor = V_GetColor(sc);
 				}
 				else if (sc.Compare("IgnoreTitlePatches"))
 				{

@@ -1291,7 +1291,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(65535);
 			return;
 		}
-		color = V_GetColor(NULL, name, &bag.ScriptPosition);
+		color = V_GetColor(name, &bag.ScriptPosition);
 	}
 	if (PROP_PARM_COUNT > 2)
 	{

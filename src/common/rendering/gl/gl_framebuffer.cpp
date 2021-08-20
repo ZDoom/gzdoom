@@ -135,7 +135,7 @@ void OpenGLFrameBuffer::InitializeState()
 	gl_LoadExtensions();
 
 	mPipelineNbr = clamp(*gl_pipeline_depth, 1, HW_MAX_PIPELINE_BUFFERS);
-	mPipelineType = gl_pipeline_depth < 1;
+	mPipelineType = gl_pipeline_depth > 0;
 
 	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;

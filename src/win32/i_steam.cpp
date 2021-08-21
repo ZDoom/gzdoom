@@ -241,3 +241,68 @@ TArray<FString> I_GetSteamPath()
 
 	return result;
 }
+
+//==========================================================================
+//
+// I_GetBethesdaPath
+//
+// Check the registry for the path to the Bethesda.net Launcher, so that we
+// can search for IWADs that were bought from Bethesda.net.
+//
+//==========================================================================
+
+TArray<FString> I_GetBethesdaPath()
+{
+	TArray<FString> result;
+	static const char* const bethesda_dirs[] =
+	{
+		"DOOM_Classic_2019/base",
+		"DOOM_Classic_2019/rerelease/DOOM_Data/StreamingAssets",
+		"DOOM_II_Classic_2019/base",
+		"DOOM_II_Classic_2019/rerelease/DOOM II_Data/StreamingAssets",
+		"DOOM 3 BFG Edition/base/wads",
+		"Heretic Shadow of the Serpent Riders/base",
+		"Hexen/base",
+		"Hexen Deathkings of the Dark Citadel/base"
+
+		// Alternate DOS versions of Doom and Doom II (referred to as "Original" in the
+		// Bethesda Launcher). While the DOS versions that come with the Unity ports are
+		// unaltered, these use WADs from the European PSN versions. These WADs are currently
+		// misdetected by GZDoom: DOOM.WAD is detected as the Unity version (which it's not),
+		// while DOOM2.WAD is detected as the original DOS release despite having Doom 3: BFG
+		// Edition's censored secret level titles (albeit only in the title patches, not in
+		// the automap). Unfortunately, these WADs have exactly the same lump names as the WADs
+		// they're misdetected as, so it's not currently possible to distinguish them using
+		// GZDoom's current IWAD detection system. To prevent them from possibly overriding the
+		// real Unity DOOM.WAD and DOS DOOM2.WAD, these paths have been commented out.
+		//"Ultimate DOOM/base",
+		//"DOOM II/base",
+
+		// Doom Eternal includes DOOM.WAD and DOOM2.WAD, but they're the same misdetected
+		// PSN versions used by the alternate DOS releases above.
+		//"Doom Eternal/base/classicwads"
+	};
+
+#ifdef _WIN64
+	const wchar_t *bethesdaregistrypath = L"Software\\Wow6432Node\\Bethesda Softworks\\Bethesda.net";
+#else
+	// If a 32-bit ZDoom runs on a 64-bit Windows, this will be transparently and
+	// automatically redirected to the Wow6432Node address instead, so this address
+	// should be safe to use in all cases.
+	const wchar_t *bethesdaregistrypath = L"Software\\Bethesda Softworks\\Bethesda.net";
+#endif
+
+	FString path;
+	if (!QueryPathKey(HKEY_LOCAL_MACHINE, bethesdaregistrypath, L"installLocation", path))
+	{
+		return result;
+	}
+	path += "/games/";
+
+	for (unsigned int i = 0; i < countof(bethesda_dirs); ++i)
+	{
+		result.Push(path + bethesda_dirs[i]);
+	}
+
+	return result;
+}

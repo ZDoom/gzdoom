@@ -258,6 +258,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_E4M8SPECIAL			= 0x00004000,
 	LEVEL3_E4M6SPECIAL			= 0x00008000,
 	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
+	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
 };
 
 

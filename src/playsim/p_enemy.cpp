@@ -943,7 +943,7 @@ void P_NewChaseDir(AActor * actor)
 	if (target->health > 0 && !actor->IsFriend(target) && target != actor->goal)
     {   // Live enemy target
 
-		if (actor->flags3 & MF3_AVOIDMELEE)
+		if ((actor->flags3 & MF3_AVOIDMELEE) || (actor->Level->flags3 & LEVEL3_AVOIDMELEE))
 		{
 			bool ismeleeattacker = false;
 			double dist = actor->Distance2D(target);

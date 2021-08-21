@@ -312,6 +312,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange)
 // P_CheckMissileRange
 //
 //=============================================================================
+
 bool P_CheckMissileRange (AActor *actor)
 {
 	double dist;
@@ -360,32 +361,24 @@ bool P_CheckMissileRange (AActor *actor)
 	if (actor->MeleeState == NULL)
 		dist -= 128;	// no melee attack, so fire more
 
-	return actor->SuggestMissileAttack (dist);
+
+	if (actor->maxtargetrange > 0 && dist > actor->maxtargetrange)
+		return false;	// The Arch Vile's special behavior turned into a property
+
+	if (actor->MeleeState != nullptr && dist < actor->meleethreshold)
+		return false;	// From the Revenant: close enough for fist attack
+
+	if (actor->flags4 & MF4_MISSILEMORE) dist *= 0.5;
+	if (actor->flags4 & MF4_MISSILEEVENMORE) dist *= 0.125;
+
+	int mmc = int(actor->MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
+	return pr_checkmissilerange() >= min(int(dist), mmc);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, CheckMissileRange)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMissileRange, P_CheckMissileRange)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	ACTION_RETURN_BOOL(P_CheckMissileRange(self));
-}
-
-bool AActor::SuggestMissileAttack (double dist)
-{
-	// new version encapsulates the different behavior in flags instead of virtual functions
-	// The advantage is that this allows inheriting the missile attack attributes from the
-	// various Doom monsters by custom monsters
-	
-	if (maxtargetrange > 0 && dist > maxtargetrange)
-		return false;	// The Arch Vile's special behavior turned into a property
-		
-	if (MeleeState != NULL && dist < meleethreshold)
-		return false;	// From the Revenant: close enough for fist attack
-
-	if (flags4 & MF4_MISSILEMORE) dist *= 0.5;
-	if (flags4 & MF4_MISSILEEVENMORE) dist *= 0.125;
-	
-	int mmc = int(MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
-	return pr_checkmissilerange() >= MIN<int> (int(dist), mmc);
 }
 
 //=============================================================================

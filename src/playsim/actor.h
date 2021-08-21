@@ -687,9 +687,6 @@ public:
 
 	FDropItem *GetDropItems() const;
 
-	// Return true if the monster should use a missile attack, false for melee
-	bool SuggestMissileAttack (double dist);
-
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
 	bool AdjustReflectionAngle (AActor *thing, DAngle &angle);

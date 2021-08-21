@@ -55,7 +55,7 @@ void InitPalette ()
 	
 	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), pal);
 
-	GPalette.Init(NUM_TRANSLATION_TABLES);
+	GPalette.Init(NUM_TRANSLATION_TABLES, nullptr);
 	GPalette.SetPalette (pal, -1);
 
 	int lump = fileSystem.CheckNumForName("COLORMAP");

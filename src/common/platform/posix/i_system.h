@@ -46,6 +46,8 @@ TArray<FString> I_GetSteamPath();
 
 TArray<FString> I_GetGogPaths();
 
+TArray<FString> I_GetBethesdaPath();
+
 // The ini could not be saved at exit
 bool I_WriteIniFailed ();
 

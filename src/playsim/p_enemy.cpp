@@ -49,6 +49,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "actorinlines.h"
+#include "a_ceiling.h"
 
 #include "gi.h"
 
@@ -67,6 +68,7 @@ static FRandom pr_look3 ("IGotHooky");
 static FRandom pr_slook ("SlooK");
 static FRandom pr_dropoff ("Dropoff");
 static FRandom pr_defect ("Defect");
+static FRandom pr_avoidcrush("AvoidCrush");
 
 static FRandom pr_skiptarget("SkipTarget");
 static FRandom pr_enemystrafe("EnemyStrafe");
@@ -414,13 +416,41 @@ int P_HitFriend(AActor * self)
 	return false;
 }
 
+/*
+ * P_IsUnderDamage
+ *
+ * killough 9/9/98:
+ *
+ * Returns nonzero if the object is under damage based on
+ * their current position. Returns 1 if the damage is moderate,
+ * -1 if it is serious. Used for AI.
+ */
+
+static int P_IsUnderDamage(AActor* actor)
+{
+	msecnode_t* seclist;
+	int dir = 0;
+	for (seclist = actor->touching_sectorlist; seclist; seclist = seclist->m_tnext)
+	{
+		DSectorEffect* e = seclist->m_sector->ceilingdata;
+		if (e && e->IsKindOf(RUNTIME_CLASS(DCeiling)))
+		{
+			auto cl = (DCeiling*)e;
+			if (cl->getCrush() > 0) // unlike MBF we need to consider non-crushing ceiling movers here.
+				dir |= cl->getDirection();
+		}
+		// Q: consider crushing 3D floors too?
+	}
+	return dir;
+}
+
 //
 // P_Move
 // Move in the current direction,
 // returns false if the move is blocked.
 //
 
-int P_Move (AActor *actor)
+static int P_Move (AActor *actor)
 {
 
 	double tryx, tryy, deltax, deltay, origx, origy;
@@ -653,6 +683,47 @@ int P_Move (AActor *actor)
 	return true; 
 }
 
+//
+// P_SmartMove
+//
+// killough 9/12/98: Same as P_Move, except smarter
+//
+
+int P_SmartMove(AActor* actor)
+{
+	AActor* target = actor->target;
+	int on_lift = false, dropoff = false, under_damage;
+	bool monster_avoid_hazards = (actor->Level->flags3 & LEVEL3_AVOID_HAZARDS) || (actor->flags8 & MF8_AVOIDHAZARDS);
+
+#if 0
+	  /* killough 9/12/98: Stay on a lift if target is on one */
+	on_lift = !comp[comp_staylift]
+		&& target && target->health > 0
+		&& target->subsector->sector->tag == actor->subsector->sector->tag &&
+		P_IsOnLift(actor);
+#endif
+
+	under_damage = monster_avoid_hazards && P_IsUnderDamage(actor) != 0;//e6y
+
+	if (!P_Move(actor))
+		return false;
+
+	// killough 9/9/98: avoid crushing ceilings or other damaging areas
+	if (
+#if 0
+		(on_lift && P_Random(pr_stayonlift) < 230 &&      // Stay on lift
+			!P_IsOnLift(actor))
+		||
+#endif
+		(monster_avoid_hazards && !under_damage &&	//e6y  // Get away from damage
+			(under_damage = P_IsUnderDamage(actor)) &&
+			(under_damage < 0 || pr_avoidcrush() < 200))
+		)
+		actor->movedir = DI_NODIR;    // avoid the area (most of the time anyway)
+
+	return true;
+}
+
 //=============================================================================
 //
 // TryWalk
@@ -669,7 +740,7 @@ int P_Move (AActor *actor)
 
 bool P_TryWalk (AActor *actor)
 {
-	if (!P_Move (actor))
+	if (!P_SmartMove (actor))
 	{
 		return false;
 	}
@@ -2123,7 +2194,7 @@ void A_Wander(AActor *self, int flags)
 		}
 	}
 
-	if ((--self->movecount < 0 && !(flags & CHF_NORANDOMTURN)) || (!P_Move(self) && !(flags & CHF_STOPIFBLOCKED)))
+	if ((--self->movecount < 0 && !(flags & CHF_NORANDOMTURN)) || (!P_SmartMove(self) && !(flags & CHF_STOPIFBLOCKED)))
 	{
 		P_RandomChaseDir(self);
 		self->movecount += 5;
@@ -2525,7 +2596,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		FTextureID oldFloor = actor->floorpic;
 
 		// chase towards player
-		if ((--actor->movecount < 0 && !(flags & CHF_NORANDOMTURN)) || (!P_Move(actor) && !(flags & CHF_STOPIFBLOCKED)))
+		if ((--actor->movecount < 0 && !(flags & CHF_NORANDOMTURN)) || (!P_SmartMove(actor) && !(flags & CHF_STOPIFBLOCKED)))
 		{
 			P_NewChaseDir(actor);
 		}

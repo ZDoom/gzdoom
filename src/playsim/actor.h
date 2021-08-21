@@ -421,6 +421,7 @@ enum ActorFlag8
 	MF8_E4M6BOSS		= 0x00200000,	// MBF21 boss death.
 	MF8_MAP07BOSS1		= 0x00400000,	// MBF21 boss death.
 	MF8_MAP07BOSS2		= 0x00800000,	// MBF21 boss death.
+	MF8_AVOIDHAZARDS	= 0x01000000,	// MBF AI enhancement.
 };
 
 // --- mobj.renderflags ---

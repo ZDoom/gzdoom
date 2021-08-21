@@ -1443,10 +1443,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HitFriend, P_HitFriend)
 	ACTION_RETURN_BOOL(P_HitFriend(self));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, MonsterMove, P_Move)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, MonsterMove, P_SmartMove)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_Move(self));
+	ACTION_RETURN_BOOL(P_SmartMove(self));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, NewChaseDir, P_NewChaseDir)

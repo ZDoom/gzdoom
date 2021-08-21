@@ -50,7 +50,7 @@ int P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *emmiter, AActor *target, bool splash=false, double maxdist=0);
 
 bool P_CheckMeleeRange2 (AActor *actor);
-int P_Move (AActor *actor);
+int P_SmartMove (AActor *actor);
 bool P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
 void P_RandomChaseDir(AActor *actor);;

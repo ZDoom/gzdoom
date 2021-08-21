@@ -262,49 +262,49 @@ void P_NoiseAlert (AActor *emitter, AActor *target, bool splash, double maxdist)
 //
 //----------------------------------------------------------------------------
 
-bool AActor::CheckMeleeRange (double range)
+int P_CheckMeleeRange (AActor* actor, double range)
 {
-	AActor *pl = target;
+	AActor *pl = actor->target;
 
 	double dist;
 		
-	if (!pl || (Sector->Flags & SECF_NOATTACK))
+	if (!pl || (actor->Sector->Flags & SECF_NOATTACK))
 		return false;
 				
-	dist = Distance2D (pl);
-	if (range < 0) range = meleerange;
+	dist = actor->Distance2D (pl);
+	if (range < 0) range = actor->meleerange;
 
 	if (dist >= range + pl->radius)
 		return false;
 
 	// [RH] If moving toward goal, then we've reached it.
-	if (pl == goal)
+	if (pl == actor->goal)
 		return true;
 
 	// [RH] Don't melee things too far above or below actor.
-	if (!(flags5 & MF5_NOVERTICALMELEERANGE))
+	if (!(actor->flags5 & MF5_NOVERTICALMELEERANGE))
 	{
-		if (pl->Z() > Top())
+		if (pl->Z() > actor->Top())
 			return false;
-		if (pl->Top() < Z())
+		if (pl->Top() < actor->Z())
 			return false;
 	}
 
 	// killough 7/18/98: friendly monsters don't attack other friends
-	if (IsFriend(pl))
+	if (actor->IsFriend(pl))
 		return false;
 		
-	if (!P_CheckSight (this, pl, 0))
+	if (!P_CheckSight (actor, pl, 0))
 		return false;
 														
 	return true;				
 }
 
-DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMeleeRange, P_CheckMeleeRange)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(range);
-	ACTION_RETURN_INT(self->CheckMeleeRange(range));
+	ACTION_RETURN_INT(P_CheckMeleeRange(self, range));
 }
 
 //=============================================================================
@@ -313,7 +313,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckMeleeRange)
 //
 //=============================================================================
 
-bool P_CheckMissileRange (AActor *actor)
+static int P_CheckMissileRange (AActor *actor)
 {
 	double dist;
 		
@@ -2434,7 +2434,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	{
 		AActor * savedtarget = actor->target;
 		actor->target = actor->goal;
-		bool result = actor->CheckMeleeRange();
+		bool result = P_CheckMeleeRange(actor);
 		actor->target = savedtarget;
 
 		if (result)
@@ -2518,7 +2518,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		pr_scaredycat() < 43)
 	{
 		// check for melee attack
-		if (meleestate && actor->CheckMeleeRange ())
+		if (meleestate && P_CheckMeleeRange(actor))
 		{
 			if (actor->AttackSound)
 				S_Sound (actor, CHAN_WEAPON, 0, actor->AttackSound, 1, ATTN_NORM);

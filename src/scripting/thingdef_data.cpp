@@ -337,6 +337,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, MAP07BOSS1, AActor, flags8),
 	DEFINE_FLAG(MF8, MAP07BOSS2, AActor, flags8),
 	DEFINE_FLAG(MF8, AVOIDHAZARDS, AActor, flags8),
+	DEFINE_FLAG(MF8, STAYONLIFT, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

@@ -485,6 +485,7 @@ enum
 	SECMF_HIDDEN			= 256,	// Do not draw on textured automap
 	SECMF_OVERLAPPING		= 512,	// floor and ceiling overlap and require special renderer action.
 	SECMF_NOSKYWALLS		= 1024,	// Do not draw "sky walls"
+	SECMF_LIFT				= 2048,	// For MBF monster AI
 };
 
 enum

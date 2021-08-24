@@ -787,6 +787,27 @@ void MapLoader::SpawnSpecials ()
 			SpawnLinePortal(&line);
 			break;
 
+			// partial support for MBF's stay-on-lift feature.
+			// Unlike MBF we cannot scan all lines for a proper special each time because it'd take too long.
+			// So instead, set the info here, but only for repeatable lifts to keep things simple. 
+			// This also cannot consider lifts triggered by scripts etc.
+		case Generic_Lift:
+			if (line.args[3] != 1) continue;
+		case Plat_DownWaitUpStay:
+		case Plat_DownWaitUpStayLip:
+		case Plat_UpWaitDownStay:
+		case Plat_UpNearestWaitDownStay:
+			if (line.flags & ML_REPEAT_SPECIAL)
+			{
+				auto it = Level->GetSectorTagIterator(line.args[0], &line);
+				int secno;
+				while ((secno = it.Next()) != -1)
+				{
+					Level->sectors[secno].MoreFlags |= SECMF_LIFT;
+				}
+			}
+			break;
+
 		// [RH] ZDoom Static_Init settings
 		case Static_Init:
 			switch (line.args[1])

@@ -69,6 +69,7 @@ static FRandom pr_slook ("SlooK");
 static FRandom pr_dropoff ("Dropoff");
 static FRandom pr_defect ("Defect");
 static FRandom pr_avoidcrush("AvoidCrush");
+static FRandom pr_stayonlift("StayOnLift");
 
 static FRandom pr_skiptarget("SkipTarget");
 static FRandom pr_enemystrafe("EnemyStrafe");
@@ -410,6 +411,33 @@ int P_HitFriend(AActor * self)
 }
 
 /*
+ * P_IsOnLift
+ *
+ * killough 9/9/98:
+ *
+ * Returns true if the object is on a lift. Used for AI,
+ * since it may indicate the need for crowded conditions,
+ * or that a monster should stay on the lift for a while
+ * while it goes up or down.
+ */
+
+static bool P_IsOnLift(const AActor* actor)
+{
+	sector_t* sec = actor->Sector;
+
+	// Short-circuit: it's on a lift which is active.
+	DSectorEffect* e = sec->floordata;
+	if (e && e->IsKindOf(RUNTIME_CLASS(DPlat)))
+		return true;
+
+	// Check to see if it's in a sector which can be activated as a lift.
+	// This is a bit more restrictive than MBF as it only considers repeatable lifts moving from A->B->A and stop.
+	// Other types of movement are not easy to detect with the more complex map setup 
+	// and also do not really make sense in this context unless they are actually active
+	return !!(sec->MoreFlags & SECMF_LIFT);
+}
+
+/*
  * P_IsUnderDamage
  *
  * killough 9/9/98:
@@ -435,6 +463,20 @@ static int P_IsUnderDamage(AActor* actor)
 		// Q: consider crushing 3D floors too?
 	}
 	return dir;
+}
+
+//
+// P_CheckTags
+// Checks if 2 sectors share the same primary activation tag
+//
+
+bool P_CheckTags(sector_t* sec1, sector_t* sec2)
+{
+	auto Level = sec1->Level;
+	if (!Level->SectorHasTags(sec1) || !Level->SectorHasTags(sec2)) return sec1 == sec2;
+	if (Level->GetFirstSectorTag(sec1) == Level->GetFirstSectorTag(sec2)) return true;
+	// todo: check secondary tags as well.
+	return false;
 }
 
 //
@@ -686,15 +728,12 @@ int P_SmartMove(AActor* actor)
 {
 	AActor* target = actor->target;
 	int on_lift = false, dropoff = false, under_damage;
-	bool monster_avoid_hazards = (actor->Level->flags3 & LEVEL3_AVOID_HAZARDS) || (actor->flags8 & MF8_AVOIDHAZARDS);
+	bool monster_avoid_hazards = (actor->Level->i_compatflags2 & COMPATF2_AVOID_HAZARDS) || (actor->flags8 & MF8_AVOIDHAZARDS);
 
-#if 0
 	  /* killough 9/12/98: Stay on a lift if target is on one */
-	on_lift = !comp[comp_staylift]
-		&& target && target->health > 0
-		&& target->subsector->sector->tag == actor->subsector->sector->tag &&
-		P_IsOnLift(actor);
-#endif
+	on_lift = ((actor->flags8 & MF8_STAYONLIFT) || (actor->Level->i_compatflags2 & COMPATF2_STAYONLIFT))
+		&& target && target->health > 0 && P_IsOnLift(actor)
+		&& P_CheckTags(target->Sector, actor->Sector);
 
 	under_damage = monster_avoid_hazards && P_IsUnderDamage(actor) != 0;//e6y
 
@@ -703,11 +742,9 @@ int P_SmartMove(AActor* actor)
 
 	// killough 9/9/98: avoid crushing ceilings or other damaging areas
 	if (
-#if 0
-		(on_lift && P_Random(pr_stayonlift) < 230 &&      // Stay on lift
+		(on_lift && pr_stayonlift() < 230 &&      // Stay on lift
 			!P_IsOnLift(actor))
 		||
-#endif
 		(monster_avoid_hazards && !under_damage &&	//e6y  // Get away from damage
 			(under_damage = P_IsUnderDamage(actor)) &&
 			(under_damage < 0 || pr_avoidcrush() < 200))

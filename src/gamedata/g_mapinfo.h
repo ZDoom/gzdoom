@@ -258,7 +258,8 @@ enum ELevelFlags : unsigned int
 	LEVEL3_E4M8SPECIAL			= 0x00004000,
 	LEVEL3_E4M6SPECIAL			= 0x00008000,
 	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
-	LEVEL3_NOJUMPDOWN			= 0x00020000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
+	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
+	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
 };
 
 

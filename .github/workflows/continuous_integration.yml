@@ -24,12 +24,12 @@ jobs:
           }
         - {
             name: "macOS",
-            os: macos-10.15,
+            os: macos-11,
             build_type: "Release"
           }
         - {
             name: "macOS",
-            os: macos-10.15,
+            os: macos-11,
             extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
             deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
             build_type: "Debug"
@@ -53,14 +53,14 @@ jobs:
             os: ubuntu-20.04,
             extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 \
                             -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "sudo apt update && sudo apt remove gcc-11 libgcc-11-dev g++-11 libstdc++-11-dev && sudo apt install clang-6.0 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
+            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
             build_type: "Debug"
           }
         - {
-            name: "Linux Clang 11",
+            name: "Linux Clang 12",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-11 -DCMAKE_CXX_COMPILER=clang++-11",
-            deps_cmdline: "sudo apt update && sudo apt install clang-11 libsdl2-dev libvpx-dev",
+            extra_options: "-DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12",
+            deps_cmdline: "sudo apt update && sudo apt install clang-12 libsdl2-dev",
             build_type: "Release"
           }
 

@@ -113,7 +113,7 @@ body:
     attributes:
       label: Your configuration
       description: |
-        Share the config file(s) you've been using to run the program. (`raze.ini`) 
+        Share the config file(s) you've been using to run the program. (`gzdoom.ini`) 
         Please avoid pasting the full config, _use attachments or links_ in a [Gist](https://gist.github.com/)
       placeholder: "example: cl_autorun=true"
       render: ini # syntax highlighting

@@ -1051,8 +1051,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double 
 		auto val = arc.r->FindKey(key);
 		if (val != nullptr)
 		{
-			assert(val->IsDouble());
-			if (val->IsDouble())
+			assert(val->IsNumber());
+			if (val->IsNumber())
 			{
 				value = val->GetDouble();
 			}

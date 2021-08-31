@@ -292,6 +292,17 @@ public:
         return i;
     }
 
+   bool Contains(const T& item) const
+    {
+        unsigned int i;
+        for(i = 0;i < Count;++i)
+        {
+            if(Array[i] == item)
+                return true;
+        }
+        return false;
+    }
+
 	template<class Func> 
 	unsigned int FindEx(Func compare) const
 	{
@@ -826,12 +837,30 @@ public:
 		CopyNodes(o.Nodes, o.Size);
 	}
 
+	TMap(TMap &&o)
+	{
+		Nodes = o.Nodes;
+		LastFree = o.LastFree;		/* any free position is before this position */
+		Size = o.Size;		/* must be a power of 2 */
+		NumUsed = o.NumUsed;
+		
+		o.Size = 0;
+		o.NumUsed = 0;
+		o.SetNodeVector(1);
+	}
+
 	TMap &operator= (const TMap &o)
 	{
 		NumUsed = 0;
 		ClearNodeVector();
 		SetNodeVector(o.CountUsed());
 		CopyNodes(o.Nodes, o.Size);
+		return *this;
+	}
+
+	TMap &operator= (TMap &&o)
+	{
+		TransferFrom(o);
 		return *this;
 	}
 

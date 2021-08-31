@@ -9,17 +9,14 @@ extern double TimeScale;
 void I_SetFrameTime();
 
 // Called by D_DoomLoop, returns current time in tics.
-int I_GetTime();
+int I_GetTime(double const ticrate = GameTicRate);
 // same, but using nanoseconds
 uint64_t I_GetTimeNS();
 
-// Called by Build games in lieu of totalclock, returns current time in tics at ticrate of 120.
-int I_GetBuildTime();
-
-double I_GetTimeFrac();
+double I_GetTimeFrac(double const ticrate = GameTicRate);
 
 // like I_GetTime, except it waits for a new tic before returning
-int I_WaitForTic(int);
+int I_WaitForTic(int prevtic, double const ticrate = GameTicRate);
 
 // Freezes tic counting temporarily. While frozen, calls to I_GetTime()
 // will always return the same value.

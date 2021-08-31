@@ -912,6 +912,12 @@ LumpShortName& FileSystem::GetShortName(int i)
 	return FileInfo[i].shortName;
 }
 
+FString& FileSystem::GetLongName(int i)
+{
+	if ((unsigned)i >= NumEntries) I_Error("GetLongName: Invalid index");
+	return FileInfo[i].longName;
+}
+
 void FileSystem::RenameFile(int num, const char* newfn)
 {
 	if ((unsigned)num >= NumEntries) I_Error("RenameFile: Invalid index");

@@ -32,6 +32,20 @@ body:
     validations:
       required: true
   - type: dropdown
+    id: gameid
+    attributes:
+      label: Which game are you running with GZDoom?
+      multiple: false
+      options:
+        - Doom
+        - Doom 2
+        - Heretic
+        - Hexen
+        - Strife
+        - Other
+    validations:
+      required: false
+  - type: dropdown
     id: OS
     attributes:
       label: What Operating System are you using?
@@ -55,20 +69,6 @@ body:
       label: If Other OS, please describe
       description: Other details
       placeholder: "Windows, Mac OSX version, Debian, Ubuntu, Arch, etc."
-    validations:
-      required: false
-  - type: dropdown
-    id: gameid
-    attributes:
-      label: Which game are you running with GZDoom?
-      multiple: false
-      options:
-        - Doom
-        - Doom 2
-        - Heretic
-        - Hexen
-        - Strife
-        - Other
     validations:
       required: false
   - type: input

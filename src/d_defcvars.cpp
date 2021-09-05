@@ -35,7 +35,6 @@
 #include "d_main.h"
 #include "version.h"
 
-
 void D_GrabCVarDefaults()
 {
 	int lump, lastlump = 0;
@@ -118,12 +117,12 @@ void D_GrabCVarDefaults()
 				}
 				else
 				{
-					sc.ScriptError("Cannot set cvar default for non-config cvar '%s'", sc.String);
+					sc.ScriptMessage("Cannot set cvar default for non-config cvar '%s'", sc.String);
 				}
 			}
 			else
 			{
-				sc.ScriptError("Unknown cvar '%s'", sc.String);
+				sc.ScriptMessage("Unknown cvar '%s' in defcvars", sc.String);
 			}
 		}
 	}

@@ -810,6 +810,7 @@ set (PCH_SOURCES
 	ct_chat.cpp
 	d_iwad.cpp
 	d_main.cpp
+	d_defcvars.cpp
 	d_anonstats.cpp
 	d_net.cpp
 	d_netinfo.cpp

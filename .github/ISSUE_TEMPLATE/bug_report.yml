@@ -1,0 +1,133 @@
+name: Bug Report
+description: File a Bug report
+title: '[BUG] '
+labels: bug
+#assignees: 'anonymous@temp'
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Please fill out forms as cleanly as possible.
+        #### Make sure that you have
+        * properly edited & filled in the title of this bug report
+  - type: dropdown
+    id: version
+    attributes:
+      label: GZDoom version
+      description: |
+        What version are you using?
+        Run `gzdoom --version`
+        Make sure to update to latest [release](https://github.com/coelckers/gzdoom/releases) version and test again before continuing.
+      multiple: false
+      options:
+        - 4.6.1
+        - 4.6.0
+        - 4.5.0
+        - 4.4.2
+        - 4.4.1
+        - 4.4.0
+        - Git
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: gameid
+    attributes:
+      label: Which game are you running with GZDoom?
+      multiple: false
+      options:
+        - Doom
+        - Doom 2
+        - Heretic
+        - Hexen
+        - Strife
+        - Other
+    validations:
+      required: false
+  - type: dropdown
+    id: OS
+    attributes:
+      label: What Operating System are you using?
+      multiple: false
+      options:
+        - Windows 11
+        - Windows 10
+        - Windows 8
+        - Windows 7
+        - Windows Other
+        - Mac OS
+        - Linux x86
+        - Linux x86_64
+        - Linux ARM (Raspberry Pi)
+        - Other
+    validations:
+      required: false
+  - type: input
+    id: other
+    attributes:
+      label: If Other OS, please describe
+      description: Other details
+      placeholder: "Windows, Mac OSX version, Debian, Ubuntu, Arch, etc."
+    validations:
+      required: false
+  - type: input
+    id: hardware
+    attributes:
+      label: Relevant hardware info
+      description: Hardware
+      placeholder: "CPU, GPU, device brand/model: e.g. Intel, AMD, Nvidia, etc"
+    validations:
+      required: false
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Have you checked that no other similar issue already exists?
+      description: Searched issues before creating report?
+      options:
+        - label: I have searched and not found similar issues.
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: A clear and concise description of what the bug is.
+      description: Describe what happens, what software were you running? _Include screenshot if possible_
+      placeholder: "How & When does this occur?"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce the behaviour.
+      description: How can we reproduce this?
+      placeholder: "Explain how to reproduce"
+      value: |
+        Explain how to reproduce
+        1. 
+        2.
+        3.
+    validations:
+      required: false
+  - type: textarea
+    id: config_file
+    attributes:
+      label: Your configuration
+      description: |
+        Share the config file(s) you've been using to run the program. (`gzdoom.ini`) 
+        Please avoid pasting the full config, _use attachments or links_ in a [Gist](https://gist.github.com/)
+      placeholder: "example: cl_autorun=true"
+      render: ini # syntax highlighting
+    validations:
+      required: false
+  - type: textarea
+    id: log
+    attributes:
+      label: Provide a Log
+      description: Please avoid pasting the full log, _use attachments or links_ in a [Gist](https://gist.github.com/)
+      placeholder: "Copy & paste error log section or provide link"
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        * Make sure you have properly filled in the title of this bug report

@@ -7,6 +7,7 @@ class SoundEnvironment : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 	
 	override void PostBeginPlay ()

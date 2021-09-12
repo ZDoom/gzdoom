@@ -53,6 +53,7 @@ class InterpolationPoint : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+DONTSPLASH
+		+NOTONAUTOMAP
 		RenderStyle "None";
 	}
 	
@@ -119,6 +120,7 @@ class InterpolationSpecial : Actor
 		+NOSECTOR
 		+NOGRAVITY
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 	
 	override void Tick () {}		// Does absolutely nothing itself

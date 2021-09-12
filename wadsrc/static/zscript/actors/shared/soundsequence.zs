@@ -65,6 +65,7 @@ class AmbientSound : Actor
 		+NOBLOCKMAP
 		+NOSECTOR
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 	
 	native void MarkAmbientSounds();
@@ -100,6 +101,7 @@ class SoundSequenceSlot : Actor
 		+NOSECTOR
 		+NOBLOCKMAP
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 	
 	SeqNode sequence;
@@ -112,6 +114,7 @@ class SoundSequence : Actor
 		+NOSECTOR
 		+NOBLOCKMAP
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 	
 	//==========================================================================

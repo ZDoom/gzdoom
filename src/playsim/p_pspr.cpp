@@ -1352,25 +1352,35 @@ void P_SetSafeFlash(AActor *weapon, player_t *player, FState *flashstate, int in
 					P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
 					return;
 				}
-				else
+				else if (flashstate->DehIndex < 0)
 				{
-					// oh, no! The state is beyond the end of the state table so use the original flash state.
+					// oh, no! The state is beyond the end of the state table so use the original flash state if it does not have a Dehacked index.
 					P_SetPsprite(player, PSP_FLASH, flashstate, true);
 					return;
 				}
+				else break; // no need to continue.
 			}
 			// try again with parent class
 			cls = static_cast<PClassActor *>(cls->ParentClass);
 		}
-		// if we get here the state doesn't seem to belong to any class in the inheritance chain
-		// This can happen with Dehacked if the flash states are remapped. 
-		// The only way to check this would be to go through all Dehacked modifiable actors, convert
-		// their states into a single flat array and find the correct one.
-		// Rather than that, just check to make sure it belongs to something.
-		if (FState::StaticFindStateOwner(flashstate + index) == NULL)
-		{ // Invalid state. With no index offset, it should at least be valid.
-			index = 0;
+		
+		// if we get here the target state doesn't belong to any class in the inheritance chain.
+		// This can happen with Dehacked if the flash states are remapped.
+		// In this case we should check the Dehacked state map to get the proper state.
+		if (flashstate->DehIndex >= 0)
+		{
+			auto pTargetstate = dehExtStates.CheckKey(flashstate->DehIndex + index);
+			if (pTargetstate)
+			{
+				P_SetPsprite(player, PSP_FLASH, *pTargetstate, true);
+				return;
+			}
 		}
+
+		// If we still haven't found anything here, just use the base flash state.
+		// Normally this code should not be reachable.
+		index = 0;
+
 	}
 	P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
 }

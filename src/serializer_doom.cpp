@@ -346,6 +346,13 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 					arc.w->Uint((uint32_t)(state - info->GetStates()));
 					arc.w->EndArray();
 				}
+				else if (state->DehIndex >= 0)
+				{
+					arc.w->StartArray();
+					arc.w->String("@DehExtraState@");
+					arc.w->Uint(state->DehIndex);
+					arc.w->EndArray();
+				}
 				else
 				{
 					arc.w->Null();
@@ -373,10 +380,17 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState
 				assert(cls.IsString() && ndx.IsUint());
 				if (cls.IsString() && ndx.IsUint())
 				{
-					PClassActor *clas = PClass::FindActor(UnicodeToString(cls.GetString()));
+					auto str = UnicodeToString(cls.GetString());
+					PClassActor *clas = PClass::FindActor(str);
 					if (clas && ndx.GetUint() < (unsigned)clas->GetStateCount())
 					{
 						state = clas->GetStates() + ndx.GetUint();
+					}
+					else if (!strcmp(str, "@DehExtraState@"))
+					{
+						state = nullptr;
+						auto pState = dehExtStates.CheckKey(ndx.GetInt());
+						if (pState) state = *pState;
 					}
 					else
 					{

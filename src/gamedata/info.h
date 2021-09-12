@@ -112,6 +112,7 @@ struct FState
 	uint8_t		DefineFlags;
 	int32_t		Misc1;			// Was changed to int8_t, reverted to long for MBF compat
 	int32_t		Misc2;			// Was changed to uint8_t, reverted to long for MBF compat
+	int32_t		DehIndex;		// we need this to resolve offsets in P_SetSafeFlash.
 public:
 	inline int GetFrame() const
 	{
@@ -177,6 +178,8 @@ public:
 	static FRandom pr_statetics;
 
 };
+
+extern TMap<int, FState*> dehExtStates;
 
 struct FStateLabels;
 struct FStateLabel

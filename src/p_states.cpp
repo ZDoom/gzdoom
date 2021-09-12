@@ -44,6 +44,7 @@
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.
 FStateLabelStorage StateLabels;
+TMap<int, FState*> dehExtStates;
 
 // Each state is owned by an actor. Actors can own any number of
 // states, but a single state cannot be owned by more than one
@@ -138,6 +139,7 @@ FString FState::StaticGetStateName(const FState *state, PClassActor *info)
 	}
 	if (so == nullptr)
 	{
+		if (state->DehIndex > 0) return FStringf("DehExtraState.%d", state->DehIndex);
 		return "<unknown>";
 	}
 	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->GetStates()));
@@ -1029,6 +1031,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor)
 
 		for (i = 0; i < count; i++)
 		{
+			realstates[i].DehIndex = -1;
 			// resolve labels and jumps
 			switch (realstates[i].DefineFlags)
 			{
@@ -1074,16 +1077,20 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 {
 	for (int i = 0; i < StateList->NumLabels; i++)
 	{
-		if (StateList->Labels[i].State != NULL)
+		auto state = StateList->Labels[i].State;
+		if (state != NULL)
 		{
-			const PClassActor *owner = FState::StaticFindStateOwner(StateList->Labels[i].State);
+			const PClassActor *owner = FState::StaticFindStateOwner(state);
 			if (owner == NULL)
 			{
-				Printf(PRINT_LOG, "%s%s: invalid\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars());
+				if (state->DehIndex >= 0)
+					Printf(PRINT_LOG, "%s%s: DehExtra %d\n", prefix.GetChars(), state->DehIndex);
+				else
+					Printf(PRINT_LOG, "%s%s: invalid\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars());
 			}
 			else
 			{
-				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(StateList->Labels[i].State).GetChars());
+				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(state).GetChars());
 			}
 		}
 		if (StateList->Labels[i].Children != NULL)
@@ -1135,7 +1142,7 @@ DEFINE_ACTION_FUNCTION(FState, DistanceTo)
 	{
 		// Safely calculate the distance between two states.
 		auto o1 = FState::StaticFindStateOwner(self);
-		if (o1->OwnsState(other)) retv = int(other - self);
+		if (o1 && o1->OwnsState(other)) retv = int(other - self);
 	}
 	ACTION_RETURN_INT(retv);
 }

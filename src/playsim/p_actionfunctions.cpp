@@ -128,7 +128,6 @@ static int CallStateChain (AActor *self, AActor *actor, FState *state)
 			if (state->ActionFunc->Unsafe)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
-				auto owner = FState::StaticFindStateOwner(state);
 				Printf(TEXTCOLOR_RED "Unsafe state call in state %s to %s which accesses user variables. The action function has been removed from this state\n",
 					FState::StaticGetStateName(state).GetChars(), state->ActionFunc->PrintableName);
 				state->ActionFunc = nullptr;

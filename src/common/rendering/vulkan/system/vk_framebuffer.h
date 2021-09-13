@@ -37,7 +37,7 @@ public:
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
 	FRenderState* RenderState() override;
 
-	void FlushCommands(bool finish, bool lastsubmit = false);
+	void FlushCommands(bool finish, bool lastsubmit = false, bool uploadOnly = false);
 
 	unsigned int GetLightBufferBlockSize() const;
 
@@ -63,6 +63,12 @@ public:
 		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
 	} FrameDeleteList;
+
+	struct
+	{
+		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
+		size_t TotalSize = 0;
+	} FrameTextureUpload;
 
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
@@ -103,7 +109,8 @@ public:
 
 	void Draw2D() override;
 
-	void WaitForCommands(bool finish) override;
+	void WaitForCommands(bool finish) override { WaitForCommands(finish, false); }
+	void WaitForCommands(bool finish, bool uploadOnly);
 
 	void PushGroup(const FString &name);
 	void PopGroup();
@@ -116,7 +123,7 @@ private:
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
 	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;
-	void DeleteFrameObjects();
+	void DeleteFrameObjects(bool uploadOnly = false);
 	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit);
 
 	std::unique_ptr<VkShaderManager> mShaderManager;

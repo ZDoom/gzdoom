@@ -203,9 +203,14 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 	region.imageExtent.height = h;
 	cmdbuffer->copyBufferToImage(stagingBuffer->buffer, mImage.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-	fb->FrameDeleteList.Buffers.push_back(std::move(stagingBuffer));
+	fb->FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));
 
 	if (mipmap) mImage.GenerateMipmaps(cmdbuffer);
+
+	// If we queued more than 64 MB of data already: wait until the uploads finish before continuing
+	fb->FrameTextureUpload.TotalSize += totalSize;
+	if (fb->FrameTextureUpload.TotalSize > 64 * 1024 * 1024)
+		fb->WaitForCommands(false, true);
 }
 
 int VkHardwareTexture::GetMipLevels(int w, int h)

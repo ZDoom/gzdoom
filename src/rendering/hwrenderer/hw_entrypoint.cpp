@@ -108,7 +108,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 	R_SetupFrame(mainvp, r_viewwindow, camera);
 
-	if (mainview && toscreen && !(camera->Level->flags3 & LEVEL3_NOSHADOWMAP) && camera->Level->HasDynamicLights && gl_light_shadowmap && screen->mPipelineType == 0 && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER))
+	if (mainview && toscreen && !(camera->Level->flags3 & LEVEL3_NOSHADOWMAP) && camera->Level->HasDynamicLights && gl_light_shadowmap && screen->allowSSBO() && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER))
 	{
 		screen->SetAABBTree(camera->Level->aabbTree);
 		screen->mShadowMap.SetCollectLights([=] {

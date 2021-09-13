@@ -5,7 +5,13 @@
 
 class FRenderState;
 
+#ifdef __ANDROID__
 #define HW_MAX_PIPELINE_BUFFERS 8
+#define HW_BLOCK_SSBO 1
+#else
+// On desktop this is only useful fpr letting the GPU run in parallel with the playsim and for that 2 buffers are enough.
+#define HW_MAX_PIPELINE_BUFFERS 2
+#endif
 
 // The low level code needs to know which attributes exist.
 // OpenGL needs to change the state of all of them per buffer binding.

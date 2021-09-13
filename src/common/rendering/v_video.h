@@ -43,6 +43,7 @@
 #include "v_2ddrawer.h"
 #include "intrect.h"
 #include "hw_shadowmap.h"
+#include "buffers.h"
 
 
 struct FPortalSceneState;
@@ -150,6 +151,7 @@ public:
 
 	int mPipelineNbr = 1;						// Number of HW buffers to pipeline
 	int mPipelineType = 0;
+	
 public:
 	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer();
@@ -159,6 +161,14 @@ public:
 	void SetAABBTree(hwrenderer::LevelAABBTree * tree)
 	{
 		mShadowMap.SetAABBTree(tree);
+	}
+	bool allowSSBO()
+	{
+#ifndef HW_BLOCK_SSBO
+		return true;
+#else
+		return mPipelineType == 0;
+#endif
 	}
 
 	virtual DCanvas* GetCanvas() { return nullptr; }

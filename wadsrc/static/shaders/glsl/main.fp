@@ -1,4 +1,5 @@
 
+
 layout(location = 0) in vec4 vTexCoord;
 layout(location = 1) in vec4 vColor;
 layout(location = 2) in vec4 pixelpos;
@@ -628,7 +629,7 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	color = min(color, 1.0);
 
 	// these cannot be safely applied by the legacy format where the implementation cannot guarantee that the values are set.
-#ifndef LEGACY_USER_SHADER
+#if !defined LEGACY_USER_SHADER && !defined NO_LAYERS
 	//
 	// apply glow 
 	//

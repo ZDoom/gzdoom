@@ -886,7 +886,7 @@ const FDecalTemplate *FDecalLib::GetDecalByName (const char *name) const
 	FDecalBase *base = ScanTreeForName (name, Root);
 	if (base != NULL)
 	{
-		return static_cast<FDecalTemplate *>(base);
+		return base->GetDecal();
 	}
 	return NULL;
 }

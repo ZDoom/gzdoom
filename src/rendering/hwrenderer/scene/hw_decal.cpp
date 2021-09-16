@@ -61,7 +61,7 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 	state.SetObjectColor(DecalColor);
 
 	state.SetLightIndex(dynlightindex);
-	state.SetTextureMode(decal->RenderStyle);
+	state.SetTextureMode(decal->RenderStyle, true);
 	state.SetRenderStyle(decal->RenderStyle);
 	state.SetMaterial(texture, UF_Sprite, 0, CLAMP_XY, decal->Translation, -1);
 

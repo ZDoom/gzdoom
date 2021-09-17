@@ -33,7 +33,8 @@ static const int ELEMENTS_PER_LIGHT = 4;			// each light needs 4 vec4's.
 static const int ELEMENT_SIZE = (4*sizeof(float));
 
 
-FLightBuffer::FLightBuffer()
+FLightBuffer::FLightBuffer(int pipelineNbr):
+	mPipelineNbr(pipelineNbr)
 {
 	int maxNumberOfLights = 80000;
 	
@@ -43,7 +44,7 @@ FLightBuffer::FLightBuffer()
 	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
 	// We only want to disable using SSBOs for lights but not disable the feature entirely.
 	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
-	if (screen->IsVulkan() || screen->IsPoly() || ((screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && !strstr(screen->vendorstring, "Intel")))
+	if (screen->IsVulkan() || screen->IsPoly() || ((screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && screen->allowSSBO() && !strstr(screen->vendorstring, "Intel")))
 	{
 		mBufferType = true;
 		mBlockAlign = 0;
@@ -56,11 +57,15 @@ FLightBuffer::FLightBuffer()
 		mBlockSize = screen->maxuniformblock / ELEMENT_SIZE;
 		mBlockAlign = screen->uniformblockalignment / ELEMENT_SIZE;
 		mMaxUploadSize = (mBlockSize - mBlockAlign);
-		mByteSize += screen->maxuniformblock;	// to avoid mapping beyond the end of the buffer.
+		
+		//mByteSize += screen->maxuniformblock;	// to avoid mapping beyond the end of the buffer. REMOVED this...This can try to allocate 100's of MB..
 	}
 
-	mBuffer = screen->CreateDataBuffer(LIGHTBUF_BINDINGPOINT, mBufferType, false);
-	mBuffer->SetData(mByteSize, nullptr, false);
+	for (int n = 0; n < mPipelineNbr; n++)
+	{
+		mBufferPipeline[n] = screen->CreateDataBuffer(LIGHTBUF_BINDINGPOINT, mBufferType, false);
+		mBufferPipeline[n]->SetData(mByteSize, nullptr, false);
+	}
 
 	Clear();
 }
@@ -73,6 +78,11 @@ FLightBuffer::~FLightBuffer()
 void FLightBuffer::Clear()
 {
 	mIndex = 0;
+
+	mPipelinePos++;
+	mPipelinePos %= mPipelineNbr;
+
+	mBuffer = mBufferPipeline[mPipelinePos];
 }
 
 int FLightBuffer::UploadLights(FDynLightData &data)

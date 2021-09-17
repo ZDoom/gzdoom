@@ -26,7 +26,7 @@
 #include "hw_vertexbuilder.h"
 #include "flatvertices.h"
 #include "earcut.hpp"
-
+#include "v_video.h"
 
 //=============================================================================
 //
@@ -222,7 +222,8 @@ static int CreateIndexedVertices(FFlatVertexBuffer* fvb, int h, sector_t* sec, c
 	auto& vbo_shadowdata = fvb->vbo_shadowdata;
 	sec->vboindex[h] = vbo_shadowdata.Size();
 	// First calculate the vertices for the sector itself
-	sec->vboheight[h] = sec->GetPlaneTexZ(h);
+	for (int n = 0; n < screen->mPipelineNbr; n++)
+		sec->vboheight[n][h] = sec->GetPlaneTexZ(h);
 	sec->ibocount = verts[sec->Index()].indices.Size();
 	sec->iboindex[h] = CreateIndexedSectorVertices(fvb, sec, plane, floor, verts[sec->Index()]);
 
@@ -335,6 +336,8 @@ static void UpdatePlaneVertices(FFlatVertexBuffer *fvb, sector_t* sec, int plane
 		if (plane == sector_t::floor && sec->transdoor) vt->z -= 1;
 		mapvt->z = vt->z;
 	}
+	
+	fvb->mVertexBuffer->Upload(startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex));
 }
 
 //==========================================================================
@@ -357,15 +360,15 @@ static void CreateVertices(FFlatVertexBuffer* fvb, TArray<sector_t>& sectors)
 
 static void CheckPlanes(FFlatVertexBuffer* fvb, sector_t* sector)
 {
-	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
+	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[screen->mVertexData->GetPipelinePos()][sector_t::ceiling])
 	{
 		UpdatePlaneVertices(fvb, sector, sector_t::ceiling);
-		sector->vboheight[sector_t::ceiling] = sector->GetPlaneTexZ(sector_t::ceiling);
+		sector->vboheight[screen->mVertexData->GetPipelinePos()][sector_t::ceiling] = sector->GetPlaneTexZ(sector_t::ceiling);
 	}
-	if (sector->GetPlaneTexZ(sector_t::floor) != sector->vboheight[sector_t::floor])
+	if (sector->GetPlaneTexZ(sector_t::floor) != sector->vboheight[screen->mVertexData->GetPipelinePos()][sector_t::floor])
 	{
 		UpdatePlaneVertices(fvb, sector, sector_t::floor);
-		sector->vboheight[sector_t::floor] = sector->GetPlaneTexZ(sector_t::floor);
+		sector->vboheight[screen->mVertexData->GetPipelinePos()][sector_t::floor] = sector->GetPlaneTexZ(sector_t::floor);
 	}
 }
 

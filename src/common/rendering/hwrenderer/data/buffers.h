@@ -5,6 +5,14 @@
 
 class FRenderState;
 
+#ifdef __ANDROID__
+#define HW_MAX_PIPELINE_BUFFERS 8
+#define HW_BLOCK_SSBO 1
+#else
+// On desktop this is only useful fpr letting the GPU run in parallel with the playsim and for that 2 buffers are enough.
+#define HW_MAX_PIPELINE_BUFFERS 2
+#endif
+
 // The low level code needs to know which attributes exist.
 // OpenGL needs to change the state of all of them per buffer binding.
 // VAOs are mostly useless for this because they lump buffer and binding state together which the model code does not want.
@@ -54,10 +62,15 @@ public:
 	virtual void *Lock(unsigned int size) = 0;
 	virtual void Unlock() = 0;
 	virtual void Resize(size_t newsize) = 0;
+
+	virtual void Upload(size_t start, size_t size) {} // For unmappable buffers
+
 	virtual void Map() {}		// Only needed by old OpenGL but this needs to be in the interface.
 	virtual void Unmap() {}
 	void *Memory() { return map; }
 	size_t Size() { return buffersize; }
+	virtual void GPUDropSync() {}
+	virtual void GPUWaitSync() {}
 };
 
 class IVertexBuffer : virtual public IBuffer

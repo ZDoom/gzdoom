@@ -72,6 +72,13 @@ CVAR(Int, win_w, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_h, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 
+// 0 means 'no pipelining' for non GLES2 and 4 elements for GLES2
+CUSTOM_CVAR(Int, gl_pipeline_depth, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self >= HW_MAX_PIPELINE_BUFFERS) self = 0;
+	Printf("Changing the pipeline depth requires a restart for " GAMENAME ".\n");
+}
+
 CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < GameTicRate && self != 0)
@@ -92,6 +99,11 @@ CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 
 	switch(self)
 	{
+#ifdef HAVE_GLES2
+	case 3:
+		Printf("Selecting OpenGLES 2.0 backend...\n");
+		break;
+#endif
 	case 2:
 		Printf("Selecting SoftPoly backend...\n");
 		break;

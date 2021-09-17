@@ -158,6 +158,8 @@ public:
 
 struct HWLinePortal : public HWScenePortalBase
 {
+	uint32_t PAD; // This fixes walls not being drawn in portals in 32bit machines..seems to be OK this is here for 64bit also..
+
 	// this must be the same as at the start of line_t, so that we can pass in this structure directly to P_ClipLineToPortal.
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
 	DVector2	delta;		// precalculated v2 - v1 for side checking

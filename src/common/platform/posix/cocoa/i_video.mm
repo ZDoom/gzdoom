@@ -52,8 +52,11 @@
 #include "v_text.h"
 #include "version.h"
 #include "printf.h"
-
 #include "gl_framebuffer.h"
+#ifdef HAVE_GLES2
+#include "gles_framebuffer.h"
+#endif
+
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
 #endif
@@ -462,7 +465,12 @@ public:
 
 		if (fb == nullptr)
 		{
-			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+#ifdef HAVE_GLES2
+			if( (Args->CheckParm ("-gles2_renderer")) || (vid_preferbackend == 3) )
+				fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+			else
+#endif
+				fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 		}
 
 		fb->SetWindow(ms_window);

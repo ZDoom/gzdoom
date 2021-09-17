@@ -8,6 +8,9 @@ class FRenderState;
 class HWViewpointBuffer
 {
 	IDataBuffer *mBuffer;
+	IDataBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
+	int mPipelineNbr;
+	int mPipelinePos = 0;
 
 	unsigned int mBufferSize;
 	unsigned int mBlockAlign;
@@ -24,7 +27,7 @@ class HWViewpointBuffer
 
 public:
 
-	HWViewpointBuffer();
+	HWViewpointBuffer(int pipelineNbr = 1);
 	~HWViewpointBuffer();
 	void Clear();
 	int Bind(FRenderState &di, unsigned int index);

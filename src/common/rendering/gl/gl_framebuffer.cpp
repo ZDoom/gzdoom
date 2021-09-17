@@ -65,6 +65,7 @@ EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Int, gl_pipeline_depth);
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
@@ -133,6 +134,9 @@ void OpenGLFrameBuffer::InitializeState()
 
 	gl_LoadExtensions();
 
+	mPipelineNbr = clamp(*gl_pipeline_depth, 1, HW_MAX_PIPELINE_BUFFERS);
+	mPipelineType = gl_pipeline_depth > 0;
+
 	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;
 	glslversion = gl.glslversion;
@@ -164,10 +168,10 @@ void OpenGLFrameBuffer::InitializeState()
 
 	SetViewportRects(nullptr);
 
-	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
+	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight(), screen->mPipelineNbr);
 	mSkyData = new FSkyVertexBuffer;
-	mViewpoints = new HWViewpointBuffer;
-	mLights = new FLightBuffer();
+	mViewpoints = new HWViewpointBuffer(screen->mPipelineNbr);
+	mLights = new FLightBuffer(screen->mPipelineNbr);
 	GLRenderer = new FGLRenderer(this);
 	GLRenderer->Initialize(GetWidth(), GetHeight());
 	static_cast<GLDataBuffer*>(mLights->GetBuffer())->BindBase();
@@ -256,10 +260,25 @@ void OpenGLFrameBuffer::Swap()
 	bool swapbefore = gl_finishbeforeswap && camtexcount == 0;
 	Finish.Reset();
 	Finish.Clock();
-	if (swapbefore) glFinish();
-	FPSLimit();
-	SwapBuffers();
-	if (!swapbefore) glFinish();
+	if (gl_pipeline_depth < 1)
+	{
+		if (swapbefore) glFinish();
+		FPSLimit();
+		SwapBuffers();
+		if (!swapbefore) glFinish();
+	}
+	else
+	{
+		mVertexData->DropSync();
+
+		FPSLimit();
+		SwapBuffers();
+
+		mVertexData->NextPipelineBuffer();
+		mVertexData->WaitSync();
+
+		RenderState()->SetVertexBuffer(screen->mVertexData); // Needed for Raze because it does not reset it
+	}
 	Finish.Unclock();
 	camtexcount = 0;
 	FHardwareTexture::UnbindAll();

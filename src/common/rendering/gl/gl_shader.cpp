@@ -382,7 +382,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
 	}
 
-	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+	if ((gl.flags & RFL_SHADER_STORAGE_BUFFER) && screen->allowSSBO())
 	{
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}

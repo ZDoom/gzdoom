@@ -1365,7 +1365,6 @@ class LevelCompatibility : LevelPostProcessor
 			case '11EA5B8357DEB70A8F00900117831191': // kdizd_12.pk3 z1m3
 			{
 				// Fix incorrectly tagged underwater sector which causes render glitches.
-				ClearSectorTags(7857);
 				AddSectorTag(7857, 82);
 				break;
 			}

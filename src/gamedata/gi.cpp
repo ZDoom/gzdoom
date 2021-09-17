@@ -356,6 +356,12 @@ void FMapInfoParser::ParseGameInfo()
 			}
 			else gameinfo.mCheatMapArrow = "";
 		}
+		else if (nextKey.CompareNoCase("dialogue") == 0)
+		{
+			sc.MustGetToken(TK_StringConst);
+			gameinfo.Dialogue = sc.String;
+			gameinfo.AddDialogues.Clear();
+		}
 		// Insert valid keys here.
 		GAMEINFOKEY_STRING(mCheatKey, "cheatKey")
 			GAMEINFOKEY_STRING(mEasyKey, "easyKey")
@@ -437,7 +443,6 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_FONT(mStatscreenAuthorFont, "statscreen_authorfont")
 			GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 			GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
-			GAMEINFOKEY_STRING(Dialogue, "dialogue")
 			GAMEINFOKEY_STRINGARRAY(AddDialogues, "adddialogues", 0, false)
 			GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
 			GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")

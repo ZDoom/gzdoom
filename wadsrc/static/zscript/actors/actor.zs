@@ -81,6 +81,7 @@ class Actor : Thinker native
 	const ORIG_FRICTION = (0xE800/65536.);	// original value
 	const ORIG_FRICTION_FACTOR = (2048/65536.);	// original value
 	const DEFMORPHTICS = 40 * TICRATE;
+	const MELEEDELTA = 20;
 
 
 	// flags are not defined here, the native fields for those get synthesized from the internal tables.
@@ -380,7 +381,7 @@ class Actor : Thinker native
 		RenderStyle 'Normal';
 		Alpha 1;
 		MinMissileChance 200;
-		MeleeRange 64 - 20;
+		MeleeRange 64 - MELEEDELTA;
 		MaxDropoffHeight 24;
 		MaxStepHeight 24;
 		MaxSlopeSteepness STEEPSLOPE;

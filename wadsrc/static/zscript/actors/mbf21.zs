@@ -379,7 +379,7 @@ extend class Weapon
 		// slight randomization; weird vanillaism here. :P
 		FTranslatedLineTarget t;
 		double ang = angle + Random2[mbf21]() * (5.625 / 256);
-		double pitch = AimLineAttack(ang, MeleeRange, t, 0., ALF_CHECK3D);
+		double pitch = AimLineAttack(ang, range + MELEEDELTA, t, 0., ALF_CHECK3D);
 		LineAttack(ang, range, pitch, damage, 'Melee', "BulletPuff", LAF_ISMELEEATTACK, t);
 
 		// turn to face target

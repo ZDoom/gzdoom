@@ -36,7 +36,7 @@ extern int sys_ostype;
 #include "v_video.h"
 #include "gl_interface.h"
 
-CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
+CVAR(Int, sys_statsenabled47, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 
@@ -289,7 +289,7 @@ void D_DoAnonStats()
 {
 #ifndef _DEBUG
 	// Do not repeat if already sent.
-	if (sys_statsenabled != 1 || sentstats_hwr_done >= CHECKVERSION)
+	if (sys_statsenabled47 != 1 || sentstats_hwr_done >= CHECKVERSION)
 	{
 		return;
 	}
@@ -315,7 +315,7 @@ void D_DoAnonStats()
 
 void D_ConfirmSendStats()
 {
-	if (sys_statsenabled >= 0)
+	if (sys_statsenabled47 >= 0)
 	{
 		return;
 	}
@@ -327,7 +327,7 @@ void D_ConfirmSendStats()
 		"- Operating system\n" \
 		"- Number of processor cores\n" \
 		"- OpenGL version and your graphics card's name\n\n" \
-		"All information sent will be anonymously. We will NOT be sending this information to any third party.\n" \
+		"All information sent will be collected anonymously. We will NOT be sending this information to any third party.\n" \
 		"It will merely be used for decision-making about GZDoom's future development.\n" \
 		"Data will only be sent once per system.\n" \
 		"If you are getting this notice more than once, please let us know on the forums. Thanks!\n\n" \
@@ -372,7 +372,7 @@ void D_ConfirmSendStats()
 	enabled.Int = SDL_ShowMessageBox(&messageboxdata, &buttonid) == 0 && buttonid == 0;
 #endif // _WIN32
 
-	sys_statsenabled.ForceSet(enabled, CVAR_Int);
+	sys_statsenabled47.ForceSet(enabled, CVAR_Int);
 }
 
 #endif // NO_SEND_STATS

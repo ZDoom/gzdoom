@@ -166,9 +166,6 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 		di->ProcessScene(toscreen);
 
-		// Reset colormap so 2D drawing isn't affected
-		RenderState.SetSpecialColormap(CM_DEFAULT, 1);
-
 		if (mainview)
 		{
 			PostProcess.Clock();
@@ -183,6 +180,9 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 			screen->PostProcessScene(false, cm, flash, [&]() { di->DrawEndScene2D(mainvp.sector, RenderState); });
 			PostProcess.Unclock();
 		}
+		// Reset colormap so 2D drawing isn't affected
+		RenderState.SetSpecialColormap(CM_DEFAULT, 1);
+
 		di->EndDrawInfo();
 		if (eyeCount - eye_ix > 1)
 			screen->NextEye(eyeCount);

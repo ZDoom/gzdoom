@@ -92,6 +92,7 @@ static const char *WI_Cmd[] = {
 	"Pic",
 
 	"NoAutostartMap",
+	"Screensize",
 
 	NULL
 };
@@ -169,7 +170,10 @@ private:
 	FGameTexture	*background = nullptr;
 	wbstartstruct_t *wbs;
 	level_info_t	*exitlevel;
-	
+	int			bgwidth = -1;
+	int			bgheight = -1;
+
+
 public:
 
 	DInterBackground(wbstartstruct_t *wbst);
@@ -456,6 +460,13 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					noautostartmap = true;
 					break;
 
+				case 15:	// screensize
+					sc.MustGetNumber();
+					bgwidth = sc.Number;
+					sc.MustGetNumber();
+					bgheight = sc.Number;
+					break;
+
 				readanimation:
 					sc.MustGetString();
 					an.LevelName = sc.String;
@@ -591,20 +602,23 @@ DEFINE_ACTION_FUNCTION(DInterBackground, updateAnimatedBack)
 void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointeron)
 {
 	unsigned int i;
-	double animwidth = 320;		// For a flat fill or clear background scale animations to 320x200
-	double animheight = 200;
+	double animwidth = bgwidth;		// For a flat fill or clear background scale animations to 320x200
+	double animheight = bgheight;
 
 	if (background)
 	{
 		// background
 		if (background->isMiscPatch())
 		{
-			// scale all animations below to fit the size of the base pic
+			// if no explicit size was set scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetDisplayWidth();
-			animheight = background->GetDisplayHeight();
-			if (animheight == 200) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
+			if (bgwidth < 0 || bgheight < 0)
+			{
+				animwidth = background->GetDisplayWidth();
+				animheight = background->GetDisplayHeight();
+				if (animheight == 200) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
+			}
 			DrawTexture(twod, background, 0, 0, DTA_FullscreenEx, FSMode_ScaleToFit43, TAG_DONE);
 		}
 		else

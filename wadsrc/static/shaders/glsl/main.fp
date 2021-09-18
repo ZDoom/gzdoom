@@ -570,7 +570,7 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 	if ((uTextureMode & TEXF_Detailmap) != 0)
 	{
 		vec4 Detail = texture(detailtexture, texCoord.st * uDetailParms.xy) * uDetailParms.z;
-		material.Base *= Detail;
+		material.Base.rgb *= Detail.rgb;
 	}
 	
 	if ((uTextureMode & TEXF_Glowmap) != 0)

@@ -56,6 +56,7 @@ class ListMenuDescriptor : MenuDescriptor native
 	native int mFontColor2;
 	native bool mCenter;
 	native bool mAnimatedTransition;
+	native bool mAnimated;
 	native int mVirtWidth, mVirtHeight;
 
 	native void Reset();
@@ -87,6 +88,7 @@ class ListMenu : Menu
 		Super.Init(parent);
 		mDesc = desc;
 		AnimatedTransition = mDesc.mAnimatedTransition;
+		Animated = mDesc.mAnimated;
 		if (desc.mCenter)
 		{
 			double center = 160;
@@ -258,7 +260,7 @@ class ListMenu : Menu
 			{
 				for(int i=0;i<mDesc.mItems.Size(); i++)
 				{
-					if (mDesc.mItems[i].CheckCoordinate(x, y))
+					if (mDesc.mItems[i].Selectable() && mDesc.mItems[i].CheckCoordinate(x, y))
 					{
 						if (i != mDesc.mSelectedItem)
 						{

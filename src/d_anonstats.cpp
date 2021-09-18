@@ -41,8 +41,8 @@ CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFI
 CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 
 // Each machine will only send two  reports, one when started with hardware rendering and one when started with software rendering.
-#define CHECKVERSION 350
-#define CHECKVERSIONSTR "350"
+#define CHECKVERSION 470
+#define CHECKVERSIONSTR "470"
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();
@@ -301,7 +301,7 @@ void D_DoAnonStats()
 
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_201903.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202109.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
 		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 #ifndef _DEBUG

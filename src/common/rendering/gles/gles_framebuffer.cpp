@@ -122,7 +122,7 @@ void OpenGLFrameBuffer::InitializeState()
 {
 	static bool first=true;
 
-	mPipelineNbr = gl_pipeline_depth == 0? 4 : clamp(*gl_pipeline_depth, 1, HW_MAX_PIPELINE_BUFFERS);
+	mPipelineNbr = gl_pipeline_depth == 0? std::min(4, HW_MAX_PIPELINE_BUFFERS) : clamp(*gl_pipeline_depth, 1, HW_MAX_PIPELINE_BUFFERS);
 	mPipelineType = 1;
 
 	InitGLES();

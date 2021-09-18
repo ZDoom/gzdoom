@@ -268,7 +268,7 @@ void HWDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 //
 //
 //==========================================================================
-void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
+void HWDrawList::SortWallIntoPlane(HWDrawInfo* di, SortNode * head, SortNode * sort)
 {
 	HWFlat * fh = flats[drawitems[head->itemindex].index];
 	HWWall * ws = walls[drawitems[sort->itemindex].index];
@@ -301,6 +301,8 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 				w->ztop[1] = ws->zbottom[1] = w->ztop[0] = ws->zbottom[0] = fh->z;
 				w->tcs[HWWall::UPLFT].v = ws->tcs[HWWall::LOLFT].v = w->tcs[HWWall::UPRGT].v = ws->tcs[HWWall::LORGT].v = newtexv;
 			}
+			w->MakeVertices(di, false);
+			ws->MakeVertices(di, false);
 		}
 
 		SortNode * sort2 = SortNodes.GetNew();
@@ -647,7 +649,7 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 				break;
 
 			case DrawType_WALL:
-				SortWallIntoPlane(head,node);
+				SortWallIntoPlane(di,head,node);
 				break;
 
 			case DrawType_SPRITE:

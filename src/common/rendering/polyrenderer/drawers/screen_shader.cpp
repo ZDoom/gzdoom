@@ -380,7 +380,11 @@ static void ProcessMaterial(int x0, int x1, PolyTriangleThreadData* thread)
 	{
 		auto constants = thread->PushConstants;
 
-		switch (constants->uTextureMode)
+		if (constants->uTextureMode == TM_CLAMPY)
+		{
+			FuncNormal_ClampY(x0, x1, thread);
+		}
+		else switch (constants->uTextureMode & 0xff)
 		{
 		default:
 		case TM_NORMAL:
@@ -389,7 +393,6 @@ static void ProcessMaterial(int x0, int x1, PolyTriangleThreadData* thread)
 		case TM_OPAQUE:       FuncNormal_Opaque(x0, x1, thread); break;
 		case TM_INVERSE:      FuncNormal_Inverse(x0, x1, thread); break;
 		case TM_ALPHATEXTURE: FuncNormal_AlphaTexture(x0, x1, thread); break;
-		case TM_CLAMPY:       FuncNormal_ClampY(x0, x1, thread); break;
 		case TM_INVERTOPAQUE: FuncNormal_InvertOpaque(x0, x1, thread); break;
 		}
 

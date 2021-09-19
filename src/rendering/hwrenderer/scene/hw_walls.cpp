@@ -210,7 +210,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 
 	if (flags & HWWall::HWF_CLAMPY && (type == RENDERWALL_M2S || type == RENDERWALL_M2SNF))
 	{
-		state.SetTextureMode(tmode | TM_CLAMPY);
+		state.SetTextureClamp(true);
 	}
 
 	if (type == RENDERWALL_M2SNF)
@@ -300,6 +300,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	state.SetObjectColor2(0);
 	state.SetAddColor(0);
 	state.SetTextureMode(tmode);
+	state.SetTextureClamp(false);
 	state.EnableGlow(false);
 	state.EnableGradient(false);
 	state.ApplyTextureManipulation(nullptr);

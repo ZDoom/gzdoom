@@ -219,6 +219,7 @@ protected:
 	int mLightIndex;
 	int mSpecialEffect;
 	int mTextureMode;
+	int mTextureClamp;
 	int mTextureModeFlags;
 	int mSoftLight;
 	float mLightParms[4];
@@ -259,6 +260,7 @@ public:
 		mFogColor = 0xffffffff;
 		mStreamData.uFogColor = mFogColor;
 		mTextureMode = -1;
+		mTextureClamp = 0;
 		mTextureModeFlags = 0;
 		mStreamData.uDesaturationFactor = 0.0f;
 		mAlphaThreshold = 0.5f;
@@ -344,12 +346,18 @@ public:
 		mStreamData.uDesaturationFactor = 0.0f;
 	}
 
+	void SetTextureClamp(bool on)
+	{
+		if (on) mTextureClamp = TM_CLAMPY;
+		else mTextureClamp = 0;
+	}
+
 	void SetTextureMode(int mode)
 	{
 		mTextureMode = mode;
 	}
 
-	void SetTextureMode(FRenderStyle style, bool clampy = false)
+	void SetTextureMode(FRenderStyle style)
 	{
 		if (style.Flags & STYLEF_RedIsAlpha)
 		{
@@ -363,7 +371,6 @@ public:
 		{
 			SetTextureMode(TM_INVERSE);
 		}
-		if (clampy) mTextureMode |= TM_CLAMPY;
 	}
 
 	int GetTextureMode()

@@ -127,7 +127,8 @@ bool FGLRenderState::ApplyShader()
 
 	ShaderFlavourData flavour;
 
-	flavour.textureMode = (mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
+	flavour.textureMode = (mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) & 0xff;
+	if (mTextureClamp && flavour.textureMode == TM_NORMAL) flavour.textureMode = 5; // fixme. Clamp can now be combined with all modes.
 	
 	if (flavour.textureMode == -1)
 		flavour.textureMode = 0;

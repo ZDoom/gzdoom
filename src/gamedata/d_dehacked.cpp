@@ -969,6 +969,7 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int, MBFPara
 	CreateWeaponJumpFunc,
 	CreateWeaponJumpFunc,
 	CreateJumpIfFlagSetFunc,
+	CreateFlagSetFunc,
 	CreateFlagSetFunc
 };
 
@@ -979,7 +980,6 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 	static const uint8_t regts[] = { REGT_POINTER, REGT_POINTER, REGT_POINTER };
 	int value1 = state->GetMisc1();
 	int value2 = state->GetMisc2();
-	if (!(value1|value2)) return;
 	
 	bool returnsState = codepointer == 6;
 	

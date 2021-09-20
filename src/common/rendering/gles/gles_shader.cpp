@@ -633,11 +633,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		char stringbuf[20];
 		mysnprintf(stringbuf, 20, "texture%d", i);
 		int tempindex = glGetUniformLocation(shaderData->hShader, stringbuf);
-		if (tempindex > 0) glUniform1i(tempindex, i - 1);
+		if (tempindex >= 0) glUniform1i(tempindex, i - 1);
 	}
 
 	int shadowmapindex = glGetUniformLocation(shaderData->hShader, "ShadowMap");
-	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
+	if (shadowmapindex >= 0) glUniform1i(shadowmapindex, 16);
 
 	glUseProgram(0);
 
@@ -654,13 +654,17 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 FShader::~FShader()
 {
-	/*
-	glDeleteProgram(hShader);
-	if (hVertProg != 0)
-		glDeleteShader(hVertProg);
-	if (hFragProg != 0)
-		glDeleteShader(hFragProg);
-	*/
+	std::map<uint32_t, ShaderVariantData*>::iterator it = variants.begin();
+
+	while (it != variants.end())
+	{
+		glDeleteProgram(it->second->hShader);
+		if (it->second->hVertProg != 0)
+			glDeleteShader(it->second->hVertProg);
+		if (it->second->hFragProg != 0)
+			glDeleteShader(it->second->hFragProg);
+		it++;
+	}
 }
 
 
@@ -710,14 +714,13 @@ bool FShader::Bind(ShaderFlavourData& flavour)
 		variantConfig.AppendFormat("#define DEF_NPOT_EMULATION %d\n", flavour.npotEmulation);
 #endif
 
-		// Printf("Shader: %s, %08x %s", mFragProg2.GetChars(), tag, variantConfig.GetChars());
+		variantConfig.AppendFormat("#define DEF_HAS_SPOTLIGHT %d\n", flavour.hasSpotLight);
+
+		//Printf("Shader: %s, %08x %s", mFragProg2.GetChars(), tag, variantConfig.GetChars());
 
 		Load(mName.GetChars(), mVertProg, mFragProg, mFragProg2, mLightProg, mDefinesBase + variantConfig);
 
-		if (variants.insert(std::make_pair(tag, cur)).second == false)
-		{
-			Printf("ERROR INSERTING");
-		}
+		variants.insert(std::make_pair(tag, cur));
 	}
 	else
 	{

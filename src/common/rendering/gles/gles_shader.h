@@ -275,6 +275,8 @@ public:
 #ifdef NPOT_EMULATION
 	bool npotEmulation;
 #endif
+
+	bool hasSpotLight;
 };
 
 class FShader
@@ -417,6 +419,9 @@ public:
 #ifdef NPOT_EMULATION
 		tag |= (flavour.npotEmulation & 1) << 22;
 #endif
+		
+		tag |= (flavour.hasSpotLight & 1) << 23;
+
 		return tag;
 	}
 

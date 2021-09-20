@@ -92,11 +92,16 @@ bool FGLRenderState::ApplyShader()
 {
 	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };
 	
+	ShaderFlavourData flavour;
+
 	// Need to calc light data now in order to select correct shader
 	float* lightPtr = NULL;
 	int modLights = 0;
 	int subLights = 0;
 	int addLights = 0;
+	int totalLights = 0;
+
+	flavour.hasSpotLight = false;
 
 	if (mLightIndex >= 0)
 	{
@@ -119,13 +124,25 @@ bool FGLRenderState::ApplyShader()
 
 		if (modLights + subLights + addLights > gles.maxlights)
 			addLights = gles.maxlights - modLights - subLights;
-
+		
+		totalLights = modLights + subLights + addLights;
 
 		// Skip passed the first 4 floats so the upload below only contains light data
 		lightPtr += 4;
+
+		float* findSpotsPtr = lightPtr + 11; // The 11th float contains '1' if the light is a spot light, see hw_dynlightdata.cpp
+
+		for (int n = 0; n < totalLights; n++)
+		{
+			if (*findSpotsPtr > 0) // This is a spot light
+			{
+				flavour.hasSpotLight = true;
+				break;
+			}
+			findSpotsPtr += LIGHT_VEC4_NUM * 4;
+		}
 	}
 
-	ShaderFlavourData flavour;
 
 	flavour.textureMode = (mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) & 0xff;
 	if (mTextureClamp && flavour.textureMode == TM_NORMAL) flavour.textureMode = 5; // fixme. Clamp can now be combined with all modes.
@@ -199,13 +216,9 @@ bool FGLRenderState::ApplyShader()
 	
 	if (mHwUniforms)
 	{
-		//matrixToGL(mHwUniforms->mProjectionMatrix, activeShader->cur->ProjectionMatrix_index);
 		activeShader->cur->muProjectionMatrix.Set(&mHwUniforms->mProjectionMatrix);
 		activeShader->cur->muViewMatrix.Set(&mHwUniforms->mViewMatrix);
 		activeShader->cur->muNormalViewMatrix.Set(&mHwUniforms->mNormalViewMatrix);
-
-		//matrixToGL(mHwUniforms->mViewMatrix, activeShader->cur->ViewMatrix_index);
-		//matrixToGL(mHwUniforms->mNormalViewMatrix, activeShader->cur->NormalViewMatrix_index);
 
 		activeShader->cur->muCameraPos.Set(&mHwUniforms->mCameraPos.X);
 		activeShader->cur->muClipLine.Set(&mHwUniforms->mClipLine.X);
@@ -318,13 +331,9 @@ bool FGLRenderState::ApplyShader()
 	// Upload the light data
 	if (mLightIndex >= 0)
 	{
-		int totalLights = modLights + subLights + addLights;
-
 		// Calculate the total number of vec4s we need
 		int totalVectors = totalLights * LIGHT_VEC4_NUM;
-		
-		// TODO!!! If there are too many lights we need to remove some of the lights and modify the data
-		// At the moment the shader will just try to read off the end of the array...
+	
 		if (totalVectors > gles.numlightvectors)
 			totalVectors = gles.numlightvectors;
 

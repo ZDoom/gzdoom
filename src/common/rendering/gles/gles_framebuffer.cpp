@@ -240,11 +240,13 @@ void OpenGLFrameBuffer::Swap()
 	Finish.Reset();
 	Finish.Clock();
 
+	mVertexData->DropSync();
 
 	FPSLimit();
 	SwapBuffers();
 	
 	mVertexData->NextPipelineBuffer();
+	mVertexData->WaitSync();
 
 	RenderState()->SetVertexBuffer(screen->mVertexData); // Needed for Raze because it does not reset it
 

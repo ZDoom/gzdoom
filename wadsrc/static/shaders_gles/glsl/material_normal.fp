@@ -19,7 +19,13 @@ vec3 lightContribution(int i, vec3 normal)
 	float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
 
 
-	// NOTE, all spot light stuff gone
+#if (DEF_HAS_SPOTLIGHT == 1) // Only perform test below if there are ANY spot lights on this surface.
+
+	if (lightspot1.w == 1.0)
+		attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
+
+#endif
+
 	return lightcolor.rgb * attenuation;
 
 /* 
@@ -55,7 +61,7 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 	// modulated lights
 	
 	// Some very old GLES2 hardward does not allow non-constants in a for-loop expression because it can not unroll it.
-	// However they do allow 'break' and use stupid hack
+	// However they do allow 'break', so use stupid hack
 	#if (USE_GLSL_V100 == 1)
 
 		for(int i = 0; i < 8; i++) // Max 8 lights

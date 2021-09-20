@@ -6,7 +6,7 @@
 class FRenderState;
 
 #ifdef __ANDROID__
-#define HW_MAX_PIPELINE_BUFFERS 8
+#define HW_MAX_PIPELINE_BUFFERS 4
 #define HW_BLOCK_SSBO 1
 #else
 // On desktop this is only useful fpr letting the GPU run in parallel with the playsim and for that 2 buffers are enough.

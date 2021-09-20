@@ -15,6 +15,7 @@ EXTERN_CVAR(Bool, gl_customshader);
 
 PFNGLMAPBUFFERRANGEEXTPROC glMapBufferRange = NULL;
 PFNGLUNMAPBUFFEROESPROC glUnmapBuffer = NULL;
+
 #ifdef __ANDROID__
 #include <dlfcn.h>
 

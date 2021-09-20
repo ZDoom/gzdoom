@@ -232,6 +232,34 @@ void GLBuffer::Resize(size_t newsize)
 	}
 }
 
+void GLBuffer::GPUDropSync()
+{
+#if !(USE_GLES2)  // Only applicable when running on desktop for now
+	if (mGLSync != NULL)
+	{
+		glDeleteSync(mGLSync);
+	}
+
+	mGLSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+#endif
+}
+
+void GLBuffer::GPUWaitSync()
+{
+#if !(USE_GLES2)  // Only applicable when running on desktop for now
+	GLenum status = glClientWaitSync(mGLSync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000 * 1000 * 50); // Wait for a max of 50ms...
+
+	if (status != GL_ALREADY_SIGNALED && status != GL_CONDITION_SATISFIED)
+	{
+		//Printf("Error on glClientWaitSync: %d\n", status);
+	}
+
+	glDeleteSync(mGLSync);
+
+	mGLSync = NULL;
+#endif
+}
+
 
 //===========================================================================
 //
@@ -287,16 +315,12 @@ void GLDataBuffer::BindRange(FRenderState *state, size_t start, size_t length)
 	if (mBindingPoint == 3)// VIEWPOINT_BINDINGPOINT
 	{
 		static_cast<FGLRenderState*>(state)->ApplyViewport(memory + start);
-	}
-	else
-	{
-		//glBindBufferRange(mUseType, mBindingPoint, mBufferId, start, length);
 	} 
 }
 
 void GLDataBuffer::BindBase()
 {
-	//glBindBufferBase(mUseType, mBindingPoint, mBufferId);
+
 }
 
 

@@ -149,7 +149,7 @@ namespace OpenGLESRenderer
 		Printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
 		Printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
 		Printf("GL_SHADING_LANGUAGE_VERSION: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-		Printf("GL_EXTENSIONS:\n");
+		Printf(PRINT_LOG, "GL_EXTENSIONS:\n");
 		for (unsigned i = 0; i < m_Extensions.Size(); i++)
 		{
 			Printf(" %s\n", m_Extensions[i].GetChars());

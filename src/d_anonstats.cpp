@@ -35,6 +35,7 @@ extern int sys_ostype;
 #include "version.h"
 #include "v_video.h"
 #include "gl_interface.h"
+#include "printf.h"
 
 CVAR(Int, sys_statsenabled47, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
@@ -190,23 +191,24 @@ static int GetOSVersion()
 
 #elif defined __APPLE__
 
+#if defined(__aarch64__)
+	return 6;
+#else
 	return 5;
-
+#endif
 #else
 
 // fall-through linux stuff here
 #ifdef __arm__
-	return 8;
-#elif __ppc__
 	return 9;
 #else
 	if (sizeof(void*) == 4)	// 32 bit
 	{
-		return 6;
+		return 7;
 	}
 	else
 	{
-		return 7;
+		return 8;
 	}
 #endif
 
@@ -304,7 +306,7 @@ void D_DoAnonStats()
 	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202109.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
 		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
-#ifndef _DEBUG
+#if 1//ndef _DEBUG
 	// Don't send info in debug builds
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();

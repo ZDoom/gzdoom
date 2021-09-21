@@ -45,6 +45,7 @@ vec2 GetTexCoord();
 const int TEXF_Brightmap = 0x10000;
 const int TEXF_Detailmap = 0x20000;
 const int TEXF_Glowmap = 0x40000;
+const int TEXF_ClampY = 0x80000;
 
 //===========================================================================
 //
@@ -166,7 +167,7 @@ vec4 getTexel(vec2 st)
 	//
 	// Apply texture modes
 	//
-	switch (uTextureMode & 0xfff)
+	switch (uTextureMode & 0xffff)
 	{
 		case 1:	// TM_STENCIL
 			texel.rgb = vec3(1.0,1.0,1.0);
@@ -187,6 +188,13 @@ vec4 getTexel(vec2 st)
 			break;
 		}
 			
+		case 5:	// TM_CLAMPY
+			if (st.t < 0.0 || st.t > 1.0)
+			{
+				texel.a = 0.0;
+			}
+			break;
+			
 		case 6: // TM_OPAQUEINVERSE
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
 			break;
@@ -195,7 +203,8 @@ vec4 getTexel(vec2 st)
 			return texel;
 
 	}
-	if ((uTextureMode & 0x1000) != 0) // TM_CLAMPY
+
+	if (uTextureMode & TEXF_ClampY)
 	{
 		if (st.t < 0.0 || st.t > 1.0)
 		{

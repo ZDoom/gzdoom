@@ -144,14 +144,15 @@ bool FGLRenderState::ApplyShader()
 	}
 
 
-	flavour.textureMode = (mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) & 0xff;
-	if (mTextureClamp && flavour.textureMode == TM_NORMAL) flavour.textureMode = 5; // fixme. Clamp can now be combined with all modes.
+	int tm = GetTextureModeAndFlags(mTempTM);
+	flavour.textureMode = tm & 0xffff;
+	flavour.texFlags = tm >> 16; //Move flags to start of word
+
+	if (mTextureClamp && flavour.textureMode == TM_NORMAL) flavour.textureMode = TM_CLAMPY; // fixme. Clamp can now be combined with all modes.
 	
 	if (flavour.textureMode == -1)
 		flavour.textureMode = 0;
 
-	flavour.texFlags = mTextureModeFlags; if (!mBrightmapEnabled) flavour.texFlags &= ~(TEXF_Brightmap | TEXF_Glowmap);
-	flavour.texFlags >>= 16; //Move flags to start of word
 
 	flavour.blendFlags = (int)(mStreamData.uTextureAddColor.a + 0.01);
 
@@ -238,9 +239,6 @@ bool FGLRenderState::ApplyShader()
 	activeShader->cur->muDesaturation.Set(mStreamData.uDesaturationFactor);
 	//activeShader->cur->muFogEnabled.Set(fogset);
 
-	int f = mTextureModeFlags;
-	if (!mBrightmapEnabled) f &= ~(TEXF_Brightmap | TEXF_Glowmap);
-	//activeShader->cur->muTextureMode.Set((mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) | f);
 	activeShader->cur->muLightParms.Set(mLightParms);
 	activeShader->cur->muFogColor.Set(mStreamData.uFogColor);
 	activeShader->cur->muObjectColor.Set(mStreamData.uObjectColor);

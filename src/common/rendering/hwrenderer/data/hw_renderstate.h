@@ -378,6 +378,14 @@ public:
 		return mTextureMode;
 	}
 
+	int GetTextureModeAndFlags(int tempTM)
+	{
+		int f = mTextureModeFlags;
+		if (!mBrightmapEnabled) f &= ~(TEXF_Brightmap | TEXF_Glowmap);
+		if (mTextureClamp) f |= TEXF_ClampY;
+		return (mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) | f;
+	}
+
 	void EnableTexture(bool on)
 	{
 		mTextureEnabled = on;

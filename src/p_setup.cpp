@@ -598,6 +598,9 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	auto it = Level->GetThinkerIterator<AActor>();
 	AActor* ac;
+
+	Level->flags3 |= LEVEL3_LIGHTCREATED;
+
 	// Initial setup of the dynamic lights.
 	while ((ac = it.Next()))
 	{

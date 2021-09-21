@@ -584,7 +584,11 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
-	flags8 |= MF8_RECREATELIGHTS;
+	if (GetInfo()->LightAssociations.Size())
+	{
+		flags8 |= MF8_RECREATELIGHTS;
+		Level->flags3 |= LEVEL3_LIGHTCREATED;
+	}
 	return true;
 }
 
@@ -4799,7 +4803,11 @@ void AActor::PostBeginPlay ()
 {
 	PrevAngles = Angles;
 	flags7 |= MF7_HANDLENODELAY;
-	flags8 |= MF8_RECREATELIGHTS;
+	if (GetInfo()->LightAssociations.Size())
+	{
+		flags8 |= MF8_RECREATELIGHTS;
+		Level->flags3 |= LEVEL3_LIGHTCREATED;
+	}
 }
 
 void AActor::CallPostBeginPlay()

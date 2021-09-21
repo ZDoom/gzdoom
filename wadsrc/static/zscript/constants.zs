@@ -1333,6 +1333,15 @@ enum ELevelFlags
 	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
 	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
 	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
+	LEVEL3_E1M8SPECIAL			= 0x00000800,
+	LEVEL3_E2M8SPECIAL			= 0x00001000,
+	LEVEL3_E3M8SPECIAL			= 0x00002000,
+	LEVEL3_E4M8SPECIAL			= 0x00004000,
+	LEVEL3_E4M6SPECIAL			= 0x00008000,
+	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
+	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
+	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
+	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
 };
 
 // [RH] Compatibility flags.

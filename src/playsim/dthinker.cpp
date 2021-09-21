@@ -144,8 +144,9 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		if (Level->HasDynamicLights)
+		if (Level->lights || (Level->flags3 & LEVEL3_LIGHTCREATED))
 		{
+			Level->flags3 &= ~LEVEL3_LIGHTCREATED;
 			recreateLights();
 			for (auto light = Level->lights; light;)
 			{
@@ -174,8 +175,9 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		if (Level->lights && Level->HasDynamicLights)
+		if (Level->lights || (Level->flags3 & LEVEL3_LIGHTCREATED))
 		{
+			Level->flags3 &= ~LEVEL3_LIGHTCREATED;
 			recreateLights();
 			// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 			auto &prof = Profiles[NAME_InternalDynamicLight];

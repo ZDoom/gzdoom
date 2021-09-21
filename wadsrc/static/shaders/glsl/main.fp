@@ -204,7 +204,7 @@ vec4 getTexel(vec2 st)
 
 	}
 
-	if (uTextureMode & TEXF_ClampY)
+	if ((uTextureMode & TEXF_ClampY) != 0)
 	{
 		if (st.t < 0.0 || st.t > 1.0)
 		{

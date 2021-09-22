@@ -14,7 +14,7 @@ vec3 lightContribution(int i, vec3 normal)
 	vec3 lightdir = normalize(lightpos.xyz - pixelpos.xyz);
 	float dotprod = dot(normal, lightdir);
 
-	//if (dotprod < -0.0001) return vec3(0.0);	// light hits from the backside. This can happen with full sector light lists and must be rejected for all cases. Note that this can cause precision issues.
+	if (dotprod < -0.0001) return vec3(0.0);	// light hits from the backside. This can happen with full sector light lists and must be rejected for all cases. Note that this can cause precision issues.
 	
 	float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
 
@@ -26,29 +26,11 @@ vec3 lightContribution(int i, vec3 normal)
 
 #endif
 
-	return lightcolor.rgb * attenuation;
-
-/* 
-	if (lightspot1.w == 1.0)
-		attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-
 	if (lightcolor.a < 0.0) // Sign bit is the attenuated light flag
 	{
 		attenuation *= clamp(dotprod, 0.0, 1.0);
 	}
-
-	
-
-	if (attenuation > 0.0) // Skip shadow map test if possible
-	{
-		attenuation *= shadowAttenuation(lightpos, lightcolor.a);
-		return lightcolor.rgb * attenuation;
-	}
-	else
-	{
-		return vec3(0.0);
-	}
-*/
+	return lightcolor.rgb * attenuation;
 }
 
 
@@ -60,7 +42,7 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 #if (DEF_DYNAMIC_LIGHTS_MOD == 1)
 	// modulated lights
 	
-	// Some very old GLES2 hardward does not allow non-constants in a for-loop expression because it can not unroll it.
+	// Some very old GLES2 hardware does not allow non-constants in a for-loop expression because it can not unroll it.
 	// However they do allow 'break', so use stupid hack
 	#if (USE_GLSL_V100 == 1)
 

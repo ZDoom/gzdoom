@@ -32,6 +32,10 @@ static void* LoadGLES2Proc(const char* name)
 		{
 			glesLib = dlopen("libGLESv2.so", flags);
 		}
+		if(!glesLib)
+		{
+			glesLib = dlopen("libGLESv2.so.2", flags);
+		}
 	}
 
 	void * ret = NULL;

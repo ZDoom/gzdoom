@@ -584,7 +584,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
-	if (GetInfo()->LightAssociations.Size())
+	if (GetInfo()->LightAssociations.Size() || newstate->Light > 0)
 	{
 		flags8 |= MF8_RECREATELIGHTS;
 		Level->flags3 |= LEVEL3_LIGHTCREATED;

@@ -143,7 +143,7 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 							{
 								pos++;
 							}
-							lastcolor = FString((const char*)cstart, pos - start);
+							lastcolor = FString((const char*)cstart, pos - cstart);
 						}
 						else
 						{

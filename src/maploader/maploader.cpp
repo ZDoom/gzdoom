@@ -3274,14 +3274,15 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 void MapLoader::SetSubsectorLightmap(const LightmapSurface &surface)
 {
-	int index = surface.Type == ST_CEILING ? 1 : 0;
 	if (!surface.ControlSector)
 	{
+		int index = surface.Type == ST_CEILING ? 1 : 0;
 		surface.Subsector->lightmap[index][0] = surface;
 	}
 	else
 	{
-		const auto& ffloors = surface.Subsector->sector->e->XFloor.ffloors;
+		int index = surface.Type == ST_CEILING ? 0 : 1;
+		const auto &ffloors = surface.Subsector->sector->e->XFloor.ffloors;
 		for (unsigned int i = 0; i < ffloors.Size(); i++)
 		{
 			if (ffloors[i]->model == surface.ControlSector)
@@ -3294,18 +3295,20 @@ void MapLoader::SetSubsectorLightmap(const LightmapSurface &surface)
 
 void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 {
-	int index = 0;
-	switch (surface.Type)
-	{
-	default:
-	case ST_MIDDLEWALL: index = 1; break;
-	case ST_UPPERWALL: index = 0; break;
-	case ST_LOWERWALL: index = 3; break;
-	}
-
 	if (!surface.ControlSector)
 	{
+		int index = 0;
+		switch (surface.Type)
+		{
+		default:
+		case ST_MIDDLEWALL: index = 1; break;
+		case ST_UPPERWALL: index = 0; break;
+		case ST_LOWERWALL: index = 3; break;
+		}
+
 		surface.Side->lightmap[index][0] = surface;
+		if (surface.Type == ST_MIDDLEWALL)
+			surface.Side->lightmap[index + 1][0] = surface;
 	}
 	else
 	{
@@ -3314,7 +3317,7 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 		{
 			if (ffloors[i]->model == surface.ControlSector)
 			{
-				surface.Side->lightmap[index][i + 1] = surface;
+				surface.Side->lightmap[1][i + 1] = surface;
 			}
 		}
 	}

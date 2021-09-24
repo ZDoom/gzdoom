@@ -1216,6 +1216,15 @@ void HWWall::DoTexture(HWDrawInfo *di, int _type,seg_t * seg, int peg,
 
 	type = _type;
 
+	if (type >= RENDERWALL_TOP && type <= RENDERWALL_BOTTOM)
+	{
+		lightmap = seg->sidedef->lightmap[type - RENDERWALL_TOP];
+	}
+	else
+	{
+		lightmap = nullptr;
+	}
+
 	float floatceilingref = ceilingrefheight + tci.RowOffset(seg->sidedef->GetTextureYOffset(texpos));
 	if (peg) floatceilingref += tci.mRenderHeight - flh - v_offset;
 
@@ -1583,7 +1592,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 // 
 //
 //==========================================================================
-void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
+void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int roverIndex,
 	float ff_topleft, float ff_topright,
 	float ff_bottomleft, float ff_bottomright)
 {
@@ -1676,6 +1685,15 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 		translucent = false;
 	}
 
+	LightmapSurface *surf = nullptr;
+	if (seg->sidedef == seg->linedef->sidedef[0])
+		surf = seg->linedef->sidedef[1]->lightmap[1];
+	else
+		surf = seg->linedef->sidedef[0]->lightmap[1];
+
+	if (surf)
+		lightmap = &surf[1 + roverIndex];
+
 	sector_t * sec = sub ? sub->sector : seg->frontsector;
 
 	if (sec->e->XFloor.lightlist.Size() == 0 || di->isFullbrightScene()) PutWall(di, translucent);
@@ -1744,7 +1762,7 @@ void HWWall::InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 		}
 		if (ff_topleft < ff_bottomleft || ff_topright < ff_bottomright) continue;
 
-		BuildFFBlock(di, seg, rover, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
+		BuildFFBlock(di, seg, rover, i, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
 		topleft = ff_bottomleft;
 		topright = ff_bottomright;
 
@@ -1757,7 +1775,7 @@ void HWWall::InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 // 
 //
 //==========================================================================
-void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
+void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, int ffloorIndex, sector_t * frontsector,
 	float topleft, float topright,
 	float bottomleft, float bottomright)
 {
@@ -1808,7 +1826,7 @@ void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_
 		}
 		else if (ff_topleft <= topleft && ff_topright <= topright)
 		{
-			BuildFFBlock(di, seg, ffloor, topleft, topright, ff_topleft, ff_topright);
+			BuildFFBlock(di, seg, ffloor, ffloorIndex, topleft, topright, ff_topleft, ff_topright);
 			if (ff_bottomleft <= bottomleft && ff_bottomright <= bottomright) return;
 			topleft = ff_bottomleft;
 			topright = ff_bottomright;
@@ -1823,7 +1841,7 @@ void HWWall::ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_
 
 done:
 	// if the program reaches here there is one block left to draw
-	BuildFFBlock(di, seg, ffloor, topleft, topright, bottomleft, bottomright);
+	BuildFFBlock(di, seg, ffloor, ffloorIndex, topleft, topright, bottomleft, bottomright);
 }
 
 //==========================================================================
@@ -1897,9 +1915,9 @@ void HWWall::DoFFloorBlocks(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 
 		// if translucent or liquid clip away adjoining parts of the same type of FFloors on the other side
 		if (rover->flags&(FF_SWIMMABLE | FF_TRANSLUCENT))
-			ClipFFloors(di, seg, rover, frontsector, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
+			ClipFFloors(di, seg, rover, i, frontsector, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
 		else
-			BuildFFBlock(di, seg, rover, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
+			BuildFFBlock(di, seg, rover, i, ff_topleft, ff_topright, ff_bottomleft, ff_bottomright);
 
 		topleft = ff_bottomleft;
 		topright = ff_bottomright;
@@ -1939,6 +1957,8 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		int a = 0;
 	}
 #endif
+
+	lightmap = nullptr;
 
 	// note: we always have a valid sidedef and linedef reference when getting here.
 

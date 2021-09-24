@@ -194,16 +194,12 @@ static float ZeroLightmapUVs[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.
 
 int HWWall::CreateVertices(FFlatVertex *&ptr, bool split)
 {
-	float *lightuv = ZeroLightmapUVs;
+	float* lightuv = ZeroLightmapUVs;
 	float lindex = -1.0f;
-	if (seg && seg->sidedef && type >= RENDERWALL_TOP && type <= RENDERWALL_BOTTOM)
+	if (lightmap && lightmap->Type != ST_NULL)
 	{
-		LightmapSurface *lightmap = seg->sidedef->lightmap[type - RENDERWALL_TOP];
-		if (lightmap != nullptr && lightmap->Type != ST_NULL)
-		{
-			lightuv = lightmap->TexCoords;
-			lindex = (float)lightmap->LightmapNum;
-		}
+		lightuv = lightmap->TexCoords;
+		lindex = (float)lightmap->LightmapNum;
 	}
 
 	auto oo = ptr;

@@ -58,6 +58,7 @@ struct sector_t;
 class AActor;
 struct FSection;
 struct FLevelLocals;
+struct LightmapSurface;
 
 const uint16_t NO_INDEX = 0xffffu;
 const uint32_t NO_SIDE = 0xffffffffu;
@@ -706,6 +707,8 @@ struct sector_t
 	double			vboheight[HW_MAX_PIPELINE_BUFFERS][2];	// Last calculated height for the 2 planes of this actual sector
 	int				vbocount[2];	// Total count of vertices belonging to this sector's planes. This is used when a sector height changes and also contains all attached planes.
 	int				ibocount;		// number of indices per plane (identical for all planes.) If this is -1 the index buffer is not in use.
+
+	bool HasLightmaps = false;		// Sector has lightmaps, each subsector vertex needs its own unique lightmap UV data
 
 	// Below are all properties which are not used by the renderer.
 
@@ -1458,6 +1461,8 @@ struct line_t
 	int			healthgroup; // [ZZ] this is the "destructible object" id
 	int			linenum;
 
+	LightmapSurface *lightmap[4];
+
 	DVector2 Delta() const
 	{
 		return delta;
@@ -1615,6 +1620,8 @@ struct subsector_t
 	int Index() const { return subsectornum; }
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
+
+	LightmapSurface *lightmap[2];
 };
 
 
@@ -1657,6 +1664,28 @@ struct FMiniBSP
 	TArray<seg_t> Segs;
 	TArray<subsector_t> Subsectors;
 	TArray<vertex_t> Verts;
+};
+
+// Lightmap data
+
+enum SurfaceType
+{
+	ST_NULL,
+	ST_MIDDLEWALL,
+	ST_UPPERWALL,
+	ST_LOWERWALL,
+	ST_CEILING,
+	ST_FLOOR
+};
+
+struct LightmapSurface
+{
+	SurfaceType Type;
+	subsector_t *Subsector;
+	line_t *Line;
+	sector_t *ControlSector;
+	uint32_t LightmapNum;
+	float *TexCoords;
 };
 
 //

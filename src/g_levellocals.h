@@ -451,6 +451,13 @@ public:
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;
 
+	// Lightmaps
+	TArray<LightmapSurface> LMSurfaces;
+	TArray<float> LMTexCoords;
+	int LMTextureCount = 0;
+	int LMTextureSize = 0;
+	TArray<uint8_t> LMTextureData;
+
 	// Portal information.
 	FDisplacementTable Displacements;
 	FPortalBlockmap PortalBlockmap;

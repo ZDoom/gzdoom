@@ -219,6 +219,8 @@ public:
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
 	virtual void BlurScene(float amount) {}
+
+	virtual void InitLightmap() {}
     
     // Interface to hardware rendering resources
 	virtual IVertexBuffer *CreateVertexBuffer() { return nullptr; }

@@ -3206,6 +3206,12 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	SpawnThings(position);
 
+	// Load and link lightmaps - must be done after P_Spawn3DFloors (and SpawnThings? Potentially for baking static model actors?)
+	if (!ForceNodeBuild)
+	{
+		LoadLightmap(map);
+	}
+
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (Level->PlayerInGame(i) && Level->Players[i]->mo != nullptr)
@@ -3241,6 +3247,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	CreateVBO(screen->mVertexData, Level->sectors);
 
+	screen->InitLightmap();
+
 	for (auto &sec : Level->sectors)
 	{
 		P_Recalculate3DFloors(&sec);
@@ -3258,3 +3266,163 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->aabbTree = new DoomLevelAABBTree(Level);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void MapLoader::SetSubsectorLightmap(const LightmapSurface &surface)
+{
+	int index = surface.Type == ST_CEILING ? 1 : 0;
+	if (!surface.ControlSector)
+	{
+		surface.Subsector->lightmap[index][0] = surface;
+	}
+	else
+	{
+		const auto& ffloors = surface.Subsector->sector->e->XFloor.ffloors;
+		for (unsigned int i = 0; i < ffloors.Size(); i++)
+		{
+			if (ffloors[i]->model == surface.ControlSector)
+			{
+				surface.Subsector->lightmap[index][i + 1] = surface;
+			}
+		}
+	}
+}
+
+void MapLoader::SetLineLightmap(const LightmapSurface &surface)
+{
+	int index = 0;
+	switch (surface.Type)
+	{
+	default:
+	case ST_MIDDLEWALL: index = 1; break;
+	case ST_UPPERWALL: index = 0; break;
+	case ST_LOWERWALL: index = 3; break;
+	}
+
+	if (!surface.ControlSector)
+	{
+		surface.Line->lightmap[index][0] = surface;
+	}
+	else
+	{
+		const auto& ffloors = surface.Line->frontsector->e->XFloor.ffloors;
+		for (unsigned int i = 0; i < ffloors.Size(); i++)
+		{
+			if (ffloors[i]->model == surface.ControlSector)
+			{
+				surface.Line->lightmap[index][i + 1] = surface;
+			}
+		}
+	}
+}
+
+void MapLoader::LoadLightmap(MapData *map)
+{
+	if (!map->Size(ML_LIGHTMAP))
+		return;
+
+	FileReader fr;
+	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
+		return;
+
+	int version = fr.ReadInt32();
+	if (version != 0)
+		return;
+
+	uint16_t textureSize = fr.ReadUInt16();
+	uint16_t numTextures = fr.ReadUInt16();
+	uint32_t numSurfaces = fr.ReadUInt32();
+	uint32_t numTexCoords = fr.ReadUInt32();
+	uint32_t numTexBytes = numSurfaces * numTextures * textureSize * 2;
+
+	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
+		return;
+
+	Level->LMTexCoords.Resize(numTexCoords * 2);
+
+	// Allocate room for all surfaces
+
+	unsigned int allSurfaces = 0;
+
+	for (unsigned int i = 0; i < Level->lines.Size(); i++)
+		allSurfaces += 3 + Level->lines[i].frontsector->e->XFloor.ffloors.Size() * 3;
+
+	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+		allSurfaces += 2 + Level->subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
+
+	Level->LMSurfaces.Resize(allSurfaces);
+	memset(&Level->LMSurfaces[0], 0, sizeof(LightmapSurface) * allSurfaces);
+
+	// Link the surfaces to sectors, lines and their 3D floors
+
+	unsigned int offset = 0;
+	for (unsigned int i = 0; i < Level->lines.Size(); i++)
+	{
+		auto& line = Level->lines[i];
+		unsigned int count = 1 + line.frontsector->e->XFloor.ffloors.Size();
+		line.lightmap[0] = &Level->LMSurfaces[offset];
+		line.lightmap[1] = &Level->LMSurfaces[offset + count];
+		line.lightmap[2] = line.lightmap[1];
+		line.lightmap[3] = &Level->LMSurfaces[offset + count * 2];
+		offset += count * 3;
+	}
+	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+	{
+		auto& subsector = Level->subsectors[i];
+		unsigned int count = 1 + subsector.sector->e->XFloor.ffloors.Size();
+		subsector.lightmap[0] = &Level->LMSurfaces[offset];
+		subsector.lightmap[1] = &Level->LMSurfaces[offset + count];
+		offset += count * 2;
+	}
+
+	// Load the surfaces we have lightmap data for
+
+	for (uint32_t i = 0; i < numSurfaces; i++)
+	{
+		LightmapSurface surface;
+		memset(&surface, 0, sizeof(LightmapSurface));
+
+		SurfaceType type = (SurfaceType)fr.ReadUInt32();
+		uint32_t typeIndex = fr.ReadUInt32();
+		uint32_t controlSector = fr.ReadUInt32();
+		uint32_t lightmapNum = fr.ReadUInt32();
+		uint32_t firstTexCoord = fr.ReadUInt32();
+
+		if (controlSector != 0xffffffff)
+			surface.ControlSector = &Level->sectors[controlSector];
+
+		surface.Type = type;
+		surface.LightmapNum = lightmapNum;
+		surface.TexCoords = &Level->LMTexCoords[firstTexCoord];
+
+		if (type == ST_CEILING || type == ST_FLOOR)
+		{
+			surface.Subsector = &Level->subsectors[typeIndex];
+			surface.Subsector->firstline->sidedef->sector->HasLightmaps = true;
+			SetSubsectorLightmap(surface);
+		}
+		else if (type != ST_NULL)
+		{
+			surface.Line = &Level->lines[typeIndex];
+			SetLineLightmap(surface);
+		}
+	}
+
+	// Load texture coordinates
+
+	fr.Read(&Level->LMTexCoords[0], numTexCoords * 2 * sizeof(float));
+
+	// Load lightmap textures
+
+	Level->LMTextureCount = numTextures;
+	Level->LMTextureSize = textureSize;
+	Level->LMTextureData.Resize(numTexBytes);
+	uint8_t* data = &Level->LMTextureData[0];
+	fr.Read(data, numTexBytes);
+	for (uint32_t i = 1; i < numTexBytes; i++)
+		data[i] += data[i - 1];
+}

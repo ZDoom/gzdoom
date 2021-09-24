@@ -626,6 +626,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	int shadowmapindex = glGetUniformLocation(hShader, "ShadowMap");
 	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
 
+	int lightmapindex = glGetUniformLocation(hShader, "LightMap");
+	if (lightmapindex > 0) glUniform1i(lightmapindex, 17);
+
 	glUseProgram(0);
 	return linked;
 }

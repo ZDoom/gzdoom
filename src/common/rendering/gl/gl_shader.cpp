@@ -298,6 +298,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		// textures
 		uniform sampler2D tex;
 		uniform sampler2D ShadowMap;
+		uniform sampler2DArray LightMap;
 		uniform sampler2D texture2;
 		uniform sampler2D texture3;
 		uniform sampler2D texture4;

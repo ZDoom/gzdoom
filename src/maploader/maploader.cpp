@@ -3247,7 +3247,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	CreateVBO(screen->mVertexData, Level->sectors);
 
-	screen->InitLightmap();
+	screen->InitLightmap(Level);
 
 	for (auto &sec : Level->sectors)
 	{

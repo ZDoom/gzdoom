@@ -7,10 +7,12 @@ layout(location = 3) in vec3 glowdist;
 layout(location = 4) in vec3 gradientdist;
 layout(location = 5) in vec4 vWorldNormal;
 layout(location = 6) in vec4 vEyeNormal;
+layout(location = 7) in vec3 vLightmap;
 
 #ifdef NO_CLIPDISTANCE_SUPPORT
 layout(location = 7) in vec4 ClipDistanceA;
 layout(location = 8) in vec4 ClipDistanceB;
+layout(location = 9) in vec3 vLightmap;
 #endif
 
 layout(location=0) out vec4 FragColor;
@@ -654,6 +656,14 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	// apply other light manipulation by custom shaders, default is a NOP.
 	//
 	color = ProcessLight(material, color);
+
+	//
+	// apply lightmaps
+	//
+	if (vLightmap.z >= 0.0)
+	{
+		color.rgb += texture(LightMap, vLightmap).rgb;
+	}
 
 	//
 	// apply dynamic lights

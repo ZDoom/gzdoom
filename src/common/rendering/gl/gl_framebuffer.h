@@ -50,6 +50,8 @@ public:
 	IIndexBuffer *CreateIndexBuffer() override;
 	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) override;
 
+	void InitLightmap(FLevelLocals* Level) override;
+
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.

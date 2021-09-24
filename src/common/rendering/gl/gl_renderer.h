@@ -61,6 +61,8 @@ public:
 	FPresent3DRowShader *mPresent3dRowShader = nullptr;
 	FShadowMapShader *mShadowMapShader = nullptr;
 
+	int mLightMapID = 0;
+
 	//FRotator mAngles;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);

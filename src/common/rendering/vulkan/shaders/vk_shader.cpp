@@ -172,6 +172,7 @@ static const char *shaderBindings = R"(
 	};
 
 	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
+	layout(set = 0, binding = 5) uniform sampler2DArray LightMap;
 
 	// textures
 	layout(set = 1, binding = 0) uniform sampler2D tex;

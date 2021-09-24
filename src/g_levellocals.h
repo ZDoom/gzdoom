@@ -456,7 +456,7 @@ public:
 	TArray<float> LMTexCoords;
 	int LMTextureCount = 0;
 	int LMTextureSize = 0;
-	TArray<uint8_t> LMTextureData;
+	TArray<uint16_t> LMTextureData;
 
 	// Portal information.
 	FDisplacementTable Displacements;

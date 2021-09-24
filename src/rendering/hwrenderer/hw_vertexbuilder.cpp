@@ -191,7 +191,7 @@ static void SetFlatVertex(FFlatVertex& ffv, vertex_t* vt, const secplane_t& plan
 	ffv.lindex = -1.0f;
 }
 
-static void SetFlatVertex(FFlatVertex& ffv, vertex_t* vt, const secplane_t& plane, float llu, float llv, float llindex)
+static void SetFlatVertex(FFlatVertex& ffv, vertex_t* vt, const secplane_t& plane, float llu, float llv, int llindex)
 {
 	ffv.x = (float)vt->fX();
 	ffv.y = (float)vt->fY();
@@ -200,7 +200,7 @@ static void SetFlatVertex(FFlatVertex& ffv, vertex_t* vt, const secplane_t& plan
 	ffv.v = -(float)vt->fY() / 64.f;
 	ffv.lu = llu;
 	ffv.lv = llv;
-	ffv.lindex = llindex;
+	ffv.lindex = (float)llindex;
 }
 
 //==========================================================================

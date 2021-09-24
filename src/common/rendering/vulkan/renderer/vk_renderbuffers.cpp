@@ -78,6 +78,7 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 		CreateScene(width, height, samples);
 
 	CreateShadowmap();
+	CreateLightmapSampler();
 
 	mWidth = width;
 	mHeight = height;
@@ -267,5 +268,43 @@ void VkRenderBuffers::CreateShadowmap()
 		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 		ShadowmapSampler = builder.create(fb->device);
 		ShadowmapSampler->SetDebugName("VkRenderBuffers.ShadowmapSampler");
+	}
+}
+
+void VkRenderBuffers::CreateLightmapSampler()
+{
+	if (!Lightmap.Image)
+	{
+		auto fb = GetVulkanFrameBuffer();
+
+		ImageBuilder builder;
+		builder.setSize(1, 1);
+		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
+		builder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT);
+		Lightmap.Image = builder.create(fb->device);
+		Lightmap.Image->SetDebugName("VkRenderBuffers.Lightmap");
+
+		ImageViewBuilder viewbuilder;
+		viewbuilder.setType(VK_IMAGE_VIEW_TYPE_2D_ARRAY);
+		viewbuilder.setImage(Lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
+		Lightmap.View = viewbuilder.create(fb->device);
+		Lightmap.View->SetDebugName("VkRenderBuffers.LightmapView");
+
+		VkImageTransition barrier;
+		barrier.addImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
+		barrier.execute(fb->GetDrawCommands());
+	}
+
+	if (!LightmapSampler)
+	{
+		auto fb = GetVulkanFrameBuffer();
+
+		SamplerBuilder builder;
+		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+		builder.setMinFilter(VK_FILTER_LINEAR);
+		builder.setMagFilter(VK_FILTER_LINEAR);
+		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+		LightmapSampler = builder.create(fb->device);
+		LightmapSampler->SetDebugName("VkRenderBuffers.LightmapSampler");
 	}
 }

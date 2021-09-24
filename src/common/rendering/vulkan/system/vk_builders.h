@@ -38,7 +38,7 @@ class ImageBuilder
 public:
 	ImageBuilder();
 
-	void setSize(int width, int height, int miplevels = 1);
+	void setSize(int width, int height, int miplevels = 1, int arrayLayers = 1);
 	void setSamples(VkSampleCountFlagBits samples);
 	void setFormat(VkFormat format);
 	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
@@ -60,6 +60,7 @@ class ImageViewBuilder
 public:
 	ImageViewBuilder();
 
+	void setType(VkImageViewType type);
 	void setImage(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT);
 
 	std::unique_ptr<VulkanImageView> create(VulkanDevice *device);
@@ -374,11 +375,12 @@ inline ImageBuilder::ImageBuilder()
 	imageInfo.flags = 0;
 }
 
-inline void ImageBuilder::setSize(int width, int height, int mipLevels)
+inline void ImageBuilder::setSize(int width, int height, int mipLevels, int arrayLayers)
 {
 	imageInfo.extent.width = width;
 	imageInfo.extent.height = height;
 	imageInfo.mipLevels = mipLevels;
+	imageInfo.arrayLayers = arrayLayers;
 }
 
 inline void ImageBuilder::setSamples(VkSampleCountFlagBits samples)
@@ -472,6 +474,11 @@ inline ImageViewBuilder::ImageViewBuilder()
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+}
+
+inline void ImageViewBuilder::setType(VkImageViewType type)
+{
+	viewInfo.viewType = type;
 }
 
 inline void ImageViewBuilder::setImage(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask)

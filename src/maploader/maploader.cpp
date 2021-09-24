@@ -3423,8 +3423,8 @@ void MapLoader::LoadLightmap(MapData *map)
 
 	Level->LMTextureCount = numTextures;
 	Level->LMTextureSize = textureSize;
-	Level->LMTextureData.Resize(numTexBytes);
-	uint8_t* data = &Level->LMTextureData[0];
+	Level->LMTextureData.Resize((numTexBytes + 1) / 2);
+	uint8_t* data = (uint8_t*)&Level->LMTextureData[0];
 	fr.Read(data, numTexBytes);
 #if 0
 	// Apply compression predictor

@@ -3292,7 +3292,7 @@ void MapLoader::SetSubsectorLightmap(const LightmapSurface &surface)
 	}
 }
 
-void MapLoader::SetLineLightmap(const LightmapSurface &surface)
+void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 {
 	int index = 0;
 	switch (surface.Type)
@@ -3305,16 +3305,16 @@ void MapLoader::SetLineLightmap(const LightmapSurface &surface)
 
 	if (!surface.ControlSector)
 	{
-		surface.Line->lightmap[index][0] = surface;
+		surface.Side->lightmap[index][0] = surface;
 	}
 	else
 	{
-		const auto& ffloors = surface.Line->frontsector->e->XFloor.ffloors;
+		const auto &ffloors = surface.Side->sector->e->XFloor.ffloors;
 		for (unsigned int i = 0; i < ffloors.Size(); i++)
 		{
 			if (ffloors[i]->model == surface.ControlSector)
 			{
-				surface.Line->lightmap[index][i + 1] = surface;
+				surface.Side->lightmap[index][i + 1] = surface;
 			}
 		}
 	}
@@ -3337,7 +3337,7 @@ void MapLoader::LoadLightmap(MapData *map)
 	uint16_t numTextures = fr.ReadUInt16();
 	uint32_t numSurfaces = fr.ReadUInt32();
 	uint32_t numTexCoords = fr.ReadUInt32();
-	uint32_t numTexBytes = numSurfaces * numTextures * textureSize * 2;
+	uint32_t numTexBytes = numTextures * textureSize * textureSize * 3 * 2;
 
 	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
 		return;
@@ -3348,8 +3348,8 @@ void MapLoader::LoadLightmap(MapData *map)
 
 	unsigned int allSurfaces = 0;
 
-	for (unsigned int i = 0; i < Level->lines.Size(); i++)
-		allSurfaces += 3 + Level->lines[i].frontsector->e->XFloor.ffloors.Size() * 3;
+	for (unsigned int i = 0; i < Level->sides.Size(); i++)
+		allSurfaces += 3 + Level->sides[i].sector->e->XFloor.ffloors.Size() * 3;
 
 	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
 		allSurfaces += 2 + Level->subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
@@ -3357,17 +3357,17 @@ void MapLoader::LoadLightmap(MapData *map)
 	Level->LMSurfaces.Resize(allSurfaces);
 	memset(&Level->LMSurfaces[0], 0, sizeof(LightmapSurface) * allSurfaces);
 
-	// Link the surfaces to sectors, lines and their 3D floors
+	// Link the surfaces to sectors, sides and their 3D floors
 
 	unsigned int offset = 0;
-	for (unsigned int i = 0; i < Level->lines.Size(); i++)
+	for (unsigned int i = 0; i < Level->sides.Size(); i++)
 	{
-		auto& line = Level->lines[i];
-		unsigned int count = 1 + line.frontsector->e->XFloor.ffloors.Size();
-		line.lightmap[0] = &Level->LMSurfaces[offset];
-		line.lightmap[1] = &Level->LMSurfaces[offset + count];
-		line.lightmap[2] = line.lightmap[1];
-		line.lightmap[3] = &Level->LMSurfaces[offset + count * 2];
+		auto& side = Level->sides[i];
+		unsigned int count = 1 + side.sector->e->XFloor.ffloors.Size();
+		side.lightmap[0] = &Level->LMSurfaces[offset];
+		side.lightmap[1] = &Level->LMSurfaces[offset + count];
+		side.lightmap[2] = side.lightmap[1];
+		side.lightmap[3] = &Level->LMSurfaces[offset + count * 2];
 		offset += count * 3;
 	}
 	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
@@ -3397,7 +3397,7 @@ void MapLoader::LoadLightmap(MapData *map)
 
 		surface.Type = type;
 		surface.LightmapNum = lightmapNum;
-		surface.TexCoords = &Level->LMTexCoords[firstTexCoord];
+		surface.TexCoords = &Level->LMTexCoords[firstTexCoord * 2];
 
 		if (type == ST_CEILING || type == ST_FLOOR)
 		{
@@ -3407,8 +3407,8 @@ void MapLoader::LoadLightmap(MapData *map)
 		}
 		else if (type != ST_NULL)
 		{
-			surface.Line = &Level->lines[typeIndex];
-			SetLineLightmap(surface);
+			surface.Side = &Level->sides[typeIndex];
+			SetSideLightmap(surface);
 		}
 	}
 
@@ -3423,6 +3423,9 @@ void MapLoader::LoadLightmap(MapData *map)
 	Level->LMTextureData.Resize(numTexBytes);
 	uint8_t* data = &Level->LMTextureData[0];
 	fr.Read(data, numTexBytes);
+#if 0
+	// Apply compression predictor
 	for (uint32_t i = 1; i < numTexBytes; i++)
 		data[i] += data[i - 1];
+#endif
 }

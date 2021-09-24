@@ -1219,6 +1219,7 @@ struct side_t
 	uint16_t	Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
+	LightmapSurface *lightmap[4];
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
 	int numsegs;
 	int sidenum;
@@ -1461,8 +1462,6 @@ struct line_t
 	int			healthgroup; // [ZZ] this is the "destructible object" id
 	int			linenum;
 
-	LightmapSurface *lightmap[4];
-
 	DVector2 Delta() const
 	{
 		return delta;
@@ -1682,7 +1681,7 @@ struct LightmapSurface
 {
 	SurfaceType Type;
 	subsector_t *Subsector;
-	line_t *Line;
+	side_t *Side;
 	sector_t *ControlSector;
 	uint32_t LightmapNum;
 	float *TexCoords;

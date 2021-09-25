@@ -81,12 +81,11 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	int texformat = GL_RGBA;// TexFormat[gl_texture_format];
 	bool deletebuffer=false;
 
-	/*
-	if (forcenocompression)
-	{
-		texformat = GL_RGBA8;
-	}
-	*/
+	// When running in SW mode buffer will be null, so set it to the texBuffer already created
+	// There could be other use cases I do not know about which means this is a bad idea..
+	if (buffer == nullptr)
+		buffer = texBuffer;
+
 	bool firstCall = glTexID == 0;
 	if (firstCall)
 	{
@@ -136,9 +135,19 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	sourcetype = GL_BGRA;
 	texformat = GL_BGRA;
 #else
-	sourcetype = GL_BGRA;
-	texformat = GL_RGBA;
+	if (glTextureBytes == 1)
+	{
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		sourcetype = GL_RED;
+		texformat = GL_R8;
+	}
+	else
+	{
+		sourcetype = GL_BGRA;
+		texformat = GL_RGBA;
+	}
 #endif
+
 	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, sourcetype, GL_UNSIGNED_BYTE, buffer);
 
 	if (deletebuffer && buffer) free(buffer);
@@ -155,6 +164,26 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 }
 
 
+void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize) 
+{	
+	int rw = GetTexDimension(w);
+	int rh = GetTexDimension(h);
+
+	if (texelsize < 1 || texelsize > 4) texelsize = 4;
+	glTextureBytes = texelsize;
+	bufferpitch = w;
+
+	if (texBuffer)
+		delete[] texBuffer;
+
+	texBuffer = new uint8_t[(w * h) * texelsize];
+	return;
+}
+
+uint8_t* FHardwareTexture::MapBuffer()
+{
+	return texBuffer;
+}
 
 //===========================================================================
 // 
@@ -164,6 +193,9 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 FHardwareTexture::~FHardwareTexture() 
 { 
 	if (glTexID != 0) glDeleteTextures(1, &glTexID);
+
+	if (texBuffer)
+		delete[] texBuffer;
 }
 
 

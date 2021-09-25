@@ -3340,12 +3340,19 @@ void MapLoader::LoadLightmap(MapData *map)
 	uint16_t numTextures = fr.ReadUInt16();
 	uint32_t numSurfaces = fr.ReadUInt32();
 	uint32_t numTexCoords = fr.ReadUInt32();
+	uint32_t numLightProbes = fr.ReadUInt32();
 	uint32_t numTexBytes = numTextures * textureSize * textureSize * 3 * 2;
 
 	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
 		return;
 
 	Level->LMTexCoords.Resize(numTexCoords * 2);
+
+	if (numLightProbes > 0)
+	{
+		Level->LightProbes.Resize(numLightProbes);
+		fr.Read(&Level->LightProbes[0], sizeof(LightProbe) * numLightProbes);
+	}
 
 	// Allocate room for all surfaces
 

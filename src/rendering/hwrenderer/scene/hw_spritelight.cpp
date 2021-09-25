@@ -57,7 +57,8 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 	float frac, lr, lg, lb;
 	float radius;
 	
-	out[0] = out[1] = out[2] = 0.f;
+	self->Level->GetLightProbeLight(x, y, z, out);
+
 	// Go through both light lists
 	while (node)
 	{

@@ -1687,6 +1687,12 @@ struct LightmapSurface
 	float *TexCoords;
 };
 
+struct LightProbe
+{
+	float X, Y, Z;
+	float Red, Green, Blue;
+};
+
 //
 // OTHER TYPES
 //

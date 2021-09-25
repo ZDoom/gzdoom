@@ -429,6 +429,7 @@ public:
 	
 	void SetMusic();
 
+	void GetLightProbeLight(float x, float y, float z, float* out);
 
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
@@ -457,6 +458,7 @@ public:
 	int LMTextureCount = 0;
 	int LMTextureSize = 0;
 	TArray<uint16_t> LMTextureData;
+	TArray<LightProbe> LightProbes;
 
 	// Portal information.
 	FDisplacementTable Displacements;

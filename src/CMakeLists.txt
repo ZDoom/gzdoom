@@ -976,6 +976,7 @@ set (PCH_SOURCES
 	r_data/colormaps.cpp
 	r_data/gldefs.cpp
 	r_data/a_dynlightdata.cpp
+	r_data/a_lightprobe.cpp
 	r_data/r_translate.cpp
 	r_data/sprites.cpp
 	r_data/portalgroups.cpp

@@ -90,6 +90,7 @@ version "4.6"
 #include "zscript/actors/shared/fastprojectile.zs"
 #include "zscript/actors/shared/randomspawner.zs"
 #include "zscript/actors/shared/dynlights.zs"
+#include "zscript/actors/shared/lightprobe.zs"
 
 #include "zscript/actors/doom/doomplayer.zs"
 #include "zscript/actors/doom/possessed.zs"

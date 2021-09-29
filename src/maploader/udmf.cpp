@@ -752,6 +752,14 @@ public:
 				th->friendlyseeblocks = CheckInt(key);
 				break;
 
+			case NAME_Lightcolor:
+			case NAME_lightintensity:
+			case NAME_lightdistance:
+			case NAME_lightinnerangle:
+			case NAME_lightouterangle:
+				CHECK_N(Zd | Zdt)
+				break;
+
 			default:
 				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))
@@ -1121,6 +1129,12 @@ public:
 			case NAME_HealthGroup:
 				ld->healthgroup = CheckInt(key);
 				break;
+
+			case NAME_Lightcolor:
+			case NAME_lightintensity:
+			case NAME_lightdistance:
+				CHECK_N(Zd | Zdt)
+					break;
 
 			default:
 				if (strnicmp("user_", key.GetChars(), 5))
@@ -1947,7 +1961,16 @@ public:
 				case NAME_Health3DGroup:
 					sec->health3dgroup = CheckInt(key);
 					break;
-					
+
+				case NAME_lightcolorfloor:
+				case NAME_lightintensityfloor:
+				case NAME_lightdistancefloor:
+				case NAME_lightcolorceiling:
+				case NAME_lightintensityceiling:
+				case NAME_lightdistanceceiling:
+					CHECK_N(Zd | Zdt)
+						break;
+
 				default:
 					if (strnicmp("user_", key.GetChars(), 5))
 						DPrintf(DMSG_WARNING, "Unknown UDMF sector key %s\n", key.GetChars());

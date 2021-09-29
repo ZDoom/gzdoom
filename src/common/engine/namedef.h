@@ -690,6 +690,19 @@ xx(HealthCeilingGroup)
 xx(Health3DGroup)
 xx(HealthGroup)
 
+// Lightmap keywords
+//xx(lightcolor) // already defined
+xx(lightintensity)
+xx(lightdistance)
+xx(lightinnerangle)
+xx(lightouterangle)
+xx(lightcolorfloor)
+xx(lightintensityfloor)
+xx(lightdistancefloor)
+xx(lightcolorceiling)
+xx(lightintensityceiling)
+xx(lightdistanceceiling)
+
 // USDF keywords
 xx(Amount)
 xx(Text)

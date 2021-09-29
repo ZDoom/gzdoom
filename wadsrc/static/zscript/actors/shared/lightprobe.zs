@@ -1,14 +1,9 @@
 class LightProbe : Actor native
 {
-	Default
-	{
-		+NOINTERACTION
-	}
-
 	States
 	{
 	Spawn:
-		LPRO A -1;
+		LPRO A 0;
 		Stop;
 	}
 }

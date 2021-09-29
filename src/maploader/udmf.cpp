@@ -112,13 +112,13 @@ static inline bool P_IsThingSpecial(int specnum)
 
 enum
 {
-	Dm=1,
-	Ht=2,
-	Hx=4,
-	St=8,
-	Zd=16,
-	Zdt=32,
-	Va=64,
+	Dm=1,		// Doom
+	Ht=2,		// Heretic
+	Hx=4,		// Hexen
+	St=8,		// Strife
+	Zd=16,		// ZDoom
+	Zdt=32,		// ZDoom Translated
+	Va=64,		// Vavoom
 
 	// will be extended later. Unknown namespaces will always be treated like the base
 	// namespace for each game

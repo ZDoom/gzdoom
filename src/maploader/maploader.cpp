@@ -3297,18 +3297,19 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 {
 	if (!surface.ControlSector)
 	{
-		int index = 0;
-		switch (surface.Type)
+		if (surface.Type == ST_UPPERWALL)
 		{
-		default:
-		case ST_MIDDLEWALL: index = 1; break;
-		case ST_UPPERWALL: index = 0; break;
-		case ST_LOWERWALL: index = 3; break;
+			surface.Side->lightmap[0] = surface;
 		}
-
-		surface.Side->lightmap[index][0] = surface;
-		if (surface.Type == ST_MIDDLEWALL)
-			surface.Side->lightmap[index + 1][0] = surface;
+		else if (surface.Type == ST_MIDDLEWALL)
+		{
+			surface.Side->lightmap[1] = surface;
+			surface.Side->lightmap[2] = surface;
+		}
+		else if (surface.Type == ST_LOWERWALL)
+		{
+			surface.Side->lightmap[3] = surface;
+		}
 	}
 	else
 	{
@@ -3317,7 +3318,7 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 		{
 			if (ffloors[i]->model == surface.ControlSector)
 			{
-				surface.Side->lightmap[1][i + 1] = surface;
+				surface.Side->lightmap[4 + i] = surface;
 			}
 		}
 	}
@@ -3359,7 +3360,7 @@ void MapLoader::LoadLightmap(MapData *map)
 	unsigned int allSurfaces = 0;
 
 	for (unsigned int i = 0; i < Level->sides.Size(); i++)
-		allSurfaces += 3 + Level->sides[i].sector->e->XFloor.ffloors.Size() * 3;
+		allSurfaces += 4 + Level->sides[i].sector->e->XFloor.ffloors.Size();
 
 	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
 		allSurfaces += 2 + Level->subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
@@ -3373,12 +3374,8 @@ void MapLoader::LoadLightmap(MapData *map)
 	for (unsigned int i = 0; i < Level->sides.Size(); i++)
 	{
 		auto& side = Level->sides[i];
-		unsigned int count = 1 + side.sector->e->XFloor.ffloors.Size();
-		side.lightmap[0] = &Level->LMSurfaces[offset];
-		side.lightmap[1] = &Level->LMSurfaces[offset + count];
-		side.lightmap[2] = side.lightmap[1];
-		side.lightmap[3] = &Level->LMSurfaces[offset + count * 2];
-		offset += count * 3;
+		side.lightmap = &Level->LMSurfaces[offset];
+		offset += 4 + side.sector->e->XFloor.ffloors.Size();
 	}
 	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
 	{

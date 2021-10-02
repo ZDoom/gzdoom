@@ -1219,7 +1219,7 @@ struct side_t
 	uint16_t	Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
-	LightmapSurface *lightmap[4];
+	LightmapSurface* lightmap;
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
 	int numsegs;
 	int sidenum;

@@ -256,10 +256,10 @@ public:
     void ProcessDecals(HWDrawInfo *di);
 
 	int CreateVertices(FFlatVertex *&ptr, bool nosplit);
-	void SplitLeftEdge (FFlatVertex *&ptr, float *lightuv, float lindex);
-	void SplitRightEdge(FFlatVertex *&ptr, float *lightuv, float lindex);
-	void SplitUpperEdge(FFlatVertex *&ptr, float *lightuv, float lindex);
-	void SplitLowerEdge(FFlatVertex *&ptr, float *lightuv, float lindex);
+	void SplitLeftEdge (FFlatVertex *&ptr, texcoord* lightuv, float lindex);
+	void SplitRightEdge(FFlatVertex *&ptr, texcoord* lightuv, float lindex);
+	void SplitUpperEdge(FFlatVertex *&ptr, texcoord* lightuv, float lindex);
+	void SplitLowerEdge(FFlatVertex *&ptr, texcoord* lightuv, float lindex);
 
 	void CountLeftEdge (unsigned &ptr);
 	void CountRightEdge(unsigned &ptr);

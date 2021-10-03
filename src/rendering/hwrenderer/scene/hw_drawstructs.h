@@ -159,6 +159,8 @@ public:
 	HWSeg glseg;
 	float ztop[2],zbottom[2];
 	texcoord tcs[4];
+	texcoord lightuv[4];
+	float lindex;
 	float alpha;
 
 	FColormap Colormap;
@@ -256,10 +258,10 @@ public:
     void ProcessDecals(HWDrawInfo *di);
 
 	int CreateVertices(FFlatVertex *&ptr, bool nosplit);
-	void SplitLeftEdge (FFlatVertex *&ptr, texcoord* lightuv, float lindex);
-	void SplitRightEdge(FFlatVertex *&ptr, texcoord* lightuv, float lindex);
-	void SplitUpperEdge(FFlatVertex *&ptr, texcoord* lightuv, float lindex);
-	void SplitLowerEdge(FFlatVertex *&ptr, texcoord* lightuv, float lindex);
+	void SplitLeftEdge (FFlatVertex *&ptr);
+	void SplitRightEdge(FFlatVertex *&ptr);
+	void SplitUpperEdge(FFlatVertex *&ptr);
+	void SplitLowerEdge(FFlatVertex *&ptr);
 
 	void CountLeftEdge (unsigned &ptr);
 	void CountRightEdge(unsigned &ptr);

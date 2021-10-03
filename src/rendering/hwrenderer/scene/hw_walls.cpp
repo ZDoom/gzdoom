@@ -734,6 +734,10 @@ bool HWWall::SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool trans
 			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
 			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
 			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
+			copyWall1.lightuv[UPRGT].u = copyWall2.lightuv[UPLFT].u = lightuv[UPLFT].u + coeff * (lightuv[UPRGT].u - lightuv[UPLFT].u);
+			copyWall1.lightuv[UPRGT].v = copyWall2.lightuv[UPLFT].v = lightuv[UPLFT].v + coeff * (lightuv[UPRGT].v - lightuv[UPLFT].v);
+			copyWall1.lightuv[LORGT].u = copyWall2.lightuv[LOLFT].u = lightuv[LOLFT].u + coeff * (lightuv[LORGT].u - lightuv[LOLFT].u);
+			copyWall1.lightuv[LORGT].v = copyWall2.lightuv[LOLFT].v = lightuv[LOLFT].v + coeff * (lightuv[LORGT].v - lightuv[LOLFT].v);
 
 			copyWall1.SplitWall(di, frontsector, translucent);
 			copyWall2.SplitWall(di, frontsector, translucent);
@@ -775,6 +779,10 @@ bool HWWall::SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool trans
 			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
 			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
 			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
+			copyWall1.lightuv[UPRGT].u = copyWall2.lightuv[UPLFT].u = lightuv[UPLFT].u + coeff * (lightuv[UPRGT].u - lightuv[UPLFT].u);
+			copyWall1.lightuv[UPRGT].v = copyWall2.lightuv[UPLFT].v = lightuv[UPLFT].v + coeff * (lightuv[UPRGT].v - lightuv[UPLFT].v);
+			copyWall1.lightuv[LORGT].u = copyWall2.lightuv[LOLFT].u = lightuv[LOLFT].u + coeff * (lightuv[LORGT].u - lightuv[LOLFT].u);
+			copyWall1.lightuv[LORGT].v = copyWall2.lightuv[LOLFT].v = lightuv[LOLFT].v + coeff * (lightuv[LORGT].v - lightuv[LOLFT].v);
 
 			copyWall1.SplitWall(di, frontsector, translucent);
 			copyWall2.SplitWall(di, frontsector, translucent);
@@ -870,6 +878,10 @@ void HWWall::SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent)
 					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.tcs[LOLFT].v-copyWall1.tcs[UPLFT].v)/(zbottom[0]-copyWall1.ztop[0]);
 				tcs[UPRGT].v=copyWall1.tcs[LORGT].v=copyWall1.tcs[UPRGT].v+ 
 					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.tcs[LORGT].v-copyWall1.tcs[UPRGT].v)/(zbottom[1]-copyWall1.ztop[1]);
+				lightuv[UPLFT].v=copyWall1.lightuv[LOLFT].v=copyWall1.lightuv[UPLFT].v+ 
+					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.lightuv[LOLFT].v-copyWall1.lightuv[UPLFT].v)/(zbottom[0]-copyWall1.ztop[0]);
+				lightuv[UPRGT].v=copyWall1.lightuv[LORGT].v=copyWall1.lightuv[UPRGT].v+ 
+					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.lightuv[LORGT].v-copyWall1.lightuv[UPRGT].v)/(zbottom[1]-copyWall1.ztop[1]);
 				copyWall1.Put3DWall(di, &lightlist[i], translucent);
 			}
 			if (ztop[0]==zbottom[0] && ztop[1]==zbottom[1]) 
@@ -967,6 +979,8 @@ bool HWWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 	return true;
 }
 
+static float ZeroLightmapUVs[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+
 //==========================================================================
 //
 // 
@@ -997,6 +1011,17 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		texlength = 0;
 	}
 
+	texcoord* srclightuv;
+	if (lightmap && lightmap->Type != ST_NULL)
+	{
+		srclightuv = (texcoord*)lightmap->TexCoords;
+		lindex = (float)lightmap->LightmapNum;
+	}
+	else
+	{
+		srclightuv = (texcoord*)ZeroLightmapUVs;
+		lindex = -1.0f;
+	}
 
 	//
 	//
@@ -1014,6 +1039,9 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 			tcs[UPLFT].v = tci->FloatToTexV(-ztop[0] + texturetop);
 			tcs[LOLFT].v = tci->FloatToTexV(-zbottom[0] + texturetop);
 		}
+
+		lightuv[UPLFT].v = srclightuv[UPLFT].v;
+		lightuv[LOLFT].v = srclightuv[LOLFT].v;
 	}
 	else
 	{
@@ -1034,6 +1062,9 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		{
 			tcs[LOLFT].v = tcs[UPLFT].v = tci->FloatToTexV(-ztop[0] + texturetop);
 		}
+
+		lightuv[UPLFT].v = srclightuv[UPLFT].v + inter_x * (srclightuv[UPRGT].v - srclightuv[UPLFT].v);
+		lightuv[LOLFT].v = srclightuv[LOLFT].v + inter_x * (srclightuv[LORGT].v - srclightuv[LOLFT].v);
 	}
 
 	//
@@ -1052,6 +1083,9 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 			tcs[UPRGT].v = tci->FloatToTexV(-ztop[1] + texturetop);
 			tcs[LORGT].v = tci->FloatToTexV(-zbottom[1] + texturetop);
 		}
+
+		lightuv[UPRGT].v = srclightuv[UPRGT].v;
+		lightuv[LORGT].v = srclightuv[LORGT].v;
 	}
 	else
 	{
@@ -1071,10 +1105,18 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		{
 			tcs[LORGT].v = tcs[UPRGT].v = tci->FloatToTexV(-ztop[1] + texturetop);
 		}
+
+		lightuv[UPRGT].v = srclightuv[UPRGT].v + inter_x * (srclightuv[UPRGT].v - srclightuv[UPLFT].v);
+		lightuv[LORGT].v = srclightuv[LORGT].v + inter_x * (srclightuv[LORGT].v - srclightuv[LOLFT].v);
 	}
 
 	tcs[UPLFT].u = tcs[LOLFT].u = l_ul + texlength * glseg.fracleft;
 	tcs[UPRGT].u = tcs[LORGT].u = l_ul + texlength * glseg.fracright;
+
+	lightuv[UPLFT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracleft;
+	lightuv[LOLFT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracleft;
+	lightuv[UPRGT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracright;
+	lightuv[LORGT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracright;
 
 	if (texture != NULL)
 	{
@@ -1606,6 +1648,15 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int rov
 	float texlength;
 	FTexCoordInfo tci;
 
+	lightmap = nullptr;
+	if (seg->sidedef == seg->linedef->sidedef[0])
+		lightmap = seg->linedef->sidedef[1]->lightmap;
+	else
+		lightmap = seg->linedef->sidedef[0]->lightmap;
+
+	if (lightmap)
+		lightmap += 4 + roverIndex;
+
 	if (rover->flags&FF_FOG)
 	{
 		if (!di->isFullbrightScene())
@@ -1664,6 +1715,28 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int rov
 		tcs[LORGT].v = tci.FloatToTexV(to - ff_bottomright);
 		type = RENDERWALL_FFBLOCK;
 		CheckTexturePosition(&tci);
+
+		texcoord* srclightuv;
+		if (lightmap && lightmap->Type != ST_NULL)
+		{
+			srclightuv = (texcoord*)lightmap->TexCoords;
+			lindex = (float)lightmap->LightmapNum;
+		}
+		else
+		{
+			srclightuv = (texcoord*)ZeroLightmapUVs;
+			lindex = -1.0f;
+		}
+
+		lightuv[UPLFT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracleft;
+		lightuv[LOLFT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracleft;
+		lightuv[UPRGT].u = srclightuv[UPLFT].u + (srclightuv[UPRGT].u - srclightuv[UPLFT].u) * glseg.fracright;
+		lightuv[LORGT].u = srclightuv[LOLFT].u + (srclightuv[LORGT].u - srclightuv[LOLFT].u) * glseg.fracright;
+
+		lightuv[UPLFT].v = srclightuv[UPLFT].v;
+		lightuv[UPRGT].v = srclightuv[UPRGT].v;
+		lightuv[LOLFT].v = srclightuv[LOLFT].v;
+		lightuv[LORGT].v = srclightuv[LORGT].v;
 	}
 
 	ztop[0] = ff_topleft;
@@ -1684,15 +1757,6 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int rov
 		RenderStyle = STYLE_Normal;
 		translucent = false;
 	}
-
-	lightmap = nullptr;
-	if (seg->sidedef == seg->linedef->sidedef[0])
-		lightmap = seg->linedef->sidedef[1]->lightmap;
-	else
-		lightmap = seg->linedef->sidedef[0]->lightmap;
-
-	if (lightmap)
-		lightmap += 4 + roverIndex;
 
 	sector_t * sec = sub ? sub->sector : seg->frontsector;
 

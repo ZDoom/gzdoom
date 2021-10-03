@@ -344,18 +344,6 @@ OptionValue AutoOffOn
 	1, "$OPTVAL_ON"
 }
 
-OptionMenuSettings
-{
-	// These can be overridden if a different menu fonts requires it.
-	Linespacing 17
-	/*
-	IfGame(Heretic, Hexen)
-	{
-		Linespacing 9
-	}
-	*/
-}
-
 DefaultOptionMenu
 {
 	Position -15

@@ -94,6 +94,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
 	if (!stricmp(name, "DBIGFONT")) name = "BigFont";
 	else if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
+	else if (!stricmp(name, "INDEXFON")) name = "IndexFont";	// Same here - for whatever reason some people had to use its 8 character name...
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{
@@ -873,6 +874,7 @@ void V_InitFonts()
 	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
 	CurrentConsoleFont = NewConsoleFont;
 	ConFont = V_GetFont("ConsoleFont", "CONFONT");
+	V_GetFont("IndexFont", "INDEXFON");	// detect potential replacements for this one.
 }
 
 void V_LoadTranslations()

@@ -229,6 +229,7 @@ DObject::DObject ()
 	ObjNext = GC::Root;
 	GCNext = nullptr;
 	GC::Root = this;
+	GC::AllocCount++;
 }
 
 DObject::DObject (PClass *inClass)
@@ -238,6 +239,7 @@ DObject::DObject (PClass *inClass)
 	ObjNext = GC::Root;
 	GCNext = nullptr;
 	GC::Root = this;
+	GC::AllocCount++;
 }
 
 //==========================================================================
@@ -275,6 +277,7 @@ DObject::~DObject ()
 
 void DObject::Release()
 {
+	if (GC::AllocCount > 0) GC::AllocCount--;
 	DObject **probe;
 
 	// Unlink this object from the GC list.

@@ -108,6 +108,7 @@ namespace GC
 size_t AllocBytes;
 size_t Threshold;
 size_t Estimate;
+size_t AllocCount;
 DObject *Gray;
 DObject *Root;
 DObject *SoftRoots;

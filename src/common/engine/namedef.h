@@ -702,6 +702,10 @@ xx(lightdistancefloor)
 xx(lightcolorceiling)
 xx(lightintensityceiling)
 xx(lightdistanceceiling)
+xx(suncolor)
+xx(sundirx)
+xx(sundiry)
+xx(sundirz)
 
 // USDF keywords
 xx(Amount)

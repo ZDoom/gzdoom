@@ -758,6 +758,10 @@ public:
 			case NAME_lightdistance:
 			case NAME_lightinnerangle:
 			case NAME_lightouterangle:
+			case NAME_suncolor:
+			case NAME_sundirx:
+			case NAME_sundiry:
+			case NAME_sundirz:
 				CHECK_N(Zd | Zdt)
 				break;
 
@@ -1135,7 +1139,7 @@ public:
 			case NAME_lightintensity:
 			case NAME_lightdistance:
 				CHECK_N(Zd | Zdt)
-					break;
+				break;
 
 			default:
 				if (strnicmp("user_", key.GetChars(), 5))
@@ -1970,7 +1974,7 @@ public:
 				case NAME_lightintensityceiling:
 				case NAME_lightdistanceceiling:
 					CHECK_N(Zd | Zdt)
-						break;
+					break;
 
 				default:
 					if (strnicmp("user_", key.GetChars(), 5))

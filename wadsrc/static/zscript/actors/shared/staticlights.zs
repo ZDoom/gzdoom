@@ -29,3 +29,7 @@ class StaticLightBase : Actor
 
 class PointLightStatic : StaticLightBase {}
 class SpotLightStatic : StaticLightBase {}
+
+// Sunlight Actors to define sunlight properties for the current map
+
+class ZDRaySunlight : Actor {}

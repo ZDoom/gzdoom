@@ -2084,7 +2084,7 @@ class PlayerPawn : Actor
 			me.GiveDefaultInventory();
 		}
 	}
-	
+	 
 	//===========================================================================
 	//
 	// FWeaponSlot :: PickWeapon

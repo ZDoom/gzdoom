@@ -11,26 +11,17 @@ body:
         ## Please fill out forms as cleanly as possible.
         #### Make sure that you have
         * properly edited & filled in the title of this bug report
-  - type: dropdown
+  - type: input
     id: version
     attributes:
       label: GZDoom version
       description: |
         What version are you using?
-        Run `gzdoom --version`
+        Run `gzdoom --version` or check in the console in game.
         Make sure to update to latest [release](https://github.com/coelckers/gzdoom/releases) version and test again before continuing.
-      multiple: false
-      options:
-        - 4.6.1
-        - 4.6.0
-        - 4.5.0
-        - 4.4.2
-        - 4.4.1
-        - 4.4.0
-        - Git
-        - Other
+      placeholder: "ex: GZDoom 4.0.0, Git version, Branch, other"
     validations:
-      required: true
+      required: false
   - type: dropdown
     id: gameid
     attributes:

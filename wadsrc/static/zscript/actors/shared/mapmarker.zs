@@ -7,6 +7,9 @@
 //   args[1] == 0, show the sprite always
 //           == 1, show the sprite only after its sector has been drawn
 //
+//   args[2] == 0, show the sprite with a constant scale
+//           == 1, show the sprite with a scale relative to automap zoom
+//
 // To enable display of the sprite, activate it. To turn off the sprite,
 // deactivate it.
 //

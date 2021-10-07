@@ -3130,11 +3130,20 @@ void DAutomap::drawAuthorMarkers ()
 		auto it = Level->GetActorIterator(mark->args[0]);
 		AActor *marked = mark->args[0] == 0 ? mark : it.Next();
 
+		double xscale = mark->Scale.X;
+		double yscale = mark->Scale.Y;
+		// [MK] scale with automap zoom if args[2] is 1, otherwise keep a constant scale
+		if (mark->args[2] == 1)
+		{
+			xscale = MTOF(xscale);
+			yscale = MTOF(yscale);
+		}
+
 		while (marked != nullptr)
 		{
 			if (mark->args[1] == 0 || (mark->args[1] == 1 && (marked->subsector->flags & SSECMF_DRAWN)))
 			{
-				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
+				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, xscale, yscale, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : nullptr;

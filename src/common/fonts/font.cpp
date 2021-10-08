@@ -572,6 +572,32 @@ void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors)
 
 //==========================================================================
 //
+// RecordLuminosity
+//
+// Records minimum and maximum luminosity of a texture.
+//
+//==========================================================================
+
+static void RecordLuminosity(FImageSource* pic, int* minlum, int* maxlum)
+{
+	auto bitmap = pic->GetCachedBitmap(nullptr, FImageSource::normal);
+	auto pixels = bitmap.GetPixels();
+	auto size = pic->GetWidth() * pic->GetHeight();
+
+	for (int x = 0; x < size; x++)
+	{
+		int xx = x * 4;
+		if (pixels[xx + 3] > 0)
+		{
+			int lum = Luminance(pixels[xx + 2], pixels[xx + 1], pixels[xx]);
+			if (lum < *minlum) *minlum = lum;
+			if (lum > *maxlum) *maxlum = lum;
+		}
+	}
+}
+
+//==========================================================================
+//
 // RecordAllTextureColors
 //
 // Given a 256 entry buffer, sets every entry that corresponds to a color
@@ -969,27 +995,22 @@ int FFont::GetMaxAscender(const uint8_t* string) const
 void FFont::LoadTranslations()
 {
 	unsigned int count = min<unsigned>(Chars.Size(), LastChar - FirstChar + 1);
-	uint32_t usedcolors[256] = {};
-	TArray<double> Luminosity;
 
 	if (count == 0) return;
+	int minlum = 255, maxlum = 0;
 	for (unsigned int i = 0; i < count; i++)
 	{
 		if (Chars[i].OriginalPic)
 		{
 			auto pic = Chars[i].OriginalPic->GetTexture()->GetImage();
-			if (pic) RecordTextureColors(pic, usedcolors);
+			RecordLuminosity(pic, &minlum, &maxlum);
 		}
 	}
 
-	int minlum = 0, maxlum = 0;
-	GetLuminosity (usedcolors, Luminosity, &minlum, &maxlum);
 	if (MinLum >= 0 && MinLum < minlum) minlum = MinLum;
 	if (MaxLum > maxlum) maxlum = MaxLum;
 
 	// Here we can set everything to a luminosity translation.
-
-	// Create different translations for different color ranges
 	Translations.Resize(NumTextColors);
 	for (int i = 0; i < NumTextColors; i++)
 	{

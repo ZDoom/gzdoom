@@ -527,7 +527,7 @@ void FSingleLumpFont::FixupPalette (uint8_t *identity, const PalEntry *palette, 
 	double minlum = 100000000.0;
 
 	identity[0] = 0;
-	palette += 3;	// Skip the transparent color
+	palette++;	// Skip the transparent color
 
 	for (int i = 1; i < ActiveColors; ++i, palette ++)
 	{

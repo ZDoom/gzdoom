@@ -2282,27 +2282,3 @@ void FLevelLocals::SetMusic()
 {
 	S_ChangeMusic(Music, musicorder);
 }
-
-void FLevelLocals::GetLightProbeLight(float x, float y, float z, float* out)
-{
-	out[0] = out[1] = out[2] = 0.f;
-
-	// To do: Pretty stupid algorithm. Use something better once we confirmed this looks alright.
-
-	float lastdist = 0.0f;
-	for (unsigned int i = 0; i < LightProbes.Size(); i++)
-	{
-		const LightProbe& probe = LightProbes[i];
-		float dx = probe.X - x;
-		float dy = probe.Y - y;
-		float dz = probe.Z - z;
-		float dist = dx * dx + dy * dy + dz * dz;
-		if (i == 0 || dist < lastdist)
-		{
-			out[0] = probe.Red;
-			out[1] = probe.Green;
-			out[2] = probe.Blue;
-			lastdist = dist;
-		}
-	}
-}

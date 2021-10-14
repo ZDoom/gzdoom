@@ -3335,25 +3335,56 @@ void MapLoader::LoadLightmap(MapData *map)
 
 	int version = fr.ReadInt32();
 	if (version != 0)
+	{
+		Printf(PRINT_HIGH, "LoadLightmap: unsupported lightmap lump version\n");
 		return;
+	}
 
 	uint16_t textureSize = fr.ReadUInt16();
 	uint16_t numTextures = fr.ReadUInt16();
 	uint32_t numSurfaces = fr.ReadUInt32();
 	uint32_t numTexCoords = fr.ReadUInt32();
 	uint32_t numLightProbes = fr.ReadUInt32();
+	uint32_t numSubsectors = fr.ReadUInt32();
 	uint32_t numTexBytes = numTextures * textureSize * textureSize * 3 * 2;
 
 	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
 		return;
 
-	Level->LMTexCoords.Resize(numTexCoords * 2);
+	if (numSubsectors != Level->subsectors.Size())
+	{
+		Printf(PRINT_HIGH, "LoadLightmap: subsector count for level doesn't match\n");
+		return;
+	}
 
 	if (numLightProbes > 0)
 	{
 		Level->LightProbes.Resize(numLightProbes);
 		fr.Read(&Level->LightProbes[0], sizeof(LightProbe) * numLightProbes);
 	}
+
+	if (Level->subsectors.Size() > 0)
+	{
+		TArray<uint32_t> counts;
+		counts.Resize(Level->subsectors.Size());
+		fr.Read(&counts[0], sizeof(uint32_t) * Level->subsectors.Size());
+
+		unsigned int startIndex = 0;
+		for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+		{
+			unsigned int count = counts[i];
+			if (startIndex + count > Level->LightProbes.Size())
+			{
+				Printf(PRINT_HIGH, "LoadLightmap: invalid light probe data\n");
+				break;
+			}
+			Level->subsectors[i].firstprobe = &Level->LightProbes[startIndex];
+			Level->subsectors[i].numprobes = count;
+			startIndex += count;
+		}
+	}
+
+	Level->LMTexCoords.Resize(numTexCoords * 2);
 
 	// Allocate room for all surfaces
 

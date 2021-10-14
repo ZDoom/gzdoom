@@ -59,6 +59,7 @@ class AActor;
 struct FSection;
 struct FLevelLocals;
 struct LightmapSurface;
+struct LightProbe;
 
 const uint16_t NO_INDEX = 0xffffu;
 const uint32_t NO_SIDE = 0xffffffffu;
@@ -1621,6 +1622,8 @@ struct subsector_t
 	FPortalCoverage	portalcoverage[2];
 
 	LightmapSurface *lightmap[2];
+	LightProbe* firstprobe;
+	uint32_t numprobes;
 };
 
 

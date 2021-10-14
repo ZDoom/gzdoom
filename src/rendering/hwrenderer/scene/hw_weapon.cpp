@@ -641,7 +641,6 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 			{
 				hw_GetDynModelLight(playermo, lightdata);
 				hudsprite.lightindex = screen->mLights->UploadLights(lightdata);
-
 				LightProbe* probe = FindLightProbe(playermo->Level, playermo->X(), playermo->Y(), playermo->Center());
 				if (probe)
 				{

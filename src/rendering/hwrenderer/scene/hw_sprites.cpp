@@ -172,12 +172,6 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				di->GetDynSpriteLight(gl_light_sprites ? actor : nullptr, gl_light_particles ? particle : nullptr, out);
 				state.SetDynLight(out[0], out[1], out[2]);
 			}
-			else if (di->Level->LightProbes.Size() > 0)
-			{
-				LightProbe* probe = FindLightProbe(di->Level, actor->X(), actor->Y(), actor->Center());
-				if (probe)
-					state.SetDynLight(probe->Red, probe->Green, probe->Blue);
-			}
 		}
 		sector_t *cursec = actor ? actor->Sector : particle ? particle->subsector->sector : nullptr;
 		if (cursec != nullptr)
@@ -298,6 +292,13 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		}
 		else
 		{
+			if (actor && di->Level->LightProbes.Size() > 0)
+			{
+				LightProbe* probe = FindLightProbe(di->Level, actor->X(), actor->Y(), actor->Center());
+				if (probe)
+					state.SetDynLight(probe->Red, probe->Green, probe->Blue);
+			}
+
 			FHWModelRenderer renderer(di, state, dynlightindex);
 			RenderModel(&renderer, x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
 			state.SetVertexBuffer(screen->mVertexData);

@@ -1622,8 +1622,6 @@ struct subsector_t
 	FPortalCoverage	portalcoverage[2];
 
 	LightmapSurface *lightmap[2];
-	LightProbe* firstprobe;
-	uint32_t numprobes;
 };
 
 
@@ -1694,6 +1692,12 @@ struct LightProbe
 {
 	float X, Y, Z;
 	float Red, Green, Blue;
+};
+
+struct LightProbeCell
+{
+	LightProbe* FirstProbe = nullptr;
+	int NumProbes = 0;
 };
 
 //

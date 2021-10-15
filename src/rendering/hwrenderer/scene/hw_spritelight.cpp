@@ -51,24 +51,35 @@ LightProbe* FindLightProbe(FLevelLocals* level, float x, float y, float z)
 	if (level->LightProbes.Size() > 0)
 	{
 #if 1
-		float radiusSquared = 32.0f * 32.0f;
+		double rcpCellSize = 1.0 / level->LPCellSize;
+		int gridCenterX = (int)std::floor(x * rcpCellSize) - level->LPMinX;
+		int gridCenterY = (int)std::floor(y * rcpCellSize) - level->LPMinY;
+		int gridWidth = level->LPWidth;
+		int gridHeight = level->LPHeight;
 		float lastdist = 0.0f;
-		BSPWalkCircle(level, x, y, radiusSquared, [&](subsector_t* subsector) // Iterate through all subsectors potentially touched by actor
+		for (int gridY = gridCenterY - 1; gridY <= gridCenterY + 1; gridY++)
 		{
-			for (uint32_t i = 0; i < subsector->numprobes; i++)
+			for (int gridX = gridCenterX - 1; gridX <= gridCenterX + 1; gridX++)
 			{
-				LightProbe* probe = subsector->firstprobe + i;
-				float dx = probe->X - x;
-				float dy = probe->Y - y;
-				float dz = probe->Z - z;
-				float dist = dx * dx + dy * dy + dz * dz;
-				if (!foundprobe || dist < lastdist)
+				if (gridX >= 0 && gridY >= 0 && gridX < gridWidth && gridY < gridHeight)
 				{
-					foundprobe = probe;
-					lastdist = dist;
+					const LightProbeCell& cell = level->LPCells[gridX + (size_t)gridY * gridWidth];
+					for (int i = 0; i < cell.NumProbes; i++)
+					{
+						LightProbe* probe = cell.FirstProbe + i;
+						float dx = probe->X - x;
+						float dy = probe->Y - y;
+						float dz = probe->Z - z;
+						float dist = dx * dx + dy * dy + dz * dz;
+						if (!foundprobe || dist < lastdist)
+						{
+							foundprobe = probe;
+							lastdist = dist;
+						}
+					}
 				}
 			}
-		});
+		}
 #else
 		float lastdist = 0.0f;
 		for (unsigned int i = 0; i < level->LightProbes.Size(); i++)

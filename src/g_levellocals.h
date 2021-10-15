@@ -457,6 +457,12 @@ public:
 	int LMTextureSize = 0;
 	TArray<uint16_t> LMTextureData;
 	TArray<LightProbe> LightProbes;
+	int LPMinX = 0;
+	int LPMinY = 0;
+	int LPWidth = 0;
+	int LPHeight = 0;
+	static const int LPCellSize = 32;
+	TArray<LightProbeCell> LPCells;
 
 	// Portal information.
 	FDisplacementTable Displacements;

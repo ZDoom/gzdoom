@@ -3326,6 +3326,19 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 
 void MapLoader::LoadLightmap(MapData *map)
 {
+	// We have to reset everything as FLevelLocals is recycled between maps
+	Level->LightProbes.Reset();
+	Level->LPCells.Reset();
+	Level->LMTexCoords.Reset();
+	Level->LMSurfaces.Reset();
+	Level->LMTextureData.Reset();
+	Level->LMTextureCount = 0;
+	Level->LMTextureSize = 0;
+	Level->LPMinX = 0;
+	Level->LPMinY = 0;
+	Level->LPWidth = 0;
+	Level->LPHeight = 0;
+
 	if (!map->Size(ML_LIGHTMAP))
 		return;
 
@@ -3351,36 +3364,67 @@ void MapLoader::LoadLightmap(MapData *map)
 	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
 		return;
 
-	if (numSubsectors != Level->subsectors.Size())
+	/*if (numSubsectors != Level->subsectors.Size())
 	{
-		Printf(PRINT_HIGH, "LoadLightmap: subsector count for level doesn't match\n");
-		return;
-	}
+		Printf(PRINT_HIGH, "LoadLightmap: subsector count for level doesn't match (%d in wad vs %d in engine)\n", (int)numSubsectors, (int)Level->subsectors.Size());
+	}*/
 
 	if (numLightProbes > 0)
 	{
 		Level->LightProbes.Resize(numLightProbes);
 		fr.Read(&Level->LightProbes[0], sizeof(LightProbe) * numLightProbes);
-	}
 
-	if (Level->subsectors.Size() > 0)
-	{
-		TArray<uint32_t> counts;
-		counts.Resize(Level->subsectors.Size());
-		fr.Read(&counts[0], sizeof(uint32_t) * Level->subsectors.Size());
+		// Sort the light probes so that they are ordered by cell.
+		// This lets us point at the first probe knowing all other probes in the cell will follow.
+		// Also improves locality.
 
-		unsigned int startIndex = 0;
-		for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+		double rcpCellSize = 1.0 / Level->LPCellSize;
+		auto cellCompareLess = [=](const LightProbe& a, const LightProbe& b)
 		{
-			unsigned int count = counts[i];
-			if (startIndex + count > Level->LightProbes.Size())
+			double cellY_A = std::floor(a.Y * rcpCellSize);
+			double cellY_B = std::floor(b.Y * rcpCellSize);
+			if (cellY_A != cellY_B)
+				return cellY_A < cellY_B;
+			double cellX_A = std::floor(a.X * rcpCellSize);
+			double cellX_B = std::floor(b.X * rcpCellSize);
+			return cellX_A < cellX_B;
+		};
+		std::sort(Level->LightProbes.begin(), Level->LightProbes.end(), cellCompareLess);
+
+		// Find probe bounds and the grid that covers it
+		float probesMinX = Level->LightProbes[0].X;
+		float probesMaxX = Level->LightProbes[0].X;
+		float probesMinY = Level->LightProbes[0].Y;
+		float probesMaxY = Level->LightProbes[0].Y;
+		for (const LightProbe& p : Level->LightProbes)
+		{
+			probesMinX = std::min(probesMinX, p.X);
+			probesMaxX = std::max(probesMaxX, p.X);
+			probesMinY = std::min(probesMinY, p.Y);
+			probesMaxY = std::max(probesMaxY, p.Y);
+		}
+		Level->LPMinX = (int)std::floor(probesMinX * rcpCellSize);
+		Level->LPMinY = (int)std::floor(probesMinY * rcpCellSize);
+		Level->LPWidth = (int)std::floor(probesMaxX * rcpCellSize) + 1 - Level->LPMinX;
+		Level->LPHeight = (int)std::floor(probesMaxY * rcpCellSize) + 1 - Level->LPMinY;
+
+		// Place probes in a grid for faster search
+		Level->LPCells.Resize(Level->LPWidth * Level->LPHeight);
+		int minX = Level->LPMinX;
+		int minY = Level->LPMinY;
+		int width = Level->LPWidth;
+		int height = Level->LPHeight;
+		for (LightProbe& p : Level->LightProbes)
+		{
+			int gridX = (int)std::floor(p.X * rcpCellSize) - minX;
+			int gridY = (int)std::floor(p.Y * rcpCellSize) - minY;
+			if (gridX >= 0 && gridY >= 0 && gridX < width && gridY < height)
 			{
-				Printf(PRINT_HIGH, "LoadLightmap: invalid light probe data\n");
-				break;
+				LightProbeCell& cell = Level->LPCells[gridX + (size_t)gridY * width];
+				if (!cell.FirstProbe)
+					cell.FirstProbe = &p;
+				cell.NumProbes++;
 			}
-			Level->subsectors[i].firstprobe = &Level->LightProbes[startIndex];
-			Level->subsectors[i].numprobes = count;
-			startIndex += count;
 		}
 	}
 

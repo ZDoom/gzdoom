@@ -378,6 +378,7 @@ static void ParseModelDefLump(int Lump)
 	{
 		if (sc.Compare("model"))
 		{
+			int preParseFrames = SpriteModelFrames.Size();
 			int index, surface;
 			FString path = "";
 			sc.MustGetString();
@@ -456,6 +457,72 @@ static void ParseModelDefLump(int Lump)
 					{
 						Printf("%s: model not found in %s\n", sc.String, path.GetChars());
 					}
+				}
+				else if (sc.Compare("inherits"))
+				{
+					unsigned int i, j;
+					sc.MustGetString();	
+					auto type2 = PClass::FindClass(sc.String);
+					if (!type2 || type2->Defaults == nullptr)
+					{
+						sc.ScriptError("MODELDEF: Unknown actor type '%s'\n", sc.String);
+					}
+					for (i = 0; i < preParseFrames; i++)
+					{		
+						if (SpriteModelFrames[i].type == type2)
+						{		
+							auto frame = SpriteModelFrames[i];
+							frame.type = type;
+							SpriteModelFrames.Push(frame);
+							SpriteModelFrames[SpriteModelFrames.Size() - 1].type = type;
+							for (j = 0; j < smf.modelsAmount; j++)
+							{
+								if (smf.modelIDs[j] != -1)
+									SpriteModelFrames[SpriteModelFrames.Size() - 1].modelIDs[j] = smf.modelIDs[j];
+								if (smf.skinIDs[j].isValid())
+									SpriteModelFrames[SpriteModelFrames.Size() - 1].skinIDs[j] = smf.skinIDs[j];
+							}
+							for (j = 0; j < MD3_MAX_SURFACES; j++)
+							{
+								if(smf.surfaceskinIDs[j].isValid())
+									SpriteModelFrames[SpriteModelFrames.Size() - 1].surfaceskinIDs[j] = smf.surfaceskinIDs[j];
+							}
+							if (smf.xscale != 1.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].xscale = smf.xscale;
+							if (smf.yscale != 1.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].yscale = smf.yscale;
+							if (smf.zscale != 1.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].zscale = smf.zscale;
+							if (smf.xoffset != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].xoffset = smf.xoffset;
+							if (smf.yoffset != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].yoffset = smf.yoffset;
+							if (smf.zoffset != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].zoffset = smf.zoffset;
+							if (smf.angleoffset != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].angleoffset = smf.angleoffset;
+							if (smf.pitchoffset != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].pitchoffset = smf.pitchoffset;
+							if (smf.rolloffset != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].rolloffset = smf.rolloffset;
+							if (smf.rotationSpeed != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].rotationSpeed = smf.rotationSpeed;
+							if (smf.xrotate != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].xrotate = smf.xrotate;
+							if (smf.yrotate != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].yrotate = smf.yrotate;
+							if (smf.zrotate != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].zrotate = smf.zrotate;
+							if (smf.rotationCenterX != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].rotationCenterX = smf.rotationCenterX;
+							if (smf.rotationCenterY != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].rotationCenterX = smf.rotationCenterY;
+							if (smf.rotationCenterZ != 0.f)
+								SpriteModelFrames[SpriteModelFrames.Size() - 1].rotationCenterX = smf.rotationCenterZ;
+							SpriteModelFrames[SpriteModelFrames.Size() - 1].flags += smf.flags;
+						}
+					}
+					GetDefaultByType(type)->hasmodel = true;
 				}
 				else if (sc.Compare("scale"))
 				{

@@ -1,0 +1,5 @@
+sprite SHT2E0, 233, 63
+{
+	offset 32, -105
+	patch "/patches/SHT2E0.lmp", 0, 0 { }
+}

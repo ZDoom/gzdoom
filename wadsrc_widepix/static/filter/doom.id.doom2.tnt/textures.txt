@@ -1,0 +1,10 @@
+graphic BOSSBACK, 560, 200
+{
+	patch TNTBOSS, 0, 0 { }
+}
+
+graphic INTERPIC, 560, 200
+{
+	patch TNTINTER, 0, 0 { }
+}
+

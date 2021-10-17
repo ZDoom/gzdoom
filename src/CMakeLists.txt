@@ -716,6 +716,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	zcc-parse.c
 	zcc-parse.h
 	common/platform/win32/zutil.natvis
+	common/rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.natvis
 )
 
 set( VM_JIT_SOURCES

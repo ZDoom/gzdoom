@@ -220,6 +220,7 @@ void VulkanDevice::CreateAllocator()
 		allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 	allocinfo.physicalDevice = PhysicalDevice.Device;
 	allocinfo.device = device;
+	allocinfo.instance = instance;
 	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;
 	if (vmaCreateAllocator(&allocinfo, &allocator) != VK_SUCCESS)
 		VulkanError("Unable to create allocator");

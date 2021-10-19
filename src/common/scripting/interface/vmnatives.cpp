@@ -162,7 +162,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawImageRotated, SBar_DrawImageRo
 void SBar_DrawTextureRotated(DStatusBarCore* self, int texid, double x, double y, int flags, double angle, double alpha, double scaleX, double scaleY, int style, int color, int translation)
 {
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	self->DrawRotated(FSetTextureID(texid), x, y, flags, alpha, scaleX, scaleY, color, translation, style);
+	self->DrawRotated(FSetTextureID(texid), x, y, flags, angle, alpha, scaleX, scaleY, color, translation, (ERenderStyle)style);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawTextureRotated, SBar_DrawTextureRotated)

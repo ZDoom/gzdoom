@@ -162,6 +162,8 @@ struct gameinfo_t
 	FName althudclass;
 	int statusbarclassfile = -1;
 	FName MessageBoxClass;
+	FName HelpMenuClass;
+	FName MenuDelegateClass;
 	FName backpacktype;
 	FString intermissionMusic;
 	int intermissionOrder;

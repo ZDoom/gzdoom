@@ -61,6 +61,8 @@ gameinfo
 	statscreen_contentfont = "*BigFont"
 	statscreen_authorFont = "*SmallFont"
 	messageboxclass = "MessageBoxMenu"
+	helpmenuclass = "ReadThisMenu"
+	menudelegateclass = "DoomMenuDelegate"
 }
 
 gamedefaults

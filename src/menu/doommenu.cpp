@@ -202,6 +202,10 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		menu = NAME_Optionsmenu;
 		break;
 
+	case NAME_Readthismenu:
+		// [MK] allow us to override the ReadThisMenu class
+		menu = gameinfo.HelpMenuClass;
+		break;
 	}
 
 	DMenuDescriptor** desc = MenuDescriptors.CheckKey(menu);
@@ -1300,7 +1304,7 @@ void SetDefaultMenuColors()
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
 
-	auto cls = PClass::FindClass("DoomMenuDelegate");
+	auto cls = PClass::FindClass(gameinfo.MenuDelegateClass);
 	menuDelegate = cls->CreateNew();
 }
 

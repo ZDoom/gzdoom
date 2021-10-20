@@ -2,16 +2,7 @@
 
 // Simple lightweight reference counting pointer alternative for std::shared_ptr which stores the reference counter in the handled object itself.
 
-// Base classes for handled objects
-class NoVirtualRefCountedBase
-{
-public:
-	void IncRef() { refCount++; }
-	void DecRef() { if (--refCount <= 0) delete this; }
-private:
-	int refCount = 0;
-};
-
+// Base class for handled objects
 class RefCountedBase
 {
 public:

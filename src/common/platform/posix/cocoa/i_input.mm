@@ -284,11 +284,11 @@ uint8_t ModifierToDIK(const uint32_t modifier)
 {
 	switch (modifier)
 	{
-		case NSAlphaShiftKeyMask: return DIK_CAPITAL;
-		case NSShiftKeyMask:      return DIK_LSHIFT;
-		case NSControlKeyMask:    return DIK_LCONTROL;
-		case NSAlternateKeyMask:  return DIK_LMENU;
-		case NSCommandKeyMask:    return DIK_LWIN;
+		case NSEventModifierFlagCapsLock: return DIK_CAPITAL;
+		case NSEventModifierFlagShift:    return DIK_LSHIFT;
+		case NSEventModifierFlagControl:  return DIK_LCONTROL;
+		case NSEventModifierFlagOption:   return DIK_LMENU;
+		case NSEventModifierFlagCommand:  return DIK_LWIN;
 	}
 
 	return 0;
@@ -296,20 +296,20 @@ uint8_t ModifierToDIK(const uint32_t modifier)
 
 int16_t ModifierFlagsToGUIKeyModifiers(NSEvent* theEvent)
 {
-	const NSUInteger modifiers([theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);
-	return ((modifiers & NSShiftKeyMask    ) ? GKM_SHIFT : 0)
-		 | ((modifiers & NSControlKeyMask  ) ? GKM_CTRL  : 0)
-		 | ((modifiers & NSAlternateKeyMask) ? GKM_ALT   : 0)
-		 | ((modifiers & NSCommandKeyMask  ) ? GKM_META  : 0);
+	const NSUInteger modifiers([theEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
+	return ((modifiers & NSEventModifierFlagShift  ) ? GKM_SHIFT : 0)
+		 | ((modifiers & NSEventModifierFlagControl) ? GKM_CTRL  : 0)
+		 | ((modifiers & NSEventModifierFlagOption ) ? GKM_ALT   : 0)
+		 | ((modifiers & NSEventModifierFlagCommand) ? GKM_META  : 0);
 }
 
 bool ShouldGenerateGUICharEvent(NSEvent* theEvent)
 {
-	const NSUInteger modifiers([theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);
-	return !(modifiers & NSControlKeyMask)
-		&& !(modifiers & NSAlternateKeyMask)
-		&& !(modifiers & NSCommandKeyMask)
-		&& !(modifiers & NSFunctionKeyMask);
+	const NSUInteger modifiers([theEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
+	return !(modifiers & NSEventModifierFlagControl)
+		&& !(modifiers & NSEventModifierFlagOption)
+		&& !(modifiers & NSEventModifierFlagCommand)
+		&& !(modifiers & NSEventModifierFlagFunction);
 }
 
 
@@ -373,7 +373,7 @@ void ProcessKeyboardEventInMenu(NSEvent* theEvent)
 
 	unichar realchar;
 	event.type    = EV_GUI_Event;
-	event.subtype = NSKeyDown == [theEvent type] ? EV_GUI_KeyDown : EV_GUI_KeyUp;
+	event.subtype = NSEventTypeKeyDown == [theEvent type] ? EV_GUI_KeyDown : EV_GUI_KeyUp;
 	event.data2   = GetCharacterFromNSEvent(theEvent, &realchar);
 	event.data3   = ModifierFlagsToGUIKeyModifiers(theEvent);
 
@@ -505,8 +505,8 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 
 	if (k_allowfullscreentoggle
 		&& (kVK_ANSI_F == keyCode)
-		&& (NSCommandKeyMask & [theEvent modifierFlags])
-		&& (NSKeyDown == [theEvent type])
+		&& (NSEventModifierFlagCommand & [theEvent modifierFlags])
+		&& (NSEventTypeKeyDown == [theEvent type])
 		&& !isARepeat)
 	{
 		ToggleFullscreen = !ToggleFullscreen;
@@ -521,7 +521,7 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 	{
 		event_t event = {};
 
-		event.type  = NSKeyDown == [theEvent type] ? EV_KeyDown : EV_KeyUp;
+		event.type  = NSEventTypeKeyDown == [theEvent type] ? EV_KeyDown : EV_KeyUp;
 		event.data1 = KEYCODE_TO_DIK[ keyCode ];
 
 		if (0 != event.data1)
@@ -542,7 +542,7 @@ void ProcessKeyboardFlagsEvent(NSEvent* theEvent)
 	}
 
 	static const uint32_t FLAGS_MASK =
-		NSDeviceIndependentModifierFlagsMask & ~NSNumericPadKeyMask;
+		NSEventModifierFlagDeviceIndependentFlagsMask & ~NSEventModifierFlagNumericPad;
 
 	const  uint32_t      modifiers = [theEvent modifierFlags] & FLAGS_MASK;
 	static uint32_t   oldModifiers = 0;
@@ -611,12 +611,12 @@ void ProcessMouseButtonEvent(NSEvent* theEvent)
 
 		switch (cocoaEventType)
 		{
-			case NSLeftMouseDown:  event.subtype = EV_GUI_LButtonDown; break;
-			case NSRightMouseDown: event.subtype = EV_GUI_RButtonDown; break;
-			case NSOtherMouseDown: event.subtype = EV_GUI_MButtonDown; break;
-			case NSLeftMouseUp:    event.subtype = EV_GUI_LButtonUp;   break;
-			case NSRightMouseUp:   event.subtype = EV_GUI_RButtonUp;   break;
-			case NSOtherMouseUp:   event.subtype = EV_GUI_MButtonUp;   break;
+			case NSEventTypeLeftMouseDown:  event.subtype = EV_GUI_LButtonDown; break;
+			case NSEventTypeRightMouseDown: event.subtype = EV_GUI_RButtonDown; break;
+			case NSEventTypeOtherMouseDown: event.subtype = EV_GUI_MButtonDown; break;
+			case NSEventTypeLeftMouseUp:    event.subtype = EV_GUI_LButtonUp;   break;
+			case NSEventTypeRightMouseUp:   event.subtype = EV_GUI_RButtonUp;   break;
+			case NSEventTypeOtherMouseUp:   event.subtype = EV_GUI_MButtonUp;   break;
 			default: break;
 		}
 
@@ -628,15 +628,15 @@ void ProcessMouseButtonEvent(NSEvent* theEvent)
 	{
 		switch (cocoaEventType)
 		{
-			case NSLeftMouseDown:
-			case NSRightMouseDown:
-			case NSOtherMouseDown:
+			case NSEventTypeLeftMouseDown:
+			case NSEventTypeRightMouseDown:
+			case NSEventTypeOtherMouseDown:
 				event.type = EV_KeyDown;
 				break;
 
-			case NSLeftMouseUp:
-			case NSRightMouseUp:
-			case NSOtherMouseUp:
+			case NSEventTypeLeftMouseUp:
+			case NSEventTypeRightMouseUp:
+			case NSEventTypeOtherMouseUp:
 				event.type = EV_KeyUp;
 				break;
 
@@ -694,36 +694,36 @@ void I_ProcessEvent(NSEvent* event)
 
 	switch (eventType)
 	{
-		case NSMouseMoved:
+		case NSEventTypeMouseMoved:
 			ProcessMouseMoveEvent(event);
 			break;
 
-		case NSLeftMouseDown:
-		case NSLeftMouseUp:
-		case NSRightMouseDown:
-		case NSRightMouseUp:
-		case NSOtherMouseDown:
-		case NSOtherMouseUp:
+		case NSEventTypeLeftMouseDown:
+		case NSEventTypeLeftMouseUp:
+		case NSEventTypeRightMouseDown:
+		case NSEventTypeRightMouseUp:
+		case NSEventTypeOtherMouseDown:
+		case NSEventTypeOtherMouseUp:
 			ProcessMouseButtonEvent(event);
 			break;
 
-		case NSLeftMouseDragged:
-		case NSRightMouseDragged:
-		case NSOtherMouseDragged:
+		case NSEventTypeLeftMouseDragged:
+		case NSEventTypeRightMouseDragged:
+		case NSEventTypeOtherMouseDragged:
 			ProcessMouseButtonEvent(event);
 			ProcessMouseMoveEvent(event);
 			break;
 
-		case NSScrollWheel:
+		case NSEventTypeScrollWheel:
 			ProcessMouseWheelEvent(event);
 			break;
 
-		case NSKeyDown:
-		case NSKeyUp:
+		case NSEventTypeKeyDown:
+		case NSEventTypeKeyUp:
 			ProcessKeyboardEvent(event);
 			break;
 
-		case NSFlagsChanged:
+		case NSEventTypeFlagsChanged:
 			ProcessKeyboardFlagsEvent(event);
 			break;
 

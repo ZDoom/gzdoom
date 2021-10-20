@@ -37,6 +37,7 @@
 #include "hwrenderer/data/shaderuniforms.h"
 
 CVAR(Int, vk_submit_size, 1000, 0);
+EXTERN_CVAR(Bool, r_skipmats)
 
 VkRenderState::VkRenderState()
 {
@@ -239,6 +240,8 @@ void VkRenderState::ApplyRenderPass(int dt)
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
 		pipelineKey.SpecialEffect = EFF_NONE;
 		pipelineKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
+		if (r_skipmats && pipelineKey.EffectState >= 3 && pipelineKey.EffectState <= 4)
+			pipelineKey.EffectState = 0;
 		pipelineKey.AlphaTest = mAlphaThreshold >= 0.f;
 	}
 

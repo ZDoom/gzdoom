@@ -49,6 +49,8 @@
 #include <map>
 #include <memory>
 
+EXTERN_CVAR(Bool, r_skipmats)
+
 namespace OpenGLRenderer
 {
 
@@ -729,6 +731,9 @@ FShader *FShaderManager::BindEffect(int effect, EPassType passType)
 
 FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)
 {
+	if (r_skipmats && eff >= 3 && eff <= 4)
+		eff = 0;
+
 	if (passType < mPassShaders.Size())
 		return mPassShaders[passType]->Get(eff, alphateston);
 	else

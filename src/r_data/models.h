@@ -55,6 +55,7 @@ enum
 	MDL_BADROTATION					= 128,
 	MDL_DONTCULLBACKFACES			= 256,
 	MDL_USEROTATIONCENTER			= 512,
+	MDL_NOPERPIXELLIGHTING			= 1024, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
 };
 
 FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);

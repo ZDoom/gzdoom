@@ -524,6 +524,10 @@ static void ParseModelDefLump(int Lump)
 				{
 					smf.flags |= MDL_USEACTORROLL;
 				}
+				else if (sc.Compare("noperpixellighting"))
+				{
+					smf.flags |= MDL_NOPERPIXELLIGHTING;
+				}
 				else if (sc.Compare("rotating"))
 				{
 					smf.flags |= MDL_ROTATING;

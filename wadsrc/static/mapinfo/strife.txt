@@ -73,6 +73,8 @@ gameinfo
 	statscreen_single = "RavenStatusScreen"
 	statusbarclass = "StrifeStatusBar"
 	messageboxclass = "MessageBoxMenu"
+	helpmenuclass = "ReadThisMenu"
+	menudelegateclass = "DoomMenuDelegate"
 	normforwardmove = 0x19, 0x32
 	normsidemove = 0x18, 0x28
 }

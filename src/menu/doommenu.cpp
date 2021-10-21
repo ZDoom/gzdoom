@@ -202,6 +202,10 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		menu = NAME_Optionsmenu;
 		break;
 
+	case NAME_Readthismenu:
+		// [MK] allow us to override the ReadThisMenu class
+		menu = gameinfo.HelpMenuClass;
+		break;
 	}
 
 	DMenuDescriptor** desc = MenuDescriptors.CheckKey(menu);
@@ -1300,7 +1304,17 @@ void SetDefaultMenuColors()
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
 
-	auto cls = PClass::FindClass("DoomMenuDelegate");
+	auto cls = PClass::FindClass(gameinfo.HelpMenuClass);
+	if (!cls)
+		I_FatalError("%s: Undefined help menu class", gameinfo.HelpMenuClass.GetChars());
+	if (!cls->IsDescendantOf(RUNTIME_CLASS(DMenu)))
+		I_FatalError("'%s' does not inherit from Menu", gameinfo.HelpMenuClass.GetChars());
+
+	cls = PClass::FindClass(gameinfo.MenuDelegateClass);
+	if (!cls)
+		I_FatalError("%s: Undefined menu delegate class", gameinfo.HelpMenuClass.GetChars());
+	if (!cls->IsDescendantOf("MenuDelegateBase"))
+		I_FatalError("'%s' does not inherit from MenuDelegateBase", gameinfo.MenuDelegateClass.GetChars());
 	menuDelegate = cls->CreateNew();
 }
 

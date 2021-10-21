@@ -288,7 +288,7 @@ else()
 
 
 	if( APPLE )
-		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12")
 		if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 			# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
 			set( ALL_C_FLAGS "-static-libgcc" )
@@ -414,7 +414,7 @@ add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
 add_subdirectory( wadsrc_extra )
-add_subdirectory( wadsrc_widescreen )
+add_subdirectory( wadsrc_widepix )
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )

@@ -131,6 +131,8 @@ struct islope_t
 //=============================================================================
 
 CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
+CVAR(Float, am_linealpha, 1.0f, CVAR_ARCHIVE)
+CVAR(Int, am_linethickness, 1, CVAR_ARCHIVE)
 CVAR(Bool, am_thingrenderstyles, true, CVAR_ARCHIVE)
 CVAR(Int, am_showsubsector, -1, 0);
 
@@ -1735,7 +1737,16 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 
 	if (clipMline (ml, &fl))
 	{
-		twod->AddLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, -1, -1, INT_MAX, INT_MAX, color.RGB);
+		const int x1 = f_x + fl.a.x;
+		const int y1 = f_y + fl.a.y;
+		const int x2 = f_x + fl.b.x;
+		const int y2 = f_y + fl.b.y;
+		if (am_linethickness >= 2) {
+			twod->AddThickLine(x1, y1, x2, y2, am_linethickness, color.RGB, uint8_t(am_linealpha * 255));
+		} else {
+			// Use more efficient thin line drawing routine.
+			twod->AddLine(x1, y1, x2, y2, -1, -1, INT_MAX, INT_MAX, color.RGB, uint8_t(am_linealpha * 255));
+		}
 	}
 }
 
@@ -3130,11 +3141,20 @@ void DAutomap::drawAuthorMarkers ()
 		auto it = Level->GetActorIterator(mark->args[0]);
 		AActor *marked = mark->args[0] == 0 ? mark : it.Next();
 
+		double xscale = mark->Scale.X;
+		double yscale = mark->Scale.Y;
+		// [MK] scale with automap zoom if args[2] is 1, otherwise keep a constant scale
+		if (mark->args[2] == 1)
+		{
+			xscale = MTOF(xscale);
+			yscale = MTOF(yscale);
+		}
+
 		while (marked != nullptr)
 		{
 			if (mark->args[1] == 0 || (mark->args[1] == 1 && (marked->subsector->flags & SSECMF_DRAWN)))
 			{
-				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
+				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, xscale, yscale, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : nullptr;

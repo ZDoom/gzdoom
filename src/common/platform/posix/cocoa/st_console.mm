@@ -104,7 +104,7 @@ FConsoleWindow::FConsoleWindow()
 	NSString* const title = [NSString stringWithFormat:@"%s %s - Console", GAMENAME, GetVersionString()];
 
 	[m_window initWithContentRect:initialRect
-						styleMask:NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
+						styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
 						  backing:NSBackingStoreBuffered
 							defer:NO];
 	[m_window setMinSize:[m_window frame].size];
@@ -348,7 +348,7 @@ void FConsoleWindow::SetTitleText()
 	NSTextField* titleText = [[NSTextField alloc] initWithFrame:titleTextRect];
 	[titleText setStringValue:[NSString stringWithCString:GameStartupInfo.Name.GetChars()
 												 encoding:NSISOLatin1StringEncoding]];
-	[titleText setAlignment:NSCenterTextAlignment];
+	[titleText setAlignment:NSTextAlignmentCenter];
 	[titleText setTextColor:RGB(GameStartupInfo.FgColor)];
 	[titleText setBackgroundColor:RGB(GameStartupInfo.BkColor)];
 	[titleText setFont:[NSFont fontWithName:@"Trebuchet MS Bold" size:18.0f]];
@@ -434,7 +434,7 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 		// Text with connected/total players count
 		m_netCountText = [[NSTextField alloc] initWithFrame:NSMakeRect(428.0f, 64.0f, 72.0f, 16.0f)];
 		[m_netCountText setAutoresizingMask:NSViewMinXMargin];
-		[m_netCountText setAlignment:NSRightTextAlignment];
+		[m_netCountText setAlignment:NSTextAlignmentRight];
 		[m_netCountText setDrawsBackground:NO];
 		[m_netCountText setSelectable:NO];
 		[m_netCountText setBordered:NO];

@@ -61,6 +61,19 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 	state.SetObjectColor(DecalColor);
 
 	state.SetLightIndex(dynlightindex);
+
+	// add light probe contribution
+	if (di->Level->LightProbes.Size() > 0)
+	{
+		double x, y;
+		decal->GetXY(decal->Side, x, y);
+		LightProbe *probe = FindLightProbe(di->Level, x, y, decal->GetRealZ(decal->Side) * 0.5);
+		if (probe)
+		{
+			state.SetDynLight(probe->Red, probe->Green, probe->Blue);
+		}
+	}
+
 	state.SetTextureMode(decal->RenderStyle);
 	state.SetRenderStyle(decal->RenderStyle);
 	state.SetMaterial(texture, UF_Sprite, 0, CLAMP_XY, decal->Translation, -1);

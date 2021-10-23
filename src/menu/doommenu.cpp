@@ -1312,7 +1312,7 @@ void SetDefaultMenuColors()
 
 	cls = PClass::FindClass(gameinfo.MenuDelegateClass);
 	if (!cls)
-		I_FatalError("%s: Undefined menu delegate class", gameinfo.HelpMenuClass.GetChars());
+		I_FatalError("%s: Undefined menu delegate class", gameinfo.MenuDelegateClass.GetChars());
 	if (!cls->IsDescendantOf("MenuDelegateBase"))
 		I_FatalError("'%s' does not inherit from MenuDelegateBase", gameinfo.MenuDelegateClass.GetChars());
 	menuDelegate = cls->CreateNew();

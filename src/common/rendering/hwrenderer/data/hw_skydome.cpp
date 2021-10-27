@@ -130,7 +130,7 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(FSkyVertex, color) }
 	};
 	mVertexBuffer->SetFormat(1, 3, sizeof(FSkyVertex), format);
-	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], true);
+	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], BufferUsageType::Static);
 }
 
 FSkyVertexBuffer::~FSkyVertexBuffer()

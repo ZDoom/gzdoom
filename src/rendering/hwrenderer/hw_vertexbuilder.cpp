@@ -400,5 +400,5 @@ void CreateVBO(FFlatVertexBuffer* fvb, TArray<sector_t>& sectors)
 	CreateVertices(fvb, sectors);
 	fvb->mCurIndex = fvb->mIndex = fvb->vbo_shadowdata.Size();
 	fvb->Copy(0, fvb->mIndex);
-	fvb->mIndexBuffer->SetData(fvb->ibo_data.Size() * sizeof(uint32_t), &fvb->ibo_data[0]);
+	fvb->mIndexBuffer->SetData(fvb->ibo_data.Size() * sizeof(uint32_t), &fvb->ibo_data[0], BufferUsageType::Static);
 }

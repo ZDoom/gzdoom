@@ -721,7 +721,7 @@ void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
 	}
 
 	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
-	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data());
+	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data(), BufferUsageType::Static);
 }
 
 void VulkanFrameBuffer::UpdateShadowMap()

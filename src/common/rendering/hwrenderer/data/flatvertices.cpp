@@ -81,7 +81,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height, int pipelineNbr):
 
 	mIndexBuffer = screen->CreateIndexBuffer();
 	int data[4] = {};
-	mIndexBuffer->SetData(4, data); // On Vulkan this may not be empty, so set some dummy defaults to avoid crashes.
+	mIndexBuffer->SetData(4, data, BufferUsageType::Static); // On Vulkan this may not be empty, so set some dummy defaults to avoid crashes.
 
 
 	for (int n = 0; n < mPipelineNbr; n++)
@@ -89,7 +89,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height, int pipelineNbr):
 		mVertexBufferPipeline[n] = screen->CreateVertexBuffer();
 
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
-		mVertexBufferPipeline[n]->SetData(bytesize, nullptr, false);
+		mVertexBufferPipeline[n]->SetData(bytesize, nullptr, BufferUsageType::Persistent);
 
 		static const FVertexBufferAttribute format[] = {
 			{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FFlatVertex, x) },

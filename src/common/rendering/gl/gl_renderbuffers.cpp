@@ -952,7 +952,7 @@ void GLPPRenderState::Draw()
 	{
 		if (!shader->Uniforms)
 			shader->Uniforms.reset(screen->CreateDataBuffer(POSTPROCESS_BINDINGPOINT, false, false));
-		shader->Uniforms->SetData(Uniforms.Data.Size(), Uniforms.Data.Data());
+		shader->Uniforms->SetData(Uniforms.Data.Size(), Uniforms.Data.Data(), BufferUsageType::Static);
 		static_cast<GLDataBuffer*>(shader->Uniforms.get())->BindBase();
 	}
 

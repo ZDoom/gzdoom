@@ -64,61 +64,73 @@ void VKBuffer::Reset()
 	mStaging.reset();
 }
 
-void VKBuffer::SetData(size_t size, const void *data, bool staticdata)
+void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 {
 	auto fb = GetVulkanFrameBuffer();
 
-	size = std::max(size, (size_t)16); // For supporting zero byte buffers
+	size_t bufsize = std::max(size, (size_t)16); // For supporting zero byte buffers
 
-	if (staticdata)
+	if (usage == BufferUsageType::Static || usage == BufferUsageType::Stream)
 	{
+		// Note: we could recycle buffers here for the stream usage type to improve performance
+
 		mPersistent = false;
 
-		{
-			BufferBuilder builder;
-			builder.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | mBufferType, VMA_MEMORY_USAGE_GPU_ONLY);
-			builder.setSize(size);
-			mBuffer = builder.create(fb->device);
-		}
+		BufferBuilder builder;
+		builder.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | mBufferType, VMA_MEMORY_USAGE_GPU_ONLY);
+		builder.setSize(bufsize);
+		mBuffer = builder.create(fb->device);
 
-		{
-			BufferBuilder builder;
-			builder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-			builder.setSize(size);
-			mStaging = builder.create(fb->device);
-		}
+		BufferBuilder builder2;
+		builder2.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		builder2.setSize(bufsize);
+		mStaging = builder2.create(fb->device);
 
-		void *dst = mStaging->Map(0, size);
-		memcpy(dst, data, size);
-		mStaging->Unmap();
+		if (data)
+		{
+			void* dst = mStaging->Map(0, bufsize);
+			memcpy(dst, data, size);
+			mStaging->Unmap();
+		}
 
 		fb->GetTransferCommands()->copyBuffer(mStaging.get(), mBuffer.get());
 	}
-	else
+	else if (usage == BufferUsageType::Persistent)
 	{
-		mPersistent = screen->BuffersArePersistent();
+		mPersistent = true;
 
 		BufferBuilder builder;
-		builder.setUsage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, mPersistent ? VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT : 0);
+		builder.setUsage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 		builder.setMemoryType(
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		builder.setSize(size);
+		builder.setSize(bufsize);
 		mBuffer = builder.create(fb->device);
 
-		if (mPersistent)
+		map = mBuffer->Map(0, bufsize);
+		if (data)
+			memcpy(map, data, size);
+	}
+	else if (usage == BufferUsageType::Mappable)
+	{
+		mPersistent = false;
+
+		BufferBuilder builder;
+		builder.setUsage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, 0);
+		builder.setMemoryType(
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		builder.setSize(bufsize);
+		mBuffer = builder.create(fb->device);
+
+		if (data)
 		{
-			map = mBuffer->Map(0, size);
-			if (data)
-				memcpy(map, data, size);
-		}
-		else if (data)
-		{
-			void *dst = mBuffer->Map(0, size);
+			void* dst = mBuffer->Map(0, bufsize);
 			memcpy(dst, data, size);
 			mBuffer->Unmap();
 		}
 	}
+
 	buffersize = size;
 }
 
@@ -214,7 +226,7 @@ void VKBuffer::Unlock()
 	if (!mBuffer)
 	{
 		map = nullptr;
-		SetData(mStaticUpload.Size(), mStaticUpload.Data(), true);
+		SetData(mStaticUpload.Size(), mStaticUpload.Data(), BufferUsageType::Static);
 		mStaticUpload.Clear();
 	}
 	else if (!mPersistent)

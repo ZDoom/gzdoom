@@ -88,7 +88,7 @@ public:
 	void SetData()
 	{
 		if (mBuffer != nullptr)
-			mBuffer->SetData(sizeof(T), &Values);
+			mBuffer->SetData(sizeof(T), &Values, BufferUsageType::Static);
 	}
 
 	IDataBuffer* GetBuffer() const

@@ -111,7 +111,7 @@ void PolyFrameBuffer::InitializeState()
 	mScreenQuad.VertexBuffer->SetFormat(1, 3, sizeof(ScreenQuadVertex), format);
 
 	mScreenQuad.IndexBuffer = screen->CreateIndexBuffer();
-	mScreenQuad.IndexBuffer->SetData(6 * sizeof(uint32_t), indices, false);
+	mScreenQuad.IndexBuffer->SetData(6 * sizeof(uint32_t), indices, BufferUsageType::Stream);
 
 	CheckCanvas();
 }
@@ -254,7 +254,7 @@ void PolyFrameBuffer::PostProcessScene(bool swscene, int fixedcm, float flash, c
 			{ 0.0f, (float)mScreenViewport.height, 0.0f, 1.0f },
 			{ (float)mScreenViewport.width, (float)mScreenViewport.height, 1.0f, 1.0f }
 		};
-		mScreenQuad.VertexBuffer->SetData(4 * sizeof(ScreenQuadVertex), vertices, false);
+		mScreenQuad.VertexBuffer->SetData(4 * sizeof(ScreenQuadVertex), vertices, BufferUsageType::Stream);
 
 		mRenderState->SetVertexBuffer(mScreenQuad.VertexBuffer, 0, 0);
 		mRenderState->SetIndexBuffer(mScreenQuad.IndexBuffer);

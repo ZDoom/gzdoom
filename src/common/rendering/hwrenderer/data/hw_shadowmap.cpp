@@ -117,7 +117,7 @@ void IShadowMap::UploadLights()
 	if (mLightList == nullptr)
 		mLightList = screen->CreateDataBuffer(LIGHTLIST_BINDINGPOINT, true, false);
 
-	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0]);
+	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0], BufferUsageType::Stream);
 }
 
 
@@ -129,11 +129,11 @@ void IShadowMap::UploadAABBTree()
 
 		if (!mNodesBuffer)
 			mNodesBuffer = screen->CreateDataBuffer(LIGHTNODES_BINDINGPOINT, true, false);
-		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes());
+		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes(), BufferUsageType::Static);
 
 		if (!mLinesBuffer)
 			mLinesBuffer = screen->CreateDataBuffer(LIGHTLINES_BINDINGPOINT, true, false);
-		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines());
+		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines(), BufferUsageType::Static);
 	}
 	else if (mAABBTree->Update())
 	{

@@ -67,6 +67,7 @@ void I_InitGraphics ()
 #ifdef __APPLE__
 	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
 #endif // __APPLE__
+	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 
 	if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0)
 	{

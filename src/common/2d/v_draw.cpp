@@ -1529,8 +1529,9 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 	PARAM_INT(y1);
 	PARAM_INT(w);
 	PARAM_INT(h);
+	PARAM_INT(style);
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	Dim(twod, color, float(amount), x1, y1, w, h);
+	Dim(twod, color, float(amount), x1, y1, w, h, &LegacyRenderStyles[style]);
 	return 0;
 }
 

@@ -46,8 +46,13 @@ VKBuffer::~VKBuffer()
 		mBuffer->Unmap();
 
 	auto fb = GetVulkanFrameBuffer();
-	if (fb && mBuffer)
-		fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+	if (fb)
+	{
+		if (mBuffer)
+			fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+		if (mStaging)
+			fb->FrameDeleteList.Buffers.push_back(std::move(mStaging));
+	}
 }
 
 void VKBuffer::ResetAll()
@@ -69,6 +74,18 @@ void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 	auto fb = GetVulkanFrameBuffer();
 
 	size_t bufsize = std::max(size, (size_t)16); // For supporting zero byte buffers
+
+	// If SetData is called multiple times we have to keep the old buffers alive as there might still be draw commands referencing them
+	if (mBuffer)
+	{
+		fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+		mBuffer = {};
+	}
+	if (mStaging)
+	{
+		fb->FrameDeleteList.Buffers.push_back(std::move(mStaging));
+		mStaging = {};
+	}
 
 	if (usage == BufferUsageType::Static || usage == BufferUsageType::Stream)
 	{

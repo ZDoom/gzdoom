@@ -400,14 +400,16 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	WriteDescriptors update;
 	MaterialLayerInfo *layer;
 	auto systex = static_cast<VkHardwareTexture*>(GetLayer(0, state.mTranslation, &layer));
-	update.addCombinedImageSampler(descriptor.get(), 0, systex->GetImage(layer->layerTexture, state.mTranslation, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+	auto systeximage = systex->GetImage(layer->layerTexture, state.mTranslation, layer->scaleFlags);
+	update.addCombinedImageSampler(descriptor.get(), 0, systeximage->View.get(), sampler, systeximage->Layout);
 
 	if (!(layer->scaleFlags & CTF_Indexed))
 	{
 		for (int i = 1; i < numLayers; i++)
 		{
 			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
-			update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+			auto systeximage = systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
+			update.addCombinedImageSampler(descriptor.get(), i, systeximage->View.get(), sampler, systeximage->Layout);
 		}
 	}
 	else
@@ -415,7 +417,8 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 		for (int i = 1; i < 3; i++)
 		{
 			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, translation, &layer));
-			update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+			auto systeximage = systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
+			update.addCombinedImageSampler(descriptor.get(), i, systeximage->View.get(), sampler, systeximage->Layout);
 		}
 		numLayers = 3;
 	}
@@ -423,7 +426,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	auto dummyImage = fb->GetRenderPassManager()->GetNullTextureView();
 	for (int i = numLayers; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
 	{
-		update.addCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, systex->mImage.Layout);
+		update.addCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	update.updateSets(fb->device);

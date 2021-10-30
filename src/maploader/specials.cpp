@@ -452,7 +452,7 @@ static void SetupSectorDamage(sector_t *sector, int damage, int interval, int le
 	if (sector->damageamount == 0 && !(sector->Flags & (SECF_EXIT1|SECF_EXIT2)))
 	{
 		sector->damageamount = damage;
-		sector->damageinterval = MAX(1, interval);
+		sector->damageinterval = max(1, interval);
 		sector->leakydamage = leakchance;
 		sector->damagetype = type;
 		sector->Flags = (sector->Flags & ~SECF_DAMAGEFLAGS) | (flags & SECF_DAMAGEFLAGS);

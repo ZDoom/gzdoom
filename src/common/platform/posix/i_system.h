@@ -66,7 +66,7 @@ static inline char *strlwr(char *str)
 }
 
 inline int I_GetNumaNodeCount() { return 1; }
-inline int I_GetNumaNodeThreadCount(int numaNode) { return max<int>(std::thread::hardware_concurrency(), 1); }
+inline int I_GetNumaNodeThreadCount(int numaNode) { return std::max<int>(std::thread::hardware_concurrency(), 1); }
 inline void I_SetThreadNumaNode(std::thread &thread, int numaNode) { }
 
 #endif

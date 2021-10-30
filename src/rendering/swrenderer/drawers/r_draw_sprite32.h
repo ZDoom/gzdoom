@@ -143,9 +143,9 @@ namespace swrenderer
 				shade_light.g = shade_constants.light_green;
 				shade_light.b = shade_constants.light_blue;
 				desaturate = shade_constants.desaturate;
-				lightcontrib.r = MIN<uint32_t>(light + dynlight.r, 256) - light;
-				lightcontrib.g = MIN<uint32_t>(light + dynlight.g, 256) - light;
-				lightcontrib.b = MIN<uint32_t>(light + dynlight.b, 256) - light;
+				lightcontrib.r = min<uint32_t>(light + dynlight.r, 256) - light;
+				lightcontrib.g = min<uint32_t>(light + dynlight.g, 256) - light;
+				lightcontrib.b = min<uint32_t>(light + dynlight.b, 256) - light;
 				mlight.r = light;
 				mlight.g = light;
 				mlight.b = light;
@@ -161,9 +161,9 @@ namespace swrenderer
 				shade_light.b = 0;
 				desaturate = 0;
 				lightcontrib = 0;
-				mlight.r = MIN<uint32_t>(light + dynlight.r, 256);
-				mlight.g = MIN<uint32_t>(light + dynlight.g, 256);
-				mlight.b = MIN<uint32_t>(light + dynlight.b, 256);
+				mlight.r = min<uint32_t>(light + dynlight.r, 256);
+				mlight.g = min<uint32_t>(light + dynlight.g, 256);
+				mlight.b = min<uint32_t>(light + dynlight.b, 256);
 			}
 
 			int count = args.Count();
@@ -300,9 +300,9 @@ namespace swrenderer
 				fgcolor.g = (((shade_fade.g + ((fgcolor.g * inv_desaturate + intensity) >> 8) * mlight.g) >> 8) * shade_light.g) >> 8;
 				fgcolor.b = (((shade_fade.b + ((fgcolor.b * inv_desaturate + intensity) >> 8) * mlight.b) >> 8) * shade_light.b) >> 8;
 
-				fgcolor.r = MIN<uint32_t>(fgcolor.r + lit_dynlight.r, 255);
-				fgcolor.g = MIN<uint32_t>(fgcolor.g + lit_dynlight.g, 255);
-				fgcolor.b = MIN<uint32_t>(fgcolor.b + lit_dynlight.b, 255);
+				fgcolor.r = min<uint32_t>(fgcolor.r + lit_dynlight.r, 255);
+				fgcolor.g = min<uint32_t>(fgcolor.g + lit_dynlight.g, 255);
+				fgcolor.b = min<uint32_t>(fgcolor.b + lit_dynlight.b, 255);
 				return fgcolor;
 			}
 		}
@@ -332,9 +332,9 @@ namespace swrenderer
 			{
 				uint32_t alpha = ifgshade;
 				BgraColor outcolor;
-				outcolor.r = MIN<uint32_t>(((fgcolor.r * alpha) >> 8) + bgcolor.r, 255);
-				outcolor.g = MIN<uint32_t>(((fgcolor.g * alpha) >> 8) + bgcolor.g, 255);
-				outcolor.b = MIN<uint32_t>(((fgcolor.b * alpha) >> 8) + bgcolor.b, 255);
+				outcolor.r = min<uint32_t>(((fgcolor.r * alpha) >> 8) + bgcolor.r, 255);
+				outcolor.g = min<uint32_t>(((fgcolor.g * alpha) >> 8) + bgcolor.g, 255);
+				outcolor.b = min<uint32_t>(((fgcolor.b * alpha) >> 8) + bgcolor.b, 255);
 				outcolor.a = 255;
 				return outcolor;
 			}
@@ -357,21 +357,21 @@ namespace swrenderer
 				BgraColor outcolor;
 				if (BlendT::Mode == (int)SpriteBlendModes::AddClamp)
 				{
-					outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
-					outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
-					outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
+					outcolor.r = min<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+					outcolor.g = min<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+					outcolor.b = min<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 				}
 				else if (BlendT::Mode == (int)SpriteBlendModes::SubClamp)
 				{
-					outcolor.r = MAX(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
 				}
 				else if (BlendT::Mode == (int)SpriteBlendModes::RevSubClamp)
 				{
-					outcolor.r = MAX(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
 				}
 				outcolor.a = 255;
 				return outcolor;

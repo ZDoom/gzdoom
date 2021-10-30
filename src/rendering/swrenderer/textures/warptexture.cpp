@@ -126,20 +126,20 @@ void FWarpTexture::GenerateBgraMipmapsFast()
 	int levels = MipmapLevels();
 	for (int i = 1; i < levels; i++)
 	{
-		int srcw = MAX(GetPhysicalWidth() >> (i - 1), 1);
-		int srch = MAX(GetPhysicalHeight() >> (i - 1), 1);
-		int w = MAX(GetPhysicalWidth() >> i, 1);
-		int h = MAX(GetPhysicalHeight() >> i, 1);
+		int srcw = max(GetPhysicalWidth() >> (i - 1), 1);
+		int srch = max(GetPhysicalHeight() >> (i - 1), 1);
+		int w = max(GetPhysicalWidth() >> i, 1);
+		int h = max(GetPhysicalHeight() >> i, 1);
 
 		for (int x = 0; x < w; x++)
 		{
 			int sx0 = x * 2;
-			int sx1 = MIN((x + 1) * 2, srcw - 1);
+			int sx1 = min((x + 1) * 2, srcw - 1);
 
 			for (int y = 0; y < h; y++)
 			{
 				int sy0 = y * 2;
-				int sy1 = MIN((y + 1) * 2, srch - 1);
+				int sy1 = min((y + 1) * 2, srch - 1);
 
 				uint32_t src00 = src[sy0 + sx0 * srch];
 				uint32_t src01 = src[sy1 + sx0 * srch];

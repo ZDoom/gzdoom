@@ -91,7 +91,7 @@ namespace swrenderer
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
 
-				__m128i alpha = _mm_set1_epi16(MAX(MIN(frac >> (16 - start_fade), 256), 0));
+				__m128i alpha = _mm_set1_epi16(max(min(frac >> (16 - start_fade), 256), 0));
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 				
 				__m128i c = _mm_unpacklo_epi8(_mm_cvtsi32_si128(fg), _mm_setzero_si128());
@@ -120,7 +120,7 @@ namespace swrenderer
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
 
-				__m128i alpha = _mm_set1_epi16(MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0));
+				__m128i alpha = _mm_set1_epi16(max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0));
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 				
 				__m128i c = _mm_unpacklo_epi8(_mm_cvtsi32_si128(fg), _mm_setzero_si128());
@@ -171,7 +171,7 @@ namespace swrenderer
 					uint32_t fg = source0[sample_index];
 					if (fg == 0)
 					{
-						uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+						uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 						fg = source1[sample_index2];
 					}
 
@@ -216,11 +216,11 @@ namespace swrenderer
 				uint32_t fg = source0[sample_index];
 				if (fg == 0)
 				{
-					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
 				}
 
-				__m128i alpha = _mm_set1_epi16(MAX(MIN(frac >> (16 - start_fade), 256), 0));
+				__m128i alpha = _mm_set1_epi16(max(min(frac >> (16 - start_fade), 256), 0));
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 				
 				__m128i c = _mm_unpacklo_epi8(_mm_cvtsi32_si128(fg), _mm_setzero_si128());
@@ -239,7 +239,7 @@ namespace swrenderer
 				uint32_t fg = source0[sample_index];
 				if (fg == 0)
 				{
-					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
 				}
 				*dest = fg;
@@ -256,11 +256,11 @@ namespace swrenderer
 				uint32_t fg = source0[sample_index];
 				if (fg == 0)
 				{
-					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
 				}
 
-				__m128i alpha = _mm_set1_epi16(MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0));
+				__m128i alpha = _mm_set1_epi16(max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0));
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
 				
 				__m128i c = _mm_unpacklo_epi8(_mm_cvtsi32_si128(fg), _mm_setzero_si128());

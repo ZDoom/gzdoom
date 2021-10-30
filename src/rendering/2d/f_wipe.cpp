@@ -160,7 +160,7 @@ public:
 	bool Run(int ticks) override;
 	
 private:
-	static const int WIDTH = 320, HEIGHT = 200;
+	static constexpr int WIDTH = 320, HEIGHT = 200;
 	int y[WIDTH];
 };
 

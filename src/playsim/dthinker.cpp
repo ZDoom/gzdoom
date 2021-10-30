@@ -247,7 +247,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 		Printf(TEXTCOLOR_YELLOW "Total, ms   Averg, ms   Calls   Actor class\n");
 		Printf(TEXTCOLOR_YELLOW "----------  ----------  ------  --------------------\n");
 
-		const unsigned count = MIN(profilelimit > 0 ? profilelimit : UINT_MAX, sorted.Size());
+		const unsigned count = min(profilelimit > 0 ? profilelimit : UINT_MAX, sorted.Size());
 
 		for (unsigned i = 0; i < count; ++i)
 		{

@@ -1008,7 +1008,7 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString ();
 				sfx = soundEngine->FindSoundTentative (sc.String);
 				sc.MustGetNumber ();
-				S_sfx[sfx].NearLimit = MIN(MAX(sc.Number, 0), 255);
+				S_sfx[sfx].NearLimit = min(max(sc.Number, 0), 255);
 				if (sc.CheckFloat())
 				{
 					S_sfx[sfx].LimitRange = float(sc.Float * sc.Float);

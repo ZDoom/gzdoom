@@ -831,7 +831,7 @@ DEFINE_ACTION_FUNCTION(DStatusScreen, GetPlayerWidths)
 	if (numret > 0) ret[0].SetInt(maxnamewidth);
 	if (numret > 1) ret[1].SetInt(maxscorewidth);
 	if (numret > 2) ret[2].SetInt(maxiconheight);
-	return MIN(numret, 3);
+	return min(numret, 3);
 }
 
 //====================================================================

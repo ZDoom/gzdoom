@@ -233,8 +233,8 @@ namespace swrenderer
 				if (flipY)
 					std::swap(dc_yl, dc_yh);
 
-				dc_yl = std::max(dc_yl, cliptop);
-				dc_yh = std::min(dc_yh, clipbottom);
+				dc_yl = max(dc_yl, cliptop);
+				dc_yh = min(dc_yh, clipbottom);
 
 				if (dc_yl <= dc_yh)
 				{
@@ -271,8 +271,8 @@ namespace swrenderer
 				if (flipY)
 					std::swap(dc_yl, dc_yh);
 
-				dc_yl = std::max(dc_yl, cliptop);
-				dc_yh = std::min(dc_yh, clipbottom);
+				dc_yl = max(dc_yl, cliptop);
+				dc_yh = min(dc_yh, clipbottom);
 
 				if (dc_yl < dc_yh)
 				{

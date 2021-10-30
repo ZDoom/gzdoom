@@ -2987,12 +2987,12 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 		{
 			if (self->Angles.Pitch > other_pitch)
 			{
-				max_pitch = MIN(max_pitch, (self->Angles.Pitch - other_pitch).Normalized360());
+				max_pitch = min(max_pitch, (self->Angles.Pitch - other_pitch).Normalized360());
 				self->Angles.Pitch -= max_pitch;
 			}
 			else
 			{
-				max_pitch = MIN(max_pitch, (other_pitch - self->Angles.Pitch).Normalized360());
+				max_pitch = min(max_pitch, (other_pitch - self->Angles.Pitch).Normalized360());
 				self->Angles.Pitch += max_pitch;
 			}
 		}

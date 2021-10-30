@@ -870,7 +870,7 @@ bool MapLoader::LoadSegs (MapData * map)
 
 			if (vnum1 >= numvertexes || vnum2 >= numvertexes)
 			{
-				throw badseg(0, i, MAX(vnum1, vnum2));
+				throw badseg(0, i, max(vnum1, vnum2));
 			}
 
 			li->v1 = &Level->vertexes[vnum1];
@@ -1890,7 +1890,7 @@ void MapLoader::LoadLineDefs2 (MapData * map)
 	Level->sides.Alloc(count);
 	memset(&Level->sides[0], 0, count * sizeof(side_t));
 
-	sidetemp.Resize(MAX<int>(count, Level->vertexes.Size()));
+	sidetemp.Resize(max<int>(count, Level->vertexes.Size()));
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
@@ -1918,7 +1918,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 	int i;
 
 	int numsides = Level->sides.Size();
-	sidetemp.Resize(MAX<int>(Level->vertexes.Size(), numsides));
+	sidetemp.Resize(max<int>(Level->vertexes.Size(), numsides));
 
 	for (i = 0; i < (int)Level->vertexes.Size(); ++i)
 	{
@@ -2816,7 +2816,7 @@ void MapLoader::LoadReject (MapData * map, bool junk)
 	else
 	{
 		// Check if the reject has some actual content. If not, free it.
-		rejectsize = MIN (rejectsize, neededsize);
+		rejectsize = min (rejectsize, neededsize);
 		Level->rejectmatrix.Alloc(rejectsize);
 
 		map->Read (ML_REJECT, &Level->rejectmatrix[0], rejectsize);

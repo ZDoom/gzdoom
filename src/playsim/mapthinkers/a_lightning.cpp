@@ -157,11 +157,11 @@ void DLightningThinker::LightningFlash ()
 			LightningLightLevels[j] = tempSec->lightlevel;
 			if (special == Light_IndoorLightning1)
 			{
-				tempSec->SetLightLevel(MIN<int> (tempSec->lightlevel+64, flashLight));
+				tempSec->SetLightLevel(min<int> (tempSec->lightlevel+64, flashLight));
 			}
 			else if (special == Light_IndoorLightning2)
 			{
-				tempSec->SetLightLevel(MIN<int> (tempSec->lightlevel+32, flashLight));
+				tempSec->SetLightLevel(min<int> (tempSec->lightlevel+32, flashLight));
 			}
 			else
 			{

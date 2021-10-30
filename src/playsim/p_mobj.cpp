@@ -1774,7 +1774,7 @@ bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise
 		DAngle pitch = 0.;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
-			double dist = MAX(1., actor->Distance2D(target));
+			double dist = max(1., actor->Distance2D(target));
 			// Aim at a player's eyes and at the middle of the actor for everything else.
 			double aimheight = target->Height/2;
 			if (target->player)
@@ -1849,7 +1849,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 		// preserve the direction instead of clamping x and y independently.
 		double cx = mo->Vel.X == 0 ? 1. : clamp(mo->Vel.X, -maxmove, maxmove) / mo->Vel.X;
 		double cy = mo->Vel.Y == 0 ? 1. : clamp(mo->Vel.Y, -maxmove, maxmove) / mo->Vel.Y;
-		double fac = MIN(cx, cy);
+		double fac = min(cx, cy);
 
 		mo->Vel.X *= fac;
 		mo->Vel.Y *= fac;
@@ -2439,7 +2439,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 				}
 				if (mo->Vel.Z < sinkspeed)
 				{ // Dropping too fast, so slow down toward sinkspeed.
-					mo->Vel.Z -= MAX(sinkspeed*2, -8.);
+					mo->Vel.Z -= max(sinkspeed*2, -8.);
 					if (mo->Vel.Z > sinkspeed)
 					{
 						mo->Vel.Z = sinkspeed;
@@ -2447,7 +2447,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 				}
 				else if (mo->Vel.Z > sinkspeed)
 				{ // Dropping too slow/going up, so trend toward sinkspeed.
-					mo->Vel.Z = startvelz + MAX(sinkspeed/3, -8.);
+					mo->Vel.Z = startvelz + max(sinkspeed/3, -8.);
 					if (mo->Vel.Z < sinkspeed)
 					{
 						mo->Vel.Z = sinkspeed;
@@ -6693,7 +6693,7 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	th->VelFromAngle();
 
 
-	double dist = source->DistanceBySpeed(dest, MAX(1., th->Speed));
+	double dist = source->DistanceBySpeed(dest, max(1., th->Speed));
 	th->Vel.Z = (dest->Z() - source->Z()) / dist;
 
 	if (th->flags4 & MF4_SPECTRAL)

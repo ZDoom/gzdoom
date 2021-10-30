@@ -1004,11 +1004,11 @@ static void CalcSectorSoundOrg(const DVector3& listenpos, const sector_t* sec, i
 	// Set sound vertical position based on channel.
 	if (channum == CHAN_FLOOR)
 	{
-		pos.Y = (float)MIN<double>(sec->floorplane.ZatPoint(listenpos), listenpos.Z);
+		pos.Y = (float)min<double>(sec->floorplane.ZatPoint(listenpos), listenpos.Z);
 	}
 	else if (channum == CHAN_CEILING)
 	{
-		pos.Y = (float)MAX<double>(sec->ceilingplane.ZatPoint(listenpos), listenpos.Z);
+		pos.Y = (float)max<double>(sec->ceilingplane.ZatPoint(listenpos), listenpos.Z);
 	}
 	else if (channum == CHAN_INTERIOR)
 	{

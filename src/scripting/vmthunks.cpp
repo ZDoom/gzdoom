@@ -1786,7 +1786,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, LocateWeapon, LocateWeapon)
 	if (numret >= 1) ret[0].SetInt(retv);
 	if (numret >= 2) ret[1].SetInt(slot);
 	if (numret >= 3) ret[2].SetInt(index);
-	return MIN(numret, 3);
+	return min(numret, 3);
 }
 
 static PClassActor *GetWeapon(FWeaponSlots *self, int slot, int index)
@@ -2123,7 +2123,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon
 	FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &applyscale));
 	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
 	if (numret >= 2) ret[1].SetInt(applyscale);
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
 
 //=====================================================================================
@@ -2489,7 +2489,7 @@ DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
 	if (numret > 1) ret[1].SetInt(viewwindowy);
 	if (numret > 2) ret[2].SetInt(viewwidth);
 	if (numret > 3) ret[3].SetInt(viewheight);
-	return MIN(numret, 4);
+	return min(numret, 4);
 }
 
 DEFINE_ACTION_FUNCTION(_Console, MidPrint)

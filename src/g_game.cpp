@@ -837,7 +837,7 @@ void G_AddViewPitch (int look, bool mouse)
 		}
 		else
 		{
-			LocalViewPitch = MIN(LocalViewPitch + look, 0x78000000);
+			LocalViewPitch = min(LocalViewPitch + look, 0x78000000);
 		}
 	}
 	else if (look < 0)
@@ -849,7 +849,7 @@ void G_AddViewPitch (int look, bool mouse)
 		}
 		else
 		{
-			LocalViewPitch = MAX(LocalViewPitch + look, -0x78000000);
+			LocalViewPitch = max(LocalViewPitch + look, -0x78000000);
 		}
 	}
 	if (look != 0)
@@ -1319,7 +1319,7 @@ void G_Ticker ()
 	// Do some more aggressive GC maintenance when the game ticker is inactive. 
 	if ((gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL) || paused || P_CheckTickerPaused())
 	{
-		size_t ac = std::max<size_t>(10, GC::AllocCount);
+		size_t ac = max<size_t>(10, GC::AllocCount);
 		for (size_t i = 0; i < ac; i++)
 		{
 			if (!GC::CheckGC()) break;

@@ -699,9 +699,9 @@ int FNodeBuilder::FVertexMap::InsertVertex (FNodeBuilder::FPrivVert &vert)
 	// both sides of the boundary so that SelectVertexClose can find
 	// it by checking in only one block.
 	fixed64_t minx = MAX (MinX, fixed64_t(vert.x) - VERTEX_EPSILON);
-	fixed64_t maxx = MIN (MaxX, fixed64_t(vert.x) + VERTEX_EPSILON);
+	fixed64_t maxx = min (MaxX, fixed64_t(vert.x) + VERTEX_EPSILON);
 	fixed64_t miny = MAX (MinY, fixed64_t(vert.y) - VERTEX_EPSILON);
-	fixed64_t maxy = MIN (MaxY, fixed64_t(vert.y) + VERTEX_EPSILON);
+	fixed64_t maxy = min (MaxY, fixed64_t(vert.y) + VERTEX_EPSILON);
 
 	int blk[4] =
 	{

@@ -79,7 +79,7 @@ DEFINE_ACTION_FUNCTION(FState, GetSpriteTexture)
 	if (numret > 0) ret[0].SetInt(sprframe->Texture[rotation].GetIndex());
 	if (numret > 1) ret[1].SetInt(!!(sprframe->Flip & (1 << rotation)));
 	if (numret > 2) ret[2].SetVector2(DVector2(scalex, scaley));
-	return MIN(3, numret);
+	return min(3, numret);
 }
 
 

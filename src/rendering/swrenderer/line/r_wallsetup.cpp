@@ -305,7 +305,7 @@ namespace swrenderer
 	{
 		for (int i = x1; i < x2; i++)
 		{
-			ScreenY[i] = std::min(ScreenY[i], clip.sprbottomclip[i]);
+			ScreenY[i] = min(ScreenY[i], clip.sprbottomclip[i]);
 		}
 	}
 

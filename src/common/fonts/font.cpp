@@ -686,7 +686,7 @@ int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
 	// Single pic fonts do not set up their translation table and must always return 0.
 	if (Translations.Size() == 0) return 0;
-	assert(Translations.Size() == NumTextColors);
+	assert(Translations.Size() == (unsigned)NumTextColors);
 
 	if (noTranslate)
 	{

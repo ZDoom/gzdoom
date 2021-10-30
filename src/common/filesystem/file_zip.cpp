@@ -266,7 +266,7 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 			// at least one of the more common definition lumps must be present.
 			for (auto &p : filter->requiredPrefixes)
 			{ 
-				if (name.IndexOf(name0 + p) == 0 || name.LastIndexOf(p) == name.Len() - strlen(p))
+				if (name.IndexOf(name0 + p) == 0 || name.LastIndexOf(p) == ptrdiff_t(name.Len() - strlen(p)))
 				{
 					foundspeciallump = true;
 					break;

@@ -210,8 +210,8 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 	unsigned int indx[4];
 
 	vert.packedNormal = 0;	// currently this is not being used for voxels.
-	vert.u = (((col & 15) * 255 / 16) + 7) / 255.f;
-	vert.v = (((col / 16) * 255 / 16) + 7) / 255.f;
+	vert.u = (((col & 15) + 0.5f) / 16.f);
+	vert.v = (((col / 16) + 0.5f) / 16.f);
 
 	vert.x =  x1 - PivotX;
 	vert.z = -y1 + PivotY;

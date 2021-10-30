@@ -42,6 +42,7 @@ GLAPI PFNGLUNMAPBUFFEROESPROC glUnmapBuffer;
 #define GL_MAP_UNSYNCHRONIZED_BIT         0x0020
 #define GL_MAP_INVALIDATE_BUFFER_BIT      0x0008
 #define GL_BGRA                           0x80E1
+#define GL_DEPTH_CLAMP                    0x864F
 
 #else
 	#include "gl_load/gl_load.h"
@@ -69,6 +70,7 @@ namespace OpenGLESRenderer
 		bool depthStencilAvailable;
 		bool npotAvailable;
 		bool forceGLSLv100;
+		bool depthClampAvailable;
 		int max_texturesize;
 		char* vendorstring;
 		char* modelstring;

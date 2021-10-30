@@ -35,6 +35,9 @@
 #include "gles_renderbuffers.h"
 #include "gles_hwtexture.h"
 #include "gles_buffers.h"
+#include "gles_renderer.h"
+#include "gles_samplers.h"
+
 #include "hw_clock.h"
 #include "printf.h"
 
@@ -116,13 +119,13 @@ bool FGLRenderState::ApplyShader()
 		addLights = (int(lightPtr[3]) - int(lightPtr[2])) / LIGHT_VEC4_NUM;
 
 		// Here we limit the number of lights, but dont' change the light data so priority has to be mod, sub then add
-		if (modLights > gles.maxlights)
+		if (modLights > (int)gles.maxlights)
 			modLights = gles.maxlights;
 
-		if (modLights + subLights > gles.maxlights)
+		if (modLights + subLights > (int)gles.maxlights)
 			subLights = gles.maxlights - modLights;
 
-		if (modLights + subLights + addLights > gles.maxlights)
+		if (modLights + subLights + addLights > (int)gles.maxlights)
 			addLights = gles.maxlights - modLights - subLights;
 		
 		totalLights = modLights + subLights + addLights;
@@ -332,7 +335,7 @@ bool FGLRenderState::ApplyShader()
 		// Calculate the total number of vec4s we need
 		int totalVectors = totalLights * LIGHT_VEC4_NUM;
 	
-		if (totalVectors > gles.numlightvectors)
+		if (totalVectors > (int)gles.numlightvectors)
 			totalVectors = gles.numlightvectors;
 
 		glUniform4fv(activeShader->cur->lights_index, totalVectors, lightPtr);
@@ -479,6 +482,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 			for (int i = 1; i < 3; i++)
 			{
 				auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, translation, &layer));
+				GLRenderer->mSamplerManager->Bind(i, CLAMP_NONE, 255);
 				systex->Bind(i, false);
 				maxbound = i;
 			}
@@ -720,10 +724,13 @@ void FGLRenderState::ClearScreen()
 bool FGLRenderState::SetDepthClamp(bool on)
 {
 	bool res = mLastDepthClamp;
-	/*
-	if (!on) glDisable(GL_DEPTH_CLAMP);
-	else glEnable(GL_DEPTH_CLAMP);
-	*/
+
+	if (gles.depthClampAvailable)
+	{
+		if (!on) glDisable(GL_DEPTH_CLAMP);
+		else glEnable(GL_DEPTH_CLAMP);
+	}
+
 	mLastDepthClamp = on;
 	return res;
 }

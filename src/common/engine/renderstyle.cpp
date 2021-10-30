@@ -32,7 +32,7 @@
 **
 */
 
-#include "templates.h"
+#include "basics.h"
 #include "renderstyle.h"
 #include "c_cvars.h"
 

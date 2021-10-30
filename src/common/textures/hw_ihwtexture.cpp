@@ -34,7 +34,7 @@
 */
 
 #include "hw_ihwtexture.h"
-#include "templates.h"
+#include "basics.h"
 #include "tarray.h"
 #include "xs_Float.h"
 
@@ -68,7 +68,7 @@ static void ResampleBoxPrecalc(TArray<BoxPrecalc>& boxes, int oldDim)
 
 		BoxPrecalc& precalc = boxes[dst];
 		precalc.boxStart = clamp<int>(int(src_p - scale_factor_1 / 2.0 + 1), 0, oldDim - 1);
-		precalc.boxEnd = clamp<int>(MAX<int>(precalc.boxStart + 1, int(src_p + scale_factor_2)), 0, oldDim - 1);
+		precalc.boxEnd = clamp<int>(max<int>(precalc.boxStart + 1, int(src_p + scale_factor_2)), 0, oldDim - 1);
 	}
 }
 

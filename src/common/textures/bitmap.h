@@ -37,7 +37,7 @@
 #define __BITMAP_H__
 
 #include "basics.h"
-#include "templates.h"
+
 #include "palentry.h"
 
 struct FCopyInfo;

@@ -30,7 +30,7 @@
 #define __P_MOBJ_H__
 
 // Basics.
-#include "templates.h"
+
 
 // We need the thinker_t stuff.
 #include "dthinker.h"

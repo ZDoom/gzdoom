@@ -35,7 +35,7 @@
 #include <stddef.h>
 #include <cmath>
 
-#include "templates.h"
+
 #include "doomdef.h"
 
 #include "filesystem.h"

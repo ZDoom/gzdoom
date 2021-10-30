@@ -34,7 +34,7 @@
 */
 
 #include "resourcefile.h"
-#include "templates.h"
+
 #include "printf.h"
 
 //==========================================================================

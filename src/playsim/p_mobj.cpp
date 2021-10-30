@@ -58,7 +58,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 #include <float.h>
-#include "templates.h"
+
 
 #include "m_random.h"
 #include "doomdef.h"

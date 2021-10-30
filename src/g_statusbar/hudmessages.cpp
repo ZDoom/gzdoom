@@ -32,7 +32,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "sbar.h"
 #include "c_cvars.h"

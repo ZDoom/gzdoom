@@ -37,7 +37,7 @@
 #include "printf.h"
 #include "files.h"
 #include "filesystem.h"
-#include "templates.h"
+
 #include "textures.h"
 #include "bitmap.h"
 #include "colormatcher.h"

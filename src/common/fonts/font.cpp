@@ -40,7 +40,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "templates.h"
+
 #include "m_swap.h"
 #include "v_font.h"
 #include "printf.h"

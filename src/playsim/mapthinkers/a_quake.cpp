@@ -22,7 +22,7 @@
 // Hexen's earthquake system, significantly enhanced
 //
 
-#include "templates.h"
+
 #include "doomtype.h"
 #include "doomstat.h"
 #include "p_local.h"

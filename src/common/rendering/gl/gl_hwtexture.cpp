@@ -34,7 +34,7 @@
 */
 
 #include "gl_system.h"
-#include "templates.h"
+
 #include "c_cvars.h"
 #include "hw_material.h"
 

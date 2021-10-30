@@ -35,7 +35,7 @@
 
 #include <assert.h>
 
-#include "templates.h"
+
 #include "sbar.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"

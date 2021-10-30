@@ -34,7 +34,7 @@
 
 #include <string>
 
-#include "templates.h"
+
 #include "version.h"
 #include "c_bind.h"
 #include "c_console.h"

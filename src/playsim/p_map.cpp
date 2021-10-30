@@ -61,7 +61,7 @@
 #include <math.h>
 #include <algorithm>
 
-#include "templates.h"
+
 
 #include "m_bbox.h"
 #include "m_random.h"

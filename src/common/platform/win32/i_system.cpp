@@ -73,7 +73,7 @@
 
 #include "i_input.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "i_system.h"

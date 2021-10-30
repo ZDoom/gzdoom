@@ -42,7 +42,7 @@
 #include "filesystem.h"
 #include "r_sky.h"
 #include "colormaps.h"
-#include "templates.h"
+
 #include "c_cvars.h"
 
 CUSTOM_CVAR(Bool, cl_customizeinvulmap, false, CVAR_ARCHIVE|CVAR_NOINITCALL)

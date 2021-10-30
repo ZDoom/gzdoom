@@ -36,7 +36,7 @@
 #include <chrono>
 
 #include "c_cvars.h"
-#include "templates.h"
+
 #include "oalsound.h"
 #include "c_dispatch.h"
 #include "v_text.h"

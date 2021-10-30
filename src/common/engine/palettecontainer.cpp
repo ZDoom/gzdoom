@@ -37,7 +37,7 @@
 #include "m_crc32.h"
 #include "printf.h"
 #include "colormatcher.h"
-#include "templates.h"
+
 #include "palettecontainer.h"
 #include "files.h"
 

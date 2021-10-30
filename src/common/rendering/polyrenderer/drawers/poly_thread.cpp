@@ -21,7 +21,7 @@
 */
 
 #include <stddef.h>
-#include "templates.h"
+
 
 #include "filesystem.h"
 #include "v_video.h"

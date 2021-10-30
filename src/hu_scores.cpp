@@ -37,7 +37,7 @@
 
 #include "c_console.h"
 #include "teaminfo.h"
-#include "templates.h"
+
 #include "v_video.h"
 #include "doomstat.h"
 #include "g_level.h"

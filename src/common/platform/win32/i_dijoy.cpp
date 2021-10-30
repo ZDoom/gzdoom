@@ -45,7 +45,7 @@
 
 #include "i_input.h"
 #include "d_eventbase.h"
-#include "templates.h"
+
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "v_text.h"

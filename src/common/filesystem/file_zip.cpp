@@ -36,7 +36,7 @@
 #include <time.h>
 #include "file_zip.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "printf.h"
 #include "w_zip.h"
 

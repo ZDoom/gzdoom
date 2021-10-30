@@ -42,7 +42,7 @@
 #include <stdexcept>
 
 #include "files.h"
-#include "templates.h"
+
 #include "zstring.h"
 #include "cmdlib.h"
 

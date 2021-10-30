@@ -36,7 +36,7 @@
 #include <stdarg.h>
 #include "v_draw.h"
 #include "vm.h"
-#include "templates.h"
+
 #include "texturemanager.h"
 #include "r_videoscale.h"
 #include "c_cvars.h"

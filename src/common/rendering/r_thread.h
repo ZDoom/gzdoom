@@ -27,7 +27,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "templates.h"
+
 #include "c_cvars.h"
 #include "basics.h"
 

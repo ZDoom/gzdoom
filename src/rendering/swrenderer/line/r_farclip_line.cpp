@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "templates.h"
+
 
 #include "doomdef.h"
 #include "doomstat.h"

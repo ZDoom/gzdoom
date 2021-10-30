@@ -37,7 +37,7 @@
 #include "filesystem.h"
 #include "printf.h"
 #include "c_cvars.h"
-#include "templates.h"
+
 #include "gstrings.h"
 #include "textures.h"
 #include "texturemanager.h"

@@ -34,7 +34,7 @@
 */
 #include <stddef.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 
 #include "filesystem.h"

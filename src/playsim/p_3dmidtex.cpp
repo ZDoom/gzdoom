@@ -35,7 +35,7 @@
 */
 
 
-#include "templates.h"
+
 #include "p_3dmidtex.h"
 #include "p_local.h"
 #include "p_terrain.h"

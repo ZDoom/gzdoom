@@ -35,7 +35,7 @@
 */
 
 #include "files.h"
-#include "templates.h"
+
 #include "m_png.h"
 #include "bitmap.h"
 #include "imagehelpers.h"

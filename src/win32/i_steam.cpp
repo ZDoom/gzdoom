@@ -71,7 +71,7 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "g_level.h"

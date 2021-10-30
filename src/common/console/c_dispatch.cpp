@@ -39,7 +39,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "templates.h"
+
 #include "cmdlib.h"
 #include "c_console.h"
 #include "c_dispatch.h"

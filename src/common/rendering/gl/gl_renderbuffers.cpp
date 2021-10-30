@@ -30,7 +30,7 @@
 #include "gl_postprocessstate.h"
 #include "gl_shaderprogram.h"
 #include "gl_buffers.h"
-#include "templates.h"
+
 #include <random>
 
 EXTERN_CVAR(Int, gl_debug_level)

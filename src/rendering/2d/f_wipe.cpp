@@ -26,7 +26,7 @@
 #include "v_video.h"
 #include "m_random.h"
 #include "f_wipe.h"
-#include "templates.h"
+
 #include "bitmap.h"
 #include "hw_material.h"
 #include "v_draw.h"

@@ -34,7 +34,7 @@
 
 #include <stddef.h>
 
-#include "templates.h"
+
 #include "r_data/r_translate.h"
 #include "v_video.h"
 #include "g_game.h"

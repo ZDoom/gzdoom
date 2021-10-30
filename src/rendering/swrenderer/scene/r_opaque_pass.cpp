@@ -28,7 +28,7 @@
 
 #include <stdlib.h>
 
-#include "templates.h"
+
 
 #include "doomdef.h"
 

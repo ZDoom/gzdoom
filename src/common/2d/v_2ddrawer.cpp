@@ -33,7 +33,7 @@
 */
 
 #include <stdarg.h>
-#include "templates.h"
+
 #include "v_2ddrawer.h"
 #include "vectors.h"
 #include "vm.h"

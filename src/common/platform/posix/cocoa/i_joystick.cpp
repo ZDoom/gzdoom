@@ -39,7 +39,7 @@
 #include "i_system.h"
 #include "m_argv.h"
 #include "m_joy.h"
-#include "templates.h"
+
 #include "v_text.h"
 #include "printf.h"
 #include "keydef.h"

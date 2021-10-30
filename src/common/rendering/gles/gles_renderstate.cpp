@@ -25,7 +25,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "gles_system.h"
 #include "hw_cvars.h"
 #include "flatvertices.h"

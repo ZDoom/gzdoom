@@ -26,7 +26,7 @@
 #include "doomstat.h"
 #include "p_lnspec.h"
 #include "m_random.h"
-#include "templates.h"
+
 #include "s_sound.h"
 #include "p_acs.h"
 #include "r_sky.h"

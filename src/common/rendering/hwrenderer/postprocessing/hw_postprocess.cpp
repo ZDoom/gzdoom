@@ -26,7 +26,7 @@
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include <random>
 #include "texturemanager.h"
-#include "templates.h"
+
 #include "stats.h"
 
 Postprocess hw_postprocess;

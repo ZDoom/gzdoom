@@ -34,7 +34,7 @@
 
 #include "basics.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "m_joy.h"
 #include "keydef.h"
 

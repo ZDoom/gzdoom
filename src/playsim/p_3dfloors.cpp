@@ -35,7 +35,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_maputl.h"

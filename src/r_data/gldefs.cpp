@@ -35,7 +35,7 @@
 #include <ctype.h>
 
 #include "sc_man.h"
-#include "templates.h"
+
 #include "filesystem.h"
 #include "gi.h"
 #include "r_state.h"

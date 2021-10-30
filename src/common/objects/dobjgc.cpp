@@ -57,7 +57,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "dobject.h"
-#include "templates.h"
+
 #include "c_dispatch.h"
 #include "menu.h"
 #include "stats.h"

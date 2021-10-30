@@ -21,7 +21,7 @@
 */
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_bbox.h"
 

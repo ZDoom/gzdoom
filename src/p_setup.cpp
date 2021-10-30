@@ -30,7 +30,7 @@
 #include <malloc.h>		// for alloca()
 #endif
 
-#include "templates.h"
+
 #include "d_player.h"
 #include "m_argv.h"
 #include "g_game.h"

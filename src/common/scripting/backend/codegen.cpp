@@ -43,7 +43,7 @@
 #include "texturemanager.h"
 #include "m_random.h"
 #include "v_font.h"
-#include "templates.h"
+
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);

@@ -35,7 +35,7 @@
 
 #include <assert.h>
 
-#include "templates.h"
+
 #include "base_sbar.h"
 #include "printf.h"
 #include "v_draw.h"

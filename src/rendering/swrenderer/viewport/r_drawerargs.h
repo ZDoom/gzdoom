@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "templates.h"
+
 #include "doomtype.h"
 #include "doomdef.h"
 #include "r_defs.h"

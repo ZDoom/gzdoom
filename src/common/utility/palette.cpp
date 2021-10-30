@@ -39,7 +39,7 @@
 #include "files.h"
 #include "filesystem.h"
 #include "printf.h"
-#include "templates.h"
+
 #include "m_png.h"
 
 /****************************/

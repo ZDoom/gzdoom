@@ -34,7 +34,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "v_video.h"
-#include "templates.h"
+
 #include "r_videoscale.h"
 #include "cmdlib.h"
 #include "v_draw.h"

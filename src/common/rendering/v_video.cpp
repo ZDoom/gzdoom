@@ -61,7 +61,7 @@
 #include "texturemanager.h"
 #include "i_interface.h"
 #include "v_draw.h"
-#include "templates.h"
+
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)

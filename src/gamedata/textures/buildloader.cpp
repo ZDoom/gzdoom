@@ -36,7 +36,7 @@
 
 #include "files.h"
 #include "filesystem.h"
-#include "templates.h"
+
 #include "cmdlib.h"
 #include "colormatcher.h"
 #include "bitmap.h"

@@ -36,7 +36,7 @@
 #ifndef NO_SSE
 #include <xmmintrin.h>
 #endif
-#include "templates.h"
+
 #include "doomtype.h"
 #include "doomdef.h"
 #include "r_defs.h"

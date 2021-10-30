@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "templates.h"
+
 #include "s_soundinternal.h"
 #include "m_swap.h"
 #include "superfasthash.h"

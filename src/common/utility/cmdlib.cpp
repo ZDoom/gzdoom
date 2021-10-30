@@ -248,7 +248,7 @@ bool GetFileInfo(const char* pathname, size_t *size, time_t *time)
 	bool res = _wstat64(wstr.c_str(), &info) == 0;
 #endif
 	if (!res || (info.st_mode & S_IFDIR)) return false;
-	if (size) *size = info.st_size;
+	if (size) *size = (size_t)info.st_size;
 	if (time) *time = info.st_mtime;
 	return res;
 }
@@ -1060,7 +1060,7 @@ void md5Update(FileReader& file, MD5Context& md5, unsigned len)
 
 	while (len > 0)
 	{
-		t = std::min<unsigned>(len, sizeof(readbuf));
+		t = min<unsigned>(len, sizeof(readbuf));
 		len -= t;
 		t = (long)file.Read(readbuf, t);
 		md5.Update(readbuf, t);

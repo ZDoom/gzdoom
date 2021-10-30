@@ -1092,7 +1092,7 @@ void C_SearchForPullins(FExecList *exec, const char *file, FCommandLine &argv)
 
 	lastSlash1 = strrchr(file, '/');
 	lastSlash2 = strrchr(file, '\\');
-	lastSlash = MAX(lastSlash1, lastSlash2);
+	lastSlash = max(lastSlash1, lastSlash2);
 #endif
 
 	for (int i = 1; i < argv.argc(); ++i)

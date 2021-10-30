@@ -510,7 +510,7 @@ void FConsoleWindow::NetProgress(const int count)
 	if (m_netMaxPos > 1)
 	{
 		[m_netCountText setStringValue:[NSString stringWithFormat:@"%d / %d", m_netCurPos, m_netMaxPos]];
-		[m_netProgressBar setDoubleValue:MIN(m_netCurPos, m_netMaxPos)];
+		[m_netProgressBar setDoubleValue:min(m_netCurPos, m_netMaxPos)];
 	}
 }
 

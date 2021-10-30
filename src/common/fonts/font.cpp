@@ -936,7 +936,7 @@ int FFont::StringWidth(const uint8_t *string, int spacing) const
 		}
 	}
 
-	return std::max(maxw, w);
+	return max(maxw, w);
 }
 
 //==========================================================================

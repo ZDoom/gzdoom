@@ -218,8 +218,8 @@ int VkHardwareTexture::GetMipLevels(int w, int h)
 	int levels = 1;
 	while (w > 1 || h > 1)
 	{
-		w = std::max(w >> 1, 1);
-		h = std::max(h >> 1, 1);
+		w = max(w >> 1, 1);
+		h = max(h >> 1, 1);
 		levels++;
 	}
 	return levels;
@@ -391,7 +391,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	int numLayers = NumLayers();
 
 	auto fb = GetVulkanFrameBuffer();
-	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(std::max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
+	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
 
 	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");
 

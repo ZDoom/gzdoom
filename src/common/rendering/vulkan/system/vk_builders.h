@@ -571,7 +571,7 @@ inline BufferBuilder::BufferBuilder()
 
 inline void BufferBuilder::setSize(size_t size)
 {
-	bufferInfo.size = std::max(size, (size_t)16);
+	bufferInfo.size = max(size, (size_t)16);
 }
 
 inline void BufferBuilder::setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags allocFlags)

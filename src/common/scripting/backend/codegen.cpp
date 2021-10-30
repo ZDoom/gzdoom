@@ -8896,7 +8896,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	ArgList.ShrinkToFit();
 
 	if (!staticcall) emitters.SetVirtualReg(selfemit.RegNum);
-	int resultcount = vmfunc->Proto->ReturnTypes.Size() == 0 ? 0 : std::max(AssignCount, 1);
+	int resultcount = vmfunc->Proto->ReturnTypes.Size() == 0 ? 0 : max(AssignCount, 1);
 
 	assert((unsigned)resultcount <= vmfunc->Proto->ReturnTypes.Size());
 	for (int i = 0; i < resultcount; i++)

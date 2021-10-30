@@ -153,7 +153,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 		{
 			b&=~128;
 			lump.Read(data, bytesperpixel);
-			for (int i=MIN<int>(Size, (b+1)); i>0; i--)
+			for (int i=min<int>(Size, (b+1)); i>0; i--)
 			{
 				buffer[0] = data[0];
 				if (bytesperpixel>=2) buffer[1] = data[1];
@@ -164,7 +164,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 		}
 		else 
 		{
-			lump.Read(buffer, MIN<int>(Size, (b+1))*bytesperpixel);
+			lump.Read(buffer, min<int>(Size, (b+1))*bytesperpixel);
 			buffer += (b+1)*bytesperpixel;
 		}
 		Size -= b+1;

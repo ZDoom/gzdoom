@@ -244,7 +244,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 			break;
 
 		case MAKE_ID('P','L','T','E'):
-			PaletteSize = MIN<int> (len / 3, 256);
+			PaletteSize = min<int> (len / 3, 256);
 			StartOfPalette = (uint32_t)lump.Tell();
 			lump.Seek(len, FileReader::SeekCur);
 			break;
@@ -762,7 +762,7 @@ FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 			lump->Seek (len, FileReader::SeekCur);
 		else
 		{
-			PaletteSize = std::min<int> (len / 3, 256);
+			PaletteSize = min<int> (len / 3, 256);
 			for(int i = 0; i < PaletteSize; i++)
 			{
 				pe[i].r = lump->ReadUInt8();

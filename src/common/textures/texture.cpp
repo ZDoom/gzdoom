@@ -387,7 +387,7 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 			FContentIdBuilder builder;
 			builder.id = 0;
 			builder.imageID = GetImage()->GetId();
-			builder.translation = MAX(0, translation);
+			builder.translation = max(0, translation);
 			builder.expand = exx;
 			result.mContentId = builder.id;
 		}

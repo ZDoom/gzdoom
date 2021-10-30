@@ -73,7 +73,7 @@ void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 {
 	auto fb = GetVulkanFrameBuffer();
 
-	size_t bufsize = std::max(size, (size_t)16); // For supporting zero byte buffers
+	size_t bufsize = max(size, (size_t)16); // For supporting zero byte buffers
 
 	// If SetData is called multiple times we have to keep the old buffers alive as there might still be draw commands referencing them
 	if (mBuffer)
@@ -153,7 +153,7 @@ void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 
 void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 {
-	size = std::max(size, (size_t)16); // For supporting zero byte buffers
+	size = max(size, (size_t)16); // For supporting zero byte buffers
 
 	auto fb = GetVulkanFrameBuffer();
 	if (mStaging)
@@ -174,7 +174,7 @@ void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 
 void VKBuffer::Resize(size_t newsize)
 {
-	newsize = std::max(newsize, (size_t)16); // For supporting zero byte buffers
+	newsize = max(newsize, (size_t)16); // For supporting zero byte buffers
 
 	auto fb = GetVulkanFrameBuffer();
 
@@ -222,7 +222,7 @@ void VKBuffer::Unmap()
 
 void *VKBuffer::Lock(unsigned int size)
 {
-	size = std::max(size, (unsigned int)16); // For supporting zero byte buffers
+	size = max(size, (unsigned int)16); // For supporting zero byte buffers
 
 	if (!mBuffer)
 	{

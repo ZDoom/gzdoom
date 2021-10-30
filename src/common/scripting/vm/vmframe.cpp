@@ -746,7 +746,7 @@ ADD_STAT(VM)
 	for (auto d : VMCycles)
 	{
 		added += d.TimeMS();
-		peak = MAX<double>(peak, d.TimeMS());
+		peak = max<double>(peak, d.TimeMS());
 	}
 	for (auto d : VMCalls) addedc += d;
 	memmove(&VMCycles[1], &VMCycles[0], 9 * sizeof(cycle_t));

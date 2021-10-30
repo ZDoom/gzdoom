@@ -677,7 +677,7 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen)
 {
 	const char *marks = "=======================================================";
-	fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+	fprintf(dump, "\n%.*s %s %.*s", max(3, 38 - labellen / 2), marks, label, max(3, 38 - labellen / 2), marks);
 	fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
 		sfunc->NumRegD, sfunc->NumRegF, sfunc->NumRegA, sfunc->NumRegS, sfunc->MaxParam);
 	VMDumpConstants(dump, sfunc);

@@ -193,7 +193,7 @@ int ViewportScaledWidth(int width, int height)
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 	}
-	return (int)std::max((int32_t)min_width, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width, height)));
+	return (int)max((int32_t)min_width, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width, height)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -205,7 +205,7 @@ int ViewportScaledHeight(int width, int height)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 	}
-	return (int)std::max((int32_t)min_height, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(width, height)));
+	return (int)max((int32_t)min_height, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(width, height)));
 }
 
 float ViewportPixelAspect()

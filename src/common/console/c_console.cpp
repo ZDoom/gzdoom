@@ -856,7 +856,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			{ // Scroll console buffer down
 				if (ev->subtype == EV_GUI_WheelDown)
 				{
-					RowAdjust = std::max (0, RowAdjust - 3);
+					RowAdjust = max (0, RowAdjust - 3);
 				}
 				else
 				{

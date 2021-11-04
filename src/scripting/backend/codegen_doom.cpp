@@ -44,7 +44,7 @@
 #include "texturemanager.h"
 #include "m_random.h"
 #include "v_font.h"
-#include "templates.h"
+
 #include "actor.h"
 #include "p_lnspec.h"
 #include "g_levellocals.h"

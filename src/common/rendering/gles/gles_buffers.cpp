@@ -93,8 +93,9 @@ void GLBuffer::Bind()
 }
 
 
-void GLBuffer::SetData(size_t size, const void* data, bool staticdata)
+void GLBuffer::SetData(size_t size, const void* data, BufferUsageType usage)
 {
+	bool staticdata = (usage == BufferUsageType::Static || usage == BufferUsageType::Mappable);
 	if (isData || !gles.useMappedBuffers)
 	{
 		if (memory)
@@ -175,7 +176,7 @@ void GLBuffer::Unmap()
 void *GLBuffer::Lock(unsigned int size)
 {
 	// This initializes this buffer as a static object with no data.
-	SetData(size, nullptr, true);
+	SetData(size, nullptr, BufferUsageType::Mappable);
 	if (!isData && gles.useMappedBuffers)
 	{
 		return glMapBufferRange(mUseType, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);

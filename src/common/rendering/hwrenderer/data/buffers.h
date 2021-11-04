@@ -47,6 +47,14 @@ struct FVertexBufferAttribute
 	int offset;
 };
 
+enum class BufferUsageType
+{
+	Static,     // initial data is not null, staticdata is true
+	Stream,     // initial data is not null, staticdata is false
+	Persistent, // initial data is null, staticdata is false
+	Mappable    // initial data is null, staticdata is true
+};
+
 class IBuffer
 {
 protected:
@@ -58,7 +66,7 @@ public:
 	IBuffer &operator=(const IBuffer &) = delete;
 	virtual ~IBuffer() = default;
 
-	virtual void SetData(size_t size, const void *data, bool staticdata = true) = 0;
+	virtual void SetData(size_t size, const void *data, BufferUsageType type) = 0;
 	virtual void SetSubData(size_t offset, size_t size, const void *data) = 0;
 	virtual void *Lock(unsigned int size) = 0;
 	virtual void Unlock() = 0;

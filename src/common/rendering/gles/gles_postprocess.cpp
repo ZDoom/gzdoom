@@ -32,7 +32,7 @@
 #include "flatvertices.h"
 #include "r_videoscale.h"
 #include "v_video.h"
-#include "templates.h"
+
 #include "hw_vrmodes.h"
 #include "v_draw.h"
 
@@ -159,7 +159,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 	mPresentShader->Uniforms.SetData();
 
 	
-	for (int n = 0; n < mPresentShader->Uniforms.mFields.size(); n++)
+	for (size_t n = 0; n < mPresentShader->Uniforms.mFields.size(); n++)
 	{
 		int index = -1;
 		UniformFieldDesc desc = mPresentShader->Uniforms.mFields[n];
@@ -174,6 +174,8 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 			break;
 		case UniformType::Vec2:
 			glUniform2fv(loc,1 , ((GLfloat*)(((char*)(&mPresentShader->Uniforms)) + desc.Offset)));
+			break;
+		default:
 			break;
 		}
 	}

@@ -34,7 +34,7 @@
 #include "animtexture.h"
 #include "bitmap.h"
 #include "texturemanager.h"
-#include "templates.h"
+
 
 //==========================================================================
 //

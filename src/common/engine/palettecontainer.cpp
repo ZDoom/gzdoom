@@ -37,7 +37,7 @@
 #include "m_crc32.h"
 #include "printf.h"
 #include "colormatcher.h"
-#include "templates.h"
+
 #include "palettecontainer.h"
 #include "files.h"
 
@@ -565,9 +565,9 @@ bool FRemapTable::AddDesaturation(int start, int end, double r1, double g1, doub
 							GPalette.BaseColors[c].g * 143 +
 							GPalette.BaseColors[c].b * 37) / 256.0;
 
-		PalEntry pe = PalEntry(	MIN(255, int(r1 + intensity*r2)), 
-								MIN(255, int(g1 + intensity*g2)), 
-								MIN(255, int(b1 + intensity*b2)));
+		PalEntry pe = PalEntry(	min(255, int(r1 + intensity*r2)), 
+								min(255, int(g1 + intensity*g2)), 
+								min(255, int(b1 + intensity*b2)));
 
 		int cc = GPalette.Remap[c];
 

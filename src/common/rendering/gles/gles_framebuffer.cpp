@@ -36,7 +36,7 @@
 #include "gles_system.h"
 #include "v_video.h"
 #include "m_png.h"
-#include "templates.h"
+
 #include "i_time.h"
 
 #include "gles_framebuffer.h"
@@ -122,7 +122,7 @@ void OpenGLFrameBuffer::InitializeState()
 {
 	static bool first=true;
 
-	mPipelineNbr = gl_pipeline_depth == 0? std::min(4, HW_MAX_PIPELINE_BUFFERS) : clamp(*gl_pipeline_depth, 1, HW_MAX_PIPELINE_BUFFERS);
+	mPipelineNbr = gl_pipeline_depth == 0? min(4, HW_MAX_PIPELINE_BUFFERS) : clamp(*gl_pipeline_depth, 1, HW_MAX_PIPELINE_BUFFERS);
 	mPipelineType = 1;
 
 	InitGLES();

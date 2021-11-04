@@ -34,7 +34,7 @@
 
 #include "g_level.h"
 
-#include "templates.h"
+
 #include "v_video.h"
 #include "filesystem.h"
 #include "i_video.h"

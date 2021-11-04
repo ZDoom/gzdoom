@@ -41,7 +41,7 @@
 
 #include "st_start.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "i_system.h"
 #include "i_input.h"
 #include "hardware.h"
@@ -351,7 +351,7 @@ void FBasicStartupScreen :: NetProgress(int count)
 
 		mysnprintf (buf, countof(buf), "%d/%d", NetCurPos, NetMaxPos);
 		SetDlgItemTextA (NetStartPane, IDC_NETSTARTCOUNT, buf);
-		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, std::min(NetCurPos, NetMaxPos), 0);
+		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, min(NetCurPos, NetMaxPos), 0);
 	}
 }
 

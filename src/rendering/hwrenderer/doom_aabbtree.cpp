@@ -57,10 +57,10 @@ DoomLevelAABBTree::DoomLevelAABBTree(FLevelLocals *lev)
 		FVector2 aabb_min, aabb_max;
 		const auto &left = nodes[staticroot];
 		const auto &right = nodes[dynamicroot];
-		aabb_min.X = MIN(left.aabb_left, right.aabb_left);
-		aabb_min.Y = MIN(left.aabb_top, right.aabb_top);
-		aabb_max.X = MAX(left.aabb_right, right.aabb_right);
-		aabb_max.Y = MAX(left.aabb_bottom, right.aabb_bottom);
+		aabb_min.X = min(left.aabb_left, right.aabb_left);
+		aabb_min.Y = min(left.aabb_top, right.aabb_top);
+		aabb_max.X = max(left.aabb_right, right.aabb_right);
+		aabb_max.Y = max(left.aabb_bottom, right.aabb_bottom);
 		nodes.Push({ aabb_min, aabb_max, staticroot, dynamicroot });
 	}
 
@@ -137,20 +137,20 @@ bool DoomLevelAABBTree::Update()
 				float y2 = (float)line.v2->fY();
 
 				int nodeIndex = path[0];
-				nodes[nodeIndex].aabb_left = MIN(x1, x2);
-				nodes[nodeIndex].aabb_right = MAX(x1, x2);
-				nodes[nodeIndex].aabb_top = MIN(y1, y2);
-				nodes[nodeIndex].aabb_bottom = MAX(y1, y2);
+				nodes[nodeIndex].aabb_left = min(x1, x2);
+				nodes[nodeIndex].aabb_right = max(x1, x2);
+				nodes[nodeIndex].aabb_top = min(y1, y2);
+				nodes[nodeIndex].aabb_bottom = max(y1, y2);
 
 				for (unsigned int j = 1; j < path.Size(); j++)
 				{
 					auto &cur = nodes[path[j]];
 					const auto &left = nodes[cur.left_node];
 					const auto &right = nodes[cur.right_node];
-					cur.aabb_left = MIN(left.aabb_left, right.aabb_left);
-					cur.aabb_top = MIN(left.aabb_top, right.aabb_top);
-					cur.aabb_right = MAX(left.aabb_right, right.aabb_right);
-					cur.aabb_bottom = MAX(left.aabb_bottom, right.aabb_bottom);
+					cur.aabb_left = min(left.aabb_left, right.aabb_left);
+					cur.aabb_top = min(left.aabb_top, right.aabb_top);
+					cur.aabb_right = max(left.aabb_right, right.aabb_right);
+					cur.aabb_bottom = max(left.aabb_bottom, right.aabb_bottom);
 				}
 
 				treelines[i] = treeline;
@@ -181,14 +181,14 @@ int DoomLevelAABBTree::GenerateTreeNode(int *lines, int num_lines, const FVector
 		float x2 = (float)maplines[mapLines[lines[i]]].v2->fX();
 		float y2 = (float)maplines[mapLines[lines[i]]].v2->fY();
 
-		aabb_min.X = MIN(aabb_min.X, x1);
-		aabb_min.X = MIN(aabb_min.X, x2);
-		aabb_min.Y = MIN(aabb_min.Y, y1);
-		aabb_min.Y = MIN(aabb_min.Y, y2);
-		aabb_max.X = MAX(aabb_max.X, x1);
-		aabb_max.X = MAX(aabb_max.X, x2);
-		aabb_max.Y = MAX(aabb_max.Y, y1);
-		aabb_max.Y = MAX(aabb_max.Y, y2);
+		aabb_min.X = min(aabb_min.X, x1);
+		aabb_min.X = min(aabb_min.X, x2);
+		aabb_min.Y = min(aabb_min.Y, y1);
+		aabb_min.Y = min(aabb_min.Y, y2);
+		aabb_max.X = max(aabb_max.X, x1);
+		aabb_max.X = max(aabb_max.X, x2);
+		aabb_max.Y = max(aabb_max.Y, y1);
+		aabb_max.Y = max(aabb_max.Y, y2);
 
 		median += centroids[mapLines[lines[i]]];
 	}

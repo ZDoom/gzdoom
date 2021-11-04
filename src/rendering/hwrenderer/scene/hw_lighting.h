@@ -2,7 +2,7 @@
 
 #include "c_cvars.h"
 #include "v_palette.h"
-#include "templates.h"
+
 #include "r_utility.h"
 
 struct Colormap;

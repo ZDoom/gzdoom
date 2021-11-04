@@ -620,7 +620,7 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 					if (*c == '$') c = GStrings(c + 1);
 					int textwidth = ld->mFont->StringWidth(c);
 					int textright = posx + textwidth;
-					if (posx + textright > 320) posx = std::max(0, 320 - textright);
+					if (posx + textright > 320) posx = max(0, 320 - textright);
 				}
 
 				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
@@ -1164,7 +1164,7 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				if (*c == '$') c = GStrings(c + 1);
 				int textwidth = ld->mFont->StringWidth(c);
 				int textright = posx + textwidth;
-				if (posx + textright > 320) posx = std::max(0, 320 - textright);
+				if (posx + textright > 320) posx = max(0, 320 - textright);
 			}
 
 			unsigned firstitem = ld->mItems.Size();
@@ -1312,7 +1312,7 @@ void SetDefaultMenuColors()
 
 	cls = PClass::FindClass(gameinfo.MenuDelegateClass);
 	if (!cls)
-		I_FatalError("%s: Undefined menu delegate class", gameinfo.HelpMenuClass.GetChars());
+		I_FatalError("%s: Undefined menu delegate class", gameinfo.MenuDelegateClass.GetChars());
 	if (!cls->IsDescendantOf("MenuDelegateBase"))
 		I_FatalError("'%s' does not inherit from MenuDelegateBase", gameinfo.MenuDelegateClass.GetChars());
 	menuDelegate = cls->CreateNew();

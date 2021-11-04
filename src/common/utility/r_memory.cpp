@@ -21,7 +21,7 @@
 */
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "r_memory.h"
 #include <stdlib.h>
 

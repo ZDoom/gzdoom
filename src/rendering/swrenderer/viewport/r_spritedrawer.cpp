@@ -70,8 +70,8 @@ namespace swrenderer
 			iscale = -iscale;
 		float vstepY = iscale / WallC.sz1 / (viewport->InvZtoScale / WallC.sz1);
 
-		int x1 = MAX<int>(WallC.sx1, clipx1);
-		int x2 = MIN<int>(WallC.sx2, clipx2);
+		int x1 = max<int>(WallC.sx1, clipx1);
+		int x2 = min<int>(WallC.sx2, clipx2);
 		if (x1 >= x2)
 			return;
 
@@ -127,10 +127,10 @@ namespace swrenderer
 
 	void SpriteDrawerArgs::DrawMasked2D(RenderThread* thread, double x0, double x1, double y0, double y1, FSoftwareTexture* tex, FRenderStyle style)
 	{
-		int sx0 = MAX((int)x0, 0);
-		int sx1 = MIN((int)x1, viewwidth);
-		int sy0 = MAX((int)y0, 0);
-		int sy1 = MIN((int)y1, viewheight);
+		int sx0 = max((int)x0, 0);
+		int sx1 = min((int)x1, viewwidth);
+		int sy0 = max((int)y0, 0);
+		int sy1 = min((int)y1, viewheight);
 
 		if (sx0 >= sx1 || sy0 >= sy1)
 			return;
@@ -169,9 +169,9 @@ namespace swrenderer
 		{
 			double xmagnitude = fabs(static_cast<int32_t>(texelStepX)* (1.0 / 0x1'0000'0000LL));
 			double ymagnitude = fabs(static_cast<int32_t>(texelStepY)* (1.0 / 0x1'0000'0000LL));
-			double magnitude = MAX(ymagnitude, xmagnitude);
+			double magnitude = max(ymagnitude, xmagnitude);
 			double min_lod = -1000.0;
-			double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+			double lod = max(log2(magnitude) + r_lod_bias, min_lod);
 			bool magnifying = lod < 0.0f;
 
 			int mipmap_offset = 0;
@@ -184,8 +184,8 @@ namespace swrenderer
 				{
 					mipmap_offset += mip_width * mip_height;
 					level--;
-					mip_width = MAX(mip_width >> 1, 1);
-					mip_height = MAX(mip_height >> 1, 1);
+					mip_width = max(mip_width >> 1, 1);
+					mip_height = max(mip_height >> 1, 1);
 				}
 			}
 
@@ -195,7 +195,7 @@ namespace swrenderer
 			bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
 			if (filter_nearest)
 			{
-				xoffset = MAX(MIN(xoffset, (mip_width << FRACBITS) - 1), 0);
+				xoffset = max(min(xoffset, (mip_width << FRACBITS) - 1), 0);
 
 				int tx = xoffset >> FRACBITS;
 				dc_source = (uint8_t*)(pixels + tx * mip_height);
@@ -205,10 +205,10 @@ namespace swrenderer
 			}
 			else
 			{
-				xoffset = MAX(MIN(xoffset - (FRACUNIT / 2), (mip_width << FRACBITS) - 1), 0);
+				xoffset = max(min(xoffset - (FRACUNIT / 2), (mip_width << FRACBITS) - 1), 0);
 
 				int tx0 = xoffset >> FRACBITS;
-				int tx1 = MIN(tx0 + 1, mip_width - 1);
+				int tx1 = min(tx0 + 1, mip_width - 1);
 				dc_source = (uint8_t*)(pixels + tx0 * mip_height);
 				dc_source2 = (uint8_t*)(pixels + tx1 * mip_height);
 				dc_textureheight = mip_height;
@@ -233,8 +233,8 @@ namespace swrenderer
 				if (flipY)
 					std::swap(dc_yl, dc_yh);
 
-				dc_yl = std::max(dc_yl, cliptop);
-				dc_yh = std::min(dc_yh, clipbottom);
+				dc_yl = max(dc_yl, cliptop);
+				dc_yh = min(dc_yh, clipbottom);
 
 				if (dc_yl <= dc_yh)
 				{
@@ -271,8 +271,8 @@ namespace swrenderer
 				if (flipY)
 					std::swap(dc_yl, dc_yh);
 
-				dc_yl = std::max(dc_yl, cliptop);
-				dc_yh = std::min(dc_yh, clipbottom);
+				dc_yl = max(dc_yl, cliptop);
+				dc_yh = min(dc_yh, clipbottom);
 
 				if (dc_yl < dc_yh)
 				{
@@ -282,12 +282,12 @@ namespace swrenderer
 					dc_yl--;
 
 					fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
-					dc_texturefrac = MAX(dc_texturefrac, 0);
-					dc_texturefrac = MIN(dc_texturefrac, maxfrac);
+					dc_texturefrac = max(dc_texturefrac, 0);
+					dc_texturefrac = min(dc_texturefrac, maxfrac);
 					if (dc_iscale > 0)
-						dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
+						dc_count = min(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
 					else if (dc_iscale < 0)
-						dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+						dc_count = min(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
 
 					(thread->Drawers(dc_viewport)->*colfunc)(*this);
 				}

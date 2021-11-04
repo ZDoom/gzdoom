@@ -73,23 +73,6 @@ void Mac_I_FatalError(const char* const message)
 }
 
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
-
-// Available since 10.9 with no public declaration/definition until 10.10
-
-struct NSOperatingSystemVersion
-{
-	NSInteger majorVersion;
-	NSInteger minorVersion;
-	NSInteger patchVersion;
-};
-
-@interface NSProcessInfo(OperatingSystemVersion)
-- (NSOperatingSystemVersion)operatingSystemVersion;
-@end
-
-#endif // before 10.10
-
 static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 {
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 110000
@@ -169,9 +152,6 @@ void I_DetectOS()
 	case 10:
 		switch (version.minorVersion)
 		{
-			case  9: name = "OS X Mavericks";        break;
-			case 10: name = "OS X Yosemite";         break;
-			case 11: name = "OS X El Capitan";       break;
 			case 12: name = "macOS Sierra";          break;
 			case 13: name = "macOS High Sierra";     break;
 			case 14: name = "macOS Mojave";          break;
@@ -196,9 +176,7 @@ void I_DetectOS()
 	sysctlbyname("hw.model", model, &size, nullptr, 0);
 
 	const char* const architecture =
-#ifdef __i386__
-		"32-bit Intel";
-#elif defined __x86_64__
+#ifdef __x86_64__
 		"64-bit Intel";	
 #elif defined __aarch64__
 		"64-bit ARM";

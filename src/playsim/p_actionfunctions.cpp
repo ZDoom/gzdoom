@@ -1921,9 +1921,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burst)
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An self with radius 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, int(self->radius * self->Height)/32);
+	numChunks = max<int> (4, int(self->radius * self->Height)/32);
 	i = (pr_burst.Random2()) % (numChunks/4);
-	for (i = MAX (24, numChunks + i); i >= 0; i--)
+	for (i = max (24, numChunks + i); i >= 0; i--)
 	{
 		double xo = (pr_burst() - 128) * self->radius / 128;
 		double yo = (pr_burst() - 128) * self->radius / 128;
@@ -2492,7 +2492,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	fov = MIN<DAngle>(fov, 360.);
+	fov = min<DAngle>(fov, 360.);
 
 	if (fov > 0)
 	{
@@ -4785,11 +4785,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 			{
 				if (pdelta > 0)
 				{
-					current -= MIN(pitchlimit, pdelta);
+					current -= min(pitchlimit, pdelta);
 				}
 				else //if (pdelta < 0)
 				{
-					current += MIN(pitchlimit, -pdelta);
+					current += min(pitchlimit, -pdelta);
 				}
 				mobj->SetPitch(current, !!(flags & FMDF_INTERPOLATE));
 			}

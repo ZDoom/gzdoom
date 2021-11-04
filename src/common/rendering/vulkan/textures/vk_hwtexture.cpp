@@ -218,8 +218,8 @@ int VkHardwareTexture::GetMipLevels(int w, int h)
 	int levels = 1;
 	while (w > 1 || h > 1)
 	{
-		w = std::max(w >> 1, 1);
-		h = std::max(h >> 1, 1);
+		w = max(w >> 1, 1);
+		h = max(h >> 1, 1);
 		levels++;
 	}
 	return levels;
@@ -391,7 +391,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	int numLayers = NumLayers();
 
 	auto fb = GetVulkanFrameBuffer();
-	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(std::max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
+	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
 
 	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");
 
@@ -400,14 +400,16 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	WriteDescriptors update;
 	MaterialLayerInfo *layer;
 	auto systex = static_cast<VkHardwareTexture*>(GetLayer(0, state.mTranslation, &layer));
-	update.addCombinedImageSampler(descriptor.get(), 0, systex->GetImage(layer->layerTexture, state.mTranslation, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+	auto systeximage = systex->GetImage(layer->layerTexture, state.mTranslation, layer->scaleFlags);
+	update.addCombinedImageSampler(descriptor.get(), 0, systeximage->View.get(), sampler, systeximage->Layout);
 
 	if (!(layer->scaleFlags & CTF_Indexed))
 	{
 		for (int i = 1; i < numLayers; i++)
 		{
 			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
-			update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+			auto systeximage = systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
+			update.addCombinedImageSampler(descriptor.get(), i, systeximage->View.get(), sampler, systeximage->Layout);
 		}
 	}
 	else
@@ -415,7 +417,8 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 		for (int i = 1; i < 3; i++)
 		{
 			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, translation, &layer));
-			update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+			auto systeximage = systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
+			update.addCombinedImageSampler(descriptor.get(), i, systeximage->View.get(), sampler, systeximage->Layout);
 		}
 		numLayers = 3;
 	}
@@ -423,7 +426,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	auto dummyImage = fb->GetRenderPassManager()->GetNullTextureView();
 	for (int i = numLayers; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
 	{
-		update.addCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, systex->mImage.Layout);
+		update.addCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	update.updateSets(fb->device);

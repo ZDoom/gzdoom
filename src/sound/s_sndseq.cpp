@@ -704,7 +704,7 @@ void S_ParseSndSeq (int levellump)
 					delaybase = sc.Number;
 					ScriptTemp.Push(MakeCommand(SS_CMD_DELAYRAND, sc.Number));
 					sc.MustGetNumber ();
-					ScriptTemp.Push(MAX(1, sc.Number - delaybase + 1));
+					ScriptTemp.Push(max(1, sc.Number - delaybase + 1));
 					break;
 
 				case SS_STRING_VOLUME:		// volume is in range 0..100

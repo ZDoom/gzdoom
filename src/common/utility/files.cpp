@@ -34,7 +34,7 @@
 */
 
 #include "files.h"
-#include "templates.h"	// just for 'clamp'
+	// just for 'clamp'
 #include "zstring.h"
 
 

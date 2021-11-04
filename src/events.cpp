@@ -1249,7 +1249,7 @@ CCMD(event)
 	else
 	{
 		int arg[3] = { 0, 0, 0 };
-		int argn = MIN<int>(argc - 2, countof(arg));
+		int argn = min<int>(argc - 2, countof(arg));
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call locally
@@ -1274,7 +1274,7 @@ CCMD(netevent)
 	else
 	{
 		int arg[3] = { 0, 0, 0 };
-		int argn = MIN<int>(argc - 2, countof(arg));
+		int argn = min<int>(argc - 2, countof(arg));
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call networked

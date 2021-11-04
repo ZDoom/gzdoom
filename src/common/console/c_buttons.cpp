@@ -34,7 +34,7 @@
 */
 
 #include "c_buttons.h"
-#include "templates.h"
+
 #include "c_dispatch.h"
 #include "printf.h"
 #include "cmdlib.h"

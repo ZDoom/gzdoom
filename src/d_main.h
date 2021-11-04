@@ -90,6 +90,9 @@ struct FIWADInfo
 	TArray<FString> Lumps;	// Lump names for identification
 	TArray<FString> DeleteLumps;	// Lumps which must be deleted from the directory.
 	int flags = 0;
+	int LoadWidescreen = -1;
+	int LoadBrightmaps = -1;
+	int LoadLights = -1;
 };
 
 struct FFoundWadInfo

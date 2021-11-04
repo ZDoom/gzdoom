@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "d_net.h"
 #include "doomstat.h"

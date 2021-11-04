@@ -36,7 +36,7 @@
 #ifndef NO_SSE
 #include <xmmintrin.h>
 #endif
-#include "templates.h"
+
 #include "doomtype.h"
 #include "doomdef.h"
 #include "r_defs.h"
@@ -107,7 +107,7 @@ namespace swrenderer
 
 			// L = light-pos
 			// dist = sqrt(dot(L, L))
-			// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+			// distance_attenuation = 1 - min(dist * (1/radius), 1)
 			float Lxy2 = lights[i].x; // L.x*L.x + L.y*L.y
 			float Lz = lights[i].z - viewpos_z;
 			float dist2 = Lxy2 + Lz * Lz;
@@ -117,7 +117,7 @@ namespace swrenderer
 			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
 #endif
 			float dist = dist2 * rcp_dist;
-			float distance_attenuation = (256.0f - MIN(dist * lights[i].radius, 256.0f));
+			float distance_attenuation = (256.0f - min(dist * lights[i].radius, 256.0f));
 
 			// The simple light type
 			float simple_attenuation = distance_attenuation;
@@ -139,9 +139,9 @@ namespace swrenderer
 		uint32_t material_g = GPalette.BaseColors[material].g;
 		uint32_t material_b = GPalette.BaseColors[material].b;
 
-		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
-		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
-		lit_b = MIN<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
+		lit_r = min<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
+		lit_g = min<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
+		lit_b = min<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
 
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
@@ -286,9 +286,9 @@ namespace swrenderer
 				{
 					uint8_t lit = colormap[pix];
 
-					uint32_t r = MIN(GPalette.BaseColors[lit].r + GPalette.BaseColors[*dest].r, 255);
-					uint32_t g = MIN(GPalette.BaseColors[lit].g + GPalette.BaseColors[*dest].g, 255);
-					uint32_t b = MIN(GPalette.BaseColors[lit].b + GPalette.BaseColors[*dest].b, 255);
+					uint32_t r = min(GPalette.BaseColors[lit].r + GPalette.BaseColors[*dest].r, 255);
+					uint32_t g = min(GPalette.BaseColors[lit].g + GPalette.BaseColors[*dest].g, 255);
+					uint32_t b = min(GPalette.BaseColors[lit].b + GPalette.BaseColors[*dest].b, 255);
 					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
 				}
 				frac += fracstep;
@@ -352,9 +352,9 @@ namespace swrenderer
 				{
 					uint8_t lit = num_dynlights != 0 ? AddLightsColumn(dynlights, num_dynlights, viewpos_z, colormap[pix], pix) : colormap[pix];
 
-					uint32_t r = MIN(GPalette.BaseColors[lit].r + GPalette.BaseColors[*dest].r, 255);
-					uint32_t g = MIN(GPalette.BaseColors[lit].g + GPalette.BaseColors[*dest].g, 255);
-					uint32_t b = MIN(GPalette.BaseColors[lit].b + GPalette.BaseColors[*dest].b, 255);
+					uint32_t r = min(GPalette.BaseColors[lit].r + GPalette.BaseColors[*dest].r, 255);
+					uint32_t g = min(GPalette.BaseColors[lit].g + GPalette.BaseColors[*dest].g, 255);
+					uint32_t b = min(GPalette.BaseColors[lit].b + GPalette.BaseColors[*dest].b, 255);
 					*dest = RGB256k.RGB[r>>2][g>>2][b>>2];
 				}
 				viewpos_z += step_viewpos_z;
@@ -567,7 +567,7 @@ namespace swrenderer
 			uint8_t fg = source0[sample_index];
 
 			uint32_t c = palette[fg];
-			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+			int alpha_top = max(min(frac >> (16 - start_fade), 256), 0);
 			int inv_alpha_top = 256 - alpha_top;
 			int c_red = RPART(c);
 			int c_green = GPART(c);
@@ -600,7 +600,7 @@ namespace swrenderer
 			uint8_t fg = source0[sample_index];
 
 			uint32_t c = palette[fg];
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+			int alpha_bottom = max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
 			int inv_alpha_bottom = 256 - alpha_bottom;
 			int c_red = RPART(c);
 			int c_green = GPART(c);
@@ -645,7 +645,7 @@ namespace swrenderer
 				uint8_t fg = source0[sample_index];
 				if (fg == 0)
 				{
-					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
 				}
 
@@ -701,12 +701,12 @@ namespace swrenderer
 			uint8_t fg = source0[sample_index];
 			if (fg == 0)
 			{
-				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 				fg = source1[sample_index2];
 			}
 
 			uint32_t c = palette[fg];
-			int alpha_top = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+			int alpha_top = max(min(frac >> (16 - start_fade), 256), 0);
 			int inv_alpha_top = 256 - alpha_top;
 			int c_red = RPART(c);
 			int c_green = GPART(c);
@@ -728,7 +728,7 @@ namespace swrenderer
 			uint8_t fg = source0[sample_index];
 			if (fg == 0)
 			{
-				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 				fg = source1[sample_index2];
 			}
 			*dest = fg;
@@ -745,12 +745,12 @@ namespace swrenderer
 			uint8_t fg = source0[sample_index];
 			if (fg == 0)
 			{
-				uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+				uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 				fg = source1[sample_index2];
 			}
 
 			uint32_t c = palette[fg];
-			int alpha_bottom = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+			int alpha_bottom = max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
 			int inv_alpha_bottom = 256 - alpha_bottom;
 			int c_red = RPART(c);
 			int c_green = GPART(c);
@@ -785,9 +785,9 @@ namespace swrenderer
 		uint32_t material_g = GPalette.BaseColors[material].g;
 		uint32_t material_b = GPalette.BaseColors[material].b;
 
-		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
-		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
-		lit_b = MIN<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
+		lit_r = min<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
+		lit_g = min<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
+		lit_b = min<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
 
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
@@ -836,9 +836,9 @@ namespace swrenderer
 			uint32_t lit_g = GPART(dynlight);
 			uint32_t lit_b = BPART(dynlight);
 			uint32_t light = 256 - (args.Light() >> (FRACBITS - 8));
-			lit_r = MIN<uint32_t>(light + lit_r, 256);
-			lit_g = MIN<uint32_t>(light + lit_g, 256);
-			lit_b = MIN<uint32_t>(light + lit_b, 256);
+			lit_r = min<uint32_t>(light + lit_r, 256);
+			lit_g = min<uint32_t>(light + lit_g, 256);
+			lit_b = min<uint32_t>(light + lit_b, 256);
 			lit_r = lit_r - light;
 			lit_g = lit_g - light;
 			lit_b = lit_b - light;
@@ -1011,9 +1011,9 @@ namespace swrenderer
 				int src_g = ((srccolor >> 0) & 0xff) * srcalpha;
 				int src_b = ((srccolor >> 8) & 0xff) * srcalpha;
 				int bg = *dest;
-				int r = MAX((-src_r + palette[bg].r * destalpha)>>18, 0);
-				int g = MAX((-src_g + palette[bg].g * destalpha)>>18, 0);
-				int b = MAX((-src_b + palette[bg].b * destalpha)>>18, 0);
+				int r = max((-src_r + palette[bg].r * destalpha)>>18, 0);
+				int g = max((-src_g + palette[bg].g * destalpha)>>18, 0);
+				int b = max((-src_b + palette[bg].b * destalpha)>>18, 0);
 
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
@@ -1061,9 +1061,9 @@ namespace swrenderer
 				int src_g = ((srccolor >> 0) & 0xff) * srcalpha;
 				int src_b = ((srccolor >> 8) & 0xff) * srcalpha;
 				int bg = *dest;
-				int r = MAX((src_r - palette[bg].r * destalpha)>>18, 0);
-				int g = MAX((src_g - palette[bg].g * destalpha)>>18, 0);
-				int b = MAX((src_b - palette[bg].b * destalpha)>>18, 0);
+				int r = max((src_r - palette[bg].r * destalpha)>>18, 0);
+				int g = max((src_g - palette[bg].g * destalpha)>>18, 0);
+				int b = max((src_b - palette[bg].b * destalpha)>>18, 0);
 
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
@@ -1113,9 +1113,9 @@ namespace swrenderer
 			{
 				uint32_t fg = colormap[source[frac >> FRACBITS]];
 				uint32_t bg = *dest;
-				uint32_t r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
-				uint32_t g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
-				uint32_t b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
+				uint32_t r = min((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				uint32_t g = min((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				uint32_t b = min((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1192,9 +1192,9 @@ namespace swrenderer
 			{
 				uint32_t fg = colormap[translation[source[frac >> FRACBITS]]];
 				uint32_t bg = *dest;
-				uint32_t r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
-				uint32_t g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
-				uint32_t b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
+				uint32_t r = min((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				uint32_t g = min((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				uint32_t b = min((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1331,9 +1331,9 @@ namespace swrenderer
 			{
 				int fg = colormap[source[frac >> FRACBITS]];
 				int bg = *dest;
-				int r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
-				int g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
-				int b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
+				int r = min((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				int g = min((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				int b = min((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1385,9 +1385,9 @@ namespace swrenderer
 			{
 				int fg = colormap[translation[source[frac >> FRACBITS]]];
 				int bg = *dest;
-				int r = MIN((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
-				int g = MIN((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
-				int b = MIN((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
+				int r = min((palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 63);
+				int g = min((palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 63);
+				int b = min((palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 63);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1437,9 +1437,9 @@ namespace swrenderer
 			{
 				int fg = colormap[source[frac >> FRACBITS]];
 				int bg = *dest;
-				int r = MAX((palette[fg].r * srcalpha - palette[bg].r * destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * srcalpha - palette[bg].g * destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * srcalpha - palette[bg].b * destalpha)>>18, 0);
+				int r = max((palette[fg].r * srcalpha - palette[bg].r * destalpha)>>18, 0);
+				int g = max((palette[fg].g * srcalpha - palette[bg].g * destalpha)>>18, 0);
+				int b = max((palette[fg].b * srcalpha - palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1490,9 +1490,9 @@ namespace swrenderer
 			{
 				int fg = colormap[translation[source[frac >> FRACBITS]]];
 				int bg = *dest;
-				int r = MAX((palette[fg].r * srcalpha - palette[bg].r * destalpha)>>18, 0);
-				int g = MAX((palette[fg].g * srcalpha - palette[bg].g * destalpha)>>18, 0);
-				int b = MAX((palette[fg].b * srcalpha - palette[bg].b * destalpha)>>18, 0);
+				int r = max((palette[fg].r * srcalpha - palette[bg].r * destalpha)>>18, 0);
+				int g = max((palette[fg].g * srcalpha - palette[bg].g * destalpha)>>18, 0);
+				int b = max((palette[fg].b * srcalpha - palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1542,9 +1542,9 @@ namespace swrenderer
 			{
 				int fg = colormap[source[frac >> FRACBITS]];
 				int bg = *dest;
-				int r = MAX((-palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 0);
-				int g = MAX((-palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 0);
-				int b = MAX((-palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 0);
+				int r = max((-palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 0);
+				int g = max((-palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 0);
+				int b = max((-palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1595,9 +1595,9 @@ namespace swrenderer
 			{
 				int fg = colormap[translation[source[frac >> FRACBITS]]];
 				int bg = *dest;
-				int r = MAX((-palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 0);
-				int g = MAX((-palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 0);
-				int b = MAX((-palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 0);
+				int r = max((-palette[fg].r * srcalpha + palette[bg].r * destalpha)>>18, 0);
+				int g = max((-palette[fg].g * srcalpha + palette[bg].g * destalpha)>>18, 0);
+				int b = max((-palette[fg].b * srcalpha + palette[bg].b * destalpha)>>18, 0);
 				*dest = RGB256k.RGB[r][g][b];
 				dest += pitch;
 				frac += fracstep;
@@ -1618,8 +1618,8 @@ namespace swrenderer
 		int _fuzzviewheight = fuzzviewheight;
 
 		int x = _x;
-		int yl = MAX(_yl, 1);
-		int yh = MIN(_yh, _fuzzviewheight);
+		int yl = max(_yl, 1);
+		int yh = min(_yh, _fuzzviewheight);
 
 		int count = yh - yl + 1;
 		if (count <= 0) return;
@@ -1661,8 +1661,8 @@ namespace swrenderer
 		int _fuzzpos = fuzzpos;
 		int _fuzzviewheight = fuzzviewheight;
 
-		int yl = MAX(_yl, 1);
-		int yh = MIN(_yh, _fuzzviewheight);
+		int yl = max(_yl, 1);
+		int yh = min(_yh, _fuzzviewheight);
 
 		int count = yh - yl + 1;
 
@@ -1687,7 +1687,7 @@ namespace swrenderer
 			if (available % fuzzstep != 0)
 				next_wrap++;
 
-			int cnt = MIN(count, next_wrap);
+			int cnt = min(count, next_wrap);
 			count -= cnt;
 			do
 			{
@@ -1733,7 +1733,7 @@ namespace swrenderer
 			if (available % fuzzstep != 0)
 				next_wrap++;
 
-			int cnt = MIN(count, next_wrap);
+			int cnt = min(count, next_wrap);
 			count -= cnt;
 			do
 			{
@@ -1775,7 +1775,7 @@ namespace swrenderer
 
 			// L = light-pos
 			// dist = sqrt(dot(L, L))
-			// attenuation = 1 - MIN(dist * (1/radius), 1)
+			// attenuation = 1 - min(dist * (1/radius), 1)
 			float Lyz2 = lights[i].y; // L.y*L.y + L.z*L.z
 			float Lx = lights[i].x - viewpos_x;
 			float dist2 = Lyz2 + Lx * Lx;
@@ -1785,7 +1785,7 @@ namespace swrenderer
 			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
 #endif
 			float dist = dist2 * rcp_dist;
-			float distance_attenuation = (256.0f - MIN(dist * lights[i].radius, 256.0f));
+			float distance_attenuation = (256.0f - min(dist * lights[i].radius, 256.0f));
 
 			// The simple light type
 			float simple_attenuation = distance_attenuation;
@@ -1807,9 +1807,9 @@ namespace swrenderer
 		uint32_t material_g = GPalette.BaseColors[material].g;
 		uint32_t material_b = GPalette.BaseColors[material].b;
 
-		lit_r = MIN<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
-		lit_g = MIN<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
-		lit_b = MIN<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
+		lit_r = min<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
+		lit_g = min<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
+		lit_b = min<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
 
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
@@ -2113,9 +2113,9 @@ namespace swrenderer
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest++ = RGB256k.RGB[r][g][b];
 
 					xfrac += xstep;
@@ -2133,9 +2133,9 @@ namespace swrenderer
 					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest++ = RGB256k.RGB[r][g][b];
 
 					xfrac += xstep;
@@ -2267,9 +2267,9 @@ namespace swrenderer
 					{
 						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
-						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 						*dest = RGB256k.RGB[r][g][b];
 					}
 					dest++;
@@ -2293,9 +2293,9 @@ namespace swrenderer
 					{
 						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
-						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 						*dest = RGB256k.RGB[r][g][b];
 					}
 					dest++;
@@ -2416,9 +2416,9 @@ namespace swrenderer
 					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest++ = RGB256k.RGB[r][g][b];
 
 					xfrac += xstep;
@@ -2436,9 +2436,9 @@ namespace swrenderer
 					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
-					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-					int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-					int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+					int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+					int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+					int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 					*dest++ = RGB256k.RGB[r][g][b];
 
 					xfrac += xstep;
@@ -2577,9 +2577,9 @@ namespace swrenderer
 					{
 						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
-						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 						*dest = RGB256k.RGB[r][g][b];
 					}
 					dest++;
@@ -2603,9 +2603,9 @@ namespace swrenderer
 					{
 						uint32_t fg = num_dynlights != 0 ? AddLightsSpan(dynlights, num_dynlights, viewpos_x, colormap[texdata], texdata) : colormap[texdata];
 						uint32_t bg = *dest;
-						int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
-						int g = MAX((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
-						int b = MAX((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
+						int r = max((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
+						int g = max((palette[fg].g * _srcalpha + palette[bg].g * _destalpha)>>18, 0);
+						int b = max((palette[fg].b * _srcalpha + palette[bg].b * _destalpha)>>18, 0);
 						*dest = RGB256k.RGB[r][g][b];
 					}
 					dest++;
@@ -2859,7 +2859,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int particle_texture_index = MIN<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
+		int particle_texture_index = min<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
 		const uint32_t *source = &particle_texture[particle_texture_index][(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
 		uint32_t particle_alpha = _alpha;
 
@@ -3122,7 +3122,7 @@ namespace swrenderer
 				uint32_t next_uv_wrap = available / texelStepY;
 				if (available % texelStepY != 0)
 					next_uv_wrap++;
-				uint32_t count = MIN(left, next_uv_wrap);
+				uint32_t count = min(left, next_uv_wrap);
 
 				drawerargs.SetDest(x, y);
 				drawerargs.SetCount(count);

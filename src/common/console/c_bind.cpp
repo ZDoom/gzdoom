@@ -41,7 +41,7 @@
 #include "c_dispatch.h"
 #include "configfile.h"
 #include "filesystem.h"
-#include "templates.h"
+
 #include "i_time.h"
 #include "printf.h"
 #include "sc_man.h"

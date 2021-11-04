@@ -39,7 +39,7 @@
 
 #include "gl_sysfb.h"
 #include "hardware.h"
-#include "templates.h"
+
 #include "version.h"
 #include "c_console.h"
 #include "v_video.h"

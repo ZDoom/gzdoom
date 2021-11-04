@@ -98,7 +98,7 @@ std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex)
 	const uint32_t* buffer = (const uint32_t*)bitmap.GetPixels();
 	if (buffer)
 	{
-		sky.Colors.first = averageColor((uint32_t*)buffer, w * MIN(30, h), 0);
+		sky.Colors.first = averageColor((uint32_t*)buffer, w * min(30, h), 0);
 		if (h > 30)
 		{
 			sky.Colors.second = averageColor(((uint32_t*)buffer) + (h - 30) * w, w * 30, 0);
@@ -130,7 +130,7 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(FSkyVertex, color) }
 	};
 	mVertexBuffer->SetFormat(1, 3, sizeof(FSkyVertex), format);
-	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], true);
+	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], BufferUsageType::Static);
 }
 
 FSkyVertexBuffer::~FSkyVertexBuffer()

@@ -41,7 +41,7 @@
 #include "c_cvars.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "menu.h"
 #include "vm.h"
 #include "gstrings.h"
@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, StatusbarToRealCoords, StatusbarTo
 	if (numret > 1) ret[1].SetFloat(y);
 	if (numret > 2) ret[2].SetFloat(w);
 	if (numret > 3) ret[3].SetFloat(h);
-	return MIN(4, numret);
+	return min(4, numret);
 }
 
 void SBar_DrawTexture(DStatusBarCore* self, int texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY, int style, int color, int translation, double clipwidth)
@@ -228,7 +228,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, TransformRect, SBar_TransformRect)
 	if (numret > 1) ret[1].SetFloat(y);
 	if (numret > 2) ret[2].SetFloat(w);
 	if (numret > 3) ret[3].SetFloat(h);
-	return MIN(4, numret);
+	return min(4, numret);
 }
 
 static void SBar_Fill(DStatusBarCore* self, int color, double x, double y, double w, double h, int flags)
@@ -437,7 +437,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
 	x = GetTextureSize(texid, &y);
 	if (numret > 0) ret[0].SetInt(x);
 	if (numret > 1) ret[1].SetInt(y);
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
 
 //==========================================================================
@@ -941,7 +941,7 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
 	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
 	if (numret > 0) ret[0].SetInt(k1);
 	if (numret > 1) ret[1].SetInt(k2);
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
 
 DEFINE_ACTION_FUNCTION(FKeyBindings, GetAllKeysForCommand)

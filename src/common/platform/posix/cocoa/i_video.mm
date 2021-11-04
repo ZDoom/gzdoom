@@ -969,7 +969,7 @@ bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 	else
 	{
 		const bool result = *count >= extensionCount;
-		*count = std::min(*count, extensionCount);
+		*count = min(*count, extensionCount);
 
 		for (unsigned int i = 0; i < *count; ++i)
 		{

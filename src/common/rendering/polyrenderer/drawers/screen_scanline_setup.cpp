@@ -21,7 +21,7 @@
 */
 
 #include <stddef.h>
-#include "templates.h"
+
 #include "poly_thread.h"
 #include "screen_scanline_setup.h"
 #include <cmath>
@@ -124,7 +124,7 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 
 			// L = light-pos
 			// dist = sqrt(dot(L, L))
-			// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+			// distance_attenuation = 1 - min(dist * (1/radius), 1)
 			__m128 Lx = _mm_sub_ps(lightposX, _mm_loadu_ps(&worldposX[x]));
 			__m128 Ly = _mm_sub_ps(lightposY, _mm_loadu_ps(&worldposY[x]));
 			__m128 Lz = _mm_sub_ps(lightposZ, _mm_loadu_ps(&worldposZ[x]));
@@ -179,7 +179,7 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 
 			// L = light-pos
 			// dist = sqrt(dot(L, L))
-			// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+			// distance_attenuation = 1 - min(dist * (1/radius), 1)
 			float Lx = lightposX - worldposX[x];
 			float Ly = lightposY - worldposY[x];
 			float Lz = lightposZ - worldposZ[x];
@@ -191,7 +191,7 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
 #endif
 			float dist = dist2 * rcp_dist;
-			float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+			float distance_attenuation = 256.0f - min(dist * light_radius, 256.0f);
 
 			// The simple light type
 			float simple_attenuation = distance_attenuation;
@@ -202,7 +202,7 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 			Ly *= rcp_dist;
 			Lz *= rcp_dist;
 			float dotNL = worldnormalX * Lx + worldnormalY * Ly + worldnormalZ * Lz;
-			float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
+			float point_attenuation = max(dotNL, 0.0f) * distance_attenuation;
 
 			uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
 
@@ -211,9 +211,9 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 			lit_b += (BPART(light_color) * attenuation) >> 8;
 		}
 
-		lit_r = MIN<uint32_t>(lit_r, 255);
-		lit_g = MIN<uint32_t>(lit_g, 255);
-		lit_b = MIN<uint32_t>(lit_b, 255);
+		lit_r = min<uint32_t>(lit_r, 255);
+		lit_g = min<uint32_t>(lit_g, 255);
+		lit_b = min<uint32_t>(lit_b, 255);
 		lightarray[x] = MAKEARGB(lit_a, lit_r, lit_g, lit_b);
 
 		// Palette version:
@@ -255,7 +255,7 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 			uint32_t* lightarray = thread->scanline.lightarray;
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t l = MIN(lightpos >> 8, 256);
+				uint32_t l = min(lightpos >> 8, 256);
 
 				uint32_t r = vColorR[x];
 				uint32_t g = vColorG[x];
@@ -273,9 +273,9 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 					g += (uint32_t)(constants->uDynLightColor.Y * 255.0f);
 					b += (uint32_t)(constants->uDynLightColor.Z * 255.0f);
 
-					r = MIN<uint32_t>(r, 255);
-					g = MIN<uint32_t>(g, 255);
-					b = MIN<uint32_t>(b, 255);
+					r = min<uint32_t>(r, 255);
+					g = min<uint32_t>(g, 255);
+					b = min<uint32_t>(b, 255);
 				}
 
 				lightarray[x] = MAKEARGB(a, r, g, b);
@@ -287,7 +287,7 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 			uint32_t* lightarray = thread->scanline.lightarray;
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t l = MIN((FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8, 256);
+				uint32_t l = min((FRACUNIT - clamp<fixed_t>(shade - min(maxvis, lightpos), 0, maxlight)) >> 8, 256);
 				uint32_t r = vColorR[x];
 				uint32_t g = vColorG[x];
 				uint32_t b = vColorB[x];
@@ -304,9 +304,9 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 					g += (uint32_t)(constants->uDynLightColor.Y * 255.0f);
 					b += (uint32_t)(constants->uDynLightColor.Z * 255.0f);
 
-					r = MIN<uint32_t>(r, 255);
-					g = MIN<uint32_t>(g, 255);
-					b = MIN<uint32_t>(b, 255);
+					r = min<uint32_t>(r, 255);
+					g = min<uint32_t>(g, 255);
+					b = min<uint32_t>(b, 255);
 				}
 
 				lightarray[x] = MAKEARGB(a, r, g, b);
@@ -327,7 +327,7 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 			uint32_t g = thread->scanline.vColorG[x];
 			uint32_t b = thread->scanline.vColorB[x];
 
-			float fogdist = MAX(16.0f, w[x]);
+			float fogdist = max(16.0f, w[x]);
 			float fogfactor = std::exp2(constants->uFogDensity * fogdist);
 
 			// brightening around the player for light mode 2:
@@ -365,9 +365,9 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 				g += (uint32_t)(constants->uDynLightColor.Y * 255.0f);
 				b += (uint32_t)(constants->uDynLightColor.Z * 255.0f);
 
-				r = MIN<uint32_t>(r, 255);
-				g = MIN<uint32_t>(g, 255);
-				b = MIN<uint32_t>(b, 255);
+				r = min<uint32_t>(r, 255);
+				g = min<uint32_t>(g, 255);
+				b = min<uint32_t>(b, 255);
 			}
 
 			lightarray[x] = MAKEARGB(a, r, g, b);

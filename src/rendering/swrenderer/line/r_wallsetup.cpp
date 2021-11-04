@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "templates.h"
+
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -305,7 +305,7 @@ namespace swrenderer
 	{
 		for (int i = x1; i < x2; i++)
 		{
-			ScreenY[i] = std::min(ScreenY[i], clip.sprbottomclip[i]);
+			ScreenY[i] = min(ScreenY[i], clip.sprbottomclip[i]);
 		}
 	}
 
@@ -441,8 +441,8 @@ namespace swrenderer
 		float yscale = GetYScale(sidedef, pic, side_t::mid);
 		double cameraZ = viewport->viewpoint.Pos.Z;
 
-		double texZFloor = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor));
-		double texZCeiling = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+		double texZFloor = max(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor));
+		double texZCeiling = min(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 
 		double texturemid;
 		if (yscale >= 0)

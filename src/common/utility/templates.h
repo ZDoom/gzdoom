@@ -93,54 +93,5 @@ const ClassType *BinarySearch (const ClassType *first, int max,
 	return NULL;
 }
 
-//==========================================================================
-//
-// MIN
-//
-// Returns the minimum of a and b.
-//==========================================================================
-
-#ifdef MIN
-#undef MIN
-#endif
-
-template<class T>
-inline
-const T MIN (const T a, const T b)
-{
-	return a < b ? a : b;
-}
-
-//==========================================================================
-//
-// MAX
-//
-// Returns the maximum of a and b.
-//==========================================================================
-
-#ifdef MAX
-#undef MAX
-#endif
-
-template<class T>
-inline
-const T MAX (const T a, const T b)
-{
-	return a > b ? a : b;
-}
-
-//==========================================================================
-//
-// clamp
-//
-// Clamps in to the range [min,max].
-//==========================================================================
-
-template<typename T, typename X, typename Y>
-inline constexpr
-T clamp (const T in, const X min, const Y max)
-{
-	return in <= (T) min ? (T) min : in >= (T) max ? (T) max : in;
-}
 
 #endif //__TEMPLATES_H__

@@ -19,7 +19,7 @@ public:
 	static void ResetAll();
 	void Reset();
 
-	void SetData(size_t size, const void *data, bool staticdata) override;
+	void SetData(size_t size, const void *data, BufferUsageType usage) override;
 	void SetSubData(size_t offset, size_t size, const void *data) override;
 	void Resize(size_t newsize) override;
 

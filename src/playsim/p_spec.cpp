@@ -67,7 +67,7 @@
 
 #include <stdlib.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"

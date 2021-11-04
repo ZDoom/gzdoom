@@ -40,7 +40,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "templates.h"
+
 #include "m_swap.h"
 #include "v_font.h"
 #include "printf.h"
@@ -686,7 +686,7 @@ int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
 	// Single pic fonts do not set up their translation table and must always return 0.
 	if (Translations.Size() == 0) return 0;
-	assert(Translations.Size() == NumTextColors);
+	assert(Translations.Size() == (unsigned)NumTextColors);
 
 	if (noTranslate)
 	{
@@ -936,7 +936,7 @@ int FFont::StringWidth(const uint8_t *string, int spacing) const
 		}
 	}
 
-	return std::max(maxw, w);
+	return max(maxw, w);
 }
 
 //==========================================================================

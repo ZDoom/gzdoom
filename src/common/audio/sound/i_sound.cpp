@@ -172,7 +172,7 @@ public:
 	}
 
 	// Streaming sounds.
-	SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
+	SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, SampleType stype, ChannelConfig chans, int samplerate, void *userdata)
 	{
 		return NULL;
 	}
@@ -302,6 +302,7 @@ const char *GetSampleTypeName(SampleType type)
     {
         case SampleType_UInt8: return "Unsigned 8-bit";
         case SampleType_Int16: return "Signed 16-bit";
+        case SampleType_Float32: return "32-bit float";
     }
     return "(invalid sample type)";
 }

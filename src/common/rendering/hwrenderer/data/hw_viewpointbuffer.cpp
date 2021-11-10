@@ -43,7 +43,7 @@ HWViewpointBuffer::HWViewpointBuffer(int pipelineNbr):
 	for (int n = 0; n < mPipelineNbr; n++)
 	{
 		mBufferPipeline[n] = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false, true);
-		mBufferPipeline[n]->SetData(mByteSize, nullptr, false);
+		mBufferPipeline[n]->SetData(mByteSize, nullptr, BufferUsageType::Persistent);
 	}
 
 	Clear();

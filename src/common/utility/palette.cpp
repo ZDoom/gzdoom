@@ -39,7 +39,7 @@
 #include "files.h"
 #include "filesystem.h"
 #include "printf.h"
-#include "templates.h"
+
 #include "m_png.h"
 
 /****************************/
@@ -500,7 +500,7 @@ PalEntry averageColor(const uint32_t* data, int size, int maxout)
 	g = g / size;
 	b = b / size;
 
-	int maxv = MAX(MAX(r, g), b);
+	int maxv = max(max(r, g), b);
 
 	if (maxv && maxout)
 	{
@@ -802,9 +802,9 @@ void UpdateSpecialColormap(PalEntry* BaseColors, unsigned int index, float r1, f
 				BaseColors[c].g * 143 +
 				BaseColors[c].b * 37) / 256.0;
 
-			PalEntry pe = PalEntry(std::min(255, int(r1 + intensity * r2)),
-				std::min(255, int(g1 + intensity * g2)),
-				std::min(255, int(b1 + intensity * b2)));
+			PalEntry pe = PalEntry(min(255, int(r1 + intensity * r2)),
+				min(255, int(g1 + intensity * g2)),
+				min(255, int(b1 + intensity * b2)));
 
 			cm->Colormap[c] = BestColor((uint32_t*)BaseColors, pe.r, pe.g, pe.b);
 		}
@@ -813,9 +813,9 @@ void UpdateSpecialColormap(PalEntry* BaseColors, unsigned int index, float r1, f
 	// This table is used by the texture composition code
 	for (int i = 0; i < 256; i++)
 	{
-		cm->GrayscaleToColor[i] = PalEntry(std::min(255, int(r1 + i * r2)),
-			std::min(255, int(g1 + i * g2)),
-			std::min(255, int(b1 + i * b2)));
+		cm->GrayscaleToColor[i] = PalEntry(min(255, int(r1 + i * r2)),
+			min(255, int(g1 + i * g2)),
+			min(255, int(b1 + i * b2)));
 	}
 }
 
@@ -911,7 +911,7 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 				fr.Seek(len, FileReader::SeekCur);
 			else
 			{
-				int PaletteSize = MIN<int>(len, 768);
+				int PaletteSize = min<int>(len, 768);
 				fr.Read(buffer, PaletteSize);
 				return PaletteSize / 3;
 			}
@@ -930,7 +930,7 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 		sc.MustGetString();
 		sc.MustGetNumber();	// version - ignore
 		sc.MustGetNumber();
-		int colors = MIN(256, sc.Number) * 3;
+		int colors = min(256, sc.Number) * 3;
 		for (int i = 0; i < colors; i++)
 		{
 			sc.MustGetNumber();
@@ -944,7 +944,7 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 	}
 	else
 	{
-		memcpy(buffer, lumpmem, MIN<size_t>(768, lump.GetSize()));
+		memcpy(buffer, lumpmem, min<size_t>(768, lump.GetSize()));
 		return 256;
 	}
 }

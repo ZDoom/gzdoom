@@ -20,7 +20,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_bbox.h"
 
@@ -104,21 +104,21 @@ namespace swrenderer
 
 			DrawSegmentGroup group;
 			group.BeginIndex = index;
-			group.EndIndex = MIN(index + groupSize, SegmentsCount());
+			group.EndIndex = min(index + groupSize, SegmentsCount());
 			group.x1 = ds->x1;
 			group.x2 = ds->x2;
-			group.neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
-			group.fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
+			group.neardepth = min(ds->WallC.sz1, ds->WallC.sz2);
+			group.fardepth = max(ds->WallC.sz1, ds->WallC.sz2);
 
 			for (unsigned int groupIndex = group.BeginIndex + 1; groupIndex < group.EndIndex; groupIndex++)
 			{
 				ds = Segment(groupIndex);
-				group.x1 = MIN(group.x1, ds->x1);
-				group.x2 = MAX(group.x2, ds->x2);
-				group.neardepth = MIN(group.neardepth, ds->WallC.sz1);
-				group.neardepth = MIN(group.neardepth, ds->WallC.sz2);
-				group.fardepth = MAX(ds->WallC.sz1, group.fardepth);
-				group.fardepth = MAX(ds->WallC.sz2, group.fardepth);
+				group.x1 = min(group.x1, ds->x1);
+				group.x2 = max(group.x2, ds->x2);
+				group.neardepth = min(group.neardepth, ds->WallC.sz1);
+				group.neardepth = min(group.neardepth, ds->WallC.sz2);
+				group.fardepth = max(ds->WallC.sz1, group.fardepth);
+				group.fardepth = max(ds->WallC.sz2, group.fardepth);
 			}
 
 			for (int x = group.x1; x < group.x2; x++)

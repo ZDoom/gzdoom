@@ -58,7 +58,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "d_event.h"
 #include "p_local.h"
@@ -453,7 +453,7 @@ void player_t::SetSubtitle(int num, FSoundID soundid)
 	if (text != nullptr)
 	{
 		SubtitleText = lumpname;
-		int sl = soundid == 0 ? 7000 : std::max<int>(7000, S_GetMSLength(soundid));
+		int sl = soundid == 0 ? 7000 : max<int>(7000, S_GetMSLength(soundid));
 		SubtitleCounter = sl * TICRATE / 1000;
 	}
 }
@@ -623,8 +623,8 @@ EXTERN_CVAR(Bool, cl_oldfreelooklimit);
 
 static int GetSoftPitch(bool down)
 {
-	int MAX_DN_ANGLE = MIN(56, (int)maxviewpitch); // Max looking down angle
-	int MAX_UP_ANGLE = MIN(32, (int)maxviewpitch); // Max looking up angle
+	int MAX_DN_ANGLE = min(56, (int)maxviewpitch); // Max looking down angle
+	int MAX_UP_ANGLE = min(32, (int)maxviewpitch); // Max looking up angle
 	return (down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE));
 }
 

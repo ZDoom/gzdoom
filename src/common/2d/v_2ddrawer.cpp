@@ -33,7 +33,7 @@
 */
 
 #include <stdarg.h>
-#include "templates.h"
+
 #include "v_2ddrawer.h"
 #include "vectors.h"
 #include "vm.h"
@@ -455,7 +455,7 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 		// Note that this only works for unflipped and unrotated full textures.
 		if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 		{
-			double wi = std::min(parms.windowright, parms.texwidth);
+			double wi = min(parms.windowright, parms.texwidth);
 			x += parms.windowleft * xscale;
 			w -= (parms.texwidth - wi + parms.windowleft) * xscale;
 

@@ -29,7 +29,7 @@
 #include <array>
 
 #include "doomdef.h"
-#include "templates.h"
+
 #include "g_level.h"
 #include "st_stuff.h"
 #include "p_local.h"

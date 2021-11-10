@@ -32,7 +32,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "p_local.h"
 #include "c_dispatch.h"

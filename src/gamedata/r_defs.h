@@ -31,7 +31,7 @@
 #define __R_DEFS_H__
 
 #include "doomdef.h"
-#include "templates.h"
+
 #include "m_bbox.h"
 #include "dobjgc.h"
 #include "r_data/r_translate.h"

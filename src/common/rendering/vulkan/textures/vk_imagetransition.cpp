@@ -117,8 +117,8 @@ void VkTextureImage::GenerateMipmaps(VulkanCommandBuffer *cmdbuffer)
 		barrier0.execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 		Layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-		int nextWidth = std::max(mipWidth >> 1, 1);
-		int nextHeight = std::max(mipHeight >> 1, 1);
+		int nextWidth = max(mipWidth >> 1, 1);
+		int nextHeight = max(mipHeight >> 1, 1);
 
 		VkImageBlit blit = {};
 		blit.srcOffsets[0] = { 0, 0, 0 };

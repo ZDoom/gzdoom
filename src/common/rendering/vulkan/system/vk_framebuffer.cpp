@@ -309,7 +309,7 @@ void VulkanFrameBuffer::WaitForCommands(bool finish, bool uploadOnly)
 			swapChain->QueuePresent(presentImageIndex, mRenderFinishedSemaphore.get());
 	}
 
-	int numWaitFences = MIN(mNextSubmit, (int)maxConcurrentSubmitCount);
+	int numWaitFences = min(mNextSubmit, (int)maxConcurrentSubmitCount);
 
 	if (numWaitFences > 0)
 	{
@@ -345,8 +345,8 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
-	bounds.width = std::min(tex->GetWidth(), image->Image->width);
-	bounds.height = std::min(tex->GetHeight(), image->Image->height);
+	bounds.width = min(tex->GetWidth(), image->Image->width);
+	bounds.height = min(tex->GetHeight(), image->Image->height);
 
 	renderFunc(bounds);
 
@@ -703,7 +703,7 @@ void VulkanFrameBuffer::UpdateGpuStats()
 		if (q.endIndex <= q.startIndex)
 			continue;
 
-		int64_t timeElapsed = std::max(static_cast<int64_t>(timestamps[q.endIndex] - timestamps[q.startIndex]), (int64_t)0);
+		int64_t timeElapsed = max(static_cast<int64_t>(timestamps[q.endIndex] - timestamps[q.startIndex]), (int64_t)0);
 		double timeNS = timeElapsed * timestampPeriod;
 
 		FString out;
@@ -796,7 +796,7 @@ void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
 	}
 
 	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
-	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data());
+	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data(), BufferUsageType::Static);
 }
 
 void VulkanFrameBuffer::UpdateShadowMap()

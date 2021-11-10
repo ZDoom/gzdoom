@@ -36,7 +36,7 @@
 #include "s_soundinternal.h"
 #include "sc_man.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "filesystem.h"
 #include "i_system.h"
 #include "printf.h"

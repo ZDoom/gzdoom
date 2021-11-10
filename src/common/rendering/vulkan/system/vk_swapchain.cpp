@@ -161,8 +161,8 @@ bool VulkanSwapChain::CreateSwapChain(VkSwapchainKHR oldSwapChain)
 	VkSurfaceCapabilitiesKHR surfaceCapabilities = GetSurfaceCapabilities();
 
 	actualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
-	actualExtent.width = std::max(surfaceCapabilities.minImageExtent.width, std::min(surfaceCapabilities.maxImageExtent.width, actualExtent.width));
-	actualExtent.height = std::max(surfaceCapabilities.minImageExtent.height, std::min(surfaceCapabilities.maxImageExtent.height, actualExtent.height));
+	actualExtent.width = max(surfaceCapabilities.minImageExtent.width, min(surfaceCapabilities.maxImageExtent.width, actualExtent.width));
+	actualExtent.height = max(surfaceCapabilities.minImageExtent.height, min(surfaceCapabilities.maxImageExtent.height, actualExtent.height));
 	if (actualExtent.width == 0 || actualExtent.height == 0)
 	{
 		swapChain = VK_NULL_HANDLE;
@@ -176,9 +176,9 @@ bool VulkanSwapChain::CreateSwapChain(VkSwapchainKHR oldSwapChain)
 	// When vsync is on we only want two images. This creates a slight performance penalty in exchange for reduced input latency (less mouse lag).
 	// When vsync is off we want three images as it allows us to generate new images even during the vertical blanking period where one entry is being used by the presentation engine.
 	if (swapChainPresentMode == VK_PRESENT_MODE_MAILBOX_KHR || swapChainPresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-		imageCount = std::min(imageCount, (uint32_t)3);
+		imageCount = min(imageCount, (uint32_t)3);
 	else
-		imageCount = std::min(imageCount, (uint32_t)2);
+		imageCount = min(imageCount, (uint32_t)2);
 
 	VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
 	swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;

@@ -91,7 +91,7 @@ namespace swrenderer
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
 
-				uint32_t alpha = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+				uint32_t alpha = max(min(frac >> (16 - start_fade), 256), 0);
 				uint32_t inv_alpha = 256 - alpha;
 				
 				BgraColor c = fg;
@@ -122,7 +122,7 @@ namespace swrenderer
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
 
-				uint32_t alpha = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+				uint32_t alpha = max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
 				uint32_t inv_alpha = 256 - alpha;
 				
 				BgraColor c = fg;
@@ -187,7 +187,7 @@ namespace swrenderer
 					uint32_t fg = source0[sample_index];
 					if (fg == 0)
 					{
-						uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+						uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 						fg = source1[sample_index2];
 					}
 
@@ -220,11 +220,11 @@ namespace swrenderer
 				uint32_t fg = source0[sample_index];
 				if (fg == 0)
 				{
-					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
 				}
 
-				uint32_t alpha = MAX(MIN(frac >> (16 - start_fade), 256), 0);
+				uint32_t alpha = max(min(frac >> (16 - start_fade), 256), 0);
 				uint32_t inv_alpha = 256 - alpha;
 				
 				BgraColor c = fg;
@@ -243,7 +243,7 @@ namespace swrenderer
 				uint32_t fg = source0[sample_index];
 				if (fg == 0)
 				{
-					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
 				}
 				*dest = fg;
@@ -260,11 +260,11 @@ namespace swrenderer
 				uint32_t fg = source0[sample_index];
 				if (fg == 0)
 				{
-					uint32_t sample_index2 = MIN(sample_index, maxtextureheight1);
+					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
 				}
 
-				uint32_t alpha = MAX(MIN(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
+				uint32_t alpha = max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0);
 				uint32_t inv_alpha = 256 - alpha;
 				
 				BgraColor c = fg;

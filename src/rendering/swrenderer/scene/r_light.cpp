@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <float.h>
 
-#include "templates.h"
+
 
 #include "filesystem.h"
 #include "doomdef.h"
@@ -149,7 +149,7 @@ namespace swrenderer
 		bool nolightfade = !foggy && ((viewport->Level()->flags3 & LEVEL3_NOLIGHTFADE));
 		if (nolightfade)
 		{
-			return (MAX(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);
+			return (max(255 - lightlevel, 0) * NUMCOLORMAPS) << (FRACBITS - 8);
 		}
 		else
 		{

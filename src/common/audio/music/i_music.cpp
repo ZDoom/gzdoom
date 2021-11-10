@@ -43,7 +43,7 @@
 #include "m_argv.h"
 #include "filesystem.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "stats.h"
 #include "cmdlib.h"
 #include "c_cvars.h"

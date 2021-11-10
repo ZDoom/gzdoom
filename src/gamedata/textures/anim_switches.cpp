@@ -32,7 +32,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "textures.h"
 #include "s_sound.h"
 #include "r_state.h"

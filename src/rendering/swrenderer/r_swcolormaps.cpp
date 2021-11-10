@@ -52,7 +52,7 @@
 #include "r_data/colormaps.h"
 #include "r_swcolormaps.h"
 #include "v_video.h"
-#include "templates.h"
+
 #include "r_utility.h"
 #include "swrenderer/r_renderer.h"
 #include <atomic>

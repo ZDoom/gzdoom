@@ -644,7 +644,7 @@ void ProcessMouseButtonEvent(NSEvent* theEvent)
 				break;
 		}
 
-		event.data1 = MIN(KEY_MOUSE1 + [theEvent buttonNumber], NSInteger(KEY_MOUSE8));
+		event.data1 = min(KEY_MOUSE1 + [theEvent buttonNumber], NSInteger(KEY_MOUSE8));
 
 		D_PostEvent(&event);
 	}

@@ -40,11 +40,11 @@
 #include "engineerrors.h"
 #include "sc_man.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "printf.h"
 #include "name.h"
 #include "v_text.h"
-#include "templates.h"
+
 #include "zstring.h"
 #include "name.h"
 #include <inttypes.h>

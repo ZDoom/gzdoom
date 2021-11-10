@@ -34,7 +34,7 @@
 */
 #include <stddef.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 
 #include "filesystem.h"
@@ -257,8 +257,8 @@ namespace swrenderer
 		int _fuzzviewheight = fuzzviewheight;
 
 		int x = _x;
-		int yl = MAX(_yl, 1);
-		int yh = MIN(_yh, _fuzzviewheight);
+		int yl = max(_yl, 1);
+		int yh = min(_yh, _fuzzviewheight);
 
 		int count = yh - yl + 1;
 		if (count <= 0) return;
@@ -304,8 +304,8 @@ namespace swrenderer
 		int _fuzzpos = fuzzpos;
 		int _fuzzviewheight = fuzzviewheight;
 
-		int yl = MAX(_yl, 1);
-		int yh = MIN(_yh, _fuzzviewheight);
+		int yl = max(_yl, 1);
+		int yh = min(_yh, _fuzzviewheight);
 
 		int count = yh - yl + 1;
 
@@ -328,7 +328,7 @@ namespace swrenderer
 			if (available % fuzzstep != 0)
 				next_wrap++;
 
-			int cnt = MIN(count, next_wrap);
+			int cnt = min(count, next_wrap);
 			count -= cnt;
 			do
 			{
@@ -383,7 +383,7 @@ namespace swrenderer
 			if (available % fuzzstep != 0)
 				next_wrap++;
 
-			int cnt = MIN(count, next_wrap);
+			int cnt = min(count, next_wrap);
 			count -= cnt;
 			do
 			{
@@ -810,7 +810,7 @@ namespace swrenderer
 		if (count <= 0)
 			return;
 
-		int particle_texture_index = MIN<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
+		int particle_texture_index = min<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
 		const uint32_t *source = &particle_texture[particle_texture_index][(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
 		uint32_t particle_alpha = _alpha;
 
@@ -991,9 +991,9 @@ namespace swrenderer
 
 		double xmagnitude = fabs(static_cast<int32_t>(texelStepX) * (1.0 / 0x1'0000'0000LL));
 		double ymagnitude = fabs(static_cast<int32_t>(texelStepY) * (1.0 / 0x1'0000'0000LL));
-		double magnitude = MAX(ymagnitude, xmagnitude);
+		double magnitude = max(ymagnitude, xmagnitude);
 		double min_lod = -1000.0;
-		double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+		double lod = max(log2(magnitude) + r_lod_bias, min_lod);
 		bool magnifying = lod < 0.0f;
 
 		int mipmap_offset = 0;
@@ -1006,8 +1006,8 @@ namespace swrenderer
 			{
 				mipmap_offset += mip_width * mip_height;
 				level--;
-				mip_width = MAX(mip_width >> 1, 1);
-				mip_height = MAX(mip_height >> 1, 1);
+				mip_width = max(mip_width >> 1, 1);
+				mip_height = max(mip_height >> 1, 1);
 			}
 		}
 

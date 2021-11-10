@@ -40,7 +40,7 @@
 #include "m_random.h"
 #include "weightedlist.h"
 #include "statnums.h"
-#include "templates.h"
+
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "b_bot.h"

@@ -831,7 +831,7 @@ void FStrifeStartupScreen::DrawStuff(int old_laser, int new_laser)
 		ST_LASERSPACE_X + new_laser, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 
 	// The bot jumps up and down like crazy.
-	y = std::max(0, (new_laser >> 1) % 5 - 2);
+	y = max(0, (new_laser >> 1) % 5 - 2);
 	if (y > 0)
 	{
 		ST_Util_ClearBlock(bitmap_info, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);

@@ -395,7 +395,7 @@ void FDynamicLight::UpdateLocation()
 
 		if (lighttype == FlickerLight || lighttype == RandomFlickerLight || lighttype == PulseLight)
 		{
-			intensity = float(MAX(GetIntensity(), GetSecondaryIntensity()));
+			intensity = float(max(GetIntensity(), GetSecondaryIntensity()));
 		}
 		else
 		{

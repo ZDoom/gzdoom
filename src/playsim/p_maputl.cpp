@@ -527,10 +527,10 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 			}
 			else
 			{ // [RH] Link into every block this actor touches, not just the center one
-				x1 = MAX(0, x1);
-				y1 = MAX(0, y1);
-				x2 = MIN(Level->blockmap.bmapwidth - 1, x2);
-				y2 = MIN(Level->blockmap.bmapheight - 1, y2);
+				x1 = max(0, x1);
+				y1 = max(0, y1);
+				x2 = min(Level->blockmap.bmapwidth - 1, x2);
+				y2 = min(Level->blockmap.bmapheight - 1, y2);
 				for (int y = y1; y <= y2; ++y)
 				{
 					for (int x = x1; x <= x2; ++x)

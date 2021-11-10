@@ -76,16 +76,20 @@ void GLBuffer::Bind()
 }
 
 
-void GLBuffer::SetData(size_t size, const void *data, bool staticdata)
+void GLBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 {
 	Bind();
-	if (data != nullptr)
+	if (usage == BufferUsageType::Static)
 	{
-		glBufferData(mUseType, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
+		glBufferData(mUseType, size, data, GL_STATIC_DRAW);
 	}
-	else
+	else if (usage == BufferUsageType::Stream)
 	{
-		mPersistent = screen->BuffersArePersistent() && !staticdata;
+		glBufferData(mUseType, size, data, GL_STREAM_DRAW);
+	}
+	else if (usage == BufferUsageType::Persistent)
+	{
+		mPersistent = screen->BuffersArePersistent();
 		if (mPersistent)
 		{
 			glBufferStorage(mUseType, size, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -93,10 +97,15 @@ void GLBuffer::SetData(size_t size, const void *data, bool staticdata)
 		}
 		else
 		{
-			glBufferData(mUseType, size, nullptr, staticdata ? GL_STATIC_DRAW : GL_STREAM_DRAW);
+			glBufferData(mUseType, size, nullptr, GL_STREAM_DRAW);
 			map = nullptr;
 		}
-		if (!staticdata) nomap = false;
+		nomap = false;
+	}
+	else if (usage == BufferUsageType::Mappable)
+	{
+		glBufferData(mUseType, size, nullptr, GL_STATIC_DRAW);
+		map = nullptr;
 	}
 	buffersize = size;
 	InvalidateBufferState();
@@ -134,7 +143,7 @@ void GLBuffer::Unmap()
 void *GLBuffer::Lock(unsigned int size)
 {
 	// This initializes this buffer as a static object with no data.
-	SetData(size, nullptr, true);
+	SetData(size, nullptr, BufferUsageType::Mappable);
 	return glMapBufferRange(mUseType, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 }
 
@@ -158,7 +167,7 @@ void GLBuffer::Resize(size_t newsize)
 		glUnmapBuffer(mUseType);
 
 		glGenBuffers(1, &mBufferId);
-		SetData(newsize, nullptr, false);
+		SetData(newsize, nullptr, BufferUsageType::Persistent);
 		glBindBuffer(GL_COPY_READ_BUFFER, oldbuffer);
 
 		// copy contents and delete the old buffer.

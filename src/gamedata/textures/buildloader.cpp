@@ -36,7 +36,7 @@
 
 #include "files.h"
 #include "filesystem.h"
-#include "templates.h"
+
 #include "cmdlib.h"
 #include "colormatcher.h"
 #include "bitmap.h"
@@ -178,7 +178,7 @@ void AddTiles(const FString& pathprefix, const void* tiles, FRemapTable *remap)
 			}
 
 			speed = (anm >> 24) & 15;
-			speed = MAX(1, (1 << speed) * 1000 / 120);	// Convert from 120 Hz to 1000 Hz.
+			speed = max(1, (1 << speed) * 1000 / 120);	// Convert from 120 Hz to 1000 Hz.
 
 			TexAnim.AddSimpleAnim(texnum, picanm[pic] & 63, type, speed);
 		}

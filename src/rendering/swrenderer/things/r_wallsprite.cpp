@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
@@ -159,8 +159,8 @@ namespace swrenderer
 	{
 		auto spr = this;
 
-		int x1 = MAX<int>(spr->x1, spr->wallc.sx1);
-		int x2 = MIN<int>(spr->x2, spr->wallc.sx2);
+		int x1 = max<int>(spr->x1, spr->wallc.sx1);
+		int x2 = min<int>(spr->x2, spr->wallc.sx2);
 		if (x1 >= x2)
 			return;
 

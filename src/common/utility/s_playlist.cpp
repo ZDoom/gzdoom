@@ -37,7 +37,7 @@
 
 #include "cmdlib.h"
 #include "s_playlist.h"
-#include "templates.h"
+
 #include "v_text.h"
 #include "files.h"
 

@@ -280,7 +280,7 @@ namespace swrenderer
 
 				// L = light-pos
 				// dist = sqrt(dot(L, L))
-				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				// distance_attenuation = 1 - min(dist * (1/radius), 1)
 				__m128 Lxy2 = light_x; // L.x*L.x + L.y*L.y
 				__m128 Lz = _mm_sub_ps(light_z, viewpos_z);
 				__m128 dist2 = _mm_add_ps(Lxy2, _mm_mul_ps(Lz, Lz));

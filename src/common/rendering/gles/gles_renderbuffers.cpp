@@ -28,7 +28,7 @@
 #include "gles_postprocessstate.h"
 #include "gles_shaderprogram.h"
 #include "gles_buffers.h"
-#include "templates.h"
+
 #include <random>
 
 EXTERN_CVAR(Int, gl_debug_level)

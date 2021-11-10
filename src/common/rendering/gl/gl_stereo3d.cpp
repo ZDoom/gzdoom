@@ -34,7 +34,7 @@
 #include "gl_framebuffer.h"
 #include "gl_shaderprogram.h"
 #include "gl_buffers.h"
-#include "templates.h"
+
 
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Float, vid_saturation)

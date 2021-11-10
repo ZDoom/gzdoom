@@ -192,8 +192,8 @@ void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, doubl
 	if (ff == 0) ff = front->floorplane.ZatPoint(x, y);
 	if (bf == 0) bf = back->floorplane.ZatPoint(x, y);
 
-	open.bottom = MAX(ff, bf);
-	open.top = MIN(fc, bc);
+	open.bottom = max(ff, bf);
+	open.top = min(fc, bc);
 
 	// we only want to know if there is an opening, not how large it is.
 	open.range = open.bottom < open.top;

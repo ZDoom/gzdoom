@@ -64,7 +64,7 @@ FLightBuffer::FLightBuffer(int pipelineNbr):
 	for (int n = 0; n < mPipelineNbr; n++)
 	{
 		mBufferPipeline[n] = screen->CreateDataBuffer(LIGHTBUF_BINDINGPOINT, mBufferType, false);
-		mBufferPipeline[n]->SetData(mByteSize, nullptr, false);
+		mBufferPipeline[n]->SetData(mByteSize, nullptr, BufferUsageType::Persistent);
 	}
 
 	Clear();

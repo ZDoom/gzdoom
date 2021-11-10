@@ -40,7 +40,7 @@
 #include "version.h"
 #include "zcc_parser.h"
 #include "zcc_compile.h"
-#include "templates.h"
+
 
 TArray<FString> Includes;
 TArray<FScriptPosition> IncludeLocs;

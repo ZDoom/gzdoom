@@ -144,7 +144,7 @@ void FCommandBuffer::MakeStartPosGood()
 	{ // The cursor is in front of the visible part of the line
 		n = CursorPosCells;
 	}
-	StartPosCells = std::max(0, n);
+	StartPosCells = max(0, n);
 	bool overflow;
 	StartPos = CharsForCells(StartPosCells, &overflow);
 	if (overflow)

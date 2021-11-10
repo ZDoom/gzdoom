@@ -25,7 +25,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "gl_system.h"
 #include "gl_interface.h"
 #include "hw_cvars.h"

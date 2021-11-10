@@ -50,7 +50,7 @@
 #include "texturemanager.h"
 #include "printf.h"
 #include "i_interface.h"
-#include "templates.h"
+
 
 
 bool CheckSkipGameOptionBlock(FScanner& sc);

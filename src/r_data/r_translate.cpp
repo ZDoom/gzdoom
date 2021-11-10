@@ -34,7 +34,7 @@
 
 #include <stddef.h>
 
-#include "templates.h"
+
 #include "r_data/r_translate.h"
 #include "v_video.h"
 #include "g_game.h"
@@ -144,7 +144,7 @@ int CreateBloodTranslation(PalEntry color)
 	trans.Remap[0] = 0;
 	for (i = 1; i < 256; i++)
 	{
-		int bright = std::max(std::max(GPalette.BaseColors[i].r, GPalette.BaseColors[i].g), GPalette.BaseColors[i].b);
+		int bright = max(std::max(GPalette.BaseColors[i].r, GPalette.BaseColors[i].g), GPalette.BaseColors[i].b);
 		PalEntry pe = PalEntry(255, color.r*bright/255, color.g*bright/255, color.b*bright/255);
 		int entry = ColorMatcher.Pick(pe.r, pe.g, pe.b);
 
@@ -484,7 +484,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 
 			// Build player sprite translation
 			//h = 45.f;
-			v = MAX (0.1f, v);
+			v = max (0.1f, v);
 
 			for (i = start; i <= end; i++)
 			{
@@ -498,7 +498,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 			float mv[18] = { .16f, .19f, .22f, .25f, .31f, .35f, .38f, .41f, .47f, .54f, .60f, .65f, .71f, .77f, .83f, .89f, .94f, 1.f };
 
 			// Build player sprite translation
-			v = MAX (0.1f, v);
+			v = max (0.1f, v);
 
 			for (i = start; i <= end; i++)
 			{
@@ -513,12 +513,12 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		if (gameinfo.gametype == GAME_Heretic)
 		{
 			// Build rain/lifegem translation
-			bases = MIN(bases * 1.3f, 1.f);
-			basev = MIN(basev * 1.3f, 1.f);
+			bases = min(bases * 1.3f, 1.f);
+			basev = min(basev * 1.3f, 1.f);
 			for (i = 145; i <= 168; i++)
 			{
-				s = MIN(bases, 0.8965f - 0.0962f * (float)(i - 161));
-				v = MIN(1.f, (0.2102f + 0.0489f * (float)(i - 144)) * basev);
+				s = min(bases, 0.8965f - 0.0962f * (float)(i - 161));
+				v = min(1.f, (0.2102f + 0.0489f * (float)(i - 144)) * basev);
 				HSVtoRGB(&r, &g, &b, h, s, v);
 				SetRemap(alttable, i, r, g, b);
 				SetPillarRemap(pillartable, i, h, s, v);

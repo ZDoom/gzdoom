@@ -26,7 +26,7 @@
 #include "v_video.h"
 #include "m_random.h"
 #include "f_wipe.h"
-#include "templates.h"
+
 #include "bitmap.h"
 #include "hw_material.h"
 #include "v_draw.h"
@@ -74,11 +74,11 @@ int wipe_CalcBurn (uint8_t *burnarray, int width, int height, int density)
 	{
 		unsigned int offs = (a+b) & (width - 1);
 		unsigned int v = M_Random();
-		v = MIN(from[offs] + 4 + (v & 15) + (v >> 3) + (M_Random() & 31), 255u);
+		v = min(from[offs] + 4 + (v & 15) + (v >> 3) + (M_Random() & 31), 255u);
 		from[offs] = from[width*2 + ((offs + width*3/2) & (width - 1))] = v;
 	}
 
-	density = MIN(density + 10, width * 7);
+	density = min(density + 10, width * 7);
 
 	from = burnarray;
 	for (b = 0; b <= height; b += 2)
@@ -160,7 +160,7 @@ public:
 	bool Run(int ticks) override;
 	
 private:
-	static const int WIDTH = 320, HEIGHT = 200;
+	enum { WIDTH = 320, HEIGHT = 200 };
 	int y[WIDTH];
 };
 
@@ -289,7 +289,7 @@ bool Wiper_Melt::Run(int ticks)
 			else if (y[i] < HEIGHT)
 			{
 				int dy = (y[i] < 16) ? y[i] + 1 : 8;
-				y[i] = MIN(y[i] + dy, HEIGHT);
+				y[i] = min<int>(y[i] + dy, HEIGHT);
 				done = false;
 			}
 			if (ticks == 0)
@@ -311,7 +311,7 @@ bool Wiper_Melt::Run(int ticks)
 				int w = startScreen->GetTexelWidth();
 				int h = startScreen->GetTexelHeight();
 				dpt.x = i * w / WIDTH;
-				dpt.y = MAX(0, y[i] * h / HEIGHT);
+				dpt.y = max(0, y[i] * h / HEIGHT);
 				rect.left = dpt.x;
 				rect.top = 0;
 				rect.right = (i + 1) * w / WIDTH;

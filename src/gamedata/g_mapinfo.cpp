@@ -34,7 +34,7 @@
 */
 
 #include <assert.h>
-#include "templates.h"
+
 #include "g_level.h"
 #include "filesystem.h"
 #include "cmdlib.h"

@@ -1387,14 +1387,12 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 endif()
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
-	if( SSE_MATTERS )
-		set_property( SOURCE
-			common/rendering/polyrenderer/poly_all.cpp
-			rendering/swrenderer/r_all.cpp
-			utility/palette.cpp
-			utility/x86.cpp
-			APPEND_STRING PROPERTY COMPILE_FLAGS " -msse2 -mmmx" )
-	endif()
+	set_property( SOURCE
+		common/rendering/polyrenderer/poly_all.cpp
+		common/utility/palette.cpp
+		common/utility/x86.cpp
+		rendering/swrenderer/r_all.cpp
+		APPEND_STRING PROPERTY COMPILE_FLAGS " ${SSE2_ENABLE}" )
 endif()
 
 if( APPLE )

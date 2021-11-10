@@ -272,7 +272,7 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 
 	Uniforms.UniformLocation.resize(Uniforms.mFields.size());
 
-	for (int n = 0; n < Uniforms.mFields.size(); n++)
+	for (size_t n = 0; n < Uniforms.mFields.size(); n++)
 	{
 		int index = -1;
 		UniformFieldDesc desc = Uniforms.mFields[n];

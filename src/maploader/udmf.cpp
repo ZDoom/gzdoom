@@ -762,6 +762,9 @@ public:
 			case NAME_sundirx:
 			case NAME_sundiry:
 			case NAME_sundirz:
+			case NAME_sampledistance:
+			case NAME_bounces:
+			case NAME_gridsize:
 				CHECK_N(Zd | Zdt)
 				break;
 

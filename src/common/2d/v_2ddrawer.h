@@ -132,7 +132,7 @@ public:
 
 		RenderCommand()
 		{
-			memset(this, 0, sizeof(*this));
+			memset((void*)this, 0,  sizeof(*this));
 		}
 
 		// If these fields match, two draw commands can be batched.

@@ -36,7 +36,7 @@
 #include "flatvertices.h"
 #include "r_videoscale.h"
 #include "filesystem.h"
-#include "templates.h"
+
 
 EXTERN_CVAR(Int, gl_dither_bpc)
 

@@ -22,7 +22,6 @@
 
 #include <stddef.h>
 
-
 #include "filesystem.h"
 #include "v_video.h"
 #include "poly_triangle.h"

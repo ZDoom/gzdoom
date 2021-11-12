@@ -21,7 +21,6 @@
 */
 
 #include <stddef.h>
-
 #include "poly_thread.h"
 #include "screen_scanline_setup.h"
 #include <cmath>

@@ -29,6 +29,7 @@ RAPIDJSON_DIAG_PUSH
 #ifdef _MSC_VER
 RAPIDJSON_DIAG_OFF(4127) // conditional expression is constant
 RAPIDJSON_DIAG_OFF(4244) // conversion from kXxxFlags to 'uint16_t', possible loss of data
+RAPIDJSON_DIAG_OFF(4996) // deprecation of std::iterator
 #endif
 
 #ifdef __clang__

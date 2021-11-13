@@ -160,7 +160,7 @@ public:
 	bool Run(int ticks) override;
 	
 private:
-	static constexpr int WIDTH = 320, HEIGHT = 200;
+	enum { WIDTH = 320, HEIGHT = 200 };
 	int y[WIDTH];
 };
 
@@ -289,7 +289,7 @@ bool Wiper_Melt::Run(int ticks)
 			else if (y[i] < HEIGHT)
 			{
 				int dy = (y[i] < 16) ? y[i] + 1 : 8;
-				y[i] = min(y[i] + dy, HEIGHT);
+				y[i] = min<int>(y[i] + dy, HEIGHT);
 				done = false;
 			}
 			if (ticks == 0)

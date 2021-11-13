@@ -706,6 +706,9 @@ xx(suncolor)
 xx(sundirx)
 xx(sundiry)
 xx(sundirz)
+xx(sampledistance)
+xx(bounces)
+xx(gridsize)
 
 // USDF keywords
 xx(Amount)

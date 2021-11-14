@@ -449,7 +449,7 @@ inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device, V
 		*allocatedBytes = allocatedInfo.size;
 	}
 
-	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
+	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels, imageInfo.arrayLayers);
 }
 
 inline std::unique_ptr<VulkanImage> ImageBuilder::tryCreate(VulkanDevice *device)
@@ -461,7 +461,7 @@ inline std::unique_ptr<VulkanImage> ImageBuilder::tryCreate(VulkanDevice *device
 	if (result != VK_SUCCESS)
 		return nullptr;
 
-	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
+	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels, imageInfo.arrayLayers);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -487,6 +487,7 @@ inline void ImageViewBuilder::setImage(VulkanImage *image, VkFormat format, VkIm
 	viewInfo.format = format;
 	viewInfo.subresourceRange.levelCount = image->mipLevels;
 	viewInfo.subresourceRange.aspectMask = aspectMask;
+	viewInfo.subresourceRange.layerCount = image->layerCount;
 }
 
 inline std::unique_ptr<VulkanImageView> ImageViewBuilder::create(VulkanDevice *device)

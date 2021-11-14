@@ -635,7 +635,7 @@ void VulkanFrameBuffer::InitLightmap(FLevelLocals* Level)
 		stagingBuffer->Unmap();
 
 		VkImageTransition imageTransition;
-		imageTransition.addImage(&lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+		imageTransition.addImage(&lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, 0, count);
 		imageTransition.execute(cmdbuffer);
 
 		VkBufferImageCopy region = {};
@@ -647,7 +647,7 @@ void VulkanFrameBuffer::InitLightmap(FLevelLocals* Level)
 		cmdbuffer->copyBufferToImage(stagingBuffer->buffer, lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 		VkImageTransition barrier;
-		barrier.addImage(&lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
+		barrier.addImage(&lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count);
 		barrier.execute(cmdbuffer);
 
 		FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));

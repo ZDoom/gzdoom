@@ -12,10 +12,7 @@ struct HWSkyPortal;
 struct HWDrawInfo;
 
 // 57 world units roughly represent one sky texel for the glTranslate call.
-enum
-{
-	skyoffsetfactor = 57
-};
+const int skyoffsetfactor = 57;
 
 struct FSkyVertex
 {

@@ -26,7 +26,7 @@
 
 #include "v_video.h"
 #include "m_png.h"
-#include "templates.h"
+
 #include "r_videoscale.h"
 #include "i_time.h"
 #include "v_text.h"

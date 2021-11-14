@@ -63,14 +63,14 @@
 
 #include "m_alloc.h"
 
-template<typename T> class TIterator : public std::iterator<std::random_access_iterator_tag, T>
+template<typename T> class TIterator
 {
 public:
-	typedef typename TIterator::value_type value_type;
-	typedef typename TIterator::difference_type difference_type;
-	typedef typename TIterator::pointer pointer;
-	typedef typename TIterator::reference reference;
-	typedef typename TIterator::iterator_category iterator_category;
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type        = T;
+    using difference_type   = ptrdiff_t;
+    using pointer           = value_type*;
+    using reference         = value_type&;
 
 	TIterator(T* ptr = nullptr) { m_ptr = ptr; }
 
@@ -125,6 +125,8 @@ public:
 
     typedef TIterator<T>                       iterator;
     typedef TIterator<const T>                 const_iterator;
+    using reverse_iterator       =             std::reverse_iterator<iterator>;
+    using const_reverse_iterator =             std::reverse_iterator<const_iterator>;
 	typedef T							value_type;
 
     iterator begin()
@@ -153,7 +155,32 @@ public:
 		return &Array[Count];
 	}
 	
-	
+	reverse_iterator rbegin()
+	{
+		return reverse_iterator(end());
+	}
+	const_reverse_iterator rbegin() const
+	{
+		return const_reverse_iterator(end());
+	}
+	const_reverse_iterator crbegin() const
+	{
+		return const_reverse_iterator(cend());
+	}
+
+	reverse_iterator rend()
+	{
+		return reverse_iterator(begin());
+	}
+	const_reverse_iterator rend() const
+	{
+		return const_reverse_iterator(begin());
+	}
+	const_reverse_iterator crend() const
+	{
+		return const_reverse_iterator(cbegin());
+	}
+
 
 	////////
 	// This is a dummy constructor that does nothing. The purpose of this
@@ -636,6 +663,8 @@ public:
 
 	typedef TIterator<T>                       iterator;
 	typedef TIterator<const T>                 const_iterator;
+    using reverse_iterator       =             std::reverse_iterator<iterator>;
+    using const_reverse_iterator =             std::reverse_iterator<const_iterator>;
 	typedef T                                  value_type;
 
 	iterator begin()
@@ -662,6 +691,32 @@ public:
 	const_iterator cend() const
 	{
 		return &Array[Count];
+	}
+
+	reverse_iterator rbegin()
+	{
+		return reverse_iterator(end());
+	}
+	const_reverse_iterator rbegin() const
+	{
+		return const_reverse_iterator(end());
+	}
+	const_reverse_iterator crbegin() const
+	{
+		return const_reverse_iterator(cend());
+	}
+
+	reverse_iterator rend()
+	{
+		return reverse_iterator(begin());
+	}
+	const_reverse_iterator rend() const
+	{
+		return const_reverse_iterator(begin());
+	}
+	const_reverse_iterator crend() const
+	{
+		return const_reverse_iterator(cbegin());
 	}
 
 	void Init(T *ptr, unsigned cnt)
@@ -1579,7 +1634,7 @@ public:
 	}
 
 	BitArray(unsigned elem)
-		: bytes((elem + 7) / 8, true)
+		: bytes((elem + 7) / 8, true), size(elem)
 	{
 
 	}
@@ -1636,6 +1691,11 @@ public:
 	void Zero()
 	{
 		memset(&bytes[0], 0, bytes.Size());
+	}
+
+	TArray<uint8_t> &Storage()
+	{
+		return bytes;
 	}
 };
 
@@ -1704,6 +1764,8 @@ public:
 
 	typedef TIterator<T>                       iterator;
 	typedef TIterator<const T>                 const_iterator;
+    using reverse_iterator       =             std::reverse_iterator<iterator>;
+    using const_reverse_iterator =             std::reverse_iterator<const_iterator>;
 	typedef T                                  value_type;
 
 	iterator begin()
@@ -1730,6 +1792,32 @@ public:
 	const_iterator cend() const
 	{
 		return &Array[Count];
+	}
+
+	reverse_iterator rbegin()
+	{
+		return reverse_iterator(end());
+	}
+	const_reverse_iterator rbegin() const
+	{
+		return const_reverse_iterator(end());
+	}
+	const_reverse_iterator crbegin() const
+	{
+		return const_reverse_iterator(cend());
+	}
+
+	reverse_iterator rend()
+	{
+		return reverse_iterator(begin());
+	}
+	const_reverse_iterator rend() const
+	{
+		return const_reverse_iterator(begin());
+	}
+	const_reverse_iterator crend() const
+	{
+		return const_reverse_iterator(cbegin());
 	}
 
 
@@ -1806,4 +1894,204 @@ public:
 private:
 	T *Array;
 	unsigned int Count;
+};
+
+
+template<typename T> class TSparseIterator
+{
+public:
+	using iterator_category = std::random_access_iterator_tag;
+	using value_type        = T;
+	using difference_type   = ptrdiff_t;
+	using pointer           = value_type*;
+	using reference         = value_type&;
+
+	TSparseIterator(unsigned char* ptr = nullptr, unsigned stride = 0) { m_Ptr = ptr; Stride = stride; }
+
+	// Comparison operators
+	bool operator==(const TSparseIterator &other) const { return m_Ptr == other.m_Ptr; }
+	bool operator!=(const TSparseIterator &other) const { return m_Ptr != other.m_Ptr; }
+	bool operator< (const TSparseIterator &other) const { return m_Ptr <  other.m_Ptr; }
+	bool operator<=(const TSparseIterator &other) const { return m_Ptr <= other.m_Ptr; }
+	bool operator> (const TSparseIterator &other) const { return m_Ptr >  other.m_Ptr; }
+	bool operator>=(const TSparseIterator &other) const { return m_Ptr >= other.m_Ptr; }
+
+	// Arithmetic operators
+	TSparseIterator &operator++() { m_Ptr += Stride; return *this; }
+	TSparseIterator operator++(int) { auto tmp = *this; ++*this; return tmp; }
+	TSparseIterator &operator--() { m_Ptr -= Stride; return *this; }
+	TSparseIterator operator--(int) { auto tmp = *this; --*this; return tmp; }
+	TSparseIterator &operator+=(difference_type offset) { m_Ptr += offset * Stride; return *this; }
+	TSparseIterator operator+(difference_type offset) const { return TSparseIterator(m_Ptr + offset * Stride, Stride); }
+	friend TSparseIterator operator+(difference_type offset, const TSparseIterator &other) { return TSparseIterator(offset*other.Stride + other.m_Ptr, other.Stride); }
+	TSparseIterator &operator-=(difference_type offset) { m_Ptr -= offset * Stride; return *this; }
+	TSparseIterator operator-(difference_type offset) const { return TSparseIterator(m_Ptr - offset * Stride, Stride); }
+	difference_type operator-(const TSparseIterator &other) const { return (m_Ptr - other.m_Ptr) / Stride; }
+
+	// Random access operators
+	T& operator[](difference_type i) { return *(T*)(m_Ptr + i * Stride); }
+	const T& operator[](difference_type i) const { return *(T*)(m_Ptr + i * Stride); }
+
+	T &operator*() const { return (T*)m_Ptr; }
+	T* operator->() { return (T*)m_Ptr; }
+
+protected:
+	unsigned char* m_Ptr;
+	unsigned Stride;
+};
+
+// A wrapper to externally stored data.
+// Like the above but with a customizable stride
+template <class T>
+class TSparseArrayView
+{
+public:
+
+	typedef TSparseIterator<T>                       iterator;
+	typedef TSparseIterator<const T>                 const_iterator;
+    using reverse_iterator       =             std::reverse_iterator<iterator>;
+    using const_reverse_iterator =             std::reverse_iterator<const_iterator>;
+	typedef T                                  value_type;
+
+	iterator begin()
+	{
+		return iterator(Array, Stride);
+	}
+	const_iterator begin() const
+	{
+		return const_iterator(Array, Stride);
+	}
+	const_iterator cbegin() const
+	{
+		return const_iterator(Array, Stride);
+	}
+
+	iterator end()
+	{
+		return iterator(Array + Count * Stride, Stride);
+	}
+	const_iterator end() const
+	{
+		return const_iterator(Array + Count * Stride, Stride);
+	}
+	const_iterator cend() const
+	{
+		return const_iterator(Array + Count * Stride, Stride);
+	}
+
+	reverse_iterator rbegin()
+	{
+		return reverse_iterator(end());
+	}
+	const_reverse_iterator rbegin() const
+	{
+		return const_reverse_iterator(end());
+	}
+	const_reverse_iterator crbegin() const
+	{
+		return const_reverse_iterator(cend());
+	}
+
+	reverse_iterator rend()
+	{
+		return reverse_iterator(begin());
+	}
+	const_reverse_iterator rend() const
+	{
+		return const_reverse_iterator(begin());
+	}
+	const_reverse_iterator crend() const
+	{
+		return const_reverse_iterator(cbegin());
+	}
+
+	////////
+	TSparseArrayView() = default;	// intended to keep this type trivial.
+	TSparseArrayView(T *data, unsigned stride, unsigned count = 0)
+	{
+		Count = count;
+		Array = data;
+		Stride = stride;
+	}
+	TSparseArrayView(const TSparseArrayView<T> &other) = default;
+	TSparseArrayView<T> &operator= (const TSparseArrayView<T> &other) = default;
+
+	// Check equality of two arrays
+	bool operator==(const TArrayView<T> &other) const
+	{
+		if (Count != other.Count)
+		{
+			return false;
+		}
+		for (unsigned int i = 0; i < Count; ++i)
+		{
+			if (Element(i) != other.Element(i))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	T &Element(size_t index)
+	{
+		return (T*)Array[index*Stride];
+	}
+	// Return a reference to an element
+	T &operator[] (size_t index) const
+	{
+		return Element(index);
+	}
+	// Returns a reference to the last element
+	T &Last() const
+	{
+		return Element(Count - 1);
+	}
+
+	// returns address of first element
+	T *Data() const
+	{
+		return &Element(0);
+	}
+
+	unsigned Size() const
+	{
+		return Count;
+	}
+
+	unsigned int Find(const T& item) const
+	{
+		unsigned int i;
+		for (i = 0; i < Count; ++i)
+		{
+			if (Element(i) == item)
+				break;
+		}
+		return i;
+	}
+
+	void Set(T *data, unsigned stride, unsigned count)
+	{
+		Array = reinterpret_cast<unsigned char*>(data);
+		Count = count;
+		Stride = stride;
+	}
+
+	void Set(void *data, unsigned stride, unsigned count)
+	{
+		Array = reinterpret_cast<unsigned char*>(data);
+		Count = count;
+		Stride = stride;
+	}
+
+	void Clear()
+	{
+		Count = 0;
+		Stride = 0;
+		Array = nullptr;
+	}
+private:
+	unsigned char* Array;
+	unsigned int Count;
+	unsigned int Stride;
 };

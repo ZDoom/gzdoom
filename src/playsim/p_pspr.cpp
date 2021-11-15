@@ -132,6 +132,7 @@ DEFINE_FIELD(DPSprite, x)
 DEFINE_FIELD(DPSprite, y)
 DEFINE_FIELD(DPSprite, oldx)
 DEFINE_FIELD(DPSprite, oldy)
+DEFINE_FIELD(DPSprite, baseScale)
 DEFINE_FIELD(DPSprite, pivot)
 DEFINE_FIELD(DPSprite, scale)
 DEFINE_FIELD(DPSprite, rotation)
@@ -180,6 +181,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   ID(id),
   processPending(true)
 {
+	baseScale = {1.0, 1.2};
 	rotation = 0.;
 	scale = {1.0, 1.0};
 	pivot = {0.0, 0.0};
@@ -1251,7 +1253,8 @@ void DPSprite::Serialize(FSerializer &arc)
 		("rotation", rotation)
 		("halign", HAlign)
 		("valign", VAlign)
-		("renderstyle_", Renderstyle);	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
+		("renderstyle_", Renderstyle)	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
+		("baseScale", baseScale);
 }
 
 //------------------------------------------------------------------------

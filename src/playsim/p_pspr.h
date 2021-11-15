@@ -114,9 +114,10 @@ public:
 	float GetYAdjust(bool fullscreen);
 
 	int HAlign, VAlign;		// Horizontal and vertical alignment
+	DVector2 baseScale;		// Base scale (set by weapon); defaults to (1.0, 1.2) since that's Doom's native aspect ratio
 	DAngle rotation;		// How much rotation to apply.
 	DVector2 pivot;			// pivot points
-	DVector2 scale;			// Scale
+	DVector2 scale;			// Dynamic scale (set by A_Overlay functions)
 	double x, y, alpha;
 	double oldx, oldy;
 	bool InterpolateTic;	// One tic interpolation (WOF_INTERPOLATE)

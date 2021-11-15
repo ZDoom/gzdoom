@@ -428,7 +428,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	FloatRect r = spi.GetSpriteRect();
 
 	// calculate edges of the shape
-	scalex = (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * vw / 320;
+	scalex = psp->baseScale.X * (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * (vw / 320);
 
 	float x1, y1, x2, y2, u1, v1, u2, v2;
 
@@ -447,7 +447,10 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	// killough 12/98: fix psprite positioning problem
 	ftexturemid = 100.f - sy - r.top - psp->GetYAdjust(screenblocks >= 11);
 
-	scale = (SCREENHEIGHT*vw) / (SCREENWIDTH * 200.0f);
+	// [XA] note: Doom's native 1.2x aspect ratio was originally
+	// handled here by multiplying SCREENWIDTH by 200 instead of
+	// 240, but now the baseScale var defines this from now on.
+	scale = psp->baseScale.Y * (SCREENHEIGHT*vw) / (SCREENWIDTH * 240.0f);
 	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
 	y2 = y1 + (r.height * scale) + 1;
 

@@ -411,6 +411,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	float			tx;
 	float			scale;
 	float			scalex;
+	float			ftextureadj;
 	float			ftexturemid;
 
 	// decide which patch to use
@@ -445,7 +446,8 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	x2 += viewwindowx;
 
 	// killough 12/98: fix psprite positioning problem
-	ftexturemid = 100.f - sy - r.top - psp->GetYAdjust(screenblocks >= 11);
+	ftextureadj = (120.0f / psp->baseScale.Y) - 100.0f; // [XA] scale relative to weapon baseline
+	ftexturemid = 100.f - sy - r.top - psp->GetYAdjust(screenblocks >= 11) - ftextureadj;
 
 	// [XA] note: Doom's native 1.2x aspect ratio was originally
 	// handled here by multiplying SCREENWIDTH by 200 instead of

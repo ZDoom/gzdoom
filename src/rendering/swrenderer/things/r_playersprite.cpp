@@ -293,7 +293,8 @@ namespace swrenderer
 		vis.renderflags = owner->renderflags;
 
 		FSoftwareTexture* stex = GetSoftwareTexture(tex);
-		vis.texturemid = (BASEYCENTER - sy) * stex->GetScale().Y + stex->GetTopOffset(0);
+		double textureadj = (120.0f / pspr->baseScale.Y) - BASEYCENTER; // [XA] scale relative to weapon baseline
+		vis.texturemid = (BASEYCENTER - sy - textureadj) * stex->GetScale().Y + stex->GetTopOffset(0);
 
 		// Force it to use software rendering when drawing to a canvas texture.
 		bool renderToCanvas = viewport->RenderingToCanvas;

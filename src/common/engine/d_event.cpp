@@ -67,11 +67,20 @@ CVAR(Bool, m_filter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void D_ProcessEvents (void)
 {
-	event_t *ev;
+	bool keywasdown[NUM_KEYS] = { false };
+	TArray<event_t*> delayedevents;
+
 	while (eventtail != eventhead)
 	{
-		ev = &events[eventtail];
+		event_t *ev = &events[eventtail];
 		eventtail = (eventtail + 1) & (MAXEVENTS - 1);
+
+		if (ev->type == EV_KeyUp && keywasdown[ev->data1])
+		{
+			delayedevents.Push(ev);
+			continue;
+		}
+
 		if (ev->type == EV_None)
 			continue;
 		if (ev->type == EV_DeviceChange)
@@ -85,7 +94,12 @@ void D_ProcessEvents (void)
 				continue;				// menu ate the event
 		}
 
-		G_Responder (ev);
+		keywasdown[ev->data1] = G_Responder(ev) && ev->type == EV_KeyDown;
+	}
+
+	for (auto& ev: delayedevents)
+	{
+		D_PostEvent(ev);
 	}
 }
 

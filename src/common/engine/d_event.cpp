@@ -68,7 +68,7 @@ CVAR(Bool, m_filter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 void D_ProcessEvents (void)
 {
 	bool keywasdown[NUM_KEYS] = { false };
-	TArray<event_t*> delayedevents;
+	TArray<event_t> delayedevents;
 
 	while (eventtail != eventhead)
 	{
@@ -77,7 +77,7 @@ void D_ProcessEvents (void)
 
 		if (ev->type == EV_KeyUp && keywasdown[ev->data1])
 		{
-			delayedevents.Push(ev);
+			delayedevents.Push(*ev);
 			continue;
 		}
 
@@ -99,7 +99,7 @@ void D_ProcessEvents (void)
 
 	for (auto& ev: delayedevents)
 	{
-		D_PostEvent(ev);
+		D_PostEvent(&ev);
 	}
 }
 

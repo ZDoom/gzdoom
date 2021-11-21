@@ -480,7 +480,10 @@ public:
 		{
 			return mMaterialShaders[eff];
 		}
-		return NULL;
+		else // This can happen if we try and active a user shader which is not loaded, so return default shader so it does not crash
+		{
+			return mMaterialShaders[0];
+		}
 	}
 };
 

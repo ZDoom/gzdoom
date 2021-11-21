@@ -67,9 +67,10 @@ CVAR(Bool, m_filter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void D_ProcessEvents (void)
 {
-	bool keywasdown[NUM_KEYS] = { false };
+	FixedBitArray<NUM_KEYS> keywasdown;
 	TArray<event_t> delayedevents;
 
+	keywasdown.Zero();
 	while (eventtail != eventhead)
 	{
 		event_t *ev = &events[eventtail];
@@ -94,7 +95,7 @@ void D_ProcessEvents (void)
 				continue;				// menu ate the event
 		}
 
-		keywasdown[ev->data1] = G_Responder(ev) && ev->type == EV_KeyDown;
+		if (G_Responder(ev) && ev->type == EV_KeyDown) keywasdown.Set(ev->data1);
 	}
 
 	for (auto& ev: delayedevents)

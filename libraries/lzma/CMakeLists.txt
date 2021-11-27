@@ -25,7 +25,7 @@ set( LZMA_FILES
 	C/Ppmd7Dec.c )
 
 if( WIN32 )
-	set( LZMA_FILES ${LZMA_FILES} C/LzFindMt.c C/Threads.c )
+	set( LZMA_FILES ${LZMA_FILES} C/LzFindMt.c C/LzFindOpt.c C/Threads.c )
 else()
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_ST" )
 endif()

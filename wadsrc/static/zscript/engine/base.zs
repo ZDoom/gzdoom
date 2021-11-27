@@ -667,22 +667,22 @@ class Object native
 	//
 	// Object intrinsics
 	// Every ZScript "class" inherits from Object, and so inherits these methods as well
-	// clearscope bool IsAbstract(); // Intrinsic - Query whether or not the class of this object is abstract
-	// clearscope Object GetParentClass(); // Intrinsic - Get the parent class of this object
-	// clearscope Name GetClassName(); // Intrinsic - Get the name of this object's class
-	// clearscope Class<Object> GetClass(); // Intrinsic - Get the object's class
-	// clearscope Object new(class<Object> type); // Intrinsic - Create a new object with this class. This is only valid for thinkers and plain objects, except menus. For actors, use Actor.Spawn();
+	// clearscope bool IsAbstract(); // Query whether or not the class of this object is abstract
+	// clearscope Object GetParentClass(); // Get the parent class of this object
+	// clearscope Name GetClassName(); // Get the name of this object's class
+	// clearscope Class<Object> GetClass(); // Get the object's class
+	// clearscope Object new(class<Object> type); // Create a new object with this class. This is only valid for thinkers and plain objects, except menus. For actors, use Actor.Spawn();
 	//
 	//
 	// Intrinsic random number generation functions. Note that the square
 	// bracket syntax for specifying an RNG ID is only available for these
 	// functions.
-	// clearscope void SetRandomSeed[Name rngId = 'None'](int seed); // Intrinsic - Set the seed for the given RNG.
-	// clearscope int Random[Name rngId = 'None'](int min, int max); // Intrinsic - Use the given RNG to generate a random integer number in the range (min, max) inclusive.
-	// clearscope int Random2[Name rngId = 'None'](int mask); // Intrinsic - Use the given RNG to generate a random integer number, and do a "union" (bitwise AND, AKA &) operation with the bits in the mask integer.
-	// clearscope int FRandom[Name rngId = 'None'](double min, double max); // Intrinsic - Use the given RNG to generate a random real number in the range (min, max) inclusive.
-	// clearscope int RandomPick[Name rngId = 'None'](int choices...); // Intrinsic - Use the given RNG to generate a random integer from the given choices.
-	// clearscope double FRandomPick[Name rngId = 'None'](double choices...); // Intrinsic - Use the given RNG to generate a random real number from the given choices.
+	// clearscope void SetRandomSeed[Name rngId = 'None'](int seed); // Set the seed for the given RNG.
+	// clearscope int Random[Name rngId = 'None'](int min, int max); // Use the given RNG to generate a random integer number in the range (min, max) inclusive.
+	// clearscope int Random2[Name rngId = 'None'](int mask); // Use the given RNG to generate a random integer number, and do a "union" (bitwise AND, AKA &) operation with the bits in the mask integer.
+	// clearscope double FRandom[Name rngId = 'None'](double min, double max); // Use the given RNG to generate a random real number in the range (min, max) inclusive.
+	// clearscope int RandomPick[Name rngId = 'None'](int choices...); // Use the given RNG to generate a random integer from the given choices.
+	// clearscope double FRandomPick[Name rngId = 'None'](double choices...); // Use the given RNG to generate a random real number from the given choices.
 	//
 	//
 	// Intrinsic math functions - the argument and return types for these
@@ -785,8 +785,9 @@ struct StringStruct native
 	native static vararg String Format(String fmt, ...);
 	native vararg void AppendFormat(String fmt, ...);
 	// native int Length();  // Intrinsic
-	// native bool operator~==(String other)  // Case-insensitive equality comparison
-	// native String operator..(String other)  // Concatenate with another String
+	// native bool operator==(String other); // Equality comparison
+	// native bool operator~==(String other);  // Case-insensitive equality comparison
+	// native String operator..(String other);  // Concatenate with another String
 	native void Replace(String pattern, String replacement);
 	native String Left(int len) const;
 	native String Mid(int pos = 0, int len = 2147483647) const;

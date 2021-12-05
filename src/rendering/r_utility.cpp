@@ -449,8 +449,8 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 			// Interpolating through line portals is a messy affair.
 			// What needs be done is to store the portal transitions of the camera actor as waypoints
 			// and then find out on which part of the path the current view lies.
-			// Needless to say, this doesn't work for chasecam mode.
-			if (!viewpoint.showviewer)
+			// Needless to say, this doesn't work for chasecam mode or viewpos.
+			if (!viewpoint.showviewer && !viewpoint.NoPortalPath)
 			{
 				double pathlen = 0;
 				double zdiff = 0;
@@ -789,35 +789,118 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		iview->otic = nowtic;
 		iview->Old = iview->New;
 	}
+	//==============================================================================================
+	// Handles offsetting the camera with ChaseCam and/or viewpos.
+	{
+		AActor *mo = viewpoint.camera;
+		FViewPosition *VP = mo->ViewPos;
+		if (VP) VP->ResetTraceInfo();
+		const DVector3 orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
+		viewpoint.ActorPos = orig;
 
-	if (player != NULL && gamestate != GS_TITLELEVEL &&
-		((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0)))
-	{
+		bool DefaultDraw = true;
+
 		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
-		// [RH] Use chasecam view
-		DVector3 campos;
-		DAngle camangle;
-		P_AimCamera (viewpoint.camera, campos, camangle, viewpoint.sector, unlinked);	// fixme: This needs to translate the angle, too.
-		iview->New.Pos = campos;
-		iview->New.Angles.Yaw = camangle;
-		
-		viewpoint.showviewer = true;
-		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
-		// it's probably best to just reset the interpolation for this move.
-		// Note that this can still cause problems with unusually linked portals
-		if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256*256))
+		if (gamestate != GS_TITLELEVEL &&
+			(player && ((player->cheats & CF_CHASECAM)) || (r_deathcamera && viewpoint.camera->health <= 0)))
 		{
-			iview->otic = nowtic;
-			iview->Old = iview->New;
-			r_NoInterpolate = true;
+			// [RH] Use chasecam view
+			DefaultDraw = false;
+			DVector3 campos;
+			DAngle camangle;
+			P_AimCamera(viewpoint.camera, campos, camangle, viewpoint.sector, unlinked);	// fixme: This needs to translate the angle, too.
+			iview->New.Pos = campos;
+			iview->New.Angles.Yaw = camangle;
+
+			viewpoint.showviewer = true;
+			// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
+			// it's probably best to just reset the interpolation for this move.
+			// Note that this can still cause problems with unusually linked portals
+			if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
+			{
+				iview->otic = nowtic;
+				iview->Old = iview->New;
+				r_NoInterpolate = true;
+			}
+			viewpoint.ActorPos = campos;
 		}
-		viewpoint.ActorPos = campos;
-	}
-	else
-	{
-		viewpoint.ActorPos = iview->New.Pos = { viewpoint.camera->Pos().XY(), viewpoint.camera->player ? viewpoint.camera->player->viewz : viewpoint.camera->Z() + viewpoint.camera->GetCameraHeight() };
-		viewpoint.sector = viewpoint.camera->Sector;
-		viewpoint.showviewer = false;
+		else if (VP) // No chase/death cam and player is alive, wants viewpos.
+		{
+			viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(iview->New.Pos.XY())->sector;
+			viewpoint.showviewer = false;
+
+			// [MC] Ignores all portal portal transitions since it's meant to be absolute.
+			// Modders must handle performing offsetting with the appropriate functions to get it to work.
+			// Hint: Check P_AdjustViewPos.
+			if (VP->Flags & VPSF_ABSOLUTEPOS)
+			{
+				iview->New.Pos = VP->Offset;
+			}
+			else
+			{
+				DVector3 next = orig;
+
+				if (VP->isZero())
+				{
+					// Since viewpos isn't being used, it's safe to enable path interpolation
+					viewpoint.NoPortalPath = false;
+				}
+				else if (VP->Flags & VPSF_ABSOLUTEOFFSET)
+				{
+					// No relativity added from angles.
+					next += VP->Offset;
+				}
+				else
+				{
+					// [MC] Do NOT handle portals here! Trace must have the unportaled (absolute) position to
+					// get the correct angle and distance. Trace automatically handles portals by itself.
+					// Note: viewpos does not include view angles, and ViewZ/CameraHeight are applied before this.
+
+					DAngle yaw = mo->Angles.Yaw;
+					DAngle pitch = mo->Angles.Pitch;
+					DAngle roll = mo->Angles.Roll;
+					DVector3 relx, rely, relz, Off = VP->Offset;
+					DMatrix3x3 rot =
+						DMatrix3x3(DVector3(0., 0., 1.), yaw.Cos(), yaw.Sin()) *
+						DMatrix3x3(DVector3(0., 1., 0.), pitch.Cos(), pitch.Sin()) *
+						DMatrix3x3(DVector3(1., 0., 0.), roll.Cos(), roll.Sin());
+					relx = DVector3(1., 0., 0.)*rot;
+					rely = DVector3(0., 1., 0.)*rot;
+					relz = DVector3(0., 0., 1.)*rot;
+					next += relx * Off.X + rely * Off.Y + relz * Off.Z;
+				}
+
+				if (next != orig)
+				{
+					// [MC] Disable interpolation if the camera view is crossing through a portal. Sometimes 
+					// the player is made visible when crossing a portal and it's extremely jarring.
+					// Also, disable the portal interpolation pathing entirely when using the viewpos feature.
+					// Interpolation still happens with everything else though and seems to work fine.
+					DefaultDraw = false;
+					viewpoint.NoPortalPath = true;
+					P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, VP);
+
+					VP->PlrPos = orig;
+					VP->CamPos = next;
+					VP->CamSec = viewpoint.sector;
+					
+					if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
+					{
+						iview->otic = nowtic;
+						iview->Old = iview->New;
+						r_NoInterpolate = true;
+					}
+					iview->New.Pos = next;
+				}
+			}
+		}
+		
+		if (DefaultDraw)
+		{
+			iview->New.Pos = orig;
+			viewpoint.sector = viewpoint.camera->Sector;
+			viewpoint.showviewer = viewpoint.NoPortalPath = false;
+		}
 	}
 
 	// [MC] Apply the view angles first, which is the offsets. If the absolute isn't desired,

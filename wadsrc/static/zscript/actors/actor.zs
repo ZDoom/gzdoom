@@ -67,6 +67,12 @@ struct LinkContext
 	voidptr render_list;
 }
 
+class ViewPosition native
+{
+	native readonly Vector3 Offset;
+	native readonly int Flags;
+}
+
 
 class Actor : Thinker native
 {
@@ -89,6 +95,7 @@ class Actor : Thinker native
 	// for some comments on these fields, see their native representations in actor.h.
 	native readonly Actor snext;	// next in sector list.
 	native PlayerInfo Player;
+	native readonly ViewPosition ViewPos; // Will be null until A_SetViewPos() is called for the first time.
 	native readonly vector3 Pos;
 	native vector3 Prev;
 	native uint ThruBits;
@@ -1157,6 +1164,7 @@ class Actor : Thinker native
 	native void A_SetViewAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetViewPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetViewRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void SetViewPos(Vector3 offset, int flags = -1);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVar(name varname, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserArray(name varname, int index, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVarFloat(name varname, double value);

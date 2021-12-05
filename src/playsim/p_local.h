@@ -50,6 +50,7 @@ struct secplane_t;
 struct FCheckPosition;
 struct FTranslatedLineTarget;
 struct FLinePortal;
+class FViewPosition;
 
 #include <stdlib.h>
 
@@ -391,6 +392,10 @@ void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
 // [RH] Position the chasecam
 void	P_AimCamera (AActor *t1, DVector3 &, DAngle &, sector_t *&sec, bool &unlinked);
+
+// [MC] Aiming for ViewPos
+void	P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &, sector_t *&sec, bool &unlinked, FViewPosition *VP);
+
 
 // [RH] Means of death
 enum

@@ -369,6 +369,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("spawnorder", SpawnOrder)
 		A("friction", Friction)
 		A("SpriteOffset", SpriteOffset)
+		("viewpos", ViewPos)
 		A("userlights", UserLights);
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
@@ -4951,6 +4952,12 @@ void AActor::OnDestroy ()
 	// unlink from sector and block lists
 	UnlinkFromWorld (nullptr);
 	flags |= MF_NOSECTOR|MF_NOBLOCKMAP;
+
+	if (ViewPos != nullptr)
+	{
+		ViewPos->Destroy();
+		ViewPos = nullptr;
+	}
 
 	// Transform any playing sound into positioned, non-actor sounds.
 	S_RelinkSound (this, NULL);

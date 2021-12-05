@@ -654,6 +654,63 @@ struct FDropItem
 	int Amount;
 };
 
+enum EViewPosFlags // [MC] Flags for SetViewPos.
+{
+	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
+};
+
+class FViewPosition : public DObject
+{
+	DECLARE_CLASS(FViewPosition, DObject);
+public:
+	// Variables
+	// Exposed to ZScript
+	DVector3	Offset;
+	int			Flags;
+
+	// Engine only. 
+	// Used to do a backwards trace to disable rendering over portals.
+	bool		isUsed;
+	DVector3	PlrPos,
+				CamPos;
+	double		Distance;
+	sector_t	*CamSec;
+
+
+	// Functions
+	FViewPosition()
+	{
+		Offset = PlrPos = CamPos = { 0,0,0 };
+		isUsed = false;
+		Distance = 0.0;
+		CamSec = nullptr;
+	}
+
+	void Set(DVector3 &off, int f = -1)
+	{
+		Offset = off;
+
+		if (f > -1)
+			Flags = f;
+	}
+
+	bool isZero()
+	{
+		return Offset.isZero();
+	}
+
+	void ResetTraceInfo()
+	{
+		isUsed = false;
+		PlrPos = CamPos = {0,0,0};
+		Distance = 0.;
+		CamSec = nullptr;
+	}
+
+	bool TraceBack(AActor *Owner);
+};
+
 const double MinVel = EQUAL_EPSILON;
 
 // Map Object definition.
@@ -974,7 +1031,8 @@ public:
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
 	DRotator		Angles;
-	DRotator		ViewAngles;			// Offsets for cameras
+	DRotator		ViewAngles;			// Angle offsets for cameras
+	FViewPosition	*ViewPos;			// Position offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 

@@ -133,6 +133,7 @@ struct islope_t
 CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
 CVAR(Float, am_linealpha, 1.0f, CVAR_ARCHIVE)
 CVAR(Int, am_linethickness, 1, CVAR_ARCHIVE)
+CVAR(Int, am_lineantialiasing, 0, CVAR_ARCHIVE)
 CVAR(Bool, am_thingrenderstyles, true, CVAR_ARCHIVE)
 CVAR(Int, am_showsubsector, -1, 0);
 
@@ -1741,11 +1742,63 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 		const int y1 = f_y + fl.a.y;
 		const int x2 = f_x + fl.b.x;
 		const int y2 = f_y + fl.b.y;
-		if (am_linethickness >= 2) {
-			twod->AddThickLine(DVector2(x1, y1), DVector2(x2, y2), am_linethickness, color.RGB, uint8_t(am_linealpha * 255));
+
+		if (am_lineantialiasing) {
+			// Draw 5 lines (am_linethickness 2) or 9 lines (am_linethickness >= 3)
+			// slightly offset from each other, but with lower opacity
+			// as a bruteforce way to achieve antialiased line drawing.
+			const int aa_alpha_divide = am_linethickness >= 3 ? 3 : 2;
+
+			// Subtract to line thickness to compensate for the antialiasing making lines thicker.
+			const int aa_linethickness = max(1, am_linethickness - 2);
+
+			if (aa_linethickness >= 2) {
+				// Top row.
+				twod->AddThickLine(DVector2(x1 - 1, y1 - 1), DVector2(x2 - 1, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1 + 1, y1 - 1), DVector2(x2 + 1, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Middle row.
+				twod->AddThickLine(DVector2(x1 - 1, y1), DVector2(x2 - 1, y2), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1 + 1, y1), DVector2(x2 + 1, y2), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1, y1), DVector2(x2, y2), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Bottom row.
+				twod->AddThickLine(DVector2(x1 - 1, y1 + 1), DVector2(x2 - 1, y2 + 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1 + 1, y1 + 1), DVector2(x2 + 1, y2 + 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+			} else {
+				// Use more efficient thin line drawing routine.
+				// Top row.
+				if (am_linethickness >= 3) {
+					// If original line thickness is 2, do not add diagonal lines to allow thin lines to be represented.
+					// This part is not needed for thick antialiased drawing, as original line thickness is always greater than 3.
+					twod->AddLine(DVector2(x1 - 1, y1 - 1), DVector2(x2 - 1, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+					twod->AddLine(DVector2(x1 + 1, y1 - 1), DVector2(x2 + 1, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				}
+				twod->AddLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Middle row.
+				twod->AddLine(DVector2(x1 - 1, y1), DVector2(x2 - 1, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddLine(DVector2(x1 + 1, y1), DVector2(x2 + 1, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddLine(DVector2(x1, y1), DVector2(x2, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Bottom row.
+				if (am_linethickness >= 3) {
+					// If original line thickness is 2, do not add diagonal lines to allow thin lines to be represented.
+					// This part is not needed for thick antialiased drawing, as original line thickness is always greater than 3.
+					twod->AddLine(DVector2(x1 - 1, y1 + 1), DVector2(x2 - 1, y2 + 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+					twod->AddLine(DVector2(x1 + 1, y1 + 1), DVector2(x2 + 1, y2 + 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				}
+				twod->AddLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+			}
 		} else {
-			// Use more efficient thin line drawing routine.
-			twod->AddLine(DVector2(x1, y1), DVector2(x2, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255));
+			if (am_linethickness >= 2) {
+				twod->AddThickLine(DVector2(x1, y1), DVector2(x2, y2), am_linethickness, color.RGB, uint8_t(am_linealpha * 255));
+			} else {
+				// Use more efficient thin line drawing routine.
+				twod->AddLine(DVector2(x1, y1), DVector2(x2, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255));
+			}
 		}
 	}
 }

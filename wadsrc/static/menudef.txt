@@ -1347,6 +1347,7 @@ OptionMenu AutomapOptions protected
 	Option "$AUTOMAPMNU_TEXTURED",				"am_textured", "OnOff"
 	Slider "$AUTOMAPMNU_LINEALPHA",				"am_linealpha", 0.1, 1.0, 0.1, 1
 	Slider "$AUTOMAPMNU_LINETHICKNESS",			"am_linethickness", 1, 8, 1, 0
+	Option "$AUTOMAPMNU_LINEANTIALIASING",		"am_lineantialiasing", "OnOff"
 
 	StaticText ""
 	Option "$AUTOMAPMNU_SHOWITEMS",				"am_showitems", "OnOff"

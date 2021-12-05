@@ -396,6 +396,13 @@ enum EActivationFlags
 	
 };
 
+// [MC] Flags for SetViewPos.
+enum EViewPosFlags
+{
+	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
+};
+
 // Flags for A_TakeInventory and A_TakeFromTarget
 enum ETakeFlags
 {

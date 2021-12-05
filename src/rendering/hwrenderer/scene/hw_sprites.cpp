@@ -727,6 +727,12 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		DVector3 thingorigin = thing->Pos();
 		if (thruportal == 1) thingorigin += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(thingorigin.X - vp.ActorPos.X) < 2 && fabs(thingorigin.Y - vp.ActorPos.Y) < 2) return;
+
+		// Try to do an inverted trace to get to the camera's body. This way, we know exactly behind which line to disable.
+		// Currently doesn't work.
+		FViewPosition *vpos = camera->ViewPos;
+		if (vpos && vpos->TraceBack(camera))
+			return;
 	}
 	// Thing is invisible if close to the camera.
 	if (thing->renderflags & RF_MAYBEINVISIBLE)

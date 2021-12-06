@@ -5441,43 +5441,8 @@ void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&Cam
 	{
 		campos = trace.HitPos - trace.HitVector * 1 / 256.;
 	}
-//	DVector3 cpos = campos;
 	CameraSector = trace.Sector;
 	unlinked = trace.unlinked;
-
-	// Save the info for the renderers. Needed to disable sprites across portals.
-	VP->Distance = distance;
-	VP->isUsed = true;
-}
-
-struct EViewPosFinder
-{
-	AActor *Owner;
-};
-
-static ETraceStatus TraceToOwner(FTraceResults &res, void *userdata)
-{
-	// Try to guarantee hitting the owner if possible.
-	if (res.HitType != TRACE_HitActor)
-		return TRACE_Skip;
-
-	EViewPosFinder *data = (EViewPosFinder *)userdata;
-	ETraceStatus ret = (res.Actor == data->Owner) ? TRACE_Stop : TRACE_Skip;
-	return ret;
-}
-
-bool FViewPosition::TraceBack(AActor *Owner)
-{
-	if (!isUsed || !Owner)
-		return false;
-	
-	DVector3 vvec = (CamPos - PlrPos).Unit() * -1.0;
-	FTraceResults res;
-	EViewPosFinder TrcBack = {Owner};
-
-	bool ret = Trace(CamPos, CamSec, vvec, Distance, 0, 0, nullptr, res, TRACE_ReportPortals, TraceToOwner, &TrcBack);
-	
-	return ret;
 }
 
 //==========================================================================

@@ -794,7 +794,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	{
 		AActor *mo = viewpoint.camera;
 		FViewPosition *VP = mo->ViewPos;
-		if (VP) VP->ResetTraceInfo();
 		const DVector3 orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
 		viewpoint.ActorPos = orig;
 
@@ -879,10 +878,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 					DefaultDraw = false;
 					viewpoint.NoPortalPath = true;
 					P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, VP);
-
-					VP->PlrPos = orig;
-					VP->CamPos = next;
-					VP->CamSec = viewpoint.sector;
 					
 					if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
 					{

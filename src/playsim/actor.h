@@ -669,22 +669,11 @@ public:
 	DVector3	Offset;
 	int			Flags;
 
-	// Engine only. 
-	// Used to do a backwards trace to disable rendering over portals.
-	bool		isUsed;
-	DVector3	PlrPos,
-				CamPos;
-	double		Distance;
-	sector_t	*CamSec;
-
-
 	// Functions
 	FViewPosition()
 	{
-		Offset = PlrPos = CamPos = { 0,0,0 };
-		isUsed = false;
-		Distance = 0.0;
-		CamSec = nullptr;
+		Offset = { 0,0,0 };
+		Flags = 0;
 	}
 
 	void Set(DVector3 &off, int f = -1)
@@ -699,16 +688,6 @@ public:
 	{
 		return Offset.isZero();
 	}
-
-	void ResetTraceInfo()
-	{
-		isUsed = false;
-		PlrPos = CamPos = {0,0,0};
-		Distance = 0.;
-		CamSec = nullptr;
-	}
-
-	bool TraceBack(AActor *Owner);
 };
 
 const double MinVel = EQUAL_EPSILON;

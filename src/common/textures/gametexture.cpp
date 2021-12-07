@@ -325,6 +325,16 @@ void FGameTexture::SetupSpriteData()
 //
 //===========================================================================
 
+CUSTOM_CVAR(Bool, r_trimspriteborders, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	for (int i = 0; i < TexMan.NumTextures(); i++)
+	{
+		auto tex = TexMan.GetGameTexture(FSetTextureID(i));
+		if (tex->GetUseType() == ETextureType::Sprite)
+			tex->SetupSpriteData();
+	}
+}
+
 void FGameTexture::SetSpriteRect()
 {
 
@@ -362,7 +372,7 @@ void FGameTexture::SetSpriteRect()
 			spi.mSpriteRect.width = (float)spi.spriteWidth / fxScale;
 			spi.mSpriteRect.height = (float)spi.spriteHeight / fyScale;
 
-			if (spi.mTrimResult > 0)
+			if (spi.mTrimResult > 0 && r_trimspriteborders)
 			{
 				spi.mSpriteRect.left += (float)spi.trim[0] / fxScale;
 				spi.mSpriteRect.top += (float)spi.trim[1] / fyScale;

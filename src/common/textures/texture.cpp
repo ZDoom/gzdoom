@@ -439,16 +439,24 @@ TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 // 
 //  Finds empty space around the texture. 
 //  Used for sprites that got placed into a huge empty frame.
+//	Disabled if r_trimspriteborders is 0
 //
 //===========================================================================
 
+CUSTOM_CVAR(Bool, r_trimspriteborders, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	Printf("An engine restart is required for this to take effect.\n");
+}
+
 bool FTexture::TrimBorders(uint16_t* rect)
 {
-
 	auto texbuffer = CreateTexBuffer(0);
 	int w = texbuffer.mWidth;
 	int h = texbuffer.mHeight;
 	auto Buffer = texbuffer.mBuffer;
+	
+	if (!r_trimspriteborders)
+		return false;
 
 	if (texbuffer.mBuffer == nullptr)
 	{

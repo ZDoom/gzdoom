@@ -811,6 +811,22 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			}				
 			//else Printf("Unable to define hires texture '%s'\n", tex->Name);
 		}
+		else if (sc.Compare("notrim"))
+		{
+			sc.MustGetString();
+
+			FTextureID id = TexMan.CheckForTexture(sc.String, ETextureType::Sprite);
+			if (id.isValid())
+			{
+				FGameTexture *tex = TexMan.GetGameTexture(id);
+
+				if (tex)	tex->SetNoTrimming(true);
+				else		sc.ScriptError("NoTrim: %s not found", sc.String);
+			}
+			else
+				sc.ScriptError("NoTrim: %s is not a sprite", sc.String);
+
+		}
 		else if (sc.Compare("texture"))
 		{
 			build.ParseTexture(sc, ETextureType::Override, lump);

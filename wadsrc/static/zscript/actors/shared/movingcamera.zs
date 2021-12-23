@@ -493,8 +493,8 @@ class ActorMover : PathFollower
 		{
 			LinkContext ctx;
 			tracer.UnlinkFromWorld (ctx);
-			bNoBlockmap = true;
-			bSolid = false;
+			tracer.bNoBlockmap = true;
+			tracer.bSolid = false;
 			tracer.LinkToWorld (ctx);
 		}
 		if (tracer.bIsMonster)

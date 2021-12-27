@@ -1414,9 +1414,9 @@ void MapLoader::SpawnScrollers()
 			else
 			{
 				auto it = Level->GetLineIdIterator(l->args[1]);
-				while (int ln = it.Next())
+				while ((s = it.Next()) >= 0)
 				{
-					Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, Level->lines[ln].sidedef[0], accel, SCROLLTYPE(l->args[0]));
+					Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, Level->lines[s].sidedef[0], accel, SCROLLTYPE(l->args[0]));
 				}
 			}
 			break;

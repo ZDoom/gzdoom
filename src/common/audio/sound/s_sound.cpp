@@ -164,7 +164,6 @@ void SoundEngine::CacheSound (sfxinfo_t *sfx)
 {
 	if (GSnd && !sfx->bTentative)
 	{
-		sfxinfo_t *orig = sfx;
 		while (!sfx->bRandomHeader && sfx->link != sfxinfo_t::NO_LINK)
 		{
 			sfx = &S_sfx[sfx->link];
@@ -1085,13 +1084,14 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 // Is a sound being played by a specific emitter?
 //==========================================================================
 
-int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id)
+int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id, int chann)
 {
 	int count = 0;
 	if (sound_id > 0)
 	{
 		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
+			if (chann != -1 && chann != chan->EntChannel) continue;
 			if (chan->OrgID == sound_id && (sourcetype == SOURCE_Any ||
 				(chan->SourceType == sourcetype &&
 				chan->Source == source)))
@@ -1104,6 +1104,7 @@ int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int so
 	{
 		for (FSoundChan* chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
+			if (chann != -1 && chann != chan->EntChannel) continue;
 			if ((sourcetype == SOURCE_Any || (chan->SourceType == sourcetype &&	chan->Source == source)))
 			{
 				count++;

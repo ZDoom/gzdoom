@@ -428,7 +428,6 @@ int getAlternative(int code)
 		case 0x457:	return 0xef;
 		case 0x458:	return 'j';
 	}
-	return code;
 }
 
 //==========================================================================

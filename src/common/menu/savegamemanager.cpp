@@ -151,8 +151,6 @@ int FSavegameManagerBase::InsertSaveNode(FSaveGameNode *node)
 
 void FSavegameManagerBase::NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave, bool forceQuicksave)
 {
-	FSaveGameNode *node;
-
 	if (file.IsEmpty())
 		return;
 
@@ -180,7 +178,7 @@ void FSavegameManagerBase::NotifyNewSave(const FString &file, const FString &tit
 		}
 	}
 
-	node = new FSaveGameNode;
+	auto node = new FSaveGameNode;
 	node->SaveTitle = title;
 	node->Filename = file;
 	node->bOldVersion = false;

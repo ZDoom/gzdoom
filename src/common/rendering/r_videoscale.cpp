@@ -105,7 +105,6 @@ namespace
 		// minimum set in GZDoom 4.0.0, but only while those fonts are required.
 
 		static bool lastspecialUI = false;
-		bool isInActualMenu = false;
 
 		bool specialUI = (!sysCallbacks.IsSpecialUI || sysCallbacks.IsSpecialUI());
 

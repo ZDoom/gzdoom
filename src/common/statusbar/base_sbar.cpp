@@ -467,7 +467,7 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 	double texheight = tex->GetDisplayHeight() * scaleY;
 	double texleftoffs = tex->GetDisplayLeftOffset() * scaleY;
 	double textopoffs = tex->GetDisplayTopOffset() * scaleY;
-	double boxleftoffs, boxtopoffs;
+	double boxleftoffs = 0, boxtopoffs = 0;
 
 	if (boxwidth > 0 || boxheight > 0)
 	{
@@ -618,8 +618,6 @@ void DStatusBarCore::DrawRotated(FGameTexture* tex, double x, double y, int flag
 {
 	double texwidth = tex->GetDisplayWidth() * scaleX;
 	double texheight = tex->GetDisplayHeight() * scaleY;
-	double texleftoffs = tex->GetDisplayLeftOffset() * scaleY;
-	double textopoffs = tex->GetDisplayTopOffset() * scaleY;
 
 	// resolve auto-alignment before making any adjustments to the position values.
 	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
@@ -754,7 +752,7 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 	{
 		if (ch == ' ')
 		{
-			x += (monospaced ? spacing : font->GetSpaceWidth() + spacing) * scaleX;
+			x += monospaced ? spacing : font->GetSpaceWidth() + spacing;
 			continue;
 		}
 		else if (ch == TEXTCOLOR_ESCAPE)
@@ -774,7 +772,7 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 		width += font->GetDefaultKerning();
 
 		if (!monospaced) //If we are monospaced lets use the offset
-			x += c->GetDisplayLeftOffset() * scaleX + 1; //ignore x offsets since we adapt to character size
+			x += (c->GetDisplayLeftOffset() + 1); //ignore x offsets since we adapt to character size
 
 		double rx, ry, rw, rh;
 		rx = x + drawOffset.X;
@@ -825,12 +823,12 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 			DTA_LegacyRenderStyle, ERenderStyle(style),
 			TAG_DONE);
 
-		// Take text scale into account
 		dx = monospaced
-			? spacing * scaleX
-			: (double(width) + spacing - c->GetDisplayLeftOffset()) * scaleX - 1;
+			? spacing
+			: width + spacing - (c->GetDisplayLeftOffset() + 1);
 
-		x += dx;
+		// Take text scale into account
+		x += dx * scaleX;
 	}
 }
 

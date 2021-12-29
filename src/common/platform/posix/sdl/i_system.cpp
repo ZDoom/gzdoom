@@ -182,7 +182,9 @@ void I_PrintStr(const char *cp)
 		if (*srcp == 0x1c && con_printansi && terminal)
 		{
 			srcp += 1;
-			EColorRange range = V_ParseFontColor((const uint8_t*&)srcp, CR_UNTRANSLATED, CR_YELLOW);
+			const uint8_t* scratch = (const uint8_t*)srcp; // GCC does not like direct casting of the parameter.
+			EColorRange range = V_ParseFontColor(scratch, CR_UNTRANSLATED, CR_YELLOW);
+			srcp = (char*)scratch;
 			if (range != CR_UNDEFINED)
 			{
 				PalEntry color = V_LogColorFromColorRange(range);

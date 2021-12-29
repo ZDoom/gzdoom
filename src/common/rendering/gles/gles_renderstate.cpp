@@ -389,19 +389,17 @@ void FGLRenderState::ApplyState()
 		mMaterial.mChanged = false;
 	}
 
-	if (mBias.mChanged)
+
+	if (mBias.mFactor == 0 && mBias.mUnits == 0)
 	{
-		if (mBias.mFactor == 0 && mBias.mUnits == 0)
-		{
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		}
-		else
-		{
-			glEnable(GL_POLYGON_OFFSET_FILL);
-		}
-		glPolygonOffset(mBias.mFactor, mBias.mUnits);
-		mBias.mChanged = false;
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
+	else
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+	}
+	glPolygonOffset(mBias.mFactor, mBias.mUnits);
+	mBias.mChanged = false;
 }
 
 void FGLRenderState::ApplyBuffers()
@@ -458,7 +456,6 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	lastClamp = clampmode;
 	lastTranslation = translation;
 
-	int usebright = false;
 	int maxbound = 0;
 
 	int numLayers = mat->NumLayers();

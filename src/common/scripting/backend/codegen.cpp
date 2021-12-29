@@ -522,10 +522,10 @@ FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 	}
 	else
 	{
-		PSymbolConstString *csym = dyn_cast<PSymbolConstString>(sym);
-		if (csym != nullptr)
+		PSymbolConstString *csymbol = dyn_cast<PSymbolConstString>(sym);
+		if (csymbol != nullptr)
 		{
-			x = new FxConstant(csym->Str, pos);
+			x = new FxConstant(csymbol->Str, pos);
 		}
 		else
 		{
@@ -2436,7 +2436,7 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 
 	ExpEmit result;
 	bool intconst = false;
-	int intconstval;
+	int intconstval = 0;
 
 	if (Right->isConstant() && Right->ValueType->GetRegType() == REGT_INT)
 	{
@@ -4396,7 +4396,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 1 : 0);
 	build->Emit(OP_JMP, 1);
 	build->BackpatchListToHere(no);
-	auto ctarget = build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 0 : 1);
+	build->Emit(OP_LI, to.RegNum, (Operator == TK_AndAnd) ? 0 : 1);
 	list.DeleteAndClear();
 	list.ShrinkToFit();
 	return to;
@@ -5134,7 +5134,7 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	int outerside = -1;
 	if (!val->isConstant())
 	{
-		int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
+		outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
 		if (outerside == FScopeBarrier::Side_Virtual)
 			outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ScopeFlags);
 	}
@@ -5569,8 +5569,6 @@ FxExpression *FxRandomPick::Resolve(FCompileContext &ctx)
 
 ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 {
-	unsigned i;
-
 	assert(choices.Size() > 0);
 
 	// Call BuiltinRandom to generate a random number.
@@ -5603,7 +5601,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 
 	// Allocate space for the jump table.
 	size_t jumptable = build->Emit(OP_JMP, 0);
-	for (i = 1; i < choices.Size(); ++i)
+	for (unsigned i = 1; i < choices.Size(); ++i)
 	{
 		build->Emit(OP_JMP, 0);
 	}
@@ -5639,7 +5637,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 		}
 	}
 	// Backpatch each case (except the last, since it ends here) to jump to here.
-	for (i = 0; i < choices.Size() - 1; ++i)
+	for (unsigned i = 0; i < choices.Size() - 1; ++i)
 	{
 		build->BackpatchToHere(finishes[i]);
 	}
@@ -7855,8 +7853,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			}
 			else if (!ArgList.Size())
 			{
-				auto cls = static_cast<PClassType*>(ctx.Class)->Descriptor;
-				ArgList.Push(new FxConstant(cls, NewClassPointer(cls), ScriptPosition));
+				auto clss = static_cast<PClassType*>(ctx.Class)->Descriptor;
+				ArgList.Push(new FxConstant(clss, NewClassPointer(clss), ScriptPosition));
 			}
 
 			func = new FxNew(ArgList[0]);
@@ -8036,7 +8034,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			}
 			// No need to create a dedicated node here, all builtins map directly to trivial operations.
 			Self->ValueType = TypeSInt32;	// all builtins treat the texture index as integer.
-			FxExpression *x;
+			FxExpression *x = nullptr;
 			switch (MethodName.GetIndex())
 			{
 			case NAME_IsValid:
@@ -8369,8 +8367,8 @@ isresolved:
 		if (!novirtual || !(afd->Variants[0].Flags & VARF_Virtual))
 		{
 			auto clstype = PType::toClass(ctx.Class);
-			auto ccls = PType::toClass(cls);
-			if (clstype == nullptr || ccls == nullptr || !clstype->Descriptor->IsDescendantOf(ccls->Descriptor))
+			auto cclss = PType::toClass(cls);
+			if (clstype == nullptr || cclss == nullptr || !clstype->Descriptor->IsDescendantOf(cclss->Descriptor))
 			{
 				ScriptPosition.Message(MSG_ERROR, "Cannot call non-static function %s::%s from here", cls->TypeName.GetChars(), MethodName.GetChars());
 				delete this;

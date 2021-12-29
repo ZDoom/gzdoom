@@ -1131,9 +1131,7 @@ FString FScanner::TokenName (int token, const char *string)
 	}
 	else
 	{
-		FString work;
-		work.Format ("Unknown(%d)", token);
-		return work;
+		work.Format("Unknown(%d)", token);
 	}
 	return work;
 }

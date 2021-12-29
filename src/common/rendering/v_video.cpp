@@ -374,8 +374,6 @@ void V_InitScreen()
 
 void V_Init2()
 {
-	float gamma = static_cast<DDummyFrameBuffer *>(screen)->Gamma;
-
 	{
 		DFrameBuffer *s = screen;
 		screen = NULL;

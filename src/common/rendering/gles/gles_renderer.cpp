@@ -110,7 +110,6 @@ FGLRenderer::~FGLRenderer()
 
 bool FGLRenderer::StartOffscreen()
 {
-	bool firstBind = (mFBID == 0);
 	if (mFBID == 0)
 		glGenFramebuffers(1, &mFBID);
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mOldFBID);

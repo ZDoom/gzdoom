@@ -90,7 +90,7 @@ FBitmap FImageTexture::GetBgraBitmap(const PalEntry *p, int *trans)
 
 TArray<uint8_t> FImageTexture::Get8BitPixels(bool alpha)
 {
-	return mImage->GetPalettedPixels(alpha? alpha : bNoRemap0 ? FImageSource::noremap0 : FImageSource::normal);
+	return mImage->GetPalettedPixels(alpha? FImageSource::luminance : bNoRemap0 ? FImageSource::noremap0 : FImageSource::normal);
 }	
 
 //===========================================================================

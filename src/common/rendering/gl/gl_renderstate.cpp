@@ -318,7 +318,6 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	lastClamp = clampmode;
 	lastTranslation = translation;
 
-	int usebright = false;
 	int maxbound = 0;
 
 	int numLayers = mat->NumLayers();

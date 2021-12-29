@@ -86,11 +86,11 @@ FTextureManager::~FTextureManager ()
 
 void FTextureManager::DeleteAll()
 {
-	FImageSource::ClearImages();
 	for (unsigned int i = 0; i < Textures.Size(); ++i)
 	{
 		delete Textures[i].Texture;
 	}
+	FImageSource::ClearImages();
 	Textures.Clear();
 	Translation.Clear();
 	FirstTextureForFile.Clear();
@@ -717,7 +717,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			sc.String[8]=0;
 
 			tlist.Clear();
-			int amount = ListTextures(sc.String, tlist);
+			ListTextures(sc.String, tlist);
 			FName texname = sc.String;
 
 			sc.MustGetString();
@@ -935,7 +935,6 @@ void FTextureManager::LoadTextureX(int wadnum, FMultipatchTextureBuilder &build)
 void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build)
 {
 	int firsttexture = Textures.Size();
-	int lumpcount = fileSystem.GetNumEntries();
 	bool iwad = wadnum >= fileSystem.GetIwadNum() && wadnum <= fileSystem.GetMaxIwadNum();
 
 	FirstTextureForFile.Push(firsttexture);
@@ -1206,8 +1205,12 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	AddGameTexture(CreateShaderTexture(true, false));
 	AddGameTexture(CreateShaderTexture(true, true));
 	// Add two animtexture entries so that movie playback can call functions using texture IDs.
-	AddGameTexture(MakeGameTexture(new AnimTexture(), "AnimTextureFrame1", ETextureType::Override));
-	AddGameTexture(MakeGameTexture(new AnimTexture(), "AnimTextureFrame2", ETextureType::Override));
+	auto mt = MakeGameTexture(new AnimTexture(), "AnimTextureFrame1", ETextureType::Override);
+	mt->SetUpscaleFlag(false, true);
+	AddGameTexture(mt);
+	mt = MakeGameTexture(new AnimTexture(), "AnimTextureFrame2", ETextureType::Override);
+	mt->SetUpscaleFlag(false, true);
+	AddGameTexture(mt);
 
 	int wadcnt = fileSystem.GetNumWads();
 

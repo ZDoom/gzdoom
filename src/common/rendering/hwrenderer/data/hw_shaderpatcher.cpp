@@ -152,7 +152,7 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 	char *chars = code.LockBuffer();
 
 	ptrdiff_t startIndex = 0;
-	ptrdiff_t startpos, endpos;
+	ptrdiff_t startpos, endpos = 0;
 	while (true)
 	{
 		ptrdiff_t matchIndex = code.IndexOf("layout(binding", startIndex);
@@ -188,10 +188,10 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 						if (isSamplerUniformName)
 						{
 							samplerstobind.Push(std::make_pair(identifier, val));
-							for (auto pos = startpos; pos < endpos; pos++)
+							for (auto posi = startpos; posi < endpos; posi++)
 							{
-								if (!IsGlslWhitespace(chars[pos]))
-									chars[pos] = ' ';
+								if (!IsGlslWhitespace(chars[posi]))
+									chars[posi] = ' ';
 							}
 						}
 					}
@@ -216,7 +216,6 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 
 FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 {
-	ptrdiff_t len = code.Len();
 	char *chars = code.LockBuffer();
 
 	ptrdiff_t startIndex = 0;
@@ -255,8 +254,8 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 		if (keywordFound && IsGlslWhitespace(chars[endIndex + i]))
 		{
 			// yes - replace declaration with spaces
-			for (auto i = matchIndex; i < endIndex; i++)
-				chars[i] = ' ';
+			for (auto ii = matchIndex; ii < endIndex; ii++)
+				chars[ii] = ' ';
 		}
 
 		startIndex = endIndex;

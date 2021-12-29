@@ -137,8 +137,12 @@ public:
 	void SetSpriteRect();
 
 	ETextureType GetUseType() const { return UseType; }
-	void SetUpscaleFlag(int what) { shouldUpscaleFlag = what; }
-	int GetUpscaleFlag() { return shouldUpscaleFlag == 1; }
+	void SetUpscaleFlag(int what, bool manual = false) 
+	{ 
+		if ((shouldUpscaleFlag & 2) && !manual) return;	// if set manually this may not be reset.
+		shouldUpscaleFlag = what | (manual? 2 : 0); 
+	}
+	int GetUpscaleFlag() { return shouldUpscaleFlag & 1; }
 
 	FTexture* GetTexture() { return Base.get(); }
 	int GetSourceLump() const { return Base->GetSourceLump(); }

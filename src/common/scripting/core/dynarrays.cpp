@@ -114,7 +114,7 @@ template<class T, int fill = 1> void ArrayResize(T *self, int amount)
 	{
 		// This must ensure that all new entries get cleared.
 		const int fillCount = int(self->Size() - oldSize);
-		if (fillCount > 0) memset(&(*self)[oldSize], 0, sizeof(*self)[0] * fillCount);
+		if (fillCount > 0) memset((void*)&(*self)[oldSize], 0, sizeof(*self)[0] * fillCount);
 	}
 }
 

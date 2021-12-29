@@ -475,7 +475,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 	if (ast.TopNode != NULL)
 	{
 		ZCC_TreeNode *node = ast.TopNode;
-		PSymbolTreeNode *tnode;
+		PSymbolTreeNode *tnode = nullptr;
 
 		// [pbeta] Anything that must be processed before classes, structs, etc. should go here.
 		do
@@ -606,7 +606,6 @@ PSymbolTreeNode *ZCCCompiler::AddTreeNode(FName name, ZCC_TreeNode *node, PSymbo
 	else
 	{
 		auto sy = Create<PSymbolTreeNode>(name, node);
-		FString name;
 		treenodes->AddSymbol(sy);
 		return sy;
 	}
@@ -1930,19 +1929,19 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 	if (mVersion >= MakeVersion(3, 7, 2))
 	{
 		TArray<ZCC_Expression *> fixedIndices;
-		for (auto node : indices)
+		for (auto index : indices)
 		{
-			fixedIndices.Insert (0, node);
+			fixedIndices.Insert (0, index);
 		}
 
 		indices = std::move(fixedIndices);
 	}
 
 	FCompileContext ctx(OutNamespace, cls, false);
-	for (auto node : indices)
+	for (auto index : indices)
 	{
 		// There is no float->int casting here.
-		FxExpression *ex = ConvertNode(node);
+		FxExpression *ex = ConvertNode(index);
 		ex = ex->Resolve(ctx);
 
 		if (ex == nullptr) return TypeError;
@@ -2425,17 +2424,17 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 
 				auto parentfunc = clstype->ParentClass? dyn_cast<PFunction>(clstype->ParentClass->VMType->Symbols.FindSymbol(sym->SymbolName, true)) : nullptr;
 
-				int vindex = clstype->FindVirtualIndex(sym->SymbolName, &sym->Variants[0], parentfunc, exactReturnType);
+				int virtindex = clstype->FindVirtualIndex(sym->SymbolName, &sym->Variants[0], parentfunc, exactReturnType);
 				// specifying 'override' is necessary to prevent one of the biggest problem spots with virtual inheritance: Mismatching argument types.
 				if (varflags & VARF_Override)
 				{
-					if (vindex == -1)
+					if (virtindex == -1)
 					{
 						Error(f, "Attempt to override non-existent virtual function %s", FName(f->Name).GetChars());
 					}
 					else
 					{
-						auto oldfunc = clstype->Virtuals[vindex];
+						auto oldfunc = clstype->Virtuals[virtindex];
 						if (parentfunc && parentfunc->mVersion > mVersion)
 						{
 							Error(f, "Attempt to override function %s which is incompatible with version %d.%d.%d", FName(f->Name).GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
@@ -2467,8 +2466,8 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						if (oldfunc->VarFlags & VARF_Protected)
 							sym->Variants[0].Flags |= VARF_Protected;
 													
-						clstype->Virtuals[vindex] = sym->Variants[0].Implementation;
-						sym->Variants[0].Implementation->VirtualIndex = vindex;
+						clstype->Virtuals[virtindex] = sym->Variants[0].Implementation;
+						sym->Variants[0].Implementation->VirtualIndex = virtindex;
 						sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
 						
 						// Defaults must be identical to parent class
@@ -2493,7 +2492,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				}
 				else
 				{
-					if (vindex != -1)
+					if (virtindex != -1)
 					{
 						Error(f, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
 					}
@@ -2507,8 +2506,8 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		}
 		else if (forclass)
 		{
-			int vindex = clstype->FindVirtualIndex(sym->SymbolName, &sym->Variants[0], nullptr, exactReturnType);
-			if (vindex != -1)
+			int virtindex = clstype->FindVirtualIndex(sym->SymbolName, &sym->Variants[0], nullptr, exactReturnType);
+			if (virtindex != -1)
 			{
 				Error(f, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());
 			}

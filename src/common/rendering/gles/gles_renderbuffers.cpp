@@ -302,9 +302,6 @@ namespace OpenGLESRenderer
 		if (result == GL_FRAMEBUFFER_COMPLETE)
 			return true;
 
-		bool FailedCreate = true;
-
-
 		FString error = "glCheckFramebufferStatus failed: ";
 		switch (result)
 		{

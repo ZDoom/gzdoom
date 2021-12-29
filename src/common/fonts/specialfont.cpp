@@ -102,12 +102,12 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture
 
 		if (charlumps[i] != nullptr)
 		{
-			auto pic = charlumps[i];
-			Chars[i].OriginalPic = MakeGameTexture(pic->GetTexture(), nullptr, ETextureType::FontChar);
-			Chars[i].OriginalPic->CopySize(pic, true);
+			auto charpic = charlumps[i];
+			Chars[i].OriginalPic = MakeGameTexture(charpic->GetTexture(), nullptr, ETextureType::FontChar);
+			Chars[i].OriginalPic->CopySize(charpic, true);
 			TexMan.AddGameTexture(Chars[i].OriginalPic);
 			Chars[i].XMove = (int)Chars[i].OriginalPic->GetDisplayWidth();
-			if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(pic, Chars[i].OriginalPic);
+			if (sysCallbacks.FontCharCreated) sysCallbacks.FontCharCreated(charpic, Chars[i].OriginalPic);
 		}
 		else
 		{

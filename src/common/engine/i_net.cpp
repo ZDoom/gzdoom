@@ -736,7 +736,7 @@ bool HostGame (int i)
 	{
 		// If we send the packets eight times to each guest,
 		// hopefully at least one of them will get through.
-		for (int i = 8; i != 0; --i)
+		for (int ii = 8; ii != 0; --ii)
 		{
 			PreSend (&packet, 2, &sendaddress[node]);
 		}

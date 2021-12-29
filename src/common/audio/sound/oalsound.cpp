@@ -329,7 +329,6 @@ public:
 	virtual FString GetStats()
 		{
 		FString stats;
-		size_t pos = 0, len = 0;
 		ALfloat volume;
 		ALint offset;
 		ALint processed;

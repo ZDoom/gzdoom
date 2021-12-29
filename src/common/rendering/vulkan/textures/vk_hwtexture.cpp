@@ -407,18 +407,18 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	{
 		for (int i = 1; i < numLayers; i++)
 		{
-			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
-			auto systeximage = systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
-			update.addCombinedImageSampler(descriptor.get(), i, systeximage->View.get(), sampler, systeximage->Layout);
+			auto syslayer = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
+			auto syslayerimage = syslayer->GetImage(layer->layerTexture, 0, layer->scaleFlags);
+			update.addCombinedImageSampler(descriptor.get(), i, syslayerimage->View.get(), sampler, syslayerimage->Layout);
 		}
 	}
 	else
 	{
 		for (int i = 1; i < 3; i++)
 		{
-			auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, translation, &layer));
-			auto systeximage = systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
-			update.addCombinedImageSampler(descriptor.get(), i, systeximage->View.get(), sampler, systeximage->Layout);
+			auto syslayer = static_cast<VkHardwareTexture*>(GetLayer(i, translation, &layer));
+			auto syslayerimage = syslayer->GetImage(layer->layerTexture, 0, layer->scaleFlags);
+			update.addCombinedImageSampler(descriptor.get(), i, syslayerimage->View.get(), sampler, syslayerimage->Layout);
 		}
 		numLayers = 3;
 	}

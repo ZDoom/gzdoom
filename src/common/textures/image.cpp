@@ -85,7 +85,6 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
 	FString name;
 	fileSystem.GetFileShortName(name, SourceLump);
 
-	std::pair<int, int> *info = nullptr;
 	auto imageID = ImageID;
 
 	// Do we have this image in the cache?
@@ -201,7 +200,6 @@ FBitmap FImageSource::GetCachedBitmap(const PalEntry *remap, int conversion, int
 	int trans = -1;
 	fileSystem.GetFileShortName(name, SourceLump);
 	
-	std::pair<int, int> *info = nullptr;
 	auto imageID = ImageID;
 	
 	if (remap != nullptr)

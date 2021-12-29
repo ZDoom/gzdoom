@@ -309,9 +309,9 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 	}
 
 	Palette[0] = 0;
-	for (int i = 1; i < ActiveColors; i++)
+	for (int pp = 1; pp < ActiveColors; pp++)
 	{
-		Palette[i] = PalEntry(255, palette[i * 3], palette[i * 3 + 1], palette[i * 3 + 2]);
+		Palette[pp] = PalEntry(255, palette[pp * 3], palette[pp * 3 + 1], palette[pp * 3 + 2]);
 	}
 
 	data_p = palette + ActiveColors*3;

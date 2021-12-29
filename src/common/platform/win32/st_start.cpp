@@ -113,7 +113,7 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
 	FStartupScreen *scr = NULL;
-	HRESULT hr;
+	HRESULT hr = -1;
 
 	if (!Args->CheckParm("-nostartup"))
 	{

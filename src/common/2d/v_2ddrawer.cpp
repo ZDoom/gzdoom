@@ -749,7 +749,6 @@ void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, const unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
 {
 	RenderCommand dg;
-	int method = 0;
 
 	if (!img || !img->isValid()) return;
 
@@ -835,13 +834,13 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTextu
 	dg.mFlags = DTF_Wrap;
 
 	float fs = 1.f / float(flatscale);
-	bool flipc = false;
 
 	float sw = GetClassicFlatScalarWidth();
 	float sh = GetClassicFlatScalarHeight();
 
 	switch (local_origin)
 	{
+	default:
 	case 0:
 		fU1 = float(left) / (float)src->GetDisplayWidth() * fs;
 		fV1 = float(top) / (float)src->GetDisplayHeight() * fs;

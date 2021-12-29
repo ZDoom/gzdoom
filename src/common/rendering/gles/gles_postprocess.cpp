@@ -161,7 +161,6 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 	
 	for (size_t n = 0; n < mPresentShader->Uniforms.mFields.size(); n++)
 	{
-		int index = -1;
 		UniformFieldDesc desc = mPresentShader->Uniforms.mFields[n];
 		int loc = mPresentShader->Uniforms.UniformLocation[n];
 		switch (desc.Type)

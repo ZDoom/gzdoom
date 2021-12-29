@@ -35,6 +35,7 @@
 
 #include <chrono>
 #include <thread>
+#include <assert.h>
 #include "i_time.h"
 
 //==========================================================================
@@ -46,6 +47,7 @@
 static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
+static double lastinputtime;
 int GameTicRate = 35;	// make sure it is not 0, even if the client doesn't set it.
 
 double TimeScale = 1.0;
@@ -194,4 +196,40 @@ void I_ResetFrameTime()
 	auto ft = CurrentFrameStartTime;
 	I_SetFrameTime();
 	FirstFrameStartTime += (CurrentFrameStartTime - ft);
+}
+
+double I_GetInputFrac(bool const synchronised, double const ticrate)
+{
+	if (!synchronised)
+	{
+		const double max = 1000. / ticrate;
+		const double now = I_msTimeF();
+		const double elapsedInputTicks = std::min(now - lastinputtime, max);
+		lastinputtime = now;
+
+		if (elapsedInputTicks < max)
+		{
+			// Calculate an amplification to apply to the result before returning,
+			// factoring in the game's ticrate and the value of the result.
+			// This rectifies a deviation of 100+ ms or more depending on the length
+			// of the operation to be within 1-2 ms of synchronised input
+			// from 60 fps to at least 1000 fps at ticrates of 30 and 40 Hz.
+			const double result = elapsedInputTicks * ticrate * (1. / 1000.);
+			return result * (1. + 0.35 * (1. - ticrate * (1. / 50.)) * (1. - result));
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+void I_ResetInputTime()
+{
+	// Reset lastinputtime to current time.
+	lastinputtime = I_msTimeF();
 }

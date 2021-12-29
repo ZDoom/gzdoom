@@ -296,12 +296,12 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 		// Catalog the patches these textures use so we know which
 		// textures they represent.
 		patchlookup.Resize(numpatches);
-		for (uint32_t i = 0; i < numpatches; ++i)
+		for (uint32_t ii = 0; ii < numpatches; ++ii)
 		{
 			char pname[9];
 			pnames.Read(pname, 8);
 			pname[8] = '\0';
-			patchlookup[i].Name = pname;
+			patchlookup[ii].Name = pname;
 		}
 	}
 
@@ -782,12 +782,12 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 		{
 			TArray<FTextureID> list;
 			TexMan.ListTextures(buildinfo.Inits[i].TexName, list, true);
-			for (int i = list.Size() - 1; i >= 0; i--)
+			for (int ii = list.Size() - 1; ii >= 0; ii--)
 			{
-				auto gtex = TexMan.GetGameTexture(list[i]);
+				auto gtex = TexMan.GetGameTexture(list[ii]);
 				if (gtex && gtex != buildinfo.texture && gtex->GetTexture() && gtex->GetTexture()->GetImage() && !dynamic_cast<FMultiPatchTexture*>(gtex->GetTexture()->GetImage()))
 				{
-					texno = list[i];
+					texno = list[ii];
 					break;
 				}
 			}
@@ -858,7 +858,6 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 		ResolvePatches(bi);
 	}
 	// Now try to resolve the images. We only can do this at the end when all multipatch textures are set up.
-	int i = 0;
 
 	// reverse the list so that the Delete operation in the loop below deletes at the end.
 	// For normal sized lists this is of no real concern, but Total Chaos has over 250000 textures where this becomes a performance issue.

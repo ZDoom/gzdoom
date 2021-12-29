@@ -23,6 +23,8 @@
 #ifndef __GLC_DYNLIGHT_H
 #define __GLC_DYNLIGHT_H
 
+#include "tarray.h"
+
 struct FDynLightData
 {
 	TArray<float> arrays[3];

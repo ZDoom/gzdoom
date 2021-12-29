@@ -249,9 +249,6 @@ public:
 		blockNewSounds = on;
 	}
 
-	virtual int SoundSourceIndex(FSoundChan* chan) { return 0; }
-	virtual void SetSource(FSoundChan* chan, int index) {}
-
 	virtual void StopChannel(FSoundChan* chan);
 	sfxinfo_t* LoadSound(sfxinfo_t* sfx);
 	const sfxinfo_t* GetSfx(unsigned snd)
@@ -303,7 +300,7 @@ public:
 	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, int sound_id = -1);
 
 	// Stop and resume music, during game PAUSE.
-	int GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id);
+	int GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id, int chan = -1);
 	void UnloadAllSounds();
 	void Reset();
 	void MarkUsed(int num);

@@ -292,12 +292,12 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				auto position = strtoll(base.GetChars(), &endp, 16);
 				if ((*endp == 0 || (*endp == '.' && position >= '!' && position < 0xffff)))
 				{
-					auto lump = TexMan.CheckForTexture(entry.name, ETextureType::MiscPatch);
-					if (lump.isValid())
+					auto texlump = TexMan.CheckForTexture(entry.name, ETextureType::MiscPatch);
+					if (texlump.isValid())
 					{
 						if ((int)position < minchar) minchar = (int)position;
 						if ((int)position > maxchar) maxchar = (int)position;
-						auto tex = TexMan.GetGameTexture(lump);
+						auto tex = TexMan.GetGameTexture(texlump);
 						tex->SetScale((float)Scale.X, (float)Scale.Y);
 						charMap.Insert((int)position, tex);
 						Type = Folder;
@@ -313,10 +313,10 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 
 		for (i = 0; i < count; i++)
 		{
-			auto lump = charMap.CheckKey(FirstChar + i);
-			if (lump != nullptr)
+			auto charlump = charMap.CheckKey(FirstChar + i);
+			if (charlump != nullptr)
 			{
-				auto pic = *lump;
+				auto pic = *charlump;
 				if (pic != nullptr)
 				{
 					double fheight = pic->GetDisplayHeight();
@@ -399,8 +399,8 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						part[0].OriginY = -height * y;
 						part[0].TexImage = static_cast<FImageTexture*>(tex->GetTexture());
 						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
-						FImageTexture *tex = new FImageTexture(image);
-						auto gtex = MakeGameTexture(tex, nullptr, ETextureType::FontChar);
+						FImageTexture *imgtex = new FImageTexture(image);
+						auto gtex = MakeGameTexture(imgtex, nullptr, ETextureType::FontChar);
 						gtex->SetWorldPanning(true);
 						gtex->SetOffsets(0, 0, 0);
 						gtex->SetOffsets(1, 0, 0);
@@ -424,7 +424,6 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 	LastChar = maxchar;
 	auto count = maxchar - minchar + 1;
 	Chars.Resize(count);
-	int fontheight = 0;
 
 	for (int i = 0; i < count; i++)
 	{

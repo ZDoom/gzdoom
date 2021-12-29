@@ -20,3 +20,4 @@ inline ZMusicCustomReader *GetMusicReader(FileReader& fr)
 	};
 	return zcr;
 }
+

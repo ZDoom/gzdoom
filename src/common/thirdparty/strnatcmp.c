@@ -85,8 +85,6 @@ compare_right(nat_char const *a, nat_char const *b)
 	  } else if (!*a  &&  !*b)
 	       return bias;
      }
-
-     return 0;
 }
 
 
@@ -107,8 +105,6 @@ compare_left(nat_char const *a, nat_char const *b)
 	  else if (*a > *b)
 	       return +1;
      }
-	  
-     return 0;
 }
 
 

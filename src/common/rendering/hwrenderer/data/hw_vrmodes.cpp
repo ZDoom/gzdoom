@@ -154,9 +154,9 @@ VSMatrix VREyeInfo::GetProjection(float fov, float aspectRatio, float fovRatio) 
 		double bottom = -fH;
 		double top = fH;
 
-		VSMatrix result(1);
-		result.frustum((float)left, (float)right, (float)bottom, (float)top, (float)zNear, (float)zFar);
-		return result;
+		VSMatrix fmat(1);
+		fmat.frustum((float)left, (float)right, (float)bottom, (float)top, (float)zNear, (float)zFar);
+		return fmat;
 	}
 }
 

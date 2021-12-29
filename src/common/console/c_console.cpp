@@ -331,16 +331,16 @@ void C_DeinitConsole ()
 	// at runtime.)
 	for (size_t i = 0; i < countof(Commands); ++i)
 	{
-		FConsoleCommand *cmd = Commands[i];
+		FConsoleCommand *command = Commands[i];
 
-		while (cmd != NULL)
+		while (command != NULL)
 		{
-			FConsoleCommand *next = cmd->m_Next;
-			if (cmd->IsAlias())
+			FConsoleCommand *nextcmd = command->m_Next;
+			if (command->IsAlias())
 			{
-				delete cmd;
+				delete command;
 			}
-			cmd = next;
+			command = nextcmd;
 		}
 	}
 

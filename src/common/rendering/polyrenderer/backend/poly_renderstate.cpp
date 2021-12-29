@@ -287,7 +287,7 @@ void PolyRenderState::Apply()
 
 	PolyPushConstants constants;
 	constants.uFogEnabled = fogset;
-	constants.uTextureMode = GetTextureModeAndFlags(mTempTM);
+	constants.uTextureMode = (mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
 	constants.uLightDist = mLightParms[0];
 	constants.uLightFactor = mLightParms[1];
 	constants.uFogDensity = mLightParms[2];

@@ -226,7 +226,7 @@ void I_InitMusic(void)
 	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
 
 	snd_mididevice.Callback();
-	
+
 	ZMusicCallbacks callbacks{};
 
 	callbacks.MessageFunc = zmusic_printfunc;

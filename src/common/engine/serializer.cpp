@@ -623,7 +623,7 @@ void FSerializer::WriteObjects()
 void FSerializer::ReadObjects(bool hubtravel)
 {
 	bool founderrors = false;
-	
+
 	if (isReading() && BeginArray("objects"))
 	{
 		// Do not link any thinker that's being created here. This will be done by deserializing the thinker list later.

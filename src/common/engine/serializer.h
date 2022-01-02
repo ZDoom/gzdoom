@@ -111,7 +111,7 @@ public:
 	{
 		return w != nullptr;
 	}
-	
+
 	bool canSkip() const;
 
 	template<class T>

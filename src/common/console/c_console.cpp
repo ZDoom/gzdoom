@@ -1027,7 +1027,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			TabbedList = false;
 			break;
 		}
-		
+
 		case '`':
 			// Check to see if we have ` bound to the console before accepting
 			// it as a way to close the console.

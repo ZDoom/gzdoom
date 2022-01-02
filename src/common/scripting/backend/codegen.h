@@ -206,7 +206,7 @@ struct ExpVal
 		int regtype = Type->GetRegType();
 		return regtype == REGT_INT ? !!Int : regtype == REGT_FLOAT ? Float!=0. : false;
 	}
-	
+
 	FName GetName() const
 	{
 		if (Type == TypeString)
@@ -325,7 +325,7 @@ protected:
 public:	
 	virtual ~FxExpression() {}
 	virtual FxExpression *Resolve(FCompileContext &ctx);
-	
+
 	virtual bool isConstant() const;
 	virtual bool RequestAddress(FCompileContext &ctx, bool *writable);
 	virtual PPrototype *ReturnProto();
@@ -525,7 +525,7 @@ public:
 		}
 		ValueType = value.Type = type;
 	}
-	
+
 	static FxExpression *MakeConstant(PSymbol *sym, const FScriptPosition &pos);
 
 	bool isConstant() const
@@ -1864,7 +1864,7 @@ protected:
 	: FxExpression(etype, pos)
 	{
 	}
-	
+
 	void Backpatch(VMFunctionBuilder *build, size_t loopstart, size_t loopend);
 	FxExpression *Resolve(FCompileContext&) final;
 	virtual FxExpression *DoResolve(FCompileContext&) = 0;

@@ -266,7 +266,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 		// light buffers
 		uniform vec4 lights[MAXIMUM_LIGHT_VECTORS];
-		
+
 		uniform	mat4 ProjectionMatrix;
 		uniform	mat4 ViewMatrix;
 		uniform	mat4 NormalViewMatrix;
@@ -370,7 +370,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		#define glowtexture texture4
 		#endif
 	)";
-	
+
 #ifdef NPOT_EMULATION
 	i_data += "#define NPOT_EMULATION\nuniform vec2 uNpotEmulation;\n";
 #endif
@@ -392,7 +392,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 	assert(screen->mLights != NULL);
 
-	bool lightbuffertype = screen->mLights->GetBufferType();
 	unsigned int lightbuffersize = screen->mLights->GetBlockSize();
 
 	vp_comb.Format("#version 100\n#define NUM_UBO_LIGHTS %d\n#define NO_CLIPDISTANCE_SUPPORT\n", lightbuffersize);
@@ -495,7 +494,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	}
 
 	shaderData->hShader = glCreateProgram();
-	
+
 	uint32_t binaryFormat = 0;
 	TArray<uint8_t> binary;
 	if (IsShaderCacheActive())
@@ -687,7 +686,7 @@ bool FShader::Bind(ShaderFlavourData& flavour)
 		variantConfig.AppendFormat("#define MAXIMUM_LIGHT_VECTORS %d\n", gles.numlightvectors);
 		variantConfig.AppendFormat("#define DEF_TEXTURE_MODE %d\n", flavour.textureMode);
 		variantConfig.AppendFormat("#define DEF_TEXTURE_FLAGS %d\n", flavour.texFlags);
-		variantConfig.AppendFormat("#define DEF_BLEND_FLAGS %d\n", flavour.blendFlags);
+		variantConfig.AppendFormat("#define DEF_BLEND_FLAGS %d\n", flavour.blendFlags & 0x7);
 		variantConfig.AppendFormat("#define DEF_FOG_2D %d\n", flavour.twoDFog);
 		variantConfig.AppendFormat("#define DEF_FOG_ENABLED %d\n", flavour.fogEnabled);
 		variantConfig.AppendFormat("#define DEF_FOG_RADIAL %d\n", flavour.fogEquationRadial);
@@ -695,7 +694,7 @@ bool FShader::Bind(ShaderFlavourData& flavour)
 		variantConfig.AppendFormat("#define DEF_USE_U_LIGHT_LEVEL %d\n", flavour.useULightLevel);
 
 		variantConfig.AppendFormat("#define DEF_DO_DESATURATE %d\n", flavour.doDesaturate);
-		
+
 		variantConfig.AppendFormat("#define DEF_DYNAMIC_LIGHTS_MOD %d\n", flavour.dynLightsMod);
 		variantConfig.AppendFormat("#define DEF_DYNAMIC_LIGHTS_SUB %d\n", flavour.dynLightsSub);
 		variantConfig.AppendFormat("#define DEF_DYNAMIC_LIGHTS_ADD %d\n", flavour.dynLightsAdd);
@@ -703,7 +702,7 @@ bool FShader::Bind(ShaderFlavourData& flavour)
 		variantConfig.AppendFormat("#define DEF_USE_OBJECT_COLOR_2 %d\n", flavour.useObjectColor2);
 		variantConfig.AppendFormat("#define DEF_USE_GLOW_TOP_COLOR %d\n", flavour.useGlowTopColor);
 		variantConfig.AppendFormat("#define DEF_USE_GLOW_BOTTOM_COLOR %d\n", flavour.useGlowBottomColor);
-		
+
 		variantConfig.AppendFormat("#define DEF_USE_COLOR_MAP %d\n", flavour.useColorMap);
 		variantConfig.AppendFormat("#define DEF_BUILD_LIGHTING %d\n", flavour.buildLighting);
 		variantConfig.AppendFormat("#define DEF_BANDED_SW_LIGHTING %d\n", flavour.bandedSwLight);
@@ -715,6 +714,7 @@ bool FShader::Bind(ShaderFlavourData& flavour)
 #endif
 
 		variantConfig.AppendFormat("#define DEF_HAS_SPOTLIGHT %d\n", flavour.hasSpotLight);
+		variantConfig.AppendFormat("#define DEF_PALETTE_INTERPOLATE %d\n", flavour.paletteInterpolate);
 
 		//Printf("Shader: %s, %08x %s", mFragProg2.GetChars(), tag, variantConfig.GetChars());
 
@@ -851,7 +851,7 @@ void FShaderCollection::CompileShaders(EPassType passType)
 		mMaterialShaders.Push(shc);
 		if (i < SHADER_NoTexture)
 		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, passType);
+			shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, passType);
 			mMaterialShadersNAT.Push(shc);
 		}
 	}

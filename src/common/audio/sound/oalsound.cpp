@@ -1675,7 +1675,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 
 		const_cast<ReverbContainer*>(env)->Modified = false;
 	}
-	
+
 	// NOTE: Moving into and out of water will undo pitch variations on sounds.
 	if(listener->underwater || env->SoftwareWater)
 	{
@@ -1721,7 +1721,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 	}
 	else if(WasInWater)
 	{
-		
+
 		WasInWater = false;
 
 		if(EnvSlot != 0)

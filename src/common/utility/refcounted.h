@@ -26,7 +26,7 @@ public:
 
     RefCountedPtr() : ptr(nullptr) 
 	{}
- 
+
     explicit RefCountedPtr(T* p) : ptr(p)
     {
         if (ptr) ptr->IncRef();
@@ -52,7 +52,7 @@ public:
 		}
         return *this;
     }
- 
+
     RefCountedPtr& operator=(T* r)
     {
         if (ptr != r)
@@ -99,18 +99,18 @@ public:
 	{
         return *ptr;
     }
- 
+
     T* operator-> () const 
 	{
         return ptr;
     }
- 
+
     T* get() const 
 	{
         return ptr;
     }
- 
+
 private:
- 
+
     T * ptr;
 };

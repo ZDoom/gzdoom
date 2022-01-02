@@ -133,7 +133,7 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 
 	auto numFrames = LittleLong(hdr->Num_Frames);
 	auto numSurfaces = LittleLong(hdr->Num_Surfaces);
-	
+
 	numTags = LittleLong(hdr->Num_Tags);
 
 	md3_frame_t * frm = (md3_frame_t*)(buffer + LittleLong(hdr->Ofs_Frames));

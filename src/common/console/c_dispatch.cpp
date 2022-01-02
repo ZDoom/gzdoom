@@ -253,7 +253,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			return;
 		}
 	}
-	
+
 	// Parse it as a normal command
 	// Checking for matching commands follows this search order:
 	//	1. Check the Commands[] hash table

@@ -857,7 +857,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			parms->cleanmode = DTA_Base;
 			parms->virtHeight = ListGetDouble(tags);
 			break;
-			
+
 		case DTA_FullscreenScale:
 			intval = ListGetInt(tags);
 			if (intval >= FSMode_None && intval < FSMode_Max)

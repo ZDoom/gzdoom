@@ -639,7 +639,7 @@ bool FStringTable::MatchDefaultString(const char *name, const char *content) con
 	// This only compares the first line to avoid problems with bad linefeeds. For the few cases where this feature is needed it is sufficient.
 	auto c = GetLanguageString(name, FStringTable::default_table);
 	if (!c) return false;
-	
+
 	// Check a secondary key, in case the text comparison cannot be done due to needed orthographic fixes (see Harmony's exit text)
 	FStringf checkkey("%s_CHECK", name);
 	auto cc = GetLanguageString(checkkey, FStringTable::default_table);

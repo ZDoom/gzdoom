@@ -23,7 +23,7 @@ class FLightBuffer
 	unsigned int mBufferSize;
 	unsigned int mByteSize;
     unsigned int mMaxUploadSize;
-    
+
 	void CheckSize();
 
 public:

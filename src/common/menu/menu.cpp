@@ -271,7 +271,7 @@ DMenu::DMenu(DMenu *parent)
 	DontDim = false;
 	GC::WriteBarrier(this, parent);
 }
-	
+
 //=============================================================================
 //
 //

@@ -410,7 +410,7 @@ bool PContainerType::IsMatch(intptr_t id1, intptr_t id2) const
 {
 	const PTypeBase *outer = (const PTypeBase *)id1;
 	FName name = (ENamedName)(intptr_t)id2;
-	
+
 	return Outer == outer && TypeName == name;
 }
 

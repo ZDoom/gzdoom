@@ -96,7 +96,7 @@ protected:
 	void LoadFON1 (int lump, const uint8_t *data);
 	void LoadFON2 (int lump, const uint8_t *data);
 	void LoadBMF (int lump, const uint8_t *data);
-	
+
 	enum
 	{
 		FONT1,
@@ -259,7 +259,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 	LastChar = data[7];
 	ActiveColors = data[10]+1;
 	RescalePalette = data[9] == 0;
-	
+
 	count = LastChar - FirstChar + 1;
 	Chars.Resize(count);
 	TArray<int> widths2(count, true);

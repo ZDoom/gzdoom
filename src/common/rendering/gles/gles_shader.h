@@ -277,13 +277,14 @@ public:
 #endif
 
 	bool hasSpotLight;
+	bool paletteInterpolate;
 };
 
 class FShader
 {
 	friend class FShaderCollection;
 	friend class FGLRenderState;
-	
+
 	FName mName;
 
 	FString mVertProg;
@@ -378,7 +379,7 @@ public:
 	FShader(const char *name)
 		: mName(name)
 	{
-		
+
 	}
 
 	~FShader();
@@ -393,9 +394,9 @@ public:
 	{
 		uint32_t tag = 0;
 		tag |= (flavour.textureMode & 0x7);
-		
+
 		tag |= (flavour.texFlags & 7) << 3;
-		
+
 		tag |= (flavour.blendFlags & 7) << 6;
 
 		tag |= (flavour.twoDFog & 1) << 7;
@@ -419,15 +420,15 @@ public:
 #ifdef NPOT_EMULATION
 		tag |= (flavour.npotEmulation & 1) << 22;
 #endif
-		
 		tag |= (flavour.hasSpotLight & 1) << 23;
+		tag |= (flavour.paletteInterpolate & 1) << 24;
 
 		return tag;
 	}
 
 	bool Bind(ShaderFlavourData& flavour);
 
-	
+
 };
 
 //==========================================================================
@@ -461,7 +462,7 @@ class FShaderCollection
 
 	void Clean();
 	void CompileShaders(EPassType passType);
-	
+
 public:
 	FShaderCollection(EPassType passType);
 	~FShaderCollection();

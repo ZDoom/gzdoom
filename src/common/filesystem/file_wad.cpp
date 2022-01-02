@@ -206,7 +206,7 @@ bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 		Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
 		Lumps[i].Namespace = ns_global;
 		Lumps[i].Flags = Lumps[i].Compressed ? LUMPF_COMPRESSED | LUMPF_SHORTNAME : LUMPF_SHORTNAME;
-		
+
 		// Check if the lump is within the WAD file and print a warning if not.
 		if (Lumps[i].Position + Lumps[i].LumpSize > wadSize || Lumps[i].Position < 0 || Lumps[i].LumpSize < 0)
 		{
@@ -279,7 +279,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 	int numstartmarkers = 0, numendmarkers = 0;
 	unsigned int i;
 	TArray<Marker> markers;
-	
+
 	for(i = 0; i < NumLumps; i++)
 	{
 		if (IsMarker(i, startmarker))
@@ -302,7 +302,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 
 		Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", endmarker, startmarker);
 
-		
+
 		if (flathack)
 		{
 			// We have found no F_START but one or more F_END markers.

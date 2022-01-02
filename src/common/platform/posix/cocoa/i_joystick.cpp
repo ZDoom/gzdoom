@@ -1127,7 +1127,7 @@ void IOKitJoystickManager::AddDevices(const IONotificationPortRef notificationPo
 		}
 
 		IOObjectRelease(device);
-		
+
 		PostDeviceChangeEvent();
 	}
 }

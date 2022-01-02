@@ -97,20 +97,20 @@ void FCycler::Update(double diff)
 {
 	double mult, angle;
 	double step = m_end - m_start;
-	
+
 	if (!m_shouldCycle)
 	{
 		return;
 	}
-	
+
 	m_time += diff;
 	if (m_time >= m_cycle)
 	{
 		m_time = m_cycle;
 	}
-	
+
 	mult = m_time / m_cycle;
-	
+
 	switch (m_cycleType)
 	{
 	case CYCLE_Linear:
@@ -149,7 +149,7 @@ void FCycler::Update(double diff)
 		}
 		break;
 	}
-	
+
 	if (m_time == m_cycle)
 	{
 		m_time = 0.;

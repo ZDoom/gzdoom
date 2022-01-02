@@ -23,7 +23,7 @@ public:
 	FCycler() = default;
 	FCycler(const FCycler &other) = default;
 	FCycler &operator=(const FCycler &other) = default;
-	
+
    void Update(double diff);
    void SetParams(double start, double end, double cycle, bool update = false);
    void ShouldCycle(bool sc) { m_shouldCycle = sc; }

@@ -1069,7 +1069,7 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 	auto def = constant.node;
 	auto val = def->Value;
 	ExpVal &c = constant.constval;
-	
+
 	// This is for literal constants.
 	if (val->NodeType == AST_ExprConstant)
 	{
@@ -1364,7 +1364,7 @@ void ZCCCompiler::CompileAllFields()
 		for (unsigned i = 0; i < Classes.Size(); i++)
 		{
 			auto type = Classes[i]->ClassType();
-				
+
 			if (type->Size == TentativeClass)
 			{
 				if (type->ParentClass->Size == TentativeClass)
@@ -1528,7 +1528,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 						Error(field, "Must specify array size");
 					}
 				}
-				
+
 				PField *f = nullptr;
 
 				if (varflags & VARF_Native)
@@ -1867,7 +1867,7 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 {
 	// Check the symbol table for the identifier.
 	PSymbol *sym = nullptr;
-	
+
 	// We first look in the current class and its parents, and then in the current namespace and its parents.
 	if (symt != nullptr) sym = symt->FindSymbol(type->UserType->Id, true);
 	if (sym == nullptr) sym = OutNamespace->Symbols.FindSymbol(type->UserType->Id, true);
@@ -2244,7 +2244,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 
 						flags |= VARF_Optional;
 						hasoptionals = true;
-						
+
 						if ((varflags & VARF_Override) && !overridemsg)
 						{
 							// This is illegal, but in older compilers wasn't checked, so there it has to be demoted to a warning.
@@ -2465,11 +2465,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							sym->Variants[0].Flags |= VARF_ReadOnly;
 						if (oldfunc->VarFlags & VARF_Protected)
 							sym->Variants[0].Flags |= VARF_Protected;
-													
+
 						clstype->Virtuals[virtindex] = sym->Variants[0].Implementation;
 						sym->Variants[0].Implementation->VirtualIndex = virtindex;
 						sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
-						
+
 						// Defaults must be identical to parent class
 						if (parentfunc->Variants[0].Implementation->DefaultArgs.Size() > 0)
 						{
@@ -3112,7 +3112,7 @@ FxExpression *ZCCCompiler::ConvertImplicitScopeNode(ZCC_TreeNode *node, ZCC_Stat
 	{
 		return nullptr;
 	}
-	
+
 	FxExpression *nestedExpr = ConvertNode(nested);
 	assert(nullptr != nestedExpr);
 

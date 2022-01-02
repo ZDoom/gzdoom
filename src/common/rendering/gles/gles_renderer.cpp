@@ -83,7 +83,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mScreenBuffers = new FGLRenderBuffers();
 	mBuffers = mScreenBuffers;
 	mPresentShader = new FPresentShader();
-	
+
 	mFBID = 0;
 	mOldFBID = 0;
 
@@ -97,7 +97,7 @@ FGLRenderer::~FGLRenderer()
 	TexMan.FlushAll();
 	if (mShaderManager != nullptr) delete mShaderManager;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
-	
+
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
 }

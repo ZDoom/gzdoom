@@ -51,7 +51,7 @@ struct FDynLightData
 		if (siz[1] > max) siz[1] = max;
 		if (siz[2] > max) siz[2] = max;
 	}
-    
+
 
 };
 

@@ -150,7 +150,7 @@ static const char *shaderBindings = R"(
 		int useVertexData;
 		vec4 uVertexColor;
 		vec4 uVertexNormal;
-		
+
 		vec4 uGlowTopPlane;
 		vec4 uGlowTopColor;
 		vec4 uGlowBottomPlane;

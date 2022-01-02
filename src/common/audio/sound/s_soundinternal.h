@@ -73,7 +73,7 @@ class FSoundID
 {
 public:
 	FSoundID() = default;
-	
+
 	static FSoundID byResId(int ndx)
 	{
 		return FSoundID(S_FindSoundByResID(ndx)); 
@@ -120,7 +120,7 @@ protected:
 	enum EDummy { NoInit };
 	FSoundID(EDummy) {}
 };
- 
+
  class FSoundIDNoInit : public FSoundID
 {
 public:
@@ -196,7 +196,7 @@ void S_SetEnvironment (const ReverbContainer *settings);
 ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);
 void S_AddEnvironment (ReverbContainer *settings);
-	
+
 class SoundEngine
 {
 protected:

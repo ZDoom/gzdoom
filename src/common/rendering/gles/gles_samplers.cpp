@@ -60,9 +60,9 @@ FSamplerManager::~FSamplerManager()
 
 void FSamplerManager::UnbindAll()
 {
-	
+
 }
-	
+
 uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 {
 
@@ -157,14 +157,14 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 	return 255;
 }
 
-	
+
 void FSamplerManager::SetTextureFilterMode()
 {
 	/*
 	GLRenderer->FlushTextures();
 
 	GLint bounds[IHardwareTexture::MAX_TEXTURES];
-	
+
 	// Unbind all
 	for(int i = IHardwareTexture::MAX_TEXTURES-1; i >= 0; i--)
 	{

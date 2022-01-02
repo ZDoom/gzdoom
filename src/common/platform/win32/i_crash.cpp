@@ -1581,7 +1581,7 @@ static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, sho
 	local.ModDate = dosdate;
 	local.UncompressedSize = LittleLong(whichfile->UncompressedSize);
 	local.NameLength = LittleShort((uint16_t)strlen(whichfile->Filename));
-	
+
 	whichfile->ZipOffset = SetFilePointer (ziphandle, 0, NULL, FILE_CURRENT);
 	WriteFile (ziphandle, &local, sizeof(local), &wrote, NULL);
 	WriteFile (ziphandle, whichfile->Filename, (DWORD)strlen(whichfile->Filename), &wrote, NULL);

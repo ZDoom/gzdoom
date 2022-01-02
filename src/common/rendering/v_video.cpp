@@ -219,13 +219,13 @@ void DCanvas::Resize(int width, int height, bool optimizepitch)
 {
 	Width = width;
 	Height = height;
-	
+
 	// Making the pitch a power of 2 is very bad for performance
 	// Try to maximize the number of cache lines that can be filled
 	// for each column drawing operation by making the pitch slightly
 	// longer than the width. The values used here are all based on
 	// empirical evidence.
-	
+
 	if (width <= 640 || !optimizepitch)
 	{
 		// For low resolutions, just keep the pitch the same as the width.
@@ -337,15 +337,15 @@ void V_InitScreenSize ()
 { 
 	const char *i;
 	int width, height, bits;
-	
+
 	width = height = bits = 0;
-	
+
 	if ( (i = Args->CheckValue ("-width")) )
 		width = atoi (i);
-	
+
 	if ( (i = Args->CheckValue ("-height")) )
 		height = atoi (i);
-	
+
 	if (width == 0)
 	{
 		if (height == 0)

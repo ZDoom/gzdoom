@@ -336,7 +336,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		#endif
 
 	)";
-	
+
 
 #ifdef __APPLE__
 	// The noise functions are completely broken in macOS OpenGL drivers

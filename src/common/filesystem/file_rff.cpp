@@ -221,7 +221,7 @@ int FRFFLump::FillCache()
 	{
 		int cryptlen = min<int> (LumpSize, 256);
 		uint8_t *data = (uint8_t *)Cache;
-		
+
 		for (int i = 0; i < cryptlen; ++i)
 		{
 			data[i] ^= i >> 1;

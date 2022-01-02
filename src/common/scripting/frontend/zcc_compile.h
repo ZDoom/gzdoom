@@ -140,7 +140,7 @@ protected:
 
 	void InitFunctions();
 	virtual void InitDefaults();
-	
+
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;
 	TArray<ZCC_ClassWork *> Classes;

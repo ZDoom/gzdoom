@@ -192,12 +192,12 @@ void GLBuffer::GPUDropSync()
 void GLBuffer::GPUWaitSync()
 {
 	GLenum status = glClientWaitSync(mGLSync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000 * 1000 * 50); // Wait for a max of 50ms...
-	
+
 	if (status != GL_ALREADY_SIGNALED && status != GL_CONDITION_SATISFIED)
 	{
 		//Printf("Error on glClientWaitSync: %d\n", status);
 	}
-	
+
 	glDeleteSync(mGLSync);
 
 	mGLSync = NULL;
@@ -213,10 +213,10 @@ void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 {
 	static int VFmtToGLFmt[] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT_2_10_10_10_REV };
 	static uint8_t VFmtToSize[] = {4, 3, 2, 1, 4, 4};
-	
+
 	mStride = stride;
 	mNumBindingPoints = numBindingPoints;
-	
+
 	for(int i = 0; i < numAttributes; i++)
 	{
 		if (attrs[i].location >= 0 && attrs[i].location < VATTR_MAX)

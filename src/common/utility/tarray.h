@@ -165,7 +165,7 @@ public:
 	{
 		return &Array[Count];
 	}
-	
+
 	reverse_iterator rbegin()
 	{
 		return reverse_iterator(end());
@@ -919,7 +919,7 @@ public:
 		LastFree = o.LastFree;		/* any free position is before this position */
 		Size = o.Size;		/* must be a power of 2 */
 		NumUsed = o.NumUsed;
-		
+
 		o.Size = 0;
 		o.NumUsed = 0;
 		o.SetNodeVector(1);

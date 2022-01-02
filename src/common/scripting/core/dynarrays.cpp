@@ -130,7 +130,7 @@ template<> unsigned int ArrayReserve(TArray<DObject*> *self, int amount)
 
 	if (fillCount > 0)
 		memset(&(*self)[oldSize], 0, sizeof(DObject*) * fillCount);
-	
+
 	return oldSize;
 }
 

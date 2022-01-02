@@ -50,3 +50,8 @@ inline uint32_t CRC1 (uint32_t crc, const uint8_t c, const uint32_t *crcTable)
 {
 	return crcTable[(crc & 0xff) ^ c] ^ (crc >> 8);
 }
+
+inline uint32_t Bcrc32(const void* data, int length, uint32_t crc)
+{
+	return crc32(crc, (const Bytef*)data, length);
+}

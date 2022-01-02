@@ -515,7 +515,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			DoCast(reg, f, a, B, C);
 		}
 		NEXTOP;
-	
+
 	OP(CASTB):
 		if (C == CASTB_I)
 		{
@@ -538,7 +538,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			reg.d[a] = reg.s[B].Len() > 0;
 		}
 		NEXTOP;
-	
+
 	OP(TEST):
 		ASSERTD(a);
 		if (reg.d[a] != BC)
@@ -852,7 +852,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		ASSERTD(a); ASSERTS(B);
 		reg.d[a] = (int)reg.s[B].Len();
 		NEXTOP;
-	
+
 	OP(CMPS):
 		// String comparison is a fairly expensive operation, so I've
 		// chosen to conserve a few opcodes by condensing all the
@@ -1347,7 +1347,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		fb = reg.f[B];
 		reg.f[a] = (C == FLOP_ABS) ? fabs(fb) : (C == FLOP_NEG) ? -fb : DoFLOP(C, fb);
 		NEXTOP;
-	
+
 	OP(EQF_R):
 		ASSERTF(B); ASSERTF(C);
 		if (a & CMP_APPROX)

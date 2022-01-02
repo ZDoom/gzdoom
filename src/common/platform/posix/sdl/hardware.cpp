@@ -79,7 +79,7 @@ void I_InitGraphics ()
 
 	extern IVideo *gl_CreateVideo();
 	Video = gl_CreateVideo();
-	
+
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
 }

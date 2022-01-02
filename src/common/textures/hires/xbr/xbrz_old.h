@@ -47,7 +47,7 @@ http://board.byuu.org/viewtopic.php?f=10&t=2248
 THREAD-SAFETY: - parts of the same image may be scaled by multiple threads as long as the [yFirst, yLast) ranges do not overlap!
                - there is a minor inefficiency for the first row of a slice, so avoid processing single rows only
 
-			   
+
 */
 void scale(size_t factor, //valid range: 2 - 5
            const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight,

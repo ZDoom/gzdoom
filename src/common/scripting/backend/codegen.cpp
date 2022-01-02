@@ -1964,7 +1964,7 @@ ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
 	from.Free(build);
 	ExpEmit to(build, REGT_INT);
 	assert(!from.Konst);
-	
+
 	build->Emit(OP_NOT, to.RegNum, from.RegNum, 0);
 	return to;
 }
@@ -2746,7 +2746,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		delete this;
 		return nullptr;
 	}
-	
+
 	if (compileEnvironment.CheckForCustomAddition)
 	{
 		auto result = compileEnvironment.CheckForCustomAddition(this, ctx);
@@ -2756,7 +2756,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 			goto goon;
 		}
 	}
-	
+
 	if (left->ValueType == TypeTextureID && right->IsInteger())
 	{
 		ValueType = TypeTextureID;
@@ -5125,10 +5125,10 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	// Call DecoRandom to generate a random number.
 	VMFunction *callfunc;
 	auto sym = FindBuiltinFunction(compileEnvironment.CustomBuiltinNew != NAME_None? compileEnvironment.CustomBuiltinNew : NAME_BuiltinNew);
-	
+
 	assert(sym);
 	callfunc = sym->Variants[0].Implementation;
-	
+
 	FunctionCallEmitter emitters(callfunc);
 
 	int outerside = -1;
@@ -5886,7 +5886,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 {
 	PSymbol * sym;
 	FxExpression *newex = nullptr;
-	
+
 	CHECKRESOLVED();
 
 	// Local variables have highest priority.
@@ -6038,7 +6038,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 						deprecationMessage.IsEmpty() ? "" : ", ", deprecationMessage.GetChars());
 				}
 			}
-			
+
 
 			newex = new FxGlobalVariable(static_cast<PField *>(sym), ScriptPosition);
 			goto foundit;
@@ -6068,7 +6068,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		newex = new FxCVar(cvar, ScriptPosition);
 		goto foundit;
 	}
-	
+
 	ScriptPosition.Message(MSG_ERROR, "Unknown identifier '%s'", Identifier.GetChars());
 	delete this;
 	return nullptr;
@@ -6406,7 +6406,7 @@ bool FxLocalVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 	if (writable != nullptr) *writable = !ctx.CheckWritable(Variable->VarFlags);
 	return true;
 }
-	
+
 ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 {
 	// 'Out' variables are actually pointers but this fact must be hidden to the script.
@@ -6771,7 +6771,7 @@ FxExpression *FxStackVariable::Resolve(FCompileContext &ctx)
 ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 {
 	int offsetreg = -1;
-	
+
 	if (membervar->Offset != 0) offsetreg = build->GetConstantInt((int)membervar->Offset);
 
 	if (AddressRequested)
@@ -6963,7 +6963,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 			{
 				locvar->RegOffset = int(membervar->Offset);
 			}
-			
+
 			locvar->ValueType = membervar->Type;
 			classx = nullptr;
 			delete this;
@@ -7245,7 +7245,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 {
 	PArray *arraytype;
-	
+
 	if (arrayispointer)
 	{
 		auto ptr = Array->ValueType->toPointer();
@@ -7267,7 +7267,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	ExpEmit start;
 	ExpEmit bound;
 	bool nestedarray = false;
-	
+
 	if (SizeAddr != ~0u)
 	{
 		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
@@ -7669,7 +7669,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			return x->Resolve(ctx);
 		}
 	}
-	
+
 	if (compileEnvironment.CheckCustomGlobalFunctions)
 	{
 		auto result = compileEnvironment.CheckCustomGlobalFunctions(this, ctx);
@@ -8508,7 +8508,7 @@ VMFunction *FxVMFunctionCall::GetDirectFunction(PFunction *callingfunc, const Ve
 		if (Function->Variants[0].ArgFlags.Size() > imp && !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
 		return Function->Variants[0].Implementation;
 	}
-	
+
 	return nullptr;
 }
 
@@ -8567,7 +8567,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			delete this;
 			return nullptr;
 		}
-		
+
 		bool foundvarargs = false;
 		PType * type = nullptr;
 		int flag = 0;
@@ -10509,7 +10509,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
-	
+
 	if (basex->ValueType != TypeName && basex->ValueType != TypeString)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Cannot convert %s to class type", basex->ValueType->DescriptiveName());
@@ -10526,7 +10526,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 		{
 			if (Explicit) cls = FindClassType(clsname, ctx);
 			else cls = PClass::FindClass(clsname);
-			
+
 			if (cls == nullptr || cls->VMType == nullptr)
 			{
 				/* lax */
@@ -10761,7 +10761,7 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 	{
 		auto sfunc = static_cast<VMScriptFunction *>(ctx.Function->Variants[0].Implementation);
 		StackOffset = sfunc->AllocExtraStack(ValueType);
-		
+
 		if (Init != nullptr)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Cannot initialize non-scalar variable %s here", Name.GetChars());
@@ -11203,7 +11203,7 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 				break;
 			}
 			build->Registers[regtype].Return(regNum, 1);
-			
+
 			emitval.Free(build);
 		}
 		else

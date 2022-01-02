@@ -612,7 +612,7 @@ void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType,
 	BuildInfo &buildinfo = BuiltTextures[BuiltTextures.Reserve(1)];
 
 	bool bSilent = false;
-	
+
 	buildinfo.textual = true;
 	sc.SetCMode(true);
 	sc.MustGetString();

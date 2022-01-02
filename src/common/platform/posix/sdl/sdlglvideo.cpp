@@ -53,7 +53,7 @@
 #ifdef HAVE_GLES2
 #include "gles_framebuffer.h"
 #endif
- 
+
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
 #endif
@@ -517,7 +517,7 @@ int SystemBaseFrameBuffer::GetClientWidth()
 		return width;
 	}
 #endif
-	
+
 #ifdef HAVE_VULKAN
 	assert(Priv::vulkanEnabled);
 	SDL_Vulkan_GetDrawableSize(Priv::window, &width, nullptr);

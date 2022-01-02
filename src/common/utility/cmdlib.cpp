@@ -557,7 +557,7 @@ void CreatePath(const char *fn)
 void CreatePath(const char *fn)
 {
 	char *copy, *p;
- 
+
 	if (fn[0] == '/' && fn[1] == '\0')
 	{
 		return;

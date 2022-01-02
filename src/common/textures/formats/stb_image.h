@@ -1198,7 +1198,7 @@ static FILE *stbi__fopen(char const *filename, char const *mode)
    wchar_t wFilename[1024];
 	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, filename, -1, wFilename, sizeof(wFilename)))
       return 0;
-	
+
 	if (0 == MultiByteToWideChar(65001 /* UTF8 */, 0, mode, -1, wMode, sizeof(wMode)))
       return 0;
 
@@ -1302,7 +1302,7 @@ STBIDEF stbi_uc *stbi_load_gif_from_memory(stbi_uc const *buffer, int len, int *
    unsigned char *result;
    stbi__context s; 
    stbi__start_mem(&s,buffer,len); 
-   
+
    result = (unsigned char*) stbi__load_gif_main(&s, delays, x, y, z, comp, req_comp);
    if (stbi__vertically_flip_on_load) {
       stbi__vertical_flip_slices( result, *x, *y, *z, *comp ); 
@@ -6522,7 +6522,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
                g->color_table = (stbi_uc *) g->pal;
             } else
                return stbi__errpuc("missing color table", "Corrupt GIF");            
-            
+
             o = stbi__process_gif_raster(s, g);
             if (!o) return NULL;
 
@@ -6608,7 +6608,7 @@ static void *stbi__load_gif_main(stbi__context *s, int **delays, int *x, int *y,
             *y = g.h;
             ++layers; 
             stride = g.w * g.h * 4; 
-         
+
             if (out) {
                out = (stbi_uc*) STBI_REALLOC( out, layers * stride ); 
                if (delays) {

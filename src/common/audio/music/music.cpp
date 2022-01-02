@@ -180,7 +180,7 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 			fbuf[i] = convert[i] * mus_playing.replayGainFactor * (1.f/32768.f);
 		}
 	}
-	
+
 	if (!written)
 	{
 		memset((char*)buff, 0, len);
@@ -298,7 +298,7 @@ void S_UpdateMusic ()
 	if (mus_playing.handle != nullptr)
 	{
 		ZMusic_Update(mus_playing.handle);
-		
+
 		// [RH] Update music and/or playlist. IsPlaying() must be called
 		// to attempt to reconnect to broken net streams and to advance the
 		// playlist when the current song finishes.

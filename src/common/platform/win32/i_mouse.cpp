@@ -86,7 +86,7 @@ class FDInputMouse : public FMouse
 public:
 	FDInputMouse();
 	~FDInputMouse();
-	
+
 	bool GetDevice();
 	void ProcessInput();
 	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
@@ -103,7 +103,7 @@ class FWin32Mouse : public FMouse
 public:
 	FWin32Mouse();
 	~FWin32Mouse();
-	
+
 	bool GetDevice();
 	void ProcessInput();
 	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
@@ -697,7 +697,7 @@ bool FDInputMouse::GetDevice()
 	{
 		return false;
 	}
-	
+
 	// How many buttons does this mouse have?
 	DIDEVCAPS_DX3 caps = { sizeof(caps) };
 	hr = Device->GetCapabilities((DIDEVCAPS *)&caps);

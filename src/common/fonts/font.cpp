@@ -86,10 +86,10 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;
 	int maxchar = INT_MIN;
-	
+
 	// Read the font's configuration.
 	// This will not be done for the default fonts, because they are not atomic and the default content does not need it.
-	
+
 	TArray<FolderEntry> folderdata;
 	if (filetemplate != nullptr)
 	{
@@ -97,16 +97,16 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		// If a name template is given, collect data from all resource files.
 		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
 		fileSystem.GetFilesInFolder(path, folderdata, nametemplate == nullptr);
-		
+
 		//if (nametemplate == nullptr)
 		{
 			FStringf infpath("fonts/%s/font.inf", filetemplate);
-			
+
 			unsigned index = folderdata.FindEx([=](const FolderEntry &entry)
 			{
 				return infpath.CompareNoCase(entry.name) == 0;
 			});
-			
+
 			if (index < folderdata.Size())
 			{
 				FScanner sc;
@@ -182,7 +182,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			}
 		}
 	}
-	
+
 	if (FixedWidth > 0)
 	{
 		ReadSheetFont(folderdata, FixedWidth, FontHeight, Scale);
@@ -559,10 +559,10 @@ FFont *FFont::FindFont (FName name)
 void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors)
 {
 	int x;
-	
+
 	auto pixels = pic->GetPalettedPixels(false);
 	auto size = pic->GetWidth() * pic->GetHeight();
-	
+
 	for(x = 0;x < size; x++)
 	{
 		usedcolors[pixels[x]]++;
@@ -727,7 +727,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	{
 		return code;
 	}
-	
+
 	// Use different substitution logic based on the fonts content:
 	// In a font which has both upper and lower case, prefer unaccented small characters over capital ones.
 	// In a pure upper-case font, do not check for lower case replacements.
@@ -805,7 +805,7 @@ FGameTexture *FFont::GetChar (int code, int translation, int *const width) const
 		code -= FirstChar;
 		xmove = Chars[code].XMove;
 	}
-	
+
 	if (width != nullptr)
 	{
 		*width = xmove;

@@ -1267,7 +1267,7 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 
 		break;
 	}
-		
+
 	case AST_ClassCast:
 	{
 		TreeNodeDeepCopy_Start(ClassCast);

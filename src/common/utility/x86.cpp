@@ -164,7 +164,7 @@ void CheckCPUID(CPUInfo *cpu)
 FString DumpCPUInfo(const CPUInfo *cpu)
 {
 	char cpustring[4*4*3+1];
-	
+
 	// Why does Intel right-justify this string (on P4s)
 	// or add extra spaces (on Cores)?
 	const char *f = cpu->CPUString;

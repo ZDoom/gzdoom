@@ -97,7 +97,7 @@ void iCopyColors(uint8_t *pout, const uint8_t *pin, int count, int step, FCopyIn
 			if (TBlend::ProcessAlpha0() || a)
 			{
 				int gray = TSrc::Gray(pin)>>4;
-	
+
 				TBlend::OpC(pout[TDest::RED],   IcePalette[gray][0], a, inf);
 				TBlend::OpC(pout[TDest::GREEN], IcePalette[gray][1], a, inf);
 				TBlend::OpC(pout[TDest::BLUE],  IcePalette[gray][2], a, inf);
@@ -331,7 +331,7 @@ bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
 		srcwidth = cr->x + cr->width - originx;
 		if (srcwidth<=0) return false;
 	}
-		
+
 	if (originy < cr->y)
 	{
 		int skip = cr->y - originy;

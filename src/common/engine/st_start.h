@@ -47,7 +47,7 @@ public:
 		CurPos = 0;
 		NotchPos = 0;
 	}
-	
+
 	virtual ~FStartupScreen() = default;
 
 	virtual void Progress() {}
@@ -98,7 +98,7 @@ public:
 	void AppendStatusLine(const char *status);
 protected:
 	void SetWindowSize();
-	
+
 	int ThermX, ThermY, ThermWidth, ThermHeight;
 	int HMsgY, SMsgX;
 };

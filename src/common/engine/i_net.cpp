@@ -172,7 +172,7 @@ FString GetPlayerName(int num)
 SOCKET UDPsocket (void)
 {
 	SOCKET s;
-		
+
 	// allocate a socket
 	s = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (s == INVALID_SOCKET)
@@ -193,7 +193,7 @@ void BindToLocalPort (SOCKET s, u_short port)
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
-						
+
 	v = bind (s, (sockaddr *)&address, sizeof(address));
 	if (v == SOCKET_ERROR)
 		I_FatalError ("BindToPort: %s", neterror ());
@@ -459,7 +459,7 @@ void StartNetwork (bool autoPort)
 
 	netgame = true;
 	multiplayer = true;
-	
+
 	// create communication socket
 	mysocket = UDPsocket ();
 	BindToLocalPort (mysocket, autoPort ? 0 : DOOMPORT);
@@ -892,7 +892,7 @@ bool JoinGame (int i)
 		SendAbort();
 		return false;
 	}
-	
+
 	StartScreen->NetMessage ("Total players: %d", doomcom.numnodes);
 
 	doomcom.id = DOOMCOM_ID;

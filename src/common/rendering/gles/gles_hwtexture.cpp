@@ -176,7 +176,7 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 		glGenerateMipmap(GL_TEXTURE_2D);
 		mipmapped = true;
 	}
-	
+
 	if (texunit > 0) glActiveTexture(GL_TEXTURE0);
 	else if (texunit == -1) glBindTexture(GL_TEXTURE_2D, textureBinding);
 	return glTexID;
@@ -317,7 +317,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		int w = 0, h = 0;
 
 		// Create this texture
-		
+
 		FTextureBuffer texbuffer;
 
 		if (!tex->isHardwareCanvas())

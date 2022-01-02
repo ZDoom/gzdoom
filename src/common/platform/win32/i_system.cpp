@@ -868,7 +868,7 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 	// Delete the bitmaps.
 	DeleteObject(and_mask);
 	DeleteObject(color_mask);
-	
+
 	return cursor;
 }
 

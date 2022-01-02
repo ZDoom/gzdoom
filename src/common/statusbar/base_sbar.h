@@ -131,7 +131,7 @@ class DStatusBarCore : public DObject
 	DECLARE_CLASS(DStatusBarCore, DObject)
 
 protected:
-	
+
 
 
 public:

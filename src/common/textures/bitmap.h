@@ -156,7 +156,7 @@ public:
 		}
 	}
 
-	
+
 	~FBitmap()
 	{
 		Destroy();

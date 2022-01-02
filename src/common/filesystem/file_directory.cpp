@@ -118,7 +118,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 	FString dirmatch = dirpath;
 	findstate_t find;
 	dirmatch += '*';
-	
+
 	handle = I_FindFirst(dirmatch.GetChars(), &find);
 	if (handle == ((void *)(-1)))
 	{

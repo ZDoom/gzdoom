@@ -21,7 +21,7 @@ class FTextureManager
 public:
 	FTextureManager ();
 	~FTextureManager ();
-	
+
 private:
 	int ResolveLocalizedTexture(int texnum);
 
@@ -57,7 +57,7 @@ public:
 	{
 		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
-	
+
 	FGameTexture* GetPalettedTexture(FTextureID texnum, bool animate = false, bool allowsubstitute = true)
 	{
 		auto texid = ResolveTextureIndex(texnum.GetIndex(), animate, true);
@@ -171,7 +171,7 @@ public:
 private:
 
 	void InitPalettedVersions();
-	
+
 	// Switches
 
 	struct TextureHash

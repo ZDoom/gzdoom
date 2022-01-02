@@ -536,7 +536,7 @@ void FMD2Model::LoadGeometry()
 	}
 
 	lods[0].triangles = new FTriangle[lodInfo[0].numTriangles];
-		
+
 	int cnt = lodInfo[0].numTriangles;
 	memcpy(lods[0].triangles, buffer + lodInfo[0].offsetTriangles, sizeof(FTriangle) * cnt);
 	for (int j = 0; j < cnt; j++)

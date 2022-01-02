@@ -266,7 +266,7 @@ int FHexFontChar2::CopyPixels(FBitmap* bmp, int conversion)
 
 class FHexFont : public FFont
 {
-	
+
 public:
 	//==========================================================================
 	//
@@ -283,14 +283,14 @@ public:
 		assert(lump >= 0);
 
 		FontName = fontname;
-		
+
 		FirstChar = hexdata.FirstChar;
 		LastChar = hexdata.LastChar;
 
 		FontHeight = 16;
 		SpaceWidth = 9;
 		GlobalKerning = 0;
-		
+
 		Chars.Resize(LastChar - FirstChar + 1);
 		for (int i = FirstChar; i <= LastChar; i++)
 		{
@@ -325,7 +325,7 @@ public:
 			else Translations[i] = LuminosityTranslation(i * 2 + 1, minlum, maxlum);
 		}
 	}
-	
+
 };
 
 

@@ -402,7 +402,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	{
 		return nullptr;
 	}
-	
+
 	sfx = &S_sfx[sound_id];
 
 	// Scale volume according to SNDINFO data.
@@ -611,7 +611,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		{
 			chan->Source = source;
 		}
-		
+
 		if (spitch > 0.0)				// A_StartSound has top priority over all others.
 			SetPitch(chan, spitch);
 		else if (defpitch > 0.0)	// $PitchSet overrides $PitchShift
@@ -726,7 +726,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 		{
 			return sfx;
 		}
-		
+
 		// See if there is another sound already initialized with this lump. If so,
 		// then set this one up as a link, and don't load the sound again.
 		for (i = 0; i < S_sfx.Size(); i++)
@@ -830,7 +830,7 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 {
 	FSoundChan *chan;
 	int count;
-	
+
 	for (chan = Channels, count = 0; chan != NULL && count < near_limit; chan = chan->NextChan)
 	{
 		if (chan->ChanFlags & CHANF_FORGETTABLE) continue;

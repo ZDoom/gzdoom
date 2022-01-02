@@ -272,9 +272,9 @@ bool Diff(const unsigned int rgb1, const unsigned int rgb2)
   {
     return false;
   }
-	
+
   static const hq_vec THRESHOLD = 0x00300706;
-  
+
   const hq_vec yuv1 = RGBtoYUV[rgb1];
   const hq_vec yuv2 = RGBtoYUV[rgb2];
 

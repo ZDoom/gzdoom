@@ -235,7 +235,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		}
 	}
 
-	
+
 	if (!(flags & TEXMAN_ShortNameOnly))
 	{
 		// We intentionally only look for textures in subdirectories.
@@ -376,18 +376,18 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (*substitute == '$') substitute = GStrings.GetString(substitute+1, &langtable);
 	else return true;	// String literals from the source data should never override graphics from the same definition.
 	if (substitute == nullptr) return true;	// The text does not exist.
-	
+
 	// Modes 2, 3 and 4 must not replace localized textures.
 	int localizedTex = ResolveLocalizedTexture(texnum.GetIndex());
 	if (localizedTex != texnum.GetIndex()) return true;	// Do not substitute a localized variant of the graphics patch.
-	
+
 	// For mode 4 we are done now.
 	if (locmode == 4) return false;
-	
+
 	// Mode 2 and 3 must reject any text replacement from the default language tables.
 	if ((langtable & MAKE_ID(255,0,0,0)) == MAKE_ID('*', 0, 0, 0)) return true;	// Do not substitute if the string comes from the default table.
 	if (locmode == 2) return false;
-	
+
 	// Mode 3 must also reject substitutions for non-IWAD content.
 	int file = fileSystem.GetFileContainer(Textures[texnum.GetIndex()].Texture->GetSourceLump());
 	if (file > fileSystem.GetMaxIwadNum()) return true;
@@ -771,7 +771,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 		else if (sc.Compare("define")) // define a new "fake" texture
 		{
 			sc.GetString();
-					
+
 			FString base = ExtractFileBase(sc.String, false);
 			if (!base.IsEmpty())
 			{
@@ -1402,7 +1402,7 @@ int FTextureManager::ResolveLocalizedTexture(int tex)
 int FTextureManager::GuesstimateNumTextures ()
 {
 	int numtex = 0;
-	
+
 	for(int i = fileSystem.GetNumEntries()-1; i>=0; i--)
 	{
 		int space = fileSystem.GetFileNamespace(i);

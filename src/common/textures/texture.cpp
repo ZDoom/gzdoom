@@ -97,7 +97,7 @@ FBitmap FTexture::GetBgraBitmap(const PalEntry* remap, int* ptrans)
 int FTexture::CheckRealHeight()
 {
 	auto pixels = Get8BitPixels(false);
-	
+
 	for(int h = GetHeight()-1; h>= 0; h--)
 	{
 		for(int w = 0; w < GetWidth(); w++)

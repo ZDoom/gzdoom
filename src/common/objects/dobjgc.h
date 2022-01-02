@@ -158,6 +158,10 @@ namespace GC
 	{
 		MarkArray((DObject **)(obj), count);
 	}
+	template<class T> void MarkArray(TObjPtr<T>* obj, size_t count)
+	{
+		MarkArray((DObject**)(obj), count);
+	}
 	template<class T> void MarkArray(TArray<T> &arr)
 	{
 		MarkArray(&arr[0], arr.Size());

@@ -993,7 +993,7 @@ void F2DDrawer::AddLine(double x1, double y1, double x2, double y2, int clipx1, 
 		dg.mScissor[3] = clipy2 + 1 + int(offset.Y);
 		dg.mFlags |= DTF_Scissor;
 	}
-	
+
 	dg.mType = DrawTypeLines;
 	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
 	dg.mVertCount = 2;

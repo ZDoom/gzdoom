@@ -100,7 +100,7 @@ TArray<uint8_t> FVoxelTexture::CreatePalettedPixels(int conversion)
 			pe.b = (pp[2] << 2) | (pp[2] >> 4);
 			// Alphatexture handling is just for completeness, but rather unlikely to be used ever.
 			Pixels[i] = conversion == luminance ? pe.r : ColorMatcher.Pick(pe);
-			
+
 		}
 	}
 	else 

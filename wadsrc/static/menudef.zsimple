@@ -107,7 +107,6 @@ OptionMenu "MouseOptionsSimple" protected
 	Title "$MOUSEMNU_TITLE"
 	Option "$MOUSEMNU_ENABLEMOUSE",		"use_mouse", "YesNo"
 	Option "$MOUSEMNU_MOUSEINMENU",		"m_use_mouse", "MenuMouse", "use_mouse"
-	Option "$MOUSEMNU_SHOWBACKBUTTON",	"m_show_backbutton", "Corners", "use_mouse"
 	IfOption(Windows)
 	{
 		Option "$MOUSEMNU_SWAPBUTTONS", "m_swapbuttons", "YesNo"

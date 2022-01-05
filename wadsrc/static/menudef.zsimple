@@ -118,9 +118,5 @@ OptionMenu "MouseOptionsSimple" protected
 	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
 	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
 	StaticText 	""
-	Option "$MOUSEMNU_ALWAYSMOUSELOOK",	"freelook", "OnOff"
-	Option "$MOUSEMNU_INVERTMOUSEX",	"invertmousex", "OnOff"
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
-	Option "$MOUSEMNU_LOOKSPRING",		"lookspring", "OnOff"
-	Option "$MOUSEMNU_LOOKSTRAFE",		"lookstrafe", "OnOff"
 }

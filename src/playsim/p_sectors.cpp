@@ -89,27 +89,44 @@ CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 // Returns the next special sector attached to this sector
 // with a certain special.
-sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
+
+sector_t* P_NextSpecialSectorVC(sector_t* sec, int type)
+{
+	sector_t* tsec;
+	for (auto ln : sec->Lines)
+	{
+		if (nullptr != (tsec = getNextSector(ln, sec)) &&
+			tsec->validcount != validcount &&
+			tsec->special == type)
+		{
+			return tsec;
+		}
+	}
+	return nullptr;
+}
+
+
+sector_t *P_NextSpecialSector (sector_t* sec, int type, sector_t *nogood)
 {
 	sector_t *tsec;
-	for (auto ln : Lines)
+	for (auto ln : sec->Lines)
 	{
-		if (NULL != (tsec = getNextSector (ln, this)) &&
+		if (nullptr != (tsec = getNextSector (ln, sec)) &&
 			tsec != nogood &&
 			tsec->special == type)
 		{
 			return tsec;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, NextSpecialSector)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextSpecialSector, P_NextSpecialSector)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(type);
 	PARAM_POINTER(nogood, sector_t);
-	ACTION_RETURN_POINTER(self->NextSpecialSector(type, nogood));
+	ACTION_RETURN_POINTER(P_NextSpecialSector(self, type, nogood));
 }
 
 //

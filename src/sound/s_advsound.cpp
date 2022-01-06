@@ -416,7 +416,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 
 	sfxid = soundEngine->FindSoundNoHash (logicalname);
 
-	if (sfxid > 0)
+	if ((unsigned int)sfxid < S_sfx.Size())
 	{ // If the sound has already been defined, change the old definition
 		sfxinfo_t *sfx = &S_sfx[sfxid];
 

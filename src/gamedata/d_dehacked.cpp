@@ -2059,60 +2059,54 @@ static int PatchWeapon (int weapNum)
 	{
 		int val = atoi (Line2);
 
-		if (strlen (Line1) >= 9)
+		size_t len = strlen(Line1);
+		if (len > 6 && stricmp (Line1 + len - 6, " frame") == 0)
 		{
-			if (stricmp (Line1 + strlen (Line1) - 6, " frame") == 0)
+			FState *state = FindState (val);
+
+			if (type != nullptr && !patchedStates)
 			{
-				FState *state = FindState (val);
-
-				if (type != NULL && !patchedStates)
-				{
-					statedef.MakeStateDefines(type);
-					patchedStates = true;
-				}
-
-				if (strnicmp (Line1, "Deselect", 8) == 0)
-					statedef.SetStateLabel("Select", state);
-				else if (strnicmp (Line1, "Select", 6) == 0)
-					statedef.SetStateLabel("Deselect", state);
-				else if (strnicmp (Line1, "Bobbing", 7) == 0)
-					statedef.SetStateLabel("Ready", state);
-				else if (strnicmp (Line1, "Shooting", 8) == 0)
-					statedef.SetStateLabel("Fire", state);
-				else if (strnicmp (Line1, "Firing", 6) == 0)
-					statedef.SetStateLabel("Flash", state);
+				statedef.MakeStateDefines(type);
+				patchedStates = true;
 			}
-			else if (stricmp (Line1, "Ammo type") == 0)
+
+			if (strnicmp (Line1, "Deselect", 8) == 0)
+				statedef.SetStateLabel("Select", state);
+			else if (strnicmp (Line1, "Select", 6) == 0)
+				statedef.SetStateLabel("Deselect", state);
+			else if (strnicmp (Line1, "Bobbing", 7) == 0)
+				statedef.SetStateLabel("Ready", state);
+			else if (strnicmp (Line1, "Shooting", 8) == 0)
+				statedef.SetStateLabel("Fire", state);
+			else if (strnicmp (Line1, "Firing", 6) == 0)
+				statedef.SetStateLabel("Flash", state);
+		}
+		else if (stricmp (Line1, "Ammo type") == 0)
+		{
+			if (val < 0 || val >= 12 || (unsigned)val >= AmmoNames.Size())
 			{
-				if (val < 0 || val >= 12 || (unsigned)val >= AmmoNames.Size())
+				val = 5;
+			}
+			if (info)
+			{
+				auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
+				AmmoType = AmmoNames[val];
+				if (AmmoType != nullptr)
 				{
-					val = 5;
-				}
-				if (info)
-				{
-					auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
-					AmmoType = AmmoNames[val];
-					if (AmmoType != nullptr)
+					info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
+					auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
+					if (AmmoUse == 0)
 					{
-						info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
-						auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
-						if (AmmoUse == 0)
-						{
-							AmmoUse = 1;
-						}
+						AmmoUse = 1;
 					}
 				}
-			}
-			else
-			{
-				Printf (unknown_str, Line1, "Weapon", weapNum);
 			}
 		}
 		else if (stricmp (Line1, "Decal") == 0)
 		{
 			stripwhite (Line2);
 			const FDecalTemplate *decal = DecalLibrary.GetDecalByName (Line2);
-			if (decal != NULL)
+			if (decal != nullptr)
 			{
 				if (info) info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
 			}

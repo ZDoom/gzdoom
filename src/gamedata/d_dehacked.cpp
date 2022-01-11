@@ -184,7 +184,7 @@ struct MBFParamState
 	int GetSoundArg(int i, int def = 0)
 	{
 		int num = argsused & (1 << i) ? (int)args[i] : def;
-		if (num > 0 && num < int(SoundMap.Size())) return SoundMap[num];
+		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1];
 		return 0;
 	}
 

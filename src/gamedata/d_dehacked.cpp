@@ -886,12 +886,12 @@ static void CreateWeaponBulletAttackFunc(FunctionCallEmitter &emitters, int valu
 
 static void CreateWeaponMeleeAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 {
-	state->ValidateArgCount(5, "A_WeaponBulletAttack");
+	state->ValidateArgCount(5, "A_WeaponMeleeAttack");
 	emitters.AddParameterIntConst(state->GetIntArg(0, 2));
 	emitters.AddParameterIntConst(state->GetIntArg(1, 10));
 	emitters.AddParameterFloatConst(state->GetFloatArg(2, 1));
-	emitters.AddParameterIntConst(state->GetIntArg(3));
-	emitters.AddParameterIntConst(state->GetIntArg(4));
+	emitters.AddParameterIntConst(state->GetSoundArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
 }
 
 static void CreateWeaponSoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)

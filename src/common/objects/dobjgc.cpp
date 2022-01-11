@@ -125,7 +125,7 @@ EGCState State = GCS_Pause;
 int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
 int StepCount;
-int CheckTime;
+uint64_t CheckTime;
 bool FinalGC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

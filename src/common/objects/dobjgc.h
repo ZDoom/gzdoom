@@ -71,7 +71,7 @@ namespace GC
 	extern bool FinalGC;
 
 	// Counts the number of times CheckGC has been called.
-	extern int CheckTime;
+	extern uint64_t CheckTime;
 
 	// Current white value for known-dead objects.
 	static inline uint32_t OtherWhite()

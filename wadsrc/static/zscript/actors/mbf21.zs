@@ -316,11 +316,9 @@ extend class Weapon
 		FTranslatedLineTarget t;
 
 		angle += self.angle;
-		double x = Spawnofs_xy * cos(angle);
-		double y = Spawnofs_xy * sin(angle);
-		let pos = self.Vec3Offset(x, y, Spawnofs_z);
+		Vector2 ofs = AngleToVector(self.Angle - 90, spawnofs_xy);
 
-		let mo = SpawnPlayerMissile(type, angle, pos.X, pos.Y, pos.Z, pLineTarget: t);
+		let mo = SpawnPlayerMissile(type, angle, ofs.x, ofs.y, Spawnofs_z, pLineTarget: t);
 		if (!mo) return;
 
 		Pitch += mo.PitchFromVel();

@@ -73,6 +73,9 @@ namespace GC
 	// Is this the final collection just before exit?
 	extern bool FinalGC;
 
+	// Counts the number of times CheckGC has been called.
+	extern int CheckTime;
+
 	// Current white value for known-dead objects.
 	static inline uint32_t OtherWhite()
 	{
@@ -111,6 +114,7 @@ namespace GC
 	static inline bool CheckGC()
 	{
 		AllocCount = 0;
+		CheckTime++;
 		if (AllocBytes >= Threshold)
 		{
 			Step();

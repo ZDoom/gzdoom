@@ -57,8 +57,6 @@
 #include "engineerrors.h"
 #include "c_dispatch.h"
 
-void Draw2D(F2DDrawer *drawer, FRenderState &state);
-
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)

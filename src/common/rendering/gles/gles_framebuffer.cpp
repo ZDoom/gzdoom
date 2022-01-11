@@ -67,8 +67,6 @@ EXTERN_CVAR(Int, gl_pipeline_depth);
 
 EXTERN_CVAR(Bool, gl_sort_textures);
 
-void Draw2D(F2DDrawer *drawer, FRenderState &state);
-
 extern bool vid_hdr_active;
 
 namespace OpenGLESRenderer

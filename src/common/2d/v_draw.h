@@ -325,3 +325,5 @@ public:
 		CleanHeight = savedheight;
 	}
 };
+
+void Draw2D(F2DDrawer* drawer, FRenderState& state);

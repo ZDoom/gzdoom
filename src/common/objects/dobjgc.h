@@ -43,9 +43,6 @@ namespace GC
 	// Number of bytes currently allocated through M_Malloc/M_Realloc.
 	extern size_t AllocBytes;
 
-	// Number of allocated objects since last CheckGC call.
-	extern size_t AllocCount;
-
 	// Amount of memory to allocate before triggering a collection.
 	extern size_t Threshold;
 
@@ -111,16 +108,11 @@ namespace GC
 	}
 
 	// Check if it's time to collect, and do a collection step if it is.
-	static inline bool CheckGC()
+	static inline void CheckGC()
 	{
-		AllocCount = 0;
 		CheckTime++;
 		if (AllocBytes >= Threshold)
-		{
 			Step();
-			return true;
-		}
-		return false;
 	}
 
 	// Forces a collection to start now.

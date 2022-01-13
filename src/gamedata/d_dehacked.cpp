@@ -237,6 +237,7 @@ static AmmoPerAttack AmmoPerAttacks[] = {
 	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
 	{ NAME_A_FireOldBFG, 1},
 	{ NAME_A_FireRailgun, 1},
+	{ NAME_A_ConsumeAmmo, 1}, // MBF21
 	{ NAME_None, 0}
 };
 

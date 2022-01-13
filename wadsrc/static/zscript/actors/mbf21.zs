@@ -430,7 +430,7 @@ extend class Weapon
 		if (!weap) return;
 
 		if (consume == 0) consume = -1;
-		weap.DepleteAmmo(weap.bAltFire, false, consume);
+		weap.DepleteAmmo(weap.bAltFire, false, consume, true);
 	}
 
 	//

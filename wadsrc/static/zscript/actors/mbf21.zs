@@ -198,7 +198,9 @@ extend class Actor
 	//
 	void A_FindTracer(double fov, int dist)
 	{
-		if (!tracer) tracer = RoughMonsterSearch(dist, fov: fov);
+		// note: mbf21 fov is the angle of the entire cone, while
+		// zdoom fov is defined as 1/2 of the cone, so halve it.
+		if (!tracer) tracer = RoughMonsterSearch(dist, fov: fov/2);
 	}
 
 	//

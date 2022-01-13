@@ -503,9 +503,9 @@ extend class Weapon
 
 	// needed to call A_SeekerMissile with proper defaults.
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_SeekTracer(int threshold, int turnmax)
+	void MBF21_SeekTracer(double threshold, double turnmax)
 	{
-		A_SeekerMissile(threshold, turnmax);
+		A_SeekerMissile(threshold, turnmax); // args get truncated to ints here, but it's close enough
 	}
 
 }

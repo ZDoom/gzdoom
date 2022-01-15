@@ -515,7 +515,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			DoCast(reg, f, a, B, C);
 		}
 		NEXTOP;
-	
+
 	OP(CASTB):
 		if (C == CASTB_I)
 		{
@@ -538,7 +538,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			reg.d[a] = reg.s[B].Len() > 0;
 		}
 		NEXTOP;
-	
+
 	OP(TEST):
 		ASSERTD(a);
 		if (reg.d[a] != BC)
@@ -692,7 +692,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		{
 			VMFunction *call = (VMFunction *)ptr;
 			VMReturn returns[MAX_RETURNS];
-			int numret;
+			int numret1;
 
 			b = B;
 			FillReturns(reg, f, returns, pc+1, C);
@@ -701,7 +701,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 				try
 				{
 					VMCycles[0].Unclock();
-					numret = static_cast<VMNativeFunction *>(call)->NativeCall(VM_INVOKE(reg.param + f->NumParam - b, b, returns, C, call->RegTypes));
+					numret1 = static_cast<VMNativeFunction *>(call)->NativeCall(VM_INVOKE(reg.param + f->NumParam - b, b, returns, C, call->RegTypes));
 					VMCycles[0].Clock();
 				}
 				catch (CVMAbortException &err)
@@ -714,10 +714,10 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			}
 			else
 			{
-				auto sfunc = static_cast<VMScriptFunction *>(call);
-				numret = sfunc->ScriptCall(sfunc, reg.param + f->NumParam - b, b, returns, C);
+				auto sfunc1 = static_cast<VMScriptFunction *>(call);
+				numret1 = sfunc1->ScriptCall(sfunc1, reg.param + f->NumParam - b, b, returns, C);
 			}
-			assert(numret == C && "Number of parameters returned differs from what was expected by the caller");
+			assert(numret1 == C && "Number of parameters returned differs from what was expected by the caller");
 			f->NumParam -= B;
 			pc += C;			// Skip RESULTs
 		}
@@ -852,37 +852,37 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		ASSERTD(a); ASSERTS(B);
 		reg.d[a] = (int)reg.s[B].Len();
 		NEXTOP;
-	
+
 	OP(CMPS):
 		// String comparison is a fairly expensive operation, so I've
 		// chosen to conserve a few opcodes by condensing all the
 		// string comparisons into a single one.
 		{
-			const FString *b, *c;
+			const FString *b1, *c1;
 			int test, method;
 			bool cmp;
 
 			if (a & CMP_BK)
 			{
 				ASSERTKS(B);
-				b = &konsts[B];
+				b1 = &konsts[B];
 			}
 			else
 			{
 				ASSERTS(B);
-				b = &reg.s[B];
+				b1 = &reg.s[B];
 			}
 			if (a & CMP_CK)
 			{
 				ASSERTKS(C);
-				c = &konsts[C];
+				c1 = &konsts[C];
 			}
 			else
 			{
 				ASSERTS(C);
-				c = &reg.s[C];
+				c1 = &reg.s[C];
 			}
-			test = (a & CMP_APPROX) ? b->CompareNoCase(*c) : b->Compare(*c);
+			test = (a & CMP_APPROX) ? b1->CompareNoCase(*c1) : b1->Compare(*c1);
 			method = a & CMP_METHOD_MASK;
 			if (method == CMP_EQ)
 			{
@@ -1302,12 +1302,10 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		ASSERTF(a); ASSERTF(B); ASSERTKF(C);
 		fb = reg.f[B]; fc = konstf[C];
 		goto Do_MODF;
-		NEXTOP;
 	OP(MODF_KR):
 		ASSERTF(a); ASSERTKF(B); ASSERTF(C);
 		fb = konstf[B]; fc = reg.f[C];
 		goto Do_MODF;
-		NEXTOP;
 
 	OP(POWF_RR):
 		ASSERTF(a); ASSERTF(B); ASSERTF(C);
@@ -1349,7 +1347,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		fb = reg.f[B];
 		reg.f[a] = (C == FLOP_ABS) ? fabs(fb) : (C == FLOP_NEG) ? -fb : DoFLOP(C, fb);
 		NEXTOP;
-	
+
 	OP(EQF_R):
 		ASSERTF(B); ASSERTF(C);
 		if (a & CMP_APPROX)
@@ -1712,7 +1710,6 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		// PrintParameters(reg.param + f->NumParam - B, B);
 		throw;
 	}
-	return 0;
 }
 
 static double DoFLOP(int flop, double v)

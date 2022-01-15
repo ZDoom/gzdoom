@@ -299,7 +299,7 @@ void FCommandBuffer::AddString(FString clip)
 		}
 		auto strp = (const uint8_t*)clip.GetChars();
 		while (auto chr = GetCharFromString(strp)) build += chr;
-		
+
 		if (Text.length() == 0)
 		{
 			Text = build;

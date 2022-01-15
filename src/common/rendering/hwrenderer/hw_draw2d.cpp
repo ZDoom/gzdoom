@@ -89,7 +89,6 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	for(auto &cmd : commands)
 	{
 
-		int gltrans = -1;
 		state.SetRenderStyle(cmd.mRenderStyle);
 		state.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
 		state.EnableFog(2);	// Special 2D mode 'fog'.

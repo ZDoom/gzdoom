@@ -306,11 +306,11 @@ int lumpcmp(const void * a, const void * b)
 void FResourceFile::GenerateHash()
 {
 	// hash the lump directory after sorting
-	
+
 	Hash.Format(("%08X-%04X-"), (unsigned)Reader.GetLength(), NumLumps);
-	
+
 	MD5Context md5;
-	
+
 	uint8_t digest[16];
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
@@ -382,9 +382,9 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 		return 0;
 	}
 	filter << "filter/" << filtername << '/';
-	
+
 	bool found = FindPrefixRange(filter, lumps, lumpsize, max, start, end);
-	
+
 	// Workaround for old Doom filter names.
 	if (!found && filtername.IndexOf("doom.id.doom") == 0)
 	{
@@ -490,7 +490,7 @@ bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize
 {
 	uint32_t min, max, mid, inside;
 	FResourceLump *lump;
-	int cmp;
+	int cmp = 0;
 
 	end = start = 0;
 
@@ -499,7 +499,7 @@ bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize
 	lumps = (uint8_t *)lumps - lumpsize;
 
 	// Binary search to find any match at all.
-	min = 1, max = maxlump;
+	mid = min = 1, max = maxlump;
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;

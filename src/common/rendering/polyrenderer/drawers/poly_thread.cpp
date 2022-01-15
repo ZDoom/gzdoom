@@ -679,7 +679,7 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 	// -v.w <= v.x <= v.w
 	// -v.w <= v.y <= v.w
 	// -v.w <= v.z <= v.w
-	
+
 	// halfspace clip distances
 	static const int numclipdistances = 9;
 #ifdef NO_SSE
@@ -799,7 +799,7 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 				for (int k = 0; k < 3; k++)
 					output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t1) + input[j * 3 + k] * t1;
 				outputverts++;
-			
+
 				if (t2 != 1.0f && t2 > t1)
 				{
 					// add t2 vertex

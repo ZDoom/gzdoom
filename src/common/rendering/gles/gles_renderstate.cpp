@@ -94,7 +94,7 @@ void FGLRenderState::Reset()
 bool FGLRenderState::ApplyShader()
 {
 	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };
-	
+
 	ShaderFlavourData flavour;
 
 	// Need to calc light data now in order to select correct shader
@@ -127,7 +127,7 @@ bool FGLRenderState::ApplyShader()
 
 		if (modLights + subLights + addLights > (int)gles.maxlights)
 			addLights = gles.maxlights - modLights - subLights;
-		
+
 		totalLights = modLights + subLights + addLights;
 
 		// Skip passed the first 4 floats so the upload below only contains light data
@@ -152,12 +152,13 @@ bool FGLRenderState::ApplyShader()
 	flavour.texFlags = tm >> 16; //Move flags to start of word
 
 	if (mTextureClamp && flavour.textureMode == TM_NORMAL) flavour.textureMode = TM_CLAMPY; // fixme. Clamp can now be combined with all modes.
-	
+
 	if (flavour.textureMode == -1)
 		flavour.textureMode = 0;
 
 
 	flavour.blendFlags = (int)(mStreamData.uTextureAddColor.a + 0.01);
+	flavour.paletteInterpolate = !!(flavour.blendFlags & 0x4000);
 
 	flavour.twoDFog = false;
 	flavour.fogEnabled = false;
@@ -165,7 +166,7 @@ bool FGLRenderState::ApplyShader()
 	flavour.colouredFog = false;
 
 	flavour.fogEquationRadial = (gl_fogmode == 2);
-	
+
 	flavour.twoDFog = false;
 	flavour.fogEnabled = false;
 	flavour.colouredFog = false;
@@ -196,7 +197,7 @@ bool FGLRenderState::ApplyShader()
 	flavour.useObjectColor2 = (mStreamData.uObjectColor2.a > 0);
 	flavour.useGlowTopColor = mGlowEnabled && (mStreamData.uGlowTopColor[3] > 0);
 	flavour.useGlowBottomColor = mGlowEnabled && (mStreamData.uGlowBottomColor[3] > 0);
-	
+
 	flavour.useColorMap = (mColorMapSpecial >= CM_FIRSTSPECIALCOLORMAP) || (mColorMapFlash != 1);
 
 	flavour.buildLighting = (mHwUniforms->mPalLightLevels >> 16) == 5; // Build engine mode
@@ -217,7 +218,7 @@ bool FGLRenderState::ApplyShader()
 		activeShader->Bind(flavour);
 	}
 
-	
+
 	if (mHwUniforms)
 	{
 		activeShader->cur->muProjectionMatrix.Set(&mHwUniforms->mProjectionMatrix);
@@ -334,7 +335,7 @@ bool FGLRenderState::ApplyShader()
 	{
 		// Calculate the total number of vec4s we need
 		int totalVectors = totalLights * LIGHT_VEC4_NUM;
-	
+
 		if (totalVectors > (int)gles.numlightvectors)
 			totalVectors = gles.numlightvectors;
 
@@ -347,7 +348,7 @@ bool FGLRenderState::ApplyShader()
 
 		activeShader->cur->muLightRange.Set(range);
 	}
-	
+
 	return true;
 }
 
@@ -389,19 +390,17 @@ void FGLRenderState::ApplyState()
 		mMaterial.mChanged = false;
 	}
 
-	if (mBias.mChanged)
+
+	if (mBias.mFactor == 0 && mBias.mUnits == 0)
 	{
-		if (mBias.mFactor == 0 && mBias.mUnits == 0)
-		{
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		}
-		else
-		{
-			glEnable(GL_POLYGON_OFFSET_FILL);
-		}
-		glPolygonOffset(mBias.mFactor, mBias.mUnits);
-		mBias.mChanged = false;
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
+	else
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+	}
+	glPolygonOffset(mBias.mFactor, mBias.mUnits);
+	mBias.mChanged = false;
 }
 
 void FGLRenderState::ApplyBuffers()
@@ -451,14 +450,13 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex->GetTexture())->NeedUpdate();
 
 	clampmode = tex->GetClampMode(clampmode);
-	
+
 	// avoid rebinding the same texture multiple times.
 	if (mat == lastMaterial && lastClamp == clampmode && translation == lastTranslation) return;
 	lastMaterial = mat;
 	lastClamp = clampmode;
 	lastTranslation = translation;
 
-	int usebright = false;
 	int maxbound = 0;
 
 	int numLayers = mat->NumLayers();

@@ -171,7 +171,7 @@ int main (int argc, char **argv)
 	}
 
 	printf("\n");
-	
+
 	Args = new FArgs(argc, argv);
 
 	// Should we even be doing anything with progdir on Unix systems?
@@ -188,7 +188,7 @@ int main (int argc, char **argv)
 	{
 		progdir = "./";
 	}
-	
+
 	I_StartupJoysticks();
 
 	const int result = GameMain();

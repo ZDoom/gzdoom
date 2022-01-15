@@ -514,8 +514,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_WTSSESSION_CHANGE:
 	case WM_POWERBROADCAST:
 		{
-			int oldstate = SessionState;
-
 			if (message == WM_WTSSESSION_CHANGE && lParam == (LPARAM)SessionID)
 			{
 #ifdef _DEBUG

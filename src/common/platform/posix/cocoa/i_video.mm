@@ -449,7 +449,7 @@ public:
 		}
 		else
 #endif
-			
+
 #ifdef HAVE_SOFTPOLY
 		if (vid_preferbackend == 2)
 		{
@@ -832,7 +832,7 @@ bool I_SetCursor(FGameTexture *cursorpic)
 	if (NULL != cursorpic && cursorpic->isValid())
 	{
 		// Create bitmap image representation
-		
+
 		auto sbuffer = cursorpic->GetTexture()->CreateTexBuffer(0);
 
 		const NSInteger imageWidth  = sbuffer.mWidth;
@@ -873,11 +873,11 @@ bool I_SetCursor(FGameTexture *cursorpic)
 		cursor = [[NSCursor alloc] initWithImage:cursorImage
 										 hotSpot:NSMakePoint(0.0f, 0.0f)];
 	}
-	
+
 	SystemBaseFrameBuffer::SetCursor(cursor);
-	
+
 	[pool release];
-	
+
 	return true;
 }
 

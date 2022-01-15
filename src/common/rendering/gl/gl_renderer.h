@@ -82,7 +82,7 @@ public:
 	void DrawPresentTexture(const IntRect &box, bool applyGamma);
 	void Flush();
 	void BeginFrame();
-    
+
 	bool StartOffscreen();
 	void EndOffscreen();
 

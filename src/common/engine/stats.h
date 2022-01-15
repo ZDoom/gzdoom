@@ -61,28 +61,28 @@ public:
 	{
 		Sec = 0;
 	}
-	
+
 	void Clock()
 	{
 		timespec ts;
-		
+
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		Sec -= ts.tv_sec + ts.tv_nsec * 1e-9;
 	}
-	
+
 	void Unclock()
 	{
 		timespec ts;
-		
+
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		Sec += ts.tv_sec + ts.tv_nsec * 1e-9;
 	}
-	
+
 	double Time()
 	{
 		return Sec;
 	}
-	
+
 	double TimeMS()
 	{
 		return Sec * 1e3;
@@ -159,24 +159,24 @@ public:
 	{
 		Counter = 0;
 	}
-	
+
 	void Clock()
 	{
 		int64_t time = rdtsc();
 		Counter -= time;
 	}
-	
+
 	void Unclock(bool checkvar = true)
 	{
 		int64_t time = rdtsc();
 		Counter += time;
 	}
-	
+
 	double Time()
 	{
 		return Counter * PerfToSec;
 	}
-	
+
 	double TimeMS()
 	{
 		return Counter * PerfToMillisec;

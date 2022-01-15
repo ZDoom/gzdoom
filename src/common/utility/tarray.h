@@ -105,6 +105,17 @@ protected:
 	T* m_ptr;
 };
 
+// magic little helper. :)
+template <class T>
+class backwards
+{
+	T& _obj;
+public:
+	backwards(T &obj) : _obj(obj) {}
+	auto begin() {return _obj.rbegin();}
+	auto end() {return _obj.rend();}
+};
+
 
 // TArray -------------------------------------------------------------------
 
@@ -154,7 +165,7 @@ public:
 	{
 		return &Array[Count];
 	}
-	
+
 	reverse_iterator rbegin()
 	{
 		return reverse_iterator(end());
@@ -306,6 +317,16 @@ public:
 	T *Data() const
 	{
 		return &Array[0];
+	}
+
+	unsigned IndexOf(const T& elem) const
+	{
+		return &elem - Array;
+	}
+
+	unsigned IndexOf(const T* elem) const
+	{
+		return elem - Array;
 	}
 
     unsigned int Find(const T& item) const
@@ -898,7 +919,7 @@ public:
 		LastFree = o.LastFree;		/* any free position is before this position */
 		Size = o.Size;		/* must be a power of 2 */
 		NumUsed = o.NumUsed;
-		
+
 		o.Size = 0;
 		o.NumUsed = 0;
 		o.SetNodeVector(1);
@@ -1672,6 +1693,12 @@ public:
 		return !!(bytes[index >> 3] & (1 << (index & 7)));
 	}
 
+	// for when array syntax cannot be used.
+	bool Check(size_t index) const
+	{
+		return !!(bytes[index >> 3] & (1 << (index & 7)));
+	}
+
 	void Set(size_t index, bool set = true)
 	{
 		if (!set) Clear(index);
@@ -1850,18 +1877,20 @@ public:
 	// Return a reference to an element
 	T &operator[] (size_t index) const
 	{
+		assert(index < Count);
 		return Array[index];
 	}
 	// Returns a reference to the last element
 	T &Last() const
 	{
+		assert(Count > 0);
 		return Array[Count - 1];
 	}
 
 	// returns address of first element
 	T *Data() const
 	{
-		return &Array[0];
+		return Array;
 	}
 
 	unsigned Size() const
@@ -1896,202 +1925,3 @@ private:
 	unsigned int Count;
 };
 
-
-template<typename T> class TSparseIterator
-{
-public:
-	using iterator_category = std::random_access_iterator_tag;
-	using value_type        = T;
-	using difference_type   = ptrdiff_t;
-	using pointer           = value_type*;
-	using reference         = value_type&;
-
-	TSparseIterator(unsigned char* ptr = nullptr, unsigned stride = 0) { m_Ptr = ptr; Stride = stride; }
-
-	// Comparison operators
-	bool operator==(const TSparseIterator &other) const { return m_Ptr == other.m_Ptr; }
-	bool operator!=(const TSparseIterator &other) const { return m_Ptr != other.m_Ptr; }
-	bool operator< (const TSparseIterator &other) const { return m_Ptr <  other.m_Ptr; }
-	bool operator<=(const TSparseIterator &other) const { return m_Ptr <= other.m_Ptr; }
-	bool operator> (const TSparseIterator &other) const { return m_Ptr >  other.m_Ptr; }
-	bool operator>=(const TSparseIterator &other) const { return m_Ptr >= other.m_Ptr; }
-
-	// Arithmetic operators
-	TSparseIterator &operator++() { m_Ptr += Stride; return *this; }
-	TSparseIterator operator++(int) { auto tmp = *this; ++*this; return tmp; }
-	TSparseIterator &operator--() { m_Ptr -= Stride; return *this; }
-	TSparseIterator operator--(int) { auto tmp = *this; --*this; return tmp; }
-	TSparseIterator &operator+=(difference_type offset) { m_Ptr += offset * Stride; return *this; }
-	TSparseIterator operator+(difference_type offset) const { return TSparseIterator(m_Ptr + offset * Stride, Stride); }
-	friend TSparseIterator operator+(difference_type offset, const TSparseIterator &other) { return TSparseIterator(offset*other.Stride + other.m_Ptr, other.Stride); }
-	TSparseIterator &operator-=(difference_type offset) { m_Ptr -= offset * Stride; return *this; }
-	TSparseIterator operator-(difference_type offset) const { return TSparseIterator(m_Ptr - offset * Stride, Stride); }
-	difference_type operator-(const TSparseIterator &other) const { return (m_Ptr - other.m_Ptr) / Stride; }
-
-	// Random access operators
-	T& operator[](difference_type i) { return *(T*)(m_Ptr + i * Stride); }
-	const T& operator[](difference_type i) const { return *(T*)(m_Ptr + i * Stride); }
-
-	T &operator*() const { return (T*)m_Ptr; }
-	T* operator->() { return (T*)m_Ptr; }
-
-protected:
-	unsigned char* m_Ptr;
-	unsigned Stride;
-};
-
-// A wrapper to externally stored data.
-// Like the above but with a customizable stride
-template <class T>
-class TSparseArrayView
-{
-public:
-
-	typedef TSparseIterator<T>                       iterator;
-	typedef TSparseIterator<const T>                 const_iterator;
-    using reverse_iterator       =             std::reverse_iterator<iterator>;
-    using const_reverse_iterator =             std::reverse_iterator<const_iterator>;
-	typedef T                                  value_type;
-
-	iterator begin()
-	{
-		return iterator(Array, Stride);
-	}
-	const_iterator begin() const
-	{
-		return const_iterator(Array, Stride);
-	}
-	const_iterator cbegin() const
-	{
-		return const_iterator(Array, Stride);
-	}
-
-	iterator end()
-	{
-		return iterator(Array + Count * Stride, Stride);
-	}
-	const_iterator end() const
-	{
-		return const_iterator(Array + Count * Stride, Stride);
-	}
-	const_iterator cend() const
-	{
-		return const_iterator(Array + Count * Stride, Stride);
-	}
-
-	reverse_iterator rbegin()
-	{
-		return reverse_iterator(end());
-	}
-	const_reverse_iterator rbegin() const
-	{
-		return const_reverse_iterator(end());
-	}
-	const_reverse_iterator crbegin() const
-	{
-		return const_reverse_iterator(cend());
-	}
-
-	reverse_iterator rend()
-	{
-		return reverse_iterator(begin());
-	}
-	const_reverse_iterator rend() const
-	{
-		return const_reverse_iterator(begin());
-	}
-	const_reverse_iterator crend() const
-	{
-		return const_reverse_iterator(cbegin());
-	}
-
-	////////
-	TSparseArrayView() = default;	// intended to keep this type trivial.
-	TSparseArrayView(T *data, unsigned stride, unsigned count = 0)
-	{
-		Count = count;
-		Array = data;
-		Stride = stride;
-	}
-	TSparseArrayView(const TSparseArrayView<T> &other) = default;
-	TSparseArrayView<T> &operator= (const TSparseArrayView<T> &other) = default;
-
-	// Check equality of two arrays
-	bool operator==(const TArrayView<T> &other) const
-	{
-		if (Count != other.Count)
-		{
-			return false;
-		}
-		for (unsigned int i = 0; i < Count; ++i)
-		{
-			if (Element(i) != other.Element(i))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	T &Element(size_t index)
-	{
-		return (T*)Array[index*Stride];
-	}
-	// Return a reference to an element
-	T &operator[] (size_t index) const
-	{
-		return Element(index);
-	}
-	// Returns a reference to the last element
-	T &Last() const
-	{
-		return Element(Count - 1);
-	}
-
-	// returns address of first element
-	T *Data() const
-	{
-		return &Element(0);
-	}
-
-	unsigned Size() const
-	{
-		return Count;
-	}
-
-	unsigned int Find(const T& item) const
-	{
-		unsigned int i;
-		for (i = 0; i < Count; ++i)
-		{
-			if (Element(i) == item)
-				break;
-		}
-		return i;
-	}
-
-	void Set(T *data, unsigned stride, unsigned count)
-	{
-		Array = reinterpret_cast<unsigned char*>(data);
-		Count = count;
-		Stride = stride;
-	}
-
-	void Set(void *data, unsigned stride, unsigned count)
-	{
-		Array = reinterpret_cast<unsigned char*>(data);
-		Count = count;
-		Stride = stride;
-	}
-
-	void Clear()
-	{
-		Count = 0;
-		Stride = 0;
-		Array = nullptr;
-	}
-private:
-	unsigned char* Array;
-	unsigned int Count;
-	unsigned int Stride;
-};

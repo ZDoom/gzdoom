@@ -694,7 +694,6 @@ void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...)
 	va_list ap;
 	va_start(ap, moreinfo);
 	throw CVMAbortException(reason, moreinfo, ap);
-	va_end(ap);
 }
 
 void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...)
@@ -706,7 +705,6 @@ void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException 
 
 	err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars(), sfunc->PCToLine(line));
 	throw err;
-	va_end(ap);
 }
 
 DEFINE_ACTION_FUNCTION(DObject, ThrowAbortException)

@@ -310,7 +310,7 @@ void FXInputController::ProcessThumbstick(int value1, AxisInfo *axis1,
 {
 	uint8_t buttonstate;
 	double axisval1, axisval2;
-	
+
 	axisval1 = (value1 - SHRT_MIN) * 2.0 / 65536 - 1.0;
 	axisval2 = (value2 - SHRT_MIN) * 2.0 / 65536 - 1.0;
 	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
@@ -337,7 +337,7 @@ void FXInputController::ProcessTrigger(int value, AxisInfo *axis, int base)
 {
 	uint8_t buttonstate;
 	double axisval;
-	
+
 	axisval = Joy_RemoveDeadZone(value / 256.0, axis->DeadZone, &buttonstate);
 	Joy_GenerateButtonEvents(axis->ButtonValue, buttonstate, 1, base);
 	axis->ButtonValue = buttonstate;

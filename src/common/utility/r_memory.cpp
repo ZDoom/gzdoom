@@ -28,7 +28,7 @@
 void *RenderMemory::AllocBytes(int size)
 {
 	size = (size + 15) / 16 * 16; // 16-byte align
-		
+
 	if (UsedBlocks.empty() || UsedBlocks.back()->Position + size > BlockSize)
 	{
 		if (!FreeBlocks.empty())
@@ -43,14 +43,14 @@ void *RenderMemory::AllocBytes(int size)
 			UsedBlocks.push_back(std::unique_ptr<MemoryBlock>(new MemoryBlock()));
 		}
 	}
-		
+
 	auto &block = UsedBlocks.back();
 	void *data = block->Data + block->Position;
 	block->Position += size;
 
 	return data;
 }
-	
+
 void RenderMemory::Clear()
 {
 	while (!UsedBlocks.empty())

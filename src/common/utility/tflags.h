@@ -53,42 +53,42 @@ public:
 
 	TFlags() = default;
 	TFlags(const Self& other) = default;
-	TFlags (T value) : Value (static_cast<TT> (value)) {}
+	constexpr TFlags (T value) : Value (static_cast<TT> (value)) {}
 
 	// This allows initializing the flagset with 0, as 0 implicitly converts into a null pointer.
-	TFlags (ZeroDummy*) : Value (0) {}
+	constexpr TFlags (ZeroDummy*) : Value (0) {}
 
 	// Relation operators
-	Self operator| (Self other) const { return Self::FromInt (Value | other.GetValue()); }
-	Self operator& (Self other) const { return Self::FromInt (Value & other.GetValue()); }
-	Self operator^ (Self other) const { return Self::FromInt (Value ^ other.GetValue()); }
-	Self operator| (T value) const { return Self::FromInt (Value | value); }
-	Self operator& (T value) const { return Self::FromInt (Value & value); }
-	Self operator^ (T value) const { return Self::FromInt (Value ^ value); }
-	Self operator~() const { return Self::FromInt (~Value); }
+	constexpr Self operator| (const Self& other) const { return Self::FromInt (Value | other.GetValue()); }
+	constexpr Self operator& (const Self& other) const { return Self::FromInt (Value & other.GetValue()); }
+	constexpr Self operator^ (const Self& other) const { return Self::FromInt (Value ^ other.GetValue()); }
+	constexpr Self operator| (T value) const { return Self::FromInt (Value | value); }
+	constexpr Self operator& (T value) const { return Self::FromInt (Value & value); }
+	constexpr Self operator^ (T value) const { return Self::FromInt (Value ^ value); }
+	constexpr Self operator~() const { return Self::FromInt (~Value); }
 
 	// Assignment operators
-	Self& operator= (Self other) { Value = other.GetValue(); return *this; }
-	Self& operator|= (Self other) { Value |= other.GetValue(); return *this; }
-	Self& operator&= (Self other) { Value &= other.GetValue(); return *this; }
-	Self& operator^= (Self other) { Value ^= other.GetValue(); return *this; }
-	Self& operator= (T value) { Value = value; return *this; }
-	Self& operator|= (T value) { Value |= value; return *this; }
-	Self& operator&= (T value) { Value &= value; return *this; }
-	Self& operator^= (T value) { Value ^= value; return *this; }
+	constexpr Self& operator= (const Self& other) = default;
+	constexpr Self& operator|= (const Self& other) { Value |= other.GetValue(); return *this; }
+	constexpr Self& operator&= (const Self& other) { Value &= other.GetValue(); return *this; }
+	constexpr Self& operator^= (const Self& other) { Value ^= other.GetValue(); return *this; }
+	constexpr Self& operator= (T value) { Value = value; return *this; }
+	constexpr Self& operator|= (T value) { Value |= value; return *this; }
+	constexpr Self& operator&= (T value) { Value &= value; return *this; }
+	constexpr Self& operator^= (T value) { Value ^= value; return *this; }
 
 	// Access the value of the flagset
-	TT GetValue() const { return Value; }
-	operator TT() const { return Value; }
+	constexpr TT GetValue() const { return Value; }
+	constexpr operator TT() const { return Value; }
 
 	// Set the value of the flagset manually with an integer.
 	// Please think twice before using this.
-	static Self FromInt (TT value) { return Self (static_cast<T> (value)); }
+	static constexpr Self FromInt (TT value) { return Self (static_cast<T> (value)); }
 
 private:
-	template<typename X> Self operator| (X value) const { return Self::FromInt (Value | value); }
-	template<typename X> Self operator& (X value) const { return Self::FromInt (Value & value); }
-	template<typename X> Self operator^ (X value) const { return Self::FromInt (Value ^ value); }
+	template<typename X> constexpr Self operator| (X value) const { return Self::FromInt (Value | value); }
+	template<typename X> constexpr Self operator& (X value) const { return Self::FromInt (Value & value); }
+	template<typename X> constexpr Self operator^ (X value) const { return Self::FromInt (Value ^ value); }
 
 public:	// to be removed.
 	TT Value;
@@ -98,11 +98,11 @@ public:	// to be removed.
  * Additional operators for TFlags types.
  */
 #define DEFINE_TFLAGS_OPERATORS(T) \
-inline T operator| (T::EnumType a, T::EnumType b) { return T::FromInt (T::IntType (a) | T::IntType (b)); } \
-inline T operator& (T::EnumType a, T::EnumType b) { return T::FromInt (T::IntType (a) & T::IntType (b)); } \
-inline T operator^ (T::EnumType a, T::EnumType b) { return T::FromInt (T::IntType (a) ^ T::IntType (b)); } \
-inline T operator| (T::EnumType a, T b) { return T::FromInt (T::IntType (a) | T::IntType (b)); } \
-inline T operator& (T::EnumType a, T b) { return T::FromInt (T::IntType (a) & T::IntType (b)); } \
-inline T operator^ (T::EnumType a, T b) { return T::FromInt (T::IntType (a) ^ T::IntType (b)); } \
-inline T operator~ (T::EnumType a) { return T::FromInt (~T::IntType (a)); }
+constexpr inline T operator| (T::EnumType a, T::EnumType b) { return T::FromInt (T::IntType (a) | T::IntType (b)); } \
+constexpr inline T operator& (T::EnumType a, T::EnumType b) { return T::FromInt (T::IntType (a) & T::IntType (b)); } \
+constexpr inline T operator^ (T::EnumType a, T::EnumType b) { return T::FromInt (T::IntType (a) ^ T::IntType (b)); } \
+constexpr inline T operator| (T::EnumType a, T b) { return T::FromInt (T::IntType (a) | T::IntType (b)); } \
+constexpr inline T operator& (T::EnumType a, T b) { return T::FromInt (T::IntType (a) & T::IntType (b)); } \
+constexpr inline T operator^ (T::EnumType a, T b) { return T::FromInt (T::IntType (a) ^ T::IntType (b)); } \
+constexpr inline T operator~ (T::EnumType a) { return T::FromInt (~T::IntType (a)); }
 

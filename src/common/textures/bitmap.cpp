@@ -68,7 +68,6 @@ void iCopyColors(uint8_t *pout, const uint8_t *pin, int count, int step, FCopyIn
 	int i;
 	int fac;
 	uint8_t r,g,b;
-	int gray;
 	int a;
 
 	switch(inf? inf->blend : BLEND_NONE)
@@ -98,7 +97,7 @@ void iCopyColors(uint8_t *pout, const uint8_t *pin, int count, int step, FCopyIn
 			if (TBlend::ProcessAlpha0() || a)
 			{
 				int gray = TSrc::Gray(pin)>>4;
-	
+
 				TBlend::OpC(pout[TDest::RED],   IcePalette[gray][0], a, inf);
 				TBlend::OpC(pout[TDest::GREEN], IcePalette[gray][1], a, inf);
 				TBlend::OpC(pout[TDest::BLUE],  IcePalette[gray][2], a, inf);
@@ -119,7 +118,7 @@ void iCopyColors(uint8_t *pout, const uint8_t *pin, int count, int step, FCopyIn
 				a = TSrc::A(pin, tr, tg, tb);
 				if (TBlend::ProcessAlpha0() || a)
 				{
-					gray = clamp<int>(TSrc::Gray(pin),0,255);
+					int gray = clamp<int>(TSrc::Gray(pin),0,255);
 
 					PalEntry pe = cm->GrayscaleToColor[gray];
 					TBlend::OpC(pout[TDest::RED], pe.r , a, inf);
@@ -140,7 +139,7 @@ void iCopyColors(uint8_t *pout, const uint8_t *pin, int count, int step, FCopyIn
 			a = TSrc::A(pin, tr, tg, tb);
 			if (TBlend::ProcessAlpha0() || a)
 				{
-					gray = TSrc::Gray(pin);
+					int gray = TSrc::Gray(pin);
 					r = (TSrc::R(pin)*(31-fac) + gray*fac)/31;
 					g = (TSrc::G(pin)*(31-fac) + gray*fac)/31;
 					b = (TSrc::B(pin)*(31-fac) + gray*fac)/31;
@@ -332,7 +331,7 @@ bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
 		srcwidth = cr->x + cr->width - originx;
 		if (srcwidth<=0) return false;
 	}
-		
+
 	if (originy < cr->y)
 	{
 		int skip = cr->y - originy;

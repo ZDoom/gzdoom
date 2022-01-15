@@ -309,7 +309,6 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, GetValue)
 		}
 	}
 	ACTION_RETURN_FLOAT(v);
-	return 1;
 }
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
@@ -337,14 +336,12 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
 	}
 
 	ACTION_RETURN_FLOAT(v);
-	return 1;
 }
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, GrayCheck)
 {
 	PARAM_PROLOGUE;
 	ACTION_RETURN_BOOL(CurrentEnv->Builtin);
-	return 1;
 }
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, GetSelectedEnvironment)

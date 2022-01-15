@@ -126,7 +126,7 @@ void FNotifyBufferBase::Tick()
 	{
 		Text[i].Ticker++;
 	}
-	
+
 	for (i = 0; i < Text.Size(); ++i)
 	{
 		if (Text[i].TimeOut != 0 && Text[i].TimeOut > Text[i].Ticker)

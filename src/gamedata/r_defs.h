@@ -785,7 +785,6 @@ public:
 
 	bool IsLinked(sector_t *other, bool ceiling) const;
 
-	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	void RemoveForceField();
 	int Index() const { return sectornum; }
 
@@ -1767,6 +1766,8 @@ int GetCeilingLight(const sector_t *);
 double GetFriction(const sector_t *self, int plane, double *movefac);
 double HighestCeilingAt(sector_t *sec, double x, double y, sector_t **resultsec = nullptr);
 double LowestFloorAt(sector_t *sec, double x, double y, sector_t **resultsec = nullptr);
+sector_t* P_NextSpecialSector(sector_t* sect, int type, sector_t* prev);
+sector_t* P_NextSpecialSectorVC(sector_t* sect, int type); // uses validcount
 
 inline void sector_t::RemoveForceField() { return ::RemoveForceField(this); }
 inline bool sector_t::PlaneMoving(int pos) { return !!::PlaneMoving(this, pos); }

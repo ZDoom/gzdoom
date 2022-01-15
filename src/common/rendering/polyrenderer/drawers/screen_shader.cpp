@@ -456,7 +456,7 @@ static void GetLightColor(int x0, int x1, PolyTriangleThreadData* thread)
 		uint32_t fogG = (int)((thread->mainVertexShader.Data.uFogColor.g) * 255.0f);
 		uint32_t fogB = (int)((thread->mainVertexShader.Data.uFogColor.b) * 255.0f);
 		float uFogDensity = thread->PushConstants->uFogDensity;
-		
+
 		float* w = thread->scanline.W;
 		for (int x = x0; x < x1; x++)
 		{

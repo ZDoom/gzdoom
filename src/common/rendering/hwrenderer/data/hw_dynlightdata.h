@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -22,6 +22,8 @@
 
 #ifndef __GLC_DYNLIGHT_H
 #define __GLC_DYNLIGHT_H
+
+#include "tarray.h"
 
 struct FDynLightData
 {
@@ -49,7 +51,7 @@ struct FDynLightData
 		if (siz[1] > max) siz[1] = max;
 		if (siz[2] > max) siz[2] = max;
 	}
-    
+
 
 };
 

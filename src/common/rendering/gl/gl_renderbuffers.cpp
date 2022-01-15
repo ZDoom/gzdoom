@@ -444,8 +444,6 @@ bool FGLRenderBuffers::CheckFrameBufferCompleteness()
 	if (result == GL_FRAMEBUFFER_COMPLETE)
 		return true;
 
-	bool FailedCreate = true;
-
 	if (gl_debug_level > 0)
 	{
 		FString error = "glCheckFramebufferStatus failed: ";

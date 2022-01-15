@@ -218,14 +218,13 @@ void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, Lump
 
 	for(unsigned i=0;i<filenames.Size(); i++)
 	{
-		int baselump = NumEntries;
 		AddFile (filenames[i], nullptr, quiet, filter);
-		
+
 		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
 		FStringf path("filter/%s", Files.Last()->GetHash().GetChars());
 		MoveLumpsInFolder(path);
 	}
-	
+
 	NumEntries = FileInfo.Size();
 	if (NumEntries == 0)
 	{
@@ -284,7 +283,7 @@ int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, in
 	FileInfo.Last().resourceId = id;
 	return FileInfo.Size()-1;
 }
- 
+
 //==========================================================================
 //
 // AddFile
@@ -333,7 +332,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 	startlump = NumEntries;
 
 	FResourceFile *resfile;
-	
+
 	if (!isdir)
 		resfile = FResourceFile::OpenResourceFile(filename, filereader, quiet, false, filter);
 	else
@@ -946,10 +945,10 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 	{
 		return;
 	}
-	
+
 	auto len = strlen(path);
 	auto rfnum = FileInfo.Last().rfnum;
-	
+
 	unsigned i;
 	for (i = 0; i < FileInfo.Size(); i++)
 	{
@@ -1022,7 +1021,7 @@ int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, in
 	{
 		if (anyns || lump_p->Namespace == ns_global)
 		{
-			
+
 			for(const char **name = names; *name != NULL; name++)
 			{
 				if (!strnicmp(*name, lump_p->shortName.String, 8))
@@ -1512,7 +1511,7 @@ int FileSystem::GetEntryCount (int rfnum) const noexcept
 	{
 		return 0;
 	}
-	
+
 	return Files[rfnum]->LumpCount();
 }
 
@@ -1669,3 +1668,20 @@ FResourceLump* FileSystem::GetFileAt(int no)
 	return FileInfo[no].lump;
 }
 
+#include "c_dispatch.h"
+
+CCMD(fs_dir)
+{
+	int numfiles = fileSystem.GetNumEntries();
+
+	for (int i = 0; i < numfiles; i++)
+	{
+		auto container = fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(i));
+		auto fn1 = fileSystem.GetFileFullName(i);
+		auto fns = fileSystem.GetFileShortName(i);
+		auto fnid = fileSystem.GetResourceId(i);
+		auto length = fileSystem.FileLength(i);
+		bool hidden = fileSystem.FindFile(fn1) != i;
+		Printf(PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
+	}
+}

@@ -467,7 +467,7 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 	double texheight = tex->GetDisplayHeight() * scaleY;
 	double texleftoffs = tex->GetDisplayLeftOffset() * scaleY;
 	double textopoffs = tex->GetDisplayTopOffset() * scaleY;
-	double boxleftoffs, boxtopoffs;
+	double boxleftoffs = 0, boxtopoffs = 0;
 
 	if (boxwidth > 0 || boxheight > 0)
 	{
@@ -618,8 +618,6 @@ void DStatusBarCore::DrawRotated(FGameTexture* tex, double x, double y, int flag
 {
 	double texwidth = tex->GetDisplayWidth() * scaleX;
 	double texheight = tex->GetDisplayHeight() * scaleY;
-	double texleftoffs = tex->GetDisplayLeftOffset() * scaleY;
-	double textopoffs = tex->GetDisplayTopOffset() * scaleY;
 
 	// resolve auto-alignment before making any adjustments to the position values.
 	if (!(flags & DI_SCREEN_MANUAL_ALIGN))

@@ -288,8 +288,8 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 
 	wchar_t wbuf[256];
 	int bpos = 0;
-	CHARRANGE selection;
-	CHARRANGE endselection;
+	CHARRANGE selection = {};
+	CHARRANGE endselection = {};
 	LONG lines_before = 0, lines_after;
 	CHARFORMAT format;
 
@@ -868,7 +868,7 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 	// Delete the bitmaps.
 	DeleteObject(and_mask);
 	DeleteObject(color_mask);
-	
+
 	return cursor;
 }
 

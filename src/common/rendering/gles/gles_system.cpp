@@ -63,7 +63,7 @@ static PROC(WINAPI* getprocaddress)(LPCSTR name);
 static void* LoadGLES2Proc(const char* name)
 {
 	HINSTANCE hGetProcIDDLL = LoadLibraryA("libGLESv2.dll");
-	
+
 	int error =	GetLastError();
 
 	void* addr = GetProcAddress(hGetProcIDDLL, name);
@@ -169,14 +169,14 @@ namespace OpenGLESRenderer
 
 		gles.modelstring = (char*)glGetString(GL_RENDERER);
 		gles.vendorstring = (char*)glGetString(GL_VENDOR);
-	
+
 		gl_customshader = false;
 
 		GLint maxTextureSize[1];
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize);
 
 		gles.max_texturesize = maxTextureSize[0];
-		
+
 		Printf("GL_MAX_TEXTURE_SIZE: %d\n", gles.max_texturesize);
 
 #if USE_GLES2
@@ -189,7 +189,7 @@ namespace OpenGLESRenderer
 		gles.useMappedBuffers = true;
 		gles.depthClampAvailable = true;
 #endif
-		
+
 		gles.numlightvectors = (gles.maxlights * LIGHT_VEC4_NUM);
 	}
 }

@@ -265,7 +265,7 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func)
 {
-	VMFunction *callfunc;
+	VMFunction *callfunc = nullptr;
 	const char *name;
 	int col;
 	int mode;
@@ -526,7 +526,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			{
 				printf_wrapper(out, ",%d\n", code[++i].i24);
 			}
-			else if (code[i].op == OP_CALL_K)
+			else if (code[i].op == OP_CALL_K && callfunc)
 			{
 				printf_wrapper(out, "  [%s]\n", callfunc->PrintableName.GetChars());
 			}
@@ -665,7 +665,6 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 	default:
 		return col+printf_wrapper(out, "$%d", arg);
 	}
-	return col;
 }
 
 //==========================================================================

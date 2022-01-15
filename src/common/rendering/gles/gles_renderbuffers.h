@@ -113,7 +113,7 @@ public:
 
 private:
 	void ClearScene();
-	
+
 	void CreateScene(int width, int height);
 	void CreatePipeline(int width, int height);
 

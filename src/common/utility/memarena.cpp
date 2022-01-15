@@ -117,6 +117,14 @@ void *FMemArena::Alloc(size_t size)
 	return iAlloc((size + 15) & ~15);
 }
 
+void* FMemArena::Calloc(size_t size)
+{
+	size = (size + 15) & ~15;
+	auto mem = iAlloc(size);
+	memset(mem, 0, size);
+	return mem;
+}
+
 //==========================================================================
 //
 // FMemArena :: FreeAll

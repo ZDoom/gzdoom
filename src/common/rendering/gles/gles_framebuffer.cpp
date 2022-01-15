@@ -67,8 +67,6 @@ EXTERN_CVAR(Int, gl_pipeline_depth);
 
 EXTERN_CVAR(Bool, gl_sort_textures);
 
-void Draw2D(F2DDrawer *drawer, FRenderState &state);
-
 extern bool vid_hdr_active;
 
 namespace OpenGLESRenderer
@@ -136,8 +134,9 @@ void OpenGLFrameBuffer::InitializeState()
 	glEnable(GL_DITHER);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	
+
 	glEnable(GL_BLEND);
+	if (gles.depthClampAvailable) glEnable(GL_DEPTH_CLAMP);
 
 	glDisable(GL_DEPTH_TEST);
 
@@ -236,7 +235,7 @@ const char* OpenGLFrameBuffer::DeviceName() const
 
 void OpenGLFrameBuffer::Swap()
 {
-	
+
 	Finish.Reset();
 	Finish.Clock();
 
@@ -244,7 +243,7 @@ void OpenGLFrameBuffer::Swap()
 
 	FPSLimit();
 	SwapBuffers();
-	
+
 	mVertexData->NextPipelineBuffer();
 	mVertexData->WaitSync();
 
@@ -286,7 +285,6 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
-	int flags = mat->GetScaleFlags();
 	int numLayers = mat->NumLayers();
 	MaterialLayerInfo* layer;
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation, &layer));

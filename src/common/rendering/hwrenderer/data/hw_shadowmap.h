@@ -4,6 +4,7 @@
 #include "hw_aabbtree.h"
 #include "stats.h"
 #include <memory>
+#include <functional>
 
 class IDataBuffer;
 

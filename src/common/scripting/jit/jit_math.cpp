@@ -902,7 +902,7 @@ void JitCompiler::EmitMINF_RK()
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.minpd(regF[A], rb); // minsd requires SSE 4.1
 }
-	
+
 void JitCompiler::EmitMAXF_RR()
 {
 	auto rc = CheckRegF(C, A);
@@ -919,7 +919,7 @@ void JitCompiler::EmitMAXF_RK()
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.maxpd(regF[A], rb); // maxsd requires SSE 4.1
 }
-	
+
 void JitCompiler::EmitATAN2()
 {
 	auto result = newResultXmmSd();
@@ -1441,7 +1441,7 @@ void JitCompiler::EmitEQV3_R()
 		EmitVectorComparison<3> (check, fail, success);
 	});
 }
-	
+
 void JitCompiler::EmitEQV3_K()
 {
 	I_Error("EQV3_K is not used.");

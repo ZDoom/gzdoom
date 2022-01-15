@@ -67,7 +67,7 @@ public:
 
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	std::shared_ptr<FGLDebug> mDebug;	// Debug API
-    
+
     FTexture *WipeStartScreen() override;
     FTexture *WipeEndScreen() override;
 

@@ -311,14 +311,13 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex->GetTexture())->NeedUpdate();
 
 	clampmode = tex->GetClampMode(clampmode);
-	
+
 	// avoid rebinding the same texture multiple times.
 	if (mat == lastMaterial && lastClamp == clampmode && translation == lastTranslation) return;
 	lastMaterial = mat;
 	lastClamp = clampmode;
 	lastTranslation = translation;
 
-	int usebright = false;
 	int maxbound = 0;
 
 	int numLayers = mat->NumLayers();

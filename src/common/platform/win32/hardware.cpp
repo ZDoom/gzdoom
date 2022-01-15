@@ -165,5 +165,5 @@ void I_InitGraphics ()
 	// we somehow STILL don't have a display!!
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
-	
+
 }

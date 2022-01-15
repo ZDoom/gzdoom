@@ -751,9 +751,9 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 
 		if (lumpnum >= 0 && (lumplen = fileSystem.FileLength(lumpnum)) == StrifeStartupPicSizes[i])
 		{
-			auto lumpr = fileSystem.OpenFileReader(lumpnum);
+			auto lumpr1 = fileSystem.OpenFileReader(lumpnum);
 			StartupPics[i] = new uint8_t[lumplen];
-			lumpr.Read(StartupPics[i], lumplen);
+			lumpr1.Read(StartupPics[i], lumplen);
 		}
 	}
 

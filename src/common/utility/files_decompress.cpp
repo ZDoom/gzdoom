@@ -107,7 +107,7 @@ class DecompressorZ : public DecompressorBase
 	bool SawEOF;
 	z_stream Stream;
 	uint8_t InBuff[BUFF_SIZE];
-	
+
 public:
 	DecompressorZ (FileReader *file, bool zip, const std::function<void(const char*)>& cb)
 	: SawEOF(false)
@@ -198,7 +198,7 @@ class DecompressorBZ2 : public DecompressorBase
 	bool SawEOF;
 	bz_stream Stream;
 	uint8_t InBuff[BUFF_SIZE];
-	
+
 public:
 	DecompressorBZ2 (FileReader *file, const std::function<void(const char*)>& cb)
 	: SawEOF(false)
@@ -627,7 +627,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_LZSS:
 			dec = new DecompressorLZSS(p, cb);
 			break;
-			
+
 		// todo: METHOD_IMPLODE, METHOD_SHRINK
 		default:
 			return false;

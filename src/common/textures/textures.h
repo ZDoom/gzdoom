@@ -249,10 +249,10 @@ public:
 
 	int GetWidth() { return Width; }
 	int GetHeight() { return Height; }
-	
+
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isCanvas() const { return bHasCanvas; }
-	
+
 	int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	void SetSourceLump(int sl) { SourceLump  = sl; }
 	bool FindHoles(const unsigned char * buffer, int w, int h);

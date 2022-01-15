@@ -11,13 +11,19 @@ jobs:
       matrix:
         config:
         - {
-            name: "Visual Studio 64-bit",
+            name: "Visual Studio 2022",
+            os: windows-2022,
+            extra_options: "-A x64",
+            build_type: "Release"
+          }
+        - {
+            name: "Visual Studio 2019",
             os: windows-2019,
             extra_options: "-A x64",
             build_type: "Release"
           }
         - {
-            name: "Visual Studio 64-bit",
+            name: "Visual Studio 2019",
             os: windows-2019,
             extra_options: "-A x64",
             build_type: "Debug"

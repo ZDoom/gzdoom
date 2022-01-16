@@ -71,6 +71,8 @@
 
 
 FBoolCVar noisedebug("noise", false, 0);	// [RH] Print sound debugging info?
+CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, i_pauseinbackground, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
 static FString LastLocalSndInfo;
@@ -930,7 +932,16 @@ void S_SerializeSounds(FSerializer &arc)
 
 void S_SetSoundPaused(int state)
 {
-	if (state)
+	if (!netgame && (i_pauseinbackground)
+#ifdef _DEBUG
+		&& !demoplayback
+#endif
+		)
+	{
+		pauseext = !state;
+	}
+
+	if ((state || i_soundinbackground) && !pauseext)
 	{
 		if (paused == 0)
 		{
@@ -953,14 +964,6 @@ void S_SetSoundPaused(int state)
 					SoundRenderer::INACTIVE_Mute);
 			}
 		}
-	}
-	if (!netgame
-#ifdef _DEBUG
-		&& !demoplayback
-#endif
-		)
-	{
-		pauseext = !state;
 	}
 }
 

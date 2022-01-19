@@ -10,6 +10,7 @@ xx(Object)
 xx(Actor)
 xx(Class)
 xx(Thinker)
+xx(Crosshairs)
 
 xx(Untranslated)
 
@@ -30,6 +31,9 @@ xx(ColorAdd)
 xx(Multiply)
 
 // Special names for compiler backend
+xx(Name)
+xx(Clamp)
+xx(Abs)
 xx(Random)
 xx(FRandom)
 xx(Random2)
@@ -43,7 +47,9 @@ xx(GetParentClass)
 xx(GetClassName)
 xx(IsAbstract)
 xx(GetDefaultByType)
+xx(Floor)
 xx(Exp)
+xx(Log)
 xx(Log10)
 xx(Ceil)
 xx(ACos)
@@ -63,6 +69,16 @@ xx(New)
 
 xx(Static)
 xx(Staticconst)
+
+// compatibility crap that GZDoom needs in the backend.
+xx(ACS_NamedExecuteWithResult)
+xx(__decorate_internal_int__)
+xx(__decorate_internal_bool__)
+xx(__decorate_internal_float__)
+xx(Weapon)
+xx(Item)
+xx(LevelLocals)
+xx(Level)
 
 xy(menu_cursor, "menu/cursor")
 xy(menu_choose, "menu/choose")
@@ -145,6 +161,11 @@ xx(r)
 xx(g)
 xx(b)
 
+xx(X)
+xx(Y)
+xx(Z)
+xx(XY)
+
 xx(Prototype)
 xx(Void)
 xx(Label)
@@ -186,6 +207,7 @@ xx(EndGameMenu)
 xx(HelpMenu)
 xx(SoundMenu)
 xx(ConfirmPlayerReset)
+xx(JoystickOptions)
 
 xx(OptionMenuItemSubmenu)
 xx(OptionMenuItemCommand)
@@ -211,6 +233,3 @@ xx(BuiltinNameToClass)
 xx(BuiltinClassCast)
 
 xx(ScreenJobRunner)
-
-
-

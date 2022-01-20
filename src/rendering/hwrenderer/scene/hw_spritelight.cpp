@@ -37,6 +37,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "models.h"
+#include <cmath>	// needed for std::floor on mac
 
 template<class T>
 T smoothstep(const T edge0, const T edge1, const T x)

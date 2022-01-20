@@ -42,6 +42,9 @@ enum ENamedName
 #define xx(n) NAME_##n,
 #define xy(n, s) NAME_##n,
 #include "namedef.h"
+#if __has_include("namedef_custom.h")
+	#include "namedef_custom.h"
+#endif
 #undef xx
 #undef xy
 };

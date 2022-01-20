@@ -59,6 +59,7 @@
 
 
 #include <math.h>
+#include <cmath>	// needed for std::floor on mac
 #include "maploader.h"
 #include "c_cvars.h"
 #include "actor.h"

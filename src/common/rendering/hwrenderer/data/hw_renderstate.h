@@ -585,7 +585,7 @@ public:
 
 	void SetDepthBias(float a, float b)
 	{
-		mBias.mChanged = mBias.mFactor != a || mBias.mUnits != b;
+		mBias.mChanged |= mBias.mFactor != a || mBias.mUnits != b;
 		mBias.mFactor = a;
 		mBias.mUnits = b;
 	}
@@ -597,7 +597,7 @@ public:
 
 	void ClearDepthBias()
 	{
-		mBias.mChanged = mBias.mFactor != 0 || mBias.mUnits != 0;
+		mBias.mChanged |= mBias.mFactor != 0 || mBias.mUnits != 0;
 		mBias.mFactor = 0;
 		mBias.mUnits = 0;
 	}

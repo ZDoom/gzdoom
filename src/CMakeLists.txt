@@ -937,7 +937,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/hw_vertexbuilder.cpp
 	rendering/hwrenderer/doom_aabbtree.cpp
 	rendering/hwrenderer/hw_models.cpp
-	rendering/hwrenderer/hw_postprocessshader.cpp
 	rendering/hwrenderer/hw_precache.cpp
 	rendering/hwrenderer/scene/hw_lighting.cpp
 	rendering/hwrenderer/scene/hw_drawlistadd.cpp
@@ -1152,6 +1151,7 @@ set (PCH_SOURCES
 	common/rendering/hwrenderer/data/hw_aabbtree.cpp
 	common/rendering/hwrenderer/data/hw_shadowmap.cpp
 	common/rendering/hwrenderer/data/hw_shaderpatcher.cpp
+	common/rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
 	common/rendering/hwrenderer/postprocessing/hw_postprocess.cpp
 	common/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	common/rendering/gl_load/gl_interface.cpp

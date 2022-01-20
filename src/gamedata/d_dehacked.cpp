@@ -184,7 +184,7 @@ struct MBFParamState
 	int GetSoundArg(int i, int def = 0)
 	{
 		int num = argsused & (1 << i) ? (int)args[i] : def;
-		if (num > 0 && num < int(SoundMap.Size())) return SoundMap[num];
+		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1];
 		return 0;
 	}
 
@@ -237,6 +237,7 @@ static AmmoPerAttack AmmoPerAttacks[] = {
 	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
 	{ NAME_A_FireOldBFG, 1},
 	{ NAME_A_FireRailgun, 1},
+	{ NAME_A_ConsumeAmmo, 1}, // MBF21
 	{ NAME_None, 0}
 };
 
@@ -886,12 +887,12 @@ static void CreateWeaponBulletAttackFunc(FunctionCallEmitter &emitters, int valu
 
 static void CreateWeaponMeleeAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 {
-	state->ValidateArgCount(5, "A_WeaponBulletAttack");
+	state->ValidateArgCount(5, "A_WeaponMeleeAttack");
 	emitters.AddParameterIntConst(state->GetIntArg(0, 2));
 	emitters.AddParameterIntConst(state->GetIntArg(1, 10));
 	emitters.AddParameterFloatConst(state->GetFloatArg(2, 1));
-	emitters.AddParameterIntConst(state->GetIntArg(3));
-	emitters.AddParameterIntConst(state->GetIntArg(4));
+	emitters.AddParameterIntConst(state->GetSoundArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
 }
 
 static void CreateWeaponSoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)

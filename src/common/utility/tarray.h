@@ -61,7 +61,13 @@
 #include <stdint.h>			// for mingw
 #endif
 
-#include "m_alloc.h"
+#if __has_include("m_alloc.h")
+	#include "m_alloc.h"
+#else
+	#define M_Malloc malloc
+	#define M_Realloc realloc
+	#define M_Free free
+#endif
 
 template<typename T> class TIterator
 {
@@ -1925,3 +1931,8 @@ private:
 	unsigned int Count;
 };
 
+#if !__has_include("m_alloc.h")
+	#undef M_Malloc
+	#undef M_Realloc
+	#undef M_Free
+#endif

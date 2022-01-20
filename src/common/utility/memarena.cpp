@@ -40,7 +40,14 @@
 #include "basics.h"
 #include "memarena.h"
 #include "cmdlib.h"
-#include "m_alloc.h"
+
+#if __has_include("m_alloc.h")
+	#include "m_alloc.h"
+#else
+	#define M_Malloc malloc
+	#define M_Realloc realloc
+	#define M_Free free
+#endif
 
 struct FMemArena::Block
 {

@@ -423,6 +423,7 @@ struct LevelLocals native
 	native readonly bool monsterstelefrag;
 	native readonly bool actownspecial;
 	native readonly bool sndseqtotalctrl;
+	native readonly bool changemapcheat;
 	native bool allmap;
 	native readonly bool missilesactivateimpact;
 	native readonly bool monsterfallingdamage;

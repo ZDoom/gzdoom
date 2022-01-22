@@ -704,7 +704,7 @@ struct Shader native
 	// This interface was deprecated for the pointless player dependency 
 	private static bool IsConsolePlayer(PlayerInfo player)
 	{
-		return player && !player.mo && player == players[consoleplayer];
+		return player && player.mo && player == players[consoleplayer];
 	}
 	deprecated("4.8", "Use PPShader.SetEnabled() instead") clearscope static void SetEnabled(PlayerInfo player, string shaderName, bool enable)
 	{

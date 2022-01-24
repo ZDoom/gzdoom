@@ -83,6 +83,7 @@
 #include "vm.h"
 #include "texturemanager.h"
 #include "hw_vertexbuilder.h"
+#include "version.h"
 
 enum
 {
@@ -3339,6 +3340,10 @@ void MapLoader::LoadLightmap(MapData *map)
 	Level->LPMinY = 0;
 	Level->LPWidth = 0;
 	Level->LPHeight = 0;
+
+	if (!Args->CheckParm("-enablelightmaps"))
+		return;		// this feature is still too early WIP to allow general access
+	Printf(PRINT_HIGH, "WARNING! Lightmaps are an experimental feature and are subject to change before being finalized. Do not expect this to work as-is in future releases of %s!\n", GAMENAME);
 
 	if (!map->Size(ML_LIGHTMAP))
 		return;

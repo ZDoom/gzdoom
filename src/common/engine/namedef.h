@@ -1032,6 +1032,8 @@ xx(Crosshair)
 xx(WeaponFlags)
 xx(DropTime)
 xx(PickupSound)
+xx(WeaponScaleX)
+xx(WeaponScaleY)
 
 // PlayerPawn member fields
 xx(ColorRangeStart)

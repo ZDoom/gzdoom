@@ -258,6 +258,26 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, FindPSprite)	// the underscore is needed to 
 //
 //------------------------------------------------------------------------
 
+static DPSprite *P_CreatePsprite(player_t *player, AActor *caller, int layer)
+{
+	DPSprite *pspr = Create<DPSprite>(player, caller, layer);
+
+	// [XA] apply WeaponScaleX/WeaponScaleY properties for weapon psprites
+	if (caller != nullptr && caller->IsKindOf(NAME_Weapon))
+	{
+		pspr->baseScale.X = caller->FloatVar(NAME_WeaponScaleX);
+		pspr->baseScale.Y = caller->FloatVar(NAME_WeaponScaleY);
+	}
+
+	return pspr;
+}
+
+//------------------------------------------------------------------------
+//
+//
+//
+//------------------------------------------------------------------------
+
 void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending)
 {
 	if (player == nullptr) return;
@@ -301,7 +321,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
 	{
-		pspr = Create<DPSprite>(this, newcaller, layer);
+		pspr = P_CreatePsprite(this, newcaller, layer);
 	}
 	else
 	{
@@ -1112,7 +1132,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 	}
 
 	DPSprite *pspr;
-	pspr = Create<DPSprite>(player, stateowner, layer);
+	pspr = P_CreatePsprite(player, stateowner, layer);
 	pspr->SetState(state);
 	ACTION_RETURN_BOOL(true);
 }

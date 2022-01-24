@@ -25,7 +25,7 @@ class Weapon : StateProvider
 	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
 	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
 	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
-	float WeaponScaleX, WeaponScaleY;		// [XA] Weapon scale. Defines the scale for the held weapon sprites (PSprite). Defaults to (1.0, 1.2) since that's what Doom does.
+	double WeaponScaleX, WeaponScaleY;		// [XA] Weapon scale. Defines the scale for the held weapon sprites (PSprite). Defaults to (1.0, 1.2) since that's what Doom does.
 	Ammo Ammo1, Ammo2;						// In-inventory instance variables
 	Weapon SisterWeapon;
 	double FOVScale;

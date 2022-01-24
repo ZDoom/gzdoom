@@ -180,7 +180,7 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 			fbuf[i] = convert[i] * mus_playing.replayGainFactor * (1.f/32768.f);
 		}
 	}
-	
+
 	if (!written)
 	{
 		memset((char*)buff, 0, len);
@@ -298,7 +298,7 @@ void S_UpdateMusic ()
 	if (mus_playing.handle != nullptr)
 	{
 		ZMusic_Update(mus_playing.handle);
-		
+
 		// [RH] Update music and/or playlist. IsPlaying() must be called
 		// to attempt to reconnect to broken net streams and to advance the
 		// playlist when the current song finishes.
@@ -603,13 +603,13 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 		{
 			float* sbuf = (float*)readbuffer.Data();
 			int numsamples = fmt.mBufferSize / 8;
-			auto index = lbuffer.Reserve(numsamples);
+			auto addr = lbuffer.Reserve(numsamples);
 			rbuffer.Reserve(numsamples);
 
 			for (int i = 0; i < numsamples; i++)
 			{
-				lbuffer[index + i] = sbuf[i * 2] * 32768.f;
-				rbuffer[index + i] = sbuf[i * 2 + 1] * 32768.f;
+				lbuffer[addr + i] = sbuf[i * 2] * 32768.f;
+				rbuffer[addr + i] = sbuf[i * 2 + 1] * 32768.f;
 			}
 		}
 		float accTime = lbuffer.Size() / (float)fmt.mSampleRate;
@@ -684,8 +684,6 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 		return true;
 	}
 
-	int lumpnum = -1;
-	int length = 0;
 	ZMusic_MusicStream handle = nullptr;
 	MidiDeviceSetting* devp = MidiDevices.CheckKey(musicname);
 

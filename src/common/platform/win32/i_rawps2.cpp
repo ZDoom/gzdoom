@@ -503,7 +503,7 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 
 	// Generate events for buttons that have changed.
 	int buttons = 0;
-	
+
 	// If we know we are digital, ignore the D-Pad.
 	if (!digital)
 	{
@@ -538,7 +538,7 @@ void FRawPS2Controller::ProcessThumbstick(int value1, AxisInfo *axis1, int value
 {
 	uint8_t buttonstate;
 	double axisval1, axisval2;
-	
+
 	axisval1 = value1 * (2.0 / 255) - 1.0;
 	axisval2 = value2 * (2.0 / 255) - 1.0;
 	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);

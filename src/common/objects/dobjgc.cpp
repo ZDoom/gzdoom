@@ -3,7 +3,7 @@
 ** The garbage collector. Based largely on Lua's.
 **
 **---------------------------------------------------------------------------
-** Copyright 2008 Randy Heit
+** Copyright 2008-2022 Marisa Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -82,13 +82,19 @@
 ** infinity, where each step performs a full collection.) You can also
 ** change this value dynamically.
 */
-#define DEFAULT_GCMUL		400 // GC runs 'quadruple the speed' of memory allocation
+#define DEFAULT_GCMUL		200 // GC runs 'double the speed' of memory allocation
 
-// Number of sectors to mark for each step.
+// Minimum step size
+#define GCSTEPSIZE		(sizeof(DObject) * 16)
 
-#define GCSTEPSIZE		1024u
+// Maximum number of elements to sweep in a single step
 #define GCSWEEPMAX		40
-#define GCSWEEPCOST		10
+
+// Cost of sweeping one element (the size of a small object divided by
+// some adjust for the sweep speed)
+#define GCSWEEPCOST		(sizeof(DObject) / 4)
+
+// Cost of calling of one destructor
 #define GCFINALIZECOST	100
 
 // TYPES -------------------------------------------------------------------
@@ -99,6 +105,8 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static size_t CalcStepSize();
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -108,7 +116,6 @@ namespace GC
 size_t AllocBytes;
 size_t Threshold;
 size_t Estimate;
-size_t AllocCount;
 DObject *Gray;
 DObject *Root;
 DObject *SoftRoots;
@@ -118,10 +125,14 @@ EGCState State = GCS_Pause;
 int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
 int StepCount;
-size_t Dept;
+uint64_t CheckTime;
 bool FinalGC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int LastCollectTime;		// Time last time collector finished
+static size_t LastCollectAlloc;	// Memory allocation when collector finished
+static size_t MinStepSize;		// Cover at least this much memory per step
 
 // CODE --------------------------------------------------------------------
 
@@ -161,8 +172,8 @@ size_t PropagateMark()
 //
 // SweepList
 //
-// Runs a limited sweep on a list, returning the location where to resume
-// the sweep at next time. (FIXME: Horrible Engrish in this description.)
+// Runs a limited sweep on a list, returning the position in the list just
+// after the last object swept.
 //
 //==========================================================================
 
@@ -256,6 +267,26 @@ void MarkArray(DObject **obj, size_t count)
 
 //==========================================================================
 //
+// CalcStepSize
+//
+// Decide how big a step should be based, depending on how long it took to
+// allocate up to the threshold from the amount left after the previous
+// collection.
+//
+//==========================================================================
+
+static size_t CalcStepSize()
+{
+	int time_passed = CheckTime - LastCollectTime;
+	auto alloc = min(LastCollectAlloc, Estimate);
+	size_t bytes_gained = AllocBytes > alloc ? AllocBytes - alloc : 0;
+	return (StepMul > 0 && time_passed > 0)
+		? std::max<size_t>(GCSTEPSIZE, bytes_gained / time_passed * StepMul / 100)
+		: std::numeric_limits<size_t>::max() / 2;		// no limit
+}
+
+//==========================================================================
+//
 // MarkRoot
 //
 // Mark the root set of objects.
@@ -310,6 +341,10 @@ static void Atomic()
 	SweepPos = &Root;
 	State = GCS_Sweep;
 	Estimate = AllocBytes;
+
+	// Now that we are about to start a sweep, establish a baseline minimum
+	// step size for how much memory we want to sweep each CheckGC().
+	MinStepSize = CalcStepSize();
 }
 
 //==========================================================================
@@ -354,7 +389,8 @@ static size_t SingleStep()
 
 	case GCS_Finalize:
 		State = GCS_Pause;		// end collection
-		Dept = 0;
+		LastCollectAlloc = AllocBytes;
+		LastCollectTime = CheckTime;
 		return 0;
 
 	default:
@@ -374,29 +410,26 @@ static size_t SingleStep()
 
 void Step()
 {
-	size_t lim = (GCSTEPSIZE/100) * StepMul;
-	size_t olim;
-	if (lim == 0)
-	{
-		lim = (~(size_t)0) / 2;		// no limit
-	}
-	Dept += AllocBytes - Threshold;
+	// We recalculate a step size in case the rate of allocation went up
+	// since we started sweeping because we don't want to fall behind.
+	// However, we also don't want to go slower than what was decided upon
+	// when the sweep began if the rate of allocation has slowed.
+	size_t lim = max(CalcStepSize(), MinStepSize);
 	do
 	{
-		olim = lim;
-		lim -= SingleStep();
-	} while (olim > lim && State != GCS_Pause);
-	if (State != GCS_Pause)
-	{
-		if (Dept < GCSTEPSIZE)
+		size_t done = SingleStep();
+		if (done < lim)
 		{
-			Threshold = AllocBytes + GCSTEPSIZE;	// - lim/StepMul
+			lim -= done;
 		}
 		else
 		{
-			Dept -= GCSTEPSIZE;
-			Threshold = AllocBytes;
+			lim = 0;
 		}
+	} while (lim && State != GCS_Pause);
+	if (State != GCS_Pause)
+	{
+		Threshold = AllocBytes;
 	}
 	else
 	{
@@ -571,16 +604,13 @@ ADD_STAT(gc)
 		"  Sweep  ",
 		"Finalize " };
 	FString out;
-	out.Format("[%s] Alloc:%6zuK  Thresh:%6zuK  Est:%6zuK  Steps: %d",
+	out.Format("[%s] Alloc:%6zuK  Thresh:%6zuK  Est:%6zuK  Steps: %d  %zuK",
 		StateStrings[GC::State],
 		(GC::AllocBytes + 1023) >> 10,
 		(GC::Threshold + 1023) >> 10,
 		(GC::Estimate + 1023) >> 10,
-		GC::StepCount);
-	if (GC::State != GC::GCS_Pause)
-	{
-		out.AppendFormat("  %zuK", (GC::Dept + 1023) >> 10);
-	}
+		GC::StepCount,
+		(GC::MinStepSize + 1023) >> 10);
 	return out;
 }
 

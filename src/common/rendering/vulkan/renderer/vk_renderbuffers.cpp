@@ -255,12 +255,12 @@ void VkRenderBuffers::CreateShadowmap()
 
 	if (!ShadowmapSampler)
 	{
-		SamplerBuilder builder;
-		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
-		builder.setMinFilter(VK_FILTER_NEAREST);
-		builder.setMagFilter(VK_FILTER_NEAREST);
-		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-		ShadowmapSampler = builder.create(fb->device);
+		SamplerBuilder samplerBuilder;
+		samplerBuilder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+		samplerBuilder.setMinFilter(VK_FILTER_NEAREST);
+		samplerBuilder.setMagFilter(VK_FILTER_NEAREST);
+		samplerBuilder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+		ShadowmapSampler = samplerBuilder.create(fb->device);
 		ShadowmapSampler->SetDebugName("VkRenderBuffers.ShadowmapSampler");
 	}
 }

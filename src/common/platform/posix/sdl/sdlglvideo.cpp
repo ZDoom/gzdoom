@@ -53,7 +53,7 @@
 #ifdef HAVE_GLES2
 #include "gles_framebuffer.h"
 #endif
- 
+
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
 #endif
@@ -94,8 +94,6 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
-
-CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -517,7 +515,7 @@ int SystemBaseFrameBuffer::GetClientWidth()
 		return width;
 	}
 #endif
-	
+
 #ifdef HAVE_VULKAN
 	assert(Priv::vulkanEnabled);
 	SDL_Vulkan_GetDrawableSize(Priv::window, &width, nullptr);
@@ -721,7 +719,7 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 		break;
 
 	case SDL_WINDOWEVENT_FOCUS_LOST:
-		S_SetSoundPaused(i_soundinbackground);
+		S_SetSoundPaused(0);
 		AppActive = false;
 		break;
 

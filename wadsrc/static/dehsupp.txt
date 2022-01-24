@@ -1199,7 +1199,7 @@ Aliases
 	A_MonsterMeleeAttack, MBF21_MonsterMeleeAttack,
 	A_RadiusDamage,	A_RadiusDamage,
 	A_HealChase,	MBF21_HealChase,
-	A_SeekTracer,	A_SeekerMissile,
+	A_SeekTracer,	MBF21_SeekTracer,
 	A_FindTracer,	A_FindTracer,
 	A_JumpIfHealthBelow, MBF21_JumpIfHealthBelow,
 	A_JumpIfTargetInSight, MBF21_JumpIfTargetInSight,

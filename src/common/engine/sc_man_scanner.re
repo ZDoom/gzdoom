@@ -102,14 +102,14 @@ std2:
 		":"							{ RET(':'); }
 		";"							{ RET(';'); }
 		"}"							{ StateMode = 0; StateOptions = false; RET('}'); }
-		
+
 		WSP+						{ goto std1; }
 		"\n"						{ goto newline; }
-		
+
 		TOKS = (NWS\[/":;}]);
 		TOKS* ([/] (TOKS\[*]) TOKS*)*
 									{ RET(TK_NonWhitespace); }
-		
+
 	*/
 	}
 	else if (tokens)	// A well-defined scanner, based on the c.re example.
@@ -222,7 +222,7 @@ std2:
 		'canraise'					{ RET(StateOptions ? TK_CanRaise : TK_Identifier); }
 		'offset'					{ RET(StateOptions ? TK_Offset : TK_Identifier); }
 		'light'						{ RET(StateOptions ? TK_Light : TK_Identifier); }
-		
+
 		/* other DECORATE top level keywords */
 		'#include'					{ RET(TK_Include); }
 

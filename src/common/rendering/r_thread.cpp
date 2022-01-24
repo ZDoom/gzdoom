@@ -60,7 +60,7 @@ void DrawerThreads::Execute(DrawerCommandQueuePtr commands)
 {
 	if (!commands || commands->commands.empty())
 		return;
-	
+
 	auto queue = Instance();
 
 	queue->StartThreads();

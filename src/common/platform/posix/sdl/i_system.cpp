@@ -159,7 +159,7 @@ void RedrawProgressBar(int CurPos, int MaxPos)
 	memset(progressBuffer,'.',512);
 	progressBuffer[sizeOfWindow.ws_col - 1] = 0;
 	int lengthOfStr = 0;
-	
+
 	while (curProgVal-- > 0)
 	{
 		progressBuffer[lengthOfStr++] = '=';
@@ -182,7 +182,9 @@ void I_PrintStr(const char *cp)
 		if (*srcp == 0x1c && con_printansi && terminal)
 		{
 			srcp += 1;
-			EColorRange range = V_ParseFontColor((const uint8_t*&)srcp, CR_UNTRANSLATED, CR_YELLOW);
+			const uint8_t* scratch = (const uint8_t*)srcp; // GCC does not like direct casting of the parameter.
+			EColorRange range = V_ParseFontColor(scratch, CR_UNTRANSLATED, CR_YELLOW);
+			srcp = (char*)scratch;
 			if (range != CR_UNDEFINED)
 			{
 				PalEntry color = V_LogColorFromColorRange(range);
@@ -206,7 +208,7 @@ void I_PrintStr(const char *cp)
 						else if (v < 0.90) attrib = 0x7;
 						else			   attrib = 0xF;
 					}
-					
+
 					printData.AppendFormat("\033[%um",((attrib & 0x8) ? 90 : 30) + (attrib & 0x7));
 				}
 				else printData.AppendFormat("\033[38;2;%u;%u;%um",color.r,color.g,color.b);
@@ -222,7 +224,7 @@ void I_PrintStr(const char *cp)
 			else break;
 		}
 	}
-	
+
 	if (StartScreen) CleanProgressBar();
 	fputs(printData.GetChars(),stdout);
 	if (terminal) fputs("\033[0m",stdout);
@@ -301,7 +303,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 #ifdef __APPLE__
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
 #endif
-	
+
 	if (!isatty(fileno(stdin)))
 	{
 		return defaultiwad;

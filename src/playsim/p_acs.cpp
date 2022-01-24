@@ -8570,7 +8570,7 @@ scriptwait:
 				int capacity, offset, a, c;
 				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTMAPCHRANGE))
 				{
-					while (capacity-- && (c = activeBehavior->GetArrayVal (a, offset)) != '\0')
+					while (capacity-- && (c = activeBehavior->GetArrayVal (*activeBehavior->MapVars[a], offset)) != '\0')
 					{
 						work += (char)c;
 						offset++;

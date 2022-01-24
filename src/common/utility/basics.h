@@ -38,6 +38,13 @@ typedef uint32_t			angle_t;
 #define FORCE_PACKED
 #endif
 
+// Todo: get rid of this. Static file name buffers suck.
+#ifndef PATH_MAX
+#define BMAX_PATH 256
+#else
+#define BMAX_PATH PATH_MAX
+#endif
+
 
 #ifdef __GNUC__
 #define GCCPRINTF(stri,firstargi)		__attribute__((format(printf,stri,firstargi)))

@@ -151,7 +151,7 @@ public:
 
 	int mPipelineNbr = 1;						// Number of HW buffers to pipeline
 	int mPipelineType = 0;
-	
+
 public:
 	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer();
@@ -219,7 +219,7 @@ public:
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
 	virtual void BlurScene(float amount) {}
-    
+
     // Interface to hardware rendering resources
 	virtual IVertexBuffer *CreateVertexBuffer() { return nullptr; }
 	virtual IIndexBuffer *CreateIndexBuffer() { return nullptr; }

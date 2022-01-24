@@ -455,6 +455,17 @@ void FTextureAnimator::ParseAnim (FScanner &sc, ETextureType usetype)
 			defined = 1;
 			ani = ParseRangeAnim (sc, picnum, usetype, missing);
 		}
+		else if (sc.Compare("notrim"))
+		{
+			if (picnum.isValid())
+			{
+				auto tex = TexMan.GetGameTexture(picnum);
+
+				if (tex)	tex->SetNoTrimming(true);
+				else		sc.ScriptError("NoTrim: %s not found", sc.String);
+			}
+			else sc.ScriptError("NoTrim: %s is not a sprite", sc.String);
+		}
 		else if (sc.Compare ("pic"))
 		{
 			if (defined == 1)

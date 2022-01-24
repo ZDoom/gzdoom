@@ -58,7 +58,7 @@ private:
 
 	TranslatedTexture hwDefTex[4];
 	TArray<TranslatedTexture> hwTex_Translated;
-	
+
  	TranslatedTexture * GetTexID(int translation, int scaleflags)
 	{
 		// Allow negative indices to pass through unchanged. 
@@ -108,13 +108,13 @@ public:
 		hwDefTex[1].Delete();
 		hwTex_Translated.Clear();
 	}
-	
+
 	IHardwareTexture * GetHardwareTexture(int translation, int scaleflags)
 	{
 		auto tt = GetTexID(translation, scaleflags);
 		return tt->hwTexture;
 	}
-	
+
 	void AddHardwareTexture(int translation, int scaleflags, IHardwareTexture *tex)
 	{
 		auto tt = GetTexID(translation, scaleflags);
@@ -170,6 +170,6 @@ public:
 		for (auto & t : hwTex_Translated) if (t.hwTexture) callback(t.hwTexture);
 	}
 
-	
+
 };
 

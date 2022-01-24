@@ -58,7 +58,7 @@ namespace ImageHelpers
 			return srcisgrayscale ? GPalette.GrayMap : GPalette.Remap;
 		}
 	}
-	
+
 	inline uint8_t RGBToPalettePrecise(bool wantluminance, int r, int g, int b, int a = 255)
 	{
 		if (wantluminance)
@@ -70,7 +70,7 @@ namespace ImageHelpers
 			return ColorMatcher.Pick(r, g, b);
 		}
 	}
-	
+
 	inline uint8_t RGBToPalette(bool wantluminance, int r, int g, int b, int a = 255)
 	{
 		if (wantluminance)
@@ -83,19 +83,19 @@ namespace ImageHelpers
 			return a < 128? 0 : RGB256k.RGB[r >> 2][g >> 2][b >> 2];
 		}
 	}
-	
+
 	inline uint8_t RGBToPalette(bool wantluminance, PalEntry pe, bool hasalpha = true)
 	{
 		return RGBToPalette(wantluminance, pe.r, pe.g, pe.b, hasalpha? pe.a : 255);
 	}
-	
+
 	//==========================================================================
 	//
 	// Converts a texture between row-major and column-major format
 	// by flipping it about the X=Y axis.
 	//
 	//==========================================================================
-	
+
 	template<class T>
 	void FlipSquareBlock (T *block, int x)
 	{
@@ -109,7 +109,7 @@ namespace ImageHelpers
 			}
 		}
 	}
-	
+
 	inline void FlipSquareBlockRemap (uint8_t *block, int x, const uint8_t *remap)
 	{
 		for (int i = 0; i < x; ++i)
@@ -124,7 +124,7 @@ namespace ImageHelpers
 			}
 		}
 	}
-	
+
 	template<class T>
 	void FlipNonSquareBlock (T *dst, const T *src, int x, int y, int srcpitch)
 	{
@@ -136,7 +136,7 @@ namespace ImageHelpers
 			}
 		}
 	}
-	
+
 	inline void FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x, int y, int srcpitch, const uint8_t *remap)
 	{
 		for (int i = 0; i < x; ++i)

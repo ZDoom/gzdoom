@@ -446,7 +446,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 	if (ret >= 0)
 	{
 		NSString* parametersToAppend = [picker commandLineParameters];
-		
+
 		if (0 != [parametersToAppend length])
 		{
 			RestartWithParameters(wads[ret], parametersToAppend);

@@ -52,7 +52,7 @@ public:
 	IVertexBuffer *mVertexBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
 	IIndexBuffer *mIndexBuffer;
 
-	
+
 
 	unsigned int mIndex;
 	std::atomic<unsigned int> mCurIndex;

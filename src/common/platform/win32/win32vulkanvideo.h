@@ -21,7 +21,7 @@ public:
 	{
 		device = new VulkanDevice();
 	}
-	
+
 	~Win32VulkanVideo()
 	{
 		delete device;

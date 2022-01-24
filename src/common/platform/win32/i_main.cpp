@@ -777,7 +777,7 @@ int DoMain (HINSTANCE hInstance)
 	RECT cRect;
 	TIMECAPS tc;
 	DEVMODE displaysettings;
-	
+
 	// Do not use the multibyte __argv here because we want UTF-8 arguments
 	// and those can only be done by converting the Unicode variants.
 	Args = new FArgs();
@@ -787,17 +787,17 @@ int DoMain (HINSTANCE hInstance)
 	{
 		Args->AppendArg(FString(wargv[i]));
 	}
-	
+
 	// Load Win32 modules
 	Kernel32Module.Load({"kernel32.dll"});
 	Shell32Module.Load({"shell32.dll"});
 	User32Module.Load({"user32.dll"});
-	
+
 	// Under XP, get our session ID so we can know when the user changes/locks sessions.
 	// Since we need to remain binary compatible with older versions of Windows, we
 	// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
 	HMODULE kernel = GetModuleHandleA ("kernel32.dll");
-	
+
 	if (Args->CheckParm("-stdout"))
 	{
 		// As a GUI application, we don't normally get a console when we start.
@@ -805,7 +805,7 @@ int DoMain (HINSTANCE hInstance)
 		// console. Otherwise, we can create a new one. If we already have a
 		// stdout handle, then we have been redirected and should just use that
 		// handle instead of creating a console window.
-		
+
 		StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (StdOut != NULL)
 		{
@@ -832,18 +832,18 @@ int DoMain (HINSTANCE hInstance)
 			{
 				StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 			}
-			
+
 			// These two functions do not exist in Windows XP.
 			BOOL (WINAPI* p_GetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
 			BOOL (WINAPI* p_SetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
-			
+
 			p_SetCurrentConsoleFontEx = (decltype(p_SetCurrentConsoleFontEx))GetProcAddress(kernel, "SetCurrentConsoleFontEx");
 			p_GetCurrentConsoleFontEx = (decltype(p_GetCurrentConsoleFontEx))GetProcAddress(kernel, "GetCurrentConsoleFontEx");
 			if (p_SetCurrentConsoleFontEx && p_GetCurrentConsoleFontEx)
 			{
 				CONSOLE_FONT_INFOEX cfi;
 				cfi.cbSize = sizeof(cfi);
-				
+
 				if (p_GetCurrentConsoleFontEx(StdOut, false, &cfi))
 				{
 					if (*cfi.FaceName == 0)	// If the face name is empty, the default (useless) raster font is actoive.
@@ -858,16 +858,16 @@ int DoMain (HINSTANCE hInstance)
 			FancyStdOut = true;
 		}
 	}
-	
+
 	// Set the timer to be as accurate as possible
 	if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
 		TimerPeriod = 1;	// Assume minimum resolution of 1 ms
 	else
 		TimerPeriod = tc.wPeriodMin;
-	
+
 	timeBeginPeriod (TimerPeriod);
 	atexit(UnTbp);
-	
+
 	// Figure out what directory the program resides in.
 	WCHAR progbuff[1024];
 	if (GetModuleFileNameW(nullptr, progbuff, sizeof progbuff) == 0)
@@ -875,22 +875,22 @@ int DoMain (HINSTANCE hInstance)
 		MessageBoxA(nullptr, "Fatal", "Could not determine program location.", MB_ICONEXCLAMATION|MB_OK);
 		exit(-1);
 	}
-	
+
 	progbuff[1023] = '\0';
 	if (auto lastsep = wcsrchr(progbuff, '\\'))
 	{
 		lastsep[1] = '\0';
 	}
-	
+
 	progdir = progbuff;
 	FixPathSeperator(progdir);
-	
+
 	HDC screenDC = GetDC(0);
 	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
 	ReleaseDC(0, screenDC);
 	width = (512 * dpi + 96 / 2) / 96;
 	height = (384 * dpi + 96 / 2) / 96;
-	
+
 	// Many Windows structures that specify their size do so with the first
 	// element. DEVMODE is not one of those structures.
 	memset (&displaysettings, 0, sizeof(displaysettings));
@@ -898,12 +898,12 @@ int DoMain (HINSTANCE hInstance)
 	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
 	x = (displaysettings.dmPelsWidth - width) / 2;
 	y = (displaysettings.dmPelsHeight - height) / 2;
-	
+
 	if (Args->CheckParm ("-0"))
 	{
 		x = y = 0;
 	}
-	
+
 	WNDCLASS WndClass;
 	WndClass.style			= 0;
 	WndClass.lpfnWndProc	= LConProc;
@@ -915,14 +915,14 @@ int DoMain (HINSTANCE hInstance)
 	WndClass.hbrBackground	= NULL;
 	WndClass.lpszMenuName	= NULL;
 	WndClass.lpszClassName	= WinClassName;
-	
+
 	/* register this new class with Windows */
 	if (!RegisterClass((LPWNDCLASS)&WndClass))
 	{
 		MessageBoxA(nullptr, "Could not register window class", "Fatal", MB_ICONEXCLAMATION|MB_OK);
 		exit(-1);
 	}
-	
+
 	/* create window */
 	FStringf caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 	std::wstring wcaption = caption.WideString();
@@ -936,13 +936,13 @@ int DoMain (HINSTANCE hInstance)
 							 (HMENU)  NULL,
 							 hInstance,
 							 NULL);
-	
+
 	if (!Window)
 	{
 		MessageBoxA(nullptr, "Unable to create main window", "Fatal", MB_ICONEXCLAMATION|MB_OK);
 		exit(-1);
 	}
-	
+
 	if (kernel != NULL)
 	{
 		typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
@@ -969,15 +969,15 @@ int DoMain (HINSTANCE hInstance)
 			}
 		}
 	}
-	
+
 	GetClientRect (Window, &cRect);
-	
+
 	WinWidth = cRect.right;
 	WinHeight = cRect.bottom;
-	
+
 	CoInitialize (NULL);
 	atexit (UnCOM);
-	
+
 	int ret = GameMain ();
 	CheckForRestart();
 
@@ -990,7 +990,7 @@ int DoMain (HINSTANCE hInstance)
 			{ // Outputting to a new console window: Wait for a keypress before quitting.
 				DWORD bytes;
 				HANDLE stdinput = GetStdHandle(STD_INPUT_HANDLE);
-				
+
 				ShowWindow(Window, SW_HIDE);
 				WriteFile(StdOut, "Press any key to exit...", 24, &bytes, NULL);
 				FlushConsoleInputBuffer(stdinput);
@@ -1017,7 +1017,7 @@ void I_ShowFatalError(const char *msg)
 	{
 		Printf("%s", CVMAbortException::stacktrace.GetChars());
 	}
-	
+
 	if (!batchrun)
 	{
 		ShowErrorPane(msg);

@@ -403,7 +403,7 @@ static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstruct
 	unsigned int lengthPos = stream.Size();
 	WriteUInt32(stream, 0); // Length
 	WriteUInt32(stream, 0); // CIE ID
-	
+
 	WriteUInt8(stream, 1); // CIE Version
 	WriteUInt8(stream, 'z');
 	WriteUInt8(stream, 'R'); // fde encoding
@@ -428,7 +428,7 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 	WriteUInt32(stream, 0); // Length
 	uint32_t offsetToCIE = stream.Size() - cieLocation;
 	WriteUInt32(stream, offsetToCIE);
-	
+
 	functionStart = stream.Size();
 	WriteUInt64(stream, 0); // func start
 	WriteUInt64(stream, 0); // func size
@@ -499,7 +499,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	//
 	// The CFI_Parser<A>::decodeFDE parser on the other side..
 	// https://github.com/llvm-mirror/libunwind/blob/master/src/DwarfParser.hpp
-	
+
 	// Asmjit -> DWARF register id
 	int dwarfRegId[16];
 	dwarfRegId[X86Gp::kIdAx] = 0;
@@ -520,7 +520,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	dwarfRegId[X86Gp::kIdR15] = 15;
 	int dwarfRegRAId = 16;
 	int dwarfRegXmmId = 17;
-	
+
 	TArray<uint8_t> cieInstructions;
 	TArray<uint8_t> fdeInstructions;
 
@@ -529,7 +529,7 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 
 	WriteDefineCFA(cieInstructions, dwarfRegId[X86Gp::kIdSp], stackOffset);
 	WriteRegisterStackLocation(cieInstructions, returnAddressReg, stackOffset);
-	
+
 	FuncFrameLayout layout;
 	Error error = layout.init(func->getDetail(), func->getFrameInfo());
 	if (error != kErrorOk)
@@ -702,7 +702,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 				uint64_t length64 = *((uint64_t *)(entry + 4));
 				if (length64 == 0)
 					break;
-				
+
 				uint64_t offset = *((uint64_t *)(entry + 12));
 				if (offset != 0)
 				{
@@ -831,10 +831,10 @@ public:
 		if (result)
 		{
 			IMAGEHLP_LINE64 line64;
-			DWORD displacement = 0;
+			DWORD displacement1 = 0;
 			memset(&line64, 0, sizeof(IMAGEHLP_LINE64));
 			line64.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-			result = SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64)frame, &displacement, &line64);
+			result = SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64)frame, &displacement1, &line64);
 			if (result)
 			{
 				s.Format("Called from %s at %s, line %d\n", symbol64->Name, line64.FileName, (int)line64.LineNumber);

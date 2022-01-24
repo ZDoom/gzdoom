@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -37,10 +37,10 @@ FLightBuffer::FLightBuffer(int pipelineNbr):
 	mPipelineNbr(pipelineNbr)
 {
 	int maxNumberOfLights = 80000;
-	
+
 	mBufferSize = maxNumberOfLights * ELEMENTS_PER_LIGHT;
 	mByteSize = mBufferSize * ELEMENT_SIZE;
-	
+
 	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
 	// We only want to disable using SSBOs for lights but not disable the feature entirely.
 	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
@@ -57,7 +57,7 @@ FLightBuffer::FLightBuffer(int pipelineNbr):
 		mBlockSize = screen->maxuniformblock / ELEMENT_SIZE;
 		mBlockAlign = screen->uniformblockalignment / ELEMENT_SIZE;
 		mMaxUploadSize = (mBlockSize - mBlockAlign);
-		
+
 		//mByteSize += screen->maxuniformblock;	// to avoid mapping beyond the end of the buffer. REMOVED this...This can try to allocate 100's of MB..
 	}
 
@@ -96,7 +96,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	if (totalsize > (int)mMaxUploadSize)
 	{
 		int diff = totalsize - (int)mMaxUploadSize;
-		
+
 		size2 -= diff;
 		if (size2 < 0)
 		{
@@ -115,14 +115,14 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	assert(mBufferPointer != nullptr);
 	if (mBufferPointer == nullptr) return -1;
 	if (totalsize <= 1) return -1;	// there are no lights
-	
+
 	unsigned thisindex = mIndex.fetch_add(totalsize);
 	float parmcnt[] = { 0, float(size0), float(size0 + size1), float(size0 + size1 + size2) };
 
 	if (thisindex + totalsize <= mBufferSize)
 	{
 		float *copyptr = mBufferPointer + thisindex*4;
-		
+
 		memcpy(&copyptr[0], parmcnt, ELEMENT_SIZE);
 		memcpy(&copyptr[4], &data.arrays[0][0], size0 * ELEMENT_SIZE);
 		memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], size1 * ELEMENT_SIZE);

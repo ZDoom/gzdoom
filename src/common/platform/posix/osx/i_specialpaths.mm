@@ -256,7 +256,7 @@ FString M_GetDocumentsPath()
 FString M_GetDemoPath()
 {
 	FString path = GetSpecialPath(NSDocumentDirectory);
-	
+
 	if (path.IsNotEmpty())
 	{
 		path += "/" GAME_DIR "/Demos/";

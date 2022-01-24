@@ -7,7 +7,7 @@
     APIs: gles2=2.0
     Profile: compatibility
     Extensions:
-        
+
     Loader: True
     Local files: False
     Omit khrplatform: False

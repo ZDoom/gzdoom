@@ -429,7 +429,7 @@ void ProcessKeyboardEventInMenu(NSEvent* theEvent)
 		event.subtype = EV_GUI_Char;
 		event.data1   = realchar;
 		event.data2   = event.data3 & GKM_ALT;
-		
+
 		D_PostEvent(&event);
 	}
 }
@@ -667,9 +667,9 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 	{
 		return;
 	}
-	
+
 	event_t event = {};
-	
+
 	if (GUICapture)
 	{
 		event.type    = EV_GUI_Event;
@@ -681,7 +681,7 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 		event.type  = isZeroDelta  ? EV_KeyUp     : EV_KeyDown;
 		event.data1 = delta > 0.0f ? KEY_MWHEELUP : KEY_MWHEELDOWN;
 	}
-	
+
 	D_PostEvent(&event);
 }
 

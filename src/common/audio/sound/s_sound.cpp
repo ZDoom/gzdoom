@@ -164,7 +164,6 @@ void SoundEngine::CacheSound (sfxinfo_t *sfx)
 {
 	if (GSnd && !sfx->bTentative)
 	{
-		sfxinfo_t *orig = sfx;
 		while (!sfx->bRandomHeader && sfx->link != sfxinfo_t::NO_LINK)
 		{
 			sfx = &S_sfx[sfx->link];
@@ -389,7 +388,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
 
-	if (sound_id <= 0 || volume <= 0 || nosfx || !SoundEnabled() || blockNewSounds)
+	if (sound_id <= 0 || volume <= 0 || nosfx || !SoundEnabled() || blockNewSounds || (unsigned)sound_id >= S_sfx.Size())
 		return NULL;
 
 	// prevent crashes.
@@ -403,7 +402,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	{
 		return nullptr;
 	}
-	
+
 	sfx = &S_sfx[sound_id];
 
 	// Scale volume according to SNDINFO data.
@@ -612,7 +611,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		{
 			chan->Source = source;
 		}
-		
+
 		if (spitch > 0.0)				// A_StartSound has top priority over all others.
 			SetPitch(chan, spitch);
 		else if (defpitch > 0.0)	// $PitchSet overrides $PitchShift
@@ -727,7 +726,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 		{
 			return sfx;
 		}
-		
+
 		// See if there is another sound already initialized with this lump. If so,
 		// then set this one up as a link, and don't load the sound again.
 		for (i = 0; i < S_sfx.Size(); i++)
@@ -831,7 +830,7 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 {
 	FSoundChan *chan;
 	int count;
-	
+
 	for (chan = Channels, count = 0; chan != NULL && count < near_limit; chan = chan->NextChan)
 	{
 		if (chan->ChanFlags & CHANF_FORGETTABLE) continue;
@@ -1085,13 +1084,14 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 // Is a sound being played by a specific emitter?
 //==========================================================================
 
-int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id)
+int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id, int chann)
 {
 	int count = 0;
 	if (sound_id > 0)
 	{
 		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
+			if (chann != -1 && chann != chan->EntChannel) continue;
 			if (chan->OrgID == sound_id && (sourcetype == SOURCE_Any ||
 				(chan->SourceType == sourcetype &&
 				chan->Source == source)))
@@ -1104,6 +1104,7 @@ int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int so
 	{
 		for (FSoundChan* chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
+			if (chann != -1 && chann != chan->EntChannel) continue;
 			if ((sourcetype == SOURCE_Any || (chan->SourceType == sourcetype &&	chan->Source == source)))
 			{
 				count++;

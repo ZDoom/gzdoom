@@ -1001,7 +1001,7 @@ class Weapon : StateProvider
 	//
 	//===========================================================================
 
-	virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1)
+	virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1, bool forceammouse = false)
 	{
 		if (!(sv_infiniteammo || (Owner.FindInventory ('PowerInfiniteAmmo', true) != null)))
 		{
@@ -1013,7 +1013,7 @@ class Weapon : StateProvider
 			{
 				if (Ammo1 != null)
 				{
-					if (ammouse >= 0 && bDehAmmo)
+					if (ammouse >= 0 && (bDehAmmo || forceammouse))
 					{
 						Ammo1.Amount -= ammouse;
 					}

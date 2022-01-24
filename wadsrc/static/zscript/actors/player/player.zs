@@ -254,6 +254,11 @@ class PlayerPawn : Actor
 			invul.EffectTics = 3 * TICRATE;
 			invul.BlendColor = 0;			// don't mess with the view
 			invul.bUndroppable = true;		// Don't drop self
+			if (!invul.CallTryPickup(self))
+			{
+				invul.Destroy();
+				return;
+			}
 			bRespawnInvul = true;			// [RH] special effect
 		}
 	}

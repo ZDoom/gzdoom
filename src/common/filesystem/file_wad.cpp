@@ -206,7 +206,7 @@ bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 		Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
 		Lumps[i].Namespace = ns_global;
 		Lumps[i].Flags = Lumps[i].Compressed ? LUMPF_COMPRESSED | LUMPF_SHORTNAME : LUMPF_SHORTNAME;
-		
+
 		// Check if the lump is within the WAD file and print a warning if not.
 		if (Lumps[i].Position + Lumps[i].LumpSize > wadSize || Lumps[i].Position < 0 || Lumps[i].LumpSize < 0)
 		{
@@ -279,7 +279,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 	int numstartmarkers = 0, numendmarkers = 0;
 	unsigned int i;
 	TArray<Marker> markers;
-	
+
 	for(i = 0; i < NumLumps; i++)
 	{
 		if (IsMarker(i, startmarker))
@@ -302,20 +302,20 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 
 		Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", endmarker, startmarker);
 
-		
+
 		if (flathack)
 		{
 			// We have found no F_START but one or more F_END markers.
 			// mark all lumps before the last F_END marker as potential flats.
 			unsigned int end = markers[markers.Size()-1].index;
-			for(unsigned int i = 0; i < end; i++)
+			for(unsigned int ii = 0; ii < end; ii++)
 			{
-				if (Lumps[i].LumpSize == 4096)
+				if (Lumps[ii].LumpSize == 4096)
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
-					DPrintf(DMSG_NOTIFY, "Marking %s as potential flat\n", Lumps[i].getName());
-					Lumps[i].Flags |= LUMPF_MAYBEFLAT;
+					DPrintf(DMSG_NOTIFY, "Marking %s as potential flat\n", Lumps[ii].getName());
+					Lumps[ii].Flags |= LUMPF_MAYBEFLAT;
 				}
 			}
 		}
@@ -428,18 +428,19 @@ void FWadFile::SkinHack ()
 				namespc++;
 			}
 		}
+		// needless to say, this check is entirely useless these days as map names can be more diverse..
 		if ((lump->getName()[0] == 'M' &&
 			 lump->getName()[1] == 'A' &&
 			 lump->getName()[2] == 'P' &&
 			 lump->getName()[3] >= '0' && lump->getName()[3] <= '9' &&
 			 lump->getName()[4] >= '0' && lump->getName()[4] <= '9' &&
-			 lump->getName()[5] >= '\0')
+			 lump->getName()[5] == '\0')
 			||
 			(lump->getName()[0] == 'E' &&
 			 lump->getName()[1] >= '0' && lump->getName()[1] <= '9' &&
 			 lump->getName()[2] == 'M' &&
 			 lump->getName()[3] >= '0' && lump->getName()[3] <= '9' &&
-			 lump->getName()[4] >= '\0'))
+			 lump->getName()[4] == '\0'))
 		{
 			hasmap = true;
 		}

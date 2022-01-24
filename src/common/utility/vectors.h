@@ -1651,6 +1651,12 @@ public:
 		m_d = d;
 	}
 
+	void Init(const FVector3& p1, const FVector3& p2, const FVector3& p3)
+	{
+		m_normal = ((p2 - p1) ^ (p3 - p1)).Unit();
+		m_d = -(p3 |m_normal);
+	}
+
 	// same for a play-vector. Note that y and z are inversed.
 	void Set(DVector3 normal, double d)
 	{
@@ -1671,7 +1677,7 @@ public:
 		return DistToPoint(x, y, z) < 0.f;
 	}
 
-	bool PointOnSide(FVector3 &v) { return PointOnSide(v.X, v.Y, v.Z); }
+	bool PointOnSide(const FVector3 &v) { return PointOnSide(v.X, v.Y, v.Z); }
 
 	float A() { return m_normal.X; }
 	float B() { return m_normal.Y; }
@@ -1683,5 +1689,6 @@ protected:
 	FVector3 m_normal;
 	float m_d;
 };
+
 
 #endif

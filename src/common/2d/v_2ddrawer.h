@@ -101,7 +101,7 @@ public:
 		}
 
 	};
-	
+
 	struct RenderCommand
 	{
 		EDrawType mType;
@@ -175,7 +175,7 @@ public:
 public:
 	int fullscreenautoaspect = 3;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
-	
+
 	int AddCommand(RenderCommand *data);
 	void AddIndices(int firstvert, int count, ...);
 private:
@@ -200,8 +200,8 @@ public:
 	void ClearScreen(PalEntry color = 0xff000000);
 	void AddDim(PalEntry color, float damount, int x1, int y1, int w, int h);
 	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
-	
-		
+
+
 	void AddLine(double x1, double y1, double x2, double y2, int cx, int cy, int cx2, int cy2, uint32_t color, uint8_t alpha = 255);
 	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha = 255);
 	void AddPixel(int x1, int y1, uint32_t color);

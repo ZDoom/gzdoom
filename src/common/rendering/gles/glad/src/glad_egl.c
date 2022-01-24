@@ -7,7 +7,7 @@
     APIs: egl=1.4
     Profile: -
     Extensions:
-        
+
     Loader: True
     Local files: False
     Omit khrplatform: False

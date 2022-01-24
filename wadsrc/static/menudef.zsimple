@@ -6,7 +6,7 @@ OptionMenu "OptionsMenuSimple" protected
 {
 	Title "$OPTMNU_TITLE"
 	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
-	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
+	Submenu "$OPTMNU_MOUSE",			"MouseOptionsSimple"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
 	StaticText " "
 	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
@@ -100,4 +100,22 @@ OptionMenu MiscOptionsSimple protected
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
 	Option "$OPTMNU_LANGUAGE",					"language", "LanguageOptions"
+}
+
+OptionMenu "MouseOptionsSimple" protected
+{
+	Title "$MOUSEMNU_TITLE"
+	Option "$MOUSEMNU_ENABLEMOUSE",		"use_mouse", "YesNo"
+	Option "$MOUSEMNU_MOUSEINMENU",		"m_use_mouse", "MenuMouse", "use_mouse"
+	IfOption(Windows)
+	{
+		Option "$MOUSEMNU_SWAPBUTTONS", "m_swapbuttons", "YesNo"
+	}
+	Option "$MOUSEMNU_CURSOR",			"vid_cursor", "Cursors"
+	StaticText 	""
+	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
+	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
+	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
+	StaticText 	""
+	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 }

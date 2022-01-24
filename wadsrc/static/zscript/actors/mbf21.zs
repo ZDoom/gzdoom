@@ -198,7 +198,9 @@ extend class Actor
 	//
 	void A_FindTracer(double fov, int dist)
 	{
-		if (!tracer) tracer = RoughMonsterSearch(dist, fov: fov);
+		// note: mbf21 fov is the angle of the entire cone, while
+		// zdoom fov is defined as 1/2 of the cone, so halve it.
+		if (!tracer) tracer = RoughMonsterSearch(dist, fov: fov/2);
 	}
 
 	//
@@ -316,11 +318,9 @@ extend class Weapon
 		FTranslatedLineTarget t;
 
 		angle += self.angle;
-		double x = Spawnofs_xy * cos(angle);
-		double y = Spawnofs_xy * sin(angle);
-		let pos = self.Vec3Offset(x, y, Spawnofs_z);
+		Vector2 ofs = AngleToVector(self.Angle - 90, spawnofs_xy);
 
-		let mo = SpawnPlayerMissile(type, angle, pos.X, pos.Y, pos.Z, pLineTarget: t);
+		let mo = SpawnPlayerMissile(type, angle, ofs.x, ofs.y, Spawnofs_z, pLineTarget: t);
 		if (!mo) return;
 
 		Pitch += mo.PitchFromVel();
@@ -432,7 +432,7 @@ extend class Weapon
 		if (!weap) return;
 
 		if (consume == 0) consume = -1;
-		weap.DepleteAmmo(weap.bAltFire, false, consume);
+		weap.DepleteAmmo(weap.bAltFire, false, consume, true);
 	}
 
 	//
@@ -503,5 +503,11 @@ extend class Weapon
 		player.SetPsprite(PSP_FLASH, tstate);
 	}
 
+	// needed to call A_SeekerMissile with proper defaults.
+	deprecated("2.3", "for Dehacked use only")
+	void MBF21_SeekTracer(double threshold, double turnmax)
+	{
+		A_SeekerMissile(threshold, turnmax, flags: SMF_PRECISE); // args get truncated to ints here, but it's close enough
+	}
 
 }

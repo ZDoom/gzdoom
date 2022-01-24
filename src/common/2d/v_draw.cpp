@@ -144,7 +144,7 @@ int GetUIScale(F2DDrawer *drawer, int altval)
 		// Default should try to scale to 640x400
 		int vscale = drawer->GetHeight() / 400;
 		int hscale = drawer->GetWidth() / 640;
-		scaleval = clamp(vscale, 1, hscale);
+		scaleval = max(1, min(vscale, hscale));
 	}
 	else scaleval = uiscale;
 
@@ -165,7 +165,7 @@ int GetConScale(F2DDrawer* drawer, int altval)
 		// Default should try to scale to 640x400
 		int vscale = drawer->GetHeight() / 800;
 		int hscale = drawer->GetWidth() / 1280;
-		scaleval = clamp(vscale, 1, hscale);
+		scaleval = max(1, min(vscale, hscale));
 	}
 	else scaleval = (uiscale+1) / 2;
 
@@ -671,7 +671,6 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 {
 	INTBOOL boolval;
 	int intval;
-	bool translationset = false;
 	bool fillcolorset = false;
 
 	if (!fortext)
@@ -858,7 +857,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			parms->cleanmode = DTA_Base;
 			parms->virtHeight = ListGetDouble(tags);
 			break;
-			
+
 		case DTA_FullscreenScale:
 			intval = ListGetInt(tags);
 			if (intval >= FSMode_None && intval < FSMode_Max)
@@ -1016,10 +1015,16 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 		case DTA_CenterOffsetRel:
 			assert(fortext == false);
 			if (fortext) return false;
-			if (ListGetInt(tags))
+			intval = ListGetInt(tags);
+			if (intval == 1)
 			{
-				parms->left = img->GetDisplayLeftOffset() + img->GetDisplayWidth() * 0.5;
-				parms->top = img->GetDisplayTopOffset() + img->GetDisplayHeight() * 0.5;
+				parms->left = img->GetDisplayLeftOffset() + (img->GetDisplayWidth() * 0.5);
+				parms->top = img->GetDisplayTopOffset() + (img->GetDisplayHeight() * 0.5);
+			}
+			else if (intval == 2)
+			{
+				parms->left = img->GetDisplayLeftOffset() + floor(img->GetDisplayWidth() * 0.5);
+				parms->top = img->GetDisplayTopOffset() + floor(img->GetDisplayHeight() * 0.5);
 			}
 			break;
 

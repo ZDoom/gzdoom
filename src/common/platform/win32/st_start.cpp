@@ -113,7 +113,7 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
 	FStartupScreen *scr = NULL;
-	HRESULT hr;
+	HRESULT hr = -1;
 
 	if (!Args->CheckParm("-nostartup"))
 	{
@@ -310,7 +310,7 @@ void FBasicStartupScreen::NetMessage(const char *format, ...)
 {
 	FString str;
 	va_list argptr;
-	
+
 	va_start (argptr, format);
 	str.VFormat (format, argptr);
 	va_end (argptr);

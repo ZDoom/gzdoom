@@ -99,7 +99,7 @@ bool FGrpFile::Open(bool quiet, LumpFilterInfo*)
 
 	Reader.Read(&header, sizeof(header));
 	NumLumps = LittleLong(header.NumLumps);
-	
+
 	GrpLump *fileinfo = new GrpLump[NumLumps];
 	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
 

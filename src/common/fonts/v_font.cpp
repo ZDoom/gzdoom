@@ -106,10 +106,10 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 		int lump = -1;
 		int folderfile = -1;
-		
+
 		TArray<FolderEntry> folderdata;
 		FStringf path("fonts/%s/", name);
-		
+
 		// Use a folder-based font only if it comes from a later file than the single lump version.
 		if (fileSystem.GetFilesInFolder(path, folderdata, true))
 		{
@@ -119,7 +119,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 
 		lump = fileSystem.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
-		
+
 		if (lump != -1 && fileSystem.GetFileContainer(lump) >= folderfile)
 		{
 			uint32_t head;
@@ -725,9 +725,9 @@ static void CalcDefaultTranslation(FFont* base, int index)
 		auto lum = otherluminosity[i];
 		if (lum >= 0 && lum <= 1)
 		{
-			int index = int(lum * 255);
-			remap[index] = GPalette.BaseColors[i];
-			remap[index].a = 255;
+			int lumidx = int(lum * 255);
+			remap[lumidx] = GPalette.BaseColors[i];
+			remap[lumidx].a = 255;
 		}
 	}
 
@@ -769,7 +769,7 @@ static void CalcDefaultTranslation(FFont* base, int index)
 			lowindex = highindex++;
 		}
 	}
-	
+
 }
 
 //==========================================================================

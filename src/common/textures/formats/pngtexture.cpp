@@ -684,7 +684,7 @@ public:
 	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans) override;
 
 protected:
-	
+
 	FileReader fr;
 	uint8_t ColorType;
 	int PaletteSize;
@@ -703,7 +703,7 @@ FGameTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 	{
 		return nullptr;
 	}
-	
+
 	// Savegame images can only be either 8 bit paletted or 24 bit RGB
 	auto &data = png->File;
 	int width = data.ReadInt32BE();
@@ -713,7 +713,7 @@ FGameTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 	uint8_t compression = data.ReadUInt8();
 	uint8_t filter = data.ReadUInt8();
 	uint8_t interlace = data.ReadUInt8();
-	
+
 	// Reject anything that cannot be put into a savegame picture by GZDoom itself.
 	if (compression != 0 || filter != 0 || interlace > 0 || bitdepth != 8 || (colortype != 2 && colortype != 3)) return nullptr;
 	else return MakeGameTexture(new FPNGFileTexture (png->File, width, height, colortype), nullptr, ETextureType::Override);
@@ -748,9 +748,9 @@ FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 	PalEntry pe[256];
 	uint32_t len, id;
 	int pixwidth = Width * (ColorType == 2? 3:1);
-	
+
 	FileReader *lump = &fr;
-	
+
 	bmp.Create(Width, Height);
 	lump->Seek(33, FileReader::SeekSet);
 	lump->Read(&len, 4);
@@ -779,12 +779,12 @@ FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 	auto StartOfIDAT = (uint32_t)lump->Tell() - 8;
 
 	TArray<uint8_t> Pixels(pixwidth * Height);
-	
+
 	lump->Seek (StartOfIDAT, FileReader::SeekSet);
 	lump->Read(&len, 4);
 	lump->Read(&id, 4);
 	M_ReadIDAT (*lump, Pixels.Data(), Width, Height, pixwidth, 8, ColorType, 0, BigLong((unsigned int)len));
-	
+
 	if (ColorType == 3)
 	{
 		bmp.CopyPixelData(0, 0, Pixels.Data(), Width, Height, 1, Width, 0, pe);

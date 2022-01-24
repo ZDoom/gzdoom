@@ -44,7 +44,7 @@ namespace OpenGLESRenderer
 
 	FGLRenderBuffers::FGLRenderBuffers()
 	{
-	
+
 	}
 
 	//==========================================================================
@@ -56,7 +56,7 @@ namespace OpenGLESRenderer
 	FGLRenderBuffers::~FGLRenderBuffers()
 	{
 		ClearScene();
-		
+
 		DeleteTexture(mDitherTexture);
 	}
 
@@ -163,7 +163,7 @@ namespace OpenGLESRenderer
 		mSceneTex = Create2DTexture("PipelineTexture", GL_RGBA, width, height);
 	}
 
-	
+
 
 	//==========================================================================
 	//
@@ -178,7 +178,7 @@ namespace OpenGLESRenderer
 		tex.Height = height;
 		glGenTextures(1, &tex.handle);
 		glBindTexture(GL_TEXTURE_2D, tex.handle);
-	
+
 		GLenum dataformat = 0, datatype = 0;
 		/*
 		switch (format)
@@ -224,7 +224,7 @@ namespace OpenGLESRenderer
 		PPGLRenderBuffer buf;
 		glGenRenderbuffers(1, &buf.handle);
 		glBindRenderbuffer(GL_RENDERBUFFER, buf.handle);
-	
+
 		glRenderbufferStorage(GL_RENDERBUFFER, format, width, height);
 		return buf;
 	}
@@ -240,7 +240,7 @@ namespace OpenGLESRenderer
 		PPGLFrameBuffer fb;
 		glGenFramebuffers(1, &fb.handle);
 		glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
-	
+
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer.handle, 0);
 		if (CheckFrameBufferCompleteness())
 			ClearFrameBuffer(false, false);
@@ -252,7 +252,7 @@ namespace OpenGLESRenderer
 		PPGLFrameBuffer fb;
 		glGenFramebuffers(1, &fb.handle);
 		glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
-		
+
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer.handle, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthstencil.handle);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gles.depthStencilAvailable ? depthstencil.handle : stencil.handle);
@@ -266,7 +266,7 @@ namespace OpenGLESRenderer
 		PPGLFrameBuffer fb;
 		glGenFramebuffers(1, &fb.handle);
 		glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
-	
+
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorbuffer.handle);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthstencil.handle);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gles.depthStencilAvailable ? depthstencil.handle : stencil.handle);
@@ -284,7 +284,7 @@ namespace OpenGLESRenderer
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer0.handle, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthstencil.handle);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gles.depthStencilAvailable ? depthstencil.handle : stencil.handle);
-	
+
 		if (CheckFrameBufferCompleteness())
 			ClearFrameBuffer(true, true);
 		return fb;
@@ -302,9 +302,6 @@ namespace OpenGLESRenderer
 		if (result == GL_FRAMEBUFFER_COMPLETE)
 			return true;
 
-		bool FailedCreate = true;
-
-
 		FString error = "glCheckFramebufferStatus failed: ";
 		switch (result)
 		{
@@ -314,7 +311,7 @@ namespace OpenGLESRenderer
 		case GL_FRAMEBUFFER_UNSUPPORTED: error << "GL_FRAMEBUFFER_UNSUPPORTED"; break;
 		}
 		Printf("%s\n", error.GetChars());
-	
+
 
 		return false;
 	}
@@ -372,7 +369,7 @@ namespace OpenGLESRenderer
 		mDitherTexture.Bind(1, GL_NEAREST, GL_REPEAT);
 	}
 
-	
+
 	//==========================================================================
 	//
 	// Makes the scene frame buffer active (multisample, depth, stecil, etc.)

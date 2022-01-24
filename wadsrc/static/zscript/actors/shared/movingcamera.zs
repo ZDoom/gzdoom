@@ -488,19 +488,19 @@ class ActorMover : PathFollower
 		Super.Activate (activator);
 		let tracer = self.tracer;
 		special1 = tracer.bNoGravity + (tracer.bNoBlockmap<<1) + (tracer.bSolid<<2) + (tracer.bInvulnerable<<4) + (tracer.bDormant<<8);
-		bNoGravity = true;
+		tracer.bNoGravity = true;
 		if (args[2] & 128)
 		{
 			LinkContext ctx;
 			tracer.UnlinkFromWorld (ctx);
-			bNoBlockmap = true;
-			bSolid = false;
+			tracer.bNoBlockmap = true;
+			tracer.bSolid = false;
 			tracer.LinkToWorld (ctx);
 		}
 		if (tracer.bIsMonster)
 		{
-			bInvulnerable = true;
-			bDormant = true;
+			tracer.bInvulnerable = true;
+			tracer.bDormant = true;
 		}
 		// Don't let the renderer interpolate between the actor's
 		// old position and its new position.

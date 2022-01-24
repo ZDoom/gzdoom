@@ -58,7 +58,7 @@ public:
 
 		return (uint8_t)BestColor ((uint32_t *)Pal, r, g, b, startindex, 255, indexmap);
 	}
-	
+
 	uint8_t Pick (PalEntry pe)
 	{
 		return Pick(pe.r, pe.g, pe.b);

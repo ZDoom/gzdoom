@@ -79,7 +79,7 @@ GLBuffer::~GLBuffer()
 		glBindBuffer(mUseType, 0);
 		glDeleteBuffers(1, &mBufferId);
 	}
-	
+
 	if (memory)
 		delete[] memory;
 }
@@ -129,9 +129,9 @@ void GLBuffer::SetData(size_t size, const void* data, BufferUsageType usage)
 void GLBuffer::SetSubData(size_t offset, size_t size, const void *data)
 {
 	Bind();
-	
+
 	memcpy(memory + offset, data, size);
-	
+
 	if (!isData)
 	{
 		glBufferSubData(mUseType, offset, size, data);
@@ -143,7 +143,7 @@ void GLBuffer::Upload(size_t start, size_t size)
 	if (!gles.useMappedBuffers)
 	{
 		Bind();
-		
+
 		if(size)
 			glBufferSubData(mUseType, start, size, memory + start);
 	}
@@ -278,10 +278,10 @@ void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 {
 	static int VFmtToGLFmt[] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_FLOAT }; // TODO Fix last entry GL_INT_2_10_10_10_REV, normals for models will be broken
 	static uint8_t VFmtToSize[] = {4, 3, 2, 1, 4, 4};
-	
+
 	mStride = stride;
 	mNumBindingPoints = numBindingPoints;
-	
+
 	for(int i = 0; i < numAttributes; i++)
 	{
 		if (attrs[i].location >= 0 && attrs[i].location < VATTR_MAX)

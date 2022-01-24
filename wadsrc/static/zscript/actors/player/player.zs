@@ -2605,6 +2605,7 @@ class PSprite : Object native play
 	native double y;
 	native double oldx;
 	native double oldy;
+	native Vector2 baseScale;
 	native Vector2 pivot;
 	native Vector2 scale;
 	native double rotation;

@@ -184,7 +184,7 @@ public:
 		ToggleMessages[1] = on;
 	}
 
-	void SetCallback(void *callback);
+	void SetCallback(void (*callback)(FBaseCVar&));
 	void ClearCallback();
 
 	void SetExtraDataPointer(void *pointer);

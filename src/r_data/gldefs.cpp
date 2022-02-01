@@ -1529,17 +1529,17 @@ class GLDefsParser
 						ECVarType cvartype = CVAR_Dummy;
 						int cvarflags = CVAR_MOD|CVAR_ARCHIVE|CVAR_VIRTUAL;
 						FBaseCVar *cvar;
-						void* callback = NULL;
+						void (*callback)(FBaseCVar&) = NULL;
 						FString cvarname;
 						switch (parsedType)
 						{
 						case PostProcessUniformType::Int:
 							cvartype = CVAR_Int;
-							callback = uniform_callback_int;
+							callback = (void (*)(FBaseCVar&))uniform_callback_int;
 							break;
 						case PostProcessUniformType::Float:
 							cvartype = CVAR_Float;
-							callback = uniform_callback_float;
+							callback = (void (*)(FBaseCVar&))uniform_callback_float;
 							break;
 						default:
 							sc.ScriptError("'%s' not supported for CVAR uniforms!", strUniformType);

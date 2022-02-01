@@ -145,9 +145,9 @@ FBaseCVar::~FBaseCVar ()
 	}
 }
 
-void FBaseCVar::SetCallback(void *callback)
+void FBaseCVar::SetCallback(void (*callback)(FBaseCVar&))
 {
-	m_Callback = reinterpret_cast<void (__cdecl *)(FBaseCVar &)>(callback);
+	m_Callback = callback;
 	m_UseCallback = true;
 }
 

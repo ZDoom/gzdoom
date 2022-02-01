@@ -1553,7 +1553,7 @@ class GLDefsParser
 						if (!(cvar->GetFlags() & CVAR_MOD))
 						{
 							if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
-								sc.ScriptError("CVAR '%s' already in use!", cvarname);
+								sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
 						}
 						
 						UCVarValue val;

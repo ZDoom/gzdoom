@@ -58,6 +58,46 @@ extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern int AttenuationIsSet;
 
 
+struct ExtraUniformCVARData
+{
+	FString Shader;
+	FString Uniform;
+	double* vec4 = nullptr;
+};
+
+static void do_uniform_set(float value, ExtraUniformCVARData* data)
+{
+	if (!(data->vec4))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader& shader = PostProcessShaders[i];
+			if (strcmp(shader.Name, data->Shader) == 0)
+			{
+				data->vec4 = shader.Uniforms[data->Uniform].Values;
+			}
+		}
+	}
+	double* vec4 = data->vec4;
+	if (vec4)
+	{
+		vec4[0] = value;
+		vec4[1] = 0.0;
+		vec4[2] = 0.0;
+		vec4[3] = 1.0;
+	}
+}
+
+void uniform_callback_int(FIntCVar &self)
+{
+	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+}
+
+void uniform_callback_float(FFloatCVar &self)
+{
+	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+}
+
 //-----------------------------------------------------------------------------
 //
 // ParseVavoomSkybox
@@ -1452,8 +1492,10 @@ class GLDefsParser
 					sc.MustGetString();
 					shaderdesc.Name = sc.String;
 				}
-				else if (sc.Compare("uniform"))
+				else if (sc.Compare("uniform") || sc.Compare("cvar_uniform"))
 				{
+					bool is_cvar = sc.Compare("cvar_uniform");
+
 					sc.MustGetString();
 					FString uniformType = sc.String;
 					uniformType.ToLower();
@@ -1474,8 +1516,70 @@ class GLDefsParser
 					else
 						sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
 
+					auto strUniformType = sc.String;
+
 					if (parsedType != PostProcessUniformType::Undefined)
 						shaderdesc.Uniforms[uniformName].Type = parsedType;
+
+					if (is_cvar)
+					{
+						if (!shaderdesc.Name.GetChars())
+							sc.ScriptError("Shader must have a name to use cvar uniforms");
+
+						ECVarType cvartype = CVAR_Dummy;
+						int cvarflags = CVAR_MOD|CVAR_ARCHIVE|CVAR_VIRTUAL;
+						FBaseCVar *cvar;
+						void* callback = NULL;
+						FString cvarname;
+						switch (parsedType)
+						{
+						case PostProcessUniformType::Int:
+							cvartype = CVAR_Int;
+							callback = uniform_callback_int;
+							break;
+						case PostProcessUniformType::Float:
+							cvartype = CVAR_Float;
+							callback = uniform_callback_float;
+							break;
+						default:
+							sc.ScriptError("'%s' not supported for CVAR uniforms!", strUniformType);
+							break;
+						}
+						sc.MustGetString();
+						cvarname = sc.String;
+						cvar = FindCVar(cvarname, NULL);
+						if (!cvar)
+							cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+						if (!(cvar->GetFlags() & CVAR_MOD))
+						{
+							if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+								sc.ScriptError("CVAR '%s' already in use!", cvarname);
+						}
+						
+						UCVarValue val;
+						sc.MustGetNumber();
+						
+						val.Float = sc.Number;
+
+						// must've picked this up from an autoexec.cfg, handle accordingly
+						if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+						{
+							val = cvar->GetGenericRep(CVAR_Float);
+							delete cvar;
+							cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+						}
+
+						shaderdesc.Uniforms[uniformName].Values[0] = sc.Number;
+
+						cvar->SetGenericRepDefault(val, CVAR_Float);
+						
+						if (callback)
+							cvar->SetCallback(callback);
+						ExtraUniformCVARData* extra = new ExtraUniformCVARData;
+						extra->Shader = shaderdesc.Name.GetChars();
+						extra->Uniform = uniformName.GetChars();
+						cvar->SetExtraDataPointer(extra);
+					}
 				}
 				else if (sc.Compare("texture"))
 				{

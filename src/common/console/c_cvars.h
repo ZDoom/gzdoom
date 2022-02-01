@@ -184,6 +184,12 @@ public:
 		ToggleMessages[1] = on;
 	}
 
+	void SetCallback(void *callback);
+	void ClearCallback();
+
+	void SetExtraDataPointer(void *pointer);
+
+	void* GetExtraDataPointer();
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;
@@ -212,6 +218,8 @@ private:
 
 	static bool m_UseCallback;
 	static bool m_DoNoSet;
+
+	void *m_ExtraDataPointer;
 
 	// These need to go away!
 	friend FString C_GetMassCVarString (uint32_t filter, bool compact);

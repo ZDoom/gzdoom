@@ -1557,9 +1557,9 @@ class GLDefsParser
 						}
 						
 						UCVarValue val;
-						sc.MustGetNumber();
+						sc.MustGetFloat();
 						
-						val.Float = sc.Number;
+						val.Float = sc.Float;
 
 						// must've picked this up from an autoexec.cfg, handle accordingly
 						if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))

@@ -48,6 +48,7 @@
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include "hw_material.h"
 #include "texturemanager.h"
+#include "gameconfigfile.h"
 
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
@@ -57,12 +58,14 @@ void ParseColorization(FScanner& sc);
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern int AttenuationIsSet;
 
+bool addedcvars = false;
 
 struct ExtraUniformCVARData
 {
 	FString Shader;
 	FString Uniform;
 	double* vec4 = nullptr;
+	ExtraUniformCVARData* Next;
 };
 
 static void do_uniform_set(float value, ExtraUniformCVARData* data)
@@ -86,6 +89,8 @@ static void do_uniform_set(float value, ExtraUniformCVARData* data)
 		vec4[2] = 0.0;
 		vec4[3] = 1.0;
 	}
+	if (data->Next)
+		do_uniform_set(value, data->Next);
 }
 
 void uniform_callback_int(FIntCVar &self)
@@ -1523,6 +1528,7 @@ class GLDefsParser
 
 					if (is_cvar)
 					{
+						addedcvars = true;
 						if (!shaderdesc.Name.GetChars())
 							sc.ScriptError("Shader must have a name to use cvar uniforms");
 
@@ -1548,36 +1554,54 @@ class GLDefsParser
 						sc.MustGetString();
 						cvarname = sc.String;
 						cvar = FindCVar(cvarname, NULL);
+
+						UCVarValue oldval;
+						UCVarValue val;
+						sc.MustGetFloat();
+						
+						val.Float = oldval.Float = sc.Float;
+
 						if (!cvar)
+						{
 							cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+						}
+						else if (cvar && (((cvar->GetFlags()) & CVAR_MOD) == CVAR_MOD))
+						{
+							// this value may have been previously loaded
+							oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+						}
+
 						if (!(cvar->GetFlags() & CVAR_MOD))
 						{
 							if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
 								sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
 						}
 						
-						UCVarValue val;
-						sc.MustGetFloat();
-						
-						val.Float = sc.Float;
+
+						ExtraUniformCVARData* oldextra = nullptr;
 
 						// must've picked this up from an autoexec.cfg, handle accordingly
 						if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
 						{
-							val = cvar->GetGenericRep(CVAR_Float);
+							oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
 							delete cvar;
 							cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+							oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
 						}
 
-						shaderdesc.Uniforms[uniformName].Values[0] = sc.Number;
+						shaderdesc.Uniforms[uniformName].Values[0] = oldval.Float;
 
 						cvar->SetGenericRepDefault(val, CVAR_Float);
+
+						if (val.Float != oldval.Float) // it's not default anymore
+							cvar->SetGenericRep(oldval.Float, CVAR_Float);
 						
 						if (callback)
 							cvar->SetCallback(callback);
 						ExtraUniformCVARData* extra = new ExtraUniformCVARData;
 						extra->Shader = shaderdesc.Name.GetChars();
 						extra->Uniform = uniformName.GetChars();
+						extra->Next = oldextra;
 						cvar->SetExtraDataPointer(extra);
 					}
 				}
@@ -1837,6 +1861,8 @@ public:
 			sc.SavePos();
 			if (!sc.GetToken ())
 			{
+				if (addedcvars)
+					GameConfig->DoModSetup (gameinfo.ConfigName);
 				return;
 			}
 			type = sc.MatchString(CoreKeywords);

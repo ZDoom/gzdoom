@@ -479,6 +479,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 
 		case DECAL_OPAQUEBLOOD:
 			newdecal.RenderStyle = STYLE_Normal;
+			newdecal.Translation = TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(gameinfo.defaultbloodcolor));
 			newdecal.opaqueBlood = true;
 			break;
 		}

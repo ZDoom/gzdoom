@@ -1557,6 +1557,7 @@ class GLDefsParser
 
 						UCVarValue oldval;
 						UCVarValue val;
+						ExtraUniformCVARData* oldextra = nullptr;
 						sc.MustGetFloat();
 						
 						val.Float = oldval.Float = sc.Float;
@@ -1569,6 +1570,7 @@ class GLDefsParser
 						{
 							// this value may have been previously loaded
 							oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+							oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
 						}
 
 						if (!(cvar->GetFlags() & CVAR_MOD))
@@ -1576,9 +1578,6 @@ class GLDefsParser
 							if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
 								sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
 						}
-						
-
-						ExtraUniformCVARData* oldextra = nullptr;
 
 						// must've picked this up from an autoexec.cfg, handle accordingly
 						if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))

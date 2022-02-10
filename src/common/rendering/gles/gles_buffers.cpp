@@ -207,29 +207,28 @@ void GLBuffer::Unlock()
 }
 
 void GLBuffer::Resize(size_t newsize)
-{
-	assert(!nomap);	// only mappable buffers can be resized. 
-	if (newsize > buffersize && !nomap)
+{ 
+	if (newsize > buffersize)
 	{
-		/*
-		// reallocate the buffer with twice the size
-		unsigned int oldbuffer = mBufferId;
+		if (isData)
+		{
+			// Create new bigger memory
+			char* memoryNew = (char*)(new uint64_t[newsize / 8 + 16]);
 
-		// first unmap the old buffer
-		Bind();
-		glUnmapBuffer(mUseType);
+			// Copy old data
+			memcpy(memoryNew, memory, buffersize);
 
-		glGenBuffers(1, &mBufferId);
-		SetData(newsize, nullptr, false);
-		glBindBuffer(GL_COPY_READ_BUFFER, oldbuffer);
+			// Delete old memory
+			delete[] memory;
 
-		// copy contents and delete the old buffer.
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, mUseType, 0, 0, buffersize);
-		glBindBuffer(GL_COPY_READ_BUFFER, 0);
-		glDeleteBuffers(1, &oldbuffer);
-		buffersize = newsize;
-		InvalidateBufferState();
-		*/
+			memory = memoryNew;
+
+			buffersize = newsize;
+		}
+		else
+		{
+			// TODO
+		}
 	}
 }
 

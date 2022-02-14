@@ -507,7 +507,7 @@ extend class Weapon
 	deprecated("2.3", "for Dehacked use only")
 	void MBF21_SeekTracer(double threshold, double turnmax)
 	{
-		A_SeekerMissile(threshold, turnmax, flags: SMF_PRECISE); // args get truncated to ints here, but it's close enough
+		A_SeekerMissile(int(threshold), int(turnmax), flags: SMF_PRECISE); // args get truncated to ints here, but it's close enough
 	}
 
 }

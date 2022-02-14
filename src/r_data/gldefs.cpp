@@ -1560,7 +1560,7 @@ class GLDefsParser
 						ExtraUniformCVARData* oldextra = nullptr;
 						sc.MustGetFloat();
 						
-						val.Float = oldval.Float = sc.Float;
+						val.Float = oldval.Float = (float)sc.Float;
 
 						if (!cvar)
 						{

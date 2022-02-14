@@ -11158,8 +11158,12 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 
 	auto zero = build->GetConstantInt(0);
 	auto elementSizeConst = build->GetConstantInt(static_cast<PArray *>(ValueType)->ElementSize);
-	auto arrOffsetReg = build->Registers[REGT_INT].Get(1);
-	build->Emit(OP_ADDA_RK, arrOffsetReg, build->FramePointer.RegNum, build->GetConstantInt(StackOffset));
+	int arrOffsetReg;
+	if (!isDynamicArray)
+	{
+		arrOffsetReg = build->Registers[REGT_POINTER].Get(1);
+		build->Emit(OP_ADDA_RK, arrOffsetReg, build->FramePointer.RegNum, build->GetConstantInt(StackOffset));
+	}
 
 	for (auto v : values)
 	{
@@ -11167,6 +11171,7 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 
 		if (isDynamicArray)
 		{
+			emitval.Free(build);
 			continue;
 		}
 
@@ -11184,23 +11189,23 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 			{
 			default:
 			case REGT_INT:
-				build->Emit(OP_LK, regNum, build->GetConstantInt(constval->GetValue().GetInt()));
-				build->Emit(OP_SW_R, arrOffsetReg, regNum, zero);
+				build->Emit(OP_LK, regNum, emitval.RegNum);
+				build->Emit(OP_SW, arrOffsetReg, regNum, zero);
 				break;
 
 			case REGT_FLOAT:
-				build->Emit(OP_LKF, regNum, build->GetConstantFloat(constval->GetValue().GetFloat()));
-				build->Emit(OP_SDP_R, arrOffsetReg, regNum, zero);
+				build->Emit(OP_LKF, regNum, emitval.RegNum);
+				build->Emit(OP_SDP, arrOffsetReg, regNum, zero);
 				break;
 
 			case REGT_POINTER:
-				build->Emit(OP_LKP, regNum, build->GetConstantAddress(constval->GetValue().GetPointer()));
-				build->Emit(OP_SP_R, arrOffsetReg, regNum, zero);
+				build->Emit(OP_LKP, regNum, emitval.RegNum);
+				build->Emit(OP_SP, arrOffsetReg, regNum, zero);
 				break;
 
 			case REGT_STRING:
-				build->Emit(OP_LKS, regNum, build->GetConstantString(constval->GetValue().GetString()));
-				build->Emit(OP_SS_R, arrOffsetReg, regNum, zero);
+				build->Emit(OP_LKS, regNum, emitval.RegNum);
+				build->Emit(OP_SS, arrOffsetReg, regNum, zero);
 				break;
 			}
 
@@ -11212,9 +11217,15 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 		}
 		emitval.Free(build);
 
-		build->Emit(OP_ADDA_RK, arrOffsetReg, arrOffsetReg, elementSizeConst);
+		if (!isDynamicArray)
+		{
+			build->Emit(OP_ADDA_RK, arrOffsetReg, arrOffsetReg, elementSizeConst);
+		}
 	}
-	build->Registers[REGT_INT].Return(arrOffsetReg, 1);
+	if (!isDynamicArray)
+	{
+		build->Registers[REGT_INT].Return(arrOffsetReg, 1);
+	}
 
 	return ExpEmit();
 }

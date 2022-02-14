@@ -1286,6 +1286,31 @@ class Actor : Thinker native
 		}
 	}
 	
+	virtual void PlayerLandedMakeGruntSound(actor onmobj)
+	{
+		bool grunted;
+
+		// [RH] only make noise if alive
+		if (self.health > 0 && !self.player.morphTics)
+		{
+			grunted = false;
+			// Why should this number vary by gravity?
+			if (self.Vel.Z < -self.player.mo.GruntSpeed)
+			{
+				A_StartSound("*grunt", CHAN_VOICE);
+				grunted = true;
+			}
+			bool isliquid = (pos.Z <= floorz) && HitFloor ();
+			if (onmobj != NULL || !isliquid)
+			{
+				if (!grunted)
+				{
+					A_StartSound("*land", CHAN_AUTO);
+				}
+			}
+		}
+	}
+
 	//----------------------------------------------------------------------------
 	//
 	// PROC A_CheckSkullDone

@@ -197,11 +197,11 @@ inline bool P_IsBlockedByLine(AActor* actor, line_t* line)
 		// the regular 'blockmonsters' flag.
 		if (line->flags & ML_BLOCKMONSTERS) return true;
 		// MBF21's flag for walking monsters
-		if ((line->flags2 & ML2_BLOCKLANDMONSTERS) && !(actor->flags & MF_FLOAT)) return true;
+		if ((line->flags2 & ML2_BLOCKLANDMONSTERS) && actor->Level->MBF21Enabled() && !(actor->flags & MF_FLOAT)) return true;
 	}
 
 	// Blocking players
-	if (((actor->player != nullptr) || (actor->flags8 & MF8_BLOCKASPLAYER)) && (line->flags & ML_BLOCK_PLAYERS)) return true;
+	if ((((actor->player != nullptr) || (actor->flags8 & MF8_BLOCKASPLAYER)) && (line->flags & ML_BLOCK_PLAYERS)) && actor->Level->MBF21Enabled()) return true;
 
 	// Blocking floaters.
 	if ((actor->flags & MF_FLOAT) && (line->flags & ML_BLOCK_FLOATERS)) return true;

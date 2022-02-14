@@ -169,6 +169,7 @@ static FCompatOption Options[] =
 	{ "explode2",				COMPATF2_EXPLODE2, SLOT_COMPAT2 },
 	{ "railing",				COMPATF2_RAILING, SLOT_COMPAT2 },
 	{ "scriptwait",				COMPATF2_SCRIPTWAIT, SLOT_COMPAT2 },
+	{ "nombf21",				COMPATF2_NOMBF21, SLOT_COMPAT2 },
 	{ NULL, 0, 0 }
 };
 

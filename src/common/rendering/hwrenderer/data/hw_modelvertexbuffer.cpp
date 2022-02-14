@@ -50,7 +50,7 @@ FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
 		{ 1, VATTR_VERTEX2, VFmt_Float3, (int)myoffsetof(FModelVertex, x) },
 		{ 1, VATTR_NORMAL2, VFmt_Packed_A2R10G10B10, (int)myoffsetof(FModelVertex, packedNormal) }
 	};
-	mVertexBuffer->SetFormat(2, 5, sizeof(FModelVertex), format);
+	mVertexBuffer->SetFormat(2, 6, sizeof(FModelVertex), format);
 }
 
 //===========================================================================

@@ -17,6 +17,8 @@ struct FModelVertex
 		z = zz;
 		u = uu;
 		v = vv;
+		lu = 0.0f;
+		lv = 0.0f;
 		lindex = -1.0f;
 	}
 

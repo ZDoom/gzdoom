@@ -65,7 +65,7 @@ struct ExtraUniformCVARData
 	FString Shader;
 	FString Uniform;
 	double* vec4 = nullptr;
-	ExtraUniformCVARData* Next;
+	ExtraUniformCVARData* Next = nullptr;
 };
 
 static void do_uniform_set(float value, ExtraUniformCVARData* data)

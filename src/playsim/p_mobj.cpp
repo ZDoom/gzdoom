@@ -2778,10 +2778,17 @@ DEFINE_ACTION_FUNCTION(AActor, CheckFakeFloorTriggers)
 //
 //===========================================================================
 
+void AActor::PlayerLandedMakeGruntSound(AActor *onmobj)
+{
+	IFVIRTUAL(AActor, PlayerLandedMakeGruntSound)
+	{
+		VMValue params[2] = { (AActor*)this, (AActor*)onmobj };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 {
-	bool grunted;
-
 	if (!mo->player)
 		return;
 
@@ -2795,24 +2802,8 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 
 	P_FallingDamage (mo);
 
-	// [RH] only make noise if alive
-	if (mo->health > 0 && !mo->player->morphTics)
-	{
-		grunted = false;
-		// Why should this number vary by gravity?
-		if (mo->Vel.Z < -mo->player->mo->FloatVar(NAME_GruntSpeed))
-		{
-			S_Sound (mo, CHAN_VOICE, 0, "*grunt", 1, ATTN_NORM);
-			grunted = true;
-		}
-		if (onmobj != NULL || !Terrains[P_GetThingFloorType (mo)].IsLiquid)
-		{
-			if (!grunted || !S_AreSoundsEquivalent (mo, "*grunt", "*land"))
-			{
-				S_Sound (mo, CHAN_AUTO, 0, "*land", 1, ATTN_NORM);
-			}
-		}
-	}
+	mo->PlayerLandedMakeGruntSound(onmobj);
+
 //	mo->player->centering = true;
 }
 

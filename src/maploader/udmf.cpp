@@ -755,9 +755,6 @@ public:
 
 			case NAME_lightintensity:
 			case NAME_suncolor:
-			case NAME_sundirx:
-			case NAME_sundiry:
-			case NAME_sundirz:
 			case NAME_sampledistance:
 			case NAME_bounces:
 			case NAME_gridsize:

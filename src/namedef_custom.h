@@ -853,8 +853,6 @@ xx(Pagename)
 //xx(lightcolor) // already defined
 xx(lightintensity)
 xx(lightdistance)
-xx(lightinnerangle)
-xx(lightouterangle)
 xx(lightcolorfloor)
 xx(lightintensityfloor)
 xx(lightdistancefloor)

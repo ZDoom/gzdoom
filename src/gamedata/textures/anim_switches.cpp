@@ -91,6 +91,7 @@ void FTextureAnimator::InitSwitchList ()
 				def1->NumFrames = def2->NumFrames = 1;
 				def1->frames[0].TimeMin = def2->frames[0].TimeMin = 0;
 				def1->frames[0].TimeRnd = def2->frames[0].TimeRnd = 0;
+				def1->QuestPanel = def2->QuestPanel = false;
 				AddSwitchPair(def1, def2);
 			}
 		}

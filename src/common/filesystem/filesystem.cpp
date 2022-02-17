@@ -216,6 +216,19 @@ void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, Lump
 	DeleteAll();
 	numfiles = 0;
 
+	// first, check for duplicates
+	if (!Args->CheckParm("-allowduplicates"))
+	{
+		for (unsigned i=0;i<filenames.Size(); i++)
+		{
+			for (unsigned j=i+1;j<filenames.Size(); j++)
+			{
+				if (strcmp(filenames[i], filenames[j]) == 0)
+					filenames.Delete(j);
+			}
+		}
+	}
+
 	for(unsigned i=0;i<filenames.Size(); i++)
 	{
 		AddFile (filenames[i], nullptr, quiet, filter);

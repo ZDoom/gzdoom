@@ -11224,7 +11224,7 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 	}
 	if (!isDynamicArray)
 	{
-		build->Registers[REGT_INT].Return(arrOffsetReg, 1);
+		build->Registers[REGT_POINTER].Return(arrOffsetReg, 1);
 	}
 
 	return ExpEmit();

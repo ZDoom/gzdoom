@@ -364,6 +364,7 @@ struct level_info_t
 	int			outsidefogdensity;
 	int			skyfog;
 	float		pixelstretch;
+	FVector4	DirectionalLight;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.

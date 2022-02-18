@@ -307,7 +307,7 @@ public:
 #ifdef NPOT_EMULATION
 		mStreamData.uNpotEmulation = { 0,0,0,0 };
 #endif
-		mStreamData.uDirectionalLight = { -0.55708601453f, 0.7427813527f, -0.37139067635f, 0.25f };
+		mStreamData.uDirectionalLight = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
 		ClearClipSplit();

@@ -1713,6 +1713,8 @@ void FLevelLocals::Init()
 
 	pixelstretch = info->pixelstretch;
 
+	DirectionalLight = info->DirectionalLight;
+
 	compatflags.Callback();
 	compatflags2.Callback();
 

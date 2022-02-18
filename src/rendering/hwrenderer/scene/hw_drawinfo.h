@@ -212,6 +212,7 @@ private:
 	PalEntry CalcLightColor(int light, PalEntry pe, int blendfactor);
 	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
 	bool CheckFog(sector_t *frontsector, sector_t *backsector);
+	FVector4 GetDirectionalLight(void);
 	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
 public:
 

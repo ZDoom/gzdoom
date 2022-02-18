@@ -49,7 +49,7 @@ public:
 	void EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
 	VSMatrix GetViewToWorldMatrix() override;
-	void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
+	void BeginDrawHUDModel(FRenderStyle style, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 	void EndDrawHUDModel(FRenderStyle style) override;
 	void SetInterpolation(double interpolation) override;
 	void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) override;

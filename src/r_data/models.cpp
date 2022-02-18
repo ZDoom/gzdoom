@@ -213,7 +213,7 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float o
 
 	float orientation = smf->xscale * smf->yscale * smf->zscale;
 
-	renderer->BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0);
+	renderer->BeginDrawHUDModel(playermo->RenderStyle, smf, objectToWorldMatrix, orientation < 0);
 	uint32_t trans = psp->GetTranslation() != 0 ? psp->GetTranslation() : 0;
 	if ((psp->Flags & PSPF_PLAYERTRANSLATED)) trans = psp->Owner->mo->Translation;
 	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), psp->Caller->GetClass(), trans);
@@ -703,6 +703,10 @@ static void ParseModelDefLump(int Lump)
 					smf.rotationCenterX = 0.;
 					smf.rotationCenterY = 0.;
 					smf.rotationCenterZ = 0.;
+				}
+				else if (sc.Compare("nodirectionallight"))
+				{
+					smf.flags |= MDL_NODIRECTIONALLIGHT;
 				}
 				else
 				{

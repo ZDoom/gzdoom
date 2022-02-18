@@ -77,7 +77,13 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 	state.SetTextureMode(decal->RenderStyle);
 	state.SetRenderStyle(decal->RenderStyle);
 	state.SetMaterial(texture, UF_Sprite, 0, CLAMP_XY, decal->Translation, -1);
-	state.SetDirectionalLight(di->GetDirectionalLight());
+
+	// only enable directional lighting if the DL mode is enabled for the entire map.
+	// IMO it doesn't make sense to enable DL on decals if the DL mode is set to "models only".
+	if (level.info->DirectionalLightMode == 2)
+	{
+		state.SetDirectionalLight(di->GetDirectionalLight());
+	}
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold

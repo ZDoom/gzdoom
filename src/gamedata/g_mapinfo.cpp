@@ -290,6 +290,7 @@ void level_info_t::Reset()
 	outsidefogdensity = 0;
 	skyfog = 0;
 	pixelstretch = 1.2f;
+	DirectionalLightMode = 0;
 	DirectionalLight = FVector4(0, 0, 0, 0);
 
 	specialactions.Clear();
@@ -1435,6 +1436,13 @@ DEFINE_MAP_OPTION(pixelratio, false)
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
 	info->pixelstretch = (float)parse.sc.Float;
+}
+
+DEFINE_MAP_OPTION(DirectionalLightMode, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->DirectionalLightMode = (int8_t)clamp(parse.sc.Number, 0, 2);
 }
 
 DEFINE_MAP_OPTION(DirectionalLight, true)

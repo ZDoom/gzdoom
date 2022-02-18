@@ -2475,6 +2475,55 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, setFrozen, setFrozen)
 //
 //=====================================================================================
 
+static void SetDirectionalLight(FLevelLocals *self, double x, double y, double z, double strength)
+{
+	// normalize the vector
+	DVector3 dlv = DVector3(x, y, z);
+	dlv.MakeUnit();
+	self->DirectionalLight = FVector4(static_cast<float>(dlv.X), static_cast<float>(dlv.Y), static_cast<float>(dlv.Z), static_cast<float>(strength));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SetDirectionalLight, SetDirectionalLight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(strength);
+	SetDirectionalLight(self, x, y, z, strength);
+	return 0;
+}
+
+static void GetDirectionalLightVector(FLevelLocals *self, DVector3 *result)
+{
+	*result = DVector3(self->DirectionalLight.X, self->DirectionalLight.Y, self->DirectionalLight.Z);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetDirectionalLightVector, GetDirectionalLightVector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	DVector3 result;
+	GetDirectionalLightVector(self, &result);
+	ACTION_RETURN_VEC3(result);
+}
+
+static double GetDirectionalLightStrength(FLevelLocals *self)
+{
+	return self->DirectionalLight.W;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetDirectionalLightStrength, GetDirectionalLightStrength)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_FLOAT(GetDirectionalLightStrength(self));
+}
+
+//=====================================================================================
+//
+//
+//
+//=====================================================================================
+
 DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 {
 	PARAM_PROLOGUE;
@@ -2715,6 +2764,7 @@ DEFINE_FIELD(FLevelLocals, fogdensity)
 DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, DirectionalLightMode)
 DEFINE_FIELD(FLevelLocals, MusicVolume)
 DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.

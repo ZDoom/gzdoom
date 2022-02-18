@@ -202,6 +202,8 @@ struct StreamData
 	FVector4 uDetailParms;
 	FVector4 uNpotEmulation;
 	FVector4 padding1, padding2, padding3;
+
+	FVector4 uDirectionalLight;
 };
 
 class FRenderState
@@ -305,6 +307,7 @@ public:
 #ifdef NPOT_EMULATION
 		mStreamData.uNpotEmulation = { 0,0,0,0 };
 #endif
+		mStreamData.uDirectionalLight = { -0.55708601453f, 0.7427813527f, -0.37139067635f, 0.25f };
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
 		ClearClipSplit();
@@ -486,6 +489,11 @@ public:
 		mStreamData.uDynLightColor.X = r;
 		mStreamData.uDynLightColor.Y = g;
 		mStreamData.uDynLightColor.Z = b;
+	}
+
+	void SetDirectionalLight(FVector4 dl)
+	{
+		mStreamData.uDirectionalLight = { dl.X, dl.Y, dl.Z, dl.W };
 	}
 
 	void SetScreenFade(float f)

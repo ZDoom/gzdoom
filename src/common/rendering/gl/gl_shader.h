@@ -266,6 +266,7 @@ class FShader
 	FBufferedUniform2f muNpotEmulation;
 #endif
 
+	FUniform4f muDirectionalLight;
 	int lights_index;
 	int modelmatrix_index;
 	int normalmodelmatrix_index;

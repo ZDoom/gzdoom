@@ -36,7 +36,7 @@ vec2 lightAttenuation(int i, vec3 normal, vec3 viewdir, float lightcolorA)
 
 vec2 lightDirectionalAttenuation(vec3 normal, vec3 viewdir)
 {
-	vec3 lightDirectionalDir = vec3(-0.55708601453, 0.7427813527, -0.37139067635);
+	vec3 lightDirectionalDir = uDirectionalLight.xyz;
 	float attenuation = clamp(dot(lightDirectionalDir, normal), 0.0, 1.0);
 
 	float glossiness = uSpecularMaterial.x;
@@ -56,9 +56,9 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 	vec3 normal = material.Normal;
 	vec3 viewdir = normalize(uCameraPos.xyz - pixelpos.xyz);
 
-	if (normal != vec3(0.0))
+	if (uDirectionalLight.w != 0 && normal != vec3(0.0))
 	{
-		float lightDirectionalStrength = 0.25;
+		float lightDirectionalStrength = uDirectionalLight.w;
 		vec2 lightLevelAttenuation = lightDirectionalAttenuation(normal, viewdir) * lightDirectionalStrength;
 		dynlight.rgb += color * lightLevelAttenuation.x;
 		specular.rgb += color * lightLevelAttenuation.y;

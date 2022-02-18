@@ -80,11 +80,11 @@ vec3 ProcessMaterialLight(Material material, vec3 ambientLight)
 
 	vec3 Lo = uDynLightColor.rgb;
 
-	if (N != vec3(0.0))
+	if (uDirectionalLight.w != 0 && N != vec3(0.0))
 	{
-		float lightDirectionalStrength = 0.5;
+		float lightDirectionalStrength = uDirectionalLight.w;
 
-		vec3 lightDirectionalDir = vec3(-0.55708601453, 0.7427813527, -0.37139067635);
+		vec3 lightDirectionalDir = uDirectionalLight.xyz;
 		float attenuation = clamp(dot(N, lightDirectionalDir), 0.0, 1.0);
 		if (attenuation > 0.0)
 		{

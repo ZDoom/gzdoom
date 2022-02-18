@@ -284,6 +284,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		uniform mat4 NormalModelMatrix;
 		uniform mat4 TextureMatrix;
 
+		// directional light
+		uniform vec4 uDirectionalLight;
+
 		// light buffers
 		#ifdef SHADER_STORAGE_LIGHTS
 		layout(std430, binding = 1) buffer LightBufferSSO
@@ -600,6 +603,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muTextureModulateColor.Init(hShader, "uTextureModulateColor");
 	muTextureBlendColor.Init(hShader, "uTextureBlendColor");
 	muTimer.Init(hShader, "timer");
+	muDirectionalLight.Init(hShader, "uDirectionalLight");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");

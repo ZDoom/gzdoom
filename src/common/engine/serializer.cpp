@@ -1629,3 +1629,8 @@ FSerializer& Serialize(FSerializer& arc, const char* key, FRenderStyle& style, F
 }
 
 SaveRecords saveRecords;
+
+FSerializer &Serialize(FSerializer &arc, const char *key, FVector4 &value, FVector4 *defval)
+{
+	return arc.Array<float>(key, &value[0], defval ? &(*defval)[0] : nullptr, 4, true);
+}

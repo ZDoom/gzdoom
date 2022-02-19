@@ -753,14 +753,6 @@ public:
 				th->friendlyseeblocks = CheckInt(key);
 				break;
 
-			case NAME_lightintensity:
-			case NAME_suncolor:
-			case NAME_sampledistance:
-			case NAME_bounces:
-			case NAME_gridsize:
-				CHECK_N(Zd | Zdt)
-				break;
-
 			default:
 				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))
@@ -1131,9 +1123,9 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
-			case NAME_Lightcolor:
-			case NAME_lightintensity:
-			case NAME_lightdistance:
+			case NAME_lightcolorline:
+			case NAME_lightintensityline:
+			case NAME_lightdistanceline:
 				CHECK_N(Zd | Zdt)
 				break;
 

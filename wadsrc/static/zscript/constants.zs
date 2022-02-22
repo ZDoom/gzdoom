@@ -1021,9 +1021,6 @@ enum EFindFloorCeiling
 	FFCF_NOCEILING = 64,
 	FFCF_RESTRICTEDPORTAL = 128,	// current values in the iterator's return are through a restricted portal type (i.e. some features are blocked.)
 	FFCF_NODROPOFF = 256,			// Caller does not need a dropoff (saves some time when checking portals)
-	FFCF_NONSOLID = 512,			// [MC] Include non-solids
-	FFCF_NOSOLIDS = 1024,			// [MC] Ignore solid
-	FFCF_SWIMMABLE = 2048,			// [MC] Search for swimmables
 };
 
 enum ERaise

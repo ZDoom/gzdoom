@@ -938,6 +938,16 @@ int GetTerrain(const sector_t *sector, int pos)
 	return sector->terrainnum[pos] >= 0 ? sector->terrainnum[pos] : TerrainTypes[sector->GetTexture(pos)];
 }
 
+FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos)
+{
+	return &Terrains[GetTerrain(sec, pos)];
+}
+
+FTerrainDef *GetTerrainDef(const unsigned int num)
+{
+	return (num >= 0 && num < Terrains.Size()) ? &Terrains[num] : nullptr;
+}
+
 	//=====================================================================================
 //
 //

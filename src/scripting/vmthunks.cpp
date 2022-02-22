@@ -477,13 +477,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFloorTerrain, GetFloorTerrain_S)
 	ACTION_RETURN_POINTER(GetFloorTerrain_S(self, pos));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTerrainDef, GetTerrainDef)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
-	PARAM_UINT(floorterrain);
-	ACTION_RETURN_POINTER(GetTerrainDef(floorterrain));
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CheckPortalPlane, CheckPortalPlane)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);

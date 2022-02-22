@@ -1771,7 +1771,6 @@ void GetSpecial(sector_t *self, secspecial_t *spec);
 void SetSpecial(sector_t *self, const secspecial_t *spec);
 int GetTerrain(const sector_t *, int pos);
 FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos);
-FTerrainDef *GetTerrainDef(const unsigned int num);
 void CheckPortalPlane(sector_t *sector, int plane);
 void AdjustFloorClip(const sector_t *sector);
 void SetColor(sector_t *sector, int color, int desat);

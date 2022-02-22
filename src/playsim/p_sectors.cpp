@@ -943,12 +943,7 @@ FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos)
 	return &Terrains[GetTerrain(sec, pos)];
 }
 
-FTerrainDef *GetTerrainDef(const unsigned int num)
-{
-	return (num >= 0 && num < Terrains.Size()) ? &Terrains[num] : nullptr;
-}
-
-	//=====================================================================================
+//=====================================================================================
 //
 //
 //=====================================================================================

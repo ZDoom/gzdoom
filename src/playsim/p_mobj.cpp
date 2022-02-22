@@ -6271,6 +6271,7 @@ foundone:
 		if (smallsplash && splash->SmallSplash)
 		{
 			mo = Spawn(sec->Level, splash->SmallSplash, pos, ALLOW_REPLACE);
+			mo->target = thing;
 			if (mo) mo->Floorclip += splash->SmallSplashClip;
 		}
 		else
@@ -6292,6 +6293,7 @@ foundone:
 			if (splash->SplashBase)
 			{
 				mo = Spawn(sec->Level, splash->SplashBase, pos, ALLOW_REPLACE);
+				mo->target = thing;
 			}
 			if (thing->player && !splash->NoAlert && alert)
 			{

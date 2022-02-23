@@ -997,6 +997,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// light calculation
 
 	bool enhancedvision = false;
+	bool UseActorLight = (thing->LightLevel > -1);
 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
@@ -1004,13 +1005,13 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		((thing->renderflags & RF_FULLBRIGHT) && (!texture || !texture->isFullbrightDisabled()));
 
 	if (fullbright)	lightlevel = 255;
-	else if (thing->LightLevel > -1)
+	else if (UseActorLight)
 		lightlevel = thing->LightLevel;
 	else
 		lightlevel = hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 
-	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255);
+	foglevel = (uint8_t)clamp<short>((UseActorLight) ? thing->LightLevel : rendersector->lightlevel, 0, 255);
 
 	lightlevel = rendersector->CheckSpriteGlow(lightlevel, thingpos);
 

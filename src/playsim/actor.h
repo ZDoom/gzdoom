@@ -425,6 +425,7 @@ enum ActorFlag8
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
 	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
 	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
+	MF8_CROSSLINECHECK	= 0x10000000,	// [MC]Enables CanCrossLine virtual
 };
 
 // --- mobj.renderflags ---

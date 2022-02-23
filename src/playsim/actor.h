@@ -1112,6 +1112,7 @@ public:
 	int16_t			movecount;		// when 0, select a new dir
 
 	int16_t			strafecount;	// for MF3_AVOIDMELEE
+	int16_t			LightLevel;		// Allows for overriding sector light levels.
 	uint16_t			SpawnAngle;
 
 	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)

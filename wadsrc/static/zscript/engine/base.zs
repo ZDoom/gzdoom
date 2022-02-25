@@ -587,6 +587,7 @@ class Object native
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
 	native static uint MSTime();
+	native static double NSTime();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native virtualscope void Destroy();

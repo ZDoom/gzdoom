@@ -90,7 +90,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 
 	// The pickup is at or above the toucher's feet OR
 	// The pickup is below the toucher.
-	if (delta > toucher->Height || delta < MIN(-32., -special->Height))
+	if (delta > toucher->Height || delta < min(-32., -special->Height))
 	{ // out of reach
 		return;
 	}
@@ -1467,7 +1467,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				}
 			}
 
-			const int realdamage = MAX(0, damage);
+			const int realdamage = max(0, damage);
 			target->Level->localEventManager->WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
 			needevent = false;
 
@@ -1475,7 +1475,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			return realdamage;
 		}
 	}
-	return MAX(0, damage);
+	return max(0, damage);
 }
 
 static int DoDamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
@@ -1492,7 +1492,7 @@ static int DoDamageMobj(AActor *target, AActor *inflictor, AActor *source, int d
 		target->Level->localEventManager->WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
 	}
 
-	return MAX(0, realdamage);
+	return max(0, realdamage);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
@@ -1600,19 +1600,25 @@ bool AActor::OkayToSwitchTarget(AActor *other)
 	if (!(other->flags & MF_SHOOTABLE))
 		return false;		// Don't attack things that can't be hurt
 
-	if ((flags4 & MF4_NOTARGETSWITCH) && target != NULL)
+	if ((flags4 & MF4_NOTARGETSWITCH) && target != nullptr)
 		return false;		// Don't switch target if not allowed
 
-	if ((master != NULL && other->IsA(master->GetClass())) ||		// don't attack your master (or others of its type)
-		(other->master != NULL && IsA(other->master->GetClass())))	// don't attack your minion (or those of others of your type)
+	if ((master != nullptr && other->IsA(master->GetClass())) ||		// don't attack your master (or others of its type)
+		(other->master != nullptr && IsA(other->master->GetClass())))	// don't attack your minion (or those of others of your type)
 	{
-		if (!IsHostile (other) &&								// allow target switch if other is considered hostile
+		if (!IsHostile(other) &&								// allow target switch if other is considered hostile
 			(other->tid != TIDtoHate || TIDtoHate == 0) &&		// or has the tid we hate
 			other->TIDtoHate == TIDtoHate)						// or has different hate information
 		{
 			return false;
 		}
 	}
+
+	// MBF21 support.
+	auto mygroup = GetClass()->ActorInfo()->infighting_group;
+	auto othergroup = other->GetClass()->ActorInfo()->infighting_group;
+	if (mygroup != 0 && mygroup == othergroup)
+		return false;
 
 	if ((flags7 & MF7_NOINFIGHTSPECIES) && GetSpecies() == other->GetSpecies())
 		return false;		// Don't fight own species.

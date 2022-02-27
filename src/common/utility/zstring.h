@@ -215,28 +215,28 @@ public:
 	void AppendCharacter(int codepoint);
 	void DeleteLastCharacter();
 
-	long IndexOf (const FString &substr, long startIndex=0) const;
-	long IndexOf (const char *substr, long startIndex=0) const;
-	long IndexOf (char subchar, long startIndex=0) const;
+	ptrdiff_t IndexOf (const FString &substr, ptrdiff_t startIndex=0) const;
+	ptrdiff_t IndexOf (const char *substr, ptrdiff_t startIndex=0) const;
+	ptrdiff_t IndexOf (char subchar, ptrdiff_t startIndex=0) const;
 
-	long IndexOfAny (const FString &charset, long startIndex=0) const;
-	long IndexOfAny (const char *charset, long startIndex=0) const;
+	ptrdiff_t IndexOfAny (const FString &charset, ptrdiff_t startIndex=0) const;
+	ptrdiff_t IndexOfAny (const char *charset, ptrdiff_t startIndex=0) const;
 
 	// This is only kept for backwards compatibility with old ZScript versions that used this function and depend on its bug.
-	long LastIndexOf (char subchar) const;
-	long LastIndexOfBroken (const FString &substr, long endIndex) const;
-	long LastIndexOf (char subchar, long endIndex) const;
+	ptrdiff_t LastIndexOf (char subchar) const;
+	ptrdiff_t LastIndexOfBroken (const FString &substr, ptrdiff_t endIndex) const;
+	ptrdiff_t LastIndexOf (char subchar, ptrdiff_t endIndex) const;
 
-	long LastIndexOfAny (const FString &charset) const;
-	long LastIndexOfAny (const char *charset) const;
-	long LastIndexOfAny (const FString &charset, long endIndex) const;
-	long LastIndexOfAny (const char *charset, long endIndex) const;
+	ptrdiff_t LastIndexOfAny (const FString &charset) const;
+	ptrdiff_t LastIndexOfAny (const char *charset) const;
+	ptrdiff_t LastIndexOfAny (const FString &charset, ptrdiff_t endIndex) const;
+	ptrdiff_t LastIndexOfAny (const char *charset, ptrdiff_t endIndex) const;
 
-	long LastIndexOf (const FString &substr) const;
-	long LastIndexOf (const FString &substr, long endIndex) const;
-	long LastIndexOf (const char *substr) const;
-	long LastIndexOf (const char *substr, long endIndex) const;
-	long LastIndexOf (const char *substr, long endIndex, size_t substrlen) const;
+	ptrdiff_t LastIndexOf (const FString &substr) const;
+	ptrdiff_t LastIndexOf (const FString &substr, ptrdiff_t endIndex) const;
+	ptrdiff_t LastIndexOf (const char *substr) const;
+	ptrdiff_t LastIndexOf (const char *substr, ptrdiff_t endIndex) const;
+	ptrdiff_t LastIndexOf (const char *substr, ptrdiff_t endIndex, size_t substrlen) const;
 
 	void ToUpper ();
 	void ToLower ();

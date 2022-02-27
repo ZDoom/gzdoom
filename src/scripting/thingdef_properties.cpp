@@ -325,6 +325,10 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->IntVar(NAME_InterHubAmount) = set ? 0 : 1;
 		break;
 
+	case DEPF_HIGHERMPROB:
+		defaults->MinMissileChance = set ? 160 : 200;
+		break;
+
 	default:
 		break;	// silence GCC
 	}
@@ -384,6 +388,9 @@ bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
 
 	case DEPF_INTERHUBSTRIP:
 		return !(actor->IntVar(NAME_InterHubAmount));
+
+	case DEPF_HIGHERMPROB:
+		return actor->MinMissileChance <= 160;
 	}
 
 	return false; // Any entirely unknown flag is not set
@@ -1026,6 +1033,45 @@ DEFINE_PROPERTY(designatedteam, I, Actor)
 }
 
 //==========================================================================
+// MBF21
+//==========================================================================
+DEFINE_PROPERTY(infightinggroup, I, Actor)
+{
+	PROP_INT_PARM(i, 0);
+	if (i < 0)
+	{
+		I_Error("Infighting groups must be >= 0.");
+	}
+	info->ActorInfo()->infighting_group = i;
+}
+
+//==========================================================================
+// MBF21
+//==========================================================================
+DEFINE_PROPERTY(projectilegroup, I, Actor)
+{
+	PROP_INT_PARM(i, 0);
+	if (i < -1)
+	{
+		I_Error("Projectile groups must be >= -1.");
+	}
+	info->ActorInfo()->projectile_group = i;
+}
+
+//==========================================================================
+// MBF21
+//==========================================================================
+DEFINE_PROPERTY(splashgroup, I, Actor)
+{
+	PROP_INT_PARM(i, 0);
+	if (i < 0)
+	{
+		I_Error("Splash groups must be >= 0.");
+	}
+	info->ActorInfo()->splash_group = i;
+}
+
+//==========================================================================
 // [BB]
 //==========================================================================
 DEFINE_PROPERTY(visibletoteam, I, Actor)
@@ -1245,7 +1291,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(65535);
 			return;
 		}
-		color = V_GetColor(NULL, name, &bag.ScriptPosition);
+		color = V_GetColor(name, &bag.ScriptPosition);
 	}
 	if (PROP_PARM_COUNT > 2)
 	{

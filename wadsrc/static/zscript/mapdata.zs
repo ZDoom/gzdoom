@@ -162,10 +162,15 @@ struct Line native play
 		ML_3DMIDTEX_IMPASS			= 0x10000000,	// [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
 	};
 
+	enum ELineFlags2
+	{
+		ML2_BLOCKLANDMONSTERS = 1,
+	}
 
 	native readonly vertex			v1, v2;		// vertices, from v1 to v2
 	native readonly Vector2			delta;		// precalculated v2 - v1 for side checking
 	native uint						flags;
+	native uint						flags2;
 	native uint						activation;	// activation type
 	native int						special;
 	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
@@ -278,7 +283,7 @@ struct SecSpecial play
 {
 	Name damagetype;
 	int damageamount;
-	short special;
+	int special;
 	short damageinterval;
 	short leakydamage;
 	int Flags;
@@ -302,7 +307,7 @@ struct Sector native play
 
 	native Actor 		SoundTarget;
 
-	native int16 		special;
+	native int			special;
 	native int16 		lightlevel;
 	native int16		seqType;	
 
@@ -447,6 +452,7 @@ struct Sector native play
 	native void GetSpecial(out SecSpecial spec);
 	native void SetSpecial( SecSpecial spec);
 	native int GetTerrain(int pos);
+	native TerrainDef GetFloorTerrain(int pos);			// Gets the terraindef from floor/ceiling (see EPlane const).
 	native void CheckPortalPlane(int plane);
 	native double, Sector HighestCeilingAt(Vector2 a);
 	native double, Sector LowestFloorAt(Vector2 a);

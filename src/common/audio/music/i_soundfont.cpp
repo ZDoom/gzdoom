@@ -140,7 +140,7 @@ FileReader FSoundFontReader::Open(const char *name, std::string& filename)
 ZMusicCustomReader* FSoundFontReader::open_interface(const char* name)
 {
 	std::string filename;
-	
+
 	FileReader fr = Open(name, filename);
 	if (!fr.isOpen()) return nullptr;
 	auto fri = GetMusicReader(fr);
@@ -336,7 +336,7 @@ void FSoundFontManager::ProcessOneFile(const FString &fn)
 		// We already got a soundfont with this name. Do not add again.
 		if (!sfi.mName.CompareNoCase(fb)) return;
 	}
-	
+
 	FileReader fr;
 	if (fr.OpenFile(fn))
 	{

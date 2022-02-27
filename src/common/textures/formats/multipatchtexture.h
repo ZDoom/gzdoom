@@ -120,6 +120,7 @@ struct BuildInfo
 	bool bComplex = false;
 	bool textual = false;
 	bool bNoDecals = false;
+	bool bNoTrim = false;
 	int LeftOffset[2] = {};
 	int TopOffset[2] = {};
 	FGameTexture *texture = nullptr;

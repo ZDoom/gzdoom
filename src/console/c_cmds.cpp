@@ -361,7 +361,18 @@ CCMD (changemap)
 	if (argv.argc() > 1)
 	{
 		const char *mapname = argv[1];
-		if (!strcmp(mapname, "*")) mapname = primaryLevel->MapName.GetChars();
+		if (!strcmp(mapname, "*"))
+		{
+			mapname = primaryLevel->MapName.GetChars();
+		}
+		else if (!strcmp(mapname, "+") && primaryLevel->NextMap.Len() > 0 && primaryLevel->NextMap.Compare("enDSeQ", 6))
+		{
+			mapname = primaryLevel->NextMap.GetChars();
+		}
+		else if (!strcmp(mapname, "+$") && primaryLevel->NextSecretMap.Len() > 0 && primaryLevel->NextSecretMap.Compare("enDSeQ", 6))
+		{
+			mapname = primaryLevel->NextSecretMap.GetChars();
+		}
 
 		try
 		{
@@ -458,7 +469,7 @@ CCMD (puke)
 			return;
 		}
 		int arg[4] = { 0, 0, 0, 0 };
-		int argn = MIN<int>(argc - 2, countof(arg)), i;
+		int argn = min<int>(argc - 2, countof(arg)), i;
 
 		for (i = 0; i < argn; ++i)
 		{
@@ -505,7 +516,7 @@ CCMD (pukename)
 				always = true;
 				argstart = 3;
 			}
-			argn = MIN<int>(argc - argstart, countof(arg));
+			argn = min<int>(argc - argstart, countof(arg));
 			for (i = 0; i < argn; ++i)
 			{
 				arg[i] = atoi(argv[argstart + i]);
@@ -1103,7 +1114,7 @@ CCMD(idmus)
 	FString map;
 	int l;
 
-	if (!nomusic)
+	if (MusicEnabled())
 	{
 		if (argv.argc() > 1)
 		{

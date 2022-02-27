@@ -50,3 +50,9 @@ TArray<FString> I_GetGogPaths()
 	// GOG's Doom games are Windows only at the moment
 	return TArray<FString>();
 }
+
+TArray<FString> I_GetBethesdaPath()
+{
+	// Bethesda.net Launcher is Windows only at the moment
+	return TArray<FString>();
+}

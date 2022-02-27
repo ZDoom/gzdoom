@@ -265,7 +265,7 @@ DObject::~DObject ()
 				Release();
 			}
 		}
-		
+
 		if (nullptr != type)
 		{
 			type->DestroySpecials(this);

@@ -31,12 +31,15 @@
 #define __R_DEFS_H__
 
 #include "doomdef.h"
-#include "templates.h"
+
 #include "m_bbox.h"
 #include "dobjgc.h"
 #include "r_data/r_translate.h"
 #include "texmanip.h"
 #include "fcolormap.h"
+#include "p_terrain.h"
+
+#include "hwrenderer/data/buffers.h"
 
 // Some more or less basic data types
 // we depend on.
@@ -56,6 +59,8 @@ struct sector_t;
 class AActor;
 struct FSection;
 struct FLevelLocals;
+struct LightmapSurface;
+struct LightProbe;
 
 const uint16_t NO_INDEX = 0xffffu;
 const uint32_t NO_SIDE = 0xffffffffu;
@@ -485,6 +490,7 @@ enum
 	SECMF_HIDDEN			= 256,	// Do not draw on textured automap
 	SECMF_OVERLAPPING		= 512,	// floor and ceiling overlap and require special renderer action.
 	SECMF_NOSKYWALLS		= 1024,	// Do not draw "sky walls"
+	SECMF_LIFT				= 2048,	// For MBF monster AI
 };
 
 enum
@@ -501,13 +507,16 @@ enum
 	SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
 	SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
 	SECF_NOATTACK		= 2048,	// monsters cannot start attacks in this sector.
+	SECF_EXIT1			= 4096,
+	SECF_EXIT2			= 8192,
+	SECF_KILLMONSTERS	= 16384,
 
 	SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
 	SECF_SECRET			= 1 << 31,	// a secret sector
 
 	SECF_DAMAGEFLAGS = SECF_ENDGODMODE|SECF_ENDLEVEL|SECF_DMGTERRAINFX|SECF_HAZARD,
 	SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
-	SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
+	SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH|SECF_EXIT1|SECF_EXIT2|SECF_KILLMONSTERS,	// these flags originate from 'special' and must be transferrable by floor thinkers
 };
 
 enum
@@ -592,7 +601,7 @@ struct secspecial_t
 {
 	FName damagetype;		// [RH] Means-of-death for applied damage
 	int damageamount;			// [RH] Damage to do while standing on floor
-	short special;
+	int special;
 	short damageinterval;	// Interval for damage application
 	short leakydamage;		// chance of leaking through radiation suit
 	int Flags;
@@ -668,8 +677,7 @@ struct sector_t
 
 	FColormap Colormap;						// Sector's own color/fog info.
 
-	short		special;					// map-defined sector special type
-	short		lightlevel;
+	int		special;					// map-defined sector special type
 
 	int			sky;						// MBF sky transfer info.
 	int 		validcount;					// if == validcount, already checked
@@ -679,6 +687,7 @@ struct sector_t
 											//		the alpha mask is non-zero
 
 	bool transdoor;							// For transparent door hacks
+	short		lightlevel;
 	uint16_t MoreFlags;						// [RH] Internal sector flags
 	uint32_t Flags;							// Sector flags
 
@@ -689,18 +698,19 @@ struct sector_t
 	int							sectornum;			// for comparing sector copies
 
 	// GL only stuff starts here
-	float						reflect[2];
-
 	int							subsectorcount;		// list of subsectors
+	float						reflect[2];
 	double						transdoorheight;	// for transparent door hacks
 	subsector_t **				subsectors;
 	FSectorPortalGroup *		portals[2];			// floor and ceiling portals
 
 	int				vboindex[4];	// VBO indices of the 4 planes this sector uses during rendering. This is only needed for updating plane heights.
 	int				iboindex[4];	// IBO indices of the 4 planes this sector uses during rendering
-	double			vboheight[2];	// Last calculated height for the 2 planes of this actual sector
+	double			vboheight[HW_MAX_PIPELINE_BUFFERS][2];	// Last calculated height for the 2 planes of this actual sector
 	int				vbocount[2];	// Total count of vertices belonging to this sector's planes. This is used when a sector height changes and also contains all attached planes.
 	int				ibocount;		// number of indices per plane (identical for all planes.) If this is -1 the index buffer is not in use.
+
+	bool HasLightmaps = false;		// Sector has lightmaps, each subsector vertex needs its own unique lightmap UV data
 
 	// Below are all properties which are not used by the renderer.
 
@@ -776,7 +786,6 @@ public:
 
 	bool IsLinked(sector_t *other, bool ceiling) const;
 
-	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	void RemoveForceField();
 	int Index() const { return sectornum; }
 
@@ -1143,15 +1152,20 @@ class DBaseDecal;
 
 enum
 {
-	WALLF_ABSLIGHTING	 = 1,	// Light is absolute instead of relative
-	WALLF_NOAUTODECALS	 = 2,	// Do not attach impact decals to this wall
-	WALLF_NOFAKECONTRAST = 4,	// Don't do fake contrast for this wall in side_t::GetLightLevel
-	WALLF_SMOOTHLIGHTING = 8,   // Similar to autocontrast but applies to all angles.
-	WALLF_CLIP_MIDTEX	 = 16,	// Like the line counterpart, but only for this side.
-	WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
-	WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
-	WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
-	WALLF_EXTCOLOR		 = 256,	// enables the extended color options (flagged to allow the renderer to easily skip the relevant code)
+	WALLF_ABSLIGHTING			= 1,	// Light is absolute instead of relative
+	WALLF_NOAUTODECALS			= 2,	// Do not attach impact decals to this wall
+	WALLF_NOFAKECONTRAST		= 4,	// Don't do fake contrast for this wall in side_t::GetLightLevel
+	WALLF_SMOOTHLIGHTING		= 8,	// Similar to autocontrast but applies to all angles.
+	WALLF_CLIP_MIDTEX			= 16,	// Like the line counterpart, but only for this side.
+	WALLF_WRAP_MIDTEX			= 32,	// Like the line counterpart, but only for this side.
+	WALLF_POLYOBJ				= 64,	// This wall belongs to a polyobject.
+	WALLF_LIGHT_FOG				= 128,	// This wall's Light is used even in fog.
+	WALLF_EXTCOLOR				= 256,	// enables the extended color options (flagged to allow the renderer to easily skip the relevant code)
+
+	WALLF_ABSLIGHTING_TIER		= 512,	// Per-tier absolute lighting flags
+	WALLF_ABSLIGHTING_TOP		= WALLF_ABSLIGHTING_TIER << 0, 	// Top tier light is absolute instead of relative
+	WALLF_ABSLIGHTING_MID		= WALLF_ABSLIGHTING_TIER << 1, 	// Mid tier light is absolute instead of relative
+	WALLF_ABSLIGHTING_BOTTOM 	= WALLF_ABSLIGHTING_TIER << 2,	// Bottom tier light is absolute instead of relative
 };
 
 struct side_t
@@ -1208,19 +1222,27 @@ struct side_t
 	uint32_t	LeftSide, RightSide;	// [RH] Group walls into loops
 	uint16_t	TexelLength;
 	int16_t		Light;
+	int16_t		TierLights[3];	// per-tier light levels
 	uint16_t	Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
+	LightmapSurface* lightmap;
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
 	int numsegs;
 	int sidenum;
 
-	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
+	int GetLightLevel (bool foggy, int baselight, int which, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
 	void SetLight(int16_t l)
 	{
 		Light = l;
 	}
+
+	void SetLight(int16_t l, int which)
+	{
+		TierLights[which] = l;
+	}
+
 
 	FLevelLocals *GetLevel()
 	{
@@ -1436,7 +1458,7 @@ struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
 	DVector2	delta;		// precalculated v2 - v1 for side checking
-	uint32_t	flags;
+	uint32_t	flags, flags2;
 	uint32_t	activation;	// activation type
 	int			special;
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
@@ -1610,6 +1632,8 @@ struct subsector_t
 	int Index() const { return subsectornum; }
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
+
+	LightmapSurface *lightmap[2];
 };
 
 
@@ -1652,6 +1676,40 @@ struct FMiniBSP
 	TArray<seg_t> Segs;
 	TArray<subsector_t> Subsectors;
 	TArray<vertex_t> Verts;
+};
+
+// Lightmap data
+
+enum SurfaceType
+{
+	ST_NULL,
+	ST_MIDDLEWALL,
+	ST_UPPERWALL,
+	ST_LOWERWALL,
+	ST_CEILING,
+	ST_FLOOR
+};
+
+struct LightmapSurface
+{
+	SurfaceType Type;
+	subsector_t *Subsector;
+	side_t *Side;
+	sector_t *ControlSector;
+	uint32_t LightmapNum;
+	float *TexCoords;
+};
+
+struct LightProbe
+{
+	float X, Y, Z;
+	float Red, Green, Blue;
+};
+
+struct LightProbeCell
+{
+	LightProbe* FirstProbe = nullptr;
+	int NumProbes = 0;
 };
 
 //
@@ -1712,6 +1770,7 @@ void TransferSpecial(sector_t *self, sector_t *model);
 void GetSpecial(sector_t *self, secspecial_t *spec);
 void SetSpecial(sector_t *self, const secspecial_t *spec);
 int GetTerrain(const sector_t *, int pos);
+FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos);
 void CheckPortalPlane(sector_t *sector, int plane);
 void AdjustFloorClip(const sector_t *sector);
 void SetColor(sector_t *sector, int color, int desat);
@@ -1721,6 +1780,8 @@ int GetCeilingLight(const sector_t *);
 double GetFriction(const sector_t *self, int plane, double *movefac);
 double HighestCeilingAt(sector_t *sec, double x, double y, sector_t **resultsec = nullptr);
 double LowestFloorAt(sector_t *sec, double x, double y, sector_t **resultsec = nullptr);
+sector_t* P_NextSpecialSector(sector_t* sect, int type, sector_t* prev);
+sector_t* P_NextSpecialSectorVC(sector_t* sect, int type); // uses validcount
 
 inline void sector_t::RemoveForceField() { return ::RemoveForceField(this); }
 inline bool sector_t::PlaneMoving(int pos) { return !!::PlaneMoving(this, pos); }

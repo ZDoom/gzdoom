@@ -37,7 +37,7 @@
 #include "m_crc32.h"
 #include "printf.h"
 #include "colormatcher.h"
-#include "templates.h"
+
 #include "palettecontainer.h"
 #include "files.h"
 
@@ -51,7 +51,7 @@ extern uint8_t IcePalette[16][3];
 //
 //----------------------------------------------------------------------------
 
-void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
+void PaletteContainer::Init(int numslots, const uint8_t* indexmap)	// This cannot be a constructor!!!
 {
 	if (numslots < 1) numslots = 1;
 	Clear();
@@ -63,6 +63,7 @@ void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
 	TranslationTables.Resize(numslots);
 	StoreTranslation(0, &remap);	// make sure that translation ID 0 is the identity.
 	ColorMatcher.SetPalette(BaseColors);
+	ColorMatcher.SetIndexMap(indexmap);
 }
 
 void PaletteContainer::SetPalette(const uint8_t* colors, int transparent_index)
@@ -233,7 +234,7 @@ void PaletteContainer::UpdateTranslation(int trans, FRemapTable* remap)
 
 int PaletteContainer::AddTranslation(int slot, FRemapTable* remap, int count)
 {
-	uint32_t id;
+	uint32_t id = 0;
 	for (int i = 0; i < count; i++)
 	{
 		auto newremap = AddRemap(&remap[i]);
@@ -264,7 +265,7 @@ FRemapTable *PaletteContainer::TranslationToTable(int translation)
 	unsigned int type = GetTranslationType(translation);
 	unsigned int index = GetTranslationIndex(translation);
 
-	if (type < 0 || type >= TranslationTables.Size() || index >= NumTranslations(type))
+	if (type >= TranslationTables.Size() || index >= NumTranslations(type))
 	{
 		return uniqueRemaps[0]; // this is the identity table.
 	}
@@ -564,9 +565,9 @@ bool FRemapTable::AddDesaturation(int start, int end, double r1, double g1, doub
 							GPalette.BaseColors[c].g * 143 +
 							GPalette.BaseColors[c].b * 37) / 256.0;
 
-		PalEntry pe = PalEntry(	MIN(255, int(r1 + intensity*r2)), 
-								MIN(255, int(g1 + intensity*g2)), 
-								MIN(255, int(b1 + intensity*b2)));
+		PalEntry pe = PalEntry(	min(255, int(r1 + intensity*r2)), 
+								min(255, int(g1 + intensity*g2)), 
+								min(255, int(b1 + intensity*b2)));
 
 		int cc = GPalette.Remap[c];
 
@@ -648,7 +649,6 @@ bool FRemapTable::AddTint(int start, int end, int r, int g, int b, int amount)
 bool FRemapTable::AddToTranslation(const char *range)
 {
 	int start,end;
-	bool desaturated = false;
 	FScanner sc;
 
 	sc.OpenMem("translation", range, int(strlen(range)));

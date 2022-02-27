@@ -50,7 +50,7 @@
 #include "d_net.h"
 #include "g_levellocals.h"
 #include "utf8.h"
-#include "templates.h"
+
 #include "s_music.h"
 #include "texturemanager.h"
 #include "v_draw.h"
@@ -386,7 +386,7 @@ void DIntermissionScreenText::Drawer ()
 		// line feed characters.
 		int numrows;
 		auto font = generic_ui ? NewSmallFont : SmallFont;
-		auto fontscale = MAX(generic_ui ? MIN(twod->GetWidth() / 640, twod->GetHeight() / 400) : MIN(twod->GetWidth() / 400, twod->GetHeight() / 250), 1);
+		auto fontscale = max(generic_ui ? min(twod->GetWidth() / 640, twod->GetHeight() / 400) : min(twod->GetWidth() / 400, twod->GetHeight() / 250), 1);
 		int cleanwidth = twod->GetWidth() / fontscale;
 		int cleanheight = twod->GetHeight() / fontscale;
 		int refwidth = generic_ui ? 640 : 320;
@@ -403,7 +403,7 @@ void DIntermissionScreenText::Drawer ()
 
 		int cx = (mTextX - refwidth/2) * fontscale + twod->GetWidth() / 2;
 		int cy = (mTextY - refheight/2) * fontscale + twod->GetHeight() / 2;
-		cx = MAX<int>(0, cx);
+		cx = max<int>(0, cx);
 		int startx = cx;
 
 		if (usesDefault)

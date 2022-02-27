@@ -209,6 +209,7 @@ ListMenu "EpisodeMenu"
 	{
 		Position 48, 63
 		StaticPatch 54, 38, "M_EPISOD", 0 , "$MNU_EPISODE"
+		linespacing 16
 	}
 	IfGame(Strife)
 	{
@@ -234,6 +235,7 @@ ListMenu "SkillMenu"
 	IfGame(Doom, Chex)
 	{
 		StaticPatch 96, 14, "M_NEWG", 0, "$MNU_NEWGAME"
+		linespacing 16
 	}
 	IfGame(Strife)
 	{
@@ -340,18 +342,6 @@ OptionValue AutoOffOn
 	-1, "$OPTVAL_AUTO"
 	0, "$OPTVAL_OFF"
 	1, "$OPTVAL_ON"
-}
-
-OptionMenuSettings
-{
-	// These can be overridden if a different menu fonts requires it.
-	Linespacing 17
-	/*
-	IfGame(Heretic, Hexen)
-	{
-		Linespacing 9
-	}
-	*/
 }
 
 DefaultOptionMenu
@@ -904,6 +894,7 @@ OptionValue PreferBackend
 	0, "$OPTVAL_OPENGL"
 	1, "$OPTVAL_VULKAN"
 	2, "$OPTVAL_SOFTPOLY"
+	3, "$OPTVAL_OPENGLES"
 }
 
 OptionMenu "TrueColorOptions" protected
@@ -944,6 +935,8 @@ OptionMenu "VideoOptions" protected
 	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
+	StaticText " "
+	Slider "$DSPLYMNU_FOV",						"fov",							75.0, 120.0, 0.1, 1
 	StaticText " "
 	Option "$DSPLYMNU_SPRITESHADOW",			"r_actorspriteshadow", "SpriteShadowModes"
 	Option "$DSPLYMNU_CUSTOMINVERTMAP",			"cl_customizeinvulmap", "OnOff"
@@ -1346,9 +1339,11 @@ OptionMenu AutomapOptions protected
 
 	StaticText ""
 	Option "$AUTOMAPMNU_ROTATE",				"am_rotate", "RotateTypes"
+	Option "$AUTOMAPMNU_FOLLOW",				"am_followplayer", "OnOff"
 	Option "$AUTOMAPMNU_OVERLAY",				"am_overlay", "OverlayTypes"
 	Option "$AUTOMAPMNU_TEXTURED",				"am_textured", "OnOff"
-	Option "$AUTOMAPMNU_FOLLOW",				"am_followplayer", "OnOff"
+	Slider "$AUTOMAPMNU_LINEALPHA",				"am_linealpha", 0.1, 1.0, 0.1, 1
+	Slider "$AUTOMAPMNU_LINETHICKNESS",			"am_linethickness", 1, 8, 1, 0
 
 	StaticText ""
 	Option "$AUTOMAPMNU_SHOWITEMS",				"am_showitems", "OnOff"
@@ -1781,6 +1776,7 @@ OptionMenu "CompatMapMenu" protected
 	Option "$CMPTMNU_PUSHWINDOW",					"compat_pushwindow", "YesNo"
 	Option "$CMPTMNU_CHECKSWITCHRANGE",				"compat_checkswitchrange", "YesNo"
 	Option "$CMPTMNU_RAILINGHACK",					"compat_railing", "YesNo"
+	Option "$CMPTMNU_NOMBF21",						"compat_nombf21", "YeaNo"
 	Class "CompatibilityMenu"
 }
 
@@ -2640,7 +2636,7 @@ OptionMenu "OpenGLOptions" protected
 	Option "$GLPREFMNU_SPRBILLBOARD",			gl_billboard_mode,				"BillboardModes"
 	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
 	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
-	Option "$GLPREFMNU_RENDERQUALITY",			gl_render_precise,				"Precision"
+	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
 	StaticText " "
 	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
 	StaticText " "

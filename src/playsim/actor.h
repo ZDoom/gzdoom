@@ -30,7 +30,7 @@
 #define __P_MOBJ_H__
 
 // Basics.
-#include "templates.h"
+
 
 // We need the thinker_t stuff.
 #include "dthinker.h"
@@ -142,7 +142,7 @@ enum ActorFlag
 	MF_DROPOFF			= 0x00000400,	// allow jumps from high places
 	MF_PICKUP			= 0x00000800,	// for players to pick up items
 	MF_NOCLIP			= 0x00001000,	// player cheat
-	MF_INCHASE			= 0x00002000,	// [RH] used by A_Chase and A_Look to avoid recursion
+	MF_SLIDE			= 0x00002000,	// Not used anymore but needed for MBF21 flag checkers.
 	MF_FLOAT			= 0x00004000,	// allow moves to any height, no gravity
 	MF_TELEPORT			= 0x00008000,	// don't cross lines or look at heights
 	MF_MISSILE			= 0x00010000,	// don't hit same species, explode on block
@@ -167,9 +167,6 @@ enum ActorFlag
 	MF_NOLIFTDROP		= 0x20000000,	// [RH] Used with MF_NOGRAVITY to avoid dropping with lifts
 	MF_STEALTH			= 0x40000000,	// [RH] Andy Baker's stealth monsters
 	MF_ICECORPSE		= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
-
-	// --- dummies for unknown/unimplemented Strife flags ---
-	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW
 };
 
 // --- mobj.flags2 ---
@@ -399,6 +396,7 @@ enum ActorFlag7
 	MF7_FORCEZERORADIUSDMG = 0x10000000,	// passes zero radius damage on to P_DamageMobj, this is necessary in some cases where DoSpecialDamage gets overrideen.
 	MF7_NOINFIGHTSPECIES = 0x20000000,	// don't start infights with one's own species.
 	MF7_FORCEINFIGHTING	= 0x40000000,	// overrides a map setting of 'no infighting'.
+	MF7_INCHASE			= 0x80000000,	// [RH] used by A_Chase and A_Look to avoid recursion
 };
 enum ActorFlag8
 {
@@ -414,7 +412,17 @@ enum ActorFlag8
 	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
 	MF8_ABSVIEWANGLES	= 0x00000400,	// [MC] By default view angle/pitch/roll is an offset. This will make it absolute instead.
 	MF8_FALLDAMAGE		= 0x00000800,	// Monster will take fall damage regardless of map settings.
-	MF8_ALLOWTHRUBITS		= 0x00008000,	// [MC] Enable ThruBits property
+	MF8_ALLOWTHRUBITS	= 0x00008000,	// [MC] Enable ThruBits property
+	MF8_FULLVOLSEE		= 0x00010000,	// Play see sound at full volume
+	MF8_E1M8BOSS		= 0x00020000,	// MBF21 boss death.
+	MF8_E2M8BOSS		= 0x00040000,	// MBF21 boss death.
+	MF8_E3M8BOSS		= 0x00080000,	// MBF21 boss death.
+	MF8_E4M8BOSS		= 0x00100000,	// MBF21 boss death.
+	MF8_E4M6BOSS		= 0x00200000,	// MBF21 boss death.
+	MF8_MAP07BOSS1		= 0x00400000,	// MBF21 boss death.
+	MF8_MAP07BOSS2		= 0x00800000,	// MBF21 boss death.
+	MF8_AVOIDHAZARDS	= 0x01000000,	// MBF AI enhancement.
+	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
 };
 
 // --- mobj.renderflags ---
@@ -502,6 +510,7 @@ enum ActorBounceFlag
 	BOUNCE_NotOnShootables = 1<<15,	// do not bounce off shootable actors if we are a projectile. Explode instead.
 	BOUNCE_BounceOnUnrips = 1<<16,	// projectile bounces on actors with DONTRIP
 	BOUNCE_NotOnSky = 1<<17,		// Don't bounce on sky floors / ceilings / walls
+	BOUNCE_DEH = 1<<18,				// Flag was set through Dehacked.
 
 	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType | BOUNCE_MBF,
 
@@ -645,6 +654,42 @@ struct FDropItem
 	int Amount;
 };
 
+enum EViewPosFlags // [MC] Flags for SetViewPos.
+{
+	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
+};
+
+class FViewPosition : public DObject
+{
+	DECLARE_CLASS(FViewPosition, DObject);
+public:
+	// Variables
+	// Exposed to ZScript
+	DVector3	Offset;
+	int			Flags;
+
+	// Functions
+	FViewPosition()
+	{
+		Offset = { 0,0,0 };
+		Flags = 0;
+	}
+
+	void Set(DVector3 &off, int f = -1)
+	{
+		Offset = off;
+
+		if (f > -1)
+			Flags = f;
+	}
+
+	bool isZero()
+	{
+		return Offset.isZero();
+	}
+};
+
 const double MinVel = EQUAL_EPSILON;
 
 // Map Object definition.
@@ -679,17 +724,11 @@ public:
 
 	FDropItem *GetDropItems() const;
 
-	// Return true if the monster should use a missile attack, false for melee
-	bool SuggestMissileAttack (double dist);
-
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
 	bool AdjustReflectionAngle (AActor *thing, DAngle &angle);
 	int AbsorbDamage(int damage, FName dmgtype, AActor *inflictor, AActor *source, int flags);
 	void AlterWeaponSprite(visstyle_t *vis);
-
-	// Returns true if this actor is within melee range of its target
-	bool CheckMeleeRange();
 
 	bool CheckNoDelay();
 
@@ -971,7 +1010,8 @@ public:
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
 	DRotator		Angles;
-	DRotator		ViewAngles;			// Offsets for cameras
+	DRotator		ViewAngles;			// Angle offsets for cameras
+	FViewPosition	*ViewPos;			// Position offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 
@@ -1298,7 +1338,7 @@ public:
 
 	double RenderRadius() const
 	{
-		return MAX(radius, renderradius);
+		return max(radius, renderradius);
 	}
 
 	DVector3 PosRelative(int grp) const;
@@ -1450,7 +1490,7 @@ public:
 	// Better have it in one place, if something needs to be changed about the formula.
 	double DistanceBySpeed(AActor *dest, double speed) const
 	{
-		return MAX(1., Distance2D(dest) / speed);
+		return max(1., Distance2D(dest) / speed);
 	}
 
 	int ApplyDamageFactor(FName damagetype, int damage) const;
@@ -1459,6 +1499,8 @@ public:
 	bool isFrozen() const;
 
 	bool				hasmodel;
+
+	void PlayerLandedMakeGruntSound(AActor* onmobj);
 };
 
 class FActorIterator

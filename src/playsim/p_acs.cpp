@@ -2454,7 +2454,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 				// Use unsigned iterator here to avoid issue with GCC 4.9/5.x
 				// optimizer. Might be some undefined behavior in this code,
 				// but I don't know what it is.
-				unsigned int initsize = MIN<unsigned int> (ArrayStore[arraynum].ArraySize, (LittleLong(chunk[1])-4)/4);
+				unsigned int initsize = min<unsigned int> (ArrayStore[arraynum].ArraySize, (LittleLong(chunk[1])-4)/4);
 				int32_t *elems = ArrayStore[arraynum].Elements;
 				for (unsigned int j = 0; j < initsize; ++j)
 				{
@@ -2532,7 +2532,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 					{
 						int32_t *elems = ArrayStore[arraynum].Elements;
 						// Ending zeros may be left out.
-						for (int j = MIN(LittleLong(chunk[1])-5, ArrayStore[arraynum].ArraySize); j > 0; --j, ++elems, ++chunkData)
+						for (int j = min(LittleLong(chunk[1])-5, ArrayStore[arraynum].ArraySize); j > 0; --j, ++elems, ++chunkData)
 						{
 							// For ATAG, a value of 0 = Integer, 1 = String, 2 = FunctionPtr
 							// Our implementation uses the same tags for both String and FunctionPtr
@@ -8570,7 +8570,7 @@ scriptwait:
 				int capacity, offset, a, c;
 				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTMAPCHRANGE))
 				{
-					while (capacity-- && (c = activeBehavior->GetArrayVal (a, offset)) != '\0')
+					while (capacity-- && (c = activeBehavior->GetArrayVal (*activeBehavior->MapVars[a], offset)) != '\0')
 					{
 						work += (char)c;
 						offset++;
@@ -10309,7 +10309,7 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 	assert(code->VarCount >= code->ArgCount);
 	Localvars.Resize(code->VarCount);
 	memset(&Localvars[0], 0, code->VarCount * sizeof(int32_t));
-	for (int i = 0; i < MIN<int>(argcount, code->ArgCount); ++i)
+	for (int i = 0; i < min<int>(argcount, code->ArgCount); ++i)
 	{
 		Localvars[i] = args[i];
 	}

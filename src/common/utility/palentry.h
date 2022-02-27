@@ -12,6 +12,7 @@
 struct PalEntry
 {
 	PalEntry() = default;
+	PalEntry(const PalEntry&) = default;
 	constexpr PalEntry (uint32_t argb) : d(argb) { }
 	operator uint32_t () const { return d; }
 	void SetRGB(PalEntry other)

@@ -80,9 +80,6 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 	GlobalKerning = 0;
 	FirstChar = LastChar = 'A';
 	PicNum = picnum;
-
-	Next = FirstFont;
-	FirstFont = this;
 }
 
 //==========================================================================

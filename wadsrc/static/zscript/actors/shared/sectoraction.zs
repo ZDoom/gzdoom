@@ -29,6 +29,7 @@ class SectorAction : Actor
 		+NOSECTOR
 		+NOGRAVITY
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 	
 	override void OnDestroy ()

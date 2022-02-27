@@ -7,7 +7,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -75,7 +75,7 @@
 #include "cmdlib.h"
 #include "printf.h"
 #include "i_interface.h"
-#include "templates.h"
+
 
 #include "i_net.h"
 
@@ -172,7 +172,7 @@ FString GetPlayerName(int num)
 SOCKET UDPsocket (void)
 {
 	SOCKET s;
-		
+
 	// allocate a socket
 	s = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (s == INVALID_SOCKET)
@@ -193,7 +193,7 @@ void BindToLocalPort (SOCKET s, u_short port)
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
-						
+
 	v = bind (s, (sockaddr *)&address, sizeof(address));
 	if (v == SOCKET_ERROR)
 		I_FatalError ("BindToPort: %s", neterror ());
@@ -459,7 +459,7 @@ void StartNetwork (bool autoPort)
 
 	netgame = true;
 	multiplayer = true;
-	
+
 	// create communication socket
 	mysocket = UDPsocket ();
 	BindToLocalPort (mysocket, autoPort ? 0 : DOOMPORT);
@@ -736,7 +736,7 @@ bool HostGame (int i)
 	{
 		// If we send the packets eight times to each guest,
 		// hopefully at least one of them will get through.
-		for (int i = 8; i != 0; --i)
+		for (int ii = 8; ii != 0; --ii)
 		{
 			PreSend (&packet, 2, &sendaddress[node]);
 		}
@@ -892,7 +892,7 @@ bool JoinGame (int i)
 		SendAbort();
 		return false;
 	}
-	
+
 	StartScreen->NetMessage ("Total players: %d", doomcom.numnodes);
 
 	doomcom.id = DOOMCOM_ID;

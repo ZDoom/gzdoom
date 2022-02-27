@@ -159,7 +159,7 @@ public:
 	{
 		return constants.CheckKey(name);
 	}
-	
+
 	// Token based variant
 	bool CheckValue(bool allowfloat, bool evaluate = true);
 	void MustGetValue(bool allowfloat, bool evaluate = true);

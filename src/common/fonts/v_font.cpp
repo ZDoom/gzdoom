@@ -39,7 +39,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "templates.h"
+
 #include "m_swap.h"
 #include "v_font.h"
 #include "filesystem.h"
@@ -94,6 +94,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
 	if (!stricmp(name, "DBIGFONT")) name = "BigFont";
 	else if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
+	else if (!stricmp(name, "INDEXFON")) name = "IndexFont";	// Same here - for whatever reason some people had to use its 8 character name...
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{
@@ -105,10 +106,10 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 		int lump = -1;
 		int folderfile = -1;
-		
+
 		TArray<FolderEntry> folderdata;
 		FStringf path("fonts/%s/", name);
-		
+
 		// Use a folder-based font only if it comes from a later file than the single lump version.
 		if (fileSystem.GetFilesInFolder(path, folderdata, true))
 		{
@@ -118,7 +119,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 
 		lump = fileSystem.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
-		
+
 		if (lump != -1 && fileSystem.GetFileContainer(lump) >= folderfile)
 		{
 			uint32_t head;
@@ -177,9 +178,11 @@ void V_InitCustomFonts()
 	int start;
 	int first;
 	int count;
-	int spacewidth;
+	int spacewidth = -1;
 	int kerning;
 	char cursor = '_';
+	bool ignoreoffsets = false;
+	int MinLum = -1, MaxLum = -1;
 
 	while ((llump = fileSystem.FindLump ("FONTDEFS", &lastlump)) != -1)
 	{
@@ -236,10 +239,8 @@ void V_InitCustomFonts()
 				}
 				else if (sc.Compare ("SPACEWIDTH"))
 				{
-					if (format == 2) goto wrong;
 					sc.MustGetNumber();
 					spacewidth = sc.Number;
-					format = 1;
 				}
 				else if (sc.Compare("DONTTRANSLATE"))
 				{
@@ -260,9 +261,26 @@ void V_InitCustomFonts()
 					sc.MustGetNumber();
 					kerning = sc.Number;
 				}
+				else if (sc.Compare("ignoreoffsets"))
+				{
+					ignoreoffsets = true;
+				}
+				else if (sc.Compare("minluminosity"))
+				{
+					sc.MustGetValue(false);
+					MinLum = (int16_t)clamp(sc.Number, 0, 255);
+				}
+				else if (sc.Compare("maxluminosity"))
+				{
+					sc.MustGetValue(false);
+					MaxLum = (int16_t)clamp(sc.Number, 0, 255);
+				}
 				else
 				{
 					if (format == 1) goto wrong;
+					// The braces must be filtered so because they'd be treated as block terminators otherwise.
+					if (!strcmp(sc.String, "-{")) strcpy(sc.String, "{");
+					if (!strcmp(sc.String, "-}")) strcpy(sc.String, "}");
 					FGameTexture **p = &lumplist[*(unsigned char*)sc.String];
 					sc.MustGetString();
 					FTextureID texid = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
@@ -283,6 +301,7 @@ void V_InitCustomFonts()
 				FFont *fnt = new FFont (namebuffer, templatebuf, nullptr, first, count, start, llump, spacewidth, donttranslate);
 				fnt->SetCursor(cursor);
 				fnt->SetKerning(kerning);
+				if (ignoreoffsets) fnt->ClearOffsets();
 			}
 			else if (format == 2)
 			{
@@ -308,6 +327,10 @@ void V_InitCustomFonts()
 					FFont *fnt = CreateSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump, donttranslate);
 					fnt->SetCursor(cursor);
 					fnt->SetKerning(kerning);
+					if (spacewidth >= 0) fnt->SpaceWidth = spacewidth;
+					fnt->MinLum = MinLum;
+					fnt->MaxLum = MaxLum;
+					if (ignoreoffsets) fnt->ClearOffsets();
 				}
 			}
 			else goto wrong;
@@ -317,7 +340,7 @@ void V_InitCustomFonts()
 	return;
 
 wrong:
-	sc.ScriptError ("Invalid combination of properties in font '%s'", namebuffer.GetChars());
+	sc.ScriptError ("Invalid combination of properties in font '%s', %s not allowed", namebuffer.GetChars(), sc.String);
 }
 
 //==========================================================================
@@ -393,19 +416,19 @@ void V_InitFontColors ()
 				else if (sc.Compare ("Flat:"))
 				{
 					sc.MustGetString();
-					logcolor = V_GetColor (nullptr, sc);
+					logcolor = V_GetColor (sc);
 				}
 				else
 				{
 					// Get first color
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.Start[0] = RPART(c);
 					tparm.Start[1] = GPART(c);
 					tparm.Start[2] = BPART(c);
 
 					// Get second color
 					sc.MustGetString();
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.End[0] = RPART(c);
 					tparm.End[1] = GPART(c);
 					tparm.End[2] = BPART(c);
@@ -659,13 +682,13 @@ void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size)
 		int index = clamp(lumadjust, 0, 255);
 		PalEntry newcol = remap[index];
 		// extend the range if we find colors outside what initial analysis provided.
-		if (gray < lum_min)
+		if (gray < lum_min && lum_min != 0)
 		{
 			newcol.r = newcol.r * gray / lum_min;
 			newcol.g = newcol.g * gray / lum_min;
 			newcol.b = newcol.b * gray / lum_min;
 		}
-		else if (gray > lum_max)
+		else if (gray > lum_max && lum_max != 0)
 		{
 			newcol.r = clamp(newcol.r * gray / lum_max, 0, 255);
 			newcol.g = clamp(newcol.g * gray / lum_max, 0, 255);
@@ -702,9 +725,9 @@ static void CalcDefaultTranslation(FFont* base, int index)
 		auto lum = otherluminosity[i];
 		if (lum >= 0 && lum <= 1)
 		{
-			int index = int(lum * 255);
-			remap[index] = GPalette.BaseColors[i];
-			remap[index].a = 255;
+			int lumidx = int(lum * 255);
+			remap[lumidx] = GPalette.BaseColors[i];
+			remap[lumidx].a = 255;
 		}
 	}
 
@@ -746,7 +769,7 @@ static void CalcDefaultTranslation(FFont* base, int index)
 			lowindex = highindex++;
 		}
 	}
-	
+
 }
 
 //==========================================================================
@@ -851,6 +874,7 @@ void V_InitFonts()
 	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
 	CurrentConsoleFont = NewConsoleFont;
 	ConFont = V_GetFont("ConsoleFont", "CONFONT");
+	V_GetFont("IndexFont", "INDEXFON");	// detect potential replacements for this one.
 }
 
 void V_LoadTranslations()

@@ -273,7 +273,7 @@ bool C_TabCompleteList ()
 				}
 			}
 			nummatches++;
-			maxwidth = std::max (maxwidth, strlen (TabCommands[i].TabName.GetChars()));
+			maxwidth = max (maxwidth, strlen (TabCommands[i].TabName.GetChars()));
 		}
 	}
 	if (nummatches > 1)

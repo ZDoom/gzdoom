@@ -34,6 +34,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#pragma warning(disable:4996)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <richedit.h>
@@ -339,7 +340,7 @@ static HANDLE WriteMyMiniDump (void)
 	MINIDUMP_EXCEPTION_INFORMATION exceptor = { DbgThreadID, &CrashPointers, FALSE };
 	WCHAR dbghelpPath[MAX_PATH+12], *bs;
 	WRITEDUMP pMiniDumpWriteDump;
-	HANDLE file;
+	HANDLE file = INVALID_HANDLE_VALUE;
 	BOOL good = FALSE;
 	HMODULE dbghelp = NULL;
 
@@ -709,14 +710,14 @@ HANDLE WriteTextReport ()
 			ctxt->Rip, ctxt->Rsp, ctxt->SegCs, ctxt->SegSs, ctxt->EFlags);
 #endif
 
-		DWORD j;
+		DWORD dw;
 
-		for (i = 0, j = 1; (size_t)i < sizeof(eflagsBits)/sizeof(eflagsBits[0]); j <<= 1, ++i)
+		for (i = 0, dw = 1; (size_t)i < sizeof(eflagsBits)/sizeof(eflagsBits[0]); dw <<= 1, ++i)
 		{
 			if (eflagsBits[i][0] != 'x')
 			{
 				Writef (file, " %c%c%c", eflagsBits[i][0], eflagsBits[i][1],
-					ctxt->EFlags & j ? '+' : '-');
+					ctxt->EFlags & dw ? '+' : '-');
 			}
 		}
 		Writef (file, "\r\n");
@@ -1580,7 +1581,7 @@ static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, sho
 	local.ModDate = dosdate;
 	local.UncompressedSize = LittleLong(whichfile->UncompressedSize);
 	local.NameLength = LittleShort((uint16_t)strlen(whichfile->Filename));
-	
+
 	whichfile->ZipOffset = SetFilePointer (ziphandle, 0, NULL, FILE_CURRENT);
 	WriteFile (ziphandle, &local, sizeof(local), &wrote, NULL);
 	WriteFile (ziphandle, whichfile->Filename, (DWORD)strlen(whichfile->Filename), &wrote, NULL);

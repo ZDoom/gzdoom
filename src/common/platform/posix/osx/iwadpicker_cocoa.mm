@@ -194,7 +194,7 @@ static NSArray* GetKnownExtensions()
 	[openPanel setResolvesAliases:YES];
 	[openPanel setAllowedFileTypes:GetKnownExtensions()];
 
-	if (NSOKButton == [openPanel runModal])
+	if (NSModalResponseOK == [openPanel runModal])
 	{
 		NSArray* files = [openPanel URLs];
 		NSMutableString* parameters = [NSMutableString string];
@@ -259,7 +259,7 @@ static NSArray* GetKnownExtensions()
 	id windowTitle = [NSString stringWithFormat:@"%s %s", GAMENAME, GetVersionString()];
 
 	NSRect frame = NSMakeRect(0, 0, 440, 450);
-	window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO];
+	window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
 	[window setTitle:windowTitle];
 
 	NSTextField *description = [[NSTextField alloc] initWithFrame:NSMakeRect(18, 384, 402, 50)];
@@ -446,7 +446,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 	if (ret >= 0)
 	{
 		NSString* parametersToAppend = [picker commandLineParameters];
-		
+
 		if (0 != [parametersToAppend length])
 		{
 			RestartWithParameters(wads[ret], parametersToAppend);

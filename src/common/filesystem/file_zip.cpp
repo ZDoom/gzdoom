@@ -36,7 +36,7 @@
 #include <time.h>
 #include "file_zip.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "printf.h"
 #include "w_zip.h"
 
@@ -124,7 +124,7 @@ static uint32_t Zip_FindCentralDir(FileReader &fin)
 	uint32_t uPosFound=0;
 
 	FileSize = (uint32_t)fin.GetLength();
-	uMaxBack = MIN<uint32_t>(0xffff, FileSize);
+	uMaxBack = min<uint32_t>(0xffff, FileSize);
 
 	uBackRead = 4;
 	while (uBackRead < uMaxBack)
@@ -137,7 +137,7 @@ static uint32_t Zip_FindCentralDir(FileReader &fin)
 			uBackRead += BUFREADCOMMENT;
 		uReadPos = FileSize - uBackRead;
 
-		uReadSize = MIN<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
+		uReadSize = min<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
 
 		if (fin.Seek(uReadPos, FileReader::SeekSet) != 0) break;
 
@@ -208,8 +208,9 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
 
-	FString name0;
+	FString name0, name1;
 	bool foundspeciallump = false;
+	bool foundprefix = false;
 
 	// Check if all files have the same prefix so that this can be stripped out.
 	// This will only be done if there is either a MAPINFO, ZMAPINFO or GAMEINFO lump in the subdirectory, denoting a ZDoom mod.
@@ -233,32 +234,42 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		}
 
 		name.ToLower();
+		if (name.IndexOf("filter/") == 0)
+			continue; // 'filter' is a reserved name of the file system.
 		if (name.IndexOf("__macosx") == 0) 
-			continue; // skip Apple garbage. At this stage only the root folder matters,
-		if (i == 0)
+			continue; // skip Apple garbage. At this stage only the root folder matters.
+		if (!foundprefix)
 		{
 			// check for special names, if one of these gets found this must be treated as a normal zip.
 			bool isspecial = name.IndexOf("/") < 0 || (filter && filter->reservedFolders.Find(name) < filter->reservedFolders.Size());
 			if (isspecial) break;
 			name0 = name.Left(name.LastIndexOf("/")+1);
+			name1 = name.Left(name.IndexOf("/") + 1);
+			foundprefix = true;
 		}
-		else
+
+		if (name.IndexOf(name0) != 0)
 		{
-			if (name.IndexOf(name0) != 0)
+			if (name1.IsNotEmpty())
 			{
-				name0 = "";
-				break;
+				name0 = name1;
+				if (name.IndexOf(name0) != 0)
+				{
+					name0 = "";
+				}
 			}
-			else if (!foundspeciallump && filter)
-			{
-				// at least one of the more common definition lumps must be present.
-				for (auto &p : filter->requiredPrefixes)
-				{ 
-					if (name.IndexOf(name0 + p) == 0 || name.LastIndexOf(p) == name.Len() - strlen(p))
-					{
-						foundspeciallump = true;
-						break;
-					}
+			if (name0.IsEmpty()) 
+				break;
+		}
+		if (!foundspeciallump && filter)
+		{
+			// at least one of the more common definition lumps must be present.
+			for (auto &p : filter->requiredPrefixes)
+			{ 
+				if (name.IndexOf(name0 + p) == 0 || name.LastIndexOf(p) == ptrdiff_t(name.Len() - strlen(p)))
+				{
+					foundspeciallump = true;
+					break;
 				}
 			}
 		}

@@ -36,7 +36,7 @@
 #include "gl_system.h"
 #include "v_video.h"
 #include "m_png.h"
-#include "templates.h"
+
 #include "i_time.h"
 
 #include "gl_interface.h"
@@ -65,10 +65,10 @@ EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Int, gl_pipeline_depth);
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
-void Draw2D(F2DDrawer *drawer, FRenderState &state);
 
 extern bool vid_hdr_active;
 
@@ -133,6 +133,9 @@ void OpenGLFrameBuffer::InitializeState()
 
 	gl_LoadExtensions();
 
+	mPipelineNbr = clamp(*gl_pipeline_depth, 1, HW_MAX_PIPELINE_BUFFERS);
+	mPipelineType = gl_pipeline_depth > 0;
+
 	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;
 	glslversion = gl.glslversion;
@@ -164,10 +167,10 @@ void OpenGLFrameBuffer::InitializeState()
 
 	SetViewportRects(nullptr);
 
-	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
+	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight(), screen->mPipelineNbr);
 	mSkyData = new FSkyVertexBuffer;
-	mViewpoints = new HWViewpointBuffer;
-	mLights = new FLightBuffer();
+	mViewpoints = new HWViewpointBuffer(screen->mPipelineNbr);
+	mLights = new FLightBuffer(screen->mPipelineNbr);
 	GLRenderer = new FGLRenderer(this);
 	GLRenderer->Initialize(GetWidth(), GetHeight());
 	static_cast<GLDataBuffer*>(mLights->GetBuffer())->BindBase();
@@ -256,10 +259,25 @@ void OpenGLFrameBuffer::Swap()
 	bool swapbefore = gl_finishbeforeswap && camtexcount == 0;
 	Finish.Reset();
 	Finish.Clock();
-	if (swapbefore) glFinish();
-	FPSLimit();
-	SwapBuffers();
-	if (!swapbefore) glFinish();
+	if (gl_pipeline_depth < 1)
+	{
+		if (swapbefore) glFinish();
+		FPSLimit();
+		SwapBuffers();
+		if (!swapbefore) glFinish();
+	}
+	else
+	{
+		mVertexData->DropSync();
+
+		FPSLimit();
+		SwapBuffers();
+
+		mVertexData->NextPipelineBuffer();
+		mVertexData->WaitSync();
+
+		RenderState()->SetVertexBuffer(screen->mVertexData); // Needed for Raze because it does not reset it
+	}
 	Finish.Unclock();
 	camtexcount = 0;
 	FHardwareTexture::UnbindAll();
@@ -307,7 +325,6 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
-	int flags = mat->GetScaleFlags();
 	int numLayers = mat->NumLayers();
 	MaterialLayerInfo* layer;
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation, &layer));
@@ -343,6 +360,29 @@ IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bo
 void OpenGLFrameBuffer::BlurScene(float amount)
 {
 	GLRenderer->BlurScene(amount);
+}
+
+void OpenGLFrameBuffer::InitLightmap(FLevelLocals *Level)
+{
+	if (Level->LMTextureData.Size() > 0)
+	{
+		GLint activeTex = 0;
+		glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+		glActiveTexture(GL_TEXTURE0 + 17);
+
+		if (GLRenderer->mLightMapID == 0)
+			glGenTextures(1, (GLuint*)&GLRenderer->mLightMapID);
+
+		glBindTexture(GL_TEXTURE_2D_ARRAY, GLRenderer->mLightMapID);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB16F, Level->LMTextureSize, Level->LMTextureSize, Level->LMTextureCount, 0, GL_RGB, GL_HALF_FLOAT, &Level->LMTextureData[0]);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+		glActiveTexture(activeTex);
+
+		Level->LMTextureData.Reset(); // We no longer need this, release the memory
+	}
 }
 
 void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)

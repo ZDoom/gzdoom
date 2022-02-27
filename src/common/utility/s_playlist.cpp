@@ -37,7 +37,7 @@
 
 #include "cmdlib.h"
 #include "s_playlist.h"
-#include "templates.h"
+
 #include "v_text.h"
 #include "files.h"
 
@@ -95,7 +95,7 @@ bool FPlayList::ChangeList (const char *path)
 		}
 
 		// Check for relative paths.
-		long slashpos = song.IndexOf('/');
+		auto slashpos = song.IndexOf('/');
 
 		if (slashpos == 0)
 		{

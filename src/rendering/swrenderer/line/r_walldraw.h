@@ -47,6 +47,7 @@ namespace swrenderer
 		void Render(
 			const sector_t *lightsector,
 			seg_t *curline,
+			int tier,
 			const FWallCoords &WallC,
 			FSoftwareTexture *pic,
 			int x1,
@@ -70,6 +71,7 @@ namespace swrenderer
 		FSoftwareTexture *pic = nullptr;
 		const sector_t *lightsector = nullptr;
 		seg_t *curline = nullptr;
+		int tier;
 		FWallCoords WallC;
 
 		ProjectedWallLight mLight;

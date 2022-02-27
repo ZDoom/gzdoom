@@ -32,7 +32,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "sbar.h"
 #include "c_cvars.h"
@@ -340,7 +340,7 @@ void DHUDMessage::ResetText (const char *text)
 	for (auto &line : Lines)
 	{
 		Height += Font->GetHeight ();
-		Width = MAX<int> (Width, line.Width);
+		Width = max<int> (Width, line.Width);
 	}
 }
 
@@ -751,7 +751,7 @@ void DHUDMessageTypeOnFadeOut::Serialize(FSerializer &arc)
 			LineLen = CurrLine = 0;
 		}
 
-		clamp(LineVisible, 0, LineLen);
+		LineVisible = clamp(LineVisible, 0, LineLen);
 	}
 }
 

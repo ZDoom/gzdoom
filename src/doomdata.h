@@ -62,6 +62,7 @@ enum
 	ML_BEHAVIOR,		// [RH] Hexen-style scripts. If present, THINGS
 						//		and LINEDEFS are also Hexen-style.
 	ML_CONVERSATION,	// Strife dialog (only for TEXTMAP format)
+	ML_LIGHTMAP,		// ZDRay generated lightmap
 	ML_MAX,
 
 	// [RH] These are compressed (and extended) nodes. They combine the data from
@@ -128,7 +129,7 @@ struct maplinedef2_t
 // LineDef attributes.
 //
 
-enum ELineFlags : unsigned
+enum ELineFlags : uint32_t
 {
 	ML_BLOCKING					=0x00000001,	// solid, is an obstacle
 	ML_BLOCKMONSTERS			=0x00000002,	// blocks monsters only
@@ -176,6 +177,8 @@ enum ELineFlags : unsigned
 	ML_REVEALED					= 0x20000000,	// set if revealed in automap
 	ML_DRAWFULLHEIGHT			= 0x40000000,	// Draw the full height of the upper/lower sections
 	ML_PORTALCONNECT			= 0x80000000,	// for internal use only: This line connects to a sector with a linked portal (used to speed up sight checks.)
+	// Flag words may not exceed 32 bit due to VM limitations.
+	ML2_BLOCKLANDMONSTERS		= 0x1,	// MBF21
 };
 
 

@@ -43,7 +43,7 @@
 #define STBI_NO_HDR
 #define STBI_NO_PNM
 #include "stb_image.h"
- 
+
 
 #include "files.h"
 #include "filesystem.h"
@@ -92,7 +92,7 @@ FImageSource *StbImage_TryCreate(FileReader & file, int lumpnum)
 	{
 		return new FStbTexture(lumpnum, x, y);
 	}
-	
+
 	return nullptr;
 }
 

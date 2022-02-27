@@ -17,7 +17,7 @@ void I_GetVulkanDrawableSize(int *width, int *height)
 
 	RECT clientRect = { 0 };
 	GetClientRect(Window, &clientRect);
-	
+
 	if (width != nullptr)
 	{
 		*width = clientRect.right;

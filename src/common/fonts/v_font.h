@@ -40,10 +40,14 @@
 
 class FGameTexture;
 struct FRemapTable;
+class FFont;
+
+FFont* V_GetFont(const char* fontname, const char* fontlumpname = nullptr);
 
 enum EColorRange : int
 {
 	CR_UNDEFINED = -1,
+	CR_NATIVEPAL = -1,
 	CR_BRICK,
 	CR_TAN,
 	CR_GRAY,
@@ -95,6 +99,7 @@ public:
 	};
 
 	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false, bool doomtemplate = false, GlyphSet *baseGlpyphs = nullptr);
+	FFont(int lump, FName nm = NAME_None);
 	virtual ~FFont ();
 
 	virtual FGameTexture *GetChar (int code, int translation, int *const width) const;
@@ -122,38 +127,66 @@ public:
 	inline bool CanPrint(const char *str) const { return CanPrint((const uint8_t *)str); }
 	inline bool CanPrint(const FString &str) const { return CanPrint((const uint8_t *)str.GetChars()); }
 
+	inline FFont* AltFont()
+	{
+		if (AltFontName != NAME_None) return V_GetFont(AltFontName.GetChars());
+		return nullptr;
+	}
+
 	int GetCharCode(int code, bool needpic) const;
 	char GetCursor() const { return Cursor; }
 	void SetCursor(char c) { Cursor = c; }
 	void SetKerning(int c) { GlobalKerning = c; }
+	void SetHeight(int c) { FontHeight = c; }
+	void ClearOffsets();
 	bool NoTranslate() const { return noTranslate; }
 	virtual void RecordAllTextureColors(uint32_t *usedcolors);
 	void CheckCase();
+	void SetName(FName nm) { FontName = nm; }
 
 	int GetDisplacement() const { return Displacement; }
 
 	static int GetLuminosity(uint32_t* colorsused, TArray<double>& Luminosity, int* minlum = nullptr, int* maxlum = nullptr);
 	EFontType GetType() const { return Type; }
 
+	friend void V_InitCustomFonts();
+
+	void CopyFrom(const FFont& other)
+	{
+		Type = other.Type;
+		FirstChar = other.FirstChar;
+		LastChar = other.LastChar;
+		SpaceWidth = other.SpaceWidth;
+		FontHeight = other.FontHeight;
+		GlobalKerning = other.GlobalKerning;
+		TranslationType = other.TranslationType;
+		Displacement = other.Displacement;
+		Cursor = other.Cursor;
+		noTranslate = other.noTranslate;
+		MixedCase = other.MixedCase;
+		forceremap = other.forceremap;
+		Chars = other.Chars;
+		Translations = other.Translations;
+		Lump = other.Lump;
+	}
 
 protected:
-	FFont (int lump);
 
 	void FixXMoves();
 
 	void ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale);
 
 	EFontType Type = EFontType::Unknown;
+	FName AltFontName = NAME_None;
 	int FirstChar, LastChar;
 	int SpaceWidth;
 	int FontHeight;
-	int AsciiHeight = 0;
 	int GlobalKerning;
 	int TranslationType = 0;
 	int Displacement = 0;
+	int16_t MinLum = -1, MaxLum = -1;
 	char Cursor;
 	bool noTranslate = false;
-	bool translateUntranslated;
 	bool MixedCase = false;
 	bool forceremap = false;
 	struct CharData
@@ -163,7 +196,6 @@ protected:
 	};
 	TArray<CharData> Chars;
 	TArray<int> Translations;
-	uint8_t PatchRemap[256];
 
 	int Lump;
 	FName FontName = NAME_None;
@@ -184,7 +216,6 @@ void V_ClearFonts();
 EColorRange V_FindFontColor (FName name);
 PalEntry V_LogColorFromColorRange (EColorRange range);
 EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int boldcolor);
-FFont *V_GetFont(const char *fontname, const char *fontlumpname = nullptr);
 void V_InitFontColors();
 char* CleanseString(char* str);
 void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size);

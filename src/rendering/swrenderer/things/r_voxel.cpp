@@ -32,7 +32,7 @@
 // the GNU General Public License v3.0.
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "doomdef.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"
@@ -324,7 +324,7 @@ namespace swrenderer
 
 		// Select mip level
 		i = abs(DMulScale(dasprx - globalposx, cosang, daspry - globalposy, sinang, 6));
-		i = DivScale(i, MIN(daxscale, dayscale), 6);
+		i = DivScale(i, min(daxscale, dayscale), 6);
 		j = xs_Fix<13>::ToFix(viewport->FocalLengthX);
 		for (k = 0; i >= j && k < voxobj->NumMips; ++k)
 		{
@@ -372,7 +372,7 @@ namespace swrenderer
 		gyinc = DMulScale(sprcosang, cosang, sprsinang, sinang, 10);
 		if ((abs(globalposz - dasprz) >> 10) >= abs(dazscale)) return;
 
-		x = 0; y = 0; j = MAX(mip->SizeX, mip->SizeY);
+		x = 0; y = 0; j = max(mip->SizeX, mip->SizeY);
 		fixed_t *ggxinc = (fixed_t *)alloca((j + 1) * sizeof(fixed_t) * 2);
 		fixed_t *ggyinc = ggxinc + (j + 1);
 		for (i = 0; i <= j; i++)
@@ -487,8 +487,8 @@ namespace swrenderer
 
 					if (flags & DVF_FIND_X1X2)
 					{
-						coverageX1 = MIN(coverageX1, lx);
-						coverageX2 = MAX(coverageX2, rx);
+						coverageX1 = min(coverageX1, lx);
+						coverageX2 = max(coverageX2, rx);
 						continue;
 					}
 
@@ -550,9 +550,9 @@ namespace swrenderer
 							else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
 						}
 						// [RH] Clip each column separately, not just by the first one.
-						for (int stripwidth = MIN<int>(countof(z1a), rx - lx), lxt = lx;
+						for (int stripwidth = min<int>(countof(z1a), rx - lx), lxt = lx;
 							lxt < rx;
-							(lxt += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lxt))
+							(lxt += countof(z1a)), stripwidth = min<int>(countof(z1a), rx - lxt))
 						{
 							// Calculate top and bottom pixels locations
 							for (int xxx = 0; xxx < stripwidth; ++xxx)
@@ -560,7 +560,7 @@ namespace swrenderer
 								if (zleng == 1)
 								{
 									yplc[xxx] = 0;
-									z1a[xxx] = MAX<int>(z1, daumost[lxt + xxx]);
+									z1a[xxx] = max<int>(z1, daumost[lxt + xxx]);
 								}
 								else
 								{
@@ -575,7 +575,7 @@ namespace swrenderer
 										z1a[xxx] = z1;
 									}
 								}
-								z2a[xxx] = MIN<int>(z2, dadmost[lxt + xxx]);
+								z2a[xxx] = min<int>(z2, dadmost[lxt + xxx]);
 							}
 
 							const uint8_t *columnColors = col;
@@ -991,8 +991,8 @@ namespace swrenderer
 						int ztop = slab->ztop;
 						int zbottom = ztop + slab->zleng;
 						
-						//ztop = MAX(ztop, minZ);
-						//zbottom = MIN(zbottom, maxZ);
+						//ztop = max(ztop, minZ);
+						//zbottom = min(zbottom, maxZ);
 						
 						for (int z = ztop; z < zbottom; z++)
 						{
@@ -1023,10 +1023,10 @@ namespace swrenderer
 		DVector3 screenPos = viewport->PointViewToScreen(viewPos);
 		DVector2 screenExtent = viewport->ScaleViewToScreen({ extentX, extentY }, viewPos.Z, pixelstretch);
 
-		int x1 = MAX((int)(screenPos.X - screenExtent.X), 0);
-		int x2 = MIN((int)(screenPos.X + screenExtent.X + 0.5f), viewwidth - 1);
-		int y1 = MAX((int)(screenPos.Y - screenExtent.Y), 0);
-		int y2 = MIN((int)(screenPos.Y + screenExtent.Y + 0.5f), viewheight - 1);
+		int x1 = max((int)(screenPos.X - screenExtent.X), 0);
+		int x2 = min((int)(screenPos.X + screenExtent.X + 0.5f), viewwidth - 1);
+		int y1 = max((int)(screenPos.Y - screenExtent.Y), 0);
+		int y2 = min((int)(screenPos.Y + screenExtent.Y + 0.5f), viewheight - 1);
 
 		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 
@@ -1034,8 +1034,8 @@ namespace swrenderer
 		{
 			for (int x = x1; x < x2; x++)
 			{
-				int columnY1 = MAX(y1, (int)cliptop[x]);
-				int columnY2 = MIN(y2, (int)clipbottom[x]);
+				int columnY1 = max(y1, (int)cliptop[x]);
+				int columnY2 = min(y2, (int)clipbottom[x]);
 				if (columnY1 < columnY2)
 				{
 					drawerargs.SetDest(x, columnY1);

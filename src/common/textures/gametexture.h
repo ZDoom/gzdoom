@@ -59,6 +59,7 @@ enum EGameTexFlags
 	GTexf_BrightmapChecked = 128,			// Check for a colormap-based brightmap was already done.
 	GTexf_AutoMaterialsAdded = 256,			// AddAutoMaterials has been called on this texture.
 	GTexf_OffsetsNotForFont = 512,			// The offsets must be ignored when using this texture in a font.
+	GTexf_NoTrim = 1024,					// Don't perform trimming on this texture.
 };
 
 // Refactoring helper to allow piece by piece adjustment of the API
@@ -136,8 +137,12 @@ public:
 	void SetSpriteRect();
 
 	ETextureType GetUseType() const { return UseType; }
-	void SetUpscaleFlag(int what) { shouldUpscaleFlag = what; }
-	int GetUpscaleFlag() { return shouldUpscaleFlag == 1; }
+	void SetUpscaleFlag(int what, bool manual = false) 
+	{ 
+		if ((shouldUpscaleFlag & 2) && !manual) return;	// if set manually this may not be reset.
+		shouldUpscaleFlag = what | (manual? 2 : 0); 
+	}
+	int GetUpscaleFlag() { return shouldUpscaleFlag & 1; }
 
 	FTexture* GetTexture() { return Base.get(); }
 	int GetSourceLump() const { return Base->GetSourceLump(); }
@@ -155,6 +160,8 @@ public:
 	bool expandSprites() { return expandSprite == -1? ShouldExpandSprite() : !!expandSprite; }
 	bool useWorldPanning() const { return !!(flags & GTexf_WorldPanning);  }
 	void SetWorldPanning(bool on) { if (on) flags |= GTexf_WorldPanning; else flags &= ~GTexf_WorldPanning; }
+	void SetNoTrimming(bool on) { if (on) flags |= GTexf_NoTrim; else flags &= ~GTexf_NoTrim; }
+	bool GetNoTrimming() { return !!(flags & GTexf_NoTrim); }
 	bool allowNoDecals() const { return !!(flags & GTexf_NoDecals);	}
 	void SetNoDecals(bool on) { if (on) flags |= GTexf_NoDecals; else flags &= ~GTexf_NoDecals; }
 	void SetOffsetsNotForFont() { flags |= GTexf_OffsetsNotForFont; }

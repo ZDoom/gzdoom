@@ -33,7 +33,7 @@
 */
 
 #include <stdarg.h>
-#include "templates.h"
+
 #include "v_2ddrawer.h"
 #include "vectors.h"
 #include "vm.h"
@@ -124,7 +124,7 @@ static void Shape2D_Clear(DShape2D* self, int which)
 	if (which & C_Verts) self->mVertices.Clear();
 	if (which & C_Coords) self->mCoords.Clear();
 	if (which & C_Indices) self->mIndices.Clear();
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, Clear, Shape2D_Clear)
@@ -138,7 +138,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, Clear, Shape2D_Clear)
 static void Shape2D_PushVertex(DShape2D* self, double x, double y)
 {
 	self->mVertices.Push(DVector2(x, y));
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushVertex, Shape2D_PushVertex)
@@ -153,7 +153,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushVertex, Shape2D_PushVertex)
 static void Shape2D_PushCoord(DShape2D* self, double u, double v)
 {
 	self->mCoords.Push(DVector2(u, v));
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushCoord, Shape2D_PushCoord)
@@ -170,7 +170,7 @@ static void Shape2D_PushTriangle(DShape2D* self, int a, int b, int c)
 	self->mIndices.Push(a);
 	self->mIndices.Push(b);
 	self->mIndices.Push(c);
-	self->needsVertexUpload = true;
+	self->bufferInfo->needsVertexUpload = true;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
@@ -455,7 +455,7 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 		// Note that this only works for unflipped and unrotated full textures.
 		if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 		{
-			double wi = std::min(parms.windowright, parms.texwidth);
+			double wi = min(parms.windowright, parms.texwidth);
 			x += parms.windowleft * xscale;
 			w -= (parms.texwidth - wi + parms.windowleft) * xscale;
 
@@ -528,8 +528,15 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	offset = osave;
 }
 
-DShape2D::~DShape2D() {
-	delete lastParms;
+static TArray<RefCountedPtr<DShape2DBufferInfo>> buffersToDestroy;
+
+void DShape2D::OnDestroy() {
+	if (lastParms) delete lastParms;
+	lastParms = nullptr;
+	mIndices.Reset();
+	mVertices.Reset();
+	mCoords.Reset();
+	buffersToDestroy.Push(std::move(bufferInfo));
 }
 
 //==========================================================================
@@ -562,11 +569,11 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->lastParms = new DrawParms(parms);
 	}
 	else if (shape->lastParms->vertexColorChange(parms)) {
-		shape->needsVertexUpload = true;
-		if (!shape->uploadedOnce) {
-			shape->bufIndex = -1;
-			shape->buffers.Clear();
-			shape->lastCommand = -1;
+		shape->bufferInfo->needsVertexUpload = true;
+		if (!shape->bufferInfo->uploadedOnce) {
+			shape->bufferInfo->bufIndex = -1;
+			shape->bufferInfo->buffers.Clear();
+			shape->bufferInfo->lastCommand = -1;
 		}
 		delete shape->lastParms;
 		shape->lastParms = new DrawParms(parms);
@@ -578,7 +585,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	auto osave = offset;
 	if (parms.nooffset) offset = { 0,0 };
 
-	if (shape->needsVertexUpload)
+	if (shape->bufferInfo->needsVertexUpload)
 	{
 		shape->minx = 16383;
 		shape->miny = 16383;
@@ -617,15 +624,15 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	dg.transform = shape->transform;
 	dg.transform.Cells[0][2] += offset.X;
 	dg.transform.Cells[1][2] += offset.Y;
-	dg.shape2D = shape;
+	dg.shape2DBufInfo = shape->bufferInfo;
 	dg.shape2DIndexCount = shape->mIndices.Size();
-	if (shape->needsVertexUpload)
+	if (shape->bufferInfo->needsVertexUpload)
 	{
-		shape->bufIndex += 1;
+		shape->bufferInfo->bufIndex += 1;
 
-		shape->buffers.Reserve(1);
+		shape->bufferInfo->buffers.Reserve(1);
 
-		auto buf = &shape->buffers[shape->bufIndex];
+		auto buf = &shape->bufferInfo->buffers[shape->bufferInfo->bufIndex];
 
 		auto verts = TArray<TwoDVertex>(dg.mVertCount, true);
 		for ( int i=0; i<dg.mVertCount; i++ )
@@ -644,12 +651,12 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		}
 
 		buf->UploadData(&verts[0], dg.mVertCount, &shape->mIndices[0], shape->mIndices.Size());
-		shape->needsVertexUpload = false;
-		shape->uploadedOnce = true;
+		shape->bufferInfo->needsVertexUpload = false;
+		shape->bufferInfo->uploadedOnce = true;
 	}
-	dg.shape2DBufIndex = shape->bufIndex;
-	shape->lastCommand += 1;
-	dg.shape2DCommandCounter = shape->lastCommand;
+	dg.shape2DBufIndex = shape->bufferInfo->bufIndex;
+	shape->bufferInfo->lastCommand += 1;
+	dg.shape2DCommandCounter = shape->bufferInfo->lastCommand;
 	AddCommand(&dg);
 	offset = osave;
 }
@@ -742,7 +749,6 @@ void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, const unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
 {
 	RenderCommand dg;
-	int method = 0;
 
 	if (!img || !img->isValid()) return;
 
@@ -828,13 +834,13 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTextu
 	dg.mFlags = DTF_Wrap;
 
 	float fs = 1.f / float(flatscale);
-	bool flipc = false;
 
 	float sw = GetClassicFlatScalarWidth();
 	float sh = GetClassicFlatScalarHeight();
 
 	switch (local_origin)
 	{
+	default:
 	case 0:
 		fU1 = float(left) / (float)src->GetDisplayWidth() * fs;
 		fV1 = float(top) / (float)src->GetDisplayHeight() * fs;
@@ -987,7 +993,7 @@ void F2DDrawer::AddLine(double x1, double y1, double x2, double y2, int clipx1, 
 		dg.mScissor[3] = clipy2 + 1 + int(offset.Y);
 		dg.mFlags |= DTF_Scissor;
 	}
-	
+
 	dg.mType = DrawTypeLines;
 	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
 	dg.mVertCount = 2;
@@ -1075,6 +1081,17 @@ void F2DDrawer::Clear()
 		mIsFirstPass = true;
 	}
 	screenFade = 1.f;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void F2DDrawer::OnFrameDone()
+{
+	buffersToDestroy.Clear();
 }
 
 F2DVertexBuffer::F2DVertexBuffer()

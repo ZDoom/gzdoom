@@ -40,6 +40,7 @@ class ImageScrollerDescriptor : MenuDescriptor native
 	native Color textBackgroundBrightness;
 	native double textScale;
 	native bool mAnimatedTransition;
+	native bool mAnimated;
 	native int virtWidth, virtHeight;
 }
 
@@ -168,6 +169,7 @@ class ImageScrollerMenu : Menu
 		index = 0;
 		mDesc = desc;
 		AnimatedTransition = desc.mAnimatedTransition;
+		Animated = desc.mAnimated;
 		current = mDesc.mItems[0];
 		current.onStartPage();
 		previous = null;
@@ -273,11 +275,12 @@ class ImageScrollerMenu : Menu
 	{
 		if (previous != null)
 		{
+			bool wasAnimated = Animated;
 			Animated = true;
 			if (DrawTransition()) return;
 			previous = null;
+			Animated = wasAnimated;
 		}
 		current.Drawer(false);
-		Animated = false;
 	}
 }

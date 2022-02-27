@@ -215,7 +215,7 @@ const char* GameInfoBorders[] =
 		FString colorName = V_GetColorStringByName(color); \
 		if(!colorName.IsEmpty()) \
 			color = colorName; \
-		gameinfo.key = V_GetColorFromString(NULL, color); \
+		gameinfo.key = V_GetColorFromString(color); \
 	}
 
 #define GAMEINFOKEY_BOOL(key, variable) \
@@ -356,6 +356,12 @@ void FMapInfoParser::ParseGameInfo()
 			}
 			else gameinfo.mCheatMapArrow = "";
 		}
+		else if (nextKey.CompareNoCase("dialogue") == 0)
+		{
+			sc.MustGetToken(TK_StringConst);
+			gameinfo.Dialogue = sc.String;
+			gameinfo.AddDialogues.Clear();
+		}
 		// Insert valid keys here.
 		GAMEINFOKEY_STRING(mCheatKey, "cheatKey")
 			GAMEINFOKEY_STRING(mEasyKey, "easyKey")
@@ -398,6 +404,8 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
 			GAMEINFOKEY_STRING(CursorPic, "CursorPic")
 			GAMEINFOKEY_STRING(MessageBoxClass, "MessageBoxClass")
+			GAMEINFOKEY_STRING(HelpMenuClass, "HelpMenuClass")
+			GAMEINFOKEY_STRING(MenuDelegateClass, "MenuDelegateClass")
 			GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
 			GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
 			GAMEINFOKEY_BOOL(swapmenu, "swapmenu")
@@ -437,7 +445,6 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_FONT(mStatscreenAuthorFont, "statscreen_authorfont")
 			GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 			GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
-			GAMEINFOKEY_STRING(Dialogue, "dialogue")
 			GAMEINFOKEY_STRINGARRAY(AddDialogues, "adddialogues", 0, false)
 			GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
 			GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")

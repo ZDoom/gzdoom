@@ -128,6 +128,7 @@ EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Bool, cl_customizeinvulmap)
 EXTERN_CVAR(Bool, log_vgafont)
 EXTERN_CVAR(Bool, dlg_vgafont)
+CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
 
 void DrawHUD();
 void D_DoAnonStats();
@@ -169,6 +170,7 @@ void D_Cleanup();
 void FreeSBarInfoScript();
 void I_UpdateWindowTitle();
 void S_ParseMusInfo();
+void D_GrabCVarDefaults();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -197,7 +199,7 @@ extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern FName MessageBoxClass;
 
-const char* iwad_folders[13] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/" };
+const char* iwad_folders[14] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/", "materials/"};
 const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 
 
@@ -332,99 +334,6 @@ static int pagetic;
 
 // CODE --------------------------------------------------------------------
 
-void D_GrabCVarDefaults()
-{
-	int lump, lastlump = 0;
-	int lumpversion, gamelastrunversion;
-	gamelastrunversion = atoi(LASTRUNVERSION);
-
-	while ((lump = fileSystem.FindLump("DEFCVARS", &lastlump)) != -1)
-	{
-		// don't parse from wads
-		if (lastlump > fileSystem.GetLastEntry(fileSystem.GetMaxIwadNum()))
-		{
-			// would rather put this in a modal of some sort, but this will have to do.
-			Printf(TEXTCOLOR_RED "Cannot load DEFCVARS from a wadfile!\n");
-			break;
-		}
-
-		FScanner sc(lump);
-
-		sc.MustGetString();
-		if (!sc.Compare("version"))
-			sc.ScriptError("Must declare version for defcvars! (currently: %i)", gamelastrunversion);
-		sc.MustGetNumber();
-		lumpversion = sc.Number;
-		if (lumpversion > gamelastrunversion)
-			sc.ScriptError("Unsupported version %i (%i supported)", lumpversion, gamelastrunversion);
-		if (lumpversion < 219)
-			sc.ScriptError("Version must be at least 219 (current version %i)", gamelastrunversion);
-
-		FBaseCVar* var;
-		FString CurrentFindCVar;
-
-		while (sc.GetString())
-		{
-			if (sc.Compare("set"))
-			{
-				sc.MustGetString();
-			}
-
-			CurrentFindCVar = sc.String;
-			if (lumpversion < 220)
-			{
-				CurrentFindCVar.ToLower();
-
-				// these two got renamed
-				if (strcmp(CurrentFindCVar, "gamma") == 0)
-				{
-					CurrentFindCVar = "vid_gamma";
-				}
-				if (strcmp(CurrentFindCVar, "fullscreen") == 0)
-				{
-					CurrentFindCVar = "vid_fullscreen";
-				}
-
-				// this was removed
-				if (strcmp(CurrentFindCVar, "cd_drive") == 0)
-					break;
-			}
-			if (lumpversion < 221)
-			{
-				// removed cvar
-				// this one doesn't matter as much, since it depended on platform-specific values,
-				// and is something the user should change anyhow, so, let's just throw this value
-				// out.
-				if (strcmp(CurrentFindCVar, "mouse_sensitivity") == 0)
-					break;
-				if (strcmp(CurrentFindCVar, "m_noprescale") == 0)
-					break;
-			}
-
-			var = FindCVar(CurrentFindCVar, NULL);
-			if (var != NULL)
-			{
-				if (var->GetFlags() & CVAR_ARCHIVE)
-				{
-					UCVarValue val;
-
-					sc.MustGetString();
-					val.String = const_cast<char*>(sc.String);
-					var->SetGenericRepDefault(val, CVAR_String);
-				}
-				else
-				{
-					sc.ScriptError("Cannot set cvar default for non-config cvar '%s'", sc.String);
-				}
-			}
-			else
-			{
-				sc.ScriptError("Unknown cvar '%s'", sc.String);
-			}
-		}
-	}
-}
-
 //==========================================================================
 //
 // D_ToggleHud
@@ -476,9 +385,9 @@ void D_Render(std::function<void()> action, bool interpolate)
 	for (auto Level : AllLevels())
 	{
 		// Check for the presence of dynamic lights at the start of the frame once.
-		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4) || Level->LightProbes.Size() > 0)
 		{
-			Level->HasDynamicLights = !!Level->lights;
+			Level->HasDynamicLights = Level->lights || Level->LightProbes.Size() > 0;
 		}
 		else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
 		if (interpolate) Level->interpolator.DoInterpolations(I_GetTimeFrac());
@@ -680,7 +589,7 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		v = COMPATF_SHORTTEX | COMPATF_STAIRINDEX | COMPATF_USEBLOCKING | COMPATF_NODOORLIGHT | COMPATF_SPRITESORT |
 			COMPATF_TRACE | COMPATF_MISSILECLIP | COMPATF_SOUNDTARGET | COMPATF_DEHHEALTH | COMPATF_CROSSDROPOFF |
 			COMPATF_LIGHT | COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_FLOORMOVE | COMPATF2_EXPLODE1;
+		w = COMPATF2_FLOORMOVE | COMPATF2_EXPLODE1 | COMPATF2_NOMBF21;
 		break;
 
 	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
@@ -688,36 +597,36 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 			COMPATF_TRACE | COMPATF_MISSILECLIP | COMPATF_SOUNDTARGET | COMPATF_NO_PASSMOBJ | COMPATF_LIMITPAIN |
 			COMPATF_DEHHEALTH | COMPATF_INVISIBILITY | COMPATF_CROSSDROPOFF | COMPATF_CORPSEGIBS | COMPATF_HITSCAN |
 			COMPATF_WALLRUN | COMPATF_NOTOSSDROPS | COMPATF_LIGHT | COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_BADANGLES | COMPATF2_FLOORMOVE | COMPATF2_POINTONLINE | COMPATF2_EXPLODE2;
+		w = COMPATF2_BADANGLES | COMPATF2_FLOORMOVE | COMPATF2_POINTONLINE | COMPATF2_EXPLODE2 | COMPATF2_NOMBF21;
 		break;
 
 	case 3: // Boom compat mode
 		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_EXPLODE1;
+		w = COMPATF2_EXPLODE1 | COMPATF2_NOMBF21;
 		break;
 
 	case 4: // Old ZDoom compat mode
 		v = COMPATF_SOUNDTARGET | COMPATF_LIGHT;
-		w = COMPATF2_MULTIEXIT | COMPATF2_TELEPORT | COMPATF2_PUSHWINDOW | COMPATF2_CHECKSWITCHRANGE;
+		w = COMPATF2_MULTIEXIT | COMPATF2_TELEPORT | COMPATF2_PUSHWINDOW | COMPATF2_CHECKSWITCHRANGE | COMPATF2_NOMBF21;
 		break;
 
 	case 5: // MBF compat mode
 		v = COMPATF_TRACE | COMPATF_SOUNDTARGET | COMPATF_BOOMSCROLL | COMPATF_MISSILECLIP | COMPATF_MUSHROOM |
 			COMPATF_MBFMONSTERMOVE | COMPATF_NOBLOCKFRIENDS | COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_EXPLODE1;
+		w = COMPATF2_EXPLODE1 | COMPATF2_AVOID_HAZARDS | COMPATF2_STAYONLIFT | COMPATF2_NOMBF21;
 		break;
 
 	case 6:	// Boom with some added settings to reenable some 'broken' behavior
 		v = COMPATF_TRACE | COMPATF_SOUNDTARGET | COMPATF_BOOMSCROLL | COMPATF_MISSILECLIP | COMPATF_NO_PASSMOBJ |
 			COMPATF_INVISIBILITY | COMPATF_CORPSEGIBS | COMPATF_HITSCAN | COMPATF_WALLRUN | COMPATF_NOTOSSDROPS | COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_POINTONLINE | COMPATF2_EXPLODE2;
+		w = COMPATF2_POINTONLINE | COMPATF2_EXPLODE2 | COMPATF2_NOMBF21;
 		break;
 
 	case 7: // Stricter MBF compatibility
 		v = COMPATF_CORPSEGIBS | COMPATF_NOBLOCKFRIENDS | COMPATF_MBFMONSTERMOVE | COMPATF_INVISIBILITY |
 			COMPATF_NOTOSSDROPS | COMPATF_MUSHROOM | COMPATF_NO_PASSMOBJ | COMPATF_BOOMSCROLL | COMPATF_WALLRUN |
 			COMPATF_TRACE | COMPATF_HITSCAN | COMPATF_MISSILECLIP | COMPATF_MASKEDMIDTEX | COMPATF_SOUNDTARGET;
-		w = COMPATF2_POINTONLINE | COMPATF2_EXPLODE1 | COMPATF2_EXPLODE2;
+		w = COMPATF2_POINTONLINE | COMPATF2_EXPLODE1 | COMPATF2_EXPLODE2 | COMPATF2_AVOID_HAZARDS | COMPATF2_STAYONLIFT | COMPATF2_NOMBF21;
 		break;
 	}
 	compatflags = v;
@@ -767,6 +676,9 @@ CVAR (Flag, compat_checkswitchrange,	compatflags2, COMPATF2_CHECKSWITCHRANGE);
 CVAR (Flag, compat_explode1,			compatflags2, COMPATF2_EXPLODE1);
 CVAR (Flag, compat_explode2,			compatflags2, COMPATF2_EXPLODE2);
 CVAR (Flag, compat_railing,				compatflags2, COMPATF2_RAILING);
+CVAR (Flag, compat_avoidhazard,			compatflags2, COMPATF2_AVOID_HAZARDS);
+CVAR (Flag, compat_stayonlift,			compatflags2, COMPATF2_STAYONLIFT);
+CVAR (Flag, compat_nombf21,				compatflags2, COMPATF2_NOMBF21);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -904,6 +816,7 @@ static void End2DAndUpdate()
 	twod->End();
 	CheckBench();
 	screen->Update();
+	twod->OnFrameDone();
 }
 
 //==========================================================================
@@ -1116,18 +1029,31 @@ void D_Display ()
 		// draw pause pic
 		if ((paused || pauseext) && menuactive == MENU_Off)
 		{
-			auto tex = TexMan.GetGameTextureByName(gameinfo.PauseSign, true);
-			double x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
-				tex->GetDisplayLeftOffset() * CleanXfac;
-			DrawTexture(twod, tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
-			if (paused && multiplayer)
+			// [MK] optionally let the status bar handle this
+			bool skip = false;
+			IFVIRTUALPTR(StatusBar, DBaseStatusBar, DrawPaused)
 			{
-				FFont *font = generic_ui? NewSmallFont : SmallFont;
-				FString pstring = GStrings("TXT_BY");
-				pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
-				DrawText(twod, font, CR_RED,
-					(twod->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
-					(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+				VMValue params[] { (DObject*)StatusBar, paused-1 };
+				int rv;
+				VMReturn ret(&rv);
+				VMCall(func, params, countof(params), &ret, 1);
+				skip = !!rv;
+			}
+			if ( !skip )
+			{
+				auto tex = TexMan.GetGameTextureByName(gameinfo.PauseSign, true);
+				double x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
+					tex->GetDisplayLeftOffset() * CleanXfac;
+				DrawTexture(twod, tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+				if (paused && multiplayer)
+				{
+					FFont *font = generic_ui? NewSmallFont : SmallFont;
+					FString pstring = GStrings("TXT_BY");
+					pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
+					DrawText(twod, font, CR_RED,
+						(twod->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
+						(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+				}
 			}
 		}
 
@@ -1911,10 +1837,10 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 		else if (!nextKey.CompareNoCase("STARTUPCOLORS"))
 		{
 			sc.MustGetString();
-			GameStartupInfo.FgColor = V_GetColor(NULL, sc);
+			GameStartupInfo.FgColor = V_GetColor(sc);
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			GameStartupInfo.BkColor = V_GetColor(NULL, sc);
+			GameStartupInfo.BkColor = V_GetColor(sc);
 		}
 		else if (!nextKey.CompareNoCase("STARTUPTYPE"))
 		{
@@ -2133,8 +2059,8 @@ static void AddAutoloadFiles(const char *autoname)
 		// Add common (global) wads
 		D_AddConfigFiles(allwads, "Global.Autoload", "*.wad", GameConfig);
 
-		long len;
-		int lastpos = -1;
+		ptrdiff_t len;
+		ptrdiff_t lastpos = -1;
 
 		while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
 		{
@@ -2860,7 +2786,7 @@ FString System_GetLocationDescription()
 {
 	auto& vp = r_viewpoint;
 	auto Level = vp.ViewLevel;
-	return FStringf("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n%llu fps\n\n",
+	return Level == nullptr ? FString() : FStringf("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n%llu fps\n\n",
 		Level->MapName.GetChars(), Level->LevelName.GetChars(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw.Degrees, vp.Angles.Pitch.Degrees, (unsigned long long)LastCount);
 
 }
@@ -3055,6 +2981,11 @@ static void GC_MarkGameRoots()
 	GC::Mark(NextToThink);
 }
 
+static void System_ToggleFullConsole()
+{
+	gameaction = ga_fullconsole;
+}
+
 bool  CheckSkipGameOptionBlock(const char* str);
 
 //==========================================================================
@@ -3103,6 +3034,10 @@ static int D_DoomMain_Internal (void)
 		nullptr,
 		CheckSkipGameOptionBlock,
 		System_ConsoleToggled,
+		nullptr, 
+		nullptr,
+		System_ToggleFullConsole,
+		nullptr,
 	};
 
 	
@@ -3748,7 +3683,6 @@ void D_Cleanup()
 	FreeSBarInfoScript();
 	
 	// clean up game state
-	ST_Clear();
 	D_ErrorCleanup ();
 	P_Shutdown();
 	

@@ -61,7 +61,7 @@
 #include <math.h>
 #include <algorithm>
 
-#include "templates.h"
+
 
 #include "m_bbox.h"
 #include "m_random.h"
@@ -849,12 +849,6 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	// MBF bouncers are treated as missiles here.
 	bool Projectile = (tm.thing->flags & MF_MISSILE || tm.thing->BounceFlags & BOUNCE_MBF);
-	// MBF considers that friendly monsters are not blocked by monster-blocking lines.
-	// This is added here as a compatibility option. Note that monsters that are dehacked
-	// into being friendly with the MBF flag automatically gain MF3_NOBLOCKMONST, so this
-	// just optionally generalizes the behavior to other friendly monsters.
-	bool NotBlocked = ((tm.thing->flags3 & MF3_NOBLOCKMONST)
-		|| ((tm.thing->Level->i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
 
 	uint32_t ProjectileBlocking = ML_BLOCKEVERYTHING | ML_BLOCKPROJECTILE;
 	if ( tm.thing->flags8 & MF8_BLOCKASPLAYER ) ProjectileBlocking |= ML_BLOCK_PLAYERS | ML_BLOCKING;
@@ -865,11 +859,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		{
 			rail = true;
 		}
-		else if ((ld->flags & (ML_BLOCKING | ML_BLOCKEVERYTHING)) || 				// explicitly blocking everything
-			(!(NotBlocked) && (ld->flags & ML_BLOCKMONSTERS)) || 				// block monsters only
-			(((tm.thing->player != NULL) || (tm.thing->flags8 & MF8_BLOCKASPLAYER)) && (ld->flags & ML_BLOCK_PLAYERS)) ||		// block players
-			((Projectile) && (ld->flags & ML_BLOCKPROJECTILE)) ||				// block projectiles
-			((tm.thing->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS)))	// block floaters
+		else if (P_IsBlockedByLine(tm.thing, ld) ||
+			((Projectile) && (ld->flags & ML_BLOCKPROJECTILE)))
 		{
 			if (cres.portalflags & FFCF_NOFLOOR)
 			{
@@ -1166,6 +1157,29 @@ static bool CheckRipLevel(AActor *victim, AActor *projectile)
 //
 //==========================================================================
 
+static bool P_ProjectileImmune(AActor* target, AActor* source)
+{
+	// This one's directly taken from DSDA.
+	auto targetgroup = target->GetClass()->ActorInfo()->projectile_group;
+	auto sourcegroup = source->GetClass()->ActorInfo()->projectile_group;
+
+	return
+		( // PG_GROUPLESS means no immunity, even to own species
+			targetgroup != -1/*PG_GROUPLESS*/ ||
+			target == source
+			) &&
+		(
+			( // target type has default behaviour, and things are the same type
+				targetgroup == 0/*PG_DEFAULT*/ &&
+				(source->GetSpecies() == target->GetSpecies() && !(target->flags6 & MF6_DOHARMSPECIES))
+				) ||
+			( // target type has special behaviour, and things have the same group
+				targetgroup != 0/*PG_DEFAULT*/ &&
+				targetgroup == sourcegroup
+				)
+			);
+}
+
 static bool CanAttackHurt(AActor *victim, AActor *shooter)
 {
 	// players are never subject to infighting settings and are always allowed
@@ -1213,7 +1227,8 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 					// [RH] Don't hurt monsters that hate the same victim as you do
 					return false;
 				}
-				if (victim->GetSpecies() == shooter->GetSpecies() && !(victim->flags6 & MF6_DOHARMSPECIES))
+
+				if (P_ProjectileImmune(victim, shooter))
 				{
 					// Don't hurt same species or any relative -
 					// but only if the target isn't one's hostile.
@@ -1584,7 +1599,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 					{ // Ok to spawn blood
 						P_RipperBlood(tm.thing, thing);
 					}
-					S_Sound(tm.thing, CHAN_BODY, 0, "misc/ripslop", 1, ATTN_IDLE);
+					S_Sound(tm.thing, CHAN_BODY, 0, tm.thing->SoundVar(NAME_RipSound), 1, ATTN_IDLE);
 
 					// Do poisoning (if using new style poison)
 					if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
@@ -1978,7 +1993,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 {
 	AActor *onmobj = nullptr;
 	if (pOnmobj) *pOnmobj = nullptr;
-	if (actor->flags & MF_NOCLIP)
+	if ((actor->flags & MF_NOCLIP) || (actor->flags2 & MF2_THRUACTORS))
 	{
 		return true;
 	}
@@ -1996,7 +2011,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
-		if ((actor->flags2 | thing->flags2) & MF2_THRUACTORS)
+		if (thing->flags2 & MF2_THRUACTORS)
 		{
 			continue;
 		}
@@ -2342,7 +2357,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				// This is so that it does not walk off of things onto a drop off.
 				if (thing->flags2 & MF2_ONMOBJ)
 				{
-					floorz = MAX(thing->Z(), tm.floorz);
+					floorz = max(thing->Z(), tm.floorz);
 				}
 
 				if (floorz - tm.dropoffz > thing->MaxDropOffHeight &&
@@ -2987,19 +3002,7 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 			}
 			goto isblocking;
 		}
-		if (li->flags & (ML_BLOCKING | ML_BLOCKEVERYTHING))
-		{
-			goto isblocking;
-		}
-		if (li->flags & ML_BLOCK_PLAYERS && ((slidemo->player != NULL) || (slidemo->flags8 & MF8_BLOCKASPLAYER)))
-		{
-			goto isblocking;
-		}
-		if (li->flags & ML_BLOCKMONSTERS && !((slidemo->flags3 & MF3_NOBLOCKMONST)
-			|| ((slidemo->Level->i_compatflags & COMPATF_NOBLOCKFRIENDS) && (slidemo->flags & MF_FRIENDLY))))
-		{
-			goto isblocking;
-		}
+		if (P_IsBlockedByLine(slidemo, li)) goto isblocking;
 
 		// set openrange, opentop, openbottom
 		P_LineOpening(open, slidemo, li, it.InterceptPoint(in));
@@ -3468,7 +3471,7 @@ bool FSlide::BounceWall(AActor *mo)
 	deltaangle = (lineangle * 2) - moveangle;
 	mo->Angles.Yaw = deltaangle;
 
-	movelen = mo->Vel.XY().Length() * mo->wallbouncefactor;
+	movelen = mo->Vel.XY().Length() * GetWallBounceFactor(mo);
 
 	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
 	if (BoxOnLineSide(box, line) == -1)
@@ -3555,7 +3558,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		if (!ontop)
 		{
 			DAngle angle = BlockingMobj->AngleTo(mo) + ((pr_bounce() % 16) - 8);
-			double speed = mo->VelXYToSpeed() * mo->wallbouncefactor; // [GZ] was 0.75, using wallbouncefactor seems more consistent
+			double speed = mo->VelXYToSpeed() * GetWallBounceFactor(mo); // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			if (fabs(speed) < EQUAL_EPSILON) speed = 0;
 			mo->Angles.Yaw = angle;
 			mo->VelFromAngle(speed);
@@ -3577,7 +3580,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 				}
 				else
 				{
-					mo->Vel.Z *= mo->bouncefactor;
+					mo->Vel.Z *= GetMBFBounceFactor(mo);
 				}
 			}
 			else // Don't run through this for MBF-style bounces
@@ -4017,8 +4020,8 @@ struct aim_t
 				floorportalstate = false;
 			}
 		}
-		if (ceilingportalstate) EnterSectorPortal(sector_t::ceiling, 0, lastsector, toppitch, MIN<DAngle>(0., bottompitch));
-		if (floorportalstate) EnterSectorPortal(sector_t::floor, 0, lastsector, MAX<DAngle>(0., toppitch), bottompitch);
+		if (ceilingportalstate) EnterSectorPortal(sector_t::ceiling, 0, lastsector, toppitch, min<DAngle>(0., bottompitch));
+		if (floorportalstate) EnterSectorPortal(sector_t::floor, 0, lastsector, max<DAngle>(0., toppitch), bottompitch);
 
 		FPathTraverse it(lastsector->Level, startpos.X, startpos.Y, aimtrace.X, aimtrace.Y, PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE | PT_DELTA, startfrac);
 		intercept_t *in;
@@ -4096,11 +4099,11 @@ struct aim_t
 				// check portal in backsector when aiming up/downward is possible, the line doesn't have portals on both sides and there's actually a portal in the backsector
 				if ((planestocheck & aim_up) && toppitch < 0 && open.top != LINEOPEN_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
 				{
-					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, MIN<DAngle>(0., bottompitch));
+					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, min<DAngle>(0., bottompitch));
 				}
 				if ((planestocheck & aim_down) && bottompitch > 0 && open.bottom != LINEOPEN_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
 				{
-					EnterSectorPortal(sector_t::floor, in->frac, entersec, MAX<DAngle>(0., toppitch), bottompitch);
+					EnterSectorPortal(sector_t::floor, in->frac, entersec, max<DAngle>(0., toppitch), bottompitch);
 				}
 				continue;					// shot continues
 			}
@@ -5405,6 +5408,27 @@ void P_AimCamera(AActor *t1, DVector3 &campos, DAngle &camangle, sector_t *&Came
 	camangle = trace.SrcAngleFromTarget - 180.;
 }
 
+// [MC] Used for ViewPos. Uses code borrowed from P_AimCamera.
+void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, FViewPosition *VP)
+{
+	FTraceResults trace;
+	const DVector3 vvec = campos - orig;
+	const double distance = vvec.Length();
+
+	// Trace handles all of the portal crossing, which is why there is no usage of Vec#Offset(Z).
+	if (Trace(orig, t1->Sector, vvec.Unit(), distance, 0, 0, t1, trace) &&
+		trace.Distance > 5)
+	{
+		// Position camera slightly in front of hit thing
+		campos = orig + vvec.Unit() * (trace.Distance - 5);
+	}
+	else
+	{
+		campos = trace.HitPos - trace.HitVector * 1 / 256.;
+	}
+	CameraSector = trace.Sector;
+	unlinked = trace.unlinked;
+}
 
 //==========================================================================
 //
@@ -5937,6 +5961,11 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		{ // don't damage the source of the explosion
 			continue;
 		}
+
+		// MBF21
+		auto targetgroup = thing->GetClass()->ActorInfo()->splash_group;
+		auto sourcegroup = bombspot->GetClass()->ActorInfo()->splash_group;
+		if (targetgroup != 0 && targetgroup == sourcegroup) continue;
 
 		// a much needed option: monsters that fire explosive projectiles cannot 
 		// be hurt by projectiles fired by a monster of the same type.
@@ -6640,7 +6669,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 		AActor *onmobj;
 		if (!P_TestMobjZ(thing, true, &onmobj) && onmobj->Z() <= thing->Z())
 		{
-			thing->SetZ(MIN(thing->ceilingz - thing->Height, onmobj->Top()));
+			thing->SetZ(min(thing->ceilingz - thing->Height, onmobj->Top()));
 			thing->UpdateRenderSectorList();
 		}
 	}

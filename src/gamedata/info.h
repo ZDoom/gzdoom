@@ -245,6 +245,9 @@ struct FActorInfo
 	uint16_t SpawnID = 0;
 	uint16_t ConversationID = 0;
 	int16_t DoomEdNum = -1;
+	int infighting_group = 0;
+	int projectile_group = 0;
+	int splash_group = 0;
 
 	FStateLabels *StateList = nullptr;
 	DmgFactors DamageFactors;

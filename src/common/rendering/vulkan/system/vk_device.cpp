@@ -27,6 +27,7 @@
 #undef min
 #endif
 
+#include <inttypes.h>
 #include <vector>
 #include <array>
 #include <set>
@@ -219,6 +220,7 @@ void VulkanDevice::CreateAllocator()
 		allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 	allocinfo.physicalDevice = PhysicalDevice.Device;
 	allocinfo.device = device;
+	allocinfo.instance = instance;
 	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;
 	if (vmaCreateAllocator(&allocinfo, &allocator) != VK_SUCCESS)
 		VulkanError("Unable to create allocator");
@@ -323,20 +325,20 @@ void VulkanDevice::CreateInstance()
 
 	if (debugLayerFound)
 	{
-		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.messageSeverity =
+		VkDebugUtilsMessengerCreateInfoEXT dbgCreateInfo = {};
+		dbgCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+		dbgCreateInfo.messageSeverity =
 			//VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
 			//VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		createInfo.messageType =
+		dbgCreateInfo.messageType =
 			VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		createInfo.pfnUserCallback = DebugCallback;
-		createInfo.pUserData = this;
-		result = vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger);
+		dbgCreateInfo.pfnUserCallback = DebugCallback;
+		dbgCreateInfo.pUserData = this;
+		result = vkCreateDebugUtilsMessengerEXT(instance, &dbgCreateInfo, nullptr, &debugMessenger);
 		CheckVulkanError(result, "vkCreateDebugUtilsMessengerEXT failed");
 
 		DebugLayerActive = true;
@@ -345,8 +347,6 @@ void VulkanDevice::CreateInstance()
 
 VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
 {
-	VulkanDevice *device = (VulkanDevice*)userData;
-
 	static std::mutex mtx;
 	static std::set<FString> seenMessages;
 	static int totalMessages;
@@ -361,7 +361,7 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 		if (callbackData->pObjects[i].pObjectName)
 		{
 			FString hexname;
-			hexname.Format("0x%llx", callbackData->pObjects[i].objectHandle);
+			hexname.Format("0x%" PRIx64, callbackData->pObjects[i].objectHandle);
 			msg.Substitute(hexname.GetChars(), callbackData->pObjects[i].pObjectName);
 		}
 	}
@@ -375,9 +375,11 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 			seenMessages.insert(msg);
 
 			const char *typestr;
+			bool showcallstack = false;
 			if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 			{
 				typestr = "vulkan error";
+				showcallstack = true;
 			}
 			else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 			{
@@ -396,11 +398,12 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 				typestr = "vulkan";
 			}
 
-			Printf("\n");
+			if (showcallstack)
+				Printf("\n");
 			Printf(TEXTCOLOR_RED "[%s] ", typestr);
 			Printf(TEXTCOLOR_WHITE "%s\n", msg.GetChars());
 
-			if (vk_debug_callstack)
+			if (vk_debug_callstack && showcallstack)
 			{
 				FString callstack = JitCaptureStackTrace(0, true);
 				if (!callstack.IsEmpty())

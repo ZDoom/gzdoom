@@ -44,8 +44,8 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 	{
 		// Ensure usemtl statements remain intact
 		TArray<FString> mtlUsages;
-		TArray<long> mtlUsageIdxs;
-		long bpos = 0, nlpos = 0, slashpos = 0;
+		TArray<ptrdiff_t> mtlUsageIdxs;
+		ptrdiff_t bpos = 0, nlpos = 0, slashpos = 0;
 		while (1)
 		{
 			bpos = objBuf.IndexOf("\nusemtl", bpos);
@@ -58,7 +58,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			}
 			if (nlpos == -1)
 			{
-				nlpos = (long)objBuf.Len();
+				nlpos = objBuf.Len();
 			}
 			FString lineStr(objBuf.GetChars() + bpos, nlpos - bpos);
 			mtlUsages.Push(lineStr);
@@ -76,7 +76,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			nlpos = objBuf.IndexOf('\n', bpos);
 			if (nlpos == -1)
 			{
-				nlpos = (long)objBuf.Len();
+				nlpos = objBuf.Len();
 			}
 			memcpy(wObjBuf + bpos, mtlUsages[i].GetChars(), nlpos - bpos);
 		}
@@ -240,13 +240,12 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
  */
 template<typename T, size_t L> void FOBJModel::ParseVector(TArray<T> &array)
 {
-	float coord[L];
-	for (size_t axis = 0; axis < L; axis++)
+	T vec;
+	for (unsigned axis = 0; axis < L; axis++)
 	{
 		sc.MustGetFloat();
-		coord[axis] = (float)sc.Float;
+		vec[axis] = (float)sc.Float;
 	}
-	T vec(coord);
 	array.Push(vec);
 }
 

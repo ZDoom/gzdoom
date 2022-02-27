@@ -422,7 +422,7 @@ void FString::Remove(size_t index, size_t remlen)
 	{
 		if (index + remlen >= Len())
 		{
-			Truncate((long)index);
+			Truncate(index);
 		}
 		else
 		{
@@ -500,12 +500,12 @@ void FString::DeleteLastCharacter()
 }
 
 
-long FString::IndexOf (const FString &substr, long startIndex) const
+ptrdiff_t FString::IndexOf (const FString &substr, ptrdiff_t startIndex) const
 {
 	return IndexOf (substr.Chars, startIndex);
 }
 
-long FString::IndexOf (const char *substr, long startIndex) const
+ptrdiff_t FString::IndexOf (const char *substr, ptrdiff_t startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
 	{
@@ -516,10 +516,10 @@ long FString::IndexOf (const char *substr, long startIndex) const
 	{
 		return -1;
 	}
-	return long(str - Chars);
+	return str - Chars;
 }
 
-long FString::IndexOf (char subchar, long startIndex) const
+ptrdiff_t FString::IndexOf (char subchar, ptrdiff_t startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
 	{
@@ -530,15 +530,15 @@ long FString::IndexOf (char subchar, long startIndex) const
 	{
 		return -1;
 	}
-	return long(str - Chars);
+	return str - Chars;
 }
 
-long FString::IndexOfAny (const FString &charset, long startIndex) const
+ptrdiff_t FString::IndexOfAny (const FString &charset, ptrdiff_t startIndex) const
 {
 	return IndexOfAny (charset.Chars, startIndex);
 }
 
-long FString::IndexOfAny (const char *charset, long startIndex) const
+ptrdiff_t FString::IndexOfAny (const char *charset, ptrdiff_t startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
 	{
@@ -549,19 +549,19 @@ long FString::IndexOfAny (const char *charset, long startIndex) const
 	{
 		return -1;
 	}
-	return long(brk - Chars);
+	return brk - Chars;
 }
 
-long FString::LastIndexOf (char subchar) const
+ptrdiff_t FString::LastIndexOf (char subchar) const
 {
-	return LastIndexOf (subchar, long(Len()));
+	return LastIndexOf (subchar, Len());
 }
 
-long FString::LastIndexOf (char subchar, long endIndex) const
+ptrdiff_t FString::LastIndexOf (char subchar, ptrdiff_t endIndex) const
 {
 	if ((size_t)endIndex > Len())
 	{
-		endIndex = long(Len());
+		endIndex = Len();
 	}
 	while (--endIndex >= 0)
 	{
@@ -573,16 +573,16 @@ long FString::LastIndexOf (char subchar, long endIndex) const
 	return -1;
 }
 
-long FString::LastIndexOfBroken (const FString &_substr, long endIndex) const
+ptrdiff_t FString::LastIndexOfBroken (const FString &_substr, ptrdiff_t endIndex) const
 {
 	const char *substr = _substr.GetChars();
 	size_t substrlen = _substr.Len();
 	if ((size_t)endIndex > Len())
 	{
-		endIndex = long(Len());
+		endIndex = Len();
 	}
 	substrlen--;
-	while (--endIndex >= long(substrlen))
+	while (--endIndex >= ptrdiff_t(substrlen))
 	{
 		if (strncmp (substr, Chars + endIndex - substrlen, substrlen + 1) == 0)
 		{
@@ -592,26 +592,26 @@ long FString::LastIndexOfBroken (const FString &_substr, long endIndex) const
 	return -1;
 }
 
-long FString::LastIndexOfAny (const FString &charset) const
+ptrdiff_t FString::LastIndexOfAny (const FString &charset) const
 {
-	return LastIndexOfAny (charset.Chars, long(Len()));
+	return LastIndexOfAny (charset.Chars, Len());
 }
 
-long FString::LastIndexOfAny (const char *charset) const
+ptrdiff_t FString::LastIndexOfAny (const char *charset) const
 {
 	return LastIndexOfAny (charset, long(Len()));
 }
 
-long FString::LastIndexOfAny (const FString &charset, long endIndex) const
+ptrdiff_t FString::LastIndexOfAny (const FString &charset, ptrdiff_t endIndex) const
 {
 	return LastIndexOfAny (charset.Chars, endIndex);
 }
 
-long FString::LastIndexOfAny (const char *charset, long endIndex) const
+ptrdiff_t FString::LastIndexOfAny (const char *charset, ptrdiff_t endIndex) const
 {
 	if ((size_t)endIndex > Len())
 	{
-		endIndex = long(Len());
+		endIndex = Len();
 	}
 	while (--endIndex >= 0)
 	{
@@ -623,31 +623,31 @@ long FString::LastIndexOfAny (const char *charset, long endIndex) const
 	return -1;
 }
 
-long FString::LastIndexOf (const FString &substr) const
+ptrdiff_t FString::LastIndexOf (const FString &substr) const
 {
-	return LastIndexOf(substr.Chars, long(Len() - substr.Len()), substr.Len());
+	return LastIndexOf(substr.Chars, Len() - substr.Len(), substr.Len());
 }
 
-long FString::LastIndexOf (const FString &substr, long endIndex) const
+ptrdiff_t FString::LastIndexOf (const FString &substr, ptrdiff_t endIndex) const
 {
 	return LastIndexOf(substr.Chars, endIndex, substr.Len());
 }
 
-long FString::LastIndexOf (const char *substr) const
+ptrdiff_t FString::LastIndexOf (const char *substr) const
 {
-	return LastIndexOf(substr, long(Len() - strlen(substr)), strlen(substr));
+	return LastIndexOf(substr, Len() - strlen(substr), strlen(substr));
 }
 
-long FString::LastIndexOf (const char *substr, long endIndex) const
+ptrdiff_t FString::LastIndexOf (const char *substr, ptrdiff_t endIndex) const
 {
 	return LastIndexOf(substr, endIndex, strlen(substr));
 }
 
-long FString::LastIndexOf (const char *substr, long endIndex, size_t substrlen) const
+ptrdiff_t FString::LastIndexOf (const char *substr, ptrdiff_t endIndex, size_t substrlen) const
 {
 	if ((size_t)endIndex + substrlen > Len())
 	{
-		endIndex = long(Len() - substrlen);
+		endIndex = Len() - substrlen;
 	}
 	while (endIndex >= 0)
 	{
@@ -1256,15 +1256,15 @@ void FString::Split(TArray<FString>& tokens, const char *delimiter, EmptyTokenTy
 {
 	assert(nullptr != delimiter);
 
-	const long selfLen = static_cast<long>(Len());
-	const long delimLen = static_cast<long>(strlen(delimiter));
-	long lastPos = 0;
+	const auto selfLen = static_cast<ptrdiff_t>(Len());
+	const auto delimLen = static_cast<ptrdiff_t>(strlen(delimiter));
+	ptrdiff_t lastPos = 0;
 
 	if (selfLen == 0) return;	// Empty strings do not contain tokens, even with TOK_KEEPEMPTY.
 
 	while (lastPos <= selfLen)
 	{
-		long pos = IndexOf(delimiter, lastPos);
+		auto pos = IndexOf(delimiter, lastPos);
 
 		if (-1 == pos)
 		{

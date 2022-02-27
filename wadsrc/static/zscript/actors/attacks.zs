@@ -616,6 +616,18 @@ extend class Actor
 		return count;
 	}
 
+	deprecated("2.3", "For Dehacked use only")
+	void A_NailBomb()
+	{
+		A_Explode(nails:30);
+	}
+
+	deprecated("2.3", "For Dehacked use only")
+	void A_RadiusDamage(int dam, int dist)
+	{
+		A_Explode(dam, dist);
+	}
+
 	//==========================================================================
 	//
 	// A_RadiusThrust

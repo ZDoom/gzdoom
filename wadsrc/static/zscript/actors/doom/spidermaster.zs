@@ -20,6 +20,8 @@ class SpiderMastermind : Actor
 		+NORADIUSDMG
 		+DONTMORPH
 		+BOSSDEATH
+		+E3M8BOSS
+		+E4M8BOSS
 		SeeSound "spider/sight";
 		AttackSound "spider/attack";
 		PainSound "spider/pain";

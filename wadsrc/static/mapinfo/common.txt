@@ -136,6 +136,10 @@ DoomEdNums
   9872 = SpotLightFlickerAttenuated
   9873 = SectorSpotLightAttenuated
   9874 = SpotLightFlickerRandomAttenuated
+  9875 = None	// ZDRay light probe
+  9876 = None	// ZDRay static point light
+  9881 = None	// ZDRay static spotlight
+  9890 = None	// ZDRayInfo
   9982 = SecActEyesAboveC
   9983 = SecActEyesBelowC
   9988 = CustomSprite

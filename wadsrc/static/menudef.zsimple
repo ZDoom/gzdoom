@@ -6,8 +6,10 @@ OptionMenu "OptionsMenuSimple" protected
 {
 	Title "$OPTMNU_TITLE"
 	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
-	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
+	Submenu "$OPTMNU_MOUSE",			"MouseOptionsSimple"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
+	StaticText " "
+	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
 	StaticText " "
 	Submenu "$OPTMNU_SOUND",			"SoundOptionsSimple"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptionsSimple"
@@ -67,7 +69,8 @@ OptionMenu VideoOptionsSimple protected
 	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
-
+	StaticText " "
+	Slider "$DSPLYMNU_FOV",						"fov",							75.0, 120.0, 0.1, 1
 	// commenting this out for now, this menu is so general purpose I am not sure it makes sense, but I'm leaving it here just in case
 	// the "full" menu doesn't have some of the options that are in this one.
 	//StaticText " "
@@ -97,4 +100,22 @@ OptionMenu MiscOptionsSimple protected
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
 	Option "$OPTMNU_LANGUAGE",					"language", "LanguageOptions"
+}
+
+OptionMenu "MouseOptionsSimple" protected
+{
+	Title "$MOUSEMNU_TITLE"
+	Option "$MOUSEMNU_ENABLEMOUSE",		"use_mouse", "YesNo"
+	Option "$MOUSEMNU_MOUSEINMENU",		"m_use_mouse", "MenuMouse", "use_mouse"
+	IfOption(Windows)
+	{
+		Option "$MOUSEMNU_SWAPBUTTONS", "m_swapbuttons", "YesNo"
+	}
+	Option "$MOUSEMNU_CURSOR",			"vid_cursor", "Cursors"
+	StaticText 	""
+	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
+	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
+	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
+	StaticText 	""
+	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 }

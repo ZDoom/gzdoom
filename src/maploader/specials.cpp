@@ -67,7 +67,7 @@
 
 #include <stdlib.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -449,10 +449,10 @@ void MapLoader::SpawnSkybox(AActor *origin)
 static void SetupSectorDamage(sector_t *sector, int damage, int interval, int leakchance, FName type, int flags)
 {
 	// Only set if damage is not yet initialized. This ensures that UDMF takes precedence over sector specials.
-	if (sector->damageamount == 0)
+	if (sector->damageamount == 0 && !(sector->Flags & (SECF_EXIT1|SECF_EXIT2)))
 	{
 		sector->damageamount = damage;
-		sector->damageinterval = MAX(1, interval);
+		sector->damageinterval = max(1, interval);
 		sector->leakydamage = leakchance;
 		sector->damagetype = type;
 		sector->Flags = (sector->Flags & ~SECF_DAMAGEFLAGS) | (flags & SECF_DAMAGEFLAGS);
@@ -484,17 +484,44 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 	{
 		sector->Flags |= SECF_PUSH;
 	}
-	if ((sector->special & DAMAGE_MASK) == 0x100)
+	// Nom MBF21 compatibility needs to be checked here, because after this point there is no longer any context in which it can be done.
+	if ((sector->special & KILL_MONSTERS_MASK) && Level->MBF21Enabled())
 	{
-		SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+		sector->Flags |= SECF_KILLMONSTERS;
 	}
-	else if ((sector->special & DAMAGE_MASK) == 0x200)
+	if (!(sector->special & DEATH_MASK) || !Level->MBF21Enabled())
 	{
-		SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		if ((sector->special & DAMAGE_MASK) == 0x100)
+		{
+			SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x200)
+		{
+			SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x300)
+		{
+			SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		}
 	}
-	else if ((sector->special & DAMAGE_MASK) == 0x300)
+	else
 	{
-		SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		if ((sector->special & DAMAGE_MASK) == 0x100)
+		{
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE, 0, 0, NAME_InstantDeath, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x200)
+		{
+			sector->Flags |= SECF_EXIT1;
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x300)
+		{
+			sector->Flags |= SECF_EXIT2;
+		}
+		else // 0
+		{
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE-1, 0, 0, NAME_InstantDeath, 0);
+		}
 	}
 	sector->special &= 0xff;
 
@@ -759,6 +786,27 @@ void MapLoader::SpawnSpecials ()
 		case Line_SetPortal:
 		case Line_QuickPortal:
 			SpawnLinePortal(&line);
+			break;
+
+			// partial support for MBF's stay-on-lift feature.
+			// Unlike MBF we cannot scan all lines for a proper special each time because it'd take too long.
+			// So instead, set the info here, but only for repeatable lifts to keep things simple. 
+			// This also cannot consider lifts triggered by scripts etc.
+		case Generic_Lift:
+			if (line.args[3] != 1) continue;
+		case Plat_DownWaitUpStay:
+		case Plat_DownWaitUpStayLip:
+		case Plat_UpWaitDownStay:
+		case Plat_UpNearestWaitDownStay:
+			if (line.flags & ML_REPEAT_SPECIAL)
+			{
+				auto it = Level->GetSectorTagIterator(line.args[0], &line);
+				int secno;
+				while ((secno = it.Next()) != -1)
+				{
+					Level->sectors[secno].MoreFlags |= SECMF_LIFT;
+				}
+			}
 			break;
 
 		// [RH] ZDoom Static_Init settings
@@ -1346,11 +1394,34 @@ void MapLoader::SpawnScrollers()
 		}
 
 		case Scroll_Texture_Offsets:
+		{
+			double divider = max(1, l->args[3]);
 			// killough 3/2/98: scroll according to sidedef offsets
-			side = Level->lines[i].sidedef[0];
-			Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
-				side->GetTextureYOffset(side_t::mid), nullptr, nullptr, side, accel, SCROLLTYPE(l->args[0]));
+			side = l->sidedef[0];
+			if (l->args[2] & 3)
+			{
+				// if 1, then displacement
+				// if 2, then accelerative (also if 3)
+				control = l->sidedef[0]->sector;
+				if (l->args[2] & 2)
+					accel = 1;
+			}
+			double dx = -side->GetTextureXOffset(side_t::mid) / divider;
+			double dy = side->GetTextureYOffset(side_t::mid) / divider;
+			if (l->args[1] == 0)
+			{
+				Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, side, accel, SCROLLTYPE(l->args[0]));
+			}
+			else
+			{
+				auto it = Level->GetLineIdIterator(l->args[1]);
+				while ((s = it.Next()) >= 0)
+				{
+					Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, Level->lines[s].sidedef[0], accel, SCROLLTYPE(l->args[0]));
+				}
+			}
 			break;
+		}
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.

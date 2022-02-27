@@ -35,7 +35,7 @@
 
 #include <float.h>
 #include "dobject.h"
-#include "templates.h"
+
 #include "serializer.h"
 #include "types.h"
 #include "vm.h"
@@ -345,7 +345,7 @@ PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned
 	// its fields.
 	if (Align != nullptr)
 	{
-		*Align = MAX(*Align, type->Align);
+		*Align = max(*Align, type->Align);
 	}
 
 	if (AddSymbol(field) == nullptr)

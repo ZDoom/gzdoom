@@ -72,7 +72,7 @@ FConsoleBuffer::FConsoleBuffer()
 void FConsoleBuffer::AddText(int printlevel, const char *text)
 {
 	FString build = TEXTCOLOR_TAN;
-	
+
 	if (mAddType == REPLACELINE)
 	{
 		// Just wondering: Do we actually need this case? If so, it may need some work.
@@ -85,15 +85,15 @@ void FConsoleBuffer::AddText(int printlevel, const char *text)
 		printlevel = -1;
 		mLastLineNeedsUpdate = true;
 	}
-	
+
 	if (printlevel >= 0 && printlevel != PRINT_HIGH)
 	{
 		if (printlevel == 200) build = TEXTCOLOR_GREEN;
 		else if (printlevel < PRINTLEVELS) build.Format("%c%c", TEXTCOLOR_ESCAPE, PrintColors[printlevel]+'A');
 	}
-	
+
 	size_t textsize = strlen(text);
-	
+
 	if (text[textsize-1] == '\r')
 	{
 		textsize--;

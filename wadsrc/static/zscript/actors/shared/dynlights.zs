@@ -68,6 +68,7 @@ class DynamicLight : Actor
 		+NOGRAVITY
 		+FIXMAPTHINGPOS
 		+INVISIBLE
+		+NOTONAUTOMAP
 	}
 	
 	//==========================================================================

@@ -429,7 +429,6 @@ public:
 	
 	void SetMusic();
 
-
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
 	TArray<extsector_t> extsectors; // container for non-trivial sector information. sector_t must be trivially copyable for *_fakeflat to work as intended.
@@ -450,6 +449,20 @@ public:
 
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;
+
+	// Lightmaps
+	TArray<LightmapSurface> LMSurfaces;
+	TArray<float> LMTexCoords;
+	int LMTextureCount = 0;
+	int LMTextureSize = 0;
+	TArray<uint16_t> LMTextureData;
+	TArray<LightProbe> LightProbes;
+	int LPMinX = 0;
+	int LPMinY = 0;
+	int LPWidth = 0;
+	int LPHeight = 0;
+	static const int LPCellSize = 32;
+	TArray<LightProbeCell> LPCells;
 
 	// Portal information.
 	FDisplacementTable Displacements;
@@ -582,6 +595,12 @@ public:
 		auto p = GetConsolePlayer();
 		if (!p) return false;
 		return p->camera == mo;
+	}
+
+	bool MBF21Enabled() const
+	{
+		// The affected features only are a problem with Doom format maps - the flag should have no effect in Hexen and UDMF format.
+		return !(i_compatflags2 & COMPATF2_NOMBF21) || maptype != MAPTYPE_DOOM;
 	}
 
 	int NumMapSections;

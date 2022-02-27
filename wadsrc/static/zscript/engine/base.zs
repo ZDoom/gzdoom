@@ -76,11 +76,14 @@ enum EGameState
 	GS_INTERMISSION,
 	GS_FINALE,
 	GS_DEMOSCREEN,
+	GS_FULLCONSOLE,		// [RH]	Fullscreen console
+	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
+	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
+	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
+	GS_INTRO,
+	GS_CUTSCENE,
+
 	GS_MENUSCREEN = GS_DEMOSCREEN,
-	GS_FULLCONSOLE,
-	GS_HIDECONSOLE,
-	GS_STARTUP,
-	GS_TITLELEVEL,
 }
 
 const TEXTCOLOR_BRICK			= "\034A";
@@ -180,6 +183,26 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native MenuDelegateBase menuDelegate;
 	native readonly int consoleplayer;
 	native readonly double NotifyFontScale;
+	native readonly int paused;
+}
+
+struct System native
+{
+	native static void StopMusic();
+	native static void StopAllSounds();
+	native static bool SoundEnabled();
+	native static bool MusicEnabled();
+	native static double GetTimeFrac();
+	
+	static bool specialKeyEvent(InputEvent ev)
+	{
+		if (ev.type == InputEvent.Type_KeyDown || ev.type == InputEvent.Type_KeyUp)
+		{
+			int key = ev.KeyScan;
+			if (key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP || (key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT)) return true;
+		}
+		return false;
+	}
 }
 
 struct MusPlayingInfo native
@@ -390,7 +413,7 @@ struct Screen native
 	native static int GetWidth();
 	native static int GetHeight();
 	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
-	native static void Dim(Color col, double amount, int x, int y, int w, int h);
+	native static void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
@@ -416,6 +439,7 @@ struct Font native
 	enum EColorRange
 	{
 		CR_UNDEFINED = -1,
+		CR_NATIVEPAL = -1,
 		CR_BRICK,
 		CR_TAN,
 		CR_GRAY,
@@ -495,6 +519,7 @@ struct Font native
 	native static Font GetFont(Name fontname);
 	native BrokenLines BreakLines(String text, int maxlen);
 	native int GetGlyphHeight(int code);
+	native int GetDefaultKerning();
 }
 
 struct Console native
@@ -665,6 +690,7 @@ struct StringStruct native
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
 	native void Substitute(String str, String replace);
+	native void StripRight(String junk = "");
 }
 
 struct Translation version("2.4")

@@ -46,7 +46,7 @@ struct FScopeBarrier
 	//
 	static int FlagsFromSide(int side);
 	static EScopeFlags ObjectFlagsFromSide(int side);
-	
+
 	// used for errors
 	static const char* StringFromSide(int side);
 

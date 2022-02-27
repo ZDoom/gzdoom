@@ -22,9 +22,11 @@
 
 #include "volk/volk.h"
 
+#include <inttypes.h>
+
 #include "v_video.h"
 #include "m_png.h"
-#include "templates.h"
+
 #include "r_videoscale.h"
 #include "i_time.h"
 #include "v_text.h"
@@ -54,8 +56,6 @@
 #include "vulkan/system/vk_swapchain.h"
 #include "engineerrors.h"
 #include "c_dispatch.h"
-
-void Draw2D(F2DDrawer *drawer, FRenderState &state);
 
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
@@ -207,15 +207,21 @@ void VulkanFrameBuffer::Update()
 	Super::Update();
 }
 
-void VulkanFrameBuffer::DeleteFrameObjects()
+void VulkanFrameBuffer::DeleteFrameObjects(bool uploadOnly)
 {
-	FrameDeleteList.Images.clear();
-	FrameDeleteList.ImageViews.clear();
-	FrameDeleteList.Framebuffers.clear();
-	FrameDeleteList.Buffers.clear();
-	FrameDeleteList.Descriptors.clear();
-	FrameDeleteList.DescriptorPools.clear();
-	FrameDeleteList.CommandBuffers.clear();
+	FrameTextureUpload.Buffers.clear();
+	FrameTextureUpload.TotalSize = 0;
+
+	if (!uploadOnly)
+	{
+		FrameDeleteList.Images.clear();
+		FrameDeleteList.ImageViews.clear();
+		FrameDeleteList.Framebuffers.clear();
+		FrameDeleteList.Buffers.clear();
+		FrameDeleteList.Descriptors.clear();
+		FrameDeleteList.DescriptorPools.clear();
+		FrameDeleteList.CommandBuffers.clear();
+	}
 }
 
 void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit)
@@ -249,11 +255,12 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 	mNextSubmit++;
 }
 
-void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
+void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit, bool uploadOnly)
 {
-	mRenderState->EndRenderPass();
+	if (!uploadOnly)
+		mRenderState->EndRenderPass();
 
-	if (mDrawCommands || mTransferCommands)
+	if ((!uploadOnly && mDrawCommands) || mTransferCommands)
 	{
 		VulkanCommandBuffer *commands[2];
 		size_t count = 0;
@@ -265,7 +272,7 @@ void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 			FrameDeleteList.CommandBuffers.push_back(std::move(mTransferCommands));
 		}
 
-		if (mDrawCommands)
+		if (!uploadOnly && mDrawCommands)
 		{
 			mDrawCommands->end();
 			commands[count++] = mDrawCommands.get();
@@ -278,7 +285,7 @@ void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 	}
 }
 
-void VulkanFrameBuffer::WaitForCommands(bool finish)
+void VulkanFrameBuffer::WaitForCommands(bool finish, bool uploadOnly)
 {
 	if (finish)
 	{
@@ -290,7 +297,7 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 			mPostprocess->DrawPresentTexture(mOutputLetterbox, true, false);
 	}
 
-	FlushCommands(finish, true);
+	FlushCommands(finish, true, uploadOnly);
 
 	if (finish)
 	{
@@ -300,7 +307,7 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 			swapChain->QueuePresent(presentImageIndex, mRenderFinishedSemaphore.get());
 	}
 
-	int numWaitFences = MIN(mNextSubmit, (int)maxConcurrentSubmitCount);
+	int numWaitFences = min(mNextSubmit, (int)maxConcurrentSubmitCount);
 
 	if (numWaitFences > 0)
 	{
@@ -308,7 +315,7 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 		vkResetFences(device->device, numWaitFences, mSubmitWaitFences);
 	}
 
-	DeleteFrameObjects();
+	DeleteFrameObjects(uploadOnly);
 	mNextSubmit = 0;
 
 	if (finish)
@@ -336,8 +343,8 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
-	bounds.width = std::min(tex->GetWidth(), image->Image->width);
-	bounds.height = std::min(tex->GetHeight(), image->Image->height);
+	bounds.width = min(tex->GetWidth(), image->Image->width);
+	bounds.height = min(tex->GetHeight(), image->Image->height);
 
 	renderFunc(bounds);
 
@@ -383,8 +390,8 @@ void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	int numLayers = mat->NumLayers();
 	for (int i = 1; i < numLayers; i++)
 	{
-		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-		systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
+		auto syslayer = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+		syslayer->GetImage(layer->layerTexture, 0, layer->scaleFlags);
 	}
 }
 
@@ -412,7 +419,6 @@ IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bo
 {
 	auto buffer = new VKDataBuffer(bindingpoint, ssbo, needsresize);
 
-	auto fb = GetVulkanFrameBuffer();
 	switch (bindingpoint)
 	{
 	case LIGHTBUF_BINDINGPOINT: LightBufferSSO = buffer; break;
@@ -573,6 +579,81 @@ void VulkanFrameBuffer::BeginFrame()
 	}
 }
 
+void VulkanFrameBuffer::InitLightmap(FLevelLocals* Level)
+{
+	if (Level->LMTextureData.Size() > 0)
+	{
+		int w = Level->LMTextureSize;
+		int h = Level->LMTextureSize;
+		int count = Level->LMTextureCount;
+		int pixelsize = 8;
+		auto& lightmap = mActiveRenderBuffers->Lightmap;
+
+		if (lightmap.Image)
+		{
+			FrameDeleteList.Images.push_back(std::move(lightmap.Image));
+			FrameDeleteList.ImageViews.push_back(std::move(lightmap.View));
+			lightmap.reset();
+		}
+
+		ImageBuilder builder;
+		builder.setSize(w, h, 1, count);
+		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
+		builder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		lightmap.Image = builder.create(device);
+		lightmap.Image->SetDebugName("VkRenderBuffers.Lightmap");
+
+		ImageViewBuilder viewbuilder;
+		viewbuilder.setType(VK_IMAGE_VIEW_TYPE_2D_ARRAY);
+		viewbuilder.setImage(lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
+		lightmap.View = viewbuilder.create(device);
+		lightmap.View->SetDebugName("VkRenderBuffers.LightmapView");
+
+		auto cmdbuffer = GetTransferCommands();
+
+		int totalSize = w * h * count * pixelsize;
+
+		BufferBuilder bufbuilder;
+		bufbuilder.setSize(totalSize);
+		bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		std::unique_ptr<VulkanBuffer> stagingBuffer = bufbuilder.create(device);
+		stagingBuffer->SetDebugName("VkHardwareTexture.mStagingBuffer");
+
+		uint16_t one = 0x3c00; // half-float 1.0
+		uint16_t* src = &Level->LMTextureData[0];
+		uint16_t* data = (uint16_t*)stagingBuffer->Map(0, totalSize);
+		for (int i = w * h * count; i > 0; i--)
+		{
+			*(data++) = *(src++);
+			*(data++) = *(src++);
+			*(data++) = *(src++);
+			*(data++) = one;
+		}
+		stagingBuffer->Unmap();
+
+		VkImageTransition imageTransition;
+		imageTransition.addImage(&lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, 0, count);
+		imageTransition.execute(cmdbuffer);
+
+		VkBufferImageCopy region = {};
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.layerCount = count;
+		region.imageExtent.depth = 1;
+		region.imageExtent.width = w;
+		region.imageExtent.height = h;
+		cmdbuffer->copyBufferToImage(stagingBuffer->buffer, lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		VkImageTransition barrier;
+		barrier.addImage(&lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count);
+		barrier.execute(cmdbuffer);
+
+		FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));
+		FrameTextureUpload.TotalSize += totalSize;
+
+		Level->LMTextureData.Reset(); // We no longer need this, release the memory
+	}
+}
+
 void VulkanFrameBuffer::PushGroup(const FString &name)
 {
 	if (!gpuStatActive)
@@ -619,7 +700,7 @@ void VulkanFrameBuffer::UpdateGpuStats()
 		if (q.endIndex <= q.startIndex)
 			continue;
 
-		int64_t timeElapsed = std::max(static_cast<int64_t>(timestamps[q.endIndex] - timestamps[q.startIndex]), (int64_t)0);
+		int64_t timeElapsed = max(static_cast<int64_t>(timestamps[q.endIndex] - timestamps[q.startIndex]), (int64_t)0);
 		double timeNS = timeElapsed * timestampPeriod;
 
 		FString out;
@@ -698,7 +779,7 @@ void VulkanFrameBuffer::PrintStartupLog()
 	const auto &limits = props.limits;
 	Printf("Max. texture size: %d\n", limits.maxImageDimension2D);
 	Printf("Max. uniform buffer range: %d\n", limits.maxUniformBufferRange);
-	Printf("Min. uniform buffer offset alignment: %llu\n", limits.minUniformBufferOffsetAlignment);
+	Printf("Min. uniform buffer offset alignment: %" PRIu64 "\n", limits.minUniformBufferOffsetAlignment);
 }
 
 void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
@@ -712,7 +793,7 @@ void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
 	}
 
 	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
-	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data());
+	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data(), BufferUsageType::Static);
 }
 
 void VulkanFrameBuffer::UpdateShadowMap()

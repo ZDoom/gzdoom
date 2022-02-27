@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -217,10 +217,10 @@ void FDMDModel::LoadGeometry()
 			memcpy(lods[i].triangles, buffer + lodInfo[i].offsetTriangles, lodInfo[i].numTriangles * sizeof(FTriangle));
 			for (int j = 0; j < lodInfo[i].numTriangles; j++)
 			{
-				for (int k = 0; k < 3; k++)
+				for (int kk = 0; kk < 3; kk++)
 				{
-					lods[i].triangles[j].textureIndices[k] = LittleShort(lods[i].triangles[j].textureIndices[k]);
-					lods[i].triangles[j].vertexIndices[k] = LittleShort(lods[i].triangles[j].vertexIndices[k]);
+					lods[i].triangles[j].textureIndices[kk] = LittleShort(lods[i].triangles[j].textureIndices[kk]);
+					lods[i].triangles[j].vertexIndices[kk] = LittleShort(lods[i].triangles[j].vertexIndices[kk]);
 				}
 			}
 		}
@@ -306,7 +306,7 @@ void FDMDModel::BuildVertexBuffer(FModelRenderer *renderer)
 
 			FTriangle *tri = lods[0].triangles;
 
-			for (int i = 0; i < lodInfo[0].numTriangles; i++)
+			for (int ii = 0; ii < lodInfo[0].numTriangles; ii++)
 			{
 				for (int j = 0; j < 3; j++)
 				{
@@ -536,15 +536,15 @@ void FMD2Model::LoadGeometry()
 	}
 
 	lods[0].triangles = new FTriangle[lodInfo[0].numTriangles];
-		
+
 	int cnt = lodInfo[0].numTriangles;
 	memcpy(lods[0].triangles, buffer + lodInfo[0].offsetTriangles, sizeof(FTriangle) * cnt);
 	for (int j = 0; j < cnt; j++)
 	{
-		for (int k = 0; k < 3; k++)
+		for (int kk = 0; kk < 3; kk++)
 		{
-			lods[0].triangles[j].textureIndices[k] = LittleShort(lods[0].triangles[j].textureIndices[k]);
-			lods[0].triangles[j].vertexIndices[k] = LittleShort(lods[0].triangles[j].vertexIndices[k]);
+			lods[0].triangles[j].textureIndices[kk] = LittleShort(lods[0].triangles[j].textureIndices[kk]);
+			lods[0].triangles[j].vertexIndices[kk] = LittleShort(lods[0].triangles[j].vertexIndices[kk]);
 		}
 	}
 }

@@ -117,6 +117,7 @@ public:
 	}
 
 	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
+	FString& GetLongName(int i);	// may only be called before the hash chains are set up.
 	void RenameFile(int num, const char* fn);
 	bool CreatePathlessCopy(const char* name, int id, int flags);
 

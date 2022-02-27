@@ -43,7 +43,7 @@
 #endif
 
 #include <zlib.h>
-#include "templates.h"
+
 #include "m_argv.h"
 #include "c_dispatch.h"
 #include "m_swap.h"
@@ -708,7 +708,7 @@ static bool MatchHeader(const char * label, const char * hdata)
 	if (memcmp(hdata, "LEVEL=", 6) == 0)
 	{
 		size_t labellen = strlen(label);
-		labellen = MIN(size_t(8), labellen);
+		labellen = min(size_t(8), labellen);
 
 		if (strnicmp(hdata+6, label, labellen)==0 && 
 			(hdata[6+labellen]==0xa || hdata[6+labellen]==0xd))
@@ -1001,13 +1001,13 @@ static FString CreateCacheName(MapData *map, bool create)
 {
 	FString path = M_GetCachePath(create);
 	FString lumpname = fileSystem.GetFileFullPath(map->lumpnum);
-	int separator = lumpname.IndexOf(':');
+	auto separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
 	if (create) CreatePath(path);
 
 	lumpname.ReplaceChars('/', '%');
 	lumpname.ReplaceChars(':', '$');
-	path << '/' << lumpname.Right(lumpname.Len() - separator - 1) << ".gzc";
+	path << '/' << lumpname.Right((ptrdiff_t)lumpname.Len() - separator - 1) << ".gzc";
 	return path;
 }
 

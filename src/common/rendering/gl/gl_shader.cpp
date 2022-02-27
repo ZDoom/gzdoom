@@ -49,6 +49,8 @@
 #include <map>
 #include <memory>
 
+EXTERN_CVAR(Bool, r_skipmats)
+
 namespace OpenGLRenderer
 {
 
@@ -298,6 +300,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		// textures
 		uniform sampler2D tex;
 		uniform sampler2D ShadowMap;
+		uniform sampler2DArray LightMap;
 		uniform sampler2D texture2;
 		uniform sampler2D texture3;
 		uniform sampler2D texture4;
@@ -334,7 +337,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		#endif
 
 	)";
-	
+
 
 #ifdef __APPLE__
 	// The noise functions are completely broken in macOS OpenGL drivers
@@ -382,7 +385,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
 	}
 
-	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+	if ((gl.flags & RFL_SHADER_STORAGE_BUFFER) && screen->allowSSBO())
 	{
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}
@@ -404,7 +407,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 		if (*proc_prog_lump != '#')
 		{
-			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump);
+			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump, 0);	// if it's a core shader, ignore overrides by user mods.
+			if (pp_lump == -1) pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump);
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump);
 			FileData pp_data = fileSystem.ReadFile(pp_lump);
 
@@ -617,12 +621,15 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	{
 		char stringbuf[20];
 		mysnprintf(stringbuf, 20, "texture%d", i);
-		int tempindex = glGetUniformLocation(hShader, stringbuf);
-		if (tempindex > 0) glUniform1i(tempindex, i - 1);
+		tempindex = glGetUniformLocation(hShader, stringbuf);
+		if (tempindex != -1) glUniform1i(tempindex, i - 1);
 	}
 
 	int shadowmapindex = glGetUniformLocation(hShader, "ShadowMap");
-	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
+	if (shadowmapindex != -1) glUniform1i(shadowmapindex, 16);
+
+	int lightmapindex = glGetUniformLocation(hShader, "LightMap");
+	if (lightmapindex != -1) glUniform1i(lightmapindex, 17);
 
 	glUseProgram(0);
 	return linked;
@@ -728,6 +735,9 @@ FShader *FShaderManager::BindEffect(int effect, EPassType passType)
 
 FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)
 {
+	if (r_skipmats && eff >= 3 && eff <= 4)
+		eff = 0;
+
 	if (passType < mPassShaders.Size())
 		return mPassShaders[passType]->Get(eff, alphateston);
 	else
@@ -777,8 +787,8 @@ void FShaderCollection::CompileShaders(EPassType passType)
 		mMaterialShaders.Push(shc);
 		if (i < SHADER_NoTexture)
 		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, passType);
-			mMaterialShadersNAT.Push(shc);
+			FShader *shc1 = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, passType);
+			mMaterialShadersNAT.Push(shc1);
 		}
 	}
 

@@ -38,7 +38,7 @@ class ImageBuilder
 public:
 	ImageBuilder();
 
-	void setSize(int width, int height, int miplevels = 1);
+	void setSize(int width, int height, int miplevels = 1, int arrayLayers = 1);
 	void setSamples(VkSampleCountFlagBits samples);
 	void setFormat(VkFormat format);
 	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
@@ -60,6 +60,7 @@ class ImageViewBuilder
 public:
 	ImageViewBuilder();
 
+	void setType(VkImageViewType type);
 	void setImage(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT);
 
 	std::unique_ptr<VulkanImageView> create(VulkanDevice *device);
@@ -374,11 +375,12 @@ inline ImageBuilder::ImageBuilder()
 	imageInfo.flags = 0;
 }
 
-inline void ImageBuilder::setSize(int width, int height, int mipLevels)
+inline void ImageBuilder::setSize(int width, int height, int mipLevels, int arrayLayers)
 {
 	imageInfo.extent.width = width;
 	imageInfo.extent.height = height;
 	imageInfo.mipLevels = mipLevels;
+	imageInfo.arrayLayers = arrayLayers;
 }
 
 inline void ImageBuilder::setSamples(VkSampleCountFlagBits samples)
@@ -447,7 +449,7 @@ inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device, V
 		*allocatedBytes = allocatedInfo.size;
 	}
 
-	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
+	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels, imageInfo.arrayLayers);
 }
 
 inline std::unique_ptr<VulkanImage> ImageBuilder::tryCreate(VulkanDevice *device)
@@ -459,7 +461,7 @@ inline std::unique_ptr<VulkanImage> ImageBuilder::tryCreate(VulkanDevice *device
 	if (result != VK_SUCCESS)
 		return nullptr;
 
-	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
+	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels, imageInfo.arrayLayers);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -474,12 +476,18 @@ inline ImageViewBuilder::ImageViewBuilder()
 	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 }
 
+inline void ImageViewBuilder::setType(VkImageViewType type)
+{
+	viewInfo.viewType = type;
+}
+
 inline void ImageViewBuilder::setImage(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask)
 {
 	viewInfo.image = image->image;
 	viewInfo.format = format;
 	viewInfo.subresourceRange.levelCount = image->mipLevels;
 	viewInfo.subresourceRange.aspectMask = aspectMask;
+	viewInfo.subresourceRange.layerCount = image->layerCount;
 }
 
 inline std::unique_ptr<VulkanImageView> ImageViewBuilder::create(VulkanDevice *device)
@@ -571,7 +579,7 @@ inline BufferBuilder::BufferBuilder()
 
 inline void BufferBuilder::setSize(size_t size)
 {
-	bufferInfo.size = size;
+	bufferInfo.size = max(size, (size_t)16);
 }
 
 inline void BufferBuilder::setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags allocFlags)

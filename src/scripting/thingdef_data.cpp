@@ -81,7 +81,7 @@ extern float			BackbuttonAlpha;
 // internal flags. These do not get exposed to actor definitions but scripts need to be able to access them as variables.
 static FFlagDef InternalActorFlagDefs[]=
 {
-	DEFINE_FLAG(MF, INCHASE, AActor, flags),
+	DEFINE_FLAG(MF7, INCHASE, AActor, flags7),
 	DEFINE_FLAG(MF, UNMORPHED, AActor, flags),
 	DEFINE_FLAG(MF2, FLY, AActor, flags2),
 	DEFINE_FLAG(MF2, ONMOBJ, AActor, flags2),
@@ -328,6 +328,16 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, FALLDAMAGE, AActor, flags8),
 	DEFINE_FLAG(MF8, ABSVIEWANGLES, AActor, flags8),
 	DEFINE_FLAG(MF8, ALLOWTHRUBITS, AActor, flags8),
+	DEFINE_FLAG(MF8, FULLVOLSEE, AActor, flags8),
+	DEFINE_FLAG(MF8, E1M8BOSS, AActor, flags8),
+	DEFINE_FLAG(MF8, E2M8BOSS, AActor, flags8),
+	DEFINE_FLAG(MF8, E3M8BOSS, AActor, flags8),
+	DEFINE_FLAG(MF8, E4M8BOSS, AActor, flags8),
+	DEFINE_FLAG(MF8, E4M6BOSS, AActor, flags8),
+	DEFINE_FLAG(MF8, MAP07BOSS1, AActor, flags8),
+	DEFINE_FLAG(MF8, MAP07BOSS2, AActor, flags8),
+	DEFINE_FLAG(MF8, AVOIDHAZARDS, AActor, flags8),
+	DEFINE_FLAG(MF8, STAYONLIFT, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -389,6 +399,7 @@ static FFlagDef MoreFlagDefs[] =
 	DEFINE_DEPRECATED_FLAG(HERETICBOUNCE),
 	DEFINE_DEPRECATED_FLAG(HEXENBOUNCE),
 	DEFINE_DEPRECATED_FLAG(DOOMBOUNCE),
+	DEFINE_DEPRECATED_FLAG(HIGHERMPROB),
 
 	// Deprecated flags with no more existing functionality.
 	DEFINE_DUMMY_FLAG(FASTER, true),				// obsolete, replaced by 'Fast' state flag

@@ -336,10 +336,10 @@ void BlendColorAdd_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thread
 		uint32_t srcscale = APART(src);
 		srcscale += srcscale >> 7;
 
-		uint32_t a = MIN<int32_t>((((APART(src) * srcscale) + 127) >> 8) + APART(dst), 255);
-		uint32_t r = MIN<int32_t>((((RPART(src) * srcscale) + 127) >> 8) + RPART(dst), 255);
-		uint32_t g = MIN<int32_t>((((GPART(src) * srcscale) + 127) >> 8) + GPART(dst), 255);
-		uint32_t b = MIN<int32_t>((((BPART(src) * srcscale) + 127) >> 8) + BPART(dst), 255);
+		uint32_t a = min<int32_t>((((APART(src) * srcscale) + 127) >> 8) + APART(dst), 255);
+		uint32_t r = min<int32_t>((((RPART(src) * srcscale) + 127) >> 8) + RPART(dst), 255);
+		uint32_t g = min<int32_t>((((GPART(src) * srcscale) + 127) >> 8) + GPART(dst), 255);
+		uint32_t b = min<int32_t>((((BPART(src) * srcscale) + 127) >> 8) + BPART(dst), 255);
 
 		line[x] = MAKEARGB(a, r, g, b);
 	}
@@ -382,10 +382,10 @@ void BlendColorAdd_SrcCol_One(int y, int x0, int x1, PolyTriangleThreadData* thr
 		srcscale_g += srcscale_g >> 7;
 		srcscale_b += srcscale_b >> 7;
 
-		uint32_t a = MIN<int32_t>((((APART(src) * srcscale_a) + 127) >> 8) + APART(dst), 255);
-		uint32_t r = MIN<int32_t>((((RPART(src) * srcscale_r) + 127) >> 8) + RPART(dst), 255);
-		uint32_t g = MIN<int32_t>((((GPART(src) * srcscale_g) + 127) >> 8) + GPART(dst), 255);
-		uint32_t b = MIN<int32_t>((((BPART(src) * srcscale_b) + 127) >> 8) + BPART(dst), 255);
+		uint32_t a = min<int32_t>((((APART(src) * srcscale_a) + 127) >> 8) + APART(dst), 255);
+		uint32_t r = min<int32_t>((((RPART(src) * srcscale_r) + 127) >> 8) + RPART(dst), 255);
+		uint32_t g = min<int32_t>((((GPART(src) * srcscale_g) + 127) >> 8) + GPART(dst), 255);
+		uint32_t b = min<int32_t>((((BPART(src) * srcscale_b) + 127) >> 8) + BPART(dst), 255);
 
 		line[x] = MAKEARGB(a, r, g, b);
 	}
@@ -514,10 +514,10 @@ void BlendColorRevSub_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thr
 		uint32_t srcscale = APART(src);
 		srcscale += srcscale >> 7;
 
-		uint32_t a = MAX<int32_t>(APART(dst) - (((APART(src) * srcscale) + 127) >> 8), 0);
-		uint32_t r = MAX<int32_t>(RPART(dst) - (((RPART(src) * srcscale) + 127) >> 8), 0);
-		uint32_t g = MAX<int32_t>(GPART(dst) - (((GPART(src) * srcscale) + 127) >> 8), 0);
-		uint32_t b = MAX<int32_t>(BPART(dst) - (((BPART(src) * srcscale) + 127) >> 8), 0);
+		uint32_t a = max<int32_t>(APART(dst) - (((APART(src) * srcscale) + 127) >> 8), 0);
+		uint32_t r = max<int32_t>(RPART(dst) - (((RPART(src) * srcscale) + 127) >> 8), 0);
+		uint32_t g = max<int32_t>(GPART(dst) - (((GPART(src) * srcscale) + 127) >> 8), 0);
+		uint32_t b = max<int32_t>(BPART(dst) - (((BPART(src) * srcscale) + 127) >> 8), 0);
 
 		line[x] = MAKEARGB(a, r, g, b);
 	}

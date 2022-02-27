@@ -95,7 +95,7 @@ bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
 	Reader.Read(&header, sizeof(header));
 	NumLumps = LittleLong(header.dirlen) / sizeof(dpackfile_t);
 	header.dirofs = LittleLong(header.dirofs);
-	
+
 	TArray<dpackfile_t> fileinfo(NumLumps, true);
 	Reader.Seek (header.dirofs, FileReader::SeekSet);
 	Reader.Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));

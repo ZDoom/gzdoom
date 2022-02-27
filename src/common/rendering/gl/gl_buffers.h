@@ -1,6 +1,7 @@
 #pragma once
 
 #include "buffers.h"
+#include "gl_load.h"
 
 #ifdef _MSC_VER
 // silence bogus warning C4250: 'GLVertexBuffer': inherits 'GLBuffer::GLBuffer::SetData' via dominance
@@ -19,16 +20,20 @@ protected:
 	int mAllocationSize = 0;
 	bool mPersistent = false;
 	bool nomap = true;
+	GLsync mGLSync = 0;
 
 	GLBuffer(int usetype);
 	~GLBuffer();
-	void SetData(size_t size, const void *data, bool staticdata) override;
+	void SetData(size_t size, const void *data, BufferUsageType usage) override;
 	void SetSubData(size_t offset, size_t size, const void *data) override;
 	void Map() override;
 	void Unmap() override;
 	void Resize(size_t newsize) override;
 	void *Lock(unsigned int size) override;
 	void Unlock() override;
+
+	void GPUDropSync();
+	void GPUWaitSync();
 public:
 	void Bind();
 };

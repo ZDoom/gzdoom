@@ -21,7 +21,7 @@
 */
 
 #include <stddef.h>
-#include "templates.h"
+
 
 #include "filesystem.h"
 #include "v_video.h"
@@ -100,10 +100,10 @@ void PolyTriangleThreadData::SetScissor(int x, int y, int w, int h)
 
 void PolyTriangleThreadData::UpdateClip()
 {
-	clip.left = MAX(MAX(viewport_x, scissor.left), 0);
-	clip.top = MAX(MAX(viewport_y, scissor.top), 0);
-	clip.right = MIN(MIN(viewport_x + viewport_width, scissor.right), dest_width);
-	clip.bottom = MIN(MIN(viewport_y + viewport_height, scissor.bottom), dest_height);
+	clip.left = max(max(viewport_x, scissor.left), 0);
+	clip.top = max(max(viewport_y, scissor.top), 0);
+	clip.right = min(min(viewport_x + viewport_width, scissor.right), dest_width);
+	clip.bottom = min(min(viewport_y + viewport_height, scissor.bottom), dest_height);
 }
 
 void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPushConstants &constants)
@@ -206,11 +206,11 @@ void PolyTriangleThreadData::SetStencil(int stencilRef, int op)
 	StencilTestValue = stencilRef;
 	if (op == SOP_Increment)
 	{
-		StencilWriteValue = MIN(stencilRef + 1, (int)255);
+		StencilWriteValue = min(stencilRef + 1, (int)255);
 	}
 	else if (op == SOP_Decrement)
 	{
-		StencilWriteValue = MAX(stencilRef - 1, (int)0);
+		StencilWriteValue = max(stencilRef - 1, (int)0);
 	}
 	else // SOP_Keep
 	{
@@ -453,8 +453,8 @@ void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
 	{
 		float clipdistance1 = clipdistance[0 * numclipdistances + p];
 		float clipdistance2 = clipdistance[1 * numclipdistances + p];
-		if (clipdistance1 < 0.0f) t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
-		if (clipdistance2 < 0.0f) t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
+		if (clipdistance1 < 0.0f) t1 = max(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
+		if (clipdistance2 < 0.0f) t2 = min(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
 		if (t1 >= t2)
 			return;
 	}
@@ -679,7 +679,7 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 	// -v.w <= v.x <= v.w
 	// -v.w <= v.y <= v.w
 	// -v.w <= v.z <= v.w
-	
+
 	// halfspace clip distances
 	static const int numclipdistances = 9;
 #ifdef NO_SSE
@@ -792,14 +792,14 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 			// Clip halfspace
 			if ((clipdistance1 >= 0.0f || clipdistance2 >= 0.0f) && outputverts + 1 < max_additional_vertices)
 			{
-				float t1 = (clipdistance1 < 0.0f) ? MAX(-clipdistance1 / (clipdistance2 - clipdistance1), 0.0f) : 0.0f;
-				float t2 = (clipdistance2 < 0.0f) ? MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), 1.0f) : 1.0f;
+				float t1 = (clipdistance1 < 0.0f) ? max(-clipdistance1 / (clipdistance2 - clipdistance1), 0.0f) : 0.0f;
+				float t2 = (clipdistance2 < 0.0f) ? min(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), 1.0f) : 1.0f;
 
 				// add t1 vertex
 				for (int k = 0; k < 3; k++)
 					output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t1) + input[j * 3 + k] * t1;
 				outputverts++;
-			
+
 				if (t2 != 1.0f && t2 > t1)
 				{
 					// add t2 vertex

@@ -31,7 +31,8 @@ class os_Menu : OptionMenu
 
 		addSearchField(text);
 
-		bool found = listOptions(mDesc, "MainMenu", query, "", isAnyTermMatches);
+		Dictionary searchedMenus = Dictionary.Create();
+		bool found = listOptions(mDesc, "MainMenu", query, "", isAnyTermMatches, searchedMenus);
 
 		if (!found) { addNoResultsItem(mDesc); }
 
@@ -54,21 +55,29 @@ class os_Menu : OptionMenu
 	                                string   menuName,
 	                                os_Query query,
 	                                string   path,
-	                                bool     isAnyTermMatches)
+	                                bool     isAnyTermMatches,
+	                                Dictionary searchedMenus)
 	{
+		if (searchedMenus.At(menuName).length() > 0)
+		{
+			return false;
+		}
+
+		searchedMenus.Insert(menuName, "1");
+
 		let desc         = MenuDescriptor.GetDescriptor(menuName);
 		let listMenuDesc = ListMenuDescriptor(desc);
 
 		if (listMenuDesc)
 		{
-			return listOptionsListMenu(listMenuDesc, targetDesc, query, path, isAnyTermMatches);
+			return listOptionsListMenu(listMenuDesc, targetDesc, query, path, isAnyTermMatches, searchedMenus);
 		}
 
 		let optionMenuDesc = OptionMenuDescriptor(desc);
 
 		if (optionMenuDesc)
 		{
-			return listOptionsOptionMenu(optionMenuDesc, targetDesc, query, path, isAnyTermMatches);
+			return listOptionsOptionMenu(optionMenuDesc, targetDesc, query, path, isAnyTermMatches, searchedMenus);
 		}
 
 		return false;
@@ -78,7 +87,8 @@ class os_Menu : OptionMenu
 	                                        OptionMenuDescriptor targetDesc,
 	                                        os_Query query,
 	                                        string   path,
-	                                        bool     isAnyTermMatches)
+	                                        bool     isAnyTermMatches,
+	                                        Dictionary searchedMenus)
 	{
 		int  nItems = sourceDesc.mItems.size();
 		bool found  = false;
@@ -92,7 +102,7 @@ class os_Menu : OptionMenu
 				? makePath(path, StringTable.Localize(textItem.mText))
 				: path;
 
-			found |= listOptions(targetDesc, actionN, query, newPath, isAnyTermMatches);
+			found |= listOptions(targetDesc, actionN, query, newPath, isAnyTermMatches, searchedMenus);
 		}
 
 		return found;
@@ -102,7 +112,8 @@ class os_Menu : OptionMenu
 	                                          OptionMenuDescriptor targetDesc,
 	                                          os_Query query,
 	                                          string   path,
-	                                          bool     isAnyTermMatches)
+	                                          bool     isAnyTermMatches,
+	                                          Dictionary searchedMenus)
 	{
 		if (sourceDesc == targetDesc) { return false; }
 
@@ -152,7 +163,7 @@ class os_Menu : OptionMenu
 			{
 				string newPath = makePath(path, label);
 
-				found |= listOptions(targetDesc, item.GetAction(), query, newPath, isAnyTermMatches);
+				found |= listOptions(targetDesc, item.GetAction(), query, newPath, isAnyTermMatches, searchedMenus);
 			}
 		}
 

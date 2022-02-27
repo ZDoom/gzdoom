@@ -7,6 +7,7 @@
 #include "textures.h"
 #include "renderstyle.h"
 #include "dobject.h"
+#include "refcounted.h"
 
 struct DrawParms;
 struct FColormap;
@@ -49,6 +50,7 @@ struct F2DPolygons
 };
 
 class DShape2D;
+struct DShape2DBufferInfo;
 
 class F2DDrawer
 {
@@ -99,7 +101,7 @@ public:
 		}
 
 	};
-	
+
 	struct RenderCommand
 	{
 		EDrawType mType;
@@ -123,20 +125,20 @@ public:
 		bool useTransform;
 		DMatrix3x3 transform;
 
-		DShape2D* shape2D;
+		RefCountedPtr<DShape2DBufferInfo> shape2DBufInfo;
 		int shape2DBufIndex;
 		int shape2DIndexCount;
 		int shape2DCommandCounter;
 
 		RenderCommand()
 		{
-			memset(this, 0, sizeof(*this));
+			memset((void*)this, 0,  sizeof(*this));
 		}
 
 		// If these fields match, two draw commands can be batched.
 		bool isCompatible(const RenderCommand &other) const
 		{
-			if (shape2D != nullptr || other.shape2D != nullptr) return false;
+			if (shape2DBufInfo != nullptr || other.shape2DBufInfo != nullptr) return false;
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
 				mTranslationId == other.mTranslationId &&
@@ -173,7 +175,7 @@ public:
 public:
 	int fullscreenautoaspect = 3;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
-	
+
 	int AddCommand(RenderCommand *data);
 	void AddIndices(int firstvert, int count, ...);
 private:
@@ -198,8 +200,8 @@ public:
 	void ClearScreen(PalEntry color = 0xff000000);
 	void AddDim(PalEntry color, float damount, int x1, int y1, int w, int h);
 	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
-	
-		
+
+
 	void AddLine(double x1, double y1, double x2, double y2, int cx, int cy, int cx2, int cy2, uint32_t color, uint8_t alpha = 255);
 	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha = 255);
 	void AddPixel(int x1, int y1, uint32_t color);
@@ -214,6 +216,7 @@ public:
 	void Begin(int w, int h) { isIn2D = true; Width = w; Height = h; }
 	void End() { isIn2D = false; }
 	bool HasBegun2D() { return isIn2D; }
+	void OnFrameDone();
 
 	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
 	void SetClipRect(int x, int y, int w, int h);
@@ -240,12 +243,22 @@ public:
 	bool mIsFirstPass = true;
 };
 
+struct DShape2DBufferInfo : RefCountedBase
+{
+	TArray<F2DVertexBuffer> buffers;
+	bool needsVertexUpload = true;
+	int bufIndex = -1;
+	int lastCommand = -1;
+	bool uploadedOnce = false;
+};
+
 class DShape2D : public DObject
 {
 
 	DECLARE_CLASS(DShape2D,DObject)
 public:
 	DShape2D()
+	: bufferInfo(new DShape2DBufferInfo)
 	{
 		transform.Identity();
 	}
@@ -261,15 +274,11 @@ public:
 
 	DMatrix3x3 transform;
 
-	TArray<F2DVertexBuffer> buffers;
-	bool needsVertexUpload = true;
-	int bufIndex = -1;
-	int lastCommand = -1;
+	RefCountedPtr<DShape2DBufferInfo> bufferInfo;
 
-	bool uploadedOnce = false;
 	DrawParms* lastParms;
 
-	~DShape2D();
+	void OnDestroy() override;
 };
 
 
@@ -297,8 +306,8 @@ public:
 
 	void UploadData(F2DDrawer::TwoDVertex *vertices, int vertcount, int *indices, int indexcount)
 	{
-		mVertexBuffer->SetData(vertcount * sizeof(*vertices), vertices, false);
-		mIndexBuffer->SetData(indexcount * sizeof(unsigned int), indices, false);
+		mVertexBuffer->SetData(vertcount * sizeof(*vertices), vertices, BufferUsageType::Stream);
+		mIndexBuffer->SetData(indexcount * sizeof(unsigned int), indices, BufferUsageType::Stream);
 	}
 
 	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const

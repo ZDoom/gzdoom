@@ -64,6 +64,7 @@
 #include "gameconfigfile.h"
 #include "d_player.h"
 #include "teaminfo.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
 EXTERN_CVAR(Bool, m_quickexit)
@@ -201,6 +202,10 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		menu = NAME_Optionsmenu;
 		break;
 
+	case NAME_Readthismenu:
+		// [MK] allow us to override the ReadThisMenu class
+		menu = gameinfo.HelpMenuClass;
+		break;
 	}
 
 	DMenuDescriptor** desc = MenuDescriptors.CheckKey(menu);
@@ -295,6 +300,7 @@ CCMD (menu_quit)
 {	// F10
 	if (m_quickexit)
 	{
+		CleanSWDrawer();
 		ST_Endoom();
 	}
 
@@ -326,6 +332,7 @@ CCMD (menu_quit)
 				I_WaitVBL(105);
 			}
 		}
+		CleanSWDrawer();
 		ST_Endoom();
 	});
 
@@ -568,8 +575,21 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 				if (y < topy) topy = y;
 			}
 
+			int spacing = ld->mLinespacing;
+			for (unsigned i = 0; i < AllEpisodes.Size(); i++)
+			{
+				if (AllEpisodes[i].mPicName.IsNotEmpty())
+				{
+					FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
+					if (AllEpisodes[i].mEpisodeName.IsEmpty() || OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
+						continue;
+				}
+				if ((gameinfo.gametype & GAME_DoomStrifeChex) && spacing == 16) spacing = 18;
+				break;
+			}
+
 			// center the menu on the screen if the top space is larger than the bottom space
-			int totalheight = posy + AllEpisodes.Size() * ld->mLinespacing - topy;
+			int totalheight = posy + AllEpisodes.Size() * spacing - topy;
 
 			if (totalheight < 190 || AllEpisodes.Size() == 1)
 			{
@@ -600,7 +620,7 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 					if (*c == '$') c = GStrings(c + 1);
 					int textwidth = ld->mFont->StringWidth(c);
 					int textright = posx + textwidth;
-					if (posx + textright > 320) posx = std::max(0, 320 - textright);
+					if (posx + textright > 320) posx = max(0, 320 - textright);
 				}
 
 				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
@@ -610,15 +630,15 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
 						if (AllEpisodes[i].mEpisodeName.IsEmpty() || OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
-							it = CreateListMenuItemPatch(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
+							it = CreateListMenuItemPatch(posx, posy, spacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
 					}
 					if (it == nullptr)
 					{
-						it = CreateListMenuItemText(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+						it = CreateListMenuItemText(posx, posy, spacing, AllEpisodes[i].mShortcut, 
 							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, ld->mFontColor2, NAME_Skillmenu, i);
 					}
 					ld->mItems.Push(it);
-					posy += ld->mLinespacing;
+					posy += spacing;
 				}
 				if (AllEpisodes.Size() == 1)
 				{
@@ -1070,9 +1090,10 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				}
 			}
 
-			if (done != restart)
+			int spacing = ld->mLinespacing;
+			//if (done != restart)
 			{
-				done = restart;
+				//done = restart;
 				ld->mSelectedItem = ld->mItems.Size() + defindex;
 
 				int posy = y;
@@ -1085,8 +1106,20 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 					if (y < topy) topy = y;
 				}
 
+				for (unsigned i = 0; i < MenuSkills.Size(); i++)
+				{
+					if (MenuSkills[i]->PicName.IsNotEmpty())
+					{
+						FTextureID tex = GetMenuTexture(MenuSkills[i]->PicName);
+						if (MenuSkills[i]->MenuName.IsEmpty() || OkForLocalization(tex, MenuSkills[i]->MenuName))
+							continue;
+					}
+					if ((gameinfo.gametype & GAME_DoomStrifeChex) && spacing == 16) spacing = 18;
+					break;
+				}
+
 				// center the menu on the screen if the top space is larger than the bottom space
-				int totalheight = posy + MenuSkills.Size() * ld->mLinespacing - topy;
+				int totalheight = posy + MenuSkills.Size() * spacing - topy;
 
 				if (totalheight < 190 || MenuSkills.Size() == 1)
 				{
@@ -1131,7 +1164,7 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				if (*c == '$') c = GStrings(c + 1);
 				int textwidth = ld->mFont->StringWidth(c);
 				int textright = posx + textwidth;
-				if (posx + textright > 320) posx = std::max(0, 320 - textright);
+				if (posx + textright > 320) posx = max(0, 320 - textright);
 			}
 
 			unsigned firstitem = ld->mItems.Size();
@@ -1154,16 +1187,16 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
 					if (skill.MenuName.IsEmpty() || OkForLocalization(tex, skill.MenuName))
-						li = CreateListMenuItemPatch(posx, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
+						li = CreateListMenuItemPatch(posx, y, spacing, skill.Shortcut, tex, action, SkillIndices[i]);
 				}
 				if (li == nullptr)
 				{
-					li = CreateListMenuItemText(posx, y, ld->mLinespacing, skill.Shortcut,
+					li = CreateListMenuItemText(posx, y, spacing, skill.Shortcut,
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, SkillIndices[i]);
 				}
 				ld->mItems.Push(li);
 				GC::WriteBarrier(*desc, li);
-				y += ld->mLinespacing;
+				y += spacing;
 			}
 			if (AllEpisodes[gs->Episode].mNoSkill || MenuSkills.Size() == 1)
 			{
@@ -1271,7 +1304,17 @@ void SetDefaultMenuColors()
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
 
-	auto cls = PClass::FindClass("DoomMenuDelegate");
+	auto cls = PClass::FindClass(gameinfo.HelpMenuClass);
+	if (!cls)
+		I_FatalError("%s: Undefined help menu class", gameinfo.HelpMenuClass.GetChars());
+	if (!cls->IsDescendantOf(RUNTIME_CLASS(DMenu)))
+		I_FatalError("'%s' does not inherit from Menu", gameinfo.HelpMenuClass.GetChars());
+
+	cls = PClass::FindClass(gameinfo.MenuDelegateClass);
+	if (!cls)
+		I_FatalError("%s: Undefined menu delegate class", gameinfo.MenuDelegateClass.GetChars());
+	if (!cls->IsDescendantOf("MenuDelegateBase"))
+		I_FatalError("'%s' does not inherit from MenuDelegateBase", gameinfo.MenuDelegateClass.GetChars());
 	menuDelegate = cls->CreateNew();
 }
 

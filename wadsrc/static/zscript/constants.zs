@@ -285,6 +285,7 @@ enum EBlastFlags
 	BF_DONTWARN = 2,
 	BF_AFFECTBOSSES = 4,
 	BF_NOIMPACTDAMAGE = 8,
+	BF_ONLYVISIBLETHINGS = 16,
 };
 
 // Flags for A_SeekerMissile
@@ -393,6 +394,13 @@ enum EActivationFlags
 	AF_Deactivate		= 1<<9,		// The thing is deactivated when triggered
 	AF_Switch			= 1<<10,	// The thing is alternatively activated and deactivated when triggered
 	
+};
+
+// [MC] Flags for SetViewPos.
+enum EViewPosFlags
+{
+	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
 };
 
 // Flags for A_TakeInventory and A_TakeFromTarget
@@ -1332,6 +1340,15 @@ enum ELevelFlags
 	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
 	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
 	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
+	LEVEL3_E1M8SPECIAL			= 0x00000800,
+	LEVEL3_E2M8SPECIAL			= 0x00001000,
+	LEVEL3_E3M8SPECIAL			= 0x00002000,
+	LEVEL3_E4M8SPECIAL			= 0x00004000,
+	LEVEL3_E4M6SPECIAL			= 0x00008000,
+	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
+	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
+	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
+	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
 };
 
 // [RH] Compatibility flags.

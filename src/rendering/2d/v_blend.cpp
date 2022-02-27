@@ -34,7 +34,7 @@
 
 #include <assert.h>
 
-#include "templates.h"
+
 #include "sbar.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -141,7 +141,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 
 	if (painFlash.a != 0)
 	{
-		cnt = DamageToAlpha[MIN (CPlayer->damagecount * painFlash.a / 255, (uint32_t)113)];
+		cnt = DamageToAlpha[min (CPlayer->damagecount * painFlash.a / 255, (uint32_t)113)];
 
 		// [BC] Allow users to tone down the intensity of the blood on the screen.
 		cnt = (int)( cnt * blood_fade_scalar );
@@ -164,7 +164,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 
 	if (CPlayer->poisoncount)
 	{
-		cnt = MIN (CPlayer->poisoncount, 64);
+		cnt = min (CPlayer->poisoncount, 64);
 		if (paletteflash & PF_POISON)
 		{
 			V_AddBlend(44/255.f, 92/255.f, 36/255.f, ((cnt + 7) >> 3) * 0.1f, blend);
@@ -190,7 +190,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 		}
 		else
 		{
-			cnt= MIN(CPlayer->hazardcount/8, 64);
+			cnt= min(CPlayer->hazardcount/8, 64);
 			float r = ((Level->hazardcolor & 0xff0000) >> 16) / 255.f;
 			float g = ((Level->hazardcolor & 0xff00) >> 8) / 255.f;
 			float b = ((Level->hazardcolor & 0xff)) / 255.f;

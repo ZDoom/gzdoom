@@ -52,8 +52,11 @@
 #include "v_text.h"
 #include "version.h"
 #include "printf.h"
-
 #include "gl_framebuffer.h"
+#ifdef HAVE_GLES2
+#include "gles_framebuffer.h"
+#endif
+
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
 #endif
@@ -118,8 +121,8 @@ namespace
 	const NSInteger LEVEL_FULLSCREEN = NSMainMenuWindowLevel + 1;
 	const NSInteger LEVEL_WINDOWED   = NSNormalWindowLevel;
 
-	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
-	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+	const NSUInteger STYLE_MASK_FULLSCREEN = NSWindowStyleMaskBorderless;
+	const NSUInteger STYLE_MASK_WINDOWED   = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
 }
 
 
@@ -446,7 +449,7 @@ public:
 		}
 		else
 #endif
-			
+
 #ifdef HAVE_SOFTPOLY
 		if (vid_preferbackend == 2)
 		{
@@ -462,7 +465,12 @@ public:
 
 		if (fb == nullptr)
 		{
-			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+#ifdef HAVE_GLES2
+			if( (Args->CheckParm ("-gles2_renderer")) || (vid_preferbackend == 3) )
+				fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+			else
+#endif
+				fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 		}
 
 		fb->SetWindow(ms_window);
@@ -824,7 +832,7 @@ bool I_SetCursor(FGameTexture *cursorpic)
 	if (NULL != cursorpic && cursorpic->isValid())
 	{
 		// Create bitmap image representation
-		
+
 		auto sbuffer = cursorpic->GetTexture()->CreateTexBuffer(0);
 
 		const NSInteger imageWidth  = sbuffer.mWidth;
@@ -865,11 +873,11 @@ bool I_SetCursor(FGameTexture *cursorpic)
 		cursor = [[NSCursor alloc] initWithImage:cursorImage
 										 hotSpot:NSMakePoint(0.0f, 0.0f)];
 	}
-	
+
 	SystemBaseFrameBuffer::SetCursor(cursor);
-	
+
 	[pool release];
-	
+
 	return true;
 }
 
@@ -961,7 +969,7 @@ bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 	else
 	{
 		const bool result = *count >= extensionCount;
-		*count = std::min(*count, extensionCount);
+		*count = min(*count, extensionCount);
 
 		for (unsigned int i = 0; i < *count; ++i)
 		{

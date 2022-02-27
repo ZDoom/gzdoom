@@ -89,27 +89,44 @@ CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 // Returns the next special sector attached to this sector
 // with a certain special.
-sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
+
+sector_t* P_NextSpecialSectorVC(sector_t* sec, int type)
+{
+	sector_t* tsec;
+	for (auto ln : sec->Lines)
+	{
+		if (nullptr != (tsec = getNextSector(ln, sec)) &&
+			tsec->validcount != validcount &&
+			tsec->special == type)
+		{
+			return tsec;
+		}
+	}
+	return nullptr;
+}
+
+
+sector_t *P_NextSpecialSector (sector_t* sec, int type, sector_t *nogood)
 {
 	sector_t *tsec;
-	for (auto ln : Lines)
+	for (auto ln : sec->Lines)
 	{
-		if (NULL != (tsec = getNextSector (ln, this)) &&
+		if (nullptr != (tsec = getNextSector (ln, sec)) &&
 			tsec != nogood &&
 			tsec->special == type)
 		{
 			return tsec;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, NextSpecialSector)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextSpecialSector, P_NextSpecialSector)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(type);
 	PARAM_POINTER(nogood, sector_t);
-	ACTION_RETURN_POINTER(self->NextSpecialSector(type, nogood));
+	ACTION_RETURN_POINTER(P_NextSpecialSector(self, type, nogood));
 }
 
 //
@@ -921,7 +938,12 @@ int GetTerrain(const sector_t *sector, int pos)
 	return sector->terrainnum[pos] >= 0 ? sector->terrainnum[pos] : TerrainTypes[sector->GetTexture(pos)];
 }
 
-	//=====================================================================================
+FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos)
+{
+	return &Terrains[GetTerrain(sec, pos)];
+}
+
+//=====================================================================================
 //
 //
 //=====================================================================================
@@ -1516,11 +1538,18 @@ void line_t::AdjustLine()
 //
 //==========================================================================
 
-int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfakecontrast) const
+int side_t::GetLightLevel (bool foggy, int baselight, int which, bool is3dlight, int *pfakecontrast) const
 {
-	if (!is3dlight && (Flags & WALLF_ABSLIGHTING))
+	if (!is3dlight)
 	{
-		baselight = Light;
+		if (Flags & (WALLF_ABSLIGHTING_TIER << which))
+		{
+			baselight = TierLights[which];
+		}
+		else if (Flags & WALLF_ABSLIGHTING)
+		{
+			baselight = Light + TierLights[which];
+		}
 	}
 
 	if (pfakecontrast != NULL)
@@ -1559,9 +1588,9 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 			}
 		}
 	}
-	if (!is3dlight && !(Flags & WALLF_ABSLIGHTING) && (!foggy || (Flags & WALLF_LIGHT_FOG)))
+	if (!is3dlight && !(Flags & WALLF_ABSLIGHTING) && !(Flags & (WALLF_ABSLIGHTING_TIER << which)) && (!foggy || (Flags & WALLF_LIGHT_FOG)))
 	{
-		baselight += this->Light;
+		baselight += this->Light + this->TierLights[which];
 	}
 	return baselight;
 }
@@ -1602,4 +1631,3 @@ void vertex_t::RecalcVertexHeights()
 	if (numheights <= 2) numheights = 0;	// is not in need of any special attention
 	dirty = false;
 }
-

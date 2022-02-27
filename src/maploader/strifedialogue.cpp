@@ -107,7 +107,7 @@ void MapLoader::LoadStrifeConversations (MapData *map, const char *mapname)
 	{
 		// additive dialogues via MAPINFO
 		bool addedDialogues = false;
-		for (const FString addd : gameinfo.AddDialogues)
+		for (const FString &addd : gameinfo.AddDialogues)
 		{
 			if (!LoadScriptFile(addd, true, 0))
 			{

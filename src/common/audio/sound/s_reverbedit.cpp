@@ -36,7 +36,7 @@
 #include "s_soundinternal.h"
 #include "sc_man.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "filesystem.h"
 #include "i_system.h"
 #include "printf.h"
@@ -309,7 +309,6 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, GetValue)
 		}
 	}
 	ACTION_RETURN_FLOAT(v);
-	return 1;
 }
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
@@ -337,14 +336,12 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
 	}
 
 	ACTION_RETURN_FLOAT(v);
-	return 1;
 }
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, GrayCheck)
 {
 	PARAM_PROLOGUE;
 	ACTION_RETURN_BOOL(CurrentEnv->Builtin);
-	return 1;
 }
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, GetSelectedEnvironment)

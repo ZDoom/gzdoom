@@ -200,6 +200,7 @@ if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
 endif()
 
 option (HAVE_VULKAN "Enable Vulkan support" ON)
+option (HAVE_GLES2 "Enable GLES2 support" ON)
 
 # no, we're not using external asmjit for now, we made too many modifications to our's.
 # if the asmjit author uses our changes then we'll update this.
@@ -216,10 +217,14 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
+	set( ALL_C_FLAGS "/GF /Gy /permissive- /DHAVE_SOFTPOLY" )
+
 	if ( HAVE_VULKAN )
-		set( ALL_C_FLAGS "/GF /Gy /permissive- /DHAVE_VULKAN /DHAVE_SOFTPOLY" )
-	else()
-		set( ALL_C_FLAGS "/GF /Gy /permissive- /DHAVE_SOFTPOLY" )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_VULKAN" )
+	endif()
+
+	if ( HAVE_GLES2 )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_GLES2" )
 	endif()
 
 	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall
@@ -240,7 +245,7 @@ if( MSVC )
 	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
 
 	# Disable warnings for unsecure CRT functions from VC8+
-	set( ALL_C_FLAGS "${ALL_C_FLAGS} /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600" )
+	set( ALL_C_FLAGS "${ALL_C_FLAGS} /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS" )
 
 	# The CMake configurations set /GR and /MD by default, which conflict with our settings.
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} )
@@ -254,10 +259,14 @@ if( MSVC )
 	string(REPLACE "/MDd " " " CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} )
 else()
 	set( REL_LINKER_FLAGS "" )
+	set( ALL_C_FLAGS "-ffp-contract=off -DHAVE_SOFTPOLY" )
+
 	if ( HAVE_VULKAN )
-		set( ALL_C_FLAGS "-ffp-contract=off -DHAVE_VULKAN -DHAVE_SOFTPOLY" )
-	else()
-		set( ALL_C_FLAGS "-ffp-contract=off -DHAVE_SOFTPOLY" )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} -DHAVE_VULKAN" )
+	endif()
+
+	if ( HAVE_GLES2 )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} -DHAVE_GLES2" )
 	endif()
 
 	if ( UNIX )
@@ -279,7 +288,7 @@ else()
 
 
 	if( APPLE )
-		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12")
 		if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 			# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
 			set( ALL_C_FLAGS "-static-libgcc" )
@@ -406,7 +415,7 @@ add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
 add_subdirectory( wadsrc_extra )
 add_subdirectory( wadsrc_tdbots )
-add_subdirectory( wadsrc_widescreen )
+add_subdirectory( wadsrc_widepix )
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )

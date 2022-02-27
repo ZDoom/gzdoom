@@ -56,12 +56,12 @@ class FConsoleBuffer
 	EAddType mAddType;
 	int mTextLines;
 	bool mBufferWasCleared;
-	
+
 	FFont *mLastFont;
 	int mLastDisplayWidth;
 	bool mLastLineNeedsUpdate;
 
-	
+
 public:
 	FConsoleBuffer();
 	void AddText(int printlevel, const char *string);

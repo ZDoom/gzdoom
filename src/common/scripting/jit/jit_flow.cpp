@@ -7,7 +7,7 @@ void JitCompiler::EmitTEST()
 	cc.cmp(regD[A], BC);
 	cc.jne(GetLabel(i + 2));
 }
-	
+
 void JitCompiler::EmitTESTN()
 {
 	int bc = BC;

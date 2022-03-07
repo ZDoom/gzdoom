@@ -56,6 +56,7 @@ enum
 	MDL_DONTCULLBACKFACES			= 256,
 	MDL_USEROTATIONCENTER			= 512,
 	MDL_NOPERPIXELLIGHTING			= 1024, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
+	MDL_SCALEWEAPONFOV				= 2048,	// scale weapon view model with higher user FOVs
 };
 
 FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);
@@ -108,5 +109,7 @@ void BSPWalkCircle(FLevelLocals *Level, float x, float y, float radiusSquared, c
 
 void RenderModel(FModelRenderer* renderer, float x, float y, float z, FSpriteModelFrame* smf, AActor* actor, double ticFrac);
 void RenderHUDModel(FModelRenderer* renderer, DPSprite* psp, float ofsX, float ofsY);
+
+EXTERN_CVAR(Float, cl_scaleweaponfov)
 
 #endif

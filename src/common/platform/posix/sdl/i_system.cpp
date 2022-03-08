@@ -146,15 +146,14 @@ void CalculateCPUSpeed()
 	PerfToMillisec = PerfToSec = 0.;
 #ifdef __linux__
 	// [MK] read from perf values if we can
-	struct perf_event_attr pe =
-	{
-		.type = PERF_TYPE_HARDWARE,
-		.size = sizeof(struct perf_event_attr),
-		.config = PERF_COUNT_HW_INSTRUCTIONS,
-		.disabled = 1,
-		.exclude_kernel = 1,
-		.exclude_hv = 1
-	};
+	struct perf_event_attr pe;
+	memset(&pe,0,sizeof(struct perf_event_attr));
+	pe.type = PERF_TYPE_HARDWARE;
+	pe.size = sizeof(struct perf_event_attr);
+	pe.config = PERF_COUNT_HW_INSTRUCTIONS;
+	pe.disabled = 1;
+	pe.exclude_kernel = 1;
+	pe.exclude_hv = 1;
 	int fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
 	if (fd == -1)
 	{

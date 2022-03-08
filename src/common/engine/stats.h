@@ -78,13 +78,15 @@ inline uint64_t rdtsc()
 #elif defined __aarch64__
 	// TODO: Implement and test on ARM64
 	return 0;
-#else // i386
+#elif defined __i386__
 	if (CPU.bRDTSC)
 	{
 		uint64_t tsc;
 		asm volatile ("\trdtsc\n" : "=A" (tsc));
 		return tsc;
 	}
+	return 0;
+#else
 	return 0;
 #endif // __amd64__
 }

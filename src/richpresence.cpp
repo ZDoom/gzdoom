@@ -90,6 +90,9 @@ void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const cha
 	if (appid && appid[0] != '\0')
 		curappid = appid;
 
+	if (!didInit && !SendPresence)
+		return;	// we haven't initted, there's nothing to do here, just exit
+
 	if (!didInit)
 	{
 		didInit = true;

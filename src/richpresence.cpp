@@ -83,7 +83,7 @@ static void handleDiscordJoinRequest(const DiscordUser* request)
 		request->userId);
 }
 
-void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const char* appid)
+void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const char* appid, const char* steamappid)
 {
 	const char* curappid = DEFAULT_DISCORD_APP_ID;
 
@@ -101,7 +101,7 @@ void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const cha
 		handlers.joinGame = handleDiscordJoin;
 		handlers.spectateGame = handleDiscordSpectate;
 		handlers.joinRequest = handleDiscordJoinRequest;
-		Discord_Initialize(curappid, &handlers, 1, NULL);
+		Discord_Initialize(curappid, &handlers, 1, steamappid);
 	}
 
 	if (SendPresence)

@@ -154,7 +154,7 @@ void M_SaveDefaultsFinal();
 void R_Shutdown();
 void I_ShutdownInput();
 void SetConsoleNotifyBuffer();
-void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const char* appid);
+void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const char* appid, const char* steamappid);
 
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -1880,6 +1880,11 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 		{
 			sc.MustGetString();
 			GameStartupInfo.DiscordAppId = !!sc.String;
+		}
+		else if (!nextKey.CompareNoCase("STEAMAPPID"))
+		{
+			sc.MustGetString();
+			GameStartupInfo.SteamAppId = !!sc.String;
 		}
 		else
 		{
@@ -3703,6 +3708,7 @@ void D_Cleanup()
 	GameStartupInfo.BkColor = GameStartupInfo.FgColor = GameStartupInfo.Type = 0;
 	GameStartupInfo.LoadWidescreen = GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
 	GameStartupInfo.DiscordAppId = "";
+	GameStartupInfo.SteamAppId = "";
 	
 	GC::FullGC();					// clean up before taking down the object list.
 	
@@ -3792,7 +3798,7 @@ void I_UpdateWindowTitle()
 		titlestr = GameStartupInfo.Name;
 		break;
 	default:
-		I_UpdateDiscordPresence(false, NULL, GameStartupInfo.DiscordAppId.GetChars());
+		I_UpdateDiscordPresence(false, NULL, GameStartupInfo.DiscordAppId.GetChars(), GameStartupInfo.SteamAppId.GetChars());
 		I_SetWindowTitle(NULL);
 		return;
 	}
@@ -3822,6 +3828,6 @@ void I_UpdateWindowTitle()
 		}
 	}
 	*dstp = 0;
-	I_UpdateDiscordPresence(true, copy.Data(), GameStartupInfo.DiscordAppId.GetChars());
+	I_UpdateDiscordPresence(true, copy.Data(), GameStartupInfo.DiscordAppId.GetChars(), GameStartupInfo.SteamAppId.GetChars());
 	I_SetWindowTitle(copy.Data());
 }

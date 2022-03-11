@@ -1888,12 +1888,12 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 		else if (!nextKey.CompareNoCase("DISCORDAPPID"))
 		{
 			sc.MustGetString();
-			GameStartupInfo.DiscordAppId = !!sc.String;
+			GameStartupInfo.DiscordAppId = sc.String;
 		}
 		else if (!nextKey.CompareNoCase("STEAMAPPID"))
 		{
 			sc.MustGetString();
-			GameStartupInfo.SteamAppId = !!sc.String;
+			GameStartupInfo.SteamAppId = sc.String;
 		}
 		else
 		{

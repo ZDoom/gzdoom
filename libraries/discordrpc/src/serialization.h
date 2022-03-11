@@ -10,6 +10,7 @@
 #pragma warning(disable : 4464) // relative include path contains
 #pragma warning(disable : 4668) // is not defined as a preprocessor macro
 #pragma warning(disable : 6313) // Incorrect operator
+#pragma warning(disable : 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif                          // __MINGW32__
 
 #include "rapidjson/document.h"

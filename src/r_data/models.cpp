@@ -193,8 +193,16 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float o
 	// but we need to position it correctly in the world for light to work properly.
 	VSMatrix objectToWorldMatrix = renderer->GetViewToWorldMatrix();
 
+	// [Nash] Optional scale weapon FOV
+	float fovscale = 1.0f;
+	if (smf->flags & MDL_SCALEWEAPONFOV)
+	{
+		fovscale = tan(players[consoleplayer].DesiredFOV * (0.5f * M_PI / 180.f));
+		fovscale = 1.f + (fovscale - 1.f) * cl_scaleweaponfov;
+	}
+
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
+	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale / fovscale);
 
 	// Aplying model offsets (model offsets do not depend on model scalings).
 	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
@@ -527,6 +535,10 @@ static void ParseModelDefLump(int Lump)
 				else if (sc.Compare("noperpixellighting"))
 				{
 					smf.flags |= MDL_NOPERPIXELLIGHTING;
+				}
+				else if (sc.Compare("scaleweaponfov"))
+				{
+					smf.flags |= MDL_SCALEWEAPONFOV;
 				}
 				else if (sc.Compare("rotating"))
 				{

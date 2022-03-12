@@ -292,7 +292,6 @@ CVAR (Bool, disableautoload, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBAL
 CVAR (Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, autoloadwidescreen, true, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
-CVAR (Bool, autoloadbots, true, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, r_debug_disable_vis_filter, false, 0)
 CVAR(Bool, vid_fps, false, 0)
 CVAR(Int, vid_showpalette, 0, 0)
@@ -1886,11 +1885,6 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetNumber();
 			GameStartupInfo.LoadWidescreen = !!sc.Number;
 		}
-		else if (!nextKey.CompareNoCase("LOADBOTS"))
-		{
-			sc.MustGetNumber();
-			GameStartupInfo.LoadBots = !!sc.Number;
-		}
 		else if (!nextKey.CompareNoCase("DISCORDAPPID"))
 		{
 			sc.MustGetString();
@@ -2038,12 +2032,6 @@ static void AddAutoloadFiles(const char *autoname)
 		if (GameStartupInfo.LoadWidescreen == 1 || (GameStartupInfo.LoadWidescreen != 0 && autoloadwidescreen))
 		{
 			const char *wswad = BaseFileSearch ("game_widescreen_gfx.pk3", NULL, true, GameConfig);
-			if (wswad)
-				D_AddFile (allwads, wswad, true, -1, GameConfig);
-		}
-		if (GameStartupInfo.LoadBots == 1 || (GameStartupInfo.LoadBots != 0 && autoloadbots))
-		{
-			const char *wswad = BaseFileSearch ("gzdoom-tdbots.pk3", NULL, true, GameConfig);
 			if (wswad)
 				D_AddFile (allwads, wswad, true, -1, GameConfig);
 		}
@@ -3729,8 +3717,7 @@ void D_Cleanup()
 	GameStartupInfo.BkColor = GameStartupInfo.FgColor = GameStartupInfo.Type = 0;
 
 	// this statement is starting to get a little messy!
-	GameStartupInfo.LoadBots =
-		GameStartupInfo.LoadWidescreen =
+	GameStartupInfo.LoadWidescreen =
 		GameStartupInfo.LoadLights =
 		GameStartupInfo.LoadBrightmaps = -1;
 	GameStartupInfo.DiscordAppId = "";

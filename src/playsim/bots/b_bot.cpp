@@ -139,9 +139,16 @@ void DBot::Tick ()
 {
 	Super::Tick ();
 
-	if (player->mo == nullptr || Level->isFrozen())
+	if (player->mo == nullptr)
 	{
 		return;
+	}
+	ticcmd_t *cmd = &netcmds[player - players][((gametic + 1)/ticdup)%BACKUPTICS];
+
+	IFVIRTUAL(DBot, Thinker)
+	{
+		VMValue params[2] = { (DBot*)this, (ticcmd_t*)cmd };
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 

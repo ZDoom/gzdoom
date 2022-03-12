@@ -1362,11 +1362,13 @@ if( NOT WIN32 AND NOT APPLE )
 	add_custom_command( TARGET zdoom POST_BUILD
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
-	set_target_properties(zdoom PROPERTIES
-		#allow libzmusic.so.1 library in same folder as executable at runtime
-		INSTALL_RPATH "\$ORIGIN"
-		BUILD_WITH_INSTALL_RPATH ON
-	)
+	IF ("${INSTALL_RPATH}" STREQUAL "")
+		set_target_properties(zdoom PROPERTIES
+			#allow libzmusic.so.1 library in same folder as executable at runtime
+			INSTALL_RPATH "\$ORIGIN"
+			BUILD_WITH_INSTALL_RPATH ON
+		)
+	endif()
 endif()
 
 add_custom_command(TARGET zdoom POST_BUILD

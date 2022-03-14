@@ -145,6 +145,8 @@ void DBot::Tick ()
 	}
 	ticcmd_t *cmd = &netcmds[player - players][((gametic + 1)/ticdup)%BACKUPTICS];
 
+	memset (cmd, 0, sizeof(*cmd));
+
 	IFVIRTUAL(DBot, Thinker)
 	{
 		VMValue params[2] = { (DBot*)this, (ticcmd_t*)cmd };

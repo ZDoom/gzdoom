@@ -54,6 +54,44 @@ public:
 
 #include <time.h>
 
+// [MK] try to use RDTSC on linux if possible
+// avoids excess latency of clock_gettime() on some platforms
+#ifdef __linux__
+extern bool PerfAvailable;
+extern double PerfToSec, PerfToMillisec;
+
+inline uint64_t rdtsc()
+{
+#ifdef __amd64__
+	uint64_t tsc;
+	asm volatile("rdtsc; shlq $32, %%rdx; orq %%rdx, %%rax":"=a"(tsc)::"%rdx");
+	return tsc;
+#elif defined __ppc__
+	unsigned int lower, upper, temp;
+	do
+	{
+		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n"
+			: "=r"(upper), "=r"(lower), "=r"(temp));
+	}
+	while (upper != temp);
+	return (static_cast<unsigned long long>(upper) << 32) | lower;
+#elif defined __aarch64__
+	// TODO: Implement and test on ARM64
+	return 0;
+#elif defined __i386__
+	if (CPU.bRDTSC)
+	{
+		uint64_t tsc;
+		asm volatile ("\trdtsc\n" : "=A" (tsc));
+		return tsc;
+	}
+	return 0;
+#else
+	return 0;
+#endif // __amd64__
+}
+#endif
+
 class cycle_t
 {
 public:
@@ -64,6 +102,14 @@ public:
 
 	void Clock()
 	{
+#ifdef __linux__
+		if ( PerfAvailable )
+		{
+			int64_t time = rdtsc();
+			Sec -= time * PerfToSec;
+			return;
+		}
+#endif
 		timespec ts;
 
 		clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -72,6 +118,14 @@ public:
 
 	void Unclock()
 	{
+#ifdef __linux__
+		if ( PerfAvailable )
+		{
+			int64_t time = rdtsc();
+			Sec += time * PerfToSec;
+			return;
+		}
+#endif
 		timespec ts;
 
 		clock_gettime(CLOCK_MONOTONIC, &ts);

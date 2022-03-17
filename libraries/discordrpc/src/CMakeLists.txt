@@ -42,7 +42,6 @@ if(WIN32)
             endforeach()
         endif(USE_STATIC_CRT)
         target_compile_options(discord-rpc PRIVATE /EHsc
-            /Wall
             /wd4100 # unreferenced formal parameter
             /wd4514 # unreferenced inline
             /wd4625 # copy constructor deleted

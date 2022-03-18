@@ -819,7 +819,7 @@ set (POLYBACKEND_SOURCES
 set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${POLYBACKEND_SOURCES})
 
 set (PCH_SOURCES
-	richpresence.cpp
+	common/thirdparty/richpresence.cpp
 	am_map.cpp
 	playsim/bots/b_bot.cpp
 	playsim/bots/b_func.cpp

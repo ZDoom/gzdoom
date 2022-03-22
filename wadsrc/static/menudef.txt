@@ -1150,6 +1150,7 @@ OptionMenu "AltHUDOptions" protected
 	Option "$ALTHUDMNU_SHOWSTATS",				"hud_showstats", "OnOff"
 	Option "$ALTHUDMNU_SHOWBERSERK",			"hud_berserk_health", "OnOff"
 	Option "$ALTHUDMNU_SHOWWEAPONS",			"hud_showweapons", "OnOff"
+	Option "$ALTHUDMNU_SHOWTIMESTAT",			"hud_showtimestat", "OnOff"
 	Option "$ALTHUDMNU_SHOWAMMO",				"hud_showammo", "AltHUDAmmo"
 	Option "$ALTHUDMNU_SHOWTIME",				"hud_showtime", "AltHUDTime"
 	Option "$ALTHUDMNU_TIMECOLOR",				"hud_timecolor", "TextColors"

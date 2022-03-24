@@ -110,6 +110,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", user_app_support, true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 		SetValueForKey ("Path", local_app_support, true);
+		SetValueForKey ("Path", "$PROGDIR/../../..", true); // look outside the app bundle
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);

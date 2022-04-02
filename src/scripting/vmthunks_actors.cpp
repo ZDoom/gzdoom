@@ -1821,7 +1821,7 @@ static void SetViewPos(AActor *self, double x, double y, double z, int flags)
 {
 	if (!self->ViewPos)
 	{
-		self->ViewPos = Create<FViewPosition>();
+		self->ViewPos = Create<DViewPosition>();
 	}
 
 	DVector3 pos = { x,y,z };
@@ -1839,9 +1839,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetViewPos, SetViewPos)
 	return 0;
 }
 
-IMPLEMENT_CLASS(FViewPosition, false, false);
-DEFINE_FIELD_X(ViewPosition, FViewPosition, Offset)
-DEFINE_FIELD_X(ViewPosition, FViewPosition, Flags)
+IMPLEMENT_CLASS(DViewPosition, false, false);
+DEFINE_FIELD_X(ViewPosition, DViewPosition, Offset)
+DEFINE_FIELD_X(ViewPosition, DViewPosition, Flags)
 
 DEFINE_FIELD(DThinker, Level)
 DEFINE_FIELD(AActor, snext)

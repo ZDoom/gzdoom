@@ -793,7 +793,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	// Handles offsetting the camera with ChaseCam and/or viewpos.
 	{
 		AActor *mo = viewpoint.camera;
-		FViewPosition *VP = mo->ViewPos;
+		DViewPosition *VP = mo->ViewPos;
 		const DVector3 orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
 		viewpoint.ActorPos = orig;
 

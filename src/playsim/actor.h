@@ -660,9 +660,9 @@ enum EViewPosFlags // [MC] Flags for SetViewPos.
 	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
 };
 
-class FViewPosition : public DObject
+class DViewPosition : public DObject
 {
-	DECLARE_CLASS(FViewPosition, DObject);
+	DECLARE_CLASS(DViewPosition, DObject);
 public:
 	// Variables
 	// Exposed to ZScript
@@ -670,7 +670,7 @@ public:
 	int			Flags;
 
 	// Functions
-	FViewPosition()
+	DViewPosition()
 	{
 		Offset = { 0,0,0 };
 		Flags = 0;
@@ -1011,7 +1011,7 @@ public:
 	DAngle			SpriteRotation;
 	DRotator		Angles;
 	DRotator		ViewAngles;			// Angle offsets for cameras
-	FViewPosition	*ViewPos;			// Position offsets for cameras
+	TObjPtr<DViewPosition*> ViewPos;			// Position offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 

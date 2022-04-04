@@ -400,7 +400,6 @@ Gameplay Options,GMPLYMNU_TITLE,,,,Nastavení herních mechanik,Gameplay-Optione
 Always,OPTVAL_ALWAYS,,,,Vždy,Immer,,Ĉiam,Siempre,,Aina,Toujours,Mindig,Sempre,常に,언제나,Altijd,Zawsze,Sempre,,Mereu,Всегда,Увек
 Never,OPTVAL_NEVER,,,,Nikdy,Nie,,Neniam,Nunca,,Ei koskaan,Jamais,Soha,Mai,しない,없음,Nooit,Nigdy,Nunca,,Niciodată,Никогда,Никад
 Autoaim,PLYRMNU_AUTOAIM,,,,Automatické míření,Automatisch zielen,,Celasisto,Autoapuntar,,Automaattitähtäys,Auto-visée,Automatikus célzás,Mira automatica,自動照準,자동 조준,Autoaim,Automatyczne Celowanie,Mira automática,,Autoțintire,Автоприцеливание,Аутоматско циљање
-Vertical Bullet Spread,PLYRMNU_VERTSPREAD,,,,,,,,,,,,,,,,,,,,,,,,
 Always Run,PLYRMNU_ALWAYSRUN,,,,Vždy běžet,Immer Rennen,,Ĉiam Kuri,Siempre correr,,Jatkuva juoksu,Toujours courir,Mindig fusson,Corri sempre,常に駆け足,달리기 토글,Altijd lopen,Zawsze Biegaj,Sempre correr,Correr Sempre,Fugă în permanență,Постоянный бег,Увек трчи
 ,,Display,,,,,,,,,,,,,,,,,,,,,
 Display Options,DSPLYMNU_TITLE,,,,Nastavení grafiky,Anzeigeoptionen,,Ekrano-Agordoj,Opciones de visualización,,Näyttöasetukset,Options Affichage,Megjelenítés beállítások,Opzioni display,ディスプレイ オプション,디스플레이 설정,Weergaveopties,Opcje Wyświetlania,Opções de vídeo,,Setări afișare,Настройки экрана,Подешавања приказа

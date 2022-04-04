@@ -172,6 +172,7 @@ enum
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
 	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
 	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
+	DF2_NOVERTSPREAD		= 1 << 30,	// Don't allow vertical spread for hitscan weapons (excluding ssg)
 };
 
 // [RH] Compatibility flags.

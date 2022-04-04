@@ -68,6 +68,7 @@ CVAR (Float,	wbobspeed,				1.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	wbobfire,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	playerclass,			"Fighter",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		classicflight,			false,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Bool,		vertspread,				false,		CVAR_USERINFO | CVAR_ARCHIVE);
 
 enum
 {
@@ -85,6 +86,7 @@ enum
 	INFO_PlayerClass,
 	INFO_ColorSet,
 	INFO_ClassicFlight,
+	INFO_VertSpread,
 };
 
 const char *GenderNames[GENDER_MAX] = { "male", "female", "neutral", "other" };

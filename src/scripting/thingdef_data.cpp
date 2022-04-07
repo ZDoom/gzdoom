@@ -727,21 +727,6 @@ void InitThingdef()
 		}
 	);
 
-	auto fontstruct = NewStruct("FFont", nullptr, true);
-	fontstruct->Size = sizeof(FFont);
-	fontstruct->Align = alignof(FFont);
-	NewPointer(fontstruct, false)->InstallHandlers(
-		[](FSerializer &ar, const char *key, const void *addr)
-		{
-			ar(key, *(FFont **)addr);
-		},
-			[](FSerializer &ar, const char *key, void *addr)
-		{
-			Serialize<FFont>(ar, key, *(FFont **)addr, nullptr);
-			return true;
-		}
-	);
-
 	auto wbplayerstruct = NewStruct("WBPlayerStruct", nullptr, true);
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);

@@ -194,6 +194,7 @@ FileReader FSF2Reader::OpenFile(const char *name)
 
 FZipPatReader::FZipPatReader(const char *filename)
 {
+	mAllowAbsolutePaths = true;
 	resf = FResourceFile::OpenResourceFile(filename, true);
 }
 
@@ -218,6 +219,7 @@ FileReader FZipPatReader::OpenFile(const char *name)
 			return lump->NewReader();
 		}
 	}
+	fr.OpenFile(name);
 	return fr;
 }
 
@@ -478,13 +480,6 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 		}
 	}
 
-	auto sfi = FindSoundFont(name, allowed);
-	if (sfi != nullptr)
-	{
-		if (sfi->type == SF_SF2) return new FSF2Reader(sfi->mFilename);
-		else return new FZipPatReader(sfi->mFilename);
-	}
-	// The sound font collection did not yield any good results.
 	// Next check if the file is a .sf file
 	if (allowed & SF_SF2)
 	{
@@ -500,6 +495,7 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 			}
 		}
 	}
+	// Next check if the file is a resource file (it should contains gus patches and a timidity.cfg file)
 	if (allowed & SF_GUS)
 	{
 		FileReader fr;
@@ -522,6 +518,13 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 		{
 			return new FPatchSetReader(name);
 		}
+	}
+	// Lastly check in the sound font collection for a specific item or pick the first valid item available.
+	auto sfi = FindSoundFont(name, allowed);
+	if (sfi != nullptr)
+	{
+		if (sfi->type == SF_SF2) return new FSF2Reader(sfi->mFilename);
+		else return new FZipPatReader(sfi->mFilename);
 	}
 	return nullptr;
 

@@ -200,7 +200,8 @@ static void SetupWgOpn()
 
 static void SetupDMXGUS()
 {
-	int lump = fileSystem.CheckNumForFullName("DMXGUS");
+	int lump = fileSystem.CheckNumForName("DMXGUSC", ns_global);
+	if (lump < 0) lump = fileSystem.CheckNumForName("DMXGUS", ns_global);
 	if (lump < 0)
 	{
 		return;

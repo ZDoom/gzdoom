@@ -1092,7 +1092,7 @@ void P_RandomChaseDir (AActor *actor)
 	int turndir;
 
 	// Friendly monsters like to head toward a player
-	if (actor->flags & MF_FRIENDLY)
+	if (actor->flags & MF_FRIENDLY && !(actor->flags8 & MF8_DONTFOLLOWPLAYERS))
 	{
 		AActor *player;
 		DVector2 delta;

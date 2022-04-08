@@ -423,6 +423,7 @@ enum ActorFlag8
 	MF8_MAP07BOSS2		= 0x00800000,	// MBF21 boss death.
 	MF8_AVOIDHAZARDS	= 0x01000000,	// MBF AI enhancement.
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
+	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalwetrust] Friendly monster will not follow players.
 };
 
 // --- mobj.renderflags ---

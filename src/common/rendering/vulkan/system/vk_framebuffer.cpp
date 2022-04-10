@@ -579,13 +579,13 @@ void VulkanFrameBuffer::BeginFrame()
 	}
 }
 
-void VulkanFrameBuffer::InitLightmap(FLevelLocals* Level)
+void VulkanFrameBuffer::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData)
 {
-	if (Level->LMTextureData.Size() > 0)
+	if (LMTextureData.Size() > 0)
 	{
-		int w = Level->LMTextureSize;
-		int h = Level->LMTextureSize;
-		int count = Level->LMTextureCount;
+		int w = LMTextureSize;
+		int h = LMTextureSize;
+		int count = LMTextureCount;
 		int pixelsize = 8;
 		auto& lightmap = mActiveRenderBuffers->Lightmap;
 
@@ -620,7 +620,7 @@ void VulkanFrameBuffer::InitLightmap(FLevelLocals* Level)
 		stagingBuffer->SetDebugName("VkHardwareTexture.mStagingBuffer");
 
 		uint16_t one = 0x3c00; // half-float 1.0
-		uint16_t* src = &Level->LMTextureData[0];
+		uint16_t* src = &LMTextureData[0];
 		uint16_t* data = (uint16_t*)stagingBuffer->Map(0, totalSize);
 		for (int i = w * h * count; i > 0; i--)
 		{
@@ -650,7 +650,7 @@ void VulkanFrameBuffer::InitLightmap(FLevelLocals* Level)
 		FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));
 		FrameTextureUpload.TotalSize += totalSize;
 
-		Level->LMTextureData.Reset(); // We no longer need this, release the memory
+		LMTextureData.Reset(); // We no longer need this, release the memory
 	}
 }
 

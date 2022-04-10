@@ -362,9 +362,9 @@ void OpenGLFrameBuffer::BlurScene(float amount)
 	GLRenderer->BlurScene(amount);
 }
 
-void OpenGLFrameBuffer::InitLightmap(FLevelLocals *Level)
+void OpenGLFrameBuffer::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData)
 {
-	if (Level->LMTextureData.Size() > 0)
+	if (LMTextureData.Size() > 0)
 	{
 		GLint activeTex = 0;
 		glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
@@ -374,14 +374,14 @@ void OpenGLFrameBuffer::InitLightmap(FLevelLocals *Level)
 			glGenTextures(1, (GLuint*)&GLRenderer->mLightMapID);
 
 		glBindTexture(GL_TEXTURE_2D_ARRAY, GLRenderer->mLightMapID);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB16F, Level->LMTextureSize, Level->LMTextureSize, Level->LMTextureCount, 0, GL_RGB, GL_HALF_FLOAT, &Level->LMTextureData[0]);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB16F, LMTextureSize, LMTextureSize, LMTextureCount, 0, GL_RGB, GL_HALF_FLOAT, &LMTextureData[0]);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
 		glActiveTexture(activeTex);
 
-		Level->LMTextureData.Reset(); // We no longer need this, release the memory
+		LMTextureData.Reset(); // We no longer need this, release the memory
 	}
 }
 

@@ -44,7 +44,6 @@
 #include "intrect.h"
 #include "hw_shadowmap.h"
 #include "buffers.h"
-#include "g_levellocals.h"
 
 
 struct FPortalSceneState;

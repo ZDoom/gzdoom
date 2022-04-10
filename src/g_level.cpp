@@ -828,6 +828,114 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SecretExitLevel, LevelLocals_SecretE
 //==========================================================================
 static wbstartstruct_t staticWmInfo;
 
+DIntermissionController* FLevelLocals::CreateIntermission()
+{
+	DIntermissionController* controller;
+	cluster_info_t *nextcluster;
+	cluster_info_t *thiscluster;
+
+	if (flags & LEVEL_CHANGEMAPCHEAT)
+		return nullptr;
+
+	thiscluster = FindClusterInfo (cluster);
+
+	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
+	{
+		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
+		if (endsequence == NAME_Inter_Strife)
+		{
+			if (Players[0]->mo->FindInventory (NAME_QuestItem25) ||
+				Players[0]->mo->FindInventory (NAME_QuestItem28))
+			{
+				endsequence = NAME_Inter_Strife_Good;
+			}
+			else
+			{
+				endsequence = NAME_Inter_Strife_Sad;
+			}
+		}
+
+		auto ext = info->ExitMapTexts.CheckKey(flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
+		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
+		{
+			controller = F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
+				ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+				-1, 0,
+				ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
+				ext->mText,
+				false,
+				ext->mDefined & FExitText::DEF_PIC,
+				ext->mDefined & FExitText::DEF_LOOKUP,
+				true, endsequence);
+		}
+		else if (!(info->flags2 & LEVEL2_NOCLUSTERTEXT))
+		{
+			controller = F_StartFinale(thiscluster->MessageMusic, thiscluster->musicorder,
+				thiscluster->cdtrack, thiscluster->cdid,
+				thiscluster->FinaleFlat, thiscluster->ExitText,
+				thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+				thiscluster->flags & CLUSTER_FINALEPIC,
+				thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+				true, endsequence);
+		}
+	}
+	else if (!deathmatch)
+	{
+		FExitText *ext = nullptr;
+		
+		if (flags3 & LEVEL3_EXITSECRETUSED) ext = info->ExitMapTexts.CheckKey(NAME_Secret);
+		else if (flags3 & LEVEL3_EXITNORMALUSED) ext = info->ExitMapTexts.CheckKey(NAME_Normal);
+		if (ext == nullptr) ext = info->ExitMapTexts.CheckKey(nextlevel);
+
+		if (ext != nullptr)
+		{
+			if ((ext->mDefined & FExitText::DEF_TEXT))
+			{
+				controller = F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
+					ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+					-1, 0,
+					ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
+					ext->mText,
+					false,
+					ext->mDefined & FExitText::DEF_PIC,
+					ext->mDefined & FExitText::DEF_LOOKUP,
+					false);
+			}
+			return controller;
+		}
+
+		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
+
+		if (nextcluster->cluster != cluster && !(info->flags2 & LEVEL2_NOCLUSTERTEXT))
+		{
+			// Only start the finale if the next level's cluster is different
+			// than the current one and we're not in deathmatch.
+			if (nextcluster->EnterText.IsNotEmpty())
+			{
+				controller = F_StartFinale (nextcluster->MessageMusic, nextcluster->musicorder,
+					nextcluster->cdtrack, nextcluster->cdid,
+					nextcluster->FinaleFlat, nextcluster->EnterText,
+					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
+					nextcluster->flags & CLUSTER_FINALEPIC,
+					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
+					false);
+			}
+			else if (thiscluster->ExitText.IsNotEmpty())
+			{
+				controller = F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
+					thiscluster->cdtrack, nextcluster->cdid,
+					thiscluster->FinaleFlat, thiscluster->ExitText,
+					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+					thiscluster->flags & CLUSTER_FINALEPIC,
+					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+					false);
+			}
+		}
+	}
+	return controller;
+}
+
 void G_DoCompleted (void)
 {
 	gameaction = ga_nothing;
@@ -860,9 +968,10 @@ void G_DoCompleted (void)
 		SN_StopAllSequences(Level);
 	}
 
+	// todo: create end of level screenjob
+	DObject* statusScreen = nullptr, *intermissionScreen = nullptr;
 	if (playinter)
 	{
-		gamestate = GS_INTERMISSION;
 		viewactive = false;
 		automapactive = false;
 		
@@ -870,8 +979,10 @@ void G_DoCompleted (void)
 		//	if (statcopy)
 		//		memcpy (statcopy, &wminfo, sizeof(wminfo));
 		
-		WI_Start (&staticWmInfo);
+		statusScreen = WI_Start (&staticWmInfo);
 	}
+	intermissionScreen = primaryLevel->CreateIntermission();
+	// todo: create start of level screenjob.
 }
 
 //==========================================================================
@@ -1281,10 +1392,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 //==========================================================================
 
 void FLevelLocals::WorldDone (void) 
-{ 
-	cluster_info_t *nextcluster;
-	cluster_info_t *thiscluster;
-
+{
 	gameaction = ga_worlddone; 
 
 
@@ -1294,110 +1402,11 @@ void FLevelLocals::WorldDone (void)
 		BotInfo.RemoveAllBots(this, consoleplayer != Net_Arbitrator);
 	}
 
-	if (flags & LEVEL_CHANGEMAPCHEAT)
-		return;
-
-	thiscluster = FindClusterInfo (cluster);
-
-	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
-	{
-		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
-		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
-		if (endsequence == NAME_Inter_Strife)
-		{
-			if (Players[0]->mo->FindInventory (NAME_QuestItem25) ||
-				Players[0]->mo->FindInventory (NAME_QuestItem28))
-			{
-				endsequence = NAME_Inter_Strife_Good;
-			}
-			else
-			{
-				endsequence = NAME_Inter_Strife_Sad;
-			}
-		}
-
-		auto ext = info->ExitMapTexts.CheckKey(flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
-		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
-		{
-			F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
-				ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
-				-1, 0,
-				ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
-				ext->mText,
-				false,
-				ext->mDefined & FExitText::DEF_PIC,
-				ext->mDefined & FExitText::DEF_LOOKUP,
-				true, endsequence);
-		}
-		else if (!(info->flags2 & LEVEL2_NOCLUSTERTEXT))
-		{
-			F_StartFinale(thiscluster->MessageMusic, thiscluster->musicorder,
-				thiscluster->cdtrack, thiscluster->cdid,
-				thiscluster->FinaleFlat, thiscluster->ExitText,
-				thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-				thiscluster->flags & CLUSTER_FINALEPIC,
-				thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-				true, endsequence);
-		}
-	}
-	else if (!deathmatch)
-	{
-		FExitText *ext = nullptr;
-		
-		if (flags3 & LEVEL3_EXITSECRETUSED) ext = info->ExitMapTexts.CheckKey(NAME_Secret);
-		else if (flags3 & LEVEL3_EXITNORMALUSED) ext = info->ExitMapTexts.CheckKey(NAME_Normal);
-		if (ext == nullptr) ext = info->ExitMapTexts.CheckKey(nextlevel);
-
-		if (ext != nullptr)
-		{
-			if ((ext->mDefined & FExitText::DEF_TEXT))
-			{
-				F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
-					ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
-					-1, 0,
-					ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
-					ext->mText,
-					false,
-					ext->mDefined & FExitText::DEF_PIC,
-					ext->mDefined & FExitText::DEF_LOOKUP,
-					false);
-			}
-			return;
-		}
-
-		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
-
-		if (nextcluster->cluster != cluster && !(info->flags2 & LEVEL2_NOCLUSTERTEXT))
-		{
-			// Only start the finale if the next level's cluster is different
-			// than the current one and we're not in deathmatch.
-			if (nextcluster->EnterText.IsNotEmpty())
-			{
-				F_StartFinale (nextcluster->MessageMusic, nextcluster->musicorder,
-					nextcluster->cdtrack, nextcluster->cdid,
-					nextcluster->FinaleFlat, nextcluster->EnterText,
-					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
-					nextcluster->flags & CLUSTER_FINALEPIC,
-					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
-					false);
-			}
-			else if (thiscluster->ExitText.IsNotEmpty())
-			{
-				F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
-					thiscluster->cdtrack, nextcluster->cdid,
-					thiscluster->FinaleFlat, thiscluster->ExitText,
-					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-					thiscluster->flags & CLUSTER_FINALEPIC,
-					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-					false);
-			}
-		}
-	}
-} 
+}
  
 DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 {
-	primaryLevel->WorldDone();
+	// This is just a dummy to make old status screens happy.
 	return 0;
 }
 

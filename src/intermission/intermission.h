@@ -299,8 +299,6 @@ class DIntermissionController : public DObject
 	uint8_t mGameState;
 	int mIndex;
 
-	bool NextPage();
-
 public:
 	static DIntermissionController *CurrentIntermission;
 
@@ -309,23 +307,18 @@ public:
 	void Ticker ();
 	void Drawer ();
 	void OnDestroy() override;
+	bool NextPage();
 
-	friend void F_AdvanceIntermission();
-	friend void F_StartIntermission(FIntermissionDescriptor *, bool, uint8_t);
+	friend DIntermissionController* F_StartIntermission(FIntermissionDescriptor *, bool, uint8_t);
 };
 
 
 // Interface for main loop
-bool F_Responder (event_t* ev);
-void F_Ticker ();
-void F_Drawer ();
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state);
-void F_StartIntermission(FName desc, uint8_t state);
-void F_EndFinale ();
-void F_AdvanceIntermission();
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state);
+DIntermissionController* F_StartIntermission(FName desc, uint8_t state);
 
 // Create an intermission from old cluster data
-void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
+DIntermissionController* F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
 					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
 					bool ending, FName endsequence = NAME_None);
 

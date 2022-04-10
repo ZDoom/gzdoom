@@ -102,6 +102,7 @@ struct EventManager;
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
 typedef TMap<int, FUDMFKeys> FUDMFKeyMap;
+class DIntermissionController;
 
 struct FLevelLocals
 {
@@ -122,6 +123,7 @@ struct FLevelLocals
 
 	friend class MapLoader;
 
+	DIntermissionController* CreateIntermission();
 	void Tick();
 	void Mark();
 	void AddScroller(int secnum);

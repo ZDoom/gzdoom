@@ -155,7 +155,7 @@ CVAR (Int, bot_next_color, 11, 0)
 
 CCMD (addbot)
 {
-	if (gamestate != GS_LEVEL && gamestate != GS_INTERMISSION)
+	if (gamestate != GS_LEVEL)
 	{
 		Printf ("Bots cannot be added when not in a game!\n");
 		return;

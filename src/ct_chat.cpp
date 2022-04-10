@@ -240,11 +240,14 @@ void CT_Drawer (void)
 	if (players[consoleplayer].camera != NULL &&
 		(buttonMap.ButtonDown(Button_ShowScores) ||
 		 players[consoleplayer].camera->health <= 0 ||
-		 SB_ForceActive) &&
-		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
-		 gamestate != GS_INTERMISSION)
+		 SB_ForceActive))
 	{
-		HU_DrawScores (&players[consoleplayer]);
+		bool skipit = false;
+		if (gamestate == GS_CUTSCENE)
+		{
+			// todo: check for summary screen
+		}
+		if (!skipit) HU_DrawScores (&players[consoleplayer]);
 	}
 	if (chatmodeon)
 	{

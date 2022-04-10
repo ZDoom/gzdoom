@@ -849,7 +849,7 @@ FName FMapInfoParser::CheckEndSequence()
 //
 //==========================================================================
 
-void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
+DIntermissionController* F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat,
 					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
 					bool ending, FName endsequence)
 {
@@ -909,16 +909,17 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 			desc->mActions.Push(wiper);
 		}
 
-		F_StartIntermission(desc, true, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
+		return F_StartIntermission(desc, true, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
 	}
 	else if (ending)
 	{
 		FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(endsequence);
 		if (pdesc != NULL)
 		{
-			F_StartIntermission(*pdesc, false, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
+			return F_StartIntermission(*pdesc, false, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
 		}
 	}
+	return nullptr;
 }
 
 
@@ -952,5 +953,6 @@ CCMD(testfinale)
 		return;
 	}
 
-	F_StartFinale(gameinfo.finaleMusic, gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat, text, false, false, true, true);
+	auto controller = F_StartFinale(gameinfo.finaleMusic, gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat, text, false, false, true, true);
+	// todo: play it
 }

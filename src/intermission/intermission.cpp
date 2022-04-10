@@ -835,8 +835,6 @@ void DIntermissionScreenScroller::Drawer ()
 //
 //==========================================================================
 
-DIntermissionController *DIntermissionController::CurrentIntermission;
-
 DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, uint8_t state)
 {
 	mDesc = Desc;
@@ -932,10 +930,9 @@ bool DIntermissionController::Responder (event_t *ev)
 
 		if (mScreen->mTicker < 2) return false;	// prevent some leftover events from auto-advancing
 		int res = mScreen->Responder(ev);
-		if (res == -1 && !mSentAdvance)
+		if (res == -1)
 		{
-			Net_WriteByte(DEM_ADVANCEINTER);
-			mSentAdvance = true;
+			mAdvance = true;
 		}
 		return !!res;
 	}
@@ -995,7 +992,6 @@ void DIntermissionController::OnDestroy ()
 	if (mScreen != NULL) mScreen->Destroy();
 	if (mDeleteDesc) delete mDesc;
 	mDesc = NULL;
-	if (CurrentIntermission == this) CurrentIntermission = NULL;
 }
 
 
@@ -1005,28 +1001,25 @@ void DIntermissionController::OnDestroy ()
 //
 //==========================================================================
 
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
 {
 	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Destroy();
-	}
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
 	if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
 	viewactive = false;
 	automapactive = false;
-	DIntermissionController::CurrentIntermission = Create<DIntermissionController>(desc, deleteme, state);
+	auto CurrentIntermission = Create<DIntermissionController>(desc, deleteme, state);
 
 	// If the intermission finishes straight away then cancel the wipe.
-	if (!DIntermissionController::CurrentIntermission->NextPage())
+	if (!CurrentIntermission->NextPage())
 	{
-		wipegamestate = GS_FINALE;
+		CurrentIntermission->Destroy();
 	}
 
-	GC::WriteBarrier(DIntermissionController::CurrentIntermission);
+	GC::WriteBarrier(CurrentIntermission);
+	return CurrentIntermission;
 }
 
 
@@ -1036,93 +1029,16 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t s
 //
 //==========================================================================
 
-void F_StartIntermission(FName seq, uint8_t state)
+DIntermissionController* F_StartIntermission(FName seq, uint8_t state)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
 	if (pdesc == nullptr)
 	{
-		gameaction = ga_nothing;
+		return nullptr;
 	}
 	else
 	{
 		F_StartIntermission(*pdesc, false, state);
-	}
-}
-
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-bool F_Responder (event_t* ev)
-{
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		return DIntermissionController::CurrentIntermission->Responder(ev);
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-void F_Ticker ()
-{
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Ticker();
-	}
-}
-
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-void F_Drawer ()
-{
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Drawer();
-	}
-}
-
-
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-void F_EndFinale ()
-{
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Destroy();
-		DIntermissionController::CurrentIntermission = NULL;
-	}
-}
-
-//==========================================================================
-//
-// Called by net loop.
-//
-//==========================================================================
-
-void F_AdvanceIntermission()
-{
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->mAdvance = true;
 	}
 }
 

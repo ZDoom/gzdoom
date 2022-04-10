@@ -118,6 +118,7 @@
 #include "hw_clock.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "doomfont.h"
+#include "screenjob.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -1018,18 +1019,20 @@ void D_Display ()
 				End2DAndUpdate ();
 				return;
 				
-			case GS_INTERMISSION:
-				WI_Drawer ();
-				break;
-				
-			case GS_FINALE:
-				F_Drawer ();
-				break;
-				
 			case GS_DEMOSCREEN:
 				D_PageDrawer ();
 				break;
 				
+		case GS_CUTSCENE:
+		case GS_INTRO:
+			if (ScreenJobTick())
+			{
+				// synchronize termination with the playsim.
+				Net_WriteByte(DEM_ENDSCREENJOB);
+			}
+			break;
+
+
 			default:
 				break;
 		}
@@ -1168,7 +1171,6 @@ void D_ErrorCleanup ()
 	{
 		menuactive = MENU_Off;
 	}
-	if (gamestate == GS_INTERMISSION) gamestate = GS_DEMOSCREEN;
 	insave = false;
 	ClearGlobalVMStack();
 }
@@ -2735,7 +2737,7 @@ static bool System_CaptureModeInGame()
 	case 0:
 		return gamestate == GS_LEVEL;
 	case 1:
-		return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
+		return gamestate == GS_LEVEL || gamestate == GS_CUTSCENE;
 	case 2:
 		return true;
 	}
@@ -2975,7 +2977,6 @@ extern DThinker* NextToThink;
 
 static void GC_MarkGameRoots()
 {
-	GC::Mark(DIntermissionController::CurrentIntermission);
 	GC::Mark(staticEventManager.FirstEventHandler);
 	GC::Mark(staticEventManager.LastEventHandler);
 	for (auto Level : AllLevels())
@@ -3694,7 +3695,6 @@ void D_Cleanup()
 	G_ClearMapinfo();
 
 	M_ClearMenus();					// close menu if open
-	F_EndFinale();					// If an intermission is active, end it now
 	AM_ClearColorsets();
 	DeinitSWColorMaps();
 	FreeSBarInfoScript();

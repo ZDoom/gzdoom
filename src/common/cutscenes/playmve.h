@@ -58,7 +58,7 @@ public:
     {
         CHUNK_PREAMBLE_SIZE = 4,
         OPCODE_PREAMBLE_SIZE = 4,
-        
+
         CHUNK_INIT_AUDIO   = 0x0000,
         CHUNK_AUDIO_ONLY   = 0x0001,
         CHUNK_INIT_VIDEO   = 0x0002,
@@ -70,7 +70,7 @@ public:
         CHUNK_NOMEM        = 0xFFFD,
         CHUNK_EOF          = 0xFFFE,
         CHUNK_BAD          = 0xFFFF,
-        
+
         OPCODE_END_OF_STREAM           = 0x00,
         OPCODE_END_OF_CHUNK            = 0x01,
         OPCODE_CREATE_TIMER            = 0x02,
@@ -93,7 +93,7 @@ public:
         OPCODE_UNKNOWN_13              = 0x13,
         OPCODE_UNKNOWN_14              = 0x14,
         OPCODE_UNKNOWN_15              = 0x15,
-        
+
         PALETTE_COUNT = 256,
         kAudioBlocks    = 20 // alloc a lot of blocks - need to store lots of audio data before video frames start.
     };

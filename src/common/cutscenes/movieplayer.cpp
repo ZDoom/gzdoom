@@ -123,12 +123,9 @@ public:
 		frametime = currentclock;
 
 		int delay = 20;
-		if (frameTicks)
-		{
-			if (curframe == 1) delay = frameTicks[0];
-			else if (curframe < numframes - 2) delay = frameTicks[1];
-			else delay = frameTicks[2];
-		}
+		if (curframe == 1) delay = frameTicks[0];
+		else if (curframe < numframes - 2) delay = frameTicks[1];
+		else delay = frameTicks[2];
 		nextframetime += delay;
 
 		bool nostopsound = (flags & NOSOUNDCUTOFF);
@@ -177,7 +174,7 @@ class MvePlayer : public MoviePlayer
 {
 	InterplayDecoder decoder;
 	bool failed = false;
-	
+
 public:
 	bool isvalid() { return !failed; }
 
@@ -532,7 +529,7 @@ public:
 		SmkPlayer* pId = (SmkPlayer*)userdata;
 		memcpy(buff, &pId->adata.samples[pId->adata.nRead], len);
 		pId->adata.nRead += len / 2;
-		if (pId->adata.nRead >= countof(pId->adata.samples)) pId->adata.nRead = 0;
+		if (pId->adata.nRead >= (int)countof(pId->adata.samples)) pId->adata.nRead = 0;
 		return true;
 	}
 
@@ -541,7 +538,7 @@ public:
 		for (unsigned i = 0; i < count; i++)
 		{
 			adata.samples[adata.nWrite] = (audioBuffer[i] - 128) << 8;
-			if (++adata.nWrite >= countof(adata.samples)) adata.nWrite = 0;
+			if (++adata.nWrite >= (int)countof(adata.samples)) adata.nWrite = 0;
 		}
 	}
 
@@ -551,7 +548,7 @@ public:
 		for (unsigned i = 0; i < count/2; i++)
 		{
 			adata.samples[adata.nWrite] = *ptr++;
-			if (++adata.nWrite >= countof(adata.samples)) adata.nWrite = 0;
+			if (++adata.nWrite >= (int)countof(adata.samples)) adata.nWrite = 0;
 		}
 	}
 
@@ -565,7 +562,7 @@ public:
 		}
 		flags = flags_;
 		Smacker_GetFrameSize(hSMK, nWidth, nHeight);
-		pFrame.Resize(nWidth * nHeight + std::max(nWidth, nHeight));
+		pFrame.Resize(nWidth * nHeight + max(nWidth, nHeight));
 		float frameRate = Smacker_GetFrameRate(hSMK);
 		nFrameNs = uint64_t(1'000'000'000 / frameRate);
 		nFrames = Smacker_GetNumFrames(hSMK);
@@ -789,7 +786,7 @@ DEFINE_ACTION_FUNCTION(_MoviePlayer, Create)
 	auto movie = OpenMovie(filename, *sndinf, frametime == -1? nullptr : frametimes, flags, error);
 	if (!movie)
 	{
-		Printf(TEXTCOLOR_YELLOW, "%s", error.GetChars());
+		Printf(TEXTCOLOR_YELLOW "%s", error.GetChars());
 	}
 	ACTION_RETURN_POINTER(movie);
 }
@@ -808,7 +805,6 @@ DEFINE_ACTION_FUNCTION(_MoviePlayer, Frame)
 	PARAM_SELF_STRUCT_PROLOGUE(MoviePlayer);
 	PARAM_FLOAT(clock);
 	ACTION_RETURN_INT(self->Frame(int64_t(clock)));
-	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(_MoviePlayer, Destroy)

@@ -34,7 +34,6 @@ struct SystemCallbacks
 	void (*FontCharCreated)(FGameTexture* base, FGameTexture* untranslated);
 	void (*ToggleFullConsole)();
 	void (*StartCutscene)(bool blockui);
-
 };
 
 extern SystemCallbacks sysCallbacks;

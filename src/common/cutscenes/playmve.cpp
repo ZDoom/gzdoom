@@ -49,7 +49,7 @@
 #include "v_draw.h"
 #include "s_music.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 
 
 
@@ -97,7 +97,7 @@ static bool StreamCallbackFunc(SoundStream* stream, void* buff, int len, void* u
     InterplayDecoder* pId = (InterplayDecoder*)userdata;
     memcpy(buff, &pId->audio.samples[pId->audio.nRead], len);
     pId->audio.nRead += len / 2;
-    if (pId->audio.nRead >= countof(pId->audio.samples)) pId->audio.nRead = 0;
+    if (pId->audio.nRead >= (int)countof(pId->audio.samples)) pId->audio.nRead = 0;
     return true;
 }
 
@@ -364,7 +364,7 @@ bool InterplayDecoder::RunFrame(uint64_t clock)
                     }
 
                     audio.samples[audio.nWrite++] = predictor[ch];
-                    if (audio.nWrite >= countof(audio.samples)) audio.nWrite = 0;
+                    if (audio.nWrite >= (int)countof(audio.samples)) audio.nWrite = 0;
                 }
 
                 int ch = 0;
@@ -374,7 +374,7 @@ bool InterplayDecoder::RunFrame(uint64_t clock)
                     predictor[ch] = clamp(predictor[ch], -32768, 32768);
 
                     audio.samples[audio.nWrite++] = predictor[ch];
-                    if (audio.nWrite >= countof(audio.samples)) audio.nWrite = 0;
+                    if (audio.nWrite >= (int)countof(audio.samples)) audio.nWrite = 0;
 
                     // toggle channel
                     ch ^= audio.nChannels - 1;
@@ -442,7 +442,7 @@ bool InterplayDecoder::RunFrame(uint64_t clock)
                 }
                 else
                 {
-                    if (opcodeSize != decodeMap.nSize) {
+                    if (opcodeSize != (int)decodeMap.nSize) {
                         delete[] decodeMap.pData;
                         decodeMap.pData = new uint8_t[opcodeSize];
                         decodeMap.nSize = opcodeSize;
@@ -464,7 +464,7 @@ bool InterplayDecoder::RunFrame(uint64_t clock)
                 if (decodeMap.nSize)
                 {
                     int i = 0;
-    
+
                     for (uint32_t y = 0; y < nHeight; y += 8)
                     {
                         for (uint32_t x = 0; x < nWidth; x += 8)
@@ -948,7 +948,7 @@ void InterplayDecoder::DecodeBlock13(int32_t offset)
 {
     // 4-color block encoding: each 4x4 block is a different color
     uint8_t* pBuffer = GetCurrentFrame() + (intptr_t)offset;
-    uint8_t P[2];
+    uint8_t P[2] = {};
 
     for (int y = 0; y < 8; y++)
     {

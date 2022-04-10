@@ -243,9 +243,9 @@ const char *kSMK4iD = "SMK4";
  * Context used for code reconstructing
  */
 typedef struct HuffContext {
-    int length;
-    int maxlength;
-    int current;
+    int length = 0;
+    int maxlength = 0;
+    int current = 0;
 
 	std::vector<uint32_t> bits;
 	std::vector<int> lengths;

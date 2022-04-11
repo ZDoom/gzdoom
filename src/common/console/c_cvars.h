@@ -210,14 +210,17 @@ protected:
 	uint32_t Flags;
 	bool inCallback = false;
 
+public:
+	static inline bool m_inEnable = false;
+
 private:
 	FBaseCVar (const FBaseCVar &var) = delete;
 	FBaseCVar (const char *name, uint32_t flags);
 	void (*m_Callback)(FBaseCVar &);
 	FBaseCVar *m_Next;
 
-	static bool m_UseCallback;
-	static bool m_DoNoSet;
+	static inline bool m_UseCallback = false;
+	static inline bool m_DoNoSet = false;
 
 	void *m_ExtraDataPointer;
 

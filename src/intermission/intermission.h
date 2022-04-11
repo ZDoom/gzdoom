@@ -10,7 +10,7 @@
 #include "g_game.h"
 #include "v_text.h"
 
-struct event_t;
+struct FInputEvent;
 struct FState;
 
 #define DECLARE_SUPER_CLASS(cls,parent) \
@@ -176,7 +176,7 @@ public:
 
 	DIntermissionScreen() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
 	void OnDestroy() override;
@@ -202,7 +202,7 @@ public:
 
 	DIntermissionScreenFader() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
 };
@@ -227,7 +227,7 @@ public:
 
 	DIntermissionScreenText() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual void Drawer ();
 };
 
@@ -256,7 +256,7 @@ public:
 
 	DIntermissionScreenCast() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
 };
@@ -275,7 +275,7 @@ public:
 
 	DIntermissionScreenScroller() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual void Drawer ();
 };
 
@@ -296,14 +296,13 @@ class DIntermissionController : public DObject
 	bool mDeleteDesc;
 	bool mFirst;
 	bool mAdvance, mSentAdvance;
-	uint8_t mGameState;
 	int mIndex;
 
 public:
-	static DIntermissionController *CurrentIntermission;
+	bool mEndGame;
 
-	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, uint8_t state = FSTATE_ChangingLevel);
-	bool Responder (event_t *ev);
+	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false);
+	bool Responder (FInputEvent *ev);
 	void Ticker ();
 	void Drawer ();
 	void OnDestroy() override;
@@ -314,8 +313,8 @@ public:
 
 
 // Interface for main loop
-DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state);
-DIntermissionController* F_StartIntermission(FName desc, uint8_t state);
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme);
+DIntermissionController* F_StartIntermission(FName desc);
 
 // Create an intermission from old cluster data
 DIntermissionController* F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 

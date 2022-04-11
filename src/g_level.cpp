@@ -839,7 +839,8 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 
 	thiscluster = FindClusterInfo (cluster);
 
-	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
+	bool endgame = strncmp (nextlevel, "enDSeQ", 6) == 0;
+	if (endgame)
 	{
 		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
 		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
@@ -902,6 +903,7 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 					ext->mDefined & FExitText::DEF_LOOKUP,
 					false);
 			}
+			if (controller) controller->mEndGame = false;
 			return controller;
 		}
 
@@ -933,7 +935,33 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 			}
 		}
 	}
+	if (controller) controller->mEndGame = endgame;
 	return controller;
+}
+
+void RunIntermission(DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
+{
+	runner = CreateRunner();
+	GC::WriteBarrier(runner);
+	completion = std::move(completionf);
+
+	auto func = LookupFunction("DoomCutscenes.BuildMapTransition");
+	if (func == nullptr)
+	{
+		I_Error("Script function 'DoomCutscenes.BuildMapTransition' not found");
+	}
+	VMValue val[3] = { runner, intermissionScreen, statusScreen };
+	VMCall(func, val, 3, nullptr, 0);
+
+	if (!ScreenJobValidate())
+	{
+		runner->Destroy();
+		runner = nullptr;
+		if (completion) completion(false);
+		completion = nullptr;
+		return;
+	}
+	gameaction = ga_intermission;
 }
 
 void G_DoCompleted (void)
@@ -972,17 +1000,16 @@ void G_DoCompleted (void)
 	DObject* statusScreen = nullptr, *intermissionScreen = nullptr;
 	if (playinter)
 	{
-		viewactive = false;
-		automapactive = false;
-		
 		// [RH] If you ever get a statistics driver operational, adapt this.
 		//	if (statcopy)
 		//		memcpy (statcopy, &wminfo, sizeof(wminfo));
 		
 		statusScreen = WI_Start (&staticWmInfo);
 	}
+	bool endgame = intermissionScreen && intermissionScreen->mEndGame;
 	intermissionScreen = primaryLevel->CreateIntermission();
-	// todo: create start of level screenjob.
+	RunIntermission(intermissionScreen, statusScreen, [=](bool) { if (!endgame) primaryLevel->WorldDone(); }
+)
 }
 
 //==========================================================================

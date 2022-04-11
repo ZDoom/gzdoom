@@ -1,11 +1,13 @@
 
 
-class IntermissionController native
+class IntermissionController native ui
 {
     // This is mostly a black box to the native intermission code.
     // May be scriptified later, but right now we do not need it.
-    static native IntermissionController Creeate(String music, int musicorder, String flat, String text, int textInLump, int finalePic, int lookupText, bool ending, Name endsequence);
+	/*
+    static native IntermissionController Create(String music, int musicorder, String flat, String text, int textInLump, int finalePic, int lookupText, bool ending, Name endsequence);
     static native IntermissionController CreateNamed(Name nm);
+	*/
     native bool Responder(InputEvent ev);
     native bool Ticker();
     native void Drawer();
@@ -16,21 +18,12 @@ class IntermissionController native
 class IntermissionScreenJob : ScreenJob
 {
     IntermissionController controller;
-
-    void Init(String music, int musicorder, String flat, String text, int textInLump, int finalePic, int lookupText, bool ending, Name endsequence)
-	{
-		controller = IntermissionController.Create(music, musicorder, flat, text, textInLump, finalePic, lookupText, ending, endsequence);
-	}
-
-    void InitNamed(Name nm)
-    {
-        controller = IntermissionController.CreateNamed(nm);
-    }
+	
+	void Init(IntermissionController ctrl) { controller = ctrl; }
 
 	override bool OnEvent(InputEvent evt) { return controller.Responder(evt); }
-	virtual void OnTick() { if (!controller.Ticker()) jobstate = finished; }
-	virtual void Draw(double smoothratio) { controller.Drawer(); }
-	virtual void OnSkip() { if (!controller.NextPage()) jobstate = finished; }
+	override void OnTick() { if (!controller.Ticker()) jobstate = finished; }
+	override void Draw(double smoothratio) { controller.Drawer(); }
 
 	override void OnDestroy()
 	{
@@ -40,7 +33,7 @@ class IntermissionScreenJob : ScreenJob
 }
 
 
-class StatusScreenJob : ScreenJob
+class StatusScreenJob : SkippableScreenJob
 {
     StatusScreen controller;
 
@@ -49,14 +42,35 @@ class StatusScreenJob : ScreenJob
 		controller = scr;
 	}
 
-	override bool OnEvent(InputEvent evt) { return controller.Responder(evt); }
-	virtual void OnTick() { controller.Ticker(); if (controller.CurState == StatusScreen.LeavingIntermission) jobstate = finished; }
-	virtual void Draw(double smoothratio) { controller.Drawer(); }
-	virtual void OnSkip() { if (!controller.NextStage()) jobstate = finished; }
+	override void OnTick() { controller.Ticker(); if (controller.CurState == StatusScreen.LeavingIntermission) jobstate = finished; }
+	override void Draw(double smoothratio) { controller.Drawer(); }
+	override void OnSkip() { controller.NextStage(); } // skipping status screens is asynchronous, so yields no result
 
 	override void OnDestroy()
 	{
         controller.Destroy();
         Super.OnDestroy();
+	}
+}
+
+
+class DoomCutscenes
+{
+	//---------------------------------------------------------------------------
+	//
+	//
+	//
+	//---------------------------------------------------------------------------
+
+	static void BuildMapTransition(ScreenJobRunner runner, IntermissionController inter, StatusScreen status)
+	{
+		if (status)
+		{
+			runner.Append(new("StatusScreenJob").Init(status));
+		}
+		if (inter)
+		{
+			runner.Append(new("IntermissionScreenJob").Init(inter));
+		}
 	}
 }

@@ -796,25 +796,9 @@ class StatusScreen abstract play version("2.5")
 	//
 	// ====================================================================
 
-	protected void checkForAccelerate(void)
+	void nextStage(void)
 	{
-		int i;
-
-		// check for button presses to skip delays
-		for (i = 0; i < MAXPLAYERS; i++)
-		{
-			PlayerInfo player = players[i];
-			if (playeringame[i])
-			{
-				if ((player.cmd.buttons ^ player.oldbuttons) &&
-					((player.cmd.buttons & player.oldbuttons) == player.oldbuttons) && player.Bot == NULL)
-				{
-					acceleratestage = 1;
-					playerready[i] = true;
-				}
-				player.oldbuttons = player.buttons;
-			}
-		}
+		accelerateStage = 1;
 	}
 	
 	// ====================================================================

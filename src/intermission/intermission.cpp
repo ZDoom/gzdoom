@@ -196,9 +196,9 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 }
 
 
-int DIntermissionScreen::Responder (event_t *ev)
+int DIntermissionScreen::Responder (FInputEvent *ev)
 {
-	if (ev->type == EV_KeyDown)
+	if (ev->Type == EV_KeyDown)
 	{
 		return -1;
 	}
@@ -275,9 +275,9 @@ void DIntermissionScreenFader::Init(FIntermissionAction *desc, bool first)
 //
 //===========================================================================
 
-int DIntermissionScreenFader::Responder (event_t *ev)
+int DIntermissionScreenFader::Responder (FInputEvent *ev)
 {
-	if (ev->type == EV_KeyDown)
+	if (ev->Type == EV_KeyDown)
 	{
 		return -1;
 	}
@@ -367,9 +367,9 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mDuration > 0) mDuration += mTextDelay + mTextSpeed * mTextLen;
 }
 
-int DIntermissionScreenText::Responder (event_t *ev)
+int DIntermissionScreenText::Responder (FInputEvent *ev)
 {
-	if (ev->type == EV_KeyDown)
+	if (ev->Type == EV_KeyDown)
 	{
 		if (mTicker < mTextDelay + (mTextLen * mTextSpeed))
 		{
@@ -517,9 +517,9 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	}
 }
 
-int DIntermissionScreenCast::Responder (event_t *ev)
+int DIntermissionScreenCast::Responder (FInputEvent *ev)
 {
-	if (ev->type != EV_KeyDown) return 0;
+	if (ev->Type != EV_KeyDown) return 0;
 
 	if (castdeath)
 		return 1;					// already in dying frames
@@ -715,7 +715,7 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;
 }
 
-int DIntermissionScreenScroller::Responder (event_t *ev)
+int DIntermissionScreenScroller::Responder (FInputEvent *ev)
 {
 	int res = Super::Responder(ev);
 	if (res == -1 && !nointerscrollabort)
@@ -835,7 +835,7 @@ void DIntermissionScreenScroller::Drawer ()
 //
 //==========================================================================
 
-DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, uint8_t state)
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc)
 {
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
@@ -844,7 +844,6 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mSentAdvance = false;
 	mScreen = nullptr;
 	mFirst = true;
-	mGameState = state;
 }
 
 bool DIntermissionController::NextPage ()
@@ -903,13 +902,13 @@ again:
 	return false;
 }
 
-bool DIntermissionController::Responder (event_t *ev)
+bool DIntermissionController::Responder (FInputEvent *ev)
 {
 	if (mScreen != NULL)
 	{
-		if (ev->type == EV_KeyDown)
+		if (ev->Type == EV_KeyDown)
 		{
-			const char *cmd = Bindings.GetBind (ev->data1);
+			const char *cmd = Bindings.GetBind (ev->KeyScan);
 
 			if (cmd != nullptr)
 			{
@@ -954,25 +953,6 @@ void DIntermissionController::Ticker ()
 		mAdvance = false;
 		if (!NextPage())
 		{
-			switch (mGameState)
-			{
-			case FSTATE_InLevel:
-				primaryLevel->SetMusic();
-				gamestate = GS_LEVEL;
-				wipegamestate = GS_LEVEL;
-				gameaction = ga_resumeconversation;
-				viewactive = true;
-				Destroy();
-				break;
-
-			case FSTATE_ChangingLevel:
-				gameaction = ga_worlddone;
-				Destroy();
-				break;
-
-			default:
-				break;
-			}
 		}
 	}
 }
@@ -1001,16 +981,14 @@ void DIntermissionController::OnDestroy ()
 //
 //==========================================================================
 
-DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme)
 {
 	ScaleOverrider s(twod);
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
-	if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
-	viewactive = false;
-	automapactive = false;
-	auto CurrentIntermission = Create<DIntermissionController>(desc, deleteme, state);
+	//if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
+	auto CurrentIntermission = Create<DIntermissionController>(desc, deleteme);
 
 	// If the intermission finishes straight away then cancel the wipe.
 	if (!CurrentIntermission->NextPage())
@@ -1029,7 +1007,7 @@ DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool
 //
 //==========================================================================
 
-DIntermissionController* F_StartIntermission(FName seq, uint8_t state)
+DIntermissionController* F_StartIntermission(FName seq)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
 	if (pdesc == nullptr)
@@ -1038,8 +1016,36 @@ DIntermissionController* F_StartIntermission(FName seq, uint8_t state)
 	}
 	else
 	{
-		F_StartIntermission(*pdesc, false, state);
+		return F_StartIntermission(*pdesc, false);
 	}
+}
+
+
+DEFINE_ACTION_FUNCTION(DIntermissionController, Responder)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	PARAM_POINTER(evt, FInputEvent);
+	ACTION_RETURN_BOOL(self->Responder(evt));
+}
+
+DEFINE_ACTION_FUNCTION(DIntermissionController, Ticker)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	self->Ticker();
+	ACTION_RETURN_BOOL(true);
+}
+
+DEFINE_ACTION_FUNCTION(DIntermissionController, Drawer)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	self->Ticker();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DIntermissionController, NextPage)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	ACTION_RETURN_BOOL(self->NextPage());
 }
 
 #include "c_dispatch.h"

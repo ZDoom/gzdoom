@@ -41,6 +41,7 @@
 #include "c_dispatch.h"
 #include "gstrings.h"
 #include "gi.h"
+#include "screenjob.h"
 	
 
 static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
@@ -922,7 +923,6 @@ DIntermissionController* F_StartFinale (const char *music, int musicorder, int c
 	return nullptr;
 }
 
-
 CCMD(testfinale)
 {
 	if (argv.argc() < 2)
@@ -954,5 +954,6 @@ CCMD(testfinale)
 	}
 
 	auto controller = F_StartFinale(gameinfo.finaleMusic, gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat, text, false, false, true, true);
-	// todo: play it
+	RunIntermission(controller, nullptr, [=](bool) { gameaction = ga_nothing; });
+
 }

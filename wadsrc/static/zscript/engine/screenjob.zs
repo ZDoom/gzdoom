@@ -1,5 +1,5 @@
 
-class ScreenJob : Object
+class ScreenJob : Object UI
 {
 	int flags;
 	float fadetime;	// in milliseconds
@@ -299,7 +299,7 @@ class MoviePlayerJob : SkippableScreenJob
 //
 //---------------------------------------------------------------------------
 
-class ScreenJobRunner : Object
+class ScreenJobRunner : Object UI
 {
 	enum ERunState
 	{

@@ -143,7 +143,6 @@ extern bool playedtitlemusic;
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
-FName			SelectedSlideshow;		// what to start when ga_slideshow
 
 int 			paused;
 bool			pauseext;
@@ -1169,9 +1168,6 @@ void G_Ticker ()
 		case ga_completed:
 			G_DoCompleted ();
 			break;
-		case ga_slideshow:
-			if (gamestate == GS_LEVEL) F_StartIntermission(SelectedSlideshow, FSTATE_InLevel);
-			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
 			break;
@@ -1192,6 +1188,11 @@ void G_Ticker ()
 			P_ResumeConversation ();
 			gameaction = ga_nothing;
 			break;
+		case ga_intermission:
+			gamestate = GS_CUTSCENE;
+			break;
+
+
 		default:
 		case ga_nothing:
 			break;
@@ -3058,8 +3059,16 @@ bool G_CheckDemoStatus (void)
 
 void G_StartSlideshow(FLevelLocals *Level, FName whichone)
 {
-	gameaction = ga_slideshow;
-	SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
+	auto SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
+	auto slide = F_StartIntermission(SelectedSlideshow);
+	RunIntermission(slide, nullptr, [](bool)
+	{
+		primaryLevel->SetMusic();
+		gamestate = GS_LEVEL;
+		wipegamestate = GS_LEVEL;
+		gameaction = ga_resumeconversation;
+
+	});
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)

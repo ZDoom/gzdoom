@@ -189,6 +189,7 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( JPEG )
+find_package( VPX )
 find_package( ZLIB )
 
 include( TargetArch )

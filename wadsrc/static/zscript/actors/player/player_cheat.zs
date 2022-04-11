@@ -207,7 +207,7 @@ extend class PlayerPawn
 				if (type!= null)
 				{
 					let def = GetDefaultByType (type);
-					if (def.Icon.isValid() && def.MaxAmount > 1 &&
+					if (def.Icon.isValid() && (def.MaxAmount > 1 || def.bAutoActivate == false) &&
 						!(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor"))
 					{
 						// Do not give replaced items unless using "give everything"

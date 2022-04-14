@@ -233,7 +233,7 @@ xx(A_FirePlasma)
 xx(A_FireBFG)
 xx(A_FireOldBFG)
 xx(A_FireRailgun)
-xx(A_ConsumeAmmo)
+xx(MBF21_ConsumeAmmo)
 
 // Special translation names
 xx(RainPillar1)

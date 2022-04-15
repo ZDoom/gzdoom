@@ -56,12 +56,12 @@ extern FFastTrig fasttrig;
 
 inline double fastcosbam(double v)
 {
-	return fasttrig.cos(v);
+	return fasttrig.cos(xs_CRoundToUInt(v));
 }
 
 inline double fastsinbam(double v)
 {
-	return fasttrig.sin(v);
+	return fasttrig.sin(xs_CRoundToUInt(v));
 }
 
 inline double fastcosdeg(double v)

@@ -1260,14 +1260,20 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 12 && stricmp(Line1, "dropped item") == 0)
 		{
+			val--;	// This is 1-based and 0 means 'no drop'.
 			if ((unsigned)val < InfoNames.Size())
 			{
 				FDropItem* di = (FDropItem*)ClassDataAllocator.Alloc(sizeof(FDropItem));
 
+				di->Next = nullptr;
 				di->Name = InfoNames[val]->TypeName.GetChars();
 				di->Probability = 255;
 				di->Amount = -1;
 				info->GetInfo()->DropItems = di;
+			}
+			else if (val == -1)
+			{
+				info->GetInfo()->DropItems = nullptr;
 			}
 		}
 		else if (linelen == 11 && stricmp(Line1, "blood color") == 0)

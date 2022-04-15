@@ -753,6 +753,12 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 	desc->mVirtWidth = -2;
 	desc->mCustomSizeSet = false;
+	if (DefaultListMenuSettings->mCustomSizeSet)
+	{
+		desc->mVirtHeight = DefaultListMenuSettings->mVirtHeight;
+		desc->mVirtWidth = DefaultListMenuSettings->mVirtWidth;
+		desc->mCustomSizeSet = true;
+	}
 
 	ParseListMenuBody(sc, desc, -1);
 	ReplaceMenu(sc, desc);

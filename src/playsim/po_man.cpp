@@ -945,7 +945,7 @@ bool FPolyObj::RotatePolyobj (DAngle angle, bool fromsave)
 
 	UnLinkPolyobj();
 
-	for(unsigned i=0;i < Vertices.Size(); i++)
+	for(unsigned i=0;i < OriginalPts.Size(); i++)
 	{
 		PrevPts[i].pos = Vertices[i]->fPos();
 		FPolyVertex torot = OriginalPts[i];

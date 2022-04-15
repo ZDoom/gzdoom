@@ -170,7 +170,7 @@ void DBaseStatusBar::DrawAltHUD()
 	int hudwidth = twod->GetWidth() / scale;
 	int hudheight = hud_aspectscale ? int(twod->GetHeight() / (scale*1.2)) : twod->GetHeight() / scale;
 
-	IFVM(AltHud, Draw)
+	IFVIRTUALPTRNAME(AltHud, "AltHud", Draw)
 	{
 		VMValue params[] = { AltHud, CPlayer, hudwidth, hudheight };
 		VMCall(func, params, countof(params), nullptr, 0);

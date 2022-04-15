@@ -4767,10 +4767,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	PClassActor *type = PClass::FindActor(pufftype);
 	if (type == NULL)
 	{
-		if (victim != NULL)
-		{
-			memset(victim, 0, sizeof(*victim));
-		}
+		if (victim != NULL) *victim = {};
 		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
 		return NULL;
 	}

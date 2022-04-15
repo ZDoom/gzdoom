@@ -1497,6 +1497,12 @@ void subsector_t::BuildPolyBSP()
 		BSP->Subsectors[i].sector = sector;
 		BSP->Subsectors[i].section = section;
 	}
+	for (unsigned i = 0; i < BSP->Segs.Size(); i++)
+	{
+		BSP->Segs[i].Subsector = this;
+		BSP->Segs[i].PartnerSeg = nullptr;
+	}
+
 }
 
 //===========================================================================

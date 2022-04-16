@@ -459,6 +459,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, SavegameCount)
 
 FSaveGameNode *FSavegameManagerBase::GetSavegame(int i)
 {
+	if ((unsigned)i >= SaveGames.Size()) ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Bad savegame index");
 	return SaveGames[i];
 }
 

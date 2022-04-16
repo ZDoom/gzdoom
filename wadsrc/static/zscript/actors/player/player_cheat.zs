@@ -175,7 +175,7 @@ extend class PlayerPawn
 			for (i = 0; i < AllActorClasses.Size(); ++i)
 			{
 				let type = (class<Weapon>)(AllActorClasses[i]);
-				if (type != null && type != "Weapon")
+				if (type != null && type != "Weapon" && !type.isAbstract())
 				{
 					// Don't give replaced weapons unless the replacement was done by Dehacked.
 					let rep = GetReplacement(type);

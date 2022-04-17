@@ -72,10 +72,6 @@ if(UNIX)
     add_library(discord-rpc ${BASE_RPC_SRC})
     target_link_libraries(discord-rpc PUBLIC pthread)
 
-    if (APPLE)
-        target_link_libraries(discord-rpc PRIVATE "-framework AppKit, -mmacosx-version-min=10.10")
-    endif (APPLE)
-
     target_compile_options(discord-rpc PRIVATE
         -g
         -Wall

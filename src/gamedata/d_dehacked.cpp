@@ -237,7 +237,6 @@ static AmmoPerAttack AmmoPerAttacks[] = {
 	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
 	{ NAME_A_FireOldBFG, 1},
 	{ NAME_A_FireRailgun, 1},
-	{ NAME_MBF21_ConsumeAmmo, 1}, // MBF21
 	{ NAME_None, 0}
 };
 
@@ -2588,11 +2587,15 @@ static int PatchCodePtrs (int dummy)
 			{
 				FString symname;
 
-
 				if ((Line2[0] == 'A' || Line2[0] == 'a') && Line2[1] == '_')
 					symname = Line2;
 				else
 					symname.Format("A_%s", Line2);
+
+				// Hack alert: If A_ConsumeAmmo is used we need to handle the ammo use differently.
+				// Since this is a parameterized code pointer the AmmoPerAttack check cannot find it easily without some help.
+				if (symname.CompareNoCase("A_ConsumeAmmo") == 0)
+					state->StateFlags |= STF_CONSUMEAMMO;
 
 				// Let's consider as aliases some redundant MBF pointer
 				bool ismbfcp = false;
@@ -3571,8 +3574,8 @@ void FinishDehPatch ()
 		}
 		else
 		{
+			bool handled = false;
 			weap->BoolVar(NAME_bDehAmmo) = true;
-			weap->IntVar(NAME_AmmoUse1) = 0;
 			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
 			// and set its default ammo use as the weapon's AmmoUse1.
 
@@ -3587,6 +3590,13 @@ void FinishDehPatch ()
 					break;	// State has already been checked so we reached a loop
 				}
 				StateVisited[state] = true;
+				if (state->StateFlags & STF_CONSUMEAMMO)
+				{
+					// If A_ConsumeAmmo is being used we have to rely on the existing AmmoUse1 value.
+					handled = true;
+					state->StateFlags &= ~STF_CONSUMEAMMO;
+					break;
+				}
 				for(unsigned j = 0; AmmoPerAttacks[j].func != NAME_None; j++)
 				{
 					if (AmmoPerAttacks[j].ptr == nullptr)
@@ -3601,11 +3611,17 @@ void FinishDehPatch ()
 						int use = AmmoPerAttacks[j].ammocount;
 						if (use < 0) use = deh.BFGCells;
 						weap->IntVar(NAME_AmmoUse1) = use;
+						handled = true;
 						break;
 					}
 				}
 				if (found) break;
 				state = state->GetNextState();
+			}
+			if (!handled)
+			{
+				weap->IntVar(NAME_AmmoUse1) = 0;
+
 			}
 		}
 	}

@@ -72,6 +72,7 @@ enum EStateFlags
 	STF_SAMEFRAME = 16,	// Ignore Frame (except when spawning actor)
 	STF_CANRAISE = 32,	// Allows a monster to be resurrected without waiting for an infinate frame
 	STF_DEHACKED = 64,	// Modified by Dehacked
+	STF_CONSUMEAMMO = 128,	// Needed by the Dehacked parser.
 };
 
 enum EStateType : int // this must ensure proper alignment.

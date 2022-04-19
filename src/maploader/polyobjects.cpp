@@ -295,8 +295,8 @@ void MapLoader::TranslateToStartSpot (int tag, const DVector2 &origin)
 		Printf(TEXTCOLOR_RED "TranslateToStartSpot: Anchor point located without a StartSpot point: %d\n", tag);
 		return;
 	}
-	po->OriginalPts.Resize(po->Sidedefs.Size());
-	po->PrevPts.Resize(po->Sidedefs.Size());
+	po->OriginalPts.Resize(po->Vertices.Size());
+	po->PrevPts.Resize(po->Vertices.Size());
 	delta = origin - po->StartSpot.pos;
 
 	for (unsigned i = 0; i < po->Sidedefs.Size(); i++)

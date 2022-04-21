@@ -170,7 +170,7 @@ namespace OpenGLESRenderer
 		gles.modelstring = (char*)glGetString(GL_RENDERER);
 		gles.vendorstring = (char*)glGetString(GL_VENDOR);
 
-		//gl_customshader = false;
+		gl_customshader = false;
 
 		GLint maxTextureSize[1];
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize);

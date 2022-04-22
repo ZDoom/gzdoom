@@ -796,11 +796,16 @@ class StatusScreen abstract ui version("2.5")
 	//
 	// ====================================================================
 
-	void nextStage(void)
+	virtual bool Responder(InputEvent evt)
 	{
-		accelerateStage = 1;
+		if (evt.type == InputEvent.Type_KeyDown)
+		{
+			accelerateStage = 1;
+			return true;
+		}
+		return false;
 	}
-	
+
 	void checkForAccelerate()
 	{
 		// no longer used, but still needed for old content.
@@ -836,7 +841,6 @@ class StatusScreen abstract ui version("2.5")
 			StartMusic();
 		}
 	
-		checkForAccelerate();
 		bg.updateAnimatedBack();
 	
 		switch (CurState)

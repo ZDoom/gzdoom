@@ -1025,11 +1025,7 @@ void D_Display ()
 				
 		case GS_CUTSCENE:
 		case GS_INTRO:
-			if (ScreenJobTick())
-			{
-				// synchronize termination with the playsim.
-				Net_WriteByte(DEM_ENDSCREENJOB);
-			}
+			ScreenJobDraw();
 			break;
 
 
@@ -3699,7 +3695,8 @@ void D_Cleanup()
 	AM_ClearColorsets();
 	DeinitSWColorMaps();
 	FreeSBarInfoScript();
-	
+	DeleteScreenJob();
+
 	// clean up game state
 	D_ErrorCleanup ();
 	P_Shutdown();
@@ -3728,7 +3725,7 @@ void D_Cleanup()
 	GameStartupInfo.LoadWidescreen = GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
 	GameStartupInfo.DiscordAppId = "";
 	GameStartupInfo.SteamAppId = "";
-	
+		
 	GC::FullGC();					// clean up before taking down the object list.
 	
 	// Delete the reference to the VM functions here which were deleted and will be recreated after the restart.

@@ -87,6 +87,7 @@
 #include "d_buttons.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "doommenu.h"
+#include "screenjob.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -969,6 +970,11 @@ bool G_Responder (event_t *ev)
 	if (ev->type != EV_Mouse && primaryLevel->localEventManager->Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 		return true;
 	
+	if (gamestate == GS_INTRO || gamestate == GS_CUTSCENE)
+	{
+		return ScreenJobResponder(ev);
+	}
+	
 	// any other key pops up menu if in demos
 	// [RH] But only if the key isn't bound to a "special" command
 	if (gameaction == ga_nothing && 
@@ -1292,6 +1298,15 @@ void G_Ticker ()
 		{
 			gamestate = GS_FULLCONSOLE;
 			gameaction = ga_fullconsole;
+		}
+		break;
+
+	case GS_CUTSCENE:
+	case GS_INTRO:
+		if (ScreenJobTick())
+		{
+			// synchronize termination with the playsim.
+			Net_WriteByte(DEM_ENDSCREENJOB);
 		}
 		break;
 

@@ -37,7 +37,7 @@ class IntermissionScreenJob : ScreenJob
 }
 
 
-class StatusScreenJob : SkippableScreenJob
+class StatusScreenJob : ScreenJob
 {
     StatusScreen controller;
 
@@ -49,7 +49,7 @@ class StatusScreenJob : SkippableScreenJob
 
 	override void OnTick() { controller.Ticker(); if (controller.CurState == StatusScreen.LeavingIntermission) jobstate = finished; }
 	override void Draw(double smoothratio) { controller.Drawer(); }
-	override void OnSkip() { controller.NextStage(); } // skipping status screens is asynchronous, so yields no result
+	override bool OnEvent(InputEvent evt) { return controller.Responder(evt); }
 
 	override void OnDestroy()
 	{

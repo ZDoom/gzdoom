@@ -42,6 +42,7 @@
 #include "gstrings.h"
 #include "gi.h"
 #include "screenjob.h"
+#include "d_event.h"
 	
 
 static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
@@ -910,14 +911,14 @@ DIntermissionController* F_StartFinale (const char *music, int musicorder, int c
 			desc->mActions.Push(wiper);
 		}
 
-		return F_StartIntermission(desc, true, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
+		return F_StartIntermission(desc, true);
 	}
 	else if (ending)
 	{
 		FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(endsequence);
 		if (pdesc != NULL)
 		{
-			return F_StartIntermission(*pdesc, false, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
+			return F_StartIntermission(*pdesc, false);
 		}
 	}
 	return nullptr;

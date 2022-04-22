@@ -60,6 +60,7 @@
 #include "actorinlines.h"
 #include "v_draw.h"
 #include "doommenu.h"
+#include "g_game.h"
 
 static FRandom pr_randomspeech("RandomSpeech");
 

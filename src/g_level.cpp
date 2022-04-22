@@ -82,6 +82,7 @@
 #include "p_effect.h"
 #include "stringtable.h"
 #include "c_buttons.h"
+#include "screenjob.h"
 
 #include "gi.h"
 
@@ -830,7 +831,7 @@ static wbstartstruct_t staticWmInfo;
 
 DIntermissionController* FLevelLocals::CreateIntermission()
 {
-	DIntermissionController* controller;
+	DIntermissionController* controller = nullptr;
 	cluster_info_t *nextcluster;
 	cluster_info_t *thiscluster;
 
@@ -997,7 +998,8 @@ void G_DoCompleted (void)
 	}
 
 	// todo: create end of level screenjob
-	DObject* statusScreen = nullptr, *intermissionScreen = nullptr;
+	DObject* statusScreen = nullptr;
+	DIntermissionController* intermissionScreen = nullptr;
 	if (playinter)
 	{
 		// [RH] If you ever get a statistics driver operational, adapt this.
@@ -1008,8 +1010,7 @@ void G_DoCompleted (void)
 	}
 	bool endgame = intermissionScreen && intermissionScreen->mEndGame;
 	intermissionScreen = primaryLevel->CreateIntermission();
-	RunIntermission(intermissionScreen, statusScreen, [=](bool) { if (!endgame) primaryLevel->WorldDone(); }
-)
+	RunIntermission(intermissionScreen, statusScreen, [=](bool) { if (!endgame) primaryLevel->WorldDone(); });
 }
 
 //==========================================================================

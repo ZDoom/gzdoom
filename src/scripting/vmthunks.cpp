@@ -1645,7 +1645,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	 PARAM_NAME(seq);
 	 PARAM_INT(state);
-	 F_StartIntermission(seq, (uint8_t)state);
+	 G_StartSlideshow(self, seq);
 	 return 0;
  }
 

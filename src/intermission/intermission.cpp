@@ -938,7 +938,7 @@ bool DIntermissionController::Responder (FInputEvent *ev)
 	return false;
 }
 
-void DIntermissionController::Ticker ()
+bool DIntermissionController::Ticker ()
 {
 	if (mAdvance)
 	{
@@ -953,8 +953,10 @@ void DIntermissionController::Ticker ()
 		mAdvance = false;
 		if (!NextPage())
 		{
+			return false;
 		}
 	}
+	return true;
 }
 
 void DIntermissionController::Drawer ()
@@ -1031,14 +1033,13 @@ DEFINE_ACTION_FUNCTION(DIntermissionController, Responder)
 DEFINE_ACTION_FUNCTION(DIntermissionController, Ticker)
 {
 	PARAM_SELF_PROLOGUE(DIntermissionController);
-	self->Ticker();
-	ACTION_RETURN_BOOL(true);
+	ACTION_RETURN_BOOL(self->Ticker());
 }
 
 DEFINE_ACTION_FUNCTION(DIntermissionController, Drawer)
 {
 	PARAM_SELF_PROLOGUE(DIntermissionController);
-	self->Ticker();
+	self->Drawer	();
 	return 0;
 }
 

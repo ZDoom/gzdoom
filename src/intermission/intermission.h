@@ -303,7 +303,7 @@ public:
 
 	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false);
 	bool Responder (FInputEvent *ev);
-	void Ticker ();
+	bool Ticker ();
 	void Drawer ();
 	void OnDestroy() override;
 	bool NextPage();

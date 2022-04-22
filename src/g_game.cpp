@@ -1190,6 +1190,7 @@ void G_Ticker ()
 			break;
 		case ga_intermission:
 			gamestate = GS_CUTSCENE;
+			gameaction = ga_nothing;
 			break;
 
 

@@ -1,6 +1,6 @@
 // Note that the status screen needs to run in 'play' scope!
 
-class InterBackground native play version("2.5")
+class InterBackground native ui version("2.5")
 {
 	native static InterBackground Create(wbstartstruct wbst);
 	native virtual bool LoadBackground(bool isenterpic);
@@ -9,7 +9,7 @@ class InterBackground native play version("2.5")
 }
 
 // This is obsolete. Hopefully this was never used...
-struct PatchInfo play version("2.5")
+struct PatchInfo ui version("2.5")
 {
 	Font mFont;
 	deprecated("3.8") TextureID mPatch;
@@ -39,7 +39,7 @@ struct PatchInfo play version("2.5")
 };
 
 
-class StatusScreen abstract play version("2.5")
+class StatusScreen abstract ui version("2.5")
 {
 	enum EValues
 	{
@@ -799,6 +799,11 @@ class StatusScreen abstract play version("2.5")
 	void nextStage(void)
 	{
 		accelerateStage = 1;
+	}
+	
+	void checkForAccelerate()
+	{
+		// no longer used, but still needed for old content.
 	}
 	
 	// ====================================================================

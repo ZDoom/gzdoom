@@ -956,8 +956,7 @@ void RunIntermission(DIntermissionController* intermissionScreen, DObject* statu
 
 	if (!ScreenJobValidate())
 	{
-		runner->Destroy();
-		runner = nullptr;
+		DeleteScreenJob();
 		if (completion) completion(false);
 		completion = nullptr;
 		return;
@@ -1010,7 +1009,11 @@ void G_DoCompleted (void)
 	}
 	bool endgame = intermissionScreen && intermissionScreen->mEndGame;
 	intermissionScreen = primaryLevel->CreateIntermission();
-	RunIntermission(intermissionScreen, statusScreen, [=](bool) { if (!endgame) primaryLevel->WorldDone(); });
+	RunIntermission(intermissionScreen, statusScreen, [=](bool)
+					{
+		if (!endgame) primaryLevel->WorldDone();
+		
+	});
 }
 
 //==========================================================================

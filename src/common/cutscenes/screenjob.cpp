@@ -312,16 +312,14 @@ bool StartCutscene(CutsceneDef& cs, int flags, const CompletionFunc& completion_
 			cs.Create(runner);
 			if (!ScreenJobValidate())
 			{
-				runner->Destroy();
-				runner = nullptr;
+				DeleteScreenJob();
 				return false;
 			}
 			if (sysCallbacks.StartCutscene) sysCallbacks.StartCutscene(flags & SJ_BLOCKUI);
 		}
 		catch (...)
 		{
-			if (runner) runner->Destroy();
-			runner = nullptr;
+			DeleteScreenJob();
 			throw;
 		}
 		return true;

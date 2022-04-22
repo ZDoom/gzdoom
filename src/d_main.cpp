@@ -3385,6 +3385,7 @@ static int D_DoomMain_Internal (void)
 
 		R_ParseTrnslate();
 		PClassActor::StaticInit ();
+		Job_Init();
 
 		// [GRB] Initialize player class list
 		SetupPlayerClasses ();

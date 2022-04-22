@@ -19,7 +19,11 @@ class IntermissionScreenJob : ScreenJob
 {
     IntermissionController controller;
 	
-	void Init(IntermissionController ctrl) { controller = ctrl; }
+	ScreenJob Init(IntermissionController ctrl)
+	{
+		controller = ctrl;
+		return self;
+	}
 
 	override bool OnEvent(InputEvent evt) { return controller.Responder(evt); }
 	override void OnTick() { if (!controller.Ticker()) jobstate = finished; }
@@ -37,9 +41,10 @@ class StatusScreenJob : SkippableScreenJob
 {
     StatusScreen controller;
 
-    void Init(StatusScreen scr)
+    ScreenJob Init(StatusScreen scr)
 	{
 		controller = scr;
+		return self;
 	}
 
 	override void OnTick() { controller.Ticker(); if (controller.CurState == StatusScreen.LeavingIntermission) jobstate = finished; }
@@ -54,7 +59,7 @@ class StatusScreenJob : SkippableScreenJob
 }
 
 
-class DoomCutscenes
+class DoomCutscenes ui
 {
 	//---------------------------------------------------------------------------
 	//

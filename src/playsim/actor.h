@@ -47,6 +47,7 @@
 #include "g_level.h"
 #include "tflags.h"
 #include "portal.h"
+#include <common/models/model.h>
 
 struct subsector_t;
 struct FBlockNode;
@@ -1050,6 +1051,9 @@ public:
 	DVector2		SpriteOffset;
 	double			Speed;
 	double			FloatSpeed;
+
+	TArray<FSpriteModelFrame> SpriteModelFrames;
+	TArray<int> SpriteModelHash;
 
 // interaction info
 	FBlockNode		*BlockNode;			// links in blocks (if needed)

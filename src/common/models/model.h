@@ -33,7 +33,6 @@ struct FSpriteModelFrame
 	float rotationCenterX, rotationCenterY, rotationCenterZ;
 	float rotationSpeed;
 	unsigned int flags;
-	const void* type;	// used for hashing, must point to something usable as identifier for the model's owner.
 	short sprite;
 	short frame;
 	int hashnext;

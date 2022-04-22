@@ -133,7 +133,7 @@ int ModelFrameHash(FSpriteModelFrame * smf)
 	const uint32_t *table = GetCRCTable ();
 	uint32_t hash = 0xffffffff;
 
-	const char * s = (const char *)(&smf->type);	// this uses type, sprite and frame for hashing
+	const char* s = (const char*)(&smf->sprite);	// this uses sprite and frame for hashing
 	const char * se= (const char *)(&smf->hashnext);
 
 	for (; s<se; s++)

@@ -366,7 +366,7 @@ void InitModels()
 		ParseModelDefLump(Lump);
 	}
 
-	// create a hash table for quick access
+	// create a hash table for quick access, for voxels
 	SpriteModelHash.Resize(SpriteModelFrames.Size ());
 	memset(SpriteModelHash.Data(), 0xff, SpriteModelFrames.Size () * sizeof(int));
 
@@ -376,6 +376,28 @@ void InitModels()
 
 		SpriteModelFrames[i].hashnext = SpriteModelHash[j];
 		SpriteModelHash[j]=i;
+	}
+
+	// let's create hash tables for each actor that has a model designed for it
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
+	{
+		auto* thisActor = GetDefaultByType(PClassActor::AllActorClasses[i]);
+
+		if (thisActor->hasmodel)
+		{
+			thisActor->SpriteModelHash.Clear();
+
+			thisActor->SpriteModelHash.Resize(thisActor->SpriteModelFrames.Size());
+			memset(thisActor->SpriteModelHash.Data(), 0xff, thisActor->SpriteModelFrames.Size() * sizeof(int));
+
+			for (unsigned int j = 0; j < thisActor->SpriteModelFrames.Size(); j++)
+			{
+				int k = ModelFrameHash(&thisActor->SpriteModelFrames[j]) % thisActor->SpriteModelFrames.Size();
+
+				thisActor->SpriteModelFrames[j].hashnext = thisActor->SpriteModelHash[k];
+				thisActor->SpriteModelHash[k] = j;
+			}
+		}
 	}
 }
 
@@ -399,7 +421,6 @@ static void ParseModelDefLump(int Lump)
 			{
 				sc.ScriptError("MODELDEF: Unknown actor type '%s'\n", sc.String);
 			}
-			smf.type = type;
 			FScanner::SavedPos scPos = sc.SavePos();
 			sc.MustGetStringName("{");
 			while (!sc.CheckString("}"))
@@ -700,7 +721,7 @@ static void ParseModelDefLump(int Lump)
 						}
 						if (map[c]) continue;
 						smf.frame=c;
-						SpriteModelFrames.Push(smf);
+						GetDefaultByType(type)->SpriteModelFrames.Push(smf);
 						GetDefaultByType(type)->hasmodel = true;
 						map[c]=1;
 					}
@@ -748,21 +769,21 @@ static void ParseModelDefLump(int Lump)
 
 FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped)
 {
-	if (GetDefaultByType(ti)->hasmodel)
+	AActor *thisClass = GetDefaultByType(ti);
+	if (thisClass->hasmodel)
 	{
 		FSpriteModelFrame smf;
 
 		memset(&smf, 0, sizeof(smf));
-		smf.type=ti;
 		smf.sprite=sprite;
 		smf.frame=frame;
 
-		int hash = SpriteModelHash[ModelFrameHash(&smf) % SpriteModelFrames.Size()];
+		int hash = thisClass->SpriteModelHash[ModelFrameHash(&smf) % thisClass->SpriteModelFrames.Size()];
 
-		while (hash>=0)
+		while (hash >= 0)
 		{
-			FSpriteModelFrame * smff = &SpriteModelFrames[hash];
-			if (smff->type==ti && smff->sprite==sprite && smff->frame==frame) return smff;
+			FSpriteModelFrame * smff = &thisClass->SpriteModelFrames[hash];
+			if (smff->sprite == sprite && smff->frame == frame) return smff;
 			hash=smff->hashnext;
 		}
 	}

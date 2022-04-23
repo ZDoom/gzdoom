@@ -92,15 +92,15 @@ DEFINE_ACTION_FUNCTION(_Screen, GetTextScreenSize)
 //
 //==========================================================================
 
-void DrawFullscreenSubtitle(const char *text)
+void DrawFullscreenSubtitle(FFont* font, const char *text)
 {
 	if (!text || !*text || !inter_subtitles) return;
+	if (*text == '$') text = GStrings[text + 1];
 
 	// This uses the same scaling as regular HUD messages
 	auto scale = active_con_scaletext(twod, generic_ui);
 	int hudwidth = twod->GetWidth() / scale;
 	int hudheight = twod->GetHeight() / scale;
-	FFont *font = generic_ui? NewSmallFont : SmallFont;
 
 	int linelen = hudwidth < 640 ? Scale(hudwidth, 9, 10) - 40 : 560;
 	auto lines = V_BreakLines(font, linelen, text);
@@ -246,9 +246,8 @@ void DIntermissionScreen::Drawer ()
 		if (CheckOverlay(i))
 			DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
-	const char *sub = mSubtitle.GetChars();
-	if (sub && *sub == '$') sub = GStrings[sub + 1];
-	if (sub) DrawFullscreenSubtitle(sub);
+	FFont* font = generic_ui ? NewSmallFont : SmallFont;
+	DrawFullscreenSubtitle(font, mSubtitle);
 }
 
 void DIntermissionScreen::OnDestroy()

@@ -942,7 +942,7 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 
 void RunIntermission(DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
 {
-	runner = CreateRunner();
+	runner = CreateRunner(false);
 	GC::WriteBarrier(runner);
 	completion = std::move(completionf);
 

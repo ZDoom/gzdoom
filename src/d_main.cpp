@@ -167,7 +167,7 @@ void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_LoadWadSettings ();
 void ParseGLDefs();
-void DrawFullscreenSubtitle(const char *text);
+void DrawFullscreenSubtitle(FFont* font, const char *text);
 void D_Cleanup();
 void FreeSBarInfoScript();
 void I_UpdateWindowTitle();
@@ -1284,7 +1284,8 @@ void D_PageDrawer (void)
 	}
 	if (Subtitle != nullptr)
 	{
-		DrawFullscreenSubtitle(GStrings[Subtitle]);
+		FFont* font = generic_ui ? NewSmallFont : SmallFont;
+		DrawFullscreenSubtitle(font, GStrings[Subtitle]);
 	}
 	if (Advisory != nullptr)
 	{
@@ -1362,7 +1363,7 @@ void D_DoStrifeAdvanceDemo ()
 	case 3:
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
-		subtitle = "TXT_SUB_INTRO1";
+		subtitle = "$TXT_SUB_INTRO1";
 		S_Sound (CHAN_VOICE, CHANF_UI, voices[0], 1, ATTN_NORM);
 		// The new Strife teaser has D_FMINTR.
 		// The full retail Strife has D_INTRO.
@@ -1373,35 +1374,35 @@ void D_DoStrifeAdvanceDemo ()
 	case 4:
 		pagetic = 9 * TICRATE;
 		pagename = "PANEL2";
-		subtitle = "TXT_SUB_INTRO2";
+		subtitle = "$TXT_SUB_INTRO2";
 		S_Sound (CHAN_VOICE, CHANF_UI, voices[1], 1, ATTN_NORM);
 		break;
 
 	case 5:
 		pagetic = 12 * TICRATE;
 		pagename = "PANEL3";
-		subtitle = "TXT_SUB_INTRO3";
+		subtitle = "$TXT_SUB_INTRO3";
 		S_Sound (CHAN_VOICE, CHANF_UI, voices[2], 1, ATTN_NORM);
 		break;
 
 	case 6:
 		pagetic = 11 * TICRATE;
 		pagename = "PANEL4";
-		subtitle = "TXT_SUB_INTRO4";
+		subtitle = "$TXT_SUB_INTRO4";
 		S_Sound (CHAN_VOICE, CHANF_UI, voices[3], 1, ATTN_NORM);
 		break;
 
 	case 7:
 		pagetic = 10 * TICRATE;
 		pagename = "PANEL5";
-		subtitle = "TXT_SUB_INTRO5";
+		subtitle = "$TXT_SUB_INTRO5";
 		S_Sound (CHAN_VOICE, CHANF_UI, voices[4], 1, ATTN_NORM);
 		break;
 
 	case 8:
 		pagetic = 16 * TICRATE;
 		pagename = "PANEL6";
-		subtitle = "TXT_SUB_INTRO6";
+		subtitle = "$TXT_SUB_INTRO6";
 		S_Sound (CHAN_VOICE, CHANF_UI, voices[5], 1, ATTN_NORM);
 		break;
 

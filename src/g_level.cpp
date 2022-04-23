@@ -942,6 +942,13 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 
 void RunIntermission(DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
 {
+			D_StartTitle();
+
+	if (!intermissionScreen && !statusScreen)
+	{
+		completionf(false);
+		return;
+	}
 	runner = CreateRunner(false);
 	GC::WriteBarrier(runner);
 	completion = std::move(completionf);
@@ -1010,9 +1017,9 @@ void G_DoCompleted (void)
 	bool endgame = intermissionScreen && intermissionScreen->mEndGame;
 	intermissionScreen = primaryLevel->CreateIntermission();
 	RunIntermission(intermissionScreen, statusScreen, [=](bool)
-					{
+	{
 		if (!endgame) primaryLevel->WorldDone();
-		
+		else if (!intermissionScreen) D_StartTitle();
 	});
 }
 

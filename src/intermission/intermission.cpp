@@ -872,9 +872,7 @@ again:
 		}
 		else if (action->mClass == TITLE_ID)
 		{
-			Destroy();
-			D_StartTitle ();
-			return false;
+			continue;
 		}
 		else
 		{
@@ -1011,13 +1009,21 @@ DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool
 DIntermissionController* F_StartIntermission(FName seq)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
-	if (pdesc == nullptr)
+	if (pdesc == nullptr || (*pdesc)->mActions.Size() == 0)
 	{
 		return nullptr;
 	}
 	else
 	{
-		return F_StartIntermission(*pdesc, false);
+		auto desc = *pdesc;
+		auto action = desc->mActions[0];
+		if (action->mClass == TITLE_ID)
+		{
+			// is handled elsewhere.
+			return nullptr;
+		}
+
+		return F_StartIntermission(desc, false);
 	}
 }
 

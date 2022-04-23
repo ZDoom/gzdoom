@@ -412,9 +412,6 @@ Intermission Inter_Underwater
 	{
 		Background = "E2END", 0
 	}
-	GotoTitle
-	{
-	}
 }
 
 Intermission Inter_Demonscroll

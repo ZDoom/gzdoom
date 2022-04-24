@@ -623,13 +623,16 @@ int FOBJModel::FindFrame(const char* name)
  *
  * @param renderer The model renderer
  * @param skin The loaded skin for the surface
- * @param frameno Unused
- * @param frameno2 Unused
- * @param inter Unused
+ * @param frameno The first frame to interpolate between. Only prevents the model from rendering if it is < 0, since OBJ models are static.
+ * @param frameno2 The second frame to interpolate between.
+ * @param inter The amount to interpolate the two frames.
  * @param translation The translation for the skin
  */
 void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
+	// Prevent the model from rendering if the frame number is < 0
+	if (frameno < 0 || frameno2 < 0) return;
+
 	for (unsigned int i = 0; i < surfaces.Size(); i++)
 	{
 		OBJSurface *surf = &surfaces[i];

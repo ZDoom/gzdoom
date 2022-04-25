@@ -56,5 +56,7 @@ public:
 	static Wiper *Create(int type);
 };
 
+void PerformWipe(FTexture* startimg, FTexture* endimg, int wipe_type, bool stopsound, std::function<void()> overlaydrawer);
+
 
 #endif

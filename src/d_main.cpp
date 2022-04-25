@@ -823,9 +823,18 @@ static void DrawRateStuff()
 	}
 }
 
+static void DrawOverlays()
+{
+	NetUpdate ();
+	C_DrawConsole ();
+	M_Drawer ();
+	DrawRateStuff();
+	if (!hud_toggled)
+		FStat::PrintStat (twod);
+}
+
 static void End2DAndUpdate()
 {
-	DrawRateStuff();
 	twod->End();
 	CheckBench();
 	screen->Update();
@@ -842,7 +851,7 @@ static void End2DAndUpdate()
 
 void D_Display ()
 {
-	FGameTexture *wipe = nullptr;
+	FTexture *wipestart = nullptr;
 	int wipe_type;
 	sector_t *viewsec;
 
@@ -908,7 +917,7 @@ void D_Display ()
 	if (NoWipe)
 	{
 		NoWipe--;
-		wipe = nullptr;
+		wipestart = nullptr;
 		wipegamestate = gamestate;
 	}
 	// No wipes when in a stereo3D VR mode
@@ -917,7 +926,7 @@ void D_Display ()
 		if (vr_mode == 0 || vid_rendermode != 4)
 		{
 			// save the current screen if about to wipe
-			wipe = MakeGameTexture(screen->WipeStartScreen(), nullptr, ETextureType::SWCanvas);
+			wipestart = screen->WipeStartScreen();
 
 			switch (wipegamestate)
 			{
@@ -943,7 +952,7 @@ void D_Display ()
 	}
 	else
 	{
-		wipe = nullptr;
+		wipestart = nullptr;
 	}
 	
 	screen->FrameTime = I_msTimeFS();
@@ -1089,54 +1098,17 @@ void D_Display ()
 		}
 	}
 
-	if (!wipe || NoWipe < 0 || wipe_type == wipe_None || hud_toggled)
+	if (!wipestart || NoWipe < 0 || wipe_type == wipe_None || hud_toggled)
 	{
-		if (wipe != nullptr) delete wipe;
-		wipe = nullptr;
-		NetUpdate ();			// send out any new accumulation
-		// normal update
-		// draw ZScript UI stuff
-		C_DrawConsole ();	// draw console
-		M_Drawer ();			// menu is drawn even on top of everything
-		if (!hud_toggled)
-			FStat::PrintStat (twod);
+		if (wipestart != nullptr) wipestart->DecRef();
+		wipestart = nullptr;
+		DrawOverlays();
 		End2DAndUpdate ();
 	}
 	else
 	{
-		// wipe update
-		uint64_t wipestart, nowtime, diff;
-		bool done;
-
-		GSnd->SetSfxPaused(true, 1);
-		I_FreezeTime(true);
-		twod->End();
-		auto wipend = MakeGameTexture(screen->WipeEndScreen(), nullptr, ETextureType::SWCanvas);
-		auto wiper = Wiper::Create(wipe_type);
-		wiper->SetTextures(wipe, wipend);
-
-		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation
-
-		do
-		{
-			do
-			{
-				I_WaitVBL(2);
-				nowtime = I_msTime();
-				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
-			} while (diff < 1);
-			wipestart = nowtime;
-			twod->Begin(screen->GetWidth(), screen->GetHeight());
-			done = wiper->Run(1);
-			C_DrawConsole ();	// console and
-			M_Drawer ();			// menu are drawn even on top of wipes
-			End2DAndUpdate ();
-			NetUpdate ();			// [RH] not sure this is needed anymore
-		} while (!done);
-		delete wiper;
-		I_FreezeTime(false);
-		GSnd->SetSfxPaused(false, 1);
+		PerformWipe(wipestart, screen->WipeEndScreen(), wipe_type, false, DrawOverlays);
 	}
 	cycles.Unclock();
 	FrameCycles = cycles;

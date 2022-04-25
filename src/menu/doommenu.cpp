@@ -64,6 +64,7 @@
 #include "gameconfigfile.h"
 #include "d_player.h"
 #include "teaminfo.h"
+#include "i_time.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
@@ -77,7 +78,6 @@ CVAR(Bool, m_simpleoptions, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 typedef void(*hfunc)();
 DMenu* CreateMessageBoxMenu(DMenu* parent, const char* message, int messagemode, bool playsound, FName action = NAME_None, hfunc handler = nullptr);
 bool OkForLocalization(FTextureID texnum, const char* substitute);
-void I_WaitVBL(int count);
 
 
 FNewGameStartup NewGameStartupInfo;

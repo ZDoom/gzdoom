@@ -30,6 +30,8 @@
 #include "bitmap.h"
 #include "hw_material.h"
 #include "v_draw.h"
+#include "s_soundinternal.h"
+#include "i_time.h"
 
 class FBurnTexture : public FTexture
 {
@@ -395,4 +397,45 @@ bool Wiper_Burn::Run(int ticks)
 	// The fire may not always stabilize, so the wipe is forced to end
 	// after an arbitrary maximum time.
 	return done || (BurnTime > 40);
+}
+
+
+void PerformWipe(FTexture* startimg, FTexture* endimg, int wipe_type, bool stopsound, std::function<void()> overlaydrawer)
+{
+	// wipe update
+	uint64_t wipestart, nowtime, diff;
+	bool done;
+
+	GSnd->SetSfxPaused(true, 1);
+	I_FreezeTime(true);
+	twod->End();
+	assert(startimg != nullptr && endimg != nullptr);
+	auto starttex = MakeGameTexture(startimg, nullptr, ETextureType::SWCanvas);
+	auto endtex = MakeGameTexture(endimg, nullptr, ETextureType::SWCanvas);
+	auto wiper = Wiper::Create(wipe_type);
+	wiper->SetTextures(starttex, endtex);
+
+	wipestart = I_msTime();
+
+	do
+	{
+		do
+		{
+			I_WaitVBL(2);
+			nowtime = I_msTime();
+			diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
+		} while (diff < 1);
+		wipestart = nowtime;
+		twod->Begin(screen->GetWidth(), screen->GetHeight());
+		done = wiper->Run(1);
+		if (overlaydrawer) overlaydrawer();
+		twod->End();
+		screen->Update();
+		twod->OnFrameDone();
+
+	} while (!done);
+	delete wiper;
+	I_FreezeTime(false);
+	GSnd->SetSfxPaused(false, 1);
+
 }

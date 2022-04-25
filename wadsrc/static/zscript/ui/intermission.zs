@@ -41,8 +41,9 @@ class StatusScreenJob : ScreenJob
 {
     StatusScreen controller;
 
-    ScreenJob Init(StatusScreen scr)
+    ScreenJob Init(StatusScreen scr, bool allowwipe)
 	{
+		if (allowwipe && wipetype != 0) flags |= wipetype << ScreenJob.transition_shift;
 		controller = scr;
 		return self;
 	}
@@ -75,7 +76,7 @@ class DoomCutscenes ui
 		}
 		if (inter)
 		{
-			runner.Append(new("IntermissionScreenJob").Init(inter));
+			runner.Append(new("IntermissionScreenJob").Init(inter, status != nullptr));
 		}
 	}
 }

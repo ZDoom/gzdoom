@@ -336,6 +336,21 @@ bool StartCutscene(const char* s, int flags, const CompletionFunc& completion)
 
 //=============================================================================
 //
+// initiates a screen wipe. Needs to call the game code for it.
+//
+//=============================================================================
+
+DEFINE_ACTION_FUNCTION(DScreenJobRunner, setTransition)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(type);
+	
+	if (type && sysCallbacks.SetTransition) sysCallbacks.SetTransition(type);
+	return 0;
+}
+
+//=============================================================================
+//
 //
 //
 //=============================================================================

@@ -25,6 +25,11 @@ class ScreenJob : Object UI
 		fadeout = 2,
 		stopmusic = 4,
 		stopsound = 8,
+		transition_shift = 4,
+		transition_mask = 48,
+		transition_melt = 16,
+		transition_burn = 32,
+		transition_crossfade = 48,
 	};
 
 	void Init(int fflags = 0, float fadet = 250.f)
@@ -318,6 +323,8 @@ class ScreenJobRunner : Object UI
 	int terminateState;
 	int fadeticks;
 	int last_paused_tic;
+	
+	native static void setTransition(int type);
 
 	void Init(bool clearbefore_, bool skipall_)
 	{
@@ -379,6 +386,10 @@ class ScreenJobRunner : Object UI
 		{
 			jobs[index].fadestate = !paused && jobs[index].flags & ScreenJob.fadein? ScreenJob.fadein : ScreenJob.visible;
 			jobs[index].Start();
+			if (jobs[index].flags & ScreenJob.transition_mask)
+			{
+				setTransition((jobs[index].flags & ScreenJob.transition_mask) >> ScreenJob.Transition_Shift);
+			}
 		}
 	}
 

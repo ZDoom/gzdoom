@@ -2972,6 +2972,11 @@ static void System_StartCutscene(bool blockui)
 	gameaction = blockui ? ga_intro : ga_intermission;
 }
 
+static void System_SetTransition(int type)
+{
+	if (type != wipe_None) wipegamestate = type == wipe_Burn? GS_FORCEWIPEBURN : type == wipe_Fade? GS_FORCEWIPEFADE : GS_FORCEWIPEMELT;
+}
+
 
 bool  CheckSkipGameOptionBlock(const char* str);
 
@@ -3025,6 +3030,7 @@ static int D_DoomMain_Internal (void)
 		nullptr,
 		System_ToggleFullConsole,
 		System_StartCutscene,
+		System_SetTransition,
 	};
 
 	

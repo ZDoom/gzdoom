@@ -279,7 +279,7 @@ Wiper_Melt::Wiper_Melt()
 
 bool Wiper_Melt::Run(int ticks)
 {
-	bool done;
+	bool done = false;
 	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false,  TAG_DONE);
 	
 	// Copy the old screen in vertical strips on top of the new one.
@@ -366,14 +366,13 @@ Wiper_Burn::~Wiper_Burn()
 
 bool Wiper_Burn::Run(int ticks)
 {
-	bool done;
-	
+	bool done = false;
+
 	
 	BurnTime += ticks;
 	ticks *= 2;
 	
 	// Make the fire burn
-	done = false;
 	while (!done && ticks--)
 	{
 		Density = wipe_CalcBurn(BurnArray, WIDTH, HEIGHT, Density);

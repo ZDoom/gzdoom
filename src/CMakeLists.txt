@@ -953,7 +953,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	rendering/2d/f_wipe.cpp
 	rendering/2d/v_blend.cpp
 	rendering/hwrenderer/hw_entrypoint.cpp
 	rendering/hwrenderer/hw_vertexbuilder.cpp
@@ -1036,6 +1035,7 @@ set (PCH_SOURCES
 	common/2d/v_2ddrawer.cpp
 	common/2d/v_drawtext.cpp
 	common/2d/v_draw.cpp
+	common/2d/wipe.cpp
 	common/thirdparty/gain_analysis.cpp
 	common/thirdparty/sfmt/SFMT.cpp
 	common/fonts/singlelumpfont.cpp

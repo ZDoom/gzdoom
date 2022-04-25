@@ -54,7 +54,7 @@
 #include "s_sound.h"
 #include "v_video.h"
 #include "intermission/intermission.h"
-#include "f_wipe.h"
+#include "wipe.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "menu.h"

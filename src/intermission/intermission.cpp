@@ -834,7 +834,7 @@ void DIntermissionScreenScroller::Drawer ()
 //
 //==========================================================================
 
-DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc)
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, bool ending)
 {
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
@@ -843,6 +843,7 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mSentAdvance = false;
 	mScreen = nullptr;
 	mFirst = true;
+	mEndGame = ending;
 }
 
 bool DIntermissionController::NextPage ()
@@ -852,8 +853,8 @@ bool DIntermissionController::NextPage ()
 
 	if (mIndex == (int)mDesc->mActions.Size() && mDesc->mLink == NAME_None)
 	{
-		// last page
-		return false;
+		// last page (must block when ending the game.)
+		return mEndGame;
 	}
 	bg.SetInvalid();
 
@@ -872,7 +873,7 @@ again:
 		}
 		else if (action->mClass == TITLE_ID)
 		{
-			continue;
+			return false;
 		}
 		else
 		{
@@ -950,7 +951,7 @@ bool DIntermissionController::Ticker ()
 		mAdvance = false;
 		if (!NextPage())
 		{
-			return false;
+			return !false;
 		}
 	}
 	return true;
@@ -980,14 +981,14 @@ void DIntermissionController::OnDestroy ()
 //
 //==========================================================================
 
-DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme)
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool ending)
 {
 	ScaleOverrider s(twod);
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
 	//if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
-	auto CurrentIntermission = Create<DIntermissionController>(desc, deleteme);
+	auto CurrentIntermission = Create<DIntermissionController>(desc, deleteme, ending);
 
 	// If the intermission finishes straight away then cancel the wipe.
 	if (!CurrentIntermission->NextPage())

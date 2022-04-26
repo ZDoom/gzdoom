@@ -681,7 +681,6 @@ class StatusScreen : ScreenJob abstract version("2.5")
 		if (cnt == 0)
 		{
 			End();
-			Level.WorldDone();
 		}
 	}
 
@@ -693,11 +692,11 @@ class StatusScreen : ScreenJob abstract version("2.5")
 
 	protected virtual void initShowNextLoc ()
 	{
+		Console.Printf("Next m ap = %s", wbs.next);
 		if (wbs.next == "") 
 		{
 			// Last map in episode - there is no next location!
-			End();
-			Level.WorldDone();
+			jobstate = finished;
 			return;
 		}
 

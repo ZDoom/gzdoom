@@ -911,14 +911,14 @@ DIntermissionController* F_StartFinale (const char *music, int musicorder, int c
 			desc->mActions.Push(wiper);
 		}
 
-		return F_StartIntermission(desc, true);
+		return F_StartIntermission(desc, true, ending && endsequence != NAME_None);
 	}
 	else if (ending)
 	{
 		FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(endsequence);
 		if (pdesc != NULL)
 		{
-			return F_StartIntermission(*pdesc, false);
+			return F_StartIntermission(*pdesc, false, ending);
 		}
 	}
 	return nullptr;

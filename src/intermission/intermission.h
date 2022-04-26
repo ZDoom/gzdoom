@@ -301,7 +301,7 @@ class DIntermissionController : public DObject
 public:
 	bool mEndGame;
 
-	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false);
+	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, bool ending = false);
 	bool Responder (FInputEvent *ev);
 	bool Ticker ();
 	void Drawer ();
@@ -313,7 +313,7 @@ public:
 
 
 // Interface for main loop
-DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme);
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool ending = false);
 DIntermissionController* F_StartIntermission(FName desc);
 
 // Create an intermission from old cluster data

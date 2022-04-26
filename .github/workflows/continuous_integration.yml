@@ -67,7 +67,7 @@ jobs:
             name: "Linux Clang 12",
             os: ubuntu-20.04,
             extra_options: "-DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12",
-            deps_cmdline: "sudo apt update && sudo apt install clang-12 libsdl2-dev",
+            deps_cmdline: "sudo apt update && sudo apt install clang-12 libsdl2-dev libvpx-dev",
             build_type: "Release"
           }
 

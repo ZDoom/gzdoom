@@ -3520,7 +3520,6 @@ static int D_DoomMain_Internal (void)
 			{
 				singledemo = true;				// quit after one demo
 				G_DeferedPlayDemo (v);
-				D_DoomLoop ();	// never returns
 			}
 			else
 			{
@@ -3528,7 +3527,6 @@ static int D_DoomMain_Internal (void)
 				if (v)
 				{
 					G_TimeDemo(v);
-					D_DoomLoop();	// never returns
 				}
 				else
 				{

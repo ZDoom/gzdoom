@@ -208,7 +208,7 @@ void FileSystem::InitSingleFile(const char* filename, bool quiet)
 	InitMultipleFiles(filenames, true);
 }
 
-void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, LumpFilterInfo* filter)
+void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, LumpFilterInfo* filter, bool allowduplicates)
 {
 	int numfiles;
 
@@ -217,14 +217,17 @@ void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, Lump
 	numfiles = 0;
 
 	// first, check for duplicates
-	if (!Args->CheckParm("-allowduplicates"))
+	if (allowduplicates)
 	{
 		for (unsigned i=0;i<filenames.Size(); i++)
 		{
 			for (unsigned j=i+1;j<filenames.Size(); j++)
 			{
 				if (strcmp(filenames[i], filenames[j]) == 0)
+				{
 					filenames.Delete(j);
+					j--;
+				}
 			}
 		}
 	}

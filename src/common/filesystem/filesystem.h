@@ -68,7 +68,7 @@ public:
 	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
 
 	void InitSingleFile(const char *filename, bool quiet = false);
-	void InitMultipleFiles (TArray<FString> &filenames, bool quiet = false, LumpFilterInfo* filter = nullptr);
+	void InitMultipleFiles (TArray<FString> &filenames, bool quiet = false, LumpFilterInfo* filter = nullptr, bool allowduplicates = false);
 	void AddFile (const char *filename, FileReader *wadinfo, bool quiet, LumpFilterInfo* filter);
 	int CheckIfResourceFileLoaded (const char *name) noexcept;
 	void AddAdditionalFile(const char* filename, FileReader* wadinfo = NULL) {}

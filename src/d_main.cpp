@@ -3205,7 +3205,8 @@ static int D_DoomMain_Internal (void)
 			FindStrifeTeaserVoices(fileSystem);
 		};
 
-		fileSystem.InitMultipleFiles (allwads, false, &lfi);
+		bool allowduplicates = Args->CheckParm("-allowduplicates");
+		fileSystem.InitMultipleFiles (allwads, false, &lfi, allowduplicates);
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();

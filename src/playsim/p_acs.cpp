@@ -6204,9 +6204,12 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			{
 				int line;
 				auto itr = Level->GetLineIdIterator(args[0]);
+				int repeat = argCount > 2? args[2] : -1;
 				while ((line = itr.Next()) >= 0)
 				{
 					Level->lines[line].activation = args[1];
+					if (repeat > 0) Level->lines[line].flags |= ML_REPEAT_SPECIAL;
+					else if (repeat == 0) Level->lines[line].flags &= ~ML_REPEAT_SPECIAL;
 				}
 			}
 			break;

@@ -951,7 +951,7 @@ bool DIntermissionController::Ticker ()
 		mAdvance = false;
 		if (!NextPage())
 		{
-			return !false;
+			return false;
 		}
 	}
 	return true;

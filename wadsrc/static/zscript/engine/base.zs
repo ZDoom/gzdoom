@@ -587,7 +587,8 @@ class Object native
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
-	native static uint MSTime();
+	deprecated("4.8", "Use MSTimeF instead") native static uint MSTime();
+	native static double MSTimeF();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native virtualscope void Destroy();

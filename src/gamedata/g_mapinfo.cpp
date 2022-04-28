@@ -1663,6 +1663,7 @@ MapFlagHandlers[] =
 	{ "enableskyboxao",					MITYPE_SETFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "disableskyboxao",				MITYPE_CLRFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "avoidmelee",						MITYPE_SETFLAG3,	LEVEL3_AVOIDMELEE, 0 },
+	{ "attenuatelights",				MITYPE_SETFLAG3,	LEVEL3_ATTENUATE, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },

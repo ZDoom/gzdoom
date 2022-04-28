@@ -24,7 +24,6 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 {
 	stairs
 	maskedmidtex
-	corpsegibs
 	vileghosts
 }
 
@@ -99,7 +98,6 @@ C7A2FAFB0AFB2632C50AD625CDB50E51 // Reverie map18
 1E998262EE319B7D088E01DE782E6B41 // Mayhem 2013 map05
 A81E2734F735A82720D8E0F1442BA0C9 // Imp's [sic] are Ghost Gods map01
 {
-	corpsegibs
 	vileghosts
 }
 

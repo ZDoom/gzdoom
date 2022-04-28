@@ -1687,7 +1687,7 @@ MapFlagHandlers[] =
 	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR, 0 },
 	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM, 0 },
 	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE, 0 },
-	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS, 0 },
+	{ "compat_vileghosts",				MITYPE_COMPATFLAG, COMPATF_VILEGHOSTS, 0 },
 	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS, 0 },
 	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT, 0 },
 	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT, 0 },

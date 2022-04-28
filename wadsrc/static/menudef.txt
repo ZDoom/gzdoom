@@ -1741,7 +1741,7 @@ OptionMenu "CompatActorMenu" protected
 {
 	Position -35
 	Title "$CMPTMNU_ACTORBEHAVIOR"
-	Option "$CMPTMNU_CORPSEGIBS",					"compat_CORPSEGIBS", "YesNo"
+	Option "$CMPTMNU_VILEGHOSTS",					"compat_VILEGHOSTS", "YesNo"
 	Option "$CMPTMNU_NOBLOCKFRIENDS",				"compat_NOBLOCKFRIENDS", "YesNo"
 	Option "$CMPTMNU_LIMITPAIN",					"compat_LIMITPAIN", "YesNo"
 	Option "$CMPTMNU_MBFMONSTERMOVE",				"compat_MBFMONSTERMOVE", "YesNo"

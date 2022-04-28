@@ -2828,7 +2828,7 @@ bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nu
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}
-				if (self->Level->ib_compatflags & BCOMPATF_VILEGHOSTS)
+				if (self->Level->i_compatflags & COMPATF_VILEGHOSTS)
 				{
 					corpsehit->Height *= 4;
 					// [GZ] This was a commented-out feature, so let's make use of it,

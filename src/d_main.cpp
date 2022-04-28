@@ -1929,23 +1929,6 @@ static void SetMapxxFlag()
 
 static void D_DoomInit()
 {
-	// Set the FPU precision to 53 significant bits. This is the default
-	// for Visual C++, but not for GCC, so some slight math variances
-	// might crop up if we leave it alone.
-#if defined(_FPU_GETCW) && defined(_FPU_EXTENDED) && defined(_FPU_DOUBLE)
-	{
-		int cw;
-		_FPU_GETCW(cw);
-		cw = (cw & ~_FPU_EXTENDED) | _FPU_DOUBLE;
-		_FPU_SETCW(cw);
-	}
-#elif defined(_PC_53)
-// On the x64 architecture, changing the floating point precision is not supported.
-#ifndef _WIN64
-	int cfp = _control87(_PC_53, _MCW_PC);
-#endif
-#endif
-
 	// Check response files before coalescing file parameters.
 	M_FindResponseFile ();
 

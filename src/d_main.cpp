@@ -1931,22 +1931,6 @@ static void D_DoomInit()
 
 	gamestate = GS_STARTUP;
 
-	const char *v = Args->CheckValue("-rngseed");
-	if (v)
-	{
-		rngseed = staticrngseed = atoi(v);
-		use_staticrng = true;
-		if (!batchrun) Printf("D_DoomInit: Static RNGseed %d set.\n", rngseed);
-	}
-	else
-	{
-		rngseed = I_MakeRNGSeed();
-		use_staticrng = false;
-	}
-	srand(rngseed);
-		
-	FRandom::StaticClearRandom ();
-
 	if (!batchrun) Printf ("M_LoadDefaults: Load system defaults.\n");
 	M_LoadDefaults ();			// load before initing other systems
 }
@@ -2999,6 +2983,21 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString> allwads)
 	gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
 	gameinfo.ConfigName = iwad_info->Configname;
 
+	const char *v = Args->CheckValue("-rngseed");
+	if (v)
+	{
+		rngseed = staticrngseed = atoi(v);
+		use_staticrng = true;
+		if (!batchrun) Printf("D_DoomInit: Static RNGseed %d set.\n", rngseed);
+	}
+	else
+	{
+		rngseed = I_MakeRNGSeed();
+		use_staticrng = false;
+	}
+	srand(rngseed);
+		
+	FRandom::StaticClearRandom ();
 
 	FBaseCVar::DisableCallbacks();
 	GameConfig->DoGameSetup (gameinfo.ConfigName);

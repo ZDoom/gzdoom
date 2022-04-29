@@ -317,7 +317,6 @@ FString startmap;
 bool autostart;
 bool advancedemo;
 FILE *debugfile;
-FILE *hashfile;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FGameTexture *Advisory;
@@ -2956,6 +2955,39 @@ bool  CheckSkipGameOptionBlock(const char* str);
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+static FILE* D_GetHashFile()
+{
+	FILE *hashfile = nullptr;
+
+	if (Args->CheckParm("-hashfiles"))
+	{
+		const char *filename = "fileinfo.txt";
+		Printf("Hashing loaded content to: %s\n", filename);
+		hashfile = fopen(filename, "w");
+		if (hashfile)
+		{
+			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer than usual.\n");
+			fprintf(hashfile, "%s version %s (%s)\n", GAMENAME, GetVersionString(), GetGitHash());
+#ifdef __VERSION__
+			fprintf(hashfile, "Compiler version: %s\n", __VERSION__);
+#endif
+			fprintf(hashfile, "Command line:");
+			for (int i = 0; i < Args->NumArgs(); ++i)
+			{
+				fprintf(hashfile, " %s", Args->GetArg(i));
+			}
+			fprintf(hashfile, "\n");
+		}
+	}
+	return hashfile;
+}
+
+//==========================================================================
+//
 // D_InitGame
 //
 //==========================================================================
@@ -2994,11 +3026,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString> allwads)
 		exec->AddPullins(allwads, GameConfig);
 	}
 
-	if (hashfile)
-	{
-		Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer than usual.\n");
-	}
-
 	if (!batchrun) Printf ("W_Init: Init WADfiles.\n");
 
 	LumpFilterInfo lfi;
@@ -3030,7 +3057,8 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString> allwads)
 	};
 
 	bool allowduplicates = Args->CheckParm("-allowduplicates");
-	fileSystem.InitMultipleFiles (allwads, false, &lfi, allowduplicates);
+	auto hashfile = D_GetHashFile();
+	fileSystem.InitMultipleFiles (allwads, false, &lfi, allowduplicates, hashfile);
 	allwads.Clear();
 	allwads.ShrinkToFit();
 	SetMapxxFlag();
@@ -3466,26 +3494,6 @@ static int D_DoomMain_Internal (void)
 			Printf("%s ", Args->GetArg(i));
 		}
 		Printf("\n");
-	}
-
-	if (Args->CheckParm("-hashfiles"))
-	{
-		const char *filename = "fileinfo.txt";
-		Printf("Hashing loaded content to: %s\n", filename);
-		hashfile = fopen(filename, "w");
-		if (hashfile)
-		{
-			fprintf(hashfile, "%s version %s (%s)\n", GAMENAME, GetVersionString(), GetGitHash());
-#ifdef __VERSION__
-			fprintf(hashfile, "Compiler version: %s\n", __VERSION__);
-#endif
-			fprintf(hashfile, "Command line:");
-			for (int i = 0; i < Args->NumArgs(); ++i)
-			{
-				fprintf(hashfile, " %s", Args->GetArg(i));
-			}
-			fprintf(hashfile, "\n");
-		}
 	}
 
 	if (!batchrun) Printf(PRINT_LOG, "%s version %s\n", GAMENAME, GetVersionString());

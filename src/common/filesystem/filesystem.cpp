@@ -47,8 +47,6 @@
 #include "printf.h"
 #include "md5.h"
 
-extern	FILE* hashfile;
-
 // MACROS ------------------------------------------------------------------
 
 #define NULL_INDEX		(0xffffffff)
@@ -208,7 +206,7 @@ void FileSystem::InitSingleFile(const char* filename, bool quiet)
 	InitMultipleFiles(filenames, true);
 }
 
-void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, LumpFilterInfo* filter, bool allowduplicates)
+void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, LumpFilterInfo* filter, bool allowduplicates, FILE* hashfile)
 {
 	int numfiles;
 
@@ -234,7 +232,7 @@ void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, Lump
 
 	for(unsigned i=0;i<filenames.Size(); i++)
 	{
-		AddFile (filenames[i], nullptr, quiet, filter);
+		AddFile (filenames[i], nullptr, quiet, filter, hashfile);
 
 		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
 		FStringf path("filter/%s", Files.Last()->GetHash().GetChars());
@@ -310,7 +308,7 @@ int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, in
 // [RH] Removed reload hack
 //==========================================================================
 
-void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, LumpFilterInfo* filter)
+void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, LumpFilterInfo* filter, FILE* hashfile)
 {
 	int startlump;
 	bool isdir = false;
@@ -378,7 +376,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 				FString path;
 				path.Format("%s:%s", filename, lump->getName());
 				auto embedded = lump->NewReader();
-				AddFile(path, &embedded, quiet, filter);
+				AddFile(path, &embedded, quiet, filter, hashfile);
 			}
 		}
 

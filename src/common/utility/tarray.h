@@ -408,6 +408,7 @@ public:
 		{
 			new(&Array[start + i]) T(std::move(item[i]));
 		}
+		item.Clear();
 		return start;
 	}
 

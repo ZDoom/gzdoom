@@ -70,6 +70,9 @@ namespace GC
 	// Is this the final collection just before exit?
 	extern bool FinalGC;
 
+	// Counts the number of times CheckGC has been called.
+	extern uint64_t CheckTime;
+
 	// Current white value for known-dead objects.
 	static inline uint32_t OtherWhite()
 	{
@@ -107,6 +110,7 @@ namespace GC
 	// Check if it's time to collect, and do a collection step if it is.
 	static inline void CheckGC()
 	{
+		CheckTime++;
 		if (AllocBytes >= Threshold)
 			Step();
 	}
@@ -150,6 +154,10 @@ namespace GC
 	{
 		MarkArray((DObject **)(obj), count);
 	}
+	template<class T> void MarkArray(TObjPtr<T>* obj, size_t count)
+	{
+		MarkArray((DObject**)(obj), count);
+	}
 	template<class T> void MarkArray(TArray<T> &arr)
 	{
 		MarkArray(&arr[0], arr.Size());
@@ -175,7 +183,7 @@ public:
 	TObjPtr() = default;
 	TObjPtr(const TObjPtr<T> &q) = default;
 
-	TObjPtr(T q) throw()
+	TObjPtr(T q) noexcept
 		: pp(q)
 	{
 	}
@@ -207,35 +215,35 @@ public:
 		return *this;
 	}
 
-	T Get() throw()
+	T Get() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
 
-	T ForceGet() throw()	//for situations where the read barrier needs to be skipped.
+	T ForceGet() noexcept	//for situations where the read barrier needs to be skipped.
 	{
 		return pp;
 	}
 
-	operator T() throw()
+	operator T() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	T &operator*()
+	T &operator*() noexcept
 	{
 		T q = GC::ReadBarrier(pp);
 		assert(q != NULL);
 		return *q;
 	}
-	T operator->() throw()
+	T operator->() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	bool operator!=(T u) throw()
+	bool operator!=(T u) noexcept
 	{
 		return GC::ReadBarrier(o) != u;
 	}
-	bool operator==(T u) throw()
+	bool operator==(T u) noexcept
 	{
 		return GC::ReadBarrier(o) == u;
 	}

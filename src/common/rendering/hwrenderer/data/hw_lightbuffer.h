@@ -12,6 +12,9 @@ class FRenderState;
 class FLightBuffer
 {
 	IDataBuffer *mBuffer;
+	IDataBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
+	int mPipelineNbr;
+	int mPipelinePos = 0;
 
 	bool mBufferType;
     std::atomic<unsigned int> mIndex;
@@ -20,12 +23,12 @@ class FLightBuffer
 	unsigned int mBufferSize;
 	unsigned int mByteSize;
     unsigned int mMaxUploadSize;
-    
+
 	void CheckSize();
 
 public:
 
-	FLightBuffer();
+	FLightBuffer(int pipelineNbr = 1);
 	~FLightBuffer();
 	void Clear();
 	int UploadLights(FDynLightData &data);

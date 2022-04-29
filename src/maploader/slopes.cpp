@@ -417,6 +417,7 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 			mt->EdNum = 0;
 		}
 	}
+	SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
 
 	for (mt = firstmt; mt < lastmt; ++mt)
 	{
@@ -428,7 +429,6 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 		}
 	}
 
-	SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
 }
 
 

@@ -47,10 +47,11 @@ struct FLookExParams
 };
 
 int P_HitFriend (AActor *self);
-void P_NoiseAlert (AActor *emmiter, AActor *target, bool splash=false, double maxdist=0);
+void P_NoiseAlert (AActor *emitter, AActor *target, bool splash=false, double maxdist=0);
+int P_CheckMeleeRange(AActor* actor, double range = -1);
 
 bool P_CheckMeleeRange2 (AActor *actor);
-int P_Move (AActor *actor);
+int P_SmartMove (AActor *actor);
 bool P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
 void P_RandomChaseDir(AActor *actor);;
@@ -72,11 +73,10 @@ void A_DoChase(AActor *actor, bool fastchase, FState *meleestate, FState *missil
 void A_Chase(AActor *self);
 void A_FaceTarget(AActor *actor);
 void A_Face(AActor *self, AActor *other, DAngle max_turn = 0., DAngle max_pitch = 270., DAngle ang_offset = 0., DAngle pitch_offset = 0., int flags = 0, double z_add = 0);
-bool P_CheckForResurrection(AActor *self, bool usevilestates);
+class FSoundID;
 
 int CheckBossDeath (AActor *);
 int P_Massacre (bool baddies = false, PClassActor *cls = nullptr);
-bool P_CheckMissileRange (AActor *actor);
 
 #define SKULLSPEED (20.)
 void A_SkullAttack(AActor *self, double speed);

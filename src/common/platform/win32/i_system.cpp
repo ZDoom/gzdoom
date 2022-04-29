@@ -45,6 +45,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#pragma warning(disable:4996)
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -73,7 +74,7 @@
 
 #include "i_input.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "i_system.h"
@@ -199,7 +200,7 @@ void I_DetectOS(void)
 		}
 		else if (info.dwMajorVersion == 10)
 		{
-			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 2016 (or higher)";
+			osname = (info.wProductType == VER_NT_WORKSTATION) ? (info.dwBuildNumber >= 22000 ? "11 (or higher)" : "10") : "Server 2016 (or higher)";
 			sys_ostype = 3; // modern OS
 		}
 		break;
@@ -287,8 +288,8 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 
 	wchar_t wbuf[256];
 	int bpos = 0;
-	CHARRANGE selection;
-	CHARRANGE endselection;
+	CHARRANGE selection = {};
+	CHARRANGE endselection = {};
 	LONG lines_before = 0, lines_after;
 	CHARFORMAT format;
 
@@ -510,7 +511,6 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		char	szString[256];
 
 		// Check the current video settings.
-		//SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
 		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, vid_fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
 		switch (vid_preferbackend)
 		{
@@ -520,6 +520,11 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		case 2:
 			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN3, BM_SETCHECK, BST_CHECKED, 0 );
 			break;
+#ifdef HAVE_GLES2
+		case 3:
+			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN4, BM_SETCHECK, BST_CHECKED, 0 );
+			break;
+#endif			
 		default:
 			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN1, BM_SETCHECK, BST_CHECKED, 0 );
 			break;
@@ -574,6 +579,11 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			SetQueryIWad(hDlg);
 			// [SP] Upstreamed from Zandronum
 			vid_fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+#ifdef HAVE_GLES2
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN4, BM_GETCHECK, 0, 0) == BST_CHECKED)
+				vid_preferbackend = 3;
+			else 
+#endif
 			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN3, BM_GETCHECK, 0, 0) == BST_CHECKED)
 				vid_preferbackend = 2;
 			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -769,7 +779,7 @@ static HCURSOR CreateAlphaCursor(FBitmap &source, int leftofs, int topofs)
 	// Find closest integer scale factor for the monitor DPI
 	HDC screenDC = GetDC(0);
 	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
-	int scale = std::max((dpi + 96 / 2 - 1) / 96, 1);
+	int scale = max((dpi + 96 / 2 - 1) / 96, 1);
 	ReleaseDC(0, screenDC);
 
 	memset(&bi, 0, sizeof(bi));
@@ -858,7 +868,7 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 	// Delete the bitmaps.
 	DeleteObject(and_mask);
 	DeleteObject(color_mask);
-	
+
 	return cursor;
 }
 

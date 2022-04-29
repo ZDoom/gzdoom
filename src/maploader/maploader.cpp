@@ -59,6 +59,7 @@
 
 
 #include <math.h>
+#include <cmath>	// needed for std::floor on mac
 #include "maploader.h"
 #include "c_cvars.h"
 #include "actor.h"
@@ -82,6 +83,7 @@
 #include "vm.h"
 #include "texturemanager.h"
 #include "hw_vertexbuilder.h"
+#include "version.h"
 
 enum
 {
@@ -870,7 +872,7 @@ bool MapLoader::LoadSegs (MapData * map)
 
 			if (vnum1 >= numvertexes || vnum2 >= numvertexes)
 			{
-				throw badseg(0, i, MAX(vnum1, vnum2));
+				throw badseg(0, i, max(vnum1, vnum2));
 			}
 
 			li->v1 = &Level->vertexes[vnum1];
@@ -1890,7 +1892,7 @@ void MapLoader::LoadLineDefs2 (MapData * map)
 	Level->sides.Alloc(count);
 	memset(&Level->sides[0], 0, count * sizeof(side_t));
 
-	sidetemp.Resize(MAX<int>(count, Level->vertexes.Size()));
+	sidetemp.Resize(max<int>(count, Level->vertexes.Size()));
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
@@ -1918,7 +1920,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 	int i;
 
 	int numsides = Level->sides.Size();
-	sidetemp.Resize(MAX<int>(Level->vertexes.Size(), numsides));
+	sidetemp.Resize(max<int>(Level->vertexes.Size(), numsides));
 
 	for (i = 0; i < (int)Level->vertexes.Size(); ++i)
 	{
@@ -2816,7 +2818,7 @@ void MapLoader::LoadReject (MapData * map, bool junk)
 	else
 	{
 		// Check if the reject has some actual content. If not, free it.
-		rejectsize = MIN (rejectsize, neededsize);
+		rejectsize = min (rejectsize, neededsize);
 		Level->rejectmatrix.Alloc(rejectsize);
 
 		map->Read (ML_REJECT, &Level->rejectmatrix[0], rejectsize);
@@ -3206,6 +3208,12 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	SpawnThings(position);
 
+	// Load and link lightmaps - must be done after P_Spawn3DFloors (and SpawnThings? Potentially for baking static model actors?)
+	if (!ForceNodeBuild)
+	{
+		LoadLightmap(map);
+	}
+
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (Level->PlayerInGame(i) && Level->Players[i]->mo != nullptr)
@@ -3241,6 +3249,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	CreateVBO(screen->mVertexData, Level->sectors);
 
+	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
+
 	for (auto &sec : Level->sectors)
 	{
 		P_Recalculate3DFloors(&sec);
@@ -3258,3 +3268,253 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->aabbTree = new DoomLevelAABBTree(Level);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void MapLoader::SetSubsectorLightmap(const LightmapSurface &surface)
+{
+	if (!surface.ControlSector)
+	{
+		int index = surface.Type == ST_CEILING ? 1 : 0;
+		surface.Subsector->lightmap[index][0] = surface;
+	}
+	else
+	{
+		int index = surface.Type == ST_CEILING ? 0 : 1;
+		const auto &ffloors = surface.Subsector->sector->e->XFloor.ffloors;
+		for (unsigned int i = 0; i < ffloors.Size(); i++)
+		{
+			if (ffloors[i]->model == surface.ControlSector)
+			{
+				surface.Subsector->lightmap[index][i + 1] = surface;
+			}
+		}
+	}
+}
+
+void MapLoader::SetSideLightmap(const LightmapSurface &surface)
+{
+	if (!surface.ControlSector)
+	{
+		if (surface.Type == ST_UPPERWALL)
+		{
+			surface.Side->lightmap[0] = surface;
+		}
+		else if (surface.Type == ST_MIDDLEWALL)
+		{
+			surface.Side->lightmap[1] = surface;
+			surface.Side->lightmap[2] = surface;
+		}
+		else if (surface.Type == ST_LOWERWALL)
+		{
+			surface.Side->lightmap[3] = surface;
+		}
+	}
+	else
+	{
+		const auto &ffloors = surface.Side->sector->e->XFloor.ffloors;
+		for (unsigned int i = 0; i < ffloors.Size(); i++)
+		{
+			if (ffloors[i]->model == surface.ControlSector)
+			{
+				surface.Side->lightmap[4 + i] = surface;
+			}
+		}
+	}
+}
+
+void MapLoader::LoadLightmap(MapData *map)
+{
+	// We have to reset everything as FLevelLocals is recycled between maps
+	Level->LightProbes.Reset();
+	Level->LPCells.Reset();
+	Level->LMTexCoords.Reset();
+	Level->LMSurfaces.Reset();
+	Level->LMTextureData.Reset();
+	Level->LMTextureCount = 0;
+	Level->LMTextureSize = 0;
+	Level->LPMinX = 0;
+	Level->LPMinY = 0;
+	Level->LPWidth = 0;
+	Level->LPHeight = 0;
+
+	if (!Args->CheckParm("-enablelightmaps"))
+		return;		// this feature is still too early WIP to allow general access
+
+	if (!map->Size(ML_LIGHTMAP))
+		return;
+
+	FileReader fr;
+	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
+		return;
+
+	int version = fr.ReadInt32();
+	if (version != 0)
+	{
+		Printf(PRINT_HIGH, "LoadLightmap: unsupported lightmap lump version\n");
+		return;
+	}
+
+	uint16_t textureSize = fr.ReadUInt16();
+	uint16_t numTextures = fr.ReadUInt16();
+	uint32_t numSurfaces = fr.ReadUInt32();
+	uint32_t numTexCoords = fr.ReadUInt32();
+	uint32_t numLightProbes = fr.ReadUInt32();
+	uint32_t numSubsectors = fr.ReadUInt32();
+	uint32_t numTexBytes = numTextures * textureSize * textureSize * 3 * 2;
+
+	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
+		return;
+
+	Printf(PRINT_HIGH, "WARNING! Lightmaps are an experimental feature and are subject to change before being finalized. Do not expect this to work as-is in future releases of %s!\n", GAMENAME);
+
+	/*if (numSubsectors != Level->subsectors.Size())
+	{
+		Printf(PRINT_HIGH, "LoadLightmap: subsector count for level doesn't match (%d in wad vs %d in engine)\n", (int)numSubsectors, (int)Level->subsectors.Size());
+	}*/
+
+	if (numLightProbes > 0)
+	{
+		Level->LightProbes.Resize(numLightProbes);
+		fr.Read(&Level->LightProbes[0], sizeof(LightProbe) * numLightProbes);
+
+		// Sort the light probes so that they are ordered by cell.
+		// This lets us point at the first probe knowing all other probes in the cell will follow.
+		// Also improves locality.
+
+		double rcpCellSize = 1.0 / Level->LPCellSize;
+		auto cellCompareLess = [=](const LightProbe& a, const LightProbe& b)
+		{
+			double cellY_A = std::floor(a.Y * rcpCellSize);
+			double cellY_B = std::floor(b.Y * rcpCellSize);
+			if (cellY_A != cellY_B)
+				return cellY_A < cellY_B;
+			double cellX_A = std::floor(a.X * rcpCellSize);
+			double cellX_B = std::floor(b.X * rcpCellSize);
+			return cellX_A < cellX_B;
+		};
+		std::sort(Level->LightProbes.begin(), Level->LightProbes.end(), cellCompareLess);
+
+		// Find probe bounds and the grid that covers it
+		float probesMinX = Level->LightProbes[0].X;
+		float probesMaxX = Level->LightProbes[0].X;
+		float probesMinY = Level->LightProbes[0].Y;
+		float probesMaxY = Level->LightProbes[0].Y;
+		for (const LightProbe& p : Level->LightProbes)
+		{
+			probesMinX = std::min(probesMinX, p.X);
+			probesMaxX = std::max(probesMaxX, p.X);
+			probesMinY = std::min(probesMinY, p.Y);
+			probesMaxY = std::max(probesMaxY, p.Y);
+		}
+		Level->LPMinX = (int)std::floor(probesMinX * rcpCellSize);
+		Level->LPMinY = (int)std::floor(probesMinY * rcpCellSize);
+		Level->LPWidth = (int)std::floor(probesMaxX * rcpCellSize) + 1 - Level->LPMinX;
+		Level->LPHeight = (int)std::floor(probesMaxY * rcpCellSize) + 1 - Level->LPMinY;
+
+		// Place probes in a grid for faster search
+		Level->LPCells.Resize(Level->LPWidth * Level->LPHeight);
+		int minX = Level->LPMinX;
+		int minY = Level->LPMinY;
+		int width = Level->LPWidth;
+		int height = Level->LPHeight;
+		for (LightProbe& p : Level->LightProbes)
+		{
+			int gridX = (int)std::floor(p.X * rcpCellSize) - minX;
+			int gridY = (int)std::floor(p.Y * rcpCellSize) - minY;
+			if (gridX >= 0 && gridY >= 0 && gridX < width && gridY < height)
+			{
+				LightProbeCell& cell = Level->LPCells[gridX + (size_t)gridY * width];
+				if (!cell.FirstProbe)
+					cell.FirstProbe = &p;
+				cell.NumProbes++;
+			}
+		}
+	}
+
+	Level->LMTexCoords.Resize(numTexCoords * 2);
+
+	// Allocate room for all surfaces
+
+	unsigned int allSurfaces = 0;
+
+	for (unsigned int i = 0; i < Level->sides.Size(); i++)
+		allSurfaces += 4 + Level->sides[i].sector->e->XFloor.ffloors.Size();
+
+	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+		allSurfaces += 2 + Level->subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
+
+	Level->LMSurfaces.Resize(allSurfaces);
+	memset(&Level->LMSurfaces[0], 0, sizeof(LightmapSurface) * allSurfaces);
+
+	// Link the surfaces to sectors, sides and their 3D floors
+
+	unsigned int offset = 0;
+	for (unsigned int i = 0; i < Level->sides.Size(); i++)
+	{
+		auto& side = Level->sides[i];
+		side.lightmap = &Level->LMSurfaces[offset];
+		offset += 4 + side.sector->e->XFloor.ffloors.Size();
+	}
+	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+	{
+		auto& subsector = Level->subsectors[i];
+		unsigned int count = 1 + subsector.sector->e->XFloor.ffloors.Size();
+		subsector.lightmap[0] = &Level->LMSurfaces[offset];
+		subsector.lightmap[1] = &Level->LMSurfaces[offset + count];
+		offset += count * 2;
+	}
+
+	// Load the surfaces we have lightmap data for
+
+	for (uint32_t i = 0; i < numSurfaces; i++)
+	{
+		LightmapSurface surface;
+		memset(&surface, 0, sizeof(LightmapSurface));
+
+		SurfaceType type = (SurfaceType)fr.ReadUInt32();
+		uint32_t typeIndex = fr.ReadUInt32();
+		uint32_t controlSector = fr.ReadUInt32();
+		uint32_t lightmapNum = fr.ReadUInt32();
+		uint32_t firstTexCoord = fr.ReadUInt32();
+
+		if (controlSector != 0xffffffff)
+			surface.ControlSector = &Level->sectors[controlSector];
+
+		surface.Type = type;
+		surface.LightmapNum = lightmapNum;
+		surface.TexCoords = &Level->LMTexCoords[firstTexCoord * 2];
+
+		if (type == ST_CEILING || type == ST_FLOOR)
+		{
+			surface.Subsector = &Level->subsectors[typeIndex];
+			surface.Subsector->firstline->sidedef->sector->HasLightmaps = true;
+			SetSubsectorLightmap(surface);
+		}
+		else if (type != ST_NULL)
+		{
+			surface.Side = &Level->sides[typeIndex];
+			SetSideLightmap(surface);
+		}
+	}
+
+	// Load texture coordinates
+
+	fr.Read(&Level->LMTexCoords[0], numTexCoords * 2 * sizeof(float));
+
+	// Load lightmap textures
+
+	Level->LMTextureCount = numTextures;
+	Level->LMTextureSize = textureSize;
+	Level->LMTextureData.Resize((numTexBytes + 1) / 2);
+	uint8_t* data = (uint8_t*)&Level->LMTextureData[0];
+	fr.Read(data, numTexBytes);
+#if 0
+	// Apply compression predictor
+	for (uint32_t i = 1; i < numTexBytes; i++)
+		data[i] += data[i - 1];
+#endif
+}

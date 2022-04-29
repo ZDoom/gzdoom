@@ -248,7 +248,7 @@ done:
 bool IsFloat (const char *str)
 {
 	const char *pt;
-	
+
 	if (*str == '+' || *str == '-')
 		str++;
 
@@ -367,7 +367,7 @@ static FStringProd *DoubleToString (FProduction *prod)
 static FDoubleProd *StringToDouble (FProduction *prod)
 {
 	FDoubleProd *newprod;
-	
+
 	newprod = NewDoubleProd (atof (static_cast<FStringProd *>(prod)->Value));
 	M_Free (prod);
 	return newprod;

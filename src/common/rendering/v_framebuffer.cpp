@@ -186,7 +186,7 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	int screenWidth = GetWidth();
 	int screenHeight = GetHeight();
 	float scaleX, scaleY;
-	scaleX = std::min(clientWidth / (float)screenWidth, clientHeight / ((float)screenHeight * ViewportPixelAspect()));
+	scaleX = min(clientWidth / (float)screenWidth, clientHeight / ((float)screenHeight * ViewportPixelAspect()));
 	scaleY = scaleX * ViewportPixelAspect();
 	mOutputLetterbox.width = (int)round(screenWidth * scaleX);
 	mOutputLetterbox.height = (int)round(screenHeight * scaleY);
@@ -291,16 +291,19 @@ FMaterial* DFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(_Screen, GetWidth)
+static int ScreenGetWidth() { return twod->GetWidth(); }
+static int ScreenGetHeight() { return twod->GetHeight(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Screen, GetWidth, ScreenGetWidth)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(screen->GetWidth());
+	ACTION_RETURN_INT(twod->GetWidth());
 }
 
-DEFINE_ACTION_FUNCTION(_Screen, GetHeight)
+DEFINE_ACTION_FUNCTION_NATIVE(_Screen, GetHeight, ScreenGetHeight)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(screen->GetHeight());
+	ACTION_RETURN_INT(twod->GetHeight());
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, PaletteColor)

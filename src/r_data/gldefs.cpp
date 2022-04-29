@@ -35,7 +35,7 @@
 #include <ctype.h>
 
 #include "sc_man.h"
-#include "templates.h"
+
 #include "filesystem.h"
 #include "gi.h"
 #include "r_state.h"
@@ -48,6 +48,8 @@
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include "hw_material.h"
 #include "texturemanager.h"
+#include "gameconfigfile.h"
+#include "m_argv.h"
 
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
@@ -57,6 +59,50 @@ void ParseColorization(FScanner& sc);
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern int AttenuationIsSet;
 
+bool addedcvars = false;
+
+struct ExtraUniformCVARData
+{
+	FString Shader;
+	FString Uniform;
+	double* vec4 = nullptr;
+	ExtraUniformCVARData* Next = nullptr;
+};
+
+static void do_uniform_set(float value, ExtraUniformCVARData* data)
+{
+	if (!(data->vec4))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader& shader = PostProcessShaders[i];
+			if (strcmp(shader.Name, data->Shader) == 0)
+			{
+				data->vec4 = shader.Uniforms[data->Uniform].Values;
+			}
+		}
+	}
+	double* vec4 = data->vec4;
+	if (vec4)
+	{
+		vec4[0] = value;
+		vec4[1] = 0.0;
+		vec4[2] = 0.0;
+		vec4[3] = 1.0;
+	}
+	if (data->Next)
+		do_uniform_set(value, data->Next);
+}
+
+void uniform_callback_int(FIntCVar &self)
+{
+	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+}
+
+void uniform_callback_float(FFloatCVar &self)
+{
+	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -1057,7 +1103,7 @@ class GLDefsParser
 				auto tex = TexMan.GetGameTexture(flump);
 				sc.MustGetStringName(",");
 				sc.MustGetString();
-				PalEntry color = V_GetColor(NULL, sc.String);
+				PalEntry color = V_GetColor(sc.String);
 				//sc.MustGetStringName(",");
 				//sc.MustGetNumber();
 				if (sc.CheckString(","))
@@ -1155,7 +1201,7 @@ class GLDefsParser
 			if (lumpnum != -1)
 			{
 				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
-				if (thiswad && fileSystem.GetFileContainer(lumpnum) == workingLump) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1337,7 +1383,7 @@ class GLDefsParser
 			if (lumpnum != -1)
 			{
 				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
-				if (thiswad && fileSystem.GetFileContainer(lumpnum) == workingLump) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1452,8 +1498,10 @@ class GLDefsParser
 					sc.MustGetString();
 					shaderdesc.Name = sc.String;
 				}
-				else if (sc.Compare("uniform"))
+				else if (sc.Compare("uniform") || sc.Compare("cvar_uniform"))
 				{
+					bool is_cvar = sc.Compare("cvar_uniform");
+
 					sc.MustGetString();
 					FString uniformType = sc.String;
 					uniformType.ToLower();
@@ -1474,8 +1522,96 @@ class GLDefsParser
 					else
 						sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
 
+					auto strUniformType = sc.String;
+
 					if (parsedType != PostProcessUniformType::Undefined)
 						shaderdesc.Uniforms[uniformName].Type = parsedType;
+
+					if (is_cvar)
+					{
+						addedcvars = true;
+						if (!shaderdesc.Name.GetChars())
+							sc.ScriptError("Shader must have a name to use cvar uniforms");
+
+						ECVarType cvartype = CVAR_Dummy;
+						int cvarflags = CVAR_MOD|CVAR_ARCHIVE|CVAR_VIRTUAL;
+						FBaseCVar *cvar;
+						void (*callback)(FBaseCVar&) = NULL;
+						FString cvarname;
+						switch (parsedType)
+						{
+						case PostProcessUniformType::Int:
+							cvartype = CVAR_Int;
+							callback = (void (*)(FBaseCVar&))uniform_callback_int;
+							break;
+						case PostProcessUniformType::Float:
+							cvartype = CVAR_Float;
+							callback = (void (*)(FBaseCVar&))uniform_callback_float;
+							break;
+						default:
+							sc.ScriptError("'%s' not supported for CVAR uniforms!", strUniformType);
+							break;
+						}
+						sc.MustGetString();
+						cvarname = sc.String;
+						cvar = FindCVar(cvarname, NULL);
+
+						UCVarValue oldval;
+						UCVarValue val;
+						ExtraUniformCVARData* oldextra = nullptr;
+						sc.MustGetFloat();
+						
+						val.Float = oldval.Float = (float)sc.Float;
+
+						if (!Args->CheckParm ("-shaderuniformtest"))
+						{
+							// these aren't really release-ready, so lock them behind a command-line argument for now.
+							sc.ScriptMessage("Warning - Use -shaderuniformtest to enable shader uniforms!");
+						}
+						else
+						{
+							if (!cvar)
+							{
+								cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+							}
+							else if (cvar && (((cvar->GetFlags()) & CVAR_MOD) == CVAR_MOD))
+							{
+								// this value may have been previously loaded
+								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
+							}
+
+							if (!(cvar->GetFlags() & CVAR_MOD))
+							{
+								if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+									sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
+							}
+
+							// must've picked this up from an autoexec.cfg, handle accordingly
+							if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+							{
+								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+								delete cvar;
+								cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
+							}
+
+							shaderdesc.Uniforms[uniformName].Values[0] = oldval.Float;
+
+							cvar->SetGenericRepDefault(val, CVAR_Float);
+
+							if (val.Float != oldval.Float) // it's not default anymore
+								cvar->SetGenericRep(oldval.Float, CVAR_Float);
+						
+							if (callback)
+								cvar->SetCallback(callback);
+							ExtraUniformCVARData* extra = new ExtraUniformCVARData;
+							extra->Shader = shaderdesc.Name.GetChars();
+							extra->Uniform = uniformName.GetChars();
+							extra->Next = oldextra;
+							cvar->SetExtraDataPointer(extra);
+						}
+					}
 				}
 				else if (sc.Compare("texture"))
 				{
@@ -1671,12 +1807,12 @@ class GLDefsParser
 			else if (sc.Compare("AddColor"))
 			{
 				sc.MustGetString();
-				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(NULL, sc) & 0xffffff);
+				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(sc) & 0xffffff);
 			}
 			else if (sc.Compare("ModulateColor"))
 			{
 				sc.MustGetString();
-				tm.ModulateColor = V_GetColor(NULL, sc) & 0xffffff;
+				tm.ModulateColor = V_GetColor(sc) & 0xffffff;
 				if (sc.CheckToken(','))
 				{
 					sc.MustGetNumber();
@@ -1687,7 +1823,7 @@ class GLDefsParser
 			else if (sc.Compare("BlendColor"))
 			{
 				sc.MustGetString();
-				tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
+				tm.BlendColor = V_GetColor(sc) & 0xffffff;
 				sc.MustGetToken(',');
 				sc.MustGetString();
 				static const char* opts[] = { "none", "alpha", "screen", "overlay", "hardlight", nullptr };
@@ -1733,6 +1869,8 @@ public:
 			sc.SavePos();
 			if (!sc.GetToken ())
 			{
+				if (addedcvars)
+					GameConfig->DoModSetup (gameinfo.ConfigName);
 				return;
 			}
 			type = sc.MatchString(CoreKeywords);

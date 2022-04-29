@@ -44,7 +44,7 @@
 #include <stddef.h>
 
 #include "doomtype.h"
-#include "templates.h"
+
 #include "doomstat.h"
 #include "info.h"
 #include "d_dehacked.h"
@@ -66,6 +66,9 @@
 #include "types.h"
 #include "m_argv.h"
 #include "actorptrselect.h"
+#include "g_levellocals.h"
+
+extern TArray<PalEntry> TranslationColors;
 
 void JitDumpLog(FILE *file, VMScriptFunction *func);
 
@@ -141,20 +144,69 @@ static TArray<StyleName> StyleNames;
 static TArray<PClassActor *> AmmoNames;
 static TArray<PClassActor *> WeaponNames;
 
+struct MBFArgs
+{
+	int64_t args[8];
+	int argsused;
+};
+static TMap<FState*, MBFArgs> stateargs;
+static FState* FindState(int statenum);
+
 // DeHackEd trickery to support MBF-style parameters
 // List of states that are hacked to use a codepointer
 struct MBFParamState
 {
 	FState *state;
 	int pointer;
+	int argsused;
+	int64_t* args;
+
+	PClassActor* GetTypeArg(int i)
+	{
+		PClassActor* type = nullptr;
+		int num = (int)args[i];
+		if (num > 0 && num < int(InfoNames.Size())) type = InfoNames[num-1];	// Dehacked is 1-based.
+		return type;
+	}
+
+	FState* GetStateArg(int i)
+	{
+		int num = (int)args[i];
+		return FindState(num);
+	}
+
+
+	int GetIntArg(int i, int def = 0)
+	{
+		return argsused & (1 << i)? (int)args[i] : def;
+	}
+
+	int GetSoundArg(int i, int def = 0)
+	{
+		int num = argsused & (1 << i) ? (int)args[i] : def;
+		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1];
+		return 0;
+	}
+
+	double GetFloatArg(int i, double def = 0)
+	{
+		return argsused & (1 << i) ? FixedToFloat((fixed_t)args[i]) : def;
+	}
+
+	void ValidateArgCount(int num, const char* function)
+	{
+		if (argsused >= (1 << num))
+		{
+			Printf("Too many args for %s\n", function); // got no line number... :(
+		}
+	}
 };
 static TArray<MBFParamState> MBFParamStates;
 // Data on how to correctly modify the codepointers
 struct CodePointerAlias
 {
 	FName name;
-	char alias[20];
-	uint8_t params;
+	FString alias;
 };
 static TArray<CodePointerAlias> MBFCodePointers;
 
@@ -164,6 +216,13 @@ struct AmmoPerAttack
 	int ammocount;
 	VMFunction *ptr;
 };
+
+struct DehBits
+{
+	const char* name;
+	int value;
+};
+
 
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
@@ -623,7 +682,7 @@ static int GetLine (void)
 
 
 // misc1 = vrange (arg +3), misc2 = hrange (arg+4)
-static void CreateMushroomFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreateMushroomFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_Mushroom
 	emitters.AddParameterPointerConst(PClass::FindClass("FatShot"));	// itemtype
 	emitters.AddParameterIntConst(0);									// numspawns
@@ -633,7 +692,7 @@ static void CreateMushroomFunc(FunctionCallEmitter &emitters, int value1, int va
 }
 
 // misc1 = type (arg +0), misc2 = Z-pos (arg +2)
-static void CreateSpawnFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreateSpawnFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_SpawnItem
 	if (InfoNames[value1-1] == nullptr)
 	{
@@ -648,13 +707,13 @@ static void CreateSpawnFunc(FunctionCallEmitter &emitters, int value1, int value
 
 
 // misc1 = angle (in degrees) (arg +0 but factor in current actor angle too)
-static void CreateTurnFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreateTurnFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_Turn
 	emitters.AddParameterFloatConst(value1);				// angle
 }
 
 // misc1 = angle (in degrees) (arg +0)
-static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_SetAngle
 	emitters.AddParameterFloatConst(value1);				// angle
 	emitters.AddParameterIntConst(0);						// flags
@@ -662,7 +721,7 @@ static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2
 }
 
 // misc1 = damage, misc 2 = sound
-static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_CustomMeleeAttack
 	emitters.AddParameterIntConst(value1);								// damage
 	emitters.AddParameterIntConst(value2 ? (int)SoundMap[value2 - 1] : 0);	// hit sound
@@ -672,7 +731,7 @@ static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int val
 }
 
 // misc1 = sound, misc2 = attenuation none (true) or normal (false)
-static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_PlaySound
 	emitters.AddParameterIntConst(value1 ? (int)SoundMap[value1 - 1] : 0);	// soundid
 	emitters.AddParameterIntConst(CHAN_BODY);							// channel
@@ -684,7 +743,7 @@ static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int v
 }
 
 // misc1 = state, misc2 = probability
-static void CreateRandomJumpFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreateRandomJumpFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_Jump
 	auto symlabel = StateLabels.AddPointer(FindState(value1));
 
@@ -694,7 +753,7 @@ static void CreateRandomJumpFunc(FunctionCallEmitter &emitters, int value1, int 
 }
 
 // misc1 = Boom linedef type, misc2 = sector tag
-static void CreateLineEffectFunc(FunctionCallEmitter &emitters, int value1, int value2)
+static void CreateLineEffectFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_LineEffect
 	// This is the second MBF codepointer that couldn't be translated easily.
 	// Calling P_TranslateLineDef() here was a simple matter, as was adding an
@@ -705,28 +764,162 @@ static void CreateLineEffectFunc(FunctionCallEmitter &emitters, int value1, int 
 	emitters.AddParameterIntConst(value2);		// tag
 }
 
-// No misc, but it's basically A_Explode with an added effect
-static void CreateNailBombFunc(FunctionCallEmitter &emitters, int value1, int value2)
-{ // A_Explode
-	// This one does not actually have MBF-style parameters. But since
-	// we're aliasing it to an extension of A_Explode...
-	emitters.AddParameterIntConst(-1);		// damage
-	emitters.AddParameterIntConst(-1);		// distance
-	emitters.AddParameterIntConst(1);		// flags (1=XF_HURTSOURCE)
-	emitters.AddParameterIntConst(0);		// alert
-	emitters.AddParameterIntConst(0);		// fulldamagedistance
-	emitters.AddParameterIntConst(30);		// nails
-	emitters.AddParameterIntConst(10);		// naildamage
-	emitters.AddParameterPointerConst(PClass::FindClass(NAME_BulletPuff));	// itemtype
-	emitters.AddParameterIntConst(NAME_None);	// damage type
+static void CreateSpawnObjectFunc(FunctionCallEmitter& emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(8, "A_SpawnObject");
+	emitters.AddParameterPointerConst(state->GetTypeArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
+	emitters.AddParameterFloatConst(state->GetFloatArg(5));
+	emitters.AddParameterFloatConst(state->GetFloatArg(6));
+	emitters.AddParameterFloatConst(state->GetFloatArg(7));
+}
+
+static void CreateMonsterProjectileFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_MonsterProjectile");
+	emitters.AddParameterPointerConst(state->GetTypeArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
+}
+
+static void CreateMonsterBulletAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_MonsterBulletAttack");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterIntConst(state->GetIntArg(2, 1));
+	emitters.AddParameterIntConst(state->GetIntArg(3, 3));
+	emitters.AddParameterIntConst(state->GetIntArg(4, 5));
+}
+
+static void CreateMonsterMeleeAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(4, "A_MonsterMeleeAttack");
+	emitters.AddParameterIntConst(state->GetIntArg(0, 3));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 8));
+	emitters.AddParameterIntConst(state->GetIntArg(2, 0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
+
+}
+
+static void CreateRadiusDamageFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_RadiusDamage");
+	emitters.AddParameterIntConst(state->GetIntArg(0, 0));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 0));
+}
+
+static void CreateHealChaseFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_HealChase");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetSoundArg(1));
+}
+
+static void CreateSeekTracerFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_SeekTracer");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0, 0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1, 0));
+}
+
+static void CreateFindTracerFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_FindTracer");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 10));
+}
+
+static void CreateJumpIfHealthBelowFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_JumpIfHealthBelow");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateJumpIfFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_JumpIf..");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+}
+
+static void CreateJumpIfFlagSetFunc(FunctionCallEmitter& emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_JumpIfFlagsSet");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+	emitters.AddParameterIntConst(state->GetIntArg(2));
+}
+
+static void CreateFlagSetFunc(FunctionCallEmitter& emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_...Flags");
+	emitters.AddParameterIntConst(state->GetIntArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateWeaponProjectileFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_WeaponProjectile");
+	emitters.AddParameterPointerConst(state->GetTypeArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2));
+	emitters.AddParameterFloatConst(state->GetFloatArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
+}
+
+static void CreateWeaponBulletAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_WeaponBulletAttack");
+	emitters.AddParameterFloatConst(state->GetFloatArg(0));
+	emitters.AddParameterFloatConst(state->GetFloatArg(1));
+	emitters.AddParameterIntConst(state->GetIntArg(2, 1));
+	emitters.AddParameterIntConst(state->GetIntArg(3, 5));
+	emitters.AddParameterIntConst(state->GetIntArg(4, 3));
+}
+
+static void CreateWeaponMeleeAttackFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(5, "A_WeaponMeleeAttack");
+	emitters.AddParameterIntConst(state->GetIntArg(0, 2));
+	emitters.AddParameterIntConst(state->GetIntArg(1, 10));
+	emitters.AddParameterFloatConst(state->GetFloatArg(2, 1));
+	emitters.AddParameterIntConst(state->GetSoundArg(3));
+	emitters.AddParameterFloatConst(state->GetFloatArg(4));
+}
+
+static void CreateWeaponSoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_WeaponSound");
+	emitters.AddParameterIntConst(state->GetSoundArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateWeaponJumpFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(2, "A_WeaponJump");
+	emitters.AddParameterPointerConst(state->GetStateArg(0));
+	emitters.AddParameterIntConst(state->GetIntArg(1));
+}
+
+static void CreateConsumeAmmoFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
+{
+	state->ValidateArgCount(1, "A_ConsumeAmmo");
+	emitters.AddParameterIntConst(state->GetIntArg(0));
+
 }
 
 // This array must be in sync with the Aliases array in DEHSUPP.
-static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int) =
+static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int, MBFParamState*) =
 {
 	// Die and Detonate are not in this list because these codepointers have
 	// no dehacked arguments and therefore do not need special handling.
-	// NailBomb has no argument but is implemented as new parameters for A_Explode.
 	CreateMushroomFunc,
 	CreateSpawnFunc,
 	CreateTurnFunc,
@@ -735,17 +928,40 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int) =
 	CreatePlaySoundFunc,
 	CreateRandomJumpFunc,
 	CreateLineEffectFunc,
-	CreateNailBombFunc
+	CreateSpawnObjectFunc,
+	CreateMonsterProjectileFunc,
+	CreateMonsterBulletAttackFunc,
+	CreateMonsterMeleeAttackFunc,
+	CreateRadiusDamageFunc,
+	CreateHealChaseFunc,
+	CreateSeekTracerFunc,
+	CreateFindTracerFunc,
+	CreateJumpIfHealthBelowFunc,
+	CreateJumpIfFunc,
+	CreateJumpIfFunc,
+	CreateJumpIfFunc,
+	CreateJumpIfFunc,
+	CreateWeaponProjectileFunc,
+	CreateWeaponBulletAttackFunc,
+	CreateWeaponMeleeAttackFunc,
+	CreateWeaponSoundFunc,
+	CreateWeaponJumpFunc,
+	CreateConsumeAmmoFunc,
+	CreateWeaponJumpFunc,
+	CreateWeaponJumpFunc,
+	CreateWeaponJumpFunc,
+	CreateJumpIfFlagSetFunc,
+	CreateFlagSetFunc,
+	CreateFlagSetFunc
 };
 
 // Creates new functions for the given state so as to convert MBF-args (misc1 and misc2) into real args.
 
-static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &disasmdump)
+static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &disasmdump, MBFParamState* pstate)
 {
 	static const uint8_t regts[] = { REGT_POINTER, REGT_POINTER, REGT_POINTER };
 	int value1 = state->GetMisc1();
 	int value2 = state->GetMisc2();
-	if (!(value1|value2)) return;
 	
 	bool returnsState = codepointer == 6;
 	
@@ -766,6 +982,12 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 	}
 	else
 	{
+		MBFArgs scratchargs{};
+		auto args = stateargs.CheckKey(pstate->state);
+		if (!args) args = &scratchargs;
+		pstate->args = args->args;
+		pstate->argsused = args->argsused;
+
 		int numargs = sym->GetImplicitArgs();
 		auto funcsym = CreateAnonymousFunction(RUNTIME_CLASS(AActor)->VMType, returnsState? (PType*)TypeState : TypeVoid, numargs==3? SUF_ACTOR|SUF_WEAPON : SUF_ACTOR);
 		VMFunctionBuilder buildit(numargs);
@@ -779,7 +1001,7 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 			emitters.AddParameterPointer(i, false);
 		}
 		// Emit code for action parameters.
-		MBFCodePointerFactories[codepointer](emitters, value1, value2);
+		MBFCodePointerFactories[codepointer](emitters, value1, value2, pstate);
 		auto where = emitters.EmitCall(&buildit);
 		if (!returnsState) buildit.Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
 		else buildit.Emit(OP_RET, RET_FINAL, EncodeRegType(where), where.RegNum);
@@ -811,6 +1033,48 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 #endif // HAVE_VM_JIT
 	}
 }
+
+struct DehFlags2
+{
+	const char* name;
+	void (*setter)(AActor* defaults);
+};
+
+// not all of these map to real flags so this table needs handler callbacks.
+static const struct DehFlags2 deh_mobjflags_mbf21[] = {
+  {"LOGRAV",         [](AActor* defaults) { defaults->Gravity = 1. / 8.; }}, // low gravity
+  {"SHORTMRANGE",    [](AActor* defaults) { defaults->maxtargetrange = 896.; }}, // short missile range
+  {"DMGIGNORED",     [](AActor* defaults) { defaults->flags3 |= MF3_NOTARGET; }}, // other things ignore its attacks
+  {"NORADIUSDMG",    [](AActor* defaults) { defaults->flags3 |= MF3_NORADIUSDMG; }}, // doesn't take splash damage
+  {"FORCERADIUSDMG", [](AActor* defaults) { defaults->flags4 |= MF4_FORCERADIUSDMG; }}, // causes splash damage even if target immune
+  {"HIGHERMPROB",    [](AActor* defaults) { defaults->MinMissileChance = 160; }}, // higher missile attack probability
+  {"RANGEHALF",      [](AActor* defaults) { defaults->flags4 |= MF4_MISSILEMORE; }}, // use half distance for missile attack probability
+  {"NOTHRESHOLD",    [](AActor* defaults) { defaults->flags4 |= MF4_QUICKTORETALIATE; }}, // no targeting threshold
+  {"LONGMELEE",      [](AActor* defaults) { defaults->meleethreshold = 196; }}, // long melee range
+  {"BOSS",           [](AActor* defaults) { defaults->flags2 |= MF2_BOSS; }}, // full volume see / death sound + splash immunity
+  {"MAP07BOSS1",     [](AActor* defaults) { defaults->flags8 |= MF8_MAP07BOSS1; }}, // Tag 666 "boss" on doom 2 map 7
+  {"MAP07BOSS2",     [](AActor* defaults) { defaults->flags8 |= MF8_MAP07BOSS2; }}, // Tag 667 "boss" on doom 2 map 7
+  {"E1M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E1M8BOSS; }}, // E1M8 boss
+  {"E2M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E2M8BOSS; }}, // E2M8 boss
+  {"E3M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E3M8BOSS; }}, // E3M8 boss
+  {"E4M6BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E4M6BOSS; }}, // E4M6 boss
+  {"E4M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E4M8BOSS; }}, // E4M8 boss
+  {"RIP",            [](AActor* defaults) { defaults->flags2 |= MF2_RIP;  }}, // projectile rips through targets
+  {"FULLVOLSOUNDS",  [](AActor* defaults) { defaults->flags8 |= MF8_FULLVOLSEE; defaults->flags3 |= MF3_FULLVOLDEATH; } }, // full volume see / death sound
+};
+
+static void ClearBits2Stuff(AActor* defaults)
+{
+	defaults->Gravity = 1.;
+	defaults->maxtargetrange = 0;
+	defaults->MinMissileChance = 200;
+	defaults->meleethreshold = 0;
+	defaults->flags2 &= ~(MF2_BOSS | MF2_RIP);
+	defaults->flags3 &= ~(MF3_NOTARGET | MF3_NORADIUSDMG | MF3_FULLVOLDEATH);
+	defaults->flags4 &= ~(MF4_MISSILEMORE | MF4_QUICKTORETALIATE | MF4_FORCERADIUSDMG);
+	defaults->flags8 &= ~(MF8_E1M8BOSS | MF8_E2M8BOSS | MF8_E3M8BOSS | MF8_E4M8BOSS | MF8_E4M6BOSS | MF8_MAP07BOSS1 | MF8_MAP07BOSS2 | MF8_FULLVOLSEE);
+}
+
 
 static int PatchThing (int thingy)
 {
@@ -874,7 +1138,7 @@ static int PatchThing (int thingy)
 	while ((result = GetLine ()) == 1)
 	{
 		char *endptr;
-		unsigned long val = (unsigned long)strtoull (Line2, &endptr, 10);
+		uint32_t val = (uint32_t)strtoull (Line2, &endptr, 10);
 		size_t linelen = strlen (Line1);
 
 		if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
@@ -893,6 +1157,7 @@ static int PatchThing (int thingy)
 		{
 			info->Alpha = DEHToDouble(val);
 			info->RenderStyle = STYLE_Translucent;
+			info->renderflags &= ~RF_ZDOOMTRANS;
 			hadTranslucency = true;
 			hadStyle = true;
 		}
@@ -949,20 +1214,134 @@ static int PatchThing (int thingy)
 				hadStyle = true;
 			}
 		}
-		else if (linelen > 6)
+		else if (linelen == 12 && stricmp(Line1, "No Ice Death") == 0)
 		{
-			if (linelen == 12 && stricmp (Line1, "No Ice Death") == 0)
+			if (val)
 			{
-				if (val)
+				info->flags4 |= MF4_NOICEDEATH;
+			}
+			else
+			{
+				info->flags4 &= ~MF4_NOICEDEATH;
+			}
+		}
+		else if (linelen == 16 && stricmp(Line1, "infighting group") == 0)
+		{
+			if (val < 0)
+			{
+				Printf("Infighting groups must be >= 0 (check your dehacked)\n");
+				val = 0;
+			}
+			type->ActorInfo()->infighting_group = val;
+		}
+		else if (linelen == 16 && stricmp(Line1, "projectile group") == 0)
+		{
+			if (val < 0) val = -1;
+			type->ActorInfo()->projectile_group = val;
+		}
+		else if (linelen == 12 && stricmp(Line1, "splash group") == 0)
+		{
+			if (val < 0)
+			{
+				Printf("Splash groups must be >= 0 (check your dehacked)\n");
+				val = 0;
+			}
+			type->ActorInfo()->splash_group = val;
+		}
+		else if (linelen == 10 && stricmp(Line1, "fast speed") == 0)
+		{
+			double fval = val >= 256 ? DEHToDouble(val) : val;
+			info->FloatVar(NAME_FastSpeed) = fval;
+		}
+		else if (linelen == 11 && stricmp(Line1, "melee range") == 0)
+		{
+			info->meleerange = DEHToDouble(val) - 20;	// -20 is needed because DSDA subtracts it in P_CheckMeleeRange, while GZDoom does not.
+		}
+		else if (linelen == 12 && stricmp(Line1, "dropped item") == 0)
+		{
+			val--;	// This is 1-based and 0 means 'no drop'.
+			if ((unsigned)val < InfoNames.Size())
+			{
+				FDropItem* di = (FDropItem*)ClassDataAllocator.Alloc(sizeof(FDropItem));
+
+				di->Next = nullptr;
+				di->Name = InfoNames[val]->TypeName.GetChars();
+				di->Probability = 255;
+				di->Amount = -1;
+				info->GetInfo()->DropItems = di;
+			}
+			else if (val == -1)
+			{
+				info->GetInfo()->DropItems = nullptr;
+			}
+		}
+		else if (linelen == 11 && stricmp(Line1, "blood color") == 0)
+		{
+			static const unsigned int bloodcolor[] = {
+			  0,          // 0 - Red (normal)
+			  0xffcccccc, // 1 - Grey
+			  0xff63af57, // 2 - Green
+			  0xff6357af, // 3 - Blue
+			  0xffffd300, // 4 - Yellow
+			  0xff333333, // 5 - Black
+			  0xffff30ff, // 6 - Purple
+			  0xffffffff, // 7 - White
+			  0xffff8000, // 8 - Orange
+			};
+
+			if (val < 0 || val > 8) val = 0;
+			unsigned color = bloodcolor[val];
+			info->BloodColor = color;
+			info->BloodTranslation = val == 0? 0 : TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(color));
+		}
+		else if (linelen == 10 && stricmp(Line1, "MBF21 Bits") == 0)
+		{
+			uint32_t value = 0;
+			bool vchanged = false;
+
+			char* strval;
+
+			for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
+			{
+				if (IsNum(strval))
 				{
-					info->flags4 |= MF4_NOICEDEATH;
+					value |= (unsigned long)strtoll(strval, NULL, 10);
+					vchanged = true;
 				}
 				else
 				{
-					info->flags4 &= ~MF4_NOICEDEATH;
+					unsigned i;
+					for (i = 0; i < countof(deh_mobjflags_mbf21); i++)
+					{
+						if (!stricmp(strval, deh_mobjflags_mbf21[i].name))
+						{
+							vchanged = true;
+							value |= 1 << i;
+							break;
+						}
+					}
+					if (i == countof(deh_mobjflags_mbf21))
+					{
+						DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
+					}
 				}
 			}
-			else if (stricmp (Line1 + linelen - 6, " frame") == 0)
+			if (vchanged)
+			{
+				ClearBits2Stuff(info);
+				for (size_t i = 0; i < countof(deh_mobjflags_mbf21); i++)
+				{
+					if (value & (1 << i))
+					{
+						deh_mobjflags_mbf21[i].setter(info);
+					}
+				}
+			}
+			DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->flags.GetValue(), info->flags.GetValue());
+		}
+		else if (linelen > 6)
+		{
+			if (stricmp (Line1 + linelen - 6, " frame") == 0)
 			{
 				FState *state = FindState (val);
 
@@ -1028,6 +1407,9 @@ static int PatchThing (int thingy)
 					info->DeathSound = snd;
 				else if (!strnicmp (Line1, "Action", 6))
 					info->ActiveSound = snd;
+				else if (!strnicmp(Line1, "Rip", 3))
+					info->SoundVar(NAME_RipSound) = snd;
+
 			}
 		}
 		else if (linelen == 4)
@@ -1078,12 +1460,6 @@ static int PatchThing (int thingy)
 				}
 				if (vchanged[0])
 				{
-					if (value[0] & MF_SLIDE)
-					{
-						// SLIDE (which occupies in Doom what is the MF_INCHASE slot in ZDoom)
-						value[0] &= ~MF_SLIDE; // clean the slot
-						// Nothing else to do, this flag is never actually used.
-					}
 					if (value[0] & MF_TRANSLATION)
 					{
 						info->Translation = TRANSLATION (TRANSLATION_Standard,
@@ -1119,10 +1495,10 @@ static int PatchThing (int thingy)
 						// This is different from BOUNCE_Heretic behavior as in Heretic the missiles
 						// die when they bounce, while in MBF they will continue to bounce until they
 						// collide with a wall or a solid actor.
-						if (value[0] & MF_MISSILE) info->BounceFlags = BOUNCE_Classic;
+						if (value[0] & MF_MISSILE) info->BounceFlags = BOUNCE_Classic | BOUNCE_DEH;
 						// MBF bouncing actors that do not have the missile flag will also rebound on
 						// walls, and this does correspond roughly to the ZDoom bounce style.
-						else info->BounceFlags = BOUNCE_Grenade;
+						else info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
 
 						// MBF grenades are dehacked rockets that gain the BOUNCES flag but
 						// lose the MISSILE flag, so they can be identified here easily.
@@ -1132,27 +1508,13 @@ static int PatchThing (int thingy)
 							info->effects |= FX_GRENADE;	// by grenade trail
 						}
 
-						// MBF bounce factors depend on flag combos:
-						const double MBF_BOUNCE_NOGRAVITY = 1;				// With NOGRAVITY: full momentum
-						const double MBF_BOUNCE_FLOATDROPOFF = 0.85;		// With FLOAT and DROPOFF: 85%
-						const double MBF_BOUNCE_FLOAT = 0.7;				// With FLOAT alone: 70%
-						const double MBF_BOUNCE_DEFAULT = 0.45;				// Without the above flags: 45%
-						const double MBF_BOUNCE_WALL = 0.5;					// Bouncing off walls: 50%
+						// bounce factors are dynamic, we only set some defaults here.
+						info->bouncefactor = 0.45;
+						info->wallbouncefactor = 0.85;
 
-						info->bouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY
-							: (value[0] & MF_FLOAT) ? (value[0] & MF_DROPOFF) ? MBF_BOUNCE_FLOATDROPOFF
-							: MBF_BOUNCE_FLOAT : MBF_BOUNCE_DEFAULT);
-
-						info->wallbouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY : MBF_BOUNCE_WALL);
-
-						// MBF sentient actors with BOUNCE and FLOAT are able to "jump" by floating up.
-						if (info->IsSentient())
+						if (!info->IsSentient())
 						{
-							if (value[0] & MF_FLOAT) info->flags6 |= MF6_CANJUMP;
-						}
-						// Non sentient actors can be damaged but they shouldn't bleed.
-						else
-						{
+							// Non sentient actors can be damaged but they shouldn't bleed.
 							value[0] |= MF_NOBLOOD;
 						}
 					}
@@ -1226,6 +1588,7 @@ static int PatchThing (int thingy)
 						else if (value[2] & 4)
 							info->Alpha = 0.75;
 						info->RenderStyle = STYLE_Translucent;
+						info->renderflags &= ~RF_ZDOOMTRANS;
 					}
 					if (value[2] & 8)
 						info->renderflags |= RF_INVISIBLE;
@@ -1366,8 +1729,14 @@ static int PatchSound (int soundNum)
 	return result;
 }
 
+DehBits sbits[] = {
+	{ "SKILL5FAST", STF_FAST }
+};
+
+
 static int PatchFrame (int frameNum)
 {
+	MBFArgs args{};
 	int result;
 	int tics, misc1, frame;
 	FState *info, dummy;
@@ -1400,7 +1769,8 @@ static int PatchFrame (int frameNum)
 
 	while ((result = GetLine ()) == 1)
 	{
-		int val = atoi (Line2);
+		int64_t val64 = atoll(Line2);
+		int val = int(val64);
 		size_t keylen = strlen (Line1);
 
 		if (keylen == 8 && stricmp (Line1, "Duration") == 0)
@@ -1449,6 +1819,68 @@ static int PatchFrame (int frameNum)
 		{
 			frame = val;
 		}
+		else if (keylen == 5 && strnicmp(Line1, "Args", 4) == 0)
+		{
+			int arg = Line1[4] - '1';
+			if (arg < 0 || arg >= 8)
+			{
+				Printf("Invalid frame arg %d\n", arg);
+			}
+			else
+			{
+				args.args[arg] = val64;
+				args.argsused |= (1 << arg);
+			}
+		}
+		else if (stricmp(Line1, "MBF21 Bits") == 0)
+		{
+			uint32_t value = 0;
+			bool vchanged = false;
+
+			char* strval;
+
+			for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
+			{
+				if (IsNum(strval))
+				{
+					value |= (unsigned long)strtoll(strval, NULL, 10);
+					vchanged = true;
+				}
+				else
+				{
+					unsigned i;
+					for (i = 0; i < countof(sbits); i++)
+					{
+						if (!stricmp(strval, sbits[i].name))
+						{
+							vchanged = true;
+							value |= 1 << i;
+							break;
+						}
+					}
+					if (i == countof(sbits))
+					{
+						DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
+					}
+				}
+			}
+			if (vchanged)
+			{
+				int flags = 0;
+				int mask = 0;
+				for (size_t i = 0; i < countof(sbits); i++)
+				{
+					mask |= sbits[i].value;
+					if (value & (1 << i))
+					{
+						flags |= sbits[i].value;
+					}
+				}
+				info->StateFlags = (info->StateFlags & ~mask) | flags;
+			}
+			DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->StateFlags, info->StateFlags);
+		}
+
 		else
 		{
 			Printf (unknown_str, Line1, "Frame", frameNum);
@@ -1467,6 +1899,7 @@ static int PatchFrame (int frameNum)
 		info->Frame = frame & 0x3f;
 		if (frame & 0x8000) info->StateFlags |= STF_FULLBRIGHT;
 		else info->StateFlags &= ~STF_FULLBRIGHT;
+		stateargs.Insert(info, args);
 	}
 
 	return result;
@@ -1596,6 +2029,15 @@ static int PatchAmmo (int ammoNum)
 	return result;
 }
 
+DehBits wbits[] = {
+	{ "NOTHRUST", -1 },	// i.e. set kickback to 0
+	{ "SILENT", WIF_NOALERT },
+	{ "NOAUTOFIRE", WIF_NOAUTOFIRE },
+	{ "FLEEMELEE", WIF_MELEEWEAPON },
+	{ "AUTOSWITCHFROM", WIF_WIMPY_WEAPON },	// ugh, I wish I could change this stupid name...
+	{ "NOAUTOSWITCHTO", WIF_NOAUTOSWITCHTO }
+};
+
 static int PatchWeapon (int weapNum)
 {
 	int result;
@@ -1623,60 +2065,54 @@ static int PatchWeapon (int weapNum)
 	{
 		int val = atoi (Line2);
 
-		if (strlen (Line1) >= 9)
+		size_t len = strlen(Line1);
+		if (len > 6 && stricmp (Line1 + len - 6, " frame") == 0)
 		{
-			if (stricmp (Line1 + strlen (Line1) - 6, " frame") == 0)
+			FState *state = FindState (val);
+
+			if (type != nullptr && !patchedStates)
 			{
-				FState *state = FindState (val);
-
-				if (type != NULL && !patchedStates)
-				{
-					statedef.MakeStateDefines(type);
-					patchedStates = true;
-				}
-
-				if (strnicmp (Line1, "Deselect", 8) == 0)
-					statedef.SetStateLabel("Select", state);
-				else if (strnicmp (Line1, "Select", 6) == 0)
-					statedef.SetStateLabel("Deselect", state);
-				else if (strnicmp (Line1, "Bobbing", 7) == 0)
-					statedef.SetStateLabel("Ready", state);
-				else if (strnicmp (Line1, "Shooting", 8) == 0)
-					statedef.SetStateLabel("Fire", state);
-				else if (strnicmp (Line1, "Firing", 6) == 0)
-					statedef.SetStateLabel("Flash", state);
+				statedef.MakeStateDefines(type);
+				patchedStates = true;
 			}
-			else if (stricmp (Line1, "Ammo type") == 0)
+
+			if (strnicmp (Line1, "Deselect", 8) == 0)
+				statedef.SetStateLabel("Select", state);
+			else if (strnicmp (Line1, "Select", 6) == 0)
+				statedef.SetStateLabel("Deselect", state);
+			else if (strnicmp (Line1, "Bobbing", 7) == 0)
+				statedef.SetStateLabel("Ready", state);
+			else if (strnicmp (Line1, "Shooting", 8) == 0)
+				statedef.SetStateLabel("Fire", state);
+			else if (strnicmp (Line1, "Firing", 6) == 0)
+				statedef.SetStateLabel("Flash", state);
+		}
+		else if (stricmp (Line1, "Ammo type") == 0)
+		{
+			if (val < 0 || val >= 12 || (unsigned)val >= AmmoNames.Size())
 			{
-				if (val < 0 || val >= 12 || (unsigned)val >= AmmoNames.Size())
+				val = 5;
+			}
+			if (info)
+			{
+				auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
+				AmmoType = AmmoNames[val];
+				if (AmmoType != nullptr)
 				{
-					val = 5;
-				}
-				if (info)
-				{
-					auto &AmmoType = info->PointerVar<PClassActor>(NAME_AmmoType1);
-					AmmoType = AmmoNames[val];
-					if (AmmoType != nullptr)
+					info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
+					auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
+					if (AmmoUse == 0)
 					{
-						info->IntVar(NAME_AmmoGive1) = GetDefaultByType(AmmoType)->IntVar(NAME_Amount) * 2;
-						auto &AmmoUse = info->IntVar(NAME_AmmoUse1);
-						if (AmmoUse == 0)
-						{
-							AmmoUse = 1;
-						}
+						AmmoUse = 1;
 					}
 				}
-			}
-			else
-			{
-				Printf (unknown_str, Line1, "Weapon", weapNum);
 			}
 		}
 		else if (stricmp (Line1, "Decal") == 0)
 		{
 			stripwhite (Line2);
 			const FDecalTemplate *decal = DecalLibrary.GetDecalByName (Line2);
-			if (decal != NULL)
+			if (decal != nullptr)
 			{
 				if (info) info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
 			}
@@ -1697,6 +2133,57 @@ static int PatchWeapon (int weapNum)
 		{
 			if (info) info->IntVar(NAME_MinSelAmmo1) = val;
 		}
+		else if (stricmp(Line1, "MBF21 Bits") == 0)
+		{
+			uint32_t value = 0;
+			bool vchanged = false;
+
+			char* strval;
+
+			for (strval = Line2; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
+			{
+				if (IsNum(strval))
+				{
+					value |= (unsigned long)strtoll(strval, NULL, 10);
+					vchanged = true;
+				}
+				else
+				{
+					unsigned i;
+					for (i = 0; i < countof(wbits); i++)
+					{
+						if (!stricmp(strval, wbits[i].name))
+						{
+							vchanged = true;
+							value |= 1 << i;
+							break;
+						}
+					}
+					if (i == countof(wbits))
+					{
+						DPrintf(DMSG_ERROR, "Unknown bit mnemonic %s\n", strval);
+					}
+				}
+			}
+			if (vchanged)
+			{
+				int kickback = 100;
+				int flags = 0;
+				for (size_t i = 0; i < countof(wbits); i++)
+				{
+					if (value & (1 << i))
+					{
+						int val = wbits[i].value;
+						if (val == -1) kickback = 0;
+						else flags |= wbits[i].value;
+					}
+				}
+				info->IntVar(NAME_Kickback) = kickback;
+				info->IntVar(NAME_WeaponFlags) = flags;
+			}
+			DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->flags.GetValue(), info->flags.GetValue());
+		}
+
 		else
 		{
 			Printf (unknown_str, Line1, "Weapon", weapNum);
@@ -1719,12 +2206,11 @@ static int PatchWeapon (int weapNum)
 	return result;
 }
 
-static void SetPointer(FState *state, PFunction *sym, int frame = 0)
+static int SetPointer(FState *state, PFunction *sym, int frame = 0)
 {
 	if (sym == NULL)
 	{
 		state->ClearAction();
-		return;
 	}
 	else
 	{
@@ -1734,14 +2220,12 @@ static void SetPointer(FState *state, PFunction *sym, int frame = 0)
 		{
 			if (sym->SymbolName == MBFCodePointers[i].name)
 			{
-				MBFParamState newstate;
-				newstate.state = state;
-				newstate.pointer = i;
-				MBFParamStates.Push(newstate);
-				break; // No need to cycle through the rest of the list.
+				MBFParamState newstate = { state, int(i) };
+				return MBFParamStates.Push(newstate);
 			}
 		}
 	}
+	return -1;
 }
 
 static int PatchPointer (int ptrNum)
@@ -2033,7 +2517,7 @@ static int PatchPars (int dummy)
 		{
 			while ('\0' != *str)
 			{
-				if (isspace((unsigned char)*str))
+				if (*str != '\r' && isspace((unsigned char)*str))
 				{
 					return str;
 				}
@@ -2103,11 +2587,15 @@ static int PatchCodePtrs (int dummy)
 			{
 				FString symname;
 
-
 				if ((Line2[0] == 'A' || Line2[0] == 'a') && Line2[1] == '_')
 					symname = Line2;
 				else
 					symname.Format("A_%s", Line2);
+
+				// Hack alert: If A_ConsumeAmmo is used we need to handle the ammo use differently.
+				// Since this is a parameterized code pointer the AmmoPerAttack check cannot find it easily without some help.
+				if (symname.CompareNoCase("A_ConsumeAmmo") == 0)
+					state->StateFlags |= STF_CONSUMEAMMO;
 
 				// Let's consider as aliases some redundant MBF pointer
 				bool ismbfcp = false;
@@ -2116,7 +2604,7 @@ static int PatchCodePtrs (int dummy)
 					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
 					{
 						symname = MBFCodePointers[i].name.GetChars();
-						DPrintf(DMSG_SPAMMY, "%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
+						DPrintf(DMSG_SPAMMY, "%s --> %s\n", MBFCodePointers[i].alias.GetChars(), MBFCodePointers[i].name.GetChars());
 						ismbfcp = true;
 						break;
 					}
@@ -2265,7 +2753,17 @@ static int PatchText (int oldSize)
 
 	// Search through most other texts
 	const char *str;
-	do
+	
+	// hackhack: If the given string is "Doom", only replace "MUSIC_DOOM".
+	// This is the only music or texture name clashing with common words in the string table.
+	if (!stricmp(oldStr, "Doom"))
+	{
+		str = "MUSIC_DOOM";
+		TableElement te = { LumpFileNum, { newStrData, newStrData, newStrData, newStrData } };
+		DehStrings.Insert(str, te);
+		good = true;
+	}
+	else do
 	{
 		oldStrData.MergeChars(' ');
 		str = EnglishStrings.MatchString(oldStr);
@@ -2642,8 +3140,9 @@ static void UnloadDehSupp ()
 		// Handle MBF params here, before the required arrays are cleared
 		for (unsigned int i=0; i < MBFParamStates.Size(); i++)
 		{
-			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump);
+			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump, &MBFParamStates[i]);
 		}
+		stateargs.Clear();
 		MBFParamStates.Clear();
 		MBFParamStates.ShrinkToFit();
 		MBFCodePointers.Clear();
@@ -2959,14 +3458,10 @@ static bool LoadDehSupp ()
 				{
 					CodePointerAlias temp;
 					sc.MustGetString();
-					strncpy(temp.alias, sc.String, 19);
-					temp.alias[19]=0;
+					temp.alias = sc.String;
 					sc.MustGetStringName(",");
 					sc.MustGetString();
 					temp.name = sc.String;
-					sc.MustGetStringName(",");
-					sc.MustGetNumber();
-					temp.params = sc.Number;
 					MBFCodePointers.Push(temp);
 					if (sc.CheckString("}")) break;
 					sc.MustGetStringName(",");
@@ -3089,8 +3584,8 @@ void FinishDehPatch ()
 		}
 		else
 		{
+			bool handled = false;
 			weap->BoolVar(NAME_bDehAmmo) = true;
-			weap->IntVar(NAME_AmmoUse1) = 0;
 			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
 			// and set its default ammo use as the weapon's AmmoUse1.
 
@@ -3105,24 +3600,38 @@ void FinishDehPatch ()
 					break;	// State has already been checked so we reached a loop
 				}
 				StateVisited[state] = true;
+				if (state->StateFlags & STF_CONSUMEAMMO)
+				{
+					// If A_ConsumeAmmo is being used we have to rely on the existing AmmoUse1 value.
+					handled = true;
+					state->StateFlags &= ~STF_CONSUMEAMMO;
+					break;
+				}
 				for(unsigned j = 0; AmmoPerAttacks[j].func != NAME_None; j++)
 				{
 					if (AmmoPerAttacks[j].ptr == nullptr)
 					{
 						auto p = dyn_cast<PFunction>(wcls->FindSymbol(AmmoPerAttacks[j].func, true));
 						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
+						assert(AmmoPerAttacks[j].ptr);
 					}
-					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
+					if (state->ActionFunc == AmmoPerAttacks[j].ptr && AmmoPerAttacks[j].ptr)
 					{
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
 						if (use < 0) use = deh.BFGCells;
 						weap->IntVar(NAME_AmmoUse1) = use;
+						handled = true;
 						break;
 					}
 				}
 				if (found) break;
 				state = state->GetNextState();
+			}
+			if (!handled)
+			{
+				weap->IntVar(NAME_AmmoUse1) = 0;
+
 			}
 		}
 	}
@@ -3157,4 +3666,341 @@ DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 		}
 	}
 	ACTION_RETURN_POINTER(nullptr);
+}
+
+// Handling the flags is not as trivial as it seems...
+
+struct FlagHandler
+{
+	void (*setter)(AActor*);
+	void (*clearer)(AActor*);
+	bool (*checker)(AActor*);
+};
+
+// cut down on boilerplate
+#define F(flag) { [](AActor* a) { a->flags |= flag; }, [](AActor* a) { a->flags &= ~flag; }, [](AActor* a)->bool { return a->flags & flag; } }
+#define F2(flag) { [](AActor* a) { a->flags2 |= flag; }, [](AActor* a) { a->flags2 &= ~flag; }, [](AActor* a)->bool { return a->flags2 & flag; } }
+#define F3(flag) { [](AActor* a) { a->flags3 |= flag; }, [](AActor* a) { a->flags3 &= ~flag; }, [](AActor* a)->bool { return a->flags3 & flag; } }
+#define F4(flag) { [](AActor* a) { a->flags4 |= flag; }, [](AActor* a) { a->flags4 &= ~flag; }, [](AActor* a)->bool { return a->flags4 & flag; } }
+#define F6(flag) { [](AActor* a) { a->flags6 |= flag; }, [](AActor* a) { a->flags6 &= ~flag; }, [](AActor* a)->bool { return a->flags6 & flag; } }
+#define F8(flag) { [](AActor* a) { a->flags8 |= flag; }, [](AActor* a) { a->flags8 &= ~flag; }, [](AActor* a)->bool { return a->flags8 & flag; } }
+#define DEPF(flag) { [](AActor* a) { HandleDeprecatedFlags(a, nullptr, true, flag); }, [](AActor* a) { HandleDeprecatedFlags(a, nullptr, false, flag); }, [](AActor* a)->bool { return CheckDeprecatedFlags(a, nullptr, flag); } }
+
+void SetNoSector(AActor* a) 
+{ 
+	a->UnlinkFromWorld(nullptr); 
+	a->flags |= MF_NOSECTOR; 
+	a->LinkToWorld(nullptr); 
+}
+
+void ClearNoSector(AActor* a)
+{
+	a->UnlinkFromWorld(nullptr);
+	a->flags &= ~MF_NOSECTOR;
+	a->LinkToWorld(nullptr);
+}
+
+void SetNoBlockmap(AActor* a)
+{
+	a->UnlinkFromWorld(nullptr);
+	a->flags |= MF_NOBLOCKMAP;
+	a->LinkToWorld(nullptr);
+}
+
+void ClearNoBlockmap(AActor* a)
+{
+	a->UnlinkFromWorld(nullptr);
+	a->flags &= ~MF_NOBLOCKMAP;
+	a->LinkToWorld(nullptr);
+}
+
+void SetCountkill(AActor* a)
+{
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
+	a->flags |= MF_COUNTKILL;
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
+}
+
+void ClearCountkill(AActor* a)
+{
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
+	a->flags &= ~MF_COUNTKILL;
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
+}
+
+void SetCountitem(AActor* a)
+{
+	if (!(a->flags & MF_COUNTITEM))
+	{
+		a->flags |= MF_COUNTITEM;
+		a->Level->total_items++;
+	}
+}
+
+void ClearCountitem(AActor* a)
+{
+	if (a->flags & MF_COUNTITEM)
+	{
+		a->flags |= MF_COUNTITEM;
+		a->Level->total_items--;
+	}
+}
+
+void SetFriendly(AActor* a)
+{
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
+	a->flags |= MF_FRIENDLY;
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
+}
+
+void ClearFriendly(AActor* a)
+{
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
+	a->flags &= ~MF_FRIENDLY;
+	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
+}
+
+void SetFullVol(AActor* a)
+{
+	a->flags8 |= MF8_FULLVOLSEE; 
+	a->flags3 |= MF3_FULLVOLDEATH;
+}
+
+void ClearFullVol(AActor* a)
+{
+	a->flags8 &= ~MF8_FULLVOLSEE;
+	a->flags3 &= ~MF3_FULLVOLDEATH;
+}
+
+void SetTranslucent(AActor* a)
+{
+	a->RenderStyle = STYLE_Translucent;
+	a->Alpha = 0.5;
+	a->renderflags &= ~RF_ZDOOMTRANS;
+}
+
+void ClearTranslucent(AActor* a)
+{
+	a->RenderStyle = STYLE_Normal;
+	a->Alpha = 1;
+	a->renderflags &= ~RF_ZDOOMTRANS;
+}
+
+bool CheckTranslucent(AActor* a)
+{
+	// This is solely for MBF21. It will treat all objects with ZDOOMTRANS as non-translucent to ensure consistent results.
+	// This also means that all translucency changes via Dehacked need to clear this flag.
+	return !(a->renderflags & RF_ZDOOMTRANS) && a->Alpha < 1 - FLT_EPSILON;
+}
+
+constexpr int t0 = 0;
+constexpr int t1 = TRANSLATION(TRANSLATION_Standard, 0);
+constexpr int t2 = TRANSLATION(TRANSLATION_Standard, 1);
+constexpr int t3 = TRANSLATION(TRANSLATION_Standard, 2);
+
+void SetTranslation1(AActor* a)
+{
+	if (a->Translation == t2 || a->Translation == t3) a->Translation = t3;
+	else a->Translation = t1;
+}
+
+void ClearTranslation1(AActor* a)
+{
+	if (a->Translation == t3 || a->Translation == t2) a->Translation = t2;
+	else a->Translation = t0;
+}
+
+bool CheckTranslation1(AActor* a)
+{
+	return a->Translation == t1 || a->Translation == t3;
+}
+
+void SetTranslation2(AActor* a)
+{
+	if (a->Translation == t1 || a->Translation == t3) a->Translation = t3;
+	else a->Translation = t2;
+}
+
+void ClearTranslation2(AActor* a)
+{
+	if (a->Translation == t3 || a->Translation == t1) a->Translation = t1;
+	else a->Translation = t0;
+}
+
+bool CheckTranslation2(AActor* a)
+{
+	return a->Translation == t2 || a->Translation == t3;
+}
+
+// Bounces is very complex...
+void SetBounces(AActor* info)
+{
+	info->flags6 |= MF6_VULNERABLE;
+	info->flags3 |= MF3_NOBLOCKMONST;
+	info->flags4 |= (MF4_FORCERADIUSDMG | MF4_DONTHARMCLASS);
+	info->effects &= ~FX_ROCKET;	// disable rocket trail if set.
+
+	if (info->flags & MF_MISSILE) info->BounceFlags = BOUNCE_Classic | BOUNCE_DEH;
+	else info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
+
+}
+
+void ClearBounces(AActor* info)
+{
+	info->flags6 &= ~MF6_VULNERABLE;
+	info->flags3 &= ~MF3_NOBLOCKMONST;
+	info->flags4 &= ~(MF4_FORCERADIUSDMG | MF4_DONTHARMCLASS);
+	info->BounceFlags = 0;
+}
+
+// The missile flag affects the bouncing mode.
+void SetMissile(AActor* info)
+{
+	info->flags |= MF_MISSILE;
+	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Classic | BOUNCE_DEH;
+}
+
+void ClearMissile(AActor* info)
+{
+	info->flags &= ~MF_MISSILE;
+	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
+}
+
+static FlagHandler flag1handlers[32] = {
+	F(MF_SPECIAL),
+	F(MF_SOLID),
+	F(MF_SHOOTABLE),
+	{ SetNoSector, ClearNoSector, [](AActor* a)->bool { return a->flags & MF_NOSECTOR; } },
+	{ SetNoBlockmap, ClearNoBlockmap, [](AActor* a)->bool { return a->flags & MF_NOBLOCKMAP; } },
+	F(MF_AMBUSH),
+	F(MF_JUSTHIT),
+	F(MF_JUSTATTACKED),
+	F(MF_SPAWNCEILING),
+	F(MF_NOGRAVITY),
+	F(MF_DROPOFF),
+	F(MF_PICKUP),
+	F(MF_NOCLIP),
+	F(MF_SLIDE),
+	F(MF_FLOAT),
+	F(MF_TELEPORT),
+	{ SetMissile, ClearMissile, [](AActor* a)->bool { return a->flags & MF_MISSILE; } },
+	F(MF_DROPPED),
+	F(MF_SHADOW),
+	F(MF_NOBLOOD),
+	F(MF_CORPSE),
+	F(MF_INFLOAT),
+	{ SetCountkill, ClearCountkill, [](AActor* a)->bool { return a->flags & MF_COUNTKILL; } },
+	{ SetCountitem, ClearCountitem, [](AActor* a)->bool { return a->flags & MF_COUNTITEM; } },
+	F(MF_SKULLFLY),
+	F(MF_NOTDMATCH),
+	{ SetTranslation1, ClearTranslation1, CheckTranslation1 },
+	{ SetTranslation2, ClearTranslation2, CheckTranslation2 },
+	F6(MF6_TOUCHY),
+	{ SetBounces, ClearBounces, [](AActor* a)->bool { return a->BounceFlags & BOUNCE_DEH; } },
+	F(MF_FRIENDLY),
+	{ SetTranslucent, ClearTranslucent, CheckTranslucent }
+};
+
+static FlagHandler flag2handlers[32] = {
+	DEPF(DEPF_LOWGRAVITY),
+	DEPF(DEPF_SHORTMISSILERANGE),
+	F3(MF3_NOTARGET),
+	F3(MF3_NORADIUSDMG),
+	F4(MF4_FORCERADIUSDMG),
+	DEPF(DEPF_HIGHERMPROB),
+	F4(MF4_MISSILEMORE),
+	F4(MF4_QUICKTORETALIATE),
+	DEPF(DEPF_LONGMELEERANGE),
+	F2(MF2_BOSS),
+	F8(MF8_MAP07BOSS1),
+	F8(MF8_MAP07BOSS2),
+	F8(MF8_E1M8BOSS),
+	F8(MF8_E2M8BOSS),
+	F8(MF8_E3M8BOSS),
+	F8(MF8_E4M6BOSS),
+	F8(MF8_E4M8BOSS),
+	F2(MF2_RIP),
+	{ SetFullVol, ClearFullVol, [](AActor* a)->bool { return a->flags8 & MF8_FULLVOLSEE; } }, // checking one of the two flags should suffice here.
+};
+
+
+//
+// A_JumpIfFlagsSet
+// Jumps to a state if caller has the specified thing flags set.
+//   args[0]: State to jump to
+//   args[1]: Standard Flag(s) to check
+//   args[2]: MBF21 Flag(s) to check
+//
+DEFINE_ACTION_FUNCTION(AActor, MBF21_JumpIfFlagsSet)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(tstate, FState);
+	PARAM_INT(flags);
+	PARAM_INT(flags2);
+
+	for (int i = 0; i < 32; i++)
+	{
+		if (flags & (1 << i) && flag1handlers[i].checker)
+		{
+			if (!flag1handlers[i].checker(self)) return 0;
+		}
+		if (flags2 & (1 << i) && flag2handlers[i].checker)
+		{
+			if (!flag2handlers[i].checker(self)) return 0;
+		}
+	}
+	self->SetState(tstate);
+	return 0;
+}
+
+//
+// A_AddFlags
+// Adds the specified thing flags to the caller.
+//   args[0]: Standard Flag(s) to add
+//   args[1]: MBF21 Flag(s) to add
+//
+DEFINE_ACTION_FUNCTION(AActor, MBF21_AddFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(flags);
+	PARAM_INT(flags2);
+
+	for (int i = 0; i < 32; i++)
+	{
+		if (flags & (1 << i) && flag1handlers[i].setter)
+		{
+			flag1handlers[i].setter(self);
+		}
+		if (flags2 & (1 << i) && flag2handlers[i].setter)
+		{
+			flag2handlers[i].setter(self);
+		}
+	}
+	return 0;
+}
+
+//
+// A_RemoveFlags
+// Removes the specified thing flags from the caller.
+//   args[0]: Flag(s) to remove
+//   args[1]: MBF21 Flag(s) to remove
+//
+DEFINE_ACTION_FUNCTION(AActor, MBF21_RemoveFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(flags);
+	PARAM_INT(flags2);
+
+	for (int i = 0; i < 32; i++)
+	{
+		if (flags & (1 << i) && flag1handlers[i].clearer)
+		{
+			flag1handlers[i].clearer(self);
+		}
+		if (flags2 & (1 << i) && flag2handlers[i].clearer)
+		{
+			flag2handlers[i].clearer(self);
+		}
+	}
+	return 0;
 }

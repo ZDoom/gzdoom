@@ -19,7 +19,7 @@
 **  3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "templates.h"
+
 #include "gl_system.h"
 #include "gl_interface.h"
 #include "gl_postprocessstate.h"

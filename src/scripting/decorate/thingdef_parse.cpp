@@ -190,7 +190,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type)
 		}
 		else
 		{
-			int c = V_GetColor (NULL, sc);
+			int c = V_GetColor (sc);
 			// 0 needs to be the default so we have to mark the color.
 			v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 		}
@@ -884,7 +884,7 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		else if (f->Type == TypeColor)
 		{
 			if (sc.CheckNumber()) *(int*)addr = sc.Number;
-			else *(PalEntry*)addr = V_GetColor(nullptr, sc);
+			else *(PalEntry*)addr = V_GetColor(sc);
 		}
 		else if (f->Type->isIntCompatible())
 		{

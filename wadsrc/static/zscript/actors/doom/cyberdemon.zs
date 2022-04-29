@@ -22,6 +22,8 @@ class Cyberdemon : Actor
 		+NORADIUSDMG
 		+DONTMORPH
 		+BOSSDEATH
+		+E2M8BOSS
+		+E4M6BOSS
 		SeeSound "cyber/sight";
 		PainSound "cyber/pain";
 		DeathSound "cyber/death";

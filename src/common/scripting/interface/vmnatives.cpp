@@ -41,7 +41,7 @@
 #include "c_cvars.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "menu.h"
 #include "vm.h"
 #include "gstrings.h"
@@ -50,6 +50,8 @@
 #include "i_interface.h"
 #include "base_sbar.h"
 #include "image.h"
+#include "s_soundinternal.h"
+#include "i_time.h"
 
 //==========================================================================
 //
@@ -78,7 +80,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, StatusbarToRealCoords, StatusbarTo
 	if (numret > 1) ret[1].SetFloat(y);
 	if (numret > 2) ret[2].SetFloat(w);
 	if (numret > 3) ret[3].SetFloat(h);
-	return MIN(4, numret);
+	return min(4, numret);
 }
 
 void SBar_DrawTexture(DStatusBarCore* self, int texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY, int style, int color, int translation, double clipwidth)
@@ -160,7 +162,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawImageRotated, SBar_DrawImageRo
 void SBar_DrawTextureRotated(DStatusBarCore* self, int texid, double x, double y, int flags, double angle, double alpha, double scaleX, double scaleY, int style, int color, int translation)
 {
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	self->DrawRotated(FSetTextureID(texid), x, y, flags, alpha, scaleX, scaleY, color, translation, style);
+	self->DrawRotated(FSetTextureID(texid), x, y, flags, angle, alpha, scaleX, scaleY, color, translation, (ERenderStyle)style);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, DrawTextureRotated, SBar_DrawTextureRotated)
@@ -226,7 +228,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DStatusBarCore, TransformRect, SBar_TransformRect)
 	if (numret > 1) ret[1].SetFloat(y);
 	if (numret > 2) ret[2].SetFloat(w);
 	if (numret > 3) ret[3].SetFloat(h);
-	return MIN(4, numret);
+	return min(4, numret);
 }
 
 static void SBar_Fill(DStatusBarCore* self, int color, double x, double y, double w, double h, int flags)
@@ -435,7 +437,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
 	x = GetTextureSize(texid, &y);
 	if (numret > 0) ret[0].SetInt(x);
 	if (numret > 1) ret[1].SetInt(y);
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
 
 //==========================================================================
@@ -696,6 +698,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetGlyphHeight, GetGlyphHeight)
 	PARAM_INT(code);
 	ACTION_RETURN_INT(GetGlyphHeight(self, code));
 }
+
+static int GetDefaultKerning(FFont* font)
+{
+	return font->GetDefaultKerning();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDefaultKerning, GetDefaultKerning)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_INT(self->GetDefaultKerning());
+}
+
 //==========================================================================
 //
 // file system
@@ -927,7 +941,7 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
 	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
 	if (numret > 0) ret[0].SetInt(k1);
 	if (numret > 1) ret[1].SetInt(k2);
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
 
 DEFINE_ACTION_FUNCTION(FKeyBindings, GetAllKeysForCommand)
@@ -964,10 +978,16 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
 // This is only accessible to the special menu item to run CCMDs.
 DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 {
-	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
 	PARAM_BOOL(unsafe);
+
+	// Only menus are allowed to execute CCMDs.
+	if (DMenu::InMenu == 0)
+	{
+		I_FatalError("Attempt to execute CCMD '%s' outside of menu code", cmd.GetChars());
+	}
+
 	UnsafeExecutionScope scope(unsafe);
 	C_DoCommand(cmd);
 	return 0;
@@ -988,6 +1008,58 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 	Printf("%s\n", s.GetChars());
 	return 0;
 }
+
+static void StopAllSounds()
+{
+	soundEngine->StopAllChannels();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, StopAllSounds, StopAllSounds)
+{
+	StopAllSounds();
+	return 0;
+}
+
+static int PlayMusic(const FString& musname, int order, int looped)
+{
+	return S_ChangeMusic(musname, order, !!looped, true);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, PlayMusic, PlayMusic)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(order);
+	PARAM_BOOL(looped);
+	ACTION_RETURN_BOOL(PlayMusic(name, order, looped));
+}
+
+static void Mus_Stop()
+{
+	S_StopMusic(true);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, StopMusic, Mus_Stop)
+{
+	Mus_Stop();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, SoundEnabled, SoundEnabled)
+{
+	ACTION_RETURN_INT(SoundEnabled());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, MusicEnabled, MusicEnabled)
+{
+	ACTION_RETURN_INT(MusicEnabled());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, GetTimeFrac, I_GetTimeFrac)
+{
+	ACTION_RETURN_FLOAT(I_GetTimeFrac());
+}
+
 
 DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);

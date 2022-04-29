@@ -81,6 +81,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 		{"REJECT",	 false},
 		{"BLOCKMAP", false},
 		{"BEHAVIOR", false},
+		{"LIGHTMAP", false },
 		//{"SCRIPTS",	 false},
 	};
 
@@ -235,6 +236,10 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						index = ML_BEHAVIOR;
 						map->HasBehavior = true;
 					}
+					else if (!stricmp(lumpname, "LIGHTMAP"))
+					{
+						index = ML_LIGHTMAP;
+					}
 					else if (!stricmp(lumpname, "ENDMAP"))
 					{
 						break;
@@ -311,6 +316,10 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 					{
 						index = ML_BEHAVIOR;
 						map->HasBehavior = true;
+					}
+					else if (!strnicmp(lumpname, "LIGHTMAP", 8))
+					{
+						index = ML_LIGHTMAP;
 					}
 					else if (!strnicmp(lumpname, "ENDMAP",8))
 					{

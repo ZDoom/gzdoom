@@ -1,12 +1,14 @@
 #pragma once
 
-#include "templates.h"
+
 
 struct FModelVertex
 {
 	float x, y, z;	// world position
 	float u, v;		// texture coordinates
 	unsigned packedNormal;	// normal vector as GL_INT_2_10_10_10_REV.
+	float lu, lv;	// lightmap texture coordinates
+	float lindex;	// lightmap texture index
 
 	void Set(float xx, float yy, float zz, float uu, float vv)
 	{
@@ -15,6 +17,9 @@ struct FModelVertex
 		z = zz;
 		u = uu;
 		v = vv;
+		lu = 0.0f;
+		lv = 0.0f;
+		lindex = -1.0f;
 	}
 
 	void SetNormal(float nx, float ny, float nz)

@@ -230,7 +230,7 @@ void gl_PrintStartupLog()
 	Printf ("Max. texture units: %d\n", v);
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
 	Printf ("Max. varying: %d\n", v);
-	
+
 	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
 	{
 		glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &v);

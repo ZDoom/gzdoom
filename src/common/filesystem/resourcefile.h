@@ -6,6 +6,7 @@
 #include <limits.h>
 
 #include "files.h"
+#include "zstring.h"
 
 struct LumpFilterInfo
 {

@@ -35,6 +35,7 @@
 
 #include <chrono>
 #include <thread>
+#include <assert.h>
 #include "i_time.h"
 
 //==========================================================================
@@ -46,6 +47,7 @@
 static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
+static double lastinputtime;
 int GameTicRate = 35;	// make sure it is not 0, even if the client doesn't set it.
 
 double TimeScale = 1.0;
@@ -67,22 +69,14 @@ static uint64_t NSToMS(uint64_t ns)
 	return static_cast<uint64_t>(ns / 1'000'000);
 }
 
-static int NSToTic(uint64_t ns)
+static int NSToTic(uint64_t ns, double const ticrate)
 {
-	return static_cast<int>(ns * GameTicRate / 1'000'000'000);
+	return static_cast<int>(ns * ticrate / 1'000'000'000);
 }
 
-static int NSToBuildTic(uint64_t ns)
+static uint64_t TicToNS(double tic, double const ticrate)
 {
-	return static_cast<int>(ns * 120 / 1'000'000'000);
-}
-static uint64_t TicToNS(int tic)
-{
-	return static_cast<uint64_t>(tic) * 1'000'000'000 / GameTicRate;
-}
-static uint64_t BuildTicToNS(int tic)
-{
-	return static_cast<uint64_t>(tic) * 1'000'000'000 / 120;
+	return static_cast<uint64_t>(tic * 1'000'000'000 / ticrate);
 }
 
 void I_SetFrameTime()
@@ -111,18 +105,18 @@ void I_WaitVBL(int count)
 	I_SetFrameTime();
 }
 
-int I_WaitForTic(int prevtic)
+int I_WaitForTic(int prevtic, double const ticrate)
 {
 	// Waits until the current tic is greater than prevtic. Time must not be frozen.
 
 	int time;
-	while ((time = I_GetTime()) <= prevtic)
+	while ((time = I_GetTime(ticrate)) <= prevtic)
 	{
 		// Windows-specific note:
 		// The minimum amount of time a thread can sleep is controlled by timeBeginPeriod.
 		// We set this to 1 ms in DoMain.
 
-		const uint64_t next = FirstFrameStartTime + TicToNS(prevtic + 1);
+		const uint64_t next = FirstFrameStartTime + TicToNS(prevtic + 1, ticrate);
 		const uint64_t now = I_nsTime();
 
 		if (next > now)
@@ -166,21 +160,16 @@ uint64_t I_GetTimeNS()
 	return CurrentFrameStartTime - FirstFrameStartTime;
 }
 
-int I_GetTime()
+int I_GetTime(double const ticrate)
 {
-	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime);
+	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime, ticrate);
 }
 
-int I_GetBuildTime()
+double I_GetTimeFrac(double const ticrate)
 {
-	return NSToBuildTic(CurrentFrameStartTime - FirstFrameStartTime);
-}
-
-double I_GetTimeFrac()
-{
-	int currentTic = NSToTic(CurrentFrameStartTime - FirstFrameStartTime);
-	uint64_t ticStartTime = FirstFrameStartTime + TicToNS(currentTic);
-	uint64_t ticNextTime = FirstFrameStartTime + TicToNS(currentTic + 1);
+	int currentTic = NSToTic(CurrentFrameStartTime - FirstFrameStartTime, ticrate);
+	uint64_t ticStartTime = FirstFrameStartTime + TicToNS(currentTic, ticrate);
+	uint64_t ticNextTime = FirstFrameStartTime + TicToNS(currentTic + 1, ticrate);
 
 	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
 }
@@ -195,9 +184,52 @@ void I_FreezeTime(bool frozen)
 	else
 	{
 		assert(FreezeTime != 0);
-		FirstFrameStartTime += GetClockTimeNS() - FreezeTime;
+		if (FirstFrameStartTime != 0) FirstFrameStartTime += GetClockTimeNS() - FreezeTime;
 		FreezeTime = 0;
 		I_SetFrameTime();
 	}
 }
 
+void I_ResetFrameTime()
+{
+	// Reset the starting point of the current frame to now. For use after lengthy operations that should not result in tic accumulation.
+	auto ft = CurrentFrameStartTime;
+	I_SetFrameTime();
+	FirstFrameStartTime += (CurrentFrameStartTime - ft);
+}
+
+double I_GetInputFrac(bool const synchronised, double const ticrate)
+{
+	if (!synchronised)
+	{
+		const double max = 1000. / ticrate;
+		const double now = I_msTimeF();
+		const double elapsedInputTicks = std::min(now - lastinputtime, max);
+		lastinputtime = now;
+
+		if (elapsedInputTicks < max)
+		{
+			// Calculate an amplification to apply to the result before returning,
+			// factoring in the game's ticrate and the value of the result.
+			// This rectifies a deviation of 100+ ms or more depending on the length
+			// of the operation to be within 1-2 ms of synchronised input
+			// from 60 fps to at least 1000 fps at ticrates of 30 and 40 Hz.
+			const double result = elapsedInputTicks * ticrate * (1. / 1000.);
+			return result * (1. + 0.35 * (1. - ticrate * (1. / 50.)) * (1. - result));
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+void I_ResetInputTime()
+{
+	// Reset lastinputtime to current time.
+	lastinputtime = I_msTimeF();
+}

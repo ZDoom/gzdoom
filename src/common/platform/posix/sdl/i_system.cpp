@@ -47,6 +47,13 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
+#ifdef __linux__
+#include <asm/unistd.h>
+#include <linux/perf_event.h>
+#include <sys/mman.h>
+#include "printf.h"
+#endif
+
 #include <SDL.h>
 
 #include "version.h"
@@ -96,7 +103,7 @@ void Mac_I_FatalError(const char* errortext);
 void Unix_I_FatalError(const char* errortext)
 {
 	// Close window or exit fullscreen and release mouse capture if the console isn't running.
-	if (!FConsoleWindow::InstanceExists()) SDL_Quit();
+	if (!FConsoleWindow::InstanceExists()) SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
 	const char *str;
 	if (FConsoleWindow::InstanceExists())
@@ -141,8 +148,54 @@ void I_ShowFatalError(const char *message)
 #endif
 }
 
+bool PerfAvailable;
+
 void CalculateCPUSpeed()
 {
+	PerfAvailable = false;
+	PerfToMillisec = PerfToSec = 0.;
+#ifdef __aarch64__
+	// [MK] on aarch64 rather than having to calculate cpu speed, there is
+	// already an independent frequency for the perf timer
+	uint64_t frq;
+	asm volatile("mrs %0, cntfrq_el0":"=r"(frq));
+	PerfAvailable = true;
+	PerfToSec = 1./frq;
+	PerfToMillisec = PerfToSec*1000.;
+#elif defined(__linux__)
+	// [MK] read from perf values if we can
+	struct perf_event_attr pe;
+	memset(&pe,0,sizeof(struct perf_event_attr));
+	pe.type = PERF_TYPE_HARDWARE;
+	pe.size = sizeof(struct perf_event_attr);
+	pe.config = PERF_COUNT_HW_INSTRUCTIONS;
+	pe.disabled = 1;
+	pe.exclude_kernel = 1;
+	pe.exclude_hv = 1;
+	int fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
+	if (fd == -1)
+	{
+		return;
+	}
+	void *addr = mmap(nullptr, 4096, PROT_READ, MAP_SHARED, fd, 0);
+	if (addr == nullptr)
+	{
+		close(fd);
+		return;
+	}
+	struct perf_event_mmap_page *pc = (struct perf_event_mmap_page *)addr;
+	if (pc->cap_user_time != 1)
+	{
+		close(fd);
+		return;
+	}
+	double mhz = (1000LU << pc->time_shift) / (double)pc->time_mult;
+	PerfAvailable = true;
+	PerfToSec = .000001/mhz;
+	PerfToMillisec = PerfToSec*1000.;
+	if (!batchrun) Printf("CPU speed: %.0f MHz\n", mhz);
+	close(fd);
+#endif
 }
 
 void CleanProgressBar()
@@ -170,7 +223,7 @@ void RedrawProgressBar(int CurPos, int MaxPos)
 	memset(progressBuffer,'.',512);
 	progressBuffer[sizeOfWindow.ws_col - 1] = 0;
 	int lengthOfStr = 0;
-	
+
 	while (curProgVal-- > 0)
 	{
 		progressBuffer[lengthOfStr++] = '=';
@@ -194,7 +247,9 @@ void I_PrintStr(const char *cp)
 		if (*srcp == 0x1c && con_printansi && terminal)
 		{
 			srcp += 1;
-			EColorRange range = V_ParseFontColor((const uint8_t*&)srcp, CR_UNTRANSLATED, CR_YELLOW);
+			const uint8_t* scratch = (const uint8_t*)srcp; // GCC does not like direct casting of the parameter.
+			EColorRange range = V_ParseFontColor(scratch, CR_UNTRANSLATED, CR_YELLOW);
+			srcp = (char*)scratch;
 			if (range != CR_UNDEFINED)
 			{
 				PalEntry color = V_LogColorFromColorRange(range);
@@ -216,9 +271,9 @@ void I_PrintStr(const char *cp)
 					{ // gray
 						     if (v < 0.33) attrib = 0x8;
 						else if (v < 0.90) attrib = 0x7;
-						else			   attrib = 0x15;
+						else			   attrib = 0xF;
 					}
-					
+
 					printData.AppendFormat("\033[%um",((attrib & 0x8) ? 90 : 30) + (attrib & 0x7));
 				}
 				else printData.AppendFormat("\033[38;2;%u;%u;%um",color.r,color.g,color.b);
@@ -318,7 +373,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 #ifdef __APPLE__
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
 #endif
-	
+
 	if (!isatty(fileno(stdin)))
 	{
 		return defaultiwad;

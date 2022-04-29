@@ -76,16 +76,20 @@ void GLBuffer::Bind()
 }
 
 
-void GLBuffer::SetData(size_t size, const void *data, bool staticdata)
+void GLBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 {
 	Bind();
-	if (data != nullptr)
+	if (usage == BufferUsageType::Static)
 	{
-		glBufferData(mUseType, size, data, staticdata? GL_STATIC_DRAW : GL_STREAM_DRAW);
+		glBufferData(mUseType, size, data, GL_STATIC_DRAW);
 	}
-	else
+	else if (usage == BufferUsageType::Stream)
 	{
-		mPersistent = screen->BuffersArePersistent() && !staticdata;
+		glBufferData(mUseType, size, data, GL_STREAM_DRAW);
+	}
+	else if (usage == BufferUsageType::Persistent)
+	{
+		mPersistent = screen->BuffersArePersistent();
 		if (mPersistent)
 		{
 			glBufferStorage(mUseType, size, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -93,10 +97,15 @@ void GLBuffer::SetData(size_t size, const void *data, bool staticdata)
 		}
 		else
 		{
-			glBufferData(mUseType, size, nullptr, staticdata ? GL_STATIC_DRAW : GL_STREAM_DRAW);
+			glBufferData(mUseType, size, nullptr, GL_STREAM_DRAW);
 			map = nullptr;
 		}
-		if (!staticdata) nomap = false;
+		nomap = false;
+	}
+	else if (usage == BufferUsageType::Mappable)
+	{
+		glBufferData(mUseType, size, nullptr, GL_STATIC_DRAW);
+		map = nullptr;
 	}
 	buffersize = size;
 	InvalidateBufferState();
@@ -134,7 +143,7 @@ void GLBuffer::Unmap()
 void *GLBuffer::Lock(unsigned int size)
 {
 	// This initializes this buffer as a static object with no data.
-	SetData(size, nullptr, true);
+	SetData(size, nullptr, BufferUsageType::Mappable);
 	return glMapBufferRange(mUseType, 0, size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 }
 
@@ -158,7 +167,7 @@ void GLBuffer::Resize(size_t newsize)
 		glUnmapBuffer(mUseType);
 
 		glGenBuffers(1, &mBufferId);
-		SetData(newsize, nullptr, false);
+		SetData(newsize, nullptr, BufferUsageType::Persistent);
 		glBindBuffer(GL_COPY_READ_BUFFER, oldbuffer);
 
 		// copy contents and delete the old buffer.
@@ -170,6 +179,29 @@ void GLBuffer::Resize(size_t newsize)
 	}
 }
 
+void GLBuffer::GPUDropSync()
+{
+	if (mGLSync != NULL)
+	{
+		glDeleteSync(mGLSync);
+	}
+
+	mGLSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+}
+
+void GLBuffer::GPUWaitSync()
+{
+	GLenum status = glClientWaitSync(mGLSync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000 * 1000 * 50); // Wait for a max of 50ms...
+
+	if (status != GL_ALREADY_SIGNALED && status != GL_CONDITION_SATISFIED)
+	{
+		//Printf("Error on glClientWaitSync: %d\n", status);
+	}
+
+	glDeleteSync(mGLSync);
+
+	mGLSync = NULL;
+}
 
 //===========================================================================
 //
@@ -181,10 +213,10 @@ void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 {
 	static int VFmtToGLFmt[] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT_2_10_10_10_REV };
 	static uint8_t VFmtToSize[] = {4, 3, 2, 1, 4, 4};
-	
+
 	mStride = stride;
 	mNumBindingPoints = numBindingPoints;
-	
+
 	for(int i = 0; i < numAttributes; i++)
 	{
 		if (attrs[i].location >= 0 && attrs[i].location < VATTR_MAX)

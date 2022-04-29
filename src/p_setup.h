@@ -141,6 +141,7 @@ MapData * P_OpenMapData(const char * mapname, bool justcheck);
 bool P_CheckMapData(const char * mapname);
 
 void P_SetupLevel (FLevelLocals *Level, int position, bool newGame);
+void P_LoadLightmap(MapData *map);
 
 void P_FreeLevelData();
 

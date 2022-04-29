@@ -1,20 +1,20 @@
 #pragma once
 
 // Simple lightweight reference counting pointer alternative for std::shared_ptr which stores the reference counter in the handled object itself.
- 
- // Base class for handled objects
+
+// Base class for handled objects
 class RefCountedBase
 {
 public:
-    void IncRef() { refCount++; }
-    void DecRef() { if (--refCount <= 0) delete this; }
+	void IncRef() { refCount++; }
+	void DecRef() { if (--refCount <= 0) delete this; }
 private:
-    int refCount = 0;
+	int refCount = 0;
 protected:
-    virtual ~RefCountedBase() = default;
+	virtual ~RefCountedBase() = default;
 };
- 
- // The actual pointer object
+
+// The actual pointer object
 template<class T> 
 class RefCountedPtr
 {
@@ -26,15 +26,25 @@ public:
 
     RefCountedPtr() : ptr(nullptr) 
 	{}
- 
+
     explicit RefCountedPtr(T* p) : ptr(p)
     {
         if (ptr) ptr->IncRef();
     }
- 
+
+	RefCountedPtr(const RefCountedPtr& r) : ptr(r.ptr)
+	{
+		if (ptr) ptr->IncRef();
+	}
+
+	RefCountedPtr(RefCountedPtr&& r) : ptr(r.ptr)
+	{
+		r.ptr = nullptr;
+	}
+
     RefCountedPtr & operator=(const RefCountedPtr& r) 
     {
-		if (ptr != r.ptr)
+		if (this != &r)
 		{
             if (ptr) ptr->DecRef();
 			ptr = r.ptr;
@@ -42,7 +52,7 @@ public:
 		}
         return *this;
     }
- 
+
     RefCountedPtr& operator=(T* r)
     {
         if (ptr != r)
@@ -54,11 +64,14 @@ public:
         return *this;
     }
 
-    RefCountedPtr & operator=(const RefCountedPtr&& r)
+    RefCountedPtr & operator=(RefCountedPtr&& r)
     {
-        if (ptr) ptr->DecRef();
-        ptr = r.ptr;
-		r.ptr = nullptr;
+		if (this != &r)
+		{
+			if (ptr) ptr->DecRef();
+			ptr = r.ptr;
+			r.ptr = nullptr;
+		}
         return *this;
     }
 
@@ -86,18 +99,18 @@ public:
 	{
         return *ptr;
     }
- 
+
     T* operator-> () const 
 	{
         return ptr;
     }
- 
+
     T* get() const 
 	{
         return ptr;
     }
- 
+
 private:
- 
+
     T * ptr;
 };

@@ -36,7 +36,7 @@
 #include <chrono>
 
 #include "c_cvars.h"
-#include "templates.h"
+
 #include "oalsound.h"
 #include "c_dispatch.h"
 #include "v_text.h"
@@ -329,7 +329,6 @@ public:
 	virtual FString GetStats()
 		{
 		FString stats;
-		size_t pos = 0, len = 0;
 		ALfloat volume;
 		ALint offset;
 		ALint processed;
@@ -579,7 +578,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	// Make sure one source is capable of stereo output with the rest doing
 	// mono, without running out of voices
 	attribs.Push(ALC_MONO_SOURCES);
-	attribs.Push(std::max<ALCint>(snd_channels, 2) - 1);
+	attribs.Push(max<ALCint>(snd_channels, 2) - 1);
 	attribs.Push(ALC_STEREO_SOURCES);
 	attribs.Push(1);
 	if(ALC.SOFT_HRTF)
@@ -681,7 +680,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	// At least Apple's OpenAL implementation returns zeroes,
 	// although it can generate reasonable number of sources.
 
-	const int numChannels = std::max<int>(snd_channels, 2);
+	const int numChannels = max<int>(snd_channels, 2);
 	int numSources = numMono + numStereo;
 
 	if (0 == numSources)
@@ -689,7 +688,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 		numSources = numChannels;
 	}
 
-	Sources.Resize(std::min<int>(numChannels, numSources));
+	Sources.Resize(min<int>(numChannels, numSources));
 	for(unsigned i = 0;i < Sources.Size();i++)
 	{
 		alGenSources(1, &Sources[i]);
@@ -1346,7 +1345,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 		float gain = GetRolloff(rolloff, dist * distscale);
 		// Don't let the ref distance go to 0, or else distance attenuation is
 		// lost with the inverse distance model.
-		alSourcef(source, AL_REFERENCE_DISTANCE, std::max<float>(gain*dist, 0.0004f));
+		alSourcef(source, AL_REFERENCE_DISTANCE, max<float>(gain*dist, 0.0004f));
 		alSourcef(source, AL_MAX_DISTANCE, std::numeric_limits<float>::max());
 		alSourcef(source, AL_ROLLOFF_FACTOR, 1.f);
 	}
@@ -1466,9 +1465,9 @@ void OpenALSoundRenderer::ChannelPitch(FISoundChannel *chan, float pitch)
 
 	ALuint source = GET_PTRID(chan->SysChannel);
 	if (WasInWater && !(chan->ChanFlags & CHANF_UI))
-		alSourcef(source, AL_PITCH, std::max(pitch, 0.0001f)*PITCH_MULT);
+		alSourcef(source, AL_PITCH, max(pitch, 0.0001f)*PITCH_MULT);
 	else
-		alSourcef(source, AL_PITCH, std::max(pitch, 0.0001f));
+		alSourcef(source, AL_PITCH, max(pitch, 0.0001f));
 }
 
 void OpenALSoundRenderer::StopChannel(FISoundChannel *chan)
@@ -1622,7 +1621,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
 		{
 			float dist = sqrtf(dist_sqr);
 			float gain = GetRolloff(&chan->Rolloff, dist * chan->DistanceScale);
-			alSourcef(source, AL_REFERENCE_DISTANCE, std::max<float>(gain*dist, 0.0004f));
+			alSourcef(source, AL_REFERENCE_DISTANCE, max<float>(gain*dist, 0.0004f));
 		}
 
 		alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
@@ -1676,7 +1675,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 
 		const_cast<ReverbContainer*>(env)->Modified = false;
 	}
-	
+
 	// NOTE: Moving into and out of water will undo pitch variations on sounds.
 	if(listener->underwater || env->SoftwareWater)
 	{
@@ -1722,7 +1721,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 	}
 	else if(WasInWater)
 	{
-		
+
 		WasInWater = false;
 
 		if(EnvSlot != 0)

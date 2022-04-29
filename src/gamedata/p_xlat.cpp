@@ -68,6 +68,7 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 
 	uint32_t flags1 = flags;
 	uint32_t newflags = 0;
+	uint32_t newflags2 = 0;
 
 	for(int i=0;i<16;i++)
 	{
@@ -80,7 +81,8 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 	{
 		if ((flags1 & (1<<i)) && !translator->LineFlagTranslations[i].ismask)
 		{
-			switch (translator->LineFlagTranslations[i].newvalue)
+			unsigned val = translator->LineFlagTranslations[i].newvalue;
+			switch ((int)val)
 			{
 			case -1:
 				passthrough = true;
@@ -92,12 +94,14 @@ void FLevelLocals::TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineinde
 				ld->alpha = 0.25;
 				break;
 			default:
-				newflags |= translator->LineFlagTranslations[i].newvalue;
+				if ((val & 0x80000000) && val != 0x80000000) newflags2 |= val;
+				else newflags |= val;
 				break;
 			}
 		}
 	}
 	flags = newflags;
+	ld->flags2 = newflags2;
 
 	if (lineindexforid >= 0)
 	{

@@ -183,7 +183,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float ofsY)
 {
 	AActor * playermo = players[consoleplayer].camera;
-	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
+	FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
 
 	// [BB] No model found for this sprite, so we can't render anything.
 	if (smf == nullptr)
@@ -193,8 +193,16 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float o
 	// but we need to position it correctly in the world for light to work properly.
 	VSMatrix objectToWorldMatrix = renderer->GetViewToWorldMatrix();
 
+	// [Nash] Optional scale weapon FOV
+	float fovscale = 1.0f;
+	if (smf->flags & MDL_SCALEWEAPONFOV)
+	{
+		fovscale = tan(players[consoleplayer].DesiredFOV * (0.5f * M_PI / 180.f));
+		fovscale = 1.f + (fovscale - 1.f) * cl_scaleweaponfov;
+	}
+
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
+	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale / fovscale);
 
 	// Aplying model offsets (model offsets do not depend on model scalings).
 	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
@@ -216,7 +224,7 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float o
 	renderer->BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0);
 	uint32_t trans = psp->GetTranslation() != 0 ? psp->GetTranslation() : 0;
 	if ((psp->Flags & PSPF_PLAYERTRANSLATED)) trans = psp->Owner->mo->Translation;
-	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), trans);
+	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), psp->Caller->GetClass(), trans);
 	renderer->EndDrawHUDModel(playermo->RenderStyle);
 }
 
@@ -413,25 +421,18 @@ static void ParseModelDefLump(int Lump)
 			{
 				smf.modelsAmount = MIN_MODELS;
 			}
-			//Allocate TArrays
-			smf.modelIDs.Alloc(smf.modelsAmount);
-			smf.skinIDs.Alloc(smf.modelsAmount);
-			smf.surfaceskinIDs.Alloc(smf.modelsAmount * MD3_MAX_SURFACES);
-			smf.modelframes.Alloc(smf.modelsAmount);
-			//Make sure all modelIDs are -1 by default
-			for (auto& modelID : smf.modelIDs)
+
+			const auto initArray = [](auto& array, const unsigned count, const auto value)
 			{
-				modelID = -1;
-			}
-			//Make sure no TArray elements of type FTextureID are null. These elements will have a textureid (FTextureID.texnum) of 0.
-			for (auto& skinID : smf.skinIDs)
-			{
-				skinID = FTextureID(FNullTextureID());
-			}
-			for (auto& surfaceskinID : smf.surfaceskinIDs)
-			{
-				surfaceskinID = FTextureID(FNullTextureID());
-			}
+				array.Alloc(count);
+				std::fill(array.begin(), array.end(), value);
+			};
+
+			initArray(smf.modelIDs, smf.modelsAmount, -1);
+			initArray(smf.skinIDs, smf.modelsAmount, FNullTextureID());
+			initArray(smf.surfaceskinIDs, smf.modelsAmount * MD3_MAX_SURFACES, FNullTextureID());
+			initArray(smf.modelframes, smf.modelsAmount, 0);
+
 			sc.RestorePos(scPos);
 			sc.MustGetStringName("{");
 			while (!sc.CheckString("}"))
@@ -530,6 +531,14 @@ static void ParseModelDefLump(int Lump)
 				else if (sc.Compare("useactorroll"))
 				{
 					smf.flags |= MDL_USEACTORROLL;
+				}
+				else if (sc.Compare("noperpixellighting"))
+				{
+					smf.flags |= MDL_NOPERPIXELLIGHTING;
+				}
+				else if (sc.Compare("scaleweaponfov"))
+				{
+					smf.flags |= MDL_SCALEWEAPONFOV;
 				}
 				else if (sc.Compare("rotating"))
 				{
@@ -784,15 +793,14 @@ FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, boo
 
 bool IsHUDModelForPlayerAvailable (player_t * player)
 {
-	if (player == nullptr || player->ReadyWeapon == nullptr)
+	if (player == nullptr || player->psprites == nullptr)
 		return false;
 
-	DPSprite *psp = player->FindPSprite(PSP_WEAPON);
-
-	if (psp == nullptr)
-		return false;
-
-	FSpriteModelFrame *smf = FindModelFrame(player->ReadyWeapon->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
-	return ( smf != nullptr );
+	// [MK] check that at least one psprite uses models
+	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
+	{
+		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+		if ( smf != nullptr ) return true;
+	}
+	return false;
 }
-

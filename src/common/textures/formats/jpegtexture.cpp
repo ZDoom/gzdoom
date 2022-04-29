@@ -296,7 +296,7 @@ TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 
 			while (cinfo.output_scanline < cinfo.output_height)
 			{
-				int num_scanlines = jpeg_read_scanlines(&cinfo, &buff, 1);
+				jpeg_read_scanlines(&cinfo, &buff, 1);
 				uint8_t *in = buff;
 				uint8_t *out = Pixels.Data() + y;
 				switch (cinfo.out_color_space)

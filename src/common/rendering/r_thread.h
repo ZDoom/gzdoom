@@ -27,7 +27,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "templates.h"
+
 #include "c_cvars.h"
 #include "basics.h"
 
@@ -78,7 +78,7 @@ public:
 	// The number of lines to skip to reach the first line to be rendered by this thread
 	int skipped_by_thread(int first_line)
 	{
-		int clip_first_line = MAX(first_line, numa_start_y);
+		int clip_first_line = max(first_line, numa_start_y);
 		int core_skip = (num_cores - (clip_first_line - core) % num_cores) % num_cores;
 		return clip_first_line + core_skip - first_line;
 	}
@@ -86,9 +86,9 @@ public:
 	// The number of lines to be rendered by this thread
 	int count_for_thread(int first_line, int count)
 	{
-		count = MIN(count, numa_end_y - first_line);
+		count = min(count, numa_end_y - first_line);
 		int c = (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
-		return MAX(c, 0);
+		return max(c, 0);
 	}
 
 	// Calculate the dest address for the first line to be rendered by this thread
@@ -156,17 +156,17 @@ public:
 	static void WaitForWorkers();
 
 	static void ResetDebugDrawPos();
-	
+
 private:
 	DrawerThreads();
 	~DrawerThreads();
-	
+
 	void StartThreads();
 	void StopThreads();
 	void WorkerMain(DrawerThread *thread);
 
 	static DrawerThreads *Instance();
-	
+
 	std::mutex threads_mutex;
 	std::vector<DrawerThread> threads;
 
@@ -182,7 +182,7 @@ private:
 	size_t debug_draw_end = 0;
 
 	DrawerThread single_core_thread;
-	
+
 	friend class DrawerCommandQueue;
 };
 
@@ -192,9 +192,9 @@ class DrawerCommandQueue
 {
 public:
 	DrawerCommandQueue(RenderMemory *memoryAllocator);
-	
+
 	void Clear() { commands.clear(); }
-	
+
 	// Queue command to be executed by drawer worker threads
 	template<typename T, typename... Types>
 	void Push(Types &&... args)
@@ -212,13 +212,13 @@ public:
 			command.Execute(&threads->single_core_thread);
 		}
 	}
-	
+
 private:
 	// Allocate memory valid for the duration of a command execution
 	void *AllocMemory(size_t size);
-	
+
 	std::vector<DrawerCommand *> commands;
 	RenderMemory *FrameMemory;
-	
+
 	friend class DrawerThreads;
 };

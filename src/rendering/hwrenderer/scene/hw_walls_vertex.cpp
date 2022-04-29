@@ -43,6 +43,8 @@ void HWWall::SplitUpperEdge(FFlatVertex *&ptr)
 	float fact = (ztop[1] - ztop[0]) / polyw;
 	float facc = (zceil[1] - zceil[0]) / polyw;
 	float facf = (zfloor[1] - zfloor[0]) / polyw;
+	float faclu = (lightuv[UPRGT].u - lightuv[UPLFT].u) / polyw;
+	float faclv = (lightuv[UPRGT].v - lightuv[UPLFT].v) / polyw;
 
 	for (int i = 0; i < sidedef->numsegs - 1; i++)
 	{
@@ -58,6 +60,9 @@ void HWWall::SplitUpperEdge(FFlatVertex *&ptr)
 		ptr->z = ztop[0] + fact * fracfac;
 		ptr->u = tcs[UPLFT].u + facu * fracfac;
 		ptr->v = tcs[UPLFT].v + facv * fracfac;
+		ptr->lu = lightuv[UPLFT].u + faclu * fracfac;
+		ptr->lv = lightuv[UPLFT].v + faclv * fracfac;
+		ptr->lindex = lindex;
 		ptr++;
 	}
 }
@@ -77,6 +82,8 @@ void HWWall::SplitLowerEdge(FFlatVertex *&ptr)
 	float facb = (zbottom[1] - zbottom[0]) / polyw;
 	float facc = (zceil[1] - zceil[0]) / polyw;
 	float facf = (zfloor[1] - zfloor[0]) / polyw;
+	float faclu = (lightuv[LORGT].u - lightuv[LOLFT].u) / polyw;
+	float faclv = (lightuv[LORGT].v - lightuv[LOLFT].v) / polyw;
 
 	for (int i = sidedef->numsegs - 2; i >= 0; i--)
 	{
@@ -92,6 +99,9 @@ void HWWall::SplitLowerEdge(FFlatVertex *&ptr)
 		ptr->z = zbottom[0] + facb * fracfac;
 		ptr->u = tcs[LOLFT].u + facu * fracfac;
 		ptr->v = tcs[LOLFT].v + facv * fracfac;
+		ptr->lu = lightuv[LOLFT].u + faclu * fracfac;
+		ptr->lv = lightuv[LOLFT].v + faclv * fracfac;
+		ptr->lindex = lindex;
 		ptr++;
 	}
 }
@@ -115,6 +125,8 @@ void HWWall::SplitLeftEdge(FFlatVertex *&ptr)
 		float polyh1 = ztop[0] - zbottom[0];
 		float factv1 = polyh1 ? (tcs[UPLFT].v - tcs[LOLFT].v) / polyh1 : 0;
 		float factu1 = polyh1 ? (tcs[UPLFT].u - tcs[LOLFT].u) / polyh1 : 0;
+		float factlv1 = polyh1 ? (lightuv[UPLFT].v - lightuv[LOLFT].v) / polyh1 : 0;
+		float factlu1 = polyh1 ? (lightuv[UPLFT].u - lightuv[LOLFT].u) / polyh1 : 0;
 
 		while (i<vi->numheights && vi->heightlist[i] <= zbottom[0]) i++;
 		while (i<vi->numheights && vi->heightlist[i] < ztop[0])
@@ -124,6 +136,9 @@ void HWWall::SplitLeftEdge(FFlatVertex *&ptr)
 			ptr->z = vi->heightlist[i];
 			ptr->u = factu1*(vi->heightlist[i] - ztop[0]) + tcs[UPLFT].u;
 			ptr->v = factv1*(vi->heightlist[i] - ztop[0]) + tcs[UPLFT].v;
+			ptr->lu = factlu1 * (vi->heightlist[i] - ztop[0]) + lightuv[UPLFT].u;
+			ptr->lv = factlv1 * (vi->heightlist[i] - ztop[0]) + lightuv[UPLFT].v;
+			ptr->lindex = lindex;
 			ptr++;
 			i++;
 		}
@@ -149,6 +164,8 @@ void HWWall::SplitRightEdge(FFlatVertex *&ptr)
 		float polyh2 = ztop[1] - zbottom[1];
 		float factv2 = polyh2 ? (tcs[UPRGT].v - tcs[LORGT].v) / polyh2 : 0;
 		float factu2 = polyh2 ? (tcs[UPRGT].u - tcs[LORGT].u) / polyh2 : 0;
+		float factlv2 = polyh2 ? (lightuv[UPRGT].v - lightuv[LORGT].v) / polyh2 : 0;
+		float factlu2 = polyh2 ? (lightuv[UPRGT].u - lightuv[LORGT].u) / polyh2 : 0;
 
 		while (i>0 && vi->heightlist[i] >= ztop[1]) i--;
 		while (i>0 && vi->heightlist[i] > zbottom[1])
@@ -158,6 +175,9 @@ void HWWall::SplitRightEdge(FFlatVertex *&ptr)
 			ptr->z = vi->heightlist[i];
 			ptr->u = factu2*(vi->heightlist[i] - ztop[1]) + tcs[UPRGT].u;
 			ptr->v = factv2*(vi->heightlist[i] - ztop[1]) + tcs[UPRGT].v;
+			ptr->lu = factlu2 * (vi->heightlist[i] - ztop[1]) + lightuv[UPRGT].u;
+			ptr->lv = factlv2 * (vi->heightlist[i] - ztop[1]) + lightuv[UPRGT].v;
+			ptr->lindex = lindex;
 			ptr++;
 			i--;
 		}
@@ -173,16 +193,16 @@ void HWWall::SplitRightEdge(FFlatVertex *&ptr)
 int HWWall::CreateVertices(FFlatVertex *&ptr, bool split)
 {
 	auto oo = ptr;
-	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
+	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v, lightuv[LOLFT].u, lightuv[LOLFT].v, lindex);
 	ptr++;
 	if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
-	ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
+	ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v, lightuv[UPLFT].u, lightuv[UPLFT].v, lindex);
 	ptr++;
 	if (split && !(flags & HWF_NOSPLITUPPER && seg->sidedef->numsegs > 1)) SplitUpperEdge(ptr);
-	ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
+	ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v, lightuv[UPRGT].u, lightuv[UPRGT].v, lindex);
 	ptr++;
 	if (split && glseg.fracright == 1) SplitRightEdge(ptr);
-	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
+	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v, lightuv[LORGT].u, lightuv[LORGT].v, lindex);
 	ptr++;
 	if (split && !(flags & HWF_NOSPLITLOWER) && seg->sidedef->numsegs > 1) SplitLowerEdge(ptr);
 	return int(ptr - oo);

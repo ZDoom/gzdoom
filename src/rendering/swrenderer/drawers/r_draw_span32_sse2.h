@@ -94,8 +94,8 @@ namespace swrenderer
 						break;
 
 					texdata.source += texdata.width * texdata.height;
-					texdata.width = MAX<uint32_t>(texdata.width / 2, 1);
-					texdata.height = MAX<uint32_t>(texdata.height / 2, 1);
+					texdata.width = max<uint32_t>(texdata.width / 2, 1);
+					texdata.height = max<uint32_t>(texdata.height / 2, 1);
 					level--;
 				}
 			}
@@ -366,7 +366,7 @@ namespace swrenderer
 
 				// L = light-pos
 				// dist = sqrt(dot(L, L))
-				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				// distance_attenuation = 1 - min(dist * (1/radius), 1)
 				__m128 Lyz2 = light_y; // L.y*L.y + L.z*L.z
 				__m128 Lx = _mm_sub_ps(light_x, viewpos_x);
 				__m128 dist2 = _mm_add_ps(Lyz2, _mm_mul_ps(Lx, Lx));

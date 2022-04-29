@@ -88,7 +88,6 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 			{
 				if (*string == '[')
 				{
-					const uint8_t *start = string;
 					while (*string != ']' && *string != '\0')
 					{
 						string++;
@@ -97,11 +96,6 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 					{
 						string++;
 					}
-					lastcolor = FString((const char *)start, string - start);
-				}
-				else
-				{
-					lastcolor = *string++;
 				}
 			}
 			continue;
@@ -130,6 +124,33 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 			}
 
 			auto index = Lines.Reserve(1);
+			for (const uint8_t* pos = start; pos < space; pos++)
+			{
+				if (*pos == TEXTCOLOR_ESCAPE)
+				{
+					pos++;
+					if (*pos)
+					{
+						if (*pos == '[')
+						{
+							const uint8_t* cstart = pos;
+							while (*pos != ']' && *pos != '\0')
+							{
+								pos++;
+							}
+							if (*pos != '\0')
+							{
+								pos++;
+							}
+							lastcolor = FString((const char*)cstart, pos - cstart);
+						}
+						else
+						{
+							lastcolor = *pos++;
+						}
+					}
+				}
+			}
 			breakit (&Lines[index], font, start, space, linecolor);
 			if (c == '\n' && !preservecolor)
 			{

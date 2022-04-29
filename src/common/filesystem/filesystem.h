@@ -68,8 +68,8 @@ public:
 	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
 
 	void InitSingleFile(const char *filename, bool quiet = false);
-	void InitMultipleFiles (TArray<FString> &filenames, bool quiet = false, LumpFilterInfo* filter = nullptr);
-	void AddFile (const char *filename, FileReader *wadinfo, bool quiet, LumpFilterInfo* filter);
+	void InitMultipleFiles (TArray<FString> &filenames, bool quiet = false, LumpFilterInfo* filter = nullptr, bool allowduplicates = false, FILE* hashfile = nullptr);
+	void AddFile (const char *filename, FileReader *wadinfo, bool quiet, LumpFilterInfo* filter, FILE* hashfile);
 	int CheckIfResourceFileLoaded (const char *name) noexcept;
 	void AddAdditionalFile(const char* filename, FileReader* wadinfo = NULL) {}
 
@@ -117,6 +117,7 @@ public:
 	}
 
 	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
+	FString& GetLongName(int i);	// may only be called before the hash chains are set up.
 	void RenameFile(int num, const char* fn);
 	bool CreatePathlessCopy(const char* name, int id, int flags);
 

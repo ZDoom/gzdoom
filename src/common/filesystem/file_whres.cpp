@@ -95,10 +95,10 @@ FWHResFile::FWHResFile(const char *filename, FileReader &file)
 bool FWHResFile::Open(bool quiet, LumpFilterInfo*)
 {
 	int directory[1024];
-	
+
 	Reader.Seek(-4096, FileReader::SeekEnd);
 	Reader.Read(directory, 4096);
-	
+
 	int nl =1024/3;
 	Lumps.Resize(nl);
 
@@ -135,10 +135,10 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, bool quiet, Lu
 	{
 		int directory[1024];
 		int nl =1024/3;
-		
+
 		file.Seek(-4096, FileReader::SeekEnd);
 		file.Read(directory, 4096);
-		
+
 		int checkpos = 0;
 		for(int k = 0; k < nl; k++)
 		{

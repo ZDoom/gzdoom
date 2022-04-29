@@ -35,7 +35,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_maputl.h"
@@ -780,7 +780,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 
 			double low1 = (open.lowfloorthroughportal & 1) ? open.lowfloor : lowestfloor[0];
 			double low2 = (open.lowfloorthroughportal & 2) ? open.lowfloor : lowestfloor[1];
-			open.lowfloor = MIN(low1, low2);
+			open.lowfloor = min(low1, low2);
 		}
     }
 }

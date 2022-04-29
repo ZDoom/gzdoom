@@ -38,13 +38,13 @@
 	but then only in 2D where this reduces itself to a square. When main.fp samples from the shadow map
 	it first decides in which direction the fragment is (relative to the light), like cubemap sampling does
 	for 3D, but once again just for the 2D case.
-	
+
 	Texels 0-255 is Y positive, 256-511 is X positive, 512-767 is Y negative and 768-1023 is X negative.
 
 	Generating the shadow map itself is done by FShadowMap::Update(). The shadow map texture's FBO is
 	bound and then a screen quad is drawn to make a fragment shader cover all texels. For each fragment
 	it shoots a ray and collects the distance to what it hit.
-	
+
 	The shadowmap.fp shader knows which light and texel it is processing by mapping gl_FragCoord.y back
 	to the light index, and it knows which direction to ray trace by looking at gl_FragCoord.x. For
 	example, if gl_FragCoord.y is 20.5, then it knows its processing light 20, and if gl_FragCoord.x is
@@ -98,7 +98,8 @@ bool IShadowMap::PerformUpdate()
 	LightsProcessed = 0;
 	LightsShadowmapped = 0;
 
-	if (gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && CollectLights != nullptr)
+	// CollectLights will be null if the calling code decides that shadowmaps are not needed.
+	if (CollectLights != nullptr)
 	{
 		UpdateCycles.Clock();
 		UploadAABBTree();
@@ -116,7 +117,7 @@ void IShadowMap::UploadLights()
 	if (mLightList == nullptr)
 		mLightList = screen->CreateDataBuffer(LIGHTLIST_BINDINGPOINT, true, false);
 
-	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0]);
+	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0], BufferUsageType::Stream);
 }
 
 
@@ -128,11 +129,11 @@ void IShadowMap::UploadAABBTree()
 
 		if (!mNodesBuffer)
 			mNodesBuffer = screen->CreateDataBuffer(LIGHTNODES_BINDINGPOINT, true, false);
-		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes());
+		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes(), BufferUsageType::Static);
 
 		if (!mLinesBuffer)
 			mLinesBuffer = screen->CreateDataBuffer(LIGHTLINES_BINDINGPOINT, true, false);
-		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines());
+		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines(), BufferUsageType::Static);
 	}
 	else if (mAABBTree->Update())
 	{

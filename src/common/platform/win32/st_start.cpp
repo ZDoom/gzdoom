@@ -41,7 +41,7 @@
 
 #include "st_start.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "i_system.h"
 #include "i_input.h"
 #include "hardware.h"
@@ -113,7 +113,7 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
 	FStartupScreen *scr = NULL;
-	HRESULT hr;
+	HRESULT hr = -1;
 
 	if (!Args->CheckParm("-nostartup"))
 	{
@@ -310,7 +310,7 @@ void FBasicStartupScreen::NetMessage(const char *format, ...)
 {
 	FString str;
 	va_list argptr;
-	
+
 	va_start (argptr, format);
 	str.VFormat (format, argptr);
 	va_end (argptr);
@@ -351,7 +351,7 @@ void FBasicStartupScreen :: NetProgress(int count)
 
 		mysnprintf (buf, countof(buf), "%d/%d", NetCurPos, NetMaxPos);
 		SetDlgItemTextA (NetStartPane, IDC_NETSTARTCOUNT, buf);
-		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, std::min(NetCurPos, NetMaxPos), 0);
+		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, min(NetCurPos, NetMaxPos), 0);
 	}
 }
 

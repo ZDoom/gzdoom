@@ -45,7 +45,7 @@
 
 #include "i_input.h"
 #include "d_eventbase.h"
-#include "templates.h"
+
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "v_text.h"
@@ -280,14 +280,6 @@ CUSTOM_CVAR(Bool, joy_dinput, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCA
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const uint8_t POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
-
-//("dc12a687-737f-11cf-884d-00aa004b2e24")
-static const IID IID_IWbemLocator =		{ 0xdc12a687, 0x737f, 0x11cf,
-	{ 0x88, 0x4d, 0x00, 0xaa, 0x00, 0x4b, 0x2e, 0x24 } };
-
-//("4590f811-1d3a-11d0-891f-00aa004b2e24")
-static const CLSID CLSID_WbemLocator =	{ 0x4590f811, 0x1d3a, 0x11d0,
-	{ 0x89, 0x1f, 0x00, 0xaa, 0x00, 0x4b, 0x2e, 0x24 } };
 
 // CODE --------------------------------------------------------------------
 

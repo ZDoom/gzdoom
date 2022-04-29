@@ -264,7 +264,7 @@ IWad
 	Name = "Heretic Shareware"
 	Game = "Heretic"
 	Config = "Heretic"
-	Mapinfo = "mapinfo/heretic.txt"
+	Mapinfo = "mapinfo/hereticshareware.txt"
 	Compatibility = "Shareware"
 	MustContain = "E1M1", "TITLE", "MUS_E1M1"
 	BannerColors = "fc fc 00", "a8 00 00"

@@ -39,7 +39,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "templates.h"
+
 #include "m_swap.h"
 #include "v_font.h"
 #include "filesystem.h"
@@ -59,16 +59,6 @@
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_LOG_COLOR	PalEntry(223,223,223)
-
-//
-// Globally visible constants.
-//
-#define HU_FONTSTART	uint8_t('!')		// the first font characters
-#define HU_FONTEND		uint8_t('\377')	// the last font characters
-
-// Calculate # of glyphs in font.
-#define HU_FONTSIZE		(HU_FONTEND - HU_FONTSTART + 1)
-
 
 // TYPES -------------------------------------------------------------------
 
@@ -104,6 +94,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
 	if (!stricmp(name, "DBIGFONT")) name = "BigFont";
 	else if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
+	else if (!stricmp(name, "INDEXFON")) name = "IndexFont";	// Same here - for whatever reason some people had to use its 8 character name...
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{
@@ -115,10 +106,10 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 		int lump = -1;
 		int folderfile = -1;
-		
+
 		TArray<FolderEntry> folderdata;
 		FStringf path("fonts/%s/", name);
-		
+
 		// Use a folder-based font only if it comes from a later file than the single lump version.
 		if (fileSystem.GetFilesInFolder(path, folderdata, true))
 		{
@@ -128,7 +119,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 
 		lump = fileSystem.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
-		
+
 		if (lump != -1 && fileSystem.GetFileContainer(lump) >= folderfile)
 		{
 			uint32_t head;
@@ -158,7 +149,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		}
 		if (folderdata.Size() > 0)
 		{
-			font = new FFont(name, nullptr, name, HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			font = new FFont(name, nullptr, name, 0, 0, 1, -1);
 			if (translationsLoaded) font->LoadTranslations();
 			return font;
 		}
@@ -187,9 +178,11 @@ void V_InitCustomFonts()
 	int start;
 	int first;
 	int count;
-	int spacewidth;
+	int spacewidth = -1;
 	int kerning;
 	char cursor = '_';
+	bool ignoreoffsets = false;
+	int MinLum = -1, MaxLum = -1;
 
 	while ((llump = fileSystem.FindLump ("FONTDEFS", &lastlump)) != -1)
 	{
@@ -246,10 +239,8 @@ void V_InitCustomFonts()
 				}
 				else if (sc.Compare ("SPACEWIDTH"))
 				{
-					if (format == 2) goto wrong;
 					sc.MustGetNumber();
 					spacewidth = sc.Number;
-					format = 1;
 				}
 				else if (sc.Compare("DONTTRANSLATE"))
 				{
@@ -270,9 +261,26 @@ void V_InitCustomFonts()
 					sc.MustGetNumber();
 					kerning = sc.Number;
 				}
+				else if (sc.Compare("ignoreoffsets"))
+				{
+					ignoreoffsets = true;
+				}
+				else if (sc.Compare("minluminosity"))
+				{
+					sc.MustGetValue(false);
+					MinLum = (int16_t)clamp(sc.Number, 0, 255);
+				}
+				else if (sc.Compare("maxluminosity"))
+				{
+					sc.MustGetValue(false);
+					MaxLum = (int16_t)clamp(sc.Number, 0, 255);
+				}
 				else
 				{
 					if (format == 1) goto wrong;
+					// The braces must be filtered so because they'd be treated as block terminators otherwise.
+					if (!strcmp(sc.String, "-{")) strcpy(sc.String, "{");
+					if (!strcmp(sc.String, "-}")) strcpy(sc.String, "}");
 					FGameTexture **p = &lumplist[*(unsigned char*)sc.String];
 					sc.MustGetString();
 					FTextureID texid = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
@@ -293,6 +301,7 @@ void V_InitCustomFonts()
 				FFont *fnt = new FFont (namebuffer, templatebuf, nullptr, first, count, start, llump, spacewidth, donttranslate);
 				fnt->SetCursor(cursor);
 				fnt->SetKerning(kerning);
+				if (ignoreoffsets) fnt->ClearOffsets();
 			}
 			else if (format == 2)
 			{
@@ -318,6 +327,10 @@ void V_InitCustomFonts()
 					FFont *fnt = CreateSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump, donttranslate);
 					fnt->SetCursor(cursor);
 					fnt->SetKerning(kerning);
+					if (spacewidth >= 0) fnt->SpaceWidth = spacewidth;
+					fnt->MinLum = MinLum;
+					fnt->MaxLum = MaxLum;
+					if (ignoreoffsets) fnt->ClearOffsets();
 				}
 			}
 			else goto wrong;
@@ -327,7 +340,7 @@ void V_InitCustomFonts()
 	return;
 
 wrong:
-	sc.ScriptError ("Invalid combination of properties in font '%s'", namebuffer.GetChars());
+	sc.ScriptError ("Invalid combination of properties in font '%s', %s not allowed", namebuffer.GetChars(), sc.String);
 }
 
 //==========================================================================
@@ -403,19 +416,19 @@ void V_InitFontColors ()
 				else if (sc.Compare ("Flat:"))
 				{
 					sc.MustGetString();
-					logcolor = V_GetColor (nullptr, sc);
+					logcolor = V_GetColor (sc);
 				}
 				else
 				{
 					// Get first color
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.Start[0] = RPART(c);
 					tparm.Start[1] = GPART(c);
 					tparm.Start[2] = BPART(c);
 
 					// Get second color
 					sc.MustGetString();
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.End[0] = RPART(c);
 					tparm.End[1] = GPART(c);
 					tparm.End[2] = BPART(c);
@@ -669,13 +682,13 @@ void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size)
 		int index = clamp(lumadjust, 0, 255);
 		PalEntry newcol = remap[index];
 		// extend the range if we find colors outside what initial analysis provided.
-		if (gray < lum_min)
+		if (gray < lum_min && lum_min != 0)
 		{
 			newcol.r = newcol.r * gray / lum_min;
 			newcol.g = newcol.g * gray / lum_min;
 			newcol.b = newcol.b * gray / lum_min;
 		}
-		else if (gray > lum_max)
+		else if (gray > lum_max && lum_max != 0)
 		{
 			newcol.r = clamp(newcol.r * gray / lum_max, 0, 255);
 			newcol.g = clamp(newcol.g * gray / lum_max, 0, 255);
@@ -712,9 +725,9 @@ static void CalcDefaultTranslation(FFont* base, int index)
 		auto lum = otherluminosity[i];
 		if (lum >= 0 && lum <= 1)
 		{
-			int index = int(lum * 255);
-			remap[index] = GPalette.BaseColors[i];
-			remap[index].a = 255;
+			int lumidx = int(lum * 255);
+			remap[lumidx] = GPalette.BaseColors[i];
+			remap[lumidx].a = 255;
 		}
 	}
 
@@ -756,7 +769,7 @@ static void CalcDefaultTranslation(FFont* base, int index)
 			lowindex = highindex++;
 		}
 	}
-	
+
 }
 
 //==========================================================================
@@ -860,140 +873,8 @@ void V_InitFonts()
 	NewConsoleFont = CreateHexLumpFont("NewConsoleFont", lump);
 	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
 	CurrentConsoleFont = NewConsoleFont;
-
-	// load the heads-up font
-	if (!(SmallFont = V_GetFont("SmallFont", "SMALLFNT")))
-	{
-		if (fileSystem.CheckNumForName("FONTA_S") >= 0)
-		{
-			int wadfile = -1;
-			auto a = fileSystem.CheckNumForName("FONTA33", ns_graphics);
-			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetIwadNum())
-			{
-				// The font has been replaced, so we need to create a copy of the original as well.
-				SmallFont = new FFont("SmallFont", "FONTA%02u", nullptr, HU_FONTSTART, HU_FONTSIZE, 1, -1);
-				SmallFont->SetCursor('[');
-			}
-			else
-			{
-				SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-				SmallFont->SetCursor('[');
-			}
-		}
-		else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
-		{
-			int wadfile = -1;
-			auto a = fileSystem.CheckNumForName("STCFN065", ns_graphics);
-			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetIwadNum())
-			{
-				// The font has been replaced, so we need to create a copy of the original as well.
-				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);
-			}
-			else
-			{
-				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);
-			}
-		}
-	}
-
-	// Create the original small font as a fallback for incomplete definitions.
-	if (fileSystem.CheckNumForName("FONTA_S") >= 0)
-	{
-		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-		OriginalSmallFont->SetCursor('[');
-	}
-	else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
-	{
-		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
-	}
-
-
-	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
-	{
-		if (fileSystem.CheckNumForName("STBFN033", ns_graphics) >= 0)
-		{
-			SmallFont2 = new FFont("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
-		}
-	}
-
-	//This must be read before BigFont so that it can be properly substituted.
-	BigUpper = V_GetFont("BigUpper");
-
-	if (!(BigFont = V_GetFont("BigFont")))
-	{
-		if (fileSystem.CheckNumForName("FONTB_S") >= 0)
-		{
-			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-		}
-	}
-	
-	if (!BigFont)
-	{
-		// Load the generic fallback if no BigFont is found.
-		BigFont = V_GetFont("BigFont", "ZBIGFONT");
-	}
-
-	if (fileSystem.CheckNumForName("FONTB_S") >= 0)
-	{
-		OriginalBigFont = new FFont("OriginalBigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-	}
-	else
-	{
-		OriginalBigFont = new FFont("OriginalBigFont", nullptr, "bigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-	}
-
-	// let PWAD BIGFONTs override the stock BIGUPPER font. (This check needs to be made smarter.)
-	if (BigUpper && BigFont->Type != FFont::Folder && BigUpper->Type == FFont::Folder)
-	{
-		delete BigUpper;
-		BigUpper = BigFont;
-	}
-
-	if (BigUpper == nullptr)
-	{
-		BigUpper = BigFont;
-	}
-	if (!(ConFont = V_GetFont("ConsoleFont", "CONFONT")))
-	{
-		ConFont = SmallFont;
-	}
-	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
-	{
-		if (TexMan.CheckForTexture("WINUM0", ETextureType::MiscPatch).isValid())
-		{
-			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
-		}
-		if (IntermissionFont == nullptr)
-		{
-			IntermissionFont = BigFont;
-		}
-	}
-	// This can only happen if gzdoom.pk3 is corrupted. ConFont should always be present.
-	if (ConFont == nullptr)
-	{
-		I_FatalError("Console font not found.");
-	}
-	// SmallFont and SmallFont2 have no default provided by the engine. BigFont only has in non-Raven games.
-	if (OriginalSmallFont == nullptr)
-	{
-		OriginalSmallFont = ConFont;
-	}
-	if (SmallFont == nullptr)
-	{
-		SmallFont = OriginalSmallFont;
-	}
-	if (SmallFont2 == nullptr)
-	{
-		SmallFont2 = SmallFont;
-	}
-	if (BigFont == nullptr)
-	{
-		BigFont = OriginalBigFont;
-	}
-	AlternativeSmallFont = OriginalSmallFont;
-	AlternativeBigFont = OriginalBigFont;
+	ConFont = V_GetFont("ConsoleFont", "CONFONT");
+	V_GetFont("IndexFont", "INDEXFON");	// detect potential replacements for this one.
 }
 
 void V_LoadTranslations()

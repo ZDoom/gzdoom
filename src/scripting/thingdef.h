@@ -228,6 +228,7 @@ enum
 	DEPF_HEXENBOUNCE = 10,
 	DEPF_DOOMBOUNCE = 11,
 	DEPF_INTERHUBSTRIP = 12,
+	DEPF_HIGHERMPROB = 13,
 };
 
 // Types of old style decorations
@@ -325,6 +326,6 @@ int MatchString (const char *in, const char **strings);
 	double var = params[(no)+1].d;
 
 #define PROP_COLOR_PARM(var, no, scriptpos) \
-	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s, scriptpos);
+	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(params[(no)+2].s, scriptpos);
 
 #endif

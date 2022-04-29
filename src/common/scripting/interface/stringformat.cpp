@@ -419,7 +419,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Filter, StringFilter)
 
 static int StringIndexOf(FString *self, const FString &substr, int startIndex)
 {
-	return self->IndexOf(substr, startIndex);
+	return (int)self->IndexOf(substr, startIndex);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IndexOf, StringIndexOf)
@@ -427,12 +427,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IndexOf, StringIndexOf)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
 	PARAM_INT(startIndex);
-	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
+	ACTION_RETURN_INT(StringIndexOf(self, substr, startIndex));
 }
 
 static int StringLastIndexOf(FString *self, const FString &substr, int endIndex)
 {
-	return self->LastIndexOfBroken(substr, endIndex);
+	return (int)self->LastIndexOfBroken(substr, endIndex);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, LastIndexOf, StringLastIndexOf)
@@ -440,12 +440,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, LastIndexOf, StringLastIndexOf)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
 	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
+	ACTION_RETURN_INT(StringLastIndexOf(self, substr, endIndex));
 }
 
 static int StringRightIndexOf(FString *self, const FString &substr, int endIndex)
 {
-	return self->LastIndexOf(substr, endIndex);
+	return (int)self->LastIndexOf(substr, endIndex);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, RightIndexOf, StringRightIndexOf)
@@ -453,7 +453,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, RightIndexOf, StringRightIndexOf)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
 	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
+	ACTION_RETURN_INT(StringRightIndexOf(self, substr, endIndex));
 }
 
 static void StringToUpper(FString *self)
@@ -561,6 +561,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Substitute, StringSubst)
 	PARAM_STRING(substr);
 	PARAM_STRING(replc);
 	StringSubst(self, substr, replc);
+	return 0;
+}
+
+static void StringStripRight(FString* self, const FString& junk)
+{
+	if (junk.IsNotEmpty()) self->StripRight(junk);
+	else self->StripRight();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, StripRight, StringStripRight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(junk);
+	StringStripRight(self, junk);
 	return 0;
 }
 

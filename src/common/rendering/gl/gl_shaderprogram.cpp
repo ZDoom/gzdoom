@@ -263,7 +263,7 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 
 	// If we have 4.2, always use it because it adds important new syntax.
 	if (maxGlslVersion < 420 && gl.glslversion >= 4.2f) maxGlslVersion = 420;
-	int shaderVersion = std::min((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
+	int shaderVersion = min((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
 	patchedCode.AppendFormat("#version %d\n", shaderVersion);
 
 	// TODO: Find some way to add extension requirements to the patching

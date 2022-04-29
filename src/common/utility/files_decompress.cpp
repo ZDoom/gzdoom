@@ -42,7 +42,7 @@
 #include <stdexcept>
 
 #include "files.h"
-#include "templates.h"
+
 #include "zstring.h"
 #include "cmdlib.h"
 
@@ -107,7 +107,7 @@ class DecompressorZ : public DecompressorBase
 	bool SawEOF;
 	z_stream Stream;
 	uint8_t InBuff[BUFF_SIZE];
-	
+
 public:
 	DecompressorZ (FileReader *file, bool zip, const std::function<void(const char*)>& cb)
 	: SawEOF(false)
@@ -198,7 +198,7 @@ class DecompressorBZ2 : public DecompressorBase
 	bool SawEOF;
 	bz_stream Stream;
 	uint8_t InBuff[BUFF_SIZE];
-	
+
 public:
 	DecompressorBZ2 (FileReader *file, const std::function<void(const char*)>& cb)
 	: SawEOF(false)
@@ -509,7 +509,7 @@ class DecompressorLZSS : public DecompressorBase
 				// Partial overlap: Copy in 2 or 3 chunks.
 				do
 				{
-					unsigned int copy = std::min<unsigned int>(len, pos+1);
+					unsigned int copy = min<unsigned int>(len, pos+1);
 					memcpy(Stream.InternalBuffer, copyStart, copy);
 					Stream.InternalBuffer += copy;
 					Stream.InternalOut += copy;
@@ -575,7 +575,7 @@ public:
 					break;
 			}
 
-			unsigned int copy = std::min<unsigned int>(Stream.InternalOut, AvailOut);
+			unsigned int copy = min<unsigned int>(Stream.InternalOut, AvailOut);
 			if(copy > 0)
 			{
 				memcpy(Out, Stream.WindowData, copy);
@@ -627,7 +627,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_LZSS:
 			dec = new DecompressorLZSS(p, cb);
 			break;
-			
+
 		// todo: METHOD_IMPLODE, METHOD_SHRINK
 		default:
 			return false;

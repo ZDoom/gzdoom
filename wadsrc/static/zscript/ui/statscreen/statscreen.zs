@@ -1,6 +1,6 @@
 // Note that the status screen needs to run in 'play' scope!
 
-class InterBackground native play version("2.5")
+class InterBackground native ui version("2.5")
 {
 	native static InterBackground Create(wbstartstruct wbst);
 	native virtual bool LoadBackground(bool isenterpic);
@@ -9,7 +9,7 @@ class InterBackground native play version("2.5")
 }
 
 // This is obsolete. Hopefully this was never used...
-struct PatchInfo play version("2.5")
+struct PatchInfo ui version("2.5")
 {
 	Font mFont;
 	deprecated("3.8") TextureID mPatch;
@@ -39,7 +39,7 @@ struct PatchInfo play version("2.5")
 };
 
 
-class StatusScreen abstract play version("2.5")
+class StatusScreen : ScreenJob abstract version("2.5")
 {
 	enum EValues
 	{
@@ -105,7 +105,7 @@ class StatusScreen abstract play version("2.5")
 	float			shadowalpha;
 
 	PatchInfo 		mapname;
-	PatchInfo 		finished;
+	PatchInfo 		finishedp;
 	PatchInfo 		entering;
 	PatchInfo		content;
 	PatchInfo		author;
@@ -334,7 +334,7 @@ class StatusScreen abstract play version("2.5")
 				
 				if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
 				{
-					disp += finished.mFont.GetMaxAscender("$WI_FINISHED");
+					disp += finishedp.mFont.GetMaxAscender("$WI_FINISHED");
 				}
 			}
 			else
@@ -349,10 +349,10 @@ class StatusScreen abstract play version("2.5")
 		// draw "Finished!"
 
 		int statsy = multiplayer? NG_STATSY : SP_STATSY * scaleFactorY;
-		if (y < (statsy - finished.mFont.GetHeight()*3/4) * scaleFactorY)
+		if (y < (statsy - finishedp.mFont.GetHeight()*3/4) * scaleFactorY)
 		{
 			// don't draw 'finished' if the level name is too tall
-			y = DrawPatchOrText(y, finished, finishedPatch, "$WI_FINISHED");
+			y = DrawPatchOrText(y, finishedp, finishedPatch, "$WI_FINISHED");
 		}
 		return y;
 	}
@@ -681,7 +681,6 @@ class StatusScreen abstract play version("2.5")
 		if (cnt == 0)
 		{
 			End();
-			Level.WorldDone();
 		}
 	}
 
@@ -693,11 +692,11 @@ class StatusScreen abstract play version("2.5")
 
 	protected virtual void initShowNextLoc ()
 	{
+		Console.Printf("Next m ap = %s", wbs.next);
 		if (wbs.next == "") 
 		{
 			// Last map in episode - there is no next location!
-			End();
-			Level.WorldDone();
+			jobstate = finished;
 			return;
 		}
 
@@ -787,7 +786,7 @@ class StatusScreen abstract play version("2.5")
 	
 	
 	// ====================================================================
-	// checkForAccelerate
+	//
 	// Purpose: See if the player has hit either the attack or use key
 	//          or mouse button.  If so we set acceleratestage to 1 and
 	//          all those display routines above jump right to the end.
@@ -796,25 +795,24 @@ class StatusScreen abstract play version("2.5")
 	//
 	// ====================================================================
 
-	protected void checkForAccelerate(void)
+	override bool OnEvent(InputEvent evt)
 	{
-		int i;
-
-		// check for button presses to skip delays
-		for (i = 0; i < MAXPLAYERS; i++)
+		if (evt.type == InputEvent.Type_KeyDown)
 		{
-			PlayerInfo player = players[i];
-			if (playeringame[i])
-			{
-				if ((player.cmd.buttons ^ player.oldbuttons) &&
-					((player.cmd.buttons & player.oldbuttons) == player.oldbuttons) && player.Bot == NULL)
-				{
-					acceleratestage = 1;
-					playerready[i] = true;
-				}
-				player.oldbuttons = player.buttons;
-			}
+			accelerateStage = 1;
+			return true;
 		}
+		return false;
+	}
+
+	void nextStage()
+	{
+		accelerateStage = 1;
+	}
+
+	// this one is no longer used, but still needed for old content referencing them.
+	deprecated("4.8") void checkForAccelerate()
+	{
 	}
 	
 	// ====================================================================
@@ -833,11 +831,11 @@ class StatusScreen abstract play version("2.5")
 
 	//====================================================================
 	//
-	//
+	// Two stage interface to allow redefining this class as a screen job
 	//
 	//====================================================================
 
-	virtual void Ticker(void)
+	protected virtual void Ticker()
 	{
 		// counter for general background animation
 		bcnt++;  
@@ -847,7 +845,6 @@ class StatusScreen abstract play version("2.5")
 			StartMusic();
 		}
 	
-		checkForAccelerate();
 		bg.updateAnimatedBack();
 	
 		switch (CurState)
@@ -865,18 +862,23 @@ class StatusScreen abstract play version("2.5")
 			break;
 
 		case LeavingIntermission:
-			// Hush, GCC.
 			break;
 		}
 	}
 	
+	override void OnTick()
+	{
+		Ticker();
+		if (CurState == StatusScreen.LeavingIntermission) jobstate = finished;
+	}
+
 	//====================================================================
 	//
 	//
 	//
 	//====================================================================
 
-	virtual void Drawer (void)
+	protected virtual void Drawer()
 	{
 		switch (CurState)
 		{
@@ -895,6 +897,11 @@ class StatusScreen abstract play version("2.5")
 			drawNoState();
 			break;
 		}
+	}
+
+	override void Draw(double smoothratio)
+	{
+		Drawer();
 	}
 
 	//====================================================================
@@ -924,7 +931,7 @@ class StatusScreen abstract play version("2.5")
 		}
 		
 		entering.Init(gameinfo.mStatscreenEnteringFont);
-		finished.Init(gameinfo.mStatscreenFinishedFont);
+		finishedp.Init(gameinfo.mStatscreenFinishedFont);
 		mapname.Init(gameinfo.mStatscreenMapNameFont);
 		content.Init(gameinfo.mStatscreenContentFont);
 		author.Init(gameinfo.mStatscreenAuthorFont);
@@ -954,7 +961,6 @@ class StatusScreen abstract play version("2.5")
 		scaleFactorX = CleanXfac;
 		scaleFactorY = CleanYfac;
 	}
-	
 	
 	protected virtual void initStats() {}
 	protected virtual void updateStats() {}

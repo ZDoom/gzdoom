@@ -58,7 +58,7 @@ VSMatrix::loadIdentity()
 void 
 VSMatrix::multMatrix(const FLOATTYPE *aMatrix)
 {
-	
+
 	FLOATTYPE res[16];
 
 	for (int i = 0; i < 4; ++i) 
@@ -164,19 +164,19 @@ VSMatrix::rotate(FLOATTYPE angle, FLOATTYPE x, FLOATTYPE y, FLOATTYPE z)
 	mat[4] = v[0] * v[1] * (1 - co) - v[2] * si;
 	mat[8] = v[0] * v[2] * (1 - co) + v[1] * si;
 	mat[12]= 0.0f;
-	   
+
 	mat[1] = v[0] * v[1] * (1 - co) + v[2] * si;
 //	mat[5] = y2 + (x2 + z2) * co;
 	mat[5] = co + y2 * (1 - co);
 	mat[9] = v[1] * v[2] * (1 - co) - v[0] * si;
 	mat[13]= 0.0f;
-	   
+
 	mat[2] = v[0] * v[2] * (1 - co) - v[1] * si;
 	mat[6] = v[1] * v[2] * (1 - co) + v[0] * si;
 //	mat[10]= z2 + (x2 + y2) * co;
 	mat[10]= co + z2 * (1 - co);
 	mat[14]= 0.0f;
-	   
+
 	mat[3] = 0.0f;
 	mat[7] = 0.0f;
 	mat[11]= 0.0f;
@@ -323,9 +323,9 @@ VSMatrix::multMatrixPoint(const FLOATTYPE *point, FLOATTYPE *res)
 	{
 
 		res[i] = 0.0f;
-	
+
 		for (int j = 0; j < 4; j++) {
-		
+
 			res[i] += point[j] * mMatrix[j*4 + i];
 		} 
 	}
@@ -444,7 +444,7 @@ VSMatrix::computeNormalMatrix(const FLOATTYPE *aMatrix)
 void 
 VSMatrix::multMatrix(FLOATTYPE *resMat, const FLOATTYPE *aMatrix)
 {
-	
+
 	FLOATTYPE res[16];
 
 	for (int i = 0; i < 4; ++i) 

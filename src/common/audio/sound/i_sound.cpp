@@ -367,7 +367,7 @@ SoundHandle SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length)
 			i += 4;
 			if (i + blocksize > length)
 			{
-				okay = false;
+				//okay = false;
 				break;
 			}
 
@@ -450,7 +450,7 @@ SoundHandle SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length)
 		}
 
 		// Second pass to write the data
-		if (okay)
+		if (okay && len > 0)
 		{
 			data = new uint8_t[len];
 			i = 26;

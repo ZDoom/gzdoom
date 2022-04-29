@@ -375,7 +375,7 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 	outHeight = N *inHeight;
 
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
-	
+
 	const int thresholdWidth  = gl_texture_hqresize_mt_width;
 	const int thresholdHeight = gl_texture_hqresize_mt_height;
 

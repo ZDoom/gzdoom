@@ -235,6 +235,8 @@ class BaseStatusBar : StatusBarCore native
 	virtual bool ProcessMidPrint(Font fnt, String msg, bool bold) { return false; }
 	// [MK] let the HUD handle drawing the chat prompt
 	virtual bool DrawChat(String txt) { return false; }
+	// [MK] let the HUD handle drawing the pause graphics
+	virtual bool DrawPaused(int player) { return false; }
 
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	native int GetTopOfStatusBar();
@@ -981,7 +983,7 @@ class BaseStatusBar : StatusBarCore native
 				}
 				else
 				{
-					DrawInventoryIcon(item, itempos + (boxsize.X * i, 0), flags | DI_ITEM_CENTER );
+					DrawInventoryIcon(item, itempos + (boxsize.X * i, 0), flags | DI_ITEM_CENTER | DI_DIMDEPLETED );
 				}
 			}
 			

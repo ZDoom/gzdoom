@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <float.h>
-#include "templates.h"
+
 #include "engineerrors.h"
 #include "filesystem.h"
 #include "doomdef.h"
@@ -178,9 +178,9 @@ namespace swrenderer
 			double distance2 = viewport->PlaneDepth(y + 1, planeheight);
 			double xmagnitude = fabs(ystepscale * (distance2 - distance) * viewport->FocalLengthX);
 			double ymagnitude = fabs(xstepscale * (distance2 - distance) * viewport->FocalLengthX);
-			double magnitude = MAX(ymagnitude, xmagnitude);
+			double magnitude = max(ymagnitude, xmagnitude);
 			double min_lod = -1000.0;
-			drawerargs.SetTextureLOD(MAX(log2(magnitude) + r_lod_bias, min_lod));
+			drawerargs.SetTextureLOD(max(log2(magnitude) + r_lod_bias, min_lod));
 		}
 
 		if (plane_shade)

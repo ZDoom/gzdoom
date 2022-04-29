@@ -219,10 +219,10 @@ void makeMD5(const void *buffer, unsigned length, char *md5out)
 bool checkPatchForAlpha(const void *buffer, uint32_t length)
 {
 	if (length > 10164) return false;	// shortcut for anything too large
-	
+
 	char md5[33];
 	bool done = false;
-	
+
 	for(int i=0; alphapatches[i].length > 0; i++)
 	{
 		if (alphapatches[i].length == (int)length)	// length check

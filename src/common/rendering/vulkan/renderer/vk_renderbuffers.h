@@ -32,6 +32,9 @@ public:
 	VkTextureImage Shadowmap;
 	std::unique_ptr<VulkanSampler> ShadowmapSampler;
 
+	VkTextureImage Lightmap;
+	std::unique_ptr<VulkanSampler> LightmapSampler;
+
 private:
 	void CreatePipeline(int width, int height);
 	void CreateScene(int width, int height, VkSampleCountFlagBits samples);
@@ -40,6 +43,7 @@ private:
 	void CreateSceneFog(int width, int height, VkSampleCountFlagBits samples);
 	void CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples);
 	void CreateShadowmap();
+	void CreateLightmapSampler();
 	VkSampleCountFlagBits GetBestSampleCount();
 
 	int mWidth = 0;

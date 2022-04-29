@@ -200,7 +200,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 			// [RH] Zoom player's field of vision
 			// [BC] && bHaltVelocity.
 			if (telezoom && thing->player->mo == thing && !(flags & TELF_KEEPVELOCITY))
-				thing->player->FOV = MIN (175.f, thing->player->DesiredFOV + 45.f);
+				thing->player->FOV = min (175.f, thing->player->DesiredFOV + 45.f);
 		}
 	}
 	// [BC] && bHaltVelocity.
@@ -662,10 +662,11 @@ bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, b
 	DAngle offAngle = victim->Angles.Yaw - source->Angles.Yaw;
 	DVector2 newp = { off.X * an.Cos() - off.Y * an.Sin(), off.X * an.Sin() + off.Y * an.Cos() };
 	double z = floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z();
+	int flags = fog ? (TELF_DESTFOG | TELF_SOURCEFOG | TELF_KEEPORIENTATION) : TELF_KEEPORIENTATION;
 
 	bool res =
 		P_Teleport (victim, DVector3(dest->Pos().XY() + newp, z),
-							0., fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
+							0., flags);
 	// P_Teleport only changes angle if fog is true
 	victim->Angles.Yaw = (dest->Angles.Yaw + victim->Angles.Yaw - source->Angles.Yaw).Normalized360();
 

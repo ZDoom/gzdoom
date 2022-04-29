@@ -82,7 +82,7 @@ void VkSamplerManager::SetTextureFilterMode()
 void VkSamplerManager::Create()
 {
 	int filter = sysCallbacks.DisableTextureFilter && sysCallbacks.DisableTextureFilter()? 0 : gl_texture_filter;
-	
+
 	for (int i = CLAMP_NONE; i <= CLAMP_XY; i++)
 	{
 		SamplerBuilder builder;

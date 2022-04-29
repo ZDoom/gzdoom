@@ -150,10 +150,10 @@ int FNodeBuilder::CreateNode (uint32_t set, unsigned int count, fixed_t bbox[4])
 		D(PrintSet (2, set2));
 		node.intchildren[0] = CreateNode (set1, count1, node.nb_bbox[0]);
 		node.intchildren[1] = CreateNode (set2, count2, node.nb_bbox[1]);
-		bbox[BOXTOP] = MAX (node.nb_bbox[0][BOXTOP], node.nb_bbox[1][BOXTOP]);
-		bbox[BOXBOTTOM] = MIN (node.nb_bbox[0][BOXBOTTOM], node.nb_bbox[1][BOXBOTTOM]);
-		bbox[BOXLEFT] = MIN (node.nb_bbox[0][BOXLEFT], node.nb_bbox[1][BOXLEFT]);
-		bbox[BOXRIGHT] = MAX (node.nb_bbox[0][BOXRIGHT], node.nb_bbox[1][BOXRIGHT]);
+		bbox[BOXTOP] = max (node.nb_bbox[0][BOXTOP], node.nb_bbox[1][BOXTOP]);
+		bbox[BOXBOTTOM] = min (node.nb_bbox[0][BOXBOTTOM], node.nb_bbox[1][BOXBOTTOM]);
+		bbox[BOXLEFT] = min (node.nb_bbox[0][BOXLEFT], node.nb_bbox[1][BOXLEFT]);
+		bbox[BOXRIGHT] = max (node.nb_bbox[0][BOXRIGHT], node.nb_bbox[1][BOXRIGHT]);
 		return (int)Nodes.Push (node);
 	}
 	else
@@ -643,7 +643,7 @@ int FNodeBuilder::Heuristic (node_t &node, uint32_t set, bool honorNoSplit)
 					frac = 1 - frac;
 				}
 				int penalty = int(1 / frac);
-				score = MAX(score - penalty, 1);
+				score = std::max(score - penalty, 1);
 				D(Printf ("Penalized splitter by %d for being near endpt of seg %d (%f).\n", penalty, i, frac));
 			}
 

@@ -36,10 +36,13 @@
 #include "vectors.h"
 #include "doomdef.h"
 
-#define FX_ROCKET			0x00000001
-#define FX_GRENADE			0x00000002
-#define FX_RESPAWNINVUL		0x00000020
-#define FX_VISIBILITYPULSE	0x00000040
+enum
+{
+	FX_ROCKET			= 0x00000001,
+	FX_GRENADE			= 0x00000002,
+	FX_RESPAWNINVUL		= 0x00000020,
+	FX_VISIBILITYPULSE	= 0x00000040
+};
 
 struct subsector_t;
 struct FLevelLocals;

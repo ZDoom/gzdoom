@@ -102,6 +102,11 @@ void S_SetMusicCallbacks(MusicCallbacks* cb)
 	if (mus_cb.OpenMusic == nullptr) mus_cb.OpenMusic = DefaultOpenMusic;	// without this we are dead in the water.
 }
 
+int MusicEnabled() // int return is for scripting
+{
+	return mus_enabled && !nomusic;
+} 
+
 //==========================================================================
 //
 // 
@@ -175,7 +180,7 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 			fbuf[i] = convert[i] * mus_playing.replayGainFactor * (1.f/32768.f);
 		}
 	}
-	
+
 	if (!written)
 	{
 		memset((char*)buff, 0, len);
@@ -293,7 +298,7 @@ void S_UpdateMusic ()
 	if (mus_playing.handle != nullptr)
 	{
 		ZMusic_Update(mus_playing.handle);
-		
+
 		// [RH] Update music and/or playlist. IsPlaying() must be called
 		// to attempt to reconnect to broken net streams and to advance the
 		// playlist when the current song finishes.
@@ -598,13 +603,13 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 		{
 			float* sbuf = (float*)readbuffer.Data();
 			int numsamples = fmt.mBufferSize / 8;
-			auto index = lbuffer.Reserve(numsamples);
+			auto addr = lbuffer.Reserve(numsamples);
 			rbuffer.Reserve(numsamples);
 
 			for (int i = 0; i < numsamples; i++)
 			{
-				lbuffer[index + i] = sbuf[i * 2] * 32768.f;
-				rbuffer[index + i] = sbuf[i * 2 + 1] * 32768.f;
+				lbuffer[addr + i] = sbuf[i * 2] * 32768.f;
+				rbuffer[addr + i] = sbuf[i * 2 + 1] * 32768.f;
 			}
 		}
 		float accTime = lbuffer.Size() / (float)fmt.mSampleRate;
@@ -613,23 +618,26 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 	ZMusic_Close(handle);
 
 	GainAnalyzer analyzer;
-	analyzer.InitGainAnalysis(fmt.mSampleRate);
-	int result = analyzer.AnalyzeSamples(lbuffer.Data(), rbuffer.Size() == 0 ? nullptr : rbuffer.Data(), lbuffer.Size(), rbuffer.Size() == 0? 1: 2);
+	int result = analyzer.InitGainAnalysis(fmt.mSampleRate);
 	if (result == GAIN_ANALYSIS_OK)
 	{
-		auto gain = analyzer.GetTitleGain();
-		Printf("Calculated replay gain for %s at %f dB\n", hash.GetChars(), gain);
+		result = analyzer.AnalyzeSamples(lbuffer.Data(), rbuffer.Size() == 0 ? nullptr : rbuffer.Data(), lbuffer.Size(), rbuffer.Size() == 0 ? 1 : 2);
+		if (result == GAIN_ANALYSIS_OK)
+		{
+			auto gain = analyzer.GetTitleGain();
+			Printf("Calculated replay gain for %s at %f dB\n", hash.GetChars(), gain);
 
-		gainMap.Insert(hash, gain);
-		mus_playing.replayGain = gain;
-		mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
-		SaveGains();
+			gainMap.Insert(hash, gain);
+			mus_playing.replayGain = gain;
+			mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+			SaveGains();
+		}
 	}
 }
 
 bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 {
-	if (nomusic) return false;	// skip the entire procedure if music is globally disabled.
+	if (!MusicEnabled()) return false;	// skip the entire procedure if music is globally disabled.
 
 	if (!force && PlayList.GetNumSongs())
 	{ // Don't change if a playlist is active
@@ -676,8 +684,6 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 		return true;
 	}
 
-	int lumpnum = -1;
-	int length = 0;
 	ZMusic_MusicStream handle = nullptr;
 	MidiDeviceSetting* devp = MidiDevices.CheckKey(musicname);
 
@@ -851,7 +857,7 @@ void S_StopMusic (bool force)
 
 CCMD (changemus)
 {
-	if (!nomusic)
+	if (MusicEnabled())
 	{
 		if (argv.argc() > 1)
 		{

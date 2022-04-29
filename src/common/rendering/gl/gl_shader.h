@@ -325,7 +325,7 @@ class FShaderCollection
 
 	void Clean();
 	void CompileShaders(EPassType passType);
-	
+
 public:
 	FShaderCollection(EPassType passType);
 	~FShaderCollection();

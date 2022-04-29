@@ -105,6 +105,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 			corpsequeue.Delete(0);
 		}
 		corpsequeue.Push(self);
+		GC::WriteBarrier(self);
 	}
 	return 0;
 }

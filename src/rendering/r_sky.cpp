@@ -80,13 +80,11 @@ void InitSkyMap(FLevelLocals *Level)
 		Level->skytexture1 = TexMan.GetFrontSkyLayer(Level->skytexture1);
 	}
 
-
 	skytex1 = TexMan.GetGameTexture(Level->skytexture1, false);
 	skytex2 = TexMan.GetGameTexture(Level->skytexture2, false);
 
-	if (skytex1 == nullptr)
+	if (skytex1 == nullptr || skytex2 == nullptr)
 		return;
-
 
 	if ((Level->flags & LEVEL_DOUBLESKY) && skytex1->GetDisplayHeight() != skytex2->GetDisplayHeight())
 	{

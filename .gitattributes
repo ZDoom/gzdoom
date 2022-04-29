@@ -25,3 +25,4 @@ language.*	text
 *.lmp		binary
 *.flac		binary
 *.dat		binary
+*.ico		binary

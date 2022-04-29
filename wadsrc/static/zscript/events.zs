@@ -15,6 +15,8 @@ struct WorldEvent native play version("2.4")
     native readonly bool IsSaveGame;
     // this will be true if we are re-entering the hub level.
     native readonly bool IsReopen;
+    // for unloaded, name of next map (if any)
+    native readonly String NextMap;
     // for thingspawned/thingdied/thingdestroyed/thingground
     native readonly Actor Thing;
     // for thingdied. can be null

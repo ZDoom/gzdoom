@@ -36,7 +36,7 @@
 **
 **/
 
-#include "templates.h"
+
 #include "c_cvars.h"
 #include "filesystem.h"
 #include "doomtype.h"

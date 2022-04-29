@@ -16,6 +16,7 @@ class BaronOfHell : Actor
 		Monster;
 		+FLOORCLIP
 		+BOSSDEATH
+		+E1M8BOSS
 		SeeSound "baron/sight";
 		PainSound "baron/pain";
 		DeathSound "baron/death";

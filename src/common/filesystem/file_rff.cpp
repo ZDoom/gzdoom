@@ -34,7 +34,7 @@
 */
 
 #include "resourcefile.h"
-#include "templates.h"
+
 #include "printf.h"
 
 //==========================================================================
@@ -219,9 +219,9 @@ int FRFFLump::FillCache()
 
 	if (Flags & LUMPF_COMPRESSED)
 	{
-		int cryptlen = MIN<int> (LumpSize, 256);
+		int cryptlen = min<int> (LumpSize, 256);
 		uint8_t *data = (uint8_t *)Cache;
-		
+
 		for (int i = 0; i < cryptlen; ++i)
 		{
 			data[i] ^= i >> 1;

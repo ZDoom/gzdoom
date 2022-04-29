@@ -29,13 +29,13 @@ protected:
     // When reading from an archive it will always be case insensitive, just like the lump manager.
     bool mCaseSensitivePaths = false;
     TArray<FString> mPaths;
-    
-  
+
+
     int pathcmp(const char *p1, const char *p2);
-   
-   
+
+
 public:
-    
+
     virtual ~FSoundFontReader() {}
     virtual FileReader OpenMainConfigFile() = 0;    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
 	virtual FString MainConfigFileName()
@@ -147,15 +147,15 @@ public:
 class FSoundFontManager
 {
     TArray<FSoundFontInfo> soundfonts;
-    
+
     void ProcessOneFile(const FString & fn);
-    
+
 public:
     void CollectSoundfonts();
     const FSoundFontInfo *FindSoundFont(const char *name, int allowedtypes) const;
     FSoundFontReader *OpenSoundFont(const char *name, int allowedtypes);
     const auto &GetList() const { return soundfonts; } // This is for the menu
-    
+
 };
 
 

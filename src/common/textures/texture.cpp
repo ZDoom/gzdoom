@@ -37,7 +37,7 @@
 #include "printf.h"
 #include "files.h"
 #include "filesystem.h"
-#include "templates.h"
+
 #include "textures.h"
 #include "bitmap.h"
 #include "colormatcher.h"
@@ -97,7 +97,7 @@ FBitmap FTexture::GetBgraBitmap(const PalEntry* remap, int* ptrans)
 int FTexture::CheckRealHeight()
 {
 	auto pixels = Get8BitPixels(false);
-	
+
 	for(int h = GetHeight()-1; h>= 0; h--)
 	{
 		for(int w = 0; w < GetWidth(); w++)
@@ -387,7 +387,7 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 			FContentIdBuilder builder;
 			builder.id = 0;
 			builder.imageID = GetImage()->GetId();
-			builder.translation = MAX(0, translation);
+			builder.translation = max(0, translation);
 			builder.expand = exx;
 			result.mContentId = builder.id;
 		}

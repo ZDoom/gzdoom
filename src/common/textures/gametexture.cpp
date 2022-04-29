@@ -37,7 +37,7 @@
 #include "printf.h"
 #include "files.h"
 #include "filesystem.h"
-#include "templates.h"
+
 #include "textures.h"
 #include "bitmap.h"
 #include "colormatcher.h"
@@ -311,7 +311,7 @@ void FGameTexture::SetupSpriteData()
 
 		if (i == 1 && ShouldExpandSprite())
 		{
-			spi.mTrimResult = Base->TrimBorders(spi.trim);	// get the trim size before adding the empty frame
+			spi.mTrimResult = Base->TrimBorders(spi.trim) && !GetNoTrimming();	// get the trim size before adding the empty frame
 			spi.spriteWidth += 2;
 			spi.spriteHeight += 2;
 		}

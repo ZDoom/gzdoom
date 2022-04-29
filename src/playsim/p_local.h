@@ -50,6 +50,7 @@ struct secplane_t;
 struct FCheckPosition;
 struct FTranslatedLineTarget;
 struct FLinePortal;
+class DViewPosition;
 
 #include <stdlib.h>
 
@@ -61,7 +62,6 @@ struct FLinePortal;
 #define USERANGE		(64.)
 
 #define DEFMELEERANGE		(64.)
-#define SAWRANGE		(64.+(1./65536.))	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
 #define MISSILERANGE	(32*64.)
 #define PLAYERMISSILERANGE	(8192.)	// [RH] New MISSILERANGE for players
 
@@ -229,8 +229,9 @@ enum PCM
 };
 
 
+int P_CheckFov(AActor* t1, AActor* t2, double fov);
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
-AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false, bool frontonly = false);
+AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false, bool frontonly = false, double fov = 0);
 
 //
 // P_MAP
@@ -391,6 +392,10 @@ void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
 // [RH] Position the chasecam
 void	P_AimCamera (AActor *t1, DVector3 &, DAngle &, sector_t *&sec, bool &unlinked);
+
+// [MC] Aiming for ViewPos
+void	P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &, sector_t *&sec, bool &unlinked, DViewPosition *VP);
+
 
 // [RH] Means of death
 enum

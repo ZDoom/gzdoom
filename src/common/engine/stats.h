@@ -54,6 +54,45 @@ public:
 
 #include <time.h>
 
+// [MK] try to use RDTSC on linux if possible
+// avoids excess latency of clock_gettime() on some platforms
+#ifdef __linux__
+extern bool PerfAvailable;
+extern double PerfToSec, PerfToMillisec;
+
+inline uint64_t rdtsc()
+{
+#ifdef __amd64__
+	uint64_t tsc;
+	asm volatile("rdtsc; shlq $32, %%rdx; orq %%rdx, %%rax":"=a"(tsc)::"%rdx");
+	return tsc;
+#elif defined __ppc__
+	unsigned int lower, upper, temp;
+	do
+	{
+		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n"
+			: "=r"(upper), "=r"(lower), "=r"(temp));
+	}
+	while (upper != temp);
+	return (static_cast<unsigned long long>(upper) << 32) | lower;
+#elif defined __aarch64__
+	uint64_t vct;
+	asm volatile("mrs %0, cntvct_el0":"=r"(vct));
+	return vct;
+#elif defined __i386__
+	if (CPU.bRDTSC)
+	{
+		uint64_t tsc;
+		asm volatile ("\trdtsc\n" : "=A" (tsc));
+		return tsc;
+	}
+	return 0;
+#else
+	return 0;
+#endif // __amd64__
+}
+#endif
+
 class cycle_t
 {
 public:
@@ -61,28 +100,44 @@ public:
 	{
 		Sec = 0;
 	}
-	
+
 	void Clock()
 	{
+#ifdef __linux__
+		if ( PerfAvailable )
+		{
+			int64_t time = rdtsc();
+			Sec -= time * PerfToSec;
+			return;
+		}
+#endif
 		timespec ts;
-		
+
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		Sec -= ts.tv_sec + ts.tv_nsec * 1e-9;
 	}
-	
+
 	void Unclock()
 	{
+#ifdef __linux__
+		if ( PerfAvailable )
+		{
+			int64_t time = rdtsc();
+			Sec += time * PerfToSec;
+			return;
+		}
+#endif
 		timespec ts;
-		
+
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		Sec += ts.tv_sec + ts.tv_nsec * 1e-9;
 	}
-	
+
 	double Time()
 	{
 		return Sec;
 	}
-	
+
 	double TimeMS()
 	{
 		return Sec * 1e3;
@@ -132,21 +187,24 @@ inline uint64_t rdtsc()
 	unsigned int lower, upper, temp;
 	do
 	{
-		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n" 
+		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n"
 			: "=r"(upper), "=r"(lower), "=r"(temp));
 	}
 	while (upper != temp);
 	return (static_cast<unsigned long long>(upper) << 32) | lower;
 #elif defined __aarch64__
-	// TODO: Implement and test on ARM64
-	return 0;
-#else // i386
+	uint64_t vct;
+	asm volatile("mrs %0, cntvct_el0":"=r"(vct));
+	return vct;
+#elif defined __i386__ // i386
 	if (CPU.bRDTSC)
 	{
 		uint64_t tsc;
 		asm volatile ("\trdtsc\n" : "=A" (tsc));
 		return tsc;
 	}
+	return 0;
+#else
 	return 0;
 #endif // __amd64__
 }
@@ -159,24 +217,24 @@ public:
 	{
 		Counter = 0;
 	}
-	
+
 	void Clock()
 	{
 		int64_t time = rdtsc();
 		Counter -= time;
 	}
-	
+
 	void Unclock(bool checkvar = true)
 	{
 		int64_t time = rdtsc();
 		Counter += time;
 	}
-	
+
 	double Time()
 	{
 		return Counter * PerfToSec;
 	}
-	
+
 	double TimeMS()
 	{
 		return Counter * PerfToMillisec;

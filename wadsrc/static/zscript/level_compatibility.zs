@@ -987,6 +987,15 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '6CDA2721AA1076F063557CF89D88E92B': // hexen.wad map08
+			{
+				// Amulet of warding accidentally shifted outside of map
+				SetThingXY(256,-1632,2352);
+				// Icon of the defender outside of map
+				SetThingSkills(261,0);
+				break;
+			}
+
 			case '39C594CAC07EE51C80F757DA465FCC94': // strife1.wad map10
 			{
 				// fix the shooting range by matching sector 138 and 145 properties together
@@ -1365,7 +1374,6 @@ class LevelCompatibility : LevelPostProcessor
 			case '11EA5B8357DEB70A8F00900117831191': // kdizd_12.pk3 z1m3
 			{
 				// Fix incorrectly tagged underwater sector which causes render glitches.
-				ClearSectorTags(7857);
 				AddSectorTag(7857, 82);
 				break;
 			}
@@ -2120,7 +2128,14 @@ class LevelCompatibility : LevelPostProcessor
 				// fix broken switch to raise the exit bridge
 				SetLineSpecial(1248, Floor_RaiseByValue, 39, 8, 512);
 				break;
-			}			
+			}
+
+			case '1C35384B22BD805F51B3B2C9D17D62E4': // 007ltsd.wad E4M7
+			{
+				// Fix impassable exit line
+				SetLineFlags(6842, 0, Line.ML_BLOCKING); 
+				break;
+			}
 		}
 	}
 }

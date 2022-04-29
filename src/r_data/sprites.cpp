@@ -452,7 +452,7 @@ void R_InitSpriteDefs ()
 					{ // voxel applies to a specific frame
 						j = vh->Frame - 'A';
 						sprtemp[j].Voxel = voxdef;
-						maxframe = MAX<int>(maxframe, j);
+						maxframe = max<int>(maxframe, j);
 					}
 				}
 			}

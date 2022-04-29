@@ -72,6 +72,7 @@ enum EStateFlags
 	STF_SAMEFRAME = 16,	// Ignore Frame (except when spawning actor)
 	STF_CANRAISE = 32,	// Allows a monster to be resurrected without waiting for an infinate frame
 	STF_DEHACKED = 64,	// Modified by Dehacked
+	STF_CONSUMEAMMO = 128,	// Needed by the Dehacked parser.
 };
 
 enum EStateType : int // this must ensure proper alignment.
@@ -245,6 +246,9 @@ struct FActorInfo
 	uint16_t SpawnID = 0;
 	uint16_t ConversationID = 0;
 	int16_t DoomEdNum = -1;
+	int infighting_group = 0;
+	int projectile_group = 0;
+	int splash_group = 0;
 
 	FStateLabels *StateList = nullptr;
 	DmgFactors DamageFactors;

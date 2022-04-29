@@ -50,6 +50,9 @@
 
 #include "gl_renderer.h"
 #include "gl_framebuffer.h"
+#ifdef HAVE_GLES2
+#include "gles_framebuffer.h"
+#endif
 
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
@@ -94,8 +97,6 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
-CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(String, vid_sdl_render_driver, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -117,8 +118,6 @@ CCMD(vid_list_sdl_render_drivers)
 
 namespace Priv
 {
-	static const uint32_t VulkanWindowFlag = SDL_WINDOW_VULKAN;
-
 	SDL_Window *window;
 	bool vulkanEnabled;
 	bool softpolyEnabled;
@@ -151,6 +150,8 @@ namespace Priv
 		{
 			// Enforce minimum size limit
 			SDL_SetWindowMinimumSize(Priv::window, VID_MIN_WIDTH, VID_MIN_HEIGHT);
+			// Tell SDL to start sending text input on Wayland.
+			if (strncasecmp(SDL_GetCurrentVideoDriver(), "wayland", 7) == 0) SDL_StartTextInput();
 		}
 	}
 
@@ -410,7 +411,7 @@ SDLVideo::SDLVideo ()
 
 	if (Priv::vulkanEnabled)
 	{
-		Priv::CreateWindow(Priv::VulkanWindowFlag | SDL_WINDOW_HIDDEN);
+		Priv::CreateWindow(SDL_WINDOW_VULKAN | SDL_WINDOW_HIDDEN | (vid_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
 		if (Priv::window == nullptr)
 		{
@@ -472,7 +473,12 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 #endif
 	if (fb == nullptr)
 	{
-		fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+#ifdef HAVE_GLES2
+		if( (Args->CheckParm ("-gles2_renderer")) || (vid_preferbackend == 3) )
+			fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+		else
+#endif
+			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 	}
 
 	return fb;
@@ -512,7 +518,7 @@ int SystemBaseFrameBuffer::GetClientWidth()
 		return width;
 	}
 #endif
-	
+
 #ifdef HAVE_VULKAN
 	assert(Priv::vulkanEnabled);
 	SDL_Vulkan_GetDrawableSize(Priv::window, &width, nullptr);
@@ -716,7 +722,7 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 		break;
 
 	case SDL_WINDOWEVENT_FOCUS_LOST:
-		S_SetSoundPaused(i_soundinbackground);
+		S_SetSoundPaused(0);
 		AppActive = false;
 		break;
 

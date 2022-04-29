@@ -77,7 +77,7 @@ public:
 	int8_t bTranslucent = -1;					// Image has pixels with a non-0/1 value. (-1 means the user needs to do a real check)
 
 	int GetId() const { return ImageID; }
-	
+
 	// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
 
 	// Either returns a reference to the cache, or a newly created item. The return of this has to be considered transient. If you need to store the result, use GetPalettedPixels
@@ -86,7 +86,7 @@ public:
 	// tries to get a buffer from the cache. If not available, create a new one. If further references are pending, create a copy.
 	TArray<uint8_t> GetPalettedPixels(int conversion);
 
-	
+
 	// Unlile for paletted images there is no variant here that returns a persistent bitmap, because all users have to process the returned image into another format.
 	FBitmap GetCachedBitmap(const PalEntry *remap, int conversion, int *trans = nullptr);
 
@@ -102,25 +102,25 @@ public:
 		luminance = 1,
 		noremap0 = 2
 	};
-	
+
 	FImageSource(int sourcelump = -1) : SourceLump(sourcelump) { ImageID = ++NextID; }
 	virtual ~FImageSource() {}
-	
+
 	int GetWidth() const
 	{
 		return Width;
 	}
-	
+
 	int GetHeight() const
 	{
 		return Height;
 	}
-	
+
 	std::pair<int, int> GetSize() const
 	{
 		return std::make_pair(Width, Height);
 	}
-	
+
 	std::pair<int, int> GetOffsets() const
 	{
 		return std::make_pair(LeftOffset, TopOffset);
@@ -131,12 +131,12 @@ public:
 		LeftOffset = x;
 		TopOffset = y;
 	}
-	
+
 	int LumpNum() const
 	{
 		return SourceLump;
 	}
-	
+
 	bool UseGamePalette() const
 	{
 		return bUseGamePalette;

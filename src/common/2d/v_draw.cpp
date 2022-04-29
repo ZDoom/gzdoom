@@ -36,7 +36,7 @@
 #include <stdarg.h>
 #include "v_draw.h"
 #include "vm.h"
-#include "templates.h"
+
 #include "texturemanager.h"
 #include "r_videoscale.h"
 #include "c_cvars.h"
@@ -144,15 +144,15 @@ int GetUIScale(F2DDrawer *drawer, int altval)
 		// Default should try to scale to 640x400
 		int vscale = drawer->GetHeight() / 400;
 		int hscale = drawer->GetWidth() / 640;
-		scaleval = clamp(vscale, 1, hscale);
+		scaleval = max(1, min(vscale, hscale));
 	}
 	else scaleval = uiscale;
 
 	// block scales that result in something larger than the current screen.
 	int vmax = drawer->GetHeight() / 200;
 	int hmax = drawer->GetWidth() / 320;
-	int max = MAX(vmax, hmax);
-	return MAX(1,MIN(scaleval, max));
+	int max = std::max(vmax, hmax);
+	return std::max(1,min(scaleval, max));
 }
 
 // The new console font is twice as high, so the scaling calculation must factor that in.
@@ -165,15 +165,15 @@ int GetConScale(F2DDrawer* drawer, int altval)
 		// Default should try to scale to 640x400
 		int vscale = drawer->GetHeight() / 800;
 		int hscale = drawer->GetWidth() / 1280;
-		scaleval = clamp(vscale, 1, hscale);
+		scaleval = max(1, min(vscale, hscale));
 	}
 	else scaleval = (uiscale+1) / 2;
 
 	// block scales that result in something larger than the current screen.
 	int vmax = drawer->GetHeight() / 400;
 	int hmax = drawer->GetWidth() / 640;
-	int max = MAX(vmax, hmax);
-	return MAX(1, MIN(scaleval, max));
+	int max = std::max(vmax, hmax);
+	return std::max(1, min(scaleval, max));
 }
 
 
@@ -357,7 +357,7 @@ DEFINE_ACTION_FUNCTION(_Screen, GetClipRect)
 	if (numret > 1) ret[1].SetInt(y);
 	if (numret > 2) ret[2].SetInt(w);
 	if (numret > 3) ret[3].SetInt(h);
-	return MIN(numret, 4);
+	return min(numret, 4);
 }
 
 
@@ -460,7 +460,7 @@ DEFINE_ACTION_FUNCTION(_Screen, GetFullscreenRect)
 	if (numret >= 2) ret[1].SetFloat(rect.top);
 	if (numret >= 3) ret[2].SetFloat(rect.width);
 	if (numret >= 4) ret[3].SetFloat(rect.height);
-	return MIN(numret, 4);
+	return min(numret, 4);
 }
 
 
@@ -671,7 +671,6 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 {
 	INTBOOL boolval;
 	int intval;
-	bool translationset = false;
 	bool fillcolorset = false;
 
 	if (!fortext)
@@ -858,7 +857,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			parms->cleanmode = DTA_Base;
 			parms->virtHeight = ListGetDouble(tags);
 			break;
-			
+
 		case DTA_FullscreenScale:
 			intval = ListGetInt(tags);
 			if (intval >= FSMode_None && intval < FSMode_Max)
@@ -905,7 +904,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			break;
 
 		case DTA_Alpha:
-			parms->Alpha = (float)(MIN<double>(1., ListGetDouble(tags)));
+			parms->Alpha = (float)(min<double>(1., ListGetDouble(tags)));
 			break;
 
 		case DTA_AlphaChannel:
@@ -1016,10 +1015,16 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 		case DTA_CenterOffsetRel:
 			assert(fortext == false);
 			if (fortext) return false;
-			if (ListGetInt(tags))
+			intval = ListGetInt(tags);
+			if (intval == 1)
 			{
-				parms->left = img->GetDisplayLeftOffset() + img->GetDisplayWidth() * 0.5;
-				parms->top = img->GetDisplayTopOffset() + img->GetDisplayHeight() * 0.5;
+				parms->left = img->GetDisplayLeftOffset() + (img->GetDisplayWidth() * 0.5);
+				parms->top = img->GetDisplayTopOffset() + (img->GetDisplayHeight() * 0.5);
+			}
+			else if (intval == 2)
+			{
+				parms->left = img->GetDisplayLeftOffset() + floor(img->GetDisplayWidth() * 0.5);
+				parms->top = img->GetDisplayTopOffset() + floor(img->GetDisplayHeight() * 0.5);
 			}
 			break;
 
@@ -1090,7 +1095,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			break;
 
 		case DTA_ShadowAlpha:
-			//parms->shadowAlpha = (float)MIN(1., ListGetDouble(tags));
+			//parms->shadowAlpha = (float)min(1., ListGetDouble(tags));
 			break;
 
 		case DTA_ShadowColor:
@@ -1286,10 +1291,10 @@ static void VirtualToRealCoords(F2DDrawer *drawer, double Width, double Height, 
 	{
 	case 1:
 	default:
-		myratio = MIN(64.0f / 27.0f, myratio);
+		myratio = min(64.0f / 27.0f, myratio);
 		break;
 	case 0:
-		myratio = MIN(16.0f / 9.0f, myratio);
+		myratio = min(16.0f / 9.0f, myratio);
 	case -1:
 		break;
 	}
@@ -1348,7 +1353,7 @@ DEFINE_ACTION_FUNCTION(_Screen, VirtualToRealCoords)
 	VirtualToRealCoords(twod, x, y, w, h, vw, vh, vbottom, handleaspect);
 	if (numret >= 1) ret[0].SetVector2(DVector2(x, y));
 	if (numret >= 2) ret[1].SetVector2(DVector2(w, h));
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
 
 void VirtualToRealCoordsInt(F2DDrawer *drawer, int &x, int &y, int &w, int &h,
@@ -1529,8 +1534,9 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 	PARAM_INT(y1);
 	PARAM_INT(w);
 	PARAM_INT(h);
+	PARAM_INT(style);
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	Dim(twod, color, float(amount), x1, y1, w, h);
+	Dim(twod, color, float(amount), x1, y1, w, h, &LegacyRenderStyles[style]);
 	return 0;
 }
 
@@ -1593,7 +1599,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawLineFrame)
 void V_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int* cleanx, int* cleany, int* _cx1, int* _cx2)
 {
 	if (designheight < 240 && realheight >= 480) designheight = 240;
-	*cleanx = *cleany = std::min(realwidth / designwidth, realheight / designheight);
+	*cleanx = *cleany = min(realwidth / designwidth, realheight / designheight);
 }
 
 

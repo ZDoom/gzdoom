@@ -75,6 +75,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *
 	if (arc.BeginObject(key))
 	{
 		arc("flags", line.flags, def->flags)
+			("flags2", line.flags2, def->flags2)
 			("activation", line.activation, def->activation)
 			("special", line.special, def->special)
 			("alpha", line.alpha, def->alpha)
@@ -524,9 +525,12 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj &poly, FPolyO
 
 		if (arc.isReading())
 		{
-			poly.RotatePolyobj(angle, true);
-			delta -= poly.StartSpot.pos;
-			poly.MovePolyobj(delta, true);
+			if (poly.OriginalPts.Size() > 0)
+			{
+				poly.RotatePolyobj(angle, true);
+				delta -= poly.StartSpot.pos;
+				poly.MovePolyobj(delta, true);
+			}
 		}
 	}
 	return arc;

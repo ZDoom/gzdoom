@@ -318,9 +318,9 @@ namespace StringFormat
 		 */
 		const char *decimal_point = ".";/* locale specific decimal point */
 		int signflag;					/* true if float is negative */
-		int expt;						/* integer value of exponent */
+		int expt = 0;					/* integer value of exponent */
 		char expchar = 'e';				/* exponent character: [eEpP\0] */
-		char *dtoaend;					/* pointer to end of converted digits */
+		char* dtoaend = nullptr;		/* pointer to end of converted digits */
 		int expsize = 0;				/* character count for expstr */
 		int ndig = 0;					/* actual number of digits returned by dtoa */
 		char expstr[MAXEXPDIG+2];		/* buffer for exponent string: e+ZZZ */

@@ -35,7 +35,7 @@
 */
 
 
-#include "templates.h"
+
 #include "p_3dmidtex.h"
 #include "p_local.h"
 #include "p_terrain.h"
@@ -244,14 +244,14 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	if(line->flags & ML_DONTPEGBOTTOM)
 	{
 		*ptexbot = y_offset +
-			MAX(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
+			max(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
 
 		*ptextop = *ptexbot + textureheight;
 	}
 	else
 	{
 		*ptextop = y_offset +
-		   MIN(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
+		   min(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
 		
 		*ptexbot = *ptextop - textureheight;
 	}

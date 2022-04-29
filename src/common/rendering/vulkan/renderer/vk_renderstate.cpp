@@ -26,7 +26,7 @@
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
-#include "templates.h"
+
 #include "hw_skydome.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"
@@ -37,6 +37,7 @@
 #include "hwrenderer/data/shaderuniforms.h"
 
 CVAR(Int, vk_submit_size, 1000, 0);
+EXTERN_CVAR(Bool, r_skipmats)
 
 VkRenderState::VkRenderState()
 {
@@ -227,7 +228,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.ColorMask = mColorMask;
 	pipelineKey.CullMode = mCullMode;
 	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->NumLayers() : 0;
-	pipelineKey.NumTextureLayers = std::max(pipelineKey.NumTextureLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS);// Always force minimum 8 textures as the shader requires it
+	pipelineKey.NumTextureLayers = max(pipelineKey.NumTextureLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS);// Always force minimum 8 textures as the shader requires it
 	if (mSpecialEffect > EFF_NONE)
 	{
 		pipelineKey.SpecialEffect = mSpecialEffect;
@@ -239,6 +240,8 @@ void VkRenderState::ApplyRenderPass(int dt)
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
 		pipelineKey.SpecialEffect = EFF_NONE;
 		pipelineKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
+		if (r_skipmats && pipelineKey.EffectState >= 3 && pipelineKey.EffectState <= 4)
+			pipelineKey.EffectState = 0;
 		pipelineKey.AlphaTest = mAlphaThreshold >= 0.f;
 	}
 
@@ -371,9 +374,7 @@ void VkRenderState::ApplyPushConstants()
 		tempTM = TM_OPAQUE;
 
 	mPushConstants.uFogEnabled = fogset;
-	int f = mTextureModeFlags;
-	if (!mBrightmapEnabled) f &= ~(TEXF_Brightmap|TEXF_Glowmap);
-	mPushConstants.uTextureMode = (mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) | f;
+	mPushConstants.uTextureMode = GetTextureModeAndFlags(tempTM);
 	mPushConstants.uLightDist = mLightParms[0];
 	mPushConstants.uLightFactor = mLightParms[1];
 	mPushConstants.uFogDensity = mLightParms[2];

@@ -365,7 +365,7 @@ class TextEnterMenu : Menu
 					else if (ch == 8 || ch == 0)
 					{
 						// Draw the backspace and end "characters".
-						String str = ch == 8 ? "BS" : "ED";
+						String str = ch == 8 ? "←" : "↲";
 						screen.DrawText(displayFont, colr,
 							xx + cell_width/2 - displayFont.StringWidth(str)*CleanXfac_1/2,
 							yy + top_padding, str, DTA_CleanNoMove_1, true);

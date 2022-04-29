@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "templates.h"
+
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -155,7 +155,7 @@ namespace swrenderer
 			for (int x = x1; x < x2; ++x)
 			{
 				short top = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeCeiling) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
-				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
+				short bottom = min(walltop.ScreenY[x], floorclip[x]);
 				if (top < bottom)
 				{
 					mCeilingPlane->top[x] = top;
@@ -177,7 +177,7 @@ namespace swrenderer
 
 			for (int x = x1; x < x2; ++x)
 			{
-				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
+				short top = max(wallbottom.ScreenY[x], ceilingclip[x]);
 				short bottom = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeFloor) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{

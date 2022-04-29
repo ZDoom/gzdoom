@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
@@ -120,8 +120,8 @@ namespace swrenderer
 		// calculate edges of the shape
 		double psize = particle->size / 8.0;
 
-		x1 = MAX<int>(renderportal->WindowLeft, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx - psize) * xscale));
-		x2 = MIN<int>(renderportal->WindowRight, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx + psize) * xscale));
+		x1 = max<int>(renderportal->WindowLeft, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx - psize) * xscale));
+		x2 = min<int>(renderportal->WindowRight, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx + psize) * xscale));
 
 		if (x1 >= x2)
 			return;
@@ -285,7 +285,7 @@ namespace swrenderer
 				if (ds->drawsegclip.CurrentPortalUniq == CurrentPortalUniq)
 				{
 					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2), clip3DFloor);
+					renderer.Render(ds, max<int>(ds->x1, x1), min<int>(ds->x2, x2), clip3DFloor);
 				}
 			}
 		}

@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -46,10 +46,11 @@ FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
 		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FModelVertex, x) },
 		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FModelVertex, u) },
 		{ 0, VATTR_NORMAL, VFmt_Packed_A2R10G10B10, (int)myoffsetof(FModelVertex, packedNormal) },
+		{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FModelVertex, lu) },
 		{ 1, VATTR_VERTEX2, VFmt_Float3, (int)myoffsetof(FModelVertex, x) },
 		{ 1, VATTR_NORMAL2, VFmt_Packed_A2R10G10B10, (int)myoffsetof(FModelVertex, packedNormal) }
 	};
-	mVertexBuffer->SetFormat(2, 5, sizeof(FModelVertex), format);
+	mVertexBuffer->SetFormat(2, 6, sizeof(FModelVertex), format);
 }
 
 //===========================================================================

@@ -730,7 +730,7 @@ void PClassActor::SetPainChance(FName type, int chance)
 
 	if (chance >= 0) 
 	{
-		ActorInfo()->PainChances.Push({ type, MIN(chance, 256) });
+		ActorInfo()->PainChances.Push({ type, min(chance, 256) });
 	}
 }
 

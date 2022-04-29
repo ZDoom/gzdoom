@@ -14,6 +14,8 @@ struct FFlatVertex
 {
 	float x, z, y;	// world position
 	float u, v;		// texture coordinates
+	float lu, lv;	// lightmap texture coordinates
+	float lindex;	// lightmap texture index
 
 	void Set(float xx, float zz, float yy, float uu, float vv)
 	{
@@ -22,6 +24,19 @@ struct FFlatVertex
 		y = yy;
 		u = uu;
 		v = vv;
+		lindex = -1.0f;
+	}
+
+	void Set(float xx, float zz, float yy, float uu, float vv, float llu, float llv, float llindex)
+	{
+		x = xx;
+		z = zz;
+		y = yy;
+		u = uu;
+		v = vv;
+		lu = llu;
+		lv = llv;
+		lindex = llindex;
 	}
 
 	void SetVertex(float _x, float _y, float _z = 0)
@@ -45,13 +60,20 @@ public:
 	TArray<FFlatVertex> vbo_shadowdata;
 	TArray<uint32_t> ibo_data;
 
-	IVertexBuffer *mVertexBuffer;
+	int mPipelineNbr;
+	int mPipelinePos = 0;
+
+	IVertexBuffer* mVertexBuffer;
+	IVertexBuffer *mVertexBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
 	IIndexBuffer *mIndexBuffer;
+
+
 
 	unsigned int mIndex;
 	std::atomic<unsigned int> mCurIndex;
 	unsigned int mNumReserved;
 
+	unsigned int mMapStart;
 
 	static const unsigned int BUFFER_SIZE = 2000000;
 	static const unsigned int BUFFER_SIZE_TO_USE = BUFFER_SIZE-500;
@@ -68,7 +90,7 @@ public:
 		NUM_RESERVED = 20
 	};
 
-	FFlatVertexBuffer(int width, int height);
+	FFlatVertexBuffer(int width, int height, int pipelineNbr = 1);
 	~FFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
@@ -97,16 +119,40 @@ public:
 		mCurIndex = mIndex;
 	}
 
+	void NextPipelineBuffer()
+	{
+		mPipelinePos++;
+		mPipelinePos %= mPipelineNbr;
+
+		mVertexBuffer = mVertexBufferPipeline[mPipelinePos];
+	}
+
 	void Map()
 	{
+		mMapStart = mCurIndex;
 		mVertexBuffer->Map();
 	}
 
 	void Unmap()
 	{
 		mVertexBuffer->Unmap();
+		mVertexBuffer->Upload(mMapStart * sizeof(FFlatVertex), (mCurIndex - mMapStart) * sizeof(FFlatVertex));
 	}
 
+	void DropSync()
+	{
+		mVertexBuffer->GPUDropSync();
+	}
+
+	void WaitSync()
+	{
+		mVertexBuffer->GPUWaitSync();
+	}
+
+	int GetPipelinePos() 
+	{ 
+		return mPipelinePos; 
+	}
 };
 
 #endif

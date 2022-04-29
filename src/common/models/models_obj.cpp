@@ -44,8 +44,8 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 	{
 		// Ensure usemtl statements remain intact
 		TArray<FString> mtlUsages;
-		TArray<long> mtlUsageIdxs;
-		long bpos = 0, nlpos = 0, slashpos = 0;
+		TArray<ptrdiff_t> mtlUsageIdxs;
+		ptrdiff_t bpos = 0, nlpos = 0, slashpos = 0;
 		while (1)
 		{
 			bpos = objBuf.IndexOf("\nusemtl", bpos);
@@ -58,7 +58,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			}
 			if (nlpos == -1)
 			{
-				nlpos = (long)objBuf.Len();
+				nlpos = objBuf.Len();
 			}
 			FString lineStr(objBuf.GetChars() + bpos, nlpos - bpos);
 			mtlUsages.Push(lineStr);
@@ -76,7 +76,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			nlpos = objBuf.IndexOf('\n', bpos);
 			if (nlpos == -1)
 			{
-				nlpos = (long)objBuf.Len();
+				nlpos = objBuf.Len();
 			}
 			memcpy(wObjBuf + bpos, mtlUsages[i].GetChars(), nlpos - bpos);
 		}
@@ -240,13 +240,12 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
  */
 template<typename T, size_t L> void FOBJModel::ParseVector(TArray<T> &array)
 {
-	float coord[L];
-	for (size_t axis = 0; axis < L; axis++)
+	T vec;
+	for (unsigned axis = 0; axis < L; axis++)
 	{
 		sc.MustGetFloat();
-		coord[axis] = (float)sc.Float;
+		vec[axis] = (float)sc.Float;
 	}
-	T vec(coord);
 	array.Push(vec);
 }
 
@@ -624,13 +623,16 @@ int FOBJModel::FindFrame(const char* name)
  *
  * @param renderer The model renderer
  * @param skin The loaded skin for the surface
- * @param frameno Unused
- * @param frameno2 Unused
- * @param inter Unused
+ * @param frameno The first frame to interpolate between. Only prevents the model from rendering if it is < 0, since OBJ models are static.
+ * @param frameno2 The second frame to interpolate between.
+ * @param inter The amount to interpolate the two frames.
  * @param translation The translation for the skin
  */
 void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
+	// Prevent the model from rendering if the frame number is < 0
+	if (frameno < 0 || frameno2 < 0) return;
+
 	for (unsigned int i = 0; i < surfaces.Size(); i++)
 	{
 		OBJSurface *surf = &surfaces[i];

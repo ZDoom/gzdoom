@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -133,7 +133,7 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 
 	auto numFrames = LittleLong(hdr->Num_Frames);
 	auto numSurfaces = LittleLong(hdr->Num_Surfaces);
-	
+
 	numTags = LittleLong(hdr->Num_Tags);
 
 	md3_frame_t * frm = (md3_frame_t*)(buffer + LittleLong(hdr->Ofs_Frames));
@@ -141,7 +141,7 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 	Frames.Resize(numFrames);
 	for (unsigned i = 0; i < numFrames; i++)
 	{
-		strncpy(Frames[i].Name, frm[i].Name, 16);
+		strncpy(Frames[i].Name, frm[i].Name, 15);
 		for (int j = 0; j < 3; j++) Frames[i].origin[j] = frm[i].localorigin[j];
 	}
 
@@ -164,15 +164,15 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 		md3_shader_t * shader = (md3_shader_t*)(((char*)ss) + LittleLong(ss->Ofs_Shaders));
 		s->Skins.Resize(s->numSkins);
 
-		for (unsigned i = 0; i < s->numSkins; i++)
+		for (unsigned ii = 0; ii < s->numSkins; ii++)
 		{
 			// [BB] According to the MD3 spec, Name is supposed to include the full path.
 			// ... and since some tools seem to output backslashes, these need to be replaced with forward slashes to work.
-			FixPathSeperator(shader[i].Name);
-			s->Skins[i] = LoadSkin("", shader[i].Name);
+			FixPathSeperator(shader[ii].Name);
+			s->Skins[ii] = LoadSkin("", shader[ii].Name);
 			// [BB] Fall back and check if Name is relative.
-			if (!s->Skins[i].isValid())
-				s->Skins[i] = LoadSkin(path, shader[i].Name);
+			if (!s->Skins[ii].isValid())
+				s->Skins[ii] = LoadSkin(path, shader[ii].Name);
 		}
 	}
 	mLumpNum = lumpnum;
@@ -203,31 +203,31 @@ void FMD3Model::LoadGeometry()
 		md3_triangle_t * tris = (md3_triangle_t*)(((char*)ss) + LittleLong(ss->Ofs_Triangles));
 		s->Tris.Resize(s->numTriangles);
 
-		for (unsigned i = 0; i < s->numTriangles; i++) for (int j = 0; j < 3; j++)
+		for (unsigned ii = 0; ii < s->numTriangles; ii++) for (int j = 0; j < 3; j++)
 		{
-			s->Tris[i].VertIndex[j] = LittleLong(tris[i].vt_index[j]);
+			s->Tris[ii].VertIndex[j] = LittleLong(tris[ii].vt_index[j]);
 		}
 
 		// Load texture coordinates
 		md3_texcoord_t * tc = (md3_texcoord_t*)(((char*)ss) + LittleLong(ss->Ofs_Texcoord));
 		s->Texcoords.Resize(s->numVertices);
 
-		for (unsigned i = 0; i < s->numVertices; i++)
+		for (unsigned ii = 0; ii < s->numVertices; ii++)
 		{
-			s->Texcoords[i].s = tc[i].s;
-			s->Texcoords[i].t = tc[i].t;
+			s->Texcoords[ii].s = tc[ii].s;
+			s->Texcoords[ii].t = tc[ii].t;
 		}
 
 		// Load vertices and texture coordinates
 		md3_vertex_t * vt = (md3_vertex_t*)(((char*)ss) + LittleLong(ss->Ofs_XYZNormal));
 		s->Vertices.Resize(s->numVertices * Frames.Size());
 
-		for (unsigned i = 0; i < s->numVertices * Frames.Size(); i++)
+		for (unsigned ii = 0; ii < s->numVertices * Frames.Size(); ii++)
 		{
-			s->Vertices[i].x = LittleShort(vt[i].x) / 64.f;
-			s->Vertices[i].y = LittleShort(vt[i].y) / 64.f;
-			s->Vertices[i].z = LittleShort(vt[i].z) / 64.f;
-			UnpackVector(LittleShort(vt[i].n), s->Vertices[i].nx, s->Vertices[i].ny, s->Vertices[i].nz);
+			s->Vertices[ii].x = LittleShort(vt[ii].x) / 64.f;
+			s->Vertices[ii].y = LittleShort(vt[ii].y) / 64.f;
+			s->Vertices[ii].z = LittleShort(vt[ii].z) / 64.f;
+			UnpackVector(LittleShort(vt[ii].n), s->Vertices[ii].nx, s->Vertices[ii].ny, s->Vertices[ii].nz);
 		}
 	}
 }

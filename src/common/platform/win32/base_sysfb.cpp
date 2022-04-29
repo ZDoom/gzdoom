@@ -39,7 +39,7 @@
 
 #include "gl_sysfb.h"
 #include "hardware.h"
-#include "templates.h"
+
 #include "version.h"
 #include "c_console.h"
 #include "v_video.h"
@@ -279,7 +279,7 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen, bool initialcall)
 	RECT r;
 	LONG style, exStyle;
 
-	RECT monRect;
+	RECT monRect = {};
 
 	if (!m_Fullscreen && fullscreen && !initialcall) SaveWindowedPos();
 	if (m_Monitor)

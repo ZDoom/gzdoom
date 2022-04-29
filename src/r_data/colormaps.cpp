@@ -42,7 +42,7 @@
 #include "filesystem.h"
 #include "r_sky.h"
 #include "colormaps.h"
-#include "templates.h"
+
 #include "c_cvars.h"
 
 CUSTOM_CVAR(Bool, cl_customizeinvulmap, false, CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -156,7 +156,7 @@ void R_InitColormaps (bool allowCustomColormap)
 				g /= 256;
 				b /= 256;
 				// The calculated average is too dark so brighten it according to the palettes's overall brightness
-				int maxcol = MAX<int>(MAX<int>(palette_brightness, r), MAX<int>(g, b));
+				int maxcol = max<int>(max<int>(palette_brightness, r), max<int>(g, b));
 				
 				fakecmaps[j].blend = PalEntry (255, r * 255 / maxcol, g * 255 / maxcol, b * 255 / maxcol);
 			}

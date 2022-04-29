@@ -35,6 +35,7 @@
 #include "s_soundinternal.h"
 
 #include <sys/sysctl.h>
+#include <sys/stat.h>
 
 #include "c_console.h"
 #include "c_cvars.h"
@@ -54,7 +55,6 @@
 // ---------------------------------------------------------------------------
 
 
-CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 EXTERN_CVAR(Int,  vid_defwidth )
 EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, vid_vsync    )
@@ -72,55 +72,98 @@ void Mac_I_FatalError(const char* const message)
 }
 
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
-
-// Available since 10.9 with no public declaration/definition until 10.10
-
-struct NSOperatingSystemVersion
+static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 {
-	NSInteger majorVersion;
-	NSInteger minorVersion;
-	NSInteger patchVersion;
-};
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 110000
+	// The version returned by macOS depends on the SDK which the software has been built against.
+	// When built against the 10.15 SDK or earlier, Big Sur returns 10.16 for compatibility with previous numbering.
+	// When built against the 11.0 SDK, it returns 11.0 for forward compatibility.
+	// https://eclecticlight.co/2020/08/13/macos-version-numbering-isnt-so-simple/
 
-@interface NSProcessInfo(OperatingSystemVersion)
-- (NSOperatingSystemVersion)operatingSystemVersion;
-@end
+	// It's impossible to load real SystemVersion.plist when linking with old SDK, i.e. when building for Intel CPU
+	// Any attempt to read this file is redirected to SystemVersionCompat.plist silently
+	// Workaround with the external process is needed in order to report correct macOS version
 
-#endif // before 10.10
+	const char *const plistPath = "/System/Library/CoreServices/SystemVersion.plist";
+	struct stat dummy;
+
+	if (stat(plistPath, &dummy) != 0)
+		return false;
+
+	char commandLine[1024] = {};
+	snprintf(commandLine, sizeof commandLine, "defaults read %s ProductVersion", plistPath);
+
+	FILE *const versionFile = popen(commandLine, "r");
+
+	if (versionFile == nullptr)
+		return false;
+
+	NSOperatingSystemVersion plistVersion = {};
+	char versionString[256] = {};
+
+	if (fgets(versionString, sizeof versionString, versionFile))
+	{
+		plistVersion.majorVersion = atoi(versionString);
+
+		if (const char *minorVersionString = strstr(versionString, "."))
+		{
+			minorVersionString++;
+			plistVersion.minorVersion = atoi(minorVersionString);
+
+			if (const char *patchVersionString = strstr(minorVersionString, "."))
+			{
+				patchVersionString++;
+				plistVersion.patchVersion = atoi(patchVersionString);
+			}
+		}
+	}
+
+	fclose(versionFile);
+
+	if (plistVersion.majorVersion != 0)
+	{
+		version = plistVersion;
+		return true;
+	}
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED < 110000
+
+	return false;
+}
 
 void I_DetectOS()
 {
 	NSOperatingSystemVersion version = {};
-	NSProcessInfo* const processInfo = [NSProcessInfo processInfo];
 
-	if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+	if (!ReadSystemVersionFromPlist(version))
 	{
-		version = [processInfo operatingSystemVersion];
+		NSProcessInfo *const processInfo = [NSProcessInfo processInfo];
+
+		if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+		{
+			version = [processInfo operatingSystemVersion];
+		}
 	}
 
 	const char* name = "Unknown version";
-	
-	if (10 == version.majorVersion)
+
+	switch (version.majorVersion)
 	{
+	case 10:
 		switch (version.minorVersion)
 		{
-			case  9: name = "OS X Mavericks";        break;
-			case 10: name = "OS X Yosemite";         break;
-			case 11: name = "OS X El Capitan";       break;
 			case 12: name = "macOS Sierra";          break;
 			case 13: name = "macOS High Sierra";     break;
 			case 14: name = "macOS Mojave";          break;
 			case 15: name = "macOS Catalina";        break;
 			case 16: name = "macOS Big Sur";         break;
 		}
-	}
-	else if (11 == version.majorVersion)
-	{
-		switch (version.minorVersion)
-		{
-			case 0: name = "macOS Big Sur";          break;
-		}
+		break;
+	case 11:
+		name = "macOS Big Sur";
+		break;
+	case 12:
+		name = "macOS Monterey";
+		break;
 	}
 
 	char release[16] = "unknown";
@@ -132,16 +175,14 @@ void I_DetectOS()
 	sysctlbyname("hw.model", model, &size, nullptr, 0);
 
 	const char* const architecture =
-#ifdef __i386__
-		"32-bit Intel";
-#elif defined __x86_64__
+#ifdef __x86_64__
 		"64-bit Intel";	
 #elif defined __aarch64__
 		"64-bit ARM";
 #else
 		"Unknown";
 #endif
-	
+
 	Printf("%s running %s %d.%d.%d (%s) %s\n", model, name,
 		   int(version.majorVersion), int(version.minorVersion), int(version.patchVersion),
 		   release, architecture);
@@ -224,14 +265,14 @@ ApplicationController* appCtrl;
 - (void)keyDown:(NSEvent*)theEvent
 {
 	// Empty but present to avoid playing of 'beep' alert sound
-	
+
 	ZD_UNUSED(theEvent);
 }
 
 - (void)keyUp:(NSEvent*)theEvent
 {
 	// Empty but present to avoid playing of 'beep' alert sound
-	
+
 	ZD_UNUSED(theEvent);
 }
 
@@ -241,7 +282,7 @@ extern bool AppActive;
 - (void)applicationDidBecomeActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
-	
+
 	S_SetSoundPaused(1);
 
 	AppActive = true;
@@ -250,8 +291,8 @@ extern bool AppActive;
 - (void)applicationWillResignActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
-	
-	S_SetSoundPaused(i_soundinbackground);
+
+	S_SetSoundPaused(0);
 
 	AppActive = false;
 }
@@ -332,7 +373,7 @@ extern bool AppActive;
 
 	while (true)
 	{
-		NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
+		NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
 											untilDate:[NSDate dateWithTimeIntervalSinceNow:0]
 											   inMode:NSDefaultRunLoopMode
 											  dequeue:YES];
@@ -385,7 +426,7 @@ NSMenuItem* CreateApplicationMenu()
 	[[menu addItemWithTitle:@"Hide Others"
 						action:@selector(hideOtherApplications:)
 				 keyEquivalent:@"h"]
-	 setKeyEquivalentModifierMask:NSAlternateKeyMask | NSCommandKeyMask];
+	 setKeyEquivalentModifierMask:NSEventModifierFlagOption | NSEventModifierFlagCommand];
 	[menu addItemWithTitle:@"Show All"
 					   action:@selector(unhideAllApplications:)
 				keyEquivalent:@""];

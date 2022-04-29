@@ -26,7 +26,7 @@ class ExplosiveBarrel : Actor
 		BEXP A 5 BRIGHT;
 		BEXP B 5 BRIGHT A_Scream;
 		BEXP C 5 BRIGHT;
-		BEXP D 5 BRIGHT A_Explode;
+		BEXP D 10 BRIGHT A_Explode;
 		BEXP E 10 BRIGHT;
 		TNT1 A 1050 BRIGHT A_BarrelDestroy;
 		TNT1 A 5 A_Respawn;

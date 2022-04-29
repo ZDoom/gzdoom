@@ -45,37 +45,37 @@ Modifications for JonoF's port by Jonathon Fowler (jf@jonof.id.au)
 
 struct lpfileheader
 {
-    uint32_t id;              /* 4 uint8_tacter ID == "LPF " */
-    uint16_t maxLps;          /* max # largePages allowed. 256 FOR NOW.   */
-    uint16_t nLps;            /* # largePages in this file. */
-    uint32_t nRecords;        /* # records in this file.  65534 is current limit + ring */
-    uint16_t maxRecsPerLp;    /* # records permitted in an lp. 256 FOR NOW.   */
-    uint16_t lpfTableOffset;  /* Absolute Seek position of lpfTable.  1280 FOR NOW. */
-    uint32_t contentType;     /* 4 character ID == "ANIM" */
-    uint16_t width;           /* Width of screen in pixels. */
-    uint16_t height;          /* Height of screen in pixels. */
-    uint8_t variant;          /* 0==ANIM. */
-    uint8_t version;          /* 0==frame rate in 18/sec, 1= 70/sec */
-    uint8_t hasLastDelta;     /* 1==Last record is a delta from last-to-first frame. */
-    uint8_t lastDeltaValid;   /* 0==Ignore ring frame. */
-    uint8_t pixelType;        /* 0==256 color. */
-    uint8_t CompressionType;  /* 1==(RunSkipDump) Only one used FOR NOW. */
-    uint8_t otherRecsPerFrm;  /* 0 FOR NOW. */
-    uint8_t bitmaptype;       /* 1==320x200, 256-color.  Only one implemented so far. */
-    uint8_t recordTypes[32];  /* Not yet implemented. */
-    uint32_t nFrames;         /* Number of actual frames in the file, includes ring frame. */
-    uint16_t framesPerSecond; /* Number of frames to play per second. */
-    uint16_t pad2[29];        /* 58 bytes of filler to round up to 128 bytes total. */
+	uint32_t id;              /* 4 uint8_tacter ID == "LPF " */
+	uint16_t maxLps;          /* max # largePages allowed. 256 FOR NOW.   */
+	uint16_t nLps;            /* # largePages in this file. */
+	uint32_t nRecords;        /* # records in this file.  65534 is current limit + ring */
+	uint16_t maxRecsPerLp;    /* # records permitted in an lp. 256 FOR NOW.   */
+	uint16_t lpfTableOffset;  /* Absolute Seek position of lpfTable.  1280 FOR NOW. */
+	uint32_t contentType;     /* 4 character ID == "ANIM" */
+	uint16_t width;           /* Width of screen in pixels. */
+	uint16_t height;          /* Height of screen in pixels. */
+	uint8_t variant;          /* 0==ANIM. */
+	uint8_t version;          /* 0==frame rate in 18/sec, 1= 70/sec */
+	uint8_t hasLastDelta;     /* 1==Last record is a delta from last-to-first frame. */
+	uint8_t lastDeltaValid;   /* 0==Ignore ring frame. */
+	uint8_t pixelType;        /* 0==256 color. */
+	uint8_t CompressionType;  /* 1==(RunSkipDump) Only one used FOR NOW. */
+	uint8_t otherRecsPerFrm;  /* 0 FOR NOW. */
+	uint8_t bitmaptype;       /* 1==320x200, 256-color.  Only one implemented so far. */
+	uint8_t recordTypes[32];  /* Not yet implemented. */
+	uint32_t nFrames;         /* Number of actual frames in the file, includes ring frame. */
+	uint16_t framesPerSecond; /* Number of frames to play per second. */
+	uint16_t pad2[29];        /* 58 bytes of filler to round up to 128 bytes total. */
 };
 
 // this is the format of a large page structure
 struct lp_descriptor
 {
-    uint16_t baseRecord;   // Number of first record in this large page.
-    uint16_t nRecords;        // Number of records in lp.
-    // bit 15 of "nRecords" == "has continuation from previous lp".
-    // bit 14 of "nRecords" == "final record continues on next lp".
-    uint16_t nBytes;                  // Total number of bytes of contents, excluding header.
+	uint16_t baseRecord;   // Number of first record in this large page.
+	uint16_t nRecords;        // Number of records in lp.
+	// bit 15 of "nRecords" == "has continuation from previous lp".
+	// bit 14 of "nRecords" == "final record continues on next lp".
+	uint16_t nBytes;                  // Total number of bytes of contents, excluding header.
 };
 
 #pragma pack(pop)
@@ -84,16 +84,16 @@ struct lp_descriptor
 
 struct anim_t
 {
-    uint16_t framecount;          // current frame of anim
-    lpfileheader * lpheader;           // file header will be loaded into this structure
-    lp_descriptor * LpArray; // arrays of large page structs used to find frames
-    uint16_t curlpnum;               // initialize to an invalid Large page number
-    lp_descriptor * curlp;        // header of large page currently in memory
-    uint16_t * thepage;     // buffer where current large page is loaded
-    uint8_t imagebuffer[IMAGEBUFFERSIZE]; // buffer where anim frame is decoded
-    uint8_t * buffer;
-    uint8_t pal[768];
-    int32_t currentframe;
+	uint16_t framecount;          // current frame of anim
+	lpfileheader * lpheader;           // file header will be loaded into this structure
+	lp_descriptor * LpArray; // arrays of large page structs used to find frames
+	uint16_t curlpnum;               // initialize to an invalid Large page number
+	lp_descriptor * curlp;        // header of large page currently in memory
+	uint16_t * thepage;     // buffer where current large page is loaded
+	uint8_t imagebuffer[IMAGEBUFFERSIZE]; // buffer where anim frame is decoded
+	uint8_t * buffer;
+	uint8_t pal[768];
+	int32_t currentframe;
 };
 
 //****************************************************************************
@@ -116,7 +116,7 @@ int32_t ANIM_LoadAnim(anim_t *anim, uint8_t *buffer, int32_t length);
 
 inline int32_t ANIM_NumFrames(anim_t* anim)
 {
-    return anim->lpheader->nRecords;
+	return anim->lpheader->nRecords;
 }
 
 //****************************************************************************
@@ -138,7 +138,7 @@ uint8_t * ANIM_DrawFrame(anim_t* anim, int32_t framenumber);
 
 inline uint8_t* ANIM_GetPalette(anim_t* anim)
 {
-    return anim->pal;
+	return anim->pal;
 }
 
 #endif

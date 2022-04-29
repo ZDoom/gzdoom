@@ -56,7 +56,7 @@ void PolyBuffer::Reset()
 {
 }
 
-void PolyBuffer::SetData(size_t size, const void *data, bool staticdata)
+void PolyBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 {
 	mData.resize(size);
 	map = mData.data();

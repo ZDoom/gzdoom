@@ -855,6 +855,17 @@ class Inventory : Actor
 
 	//===========================================================================
 	//
+	// Inventory :: PreTravelled
+	//
+	// Called when an item in somebody's inventory is about to be carried
+	// over to another map, in case it needs to do special clean-up.
+	//
+	//===========================================================================
+
+	virtual void PreTravelled() {}
+
+	//===========================================================================
+	//
 	// Inventory :: Travelled
 	//
 	// Called when an item in somebody's inventory is carried over to another

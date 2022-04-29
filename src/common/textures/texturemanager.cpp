@@ -37,7 +37,7 @@
 #include "filesystem.h"
 #include "printf.h"
 #include "c_cvars.h"
-#include "templates.h"
+
 #include "gstrings.h"
 #include "textures.h"
 #include "texturemanager.h"
@@ -86,11 +86,11 @@ FTextureManager::~FTextureManager ()
 
 void FTextureManager::DeleteAll()
 {
-	FImageSource::ClearImages();
 	for (unsigned int i = 0; i < Textures.Size(); ++i)
 	{
 		delete Textures[i].Texture;
 	}
+	FImageSource::ClearImages();
 	Textures.Clear();
 	Translation.Clear();
 	FirstTextureForFile.Clear();
@@ -235,7 +235,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		}
 	}
 
-	
+
 	if (!(flags & TEXMAN_ShortNameOnly))
 	{
 		// We intentionally only look for textures in subdirectories.
@@ -376,18 +376,18 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (*substitute == '$') substitute = GStrings.GetString(substitute+1, &langtable);
 	else return true;	// String literals from the source data should never override graphics from the same definition.
 	if (substitute == nullptr) return true;	// The text does not exist.
-	
+
 	// Modes 2, 3 and 4 must not replace localized textures.
 	int localizedTex = ResolveLocalizedTexture(texnum.GetIndex());
 	if (localizedTex != texnum.GetIndex()) return true;	// Do not substitute a localized variant of the graphics patch.
-	
+
 	// For mode 4 we are done now.
 	if (locmode == 4) return false;
-	
+
 	// Mode 2 and 3 must reject any text replacement from the default language tables.
 	if ((langtable & MAKE_ID(255,0,0,0)) == MAKE_ID('*', 0, 0, 0)) return true;	// Do not substitute if the string comes from the default table.
 	if (locmode == 2) return false;
-	
+
 	// Mode 3 must also reject substitutions for non-IWAD content.
 	int file = fileSystem.GetFileContainer(Textures[texnum.GetIndex()].Texture->GetSourceLump());
 	if (file > fileSystem.GetMaxIwadNum()) return true;
@@ -448,7 +448,13 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 	if (lumpnum != -1)
 	{
 		FString str;
-		fileSystem.GetFileShortName(str, lumpnum);
+		if (!usefullnames)
+			fileSystem.GetFileShortName(str, lumpnum);
+		else
+		{
+			auto fn = fileSystem.GetFileFullName(lumpnum);
+			str = ExtractFileBase(fn);
+		}
 		auto out = MakeGameTexture(CreateTextureFromLump(lumpnum, usetype == ETextureType::Flat), str, usetype);
 
 		if (out != NULL)
@@ -557,30 +563,44 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 	int lasttx = fileSystem.GetLastEntry(wadnum);
 	FString Name;
 
-	// Go from first to last so that ANIMDEFS work as expected. However,
-	// to avoid duplicates (and to keep earlier entries from overriding
-	// later ones), the texture is only inserted if it is the one returned
-	// by doing a check by name in the list of wads.
-
-	for (; firsttx <= lasttx; ++firsttx)
+	if (!usefullnames)
 	{
-		if (fileSystem.GetFileNamespace(firsttx) == ns)
-		{
-			fileSystem.GetFileShortName (Name, firsttx);
+		// Go from first to last so that ANIMDEFS work as expected. However,
+		// to avoid duplicates (and to keep earlier entries from overriding
+		// later ones), the texture is only inserted if it is the one returned
+		// by doing a check by name in the list of wads.
 
-			if (fileSystem.CheckNumForName (Name, ns) == firsttx)
-			{
-				CreateTexture (firsttx, usetype);
-			}
-			progressFunc();
-		}
-		else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & LUMPF_MAYBEFLAT)
+		for (; firsttx <= lasttx; ++firsttx)
 		{
-			if (fileSystem.CheckNumForName (Name, ns) < firsttx)
+			if (fileSystem.GetFileNamespace(firsttx) == ns)
 			{
-				CreateTexture (firsttx, usetype);
+				fileSystem.GetFileShortName(Name, firsttx);
+
+				if (fileSystem.CheckNumForName(Name, ns) == firsttx)
+				{
+					CreateTexture(firsttx, usetype);
+				}
+				progressFunc();
 			}
-			progressFunc();
+			else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & LUMPF_MAYBEFLAT)
+			{
+				if (fileSystem.CheckNumForName(Name, ns) < firsttx)
+				{
+					CreateTexture(firsttx, usetype);
+				}
+				progressFunc();
+			}
+		}
+	}
+	else
+	{
+		// The duplicate check does not work with this (yet.)
+		for (; firsttx <= lasttx; ++firsttx)
+		{
+			if (fileSystem.GetFileNamespace(firsttx) == ns)
+			{
+				CreateTexture(firsttx, usetype);
+			}
 		}
 	}
 }
@@ -697,7 +717,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			sc.String[8]=0;
 
 			tlist.Clear();
-			int amount = ListTextures(sc.String, tlist);
+			ListTextures(sc.String, tlist);
 			FName texname = sc.String;
 
 			sc.MustGetString();
@@ -751,7 +771,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 		else if (sc.Compare("define")) // define a new "fake" texture
 		{
 			sc.GetString();
-					
+
 			FString base = ExtractFileBase(sc.String, false);
 			if (!base.IsEmpty())
 			{
@@ -790,6 +810,22 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 				}
 			}				
 			//else Printf("Unable to define hires texture '%s'\n", tex->Name);
+		}
+		else if (sc.Compare("notrim"))
+		{
+			sc.MustGetString();
+
+			FTextureID id = TexMan.CheckForTexture(sc.String, ETextureType::Sprite);
+			if (id.isValid())
+			{
+				FGameTexture *tex = TexMan.GetGameTexture(id);
+
+				if (tex)	tex->SetNoTrimming(true);
+				else		sc.ScriptError("NoTrim: %s not found", sc.String);
+			}
+			else
+				sc.ScriptError("NoTrim: %s is not a sprite", sc.String);
+
 		}
 		else if (sc.Compare("texture"))
 		{
@@ -899,7 +935,6 @@ void FTextureManager::LoadTextureX(int wadnum, FMultipatchTextureBuilder &build)
 void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build)
 {
 	int firsttexture = Textures.Size();
-	int lumpcount = fileSystem.GetNumEntries();
 	bool iwad = wadnum >= fileSystem.GetIwadNum() && wadnum <= fileSystem.GetMaxIwadNum();
 
 	FirstTextureForFile.Push(firsttexture);
@@ -1170,8 +1205,12 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	AddGameTexture(CreateShaderTexture(true, false));
 	AddGameTexture(CreateShaderTexture(true, true));
 	// Add two animtexture entries so that movie playback can call functions using texture IDs.
-	AddGameTexture(MakeGameTexture(new AnimTexture(), "AnimTextureFrame1", ETextureType::Override));
-	AddGameTexture(MakeGameTexture(new AnimTexture(), "AnimTextureFrame2", ETextureType::Override));
+	auto mt = MakeGameTexture(new AnimTexture(), "AnimTextureFrame1", ETextureType::Override);
+	mt->SetUpscaleFlag(false, true);
+	AddGameTexture(mt);
+	mt = MakeGameTexture(new AnimTexture(), "AnimTextureFrame2", ETextureType::Override);
+	mt->SetUpscaleFlag(false, true);
+	AddGameTexture(mt);
 
 	int wadcnt = fileSystem.GetNumWads();
 
@@ -1363,7 +1402,7 @@ int FTextureManager::ResolveLocalizedTexture(int tex)
 int FTextureManager::GuesstimateNumTextures ()
 {
 	int numtex = 0;
-	
+
 	for(int i = fileSystem.GetNumEntries()-1; i>=0; i--)
 	{
 		int space = fileSystem.GetFileNamespace(i);

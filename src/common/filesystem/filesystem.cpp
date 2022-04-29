@@ -47,8 +47,6 @@
 #include "printf.h"
 #include "md5.h"
 
-extern	FILE* hashfile;
-
 // MACROS ------------------------------------------------------------------
 
 #define NULL_INDEX		(0xffffffff)
@@ -113,7 +111,20 @@ struct FileSystem::LumpRecord
 			if (Namespace == ns_hidden) shortName.qword = 0;
 			else
 			{
-				long slash = longName.LastIndexOf('/');
+				ptrdiff_t encodedResID = longName.LastIndexOf(".{");
+				if (resourceId == -1 && encodedResID >= 0)
+				{
+					const char* p = longName.GetChars() + encodedResID;
+					char* q;
+					int id = (int)strtoull(p+2, &q, 10);	// only decimal numbers allowed here.
+					if (q[0] == '}' && (q[1] == '.' || q[1] == 0))
+					{
+						FString toDelete(p, q - p + 1);
+						longName.Substitute(toDelete, "");
+						resourceId = id;
+					}
+				}
+				ptrdiff_t slash = longName.LastIndexOf('/');
 				FString base = (slash >= 0) ? longName.Mid(slash + 1) : longName;
 				auto dot = base.LastIndexOf('.');
 				if (dot >= 0) base.Truncate(dot);
@@ -195,7 +206,7 @@ void FileSystem::InitSingleFile(const char* filename, bool quiet)
 	InitMultipleFiles(filenames, true);
 }
 
-void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, LumpFilterInfo* filter)
+void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, LumpFilterInfo* filter, bool allowduplicates, FILE* hashfile)
 {
 	int numfiles;
 
@@ -203,16 +214,31 @@ void FileSystem::InitMultipleFiles (TArray<FString> &filenames, bool quiet, Lump
 	DeleteAll();
 	numfiles = 0;
 
+	// first, check for duplicates
+	if (allowduplicates)
+	{
+		for (unsigned i=0;i<filenames.Size(); i++)
+		{
+			for (unsigned j=i+1;j<filenames.Size(); j++)
+			{
+				if (strcmp(filenames[i], filenames[j]) == 0)
+				{
+					filenames.Delete(j);
+					j--;
+				}
+			}
+		}
+	}
+
 	for(unsigned i=0;i<filenames.Size(); i++)
 	{
-		int baselump = NumEntries;
-		AddFile (filenames[i], nullptr, quiet, filter);
-		
+		AddFile (filenames[i], nullptr, quiet, filter, hashfile);
+
 		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
 		FStringf path("filter/%s", Files.Last()->GetHash().GetChars());
 		MoveLumpsInFolder(path);
 	}
-	
+
 	NumEntries = FileInfo.Size();
 	if (NumEntries == 0)
 	{
@@ -271,7 +297,7 @@ int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, in
 	FileInfo.Last().resourceId = id;
 	return FileInfo.Size()-1;
 }
- 
+
 //==========================================================================
 //
 // AddFile
@@ -282,7 +308,7 @@ int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, in
 // [RH] Removed reload hack
 //==========================================================================
 
-void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, LumpFilterInfo* filter)
+void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, LumpFilterInfo* filter, FILE* hashfile)
 {
 	int startlump;
 	bool isdir = false;
@@ -320,7 +346,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 	startlump = NumEntries;
 
 	FResourceFile *resfile;
-	
+
 	if (!isdir)
 		resfile = FResourceFile::OpenResourceFile(filename, filereader, quiet, false, filter);
 	else
@@ -350,7 +376,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 				FString path;
 				path.Format("%s:%s", filename, lump->getName());
 				auto embedded = lump->NewReader();
-				AddFile(path, &embedded, quiet, filter);
+				AddFile(path, &embedded, quiet, filter, hashfile);
 			}
 		}
 
@@ -635,7 +661,7 @@ int FileSystem::GetNumForFullName (const char *name)
 //
 // FindFile
 //
-// Looks up a file by name, either eith or without path and extension
+// Looks up a file by name, either with or without path and extension
 //
 //==========================================================================
 
@@ -899,6 +925,12 @@ LumpShortName& FileSystem::GetShortName(int i)
 	return FileInfo[i].shortName;
 }
 
+FString& FileSystem::GetLongName(int i)
+{
+	if ((unsigned)i >= NumEntries) I_Error("GetLongName: Invalid index");
+	return FileInfo[i].longName;
+}
+
 void FileSystem::RenameFile(int num, const char* newfn)
 {
 	if ((unsigned)num >= NumEntries) I_Error("RenameFile: Invalid index");
@@ -927,10 +959,10 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 	{
 		return;
 	}
-	
+
 	auto len = strlen(path);
 	auto rfnum = FileInfo.Last().rfnum;
-	
+
 	unsigned i;
 	for (i = 0; i < FileInfo.Size(); i++)
 	{
@@ -1003,7 +1035,7 @@ int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, in
 	{
 		if (anyns || lump_p->Namespace == ns_global)
 		{
-			
+
 			for(const char **name = names; *name != NULL; name++)
 			{
 				if (!strnicmp(*name, lump_p->shortName.String, 8))
@@ -1493,7 +1525,7 @@ int FileSystem::GetEntryCount (int rfnum) const noexcept
 	{
 		return 0;
 	}
-	
+
 	return Files[rfnum]->LumpCount();
 }
 
@@ -1533,7 +1565,7 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 	if (lump < 0) return false;		// Does not exist.
 
 	auto oldlump = FileInfo[lump];
-	int slash = oldlump.longName.LastIndexOf('/');
+	ptrdiff_t slash = oldlump.longName.LastIndexOf('/');
 
 	if (slash == -1)
 	{
@@ -1650,3 +1682,20 @@ FResourceLump* FileSystem::GetFileAt(int no)
 	return FileInfo[no].lump;
 }
 
+#include "c_dispatch.h"
+
+CCMD(fs_dir)
+{
+	int numfiles = fileSystem.GetNumEntries();
+
+	for (int i = 0; i < numfiles; i++)
+	{
+		auto container = fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(i));
+		auto fn1 = fileSystem.GetFileFullName(i);
+		auto fns = fileSystem.GetFileShortName(i);
+		auto fnid = fileSystem.GetResourceId(i);
+		auto length = fileSystem.FileLength(i);
+		bool hidden = fileSystem.FindFile(fn1) != i;
+		Printf(PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
+	}
+}

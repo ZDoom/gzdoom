@@ -61,6 +61,8 @@ public:
 	FPresent3DRowShader *mPresent3dRowShader = nullptr;
 	FShadowMapShader *mShadowMapShader = nullptr;
 
+	int mLightMapID = 0;
+
 	//FRotator mAngles;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
@@ -80,7 +82,7 @@ public:
 	void DrawPresentTexture(const IntRect &box, bool applyGamma);
 	void Flush();
 	void BeginFrame();
-    
+
 	bool StartOffscreen();
 	void EndOffscreen();
 

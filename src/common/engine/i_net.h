@@ -76,7 +76,7 @@ struct doomcom_t
 
 // packet data to be sent
 	uint8_t	data[MAX_MSGLEN];
-	
+
 }; 
 
 extern doomcom_t doomcom;

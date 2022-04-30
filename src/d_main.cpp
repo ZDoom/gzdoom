@@ -1941,7 +1941,7 @@ static void D_DoomInit()
 //
 //==========================================================================
 
-static void AddAutoloadFiles(const char *autoname, TArray<FString> allwads)
+static void AddAutoloadFiles(const char *autoname, TArray<FString>& allwads)
 {
 	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
@@ -2976,7 +2976,7 @@ static FILE* D_GetHashFile()
 //
 //==========================================================================
 
-static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString> allwads)
+static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArray<FString>& pwads)
 {
 	gameinfo.gametype = iwad_info->gametype;
 	gameinfo.flags = iwad_info->flags;
@@ -3054,6 +3054,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString> allwads)
 		FixMacHexen(fileSystem);
 		FindStrifeTeaserVoices(fileSystem);
 	};
+	allwads.Append(std::move(pwads));
 
 	bool allowduplicates = Args->CheckParm("-allowduplicates");
 	auto hashfile = D_GetHashFile();
@@ -3568,10 +3569,9 @@ static int D_DoomMain_Internal (void)
 		{
 			I_FatalError ("You cannot -file with the shareware version. Register!");
 		}
-		allwads.Append(std::move(pwads));
 		lastIWAD = iwad;
 
-		int ret = D_InitGame(iwad_info, allwads);
+		int ret = D_InitGame(iwad_info, allwads, pwads);
 		allwads.Reset();
 		delete iwad_man;	// now we won't need this anymore
 		iwad_man = NULL;

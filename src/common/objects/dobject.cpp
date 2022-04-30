@@ -495,7 +495,7 @@ DEFINE_ACTION_FUNCTION(DObject, MSTime)
 
 DEFINE_ACTION_FUNCTION_NATIVE(DObject, MSTimef, I_msTimeF)
 {
-	ACTION_RETURN_INT((double)I_msTimeF());
+	ACTION_RETURN_FLOAT(I_msTimeF());
 }
 
 void *DObject::ScriptVar(FName field, PType *type)

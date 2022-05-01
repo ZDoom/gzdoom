@@ -58,11 +58,12 @@ struct HexDataSource
 	//
 	//==========================================================================
 
-	void ParseDefinition(int lumpnum)
+	void ParseDefinition(FResourceLump* font)
 	{
 		FScanner sc;
 
-		sc.OpenLumpNum(lumpnum);
+		auto data = font->Lock();
+		sc.OpenMem("newconsolefont.hex", (const char*)data, font->Size());
 		sc.SetCMode(true);
 		glyphdata.Push(0);	// ensure that index 0 can be used as 'not present'.
 		while (sc.GetString())
@@ -96,6 +97,7 @@ struct HexDataSource
 			lumb = i * 255 / 17;
 			SmallPal[i] = PalEntry(255, lumb, lumb, lumb);
 		}
+		font->Unlock();
 	}
 };
 
@@ -400,7 +402,7 @@ public:
 
 FFont *CreateHexLumpFont (const char *fontname, int lump)
 {
-	if (hexdata.FirstChar == INT_MAX) hexdata.ParseDefinition(lump);
+	assert(hexdata.FirstChar != INT_MAX);
 	return new FHexFont(fontname, lump);
 }
 
@@ -412,7 +414,7 @@ FFont *CreateHexLumpFont (const char *fontname, int lump)
 
 FFont *CreateHexLumpFont2(const char *fontname, int lump)
 {
-	if (hexdata.FirstChar == INT_MAX) hexdata.ParseDefinition(lump);
+	assert(hexdata.FirstChar != INT_MAX);
 	return new FHexFont2(fontname, lump);
 }
 
@@ -424,8 +426,7 @@ FFont *CreateHexLumpFont2(const char *fontname, int lump)
 
 uint8_t* GetHexChar(int codepoint)
 {
-	auto lump = fileSystem.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
-	if (hexdata.FirstChar == INT_MAX) hexdata.ParseDefinition(lump);
+	assert(hexdata.FirstChar != INT_MAX);
 
 	if (hexdata.glyphmap[codepoint] > 0)
 	{
@@ -433,4 +434,13 @@ uint8_t* GetHexChar(int codepoint)
 		return &hexdata.glyphdata[offset];
 	}
 	return nullptr;
+}
+
+void LoadHexFont(const char* filename)
+{
+	auto resf = FResourceFile::OpenResourceFile(filename);
+	if (resf == nullptr) I_FatalError("Unable to open %s", filename);
+	auto hexfont = resf->FindLump("newconsolefont.hex");
+	if (hexfont == nullptr) I_FatalError("Unable to find newconsolefont.hex in %s", filename);
+	hexdata.ParseDefinition(hexfont);
 }

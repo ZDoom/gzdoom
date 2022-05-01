@@ -444,7 +444,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 
 	c.color.rgbReserved = 0;
 
-	StartupBitmap = ST_Util_CreateBitmap(640, 480, 4);
+	StartupBitmap = ST_Util_CreateBitmap(640, 480, 8);
 
 	// Initialize the bitmap palette.
 	for (int i = 0; i < 16; ++i)
@@ -516,7 +516,7 @@ void FHexenStartupScreen::Progress()
 			{
 				x = ST_PROGRESS_X + ST_NOTCH_WIDTH * NotchPos;
 				y = ST_PROGRESS_Y;
-				ST_Util_DrawBlock(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
+				ST_Util_DrawBlock4(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
 			}
 			ST_Sound("StartupTick");
 		}
@@ -544,7 +544,7 @@ void FHexenStartupScreen::NetProgress(int count)
 		{
 			x = ST_NETPROGRESS_X + ST_NETNOTCH_WIDTH * oldpos;
 			y = ST_NETPROGRESS_Y;
-			ST_Util_DrawBlock(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
+			ST_Util_DrawBlock4(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
 		}
 		ST_Sound("misc/netnotch");
 		I_GetEvent();
@@ -854,19 +854,15 @@ void ST_Util_PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int h
 	{
 		for (x = width; x > 0; x -= 8)
 		{
-			// Pixels 0 and 1
-			dest[0] = (*src4 & 0x80) | ((*src3 & 0x80) >> 1) | ((*src2 & 0x80) >> 2) | ((*src1 & 0x80) >> 3) |
-				((*src4 & 0x40) >> 3) | ((*src3 & 0x40) >> 4) | ((*src2 & 0x40) >> 5) | ((*src1 & 0x40) >> 6);
-			// Pixels 2 and 3
-			dest[1] = ((*src4 & 0x20) << 2) | ((*src3 & 0x20) << 1) | ((*src2 & 0x20)) | ((*src1 & 0x20) >> 1) |
-				((*src4 & 0x10) >> 1) | ((*src3 & 0x10) >> 2) | ((*src2 & 0x10) >> 3) | ((*src1 & 0x10) >> 4);
-			// Pixels 4 and 5
-			dest[2] = ((*src4 & 0x08) << 4) | ((*src3 & 0x08) << 3) | ((*src2 & 0x08) << 2) | ((*src1 & 0x08) << 1) |
-				((*src4 & 0x04) << 1) | ((*src3 & 0x04)) | ((*src2 & 0x04) >> 1) | ((*src1 & 0x04) >> 2);
-			// Pixels 6 and 7
-			dest[3] = ((*src4 & 0x02) << 6) | ((*src3 & 0x02) << 5) | ((*src2 & 0x02) << 4) | ((*src1 & 0x02) << 3) |
-				((*src4 & 0x01) << 3) | ((*src3 & 0x01) << 2) | ((*src2 & 0x01) << 1) | ((*src1 & 0x01));
-			dest += 4;
+			dest[0] = ((*src4 & 0x80) | ((*src3 & 0x80) >> 1) | ((*src2 & 0x80) >> 2) | ((*src1 & 0x80) >> 3)) >> 4;
+			dest[1] = ((*src4 & 0x40) >> 3) | ((*src3 & 0x40) >> 4) | ((*src2 & 0x40) >> 5) | ((*src1 & 0x40) >> 6);
+			dest[2] = (((*src4 & 0x20) << 2) | ((*src3 & 0x20) << 1) | ((*src2 & 0x20)) | ((*src1 & 0x20) >> 1)) >> 4;
+			dest[3] = ((*src4 & 0x10) >> 1) | ((*src3 & 0x10) >> 2) | ((*src2 & 0x10) >> 3) | ((*src1 & 0x10) >> 4);
+			dest[4] = (((*src4 & 0x08) << 4) | ((*src3 & 0x08) << 3) | ((*src2 & 0x08) << 2) | ((*src1 & 0x08) << 1)) >> 4;
+			dest[5] = ((*src4 & 0x04) << 1) | ((*src3 & 0x04)) | ((*src2 & 0x04) >> 1) | ((*src1 & 0x04) >> 2);
+			dest[6] = (((*src4 & 0x02) << 6) | ((*src3 & 0x02) << 5) | ((*src2 & 0x02) << 4) | ((*src1 & 0x02) << 3)) >> 4;
+			dest[7] = ((*src4 & 0x01) << 3) | ((*src3 & 0x01) << 2) | ((*src2 & 0x01) << 1) | ((*src1 & 0x01));
+			dest += 8;
 			src1 += 1;
 			src2 += 1;
 			src3 += 1;
@@ -921,6 +917,38 @@ void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y
 			dest += destpitch;
 			src += bytewidth;
 		}
+	}
+}
+
+//==========================================================================
+//
+// ST_Util_DrawBlock
+//
+//==========================================================================
+
+void ST_Util_DrawBlock4(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height)
+{
+	if (src == NULL)
+	{
+		return;
+	}
+
+	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
+	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
+	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+
+	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+
+	for (; height > 0; --height)
+	{
+		for (int x = 0; x < bytewidth; x++)
+		{
+			int val = src[x];
+			dest[x * 2] = val >> 4;
+			dest[x * 2 + 1] = val & 15;
+		}
+		dest += destpitch;
+		src += bytewidth;
 	}
 }
 

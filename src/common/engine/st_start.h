@@ -177,6 +177,7 @@ extern BitmapInfo* StartupBitmap;
 
 void ST_Util_PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int height);
 void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height);
+void ST_Util_DrawBlock4(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height);
 void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int bytewidth, int height);
 BitmapInfo* ST_Util_CreateBitmap(int width, int height, int color_bits);
 uint8_t* ST_Util_BitsForBitmap(BitmapInfo* bitmap_info);

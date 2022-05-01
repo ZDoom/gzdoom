@@ -331,7 +331,7 @@ BitmapInfo* StartupBitmap;
 #define THERM_X					14
 #define THERM_Y					14
 #define THERM_LEN				51
-#define THERM_COLOR				0xAA		// light green
+#define THERM_COLOR				0xA		// light green
 
 // Strife startup screen
 #define PEASANT_INDEX			0
@@ -1041,7 +1041,7 @@ void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
 
 BitmapInfo* ST_Util_AllocTextBitmap()
 {
-	BitmapInfo* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * 16, 4);
+	BitmapInfo* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * 16, 8);
 	memcpy(bitmap->bmiColors, TextModePalette, sizeof(TextModePalette));
 	return bitmap;
 }
@@ -1081,41 +1081,39 @@ void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen)
 int ST_Util_DrawChar(BitmapInfo* screen, int x, int y, unsigned charnum, uint8_t attrib)
 {
 	static const uint8_t space[17] = { 16 };
-	const uint8_t bg_left = attrib & 0x70;
+	const uint8_t bg = (attrib & 0x70) >> 4;
 	const uint8_t fg = attrib & 0x0F;
-	const uint8_t fg_left = fg << 4;
-	const uint8_t bg = bg_left >> 4;
-	const uint8_t color_array[4] = { (uint8_t)(bg_left | bg), (uint8_t)(attrib & 0x7F), (uint8_t)(fg_left | bg), (uint8_t)(fg_left | fg) };
+	const uint8_t color_array[4] = { bg, fg };
 	const uint8_t* src = GetHexChar(charnum);
 	if (!src) src = space;
 	int size = *src++;
-	int pitch = screen->bmiHeader.biWidth >> 1;
-	uint8_t* dest = ST_Util_BitsForBitmap(screen) + x * 4 + y * 16 * pitch;
+	int pitch = screen->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(screen) + x * 8 + y * 16 * pitch;
 
 	for (y = 0; y <16; ++y)
 	{
 		uint8_t srcbyte = *src++;
 
-		// Pixels 0 and 1
-		dest[0] = color_array[(srcbyte >> 6) & 3];
-		// Pixels 2 and 3
-		dest[1] = color_array[(srcbyte >> 4) & 3];
-		// Pixels 4 and 5
-		dest[2] = color_array[(srcbyte >> 2) & 3];
-		// Pixels 6 and 7
-		dest[3] = color_array[(srcbyte) & 3];
+		dest[0] = color_array[(srcbyte >> 7) & 1];
+		dest[1] = color_array[(srcbyte >> 6) & 1];
+		dest[2] = color_array[(srcbyte >> 5) & 1];
+		dest[3] = color_array[(srcbyte >> 4) & 1];
+		dest[4] = color_array[(srcbyte >> 3) & 1];
+		dest[5] = color_array[(srcbyte >> 2) & 1];
+		dest[6] = color_array[(srcbyte >> 1) & 1];
+		dest[7] = color_array[(srcbyte) & 1];
 		if (size == 32)
 		{
 			srcbyte = *src++;
 
-			// Pixels 0 and 1
-			dest[4] = color_array[(srcbyte >> 6) & 3];
-			// Pixels 2 and 3
-			dest[5] = color_array[(srcbyte >> 4) & 3];
-			// Pixels 4 and 5
-			dest[6] = color_array[(srcbyte >> 2) & 3];
-			// Pixels 6 and 7
-			dest[7] = color_array[(srcbyte) & 3];
+			dest[8] = color_array[(srcbyte >> 7) & 1];
+			dest[9] = color_array[(srcbyte >> 6) & 1];
+			dest[10] = color_array[(srcbyte >> 5) & 1];
+			dest[11] = color_array[(srcbyte >> 4) & 1];
+			dest[12] = color_array[(srcbyte >> 3) & 1];
+			dest[13] = color_array[(srcbyte >> 2) & 1];
+			dest[14] = color_array[(srcbyte >> 1) & 1];
+			dest[15] = color_array[(srcbyte) & 1];
 		}
 		dest += pitch;
 	}

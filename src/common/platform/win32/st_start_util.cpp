@@ -444,7 +444,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 
 	c.color.rgbReserved = 0;
 
-	StartupBitmap = ST_Util_CreateBitmap(640, 480, 8);
+	StartupBitmap = ST_Util_CreateBitmap(640, 480);
 
 	// Initialize the bitmap palette.
 	for (int i = 0; i < 16; ++i)
@@ -716,7 +716,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 		return;
 	}
 
-	StartupBitmap = ST_Util_CreateBitmap(320, 200, 8);
+	StartupBitmap = ST_Util_CreateBitmap(320, 200);
 	ST_Util_BitmapColorsFromPlaypal(StartupBitmap);
 
 	// Fill bitmap with the startup image.
@@ -884,11 +884,10 @@ void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y
 		return;
 	}
 
-	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
-	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+	int destpitch = bitmap_info->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth, y + height);
 
 	if (bytewidth == 8)
 	{ // progress notches
@@ -933,11 +932,10 @@ void ST_Util_DrawBlock4(BitmapInfo* bitmap_info, const uint8_t* src, int x, int 
 		return;
 	}
 
-	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
-	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+	int destpitch = bitmap_info->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth * 2, y + height);
 
 	for (; height > 0; --height)
 	{
@@ -960,11 +958,10 @@ void ST_Util_DrawBlock4(BitmapInfo* bitmap_info, const uint8_t* src, int x, int 
 
 void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int bytewidth, int height)
 {
-	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
-	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+	int destpitch = bitmap_info->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth, y + height);
 
 	while (height > 0)
 	{
@@ -987,23 +984,23 @@ void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int
 //
 //==========================================================================
 
-BitmapInfo* ST_Util_CreateBitmap(int width, int height, int color_bits)
+BitmapInfo* ST_Util_CreateBitmap(int width, int height)
 {
-	uint32_t size_image = (width * height) >> int(color_bits == 4);
+	uint32_t size_image = (width * height);
 	BitmapInfo* bitmap_info = (BitmapInfo*)M_Malloc(sizeof(BitmapInfoHeader) +
-		(sizeof(RgbQuad) << color_bits) + size_image);
+		(sizeof(RgbQuad) << 8) + size_image);
 
 	// Initialize the header.
 	bitmap_info->bmiHeader.biSize = sizeof(BitmapInfoHeader);
 	bitmap_info->bmiHeader.biWidth = width;
 	bitmap_info->bmiHeader.biHeight = height;
 	bitmap_info->bmiHeader.biPlanes = 1;
-	bitmap_info->bmiHeader.biBitCount = color_bits;
+	bitmap_info->bmiHeader.biBitCount = 8;
 	bitmap_info->bmiHeader.biCompression = 0;
 	bitmap_info->bmiHeader.biSizeImage = size_image;
 	bitmap_info->bmiHeader.biXPelsPerMeter = 0;
 	bitmap_info->bmiHeader.biYPelsPerMeter = 0;
-	bitmap_info->bmiHeader.biClrUsed = 1 << color_bits;
+	bitmap_info->bmiHeader.biClrUsed = 1 << 8;
 	bitmap_info->bmiHeader.biClrImportant = 0;
 
 	return bitmap_info;
@@ -1069,7 +1066,7 @@ void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
 
 BitmapInfo* ST_Util_AllocTextBitmap()
 {
-	BitmapInfo* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * 16, 8);
+	BitmapInfo* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * 16);
 	memcpy(bitmap->bmiColors, TextModePalette, sizeof(TextModePalette));
 	return bitmap;
 }

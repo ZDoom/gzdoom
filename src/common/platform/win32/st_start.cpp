@@ -61,7 +61,6 @@
 // The number here therefore corresponds roughly to the blink rate on a
 // 60 Hz display.
 #define BLINK_PERIOD			267
-#define TEXT_FONT_NAME			"vga-rom-font.16"
 
 
 // TYPES -------------------------------------------------------------------
@@ -517,7 +516,6 @@ int RunEndoom()
 	int endoom_lump = fileSystem.CheckNumForFullName (endoomName, true);
 
 	uint8_t endoom_screen[4000];
-	uint8_t *font;
 	MSG mess;
 	BOOL bRet;
 	bool blinking = false, blinkstate = false;
@@ -534,15 +532,8 @@ int RunEndoom()
 		return 0;
 	}
 
-	font = ST_Util_LoadFont (TEXT_FONT_NAME);
-	if (font == NULL)
-	{
-		return 0;
-	}
-
 	if (!ST_Util_CreateStartupWindow())
 	{
-		ST_Util_FreeFont (font);
 		return 0;
 	}
 
@@ -553,8 +544,8 @@ int RunEndoom()
 	fileSystem.ReadFile (endoom_lump, endoom_screen);
 
 	// Draw the loading screen to a bitmap.
-	StartupBitmap = ST_Util_AllocTextBitmap (font);
-	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen, font);
+	StartupBitmap = ST_Util_AllocTextBitmap();
+	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen);
 
 	// Make the title banner go away.
 	if (GameTitleWindow != NULL)
@@ -593,12 +584,11 @@ int RunEndoom()
 				KillTimer (Window, 0x5A15A);
 			}
 			ST_Util_FreeBitmap (StartupBitmap);
-			ST_Util_FreeFont (font);
 			return int(bRet == 0 ? mess.wParam : 0);
 		}
 		else if (blinking && mess.message == WM_TIMER && mess.hwnd == Window && mess.wParam == 0x5A15A)
 		{
-			ST_Util_UpdateTextBlink (StartupBitmap, endoom_screen, font, blinkstate);
+			ST_Util_UpdateTextBlink (StartupBitmap, endoom_screen, blinkstate);
 			blinkstate = !blinkstate;
 		}
 		TranslateMessage (&mess);

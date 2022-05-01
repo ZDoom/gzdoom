@@ -415,3 +415,22 @@ FFont *CreateHexLumpFont2(const char *fontname, int lump)
 	if (hexdata.FirstChar == INT_MAX) hexdata.ParseDefinition(lump);
 	return new FHexFont2(fontname, lump);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+uint8_t* GetHexChar(int codepoint)
+{
+	auto lump = fileSystem.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
+	if (hexdata.FirstChar == INT_MAX) hexdata.ParseDefinition(lump);
+
+	if (hexdata.glyphmap[codepoint] > 0)
+	{
+		auto offset = hexdata.glyphmap[codepoint];
+		return &hexdata.glyphdata[offset];
+	}
+	return nullptr;
+}

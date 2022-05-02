@@ -46,13 +46,30 @@
 #define ST_NETNOTCH_WIDTH		4
 #define ST_NETNOTCH_HEIGHT		16
 
+struct StrifeStartupInfo
+{
+	char name[9];
+	uint8_t width, height;
+};
+
+static StrifeStartupInfo StrifeRawPics[] =
+{
+	{ "STRTPA1", 32, 64},
+	{ "STRTPB1", 32, 64},
+	{ "STRTPC1", 32, 64},
+	{ "STRTPD1", 32, 64},
+	{ "STRLZ1", 16, 16},
+	{ "STRLZ2", 16, 16},
+	{ "STRTBOT", 48, 48}
+};
+
 // there is only one palette for all these images.
 static uint8_t startuppalette8[16];
 static uint32_t startuppalette32[16];
 
 //==========================================================================
 //
-// A raw 320x200 graphic used by Heretic and Hexen fullscreen images
+//
 //
 //==========================================================================
 
@@ -72,6 +89,19 @@ public:
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
+class FStrifeStartupTexture : public FImageSource
+{
+public:
+	FStrifeStartupTexture (int lumpnum, int w, int h);
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+};
+
+class FStrifeStartupBackground : public FImageSource
+{
+public:
+	FStrifeStartupBackground (int lumpnum);
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+};
 
 //==========================================================================
 //
@@ -83,7 +113,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize);
 
 //==========================================================================
 //
-//
+// loads all raw images for Hexen's and Strife's startup screens
 //
 //==========================================================================
 
@@ -103,6 +133,19 @@ FImageSource *StartupPageImage_TryCreate(FileReader & file, int lumpnum)
 	{
 		if (!CheckIfRaw(file, ST_NETNOTCH_WIDTH * ST_NETNOTCH_HEIGHT / 2)) return nullptr;
 		return new FNotchTexture(lumpnum, ST_NETNOTCH_WIDTH, ST_NETNOTCH_HEIGHT);
+	}
+	if (fileSystem.CheckFileName(lumpnum, "STARTUP0"))
+	{
+		if (!CheckIfRaw(file, 64000)) return nullptr;
+		return new FStrifeStartupBackground(lumpnum);
+	}
+	for(auto& sst : StrifeRawPics)
+	{
+		if (fileSystem.CheckFileName(lumpnum, sst.name))
+		{
+			if (!CheckIfRaw(file, sst.width * sst.height)) return nullptr;
+			return new FStrifeStartupTexture(lumpnum, sst.width, sst.height);
+		}
 	}
 	return nullptr;
 }
@@ -285,4 +328,68 @@ int FNotchTexture::CopyPixels(FBitmap *bmp, int conversion)
 		Work[i * 2 + 1] = startuppalette32[source[i] & 15];
 	}
 	return 0;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FStrifeStartupTexture::FStrifeStartupTexture (int lumpnum, int w, int h)
+: FImageSource(lumpnum)
+{
+	Width = w;
+	Height = h;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+TArray<uint8_t> FStrifeStartupTexture::CreatePalettedPixels(int conversion)
+{
+	FileData lump = fileSystem.ReadFile (SourceLump);
+	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	TArray<uint8_t> Pixels(Width*Height, true);
+	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
+	ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), source, Width, Height, Width, remap);
+	return Pixels;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FStrifeStartupBackground::FStrifeStartupBackground (int lumpnum)
+: FImageSource(lumpnum)
+{
+	Width = 320;
+	Height = 200;
+}
+
+//==========================================================================
+//
+// this image is very messy but let's prepare it just like Strife does
+// so that the screen can be replaced with a whole image.
+//
+//==========================================================================
+
+TArray<uint8_t> FStrifeStartupBackground::CreatePalettedPixels(int conversion)
+{
+	TArray<uint8_t> source(64000, true);
+	memset(source.Data(), 0xF0, 64000);
+	auto lumpr = fileSystem.OpenFileReader(SourceLump);
+	lumpr.Seek(57 * 320, FileReader::SeekSet);
+	lumpr.Read(source.Data() + 41 * 320, 95 * 320);
+
+	TArray<uint8_t> Pixels(Width*Height, true);
+	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
+	ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), source.Data(), Width, Height, Width, remap);
+	return Pixels;
 }

@@ -351,12 +351,12 @@ FImageSource * FImageSource::GetImage(int lumpnum, bool isflat)
 		{ StbImage_TryCreate,			false },
 		{ TGAImage_TryCreate,			false },
 		{ AnmImage_TryCreate,			false },
+		{ StartupPageImage_TryCreate,	false },
 		{ RawPageImage_TryCreate,		false },
 		{ FlatImage_TryCreate,			true },	// flat detection is not reliable, so only consider this for real flats.
 		{ PatchImage_TryCreate,			false },
 		{ EmptyImage_TryCreate,			false },
 		{ AutomapImage_TryCreate,		false },
-		{ StartupPageImage_TryCreate,	false },
 	};
 
 	if (lumpnum == -1) return nullptr;

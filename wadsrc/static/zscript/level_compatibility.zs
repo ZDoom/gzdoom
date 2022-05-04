@@ -987,6 +987,13 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '30D1480A6D4F3A3153739D4CCF659C4E': // heretic.wad E4M8
+			{
+				// multiplayer teleporter prevents exit on cooperative
+				SetThingFlags(78,MTF_DEATHMATCH);
+				break;
+			}
+
 			case '6CDA2721AA1076F063557CF89D88E92B': // hexen.wad map08
 			{
 				// Amulet of warding accidentally shifted outside of map

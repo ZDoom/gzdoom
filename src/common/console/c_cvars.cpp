@@ -55,6 +55,9 @@ struct FLatchedValue
 
 static TArray<FLatchedValue> LatchedValues;
 
+bool FBaseCVar::m_DoNoSet = false;
+bool FBaseCVar::m_UseCallback = false;
+
 FBaseCVar *CVars = NULL;
 
 int cvar_defflags;
@@ -520,7 +523,6 @@ void FBaseCVar::EnableNoSet ()
 
 void FBaseCVar::EnableCallbacks ()
 {
-	m_inEnable = true;
 	m_UseCallback = true;
 	FBaseCVar *cvar = CVars;
 
@@ -532,7 +534,6 @@ void FBaseCVar::EnableCallbacks ()
 		}
 		cvar = cvar->m_Next;
 	}
-	m_inEnable = false;
 }
 
 void FBaseCVar::DisableCallbacks ()

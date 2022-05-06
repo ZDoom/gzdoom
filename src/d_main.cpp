@@ -569,7 +569,6 @@ EXTERN_CVAR(Int, compatmode)
 
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
-	if (FBaseCVar::m_inEnable) return;
 	for (auto Level : AllLevels())
 	{
 		Level->ApplyCompatibility();
@@ -578,7 +577,6 @@ CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL
 
 CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
-	if (FBaseCVar::m_inEnable) return;
 	for (auto Level : AllLevels())
 	{
 		Level->ApplyCompatibility2();
@@ -586,7 +584,7 @@ CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCAL
 	}
 }
 
-CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE)
+CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	int v, w = 0;
 

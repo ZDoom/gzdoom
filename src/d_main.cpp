@@ -3119,6 +3119,13 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 
 	// Base systems have been inited; enable cvar callbacks
 	FBaseCVar::EnableCallbacks ();
+	
+	// +compatmode cannot be used on the command line, so use this as a substitute
+	auto compatmodeval = Args->CheckValue("-compatmode");
+	if (compatmodeval)
+	{
+		compatmode = (int)strtoll(compatmodeval, nullptr, 10);
+	}
 
 	if (!batchrun) Printf ("S_Init: Setting up sound.\n");
 	S_Init ();

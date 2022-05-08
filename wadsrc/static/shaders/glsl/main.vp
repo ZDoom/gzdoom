@@ -16,8 +16,8 @@ layout(location = 6) in vec3 aLightmap;
 layout(location = 2) out vec4 pixelpos;
 layout(location = 3) out vec3 glowdist;
 layout(location = 4) out vec3 gradientdist;
-layout(location = 5) out vec4 vWorldNormal;
-layout(location = 6) out vec4 vEyeNormal;
+layout(location = 5) out vec4 vWorldNormalOrig;
+layout(location = 6) out vec4 vEyeNormalOrig;
 #endif
 
 #ifdef NO_CLIPDISTANCE_SUPPORT
@@ -84,13 +84,13 @@ void main()
 
 		#ifdef HAS_UNIFORM_VERTEX_DATA
 			if ((useVertexData & 2) == 0)
-				vWorldNormal = NormalModelMatrix * vec4(normalize(uVertexNormal.xyz), 1.0);
+				vWorldNormalOrig = NormalModelMatrix * vec4(normalize(uVertexNormal.xyz), 1.0);
 			else
-				vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+				vWorldNormalOrig = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
 		#else
-			vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+			vWorldNormalOrig = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
 		#endif
-		vEyeNormal = NormalViewMatrix * vec4(normalize(vWorldNormal.xyz), 1.0);
+		vEyeNormalOrig = NormalViewMatrix * vec4(normalize(vWorldNormalOrig.xyz), 1.0);
 	#endif
 	
 	#ifdef SPHEREMAP

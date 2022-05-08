@@ -726,11 +726,7 @@ void main()
 	// Flip normal if it is facing away from the camera
 	vWorldNormal = vWorldNormalOrig;
 	vEyeNormal = vEyeNormalOrig;
-#ifdef VULKAN_COORDINATE_SYSTEM
-	if (gl_FrontFacing)
-#else
-	if (!gl_FrontFacing)
-#endif
+	if (dot(uCameraPos.xyz - pixelpos.xyz, vWorldNormal.xyz) < 0)
 	{
 		vWorldNormal.xyz = -vWorldNormal.xyz;
 		vEyeNormal.xyz = -vEyeNormal.xyz;

@@ -166,7 +166,11 @@ protected:
 	int mDuration;
 	FTextureID mBackground;
 	FString mSubtitle;
+	FString mMusic;
+	int mMusicOrder;
+	bool mMusicLooping;
 	bool mFlatfill;
+	bool mFirst;
 	TArray<FIIntermissionPatch> mOverlays;
 
 	bool CheckOverlay(int i);
@@ -176,6 +180,7 @@ public:
 
 	DIntermissionScreen() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
+	virtual void Start();
 	virtual int Responder (FInputEvent *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
@@ -304,6 +309,7 @@ public:
 	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, bool ending = false);
 	bool Responder (FInputEvent *ev);
 	bool Ticker ();
+	void Start();
 	void Drawer ();
 	void OnDestroy() override;
 	bool NextPage();

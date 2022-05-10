@@ -5,6 +5,7 @@ class IntermissionController native ui
     // This is mostly a black box to the native intermission code.
     // May be scriptified later, but right now we do not need it.
 
+    native void Start();
 	native bool Responder(InputEvent ev);
     native bool Ticker();
     native void Drawer();
@@ -24,6 +25,7 @@ class IntermissionScreenJob : ScreenJob
 		return self;
 	}
 
+	override void Start() { controller.Start(); }
 	override bool OnEvent(InputEvent evt) { return controller.Responder(evt); }
 	override void OnTick() { if (!controller.Ticker()) jobstate = finished; }
 	override void Draw(double smoothratio) { controller.Drawer(); }

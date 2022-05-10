@@ -1555,25 +1555,32 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 			continue;
 
 		other = NULL;
-		if (link->flags & MF_FRIENDLY)
+		if (lookee->flags & MF_FRIENDLY)
 		{
-			if (!lookee->IsFriend(link))
+			if (link->flags & MF_FRIENDLY)
 			{
-				// This is somebody else's friend, so go after it
-				other = link;
-			}
-			else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
-			{
-				other = link->target;
-				if (!(other->flags & MF_SHOOTABLE) ||
-					other->health <= 0 ||
-					(other->flags2 & MF2_DORMANT))
+				if (!lookee->IsFriend(link))
 				{
-					other = NULL;;
+					// This is somebody else's friend, so go after it
+					other = link;
+				}
+				else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
+				{
+					other = link->target;
+					if (!(other->flags & MF_SHOOTABLE) ||
+						other->health <= 0 ||
+						(other->flags2 & MF2_DORMANT))
+					{
+						other = NULL;;
+					}
 				}
 			}
+			else
+			{
+				other = link;
+			}
 		}
-		else
+		else if (lookee->flags8 & MF8_SEEFRIENDLYMONSTERS && link->flags & MF_FRIENDLY)
 		{
 			other = link;
 		}
@@ -1617,7 +1624,7 @@ int P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	AActor *other;
 
-	other = P_BlockmapSearch (actor, actor->friendlyseeblocks, LookForEnemiesInBlock, params);
+	other = P_BlockmapSearch(actor, actor->friendlyseeblocks, LookForEnemiesInBlock, params);
 
 	if (other != NULL)
 	{
@@ -1726,6 +1733,12 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 
 	}	// [SP] if false, and in deathmatch, intentional fall-through
+	else if (actor->flags8 & MF8_SEEFRIENDLYMONSTERS)
+	{
+		bool result = P_LookForEnemies (actor, allaround, params);
+
+		if (result) return true;
+	}
 
 	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		actor->Level->isPrimaryLevel() &&

@@ -112,6 +112,7 @@ enum
 	QF_MAX =			1 << 3,
 	QF_FULLINTENSITY =	1 << 4,
 	QF_WAVE =			1 << 5,
+	QF_3D =				1 << 6,
 };
 
 struct FQuakeJiggers

@@ -1819,7 +1819,6 @@ OptionMenu "CompatSoundMenu" protected
 	Option "$CMPTMNU_SILENTPICKUP",					"compat_SILENTPICKUP", "YesNo"
 	Option "$CMPTMNU_SILENTINSTANTFLOORS",			"compat_silentinstantfloors", "YesNo"
 	Option "$CMPTMNU_SECTORSOUNDS",					"compat_SECTORSOUNDS", "YesNo"
-	Option "$CMPTMNU_SOUNDCUTOFF",					"compat_soundcutoff", "YesNo"
 	Option "$CMPTMNU_SOUNDTARGET",					"compat_SOUNDTARGET", "YesNo"
 	Class "CompatibilityMenu"
 }

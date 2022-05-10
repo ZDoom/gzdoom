@@ -423,8 +423,9 @@ enum ActorFlag8
 	MF8_MAP07BOSS2		= 0x00800000,	// MBF21 boss death.
 	MF8_AVOIDHAZARDS	= 0x01000000,	// MBF AI enhancement.
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
-	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalwetrust] Friendly monster will not follow players.
-	MF8_MASTERNOSEE		= 0x08000000,	// Don't show object in first person if their master is the current camera.
+	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
+	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
+	MF8_MASTERNOSEE		= 0x10000000,	// Don't show object in first person if their master is the current camera.
 };
 
 // --- mobj.renderflags ---

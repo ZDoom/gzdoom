@@ -561,6 +561,11 @@ void OpenGLFrameBuffer::PostProcessScene(bool swscene, int fixedcm, float flash,
 	GLRenderer->PostProcessScene(fixedcm, flash, afterBloomDrawEndScene2D);
 }
 
+bool OpenGLFrameBuffer::CompileNextShader()
+{
+	return GLRenderer->mShaderManager->CompileNextShader();
+}
+
 //==========================================================================
 //
 // OpenGLFrameBuffer :: WipeStartScreen

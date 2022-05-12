@@ -207,6 +207,11 @@ void VulkanFrameBuffer::Update()
 	Super::Update();
 }
 
+bool VulkanFrameBuffer::CompileNextShader()
+{
+	return mShaderManager->CompileNextShader();
+}
+
 void VulkanFrameBuffer::DeleteFrameObjects(bool uploadOnly)
 {
 	FrameTextureUpload.Buffers.clear();

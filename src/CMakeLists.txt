@@ -1083,6 +1083,7 @@ set (PCH_SOURCES
 	common/textures/formats/tgatexture.cpp
 	common/textures/formats/stbtexture.cpp
 	common/textures/formats/anmtexture.cpp
+	common/textures/formats/startscreentexture.cpp
 	common/textures/hires/hqresize.cpp
 	common/models/models_md3.cpp
 	common/models/models_md2.cpp

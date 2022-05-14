@@ -77,7 +77,6 @@ public:
 	void NetDone();
 	bool NetLoop(bool (*timer_callback)(void*), void* userdata);
 protected:
-	long long NetMarqueeMode;
 	int NetMaxPos, NetCurPos;
 };
 

@@ -11,6 +11,8 @@ void D_ConfirmSendStats()
 
 #else // !NO_SEND_STATS
 
+#include "i_mainwindow.h"
+
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -340,8 +342,7 @@ void D_ConfirmSendStats()
 	UCVarValue enabled = { 0 };
 
 #ifdef _WIN32
-	extern HWND Window;
-	enabled.Int = MessageBoxA(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
+	enabled.Int = MessageBoxA(mainwindow.GetHandle(), MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
 #elif defined __APPLE__
 	const CFStringRef messageString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, MESSAGE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
 	const CFStringRef titleString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, TITLE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);

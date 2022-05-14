@@ -53,6 +53,8 @@
 #include "keydef.h"
 #include "printf.h"
 
+#include "i_mainwindow.h"
+
 #define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
 
 // WBEMIDL BITS -- because w32api doesn't have this, either -----------------
@@ -266,7 +268,6 @@ protected:
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern LPDIRECTINPUT8 g_pdi;
-extern HWND Window;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -372,7 +373,7 @@ bool FDInputJoystick::GetDevice()
 		Printf(TEXTCOLOR_ORANGE "Setting data format for %s failed.\n", Name.GetChars());
 		return false;
 	}
-	hr = Device->SetCooperativeLevel(Window, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
+	hr = Device->SetCooperativeLevel(mainwindow.GetHandle(), DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
 	if (FAILED(hr))
 	{
 		Printf(TEXTCOLOR_ORANGE "Setting cooperative level for %s failed.\n", Name.GetChars());

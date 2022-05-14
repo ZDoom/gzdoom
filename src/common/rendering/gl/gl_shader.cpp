@@ -741,7 +741,7 @@ void FShaderManager::SetActiveShader(FShader *sh)
 
 FShader *FShaderManager::BindEffect(int effect, EPassType passType)
 {
-	if (passType < mPassShaders.Size() && mCompilePass > -1)
+	if (passType < mPassShaders.Size() && mCompilePass == -1)
 		return mPassShaders[passType]->BindEffect(effect);
 	else
 		return nullptr;

@@ -86,6 +86,7 @@
 #include "printf.h"
 #include "c_buttons.h"
 #include "cmdlib.h"
+#include "i_mainwindow.h"
 
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
@@ -116,7 +117,6 @@ extern bool ToggleFullscreen;
 bool VidResizing;
 
 extern BOOL vidactive;
-extern HWND Window, ConWindow;
 
 EXTERN_CVAR (String, language)
 EXTERN_CVAR (Bool, lookstrafe)
@@ -160,7 +160,7 @@ static void I_CheckGUICapture ()
 
 void I_SetMouseCapture()
 {
-	SetCapture(Window);
+	SetCapture(mainwindow.GetHandle());
 }
 
 void I_ReleaseMouseCapture()
@@ -444,7 +444,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SIZE:
-		InvalidateRect (Window, NULL, FALSE);
+		InvalidateRect (hWnd, NULL, FALSE);
 		break;
 
 	case WM_KEYDOWN:
@@ -820,7 +820,7 @@ IJoystickConfig *I_UpdateDeviceList()
 
 void I_PutInClipboard (const char *str)
 {
-	if (str == NULL || !OpenClipboard (Window))
+	if (str == NULL || !OpenClipboard (mainwindow.GetHandle()))
 		return;
 	EmptyClipboard ();
 
@@ -842,7 +842,7 @@ FString I_GetFromClipboard (bool return_nothing)
 	HGLOBAL cliphandle;
 	wchar_t *clipstr;
 
-	if (return_nothing || !IsClipboardFormatAvailable (CF_UNICODETEXT) || !OpenClipboard (Window))
+	if (return_nothing || !IsClipboardFormatAvailable (CF_UNICODETEXT) || !OpenClipboard (mainwindow.GetHandle()))
 		return retstr;
 
 	cliphandle = GetClipboardData (CF_UNICODETEXT);

@@ -43,13 +43,11 @@
 #include "startupinfo.h"
 #include "palutil.h"
 #include "i_interface.h"
+#include "i_mainwindow.h"
 
 uint8_t* GetHexChar(int codepoint);
 
 void I_GetEvent();	// i_input.h pulls in too much garbage.
-
-void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int right, int bottom);
-bool ST_Util_CreateStartupWindow();
 
 static const uint16_t IBM437ToUnicode[] = {
 	0x0000, //#NULL
@@ -420,7 +418,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 	int notch_lump = fileSystem.CheckNumForName("NOTCH");
 	hr = -1;
 
-	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 153648 || !ST_Util_CreateStartupWindow() ||
+	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 153648 ||
 		netnotch_lump < 0 || fileSystem.FileLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
 		notch_lump < 0 || fileSystem.FileLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
 	{
@@ -585,7 +583,7 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 	uint8_t loading_screen[4000];
 
 	hr = -1;
-	if (loading_lump < 0 || fileSystem.FileLength(loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
+	if (loading_lump < 0 || fileSystem.FileLength(loading_lump) != 4000)
 	{
 		return;
 	}
@@ -657,7 +655,7 @@ void FHereticStartupScreen::LoadingStatus(const char* message, int colors)
 	{
 		ST_Util_DrawChar(StartupBitmap, 17 + x, HMsgY, message[x], colors);
 	}
-	ST_Util_InvalidateRect(StartupBitmap, 17 * 8, HMsgY * 16, (17 + x) * 8, HMsgY * 16 + 16);
+	mainwindow.InvalidateStartupScreen(17 * 8, HMsgY * 16, (17 + x) * 8, HMsgY * 16 + 16);
 	HMsgY++;
 	I_GetEvent();
 }
@@ -678,7 +676,7 @@ void FHereticStartupScreen::AppendStatusLine(const char* status)
 	{
 		ST_Util_DrawChar(StartupBitmap, SMsgX + x, 24, status[x], 0x1f);
 	}
-	ST_Util_InvalidateRect(StartupBitmap, SMsgX * 8, 24 * 16, (SMsgX + x) * 8, 25 * 16);
+	mainwindow.InvalidateStartupScreen(SMsgX * 8, 24 * 16, (SMsgX + x) * 8, 25 * 16);
 	SMsgX += x;
 	I_GetEvent();
 }
@@ -711,7 +709,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 		StartupPics[i] = NULL;
 	}
 
-	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
+	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 64000)
 	{
 		return;
 	}
@@ -887,7 +885,7 @@ void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y
 	int destpitch = bitmap_info->bmiHeader.biWidth;
 	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth, y + height);
+	mainwindow.InvalidateStartupScreen(x, y, x + bytewidth, y + height);
 
 	if (bytewidth == 8)
 	{ // progress notches
@@ -935,7 +933,7 @@ void ST_Util_DrawBlock4(BitmapInfo* bitmap_info, const uint8_t* src, int x, int 
 	int destpitch = bitmap_info->bmiHeader.biWidth;
 	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth * 2, y + height);
+	mainwindow.InvalidateStartupScreen(x, y, x + bytewidth * 2, y + height);
 
 	for (; height > 0; --height)
 	{
@@ -961,7 +959,7 @@ void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int
 	int destpitch = bitmap_info->bmiHeader.biWidth;
 	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth, y + height);
+	mainwindow.InvalidateStartupScreen(x, y, x + bytewidth, y + height);
 
 	while (height > 0)
 	{
@@ -1165,7 +1163,7 @@ void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen
 			if (text_screen[1] & 0x80)
 			{
 				ST_Util_DrawChar(bitmap_info, x, y, on ? IBM437ToUnicode[text_screen[0]] : ' ', text_screen[1]);
-				ST_Util_InvalidateRect(bitmap_info, x * 8, y * 16, x * 8 + 8, y * 16 + 16);
+				mainwindow.InvalidateStartupScreen(x * 8, y * 16, x * 8 + 8, y * 16 + 16);
 			}
 			text_screen += 2;
 		}

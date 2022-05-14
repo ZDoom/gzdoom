@@ -44,6 +44,8 @@
 #include "cmdlib.h"
 #include "keydef.h"
 
+#include "i_mainwindow.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_DEADZONE			0.25f
@@ -213,8 +215,6 @@ struct PS2Descriptor
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern HWND Window;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -905,7 +905,7 @@ bool FRawPS2Manager::GetDevice()
 	rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
 	rid.usUsage = HID_GDP_JOYSTICK;
 	rid.dwFlags = RIDEV_INPUTSINK;
-	rid.hwndTarget = Window;
+	rid.hwndTarget = mainwindow.GetHandle();
 	if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
 	{
 		return false;
@@ -1273,7 +1273,7 @@ void FRawPS2Manager::DoRegister()
 		if (!Registered)
 		{
 			rid.dwFlags = RIDEV_INPUTSINK;
-			rid.hwndTarget = Window;
+			rid.hwndTarget = mainwindow.GetHandle();
 			if (RegisterRawInputDevices(&rid, 1, sizeof(rid)))
 			{
 				Registered = true;

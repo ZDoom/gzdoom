@@ -3,14 +3,13 @@
 #include "hardware.h"
 #include "engineerrors.h"
 #include <Windows.h>
+#include "i_mainwindow.h"
 
 #ifdef HAVE_SOFTPOLY
 
 EXTERN_CVAR(Bool, vid_vsync)
 
 bool ViewportLinearScale();
-
-extern HWND Window;
 
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
@@ -41,7 +40,7 @@ void I_PolyPresentInit()
 	}
 
 	RECT rect = {};
-	GetClientRect(Window, &rect);
+	GetClientRect(mainwindow.GetHandle(), &rect);
 
 	ClientWidth = rect.right;
 	ClientHeight = rect.bottom;
@@ -52,10 +51,10 @@ void I_PolyPresentInit()
 	pp.BackBufferWidth = ClientWidth;
 	pp.BackBufferHeight = ClientHeight;
 	pp.BackBufferCount = 1;
-	pp.hDeviceWindow = Window;
+	pp.hDeviceWindow = mainwindow.GetHandle();
 	pp.PresentationInterval = CurrentVSync ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_IMMEDIATE;
 
-	HRESULT result = d3d9->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window, D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, nullptr, &device);
+	HRESULT result = d3d9->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, mainwindow.GetHandle(), D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, nullptr, &device);
 	if (FAILED(result))
 	{
 		I_FatalError("IDirect3D9.CreateDevice failed");
@@ -67,7 +66,7 @@ uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
 	HRESULT result;
 
 	RECT rect = {};
-	GetClientRect(Window, &rect);
+	GetClientRect(mainwindow.GetHandle(), &rect);
 	if (rect.right != ClientWidth || rect.bottom != ClientHeight || CurrentVSync != vsync)
 	{
 		if (surface)
@@ -86,7 +85,7 @@ uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
 		pp.BackBufferWidth = ClientWidth;
 		pp.BackBufferHeight = ClientHeight;
 		pp.BackBufferCount = 1;
-		pp.hDeviceWindow = Window;
+		pp.hDeviceWindow = mainwindow.GetHandle();
 		pp.PresentationInterval = CurrentVSync ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_IMMEDIATE;
 		device->Reset(&pp);
 	}

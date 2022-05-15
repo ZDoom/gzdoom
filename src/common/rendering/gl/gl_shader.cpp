@@ -830,6 +830,7 @@ bool FShaderCollection::CompileNextShader()
 		FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
 		FShader *shc = Compile(name, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, mPassType);
 		mMaterialShaders.Push(shc);
+		mCompileIndex++;
 		if (mCompileIndex >= (int)usershaders.Size())
 		{
 			mCompileIndex = 0;

@@ -55,11 +55,11 @@ body:
     validations:
       required: false
   - type: input
-    id: other
+    id: os_detail
     attributes:
-      label: If Other OS, please describe
+      label: Please describe your specific OS version
       description: Other details
-      placeholder: "Windows, Mac OSX version, Debian, Ubuntu, Arch, etc."
+      placeholder: "Windows 11 Home/Pro/Server/etc, Mac OSX version, Debian 10/11/etc, Ubuntu 18/20/etc, Arch, etc."
     validations:
       required: false
   - type: input

@@ -99,13 +99,13 @@ bool VkShaderManager::CompileNextShader()
 		if (compileIndex >= MAX_EFFECTS)
 		{
 			compileIndex = 0;
+			compilePass++;
 			if (compilePass == MAX_PASS_TYPES)
 			{
 				compileIndex = -1; // we're done.
 				return true;
 			}
 			compileState = 0;
-			compilePass++;
 		}
 	}
 	return false;
@@ -135,7 +135,7 @@ VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassT
 {
 	if (compileIndex != -1) return &mMaterialShaders[0][0];
 	// indices 0-2 match the warping modes, 3 no texture, the following are custom
-	if (!alphateston && eff <= SHADER_NoTexture)
+	if (!alphateston && eff < SHADER_NoTexture)
 	{
 		return &mMaterialShadersNAT[passType][eff];	// Non-alphatest shaders are only created for default, warp1+2. The rest won't get used anyway
 	}

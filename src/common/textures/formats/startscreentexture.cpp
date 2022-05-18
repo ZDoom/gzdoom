@@ -36,13 +36,12 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "w_wad.h"
 #include "gi.h"
 #include "bitmap.h"
-#include "textures/textures.h"
+#include "textures.h"
 #include "imagehelpers.h"
 #include "image.h"
-#include "st_start.h"
+#include "startscreen.h"
 
 
 //==========================================================================
@@ -53,11 +52,21 @@
 
 class FStartScreenTexture : public FImageSource
 {
-	BitmapInfo *info; // This must remain constant for the lifetime of this texture
+	FBitmap& info; // This must remain constant for the lifetime of this texture
 
 public:
-	FStartScreenTexture (BitmapInfo *srcdata);
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	FStartScreenTexture(FBitmap& srcdata)
+		: FImageSource(-1), info(srcdata)
+	{
+		Width = srcdata.GetWidth();
+		Height = srcdata.GetHeight();
+		bUseGamePalette = false;
+	}
+	int CopyPixels(FBitmap* bmp, int conversion)
+	{
+		bmp->Blit(0, 0, info);
+		return 0;
+	}
 };
 
 //==========================================================================
@@ -66,48 +75,9 @@ public:
 //
 //==========================================================================
 
-FImageSource *CreateStartScreenTexture(BitmapInfo *srcdata)
+FImageSource *CreateStartScreenTexture(FBitmap& srcdata)
 {
 	return new FStartScreenTexture(srcdata);
 }
 
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FStartScreenTexture::FStartScreenTexture (BitmapInfo *srcdata)
-: FImageSource(-1)
-{
-	Width = srcdata->bmiHeader.biWidth;
-	Height = srcdata->bmiHeader.biHeight;
-	info = srcdata;
-	bUseGamePalette = false;
-
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-int FStartScreenTexture::CopyPixels(FBitmap *bmp, int conversion)
-{
-	const RgbQuad *psource = info->bmiColors;
-	PalEntry paldata[256] = {};
-	auto pixels = ST_Util_BitsForBitmap(info);
-	for (uint32_t i = 0; i < info->bmiHeader.biClrUsed; i++)
-	{
-		PalEntry &pe = paldata[i];
-		pe.r = psource[i].rgbRed;
-		pe.g = psource[i].rgbGreen;
-		pe.b = psource[i].rgbBlue;
-		pe.a = 255;
-	}
-	bmp->CopyPixelData(0, 0, pixels, Width, Height, 1, (Width + 3) & ~3, 0, paldata);
-	
-	return 0;
-}

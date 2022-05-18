@@ -622,6 +622,7 @@ file( GLOB HEADER_FILES
 	common/platform/win32/*.h
 	common/models/*.h
 	common/textures/*.h
+	common/startscreen/*.h
 	common/textures/hires/hqnx/*.h
 	common/textures/hires/hqnx_asm/*.h
 	common/textures/hires/xbr/*.h
@@ -1042,6 +1043,12 @@ set (PCH_SOURCES
 	common/2d/wipe.cpp
 	common/thirdparty/gain_analysis.cpp
 	common/thirdparty/sfmt/SFMT.cpp
+	common/startscreen/startscreen.cpp
+	common/startscreen/startscreen_heretic.cpp
+	common/startscreen/startscreen_hexen.cpp
+	common/startscreen/startscreen_strife.cpp
+	common/startscreen/startscreen_generic.cpp
+	common/startscreen/endoom.cpp
 	common/fonts/singlelumpfont.cpp
 	common/fonts/singlepicfont.cpp
 	common/fonts/specialfont.cpp
@@ -1313,6 +1320,7 @@ include_directories( .
 	common/statusbar
 	common/fonts
 	common/objects
+	common/startscreen
 	common/rendering
 	common/rendering/hwrenderer/data
 	common/rendering/gl_load

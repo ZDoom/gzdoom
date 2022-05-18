@@ -403,7 +403,6 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, i
 	}
 }
 
-
 template<class TDest, class TBlend> 
 void iCopyPaletted(uint8_t *buffer, const uint8_t * patch, int srcwidth, int srcheight, int Pitch,
 					int step_x, int step_y, int rotate, const PalEntry * palette, FCopyInfo *inf)

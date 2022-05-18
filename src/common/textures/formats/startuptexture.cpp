@@ -322,7 +322,7 @@ int FNotchTexture::CopyPixels(FBitmap *bmp, int conversion)
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 
 	auto Work = (uint32_t*)bmp->GetPixels();
-	for(int i=0; i * Width * Height / 2; i++)
+	for(int i = 0; i < Width * Height / 2; i++)
 	{
 		Work[i * 2] = startuppalette32[source[i] >> 4];
 		Work[i * 2 + 1] = startuppalette32[source[i] & 15];

@@ -1270,7 +1270,7 @@ static int PatchThing (int thingy)
 				di->Amount = -1;
 				info->GetInfo()->DropItems = di;
 			}
-			else if (val == -1)
+			else if ((int)val == -1)
 			{
 				info->GetInfo()->DropItems = nullptr;
 			}

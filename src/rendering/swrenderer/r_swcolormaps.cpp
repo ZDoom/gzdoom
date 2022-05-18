@@ -45,7 +45,6 @@
 #include "c_dispatch.h"
 #include "sc_man.h"
 #include "v_text.h"
-#include "st_start.h"
 #include "doomstat.h"
 #include "v_palette.h"
 #include "colormatcher.h"

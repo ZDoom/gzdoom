@@ -340,7 +340,7 @@ public:
 	FShader *Get(unsigned int eff, bool alphateston)
 	{
 		// indices 0-2 match the warping modes, 3 no texture, the following are custom
-		if (!alphateston && eff < SHADER_NoTexture)
+		if (!alphateston && eff < SHADER_NoTexture && mCompileState == -1)
 		{
 			return mMaterialShadersNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
 		}

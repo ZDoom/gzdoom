@@ -219,27 +219,6 @@ void FBasicStartupScreen::NetDone()
 
 //==========================================================================
 //
-// FBasicStartupScreen :: NetMessage
-//
-// Call this between NetInit() and NetDone() instead of Printf() to
-// display messages, in case the progress meter is mixed in the same output
-// stream as normal messages.
-//
-//==========================================================================
-
-void FBasicStartupScreen::NetMessage(const char *format, ...)
-{
-	FString str;
-	va_list argptr;
-
-	va_start (argptr, format);
-	str.VFormat (format, argptr);
-	va_end (argptr);
-	Printf ("%s\n", str.GetChars());
-}
-
-//==========================================================================
-//
 // FBasicStartupScreen :: NetProgress
 //
 // Sets the network progress meter. If count is 0, it gets bumped by 1.

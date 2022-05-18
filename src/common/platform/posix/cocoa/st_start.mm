@@ -121,18 +121,6 @@ void FBasicStartupScreen::NetProgress(const int count)
 	FConsoleWindow::GetInstance().NetProgress(count);
 }
 
-void FBasicStartupScreen::NetMessage(const char* const format, ...)
-{
-	va_list args;
-	va_start(args, format);
-
-	FString message;
-	message.VFormat(format, args);
-	va_end(args);
-
-	Printf("%s\n", message.GetChars());
-}
-
 void FBasicStartupScreen::NetDone()
 {
 	FConsoleWindow::GetInstance().NetDone();

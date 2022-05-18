@@ -11,7 +11,7 @@
 
 void I_GetVulkanDrawableSize(int *width, int *height)
 {
-	assert(Window);
+	assert(mainwindow.GetHandle());
 
 	RECT clientRect = { 0 };
 	GetClientRect(mainwindow.GetHandle(), &clientRect);

@@ -376,38 +376,6 @@ bool MainWindow::RunMessageLoop(bool (*timer_callback)(void*), void* userdata)
 	return false;
 }
 
-void MainWindow::ShowStartupScreen()
-{
-	StartupScreen = CreateWindowEx(WS_EX_NOPARENTNOTIFY, L"STATIC", 0, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, 0, GetModuleHandle(0), 0);
-	if (StartupScreen != 0)
-		SetWindowLong(StartupScreen, GWL_ID, IDC_STATIC_STARTUP);
-}
-
-void MainWindow::HideStartupScreen()
-{
-	if (StartupScreen != 0)
-	{
-		DestroyWindow(StartupScreen);
-		StartupScreen = 0;
-	}
-}
-
-void MainWindow::InvalidateStartupScreen()
-{
-	InvalidateRect(StartupScreen, 0, TRUE);
-}
-
-void MainWindow::InvalidateStartupScreen(int left, int top, int right, int bottom)
-{
-	RECT rect;
-	GetClientRect(StartupScreen, &rect);
-	rect.left = left * rect.right / StartupBitmap->bmiHeader.biWidth - 1;
-	rect.top = top * rect.bottom / StartupBitmap->bmiHeader.biHeight - 1;
-	rect.right = right * rect.right / StartupBitmap->bmiHeader.biWidth + 1;
-	rect.bottom = bottom * rect.bottom / StartupBitmap->bmiHeader.biHeight + 1;
-	InvalidateRect(StartupScreen, &rect, FALSE);
-}
-
 void MainWindow::UpdateLayout()
 {
 	LayoutMainWindow(Window, 0);
@@ -456,18 +424,8 @@ void MainWindow::LayoutMainWindow(HWND hWnd, HWND pane)
 		leftside = GetSystemMetrics(SM_CXICON) + 6;
 		MoveWindow(ErrorIcon, 0, bannerheight, leftside, h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
 	}
-	// If there is a startup screen, it covers the log window
-	if (StartupScreen != NULL)
-	{
-		SetWindowPos(StartupScreen, HWND_TOP, leftside, bannerheight, w - leftside, h - bannerheight - errorpaneheight - progressheight - netpaneheight, SWP_SHOWWINDOW);
-		InvalidateRect(StartupScreen, NULL, FALSE);
-		MoveWindow(ConWindow, 0, 0, 0, 0, TRUE);
-	}
-	else
-	{
-		// The log window uses whatever space is left.
-		MoveWindow(ConWindow, leftside, bannerheight, w - leftside, h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
-	}
+	// The log window uses whatever space is left.
+	MoveWindow(ConWindow, leftside, bannerheight, w - leftside, h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
 }
 
 // Lays out the error pane to the desired width, returning the required height.
@@ -708,35 +666,6 @@ LRESULT MainWindow::OnDrawItem(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		TextOutW(drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, widename.c_str(), (int)widename.length());
 		SelectObject(drawitem->hDC, oldfont);
 		return TRUE;
-	}
-	// Draw startup screen
-	else if (wParam == IDC_STATIC_STARTUP)
-	{
-		if (StartupScreen != NULL)
-		{
-			drawitem = (LPDRAWITEMSTRUCT)lParam;
-
-			rect = drawitem->rcItem;
-			// Windows expects DIBs to be bottom-up but ours is top-down,
-			// so flip it vertically while drawing it.
-			StretchDIBits(drawitem->hDC, rect.left, rect.bottom - 1, rect.right - rect.left, rect.top - rect.bottom,
-				0, 0, StartupBitmap->bmiHeader.biWidth, StartupBitmap->bmiHeader.biHeight,
-				ST_Util_BitsForBitmap(StartupBitmap), reinterpret_cast<const BITMAPINFO*>(StartupBitmap), DIB_RGB_COLORS, SRCCOPY);
-
-			// If the title banner is gone, then this is an ENDOOM screen, so draw a short prompt
-			// where the command prompt would have been in DOS.
-			if (GameTitleWindow == NULL)
-			{
-				auto quitmsg = WideString(GStrings("TXT_QUITENDOOM"));
-
-				SetTextColor(drawitem->hDC, RGB(240, 240, 240));
-				SetBkMode(drawitem->hDC, TRANSPARENT);
-				oldfont = SelectObject(drawitem->hDC, (HFONT)GetStockObject(DEFAULT_GUI_FONT));
-				TextOutW(drawitem->hDC, 3, drawitem->rcItem.bottom - DefaultGUIFontHeight - 3, quitmsg.c_str(), (int)quitmsg.length());
-				SelectObject(drawitem->hDC, oldfont);
-			}
-			return TRUE;
-		}
 	}
 	// Draw stop icon.
 	else if (wParam == IDC_ICONPIC)

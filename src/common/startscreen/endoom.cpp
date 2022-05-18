@@ -66,13 +66,13 @@
 // TYPES -------------------------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-#if 0
+
 CUSTOM_CVAR(Int, showendoom, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0) self = 0;
 	else if (self > 2) self=2;
 }
-#endif
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -138,7 +138,6 @@ void FEndoomScreen::Update()
 }
 
 
-#if 0 // this part is not ready yet.
 //==========================================================================
 //
 // ST_Endoom
@@ -198,4 +197,3 @@ void ST_Endoom()
 	int code = RunEndoom();
 	throw CExitEvent(code);
 }
-#endif

@@ -368,8 +368,9 @@ FStartScreen* GetGameStartScreen(int max_progress)
 			Printf("Error creating start screen: %s\n", err.what());
 			// fall through to the generic startup screen
 		}
+		return CreateGenericStartScreen(max_progress);
 	}
-	return CreateGenericStartScreen(max_progress);
+	return nullptr;
 }
 
 //==========================================================================

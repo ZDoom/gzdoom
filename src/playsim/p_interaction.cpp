@@ -76,6 +76,7 @@ EXTERN_CVAR (Bool, show_obituaries)
 CVAR (Float, sv_damagefactormobj, 1.0, CVAR_SERVERINFO|CVAR_CHEAT)
 CVAR (Float, sv_damagefactorfriendly, 1.0, CVAR_SERVERINFO|CVAR_CHEAT)
 CVAR (Float, sv_damagefactorplayer, 1.0, CVAR_SERVERINFO|CVAR_CHEAT)
+CVAR (Float, sv_ammofactor, 1.0, CVAR_SERVERINFO|CVAR_CHEAT) // used in the zscript ammo code
 
 //
 // GET STUFF

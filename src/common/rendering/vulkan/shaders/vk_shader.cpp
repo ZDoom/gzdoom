@@ -124,11 +124,14 @@ VkShaderManager::~VkShaderManager()
 
 VkShaderProgram *VkShaderManager::GetEffect(int effect, EPassType passType)
 {
-	if (compileIndex > -1 && effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[passType][effect].frag)
+	if (compileIndex != -1 && effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[passType][effect].frag)
 	{
 		return &mEffectShaders[passType][effect];
 	}
-	return nullptr;
+	else
+	{
+		return &mEffectShaders[passType][0];
+	}
 }
 
 VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)

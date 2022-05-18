@@ -135,16 +135,19 @@ public:
 
 	FRemapTable* GetTranslation(int slot, int index)
 	{
+		if (TranslationTables.Size() <= (unsigned)slot) return nullptr;
 		return TranslationTables[slot].GetVal(index);
 	}
 
 	void ClearTranslationSlot(int slot)
 	{
+		if (TranslationTables.Size() <= (unsigned)slot) return;
 		TranslationTables[slot].Clear();
 	}
 
 	unsigned NumTranslations(int slot) const
 	{
+		if (TranslationTables.Size() <= (unsigned)slot) return 0;
 		return TranslationTables[slot].Size();
 	}
 

@@ -79,7 +79,7 @@ double PerfToSec, PerfToMillisec;
 CVAR(Bool, con_printansi, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR(Bool, con_4bitansi, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 
-extern FStartupScreen *StartScreen;
+extern FStartupScreen *StartWindow;
 
 void I_SetIWADInfo()
 {
@@ -278,10 +278,10 @@ void I_PrintStr(const char *cp)
 		}
 	}
 
-	if (StartScreen) CleanProgressBar();
+	if (StartWindow) CleanProgressBar();
 	fputs(printData.GetChars(),stdout);
 	if (terminal) fputs("\033[0m",stdout);
-	if (StartScreen) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
+	if (StartWindow) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
 }
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)

@@ -933,3 +933,19 @@ void MainWindow::GetLog(std::function<bool(const void* data, uint32_t size, uint
 	EDITSTREAM streamer = { (DWORD_PTR)&writeData, 0, WriteLogFileStreamer };
 	SendMessage(ConWindow, EM_STREAMOUT, SF_RTF, (LPARAM)&streamer);
 }
+
+// each platform has its own specific version of this function.
+void MainWindow::SetWindowTitle(const char* caption)
+{
+	std::wstring widecaption;
+	if (!caption)
+	{
+		FStringf default_caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		widecaption = default_caption.WideString();
+	}
+	else
+	{
+		widecaption = WideString(caption);
+	}
+	SetWindowText(Window, widecaption.c_str());
+}

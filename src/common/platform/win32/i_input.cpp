@@ -50,18 +50,6 @@
 #pragma warning(disable:4244)
 #endif
 
-// Compensate for w32api's lack
-#ifndef WM_WTSSESSION_CHANGE
-#define WM_WTSSESSION_CHANGE 0x02B1
-#define WTS_CONSOLE_CONNECT 1
-#define WTS_CONSOLE_DISCONNECT 2
-#define WTS_SESSION_LOCK 7
-#define WTS_SESSION_UNLOCK 8
-#endif
-#ifndef PBT_APMSUSPEND
-// w32api does not #define the PBT_ macros in winuser.h like the PSDK does
-#include <pbt.h>
-#endif
 #ifndef GET_RAWINPUT_CODE_WPARAM
 #define GET_RAWINPUT_CODE_WPARAM(wParam)	((wParam) & 0xff)
 #endif
@@ -105,8 +93,6 @@ FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
 
 
 extern HINSTANCE g_hInst;
-extern DWORD SessionID;
-
 static HMODULE DInputDLL;
 
 bool GUICapture;
@@ -134,7 +120,6 @@ LPDIRECTINPUT			g_pdi3;
 
 extern bool AppActive;
 
-int SessionState = 0;
 int BlockMouseMove;
 
 static bool EventHandlerResultForNativeMouse;
@@ -508,65 +493,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
 		S_SetSoundPaused (wParam);
-		break;
-
-	case WM_WTSSESSION_CHANGE:
-	case WM_POWERBROADCAST:
-		{
-			if (message == WM_WTSSESSION_CHANGE && lParam == (LPARAM)SessionID)
-			{
-#ifdef _DEBUG
-				OutputDebugStringA ("SessionID matched\n");
-#endif
-				// When using fast user switching, XP will lock a session before
-				// disconnecting it, and the session will be unlocked before reconnecting it.
-				// For our purposes, video output will only happen when the session is
-				// both unlocked and connected (that is, SessionState is 0).
-				switch (wParam)
-				{
-				case WTS_SESSION_LOCK:
-					SessionState |= 1;
-					break;
-				case WTS_SESSION_UNLOCK:
-					SessionState &= ~1;
-					break;
-				case WTS_CONSOLE_DISCONNECT:
-					SessionState |= 2;
-					break;
-				case WTS_CONSOLE_CONNECT:
-					SessionState &= ~2;
-					break;
-				}
-			}
-			else if (message == WM_POWERBROADCAST)
-			{
-				switch (wParam)
-				{
-				case PBT_APMSUSPEND:
-					SessionState |= 4;
-					break;
-				case PBT_APMRESUMESUSPEND:
-					SessionState &= ~4;
-					break;
-				}
-			}
-
-			if (GSnd != NULL)
-			{
-#if 0
-				// Do we actually need this here?
-				if (!oldstate && SessionState)
-				{
-					GSnd->SuspendSound ();
-				}
-#endif
-			}
-#ifdef _DEBUG
-			char foo[256];
-			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", (long)lParam, (int)wParam);
-			OutputDebugStringA (foo);
-#endif
-		}
 		break;
 
 	case WM_ERASEBKGND:

@@ -43,6 +43,8 @@ public:
 	void HideStartupScreen();
 	void InvalidateStartupScreen();
 	void InvalidateStartupScreen(int left, int top, int right, int bottom);
+	
+	void SetWindowTitle(const char* caption);
 
 	HWND GetHandle() { return Window; }
 

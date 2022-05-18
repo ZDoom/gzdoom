@@ -48,9 +48,6 @@
 #pragma warning(disable:4244)
 #endif
 
-//#include <wtsapi32.h>
-#define NOTIFY_FOR_THIS_SESSION 0
-
 #ifdef _MSC_VER
 #include <eh.h>
 #include <new.h>
@@ -116,57 +113,13 @@ extern UINT TimerPeriod;
 FArgs *Args;
 
 HINSTANCE		g_hInst;
-DWORD			SessionID;
 HANDLE			MainThread;
 DWORD			MainThreadID;
 HANDLE			StdOut;
 bool			FancyStdOut, AttachedStdOut;
 
-FModule Kernel32Module{"Kernel32"};
-FModule Shell32Module{"Shell32"};
-FModule User32Module{"User32"};
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static HMODULE hwtsapi32;		// handle to wtsapi32.dll
-
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// UnCOM
-//
-// Called by atexit if CoInitialize() succeeded.
-//
-//==========================================================================
-
-static void UnCOM (void)
-{
-	CoUninitialize ();
-}
-
-//==========================================================================
-//
-// UnWTS
-//
-// Called by atexit if RegisterSessionNotification() succeeded.
-//
-//==========================================================================
-
-static void UnWTS (void)
-{
-	if (hwtsapi32 != 0)
-	{
-		typedef BOOL (WINAPI *ursn)(HWND);
-		ursn unreg = (ursn)GetProcAddress (hwtsapi32, "WTSUnRegisterSessionNotification");
-		if (unreg != 0)
-		{
-			unreg (mainwindow.GetHandle());
-		}
-		FreeLibrary (hwtsapi32);
-		hwtsapi32 = 0;
-	}
-}
 
 //==========================================================================
 //
@@ -178,11 +131,6 @@ void I_SetIWADInfo()
 {
 	// Make the startup banner show itself
 	mainwindow.UpdateLayout();
-}
-
-static void UnTbp()
-{
-	timeEndPeriod(TimerPeriod);
 }
 
 //==========================================================================
@@ -208,16 +156,6 @@ int DoMain (HINSTANCE hInstance)
 	{
 		Args->AppendArg(FString(wargv[i]));
 	}
-
-	// Load Win32 modules
-	Kernel32Module.Load({"kernel32.dll"});
-	Shell32Module.Load({"shell32.dll"});
-	User32Module.Load({"user32.dll"});
-
-	// Under XP, get our session ID so we can know when the user changes/locks sessions.
-	// Since we need to remain binary compatible with older versions of Windows, we
-	// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
-	HMODULE kernel = GetModuleHandleA ("kernel32.dll");
 
 	if (Args->CheckParm("-stdout"))
 	{
@@ -254,26 +192,17 @@ int DoMain (HINSTANCE hInstance)
 				StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 			}
 
-			// These two functions do not exist in Windows XP.
-			BOOL (WINAPI* p_GetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
-			BOOL (WINAPI* p_SetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
-
-			p_SetCurrentConsoleFontEx = (decltype(p_SetCurrentConsoleFontEx))GetProcAddress(kernel, "SetCurrentConsoleFontEx");
-			p_GetCurrentConsoleFontEx = (decltype(p_GetCurrentConsoleFontEx))GetProcAddress(kernel, "GetCurrentConsoleFontEx");
-			if (p_SetCurrentConsoleFontEx && p_GetCurrentConsoleFontEx)
+			// Deprecated stuff for legacy consoles. As of now this is still relevant, but this code can be removed once Windows 7 is no longer relevant.
+			CONSOLE_FONT_INFOEX cfi;
+			cfi.cbSize = sizeof(cfi);
+			if (GetCurrentConsoleFontEx(StdOut, false, &cfi))
 			{
-				CONSOLE_FONT_INFOEX cfi;
-				cfi.cbSize = sizeof(cfi);
-
-				if (p_GetCurrentConsoleFontEx(StdOut, false, &cfi))
+				if (*cfi.FaceName == 0)	// If the face name is empty, the default (useless) raster font is actoive.
 				{
-					if (*cfi.FaceName == 0)	// If the face name is empty, the default (useless) raster font is actoive.
-					{
-						//cfi.dwFontSize = { 8, 14 };
-						wcscpy(cfi.FaceName, L"Lucida Console");
-						cfi.FontFamily = FF_DONTCARE;
-						p_SetCurrentConsoleFontEx(StdOut, false, &cfi);
-					}
+					//cfi.dwFontSize = { 8, 14 };
+					wcscpy(cfi.FaceName, L"Lucida Console");
+					cfi.FontFamily = FF_DONTCARE;
+					SetCurrentConsoleFontEx(StdOut, false, &cfi);
 				}
 			}
 			FancyStdOut = true;
@@ -287,7 +216,7 @@ int DoMain (HINSTANCE hInstance)
 		TimerPeriod = tc.wPeriodMin;
 
 	timeBeginPeriod (TimerPeriod);
-	atexit(UnTbp);
+	atexit([](){ timeEndPeriod(TimerPeriod); });
 
 	// Figure out what directory the program resides in.
 	WCHAR progbuff[1024];
@@ -329,40 +258,13 @@ int DoMain (HINSTANCE hInstance)
 	FStringf caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 	mainwindow.Create(caption, x, y, width, height);
 
-	if (kernel != NULL)
-	{
-		typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
-		pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
-		if (pidsid != 0)
-		{
-			if (!pidsid (GetCurrentProcessId(), &SessionID))
-			{
-				SessionID = 0;
-			}
-			hwtsapi32 = LoadLibraryA ("wtsapi32.dll");
-			if (hwtsapi32 != 0)
-			{
-				FARPROC reg = GetProcAddress (hwtsapi32, "WTSRegisterSessionNotification");
-				if (reg == 0 || !((BOOL(WINAPI *)(HWND, DWORD))reg) (mainwindow.GetHandle(), NOTIFY_FOR_THIS_SESSION))
-				{
-					FreeLibrary (hwtsapi32);
-					hwtsapi32 = 0;
-				}
-				else
-				{
-					atexit (UnWTS);
-				}
-			}
-		}
-	}
-
 	GetClientRect (mainwindow.GetHandle(), &cRect);
 
 	WinWidth = cRect.right;
 	WinHeight = cRect.bottom;
 
 	CoInitialize (NULL);
-	atexit (UnCOM);
+	atexit ([](){ CoUninitialize(); }); // beware of calling convention.
 
 	int ret = GameMain ();
 	mainwindow.CheckForRestart();
@@ -662,15 +564,5 @@ int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE nothing, LPWSTR cmdline, int
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
-	std::wstring widecaption;
-	if (!caption)
-	{
-		FStringf default_caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
-		widecaption = default_caption.WideString();
-	}
-	else
-	{
-		widecaption = WideString(caption);
-	}
-	SetWindowText(mainwindow.GetHandle(), widecaption.c_str());
+	mainwindow.SetWindowTitle(caption);
 }

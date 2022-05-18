@@ -39,11 +39,6 @@ public:
 	bool RunMessageLoop(bool (*timer_callback)(void*), void* userdata);
 	void HideNetStartPane();
 
-	void ShowStartupScreen();
-	void HideStartupScreen();
-	void InvalidateStartupScreen();
-	void InvalidateStartupScreen(int left, int top, int right, int bottom);
-	
 	void SetWindowTitle(const char* caption);
 
 	HWND GetHandle() { return Window; }

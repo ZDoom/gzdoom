@@ -1452,7 +1452,7 @@ bool DoArbitrate (void *userdata)
 
 				data->playersdetected[0] |= 1 << netbuffer[1];
 
-				StartScreen->NetMessage ("Found %s (node %d, player %d)",
+				I_NetMessage ("Found %s (node %d, player %d)",
 						players[netbuffer[1]].userinfo.GetName(),
 						node, netbuffer[1]+1);
 			}
@@ -1600,8 +1600,8 @@ bool D_ArbitrateNetStart (void)
 		data.gotsetup[0] = 0x80;
 	}
 
-	StartScreen->NetInit ("Exchanging game information", 1);
-	if (!StartScreen->NetLoop (DoArbitrate, &data))
+	I_NetInit ("Exchanging game information", 1);
+	if (!I_NetLoop (DoArbitrate, &data))
 	{
 		return false;
 	}
@@ -1619,7 +1619,7 @@ bool D_ArbitrateNetStart (void)
 			fprintf (debugfile, "player %d is on node %d\n", i, nodeforplayer[i]);
 		}
 	}
-	StartScreen->NetDone();
+	I_NetDone();
 	return true;
 }
 

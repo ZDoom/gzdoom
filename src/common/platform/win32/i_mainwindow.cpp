@@ -9,6 +9,7 @@
 #include "version.h"
 #include "utf8.h"
 #include "v_font.h"
+#include "i_net.h"
 #include <richedit.h>
 #include <shellapi.h>
 #include <commctrl.h>
@@ -151,7 +152,7 @@ void MainWindow::ShowErrorPane(const char* text)
 
 	if (StartScreen != NULL)	// Ensure that the network pane is hidden.
 	{
-		StartScreen->NetDone();
+		I_NetDone();
 	}
 	if (text != NULL)
 	{

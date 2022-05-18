@@ -103,7 +103,7 @@ FGenericStartScreen::FGenericStartScreen(int max_progress)
 
 bool FGenericStartScreen::DoProgress(int advance)
 {
-	int notch_pos, x, y;
+	int notch_pos;
 
 	if (CurPos < MaxPos)
 	{

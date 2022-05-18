@@ -56,7 +56,6 @@ class FTTYStartupScreen : public FStartupScreen
 		void Progress();
 		void NetInit(const char *message, int num_players);
 		void NetProgress(int count);
-		void NetMessage(const char *format, ...);	// cover for printf
 		void NetDone();
 		bool NetLoop(bool (*timer_callback)(void *), void *userdata);
 	protected:
@@ -212,27 +211,6 @@ void FTTYStartupScreen::NetDone()
 		printf ("\n");
 		DidNetInit = false;
 	}	
-}
-
-//===========================================================================
-//
-// FTTYStartupScreen :: NetMessage
-//
-// Call this between NetInit() and NetDone() instead of Printf() to
-// display messages, because the progress meter is mixed in the same output
-// stream as normal messages.
-//
-//===========================================================================
-
-void FTTYStartupScreen::NetMessage(const char *format, ...)
-{
-	FString str;
-	va_list argptr;
-
-	va_start (argptr, format);
-	str.VFormat (format, argptr);
-	va_end (argptr);
-	fprintf (stderr, "\r%-40s\n", str.GetChars());
 }
 
 //===========================================================================

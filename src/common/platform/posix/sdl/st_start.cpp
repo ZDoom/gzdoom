@@ -78,7 +78,7 @@ extern void CleanProgressBar();
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FStartupScreen *StartScreen;
+FStartupScreen *StartWindow;
 
 CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {

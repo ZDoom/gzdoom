@@ -1186,19 +1186,19 @@ FGameTexture *CreateShaderTexture(bool, bool);
 void InitBuildTiles();
 FImageSource* CreateEmptyTexture();
 
-void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo&))
+void FTextureManager::Init()
 {
-	progressFunc = progressFunc_;
 	DeleteAll();
-	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 
+	// Add all the static content 
 	auto nulltex = MakeGameTexture(new FImageTexture(CreateEmptyTexture()), nullptr, ETextureType::Null);
 	AddGameTexture(nulltex);
 
 	// This is for binding to unused texture units, because accessing an unbound texture unit is undefined. It's a one pixel empty texture.
 	auto emptytex = MakeGameTexture(new FImageTexture(CreateEmptyTexture()), nullptr, ETextureType::Override);
 	emptytex->SetSize(1, 1);
-	AddGameTexture(emptytex);	
+	AddGameTexture(emptytex);
+
 	// some special textures used in the game.
 	AddGameTexture(CreateShaderTexture(false, false));
 	AddGameTexture(CreateShaderTexture(false, true));
@@ -1211,6 +1211,12 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	mt = MakeGameTexture(new AnimTexture(), "AnimTextureFrame2", ETextureType::Override);
 	mt->SetUpscaleFlag(false, true);
 	AddGameTexture(mt);
+}
+
+void FTextureManager::AddTextures(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo&))
+{
+	progressFunc = progressFunc_;
+	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 
 	int wadcnt = fileSystem.GetNumWads();
 

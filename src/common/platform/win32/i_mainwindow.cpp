@@ -150,7 +150,7 @@ void MainWindow::ShowErrorPane(const char* text)
 		return;
 	}
 
-	if (StartScreen != NULL)	// Ensure that the network pane is hidden.
+	if (StartWindow != NULL)	// Ensure that the network pane is hidden.
 	{
 		I_NetDone();
 	}

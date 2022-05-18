@@ -119,6 +119,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "doomfont.h"
 #include "screenjob.h"
+#include "startscreen.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -329,6 +330,7 @@ FString lastIWAD;
 int restart = 0;
 bool AppActive = true;
 bool playedtitlemusic;
+FStartScreen* StartScreen;
 
 cycle_t FrameCycles;
 
@@ -2130,6 +2132,7 @@ static void CheckCmdLine()
 		timelimit = 20.f;
 	}
 
+	if (!StartScreen) return;
 	//
 	//  Build status bar line!
 	//
@@ -3064,6 +3067,11 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 
 	D_GrabCVarDefaults(); //parse DEFCVARS
 
+	int max_progress = TexMan.GuesstimateNumTextures();
+	int per_shader_progress = 0;//screen->GetShaderCount()? (max_progress / 10 / screen->GetShaderCount()) : 0;
+	bool nostartscreen = batchrun || restart || Args->CheckParm("-join") || Args->CheckParm("-host") || Args->CheckParm("-norun");
+	StartScreen = nostartscreen? nullptr : GetGameStartScreen(per_shader_progress > 0 ? max_progress * 10 / 9 : max_progress + 3);
+	
 	GameConfig->DoKeySetup(gameinfo.ConfigName);
 
 	// Now that wads are loaded, define mod-specific cvars.
@@ -3096,22 +3104,24 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		Printf("%s", ci.GetChars());
 	}
 
-	// [RH] Initialize palette management
-	InitPalette ();
+	InitPalette();
+	TexMan.Init();
 	
 	if (!batchrun) Printf ("V_Init: allocate screen.\n");
 	if (!restart)
 	{
 		V_InitScreenSize();
-	}
-	
-	if (!restart)
-	{
 		// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
 		V_InitScreen ();
+
+		if (StartScreen != nullptr)
+		{
+			V_Init2();
+			StartScreen->Render();
+		}
+
 	}
-	
-	if (restart)
+	else
 	{
 		// Update screen palette when restarting
 		screen->UpdatePalette();
@@ -3133,31 +3143,11 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
 	if (!restart)
 	{
-		if (GameStartupInfo.Type == FStartupInfo::DefaultStartup)
-		{
-			switch (gameinfo.gametype)
-			{
-			case GAME_Hexen:
-				GameStartupInfo.Type = FStartupInfo::HexenStartup;
-				break;
-
-			case GAME_Heretic:
-				GameStartupInfo.Type = FStartupInfo::HereticStartup;
-				break;
-
-			case GAME_Strife:
-				GameStartupInfo.Type = FStartupInfo::StrifeStartup;
-				break;
-
-			default:
-				break;
-			}
-		}
-		StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
+		StartWindow = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
 	}
 	else
 	{
-		StartScreen = new FStartupScreen(0);
+		StartWindow = new FStartupScreen(0);
 	}
 
 	CheckCmdLine();
@@ -3183,14 +3173,19 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	if (!batchrun) Printf ("Texman.Init: Init texture manager.\n");
 	UpdateUpscaleMask();
 	SpriteFrames.Clear();
-	TexMan.Init([]() { StartScreen->Progress(); }, CheckForHacks);
+	TexMan.AddTextures([]() 
+	{ 
+		StartWindow->Progress(); 
+		if (StartScreen) StartScreen->Progress(1); 
+	}, CheckForHacks);
 	PatchTextures();
 	TexAnim.Init();
 	C_InitConback(TexMan.CheckForTexture(gameinfo.BorderFlat, ETextureType::Flat), true, 0.25);
 
 	FixWideStatusBar();
 
-	StartScreen->Progress();
+	StartWindow->Progress(); 
+	if (StartScreen) StartScreen->Progress(1);
 	V_InitFonts();
 	InitDoomFonts();
 	V_LoadTranslations();
@@ -3216,12 +3211,15 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		I_FatalError ("No player classes defined");
 	}
 
-	StartScreen->Progress ();
+	StartWindow->Progress(); 
+	if (StartScreen) StartScreen->Progress (1);
 
 	ParseGLDefs();
 
 	if (!batchrun) Printf ("R_Init: Init %s refresh subsystem.\n", gameinfo.ConfigName.GetChars());
-	StartScreen->LoadingStatus ("Loading graphics", 0x3f);
+	if (StartScreen) StartScreen->LoadingStatus ("Loading graphics", 0x3f);
+	if (StartScreen) StartScreen->Progress(1);
+	StartWindow->Progress(); 
 	R_Init ();
 
 	if (!batchrun) Printf ("DecalLibrary: Load decals.\n");
@@ -3282,7 +3280,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	primaryLevel->BotInfo.wanted_botnum = primaryLevel->BotInfo.getspawned.Size();
 
 	if (!batchrun) Printf ("P_Init: Init Playloop state.\n");
-	StartScreen->LoadingStatus ("Init game engine", 0x3f);
+	if (StartScreen) StartScreen->LoadingStatus ("Init game engine", 0x3f);
 	AM_StaticInit();
 	P_Init ();
 
@@ -3311,7 +3309,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	if (!restart)
 	{
 		if (!batchrun) Printf ("D_CheckNetGame: Checking network game status.\n");
-		StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
+		if (StartScreen) StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
 		if (!D_CheckNetGame ())
 		{
 			return 0;
@@ -3346,8 +3344,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 			autostart = true;
 		}
 
-		delete StartScreen;
-		StartScreen = NULL;
 		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
 
 		if (Args->CheckParm("-norun") || batchrun)
@@ -3355,10 +3351,17 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 			return 1337; // special exit
 		}
 
-		V_Init2();
+		if (StartScreen == nullptr) V_Init2();
 		while(!screen->CompileNextShader())
 		{
 			// here we can do some visual updates later
+		}
+		if (StartScreen) 
+		{
+			StartScreen->Progress(max_progress);	// advance progress bar to the end.
+			StartScreen->Render(true);
+			delete StartScreen;
+			StartScreen = NULL;
 		}
 		twod->fullscreenautoaspect = gameinfo.fullscreenautoaspect;
 		// Initialize the size of the 2D drawer so that an attempt to access it outside the draw code won't crash.

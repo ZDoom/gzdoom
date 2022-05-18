@@ -123,7 +123,8 @@ public:
 
 	void LoadTextureX(int wadnum, FMultipatchTextureBuilder &build);
 	void AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build);
-	void Init(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo &));
+	void Init();
+	void AddTextures(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo&));
 	void DeleteAll();
 
 	void ReplaceTexture (FTextureID picnum, FGameTexture *newtexture, bool free);

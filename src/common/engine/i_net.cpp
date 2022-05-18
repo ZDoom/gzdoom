@@ -292,7 +292,7 @@ void PacketGet (void)
 		if (err == WSAECONNRESET)
 		{ // The remote node aborted unexpectedly, so pretend it sent an exit packet
 
-			if (StartScreen != NULL)
+			if (StartWindow != NULL)
 			{
 				I_NetMessage ("The connection from %s was dropped.\n",
 					GetPlayerName(node).GetChars());
@@ -1049,19 +1049,19 @@ void I_NetMessage(const char* text, ...)
 // todo: later these must be dispatched by the main menu, not the start screen.
 void I_NetProgress(int val)
 {
-	StartScreen->NetProgress(val);
+	StartWindow->NetProgress(val);
 }
 void I_NetInit(const char* msg, int num)
 {
-	StartScreen->NetInit(msg, num);
+	StartWindow->NetInit(msg, num);
 }
 bool I_NetLoop(bool (*timer_callback)(void*), void* userdata)
 {
-	return StartScreen->NetLoop(timer_callback, userdata);
+	return StartWindow->NetLoop(timer_callback, userdata);
 }
 void I_NetDone()
 {
-	StartScreen->NetDone();
+	StartWindow->NetDone();
 }
 #ifdef __WIN32__
 const char *neterror (void)

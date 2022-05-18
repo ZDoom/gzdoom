@@ -81,7 +81,7 @@ protected:
 
 
 
-extern FStartupScreen *StartScreen;
+extern FStartupScreen *StartWindow;
 
 extern void ST_Endoom();
 
@@ -95,10 +95,10 @@ extern void ST_Endoom();
 
 inline void DeleteStartupScreen()
 {
-	if (StartScreen != nullptr)
+	if (StartWindow != nullptr)
 	{
-		delete StartScreen;
-		StartScreen = nullptr;
+		delete StartWindow;
+		StartWindow = nullptr;
 	}
 }
 

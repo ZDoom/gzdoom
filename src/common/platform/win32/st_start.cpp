@@ -65,7 +65,7 @@ extern HINSTANCE g_hInst;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FStartupScreen *StartScreen;
+FStartupScreen *StartWindow;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

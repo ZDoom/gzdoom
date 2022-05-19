@@ -1227,25 +1227,14 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 16 && stricmp(Line1, "infighting group") == 0)
 		{
-			if (val < 0)
-			{
-				Printf("Infighting groups must be >= 0 (check your dehacked)\n");
-				val = 0;
-			}
 			type->ActorInfo()->infighting_group = val;
 		}
 		else if (linelen == 16 && stricmp(Line1, "projectile group") == 0)
 		{
-			if (val < 0) val = -1;
 			type->ActorInfo()->projectile_group = val;
 		}
 		else if (linelen == 12 && stricmp(Line1, "splash group") == 0)
 		{
-			if (val < 0)
-			{
-				Printf("Splash groups must be >= 0 (check your dehacked)\n");
-				val = 0;
-			}
 			type->ActorInfo()->splash_group = val;
 		}
 		else if (linelen == 10 && stricmp(Line1, "fast speed") == 0)
@@ -1289,7 +1278,7 @@ static int PatchThing (int thingy)
 			  0xffff8000, // 8 - Orange
 			};
 
-			if (val < 0 || val > 8) val = 0;
+			if (val > 8) val = 0;
 			unsigned color = bloodcolor[val];
 			info->BloodColor = color;
 			info->BloodTranslation = val == 0? 0 : TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(color));

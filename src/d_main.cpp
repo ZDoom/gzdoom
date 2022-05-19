@@ -330,6 +330,8 @@ FString lastIWAD;
 int restart = 0;
 bool AppActive = true;
 bool playedtitlemusic;
+
+FStartupScreen* StartWindow;
 FStartScreen* StartScreen;
 
 cycle_t FrameCycles;

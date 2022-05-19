@@ -83,8 +83,6 @@ protected:
 
 extern FStartupScreen *StartWindow;
 
-extern void ST_Endoom();
-
 //===========================================================================
 //
 // DeleteStartupScreen

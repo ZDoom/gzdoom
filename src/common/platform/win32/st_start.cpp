@@ -63,10 +63,6 @@ void ST_Util_SizeWindowForBitmap (int scale);
 
 extern HINSTANCE g_hInst;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-FStartupScreen *StartWindow;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------

@@ -56,7 +56,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "p_tick.h"
-#include "st_start.h"
+#include "startscreen.h"
 #include "d_main.h"
 #include "i_system.h"
 #include "doommenu.h"

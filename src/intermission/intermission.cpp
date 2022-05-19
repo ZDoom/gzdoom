@@ -1013,6 +1013,7 @@ DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool
 	if (!CurrentIntermission->NextPage())
 	{
 		CurrentIntermission->Destroy();
+		return nullptr;
 	}
 
 	GC::WriteBarrier(CurrentIntermission);

@@ -70,22 +70,6 @@ class FTTYStartupScreen : public FStartupScreen
 extern void RedrawProgressBar(int CurPos, int MaxPos);
 extern void CleanProgressBar();
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-FStartupScreen *StartWindow;
-
-CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0) self = 0;
-	else if (self > 2) self=2;
-}
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
@@ -309,7 +293,3 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 	}
 }
 
-void ST_Endoom()
-{
-	throw CExitEvent(0);
-}

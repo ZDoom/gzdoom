@@ -1039,7 +1039,7 @@ void I_NetMessage(const char* text, ...)
 	FString str;
 	va_list argptr;
 
-	va_start(argptr, format);
+	va_start(argptr, text);
 	str.VFormat(format, argptr);
 	va_end(argptr);
 	fprintf(stderr, "\r%-40s\n", str.GetChars());

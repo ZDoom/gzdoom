@@ -161,7 +161,7 @@ class FPlayerClass
 {
 public:
 	FPlayerClass ();
-	FPlayerClass (const FPlayerClass &other);
+	FPlayerClass (const FPlayerClass &other) = default;
 	~FPlayerClass ();
 
 	bool CheckSkin (int skin);

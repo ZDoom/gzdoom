@@ -67,7 +67,8 @@ typedef struct SoundStreamInfo_
 typedef enum SampleType_
 {
 	SampleType_UInt8,
-	SampleType_Int16
+	SampleType_Int16,
+	SampleType_Float32
 } SampleType;
 
 typedef enum ChannelConfig_
@@ -75,6 +76,15 @@ typedef enum ChannelConfig_
 	ChannelConfig_Mono,
 	ChannelConfig_Stereo
 } ChannelConfig;
+
+typedef struct SoundStreamInfoEx_
+{
+	int mBufferSize; // If mBufferSize is 0, the song doesn't use streaming but plays through a different interface.
+	int mSampleRate;
+	SampleType mSampleType;
+	ChannelConfig mChannelConfig;
+} SoundStreamInfoEx;
+
 
 typedef enum EIntConfigKey_
 {
@@ -264,14 +274,14 @@ typedef struct ZMusicConfigurationSetting_
 
 
 #ifndef ZMUSIC_INTERNAL
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(ZMUSIC_STATIC)
 #define DLL_IMPORT _declspec(dllimport)
-#else // !_MSC_VER
+#else
 #define DLL_IMPORT
-#endif // _MSC_VER
+#endif
 // Note that the internal 'class' definitions are not C compatible!
-typedef struct { int zm1; } *ZMusic_MidiSource;
-typedef struct { int zm2; } *ZMusic_MusicStream;
+typedef struct _ZMusic_MidiSource_Struct { int zm1; } *ZMusic_MidiSource;
+typedef struct _ZMusic_MusicStream_Struct { int zm2; } *ZMusic_MusicStream;
 struct SoundDecoder;
 #endif
 
@@ -319,6 +329,7 @@ extern "C"
 	DLL_IMPORT void ZMusic_VolumeChanged(ZMusic_MusicStream song);
 	DLL_IMPORT zmusic_bool ZMusic_WriteSMF(ZMusic_MidiSource source, const char* fn, int looplimit);
 	DLL_IMPORT void ZMusic_GetStreamInfo(ZMusic_MusicStream song, SoundStreamInfo *info);
+	DLL_IMPORT void ZMusic_GetStreamInfoEx(ZMusic_MusicStream song, SoundStreamInfoEx *info);
 	// Configuration interface. The return value specifies if a music restart is needed.
 	// RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.
 	DLL_IMPORT zmusic_bool ChangeMusicSettingInt(EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue);
@@ -406,6 +417,7 @@ typedef zmusic_bool (*pfn_ZMusic_IsMIDI)(ZMusic_MusicStream song);
 typedef void (*pfn_ZMusic_VolumeChanged)(ZMusic_MusicStream song);
 typedef zmusic_bool (*pfn_ZMusic_WriteSMF)(ZMusic_MidiSource source, const char* fn, int looplimit);
 typedef void (*pfn_ZMusic_GetStreamInfo)(ZMusic_MusicStream song, SoundStreamInfo *info);
+typedef void (*pfn_ZMusic_GetStreamInfoEx)(ZMusic_MusicStream song, SoundStreamInfoEx *info);
 typedef zmusic_bool (*pfn_ChangeMusicSettingInt)(EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue);
 typedef zmusic_bool (*pfn_ChangeMusicSettingFloat)(EFloatConfigKey key, ZMusic_MusicStream song, float value, float* pRealValue);
 typedef zmusic_bool (*pfn_ChangeMusicSettingString)(EStringConfigKey key, ZMusic_MusicStream song, const char* value);

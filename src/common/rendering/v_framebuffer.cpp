@@ -70,9 +70,8 @@ EXTERN_CVAR(Int, screenblocks)
 //
 //==========================================================================
 
-DFrameBuffer::DFrameBuffer (int width, int height)
+DFrameBuffer::DFrameBuffer()
 {
-	SetSize(width, height);
 }
 
 DFrameBuffer::~DFrameBuffer()

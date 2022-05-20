@@ -519,7 +519,6 @@ static SystemBaseFrameBuffer* frameBuffer;
 
 
 SystemBaseFrameBuffer::SystemBaseFrameBuffer(void*, const bool fullscreen)
-: DFrameBuffer(vid_defwidth, vid_defheight)
 , m_fullscreen(false)
 , m_hiDPI(false)
 , m_window(nullptr)

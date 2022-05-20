@@ -11,7 +11,7 @@ class SystemBaseFrameBuffer : public DFrameBuffer
 
 public:
 	// this must have the same parameters as the Windows version, even if they are not used!
-	SystemBaseFrameBuffer (void *hMonitor, bool fullscreen);
+	SystemBaseFrameBuffer(void *hMonitor, bool fullscreen);
 
 	bool IsFullscreen() override;
 

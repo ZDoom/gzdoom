@@ -156,7 +156,7 @@ public:
 	double scaleFactor = 1.;
 
 public:
-	DFrameBuffer (int width=1, int height=1);
+	DFrameBuffer();
 	virtual ~DFrameBuffer();
 	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
 	virtual bool IsVulkan() { return false; }
@@ -303,7 +303,7 @@ EXTERN_CVAR (Float, vid_gamma)
 
 // Allocates buffer screens, call before R_Init.
 void V_InitScreenSize();
-void V_InitScreen();
+void V_InitScreen(int, int);
 
 // Initializes graphics mode for the first time.
 void V_Init2 ();

@@ -195,6 +195,8 @@ EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, show_messages)
 EXTERN_CVAR(Bool, ticker)
+EXTERN_CVAR(Int, vid_defwidth)
+EXTERN_CVAR(Int, vid_defheight)
 
 extern bool setmodeneeded;
 extern bool demorecording;
@@ -3114,7 +3116,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	{
 		V_InitScreenSize();
 		// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
-		V_InitScreen ();
+		V_InitScreen (vid_defwidth, vid_defheight);
 
 		if (StartScreen != nullptr)
 		{

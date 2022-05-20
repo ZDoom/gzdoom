@@ -200,7 +200,7 @@ public:
 	SDLVideo ();
 	~SDLVideo ();
 
-	DFrameBuffer *CreateFrameBuffer (bool fullscreen);
+	DFrameBuffer *CreateFrameBuffer(bool fullscreen);
 
 private:
 #ifdef HAVE_VULKAN
@@ -436,7 +436,7 @@ SDLVideo::~SDLVideo ()
 #endif
 }
 
-DFrameBuffer *SDLVideo::CreateFrameBuffer (bool fullscreen)
+DFrameBuffer *SDLVideo::CreateFrameBuffer(bool fullscreen)
 {
 	SystemBaseFrameBuffer *fb = nullptr;
 
@@ -491,8 +491,7 @@ IVideo *gl_CreateVideo()
 
 // FrameBuffer Implementation -----------------------------------------------
 
-SystemBaseFrameBuffer::SystemBaseFrameBuffer (void *, bool fullscreen)
-: DFrameBuffer (vid_defwidth, vid_defheight)
+SystemBaseFrameBuffer::SystemBaseFrameBuffer(void *, bool fullscreen)
 {
 	if (Priv::window != nullptr)
 	{
@@ -656,7 +655,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
 	}
 }
 
-SystemGLFrameBuffer::~SystemGLFrameBuffer ()
+SystemGLFrameBuffer::~SystemGLFrameBuffer()
 {
 	if (Priv::window)
 	{

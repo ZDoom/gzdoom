@@ -146,8 +146,7 @@ class DDummyFrameBuffer : public DFrameBuffer
 {
 	typedef DFrameBuffer Super;
 public:
-	DDummyFrameBuffer (int width, int height)
-		: DFrameBuffer (0, 0)
+	DDummyFrameBuffer(int width, int height)
 	{
 		SetVirtualSize(width, height);
 	}
@@ -372,9 +371,9 @@ void V_InitScreenSize ()
 	vid_defheight = height;
 }
 
-void V_InitScreen()
+void V_InitScreen(int width, int height)
 {
-	screen = new DDummyFrameBuffer (vid_defwidth, vid_defheight);
+	screen = new DDummyFrameBuffer(width, height);
 }
 
 void V_Init2()

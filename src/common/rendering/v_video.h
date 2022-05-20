@@ -151,6 +151,9 @@ public:
 
 	int mPipelineNbr = 1;						// Number of HW buffers to pipeline
 	int mPipelineType = 0;
+	
+	int scaleMode = 0;
+	double scaleFactor = 1.;
 
 public:
 	DFrameBuffer (int width=1, int height=1);
@@ -215,6 +218,7 @@ public:
 	virtual FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags);
 	virtual void BeginFrame() {}
 	virtual void SetWindowSize(int w, int h) {}
+	void SetWindowScale(int scalemode, double scalefactor);
 	virtual void StartPrecaching() {}
 	virtual FRenderState* RenderState() { return nullptr; }
 

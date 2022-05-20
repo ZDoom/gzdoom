@@ -87,6 +87,7 @@ CCMD (menu_resolution_commit_changes)
 		vid_scale_customheight = menu_resolution_custom_height;
 		vid_scale_custompixelaspect = 1.0;
 	}
+	screen->SetWindowScale(vid_scalemode, vid_scalefactor);
 }
 
 

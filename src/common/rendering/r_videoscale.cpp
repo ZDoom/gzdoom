@@ -169,8 +169,6 @@ CUSTOM_CVAR(Bool, vid_cropaspect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 bool ViewportLinearScale()
 {
-	if (isOutOfBounds(vid_scalemode))
-		vid_scalemode = 0;
 	// always use linear if supersampling
 	int x = screen->GetClientWidth(), y = screen->GetClientHeight();
 	float aspectmult = ViewportPixelAspect();
@@ -184,44 +182,45 @@ bool ViewportLinearScale()
 
 int ViewportScaledWidth(int width, int height)
 {
-	if (isOutOfBounds(vid_scalemode))
-		vid_scalemode = 0;
 	refresh_minimums();
 	if (vid_cropaspect && height > 0)
 	{
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 	}
-	return (int)max((int32_t)min_width, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width, height)));
+	return (int)max((int32_t)min_width, (int32_t)(screen->scaleFactor * vScaleTable[screen->scaleMode].GetScaledWidth(width, height)));
 }
 
 int ViewportScaledHeight(int width, int height)
 {
-	if (isOutOfBounds(vid_scalemode))
-		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 	{
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 	}
-	return (int)max((int32_t)min_height, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(width, height)));
+	return (int)max((int32_t)min_height, (int32_t)(screen->scaleFactor * vScaleTable[screen->scaleMode].GetScaledHeight(width, height)));
 }
 
 float ViewportPixelAspect()
 {
-	if (isOutOfBounds(vid_scalemode))
-		vid_scalemode = 0;
 	// hack - use custom scaling if in "custom" mode
-	if (vScaleTable[vid_scalemode].isCustom)
+	if (vScaleTable[screen->scaleMode].isCustom)
 		return vid_scale_custompixelaspect;
-	return vScaleTable[vid_scalemode].pixelAspect;
+	return vScaleTable[screen->scaleMode].pixelAspect;
 }
 
 void R_ShowCurrentScaling()
 {
 	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = ViewportScaledWidth(x1, y1), y2 = ViewportScaledHeight(x1, y1);
-	Printf("Current vid_scalefactor: %f\n", (float)(vid_scalefactor));
+	Printf("Current scale factor: %f\n", (float)(screen->scaleFactor));
 	Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
+}
+
+void DFrameBuffer::SetWindowScale(int scalemode, double scalefactor)
+{
+	if (isOutOfBounds(scalemode)) scalemode = 0;
+	scaleMode = scalemode;
+	scaleFactor = scalefactor;
 }
 
 CCMD (vid_showcurrentscaling)
@@ -236,6 +235,7 @@ CCMD (vid_scaletowidth)
 		// the following enables the use of ViewportScaledWidth to get the proper dimensions in custom scale modes
 		vid_scalefactor = 1;
 		vid_scalefactor = (float)((double)atof(argv[1]) / ViewportScaledWidth(screen->GetClientWidth(), screen->GetClientHeight()));
+		screen->SetWindowScale(screen->scaleMode, vid_scalefactor);
 	}
 }
 
@@ -245,6 +245,7 @@ CCMD (vid_scaletoheight)
 	{
 		vid_scalefactor = 1;
 		vid_scalefactor = (float)((double)atof(argv[1]) / ViewportScaledHeight(screen->GetClientWidth(), screen->GetClientHeight()));
+		screen->SetWindowScale(screen->scaleMode, vid_scalefactor);
 	}
 }
 
@@ -270,7 +271,8 @@ CCMD (vid_setscale)
             }
         }
         vid_scalemode = 5;
-	vid_scalefactor = 1.0;
+		vid_scalefactor = 1.0;
+		screen->SetWindowScale(5, 1);
     }
     else
     {
@@ -301,4 +303,5 @@ CCMD (vid_scaletolowest)
 		vid_scalefactor = v_MinimumToFill(screen->GetClientWidth(), screen->GetClientHeight());
 		break;
 	}
+	screen->SetWindowScale(vid_scalemode, vid_scalefactor);
 }

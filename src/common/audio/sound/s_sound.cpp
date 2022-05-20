@@ -45,6 +45,9 @@
 #include "printf.h"
 #include "c_cvars.h"
 
+CVARD(Bool, snd_redefine_pitch, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables redefinable pitch (set snd_min_pitch and snd_max_pitch)")
+CVARD(Int, snd_min_pitch, 20, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "sets max pitch limit")
+CVARD(Int, snd_max_pitch, 20, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "sets minimum pitch limit")
 CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
 
 int SoundEnabled()
@@ -542,7 +545,12 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	// Vary the sfx pitches. Overridden by $PitchSet and A_StartSound.
 	if (pitchmask != 0)
 	{
-		pitch = DEFAULT_PITCH - (rand() & pitchmask) + (rand() & pitchmask);
+		if(snd_redefine_pitch == 0){
+			pitch = DEFAULT_PITCH - (rand() & pitchmask) + (rand() & pitchmask);
+		}
+		else{
+			pitch = DEFAULT_PITCH - (rand() & snd_min_pitch) + (rand() & snd_max_pitch);
+		}
 	}
 	else
 	{

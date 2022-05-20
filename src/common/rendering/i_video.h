@@ -11,7 +11,7 @@ class IVideo
 public:
 	virtual ~IVideo() {}
 
-	virtual DFrameBuffer *CreateFrameBuffer() = 0;
+	virtual DFrameBuffer *CreateFrameBuffer(bool fullscreen) = 0;
 
 	bool SetResolution();
 

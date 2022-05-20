@@ -200,7 +200,7 @@ public:
 	SDLVideo ();
 	~SDLVideo ();
 
-	DFrameBuffer *CreateFrameBuffer ();
+	DFrameBuffer *CreateFrameBuffer (bool fullscreen);
 
 private:
 #ifdef HAVE_VULKAN
@@ -436,7 +436,7 @@ SDLVideo::~SDLVideo ()
 #endif
 }
 
-DFrameBuffer *SDLVideo::CreateFrameBuffer ()
+DFrameBuffer *SDLVideo::CreateFrameBuffer (bool fullscreen)
 {
 	SystemBaseFrameBuffer *fb = nullptr;
 
@@ -448,7 +448,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 		{
 			assert(device == nullptr);
 			device = new VulkanDevice();
-			fb = new VulkanFrameBuffer(nullptr, vid_fullscreen, device);
+			fb = new VulkanFrameBuffer(nullptr, fullscreen, device);
 		}
 		catch (CVulkanError const &error)
 		{
@@ -466,17 +466,17 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 #ifdef HAVE_SOFTPOLY
 	if (Priv::softpolyEnabled)
 	{
-		fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
+		fb = new PolyFrameBuffer(nullptr, fullscreen);
 	}
 #endif
 	if (fb == nullptr)
 	{
 #ifdef HAVE_GLES2
 		if( (Args->CheckParm ("-gles2_renderer")) || (vid_preferbackend == 3) )
-			fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+			fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, fullscreen);
 		else
 #endif
-			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
 	}
 
 	return fb;

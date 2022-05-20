@@ -105,16 +105,16 @@ Win32GLVideo::Win32GLVideo()
 //
 //==========================================================================
 
-DFrameBuffer *Win32GLVideo::CreateFrameBuffer()
+DFrameBuffer *Win32GLVideo::CreateFrameBuffer(bool fullscreen)
 {
 	SystemGLFrameBuffer *fb;
 
 #ifdef HAVE_GLES2
 	if ((Args->CheckParm("-gles2_renderer")) || (vid_preferbackend == 3) )
-		fb = new OpenGLESRenderer::OpenGLFrameBuffer(m_hMonitor, vid_fullscreen);
+		fb = new OpenGLESRenderer::OpenGLFrameBuffer(m_hMonitor, fullscreen);
 	else
 #endif
-		fb = new OpenGLRenderer::OpenGLFrameBuffer(m_hMonitor, vid_fullscreen);
+		fb = new OpenGLRenderer::OpenGLFrameBuffer(m_hMonitor, fullscreen);
 
 	return fb;
 }

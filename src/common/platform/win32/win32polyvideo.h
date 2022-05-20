@@ -13,9 +13,9 @@ public:
 	{
 	}
 
-	DFrameBuffer *CreateFrameBuffer() override
+	DFrameBuffer *CreateFrameBuffer(bool fullscreen) override
 	{
-		auto fb = new PolyFrameBuffer(m_hMonitor, vid_fullscreen);
+		auto fb = new PolyFrameBuffer(m_hMonitor, fullscreen);
 		return fb;
 	}
 };

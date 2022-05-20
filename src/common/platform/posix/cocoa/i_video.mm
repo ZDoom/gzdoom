@@ -387,7 +387,7 @@ public:
 		ms_window = nil;
 	}
 
-	virtual DFrameBuffer* CreateFrameBuffer() override
+	virtual DFrameBuffer* CreateFrameBuffer(bool fullscreen) override
 	{
 		assert(ms_window == nil);
 		ms_window = CreateWindow(STYLE_MASK_WINDOWED);
@@ -438,7 +438,7 @@ public:
 			try
 			{
 				m_vulkanDevice = new VulkanDevice();
-				fb = new VulkanFrameBuffer(nullptr, vid_fullscreen, m_vulkanDevice);
+				fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
 			}
 			catch (std::exception const&)
 			{
@@ -455,7 +455,7 @@ public:
 		{
 			SetupOpenGLView(ms_window, OpenGLProfile::Legacy);
 
-			fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
+			fb = new PolyFrameBuffer(nullptr, fullscreen);
 		}
 		else
 #endif
@@ -467,14 +467,14 @@ public:
 		{
 #ifdef HAVE_GLES2
 			if( (Args->CheckParm ("-gles2_renderer")) || (vid_preferbackend == 3) )
-				fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+				fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, fullscreen);
 			else
 #endif
-				fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+				fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
 		}
 
 		fb->SetWindow(ms_window);
-		fb->SetMode(vid_fullscreen, vid_hidpi);
+		fb->SetMode(fullscreen, vid_hidpi);
 		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
 
 #ifdef HAVE_VULKAN
@@ -482,7 +482,7 @@ public:
 		// with fullscreen window and Core Animation's Metal layer
 		// It is somehow related to initial window level and flags
 		// Toggling fullscreen -> window -> fullscreen mysteriously solves the problem
-		if (ms_isVulkanEnabled && vid_fullscreen)
+		if (ms_isVulkanEnabled && fullscreen)
 		{
 			fb->SetMode(false, vid_hidpi);
 			fb->SetMode(true, vid_hidpi);

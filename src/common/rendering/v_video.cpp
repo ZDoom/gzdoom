@@ -319,7 +319,7 @@ void V_OutputResized (int width, int height)
 
 bool IVideo::SetResolution ()
 {
-	DFrameBuffer *buff = CreateFrameBuffer();
+	DFrameBuffer *buff = CreateFrameBuffer(vid_fullscreen);
 
 	if (buff == NULL)	// this cannot really happen
 	{

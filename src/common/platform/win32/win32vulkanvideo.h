@@ -33,9 +33,9 @@ public:
 		device = nullptr;
 	}
 
-	DFrameBuffer *CreateFrameBuffer() override
+	DFrameBuffer *CreateFrameBuffer(bool fullscreen) override
 	{
-		auto fb = new VulkanFrameBuffer(m_hMonitor, vid_fullscreen, device);
+		auto fb = new VulkanFrameBuffer(m_hMonitor, fullscreen, device);
 		return fb;
 	}
 

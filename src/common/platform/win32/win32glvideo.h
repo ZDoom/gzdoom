@@ -13,7 +13,7 @@ class Win32GLVideo : public Win32BaseVideo
 public:
 	Win32GLVideo();
 
-	DFrameBuffer *CreateFrameBuffer() override;
+	DFrameBuffer *CreateFrameBuffer(bool fullscreen) override;
 	bool InitHardware(HWND Window, int multisample);
 	void Shutdown();
 

@@ -3866,6 +3866,20 @@ void ClearMissile(AActor* info)
 	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
 }
 
+void SetShadow(AActor* info)
+{
+	info->flags |= MF_SHADOW;
+	info->RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
+	info->renderflags &= ~RF_ZDOOMTRANS;
+}
+
+void ClearShadow(AActor* info)
+{
+	info->flags &= ~MF_SHADOW;
+	info->RenderStyle = LegacyRenderStyles[info->Alpha >= 1 - FLT_EPSILON? STYLE_Normal : STYLE_Translucent];
+	info->renderflags &= ~RF_ZDOOMTRANS;
+}
+
 static FlagHandler flag1handlers[32] = {
 	F(MF_SPECIAL),
 	F(MF_SOLID),
@@ -3885,7 +3899,7 @@ static FlagHandler flag1handlers[32] = {
 	F(MF_TELEPORT),
 	{ SetMissile, ClearMissile, [](AActor* a)->bool { return a->flags & MF_MISSILE; } },
 	F(MF_DROPPED),
-	F(MF_SHADOW),
+	{ SetShadow, ClearShadow, [](AActor* a)->bool { return a->flags & MF_SHADOW; } },
 	F(MF_NOBLOOD),
 	F(MF_CORPSE),
 	F(MF_INFLOAT),
@@ -3898,7 +3912,7 @@ static FlagHandler flag1handlers[32] = {
 	F6(MF6_TOUCHY),
 	{ SetBounces, ClearBounces, [](AActor* a)->bool { return a->BounceFlags & BOUNCE_DEH; } },
 	F(MF_FRIENDLY),
-	{ SetTranslucent, ClearTranslucent, CheckTranslucent }
+	{ SetTranslucent, ClearTranslucent, CheckTranslucent },
 };
 
 static FlagHandler flag2handlers[32] = {

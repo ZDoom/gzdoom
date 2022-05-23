@@ -292,7 +292,6 @@ extern DFrameBuffer *screen;
 
 #define SCREENWIDTH (screen->GetWidth ())
 #define SCREENHEIGHT (screen->GetHeight ())
-#define SCREENPITCH (screen->GetPitch ())
 
 EXTERN_CVAR (Float, vid_gamma)
 

@@ -737,7 +737,6 @@ OptionMenu "MouseOptions" protected
 	StaticText 	""
 	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
 	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
-	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
 	StaticText 	""
 	Slider "$MOUSEMNU_TURNSPEED",		"m_yaw", 0, 2.5, 0.1
 	Slider "$MOUSEMNU_MOUSELOOKSPEED",	"m_pitch", 0, 2.5, 0.1

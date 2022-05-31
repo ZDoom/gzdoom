@@ -305,7 +305,6 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 
 FMouse::FMouse()
 {
-	LastX = LastY = 0;
 	ButtonState = 0;
 	WheelMove[0] = 0;
 	WheelMove[1] = 0;

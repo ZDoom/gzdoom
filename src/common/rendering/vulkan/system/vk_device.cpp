@@ -277,16 +277,20 @@ void VulkanDevice::CreateInstance()
 	Extensions = GetExtensions();
 	EnabledExtensions = GetPlatformExtensions();
 
-	std::string debugLayer = "VK_LAYER_LUNARG_standard_validation";
+	std::string debugLayer = "VK_LAYER_KHRONOS_validation";
 	bool wantDebugLayer = vk_debug;
 	bool debugLayerFound = false;
-	for (const VkLayerProperties &layer : AvailableLayers)
+	if (wantDebugLayer)
 	{
-		if (layer.layerName == debugLayer && wantDebugLayer)
+		for (const VkLayerProperties& layer : AvailableLayers)
 		{
-			EnabledValidationLayers.push_back(debugLayer.c_str());
-			EnabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			debugLayerFound = true;
+			if (layer.layerName == debugLayer)
+			{
+				EnabledValidationLayers.push_back(layer.layerName);
+				EnabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+				debugLayerFound = true;
+				break;
+			}
 		}
 	}
 

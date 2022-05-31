@@ -100,6 +100,7 @@ class Actor : Thinker native
 	native vector3 Prev;
 	native uint ThruBits;
 	native vector2 SpriteOffset;
+	native vector3 WorldOffset;
 	native double spriteAngle;
 	native double spriteRotation;
 	native float VisibleStartAngle;
@@ -497,6 +498,12 @@ class Actor : Thinker native
 
 	// Called by PIT_CheckThing to check if two actors actually can collide.
 	virtual bool CanCollideWith(Actor other, bool passive)
+	{
+		return true;
+	}
+
+	// Called by PIT_CheckLine to check if an actor can cross a line.
+	virtual bool CanCrossLine(Line crossing, Vector3 next)
 	{
 		return true;
 	}

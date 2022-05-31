@@ -222,7 +222,7 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 			return false;
 		}
 		
-		NumLumps = info.NumEntries;
+		NumLumps = (uint32_t)info.NumEntries;
 		dirsize = info.DirectorySize;
 		DirectoryOffset = info.DirectoryOffset;
 	}
@@ -521,7 +521,7 @@ int FZipLump::GetFileOffset()
 {
 	if (Method != METHOD_STORED) return -1;
 	if (NeedFileStart) SetLumpAddress();
-	return Position;
+	return (int)Position;
 }
 
 //==========================================================================

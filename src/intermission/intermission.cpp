@@ -144,12 +144,7 @@ void DrawFullscreenSubtitle(FFont* font, const char *text)
 
 void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 {
-	if (desc->mMusic.IsEmpty())
-	{
-		// only start the default music if this is the first action in an intermission
-		if (first) S_ChangeMusic (gameinfo.finaleMusic, gameinfo.finaleOrder, desc->mMusicLooping);
-	}
-	else
+	if (!first && desc->mMusic.IsNotEmpty())
 	{
 		S_ChangeMusic (desc->mMusic, desc->mMusicOrder, desc->mMusicLooping);
 	}
@@ -193,8 +188,27 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	}
 	mTicker = 0;
 	mSubtitle = desc->mSubtitle;
+	mFirst = first;
+	// If this is the first element of an intermission we must delay starting the music until Start() is called.
+	mMusic = desc->mMusic;
+	mMusicLooping = desc->mMusicLooping;
+	mMusicOrder = desc->mMusicOrder;
 }
 
+void DIntermissionScreen::Start()
+{
+	if (mFirst)
+	{
+		if (mMusic.IsEmpty())
+		{
+			S_ChangeMusic(gameinfo.finaleMusic, gameinfo.finaleOrder, mMusicLooping);
+		}
+		else
+		{
+			S_ChangeMusic(mMusic, mMusicOrder, mMusicLooping);
+		}
+	}
+}
 
 int DIntermissionScreen::Responder (FInputEvent *ev)
 {
@@ -900,6 +914,11 @@ again:
 	return false;
 }
 
+void DIntermissionController::Start()
+{
+	if (mScreen) mScreen->Start();
+}
+
 bool DIntermissionController::Responder (FInputEvent *ev)
 {
 	if (mScreen != NULL)
@@ -994,6 +1013,7 @@ DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool
 	if (!CurrentIntermission->NextPage())
 	{
 		CurrentIntermission->Destroy();
+		return nullptr;
 	}
 
 	GC::WriteBarrier(CurrentIntermission);
@@ -1042,10 +1062,17 @@ DEFINE_ACTION_FUNCTION(DIntermissionController, Ticker)
 	ACTION_RETURN_BOOL(self->Ticker());
 }
 
+DEFINE_ACTION_FUNCTION(DIntermissionController, Start)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	self->Start();
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DIntermissionController, Drawer)
 {
 	PARAM_SELF_PROLOGUE(DIntermissionController);
-	self->Drawer	();
+	self->Drawer();
 	return 0;
 }
 

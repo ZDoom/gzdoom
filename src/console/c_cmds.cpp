@@ -1023,10 +1023,10 @@ CCMD(secret)
 	maphdr.Format("[%s]", mapname);
 
 	FString linebuild;
-	char readbuffer[1024];
+	char readbuffer[10240];
 	bool inlevel = false;
 
-	while (lump.Gets(readbuffer, 1024))
+	while (lump.Gets(readbuffer, 10240))
 	{
 		if (!inlevel)
 		{

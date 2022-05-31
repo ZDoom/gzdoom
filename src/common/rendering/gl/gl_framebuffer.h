@@ -23,7 +23,7 @@ public:
 	explicit OpenGLFrameBuffer() {}
 	OpenGLFrameBuffer(void *hMonitor, bool fullscreen) ;
 	~OpenGLFrameBuffer();
-
+	bool CompileNextShader() override;
 	void InitializeState() override;
 	void Update() override;
 

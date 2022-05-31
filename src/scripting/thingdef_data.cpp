@@ -340,6 +340,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, STAYONLIFT, AActor, flags8),
 	DEFINE_FLAG(MF8, DONTFOLLOWPLAYERS, AActor, flags8),
 	DEFINE_FLAG(MF8, SEEFRIENDLYMONSTERS, AActor, flags8),
+	DEFINE_FLAG(MF8, CROSSLINECHECK, AActor, flags8),
 	DEFINE_FLAG(MF8, MASTERNOSEE, AActor, flags8),
 
 	// Effect flags

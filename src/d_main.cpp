@@ -3356,6 +3356,10 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		}
 
 		V_Init2();
+		while(!screen->CompileNextShader())
+		{
+			// here we can do some visual updates later
+		}
 		twod->fullscreenautoaspect = gameinfo.fullscreenautoaspect;
 		// Initialize the size of the 2D drawer so that an attempt to access it outside the draw code won't crash.
 		twod->Begin(screen->GetWidth(), screen->GetHeight());

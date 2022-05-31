@@ -2143,6 +2143,13 @@ class LevelCompatibility : LevelPostProcessor
 				SetLineFlags(6842, 0, Line.ML_BLOCKING); 
 				break;
 			}
+			
+			case '50E394239FF64264950D11883E933553': // 1024.wad map05
+			{
+				// Change duplicate player 2 start to player 3 start
+				SetThingEdNum(59, 3);
+				break;
+			}
 		}
 	}
 }

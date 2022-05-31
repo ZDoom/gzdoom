@@ -208,7 +208,7 @@ extend class PlayerPawn
 				{
 					let def = GetDefaultByType (type);
 					if (def.Icon.isValid() && (def.MaxAmount > 1 || def.bAutoActivate == false) &&
-						!(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor"))
+						!(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key"))
 					{
 						// Do not give replaced items unless using "give everything"
 						if (giveall == ALL_YESYES || GetReplacement(type) == type)
@@ -364,7 +364,7 @@ extend class PlayerPawn
 			for (int i = 0; i < AllActorClasses.Size(); ++i)
 			{
 				type = (class<Inventory>)(AllActorClasses[i]);
-				if (type!= null && !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor"))
+				if (type!= null && !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key"))
 				{
 					let pack = FindInventory(type);
 					if (pack) pack.Destroy();

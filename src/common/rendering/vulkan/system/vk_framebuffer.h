@@ -77,7 +77,7 @@ public:
 	void Update() override;
 
 	void InitializeState() override;
-
+	bool CompileNextShader() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	const char* DeviceName() const override;

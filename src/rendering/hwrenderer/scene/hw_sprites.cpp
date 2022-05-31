@@ -702,7 +702,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		return;
 	}
 
-    const auto &vp = di->Viewpoint;
+	const auto &vp = di->Viewpoint;
 	AActor *camera = vp.camera;
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
@@ -805,9 +805,9 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
 
 	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
-	x = thingpos.X;
-	z = thingpos.Z;
-	y = thingpos.Y;
+	x = thingpos.X + thing->WorldOffset.X;
+	z = thingpos.Z + thing->WorldOffset.Z;
+	y = thingpos.Y + thing->WorldOffset.Y;
 	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
 
 	// snap shadow Z to the floor
@@ -925,7 +925,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			thing->renderflags ^= RF_XFLIP;
 
 		r.Scale(sprscale.X, isSpriteShadow ? sprscale.Y * 0.15 : sprscale.Y);
-		
+
 		float SpriteOffY = thing->SpriteOffset.Y;
 		float rightfac = -r.left - thing->SpriteOffset.X;
 		float leftfac = rightfac - r.width;

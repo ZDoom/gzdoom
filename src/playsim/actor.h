@@ -425,7 +425,8 @@ enum ActorFlag8
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
 	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
 	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
-	MF8_MASTERNOSEE		= 0x10000000,	// Don't show object in first person if their master is the current camera.
+	MF8_CROSSLINECHECK	= 0x10000000,	// [MC]Enables CanCrossLine virtual
+	MF8_MASTERNOSEE		= 0x20000000,	// Don't show object in first person if their master is the current camera.
 };
 
 // --- mobj.renderflags ---
@@ -1050,6 +1051,7 @@ public:
 	DVector3		OldRenderPos;
 	DVector3		Vel;
 	DVector2		SpriteOffset;
+	DVector3		WorldOffset;
 	double			Speed;
 	double			FloatSpeed;
 
@@ -1083,32 +1085,35 @@ public:
 	FState			*state;
 	//VMFunction		*Damage;			// For missiles and monster railgun
 	int				DamageVal;
-	VMFunction		*DamageFunc;
 	int				projectileKickback;
+	VMFunction		*DamageFunc;
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
-	uint32_t			VisibleToTeam;
 
 	int				special1;		// Special info
 	int				special2;		// Special info
 	double			specialf1;		// With floats we cannot use the int versions for storing position or angle data without reverting to fixed point (which we do not want.)
 	double			specialf2;
 
+	uint32_t			VisibleToTeam;
 	int				weaponspecial;	// Special info for weapons.
 	int 			health;
-	uint8_t			movedir;		// 0-7
-	int8_t			visdir;
-	int16_t			movecount;		// when 0, select a new dir
-	int16_t			strafecount;	// for MF3_AVOIDMELEE
-	uint16_t			SpawnAngle;
-	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)
-									// also the originator for missiles
-	TObjPtr<AActor*>	lastenemy;		// Last known enemy -- killough 2/15/98
-	TObjPtr<AActor*> LastHeard;		// [RH] Last actor this one heard
 	int32_t			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
 	int32_t			threshold;		// if > 0, the target will be chased
 	int32_t			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
+
+	uint8_t			movedir;		// 0-7
+	int8_t			visdir;
+	int16_t			movecount;		// when 0, select a new dir
+
+	int16_t			strafecount;	// for MF3_AVOIDMELEE
+	uint16_t			SpawnAngle;
+
+	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)
+									// also the originator for missiles
+	TObjPtr<AActor*>	lastenemy;		// Last known enemy -- killough 2/15/98
+	TObjPtr<AActor*> LastHeard;		// [RH] Last actor this one heard
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of PlayerPawn
 	TObjPtr<AActor*>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)

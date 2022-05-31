@@ -115,7 +115,6 @@ OptionMenu "MouseOptionsSimple" protected
 	StaticText 	""
 	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
 	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
-	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
 	StaticText 	""
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 }

@@ -156,6 +156,38 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 }
 
 //==========================================================================
+// 
+// CanCrossLine
+//
+// Checks if an actor can cross a line after all checks are processed.
+// If false, the line blocks them.
+//==========================================================================
+
+bool P_CanCrossLine(AActor *mo, line_t *line, DVector3 next)
+{
+	static unsigned VIndex = ~0u;
+	if (VIndex == ~0u)
+	{
+		VIndex = GetVirtualIndex(RUNTIME_CLASS(AActor), "CanCrossLine");
+		assert(VIndex != ~0u);
+	}
+
+	VMValue params[] = { mo, line, next.X, next.Y, next.Z, false };
+	VMReturn ret;
+	int retval;
+	ret.IntAt(&retval);
+
+	auto clss = mo->GetClass();
+	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+	if (func != nullptr)
+	{
+		VMCall(func, params, countof(params), &ret, 1);
+		return retval;
+	}
+	return true;
+}
+
+//==========================================================================
 //
 // FindRefPoint
 //
@@ -953,6 +985,13 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		}
 	}
 
+	if ((tm.thing->flags8 & MF8_CROSSLINECHECK) && !P_CanCrossLine(tm.thing, ld, tm.pos))
+	{
+		if (wasfit)
+			tm.thing->BlockingLine = ld;
+		
+		return false;
+	}
 	// If the floor planes on both sides match we should recalculate open.bottom at the actual position we are checking
 	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
 	// This should never narrow down the opening, though, only widen it.

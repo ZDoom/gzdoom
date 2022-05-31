@@ -692,7 +692,6 @@ class StatusScreen : ScreenJob abstract version("2.5")
 
 	protected virtual void initShowNextLoc ()
 	{
-		Console.Printf("Next m ap = %s", wbs.next);
 		if (wbs.next == "") 
 		{
 			// Last map in episode - there is no next location!

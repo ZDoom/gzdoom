@@ -733,7 +733,7 @@ bool FShader::Bind(ShaderFlavourData& flavour)
 
 //==========================================================================
 //
-// Since all shaders are REQUIRED, any error here needs to be fatal
+//
 //
 //==========================================================================
 
@@ -744,21 +744,8 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 	// this can't be in the shader code due to ATI strangeness.
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
 
-	FShader *shader = NULL;
-	try
-	{
-		shader = new FShader(ShaderName);
-		if (!shader->Configure(ShaderName, "shaders_gles/glsl/main.vp", "shaders_gles/glsl/main.fp", ShaderPath, LightModePath, defines.GetChars()))
-		{
-			I_FatalError("Unable to load shader %s\n", ShaderName);
-		}
-	}
-	catch(CRecoverableError &err)
-	{
-		if (shader != NULL) delete shader;
-		shader = NULL;
-		I_FatalError("Unable to load shader %s:\n%s\n", ShaderName, err.GetMessage());
-	}
+	FShader *shader = new FShader(ShaderName);
+	shader->Configure(ShaderName, "shaders_gles/glsl/main.vp", "shaders_gles/glsl/main.fp", ShaderPath, LightModePath, defines.GetChars());
 	return shader;
 }
 

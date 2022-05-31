@@ -334,7 +334,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	{
 		if (sector->special != GLSector_Skybox)
 		{
-			if (level.info->DirectionalLightMode == 2)
+			if (level.DirectionalLightMode == 2)
 			{
 				state.SetDirectionalLight(di->GetDirectionalLight());
 			}
@@ -366,7 +366,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			if (!texture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 			else state.AlphaFunc(Alpha_GEqual, 0.f);
-			if (level.info->DirectionalLightMode == 2)
+			if (level.DirectionalLightMode == 2)
 			{
 				state.SetDirectionalLight(di->GetDirectionalLight());
 			}

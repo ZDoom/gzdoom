@@ -80,7 +80,7 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 
 	// only enable directional lighting if the DL mode is enabled for the entire map.
 	// IMO it doesn't make sense to enable DL on decals if the DL mode is set to "models only".
-	if (level.info->DirectionalLightMode == 2)
+	if (level.DirectionalLightMode == 2)
 	{
 		state.SetDirectionalLight(di->GetDirectionalLight());
 	}

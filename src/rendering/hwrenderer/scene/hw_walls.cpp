@@ -231,7 +231,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 			state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
 			state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
 			state.ApplyTextureManipulation(&tier.TextureFx);
-			if (level.info->DirectionalLightMode == 2)
+			if (level.DirectionalLightMode == 2)
 			{
 				state.SetDirectionalLight(di->GetDirectionalLight());
 			}

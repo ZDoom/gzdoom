@@ -68,7 +68,7 @@ void FHWModelRenderer::BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf
 	state.mModelMatrix = objectToWorldMatrix;
 	state.EnableModelMatrix(true);
 
-	if (level.info->DirectionalLightMode >= 1 && !(smf->flags & MDL_NODIRECTIONALLIGHT))
+	if (level.DirectionalLightMode >= 1 && !(smf->flags & MDL_NODIRECTIONALLIGHT))
 	{
 		state.SetDirectionalLight(di->GetDirectionalLight());
 	}
@@ -98,7 +98,7 @@ void FHWModelRenderer::BeginDrawHUDModel(FRenderStyle style, FSpriteModelFrame *
 	state.mModelMatrix = objectToWorldMatrix;
 	state.EnableModelMatrix(true);
 
-	if (level.info->DirectionalLightMode >= 1 && !(smf->flags & MDL_NODIRECTIONALLIGHT))
+	if (level.DirectionalLightMode >= 1 && !(smf->flags & MDL_NODIRECTIONALLIGHT))
 	{
 		state.SetDirectionalLight(di->GetDirectionalLight());
 	}

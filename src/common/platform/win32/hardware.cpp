@@ -111,9 +111,9 @@ void I_InitGraphics ()
 	// todo: implement ATI version of this. this only works for nvidia notebooks, for now.
 	currentgpuswitch = vid_gpuswitch;
 	if (currentgpuswitch == 1)
-		putenv("SHIM_MCCOMPAT=0x800000001"); // discrete
+		_putenv("SHIM_MCCOMPAT=0x800000001"); // discrete
 	else if (currentgpuswitch == 2)
-		putenv("SHIM_MCCOMPAT=0x800000000"); // integrated
+		_putenv("SHIM_MCCOMPAT=0x800000000"); // integrated
 
 	// If the focus window is destroyed, it doesn't go back to the active window.
 	// (e.g. because the net pane was up, and a button on it had focus)
@@ -165,5 +165,5 @@ void I_InitGraphics ()
 	// we somehow STILL don't have a display!!
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
-	
+
 }

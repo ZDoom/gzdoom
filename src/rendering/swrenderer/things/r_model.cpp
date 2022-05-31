@@ -21,7 +21,7 @@
 */
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "doomdef.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"

@@ -40,7 +40,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "templates.h"
+
 #include "m_swap.h"
 #include "v_font.h"
 #include "printf.h"
@@ -86,10 +86,10 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;
 	int maxchar = INT_MIN;
-	
+
 	// Read the font's configuration.
 	// This will not be done for the default fonts, because they are not atomic and the default content does not need it.
-	
+
 	TArray<FolderEntry> folderdata;
 	if (filetemplate != nullptr)
 	{
@@ -97,16 +97,16 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		// If a name template is given, collect data from all resource files.
 		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
 		fileSystem.GetFilesInFolder(path, folderdata, nametemplate == nullptr);
-		
+
 		//if (nametemplate == nullptr)
 		{
 			FStringf infpath("fonts/%s/font.inf", filetemplate);
-			
+
 			unsigned index = folderdata.FindEx([=](const FolderEntry &entry)
 			{
 				return infpath.CompareNoCase(entry.name) == 0;
 			});
-			
+
 			if (index < folderdata.Size())
 			{
 				FScanner sc;
@@ -182,7 +182,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			}
 		}
 	}
-	
+
 	if (FixedWidth > 0)
 	{
 		ReadSheetFont(folderdata, FixedWidth, FontHeight, Scale);
@@ -292,12 +292,12 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				auto position = strtoll(base.GetChars(), &endp, 16);
 				if ((*endp == 0 || (*endp == '.' && position >= '!' && position < 0xffff)))
 				{
-					auto lump = TexMan.CheckForTexture(entry.name, ETextureType::MiscPatch);
-					if (lump.isValid())
+					auto texlump = TexMan.CheckForTexture(entry.name, ETextureType::MiscPatch);
+					if (texlump.isValid())
 					{
 						if ((int)position < minchar) minchar = (int)position;
 						if ((int)position > maxchar) maxchar = (int)position;
-						auto tex = TexMan.GetGameTexture(lump);
+						auto tex = TexMan.GetGameTexture(texlump);
 						tex->SetScale((float)Scale.X, (float)Scale.Y);
 						charMap.Insert((int)position, tex);
 						Type = Folder;
@@ -313,10 +313,10 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 
 		for (i = 0; i < count; i++)
 		{
-			auto lump = charMap.CheckKey(FirstChar + i);
-			if (lump != nullptr)
+			auto charlump = charMap.CheckKey(FirstChar + i);
+			if (charlump != nullptr)
 			{
-				auto pic = *lump;
+				auto pic = *charlump;
 				if (pic != nullptr)
 				{
 					double fheight = pic->GetDisplayHeight();
@@ -399,8 +399,8 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						part[0].OriginY = -height * y;
 						part[0].TexImage = static_cast<FImageTexture*>(tex->GetTexture());
 						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
-						FImageTexture *tex = new FImageTexture(image);
-						auto gtex = MakeGameTexture(tex, nullptr, ETextureType::FontChar);
+						FImageTexture *imgtex = new FImageTexture(image);
+						auto gtex = MakeGameTexture(imgtex, nullptr, ETextureType::FontChar);
 						gtex->SetWorldPanning(true);
 						gtex->SetOffsets(0, 0, 0);
 						gtex->SetOffsets(1, 0, 0);
@@ -424,7 +424,6 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 	LastChar = maxchar;
 	auto count = maxchar - minchar + 1;
 	Chars.Resize(count);
-	int fontheight = 0;
 
 	for (int i = 0; i < count; i++)
 	{
@@ -437,7 +436,7 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 			Chars[i].OriginalPic->CopySize(*lump, true);
 			if (Chars[i].OriginalPic != *lump) TexMan.AddGameTexture(Chars[i].OriginalPic);
 		}
-		Chars[i].XMove = width;
+		Chars[i].XMove = int(width / Scale.X);
 	}
 
 	if (map1252)
@@ -560,13 +559,39 @@ FFont *FFont::FindFont (FName name)
 void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors)
 {
 	int x;
-	
+
 	auto pixels = pic->GetPalettedPixels(false);
 	auto size = pic->GetWidth() * pic->GetHeight();
-	
+
 	for(x = 0;x < size; x++)
 	{
 		usedcolors[pixels[x]]++;
+	}
+}
+
+//==========================================================================
+//
+// RecordLuminosity
+//
+// Records minimum and maximum luminosity of a texture.
+//
+//==========================================================================
+
+static void RecordLuminosity(FImageSource* pic, int* minlum, int* maxlum)
+{
+	auto bitmap = pic->GetCachedBitmap(nullptr, FImageSource::normal);
+	auto pixels = bitmap.GetPixels();
+	auto size = pic->GetWidth() * pic->GetHeight();
+
+	for (int x = 0; x < size; x++)
+	{
+		int xx = x * 4;
+		if (pixels[xx + 3] > 0)
+		{
+			int lum = Luminance(pixels[xx + 2], pixels[xx + 1], pixels[xx]);
+			if (lum < *minlum) *minlum = lum;
+			if (lum > *maxlum) *maxlum = lum;
+		}
 	}
 }
 
@@ -660,7 +685,7 @@ int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
 	// Single pic fonts do not set up their translation table and must always return 0.
 	if (Translations.Size() == 0) return 0;
-	assert(Translations.Size() == NumTextColors);
+	assert(Translations.Size() == (unsigned)NumTextColors);
 
 	if (noTranslate)
 	{
@@ -702,7 +727,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	{
 		return code;
 	}
-	
+
 	// Use different substitution logic based on the fonts content:
 	// In a font which has both upper and lower case, prefer unaccented small characters over capital ones.
 	// In a pure upper-case font, do not check for lower case replacements.
@@ -780,7 +805,7 @@ FGameTexture *FFont::GetChar (int code, int translation, int *const width) const
 		code -= FirstChar;
 		xmove = Chars[code].XMove;
 	}
-	
+
 	if (width != nullptr)
 	{
 		*width = xmove;
@@ -910,7 +935,7 @@ int FFont::StringWidth(const uint8_t *string, int spacing) const
 		}
 	}
 
-	return std::max(maxw, w);
+	return max(maxw, w);
 }
 
 //==========================================================================
@@ -969,27 +994,22 @@ int FFont::GetMaxAscender(const uint8_t* string) const
 void FFont::LoadTranslations()
 {
 	unsigned int count = min<unsigned>(Chars.Size(), LastChar - FirstChar + 1);
-	uint32_t usedcolors[256] = {};
-	TArray<double> Luminosity;
 
 	if (count == 0) return;
+	int minlum = 255, maxlum = 0;
 	for (unsigned int i = 0; i < count; i++)
 	{
 		if (Chars[i].OriginalPic)
 		{
 			auto pic = Chars[i].OriginalPic->GetTexture()->GetImage();
-			if (pic) RecordTextureColors(pic, usedcolors);
+			RecordLuminosity(pic, &minlum, &maxlum);
 		}
 	}
 
-	int minlum = 0, maxlum = 0;
-	GetLuminosity (usedcolors, Luminosity, &minlum, &maxlum);
 	if (MinLum >= 0 && MinLum < minlum) minlum = MinLum;
 	if (MaxLum > maxlum) maxlum = MaxLum;
 
 	// Here we can set everything to a luminosity translation.
-
-	// Create different translations for different color ranges
 	Translations.Resize(NumTextColors);
 	for (int i = 0; i < NumTextColors; i++)
 	{

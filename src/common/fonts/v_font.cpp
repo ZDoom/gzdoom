@@ -39,7 +39,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "templates.h"
+
 #include "m_swap.h"
 #include "v_font.h"
 #include "filesystem.h"
@@ -94,6 +94,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
 	if (!stricmp(name, "DBIGFONT")) name = "BigFont";
 	else if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
+	else if (!stricmp(name, "INDEXFON")) name = "IndexFont";	// Same here - for whatever reason some people had to use its 8 character name...
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{
@@ -105,10 +106,10 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 		int lump = -1;
 		int folderfile = -1;
-		
+
 		TArray<FolderEntry> folderdata;
 		FStringf path("fonts/%s/", name);
-		
+
 		// Use a folder-based font only if it comes from a later file than the single lump version.
 		if (fileSystem.GetFilesInFolder(path, folderdata, true))
 		{
@@ -118,7 +119,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 
 
 		lump = fileSystem.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
-		
+
 		if (lump != -1 && fileSystem.GetFileContainer(lump) >= folderfile)
 		{
 			uint32_t head;
@@ -415,19 +416,19 @@ void V_InitFontColors ()
 				else if (sc.Compare ("Flat:"))
 				{
 					sc.MustGetString();
-					logcolor = V_GetColor (nullptr, sc);
+					logcolor = V_GetColor (sc);
 				}
 				else
 				{
 					// Get first color
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.Start[0] = RPART(c);
 					tparm.Start[1] = GPART(c);
 					tparm.Start[2] = BPART(c);
 
 					// Get second color
 					sc.MustGetString();
-					c = V_GetColor (nullptr, sc);
+					c = V_GetColor (sc);
 					tparm.End[0] = RPART(c);
 					tparm.End[1] = GPART(c);
 					tparm.End[2] = BPART(c);
@@ -724,9 +725,9 @@ static void CalcDefaultTranslation(FFont* base, int index)
 		auto lum = otherluminosity[i];
 		if (lum >= 0 && lum <= 1)
 		{
-			int index = int(lum * 255);
-			remap[index] = GPalette.BaseColors[i];
-			remap[index].a = 255;
+			int lumidx = int(lum * 255);
+			remap[lumidx] = GPalette.BaseColors[i];
+			remap[lumidx].a = 255;
 		}
 	}
 
@@ -768,7 +769,7 @@ static void CalcDefaultTranslation(FFont* base, int index)
 			lowindex = highindex++;
 		}
 	}
-	
+
 }
 
 //==========================================================================
@@ -873,6 +874,7 @@ void V_InitFonts()
 	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
 	CurrentConsoleFont = NewConsoleFont;
 	ConFont = V_GetFont("ConsoleFont", "CONFONT");
+	V_GetFont("IndexFont", "INDEXFON");	// detect potential replacements for this one.
 }
 
 void V_LoadTranslations()

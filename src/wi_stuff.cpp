@@ -92,6 +92,7 @@ static const char *WI_Cmd[] = {
 	"Pic",
 
 	"NoAutostartMap",
+	"Screensize",
 
 	NULL
 };
@@ -169,7 +170,10 @@ private:
 	FGameTexture	*background = nullptr;
 	wbstartstruct_t *wbs;
 	level_info_t	*exitlevel;
-	
+	int			bgwidth = -1;
+	int			bgheight = -1;
+
+
 public:
 
 	DInterBackground(wbstartstruct_t *wbst);
@@ -456,6 +460,13 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					noautostartmap = true;
 					break;
 
+				case 15:	// screensize
+					sc.MustGetNumber();
+					bgwidth = sc.Number;
+					sc.MustGetNumber();
+					bgheight = sc.Number;
+					break;
+
 				readanimation:
 					sc.MustGetString();
 					an.LevelName = sc.String;
@@ -591,20 +602,23 @@ DEFINE_ACTION_FUNCTION(DInterBackground, updateAnimatedBack)
 void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointeron)
 {
 	unsigned int i;
-	double animwidth = 320;		// For a flat fill or clear background scale animations to 320x200
-	double animheight = 200;
+	double animwidth = bgwidth;		// For a flat fill or clear background scale animations to 320x200
+	double animheight = bgheight;
 
 	if (background)
 	{
 		// background
 		if (background->isMiscPatch())
 		{
-			// scale all animations below to fit the size of the base pic
+			// if no explicit size was set scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetDisplayWidth();
-			animheight = background->GetDisplayHeight();
-			if (animheight == 200) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
+			if (bgwidth < 0 || bgheight < 0)
+			{
+				animwidth = background->GetDisplayWidth();
+				animheight = background->GetDisplayHeight();
+				if (animheight == 200) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
+			}
 			DrawTexture(twod, background, 0, 0, DTA_FullscreenEx, FSMode_ScaleToFit43, TAG_DONE);
 		}
 		else
@@ -694,66 +708,13 @@ DEFINE_ACTION_FUNCTION(DInterBackground, drawBackground)
 
 IMPLEMENT_CLASS(DInterBackground, true, false)
 
-DObject *WI_Screen;
-
-//====================================================================
-// 
-//
-//
-//====================================================================
-
-void WI_Ticker()
-{
-	if (WI_Screen)
-	{
-		ScaleOverrider s(twod);
-		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
-		{
-			VMValue self = WI_Screen;
-			VMCall(func, &self, 1, nullptr, 0);
-		}
-	}
-}
-
-//====================================================================
-// 
-// Called by main loop,
-// draws the intermission directly into the screen buffer.
-//
-//====================================================================
-
-void WI_Drawer()
-{
-	if (WI_Screen)
-	{
-		ScaleOverrider s(twod);
-		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
-		{
-			twod->ClearClipRect();
-			twod->ClearScreen();
-			VMValue self = WI_Screen;
-			VMCall(func, &self, 1, nullptr, 0);
-			twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
-
-			// The internal handling here is somewhat poor. After being set to 'LeavingIntermission'
-			// the screen is needed for one more draw operation so we cannot delete it right away but only here.
-			if (WI_Screen->IntVar("CurState") == LeavingIntermission)
-			{
-				WI_Screen->Destroy();
-				GC::DelSoftRoot(WI_Screen);
-				WI_Screen = nullptr;
-			}
-		}
-	}
-}
-
 //====================================================================
 // 
 // Setup for an intermission screen.
 //
 //====================================================================
 
-void WI_Start(wbstartstruct_t *wbstartstruct)
+DObject* WI_Start(wbstartstruct_t *wbstartstruct)
 {
 	FName screenclass = deathmatch ? gameinfo.statusscreen_dm : multiplayer ? gameinfo.statusscreen_coop : gameinfo.statusscreen_single;
 	auto cls = PClass::FindClass(screenclass);
@@ -770,7 +731,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 	
-	WI_Screen = cls->CreateNew();
+	auto WI_Screen = cls->CreateNew();
 
 
 	ScaleOverrider s(twod);
@@ -800,7 +761,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 
-	GC::AddSoftRoot(WI_Screen);
+	return WI_Screen;
 }
 
 //====================================================================
@@ -817,7 +778,7 @@ DEFINE_ACTION_FUNCTION(DStatusScreen, GetPlayerWidths)
 	if (numret > 0) ret[0].SetInt(maxnamewidth);
 	if (numret > 1) ret[1].SetInt(maxscorewidth);
 	if (numret > 2) ret[2].SetInt(maxiconheight);
-	return MIN(numret, 3);
+	return min(numret, 3);
 }
 
 //====================================================================

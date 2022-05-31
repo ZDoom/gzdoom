@@ -140,7 +140,7 @@ class PlayerPawn : Actor
 			if (health > 0) Height = FullHeight;
 		}
 
-		if (bWeaponLevel2Ended)
+		if (player && bWeaponLevel2Ended)
 		{
 			bWeaponLevel2Ended = false;
 			if (player.ReadyWeapon != NULL && player.ReadyWeapon.bPowered_Up)
@@ -254,6 +254,11 @@ class PlayerPawn : Actor
 			invul.EffectTics = 3 * TICRATE;
 			invul.BlendColor = 0;			// don't mess with the view
 			invul.bUndroppable = true;		// Don't drop self
+			if (!invul.CallTryPickup(self))
+			{
+				invul.Destroy();
+				return;
+			}
 			bRespawnInvul = true;			// [RH] special effect
 		}
 	}
@@ -456,6 +461,7 @@ class PlayerPawn : Actor
 	virtual void CheckWeaponChange ()
 	{
 		let player = self.player;
+		if (!player) return;	
 		if ((player.WeaponState & WF_DISABLESWITCH) || // Weapon changing has been disabled.
 			player.morphTics != 0)					// Morphed classes cannot change weapons.
 		{ // ...so throw away any pending weapon requests.
@@ -2082,8 +2088,17 @@ class PlayerPawn : Actor
 			me.ClearInventory();
 			me.GiveDefaultInventory();
 		}
+
+		// [MK] notify self and inventory that we're about to travel
+		// this must be called here so these functions can still have a
+		// chance to alter the world before a snapshot is done in hubs
+		me.PreTravelled();
+		for (item = me.Inv; item != NULL; item = item.Inv)
+		{
+			item.PreTravelled();
+		}
 	}
-	
+	 
 	//===========================================================================
 	//
 	// FWeaponSlot :: PickWeapon
@@ -2462,6 +2477,18 @@ class PlayerPawn : Actor
 
 	//===========================================================================
 	//
+	// PlayerPawn :: PreTravelled
+	//
+	// Called before the player moves to another map, in case it needs to do
+	// special clean-up. This is called right before all carried items
+	// execute their respective PreTravelled() virtuals.
+	//
+	//===========================================================================
+
+	virtual void PreTravelled() {}
+
+	//===========================================================================
+	//
 	// PlayerPawn :: Travelled
 	//
 	// Called when the player moves to another map, in case it needs to do
@@ -2578,6 +2605,7 @@ class PSprite : Object native play
 	native double y;
 	native double oldx;
 	native double oldy;
+	native Vector2 baseScale;
 	native Vector2 pivot;
 	native Vector2 scale;
 	native double rotation;

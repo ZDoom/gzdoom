@@ -76,11 +76,14 @@ enum EGameState
 	GS_INTERMISSION,
 	GS_FINALE,
 	GS_DEMOSCREEN,
+	GS_FULLCONSOLE,		// [RH]	Fullscreen console
+	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
+	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
+	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
+	GS_INTRO,
+	GS_CUTSCENE,
+
 	GS_MENUSCREEN = GS_DEMOSCREEN,
-	GS_FULLCONSOLE,
-	GS_HIDECONSOLE,
-	GS_STARTUP,
-	GS_TITLELEVEL,
 }
 
 const TEXTCOLOR_BRICK			= "\034A";
@@ -140,6 +143,33 @@ enum EPrintLevel
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
+/*
+// These are here to document the intrinsic methods and fields available on
+// the built-in ZScript types
+struct Vector2
+{
+	Vector2(x, y);
+	double x, y;
+	native double Length();
+	native Vector2 Unit();
+	// The dot product of two vectors can be calculated like this:
+	// double d = a dot b;
+}
+
+struct Vector3
+{
+	Vector3(x, y, z);
+	double x, y, z;
+	Vector2 xy; // Convenient access to the X and Y coordinates of a 3D vector
+	native double Length();
+	native Vector3 Unit();
+	// The dot product of two vectors can be calculated like this:
+	// double d = a dot b;
+	// The cross product of two vectors can be calculated like this:
+	// Vector3 d = a cross b;
+}
+*/
+
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
@@ -180,6 +210,26 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native MenuDelegateBase menuDelegate;
 	native readonly int consoleplayer;
 	native readonly double NotifyFontScale;
+	native readonly int paused;
+}
+
+struct System native
+{
+	native static void StopMusic();
+	native static void StopAllSounds();
+	native static bool SoundEnabled();
+	native static bool MusicEnabled();
+	native static double GetTimeFrac();
+	
+	static bool specialKeyEvent(InputEvent ev)
+	{
+		if (ev.type == InputEvent.Type_KeyDown || ev.type == InputEvent.Type_KeyUp)
+		{
+			int key = ev.KeyScan;
+			if (key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP || (key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT)) return true;
+		}
+		return false;
+	}
 }
 
 struct MusPlayingInfo native
@@ -245,6 +295,47 @@ struct TexMan
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
 	native static bool UseGamePalette(TextureID tex);
 }
+
+/*
+// Intrinsic TextureID methods
+// This isn't really a class, and can be used as an integer
+struct TextureID
+{
+	native bool IsValid();
+	native bool IsNull();
+	native bool Exists();
+	native void SetInvalid();
+	native void SetNull();
+}
+
+// 32-bit RGBA color - each component is one byte, or 8-bit
+// This isn't really a class, and can be used as an integer
+struct Color
+{
+	// Constructor - alpha channel is optional
+	Color(int alpha, int red, int green, int blue);
+	Color(int red, int green, int blue); // Alpha is 0 if omitted
+	int r; // Red
+	int g; // Green
+	int b; // Blue
+	int a; // Alpha
+}
+
+// Name - a string with an integer ID
+struct Name
+{
+	Name(Name name);
+	Name(String name);
+}
+
+// Sound ID - can be created by casting from a string (name from SNDINFO) or an
+// integer (sound ID as integer).
+struct Sound
+{
+	Sound(String soundName);
+	Sound(int id);
+}
+*/
 
 enum EScaleMode
 {
@@ -389,8 +480,9 @@ struct Screen native
 	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();
+	native static Vector2 GetTextScreenSize();
 	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
-	native static void Dim(Color col, double amount, int x, int y, int w, int h);
+	native static void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
@@ -416,6 +508,7 @@ struct Font native
 	enum EColorRange
 	{
 		CR_UNDEFINED = -1,
+		CR_NATIVEPAL = -1,
 		CR_BRICK,
 		CR_TAN,
 		CR_GRAY,
@@ -479,7 +572,8 @@ struct Font native
 
 	const TEXTCOLOR_CHAT			= "\034*";
 	const TEXTCOLOR_TEAMCHAT		= "\034!";
-	
+	// native Font(const String name);  // String/name to font casts
+	// native Font(const Name name);
 
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
@@ -495,6 +589,7 @@ struct Font native
 	native static Font GetFont(Name fontname);
 	native BrokenLines BreakLines(String text, int maxlen);
 	native int GetGlyphHeight(int code);
+	native int GetDefaultKerning();
 }
 
 struct Console native
@@ -561,13 +656,63 @@ class Object native
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
-	native static uint MSTime();
+	deprecated("4.8", "Use MSTimeF instead") native static uint MSTime();
+	native static double MSTimeF();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native virtualscope void Destroy();
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
 	virtual virtualscope void OnDestroy() {}
+	//
+	// Object intrinsics
+	// Every ZScript "class" inherits from Object, and so inherits these methods as well
+	// clearscope bool IsAbstract(); // Query whether or not the class of this object is abstract
+	// clearscope Object GetParentClass(); // Get the parent class of this object
+	// clearscope Name GetClassName(); // Get the name of this object's class
+	// clearscope Class<Object> GetClass(); // Get the object's class
+	// clearscope Object new(class<Object> type); // Create a new object with this class. This is only valid for thinkers and plain objects, except menus. For actors, use Actor.Spawn();
+	//
+	//
+	// Intrinsic random number generation functions. Note that the square
+	// bracket syntax for specifying an RNG ID is only available for these
+	// functions.
+	// clearscope void SetRandomSeed[Name rngId = 'None'](int seed); // Set the seed for the given RNG.
+	// clearscope int Random[Name rngId = 'None'](int min, int max); // Use the given RNG to generate a random integer number in the range (min, max) inclusive.
+	// clearscope int Random2[Name rngId = 'None'](int mask); // Use the given RNG to generate a random integer number, and do a "union" (bitwise AND, AKA &) operation with the bits in the mask integer.
+	// clearscope double FRandom[Name rngId = 'None'](double min, double max); // Use the given RNG to generate a random real number in the range (min, max) inclusive.
+	// clearscope int RandomPick[Name rngId = 'None'](int choices...); // Use the given RNG to generate a random integer from the given choices.
+	// clearscope double FRandomPick[Name rngId = 'None'](double choices...); // Use the given RNG to generate a random real number from the given choices.
+	//
+	//
+	// Intrinsic math functions - the argument and return types for these
+	// functions depend on the arguments given. Other than that, they work the
+	// same way similarly-named functions in other programming languages work.
+	// Note that trigonometric functions work with degrees instead of radians
+	// clearscope T abs(T x);
+	// clearscope T atan2(T y, T x); // NOTE: Returns a value in degrees instead of radians
+	// clearscope T vectorangle(T x, T y); // Same as Atan2 with the arguments in a different order
+	// clearscope T min(T x...);
+	// clearscope T max(T x...);
+	// clearscope T clamp(T x, T min, T max);
+	//
+	// These math functions only work with doubles - they are defined in FxFlops
+	// clearscope double exp(double x);
+	// clearscope double log(double x);
+	// clearscope double log10(double x);
+	// clearscope double sqrt(double x);
+	// clearscope double ceil(double x);
+	// clearscope double floor(double x);
+	// clearscope double acos(double x);
+	// clearscope double asin(double x);
+	// clearscope double atan(double x);
+	// clearscope double cos(double x);
+	// clearscope double sin(double x);
+	// clearscope double tan(double x);
+	// clearscope double cosh(double x);
+	// clearscope double sinh(double x);
+	// clearscope double tanh(double x);
+	// clearscope double round(double x);
 }
 
 class BrokenLines : Object native version("2.4")
@@ -634,11 +779,15 @@ enum EmptyTokenType
 }
 
 // Although String is a builtin type, this is a convenient way to attach methods to it.
+// All of these methods are available on strings
 struct StringStruct native
 {
 	native static vararg String Format(String fmt, ...);
 	native vararg void AppendFormat(String fmt, ...);
-
+	// native int Length();  // Intrinsic
+	// native bool operator==(String other); // Equality comparison
+	// native bool operator~==(String other);  // Case-insensitive equality comparison
+	// native String operator..(String other);  // Concatenate with another String
 	native void Replace(String pattern, String replacement);
 	native String Left(int len) const;
 	native String Mid(int pos = 0, int len = 2147483647) const;
@@ -665,6 +814,7 @@ struct StringStruct native
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
 	native void Substitute(String str, String replace);
+	native void StripRight(String junk = "");
 }
 
 struct Translation version("2.4")

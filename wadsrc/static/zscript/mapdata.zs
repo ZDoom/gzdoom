@@ -452,6 +452,7 @@ struct Sector native play
 	native void GetSpecial(out SecSpecial spec);
 	native void SetSpecial( SecSpecial spec);
 	native int GetTerrain(int pos);
+	native TerrainDef GetFloorTerrain(int pos);			// Gets the terraindef from floor/ceiling (see EPlane const).
 	native void CheckPortalPlane(int plane);
 	native double, Sector HighestCeilingAt(Vector2 a);
 	native double, Sector LowestFloorAt(Vector2 a);

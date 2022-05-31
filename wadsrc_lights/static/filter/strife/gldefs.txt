@@ -2412,14 +2412,6 @@ flickerlight POWCRYS_X5
 
 flickerlight POWCRYS_X6
 {
-    color 1.0 0.65 0.24
-    size 113
-    secondarySize 115
-    chance 0.3
-}
-
-flickerlight POWCRYS_X6
-{
     color 1.0 0.62 0.22
     size 112
     secondarySize 114

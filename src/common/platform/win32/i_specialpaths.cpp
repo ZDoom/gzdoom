@@ -74,16 +74,36 @@ bool UseKnownFolders()
 	{
 		return !iswritable;
 	}
-	std::wstring testpath = progdir.WideString() + L"writest";
-	file = CreateFile(testpath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,
-		CREATE_ALWAYS,
-		FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
-	if (file != INVALID_HANDLE_VALUE)
+	// Consider 'Program Files' read only without actually checking.
+	bool found = false;
+	for (auto p : { L"ProgramFiles", L"ProgramFiles(x86)" })
 	{
-		CloseHandle(file);
-		if (!batchrun) Printf("Using program directory for storage\n");
-		iswritable = true;
-		return false;
+		wchar_t buffer1[256];
+		if (GetEnvironmentVariable(p, buffer1, 256))
+		{
+			FString envpath(buffer1);
+			FixPathSeperator(envpath);
+			if (progdir.MakeLower().IndexOf(envpath.MakeLower()) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+	}
+
+	if (!found)
+	{
+		std::wstring testpath = progdir.WideString() + L"writest";
+		file = CreateFile(testpath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,
+			CREATE_ALWAYS,
+			FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+		if (file != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(file);
+			if (!batchrun) Printf("Using program directory for storage\n");
+			iswritable = true;
+			return false;
+		}
 	}
 	if (!batchrun) Printf("Using known folders for storage\n");
 	iswritable = false;

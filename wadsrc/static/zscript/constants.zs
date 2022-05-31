@@ -140,6 +140,7 @@ enum EChaseFlags
 	CHF_NODIRECTIONTURN =				64,
 	CHF_NOPOSTATTACKTURN =				128,
 	CHF_STOPIFBLOCKED =					256,
+	CHF_DONTIDLE =						512,
 
 	CHF_DONTTURN = CHF_NORANDOMTURN | CHF_NOPOSTATTACKTURN | CHF_STOPIFBLOCKED
 };
@@ -285,6 +286,7 @@ enum EBlastFlags
 	BF_DONTWARN = 2,
 	BF_AFFECTBOSSES = 4,
 	BF_NOIMPACTDAMAGE = 8,
+	BF_ONLYVISIBLETHINGS = 16,
 };
 
 // Flags for A_SeekerMissile
@@ -395,6 +397,13 @@ enum EActivationFlags
 	
 };
 
+// [MC] Flags for SetViewPos.
+enum EViewPosFlags
+{
+	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
+};
+
 // Flags for A_TakeInventory and A_TakeFromTarget
 enum ETakeFlags
 {
@@ -431,6 +440,9 @@ enum EBlockFlags
 	BLOCKF_EVERYTHING = 32,
 	BLOCKF_RAILING = 64,
 	BLOCKF_USE = 128,
+	BLOCKF_SIGHT = 256,
+	BLOCKF_HITSCAN = 512,
+	BLOCKF_SOUND = 1024,
 };
 
 // Pointer constants, bitfield-enabled
@@ -621,6 +633,7 @@ enum EQuakeFlags
 	QF_MAX =			1 << 3,
 	QF_FULLINTENSITY =	1 << 4,
 	QF_WAVE =			1 << 5,
+	QF_3D =				1 << 6,
 };
 
 // A_CheckProximity flags
@@ -1332,6 +1345,15 @@ enum ELevelFlags
 	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
 	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
 	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
+	LEVEL3_E1M8SPECIAL			= 0x00000800,
+	LEVEL3_E2M8SPECIAL			= 0x00001000,
+	LEVEL3_E3M8SPECIAL			= 0x00002000,
+	LEVEL3_E4M8SPECIAL			= 0x00004000,
+	LEVEL3_E4M6SPECIAL			= 0x00008000,
+	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
+	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
+	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
+	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
 };
 
 // [RH] Compatibility flags.
@@ -1362,7 +1384,8 @@ enum ECompatFlags
 	COMPATF_MINOTAUR		= 1 << 22,	// Minotaur's floor flame is exploded immediately when feet are clipped
 	COMPATF_MUSHROOM		= 1 << 23,	// Force original velocity calculations for A_Mushroom in Dehacked mods.
 	COMPATF_MBFMONSTERMOVE	= 1 << 24,	// Monsters are affected by friction and pushers/pullers.
-	COMPATF_CORPSEGIBS		= 1 << 25,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
+	COMPATF_CORPSEGIBS		= 1 << 25,	// only needed for some hypothetical mod checking this flag.
+	COMPATF_VILEGHOSTS		= 1 << 25,	// Crushed monsters are resurrected as ghosts.
 	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
 	COMPATF_SPRITESORT		= 1 << 27,	// Invert sprite sorting order for sprites of equal distance
 	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.

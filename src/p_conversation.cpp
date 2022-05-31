@@ -33,6 +33,7 @@
 */
 
 #include <assert.h>
+#include <stdint.h>
 
 #include "actor.h"
 #include "p_conversation.h"
@@ -59,6 +60,7 @@
 #include "actorinlines.h"
 #include "v_draw.h"
 #include "doommenu.h"
+#include "g_game.h"
 
 static FRandom pr_randomspeech("RandomSpeech");
 
@@ -489,7 +491,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		if (!(npc->flags8 & MF8_DONTFACETALKER))
 			npc->Angles.Yaw = player->ConversationNPCAngle;
 		npc->flags5 &= ~MF5_INCONVERSATION;
-		if (gameaction != ga_slideshow) ClearConversationStuff(player);
+		if (gameaction != ga_intermission) ClearConversationStuff(player);
 		return;
 	}
 
@@ -507,7 +509,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			if (!(npc->flags8 & MF8_DONTFACETALKER))
 				npc->Angles.Yaw = player->ConversationNPCAngle;
 			npc->flags5 &= ~MF5_INCONVERSATION;
-			if (gameaction != ga_slideshow) ClearConversationStuff(player);
+			if (gameaction != ga_intermission) ClearConversationStuff(player);
 			return;
 		}
 	}
@@ -548,7 +550,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			}
 		
 			if (reply->GiveType->IsDescendantOf("SlideshowStarter"))
-				gameaction = ga_slideshow;
+				G_StartSlideshow(primaryLevel, NAME_None);
 		}
 		else
 		{
@@ -617,7 +619,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 			if (!(reply->CloseDialog))
 			{
-				if (gameaction != ga_slideshow)
+				if (gameaction != ga_intermission)
 				{
 					P_StartConversation (npc, player->mo, player->ConversationFaceTalker, false);
 					return;
@@ -643,7 +645,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	// [CW] Set these to NULL because we're not using to them
 	// anymore. However, this can interfere with slideshows
 	// so we don't set them to NULL in that case.
-	if (gameaction != ga_slideshow)
+	if (gameaction != ga_intermission)
 	{
 		npc->flags5 &= ~MF5_INCONVERSATION;
 		ClearConversationStuff(player);

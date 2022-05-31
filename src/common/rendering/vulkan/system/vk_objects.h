@@ -79,7 +79,7 @@ private:
 class VulkanImage
 {
 public:
-	VulkanImage(VulkanDevice *device, VkImage image, VmaAllocation allocation, int width, int height, int mipLevels);
+	VulkanImage(VulkanDevice *device, VkImage image, VmaAllocation allocation, int width, int height, int mipLevels, int layerCount);
 	~VulkanImage();
 
 	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)image, VK_OBJECT_TYPE_IMAGE); }
@@ -88,6 +88,7 @@ public:
 	int width = 0;
 	int height = 0;
 	int mipLevels = 1;
+	int layerCount = 1;
 
 	void *Map(size_t offset, size_t size);
 	void Unmap();
@@ -989,7 +990,7 @@ inline VulkanFramebuffer::~VulkanFramebuffer()
 
 /////////////////////////////////////////////////////////////////////////////
 
-inline VulkanImage::VulkanImage(VulkanDevice *device, VkImage image, VmaAllocation allocation, int width, int height, int mipLevels) : image(image), width(width), height(height), mipLevels(mipLevels), device(device), allocation(allocation)
+inline VulkanImage::VulkanImage(VulkanDevice *device, VkImage image, VmaAllocation allocation, int width, int height, int mipLevels, int layerCount) : image(image), width(width), height(height), mipLevels(mipLevels), layerCount(layerCount), device(device), allocation(allocation)
 {
 }
 

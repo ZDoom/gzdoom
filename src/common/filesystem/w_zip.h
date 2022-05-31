@@ -17,6 +17,22 @@ struct FZipEndOfCentralDirectory
 	uint16_t	ZipCommentLength;
 } FORCE_PACKED;
 
+struct FZipEndOfCentralDirectory64
+{
+	uint32_t	Magic;
+	uint64_t	StructSize;
+	uint16_t	VersionMadeBy;
+	uint16_t	VersionNeeded;
+	uint32_t	DiskNumber;
+	uint32_t	FirstDisk;
+	uint64_t	NumEntries;
+	uint64_t	NumEntriesOnAllDisks;
+	uint64_t	DirectorySize;
+	uint64_t	DirectoryOffset;
+	uint16_t	ZipCommentLength;
+} FORCE_PACKED;
+
+
 // FZipFileInfo
 struct FZipCentralDirectoryInfo
 {
@@ -28,16 +44,26 @@ struct FZipCentralDirectoryInfo
 	uint16_t	ModTime;
 	uint16_t	ModDate;
 	uint32_t	CRC32;
-	uint32_t	CompressedSize;
-	uint32_t	UncompressedSize;
+	uint32_t	CompressedSize32;
+	uint32_t	UncompressedSize32;
 	uint16_t	NameLength;
 	uint16_t	ExtraLength;
 	uint16_t	CommentLength;
 	uint16_t	StartingDiskNumber;
 	uint16_t	InternalAttributes;
 	uint32_t	ExternalAttributes;
-	uint32_t	LocalHeaderOffset;
+	uint32_t	LocalHeaderOffset32;
 	// file name and other variable length info follows
+} FORCE_PACKED;
+
+struct FZipCentralDirectoryInfo64BitExt
+{
+	uint16_t Type;
+	uint16_t Length;
+	uint64_t UncompressedSize;
+	uint64_t CompressedSize;
+	uint64_t LocalHeaderOffset;
+	uint32_t DiskNo;
 } FORCE_PACKED;
 
 // FZipLocalHeader
@@ -56,7 +82,6 @@ struct FZipLocalFileHeader
 	uint16_t	ExtraLength;
 	// file name and other variable length info follows
 } FORCE_PACKED;
-
 
 #pragma pack()
 

@@ -429,11 +429,6 @@ void HWDrawInfo::AddPolyobjs(subsector_t *sub)
 	if (sub->BSP == nullptr || sub->BSP->bDirty)
 	{
 		sub->BuildPolyBSP();
-		for (unsigned i = 0; i < sub->BSP->Segs.Size(); i++)
-		{
-			sub->BSP->Segs[i].Subsector = sub;
-			sub->BSP->Segs[i].PartnerSeg = nullptr;
-		}
 	}
 	if (sub->BSP->Nodes.Size() == 0)
 	{

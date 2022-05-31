@@ -12,6 +12,7 @@ class BossBrain : Actor
 		Health 250;
 		Mass 10000000;
 		PainChance 255;
+		Radius 16;
 		+SOLID +SHOOTABLE
 		+NOICEDEATH
 		+OLDRADIUSDMG

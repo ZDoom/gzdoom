@@ -25,6 +25,7 @@ class Weapon : StateProvider
 	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
 	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
 	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
+	double WeaponScaleX, WeaponScaleY;		// [XA] Weapon scale. Defines the scale for the held weapon sprites (PSprite). Defaults to (1.0, 1.2) since that's what Doom does.
 	Ammo Ammo1, Ammo2;						// In-inventory instance variables
 	Weapon SisterWeapon;
 	double FOVScale;
@@ -57,6 +58,8 @@ class Weapon : StateProvider
 	property BobSpeed: BobSpeed;
 	property BobRangeX: BobRangeX;
 	property BobRangeY: BobRangeY;
+	property WeaponScaleX: WeaponScaleX;
+	property WeaponScaleY: WeaponScaleY;
 	property SlotNumber: SlotNumber;
 	property SlotPriority: SlotPriority;
 	property LookScale: LookScale;
@@ -95,6 +98,8 @@ class Weapon : StateProvider
 		Weapon.BobSpeed 1.0;
 		Weapon.BobRangeX 1.0;
 		Weapon.BobRangeY 1.0;
+		Weapon.WeaponScaleX 1.0;
+		Weapon.WeaponScaleY 1.2;
 		Weapon.SlotNumber -1;
 		Weapon.SlotPriority 32767;
 		+WEAPONSPAWN
@@ -218,6 +223,8 @@ class Weapon : StateProvider
 	{
 		if (!psp)	return;
 		psp.rotation = 0;
+		psp.baseScale.x = invoker.WeaponScaleX;
+		psp.baseScale.y = invoker.WeaponScaleY;
 		psp.scale.x = 1;
 		psp.scale.y = 1;
 		psp.pivot.x = 0;
@@ -741,7 +748,7 @@ class Weapon : StateProvider
 		// extra ammoitem in baby mode and nightmare mode
 		if (!bIgnoreSkill)
 		{
-			amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+			amount = int(amount * (G_SkillPropertyFloat(SKILLP_AmmoFactor) * sv_ammofactor));
 		}
 		ammoitem = Ammo(other.FindInventory (ammotype));
 		if (ammoitem == NULL)
@@ -776,7 +783,7 @@ class Weapon : StateProvider
 			// extra ammo in baby mode and nightmare mode
 			if (!bIgnoreSkill)
 			{
-				amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+				amount = int(amount * (G_SkillPropertyFloat(SKILLP_AmmoFactor) * sv_ammofactor));
 			}
 			ammo.Amount += amount;
 			if (ammo.Amount > ammo.MaxAmount && !sv_unlimited_pickup)
@@ -994,7 +1001,7 @@ class Weapon : StateProvider
 	//
 	//===========================================================================
 
-	virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1)
+	virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1, bool forceammouse = false)
 	{
 		if (!(sv_infiniteammo || (Owner.FindInventory ('PowerInfiniteAmmo', true) != null)))
 		{
@@ -1006,7 +1013,7 @@ class Weapon : StateProvider
 			{
 				if (Ammo1 != null)
 				{
-					if (ammouse >= 0 && bDehAmmo)
+					if (ammouse >= 0 && (bDehAmmo || forceammouse))
 					{
 						Ammo1.Amount -= ammouse;
 					}

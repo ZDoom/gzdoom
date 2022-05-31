@@ -205,7 +205,7 @@ static void MouseRead ()
 static void I_CheckNativeMouse ()
 {
 	bool focus = SDL_GetKeyboardFocus() != NULL;
-	
+
 	bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
 	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame);
 
@@ -228,7 +228,7 @@ void MessagePump (const SDL_Event &sev)
 	static int lastx = 0, lasty = 0;
 	int x, y;
 	event_t event = { 0,0,0,0,0,0,0 };
-	
+
 	switch (sev.type)
 	{
 	case SDL_QUIT:
@@ -369,7 +369,7 @@ void MessagePump (const SDL_Event &sev)
 			{
 				break;
 			}
-			
+
 			event.type = sev.type == SDL_KEYDOWN ? EV_KeyDown : EV_KeyUp;
 
 			// Try to look up our key mapped key for conversion to DirectInput.
@@ -448,7 +448,7 @@ void MessagePump (const SDL_Event &sev)
 		if (GUICapture)
 		{
 			int size;
-			
+
 			int unichar = utf8_decode((const uint8_t*)sev.text.text, &size);
 			if (size != 4)
 			{
@@ -474,7 +474,7 @@ void MessagePump (const SDL_Event &sev)
 void I_GetEvent ()
 {
 	SDL_Event sev;
-	
+
 	while (SDL_PollEvent (&sev))
 	{
 		MessagePump (sev);

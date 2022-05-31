@@ -336,6 +336,10 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, E4M6BOSS, AActor, flags8),
 	DEFINE_FLAG(MF8, MAP07BOSS1, AActor, flags8),
 	DEFINE_FLAG(MF8, MAP07BOSS2, AActor, flags8),
+	DEFINE_FLAG(MF8, AVOIDHAZARDS, AActor, flags8),
+	DEFINE_FLAG(MF8, STAYONLIFT, AActor, flags8),
+	DEFINE_FLAG(MF8, DONTFOLLOWPLAYERS, AActor, flags8),
+	DEFINE_FLAG(MF8, SEEFRIENDLYMONSTERS, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -721,21 +725,6 @@ void InitThingdef()
 			[](FSerializer &ar, const char *key, void *addr)
 		{
 			Serialize<player_t>(ar, key, *(player_t **)addr, nullptr);
-			return true;
-		}
-	);
-
-	auto fontstruct = NewStruct("FFont", nullptr, true);
-	fontstruct->Size = sizeof(FFont);
-	fontstruct->Align = alignof(FFont);
-	NewPointer(fontstruct, false)->InstallHandlers(
-		[](FSerializer &ar, const char *key, const void *addr)
-		{
-			ar(key, *(FFont **)addr);
-		},
-			[](FSerializer &ar, const char *key, void *addr)
-		{
-			Serialize<FFont>(ar, key, *(FFont **)addr, nullptr);
 			return true;
 		}
 	);

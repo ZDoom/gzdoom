@@ -34,7 +34,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "v_video.h"
-#include "templates.h"
+
 #include "r_videoscale.h"
 #include "cmdlib.h"
 #include "v_draw.h"
@@ -105,7 +105,6 @@ namespace
 		// minimum set in GZDoom 4.0.0, but only while those fonts are required.
 
 		static bool lastspecialUI = false;
-		bool isInActualMenu = false;
 
 		bool specialUI = (!sysCallbacks.IsSpecialUI || sysCallbacks.IsSpecialUI());
 
@@ -126,7 +125,7 @@ namespace
 			min_height = VID_MIN_UI_HEIGHT;
 		}
 	}
-	
+
 	// the odd formatting of this struct definition is meant to resemble a table header. set your tab stops to 4 when editing this file.
 	struct v_ScaleTable
 		{ bool isValid;		uint32_t(*GetScaledWidth)(uint32_t Width, uint32_t Height);								uint32_t(*GetScaledHeight)(uint32_t Width, uint32_t Height);						float pixelAspect;		bool isCustom;	};
@@ -179,7 +178,7 @@ bool ViewportLinearScale()
 		aspectmult = 1.f / aspectmult;
 	if ((ViewportScaledWidth(x,y) > (x * aspectmult)) || (ViewportScaledHeight(x,y) > (y * aspectmult)))
 		return true;
-	
+
 	return vid_scale_linear;
 }
 
@@ -193,7 +192,7 @@ int ViewportScaledWidth(int width, int height)
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 	}
-	return (int)std::max((int32_t)min_width, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width, height)));
+	return (int)max((int32_t)min_width, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width, height)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -205,7 +204,7 @@ int ViewportScaledHeight(int width, int height)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 	}
-	return (int)std::max((int32_t)min_height, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(width, height)));
+	return (int)max((int32_t)min_height, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(width, height)));
 }
 
 float ViewportPixelAspect()

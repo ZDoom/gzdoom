@@ -43,7 +43,7 @@
 #include "m_argv.h"
 #include "filesystem.h"
 #include "c_dispatch.h"
-#include "templates.h"
+
 #include "stats.h"
 #include "cmdlib.h"
 #include "c_cvars.h"
@@ -200,7 +200,8 @@ static void SetupWgOpn()
 
 static void SetupDMXGUS()
 {
-	int lump = fileSystem.CheckNumForFullName("DMXGUS");
+	int lump = fileSystem.CheckNumForName("DMXGUSC", ns_global);
+	if (lump < 0) lump = fileSystem.CheckNumForName("DMXGUS", ns_global);
 	if (lump < 0)
 	{
 		return;
@@ -226,7 +227,7 @@ void I_InitMusic(void)
 	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
 
 	snd_mididevice.Callback();
-	
+
 	ZMusicCallbacks callbacks{};
 
 	callbacks.MessageFunc = zmusic_printfunc;

@@ -154,10 +154,13 @@ public:
 	vertex_t * vertexes[2];				// required for polygon splitting
 	FGameTexture *texture;
 	TArray<lightlist_t> *lightlist;
+	LightmapSurface *lightmap;
 
 	HWSeg glseg;
 	float ztop[2],zbottom[2];
 	texcoord tcs[4];
+	texcoord lightuv[4];
+	float lindex;
 	float alpha;
 
 	FColormap Colormap;
@@ -238,13 +241,13 @@ public:
 
 	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
 
-	void BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
+	void BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int roverIndex,
 					  float ff_topleft, float ff_topright, 
 					  float ff_bottomleft, float ff_bottomright);
 	void InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 					   float topleft, float topright, 
 					   float bottomleft, float bottomright);
-	void ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
+	void ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, int ffloorIndex, sector_t * frontsector,
 					float topleft, float topright, 
 					float bottomleft, float bottomright);
 	void DoFFloorBlocks(HWDrawInfo *di, seg_t * seg, sector_t * frontsector, sector_t * backsector,
@@ -430,6 +433,7 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 
 bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FGameTexture * gltexture, VSMatrix &mat);
 void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata);
+LightProbe* FindLightProbe(FLevelLocals* level, float x, float y, float z);
 
 extern const float LARGE_VALUE;
 

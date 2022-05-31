@@ -98,7 +98,7 @@ void FSamplerManager::UnbindAll()
 		glBindSampler(i, 0);
 	}
 }
-	
+
 uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 {
 	unsigned int samp = mSamplers[num];
@@ -106,11 +106,11 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 	return 255;
 }
 
-	
+
 void FSamplerManager::SetTextureFilterMode()
 {
 	GLint bounds[IHardwareTexture::MAX_TEXTURES];
-	
+
 	// Unbind all
 	for(int i = IHardwareTexture::MAX_TEXTURES-1; i >= 0; i--)
 	{

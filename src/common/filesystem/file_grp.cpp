@@ -42,7 +42,7 @@
 //
 //==========================================================================
 
-struct GrpInfo
+struct GrpHeader
 {
 	uint32_t		Magic[3];
 	uint32_t		NumLumps;
@@ -95,17 +95,17 @@ FGrpFile::FGrpFile(const char *filename, FileReader &file)
 
 bool FGrpFile::Open(bool quiet, LumpFilterInfo*)
 {
-	GrpInfo header;
+	GrpHeader header;
 
 	Reader.Read(&header, sizeof(header));
 	NumLumps = LittleLong(header.NumLumps);
-	
+
 	GrpLump *fileinfo = new GrpLump[NumLumps];
 	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
 
 	Lumps.Resize(NumLumps);
 
-	int Position = sizeof(GrpInfo) + NumLumps * sizeof(GrpLump);
+	int Position = sizeof(GrpHeader) + NumLumps * sizeof(GrpLump);
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{

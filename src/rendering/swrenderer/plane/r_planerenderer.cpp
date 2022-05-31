@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <float.h>
 
-#include "templates.h"
+
 
 #include "filesystem.h"
 #include "doomdef.h"
@@ -65,14 +65,14 @@ namespace swrenderer
 			int stop;
 
 			// Draw any spans that have just closed
-			stop = MIN(t1, b2);
+			stop = min(t1, b2);
 			while (t2 < stop)
 			{
 				int y = t2++;
 				int x2 = spanend[y];
 				RenderLine(y, xr, x2);
 			}
-			stop = MAX(b1, t2);
+			stop = max(b1, t2);
 			while (b2 > stop)
 			{
 				int y = --b2;
@@ -81,12 +81,12 @@ namespace swrenderer
 			}
 
 			// Mark any spans that have just opened
-			stop = MIN(t2, b1);
+			stop = min(t2, b1);
 			while (t1 < stop)
 			{
 				spanend[t1++] = x;
 			}
-			stop = MAX(b2, t2);
+			stop = max(b2, t2);
 			while (b1 > stop)
 			{
 				spanend[--b1] = x;

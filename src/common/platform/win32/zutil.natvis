@@ -25,6 +25,17 @@
     </Expand>
 </Type>
 
+<Type Name="TSparseArrayView&lt;*&gt;">
+	<DisplayString>Size = {Count}</DisplayString>
+	<Expand>
+		<Item Name="Size">Count</Item>
+		<ArrayItems>
+			<Size>Count</Size>
+			<ValuePointer>(value_type*)Array</ValuePointer>
+		</ArrayItems>
+	</Expand>
+</Type>
+
 <Type Name="TStaticPointedArray&lt;*&gt;">
     <DisplayString>Size = {Count}</DisplayString>
     <Expand>

@@ -525,9 +525,12 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj &poly, FPolyO
 
 		if (arc.isReading())
 		{
-			poly.RotatePolyobj(angle, true);
-			delta -= poly.StartSpot.pos;
-			poly.MovePolyobj(delta, true);
+			if (poly.OriginalPts.Size() > 0)
+			{
+				poly.RotatePolyobj(angle, true);
+				delta -= poly.StartSpot.pos;
+				poly.MovePolyobj(delta, true);
+			}
 		}
 	}
 	return arc;

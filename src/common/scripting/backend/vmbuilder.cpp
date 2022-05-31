@@ -398,7 +398,7 @@ int VMFunctionBuilder::RegAvailability::Get(int count)
 	{
 		return -1;
 	}
-	
+
 	mask = count == 32 ? ~0u : (1 << count) - 1;
 
 	for (i = 0; i < 256 / 32; ++i)

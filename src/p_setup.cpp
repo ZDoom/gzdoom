@@ -30,7 +30,7 @@
 #include <malloc.h>		// for alloca()
 #endif
 
-#include "templates.h"
+
 #include "d_player.h"
 #include "m_argv.h"
 #include "g_game.h"
@@ -598,6 +598,9 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	auto it = Level->GetThinkerIterator<AActor>();
 	AActor* ac;
+
+	Level->flags3 |= LEVEL3_LIGHTCREATED;
+
 	// Initial setup of the dynamic lights.
 	while ((ac = it.Next()))
 	{

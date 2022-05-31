@@ -98,8 +98,7 @@ unsigned FCommandBuffer::CalcCellSize(unsigned length)
 	unsigned cellcount = 0;
 	for (unsigned i = 0; i < length; i++)
 	{
-		int w;
-		NewConsoleFont->GetChar(Text[i], CR_UNTRANSLATED, &w);
+		int w = NewConsoleFont->GetCharWidth(Text[i]);
 		cellcount += w / 9;
 	}
 	return cellcount;
@@ -112,8 +111,7 @@ unsigned FCommandBuffer::CharsForCells(unsigned cellin, bool *overflow)
 	int cells = cellin;
 	while (cells > 0)
 	{
-		int w;
-		NewConsoleFont->GetChar(Text[chars++], CR_UNTRANSLATED, &w);
+		int w = NewConsoleFont->GetCharWidth(Text[chars++]);
 		cells -= w / 9;
 	}
 	*overflow = (cells < 0);
@@ -146,7 +144,7 @@ void FCommandBuffer::MakeStartPosGood()
 	{ // The cursor is in front of the visible part of the line
 		n = CursorPosCells;
 	}
-	StartPosCells = std::max(0, n);
+	StartPosCells = max(0, n);
 	bool overflow;
 	StartPos = CharsForCells(StartPosCells, &overflow);
 	if (overflow)
@@ -293,7 +291,7 @@ void FCommandBuffer::AddString(FString clip)
 	if (clip.IsNotEmpty())
 	{
 		// Only paste the first line.
-		long brk = clip.IndexOfAny("\r\n\b");
+		auto brk = clip.IndexOfAny("\r\n\b");
 		std::u32string build;
 		if (brk >= 0)
 		{
@@ -301,7 +299,7 @@ void FCommandBuffer::AddString(FString clip)
 		}
 		auto strp = (const uint8_t*)clip.GetChars();
 		while (auto chr = GetCharFromString(strp)) build += chr;
-		
+
 		if (Text.length() == 0)
 		{
 			Text = build;

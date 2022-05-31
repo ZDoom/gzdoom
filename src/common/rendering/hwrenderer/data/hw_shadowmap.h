@@ -4,6 +4,7 @@
 #include "hw_aabbtree.h"
 #include "stats.h"
 #include <memory>
+#include <functional>
 
 class IDataBuffer;
 
@@ -55,6 +56,11 @@ public:
 		mLights[index + 1] = y;
 		mLights[index + 2] = z;
 		mLights[index + 3] = r;
+	}
+
+	bool Enabled() const
+	{
+		return mAABBTree != nullptr;
 	}
 
 protected:

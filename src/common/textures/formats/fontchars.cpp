@@ -113,7 +113,7 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 				if (runlen != 0)
 				{
 					uint8_t color = lump.ReadUInt8();
-					color = MIN(color, max);
+					color = min(color, max);
 					*dest_p = color;
 					dest_p += dest_adv;
 					x--;
@@ -137,7 +137,7 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 					{
 						uint8_t color = lump.ReadUInt8();
 						setlen = (-code) + 1;
-						setval = MIN(color, max);
+						setval = min(color, max);
 					}
 				}
 			}

@@ -26,7 +26,7 @@
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include <random>
 #include "texturemanager.h"
-#include "templates.h"
+
 #include "stats.h"
 
 Postprocess hw_postprocess;
@@ -326,9 +326,9 @@ void PPLensDistort::Render(PPRenderState *renderstate)
 	// Scale factor to keep sampling within the input texture
 	float r2 = aspect * aspect * 0.25f + 0.25f;
 	float sqrt_r2 = sqrt(r2);
-	float f0 = 1.0f + MAX(r2 * (k[0] + kcube[0] * sqrt_r2), 0.0f);
-	float f2 = 1.0f + MAX(r2 * (k[2] + kcube[2] * sqrt_r2), 0.0f);
-	float f = MAX(f0, f2);
+	float f0 = 1.0f + max(r2 * (k[0] + kcube[0] * sqrt_r2), 0.0f);
+	float f2 = 1.0f + max(r2 * (k[2] + kcube[2] * sqrt_r2), 0.0f);
+	float f = max(f0, f2);
 	float scale = 1.0f / f;
 
 	LensUniforms uniforms;
@@ -498,8 +498,8 @@ void PPCameraExposure::Render(PPRenderState *renderstate, int sceneWidth, int sc
 
 void PPCameraExposure::UpdateTextures(int width, int height)
 {
-	int firstwidth = MAX(width / 2, 1);
-	int firstheight = MAX(height / 2, 1);
+	int firstwidth = max(width / 2, 1);
+	int firstheight = max(height / 2, 1);
 
 	if (ExposureLevels.size() > 0 && ExposureLevels[0].Viewport.width == firstwidth && ExposureLevels[0].Viewport.height == firstheight)
 	{
@@ -511,8 +511,8 @@ void PPCameraExposure::UpdateTextures(int width, int height)
 	int i = 0;
 	do
 	{
-		width = MAX(width / 2, 1);
-		height = MAX(height / 2, 1);
+		width = max(width / 2, 1);
+		height = max(height / 2, 1);
 
 		PPExposureLevel blevel;
 		blevel.Viewport.left = 0;
@@ -746,7 +746,7 @@ void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneW
 	LinearDepthUniforms linearUniforms;
 	linearUniforms.SampleIndex = 0;
 	linearUniforms.LinearizeDepthA = 1.0f / screen->GetZFar() - 1.0f / screen->GetZNear();
-	linearUniforms.LinearizeDepthB = MAX(1.0f / screen->GetZNear(), 1.e-8f);
+	linearUniforms.LinearizeDepthB = max(1.0f / screen->GetZNear(), 1.e-8f);
 	linearUniforms.InverseDepthRangeA = 1.0f;
 	linearUniforms.InverseDepthRangeB = 0.0f;
 	linearUniforms.Scale = sceneScale;

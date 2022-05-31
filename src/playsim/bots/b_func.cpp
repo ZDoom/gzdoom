@@ -180,7 +180,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 	if (player->ReadyWeapon == NULL)
 		return;
 
-	if (player->damagecount > skill.isp)
+	if (player->damagecount > (unsigned)skill.isp)
 	{
 		first_shot = true;
 		return;

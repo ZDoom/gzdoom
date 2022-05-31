@@ -85,6 +85,7 @@ public:
 	void ReadObjects(bool hubtravel);
 	bool BeginObject(const char *name);
 	void EndObject();
+	bool HasObject(const char* name);
 	bool BeginArray(const char *name);
 	void EndArray();
 	unsigned GetSize(const char *group);
@@ -110,7 +111,7 @@ public:
 	{
 		return w != nullptr;
 	}
-	
+
 	bool canSkip() const;
 
 	template<class T>
@@ -234,7 +235,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 
-template<class T>
+template <typename T/*, typename = std::enable_if_t<std::is_base_of_v<DObject, T>>*/>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
 {
 	DObject *v = static_cast<DObject*>(value);
@@ -299,6 +300,11 @@ template<int size>
 FSerializer& Serialize(FSerializer& arc, const char* key, FixedBitArray<size>& value, FixedBitArray<size>* def)
 {
 	return arc.SerializeMemory(key, value.Storage(), value.StorageSize());
+}
+
+inline FSerializer& Serialize(FSerializer& arc, const char* key, BitArray& value, BitArray* def)
+{
+	return arc.SerializeMemory(key, value.Storage().Data(), value.Storage().Size());
 }
 
 template<> FSerializer& Serialize(FSerializer& arc, const char* key, PClass*& clst, PClass** def);

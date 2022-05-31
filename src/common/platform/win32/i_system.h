@@ -53,6 +53,9 @@ TArray<FString> I_GetSteamPath();
 // [GZ] Same deal for GOG paths
 TArray<FString> I_GetGogPaths();
 
+// Again for the Bethesda.net Launcher path
+TArray<FString> I_GetBethesdaPath();
+
 // Damn Microsoft for doing Get/SetWindowLongPtr half-assed. Instead of
 // giving them proper prototypes under Win32, they are just macros for
 // Get/SetWindowLong, meaning they take LONGs and not LONG_PTRs.

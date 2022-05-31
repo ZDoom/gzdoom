@@ -140,7 +140,6 @@ int BlockMouseMove;
 static bool EventHandlerResultForNativeMouse;
 
 
-CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 extern int chatmodeon;
@@ -508,14 +507,12 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
-		S_SetSoundPaused ((!!i_soundinbackground) || wParam);
+		S_SetSoundPaused (wParam);
 		break;
 
 	case WM_WTSSESSION_CHANGE:
 	case WM_POWERBROADCAST:
 		{
-			int oldstate = SessionState;
-
 			if (message == WM_WTSSESSION_CHANGE && lParam == (LPARAM)SessionID)
 			{
 #ifdef _DEBUG

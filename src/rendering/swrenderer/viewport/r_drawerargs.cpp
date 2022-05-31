@@ -81,7 +81,7 @@ namespace swrenderer
 			shadeConstants.fade_green = mBaseColormap->Fade.g;
 			shadeConstants.fade_blue = mBaseColormap->Fade.b;
 			shadeConstants.fade_alpha = mBaseColormap->Fade.a;
-			shadeConstants.desaturate = MIN(abs(mBaseColormap->Desaturate), 255) * 255 / 256;
+			shadeConstants.desaturate = min(abs(mBaseColormap->Desaturate), 255) * 255 / 256;
 			shadeConstants.simple_shade = (mBaseColormap->Color.d == 0x00ffffff && mBaseColormap->Fade.d == 0x00000000 && mBaseColormap->Desaturate == 0);
 		}
 		else

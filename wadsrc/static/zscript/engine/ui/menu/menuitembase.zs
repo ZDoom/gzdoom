@@ -40,6 +40,7 @@ class MenuItemBase : Object native ui version("2.4")
 	double GetY() { return mYpos; }
 	double GetX() { return mXpos; }
 	void SetX(double x) { mXpos = x; }
+	void SetY(double x) { mYpos = x; }
 	virtual void OnMenuCreated() {}
 }
 

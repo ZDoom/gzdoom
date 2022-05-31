@@ -85,7 +85,6 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
 	FString name;
 	fileSystem.GetFileShortName(name, SourceLump);
 
-	std::pair<int, int> *info = nullptr;
 	auto imageID = ImageID;
 
 	// Do we have this image in the cache?
@@ -196,14 +195,13 @@ int FImageSource::CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap)
 FBitmap FImageSource::GetCachedBitmap(const PalEntry *remap, int conversion, int *ptrans)
 {
 	FBitmap ret;
-	
+
 	FString name;
 	int trans = -1;
 	fileSystem.GetFileShortName(name, SourceLump);
-	
-	std::pair<int, int> *info = nullptr;
+
 	auto imageID = ImageID;
-	
+
 	if (remap != nullptr)
 	{
 		// Remapped images are never run through the cache because they would complicate matters too much for very little gain.
@@ -220,7 +218,7 @@ FBitmap FImageSource::GetCachedBitmap(const PalEntry *remap, int conversion, int
 		if (index < precacheDataRgba.Size())
 		{
 			auto cache = &precacheDataRgba[index];
-			
+
 			trans = cache->TransInfo;
 			if (cache->RefCount > 1)
 			{
@@ -258,7 +256,7 @@ FBitmap FImageSource::GetCachedBitmap(const PalEntry *remap, int conversion, int
 				//Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->first);
 				// This is the first time it gets accessed and needs to be placed in the cache.
 				PrecacheDataRgba *pdr = &precacheDataRgba[precacheDataRgba.Reserve(1)];
-				
+
 				pdr->ImageID = imageID;
 				pdr->RefCount = info->first - 1;
 				info->first = 0;
@@ -337,6 +335,7 @@ FImageSource *FlatImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PatchImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *EmptyImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *AutomapImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *StartupPageImage_TryCreate(FileReader &, int lumpnum);
 
 
 // Examines the lump contents to decide what type of texture to create,
@@ -352,6 +351,7 @@ FImageSource * FImageSource::GetImage(int lumpnum, bool isflat)
 		{ StbImage_TryCreate,			false },
 		{ TGAImage_TryCreate,			false },
 		{ AnmImage_TryCreate,			false },
+		{ StartupPageImage_TryCreate,	false },
 		{ RawPageImage_TryCreate,		false },
 		{ FlatImage_TryCreate,			true },	// flat detection is not reliable, so only consider this for real flats.
 		{ PatchImage_TryCreate,			false },

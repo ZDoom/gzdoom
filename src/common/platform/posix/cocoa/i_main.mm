@@ -55,7 +55,6 @@
 // ---------------------------------------------------------------------------
 
 
-CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 EXTERN_CVAR(Int,  vid_defwidth )
 EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, vid_vsync    )
@@ -72,23 +71,6 @@ void Mac_I_FatalError(const char* const message)
 	FConsoleWindow::GetInstance().ShowFatalError(message);
 }
 
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
-
-// Available since 10.9 with no public declaration/definition until 10.10
-
-struct NSOperatingSystemVersion
-{
-	NSInteger majorVersion;
-	NSInteger minorVersion;
-	NSInteger patchVersion;
-};
-
-@interface NSProcessInfo(OperatingSystemVersion)
-- (NSOperatingSystemVersion)operatingSystemVersion;
-@end
-
-#endif // before 10.10
 
 static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 {
@@ -107,10 +89,10 @@ static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 
 	if (stat(plistPath, &dummy) != 0)
 		return false;
-	
+
 	char commandLine[1024] = {};
 	snprintf(commandLine, sizeof commandLine, "defaults read %s ProductVersion", plistPath);
-	
+
 	FILE *const versionFile = popen(commandLine, "r");
 
 	if (versionFile == nullptr)
@@ -131,7 +113,7 @@ static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 			if (const char *patchVersionString = strstr(minorVersionString, "."))
 			{
 				patchVersionString++;
-				plistVersion.patchVersion = atoi(minorVersionString);
+				plistVersion.patchVersion = atoi(patchVersionString);
 			}
 		}
 	}
@@ -163,15 +145,12 @@ void I_DetectOS()
 	}
 
 	const char* name = "Unknown version";
-	
+
 	switch (version.majorVersion)
 	{
 	case 10:
 		switch (version.minorVersion)
 		{
-			case  9: name = "OS X Mavericks";        break;
-			case 10: name = "OS X Yosemite";         break;
-			case 11: name = "OS X El Capitan";       break;
 			case 12: name = "macOS Sierra";          break;
 			case 13: name = "macOS High Sierra";     break;
 			case 14: name = "macOS Mojave";          break;
@@ -196,16 +175,14 @@ void I_DetectOS()
 	sysctlbyname("hw.model", model, &size, nullptr, 0);
 
 	const char* const architecture =
-#ifdef __i386__
-		"32-bit Intel";
-#elif defined __x86_64__
+#ifdef __x86_64__
 		"64-bit Intel";	
 #elif defined __aarch64__
 		"64-bit ARM";
 #else
 		"Unknown";
 #endif
-	
+
 	Printf("%s running %s %d.%d.%d (%s) %s\n", model, name,
 		   int(version.majorVersion), int(version.minorVersion), int(version.patchVersion),
 		   release, architecture);
@@ -288,14 +265,14 @@ ApplicationController* appCtrl;
 - (void)keyDown:(NSEvent*)theEvent
 {
 	// Empty but present to avoid playing of 'beep' alert sound
-	
+
 	ZD_UNUSED(theEvent);
 }
 
 - (void)keyUp:(NSEvent*)theEvent
 {
 	// Empty but present to avoid playing of 'beep' alert sound
-	
+
 	ZD_UNUSED(theEvent);
 }
 
@@ -305,7 +282,7 @@ extern bool AppActive;
 - (void)applicationDidBecomeActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
-	
+
 	S_SetSoundPaused(1);
 
 	AppActive = true;
@@ -314,8 +291,8 @@ extern bool AppActive;
 - (void)applicationWillResignActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
-	
-	S_SetSoundPaused(i_soundinbackground);
+
+	S_SetSoundPaused(0);
 
 	AppActive = false;
 }
@@ -396,7 +373,7 @@ extern bool AppActive;
 
 	while (true)
 	{
-		NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
+		NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
 											untilDate:[NSDate dateWithTimeIntervalSinceNow:0]
 											   inMode:NSDefaultRunLoopMode
 											  dequeue:YES];
@@ -449,7 +426,7 @@ NSMenuItem* CreateApplicationMenu()
 	[[menu addItemWithTitle:@"Hide Others"
 						action:@selector(hideOtherApplications:)
 				 keyEquivalent:@"h"]
-	 setKeyEquivalentModifierMask:NSAlternateKeyMask | NSCommandKeyMask];
+	 setKeyEquivalentModifierMask:NSEventModifierFlagOption | NSEventModifierFlagCommand];
 	[menu addItemWithTitle:@"Show All"
 					   action:@selector(unhideAllApplications:)
 				keyEquivalent:@""];

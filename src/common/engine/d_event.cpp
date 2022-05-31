@@ -52,7 +52,6 @@ event_t events[MAXEVENTS];
 
 CVAR(Float, m_sensitivity_x, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Float, m_sensitivity_y, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, m_filter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 
 //==========================================================================
@@ -67,11 +66,21 @@ CVAR(Bool, m_filter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void D_ProcessEvents (void)
 {
-	event_t *ev;
+	FixedBitArray<NUM_KEYS> keywasdown;
+	TArray<event_t> delayedevents;
+
+	keywasdown.Zero();
 	while (eventtail != eventhead)
 	{
-		ev = &events[eventtail];
+		event_t *ev = &events[eventtail];
 		eventtail = (eventtail + 1) & (MAXEVENTS - 1);
+
+		if (ev->type == EV_KeyUp && keywasdown[ev->data1])
+		{
+			delayedevents.Push(*ev);
+			continue;
+		}
+
 		if (ev->type == EV_None)
 			continue;
 		if (ev->type == EV_DeviceChange)
@@ -85,7 +94,12 @@ void D_ProcessEvents (void)
 				continue;				// menu ate the event
 		}
 
-		G_Responder (ev);
+		if (G_Responder(ev) && ev->type == EV_KeyDown) keywasdown.Set(ev->data1);
+	}
+
+	for (auto& ev: delayedevents)
+	{
+		D_PostEvent(&ev);
 	}
 }
 
@@ -123,7 +137,7 @@ void D_RemoveNextCharEvent()
 		}
 	}
 }
- 
+
 
 //==========================================================================
 //
@@ -150,24 +164,11 @@ void D_PostEvent(event_t* ev)
 
 void PostMouseMove(int xx, int yy)
 {
-	static float lastx = 0, lasty = 0;
 	event_t ev{};
 
-	float x = float(xx) * m_sensitivity_x;
-	float y = -float(yy) * m_sensitivity_y;
+	ev.x = float(xx) * m_sensitivity_x;
+	ev.y = -float(yy) * m_sensitivity_y;
 
-	if (m_filter)
-	{
-		ev.x = (x + lastx) / 2;
-		ev.y = (y + lasty) / 2;
-	}
-	else
-	{
-		ev.x = x;
-		ev.y = y;
-	}
-	lastx = x;
-	lasty = y;
 	if (ev.x || ev.y)
 	{
 		ev.type = EV_Mouse;

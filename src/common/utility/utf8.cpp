@@ -124,7 +124,7 @@ int utf8_decode(const uint8_t *src, int *size)
 		}
 		return -1;
 	}
-	
+
 	int c3 = src[3];
 	if (c3 < 0x80 || c1 >= 0xc0) return -1;
 	c3 &= 0x3f;
@@ -200,7 +200,7 @@ int GetCharFromString(const uint8_t *&string)
 	if (z < 192)
 	{
 		string++;
-		
+
 		// Handle Windows 1252 characters
 		if (z >= 128 && z < 160)
 		{
@@ -353,7 +353,7 @@ int getAlternative(int code)
 	{
 		default:
 			return code;
-			
+
 		case '{': return '(';
 		case '}': return ')';
 		case 0x17f:	return 's';	// The 'long s' can be safely remapped to the regular variant, not that this gets used in any real text...
@@ -428,7 +428,6 @@ int getAlternative(int code)
 		case 0x457:	return 0xef;
 		case 0x458:	return 'j';
 	}
-	return code;
 }
 
 //==========================================================================

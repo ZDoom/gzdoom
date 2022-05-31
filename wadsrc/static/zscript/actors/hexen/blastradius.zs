@@ -148,6 +148,11 @@ extend class Actor
 				// in another region and cannot be seen.
 				continue;
 			}
+			if ((blastflags & BF_ONLYVISIBLETHINGS) && !isVisible(mo, true)) 
+			{
+				//only blast if target can bee seen by calling actor
+				continue;
+			}
 			BlastActor (mo, strength, speed, blasteffect, !!(blastflags & BF_NOIMPACTDAMAGE));
 		}
 	}

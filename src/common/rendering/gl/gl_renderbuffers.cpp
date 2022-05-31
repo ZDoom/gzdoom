@@ -30,7 +30,7 @@
 #include "gl_postprocessstate.h"
 #include "gl_shaderprogram.h"
 #include "gl_buffers.h"
-#include "templates.h"
+
 #include <random>
 
 EXTERN_CVAR(Int, gl_debug_level)
@@ -443,8 +443,6 @@ bool FGLRenderBuffers::CheckFrameBufferCompleteness()
 	GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (result == GL_FRAMEBUFFER_COMPLETE)
 		return true;
-
-	bool FailedCreate = true;
 
 	if (gl_debug_level > 0)
 	{
@@ -952,7 +950,7 @@ void GLPPRenderState::Draw()
 	{
 		if (!shader->Uniforms)
 			shader->Uniforms.reset(screen->CreateDataBuffer(POSTPROCESS_BINDINGPOINT, false, false));
-		shader->Uniforms->SetData(Uniforms.Data.Size(), Uniforms.Data.Data());
+		shader->Uniforms->SetData(Uniforms.Data.Size(), Uniforms.Data.Data(), BufferUsageType::Static);
 		static_cast<GLDataBuffer*>(shader->Uniforms.get())->BindBase();
 	}
 

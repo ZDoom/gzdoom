@@ -5,6 +5,7 @@ extend struct _
 	native readonly Array<@PlayerClass> PlayerClasses;
 	native readonly Array<@PlayerSkin> PlayerSkins;
 	native readonly Array<@Team> Teams;
+	native readonly Array<@TerrainDef> Terrains;
 	native int validcount;
 	native play @DehInfo deh;
 	native readonly bool automapactive;
@@ -26,6 +27,7 @@ extend struct _
 extend struct TexMan
 {
 	native static void SetCameraToTexture(Actor viewpoint, String texture, double fov);
+	native static void SetCameraTextureAspectRatio(String texture, double aspectScale, bool useTextureRatio = true);
 	deprecated("3.8", "Use Level.ReplaceTextures() instead") static void ReplaceTextures(String from, String to, int flags)
 	{
 		level.ReplaceTextures(from, to, flags);
@@ -701,11 +703,31 @@ class Lighting : SectorEffect native
 
 struct Shader native
 {
-	native clearscope static void SetEnabled(PlayerInfo player, string shaderName, bool enable);
-	native clearscope static void SetUniform1f(PlayerInfo player, string shaderName, string uniformName, float value);
-	native clearscope static void SetUniform2f(PlayerInfo player, string shaderName, string uniformName, vector2 value);
-	native clearscope static void SetUniform3f(PlayerInfo player, string shaderName, string uniformName, vector3 value);
-	native clearscope static void SetUniform1i(PlayerInfo player, string shaderName, string uniformName, int value);
+	// This interface was deprecated for the pointless player dependency 
+	private static bool IsConsolePlayer(PlayerInfo player)
+	{
+		return player && player.mo && player == players[consoleplayer];
+	}
+	deprecated("4.8", "Use PPShader.SetEnabled() instead") clearscope static void SetEnabled(PlayerInfo player, string shaderName, bool enable)
+	{
+		if (IsConsolePlayer(player)) PPShader.SetEnabled(shaderName, enable);
+	}
+	deprecated("4.8", "Use PPShader.SetUniform1f() instead") clearscope static void SetUniform1f(PlayerInfo player, string shaderName, string uniformName, float value)
+	{
+		if (IsConsolePlayer(player)) PPShader.SetUniform1f(shaderName, uniformName, value);
+	}
+	deprecated("4.8", "Use PPShader.SetUniform2f() instead") clearscope static void SetUniform2f(PlayerInfo player, string shaderName, string uniformName, vector2 value)
+	{
+		if (IsConsolePlayer(player)) PPShader.SetUniform2f(shaderName, uniformName, value);
+	}
+	deprecated("4.8", "Use PPShader.SetUniform3f() instead") clearscope static void SetUniform3f(PlayerInfo player, string shaderName, string uniformName, vector3 value)
+	{
+		if (IsConsolePlayer(player)) PPShader.SetUniform3f(shaderName, uniformName, value);
+	}
+	deprecated("4.8", "Use PPShader.SetUniform1i() instead") clearscope static void SetUniform1i(PlayerInfo player, string shaderName, string uniformName, int value)
+	{
+		if (IsConsolePlayer(player)) PPShader.SetUniform1i(shaderName, uniformName, value);
+	}
 }
 
 struct FRailParams

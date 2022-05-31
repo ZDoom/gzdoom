@@ -22,7 +22,7 @@
 
 #include "vk_imagetransition.h"
 
-void VkImageTransition::addImage(VkTextureImage *image, VkImageLayout targetLayout, bool undefinedSrcLayout)
+void VkImageTransition::addImage(VkTextureImage *image, VkImageLayout targetLayout, bool undefinedSrcLayout, int baseMipLevel, int levelCount)
 {
 	if (image->Layout == targetLayout)
 		return;
@@ -91,7 +91,7 @@ void VkImageTransition::addImage(VkTextureImage *image, VkImageLayout targetLayo
 		I_FatalError("Unimplemented dst image layout transition\n");
 	}
 
-	barrier.addImage(image->Image.get(), undefinedSrcLayout ? VK_IMAGE_LAYOUT_UNDEFINED : image->Layout, targetLayout, srcAccess, dstAccess, aspectMask);
+	barrier.addImage(image->Image.get(), undefinedSrcLayout ? VK_IMAGE_LAYOUT_UNDEFINED : image->Layout, targetLayout, srcAccess, dstAccess, aspectMask, baseMipLevel, levelCount);
 	needbarrier = true;
 	image->Layout = targetLayout;
 }
@@ -117,8 +117,8 @@ void VkTextureImage::GenerateMipmaps(VulkanCommandBuffer *cmdbuffer)
 		barrier0.execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 		Layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-		int nextWidth = std::max(mipWidth >> 1, 1);
-		int nextHeight = std::max(mipHeight >> 1, 1);
+		int nextWidth = max(mipWidth >> 1, 1);
+		int nextHeight = max(mipHeight >> 1, 1);
 
 		VkImageBlit blit = {};
 		blit.srcOffsets[0] = { 0, 0, 0 };

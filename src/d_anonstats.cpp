@@ -35,14 +35,15 @@ extern int sys_ostype;
 #include "version.h"
 #include "v_video.h"
 #include "gl_interface.h"
+#include "printf.h"
 
-CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
+CVAR(Int, sys_statsenabled47, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 
 // Each machine will only send two  reports, one when started with hardware rendering and one when started with software rendering.
-#define CHECKVERSION 350
-#define CHECKVERSIONSTR "350"
+#define CHECKVERSION 470
+#define CHECKVERSIONSTR "470"
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();
@@ -190,23 +191,24 @@ static int GetOSVersion()
 
 #elif defined __APPLE__
 
+#if defined(__aarch64__)
+	return 6;
+#else
 	return 5;
-
+#endif
 #else
 
 // fall-through linux stuff here
 #ifdef __arm__
-	return 8;
-#elif __ppc__
 	return 9;
 #else
 	if (sizeof(void*) == 4)	// 32 bit
 	{
-		return 6;
+		return 7;
 	}
 	else
 	{
-		return 7;
+		return 8;
 	}
 #endif
 
@@ -289,7 +291,7 @@ void D_DoAnonStats()
 {
 #ifndef _DEBUG
 	// Do not repeat if already sent.
-	if (sys_statsenabled != 1 || sentstats_hwr_done >= CHECKVERSION)
+	if (sys_statsenabled47 != 1 || sentstats_hwr_done >= CHECKVERSION)
 	{
 		return;
 	}
@@ -301,10 +303,10 @@ void D_DoAnonStats()
 
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_201903.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202109.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
 		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
-#ifndef _DEBUG
+#if 1//ndef _DEBUG
 	// Don't send info in debug builds
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
@@ -315,7 +317,7 @@ void D_DoAnonStats()
 
 void D_ConfirmSendStats()
 {
-	if (sys_statsenabled >= 0)
+	if (sys_statsenabled47 >= 0)
 	{
 		return;
 	}
@@ -327,7 +329,7 @@ void D_ConfirmSendStats()
 		"- Operating system\n" \
 		"- Number of processor cores\n" \
 		"- OpenGL version and your graphics card's name\n\n" \
-		"All information sent will be anonymously. We will NOT be sending this information to any third party.\n" \
+		"All information sent will be collected anonymously. We will NOT be sending this information to any third party.\n" \
 		"It will merely be used for decision-making about GZDoom's future development.\n" \
 		"Data will only be sent once per system.\n" \
 		"If you are getting this notice more than once, please let us know on the forums. Thanks!\n\n" \
@@ -372,7 +374,7 @@ void D_ConfirmSendStats()
 	enabled.Int = SDL_ShowMessageBox(&messageboxdata, &buttonid) == 0 && buttonid == 0;
 #endif // _WIN32
 
-	sys_statsenabled.ForceSet(enabled, CVAR_Int);
+	sys_statsenabled47.ForceSet(enabled, CVAR_Int);
 }
 
 #endif // NO_SEND_STATS

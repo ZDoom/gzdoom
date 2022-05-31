@@ -23,7 +23,7 @@
 #include "polyrenderer/backend/poly_renderstate.h"
 #include "polyrenderer/backend/poly_framebuffer.h"
 #include "polyrenderer/backend/poly_hwtexture.h"
-#include "templates.h"
+
 #include "hw_skydome.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"

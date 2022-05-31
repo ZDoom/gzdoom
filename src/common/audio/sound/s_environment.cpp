@@ -34,7 +34,7 @@
 
 #include "s_soundinternal.h"
 #include "sc_man.h"
-#include "templates.h"
+
 #include "cmdlib.h"
 
 
@@ -530,7 +530,7 @@ void S_ReadReverbDef (FScanner &sc)
 {
 	const ReverbContainer *def;
 	ReverbContainer *newenv;
-	REVERB_PROPERTIES props;
+	REVERB_PROPERTIES props = {};
 	char *name;
 	int id1, id2, i, j;
 	bool inited[NUM_REVERB_FIELDS];

@@ -40,7 +40,14 @@
 #include "basics.h"
 #include "memarena.h"
 #include "cmdlib.h"
-#include "m_alloc.h"
+
+#if __has_include("m_alloc.h")
+	#include "m_alloc.h"
+#else
+	#define M_Malloc malloc
+	#define M_Realloc realloc
+	#define M_Free free
+#endif
 
 struct FMemArena::Block
 {
@@ -115,6 +122,14 @@ void *FMemArena::iAlloc(size_t size)
 void *FMemArena::Alloc(size_t size)
 {
 	return iAlloc((size + 15) & ~15);
+}
+
+void* FMemArena::Calloc(size_t size)
+{
+	size = (size + 15) & ~15;
+	auto mem = iAlloc(size);
+	memset(mem, 0, size);
+	return mem;
 }
 
 //==========================================================================

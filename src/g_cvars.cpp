@@ -161,3 +161,5 @@ CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 	UpdateGenericUI(ui_generic);
 	I_UpdateWindowTitle();
 }
+
+CVAR(Float, cl_scaleweaponfov, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

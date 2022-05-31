@@ -119,7 +119,7 @@ static FCompatOption Options[] =
 {
 	{ "setslopeoverflow",		BCOMPATF_SETSLOPEOVERFLOW, SLOT_BCOMPAT },
 	{ "resetplayerspeed",		BCOMPATF_RESETPLAYERSPEED, SLOT_BCOMPAT },
-	{ "vileghosts",				BCOMPATF_VILEGHOSTS, SLOT_BCOMPAT },
+	{ "vileghosts",				COMPATF_VILEGHOSTS, SLOT_COMPAT },
 	{ "ignoreteleporttags",		BCOMPATF_BADTELEPORTERS, SLOT_BCOMPAT },
 	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
 	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
@@ -150,7 +150,6 @@ static FCompatOption Options[] =
 	{ "anybossdeath",			COMPATF_ANYBOSSDEATH, SLOT_COMPAT },// [GZ] Added for UAC_DEAD
 	{ "mushroom",				COMPATF_MUSHROOM, SLOT_COMPAT },
 	{ "mbfmonstermove",			COMPATF_MBFMONSTERMOVE, SLOT_COMPAT },
-	{ "corpsegibs",				COMPATF_CORPSEGIBS, SLOT_COMPAT },
 	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, SLOT_COMPAT },
 	{ "spritesort",				COMPATF_SPRITESORT, SLOT_COMPAT },
 	{ "hitscan",				COMPATF_HITSCAN, SLOT_COMPAT },
@@ -169,6 +168,7 @@ static FCompatOption Options[] =
 	{ "explode2",				COMPATF2_EXPLODE2, SLOT_COMPAT2 },
 	{ "railing",				COMPATF2_RAILING, SLOT_COMPAT2 },
 	{ "scriptwait",				COMPATF2_SCRIPTWAIT, SLOT_COMPAT2 },
+	{ "nombf21",				COMPATF2_NOMBF21, SLOT_COMPAT2 },
 	{ NULL, 0, 0 }
 };
 

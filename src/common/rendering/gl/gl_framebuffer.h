@@ -23,7 +23,7 @@ public:
 	explicit OpenGLFrameBuffer() {}
 	OpenGLFrameBuffer(void *hMonitor, bool fullscreen) ;
 	~OpenGLFrameBuffer();
-
+	bool CompileNextShader() override;
 	void InitializeState() override;
 	void Update() override;
 
@@ -50,6 +50,8 @@ public:
 	IIndexBuffer *CreateIndexBuffer() override;
 	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) override;
 
+	void InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData) override;
+
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
@@ -65,7 +67,7 @@ public:
 
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	std::shared_ptr<FGLDebug> mDebug;	// Debug API
-    
+
     FTexture *WipeStartScreen() override;
     FTexture *WipeEndScreen() override;
 

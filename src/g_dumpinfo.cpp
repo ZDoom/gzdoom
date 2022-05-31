@@ -390,7 +390,7 @@ CCMD(skyfog)
 	if (argv.argc() > 1)
 	{
 		// Do this only on the primary level.
-		primaryLevel->skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
+		primaryLevel->skyfog = max(0, (int)strtoull(argv[1], NULL, 0));
 	}
 }
 

@@ -1,0 +1,11 @@
+
+attribute vec4 PositionInProjection;
+attribute vec2 UV;
+
+varying vec2 TexCoord;
+
+void main()
+{
+	gl_Position = PositionInProjection;
+	TexCoord = UV;
+}

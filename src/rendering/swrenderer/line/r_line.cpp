@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "templates.h"
+
 #include "engineerrors.h"
 #include "doomdef.h"
 #include "doomstat.h"
@@ -752,7 +752,7 @@ namespace swrenderer
 			for (int x = x1; x < x2; ++x)
 			{
 				short top = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeCeiling) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
-				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
+				short bottom = min(walltop.ScreenY[x], floorclip[x]);
 				if (top < bottom)
 				{
 					mCeilingPlane->top[x] = top;
@@ -774,7 +774,7 @@ namespace swrenderer
 
 			for (int x = x1; x < x2; ++x)
 			{
-				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
+				short top = max(wallbottom.ScreenY[x], ceilingclip[x]);
 				short bottom = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeFloor) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{
@@ -804,7 +804,7 @@ namespace swrenderer
 			{
 				for (int x = x1; x < x2; ++x)
 				{
-					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
+					walllower.ScreenY[x] = min(max(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
 				}
 				memcpy(clip3d->fakeFloor->floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -816,7 +816,7 @@ namespace swrenderer
 			{
 				for (int x = x1; x < x2; ++x)
 				{
-					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
+					wallupper.ScreenY[x] = max(min(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
 				}
 				memcpy(clip3d->fakeFloor->ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -839,7 +839,7 @@ namespace swrenderer
 			{ // top wall
 				for (int x = x1; x < x2; ++x)
 				{
-					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
+					wallupper.ScreenY[x] = max(min(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
 				}
 				memcpy(ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -852,7 +852,7 @@ namespace swrenderer
 			{ // bottom wall
 				for (int x = x1; x < x2; ++x)
 				{
-					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
+					walllower.ScreenY[x] = min(max(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
 				}
 				memcpy(floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -873,7 +873,7 @@ namespace swrenderer
 		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mTopTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::top, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -885,7 +885,7 @@ namespace swrenderer
 		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC, mMiddleTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::mid, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -898,6 +898,6 @@ namespace swrenderer
 		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mBottomTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::bottom, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 }

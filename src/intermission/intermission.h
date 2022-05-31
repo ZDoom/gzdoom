@@ -10,7 +10,7 @@
 #include "g_game.h"
 #include "v_text.h"
 
-struct event_t;
+struct FInputEvent;
 struct FState;
 
 #define DECLARE_SUPER_CLASS(cls,parent) \
@@ -166,7 +166,11 @@ protected:
 	int mDuration;
 	FTextureID mBackground;
 	FString mSubtitle;
+	FString mMusic;
+	int mMusicOrder;
+	bool mMusicLooping;
 	bool mFlatfill;
+	bool mFirst;
 	TArray<FIIntermissionPatch> mOverlays;
 
 	bool CheckOverlay(int i);
@@ -176,7 +180,8 @@ public:
 
 	DIntermissionScreen() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual void Start();
+	virtual int Responder (FInputEvent *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
 	void OnDestroy() override;
@@ -202,7 +207,7 @@ public:
 
 	DIntermissionScreenFader() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
 };
@@ -227,7 +232,7 @@ public:
 
 	DIntermissionScreenText() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual void Drawer ();
 };
 
@@ -256,7 +261,7 @@ public:
 
 	DIntermissionScreenCast() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
 };
@@ -275,7 +280,7 @@ public:
 
 	DIntermissionScreenScroller() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
-	virtual int Responder (event_t *ev);
+	virtual int Responder (FInputEvent *ev);
 	virtual void Drawer ();
 };
 
@@ -296,36 +301,29 @@ class DIntermissionController : public DObject
 	bool mDeleteDesc;
 	bool mFirst;
 	bool mAdvance, mSentAdvance;
-	uint8_t mGameState;
 	int mIndex;
 
-	bool NextPage();
-
 public:
-	static DIntermissionController *CurrentIntermission;
+	bool mEndGame;
 
-	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, uint8_t state = FSTATE_ChangingLevel);
-	bool Responder (event_t *ev);
-	void Ticker ();
+	DIntermissionController(FIntermissionDescriptor *mDesc = NULL, bool mDeleteDesc = false, bool ending = false);
+	bool Responder (FInputEvent *ev);
+	bool Ticker ();
+	void Start();
 	void Drawer ();
 	void OnDestroy() override;
+	bool NextPage();
 
-	friend void F_AdvanceIntermission();
-	friend void F_StartIntermission(FIntermissionDescriptor *, bool, uint8_t);
+	friend DIntermissionController* F_StartIntermission(FIntermissionDescriptor *, bool, uint8_t);
 };
 
 
 // Interface for main loop
-bool F_Responder (event_t* ev);
-void F_Ticker ();
-void F_Drawer ();
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state);
-void F_StartIntermission(FName desc, uint8_t state);
-void F_EndFinale ();
-void F_AdvanceIntermission();
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool ending = false);
+DIntermissionController* F_StartIntermission(FName desc);
 
 // Create an intermission from old cluster data
-void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
+DIntermissionController* F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 
 					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
 					bool ending, FName endsequence = NAME_None);
 

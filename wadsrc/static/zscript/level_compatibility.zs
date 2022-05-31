@@ -987,6 +987,22 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '30D1480A6D4F3A3153739D4CCF659C4E': // heretic.wad E4M8
+			{
+				// multiplayer teleporter prevents exit on cooperative
+				SetThingFlags(78,MTF_DEATHMATCH);
+				break;
+			}
+
+			case '6CDA2721AA1076F063557CF89D88E92B': // hexen.wad map08
+			{
+				// Amulet of warding accidentally shifted outside of map
+				SetThingXY(256,-1632,2352);
+				// Icon of the defender outside of map
+				SetThingSkills(261,0);
+				break;
+			}
+
 			case '39C594CAC07EE51C80F757DA465FCC94': // strife1.wad map10
 			{
 				// fix the shooting range by matching sector 138 and 145 properties together
@@ -1365,7 +1381,6 @@ class LevelCompatibility : LevelPostProcessor
 			case '11EA5B8357DEB70A8F00900117831191': // kdizd_12.pk3 z1m3
 			{
 				// Fix incorrectly tagged underwater sector which causes render glitches.
-				ClearSectorTags(7857);
 				AddSectorTag(7857, 82);
 				break;
 			}
@@ -2126,6 +2141,13 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				// Fix impassable exit line
 				SetLineFlags(6842, 0, Line.ML_BLOCKING); 
+				break;
+			}
+			
+			case '50E394239FF64264950D11883E933553': // 1024.wad map05
+			{
+				// Change duplicate player 2 start to player 3 start
+				SetThingEdNum(59, 3);
 				break;
 			}
 		}

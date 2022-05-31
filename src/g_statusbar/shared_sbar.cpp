@@ -35,7 +35,7 @@
 
 #include <assert.h>
 
-#include "templates.h"
+
 #include "sbar.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -531,7 +531,7 @@ DVector2 DBaseStatusBar::GetHUDScale() const
 	// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
 	// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
 	// the resulting scaling factor needs to be reduced accordingly.
-	int realscale = MAX<int>(1, (320 * scale) / hres);
+	int realscale = max<int>(1, (320 * scale) / hres);
 	return{ double(realscale), double(realscale * (hud_aspectscale ? 1.2 : 1.)) };
 }
 

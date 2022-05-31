@@ -43,7 +43,7 @@ void WarpBuffer(TYPE *Pixels, const TYPE *source, int width, int height, int xmu
 
 	if (warptype == 1)
 	{
-		TYPE *buffer = (TYPE *)alloca(sizeof(TYPE) * MAX(width, height));
+		TYPE *buffer = (TYPE *)alloca(sizeof(TYPE) * max(width, height));
 		// [mxd] Rewrote to fix animation for NPo2 textures
 		unsigned timebase = unsigned(time * Speed * 32 / 28);
 		for (y = height - 1; y >= 0; y--)

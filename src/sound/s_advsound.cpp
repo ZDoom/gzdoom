@@ -34,7 +34,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "templates.h"
+
 #include "actor.h"
 #include "c_dispatch.h"
 #include "filesystem.h"
@@ -416,7 +416,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 
 	sfxid = soundEngine->FindSoundNoHash (logicalname);
 
-	if (sfxid > 0)
+	if (sfxid > 0 && (unsigned int)sfxid < S_sfx.Size())
 	{ // If the sound has already been defined, change the old definition
 		sfxinfo_t *sfx = &S_sfx[sfxid];
 
@@ -483,7 +483,9 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 
 int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool fromskin)
 {
+
 	auto &S_sfx = soundEngine->GetSounds();
+
 	FString fakename;
 	int id;
 
@@ -1008,7 +1010,7 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString ();
 				sfx = soundEngine->FindSoundTentative (sc.String);
 				sc.MustGetNumber ();
-				S_sfx[sfx].NearLimit = MIN(MAX(sc.Number, 0), 255);
+				S_sfx[sfx].NearLimit = min(max(sc.Number, 0), 255);
 				if (sc.CheckFloat())
 				{
 					S_sfx[sfx].LimitRange = float(sc.Float * sc.Float);

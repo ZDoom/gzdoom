@@ -34,7 +34,7 @@
 */
 
 #include "c_buttons.h"
-#include "templates.h"
+
 #include "c_dispatch.h"
 #include "printf.h"
 #include "cmdlib.h"
@@ -101,13 +101,13 @@ int ButtonMap::ListActionCommands (const char *pattern)
 int ButtonMap::FindButtonIndex (const char *key, int funclen) const
 {
     if (!key) return -1;
-	
+
 	FName name = funclen == -1? FName(key, true) : FName(key, funclen, true);
 	if (name == NAME_None) return -1;
-	
+
 	auto res = NameToNum.CheckKey(name);
 	if (!res) return -1;
-	
+
 	return *res;
 }
 

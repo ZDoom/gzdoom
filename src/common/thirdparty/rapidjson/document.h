@@ -29,6 +29,7 @@ RAPIDJSON_DIAG_PUSH
 #ifdef _MSC_VER
 RAPIDJSON_DIAG_OFF(4127) // conditional expression is constant
 RAPIDJSON_DIAG_OFF(4244) // conversion from kXxxFlags to 'uint16_t', possible loss of data
+RAPIDJSON_DIAG_OFF(4996) // deprecation of std::iterator
 #endif
 
 #ifdef __clang__
@@ -1936,7 +1937,7 @@ private:
         if (count) {
             GenericValue* e = static_cast<GenericValue*>(allocator.Malloc(count * sizeof(GenericValue)));
             SetElementsPointer(e);
-            std::memcpy(e, values, count * sizeof(GenericValue));
+            std::memcpy((void*)e, (void*)values, count * sizeof(GenericValue));
         }
         else
             SetElementsPointer(0);
@@ -1949,7 +1950,7 @@ private:
         if (count) {
             Member* m = static_cast<Member*>(allocator.Malloc(count * sizeof(Member)));
             SetMembersPointer(m);
-            std::memcpy(m, members, count * sizeof(Member));
+            std::memcpy((void*)m, (void*)members, count * sizeof(Member));
         }
         else
             SetMembersPointer(0);

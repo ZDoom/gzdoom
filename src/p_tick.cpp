@@ -175,22 +175,6 @@ void P_Ticker (void)
 		{
 			P_UpdateSpecials(Level);
 		}
-		it = Level->GetThinkerIterator<AActor>();
-
-		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
-		while ((ac = it.Next()))
-		{
-			if (ac->flags8 & MF8_RECREATELIGHTS)
-			{
-				ac->flags8 &= ~MF8_RECREATELIGHTS;
-				ac->SetDynamicLights();
-			}
-			// This was merged from P_RunEffects to eliminate the costly duplicate ThinkerIterator loop.
-			if ((ac->effects || ac->fountaincolor) && !Level->isFrozen())
-			{
-				P_RunEffect(ac, ac->effects);
-			}
-		}
 
 		// for par times
 		Level->time++;

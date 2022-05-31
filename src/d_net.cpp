@@ -68,6 +68,7 @@
 #include "vm.h"
 #include "gstrings.h"
 #include "s_music.h"
+#include "screenjob.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -222,7 +223,7 @@ static struct TicSpecial
 	{
 		int i;
 
-		specialsize = MAX(specialsize * 2, needed + 30);
+		specialsize = max(specialsize * 2, needed + 30);
 
 		DPrintf (DMSG_NOTIFY, "Expanding special size to %zu\n", specialsize);
 
@@ -1151,7 +1152,7 @@ void NetUpdate (void)
 			netbuffer[k++] = lowtic;
 		}
 
-		numtics = MAX(0, lowtic - realstart);
+		numtics = max(0, lowtic - realstart);
 		if (numtics > BACKUPTICS)
 			I_Error ("NetUpdate: Node %d missed too many tics", i);
 
@@ -1160,7 +1161,7 @@ void NetUpdate (void)
 		case 0:
 		default: 
 			resendto[i] = lowtic; break;
-		case 1: resendto[i] = MAX(0, lowtic - 1); break;
+		case 1: resendto[i] = max(0, lowtic - 1); break;
 		case 2: resendto[i] = nettics[i]; break;
 		}
 
@@ -1836,7 +1837,7 @@ static void TicStabilityEnd()
 {
 	using namespace std::chrono;
 	uint64_t stabilityendtime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
-	stabilityticduration = std::min(stabilityendtime - stabilitystarttime, (uint64_t)1'000'000);
+	stabilityticduration = min(stabilityendtime - stabilitystarttime, (uint64_t)1'000'000);
 }
 
 //
@@ -1851,7 +1852,7 @@ void TryRunTics (void)
 	int 		counts;
 	int 		numplaying;
 
-	bool doWait = (cl_capfps || pauseext || (r_NoInterpolate && !M_IsAnimated() /*&& gamestate != GS_INTERMISSION && gamestate != GS_INTRO*/));
+	bool doWait = (cl_capfps || pauseext || (r_NoInterpolate && !M_IsAnimated()));
 
 	// get real tics
 	if (doWait)
@@ -2696,10 +2697,6 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		players[player].MaxPitch = (double)ReadByte(stream);		// down
 		break;
 
-	case DEM_ADVANCEINTER:
-		F_AdvanceIntermission();
-		break;
-
 	case DEM_REVERTCAMERA:
 		players[player].camera = players[player].mo;
 		break;
@@ -2721,6 +2718,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		}
 		break;
 
+	case DEM_ENDSCREENJOB:
+		EndScreenJob();
+		break;
+		
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -2750,7 +2751,7 @@ static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int al
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(pawn->Level, pawn, NULL, snum, primaryLevel->MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
+	P_StartScript(pawn->Level, pawn, NULL, snum, primaryLevel->MapName, arg, min<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, uint8_t **stream)
@@ -2913,15 +2914,15 @@ int Net_GetLatency(int *ld, int *ad)
 	localdelay = ((localdelay / BACKUPTICS) * ticdup) * (1000 / TICRATE);
 	int severity = 0;
 
-	if (MAX(localdelay, arbitratordelay) > 200)
+	if (max(localdelay, arbitratordelay) > 200)
 	{
 		severity = 1;
 	}
-	if (MAX(localdelay, arbitratordelay) > 400)
+	if (max(localdelay, arbitratordelay) > 400)
 	{
 		severity = 2;
 	}
-	if (MAX(localdelay, arbitratordelay) >= ((BACKUPTICS / 2 - 1) * ticdup) * (1000 / TICRATE))
+	if (max(localdelay, arbitratordelay) >= ((BACKUPTICS / 2 - 1) * ticdup) * (1000 / TICRATE))
 	{
 		severity = 3;
 	}

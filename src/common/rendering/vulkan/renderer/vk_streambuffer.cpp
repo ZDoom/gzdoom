@@ -30,7 +30,7 @@ VkStreamBuffer::VkStreamBuffer(size_t structSize, size_t count)
 	mBlockSize = static_cast<uint32_t>((structSize + screen->uniformblockalignment - 1) / screen->uniformblockalignment * screen->uniformblockalignment);
 
 	UniformBuffer = (VKDataBuffer*)GetVulkanFrameBuffer()->CreateDataBuffer(-1, false, false);
-	UniformBuffer->SetData(mBlockSize * count, nullptr, false);
+	UniformBuffer->SetData(mBlockSize * count, nullptr, BufferUsageType::Persistent);
 }
 
 VkStreamBuffer::~VkStreamBuffer()

@@ -529,7 +529,7 @@ object Candlestick
 // Soul Sphere
 pulselight SOULSPHERE
 {
-    color 0.3 0.3 1.0
+    color 1.0 1.0 0.3
     size 60
     secondarySize 63
     interval 2.0

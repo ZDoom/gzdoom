@@ -364,8 +364,8 @@ void FSoftwareTexture::CreatePixelsBgraWithMipmaps()
 	int buffersize = 0;
 	for (int i = 0; i < levels; i++)
 	{
-		int w = MAX(GetPhysicalWidth() >> i, 1);
-		int h = MAX(GetPhysicalHeight() >> i, 1);
+		int w = max(GetPhysicalWidth() >> i, 1);
+		int h = max(GetPhysicalHeight() >> i, 1);
 		buffersize += w * h;
 	}
 	PixelsBgra.Resize(buffersize);
@@ -379,7 +379,7 @@ int FSoftwareTexture::MipmapLevels()
 	int heightbits = 0;
 	while ((GetPhysicalHeight() >> heightbits) != 0) heightbits++;
 
-	return MAX(widthbits, heightbits);
+	return max(widthbits, heightbits);
 }
 
 //==========================================================================
@@ -430,20 +430,20 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 		Color4f *dest = src + GetPhysicalWidth() * GetPhysicalHeight();
 		for (int i = 1; i < levels; i++)
 		{
-			int srcw = MAX(GetPhysicalWidth() >> (i - 1), 1);
-			int srch = MAX(GetPhysicalHeight() >> (i - 1), 1);
-			int w = MAX(GetPhysicalWidth() >> i, 1);
-			int h = MAX(GetPhysicalHeight() >> i, 1);
+			int srcw = max(GetPhysicalWidth() >> (i - 1), 1);
+			int srch = max(GetPhysicalHeight() >> (i - 1), 1);
+			int w = max(GetPhysicalWidth() >> i, 1);
+			int h = max(GetPhysicalHeight() >> i, 1);
 
 			// Downscale
 			for (int x = 0; x < w; x++)
 			{
 				int sx0 = x * 2;
-				int sx1 = MIN((x + 1) * 2, srcw - 1);
+				int sx1 = min((x + 1) * 2, srcw - 1);
 				for (int y = 0; y < h; y++)
 				{
 					int sy0 = y * 2;
-					int sy1 = MIN((y + 1) * 2, srch - 1);
+					int sy1 = min((y + 1) * 2, srch - 1);
 
 					Color4f src00 = src[sy0 + sx0 * srch];
 					Color4f src01 = src[sy1 + sx0 * srch];
@@ -493,14 +493,14 @@ void FSoftwareTexture::GenerateBgraMipmaps()
 		uint32_t *dest = PixelsBgra.Data() + GetPhysicalWidth() * GetPhysicalHeight();
 		for (int i = 1; i < levels; i++)
 		{
-			int w = MAX(GetPhysicalWidth() >> i, 1);
-			int h = MAX(GetPhysicalHeight() >> i, 1);
+			int w = max(GetPhysicalWidth() >> i, 1);
+			int h = max(GetPhysicalHeight() >> i, 1);
 			for (int j = 0; j < w * h; j++)
 			{
-				uint32_t a = (uint32_t)clamp(powf(MAX(src[j].a, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t r = (uint32_t)clamp(powf(MAX(src[j].r, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t g = (uint32_t)clamp(powf(MAX(src[j].g, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
-				uint32_t b = (uint32_t)clamp(powf(MAX(src[j].b, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t a = (uint32_t)clamp(powf(max(src[j].a, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t r = (uint32_t)clamp(powf(max(src[j].r, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t g = (uint32_t)clamp(powf(max(src[j].g, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
+				uint32_t b = (uint32_t)clamp(powf(max(src[j].b, 0.0f), 1.0f / 2.2f) * 255.0f + 0.5f, 0.0f, 255.0f);
 				dest[j] = (a << 24) | (r << 16) | (g << 8) | b;
 			}
 			src += w * h;

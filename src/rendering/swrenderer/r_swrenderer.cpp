@@ -55,7 +55,7 @@
 #include "texturemanager.h"
 #include "d_main.h"
 
-// [BB] Use ZDoom's freelook limit for the sotfware renderer.
+// [BB] Use ZDoom's freelook limit for the software renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.
 CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {

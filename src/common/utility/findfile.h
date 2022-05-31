@@ -43,7 +43,7 @@ inline const char *I_FindName(findstate_t *fileinfo)
 
 
 #else
-	
+
 // Mirror WIN32_FIND_DATAW in <winbase.h>
 
 struct findstate_t

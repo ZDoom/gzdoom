@@ -61,7 +61,7 @@
 #include <math.h>
 #include <algorithm>
 
-#include "templates.h"
+
 
 #include "m_bbox.h"
 #include "m_random.h"
@@ -1993,7 +1993,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 {
 	AActor *onmobj = nullptr;
 	if (pOnmobj) *pOnmobj = nullptr;
-	if (actor->flags & MF_NOCLIP)
+	if ((actor->flags & MF_NOCLIP) || (actor->flags2 & MF2_THRUACTORS))
 	{
 		return true;
 	}
@@ -2011,7 +2011,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
-		if ((actor->flags2 | thing->flags2) & MF2_THRUACTORS)
+		if (thing->flags2 & MF2_THRUACTORS)
 		{
 			continue;
 		}
@@ -2357,7 +2357,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				// This is so that it does not walk off of things onto a drop off.
 				if (thing->flags2 & MF2_ONMOBJ)
 				{
-					floorz = MAX(thing->Z(), tm.floorz);
+					floorz = max(thing->Z(), tm.floorz);
 				}
 
 				if (floorz - tm.dropoffz > thing->MaxDropOffHeight &&
@@ -4035,8 +4035,8 @@ struct aim_t
 				floorportalstate = false;
 			}
 		}
-		if (ceilingportalstate) EnterSectorPortal(sector_t::ceiling, 0, lastsector, toppitch, MIN<DAngle>(0., bottompitch));
-		if (floorportalstate) EnterSectorPortal(sector_t::floor, 0, lastsector, MAX<DAngle>(0., toppitch), bottompitch);
+		if (ceilingportalstate) EnterSectorPortal(sector_t::ceiling, 0, lastsector, toppitch, min<DAngle>(0., bottompitch));
+		if (floorportalstate) EnterSectorPortal(sector_t::floor, 0, lastsector, max<DAngle>(0., toppitch), bottompitch);
 
 		FPathTraverse it(lastsector->Level, startpos.X, startpos.Y, aimtrace.X, aimtrace.Y, PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE | PT_DELTA, startfrac);
 		intercept_t *in;
@@ -4114,11 +4114,11 @@ struct aim_t
 				// check portal in backsector when aiming up/downward is possible, the line doesn't have portals on both sides and there's actually a portal in the backsector
 				if ((planestocheck & aim_up) && toppitch < 0 && open.top != LINEOPEN_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
 				{
-					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, MIN<DAngle>(0., bottompitch));
+					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, min<DAngle>(0., bottompitch));
 				}
 				if ((planestocheck & aim_down) && bottompitch > 0 && open.bottom != LINEOPEN_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
 				{
-					EnterSectorPortal(sector_t::floor, in->frac, entersec, MAX<DAngle>(0., toppitch), bottompitch);
+					EnterSectorPortal(sector_t::floor, in->frac, entersec, max<DAngle>(0., toppitch), bottompitch);
 				}
 				continue;					// shot continues
 			}
@@ -4767,10 +4767,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	PClassActor *type = PClass::FindActor(pufftype);
 	if (type == NULL)
 	{
-		if (victim != NULL)
-		{
-			memset(victim, 0, sizeof(*victim));
-		}
+		if (victim != NULL) *victim = {};
 		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
 		return NULL;
 	}
@@ -5423,6 +5420,27 @@ void P_AimCamera(AActor *t1, DVector3 &campos, DAngle &camangle, sector_t *&Came
 	camangle = trace.SrcAngleFromTarget - 180.;
 }
 
+// [MC] Used for ViewPos. Uses code borrowed from P_AimCamera.
+void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, DViewPosition *VP)
+{
+	FTraceResults trace;
+	const DVector3 vvec = campos - orig;
+	const double distance = vvec.Length();
+
+	// Trace handles all of the portal crossing, which is why there is no usage of Vec#Offset(Z).
+	if (Trace(orig, t1->Sector, vvec.Unit(), distance, 0, 0, t1, trace) &&
+		trace.Distance > 5)
+	{
+		// Position camera slightly in front of hit thing
+		campos = orig + vvec.Unit() * (trace.Distance - 5);
+	}
+	else
+	{
+		campos = trace.HitPos - trace.HitVector * 1 / 256.;
+	}
+	CameraSector = trace.Sector;
+	unlinked = trace.unlinked;
+}
 
 //==========================================================================
 //
@@ -6663,7 +6681,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 		AActor *onmobj;
 		if (!P_TestMobjZ(thing, true, &onmobj) && onmobj->Z() <= thing->Z())
 		{
-			thing->SetZ(MIN(thing->ceilingz - thing->Height, onmobj->Top()));
+			thing->SetZ(min(thing->ceilingz - thing->Height, onmobj->Top()));
 			thing->UpdateRenderSectorList();
 		}
 	}

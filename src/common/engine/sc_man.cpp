@@ -40,11 +40,11 @@
 #include "engineerrors.h"
 #include "sc_man.h"
 #include "cmdlib.h"
-#include "templates.h"
+
 #include "printf.h"
 #include "name.h"
 #include "v_text.h"
-#include "templates.h"
+
 #include "zstring.h"
 #include "name.h"
 #include <inttypes.h>
@@ -857,7 +857,7 @@ bool FScanner::CheckFloat (bool evaluate)
 			UnGet();
 			return false;
 		}
-	
+
 		Float = strtod (String, &stopper);
 		if (*stopper != 0)
 		{
@@ -1131,9 +1131,7 @@ FString FScanner::TokenName (int token, const char *string)
 	}
 	else
 	{
-		FString work;
-		work.Format ("Unknown(%d)", token);
-		return work;
+		work.Format("Unknown(%d)", token);
 	}
 	return work;
 }

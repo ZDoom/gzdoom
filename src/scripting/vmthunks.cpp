@@ -78,6 +78,30 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
 	return 0;
 }
 
+static void SetCameraTextureAspectRatio(const FString &texturename, double aspectScale, bool useTextureRatio)
+{
+	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	if (textureid.isValid())
+	{
+		// Only proceed if the texture actually has a canvas.
+		auto tex = TexMan.GetGameTexture(textureid);
+		if (tex && tex->isHardwareCanvas())
+		{
+			static_cast<FCanvasTexture *>(tex->GetTexture())->SetAspectRatio(aspectScale, useTextureRatio);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraTextureAspectRatio, SetCameraTextureAspectRatio)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(texturename);
+	PARAM_FLOAT(aspect);
+	PARAM_BOOL(useTextureRatio);
+	SetCameraTextureAspectRatio(texturename, aspect, useTextureRatio);
+	return 0;
+}
+
 //=====================================================================================
 //
 // sector_t exports
@@ -446,6 +470,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTerrain, GetTerrain)
 	ACTION_RETURN_INT(GetTerrain(self, pos));
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFloorTerrain, GetFloorTerrain_S)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_POINTER(GetFloorTerrain_S(self, pos));
+}
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CheckPortalPlane, CheckPortalPlane)
 {
@@ -1615,7 +1645,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	 PARAM_NAME(seq);
 	 PARAM_INT(state);
-	 F_StartIntermission(seq, (uint8_t)state);
+	 G_StartSlideshow(self, seq);
 	 return 0;
  }
 
@@ -1786,7 +1816,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, LocateWeapon, LocateWeapon)
 	if (numret >= 1) ret[0].SetInt(retv);
 	if (numret >= 2) ret[1].SetInt(slot);
 	if (numret >= 3) ret[2].SetInt(index);
-	return MIN(numret, 3);
+	return min(numret, 3);
 }
 
 static PClassActor *GetWeapon(FWeaponSlots *self, int slot, int index)
@@ -2123,7 +2153,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon
 	FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &applyscale));
 	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
 	if (numret >= 2) ret[1].SetInt(applyscale);
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
 
 //=====================================================================================
@@ -2489,7 +2519,7 @@ DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
 	if (numret > 1) ret[1].SetInt(viewwindowy);
 	if (numret > 2) ret[2].SetInt(viewwidth);
 	if (numret > 3) ret[3].SetInt(viewheight);
-	return MIN(numret, 4);
+	return min(numret, 4);
 }
 
 DEFINE_ACTION_FUNCTION(_Console, MidPrint)

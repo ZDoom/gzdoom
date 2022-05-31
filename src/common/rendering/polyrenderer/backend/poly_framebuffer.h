@@ -26,6 +26,7 @@ public:
 
 	PolyFrameBuffer(void *hMonitor, bool fullscreen);
 	~PolyFrameBuffer();
+	int GetShaderCount() override { return 0; }
 
 	void Update() override;
 

@@ -34,7 +34,7 @@
 
 #include <string>
 
-#include "templates.h"
+
 #include "version.h"
 #include "c_bind.h"
 #include "c_console.h"
@@ -331,16 +331,16 @@ void C_DeinitConsole ()
 	// at runtime.)
 	for (size_t i = 0; i < countof(Commands); ++i)
 	{
-		FConsoleCommand *cmd = Commands[i];
+		FConsoleCommand *command = Commands[i];
 
-		while (cmd != NULL)
+		while (command != NULL)
 		{
-			FConsoleCommand *next = cmd->m_Next;
-			if (cmd->IsAlias())
+			FConsoleCommand *nextcmd = command->m_Next;
+			if (command->IsAlias())
 			{
-				delete cmd;
+				delete command;
 			}
-			cmd = next;
+			command = nextcmd;
 		}
 	}
 
@@ -592,8 +592,7 @@ void C_DrawConsole ()
 
 	oldbottom = ConBottom;
 
-	if (ConsoleState == c_up && gamestate != GS_INTRO && gamestate != GS_INTERMISSION && 
-		gamestate != GS_FULLCONSOLE && gamestate != GS_MENUSCREEN)
+	if (ConsoleState == c_up && gamestate == GS_LEVEL)
 	{
 		if (NotifyStrings) NotifyStrings->Draw();
 		return;
@@ -731,7 +730,7 @@ void C_ToggleConsole ()
 	}
 	if (gamestate == GS_MENUSCREEN)
 	{
-		gameaction = ga_fullconsole;
+		if (sysCallbacks.ToggleFullConsole) sysCallbacks.ToggleFullConsole();
 		togglestate = c_down;
 	}
 	else if (!chatmodeon && (ConsoleState == c_up || ConsoleState == c_rising) && menuactive == MENU_Off)
@@ -857,7 +856,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			{ // Scroll console buffer down
 				if (ev->subtype == EV_GUI_WheelDown)
 				{
-					RowAdjust = std::max (0, RowAdjust - 3);
+					RowAdjust = max (0, RowAdjust - 3);
 				}
 				else
 				{
@@ -1028,7 +1027,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			TabbedList = false;
 			break;
 		}
-		
+
 		case '`':
 			// Check to see if we have ` bound to the console before accepting
 			// it as a way to close the console.

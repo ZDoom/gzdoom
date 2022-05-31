@@ -36,14 +36,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "templates.h"
+
 #include "s_soundinternal.h"
 #include "m_swap.h"
 #include "superfasthash.h"
 #include "s_music.h"
 #include "m_random.h"
 #include "printf.h"
+#include "c_cvars.h"
 
+CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
+
+int SoundEnabled()
+{
+	return snd_enabled && !nosound && !nosfx;
+}
 
 enum
 {
@@ -157,7 +164,6 @@ void SoundEngine::CacheSound (sfxinfo_t *sfx)
 {
 	if (GSnd && !sfx->bTentative)
 	{
-		sfxinfo_t *orig = sfx;
 		while (!sfx->bRandomHeader && sfx->link != sfxinfo_t::NO_LINK)
 		{
 			sfx = &S_sfx[sfx->link];
@@ -382,7 +388,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
 
-	if (sound_id <= 0 || volume <= 0 || nosfx || nosound || blockNewSounds)
+	if (sound_id <= 0 || volume <= 0 || nosfx || !SoundEnabled() || blockNewSounds || (unsigned)sound_id >= S_sfx.Size())
 		return NULL;
 
 	// prevent crashes.
@@ -396,11 +402,11 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	{
 		return nullptr;
 	}
-	
+
 	sfx = &S_sfx[sound_id];
 
 	// Scale volume according to SNDINFO data.
-	volume = std::min(volume * sfx->Volume, 1.f);
+	volume = min(volume * sfx->Volume, 1.f);
 	if (volume <= 0)
 		return NULL;
 
@@ -605,7 +611,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		{
 			chan->Source = source;
 		}
-		
+
 		if (spitch > 0.0)				// A_StartSound has top priority over all others.
 			SetPitch(chan, spitch);
 		else if (defpitch > 0.0)	// $PitchSet overrides $PitchShift
@@ -720,7 +726,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 		{
 			return sfx;
 		}
-		
+
 		// See if there is another sound already initialized with this lump. If so,
 		// then set this one up as a link, and don't load the sound again.
 		for (i = 0; i < S_sfx.Size(); i++)
@@ -824,7 +830,7 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 {
 	FSoundChan *chan;
 	int count;
-	
+
 	for (chan = Channels, count = 0; chan != NULL && count < near_limit; chan = chan->NextChan)
 	{
 		if (chan->ChanFlags & CHANF_FORGETTABLE) continue;
@@ -840,7 +846,7 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 
 			CalcPosVel(chan, &chanorigin, NULL);
 			// scale the limit distance with the attenuation. An attenuation of 0 means the limit distance is infinite and all sounds within the level are inside the limit.
-			float attn = std::min(chan->DistanceScale, attenuation);
+			float attn = min(chan->DistanceScale, attenuation);
 			if (attn <= 0 || (chanorigin - pos).LengthSquared() <= limit_range / attn)
 			{
 				count++;
@@ -1067,8 +1073,8 @@ void SoundEngine::ChangeSoundPitch(int sourcetype, const void *source, int chann
 void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 {
 	assert(chan != nullptr);
-	GSnd->ChannelPitch(chan, std::max(0.0001f, pitch));
-	chan->Pitch = std::max(1, int(float(DEFAULT_PITCH) * pitch));
+	GSnd->ChannelPitch(chan, max(0.0001f, pitch));
+	chan->Pitch = max(1, int(float(DEFAULT_PITCH) * pitch));
 }
 
 //==========================================================================
@@ -1078,13 +1084,14 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 // Is a sound being played by a specific emitter?
 //==========================================================================
 
-int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id)
+int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id, int chann)
 {
 	int count = 0;
 	if (sound_id > 0)
 	{
 		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
+			if (chann != -1 && chann != chan->EntChannel) continue;
 			if (chan->OrgID == sound_id && (sourcetype == SOURCE_Any ||
 				(chan->SourceType == sourcetype &&
 				chan->Source == source)))
@@ -1097,6 +1104,7 @@ int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int so
 	{
 		for (FSoundChan* chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
+			if (chann != -1 && chann != chan->EntChannel) continue;
 			if ((sourcetype == SOURCE_Any || (chan->SourceType == sourcetype &&	chan->Source == source)))
 			{
 				count++;

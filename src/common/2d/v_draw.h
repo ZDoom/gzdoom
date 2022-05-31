@@ -36,7 +36,7 @@ enum
 
 
 	FSMode_Max,
-	
+
 	// These all use ScaleToFit43, their purpose is to cut down on verbosity because they imply the virtual screen size.
 	FSMode_Predefined = 1000,
 	FSMode_Fit320x200 = 1000,
@@ -325,3 +325,5 @@ public:
 		CleanHeight = savedheight;
 	}
 };
+
+void Draw2D(F2DDrawer* drawer, FRenderState& state);

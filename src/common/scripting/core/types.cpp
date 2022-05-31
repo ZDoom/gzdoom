@@ -410,7 +410,7 @@ bool PContainerType::IsMatch(intptr_t id1, intptr_t id2) const
 {
 	const PTypeBase *outer = (const PTypeBase *)id1;
 	FName name = (ENamedName)(intptr_t)id2;
-	
+
 	return Outer == outer && TypeName == name;
 }
 
@@ -1702,7 +1702,7 @@ bool PArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 	{
 		bool readsomething = false;
 		unsigned count = ar.ArraySize();
-		unsigned loop = std::min(count, ElementCount);
+		unsigned loop = min(count, ElementCount);
 		uint8_t *addrb = (uint8_t *)addr;
 		for(unsigned i=0;i<loop;i++)
 		{

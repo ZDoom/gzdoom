@@ -37,7 +37,7 @@ public:
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
 	FRenderState* RenderState() override;
 
-	void FlushCommands(bool finish, bool lastsubmit = false);
+	void FlushCommands(bool finish, bool lastsubmit = false, bool uploadOnly = false);
 
 	unsigned int GetLightBufferBlockSize() const;
 
@@ -64,6 +64,12 @@ public:
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
 	} FrameDeleteList;
 
+	struct
+	{
+		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
+		size_t TotalSize = 0;
+	} FrameTextureUpload;
+
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
 	bool IsVulkan() override { return true; }
@@ -71,7 +77,7 @@ public:
 	void Update() override;
 
 	void InitializeState() override;
-
+	bool CompileNextShader() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	const char* DeviceName() const override;
@@ -79,6 +85,7 @@ public:
 	void SetTextureFilterMode() override;
 	void StartPrecaching() override;
 	void BeginFrame() override;
+	void InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData) override;
 	void BlurScene(float amount) override;
 	void PostProcessScene(bool swscene, int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D) override;
 	void AmbientOccludeScene(float m5) override;
@@ -103,7 +110,8 @@ public:
 
 	void Draw2D() override;
 
-	void WaitForCommands(bool finish) override;
+	void WaitForCommands(bool finish) override { WaitForCommands(finish, false); }
+	void WaitForCommands(bool finish, bool uploadOnly);
 
 	void PushGroup(const FString &name);
 	void PopGroup();
@@ -116,7 +124,7 @@ private:
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
 	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;
-	void DeleteFrameObjects();
+	void DeleteFrameObjects(bool uploadOnly = false);
 	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit);
 
 	std::unique_ptr<VkShaderManager> mShaderManager;

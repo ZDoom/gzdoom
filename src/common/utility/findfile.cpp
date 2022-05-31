@@ -128,7 +128,7 @@ int I_FindAttr(findstate_t *const fileinfo)
 }
 
 #else
-	
+
 #include <windows.h>
 #include <direct.h>
 

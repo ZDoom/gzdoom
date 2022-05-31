@@ -34,7 +34,11 @@
 */
 
 
+#include "cmdlib.h"
 #include "hw_shaderpatcher.h"
+#include "textures.h"
+#include "hw_renderstate.h"
+#include "v_video.h"
 
 
 static bool IsGlslWhitespace(char c)
@@ -52,15 +56,15 @@ static bool IsGlslWhitespace(char c)
 	}
 }
 
-static FString NextGlslToken(const char *chars, long len, long &pos)
+static FString NextGlslToken(const char *chars, ptrdiff_t len, ptrdiff_t &pos)
 {
 	// Eat whitespace
-	long tokenStart = pos;
+	ptrdiff_t tokenStart = pos;
 	while (tokenStart != len && IsGlslWhitespace(chars[tokenStart]))
 		tokenStart++;
 
 	// Find token end
-	long tokenEnd = tokenStart;
+	ptrdiff_t tokenEnd = tokenStart;
 	while (tokenEnd != len && !IsGlslWhitespace(chars[tokenEnd]) && chars[tokenEnd] != ';')
 		tokenEnd++;
 
@@ -82,13 +86,13 @@ FString RemoveLegacyUserUniforms(FString code)
 
 	// The following code searches for legacy uniform declarations in the shader itself and replaces them with whitespace.
 
-	long len = (long)code.Len();
+	ptrdiff_t len = code.Len();
 	char *chars = code.LockBuffer();
 
-	long startIndex = 0;
+	ptrdiff_t startIndex = 0;
 	while (true)
 	{
-		long matchIndex = code.IndexOf("uniform", startIndex);
+		ptrdiff_t matchIndex = code.IndexOf("uniform", startIndex);
 		if (matchIndex == -1)
 			break;
 
@@ -98,7 +102,7 @@ FString RemoveLegacyUserUniforms(FString code)
 		bool isKeywordEnd = matchIndex + 7 == len || IsGlslWhitespace(chars[matchIndex + 7]);
 		if (isKeywordStart && isKeywordEnd)
 		{
-			long pos = matchIndex + 7;
+			ptrdiff_t pos = matchIndex + 7;
 			FString type = NextGlslToken(chars, len, pos);
 			FString identifier = NextGlslToken(chars, len, pos);
 
@@ -107,10 +111,10 @@ FString RemoveLegacyUserUniforms(FString code)
 
 		if (isLegacyUniformName)
 		{
-			long statementEndIndex = code.IndexOf(';', matchIndex + 7);
+			ptrdiff_t statementEndIndex = code.IndexOf(';', matchIndex + 7);
 			if (statementEndIndex == -1)
 				statementEndIndex = len;
-			for (long i = matchIndex; i <= statementEndIndex; i++)
+			for (ptrdiff_t i = matchIndex; i <= statementEndIndex; i++)
 			{
 				if (!IsGlslWhitespace(chars[i]))
 					chars[i] = ' ';
@@ -127,7 +131,7 @@ FString RemoveLegacyUserUniforms(FString code)
 	// Modern GLSL only allows use of 'texture'.
 	while (true)
 	{
-		long matchIndex = code.IndexOf("texture2d", startIndex);
+		ptrdiff_t matchIndex = code.IndexOf("texture2d", startIndex);
 		if (matchIndex == -1)
 			break;
 
@@ -148,14 +152,14 @@ FString RemoveLegacyUserUniforms(FString code)
 
 FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &samplerstobind)
 {
-	long len = (long)code.Len();
+	ptrdiff_t len = code.Len();
 	char *chars = code.LockBuffer();
 
-	long startIndex = 0;
-	long startpos, endpos;
+	ptrdiff_t startIndex = 0;
+	ptrdiff_t startpos, endpos = 0;
 	while (true)
 	{
-		long matchIndex = code.IndexOf("layout(binding", startIndex);
+		ptrdiff_t matchIndex = code.IndexOf("layout(binding", startIndex);
 		if (matchIndex == -1)
 			break;
 
@@ -165,7 +169,7 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 		bool isKeywordEnd = matchIndex + 14 == len || IsGlslWhitespace(chars[matchIndex + 14]) || chars[matchIndex + 14] == '=';
 		if (isKeywordStart && isKeywordEnd)
 		{
-			long pos = matchIndex + 14;
+			ptrdiff_t pos = matchIndex + 14;
 			startpos = matchIndex;
 			while (IsGlslWhitespace(chars[pos])) pos++;
 			if (chars[pos] == '=')
@@ -175,7 +179,7 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 				auto val = strtol(&chars[pos], &p, 0);
 				if (p != &chars[pos])
 				{
-					pos = long(p - chars);
+					pos = (p - chars);
 					while (IsGlslWhitespace(chars[pos])) pos++;
 					if (chars[pos] == ')')
 					{
@@ -188,10 +192,10 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 						if (isSamplerUniformName)
 						{
 							samplerstobind.Push(std::make_pair(identifier, val));
-							for (auto pos = startpos; pos < endpos; pos++)
+							for (auto posi = startpos; posi < endpos; posi++)
 							{
-								if (!IsGlslWhitespace(chars[pos]))
-									chars[pos] = ' ';
+								if (!IsGlslWhitespace(chars[posi]))
+									chars[posi] = ' ';
 							}
 						}
 					}
@@ -216,17 +220,16 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 
 FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 {
-	long len = (long)code.Len();
 	char *chars = code.LockBuffer();
 
-	long startIndex = 0;
+	ptrdiff_t startIndex = 0;
 	while (true)
 	{
-		long matchIndex = code.IndexOf("layout(location", startIndex);
+		ptrdiff_t matchIndex = code.IndexOf("layout(location", startIndex);
 		if (matchIndex == -1)
 			break;
 
-		long endIndex = matchIndex;
+		ptrdiff_t endIndex = matchIndex;
 
 		// Find end of layout declaration
 		while (chars[endIndex] != ')' && chars[endIndex] != 0)
@@ -255,8 +258,8 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 		if (keywordFound && IsGlslWhitespace(chars[endIndex + i]))
 		{
 			// yes - replace declaration with spaces
-			for (long i = matchIndex; i < endIndex; i++)
-				chars[i] = ' ';
+			for (auto ii = matchIndex; ii < endIndex; ii++)
+				chars[ii] = ' ';
 		}
 
 		startIndex = endIndex;
@@ -297,3 +300,12 @@ const FEffectShader effectshaders[] =
 	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 };
+
+int DFrameBuffer::GetShaderCount()
+{
+	int i;
+	for (i = 0; defaultshaders[i].ShaderName != nullptr; i++);
+
+	return MAX_PASS_TYPES * (countof(defaultshaders) - 1 + usershaders.Size() + MAX_EFFECTS + SHADER_NoTexture);
+}
+

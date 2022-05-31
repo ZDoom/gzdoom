@@ -61,7 +61,7 @@ namespace swrenderer
 		Thread = thread;
 	}
 
-	void RenderWallPart::Render(const sector_t* lightsector, seg_t* curline, const FWallCoords& WallC, FSoftwareTexture* pic, int x1, int x2, const short* walltop, const short* wallbottom, const ProjectedWallTexcoords& texcoords, bool mask, bool additive, fixed_t alpha)
+	void RenderWallPart::Render(const sector_t* lightsector, seg_t* curline, int tier, const FWallCoords& WallC, FSoftwareTexture* pic, int x1, int x2, const short* walltop, const short* wallbottom, const ProjectedWallTexcoords& texcoords, bool mask, bool additive, fixed_t alpha)
 	{
 		if (pic == nullptr)
 			return;
@@ -70,6 +70,7 @@ namespace swrenderer
 		this->x2 = x2;
 		this->lightsector = lightsector;
 		this->curline = curline;
+		this->tier = tier;
 		this->WallC = WallC;
 		this->pic = pic;
 		this->mask = mask;
@@ -78,7 +79,7 @@ namespace swrenderer
 
 		light_list = GetLightList();
 
-		mLight.SetColormap(lightsector, curline);
+		mLight.SetColormap(lightsector, curline, tier);
 		mLight.SetLightLeft(Thread, WallC);
 
 		CameraLight* cameraLight = CameraLight::Instance();
@@ -114,7 +115,7 @@ namespace swrenderer
 				down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 			}
 
-			mLight.SetColormap(lightsector, curline, &lightsector->e->XFloor.lightlist[i]);
+			mLight.SetColormap(lightsector, curline, tier, &lightsector->e->XFloor.lightlist[i]);
 		}
 
 		ProcessNormalWall(up, dwal, texcoords);

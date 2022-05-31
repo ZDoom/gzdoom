@@ -107,7 +107,7 @@ public:
 
 	void EnableDrawBuffers(int count, bool apply = false) override
 	{
-		count = std::min(count, 3);
+		count = min(count, 3);
 		if (mNumDrawBuffers != count)
 		{
 			static GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };

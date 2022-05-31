@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <float.h>
-#include "templates.h"
+
 
 #include "filesystem.h"
 #include "doomdef.h"
@@ -109,8 +109,8 @@ namespace swrenderer
 		// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
 		// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
 		// the texture as the cylinder's circumfrence.
-		sky1cyl = MAX(sskytex1->GetWidth(), fixed_t(sskytex1->GetScale().X * 1024));
-		sky2cyl = MAX(sskytex2->GetWidth(), fixed_t(sskytex2->GetScale().Y * 1024));
+		sky1cyl = max(sskytex1->GetWidth(), fixed_t(sskytex1->GetScale().X * 1024));
+		sky2cyl = max(sskytex2->GetWidth(), fixed_t(sskytex2->GetScale().Y * 1024));
 	}
 
 	void RenderSkyPlane::Render(VisiblePlane *pl)
@@ -199,7 +199,7 @@ namespace swrenderer
 				skyflip = l->args[2] ? 0u : ~0u;
 
 				int frontxscale = int(frontskytex->GetScale().X * 1024);
-				frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
+				frontcyl = max(frontskytex->GetWidth(), frontxscale);
 				if (Level->skystretch)
 				{
 					skymid = skymid * frontskytex->GetScaledHeight() / (SKYSTRETCH_HEIGHT + skyoffset);

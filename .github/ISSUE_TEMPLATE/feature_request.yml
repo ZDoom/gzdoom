@@ -1,0 +1,107 @@
+name: Feature Request
+description: Suggest an idea (a new feature or other improvement) for this project
+title: '[Feature] '
+labels: enhancement
+#assignees: 'anonymous@temp'
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Please fill out forms as cleanly as possible.
+        #### Make sure that you have
+        * properly edited & filled in the title of this bug report
+  - type: input
+    id: version
+    attributes:
+      label: GZDoom version
+      description: |
+        What version are you using?
+        Run `gzdoom --version` or check in the console in game.
+        Make sure to update to latest [release](https://github.com/coelckers/gzdoom/releases) version and test again before continuing.
+      placeholder: "ex: GZDoom 4.0.0, Git version, Branch, other"
+    validations:
+      required: false
+  - type: dropdown
+    id: gameid
+    attributes:
+      label: Which game are you running with GZDoom?
+      multiple: false
+      options:
+        - Doom
+        - Doom 2
+        - Heretic
+        - Hexen
+        - Strife
+        - Other
+    validations:
+      required: false
+  - type: dropdown
+    id: OS
+    attributes:
+      label: What Operating System are you using?
+      multiple: false
+      options:
+        - Windows 11
+        - Windows 10
+        - Windows 8
+        - Windows 7
+        - Windows Other
+        - Mac OS
+        - Linux x86
+        - Linux x86_64
+        - Linux ARM (Raspberry Pi)
+        - Other
+    validations:
+      required: false
+  - type: input
+    id: other
+    attributes:
+      label: If Other OS, please describe
+      description: Other details
+      placeholder: "Windows, Mac OSX version, Debian, Ubuntu, Arch, etc."
+    validations:
+      required: false
+  - type: input
+    id: hardware
+    attributes:
+      label: Relevant hardware info
+      description: Hardware
+      placeholder: "CPU, GPU, device brand/model: e.g. Intel, AMD, Nvidia, etc"
+    validations:
+      required: false
+  - type: textarea
+    id: related
+    attributes:
+      label: Is your feature request related to a problem? Please describe.
+      description: Related
+      placeholder: "Ex. I'm always frustrated when"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      placeholder: "Ex. How can we make it better?"
+    validations:
+      required: false
+  - type: textarea
+    id: alternative
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
+      placeholder: "Similar idea or software"
+    validations:
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: Add any other context or screenshots about the feature request here.
+      description: Screenshots or Links?
+      placeholder: "Ex. Screenshot or Link"
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        * Make sure you have properly filled in the title of this feature request

@@ -42,7 +42,9 @@
 #include "v_text.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
-
+#include "v_video.h"
+#include "g_cvars.h"
+#include "d_main.h"
 
 static int ThinkCount;
 static cycle_t ThinkCycles;
@@ -106,6 +108,37 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 
 	ThinkCycles.Clock();
 
+	bool dolights;
+	if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+	{
+		dolights = true;// Level->lights || (Level->flags3 & LEVEL3_LIGHTCREATED);
+	}
+	else
+	{
+		dolights = false;
+	}
+	Level->flags3 &= ~LEVEL3_LIGHTCREATED;
+
+
+	auto recreateLights = [=]() {
+		auto it = Level->GetThinkerIterator<AActor>();
+
+		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
+		while (auto ac = it.Next())
+		{
+			if (ac->flags8 & MF8_RECREATELIGHTS)
+			{
+				ac->flags8 &= ~MF8_RECREATELIGHTS;
+				if (dolights) ac->SetDynamicLights();
+			}
+			// This was merged from P_RunEffects to eliminate the costly duplicate ThinkerIterator loop.
+			if ((ac->effects || ac->fountaincolor) && !Level->isFrozen())
+			{
+				P_RunEffect(ac, ac->effects);
+			}
+		}
+	};
+
 	if (!profilethinkers)
 	{
 		// Tick every thinker left from last time
@@ -124,11 +157,15 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		for (auto light = Level->lights; light;)
+		recreateLights();
+		if (dolights)
 		{
-			auto next = light->next;
-			light->Tick();
-			light = next;
+			for (auto light = Level->lights; light;)
+			{
+				auto next = light->next;
+				light->Tick();
+				light = next;
+			}
 		}
 	}
 	else
@@ -150,7 +187,8 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		if (Level->lights)
+		recreateLights();
+		if (dolights)
 		{
 			// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
 			auto &prof = Profiles[NAME_InternalDynamicLight];
@@ -209,7 +247,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 		Printf(TEXTCOLOR_YELLOW "Total, ms   Averg, ms   Calls   Actor class\n");
 		Printf(TEXTCOLOR_YELLOW "----------  ----------  ------  --------------------\n");
 
-		const unsigned count = MIN(profilelimit > 0 ? profilelimit : UINT_MAX, sorted.Size());
+		const unsigned count = min(profilelimit > 0 ? profilelimit : UINT_MAX, sorted.Size());
 
 		for (unsigned i = 0; i < count; ++i)
 		{
@@ -578,7 +616,6 @@ int FThinkerList::TickThinkers(FThinkerList *dest)
 			ThinkCount++;
 			node->CallTick();
 			node->ObjectFlags &= ~OF_JustSpawned;
-			GC::CheckGC();
 		}
 		node = NextToThink;
 	}
@@ -629,7 +666,6 @@ int FThinkerList::ProfileThinkers(FThinkerList *dest)
 			node->CallTick();
 			prof.timer.Unclock();
 			node->ObjectFlags &= ~OF_JustSpawned;
-			GC::CheckGC();
 		}
 		node = NextToThink;
 	}

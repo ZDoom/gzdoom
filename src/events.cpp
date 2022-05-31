@@ -162,7 +162,7 @@ bool EventManager::UnregisterHandler(DStaticEventHandler* handler)
 
 bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
 {
-	if (gamestate != GS_LEVEL)
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 		return false;
 
 	Net_WriteByte(DEM_NETEVENT);
@@ -294,11 +294,11 @@ void EventManager::WorldLoaded()
 	}
 }
 
-void EventManager::WorldUnloaded()
+void EventManager::WorldUnloaded(const FString& nextmap)
 {
 	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 	{
-		handler->WorldUnloaded();
+		handler->WorldUnloaded(nextmap);
 	}
 }
 
@@ -629,6 +629,7 @@ DEFINE_FIELD_X(RenderEvent, FRenderEvent, Camera);
 
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, IsSaveGame);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, IsReopen);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, NextMap);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, Thing);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, Inflictor);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, Damage);
@@ -769,13 +770,14 @@ void DStaticEventHandler::WorldLoaded()
 	}
 }
 
-void DStaticEventHandler::WorldUnloaded()
+void DStaticEventHandler::WorldUnloaded(const FString& nextmap)
 {
 	IFVIRTUAL(DStaticEventHandler, WorldUnloaded)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
 		FWorldEvent e = owner->SetupWorldEvent();
+		e.NextMap = nextmap;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
@@ -1247,7 +1249,7 @@ CCMD(event)
 	else
 	{
 		int arg[3] = { 0, 0, 0 };
-		int argn = MIN<int>(argc - 2, countof(arg));
+		int argn = min<int>(argc - 2, countof(arg));
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call locally
@@ -1272,7 +1274,7 @@ CCMD(netevent)
 	else
 	{
 		int arg[3] = { 0, 0, 0 };
-		int argn = MIN<int>(argc - 2, countof(arg));
+		int argn = min<int>(argc - 2, countof(arg));
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call networked

@@ -198,6 +198,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
 	return 0;
 }
 
+
+void A_StartSoundIfNotSame(AActor *self, int soundid, int checksoundid, int channel, int flags, double volume, double attenuation, double pitch, double startTime)
+{
+	if (!S_AreSoundsEquivalent (self, soundid, checksoundid))
+		A_StartSound(self, soundid, channel, flags, volume, attenuation, pitch, startTime);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSoundIfNotSame, A_StartSoundIfNotSame)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_SOUND(checksoundid);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_FLOAT(attenuation);
+	PARAM_FLOAT(pitch);
+	PARAM_FLOAT(startTime);
+	A_StartSoundIfNotSame(self, soundid, checksoundid, channel, flags, volume, attenuation, pitch, startTime);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -1443,10 +1465,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HitFriend, P_HitFriend)
 	ACTION_RETURN_BOOL(P_HitFriend(self));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, MonsterMove, P_Move)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, MonsterMove, P_SmartMove)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_Move(self));
+	ACTION_RETURN_BOOL(P_SmartMove(self));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, NewChaseDir, P_NewChaseDir)
@@ -1770,7 +1792,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
 	ACTION_RETURN_BOOL(isFrozen(self));
 }
 
-
 //===========================================================================
 //
 // PlayerPawn functions
@@ -1796,7 +1817,31 @@ DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, GetPrintableDisplayName, GetPrintable
 	ACTION_RETURN_STRING(type->GetDisplayName());
 }
 
+static void SetViewPos(AActor *self, double x, double y, double z, int flags)
+{
+	if (!self->ViewPos)
+	{
+		self->ViewPos = Create<DViewPosition>();
+	}
 
+	DVector3 pos = { x,y,z };
+	self->ViewPos->Set(pos, flags);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetViewPos, SetViewPos)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT(flags);
+	SetViewPos(self, x, y, z, flags);
+	return 0;
+}
+
+IMPLEMENT_CLASS(DViewPosition, false, false);
+DEFINE_FIELD_X(ViewPosition, DViewPosition, Offset)
+DEFINE_FIELD_X(ViewPosition, DViewPosition, Flags)
 
 DEFINE_FIELD(DThinker, Level)
 DEFINE_FIELD(AActor, snext)
@@ -1976,6 +2021,7 @@ DEFINE_FIELD(AActor, friendlyseeblocks)
 DEFINE_FIELD(AActor, SpawnTime)
 DEFINE_FIELD(AActor, InventoryID)
 DEFINE_FIELD(AActor, ThruBits)
+DEFINE_FIELD(AActor, ViewPos)
 DEFINE_FIELD_NAMED(AActor, ViewAngles.Yaw, viewangle)
 DEFINE_FIELD_NAMED(AActor, ViewAngles.Pitch, viewpitch)
 DEFINE_FIELD_NAMED(AActor, ViewAngles.Roll, viewroll)

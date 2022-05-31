@@ -383,7 +383,7 @@ TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 		else if (bitcount == 8)
 		{
 			lump.Seek(-769, FileReader::SeekEnd);
-			uint8_t c = lump.ReadUInt8();
+			lump.ReadUInt8();
 			//if (c !=0x0c) memcpy(PaletteMap, GrayMap, 256);	// Fallback for files without palette
 			//else 
 			for(int i=0;i<256;i++)

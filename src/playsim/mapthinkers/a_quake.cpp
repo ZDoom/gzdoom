@@ -22,7 +22,7 @@
 // Hexen's earthquake system, significantly enhanced
 //
 
-#include "templates.h"
+
 #include "doomtype.h"
 #include "doomstat.h"
 #include "p_local.h"
@@ -210,8 +210,8 @@ double DEarthquake::GetModIntensity(double intensity, bool fake) const
 			{
 				// Defaults to middle of the road.
 				divider = m_CountdownStart;
-				scalar = (m_Flags & QF_MAX) ? MAX(m_Countdown, m_CountdownStart - m_Countdown)
-					: MIN(m_Countdown, m_CountdownStart - m_Countdown);
+				scalar = (m_Flags & QF_MAX) ? max(m_Countdown, m_CountdownStart - m_Countdown)
+					: min(m_Countdown, m_CountdownStart - m_Countdown);
 			}
 			scalar = (scalar > divider) ? divider : scalar;
 
@@ -297,7 +297,11 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 	{
 		if (quake->m_Spot != nullptr)
 		{
-			const double dist = quake->m_Spot->Distance2D(victim, true);
+			double dist;
+
+			if (quake->m_Flags & QF_3D)	dist = quake->m_Spot->Distance3D(victim, true);
+			else						dist = quake->m_Spot->Distance2D(victim, true);
+
 			if (dist < quake->m_TremorRadius)
 			{
 				++count;
@@ -311,20 +315,20 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 
 				if (!(quake->m_Flags & QF_WAVE))
 				{
-					jiggers.RollIntensity = MAX(r, jiggers.RollIntensity) * falloff;
+					jiggers.RollIntensity = max(r, jiggers.RollIntensity) * falloff;
 
 					intensity *= falloff;
 					if (quake->m_Flags & QF_RELATIVE)
 					{
-						jiggers.RelIntensity.X = MAX(intensity.X, jiggers.RelIntensity.X);
-						jiggers.RelIntensity.Y = MAX(intensity.Y, jiggers.RelIntensity.Y);
-						jiggers.RelIntensity.Z = MAX(intensity.Z, jiggers.RelIntensity.Z);
+						jiggers.RelIntensity.X = max(intensity.X, jiggers.RelIntensity.X);
+						jiggers.RelIntensity.Y = max(intensity.Y, jiggers.RelIntensity.Y);
+						jiggers.RelIntensity.Z = max(intensity.Z, jiggers.RelIntensity.Z);
 					}
 					else
 					{
-						jiggers.Intensity.X = MAX(intensity.X, jiggers.Intensity.X);
-						jiggers.Intensity.Y = MAX(intensity.Y, jiggers.Intensity.Y);
-						jiggers.Intensity.Z = MAX(intensity.Z, jiggers.Intensity.Z);
+						jiggers.Intensity.X = max(intensity.X, jiggers.Intensity.X);
+						jiggers.Intensity.Y = max(intensity.Y, jiggers.Intensity.Y);
+						jiggers.Intensity.Z = max(intensity.Z, jiggers.Intensity.Z);
 					}
 				}
 				else

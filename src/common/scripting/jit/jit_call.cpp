@@ -340,7 +340,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			I_Error("Unexpected register type for self pointer\n");
 			break;
 		}
-		
+
 		cc.test(*reg, *reg);
 		cc.jz(label);
 	}

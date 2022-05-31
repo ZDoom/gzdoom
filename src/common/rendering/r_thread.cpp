@@ -21,7 +21,7 @@
 */
 
 #include <stddef.h>
-#include "templates.h"
+
 #include "i_system.h"
 #include "filesystem.h"
 #include "v_video.h"
@@ -60,7 +60,7 @@ void DrawerThreads::Execute(DrawerCommandQueuePtr commands)
 {
 	if (!commands || commands->commands.empty())
 		return;
-	
+
 	auto queue = Instance();
 
 	queue->StartThreads();

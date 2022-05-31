@@ -97,6 +97,7 @@
 #define IDC_RADIO3                      1086
 #define IDC_WELCOME_VULKAN3             1086
 #define IDCE_ROOM                       1087
+#define IDC_WELCOME_VULKAN4             1187
 #define IDCS_ROOM                       1088
 #define IDCE_ROOMHF                     1089
 #define IDCS_ROOMHF                     1090

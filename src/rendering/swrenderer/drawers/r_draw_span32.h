@@ -94,8 +94,8 @@ namespace swrenderer
 						break;
 
 					texdata.source += texdata.width * texdata.height;
-					texdata.width = MAX<uint32_t>(texdata.width / 2, 1);
-					texdata.height = MAX<uint32_t>(texdata.height / 2, 1);
+					texdata.width = max<uint32_t>(texdata.width / 2, 1);
+					texdata.height = max<uint32_t>(texdata.height / 2, 1);
 					level--;
 				}
 			}
@@ -324,13 +324,13 @@ namespace swrenderer
 
 				// L = light-pos
 				// dist = sqrt(dot(L, L))
-				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				// distance_attenuation = 1 - min(dist * (1/radius), 1)
 				float Lyz2 = light_y; // L.y*L.y + L.z*L.z
 				float Lx = light_x - viewpos_x;
 				float dist2 = Lyz2 + Lx * Lx;
 				float rcp_dist = 1.f/sqrt(dist2);
 				float dist = dist2 * rcp_dist;
-				float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+				float distance_attenuation = 256.0f - min(dist * light_radius, 256.0f);
 
 				// The simple light type
 				float simple_attenuation = distance_attenuation;
@@ -348,13 +348,13 @@ namespace swrenderer
 				lit.b += (light_color.b * attenuation) >> 8;
 			}
 
-			lit.r = MIN<uint32_t>(lit.r, 256);
-			lit.g = MIN<uint32_t>(lit.g, 256);
-			lit.b = MIN<uint32_t>(lit.b, 256);
+			lit.r = min<uint32_t>(lit.r, 256);
+			lit.g = min<uint32_t>(lit.g, 256);
+			lit.b = min<uint32_t>(lit.b, 256);
 
-			fgcolor.r = MIN<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
-			fgcolor.g = MIN<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
-			fgcolor.b = MIN<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
+			fgcolor.r = min<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
+			fgcolor.g = min<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
+			fgcolor.b = min<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
 			return fgcolor;
 		}
 
@@ -381,9 +381,9 @@ namespace swrenderer
 				bgcolor.b = bgcolor.b * destalpha;
 
 				BgraColor outcolor;
-				outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
-				outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
-				outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
+				outcolor.r = min<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+				outcolor.g = min<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+				outcolor.b = min<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 				return outcolor;
 			}
 			else
@@ -405,21 +405,21 @@ namespace swrenderer
 				BgraColor outcolor;
 				if (BlendT::Mode == (int)SpanBlendModes::AddClamp)
 				{
-					outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
-					outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
-					outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
+					outcolor.r = min<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+					outcolor.g = min<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+					outcolor.b = min<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 				}
 				else if (BlendT::Mode == (int)SpanBlendModes::SubClamp)
 				{
-					outcolor.r = MAX(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
 				}
 				else if (BlendT::Mode == (int)SpanBlendModes::RevSubClamp)
 				{
-					outcolor.r = MAX(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
 				}
 				outcolor.a = 255;
 				return outcolor;

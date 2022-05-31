@@ -21,7 +21,7 @@
 //
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_bbox.h"
 
@@ -122,20 +122,20 @@ namespace swrenderer
 				top -= Thread->Viewport->viewpoint.Pos.Z;
 				bot -= Thread->Viewport->viewpoint.Pos.Z;
 
-				ceilZ = MIN(ceilZ, top);
-				floorZ = MAX(floorZ, bot);
+				ceilZ = min(ceilZ, top);
+				floorZ = max(floorZ, bot);
 			}
 
 			// Clip wall by the current 3D floor render range.
 			if (m3DFloor.clipTop)
 			{
 				double clipZ = m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z;
-				ceilZ = MIN(ceilZ, clipZ);
+				ceilZ = min(ceilZ, clipZ);
 			}
 			if (m3DFloor.clipBottom)
 			{
 				double clipZ = m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z;
-				floorZ = MAX(floorZ, clipZ);
+				floorZ = max(floorZ, clipZ);
 			}
 
 			wallupper.Project(Thread->Viewport.get(), ceilZ, &ds->WallC);
@@ -191,11 +191,11 @@ namespace swrenderer
 		sector_t tempsec;
 		const sector_t* lightsector = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
-		fixed_t alpha = FLOAT2FIXED((float)MIN(curline->linedef->alpha, 1.));
+		fixed_t alpha = FLOAT2FIXED((float)min(curline->linedef->alpha, 1.));
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, true, additive, alpha);
+		renderWallpart.Render(lightsector, curline, side_t::mid, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, true, additive, alpha);
 	}
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
@@ -216,7 +216,7 @@ namespace swrenderer
 		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC, rw_pic);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
+		renderWallpart.Render(lightsector, curline, side_t::top, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
 
 		RenderDecal::RenderDecals(Thread, ds, curline, lightsector, wallupper.ScreenY, walllower.ScreenY, true);
 	}
@@ -580,7 +580,7 @@ namespace swrenderer
 		const sector_t* lightsector = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		ProjectedWallLight walllight;
-		walllight.SetColormap(lightsector, curline);
+		walllight.SetColormap(lightsector, curline, side_t::mid);
 		walllight.SetLightLeft(Thread, ds->WallC);
 
 		RenderFogBoundary renderfog;
@@ -614,16 +614,16 @@ namespace swrenderer
 		double frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1);
 		double frontcz2 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v2);
 		double frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2);
-		top = MAX(frontcz1, frontcz2);
-		bot = MIN(frontfz1, frontfz2);
+		top = max(frontcz1, frontcz2);
+		bot = min(frontfz1, frontfz2);
 
 		if (m3DFloor.clipTop)
 		{
-			top = MIN(top, m3DFloor.sclipTop);
+			top = min(top, m3DFloor.sclipTop);
 		}
 		if (m3DFloor.clipBottom)
 		{
-			bot = MAX(bot, m3DFloor.sclipBottom);
+			bot = max(bot, m3DFloor.sclipBottom);
 		}
 	}
 
@@ -632,9 +632,9 @@ namespace swrenderer
 		double texheight = tex->GetScaledHeight() / fabs(curline->sidedef->GetTextureYScale(side_t::mid));
 		double texturemid;
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
-			texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
+			texturemid = max(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
 		else
-			texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+			texturemid = min(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 		if (tex->useWorldPanning(curline->GetLevel()))
 			rowoffset /= fabs(tex->GetScale().Y * curline->sidedef->GetTextureYScale(side_t::mid));

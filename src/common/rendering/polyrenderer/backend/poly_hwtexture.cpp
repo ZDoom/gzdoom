@@ -20,7 +20,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "c_cvars.h"
 #include "hw_material.h"
 #include "hw_cvars.h"

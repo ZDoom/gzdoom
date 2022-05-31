@@ -997,7 +997,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("automap", automap)
 		("interpolator", interpolator)
 		("frozenstate", frozenstate)
-		("directionallight", DirectionalLight);
+		("directionallight", DirectionalLight),
+		("directionallightmode", DirectionalLightMode);
 
 
 	// Hub transitions must keep the current total time

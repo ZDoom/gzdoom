@@ -2524,6 +2524,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetDirectionalLightStrength, GetDire
 	ACTION_RETURN_FLOAT(GetDirectionalLightStrength(self));
 }
 
+static void SetDirectionalLightMode(FLevelLocals *self, int mode)
+{
+	mode = clamp(mode, 0, 2);
+	self->DirectionalLightMode = mode;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SetDirectionalLightMode, SetDirectionalLightMode)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(mode);
+	SetDirectionalLightMode(self, mode);
+	return 0;
+}
+
 //=====================================================================================
 //
 //

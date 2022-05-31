@@ -451,6 +451,7 @@ struct LevelLocals native
 	native void SetDirectionalLight(double x, double y, double z, double strength);
 	native Vector3 GetDirectionalLightVector(void);
 	native double GetDirectionalLightStrength(void);
+	native void SetDirectionalLightMode(int mode);
 
 	native String GetUDMFString(int type, int index, Name key);
 	native int GetUDMFInt(int type, int index, Name key);

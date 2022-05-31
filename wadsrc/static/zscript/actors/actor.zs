@@ -166,6 +166,7 @@ class Actor : Thinker native
 	native readonly int TID;
 	native readonly int TIDtoHate;
 	native readonly int WaterLevel;
+	native readonly double WaterDepth;
 	native int Score;
 	native int Accuracy;
 	native int Stamina;
@@ -483,6 +484,7 @@ class Actor : Thinker native
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0, Name MeansOfDeath = 'none');
 	virtual native bool Slam(Actor victim);
 	virtual native void Touch(Actor toucher);
+	virtual native void FallAndSink(double grav, double oldfloorz);
 	private native void Substitute(Actor replacement);
 	native ui void DisplayNameTag();
 

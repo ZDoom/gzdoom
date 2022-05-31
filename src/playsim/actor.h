@@ -771,6 +771,10 @@ public:
 	virtual void Touch(AActor *toucher);
 	void CallTouch(AActor *toucher);
 
+	// Apply gravity and/or make actor sink in water.
+	virtual void FallAndSink(double grav, double oldfloorz);
+	void CallFallAndSink(double grav, double oldfloorz);
+
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	// Made a metadata property so no longer virtual
 	void Howl ();
@@ -1131,6 +1135,7 @@ public:
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	TObjPtr<AActor*> goal;			// Monster's goal if not chasing anything
 	int				waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
+	double			waterdepth;		// Stores how deep into water you are, in map units
 	uint8_t			boomwaterlevel;	// splash information for non-swimmable water sectors
 	uint8_t			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	int8_t			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
@@ -1269,6 +1274,7 @@ public:
 	bool IsMapActor();
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
+	int UpdateWaterDepth(bool splash);
 	virtual void SplashCheck();
 	virtual bool UpdateWaterLevel (bool splash=true);
 	bool isFast();

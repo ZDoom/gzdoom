@@ -342,6 +342,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, SEEFRIENDLYMONSTERS, AActor, flags8),
 	DEFINE_FLAG(MF8, CROSSLINECHECK, AActor, flags8),
 	DEFINE_FLAG(MF8, MASTERNOSEE, AActor, flags8),
+	DEFINE_FLAG(MF8, ADDLIGHTLEVEL, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

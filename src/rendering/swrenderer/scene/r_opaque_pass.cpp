@@ -956,7 +956,15 @@ namespace swrenderer
 						thingColormap = GetSpriteColorTable(thing->Sector->Colormap, thing->Sector->SpecialColors[sector_t::sprites], nc);					
 					}
 					if (thing->LightLevel > -1)
+					{
 						thinglightlevel = thing->LightLevel;
+
+						if (thing->flags8 & MF8_ADDLIGHTLEVEL)
+						{
+							thinglightlevel += thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
+							thinglightlevel = clamp(thinglightlevel, 0, 255);
+						}
+					}
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{
 						RenderWallSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, thinglightlevel, foggy, thingColormap);

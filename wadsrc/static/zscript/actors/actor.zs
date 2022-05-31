@@ -252,7 +252,7 @@ class Actor : Thinker native
 	native readonly int BloodTranslation;
 	native int RenderHidden;
 	native int RenderRequired;
-	native readonly int FriendlySeeBlocks;
+	native int FriendlySeeBlocks;
 	native readonly int SpawnTime;
 	private native int InventoryID;	// internal counter.
 

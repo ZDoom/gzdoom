@@ -26,6 +26,7 @@ public:
 
 	void InitializeState() override;
 	void Update() override;
+	int GetShaderCount() override { return 0; }
 
 	void FirstEye() override;
 	void NextEye(int eyecount) override;

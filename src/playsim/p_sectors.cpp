@@ -938,7 +938,12 @@ int GetTerrain(const sector_t *sector, int pos)
 	return sector->terrainnum[pos] >= 0 ? sector->terrainnum[pos] : TerrainTypes[sector->GetTexture(pos)];
 }
 
-	//=====================================================================================
+FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos)
+{
+	return &Terrains[GetTerrain(sec, pos)];
+}
+
+//=====================================================================================
 //
 //
 //=====================================================================================
@@ -1492,6 +1497,12 @@ void subsector_t::BuildPolyBSP()
 		BSP->Subsectors[i].sector = sector;
 		BSP->Subsectors[i].section = section;
 	}
+	for (unsigned i = 0; i < BSP->Segs.Size(); i++)
+	{
+		BSP->Segs[i].Subsector = this;
+		BSP->Segs[i].PartnerSeg = nullptr;
+	}
+
 }
 
 //===========================================================================

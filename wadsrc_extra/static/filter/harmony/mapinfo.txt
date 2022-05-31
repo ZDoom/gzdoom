@@ -193,5 +193,5 @@ clusterdef 1
 	// exittext, background flat is DEM1_1 and music is titletrack
 	flat = DEM1_1 
 	music = "d_dm2ttl"
-	exittext = "CLUSTEREXIT1"
+	exittext = lookup, "CLUSTEREXIT1"
 }

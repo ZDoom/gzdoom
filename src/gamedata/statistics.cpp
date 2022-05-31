@@ -589,7 +589,7 @@ CCMD(printstats)
 
 CCMD(finishgame)
 {
-	bool gamestatecheck = gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
+	bool gamestatecheck = gamestate == GS_LEVEL || gamestate == GS_CUTSCENE;
 	if (!gamestatecheck)
 	{
 		Printf("Cannot use 'finishgame' while not in a game!\n");

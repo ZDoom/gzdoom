@@ -1092,7 +1092,7 @@ void P_RandomChaseDir (AActor *actor)
 	int turndir;
 
 	// Friendly monsters like to head toward a player
-	if (actor->flags & MF_FRIENDLY)
+	if (actor->flags & MF_FRIENDLY && !(actor->flags8 & MF8_DONTFOLLOWPLAYERS))
 	{
 		AActor *player;
 		DVector2 delta;
@@ -1555,25 +1555,32 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 			continue;
 
 		other = NULL;
-		if (link->flags & MF_FRIENDLY)
+		if (lookee->flags & MF_FRIENDLY)
 		{
-			if (!lookee->IsFriend(link))
+			if (link->flags & MF_FRIENDLY)
 			{
-				// This is somebody else's friend, so go after it
-				other = link;
-			}
-			else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
-			{
-				other = link->target;
-				if (!(other->flags & MF_SHOOTABLE) ||
-					other->health <= 0 ||
-					(other->flags2 & MF2_DORMANT))
+				if (!lookee->IsFriend(link))
 				{
-					other = NULL;;
+					// This is somebody else's friend, so go after it
+					other = link;
+				}
+				else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
+				{
+					other = link->target;
+					if (!(other->flags & MF_SHOOTABLE) ||
+						other->health <= 0 ||
+						(other->flags2 & MF2_DORMANT))
+					{
+						other = NULL;;
+					}
 				}
 			}
+			else
+			{
+				other = link;
+			}
 		}
-		else
+		else if (lookee->flags8 & MF8_SEEFRIENDLYMONSTERS && link->flags & MF_FRIENDLY)
 		{
 			other = link;
 		}
@@ -1617,7 +1624,7 @@ int P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	AActor *other;
 
-	other = P_BlockmapSearch (actor, actor->friendlyseeblocks, LookForEnemiesInBlock, params);
+	other = P_BlockmapSearch(actor, actor->friendlyseeblocks, LookForEnemiesInBlock, params);
 
 	if (other != NULL)
 	{
@@ -1726,6 +1733,12 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 
 	}	// [SP] if false, and in deathmatch, intentional fall-through
+	else if (actor->flags8 & MF8_SEEFRIENDLYMONSTERS)
+	{
+		bool result = P_LookForEnemies (actor, allaround, params);
+
+		if (result) return true;
+	}
 
 	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		actor->Level->isPrimaryLevel() &&
@@ -2189,6 +2202,7 @@ enum ChaseFlags
 	CHF_NODIRECTIONTURN = 64,
 	CHF_NOPOSTATTACKTURN = 128,
 	CHF_STOPIFBLOCKED = 256,
+	CHF_DONTIDLE = 512,
 };
 
 void A_Wander(AActor *self, int flags)
@@ -2430,7 +2444,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 		if (actor->target == NULL)
 		{
-			if (actor->flags & MF_FRIENDLY)
+			if (flags & CHF_DONTIDLE || actor->flags & MF_FRIENDLY)
 			{
 				//A_Look(actor);
 				if (actor->target == NULL)
@@ -2827,7 +2841,7 @@ bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nu
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}
-				if (self->Level->ib_compatflags & BCOMPATF_VILEGHOSTS)
+				if (self->Level->i_compatflags & COMPATF_VILEGHOSTS)
 				{
 					corpsehit->Height *= 4;
 					// [GZ] This was a commented-out feature, so let's make use of it,

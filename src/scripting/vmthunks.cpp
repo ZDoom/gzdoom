@@ -470,6 +470,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTerrain, GetTerrain)
 	ACTION_RETURN_INT(GetTerrain(self, pos));
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFloorTerrain, GetFloorTerrain_S)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_POINTER(GetFloorTerrain_S(self, pos));
+}
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CheckPortalPlane, CheckPortalPlane)
 {
@@ -1639,7 +1645,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	 PARAM_NAME(seq);
 	 PARAM_INT(state);
-	 F_StartIntermission(seq, (uint8_t)state);
+	 G_StartSlideshow(self, seq);
 	 return 0;
  }
 

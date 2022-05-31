@@ -891,7 +891,7 @@ DBaseDecal *ShootDecal(FLevelLocals *Level, const FDecalTemplate *tpl, sector_t 
 
 	if (trace.HitType == TRACE_HitWall)
 	{
-		return DImpactDecal::StaticCreate(Level, tpl, trace.HitPos, trace.Line->sidedef[trace.Side], NULL, 0, 0, permanent);
+		return DImpactDecal::StaticCreate(Level, tpl, trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor, 0, 0, permanent);
 	}
 	return NULL;
 }

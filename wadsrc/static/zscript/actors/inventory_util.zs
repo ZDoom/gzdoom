@@ -814,6 +814,46 @@ extend class Actor
 		}
 	}
 
+	
+	int GetAmmoCapacity(class<Ammo> type)
+	{
+		if (type != NULL)
+		{
+			let item = FindInventory(type);
+			if (item != NULL)
+			{
+				return item.MaxAmount;
+			}
+			else
+			{
+				return GetDefaultByType(type).MaxAmount;
+			}
+		}
+		return 0;
+	}
+
+	void SetAmmoCapacity(class<Ammo> type, int amount)
+	{
+		if (type != NULL)
+		{
+			let item = FindInventory(type);
+			if (item != NULL)
+			{
+				item.MaxAmount = amount;
+			}
+			else
+			{
+				item = GiveInventoryType(type);
+				if (item != NULL)
+				{
+					item.MaxAmount = amount;
+					item.Amount = 0;
+				}
+			}
+		}
+	}
+
+
 
 
 

@@ -497,14 +497,13 @@ class ConversationMenu : Menu
 			double sx = (x - 160.0) * CleanXfac + (screen.GetWidth() * 0.5);
 			double sy = (y - 100.0) * CleanYfac + (screen.GetHeight() * 0.5);
 
-			ypositions.Push(sy);
-
 			screen.DrawText(displayFont, Font.CR_GREEN, sx / fontScale, sy / fontScale, mResponseLines[i], DTA_KeepRatio, true, DTA_VirtualWidth, displayWidth, DTA_VirtualHeight, displayHeight);
 
 			if (i == mResponses[response])
 			{
 				String tbuf;
 
+				ypositions.Push(sy);
 				response++;
 				tbuf = String.Format("%d.", response);
 				x = 50 - displayFont.StringWidth(tbuf);

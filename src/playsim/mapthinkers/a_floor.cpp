@@ -663,6 +663,7 @@ bool FLevelLocals::EV_BuildStairs (int tag, DFloor::EStair type, line_t *line, d
 		// 2. Other side is the next sector to raise
 		// 3. Unless already moving, or different texture, then stop building
 		validcount++;
+		sec->validcount = validcount;
 		do
 		{
 			ok = 0;

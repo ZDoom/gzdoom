@@ -493,6 +493,11 @@ DEFINE_ACTION_FUNCTION(DObject, MSTime)
 	ACTION_RETURN_INT((uint32_t)I_msTime());
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, MSTimef, I_msTimeF)
+{
+	ACTION_RETURN_FLOAT(I_msTimeF());
+}
+
 void *DObject::ScriptVar(FName field, PType *type)
 {
 	auto cls = GetClass();

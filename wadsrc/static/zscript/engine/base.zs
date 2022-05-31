@@ -412,6 +412,7 @@ struct Screen native
 	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();
+	native static Vector2 GetTextScreenSize();
 	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
 	native static void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
 
@@ -586,7 +587,8 @@ class Object native
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
-	native static uint MSTime();
+	deprecated("4.8", "Use MSTimeF instead") native static uint MSTime();
+	native static double MSTimeF();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native virtualscope void Destroy();

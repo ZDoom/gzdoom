@@ -7,6 +7,7 @@ version "4.6"
 #include "zscript/engine/inputevents.zs"
 #include "zscript/engine/service.zs"
 #include "zscript/engine/ppshader.zs"
+#include "zscript/engine/screenjob.zs"
 
 #include "zscript/engine/ui/menu/colorpickermenu.zs"
 #include "zscript/engine/ui/menu/joystickmenu.zs"
@@ -289,6 +290,8 @@ version "4.6"
 #include "zscript/ui/statusbar/sbarinfowrapper.zs"
 #include "zscript/ui/statusbar/statusbar.zs"
 #include "zscript/ui/statusbar/strife_sbar.zs"
+
+#include "zscript/ui/intermission.zs"
 
 #include "zscript/compatibility.zs"
 #include "zscript/scriptutil/scriptutil.zs"

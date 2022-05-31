@@ -1688,6 +1688,7 @@ MapFlagHandlers[] =
 	{ "enableskyboxao",					MITYPE_SETFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "disableskyboxao",				MITYPE_CLRFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "avoidmelee",						MITYPE_SETFLAG3,	LEVEL3_AVOIDMELEE, 0 },
+	{ "attenuatelights",				MITYPE_SETFLAG3,	LEVEL3_ATTENUATE, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
@@ -1711,7 +1712,8 @@ MapFlagHandlers[] =
 	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR, 0 },
 	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM, 0 },
 	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE, 0 },
-	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS, 0 },
+	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, 0, 0 },	// this flag no longer exists, but we need it here for old mapinfos.
+	{ "compat_vileghosts",				MITYPE_COMPATFLAG, COMPATF_VILEGHOSTS, 0 },
 	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS, 0 },
 	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT, 0 },
 	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT, 0 },

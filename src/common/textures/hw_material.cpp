@@ -30,7 +30,7 @@
 #include "v_video.h"
 
 
-CVAR(Bool, gl_customshader, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL);
+CVAR(Bool, gl_customshader, true, 0);
 
 
 static IHardwareTexture* (*layercallback)(int layer, int translation);

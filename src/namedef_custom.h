@@ -233,7 +233,7 @@ xx(A_FirePlasma)
 xx(A_FireBFG)
 xx(A_FireOldBFG)
 xx(A_FireRailgun)
-xx(A_ConsumeAmmo)
+xx(MBF21_ConsumeAmmo)
 
 // Special translation names
 xx(RainPillar1)
@@ -850,16 +850,12 @@ xx(Sky)
 xx(Pagename)
 
 // Lightmap keywords
-//xx(lightcolor) // already defined
-xx(lightintensity)
-xx(lightdistance)
+xx(lightcolorline)
+xx(lightintensityline)
+xx(lightdistanceline)
 xx(lightcolorfloor)
 xx(lightintensityfloor)
 xx(lightdistancefloor)
 xx(lightcolorceiling)
 xx(lightintensityceiling)
 xx(lightdistanceceiling)
-xx(suncolor)
-xx(sampledistance)
-xx(bounces)
-xx(gridsize)

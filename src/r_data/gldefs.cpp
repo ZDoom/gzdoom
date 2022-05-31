@@ -49,6 +49,7 @@
 #include "hw_material.h"
 #include "texturemanager.h"
 #include "gameconfigfile.h"
+#include "m_argv.h"
 
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
@@ -1562,46 +1563,54 @@ class GLDefsParser
 						
 						val.Float = oldval.Float = (float)sc.Float;
 
-						if (!cvar)
+						if (!Args->CheckParm ("-shaderuniformtest"))
 						{
-							cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+							// these aren't really release-ready, so lock them behind a command-line argument for now.
+							sc.ScriptMessage("Warning - Use -shaderuniformtest to enable shader uniforms!");
 						}
-						else if (cvar && (((cvar->GetFlags()) & CVAR_MOD) == CVAR_MOD))
+						else
 						{
-							// this value may have been previously loaded
-							oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
-							oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
-						}
+							if (!cvar)
+							{
+								cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+							}
+							else if (cvar && (((cvar->GetFlags()) & CVAR_MOD) == CVAR_MOD))
+							{
+								// this value may have been previously loaded
+								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
+							}
 
-						if (!(cvar->GetFlags() & CVAR_MOD))
-						{
-							if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
-								sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
-						}
+							if (!(cvar->GetFlags() & CVAR_MOD))
+							{
+								if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+									sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
+							}
 
-						// must've picked this up from an autoexec.cfg, handle accordingly
-						if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
-						{
-							oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
-							delete cvar;
-							cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
-							oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
-						}
+							// must've picked this up from an autoexec.cfg, handle accordingly
+							if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+							{
+								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+								delete cvar;
+								cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
+							}
 
-						shaderdesc.Uniforms[uniformName].Values[0] = oldval.Float;
+							shaderdesc.Uniforms[uniformName].Values[0] = oldval.Float;
 
-						cvar->SetGenericRepDefault(val, CVAR_Float);
+							cvar->SetGenericRepDefault(val, CVAR_Float);
 
-						if (val.Float != oldval.Float) // it's not default anymore
-							cvar->SetGenericRep(oldval.Float, CVAR_Float);
+							if (val.Float != oldval.Float) // it's not default anymore
+								cvar->SetGenericRep(oldval.Float, CVAR_Float);
 						
-						if (callback)
-							cvar->SetCallback(callback);
-						ExtraUniformCVARData* extra = new ExtraUniformCVARData;
-						extra->Shader = shaderdesc.Name.GetChars();
-						extra->Uniform = uniformName.GetChars();
-						extra->Next = oldextra;
-						cvar->SetExtraDataPointer(extra);
+							if (callback)
+								cvar->SetCallback(callback);
+							ExtraUniformCVARData* extra = new ExtraUniformCVARData;
+							extra->Shader = shaderdesc.Name.GetChars();
+							extra->Uniform = uniformName.GetChars();
+							extra->Next = oldextra;
+							cvar->SetExtraDataPointer(extra);
+						}
 					}
 				}
 				else if (sc.Compare("texture"))

@@ -111,7 +111,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 	bool dolights;
 	if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
 	{
-		dolights = Level->lights || (Level->flags3 & LEVEL3_LIGHTCREATED);
+		dolights = true;// Level->lights || (Level->flags3 & LEVEL3_LIGHTCREATED);
 	}
 	else
 	{

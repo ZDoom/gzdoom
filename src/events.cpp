@@ -162,7 +162,7 @@ bool EventManager::UnregisterHandler(DStaticEventHandler* handler)
 
 bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
 {
-	if (gamestate != GS_LEVEL)
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 		return false;
 
 	Net_WriteByte(DEM_NETEVENT);

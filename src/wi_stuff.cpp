@@ -708,66 +708,13 @@ DEFINE_ACTION_FUNCTION(DInterBackground, drawBackground)
 
 IMPLEMENT_CLASS(DInterBackground, true, false)
 
-DObject *WI_Screen;
-
-//====================================================================
-// 
-//
-//
-//====================================================================
-
-void WI_Ticker()
-{
-	if (WI_Screen)
-	{
-		ScaleOverrider s(twod);
-		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
-		{
-			VMValue self = WI_Screen;
-			VMCall(func, &self, 1, nullptr, 0);
-		}
-	}
-}
-
-//====================================================================
-// 
-// Called by main loop,
-// draws the intermission directly into the screen buffer.
-//
-//====================================================================
-
-void WI_Drawer()
-{
-	if (WI_Screen)
-	{
-		ScaleOverrider s(twod);
-		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
-		{
-			twod->ClearClipRect();
-			twod->ClearScreen();
-			VMValue self = WI_Screen;
-			VMCall(func, &self, 1, nullptr, 0);
-			twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
-
-			// The internal handling here is somewhat poor. After being set to 'LeavingIntermission'
-			// the screen is needed for one more draw operation so we cannot delete it right away but only here.
-			if (WI_Screen->IntVar("CurState") == LeavingIntermission)
-			{
-				WI_Screen->Destroy();
-				GC::DelSoftRoot(WI_Screen);
-				WI_Screen = nullptr;
-			}
-		}
-	}
-}
-
 //====================================================================
 // 
 // Setup for an intermission screen.
 //
 //====================================================================
 
-void WI_Start(wbstartstruct_t *wbstartstruct)
+DObject* WI_Start(wbstartstruct_t *wbstartstruct)
 {
 	FName screenclass = deathmatch ? gameinfo.statusscreen_dm : multiplayer ? gameinfo.statusscreen_coop : gameinfo.statusscreen_single;
 	auto cls = PClass::FindClass(screenclass);
@@ -784,7 +731,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 	
-	WI_Screen = cls->CreateNew();
+	auto WI_Screen = cls->CreateNew();
 
 
 	ScaleOverrider s(twod);
@@ -814,7 +761,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 
-	GC::AddSoftRoot(WI_Screen);
+	return WI_Screen;
 }
 
 //====================================================================

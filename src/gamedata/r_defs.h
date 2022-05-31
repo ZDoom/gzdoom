@@ -37,6 +37,7 @@
 #include "r_data/r_translate.h"
 #include "texmanip.h"
 #include "fcolormap.h"
+#include "p_terrain.h"
 
 #include "hwrenderer/data/buffers.h"
 
@@ -1769,6 +1770,7 @@ void TransferSpecial(sector_t *self, sector_t *model);
 void GetSpecial(sector_t *self, secspecial_t *spec);
 void SetSpecial(sector_t *self, const secspecial_t *spec);
 int GetTerrain(const sector_t *, int pos);
+FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos);
 void CheckPortalPlane(sector_t *sector, int plane);
 void AdjustFloorClip(const sector_t *sector);
 void SetColor(sector_t *sector, int color, int desat);

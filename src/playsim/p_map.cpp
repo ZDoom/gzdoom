@@ -4767,10 +4767,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	PClassActor *type = PClass::FindActor(pufftype);
 	if (type == NULL)
 	{
-		if (victim != NULL)
-		{
-			memset(victim, 0, sizeof(*victim));
-		}
+		if (victim != NULL) *victim = {};
 		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
 		return NULL;
 	}
@@ -5424,7 +5421,7 @@ void P_AimCamera(AActor *t1, DVector3 &campos, DAngle &camangle, sector_t *&Came
 }
 
 // [MC] Used for ViewPos. Uses code borrowed from P_AimCamera.
-void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, FViewPosition *VP)
+void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, DViewPosition *VP)
 {
 	FTraceResults trace;
 	const DVector3 vvec = campos - orig;

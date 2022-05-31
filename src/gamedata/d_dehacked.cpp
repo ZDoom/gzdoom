@@ -237,7 +237,6 @@ static AmmoPerAttack AmmoPerAttacks[] = {
 	{ NAME_A_FireBFG, -1},	// uses deh.BFGCells
 	{ NAME_A_FireOldBFG, 1},
 	{ NAME_A_FireRailgun, 1},
-	{ NAME_A_ConsumeAmmo, 1}, // MBF21
 	{ NAME_None, 0}
 };
 
@@ -1260,14 +1259,20 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 12 && stricmp(Line1, "dropped item") == 0)
 		{
+			val--;	// This is 1-based and 0 means 'no drop'.
 			if ((unsigned)val < InfoNames.Size())
 			{
 				FDropItem* di = (FDropItem*)ClassDataAllocator.Alloc(sizeof(FDropItem));
 
+				di->Next = nullptr;
 				di->Name = InfoNames[val]->TypeName.GetChars();
 				di->Probability = 255;
 				di->Amount = -1;
 				info->GetInfo()->DropItems = di;
+			}
+			else if (val == -1)
+			{
+				info->GetInfo()->DropItems = nullptr;
 			}
 		}
 		else if (linelen == 11 && stricmp(Line1, "blood color") == 0)
@@ -2582,11 +2587,15 @@ static int PatchCodePtrs (int dummy)
 			{
 				FString symname;
 
-
 				if ((Line2[0] == 'A' || Line2[0] == 'a') && Line2[1] == '_')
 					symname = Line2;
 				else
 					symname.Format("A_%s", Line2);
+
+				// Hack alert: If A_ConsumeAmmo is used we need to handle the ammo use differently.
+				// Since this is a parameterized code pointer the AmmoPerAttack check cannot find it easily without some help.
+				if (symname.CompareNoCase("A_ConsumeAmmo") == 0)
+					state->StateFlags |= STF_CONSUMEAMMO;
 
 				// Let's consider as aliases some redundant MBF pointer
 				bool ismbfcp = false;
@@ -2744,7 +2753,17 @@ static int PatchText (int oldSize)
 
 	// Search through most other texts
 	const char *str;
-	do
+	
+	// hackhack: If the given string is "Doom", only replace "MUSIC_DOOM".
+	// This is the only music or texture name clashing with common words in the string table.
+	if (!stricmp(oldStr, "Doom"))
+	{
+		str = "MUSIC_DOOM";
+		TableElement te = { LumpFileNum, { newStrData, newStrData, newStrData, newStrData } };
+		DehStrings.Insert(str, te);
+		good = true;
+	}
+	else do
 	{
 		oldStrData.MergeChars(' ');
 		str = EnglishStrings.MatchString(oldStr);
@@ -3565,8 +3584,8 @@ void FinishDehPatch ()
 		}
 		else
 		{
+			bool handled = false;
 			weap->BoolVar(NAME_bDehAmmo) = true;
-			weap->IntVar(NAME_AmmoUse1) = 0;
 			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
 			// and set its default ammo use as the weapon's AmmoUse1.
 
@@ -3581,24 +3600,38 @@ void FinishDehPatch ()
 					break;	// State has already been checked so we reached a loop
 				}
 				StateVisited[state] = true;
+				if (state->StateFlags & STF_CONSUMEAMMO)
+				{
+					// If A_ConsumeAmmo is being used we have to rely on the existing AmmoUse1 value.
+					handled = true;
+					state->StateFlags &= ~STF_CONSUMEAMMO;
+					break;
+				}
 				for(unsigned j = 0; AmmoPerAttacks[j].func != NAME_None; j++)
 				{
 					if (AmmoPerAttacks[j].ptr == nullptr)
 					{
 						auto p = dyn_cast<PFunction>(wcls->FindSymbol(AmmoPerAttacks[j].func, true));
 						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
+						assert(AmmoPerAttacks[j].ptr);
 					}
-					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
+					if (state->ActionFunc == AmmoPerAttacks[j].ptr && AmmoPerAttacks[j].ptr)
 					{
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
 						if (use < 0) use = deh.BFGCells;
 						weap->IntVar(NAME_AmmoUse1) = use;
+						handled = true;
 						break;
 					}
 				}
 				if (found) break;
 				state = state->GetNextState();
+			}
+			if (!handled)
+			{
+				weap->IntVar(NAME_AmmoUse1) = 0;
+
 			}
 		}
 	}
@@ -3833,6 +3866,20 @@ void ClearMissile(AActor* info)
 	if (info->BounceFlags & BOUNCE_DEH) info->BounceFlags = BOUNCE_Grenade | BOUNCE_DEH;
 }
 
+void SetShadow(AActor* info)
+{
+	info->flags |= MF_SHADOW;
+	info->RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
+	info->renderflags &= ~RF_ZDOOMTRANS;
+}
+
+void ClearShadow(AActor* info)
+{
+	info->flags &= ~MF_SHADOW;
+	info->RenderStyle = LegacyRenderStyles[info->Alpha >= 1 - FLT_EPSILON? STYLE_Normal : STYLE_Translucent];
+	info->renderflags &= ~RF_ZDOOMTRANS;
+}
+
 static FlagHandler flag1handlers[32] = {
 	F(MF_SPECIAL),
 	F(MF_SOLID),
@@ -3852,7 +3899,7 @@ static FlagHandler flag1handlers[32] = {
 	F(MF_TELEPORT),
 	{ SetMissile, ClearMissile, [](AActor* a)->bool { return a->flags & MF_MISSILE; } },
 	F(MF_DROPPED),
-	F(MF_SHADOW),
+	{ SetShadow, ClearShadow, [](AActor* a)->bool { return a->flags & MF_SHADOW; } },
 	F(MF_NOBLOOD),
 	F(MF_CORPSE),
 	F(MF_INFLOAT),
@@ -3865,7 +3912,7 @@ static FlagHandler flag1handlers[32] = {
 	F6(MF6_TOUCHY),
 	{ SetBounces, ClearBounces, [](AActor* a)->bool { return a->BounceFlags & BOUNCE_DEH; } },
 	F(MF_FRIENDLY),
-	{ SetTranslucent, ClearTranslucent, CheckTranslucent }
+	{ SetTranslucent, ClearTranslucent, CheckTranslucent },
 };
 
 static FlagHandler flag2handlers[32] = {

@@ -171,6 +171,7 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(master)
 	IMPLEMENT_POINTER(Poisoner)
 	IMPLEMENT_POINTER(alternative)
+	IMPLEMENT_POINTER(ViewPos)
 IMPLEMENT_POINTERS_END
 
 AActor::~AActor ()
@@ -1187,7 +1188,6 @@ bool AActor::Grind(bool items)
 		// see rh_log entry for February 21, 1999. Don't know if it is still relevant.
 		if (state == NULL 									// Only use the default crushed state if:
 			&& !(flags & MF_NOBLOOD)						// 1. the monster bleeeds,
-			&& (Level->i_compatflags & COMPATF_CORPSEGIBS)			// 2. the compat setting is on,
 			&& player == NULL)								// 3. and the thing isn't a player.
 		{
 			isgeneric = true;
@@ -6271,6 +6271,7 @@ foundone:
 		if (smallsplash && splash->SmallSplash)
 		{
 			mo = Spawn(sec->Level, splash->SmallSplash, pos, ALLOW_REPLACE);
+			mo->target = thing;
 			if (mo) mo->Floorclip += splash->SmallSplashClip;
 		}
 		else
@@ -6292,6 +6293,7 @@ foundone:
 			if (splash->SplashBase)
 			{
 				mo = Spawn(sec->Level, splash->SplashBase, pos, ALLOW_REPLACE);
+				mo->target = thing;
 			}
 			if (thing->player && !splash->NoAlert && alert)
 			{

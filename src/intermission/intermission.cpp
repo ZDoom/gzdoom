@@ -56,6 +56,8 @@
 #include "v_draw.h"
 #include "doommenu.h"
 #include "sbar.h"
+#include "screenjob.h"
+#include "vm.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -73,9 +75,16 @@ IMPLEMENT_POINTERS_END
 extern int		NoWipe;
 
 CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 CVAR(Bool, inter_classic_scaling, true, CVAR_ARCHIVE);
+
+DEFINE_ACTION_FUNCTION(_Screen, GetTextScreenSize)
+{
+	auto scale = active_con_scaletext(twod, generic_ui);
+	int hudwidth = twod->GetWidth() / scale;
+	int hudheight = twod->GetHeight() / scale;
+	ACTION_RETURN_VEC2(DVector2(hudwidth, hudheight));
+}
 
 //==========================================================================
 //
@@ -83,15 +92,15 @@ CVAR(Bool, inter_classic_scaling, true, CVAR_ARCHIVE);
 //
 //==========================================================================
 
-void DrawFullscreenSubtitle(const char *text)
+void DrawFullscreenSubtitle(FFont* font, const char *text)
 {
 	if (!text || !*text || !inter_subtitles) return;
+	if (*text == '$') text = GStrings[text + 1];
 
 	// This uses the same scaling as regular HUD messages
 	auto scale = active_con_scaletext(twod, generic_ui);
 	int hudwidth = twod->GetWidth() / scale;
 	int hudheight = twod->GetHeight() / scale;
-	FFont *font = generic_ui? NewSmallFont : SmallFont;
 
 	int linelen = hudwidth < 640 ? Scale(hudwidth, 9, 10) - 40 : 560;
 	auto lines = V_BreakLines(font, linelen, text);
@@ -135,12 +144,7 @@ void DrawFullscreenSubtitle(const char *text)
 
 void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 {
-	if (desc->mMusic.IsEmpty())
-	{
-		// only start the default music if this is the first action in an intermission
-		if (first) S_ChangeMusic (gameinfo.finaleMusic, gameinfo.finaleOrder, desc->mMusicLooping);
-	}
-	else
+	if (!first && desc->mMusic.IsNotEmpty())
 	{
 		S_ChangeMusic (desc->mMusic, desc->mMusicOrder, desc->mMusicLooping);
 	}
@@ -184,12 +188,31 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	}
 	mTicker = 0;
 	mSubtitle = desc->mSubtitle;
+	mFirst = first;
+	// If this is the first element of an intermission we must delay starting the music until Start() is called.
+	mMusic = desc->mMusic;
+	mMusicLooping = desc->mMusicLooping;
+	mMusicOrder = desc->mMusicOrder;
 }
 
-
-int DIntermissionScreen::Responder (event_t *ev)
+void DIntermissionScreen::Start()
 {
-	if (ev->type == EV_KeyDown)
+	if (mFirst)
+	{
+		if (mMusic.IsEmpty())
+		{
+			S_ChangeMusic(gameinfo.finaleMusic, gameinfo.finaleOrder, mMusicLooping);
+		}
+		else
+		{
+			S_ChangeMusic(mMusic, mMusicOrder, mMusicLooping);
+		}
+	}
+}
+
+int DIntermissionScreen::Responder (FInputEvent *ev)
+{
+	if (ev->Type == EV_KeyDown)
 	{
 		return -1;
 	}
@@ -237,9 +260,8 @@ void DIntermissionScreen::Drawer ()
 		if (CheckOverlay(i))
 			DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
-	const char *sub = mSubtitle.GetChars();
-	if (sub && *sub == '$') sub = GStrings[sub + 1];
-	if (sub) DrawFullscreenSubtitle(sub);
+	FFont* font = generic_ui ? NewSmallFont : SmallFont;
+	DrawFullscreenSubtitle(font, mSubtitle);
 }
 
 void DIntermissionScreen::OnDestroy()
@@ -266,9 +288,9 @@ void DIntermissionScreenFader::Init(FIntermissionAction *desc, bool first)
 //
 //===========================================================================
 
-int DIntermissionScreenFader::Responder (event_t *ev)
+int DIntermissionScreenFader::Responder (FInputEvent *ev)
 {
-	if (ev->type == EV_KeyDown)
+	if (ev->Type == EV_KeyDown)
 	{
 		return -1;
 	}
@@ -358,9 +380,9 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mDuration > 0) mDuration += mTextDelay + mTextSpeed * mTextLen;
 }
 
-int DIntermissionScreenText::Responder (event_t *ev)
+int DIntermissionScreenText::Responder (FInputEvent *ev)
 {
-	if (ev->type == EV_KeyDown)
+	if (ev->Type == EV_KeyDown)
 	{
 		if (mTicker < mTextDelay + (mTextLen * mTextSpeed))
 		{
@@ -376,7 +398,6 @@ void DIntermissionScreenText::Drawer ()
 	Super::Drawer();
 	if (mTicker >= mTextDelay)
 	{
-		FGameTexture *pic;
 		int w;
 		size_t count;
 		int c;
@@ -446,7 +467,7 @@ void DIntermissionScreenText::Drawer ()
 				continue;
 			}
 
-			pic = font->GetChar (c, mTextColor, &w);
+			w = font->GetCharWidth(c);
 			w += kerning;
 			w *= fontscale;
 			if (cx + w > twod->GetWidth())
@@ -509,9 +530,9 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	}
 }
 
-int DIntermissionScreenCast::Responder (event_t *ev)
+int DIntermissionScreenCast::Responder (FInputEvent *ev)
 {
-	if (ev->type != EV_KeyDown) return 0;
+	if (ev->Type != EV_KeyDown) return 0;
 
 	if (castdeath)
 		return 1;					// already in dying frames
@@ -707,7 +728,7 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;
 }
 
-int DIntermissionScreenScroller::Responder (event_t *ev)
+int DIntermissionScreenScroller::Responder (FInputEvent *ev)
 {
 	int res = Super::Responder(ev);
 	if (res == -1 && !nointerscrollabort)
@@ -827,9 +848,7 @@ void DIntermissionScreenScroller::Drawer ()
 //
 //==========================================================================
 
-DIntermissionController *DIntermissionController::CurrentIntermission;
-
-DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, uint8_t state)
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, bool ending)
 {
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
@@ -838,7 +857,7 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mSentAdvance = false;
 	mScreen = nullptr;
 	mFirst = true;
-	mGameState = state;
+	mEndGame = ending;
 }
 
 bool DIntermissionController::NextPage ()
@@ -848,8 +867,8 @@ bool DIntermissionController::NextPage ()
 
 	if (mIndex == (int)mDesc->mActions.Size() && mDesc->mLink == NAME_None)
 	{
-		// last page
-		return false;
+		// last page (must block when ending the game.)
+		return mEndGame;
 	}
 	bg.SetInvalid();
 
@@ -868,8 +887,6 @@ again:
 		}
 		else if (action->mClass == TITLE_ID)
 		{
-			Destroy();
-			D_StartTitle ();
 			return false;
 		}
 		else
@@ -897,13 +914,18 @@ again:
 	return false;
 }
 
-bool DIntermissionController::Responder (event_t *ev)
+void DIntermissionController::Start()
+{
+	if (mScreen) mScreen->Start();
+}
+
+bool DIntermissionController::Responder (FInputEvent *ev)
 {
 	if (mScreen != NULL)
 	{
-		if (ev->type == EV_KeyDown)
+		if (ev->Type == EV_KeyDown)
 		{
-			const char *cmd = Bindings.GetBind (ev->data1);
+			const char *cmd = Bindings.GetBind (ev->KeyScan);
 
 			if (cmd != nullptr)
 			{
@@ -924,17 +946,16 @@ bool DIntermissionController::Responder (event_t *ev)
 
 		if (mScreen->mTicker < 2) return false;	// prevent some leftover events from auto-advancing
 		int res = mScreen->Responder(ev);
-		if (res == -1 && !mSentAdvance)
+		if (res == -1)
 		{
-			Net_WriteByte(DEM_ADVANCEINTER);
-			mSentAdvance = true;
+			mAdvance = true;
 		}
 		return !!res;
 	}
 	return false;
 }
 
-void DIntermissionController::Ticker ()
+bool DIntermissionController::Ticker ()
 {
 	if (mAdvance)
 	{
@@ -949,27 +970,10 @@ void DIntermissionController::Ticker ()
 		mAdvance = false;
 		if (!NextPage())
 		{
-			switch (mGameState)
-			{
-			case FSTATE_InLevel:
-				primaryLevel->SetMusic();
-				gamestate = GS_LEVEL;
-				wipegamestate = GS_LEVEL;
-				gameaction = ga_resumeconversation;
-				viewactive = true;
-				Destroy();
-				break;
-
-			case FSTATE_ChangingLevel:
-				gameaction = ga_worlddone;
-				Destroy();
-				break;
-
-			default:
-				break;
-			}
+			return false;
 		}
 	}
+	return true;
 }
 
 void DIntermissionController::Drawer ()
@@ -987,7 +991,6 @@ void DIntermissionController::OnDestroy ()
 	if (mScreen != NULL) mScreen->Destroy();
 	if (mDeleteDesc) delete mDesc;
 	mDesc = NULL;
-	if (CurrentIntermission == this) CurrentIntermission = NULL;
 }
 
 
@@ -997,28 +1000,24 @@ void DIntermissionController::OnDestroy ()
 //
 //==========================================================================
 
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool ending)
 {
 	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Destroy();
-	}
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
-	if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
-	viewactive = false;
-	automapactive = false;
-	DIntermissionController::CurrentIntermission = Create<DIntermissionController>(desc, deleteme, state);
+	//if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
+	auto CurrentIntermission = Create<DIntermissionController>(desc, deleteme, ending);
 
 	// If the intermission finishes straight away then cancel the wipe.
-	if (!DIntermissionController::CurrentIntermission->NextPage())
+	if (!CurrentIntermission->NextPage())
 	{
-		wipegamestate = GS_FINALE;
+		CurrentIntermission->Destroy();
+		return nullptr;
 	}
 
-	GC::WriteBarrier(DIntermissionController::CurrentIntermission);
+	GC::WriteBarrier(CurrentIntermission);
+	return CurrentIntermission;
 }
 
 
@@ -1028,94 +1027,59 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t s
 //
 //==========================================================================
 
-void F_StartIntermission(FName seq, uint8_t state)
+DIntermissionController* F_StartIntermission(FName seq)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
-	if (pdesc == nullptr)
+	if (pdesc == nullptr || (*pdesc)->mActions.Size() == 0)
 	{
-		gameaction = ga_nothing;
+		return nullptr;
 	}
 	else
 	{
-		F_StartIntermission(*pdesc, false, state);
-	}
-}
+		auto desc = *pdesc;
+		auto action = desc->mActions[0];
+		if (action->mClass == TITLE_ID)
+		{
+			// is handled elsewhere.
+			return nullptr;
+		}
 
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-bool F_Responder (event_t* ev)
-{
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		return DIntermissionController::CurrentIntermission->Responder(ev);
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-void F_Ticker ()
-{
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Ticker();
-	}
-}
-
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-void F_Drawer ()
-{
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Drawer();
+		return F_StartIntermission(desc, false);
 	}
 }
 
 
-//==========================================================================
-//
-// Called by main loop.
-//
-//==========================================================================
-
-void F_EndFinale ()
+DEFINE_ACTION_FUNCTION(DIntermissionController, Responder)
 {
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->Destroy();
-		DIntermissionController::CurrentIntermission = NULL;
-	}
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	PARAM_POINTER(evt, FInputEvent);
+	ACTION_RETURN_BOOL(self->Responder(evt));
 }
 
-//==========================================================================
-//
-// Called by net loop.
-//
-//==========================================================================
-
-void F_AdvanceIntermission()
+DEFINE_ACTION_FUNCTION(DIntermissionController, Ticker)
 {
-	ScaleOverrider s(twod);
-	if (DIntermissionController::CurrentIntermission != NULL)
-	{
-		DIntermissionController::CurrentIntermission->mAdvance = true;
-	}
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	ACTION_RETURN_BOOL(self->Ticker());
+}
+
+DEFINE_ACTION_FUNCTION(DIntermissionController, Start)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	self->Start();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DIntermissionController, Drawer)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	self->Drawer();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DIntermissionController, NextPage)
+{
+	PARAM_SELF_PROLOGUE(DIntermissionController);
+	ACTION_RETURN_BOOL(self->NextPage());
 }
 
 #include "c_dispatch.h"

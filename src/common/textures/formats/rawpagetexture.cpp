@@ -62,9 +62,9 @@ public:
 //
 //==========================================================================
 
-static bool CheckIfRaw(FileReader & data)
+bool CheckIfRaw(FileReader & data, int desiredsize)
 {
-	if (data.GetLength() != 64000) return false;
+	if (data.GetLength() != desiredsize) return false;
 
 	// This is probably a raw page graphic, but do some checking to be sure
 	patch_t *foo;
@@ -136,7 +136,7 @@ static bool CheckIfRaw(FileReader & data)
 
 FImageSource *RawPageImage_TryCreate(FileReader & file, int lumpnum)
 {
-	if (!CheckIfRaw(file)) return nullptr;
+	if (!CheckIfRaw(file, 64000)) return nullptr;
 	return new FRawPageTexture(lumpnum);
 }
 

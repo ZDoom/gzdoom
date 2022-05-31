@@ -193,7 +193,7 @@ class OptionMenu : Menu
 					mDesc.mScrollPos += 2;
 					VisBottom += 2;
 				}
-				else
+				else if (VisBottom < mDesc.mItems.Size()-1)
 				{
 					mDesc.mScrollPos++;
 					VisBottom++;

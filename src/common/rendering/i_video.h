@@ -29,10 +29,4 @@ void I_PolyPresentUnlock(int x, int y, int w, int h);
 void I_PolyPresentDeinit();
 
 
-// Pause a bit.
-// [RH] Despite the name, it apparently never waited for the VBL, even in
-// the original DOS version (if the Heretic/Hexen source is any indicator).
-void I_WaitVBL(int count);
-
-
 #endif // __I_VIDEO_H__

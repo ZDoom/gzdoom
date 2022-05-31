@@ -1,0 +1,44 @@
+Instructions for Building EDuke32's Library Dependencies Targeting Win32 and Win64
+==================================================================================
+
+First, follow these instructions: http://wiki.eduke32.com/wiki/Building_EDuke32_on_Windows
+
+Download the latest sources from the link provided.
+
+The build output listed as "Desired Results" is what EDuke32 needs to function.
+
+The desired results for each library in some cases may need to be installed to the compiler. "x depends on the results of y to compile" means that the build output of x must be added to the compiler in this way. Copy files listed in each category to the appropriate destinations. Unless otherwise noted, do NOT copy the ".dll.a" file or else the final product may depend on external DLLs (which you may actually want).
+
+For MinGW (MinGW32):
+from the compiler root (ex. C:/MinGW/)
+  * headers: include/
+  * libraries: lib/
+
+For MinGW-w64:
+from the compiler root (ex. C:/MinGW-w64/mingw32-dw2/)
+  * headers: <target>-w64-mingw32/include/
+  * libraries: <target>-w64-mingw32/lib/
+
+Binaries (if mentioned) need to be present with the finished EDuke32 executables. They are not needed during compilation.
+
+NB: Text formatted as code blocks are commands to be pasted into the Windows command prompt.
+http://wiki.eduke32.com/wiki/Working_with_the_Windows_Command_Prompt
+
+[//]: # (Plain text readers: This refers to lines beginning with exactly four spaces.)
+
+
+libvpx
+------
+### Prerequisites ###
+Download the binary of yasm (http://yasm.tortall.net/) for your host system architecture. Both builds target both architectures.
+The build environment needs pr.exe (https://mingw-lib.googlecode.com/files/coreutils-5.97-MSYS-1.0.11-snapshot.tar.bz2).
+### Download ###
+  * Instructions: http://www.webmproject.org/code/
+  * Stable: http://downloads.webmproject.org/releases/webm/
+  * Git: https://chromium.googlesource.com/webm/libvpx
+### Build ###
+    sh ./configure --disable-vp8-encoder --disable-vp9-encoder --disable-multithread --disable-spatial-resampling --as=yasm && make libvpx.a
+### Desired Results ###
+  * headers: vpx/vp8.h vpx/vp8dx.h vpx/vpx_codec.h vpx/vpx_decoder.h vpx/vpx_frame_buffer.h vpx/vpx_image.h vpx/vpx_integer.h
+  * libraries: libvpx.a
+

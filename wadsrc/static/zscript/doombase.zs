@@ -5,6 +5,7 @@ extend struct _
 	native readonly Array<@PlayerClass> PlayerClasses;
 	native readonly Array<@PlayerSkin> PlayerSkins;
 	native readonly Array<@Team> Teams;
+	native readonly Array<@TerrainDef> Terrains;
 	native int validcount;
 	native play @DehInfo deh;
 	native readonly bool automapactive;

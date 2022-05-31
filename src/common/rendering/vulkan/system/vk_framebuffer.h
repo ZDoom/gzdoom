@@ -77,7 +77,7 @@ public:
 	void Update() override;
 
 	void InitializeState() override;
-
+	bool CompileNextShader() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	const char* DeviceName() const override;
@@ -85,7 +85,7 @@ public:
 	void SetTextureFilterMode() override;
 	void StartPrecaching() override;
 	void BeginFrame() override;
-	void InitLightmap(FLevelLocals* Level) override;
+	void InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData) override;
 	void BlurScene(float amount) override;
 	void PostProcessScene(bool swscene, int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D) override;
 	void AmbientOccludeScene(float m5) override;

@@ -748,7 +748,7 @@ class Weapon : StateProvider
 		// extra ammoitem in baby mode and nightmare mode
 		if (!bIgnoreSkill)
 		{
-			amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+			amount = int(amount * (G_SkillPropertyFloat(SKILLP_AmmoFactor) * sv_ammofactor));
 		}
 		ammoitem = Ammo(other.FindInventory (ammotype));
 		if (ammoitem == NULL)
@@ -783,7 +783,7 @@ class Weapon : StateProvider
 			// extra ammo in baby mode and nightmare mode
 			if (!bIgnoreSkill)
 			{
-				amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+				amount = int(amount * (G_SkillPropertyFloat(SKILLP_AmmoFactor) * sv_ammofactor));
 			}
 			ammo.Amount += amount;
 			if (ammo.Amount > ammo.MaxAmount && !sv_unlimited_pickup)

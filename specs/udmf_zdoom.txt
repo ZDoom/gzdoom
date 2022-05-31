@@ -211,9 +211,6 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  useowncolors_bottom = <bool>; // Set to 1 to use the colors set in the sidedef. Default is using the colors from the owning sector.
 	  uppercolor_bottom = <int>;    // Material color of the top of the lower tier.
 	  lowercolor_bottom = <int>;    // Material color of the bottom of the lower tier. (Hardware rendering only.)
-      colorscalefactor_top = <float>  // scales the material color by the given factor.  Default is 1.
-      colorscalefactor_mid = <float>  // scales the material color by the given factor.  Default is 1.
-      colorscalefactor_bottom = <float>  // scales the material color by the given factor.  Default is 1.
 
       useowncoloradd_top = <bool>;  // Controls where the advanced colorization properties are taken from.
       useowncoloradd_mid = <bool>;  // 0: From the containing sector, 1: from the given part of the linedef itself

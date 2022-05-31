@@ -77,6 +77,7 @@
 #include "v_palette.h"
 #include "s_music.h"
 #include "p_setup.h"
+#include "d_event.h"
 
 #include "v_video.h"
 #include "g_hub.h"
@@ -86,6 +87,7 @@
 #include "d_buttons.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "doommenu.h"
+#include "screenjob.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -142,7 +144,6 @@ extern bool playedtitlemusic;
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
-FName			SelectedSlideshow;		// what to start when ga_slideshow
 
 int 			paused;
 bool			pauseext;
@@ -969,6 +970,11 @@ bool G_Responder (event_t *ev)
 	if (ev->type != EV_Mouse && primaryLevel->localEventManager->Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 		return true;
 	
+	if (gamestate == GS_INTRO || gamestate == GS_CUTSCENE)
+	{
+		return ScreenJobResponder(ev);
+	}
+	
 	// any other key pops up menu if in demos
 	// [RH] But only if the key isn't bound to a "special" command
 	if (gameaction == ga_nothing && 
@@ -1016,11 +1022,6 @@ bool G_Responder (event_t *ev)
 			return true;		// status window ate it
 		if (!viewactive && primaryLevel->automap && primaryLevel->automap->Responder (ev, false))
 			return true;		// automap ate it
-	}
-	else if (gamestate == GS_FINALE)
-	{
-		if (F_Responder (ev))
-			return true;		// finale ate the event
 	}
 
 	switch (ev->type)
@@ -1173,9 +1174,6 @@ void G_Ticker ()
 		case ga_completed:
 			G_DoCompleted ();
 			break;
-		case ga_slideshow:
-			if (gamestate == GS_LEVEL) F_StartIntermission(SelectedSlideshow, FSTATE_InLevel);
-			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
 			break;
@@ -1196,19 +1194,17 @@ void G_Ticker ()
 			P_ResumeConversation ();
 			gameaction = ga_nothing;
 			break;
+		case ga_intermission:
+			gamestate = GS_CUTSCENE;
+			gameaction = ga_nothing;
+			break;
+
+
 		default:
 		case ga_nothing:
 			break;
 		}
 		C_AdjustBottom ();
-	}
-
-	if (oldgamestate != gamestate)
-	{
-		if (oldgamestate == GS_FINALE)
-		{
-			F_EndFinale ();
-		}
 	}
 
 	// get commands, check consistancy, and build new consistancy check
@@ -1293,14 +1289,6 @@ void G_Ticker ()
 		P_Ticker ();
 		break;
 
-	case GS_INTERMISSION:
-		WI_Ticker ();
-		break;
-
-	case GS_FINALE:
-		F_Ticker ();
-		break;
-
 	case GS_DEMOSCREEN:
 		D_PageTicker ();
 		break;
@@ -1310,6 +1298,15 @@ void G_Ticker ()
 		{
 			gamestate = GS_FULLCONSOLE;
 			gameaction = ga_fullconsole;
+		}
+		break;
+
+	case GS_CUTSCENE:
+	case GS_INTRO:
+		if (ScreenJobTick())
+		{
+			// synchronize termination with the playsim.
+			Net_WriteByte(DEM_ENDSCREENJOB);
 		}
 		break;
 
@@ -3078,8 +3075,16 @@ bool G_CheckDemoStatus (void)
 
 void G_StartSlideshow(FLevelLocals *Level, FName whichone)
 {
-	gameaction = ga_slideshow;
-	SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
+	auto SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
+	auto slide = F_StartIntermission(SelectedSlideshow);
+	RunIntermission(slide, nullptr, [](bool)
+	{
+		primaryLevel->SetMusic();
+		gamestate = GS_LEVEL;
+		wipegamestate = GS_LEVEL;
+		gameaction = ga_resumeconversation;
+
+	});
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
@@ -3132,3 +3137,4 @@ DEFINE_GLOBAL(automapactive);
 DEFINE_GLOBAL(Net_Arbitrator);
 DEFINE_GLOBAL(netgame);
 DEFINE_GLOBAL(paused);
+DEFINE_GLOBAL(Terrains);

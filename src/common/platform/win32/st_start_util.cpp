@@ -44,6 +44,8 @@
 #include "palutil.h"
 #include "i_interface.h"
 
+uint8_t* GetHexChar(int codepoint);
+
 void I_GetEvent();	// i_input.h pulls in too much garbage.
 
 void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int right, int bottom);
@@ -329,9 +331,7 @@ BitmapInfo* StartupBitmap;
 #define THERM_X					14
 #define THERM_Y					14
 #define THERM_LEN				51
-#define THERM_COLOR				0xAA		// light green
-
-#define TEXT_FONT_NAME			"vga-rom-font.16"
+#define THERM_COLOR				0xA		// light green
 
 // Strife startup screen
 #define PEASANT_INDEX			0
@@ -444,7 +444,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 
 	c.color.rgbReserved = 0;
 
-	StartupBitmap = ST_Util_CreateBitmap(640, 480, 4);
+	StartupBitmap = ST_Util_CreateBitmap(640, 480);
 
 	// Initialize the bitmap palette.
 	for (int i = 0; i < 16; ++i)
@@ -516,7 +516,7 @@ void FHexenStartupScreen::Progress()
 			{
 				x = ST_PROGRESS_X + ST_NOTCH_WIDTH * NotchPos;
 				y = ST_PROGRESS_Y;
-				ST_Util_DrawBlock(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
+				ST_Util_DrawBlock4(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
 			}
 			ST_Sound("StartupTick");
 		}
@@ -544,7 +544,7 @@ void FHexenStartupScreen::NetProgress(int count)
 		{
 			x = ST_NETPROGRESS_X + ST_NETNOTCH_WIDTH * oldpos;
 			y = ST_NETPROGRESS_Y;
-			ST_Util_DrawBlock(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
+			ST_Util_DrawBlock4(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
 		}
 		ST_Sound("misc/netnotch");
 		I_GetEvent();
@@ -583,16 +583,9 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 {
 	int loading_lump = fileSystem.CheckNumForName("LOADING");
 	uint8_t loading_screen[4000];
-	uint8_t* font;
 
 	hr = -1;
 	if (loading_lump < 0 || fileSystem.FileLength(loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
-	{
-		return;
-	}
-
-	font = ST_Util_LoadFont(TEXT_FONT_NAME);
-	if (font == NULL)
 	{
 		return;
 	}
@@ -605,17 +598,16 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 	loading_screen[2 * 160 + 49 * 2] = HERETIC_MINOR_VERSION;
 
 	// Draw the loading screen to a bitmap.
-	StartupBitmap = ST_Util_AllocTextBitmap(font);
-	ST_Util_DrawTextScreen(StartupBitmap, loading_screen, font);
+	StartupBitmap = ST_Util_AllocTextBitmap();
+	ST_Util_DrawTextScreen(StartupBitmap, loading_screen);
 
 	ThermX = THERM_X * 8;
-	ThermY = THERM_Y * font[0];
+	ThermY = THERM_Y * 16;
 	ThermWidth = THERM_LEN * 8 - 4;
-	ThermHeight = font[0];
+	ThermHeight = 16;
 	HMsgY = 7;
 	SMsgX = 1;
 
-	ST_Util_FreeFont(font);
 	SetWindowSize();
 	hr = 0;
 }
@@ -659,20 +651,15 @@ void FHereticStartupScreen::Progress()
 
 void FHereticStartupScreen::LoadingStatus(const char* message, int colors)
 {
-	uint8_t* font = ST_Util_LoadFont(TEXT_FONT_NAME);
-	if (font != NULL)
-	{
-		int x;
+	int x;
 
-		for (x = 0; message[x] != '\0'; ++x)
-		{
-			ST_Util_DrawChar(StartupBitmap, font, 17 + x, HMsgY, message[x], colors);
-		}
-		ST_Util_InvalidateRect(StartupBitmap, 17 * 8, HMsgY * font[0], (17 + x) * 8, HMsgY * font[0] + font[0]);
-		ST_Util_FreeFont(font);
-		HMsgY++;
-		I_GetEvent();
+	for (x = 0; message[x] != '\0'; ++x)
+	{
+		ST_Util_DrawChar(StartupBitmap, 17 + x, HMsgY, message[x], colors);
 	}
+	ST_Util_InvalidateRect(StartupBitmap, 17 * 8, HMsgY * 16, (17 + x) * 8, HMsgY * 16 + 16);
+	HMsgY++;
+	I_GetEvent();
 }
 
 //==========================================================================
@@ -685,20 +672,15 @@ void FHereticStartupScreen::LoadingStatus(const char* message, int colors)
 
 void FHereticStartupScreen::AppendStatusLine(const char* status)
 {
-	uint8_t* font = ST_Util_LoadFont(TEXT_FONT_NAME);
-	if (font != NULL)
-	{
-		int x;
+	int x;
 
-		for (x = 0; status[x] != '\0'; ++x)
-		{
-			ST_Util_DrawChar(StartupBitmap, font, SMsgX + x, 24, status[x], 0x1f);
-		}
-		ST_Util_InvalidateRect(StartupBitmap, SMsgX * 8, 24 * font[0], (SMsgX + x) * 8, 25 * font[0]);
-		ST_Util_FreeFont(font);
-		SMsgX += x;
-		I_GetEvent();
+	for (x = 0; status[x] != '\0'; ++x)
+	{
+		ST_Util_DrawChar(StartupBitmap, SMsgX + x, 24, status[x], 0x1f);
 	}
+	ST_Util_InvalidateRect(StartupBitmap, SMsgX * 8, 24 * 16, (SMsgX + x) * 8, 25 * 16);
+	SMsgX += x;
+	I_GetEvent();
 }
 
 //==========================================================================
@@ -734,7 +716,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 		return;
 	}
 
-	StartupBitmap = ST_Util_CreateBitmap(320, 200, 8);
+	StartupBitmap = ST_Util_CreateBitmap(320, 200);
 	ST_Util_BitmapColorsFromPlaypal(StartupBitmap);
 
 	// Fill bitmap with the startup image.
@@ -872,19 +854,15 @@ void ST_Util_PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int h
 	{
 		for (x = width; x > 0; x -= 8)
 		{
-			// Pixels 0 and 1
-			dest[0] = (*src4 & 0x80) | ((*src3 & 0x80) >> 1) | ((*src2 & 0x80) >> 2) | ((*src1 & 0x80) >> 3) |
-				((*src4 & 0x40) >> 3) | ((*src3 & 0x40) >> 4) | ((*src2 & 0x40) >> 5) | ((*src1 & 0x40) >> 6);
-			// Pixels 2 and 3
-			dest[1] = ((*src4 & 0x20) << 2) | ((*src3 & 0x20) << 1) | ((*src2 & 0x20)) | ((*src1 & 0x20) >> 1) |
-				((*src4 & 0x10) >> 1) | ((*src3 & 0x10) >> 2) | ((*src2 & 0x10) >> 3) | ((*src1 & 0x10) >> 4);
-			// Pixels 4 and 5
-			dest[2] = ((*src4 & 0x08) << 4) | ((*src3 & 0x08) << 3) | ((*src2 & 0x08) << 2) | ((*src1 & 0x08) << 1) |
-				((*src4 & 0x04) << 1) | ((*src3 & 0x04)) | ((*src2 & 0x04) >> 1) | ((*src1 & 0x04) >> 2);
-			// Pixels 6 and 7
-			dest[3] = ((*src4 & 0x02) << 6) | ((*src3 & 0x02) << 5) | ((*src2 & 0x02) << 4) | ((*src1 & 0x02) << 3) |
-				((*src4 & 0x01) << 3) | ((*src3 & 0x01) << 2) | ((*src2 & 0x01) << 1) | ((*src1 & 0x01));
-			dest += 4;
+			dest[0] = ((*src4 & 0x80) | ((*src3 & 0x80) >> 1) | ((*src2 & 0x80) >> 2) | ((*src1 & 0x80) >> 3)) >> 4;
+			dest[1] = ((*src4 & 0x40) >> 3) | ((*src3 & 0x40) >> 4) | ((*src2 & 0x40) >> 5) | ((*src1 & 0x40) >> 6);
+			dest[2] = (((*src4 & 0x20) << 2) | ((*src3 & 0x20) << 1) | ((*src2 & 0x20)) | ((*src1 & 0x20) >> 1)) >> 4;
+			dest[3] = ((*src4 & 0x10) >> 1) | ((*src3 & 0x10) >> 2) | ((*src2 & 0x10) >> 3) | ((*src1 & 0x10) >> 4);
+			dest[4] = (((*src4 & 0x08) << 4) | ((*src3 & 0x08) << 3) | ((*src2 & 0x08) << 2) | ((*src1 & 0x08) << 1)) >> 4;
+			dest[5] = ((*src4 & 0x04) << 1) | ((*src3 & 0x04)) | ((*src2 & 0x04) >> 1) | ((*src1 & 0x04) >> 2);
+			dest[6] = (((*src4 & 0x02) << 6) | ((*src3 & 0x02) << 5) | ((*src2 & 0x02) << 4) | ((*src1 & 0x02) << 3)) >> 4;
+			dest[7] = ((*src4 & 0x01) << 3) | ((*src3 & 0x01) << 2) | ((*src2 & 0x01) << 1) | ((*src1 & 0x01));
+			dest += 8;
 			src1 += 1;
 			src2 += 1;
 			src3 += 1;
@@ -906,11 +884,10 @@ void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y
 		return;
 	}
 
-	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
-	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+	int destpitch = bitmap_info->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth, y + height);
 
 	if (bytewidth == 8)
 	{ // progress notches
@@ -944,17 +921,47 @@ void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y
 
 //==========================================================================
 //
+// ST_Util_DrawBlock
+//
+//==========================================================================
+
+void ST_Util_DrawBlock4(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height)
+{
+	if (src == NULL)
+	{
+		return;
+	}
+
+	int destpitch = bitmap_info->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
+
+	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth * 2, y + height);
+
+	for (; height > 0; --height)
+	{
+		for (int x = 0; x < bytewidth; x++)
+		{
+			int val = src[x];
+			dest[x * 2] = val >> 4;
+			dest[x * 2 + 1] = val & 15;
+		}
+		dest += destpitch;
+		src += bytewidth;
+	}
+}
+
+//==========================================================================
+//
 // ST_Util_ClearBlock
 //
 //==========================================================================
 
 void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int bytewidth, int height)
 {
-	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
-	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+	int destpitch = bitmap_info->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + x + y * destpitch;
 
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	ST_Util_InvalidateRect(bitmap_info, x, y, x + bytewidth, y + height);
 
 	while (height > 0)
 	{
@@ -977,23 +984,23 @@ void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int
 //
 //==========================================================================
 
-BitmapInfo* ST_Util_CreateBitmap(int width, int height, int color_bits)
+BitmapInfo* ST_Util_CreateBitmap(int width, int height)
 {
-	uint32_t size_image = (width * height) >> int(color_bits == 4);
+	uint32_t size_image = (width * height);
 	BitmapInfo* bitmap_info = (BitmapInfo*)M_Malloc(sizeof(BitmapInfoHeader) +
-		(sizeof(RgbQuad) << color_bits) + size_image);
+		(sizeof(RgbQuad) << 8) + size_image);
 
 	// Initialize the header.
 	bitmap_info->bmiHeader.biSize = sizeof(BitmapInfoHeader);
 	bitmap_info->bmiHeader.biWidth = width;
 	bitmap_info->bmiHeader.biHeight = height;
 	bitmap_info->bmiHeader.biPlanes = 1;
-	bitmap_info->bmiHeader.biBitCount = color_bits;
+	bitmap_info->bmiHeader.biBitCount = 8;
 	bitmap_info->bmiHeader.biCompression = 0;
 	bitmap_info->bmiHeader.biSizeImage = size_image;
 	bitmap_info->bmiHeader.biXPelsPerMeter = 0;
 	bitmap_info->bmiHeader.biYPelsPerMeter = 0;
-	bitmap_info->bmiHeader.biClrUsed = 1 << color_bits;
+	bitmap_info->bmiHeader.biClrUsed = 1 << 8;
 	bitmap_info->bmiHeader.biClrImportant = 0;
 
 	return bitmap_info;
@@ -1050,47 +1057,6 @@ void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
 
 //==========================================================================
 //
-// ST_Util_LoadFont
-//
-// Loads a monochrome fixed-width font. Every character is one byte
-// (eight pixels) wide, so we can deduce the height of each character
-// by looking at the size of the font data.
-//
-//==========================================================================
-
-uint8_t* ST_Util_LoadFont(const char* filename)
-{
-	int lumpnum, lumplen, height;
-	uint8_t* font;
-
-	lumpnum = fileSystem.CheckNumForFullName(filename);
-	if (lumpnum < 0)
-	{ // font not found
-		return NULL;
-	}
-	lumplen = fileSystem.FileLength(lumpnum);
-	height = lumplen / 256;
-	if (height * 256 != lumplen)
-	{ // font is a bad size
-		return NULL;
-	}
-	if (height < 6 || height > 36)
-	{ // let's be reasonable here
-		return NULL;
-	}
-	font = new uint8_t[lumplen + 1];
-	font[0] = height;	// Store font height in the first byte.
-	fileSystem.ReadFile(lumpnum, font + 1);
-	return font;
-}
-
-void ST_Util_FreeFont(uint8_t* font)
-{
-	delete[] font;
-}
-
-//==========================================================================
-//
 // ST_Util_AllocTextBitmap
 //
 // Returns a bitmap properly sized to hold an 80x25 display of characters
@@ -1098,9 +1064,9 @@ void ST_Util_FreeFont(uint8_t* font)
 //
 //==========================================================================
 
-BitmapInfo* ST_Util_AllocTextBitmap(const uint8_t* font)
+BitmapInfo* ST_Util_AllocTextBitmap()
 {
-	BitmapInfo* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * font[0], 4);
+	BitmapInfo* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * 16);
 	memcpy(bitmap->bmiColors, TextModePalette, sizeof(TextModePalette));
 	return bitmap;
 }
@@ -1114,7 +1080,7 @@ BitmapInfo* ST_Util_AllocTextBitmap(const uint8_t* font)
 //
 //==========================================================================
 
-void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen, const uint8_t* font)
+void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen)
 {
 	int x, y;
 
@@ -1122,7 +1088,7 @@ void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen,
 	{
 		for (x = 0; x < 80; ++x)
 		{
-			ST_Util_DrawChar(bitmap_info, font, x, y, text_screen[0], text_screen[1]);
+			ST_Util_DrawChar(bitmap_info, x, y, IBM437ToUnicode[text_screen[0]], text_screen[1]);
 			text_screen += 2;
 		}
 	}
@@ -1137,31 +1103,46 @@ void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen,
 //
 //==========================================================================
 
-void ST_Util_DrawChar(BitmapInfo* screen, const uint8_t* font, int x, int y, uint8_t charnum, uint8_t attrib)
+int ST_Util_DrawChar(BitmapInfo* screen, int x, int y, unsigned charnum, uint8_t attrib)
 {
-	const uint8_t bg_left = attrib & 0x70;
+	static const uint8_t space[17] = { 16 };
+	const uint8_t bg = (attrib & 0x70) >> 4;
 	const uint8_t fg = attrib & 0x0F;
-	const uint8_t fg_left = fg << 4;
-	const uint8_t bg = bg_left >> 4;
-	const uint8_t color_array[4] = { (uint8_t)(bg_left | bg), (uint8_t)(attrib & 0x7F), (uint8_t)(fg_left | bg), (uint8_t)(fg_left | fg) };
-	const uint8_t* src = font + 1 + charnum * font[0];
-	int pitch = screen->bmiHeader.biWidth >> 1;
-	uint8_t* dest = ST_Util_BitsForBitmap(screen) + x * 4 + y * font[0] * pitch;
+	const uint8_t color_array[4] = { bg, fg };
+	const uint8_t* src = GetHexChar(charnum);
+	if (!src) src = space;
+	int size = *src++;
+	int pitch = screen->bmiHeader.biWidth;
+	uint8_t* dest = ST_Util_BitsForBitmap(screen) + x * 8 + y * 16 * pitch;
 
-	for (y = font[0]; y > 0; --y)
+	for (y = 0; y <16; ++y)
 	{
 		uint8_t srcbyte = *src++;
 
-		// Pixels 0 and 1
-		dest[0] = color_array[(srcbyte >> 6) & 3];
-		// Pixels 2 and 3
-		dest[1] = color_array[(srcbyte >> 4) & 3];
-		// Pixels 4 and 5
-		dest[2] = color_array[(srcbyte >> 2) & 3];
-		// Pixels 6 and 7
-		dest[3] = color_array[(srcbyte) & 3];
+		dest[0] = color_array[(srcbyte >> 7) & 1];
+		dest[1] = color_array[(srcbyte >> 6) & 1];
+		dest[2] = color_array[(srcbyte >> 5) & 1];
+		dest[3] = color_array[(srcbyte >> 4) & 1];
+		dest[4] = color_array[(srcbyte >> 3) & 1];
+		dest[5] = color_array[(srcbyte >> 2) & 1];
+		dest[6] = color_array[(srcbyte >> 1) & 1];
+		dest[7] = color_array[(srcbyte) & 1];
+		if (size == 32)
+		{
+			srcbyte = *src++;
+
+			dest[8] = color_array[(srcbyte >> 7) & 1];
+			dest[9] = color_array[(srcbyte >> 6) & 1];
+			dest[10] = color_array[(srcbyte >> 5) & 1];
+			dest[11] = color_array[(srcbyte >> 4) & 1];
+			dest[12] = color_array[(srcbyte >> 3) & 1];
+			dest[13] = color_array[(srcbyte >> 2) & 1];
+			dest[14] = color_array[(srcbyte >> 1) & 1];
+			dest[15] = color_array[(srcbyte) & 1];
+		}
 		dest += pitch;
 	}
+	return size;
 }
 
 //==========================================================================
@@ -1173,7 +1154,7 @@ void ST_Util_DrawChar(BitmapInfo* screen, const uint8_t* font, int x, int y, uin
 //
 //==========================================================================
 
-void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, const uint8_t* font, bool on)
+void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, bool on)
 {
 	int x, y;
 
@@ -1183,8 +1164,8 @@ void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen
 		{
 			if (text_screen[1] & 0x80)
 			{
-				ST_Util_DrawChar(bitmap_info, font, x, y, on ? text_screen[0] : ' ', text_screen[1]);
-				ST_Util_InvalidateRect(bitmap_info, x * 8, y * font[0], x * 8 + 8, y * font[0] + font[0]);
+				ST_Util_DrawChar(bitmap_info, x, y, on ? IBM437ToUnicode[text_screen[0]] : ' ', text_screen[1]);
+				ST_Util_InvalidateRect(bitmap_info, x * 8, y * 16, x * 8 + 8, y * 16 + 16);
 			}
 			text_screen += 2;
 		}

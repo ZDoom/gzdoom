@@ -6204,9 +6204,12 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			{
 				int line;
 				auto itr = Level->GetLineIdIterator(args[0]);
+				int repeat = argCount > 2? args[2] : -1;
 				while ((line = itr.Next()) >= 0)
 				{
 					Level->lines[line].activation = args[1];
+					if (repeat > 0) Level->lines[line].flags |= ML_REPEAT_SPECIAL;
+					else if (repeat == 0) Level->lines[line].flags &= ~ML_REPEAT_SPECIAL;
 				}
 			}
 			break;
@@ -8757,7 +8760,7 @@ scriptwait:
 						(type & HUDMSG_LAYER_MASK) >> HUDMSG_LAYER_SHIFT);
 					if (type & HUDMSG_LOG)
 					{
-						int consolecolor = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+						int consolecolor = color >= CR_BRICK && color < NUM_TEXT_COLORS && color != CR_UNTRANSLATED ? color + 'A' : '-';
 						Printf(PRINT_NONOTIFY, "\n" TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", consolecolor, console_bar, work.GetChars(), console_bar);
 					}
 				}

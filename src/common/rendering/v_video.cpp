@@ -281,6 +281,12 @@ void V_UpdateModeSize (int width, int height)
 	CleanHeight = screen->GetHeight() / CleanYfac;
 
 	int w = screen->GetWidth();
+	int h = screen->GetHeight();
+	
+	// clamp screen aspect ratio to 17:10, for anything wider the width will be reduced
+	double aspect = (double)w / h;
+	if (aspect > 1.7) w = int(w * 1.7 / aspect);
+	
 	int factor;
 	if (w < 640) factor = 1;
 	else if (w >= 1024 && w < 1280) factor = 2;

@@ -708,6 +708,13 @@ struct AFuncDesc
 	extern FieldDesc const *const VMGlobal_##name##_HookPtr; \
 	MSVC_FSEG FieldDesc const *const VMGlobal_##name##_HookPtr GCC_FSEG = &VMGlobal_##name;
 
+#define DEFINE_GLOBAL_UNSIZED(name) \
+	static const FieldDesc VMGlobal_##name = { "", #name, (size_t)&name, ~0u, 0 }; \
+	extern FieldDesc const *const VMGlobal_##name##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMGlobal_##name##_HookPtr GCC_FSEG = &VMGlobal_##name;
+
+
+
 
 class AActor;
 

@@ -423,6 +423,8 @@ enum ActorFlag8
 	MF8_MAP07BOSS2		= 0x00800000,	// MBF21 boss death.
 	MF8_AVOIDHAZARDS	= 0x01000000,	// MBF AI enhancement.
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
+	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
+	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
 };
 
 // --- mobj.renderflags ---
@@ -660,9 +662,9 @@ enum EViewPosFlags // [MC] Flags for SetViewPos.
 	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
 };
 
-class FViewPosition : public DObject
+class DViewPosition : public DObject
 {
-	DECLARE_CLASS(FViewPosition, DObject);
+	DECLARE_CLASS(DViewPosition, DObject);
 public:
 	// Variables
 	// Exposed to ZScript
@@ -670,7 +672,7 @@ public:
 	int			Flags;
 
 	// Functions
-	FViewPosition()
+	DViewPosition()
 	{
 		Offset = { 0,0,0 };
 		Flags = 0;
@@ -1011,7 +1013,7 @@ public:
 	DAngle			SpriteRotation;
 	DRotator		Angles;
 	DRotator		ViewAngles;			// Angle offsets for cameras
-	FViewPosition	*ViewPos;			// Position offsets for cameras
+	TObjPtr<DViewPosition*> ViewPos;			// Position offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 

@@ -43,7 +43,7 @@
 void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 FName MessageBoxClass = NAME_MessageBoxMenu;
 
-CVAR(Bool, m_quickexit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, m_quickexit, false, CVAR_ARCHIVE)
 
 typedef void(*hfunc)();
 DEFINE_ACTION_FUNCTION(DMessageBoxMenu, CallHandler)

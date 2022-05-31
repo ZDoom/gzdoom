@@ -753,6 +753,12 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 	desc->mVirtWidth = -2;
 	desc->mCustomSizeSet = false;
+	if (DefaultListMenuSettings->mCustomSizeSet)
+	{
+		desc->mVirtHeight = DefaultListMenuSettings->mVirtHeight;
+		desc->mVirtWidth = DefaultListMenuSettings->mVirtWidth;
+		desc->mCustomSizeSet = true;
+	}
 
 	ParseListMenuBody(sc, desc, -1);
 	ReplaceMenu(sc, desc);
@@ -1496,7 +1502,7 @@ static void InitMusicMenus()
 {
 	DMenuDescriptor **advmenu = MenuDescriptors.CheckKey("AdvSoundOptions");
 	auto soundfonts = sfmanager.GetList();
-	std::tuple<const char *, int, const char *> sfmenus[] = { std::make_tuple("GusConfigMenu", SF_SF2 | SF_GUS, "midi_config"),
+	std::tuple<const char *, int, const char *> sfmenus[] = { std::make_tuple("GusConfigMenu", SF_GUS, "midi_config"),
 																std::make_tuple("WildMidiConfigMenu", SF_GUS, "wildmidi_config"),
 																std::make_tuple("TimidityConfigMenu", SF_SF2 | SF_GUS, "timidity_config"),
 																std::make_tuple("FluidPatchsetMenu", SF_SF2, "fluid_patchset"),

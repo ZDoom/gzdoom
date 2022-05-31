@@ -362,6 +362,11 @@ void FMapInfoParser::ParseGameInfo()
 			gameinfo.Dialogue = sc.String;
 			gameinfo.AddDialogues.Clear();
 		}
+		else if (nextKey.CompareNoCase("intro") == 0)
+		{
+			ParseCutscene(gameinfo.IntroScene);
+		}
+
 		// Insert valid keys here.
 		GAMEINFOKEY_STRING(mCheatKey, "cheatKey")
 			GAMEINFOKEY_STRING(mEasyKey, "easyKey")

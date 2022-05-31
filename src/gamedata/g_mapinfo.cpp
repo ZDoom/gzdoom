@@ -50,6 +50,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "i_system.h"
+#include "screenjob.h"
 
 static TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
@@ -743,6 +744,30 @@ void FMapInfoParser::ParseMusic(FString &name, int &order)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseCutscene(CutsceneDef& cdef)
+{
+	FString sound;
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
+		sc.MustGetString();
+		if (sc.Compare("video")) { ParseAssign(); sc.MustGetString(); cdef.video = sc.String; cdef.function = ""; }
+		else if (sc.Compare("function")) { ParseAssign(); sc.SetCMode(false); sc.MustGetString(); sc.SetCMode(true); cdef.function = sc.String; cdef.video = ""; }
+		else if (sc.Compare("sound")) { ParseAssign(); sc.MustGetString(); cdef.soundName = sc.String; }
+		else if (sc.Compare("soundid")) { ParseAssign(); sc.MustGetNumber(); cdef.soundID = sc.Number; }
+		else if (sc.Compare("fps")) { ParseAssign();  sc.MustGetNumber();  cdef.framespersec = sc.Number; }
+		//else if (sc.Compare("transitiononly")) cdef.transitiononly = true;
+		else if (sc.Compare("delete")) { cdef.function = "none"; cdef.video = ""; } // this means 'play nothing', not 'not defined'.
+		else if (sc.Compare("clear")) cdef = {};
+	}
+}
+
+//==========================================================================
+//
 // ParseCluster
 // Parses a cluster definition
 //
@@ -844,6 +869,18 @@ void FMapInfoParser::ParseCluster()
 		else if (sc.Compare("exittextislump"))
 		{
 			clusterinfo->flags |= CLUSTER_EXITTEXTINLUMP;
+		}
+		else if (sc.Compare("intro"))
+		{
+			ParseCutscene(clusterinfo->intro);
+		}
+		else if (sc.Compare("outro"))
+		{
+			ParseCutscene(clusterinfo->outro);
+		}
+		else if (sc.Compare("gameover"))
+		{
+			ParseCutscene(clusterinfo->gameover);
 		}
 		else if (!ParseCloseBrace())
 		{
@@ -1540,6 +1577,16 @@ DEFINE_MAP_OPTION(loadacs, false)
 	info->acsName = parse.sc.String;
 }
 
+DEFINE_MAP_OPTION(intro, true)
+{
+	parse.ParseCutscene(info->intro);
+}
+
+DEFINE_MAP_OPTION(outro, true)
+{
+	parse.ParseCutscene(info->outro);
+}
+
 
 //==========================================================================
 //
@@ -2067,6 +2114,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 	bool noskill = false;
 	bool optional = false;
 	bool extended = false;
+	CutsceneDef introscene;
 
 	// Get map name
 	sc.MustGetString ();
@@ -2123,6 +2171,11 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		{
 			noskill = true;
 		}
+		else if (sc.Compare("intro"))
+		{
+			ParseCutscene(introscene);
+		}
+
 		else if (!ParseCloseBrace())
 		{
 			// Unknown
@@ -2181,6 +2234,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		epi->mPicName = pic;
 		epi->mShortcut = tolower(key);
 		epi->mNoSkill = noskill;
+		epi->mIntro = introscene;
 	}
 }
 

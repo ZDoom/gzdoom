@@ -728,17 +728,25 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	DVector3 thingpos = thing->InterpolatedPosition(vp.TicFrac);
 	if (thruportal == 1) thingpos += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
-	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
-	if (thing == camera && !vp.showviewer)
+	AActor *viewmaster = thing;
+	if ((thing->flags8 & MF8_MASTERNOSEE) && thing->master != nullptr)
 	{
-		DVector3 thingorigin = thing->Pos();
-		if (thruportal == 1) thingorigin += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
-		if (fabs(thingorigin.X - vp.ActorPos.X) < 2 && fabs(thingorigin.Y - vp.ActorPos.Y) < 2) return;
+		viewmaster = thing->master;
+	}
+
+	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
+	if (viewmaster == camera && !vp.showviewer)
+	{
+		DVector3 vieworigin = viewmaster->Pos();
+		if (thruportal == 1) vieworigin += di->Level->Displacements.getOffset(viewmaster->Sector->PortalGroup, sector->PortalGroup);
+		if (fabs(vieworigin.X - vp.ActorPos.X) < 2 && fabs(vieworigin.Y - vp.ActorPos.Y) < 2) return;
 	}
 	// Thing is invisible if close to the camera.
-	if (thing->renderflags & RF_MAYBEINVISIBLE)
+	if (viewmaster->renderflags & RF_MAYBEINVISIBLE)
 	{
-		if (fabs(thingpos.X - vp.Pos.X) < 32 && fabs(thingpos.Y - vp.Pos.Y) < 32) return;
+		DVector3 viewpos = viewmaster->InterpolatedPosition(vp.TicFrac);
+		if (thruportal == 1) viewpos += di->Level->Displacements.getOffset(viewmaster->Sector->PortalGroup, sector->PortalGroup);
+		if (fabs(viewpos.X - vp.Pos.X) < 32 && fabs(viewpos.Y - vp.Pos.Y) < 32) return;
 	}
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
@@ -1370,11 +1378,33 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 					DVector3 newpos = savedpos;
 					sector_t fakesector;
 
-					if (!vp.showviewer && th == vp.camera)
+					if (!vp.showviewer)
 					{
-						if (fabs(savedpos.X - vp.ActorPos.X) < 2 && fabs(savedpos.Y - vp.ActorPos.Y) < 2)
+						AActor *viewmaster = th;
+						if ((th->flags8 & MF8_MASTERNOSEE) && th->master != nullptr)
 						{
-							continue;
+							viewmaster = th->master;
+						}
+
+						if (viewmaster == vp.camera)
+						{
+							DVector3 vieworigin = viewmaster->Pos();
+
+							if (fabs(vieworigin.X - vp.ActorPos.X) < 2 && fabs(vieworigin.Y - vp.ActorPos.Y) < 2)
+							{
+								// Same as the original position
+								continue;
+							}
+
+							P_TranslatePortalXY(line, vieworigin.X, vieworigin.Y);
+							P_TranslatePortalZ(line, vieworigin.Z);
+
+							if (fabs(vieworigin.X - vp.ActorPos.X) < 2 && fabs(vieworigin.Y - vp.ActorPos.Y) < 2)
+							{
+								// Same as the translated position
+								// (This is required for MASTERNOSEE actors with 3D models)
+								continue;
+							}
 						}
 					}
 

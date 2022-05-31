@@ -171,7 +171,7 @@ namespace swrenderer
 		// Never draw the player unless in chasecam mode
 		if (!MainThread()->Viewport->viewpoint.showviewer)
 		{
-			MainThread()->Viewport->viewpoint.camera->renderflags |= RF_INVISIBLE;
+			MainThread()->Viewport->viewpoint.camera->renderflags |= RF_MAYBEINVISIBLE;
 		}
 
 		RenderThreadSlices();

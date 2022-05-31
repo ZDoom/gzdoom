@@ -997,11 +997,22 @@ namespace swrenderer
 		// Don't waste time projecting sprites that are definitely not visible.
 		if (thing == nullptr ||
 			(thing->renderflags & RF_INVISIBLE) ||
+			(thing->renderflags & RF_MAYBEINVISIBLE) ||
 			!thing->RenderStyle.IsVisible(thing->Alpha) ||
 			!thing->IsVisibleToPlayer() ||
 			!thing->IsInsideVisibleAngles())
 		{
 			return false;
+		}
+
+		if ((thing->flags8 & MF8_MASTERNOSEE) && thing->master != nullptr)
+		{
+			// Make MASTERNOSEE actors invisible if their master
+			// is invisible due to viewpoint shenanigans.
+			if (thing->master->renderflags & RF_MAYBEINVISIBLE)
+			{
+				return false;
+			}
 		}
 
 		// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,

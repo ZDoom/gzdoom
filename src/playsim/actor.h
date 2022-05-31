@@ -426,6 +426,7 @@ enum ActorFlag8
 	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
 	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
 	MF8_CROSSLINECHECK	= 0x10000000,	// [MC]Enables CanCrossLine virtual
+	MF8_MASTERNOSEE		= 0x20000000,	// Don't show object in first person if their master is the current camera.
 };
 
 // --- mobj.renderflags ---

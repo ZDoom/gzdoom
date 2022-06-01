@@ -29,6 +29,7 @@
 #define __R_SKY_H__
 
 #include <utility>
+#include <stdint.h>
 #include "textureid.h"
 
 struct FLevelLocals;

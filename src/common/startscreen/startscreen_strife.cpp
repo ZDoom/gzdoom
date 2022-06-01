@@ -37,6 +37,7 @@
 #include "filesystem.h"
 #include "printf.h"
 #include "image.h"
+#include "textures.h"
 #include "palettecontainer.h"
 
 // Strife startup screen
@@ -156,6 +157,7 @@ bool FStrifeStartScreen::DoProgress(int advance)
 		{ // Time to update.
 			DrawStuff(NotchPos, notch_pos);
 			NotchPos = notch_pos;
+			StartupTexture->CleanHardwareData(true);
 		}
 	}
 	return FStartScreen::DoProgress(advance);

@@ -58,8 +58,8 @@ static StrifeStartupInfo StrifeRawPics[] =
 	{ "STRTPB1", 32, 64},
 	{ "STRTPC1", 32, 64},
 	{ "STRTPD1", 32, 64},
-	{ "STRLZ1", 16, 16},
-	{ "STRLZ2", 16, 16},
+	{ "STRTLZ1", 16, 16},
+	{ "STRTLZ2", 16, 16},
 	{ "STRTBOT", 48, 48}
 };
 

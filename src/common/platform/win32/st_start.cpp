@@ -76,9 +76,9 @@ extern HINSTANCE g_hInst;
 //
 //==========================================================================
 
-FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
+FStartupScreen *FStartupScreen::CreateInstance(int max_progress, bool showprogress)
 {
-	return new FBasicStartupScreen(max_progress, true);
+	return new FBasicStartupScreen(max_progress, showprogress);
 }
 
 //==========================================================================

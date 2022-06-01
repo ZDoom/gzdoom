@@ -657,7 +657,7 @@ void FStartScreen::Render(bool force)
 {
 	auto nowtime = I_msTime();
 	// Do not refresh too often. This function gets called a lot more frequently than the screen can update.
-	if (nowtime - screen->FrameTime > 100 || force)
+	if (nowtime - screen->FrameTime > 30 || force)
 	{
 		screen->FrameTime = nowtime;
 		screen->BeginFrame();

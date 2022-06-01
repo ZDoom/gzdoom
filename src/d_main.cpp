@@ -3068,6 +3068,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	SetMapxxFlag();
 
 	D_GrabCVarDefaults(); //parse DEFCVARS
+	InitPalette();
 
 	int max_progress = TexMan.GuesstimateNumTextures();
 	int per_shader_progress = 0;//screen->GetShaderCount()? (max_progress / 10 / screen->GetShaderCount()) : 0;
@@ -3106,7 +3107,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		Printf("%s", ci.GetChars());
 	}
 
-	InitPalette();
 	TexMan.Init();
 	
 	if (!batchrun) Printf ("V_Init: allocate screen.\n");
@@ -3145,7 +3145,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
 	if (!restart)
 	{
-		StartWindow = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
+		StartWindow = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5, StartScreen == nullptr);
 	}
 	else
 	{

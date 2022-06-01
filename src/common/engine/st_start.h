@@ -39,7 +39,7 @@
 class FStartupScreen
 {
 public:
-	static FStartupScreen *CreateInstance(int max_progress);
+	static FStartupScreen *CreateInstance(int max_progress, bool showprogress);
 
 	FStartupScreen(int max_progress)
 	{

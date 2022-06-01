@@ -132,7 +132,7 @@ bool FBasicStartupScreen::NetLoop(bool (*timerCallback)(void*), void* const user
 // ---------------------------------------------------------------------------
 
 
-FStartupScreen *FStartupScreen::CreateInstance(const int maxProgress)
+FStartupScreen *FStartupScreen::CreateInstance(const int maxProgress, bool showprogress)
 {
-	return new FBasicStartupScreen(maxProgress, true);
+	return new FBasicStartupScreen(maxProgress, showprogress);
 }

@@ -178,6 +178,22 @@ inline bool AActor::isFrozen() const
 	return false;
 }
 
+inline int AActor::GetLightLevel(sector_t* rendersector)
+{
+	int lightlevel = rendersector->GetSpriteLight();
+
+	if (flags8 & MF8_ADDLIGHTLEVEL)
+	{
+		lightlevel += LightLevel;
+	}
+	else if (LightLevel > -1)
+	{
+		lightlevel = LightLevel;
+	}
+	return lightlevel;
+}
+
+
 // Consolidated from all (incomplete) variants that check if a line should block.
 inline bool P_IsBlockedByLine(AActor* actor, line_t* line)
 {

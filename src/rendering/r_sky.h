@@ -29,7 +29,7 @@
 #define __R_SKY_H__
 
 #include <utility>
-#include "textures.h"
+#include "textureid.h"
 
 struct FLevelLocals;
 
@@ -42,7 +42,6 @@ extern int		freelookviewheight;
 void InitSkyMap(FLevelLocals *Level);
 void R_InitSkyMap();
 void R_UpdateSky (uint64_t mstime);
-std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
 
 
 #endif //__R_SKY_H__

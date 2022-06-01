@@ -37,6 +37,7 @@
 #include "r_data/r_translate.h"
 #include "texmanip.h"
 #include "fcolormap.h"
+#include "r_sky.h"
 #include "p_terrain.h"
 
 #include "hwrenderer/data/buffers.h"
@@ -797,6 +798,7 @@ public:
 
 	int GetFloorLight() const;
 	int GetCeilingLight() const;
+	int GetSpriteLight() const;
 
 	sector_t *GetHeightSec() const
 	{
@@ -1795,6 +1797,10 @@ inline void sector_t::SetColor(PalEntry pe, int desat) { ::SetColor(this, pe, de
 inline void sector_t::SetFade(PalEntry pe) { ::SetFade(this, pe); }
 inline int sector_t::GetFloorLight() const { return ::GetFloorLight(this); }
 inline int sector_t::GetCeilingLight() const { return ::GetCeilingLight(this); }
+inline int sector_t::GetSpriteLight() const 
+{
+	return GetTexture(ceiling) == skyflatnum ? GetCeilingLight() : GetFloorLight();
+}
 inline double sector_t::GetFriction(int plane, double *movefac) const { return ::GetFriction(this, plane, movefac); }
 
 inline void sector_t::CheckExColorFlag()

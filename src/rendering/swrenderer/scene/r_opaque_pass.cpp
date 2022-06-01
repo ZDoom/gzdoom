@@ -606,14 +606,7 @@ namespace swrenderer
 		}
 
 		Add3DFloorPlanes(sub, frontsector, basecolormap, foggy, adjusted_ceilinglightlevel, adjusted_floorlightlevel);
-
-		// killough 9/18/98: Fix underwater slowdown, by passing real sector 
-		// instead of fake one. Improve sprite lighting by basing sprite
-		// lightlevels on floor & ceiling lightlevels in the surrounding area.
-		// [RH] Handle sprite lighting like Duke 3D: If the ceiling is a sky, sprites are lit by
-		// it, otherwise they are lit by the floor.
-		auto nc = !!(frontsector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
-		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy, GetSpriteColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], nc));
+		AddSprites(sub->sector, frontsector, FakeSide, foggy);
 
 		// [RH] Add particles
 		if ((unsigned int)(sub->Index()) < Level->subsectors.Size())
@@ -881,7 +874,7 @@ namespace swrenderer
 		fillshort(ceilingclip, viewwidth, 0);
 	}
 
-	void RenderOpaquePass::AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap)
+	void RenderOpaquePass::AddSprites(sector_t *sec, sector_t* frontsector, WaterFakeSide fakeside, bool foggy)
 	{
 		// BSP is traversed by subsector.
 		// A sector might have been split into several
@@ -947,23 +940,22 @@ namespace swrenderer
 				}
 				else if (GetThingSprite(thing, sprite))
 				{
-					FDynamicColormap *thingColormap = basecolormap;
-					int thinglightlevel = lightlevel;
+					int thinglightlevel;
 					if (sec->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.
 					{
-						thinglightlevel = thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
-						auto nc = !!(thing->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
-						thingColormap = GetSpriteColorTable(thing->Sector->Colormap, thing->Sector->SpecialColors[sector_t::sprites], nc);					
+						frontsector = thing->Sector;
 					}
-					if (thing->LightLevel > -1)
-					{
-						thinglightlevel = thing->LightLevel;
+					auto nc = !!(thing->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
+					FDynamicColormap* thingColormap = GetSpriteColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], nc);
 
-						if (thing->flags8 & MF8_ADDLIGHTLEVEL)
-						{
-							thinglightlevel += thing->Sector->GetTexture(sector_t::ceiling) == skyflatnum ? thing->Sector->GetCeilingLight() : thing->Sector->GetFloorLight();
-							thinglightlevel = clamp(thinglightlevel, 0, 255);
-						}
+					// per-sprite lightlevel and fog do not mix well in the software renderer.
+					if (!foggy)
+					{
+						thinglightlevel = clamp(thing->GetLightLevel(frontsector), 0, 255);
+					}
+					else
+					{
+						thinglightlevel = clamp<int>(frontsector->lightlevel, 0, 255);
 					}
 					if ((sprite.renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 					{

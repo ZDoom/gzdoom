@@ -41,6 +41,7 @@
 
 #include "filesystem.h"
 #include "r_sky.h"
+#include "textures.h"
 #include "colormaps.h"
 
 #include "c_cvars.h"

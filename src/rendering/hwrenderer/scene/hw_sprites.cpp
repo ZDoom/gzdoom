@@ -997,7 +997,6 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// light calculation
 
 	bool enhancedvision = false;
-	const bool UseActorLight = (thing->LightLevel > -1);
 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
@@ -1005,23 +1004,9 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		((thing->renderflags & RF_FULLBRIGHT) && (!texture || !texture->isFullbrightDisabled()));
 
 	if (fullbright)	lightlevel = 255;
-	else if (UseActorLight)
-	{
-		int newlevel = thing->LightLevel;
-		if (thing->flags8 & MF8_ADDLIGHTLEVEL)
-		{
-			newlevel += hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
-				rendersector->GetCeilingLight() : rendersector->GetFloorLight());
+	else lightlevel = hw_ClampLight(thing->GetLightLevel(rendersector));
 
-			newlevel = clamp(newlevel, 0, 255);
-		}
-		lightlevel = newlevel;
-	}
-	else
-		lightlevel = hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
-			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
-
-	foglevel = (uint8_t)clamp<short>((UseActorLight) ? lightlevel : rendersector->lightlevel, 0, 255);
+	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255); // this *must* use the sector's light level or the fog will just look bad.
 
 	lightlevel = rendersector->CheckSpriteGlow(lightlevel, thingpos);
 
@@ -1234,8 +1219,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 {
 	if (particle->alpha==0) return;
 
-	lightlevel = hw_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
-		sector->GetCeilingLight() : sector->GetFloorLight());
+	lightlevel = hw_ClampLight(sector->GetSpriteLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
 	if (di->isFullbrightScene()) 

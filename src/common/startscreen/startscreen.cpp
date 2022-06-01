@@ -669,7 +669,7 @@ void FStartScreen::Render(bool force)
 		twod->Begin(screen->GetWidth(), screen->GetHeight());
 
 		// Weird shit moment: Vulkan does not render the screen clear if there isn't something textured in the buffer before it.
-		DrawTexture(twod, HeaderTexture, 0, 0, DTA_VirtualWidthF, HeaderTexture->GetDisplayWidth(), DTA_VirtualHeightF, HeaderTexture->GetDisplayHeight(), DTA_KeepRatio, true, DTA_Color, PalEntry(255,0,0,0), TAG_END);
+		DrawTexture(twod, StartupTexture, 0, 0, DTA_VirtualWidthF, StartupTexture->GetDisplayWidth(), DTA_VirtualHeightF, StartupTexture->GetDisplayHeight(), DTA_KeepRatio, true, DTA_Color, PalEntry(255,0,0,0), TAG_END);
 
 		if (HeaderTexture)
 		{

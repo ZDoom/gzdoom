@@ -70,13 +70,13 @@ class VkMaterial : public FMaterial
 	struct DescriptorEntry
 	{
 		int clampmode;
-		int flags;
+		intptr_t remap;
 		std::unique_ptr<VulkanDescriptorSet> descriptor;
 
-		DescriptorEntry(int cm, int f, std::unique_ptr<VulkanDescriptorSet>&& d)
+		DescriptorEntry(int cm, intptr_t f, std::unique_ptr<VulkanDescriptorSet>&& d)
 		{
 			clampmode = cm;
-			flags = f;
+			remap = f;
 			descriptor = std::move(d);
 		}
 	};

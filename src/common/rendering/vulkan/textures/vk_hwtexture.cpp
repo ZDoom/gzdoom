@@ -380,12 +380,13 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	auto base = Source();
 	int clampmode = state.mClampMode;
 	int translation = state.mTranslation;
+	auto translationp = IsLuminosityTranslation(translation)? translation : intptr_t(GPalette.GetTranslation(GetTranslationType(translation), GetTranslationIndex(translation)));
 
 	clampmode = base->GetClampMode(clampmode);
 
 	for (auto& set : mDescriptorSets)
 	{
-		if (set.descriptor && set.clampmode == clampmode && set.flags == translation) return set.descriptor.get();
+		if (set.descriptor && set.clampmode == clampmode && set.remap == translationp) return set.descriptor.get();
 	}
 
 	int numLayers = NumLayers();
@@ -430,7 +431,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	}
 
 	update.updateSets(fb->device);
-	mDescriptorSets.emplace_back(clampmode, translation, std::move(descriptor));
+	mDescriptorSets.emplace_back(clampmode, translationp, std::move(descriptor));
 	return mDescriptorSets.back().descriptor.get();
 }
 

@@ -3070,6 +3070,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	D_GrabCVarDefaults(); //parse DEFCVARS
 	InitPalette();
 
+	if (!batchrun) Printf("S_Init: Setting up sound.\n");
+	S_Init();
+
 	int max_progress = TexMan.GuesstimateNumTextures();
 	int per_shader_progress = 0;//screen->GetShaderCount()? (max_progress / 10 / screen->GetShaderCount()) : 0;
 	bool nostartscreen = batchrun || restart || Args->CheckParm("-join") || Args->CheckParm("-host") || Args->CheckParm("-norun");
@@ -3138,9 +3141,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	{
 		compatmode = (int)strtoll(compatmodeval, nullptr, 10);
 	}
-
-	if (!batchrun) Printf ("S_Init: Setting up sound.\n");
-	S_Init ();
 
 	if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
 	if (!restart)

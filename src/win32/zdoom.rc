@@ -73,7 +73,7 @@ BEGIN
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
     "            VALUE ""InternalName"", ""GZDoom""\r\n"
     "            VALUE ""LegalCopyright"", ""Copyright © 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
-    "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
+    "            VALUE ""LegalTrademarks"", ""Doom® is a Registered Trademark of id Software, Inc.""\r\n"
     "            VALUE ""OriginalFilename"", ""gzdoom.exe""\r\n"
     "            VALUE ""ProductName"", ""GZDoom""\r\n"
     "            VALUE ""ProductVersion"", GIT_VERSION\r\n"
@@ -350,8 +350,277 @@ BEGIN
             VALUE "FileDescription", "GZDoom " GIT_DESCRIPTION
             VALUE "FileVersion", RC_FILEVERSION2
             VALUE "InternalName", "GZDoom"
-            VALUE "LegalCopyright", "Copyright © 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
-            VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
+            VALUE "LegalCopyright", "Copyright ? 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
+            VALUE "LegalTrademarks", "Doom? is a Registered Trademark of id Software, Inc."
+            VALUE "OriginalFilename", "gzdoom.exe"
+            VALUE "ProductName", "GZDoom"
+            VALUE "ProductVersion", GIT_DESCRIPTION
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian (русский) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1 ICON "icon1.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_IWADDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 5
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 241
+    END
+    IDD_EAXPROPERTYLIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 249
+        VERTGUIDE, 88
+        VERTGUIDE, 122
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 400
+    END
+    IDD_EAXEDIT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 273
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 319
+        HORZGUIDE, 299
+    END
+    IDD_NEWEAX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 341
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 250
+        HORZGUIDE, 216
+    END
+    IDD_SAVEEAX, DIALOG
+    BEGIN
+        LEFTMARGIN, 6
+        RIGHTMARGIN, 377
+        VERTGUIDE, 370
+        BOTTOMMARGIN, 88
+        HORZGUIDE, 12
+    END
+    IDD_CRASHDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 408
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 303
+        HORZGUIDE, 49
+        HORZGUIDE, 242
+    END
+    IDD_CRASHOVERVIEW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 384
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 257
+    END
+    IDD_CRASHDETAILS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 392
+        TOPMARGIN, 7
+        HORZGUIDE, 76
+    END
+    IDD_ERRORPANE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 183
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 21
+    END
+    IDD_NETSTARTPANE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 182
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_IWADDIALOG DIALOGEX  0, 0, 225, 248
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Добро пожаловать"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+	ICON	IDI_ICON1, IDC_STATIC, 7, 7, 20, 20
+	LTEXT	"Добро пожаловать в GZDoom!", IDC_STATIC, 43, 8, 180, 8
+	LTEXT	"<Версия info>", IDC_WELCOME_VERSION, 43, 18, 180, 8
+	GROUPBOX	"Выбор IWAD", IDC_STATIC, 8, 32, 208, 117
+	LTEXT	"Выберите файл игры (IWAD) для запуска.", IDC_STATIC, 12, 44, 190, 8
+	LISTBOX	IDC_IWADLIST, 12, 56, 200, 87, LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+	GROUPBOX	"Параметры видео", IDC_STATIC, 8, 155, 68, 65
+	CONTROL	"&Полн. экран", IDC_WELCOME_FULLSCREEN, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 13, 206, 48, 10
+	GROUPBOX	"Доп. графика", IDC_STATIC, 159, 155, 59, 64
+	CONTROL	"Откл. &автозагрузку", IDC_WELCOME_NOAUTOLOAD, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 86, 166, 65, 10
+	CONTROL	"&Освещение", IDC_WELCOME_LIGHTS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 164, 165, 43, 10
+	CONTROL	"&Brightmaps", IDC_WELCOME_BRIGHTMAPS, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 164, 177, 51, 10
+	CONTROL	"&Шир. экран", IDC_WELCOME_WIDESCREEN, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 164, 188, 48, 12
+	CONTROL	"&Не показ. снова", IDC_DONTASKIWAD, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 83, 190, 72, 10
+	DEFPUSHBUTTON	"&Играть!", IDOK, 8, 227, 90, 14
+	PUSHBUTTON	"В&ыход", IDCANCEL, 166, 227, 50, 14
+	CONTROL	"&OpenGL", IDC_WELCOME_VULKAN1, "Button", BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP, 13, 167, 41, 10
+	CONTROL	"&Vulkan", IDC_WELCOME_VULKAN2, "Button", BS_AUTORADIOBUTTON, 13, 176, 37, 10
+	CONTROL	"&SoftPoly", IDC_WELCOME_VULKAN3, "Button", BS_AUTORADIOBUTTON, 13, 185, 43, 10
+	CONTROL	"OpenGL &ES", IDC_WELCOME_VULKAN4, "Button", BS_AUTORADIOBUTTON, 13, 194, 53, 10
+END
+
+IDD_CRASHDIALOG DIALOGEX  0, 0, 415, 308
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT | WS_EX_APPWINDOW
+CAPTION "Критическая ошибка GZDoom"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+	CONTROL	"", IDC_CRASHTAB, "SysTabControl32", WS_TABSTOP, 4, 4, 404, 280
+	PUSHBUTTON	"&Сохр. отчёт на диск...", IDC_SAVEREPORT, 242, 289, 91, 14
+	PUSHBUTTON	"&Отменить отчёт", IDNO, 338, 289, 70, 14
+END
+
+IDD_CRASHOVERVIEW DIALOGEX  1, 13, 400, 264
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+	EDITTEXT	IDC_CRASHINFO, 7, 126, 377, 90, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+	CONTROL	"", IDC_PLEASETELLUS, "RichEdit20W", ES_MULTILINE | ES_READONLY, 7, 50, 377, 54, WS_EX_TRANSPARENT
+	LTEXT	"(Необязательно) Чтобы помочь диагностировать причину этой ошибки, опишите, что вы делали в момент её возникновения. Если вы играли с пользовательскими wad файлами, укажите, где их можно получить:", IDC_STATIC, 7, 108, 377, 16, 0, WS_EX_TRANSPARENT
+	CONTROL	IDB_BITMAP1, IDC_DEADGUYVIEWER, "Static", SS_BITMAP, 345, 7, 23, 26
+	CONTROL	"", IDC_CRASHHEADER, "RichEdit20W", ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY, 18, 13, 306, 25, WS_EX_TRANSPARENT
+	CONTROL	"", IDC_STATIC, "Static", SS_ETCHEDHORZ, 0, 42, 407, 1
+	GROUPBOX	"Общее описание", IDC_STATIC, 7, 223, 377, 34
+	LTEXT	"Данные", IDC_CRASHSUMMARY, 14, 233, 363, 20
+END
+
+IDD_CRASHDETAILS DIALOGEX  0, 0, 400, 164
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+	LTEXT	"Файлы отчёта об ошибке:", IDC_STATIC, 7, 5, 119, 8
+	LTEXT	"Информация отчёта об ошибке:", IDC_STATIC, 7, 74, 136, 8
+	RTEXT	"Данные", IDC_CRASHFILESIZE, 337, 74, 55, 8
+	LISTBOX	IDC_CRASHFILES, 7, 15, 385, 53, LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+	CONTROL	"", IDC_CRASHFILECONTENTS, "RichEdit20W", ES_MULTILINE | ES_READONLY | WS_BORDER | WS_VSCROLL | WS_TABSTOP, 7, 83, 385, 174
+END
+
+IDD_ERRORPANE DIALOGEX  0, 0, 190, 28
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+	DEFPUSHBUTTON	"В&ыход", IDOK, 133, 7, 50, 14
+	PUSHBUTTON	"&Перезапуск", IDC_BUTTON1, 79, 7, 50, 14
+END
+
+IDD_NETSTARTPANE DIALOGEX  0, 0, 189, 55
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+	PUSHBUTTON	"&Прервать сетевую игру", IDCANCEL, 45, 34, 89, 14
+	CONTROL	"", IDC_NETSTARTMESSAGE, "Static", SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_GROUP, 7, 7, 116, 8
+	CONTROL	"", IDC_NETSTARTCOUNT, "Static", SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_GROUP, 153, 7, 29, 8, WS_EX_RIGHT
+	CONTROL	"", IDC_NETSTARTPROGRESS, "msctls_progress32", WS_BORDER, 7, 18, 175, 10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_DEADGUY BITMAP "deadguy.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_IWADDIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#ifndef NO_MANIFEST
+   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "..\\common\\platform\\win32\\manifest.xml"
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+#define RC_FILEVERSION2 GIT_DESCRIPTION
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION RC_FILEVERSION
+ PRODUCTVERSION RC_PRODUCTVERSION
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x3L
+#else
+ FILEFLAGS 0x2L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Спасибо id Software за создание DOOM и последующую публикацию исходного кода. Также спасибо TeamTNT за создание BOOM, на котором частично основан ZDoom. Включает код, основанный на Cajun Bot 0.97 Мартина Колберга (Martin Collberg)."
+            VALUE "CompanyName", " "
+            VALUE "FileDescription", "GZDoom " GIT_DESCRIPTION
+            VALUE "FileVersion", RC_FILEVERSION2
+            VALUE "InternalName", "GZDoom"
+            VALUE "LegalCopyright", "Авторское право © 1993-1996 id Software, 1998-2010 Рэнди Хейт (Randy Heit), 2002-2010 Кристоф Элкерс (Christoph Oelckers) и др."
+            VALUE "LegalTrademarks", "Doom® является зарегистрированной торговой маркой id Software, Inc."
             VALUE "OriginalFilename", "gzdoom.exe"
             VALUE "ProductName", "GZDoom"
             VALUE "ProductVersion", GIT_DESCRIPTION

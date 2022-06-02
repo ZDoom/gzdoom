@@ -136,7 +136,7 @@ void DrawHUD();
 void D_DoAnonStats();
 void I_DetectOS();
 void UpdateGenericUI(bool cvar);
-
+void Local_Job_Init();
 
 // MACROS ------------------------------------------------------------------
 
@@ -306,6 +306,7 @@ CUSTOM_CVAR(Int, I_FriendlyWindowTitle, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_N
 {
 	I_UpdateWindowTitle();
 }
+CVAR(Bool, cl_nointros, false, CVAR_ARCHIVE)
 
 
 bool hud_toggled = false;
@@ -3371,6 +3372,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		twod->End();
 		UpdateJoystickMenu(NULL);
 		UpdateVRModes();
+		Local_Job_Init();
 
 		v = Args->CheckValue ("-loadgame");
 		if (v)
@@ -3417,7 +3419,16 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 					}
 					else
 					{
-						D_StartTitle();				// start up intro loop
+						if (multiplayer || cl_nointros || Args->CheckParm("-nointro"))
+						{
+							D_StartTitle();
+						}
+						else
+						{
+							if (!StartCutscene(gameinfo.IntroScene, SJ_BLOCKUI, [=](bool) {
+								gameaction = ga_titleloop;
+								})) D_StartTitle();
+						}
 					}
 				}
 				else if (demorecording)

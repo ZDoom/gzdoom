@@ -213,6 +213,12 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		state.SetTextureClamp(true);
 	}
 
+	// apply directional light shading
+	if (level.DirectionalLightMode == 2)
+	{
+		state.SetDirectionalLight(di->GetDirectionalLight());
+	}
+
 	if (type == RENDERWALL_M2SNF)
 	{
 		di->SetFog(state, 255, 0, di->isFullbrightScene(), nullptr, false);
@@ -231,10 +237,6 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 			state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
 			state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
 			state.ApplyTextureManipulation(&tier.TextureFx);
-			if (level.DirectionalLightMode == 2)
-			{
-				state.SetDirectionalLight(di->GetDirectionalLight());
-			}
 
 			if (color1 != color2)
 			{

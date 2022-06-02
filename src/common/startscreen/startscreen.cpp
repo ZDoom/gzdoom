@@ -436,7 +436,7 @@ int FStartScreen::DrawChar(FBitmap& screen, double x, double y, unsigned charnum
 	const uint8_t* src = GetHexChar(charnum);
 	if (!src) src = space;
 	int size = (*src++) == 32? 2 : 1;
-	if (x >= (screen.GetWidth() >> 3) - size) return size;
+	if (x > (screen.GetWidth() >> 3) - size) return size;
 	int pitch = screen.GetWidth();
 	RgbQuad* dest = (RgbQuad*)screen.GetPixels() + int(x * 8) + int(y * 16) * pitch;
 
@@ -668,7 +668,7 @@ void FStartScreen::Render(bool force)
 		float displayheight;
 		twod->Begin(screen->GetWidth(), screen->GetHeight());
 
-		// Weird shit moment: Vulkan does not render the screen clear if there isn't something textured in the buffer before it.
+		// At this point the shader for untextured rendering has not been loaded yet, so we got to clear the screen by rendering a texture with black color.
 		DrawTexture(twod, StartupTexture, 0, 0, DTA_VirtualWidthF, StartupTexture->GetDisplayWidth(), DTA_VirtualHeightF, StartupTexture->GetDisplayHeight(), DTA_KeepRatio, true, DTA_Color, PalEntry(255,0,0,0), TAG_END);
 
 		if (HeaderTexture)

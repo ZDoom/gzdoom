@@ -319,7 +319,7 @@ EMoveResult sector_t::MoveCeiling(double speed, double dest, int crush, int dire
 			ceilingplane.setD(dest);
 			flag = P_ChangeSector (this, crush, move, 1, false);
 
-			if (flag)
+			if (flag && !(crush >= 0 && !hexencrush && movedest == dest))
 			{
 				ceilingplane.setD(lastpos);
 				P_ChangeSector (this, crush, -move, 1, true);

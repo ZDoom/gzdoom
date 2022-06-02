@@ -1094,8 +1094,8 @@ void G_DoCompleted (void)
 	}
 	bool endgame = strncmp(nextlevel, "enDSeQ", 6) == 0;
 	intermissionScreen = primaryLevel->CreateIntermission();
-	auto nextinfo = endgame? nullptr : FindLevelInfo(nextlevel, false);
-	RunIntermission(primaryLevel->info, nextinfo, intermissionScreen, statusScreen, [=](bool)
+	auto nextinfo = !playinter || endgame? nullptr : FindLevelInfo(nextlevel, false);
+	RunIntermission(playinter? primaryLevel->info : nullptr, nextinfo, intermissionScreen, statusScreen, [=](bool)
 	{
 		if (!endgame) primaryLevel->WorldDone();
 		else D_StartTitle();

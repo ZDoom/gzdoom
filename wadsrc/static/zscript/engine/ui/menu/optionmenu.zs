@@ -219,9 +219,10 @@ class OptionMenu : Menu
 				}
 			}
 			if (mDesc.mSelectedItem <= mDesc.mScrollTop + mDesc.mScrollPos
-				|| mDesc.mSelectedItem >= VisBottom)
+				|| mDesc.mSelectedItem > VisBottom)
 			{
-				mDesc.mScrollPos = MAX(mDesc.mSelectedItem - mDesc.mScrollTop - 1, 0);
+				int pagesize = VisBottom - mDesc.mScrollPos - mDesc.mScrollTop;
+				mDesc.mScrollPos = clamp(mDesc.mSelectedItem - mDesc.mScrollTop - 1, 0, mDesc.mItems.size() - pagesize - 1);
 			}
 		}
 		return Super.OnUIEvent(ev);

@@ -280,7 +280,8 @@ bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 		// null pointers can be assigned to everything, everything can be assigned to void pointers.
 		if (fromtype == nullptr || totype == TypeVoidPtr) return true;
 		// when comparing const-ness does not matter.
-		if (!forcompare && totype->IsConst != fromtype->IsConst) return false;
+		// If not comparing, then we should not allow const to be cast away.
+		if (!forcompare && fromtype->IsConst && !totype->IsConst) return false;
 		// A type is always compatible to itself.
 		if (fromtype == totype) return true;
 		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
@@ -4516,7 +4517,7 @@ FxExpression *FxTypeCheck::Resolve(FCompileContext& ctx)
 	}
 	else
 	{
-		left = new FxTypeCast(left, NewPointer(RUNTIME_CLASS(DObject)), false);
+		left = new FxTypeCast(left, NewPointer(RUNTIME_CLASS(DObject), true), false);
 		ClassCheck = false;
 	}
 	right = new FxClassTypeCast(NewClassPointer(RUNTIME_CLASS(DObject)), right, false);

@@ -3426,6 +3426,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 						}
 						else
 						{
+							I_SetFrameTime();
 							if (!StartCutscene(gameinfo.IntroScene, SJ_BLOCKUI, [=](bool) {
 								gameaction = ga_titleloop;
 								})) D_StartTitle();

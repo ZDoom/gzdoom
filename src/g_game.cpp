@@ -1201,6 +1201,11 @@ void G_Ticker ()
 		case ga_titleloop:
 			D_StartTitle();
 			break;
+		case ga_intro:
+			gamestate = GS_INTRO;
+			gameaction = ga_nothing;
+			break;
+
 
 
 		default:

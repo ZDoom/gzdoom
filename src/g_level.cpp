@@ -183,6 +183,57 @@ FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as g
 static PType* maprecordtype;
 
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void Local_Job_Init()
+{
+	maprecordtype = NewPointer(NewStruct("MapRecord", nullptr, true));
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void CallCreateMapFunction(const char* qname, DObject* runner, level_info_t* map)
+{
+	auto func = LookupFunction(qname);
+	if (func->Proto->ArgumentTypes.Size() == 1) return CallCreateFunction(qname, runner);	// accept functions without map parameter as well here.
+	if (func->Proto->ArgumentTypes.Size() != 2) I_Error("Bad map-cutscene function %s. Must receive precisely two arguments.", qname);
+	if (func->Proto->ArgumentTypes[0] != runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
+		I_Error("Bad cutscene function %s. Must receive ScreenJobRunner and LevelInfo reference.", qname);
+	VMValue val[2] = { runner, map };
+	VMCall(func, val, 2, nullptr, 0);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool CreateCutscene(CutsceneDef* cs, DObject* runner, level_info_t* map)
+{
+	if (cs->function.CompareNoCase("none") == 0)
+		return true;	// play nothing but return as being validated
+	if (cs->function.IsNotEmpty())
+	{
+		CallCreateMapFunction(cs->function, runner, map);
+		return true;
+	}
+	else if (cs->video.IsNotEmpty())
+	{
+		AddGenericVideo(runner, cs->video, cs->GetSound(), cs->framespersec);
+		return true;
+	}
+	return false;
+}
+
 //==========================================================================
 //
 // G_InitNew
@@ -199,7 +250,6 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 	d_mapname = mapname;
 	d_skill = newskill;
 	CheckWarpTransMap (d_mapname, true);
-	gameaction = ga_newgame2;
 }
 
 void G_DeferedInitNew (FNewGameStartup *gs)
@@ -210,6 +260,26 @@ void G_DeferedInitNew (FNewGameStartup *gs)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 	finishstate = FINISH_NoHub;
+
+	if (AllEpisodes[gs->Episode].mIntro.isdefined())
+	{
+		runner = CreateRunner(false);
+		GC::WriteBarrier(runner);
+
+		if (!CreateCutscene(&AllEpisodes[gs->Episode].mIntro, runner, nullptr))
+		{
+			return;
+		}
+
+		completion = [](bool) { gameaction = ga_newgame2; };
+		if (!ScreenJobValidate())
+		{
+			DeleteScreenJob();
+			completion = nullptr;
+			return;
+		}
+		gameaction = ga_intermission;
+	}
 }
 
 //==========================================================================
@@ -939,57 +1009,6 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 		}
 	}
 	return controller;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void Local_Job_Init()
-{
-	maprecordtype = NewPointer(NewStruct("MapRecord", nullptr, true));
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-static void CallCreateMapFunction(const char* qname, DObject* runner, level_info_t* map)
-{
-	auto func = LookupFunction(qname);
-	if (func->Proto->ArgumentTypes.Size() == 1) return CallCreateFunction(qname, runner);	// accept functions without map parameter as well here.
-	if (func->Proto->ArgumentTypes.Size() != 2) I_Error("Bad map-cutscene function %s. Must receive precisely two arguments.", qname);
-	if (func->Proto->ArgumentTypes[0] != runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
-		I_Error("Bad cutscene function %s. Must receive ScreenJobRunner and LevelInfo reference.", qname);
-	VMValue val[2] = { runner, map };
-	VMCall(func, val, 2, nullptr, 0);
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool CreateCutscene(CutsceneDef* cs, DObject* runner, level_info_t* map)
-{
-	if (cs->function.CompareNoCase("none") == 0)
-		return true;	// play nothing but return as being validated
-	if (cs->function.IsNotEmpty())
-	{
-		CallCreateMapFunction(cs->function, runner, map);
-		return true;
-	}
-	else if (cs->video.IsNotEmpty())
-	{
-		AddGenericVideo(runner, cs->video, cs->GetSound(), cs->framespersec);
-		return true;
-	}
-	return false;
 }
 
 //=============================================================================

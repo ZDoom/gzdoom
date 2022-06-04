@@ -203,9 +203,9 @@ extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern FName MessageBoxClass;
 
-const char* iwad_folders[] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/", 
-	"materials/", "models/", "fonts/"};
-const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
+static const char* iwad_folders[] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/", 
+	"materials/", "models/", "fonts/", "brightmaps/"};
+static const char* iwad_reserved[] = { "mapinfo", "zmapinfo", "umapinfo", "gameinfo", "sndinfo", "sndseq", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 
 
 CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL | CVAR_VIRTUAL)
@@ -1877,13 +1877,18 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 	return iwad;
 }
 
+void GetReserved(LumpFilterInfo& lfi)
+{
+	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
+	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+}
+
 static FString CheckGameInfo(TArray<FString> & pwads)
 {
 	FileSystem check;
 
 	LumpFilterInfo lfi;
-	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
-	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+	GetReserved(lfi);
 
 	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
 	check.InitMultipleFiles(pwads, true, &lfi);
@@ -3050,8 +3055,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	}
 	lfi.gameTypeFilter.Push(FStringf("game-%s", GameTypeName()));
 
-	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
-	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+	GetReserved(lfi);
 
 	lfi.postprocessFunc = [&]()
 	{

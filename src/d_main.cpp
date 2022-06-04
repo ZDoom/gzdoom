@@ -203,7 +203,8 @@ extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern FName MessageBoxClass;
 
-const char* iwad_folders[14] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/", "materials/"};
+const char* iwad_folders[] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/", 
+	"materials/", "models/", "fonts/"};
 const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 
 

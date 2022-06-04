@@ -405,7 +405,7 @@ static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
 
-inline double DEHToDouble(int acsval)
+inline double DEHToDouble(int64_t acsval)
 {
 	return acsval / 65536.;
 }
@@ -1138,16 +1138,21 @@ static int PatchThing (int thingy)
 	while ((result = GetLine ()) == 1)
 	{
 		char *endptr;
-		uint32_t val = (uint32_t)strtoull (Line2, &endptr, 10);
+		int64_t val = (int64_t)strtoll (Line2, &endptr, 10);
 		size_t linelen = strlen (Line1);
 
-		if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
+		// Supported value range is all valid representations of signed int and unsigned int.
+		if (errno == ERANGE || val < INT_MIN || val > UINT_MAX)
 		{
-			info->health = val;
+			Printf("Bad numeric constant %s for %s\n", Line2, Line1);
+		}
+		else if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
+		{
+			info->health = (int)val;
 		}
 		else if (linelen == 13 && stricmp (Line1, "Reaction time") == 0)
 		{
-			info->reactiontime = val;
+			info->reactiontime = (int)val;
 		}
 		else if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
 		{
@@ -1169,13 +1174,13 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 14 && stricmp (Line1, "Missile damage") == 0)
 		{
-			info->SetDamage(val);
+			info->SetDamage((int)val);
 		}
 		else if (linelen == 5)
 		{
 			if (stricmp (Line1, "Speed") == 0)
 			{
-				info->Speed = (signed long)val;	// handle fixed point later.
+				info->Speed = (double)val;	// handle fixed point later.
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{
@@ -1227,19 +1232,30 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 16 && stricmp(Line1, "infighting group") == 0)
 		{
-			type->ActorInfo()->infighting_group = val;
+			if (val < 0)
+			{
+				Printf("Infighting groups must be >= 0 (check your dehacked)\n");
+				val = 0;
+			}
+			type->ActorInfo()->infighting_group = (int)val;
 		}
 		else if (linelen == 16 && stricmp(Line1, "projectile group") == 0)
 		{
-			type->ActorInfo()->projectile_group = val;
+			if (val < 0) val = -1;
+			type->ActorInfo()->projectile_group = (int)val;
 		}
 		else if (linelen == 12 && stricmp(Line1, "splash group") == 0)
 		{
-			type->ActorInfo()->splash_group = val;
+			if (val < 0)
+			{
+				Printf("Splash groups must be >= 0 (check your dehacked)\n");
+				val = 0;
+			}
+			type->ActorInfo()->splash_group = (int)val;
 		}
 		else if (linelen == 10 && stricmp(Line1, "fast speed") == 0)
 		{
-			double fval = val >= 256 ? DEHToDouble(val) : val;
+			double fval = val >= 256 ? DEHToDouble(val) : double(val);
 			info->FloatVar(NAME_FastSpeed) = fval;
 		}
 		else if (linelen == 11 && stricmp(Line1, "melee range") == 0)
@@ -1278,7 +1294,7 @@ static int PatchThing (int thingy)
 			  0xffff8000, // 8 - Orange
 			};
 
-			if (val > 8) val = 0;
+			if (val > 8 || val < 0) val = 0;
 			unsigned color = bloodcolor[val];
 			info->BloodColor = color;
 			info->BloodTranslation = val == 0? 0 : TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(color));
@@ -1332,7 +1348,7 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1 + linelen - 6, " frame") == 0)
 			{
-				FState *state = FindState (val);
+				FState *state = FindState ((int)val);
 
 				if (type != NULL && !patchedStates)
 				{
@@ -1405,7 +1421,7 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1, "Mass") == 0)
 			{
-				info->Mass = val;
+				info->Mass = (int)val;
 			}
 			else if (stricmp (Line1, "Bits") == 0)
 			{

@@ -250,6 +250,7 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 	d_mapname = mapname;
 	d_skill = newskill;
 	CheckWarpTransMap (d_mapname, true);
+	gameaction = ga_newgame2;
 }
 
 void G_DeferedInitNew (FNewGameStartup *gs)

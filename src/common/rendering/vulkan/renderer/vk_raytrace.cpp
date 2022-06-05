@@ -33,16 +33,35 @@ void VkRaytrace::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 		Mesh = mesh;
 		if (Mesh)
 		{
-			if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) && GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME))
+			if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 			{
 				CreateVulkanObjects();
 			}
-			else
-			{
-				Printf("This vulkan device does not support ray tracing.");
-			}
 		}
 	}
+}
+
+VulkanAccelerationStructure* VkRaytrace::GetAccelStruct()
+{
+	if (tlAccelStruct)
+		return tlAccelStruct.get();
+
+	// We need a dummy accel struct to keep vulkan happy:
+	hwrenderer::LevelMesh dummy;
+	dummy.MeshVertices.Push({ 0.0f, 0.0f, 0.0f });
+	dummy.MeshVertices.Push({ 0.0f, 1.0f, 0.0f });
+	dummy.MeshVertices.Push({ 1.0f, 0.0f, 0.0f });
+	dummy.MeshUVIndex.Push(0);
+	dummy.MeshUVIndex.Push(1);
+	dummy.MeshUVIndex.Push(2);
+	dummy.MeshElements.Push(0);
+	dummy.MeshElements.Push(1);
+	dummy.MeshElements.Push(2);
+	dummy.MeshSurfaces.Push(0);
+	Mesh = &dummy;
+	CreateVulkanObjects();
+	Mesh = nullptr;
+	return tlAccelStruct.get();
 }
 
 void VkRaytrace::Reset()
@@ -73,8 +92,8 @@ void VkRaytrace::CreateVulkanObjects()
 	//CreateDescriptorSet();
 
 	PipelineBarrier finishbuildbarrier;
-	finishbuildbarrier.addMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);
-	finishbuildbarrier.execute(GetVulkanFrameBuffer()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR);
+	finishbuildbarrier.addMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_SHADER_READ_BIT);
+	finishbuildbarrier.execute(GetVulkanFrameBuffer()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 void VkRaytrace::CreateVertexAndIndexBuffers()
@@ -107,8 +126,8 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 	memcpy(data + indexoffset, Mesh->MeshElements.Data(), indexbuffersize);
 	transferBuffer->Unmap();
 
-	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset);
-	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset);
+	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset, 0, vertexbuffersize);
+	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset, 0, indexbuffersize);
 
 	VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;

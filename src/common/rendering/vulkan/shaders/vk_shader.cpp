@@ -216,6 +216,7 @@ static const char *shaderBindings = R"(
 
 	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
 	layout(set = 0, binding = 5) uniform sampler2DArray LightMap;
+	layout(set = 0, binding = 6) uniform accelerationStructureEXT TopLevelAS;
 
 	// textures
 	layout(set = 1, binding = 0) uniform sampler2D tex;
@@ -337,6 +338,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
+	code << "\n#define SUPPORTS_RAYTRACING\n";
 	code << defines;
 	code << "\n$placeholder$";	// here the code can later add more needed #defines.
 	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
@@ -425,7 +427,17 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 
 FString VkShaderManager::GetTargetGlslVersion()
 {
-	return "#version 450 core\n";
+	if (device->ApiVersion == VK_API_VERSION_1_2)
+	{
+		return R"(#version 460
+			#extension GL_EXT_ray_tracing : enable
+			#extension GL_EXT_ray_query : enable
+		)";
+	}
+	else
+	{
+		return "#version 450 core\n";
+	}
 }
 
 FString VkShaderManager::LoadPublicShaderLump(const char *lumpname)

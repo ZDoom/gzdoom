@@ -9,6 +9,8 @@ class VkRaytrace
 public:
 	void SetLevelMesh(hwrenderer::LevelMesh* mesh);
 
+	VulkanAccelerationStructure* GetAccelStruct();
+
 private:
 	void Reset();
 	void CreateVulkanObjects();

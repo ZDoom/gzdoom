@@ -222,6 +222,22 @@ private:
 	VulkanQueryPool &operator=(const VulkanQueryPool &) = delete;
 };
 
+class VulkanAccelerationStructure
+{
+public:
+	VulkanAccelerationStructure(VulkanDevice* device, VkAccelerationStructureKHR accelstruct);
+	~VulkanAccelerationStructure();
+
+	void SetDebugName(const char* name) { device->SetDebugObjectName(name, (uint64_t)accelstruct, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR); }
+
+	VulkanDevice* device;
+	VkAccelerationStructureKHR accelstruct;
+
+private:
+	VulkanAccelerationStructure(const VulkanAccelerationStructure&) = delete;
+	VulkanAccelerationStructure& operator=(const VulkanAccelerationStructure&) = delete;
+};
+
 class VulkanPipeline
 {
 public:
@@ -354,6 +370,10 @@ public:
 	void nextSubpass(VkSubpassContents contents);
 	void endRenderPass();
 	void executeCommands(uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers);
+
+	void buildAccelerationStructures(uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos);
+	void traceRays(const VkStridedDeviceAddressRegionKHR* pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pCallableShaderBindingTable, uint32_t width, uint32_t height, uint32_t depth);
+	void writeAccelerationStructuresProperties(uint32_t accelerationStructureCount, const VkAccelerationStructureKHR* pAccelerationStructures, VkQueryType queryType, VkQueryPool queryPool, uint32_t firstQuery);
 
 	void debugFullPipelineBarrier();
 
@@ -879,6 +899,21 @@ inline void VulkanCommandBuffer::executeCommands(uint32_t commandBufferCount, co
 	vkCmdExecuteCommands(buffer, commandBufferCount, pCommandBuffers);
 }
 
+inline void VulkanCommandBuffer::buildAccelerationStructures(uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos)
+{
+	vkCmdBuildAccelerationStructuresKHR(buffer, infoCount, pInfos, ppBuildRangeInfos);
+}
+
+inline void VulkanCommandBuffer::traceRays(const VkStridedDeviceAddressRegionKHR* pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pCallableShaderBindingTable, uint32_t width, uint32_t height, uint32_t depth)
+{
+	vkCmdTraceRaysKHR(buffer, pRaygenShaderBindingTable, pMissShaderBindingTable, pHitShaderBindingTable, pCallableShaderBindingTable, width, height, depth);
+}
+
+inline void VulkanCommandBuffer::writeAccelerationStructuresProperties(uint32_t accelerationStructureCount, const VkAccelerationStructureKHR* pAccelerationStructures, VkQueryType queryType, VkQueryPool queryPool, uint32_t firstQuery)
+{
+	vkCmdWriteAccelerationStructuresPropertiesKHR(buffer, accelerationStructureCount, pAccelerationStructures, queryType, queryPool, firstQuery);
+}
+
 inline void VulkanCommandBuffer::SetDebugName(const char *name)
 {
 	pool->device->SetDebugObjectName(name, (uint64_t)buffer, VK_OBJECT_TYPE_COMMAND_BUFFER);
@@ -1031,6 +1066,18 @@ inline VulkanSampler::VulkanSampler(VulkanDevice *device, VkSampler sampler) : s
 inline VulkanSampler::~VulkanSampler()
 {
 	vkDestroySampler(device->device, sampler, nullptr);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+inline VulkanAccelerationStructure::VulkanAccelerationStructure(VulkanDevice* device, VkAccelerationStructureKHR accelstruct)
+	: device(device), accelstruct(accelstruct)
+{
+}
+
+inline VulkanAccelerationStructure::~VulkanAccelerationStructure()
+{
+	vkDestroyAccelerationStructureKHR(device->device, accelstruct, nullptr);
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,4 @@
-//
-// Copyright (C) 2014 LunarG, Inc.
-// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) 2020 The Khronos Group Inc.
 //
 // All rights reserved.
 //
@@ -16,7 +14,7 @@
 //    disclaimer in the documentation and/or other materials provided
 //    with the distribution.
 //
-//    Neither the name of 3Dlabs Inc. Ltd. nor the names of its
+//    Neither the name of The Khronos Group Inc. nor the names of its
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
@@ -33,29 +31,32 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
+#ifndef GLSLANG_BUILD_INFO
+#define GLSLANG_BUILD_INFO
 
-#if defined(_MSC_VER) && _MSC_VER >= 1900
-    #pragma warning(disable : 4464) // relative include path contains '..'
-#endif
+#define GLSLANG_VERSION_MAJOR 11
+#define GLSLANG_VERSION_MINOR 6
+#define GLSLANG_VERSION_PATCH 0
+#define GLSLANG_VERSION_FLAVOR ""
 
-#include "SpvTools.h"
-#include "../glslang/Include/intermediate.h"
+#define GLSLANG_VERSION_GREATER_THAN(major, minor, patch) \
+    (((major) > GLSLANG_VERSION_MAJOR) || ((major) == GLSLANG_VERSION_MAJOR && \
+    (((minor) > GLSLANG_VERSION_MINOR) || ((minor) == GLSLANG_VERSION_MINOR && \
+     ((patch) > GLSLANG_VERSION_PATCH)))))
 
-#include <string>
-#include <vector>
+#define GLSLANG_VERSION_GREATER_OR_EQUAL_TO(major, minor, patch) \
+    (((major) > GLSLANG_VERSION_MAJOR) || ((major) == GLSLANG_VERSION_MAJOR && \
+    (((minor) > GLSLANG_VERSION_MINOR) || ((minor) == GLSLANG_VERSION_MINOR && \
+     ((patch) >= GLSLANG_VERSION_PATCH)))))
 
-#include "Logger.h"
+#define GLSLANG_VERSION_LESS_THAN(major, minor, patch) \
+    (((major) < GLSLANG_VERSION_MAJOR) || ((major) == GLSLANG_VERSION_MAJOR && \
+    (((minor) < GLSLANG_VERSION_MINOR) || ((minor) == GLSLANG_VERSION_MINOR && \
+     ((patch) < GLSLANG_VERSION_PATCH)))))
 
-namespace glslang {
+#define GLSLANG_VERSION_LESS_OR_EQUAL_TO(major, minor, patch) \
+    (((major) < GLSLANG_VERSION_MAJOR) || ((major) == GLSLANG_VERSION_MAJOR && \
+    (((minor) < GLSLANG_VERSION_MINOR) || ((minor) == GLSLANG_VERSION_MINOR && \
+     ((patch) <= GLSLANG_VERSION_PATCH)))))
 
-void GetSpirvVersion(std::string&);
-int GetSpirvGeneratorVersion();
-void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
-                  SpvOptions* options = nullptr);
-void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
-                  spv::SpvBuildLogger* logger, SpvOptions* options = nullptr);
-void OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName);
-void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName);
-
-}
+#endif // GLSLANG_BUILD_INFO

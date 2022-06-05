@@ -43,6 +43,7 @@
 #include "v_2ddrawer.h"
 #include "intrect.h"
 #include "hw_shadowmap.h"
+#include "hw_levelmesh.h"
 #include "buffers.h"
 
 
@@ -164,6 +165,7 @@ public:
 	{
 		mShadowMap.SetAABBTree(tree);
 	}
+	virtual void SetLevelMesh(hwrenderer::LevelMesh *mesh) { }
 	bool allowSSBO()
 	{
 #ifndef HW_BLOCK_SSBO

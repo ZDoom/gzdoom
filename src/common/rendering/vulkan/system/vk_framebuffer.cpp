@@ -49,6 +49,7 @@
 #include "vulkan/renderer/vk_streambuffer.h"
 #include "vulkan/renderer/vk_postprocess.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
+#include "vulkan/renderer/vk_raytrace.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_hwtexture.h"
@@ -153,6 +154,7 @@ void VulkanFrameBuffer::InitializeState()
 
 	mPostprocess.reset(new VkPostprocess());
 	mRenderPassManager.reset(new VkRenderPassManager());
+	mRaytrace.reset(new VkRaytrace());
 
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
@@ -799,6 +801,11 @@ void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
 
 	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
 	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data(), BufferUsageType::Static);
+}
+
+void VulkanFrameBuffer::SetLevelMesh(hwrenderer::LevelMesh* mesh)
+{
+	mRaytrace->SetLevelMesh(mesh);
 }
 
 void VulkanFrameBuffer::UpdateShadowMap()

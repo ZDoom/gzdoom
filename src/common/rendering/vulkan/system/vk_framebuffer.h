@@ -8,6 +8,7 @@ struct FRenderViewpoint;
 class VkSamplerManager;
 class VkShaderManager;
 class VkRenderPassManager;
+class VkRaytrace;
 class VkRenderState;
 class VkStreamBuffer;
 class VKDataBuffer;
@@ -32,6 +33,7 @@ public:
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
 	VkSamplerManager *GetSamplerManager() { return mSamplerManager.get(); }
 	VkRenderPassManager *GetRenderPassManager() { return mRenderPassManager.get(); }
+	VkRaytrace* GetRaytrace() { return mRaytrace.get(); }
 	VkRenderState *GetRenderState() { return mRenderState.get(); }
 	VkPostprocess *GetPostprocess() { return mPostprocess.get(); }
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
@@ -90,6 +92,7 @@ public:
 	void PostProcessScene(bool swscene, int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D) override;
 	void AmbientOccludeScene(float m5) override;
 	void SetSceneRenderTarget(bool useSSAO) override;
+	void SetLevelMesh(hwrenderer::LevelMesh* mesh) override;
 	void UpdateShadowMap() override;
 	void SetSaveBuffers(bool yes) override;
 	void ImageTransitionScene(bool unknown) override;
@@ -133,6 +136,7 @@ private:
 	std::unique_ptr<VkRenderBuffers> mSaveBuffers;
 	std::unique_ptr<VkPostprocess> mPostprocess;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
+	std::unique_ptr<VkRaytrace> mRaytrace;
 	std::unique_ptr<VulkanCommandPool> mCommandPool;
 	std::unique_ptr<VulkanCommandBuffer> mTransferCommands;
 	std::unique_ptr<VkRenderState> mRenderState;

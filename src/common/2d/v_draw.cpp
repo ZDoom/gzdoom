@@ -163,7 +163,7 @@ int GetConScale(F2DDrawer* drawer, int altval)
 	else if (uiscale == 0)
 	{
 		// Default should try to scale to 640x400
-		int vscale = drawer->GetHeight() / 800;
+		int vscale = drawer->GetHeight() / 720;
 		int hscale = drawer->GetWidth() / 1280;
 		scaleval = max(1, min(vscale, hscale));
 	}

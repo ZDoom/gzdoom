@@ -55,6 +55,7 @@
 #include "r_data/r_canvastexture.h"
 #include "r_data/r_interpolate.h"
 #include "doom_aabbtree.h"
+#include "doom_levelmesh.h"
 
 //============================================================================
 //
@@ -476,6 +477,7 @@ public:
 	FCanvasTextureInfo canvasTextureInfo;
 	EventManager *localEventManager = nullptr;
 	DoomLevelAABBTree* aabbTree = nullptr;
+	DoomLevelMesh* levelMesh = nullptr;
 
 	// [ZZ] Destructible geometry information
 	TMap<int, FHealthGroup> healthGroups;

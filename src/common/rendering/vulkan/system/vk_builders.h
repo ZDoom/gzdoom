@@ -345,6 +345,7 @@ public:
 	void addBuffer(VulkanDescriptorSet *descriptorSet, int binding, VkDescriptorType type, VulkanBuffer *buffer, size_t offset, size_t range);
 	void addStorageImage(VulkanDescriptorSet *descriptorSet, int binding, VulkanImageView *view, VkImageLayout imageLayout);
 	void addCombinedImageSampler(VulkanDescriptorSet *descriptorSet, int binding, VulkanImageView *view, VulkanSampler *sampler, VkImageLayout imageLayout);
+	void addAccelerationStructure(VulkanDescriptorSet* descriptorSet, int binding, VulkanAccelerationStructure* accelStruct);
 
 	void updateSets(VulkanDevice *device);
 
@@ -354,6 +355,7 @@ private:
 		VkDescriptorImageInfo imageInfo;
 		VkDescriptorBufferInfo bufferInfo;
 		VkBufferView bufferView;
+		VkWriteDescriptorSetAccelerationStructureKHR accelStruct;
 	};
 
 	std::vector<VkWriteDescriptorSet> writes;
@@ -1380,6 +1382,26 @@ inline void WriteDescriptors::addCombinedImageSampler(VulkanDescriptorSet *descr
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrite.descriptorCount = 1;
 	descriptorWrite.pImageInfo = &extra->imageInfo;
+	writes.push_back(descriptorWrite);
+	writeExtras.push_back(std::move(extra));
+}
+
+inline void WriteDescriptors::addAccelerationStructure(VulkanDescriptorSet* descriptorSet, int binding, VulkanAccelerationStructure* accelStruct)
+{
+	auto extra = std::make_unique<WriteExtra>();
+	extra->accelStruct = {};
+	extra->accelStruct.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+	extra->accelStruct.accelerationStructureCount = 1;
+	extra->accelStruct.pAccelerationStructures = &accelStruct->accelstruct;
+
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = descriptorSet->set;
+	descriptorWrite.dstBinding = binding;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pNext = &extra->accelStruct;
 	writes.push_back(descriptorWrite);
 	writeExtras.push_back(std::move(extra));
 }

@@ -23,6 +23,7 @@
 #include "vk_renderpass.h"
 #include "vk_renderbuffers.h"
 #include "vk_renderstate.h"
+#include "vk_raytrace.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"
@@ -131,6 +132,8 @@ void VkRenderPassManager::CreateDynamicSetLayout()
 	builder.addBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+		builder.addBinding(6, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	DynamicSetLayout = builder.create(GetVulkanFrameBuffer()->device);
 	DynamicSetLayout->SetDebugName("VkRenderPassManager.DynamicSetLayout");
 }
@@ -179,6 +182,8 @@ void VkRenderPassManager::CreateDescriptorPool()
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3);
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1);
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2);
+	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+		builder.addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1);
 	builder.setMaxSets(1);
 	DynamicDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
 	DynamicDescriptorPool->SetDebugName("VkRenderPassManager.DynamicDescriptorPool");
@@ -251,6 +256,8 @@ void VkRenderPassManager::UpdateDynamicSet()
 	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
 	update.addCombinedImageSampler(DynamicSet.get(), 4, fb->GetBuffers()->Shadowmap.View.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.addCombinedImageSampler(DynamicSet.get(), 5, fb->GetBuffers()->Lightmap.View.get(), fb->GetBuffers()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+		update.addAccelerationStructure(DynamicSet.get(), 6, fb->GetRaytrace()->GetAccelStruct());
 	update.updateSets(fb->device);
 }
 

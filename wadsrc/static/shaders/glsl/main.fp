@@ -341,10 +341,34 @@ float R_DoomLightingEquation(float light)
 
 //===========================================================================
 //
-// Check if light is in shadow according to its 1D shadow map
+// Check if light is in shadow
 //
 //===========================================================================
 
+#ifdef SUPPORTS_RAYTRACING
+
+float shadowAttenuation(vec4 lightpos, float lightcolorA)
+{
+	vec3 origin = pixelpos.xyz;
+	vec3 direction = normalize(lightpos.xyz - pixelpos.xyz);
+	float lightDistance = distance(pixelpos.xyz, lightpos.xyz);
+
+	rayQueryEXT rayQuery;
+	rayQueryInitializeEXT(rayQuery, TopLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, origin, 0.01f, direction, lightDistance);
+
+	while(rayQueryProceedEXT(rayQuery))
+	{
+	}
+
+	if (rayQueryGetIntersectionTypeEXT(rayQuery, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+	{
+		return 0.0;
+	}
+
+	return 1.0;
+}
+
+#else
 #ifdef SUPPORTS_SHADOWMAPS
 
 float shadowDirToU(vec2 dir)
@@ -488,6 +512,7 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 	return 1.0;
 }
 
+#endif
 #endif
 
 float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle, float lightCosOuterAngle)

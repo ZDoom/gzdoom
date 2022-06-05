@@ -59,7 +59,6 @@ CVAR(Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
 CVAR(Int, crosshairhealth, 2, CVAR_ARCHIVE);
 CVARD(Float, crosshairscale, 0.5, CVAR_ARCHIVE, "changes the size of the crosshair");
 CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
-EXTERN_CVAR(Bool, vid_fps)
 
 EXTERN_CVAR(Float, hud_scalefactor)
 EXTERN_CVAR(Bool, hud_aspectscale)
@@ -568,9 +567,6 @@ void DStatusBarCore::DrawGraphic(FGameTexture* tex, double x, double y, int flag
 		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
-		// move stuff in the top right corner a bit down if the fps counter is on.
-		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
-
 		DVector2 Scale = GetHUDScale();
 
 		x *= Scale.X;
@@ -662,9 +658,6 @@ void DStatusBarCore::DrawRotated(FGameTexture* tex, double x, double y, int flag
 		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
-		// move stuff in the top right corner a bit down if the fps counter is on.
-		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
-
 		x *= Scale.X;
 		y *= Scale.Y;
 		scaleX *= Scale.X;
@@ -742,9 +735,6 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
 		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
-
-		// move stuff in the top right corner a bit down if the fps counter is on.
-		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
 	}
 	else
 	{
@@ -906,9 +896,6 @@ void DStatusBarCore::TransformRect(double& x, double& y, double& w, double& h, i
 		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
 		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
-
-		// move stuff in the top right corner a bit down if the fps counter is on.
-		if ((flags & (DI_SCREEN_HMASK | DI_SCREEN_VMASK)) == DI_SCREEN_RIGHT_TOP && vid_fps) y += 10;
 
 		DVector2 Scale = GetHUDScale();
 

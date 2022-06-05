@@ -421,7 +421,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	ADD_STAT(fps)
+	ADD_STAT(swfps)
 	{
 		FString out;
 		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
@@ -432,7 +432,7 @@ namespace swrenderer
 	static double f_acc, w_acc, p_acc, m_acc;
 	static int acc_c;
 
-	ADD_STAT(fps_accumulated)
+	ADD_STAT(swfps_accumulated)
 	{
 		f_acc += FrameCycles.TimeMS();
 		w_acc += WallCycles.TimeMS();

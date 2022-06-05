@@ -5,6 +5,7 @@
 
 #ifdef WIN32
 #include <DbgHelp.h>
+#include <psapi.h>
 #else
 #include <execinfo.h>
 #include <cxxabi.h>
@@ -813,8 +814,16 @@ static int CaptureStackTrace(int max_frames, void **out_frames)
 class NativeSymbolResolver
 {
 public:
-	NativeSymbolResolver() { SymInitialize(GetCurrentProcess(), nullptr, TRUE); }
-	~NativeSymbolResolver() { SymCleanup(GetCurrentProcess()); }
+	NativeSymbolResolver()
+	{
+		SymInitialize(GetCurrentProcess(), nullptr, TRUE);
+		GetModuleInformation(GetCurrentProcess(), GetModuleHandle(0), &moduleInfo, sizeof(MODULEINFO));
+	}
+
+	~NativeSymbolResolver()
+	{
+		SymCleanup(GetCurrentProcess());
+	}
 
 	FString GetName(void *frame)
 	{
@@ -830,6 +839,9 @@ public:
 		BOOL result = SymGetSymFromAddr64(GetCurrentProcess(), (DWORD64)frame, &displacement, symbol64);
 		if (result)
 		{
+			if ((DWORD64)frame < (DWORD64)moduleInfo.lpBaseOfDll || (DWORD64)frame >= ((DWORD64)moduleInfo.lpBaseOfDll + moduleInfo.SizeOfImage))
+				return s; // Ignore anything not from the exe itself
+
 			IMAGEHLP_LINE64 line64;
 			DWORD displacement1 = 0;
 			memset(&line64, 0, sizeof(IMAGEHLP_LINE64));
@@ -847,6 +859,8 @@ public:
 
 		return s;
 	}
+
+	MODULEINFO moduleInfo = {};
 };
 #else
 class NativeSymbolResolver
@@ -952,7 +966,7 @@ FString JitGetStackFrameName(NativeSymbolResolver *nativeSymbols, void *pc)
 	return nativeSymbols ? nativeSymbols->GetName(pc) : FString();
 }
 
-FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames)
 {
 	void *frames[32];
 	int numframes = CaptureStackTrace(32, frames);
@@ -961,10 +975,18 @@ FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
 	if (includeNativeFrames)
 		nativeSymbols.reset(new NativeSymbolResolver());
 
+	int total = 0;
 	FString s;
 	for (int i = framesToSkip + 1; i < numframes; i++)
 	{
-		s += JitGetStackFrameName(nativeSymbols.get(), frames[i]);
+		FString name = JitGetStackFrameName(nativeSymbols.get(), frames[i]);
+		if (!name.IsEmpty())
+		{
+			s += name;
+			total++;
+			if (maxFrames != -1 && maxFrames == total)
+				break;
+		}
 	}
 	return s;
 }

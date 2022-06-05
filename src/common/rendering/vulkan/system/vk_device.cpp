@@ -47,7 +47,7 @@
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);
 
-FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames);
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames = -1);
 
 // Physical device info
 static std::vector<VulkanPhysicalDevice> AvailableDevices;
@@ -404,14 +404,25 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 
 	FString msg = callbackData->pMessage;
 
-	// For patent-pending reasons the validation layer apparently can't do this itself..
-	for (uint32_t i = 0; i < callbackData->objectCount; i++)
+	// Attempt to parse the string because the default formatting is totally unreadable and half of what it writes is totally useless!
+	auto parts = msg.Split("|");
+	if (parts.Size() == 3)
 	{
-		if (callbackData->pObjects[i].pObjectName)
+		msg = parts[2];
+		auto pos = msg.IndexOf(" The Vulkan spec states:");
+		if (pos >= 0)
+			msg = msg.Left(pos);
+
+		if (callbackData->objectCount > 0)
 		{
-			FString hexname;
-			hexname.Format("0x%" PRIx64, callbackData->pObjects[i].objectHandle);
-			msg.Substitute(hexname.GetChars(), callbackData->pObjects[i].pObjectName);
+			msg += " (";
+			for (uint32_t i = 0; i < callbackData->objectCount; i++)
+			{
+				if (i > 0)
+					msg += ", ";
+				msg += callbackData->pObjects[i].pObjectName;
+			}
+			msg += ")";
 		}
 	}
 
@@ -454,7 +465,7 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 
 			if (vk_debug_callstack && showcallstack)
 			{
-				FString callstack = JitCaptureStackTrace(0, true);
+				FString callstack = JitCaptureStackTrace(0, true, 5);
 				if (!callstack.IsEmpty())
 					Printf("%s\n", callstack.GetChars());
 			}

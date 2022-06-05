@@ -343,7 +343,7 @@ void VulkanDevice::CreateInstance()
 
 	// Try get the highest vulkan version we can get
 	VkResult result = VK_ERROR_INITIALIZATION_FAILED;
-	for (int apiVersion : { VK_API_VERSION_1_2, VK_API_VERSION_1_1, VK_API_VERSION_1_0 })
+	for (uint32_t apiVersion : { VK_API_VERSION_1_2, VK_API_VERSION_1_1, VK_API_VERSION_1_0 })
 	{
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -363,7 +363,10 @@ void VulkanDevice::CreateInstance()
 
 		result = vkCreateInstance(&createInfo, nullptr, &instance);
 		if (result >= VK_SUCCESS)
+		{
+			ApiVersion = apiVersion;
 			break;
+		}
 	}
 	CheckVulkanError(result, "Could not create vulkan instance");
 

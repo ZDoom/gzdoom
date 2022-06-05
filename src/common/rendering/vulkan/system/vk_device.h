@@ -60,6 +60,7 @@ public:
 	std::vector<const char *> EnabledExtensions;
 	std::vector<const char *> OptionalExtensions = { VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME };
 	std::vector<const char*> EnabledValidationLayers;
+	uint32_t ApiVersion = {};
 
 	// Device setup
 	VkPhysicalDeviceFeatures UsedDeviceFeatures = {};

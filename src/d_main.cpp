@@ -120,6 +120,7 @@
 #include "doomfont.h"
 #include "screenjob.h"
 #include "startscreen.h"
+#include "shiftstate.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -2630,6 +2631,8 @@ bool System_WantLeftButton()
 
 static bool System_DispatchEvent(event_t* ev)
 {
+	shiftState.AddEvent(ev);
+
 	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !primaryLevel->localEventManager->Responder(ev) && !paused)
 	{
 		if (buttonMap.ButtonDown(Button_Mlook) || freelook)

@@ -62,6 +62,7 @@ CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
 EXTERN_CVAR(Bool, vid_fps)
 
 EXTERN_CVAR(Float, hud_scalefactor)
+EXTERN_CVAR(Bool, hud_aspectscale)
 
 void ST_LoadCrosshair(int num, bool alwaysload)
 {
@@ -353,10 +354,12 @@ void DStatusBarCore::SetScale()
 	int vert = VerticalResolution;
 	double refaspect = horz / double(vert);
 	double screenaspect = w / double(h);
+	double aspectscale = 1.0;
 
 	if ((horz == 320 && vert == 200) || (horz == 640 && vert == 400))
 	{
 		refaspect = 1.333;
+		if (!hud_aspectscale) aspectscale = 1 / 1.2;
 	}
 
 	if (screenaspect < refaspect)
@@ -370,14 +373,14 @@ void DStatusBarCore::SetScale()
 		refw = h * refaspect;
 	}
 	refw *= hud_scalefactor;
-	refh *= hud_scalefactor;
+	refh *= hud_scalefactor * aspectscale;
 
-	int sby = VerticalResolution - RelTop;
+	int sby = vert - int(RelTop * hud_scalefactor * aspectscale);
 	// Use full pixels for destination size.
 
 	ST_X = xs_CRoundToInt((w - refw) / 2);
 	ST_Y = xs_CRoundToInt(h - refh);
-	SBarTop = Scale(sby, h, VerticalResolution);
+	SBarTop = Scale(sby, h, vert);
 	SBarScale.X = refw / horz;
 	SBarScale.Y = refh / vert;
 }

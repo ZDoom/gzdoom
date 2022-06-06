@@ -393,7 +393,7 @@ FRenderer* SWRenderer;
 
 void R_Init ()
 {
-	//R_InitTranslationTables ();
+	R_InitTranslationTables ();
 	R_SetViewSize (screenblocks);
 
 	if (SWRenderer == NULL)

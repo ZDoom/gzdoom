@@ -3386,16 +3386,17 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		}
 
 		if (StartScreen == nullptr) V_Init2();
-		while(!screen->CompileNextShader())
-		{
-			// here we can do some visual updates later
-		}
-		if (StartScreen) 
+		if (StartScreen)
 		{
 			StartScreen->Progress(max_progress);	// advance progress bar to the end.
 			StartScreen->Render(true);
 			delete StartScreen;
 			StartScreen = NULL;
+		}
+
+		while(!screen->CompileNextShader())
+		{
+			// here we can do some visual updates later
 		}
 		twod->fullscreenautoaspect = gameinfo.fullscreenautoaspect;
 		// Initialize the size of the 2D drawer so that an attempt to access it outside the draw code won't crash.

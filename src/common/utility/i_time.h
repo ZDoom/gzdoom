@@ -40,7 +40,7 @@ uint64_t I_nsTime();
 void I_ResetFrameTime();
 
 // Return a decimal fraction to scale input operations at framerate
-double I_GetInputFrac(bool const synchronised, double const ticrate = GameTicRate);
+double I_GetInputFrac(bool const synchronised);
 
 // Reset the last input check to after a lengthy operation
 void I_ResetInputTime();

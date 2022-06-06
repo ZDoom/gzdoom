@@ -220,13 +220,17 @@ struct System native
 	native static bool SoundEnabled();
 	native static bool MusicEnabled();
 	native static double GetTimeFrac();
-	
+
 	static bool specialKeyEvent(InputEvent ev)
 	{
 		if (ev.type == InputEvent.Type_KeyDown || ev.type == InputEvent.Type_KeyUp)
 		{
 			int key = ev.KeyScan;
-			if (key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP || (key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT)) return true;
+			let binding = Bindings.GetBinding(key);
+			bool volumekeys = key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP;
+			bool gamepadkeys = key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT;
+			bool altkeys = key == InputEvent.KEY_LALT || key == InputEvent.KEY_RALT;
+			if (volumekeys || gamepadkeys || altkeys || binding ~== "screenshot") return true;
 		}
 		return false;
 	}

@@ -34,7 +34,6 @@
 **
 */
 
-#include "doomtype.h"
 #include "files.h"
 #include "gi.h"
 #include "bitmap.h"

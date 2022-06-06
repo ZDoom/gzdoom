@@ -23,22 +23,22 @@ class StatusBarCore native ui
 		DI_MIRROR = 0x1000,		// flip the texture horizontally, like a mirror
 		DI_ITEM_RELCENTER = 0x2000,
 		DI_MIRRORY = 0x40000000,
-			
+
 		DI_SCREEN_AUTO = 0,					// decide based on given offsets.
 		DI_SCREEN_MANUAL_ALIGN = 0x4000,	// If this is on, the following flags will have an effect
-			
+
 		DI_SCREEN_TOP = DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_VCENTER = 0x8000 | DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_BOTTOM = 0x10000 | DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_VOFFSET = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_VMASK = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
-			
+
 		DI_SCREEN_LEFT = DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_HCENTER = 0x20000 | DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_RIGHT = 0x40000 | DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_HOFFSET = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
 		DI_SCREEN_HMASK = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
-			
+
 		DI_SCREEN_LEFT_TOP = DI_SCREEN_TOP | DI_SCREEN_LEFT,
 		DI_SCREEN_RIGHT_TOP = DI_SCREEN_TOP | DI_SCREEN_RIGHT,
 		DI_SCREEN_LEFT_BOTTOM = DI_SCREEN_BOTTOM | DI_SCREEN_LEFT,
@@ -49,21 +49,21 @@ class StatusBarCore native ui
 		DI_SCREEN_CENTER_TOP = DI_SCREEN_TOP | DI_SCREEN_HCENTER,
 		DI_SCREEN_CENTER_BOTTOM = DI_SCREEN_BOTTOM | DI_SCREEN_HCENTER,
 		DI_SCREEN_OFFSETS = DI_SCREEN_HOFFSET | DI_SCREEN_VOFFSET,
-			
+
 		DI_ITEM_AUTO = 0,		// equivalent with bottom center, which is the default alignment.
-			
+
 		DI_ITEM_TOP = 0x80000,
 		DI_ITEM_VCENTER = 0x100000,
 		DI_ITEM_BOTTOM = 0,		// this is the default vertical alignment
 		DI_ITEM_VOFFSET = 0x180000,
 		DI_ITEM_VMASK = 0x180000,
-			
+
 		DI_ITEM_LEFT = 0x200000,
 		DI_ITEM_HCENTER = 0,	// this is the default horizontal alignment
 		DI_ITEM_RIGHT = 0x400000,
 		DI_ITEM_HOFFSET = 0x600000,
 		DI_ITEM_HMASK = 0x600000,
-			
+
 		DI_ITEM_LEFT_TOP = DI_ITEM_TOP|DI_ITEM_LEFT,
 		DI_ITEM_RIGHT_TOP = DI_ITEM_TOP|DI_ITEM_RIGHT,
 		DI_ITEM_LEFT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_LEFT,
@@ -71,7 +71,7 @@ class StatusBarCore native ui
 		DI_ITEM_CENTER = DI_ITEM_VCENTER|DI_ITEM_HCENTER,
 		DI_ITEM_CENTER_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_HCENTER,
 		DI_ITEM_OFFSETS = DI_ITEM_HOFFSET|DI_ITEM_VOFFSET,
-			
+
 		DI_TEXT_ALIGN_LEFT = 0,
 		DI_TEXT_ALIGN_RIGHT = 0x800000,
 		DI_TEXT_ALIGN_CENTER = 0x1000000,
@@ -94,7 +94,7 @@ class StatusBarCore native ui
 		FNF_WHENNOTZERO = 0x1,
 		FNF_FILLZEROS = 0x2,
 	}
-	
+
 	// These are block properties for the drawers. A child class can set them to have a block of items use the same settings.
 	native double Alpha;
 	native Vector2 drawOffset;		// can be set by subclasses to offset drawing operations
@@ -118,17 +118,17 @@ class StatusBarCore native ui
 	native double, double, double, double TransformRect(double x, double y, double w, double h, int flags = 0);
 	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
 	native void SetClipRect(double x, double y, double w, double h, int flags = 0);
-	
+
 	native void SetSize(int height, int vwidth, int vheight, int hwidth = -1, int hheight = -1);
 	native Vector2 GetHUDScale();
 	native void BeginStatusBar(bool forceScaled = false, int resW = -1, int resH = -1, int rel = -1);
 	native void BeginHUD(double Alpha = 1., bool forcescaled = false, int resW = -1, int resH = -1);
-	
+
 	void ClearClipRect()
 	{
 		screen.ClearClipRect();
 	}
-	
+
 	//============================================================================
 	//
 	// Returns how much the status bar's graphics extend into the view
@@ -137,7 +137,7 @@ class StatusBarCore native ui
 	// by the element requesting this information.
 	//
 	//============================================================================
-	
+
 	virtual int GetProtrusion(double scaleratio) const
 	{
 		return 0;
@@ -156,7 +156,7 @@ class LinearValueInterpolator : Object
 {
 	int mCurrentValue;
 	int mMaxChange;
-	
+
 	static LinearValueInterpolator Create(int startval, int maxchange)
 	{
 		let v = new("LinearValueInterpolator");
@@ -164,12 +164,12 @@ class LinearValueInterpolator : Object
 		v.mMaxChange = maxchange;
 		return v;
 	}
-	
+
 	void Reset(int value)
 	{
 		mCurrentValue = value;
 	}
-	
+
 	// This must be called periodically in the status bar's Tick function.
 	// Do not call this in the Draw function because that may skip some frames!
 	void Update(int destvalue)
@@ -183,7 +183,7 @@ class LinearValueInterpolator : Object
 			mCurrentValue = min(destvalue, mCurrentValue + mMaxChange);
 		}
 	}
-	
+
 	// This must be called in the draw function to retrieve the value for output.
 	int GetValue()
 	{
@@ -197,8 +197,8 @@ class DynamicValueInterpolator : Object
 	int mMinChange;
 	int mMaxChange;
 	double mChangeFactor;
-	
-	
+
+
 	static DynamicValueInterpolator Create(int startval, double changefactor, int minchange, int maxchange)
 	{
 		let v = new("DynamicValueInterpolator");
@@ -208,12 +208,12 @@ class DynamicValueInterpolator : Object
 		v.mChangeFactor = changefactor;
 		return v;
 	}
-	
+
 	void Reset(int value)
 	{
 		mCurrentValue = value;
 	}
-	
+
 	// This must be called periodically in the status bar's Tick function.
 	// Do not call this in the Draw function because that may skip some frames!
 	void Update(int destvalue)
@@ -228,7 +228,7 @@ class DynamicValueInterpolator : Object
 			mCurrentValue = min(destvalue, mCurrentValue + diff);
 		}
 	}
-	
+
 	// This must be called in the draw function to retrieve the value for output.
 	int GetValue()
 	{

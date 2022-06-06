@@ -90,7 +90,7 @@ public:
 	}
 
 	void RenderRow(FRenderState& state, EDrawType prim, int row, TArray<unsigned int>& mPrimStart, bool apply = true);
-	void RenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which, PalEntry color = 0xffffffff);
+	void DoRenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which, PalEntry color = 0xffffffff);
 	void RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale = 0, float yscale = 0, PalEntry color = 0xffffffff);
 	void RenderBox(FRenderState& state, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2, PalEntry color = 0xffffffff);
 

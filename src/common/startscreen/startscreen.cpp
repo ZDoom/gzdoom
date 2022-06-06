@@ -350,15 +350,15 @@ FStartScreen* GetGameStartScreen(int max_progress)
 	{
 		try
 		{
-			if (GameStartupInfo.Type == FStartupInfo::HexenStartup || (gameinfo.gametype == GAME_Hexen && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
+			if (GameStartupInfo.Type == FStartupInfo::HexenStartup)
 			{
 				return CreateHexenStartScreen(max_progress);
 			}
-			else if (GameStartupInfo.Type == FStartupInfo::HereticStartup || (gameinfo.gametype == GAME_Heretic && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
+			else if (GameStartupInfo.Type == FStartupInfo::HereticStartup)
 			{
 				return CreateHereticStartScreen(max_progress);
 			}
-			else if (GameStartupInfo.Type == FStartupInfo::StrifeStartup || (gameinfo.gametype == GAME_Strife && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
+			else if (GameStartupInfo.Type == FStartupInfo::StrifeStartup)
 			{
 				return CreateStrifeStartScreen(max_progress);
 			}

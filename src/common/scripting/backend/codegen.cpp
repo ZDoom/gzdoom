@@ -11158,7 +11158,7 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 
 	auto zero = build->GetConstantInt(0);
 	auto elementSizeConst = build->GetConstantInt(static_cast<PArray *>(ValueType)->ElementSize);
-	int arrOffsetReg;
+	int arrOffsetReg = 0;
 	if (!isDynamicArray)
 	{
 		arrOffsetReg = build->Registers[REGT_POINTER].Get(1);

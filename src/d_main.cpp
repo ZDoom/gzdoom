@@ -335,7 +335,6 @@ int restart = 0;
 bool AppActive = true;
 bool playedtitlemusic;
 
-FStartupScreen* StartWindow;
 FStartScreen* StartScreen;
 
 cycle_t FrameCycles;
@@ -3098,6 +3097,17 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	int max_progress = TexMan.GuesstimateNumTextures();
 	int per_shader_progress = 0;//screen->GetShaderCount()? (max_progress / 10 / screen->GetShaderCount()) : 0;
 	bool nostartscreen = batchrun || restart || Args->CheckParm("-join") || Args->CheckParm("-host") || Args->CheckParm("-norun");
+
+	if (GameStartupInfo.Type == FStartupInfo::DefaultStartup)
+	{
+		if (gameinfo.gametype == GAME_Hexen)
+			GameStartupInfo.Type = FStartupInfo::HexenStartup;
+		else if (gameinfo.gametype == GAME_Heretic)
+			GameStartupInfo.Type = FStartupInfo::HereticStartup;
+		else if (gameinfo.gametype == GAME_Strife)
+			GameStartupInfo.Type = FStartupInfo::StrifeStartup;
+	}
+
 	StartScreen = nostartscreen? nullptr : GetGameStartScreen(per_shader_progress > 0 ? max_progress * 10 / 9 : max_progress + 3);
 	
 	GameConfig->DoKeySetup(gameinfo.ConfigName);

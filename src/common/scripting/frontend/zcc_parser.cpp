@@ -425,9 +425,9 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 		{
 			FString fullPath = IncludeLocs[i].FileName.GetChars(); // get full path, format 'wad:filepath/filename'
 			
-			long start = fullPath.IndexOf(":"); // find first ':'
+			auto start = fullPath.IndexOf(":"); // find first ':'
 
-			long end = fullPath.LastIndexOf("/"); // find last '/'
+			auto end = fullPath.LastIndexOf("/"); // find last '/'
 
 			if (start!=-1&&end!=-1)
 			{
@@ -443,7 +443,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 				while (relativePath.IndexOf("../") == 0) // go back one folder for each '..'
 				{
 					relativePath = relativePath.Mid(3);
-					long slash_index = resolvedPath.LastIndexOf("/");
+					auto slash_index = resolvedPath.LastIndexOf("/");
 					if (slash_index != -1) {
 						resolvedPath = resolvedPath.Mid(0,slash_index);
 					} else {

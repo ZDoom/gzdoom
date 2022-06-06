@@ -455,7 +455,7 @@ void FSkyVertexBuffer::RenderRow(FRenderState& state, EDrawType prim, int row, T
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which, PalEntry color)
+void FSkyVertexBuffer::DoRenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which, PalEntry color)
 {
 	auto& primStart = which ? mPrimStartBuild : mPrimStartDoom;
 	if (tex && tex->isValid())
@@ -510,7 +510,7 @@ void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float 
 	{
 		SetupMatrices(tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix, tiled, xscale, yscale);
 	}
-	RenderDome(state, tex, mode, false, color);
+	DoRenderDome(state, tex, mode, false, color);
 }
 
 
@@ -570,5 +570,6 @@ void FSkyVertexBuffer::RenderBox(FRenderState& state, FSkyBox* tex, float x_offs
 	state.Draw(DT_TriangleStrip, FaceStart(4), 4);
 
 	state.EnableModelMatrix(false);
+	state.SetObjectColor(0xffffffff);
 }
 

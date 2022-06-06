@@ -255,7 +255,6 @@ public:
 			failed = true;
 		}
 
-		// The decoder needs a buffer with even height
 		Pic.Resize(width * height * 4);
 
 

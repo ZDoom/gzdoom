@@ -68,7 +68,7 @@ class MessageBoxMenu : Menu
 			if (SmallFont && SmallFont.CanPrint(message) && SmallFont.CanPrint("$TXT_YES") && SmallFont.CanPrint("$TXT_NO")) textFont = SmallFont;
 			else if (OriginalSmallFont && OriginalSmallFont.CanPrint(message) && OriginalSmallFont.CanPrint("$TXT_YES") && OriginalSmallFont.CanPrint("$TXT_NO")) textFont = OriginalSmallFont;
 		}
-		
+
 		if (!textFont)
 		{
 			arrowFont = textFont = NewSmallFont;
@@ -97,7 +97,7 @@ class MessageBoxMenu : Menu
 		}
 		Handler = native_handler;
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -140,7 +140,7 @@ class MessageBoxMenu : Menu
 		}
 	}
 
-	
+
 	//=============================================================================
 	//
 	//
@@ -227,7 +227,7 @@ class MessageBoxMenu : Menu
 		}
 		return Super.OnUIEvent(ev);
 	}
-	
+
 	override bool OnInputEvent(InputEvent ev)
 	{
 		if (ev.type == InputEvent.Type_KeyDown)

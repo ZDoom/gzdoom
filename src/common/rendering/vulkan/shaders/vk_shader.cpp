@@ -429,10 +429,7 @@ FString VkShaderManager::GetTargetGlslVersion()
 {
 	if (device->ApiVersion == VK_API_VERSION_1_2)
 	{
-		return R"(#version 460
-			#extension GL_EXT_ray_tracing : enable
-			#extension GL_EXT_ray_query : enable
-		)";
+		return "#version 460\n#extension GL_EXT_ray_query : enable\n";
 	}
 	else
 	{

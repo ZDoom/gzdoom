@@ -216,6 +216,7 @@ bool VulkanDevice::SupportsDeviceExtension(const char *ext) const
 void VulkanDevice::CreateAllocator()
 {
 	VmaAllocatorCreateInfo allocinfo = {};
+	allocinfo.vulkanApiVersion = ApiVersion;
 	if (SupportsDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && SupportsDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
 		allocinfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 	if (SupportsDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))

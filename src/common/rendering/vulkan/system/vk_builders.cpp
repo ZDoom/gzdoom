@@ -160,7 +160,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(const char *shadername, Vulk
 	glslang::TShader shader(stage);
 	shader.setStrings(sources, 1);
 	shader.setEnvInput(glslang::EShSourceGlsl, stage, glslang::EShClientVulkan, 100);
-    if (device->ApiVersion == VK_API_VERSION_1_2)
+    if (device->ApiVersion >= VK_API_VERSION_1_2)
     {
         shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
         shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);

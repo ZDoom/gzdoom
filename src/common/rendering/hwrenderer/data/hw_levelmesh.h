@@ -14,7 +14,7 @@ public:
 
 	TArray<FVector3> MeshVertices;
 	TArray<int> MeshUVIndex;
-	TArray<unsigned int> MeshElements;
+	TArray<uint32_t> MeshElements;
 	TArray<int> MeshSurfaces;
 };
 

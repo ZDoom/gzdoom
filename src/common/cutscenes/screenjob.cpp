@@ -54,10 +54,7 @@
 
 CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
-DObject* runner;
-PClass* runnerclass;
-PType* runnerclasstype;
-CompletionFunc completion;
+CutsceneState cutscene;
 static int ticks;
 
 //=============================================================================
@@ -72,11 +69,11 @@ void Job_Init()
 	if (!done)
 	{
 		done = true;
-		GC::AddMarkerFunc([] { GC::Mark(runner); });
+		GC::AddMarkerFunc([] { GC::Mark(cutscene.runner); });
 	}
-	runnerclass = PClass::FindClass("ScreenJobRunner");
-	if (!runnerclass) I_FatalError("ScreenJobRunner not defined");
-	runnerclasstype = NewPointer(runnerclass);
+	cutscene.runnerclass = PClass::FindClass("ScreenJobRunner");
+	if (!cutscene.runnerclass) I_FatalError("ScreenJobRunner not defined");
+	cutscene.runnerclasstype = NewPointer(cutscene.runnerclass);
 }
 
 //=============================================================================
@@ -115,7 +112,7 @@ void CallCreateFunction(const char* qname, DObject* runner)
 {
 	auto func = LookupFunction(qname);
 	if (func->Proto->ArgumentTypes.Size() != 1) I_Error("Bad cutscene function %s. Must receive precisely one argument.", qname);
-	if (func->Proto->ArgumentTypes[0] != runnerclasstype) I_Error("Bad cutscene function %s. Must receive ScreenJobRunner reference.", qname);
+	if (func->Proto->ArgumentTypes[0] != cutscene.runnerclasstype) I_Error("Bad cutscene function %s. Must receive ScreenJobRunner reference.", qname);
 	VMValue val = runner;
 	VMCall(func, &val, 1, nullptr, 0);
 }
@@ -128,7 +125,7 @@ void CallCreateFunction(const char* qname, DObject* runner)
 
 DObject* CreateRunner(bool clearbefore)
 {
-	auto obj = runnerclass->CreateNew();
+	auto obj = cutscene.runnerclass->CreateNew();
 	auto func = LookupFunction("ScreenJobRunner.Init", false);
 	VMValue val[3] = { obj, clearbefore, false };
 	VMCall(func, val, 3, nullptr, 0);
@@ -182,15 +179,15 @@ void CutsceneDef::Create(DObject* runner)
 
 void DeleteScreenJob()
 {
-	if (runner) runner->Destroy();
-	runner = nullptr;
+	if (cutscene.runner) cutscene.runner->Destroy();
+	cutscene.runner = nullptr;
 }
 
 void EndScreenJob()
 {
 	DeleteScreenJob();
-	if (completion) completion(false);
-	completion = nullptr;
+	if (cutscene.completion) cutscene.completion(false);
+	cutscene.completion = nullptr;
 }
 
 
@@ -213,12 +210,12 @@ bool ScreenJobResponder(event_t* ev)
 		}
 	}
 	FInputEvent evt = ev;
-	if (runner)
+	if (cutscene.runner)
 	{
-		IFVIRTUALPTRNAME(runner, NAME_ScreenJobRunner, OnEvent)
+		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, OnEvent)
 		{
 			int result = 0;
-			VMValue parm[] = { runner, &evt };
+			VMValue parm[] = { cutscene.runner, &evt };
 			VMReturn ret(&result);
 			VMCall(func, parm, 2, &ret, 1);
 			return result;
@@ -236,12 +233,12 @@ bool ScreenJobResponder(event_t* ev)
 bool ScreenJobTick()
 {
 	ticks++;
-	if (runner)
+	if (cutscene.runner)
 	{
-		IFVIRTUALPTRNAME(runner, NAME_ScreenJobRunner, OnTick)
+		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, OnTick)
 		{
 			int result = 0;
-			VMValue parm[] = { runner };
+			VMValue parm[] = { cutscene.runner };
 			VMReturn ret(&result);
 			VMCall(func, parm, 1, &ret, 1);
 			return result;
@@ -260,12 +257,12 @@ void ScreenJobDraw()
 {
 	double smoothratio = I_GetTimeFrac();
 
-	if (runner)
+	if (cutscene.runner)
 	{
 		twod->ClearScreen();
-		IFVIRTUALPTRNAME(runner, NAME_ScreenJobRunner, RunFrame)
+		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, RunFrame)
 		{
-			VMValue parm[] = { runner, smoothratio };
+			VMValue parm[] = { cutscene.runner, smoothratio };
 			VMCall(func, parm, 2, nullptr, 0);
 		}
 	}
@@ -279,12 +276,12 @@ void ScreenJobDraw()
 
 bool ScreenJobValidate()
 {
-	if (runner)
+	if (cutscene.runner)
 	{
-		IFVIRTUALPTRNAME(runner, NAME_ScreenJobRunner, Validate)
+		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, Validate)
 		{
 			int res;
-			VMValue parm[] = { runner };
+			VMValue parm[] = { cutscene.runner };
 			VMReturn ret(&res);
 			VMCall(func, parm, 1, &ret, 1);
 			I_ResetFrameTime();
@@ -304,12 +301,12 @@ bool StartCutscene(CutsceneDef& cs, int flags, const CompletionFunc& completion_
 {
 	if ((cs.function.IsNotEmpty() || cs.video.IsNotEmpty()) && cs.function.CompareNoCase("none") != 0)
 	{
-		completion = completion_;
-		runner = CreateRunner();
-		GC::WriteBarrier(runner);
+		cutscene.completion = completion_;
+		cutscene.runner = CreateRunner();
+		GC::WriteBarrier(cutscene.runner);
 		try
 		{
-			cs.Create(runner);
+			cs.Create(cutscene.runner);
 			if (!ScreenJobValidate())
 			{
 				DeleteScreenJob();
@@ -347,6 +344,26 @@ DEFINE_ACTION_FUNCTION(DScreenJobRunner, setTransition)
 	
 	if (type && sysCallbacks.SetTransition) sysCallbacks.SetTransition(type);
 	return 0;
+}
+
+//=============================================================================
+//
+// to block wipes on cutscenes that cannot handle it
+//
+//=============================================================================
+
+bool CanWipe()
+{
+	if (cutscene.runner == nullptr) return true;
+	IFVM(ScreenJobRunner, CanWipe)
+	{
+		int can;
+		VMReturn ret(&can);
+		VMValue param = cutscene.runner;
+		VMCall(func, &param, 1, &ret, 1);
+		return can;
+	}
+	return true;
 }
 
 //=============================================================================

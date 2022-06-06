@@ -205,7 +205,7 @@ static void CallCreateMapFunction(const char* qname, DObject* runner, level_info
 	auto func = LookupFunction(qname);
 	if (func->Proto->ArgumentTypes.Size() == 1) return CallCreateFunction(qname, runner);	// accept functions without map parameter as well here.
 	if (func->Proto->ArgumentTypes.Size() != 2) I_Error("Bad map-cutscene function %s. Must receive precisely two arguments.", qname);
-	if (func->Proto->ArgumentTypes[0] != runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
+	if (func->Proto->ArgumentTypes[0] != cutscene.runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
 		I_Error("Bad cutscene function %s. Must receive ScreenJobRunner and LevelInfo reference.", qname);
 	VMValue val[2] = { runner, map };
 	VMCall(func, val, 2, nullptr, 0);
@@ -264,19 +264,19 @@ void G_DeferedInitNew (FNewGameStartup *gs)
 
 	if (AllEpisodes[gs->Episode].mIntro.isdefined())
 	{
-		runner = CreateRunner(false);
-		GC::WriteBarrier(runner);
+		cutscene.runner = CreateRunner(false);
+		GC::WriteBarrier(cutscene.runner);
 
-		if (!CreateCutscene(&AllEpisodes[gs->Episode].mIntro, runner, nullptr))
+		if (!CreateCutscene(&AllEpisodes[gs->Episode].mIntro, cutscene.runner, nullptr))
 		{
 			return;
 		}
 
-		completion = [](bool) { gameaction = ga_newgame2; };
+		cutscene.completion = [](bool) { gameaction = ga_newgame2; };
 		if (!ScreenJobValidate())
 		{
 			DeleteScreenJob();
-			completion = nullptr;
+			cutscene.completion = nullptr;
 			return;
 		}
 		gameaction = ga_intermission;
@@ -1025,9 +1025,9 @@ void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionCo
 		completionf(false);
 		return;
 	}
-	runner = CreateRunner(false);
-	GC::WriteBarrier(runner);
-	completion = std::move(completionf);
+	cutscene.runner = CreateRunner(false);
+	GC::WriteBarrier(cutscene.runner);
+	cutscene.completion = std::move(completionf);
 	
 	// retrieve cluster relations for cluster-based cutscenes.
 	cluster_info_t* fromcluster = nullptr, *tocluster = nullptr;
@@ -1037,9 +1037,9 @@ void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionCo
 
 	if (fromMap)
 	{
-		if (!CreateCutscene(&fromMap->outro, runner, fromMap))
+		if (!CreateCutscene(&fromMap->outro, cutscene.runner, fromMap))
 		{
-			if (fromcluster != nullptr) CreateCutscene(&fromcluster->outro, runner, fromMap);
+			if (fromcluster != nullptr) CreateCutscene(&fromcluster->outro, cutscene.runner, fromMap);
 		}
 	}
 
@@ -1048,22 +1048,22 @@ void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionCo
 	{
 		I_Error("Script function 'DoomCutscenes.BuildMapTransition' not found");
 	}
-	VMValue val[3] = { runner, intermissionScreen, statusScreen };
+	VMValue val[3] = { cutscene.runner, intermissionScreen, statusScreen };
 	VMCall(func, val, 3, nullptr, 0);
 
 	if (toMap)
 	{
-		if (!CreateCutscene(&toMap->intro, runner, toMap))
+		if (!CreateCutscene(&toMap->intro, cutscene.runner, toMap))
 		{
-			if  (tocluster != nullptr) CreateCutscene(&tocluster->intro, runner, toMap);
+			if  (tocluster != nullptr) CreateCutscene(&tocluster->intro, cutscene.runner, toMap);
 		}
 	}
 
 	if (!ScreenJobValidate())
 	{
 		DeleteScreenJob();
-		if (completion) completion(false);
-		completion = nullptr;
+		if (cutscene.completion) cutscene.completion(false);
+		cutscene.completion = nullptr;
 		return;
 	}
 	gameaction = ga_intermission;

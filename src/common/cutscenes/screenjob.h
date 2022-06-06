@@ -43,14 +43,19 @@ bool ScreenJobValidate();
 struct CutsceneDef;
 bool StartCutscene(const char* s, int flags, const CompletionFunc& completion);
 bool StartCutscene(CutsceneDef& cs, int flags, const CompletionFunc& completion_);
+bool CanWipe();
 
 VMFunction* LookupFunction(const char* qname, bool validate = true);
 void CallCreateFunction(const char* qname, DObject* runner);
 DObject* CreateRunner(bool clearbefore = true);
 void AddGenericVideo(DObject* runner, const FString& fn, int soundid, int fps);
 
+struct CutsceneState
+{
+	DObject* runner;
+	PClass* runnerclass;
+	PType* runnerclasstype;
+	CompletionFunc completion;
+};
 
-extern DObject* runner;
-extern PClass* runnerclass;
-extern PType* runnerclasstype;
-extern CompletionFunc completion;
+extern CutsceneState cutscene;

@@ -325,7 +325,7 @@ bool advancedemo;
 FILE *debugfile;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
-FGameTexture *Advisory;
+FTextureID Advisory;
 FTextureID Page;
 const char *Subtitle;
 bool nospriterename;
@@ -1176,7 +1176,7 @@ void D_DoomLoop ()
 	r_NoInterpolate = true;
 	Page.SetInvalid();
 	Subtitle = nullptr;
-	Advisory = nullptr;
+	Advisory.SetInvalid();
 
 	vid_cursor.Callback();
 
@@ -1264,7 +1264,7 @@ void D_PageDrawer (void)
 	ClearRect(twod, 0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 	if (Page.Exists())
 	{
-		DrawTexture(twod, TexMan.GetGameTexture(Page, true), 0, 0,
+		DrawTexture(twod, Page, true, 0, 0,
 			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
@@ -1275,9 +1275,9 @@ void D_PageDrawer (void)
 		FFont* font = generic_ui ? NewSmallFont : SmallFont;
 		DrawFullscreenSubtitle(font, GStrings[Subtitle]);
 	}
-	if (Advisory != nullptr)
+	if (Advisory.isValid())
 	{
-		DrawTexture(twod, Advisory, 4, 160, DTA_320x200, true, TAG_DONE);
+		DrawTexture(twod, Advisory, true, 4, 160, DTA_320x200, true, TAG_DONE);
 	}
 }
 
@@ -1466,7 +1466,7 @@ void D_DoAdvanceDemo (void)
 	case 3:
 		if (gameinfo.advisoryTime)
 		{
-			Advisory = TexMan.GetGameTextureByName("ADVISOR");
+			Advisory = TexMan.GetTextureID("ADVISOR", ETextureType::MiscPatch);
 			demosequence = 1;
 			pagetic = (int)(gameinfo.advisoryTime * TICRATE);
 			break;
@@ -1475,7 +1475,7 @@ void D_DoAdvanceDemo (void)
 		[[fallthrough]];
 
 	case 1:
-		Advisory = NULL;
+		Advisory.SetInvalid();
 		if (!M_DemoNoPlay)
 		{
 			democount++;

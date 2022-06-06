@@ -244,7 +244,7 @@ void DIntermissionScreen::Drawer ()
 	{
 		if (!mFlatfill)
 		{
-			DrawTexture(twod, TexMan.GetGameTexture(mBackground), 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			DrawTexture(twod, mBackground, false, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
 		{
@@ -258,7 +258,7 @@ void DIntermissionScreen::Drawer ()
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
 		if (CheckOverlay(i))
-			DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
+			DrawTexture(twod, mOverlays[i].mPic, false, mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	FFont* font = generic_ui ? NewSmallFont : SmallFont;
 	DrawFullscreenSubtitle(font, mSubtitle);
@@ -311,11 +311,11 @@ void DIntermissionScreenFader::Drawer ()
 		if (mType == FADE_In) factor = 1.0 - factor;
 		int color = MAKEARGB(int(factor*255), 0,0,0);
 
-		DrawTexture(twod, TexMan.GetGameTexture(mBackground), 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
+		DrawTexture(twod, mBackground, false, 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
 		for (unsigned i=0; i < mOverlays.Size(); i++)
 		{
 			if (CheckOverlay(i))
-				DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
+				DrawTexture(twod, mOverlays[i].mPic, false, mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 		}
 	}
 }

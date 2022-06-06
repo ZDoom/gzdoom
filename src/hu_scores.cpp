@@ -430,8 +430,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	auto icon = FSetTextureID(player->mo->IntVar(NAME_ScoreIcon));
 	if (icon.isValid())
 	{
-		auto pic = TexMan.GetGameTexture(icon);
-		DrawTexture(twod, pic, col3, y,
+		DrawTexture(twod, icon, false, col3, y,
 			DTA_CleanNoMove, true,
 			TAG_DONE);
 	}

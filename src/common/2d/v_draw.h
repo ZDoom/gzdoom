@@ -274,6 +274,7 @@ void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double 
 void DrawChar(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...);
 
 void DrawTexture(F2DDrawer* drawer, FGameTexture* img, double x, double y, int tags_first, ...);
+void DrawTexture(F2DDrawer *drawer, FTextureID texid, bool animate, double x, double y, int tags_first, ...);
 
 void DoDim(F2DDrawer* drawer, PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);
 void Dim(F2DDrawer* drawer, PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);

@@ -600,7 +600,7 @@ void C_DrawConsole ()
 
 		if (conback.isValid() && gamestate != GS_FULLCONSOLE)
 		{
-			DrawTexture (twod, TexMan.GetGameTexture(conback), 0, visheight - screen->GetHeight(),
+			DrawTexture (twod, conback, false, 0, visheight - screen->GetHeight(),
 				DTA_DestWidth, twod->GetWidth(),
 				DTA_DestHeight, twod->GetHeight(),
 				DTA_ColorOverlay, conshade,

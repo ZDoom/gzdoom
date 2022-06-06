@@ -803,6 +803,7 @@ set (VULKAN_SOURCES
 	common/rendering/vulkan/renderer/vk_streambuffer.cpp
 	common/rendering/vulkan/renderer/vk_postprocess.cpp
 	common/rendering/vulkan/renderer/vk_renderbuffers.cpp
+	common/rendering/vulkan/renderer/vk_descriptorset.cpp
 	common/rendering/vulkan/renderer/vk_raytrace.cpp
 	common/rendering/vulkan/shaders/vk_shader.cpp
 	common/rendering/vulkan/textures/vk_samplers.cpp

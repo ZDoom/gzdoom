@@ -24,7 +24,7 @@
 #include "vk_builders.h"
 #include "vk_framebuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
-#include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_descriptorset.h"
 #include "engineerrors.h"
 
 VKBuffer *VKBuffer::First = nullptr;
@@ -197,12 +197,10 @@ void VKBuffer::Resize(size_t newsize)
 	// Transfer data from old to new
 	fb->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
 	fb->WaitForCommands(false);
+	fb->GetDescriptorSetManager()->UpdateDynamicSet(); // Old buffer may be part of the dynamic set
 
 	// Fetch pointer to new buffer
 	map = mBuffer->Map(0, newsize);
-
-	// Old buffer may be part of the dynamic set
-	fb->GetRenderPassManager()->UpdateDynamicSet();
 }
 
 void VKBuffer::Map()

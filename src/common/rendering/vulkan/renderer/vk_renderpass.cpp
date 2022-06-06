@@ -23,6 +23,7 @@
 #include "vk_renderpass.h"
 #include "vk_renderbuffers.h"
 #include "vk_renderstate.h"
+#include "vk_descriptorset.h"
 #include "vk_raytrace.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/shaders/vk_shader.h"
@@ -39,37 +40,11 @@ VkRenderPassManager::VkRenderPassManager()
 
 VkRenderPassManager::~VkRenderPassManager()
 {
-	DynamicSet.reset(); // Needed since it must come before destruction of DynamicDescriptorPool
-}
-
-void VkRenderPassManager::Init()
-{
-	CreateDynamicSetLayout();
-	CreateDescriptorPool();
-	CreateDynamicSet();
-	CreateNullTexture();
 }
 
 void VkRenderPassManager::RenderBuffersReset()
 {
 	RenderPassSetup.clear();
-}
-
-void VkRenderPassManager::TextureSetPoolReset()
-{
-	if (auto fb = GetVulkanFrameBuffer())
-	{
-		auto &deleteList = fb->FrameDeleteList;
-
-		for (auto &desc : TextureDescriptorPools)
-		{
-			deleteList.DescriptorPools.push_back(std::move(desc));
-		}
-	}
-	NullTextureDescriptorSet.reset();
-	TextureDescriptorPools.clear();
-	TextureDescriptorSetsLeft = 0;
-	TextureDescriptorsLeft = 0;
 }
 
 VkRenderPassSetup *VkRenderPassManager::GetRenderPass(const VkRenderPassKey &key)
@@ -123,40 +98,6 @@ VkVertexFormat *VkRenderPassManager::GetVertexFormat(int index)
 	return &VertexFormats[index];
 }
 
-void VkRenderPassManager::CreateDynamicSetLayout()
-{
-	DescriptorSetLayoutBuilder builder;
-	builder.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		builder.addBinding(6, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	DynamicSetLayout = builder.create(GetVulkanFrameBuffer()->device);
-	DynamicSetLayout->SetDebugName("VkRenderPassManager.DynamicSetLayout");
-}
-
-VulkanDescriptorSetLayout *VkRenderPassManager::GetTextureSetLayout(int numLayers)
-{
-	if (TextureSetLayouts.size() < (size_t)numLayers)
-		TextureSetLayouts.resize(numLayers);
-
-	auto &layout = TextureSetLayouts[numLayers - 1];
-	if (layout)
-		return layout.get();
-
-	DescriptorSetLayoutBuilder builder;
-	for (int i = 0; i < numLayers; i++)
-	{
-		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	}
-	layout = builder.create(GetVulkanFrameBuffer()->device);
-	layout->SetDebugName("VkRenderPassManager.TextureSetLayout");
-	return layout.get();
-}
-
 VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 {
 	if (PipelineLayouts.size() <= (size_t)numLayers)
@@ -166,118 +107,17 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 	if (layout)
 		return layout.get();
 
+	auto descriptors = GetVulkanFrameBuffer()->GetDescriptorSetManager();
+
 	PipelineLayoutBuilder builder;
-	builder.addSetLayout(DynamicSetLayout.get());
+	builder.addSetLayout(descriptors->GetFixedSetLayout());
+	builder.addSetLayout(descriptors->GetDynamicSetLayout());
 	if (numLayers != 0)
-		builder.addSetLayout(GetTextureSetLayout(numLayers));
+		builder.addSetLayout(descriptors->GetTextureSetLayout(numLayers));
 	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
 	layout = builder.create(GetVulkanFrameBuffer()->device);
 	layout->SetDebugName("VkRenderPassManager.PipelineLayout");
 	return layout.get();
-}
-
-void VkRenderPassManager::CreateDescriptorPool()
-{
-	DescriptorPoolBuilder builder;
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3);
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1);
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2);
-	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		builder.addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1);
-	builder.setMaxSets(1);
-	DynamicDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
-	DynamicDescriptorPool->SetDebugName("VkRenderPassManager.DynamicDescriptorPool");
-}
-
-void VkRenderPassManager::CreateDynamicSet()
-{
-	DynamicSet = DynamicDescriptorPool->allocate(DynamicSetLayout.get());
-	if (!DynamicSet)
-		I_FatalError("CreateDynamicSet failed.\n");
-}
-
-void VkRenderPassManager::CreateNullTexture()
-{
-	auto fb = GetVulkanFrameBuffer();
-
-	ImageBuilder imgbuilder;
-	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
-	imgbuilder.setSize(1, 1);
-	imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT);
-	NullTexture = imgbuilder.create(fb->device);
-	NullTexture->SetDebugName("VkRenderPassManager.NullTexture");
-
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(NullTexture.get(), VK_FORMAT_R8G8B8A8_UNORM);
-	NullTextureView = viewbuilder.create(fb->device);
-	NullTextureView->SetDebugName("VkRenderPassManager.NullTextureView");
-
-	PipelineBarrier barrier;
-	barrier.addImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	barrier.execute(fb->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-}
-
-VulkanDescriptorSet* VkRenderPassManager::GetNullTextureDescriptorSet()
-{
-	if (!NullTextureDescriptorSet)
-	{
-		NullTextureDescriptorSet = AllocateTextureDescriptorSet(SHADER_MIN_REQUIRED_TEXTURE_LAYERS);
-
-		auto fb = GetVulkanFrameBuffer();
-		WriteDescriptors update;
-		for (int i = 0; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
-		{
-			update.addCombinedImageSampler(NullTextureDescriptorSet.get(), i, NullTextureView.get(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		}
-		update.updateSets(fb->device);
-	}
-
-	return NullTextureDescriptorSet.get();
-}
-
-VulkanImageView* VkRenderPassManager::GetNullTextureView()
-{
-	return NullTextureView.get();
-}
-
-void VkRenderPassManager::UpdateDynamicSet()
-{
-	auto fb = GetVulkanFrameBuffer();
-
-	// In some rare cases drawing commands may already have been created before VulkanFrameBuffer::BeginFrame is called.
-	// Make sure there there are no active command buffers using DynamicSet when we update it:
-	fb->GetRenderState()->EndRenderPass();
-	fb->WaitForCommands(false);
-
-	WriteDescriptors update;
-	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
-	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightBufferSSO->mBuffer.get());
-	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
-	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
-	update.addCombinedImageSampler(DynamicSet.get(), 4, fb->GetBuffers()->Shadowmap.View.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	update.addCombinedImageSampler(DynamicSet.get(), 5, fb->GetBuffers()->Lightmap.View.get(), fb->GetBuffers()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		update.addAccelerationStructure(DynamicSet.get(), 6, fb->GetRaytrace()->GetAccelStruct());
-	update.updateSets(fb->device);
-}
-
-std::unique_ptr<VulkanDescriptorSet> VkRenderPassManager::AllocateTextureDescriptorSet(int numLayers)
-{
-	if (TextureDescriptorSetsLeft == 0 || TextureDescriptorsLeft < numLayers)
-	{
-		TextureDescriptorSetsLeft = 1000;
-		TextureDescriptorsLeft = 2000;
-
-		DescriptorPoolBuilder builder;
-		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, TextureDescriptorsLeft);
-		builder.setMaxSets(TextureDescriptorSetsLeft);
-		TextureDescriptorPools.push_back(builder.create(GetVulkanFrameBuffer()->device));
-		TextureDescriptorPools.back()->SetDebugName("VkRenderPassManager.TextureDescriptorPool");
-	}
-
-	TextureDescriptorSetsLeft--;
-	TextureDescriptorsLeft -= numLayers;
-	return TextureDescriptorPools.back()->allocate(GetTextureSetLayout(numLayers));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -403,12 +243,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 
 	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
 	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
-	// builder.addDynamicState(VK_DYNAMIC_STATE_LINE_WIDTH);
 	builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BIAS);
-	// builder.addDynamicState(VK_DYNAMIC_STATE_BLEND_CONSTANTS);
-	// builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BOUNDS);
-	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK);
-	// builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_WRITE_MASK);
 	builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
 
 	// Note: the actual values are ignored since we use dynamic viewport+scissor states

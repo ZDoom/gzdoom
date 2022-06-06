@@ -406,7 +406,7 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 	FString msg = callbackData->pMessage;
 
 	// Attempt to parse the string because the default formatting is totally unreadable and half of what it writes is totally useless!
-	auto parts = msg.Split("|");
+	auto parts = msg.Split(" | ");
 	if (parts.Size() == 3)
 	{
 		msg = parts[2];

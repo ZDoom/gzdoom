@@ -76,19 +76,23 @@ VulkanAccelerationStructure* VkRaytrace::GetAccelStruct()
 
 void VkRaytrace::Reset()
 {
-	vertexBuffer.reset();
-	indexBuffer.reset();
-	transferBuffer.reset();
+	auto fb = GetVulkanFrameBuffer();
+	if (fb)
+	{
+		fb->FrameDeleteList.Buffers.push_back(std::move(vertexBuffer));
+		fb->FrameDeleteList.Buffers.push_back(std::move(indexBuffer));
+		fb->FrameDeleteList.Buffers.push_back(std::move(transferBuffer));
 
-	blScratchBuffer.reset();
-	blAccelStructBuffer.reset();
-	blAccelStruct.reset();
+		fb->FrameDeleteList.Buffers.push_back(std::move(blScratchBuffer));
+		fb->FrameDeleteList.Buffers.push_back(std::move(blAccelStructBuffer));
+		fb->FrameDeleteList.AccelStructs.push_back(std::move(blAccelStruct));
 
-	tlTransferBuffer.reset();
-	tlScratchBuffer.reset();
-	tlInstanceBuffer.reset();
-	tlAccelStructBuffer.reset();
-	tlAccelStruct.reset();
+		fb->FrameDeleteList.Buffers.push_back(std::move(tlTransferBuffer));
+		fb->FrameDeleteList.Buffers.push_back(std::move(tlScratchBuffer));
+		fb->FrameDeleteList.Buffers.push_back(std::move(tlInstanceBuffer));
+		fb->FrameDeleteList.Buffers.push_back(std::move(tlAccelStructBuffer));
+		fb->FrameDeleteList.AccelStructs.push_back(std::move(tlAccelStruct));
+	}
 }
 
 void VkRaytrace::CreateVulkanObjects()

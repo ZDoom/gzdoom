@@ -25,6 +25,7 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
+#include "vulkan/renderer/vk_descriptorset.h"
 #include "vulkan/textures/vk_hwtexture.h"
 
 #include "hw_skydome.h"
@@ -265,6 +266,11 @@ void VkRenderState::ApplyRenderPass(int dt)
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, mPassSetup->GetPipeline(pipelineKey));
 		mPipelineKey = pipelineKey;
 	}
+
+	if (!inRenderPass)
+	{
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanFrameBuffer()->GetRenderPassManager()->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, GetVulkanFrameBuffer()->GetDescriptorSetManager()->GetFixedDescriptorSet());
+	}
 }
 
 void VkRenderState::ApplyStencilRef()
@@ -432,12 +438,13 @@ void VkRenderState::ApplyMaterial()
 	{
 		auto fb = GetVulkanFrameBuffer();
 		auto passManager = fb->GetRenderPassManager();
+		auto descriptors = fb->GetDescriptorSetManager();
 
 		if (mMaterial.mMaterial && mMaterial.mMaterial->Source()->isHardwareCanvas()) static_cast<FCanvasTexture*>(mMaterial.mMaterial->Source()->GetTexture())->NeedUpdate();
 
-		VulkanDescriptorSet* descriptorset = mMaterial.mMaterial ? static_cast<VkMaterial*>(mMaterial.mMaterial)->GetDescriptorSet(mMaterial) : passManager->GetNullTextureDescriptorSet();
+		VulkanDescriptorSet* descriptorset = mMaterial.mMaterial ? static_cast<VkMaterial*>(mMaterial.mMaterial)->GetDescriptorSet(mMaterial) : descriptors->GetNullTextureDescriptorSet();
 
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptorset);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 2, descriptorset);
 		mMaterial.mChanged = false;
 	}
 }
@@ -450,9 +457,10 @@ void VkRenderState::ApplyDynamicSet()
 	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset)
 	{
 		auto passManager = fb->GetRenderPassManager();
+		auto descriptors = fb->GetDescriptorSetManager();
 
 		uint32_t offsets[3] = { mViewpointOffset, matrixOffset, streamDataOffset };
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, passManager->DynamicSet.get(), 3, offsets);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetDynamicDescriptorSet(), 3, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastMatricesOffset = matrixOffset;

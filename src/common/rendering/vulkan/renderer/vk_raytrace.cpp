@@ -48,16 +48,26 @@ VulkanAccelerationStructure* VkRaytrace::GetAccelStruct()
 
 	// We need a dummy accel struct to keep vulkan happy:
 	hwrenderer::LevelMesh dummy;
-	dummy.MeshVertices.Push({ 0.0f, 0.0f, 0.0f });
-	dummy.MeshVertices.Push({ 0.0f, 1.0f, 0.0f });
-	dummy.MeshVertices.Push({ 1.0f, 0.0f, 0.0f });
-	dummy.MeshUVIndex.Push(0);
-	dummy.MeshUVIndex.Push(1);
-	dummy.MeshUVIndex.Push(2);
-	dummy.MeshElements.Push(0);
-	dummy.MeshElements.Push(1);
-	dummy.MeshElements.Push(2);
-	dummy.MeshSurfaces.Push(0);
+
+	dummy.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
+	dummy.MeshVertices.Push({  1.0f, -1.0f, -1.0f });
+	dummy.MeshVertices.Push({  1.0f,  1.0f, -1.0f });
+
+	dummy.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
+	dummy.MeshVertices.Push({ -1.0f,  1.0f, -1.0f });
+	dummy.MeshVertices.Push({  1.0f,  1.0f, -1.0f });
+
+	dummy.MeshVertices.Push({ -1.0f, -1.0f,  1.0f });
+	dummy.MeshVertices.Push({  1.0f, -1.0f,  1.0f });
+	dummy.MeshVertices.Push({  1.0f,  1.0f,  1.0f });
+
+	dummy.MeshVertices.Push({ -1.0f, -1.0f,  1.0f });
+	dummy.MeshVertices.Push({ -1.0f,  1.0f,  1.0f });
+	dummy.MeshVertices.Push({  1.0f,  1.0f,  1.0f });
+
+	for (int i = 0; i < 3 * 4; i++)
+		dummy.MeshElements.Push(i);
+
 	Mesh = &dummy;
 	CreateVulkanObjects();
 	Mesh = nullptr;
@@ -87,10 +97,6 @@ void VkRaytrace::CreateVulkanObjects()
 	CreateBottomLevelAccelerationStructure();
 	CreateTopLevelAccelerationStructure();
 
-	//CreateShaders();
-	//CreatePipeline();
-	//CreateDescriptorSet();
-
 	PipelineBarrier finishbuildbarrier;
 	finishbuildbarrier.addMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_SHADER_READ_BIT);
 	finishbuildbarrier.execute(GetVulkanFrameBuffer()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
@@ -98,6 +104,8 @@ void VkRaytrace::CreateVulkanObjects()
 
 void VkRaytrace::CreateVertexAndIndexBuffers()
 {
+	static_assert(sizeof(FVector3) == 3 * 4, "sizeof(FVector3) is not 12 bytes!");
+
 	size_t vertexbuffersize = (size_t)Mesh->MeshVertices.Size() * sizeof(FVector3);
 	size_t indexbuffersize = (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t);
 	size_t transferbuffersize = vertexbuffersize + indexbuffersize;
@@ -126,8 +134,8 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 	memcpy(data + indexoffset, Mesh->MeshElements.Data(), indexbuffersize);
 	transferBuffer->Unmap();
 
-	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset, 0, vertexbuffersize);
-	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset, 0, indexbuffersize);
+	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset);
+	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset);
 
 	VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -151,7 +159,7 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	triangles.vertexStride = sizeof(FVector3);
 	triangles.indexType = VK_INDEX_TYPE_UINT32;
 	triangles.indexData.deviceAddress = indexAddress;
-	triangles.maxVertex = Mesh->MeshVertices.Size();
+	triangles.maxVertex = Mesh->MeshVertices.Size() - 1;
 
 	VkAccelerationStructureGeometryKHR accelStructBLDesc = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
 	accelStructBLDesc.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
@@ -164,7 +172,7 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
 	buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 	buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-	buildInfo.flags = accelStructBLDesc.flags | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	buildInfo.geometryCount = 1;
 	buildInfo.pGeometries = &accelStructBLDesc;
 

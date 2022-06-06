@@ -148,8 +148,21 @@ VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassT
 
 static const char *shaderBindings = R"(
 
+	layout(set = 0, binding = 0) uniform sampler2D ShadowMap;
+	layout(set = 0, binding = 1) uniform sampler2DArray LightMap;
+
+	// light buffers
+	layout(set = 0, binding = 2, std430) buffer LightBufferSSO
+	{
+	    vec4 lights[];
+	};
+
+	#ifdef SUPPORTS_RAYTRACING
+	layout(set = 0, binding = 3) uniform accelerationStructureEXT TopLevelAS;
+	#endif
+
 	// This must match the HWViewpointUniforms struct
-	layout(set = 0, binding = 0, std140) uniform ViewpointUBO {
+	layout(set = 1, binding = 0, std140) uniform ViewpointUBO {
 		mat4 ProjectionMatrix;
 		mat4 ViewMatrix;
 		mat4 NormalViewMatrix;
@@ -165,13 +178,7 @@ static const char *shaderBindings = R"(
 		int uShadowmapFilter;
 	};
 
-	// light buffers
-	layout(set = 0, binding = 1, std430) buffer LightBufferSSO
-	{
-	    vec4 lights[];
-	};
-
-	layout(set = 0, binding = 2, std140) uniform MatricesUBO {
+	layout(set = 1, binding = 1, std140) uniform MatricesUBO {
 		mat4 ModelMatrix;
 		mat4 NormalModelMatrix;
 		mat4 TextureMatrix;
@@ -210,26 +217,22 @@ static const char *shaderBindings = R"(
 		vec4 padding1, padding2, padding3;
 	};
 
-	layout(set = 0, binding = 3, std140) uniform StreamUBO {
+	layout(set = 1, binding = 2, std140) uniform StreamUBO {
 		StreamData data[MAX_STREAM_DATA];
 	};
 
-	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
-	layout(set = 0, binding = 5) uniform sampler2DArray LightMap;
-	layout(set = 0, binding = 6) uniform accelerationStructureEXT TopLevelAS;
-
 	// textures
-	layout(set = 1, binding = 0) uniform sampler2D tex;
-	layout(set = 1, binding = 1) uniform sampler2D texture2;
-	layout(set = 1, binding = 2) uniform sampler2D texture3;
-	layout(set = 1, binding = 3) uniform sampler2D texture4;
-	layout(set = 1, binding = 4) uniform sampler2D texture5;
-	layout(set = 1, binding = 5) uniform sampler2D texture6;
-	layout(set = 1, binding = 6) uniform sampler2D texture7;
-	layout(set = 1, binding = 7) uniform sampler2D texture8;
-	layout(set = 1, binding = 8) uniform sampler2D texture9;
-	layout(set = 1, binding = 9) uniform sampler2D texture10;
-	layout(set = 1, binding = 10) uniform sampler2D texture11;
+	layout(set = 2, binding = 0) uniform sampler2D tex;
+	layout(set = 2, binding = 1) uniform sampler2D texture2;
+	layout(set = 2, binding = 2) uniform sampler2D texture3;
+	layout(set = 2, binding = 3) uniform sampler2D texture4;
+	layout(set = 2, binding = 4) uniform sampler2D texture5;
+	layout(set = 2, binding = 5) uniform sampler2D texture6;
+	layout(set = 2, binding = 6) uniform sampler2D texture7;
+	layout(set = 2, binding = 7) uniform sampler2D texture8;
+	layout(set = 2, binding = 8) uniform sampler2D texture9;
+	layout(set = 2, binding = 9) uniform sampler2D texture10;
+	layout(set = 2, binding = 10) uniform sampler2D texture11;
 
 	// This must match the PushConstants struct
 	layout(push_constant) uniform PushConstants

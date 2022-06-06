@@ -29,7 +29,7 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/textures/vk_samplers.h"
-#include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_descriptorset.h"
 #include "vulkan/renderer/vk_postprocess.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
@@ -372,7 +372,7 @@ void VkMaterial::ResetAllDescriptors()
 
 	auto fb = GetVulkanFrameBuffer();
 	if (fb)
-		fb->GetRenderPassManager()->TextureSetPoolReset();
+		fb->GetDescriptorSetManager()->TextureSetPoolReset();
 }
 
 VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
@@ -392,7 +392,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	int numLayers = NumLayers();
 
 	auto fb = GetVulkanFrameBuffer();
-	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
+	auto descriptor = fb->GetDescriptorSetManager()->AllocateTextureDescriptorSet(max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
 
 	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");
 
@@ -424,7 +424,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 		numLayers = 3;
 	}
 
-	auto dummyImage = fb->GetRenderPassManager()->GetNullTextureView();
+	auto dummyImage = fb->GetDescriptorSetManager()->GetNullTextureView();
 	for (int i = numLayers; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
 	{
 		update.addCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

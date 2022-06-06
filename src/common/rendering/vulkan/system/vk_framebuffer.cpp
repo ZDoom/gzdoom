@@ -46,6 +46,7 @@
 #include "vk_buffers.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_descriptorset.h"
 #include "vulkan/renderer/vk_streambuffer.h"
 #include "vulkan/renderer/vk_postprocess.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
@@ -153,6 +154,7 @@ void VulkanFrameBuffer::InitializeState()
 	mActiveRenderBuffers = mScreenBuffers.get();
 
 	mPostprocess.reset(new VkPostprocess());
+	mDescriptorSetManager.reset(new VkDescriptorSetManager());
 	mRenderPassManager.reset(new VkRenderPassManager());
 	mRaytrace.reset(new VkRaytrace());
 
@@ -169,7 +171,7 @@ void VulkanFrameBuffer::InitializeState()
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
-	mRenderPassManager->Init();
+	mDescriptorSetManager->Init();
 #ifdef __APPLE__
 	mRenderState.reset(new VkRenderStateMolten());
 #else
@@ -221,6 +223,7 @@ void VulkanFrameBuffer::DeleteFrameObjects(bool uploadOnly)
 
 	if (!uploadOnly)
 	{
+		FrameDeleteList.AccelStructs.clear();
 		FrameDeleteList.Images.clear();
 		FrameDeleteList.ImageViews.clear();
 		FrameDeleteList.Framebuffers.clear();
@@ -577,7 +580,10 @@ void VulkanFrameBuffer::BeginFrame()
 	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mRenderState->BeginFrame();
-	mRenderPassManager->UpdateDynamicSet();
+
+	WaitForCommands(false);
+	mDescriptorSetManager->UpdateFixedSet();
+	mDescriptorSetManager->UpdateDynamicSet();
 
 	if (mNextTimestampQuery > 0)
 	{

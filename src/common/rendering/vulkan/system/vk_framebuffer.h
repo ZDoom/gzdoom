@@ -7,6 +7,7 @@
 struct FRenderViewpoint;
 class VkSamplerManager;
 class VkShaderManager;
+class VkDescriptorSetManager;
 class VkRenderPassManager;
 class VkRaytrace;
 class VkRenderState;
@@ -32,6 +33,7 @@ public:
 	VulkanCommandBuffer *GetDrawCommands();
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
 	VkSamplerManager *GetSamplerManager() { return mSamplerManager.get(); }
+	VkDescriptorSetManager* GetDescriptorSetManager() { return mDescriptorSetManager.get(); }
 	VkRenderPassManager *GetRenderPassManager() { return mRenderPassManager.get(); }
 	VkRaytrace* GetRaytrace() { return mRaytrace.get(); }
 	VkRenderState *GetRenderState() { return mRenderState.get(); }
@@ -61,6 +63,7 @@ public:
 		std::vector<std::unique_ptr<VulkanImageView>> ImageViews;
 		std::vector<std::unique_ptr<VulkanFramebuffer>> Framebuffers;
 		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
+		std::vector<std::unique_ptr<VulkanAccelerationStructure>> AccelStructs;
 		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
 		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
@@ -135,6 +138,7 @@ private:
 	std::unique_ptr<VkRenderBuffers> mScreenBuffers;
 	std::unique_ptr<VkRenderBuffers> mSaveBuffers;
 	std::unique_ptr<VkPostprocess> mPostprocess;
+	std::unique_ptr<VkDescriptorSetManager> mDescriptorSetManager;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 	std::unique_ptr<VkRaytrace> mRaytrace;
 	std::unique_ptr<VulkanCommandPool> mCommandPool;

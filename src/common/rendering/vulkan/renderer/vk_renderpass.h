@@ -80,44 +80,15 @@ public:
 	VkRenderPassManager();
 	~VkRenderPassManager();
 
-	void Init();
 	void RenderBuffersReset();
-	void UpdateDynamicSet();
-	void TextureSetPoolReset();
 
 	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
 	int GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
-
 	VkVertexFormat *GetVertexFormat(int index);
-
-	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 	VulkanPipelineLayout* GetPipelineLayout(int numLayers);
 
-	VulkanDescriptorSet* GetNullTextureDescriptorSet();
-	VulkanImageView* GetNullTextureView();
-
-	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
-	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
-
-	std::unique_ptr<VulkanDescriptorSet> DynamicSet;
-
 private:
-	void CreateDynamicSetLayout();
-	void CreateDescriptorPool();
-	void CreateDynamicSet();
-	void CreateNullTexture();
-
-	VulkanDescriptorSetLayout *GetTextureSetLayout(int numLayers);
-
-	int TextureDescriptorSetsLeft = 0;
-	int TextureDescriptorsLeft = 0;
-	std::vector<std::unique_ptr<VulkanDescriptorPool>> TextureDescriptorPools;
-	std::unique_ptr<VulkanDescriptorPool> DynamicDescriptorPool;
-	std::vector<std::unique_ptr<VulkanDescriptorSetLayout>> TextureSetLayouts;
+	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 	std::vector<std::unique_ptr<VulkanPipelineLayout>> PipelineLayouts;
 	std::vector<VkVertexFormat> VertexFormats;
-
-	std::unique_ptr<VulkanImage> NullTexture;
-	std::unique_ptr<VulkanImageView> NullTextureView;
-	std::unique_ptr<VulkanDescriptorSet> NullTextureDescriptorSet;
 };

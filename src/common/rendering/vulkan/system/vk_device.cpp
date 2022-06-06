@@ -420,7 +420,10 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 			{
 				if (i > 0)
 					msg += ", ";
-				msg += callbackData->pObjects[i].pObjectName;
+				if (callbackData->pObjects[i].pObjectName)
+					msg += callbackData->pObjects[i].pObjectName;
+				else
+					msg += "<noname>";
 			}
 			msg += ")";
 		}

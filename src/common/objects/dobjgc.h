@@ -180,27 +180,21 @@ class TObjPtr
 		DObject *o;
 	};
 public:
-	TObjPtr() = default;
-	TObjPtr(const TObjPtr<T> &q) = default;
 
-	TObjPtr(T q) noexcept
-		: pp(q)
-	{
-	}
-	T operator=(T q)
+	constexpr TObjPtr<T>& operator=(T q) noexcept
 	{
 		pp = q;
 		return *this;
 	}
 
-	T operator=(std::nullptr_t nul)
+	constexpr TObjPtr<T>& operator=(std::nullptr_t nul) noexcept
 	{
 		o = nullptr;
 		return *this;
 	}
 
 	// To allow NULL, too.
-	T operator=(const int val)
+	TObjPtr<T>& operator=(const int val) noexcept
 	{
 		assert(val == 0);
 		o = nullptr;
@@ -208,42 +202,42 @@ public:
 	}
 
 	// To allow NULL, too. In Clang NULL is a long.
-	T operator=(const long val)
+	TObjPtr<T>& operator=(const long val) noexcept
 	{
 		assert(val == 0);
 		o = nullptr;
 		return *this;
 	}
 
-	T Get() noexcept
+	constexpr T Get() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
 
-	T ForceGet() noexcept	//for situations where the read barrier needs to be skipped.
+	constexpr T ForceGet() noexcept	//for situations where the read barrier needs to be skipped.
 	{
 		return pp;
 	}
 
-	operator T() noexcept
+	constexpr operator T() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	T &operator*() noexcept
+	constexpr T &operator*() noexcept
 	{
 		T q = GC::ReadBarrier(pp);
 		assert(q != NULL);
 		return *q;
 	}
-	T operator->() noexcept
+	constexpr T operator->() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	bool operator!=(T u) noexcept
+	constexpr bool operator!=(T u) noexcept
 	{
 		return GC::ReadBarrier(o) != u;
 	}
-	bool operator==(T u) noexcept
+	constexpr bool operator==(T u) noexcept
 	{
 		return GC::ReadBarrier(o) == u;
 	}
@@ -254,6 +248,17 @@ public:
 
 	friend class DObject;
 };
+
+// This is only needed because some parts of GCC do not treat a class with any constructor as trivial.
+// TObjPtr needs to be fully trivial, though - some parts in the engine depend on it.
+template<class T>
+constexpr TObjPtr<T> MakeObjPtr(T t) noexcept
+{
+	// since this exists to replace the constructor we cannot initialize in the declaration as this would require the constructor we want to avoid.
+	TObjPtr<T> tt;
+	tt = t;
+	return tt;
+}
 
 // Use barrier_cast instead of static_cast when you need to cast
 // the contents of a TObjPtr to a related type.

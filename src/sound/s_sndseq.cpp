@@ -832,10 +832,10 @@ void DSeqNode::ActivateSequence (int sequence)
 	m_Atten = ATTN_IDLE;	// ...and idle attenuation
 }
 
-DSeqActorNode::DSeqActorNode (AActor *actor, int sequence, int modenum)
-	: DSeqNode (actor->Level, sequence, modenum),
-	  m_Actor (actor)
+DSeqActorNode::DSeqActorNode(AActor* actor, int sequence, int modenum)
+	: DSeqNode(actor->Level, sequence, modenum)
 {
+	m_Actor = actor;
 }
 
 DSeqPolyNode::DSeqPolyNode (FPolyObj *poly, int sequence, int modenum)

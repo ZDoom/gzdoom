@@ -84,7 +84,8 @@ public:
 	void CallDraw(int bottom, int visibility);
 
 private:
-	TObjPtr<DHUDMessageBase*> Next = nullptr;
+	TObjPtr<DHUDMessageBase*> Next = MakeObjPtr<DHUDMessageBase*>(nullptr);
+;
 	uint32_t SBarID = 0;
 	friend class DBaseStatusBar;
 

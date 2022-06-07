@@ -425,7 +425,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 		{
 			FString fullPath = IncludeLocs[i].FileName.GetChars(); // get full path, format 'wad:filepath/filename'
 			
-			auto start = fullPath.IndexOf(":"); // find first ':'
+			auto start = fullPath.LastIndexOf(":"); // find find separator between wad and path
 
 			auto end = fullPath.LastIndexOf("/"); // find last '/'
 

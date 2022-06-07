@@ -3390,6 +3390,8 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		{
 			StartScreen->Progress(max_progress);	// advance progress bar to the end.
 			StartScreen->Render(true);
+			StartScreen->Progress(max_progress);	// do this again because Progress advances the counter after redrawing.
+			StartScreen->Render(true);
 			delete StartScreen;
 			StartScreen = NULL;
 		}

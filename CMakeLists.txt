@@ -329,7 +329,7 @@ if (HAVE_VULKAN)
 	add_subdirectory( libraries/glslang/OGLCompilersDLL )
 endif()
 
-add_subdirectory( libraries/discordrpc )
+add_subdirectory( libraries/discordrpc EXCLUDE_FROM_ALL )
 set( DRPC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/discordrpc/include" )
 set( DRPC_LIBRARIES discord-rpc )
 set( DRPC_LIBRARY discord-rpc )

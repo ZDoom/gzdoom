@@ -277,17 +277,41 @@ public:
 class PPTexture : public PPResource
 {
 public:
-	PPTexture() = default;
-	PPTexture(int width, int height, PixelFormat format, std::shared_ptr<void> data = {}) : Width(width), Height(height), Format(format), Data(data) { }
 
 	void ResetBackend() override { Backend.reset(); }
 
 	int Width;
 	int Height;
 	PixelFormat Format;
-	std::shared_ptr<void> Data;
+	TArray<uint8_t> Data;
 
 	std::unique_ptr<PPTextureBackend> Backend;
+	
+	explicit PPTexture() = default;
+	
+	PPTexture(int w, int h, PixelFormat f)
+	{
+		Width = w;
+		Height = h;
+		Format = f;
+	}
+	
+	void Clear()
+	{
+		Width = Height = 0;
+		Format = PixelFormat::Rgba8;
+		Data.Reset();
+	}
+	
+	uint8_t* SetBuffer(int w, int h, PixelFormat f)
+	{
+		Width = w;
+		Height = h;
+		Format = f;
+		unsigned size = f == PixelFormat::Rgba16f || f == PixelFormat::Rgba16_snorm? 8 : 4;
+		Data.Resize(w * h * size);
+		return Data.Data();
+	}
 };
 
 class PPShaderBackend
@@ -497,7 +521,7 @@ class PPCameraExposure
 public:
 	void Render(PPRenderState *renderstate, int sceneWidth, int sceneHeight);
 
-	PPTexture CameraTexture = { 1, 1, PixelFormat::R32f };
+	PPTexture CameraTexture;// = { 1, 1, PixelFormat::R32f };
 
 private:
 	void UpdateTextures(int width, int height);
@@ -542,7 +566,7 @@ class PPTonemap
 {
 public:
 	void Render(PPRenderState *renderstate);
-	void ClearTonemapPalette() { PaletteTexture = {}; }
+	void ClearTonemapPalette() { PaletteTexture.Clear(); }
 
 private:
 	void UpdateTextures();

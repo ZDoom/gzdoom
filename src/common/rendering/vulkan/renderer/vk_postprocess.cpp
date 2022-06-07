@@ -364,7 +364,7 @@ VkPPTexture::VkPPTexture(PPTexture *texture)
 	ImageBuilder imgbuilder;
 	imgbuilder.setFormat(format);
 	imgbuilder.setSize(texture->Width, texture->Height);
-	if (texture->Data)
+	if (texture->Data.Size())
 		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	else
 		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
@@ -379,7 +379,7 @@ VkPPTexture::VkPPTexture(PPTexture *texture)
 	TexImage.View = viewbuilder.create(fb->device);
 	TexImage.View->SetDebugName("VkPPTextureView");
 
-	if (texture->Data)
+	if (texture->Data.Size())
 	{
 		size_t totalsize = texture->Width * texture->Height * pixelsize;
 		BufferBuilder stagingbuilder;
@@ -393,7 +393,7 @@ VkPPTexture::VkPPTexture(PPTexture *texture)
 		barrier0.execute(fb->GetTransferCommands());
 
 		void *data = Staging->Map(0, totalsize);
-		memcpy(data, texture->Data.get(), totalsize);
+		memcpy(data, texture->Data.Data(), totalsize);
 		Staging->Unmap();
 
 		VkBufferImageCopy region = {};

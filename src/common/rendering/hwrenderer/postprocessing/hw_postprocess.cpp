@@ -570,11 +570,9 @@ void PPColormap::Render(PPRenderState *renderstate, int fixedcm, float flash)
 
 void PPTonemap::UpdateTextures()
 {
-	if (gl_tonemap == Palette && !PaletteTexture.Data)
+	if (gl_tonemap == Palette && !PaletteTexture.Data.Size())
 	{
-		std::shared_ptr<void> data(new uint32_t[512 * 512], [](void *p) { delete[](uint32_t*)p; });
-
-		uint8_t *lut = (uint8_t *)data.get();
+		uint8_t *lut = PaletteTexture.SetBuffer(512, 512, PixelFormat::Rgba8);
 		for (int r = 0; r < 64; r++)
 		{
 			for (int g = 0; g < 64; g++)
@@ -591,8 +589,6 @@ void PPTonemap::UpdateTextures()
 				}
 			}
 		}
-
-		PaletteTexture = { 512, 512, PixelFormat::Rgba8, data };
 	}
 }
 
@@ -642,8 +638,7 @@ PPAmbientOcclusion::PPAmbientOcclusion()
 	std::uniform_real_distribution<double> distribution(0.0, 1.0);
 	for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
 	{
-		std::shared_ptr<void> data(new int16_t[16 * 4], [](void *p) { delete[](int16_t*)p; });
-		int16_t *randomValues = (int16_t *)data.get();
+		int16_t *randomValues = (int16_t *)AmbientRandomTexture[quality].SetBuffer(4, 4, PixelFormat::Rgba16_snorm);
 
 		for (int i = 0; i < 16; i++)
 		{
@@ -658,8 +653,6 @@ PPAmbientOcclusion::PPAmbientOcclusion()
 			randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
 			randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
 		}
-
-		AmbientRandomTexture[quality] = { 4, 4, PixelFormat::Rgba16_snorm, data };
 	}
 }
 
@@ -864,9 +857,8 @@ PPPresent::PPPresent()
 			.8515625, .6015625, .9765625, .7265625, .8671875, .6171875, .9921875, .7421875,
 	};
 
-	std::shared_ptr<void> pixels(new float[64], [](void *p) { delete[](float*)p; });
-	memcpy(pixels.get(), data, 64 * sizeof(float));
-	Dither = { 8, 8, PixelFormat::R32f, pixels };
+	auto p = Dither.SetBuffer(8, 8, PixelFormat::R32f);
+	memcpy(p, data, 64 * sizeof(float));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1023,11 +1015,10 @@ void PPCustomShaderInstance::SetTextures(PPRenderState *renderstate)
 			if (!pptex)
 			{
 				auto buffer = tex->CreateTexBuffer(0);
-
-				std::shared_ptr<void> data(new uint32_t[buffer.mWidth * buffer.mHeight], [](void *p) { delete[](uint32_t*)p; });
+				pptex = std::make_unique<PPTexture>();
+				auto pixels = pptex->SetBuffer(buffer.mWidth, buffer.mHeight, PixelFormat::Rgba8);
 
 				int count = buffer.mWidth * buffer.mHeight;
-				uint8_t *pixels = (uint8_t *)data.get();
 				for (int i = 0; i < count; i++)
 				{
 					int pos = i << 2;
@@ -1037,7 +1028,6 @@ void PPCustomShaderInstance::SetTextures(PPRenderState *renderstate)
 					pixels[pos + 3] = buffer.mBuffer[pos + 3];
 				}
 
-				pptex = std::make_unique<PPTexture>(buffer.mWidth, buffer.mHeight, PixelFormat::Rgba8, data);
 			}
 
 			renderstate->SetInputTexture(textureIndex, pptex.get(), PPFilterMode::Linear, PPWrapMode::Repeat);

@@ -807,8 +807,8 @@ PPGLTextureBackend *GLPPRenderState::GetGLTexture(PPTexture *texture)
 		case PixelFormat::Rgba16_snorm: glformat = GL_RGBA16_SNORM; break;
 		}
 
-		if (texture->Data)
-			backend->Tex = buffers->Create2DTexture("PPTexture", glformat, texture->Width, texture->Height, texture->Data.get());
+		if (texture->Data.Size())
+			backend->Tex = buffers->Create2DTexture("PPTexture", glformat, texture->Width, texture->Height, texture->Data.Data());
 		else
 			backend->Tex = buffers->Create2DTexture("PPTexture", glformat, texture->Width, texture->Height);
 

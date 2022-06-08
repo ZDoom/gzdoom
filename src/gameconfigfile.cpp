@@ -374,6 +374,8 @@ void FGameConfigFile::DoGlobalSetup ()
 				if (var != NULL) var->ResetToDefault();
 				var = FindCVar("hud_althudscale", NULL);
 				if (var != NULL) var->ResetToDefault();
+				var = FindCVar("con_scale", NULL);
+				if (var != NULL) var->ResetToDefault();
 				var = FindCVar("con_scaletext", NULL);
 				if (var != NULL) var->ResetToDefault();
 				var = FindCVar("uiscale", NULL);

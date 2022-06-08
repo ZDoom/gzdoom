@@ -247,13 +247,11 @@ int GetUIScale(F2DDrawer* drawer, int altval);
 int GetConScale(F2DDrawer* drawer, int altval);
 
 EXTERN_CVAR(Int, uiscale);
+EXTERN_CVAR(Int, con_scale);
 
 inline int active_con_scale(F2DDrawer *drawer)
 {
-	// this sets the threshold for upscaling the console font to 2560 x 1440.
-	int vscale = drawer->GetHeight() / 720;
-	int hscale = drawer->GetWidth() / 1280;
-	return max(1, min(vscale, hscale));
+	return GetConScale(drawer, con_scale);
 }
 
 #ifdef DrawText

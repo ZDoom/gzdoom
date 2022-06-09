@@ -10,7 +10,6 @@ namespace OpenGLESRenderer
 {
 
 class FHardwareTexture;
-class FGLDebug;
 
 class OpenGLFrameBuffer : public SystemGLFrameBuffer
 {
@@ -61,7 +60,6 @@ public:
 	void PostProcessScene(bool swscene, int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D) override;
 
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
-	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 
     FTexture *WipeStartScreen() override;
     FTexture *WipeEndScreen() override;

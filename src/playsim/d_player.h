@@ -340,7 +340,7 @@ public:
 
 	AActor	   *ReadyWeapon = nullptr;
 	AActor	   *PendingWeapon = nullptr;			// WP_NOCHANGE if not changing
-	TObjPtr<DPSprite*> psprites = nullptr; // view sprites (gun, etc)
+	TObjPtr<DPSprite*> psprites = MakeObjPtr<DPSprite*>(nullptr); // view sprites (gun, etc)
 
 	int			cheats = 0;					// bit flags
 	int			timefreezer = 0;			// Player has an active time freezer
@@ -355,8 +355,8 @@ public:
 	int			poisoncount = 0;			// screen flash for poison damage
 	FName		poisontype = NAME_None;				// type of poison damage to apply
 	FName		poisonpaintype = NAME_None;			// type of Pain state to enter for poison damage
-	TObjPtr<AActor*>		poisoner = nullptr;		// NULL for non-player actors
-	TObjPtr<AActor*>		attacker = nullptr;		// who did damage (NULL for floors)
+	TObjPtr<AActor*>		poisoner = MakeObjPtr<AActor*>(nullptr);		// NULL for non-player actors
+	TObjPtr<AActor*>		attacker = MakeObjPtr<AActor*>(nullptr);		// who did damage (NULL for floors)
 	int			extralight = 0;				// so gun flashes light up areas
 	short		fixedcolormap = 0;			// can be set to REDCOLORMAP, etc.
 	short		fixedlightlevel = 0;
@@ -364,19 +364,19 @@ public:
 	PClassActor *MorphedPlayerClass = nullptr;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle = 0;				// which effects to apply for this player instance when morphed
 	PClassActor *MorphExitFlash = nullptr;		// flash to apply when demorphing (cache of value given to MorphPlayer)
-	TObjPtr<AActor*>	PremorphWeapon = nullptr;		// ready weapon before morphing
+	TObjPtr<AActor*>	PremorphWeapon = MakeObjPtr<AActor*>(nullptr);		// ready weapon before morphing
 	int			chickenPeck = 0;			// chicken peck countdown
 	int			jumpTics = 0;				// delay the next jump for a moment
 	bool		onground = 0;				// Identifies if this player is on the ground or other object
 
 	int			respawn_time = 0;			// [RH] delay respawning until this tic
-	TObjPtr<AActor*>	camera = nullptr;			// [RH] Whose eyes this player sees through
+	TObjPtr<AActor*>	camera = MakeObjPtr<AActor*>(nullptr);			// [RH] Whose eyes this player sees through
 
 	int			air_finished = 0;			// [RH] Time when you start drowning
 
 	FName		LastDamageType = NAME_None;			// [RH] For damage-specific pain and death sounds
 
-	TObjPtr<AActor*> MUSINFOactor = nullptr;		// For MUSINFO purposes
+	TObjPtr<AActor*> MUSINFOactor = MakeObjPtr<AActor*>(nullptr);		// For MUSINFO purposes
 	int8_t		MUSINFOtics = 0;
 
 	bool		settings_controller = false;	// Player can control game settings.
@@ -384,7 +384,7 @@ public:
 	int8_t		crouchdir = 0;
 
 	//Added by MC:
-	TObjPtr<DBot*> Bot = nullptr;
+	TObjPtr<DBot*> Bot = MakeObjPtr<DBot*>(nullptr);
 
 	float		BlendR = 0;		// [RH] Final blending values
 	float		BlendG = 0;
@@ -406,7 +406,7 @@ public:
 	FWeaponSlots weapons;
 
 	// [CW] I moved these here for multiplayer conversation support.
-	TObjPtr<AActor*> ConversationNPC = nullptr, ConversationPC = nullptr;
+	TObjPtr<AActor*> ConversationNPC = MakeObjPtr<AActor*>(nullptr), ConversationPC = MakeObjPtr<AActor*>(nullptr);
 	DAngle ConversationNPCAngle = 0.;
 	bool ConversationFaceTalker = false;
 

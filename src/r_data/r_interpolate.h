@@ -17,8 +17,8 @@ class DInterpolation : public DObject
 	DECLARE_ABSTRACT_CLASS(DInterpolation, DObject)
 	HAS_OBJECT_POINTERS
 
-	TObjPtr<DInterpolation*> Next = nullptr;
-	TObjPtr<DInterpolation*> Prev = nullptr;
+	TObjPtr<DInterpolation*> Next;
+	TObjPtr<DInterpolation*> Prev;
 
 protected:
 	FLevelLocals *Level;
@@ -46,7 +46,7 @@ public:
 
 struct FInterpolator
 {
-	TObjPtr<DInterpolation*> Head = nullptr;
+	TObjPtr<DInterpolation*> Head = MakeObjPtr<DInterpolation*>(nullptr);
 	bool didInterp = false;
 	int count = 0;
 

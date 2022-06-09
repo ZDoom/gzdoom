@@ -822,6 +822,6 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 PolyTriangleThreadData *PolyTriangleThreadData::Get(DrawerThread *thread)
 {
 	if (!thread->poly)
-		thread->poly = std::make_shared<PolyTriangleThreadData>(thread->core, thread->num_cores, thread->numa_node, thread->num_numa_nodes, thread->numa_start_y, thread->numa_end_y);
+		thread->poly = std::make_unique<PolyTriangleThreadData>(thread->core, thread->num_cores, thread->numa_node, thread->num_numa_nodes, thread->numa_start_y, thread->numa_end_y);
 	return thread->poly.get();
 }

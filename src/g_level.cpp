@@ -83,8 +83,10 @@
 #include "stringtable.h"
 #include "c_buttons.h"
 #include "screenjob.h"
+#include "types.h"
 
 #include "gi.h"
+
 
 #include "g_hub.h"
 #include "g_levellocals.h"
@@ -178,7 +180,59 @@ void *statcopy;					// for statistics driver
 FLevelLocals level;			// info about current level
 FLevelLocals *primaryLevel = &level;	// level for which to display the user interface.
 FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
+static PType* maprecordtype;
 
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void Local_Job_Init()
+{
+	maprecordtype = NewPointer(NewStruct("MapRecord", nullptr, true));
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void CallCreateMapFunction(const char* qname, DObject* runner, level_info_t* map)
+{
+	auto func = LookupFunction(qname);
+	if (func->Proto->ArgumentTypes.Size() == 1) return CallCreateFunction(qname, runner);	// accept functions without map parameter as well here.
+	if (func->Proto->ArgumentTypes.Size() != 2) I_Error("Bad map-cutscene function %s. Must receive precisely two arguments.", qname);
+	if (func->Proto->ArgumentTypes[0] != cutscene.runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
+		I_Error("Bad cutscene function %s. Must receive ScreenJobRunner and LevelInfo reference.", qname);
+	VMValue val[2] = { runner, map };
+	VMCall(func, val, 2, nullptr, 0);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool CreateCutscene(CutsceneDef* cs, DObject* runner, level_info_t* map)
+{
+	if (cs->function.CompareNoCase("none") == 0)
+		return true;	// play nothing but return as being validated
+	if (cs->function.IsNotEmpty())
+	{
+		CallCreateMapFunction(cs->function, runner, map);
+		return true;
+	}
+	else if (cs->video.IsNotEmpty())
+	{
+		AddGenericVideo(runner, cs->video, cs->GetSound(), cs->framespersec);
+		return true;
+	}
+	return false;
+}
 
 //==========================================================================
 //
@@ -207,6 +261,26 @@ void G_DeferedInitNew (FNewGameStartup *gs)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 	finishstate = FINISH_NoHub;
+
+	if (AllEpisodes[gs->Episode].mIntro.isdefined())
+	{
+		cutscene.runner = CreateRunner(false);
+		GC::WriteBarrier(cutscene.runner);
+
+		if (!CreateCutscene(&AllEpisodes[gs->Episode].mIntro, cutscene.runner, nullptr))
+		{
+			return;
+		}
+
+		cutscene.completion = [](bool) { gameaction = ga_newgame2; };
+		if (!ScreenJobValidate())
+		{
+			DeleteScreenJob();
+			cutscene.completion = nullptr;
+			return;
+		}
+		gameaction = ga_intermission;
+	}
 }
 
 //==========================================================================
@@ -938,30 +1012,58 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 	return controller;
 }
 
-void RunIntermission(DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
 {
 	if (!intermissionScreen && !statusScreen)
 	{
 		completionf(false);
 		return;
 	}
-	runner = CreateRunner(false);
-	GC::WriteBarrier(runner);
-	completion = std::move(completionf);
+	cutscene.runner = CreateRunner(false);
+	GC::WriteBarrier(cutscene.runner);
+	cutscene.completion = std::move(completionf);
+	
+	// retrieve cluster relations for cluster-based cutscenes.
+	cluster_info_t* fromcluster = nullptr, *tocluster = nullptr;
+	if (fromMap) fromcluster = FindClusterInfo(fromMap->cluster);
+	if (toMap) tocluster = FindClusterInfo(toMap->cluster);
+	if (fromcluster == tocluster) fromcluster = tocluster = nullptr;
+
+	if (fromMap)
+	{
+		if (!CreateCutscene(&fromMap->outro, cutscene.runner, fromMap))
+		{
+			if (fromcluster != nullptr) CreateCutscene(&fromcluster->outro, cutscene.runner, fromMap);
+		}
+	}
 
 	auto func = LookupFunction("DoomCutscenes.BuildMapTransition");
 	if (func == nullptr)
 	{
 		I_Error("Script function 'DoomCutscenes.BuildMapTransition' not found");
 	}
-	VMValue val[3] = { runner, intermissionScreen, statusScreen };
+	VMValue val[3] = { cutscene.runner, intermissionScreen, statusScreen };
 	VMCall(func, val, 3, nullptr, 0);
+
+	if (toMap)
+	{
+		if (!CreateCutscene(&toMap->intro, cutscene.runner, toMap))
+		{
+			if  (tocluster != nullptr) CreateCutscene(&tocluster->intro, cutscene.runner, toMap);
+		}
+	}
 
 	if (!ScreenJobValidate())
 	{
 		DeleteScreenJob();
-		if (completion) completion(false);
-		completion = nullptr;
+		if (cutscene.completion) cutscene.completion(false);
+		cutscene.completion = nullptr;
 		return;
 	}
 	gameaction = ga_intermission;
@@ -1012,7 +1114,8 @@ void G_DoCompleted (void)
 	}
 	bool endgame = strncmp(nextlevel, "enDSeQ", 6) == 0;
 	intermissionScreen = primaryLevel->CreateIntermission();
-	RunIntermission(intermissionScreen, statusScreen, [=](bool)
+	auto nextinfo = !playinter || endgame? nullptr : FindLevelInfo(nextlevel, false);
+	RunIntermission(playinter? primaryLevel->info : nullptr, nextinfo, intermissionScreen, statusScreen, [=](bool)
 	{
 		if (!endgame) primaryLevel->WorldDone();
 		else D_StartTitle();

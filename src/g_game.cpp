@@ -1198,6 +1198,14 @@ void G_Ticker ()
 			gamestate = GS_CUTSCENE;
 			gameaction = ga_nothing;
 			break;
+		case ga_titleloop:
+			D_StartTitle();
+			break;
+		case ga_intro:
+			gamestate = GS_INTRO;
+			gameaction = ga_nothing;
+			break;
+
 
 
 		default:
@@ -3077,7 +3085,7 @@ void G_StartSlideshow(FLevelLocals *Level, FName whichone)
 {
 	auto SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
 	auto slide = F_StartIntermission(SelectedSlideshow);
-	RunIntermission(slide, nullptr, [](bool)
+	RunIntermission(nullptr, nullptr, slide, nullptr, [](bool)
 	{
 		primaryLevel->SetMusic();
 		gamestate = GS_LEVEL;

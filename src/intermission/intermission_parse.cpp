@@ -955,6 +955,6 @@ CCMD(testfinale)
 	}
 
 	auto controller = F_StartFinale(gameinfo.finaleMusic, gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat, text, false, false, true, true);
-	RunIntermission(controller, nullptr, [=](bool) { gameaction = ga_nothing; });
+	RunIntermission(nullptr, nullptr, controller, nullptr, [=](bool) { gameaction = ga_nothing; });
 
 }

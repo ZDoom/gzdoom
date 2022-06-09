@@ -104,7 +104,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 			if (corpse) corpse->Destroy();
 			corpsequeue.Delete(0);
 		}
-		corpsequeue.Push(self);
+		corpsequeue.Push(MakeObjPtr<AActor*>(self));
 		GC::WriteBarrier(self);
 	}
 	return 0;

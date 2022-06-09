@@ -45,14 +45,58 @@
 TArray<FString> Includes;
 TArray<FScriptPosition> IncludeLocs;
 
+static FString ResolveIncludePath(const FString &path,const FString &lumpname){
+	if (path.IndexOf("./") == 0 || path.IndexOf("../") == 0) // relative path resolving
+	{
+		auto start = lumpname.LastIndexOf(":"); // find find separator between wad and path
+
+		auto end = lumpname.LastIndexOf("/"); // find last '/'
+
+		FString fullPath = lumpname.Mid(start + 1, end - start - 1); // get path from lumpname (format 'wad:filepath/filename')
+
+		if (start != -1 && end != -1)
+		{
+			FString relativePath = path;
+			if ( relativePath.IndexOf("./") == 0 ) // strip initial marker
+			{
+				relativePath = relativePath.Mid(2);
+			}
+
+			bool pathOk = true;
+
+			while (relativePath.IndexOf("../") == 0) // go back one folder for each '..'
+			{
+				relativePath = relativePath.Mid(3);
+				auto slash_index = fullPath.LastIndexOf("/");
+				if (slash_index != -1) {
+					fullPath = fullPath.Mid(0, slash_index);
+				} else {
+					pathOk = false;
+					break;
+				}
+			}
+			if (pathOk) // if '..' parsing was successful
+			{
+				return fullPath + "/" + relativePath;
+			}
+		}
+	}
+	return path;
+}
+
 static FString ZCCTokenName(int terminal);
 void AddInclude(ZCC_ExprConstant *node)
 {
 	assert(node->Type == TypeString);
-	if (Includes.Find(*node->StringVal) >= Includes.Size())
+
+	FScriptPosition pos(*node);
+
+	FString path = ResolveIncludePath(*node->StringVal, pos.FileName.GetChars());
+
+	if (Includes.Find(path) >= Includes.Size())
 	{
-		Includes.Push(*node->StringVal);
-		IncludeLocs.Push(*node);
+		Includes.Push(path);
+		IncludeLocs.Push(pos);
 	}
 }
 
@@ -421,45 +465,6 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 	for (unsigned i = 0; i < Includes.Size(); i++)
 	{
 		lumpnum = fileSystem.CheckNumForFullName(Includes[i], true);
-		if (lumpnum == -1 && ( Includes[i].IndexOf("./") == 0 || Includes[i].IndexOf("../") == 0 ) ) // relative path resolving
-		{
-			FString fullPath = IncludeLocs[i].FileName.GetChars(); // get full path, format 'wad:filepath/filename'
-			
-			long start = fullPath.IndexOf(":"); // find first ':'
-
-			long end = fullPath.LastIndexOf("/"); // find last '/'
-
-			if (start!=-1&&end!=-1)
-			{
-				FString resolvedPath = fullPath.Mid(start + 1, end - start - 1); // extract filepath from string
-				FString relativePath = Includes[i];
-				if ( relativePath.IndexOf("./") == 0 ) // strip initial marker
-				{
-					relativePath = relativePath.Mid(2);
-				}
-				
-				bool pathOk = true;
-
-				while (relativePath.IndexOf("../") == 0) // go back one folder for each '..'
-				{
-					relativePath = relativePath.Mid(3);
-					long slash_index = resolvedPath.LastIndexOf("/");
-					if (slash_index != -1) {
-						resolvedPath = resolvedPath.Mid(0,slash_index);
-					} else {
-						pathOk = false;
-						break;
-					}
-				}
-				if ( pathOk ) // if '..' parsing was successful
-				{
-					resolvedPath += "/" + relativePath; // add relative path
-
-					lumpnum = fileSystem.CheckNumForFullName(resolvedPath, true); // check for relative include
-				}
-			}
-
-		}
 		if (lumpnum == -1)
 		{
 			IncludeLocs[i].Message(MSG_ERROR, "Include script lump %s not found", Includes[i].GetChars());

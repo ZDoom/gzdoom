@@ -15,14 +15,14 @@ class ReverbEdit : OptionMenu
 		super.Init(parent, desc);
 		OnReturn();
 	}
-	
+
 	override void OnReturn()
 	{
 		string env;
 		int id;
-		
+
 		[env, id] = GetSelectedEnvironment();
-		
+
 		let li = GetItem('EvironmentName');
 		if (li != NULL)
 		{
@@ -126,7 +126,7 @@ class OptionMenuItemReverbSelect : OptionMenuItemSubMenu
 		return self;
 	}
 
-	
+
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
 		int x = drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
@@ -164,7 +164,7 @@ class OptionMenuItemReverbOption : OptionMenuItemOptionBase
 	{
 		return int(ReverbEdit.GetValue(mValIndex));
 	}
-	
+
 	override void SetSelection(int Selection)
 	{
 		ReverbEdit.SetValue(mValIndex, Selection);
@@ -182,7 +182,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 	int mValIndex;
 	String mEditValue;
 	TextEnterMenu mEnter;
-	
+
 	OptionMenuItemSliderReverbEditOption Init(String label, double min, double max, double step, int showval, int valindex)
 	{
 		Super.Init(label, min, max, step, showval);
@@ -190,7 +190,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 		mEnter = null;
 		return self;
 	}
-	
+
 
 	override double GetSliderValue()
 	{
@@ -201,7 +201,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 	{
 		ReverbEdit.SetValue(mValIndex, val);
 	}
-	
+
 	override bool Selectable()
 	{
 		return !ReverbEdit.GrayCheck();
@@ -228,7 +228,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 		}
 		return indent;
 	}
-	
+
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
 		if (mkey == Menu.MKEY_Enter)
@@ -253,6 +253,6 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 
 		return Super.MenuEvent(mkey, fromcontroller);
 	}
-	
+
 }
 

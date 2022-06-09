@@ -255,20 +255,6 @@ int FStartupTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
-	uint32_t pindex[16];
-
-	// Initialize the bitmap palette.
-	for (int i = 0; i < 16; ++i)
-	{
-		PalEntry pe;
-		pe.r = source[i * 3 + 0];
-		pe.g = source[i * 3 + 1];
-		pe.b = source[i * 3 + 2];
-		pe.a = 63;
-		// Convert from 6-bit per component to 8-bit per component.
-		pe.d= (pe.d << 2) | ((pe.d >> 4) & 0x03030303);
-		pindex[i] = pe;
-	}
 	PlanarToChunky((uint32_t*)bmp->GetPixels(), source + 48, startuppalette32, Width, Height);
 	return 0;
 }

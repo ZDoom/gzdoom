@@ -76,14 +76,14 @@ struct JoystickConfig native version("2.4")
 
 	native float GetAxisDeadZone(int axis);
 	native void SetAxisDeadZone(int axis, float zone);
-	
+
 	native int GetAxisMap(int axis);
 	native void SetAxisMap(int axis, int gameaxis);
-	
+
 	native String GetName();
 	native int GetNumAxes();
 	native String GetAxisName(int axis);
-	
+
 }
 
 class Menu : Object native ui version("2.4")
@@ -139,7 +139,7 @@ class Menu : Object native ui version("2.4")
 	native static void SetMouseCapture(bool on);
 	native void Close();
 	native void ActivateMenu();
-	
+
 	//=============================================================================
 	//
 	//
@@ -156,7 +156,7 @@ class Menu : Object native ui version("2.4")
 		AnimatedTransition = false;
 		Animated = false;
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -230,7 +230,7 @@ class Menu : Object native ui version("2.4")
 			{
 				SetCapture(true);
 			}
-			
+
 		}
 		else if (ev.type == UIEvent.Type_MouseMove)
 		{
@@ -259,7 +259,7 @@ class Menu : Object native ui version("2.4")
 	{ 
 		return false;
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -289,7 +289,7 @@ class Menu : Object native ui version("2.4")
 			}
 		}
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -330,34 +330,34 @@ class Menu : Object native ui version("2.4")
 	{
 		menuDelegate.PlaySound(snd);
 	}
-	
+
 	deprecated("4.0") static void DrawConText (int color, int x, int y, String str)
 	{
 		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
 	}
-	
+
 	static Font OptionFont()
 	{
 		return NewSmallFont;
 	}
-	
+
 	static int OptionHeight() 
 	{
 		return OptionFont().GetHeight();
 	}
-	
+
 	static int OptionWidth(String s)
 	{
 		return OptionFont().StringWidth(s);
 	}
-	
+
 	static void DrawOptionText(int x, int y, int color, String text, bool grayed = false)
 	{
 		String label = Stringtable.Localize(text);
 		int overlay = grayed? Color(96,48,0,0) : 0;
 		screen.DrawText (OptionFont(), color, x, y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
 	}
-	
+
 
 }
 

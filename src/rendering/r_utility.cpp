@@ -393,7 +393,7 @@ FRenderer* SWRenderer;
 
 void R_Init ()
 {
-	//R_InitTranslationTables ();
+	R_InitTranslationTables ();
 	R_SetViewSize (screenblocks);
 
 	if (SWRenderer == NULL)
@@ -800,7 +800,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
 		if (gamestate != GS_TITLELEVEL &&
-			(player && ((player->cheats & CF_CHASECAM)) || (r_deathcamera && viewpoint.camera->health <= 0)))
+			((player && (player->cheats & CF_CHASECAM)) || (r_deathcamera && viewpoint.camera->health <= 0)))
 		{
 			// [RH] Use chasecam view
 			DefaultDraw = false;

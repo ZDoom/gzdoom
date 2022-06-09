@@ -382,23 +382,17 @@ public:
 		const int ustride = img->stride[VPX_PLANE_U];
 		const int vstride = img->stride[VPX_PLANE_V];
 
-		for (unsigned int y = 0; y < height; y += 2)
+		for (unsigned int y = 0; y < height; y++)
 		{
-			unsigned int y1 = y + 1;
-			unsigned int wy = width * y;
-			unsigned int wy1 = width * y1;
-
-			for (unsigned int x = 0; x < width; x += 2)
+			for (unsigned int x = 0; x < width; x++)
 			{
 				uint8_t u = uplane[ustride * (y >> 1) + (x >> 1)];
 				uint8_t v = vplane[vstride * (y >> 1) + (x >> 1)];
 
-				SetPixel(&Pic[(wy + x) << 2], yplane[ystride * y + x], u, v);
-				SetPixel(&Pic[(wy + x + 1) << 2], yplane[ystride * y + x + 1], u, v);
-				SetPixel(&Pic[(wy1 + x) << 2], yplane[ystride * y1 + x], u, v);
-				SetPixel(&Pic[(wy1 + x + 1) << 2], yplane[ystride * y1 + x + 1], u, v);
+				SetPixel(&Pic[(x + y * width) << 2], yplane[ystride * y + x], u, v);
 			}
 		}
+
 		return true;
 	}
 

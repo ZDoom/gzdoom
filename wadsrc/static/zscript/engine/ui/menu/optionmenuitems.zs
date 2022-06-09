@@ -36,7 +36,7 @@ class OptionMenuItem : MenuItemBase
 {
 	String mLabel;
 	bool mCentered;
-	
+
 	protected void Init(String label, String command, bool center = false)
 	{
 		Super.Init(0, 0, command);
@@ -48,11 +48,11 @@ class OptionMenuItem : MenuItemBase
 	{
 		Menu.DrawOptionText(x, y, color, text, grayed);
 	}
-	
+
 	protected int drawLabel(int indent, int y, int color, bool grayed = false)
 	{
 		String label = Stringtable.Localize(mLabel);
-		
+
 		int x;
 		int w = Menu.OptionWidth(label) * CleanXfac_1;
 		if (!mCentered) x = indent - w;
@@ -66,24 +66,24 @@ class OptionMenuItem : MenuItemBase
 		Menu.DrawOptionText(indent + CursorSpace(), y, color, text, grayed);
 	}
 
-	
+
 	int CursorSpace()
 	{
 		return (14 * CleanXfac_1);
 	}
-	
+
 	override bool Selectable()
 	{
 		return true;
 	}
-	
+
 	override int GetIndent()
 	{
 		if (mCentered) return 0;
 		if (screen.GetWidth() < 640) return screen.GetWidth() / 2;
 		return Menu.OptionWidth(Stringtable.Localize(mLabel));
 	}
-	
+
 	override bool MouseEvent(int type, int x, int y)
 {
 		if (Selectable() && type == Menu.MOUSE_Release)
@@ -147,7 +147,7 @@ class OptionMenuItemLabeledSubmenu : OptionMenuItemSubmenu
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
 		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
-		
+
 		String text = mLabelCVar.GetString();
 		if (text.Length() == 0) text = Stringtable.Localize("$notset");
 		drawValue(indent, y, OptionMenuSettings.mFontColorValue, text);
@@ -166,7 +166,7 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 	private String ccmd;	// do not allow access to this from the outside.
 	bool mCloseOnSelect;
 	private bool mUnsafe;
-	
+
 	OptionMenuItemCommand Init(String label, Name command, bool centered = false, bool closeonselect = false)
 	{
 		Super.Init(label, command, 0, centered);
@@ -255,7 +255,7 @@ class OptionMenuItemOptionBase : OptionMenuItem
 	Name mValues;	// Entry in OptionValues table
 	CVar mGrayCheck;
 	int mCenter;
-	
+
 	const OP_VALUES = 0x11001;
 
 	protected void Init(String label, Name command, Name values, CVar graycheck, int center)
@@ -288,11 +288,11 @@ class OptionMenuItemOptionBase : OptionMenuItem
 	{
 		return 0;
 	}
-	
+
 	virtual void SetSelection(int Selection)
 	{
 	}
-	
+
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
@@ -338,7 +338,7 @@ class OptionMenuItemOptionBase : OptionMenuItem
 		}
 		return true;
 	}
-	
+
 	virtual bool isGrayed()
 	{
 		return mGrayCheck != null && !mGrayCheck.GetInt();
@@ -542,7 +542,7 @@ class OptionMenuItemControlBase : OptionMenuItem
 		}
 		return false;
 	}
-	
+
 	void SendKey(int key)
 	{
 		mInput = key;
@@ -717,7 +717,7 @@ class OptionMenuSliderBase : OptionMenuItem
 	{
 		return 0;
 	}
-	
+
 	virtual void SetSliderValue(double val)
 	{
 	}
@@ -862,7 +862,7 @@ class OptionMenuSliderBase : OptionMenuItem
 class OptionMenuItemSlider : OptionMenuSliderBase
 {
 	CVar mCVar;
-	
+
 	OptionMenuItemSlider Init(String label, Name command, double min, double max, double step, int showval = 1, CVar graycheck = NULL)
 	{
 		Super.Init(label, min, max, step, showval, command, graycheck);
@@ -941,11 +941,11 @@ class OptionMenuItemColorPicker : OptionMenuItem
 		if (mCVar != null)
 		{
 			Menu.MenuSound("menu/choose");
-			
+
 			// This code is a bit complicated because it should allow subclassing the
 			// colorpicker menu.
 			// New color pickers must inherit from the internal one to work here.
-			
+
 			let desc = MenuDescriptor.GetDescriptor('Colorpickermenu');
 			if (desc != NULL && (desc.mClass == null || desc.mClass is "ColorPickerMenu"))
 			{
@@ -1042,7 +1042,7 @@ class OptionMenuFieldBase : OptionMenuItem
 class OptionMenuItemTextField : OptionMenuFieldBase
 {
 	TextEnterMenu mEnter;
-	
+
 	OptionMenuItemTextField Init (String label, Name command, CVar graycheck = null)
 	{
 		Super.Init(label, command, graycheck);
@@ -1175,7 +1175,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	String TextZero;
 	String TextNegOne;
 	int mClickVal;
-	
+
 	OptionMenuItemScaleSlider Init(String label, Name command, double min, double max, double step, String zero, String negone = "")
 	{
 		Super.Init(label, command, min, max, step, 0);
@@ -1204,7 +1204,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 		}
 		return indent;
 	}
-	
+
 	override bool MouseEvent(int type, int x, int y)
 	{
 		int value = int(GetSliderValue());
@@ -1214,11 +1214,11 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 				mClickVal = value;
 				if (value <= 0) return false;
 				return Super.MouseEvent(type, x, y);
-				
+
 			case Menu.MOUSE_Move:
 				if (mClickVal <= 0) return false;
 				return Super.MouseEvent(type, x, y);
-				
+
 			case Menu.MOUSE_Release:
 				if (mClickVal <= 0)
 				{
@@ -1231,7 +1231,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 		}
 		return false;
 	}
-	
+
 }
 
 //=============================================================================

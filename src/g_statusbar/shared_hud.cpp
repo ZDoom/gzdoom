@@ -160,15 +160,30 @@ void DBaseStatusBar::CreateAltHUD()
 //
 //---------------------------------------------------------------------------
 EXTERN_CVAR(Bool, hud_aspectscale)
+EXTERN_CVAR(Bool, hud_oldscale)
+EXTERN_CVAR(Float, hud_scalefactor)
 
 void DBaseStatusBar::DrawAltHUD()
 {
 	player_t * CPlayer = StatusBar->CPlayer;
 
 	players[consoleplayer].inventorytics = 0;
-	int scale = GetUIScale(twod, hud_althudscale);
-	int hudwidth = twod->GetWidth() / scale;
-	int hudheight = hud_aspectscale ? int(twod->GetHeight() / (scale*1.2)) : twod->GetHeight() / scale;
+	int hudwidth;
+	int hudheight;
+
+	if (hud_oldscale)
+	{
+		int scale = GetUIScale(twod, hud_althudscale);
+		hudwidth = twod->GetWidth() / scale;
+		hudheight = twod->GetHeight() / scale;
+	}
+	else
+	{
+		hudwidth = int(640 / hud_scalefactor);
+		hudheight = hudwidth * twod->GetHeight() / twod->GetWidth();
+	}
+	if (hud_aspectscale) hudheight = hudheight * 5 / 6;
+
 
 	IFVIRTUALPTRNAME(AltHud, "AltHud", Draw)
 	{

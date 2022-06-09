@@ -1201,7 +1201,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 	{
 		self->Angles.Yaw = self->AngleTo(self->target);
 	}
-	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, aim ? self->target : NULL);
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, aim ? self->target.Get() : nullptr);
 	if (t.linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.

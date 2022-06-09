@@ -83,10 +83,6 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 {
 	vkDeviceWaitIdle(device->device); // make sure the GPU is no longer using any objects before RAII tears them down
 
-	// screen is already null at this point, but VkHardwareTexture::ResetAll needs it during clean up. Is there a better way we can do this?
-	auto tmp = screen;
-	screen = this;
-
 	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
 	VkHardwareTexture::ResetAll();
 	VKBuffer::ResetAll();
@@ -99,8 +95,6 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mViewpoints;
 	delete mLights;
 	mShadowMap.Reset();
-
-	screen = tmp;
 
 	mCommands->DeleteFrameObjects();
 }
@@ -130,14 +124,14 @@ void VulkanFrameBuffer::InitializeState()
 
 	mCommands.reset(new VkCommandBufferManager(this));
 
-	mScreenBuffers.reset(new VkRenderBuffers());
-	mSaveBuffers.reset(new VkRenderBuffers());
+	mScreenBuffers.reset(new VkRenderBuffers(this));
+	mSaveBuffers.reset(new VkRenderBuffers(this));
 	mActiveRenderBuffers = mScreenBuffers.get();
 
-	mPostprocess.reset(new VkPostprocess());
-	mDescriptorSetManager.reset(new VkDescriptorSetManager());
-	mRenderPassManager.reset(new VkRenderPassManager());
-	mRaytrace.reset(new VkRaytrace());
+	mPostprocess.reset(new VkPostprocess(this));
+	mDescriptorSetManager.reset(new VkDescriptorSetManager(this));
+	mRenderPassManager.reset(new VkRenderPassManager(this));
+	mRaytrace.reset(new VkRaytrace(this));
 
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
@@ -147,16 +141,16 @@ void VulkanFrameBuffer::InitializeState()
 	CreateFanToTrisIndexBuffer();
 
 	// To do: move this to HW renderer interface maybe?
-	MatrixBuffer = new VkStreamBuffer(sizeof(MatricesUBO), 50000);
-	StreamBuffer = new VkStreamBuffer(sizeof(StreamUBO), 300);
+	MatrixBuffer = new VkStreamBuffer(this, sizeof(MatricesUBO), 50000);
+	StreamBuffer = new VkStreamBuffer(this, sizeof(StreamUBO), 300);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(this));
 	mDescriptorSetManager->Init();
 #ifdef __APPLE__
-	mRenderState.reset(new VkRenderStateMolten());
+	mRenderState.reset(new VkRenderStateMolten(this));
 #else
-	mRenderState.reset(new VkRenderState());
+	mRenderState.reset(new VkRenderState(this));
 #endif
 }
 

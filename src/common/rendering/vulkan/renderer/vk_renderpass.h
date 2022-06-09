@@ -9,6 +9,7 @@
 #include <string.h>
 #include <map>
 
+class VulkanFrameBuffer;
 class VkPPShader;
 
 class VkPipelineKey
@@ -52,7 +53,7 @@ public:
 class VkRenderPassSetup
 {
 public:
-	VkRenderPassSetup(const VkRenderPassKey &key);
+	VkRenderPassSetup(VulkanFrameBuffer* fb, const VkRenderPassKey &key);
 
 	VulkanRenderPass *GetRenderPass(int clearTargets);
 	VulkanPipeline *GetPipeline(const VkPipelineKey &key);
@@ -64,6 +65,8 @@ public:
 private:
 	std::unique_ptr<VulkanRenderPass> CreateRenderPass(int clearTargets);
 	std::unique_ptr<VulkanPipeline> CreatePipeline(const VkPipelineKey &key);
+
+	VulkanFrameBuffer* fb = nullptr;
 };
 
 class VkVertexFormat
@@ -96,7 +99,7 @@ public:
 class VkPPRenderPassSetup
 {
 public:
-	VkPPRenderPassSetup(const VkPPRenderPassKey& key);
+	VkPPRenderPassSetup(VulkanFrameBuffer* fb, const VkPPRenderPassKey& key);
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DescriptorLayout;
 	std::unique_ptr<VulkanPipelineLayout> PipelineLayout;
@@ -108,12 +111,14 @@ private:
 	void CreatePipelineLayout(const VkPPRenderPassKey& key);
 	void CreatePipeline(const VkPPRenderPassKey& key);
 	void CreateRenderPass(const VkPPRenderPassKey& key);
+
+	VulkanFrameBuffer* fb = nullptr;
 };
 
 class VkRenderPassManager
 {
 public:
-	VkRenderPassManager();
+	VkRenderPassManager(VulkanFrameBuffer* fb);
 	~VkRenderPassManager();
 
 	void RenderBuffersReset();
@@ -126,6 +131,8 @@ public:
 	VkPPRenderPassSetup* GetPPRenderPass(const VkPPRenderPassKey& key);
 
 private:
+	VulkanFrameBuffer* fb = nullptr;
+
 	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 	std::vector<std::unique_ptr<VulkanPipelineLayout>> PipelineLayouts;
 	std::vector<VkVertexFormat> VertexFormats;

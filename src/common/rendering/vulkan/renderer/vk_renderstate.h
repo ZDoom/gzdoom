@@ -11,13 +11,14 @@
 #include "hw_renderstate.h"
 #include "hw_material.h"
 
+class VulkanFrameBuffer;
 class VkRenderPassSetup;
 class VkTextureImage;
 
 class VkRenderState : public FRenderState
 {
 public:
-	VkRenderState();
+	VkRenderState(VulkanFrameBuffer* fb);
 	virtual ~VkRenderState() = default;
 
 	// Draw commands
@@ -65,6 +66,8 @@ protected:
 
 	void BeginRenderPass(VulkanCommandBuffer *cmdbuffer);
 	void WaitForStreamBuffers();
+
+	VulkanFrameBuffer* fb = nullptr;
 
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;

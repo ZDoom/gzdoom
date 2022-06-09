@@ -3,10 +3,12 @@
 
 #include "vulkan/system/vk_objects.h"
 
+class VulkanFrameBuffer;
+
 class VkDescriptorSetManager
 {
 public:
-	VkDescriptorSetManager();
+	VkDescriptorSetManager(VulkanFrameBuffer* fb);
 	~VkDescriptorSetManager();
 
 	void Init();
@@ -31,6 +33,8 @@ private:
 	void CreateDynamicSet();
 	void CreateFixedSet();
 	void CreateNullTexture();
+
+	VulkanFrameBuffer* fb = nullptr;
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
 	std::unique_ptr<VulkanDescriptorSetLayout> FixedSetLayout;

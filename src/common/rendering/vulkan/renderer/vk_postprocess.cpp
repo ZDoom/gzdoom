@@ -42,7 +42,7 @@
 
 EXTERN_CVAR(Int, gl_dither_bpc)
 
-VkPostprocess::VkPostprocess()
+VkPostprocess::VkPostprocess(VulkanFrameBuffer* fb) : fb(fb)
 {
 }
 
@@ -52,7 +52,6 @@ VkPostprocess::~VkPostprocess()
 
 void VkPostprocess::SetActiveRenderTarget()
 {
-	auto fb = GetVulkanFrameBuffer();
 	auto buffers = fb->GetBuffers();
 
 	VkImageTransition imageTransition;
@@ -64,11 +63,10 @@ void VkPostprocess::SetActiveRenderTarget()
 
 void VkPostprocess::PostProcessScene(int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D)
 {
-	auto fb = GetVulkanFrameBuffer();
 	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
 	int sceneHeight = fb->GetBuffers()->GetSceneHeight();
 
-	VkPPRenderState renderstate;
+	VkPPRenderState renderstate(fb);
 
 	hw_postprocess.Pass1(&renderstate, fixedcm, sceneWidth, sceneHeight);
 	SetActiveRenderTarget();
@@ -78,8 +76,6 @@ void VkPostprocess::PostProcessScene(int fixedcm, float flash, const std::functi
 
 void VkPostprocess::BlitSceneToPostprocess()
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	fb->GetRenderState()->EndRenderPass();
 
 	auto buffers = fb->GetBuffers();
@@ -137,7 +133,6 @@ void VkPostprocess::BlitSceneToPostprocess()
 
 void VkPostprocess::ImageTransitionScene(bool undefinedSrcLayout)
 {
-	auto fb = GetVulkanFrameBuffer();
 	auto buffers = fb->GetBuffers();
 
 	VkImageTransition imageTransition;
@@ -150,8 +145,6 @@ void VkPostprocess::ImageTransitionScene(bool undefinedSrcLayout)
 
 void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout finallayout)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	fb->GetRenderState()->EndRenderPass();
 
 	auto srcimage = &fb->GetBuffers()->PipelineImage[mCurrentPipelineImage];
@@ -187,9 +180,7 @@ void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout f
 
 void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool screenshot)
 {
-	auto fb = GetVulkanFrameBuffer();
-
-	VkPPRenderState renderstate;
+	VkPPRenderState renderstate(fb);
 
 	if (!screenshot) // Already applied as we are actually copying the last frame here (GetScreenshotBuffer is called after swap)
 		hw_postprocess.customShaders.Run(&renderstate, "screen");
@@ -248,11 +239,10 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 
 void VkPostprocess::AmbientOccludeScene(float m5)
 {
-	auto fb = GetVulkanFrameBuffer();
 	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
 	int sceneHeight = fb->GetBuffers()->GetSceneHeight();
 
-	VkPPRenderState renderstate;
+	VkPPRenderState renderstate(fb);
 	hw_postprocess.ssao.Render(&renderstate, m5, sceneWidth, sceneHeight);
 
 	ImageTransitionScene(false);
@@ -260,11 +250,10 @@ void VkPostprocess::AmbientOccludeScene(float m5)
 
 void VkPostprocess::BlurScene(float gameinfobluramount)
 {
-	auto fb = GetVulkanFrameBuffer();
 	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
 	int sceneHeight = fb->GetBuffers()->GetSceneHeight();
 
-	VkPPRenderState renderstate;
+	VkPPRenderState renderstate(fb);
 
 	auto vrmode = VRMode::GetVRMode(true);
 	int eyeCount = vrmode->mEyeCount;
@@ -284,10 +273,9 @@ void VkPostprocess::UpdateShadowMap()
 {
 	if (screen->mShadowMap.PerformUpdate())
 	{
-		VkPPRenderState renderstate;
+		VkPPRenderState renderstate(fb);
 		hw_postprocess.shadowmap.Update(&renderstate);
 
-		auto fb = GetVulkanFrameBuffer();
 		auto buffers = fb->GetBuffers();
 
 		VkImageTransition imageTransition;
@@ -306,14 +294,14 @@ std::unique_ptr<VulkanDescriptorSet> VkPostprocess::AllocateDescriptorSet(Vulkan
 		if (descriptors)
 			return descriptors;
 
-		GetVulkanFrameBuffer()->GetCommands()->FrameDeleteList.DescriptorPools.push_back(std::move(mDescriptorPool));
+		fb->GetCommands()->FrameDeleteList.DescriptorPools.push_back(std::move(mDescriptorPool));
 	}
 
 	DescriptorPoolBuilder builder;
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200);
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4);
 	builder.setMaxSets(100);
-	mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
+	mDescriptorPool = builder.create(fb->device);
 	mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
 
 	return mDescriptorPool->allocate(layout);

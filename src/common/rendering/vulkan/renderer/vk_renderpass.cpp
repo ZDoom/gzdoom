@@ -35,7 +35,7 @@
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
 
-VkRenderPassManager::VkRenderPassManager()
+VkRenderPassManager::VkRenderPassManager(VulkanFrameBuffer* fb) : fb(fb)
 {
 }
 
@@ -53,7 +53,7 @@ VkRenderPassSetup *VkRenderPassManager::GetRenderPass(const VkRenderPassKey &key
 {
 	auto &item = RenderPassSetup[key];
 	if (!item)
-		item.reset(new VkRenderPassSetup(key));
+		item.reset(new VkRenderPassSetup(fb, key));
 	return item.get();
 }
 
@@ -109,7 +109,7 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 	if (layout)
 		return layout.get();
 
-	auto descriptors = GetVulkanFrameBuffer()->GetDescriptorSetManager();
+	auto descriptors = fb->GetDescriptorSetManager();
 
 	PipelineLayoutBuilder builder;
 	builder.addSetLayout(descriptors->GetFixedSetLayout());
@@ -117,7 +117,7 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 	if (numLayers != 0)
 		builder.addSetLayout(descriptors->GetTextureSetLayout(numLayers));
 	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
-	layout = builder.create(GetVulkanFrameBuffer()->device);
+	layout = builder.create(fb->device);
 	layout->SetDebugName("VkRenderPassManager.PipelineLayout");
 	return layout.get();
 }
@@ -126,19 +126,19 @@ VkPPRenderPassSetup* VkRenderPassManager::GetPPRenderPass(const VkPPRenderPassKe
 {
 	auto& passSetup = PPRenderPassSetup[key];
 	if (!passSetup)
-		passSetup.reset(new VkPPRenderPassSetup(key));
+		passSetup.reset(new VkPPRenderPassSetup(fb, key));
 	return passSetup.get();
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkRenderPassSetup::VkRenderPassSetup(const VkRenderPassKey &key) : PassKey(key)
+VkRenderPassSetup::VkRenderPassSetup(VulkanFrameBuffer* fb, const VkRenderPassKey &key) : PassKey(key), fb(fb)
 {
 }
 
 std::unique_ptr<VulkanRenderPass> VkRenderPassSetup::CreateRenderPass(int clearTargets)
 {
-	auto buffers = GetVulkanFrameBuffer()->GetBuffers();
+	auto buffers = fb->GetBuffers();
 
 	VkFormat drawBufferFormats[] = { VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM, buffers->SceneNormalFormat };
 
@@ -184,7 +184,7 @@ std::unique_ptr<VulkanRenderPass> VkRenderPassSetup::CreateRenderPass(int clearT
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 	}
-	auto renderpass = builder.create(GetVulkanFrameBuffer()->device);
+	auto renderpass = builder.create(fb->device);
 	renderpass->SetDebugName("VkRenderPassSetup.RenderPass");
 	return renderpass;
 }
@@ -206,7 +206,6 @@ VulkanPipeline *VkRenderPassSetup::GetPipeline(const VkPipelineKey &key)
 
 std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipelineKey &key)
 {
-	auto fb = GetVulkanFrameBuffer();
 	GraphicsPipelineBuilder builder;
 
 	VkShaderProgram *program;
@@ -297,7 +296,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkPPRenderPassSetup::VkPPRenderPassSetup(const VkPPRenderPassKey& key)
+VkPPRenderPassSetup::VkPPRenderPassSetup(VulkanFrameBuffer* fb, const VkPPRenderPassKey& key) : fb(fb)
 {
 	CreateDescriptorLayout(key);
 	CreatePipelineLayout(key);
@@ -316,7 +315,7 @@ void VkPPRenderPassSetup::CreateDescriptorLayout(const VkPPRenderPassKey& key)
 		builder.addBinding(LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 		builder.addBinding(LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
-	DescriptorLayout = builder.create(GetVulkanFrameBuffer()->device);
+	DescriptorLayout = builder.create(fb->device);
 	DescriptorLayout->SetDebugName("VkPPRenderPassSetup.DescriptorLayout");
 }
 
@@ -326,7 +325,7 @@ void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey& key)
 	builder.addSetLayout(DescriptorLayout.get());
 	if (key.Uniforms > 0)
 		builder.addPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, 0, key.Uniforms);
-	PipelineLayout = builder.create(GetVulkanFrameBuffer()->device);
+	PipelineLayout = builder.create(fb->device);
 	PipelineLayout->SetDebugName("VkPPRenderPassSetup.PipelineLayout");
 }
 
@@ -355,7 +354,7 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey& key)
 	builder.setRasterizationSamples(key.Samples);
 	builder.setLayout(PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());
-	Pipeline = builder.create(GetVulkanFrameBuffer()->device);
+	Pipeline = builder.create(fb->device);
 	Pipeline->SetDebugName("VkPPRenderPassSetup.Pipeline");
 }
 
@@ -369,7 +368,7 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
 	if (key.StencilTest)
 	{
 		builder.addDepthStencilAttachment(
-			GetVulkanFrameBuffer()->GetBuffers()->SceneDepthStencilFormat, key.Samples,
+			fb->GetBuffers()->SceneDepthStencilFormat, key.Samples,
 			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
@@ -395,6 +394,6 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
 			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT);
 	}
 
-	RenderPass = builder.create(GetVulkanFrameBuffer()->device);
+	RenderPass = builder.create(fb->device);
 	RenderPass->SetDebugName("VkPPRenderPassSetup.RenderPass");
 }

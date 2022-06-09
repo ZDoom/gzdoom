@@ -8,10 +8,13 @@ class VkPPRenderPassSetup;
 class VkPPShader;
 class VkPPTexture;
 class VkTextureImage;
+class VulkanFrameBuffer;
 
 class VkPPRenderState : public PPRenderState
 {
 public:
+	VkPPRenderState(VulkanFrameBuffer* fb);
+
 	void PushGroup(const FString &name) override;
 	void PopGroup() override;
 
@@ -27,4 +30,6 @@ private:
 	VkPPTexture *GetVkTexture(PPTexture *texture);
 
 	VkTextureImage *GetTexture(const PPTextureType &type, PPTexture *tex);
+
+	VulkanFrameBuffer* fb = nullptr;
 };

@@ -24,10 +24,8 @@
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_commandbuffer.h"
 
-VkPPTexture::VkPPTexture(PPTexture *texture)
+VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	VkFormat format;
 	int pixelsize;
 	switch (texture->Format)
@@ -97,12 +95,9 @@ VkPPTexture::VkPPTexture(PPTexture *texture)
 
 VkPPTexture::~VkPPTexture()
 {
-	if (auto fb = GetVulkanFrameBuffer())
-	{
-		if (TexImage.Image) fb->GetCommands()->FrameDeleteList.Images.push_back(std::move(TexImage.Image));
-		if (TexImage.View) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.View));
-		if (TexImage.DepthOnlyView) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.DepthOnlyView));
-		if (TexImage.PPFramebuffer) fb->GetCommands()->FrameDeleteList.Framebuffers.push_back(std::move(TexImage.PPFramebuffer));
-		if (Staging) fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(Staging));
-	}
+	if (TexImage.Image) fb->GetCommands()->FrameDeleteList.Images.push_back(std::move(TexImage.Image));
+	if (TexImage.View) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.View));
+	if (TexImage.DepthOnlyView) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.DepthOnlyView));
+	if (TexImage.PPFramebuffer) fb->GetCommands()->FrameDeleteList.Framebuffers.push_back(std::move(TexImage.PPFramebuffer));
+	if (Staging) fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(Staging));
 }

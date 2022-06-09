@@ -798,7 +798,8 @@ set (VULKAN_SOURCES
 	common/rendering/vulkan/system/vk_builders.cpp
 	common/rendering/vulkan/system/vk_framebuffer.cpp
 	common/rendering/vulkan/system/vk_commandbuffer.cpp
-	common/rendering/vulkan/system/vk_buffers.cpp
+	common/rendering/vulkan/system/vk_hwbuffer.cpp
+	common/rendering/vulkan/system/vk_buffer.cpp
 	common/rendering/vulkan/renderer/vk_renderstate.cpp
 	common/rendering/vulkan/renderer/vk_renderpass.cpp
 	common/rendering/vulkan/renderer/vk_streambuffer.cpp
@@ -813,6 +814,7 @@ set (VULKAN_SOURCES
 	common/rendering/vulkan/textures/vk_pptexture.cpp
 	common/rendering/vulkan/textures/vk_imagetransition.cpp
 	common/rendering/vulkan/textures/vk_renderbuffers.cpp
+	common/rendering/vulkan/textures/vk_texture.cpp
 	common/rendering/vulkan/thirdparty/volk/volk.c
 	common/rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp
 )

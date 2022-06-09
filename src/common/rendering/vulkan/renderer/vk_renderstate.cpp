@@ -218,7 +218,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	// Find a pipeline that matches our state
 	VkPipelineKey pipelineKey;
 	pipelineKey.DrawType = dt;
-	pipelineKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
+	pipelineKey.VertexFormat = static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	pipelineKey.RenderStyle = mRenderStyle;
 	pipelineKey.DepthTest = mDepthTest;
 	pipelineKey.DepthWrite = mDepthTest && mDepthWrite;
@@ -342,7 +342,7 @@ void VkRenderState::ApplyStreamData()
 {
 	auto passManager = fb->GetRenderPassManager();
 
-	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
+	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->Source())
 		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->GetShaderSpeed() / 1000.);
@@ -414,7 +414,7 @@ void VkRenderState::ApplyVertexBuffers()
 {
 	if ((mVertexBuffer != mLastVertexBuffer || mVertexOffsets[0] != mLastVertexOffsets[0] || mVertexOffsets[1] != mLastVertexOffsets[1]) && mVertexBuffer)
 	{
-		auto vkbuf = static_cast<VKVertexBuffer*>(mVertexBuffer);
+		auto vkbuf = static_cast<VkHardwareVertexBuffer*>(mVertexBuffer);
 		const VkVertexFormat *format = fb->GetRenderPassManager()->GetVertexFormat(vkbuf->VertexFormat);
 		VkBuffer vertexBuffers[2] = { vkbuf->mBuffer->buffer, vkbuf->mBuffer->buffer };
 		VkDeviceSize offsets[] = { mVertexOffsets[0] * format->Stride, mVertexOffsets[1] * format->Stride };
@@ -426,7 +426,7 @@ void VkRenderState::ApplyVertexBuffers()
 
 	if (mIndexBuffer != mLastIndexBuffer && mIndexBuffer)
 	{
-		mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+		mCommandBuffer->bindIndexBuffer(static_cast<VkHardwareIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
 		mLastIndexBuffer = mIndexBuffer;
 	}
 }

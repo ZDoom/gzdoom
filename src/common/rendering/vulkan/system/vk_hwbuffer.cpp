@@ -20,7 +20,7 @@
 **
 */
 
-#include "vk_buffers.h"
+#include "vk_hwbuffer.h"
 #include "vk_builders.h"
 #include "vk_framebuffer.h"
 #include "vk_commandbuffer.h"
@@ -28,16 +28,16 @@
 #include "vulkan/renderer/vk_descriptorset.h"
 #include "engineerrors.h"
 
-VKBuffer *VKBuffer::First = nullptr;
+VkHardwareBuffer *VkHardwareBuffer::First = nullptr;
 
-VKBuffer::VKBuffer()
+VkHardwareBuffer::VkHardwareBuffer()
 {
 	Next = First;
 	First = this;
 	if (Next) Next->Prev = this;
 }
 
-VKBuffer::~VKBuffer()
+VkHardwareBuffer::~VkHardwareBuffer()
 {
 	if (Next) Next->Prev = Prev;
 	if (Prev) Prev->Next = Next;
@@ -56,13 +56,13 @@ VKBuffer::~VKBuffer()
 	}
 }
 
-void VKBuffer::ResetAll()
+void VkHardwareBuffer::ResetAll()
 {
-	for (VKBuffer *cur = VKBuffer::First; cur; cur = cur->Next)
+	for (VkHardwareBuffer *cur = VkHardwareBuffer::First; cur; cur = cur->Next)
 		cur->Reset();
 }
 
-void VKBuffer::Reset()
+void VkHardwareBuffer::Reset()
 {
 	if (mBuffer && map)
 		mBuffer->Unmap();
@@ -70,7 +70,7 @@ void VKBuffer::Reset()
 	mStaging.reset();
 }
 
-void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
+void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 {
 	auto fb = GetVulkanFrameBuffer();
 
@@ -152,7 +152,7 @@ void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 	buffersize = size;
 }
 
-void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
+void VkHardwareBuffer::SetSubData(size_t offset, size_t size, const void *data)
 {
 	size = max(size, (size_t)16); // For supporting zero byte buffers
 
@@ -173,7 +173,7 @@ void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 	}
 }
 
-void VKBuffer::Resize(size_t newsize)
+void VkHardwareBuffer::Resize(size_t newsize)
 {
 	newsize = max(newsize, (size_t)16); // For supporting zero byte buffers
 
@@ -204,13 +204,13 @@ void VKBuffer::Resize(size_t newsize)
 	map = mBuffer->Map(0, newsize);
 }
 
-void VKBuffer::Map()
+void VkHardwareBuffer::Map()
 {
 	if (!mPersistent)
 		map = mBuffer->Map(0, mBuffer->size);
 }
 
-void VKBuffer::Unmap()
+void VkHardwareBuffer::Unmap()
 {
 	if (!mPersistent)
 	{
@@ -219,7 +219,7 @@ void VKBuffer::Unmap()
 	}
 }
 
-void *VKBuffer::Lock(unsigned int size)
+void *VkHardwareBuffer::Lock(unsigned int size)
 {
 	size = max(size, (unsigned int)16); // For supporting zero byte buffers
 
@@ -237,7 +237,7 @@ void *VKBuffer::Lock(unsigned int size)
 	return map;
 }
 
-void VKBuffer::Unlock()
+void VkHardwareBuffer::Unlock()
 {
 	if (!mBuffer)
 	{
@@ -254,7 +254,7 @@ void VKBuffer::Unlock()
 
 /////////////////////////////////////////////////////////////////////////////
 
-void VKVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
+void VkHardwareVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
 {
 	VertexFormat = GetVulkanFrameBuffer()->GetRenderPassManager()->GetVertexFormat(numBindingPoints, numAttributes, stride, attrs);
 }
@@ -262,7 +262,7 @@ void VKVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 /////////////////////////////////////////////////////////////////////////////
 
 
-void VKDataBuffer::BindRange(FRenderState* state, size_t start, size_t length)
+void VkHardwareDataBuffer::BindRange(FRenderState* state, size_t start, size_t length)
 {
 	static_cast<VkRenderState*>(state)->Bind(bindingpoint, (uint32_t)start);
 }

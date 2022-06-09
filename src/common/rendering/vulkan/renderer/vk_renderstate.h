@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vulkan/system/vk_buffers.h"
+#include "vulkan/system/vk_hwbuffer.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/renderer/vk_streambuffer.h"

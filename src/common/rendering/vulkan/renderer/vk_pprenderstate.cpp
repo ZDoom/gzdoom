@@ -118,7 +118,7 @@ void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDes
 	beginInfo.setFramebuffer(framebuffer);
 	beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(screen->mVertexData->GetBufferObjects().first)->mBuffer->buffer };
+	VkBuffer vertexBuffers[] = { static_cast<VkHardwareVertexBuffer*>(screen->mVertexData->GetBufferObjects().first)->mBuffer->buffer };
 	VkDeviceSize offsets[] = { 0 };
 
 	cmdbuffer->beginRenderPass(beginInfo);

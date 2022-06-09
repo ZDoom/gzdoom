@@ -6,6 +6,8 @@
 
 struct FRenderViewpoint;
 class VkSamplerManager;
+class VkBufferManager;
+class VkTextureManager;
 class VkShaderManager;
 class VkCommandBufferManager;
 class VkDescriptorSetManager;
@@ -13,7 +15,7 @@ class VkRenderPassManager;
 class VkRaytrace;
 class VkRenderState;
 class VkStreamBuffer;
-class VKDataBuffer;
+class VkHardwareDataBuffer;
 class VkHardwareTexture;
 class VkRenderBuffers;
 class VkPostprocess;
@@ -30,6 +32,8 @@ public:
 	VkCommandBufferManager* GetCommands() { return mCommands.get(); }
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
 	VkSamplerManager *GetSamplerManager() { return mSamplerManager.get(); }
+	VkBufferManager* GetBufferManager() { return mBufferManager.get(); }
+	VkTextureManager* GetTextureManager() { return mTextureManager.get(); }
 	VkDescriptorSetManager* GetDescriptorSetManager() { return mDescriptorSetManager.get(); }
 	VkRenderPassManager *GetRenderPassManager() { return mRenderPassManager.get(); }
 	VkRaytrace* GetRaytrace() { return mRaytrace.get(); }
@@ -40,14 +44,14 @@ public:
 
 	unsigned int GetLightBufferBlockSize() const;
 
-	VKDataBuffer *ViewpointUBO = nullptr;
-	VKDataBuffer *LightBufferSSO = nullptr;
+	VkHardwareDataBuffer *ViewpointUBO = nullptr;
+	VkHardwareDataBuffer *LightBufferSSO = nullptr;
 	VkStreamBuffer *MatrixBuffer = nullptr;
 	VkStreamBuffer *StreamBuffer = nullptr;
 
-	VKDataBuffer *LightNodes = nullptr;
-	VKDataBuffer *LightLines = nullptr;
-	VKDataBuffer *LightList = nullptr;
+	VkHardwareDataBuffer *LightNodes = nullptr;
+	VkHardwareDataBuffer *LightLines = nullptr;
+	VkHardwareDataBuffer *LightList = nullptr;
 
 	std::unique_ptr<IIndexBuffer> FanToTrisIndexBuffer;
 
@@ -102,8 +106,10 @@ private:
 	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;
 
 	std::unique_ptr<VkCommandBufferManager> mCommands;
-	std::unique_ptr<VkShaderManager> mShaderManager;
+	std::unique_ptr<VkBufferManager> mBufferManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
+	std::unique_ptr<VkTextureManager> mTextureManager;
+	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkRenderBuffers> mScreenBuffers;
 	std::unique_ptr<VkRenderBuffers> mSaveBuffers;
 	std::unique_ptr<VkPostprocess> mPostprocess;

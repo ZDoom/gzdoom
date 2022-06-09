@@ -43,7 +43,7 @@
 #include "hw_lightbuffer.h"
 
 #include "vk_framebuffer.h"
-#include "vk_buffers.h"
+#include "vk_hwbuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/renderer/vk_descriptorset.h"
@@ -54,9 +54,11 @@
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_hwtexture.h"
+#include "vulkan/textures/vk_texture.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_swapchain.h"
 #include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/system/vk_buffer.h"
 #include "engineerrors.h"
 #include "c_dispatch.h"
 
@@ -85,7 +87,7 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 
 	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
 	VkHardwareTexture::ResetAll();
-	VKBuffer::ResetAll();
+	VkHardwareBuffer::ResetAll();
 	PPResource::ResetAll();
 
 	delete MatrixBuffer;
@@ -124,6 +126,10 @@ void VulkanFrameBuffer::InitializeState()
 
 	mCommands.reset(new VkCommandBufferManager(this));
 
+	mSamplerManager.reset(new VkSamplerManager(this));
+	mTextureManager.reset(new VkTextureManager(this));
+	mBufferManager.reset(new VkBufferManager(this));
+
 	mScreenBuffers.reset(new VkRenderBuffers(this));
 	mSaveBuffers.reset(new VkRenderBuffers(this));
 	mActiveRenderBuffers = mScreenBuffers.get();
@@ -145,7 +151,6 @@ void VulkanFrameBuffer::InitializeState()
 	StreamBuffer = new VkStreamBuffer(this, sizeof(StreamUBO), 300);
 
 	mShaderManager.reset(new VkShaderManager(device));
-	mSamplerManager.reset(new VkSamplerManager(this));
 	mDescriptorSetManager->Init();
 #ifdef __APPLE__
 	mRenderState.reset(new VkRenderStateMolten(this));
@@ -263,17 +268,17 @@ FMaterial* VulkanFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
 
 IVertexBuffer *VulkanFrameBuffer::CreateVertexBuffer()
 {
-	return new VKVertexBuffer();
+	return new VkHardwareVertexBuffer();
 }
 
 IIndexBuffer *VulkanFrameBuffer::CreateIndexBuffer()
 {
-	return new VKIndexBuffer();
+	return new VkHardwareIndexBuffer();
 }
 
 IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize)
 {
-	auto buffer = new VKDataBuffer(bindingpoint, ssbo, needsresize);
+	auto buffer = new VkHardwareDataBuffer(bindingpoint, ssbo, needsresize);
 
 	switch (bindingpoint)
 	{

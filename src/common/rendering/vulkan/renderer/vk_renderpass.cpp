@@ -30,7 +30,7 @@
 #include "vulkan/shaders/vk_ppshader.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
-#include "vulkan/system/vk_buffers.h"
+#include "vulkan/system/vk_hwbuffer.h"
 #include "flatvertices.h"
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"

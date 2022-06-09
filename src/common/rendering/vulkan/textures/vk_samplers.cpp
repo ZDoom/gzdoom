@@ -159,7 +159,7 @@ VulkanSampler* VkSamplerManager::Get(PPFilterMode filter, PPWrapMode wrap)
 	builder.setMinFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	builder.setMagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	builder.setAddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT);
-	sampler = builder.create(GetVulkanFrameBuffer()->device);
+	sampler = builder.create(fb->device);
 	sampler->SetDebugName("VkPostprocess.mSamplers");
 	return sampler.get();
 }

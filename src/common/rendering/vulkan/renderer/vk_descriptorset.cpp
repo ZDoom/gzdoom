@@ -35,7 +35,7 @@
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
 
-VkDescriptorSetManager::VkDescriptorSetManager()
+VkDescriptorSetManager::VkDescriptorSetManager(VulkanFrameBuffer* fb) : fb(fb)
 {
 }
 
@@ -56,13 +56,13 @@ void VkDescriptorSetManager::CreateDynamicSet()
 	builder.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	DynamicSetLayout = builder.create(GetVulkanFrameBuffer()->device);
+	DynamicSetLayout = builder.create(fb->device);
 	DynamicSetLayout->SetDebugName("VkDescriptorSetManager.DynamicSetLayout");
 
 	DescriptorPoolBuilder poolbuilder;
 	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3);
 	poolbuilder.setMaxSets(1);
-	DynamicDescriptorPool = poolbuilder.create(GetVulkanFrameBuffer()->device);
+	DynamicDescriptorPool = poolbuilder.create(fb->device);
 	DynamicDescriptorPool->SetDebugName("VkDescriptorSetManager.DynamicDescriptorPool");
 
 	DynamicSet = DynamicDescriptorPool->allocate(DynamicSetLayout.get());
@@ -72,8 +72,6 @@ void VkDescriptorSetManager::CreateDynamicSet()
 
 void VkDescriptorSetManager::UpdateDynamicSet()
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	WriteDescriptors update;
 	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
 	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
@@ -87,18 +85,18 @@ void VkDescriptorSetManager::CreateFixedSet()
 	builder.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		builder.addBinding(3, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	FixedSetLayout = builder.create(GetVulkanFrameBuffer()->device);
+	FixedSetLayout = builder.create(fb->device);
 	FixedSetLayout->SetDebugName("VkDescriptorSetManager.FixedSetLayout");
 
 	DescriptorPoolBuilder poolbuilder;
 	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1);
 	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2);
-	if (GetVulkanFrameBuffer()->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1);
 	poolbuilder.setMaxSets(1);
-	FixedDescriptorPool = poolbuilder.create(GetVulkanFrameBuffer()->device);
+	FixedDescriptorPool = poolbuilder.create(fb->device);
 	FixedDescriptorPool->SetDebugName("VkDescriptorSetManager.FixedDescriptorPool");
 
 	FixedSet = FixedDescriptorPool->allocate(FixedSetLayout.get());
@@ -108,8 +106,6 @@ void VkDescriptorSetManager::CreateFixedSet()
 
 void VkDescriptorSetManager::UpdateFixedSet()
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	WriteDescriptors update;
 	update.addCombinedImageSampler(FixedSet.get(), 0, fb->GetBuffers()->Shadowmap.View.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.addCombinedImageSampler(FixedSet.get(), 1, fb->GetBuffers()->Lightmap.View.get(), fb->GetBuffers()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -121,16 +117,14 @@ void VkDescriptorSetManager::UpdateFixedSet()
 
 void VkDescriptorSetManager::TextureSetPoolReset()
 {
-	if (auto fb = GetVulkanFrameBuffer())
-	{
-		auto& deleteList = fb->GetCommands()->FrameDeleteList;
+	auto& deleteList = fb->GetCommands()->FrameDeleteList;
 
-		for (auto& desc : TextureDescriptorPools)
-		{
-			deleteList.DescriptorPools.push_back(std::move(desc));
-		}
-		deleteList.Descriptors.push_back(std::move(NullTextureDescriptorSet));
+	for (auto& desc : TextureDescriptorPools)
+	{
+		deleteList.DescriptorPools.push_back(std::move(desc));
 	}
+	deleteList.Descriptors.push_back(std::move(NullTextureDescriptorSet));
+
 	NullTextureDescriptorSet.reset();
 	TextureDescriptorPools.clear();
 	TextureDescriptorSetsLeft = 0;
@@ -145,8 +139,6 @@ void VkDescriptorSetManager::FilterModeChanged()
 
 void VkDescriptorSetManager::CreateNullTexture()
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	ImageBuilder imgbuilder;
 	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
 	imgbuilder.setSize(1, 1);
@@ -170,7 +162,6 @@ VulkanDescriptorSet* VkDescriptorSetManager::GetNullTextureDescriptorSet()
 	{
 		NullTextureDescriptorSet = AllocateTextureDescriptorSet(SHADER_MIN_REQUIRED_TEXTURE_LAYERS);
 
-		auto fb = GetVulkanFrameBuffer();
 		WriteDescriptors update;
 		for (int i = 0; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
 		{
@@ -192,7 +183,7 @@ std::unique_ptr<VulkanDescriptorSet> VkDescriptorSetManager::AllocateTextureDesc
 		DescriptorPoolBuilder builder;
 		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, TextureDescriptorsLeft);
 		builder.setMaxSets(TextureDescriptorSetsLeft);
-		TextureDescriptorPools.push_back(builder.create(GetVulkanFrameBuffer()->device));
+		TextureDescriptorPools.push_back(builder.create(fb->device));
 		TextureDescriptorPools.back()->SetDebugName("VkDescriptorSetManager.TextureDescriptorPool");
 	}
 
@@ -215,7 +206,7 @@ VulkanDescriptorSetLayout* VkDescriptorSetManager::GetTextureSetLayout(int numLa
 	{
 		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
-	layout = builder.create(GetVulkanFrameBuffer()->device);
+	layout = builder.create(fb->device);
 	layout->SetDebugName("VkDescriptorSetManager.TextureSetLayout");
 	return layout.get();
 }

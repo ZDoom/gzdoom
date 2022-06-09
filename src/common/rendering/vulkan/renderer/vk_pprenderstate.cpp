@@ -32,19 +32,22 @@
 #include "vulkan/renderer/vk_renderstate.h"
 #include "flatvertices.h"
 
+VkPPRenderState::VkPPRenderState(VulkanFrameBuffer* fb) : fb(fb)
+{
+}
+
 void VkPPRenderState::PushGroup(const FString &name)
 {
-	GetVulkanFrameBuffer()->GetCommands()->PushGroup(name);
+	fb->GetCommands()->PushGroup(name);
 }
 
 void VkPPRenderState::PopGroup()
 {
-	GetVulkanFrameBuffer()->GetCommands()->PopGroup();
+	fb->GetCommands()->PopGroup();
 }
 
 void VkPPRenderState::Draw()
 {
-	auto fb = GetVulkanFrameBuffer();
 	auto pp = fb->GetPostprocess();
 
 	fb->GetRenderState()->EndRenderPass();
@@ -59,7 +62,7 @@ void VkPPRenderState::Draw()
 	if (Output.Type == PPTextureType::PPTexture)
 		key.OutputFormat = GetVkTexture(Output.Texture)->Format;
 	else if (Output.Type == PPTextureType::SwapChain)
-		key.OutputFormat = GetVulkanFrameBuffer()->GetCommands()->swapChain->swapChainFormat.format;
+		key.OutputFormat = fb->GetCommands()->swapChain->swapChainFormat.format;
 	else if (Output.Type == PPTextureType::ShadowMap)
 		key.OutputFormat = VK_FORMAT_R32_SFLOAT;
 	else
@@ -93,7 +96,6 @@ void VkPPRenderState::Draw()
 
 void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize, bool stencilTest)
 {
-	auto fb = GetVulkanFrameBuffer();
 	auto cmdbuffer = fb->GetCommands()->GetDrawCommands();
 
 	VkViewport viewport = { };
@@ -135,7 +137,6 @@ void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDes
 
 VulkanDescriptorSet *VkPPRenderState::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers)
 {
-	auto fb = GetVulkanFrameBuffer();
 	auto descriptors = fb->GetPostprocess()->AllocateDescriptorSet(passSetup->DescriptorLayout.get());
 	descriptors->SetDebugName("VkPostprocess.descriptors");
 
@@ -169,8 +170,6 @@ VulkanDescriptorSet *VkPPRenderState::GetInput(VkPPRenderPassSetup *passSetup, c
 
 VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, bool stencilTest, int &framebufferWidth, int &framebufferHeight)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	VkTextureImage *tex = GetTexture(output.Type, output.Texture);
 
 	VkImageView view;
@@ -206,7 +205,7 @@ VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, co
 		builder.addAttachment(view);
 		if (stencilTest)
 			builder.addAttachment(fb->GetBuffers()->SceneDepthStencil.View.get());
-		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
+		framebuffer = builder.create(fb->device);
 	}
 
 	framebufferWidth = w;
@@ -216,8 +215,6 @@ VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, co
 
 VkTextureImage *VkPPRenderState::GetTexture(const PPTextureType &type, PPTexture *pptexture)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	if (type == PPTextureType::CurrentPipelineTexture || type == PPTextureType::NextPipelineTexture)
 	{
 		int idx = fb->GetPostprocess()->mCurrentPipelineImage;
@@ -265,13 +262,13 @@ VkTextureImage *VkPPRenderState::GetTexture(const PPTextureType &type, PPTexture
 VkPPShader *VkPPRenderState::GetVkShader(PPShader *shader)
 {
 	if (!shader->Backend)
-		shader->Backend = std::make_unique<VkPPShader>(shader);
+		shader->Backend = std::make_unique<VkPPShader>(fb, shader);
 	return static_cast<VkPPShader*>(shader->Backend.get());
 }
 
 VkPPTexture *VkPPRenderState::GetVkTexture(PPTexture *texture)
 {
 	if (!texture->Backend)
-		texture->Backend = std::make_unique<VkPPTexture>(texture);
+		texture->Backend = std::make_unique<VkPPTexture>(fb, texture);
 	return static_cast<VkPPTexture*>(texture->Backend.get());
 }

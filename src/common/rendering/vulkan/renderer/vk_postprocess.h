@@ -15,11 +15,12 @@ class FString;
 class VkPPShader;
 class VkPPTexture;
 class PipelineBarrier;
+class VulkanFrameBuffer;
 
 class VkPostprocess
 {
 public:
-	VkPostprocess();
+	VkPostprocess(VulkanFrameBuffer* fb);
 	~VkPostprocess();
 
 	void SetActiveRenderTarget();
@@ -41,6 +42,8 @@ private:
 	void NextEye(int eyeCount);
 
 	std::unique_ptr<VulkanDescriptorSet> AllocateDescriptorSet(VulkanDescriptorSetLayout *layout);
+
+	VulkanFrameBuffer* fb = nullptr;
 
 	std::unique_ptr<VulkanDescriptorPool> mDescriptorPool;
 	int mCurrentPipelineImage = 0;

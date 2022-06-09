@@ -5,11 +5,15 @@
 #include "vulkan/system/vk_objects.h"
 #include "vulkan/textures/vk_imagetransition.h"
 
+class VulkanFrameBuffer;
+
 class VkPPTexture : public PPTextureBackend
 {
 public:
-	VkPPTexture(PPTexture *texture);
+	VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture);
 	~VkPPTexture();
+
+	VulkanFrameBuffer* fb = nullptr;
 
 	VkTextureImage TexImage;
 	std::unique_ptr<VulkanBuffer> Staging;

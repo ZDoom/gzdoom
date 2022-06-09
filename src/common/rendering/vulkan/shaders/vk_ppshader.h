@@ -4,10 +4,12 @@
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "vulkan/system/vk_objects.h"
 
+class VulkanFrameBuffer;
+
 class VkPPShader : public PPShaderBackend
 {
 public:
-	VkPPShader(PPShader *shader);
+	VkPPShader(VulkanFrameBuffer* fb, PPShader *shader);
 
 	std::unique_ptr<VulkanShader> VertexShader;
 	std::unique_ptr<VulkanShader> FragmentShader;

@@ -29,7 +29,7 @@
 #include "vulkan/system/vk_commandbuffer.h"
 #include "hw_cvars.h"
 
-VkRenderBuffers::VkRenderBuffers()
+VkRenderBuffers::VkRenderBuffers(VulkanFrameBuffer* fb) : fb(fb)
 {
 }
 
@@ -39,7 +39,6 @@ VkRenderBuffers::~VkRenderBuffers()
 
 VkSampleCountFlagBits VkRenderBuffers::GetBestSampleCount()
 {
-	auto fb = GetVulkanFrameBuffer();
 	const auto &limits = fb->device->PhysicalDevice.Properties.limits;
 	VkSampleCountFlags deviceSampleCounts = limits.sampledImageColorSampleCounts & limits.sampledImageDepthSampleCounts & limits.sampledImageStencilSampleCounts;
 
@@ -66,7 +65,6 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 
 	if (width != mWidth || height != mHeight || mSamples != samples)
 	{
-		auto fb = GetVulkanFrameBuffer();
 		fb->GetRenderPassManager()->RenderBuffersReset();
 	}
 
@@ -88,8 +86,6 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 
 void VkRenderBuffers::CreatePipeline(int width, int height)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	for (int i = 0; i < NumPipelineImages; i++)
 	{
 		PipelineImage[i].reset();
@@ -117,8 +113,6 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 
 void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits samples)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	SceneColor.reset();
 	SceneDepthStencil.reset();
 	SceneNormal.reset();
@@ -139,8 +133,6 @@ void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits s
 
 void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagBits samples)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	ImageBuilder builder;
 	builder.setSize(width, height);
 	builder.setSamples(samples);
@@ -157,8 +149,6 @@ void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagB
 
 void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	ImageBuilder builder;
 	builder.setSize(width, height);
 	builder.setSamples(samples);
@@ -189,8 +179,6 @@ void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCou
 
 void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBits samples)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	ImageBuilder builder;
 	builder.setSize(width, height);
 	builder.setSamples(samples);
@@ -207,8 +195,6 @@ void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBit
 
 void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	ImageBuilder builder;
 	builder.setSize(width, height);
 	builder.setSamples(samples);
@@ -234,8 +220,6 @@ void VkRenderBuffers::CreateShadowmap()
 		return;
 
 	Shadowmap.reset();
-
-	auto fb = GetVulkanFrameBuffer();
 
 	ImageBuilder builder;
 	builder.setSize(gl_shadowmap_quality, 1024);
@@ -269,8 +253,6 @@ void VkRenderBuffers::CreateLightmapSampler()
 {
 	if (!Lightmap.Image)
 	{
-		auto fb = GetVulkanFrameBuffer();
-
 		ImageBuilder builder;
 		builder.setSize(1, 1);
 		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
@@ -291,8 +273,6 @@ void VkRenderBuffers::CreateLightmapSampler()
 
 	if (!LightmapSampler)
 	{
-		auto fb = GetVulkanFrameBuffer();
-
 		SamplerBuilder builder;
 		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
 		builder.setMinFilter(VK_FILTER_LINEAR);

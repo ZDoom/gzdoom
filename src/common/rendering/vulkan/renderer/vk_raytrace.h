@@ -4,9 +4,13 @@
 #include "vulkan/system/vk_objects.h"
 #include "hw_levelmesh.h"
 
+class VulkanFrameBuffer;
+
 class VkRaytrace
 {
 public:
+	VkRaytrace(VulkanFrameBuffer* fb);
+
 	void SetLevelMesh(hwrenderer::LevelMesh* mesh);
 
 	VulkanAccelerationStructure* GetAccelStruct();
@@ -17,6 +21,8 @@ private:
 	void CreateVertexAndIndexBuffers();
 	void CreateBottomLevelAccelerationStructure();
 	void CreateTopLevelAccelerationStructure();
+
+	VulkanFrameBuffer* fb = nullptr;
 
 	hwrenderer::LevelMesh* Mesh = nullptr;
 

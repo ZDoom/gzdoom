@@ -4,10 +4,12 @@
 #include "vulkan/system/vk_objects.h"
 #include "vulkan/textures/vk_imagetransition.h"
 
+class VulkanFrameBuffer;
+
 class VkRenderBuffers
 {
 public:
-	VkRenderBuffers();
+	VkRenderBuffers(VulkanFrameBuffer* fb);
 	~VkRenderBuffers();
 
 	void BeginFrame(int width, int height, int sceneWidth, int sceneHeight);
@@ -45,6 +47,8 @@ private:
 	void CreateShadowmap();
 	void CreateLightmapSampler();
 	VkSampleCountFlagBits GetBestSampleCount();
+
+	VulkanFrameBuffer* fb = nullptr;
 
 	int mWidth = 0;
 	int mHeight = 0;

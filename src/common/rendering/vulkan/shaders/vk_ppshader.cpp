@@ -25,10 +25,8 @@
 #include "vulkan/system/vk_builders.h"
 #include "filesystem.h"
 
-VkPPShader::VkPPShader(PPShader *shader)
+VkPPShader::VkPPShader(VulkanFrameBuffer* fb, PPShader *shader)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	FString prolog;
 	if (!shader->Uniforms.empty())
 		prolog = UniformBlockDecl::Create("Uniforms", shader->Uniforms, -1);

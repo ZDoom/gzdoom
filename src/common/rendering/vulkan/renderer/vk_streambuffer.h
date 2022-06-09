@@ -10,7 +10,7 @@ class VkMatrixBuffer;
 class VkStreamBufferWriter
 {
 public:
-	VkStreamBufferWriter();
+	VkStreamBufferWriter(VulkanFrameBuffer* fb);
 
 	bool Write(const StreamData& data);
 	void Reset();
@@ -27,7 +27,7 @@ private:
 class VkMatrixBufferWriter
 {
 public:
-	VkMatrixBufferWriter();
+	VkMatrixBufferWriter(VulkanFrameBuffer* fb);
 
 	bool Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled);
 	void Reset();
@@ -44,7 +44,7 @@ private:
 class VkStreamBuffer
 {
 public:
-	VkStreamBuffer(size_t structSize, size_t count);
+	VkStreamBuffer(VulkanFrameBuffer* fb, size_t structSize, size_t count);
 	~VkStreamBuffer();
 
 	uint32_t NextStreamDataBlock();

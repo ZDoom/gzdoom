@@ -25,11 +25,11 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/renderer/vk_streambuffer.h"
 
-VkStreamBuffer::VkStreamBuffer(size_t structSize, size_t count)
+VkStreamBuffer::VkStreamBuffer(VulkanFrameBuffer* fb, size_t structSize, size_t count)
 {
 	mBlockSize = static_cast<uint32_t>((structSize + screen->uniformblockalignment - 1) / screen->uniformblockalignment * screen->uniformblockalignment);
 
-	UniformBuffer = (VKDataBuffer*)GetVulkanFrameBuffer()->CreateDataBuffer(-1, false, false);
+	UniformBuffer = (VKDataBuffer*)fb->CreateDataBuffer(-1, false, false);
 	UniformBuffer->SetData(mBlockSize * count, nullptr, BufferUsageType::Persistent);
 }
 
@@ -51,9 +51,9 @@ uint32_t VkStreamBuffer::NextStreamDataBlock()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkStreamBufferWriter::VkStreamBufferWriter()
+VkStreamBufferWriter::VkStreamBufferWriter(VulkanFrameBuffer* fb)
 {
-	mBuffer = GetVulkanFrameBuffer()->StreamBuffer;
+	mBuffer = fb->StreamBuffer;
 }
 
 bool VkStreamBufferWriter::Write(const StreamData& data)
@@ -80,9 +80,9 @@ void VkStreamBufferWriter::Reset()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkMatrixBufferWriter::VkMatrixBufferWriter()
+VkMatrixBufferWriter::VkMatrixBufferWriter(VulkanFrameBuffer* fb)
 {
-	mBuffer = GetVulkanFrameBuffer()->MatrixBuffer;
+	mBuffer = fb->MatrixBuffer;
 	mIdentityMatrix.loadIdentity();
 }
 

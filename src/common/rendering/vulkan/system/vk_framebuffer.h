@@ -7,6 +7,7 @@
 struct FRenderViewpoint;
 class VkSamplerManager;
 class VkShaderManager;
+class VkCommandBufferManager;
 class VkDescriptorSetManager;
 class VkRenderPassManager;
 class VkRaytrace;
@@ -25,12 +26,8 @@ class VulkanFrameBuffer : public SystemBaseFrameBuffer
 
 public:
 	VulkanDevice *device;
-	std::unique_ptr<VulkanSwapChain> swapChain;
-	uint32_t presentImageIndex = 0xffffffff;
-	bool cur_vsync;
 
-	VulkanCommandBuffer *GetTransferCommands();
-	VulkanCommandBuffer *GetDrawCommands();
+	VkCommandBufferManager* GetCommands() { return mCommands.get(); }
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
 	VkSamplerManager *GetSamplerManager() { return mSamplerManager.get(); }
 	VkDescriptorSetManager* GetDescriptorSetManager() { return mDescriptorSetManager.get(); }
@@ -40,8 +37,6 @@ public:
 	VkPostprocess *GetPostprocess() { return mPostprocess.get(); }
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
 	FRenderState* RenderState() override;
-
-	void FlushCommands(bool finish, bool lastsubmit = false, bool uploadOnly = false);
 
 	unsigned int GetLightBufferBlockSize() const;
 
@@ -55,25 +50,6 @@ public:
 	VKDataBuffer *LightList = nullptr;
 
 	std::unique_ptr<IIndexBuffer> FanToTrisIndexBuffer;
-
-	class DeleteList
-	{
-	public:
-		std::vector<std::unique_ptr<VulkanImage>> Images;
-		std::vector<std::unique_ptr<VulkanImageView>> ImageViews;
-		std::vector<std::unique_ptr<VulkanFramebuffer>> Framebuffers;
-		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
-		std::vector<std::unique_ptr<VulkanAccelerationStructure>> AccelStructs;
-		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
-		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
-		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
-	} FrameDeleteList;
-
-	struct
-	{
-		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
-		size_t TotalSize = 0;
-	} FrameTextureUpload;
 
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
@@ -112,27 +88,20 @@ public:
 
 	TArray<uint8_t> GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma) override;
 
+	bool GetVSync() { return cur_vsync; }
 	void SetVSync(bool vsync) override;
 
 	void Draw2D() override;
 
-	void WaitForCommands(bool finish) override { WaitForCommands(finish, false); }
-	void WaitForCommands(bool finish, bool uploadOnly);
-
-	void PushGroup(const FString &name);
-	void PopGroup();
-	void UpdateGpuStats();
-	IntRect SetupTextureView(FCanvasTexture* tex);
-	void FinishTextureView(FCanvasTexture* tex);
+	void WaitForCommands(bool finish) override;
 
 private:
 	void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc) override;
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
 	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;
-	void DeleteFrameObjects(bool uploadOnly = false);
-	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit);
 
+	std::unique_ptr<VkCommandBufferManager> mCommands;
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
 	std::unique_ptr<VkRenderBuffers> mScreenBuffers;
@@ -141,35 +110,11 @@ private:
 	std::unique_ptr<VkDescriptorSetManager> mDescriptorSetManager;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 	std::unique_ptr<VkRaytrace> mRaytrace;
-	std::unique_ptr<VulkanCommandPool> mCommandPool;
-	std::unique_ptr<VulkanCommandBuffer> mTransferCommands;
 	std::unique_ptr<VkRenderState> mRenderState;
-
-	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
-
-	enum { maxConcurrentSubmitCount = 8};
-	std::unique_ptr<VulkanSemaphore> mSubmitSemaphore[maxConcurrentSubmitCount];
-	std::unique_ptr<VulkanFence> mSubmitFence[maxConcurrentSubmitCount];
-	VkFence mSubmitWaitFences[maxConcurrentSubmitCount];
-	int mNextSubmit = 0;
-
-	std::unique_ptr<VulkanSemaphore> mSwapChainImageAvailableSemaphore;
-	std::unique_ptr<VulkanSemaphore> mRenderFinishedSemaphore;
 
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
 
-	struct TimestampQuery
-	{
-		FString name;
-		uint32_t startIndex;
-		uint32_t endIndex;
-	};
-
-	enum { MaxTimestampQueries = 100 };
-	std::unique_ptr<VulkanQueryPool> mTimestampQueryPool;
-	int mNextTimestampQuery = 0;
-	std::vector<size_t> mGroupStack;
-	std::vector<TimestampQuery> timeElapsedQueries;
+	bool cur_vsync = false;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

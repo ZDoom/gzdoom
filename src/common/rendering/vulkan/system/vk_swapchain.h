@@ -12,10 +12,8 @@ public:
 	VulkanSwapChain(VulkanDevice *device);
 	~VulkanSwapChain();
 
-	uint32_t AcquireImage(int width, int height, VulkanSemaphore *semaphore = nullptr, VulkanFence *fence = nullptr);
+	uint32_t AcquireImage(int width, int height, bool vsync, VulkanSemaphore *semaphore = nullptr, VulkanFence *fence = nullptr);
 	void QueuePresent(uint32_t imageIndex, VulkanSemaphore *semaphore = nullptr);
-
-	void Recreate();
 
 	bool IsHdrModeActive() const;
 
@@ -30,9 +28,10 @@ public:
 	VkExtent2D actualExtent;
 
 private:
+	void Recreate(bool vsync);
 	void SelectFormat();
-	void SelectPresentMode();
-	bool CreateSwapChain(VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+	void SelectPresentMode(bool vsync);
+	bool CreateSwapChain(bool vsync, VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
 	void CreateViews();
 	void GetImages();
 	void ReleaseResources();

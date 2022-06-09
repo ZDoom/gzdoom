@@ -23,6 +23,7 @@
 #include "vk_buffers.h"
 #include "vk_builders.h"
 #include "vk_framebuffer.h"
+#include "vk_commandbuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_descriptorset.h"
 #include "engineerrors.h"
@@ -49,9 +50,9 @@ VKBuffer::~VKBuffer()
 	if (fb)
 	{
 		if (mBuffer)
-			fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+			fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
 		if (mStaging)
-			fb->FrameDeleteList.Buffers.push_back(std::move(mStaging));
+			fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mStaging));
 	}
 }
 
@@ -78,12 +79,12 @@ void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 	// If SetData is called multiple times we have to keep the old buffers alive as there might still be draw commands referencing them
 	if (mBuffer)
 	{
-		fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+		fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
 		mBuffer = {};
 	}
 	if (mStaging)
 	{
-		fb->FrameDeleteList.Buffers.push_back(std::move(mStaging));
+		fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mStaging));
 		mStaging = {};
 	}
 
@@ -110,7 +111,7 @@ void VKBuffer::SetData(size_t size, const void *data, BufferUsageType usage)
 			mStaging->Unmap();
 		}
 
-		fb->GetTransferCommands()->copyBuffer(mStaging.get(), mBuffer.get());
+		fb->GetCommands()->GetTransferCommands()->copyBuffer(mStaging.get(), mBuffer.get());
 	}
 	else if (usage == BufferUsageType::Persistent)
 	{
@@ -162,7 +163,7 @@ void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 		memcpy(dst, data, size);
 		mStaging->Unmap();
 
-		fb->GetTransferCommands()->copyBuffer(mStaging.get(), mBuffer.get(), offset, offset, size);
+		fb->GetCommands()->GetTransferCommands()->copyBuffer(mStaging.get(), mBuffer.get(), offset, offset, size);
 	}
 	else
 	{
@@ -195,8 +196,8 @@ void VKBuffer::Resize(size_t newsize)
 	buffersize = newsize;
 
 	// Transfer data from old to new
-	fb->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
-	fb->WaitForCommands(false);
+	fb->GetCommands()->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
+	fb->GetCommands()->WaitForCommands(false);
 	fb->GetDescriptorSetManager()->UpdateDynamicSet(); // Old buffer may be part of the dynamic set
 
 	// Fetch pointer to new buffer

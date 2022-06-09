@@ -21,13 +21,13 @@
 */
 
 #include "vk_renderbuffers.h"
-#include "vk_renderpass.h"
-#include "vk_postprocess.h"
+#include "vulkan/renderer/vk_postprocess.h"
+#include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "hw_cvars.h"
-
 
 VkRenderBuffers::VkRenderBuffers()
 {
@@ -113,7 +113,7 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 
 		barrier.addImage(&PipelineImage[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
 	}
-	barrier.execute(fb->GetDrawCommands());
+	barrier.execute(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits samples)
@@ -135,7 +135,7 @@ void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits s
 	barrier.addImage(&SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, true);
 	barrier.addImage(&SceneNormal, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
 	barrier.addImage(&SceneFog, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-	barrier.execute(fb->GetDrawCommands());
+	barrier.execute(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagBits samples)
@@ -252,7 +252,7 @@ void VkRenderBuffers::CreateShadowmap()
 
 	VkImageTransition barrier;
 	barrier.addImage(&Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
-	barrier.execute(fb->GetDrawCommands());
+	barrier.execute(fb->GetCommands()->GetDrawCommands());
 
 	if (!ShadowmapSampler)
 	{
@@ -287,7 +287,7 @@ void VkRenderBuffers::CreateLightmapSampler()
 
 		VkImageTransition barrier;
 		barrier.addImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
-		barrier.execute(fb->GetDrawCommands());
+		barrier.execute(fb->GetCommands()->GetDrawCommands());
 	}
 
 	if (!LightmapSampler)

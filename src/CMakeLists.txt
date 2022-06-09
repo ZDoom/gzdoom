@@ -797,18 +797,19 @@ set (VULKAN_SOURCES
 	common/rendering/vulkan/system/vk_swapchain.cpp
 	common/rendering/vulkan/system/vk_builders.cpp
 	common/rendering/vulkan/system/vk_framebuffer.cpp
+	common/rendering/vulkan/system/vk_commandbuffer.cpp
 	common/rendering/vulkan/system/vk_buffers.cpp
 	common/rendering/vulkan/renderer/vk_renderstate.cpp
 	common/rendering/vulkan/renderer/vk_renderpass.cpp
 	common/rendering/vulkan/renderer/vk_streambuffer.cpp
 	common/rendering/vulkan/renderer/vk_postprocess.cpp
-	common/rendering/vulkan/renderer/vk_renderbuffers.cpp
 	common/rendering/vulkan/renderer/vk_descriptorset.cpp
 	common/rendering/vulkan/renderer/vk_raytrace.cpp
 	common/rendering/vulkan/shaders/vk_shader.cpp
 	common/rendering/vulkan/textures/vk_samplers.cpp
 	common/rendering/vulkan/textures/vk_hwtexture.cpp
 	common/rendering/vulkan/textures/vk_imagetransition.cpp
+	common/rendering/vulkan/textures/vk_renderbuffers.cpp
 	common/rendering/vulkan/thirdparty/volk/volk.c
 	common/rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp
 )

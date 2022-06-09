@@ -23,13 +23,15 @@
 #include "volk/volk.h"
 #include "c_cvars.h"
 #include "v_video.h"
-
 #include "hw_cvars.h"
 #include "vulkan/system/vk_device.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "vk_samplers.h"
 #include "hw_material.h"
 #include "i_interface.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
 
 struct VkTexFilter
 {
@@ -37,16 +39,17 @@ struct VkTexFilter
 	VkFilter magFilter;
 	VkSamplerMipmapMode mipfilter;
 	bool mipmapping;
-} ;
+};
 
-VkTexFilter TexFilter[]={
+static VkTexFilter TexFilter[] =
+{
 	{VK_FILTER_NEAREST,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_NEAREST, false},
 	{VK_FILTER_NEAREST,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_NEAREST, true},
 	{VK_FILTER_LINEAR,		VK_FILTER_LINEAR,		VK_SAMPLER_MIPMAP_MODE_NEAREST, false},
 	{VK_FILTER_LINEAR,		VK_FILTER_LINEAR,		VK_SAMPLER_MIPMAP_MODE_NEAREST, true},
 	{VK_FILTER_LINEAR,		VK_FILTER_LINEAR,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true},
 	{VK_FILTER_NEAREST,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true},
-	{VK_FILTER_LINEAR,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true},
+	{VK_FILTER_LINEAR,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true}
 };
 
 struct VkTexClamp
@@ -55,31 +58,30 @@ struct VkTexClamp
 	VkSamplerAddressMode clamp_v;
 };
 
-VkTexClamp TexClamp[] ={
+static VkTexClamp TexClamp[] =
+{
 	{ VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT },
 	{ VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_REPEAT },
 	{ VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE },
 	{ VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE },
 };
 
-VkSamplerManager::VkSamplerManager(VulkanDevice *dev)
+VkSamplerManager::VkSamplerManager(VulkanFrameBuffer* fb) : fb(fb)
 {
-	vDevice = dev;
-	Create();
+	CreateHWSamplers();
 }
 
 VkSamplerManager::~VkSamplerManager()
 {
-	Destroy();
 }
 
-void VkSamplerManager::SetTextureFilterMode()
+void VkSamplerManager::FilterModeChanged()
 {
-	Destroy();
-	Create();
+	DeleteHWSamplers();
+	CreateHWSamplers();
 }
 
-void VkSamplerManager::Create()
+void VkSamplerManager::CreateHWSamplers()
 {
 	int filter = sysCallbacks.DisableTextureFilter && sysCallbacks.DisableTextureFilter()? 0 : gl_texture_filter;
 
@@ -99,7 +101,7 @@ void VkSamplerManager::Create()
 		{
 			builder.setMaxLod(0.25f);
 		}
-		mSamplers[i] = builder.create(vDevice);
+		mSamplers[i] = builder.create(fb->device);
 		mSamplers[i]->SetDebugName("VkSamplerManager.mSamplers");
 	}
 	{
@@ -109,7 +111,7 @@ void VkSamplerManager::Create()
 		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
 		builder.setMaxLod(0.25f);
-		mSamplers[CLAMP_XY_NOMIP] = builder.create(vDevice);
+		mSamplers[CLAMP_XY_NOMIP] = builder.create(fb->device);
 		mSamplers[CLAMP_XY_NOMIP]->SetDebugName("VkSamplerManager.mSamplers");
 	}
 	for (int i = CLAMP_NOFILTER; i <= CLAMP_NOFILTER_XY; i++)
@@ -120,7 +122,7 @@ void VkSamplerManager::Create()
 		builder.setAddressMode(TexClamp[i - CLAMP_NOFILTER].clamp_u, TexClamp[i - CLAMP_NOFILTER].clamp_v, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
 		builder.setMaxLod(0.25f);
-		mSamplers[i] = builder.create(vDevice);
+		mSamplers[i] = builder.create(fb->device);
 		mSamplers[i]->SetDebugName("VkSamplerManager.mSamplers");
 	}
 	// CAMTEX is repeating with texture filter and no mipmap
@@ -131,13 +133,33 @@ void VkSamplerManager::Create()
 		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
 		builder.setMaxLod(0.25f);
-		mSamplers[CLAMP_CAMTEX] = builder.create(vDevice);
+		mSamplers[CLAMP_CAMTEX] = builder.create(fb->device);
 		mSamplers[CLAMP_CAMTEX]->SetDebugName("VkSamplerManager.mSamplers");
 	}
 }
 
-void VkSamplerManager::Destroy()
+void VkSamplerManager::DeleteHWSamplers()
 {
-	for (int i = 0; i < NUMSAMPLERS; i++)
-		mSamplers[i].reset();
+	for (auto& sampler : mSamplers)
+	{
+		if (sampler)
+			fb->GetCommands()->FrameDeleteList.Samplers.push_back(std::move(sampler));
+	}
+}
+
+VulkanSampler* VkSamplerManager::Get(PPFilterMode filter, PPWrapMode wrap)
+{
+	int index = (((int)filter) << 1) | (int)wrap;
+	auto& sampler = mPPSamplers[index];
+	if (sampler)
+		return sampler.get();
+
+	SamplerBuilder builder;
+	builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+	builder.setMinFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+	builder.setMagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+	builder.setAddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT);
+	sampler = builder.create(GetVulkanFrameBuffer()->device);
+	sampler->SetDebugName("VkPostprocess.mSamplers");
+	return sampler.get();
 }

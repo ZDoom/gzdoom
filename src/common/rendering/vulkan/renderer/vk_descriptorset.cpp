@@ -26,6 +26,7 @@
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_renderbuffers.h"
+#include "vulkan/textures/vk_hwtexture.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_buffers.h"
@@ -134,6 +135,12 @@ void VkDescriptorSetManager::TextureSetPoolReset()
 	TextureDescriptorPools.clear();
 	TextureDescriptorSetsLeft = 0;
 	TextureDescriptorsLeft = 0;
+}
+
+void VkDescriptorSetManager::FilterModeChanged()
+{
+	// Destroy the texture descriptors as they used the old samplers
+	VkMaterial::ResetAllDescriptors();
 }
 
 void VkDescriptorSetManager::CreateNullTexture()

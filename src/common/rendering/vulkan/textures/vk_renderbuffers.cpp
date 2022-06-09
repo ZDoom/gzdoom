@@ -68,7 +68,6 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 	{
 		auto fb = GetVulkanFrameBuffer();
 		fb->GetRenderPassManager()->RenderBuffersReset();
-		fb->GetPostprocess()->RenderBuffersReset();
 	}
 
 	if (width != mWidth || height != mHeight)

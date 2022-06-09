@@ -36,6 +36,7 @@ public:
 		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
 		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
+		std::vector< std::unique_ptr<VulkanSampler>> Samplers;
 	} FrameDeleteList;
 
 	struct

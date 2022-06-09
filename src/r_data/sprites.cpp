@@ -1000,7 +1000,7 @@ void R_InitSprites ()
 		auto type = GetDefaultByType(PlayerClasses[0].Type);
 		Skins[i].range0start = type->IntVar(NAME_ColorRangeStart);
 		Skins[i].range0end = type->IntVar(NAME_ColorRangeEnd);
-		Skins[i].Scale = type->Scale;
+		Skins[i].Scale = DVector2(type->Scale.X, type->Scale.Y);
 	}
 
 	R_InitSpriteDefs ();
@@ -1019,7 +1019,7 @@ void R_InitSprites ()
 		Skins[i].Face = face == NAME_None? "STF" : face.GetChars();
 		Skins[i].range0start = basetype->IntVar(NAME_ColorRangeStart);
 		Skins[i].range0end = basetype->IntVar(NAME_ColorRangeEnd);
-		Skins[i].Scale = basetype->Scale;
+		Skins[i].Scale = DVector2(basetype->Scale.X, basetype->Scale.Y);
 		Skins[i].sprite = basetype->SpawnState->sprite;
 		Skins[i].namespc = ns_global;
 

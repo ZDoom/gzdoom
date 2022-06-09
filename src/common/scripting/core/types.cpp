@@ -61,6 +61,8 @@ PPointer *TypeFont;
 PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
+PStruct* TypeFVector2;
+PStruct* TypeFVector3;
 PStruct *TypeColorStruct;
 PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
@@ -347,6 +349,28 @@ void PType::StaticInit()
 	TypeVector3->RegCount = 3;
 
 
+	TypeFVector2 = new PStruct(NAME_FVector2, nullptr);
+	TypeFVector2->AddField(NAME_X, TypeFloat32);
+	TypeFVector2->AddField(NAME_Y, TypeFloat32);
+	TypeTable.AddType(TypeFVector2, NAME_Struct);
+	TypeFVector2->loadOp = OP_LFV2;
+	TypeFVector2->storeOp = OP_SFV2;
+	TypeFVector2->moveOp = OP_MOVEV2;
+	TypeFVector2->RegType = REGT_FLOAT;
+	TypeFVector2->RegCount = 2;
+
+	TypeFVector3 = new PStruct(NAME_FVector3, nullptr);
+	TypeFVector3->AddField(NAME_X, TypeFloat32);
+	TypeFVector3->AddField(NAME_Y, TypeFloat32);
+	TypeFVector3->AddField(NAME_Z, TypeFloat32);
+	// allow accessing xy as a vector2
+	TypeFVector3->Symbols.AddSymbol(Create<PField>(NAME_XY, TypeFVector2, VARF_Transient, 0));
+	TypeTable.AddType(TypeFVector3, NAME_Struct);
+	TypeFVector3->loadOp = OP_LFV3;
+	TypeFVector3->storeOp = OP_SFV3;
+	TypeFVector3->moveOp = OP_MOVEV3;
+	TypeFVector3->RegType = REGT_FLOAT;
+	TypeFVector3->RegCount = 3;
 
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_sByte, TypeSInt8));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Byte, TypeUInt8));
@@ -366,6 +390,8 @@ void PType::StaticInit()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_State, TypeState));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector2, TypeVector2));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector3, TypeVector3));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector2, TypeFVector2));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector3, TypeFVector3));
 }
 
 
@@ -2321,6 +2347,33 @@ PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
 PPrototype::PPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes)
 : ArgumentTypes(argtypes), ReturnTypes(rettypes)
 {
+	for (int i = 0; i < ArgumentTypes.Size(); ++i)
+	{
+		auto& type = ArgumentTypes[i];
+
+		if (type == TypeFVector2)
+		{
+			type = TypeVector2;
+		}
+		else if (type == TypeFVector3)
+		{
+			type = TypeVector3;
+		}
+	}
+
+	for (int i = 0; i < ReturnTypes.Size(); ++i)
+	{
+		auto& type = ReturnTypes[i];
+
+		if (type == TypeFVector2)
+		{
+			type = TypeVector2;
+		}
+		else if (type == TypeFVector3)
+		{
+			type = TypeVector3;
+		}
+	}
 }
 
 //==========================================================================

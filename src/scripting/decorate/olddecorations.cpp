@@ -405,7 +405,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (sc.Compare ("Scale"))
 		{
 			sc.MustGetFloat ();
-			defaults->Scale.X = defaults->Scale.Y = sc.Float;
+			defaults->Scale.X = defaults->Scale.Y = float(sc.Float);
 		}
 		else if (sc.Compare ("RenderStyle"))
 		{

@@ -719,7 +719,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		return;
 
 	int spritenum = thing->sprite;
-	DVector2 sprscale = thing->Scale;
+	DVector2 sprscale(thing->Scale.X, thing->Scale.Y);
 	if (thing->player != nullptr)
 	{
 		P_CheckPlayerSprite(thing, spritenum, sprscale);

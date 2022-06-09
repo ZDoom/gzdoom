@@ -336,7 +336,9 @@ public:
 	bool IsFloat() const { return ValueType->isFloat(); }
 	bool IsInteger() const { return ValueType->isNumeric() && ValueType->isIntCompatible(); }
 	bool IsPointer() const { return ValueType->isPointer(); }
-	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
+	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3 || ValueType == TypeFVector2 || ValueType == TypeFVector3; };
+	bool IsVector2() const { return ValueType == TypeVector2 || ValueType == TypeFVector2; };
+	bool IsVector3() const { return ValueType == TypeVector3 || ValueType == TypeFVector3; };
 	bool IsBoolCompat() const { return ValueType->isScalar(); }
 	bool IsObject() const { return ValueType->isObjectPointer(); }
 	bool IsArray() const { return ValueType->isArray() || (ValueType->isPointer() && ValueType->toPointer()->PointedType->isArray()); }

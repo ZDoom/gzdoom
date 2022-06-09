@@ -13,6 +13,7 @@ public:
 	void UpdateFixedSet();
 	void UpdateDynamicSet();
 	void TextureSetPoolReset();
+	void FilterModeChanged();
 
 	VulkanDescriptorSetLayout* GetDynamicSetLayout() { return DynamicSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetFixedSetLayout() { return FixedSetLayout.get(); }

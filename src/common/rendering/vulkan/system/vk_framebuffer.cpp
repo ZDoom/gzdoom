@@ -151,7 +151,7 @@ void VulkanFrameBuffer::InitializeState()
 	StreamBuffer = new VkStreamBuffer(sizeof(StreamUBO), 300);
 
 	mShaderManager.reset(new VkShaderManager(device));
-	mSamplerManager.reset(new VkSamplerManager(device));
+	mSamplerManager.reset(new VkSamplerManager(this));
 	mDescriptorSetManager->Init();
 #ifdef __APPLE__
 	mRenderState.reset(new VkRenderStateMolten());
@@ -299,10 +299,8 @@ void VulkanFrameBuffer::SetTextureFilterMode()
 {
 	if (mSamplerManager)
 	{
-		// Destroy the texture descriptors as they used the old samplers
-		VkMaterial::ResetAllDescriptors();
-
-		mSamplerManager->SetTextureFilterMode();
+		mDescriptorSetManager->FilterModeChanged();
+		mSamplerManager->FilterModeChanged();
 	}
 }
 

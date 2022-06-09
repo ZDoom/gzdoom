@@ -23,6 +23,7 @@
 #include "vk_raytrace.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "doom_levelmesh.h"
 
 void VkRaytrace::SetLevelMesh(hwrenderer::LevelMesh* mesh)
@@ -79,19 +80,20 @@ void VkRaytrace::Reset()
 	auto fb = GetVulkanFrameBuffer();
 	if (fb)
 	{
-		fb->FrameDeleteList.Buffers.push_back(std::move(vertexBuffer));
-		fb->FrameDeleteList.Buffers.push_back(std::move(indexBuffer));
-		fb->FrameDeleteList.Buffers.push_back(std::move(transferBuffer));
+		auto& deletelist = fb->GetCommands()->FrameDeleteList;
+		deletelist.Buffers.push_back(std::move(vertexBuffer));
+		deletelist.Buffers.push_back(std::move(indexBuffer));
+		deletelist.Buffers.push_back(std::move(transferBuffer));
 
-		fb->FrameDeleteList.Buffers.push_back(std::move(blScratchBuffer));
-		fb->FrameDeleteList.Buffers.push_back(std::move(blAccelStructBuffer));
-		fb->FrameDeleteList.AccelStructs.push_back(std::move(blAccelStruct));
+		deletelist.Buffers.push_back(std::move(blScratchBuffer));
+		deletelist.Buffers.push_back(std::move(blAccelStructBuffer));
+		deletelist.AccelStructs.push_back(std::move(blAccelStruct));
 
-		fb->FrameDeleteList.Buffers.push_back(std::move(tlTransferBuffer));
-		fb->FrameDeleteList.Buffers.push_back(std::move(tlScratchBuffer));
-		fb->FrameDeleteList.Buffers.push_back(std::move(tlInstanceBuffer));
-		fb->FrameDeleteList.Buffers.push_back(std::move(tlAccelStructBuffer));
-		fb->FrameDeleteList.AccelStructs.push_back(std::move(tlAccelStruct));
+		deletelist.Buffers.push_back(std::move(tlTransferBuffer));
+		deletelist.Buffers.push_back(std::move(tlScratchBuffer));
+		deletelist.Buffers.push_back(std::move(tlInstanceBuffer));
+		deletelist.Buffers.push_back(std::move(tlAccelStructBuffer));
+		deletelist.AccelStructs.push_back(std::move(tlAccelStruct));
 	}
 }
 
@@ -134,14 +136,14 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 	indexBuffer = ibuilder.create(GetVulkanFrameBuffer()->device);
 	indexBuffer->SetDebugName("indexBuffer");
 
-	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset);
-	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset);
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset);
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset);
 
 	// Finish transfer before using it for building
 	VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	GetVulkanFrameBuffer()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
 }
 
 void VkRaytrace::CreateBottomLevelAccelerationStructure()
@@ -212,13 +214,13 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	buildInfo.dstAccelerationStructure = blAccelStruct->accelstruct;
 	buildInfo.scratchData.deviceAddress = scratchAddress;
 	VkAccelerationStructureBuildRangeInfoKHR* rangeInfos[] = { &rangeInfo };
-	GetVulkanFrameBuffer()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
 
 	// Finish building before using it as input to a toplevel accel structure
 	VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
 	barrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
 	barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-	GetVulkanFrameBuffer()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
 }
 
 void VkRaytrace::CreateTopLevelAccelerationStructure()
@@ -252,13 +254,13 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	tlInstanceBuffer = instbufbuilder.create(GetVulkanFrameBuffer()->device);
 	tlInstanceBuffer->SetDebugName("tlInstanceBuffer");
 
-	GetVulkanFrameBuffer()->GetTransferCommands()->copyBuffer(tlTransferBuffer.get(), tlInstanceBuffer.get());
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->copyBuffer(tlTransferBuffer.get(), tlInstanceBuffer.get());
 
 	// Finish transfering before using it as input
 	VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-	GetVulkanFrameBuffer()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
 
 	VkBufferDeviceAddressInfo info = { VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
 	info.buffer = tlInstanceBuffer->buffer;
@@ -317,10 +319,10 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	buildInfo.scratchData.deviceAddress = scratchAddress;
 
 	VkAccelerationStructureBuildRangeInfoKHR* rangeInfos[] = { &rangeInfo };
-	GetVulkanFrameBuffer()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
+	GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
 
 	// Finish building the accel struct before using as input in a fragment shader
 	PipelineBarrier finishbuildbarrier;
 	finishbuildbarrier.addMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_SHADER_READ_BIT);
-	finishbuildbarrier.execute(GetVulkanFrameBuffer()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	finishbuildbarrier.execute(GetVulkanFrameBuffer()->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }

@@ -22,13 +22,14 @@
 
 #include "vk_descriptorset.h"
 #include "vk_streambuffer.h"
-#include "vk_renderbuffers.h"
 #include "vk_raytrace.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/textures/vk_samplers.h"
+#include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_buffers.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "flatvertices.h"
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
@@ -121,7 +122,7 @@ void VkDescriptorSetManager::TextureSetPoolReset()
 {
 	if (auto fb = GetVulkanFrameBuffer())
 	{
-		auto& deleteList = fb->FrameDeleteList;
+		auto& deleteList = fb->GetCommands()->FrameDeleteList;
 
 		for (auto& desc : TextureDescriptorPools)
 		{
@@ -153,7 +154,7 @@ void VkDescriptorSetManager::CreateNullTexture()
 
 	PipelineBarrier barrier;
 	barrier.addImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	barrier.execute(fb->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	barrier.execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 VulkanDescriptorSet* VkDescriptorSetManager::GetNullTextureDescriptorSet()

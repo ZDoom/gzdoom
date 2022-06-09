@@ -21,13 +21,14 @@
 */
 
 #include "vk_postprocess.h"
-#include "vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_buffers.h"
 #include "vulkan/system/vk_swapchain.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
+#include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_imagetransition.h"
 #include "hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
@@ -55,7 +56,7 @@ void VkPostprocess::SetActiveRenderTarget()
 
 	VkImageTransition imageTransition;
 	imageTransition.addImage(&buffers->PipelineImage[mCurrentPipelineImage], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
-	imageTransition.execute(fb->GetDrawCommands());
+	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
 
 	fb->GetRenderState()->SetRenderTarget(&buffers->PipelineImage[mCurrentPipelineImage], nullptr, buffers->GetWidth(), buffers->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT);
 }
@@ -81,14 +82,14 @@ void VkPostprocess::BlitSceneToPostprocess()
 	fb->GetRenderState()->EndRenderPass();
 
 	auto buffers = fb->GetBuffers();
-	auto cmdbuffer = fb->GetDrawCommands();
+	auto cmdbuffer = fb->GetCommands()->GetDrawCommands();
 
 	mCurrentPipelineImage = 0;
 
 	VkImageTransition imageTransition;
 	imageTransition.addImage(&buffers->SceneColor, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
 	imageTransition.addImage(&buffers->PipelineImage[mCurrentPipelineImage], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
-	imageTransition.execute(fb->GetDrawCommands());
+	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
 
 	if (buffers->GetSceneSamples() != VK_SAMPLE_COUNT_1_BIT)
 	{
@@ -143,7 +144,7 @@ void VkPostprocess::ImageTransitionScene(bool undefinedSrcLayout)
 	imageTransition.addImage(&buffers->SceneFog, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
 	imageTransition.addImage(&buffers->SceneNormal, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
 	imageTransition.addImage(&buffers->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
-	imageTransition.execute(fb->GetDrawCommands());
+	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout finallayout)
@@ -153,7 +154,7 @@ void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout f
 	fb->GetRenderState()->EndRenderPass();
 
 	auto srcimage = &fb->GetBuffers()->PipelineImage[mCurrentPipelineImage];
-	auto cmdbuffer = fb->GetDrawCommands();
+	auto cmdbuffer = fb->GetCommands()->GetDrawCommands();
 
 	VkImageTransition imageTransition0;
 	imageTransition0.addImage(srcimage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
@@ -221,7 +222,7 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 		uniforms.Offset = { 0.0f, 1.0f };
 	}
 
-	if (applyGamma && fb->swapChain->IsHdrModeActive() && !screenshot)
+	if (applyGamma && fb->GetCommands()->swapChain->IsHdrModeActive() && !screenshot)
 	{
 		uniforms.HdrMode = 1;
 	}
@@ -290,7 +291,7 @@ void VkPostprocess::UpdateShadowMap()
 
 		VkImageTransition imageTransition;
 		imageTransition.addImage(&buffers->Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-		imageTransition.execute(fb->GetDrawCommands());
+		imageTransition.execute(fb->GetCommands()->GetDrawCommands());
 
 		screen->mShadowMap.FinishUpdate();
 	}
@@ -304,7 +305,7 @@ std::unique_ptr<VulkanDescriptorSet> VkPostprocess::AllocateDescriptorSet(Vulkan
 		if (descriptors)
 			return descriptors;
 
-		GetVulkanFrameBuffer()->FrameDeleteList.DescriptorPools.push_back(std::move(mDescriptorPool));
+		GetVulkanFrameBuffer()->GetCommands()->FrameDeleteList.DescriptorPools.push_back(std::move(mDescriptorPool));
 	}
 
 	DescriptorPoolBuilder builder;
@@ -390,7 +391,7 @@ VkPPTexture::VkPPTexture(PPTexture *texture)
 
 		VkImageTransition barrier0;
 		barrier0.addImage(&TexImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
-		barrier0.execute(fb->GetTransferCommands());
+		barrier0.execute(fb->GetCommands()->GetTransferCommands());
 
 		void *data = Staging->Map(0, totalsize);
 		memcpy(data, texture->Data.get(), totalsize);
@@ -402,17 +403,17 @@ VkPPTexture::VkPPTexture(PPTexture *texture)
 		region.imageExtent.depth = 1;
 		region.imageExtent.width = texture->Width;
 		region.imageExtent.height = texture->Height;
-		fb->GetTransferCommands()->copyBufferToImage(Staging->buffer, TexImage.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		fb->GetCommands()->GetTransferCommands()->copyBufferToImage(Staging->buffer, TexImage.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 		VkImageTransition barrier1;
 		barrier1.addImage(&TexImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-		barrier1.execute(fb->GetTransferCommands());
+		barrier1.execute(fb->GetCommands()->GetTransferCommands());
 	}
 	else
 	{
 		VkImageTransition barrier;
 		barrier.addImage(&TexImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-		barrier.execute(fb->GetTransferCommands());
+		barrier.execute(fb->GetCommands()->GetTransferCommands());
 	}
 }
 
@@ -420,11 +421,11 @@ VkPPTexture::~VkPPTexture()
 {
 	if (auto fb = GetVulkanFrameBuffer())
 	{
-		if (TexImage.Image) fb->FrameDeleteList.Images.push_back(std::move(TexImage.Image));
-		if (TexImage.View) fb->FrameDeleteList.ImageViews.push_back(std::move(TexImage.View));
-		if (TexImage.DepthOnlyView) fb->FrameDeleteList.ImageViews.push_back(std::move(TexImage.DepthOnlyView));
-		if (TexImage.PPFramebuffer) fb->FrameDeleteList.Framebuffers.push_back(std::move(TexImage.PPFramebuffer));
-		if (Staging) fb->FrameDeleteList.Buffers.push_back(std::move(Staging));
+		if (TexImage.Image) fb->GetCommands()->FrameDeleteList.Images.push_back(std::move(TexImage.Image));
+		if (TexImage.View) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.View));
+		if (TexImage.DepthOnlyView) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.DepthOnlyView));
+		if (TexImage.PPFramebuffer) fb->GetCommands()->FrameDeleteList.Framebuffers.push_back(std::move(TexImage.PPFramebuffer));
+		if (Staging) fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(Staging));
 	}
 }
 
@@ -468,12 +469,12 @@ FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defin
 
 void VkPPRenderState::PushGroup(const FString &name)
 {
-	GetVulkanFrameBuffer()->PushGroup(name);
+	GetVulkanFrameBuffer()->GetCommands()->PushGroup(name);
 }
 
 void VkPPRenderState::PopGroup()
 {
-	GetVulkanFrameBuffer()->PopGroup();
+	GetVulkanFrameBuffer()->GetCommands()->PopGroup();
 }
 
 void VkPPRenderState::Draw()
@@ -493,7 +494,7 @@ void VkPPRenderState::Draw()
 	if (Output.Type == PPTextureType::PPTexture)
 		key.OutputFormat = GetVkTexture(Output.Texture)->Format;
 	else if (Output.Type == PPTextureType::SwapChain)
-		key.OutputFormat = GetVulkanFrameBuffer()->swapChain->swapChainFormat.format;
+		key.OutputFormat = GetVulkanFrameBuffer()->GetCommands()->swapChain->swapChainFormat.format;
 	else if (Output.Type == PPTextureType::ShadowMap)
 		key.OutputFormat = VK_FORMAT_R32_SFLOAT;
 	else
@@ -530,7 +531,7 @@ void VkPPRenderState::Draw()
 void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize, bool stencilTest)
 {
 	auto fb = GetVulkanFrameBuffer();
-	auto cmdbuffer = fb->GetDrawCommands();
+	auto cmdbuffer = fb->GetCommands()->GetDrawCommands();
 
 	VkViewport viewport = { };
 	viewport.x = (float)x;
@@ -597,10 +598,10 @@ VulkanDescriptorSet *VkPPRenderState::GetInput(VkPPRenderPassSetup *passSetup, c
 	}
 
 	write.updateSets(fb->device);
-	imageTransition.execute(fb->GetDrawCommands());
+	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
 
 	VulkanDescriptorSet *set = descriptors.get();
-	fb->FrameDeleteList.Descriptors.push_back(std::move(descriptors));
+	fb->GetCommands()->FrameDeleteList.Descriptors.push_back(std::move(descriptors));
 	return set;
 }
 
@@ -619,7 +620,7 @@ VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, co
 		imageTransition.addImage(tex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, output.Type == PPTextureType::NextPipelineTexture);
 		if (stencilTest)
 			imageTransition.addImage(&fb->GetBuffers()->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
-		imageTransition.execute(fb->GetDrawCommands());
+		imageTransition.execute(fb->GetCommands()->GetDrawCommands());
 
 		view = tex->View->view;
 		w = tex->Image->width;
@@ -628,10 +629,10 @@ VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, co
 	}
 	else
 	{
-		view = fb->swapChain->swapChainImageViews[fb->presentImageIndex];
-		framebufferptr = &fb->swapChain->framebuffers[fb->presentImageIndex];
-		w = fb->swapChain->actualExtent.width;
-		h = fb->swapChain->actualExtent.height;
+		view = fb->GetCommands()->swapChain->swapChainImageViews[fb->GetCommands()->presentImageIndex];
+		framebufferptr = &fb->GetCommands()->swapChain->framebuffers[fb->GetCommands()->presentImageIndex];
+		w = fb->GetCommands()->swapChain->actualExtent.width;
+		h = fb->GetCommands()->swapChain->actualExtent.height;
 	}
 
 	auto &framebuffer = *framebufferptr;

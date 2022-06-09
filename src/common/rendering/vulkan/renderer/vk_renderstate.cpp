@@ -23,9 +23,10 @@
 #include "vk_renderstate.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/renderer/vk_renderpass.h"
-#include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/renderer/vk_descriptorset.h"
+#include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
 
 #include "hw_skydome.h"
@@ -183,7 +184,7 @@ void VkRenderState::Apply(int dt)
 	mApplyCount++;
 	if (mApplyCount >= vk_submit_size)
 	{
-		GetVulkanFrameBuffer()->FlushCommands(false);
+		GetVulkanFrameBuffer()->GetCommands()->FlushCommands(false);
 		mApplyCount = 0;
 	}
 
@@ -252,7 +253,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (!inRenderPass)
 	{
-		mCommandBuffer = GetVulkanFrameBuffer()->GetDrawCommands();
+		mCommandBuffer = GetVulkanFrameBuffer()->GetCommands()->GetDrawCommands();
 		mScissorChanged = true;
 		mViewportChanged = true;
 		mStencilRefChanged = true;

@@ -21,10 +21,10 @@
 */
 
 #include "vk_renderpass.h"
-#include "vk_renderbuffers.h"
 #include "vk_renderstate.h"
 #include "vk_descriptorset.h"
 #include "vk_raytrace.h"
+#include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"

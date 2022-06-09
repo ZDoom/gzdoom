@@ -28,10 +28,11 @@
 #include "vulkan/system/vk_objects.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/textures/vk_samplers.h"
+#include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/renderer/vk_descriptorset.h"
 #include "vulkan/renderer/vk_postprocess.h"
-#include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vk_hwtexture.h"
 
@@ -70,7 +71,7 @@ void VkHardwareTexture::Reset()
 			mappedSWFB = nullptr;
 		}
 
-		auto &deleteList = fb->FrameDeleteList;
+		auto &deleteList = fb->GetCommands()->FrameDeleteList;
 		if (mImage.Image) deleteList.Images.push_back(std::move(mImage.Image));
 		if (mImage.View) deleteList.ImageViews.push_back(std::move(mImage.View));
 		for (auto &it : mImage.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
@@ -117,7 +118,7 @@ VkTextureImage *VkHardwareTexture::GetDepthStencil(FTexture *tex)
 
 		VkImageTransition barrier;
 		barrier.addImage(&mDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, true);
-		barrier.execute(fb->GetTransferCommands());
+		barrier.execute(fb->GetCommands()->GetTransferCommands());
 	}
 	return &mDepthStencil;
 }
@@ -150,7 +151,7 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 		mImage.View = viewbuilder.create(fb->device);
 		mImage.View->SetDebugName("VkHardwareTexture.mImageView");
 
-		auto cmdbuffer = fb->GetTransferCommands();
+		auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
 		VkImageTransition imageTransition;
 		imageTransition.addImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
@@ -189,7 +190,7 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 	mImage.View = viewbuilder.create(fb->device);
 	mImage.View->SetDebugName("VkHardwareTexture.mImageView");
 
-	auto cmdbuffer = fb->GetTransferCommands();
+	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
 	VkImageTransition imageTransition;
 	imageTransition.addImage(&mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
@@ -203,14 +204,13 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 	region.imageExtent.height = h;
 	cmdbuffer->copyBufferToImage(stagingBuffer->buffer, mImage.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-	fb->FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));
-
 	if (mipmap) mImage.GenerateMipmaps(cmdbuffer);
 
 	// If we queued more than 64 MB of data already: wait until the uploads finish before continuing
-	fb->FrameTextureUpload.TotalSize += totalSize;
-	if (fb->FrameTextureUpload.TotalSize > 64 * 1024 * 1024)
-		fb->WaitForCommands(false, true);
+	fb->GetCommands()->FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));
+	fb->GetCommands()->FrameTextureUpload.TotalSize += totalSize;
+	if (fb->GetCommands()->FrameTextureUpload.TotalSize > 64 * 1024 * 1024)
+		fb->GetCommands()->WaitForCommands(false, true);
 }
 
 int VkHardwareTexture::GetMipLevels(int w, int h)
@@ -256,7 +256,7 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		mImage.View = viewbuilder.create(fb->device);
 		mImage.View->SetDebugName("VkHardwareTexture.mImageView");
 
-		auto cmdbuffer = fb->GetTransferCommands();
+		auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
 		VkImageTransition imageTransition;
 		imageTransition.addImage(&mImage, VK_IMAGE_LAYOUT_GENERAL, true);
@@ -311,7 +311,7 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 
 		VkImageTransition transition0;
 		transition0.addImage(&mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
-		transition0.execute(fb->GetTransferCommands());
+		transition0.execute(fb->GetCommands()->GetTransferCommands());
 
 		VkImageSubresourceRange range = {};
 		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -323,11 +323,11 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 		value.float32[1] = 0.0f;
 		value.float32[2] = 0.0f;
 		value.float32[3] = 1.0f;
-		fb->GetTransferCommands()->clearColorImage(mImage.Image->image, mImage.Layout, &value, 1, &range);
+		fb->GetCommands()->GetTransferCommands()->clearColorImage(mImage.Image->image, mImage.Layout, &value, 1, &range);
 
 		VkImageTransition transition1;
 		transition1.addImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-		transition1.execute(fb->GetTransferCommands());
+		transition1.execute(fb->GetCommands()->GetTransferCommands());
 	}
 }
 
@@ -354,7 +354,7 @@ void VkMaterial::DeleteDescriptors()
 {
 	if (auto fb = GetVulkanFrameBuffer())
 	{
-		auto& deleteList = fb->FrameDeleteList;
+		auto& deleteList = fb->GetCommands()->FrameDeleteList;
 
 		for (auto& it : mDescriptorSets)
 		{

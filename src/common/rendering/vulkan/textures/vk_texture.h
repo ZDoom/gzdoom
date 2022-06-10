@@ -7,6 +7,7 @@
 class VulkanFrameBuffer;
 class VkHardwareTexture;
 class VkMaterial;
+class VkPPTexture;
 
 class VkTextureManager
 {
@@ -17,8 +18,12 @@ public:
 	void AddTexture(VkHardwareTexture* texture);
 	void RemoveTexture(VkHardwareTexture* texture);
 
+	void AddPPTexture(VkPPTexture* texture);
+	void RemovePPTexture(VkPPTexture* texture);
+
 private:
 	VulkanFrameBuffer* fb = nullptr;
 
 	std::list<VkHardwareTexture*> Textures;
+	std::list<VkPPTexture*> PPTextures;
 };

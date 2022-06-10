@@ -21,6 +21,7 @@
 */
 
 #include "vk_pptexture.h"
+#include "vk_texture.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_commandbuffer.h"
 
@@ -91,13 +92,22 @@ VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture)
 		barrier.addImage(&TexImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
 		barrier.execute(fb->GetCommands()->GetTransferCommands());
 	}
+
+	fb->GetTextureManager()->AddPPTexture(this);
 }
 
 VkPPTexture::~VkPPTexture()
 {
-	if (TexImage.Image) fb->GetCommands()->FrameDeleteList.Images.push_back(std::move(TexImage.Image));
-	if (TexImage.View) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.View));
-	if (TexImage.DepthOnlyView) fb->GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(TexImage.DepthOnlyView));
-	if (TexImage.PPFramebuffer) fb->GetCommands()->FrameDeleteList.Framebuffers.push_back(std::move(TexImage.PPFramebuffer));
-	if (Staging) fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(Staging));
+	if (fb)
+		fb->GetTextureManager()->RemovePPTexture(this);
+}
+
+void VkPPTexture::Reset()
+{
+	if (fb)
+	{
+		TexImage.Reset(fb);
+		if (Staging)
+			fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(Staging));
+	}
 }

@@ -31,39 +31,27 @@
 #include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_renderbuffers.h"
+#include "vulkan/textures/vk_texture.h"
 #include "vulkan/renderer/vk_descriptorset.h"
 #include "vulkan/renderer/vk_postprocess.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vk_hwtexture.h"
 
-VkHardwareTexture *VkHardwareTexture::First = nullptr;
-
-VkHardwareTexture::VkHardwareTexture(int numchannels)
+VkHardwareTexture::VkHardwareTexture(VulkanFrameBuffer* fb, int numchannels) : fb(fb)
 {
 	mTexelsize = numchannels;
-	Next = First;
-	First = this;
-	if (Next) Next->Prev = this;
+	fb->GetTextureManager()->AddTexture(this);
 }
 
 VkHardwareTexture::~VkHardwareTexture()
 {
-	if (Next) Next->Prev = Prev;
-	if (Prev) Prev->Next = Next;
-	else First = Next;
-
-	Reset();
-}
-
-void VkHardwareTexture::ResetAll()
-{
-	for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
-		cur->Reset();
+	if (fb)
+		fb->GetTextureManager()->RemoveTexture(this);
 }
 
 void VkHardwareTexture::Reset()
 {
-	if (auto fb = GetVulkanFrameBuffer())
+	if (fb)
 	{
 		if (mappedSWFB)
 		{
@@ -71,15 +59,8 @@ void VkHardwareTexture::Reset()
 			mappedSWFB = nullptr;
 		}
 
-		auto &deleteList = fb->GetCommands()->FrameDeleteList;
-		if (mImage.Image) deleteList.Images.push_back(std::move(mImage.Image));
-		if (mImage.View) deleteList.ImageViews.push_back(std::move(mImage.View));
-		for (auto &it : mImage.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
-		if (mDepthStencil.Image) deleteList.Images.push_back(std::move(mDepthStencil.Image));
-		if (mDepthStencil.View) deleteList.ImageViews.push_back(std::move(mDepthStencil.View));
-		for (auto &it : mDepthStencil.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
-		mImage.reset();
-		mDepthStencil.reset();
+		mImage.Reset(fb);
+		mDepthStencil.Reset(fb);
 	}
 }
 
@@ -96,8 +77,6 @@ VkTextureImage *VkHardwareTexture::GetDepthStencil(FTexture *tex)
 {
 	if (!mDepthStencil.View)
 	{
-		auto fb = GetVulkanFrameBuffer();
-
 		VkFormat format = fb->GetBuffers()->SceneDepthStencilFormat;
 		int w = tex->GetWidth();
 		int h = tex->GetHeight();
@@ -133,8 +112,6 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 	}
 	else
 	{
-		auto fb = GetVulkanFrameBuffer();
-
 		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 		int w = tex->GetWidth();
 		int h = tex->GetHeight();
@@ -163,8 +140,6 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 {
 	if (w <= 0 || h <= 0)
 		throw CVulkanError("Trying to create zero size texture");
-
-	auto fb = GetVulkanFrameBuffer();
 
 	int totalSize = w * h * pixelsize;
 
@@ -234,8 +209,6 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 
 	if (!mImage.Image)
 	{
-		auto fb = GetVulkanFrameBuffer();
-
 		VkFormat format = texelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM;
 
 		ImageBuilder imgbuilder;
@@ -283,8 +256,6 @@ unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int
 
 void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	VkFormat format = VK_FORMAT_B8G8R8A8_UNORM;
 
 	ImageBuilder imgbuilder;
@@ -331,28 +302,22 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 	}
 }
 
+/////////////////////////////////////////////////////////////////////////////
 
-VkMaterial* VkMaterial::First = nullptr;
-
-VkMaterial::VkMaterial(FGameTexture* tex, int scaleflags) : FMaterial(tex, scaleflags)
+VkMaterial::VkMaterial(VulkanFrameBuffer* fb, FGameTexture* tex, int scaleflags) : FMaterial(tex, scaleflags), fb(fb)
 {
-	Next = First;
-	First = this;
-	if (Next) Next->Prev = this;
+	fb->GetDescriptorSetManager()->AddMaterial(this);
 }
 
 VkMaterial::~VkMaterial()
 {
-	if (Next) Next->Prev = Prev;
-	if (Prev) Prev->Next = Next;
-	else First = Next;
-
-	DeleteDescriptors();
+	if (fb)
+		fb->GetDescriptorSetManager()->RemoveMaterial(this);
 }
 
 void VkMaterial::DeleteDescriptors()
 {
-	if (auto fb = GetVulkanFrameBuffer())
+	if (fb)
 	{
 		auto& deleteList = fb->GetCommands()->FrameDeleteList;
 
@@ -360,19 +325,9 @@ void VkMaterial::DeleteDescriptors()
 		{
 			deleteList.Descriptors.push_back(std::move(it.descriptor));
 		}
+
+		mDescriptorSets.clear();
 	}
-
-	mDescriptorSets.clear();
-}
-
-void VkMaterial::ResetAllDescriptors()
-{
-	for (VkMaterial* cur = First; cur; cur = cur->Next)
-		cur->DeleteDescriptors();
-
-	auto fb = GetVulkanFrameBuffer();
-	if (fb)
-		fb->GetDescriptorSetManager()->TextureSetPoolReset();
 }
 
 VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
@@ -391,7 +346,6 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 
 	int numLayers = NumLayers();
 
-	auto fb = GetVulkanFrameBuffer();
 	auto descriptor = fb->GetDescriptorSetManager()->AllocateTextureDescriptorSet(max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
 
 	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");

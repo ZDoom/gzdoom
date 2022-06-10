@@ -41,6 +41,8 @@ VkDescriptorSetManager::VkDescriptorSetManager(VulkanFrameBuffer* fb) : fb(fb)
 
 VkDescriptorSetManager::~VkDescriptorSetManager()
 {
+	while (!Materials.empty())
+		RemoveMaterial(Materials.back());
 }
 
 void VkDescriptorSetManager::Init()
@@ -115,8 +117,11 @@ void VkDescriptorSetManager::UpdateFixedSet()
 	update.updateSets(fb->device);
 }
 
-void VkDescriptorSetManager::TextureSetPoolReset()
+void VkDescriptorSetManager::ResetHWTextureSets()
 {
+	for (auto mat : Materials)
+		mat->DeleteDescriptors();
+
 	auto& deleteList = fb->GetCommands()->FrameDeleteList;
 
 	for (auto& desc : TextureDescriptorPools)
@@ -129,12 +134,6 @@ void VkDescriptorSetManager::TextureSetPoolReset()
 	TextureDescriptorPools.clear();
 	TextureDescriptorSetsLeft = 0;
 	TextureDescriptorsLeft = 0;
-}
-
-void VkDescriptorSetManager::FilterModeChanged()
-{
-	// Destroy the texture descriptors as they used the old samplers
-	VkMaterial::ResetAllDescriptors();
 }
 
 void VkDescriptorSetManager::CreateNullTexture()
@@ -209,4 +208,16 @@ VulkanDescriptorSetLayout* VkDescriptorSetManager::GetTextureSetLayout(int numLa
 	layout = builder.create(fb->device);
 	layout->SetDebugName("VkDescriptorSetManager.TextureSetLayout");
 	return layout.get();
+}
+
+void VkDescriptorSetManager::AddMaterial(VkMaterial* texture)
+{
+	texture->it = Materials.insert(Materials.end(), texture);
+}
+
+void VkDescriptorSetManager::RemoveMaterial(VkMaterial* texture)
+{
+	texture->DeleteDescriptors();
+	texture->fb = nullptr;
+	Materials.erase(texture->it);
 }

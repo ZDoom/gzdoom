@@ -2,8 +2,10 @@
 #pragma once
 
 #include "vulkan/system/vk_objects.h"
+#include <list>
 
 class VulkanFrameBuffer;
+class VkMaterial;
 
 class VkDescriptorSetManager
 {
@@ -14,8 +16,7 @@ public:
 	void Init();
 	void UpdateFixedSet();
 	void UpdateDynamicSet();
-	void TextureSetPoolReset();
-	void FilterModeChanged();
+	void ResetHWTextureSets();
 
 	VulkanDescriptorSetLayout* GetDynamicSetLayout() { return DynamicSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetFixedSetLayout() { return FixedSetLayout.get(); }
@@ -28,6 +29,9 @@ public:
 	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 
 	VulkanImageView* GetNullTextureView() { return NullTextureView.get(); }
+
+	void AddMaterial(VkMaterial* texture);
+	void RemoveMaterial(VkMaterial* texture);
 
 private:
 	void CreateDynamicSet();
@@ -53,4 +57,6 @@ private:
 
 	std::unique_ptr<VulkanImage> NullTexture;
 	std::unique_ptr<VulkanImageView> NullTextureView;
+
+	std::list<VkMaterial*> Materials;
 };

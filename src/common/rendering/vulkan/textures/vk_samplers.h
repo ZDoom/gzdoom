@@ -14,7 +14,7 @@ public:
 	VkSamplerManager(VulkanFrameBuffer* fb);
 	~VkSamplerManager();
 
-	void FilterModeChanged();
+	void ResetHWSamplers();
 
 	VulkanSampler *Get(int no) const { return mSamplers[no].get(); }
 	VulkanSampler* Get(PPFilterMode filter, PPWrapMode wrap);

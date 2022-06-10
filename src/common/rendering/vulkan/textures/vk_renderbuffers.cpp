@@ -88,7 +88,7 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 {
 	for (int i = 0; i < NumPipelineImages; i++)
 	{
-		PipelineImage[i].reset();
+		PipelineImage[i].Reset(fb);
 	}
 
 	VkImageTransition barrier;
@@ -113,10 +113,10 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 
 void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits samples)
 {
-	SceneColor.reset();
-	SceneDepthStencil.reset();
-	SceneNormal.reset();
-	SceneFog.reset();
+	SceneColor.Reset(fb);
+	SceneDepthStencil.Reset(fb);
+	SceneNormal.Reset(fb);
+	SceneFog.Reset(fb);
 
 	CreateSceneColor(width, height, samples);
 	CreateSceneDepthStencil(width, height, samples);
@@ -219,7 +219,7 @@ void VkRenderBuffers::CreateShadowmap()
 	if (Shadowmap.Image && Shadowmap.Image->width == gl_shadowmap_quality)
 		return;
 
-	Shadowmap.reset();
+	Shadowmap.Reset(fb);
 
 	ImageBuilder builder;
 	builder.setSize(gl_shadowmap_quality, 1024);

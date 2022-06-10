@@ -86,7 +86,6 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	vkDeviceWaitIdle(device->device); // make sure the GPU is no longer using any objects before RAII tears them down
 
 	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
-	VkHardwareTexture::ResetAll();
 	VkHardwareBuffer::ResetAll();
 	PPResource::ResetAll();
 
@@ -258,12 +257,12 @@ void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 
 IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture(int numchannels)
 {
-	return new VkHardwareTexture(numchannels);
+	return new VkHardwareTexture(this, numchannels);
 }
 
 FMaterial* VulkanFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
 {
-	return new VkMaterial(tex, scaleflags);
+	return new VkMaterial(this, tex, scaleflags);
 }
 
 IVertexBuffer *VulkanFrameBuffer::CreateVertexBuffer()
@@ -298,15 +297,15 @@ void VulkanFrameBuffer::SetTextureFilterMode()
 {
 	if (mSamplerManager)
 	{
-		mDescriptorSetManager->FilterModeChanged();
-		mSamplerManager->FilterModeChanged();
+		mDescriptorSetManager->ResetHWTextureSets();
+		mSamplerManager->ResetHWSamplers();
 	}
 }
 
 void VulkanFrameBuffer::StartPrecaching()
 {
 	// Destroy the texture descriptors to avoid problems with potentially stale textures.
-	VkMaterial::ResetAllDescriptors();
+	mDescriptorSetManager->ResetHWTextureSets();
 }
 
 void VulkanFrameBuffer::BlurScene(float amount)
@@ -446,12 +445,7 @@ void VulkanFrameBuffer::InitLightmap(int LMTextureSize, int LMTextureCount, TArr
 		int pixelsize = 8;
 		auto& lightmap = mActiveRenderBuffers->Lightmap;
 
-		if (lightmap.Image)
-		{
-			GetCommands()->FrameDeleteList.Images.push_back(std::move(lightmap.Image));
-			GetCommands()->FrameDeleteList.ImageViews.push_back(std::move(lightmap.View));
-			lightmap.reset();
-		}
+		lightmap.Reset(this);
 
 		ImageBuilder builder;
 		builder.setSize(w, h, 1, count);

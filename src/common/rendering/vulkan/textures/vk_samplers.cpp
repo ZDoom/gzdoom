@@ -75,7 +75,7 @@ VkSamplerManager::~VkSamplerManager()
 {
 }
 
-void VkSamplerManager::FilterModeChanged()
+void VkSamplerManager::ResetHWSamplers()
 {
 	DeleteHWSamplers();
 	CreateHWSamplers();

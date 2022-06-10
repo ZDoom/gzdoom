@@ -21,6 +21,7 @@
 */
 
 #include "vk_texture.h"
+#include "vk_hwtexture.h"
 
 VkTextureManager::VkTextureManager(VulkanFrameBuffer* fb) : fb(fb)
 {
@@ -28,4 +29,18 @@ VkTextureManager::VkTextureManager(VulkanFrameBuffer* fb) : fb(fb)
 
 VkTextureManager::~VkTextureManager()
 {
+	while (!Textures.empty())
+		RemoveTexture(Textures.back());
+}
+
+void VkTextureManager::AddTexture(VkHardwareTexture* texture)
+{
+	texture->it = Textures.insert(Textures.end(), texture);
+}
+
+void VkTextureManager::RemoveTexture(VkHardwareTexture* texture)
+{
+	texture->Reset();
+	texture->fb = nullptr;
+	Textures.erase(texture->it);
 }

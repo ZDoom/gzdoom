@@ -12,22 +12,23 @@
 #include "volk/volk.h"
 #include "vk_imagetransition.h"
 #include "hw_material.h"
+#include <list>
 
 struct FMaterialState;
 class VulkanDescriptorSet;
 class VulkanImage;
 class VulkanImageView;
 class VulkanBuffer;
+class VulkanFrameBuffer;
 class FGameTexture;
 
 class VkHardwareTexture : public IHardwareTexture
 {
 	friend class VkMaterial;
 public:
-	VkHardwareTexture(int numchannels);
+	VkHardwareTexture(VulkanFrameBuffer* fb, int numchannels);
 	~VkHardwareTexture();
 
-	static void ResetAll();
 	void Reset();
 
 	// Software renderer stuff
@@ -41,16 +42,14 @@ public:
 	VkTextureImage *GetImage(FTexture *tex, int translation, int flags);
 	VkTextureImage *GetDepthStencil(FTexture *tex);
 
+	VulkanFrameBuffer* fb = nullptr;
+	std::list<VkHardwareTexture*>::iterator it;
 
 private:
 	void CreateImage(FTexture *tex, int translation, int flags);
 
 	void CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels, bool mipmap);
 	static int GetMipLevels(int w, int h);
-
-	static VkHardwareTexture *First;
-	VkHardwareTexture *Prev = nullptr;
-	VkHardwareTexture *Next = nullptr;
 
 	VkTextureImage mImage;
 	int mTexelsize = 4;
@@ -60,13 +59,20 @@ private:
 	uint8_t* mappedSWFB = nullptr;
 };
 
-
 class VkMaterial : public FMaterial
 {
-	static VkMaterial* First;
-	VkMaterial* Prev = nullptr;
-	VkMaterial* Next = nullptr;
+public:
+	VkMaterial(VulkanFrameBuffer* fb, FGameTexture* tex, int scaleflags);
+	~VkMaterial();
 
+	VulkanDescriptorSet* GetDescriptorSet(const FMaterialState& state);
+
+	void DeleteDescriptors() override;
+
+	VulkanFrameBuffer* fb = nullptr;
+	std::list<VkMaterial*>::iterator it;
+
+private:
 	struct DescriptorEntry
 	{
 		int clampmode;
@@ -82,12 +88,4 @@ class VkMaterial : public FMaterial
 	};
 
 	std::vector<DescriptorEntry> mDescriptorSets;
-
-public:
-	VkMaterial(FGameTexture *tex, int scaleflags);
-	~VkMaterial();
-	VulkanDescriptorSet* GetDescriptorSet(const FMaterialState& state);
-	void DeleteDescriptors() override;
-	static void ResetAllDescriptors();
-
 };

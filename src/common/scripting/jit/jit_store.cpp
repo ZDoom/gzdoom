@@ -201,7 +201,7 @@ void JitCompiler::EmitSFV3()
 	cc.cvtsd2ss(tmpF, regF[B + 1]);
 	cc.movss(asmjit::x86::qword_ptr(tmp, 4), tmpF);
 	cc.cvtsd2ss(tmpF, regF[B + 2]);
-	cc.movss(asmjit::x86::qword_ptr(tmp, 4), tmpF);
+	cc.movss(asmjit::x86::qword_ptr(tmp, 8), tmpF);
 }
 
 void JitCompiler::EmitSFV3_R()
@@ -216,7 +216,7 @@ void JitCompiler::EmitSFV3_R()
 	cc.cvtsd2ss(tmpF, regF[B + 1]);
 	cc.movss(asmjit::x86::qword_ptr(tmp, 4), tmpF);
 	cc.cvtsd2ss(tmpF, regF[B + 2]);
-	cc.movss(asmjit::x86::qword_ptr(tmp, 4), tmpF);
+	cc.movss(asmjit::x86::qword_ptr(tmp, 8), tmpF);
 }
 
 void JitCompiler::EmitSBIT()

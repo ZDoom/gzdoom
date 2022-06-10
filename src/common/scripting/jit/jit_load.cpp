@@ -342,7 +342,7 @@ void JitCompiler::EmitLFV2_R()
 	auto tmp = newTempIntPtr();
 	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
 	cc.movss(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.movss(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	cc.movss(regF[A + 1], asmjit::x86::qword_ptr(tmp, 4));
 	cc.cvtss2sd(regF[A], regF[A]);
 	cc.cvtss2sd(regF[A + 1], regF[A + 1]);
 }
@@ -353,8 +353,8 @@ void JitCompiler::EmitLFV3()
 	auto tmp = newTempIntPtr();
 	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], konstd[C]));
 	cc.movss(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.movss(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
-	cc.movss(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+	cc.movss(regF[A + 1], asmjit::x86::qword_ptr(tmp, 4));
+	cc.movss(regF[A + 2], asmjit::x86::qword_ptr(tmp, 8));
 	cc.cvtss2sd(regF[A], regF[A]);
 	cc.cvtss2sd(regF[A + 1], regF[A + 1]);
 	cc.cvtss2sd(regF[A + 2], regF[A + 2]);
@@ -366,8 +366,8 @@ void JitCompiler::EmitLFV3_R()
 	auto tmp = newTempIntPtr();
 	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
 	cc.movss(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.movss(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
-	cc.movss(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+	cc.movss(regF[A + 1], asmjit::x86::qword_ptr(tmp, 4));
+	cc.movss(regF[A + 2], asmjit::x86::qword_ptr(tmp, 8));
 	cc.cvtss2sd(regF[A], regF[A]);
 	cc.cvtss2sd(regF[A + 1], regF[A + 1]);
 	cc.cvtss2sd(regF[A + 2], regF[A + 2]);

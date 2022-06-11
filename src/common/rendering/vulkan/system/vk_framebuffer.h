@@ -110,5 +110,3 @@ private:
 
 	bool mVSync = false;
 };
-
-inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

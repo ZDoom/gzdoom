@@ -69,10 +69,17 @@ EXTERN_CVAR(Bool, cl_capfps)
 
 CCMD(vk_memstats)
 {
-	VmaStats stats = {};
-	vmaCalculateStats(GetVulkanFrameBuffer()->device->allocator, &stats);
-	Printf("Allocated objects: %d, used bytes: %d MB\n", (int)stats.total.allocationCount, (int)stats.total.usedBytes / (1024 * 1024));
-	Printf("Unused range count: %d, unused bytes: %d MB\n", (int)stats.total.unusedRangeCount, (int)stats.total.unusedBytes / (1024 * 1024));
+	if (screen->IsVulkan())
+	{
+		VmaStats stats = {};
+		vmaCalculateStats(static_cast<VulkanFrameBuffer*>(screen)->device->allocator, &stats);
+		Printf("Allocated objects: %d, used bytes: %d MB\n", (int)stats.total.allocationCount, (int)stats.total.usedBytes / (1024 * 1024));
+		Printf("Unused range count: %d, unused bytes: %d MB\n", (int)stats.total.unusedRangeCount, (int)stats.total.unusedBytes / (1024 * 1024));
+	}
+	else
+	{
+		Printf("Vulkan is not the current render device\n");
+	}
 }
 
 VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev) : 

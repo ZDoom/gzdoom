@@ -39,15 +39,15 @@ public:
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
 		size_t TotalSize = 0;
 
-		void Add(std::unique_ptr<VulkanBuffer> obj) { TotalSize += obj->size; Buffers.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanSampler> obj) { Samplers.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanImage> obj) { Images.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanImageView> obj) { ImageViews.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanFramebuffer> obj) { Framebuffers.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanAccelerationStructure> obj) { AccelStructs.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanDescriptorPool> obj) { DescriptorPools.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanDescriptorSet> obj) { Descriptors.push_back(std::move(obj)); }
-		void Add(std::unique_ptr<VulkanCommandBuffer> obj) { CommandBuffers.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanBuffer> obj) { if (obj) { TotalSize += obj->size; Buffers.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanSampler> obj) { if (obj) { Samplers.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanImage> obj) { if (obj) { Images.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanImageView> obj) { if (obj) { ImageViews.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanFramebuffer> obj) { if (obj) { Framebuffers.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanAccelerationStructure> obj) { if (obj) { AccelStructs.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanDescriptorPool> obj) { if (obj) { DescriptorPools.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanDescriptorSet> obj) { if (obj) { Descriptors.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanCommandBuffer> obj) { if (obj) { CommandBuffers.push_back(std::move(obj)); } }
 	};
 
 	std::unique_ptr<DeleteList> TransferDeleteList = std::make_unique<DeleteList>();

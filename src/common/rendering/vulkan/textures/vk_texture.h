@@ -2,6 +2,7 @@
 #pragma once
 
 #include "vulkan/system/vk_objects.h"
+#include "vulkan/textures/vk_imagetransition.h"
 #include <list>
 
 class VulkanFrameBuffer;
@@ -18,6 +19,10 @@ public:
 	VkTextureManager(VulkanFrameBuffer* fb);
 	~VkTextureManager();
 
+	void BeginFrame();
+
+	void SetLightmap(int LMTextureSize, int LMTextureCount, const TArray<uint16_t>& LMTextureData);
+
 	VkTextureImage* GetTexture(const PPTextureType& type, PPTexture* tex);
 	VkFormat GetTextureFormat(PPTexture* texture);
 
@@ -30,8 +35,14 @@ public:
 	VulkanImage* GetNullTexture() { return NullTexture.get(); }
 	VulkanImageView* GetNullTextureView() { return NullTextureView.get(); }
 
+	VkTextureImage Shadowmap;
+	VkTextureImage Lightmap;
+
 private:
 	void CreateNullTexture();
+	void CreateShadowmap();
+	void CreateLightmap();
+
 	VkPPTexture* GetVkTexture(PPTexture* texture);
 
 	VulkanFrameBuffer* fb = nullptr;

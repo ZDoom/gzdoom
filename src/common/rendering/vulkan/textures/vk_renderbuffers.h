@@ -33,12 +33,6 @@ public:
 	static const int NumPipelineImages = 2;
 	VkTextureImage PipelineImage[NumPipelineImages];
 
-	VkTextureImage Shadowmap;
-	std::unique_ptr<VulkanSampler> ShadowmapSampler;
-
-	VkTextureImage Lightmap;
-	std::unique_ptr<VulkanSampler> LightmapSampler;
-
 	VulkanFramebuffer* GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, bool stencilTest, int& framebufferWidth, int& framebufferHeight);
 
 private:
@@ -48,8 +42,6 @@ private:
 	void CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples);
 	void CreateSceneFog(int width, int height, VkSampleCountFlagBits samples);
 	void CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples);
-	void CreateShadowmap();
-	void CreateLightmapSampler();
 	VkSampleCountFlagBits GetBestSampleCount();
 
 	VulkanFrameBuffer* fb = nullptr;

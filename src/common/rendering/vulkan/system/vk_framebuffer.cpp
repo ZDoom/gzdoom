@@ -398,6 +398,7 @@ TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 void VulkanFrameBuffer::BeginFrame()
 {
 	SetViewportRects(nullptr);
+	mTextureManager->BeginFrame();
 	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mRenderState->BeginFrame();
@@ -413,67 +414,7 @@ void VulkanFrameBuffer::InitLightmap(int LMTextureSize, int LMTextureCount, TArr
 {
 	if (LMTextureData.Size() > 0)
 	{
-		int w = LMTextureSize;
-		int h = LMTextureSize;
-		int count = LMTextureCount;
-		int pixelsize = 8;
-		auto& lightmap = mActiveRenderBuffers->Lightmap;
-
-		lightmap.Reset(this);
-
-		ImageBuilder builder;
-		builder.setSize(w, h, 1, count);
-		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-		builder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-		lightmap.Image = builder.create(device);
-		lightmap.Image->SetDebugName("VkRenderBuffers.Lightmap");
-
-		ImageViewBuilder viewbuilder;
-		viewbuilder.setType(VK_IMAGE_VIEW_TYPE_2D_ARRAY);
-		viewbuilder.setImage(lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
-		lightmap.View = viewbuilder.create(device);
-		lightmap.View->SetDebugName("VkRenderBuffers.LightmapView");
-
-		auto cmdbuffer = GetCommands()->GetTransferCommands();
-
-		int totalSize = w * h * count * pixelsize;
-
-		BufferBuilder bufbuilder;
-		bufbuilder.setSize(totalSize);
-		bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-		std::unique_ptr<VulkanBuffer> stagingBuffer = bufbuilder.create(device);
-		stagingBuffer->SetDebugName("VkHardwareTexture.mStagingBuffer");
-
-		uint16_t one = 0x3c00; // half-float 1.0
-		uint16_t* src = &LMTextureData[0];
-		uint16_t* data = (uint16_t*)stagingBuffer->Map(0, totalSize);
-		for (int i = w * h * count; i > 0; i--)
-		{
-			*(data++) = *(src++);
-			*(data++) = *(src++);
-			*(data++) = *(src++);
-			*(data++) = one;
-		}
-		stagingBuffer->Unmap();
-
-		VkImageTransition imageTransition;
-		imageTransition.addImage(&lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, 0, count);
-		imageTransition.execute(cmdbuffer);
-
-		VkBufferImageCopy region = {};
-		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		region.imageSubresource.layerCount = count;
-		region.imageExtent.depth = 1;
-		region.imageExtent.width = w;
-		region.imageExtent.height = h;
-		cmdbuffer->copyBufferToImage(stagingBuffer->buffer, lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-		VkImageTransition barrier;
-		barrier.addImage(&lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count);
-		barrier.execute(cmdbuffer);
-
-		GetCommands()->TransferDeleteList->Add(std::move(stagingBuffer));
-
+		GetTextureManager()->SetLightmap(LMTextureSize, LMTextureCount, LMTextureData);
 		LMTextureData.Reset(); // We no longer need this, release the memory
 	}
 }

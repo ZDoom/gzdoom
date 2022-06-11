@@ -33,6 +33,7 @@
 #include "vulkan/textures/vk_pptexture.h"
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_imagetransition.h"
+#include "vulkan/textures/vk_texture.h"
 #include "hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
@@ -276,10 +277,8 @@ void VkPostprocess::UpdateShadowMap()
 		VkPPRenderState renderstate(fb);
 		hw_postprocess.shadowmap.Update(&renderstate);
 
-		auto buffers = fb->GetBuffers();
-
 		VkImageTransition imageTransition;
-		imageTransition.addImage(&buffers->Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+		imageTransition.addImage(&fb->GetTextureManager()->Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
 		imageTransition.execute(fb->GetCommands()->GetDrawCommands());
 
 		screen->mShadowMap.FinishUpdate();

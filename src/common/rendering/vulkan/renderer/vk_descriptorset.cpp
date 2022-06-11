@@ -31,6 +31,7 @@
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_hwbuffer.h"
 #include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/system/vk_buffer.h"
 #include "flatvertices.h"
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
@@ -75,9 +76,9 @@ void VkDescriptorSetManager::CreateDynamicSet()
 void VkDescriptorSetManager::UpdateDynamicSet()
 {
 	WriteDescriptors update;
-	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
-	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
-	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
+	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
+	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
+	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
 	update.updateSets(fb->device);
 }
 
@@ -111,7 +112,7 @@ void VkDescriptorSetManager::UpdateFixedSet()
 	WriteDescriptors update;
 	update.addCombinedImageSampler(FixedSet.get(), 0, fb->GetBuffers()->Shadowmap.View.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.addCombinedImageSampler(FixedSet.get(), 1, fb->GetBuffers()->Lightmap.View.get(), fb->GetBuffers()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	update.addBuffer(FixedSet.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightBufferSSO->mBuffer.get());
+	update.addBuffer(FixedSet.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightBufferSSO->mBuffer.get());
 	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		update.addAccelerationStructure(FixedSet.get(), 3, fb->GetRaytrace()->GetAccelStruct());
 	update.updateSets(fb->device);

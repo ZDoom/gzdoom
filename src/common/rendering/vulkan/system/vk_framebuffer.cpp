@@ -85,12 +85,6 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 {
 	vkDeviceWaitIdle(device->device); // make sure the GPU is no longer using any objects before RAII tears them down
 
-	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
-	VkHardwareBuffer::ResetAll();
-	PPResource::ResetAll();
-
-	delete MatrixBuffer;
-	delete StreamBuffer;
 	delete mVertexData;
 	delete mSkyData;
 	delete mViewpoints;
@@ -128,6 +122,7 @@ void VulkanFrameBuffer::InitializeState()
 	mSamplerManager.reset(new VkSamplerManager(this));
 	mTextureManager.reset(new VkTextureManager(this));
 	mBufferManager.reset(new VkBufferManager(this));
+	mBufferManager->Init();
 
 	mScreenBuffers.reset(new VkRenderBuffers(this));
 	mSaveBuffers.reset(new VkRenderBuffers(this));
@@ -142,12 +137,6 @@ void VulkanFrameBuffer::InitializeState()
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
-
-	CreateFanToTrisIndexBuffer();
-
-	// To do: move this to HW renderer interface maybe?
-	MatrixBuffer = new VkStreamBuffer(this, sizeof(MatricesUBO), 50000);
-	StreamBuffer = new VkStreamBuffer(this, sizeof(StreamUBO), 300);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mDescriptorSetManager->Init();
@@ -231,11 +220,9 @@ const char* VulkanFrameBuffer::DeviceName() const
 	return props.deviceName;
 }
 
-
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
-	// This is handled in VulkanSwapChain::AcquireImage.
-	cur_vsync = vsync;
+	mVSync = vsync;
 }
 
 void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
@@ -267,30 +254,17 @@ FMaterial* VulkanFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
 
 IVertexBuffer *VulkanFrameBuffer::CreateVertexBuffer()
 {
-	return new VkHardwareVertexBuffer();
+	return GetBufferManager()->CreateVertexBuffer();
 }
 
 IIndexBuffer *VulkanFrameBuffer::CreateIndexBuffer()
 {
-	return new VkHardwareIndexBuffer();
+	return GetBufferManager()->CreateIndexBuffer();
 }
 
 IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize)
 {
-	auto buffer = new VkHardwareDataBuffer(bindingpoint, ssbo, needsresize);
-
-	switch (bindingpoint)
-	{
-	case LIGHTBUF_BINDINGPOINT: LightBufferSSO = buffer; break;
-	case VIEWPOINT_BINDINGPOINT: ViewpointUBO = buffer; break;
-	case LIGHTNODES_BINDINGPOINT: LightNodes = buffer; break;
-	case LIGHTLINES_BINDINGPOINT: LightLines = buffer; break;
-	case LIGHTLIST_BINDINGPOINT: LightList = buffer; break;
-	case POSTPROCESS_BINDINGPOINT: break;
-	default: break;
-	}
-
-	return buffer;
+	return GetBufferManager()->CreateDataBuffer(bindingpoint, ssbo, needsresize);
 }
 
 void VulkanFrameBuffer::SetTextureFilterMode()
@@ -554,20 +528,6 @@ void VulkanFrameBuffer::PrintStartupLog()
 	Printf("Max. texture size: %d\n", limits.maxImageDimension2D);
 	Printf("Max. uniform buffer range: %d\n", limits.maxUniformBufferRange);
 	Printf("Min. uniform buffer offset alignment: %" PRIu64 "\n", limits.minUniformBufferOffsetAlignment);
-}
-
-void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
-{
-	TArray<uint32_t> data;
-	for (int i = 2; i < 1000; i++)
-	{
-		data.Push(0);
-		data.Push(i - 1);
-		data.Push(i);
-	}
-
-	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
-	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data(), BufferUsageType::Static);
 }
 
 void VulkanFrameBuffer::SetLevelMesh(hwrenderer::LevelMesh* mesh)

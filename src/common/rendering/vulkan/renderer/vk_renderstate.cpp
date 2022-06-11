@@ -24,6 +24,7 @@
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/system/vk_buffer.h"
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/renderer/vk_descriptorset.h"
 #include "vulkan/textures/vk_renderbuffers.h"
@@ -586,7 +587,7 @@ void VkRenderStateMolten::Draw(int dt, int index, int count, bool apply)
 	if (dt == DT_TriangleFan)
 	{
 		IIndexBuffer *oldIndexBuffer = mIndexBuffer;
-		mIndexBuffer = fb->FanToTrisIndexBuffer.get();
+		mIndexBuffer = fb->GetBufferManager()->FanToTrisIndexBuffer.get();
 
 		if (apply || mNeedApply)
 			Apply(DT_Triangles);

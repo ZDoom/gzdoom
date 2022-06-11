@@ -40,19 +40,3 @@ private:
 	VSMatrix mIdentityMatrix;
 	uint32_t mOffset = 0;
 };
-
-class VkStreamBuffer
-{
-public:
-	VkStreamBuffer(VulkanFrameBuffer* fb, size_t structSize, size_t count);
-	~VkStreamBuffer();
-
-	uint32_t NextStreamDataBlock();
-	void Reset() { mStreamDataOffset = 0; }
-
-	VkHardwareDataBuffer* UniformBuffer = nullptr;
-
-private:
-	uint32_t mBlockSize = 0;
-	uint32_t mStreamDataOffset = 0;
-};

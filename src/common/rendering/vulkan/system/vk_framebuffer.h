@@ -44,17 +44,6 @@ public:
 
 	unsigned int GetLightBufferBlockSize() const;
 
-	VkHardwareDataBuffer *ViewpointUBO = nullptr;
-	VkHardwareDataBuffer *LightBufferSSO = nullptr;
-	VkStreamBuffer *MatrixBuffer = nullptr;
-	VkStreamBuffer *StreamBuffer = nullptr;
-
-	VkHardwareDataBuffer *LightNodes = nullptr;
-	VkHardwareDataBuffer *LightLines = nullptr;
-	VkHardwareDataBuffer *LightList = nullptr;
-
-	std::unique_ptr<IIndexBuffer> FanToTrisIndexBuffer;
-
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
 	bool IsVulkan() override { return true; }
@@ -92,7 +81,7 @@ public:
 
 	TArray<uint8_t> GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma) override;
 
-	bool GetVSync() { return cur_vsync; }
+	bool GetVSync() { return mVSync; }
 	void SetVSync(bool vsync) override;
 
 	void Draw2D() override;
@@ -102,7 +91,6 @@ public:
 private:
 	void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc) override;
 	void PrintStartupLog();
-	void CreateFanToTrisIndexBuffer();
 	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;
 
 	std::unique_ptr<VkCommandBufferManager> mCommands;
@@ -120,7 +108,7 @@ private:
 
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
 
-	bool cur_vsync = false;
+	bool mVSync = false;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

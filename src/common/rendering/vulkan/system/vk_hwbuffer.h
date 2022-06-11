@@ -3,6 +3,7 @@
 #include "hwrenderer/data/buffers.h"
 #include "vk_objects.h"
 #include "tarray.h"
+#include <list>
 
 #ifdef _MSC_VER
 // silence bogus warning C4250: 'VkHardwareVertexBuffer': inherits 'VkHardwareBuffer::VkHardwareBuffer::SetData' via dominance
@@ -10,13 +11,14 @@
 #pragma warning(disable:4250) 
 #endif
 
+class VulkanFrameBuffer;
+
 class VkHardwareBuffer : virtual public IBuffer
 {
 public:
-	VkHardwareBuffer();
+	VkHardwareBuffer(VulkanFrameBuffer* fb);
 	~VkHardwareBuffer();
 
-	static void ResetAll();
 	void Reset();
 
 	void SetData(size_t size, const void *data, BufferUsageType usage) override;
@@ -29,22 +31,20 @@ public:
 	void *Lock(unsigned int size) override;
 	void Unlock() override;
 
+	VulkanFrameBuffer* fb = nullptr;
+	std::list<VkHardwareBuffer*>::iterator it;
+
 	VkBufferUsageFlags mBufferType = 0;
 	std::unique_ptr<VulkanBuffer> mBuffer;
 	std::unique_ptr<VulkanBuffer> mStaging;
 	bool mPersistent = false;
 	TArray<uint8_t> mStaticUpload;
-
-private:
-	static VkHardwareBuffer *First;
-	VkHardwareBuffer *Prev = nullptr;
-	VkHardwareBuffer *Next = nullptr;
 };
 
 class VkHardwareVertexBuffer : public IVertexBuffer, public VkHardwareBuffer
 {
 public:
-	VkHardwareVertexBuffer() { mBufferType = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; }
+	VkHardwareVertexBuffer(VulkanFrameBuffer* fb) : VkHardwareBuffer(fb) { mBufferType = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; }
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
 
 	int VertexFormat = -1;
@@ -53,13 +53,13 @@ public:
 class VkHardwareIndexBuffer : public IIndexBuffer, public VkHardwareBuffer
 {
 public:
-	VkHardwareIndexBuffer() { mBufferType = VK_BUFFER_USAGE_INDEX_BUFFER_BIT; }
+	VkHardwareIndexBuffer(VulkanFrameBuffer* fb) : VkHardwareBuffer(fb) { mBufferType = VK_BUFFER_USAGE_INDEX_BUFFER_BIT; }
 };
 
 class VkHardwareDataBuffer : public IDataBuffer, public VkHardwareBuffer
 {
 public:
-	VkHardwareDataBuffer(int bindingpoint, bool ssbo, bool needresize) : bindingpoint(bindingpoint)
+	VkHardwareDataBuffer(VulkanFrameBuffer* fb, int bindingpoint, bool ssbo, bool needresize) : VkHardwareBuffer(fb), bindingpoint(bindingpoint)
 	{
 		mBufferType = ssbo ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		if (needresize)

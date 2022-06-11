@@ -108,6 +108,6 @@ void VkPPTexture::Reset()
 	{
 		TexImage.Reset(fb);
 		if (Staging)
-			fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(Staging));
+			fb->GetCommands()->DrawDeleteList->Add(std::move(Staging));
 	}
 }

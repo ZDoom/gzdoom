@@ -22,11 +22,12 @@
 
 #include "vk_renderbuffers.h"
 #include "vulkan/renderer/vk_postprocess.h"
-#include "vulkan/textures/vk_renderbuffers.h"
+#include "vulkan/textures/vk_texture.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/system/vk_swapchain.h"
 #include "hw_cvars.h"
 
 VkRenderBuffers::VkRenderBuffers(VulkanFrameBuffer* fb) : fb(fb)
@@ -281,4 +282,49 @@ void VkRenderBuffers::CreateLightmapSampler()
 		LightmapSampler = builder.create(fb->device);
 		LightmapSampler->SetDebugName("VkRenderBuffers.LightmapSampler");
 	}
+}
+
+VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, bool stencilTest, int& framebufferWidth, int& framebufferHeight)
+{
+	VkTextureImage* tex = fb->GetTextureManager()->GetTexture(output.Type, output.Texture);
+
+	VkImageView view;
+	std::unique_ptr<VulkanFramebuffer>* framebufferptr = nullptr;
+	int w, h;
+	if (tex)
+	{
+		VkImageTransition imageTransition;
+		imageTransition.addImage(tex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, output.Type == PPTextureType::NextPipelineTexture);
+		if (stencilTest)
+			imageTransition.addImage(&fb->GetBuffers()->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
+		imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+
+		view = tex->View->view;
+		w = tex->Image->width;
+		h = tex->Image->height;
+		framebufferptr = &tex->PPFramebuffer;
+	}
+	else
+	{
+		view = fb->GetCommands()->swapChain->swapChainImageViews[fb->GetCommands()->presentImageIndex];
+		framebufferptr = &fb->GetCommands()->swapChain->framebuffers[fb->GetCommands()->presentImageIndex];
+		w = fb->GetCommands()->swapChain->actualExtent.width;
+		h = fb->GetCommands()->swapChain->actualExtent.height;
+	}
+
+	auto& framebuffer = *framebufferptr;
+	if (!framebuffer)
+	{
+		FramebufferBuilder builder;
+		builder.setRenderPass(passSetup->RenderPass.get());
+		builder.setSize(w, h);
+		builder.addAttachment(view);
+		if (stencilTest)
+			builder.addAttachment(fb->GetBuffers()->SceneDepthStencil.View.get());
+		framebuffer = builder.create(fb->device);
+	}
+
+	framebufferWidth = w;
+	framebufferHeight = h;
+	return framebuffer.get();
 }

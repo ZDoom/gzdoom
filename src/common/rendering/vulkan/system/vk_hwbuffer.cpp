@@ -50,9 +50,9 @@ void VkHardwareBuffer::Reset()
 			map = nullptr;
 		}
 		if (mBuffer)
-			fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+			fb->GetCommands()->DrawDeleteList->Add(std::move(mBuffer));
 		if (mStaging)
-			fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mStaging));
+			fb->GetCommands()->TransferDeleteList->Add(std::move(mStaging));
 	}
 }
 
@@ -63,12 +63,12 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 	// If SetData is called multiple times we have to keep the old buffers alive as there might still be draw commands referencing them
 	if (mBuffer)
 	{
-		fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+		fb->GetCommands()->DrawDeleteList->Add(std::move(mBuffer));
 		mBuffer = {};
 	}
 	if (mStaging)
 	{
-		fb->GetCommands()->FrameDeleteList.Buffers.push_back(std::move(mStaging));
+		fb->GetCommands()->TransferDeleteList->Add(std::move(mStaging));
 		mStaging = {};
 	}
 

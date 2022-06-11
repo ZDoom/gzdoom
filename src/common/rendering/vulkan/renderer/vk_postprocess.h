@@ -38,14 +38,13 @@ public:
 	void BlitCurrentToImage(VkTextureImage *image, VkImageLayout finallayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool screenshot);
 
+	int GetCurrentPipelineImage() const { return mCurrentPipelineImage; }
+
 private:
 	void NextEye(int eyeCount);
 
-	std::unique_ptr<VulkanDescriptorSet> AllocateDescriptorSet(VulkanDescriptorSetLayout *layout);
-
 	VulkanFrameBuffer* fb = nullptr;
 
-	std::unique_ptr<VulkanDescriptorPool> mDescriptorPool;
 	int mCurrentPipelineImage = 0;
 
 	friend class VkPPRenderState;

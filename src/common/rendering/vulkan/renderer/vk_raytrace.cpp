@@ -81,20 +81,18 @@ VulkanAccelerationStructure* VkRaytrace::GetAccelStruct()
 
 void VkRaytrace::Reset()
 {
-	auto& deletelist = fb->GetCommands()->FrameDeleteList;
-	deletelist.Buffers.push_back(std::move(vertexBuffer));
-	deletelist.Buffers.push_back(std::move(indexBuffer));
-	deletelist.Buffers.push_back(std::move(transferBuffer));
-
-	deletelist.Buffers.push_back(std::move(blScratchBuffer));
-	deletelist.Buffers.push_back(std::move(blAccelStructBuffer));
-	deletelist.AccelStructs.push_back(std::move(blAccelStruct));
-
-	deletelist.Buffers.push_back(std::move(tlTransferBuffer));
-	deletelist.Buffers.push_back(std::move(tlScratchBuffer));
-	deletelist.Buffers.push_back(std::move(tlInstanceBuffer));
-	deletelist.Buffers.push_back(std::move(tlAccelStructBuffer));
-	deletelist.AccelStructs.push_back(std::move(tlAccelStruct));
+	auto deletelist = fb->GetCommands()->DrawDeleteList.get();
+	deletelist->Add(std::move(vertexBuffer));
+	deletelist->Add(std::move(indexBuffer));
+	deletelist->Add(std::move(transferBuffer));
+	deletelist->Add(std::move(blScratchBuffer));
+	deletelist->Add(std::move(blAccelStructBuffer));
+	deletelist->Add(std::move(blAccelStruct));
+	deletelist->Add(std::move(tlTransferBuffer));
+	deletelist->Add(std::move(tlScratchBuffer));
+	deletelist->Add(std::move(tlInstanceBuffer));
+	deletelist->Add(std::move(tlAccelStructBuffer));
+	deletelist->Add(std::move(tlAccelStruct));
 }
 
 void VkRaytrace::CreateVulkanObjects()

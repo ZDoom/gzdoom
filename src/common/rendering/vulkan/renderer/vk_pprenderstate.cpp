@@ -30,7 +30,9 @@
 #include "vulkan/textures/vk_pptexture.h"
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_samplers.h"
+#include "vulkan/textures/vk_texture.h"
 #include "vulkan/renderer/vk_renderstate.h"
+#include "vulkan/renderer/vk_descriptorset.h"
 #include "flatvertices.h"
 
 VkPPRenderState::VkPPRenderState(VulkanFrameBuffer* fb) : fb(fb)
@@ -49,19 +51,17 @@ void VkPPRenderState::PopGroup()
 
 void VkPPRenderState::Draw()
 {
-	auto pp = fb->GetPostprocess();
-
 	fb->GetRenderState()->EndRenderPass();
 
 	VkPPRenderPassKey key;
 	key.BlendMode = BlendMode;
 	key.InputTextures = Textures.Size();
 	key.Uniforms = Uniforms.Data.Size();
-	key.Shader = GetVkShader(Shader);
+	key.Shader = fb->GetShaderManager()->GetVkShader(Shader);
 	key.SwapChain = (Output.Type == PPTextureType::SwapChain);
 	key.ShadowMapBuffers = ShadowMapBuffers;
 	if (Output.Type == PPTextureType::PPTexture)
-		key.OutputFormat = GetVkTexture(Output.Texture)->Format;
+		key.OutputFormat = fb->GetTextureManager()->GetTextureFormat(Output.Texture);
 	else if (Output.Type == PPTextureType::SwapChain)
 		key.OutputFormat = fb->GetCommands()->swapChain->swapChainFormat.format;
 	else if (Output.Type == PPTextureType::ShadowMap)
@@ -83,14 +83,15 @@ void VkPPRenderState::Draw()
 	auto passSetup = fb->GetRenderPassManager()->GetPPRenderPass(key);
 
 	int framebufferWidth = 0, framebufferHeight = 0;
-	VulkanDescriptorSet *input = GetInput(passSetup, Textures, ShadowMapBuffers);
-	VulkanFramebuffer *output = GetOutput(passSetup, Output, key.StencilTest, framebufferWidth, framebufferHeight);
+	VulkanDescriptorSet *input = fb->GetDescriptorSetManager()->GetInput(passSetup, Textures, ShadowMapBuffers);
+	VulkanFramebuffer *output = fb->GetBuffers()->GetOutput(passSetup, Output, key.StencilTest, framebufferWidth, framebufferHeight);
 
 	RenderScreenQuad(passSetup, input, output, framebufferWidth, framebufferHeight, Viewport.left, Viewport.top, Viewport.width, Viewport.height, Uniforms.Data.Data(), Uniforms.Data.Size(), key.StencilTest);
 
 	// Advance to next PP texture if our output was sent there
 	if (Output.Type == PPTextureType::NextPipelineTexture)
 	{
+		auto pp = fb->GetPostprocess();
 		pp->mCurrentPipelineImage = (pp->mCurrentPipelineImage + 1) % VkRenderBuffers::NumPipelineImages;
 	}
 }
@@ -134,142 +135,4 @@ void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDes
 		cmdbuffer->pushConstants(passSetup->PipelineLayout.get(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantsSize, pushConstants);
 	cmdbuffer->draw(3, 1, FFlatVertexBuffer::PRESENT_INDEX, 0);
 	cmdbuffer->endRenderPass();
-}
-
-VulkanDescriptorSet *VkPPRenderState::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers)
-{
-	auto descriptors = fb->GetPostprocess()->AllocateDescriptorSet(passSetup->DescriptorLayout.get());
-	descriptors->SetDebugName("VkPostprocess.descriptors");
-
-	WriteDescriptors write;
-	VkImageTransition imageTransition;
-
-	for (unsigned int index = 0; index < textures.Size(); index++)
-	{
-		const PPTextureInput &input = textures[index];
-		VulkanSampler *sampler = fb->GetSamplerManager()->Get(input.Filter, input.Wrap);
-		VkTextureImage *tex = GetTexture(input.Type, input.Texture);
-
-		write.addCombinedImageSampler(descriptors.get(), index, tex->DepthOnlyView ? tex->DepthOnlyView.get() : tex->View.get(), sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		imageTransition.addImage(tex, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-	}
-
-	if (bindShadowMapBuffers)
-	{
-		write.addBuffer(descriptors.get(), LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightNodes->mBuffer.get());
-		write.addBuffer(descriptors.get(), LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightLines->mBuffer.get());
-		write.addBuffer(descriptors.get(), LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightList->mBuffer.get());
-	}
-
-	write.updateSets(fb->device);
-	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
-
-	VulkanDescriptorSet *set = descriptors.get();
-	fb->GetCommands()->FrameDeleteList.Descriptors.push_back(std::move(descriptors));
-	return set;
-}
-
-VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, bool stencilTest, int &framebufferWidth, int &framebufferHeight)
-{
-	VkTextureImage *tex = GetTexture(output.Type, output.Texture);
-
-	VkImageView view;
-	std::unique_ptr<VulkanFramebuffer> *framebufferptr = nullptr;
-	int w, h;
-	if (tex)
-	{
-		VkImageTransition imageTransition;
-		imageTransition.addImage(tex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, output.Type == PPTextureType::NextPipelineTexture);
-		if (stencilTest)
-			imageTransition.addImage(&fb->GetBuffers()->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
-		imageTransition.execute(fb->GetCommands()->GetDrawCommands());
-
-		view = tex->View->view;
-		w = tex->Image->width;
-		h = tex->Image->height;
-		framebufferptr = &tex->PPFramebuffer;
-	}
-	else
-	{
-		view = fb->GetCommands()->swapChain->swapChainImageViews[fb->GetCommands()->presentImageIndex];
-		framebufferptr = &fb->GetCommands()->swapChain->framebuffers[fb->GetCommands()->presentImageIndex];
-		w = fb->GetCommands()->swapChain->actualExtent.width;
-		h = fb->GetCommands()->swapChain->actualExtent.height;
-	}
-
-	auto &framebuffer = *framebufferptr;
-	if (!framebuffer)
-	{
-		FramebufferBuilder builder;
-		builder.setRenderPass(passSetup->RenderPass.get());
-		builder.setSize(w, h);
-		builder.addAttachment(view);
-		if (stencilTest)
-			builder.addAttachment(fb->GetBuffers()->SceneDepthStencil.View.get());
-		framebuffer = builder.create(fb->device);
-	}
-
-	framebufferWidth = w;
-	framebufferHeight = h;
-	return framebuffer.get();
-}
-
-VkTextureImage *VkPPRenderState::GetTexture(const PPTextureType &type, PPTexture *pptexture)
-{
-	if (type == PPTextureType::CurrentPipelineTexture || type == PPTextureType::NextPipelineTexture)
-	{
-		int idx = fb->GetPostprocess()->mCurrentPipelineImage;
-		if (type == PPTextureType::NextPipelineTexture)
-			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
-
-		return &fb->GetBuffers()->PipelineImage[idx];
-	}
-	else if (type == PPTextureType::PPTexture)
-	{
-		auto vktex = GetVkTexture(pptexture);
-		return &vktex->TexImage;
-	}
-	else if (type == PPTextureType::SceneColor)
-	{
-		return &fb->GetBuffers()->SceneColor;
-	}
-	else if (type == PPTextureType::SceneNormal)
-	{
-		return &fb->GetBuffers()->SceneNormal;
-	}
-	else if (type == PPTextureType::SceneFog)
-	{
-		return &fb->GetBuffers()->SceneFog;
-	}
-	else if (type == PPTextureType::SceneDepth)
-	{
-		return &fb->GetBuffers()->SceneDepthStencil;
-	}
-	else if (type == PPTextureType::ShadowMap)
-	{
-		return &fb->GetBuffers()->Shadowmap;
-	}
-	else if (type == PPTextureType::SwapChain)
-	{
-		return nullptr;
-	}
-	else
-	{
-		I_FatalError("VkPPRenderState::GetTexture not implemented yet for this texture type");
-		return nullptr;
-	}
-}
-
-VkPPShader *VkPPRenderState::GetVkShader(PPShader *shader)
-{
-	if (!shader->Backend)
-		shader->Backend = std::make_unique<VkPPShader>(fb, shader);
-	return static_cast<VkPPShader*>(shader->Backend.get());
-}
-
-VkPPTexture *VkPPRenderState::GetVkTexture(PPTexture *texture)
-{
-	if (!texture->Backend)
-		texture->Backend = std::make_unique<VkPPTexture>(fb, texture);
-	return static_cast<VkPPTexture*>(texture->Backend.get());
 }

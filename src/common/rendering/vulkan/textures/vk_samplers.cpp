@@ -143,7 +143,7 @@ void VkSamplerManager::DeleteHWSamplers()
 	for (auto& sampler : mSamplers)
 	{
 		if (sampler)
-			fb->GetCommands()->FrameDeleteList.Samplers.push_back(std::move(sampler));
+			fb->GetCommands()->DrawDeleteList->Add(std::move(sampler));
 	}
 }
 

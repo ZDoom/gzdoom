@@ -143,14 +143,14 @@ void VkCommandBufferManager::FlushCommands(bool finish, bool lastsubmit, bool up
 		{
 			mTransferCommands->end();
 			commands[count++] = mTransferCommands.get();
-			FrameDeleteList.CommandBuffers.push_back(std::move(mTransferCommands));
+			TransferDeleteList->Add(std::move(mTransferCommands));
 		}
 
 		if (!uploadOnly && mDrawCommands)
 		{
 			mDrawCommands->end();
 			commands[count++] = mDrawCommands.get();
-			FrameDeleteList.CommandBuffers.push_back(std::move(mDrawCommands));
+			DrawDeleteList->Add(std::move(mDrawCommands));
 		}
 
 		FlushCommands(commands, count, finish, lastsubmit);
@@ -202,20 +202,9 @@ void VkCommandBufferManager::WaitForCommands(bool finish, bool uploadOnly)
 
 void VkCommandBufferManager::DeleteFrameObjects(bool uploadOnly)
 {
-	FrameTextureUpload.Buffers.clear();
-	FrameTextureUpload.TotalSize = 0;
-
+	TransferDeleteList = std::make_unique<DeleteList>();
 	if (!uploadOnly)
-	{
-		FrameDeleteList.AccelStructs.clear();
-		FrameDeleteList.Images.clear();
-		FrameDeleteList.ImageViews.clear();
-		FrameDeleteList.Framebuffers.clear();
-		FrameDeleteList.Buffers.clear();
-		FrameDeleteList.Descriptors.clear();
-		FrameDeleteList.DescriptorPools.clear();
-		FrameDeleteList.CommandBuffers.clear();
-	}
+		DrawDeleteList = std::make_unique<DeleteList>();
 }
 
 void VkCommandBufferManager::PushGroup(const FString& name)

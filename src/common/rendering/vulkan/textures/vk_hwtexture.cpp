@@ -182,9 +182,8 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 	if (mipmap) mImage.GenerateMipmaps(cmdbuffer);
 
 	// If we queued more than 64 MB of data already: wait until the uploads finish before continuing
-	fb->GetCommands()->FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));
-	fb->GetCommands()->FrameTextureUpload.TotalSize += totalSize;
-	if (fb->GetCommands()->FrameTextureUpload.TotalSize > 64 * 1024 * 1024)
+	fb->GetCommands()->TransferDeleteList->Add(std::move(stagingBuffer));
+	if (fb->GetCommands()->TransferDeleteList->TotalSize > 64 * 1024 * 1024)
 		fb->GetCommands()->WaitForCommands(false, true);
 }
 
@@ -319,13 +318,11 @@ void VkMaterial::DeleteDescriptors()
 {
 	if (fb)
 	{
-		auto& deleteList = fb->GetCommands()->FrameDeleteList;
-
+		auto deleteList = fb->GetCommands()->DrawDeleteList.get();
 		for (auto& it : mDescriptorSets)
 		{
-			deleteList.Descriptors.push_back(std::move(it.descriptor));
+			deleteList->Add(std::move(it.descriptor));
 		}
-
 		mDescriptorSets.clear();
 	}
 }

@@ -66,6 +66,7 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 
 	if (width != mWidth || height != mHeight || mSamples != samples)
 	{
+		fb->GetCommands()->WaitForCommands(false);
 		fb->GetRenderPassManager()->RenderBuffersReset();
 	}
 

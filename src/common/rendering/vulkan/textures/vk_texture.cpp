@@ -28,6 +28,7 @@
 
 VkTextureManager::VkTextureManager(VulkanFrameBuffer* fb) : fb(fb)
 {
+	CreateNullTexture();
 }
 
 VkTextureManager::~VkTextureManager()
@@ -118,4 +119,23 @@ VkPPTexture* VkTextureManager::GetVkTexture(PPTexture* texture)
 	if (!texture->Backend)
 		texture->Backend = std::make_unique<VkPPTexture>(fb, texture);
 	return static_cast<VkPPTexture*>(texture->Backend.get());
+}
+
+void VkTextureManager::CreateNullTexture()
+{
+	ImageBuilder imgbuilder;
+	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
+	imgbuilder.setSize(1, 1);
+	imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT);
+	NullTexture = imgbuilder.create(fb->device);
+	NullTexture->SetDebugName("VkDescriptorSetManager.NullTexture");
+
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(NullTexture.get(), VK_FORMAT_R8G8B8A8_UNORM);
+	NullTextureView = viewbuilder.create(fb->device);
+	NullTextureView->SetDebugName("VkDescriptorSetManager.NullTextureView");
+
+	PipelineBarrier barrier;
+	barrier.addImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	barrier.execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }

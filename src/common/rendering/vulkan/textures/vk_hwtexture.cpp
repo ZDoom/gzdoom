@@ -375,7 +375,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 		numLayers = 3;
 	}
 
-	auto dummyImage = fb->GetDescriptorSetManager()->GetNullTextureView();
+	auto dummyImage = fb->GetTextureManager()->GetNullTextureView();
 	for (int i = numLayers; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
 	{
 		update.addCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

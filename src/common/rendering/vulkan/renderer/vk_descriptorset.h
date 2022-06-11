@@ -32,15 +32,12 @@ public:
 
 	VulkanDescriptorSet* GetInput(VkPPRenderPassSetup* passSetup, const TArray<PPTextureInput>& textures, bool bindShadowMapBuffers);
 
-	VulkanImageView* GetNullTextureView() { return NullTextureView.get(); }
-
 	void AddMaterial(VkMaterial* texture);
 	void RemoveMaterial(VkMaterial* texture);
 
 private:
 	void CreateDynamicSet();
 	void CreateFixedSet();
-	void CreateNullTexture();
 
 	std::unique_ptr<VulkanDescriptorSet> AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout);
 
@@ -62,9 +59,6 @@ private:
 	std::unique_ptr<VulkanDescriptorSet> DynamicSet;
 	std::unique_ptr<VulkanDescriptorSet> FixedSet;
 	std::unique_ptr<VulkanDescriptorSet> NullTextureDescriptorSet;
-
-	std::unique_ptr<VulkanImage> NullTexture;
-	std::unique_ptr<VulkanImageView> NullTextureView;
 
 	std::list<VkMaterial*> Materials;
 };

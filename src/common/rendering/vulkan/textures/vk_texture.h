@@ -27,11 +27,18 @@ public:
 	void AddPPTexture(VkPPTexture* texture);
 	void RemovePPTexture(VkPPTexture* texture);
 
+	VulkanImage* GetNullTexture() { return NullTexture.get(); }
+	VulkanImageView* GetNullTextureView() { return NullTextureView.get(); }
+
 private:
+	void CreateNullTexture();
 	VkPPTexture* GetVkTexture(PPTexture* texture);
 
 	VulkanFrameBuffer* fb = nullptr;
 
 	std::list<VkHardwareTexture*> Textures;
 	std::list<VkPPTexture*> PPTextures;
+
+	std::unique_ptr<VulkanImage> NullTexture;
+	std::unique_ptr<VulkanImageView> NullTextureView;
 };

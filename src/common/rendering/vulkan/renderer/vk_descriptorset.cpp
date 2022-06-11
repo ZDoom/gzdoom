@@ -51,7 +51,6 @@ void VkDescriptorSetManager::Init()
 {
 	CreateFixedSet();
 	CreateDynamicSet();
-	CreateNullTexture();
 }
 
 void VkDescriptorSetManager::CreateDynamicSet()
@@ -131,29 +130,9 @@ void VkDescriptorSetManager::ResetHWTextureSets()
 	}
 	deleteList->Add(std::move(NullTextureDescriptorSet));
 
-	NullTextureDescriptorSet.reset();
 	TextureDescriptorPools.clear();
 	TextureDescriptorSetsLeft = 0;
 	TextureDescriptorsLeft = 0;
-}
-
-void VkDescriptorSetManager::CreateNullTexture()
-{
-	ImageBuilder imgbuilder;
-	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
-	imgbuilder.setSize(1, 1);
-	imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT);
-	NullTexture = imgbuilder.create(fb->device);
-	NullTexture->SetDebugName("VkDescriptorSetManager.NullTexture");
-
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(NullTexture.get(), VK_FORMAT_R8G8B8A8_UNORM);
-	NullTextureView = viewbuilder.create(fb->device);
-	NullTextureView->SetDebugName("VkDescriptorSetManager.NullTextureView");
-
-	PipelineBarrier barrier;
-	barrier.addImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	barrier.execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 VulkanDescriptorSet* VkDescriptorSetManager::GetNullTextureDescriptorSet()
@@ -165,7 +144,7 @@ VulkanDescriptorSet* VkDescriptorSetManager::GetNullTextureDescriptorSet()
 		WriteDescriptors update;
 		for (int i = 0; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
 		{
-			update.addCombinedImageSampler(NullTextureDescriptorSet.get(), i, NullTextureView.get(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			update.addCombinedImageSampler(NullTextureDescriptorSet.get(), i, fb->GetTextureManager()->GetNullTextureView(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
 		update.updateSets(fb->device);
 	}

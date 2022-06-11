@@ -69,6 +69,8 @@ static VkTexClamp TexClamp[] =
 VkSamplerManager::VkSamplerManager(VulkanFrameBuffer* fb) : fb(fb)
 {
 	CreateHWSamplers();
+	CreateShadowmapSampler();
+	CreateLightmapSampler();
 }
 
 VkSamplerManager::~VkSamplerManager()
@@ -162,4 +164,26 @@ VulkanSampler* VkSamplerManager::Get(PPFilterMode filter, PPWrapMode wrap)
 	sampler = builder.create(fb->device);
 	sampler->SetDebugName("VkPostprocess.mSamplers");
 	return sampler.get();
+}
+
+void VkSamplerManager::CreateShadowmapSampler()
+{
+	SamplerBuilder samplerBuilder;
+	samplerBuilder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+	samplerBuilder.setMinFilter(VK_FILTER_NEAREST);
+	samplerBuilder.setMagFilter(VK_FILTER_NEAREST);
+	samplerBuilder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+	ShadowmapSampler = samplerBuilder.create(fb->device);
+	ShadowmapSampler->SetDebugName("VkRenderBuffers.ShadowmapSampler");
+}
+
+void VkSamplerManager::CreateLightmapSampler()
+{
+	SamplerBuilder builder;
+	builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+	builder.setMinFilter(VK_FILTER_LINEAR);
+	builder.setMagFilter(VK_FILTER_LINEAR);
+	builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+	LightmapSampler = builder.create(fb->device);
+	LightmapSampler->SetDebugName("VkRenderBuffers.LightmapSampler");
 }

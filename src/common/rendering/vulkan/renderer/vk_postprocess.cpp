@@ -286,28 +286,6 @@ void VkPostprocess::UpdateShadowMap()
 	}
 }
 
-std::unique_ptr<VulkanDescriptorSet> VkPostprocess::AllocateDescriptorSet(VulkanDescriptorSetLayout *layout)
-{
-	if (mDescriptorPool)
-	{
-		auto descriptors = mDescriptorPool->tryAllocate(layout);
-		if (descriptors)
-			return descriptors;
-
-		fb->GetCommands()->FrameDeleteList.DescriptorPools.push_back(std::move(mDescriptorPool));
-	}
-
-	DescriptorPoolBuilder builder;
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200);
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4);
-	builder.setMaxSets(100);
-	mDescriptorPool = builder.create(fb->device);
-	mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
-
-	return mDescriptorPool->allocate(layout);
-}
-
 void VkPostprocess::NextEye(int eyeCount)
 {
 }
-

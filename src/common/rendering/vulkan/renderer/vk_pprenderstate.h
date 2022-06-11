@@ -23,13 +23,5 @@ public:
 private:
 	void RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize, bool stencilTest);
 
-	VulkanDescriptorSet *GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers);
-	VulkanFramebuffer *GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, bool stencilTest, int &framebufferWidth, int &framebufferHeight);
-
-	VkPPShader *GetVkShader(PPShader *shader);
-	VkPPTexture *GetVkTexture(PPTexture *texture);
-
-	VkTextureImage *GetTexture(const PPTextureType &type, PPTexture *tex);
-
 	VulkanFrameBuffer* fb = nullptr;
 };

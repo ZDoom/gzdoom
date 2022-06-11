@@ -138,7 +138,7 @@ void VulkanFrameBuffer::InitializeState()
 	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
 
-	mShaderManager.reset(new VkShaderManager(device));
+	mShaderManager.reset(new VkShaderManager(this));
 	mDescriptorSetManager->Init();
 #ifdef __APPLE__
 	mRenderState.reset(new VkRenderStateMolten(this));
@@ -472,8 +472,7 @@ void VulkanFrameBuffer::InitLightmap(int LMTextureSize, int LMTextureCount, TArr
 		barrier.addImage(&lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count);
 		barrier.execute(cmdbuffer);
 
-		GetCommands()->FrameTextureUpload.Buffers.push_back(std::move(stagingBuffer));
-		GetCommands()->FrameTextureUpload.TotalSize += totalSize;
+		GetCommands()->TransferDeleteList->Add(std::move(stagingBuffer));
 
 		LMTextureData.Reset(); // We no longer need this, release the memory
 	}

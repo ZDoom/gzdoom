@@ -27,6 +27,7 @@
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
+#include "vulkan/textures/vk_texture.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_hwbuffer.h"
@@ -123,13 +124,12 @@ void VkDescriptorSetManager::ResetHWTextureSets()
 	for (auto mat : Materials)
 		mat->DeleteDescriptors();
 
-	auto& deleteList = fb->GetCommands()->FrameDeleteList;
-
+	auto deleteList = fb->GetCommands()->DrawDeleteList.get();
 	for (auto& desc : TextureDescriptorPools)
 	{
-		deleteList.DescriptorPools.push_back(std::move(desc));
+		deleteList->Add(std::move(desc));
 	}
-	deleteList.Descriptors.push_back(std::move(NullTextureDescriptorSet));
+	deleteList->Add(std::move(NullTextureDescriptorSet));
 
 	NullTextureDescriptorSet.reset();
 	TextureDescriptorPools.clear();
@@ -221,4 +221,58 @@ void VkDescriptorSetManager::RemoveMaterial(VkMaterial* texture)
 	texture->DeleteDescriptors();
 	texture->fb = nullptr;
 	Materials.erase(texture->it);
+}
+
+VulkanDescriptorSet* VkDescriptorSetManager::GetInput(VkPPRenderPassSetup* passSetup, const TArray<PPTextureInput>& textures, bool bindShadowMapBuffers)
+{
+	auto descriptors = AllocatePPDescriptorSet(passSetup->DescriptorLayout.get());
+	descriptors->SetDebugName("VkPostprocess.descriptors");
+
+	WriteDescriptors write;
+	VkImageTransition imageTransition;
+
+	for (unsigned int index = 0; index < textures.Size(); index++)
+	{
+		const PPTextureInput& input = textures[index];
+		VulkanSampler* sampler = fb->GetSamplerManager()->Get(input.Filter, input.Wrap);
+		VkTextureImage* tex = fb->GetTextureManager()->GetTexture(input.Type, input.Texture);
+
+		write.addCombinedImageSampler(descriptors.get(), index, tex->DepthOnlyView ? tex->DepthOnlyView.get() : tex->View.get(), sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		imageTransition.addImage(tex, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+	}
+
+	if (bindShadowMapBuffers)
+	{
+		write.addBuffer(descriptors.get(), LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightNodes->mBuffer.get());
+		write.addBuffer(descriptors.get(), LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightLines->mBuffer.get());
+		write.addBuffer(descriptors.get(), LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightList->mBuffer.get());
+	}
+
+	write.updateSets(fb->device);
+	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+
+	VulkanDescriptorSet* set = descriptors.get();
+	fb->GetCommands()->DrawDeleteList->Add(std::move(descriptors));
+	return set;
+}
+
+std::unique_ptr<VulkanDescriptorSet> VkDescriptorSetManager::AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout)
+{
+	if (PPDescriptorPool)
+	{
+		auto descriptors = PPDescriptorPool->tryAllocate(layout);
+		if (descriptors)
+			return descriptors;
+
+		fb->GetCommands()->DrawDeleteList->Add(std::move(PPDescriptorPool));
+	}
+
+	DescriptorPoolBuilder builder;
+	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200);
+	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4);
+	builder.setMaxSets(100);
+	PPDescriptorPool = builder.create(fb->device);
+	PPDescriptorPool->SetDebugName("PPDescriptorPool");
+
+	return PPDescriptorPool->allocate(layout);
 }

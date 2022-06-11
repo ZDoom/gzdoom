@@ -28,22 +28,30 @@ public:
 	class DeleteList
 	{
 	public:
+		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
+		std::vector<std::unique_ptr<VulkanSampler>> Samplers;
 		std::vector<std::unique_ptr<VulkanImage>> Images;
 		std::vector<std::unique_ptr<VulkanImageView>> ImageViews;
 		std::vector<std::unique_ptr<VulkanFramebuffer>> Framebuffers;
-		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
 		std::vector<std::unique_ptr<VulkanAccelerationStructure>> AccelStructs;
-		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
 		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
+		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
-		std::vector< std::unique_ptr<VulkanSampler>> Samplers;
-	} FrameDeleteList;
-
-	struct
-	{
-		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
 		size_t TotalSize = 0;
-	} FrameTextureUpload;
+
+		void Add(std::unique_ptr<VulkanBuffer> obj) { TotalSize += obj->size; Buffers.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanSampler> obj) { Samplers.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanImage> obj) { Images.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanImageView> obj) { ImageViews.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanFramebuffer> obj) { Framebuffers.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanAccelerationStructure> obj) { AccelStructs.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanDescriptorPool> obj) { DescriptorPools.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanDescriptorSet> obj) { Descriptors.push_back(std::move(obj)); }
+		void Add(std::unique_ptr<VulkanCommandBuffer> obj) { CommandBuffers.push_back(std::move(obj)); }
+	};
+
+	std::unique_ptr<DeleteList> TransferDeleteList = std::make_unique<DeleteList>();
+	std::unique_ptr<DeleteList> DrawDeleteList = std::make_unique<DeleteList>();
 
 	void DeleteFrameObjects(bool uploadOnly = false);
 

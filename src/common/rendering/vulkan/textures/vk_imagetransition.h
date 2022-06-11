@@ -14,14 +14,14 @@ public:
 	{
 		AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		Layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		auto& deletelist = fb->GetCommands()->FrameDeleteList;
-		deletelist.Framebuffers.push_back(std::move(PPFramebuffer));
+		auto deletelist = fb->GetCommands()->DrawDeleteList.get();
+		deletelist->Add(std::move(PPFramebuffer));
 		for (auto &it : RSFramebuffers)
-			deletelist.Framebuffers.push_back(std::move(it.second));
+			deletelist->Add(std::move(it.second));
 		RSFramebuffers.clear();
-		deletelist.ImageViews.push_back(std::move(DepthOnlyView));
-		deletelist.ImageViews.push_back(std::move(View));
-		deletelist.Images.push_back(std::move(Image));
+		deletelist->Add(std::move(DepthOnlyView));
+		deletelist->Add(std::move(View));
+		deletelist->Add(std::move(Image));
 	}
 
 	void GenerateMipmaps(VulkanCommandBuffer *cmdbuffer);

@@ -21,7 +21,9 @@
 */
 
 #include "vk_shader.h"
+#include "vk_ppshader.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_framebuffer.h"
 #include "hw_shaderpatcher.h"
 #include "filesystem.h"
 #include "engineerrors.h"
@@ -111,7 +113,7 @@ bool VkShaderManager::CompileNextShader()
 	return false;
 }
 
-VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
+VkShaderManager::VkShaderManager(VulkanFrameBuffer* fb) : fb(fb)
 {
 	ShInitialize();
 	CompileNextShader();
@@ -329,13 +331,13 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 	code << "#define NPOT_EMULATION\n";
 #endif
 	code << shaderBindings;
-	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
+	if (!fb->device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	code << "#line 1\n";
 	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
 
 	ShaderBuilder builder;
 	builder.setVertexShader(code);
-	return builder.create(shadername.GetChars(), device);
+	return builder.create(shadername.GetChars(), fb->device);
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
@@ -351,7 +353,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	code << shaderBindings;
 	FString placeholder = "\n";
 
-	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
+	if (!fb->device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	if (!alphatest) code << "#define NO_ALPHATEST\n";
 	if (gbufferpass) code << "#define GBUFFER_PASS\n";
 
@@ -425,12 +427,12 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 
 	ShaderBuilder builder;
 	builder.setFragmentShader(code);
-	return builder.create(shadername.GetChars(), device);
+	return builder.create(shadername.GetChars(), fb->device);
 }
 
 FString VkShaderManager::GetTargetGlslVersion()
 {
-	if (device->ApiVersion == VK_API_VERSION_1_2)
+	if (fb->device->ApiVersion == VK_API_VERSION_1_2)
 	{
 		return "#version 460\n#extension GL_EXT_ray_query : enable\n";
 	}
@@ -455,4 +457,11 @@ FString VkShaderManager::LoadPrivateShaderLump(const char *lumpname)
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
 	FileData data = fileSystem.ReadFile(lump);
 	return data.GetString();
+}
+
+VkPPShader* VkShaderManager::GetVkShader(PPShader* shader)
+{
+	if (!shader->Backend)
+		shader->Backend = std::make_unique<VkPPShader>(fb, shader);
+	return static_cast<VkPPShader*>(shader->Backend.get());
 }

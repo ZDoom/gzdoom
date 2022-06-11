@@ -5,6 +5,8 @@
 #include "vulkan/textures/vk_imagetransition.h"
 
 class VulkanFrameBuffer;
+class VkPPRenderPassSetup;
+class PPOutput;
 
 class VkRenderBuffers
 {
@@ -36,6 +38,8 @@ public:
 
 	VkTextureImage Lightmap;
 	std::unique_ptr<VulkanSampler> LightmapSampler;
+
+	VulkanFramebuffer* GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, bool stencilTest, int& framebufferWidth, int& framebufferHeight);
 
 private:
 	void CreatePipeline(int width, int height);

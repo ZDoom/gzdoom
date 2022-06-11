@@ -6,6 +6,8 @@
 
 class VulkanFrameBuffer;
 class VkMaterial;
+class PPTextureInput;
+class VkPPRenderPassSetup;
 
 class VkDescriptorSetManager
 {
@@ -28,6 +30,8 @@ public:
 
 	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 
+	VulkanDescriptorSet* GetInput(VkPPRenderPassSetup* passSetup, const TArray<PPTextureInput>& textures, bool bindShadowMapBuffers);
+
 	VulkanImageView* GetNullTextureView() { return NullTextureView.get(); }
 
 	void AddMaterial(VkMaterial* texture);
@@ -38,6 +42,8 @@ private:
 	void CreateFixedSet();
 	void CreateNullTexture();
 
+	std::unique_ptr<VulkanDescriptorSet> AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout);
+
 	VulkanFrameBuffer* fb = nullptr;
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
@@ -46,6 +52,8 @@ private:
 
 	std::unique_ptr<VulkanDescriptorPool> DynamicDescriptorPool;
 	std::unique_ptr<VulkanDescriptorPool> FixedDescriptorPool;
+
+	std::unique_ptr<VulkanDescriptorPool> PPDescriptorPool;
 
 	int TextureDescriptorSetsLeft = 0;
 	int TextureDescriptorsLeft = 0;

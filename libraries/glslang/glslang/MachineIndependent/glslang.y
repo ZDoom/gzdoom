@@ -315,7 +315,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> PATCH SAMPLE NONUNIFORM
 %token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY DEVICECOHERENT QUEUEFAMILYCOHERENT WORKGROUPCOHERENT
 %token <lex> SUBGROUPCOHERENT NONPRIVATE SHADERCALLCOHERENT
-%token <lex> NOPERSPECTIVE EXPLICITINTERPAMD PERVERTEXNV PERPRIMITIVENV PERVIEWNV PERTASKNV
+%token <lex> NOPERSPECTIVE EXPLICITINTERPAMD PERVERTEXEXT PERVERTEXNV PERPRIMITIVENV PERVIEWNV PERTASKNV
 %token <lex> PRECISE
 
 
@@ -798,7 +798,7 @@ conditional_expression
         parseContext.rValueErrorCheck($5.loc, ":", $6);
         $$ = parseContext.intermediate.addSelection($1, $4, $6, $2.loc);
         if ($$ == 0) {
-            parseContext.binaryOpError($2.loc, ":", $4->getCompleteString(), $6->getCompleteString());
+            parseContext.binaryOpError($2.loc, ":", $4->getCompleteString(parseContext.intermediate.getEnhancedMsgs()), $6->getCompleteString(parseContext.intermediate.getEnhancedMsgs()));
             $$ = $6;
         }
     }
@@ -815,7 +815,7 @@ assignment_expression
         parseContext.rValueErrorCheck($2.loc, "assign", $3);
         $$ = parseContext.addAssign($2.loc, $2.op, $1, $3);
         if ($$ == 0) {
-            parseContext.assignError($2.loc, "assign", $1->getCompleteString(), $3->getCompleteString());
+            parseContext.assignError($2.loc, "assign", $1->getCompleteString(parseContext.intermediate.getEnhancedMsgs()), $3->getCompleteString(parseContext.intermediate.getEnhancedMsgs()));
             $$ = $1;
         }
     }
@@ -877,7 +877,7 @@ expression
         parseContext.samplerConstructorLocationCheck($2.loc, ",", $3);
         $$ = parseContext.intermediate.addComma($1, $3, $2.loc);
         if ($$ == 0) {
-            parseContext.binaryOpError($2.loc, ",", $1->getCompleteString(), $3->getCompleteString());
+            parseContext.binaryOpError($2.loc, ",", $1->getCompleteString(parseContext.intermediate.getEnhancedMsgs()), $3->getCompleteString(parseContext.intermediate.getEnhancedMsgs()));
             $$ = $3;
         }
     }
@@ -983,20 +983,20 @@ function_prototype
         $$.function = $1;
         $$.loc = $2.loc;
         parseContext.requireExtensions($2.loc, 1, &E_GL_EXT_subgroup_uniform_control_flow, "attribute");
-        parseContext.handleFunctionAttributes($2.loc, *$3, $$.function);
+        parseContext.handleFunctionAttributes($2.loc, *$3);
     }
     | attribute function_declarator RIGHT_PAREN {
         $$.function = $2;
         $$.loc = $3.loc;
         parseContext.requireExtensions($3.loc, 1, &E_GL_EXT_subgroup_uniform_control_flow, "attribute");
-        parseContext.handleFunctionAttributes($3.loc, *$1, $$.function);
+        parseContext.handleFunctionAttributes($3.loc, *$1);
     }
     | attribute function_declarator RIGHT_PAREN attribute {
         $$.function = $2;
         $$.loc = $3.loc;
         parseContext.requireExtensions($3.loc, 1, &E_GL_EXT_subgroup_uniform_control_flow, "attribute");
-        parseContext.handleFunctionAttributes($3.loc, *$1, $$.function);
-        parseContext.handleFunctionAttributes($3.loc, *$4, $$.function);
+        parseContext.handleFunctionAttributes($3.loc, *$1);
+        parseContext.handleFunctionAttributes($3.loc, *$4);
     }
     ;
 
@@ -1289,6 +1289,14 @@ interpolation_qualifier
         parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_NV_fragment_shader_barycentric, "fragment shader barycentric");
         $$.init($1.loc);
         $$.qualifier.pervertexNV = true;
+    }
+    | PERVERTEXEXT {
+        parseContext.globalCheck($1.loc, "pervertexEXT");
+        parseContext.profileRequires($1.loc, ECoreProfile, 0, E_GL_EXT_fragment_shader_barycentric, "fragment shader barycentric");
+        parseContext.profileRequires($1.loc, ECompatibilityProfile, 0, E_GL_EXT_fragment_shader_barycentric, "fragment shader barycentric");
+        parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_EXT_fragment_shader_barycentric, "fragment shader barycentric");
+        $$.init($1.loc);
+        $$.qualifier.pervertexEXT = true;
     }
     | PERPRIMITIVENV {
         // No need for profile version or extension check. Shader stage already checks both.
@@ -3926,6 +3934,7 @@ iteration_statement_nonattributed
         --parseContext.controlFlowNestingLevel;
     }
     | DO {
+        parseContext.symbolTable.push();
         ++parseContext.loopNestingLevel;
         ++parseContext.statementNestingLevel;
         ++parseContext.controlFlowNestingLevel;
@@ -3937,6 +3946,7 @@ iteration_statement_nonattributed
         parseContext.boolCheck($8.loc, $6);
 
         $$ = parseContext.intermediate.addLoop($3, $6, 0, false, $4.loc);
+        parseContext.symbolTable.pop(&parseContext.defaultPrecision[0]);
         --parseContext.loopNestingLevel;
         --parseContext.statementNestingLevel;
         --parseContext.controlFlowNestingLevel;
@@ -4364,9 +4374,6 @@ spirv_type_parameter_list
 spirv_type_parameter
     : constant_expression {
         $$ = parseContext.makeSpirvTypeParameters($1->getLoc(), $1->getAsConstantUnion());
-    }
-    | type_specifier {
-        $$ = parseContext.makeSpirvTypeParameters($1);
     }
 
 spirv_instruction_qualifier

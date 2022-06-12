@@ -232,7 +232,7 @@ void DPusher::Tick ()
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
 					DAngle pushangle = pos.Angle();
-					if (m_Source->GetClass()->TypeName == NAME_PointPuller) pushangle += 180;  
+					if (m_Source->IsKindOf(NAME_PointPuller)) pushangle += 180;
 					thing->Thrust(pushangle, speed);
 				}
 			}

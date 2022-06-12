@@ -2347,10 +2347,8 @@ PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
 PPrototype::PPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes)
 : ArgumentTypes(argtypes), ReturnTypes(rettypes)
 {
-	for (int i = 0; i < ArgumentTypes.Size(); ++i)
+	for (auto& type: ArgumentTypes)
 	{
-		auto& type = ArgumentTypes[i];
-
 		if (type == TypeFVector2)
 		{
 			type = TypeVector2;
@@ -2361,10 +2359,8 @@ PPrototype::PPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &a
 		}
 	}
 
-	for (int i = 0; i < ReturnTypes.Size(); ++i)
+	for (auto& type : ReturnTypes)
 	{
-		auto& type = ReturnTypes[i];
-
 		if (type == TypeFVector2)
 		{
 			type = TypeVector2;

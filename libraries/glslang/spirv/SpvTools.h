@@ -47,7 +47,7 @@
 #include "spirv-tools/libspirv.h"
 #endif
 
-#include "../glslang/MachineIndependent/localintermediate.h"
+#include "glslang/MachineIndependent/localintermediate.h"
 #include "Logger.h"
 
 namespace glslang {

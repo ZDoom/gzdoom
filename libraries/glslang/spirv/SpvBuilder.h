@@ -99,6 +99,10 @@ public:
         stringIds[file_c_str] = strId;
         return strId;
     }
+    spv::Id getSourceFile() const 
+    {
+        return sourceFileStringId;
+    }
     void setSourceFile(const std::string& file)
     {
         sourceFileStringId = getStringId(file);
@@ -181,6 +185,7 @@ public:
     Id makeSamplerType();
     Id makeSampledImageType(Id imageType);
     Id makeCooperativeMatrixType(Id component, Id scope, Id rows, Id cols);
+    Id makeGenericType(spv::Op opcode, std::vector<spv::IdImmediate>& operands);
 
     // accelerationStructureNV type
     Id makeAccelerationStructureType();

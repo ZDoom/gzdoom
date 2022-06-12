@@ -352,7 +352,7 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 	vec3 origin = pixelpos.xyz;
 	vec3 direction = normalize(lightpos.xyz - pixelpos.xyz);
 	float lightDistance = distance(pixelpos.xyz, lightpos.xyz);
-/*
+	/*
 	rayQueryEXT rayQuery;
 	rayQueryInitializeEXT(rayQuery, TopLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, origin, 0.01f, direction, lightDistance);
 
@@ -364,7 +364,8 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 	{
 		return 0.0;
 	}
-*/
+	*/
+
 	return 1.0;
 }
 

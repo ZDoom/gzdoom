@@ -161,6 +161,8 @@ const char* const E_GL_ARB_shader_storage_buffer_object = "GL_ARB_shader_storage
 const char* const E_GL_ARB_shading_language_packing     = "GL_ARB_shading_language_packing";
 const char* const E_GL_ARB_texture_query_lod            = "GL_ARB_texture_query_lod";
 const char* const E_GL_ARB_vertex_attrib_64bit          = "GL_ARB_vertex_attrib_64bit";
+const char* const E_GL_ARB_draw_instanced               = "GL_ARB_draw_instanced";
+const char* const E_GL_ARB_fragment_coord_conventions   = "GL_ARB_fragment_coord_conventions";
 
 const char* const E_GL_KHR_shader_subgroup_basic            = "GL_KHR_shader_subgroup_basic";
 const char* const E_GL_KHR_shader_subgroup_vote             = "GL_KHR_shader_subgroup_vote";
@@ -199,6 +201,7 @@ const char* const E_GL_EXT_debug_printf                     = "GL_EXT_debug_prin
 const char* const E_GL_EXT_ray_tracing                      = "GL_EXT_ray_tracing";
 const char* const E_GL_EXT_ray_query                        = "GL_EXT_ray_query";
 const char* const E_GL_EXT_ray_flags_primitive_culling      = "GL_EXT_ray_flags_primitive_culling";
+const char* const E_GL_EXT_ray_cull_mask                    = "GL_EXT_ray_cull_mask";
 const char* const E_GL_EXT_blend_func_extended              = "GL_EXT_blend_func_extended";
 const char* const E_GL_EXT_shader_implicit_conversions      = "GL_EXT_shader_implicit_conversions";
 const char* const E_GL_EXT_fragment_shading_rate            = "GL_EXT_fragment_shading_rate";
@@ -207,6 +210,7 @@ const char* const E_GL_EXT_null_initializer                 = "GL_EXT_null_initi
 const char* const E_GL_EXT_shared_memory_block              = "GL_EXT_shared_memory_block";
 const char* const E_GL_EXT_subgroup_uniform_control_flow    = "GL_EXT_subgroup_uniform_control_flow";
 const char* const E_GL_EXT_spirv_intrinsics                 = "GL_EXT_spirv_intrinsics";
+const char* const E_GL_EXT_fragment_shader_barycentric      = "GL_EXT_fragment_shader_barycentric";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

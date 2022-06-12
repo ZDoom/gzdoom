@@ -13,7 +13,7 @@ public:
 
 	void SetLevelMesh(hwrenderer::LevelMesh* mesh);
 
-	VulkanAccelerationStructure* GetAccelStruct();
+	VulkanAccelerationStructure* GetAccelStruct() { return tlAccelStruct.get(); }
 
 private:
 	void Reset();
@@ -24,6 +24,7 @@ private:
 
 	VulkanFrameBuffer* fb = nullptr;
 
+	hwrenderer::LevelMesh NullMesh;
 	hwrenderer::LevelMesh* Mesh = nullptr;
 
 	std::unique_ptr<VulkanBuffer> vertexBuffer;

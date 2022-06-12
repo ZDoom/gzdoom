@@ -113,7 +113,7 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 
 	PipelineLayoutBuilder builder;
 	builder.addSetLayout(descriptors->GetFixedSetLayout());
-	builder.addSetLayout(descriptors->GetDynamicSetLayout());
+	builder.addSetLayout(descriptors->GetHWBufferSetLayout());
 	if (numLayers != 0)
 		builder.addSetLayout(descriptors->GetTextureSetLayout(numLayers));
 	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));

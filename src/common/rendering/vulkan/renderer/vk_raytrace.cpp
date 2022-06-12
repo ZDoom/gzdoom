@@ -28,55 +28,38 @@
 
 VkRaytrace::VkRaytrace(VulkanFrameBuffer* fb) : fb(fb)
 {
+	NullMesh.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
+	NullMesh.MeshVertices.Push({ 1.0f, -1.0f, -1.0f });
+	NullMesh.MeshVertices.Push({ 1.0f,  1.0f, -1.0f });
+	NullMesh.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
+	NullMesh.MeshVertices.Push({ -1.0f,  1.0f, -1.0f });
+	NullMesh.MeshVertices.Push({ 1.0f,  1.0f, -1.0f });
+	NullMesh.MeshVertices.Push({ -1.0f, -1.0f,  1.0f });
+	NullMesh.MeshVertices.Push({ 1.0f, -1.0f,  1.0f });
+	NullMesh.MeshVertices.Push({ 1.0f,  1.0f,  1.0f });
+	NullMesh.MeshVertices.Push({ -1.0f, -1.0f,  1.0f });
+	NullMesh.MeshVertices.Push({ -1.0f,  1.0f,  1.0f });
+	NullMesh.MeshVertices.Push({ 1.0f,  1.0f,  1.0f });
+	for (int i = 0; i < 3 * 4; i++)
+		NullMesh.MeshElements.Push(i);
+
+	SetLevelMesh(nullptr);
 }
 
 void VkRaytrace::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 {
+	if (!mesh)
+		mesh = &NullMesh;
+
 	if (mesh != Mesh)
 	{
 		Reset();
 		Mesh = mesh;
-		if (Mesh)
+		if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		{
-			if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-			{
-				CreateVulkanObjects();
-			}
+			CreateVulkanObjects();
 		}
 	}
-}
-
-VulkanAccelerationStructure* VkRaytrace::GetAccelStruct()
-{
-	if (tlAccelStruct)
-		return tlAccelStruct.get();
-
-	// We need a dummy accel struct to keep vulkan happy:
-	hwrenderer::LevelMesh dummy;
-
-	dummy.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
-	dummy.MeshVertices.Push({  1.0f, -1.0f, -1.0f });
-	dummy.MeshVertices.Push({  1.0f,  1.0f, -1.0f });
-
-	dummy.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
-	dummy.MeshVertices.Push({ -1.0f,  1.0f, -1.0f });
-	dummy.MeshVertices.Push({  1.0f,  1.0f, -1.0f });
-
-	dummy.MeshVertices.Push({ -1.0f, -1.0f,  1.0f });
-	dummy.MeshVertices.Push({  1.0f, -1.0f,  1.0f });
-	dummy.MeshVertices.Push({  1.0f,  1.0f,  1.0f });
-
-	dummy.MeshVertices.Push({ -1.0f, -1.0f,  1.0f });
-	dummy.MeshVertices.Push({ -1.0f,  1.0f,  1.0f });
-	dummy.MeshVertices.Push({  1.0f,  1.0f,  1.0f });
-
-	for (int i = 0; i < 3 * 4; i++)
-		dummy.MeshElements.Push(i);
-
-	Mesh = &dummy;
-	CreateVulkanObjects();
-	Mesh = nullptr;
-	return tlAccelStruct.get();
 }
 
 void VkRaytrace::Reset()

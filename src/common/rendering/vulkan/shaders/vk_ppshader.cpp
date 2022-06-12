@@ -21,11 +21,13 @@
 */
 
 #include "vk_ppshader.h"
+#include "vk_shader.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "filesystem.h"
 
-VkPPShader::VkPPShader(VulkanFrameBuffer* fb, PPShader *shader)
+VkPPShader::VkPPShader(VulkanFrameBuffer* fb, PPShader *shader) : fb(fb)
 {
 	FString prolog;
 	if (!shader->Uniforms.empty())
@@ -41,6 +43,23 @@ VkPPShader::VkPPShader(VulkanFrameBuffer* fb, PPShader *shader)
 	fragbuilder.setFragmentShader(LoadShaderCode(shader->FragmentShader, prolog, shader->Version));
 	FragmentShader = fragbuilder.create(shader->FragmentShader.GetChars(), fb->device);
 	FragmentShader->SetDebugName(shader->FragmentShader.GetChars());
+
+	fb->GetShaderManager()->AddVkPPShader(this);
+}
+
+VkPPShader::~VkPPShader()
+{
+	if (fb)
+		fb->GetShaderManager()->RemoveVkPPShader(this);
+}
+
+void VkPPShader::Reset()
+{
+	if (fb)
+	{
+		fb->GetCommands()->DrawDeleteList->Add(std::move(VertexShader));
+		fb->GetCommands()->DrawDeleteList->Add(std::move(FragmentShader));
+	}
 }
 
 FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defines, int version)

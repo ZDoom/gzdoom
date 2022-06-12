@@ -36,6 +36,7 @@ public:
 		std::vector<std::unique_ptr<VulkanAccelerationStructure>> AccelStructs;
 		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
 		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
+		std::vector<std::unique_ptr<VulkanShader>> Shaders;
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
 		size_t TotalSize = 0;
 
@@ -48,6 +49,7 @@ public:
 		void Add(std::unique_ptr<VulkanDescriptorPool> obj) { if (obj) { DescriptorPools.push_back(std::move(obj)); } }
 		void Add(std::unique_ptr<VulkanDescriptorSet> obj) { if (obj) { Descriptors.push_back(std::move(obj)); } }
 		void Add(std::unique_ptr<VulkanCommandBuffer> obj) { if (obj) { CommandBuffers.push_back(std::move(obj)); } }
+		void Add(std::unique_ptr<VulkanShader> obj) { if (obj) { Shaders.push_back(std::move(obj)); } }
 	};
 
 	std::unique_ptr<DeleteList> TransferDeleteList = std::make_unique<DeleteList>();

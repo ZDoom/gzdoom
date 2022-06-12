@@ -7,6 +7,7 @@
 #include "matrix.h"
 #include "name.h"
 #include "hw_renderstate.h"
+#include <list>
 
 #define SHADER_MIN_REQUIRED_TEXTURE_LAYERS 8
 
@@ -66,11 +67,16 @@ public:
 	VkShaderManager(VulkanFrameBuffer* fb);
 	~VkShaderManager();
 
+	void Deinit();
+
 	VkShaderProgram *GetEffect(int effect, EPassType passType);
 	VkShaderProgram *Get(unsigned int eff, bool alphateston, EPassType passType);
 	bool CompileNextShader();
 
 	VkPPShader* GetVkShader(PPShader* shader);
+
+	void AddVkPPShader(VkPPShader* shader);
+	void RemoveVkPPShader(VkPPShader* shader);
 
 private:
 	std::unique_ptr<VulkanShader> LoadVertShader(FString shadername, const char *vert_lump, const char *defines);
@@ -87,4 +93,6 @@ private:
 	std::vector<VkShaderProgram> mEffectShaders[MAX_PASS_TYPES];
 	uint8_t compilePass = 0, compileState = 0;
 	int compileIndex = 0;
+
+	std::list<VkPPShader*> PPShaders;
 };

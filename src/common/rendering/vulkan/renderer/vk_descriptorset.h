@@ -16,15 +16,17 @@ public:
 	~VkDescriptorSetManager();
 
 	void Init();
+	void Deinit();
+	void BeginFrame();
 	void UpdateFixedSet();
-	void UpdateDynamicSet();
+	void UpdateHWBufferSet();
 	void ResetHWTextureSets();
 
-	VulkanDescriptorSetLayout* GetDynamicSetLayout() { return DynamicSetLayout.get(); }
+	VulkanDescriptorSetLayout* GetHWBufferSetLayout() { return HWBufferSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetFixedSetLayout() { return FixedSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetTextureSetLayout(int numLayers);
 
-	VulkanDescriptorSet* GetDynamicDescriptorSet() { return DynamicSet.get(); }
+	VulkanDescriptorSet* GetHWBufferDescriptorSet() { return HWBufferSet.get(); }
 	VulkanDescriptorSet* GetFixedDescriptorSet() { return FixedSet.get(); }
 	VulkanDescriptorSet* GetNullTextureDescriptorSet();
 
@@ -36,18 +38,18 @@ public:
 	void RemoveMaterial(VkMaterial* texture);
 
 private:
-	void CreateDynamicSet();
-	void CreateFixedSet();
+	void CreateHWBufferSetLayout();
+	void CreateFixedSetLayout();
 
 	std::unique_ptr<VulkanDescriptorSet> AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout);
 
 	VulkanFrameBuffer* fb = nullptr;
 
-	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
+	std::unique_ptr<VulkanDescriptorSetLayout> HWBufferSetLayout;
 	std::unique_ptr<VulkanDescriptorSetLayout> FixedSetLayout;
 	std::vector<std::unique_ptr<VulkanDescriptorSetLayout>> TextureSetLayouts;
 
-	std::unique_ptr<VulkanDescriptorPool> DynamicDescriptorPool;
+	std::unique_ptr<VulkanDescriptorPool> HWBufferDescriptorPool;
 	std::unique_ptr<VulkanDescriptorPool> FixedDescriptorPool;
 
 	std::unique_ptr<VulkanDescriptorPool> PPDescriptorPool;
@@ -56,7 +58,7 @@ private:
 	int TextureDescriptorsLeft = 0;
 	std::vector<std::unique_ptr<VulkanDescriptorPool>> TextureDescriptorPools;
 
-	std::unique_ptr<VulkanDescriptorSet> DynamicSet;
+	std::unique_ptr<VulkanDescriptorSet> HWBufferSet;
 	std::unique_ptr<VulkanDescriptorSet> FixedSet;
 	std::unique_ptr<VulkanDescriptorSet> NullTextureDescriptorSet;
 

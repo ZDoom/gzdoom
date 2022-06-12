@@ -124,6 +124,12 @@ VkShaderManager::~VkShaderManager()
 	ShFinalize();
 }
 
+void VkShaderManager::Deinit()
+{
+	while (!PPShaders.empty())
+		RemoveVkPPShader(PPShaders.back());
+}
+
 VkShaderProgram *VkShaderManager::GetEffect(int effect, EPassType passType)
 {
 	if (compileIndex == -1 && effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[passType][effect].frag)
@@ -152,15 +158,8 @@ static const char *shaderBindings = R"(
 
 	layout(set = 0, binding = 0) uniform sampler2D ShadowMap;
 	layout(set = 0, binding = 1) uniform sampler2DArray LightMap;
-
-	// light buffers
-	layout(set = 0, binding = 2, std430) buffer LightBufferSSO
-	{
-	    vec4 lights[];
-	};
-
 	#ifdef SUPPORTS_RAYTRACING
-	layout(set = 0, binding = 3) uniform accelerationStructureEXT TopLevelAS;
+	layout(set = 0, binding = 2) uniform accelerationStructureEXT TopLevelAS;
 	#endif
 
 	// This must match the HWViewpointUniforms struct
@@ -221,6 +220,12 @@ static const char *shaderBindings = R"(
 
 	layout(set = 1, binding = 2, std140) uniform StreamUBO {
 		StreamData data[MAX_STREAM_DATA];
+	};
+
+	// light buffers
+	layout(set = 1, binding = 3, std430) buffer LightBufferSSO
+	{
+	    vec4 lights[];
 	};
 
 	// textures
@@ -464,4 +469,16 @@ VkPPShader* VkShaderManager::GetVkShader(PPShader* shader)
 	if (!shader->Backend)
 		shader->Backend = std::make_unique<VkPPShader>(fb, shader);
 	return static_cast<VkPPShader*>(shader->Backend.get());
+}
+
+void VkShaderManager::AddVkPPShader(VkPPShader* shader)
+{
+	shader->it = PPShaders.insert(PPShaders.end(), shader);
+}
+
+void VkShaderManager::RemoveVkPPShader(VkPPShader* shader)
+{
+	shader->Reset();
+	shader->fb = nullptr;
+	PPShaders.erase(shader->it);
 }

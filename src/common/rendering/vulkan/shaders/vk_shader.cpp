@@ -141,7 +141,8 @@ VkShaderProgram *VkShaderManager::GetEffect(int effect, EPassType passType)
 
 VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)
 {
-	if (compileIndex != -1) return &mMaterialShaders[0][0];
+	if (compileIndex != -1)
+		return &mMaterialShaders[0][0];
 	// indices 0-2 match the warping modes, 3 no texture, the following are custom
 	if (!alphateston && eff < SHADER_NoTexture)
 	{
@@ -342,7 +343,9 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 
 	ShaderBuilder builder;
 	builder.setVertexShader(code);
-	return builder.create(shadername.GetChars(), fb->device);
+	auto shader = builder.create(shadername.GetChars(), fb->device);
+	shader->SetDebugName(shadername.GetChars());
+	return shader;
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
@@ -432,7 +435,9 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 
 	ShaderBuilder builder;
 	builder.setFragmentShader(code);
-	return builder.create(shadername.GetChars(), fb->device);
+	auto shader = builder.create(shadername.GetChars(), fb->device);
+	shader->SetDebugName(shadername.GetChars());
+	return shader;
 }
 
 FString VkShaderManager::GetTargetGlslVersion()

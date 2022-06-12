@@ -60,7 +60,7 @@ protected:
 	void ApplyStreamData();
 	void ApplyMatrices();
 	void ApplyPushConstants();
-	void ApplyDynamicSet();
+	void ApplyHWBufferSet();
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
 

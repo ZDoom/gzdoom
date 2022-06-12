@@ -198,7 +198,7 @@ void VkRenderState::Apply(int dt)
 	ApplyDepthBias();
 	ApplyPushConstants();
 	ApplyVertexBuffers();
-	ApplyDynamicSet();
+	ApplyHWBufferSet();
 	ApplyMaterial();
 	mNeedApply = false;
 
@@ -267,11 +267,6 @@ void VkRenderState::ApplyRenderPass(int dt)
 	{
 		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, mPassSetup->GetPipeline(pipelineKey));
 		mPipelineKey = pipelineKey;
-	}
-
-	if (!inRenderPass)
-	{
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, fb->GetRenderPassManager()->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
 	}
 }
 
@@ -443,12 +438,13 @@ void VkRenderState::ApplyMaterial()
 
 		VulkanDescriptorSet* descriptorset = mMaterial.mMaterial ? static_cast<VkMaterial*>(mMaterial.mMaterial)->GetDescriptorSet(mMaterial) : descriptors->GetNullTextureDescriptorSet();
 
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, fb->GetRenderPassManager()->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
 		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 2, descriptorset);
 		mMaterial.mChanged = false;
 	}
 }
 
-void VkRenderState::ApplyDynamicSet()
+void VkRenderState::ApplyHWBufferSet()
 {
 	uint32_t matrixOffset = mMatrixBufferWriter.Offset();
 	uint32_t streamDataOffset = mStreamBufferWriter.StreamDataOffset();
@@ -458,6 +454,7 @@ void VkRenderState::ApplyDynamicSet()
 		auto descriptors = fb->GetDescriptorSetManager();
 
 		uint32_t offsets[3] = { mViewpointOffset, matrixOffset, streamDataOffset };
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, fb->GetRenderPassManager()->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
 		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetHWBufferDescriptorSet(), 3, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;

@@ -179,7 +179,7 @@ void VkHardwareBuffer::Resize(size_t newsize)
 	// Transfer data from old to new
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
 	fb->GetCommands()->WaitForCommands(false);
-	fb->GetDescriptorSetManager()->UpdateDynamicSet(); // Old buffer may be part of the dynamic set
+	fb->GetDescriptorSetManager()->UpdateHWBufferSet(); // Old buffer may be part of the bound descriptor set
 
 	// Fetch pointer to new buffer
 	map = mBuffer->Map(0, newsize);

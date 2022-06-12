@@ -42,6 +42,14 @@ VkTextureManager::~VkTextureManager()
 		RemovePPTexture(PPTextures.back());
 }
 
+void VkTextureManager::Deinit()
+{
+	while (!Textures.empty())
+		RemoveTexture(Textures.back());
+	while (!PPTextures.empty())
+		RemovePPTexture(PPTextures.back());
+}
+
 void VkTextureManager::BeginFrame()
 {
 	if (!Shadowmap.Image || Shadowmap.Image->width != gl_shadowmap_quality)

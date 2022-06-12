@@ -458,7 +458,7 @@ void VkRenderState::ApplyDynamicSet()
 		auto descriptors = fb->GetDescriptorSetManager();
 
 		uint32_t offsets[3] = { mViewpointOffset, matrixOffset, streamDataOffset };
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetDynamicDescriptorSet(), 3, offsets);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetHWBufferDescriptorSet(), 3, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastMatricesOffset = matrixOffset;

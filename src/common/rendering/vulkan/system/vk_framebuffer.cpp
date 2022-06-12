@@ -98,6 +98,11 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mLights;
 	mShadowMap.Reset();
 
+	mDescriptorSetManager->Deinit();
+	mTextureManager->Deinit();
+	mBufferManager->Deinit();
+	mShaderManager->Deinit();
+
 	mCommands->DeleteFrameObjects();
 }
 
@@ -405,16 +410,12 @@ TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 void VulkanFrameBuffer::BeginFrame()
 {
 	SetViewportRects(nullptr);
+	mCommands->BeginFrame();
 	mTextureManager->BeginFrame();
 	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mRenderState->BeginFrame();
-
-	WaitForCommands(false);
-	mDescriptorSetManager->UpdateFixedSet();
-	mDescriptorSetManager->UpdateDynamicSet();
-
-	mCommands->BeginFrame();
+	mDescriptorSetManager->BeginFrame();
 }
 
 void VulkanFrameBuffer::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData)

@@ -19,6 +19,8 @@ public:
 	VkTextureManager(VulkanFrameBuffer* fb);
 	~VkTextureManager();
 
+	void Deinit();
+
 	void BeginFrame();
 
 	void SetLightmap(int LMTextureSize, int LMTextureCount, const TArray<uint16_t>& LMTextureData);

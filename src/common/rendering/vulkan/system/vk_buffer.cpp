@@ -31,16 +31,20 @@ VkBufferManager::VkBufferManager(VulkanFrameBuffer* fb) : fb(fb)
 
 VkBufferManager::~VkBufferManager()
 {
-	delete MatrixBuffer;
-	delete StreamBuffer;
 }
 
 void VkBufferManager::Init()
 {
-	MatrixBuffer = new VkStreamBuffer(this, sizeof(MatricesUBO), 50000);
-	StreamBuffer = new VkStreamBuffer(this, sizeof(StreamUBO), 300);
+	MatrixBuffer.reset(new VkStreamBuffer(this, sizeof(MatricesUBO), 50000));
+	StreamBuffer.reset(new VkStreamBuffer(this, sizeof(StreamUBO), 300));
 
 	CreateFanToTrisIndexBuffer();
+}
+
+void VkBufferManager::Deinit()
+{
+	while (!Buffers.empty())
+		RemoveBuffer(Buffers.back());
 }
 
 void VkBufferManager::AddBuffer(VkHardwareBuffer* buffer)

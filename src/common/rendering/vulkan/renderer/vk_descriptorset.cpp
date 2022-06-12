@@ -39,6 +39,8 @@
 
 VkDescriptorSetManager::VkDescriptorSetManager(VulkanFrameBuffer* fb) : fb(fb)
 {
+	CreateHWBufferSetLayout();
+	CreateFixedSetLayout();
 }
 
 VkDescriptorSetManager::~VkDescriptorSetManager()
@@ -49,52 +51,74 @@ VkDescriptorSetManager::~VkDescriptorSetManager()
 
 void VkDescriptorSetManager::Init()
 {
-	CreateFixedSet();
-	CreateDynamicSet();
+	UpdateFixedSet();
+	UpdateHWBufferSet();
 }
 
-void VkDescriptorSetManager::CreateDynamicSet()
+void VkDescriptorSetManager::Deinit()
+{
+	while (!Materials.empty())
+		RemoveMaterial(Materials.back());
+}
+
+void VkDescriptorSetManager::BeginFrame()
+{
+	UpdateFixedSet();
+	UpdateHWBufferSet();
+}
+
+void VkDescriptorSetManager::CreateHWBufferSetLayout()
 {
 	DescriptorSetLayoutBuilder builder;
 	builder.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	DynamicSetLayout = builder.create(fb->device);
-	DynamicSetLayout->SetDebugName("VkDescriptorSetManager.DynamicSetLayout");
+	builder.addBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	HWBufferSetLayout = builder.create(fb->device);
+	HWBufferSetLayout->SetDebugName("VkDescriptorSetManager.HWBufferSetLayout");
+}
+
+void VkDescriptorSetManager::UpdateHWBufferSet()
+{
+	fb->GetCommands()->DrawDeleteList->Add(std::move(HWBufferSet));
+	fb->GetCommands()->DrawDeleteList->Add(std::move(HWBufferDescriptorPool));
 
 	DescriptorPoolBuilder poolbuilder;
 	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3);
+	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1);
 	poolbuilder.setMaxSets(1);
-	DynamicDescriptorPool = poolbuilder.create(fb->device);
-	DynamicDescriptorPool->SetDebugName("VkDescriptorSetManager.DynamicDescriptorPool");
+	HWBufferDescriptorPool = poolbuilder.create(fb->device);
+	HWBufferDescriptorPool->SetDebugName("VkDescriptorSetManager.HWBufferDescriptorPool");
 
-	DynamicSet = DynamicDescriptorPool->allocate(DynamicSetLayout.get());
-	if (!DynamicSet)
-		I_FatalError("CreateDynamicSet failed.\n");
-}
+	HWBufferSet = HWBufferDescriptorPool->allocate(HWBufferSetLayout.get());
+	if (!HWBufferSet)
+		I_FatalError("CreateHWBufferSet failed.\n");
 
-void VkDescriptorSetManager::UpdateDynamicSet()
-{
 	WriteDescriptors update;
-	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
-	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
-	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
+	update.addBuffer(HWBufferSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
+	update.addBuffer(HWBufferSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
+	update.addBuffer(HWBufferSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
+	update.addBuffer(HWBufferSet.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightBufferSSO->mBuffer.get());
 	update.updateSets(fb->device);
 }
 
-void VkDescriptorSetManager::CreateFixedSet()
+void VkDescriptorSetManager::CreateFixedSetLayout()
 {
 	DescriptorSetLayoutBuilder builder;
 	builder.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		builder.addBinding(3, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.addBinding(2, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	FixedSetLayout = builder.create(fb->device);
 	FixedSetLayout->SetDebugName("VkDescriptorSetManager.FixedSetLayout");
+}
+
+void VkDescriptorSetManager::UpdateFixedSet()
+{
+	fb->GetCommands()->DrawDeleteList->Add(std::move(FixedSet));
+	fb->GetCommands()->DrawDeleteList->Add(std::move(FixedDescriptorPool));
 
 	DescriptorPoolBuilder poolbuilder;
-	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1);
 	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2);
 	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1);
@@ -105,16 +129,12 @@ void VkDescriptorSetManager::CreateFixedSet()
 	FixedSet = FixedDescriptorPool->allocate(FixedSetLayout.get());
 	if (!FixedSet)
 		I_FatalError("CreateFixedSet failed.\n");
-}
 
-void VkDescriptorSetManager::UpdateFixedSet()
-{
 	WriteDescriptors update;
 	update.addCombinedImageSampler(FixedSet.get(), 0, fb->GetTextureManager()->Shadowmap.View.get(), fb->GetSamplerManager()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.addCombinedImageSampler(FixedSet.get(), 1, fb->GetTextureManager()->Lightmap.View.get(), fb->GetSamplerManager()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	update.addBuffer(FixedSet.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightBufferSSO->mBuffer.get());
 	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		update.addAccelerationStructure(FixedSet.get(), 3, fb->GetRaytrace()->GetAccelStruct());
+		update.addAccelerationStructure(FixedSet.get(), 2, fb->GetRaytrace()->GetAccelStruct());
 	update.updateSets(fb->device);
 }
 

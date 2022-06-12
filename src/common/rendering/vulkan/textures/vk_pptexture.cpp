@@ -25,7 +25,7 @@
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_commandbuffer.h"
 
-VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture)
+VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture) : fb(fb)
 {
 	VkFormat format;
 	int pixelsize;

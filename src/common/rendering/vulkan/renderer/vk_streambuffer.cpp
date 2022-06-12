@@ -28,7 +28,7 @@
 
 VkStreamBufferWriter::VkStreamBufferWriter(VulkanFrameBuffer* fb)
 {
-	mBuffer = fb->GetBufferManager()->StreamBuffer;
+	mBuffer = fb->GetBufferManager()->StreamBuffer.get();
 }
 
 bool VkStreamBufferWriter::Write(const StreamData& data)
@@ -57,7 +57,7 @@ void VkStreamBufferWriter::Reset()
 
 VkMatrixBufferWriter::VkMatrixBufferWriter(VulkanFrameBuffer* fb)
 {
-	mBuffer = fb->GetBufferManager()->MatrixBuffer;
+	mBuffer = fb->GetBufferManager()->MatrixBuffer.get();
 	mIdentityMatrix.loadIdentity();
 }
 

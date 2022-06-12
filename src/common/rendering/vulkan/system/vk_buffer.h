@@ -19,6 +19,7 @@ public:
 	~VkBufferManager();
 
 	void Init();
+	void Deinit();
 
 	IVertexBuffer* CreateVertexBuffer();
 	IIndexBuffer* CreateIndexBuffer();
@@ -33,8 +34,8 @@ public:
 	VkHardwareDataBuffer* LightLines = nullptr;
 	VkHardwareDataBuffer* LightList = nullptr;
 
-	VkStreamBuffer* MatrixBuffer = nullptr;
-	VkStreamBuffer* StreamBuffer = nullptr;
+	std::unique_ptr<VkStreamBuffer> MatrixBuffer;
+	std::unique_ptr<VkStreamBuffer> StreamBuffer;
 
 	std::unique_ptr<IIndexBuffer> FanToTrisIndexBuffer;
 

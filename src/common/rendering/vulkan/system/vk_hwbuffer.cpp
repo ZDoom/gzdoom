@@ -82,11 +82,13 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 		builder.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | mBufferType, VMA_MEMORY_USAGE_GPU_ONLY);
 		builder.setSize(bufsize);
 		mBuffer = builder.create(fb->device);
+		mBuffer->SetDebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Static" : "VkHardwareBuffer.Stream");
 
 		BufferBuilder builder2;
 		builder2.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 		builder2.setSize(bufsize);
 		mStaging = builder2.create(fb->device);
+		mStaging->SetDebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Staging.Static" : "VkHardwareBuffer.Staging.Stream");
 
 		if (data)
 		{
@@ -108,6 +110,7 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		builder.setSize(bufsize);
 		mBuffer = builder.create(fb->device);
+		mBuffer->SetDebugName("VkHardwareBuffer.Persistent");
 
 		map = mBuffer->Map(0, bufsize);
 		if (data)
@@ -124,6 +127,7 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		builder.setSize(bufsize);
 		mBuffer = builder.create(fb->device);
+		mBuffer->SetDebugName("VkHardwareBuffer.Mappable");
 
 		if (data)
 		{
@@ -174,10 +178,12 @@ void VkHardwareBuffer::Resize(size_t newsize)
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	builder.setSize(newsize);
 	mBuffer = builder.create(fb->device);
+	mBuffer->SetDebugName("VkHardwareBuffer.Resized");
 	buffersize = newsize;
 
 	// Transfer data from old to new
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
+	fb->GetCommands()->TransferDeleteList->Add(std::move(oldBuffer));
 	fb->GetCommands()->WaitForCommands(false);
 	fb->GetDescriptorSetManager()->UpdateHWBufferSet(); // Old buffer may be part of the bound descriptor set
 

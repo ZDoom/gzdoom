@@ -98,10 +98,14 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mLights;
 	mShadowMap.Reset();
 
-	mDescriptorSetManager->Deinit();
-	mTextureManager->Deinit();
-	mBufferManager->Deinit();
-	mShaderManager->Deinit();
+	if (mDescriptorSetManager)
+		mDescriptorSetManager->Deinit();
+	if (mTextureManager)
+		mTextureManager->Deinit();
+	if (mBufferManager)
+		mBufferManager->Deinit();
+	if (mShaderManager)
+		mShaderManager->Deinit();
 
 	mCommands->DeleteFrameObjects();
 }

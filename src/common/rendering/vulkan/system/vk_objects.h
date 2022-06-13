@@ -44,7 +44,12 @@ public:
 	VulkanBuffer(VulkanDevice *device, VkBuffer buffer, VmaAllocation allocation, size_t size);
 	~VulkanBuffer();
 
-	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)buffer, VK_OBJECT_TYPE_BUFFER); }
+#ifdef _DEBUG
+	void SetDebugName(const char* name) { debugName = name; device->SetDebugObjectName(name, (uint64_t)buffer, VK_OBJECT_TYPE_BUFFER); }
+	std::string debugName;
+#else
+	void SetDebugName(const char* name) { device->SetDebugObjectName(name, (uint64_t)buffer, VK_OBJECT_TYPE_BUFFER); }
+#endif
 
 	VulkanDevice *device = nullptr;
 
@@ -174,7 +179,12 @@ public:
 	VulkanDescriptorSet(VulkanDevice *device, VulkanDescriptorPool *pool, VkDescriptorSet set);
 	~VulkanDescriptorSet();
 
-	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)set, VK_OBJECT_TYPE_DESCRIPTOR_SET); }
+#ifdef _DEBUG
+	void SetDebugName(const char* name) { debugName = name; device->SetDebugObjectName(name, (uint64_t)set, VK_OBJECT_TYPE_DESCRIPTOR_SET); }
+	std::string debugName;
+#else
+	void SetDebugName(const char* name) { device->SetDebugObjectName(name, (uint64_t)set, VK_OBJECT_TYPE_DESCRIPTOR_SET); }
+#endif
 
 	VulkanDevice *device;
 	VulkanDescriptorPool *pool;
@@ -191,7 +201,12 @@ public:
 	VulkanDescriptorPool(VulkanDevice *device, VkDescriptorPool pool);
 	~VulkanDescriptorPool();
 
-	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)pool, VK_OBJECT_TYPE_DESCRIPTOR_POOL); }
+#ifdef _DEBUG
+	void SetDebugName(const char* name) { debugName = name; device->SetDebugObjectName(name, (uint64_t)pool, VK_OBJECT_TYPE_DESCRIPTOR_POOL); }
+	std::string debugName;
+#else
+	void SetDebugName(const char* name) { device->SetDebugObjectName(name, (uint64_t)pool, VK_OBJECT_TYPE_DESCRIPTOR_POOL); }
+#endif
 
 	std::unique_ptr<VulkanDescriptorSet> tryAllocate(VulkanDescriptorSetLayout *layout);
 	std::unique_ptr<VulkanDescriptorSet> allocate(VulkanDescriptorSetLayout *layout);

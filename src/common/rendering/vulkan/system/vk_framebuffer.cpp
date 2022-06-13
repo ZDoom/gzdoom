@@ -349,6 +349,7 @@ void VulkanFrameBuffer::CopyScreenToBuffer(int w, int h, uint8_t *data)
 	bufbuilder.setSize(w * h * 4);
 	bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	auto staging = bufbuilder.create(device);
+	staging->SetDebugName("CopyScreenToBuffer");
 
 	// Copy from image to buffer
 	VkBufferImageCopy region = {};

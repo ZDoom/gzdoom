@@ -181,22 +181,12 @@ void VkTextureManager::CreateShadowmap()
 
 void VkTextureManager::CreateLightmap()
 {
-	ImageBuilder builder;
-	builder.setSize(1, 1);
-	builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-	builder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT);
-	Lightmap.Image = builder.create(fb->device);
-	Lightmap.Image->SetDebugName("VkRenderBuffers.Lightmap");
-
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setType(VK_IMAGE_VIEW_TYPE_2D_ARRAY);
-	viewbuilder.setImage(Lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
-	Lightmap.View = viewbuilder.create(fb->device);
-	Lightmap.View->SetDebugName("VkRenderBuffers.LightmapView");
-
-	VkImageTransition barrier;
-	barrier.addImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
-	barrier.execute(fb->GetCommands()->GetDrawCommands());
+	TArray<uint16_t> data;
+	data.Push(0);
+	data.Push(0);
+	data.Push(0);
+	data.Push(0x3c00); // half-float 1.0
+	SetLightmap(1, 1, data);
 }
 
 void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const TArray<uint16_t>& LMTextureData)

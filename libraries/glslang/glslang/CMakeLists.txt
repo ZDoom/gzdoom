@@ -76,7 +76,6 @@ set(HEADERS
     Include/intermediate.h
     Include/PoolAlloc.h
     Include/ResourceLimits.h
-    Include/revision.h
     Include/ShHandle.h
     Include/SpirvIntrinsics.h
     Include/Types.h

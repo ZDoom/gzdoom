@@ -2771,7 +2771,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	else if (left->IsVector() && right->IsVector())
 	{
 		// a vector2 can be added to or subtracted from a vector 3 but it needs to be the right operand.
-		if (left->ValueType == right->ValueType || (left->IsVector3() && right->IsVector2()))
+		if (((left->IsVector3() || left->IsVector2()) && right->IsVector2()) || (left->IsVector3() && right->IsVector3()))
 		{
 			ValueType = left->ValueType;
 		}

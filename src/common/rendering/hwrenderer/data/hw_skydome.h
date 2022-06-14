@@ -16,7 +16,7 @@ const int skyoffsetfactor = 57;
 
 struct FSkyVertex
 {
-	float x, y, z, u, v;
+	float x, y, z, u, v, lu, lv, lindex;
 	PalEntry color;
 
 	void Set(float xx, float zz, float yy, float uu=0, float vv=0, PalEntry col=0xffffffff)
@@ -26,6 +26,9 @@ struct FSkyVertex
 		y = yy;
 		u = uu;
 		v = vv;
+		lu = 0.0f;
+		lv = 0.0f;
+		lindex = -1.0f;
 		color = col;
 	}
 
@@ -36,6 +39,9 @@ struct FSkyVertex
 		z = zz;
 		u = uu;
 		v = vv;
+		lu = 0.0f;
+		lv = 0.0f;
+		lindex = -1.0f;
 		color = col;
 	}
 

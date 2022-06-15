@@ -279,6 +279,8 @@ xx(DropTime)
 xx(PickupSound)
 xx(WeaponScaleX)
 xx(WeaponScaleY)
+xx(ReadySound)
+xx(A_WeaponReady)
 
 // PlayerPawn member fields
 xx(ColorRangeStart)

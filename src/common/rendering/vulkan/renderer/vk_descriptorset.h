@@ -40,6 +40,8 @@ public:
 private:
 	void CreateHWBufferSetLayout();
 	void CreateFixedSetLayout();
+	void CreateHWBufferPool();
+	void CreateFixedSetPool();
 
 	std::unique_ptr<VulkanDescriptorSet> AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout);
 
@@ -63,4 +65,6 @@ private:
 	std::unique_ptr<VulkanDescriptorSet> NullTextureDescriptorSet;
 
 	std::list<VkMaterial*> Materials;
+
+	static const int maxSets = 10;
 };

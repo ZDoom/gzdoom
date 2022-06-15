@@ -753,9 +753,9 @@ public:
 				th->friendlyseeblocks = CheckInt(key);
 				break;
 
-			case NAME_zdraysuncolor:
-			case NAME_zdraysampledistance:
-			case NAME_zdraygridsize:
+			case NAME_lm_suncolor:
+			case NAME_lm_sampledistance:
+			case NAME_lm_gridsize:
 				CHECK_N(Zd | Zdt)
 					break;
 
@@ -1129,9 +1129,9 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
-			case NAME_lightcolorline:
-			case NAME_lightintensityline:
-			case NAME_lightdistanceline:
+			case NAME_lm_lightcolorline:
+			case NAME_lm_lightintensityline:
+			case NAME_lm_lightdistanceline:
 				CHECK_N(Zd | Zdt)
 				break;
 
@@ -1985,12 +1985,12 @@ public:
 					sec->health3dgroup = CheckInt(key);
 					break;
 
-				case NAME_lightcolorfloor:
-				case NAME_lightintensityfloor:
-				case NAME_lightdistancefloor:
-				case NAME_lightcolorceiling:
-				case NAME_lightintensityceiling:
-				case NAME_lightdistanceceiling:
+				case NAME_lm_lightcolorfloor:
+				case NAME_lm_lightintensityfloor:
+				case NAME_lm_lightdistancefloor:
+				case NAME_lm_lightcolorceiling:
+				case NAME_lm_lightintensityceiling:
+				case NAME_lm_lightdistanceceiling:
 					CHECK_N(Zd | Zdt)
 					break;
 

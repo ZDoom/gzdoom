@@ -80,12 +80,12 @@ void VkDescriptorSetManager::UpdateHWBufferSet()
 		HWBufferSet = HWBufferDescriptorPool->allocate(HWBufferSetLayout.get());
 	}
 
-	WriteDescriptors update;
-	update.addBuffer(HWBufferSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
-	update.addBuffer(HWBufferSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
-	update.addBuffer(HWBufferSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
-	update.addBuffer(HWBufferSet.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightBufferSSO->mBuffer.get());
-	update.updateSets(fb->device);
+	WriteDescriptors()
+		.AddBuffer(HWBufferSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms))
+		.AddBuffer(HWBufferSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO))
+		.AddBuffer(HWBufferSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO))
+		.AddBuffer(HWBufferSet.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightBufferSSO->mBuffer.get())
+		.Execute(fb->device);
 }
 
 void VkDescriptorSetManager::UpdateFixedSet()
@@ -100,11 +100,11 @@ void VkDescriptorSetManager::UpdateFixedSet()
 	}
 
 	WriteDescriptors update;
-	update.addCombinedImageSampler(FixedSet.get(), 0, fb->GetTextureManager()->Shadowmap.View.get(), fb->GetSamplerManager()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	update.addCombinedImageSampler(FixedSet.get(), 1, fb->GetTextureManager()->Lightmap.View.get(), fb->GetSamplerManager()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	update.AddCombinedImageSampler(FixedSet.get(), 0, fb->GetTextureManager()->Shadowmap.View.get(), fb->GetSamplerManager()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	update.AddCombinedImageSampler(FixedSet.get(), 1, fb->GetTextureManager()->Lightmap.View.get(), fb->GetSamplerManager()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		update.addAccelerationStructure(FixedSet.get(), 2, fb->GetRaytrace()->GetAccelStruct());
-	update.updateSets(fb->device);
+		update.AddAccelerationStructure(FixedSet.get(), 2, fb->GetRaytrace()->GetAccelStruct());
+	update.Execute(fb->device);
 }
 
 void VkDescriptorSetManager::ResetHWTextureSets()
@@ -133,9 +133,9 @@ VulkanDescriptorSet* VkDescriptorSetManager::GetNullTextureDescriptorSet()
 		WriteDescriptors update;
 		for (int i = 0; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
 		{
-			update.addCombinedImageSampler(NullTextureDescriptorSet.get(), i, fb->GetTextureManager()->GetNullTextureView(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			update.AddCombinedImageSampler(NullTextureDescriptorSet.get(), i, fb->GetTextureManager()->GetNullTextureView(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
-		update.updateSets(fb->device);
+		update.Execute(fb->device);
 	}
 
 	return NullTextureDescriptorSet.get();
@@ -148,11 +148,11 @@ std::unique_ptr<VulkanDescriptorSet> VkDescriptorSetManager::AllocateTextureDesc
 		TextureDescriptorSetsLeft = 1000;
 		TextureDescriptorsLeft = 2000;
 
-		DescriptorPoolBuilder builder;
-		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, TextureDescriptorsLeft);
-		builder.setMaxSets(TextureDescriptorSetsLeft);
-		TextureDescriptorPools.push_back(builder.create(fb->device));
-		TextureDescriptorPools.back()->SetDebugName("VkDescriptorSetManager.TextureDescriptorPool");
+		TextureDescriptorPools.push_back(DescriptorPoolBuilder()
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, TextureDescriptorsLeft)
+			.MaxSets(TextureDescriptorSetsLeft)
+			.DebugName("VkDescriptorSetManager.TextureDescriptorPool")
+			.Create(fb->device));
 	}
 
 	TextureDescriptorSetsLeft--;
@@ -172,10 +172,10 @@ VulkanDescriptorSetLayout* VkDescriptorSetManager::GetTextureSetLayout(int numLa
 	DescriptorSetLayoutBuilder builder;
 	for (int i = 0; i < numLayers; i++)
 	{
-		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.AddBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
-	layout = builder.create(fb->device);
-	layout->SetDebugName("VkDescriptorSetManager.TextureSetLayout");
+	builder.DebugName("VkDescriptorSetManager.TextureSetLayout");
+	layout = builder.Create(fb->device);
 	return layout.get();
 }
 
@@ -205,19 +205,19 @@ VulkanDescriptorSet* VkDescriptorSetManager::GetInput(VkPPRenderPassSetup* passS
 		VulkanSampler* sampler = fb->GetSamplerManager()->Get(input.Filter, input.Wrap);
 		VkTextureImage* tex = fb->GetTextureManager()->GetTexture(input.Type, input.Texture);
 
-		write.addCombinedImageSampler(descriptors.get(), index, tex->DepthOnlyView ? tex->DepthOnlyView.get() : tex->View.get(), sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		imageTransition.addImage(tex, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+		write.AddCombinedImageSampler(descriptors.get(), index, tex->DepthOnlyView ? tex->DepthOnlyView.get() : tex->View.get(), sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		imageTransition.AddImage(tex, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
 	}
 
 	if (bindShadowMapBuffers)
 	{
-		write.addBuffer(descriptors.get(), LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightNodes->mBuffer.get());
-		write.addBuffer(descriptors.get(), LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightLines->mBuffer.get());
-		write.addBuffer(descriptors.get(), LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightList->mBuffer.get());
+		write.AddBuffer(descriptors.get(), LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightNodes->mBuffer.get());
+		write.AddBuffer(descriptors.get(), LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightLines->mBuffer.get());
+		write.AddBuffer(descriptors.get(), LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightList->mBuffer.get());
 	}
 
-	write.updateSets(fb->device);
-	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+	write.Execute(fb->device);
+	imageTransition.Execute(fb->GetCommands()->GetDrawCommands());
 
 	VulkanDescriptorSet* set = descriptors.get();
 	fb->GetCommands()->DrawDeleteList->Add(std::move(descriptors));
@@ -235,55 +235,55 @@ std::unique_ptr<VulkanDescriptorSet> VkDescriptorSetManager::AllocatePPDescripto
 		fb->GetCommands()->DrawDeleteList->Add(std::move(PPDescriptorPool));
 	}
 
-	DescriptorPoolBuilder builder;
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200);
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4);
-	builder.setMaxSets(100);
-	PPDescriptorPool = builder.create(fb->device);
-	PPDescriptorPool->SetDebugName("PPDescriptorPool");
+	PPDescriptorPool = DescriptorPoolBuilder()
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200)
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4)
+		.MaxSets(100)
+		.DebugName("PPDescriptorPool")
+		.Create(fb->device);
 
 	return PPDescriptorPool->allocate(layout);
 }
 
 void VkDescriptorSetManager::CreateHWBufferSetLayout()
 {
-	DescriptorSetLayoutBuilder builder;
-	builder.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	HWBufferSetLayout = builder.create(fb->device);
-	HWBufferSetLayout->SetDebugName("VkDescriptorSetManager.HWBufferSetLayout");
+	HWBufferSetLayout = DescriptorSetLayoutBuilder()
+		.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+		.AddBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+		.AddBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+		.AddBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+		.DebugName("VkDescriptorSetManager.HWBufferSetLayout")
+		.Create(fb->device);
 }
 
 void VkDescriptorSetManager::CreateFixedSetLayout()
 {
 	DescriptorSetLayoutBuilder builder;
-	builder.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	builder.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	builder.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		builder.addBinding(2, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	FixedSetLayout = builder.create(fb->device);
-	FixedSetLayout->SetDebugName("VkDescriptorSetManager.FixedSetLayout");
+		builder.AddBinding(2, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	builder.DebugName("VkDescriptorSetManager.FixedSetLayout");
+	FixedSetLayout = builder.Create(fb->device);
 }
 
 void VkDescriptorSetManager::CreateHWBufferPool()
 {
-	DescriptorPoolBuilder poolbuilder;
-	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3 * maxSets);
-	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 * maxSets);
-	poolbuilder.setMaxSets(maxSets);
-	HWBufferDescriptorPool = poolbuilder.create(fb->device);
-	HWBufferDescriptorPool->SetDebugName("VkDescriptorSetManager.HWBufferDescriptorPool");
+	HWBufferDescriptorPool = DescriptorPoolBuilder()
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3 * maxSets)
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 * maxSets)
+		.MaxSets(maxSets)
+		.DebugName("VkDescriptorSetManager.HWBufferDescriptorPool")
+		.Create(fb->device);
 }
 
 void VkDescriptorSetManager::CreateFixedSetPool()
 {
 	DescriptorPoolBuilder poolbuilder;
-	poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * maxSets);
+	poolbuilder.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * maxSets);
 	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		poolbuilder.addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 * maxSets);
-	poolbuilder.setMaxSets(maxSets);
-	FixedDescriptorPool = poolbuilder.create(fb->device);
-	FixedDescriptorPool->SetDebugName("VkDescriptorSetManager.FixedDescriptorPool");
+		poolbuilder.AddPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 * maxSets);
+	poolbuilder.MaxSets(maxSets);
+	poolbuilder.DebugName("VkDescriptorSetManager.FixedDescriptorPool");
+	FixedDescriptorPool = poolbuilder.Create(fb->device);
 }

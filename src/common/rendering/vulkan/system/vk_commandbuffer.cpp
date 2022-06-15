@@ -55,9 +55,9 @@ VkCommandBufferManager::VkCommandBufferManager(VulkanFrameBuffer* fb) : fb(fb)
 
 	if (fb->device->graphicsTimeQueries)
 	{
-		QueryPoolBuilder querybuilder;
-		querybuilder.setQueryType(VK_QUERY_TYPE_TIMESTAMP, MaxTimestampQueries);
-		mTimestampQueryPool = querybuilder.create(fb->device);
+		mTimestampQueryPool = QueryPoolBuilder()
+			.QueryType(VK_QUERY_TYPE_TIMESTAMP, MaxTimestampQueries)
+			.Create(fb->device);
 
 		GetDrawCommands()->resetQueryPool(mTimestampQueryPool.get(), 0, MaxTimestampQueries);
 	}
@@ -111,21 +111,21 @@ void VkCommandBufferManager::FlushCommands(VulkanCommandBuffer** commands, size_
 	QueueSubmit submit;
 
 	for (size_t i = 0; i < count; i++)
-		submit.addCommandBuffer(commands[i]);
+		submit.AddCommandBuffer(commands[i]);
 
 	if (mNextSubmit > 0)
-		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mSubmitSemaphore[(mNextSubmit - 1) % maxConcurrentSubmitCount].get());
+		submit.AddWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mSubmitSemaphore[(mNextSubmit - 1) % maxConcurrentSubmitCount].get());
 
 	if (finish && presentImageIndex != 0xffffffff)
 	{
-		submit.addWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
-		submit.addSignal(mRenderFinishedSemaphore.get());
+		submit.AddWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
+		submit.AddSignal(mRenderFinishedSemaphore.get());
 	}
 
 	if (!lastsubmit)
-		submit.addSignal(mSubmitSemaphore[currentIndex].get());
+		submit.AddSignal(mSubmitSemaphore[currentIndex].get());
 
-	submit.execute(fb->device, fb->device->graphicsQueue, mSubmitFence[currentIndex].get());
+	submit.Execute(fb->device, fb->device->graphicsQueue, mSubmitFence[currentIndex].get());
 	mNextSubmit++;
 }
 

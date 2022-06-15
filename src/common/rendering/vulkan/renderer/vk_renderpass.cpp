@@ -112,13 +112,13 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 	auto descriptors = fb->GetDescriptorSetManager();
 
 	PipelineLayoutBuilder builder;
-	builder.addSetLayout(descriptors->GetFixedSetLayout());
-	builder.addSetLayout(descriptors->GetHWBufferSetLayout());
+	builder.AddSetLayout(descriptors->GetFixedSetLayout());
+	builder.AddSetLayout(descriptors->GetHWBufferSetLayout());
 	if (numLayers != 0)
-		builder.addSetLayout(descriptors->GetTextureSetLayout(numLayers));
-	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
-	layout = builder.create(fb->device);
-	layout->SetDebugName("VkRenderPassManager.PipelineLayout");
+		builder.AddSetLayout(descriptors->GetTextureSetLayout(numLayers));
+	builder.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
+	builder.DebugName("VkRenderPassManager.PipelineLayout");
+	layout = builder.Create(fb->device);
 	return layout.get();
 }
 
@@ -144,33 +144,33 @@ std::unique_ptr<VulkanRenderPass> VkRenderPassSetup::CreateRenderPass(int clearT
 
 	RenderPassBuilder builder;
 
-	builder.addAttachment(
+	builder.AddAttachment(
 		PassKey.DrawBufferFormat, (VkSampleCountFlagBits)PassKey.Samples,
 		(clearTargets & CT_Color) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 	for (int i = 1; i < PassKey.DrawBuffers; i++)
 	{
-		builder.addAttachment(
+		builder.AddAttachment(
 			drawBufferFormats[i], buffers->GetSceneSamples(),
 			(clearTargets & CT_Color) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	}
 	if (PassKey.DepthStencil)
 	{
-		builder.addDepthStencilAttachment(
+		builder.AddDepthStencilAttachment(
 			buffers->SceneDepthStencilFormat, PassKey.DrawBufferFormat == VK_FORMAT_R8G8B8A8_UNORM ? VK_SAMPLE_COUNT_1_BIT : buffers->GetSceneSamples(),
 			(clearTargets & CT_Depth) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			(clearTargets & CT_Stencil) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
-	builder.addSubpass();
+	builder.AddSubpass();
 	for (int i = 0; i < PassKey.DrawBuffers; i++)
-		builder.addSubpassColorAttachmentRef(i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		builder.AddSubpassColorAttachmentRef(i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (PassKey.DepthStencil)
 	{
-		builder.addSubpassDepthStencilAttachmentRef(PassKey.DrawBuffers, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		builder.addExternalSubpassDependency(
+		builder.AddSubpassDepthStencilAttachmentRef(PassKey.DrawBuffers, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		builder.AddExternalSubpassDependency(
 			VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -178,15 +178,14 @@ std::unique_ptr<VulkanRenderPass> VkRenderPassSetup::CreateRenderPass(int clearT
 	}
 	else
 	{
-		builder.addExternalSubpassDependency(
+		builder.AddExternalSubpassDependency(
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 	}
-	auto renderpass = builder.create(fb->device);
-	renderpass->SetDebugName("VkRenderPassSetup.RenderPass");
-	return renderpass;
+	builder.DebugName("VkRenderPassSetup.RenderPass");
+	return builder.Create(fb->device);
 }
 
 VulkanRenderPass *VkRenderPassSetup::GetRenderPass(int clearTargets)
@@ -217,13 +216,13 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	{
 		program = fb->GetShaderManager()->Get(key.EffectState, key.AlphaTest, PassKey.DrawBuffers > 1 ? GBUFFER_PASS : NORMAL_PASS);
 	}
-	builder.addVertexShader(program->vert.get());
-	builder.addFragmentShader(program->frag.get());
+	builder.AddVertexShader(program->vert.get());
+	builder.AddFragmentShader(program->frag.get());
 
 	const VkVertexFormat &vfmt = *fb->GetRenderPassManager()->GetVertexFormat(key.VertexFormat);
 
 	for (int i = 0; i < vfmt.NumBindingPoints; i++)
-		builder.addVertexBufferBinding(i, vfmt.Stride);
+		builder.AddVertexBufferBinding(i, vfmt.Stride);
 
 	const static VkFormat vkfmts[] = {
 		VK_FORMAT_R32G32B32A32_SFLOAT,
@@ -239,7 +238,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	for (size_t i = 0; i < vfmt.Attrs.size(); i++)
 	{
 		const auto &attr = vfmt.Attrs[i];
-		builder.addVertexAttribute(attr.location, attr.binding, vkfmts[attr.format], attr.offset);
+		builder.AddVertexAttribute(attr.location, attr.binding, vkfmts[attr.format], attr.offset);
 		inputLocations[attr.location] = true;
 	}
 
@@ -247,17 +246,17 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	for (int i = 0; i < 7; i++)
 	{
 		if (!inputLocations[i])
-			builder.addVertexAttribute(i, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			builder.AddVertexAttribute(i, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
 	}
 
-	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
-	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
-	builder.addDynamicState(VK_DYNAMIC_STATE_DEPTH_BIAS);
-	builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
+	builder.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
+	builder.AddDynamicState(VK_DYNAMIC_STATE_SCISSOR);
+	builder.AddDynamicState(VK_DYNAMIC_STATE_DEPTH_BIAS);
+	builder.AddDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
 
 	// Note: the actual values are ignored since we use dynamic viewport+scissor states
-	builder.setViewport(0.0f, 0.0f, 320.0f, 200.0f);
-	builder.setScissor(0, 0, 320, 200);
+	builder.Viewport(0.0f, 0.0f, 320.0f, 200.0f);
+	builder.Scissor(0, 0, 320, 200);
 
 	static const VkPrimitiveTopology vktopology[] = {
 		VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
@@ -270,28 +269,28 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	static const VkStencilOp op2vk[] = { VK_STENCIL_OP_KEEP, VK_STENCIL_OP_INCREMENT_AND_CLAMP, VK_STENCIL_OP_DECREMENT_AND_CLAMP };
 	static const VkCompareOp depthfunc2vk[] = { VK_COMPARE_OP_LESS, VK_COMPARE_OP_LESS_OR_EQUAL, VK_COMPARE_OP_ALWAYS };
 
-	builder.setTopology(vktopology[key.DrawType]);
-	builder.setDepthStencilEnable(key.DepthTest, key.DepthWrite, key.StencilTest);
-	builder.setDepthFunc(depthfunc2vk[key.DepthFunc]);
+	builder.Topology(vktopology[key.DrawType]);
+	builder.DepthStencilEnable(key.DepthTest, key.DepthWrite, key.StencilTest);
+	builder.DepthFunc(depthfunc2vk[key.DepthFunc]);
 	if (fb->device->UsedDeviceFeatures.depthClamp)
-		builder.setDepthClampEnable(key.DepthClamp);
-	builder.setDepthBias(key.DepthBias, 0.0f, 0.0f, 0.0f);
+		builder.DepthClampEnable(key.DepthClamp);
+	builder.DepthBias(key.DepthBias, 0.0f, 0.0f, 0.0f);
 
 	// Note: CCW and CW is intentionally swapped here because the vulkan and opengl coordinate systems differ.
 	// main.vp addresses this by patching up gl_Position.z, which has the side effect of flipping the sign of the front face calculations.
-	builder.setCull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_BACK_BIT, key.CullMode == Cull_CW ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE);
+	builder.Cull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_BACK_BIT, key.CullMode == Cull_CW ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE);
 
-	builder.setColorWriteMask((VkColorComponentFlags)key.ColorMask);
-	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
-	builder.setBlendMode(key.RenderStyle);
-	builder.setSubpassColorAttachmentCount(PassKey.DrawBuffers);
-	builder.setRasterizationSamples((VkSampleCountFlagBits)PassKey.Samples);
+	builder.ColorWriteMask((VkColorComponentFlags)key.ColorMask);
+	builder.Stencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
+	builder.BlendMode(key.RenderStyle);
+	builder.SubpassColorAttachmentCount(PassKey.DrawBuffers);
+	builder.RasterizationSamples((VkSampleCountFlagBits)PassKey.Samples);
 
-	builder.setLayout(fb->GetRenderPassManager()->GetPipelineLayout(key.NumTextureLayers));
-	builder.setRenderPass(GetRenderPass(0));
-	auto pipeline = builder.create(fb->device);
-	pipeline->SetDebugName("VkRenderPassSetup.Pipeline");
-	return pipeline;
+	builder.Layout(fb->GetRenderPassManager()->GetPipelineLayout(key.NumTextureLayers));
+	builder.RenderPass(GetRenderPass(0));
+	builder.DebugName("VkRenderPassSetup.Pipeline");
+
+	return builder.Create(fb->device);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -308,78 +307,78 @@ void VkPPRenderPassSetup::CreateDescriptorLayout(const VkPPRenderPassKey& key)
 {
 	DescriptorSetLayoutBuilder builder;
 	for (int i = 0; i < key.InputTextures; i++)
-		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.AddBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	if (key.ShadowMapBuffers)
 	{
-		builder.addBinding(LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-		builder.addBinding(LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-		builder.addBinding(LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.AddBinding(LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.AddBinding(LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.AddBinding(LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
-	DescriptorLayout = builder.create(fb->device);
-	DescriptorLayout->SetDebugName("VkPPRenderPassSetup.DescriptorLayout");
+	builder.DebugName("VkPPRenderPassSetup.DescriptorLayout");
+	DescriptorLayout = builder.Create(fb->device);
 }
 
 void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey& key)
 {
 	PipelineLayoutBuilder builder;
-	builder.addSetLayout(DescriptorLayout.get());
+	builder.AddSetLayout(DescriptorLayout.get());
 	if (key.Uniforms > 0)
-		builder.addPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, 0, key.Uniforms);
-	PipelineLayout = builder.create(fb->device);
-	PipelineLayout->SetDebugName("VkPPRenderPassSetup.PipelineLayout");
+		builder.AddPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, 0, key.Uniforms);
+	builder.DebugName("VkPPRenderPassSetup.PipelineLayout");
+	PipelineLayout = builder.Create(fb->device);
 }
 
 void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey& key)
 {
 	GraphicsPipelineBuilder builder;
-	builder.addVertexShader(key.Shader->VertexShader.get());
-	builder.addFragmentShader(key.Shader->FragmentShader.get());
+	builder.AddVertexShader(key.Shader->VertexShader.get());
+	builder.AddFragmentShader(key.Shader->FragmentShader.get());
 
-	builder.addVertexBufferBinding(0, sizeof(FFlatVertex));
-	builder.addVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(FFlatVertex, x));
-	builder.addVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(FFlatVertex, u));
-	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
-	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
+	builder.AddVertexBufferBinding(0, sizeof(FFlatVertex));
+	builder.AddVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(FFlatVertex, x));
+	builder.AddVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(FFlatVertex, u));
+	builder.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
+	builder.AddDynamicState(VK_DYNAMIC_STATE_SCISSOR);
 	// Note: the actual values are ignored since we use dynamic viewport+scissor states
-	builder.setViewport(0.0f, 0.0f, 320.0f, 200.0f);
-	builder.setScissor(0, 0, 320, 200);
+	builder.Viewport(0.0f, 0.0f, 320.0f, 200.0f);
+	builder.Scissor(0, 0, 320, 200);
 	if (key.StencilTest)
 	{
-		builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
-		builder.setDepthStencilEnable(false, false, true);
-		builder.setStencil(VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
+		builder.AddDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
+		builder.DepthStencilEnable(false, false, true);
+		builder.Stencil(VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
 	}
-	builder.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-	builder.setBlendMode(key.BlendMode);
-	builder.setRasterizationSamples(key.Samples);
-	builder.setLayout(PipelineLayout.get());
-	builder.setRenderPass(RenderPass.get());
-	Pipeline = builder.create(fb->device);
-	Pipeline->SetDebugName("VkPPRenderPassSetup.Pipeline");
+	builder.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
+	builder.BlendMode(key.BlendMode);
+	builder.RasterizationSamples(key.Samples);
+	builder.Layout(PipelineLayout.get());
+	builder.RenderPass(RenderPass.get());
+	builder.DebugName("VkPPRenderPassSetup.Pipeline");
+	Pipeline = builder.Create(fb->device);
 }
 
 void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
 {
 	RenderPassBuilder builder;
 	if (key.SwapChain)
-		builder.addAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		builder.AddAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	else
-		builder.addAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		builder.AddAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.StencilTest)
 	{
-		builder.addDepthStencilAttachment(
+		builder.AddDepthStencilAttachment(
 			fb->GetBuffers()->SceneDepthStencilFormat, key.Samples,
 			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
 
-	builder.addSubpass();
-	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	builder.AddSubpass();
+	builder.AddSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.StencilTest)
 	{
-		builder.addSubpassDepthStencilAttachmentRef(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		builder.addExternalSubpassDependency(
+		builder.AddSubpassDepthStencilAttachmentRef(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		builder.AddExternalSubpassDependency(
 			VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -387,13 +386,13 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
 	}
 	else
 	{
-		builder.addExternalSubpassDependency(
+		builder.AddExternalSubpassDependency(
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT);
 	}
 
-	RenderPass = builder.create(fb->device);
-	RenderPass->SetDebugName("VkPPRenderPassSetup.RenderPass");
+	builder.DebugName("VkPPRenderPassSetup.RenderPass");
+	RenderPass = builder.Create(fb->device);
 }

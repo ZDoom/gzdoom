@@ -753,6 +753,12 @@ public:
 				th->friendlyseeblocks = CheckInt(key);
 				break;
 
+			case NAME_zdraysuncolor:
+			case NAME_zdraysampledistance:
+			case NAME_zdraygridsize:
+				CHECK_N(Zd | Zdt)
+					break;
+
 			default:
 				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))

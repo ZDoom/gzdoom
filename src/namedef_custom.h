@@ -850,7 +850,8 @@ xx(Userstring)
 xx(Sky)
 xx(Pagename)
 
-// Lightmap keywords
+// Lightmap/ZDRay keywords
+// (Surface lights are temporarily disabled and don't do anything)
 xx(lightcolorline)
 xx(lightintensityline)
 xx(lightdistanceline)
@@ -860,3 +861,6 @@ xx(lightdistancefloor)
 xx(lightcolorceiling)
 xx(lightintensityceiling)
 xx(lightdistanceceiling)
+xx(zdraysuncolor)
+xx(zdraysampledistance)
+xx(zdraygridsize)

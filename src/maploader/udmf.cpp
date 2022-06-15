@@ -737,15 +737,15 @@ public:
 				break;
 
 			case NAME_ScaleX:
-				th->Scale.X = CheckFloat(key);
+				th->Scale.X = (float)CheckFloat(key);
 				break;
 
 			case NAME_ScaleY:
-				th->Scale.Y = CheckFloat(key);
+				th->Scale.Y = (float)CheckFloat(key);
 				break;
 
 			case NAME_Scale:
-				th->Scale.X = th->Scale.Y = CheckFloat(key);
+				th->Scale.X = th->Scale.Y = (float)CheckFloat(key);
 				break;
 
 			case NAME_FriendlySeeBlocks:

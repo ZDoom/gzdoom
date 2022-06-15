@@ -670,7 +670,7 @@ void DIntermissionScreenCast::Drawer ()
 	// draw the current frame in the middle of the screen
 	if (caststate != NULL)
 	{
-		DVector2 castscale = DVector2(mDefaults->Scale.X, mDefaults->Scale.Y);
+		FVector2 castscale = mDefaults->Scale;
 
 		int castsprite = caststate->sprite;
 

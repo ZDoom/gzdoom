@@ -200,9 +200,9 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 
 	mRenderState->EndRenderPass();
 
-	VkImageTransition barrier0;
-	barrier0.addImage(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-	barrier0.execute(mCommands->GetDrawCommands());
+	VkImageTransition()
+		.AddImage(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true)
+		.Execute(mCommands->GetDrawCommands());
 
 	mRenderState->SetRenderTarget(image, depthStencil->View.get(), image->Image->width, image->Image->height, VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT);
 
@@ -215,9 +215,9 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 
 	mRenderState->EndRenderPass();
 
-	VkImageTransition barrier1;
-	barrier1.addImage(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-	barrier1.execute(mCommands->GetDrawCommands());
+	VkImageTransition()
+		.AddImage(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false)
+		.Execute(mCommands->GetDrawCommands());
 
 	mRenderState->SetRenderTarget(&GetBuffers()->SceneColor, GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
 
@@ -341,19 +341,21 @@ void VulkanFrameBuffer::CopyScreenToBuffer(int w, int h, uint8_t *data)
 	VkTextureImage image;
 
 	// Convert from rgba16f to rgba8 using the GPU:
-	ImageBuilder imgbuilder;
-	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
-	imgbuilder.setUsage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-	imgbuilder.setSize(w, h);
-	image.Image = imgbuilder.create(device);
+	image.Image = ImageBuilder()
+		.Format(VK_FORMAT_R8G8B8A8_UNORM)
+		.Usage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+		.Size(w, h)
+		.DebugName("CopyScreenToBuffer")
+		.Create(device);
+
 	GetPostprocess()->BlitCurrentToImage(&image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
 	// Staging buffer for download
-	BufferBuilder bufbuilder;
-	bufbuilder.setSize(w * h * 4);
-	bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
-	auto staging = bufbuilder.create(device);
-	staging->SetDebugName("CopyScreenToBuffer");
+	auto staging = BufferBuilder()
+		.Size(w * h * 4)
+		.Usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU)
+		.DebugName("CopyScreenToBuffer")
+		.Create(device);
 
 	// Copy from image to buffer
 	VkBufferImageCopy region = {};

@@ -93,21 +93,21 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 	VkImageTransition barrier;
 	for (int i = 0; i < NumPipelineImages; i++)
 	{
-		ImageBuilder builder;
-		builder.setSize(width, height);
-		builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-		builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-		PipelineImage[i].Image = builder.create(fb->device);
-		PipelineImage[i].Image->SetDebugName("VkRenderBuffers.PipelineImage");
+		PipelineImage[i].Image = ImageBuilder()
+			.Size(width, height)
+			.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
+			.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+			.DebugName("VkRenderBuffers.PipelineImage")
+			.Create(fb->device);
 
-		ImageViewBuilder viewbuilder;
-		viewbuilder.setImage(PipelineImage[i].Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
-		PipelineImage[i].View = viewbuilder.create(fb->device);
-		PipelineImage[i].View->SetDebugName("VkRenderBuffers.PipelineView");
+		PipelineImage[i].View = ImageViewBuilder()
+			.Image(PipelineImage[i].Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
+			.DebugName("VkRenderBuffers.PipelineView")
+			.Create(fb->device);
 
-		barrier.addImage(&PipelineImage[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
+		barrier.AddImage(&PipelineImage[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
 	}
-	barrier.execute(fb->GetCommands()->GetDrawCommands());
+	barrier.Execute(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits samples)
@@ -122,95 +122,98 @@ void VkRenderBuffers::CreateScene(int width, int height, VkSampleCountFlagBits s
 	CreateSceneNormal(width, height, samples);
 	CreateSceneFog(width, height, samples);
 
-	VkImageTransition barrier;
-	barrier.addImage(&SceneColor, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-	barrier.addImage(&SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, true);
-	barrier.addImage(&SceneNormal, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-	barrier.addImage(&SceneFog, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-	barrier.execute(fb->GetCommands()->GetDrawCommands());
+	VkImageTransition()
+		.AddImage(&SceneColor, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true)
+		.AddImage(&SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, true)
+		.AddImage(&SceneNormal, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true)
+		.AddImage(&SceneFog, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true)
+		.Execute(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagBits samples)
 {
-	ImageBuilder builder;
-	builder.setSize(width, height);
-	builder.setSamples(samples);
-	builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-	SceneColor.Image = builder.create(fb->device);
-	SceneColor.Image->SetDebugName("VkRenderBuffers.SceneColor");
+	SceneColor.Image = ImageBuilder()
+		.Size(width, height)
+		.Samples(samples)
+		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
+		.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
+		.DebugName("VkRenderBuffers.SceneColor")
+		.Create(fb->device);
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(SceneColor.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
-	SceneColor.View = viewbuilder.create(fb->device);
-	SceneColor.View->SetDebugName("VkRenderBuffers.SceneColorView");
+	SceneColor.View = ImageViewBuilder()
+		.Image(SceneColor.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
+		.DebugName("VkRenderBuffers.SceneColorView")
+		.Create(fb->device);
 }
 
 void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples)
 {
 	ImageBuilder builder;
-	builder.setSize(width, height);
-	builder.setSamples(samples);
-	builder.setFormat(SceneDepthStencilFormat);
-	builder.setUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	if (!builder.isFormatSupported(fb->device))
+	builder.Size(width, height);
+	builder.Samples(samples);
+	builder.Format(SceneDepthStencilFormat);
+	builder.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (!builder.IsFormatSupported(fb->device))
 	{
 		SceneDepthStencilFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
-		builder.setFormat(SceneDepthStencilFormat);
-		if (!builder.isFormatSupported(fb->device))
+		builder.Format(SceneDepthStencilFormat);
+		if (!builder.IsFormatSupported(fb->device))
 		{
 			I_FatalError("This device does not support any of the required depth stencil image formats.");
 		}
 	}
-	SceneDepthStencil.Image = builder.create(fb->device);
-	SceneDepthStencil.Image->SetDebugName("VkRenderBuffers.SceneDepthStencil");
+	builder.DebugName("VkRenderBuffers.SceneDepthStencil");
+
+	SceneDepthStencil.Image = builder.Create(fb->device);
 	SceneDepthStencil.AspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(SceneDepthStencil.Image.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-	SceneDepthStencil.View = viewbuilder.create(fb->device);
-	SceneDepthStencil.View->SetDebugName("VkRenderBuffers.SceneDepthStencilView");
+	SceneDepthStencil.View = ImageViewBuilder()
+		.Image(SceneDepthStencil.Image.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
+		.DebugName("VkRenderBuffers.SceneDepthStencilView")
+		.Create(fb->device);
 
-	viewbuilder.setImage(SceneDepthStencil.Image.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
-	SceneDepthStencil.DepthOnlyView = viewbuilder.create(fb->device);
-	SceneDepthStencil.DepthOnlyView->SetDebugName("VkRenderBuffers.SceneDepthView");
+	SceneDepthStencil.DepthOnlyView = ImageViewBuilder()
+		.Image(SceneDepthStencil.Image.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT)
+		.DebugName("VkRenderBuffers.SceneDepthView")
+		.Create(fb->device);
 }
 
 void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBits samples)
 {
-	ImageBuilder builder;
-	builder.setSize(width, height);
-	builder.setSamples(samples);
-	builder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
-	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	SceneFog.Image = builder.create(fb->device);
-	SceneFog.Image->SetDebugName("VkRenderBuffers.SceneFog");
+	SceneFog.Image = ImageBuilder()
+		.Size(width, height)
+		.Samples(samples)
+		.Format(VK_FORMAT_R8G8B8A8_UNORM)
+		.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+		.DebugName("VkRenderBuffers.SceneFog")
+		.Create(fb->device);
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(SceneFog.Image.get(), VK_FORMAT_R8G8B8A8_UNORM);
-	SceneFog.View = viewbuilder.create(fb->device);
-	SceneFog.View->SetDebugName("VkRenderBuffers.SceneFogView");
+	SceneFog.View = ImageViewBuilder()
+		.Image(SceneFog.Image.get(), VK_FORMAT_R8G8B8A8_UNORM)
+		.DebugName("VkRenderBuffers.SceneFogView")
+		.Create(fb->device);
 }
 
 void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples)
 {
 	ImageBuilder builder;
-	builder.setSize(width, height);
-	builder.setSamples(samples);
-	builder.setFormat(SceneNormalFormat);
-	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	if (!builder.isFormatSupported(fb->device, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+	builder.Size(width, height);
+	builder.Samples(samples);
+	builder.Format(SceneNormalFormat);
+	builder.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (!builder.IsFormatSupported(fb->device, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
 	{
 		SceneNormalFormat = VK_FORMAT_R8G8B8A8_UNORM;
-		builder.setFormat(SceneNormalFormat);
+		builder.Format(SceneNormalFormat);
 	}
-	SceneNormal.Image = builder.create(fb->device);
-	SceneNormal.Image->SetDebugName("VkRenderBuffers.SceneNormal");
+	builder.DebugName("VkRenderBuffers.SceneNormal");
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(SceneNormal.Image.get(), SceneNormalFormat);
-	SceneNormal.View = viewbuilder.create(fb->device);
-	SceneNormal.View->SetDebugName("VkRenderBuffers.SceneNormalView");
+	SceneNormal.Image = builder.Create(fb->device);
+
+	SceneNormal.View = ImageViewBuilder()
+		.Image(SceneNormal.Image.get(), SceneNormalFormat)
+		.DebugName("VkRenderBuffers.SceneNormalView")
+		.Create(fb->device);
 }
 
 VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, bool stencilTest, int& framebufferWidth, int& framebufferHeight)
@@ -223,10 +226,10 @@ VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, co
 	if (tex)
 	{
 		VkImageTransition imageTransition;
-		imageTransition.addImage(tex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, output.Type == PPTextureType::NextPipelineTexture);
+		imageTransition.AddImage(tex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, output.Type == PPTextureType::NextPipelineTexture);
 		if (stencilTest)
-			imageTransition.addImage(&fb->GetBuffers()->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
-		imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+			imageTransition.AddImage(&fb->GetBuffers()->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
+		imageTransition.Execute(fb->GetCommands()->GetDrawCommands());
 
 		view = tex->View->view;
 		w = tex->Image->width;
@@ -245,12 +248,13 @@ VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, co
 	if (!framebuffer)
 	{
 		FramebufferBuilder builder;
-		builder.setRenderPass(passSetup->RenderPass.get());
-		builder.setSize(w, h);
-		builder.addAttachment(view);
+		builder.RenderPass(passSetup->RenderPass.get());
+		builder.Size(w, h);
+		builder.AddAttachment(view);
 		if (stencilTest)
-			builder.addAttachment(fb->GetBuffers()->SceneDepthStencil.View.get());
-		framebuffer = builder.create(fb->device);
+			builder.AddAttachment(fb->GetBuffers()->SceneDepthStencil.View.get());
+		builder.DebugName("PPOutputFB");
+		framebuffer = builder.Create(fb->device);
 	}
 
 	framebufferWidth = w;

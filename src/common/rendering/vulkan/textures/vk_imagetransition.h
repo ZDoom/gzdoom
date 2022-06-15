@@ -38,8 +38,8 @@ public:
 class VkImageTransition
 {
 public:
-	void addImage(VkTextureImage *image, VkImageLayout targetLayout, bool undefinedSrcLayout, int baseMipLevel = 0, int levelCount = 1);
-	void execute(VulkanCommandBuffer *cmdbuffer);
+	VkImageTransition& AddImage(VkTextureImage *image, VkImageLayout targetLayout, bool undefinedSrcLayout, int baseMipLevel = 0, int levelCount = 1);
+	void Execute(VulkanCommandBuffer *cmdbuffer);
 
 private:
 	PipelineBarrier barrier;

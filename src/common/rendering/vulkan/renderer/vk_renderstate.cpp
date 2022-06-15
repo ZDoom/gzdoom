@@ -544,17 +544,17 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 	{
 		auto buffers = fb->GetBuffers();
 		FramebufferBuilder builder;
-		builder.setRenderPass(mPassSetup->GetRenderPass(0));
-		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
-		builder.addAttachment(mRenderTarget.Image->View.get());
+		builder.RenderPass(mPassSetup->GetRenderPass(0));
+		builder.Size(mRenderTarget.Width, mRenderTarget.Height);
+		builder.AddAttachment(mRenderTarget.Image->View.get());
 		if (key.DrawBuffers > 1)
-			builder.addAttachment(buffers->SceneFog.View.get());
+			builder.AddAttachment(buffers->SceneFog.View.get());
 		if (key.DrawBuffers > 2)
-			builder.addAttachment(buffers->SceneNormal.View.get());
+			builder.AddAttachment(buffers->SceneNormal.View.get());
 		if (key.DepthStencil)
-			builder.addAttachment(mRenderTarget.DepthStencil);
-		framebuffer = builder.create(fb->device);
-		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
+			builder.AddAttachment(mRenderTarget.DepthStencil);
+		builder.DebugName("VkRenderPassSetup.Framebuffer");
+		framebuffer = builder.Create(fb->device);
 	}
 
 	// Only clear depth+stencil if the render target actually has that

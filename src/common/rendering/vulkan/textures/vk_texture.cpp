@@ -143,40 +143,40 @@ VkPPTexture* VkTextureManager::GetVkTexture(PPTexture* texture)
 
 void VkTextureManager::CreateNullTexture()
 {
-	ImageBuilder imgbuilder;
-	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
-	imgbuilder.setSize(1, 1);
-	imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT);
-	NullTexture = imgbuilder.create(fb->device);
-	NullTexture->SetDebugName("VkDescriptorSetManager.NullTexture");
+	NullTexture = ImageBuilder()
+		.Format(VK_FORMAT_R8G8B8A8_UNORM)
+		.Size(1, 1)
+		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT)
+		.DebugName("VkDescriptorSetManager.NullTexture")
+		.Create(fb->device);
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(NullTexture.get(), VK_FORMAT_R8G8B8A8_UNORM);
-	NullTextureView = viewbuilder.create(fb->device);
-	NullTextureView->SetDebugName("VkDescriptorSetManager.NullTextureView");
+	NullTextureView = ImageViewBuilder()
+		.Image(NullTexture.get(), VK_FORMAT_R8G8B8A8_UNORM)
+		.DebugName("VkDescriptorSetManager.NullTextureView")
+		.Create(fb->device);
 
-	PipelineBarrier barrier;
-	barrier.addImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	barrier.execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	PipelineBarrier()
+		.AddImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT)
+		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 void VkTextureManager::CreateShadowmap()
 {
-	ImageBuilder builder;
-	builder.setSize(gl_shadowmap_quality, 1024);
-	builder.setFormat(VK_FORMAT_R32_SFLOAT);
-	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	Shadowmap.Image = builder.create(fb->device);
-	Shadowmap.Image->SetDebugName("VkRenderBuffers.Shadowmap");
+	Shadowmap.Image = ImageBuilder()
+		.Size(gl_shadowmap_quality, 1024)
+		.Format(VK_FORMAT_R32_SFLOAT)
+		.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+		.DebugName("VkRenderBuffers.Shadowmap")
+		.Create(fb->device);
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(Shadowmap.Image.get(), VK_FORMAT_R32_SFLOAT);
-	Shadowmap.View = viewbuilder.create(fb->device);
-	Shadowmap.View->SetDebugName("VkRenderBuffers.ShadowmapView");
+	Shadowmap.View = ImageViewBuilder()
+		.Image(Shadowmap.Image.get(), VK_FORMAT_R32_SFLOAT)
+		.DebugName("VkRenderBuffers.ShadowmapView")
+		.Create(fb->device);
 
-	VkImageTransition barrier;
-	barrier.addImage(&Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
-	barrier.execute(fb->GetCommands()->GetDrawCommands());
+	VkImageTransition()
+		.AddImage(&Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true)
+		.Execute(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkTextureManager::CreateLightmap()
@@ -198,28 +198,28 @@ void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const 
 
 	Lightmap.Reset(fb);
 
-	ImageBuilder builder;
-	builder.setSize(w, h, 1, count);
-	builder.setFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
-	builder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-	Lightmap.Image = builder.create(fb->device);
-	Lightmap.Image->SetDebugName("VkRenderBuffers.Lightmap");
+	Lightmap.Image = ImageBuilder()
+		.Size(w, h, 1, count)
+		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
+		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+		.DebugName("VkRenderBuffers.Lightmap")
+		.Create(fb->device);
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setType(VK_IMAGE_VIEW_TYPE_2D_ARRAY);
-	viewbuilder.setImage(Lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
-	Lightmap.View = viewbuilder.create(fb->device);
-	Lightmap.View->SetDebugName("VkRenderBuffers.LightmapView");
+	Lightmap.View = ImageViewBuilder()
+		.Type(VK_IMAGE_VIEW_TYPE_2D_ARRAY)
+		.Image(Lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
+		.DebugName("VkRenderBuffers.LightmapView")
+		.Create(fb->device);
 
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
 	int totalSize = w * h * count * pixelsize;
 
-	BufferBuilder bufbuilder;
-	bufbuilder.setSize(totalSize);
-	bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-	std::unique_ptr<VulkanBuffer> stagingBuffer = bufbuilder.create(fb->device);
-	stagingBuffer->SetDebugName("VkHardwareTexture.mStagingBuffer");
+	auto stagingBuffer = BufferBuilder()
+		.Size(totalSize)
+		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+		.DebugName("VkHardwareTexture.mStagingBuffer")
+		.Create(fb->device);
 
 	uint16_t one = 0x3c00; // half-float 1.0
 	const uint16_t* src = LMTextureData.Data();
@@ -233,9 +233,9 @@ void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const 
 	}
 	stagingBuffer->Unmap();
 
-	VkImageTransition imageTransition;
-	imageTransition.addImage(&Lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, 0, count);
-	imageTransition.execute(cmdbuffer);
+	VkImageTransition()
+		.AddImage(&Lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, 0, count)
+		.Execute(cmdbuffer);
 
 	VkBufferImageCopy region = {};
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -245,9 +245,9 @@ void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const 
 	region.imageExtent.height = h;
 	cmdbuffer->copyBufferToImage(stagingBuffer->buffer, Lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-	VkImageTransition barrier;
-	barrier.addImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count);
-	barrier.execute(cmdbuffer);
+	VkImageTransition()
+		.AddImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count)
+		.Execute(cmdbuffer);
 
 	fb->GetCommands()->TransferDeleteList->Add(std::move(stagingBuffer));
 }

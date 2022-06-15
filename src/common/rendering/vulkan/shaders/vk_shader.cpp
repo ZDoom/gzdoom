@@ -341,11 +341,10 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 	code << "#line 1\n";
 	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
 
-	ShaderBuilder builder;
-	builder.setVertexShader(code);
-	auto shader = builder.create(shadername.GetChars(), fb->device);
-	shader->SetDebugName(shadername.GetChars());
-	return shader;
+	return ShaderBuilder()
+		.VertexShader(code)
+		.DebugName(shadername.GetChars())
+		.Create(shadername.GetChars(), fb->device);
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
@@ -434,11 +433,10 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 		code << LoadPrivateShaderLump(light_lump).GetChars();
 	}
 
-	ShaderBuilder builder;
-	builder.setFragmentShader(code);
-	auto shader = builder.create(shadername.GetChars(), fb->device);
-	shader->SetDebugName(shadername.GetChars());
-	return shader;
+	return ShaderBuilder()
+		.FragmentShader(code)
+		.DebugName(shadername.GetChars())
+		.Create(shadername.GetChars(), fb->device);
 }
 
 FString VkShaderManager::GetTargetGlslVersion()

@@ -64,12 +64,10 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 	if (mBuffer)
 	{
 		fb->GetCommands()->DrawDeleteList->Add(std::move(mBuffer));
-		mBuffer = {};
 	}
 	if (mStaging)
 	{
 		fb->GetCommands()->TransferDeleteList->Add(std::move(mStaging));
-		mStaging = {};
 	}
 
 	if (usage == BufferUsageType::Static || usage == BufferUsageType::Stream)
@@ -78,17 +76,17 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 
 		mPersistent = false;
 
-		BufferBuilder builder;
-		builder.setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | mBufferType, VMA_MEMORY_USAGE_GPU_ONLY);
-		builder.setSize(bufsize);
-		mBuffer = builder.create(fb->device);
-		mBuffer->SetDebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Static" : "VkHardwareBuffer.Stream");
+		mBuffer = BufferBuilder()
+			.Usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | mBufferType, VMA_MEMORY_USAGE_GPU_ONLY)
+			.Size(bufsize)
+			.DebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Static" : "VkHardwareBuffer.Stream")
+			.Create(fb->device);
 
-		BufferBuilder builder2;
-		builder2.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-		builder2.setSize(bufsize);
-		mStaging = builder2.create(fb->device);
-		mStaging->SetDebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Staging.Static" : "VkHardwareBuffer.Staging.Stream");
+		mStaging = BufferBuilder()
+			.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+			.Size(bufsize)
+			.DebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Staging.Static" : "VkHardwareBuffer.Staging.Stream")
+			.Create(fb->device);
 
 		if (data)
 		{
@@ -103,14 +101,14 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 	{
 		mPersistent = true;
 
-		BufferBuilder builder;
-		builder.setUsage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-		builder.setMemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		builder.setSize(bufsize);
-		mBuffer = builder.create(fb->device);
-		mBuffer->SetDebugName("VkHardwareBuffer.Persistent");
+		mBuffer = BufferBuilder()
+			.Usage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
+			.MemoryType(
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.Size(bufsize)
+			.DebugName("VkHardwareBuffer.Persistent")
+			.Create(fb->device);
 
 		map = mBuffer->Map(0, bufsize);
 		if (data)
@@ -120,14 +118,14 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 	{
 		mPersistent = false;
 
-		BufferBuilder builder;
-		builder.setUsage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, 0);
-		builder.setMemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		builder.setSize(bufsize);
-		mBuffer = builder.create(fb->device);
-		mBuffer->SetDebugName("VkHardwareBuffer.Mappable");
+		mBuffer = BufferBuilder()
+			.Usage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, 0)
+			.MemoryType(
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			.Size(bufsize)
+			.DebugName("VkHardwareBuffer.Mappable")
+			.Create(fb->device);
 
 		if (data)
 		{
@@ -171,14 +169,14 @@ void VkHardwareBuffer::Resize(size_t newsize)
 	map = nullptr;
 
 	// Create new buffer
-	BufferBuilder builder;
-	builder.setUsage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-	builder.setMemoryType(
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	builder.setSize(newsize);
-	mBuffer = builder.create(fb->device);
-	mBuffer->SetDebugName("VkHardwareBuffer.Resized");
+	mBuffer = BufferBuilder()
+		.Usage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
+		.MemoryType(
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		.Size(newsize)
+		.DebugName("VkHardwareBuffer.Resized")
+		.Create(fb->device);
 	buffersize = newsize;
 
 	// Transfer data from old to new

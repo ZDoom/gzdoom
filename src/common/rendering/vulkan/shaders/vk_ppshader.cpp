@@ -34,15 +34,15 @@ VkPPShader::VkPPShader(VulkanFrameBuffer* fb, PPShader *shader) : fb(fb)
 		prolog = UniformBlockDecl::Create("Uniforms", shader->Uniforms, -1);
 	prolog += shader->Defines;
 
-	ShaderBuilder vertbuilder;
-	vertbuilder.setVertexShader(LoadShaderCode(shader->VertexShader, "", shader->Version));
-	VertexShader = vertbuilder.create(shader->VertexShader.GetChars(), fb->device);
-	VertexShader->SetDebugName(shader->VertexShader.GetChars());
+	VertexShader = ShaderBuilder()
+		.VertexShader(LoadShaderCode(shader->VertexShader, "", shader->Version))
+		.DebugName(shader->VertexShader.GetChars())
+		.Create(shader->VertexShader.GetChars(), fb->device);
 
-	ShaderBuilder fragbuilder;
-	fragbuilder.setFragmentShader(LoadShaderCode(shader->FragmentShader, prolog, shader->Version));
-	FragmentShader = fragbuilder.create(shader->FragmentShader.GetChars(), fb->device);
-	FragmentShader->SetDebugName(shader->FragmentShader.GetChars());
+	FragmentShader = ShaderBuilder()
+		.FragmentShader(LoadShaderCode(shader->FragmentShader, prolog, shader->Version))
+		.DebugName(shader->FragmentShader.GetChars())
+		.Create(shader->FragmentShader.GetChars(), fb->device);
 
 	fb->GetShaderManager()->AddVkPPShader(this);
 }

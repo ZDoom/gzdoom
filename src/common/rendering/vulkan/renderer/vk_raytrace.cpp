@@ -95,36 +95,36 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 	size_t vertexoffset = 0;
 	size_t indexoffset = vertexoffset + vertexbuffersize;
 
-	BufferBuilder tbuilder;
-	tbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-	tbuilder.setSize(transferbuffersize);
-	transferBuffer = tbuilder.create(fb->device);
-	transferBuffer->SetDebugName("transferBuffer");
+	transferBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+		.Size(transferbuffersize)
+		.DebugName("transferBuffer")
+		.Create(fb->device);
+
 	uint8_t* data = (uint8_t*)transferBuffer->Map(0, transferbuffersize);
 	memcpy(data + vertexoffset, Mesh->MeshVertices.Data(), vertexbuffersize);
 	memcpy(data + indexoffset, Mesh->MeshElements.Data(), indexbuffersize);
 	transferBuffer->Unmap();
 
-	BufferBuilder vbuilder;
-	vbuilder.setUsage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	vbuilder.setSize(vertexbuffersize);
-	vertexBuffer = vbuilder.create(fb->device);
-	vertexBuffer->SetDebugName("vertexBuffer");
+	vertexBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		.Size(vertexbuffersize)
+		.DebugName("vertexBuffer")
+		.Create(fb->device);
 
-	BufferBuilder ibuilder;
-	ibuilder.setUsage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	ibuilder.setSize(indexbuffersize);
-	indexBuffer = ibuilder.create(fb->device);
-	indexBuffer->SetDebugName("indexBuffer");
+	indexBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		.Size(indexbuffersize)
+		.DebugName("indexBuffer")
+		.Create(fb->device);
 
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset);
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset);
 
 	// Finish transfer before using it for building
-	VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
-	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	fb->GetCommands()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+	PipelineBarrier()
+		.AddMemory(VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
+		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR);
 }
 
 void VkRaytrace::CreateBottomLevelAccelerationStructure()
@@ -158,11 +158,11 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	VkAccelerationStructureBuildSizesInfoKHR sizeInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 	vkGetAccelerationStructureBuildSizesKHR(fb->device->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &maxPrimitiveCount, &sizeInfo);
 
-	BufferBuilder blbufbuilder;
-	blbufbuilder.setUsage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-	blbufbuilder.setSize(sizeInfo.accelerationStructureSize);
-	blAccelStructBuffer = blbufbuilder.create(fb->device);
-	blAccelStructBuffer->SetDebugName("blAccelStructBuffer");
+	blAccelStructBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+		.Size(sizeInfo.accelerationStructureSize)
+		.DebugName("blAccelStructBuffer")
+		.Create(fb->device);
 
 	VkAccelerationStructureKHR blAccelStructHandle = {};
 	VkAccelerationStructureCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
@@ -175,11 +175,11 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	blAccelStruct = std::make_unique<VulkanAccelerationStructure>(fb->device, blAccelStructHandle);
 	blAccelStruct->SetDebugName("blAccelStruct");
 
-	BufferBuilder sbuilder;
-	sbuilder.setUsage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	sbuilder.setSize(sizeInfo.buildScratchSize);
-	blScratchBuffer = sbuilder.create(fb->device);
-	blScratchBuffer->SetDebugName("blScratchBuffer");
+	blScratchBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		.Size(sizeInfo.buildScratchSize)
+		.DebugName("blScratchBuffer")
+		.Create(fb->device);
 
 	buildInfo.dstAccelerationStructure = blAccelStruct->accelstruct;
 	buildInfo.scratchData.deviceAddress = blScratchBuffer->GetDeviceAddress();
@@ -187,10 +187,9 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	fb->GetCommands()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
 
 	// Finish building before using it as input to a toplevel accel structure
-	VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
-	barrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-	barrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-	fb->GetCommands()->GetTransferCommands()->pipelineBarrier(VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+	PipelineBarrier()
+		.AddMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR)
+		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR);
 }
 
 void VkRaytrace::CreateTopLevelAccelerationStructure()
@@ -203,20 +202,21 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 	instance.accelerationStructureReference = blAccelStruct->GetDeviceAddress();
 
-	BufferBuilder tbuilder;
-	tbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-	tbuilder.setSize(sizeof(VkAccelerationStructureInstanceKHR));
-	tlTransferBuffer = tbuilder.create(fb->device);
-	tlTransferBuffer->SetDebugName("tlTransferBuffer");
+	tlTransferBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+		.Size(sizeof(VkAccelerationStructureInstanceKHR))
+		.DebugName("tlTransferBuffer")
+		.Create(fb->device);
+
 	auto data = (uint8_t*)tlTransferBuffer->Map(0, sizeof(VkAccelerationStructureInstanceKHR));
 	memcpy(data, &instance, sizeof(VkAccelerationStructureInstanceKHR));
 	tlTransferBuffer->Unmap();
 
-	BufferBuilder instbufbuilder;
-	instbufbuilder.setUsage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-	instbufbuilder.setSize(sizeof(VkAccelerationStructureInstanceKHR));
-	tlInstanceBuffer = instbufbuilder.create(fb->device);
-	tlInstanceBuffer->SetDebugName("tlInstanceBuffer");
+	tlInstanceBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+		.Size(sizeof(VkAccelerationStructureInstanceKHR))
+		.DebugName("tlInstanceBuffer")
+		.Create(fb->device);
 
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(tlTransferBuffer.get(), tlInstanceBuffer.get());
 
@@ -249,11 +249,11 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	VkAccelerationStructureBuildSizesInfoKHR sizeInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 	vkGetAccelerationStructureBuildSizesKHR(fb->device->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &maxInstanceCount, &sizeInfo);
 
-	BufferBuilder tlbufbuilder;
-	tlbufbuilder.setUsage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-	tlbufbuilder.setSize(sizeInfo.accelerationStructureSize);
-	tlAccelStructBuffer = tlbufbuilder.create(fb->device);
-	tlAccelStructBuffer->SetDebugName("tlAccelStructBuffer");
+	tlAccelStructBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+		.Size(sizeInfo.accelerationStructureSize)
+		.DebugName("tlAccelStructBuffer")
+		.Create(fb->device);
 
 	VkAccelerationStructureKHR tlAccelStructHandle = {};
 	VkAccelerationStructureCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
@@ -265,11 +265,11 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 		throw std::runtime_error("vkCreateAccelerationStructureKHR failed");
 	tlAccelStruct = std::make_unique<VulkanAccelerationStructure>(fb->device, tlAccelStructHandle);
 
-	BufferBuilder sbuilder;
-	sbuilder.setUsage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-	sbuilder.setSize(sizeInfo.buildScratchSize);
-	tlScratchBuffer = sbuilder.create(fb->device);
-	tlScratchBuffer->SetDebugName("tlScratchBuffer");
+	tlScratchBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		.Size(sizeInfo.buildScratchSize)
+		.DebugName("tlScratchBuffer")
+		.Create(fb->device);
 
 	buildInfo.dstAccelerationStructure = tlAccelStruct->accelstruct;
 	buildInfo.scratchData.deviceAddress = tlScratchBuffer->GetDeviceAddress();
@@ -277,7 +277,7 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	fb->GetCommands()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
 
 	// Finish building the accel struct before using as input in a fragment shader
-	PipelineBarrier finishbuildbarrier;
-	finishbuildbarrier.addMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_SHADER_READ_BIT);
-	finishbuildbarrier.execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	PipelineBarrier()
+		.AddMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_SHADER_READ_BIT)
+		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }

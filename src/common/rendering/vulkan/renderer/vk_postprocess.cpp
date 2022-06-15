@@ -55,9 +55,9 @@ void VkPostprocess::SetActiveRenderTarget()
 {
 	auto buffers = fb->GetBuffers();
 
-	VkImageTransition imageTransition;
-	imageTransition.addImage(&buffers->PipelineImage[mCurrentPipelineImage], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
-	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+	VkImageTransition()
+		.AddImage(&buffers->PipelineImage[mCurrentPipelineImage], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false)
+		.Execute(fb->GetCommands()->GetDrawCommands());
 
 	fb->GetRenderState()->SetRenderTarget(&buffers->PipelineImage[mCurrentPipelineImage], nullptr, buffers->GetWidth(), buffers->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT);
 }
@@ -84,10 +84,10 @@ void VkPostprocess::BlitSceneToPostprocess()
 
 	mCurrentPipelineImage = 0;
 
-	VkImageTransition imageTransition;
-	imageTransition.addImage(&buffers->SceneColor, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
-	imageTransition.addImage(&buffers->PipelineImage[mCurrentPipelineImage], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
-	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+	VkImageTransition()
+		.AddImage(&buffers->SceneColor, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false)
+		.AddImage(&buffers->PipelineImage[mCurrentPipelineImage], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true)
+		.Execute(fb->GetCommands()->GetDrawCommands());
 
 	if (buffers->GetSceneSamples() != VK_SAMPLE_COUNT_1_BIT)
 	{
@@ -136,12 +136,12 @@ void VkPostprocess::ImageTransitionScene(bool undefinedSrcLayout)
 {
 	auto buffers = fb->GetBuffers();
 
-	VkImageTransition imageTransition;
-	imageTransition.addImage(&buffers->SceneColor, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
-	imageTransition.addImage(&buffers->SceneFog, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
-	imageTransition.addImage(&buffers->SceneNormal, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
-	imageTransition.addImage(&buffers->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
-	imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+	VkImageTransition()
+		.AddImage(&buffers->SceneColor, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout)
+		.AddImage(&buffers->SceneFog, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout)
+		.AddImage(&buffers->SceneNormal, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout)
+		.AddImage(&buffers->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, undefinedSrcLayout)
+		.Execute(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout finallayout)
@@ -151,10 +151,10 @@ void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout f
 	auto srcimage = &fb->GetBuffers()->PipelineImage[mCurrentPipelineImage];
 	auto cmdbuffer = fb->GetCommands()->GetDrawCommands();
 
-	VkImageTransition imageTransition0;
-	imageTransition0.addImage(srcimage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
-	imageTransition0.addImage(dstimage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
-	imageTransition0.execute(cmdbuffer);
+	VkImageTransition()
+		.AddImage(srcimage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false)
+		.AddImage(dstimage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true)
+		.Execute(cmdbuffer);
 
 	VkImageBlit blit = {};
 	blit.srcOffsets[0] = { 0, 0, 0 };
@@ -169,14 +169,15 @@ void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout f
 	blit.dstSubresource.mipLevel = 0;
 	blit.dstSubresource.baseArrayLayer = 0;
 	blit.dstSubresource.layerCount = 1;
+
 	cmdbuffer->blitImage(
 		srcimage->Image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		dstimage->Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		1, &blit, VK_FILTER_NEAREST);
 
-	VkImageTransition imageTransition1;
-	imageTransition1.addImage(dstimage, finallayout, false);
-	imageTransition1.execute(cmdbuffer);
+	VkImageTransition()
+		.AddImage(dstimage, finallayout, false)
+		.Execute(cmdbuffer);
 }
 
 void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool screenshot)
@@ -277,9 +278,9 @@ void VkPostprocess::UpdateShadowMap()
 		VkPPRenderState renderstate(fb);
 		hw_postprocess.shadowmap.Update(&renderstate);
 
-		VkImageTransition imageTransition;
-		imageTransition.addImage(&fb->GetTextureManager()->Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-		imageTransition.execute(fb->GetCommands()->GetDrawCommands());
+		VkImageTransition()
+			.AddImage(&fb->GetTextureManager()->Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false)
+			.Execute(fb->GetCommands()->GetDrawCommands());
 
 		screen->mShadowMap.FinishUpdate();
 	}

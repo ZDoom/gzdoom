@@ -40,35 +40,36 @@ VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture) : fb(fb)
 	}
 
 	ImageBuilder imgbuilder;
-	imgbuilder.setFormat(format);
-	imgbuilder.setSize(texture->Width, texture->Height);
+	imgbuilder.Format(format);
+	imgbuilder.Size(texture->Width, texture->Height);
 	if (texture->Data)
-		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		imgbuilder.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	else
-		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-	if (!imgbuilder.isFormatSupported(fb->device))
+		imgbuilder.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	imgbuilder.DebugName("VkPPTexture");
+	if (!imgbuilder.IsFormatSupported(fb->device))
 		I_FatalError("Vulkan device does not support the image format required by a postprocess texture\n");
-	TexImage.Image = imgbuilder.create(fb->device);
-	TexImage.Image->SetDebugName("VkPPTexture");
+	TexImage.Image = imgbuilder.Create(fb->device);
 	Format = format;
 
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(TexImage.Image.get(), format);
-	TexImage.View = viewbuilder.create(fb->device);
-	TexImage.View->SetDebugName("VkPPTextureView");
+	TexImage.View = ImageViewBuilder()
+		.Image(TexImage.Image.get(), format)
+		.DebugName("VkPPTextureView")
+		.Create(fb->device);
 
 	if (texture->Data)
 	{
 		size_t totalsize = texture->Width * texture->Height * pixelsize;
-		BufferBuilder stagingbuilder;
-		stagingbuilder.setSize(totalsize);
-		stagingbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-		Staging = stagingbuilder.create(fb->device);
-		Staging->SetDebugName("VkPPTextureStaging");
 
-		VkImageTransition barrier0;
-		barrier0.addImage(&TexImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
-		barrier0.execute(fb->GetCommands()->GetTransferCommands());
+		Staging = BufferBuilder()
+			.Size(totalsize)
+			.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+			.DebugName("VkPPTextureStaging")
+			.Create(fb->device);
+
+		VkImageTransition()
+			.AddImage(&TexImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true)
+			.Execute(fb->GetCommands()->GetTransferCommands());
 
 		void *data = Staging->Map(0, totalsize);
 		memcpy(data, texture->Data.get(), totalsize);
@@ -82,15 +83,15 @@ VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture) : fb(fb)
 		region.imageExtent.height = texture->Height;
 		fb->GetCommands()->GetTransferCommands()->copyBufferToImage(Staging->buffer, TexImage.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-		VkImageTransition barrier1;
-		barrier1.addImage(&TexImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-		barrier1.execute(fb->GetCommands()->GetTransferCommands());
+		VkImageTransition()
+			.AddImage(&TexImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false)
+			.Execute(fb->GetCommands()->GetTransferCommands());
 	}
 	else
 	{
-		VkImageTransition barrier;
-		barrier.addImage(&TexImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-		barrier.execute(fb->GetCommands()->GetTransferCommands());
+		VkImageTransition()
+			.AddImage(&TexImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true)
+			.Execute(fb->GetCommands()->GetTransferCommands());
 	}
 
 	fb->GetTextureManager()->AddPPTexture(this);

@@ -2594,6 +2594,12 @@ FxExpression *FxMultiAssign::Resolve(FCompileContext &ctx)
 	}
 	auto VMRight = static_cast<FxVMFunctionCall *>(Right);
 	auto rets = VMRight->GetReturnTypes();
+	if (Base.Size() == 1)
+	{
+		Right->ScriptPosition.Message(MSG_ERROR, "Multi-assignment with only one element", VMRight->Function->SymbolName.GetChars());
+		delete this;
+		return nullptr;
+	}
 	if (rets.Size() < Base.Size())
 	{
 		Right->ScriptPosition.Message(MSG_ERROR, "Insufficient returns in function %s", VMRight->Function->SymbolName.GetChars());

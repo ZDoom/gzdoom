@@ -6846,6 +6846,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	{
 		return nullptr;
 	}
+	aimflags &= ~ALF_IGNORENOAUTOAIM; // just to be safe.
 
 	static const double angdiff[3] = { -5.625, 5.625, 0 };
 	DAngle an = angle;

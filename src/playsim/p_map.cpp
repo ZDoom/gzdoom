@@ -4192,7 +4192,7 @@ struct aim_t
 			dist = attackrange * in->frac;
 
 			// Don't autoaim certain special actors
-			if (!cl_doautoaim && th->flags6 & MF6_NOTAUTOAIMED)
+			if (!cl_doautoaim && !(flags & ALF_IGNORENOAUTOAIM) && th->flags6 & MF6_NOTAUTOAIMED)
 			{
 				continue;
 			}

@@ -310,6 +310,7 @@ enum	// P_AimLineAttack flags
 	ALF_NOFRIENDS = 16,
 	ALF_PORTALRESTRICT = 32,	// only work through portals with a global offset (to be used for stuff that cannot remember the calculated FTranslatedLineTarget info)
 	ALF_NOWEAPONCHECK = 64,		// ignore NOAUTOAIM flag on a player's weapon.
+	ALF_IGNORENOAUTOAIM = 128,	// for informative stuff like 'linetarget' CCMD.
 };
 
 enum	// P_LineAttack flags

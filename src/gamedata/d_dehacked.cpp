@@ -802,7 +802,7 @@ static void CreateMonsterMeleeAttackFunc(FunctionCallEmitter &emitters, int valu
 	state->ValidateArgCount(4, "A_MonsterMeleeAttack");
 	emitters.AddParameterIntConst(state->GetIntArg(0, 3));
 	emitters.AddParameterIntConst(state->GetIntArg(1, 8));
-	emitters.AddParameterIntConst(state->GetIntArg(2, 0));
+	emitters.AddParameterIntConst(state->GetSoundArg(2, 0));
 	emitters.AddParameterFloatConst(state->GetFloatArg(3));
 
 }

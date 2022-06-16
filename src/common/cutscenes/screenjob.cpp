@@ -208,6 +208,11 @@ bool ScreenJobResponder(event_t* ev)
 			C_ToggleConsole();
 			return true;
 		}
+		if (binding.CompareNoCase("screenshot") == 0)
+		{
+			C_DoCommand("screenshot");
+			return true;
+		}
 	}
 	FInputEvent evt = ev;
 	if (cutscene.runner)

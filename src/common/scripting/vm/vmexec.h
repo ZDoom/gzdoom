@@ -473,8 +473,8 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		GETADDR(PA,KC,X_WRITE_NIL);
 		{
 			auto v = (float *)ptr;
-			v[0] = reg.f[B];
-			v[1] = reg.f[B+1];
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
 		}
 		NEXTOP;
 	OP(SFV2_R):
@@ -482,8 +482,8 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		GETADDR(PA,RC,X_WRITE_NIL);
 		{
 			auto v = (float *)ptr;
-			v[0] = reg.f[B];
-			v[1] = reg.f[B+1];
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
 		}
 		NEXTOP;
 	OP(SFV3):
@@ -491,9 +491,9 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		GETADDR(PA,KC,X_WRITE_NIL);
 		{
 			auto v = (float *)ptr;
-			v[0] = reg.f[B];
-			v[1] = reg.f[B+1];
-			v[2] = reg.f[B+2];
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
 		}
 		NEXTOP;
 	OP(SFV3_R):
@@ -501,9 +501,9 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		GETADDR(PA,RC,X_WRITE_NIL);
 		{
 			auto v = (float *)ptr;
-			v[0] = reg.f[B];
-			v[1] = reg.f[B+1];
-			v[2] = reg.f[B+2];
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
 		}
 		NEXTOP;
 	OP(SBIT):

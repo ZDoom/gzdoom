@@ -339,6 +339,8 @@ namespace swrenderer
 
 		if (pds->mirror)
 		{
+			IsInMirrorRecursively = true;
+
 			//vertex_t *v1 = ds->curline->v1;
 			vertex_t *v1 = pds->src->v1;
 
@@ -465,6 +467,7 @@ namespace swrenderer
 
 		CurrentPortal = prevpds;
 		MirrorFlags = prevmf;
+		IsInMirrorRecursively = false;
 		viewpoint.Angles.Yaw = startang;
 		viewpoint.Pos = startpos;
 		viewpoint.Path[0] = savedpath[0];

@@ -1028,6 +1028,17 @@ namespace swrenderer
 		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), renderportal->CurrentPortal->dst))
 			return false;
 
+		// [Nash] filter visibility in mirrors
+		bool isInMirror = renderportal != nullptr && renderportal->IsInMirrorRecursively;
+		if (thing->renderflags2 & RF2_INVISIBLEINMIRRORS && isInMirror)
+		{
+			return false;
+		}
+		else if (thing->renderflags2 & RF2_ONLYVISIBLEINMIRRORS && !isInMirror)
+		{
+			return false;
+		}
+
 		double distanceSquared = (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared();
 		if (distanceSquared > sprite_distance_cull)
 			return false;

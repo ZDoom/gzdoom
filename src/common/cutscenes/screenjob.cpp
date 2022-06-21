@@ -208,10 +208,16 @@ bool ScreenJobResponder(event_t* ev)
 			C_ToggleConsole();
 			return true;
 		}
+		if (binding.CompareNoCase("screenshot") == 0)
+		{
+			C_DoCommand("screenshot");
+			return true;
+		}
 	}
 	FInputEvent evt = ev;
 	if (cutscene.runner)
 	{
+		ScaleOverrider ovr(twod);
 		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, OnEvent)
 		{
 			int result = 0;
@@ -235,6 +241,7 @@ bool ScreenJobTick()
 	ticks++;
 	if (cutscene.runner)
 	{
+		ScaleOverrider ovr(twod);
 		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, OnTick)
 		{
 			int result = 0;
@@ -260,6 +267,7 @@ void ScreenJobDraw()
 	if (cutscene.runner)
 	{
 		twod->ClearScreen();
+		ScaleOverrider ovr(twod);
 		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, RunFrame)
 		{
 			VMValue parm[] = { cutscene.runner, smoothratio };
@@ -278,6 +286,7 @@ bool ScreenJobValidate()
 {
 	if (cutscene.runner)
 	{
+		ScaleOverrider ovr(twod);
 		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, Validate)
 		{
 			int res;

@@ -55,7 +55,7 @@ public:
 	uint8_t		range0start = 0;
 	uint8_t		range0end = 0;
 	bool		othergame = 0;	// [GRB]
-	DVector2	Scale = { 1, 1 };
+	FVector2	Scale = { 1, 1 };
 	int			sprite = 0;
 	int			crouchsprite = 0;
 	int			namespc = 0;	// namespace for this skin

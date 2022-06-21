@@ -115,7 +115,7 @@ class Actor : Thinker native
 	native double FloatSpeed;
 	native SpriteID sprite;
 	native uint8 frame;
-	native vector2 Scale;
+	native fvector2 Scale;
 	native TextureID picnum;
 	native double Alpha;
 	native readonly color fillcolor;	// must be set with SetShade to initialize correctly.
@@ -374,8 +374,8 @@ class Actor : Thinker native
 	native readonly deprecated("2.3", "Use Vel.X instead") double MomX;
 	native readonly deprecated("2.3", "Use Vel.Y instead") double MomY;
 	native readonly deprecated("2.3", "Use Vel.Z instead") double MomZ;
-	native deprecated("2.3", "Use Scale.X instead") double ScaleX;
-	native deprecated("2.3", "Use Scale.Y instead") double ScaleY;
+	native deprecated("2.3", "Use Scale.X instead") float ScaleX;
+	native deprecated("2.3", "Use Scale.Y instead") float ScaleY;
 
 	//FStrifeDialogueNode *Conversation; // [RH] The dialogue to show when this actor is used.;
 	

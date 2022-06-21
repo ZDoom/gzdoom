@@ -737,21 +737,27 @@ public:
 				break;
 
 			case NAME_ScaleX:
-				th->Scale.X = CheckFloat(key);
+				th->Scale.X = (float)CheckFloat(key);
 				break;
 
 			case NAME_ScaleY:
-				th->Scale.Y = CheckFloat(key);
+				th->Scale.Y = (float)CheckFloat(key);
 				break;
 
 			case NAME_Scale:
-				th->Scale.X = th->Scale.Y = CheckFloat(key);
+				th->Scale.X = th->Scale.Y = (float)CheckFloat(key);
 				break;
 
 			case NAME_FriendlySeeBlocks:
 				CHECK_N(Zd | Zdt)
 				th->friendlyseeblocks = CheckInt(key);
 				break;
+
+			case NAME_lm_suncolor:
+			case NAME_lm_sampledistance:
+			case NAME_lm_gridsize:
+				CHECK_N(Zd | Zdt)
+					break;
 
 			default:
 				CHECK_N(Zd | Zdt)
@@ -1123,9 +1129,9 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
-			case NAME_lightcolorline:
-			case NAME_lightintensityline:
-			case NAME_lightdistanceline:
+			case NAME_lm_lightcolorline:
+			case NAME_lm_lightintensityline:
+			case NAME_lm_lightdistanceline:
 				CHECK_N(Zd | Zdt)
 				break;
 
@@ -1979,12 +1985,12 @@ public:
 					sec->health3dgroup = CheckInt(key);
 					break;
 
-				case NAME_lightcolorfloor:
-				case NAME_lightintensityfloor:
-				case NAME_lightdistancefloor:
-				case NAME_lightcolorceiling:
-				case NAME_lightintensityceiling:
-				case NAME_lightdistanceceiling:
+				case NAME_lm_lightcolorfloor:
+				case NAME_lm_lightintensityfloor:
+				case NAME_lm_lightdistancefloor:
+				case NAME_lm_lightcolorceiling:
+				case NAME_lm_lightintensityceiling:
+				case NAME_lm_lightdistanceceiling:
 					CHECK_N(Zd | Zdt)
 					break;
 

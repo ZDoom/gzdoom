@@ -304,12 +304,12 @@ void JitCompiler::SetupSimpleFrame()
 		{
 			cc.mov(regA[rega++], x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
 		}
-		else if (type == TypeVector2)
+		else if (type == TypeVector2 || type == TypeFVector2)
 		{
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 		}
-		else if (type == TypeVector3)
+		else if (type == TypeVector3 || type == TypeFVector3)
 		{
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));

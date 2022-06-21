@@ -164,6 +164,9 @@ void I_DetectOS()
 	case 12:
 		name = "macOS Monterey";
 		break;
+	case 13:
+		name = "macOS Ventura";
+		break;
 	}
 
 	char release[16] = "unknown";

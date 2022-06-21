@@ -30,14 +30,14 @@ jobs:
           }
         - {
             name: "macOS",
-            os: macos-11,
+            os: macos-12,
             deps_cmdline: "brew install libvpx",
             build_type: "Release"
           }
         - {
             name: "macOS",
-            os: macos-11,
-            extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            os: macos-12,
+            extra_options: "-G Xcode -DDYN_OPENAL=OFF",
             deps_cmdline: "brew install libvpx fluidsynth mpg123 libsndfile",
             build_type: "Debug"
           }
@@ -58,8 +58,7 @@ jobs:
         - {
             name: "Linux Clang 6",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 \
-                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DDYN_OPENAL=OFF",
             deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev libvpx-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
             build_type: "Debug"
           }
@@ -82,9 +81,9 @@ jobs:
         fi
         mkdir build
         if [[ "${{ runner.os }}" == 'macOS' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.7-macos.tar.bz2
+          export ZMUSIC_PACKAGE=zmusic-1.1.9-macos.tar.xz
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.7-linux.tar.bz2
+          export ZMUSIC_PACKAGE=zmusic-1.1.9-linux.tar.xz
         fi
         if [[ ! -z "${ZMUSIC_PACKAGE}" ]]; then
           cd build

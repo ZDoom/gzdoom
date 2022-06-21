@@ -35,6 +35,9 @@
 #define __STATS_H__
 
 #include "zstring.h"
+#if defined __i386__
+#include "x86.h"
+#endif
 
 #if !defined _WIN32 && !defined __APPLE__
 

@@ -1150,6 +1150,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMove, CheckMove)
 
 static double AimLineAttack(AActor *self, double angle, double distance, FTranslatedLineTarget *pLineTarget, double vrange, int flags, AActor *target, AActor *friender)
 {
+	flags &= ~ALF_IGNORENOAUTOAIM; // just to be safe. This flag is not supposed to be accesible to scripting.
 	return P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees;
 }
 

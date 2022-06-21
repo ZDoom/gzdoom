@@ -802,7 +802,7 @@ static void CreateMonsterMeleeAttackFunc(FunctionCallEmitter &emitters, int valu
 	state->ValidateArgCount(4, "A_MonsterMeleeAttack");
 	emitters.AddParameterIntConst(state->GetIntArg(0, 3));
 	emitters.AddParameterIntConst(state->GetIntArg(1, 8));
-	emitters.AddParameterIntConst(state->GetIntArg(2, 0));
+	emitters.AddParameterIntConst(state->GetSoundArg(2, 0));
 	emitters.AddParameterFloatConst(state->GetFloatArg(3));
 
 }
@@ -1193,7 +1193,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Scale") == 0)
 			{
-				info->Scale.Y = info->Scale.X = clamp(atof (Line2), 1./65536, 256.);
+				info->Scale.Y = info->Scale.X = clamp((float)atof (Line2), 1.f/65536, 256.f);
 			}
 			else if (stricmp (Line1, "Decal") == 0)
 			{
@@ -2066,6 +2066,7 @@ static int PatchWeapon (int weapNum)
 		Printf ("Weapon %d out of range.\n", weapNum);
 	}
 
+	FState* readyState = nullptr;
 	while ((result = GetLine ()) == 1)
 	{
 		int val = atoi (Line2);
@@ -2085,8 +2086,11 @@ static int PatchWeapon (int weapNum)
 				statedef.SetStateLabel("Select", state);
 			else if (strnicmp (Line1, "Select", 6) == 0)
 				statedef.SetStateLabel("Deselect", state);
-			else if (strnicmp (Line1, "Bobbing", 7) == 0)
+			else if (strnicmp(Line1, "Bobbing", 7) == 0)
+			{
+				readyState = state;
 				statedef.SetStateLabel("Ready", state);
+			}
 			else if (strnicmp (Line1, "Shooting", 8) == 0)
 				statedef.SetStateLabel("Fire", state);
 			else if (strnicmp (Line1, "Firing", 6) == 0)
@@ -2197,6 +2201,20 @@ static int PatchWeapon (int weapNum)
 
 	if (info)
 	{
+		// Emulate the hard coded ready sound of the chainsaw as good as possible.
+		if (readyState)
+		{
+			FState* state = FindState(67); // S_SAW
+			if (readyState == state)
+			{
+				info->IntVar(NAME_ReadySound) = S_FindSound("weapons/sawidle");
+			}
+			else
+			{
+				info->IntVar(NAME_ReadySound) = 0;
+			}
+		}
+
 		if (info->PointerVar<PClassActor>(NAME_AmmoType1) == nullptr)
 		{
 			info->IntVar(NAME_AmmoUse1) = 0;

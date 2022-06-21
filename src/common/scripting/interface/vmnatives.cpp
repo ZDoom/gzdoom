@@ -1055,7 +1055,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_System, MusicEnabled, MusicEnabled)
 	ACTION_RETURN_INT(MusicEnabled());
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(_System, GetTimeFrac, I_GetTimeFrac)
+static double Jit_GetTimeFrac() // cannot use I_GetTimwfrac directly due to default arguments.
+{
+	return I_GetTimeFrac();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_System, GetTimeFrac, Jit_GetTimeFrac)
 {
 	ACTION_RETURN_FLOAT(I_GetTimeFrac());
 }

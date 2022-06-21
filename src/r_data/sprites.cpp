@@ -651,7 +651,7 @@ void R_InitSkins (void)
 			}
 			else if (0 == stricmp (key, "scale"))
 			{
-				Skins[i].Scale.X = clamp(atof (sc.String), 1./65536, 256.);
+				Skins[i].Scale.X = clamp((float)atof (sc.String), 1.f/65536, 256.f);
 				Skins[i].Scale.Y = Skins[i].Scale.X;
 			}
 			else if (0 == stricmp (key, "game"))

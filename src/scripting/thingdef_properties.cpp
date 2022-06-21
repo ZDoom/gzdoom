@@ -618,7 +618,7 @@ DEFINE_PROPERTY(damage, X, Actor)
 DEFINE_PROPERTY(scale, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
-	defaults->Scale.X = defaults->Scale.Y = id;
+	defaults->Scale.X = defaults->Scale.Y = float(id);
 }
 
 //==========================================================================

@@ -440,6 +440,7 @@ void P_RunEffect (AActor *actor, int effects)
 			  &grey4,	&white
 			};
 		int color = actor->fountaincolor*2;
+		if (color < 0 || color >= 16) color = 0;
 		MakeFountain (actor, *fountainColors[color], *fountainColors[color+1]);
 	}
 	if (effects & FX_RESPAWNINVUL)

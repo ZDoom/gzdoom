@@ -1044,7 +1044,7 @@ namespace swrenderer
 		sprite.spritenum = thing->sprite;
 		sprite.tex = nullptr;
 		sprite.voxel = nullptr;
-		sprite.spriteScale = thing->Scale;
+		sprite.spriteScale = DVector2(thing->Scale.X, thing->Scale.Y);
 		sprite.renderflags = thing->renderflags;
 
 		if (thing->player != nullptr)

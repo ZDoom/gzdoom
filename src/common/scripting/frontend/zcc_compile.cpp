@@ -2026,7 +2026,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
-				if (type->isContainer() && type != TypeVector2 && type != TypeVector3)
+				if (type->isContainer() && type != TypeVector2 && type != TypeVector3 && type != TypeFVector2 && type != TypeFVector3)
 				{
 					// structs and classes only get passed by pointer.
 					type = NewPointer(type);
@@ -2035,6 +2035,14 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					Error(f, "The return type of a function cannot be a dynamic array");
 					break;
+				}
+				else if (type == TypeFVector2)
+				{
+					type = TypeVector2;
+				}
+				else if (type == TypeFVector3)
+				{
+					type = TypeVector3;
 				}
 				// TBD: disallow certain types? For now, let everything pass that isn't an array.
 				rets.Push(type);
@@ -2222,16 +2230,16 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					else if (type->GetRegType() != REGT_NIL)
 					{
 						if (p->Flags & ZCC_Out)	flags |= VARF_Out;
-						if (type == TypeVector2)
+						if (type == TypeVector2 || type == TypeFVector2)
 						{
 							elementcount = 2;
 						}
-						else if (type == TypeVector3)
+						else if (type == TypeVector3 || type == TypeFVector3)
 						{
 							elementcount = 3;
 						}
 					}
-					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3)
+					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3 && type != TypeFVector2 && type != TypeFVector3)
 					{
 						Error(p, "Invalid type %s for function parameter", type->DescriptiveName());
 					}
@@ -2268,13 +2276,13 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						if (x != nullptr)
 						{
 							// Vectors need special treatment because they use more than one entry in the Defaults and do not report as actual constants
-							if (type == TypeVector2 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(2))
+							if ((type == TypeVector2 || type == TypeFVector2) && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(2))
 							{
 								auto vx = static_cast<FxVectorValue *>(x);
 								vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
 								vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
 							}
-							else if (type == TypeVector3 && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(3))
+							else if ((type == TypeVector3 || type == TypeFVector3) && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(3))
 							{
 								auto vx = static_cast<FxVectorValue *>(x);
 								vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();

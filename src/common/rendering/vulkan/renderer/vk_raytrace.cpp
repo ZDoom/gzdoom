@@ -55,7 +55,7 @@ void VkRaytrace::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 	{
 		Reset();
 		Mesh = mesh;
-		if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+		if (fb->RaytracingEnabled())
 		{
 			CreateVulkanObjects();
 		}

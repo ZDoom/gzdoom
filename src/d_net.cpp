@@ -125,7 +125,7 @@ int				playerfornode[MAXNETNODES];
 
 int 			maketic;
 int 			skiptics;
-int 			ticdup;
+int 			ticdup = 1;
 
 void D_ProcessEvents (void); 
 void G_BuildTiccmd (ticcmd_t *cmd); 

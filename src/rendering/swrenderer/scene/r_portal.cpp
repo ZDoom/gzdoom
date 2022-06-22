@@ -329,9 +329,9 @@ namespace swrenderer
 		DAngle startang = viewpoint.Angles.Yaw;
 		DVector3 startpos = viewpoint.Pos;
 		DVector3 savedpath[2] = { viewpoint.Path[0], viewpoint.Path[1] };
-		ActorRenderFlags savedvisibility = viewpoint.camera ? viewpoint.camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
+		ActorRenderFlags savedvisibility = viewpoint.camera ? viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
 		
-		viewpoint.camera->renderflags &= ~RF_INVISIBLE;
+		viewpoint.camera->renderflags &= ~RF_MAYBEINVISIBLE;
 
 		CurrentPortalUniq++;
 
@@ -437,7 +437,7 @@ namespace swrenderer
 
 		Thread->OpaquePass->RenderScene(Thread->Viewport->Level());
 		Thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
-		if (!savedvisibility && viewpoint.camera) viewpoint.camera->renderflags &= ~RF_INVISIBLE;
+		if (!savedvisibility && viewpoint.camera) viewpoint.camera->renderflags &= ~RF_MAYBEINVISIBLE;
 
 		Thread->PlaneList->Render();
 		RenderPlanePortals();

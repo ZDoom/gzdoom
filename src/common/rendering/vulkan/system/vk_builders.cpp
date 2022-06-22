@@ -260,7 +260,7 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::BlendMode(const FRenderStyle &
 		blendequation = VK_BLEND_OP_ADD;
 	}
 
-	BlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
+	return BlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
 }
 
 /////////////////////////////////////////////////////////////////////////////

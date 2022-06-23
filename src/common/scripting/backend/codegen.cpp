@@ -1850,7 +1850,7 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 
 ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType == Operand->ValueType);
+	//assert(ValueType == Operand->ValueType);
 	ExpEmit from = Operand->Emit(build);
 	ExpEmit to;
 	assert(from.Konst == 0);

@@ -3522,7 +3522,8 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
-	if (left->ValueType != right->ValueType)	// identical types are always comparable, if they can be placed in a register, so we can save most checks if this is the case.
+	// identical types are always comparable, if they can be placed in a register, so we can save most checks if this is the case.
+	if (left->ValueType != right->ValueType && !(left->IsVector2() && right->IsVector2()) && !(left->IsVector3() && right->IsVector3()))
 	{
 		FxExpression *x;
 		if (left->IsNumeric() && right->ValueType == TypeString && (x = StringConstToChar(right)))

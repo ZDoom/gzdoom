@@ -6,6 +6,10 @@ if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -fomit-frame-pointer" )
 endif()
 
+if (MSVC)
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4267" )
+endif()
+
 add_library( jpeg STATIC
     jaricom.c
     jcomapi.c

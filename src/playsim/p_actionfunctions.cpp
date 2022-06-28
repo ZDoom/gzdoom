@@ -5055,8 +5055,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 
 	mobj->hasmodel = modeldef == nullptr && !mobj->hasmodel ? 1 : 0;
 	mobj->modelDef = modeldef;
-	mobj->models[modelindex] = model != nullptr ? FindModel(modelpath.GetChars(), model.GetChars()) : -1;
-	mobj->skins[skinindex] = skin != nullptr ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : mobj->skins[skinindex] = FNullTextureID();
+
+	mobj->models.Delete(modelindex);
+	mobj->skins.Delete(skinindex);
+	if(model != nullptr) mobj->models.Insert(modelindex, FindModel(modelpath.GetChars(), model.GetChars()));
+	else mobj->models.Insert(modelindex, -1);
+	if(skin != nullptr) mobj->skins.Insert(skinindex, LoadSkin(skinpath.GetChars(), skin.GetChars()));
+	else mobj->skins.Insert(skinindex, FNullTextureID());
 
 	return 0;
 }

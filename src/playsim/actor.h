@@ -1069,8 +1069,8 @@ public:
 	double			Speed;
 	double			FloatSpeed;
 	FName			modelDef;
-	int				models[16] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }; //[SM] - I hate this solution, but it get's the job done
-	FTextureID		skins[16];
+	TArray<int>		models; 
+	TArray <FTextureID>		skins;
 
 // interaction info
 	FBlockNode		*BlockNode;			// links in blocks (if needed)

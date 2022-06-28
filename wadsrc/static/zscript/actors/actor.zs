@@ -1132,6 +1132,7 @@ class Actor : Thinker native
 	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0, double alpha2 = 0.);
 	deprecated("2.3", "Use 'b<FlagName> = [true/false]' instead") native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
+	action native void A_ChangeModel(name modeldef, string modelpath = "", name model = "", int modelindex = 0, string skinpath = "", name skin = "", int skinindex = 0, int flags = 0);
 
 	void A_SetFriendly (bool set)
 	{

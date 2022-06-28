@@ -69,6 +69,7 @@
 #include "sbar.h"
 #include "actorinlines.h"
 #include "types.h"
+#include "model.h"
 
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
@@ -5017,6 +5018,46 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 	PARAM_STRING(name);
 	if (self->CheckLocalView())
 		StatusBar->SetMugShotState(name);
+	return 0;
+}
+
+//==========================================================================
+//
+// A_ChangeModel(modeldef, modelpath, model, modelindex, skinpath, skin, skinid, flags)
+//
+// This function allows the changing of an actor's modeldef, or models and/or skins at a given index
+//==========================================================================
+
+enum ChangeModelFlags
+{
+	CMDL_WEAPONTOPLAYER = 1
+};
+
+DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_NAME(modeldef)
+	PARAM_STRING_VAL(modelpath)
+	PARAM_NAME(model)
+	PARAM_INT(modelindex)
+	PARAM_STRING_VAL(skinpath)
+	PARAM_NAME(skin)
+	PARAM_INT(skinindex)
+	PARAM_INT(flags)
+
+	if (self == nullptr)
+		ACTION_RETURN_BOOL(false);
+
+	AActor* mobj = ACTION_CALL_FROM_PSPRITE() && (flags & CMDL_WEAPONTOPLAYER) ? self : stateowner;
+
+	if (modelpath[(int)modelpath.Len() - 1] != '/') modelpath += '/';
+	if (skinpath[(int)skinpath.Len() - 1] != '/') skinpath += '/';
+
+	mobj->hasmodel = modeldef == nullptr && !mobj->hasmodel ? 1 : 0;
+	mobj->modelDef = modeldef;
+	mobj->models[modelindex] = model != nullptr ? FindModel(modelpath.GetChars(), model.GetChars()) : -1;
+	mobj->skins[skinindex] = skin != nullptr ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : mobj->skins[skinindex] = FNullTextureID();
+
 	return 0;
 }
 

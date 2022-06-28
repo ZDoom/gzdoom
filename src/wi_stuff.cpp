@@ -278,6 +278,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 	bcnt = 0;
 
+	tilebackground = false;
 	texture.SetInvalid();
 
 	level_info_t * li = FindLevelInfo(wbs->current);
@@ -548,7 +549,8 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	background = texture;
 	auto tex= TexMan.GetGameTexture(texture);
 	// extremely small textures will always be tiled.
-	if (tex && tex->GetDisplayWidth() < 128 && tex->GetDisplayHeight() < 128) tilebackground = true;
+	if (tex && tex->GetDisplayWidth() < 128 && tex->GetDisplayHeight() < 128) 
+		tilebackground = true;
 	return noautostartmap;
 }
 

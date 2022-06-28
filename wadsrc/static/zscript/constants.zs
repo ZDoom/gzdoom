@@ -365,6 +365,12 @@ enum ERadiusGiveFlags
 	RGF_EITHER		=	1 << 17,
 };
 
+// Change model flags
+enum ChangeModelFlags
+{
+	CMDL_WEAPONTOPLAYER = 1
+};
+
 // Activation flags
 enum EActivationFlags
 {

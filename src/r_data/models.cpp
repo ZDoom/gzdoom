@@ -276,14 +276,25 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		}
 	}
 
+	//[SM] - these temporary arrays prevent actual smf data from being overwritten, which was the source of my problems
+	TArray<int> tempModelIDs = smf->modelIDs;
+	TArray<FTextureID> tempSkinIDs = smf->skinIDs;
 	for (int i = 0; i < smf->modelsAmount; i++)
-	{
-		if (actor->models[i] != -1)
-			smf->modelIDs[i] = actor->models[i];
-		if (smf->modelIDs[i] != -1)
+	{	
+		if (i < actor->models.Size())
 		{
-			FModel * mdl = Models[smf->modelIDs[i]];
-			auto tex = actor->skins[i].isValid() ? TexMan.GetGameTexture(actor->skins[i], true)  : smf->skinIDs[i].isValid() ? TexMan.GetGameTexture(smf->skinIDs[i], true) : nullptr;
+			if (actor->models[i] >= 0)
+				tempModelIDs[i] = actor->models[i];
+		}
+		if (tempModelIDs[i] != -1)
+		{
+			FModel * mdl = Models[tempModelIDs[i]];
+			if (i < actor->skins.Size())
+			{
+				if (actor->skins[i].isValid())
+					tempSkinIDs[i] = actor->skins[i];
+			}
+			auto tex = tempSkinIDs[i].isValid() ? TexMan.GetGameTexture(tempSkinIDs[i], true) : nullptr;
 			mdl->BuildVertexBuffer(renderer);
 
 			mdl->PushSpriteMDLFrame(smf, i);

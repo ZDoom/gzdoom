@@ -1241,11 +1241,9 @@ OptionMenu "MiscOptions" protected
 	StaticText " "
 	Option "$MISCMNU_QUICKEXIT",				"m_quickexit", "OnOff"
 
-	IfOption(Windows)
-	{
-		StaticText " "
-		Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
-	}
+	StaticText " "
+	Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
+
 	StaticText " "
 	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OffOn"
 	Option "$MISCMNU_CLEANSTAT",				"wi_cleantextscale", "OnOff"

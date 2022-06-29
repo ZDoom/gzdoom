@@ -1132,6 +1132,10 @@ public:
 			case NAME_lm_lightcolorline:
 			case NAME_lm_lightintensityline:
 			case NAME_lm_lightdistanceline:
+			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist_top:
+			case NAME_lm_sampledist_mid:
+			case NAME_lm_sampledist_bot:
 				CHECK_N(Zd | Zdt)
 				break;
 
@@ -1991,6 +1995,8 @@ public:
 				case NAME_lm_lightcolorceiling:
 				case NAME_lm_lightintensityceiling:
 				case NAME_lm_lightdistanceceiling:
+				case NAME_lm_sampledist_floor:
+				case NAME_lm_sampledist_ceiling:
 					CHECK_N(Zd | Zdt)
 					break;
 

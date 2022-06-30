@@ -158,6 +158,7 @@ CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 // CODE --------------------------------------------------------------------
 
+IMPLEMENT_CLASS(DActorModelData, false, false);
 IMPLEMENT_CLASS(AActor, false, true)
 
 IMPLEMENT_POINTERS_START(AActor)
@@ -374,7 +375,9 @@ void AActor::Serialize(FSerializer &arc)
 		("viewpos", ViewPos)
 		A("lightlevel", LightLevel)
 		A("userlights", UserLights)
-		A("WorldOffset", WorldOffset);
+		A("WorldOffset", WorldOffset)
+		A("modelData", modelData)
+		A("modelDef", modelDef);
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);
@@ -1351,6 +1354,20 @@ bool AActor::Massacre ()
 		return health <= 0;
 	}
 	return false;
+}
+
+//----------------------------------------------------------------------------
+//
+// Serialize DActorModelData
+//
+//----------------------------------------------------------------------------
+
+void DActorModelData::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+	arc ("modelIDs", modelIDs)
+		("skinIDs", skinIDs)
+		("hasModel", hasModel);
 }
 
 //----------------------------------------------------------------------------

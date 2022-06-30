@@ -5037,12 +5037,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_NAME(modeldef)
+	PARAM_INT(index)
 	PARAM_STRING_VAL(modelpath)
 	PARAM_NAME(model)
-	PARAM_INT(modelindex)
 	PARAM_STRING_VAL(skinpath)
 	PARAM_NAME(skin)
-	PARAM_INT(skinindex)
 	PARAM_INT(flags)
 
 	if (self == nullptr)
@@ -5053,15 +5052,42 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	if (modelpath[(int)modelpath.Len() - 1] != '/') modelpath += '/';
 	if (skinpath[(int)skinpath.Len() - 1] != '/') skinpath += '/';
 
-	mobj->hasmodel = modeldef == nullptr && !mobj->hasmodel ? 1 : 0;
-	mobj->modelDef = modeldef;
+	if (mobj->modelData == nullptr)
+	{
+		auto ptr = Create<DActorModelData>();
+		ptr->hasModel = modeldef != NAME_None && !mobj->hasmodel ? 0 : 1;
+		ptr->modelIDs = *new TArray<int>();
+		ptr->skinIDs = *new TArray<FTextureID>();
+		mobj->modelData = ptr;
+		mobj->hasmodel = mobj->modelData->hasModel;
+		GC::WriteBarrier(mobj, ptr);
+	}
 
-	mobj->models.Delete(modelindex);
-	mobj->skins.Delete(skinindex);
-	if(model != nullptr) mobj->models.Insert(modelindex, FindModel(modelpath.GetChars(), model.GetChars()));
-	else mobj->models.Insert(modelindex, -1);
-	if(skin != nullptr) mobj->skins.Insert(skinindex, LoadSkin(skinpath.GetChars(), skin.GetChars()));
-	else mobj->skins.Insert(skinindex, FNullTextureID());
+	mobj->modelDef = modeldef;
+	mobj->modelData->modelIDs.Delete(index);
+	mobj->modelData->skinIDs.Delete(index);
+	mobj->modelData->modelIDs.Insert(index, model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1);
+	mobj->modelData->skinIDs.Insert(index, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
+
+	//[SM] - if an indice of modelIDs or skinIDs comes up blank and it's the last one, just delete it. For using very large amounts of indices, common sense says to just not run this repeatedly.
+	int i = 0;
+	int maxModels = mobj->modelData->modelIDs.Size();
+	int maxSkins = mobj->modelData->modelIDs.Size();
+	for (i = 0; i < maxModels; i++)
+	{
+		if (mobj->modelData->modelIDs[mobj->modelData->modelIDs.Size()-1] == -1)
+			mobj->modelData->modelIDs.Delete(mobj->modelData->modelIDs.Size()-1);
+	}
+	for (i = 0; i < maxSkins; i++)
+	{
+		if (mobj->modelData->skinIDs[mobj->modelData->skinIDs.Size()-1] == FNullTextureID())
+			mobj->modelData->skinIDs.Delete(mobj->modelData->skinIDs.Size()-1);
+	}
+	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && modeldef == NAME_None)
+	{
+		mobj->hasmodel = mobj->modelData->hasModel;
+		mobj->modelData = nullptr;
+	}
 
 	return 0;
 }

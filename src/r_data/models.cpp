@@ -176,14 +176,14 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
 	renderer->BeginDrawModel(actor->RenderStyle, smf, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, actor->modelDef != nullptr ? PClass::FindActor(actor->modelDef) : actor->GetClass(), translation, actor);
+	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, actor->modelDef != NAME_None ? PClass::FindActor(actor->modelDef) : actor->GetClass(), translation, actor);
 	renderer->EndDrawModel(actor->RenderStyle, smf);
 }
 
 void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float ofsY)
 {
 	AActor * playermo = players[consoleplayer].camera;
-	FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelDef != nullptr ? PClass::FindActor(psp->Caller->modelDef) : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+	FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelDef) : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
 
 	// [BB] No model found for this sprite, so we can't render anything.
 	if (smf == nullptr)
@@ -224,7 +224,7 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float o
 	renderer->BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0);
 	uint32_t trans = psp->GetTranslation() != 0 ? psp->GetTranslation() : 0;
 	if ((psp->Flags & PSPF_PLAYERTRANSLATED)) trans = psp->Owner->mo->Translation;
-	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), psp->Caller->modelDef != nullptr ? PClass::FindActor(psp->Caller->modelDef) : psp->Caller->GetClass(), trans, psp->Caller);
+	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), psp->Caller->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelDef) : psp->Caller->GetClass(), trans, psp->Caller);
 	renderer->EndDrawHUDModel(playermo->RenderStyle);
 }
 
@@ -281,19 +281,22 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	TArray<FTextureID> tempSkinIDs = smf->skinIDs;
 	for (int i = 0; i < smf->modelsAmount; i++)
 	{	
-		if (i < actor->models.Size())
+		if (actor->modelData != nullptr)
 		{
-			if (actor->models[i] >= 0)
-				tempModelIDs[i] = actor->models[i];
+			if (i < (int)actor->modelData->modelIDs.Size())
+			{
+				if(actor->modelData->modelIDs[i] >= 0)
+					tempModelIDs[i] = actor->modelData->modelIDs[i];
+			}
+			if (i < (int)actor->modelData->skinIDs.Size())
+			{
+				if (actor->modelData->skinIDs[i].isValid())
+					tempSkinIDs[i] = actor->modelData->skinIDs[i];
+			}
 		}
 		if (tempModelIDs[i] != -1)
 		{
 			FModel * mdl = Models[tempModelIDs[i]];
-			if (i < actor->skins.Size())
-			{
-				if (actor->skins[i].isValid())
-					tempSkinIDs[i] = actor->skins[i];
-			}
 			auto tex = tempSkinIDs[i].isValid() ? TexMan.GetGameTexture(tempSkinIDs[i], true) : nullptr;
 			mdl->BuildVertexBuffer(renderer);
 

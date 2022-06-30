@@ -5058,35 +5058,42 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 		ptr->hasModel = modeldef != NAME_None && !mobj->hasmodel ? 0 : 1;
 		ptr->modelIDs = *new TArray<int>();
 		ptr->skinIDs = *new TArray<FTextureID>();
+		ptr->modelDef = NAME_None;
 		mobj->modelData = ptr;
 		mobj->hasmodel = mobj->modelData->hasModel;
 		GC::WriteBarrier(mobj, ptr);
 	}
 
-	mobj->modelDef = modeldef;
-	mobj->modelData->modelIDs.Delete(index);
-	mobj->modelData->skinIDs.Delete(index);
+	int maxModels = mobj->modelData->modelIDs.Size();
+	int maxSkins = mobj->modelData->skinIDs.Size();
+
+	mobj->modelData->modelDef = modeldef;
+	if (maxModels > index) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[index]);
+	if(maxSkins > index)  mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs[index]);
+
 	mobj->modelData->modelIDs.Insert(index, model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1);
 	mobj->modelData->skinIDs.Insert(index, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
 
 	//[SM] - if an indice of modelIDs or skinIDs comes up blank and it's the last one, just delete it. For using very large amounts of indices, common sense says to just not run this repeatedly.
 	int i = 0;
-	int maxModels = mobj->modelData->modelIDs.Size();
-	int maxSkins = mobj->modelData->modelIDs.Size();
+	
 	for (i = 0; i < maxModels; i++)
 	{
-		if (mobj->modelData->modelIDs[mobj->modelData->modelIDs.Size()-1] == -1)
-			mobj->modelData->modelIDs.Delete(mobj->modelData->modelIDs.Size()-1);
+		if (mobj->modelData->modelIDs.Last() == -1) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs.Last());
+		else break;
 	}
 	for (i = 0; i < maxSkins; i++)
 	{
-		if (mobj->modelData->skinIDs[mobj->modelData->skinIDs.Size()-1] == FNullTextureID())
-			mobj->modelData->skinIDs.Delete(mobj->modelData->skinIDs.Size()-1);
+		if (mobj->modelData->skinIDs.Last() == FNullTextureID()) mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs.Last());
+		else break;
 	}
 	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && modeldef == NAME_None)
 	{
 		mobj->hasmodel = mobj->modelData->hasModel;
-		mobj->modelData = nullptr;
+		mobj->modelData;
+		mobj->modelData->modelIDs.Reset();
+		mobj->modelData->skinIDs.Reset();
+		mobj->modelData->Destroy();
 	}
 
 	return 0;

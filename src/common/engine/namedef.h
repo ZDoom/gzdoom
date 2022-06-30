@@ -75,8 +75,17 @@ xx(ACS_NamedExecuteWithResult)
 xx(__decorate_internal_int__)
 xx(__decorate_internal_bool__)
 xx(__decorate_internal_float__)
+
+// Per-actor sound channels (for deprecated PlaySoundEx function) Do not separate this block!!!
+xx(Auto)
 xx(Weapon)
+xx(Voice)
 xx(Item)
+xx(Body)
+xx(SoundSlot5)
+xx(SoundSlot6)
+xx(SoundSlot7)
+
 xx(LevelLocals)
 xx(Level)
 

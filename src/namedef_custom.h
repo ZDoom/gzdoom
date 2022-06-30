@@ -30,15 +30,6 @@ xx(AddStencil)
 xx(Mana)
 xx(Armor)
 
-// Per-actor sound channels (for deprecated PlaySoundEx function)
-xx(Auto)
-xx(Voice)
-xx(Body)
-xx(SoundSlot5)
-xx(SoundSlot6)
-xx(SoundSlot7)
-
-
 // Hexen sound sequence names
 xx(Platform)
 xx(PlatformMetal)

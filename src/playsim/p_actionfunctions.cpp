@@ -5030,7 +5030,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 
 enum ChangeModelFlags
 {
-	CMDL_WEAPONTOPLAYER = 1
+	CMDL_WEAPONTOPLAYER = 1,
+	CMDL_HIDEMODEL = 1 << 1,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
@@ -5067,17 +5068,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	int maxModels = mobj->modelData->modelIDs.Size();
 	int maxSkins = mobj->modelData->skinIDs.Size();
 
-	int queryModel = model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1;
+	int queryModel = !(flags & CMDL_HIDEMODEL) ? model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1 : -2;
 
 	mobj->modelData->modelDef = modeldef;
 	if(maxModels > index) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[index]);
 	if(maxSkins > index)  mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs[index]);
 
+	//[SM] - We need to fill up any holes this new index will make so that it doesn't leave behind any undefined behavior
+	while ((int)mobj->modelData->modelIDs.Size() < index) mobj->modelData->modelIDs.Push(-1);
+	while ((int)mobj->modelData->skinIDs.Size() < index) mobj->modelData->skinIDs.Push(FNullTextureID());
+
 	mobj->modelData->modelIDs.Insert(index, queryModel);
 	mobj->modelData->skinIDs.Insert(index, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
 
 	//[SM] - We need to serialize file paths and model names so that they are pushed on loading save files. Likewise, let's not include models that were already parsed when initialized.
-	if (model != NAME_None)
+	if (queryModel >= 0)
 	{
 		FString fullName;
 		fullName.Format("%s%s", modelpath.GetChars(), model.GetChars());
@@ -5089,20 +5094,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	}
 
 	//[SM] - if an indice of modelIDs or skinIDs comes up blank and it's the last one, just delete it. For using very large amounts of indices, common sense says to just not run this repeatedly.
-	for (int i = 0; i < maxModels; i++)
-	{
-		if (mobj->modelData->modelIDs.Last() == -1) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs.Last());
-		else break;
-	}
-	for (int i = 0; i < maxSkins; i++)
-	{
-		if (mobj->modelData->skinIDs.Last() == FNullTextureID()) mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs.Last());
-		else break;
-	}
+	while (mobj->modelData->modelIDs.Size() > 0 && mobj->modelData->modelIDs.Last() == -1)
+		mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs.Last());
+	while (mobj->modelData->skinIDs.Size() > 0 && mobj->modelData->skinIDs.Last() == FNullTextureID())
+		mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs.Last());
+	
 	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && modeldef == NAME_None)
 	{
 		mobj->hasmodel = mobj->modelData->hasModel;
-		mobj->modelData;
 		mobj->modelData->modelIDs.Reset();
 		mobj->modelData->skinIDs.Reset();
 		mobj->modelData->Destroy();

@@ -368,7 +368,8 @@ enum ERadiusGiveFlags
 // Change model flags
 enum ChangeModelFlags
 {
-	CMDL_WEAPONTOPLAYER = 1
+	CMDL_WEAPONTOPLAYER = 1,
+	CMDL_HIDEMODEL = 1 << 1,
 };
 
 // Activation flags

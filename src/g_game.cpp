@@ -78,6 +78,7 @@
 #include "s_music.h"
 #include "p_setup.h"
 #include "d_event.h"
+#include "model.h"
 
 #include "v_video.h"
 #include "g_hub.h"
@@ -2118,6 +2119,14 @@ void G_DoLoadGame ()
 		level.info->Snapshot.Clean();
 
 	BackupSaveName = savename;
+
+	//Push any added models from A_ChangeModel
+	for (int i = 0; i < savedModelFiles.Size(); i++)
+	{
+		FString modelFilePath = savedModelFiles[i].Left(savedModelFiles[i].LastIndexOf("/")+1);
+		FString modelFileName = savedModelFiles[i].Right(savedModelFiles[i].Len() - savedModelFiles[i].Left(savedModelFiles[i].LastIndexOf("/") + 1).Len());
+		FindModel(modelFilePath, modelFileName);
+	}
 
 	// At this point, the GC threshold is likely a lot higher than the
 	// amount of memory in use, so bring it down now by starting a

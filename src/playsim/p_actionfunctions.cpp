@@ -5067,12 +5067,26 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	int maxModels = mobj->modelData->modelIDs.Size();
 	int maxSkins = mobj->modelData->skinIDs.Size();
 
+	int queryModel = model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1;
+
 	mobj->modelData->modelDef = modeldef;
-	if (maxModels > index) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[index]);
+	if(maxModels > index) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[index]);
 	if(maxSkins > index)  mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs[index]);
 
-	mobj->modelData->modelIDs.Insert(index, model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1);
+	mobj->modelData->modelIDs.Insert(index, queryModel);
 	mobj->modelData->skinIDs.Insert(index, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
+
+	//[SM] - We need to serialize file paths and model names so that they are pushed on loading save files.
+	if (model != NAME_None)
+	{
+		FString fullName;
+		fullName.Format("%s%s", modelpath, model.GetChars());
+		bool allowPush = true;
+		for (unsigned i = 0; i < savedModelFiles.Size(); i++)
+			if (!savedModelFiles[i].CompareNoCase(fullName)) allowPush = false;
+
+		if(allowPush) savedModelFiles.Push(fullName);
+	}
 
 	//[SM] - if an indice of modelIDs or skinIDs comes up blank and it's the last one, just delete it. For using very large amounts of indices, common sense says to just not run this repeatedly.
 	int i = 0;

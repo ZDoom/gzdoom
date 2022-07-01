@@ -42,6 +42,7 @@
 #include "modelrenderer.h"
 
 
+TArray<FString> savedModelFiles;
 TDeletingArray<FModel*> Models;
 TArray<FSpriteModelFrame> SpriteModelFrames;
 

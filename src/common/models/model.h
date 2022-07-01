@@ -12,6 +12,7 @@ struct FSpriteModelFrame;
 
 FTextureID LoadSkin(const char* path, const char* fn);
 void FlushModels();
+extern TArray<FString> savedModelFiles;
 extern TDeletingArray<FModel*> Models;
 extern TArray<FSpriteModelFrame> SpriteModelFrames;
 

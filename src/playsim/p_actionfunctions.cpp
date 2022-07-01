@@ -5055,12 +5055,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	if (mobj->modelData == nullptr)
 	{
 		auto ptr = Create<DActorModelData>();
-		ptr->hasModel = modeldef != NAME_None && !mobj->hasmodel ? 0 : 1;
+		ptr->hasModel = mobj->hasmodel ? 1 : 0;
 		ptr->modelIDs = *new TArray<int>();
 		ptr->skinIDs = *new TArray<FTextureID>();
 		ptr->modelDef = NAME_None;
 		mobj->modelData = ptr;
-		mobj->hasmodel = mobj->modelData->hasModel;
+		mobj->hasmodel = 1;
 		GC::WriteBarrier(mobj, ptr);
 	}
 

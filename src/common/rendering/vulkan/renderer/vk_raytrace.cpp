@@ -24,7 +24,7 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_commandbuffer.h"
-#include "doom_levelmesh.h"
+#include "hw_levelmesh.h"
 
 VkRaytrace::VkRaytrace(VulkanFrameBuffer* fb) : fb(fb)
 {

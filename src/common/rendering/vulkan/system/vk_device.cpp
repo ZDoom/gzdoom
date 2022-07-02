@@ -268,7 +268,7 @@ void VulkanDevice::CreateDevice()
 	if (SupportsDeviceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
 		*next = &deviceFeatures2;
-		void** next = &deviceFeatures2.pNext;
+		next = &deviceFeatures2.pNext;
 	}
 	else // vulkan 1.0 specified features in a different way
 	{

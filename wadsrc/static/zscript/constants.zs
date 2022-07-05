@@ -370,6 +370,7 @@ enum ChangeModelFlags
 {
 	CMDL_WEAPONTOPLAYER = 1,
 	CMDL_HIDEMODEL = 1 << 1,
+	CMDL_USESURFACESKIN = 1 << 2,
 };
 
 // Activation flags

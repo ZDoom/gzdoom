@@ -5032,15 +5032,17 @@ enum ChangeModelFlags
 {
 	CMDL_WEAPONTOPLAYER = 1,
 	CMDL_HIDEMODEL = 1 << 1,
+	CMDL_USESURFACESKIN = 1 << 2,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_NAME(modeldef)
-	PARAM_INT(index)
+	PARAM_INT(modelindex)
 	PARAM_STRING_VAL(modelpath)
 	PARAM_NAME(model)
+	PARAM_INT(skinindex)
 	PARAM_STRING_VAL(skinpath)
 	PARAM_NAME(skin)
 	PARAM_INT(flags)
@@ -5059,6 +5061,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 		ptr->hasModel = mobj->hasmodel ? 1 : 0;
 		ptr->modelIDs = *new TArray<int>();
 		ptr->skinIDs = *new TArray<FTextureID>();
+		ptr->surfaceSkinIDs = *new TArray<FTextureID>();
 		ptr->modelDef = NAME_None;
 		mobj->modelData = ptr;
 		mobj->hasmodel = 1;
@@ -5067,19 +5070,38 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 
 	int maxModels = mobj->modelData->modelIDs.Size();
 	int maxSkins = mobj->modelData->skinIDs.Size();
+	int maxSurfaceSkins = mobj->modelData->surfaceSkinIDs.Size();
+
+	int skinPosition = skinindex + modelindex * MD3_MAX_SURFACES;
 
 	int queryModel = !(flags & CMDL_HIDEMODEL) ? model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1 : -2;
 
+	//[SM] - Let's clear out any potential entries at the specified indices
 	mobj->modelData->modelDef = modeldef;
-	if(maxModels > index) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[index]);
-	if(maxSkins > index)  mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs[index]);
+	if(maxModels > modelindex) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[modelindex]);
+	if (flags & CMDL_USESURFACESKIN)
+	{
+		if (maxSurfaceSkins > skinPosition)
+			mobj->modelData->surfaceSkinIDs.Delete(skinPosition); //[SM] - It seems the only way to make sure this does what it's told is from Delete, not Pop
+	}
+	else
+	{
+		if (maxSkins > skinindex)
+			mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs[skinindex]);
+	}
 
 	//[SM] - We need to fill up any holes this new index will make so that it doesn't leave behind any undefined behavior
-	while ((int)mobj->modelData->modelIDs.Size() < index) mobj->modelData->modelIDs.Push(-1);
-	while ((int)mobj->modelData->skinIDs.Size() < index) mobj->modelData->skinIDs.Push(FNullTextureID());
-
-	mobj->modelData->modelIDs.Insert(index, queryModel);
-	mobj->modelData->skinIDs.Insert(index, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
+	while ((int)mobj->modelData->modelIDs.Size() < modelindex) mobj->modelData->modelIDs.Push(-1);
+	if (flags & CMDL_USESURFACESKIN)
+		while ((int)mobj->modelData->surfaceSkinIDs.Size() < skinPosition) mobj->modelData->surfaceSkinIDs.Push(FNullTextureID());
+	else
+		while ((int)mobj->modelData->skinIDs.Size() < skinindex) mobj->modelData->skinIDs.Push(FNullTextureID());
+		
+	mobj->modelData->modelIDs.Insert(modelindex, queryModel);
+	if (flags & CMDL_USESURFACESKIN)
+		mobj->modelData->surfaceSkinIDs.Insert(skinPosition, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
+	else
+		mobj->modelData->skinIDs.Insert(skinindex, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
 
 	//[SM] - We need to serialize file paths and model names so that they are pushed on loading save files. Likewise, let's not include models that were already parsed when initialized.
 	if (queryModel >= 0)
@@ -5098,12 +5120,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 		mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs.Last());
 	while (mobj->modelData->skinIDs.Size() > 0 && mobj->modelData->skinIDs.Last() == FNullTextureID())
 		mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs.Last());
+	while (mobj->modelData->surfaceSkinIDs.Size() > 0 && mobj->modelData->surfaceSkinIDs.Last() == FNullTextureID())
+		mobj->modelData->surfaceSkinIDs.Pop(mobj->modelData->surfaceSkinIDs.Last());
 	
-	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && modeldef == NAME_None)
+	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && mobj->modelData->surfaceSkinIDs.Size() == 0  && modeldef == NAME_None)
 	{
 		mobj->hasmodel = mobj->modelData->hasModel;
 		mobj->modelData->modelIDs.Reset();
 		mobj->modelData->skinIDs.Reset();
+		mobj->modelData->surfaceSkinIDs.Reset();
 		mobj->modelData->Destroy();
 	}
 

@@ -5050,7 +5050,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	if (self == nullptr)
 		ACTION_RETURN_BOOL(false);
 
-	AActor* mobj = ACTION_CALL_FROM_PSPRITE() && (flags & CMDL_WEAPONTOPLAYER) ? self : stateowner;
+	AActor* mobj = (ACTION_CALL_FROM_PSPRITE() && (flags & CMDL_WEAPONTOPLAYER)) || ACTION_CALL_FROM_INVENTORY() ? self : stateowner;
 
 	if (modelpath[(int)modelpath.Len() - 1] != '/') modelpath += '/';
 	if (skinpath[(int)skinpath.Len() - 1] != '/') skinpath += '/';

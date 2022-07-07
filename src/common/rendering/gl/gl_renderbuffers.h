@@ -173,6 +173,7 @@ private:
 
 	static const int NumPipelineTextures = 2;
 	int mCurrentPipelineTexture = 0;
+	PPGLRenderBuffer mPipelineDepthStencilBuf;
 
 	// Buffers for the scene
 	PPGLTexture mSceneMultisampleTex;

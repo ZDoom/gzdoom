@@ -59,6 +59,9 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 	state.SetViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 	screen->mViewpoints->Set2D(state, twod->GetWidth(), twod->GetHeight());
 
+	state.EnableStencil(false);
+	state.SetStencil(0, SOP_Keep, SF_AllOn);
+	state.Clear(CT_Stencil);
 	state.EnableDepthTest(false);
 	state.EnableMultisampling(false);
 	state.EnableLineSmooth(gl_aalines);
@@ -88,6 +91,22 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 	for(auto &cmd : commands)
 	{
+		if (cmd.isSpecial != SpecialDrawCommand::NotSpecial)
+		{
+			if (cmd.isSpecial == SpecialDrawCommand::EnableStencil)
+			{
+				state.EnableStencil(cmd.stencilOn);
+			}
+			else if (cmd.isSpecial == SpecialDrawCommand::SetStencil)
+			{
+				state.SetStencil(cmd.stencilOffs, cmd.stencilOp, cmd.stencilFlags);
+			}
+			else if (cmd.isSpecial == SpecialDrawCommand::ClearStencil)
+			{
+				state.Clear(CT_Stencil);
+			}
+			continue;
+		}
 
 		state.SetRenderStyle(cmd.mRenderStyle);
 		state.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
@@ -126,7 +145,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 		if (cmd.mFlags & F2DDrawer::DTF_Indexed) state.SetSoftLightLevel(cmd.mLightLevel);
 		state.SetLightParms(0, 0);
 
-		state.AlphaFunc(Alpha_GEqual, 0.f);
+		state.AlphaFunc(Alpha_Greater, 0.f);
 
 		if (cmd.useTransform)
 		{
@@ -225,6 +244,8 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 	state.SetRenderStyle(STYLE_Translucent);
 	state.SetVertexBuffer(screen->mVertexData);
+	state.EnableStencil(false);
+	state.SetStencil(0, SOP_Keep, SF_AllOn);
 	state.EnableTexture(true);
 	state.EnableBrightmap(true);
 	state.SetTextureMode(TM_NORMAL);

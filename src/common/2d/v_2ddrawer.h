@@ -52,6 +52,14 @@ struct F2DPolygons
 class DShape2D;
 struct DShape2DBufferInfo;
 
+enum class SpecialDrawCommand {
+	NotSpecial,
+
+	EnableStencil,
+	SetStencil,
+	ClearStencil,
+};
+
 class F2DDrawer
 {
 public:
@@ -104,6 +112,14 @@ public:
 
 	struct RenderCommand
 	{
+		SpecialDrawCommand isSpecial;
+
+		bool stencilOn;
+
+		int stencilOffs;
+		int stencilOp;
+		int stencilFlags;
+
 		EDrawType mType;
 		int mVertIndex;
 		int mVertCount;
@@ -138,6 +154,10 @@ public:
 		// If these fields match, two draw commands can be batched.
 		bool isCompatible(const RenderCommand &other) const
 		{
+			if (
+				isSpecial != SpecialDrawCommand::NotSpecial ||
+				other.isSpecial != SpecialDrawCommand::NotSpecial
+			) return false;
 			if (shape2DBufInfo != nullptr || other.shape2DBufInfo != nullptr) return false;
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
@@ -205,6 +225,10 @@ public:
 	void AddLine(double x1, double y1, double x2, double y2, int cx, int cy, int cx2, int cy2, uint32_t color, uint8_t alpha = 255);
 	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha = 255);
 	void AddPixel(int x1, int y1, uint32_t color);
+
+	void AddEnableStencil(bool on);
+	void AddSetStencil(int offs, int op, int flags);
+	void AddClearStencil();
 
 	void Clear();
 	void Lock() { locked = true; }

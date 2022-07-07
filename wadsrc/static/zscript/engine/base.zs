@@ -454,6 +454,19 @@ enum DrawTextureTags
 
 };
 
+enum StencilOp
+{
+	SOP_Keep = 0,
+	SOP_Increment = 1,
+	SOP_Decrement = 2
+};
+enum StencilFlags
+{
+	SF_AllOn = 0,
+	SF_ColorMaskOff = 1,
+	SF_DepthMaskOff = 2
+};
+
 class Shape2DTransform : Object native
 {
 	native void Clear();
@@ -505,6 +518,10 @@ struct Screen native
 	native static Vector2 SetOffset(double x, double y);
 	native static void ClearScreen(color col = 0);
 	native static void SetScreenFade(double factor);
+
+	native static void EnableStencil(bool on);
+	native static void SetStencil(int offs, int op, int flags = -1);
+	native static void ClearStencil();
 }
 
 struct Font native

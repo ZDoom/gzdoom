@@ -915,6 +915,7 @@ struct TMatrix3x3
 
 	TMatrix3x3() = default;
 	TMatrix3x3(const TMatrix3x3 &other) = default;
+	TMatrix3x3& operator=(const TMatrix3x3& other) = default;
 
 	TMatrix3x3(const Vector3 &row1, const Vector3 &row2, const Vector3 &row3)
 	{

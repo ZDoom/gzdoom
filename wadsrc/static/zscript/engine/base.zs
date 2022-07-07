@@ -460,6 +460,7 @@ class Shape2DTransform : Object native
 	native void Rotate(double angle);
 	native void Scale(Vector2 scaleVec);
 	native void Translate(Vector2 translateVec);
+	native void From2D(double m00, double m01, double m10, double m11, double vx, double vy);
 }
 
 class Shape2D : Object native
@@ -505,6 +506,9 @@ struct Screen native
 	native static Vector2 SetOffset(double x, double y);
 	native static void ClearScreen(color col = 0);
 	native static void SetScreenFade(double factor);
+
+	native static void SetTransform(Shape2DTransform transform);
+	native static void ClearTransform();
 }
 
 struct Font native

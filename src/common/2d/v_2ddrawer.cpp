@@ -579,7 +579,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->lastParms = new DrawParms(parms);
 	}
 
-	if (!img->isHardwareCanvas() && parms.TranslationId != -1)
+	if (!(img != nullptr && img->isHardwareCanvas()) && parms.TranslationId != -1)
 		dg.mTranslationId = parms.TranslationId;
 
 	auto osave = offset;

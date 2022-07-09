@@ -682,6 +682,7 @@ public:
 	TArray<int>			modelIDs;
 	TArray<FTextureID>	skinIDs;
 	TArray<FTextureID>	surfaceSkinIDs;
+	TArray<int>			modelFrameGenerators;
 
 	DActorModelData() = default;
 	virtual void Serialize(FSerializer& arc) override;

@@ -5038,17 +5038,28 @@ enum ChangeModelFlags
 DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 {
 	PARAM_ACTION_PROLOGUE(AActor);
-	PARAM_NAME(modeldef)
-	PARAM_INT(modelindex)
-	PARAM_STRING_VAL(modelpath)
-	PARAM_NAME(model)
-	PARAM_INT(skinindex)
-	PARAM_STRING_VAL(skinpath)
-	PARAM_NAME(skin)
-	PARAM_INT(flags)
+	PARAM_NAME(modeldef);
+	PARAM_INT(modelindex);
+	PARAM_STRING_VAL(modelpath);
+	PARAM_NAME(model);
+	PARAM_INT(skinindex);
+	PARAM_STRING_VAL(skinpath);
+	PARAM_NAME(skin);
+	PARAM_INT(flags);
+	PARAM_INT(generatorindex);
 
 	if (self == nullptr)
 		ACTION_RETURN_BOOL(false);
+	else if (modelindex < 0)
+	{
+		Printf("Attempt to pass invalid model index %d in %s, index must be non-negative.", modelindex, self->GetCharacterName());
+		ACTION_RETURN_BOOL(false);
+	}
+	else if (skinindex < 0)
+	{
+		Printf("Attempt to pass invalid skin index %d in %s, index must be non-negative.", skinindex, self->GetCharacterName());
+		ACTION_RETURN_BOOL(false);
+	}
 
 	AActor* mobj = (ACTION_CALL_FROM_PSPRITE() && (flags & CMDL_WEAPONTOPLAYER)) || ACTION_CALL_FROM_INVENTORY() ? self : stateowner;
 
@@ -5062,6 +5073,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 		ptr->modelIDs = *new TArray<int>();
 		ptr->skinIDs = *new TArray<FTextureID>();
 		ptr->surfaceSkinIDs = *new TArray<FTextureID>();
+		ptr->modelFrameGenerators = *new TArray<int>();
 		ptr->modelDef = NAME_None;
 		mobj->modelData = ptr;
 		mobj->hasmodel = 1;
@@ -5071,6 +5083,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	int maxModels = mobj->modelData->modelIDs.Size();
 	int maxSkins = mobj->modelData->skinIDs.Size();
 	int maxSurfaceSkins = mobj->modelData->surfaceSkinIDs.Size();
+	int maxGenerators = mobj->modelData->modelFrameGenerators.Size();
 
 	int skinPosition = skinindex + modelindex * MD3_MAX_SURFACES;
 
@@ -5079,6 +5092,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	//[SM] - Let's clear out any potential entries at the specified indices
 	mobj->modelData->modelDef = modeldef;
 	if(maxModels > modelindex) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[modelindex]);
+	if(maxGenerators > modelindex) mobj->modelData->modelFrameGenerators.Pop(mobj->modelData->modelFrameGenerators[modelindex]);
+
 	if (flags & CMDL_USESURFACESKIN)
 	{
 		if (maxSurfaceSkins > skinPosition)
@@ -5092,12 +5107,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 
 	//[SM] - We need to fill up any holes this new index will make so that it doesn't leave behind any undefined behavior
 	while ((int)mobj->modelData->modelIDs.Size() < modelindex) mobj->modelData->modelIDs.Push(-1);
+	while ((int)mobj->modelData->modelFrameGenerators.Size() < modelindex) mobj->modelData->modelFrameGenerators.Push(-1);
 	if (flags & CMDL_USESURFACESKIN)
 		while ((int)mobj->modelData->surfaceSkinIDs.Size() < skinPosition) mobj->modelData->surfaceSkinIDs.Push(FNullTextureID());
 	else
 		while ((int)mobj->modelData->skinIDs.Size() < skinindex) mobj->modelData->skinIDs.Push(FNullTextureID());
 		
 	mobj->modelData->modelIDs.Insert(modelindex, queryModel);
+	mobj->modelData->modelFrameGenerators.Insert(modelindex, generatorindex);
 	if (flags & CMDL_USESURFACESKIN)
 		mobj->modelData->surfaceSkinIDs.Insert(skinPosition, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
 	else
@@ -5118,15 +5135,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	//[SM] - if an indice of modelIDs or skinIDs comes up blank and it's the last one, just delete it. For using very large amounts of indices, common sense says to just not run this repeatedly.
 	while (mobj->modelData->modelIDs.Size() > 0 && mobj->modelData->modelIDs.Last() == -1)
 		mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs.Last());
+	while (mobj->modelData->modelFrameGenerators.Size() > 0 && mobj->modelData->modelFrameGenerators.Last() == -1)
+		mobj->modelData->modelFrameGenerators.Pop(mobj->modelData->modelFrameGenerators.Last());
 	while (mobj->modelData->skinIDs.Size() > 0 && mobj->modelData->skinIDs.Last() == FNullTextureID())
 		mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs.Last());
 	while (mobj->modelData->surfaceSkinIDs.Size() > 0 && mobj->modelData->surfaceSkinIDs.Last() == FNullTextureID())
 		mobj->modelData->surfaceSkinIDs.Pop(mobj->modelData->surfaceSkinIDs.Last());
 	
-	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && mobj->modelData->surfaceSkinIDs.Size() == 0  && modeldef == NAME_None)
+	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->modelFrameGenerators.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && mobj->modelData->surfaceSkinIDs.Size() == 0 && modeldef == NAME_None)
 	{
 		mobj->hasmodel = mobj->modelData->hasModel;
 		mobj->modelData->modelIDs.Reset();
+		mobj->modelData->modelFrameGenerators.Reset();
 		mobj->modelData->skinIDs.Reset();
 		mobj->modelData->surfaceSkinIDs.Reset();
 		mobj->modelData->Destroy();

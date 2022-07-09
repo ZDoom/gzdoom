@@ -278,14 +278,34 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		}
 	}
 
+	//[SM] - if we added any models for the frame to also render, then we also need to update modelsAmount for this smf
+	if (actor->modelData != nullptr)
+	{
+		if (tempsmf->modelsAmount < actor->modelData->modelIDs.Size())
+		{
+			tempsmf->modelsAmount = actor->modelData->modelIDs.Size();
+			while (tempsmf->modelframes.Size() < actor->modelData->modelIDs.Size()) tempsmf->modelframes.Push(-1);
+			while (smfNext->modelframes.Size() < actor->modelData->modelIDs.Size()) smfNext->modelframes.Push(-1);
+		}
+	}
+
 	for (int i = 0; i < tempsmf->modelsAmount; i++)
 	{	
 		if (actor->modelData != nullptr)
 		{
 			if (i < (int)actor->modelData->modelIDs.Size())
 			{
-				if(actor->modelData->modelIDs[i] != -1)
+				if (actor->modelData->modelIDs[i] != -1)
 					tempsmf->modelIDs[i] = actor->modelData->modelIDs[i];
+			}
+			if (i < (int)actor->modelData->modelFrameGenerators.Size())
+			{
+				//[SM] - We will use this little snippet to allow a modder to specify a model index to clone. It's also pointless to clone something that clones something else in this case. And causes me headaches.
+				if (actor->modelData->modelFrameGenerators[i] >= 0 && smf->modelframes[i] != -1)
+				{
+					tempsmf->modelframes[i] = tempsmf->modelframes[actor->modelData->modelFrameGenerators[i]];
+					if (smfNext) smfNext->modelframes[i] = smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
+				}
 			}
 			if (i < (int)actor->modelData->skinIDs.Size())
 			{

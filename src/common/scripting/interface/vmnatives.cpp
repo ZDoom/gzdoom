@@ -1009,6 +1009,16 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_Console, PrintString)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(printlevel);
+	PARAM_STRING(str);
+
+	Printf(printlevel,"%s\n", str.GetChars());
+	return 0;
+}
+
 static void StopAllSounds()
 {
 	soundEngine->StopAllChannels();

@@ -600,21 +600,6 @@ struct Console native
 {
 	native static void HideConsole();
 	native static vararg void Printf(string fmt, ...);
-	
-	enum EPrintLevel {
-		PRINT_LOW,				// pickup messages
-		PRINT_MEDIUM,			// death messages
-		PRINT_HIGH,				// critical messages
-		PRINT_CHAT,				// chat messages
-		PRINT_TEAMCHAT,			// chat messages from a teammate
-		PRINT_LOG,				// only to logfile
-		PRINT_BOLD = 200,		// What Printf_Bold used
-		PRINT_TYPES = 1023,		// Bitmask.
-		PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
-		PRINT_NOLOG = 2048,		// Flag - do not print to log file
-		PRINT_NOTIFY = 4096,	// Flag - add to game-native notify display - messages without this only go to the generic notification buffer.
-	};
-
 	native static vararg void PrintfEx(int printlevel, string fmt, ...);
 }
 

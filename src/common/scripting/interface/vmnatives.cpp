@@ -1009,13 +1009,15 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(_Console, PrintString)
+DEFINE_ACTION_FUNCTION(_Console, PrintfEx)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(printlevel);
-	PARAM_STRING(str);
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
-	Printf(printlevel,"%s\n", str.GetChars());
+	FString s = FStringFormat(VM_ARGS_NAMES,1);
+
+	Printf(printlevel,"%s\n", s.GetChars());
 	return 0;
 }
 

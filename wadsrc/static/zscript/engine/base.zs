@@ -615,7 +615,7 @@ struct Console native
 		PRINT_NOTIFY = 4096,	// Flag - add to game-native notify display - messages without this only go to the generic notification buffer.
 	};
 
-	native static void PrintString(int printlevel, string str);
+	native static vararg void PrintfEx(int printlevel, string fmt, ...);
 }
 
 struct CVar native

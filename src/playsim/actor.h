@@ -1029,7 +1029,7 @@ public:
 	DRotator		Angles;
 	DRotator		ViewAngles;			// Angle offsets for cameras
 	TObjPtr<DViewPosition*> ViewPos;			// Position offsets for cameras
-	FVector2		Scale;				// Scaling values; 1 is normal size
+	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 
 	int				sprite;				// used to find patch_t and flip value

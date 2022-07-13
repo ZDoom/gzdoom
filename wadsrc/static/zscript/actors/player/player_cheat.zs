@@ -364,7 +364,7 @@ extend class PlayerPawn
 			for (int i = 0; i < AllActorClasses.Size(); ++i)
 			{
 				type = (class<Inventory>)(AllActorClasses[i]);
-				if (type!= null && !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key"))
+				if (type!= null && !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key") && !(type is "Weapon"))
 				{
 					let pack = FindInventory(type);
 					if (pack) pack.Destroy();

@@ -5351,7 +5351,11 @@ void P_RailAttack(FRailParams *p)
 		{
 			hitpuff = P_SpawnPuff(source, puffclass, hitpos, hitangle, hitangle - 90, 1, actorpuffflags, hitactor);
 		}
-		
+		// https://github.com/coelckers/gzdoom/pull/1668#pullrequestreview-1039431156
+		if (!hitpuff) {
+			hitpuff = thepuff;
+		}
+
 		int dmgFlagPass = DMG_INFLICTOR_IS_PUFF;
 		if (puffDefaults != NULL)	// is this even possible?
 		{

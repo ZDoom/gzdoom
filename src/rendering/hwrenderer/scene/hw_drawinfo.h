@@ -197,7 +197,7 @@ private:
 	void RenderPolyBSPNode(void *node);
 	void AddPolyobjs(subsector_t *sub);
 	void AddLines(subsector_t * sub, sector_t * sector);
-	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line);
+	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, linebase_t *line);
 	public:
 	void RenderThings(subsector_t * sub, sector_t * sector);
 	void RenderParticles(subsector_t *sub, sector_t *front);

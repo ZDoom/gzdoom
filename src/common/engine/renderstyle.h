@@ -39,10 +39,7 @@
 #undef OPAQUE
 #endif
 
-enum
-{
-	OPAQUE = 65536,
-};
+constexpr int OPAQUE = 65536;
 
 enum ETexMode
 {

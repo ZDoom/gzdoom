@@ -42,6 +42,11 @@ extend class PlayerPawn
 	}
 	
 	native void CheatSuicide();
+	
+	private bool CheckArtifact(class<Actor> type)
+	{
+		return !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key") && !(type is "Weapon");
+	}
 
 	virtual void CheatGive (String name, int amount)
 	{
@@ -207,8 +212,7 @@ extend class PlayerPawn
 				if (type!= null)
 				{
 					let def = GetDefaultByType (type);
-					if (def.Icon.isValid() && (def.MaxAmount > 1 || def.bAutoActivate == false) &&
-						!(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key"))
+					if (def.Icon.isValid() && (def.MaxAmount > 1 || def.bAutoActivate == false) && CheckArtifact(type))
 					{
 						// Do not give replaced items unless using "give everything"
 						if (giveall == ALL_YESYES || GetReplacement(type) == type)
@@ -364,7 +368,7 @@ extend class PlayerPawn
 			for (int i = 0; i < AllActorClasses.Size(); ++i)
 			{
 				type = (class<Inventory>)(AllActorClasses[i]);
-				if (type!= null && !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key") && !(type is "Weapon"))
+				if (type!= null && CheckArtifact(type))
 				{
 					let pack = FindInventory(type);
 					if (pack) pack.Destroy();

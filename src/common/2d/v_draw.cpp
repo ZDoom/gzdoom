@@ -289,6 +289,19 @@ void DrawShape(F2DDrawer *drawer, FGameTexture *img, DShape2D *shape, VMVa_List 
 	drawer->AddShape(img, shape, parms);
 }
 
+void DrawShapeFill(F2DDrawer *drawer, int color, DShape2D *shape, VMVa_List &args)
+{
+	DrawParms parms;
+	uint32_t tag = ListGetInt(args);
+
+	bool res = ParseDrawTextureTags(drawer, nullptr, 0, 0, tag, args, &parms, false, false);
+	if (!res) return;
+
+	parms.fillcolor = color;
+
+	drawer->AddShape(nullptr, shape, parms);
+}
+
 DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
 {
 	PARAM_PROLOGUE;
@@ -304,6 +317,25 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
 	VMVa_List args = { param + 3, 0, numparam - 4, va_reginfo + 3 };
 
 	DrawShape(twod, tex, shape, args);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawShapeFill)
+{
+	PARAM_PROLOGUE;
+	PARAM_COLOR(color);
+	PARAM_FLOAT(amount);
+	PARAM_POINTER(shape, DShape2D);
+
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	VMVa_List args = { param + 3, 0, numparam - 4, va_reginfo + 3 };
+
+	color.a = int(amount * 255.0f);
+
+	DrawShapeFill(twod, color, shape, args);
 	return 0;
 }
 
@@ -682,13 +714,13 @@ static inline FSpecialColormap * ListGetSpecialColormap(VMVa_List &tags)
 //==========================================================================
 
 template<class T>
-bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext)
+bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext, bool checkimage)
 {
 	INTBOOL boolval;
 	int intval;
 	bool fillcolorset = false;
 
-	if (!fortext)
+	if (!fortext && checkimage)
 	{
 		if (img == NULL || !img->isValid())
 		{
@@ -1285,8 +1317,8 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 }
 // explicitly instantiate both versions for v_text.cpp.
 
-template bool ParseDrawTextureTags<Va_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, bool fortext);
-template bool ParseDrawTextureTags<VMVa_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, bool fortext);
+template bool ParseDrawTextureTags<Va_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, bool fortext, bool checkimage);
+template bool ParseDrawTextureTags<VMVa_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, bool fortext, bool checkimage);
 
 //==========================================================================
 //
@@ -1681,3 +1713,4 @@ DEFINE_ACTION_FUNCTION(_Screen, ClearTransform)
 	twod->ClearTransform();
 	return 0;
 }
+

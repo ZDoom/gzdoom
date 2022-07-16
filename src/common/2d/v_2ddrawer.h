@@ -63,6 +63,9 @@ enum class SpecialDrawCommand {
 class F2DDrawer
 {
 public:
+	F2DDrawer() {
+		this->transform.Identity();
+	}
 
 	enum EDrawType : uint8_t
 	{
@@ -192,6 +195,7 @@ public:
 	bool locked;	// prevents clearing of the data so it can be reused multiple times (useful for screen fades)
 	float screenFade = 1.f;
 	DVector2 offset;
+	DMatrix3x3 transform;
 public:
 	int fullscreenautoaspect = 3;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
@@ -253,11 +257,14 @@ public:
 		return v;
 	}
 
-	void Set(TwoDVertex* v, double xx, double yy, double zz, double uu, double vv, PalEntry col)
+	void SetTransform(const DShape2DTransform& transform)
 	{
-		v->Set(xx + offset.X, yy + offset.Y, zz, uu, vv, col);
+		this->transform = transform.transform;
 	}
-
+	void ClearTransform()
+	{
+		this->transform.Identity();
+	}
 
 	int DrawCount() const
 	{

@@ -449,7 +449,7 @@ class PoisonCloud : Actor
 		PSBG D 1;
 		PSBG D 1 A_Scream;
 		PSBG DEEEFFFGGGHHHII 2 A_PoisonBagDamage;
-		PSBG I 2 A_PoisonBagCheck;
+		PSBG I 2 A_PoisonBagDamage;
 		PSBG I 1 A_PoisonBagCheck;
 		Goto Spawn + 3;
 	Death:

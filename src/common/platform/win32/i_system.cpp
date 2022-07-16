@@ -278,97 +278,38 @@ void CalculateCPUSpeed()
 
 static void PrintToStdOut(const char *cpt, HANDLE StdOut)
 {
-	if (StdOut == nullptr && !con_debugoutput)
-		return;
+	const char* srcp = cpt;
+	FString printData = "";
+	bool terminal = FancyStdOut;
 
-	wchar_t wbuf[256];
-	int bpos = 0;
-
-	const uint8_t *cptr = (const uint8_t*)cpt;
-
-	auto outputIt = [&]()
+	while (*srcp != 0)
 	{
-		wbuf[bpos] = 0;
-		if (con_debugoutput)
+		if (*srcp == 0x1c && terminal)
 		{
-			OutputDebugStringW(wbuf);
-		}
-		if (StdOut != nullptr)
-		{
-			// Convert back to UTF-8.
-			DWORD bytes_written;
-			if (!FancyStdOut)
+			srcp += 1;
+			const uint8_t* scratch = (const uint8_t*)srcp; // GCC does not like direct casting of the parameter.
+			EColorRange range = V_ParseFontColor(scratch, CR_UNTRANSLATED, CR_YELLOW);
+			srcp = (char*)scratch;
+			if (range != CR_UNDEFINED)
 			{
-				FString conout(wbuf);
-				WriteFile(StdOut, conout.GetChars(), (DWORD)conout.Len(), &bytes_written, NULL);
-			}
-			else
-			{
-				WriteConsoleW(StdOut, wbuf, bpos, &bytes_written, nullptr);
+				PalEntry color = V_LogColorFromColorRange(range);
+				printData.AppendFormat("\033[38;2;%u;%u;%um", color.r, color.g, color.b);
 			}
 		}
-		bpos = 0;
-	};
-
-	while (int chr = GetCharFromString(cptr))
-	{
-		if ((chr == TEXTCOLOR_ESCAPE && bpos != 0) || bpos == 255)
+		else if (*srcp != 0x1c && *srcp != 0x1d && *srcp != 0x1e && *srcp != 0x1f)
 		{
-			outputIt();
-		}
-		if (chr != TEXTCOLOR_ESCAPE)
-		{
-			if (chr >= 0x1D && chr <= 0x1F)
-			{ // The bar characters, most commonly used to indicate map changes
-				chr = 0x2550;	// Box Drawings Double Horizontal
-			}
-			wbuf[bpos++] = chr;
+			printData += *srcp++;
 		}
 		else
 		{
-			EColorRange range = V_ParseFontColor(cptr, CR_UNTRANSLATED, CR_YELLOW);
-
-			if (range != CR_UNDEFINED)
-			{
-				// Change the color of future text added to the control.
-				PalEntry color = V_LogColorFromColorRange(range);
-				if (StdOut != NULL && FancyStdOut)
-				{
-					// Unfortunately, we are pretty limited here: There are only
-					// eight basic colors, and each comes in a dark and a bright
-					// variety.
-					float h, s, v, r, g, b;
-					int attrib = 0;
-
-					RGBtoHSV(color.r / 255.f, color.g / 255.f, color.b / 255.f, &h, &s, &v);
-					if (s != 0)
-					{ // color
-						HSVtoRGB(&r, &g, &b, h, 1, 1);
-						if (r == 1)  attrib  = FOREGROUND_RED;
-						if (g == 1)  attrib |= FOREGROUND_GREEN;
-						if (b == 1)  attrib |= FOREGROUND_BLUE;
-						if (v > 0.6) attrib |= FOREGROUND_INTENSITY;
-					}
-					else
-					{ // gray
-						     if (v < 0.33) attrib = FOREGROUND_INTENSITY;
-						else if (v < 0.90) attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-						else			   attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
-					}
-					SetConsoleTextAttribute(StdOut, (WORD)attrib);
-				}
-			}
+			if (srcp[1] != 0) srcp += 2;
+			else break;
 		}
 	}
-	if (bpos != 0)
-	{
-		outputIt();
-	}
-
-	if (StdOut != NULL && FancyStdOut)
-	{ // Set text back to gray, in case it was changed.
-		SetConsoleTextAttribute(StdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-	}
+	DWORD bytes_written;
+	WriteFile(StdOut, printData.GetChars(), (DWORD)printData.Len(), &bytes_written, NULL);
+	if (terminal) 
+		WriteFile(StdOut, "\033[0m", 4, &bytes_written, NULL);
 }
 
 void I_PrintStr(const char *cp)

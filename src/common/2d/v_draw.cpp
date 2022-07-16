@@ -1659,3 +1659,25 @@ DEFINE_ACTION_FUNCTION(_Screen, ClearStencil)
 	twod->AddClearStencil();
 	return 0;
 }
+
+DEFINE_ACTION_FUNCTION(_Screen, SetTransform)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT_NOT_NULL(transform, DShape2DTransform);
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	twod->SetTransform(*transform);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, ClearTransform)
+{
+	PARAM_PROLOGUE;
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	twod->ClearTransform();
+	return 0;
+}

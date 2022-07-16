@@ -43,6 +43,7 @@
 
 #include <processenv.h>
 #include <shellapi.h>
+#include <VersionHelpers.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -179,7 +180,7 @@ int DoMain (HINSTANCE hInstance)
 				StdOut = NULL;
 			}
 		}
-		if (StdOut == NULL)
+		if (StdOut == nullptr)
 		{
 			if (AttachConsole(ATTACH_PARENT_PROCESS))
 			{
@@ -187,25 +188,21 @@ int DoMain (HINSTANCE hInstance)
 				DWORD foo; WriteFile(StdOut, "\n", 1, &foo, NULL);
 				AttachedStdOut = true;
 			}
-			if (StdOut == NULL && AllocConsole())
+			if (StdOut == nullptr && AllocConsole())
 			{
 				StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 			}
-
-			// Deprecated stuff for legacy consoles. As of now this is still relevant, but this code can be removed once Windows 7 is no longer relevant.
-			CONSOLE_FONT_INFOEX cfi;
-			cfi.cbSize = sizeof(cfi);
-			if (GetCurrentConsoleFontEx(StdOut, false, &cfi))
+			if (StdOut != nullptr)
 			{
-				if (*cfi.FaceName == 0)	// If the face name is empty, the default (useless) raster font is actoive.
+				SetConsoleCP(CP_UTF8);
+				SetConsoleOutputCP(CP_UTF8);
+				DWORD mode;
+				if (GetConsoleMode(StdOut, &mode))
 				{
-					//cfi.dwFontSize = { 8, 14 };
-					wcscpy(cfi.FaceName, L"Lucida Console");
-					cfi.FontFamily = FF_DONTCARE;
-					SetCurrentConsoleFontEx(StdOut, false, &cfi);
+					if (SetConsoleMode(StdOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+						FancyStdOut = IsWindows10OrGreater(); // Windows 8.1 and lower do not understand ANSI formatting.
 				}
 			}
-			FancyStdOut = true;
 		}
 	}
 

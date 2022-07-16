@@ -1657,3 +1657,60 @@ DEFINE_ACTION_FUNCTION(_Screen, SetOffset)
 	PARAM_FLOAT(y);
 	ACTION_RETURN_VEC2(twod->SetOffset(DVector2(x, y)));
 }
+
+DEFINE_ACTION_FUNCTION(_Screen, EnableStencil)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(on);
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	twod->AddEnableStencil(on);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, SetStencil)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(offs);
+	PARAM_INT(op);
+	PARAM_INT(flags);
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	twod->AddSetStencil(offs, op, flags);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, ClearStencil)
+{
+	PARAM_PROLOGUE;
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	twod->AddClearStencil();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, SetTransform)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT_NOT_NULL(transform, DShape2DTransform);
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	twod->SetTransform(*transform);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, ClearTransform)
+{
+	PARAM_PROLOGUE;
+
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	twod->ClearTransform();
+	return 0;
+}
+

@@ -52,9 +52,20 @@ struct F2DPolygons
 class DShape2D;
 struct DShape2DBufferInfo;
 
+enum class SpecialDrawCommand {
+	NotSpecial,
+
+	EnableStencil,
+	SetStencil,
+	ClearStencil,
+};
+
 class F2DDrawer
 {
 public:
+	F2DDrawer() {
+		this->transform.Identity();
+	}
 
 	enum EDrawType : uint8_t
 	{
@@ -104,6 +115,14 @@ public:
 
 	struct RenderCommand
 	{
+		SpecialDrawCommand isSpecial;
+
+		bool stencilOn;
+
+		int stencilOffs;
+		int stencilOp;
+		int stencilFlags;
+
 		EDrawType mType;
 		int mVertIndex;
 		int mVertCount;
@@ -138,6 +157,10 @@ public:
 		// If these fields match, two draw commands can be batched.
 		bool isCompatible(const RenderCommand &other) const
 		{
+			if (
+				isSpecial != SpecialDrawCommand::NotSpecial ||
+				other.isSpecial != SpecialDrawCommand::NotSpecial
+			) return false;
 			if (shape2DBufInfo != nullptr || other.shape2DBufInfo != nullptr) return false;
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
@@ -172,6 +195,7 @@ public:
 	bool locked;	// prevents clearing of the data so it can be reused multiple times (useful for screen fades)
 	float screenFade = 1.f;
 	DVector2 offset;
+	DMatrix3x3 transform;
 public:
 	int fullscreenautoaspect = 3;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
@@ -206,6 +230,10 @@ public:
 	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha = 255);
 	void AddPixel(int x1, int y1, uint32_t color);
 
+	void AddEnableStencil(bool on);
+	void AddSetStencil(int offs, int op, int flags);
+	void AddClearStencil();
+
 	void Clear();
 	void Lock() { locked = true; }
 	void SetScreenFade(float factor) { screenFade = factor; }
@@ -229,11 +257,14 @@ public:
 		return v;
 	}
 
-	void Set(TwoDVertex* v, double xx, double yy, double zz, double uu, double vv, PalEntry col)
+	void SetTransform(const DShape2DTransform& transform)
 	{
-		v->Set(xx + offset.X, yy + offset.Y, zz, uu, vv, col);
+		this->transform = transform.transform;
 	}
-
+	void ClearTransform()
+	{
+		this->transform.Identity();
+	}
 
 	int DrawCount() const
 	{

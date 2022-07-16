@@ -545,6 +545,46 @@ std::unique_ptr<VulkanBuffer> BufferBuilder::Create(VulkanDevice* device)
 
 /////////////////////////////////////////////////////////////////////////////
 
+AccelerationStructureBuilder::AccelerationStructureBuilder()
+{
+}
+
+AccelerationStructureBuilder& AccelerationStructureBuilder::Type(VkAccelerationStructureTypeKHR type)
+{
+	createInfo.type = type;
+	return *this;
+}
+
+AccelerationStructureBuilder& AccelerationStructureBuilder::Buffer(VulkanBuffer* buffer, VkDeviceSize size)
+{
+	createInfo.buffer = buffer->buffer;
+	createInfo.offset = 0;
+	createInfo.size = size;
+	return *this;
+}
+
+AccelerationStructureBuilder& AccelerationStructureBuilder::Buffer(VulkanBuffer* buffer, VkDeviceSize offset, VkDeviceSize size)
+{
+	createInfo.buffer = buffer->buffer;
+	createInfo.offset = offset;
+	createInfo.size = size;
+	return *this;
+}
+
+std::unique_ptr<VulkanAccelerationStructure> AccelerationStructureBuilder::Create(VulkanDevice* device)
+{
+	VkAccelerationStructureKHR hande = {};
+	VkResult result = vkCreateAccelerationStructureKHR(device->device, &createInfo, nullptr, &hande);
+	if (result != VK_SUCCESS)
+		throw std::runtime_error("vkCreateAccelerationStructureKHR failed");
+	auto obj = std::make_unique<VulkanAccelerationStructure>(device, hande);
+	if (debugName)
+		obj->SetDebugName(debugName);
+	return obj;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 ComputePipelineBuilder::ComputePipelineBuilder()
 {
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;

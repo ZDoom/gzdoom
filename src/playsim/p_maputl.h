@@ -39,12 +39,12 @@ struct intercept_t
 //
 //==========================================================================
 
-inline int P_PointOnLineSidePrecise(double x, double y, const line_t *line)
+inline int P_PointOnLineSidePrecise(double x, double y, const linebase_t *line)
 {
 	return (y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - x) * line->Delta().Y > EQUAL_EPSILON;
 }
 
-inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
+inline int P_PointOnLineSidePrecise(const DVector2 &pt, const linebase_t *line)
 {
 	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
 }

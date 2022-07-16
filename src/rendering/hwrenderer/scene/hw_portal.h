@@ -74,7 +74,7 @@ public:
     virtual int ClipSeg(seg_t *seg, const DVector3 &viewpos) { return PClip_Inside; }
     virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
     virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
-    virtual line_t *ClipLine() { return nullptr; }
+    virtual linebase_t *ClipLine() { return nullptr; }
 	virtual void * GetSource() const = 0;	// GetSource MUST be implemented!
 	virtual const char *GetName() = 0;
 	virtual bool AllowSSAO() { return true; }
@@ -156,14 +156,8 @@ public:
 	virtual void Shutdown(HWDrawInfo *di, FRenderState &rstate) {}
 };
 
-struct HWLinePortal : public HWScenePortalBase
+struct HWLinePortal : public HWScenePortalBase, public linebase_t
 {
-	uint32_t PAD; // This fixes walls not being drawn in portals in 32bit machines..seems to be OK this is here for 64bit also..
-
-	// this must be the same as at the start of line_t, so that we can pass in this structure directly to P_ClipLineToPortal.
-	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-	DVector2	delta;		// precalculated v2 - v1 for side checking
-
 	angle_t		angv1, angv2;	// for quick comparisons with a line or subsector
 
 	HWLinePortal(FPortalSceneState *state, line_t *line) : HWScenePortalBase(state)
@@ -194,12 +188,6 @@ struct HWLinePortal : public HWScenePortalBase
 	void CalcDelta()
 	{
 		delta = v2->fPos() - v1->fPos();
-	}
-
-	line_t *line()
-	{
-		vertex_t **pv = &v1;
-		return reinterpret_cast<line_t*>(pv);
 	}
 
 	int ClipSeg(seg_t *seg, const DVector3 &viewpos) override;
@@ -236,7 +224,7 @@ protected:
 	bool Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper) override;
 	virtual void * GetSource() const override { return glport; }
 	virtual const char *GetName() override;
-	virtual line_t *ClipLine() override { return line(); }
+	virtual linebase_t *ClipLine() override { return this; }
 	virtual void RenderAttached(HWDrawInfo *di) override;
 
 public:

@@ -4,6 +4,7 @@
 #include "basics.h"
 #include "m_bbox.h"
 
+struct linebase_t;
 struct line_t;
 struct sector_t;
 
@@ -278,7 +279,7 @@ struct FSectorPortalGroup
 
 
 /* code ported from prototype */
-bool P_ClipLineToPortal(line_t* line, line_t* portal, DVector2 view, bool partial = true, bool samebehind = true);
+bool P_ClipLineToPortal(linebase_t* line, linebase_t* portal, DVector2 view, bool partial = true, bool samebehind = true);
 void P_TranslatePortalXY(line_t* src, double& vx, double& vy);
 void P_TranslatePortalVXVY(line_t* src, double &velx, double &vely);
 void P_TranslatePortalAngle(line_t* src, DAngle& angle);

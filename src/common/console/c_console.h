@@ -41,11 +41,10 @@
 
 struct event_t;
 
-typedef enum cstate_t 
+enum cstate_t : uint8_t
 {
 	c_up=0, c_down=1, c_falling=2, c_rising=3
-} 
-constate_e;
+};
 
 enum
 {
@@ -53,7 +52,7 @@ enum
 };
 extern int PrintColors[PRINTLEVELS + 2];
 
-extern constate_e ConsoleState;
+extern uint8_t ConsoleState;
 
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);

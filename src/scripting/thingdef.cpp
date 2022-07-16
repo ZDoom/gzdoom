@@ -318,7 +318,7 @@ static void CheckLabel(PClassActor *obj, FStateLabel *slb, int useflag, FName st
 	auto state = slb->State;
 	if (state != nullptr)
 	{
-		if (intptr_t(state) <= 0xffff)
+		if (uintptr_t(state) <= 0xffff)
 		{
 			// can't do much here aside from printing a message and aborting.
 			I_Error("Bad state label %s in actor %s", slb->Label.GetChars(), obj->TypeName.GetChars());

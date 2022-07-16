@@ -87,6 +87,7 @@ void FGLRenderBuffers::ClearScene()
 
 void FGLRenderBuffers::ClearPipeline()
 {
+	DeleteRenderBuffer(mPipelineDepthStencilBuf);
 	for (int i = 0; i < NumPipelineTextures; i++)
 	{
 		DeleteFrameBuffer(mPipelineFB[i]);
@@ -239,10 +240,11 @@ void FGLRenderBuffers::CreatePipeline(int width, int height)
 	ClearPipeline();
 	ClearEyeBuffers();
 
+	mPipelineDepthStencilBuf = CreateRenderBuffer("PipelineDepthStencil", GL_DEPTH24_STENCIL8, width, height);
 	for (int i = 0; i < NumPipelineTextures; i++)
 	{
 		mPipelineTexture[i] = Create2DTexture("PipelineTexture", GL_RGBA16F, width, height);
-		mPipelineFB[i] = CreateFrameBuffer("PipelineFB", mPipelineTexture[i]);
+		mPipelineFB[i] = CreateFrameBuffer("PipelineFB", mPipelineTexture[i], mPipelineDepthStencilBuf);
 	}
 }
 

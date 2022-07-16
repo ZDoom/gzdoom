@@ -1142,6 +1142,55 @@ void F2DDrawer::AddPixel(int x1, int y1, uint32_t color)
 //
 //==========================================================================
 
+void F2DDrawer::AddEnableStencil(bool on)
+{
+	RenderCommand dg;
+
+	dg.isSpecial = SpecialDrawCommand::EnableStencil;
+	dg.stencilOn = on;
+
+	AddCommand(&dg);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void F2DDrawer::AddSetStencil(int offs, int op, int flags)
+{
+	RenderCommand dg;
+
+	dg.isSpecial = SpecialDrawCommand::SetStencil;
+	dg.stencilOffs = offs;
+	dg.stencilOp = op;
+	dg.stencilFlags = flags;
+
+	AddCommand(&dg);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void F2DDrawer::AddClearStencil()
+{
+	RenderCommand dg;
+
+	dg.isSpecial = SpecialDrawCommand::ClearStencil;
+
+	AddCommand(&dg);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void F2DDrawer::Clear()
 {
 	if (!locked)

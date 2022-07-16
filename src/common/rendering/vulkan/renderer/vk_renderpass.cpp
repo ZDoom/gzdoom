@@ -342,7 +342,7 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey& key)
 	// Note: the actual values are ignored since we use dynamic viewport+scissor states
 	builder.Viewport(0.0f, 0.0f, 320.0f, 200.0f);
 	builder.Scissor(0, 0, 320, 200);
-	if (key.StencilTest)
+	if (key.StencilTest != WhichDepthStencil::None)
 	{
 		builder.AddDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);
 		builder.DepthStencilEnable(false, false, true);
@@ -364,7 +364,7 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
 		builder.AddAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	else
 		builder.AddAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	if (key.StencilTest)
+	if (key.StencilTest == WhichDepthStencil::Scene)
 	{
 		builder.AddDepthStencilAttachment(
 			fb->GetBuffers()->SceneDepthStencilFormat, key.Samples,
@@ -372,10 +372,18 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
 			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
+	if (key.StencilTest == WhichDepthStencil::Pipeline)
+	{
+		builder.AddDepthStencilAttachment(
+			fb->GetBuffers()->PipelineDepthStencilFormat, key.Samples,
+			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+			VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	}
 
 	builder.AddSubpass();
 	builder.AddSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	if (key.StencilTest)
+	if (key.StencilTest != WhichDepthStencil::None)
 	{
 		builder.AddSubpassDepthStencilAttachmentRef(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		builder.AddExternalSubpassDependency(

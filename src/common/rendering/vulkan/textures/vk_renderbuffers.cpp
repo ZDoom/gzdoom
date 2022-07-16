@@ -83,14 +83,49 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 	mSceneHeight = sceneHeight;
 }
 
+void VkRenderBuffers::CreatePipelineDepthStencil(int width, int height)
+{
+	ImageBuilder builder;
+	builder.Size(width, height);
+	builder.Format(PipelineDepthStencilFormat);
+	builder.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	if (!builder.IsFormatSupported(fb->device))
+	{
+		PipelineDepthStencilFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
+		builder.Format(PipelineDepthStencilFormat);
+		if (!builder.IsFormatSupported(fb->device))
+		{
+			I_FatalError("This device does not support any of the required depth stencil image formats.");
+		}
+	}
+	builder.DebugName("VkRenderBuffers.PipelineDepthStencil");
+
+	PipelineDepthStencil.Image = builder.Create(fb->device);
+	PipelineDepthStencil.AspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+
+	PipelineDepthStencil.View = ImageViewBuilder()
+		.Image(PipelineDepthStencil.Image.get(), PipelineDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
+		.DebugName("VkRenderBuffers.PipelineDepthStencilView")
+		.Create(fb->device);
+
+	PipelineDepthStencil.DepthOnlyView = ImageViewBuilder()
+		.Image(PipelineDepthStencil.Image.get(), PipelineDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT)
+		.DebugName("VkRenderBuffers.PipelineDepthView")
+		.Create(fb->device);
+}
+
 void VkRenderBuffers::CreatePipeline(int width, int height)
 {
 	for (int i = 0; i < NumPipelineImages; i++)
 	{
 		PipelineImage[i].Reset(fb);
 	}
+	PipelineDepthStencil.Reset(fb);
+
+	CreatePipelineDepthStencil(width, height);
 
 	VkImageTransition barrier;
+	barrier.AddImage(&PipelineDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, true);
 	for (int i = 0; i < NumPipelineImages; i++)
 	{
 		PipelineImage[i].Image = ImageBuilder()
@@ -216,7 +251,7 @@ void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlag
 		.Create(fb->device);
 }
 
-VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, bool stencilTest, int& framebufferWidth, int& framebufferHeight)
+VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, WhichDepthStencil stencilTest, int& framebufferWidth, int& framebufferHeight)
 {
 	VkTextureImage* tex = fb->GetTextureManager()->GetTexture(output.Type, output.Texture);
 
@@ -227,8 +262,12 @@ VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, co
 	{
 		VkImageTransition imageTransition;
 		imageTransition.AddImage(tex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, output.Type == PPTextureType::NextPipelineTexture);
-		if (stencilTest)
+		if (stencilTest == WhichDepthStencil::Scene)
 			imageTransition.AddImage(&fb->GetBuffers()->SceneDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
+
+		if (stencilTest == WhichDepthStencil::Pipeline)
+			imageTransition.AddImage(&fb->GetBuffers()->PipelineDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false);
+
 		imageTransition.Execute(fb->GetCommands()->GetDrawCommands());
 
 		view = tex->View->view;
@@ -251,8 +290,10 @@ VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, co
 		builder.RenderPass(passSetup->RenderPass.get());
 		builder.Size(w, h);
 		builder.AddAttachment(view);
-		if (stencilTest)
+		if (stencilTest == WhichDepthStencil::Scene)
 			builder.AddAttachment(fb->GetBuffers()->SceneDepthStencil.View.get());
+		if (stencilTest == WhichDepthStencil::Pipeline)
+			builder.AddAttachment(fb->GetBuffers()->PipelineDepthStencil.View.get());
 		builder.DebugName("PPOutputFB");
 		framebuffer = builder.Create(fb->device);
 	}

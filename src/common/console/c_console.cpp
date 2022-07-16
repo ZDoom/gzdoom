@@ -104,7 +104,9 @@ bool		vidactive = false;
 bool		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
 uint64_t	CursorTicker;
-constate_e	ConsoleState = c_up;
+uint8_t		ConsoleState = c_up;
+
+DEFINE_GLOBAL(ConsoleState)
 
 static int TopLine, InsertLine;
 

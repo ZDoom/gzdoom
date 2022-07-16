@@ -143,6 +143,14 @@ enum EPrintLevel
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
+enum EConsoleState
+{
+	c_up = 0,
+	c_down = 1,
+	c_falling = 2,
+	c_rising = 3
+};
+
 /*
 // These are here to document the intrinsic methods and fields available on
 // the built-in ZScript types
@@ -211,6 +219,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int consoleplayer;
 	native readonly double NotifyFontScale;
 	native readonly int paused;
+	native readonly ui uint8 ConsoleState;
 }
 
 struct System native

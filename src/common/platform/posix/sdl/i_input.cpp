@@ -57,7 +57,6 @@ CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
 extern int WaitingForKey, chatmodeon;
-extern uint8_t ConsoleState;
 
 static const SDL_Keycode DIKToKeySym[256] =
 {

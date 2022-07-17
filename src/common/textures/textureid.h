@@ -35,7 +35,7 @@ public:
 	void SetNull() { texnum = 0; }
 	bool operator ==(const FTextureID &other) const { return texnum == other.texnum; }
 	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
-	FTextureID operator +(int offset) throw();
+	FTextureID operator +(int offset) const noexcept(true);
 	int GetIndex() const { return texnum; }	// Use this only if you absolutely need the index!
 	void SetIndex(int index) { texnum = index; }	// Use this only if you absolutely need the index!
 

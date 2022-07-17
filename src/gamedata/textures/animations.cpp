@@ -73,15 +73,6 @@ void FTextureAnimator::DeleteAll()
 		}
 	}
 	mSwitchDefs.Clear();
-
-	for (unsigned i = 0; i < mAnimatedDoors.Size(); i++)
-	{
-		if (mAnimatedDoors[i].TextureFrames != NULL)
-		{
-			delete[] mAnimatedDoors[i].TextureFrames;
-			mAnimatedDoors[i].TextureFrames = NULL;
-		}
-	}
 	mAnimatedDoors.Clear();
 }
 
@@ -864,7 +855,7 @@ void FTextureAnimator::ParseAnimatedDoor(FScanner &sc)
 	}
 	if (!error)
 	{
-		anim.TextureFrames = new FTextureID[frames.Size()];
+		anim.TextureFrames = (FTextureID*)ImageArena.Alloc(sizeof(FTextureID) * frames.Size());
 		memcpy (anim.TextureFrames, &frames[0], sizeof(FTextureID) * frames.Size());
 		anim.NumTextureFrames = frames.Size();
 		mAnimatedDoors.Push (anim);

@@ -169,7 +169,7 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 	char key[32], value[32];
 	int axislen, numaxes;
 
-	if (M_SetJoystickConfigSection(joy, true))
+	if (GameConfig != NULL && M_SetJoystickConfigSection(joy, true))
 	{
 		GameConfig->ClearCurrentSection();
 		if (!joy->IsSensitivityDefault())

@@ -335,6 +335,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				mdl->RenderFrame(renderer, tex, tempsmf->modelframes[i], tempsmf->modelframes[i], 0.f, translation);
 		}
 	}
+	delete tempsmf;
 }
 
 

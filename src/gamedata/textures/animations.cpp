@@ -94,12 +94,12 @@ FAnimDef *FTextureAnimator::AddAnim (FAnimDef& anim)
 		{
 			// Found one!
 			mAnimations[i] = anim;
-			return &anim;
+			return &mAnimations[i];
 		}
 	}
 	// Didn't find one, so add it at the end.
 	mAnimations.Push (anim);
-	return &anim;
+	return &mAnimations.Last();
 }
 
 //==========================================================================

@@ -170,8 +170,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 					}
 					else if (smf->modelIDs[i] != -1)
 					{
-						Models[smf->modelIDs[i]]->PushSpriteMDLFrame(smf, i);
-						Models[smf->modelIDs[i]]->AddSkins(texhitlist);
+						Models[smf->modelIDs[i]]->AddSkins(texhitlist, (unsigned)(i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
 					}
 					if (smf->modelIDs[i] != -1)
 					{

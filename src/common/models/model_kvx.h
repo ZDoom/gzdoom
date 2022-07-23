@@ -59,8 +59,8 @@ public:
 	bool Load(const char * fn, int lumpnum, const char * buffer, int length) override;
 	void Initialize();
 	virtual int FindFrame(const char * name) override;
-	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const TArray<FTextureID>& surfaceskinids) override;
-	virtual void AddSkins(uint8_t *hitlist) override;
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids) override;
+	virtual void AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids) override;
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer(FModelRenderer *renderer) override;
 	float getAspectFactor(float vscale) override;

@@ -356,7 +356,7 @@ void FVoxelModel::BuildVertexBuffer(FModelRenderer *renderer)
 //
 //===========================================================================
 
-void FVoxelModel::AddSkins(uint8_t *hitlist)
+void FVoxelModel::AddSkins(uint8_t *hitlist, const FTextureID*)
 {
 	hitlist[mPalette.GetIndex()] |= FTextureManager::HIT_Flat;
 }
@@ -400,7 +400,7 @@ float FVoxelModel::getAspectFactor(float stretch)
 //
 //===========================================================================
 
-void FVoxelModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const TArray<FTextureID>&)
+void FVoxelModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID*)
 {
 	renderer->SetMaterial(skin, true, translation);
 	renderer->SetupFrame(this, 0, 0, 0);

@@ -339,12 +339,13 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			auto tex = skinid.isValid() ? TexMan.GetGameTexture(skinid, true) : nullptr;
 			mdl->BuildVertexBuffer(renderer);
 
-			mdl->PushSpriteMDLFrame(smf, i);
+			auto& ssids = surfaceskinids.Size() > 0 ? surfaceskinids : smf->surfaceskinIDs;
+			auto ssidp = (unsigned)(i * MD3_MAX_SURFACES) < ssids.Size() ? &ssids[i * MD3_MAX_SURFACES] : nullptr;
 
 			if (smfNext && modelframe != modelframenext)
-				mdl->RenderFrame(renderer, tex, modelframe, modelframenext, inter, translation, surfaceskinids.Size() > 0? surfaceskinids : smf->surfaceskinIDs);
+				mdl->RenderFrame(renderer, tex, modelframe, modelframenext, inter, translation, ssidp);
 			else
-				mdl->RenderFrame(renderer, tex, modelframe, modelframe, 0.f, translation, surfaceskinids.Size() > 0 ? surfaceskinids : smf->surfaceskinIDs);
+				mdl->RenderFrame(renderer, tex, modelframe, modelframe, 0.f, translation, ssidp);
 		}
 	}
 }

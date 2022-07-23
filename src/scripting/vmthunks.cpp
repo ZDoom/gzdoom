@@ -102,6 +102,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraTextureAspectRatio, SetCameraTex
 	return 0;
 }
 
+void SetCanvasToTexture(FCanvas* canvas, const FString& texturename);
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCanvasToTexture, SetCanvasToTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(canvas, FCanvas);
+	PARAM_STRING(texturename);
+	SetCanvasToTexture(canvas, texturename);
+	return 0;
+}
+
 //=====================================================================================
 //
 // sector_t exports

@@ -49,6 +49,8 @@ EXTERN_CVAR(Float, transsouls)
 CVAR(Float, classic_scaling_factor, 1.0, CVAR_ARCHIVE)
 CVAR(Float, classic_scaling_pixelaspect, 1.2f, CVAR_ARCHIVE)
 
+IMPLEMENT_CLASS(FCanvas, false, false)
+
 IMPLEMENT_CLASS(DShape2DTransform, false, false)
 
 static void Shape2DTransform_Clear(DShape2DTransform* self)

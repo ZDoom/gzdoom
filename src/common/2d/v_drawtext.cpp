@@ -235,6 +235,22 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawChar)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FCanvas, DrawChar)
+{
+	PARAM_SELF_PROLOGUE(FCanvas);
+	PARAM_POINTER(font, FFont);
+	PARAM_INT(cr);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT(chr);
+
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
+	VMVa_List args = { param + 5, 0, numparam - 6, va_reginfo + 5 };
+	DrawChar(self->Drawer.get(), font, cr, x, y, chr, args);
+	return 0;
+}
+
 //==========================================================================
 //
 // DrawText

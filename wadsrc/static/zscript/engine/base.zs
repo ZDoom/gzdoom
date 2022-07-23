@@ -502,6 +502,36 @@ class Shape2D : Object native
 	native void PushTriangle( int a, int b, int c );
 }
 
+class Canvas : Object native
+{
+	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+	native void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
+
+	native vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
+	native vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
+	native vararg void DrawShapeFill(Color col, double amount, Shape2D s, ...);
+	native vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
+	native vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
+	native void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
+	native void DrawLineFrame(Color color, int x0, int y0, int w, int h, int thickness = 1);
+	native void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
+	native Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
+	native void SetClipRect(int x, int y, int w, int h);
+	native void ClearClipRect();
+	native int, int, int, int GetClipRect();
+	native int, int, int, int GetViewWindow();
+	native double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
+	native Vector2 SetOffset(double x, double y);
+	native void ClearScreen(color col = 0);
+	native void SetScreenFade(double factor);
+
+	native void EnableStencil(bool on);
+	native void SetStencil(int offs, int op, int flags = -1);
+	native void ClearStencil();
+	native void SetTransform(Shape2DTransform transform);
+	native void ClearTransform();
+}
+
 struct Screen native
 {
 	native static Color PaletteColor(int index);

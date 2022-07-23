@@ -628,7 +628,7 @@ int FOBJModel::FindFrame(const char* name)
  * @param inter The amount to interpolate the two frames.
  * @param translation The translation for the skin
  */
-void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const TArray<FTextureID>& surfaceskinids)
 {
 	// Prevent the model from rendering if the frame number is < 0
 	if (frameno < 0 || frameno2 < 0) return;
@@ -638,12 +638,12 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		OBJSurface *surf = &surfaces[i];
 
 		FGameTexture *userSkin = skin;
-		if (!userSkin && curSpriteMDLFrame)
+		if (!userSkin)
 		{
 			int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-			if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+			if (i < MD3_MAX_SURFACES && surfaceskinids[ssIndex].isValid())
 			{
-				userSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[ssIndex], true);
+				userSkin = TexMan.GetGameTexture(surfaceskinids[ssIndex], true);
 			}
 			else if (surf->skin.isValid())
 			{

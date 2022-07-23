@@ -344,7 +344,7 @@ int FMD3Model::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const TArray<FTextureID>& surfaceskinids)
 {
 	if ((unsigned)frameno >= Frames.Size() || (unsigned)frameno2 >= Frames.Size()) return;
 
@@ -358,17 +358,14 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		FGameTexture *surfaceSkin = skin;
 		if (!surfaceSkin)
 		{
-			if (curSpriteMDLFrame)
+			int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
+			if (surfaceskinids[ssIndex].isValid())
 			{
-				int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-				if (curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
-				{
-					surfaceSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[ssIndex], true);
-				}
-				else if (surf->numSkins > 0 && surf->Skins[0].isValid())
-				{
-					surfaceSkin = TexMan.GetGameTexture(surf->Skins[0], true);
-				}
+				surfaceSkin = TexMan.GetGameTexture(surfaceskinids[ssIndex], true);
+			}
+			else if (surf->numSkins > 0 && surf->Skins[0].isValid())
+			{
+				surfaceSkin = TexMan.GetGameTexture(surf->Skins[0], true);
 			}
 
 			if (!surfaceSkin)

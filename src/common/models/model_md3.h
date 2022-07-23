@@ -67,7 +67,7 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const TArray<FTextureID>& surfaceskinids);
 	void LoadGeometry();
 	void BuildVertexBuffer(FModelRenderer *renderer);
 	virtual void AddSkins(uint8_t *hitlist);

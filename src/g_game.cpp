@@ -2121,10 +2121,10 @@ void G_DoLoadGame ()
 	BackupSaveName = savename;
 
 	//Push any added models from A_ChangeModel
-	for (int i = 0; i < savedModelFiles.Size(); i++)
+	for (auto& smf : savedModelFiles)
 	{
-		FString modelFilePath = savedModelFiles[i].Left(savedModelFiles[i].LastIndexOf("/")+1);
-		FString modelFileName = savedModelFiles[i].Right(savedModelFiles[i].Len() - savedModelFiles[i].Left(savedModelFiles[i].LastIndexOf("/") + 1).Len());
+		FString modelFilePath = smf.Left(smf.LastIndexOf("/")+1);
+		FString modelFileName = smf.Right(smf.Len() - smf.Left(smf.LastIndexOf("/") + 1).Len());
 		FindModel(modelFilePath, modelFileName);
 	}
 

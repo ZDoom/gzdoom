@@ -229,6 +229,12 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 	bounds.height = FHardwareTexture::GetTexDimension(tex->GetHeight());
 
 	renderFunc(bounds);
+
+	if (tex->Drawer)
+	{
+		::Draw2D(tex->Drawer.get(), gl_RenderState);
+	}
+
 	GLRenderer->EndOffscreen();
 
 	tex->SetUpdated(true);

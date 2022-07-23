@@ -215,6 +215,11 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 
 	renderFunc(bounds);
 
+	if (tex->Drawer)
+	{
+		::Draw2D(tex->Drawer.get(), *mRenderState);
+	}
+
 	mRenderState->EndRenderPass();
 
 	VkImageTransition()

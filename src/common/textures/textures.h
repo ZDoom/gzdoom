@@ -44,6 +44,7 @@
 #include "hw_texcontainer.h"
 #include "floatrect.h"
 #include "refcounted.h"
+#include <memory>
 
 typedef TMap<int, bool> SpriteHits;
 class FImageSource;
@@ -302,6 +303,7 @@ public:
 	friend class FTextureManager;
 };
 
+class F2DDrawer;
 
 // A texture that can be drawn to.
 
@@ -321,6 +323,8 @@ public:
 	void SetUpdated(bool rendertype) { bNeedsUpdate = false; bFirstUpdate = false; bLastUpdateType = rendertype; }
 
 	void SetAspectRatio(double aspectScale, bool useTextureRatio) { aspectRatio = (float)aspectScale * (useTextureRatio? ((float)Width / Height) : 1); }
+
+	std::shared_ptr<F2DDrawer> Drawer;
 
 protected:
 

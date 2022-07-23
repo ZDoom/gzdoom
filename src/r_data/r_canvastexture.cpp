@@ -110,6 +110,21 @@ void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fo
 	}
 }
 
+void SetCanvasToTexture(FCanvas* canvas, const FString& texturename)
+{
+	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	if (textureid.isValid())
+	{
+		// Only proceed if the texture actually has a canvas.
+		auto tex = TexMan.GetGameTexture(textureid);
+		if (tex && tex->GetTexture()->isCanvas())
+		{
+			FCanvasTexture* canvasTex = static_cast<FCanvasTexture*>(tex->GetTexture());
+			canvasTex->Drawer = canvas->Drawer;
+		}
+	}
+}
+
 //==========================================================================
 //
 // FCanvasTextureInfo :: UpdateAll

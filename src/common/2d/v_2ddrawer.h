@@ -274,6 +274,18 @@ public:
 	bool mIsFirstPass = true;
 };
 
+// DCanvas is already taken so using FCanvas instead.
+class FCanvas : public DObject
+{
+	DECLARE_CLASS(FCanvas, DObject)
+public:
+	FCanvas()
+	{
+		Drawer->SetSize(256, 256);
+	}
+	std::shared_ptr<F2DDrawer> Drawer = std::make_shared<F2DDrawer>();
+};
+
 struct DShape2DBufferInfo : RefCountedBase
 {
 	TArray<F2DVertexBuffer> buffers;

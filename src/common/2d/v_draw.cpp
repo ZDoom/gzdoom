@@ -272,7 +272,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawTexture)
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
 	auto tex = TexMan.GameByIndex(texid, animate);
-	VMVa_List args = { param + 4, 0, numparam - 5, va_reginfo + 4 };
+	VMVa_List args = { param + 5, 0, numparam - 6, va_reginfo + 5 };
 	DoDrawTexture(self->Drawer.get(), tex, x, y, args);
 	return 0;
 }
@@ -346,7 +346,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawShape)
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
 	auto tex = TexMan.GameByIndex(texid, animate);
-	VMVa_List args = { param + 3, 0, numparam - 4, va_reginfo + 3 };
+	VMVa_List args = { param + 4, 0, numparam - 5, va_reginfo + 4 };
 
 	DrawShape(self->Drawer.get(), tex, shape, args);
 	return 0;
@@ -380,7 +380,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawShapeFill)
 
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
-	VMVa_List args = { param + 3, 0, numparam - 4, va_reginfo + 3 };
+	VMVa_List args = { param + 4, 0, numparam - 5, va_reginfo + 4 };
 
 	color.a = int(amount * 255.0f);
 

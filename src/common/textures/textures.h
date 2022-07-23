@@ -303,7 +303,7 @@ public:
 	friend class FTextureManager;
 };
 
-class F2DDrawer;
+class FCanvas;
 
 // A texture that can be drawn to.
 
@@ -321,10 +321,11 @@ public:
 
 	void NeedUpdate() { bNeedsUpdate = true; }
 	void SetUpdated(bool rendertype) { bNeedsUpdate = false; bFirstUpdate = false; bLastUpdateType = rendertype; }
+	bool CheckNeedsUpdate() const { return bNeedsUpdate; }
 
 	void SetAspectRatio(double aspectScale, bool useTextureRatio) { aspectRatio = (float)aspectScale * (useTextureRatio? ((float)Width / Height) : 1); }
 
-	std::shared_ptr<F2DDrawer> Drawer;
+	FCanvas* Canvas = nullptr;
 
 protected:
 

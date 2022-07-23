@@ -279,11 +279,8 @@ class FCanvas : public DObject
 {
 	DECLARE_CLASS(FCanvas, DObject)
 public:
-	FCanvas()
-	{
-		Drawer->SetSize(256, 256);
-	}
-	std::shared_ptr<F2DDrawer> Drawer = std::make_shared<F2DDrawer>();
+	F2DDrawer Drawer;
+	FCanvasTexture* Tex = nullptr;
 };
 
 struct DShape2DBufferInfo : RefCountedBase

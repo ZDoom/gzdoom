@@ -273,7 +273,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawTexture)
 
 	auto tex = TexMan.GameByIndex(texid, animate);
 	VMVa_List args = { param + 5, 0, numparam - 6, va_reginfo + 5 };
-	DoDrawTexture(self->Drawer.get(), tex, x, y, args);
+	DoDrawTexture(&self->Drawer, tex, x, y, args);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -348,7 +349,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawShape)
 	auto tex = TexMan.GameByIndex(texid, animate);
 	VMVa_List args = { param + 4, 0, numparam - 5, va_reginfo + 4 };
 
-	DrawShape(self->Drawer.get(), tex, shape, args);
+	DrawShape(&self->Drawer, tex, shape, args);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -384,7 +386,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawShapeFill)
 
 	color.a = int(amount * 255.0f);
 
-	DrawShapeFill(self->Drawer.get(), color, shape, args);
+	DrawShapeFill(&self->Drawer, color, shape, args);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -420,7 +423,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, SetClipRect)
 	PARAM_INT(y);
 	PARAM_INT(w);
 	PARAM_INT(h);
-	self->Drawer->SetClipRect(x, y, w, h);
+	self->Drawer.SetClipRect(x, y, w, h);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -434,7 +438,8 @@ DEFINE_ACTION_FUNCTION(_Screen, ClearClipRect)
 DEFINE_ACTION_FUNCTION(FCanvas, ClearClipRect)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
-	self->Drawer->ClearClipRect();
+	self->Drawer.ClearClipRect();
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -448,7 +453,8 @@ DEFINE_ACTION_FUNCTION(_Screen, ClearScreen)
 DEFINE_ACTION_FUNCTION(FCanvas, ClearScreen)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
-	self->Drawer->ClearScreen();
+	self->Drawer.ClearScreen();
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -464,7 +470,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, SetScreenFade)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
 	PARAM_FLOAT(x);
-	self->Drawer->SetScreenFade(float(x));
+	self->Drawer.SetScreenFade(float(x));
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -493,7 +500,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, GetClipRect)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
 	int x, y, w, h;
-	self->Drawer->GetClipRect(&x, &y, &w, &h);
+	self->Drawer.GetClipRect(&x, &y, &w, &h);
 	if (numret > 0) ret[0].SetInt(x);
 	if (numret > 1) ret[1].SetInt(y);
 	if (numret > 2) ret[2].SetInt(w);
@@ -613,8 +620,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, GetFullscreenRect)
 
 	DrawParms parms;
 	DoubleRect rect;
-	parms.viewport.width = self->Drawer->GetWidth();
-	parms.viewport.height = self->Drawer->GetHeight();
+	parms.viewport.width = self->Drawer.GetWidth();
+	parms.viewport.height = self->Drawer.GetHeight();
 	CalcFullscreenScale(&parms, virtw, virth, fsmode, rect);
 	if (numret >= 1) ret[0].SetFloat(rect.left);
 	if (numret >= 2) ret[1].SetFloat(rect.top);
@@ -1526,7 +1533,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, VirtualToRealCoords)
 	PARAM_FLOAT(vh);
 	PARAM_BOOL(vbottom);
 	PARAM_BOOL(handleaspect);
-	VirtualToRealCoords(self->Drawer.get(), x, y, w, h, vw, vh, vbottom, handleaspect);
+	VirtualToRealCoords(&self->Drawer, x, y, w, h, vw, vh, vbottom, handleaspect);
 	if (numret >= 1) ret[0].SetVector2(DVector2(x, y));
 	if (numret >= 2) ret[1].SetVector2(DVector2(w, h));
 	return min(numret, 2);
@@ -1582,7 +1589,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawLine)
 	PARAM_INT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	self->Drawer->AddLine((float)x0, (float)y0, (float)x1, (float)y1, -1, -1, INT_MAX, INT_MAX, color | MAKEARGB(255, 0, 0, 0), alpha);
+	self->Drawer.AddLine((float)x0, (float)y0, (float)x1, (float)y1, -1, -1, INT_MAX, INT_MAX, color | MAKEARGB(255, 0, 0, 0), alpha);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1616,7 +1624,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawThickLine)
 	PARAM_FLOAT(thickness);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	self->Drawer->AddThickLine(x0, y0, x1, y1, thickness, color, alpha);
+	self->Drawer.AddThickLine(x0, y0, x1, y1, thickness, color, alpha);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1688,7 +1697,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, Clear)
 	PARAM_INT(y2);
 	PARAM_INT(color);
 	PARAM_INT(palcol);
-	ClearRect(self->Drawer.get(), x1, y1, x2, y2, palcol, color);
+	ClearRect(&self->Drawer, x1, y1, x2, y2, palcol, color);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1766,7 +1776,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, Dim)
 	PARAM_INT(w);
 	PARAM_INT(h);
 	PARAM_INT(style);
-	Dim(self->Drawer.get(), color, float(amount), x1, y1, w, h, &LegacyRenderStyles[style]);
+	Dim(&self->Drawer, color, float(amount), x1, y1, w, h, &LegacyRenderStyles[style]);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1835,7 +1846,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawLineFrame)
 	PARAM_INT(width);
 	PARAM_INT(height);
 	PARAM_INT(thickness);
-	DrawFrame(self->Drawer.get(), color, left, top, width, height, thickness);
+	DrawFrame(&self->Drawer, color, left, top, width, height, thickness);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1859,7 +1871,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, SetOffset)
 	PARAM_SELF_PROLOGUE(FCanvas);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	ACTION_RETURN_VEC2(self->Drawer->SetOffset(DVector2(x, y)));
+	ACTION_RETURN_VEC2(self->Drawer.SetOffset(DVector2(x, y)));
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, EnableStencil)
@@ -1878,7 +1890,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, EnableStencil)
 	PARAM_SELF_PROLOGUE(FCanvas);
 	PARAM_BOOL(on);
 
-	self->Drawer->AddEnableStencil(on);
+	self->Drawer.AddEnableStencil(on);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1902,7 +1915,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, SetStencil)
 	PARAM_INT(op);
 	PARAM_INT(flags);
 
-	self->Drawer->AddSetStencil(offs, op, flags);
+	self->Drawer.AddSetStencil(offs, op, flags);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1920,7 +1934,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, ClearStencil)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
 
-	self->Drawer->AddClearStencil();
+	self->Drawer.AddClearStencil();
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -1941,7 +1956,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, SetTransform)
 	PARAM_SELF_PROLOGUE(FCanvas);
 	PARAM_OBJECT_NOT_NULL(transform, DShape2DTransform);
 
-	self->Drawer->SetTransform(*transform);
+	self->Drawer.SetTransform(*transform);
+	self->Tex->NeedUpdate();
 
 	return 0;
 }
@@ -1960,7 +1976,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, ClearTransform)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
 
-	self->Drawer->ClearTransform();
+	self->Drawer.ClearTransform();
+	self->Tex->NeedUpdate();
 	return 0;
 }
 

@@ -325,6 +325,10 @@ void FTextureAnimator::InitAnimDefs ()
 			{
 				ParseWarp(sc);
 			}
+			else if (sc.Compare("canvastexture"))
+			{
+				ParseCanvasTexture(sc);
+			}
 			else if (sc.Compare ("cameratexture"))
 			{
 				ParseCameraTexture(sc);
@@ -681,6 +685,21 @@ void FTextureAnimator::ParseWarp(FScanner &sc)
 			}
 		}
 	}
+}
+
+
+//==========================================================================
+//
+// ParseCameraTexture
+//
+// Parses a canvas texture definition
+//
+//==========================================================================
+
+void FTextureAnimator::ParseCanvasTexture(FScanner& sc)
+{
+	// This is currently identical to camera textures.
+	ParseCameraTexture(sc);
 }
 
 //==========================================================================

@@ -69,6 +69,7 @@ class FTextureAnimator
 	FAnimDef* ParseRangeAnim(FScanner& sc, FTextureID picnum, ETextureType usetype, bool missing);
 	void ParsePicAnim(FScanner& sc, FTextureID picnum, ETextureType usetype, bool missing, TArray<FAnimDef::FAnimFrame>& frames);
 	void ParseWarp(FScanner& sc);
+	void ParseCanvasTexture(FScanner& sc);
 	void ParseCameraTexture(FScanner& sc);
 	FTextureID ParseFramenum(FScanner& sc, FTextureID basepicnum, ETextureType usetype, bool allowMissing);
 	void ParseTime(FScanner& sc, uint32_t& min, uint32_t& max);

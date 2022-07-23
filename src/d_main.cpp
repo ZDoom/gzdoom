@@ -2926,6 +2926,7 @@ static void Doom_CastSpriteIDToString(FString* a, unsigned int b)
 
 
 extern DThinker* NextToThink;
+extern TArray<FCanvas*> AllCanvases;
 
 static void GC_MarkGameRoots()
 {
@@ -2933,6 +2934,8 @@ static void GC_MarkGameRoots()
 	GC::Mark(staticEventManager.LastEventHandler);
 	for (auto Level : AllLevels())
 		Level->Mark();
+	for (auto canvas : AllCanvases)
+		GC::Mark(canvas);
 
 	// Mark players.
 	for (int i = 0; i < MAXPLAYERS; i++)

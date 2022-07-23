@@ -247,7 +247,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawChar)
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
 	VMVa_List args = { param + 6, 0, numparam - 7, va_reginfo + 6 };
-	DrawChar(self->Drawer.get(), font, cr, x, y, chr, args);
+	DrawChar(&self->Drawer, font, cr, x, y, chr, args);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 
@@ -450,7 +451,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawText)
 
 	VMVa_List args = { param + 6, 0, numparam - 7, va_reginfo + 6 };
 	const char *txt = chr[0] == '$' ? GStrings(&chr[1]) : chr.GetChars();
-	DrawText(self->Drawer.get(), font, cr, x, y, txt, args);
+	DrawText(&self->Drawer, font, cr, x, y, txt, args);
+	self->Tex->NeedUpdate();
 	return 0;
 }
 

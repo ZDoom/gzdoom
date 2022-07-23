@@ -102,15 +102,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraTextureAspectRatio, SetCameraTex
 	return 0;
 }
 
-void SetCanvasToTexture(FCanvas* canvas, const FString& texturename);
+FCanvas* GetTextureCanvas(const FString& texturename);
 
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCanvasToTexture, SetCanvasToTexture)
+DEFINE_ACTION_FUNCTION(_TexMan, GetCanvas)
 {
 	PARAM_PROLOGUE;
-	PARAM_OBJECT(canvas, FCanvas);
 	PARAM_STRING(texturename);
-	SetCanvasToTexture(canvas, texturename);
-	return 0;
+	FCanvas* canvas = GetTextureCanvas(texturename);
+	if (numret > 0) ret[0].SetPointer(canvas);
+	return numret;
 }
 
 //=====================================================================================

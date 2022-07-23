@@ -41,6 +41,7 @@
 #include "v_palette.h"
 #include "d_main.h"
 #include "g_cvars.h"
+#include "v_draw.h"
 
 #include "hw_lightbuffer.h"
 #include "hw_cvars.h"
@@ -350,6 +351,21 @@ sector_t* RenderView(player_t* player)
 		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
 		if (player->camera)
 			CheckTimer(*RenderState, player->camera->Level->ShaderStartTime);
+
+		// Draw all canvases that changed
+		for (FCanvas* canvas : AllCanvases)
+		{
+			if (canvas->Tex->CheckNeedsUpdate())
+			{
+				screen->RenderTextureView(canvas->Tex, [=](IntRect& bounds)
+					{
+						Draw2D(&canvas->Drawer, *screen->RenderState());
+						canvas->Drawer.Clear();
+					});
+				canvas->Tex->SetUpdated(true);
+			}
+		}
+
 		// prepare all camera textures that have been used in the last frame.
 		// This must be done for all levels, not just the primary one!
 		for (auto Level : AllLevels())

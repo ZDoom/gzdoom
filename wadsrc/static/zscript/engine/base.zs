@@ -502,7 +502,7 @@ class Shape2D : Object native
 	native void PushTriangle( int a, int b, int c );
 }
 
-class Canvas : Object native
+class Canvas : Object native abstract
 {
 	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
 	native void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);

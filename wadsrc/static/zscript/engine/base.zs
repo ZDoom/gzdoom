@@ -519,7 +519,6 @@ class Canvas : Object native
 	native void SetClipRect(int x, int y, int w, int h);
 	native void ClearClipRect();
 	native int, int, int, int GetClipRect();
-	native int, int, int, int GetViewWindow();
 	native double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
 	native Vector2 SetOffset(double x, double y);
 	native void ClearScreen(color col = 0);

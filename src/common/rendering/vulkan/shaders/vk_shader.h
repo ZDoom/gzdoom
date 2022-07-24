@@ -9,7 +9,7 @@
 #include "hw_renderstate.h"
 #include <list>
 
-#define SHADER_MIN_REQUIRED_TEXTURE_LAYERS 8
+#define SHADER_MIN_REQUIRED_TEXTURE_LAYERS 11
 
 class VulkanFrameBuffer;
 class VulkanDevice;

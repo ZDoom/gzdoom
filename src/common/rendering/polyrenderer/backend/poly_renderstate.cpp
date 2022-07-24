@@ -258,6 +258,9 @@ void PolyRenderState::Apply()
 
 	ApplyMaterial();
 
+	if (!mVertexBuffer)
+		SetVertexBuffer(screen->mVertexData);
+
 	if (mVertexBuffer)
 	{
 		mDrawCommands->SetVertexBuffer(mVertexBuffer->Memory(), mVertexOffsets[0], mVertexOffsets[1]); // [GEC] Add offset params

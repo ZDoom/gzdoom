@@ -390,6 +390,9 @@ void InitModels()
 		smf.skinIDs[0] = md->GetPaletteTexture();
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
+		if (VoxelDefs[i]->PitchFromMomentum) smf.flags |= MDL_PITCHFROMMOMENTUM;
+		if (VoxelDefs[i]->UseActorPitch) smf.flags |= MDL_USEACTORPITCH;
+		if (VoxelDefs[i]->UseActorRoll) smf.flags |= MDL_USEACTORROLL;
 		if (VoxelDefs[i]->PlacedSpin != 0)
 		{
 			smf.yrotate = 1.f;

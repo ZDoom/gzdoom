@@ -51,13 +51,18 @@
 
 CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE) 
 
-void Draw2D(F2DDrawer *drawer, FRenderState &state)
+void Draw2D(F2DDrawer* drawer, FRenderState& state)
+{
+	const auto& mScreenViewport = screen->mScreenViewport;
+	Draw2D(drawer, state, mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+}
+
+void Draw2D(F2DDrawer* drawer, FRenderState& state, int x, int y, int width, int height)
 {
 	twoD.Clock();
 
-	const auto &mScreenViewport = screen->mScreenViewport;
-	state.SetViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-	screen->mViewpoints->Set2D(state, twod->GetWidth(), twod->GetHeight());
+	state.SetViewport(x, y, width, height);
+	screen->mViewpoints->Set2D(state, drawer->GetWidth(), drawer->GetHeight());
 
 	state.EnableStencil(false);
 	state.SetStencil(0, SOP_Keep, SF_AllOn);

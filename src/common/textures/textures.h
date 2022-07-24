@@ -304,6 +304,7 @@ public:
 };
 
 class FCanvas;
+extern TArray<FCanvas*> AllCanvases;
 
 // A texture that can be drawn to.
 
@@ -317,6 +318,15 @@ public:
 
 		bHasCanvas = true;
 		aspectRatio = (float)width / height;
+	}
+
+	~FCanvasTexture()
+	{
+		if (Canvas)
+		{
+			AllCanvases.Delete(AllCanvases.Find(Canvas));
+			Canvas = nullptr;
+		}
 	}
 
 	void NeedUpdate() { bNeedsUpdate = true; }

@@ -359,7 +359,7 @@ sector_t* RenderView(player_t* player)
 			{
 				screen->RenderTextureView(canvas->Tex, [=](IntRect& bounds)
 					{
-						Draw2D(&canvas->Drawer, *screen->RenderState());
+						Draw2D(&canvas->Drawer, *screen->RenderState(), 0, 0, canvas->Tex->GetWidth(), canvas->Tex->GetHeight());
 						canvas->Drawer.Clear();
 					});
 				canvas->Tex->SetUpdated(true);

@@ -1,6 +1,6 @@
 # Welcome to GZDoom!
 
-[![Continuous Integration](https://github.com/ZDoom-Official/gzdoom/actions/workflows/continuous_integration.yml/badge.svg)](https://github.com/ZDoom-Official/gzdoom/actions/workflows/continuous_integration.yml)
+[![Continuous Integration](https://github.com/ZDoom/gzdoom/actions/workflows/continuous_integration.yml/badge.svg)](https://github.com/ZDoom/gzdoom/actions/workflows/continuous_integration.yml)
 
 ## GZDoom is a modder-friendly OpenGL and Vulkan source port based on the DOOM engine
 

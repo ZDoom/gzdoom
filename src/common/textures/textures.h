@@ -44,7 +44,6 @@
 #include "hw_texcontainer.h"
 #include "floatrect.h"
 #include "refcounted.h"
-#include <memory>
 
 typedef TMap<int, bool> SpriteHits;
 class FImageSource;

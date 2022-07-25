@@ -102,17 +102,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraTextureAspectRatio, SetCameraTex
 	return 0;
 }
 
-FCanvas* GetTextureCanvas(const FString& texturename);
-
-DEFINE_ACTION_FUNCTION(_TexMan, GetCanvas)
-{
-	PARAM_PROLOGUE;
-	PARAM_STRING(texturename);
-	FCanvas* canvas = GetTextureCanvas(texturename);
-	if (numret > 0) ret[0].SetPointer(canvas);
-	return numret;
-}
-
 //=====================================================================================
 //
 // sector_t exports

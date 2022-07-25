@@ -41,6 +41,7 @@
 #include "v_draw.h"
 #include "v_video.h"
 #include "fcolormap.h"
+#include "texturemanager.h"
 
 static F2DDrawer drawer = F2DDrawer();
 F2DDrawer* twod = &drawer;
@@ -1227,4 +1228,49 @@ F2DVertexBuffer::F2DVertexBuffer()
 		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(F2DDrawer::TwoDVertex, color0) }
 	};
 	mVertexBuffer->SetFormat(1, 3, sizeof(F2DDrawer::TwoDVertex), format);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+TArray<FCanvas*> AllCanvases;
+
+class InitTextureCanvasGC
+{
+public:
+	InitTextureCanvasGC()
+	{
+		GC::AddMarkerFunc([]() {
+			for (auto canvas : AllCanvases)
+				GC::Mark(canvas);
+			});
+	}
+};
+
+FCanvas* GetTextureCanvas(const FString& texturename)
+{
+	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	if (textureid.isValid())
+	{
+		// Only proceed if the texture is a canvas texture.
+		auto tex = TexMan.GetGameTexture(textureid);
+		if (tex && tex->GetTexture()->isCanvas())
+		{
+			FCanvasTexture* canvasTex = static_cast<FCanvasTexture*>(tex->GetTexture());
+			if (!canvasTex->Canvas)
+			{
+				static InitTextureCanvasGC initCanvasGC; // Does the common code have a natural init function this could be moved to?
+
+				canvasTex->Canvas = Create<FCanvas>();
+				canvasTex->Canvas->Tex = canvasTex;
+				canvasTex->Canvas->Drawer.SetSize(tex->GetTexelWidth(), tex->GetTexelHeight());
+				AllCanvases.Push(canvasTex->Canvas);
+			}
+			return canvasTex->Canvas;
+		}
+	}
+	return nullptr;
 }

@@ -24,5 +24,3 @@ struct FCanvasTextureInfo
 	void Mark();
 	
 };
-
-extern TArray<FCanvas*> AllCanvases;

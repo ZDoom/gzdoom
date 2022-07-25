@@ -552,6 +552,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, UseGamePalette, UseGamePalette)
 	ACTION_RETURN_INT(UseGamePalette(texid));
 }
 
+FCanvas* GetTextureCanvas(const FString& texturename);
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetCanvas)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(texturename);
+	ACTION_RETURN_POINTER(GetTextureCanvas(texturename));
+}
+
 //=====================================================================================
 //
 // FFont exports

@@ -280,7 +280,8 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	//[SM] - if we added any models for the frame to also render, then we also need to update modelsAmount for this smf
 	if (actor->modelData != nullptr)
 	{
-		modelsamount = actor->modelData->modelIDs.Size();
+		if (actor->modelData->modelIDs.Size() > modelsamount)
+			modelsamount = actor->modelData->modelIDs.Size();
 	}
 
 	TArray<FTextureID> surfaceskinids;
@@ -293,10 +294,10 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		FTextureID skinid; skinid.SetInvalid();
 
 		surfaceskinids.Clear();
-		bool surfaceskinsswapped = false;
 		if (actor->modelData != nullptr)
 		{
-			modelid = actor->modelData->modelIDs[i];
+			if (i < (int)actor->modelData->modelIDs.Size())
+				modelid = actor->modelData->modelIDs[i];
 
 			if (i < (int)actor->modelData->modelFrameGenerators.Size())
 			{

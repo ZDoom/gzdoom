@@ -309,8 +309,9 @@ void FUE1Model::AddSkins( uint8_t *hitlist, const FTextureID* surfaceskinids)
 {
 	for (int i = 0; i < numGroups; i++)
 	{
-		if (surfaceskinids && surfaceskinids[i].isValid())
-			hitlist[surfaceskinids[i].GetIndex()] |= FTextureManager::HIT_Flat;
+		int ssIndex = groups[i].texNum;
+		if (surfaceskinids && surfaceskinids[ssIndex].isValid())
+			hitlist[surfaceskinids[ssIndex].GetIndex()] |= FTextureManager::HIT_Flat;
 	}
 }
 

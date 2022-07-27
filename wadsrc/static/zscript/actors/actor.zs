@@ -1146,7 +1146,7 @@ class Actor : Thinker native
 	native void A_RaiseSiblings(int flags = 0);
 	native bool A_RaiseSelf(int flags = 0);
 	native bool RaiseActor(Actor other, int flags = 0);
-	native bool CanRaise();
+	native bool CanRaise(int flags = 0);
 	native void Revive();
 	native void A_Weave(int xspeed, int yspeed, double xdist, double ydist);
 

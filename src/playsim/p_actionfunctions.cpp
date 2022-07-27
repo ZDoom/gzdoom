@@ -2755,7 +2755,8 @@ DEFINE_ACTION_FUNCTION(AActor, RaiseActor)
 DEFINE_ACTION_FUNCTION(AActor, CanRaise)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_BOOL(P_Thing_CanRaise(self));
+	PARAM_INT(flags);
+	ACTION_RETURN_BOOL(P_Thing_CanRaise(self, flags));
 }
 
 //===========================================================================

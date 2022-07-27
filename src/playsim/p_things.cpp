@@ -493,14 +493,17 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int flags)
 	return true;
 }
 
-bool P_Thing_CanRaise(AActor *thing)
+bool P_Thing_CanRaise(AActor *thing, int flags)
 {
 	FState * RaiseState = thing->GetRaiseState();
 	if (RaiseState == NULL)
 	{
 		return false;
 	}
-	
+
+	if (flags & RF_NOCHECKPOSITION)
+		return true;
+
 	AActor *info = thing->GetDefault();
 
 	// Check against real height and radius

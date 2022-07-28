@@ -85,6 +85,24 @@ void I_SetIWADInfo()
 {
 }
 
+static bool I_KDialogAvailable()
+{
+	// Is KDE running?
+	const char* str = getenv("KDE_FULL_SESSION");
+	if (str && strcmp(str, "true") == 0)
+	{
+		// Is kdialog available?
+		FILE* f = popen("which kdialog >/dev/null 2>&1", "r");
+		if (f != NULL)
+		{
+			int status = pclose(f);
+			return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+		}
+	}
+
+	return false;
+}
+
 //
 // I_Error
 //
@@ -99,8 +117,7 @@ void Unix_I_FatalError(const char* errortext)
 	// Close window or exit fullscreen and release mouse capture
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
-	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if(I_KDialogAvailable())
 	{
 		FString cmd;
 		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
@@ -294,8 +311,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	}
 
 #ifndef __APPLE__
-	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if(I_KDialogAvailable())
 	{
 		FString cmd("kdialog --title \"" GAMENAME " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""

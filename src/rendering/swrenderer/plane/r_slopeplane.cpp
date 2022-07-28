@@ -205,22 +205,5 @@ namespace swrenderer
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
 		drawerargs.DrawTiltedSpan(Thread, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, lightlevel, foggy, planelightfloat, pviewx, pviewy, basecolormap);
-
-		if (r_modelscene)
-		{
-			double viewZ = 1.0;
-			double viewX1 = Thread->Viewport->ScreenToViewX(x1, viewZ);
-			double viewX2 = Thread->Viewport->ScreenToViewX(x2 + 1, viewZ);
-			double viewY = Thread->Viewport->ScreenToViewY(y, viewZ);
-
-			// Find depth values for the span
-			float zbufferdepth1 = (float)(-planeD / (planeNormal | DVector3(viewX1, viewZ, viewY)));
-			float zbufferdepth2 = (float)(-planeD / (planeNormal | DVector3(viewX2, viewZ, viewY)));
-
-			drawerargs.SetDestX1(x1);
-			drawerargs.SetDestX2(x2);
-			drawerargs.SetDestY(Thread->Viewport.get(), y);
-			drawerargs.DrawDepthSpan(Thread, 1.0f / zbufferdepth1, 1.0f / zbufferdepth2);
-		}
 	}
 }

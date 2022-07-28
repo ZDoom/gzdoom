@@ -46,7 +46,6 @@
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/things/r_voxel.h"
 #include "swrenderer/things/r_particle.h"
-#include "swrenderer/things/r_model.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_farclip_line.h"
@@ -932,13 +931,7 @@ namespace swrenderer
 				ThingSprite sprite;
 				int spritenum = thing->sprite;
 				bool isPicnumOverride = thing->picnum.isValid();
-				FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
-				if (r_modelscene && modelframe && (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared() < model_distance_cull)
-				{
-					DVector3 pos = thing->InterpolatedPosition(Thread->Viewport->viewpoint.TicFrac);
-					RenderModel::Project(Thread, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
-				}
-				else if (GetThingSprite(thing, sprite))
+				if (GetThingSprite(thing, sprite))
 				{
 					int thinglightlevel;
 					if (sec->sectornum != thing->Sector->sectornum)	// compare sectornums to account for R_FakeFlat copies.

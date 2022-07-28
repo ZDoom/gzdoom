@@ -94,10 +94,6 @@ namespace swrenderer
 		virtual void DrawFogBoundaryLine(const SpanDrawerArgs &args) = 0;
 		virtual void DrawParticleColumn(int x, int yl, int ycount, uint32_t fg, uint32_t alpha, uint32_t fracposx) = 0;
 
-		void DrawDepthColumn(const WallColumnDrawerArgs& args, float idepth);
-		void DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth);
-		void DrawDepthSpan(const SpanDrawerArgs &args, float idepth1, float idepth2);
-
 		void SetLights(WallColumnDrawerArgs& drawerargs, int x, int y1, const WallDrawerArgs& wallargs);
 
 		RenderThread* thread = nullptr;

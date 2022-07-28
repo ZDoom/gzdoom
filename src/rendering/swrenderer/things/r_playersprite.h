@@ -97,6 +97,5 @@ namespace swrenderer
 
 		TArray<HWAccelPlayerSprite> AcceleratedSprites;
 		sector_t tempsec;
-		bool renderHUDModel = false;
 	};
 }

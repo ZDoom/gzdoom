@@ -27,9 +27,7 @@
 #include "v_video.h"
 #include "r_thread.h"
 #include "r_memory.h"
-#include "poly_thread.h"
 #include "printf.h"
-#include "polyrenderer/drawers/poly_triangle.h"
 #include <chrono>
 
 CVAR(Int, r_multithreaded, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -130,11 +128,6 @@ void DrawerThreads::WorkerMain(DrawerThread *thread)
 		thread->current_queue++;
 		thread->numa_start_y = thread->numa_node * screen->GetHeight() / thread->num_numa_nodes;
 		thread->numa_end_y = (thread->numa_node + 1) * screen->GetHeight() / thread->num_numa_nodes;
-		if (thread->poly)
-		{
-			thread->poly->numa_start_y = thread->numa_start_y;
-			thread->poly->numa_end_y = thread->numa_end_y;
-		}
 		start_lock.unlock();
 
 		// Do the work:

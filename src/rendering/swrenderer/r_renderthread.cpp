@@ -53,7 +53,6 @@
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "r_memory.h"
-#include "common/rendering/polyrenderer/drawers/poly_thread.h"
 
 std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
 
@@ -75,7 +74,6 @@ namespace swrenderer
 		PlaneList.reset(new VisiblePlaneList(this));
 		DrawSegments.reset(new DrawSegmentList(this));
 		ClipSegments.reset(new RenderClipSegment());
-		Poly.reset(new PolyTriangleThreadData(0, 1, 0, 1, 0, screen->GetHeight()));
 		tc_drawers.reset(new SWTruecolorDrawers(this));
 		pal_drawers.reset(new SWPalDrawers(this));
 	}

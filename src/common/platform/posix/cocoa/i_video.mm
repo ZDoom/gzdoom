@@ -60,9 +60,6 @@
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
 #endif
-#ifdef HAVE_SOFTPOLY
-#include "poly_framebuffer.h"
-#endif
 
 extern bool ToggleFullscreen;
 
@@ -101,7 +98,6 @@ extern bool ToggleFullscreen;
 EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
-EXTERN_CVAR(Int,  vid_preferbackend)
 EXTERN_CVAR(Bool, vk_debug)
 
 CVAR(Bool, mvk_debug, false, 0)
@@ -376,7 +372,7 @@ class CocoaVideo : public IVideo
 public:
 	CocoaVideo()
 	{
-		ms_isVulkanEnabled = vid_preferbackend == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
+		ms_isVulkanEnabled = V_GetBackend() == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
 	}
 
 	~CocoaVideo()
@@ -450,23 +446,12 @@ public:
 		else
 #endif
 
-#ifdef HAVE_SOFTPOLY
-		if (vid_preferbackend == 2)
-		{
-			SetupOpenGLView(ms_window, OpenGLProfile::Legacy);
-
-			fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
-		}
-		else
-#endif
-		{
-			SetupOpenGLView(ms_window, OpenGLProfile::Core);
-		}
+		SetupOpenGLView(ms_window, OpenGLProfile::Core);
 
 		if (fb == nullptr)
 		{
 #ifdef HAVE_GLES2
-			if( (Args->CheckParm ("-gles2_renderer")) || (vid_preferbackend == 3) )
+			if(V_GetBackend() == 2)
 				fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 			else
 #endif

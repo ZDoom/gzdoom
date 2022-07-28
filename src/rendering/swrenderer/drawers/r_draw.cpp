@@ -53,7 +53,6 @@
 #include "r_thread.h"
 #include "swrenderer/scene/r_light.h"
 #include "playsim/a_dynlight.h"
-#include "polyrenderer/drawers/poly_thread.h"
 
 CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, r_fuzzscale, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -221,44 +220,6 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void SWPixelFormatDrawers::DrawDepthColumn(const WallColumnDrawerArgs& args, float idepth)
-	{
-		int x, y, count;
-
-		auto rendertarget = args.Viewport()->RenderTarget;
-		if (rendertarget->IsBgra())
-		{
-			uint32_t* destorg = (uint32_t*)rendertarget->GetPixels();
-			destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
-			uint32_t* dest = (uint32_t*)args.Dest();
-			int offset = (int)(ptrdiff_t)(dest - destorg);
-			x = offset % rendertarget->GetPitch();
-			y = offset / rendertarget->GetPitch();
-		}
-		else
-		{
-			uint8_t* destorg = rendertarget->GetPixels();
-			destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
-			uint8_t* dest = (uint8_t*)args.Dest();
-			int offset = (int)(ptrdiff_t)(dest - destorg);
-			x = offset % rendertarget->GetPitch();
-			y = offset / rendertarget->GetPitch();
-		}
-		count = args.Count();
-
-		auto zbuffer = thread->Poly->depthstencil;
-		int pitch = zbuffer->Width();
-		float* values = zbuffer->DepthValues() + y * pitch + x;
-		int cnt = count;
-
-		float depth = idepth;
-		for (int i = 0; i < cnt; i++)
-		{
-			*values = depth;
-			values += pitch;
-		}
-	}
-
 	void SWPixelFormatDrawers::SetLights(WallColumnDrawerArgs& drawerargs, int x, int y1, const WallDrawerArgs& wallargs)
 	{
 		bool mirror = !!(wallargs.PortalMirrorFlags & RF_XFLIP);
@@ -323,76 +284,4 @@ namespace swrenderer
 		}
 	}
 
-	/////////////////////////////////////////////////////////////////////////
-
-	void SWPixelFormatDrawers::DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth)
-	{
-		int x, y, count;
-		auto rendertarget = args.Viewport()->RenderTarget;
-		if (rendertarget->IsBgra())
-		{
-			uint32_t* destorg = (uint32_t*)rendertarget->GetPixels();
-			destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
-			uint32_t* dest = (uint32_t*)args.Dest();
-			int offset = (int)(ptrdiff_t)(dest - destorg);
-			x = offset % rendertarget->GetPitch();
-			y = offset / rendertarget->GetPitch();
-		}
-		else
-		{
-			uint8_t* destorg = rendertarget->GetPixels();
-			destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
-			uint8_t* dest = (uint8_t*)args.Dest();
-			int offset = (int)(ptrdiff_t)(dest - destorg);
-			x = offset % rendertarget->GetPitch();
-			y = offset / rendertarget->GetPitch();
-		}
-		count = args.Count();
-
-		auto zbuffer = thread->Poly->depthstencil;
-		int pitch = zbuffer->Width();
-		float* values = zbuffer->DepthValues() + y * pitch + x;
-		int cnt = count;
-
-		float depth = idepth;
-		for (int i = 0; i < cnt; i++)
-		{
-			*values = depth;
-			values += pitch;
-		}
-	}
-
-	void SWPixelFormatDrawers::DrawDepthSpan(const SpanDrawerArgs &args, float idepth1, float idepth2)
-	{
-		int y = args.DestY();
-		int x1 = args.DestX1();
-		int x2 = args.DestX2();
-
-		auto zbuffer = thread->Poly->depthstencil;
-		int pitch = zbuffer->Width();
-		float *values = zbuffer->DepthValues() + x1 + y * pitch;
-
-		int count = x2 - x1 + 1;
-
-		if (idepth1 == idepth2)
-		{
-			float depth = idepth1;
-			for (int i = 0; i < count; i++)
-			{
-				*values = depth;
-				values++;
-			}
-		}
-		else
-		{
-			float depth = idepth1;
-			float step = (idepth2 - idepth1) / (x2 - x1 + 1);
-			for (int i = 0; i < count; i++)
-			{
-				*values = depth;
-				values++;
-				depth += step;
-			}
-		}
-	}
 }

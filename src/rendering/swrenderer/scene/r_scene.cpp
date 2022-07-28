@@ -65,8 +65,6 @@ EXTERN_CVAR(Int, r_debug_draw)
 CVAR(Int, r_scene_multithreaded, 1, 0);
 CVAR(Bool, r_models, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
-bool r_modelscene = false;
-
 namespace swrenderer
 {
 	cycle_t WallCycles, PlaneCycles, MaskedCycles;
@@ -99,18 +97,6 @@ namespace swrenderer
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(player->camera->Level, MainThread(), width, height, trueratio);
-
-		/*r_modelscene = r_models && Models.Size() > 0;
-		if (r_modelscene)
-		{
-			if (!DepthStencil || DepthStencil->Width() != viewport->RenderTarget->GetWidth() || DepthStencil->Height() != viewport->RenderTarget->GetHeight())
-			{
-				DepthStencil.reset();
-				DepthStencil.reset(new PolyDepthStencil(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight()));
-			}
-			PolyTriangleDrawer::SetViewport(MainThread()->DrawQueue, 0, 0, viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), viewport->RenderTarget, DepthStencil.get());
-			PolyTriangleDrawer::ClearStencil(MainThread()->DrawQueue, 0);
-		}*/
 
 		if (r_clearbuffer != 0 || r_debug_draw != 0)
 		{
@@ -158,9 +144,6 @@ namespace swrenderer
 
 		R_UpdateFuzzPosFrameStart();
 
-		if (r_modelscene)
-			MainThread()->Viewport->SetupPolyViewport(MainThread());
-
 		FRenderViewpoint origviewpoint = MainThread()->Viewport->viewpoint;
 
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
@@ -174,8 +157,6 @@ namespace swrenderer
 
 		// Mirrors fail to restore the original viewpoint -- we need it for the HUD weapon to draw correctly.
 		MainThread()->Viewport->viewpoint = origviewpoint;
-		if (r_modelscene)
-			MainThread()->Viewport->SetupPolyViewport(MainThread());
 
 		if (renderPlayerSprites)
 			RenderPSprites();
@@ -258,12 +239,6 @@ namespace swrenderer
 		thread->OpaquePass->ClearClip();
 		thread->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
 		thread->Portal->SetMainPortal();
-
-		/*if (r_modelscene && thread->MainThread)
-			PolyTriangleDrawer::ClearStencil(MainThread()->DrawQueue, 0);
-
-		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget, DepthStencil.get());
-		PolyTriangleDrawer::SetScissor(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight);*/
 
 		// Cull things outside the range seen by this thread
 		VisibleSegmentRenderer visitor;
@@ -388,14 +363,6 @@ namespace swrenderer
 		viewwindowy = y;
 		viewactive = true;
 		viewport->SetViewport(actor->Level, MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
-		if (r_modelscene)
-		{
-			if (!DepthStencil || DepthStencil->Width() != viewport->RenderTarget->GetWidth() || DepthStencil->Height() != viewport->RenderTarget->GetHeight())
-			{
-				DepthStencil.reset();
-				DepthStencil.reset(new PolyDepthStencil(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight()));
-			}
-		}
 
 		// Render:
 		RenderActorView(actor, false, dontmaplines);

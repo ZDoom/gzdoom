@@ -117,11 +117,16 @@ int HWViewpointBuffer::SetViewpoint(FRenderState &di, HWViewpointUniforms *vp)
 
 void HWViewpointBuffer::Clear()
 {
+	bool needNewPipeline = mUploadIndex > 0; // Clear might be called multiple times before any actual rendering
+
 	mUploadIndex = 0;
 	mClipPlaneInfo.Clear();
 
-	mPipelinePos++;
-	mPipelinePos %= mPipelineNbr;
+	if (needNewPipeline)
+	{
+		mPipelinePos++;
+		mPipelinePos %= mPipelineNbr;
+	}
 
 	mBuffer = mBufferPipeline[mPipelinePos];
 }

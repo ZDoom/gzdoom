@@ -285,7 +285,7 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 		RenderState.SetNoSoftLightLevel();
 
 		TArray<uint8_t> scr(width * height * 3, true);
-		screen->CopyScreenToBuffer(width, height, scr);
+		screen->CopyScreenToBuffer(width, height, scr.Data());
 
 		DoWriteSavePic(file, SS_RGB, scr.Data(), width, height, viewsector, screen->FlipSavePic());
 

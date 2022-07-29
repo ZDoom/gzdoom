@@ -334,6 +334,7 @@ void PType::StaticInit()
 	TypeVector2->moveOp = OP_MOVEV2;
 	TypeVector2->RegType = REGT_FLOAT;
 	TypeVector2->RegCount = 2;
+	TypeVector2->isOrdered = true;
 
 	TypeVector3 = new PStruct(NAME_Vector3, nullptr);
 	TypeVector3->AddField(NAME_X, TypeFloat64);
@@ -347,6 +348,7 @@ void PType::StaticInit()
 	TypeVector3->moveOp = OP_MOVEV3;
 	TypeVector3->RegType = REGT_FLOAT;
 	TypeVector3->RegCount = 3;
+	TypeVector3->isOrdered = true;
 
 
 	TypeFVector2 = new PStruct(NAME_FVector2, nullptr);
@@ -358,6 +360,7 @@ void PType::StaticInit()
 	TypeFVector2->moveOp = OP_MOVEV2;
 	TypeFVector2->RegType = REGT_FLOAT;
 	TypeFVector2->RegCount = 2;
+	TypeFVector2->isOrdered = true;
 
 	TypeFVector3 = new PStruct(NAME_FVector3, nullptr);
 	TypeFVector3->AddField(NAME_X, TypeFloat32);
@@ -371,6 +374,7 @@ void PType::StaticInit()
 	TypeFVector3->moveOp = OP_MOVEV3;
 	TypeFVector3->RegType = REGT_FLOAT;
 	TypeFVector3->RegCount = 3;
+	TypeFVector3->isOrdered = true;
 
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_sByte, TypeSInt8));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Byte, TypeUInt8));

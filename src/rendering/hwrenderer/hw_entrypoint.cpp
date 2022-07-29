@@ -284,12 +284,10 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 		RenderState.EnableStencil(false);
 		RenderState.SetNoSoftLightLevel();
 
-		int numpixels = width * height;
-		uint8_t* scr = (uint8_t*)M_Malloc(numpixels * 3);
+		TArray<uint8_t> scr(width * height * 3, true);
 		screen->CopyScreenToBuffer(width, height, scr);
 
-		DoWriteSavePic(file, SS_RGB, scr, width, height, viewsector, screen->FlipSavePic());
-		M_Free(scr);
+		DoWriteSavePic(file, SS_RGB, scr.Data(), width, height, viewsector, screen->FlipSavePic());
 
 		// Switch back the screen render buffers
 		screen->SetViewportRects(nullptr);

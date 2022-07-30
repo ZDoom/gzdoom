@@ -30,6 +30,8 @@
 	#include "glad/glad.h"
 
 // Below are used extensions for GLES
+
+// Used for mapped buffer
 typedef void* (APIENTRYP PFNGLMAPBUFFERRANGEEXTPROC)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
 GLAPI PFNGLMAPBUFFERRANGEEXTPROC glMapBufferRange;
 
@@ -45,6 +47,14 @@ GLAPI PFNGLUNMAPBUFFEROESPROC glUnmapBuffer;
 #define GL_BGRA                           0x80E1
 #define GL_DEPTH_CLAMP                    0x864F
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+
+// Used for lightmaps
+typedef void (APIENTRYP PFNGLTEXIMAGE3DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels);
+GLAPI PFNGLTEXIMAGE3DPROC glTexImage3D;
+
+#define GL_TEXTURE_2D_ARRAY               0x8C1A
+#define GL_RGB16F                         0x881B
+#define GL_HALF_FLOAT                     0x140B
 
 #else
 	#include "gl_load/gl_load.h"
@@ -74,6 +84,7 @@ namespace OpenGLESRenderer
 		bool forceGLSLv100;
 		bool depthClampAvailable;
 		bool anistropicFilterAvailable;
+		bool lighmapsAvailable;
 		int max_texturesize;
 		char* vendorstring;
 		char* modelstring;

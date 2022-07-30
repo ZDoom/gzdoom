@@ -4,6 +4,7 @@
 #include "tarray.h"
 #include "v_video.h"
 #include "printf.h"
+#include "m_argv.h"
 
 CVAR(Bool, gles_use_mapped_buffer, false, 0);
 CVAR(Bool, gles_force_glsl_v100, false, 0);
@@ -16,6 +17,7 @@ void setGlVersion(double glv);
 
 PFNGLMAPBUFFERRANGEEXTPROC glMapBufferRange = NULL;
 PFNGLUNMAPBUFFEROESPROC glUnmapBuffer = NULL;
+PFNGLTEXIMAGE3DPROC glTexImage3D = NULL;
 
 #ifdef __ANDROID__
 #include <dlfcn.h>
@@ -134,6 +136,7 @@ namespace OpenGLESRenderer
 
 		glMapBufferRange = (PFNGLMAPBUFFERRANGEEXTPROC)LoadGLES2Proc("glMapBufferRange");
 		glUnmapBuffer = (PFNGLUNMAPBUFFEROESPROC)LoadGLES2Proc("glUnmapBuffer");
+		glTexImage3D = (PFNGLTEXIMAGE3DPROC)LoadGLES2Proc("glTexImage3D");
 
 #else
 		static bool first = true;
@@ -185,12 +188,14 @@ namespace OpenGLESRenderer
 		gles.npotAvailable = CheckExtension("GL_OES_texture_npot");
 		gles.depthClampAvailable = CheckExtension("GL_EXT_depth_clamp");
 		gles.anistropicFilterAvailable = CheckExtension("GL_EXT_texture_filter_anisotropic");
+		gles.lighmapsAvailable = false; // Disable for non-desktop for now
 #else
 		gles.depthStencilAvailable = true;
 		gles.npotAvailable = true;
 		gles.useMappedBuffers = true;
 		gles.depthClampAvailable = true;
 		gles.anistropicFilterAvailable = true;
+		gles.lighmapsAvailable = Args->CheckParm("-enablelightmaps");
 #endif
 
 		gles.numlightvectors = (gles.maxlights * LIGHT_VEC4_NUM);

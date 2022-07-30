@@ -304,7 +304,7 @@ class OptionMenuItemOptionBase : OptionMenuItem
 
 		int Selection = GetSelection();
 		String text = StringTable.Localize(OptionValues.GetText(mValues, Selection));
-		if (text.Length() == 0) text = "Unknown";
+		if (text.Length() == 0) text = StringTable.Localize("$TXT_UNKNOWN");
 		drawValue(indent, y, OptionMenuSettings.mFontColorValue, text, isGrayed());
 		return indent;
 	}

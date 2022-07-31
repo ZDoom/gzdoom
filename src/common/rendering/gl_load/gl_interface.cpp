@@ -44,7 +44,8 @@
 
 static TArray<FString>  m_Extensions;
 RenderContext gl;
-static double realglversion;	// this is public so the statistics code can access it.
+static double realglversion;
+static bool bindless;
 
 //==========================================================================
 //
@@ -156,7 +157,7 @@ void gl_LoadExtensions()
 #ifdef _WIN32
 		if (strstr(gl.vendorstring, "ATI Tech"))
 		{
-			gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows. (TBD: Relegate to vintage build? Maybe after the next survey.)
+			gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows.
 		}
 #endif
 		gl.glslversion = 3.31f;	// Force GLSL down to 3.3.
@@ -201,6 +202,8 @@ void gl_LoadExtensions()
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	bindless = CheckExtension("GL_ARB_bindless_texture");
 }
 
 //==========================================================================
@@ -247,9 +250,14 @@ void gl_PrintStartupLog()
 	}
 }
 
+void setGlVersion(double glv)
+{
+	realglversion = glv;
+}
+
 std::pair<double, bool> gl_getInfo()
 {
 	// gl_ARB_bindless_texture is the closest we can get to determine Vulkan support from OpenGL.
 	// This isn't foolproof because Intel doesn't support it but for NVidia and AMD support of this extension means Vulkan support.
-	return std::make_pair(realglversion, CheckExtension("GL_ARB_bindless_texture"));
+	return std::make_pair(realglversion, bindless);
 }

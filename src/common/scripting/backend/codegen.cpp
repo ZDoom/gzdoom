@@ -2685,6 +2685,19 @@ bool FxBinary::Promote(FCompileContext &ctx, bool forceint)
 	{
 		ValueType = TypeUInt32;
 	}
+	// If one side is an unsigned 32-bit int and the other side is a signed 32-bit int, the signed side is implicitly converted to unsigned.
+	else if (!ctx.FromDecorate && left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32)
+	{
+		right = new FxIntCast(right, false, false, true);
+		right = right->Resolve(ctx);
+		ValueType = TypeUInt32;
+	}
+	else if (!ctx.FromDecorate && left->ValueType == TypeSInt32 && right->ValueType == TypeUInt32)
+	{
+		left = new FxIntCast(left, false, false, true);
+		left = left->Resolve(ctx);
+		ValueType = TypeUInt32;
+	}
 	else if (left->IsInteger() && right->IsInteger())
 	{
 		ValueType = TypeSInt32;		// Addition and subtraction forces all integer-derived types to signed int.

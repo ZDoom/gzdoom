@@ -2808,7 +2808,14 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		}
 		else if (cnst->Type->isInt())
 		{
-			return new FxConstant(cnst->IntVal, *ast);
+			if (cnst->Type == TypeUInt32)
+			{
+				return new FxConstant((unsigned)cnst->IntVal, *ast);
+			}
+			else
+			{
+				return new FxConstant(cnst->IntVal, *ast);
+			}
 		}
 		else if (cnst->Type == TypeBool)
 		{

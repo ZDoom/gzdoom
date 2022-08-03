@@ -104,8 +104,8 @@ FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
-FCompileContext::FCompileContext(PNamespace *cg, PContainerType *cls, bool fromdecorate) 
-	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1), CurGlobals(cg)
+FCompileContext::FCompileContext(PNamespace *cg, PContainerType *cls, bool fromdecorate, const VersionInfo& info) 
+	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1), CurGlobals(cg), Version(info)
 {
 }
 

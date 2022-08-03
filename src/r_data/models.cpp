@@ -280,7 +280,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	//[SM] - if we added any models for the frame to also render, then we also need to update modelsAmount for this smf
 	if (actor->modelData != nullptr)
 	{
-		if (actor->modelData->modelIDs.Size() > modelsamount)
+		if (actor->modelData->modelIDs.Size() > (unsigned)modelsamount)
 			modelsamount = actor->modelData->modelIDs.Size();
 	}
 

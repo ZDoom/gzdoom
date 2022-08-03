@@ -68,7 +68,7 @@ const char * ZCCCompiler::GetStringConst(FxExpression *ex, FCompileContext &ctx)
 
 int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PContainerType *cls)
 {
-	FCompileContext ctx(OutNamespace, cls, false);
+	FCompileContext ctx(OutNamespace, cls, false, mVersion);
 	FxExpression *ex = new FxIntCast(ConvertNode(node), false);
 	ex = ex->Resolve(ctx);
 	if (ex == nullptr) return 0;
@@ -82,7 +82,7 @@ int ZCCCompiler::IntConstFromNode(ZCC_TreeNode *node, PContainerType *cls)
 
 FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls)
 {
-	FCompileContext ctx(OutNamespace, cls, false);
+	FCompileContext ctx(OutNamespace, cls, false, mVersion);
 	FxExpression *ex = new FxStringCast(ConvertNode(node));
 	ex = ex->Resolve(ctx);
 	if (ex == nullptr) return "";
@@ -1144,7 +1144,7 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 
 bool ZCCCompiler::CompileConstant(ZCC_ConstantWork *work)
 {
-	FCompileContext ctx(OutNamespace, work->cls, false);
+	FCompileContext ctx(OutNamespace, work->cls, false, mVersion);
 	FxExpression *exp = ConvertNode(work->node->Value);
 	try
 	{
@@ -1185,7 +1185,7 @@ void ZCCCompiler::CompileArrays(ZCC_StructWork *work)
 		ConvertNodeList(values, sas->Values);
 
 		bool fail = false;
-		FCompileContext ctx(OutNamespace, work->Type(), false);
+		FCompileContext ctx(OutNamespace, work->Type(), false, mVersion);
 
 		char *destmem = (char *)ClassDataAllocator.Alloc(values.Size() * ztype->Align);
 		memset(destmem, 0, values.Size() * ztype->Align);
@@ -2014,7 +2014,7 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 		indices = std::move(fixedIndices);
 	}
 
-	FCompileContext ctx(OutNamespace, cls, false);
+	FCompileContext ctx(OutNamespace, cls, false, mVersion);
 	for (auto index : indices)
 	{
 		// There is no float->int casting here.
@@ -2347,7 +2347,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 
 
 						FxExpression *x = new FxTypeCast(ConvertNode(p->Default), type, false);
-						FCompileContext ctx(OutNamespace, c->Type(), false);
+						FCompileContext ctx(OutNamespace, c->Type(), false, mVersion);
 						x = x->Resolve(ctx);
 
 						if (x != nullptr)

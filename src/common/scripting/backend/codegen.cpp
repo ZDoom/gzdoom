@@ -2678,21 +2678,22 @@ FxBinary::~FxBinary()
 //
 //==========================================================================
 
-bool FxBinary::Promote(FCompileContext &ctx, bool forceint)
+bool FxBinary::Promote(FCompileContext &ctx, bool forceint, bool shiftop)
 {
 	// math operations of unsigned ints results in an unsigned int. (16 and 8 bit values never get here, they get promoted to regular ints elsewhere already.)
 	if (left->ValueType == TypeUInt32 && right->ValueType == TypeUInt32)
 	{
 		ValueType = TypeUInt32;
 	}
-	// If one side is an unsigned 32-bit int and the other side is a signed 32-bit int, the signed side is implicitly converted to unsigned.
-	else if (!ctx.FromDecorate && left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32 && ctx.Version >= MakeVersion(4, 9, 0))
+	// If one side is an unsigned 32-bit int and the other side is a signed 32-bit int, the signed side is implicitly converted to unsigned,
+	// unless this is a shift operator where different rules must apply.
+	else if (((!ctx.FromDecorate && left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32) || !shiftop) && ctx.Version >= MakeVersion(4, 9, 0))
 	{
 		right = new FxIntCast(right, false, false, true);
 		right = right->Resolve(ctx);
 		ValueType = TypeUInt32;
 	}
-	else if (!ctx.FromDecorate && left->ValueType == TypeSInt32 && right->ValueType == TypeUInt32 && ctx.Version >= MakeVersion(4, 9, 0))
+	else if (!ctx.FromDecorate && left->ValueType == TypeSInt32 && right->ValueType == TypeUInt32 && !shiftop && ctx.Version >= MakeVersion(4, 9, 0))
 	{
 		left = new FxIntCast(left, false, false, true);
 		left = left->Resolve(ctx);
@@ -3942,7 +3943,7 @@ FxExpression *FxShift::Resolve(FCompileContext& ctx)
 
 	if (left->IsNumeric() && right->IsNumeric())
 	{
-		if (!Promote(ctx, true)) return nullptr;
+		if (!Promote(ctx, true, true)) return nullptr;
 		if ((left->ValueType == TypeUInt32 && ctx.Version >= MakeVersion(3, 7)) && Operator == TK_RShift) Operator = TK_URShift;
 	}
 	else

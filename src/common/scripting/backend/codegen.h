@@ -910,7 +910,7 @@ public:
 
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
-	bool Promote(FCompileContext &ctx, bool forceint = false);
+	bool Promote(FCompileContext &ctx, bool forceint = false, bool shiftop = false);
 };
 
 //==========================================================================

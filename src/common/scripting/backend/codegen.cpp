@@ -3358,15 +3358,15 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 						auto val = static_cast<FxConstant*>(left)->GetValue().GetUInt();
 						if (val > INT_MAX)
 						{
-							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range unsigned constant");
+							ScriptPosition.Message(MSG_WARNING, "Comparison of signed value with out of range unsigned constant");
 						}
 					}
 					else if (right->isConstant() && !left->isConstant())
 					{
 						auto val = static_cast<FxConstant*>(right)->GetValue().GetInt();
-						if (val > INT_MAX)
+						if (val < 0)
 						{
-							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range signed constant");
+							ScriptPosition.Message(MSG_WARNING, "Comparison of unsigned value with negative constant");
 						}
 					}
 					else if (!left->isConstant() && !right->isConstant())
@@ -3379,9 +3379,9 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 					if (left->isConstant() && !right->isConstant())
 					{
 						auto val = static_cast<FxConstant*>(left)->GetValue().GetInt();
-						if (val > INT_MAX)
+						if (val < 0)
 						{
-							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range signed constant");
+							ScriptPosition.Message(MSG_WARNING, "Comparison of unsigned value with negative constant");
 						}
 					}
 					else if (right->isConstant() && !left->isConstant())
@@ -3389,7 +3389,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 						auto val = static_cast<FxConstant*>(right)->GetValue().GetUInt();
 						if (val > INT_MAX)
 						{
-							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range unsigned constant");
+							ScriptPosition.Message(MSG_WARNING, "Comparison of signed value with out of range unsigned constant");
 						}
 					}
 					else if (!left->isConstant() && !right->isConstant())

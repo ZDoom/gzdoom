@@ -2686,8 +2686,7 @@ bool FxBinary::Promote(FCompileContext &ctx, bool forceint, bool shiftop)
 		ValueType = TypeUInt32;
 	}
 	// If one side is an unsigned 32-bit int and the other side is a signed 32-bit int, the signed side is implicitly converted to unsigned,
-	// unless this is a shift operator where different rules must apply.
-	else if (((!ctx.FromDecorate && left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32) || !shiftop) && ctx.Version >= MakeVersion(4, 9, 0))
+	else if (!ctx.FromDecorate && left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32 && !shiftop && ctx.Version >= MakeVersion(4, 9, 0))
 	{
 		right = new FxIntCast(right, false, false, true);
 		right = right->Resolve(ctx);
@@ -2742,6 +2741,15 @@ bool FxBinary::Promote(FCompileContext &ctx, bool forceint, bool shiftop)
 		delete this;
 		return false;
 	}
+
+	// shift operators are different: The left operand defines the type and the right operand must always be made unsigned
+	if (shiftop)
+	{
+		ValueType = left->ValueType == TypeUInt32 ? TypeUInt32 : TypeSInt32;
+		right = new FxIntCast(right, false, false, true);
+		right = right->Resolve(ctx);
+	}
+
 	return true;
 }
 
@@ -3338,6 +3346,59 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
+		if (left->IsInteger() && right->IsInteger())
+		{
+			if (ctx.Version >= MakeVersion(4, 9, 0))
+			{
+				// We need to do more checks here to catch problem cases.
+				if (left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32)
+				{
+					if (left->isConstant() && !right->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(left)->GetValue().GetUInt();
+						if (val > INT_MAX)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range unsigned constant");
+						}
+					}
+					else if (right->isConstant() && !left->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(right)->GetValue().GetInt();
+						if (val > INT_MAX)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range signed constant");
+						}
+					}
+					else if (!left->isConstant() && !right->isConstant())
+					{
+						ScriptPosition.Message(MSG_WARNING, "Comparison between signed and unsigned value");
+					}
+				}
+				else if (left->ValueType == TypeSInt32 && right->ValueType == TypeUInt32)
+				{
+					if (left->isConstant() && !right->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(left)->GetValue().GetInt();
+						if (val > INT_MAX)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range signed constant");
+						}
+					}
+					else if (right->isConstant() && !left->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(right)->GetValue().GetUInt();
+						if (val > INT_MAX)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison with out of range unsigned constant");
+						}
+					}
+					else if (!left->isConstant() && !right->isConstant())
+					{
+						ScriptPosition.Message(MSG_WARNING, "Comparison between signed and unsigned value");
+					}
+				}
+			}
+		}
 		Promote(ctx);
 	}
 	else
@@ -8247,7 +8308,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					member->membervar = newfield;
 					Self = nullptr;
 					delete this;
-					member->ValueType = TypeUInt32;
+					member->ValueType = TypeSInt32;
 					return member;
 				}
 				else

@@ -3,7 +3,7 @@
 
 struct DynArray_I8 native
 {
-	native readonly uint Size;
+	native readonly int Size;
 	
 	native void Copy(DynArray_I8 other);
 	native void Move(DynArray_I8 other);
@@ -23,7 +23,7 @@ struct DynArray_I8 native
 
 struct DynArray_I16 native
 {
-	native readonly uint Size;
+	native readonly int Size;
 
 	native void Copy(DynArray_I16 other);
 	native void Move(DynArray_I16 other);
@@ -43,7 +43,7 @@ struct DynArray_I16 native
 
 struct DynArray_I32 native
 {
-	native readonly uint Size;
+	native readonly int Size;
 
 	native void Copy(DynArray_I32 other);
 	native void Move(DynArray_I32 other);
@@ -64,7 +64,7 @@ struct DynArray_I32 native
 
 struct DynArray_F32 native
 {
-	native readonly uint Size;
+	native readonly int Size;
 	
 	native void Copy(DynArray_F32 other);
 	native void Move(DynArray_F32 other);
@@ -84,7 +84,7 @@ struct DynArray_F32 native
 
 struct DynArray_F64 native
 {
-	native readonly uint Size;
+	native readonly int Size;
 	
 	native void Copy(DynArray_F64 other);
 	native void Move(DynArray_F64 other);
@@ -104,7 +104,7 @@ struct DynArray_F64 native
 
 struct DynArray_Ptr native
 {
-	native readonly uint Size;
+	native readonly int Size;
 	
 	native void Copy(DynArray_Ptr other);
 	native void Move(DynArray_Ptr other);
@@ -124,7 +124,7 @@ struct DynArray_Ptr native
 
 struct DynArray_Obj native
 {
-	native readonly uint Size;
+	native readonly int Size;
 	
 	native void Copy(DynArray_Obj other);
 	native void Move(DynArray_Obj other);
@@ -144,7 +144,7 @@ struct DynArray_Obj native
 
 struct DynArray_String native
 {
-	native readonly uint Size;
+	native readonly int Size;
 
 	native void Copy(DynArray_String other);
 	native void Move(DynArray_String other);

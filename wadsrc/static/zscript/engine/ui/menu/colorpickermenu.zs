@@ -303,7 +303,7 @@ class ColorpickerMenu : OptionMenu
 					}
 					// Make sure the cursors stand out against similar colors
 					// by pulsing them.
-					blinky = abs(sin(MSTime()/1000.0)) * 0.5 + 0.5;
+					blinky = abs(sin(MSTimeF()/1000.0)) * 0.5 + 0.5;
 					col = Color(255, int(r*blinky), int(g*blinky), int(b*blinky));
 
 					screen.Clear (box_x, box_y, box_x + w, box_y + 1, col);

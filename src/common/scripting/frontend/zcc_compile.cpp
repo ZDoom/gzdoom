@@ -1994,8 +1994,34 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, ZCC_Identifier *id, PSy
 		}
 		if (!nativetype) return ptype;
 	}
-	Error(type, "Unable to resolve %s%s as type.", nativetype? "@" : "", FName(type->UserType->Id).GetChars());
+	Error(type, "Unable to resolve %s%s as a type.", nativetype? "@" : "", UserTypeName(type).GetChars());
 	return TypeError;
+}
+
+
+//==========================================================================
+//
+// ZCCCompiler :: UserTypeName										STATIC
+//
+// Returns the full name for a UserType node.
+// 
+//==========================================================================
+
+FString ZCCCompiler::UserTypeName(ZCC_BasicType *type)
+{
+	FString out;
+	ZCC_Identifier *id = type->UserType;
+
+	do
+	{
+		assert(id->NodeType == AST_Identifier);
+		if (out.Len() > 0)
+		{
+			out += '.';
+		}
+		out += FName(id->Id).GetChars();
+	} while ((id = static_cast<ZCC_Identifier *>(id->SiblingNext)) != type->UserType);
+	return out;
 }
 
 //==========================================================================
@@ -2339,7 +2365,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					}
 					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3 && type != TypeFVector2 && type != TypeFVector3)
 					{
-						Error(p, "Invalid type %s for function parameter", type->DescriptiveName());
+						// If it's TypeError, then an error was already given
+						if (type != TypeError)
+						{
+							Error(p, "Invalid type %s for function parameter", type->DescriptiveName());
+						}
 					}
 					else if (p->Default != nullptr)
 					{

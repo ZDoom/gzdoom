@@ -1813,7 +1813,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			{
 				Error(field, "%s: @ not allowed for user scripts", name.GetChars());
 			}
-			retval = ResolveUserType(btype, outertype? &outertype->Symbols : nullptr, true);
+			retval = ResolveUserType(btype, btype->UserType, outertype? &outertype->Symbols : nullptr, true);
 			break;
 
 		case ZCC_UserType:
@@ -1837,7 +1837,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				break;
 
 			default:
-				retval = ResolveUserType(btype, outertype ? &outertype->Symbols : nullptr, false);
+				retval = ResolveUserType(btype, btype->UserType, outertype ? &outertype->Symbols : nullptr, false);
 				break;
 			}
 			break;
@@ -1936,18 +1936,25 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 //
 // ZCCCompiler :: ResolveUserType
 //
-// resolves a user type and returns a matching PType
-//
 //==========================================================================
 
-PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, bool nativetype)
+/**
+* Resolves a user type and returns a matching PType.
+*
+* @param type The tree node with the identifiers to look for.
+* @param type The current identifier being looked for. This must be in type's UserType list.
+* @param symt The symbol table to search in. If id is the first identifier and not found in symt, then OutNamespace will also be searched.
+* @param nativetype Distinguishes between searching for a native type or a user type.
+* @returns the PType found for this user type
+*/
+PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, ZCC_Identifier *id, PSymbolTable *symt, bool nativetype)
 {
 	// Check the symbol table for the identifier.
 	PSymbol *sym = nullptr;
 
 	// We first look in the current class and its parents, and then in the current namespace and its parents.
-	if (symt != nullptr) sym = symt->FindSymbol(type->UserType->Id, true);
-	if (sym == nullptr) sym = OutNamespace->Symbols.FindSymbol(type->UserType->Id, true);
+	if (symt != nullptr) sym = symt->FindSymbol(id->Id, true);
+	if (sym == nullptr && type->UserType == id) sym = OutNamespace->Symbols.FindSymbol(id->Id, true);
 	if (sym != nullptr && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{
 		auto ptype = static_cast<PSymbolType *>(sym)->Type;
@@ -1955,6 +1962,21 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 		{
 			Error(type, "Type %s not accessible to ZScript version %d.%d.%d", FName(type->UserType->Id).GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
 			return TypeError;
+		}
+
+		if (id->SiblingNext != type->UserType)
+		{
+			assert(id->SiblingNext->NodeType == AST_Identifier);
+			ptype = ResolveUserType(
+				type,
+				static_cast<ZCC_Identifier *>(id->SiblingNext),
+				&ptype->Symbols,
+				nativetype
+			);
+			if (ptype == TypeError)
+			{
+				return ptype;
+			}
 		}
 
 		if (ptype->isEnum())
@@ -1975,7 +1997,6 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 	Error(type, "Unable to resolve %s%s as type.", nativetype? "@" : "", FName(type->UserType->Id).GetChars());
 	return TypeError;
 }
-
 
 //==========================================================================
 //

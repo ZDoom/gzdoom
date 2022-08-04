@@ -1564,7 +1564,7 @@ void VirtualToRealCoordsInt(F2DDrawer *drawer, int &x, int &y, int &w, int &h,
 static void DrawLine(int x0, int y0, int x1, int y1, uint32_t realcolor, int alpha)
 {
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	twod->AddLine((float)x0, (float)y0, (float)x1, (float)y1, -1, -1, INT_MAX, INT_MAX, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
+	twod->AddLine((float)x0, (float)y0, (float)x1, (float)y1, nullptr, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
@@ -1589,7 +1589,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawLine)
 	PARAM_INT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	self->Drawer.AddLine((float)x0, (float)y0, (float)x1, (float)y1, -1, -1, INT_MAX, INT_MAX, color | MAKEARGB(255, 0, 0, 0), alpha);
+	self->Drawer.AddLine((float)x0, (float)y0, (float)x1, (float)y1, nullptr, color | MAKEARGB(255, 0, 0, 0), alpha);
 	self->Tex->NeedUpdate();
 	return 0;
 }

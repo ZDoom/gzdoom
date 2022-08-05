@@ -8,16 +8,16 @@ struct DynArray_I8 native
 	native void Copy(DynArray_I8 other);
 	native void Move(DynArray_I8 other);
 	native void Append (DynArray_I8 other);
-	native uint Find(int item) const;
-	native uint Push (int item);
+	native int Find(int item) const;
+	native int Push(int item);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
 	native void Insert (uint index, int item);
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }
 
@@ -28,16 +28,16 @@ struct DynArray_I16 native
 	native void Copy(DynArray_I16 other);
 	native void Move(DynArray_I16 other);
 	native void Append (DynArray_I16 other);
-	native uint Find(int item) const;
-	native uint Push (int item);
+	native int Find(int item) const;
+	native int Push(int item);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
 	native void Insert (uint index, int item);
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }
 
@@ -48,8 +48,8 @@ struct DynArray_I32 native
 	native void Copy(DynArray_I32 other);
 	native void Move(DynArray_I32 other);
 	native void Append (DynArray_I32 other);
-	native uint Find(int item) const;
-	native uint Push (int item);
+	native int Find(int item) const;
+	native int Push(int item);
 	native vararg uint PushV (int item, ...);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
@@ -57,8 +57,8 @@ struct DynArray_I32 native
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }
 
@@ -69,16 +69,16 @@ struct DynArray_F32 native
 	native void Copy(DynArray_F32 other);
 	native void Move(DynArray_F32 other);
 	native void Append (DynArray_F32 other);
-	native uint Find(double item) const;
-	native uint Push (double item);
+	native int Find(double item) const;
+	native int Push(double item);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
 	native void Insert (uint index, double item);
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }
 
@@ -89,16 +89,16 @@ struct DynArray_F64 native
 	native void Copy(DynArray_F64 other);
 	native void Move(DynArray_F64 other);
 	native void Append (DynArray_F64 other);
-	native uint Find(double item) const;
-	native uint Push (double item);
+	native int Find(double item) const;
+	native int Push(double item);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
 	native void Insert (uint index, double item);
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }
 
@@ -109,16 +109,16 @@ struct DynArray_Ptr native
 	native void Copy(DynArray_Ptr other);
 	native void Move(DynArray_Ptr other);
 	native void Append (DynArray_Ptr other);
-	native uint Find(voidptr item) const;
-	native uint Push (voidptr item);
+	native int Find(voidptr item) const;
+	native int Push(voidptr item);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
 	native void Insert (uint index, voidptr item);
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }
 
@@ -129,16 +129,16 @@ struct DynArray_Obj native
 	native void Copy(DynArray_Obj other);
 	native void Move(DynArray_Obj other);
 	native void Append (DynArray_Obj other);
-	native uint Find(Object item) const;
-	native uint Push (Object item);
+	native int Find(Object item) const;
+	native int Push(Object item);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
 	native void Insert (uint index, Object item);
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }
 
@@ -149,8 +149,8 @@ struct DynArray_String native
 	native void Copy(DynArray_String other);
 	native void Move(DynArray_String other);
 	native void Append (DynArray_String other);
-	native uint Find(String item) const;
-	native uint Push (String item);
+	native int Find(String item) const;
+	native int Push(String item);
 	native vararg uint PushV(String item, ...);
 	native bool Pop ();
 	native void Delete (uint index, int deletecount = 1);
@@ -158,7 +158,7 @@ struct DynArray_String native
 	native void ShrinkToFit ();
 	native void Grow (uint amount);
 	native void Resize (uint amount);
-	native uint Reserve (uint amount);
-	native uint Max () const;
+	native int Reserve(uint amount);
+	native int Max() const;
 	native void Clear ();
 }

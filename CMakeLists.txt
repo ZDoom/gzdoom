@@ -203,6 +203,10 @@ endif()
 option (HAVE_VULKAN "Enable Vulkan support" ON)
 option (HAVE_GLES2 "Enable GLES2 support" ON)
 
+if ( WIN32 )
+	option (ALWAYS_USE_KNOWN_FOLDERS "Always use user folders for config and saves" OFF)
+endif ()
+
 # no, we're not using external asmjit for now, we made too many modifications to our's.
 # if the asmjit author uses our changes then we'll update this.
 
@@ -226,6 +230,10 @@ if( MSVC )
 
 	if ( HAVE_GLES2 )
 		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_GLES2" )
+	endif()
+
+	if ( ALWAYS_USE_KNOWN_FOLDERS )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DALWAYS_USE_KNOWN_FOLDERS" )
 	endif()
 
 	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall

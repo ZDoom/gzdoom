@@ -341,17 +341,17 @@ CCMD(printlocalized)
 
 }
 
-UNSAFE_CCMD(opensaves)
+CCMD(opensaves)
 {
 	I_OpenShellFolder(M_GetSavegamesPath().GetChars());
 }
 
-UNSAFE_CCMD(openscreenshots)
+CCMD(openscreenshots)
 {
 	I_OpenShellFolder(M_GetScreenshotsPath().GetChars());
 }
 
-UNSAFE_CCMD(openconfig)
+CCMD(openconfig)
 {
 	I_OpenShellFile(M_GetConfigPath(false).GetChars());
 }

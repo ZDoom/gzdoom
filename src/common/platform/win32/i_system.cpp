@@ -960,50 +960,20 @@ void I_SetThreadNumaNode(std::thread &thread, int numaNode)
 	}
 }
 
-std::wstring ToUtf16(const std::string& str)
-{
-    if (str.empty()) return {};
-    int needed = MultiByteToWideChar(CP_UTF8, 0, str.data(), (int)str.size(), nullptr, 0);
-    if (needed == 0)
-        throw std::runtime_error("MultiByteToWideChar failed");
-    std::wstring result;
-    result.resize(needed);
-    needed = MultiByteToWideChar(CP_UTF8, 0, str.data(), (int)str.size(), &result[0], (int)result.size());
-    if (needed == 0)
-        throw std::runtime_error("MultiByteToWideChar failed");
-    return result;
-}
-
-/*	// not currently used, but here for reference if it is needed
-std::string FromUtf16(const std::wstring& str)
-{
-	if (str.empty()) return {};
-	int needed = WideCharToMultiByte(CP_UTF8, 0, str.data(), (int)str.size(), nullptr, 0, nullptr, nullptr);
-	if (needed == 0)
-		throw std::runtime_error("WideCharToMultiByte failed");
-	std::string result;
-	result.resize(needed);
-	needed = WideCharToMultiByte(CP_UTF8, 0, str.data(), (int)str.size(), &result[0], (int)result.size(), nullptr, nullptr);
-	if (needed == 0)
-		throw std::runtime_error("WideCharToMultiByte failed");
-	return result;
-}
-*/
-
 void I_OpenShellFolder(const char* folder)
 {
-	std::string x = folder;
-	for (auto& c : x) { if (c == '/') c = '\\'; }
-	Printf("Opening folder: %s\n", x.c_str());
-	ShellExecuteW(NULL, L"open", L"explorer.exe", ToUtf16(x).c_str(), NULL, SW_SHOWNORMAL);
+	FString proc = folder;
+	proc.ReplaceChars('/', '\\');
+	Printf("Opening folder: %s\n", proc.GetChars());
+	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
 }
 
 void I_OpenShellFile(const char* file)
 {
-	std::string x = (std::string)"/select," + (std::string)file;
-	for (auto& c : x) { if (c == '/') c = '\\'; }
-	x[0] = '/';
-	Printf("Opening folder to file: %s\n", x.c_str());
-	ShellExecuteW(NULL, L"open", L"explorer.exe", ToUtf16(x).c_str(), NULL, SW_SHOWNORMAL);
+	FString proc = file;
+	proc.ReplaceChars('/', '\\');
+	Printf("Opening folder to file: %s\n", proc.GetChars());
+	proc.Format("/select,%s", proc.GetChars());
+	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
 }
 

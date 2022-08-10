@@ -29,6 +29,7 @@ class IShadowMap;
 struct particle_t;
 struct FDynLightData;
 struct HUDSprite;
+class ACorona;
 class Clipper;
 class HWPortal;
 class FFlatVertexBuffer;
@@ -150,6 +151,8 @@ struct HWDrawInfo
 	TArray<HWPortal *> Portals;
 	TArray<HWDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
+	TArray<ACorona*> Coronas;
+	uint64_t LastFrameTime = 0;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -300,6 +303,8 @@ public:
 
 	void DrawDecals(FRenderState &state, TArray<HWDecal *> &decals);
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
+	void DrawCoronas(FRenderState& state);
+	void DrawCorona(FRenderState& state, ACorona* corona, double dist);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);

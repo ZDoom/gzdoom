@@ -644,7 +644,7 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 		FTraceResults results;
 		if (!Trace(corona->Pos(), corona->Sector, direction, dist, 0, 0, corona, results))
 		{
-			corona->CoronaFade = 1.0;
+			corona->CoronaFade = std::min(corona->CoronaFade + timeElapsed * 3.0f, 1.0f);
 		}
 		else
 		{

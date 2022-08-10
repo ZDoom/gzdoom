@@ -574,8 +574,6 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 
 void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona)
 {
-	int spritenum = corona->sprite;
-
 	spriteframe_t* sprframe = &SpriteFrames[sprites[corona->sprite].spriteframes + (size_t)corona->SpawnState->GetFrame()];
 	FTextureID patch = sprframe->Texture[0];
 	if (!patch.isValid()) return;
@@ -604,8 +602,9 @@ void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona)
 
 	state.SetMaterial(tex, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, 0, 0);
 
-	float tileWidth = tex->GetDisplayWidth();
-	float tileHeight = tex->GetDisplayHeight();
+	float scale = screen->GetHeight() / 1000.0f;
+	float tileWidth = corona->Scale.X * tex->GetDisplayWidth() * scale;
+	float tileHeight = corona->Scale.Y * tex->GetDisplayHeight() * scale;
 	float x0 = screenX - tileWidth, y0 = screenY - tileHeight;
 	float x1 = screenX + tileWidth, y1 = screenY + tileHeight;
 

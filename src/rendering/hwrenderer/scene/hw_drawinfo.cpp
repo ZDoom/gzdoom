@@ -592,7 +592,7 @@ void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona, double dist)
 	float screenX = halfViewportWidth + clipPos.X * invW * halfViewportWidth;
 	float screenY = halfViewportHeight - clipPos.Y * invW * halfViewportHeight;
 
-	float alpha = corona->CoronaFade * corona->Alpha;
+	float alpha = corona->CoronaFade * float(corona->Alpha);
 
 	// distance-based fade - looks better IMO
 	float distNearFadeStart = float(MAX_CORONA_DISTANCE) * 0.1f;

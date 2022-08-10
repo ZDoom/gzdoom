@@ -21,6 +21,10 @@
 
 #pragma once
 
+#include "actor.h"
+
+#define MAX_CORONA_DISTANCE 2000.0
+
 class AActor;
 
 class ACorona : public AActor

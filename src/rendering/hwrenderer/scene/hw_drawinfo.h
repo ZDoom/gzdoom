@@ -304,7 +304,7 @@ public:
 	void DrawDecals(FRenderState &state, TArray<HWDecal *> &decals);
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 	void DrawCoronas(FRenderState& state);
-	void DrawCorona(FRenderState& state, ACorona* corona);
+	void DrawCorona(FRenderState& state, ACorona* corona, double dist);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);

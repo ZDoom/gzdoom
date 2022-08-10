@@ -92,6 +92,7 @@ version "4.9"
 #include "zscript/actors/shared/fastprojectile.zs"
 #include "zscript/actors/shared/randomspawner.zs"
 #include "zscript/actors/shared/dynlights.zs"
+#include "zscript/actors/shared/corona.zs"
 
 #include "zscript/actors/doom/doomplayer.zs"
 #include "zscript/actors/doom/possessed.zs"

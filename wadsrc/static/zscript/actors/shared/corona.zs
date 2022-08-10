@@ -1,0 +1,3 @@
+class Corona : Actor native
+{
+}

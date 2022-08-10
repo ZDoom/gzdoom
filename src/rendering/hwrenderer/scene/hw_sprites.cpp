@@ -698,7 +698,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	bool isPicnumOverride = thing->picnum.isValid();
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()))
+	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()) || thing->IsKindOf(NAME_Corona))
 	{
 		return;
 	}

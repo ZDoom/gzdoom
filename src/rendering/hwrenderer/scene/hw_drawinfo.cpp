@@ -44,6 +44,8 @@
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
 #include "v_draw.h"
+#include "a_corona.h"
+#include "texturemanager.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
@@ -165,6 +167,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
 	hudsprites.Clear();
+	Coronas.Clear();
 	vpIndex = 0;
 
 	// Fullbright information needs to be propagated from the main view.
@@ -569,6 +572,96 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 
 }
 
+void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona)
+{
+	int spritenum = corona->sprite;
+
+	spriteframe_t* sprframe = &SpriteFrames[sprites[corona->sprite].spriteframes + (size_t)corona->SpawnState->GetFrame()];
+	FTextureID patch = sprframe->Texture[0];
+	if (!patch.isValid()) return;
+	auto tex = TexMan.GetGameTexture(patch, false);
+	if (!tex || !tex->isValid()) return;
+
+	// Project the corona sprite center
+	FVector4 worldPos((float)corona->X(), (float)corona->Z(), (float)corona->Y(), 1.0f);
+	FVector4 viewPos, clipPos;
+	VPUniforms.mViewMatrix.multMatrixPoint(&worldPos[0], &viewPos[0]);
+	VPUniforms.mProjectionMatrix.multMatrixPoint(&viewPos[0], &clipPos[0]);
+	if (clipPos.W < -1.0f) return; // clip z nearest
+	float halfViewportWidth = screen->GetWidth() * 0.5f;
+	float halfViewportHeight = screen->GetHeight() * 0.5f;
+	float invW = 1.0f / clipPos.W;
+	float screenX = halfViewportWidth + clipPos.X * invW * halfViewportWidth;
+	float screenY = halfViewportHeight - clipPos.Y * invW * halfViewportHeight;
+
+	state.SetColorAlpha(0xffffff, corona->CoronaFade, 0);
+	if (isSoftwareLighting()) state.SetSoftLightLevel(255);
+	else state.SetNoSoftLightLevel();
+
+	state.SetLightIndex(-1);
+	state.SetRenderStyle(corona->RenderStyle);
+	state.SetTextureMode(corona->RenderStyle);
+
+	state.SetMaterial(tex, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, 0, 0);
+
+	float tileWidth = tex->GetDisplayWidth();
+	float tileHeight = tex->GetDisplayHeight();
+	float x0 = screenX - tileWidth, y0 = screenY - tileHeight;
+	float x1 = screenX + tileWidth, y1 = screenY + tileHeight;
+
+	float u0 = 0.0f, v0 = 0.0f;
+	float u1 = 1.0f, v1 = 1.0f;
+
+	auto vert = screen->mVertexData->AllocVertices(4);
+	auto vp = vert.first;
+	unsigned int vertexindex = vert.second;
+
+	vp[0].Set(x0, y0, 1.0f, u0, v0);
+	vp[1].Set(x1, y0, 1.0f, u1, v0);
+	vp[2].Set(x0, y1, 1.0f, u0, v1);
+	vp[3].Set(x1, y1, 1.0f, u1, v1);
+
+	state.Draw(DT_TriangleStrip, vertexindex, 4);
+}
+
+void HWDrawInfo::DrawCoronas(FRenderState& state)
+{
+	state.EnableDepthTest(false);
+	state.SetDepthMask(false);
+
+	HWViewpointUniforms vp = VPUniforms;
+	vp.mViewMatrix.loadIdentity();
+	vp.mProjectionMatrix = VRMode::GetVRMode(true)->GetHUDSpriteProjection();
+	screen->mViewpoints->SetViewpoint(state, &vp);
+
+	float timeElapsed = (screen->FrameTime - LastFrameTime) / 1000.0f;
+	LastFrameTime = screen->FrameTime;
+
+	for (ACorona* corona : Coronas)
+	{
+		DVector3 direction = Viewpoint.Pos - corona->Pos();
+		double dist = direction.Length();
+		direction.MakeUnit();
+		FTraceResults results;
+		if (!Trace(corona->Pos(), corona->Sector, direction, dist, 0, 0, corona, results))
+		{
+			corona->CoronaFade = 1.0;
+		}
+		else
+		{
+			corona->CoronaFade = std::max(corona->CoronaFade - timeElapsed * 3.0f, 0.0f);
+		}
+
+		if (corona->CoronaFade > 0.0f)
+			DrawCorona(state, corona);
+	}
+
+	state.SetTextureMode(TM_NORMAL);
+	screen->mViewpoints->Bind(state, vpIndex);
+	state.EnableDepthTest(true);
+	state.SetDepthMask(true);
+}
+
 //-----------------------------------------------------------------------------
 //
 // Draws player sprites and color blend
@@ -579,6 +672,11 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 void HWDrawInfo::EndDrawScene(sector_t * viewsector, FRenderState &state)
 {
 	state.EnableFog(false);
+
+	if (Coronas.Size() > 0)
+	{
+		DrawCoronas(state);
+	}
 
 	// [BB] HUD models need to be rendered here. 
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);

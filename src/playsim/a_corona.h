@@ -19,8 +19,7 @@
 **  3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef __A_CORONA_H__
-#define __A_CORONA_H__
+#pragma once
 
 class AActor;
 
@@ -30,6 +29,6 @@ class ACorona : public AActor
 
 public:
 	void Tick();
-};
 
-#endif //__A_CORONA_H__
+	float CoronaFade = 0.0f;
+};

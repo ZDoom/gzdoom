@@ -22,6 +22,7 @@
 
 #include "actor.h"
 #include "a_corona.h"
+#include "a_dynlight.h"
 
 IMPLEMENT_CLASS(ACorona, false, false)
 

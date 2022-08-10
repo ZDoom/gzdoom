@@ -33,6 +33,7 @@
 #include "r_sky.h"
 #include "r_utility.h"
 #include "a_pickups.h"
+#include "a_corona.h"
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "events.h"
@@ -698,8 +699,14 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	bool isPicnumOverride = thing->picnum.isValid();
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()) || thing->IsKindOf(NAME_Corona))
+	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()))
 	{
+		return;
+	}
+
+	if (thing->IsKindOf(NAME_Corona))
+	{
+		di->Coronas.Push(static_cast<ACorona*>(thing));
 		return;
 	}
 

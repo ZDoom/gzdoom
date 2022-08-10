@@ -283,7 +283,7 @@ FString M_GetScreenshotsPath()
 
 	if (!UseKnownFolders())
 	{
-		path << progdir << "/Screenshots/";
+		path << progdir << "Screenshots/";
 	}
 	else if (GetKnownFolder(-1, MyFOLDERID_Screenshots, true, path))
 	{

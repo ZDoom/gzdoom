@@ -6,6 +6,7 @@
 ** Copyright 1998-2009 Randy Heit
 ** Copyright (C) 2007-2012 Skulltag Development Team
 ** Copyright (C) 2007-2016 Zandronum Development Team
+** Copyright (C) 2017-2022 GZDoom Development Team
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -49,6 +50,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdexcept>
 #include <process.h>
 #include <time.h>
 #include <map>
@@ -61,6 +63,8 @@
 #include <richedit.h>
 #include <wincrypt.h>
 #include <shlwapi.h>
+
+#include <shellapi.h>
 
 #include "hardware.h"
 #include "printf.h"
@@ -955,3 +959,51 @@ void I_SetThreadNumaNode(std::thread &thread, int numaNode)
 		SetThreadAffinityMask(handle, (DWORD_PTR)numaNodes[numaNode].affinityMask);
 	}
 }
+
+std::wstring ToUtf16(const std::string& str)
+{
+    if (str.empty()) return {};
+    int needed = MultiByteToWideChar(CP_UTF8, 0, str.data(), (int)str.size(), nullptr, 0);
+    if (needed == 0)
+        throw std::runtime_error("MultiByteToWideChar failed");
+    std::wstring result;
+    result.resize(needed);
+    needed = MultiByteToWideChar(CP_UTF8, 0, str.data(), (int)str.size(), &result[0], (int)result.size());
+    if (needed == 0)
+        throw std::runtime_error("MultiByteToWideChar failed");
+    return result;
+}
+
+/*	// not currently used, but here for reference if it is needed
+std::string FromUtf16(const std::wstring& str)
+{
+	if (str.empty()) return {};
+	int needed = WideCharToMultiByte(CP_UTF8, 0, str.data(), (int)str.size(), nullptr, 0, nullptr, nullptr);
+	if (needed == 0)
+		throw std::runtime_error("WideCharToMultiByte failed");
+	std::string result;
+	result.resize(needed);
+	needed = WideCharToMultiByte(CP_UTF8, 0, str.data(), (int)str.size(), &result[0], (int)result.size(), nullptr, nullptr);
+	if (needed == 0)
+		throw std::runtime_error("WideCharToMultiByte failed");
+	return result;
+}
+*/
+
+void I_OpenShellFolder(const char* folder)
+{
+	std::string x = folder;
+	for (auto& c : x) { if (c == '/') c = '\\'; }
+	Printf("Opening folder: %s\n", x.c_str());
+	ShellExecuteW(NULL, L"open", L"explorer.exe", ToUtf16(x).c_str(), NULL, SW_SHOWNORMAL);
+}
+
+void I_OpenShellFile(const char* file)
+{
+	std::string x = (std::string)"/select," + (std::string)file;
+	for (auto& c : x) { if (c == '/') c = '\\'; }
+	x[0] = '/';
+	Printf("Opening folder to file: %s\n", x.c_str());
+	ShellExecuteW(NULL, L"open", L"explorer.exe", ToUtf16(x).c_str(), NULL, SW_SHOWNORMAL);
+}
+

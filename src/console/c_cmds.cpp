@@ -73,7 +73,7 @@
 extern FILE *Logfile;
 extern bool insave;
 
-CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO | CVAR_LATCH)
+CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO)
 CVAR (Bool, sv_unlimited_pickup, false, CVAR_SERVERINFO)
 CVAR (Int, cl_blockcheats, 0, 0)
 

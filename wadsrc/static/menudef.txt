@@ -380,6 +380,9 @@ OptionMenu "OptionsMenu" protected
 	SafeCommand	"$OPTMNU_WRITEINI",		"writeini"
 	
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	Command "$OPTMNU_OPENCONFIG",		"openconfig"
+	Command "$OPTMNU_OPENSCREENSHOTS",	"openscreenshots"
+	Command "$OPTMNU_OPENSAVES",		"opensaves"
 	StaticText " "
 }
 

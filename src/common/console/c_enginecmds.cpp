@@ -52,6 +52,10 @@
 #include "version.h"
 #include "findfile.h"
 #include "md5.h"
+#include "i_specialpaths.h"
+
+void I_OpenShellFolder(const char*);
+void I_OpenShellFile(const char*);
 
 extern FILE* Logfile;
 
@@ -336,3 +340,19 @@ CCMD(printlocalized)
 	}
 
 }
+
+CCMD(opensaves)
+{
+	I_OpenShellFolder(M_GetSavegamesPath().GetChars());
+}
+
+CCMD(openscreenshots)
+{
+	I_OpenShellFolder(M_GetScreenshotsPath().GetChars());
+}
+
+CCMD(openconfig)
+{
+	I_OpenShellFile(M_GetConfigPath(false).GetChars());
+}
+

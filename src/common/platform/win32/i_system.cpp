@@ -6,6 +6,7 @@
 ** Copyright 1998-2009 Randy Heit
 ** Copyright (C) 2007-2012 Skulltag Development Team
 ** Copyright (C) 2007-2016 Zandronum Development Team
+** Copyright (C) 2017-2022 GZDoom Development Team
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -49,6 +50,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdexcept>
 #include <process.h>
 #include <time.h>
 #include <map>
@@ -61,6 +63,8 @@
 #include <richedit.h>
 #include <wincrypt.h>
 #include <shlwapi.h>
+
+#include <shellapi.h>
 
 #include "hardware.h"
 #include "printf.h"
@@ -955,3 +959,21 @@ void I_SetThreadNumaNode(std::thread &thread, int numaNode)
 		SetThreadAffinityMask(handle, (DWORD_PTR)numaNodes[numaNode].affinityMask);
 	}
 }
+
+void I_OpenShellFolder(const char* folder)
+{
+	FString proc = folder;
+	proc.ReplaceChars('/', '\\');
+	Printf("Opening folder: %s\n", proc.GetChars());
+	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
+}
+
+void I_OpenShellFile(const char* file)
+{
+	FString proc = file;
+	proc.ReplaceChars('/', '\\');
+	Printf("Opening folder to file: %s\n", proc.GetChars());
+	proc.Format("/select,%s", proc.GetChars());
+	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
+}
+

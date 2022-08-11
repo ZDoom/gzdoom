@@ -221,10 +221,12 @@ void FUE1Model::UnloadGeometry()
 	groups.Reset();
 }
 
-int FUE1Model::FindFrame( const char *name )
+int FUE1Model::FindFrame( const char *name, bool nodefault )
 {
-	// unsupported, there are no named frames
-	return -1;
+	// there are no named frames, but we need something here to properly interface with it. So just treat the string as an index number.
+	auto index = strtol(name, nullptr, 0);
+	if (index < 0 || index >= numFrames) return FErr_NotFound;
+	return index;
 }
 
 void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids)

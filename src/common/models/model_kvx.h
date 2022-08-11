@@ -15,9 +15,9 @@ struct FVoxelVertexHash
 	// Returns the hash value for a key.
 	hash_t Hash(const FModelVertex &key) 
 	{ 
-		int ix = xs_RoundToInt(key.x);		
-		int iy = xs_RoundToInt(key.y);		
-		int iz = xs_RoundToInt(key.z);		
+		int ix = int(key.x);		
+		int iy = int(key.y);		
+		int iz = int(key.z);		
 		return (hash_t)(ix + (iy<<9) + (iz<<18));
 	}
 
@@ -58,7 +58,7 @@ public:
 	~FVoxelModel();
 	bool Load(const char * fn, int lumpnum, const char * buffer, int length) override;
 	void Initialize();
-	virtual int FindFrame(const char * name) override;
+	virtual int FindFrame(const char * name, bool nodefault) override;
 	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids) override;
 	virtual void AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids) override;
 	FTextureID GetPaletteTexture() const { return mPalette; }

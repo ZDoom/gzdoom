@@ -46,6 +46,16 @@ struct IntRect
 		return top + height;
 	}
 
+	int Width() const
+	{
+		return width;
+	}
+
+	int Height() const
+	{
+		return height;
+	}
+
 
 };
 

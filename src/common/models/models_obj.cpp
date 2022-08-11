@@ -613,9 +613,9 @@ FVector3 FOBJModel::CalculateNormalSmooth(unsigned int vidx, unsigned int smooth
  * @param name The name of the frame
  * @return The index of the frame
  */
-int FOBJModel::FindFrame(const char* name)
+int FOBJModel::FindFrame(const char* name, bool nodefault)
 {
-	return 0; // OBJs are not animated.
+	return nodefault? FErr_Singleframe : 0; // OBJs are not animated.
 }
 
 /**

@@ -107,6 +107,16 @@ namespace GC
 		return obj = NULL;
 	}
 
+	// Handles a read barrier for a const pointer. This does not alter the source data, but only returns NULL if the object is destroyed.
+	template<class T> inline T* ReadBarrier(const T*& obj)
+	{
+		if (obj == NULL || !(obj->ObjectFlags & OF_EuthanizeMe))
+		{
+			return obj;
+		}
+		return NULL;
+	}
+
 	// Check if it's time to collect, and do a collection step if it is.
 	static inline void CheckGC()
 	{
@@ -214,7 +224,13 @@ public:
 		return GC::ReadBarrier(pp);
 	}
 
-	constexpr T ForceGet() noexcept	//for situations where the read barrier needs to be skipped.
+	constexpr T Get() const noexcept
+	{
+		auto ppp = pp;
+		return GC::ReadBarrier(ppp);
+	}
+
+	constexpr T ForceGet() const noexcept	//for situations where the read barrier needs to be skipped.
 	{
 		return pp;
 	}

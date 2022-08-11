@@ -53,6 +53,13 @@ enum ModelRendererType
 	NumModelRendererTypes
 };
 
+enum EFrameError
+{
+	FErr_NotFound = -1,
+	FErr_Voxel = -2,
+	FErr_Singleframe = -3
+};
+
 class FModel
 {
 public:
@@ -60,7 +67,7 @@ public:
 	virtual ~FModel();
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
-	virtual int FindFrame(const char * name) = 0;
+	virtual int FindFrame(const char * name, bool nodefault = false) = 0;
 	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids) = 0;
 	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids) = 0;

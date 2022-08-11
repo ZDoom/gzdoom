@@ -222,7 +222,8 @@ TArray<FString> I_GetSteamPath()
 		"DOOM 3 BFG Edition/base/wads",
 		"Strife",
 		"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets",
-		"Doom 2/rerelease/DOOM II_Data/StreamingAssets"
+		"Doom 2/rerelease/DOOM II_Data/StreamingAssets",
+		"Doom 2/finaldoombase"
 	};
 
 	FString path;

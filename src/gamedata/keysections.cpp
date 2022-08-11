@@ -280,6 +280,10 @@ CCMD(addplayerclass)
 		{
 			FPlayerClass newclass;
 
+			// If this class was already added, don't add it again
+			if (PlayerClasses.Find(newclass) < PlayerClasses.Size())
+				return;
+
 			newclass.Type = ti;
 			newclass.Flags = 0;
 
@@ -301,4 +305,3 @@ CCMD(addplayerclass)
 		}
 	}
 }
-

@@ -188,7 +188,7 @@ void PronounMessage (const char *from, char *to, int pronoun, const char *victim
 //
 void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgflags, FName MeansOfDeath)
 {
-	FString ret;
+	FString ret, lookup;
 	char gendermessage[1024];
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
@@ -239,20 +239,30 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		messagename = "$OB_VOODOO";
 	}
 
-	if (attacker != NULL && message == NULL)
+	if (attacker != nullptr && message == nullptr)
 	{
 		if (attacker == self)
 		{
 			message = "$OB_KILLEDSELF";
 		}
-		else 
+		else
 		{
-			IFVIRTUALPTR(attacker, AActor, GetObituary)
+			lookup.Format("$Obituary_%s_%s", attacker->GetClass()->TypeName, mod.GetChars());
+			if (GStrings[lookup]) message = lookup;
+			else
 			{
-				VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
-				VMReturn rett(&ret);
-				VMCall(func, params, countof(params), &rett, 1);
-				if (ret.IsNotEmpty()) message = ret;
+				lookup.Format("$Obituary_%s", attacker->GetClass()->TypeName, mod.GetChars());
+				if (GStrings[lookup]) message = lookup;
+				else
+				{
+					IFVIRTUALPTR(attacker, AActor, GetObituary)
+					{
+						VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
+						VMReturn rett(&ret);
+						VMCall(func, params, countof(params), &rett, 1);
+						if (ret.IsNotEmpty()) message = ret;
+					}
+				}
 			}
 		}
 	}

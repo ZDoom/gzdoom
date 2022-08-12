@@ -66,6 +66,7 @@ class FGLRenderState final : public FRenderState
 	int lastTranslation = 0;
 	int maxBoundMaterial = -1;
 	size_t mLastMappedLightIndex = SIZE_MAX;
+	size_t mLastMappedBoneIndexBase = SIZE_MAX;
 
 	IVertexBuffer *mCurrentVertexBuffer;
 	int mCurrentVertexOffsets[2];	// one per binding point

@@ -230,10 +230,11 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 		VK_FORMAT_R32G32_SFLOAT,
 		VK_FORMAT_R32_SFLOAT,
 		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_A2B10G10R10_SNORM_PACK32
+		VK_FORMAT_A2B10G10R10_SNORM_PACK32,
+		VK_FORMAT_R8G8B8A8_UINT
 	};
 
-	bool inputLocations[7] = { false, false, false, false, false, false, false };
+	bool inputLocations[VATTR_MAX] = {};
 
 	for (size_t i = 0; i < vfmt.Attrs.size(); i++)
 	{
@@ -243,10 +244,10 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	}
 
 	// Vulkan requires an attribute binding for each location specified in the shader
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < VATTR_MAX; i++)
 	{
 		if (!inputLocations[i])
-			builder.AddVertexAttribute(i, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+			builder.AddVertexAttribute(i, 0, i != 8 ? VK_FORMAT_R32G32B32_SFLOAT : VK_FORMAT_R8G8B8A8_UINT, 0);
 	}
 
 	builder.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT);

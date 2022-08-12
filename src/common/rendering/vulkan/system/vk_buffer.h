@@ -33,6 +33,7 @@ public:
 	VkHardwareDataBuffer* LightNodes = nullptr;
 	VkHardwareDataBuffer* LightLines = nullptr;
 	VkHardwareDataBuffer* LightList = nullptr;
+	VkHardwareDataBuffer* BoneBufferSSO = nullptr;
 
 	std::unique_ptr<VkStreamBuffer> MatrixBuffer;
 	std::unique_ptr<VkStreamBuffer> StreamBuffer;

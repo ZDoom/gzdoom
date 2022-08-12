@@ -229,6 +229,12 @@ static const char *shaderBindings = R"(
 	    vec4 lights[];
 	};
 
+	// bone matrix buffers
+	layout(set = 1, binding = 4, std430) buffer BoneBufferSSO
+	{
+	    mat4 bones[];
+	};
+
 	// textures
 	layout(set = 2, binding = 0) uniform sampler2D tex;
 	layout(set = 2, binding = 1) uniform sampler2D texture2;
@@ -262,8 +268,11 @@ static const char *shaderBindings = R"(
 		// Blinn glossiness and specular level
 		vec2 uSpecularMaterial;
 
+		// bone animation
+		int uBoneIndexBase;
+
 		int uDataIndex;
-		int padding1, padding2, padding3;
+		int padding2, padding3;
 	};
 
 	// material types

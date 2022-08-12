@@ -41,6 +41,7 @@
 #include "hw_viewpointbuffer.h"
 #include "flatvertices.h"
 #include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
 #include "v_draw.h"
@@ -444,6 +445,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	// clip the scene and fill the drawlists
 	screen->mVertexData->Map();
 	screen->mLights->Map();
+	screen->mBones->Map();
 
 	RenderBSP(Level->HeadNode(), drawpsprites);
 
@@ -456,6 +458,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	PrepareUnhandledMissingTextures();
 	DispatchRenderHacks();
 	screen->mLights->Unmap();
+	screen->mBones->Unmap();
 	screen->mVertexData->Unmap();
 
 	ProcessAll.Unclock();
@@ -695,6 +698,7 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 	state.EnableDepthTest(true);
 	state.SetDepthMask(true);
 }
+
 
 //-----------------------------------------------------------------------------
 //

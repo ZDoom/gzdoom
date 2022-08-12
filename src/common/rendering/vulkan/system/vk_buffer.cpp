@@ -58,7 +58,7 @@ void VkBufferManager::RemoveBuffer(VkHardwareBuffer* buffer)
 	buffer->fb = nullptr;
 	Buffers.erase(buffer->it);
 
-	for (VkHardwareDataBuffer** knownbuf : { &ViewpointUBO, &LightBufferSSO, &LightNodes, &LightLines, &LightList })
+	for (VkHardwareDataBuffer** knownbuf : { &ViewpointUBO, &LightBufferSSO, &LightNodes, &LightLines, &LightList, &BoneBufferSSO })
 	{
 		if (buffer == *knownbuf) *knownbuf = nullptr;
 	}
@@ -85,6 +85,7 @@ IDataBuffer* VkBufferManager::CreateDataBuffer(int bindingpoint, bool ssbo, bool
 	case LIGHTNODES_BINDINGPOINT: LightNodes = buffer; break;
 	case LIGHTLINES_BINDINGPOINT: LightLines = buffer; break;
 	case LIGHTLIST_BINDINGPOINT: LightList = buffer; break;
+	case BONEBUF_BINDINGPOINT: BoneBufferSSO = buffer; break;
 	case POSTPROCESS_BINDINGPOINT: break;
 	default: break;
 	}

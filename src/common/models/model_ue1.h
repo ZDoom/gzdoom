@@ -25,10 +25,11 @@ public:
 	};
 
 	bool Load(const char * fn, int lumpnum, const char * buffer, int length) override;
-	int FindFrame(const char * name, bool nodefault) override;
-	void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids) override;
+	int FindFrame(const char* name, bool nodefault) override;
+	void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& animationData) override;
 	void BuildVertexBuffer(FModelRenderer *renderer) override;
 	void AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids) override;
+	const TArray<VSMatrix>* AttachAnimationData() override;
 	void LoadGeometry();
 	void UnloadGeometry();
 	FUE1Model()

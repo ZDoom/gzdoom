@@ -98,6 +98,21 @@ VSMatrix::multMatrix(const float *aMatrix)
 }
 #endif
 
+void VSMatrix::multQuaternion(const TVector4<FLOATTYPE>& q)
+{
+	FLOATTYPE m[16] = { FLOATTYPE(0.0) };
+	m[0 * 4 + 0] = FLOATTYPE(1.0) - FLOATTYPE(2.0) * q.Y * q.Y - FLOATTYPE(2.0) * q.Z * q.Z;
+	m[1 * 4 + 0] = FLOATTYPE(2.0) * q.X * q.Y - FLOATTYPE(2.0) * q.W * q.Z;
+	m[2 * 4 + 0] = FLOATTYPE(2.0) * q.X * q.Z + FLOATTYPE(2.0) * q.W * q.Y;
+	m[0 * 4 + 1] = FLOATTYPE(2.0) * q.X * q.Y + FLOATTYPE(2.0) * q.W * q.Z;
+	m[1 * 4 + 1] = FLOATTYPE(1.0) - FLOATTYPE(2.0) * q.X * q.X - FLOATTYPE(2.0) * q.Z * q.Z;
+	m[2 * 4 + 1] = FLOATTYPE(2.0) * q.Y * q.Z - FLOATTYPE(2.0) * q.W * q.X;
+	m[0 * 4 + 2] = FLOATTYPE(2.0) * q.X * q.Z - FLOATTYPE(2.0) * q.W * q.Y;
+	m[1 * 4 + 2] = FLOATTYPE(2.0) * q.Y * q.Z + FLOATTYPE(2.0) * q.W * q.X;
+	m[2 * 4 + 2] = FLOATTYPE(1.0) - FLOATTYPE(2.0) * q.X * q.X - FLOATTYPE(2.0) * q.Y * q.Y;
+	m[3 * 4 + 3] = FLOATTYPE(1.0);
+	multMatrix(m);
+}
 
 
 // gl LoadMatrix implementation
@@ -129,6 +144,29 @@ VSMatrix::translate(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z)
 	mMatrix[14] = mMatrix[2] * x + mMatrix[6] * y + mMatrix[10] * z + mMatrix[14];
 }
 
+void VSMatrix::transpose()
+{
+	FLOATTYPE original[16];
+	for (int cnt = 0; cnt < 16; cnt++)
+		original[cnt] = mMatrix[cnt];
+
+	mMatrix[0] = original[0];
+	mMatrix[1] = original[4];
+	mMatrix[2] = original[8];
+	mMatrix[3] = original[12];
+	mMatrix[4] = original[1];
+	mMatrix[5] = original[5];
+	mMatrix[6] = original[9];
+	mMatrix[7] = original[13];
+	mMatrix[8] = original[2];
+	mMatrix[9] = original[6];
+	mMatrix[10] = original[10];
+	mMatrix[11] = original[14];
+	mMatrix[12] = original[3];
+	mMatrix[13] = original[7];
+	mMatrix[14] = original[11];
+	mMatrix[15] = original[15];
+}
 
 // gl Scale implementation
 void 

@@ -241,6 +241,7 @@ class FShader
 	FBufferedUniform4f muLightParms;
 	FBufferedUniform2f muClipSplit;
 	FBufferedUniform1i muLightIndex;
+	FBufferedUniform1i muBoneIndexBase;
 	FBufferedUniformPE muFogColor;
 	FBufferedUniform4f muDynLightColor;
 	FBufferedUniformPE muObjectColor;

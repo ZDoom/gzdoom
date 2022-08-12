@@ -53,6 +53,7 @@ class VSMatrix {
 		{
 			multMatrix(aMatrix.mMatrix);
 		}
+		void multQuaternion(const TVector4<FLOATTYPE>& q);
 		void loadMatrix(const FLOATTYPE *aMatrix);
 #ifdef USE_DOUBLE
 		void loadMatrix(const float *aMatrix);

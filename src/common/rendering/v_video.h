@@ -59,6 +59,7 @@ struct HWDrawInfo;
 class FMaterial;
 class FGameTexture;
 class FRenderState;
+class BoneBuffer;
 
 enum EHWCaps
 {
@@ -143,6 +144,7 @@ public:
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
 	HWViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
+	BoneBuffer* mBones = nullptr;				// Model bones
 	IShadowMap mShadowMap;
 
 	IntRect mScreenViewport;

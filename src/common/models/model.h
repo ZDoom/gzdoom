@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "textureid.h"
 #include "i_modelvertexbuffer.h"
+#include "matrix.h"
 
 class FModelRenderer;
 class FGameTexture;
@@ -26,6 +27,7 @@ struct FSpriteModelFrame
 	TArray<FTextureID> skinIDs;
 	TArray<FTextureID> surfaceskinIDs;
 	TArray<int> modelframes;
+	TArray<int> animationIDs;
 	float xscale, yscale, zscale;
 	// [BB] Added zoffset, rotation parameters and flags.
 	// Added xoffset, yoffset
@@ -67,11 +69,12 @@ public:
 	virtual ~FModel();
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
-	virtual int FindFrame(const char * name, bool nodefault = false) = 0;
-	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids) = 0;
+	virtual int FindFrame(const char* name, bool nodefault = false) = 0;
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& animationData) = 0;
 	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids) = 0;
 	virtual float getAspectFactor(float vscale) { return 1.f; }
+	virtual const TArray<VSMatrix>* AttachAnimationData() = 0;
 
 	void SetVertexBuffer(int type, IModelVertexBuffer *buffer) { mVBuf[type] = buffer; }
 	IModelVertexBuffer *GetVertexBuffer(int type) const { return mVBuf[type]; }

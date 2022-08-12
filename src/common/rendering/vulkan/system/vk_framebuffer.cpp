@@ -41,6 +41,7 @@
 #include "flatvertices.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
 
 #include "vk_framebuffer.h"
 #include "vk_hwbuffer.h"
@@ -98,6 +99,7 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mSkyData;
 	delete mViewpoints;
 	delete mLights;
+	delete mBones;
 	mShadowMap.Reset();
 
 	if (mDescriptorSetManager)
@@ -155,6 +157,7 @@ void VulkanFrameBuffer::InitializeState()
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
+	mBones = new BoneBuffer();
 
 	mShaderManager.reset(new VkShaderManager(this));
 	mDescriptorSetManager->Init();

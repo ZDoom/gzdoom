@@ -343,10 +343,18 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			auto& ssids = surfaceskinids.Size() > 0 ? surfaceskinids : smf->surfaceskinIDs;
 			auto ssidp = (unsigned)(i * MD3_MAX_SURFACES) < ssids.Size() ? &ssids[i * MD3_MAX_SURFACES] : nullptr;
 
+			const TArray<VSMatrix>* animationData = {};
+
+			if (smf->animationIDs[i] >= 0)
+			{
+				FModel* animation = Models[smf->animationIDs[i]];
+				animationData = animation->AttachAnimationData();
+			}
+
 			if (smfNext && modelframe != modelframenext)
-				mdl->RenderFrame(renderer, tex, modelframe, modelframenext, inter, translation, ssidp);
+				mdl->RenderFrame(renderer, tex, modelframe, modelframenext, inter, translation, ssidp, *animationData);
 			else
-				mdl->RenderFrame(renderer, tex, modelframe, modelframe, 0.f, translation, ssidp);
+				mdl->RenderFrame(renderer, tex, modelframe, modelframe, 0.f, translation, ssidp, *animationData);
 		}
 	}
 }
@@ -491,6 +499,7 @@ static void ParseModelDefLump(int Lump)
 			initArray(smf.modelIDs, smf.modelsAmount, -1);
 			initArray(smf.skinIDs, smf.modelsAmount, FNullTextureID());
 			initArray(smf.surfaceskinIDs, smf.modelsAmount * MD3_MAX_SURFACES, FNullTextureID());
+			initArray(smf.animationIDs, smf.modelsAmount, -1);
 			initArray(smf.modelframes, smf.modelsAmount, 0);
 
 			sc.RestorePos(scPos);
@@ -523,6 +532,26 @@ static void ParseModelDefLump(int Lump)
 					if (smf.modelIDs[index] == -1)
 					{
 						Printf("%s: model not found in %s\n", sc.String, path.GetChars());
+					}
+				}
+				else if (sc.Compare("animation"))
+				{
+					sc.MustGetNumber();
+					index = sc.Number;
+					if (index < 0)
+					{
+						sc.ScriptError("Animation index must be 0 or greater in %s", type->TypeName.GetChars());
+					}
+					else if (index >= smf.modelsAmount)
+					{
+						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
+					}
+					sc.MustGetString();
+					FixPathSeperator(sc.String);
+					smf.animationIDs[index] = FindModel(path.GetChars(), sc.String);
+					if (smf.animationIDs[index] == -1)
+					{
+						Printf("%s: animation model not found in %s\n", sc.String, path.GetChars());
 					}
 				}
 				else if (sc.Compare("scale"))

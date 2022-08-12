@@ -36,6 +36,7 @@
 #include "model_md2.h"
 #include "model_md3.h"
 #include "model_kvx.h"
+#include "model_iqm.h"
 #include "i_time.h"
 #include "voxels.h"
 #include "texturemanager.h"
@@ -207,6 +208,10 @@ unsigned FindModel(const char * path, const char * modelfile)
 	else if (!memcmp(buffer, "IDP3", 4))
 	{
 		model = new FMD3Model;
+	}
+	else if (!memcmp(buffer, "INTERQUAKEMODEL\0", 16))
+	{
+		model = new IQMModel;
 	}
 
 	if (model != nullptr)

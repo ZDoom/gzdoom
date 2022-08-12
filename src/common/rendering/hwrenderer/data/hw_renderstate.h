@@ -217,6 +217,7 @@ protected:
 	uint8_t mBrightmapEnabled : 1;
 
 	int mLightIndex;
+	int mBoneIndexBase;
 	int mSpecialEffect;
 	int mTextureMode;
 	int mTextureClamp;
@@ -278,6 +279,7 @@ public:
 		mLightParms[3] = -1.f;
 		mSpecialEffect = EFF_NONE;
 		mLightIndex = -1;
+		mBoneIndexBase = -1;
 		mStreamData.uInterpolationFactor = 0;
 		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
@@ -566,6 +568,11 @@ public:
 	void SetLightIndex(int index)
 	{
 		mLightIndex = index;
+	}
+
+	void SetBoneIndexBase(int index)
+	{
+		mBoneIndexBase = index;
 	}
 
 	void SetRenderStyle(FRenderStyle rs)

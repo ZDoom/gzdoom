@@ -17,6 +17,7 @@ class FFlatVertexBuffer;
 class FSkyVertexBuffer;
 class HWPortal;
 class FLightBuffer;
+class BoneBuffer;
 class DPSprite;
 class FGLRenderBuffers;
 class FGL2DDrawer;

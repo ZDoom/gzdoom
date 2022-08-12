@@ -41,6 +41,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hw_renderstate.h"
 #include "hwrenderer/scene/hw_portal.h"
+#include "hw_bonebuffer.h"
 #include "hw_models.h"
 
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
@@ -71,6 +72,7 @@ void FHWModelRenderer::BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf
 
 void FHWModelRenderer::EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf)
 {
+	state.SetBoneIndexBase(-1);
 	state.EnableModelMatrix(false);
 	state.SetDepthFunc(DF_Less);
 	if (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
@@ -134,9 +136,10 @@ void FHWModelRenderer::DrawElements(int numIndices, size_t offset)
 //
 //===========================================================================
 
-void FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size)
+void FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix>& bones)
 {
 	auto mdbuff = static_cast<FModelVertexBuffer*>(model->GetVertexBuffer(GetType()));
+	state.SetBoneIndexBase(screen->mBones->UploadBones(bones));
 	state.SetVertexBuffer(mdbuff->vertexBuffer(), frame1, frame2);
 	if (mdbuff->indexBuffer()) state.SetIndexBuffer(mdbuff->indexBuffer());
 }

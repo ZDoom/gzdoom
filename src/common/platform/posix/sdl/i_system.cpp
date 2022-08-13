@@ -434,14 +434,14 @@ unsigned int I_MakeRNGSeed()
 
 void I_OpenShellFolder(const char* folder)
 {
-	std::string x = (std::string)"xdg-open " + (std::string)folder;
+	std::string x = (std::string)"xdg-open \"" + (std::string)folder + "\"";
 	Printf("Opening folder: %s\n", folder);
 	std::system(x.c_str());
 }
 
 void I_OpenShellFile(const char* file)
 {
-	std::string x = (std::string)"xdg-open " + (std::string)file;
+	std::string x = (std::string)"xdg-open \"" + (std::string)file + "\"";
 	x.erase(x.find_last_of('/'), std::string::npos);
 	Printf("Opening folder to file: %s\n", file);
 	std::system(x.c_str());

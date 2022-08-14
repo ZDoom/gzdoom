@@ -434,16 +434,33 @@ unsigned int I_MakeRNGSeed()
 
 void I_OpenShellFolder(const char* folder)
 {
-	std::string x = (std::string)"xdg-open \"" + (std::string)folder + "\"";
+	char curdir[256];
+	if (!getcwd (curdir, countof(curdir)))
+	{
+		Printf ("Current path too long\n");
+		return;
+	}
+
+	chdir(folder);
 	Printf("Opening folder: %s\n", folder);
-	std::system(x.c_str());
+	std::system("xdg-open .");
+	chdir(curdir);
 }
 
 void I_OpenShellFile(const char* file)
 {
-	std::string x = (std::string)"xdg-open \"" + (std::string)file + "\"";
-	x.erase(x.find_last_of('/'), std::string::npos);
-	Printf("Opening folder to file: %s\n", file);
-	std::system(x.c_str());
+	char curdir[256];
+	if (!getcwd (curdir, countof(curdir)))
+	{
+		Printf ("Current path too long\n");
+		return;
+	}
+
+	std::string folder = file;
+	folder.erase(folder.find_last_of('/'), std::string::npos);
+	chdir(folder.c_str());
+	Printf("Opening folder: %s\n", folder.c_str());
+	std::system("xdg-open .");
+	chdir(curdir);
 }
 

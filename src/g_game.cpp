@@ -2197,6 +2197,33 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	return name;
 }
 
+CCMD(opensaves)
+{
+	FString name;
+	FString leader;
+	const char *slash = "";
+
+	leader = Args->CheckValue ("-savedir");
+	if (leader.IsEmpty())
+	{
+		leader = save_dir;
+		if (leader.IsEmpty())
+		{
+			leader = M_GetSavegamesPath();
+		}
+	}
+	size_t len = leader.Len();
+	if (leader[0] != '\0' && leader[len-1] != '\\' && leader[len-1] != '/')
+	{
+		slash = "/";
+	}
+	name << leader << slash;
+	name = NicePath(name);
+	CreatePath(name);
+
+	I_OpenShellFolder(name);
+}
+
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 static int nextautosave = -1;
 CVAR (Int, disableautosave, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

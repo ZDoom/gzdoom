@@ -79,4 +79,7 @@ int I_GetNumaNodeCount();
 int I_GetNumaNodeThreadCount(int numaNode);
 void I_SetThreadNumaNode(std::thread &thread, int numaNode);
 
+void I_OpenShellFolder(const char*);
+void I_OpenShellFile(const char*);
+
 #endif

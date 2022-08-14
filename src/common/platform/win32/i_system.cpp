@@ -965,6 +965,7 @@ void I_OpenShellFolder(const char* folder)
 	FString proc = folder;
 	proc.ReplaceChars('/', '\\');
 	Printf("Opening folder: %s\n", proc.GetChars());
+	proc.Format("\"%s\"", proc.GetChars());
 	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
 }
 
@@ -973,7 +974,7 @@ void I_OpenShellFile(const char* file)
 	FString proc = file;
 	proc.ReplaceChars('/', '\\');
 	Printf("Opening folder to file: %s\n", proc.GetChars());
-	proc.Format("/select,%s", proc.GetChars());
+	proc.Format("/select,\"%s\"", proc.GetChars());
 	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
 }
 

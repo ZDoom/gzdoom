@@ -354,7 +354,6 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 			bool attachments = smf->flags & MDL_MODELSAREATTACHMENTS;
 			bool nextFrame = smfNext && modelframe != modelframenext;
-			bool hasExternAnimation = false;
 
 			if (animationid >= 0)
 			{
@@ -362,11 +361,8 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				animationData = animation->AttachAnimationData();
 				if(!attachments || boneData.Size() == 0)
 					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
-				
-				hasExternAnimation = true;
 			}
-
-			if(!hasExternAnimation) boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
+			else boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
 
 			if (smfNext && modelframe != modelframenext)
 				mdl->RenderFrame(renderer, tex, modelframe, modelframenext, inter, translation, ssidp, boneData);

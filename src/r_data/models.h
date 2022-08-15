@@ -57,6 +57,7 @@ enum
 	MDL_USEROTATIONCENTER			= 512,
 	MDL_NOPERPIXELLIGHTING			= 1024, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
 	MDL_SCALEWEAPONFOV				= 2048,	// scale weapon view model with higher user FOVs
+	MDL_MODELSAREATTACHMENTS		= 4096,	// any model index after 0 is treated as an attachment, and therefore will use the bone results of index 0
 };
 
 FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);

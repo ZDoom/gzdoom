@@ -286,9 +286,12 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 	TArray<FTextureID> surfaceskinids;
 
+	TArray<VSMatrix> boneData = TArray<VSMatrix>();
+
 	for (int i = 0; i < modelsamount; i++)
 	{	
 		int modelid = -1;
+		int animationid = -1;
 		int modelframe = -1;
 		int modelframenext = -1;
 		FTextureID skinid; skinid.SetInvalid();
@@ -299,10 +302,13 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			if (i < (int)actor->modelData->modelIDs.Size())
 				modelid = actor->modelData->modelIDs[i];
 
+			if (i < (int)actor->modelData->animationIDs.Size())
+				animationid = actor->modelData->animationIDs[i];
+
 			if (i < (int)actor->modelData->modelFrameGenerators.Size())
 			{
 				//[SM] - We will use this little snippet to allow a modder to specify a model index to clone. It's also pointless to clone something that clones something else in this case. And causes me headaches.
-				if (actor->modelData->modelFrameGenerators[i] >= 0 && smf->modelframes.Size() < (unsigned)i && smf->modelframes[i] != -1)
+				if (actor->modelData->modelFrameGenerators[i] >= 0 && actor->modelData->modelFrameGenerators[i] <= modelsamount && smf->modelframes[actor->modelData->modelFrameGenerators[i]] != -1)
 				{
 					modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
 					if (smfNext) modelframenext = smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
@@ -329,6 +335,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		if (i < smf->modelsAmount)
 		{
 			if (modelid == -1) modelid = smf->modelIDs[i];
+			if (animationid == -1) animationid = smf->animationIDs[i];
 			if (modelframe == -1) modelframe = smf->modelframes[i];
 			if (modelframenext == -1 && smfNext) modelframenext = smfNext->modelframes[i];
 			if (!skinid.isValid()) skinid = smf->skinIDs[i];
@@ -345,16 +352,26 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 			const TArray<VSMatrix>* animationData = nullptr;
 
-			if (smf->animationIDs[i] >= 0)
+			bool attachments = smf->flags & MDL_MODELSAREATTACHMENTS;
+			bool nextFrame = smfNext && modelframe != modelframenext;
+			bool hasExternAnimation = false;
+
+			if (animationid >= 0)
 			{
-				FModel* animation = Models[smf->animationIDs[i]];
+				FModel* animation = Models[animationid];
 				animationData = animation->AttachAnimationData();
+				if(!attachments || boneData.Size() == 0)
+					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
+				
+				hasExternAnimation = true;
 			}
 
+			if(!hasExternAnimation) boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
+
 			if (smfNext && modelframe != modelframenext)
-				mdl->RenderFrame(renderer, tex, modelframe, modelframenext, inter, translation, ssidp, *animationData);
+				mdl->RenderFrame(renderer, tex, modelframe, modelframenext, inter, translation, ssidp, boneData);
 			else
-				mdl->RenderFrame(renderer, tex, modelframe, modelframe, 0.f, translation, ssidp, *animationData);
+				mdl->RenderFrame(renderer, tex, modelframe, modelframe, 0.f, translation, ssidp, boneData);
 		}
 	}
 }
@@ -628,6 +645,10 @@ static void ParseModelDefLump(int Lump)
 				else if (sc.Compare("scaleweaponfov"))
 				{
 					smf.flags |= MDL_SCALEWEAPONFOV;
+				}
+				else if (sc.Compare("modelsareattachments"))
+				{
+					smf.flags |= MDL_MODELSAREATTACHMENTS;
 				}
 				else if (sc.Compare("rotating"))
 				{

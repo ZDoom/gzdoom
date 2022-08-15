@@ -363,7 +363,7 @@ int FDMDModel::FindFrame(const char* name, bool nodefault)
 //
 //===========================================================================
 
-void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const FTextureID*, const TArray<VSMatrix>& animationData)
+void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const FTextureID*, const TArray<VSMatrix>& boneData)
 {
 	if (frameno >= info.numFrames || frameno2 >= info.numFrames) return;
 

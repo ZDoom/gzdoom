@@ -490,46 +490,9 @@ int IQMModel::FindFrame(const char* name, bool nodefault)
 	return FErr_NotFound;
 }
 
-void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame1, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& animationData)
+void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame1, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData)
 {
-	const TArray<VSMatrix>& animationFrames = &animationData ? animationData : FrameTransforms;
-
-	int numbones = Joints.Size();
-
-	frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1)/numbones);
-	frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1)/numbones);
-	
-	int offset1 = frame1 * numbones;
-	int offset2 = frame2 * numbones;
-	float t = (float)inter;
-	float invt = 1.0f - t;
-
-	TArray<VSMatrix> bones(numbones, true);
-	for (int i = 0; i < numbones; i++)
-	{
-		const float* from = animationFrames[offset1 + i].get();
-		const float* to = animationFrames[offset2 + i].get();
-
-		// Interpolate bone between the two frames
-		float bone[16];
-		for (int i = 0; i < 16; i++)
-		{
-			bone[i] = from[i] * invt + to[i] * t;
-		}
-
-		// Apply parent bone
-		if (Joints[i].Parent >= 0)
-		{
-			bones[i] = bones[Joints[i].Parent];
-			bones[i].multMatrix(bone);
-		}
-		else
-		{
-			bones[i].loadMatrix(bone);
-		}
-	}
-
-	renderer->SetupFrame(this, 0, 0, NumVertices, bones);
+	renderer->SetupFrame(this, 0, 0, NumVertices, boneData);
 
 	FGameTexture* lastSkin = nullptr;
 	for (int i = 0; i < Meshes.Size(); i++)
@@ -596,4 +559,46 @@ void IQMModel::AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids)
 const TArray<VSMatrix>* IQMModel::AttachAnimationData()
 {
 	return &FrameTransforms;
+}
+
+const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<VSMatrix>& animationData)
+{
+	const TArray<VSMatrix>& animationFrames = &animationData ? animationData : FrameTransforms;
+
+	int numbones = Joints.Size();
+
+	frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1) / numbones);
+	frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1) / numbones);
+
+	int offset1 = frame1 * numbones;
+	int offset2 = frame2 * numbones;
+	float t = (float)inter;
+	float invt = 1.0f - t;
+
+	TArray<VSMatrix> bones(numbones, true);
+	for (int i = 0; i < numbones; i++)
+	{
+		const float* from = animationFrames[offset1 + i].get();
+		const float* to = animationFrames[offset2 + i].get();
+
+		// Interpolate bone between the two frames
+		float bone[16];
+		for (int i = 0; i < 16; i++)
+		{
+			bone[i] = from[i] * invt + to[i] * t;
+		}
+
+		// Apply parent bone
+		if (Joints[i].Parent >= 0)
+		{
+			bones[i] = bones[Joints[i].Parent];
+			bones[i].multMatrix(bone);
+		}
+		else
+		{
+			bones[i].loadMatrix(bone);
+		}
+	}
+
+	return bones;
 }

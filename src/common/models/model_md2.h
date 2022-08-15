@@ -116,7 +116,6 @@ public:
 	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& animationData) override;
 	virtual void LoadGeometry();
 	virtual void AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids) override;
-	const TArray<VSMatrix>* AttachAnimationData() override;
 
 	void UnloadGeometry();
 	void BuildVertexBuffer(FModelRenderer *renderer);

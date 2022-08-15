@@ -334,7 +334,7 @@ int FMD3Model::FindFrame(const char* name, bool nodefault)
 	{
 		if (!stricmp(name, Frames[i].Name)) return i;
 	}
-	return -1;
+	return FErr_NotFound;
 }
 
 //===========================================================================
@@ -379,13 +379,3 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 	renderer->SetInterpolation(0.f);
 }
 
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-const TArray<VSMatrix>* FMD3Model::AttachAnimationData()
-{
-	return {};
-}

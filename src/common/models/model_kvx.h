@@ -64,7 +64,6 @@ public:
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer(FModelRenderer *renderer) override;
 	float getAspectFactor(float vscale) override;
-	const TArray<VSMatrix>* AttachAnimationData() override;
 };
 
 

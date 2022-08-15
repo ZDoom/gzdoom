@@ -321,8 +321,3 @@ FUE1Model::~FUE1Model()
 {
 	UnloadGeometry();
 }
-
-const TArray<VSMatrix>* FUE1Model::AttachAnimationData()
-{
-	return {};
-}

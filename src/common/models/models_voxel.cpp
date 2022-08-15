@@ -406,15 +406,3 @@ void FVoxelModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int
 	renderer->SetupFrame(this, 0, 0, 0, {});
 	renderer->DrawElements(mNumIndices, 0);
 }
-
-//===========================================================================
-//
-// Voxels don't use bones
-//
-//===========================================================================
-
-const TArray<VSMatrix>* FVoxelModel::AttachAnimationData()
-{
-	return {};
-}
-

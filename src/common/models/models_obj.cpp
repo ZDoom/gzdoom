@@ -700,14 +700,3 @@ FOBJModel::~FOBJModel()
 	faces.Clear();
 	surfaces.Clear();
 }
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-const TArray<VSMatrix>* FOBJModel::AttachAnimationData()
-{
-	return {};
-}

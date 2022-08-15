@@ -383,19 +383,6 @@ void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 
 //===========================================================================
 //
-// Pointless for this format
-//
-//===========================================================================
-
-const TArray<VSMatrix>* FDMDModel::AttachAnimationData()
-{
-	return {};
-}
-
-
-
-//===========================================================================
-//
 // Internal data structures of MD2 files - only used during loading
 //
 //===========================================================================

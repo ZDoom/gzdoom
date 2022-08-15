@@ -426,10 +426,10 @@ void IQMModel::LoadBlendIndexes(IQMFileReader& reader, const IQMVertexArray& ver
 		for (FModelVertex& v : Vertices)
 		{
 			int x = reader.ReadUByte();
-            int y = reader.ReadUByte();
-            int z = reader.ReadUByte();
-            int w = reader.ReadUByte();
-            v.SetBoneSelector(x, y, z, w);
+			int y = reader.ReadUByte();
+			int z = reader.ReadUByte();
+			int w = reader.ReadUByte();
+			v.SetBoneSelector(x, y, z, w);
 		}
 	}
 	else if (vertexArray.Format == IQM_INT && vertexArray.Size == 4)

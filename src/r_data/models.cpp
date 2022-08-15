@@ -343,7 +343,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			auto& ssids = surfaceskinids.Size() > 0 ? surfaceskinids : smf->surfaceskinIDs;
 			auto ssidp = (unsigned)(i * MD3_MAX_SURFACES) < ssids.Size() ? &ssids[i * MD3_MAX_SURFACES] : nullptr;
 
-			const TArray<VSMatrix>* animationData = {};
+			const TArray<VSMatrix>* animationData = nullptr;
 
 			if (smf->animationIDs[i] >= 0)
 			{

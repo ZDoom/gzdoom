@@ -109,10 +109,11 @@ public:
 
 	bool Load(const char* fn, int lumpnum, const char* buffer, int length) override;
 	int FindFrame(const char* name, bool nodefault) override;
-	void RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& animationData) override;
+	void RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData) override;
 	void BuildVertexBuffer(FModelRenderer* renderer) override;
 	void AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids) override;
 	const TArray<VSMatrix>* AttachAnimationData() override;
+	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<VSMatrix>& animationData) override;
 
 private:
 	void LoadGeometry();

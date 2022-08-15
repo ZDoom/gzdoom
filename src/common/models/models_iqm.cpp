@@ -59,6 +59,9 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		uint32_t num_extensions = reader.ReadUInt32();
 		uint32_t ofs_extensions = reader.ReadUInt32();
 
+		if (num_meshes <= 0)
+			I_FatalError("Invalid model: \"%s%s\", no mesh data is unsupported", path, fileSystem.GetLongName(mLumpNum));
+
 		if (num_text == 0)
 			return false;
 

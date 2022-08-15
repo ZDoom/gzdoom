@@ -47,6 +47,7 @@
 #include "v_draw.h"
 #include "a_corona.h"
 #include "texturemanager.h"
+#include "actorinlines.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
@@ -669,7 +670,8 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 
 	for (ACorona* corona : Coronas)
 	{
-		DVector3 direction = Viewpoint.Pos - corona->Pos();
+		auto cPos = corona->Vec3Offset(0., 0., corona->Height * 0.5);
+		DVector3 direction = Viewpoint.Pos - cPos;
 		double dist = direction.Length();
 
 		// skip coronas that are too far
@@ -680,7 +682,7 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 
 		direction.MakeUnit();
 		FTraceResults results;
-		if (!Trace(corona->Pos(), corona->Sector, direction, dist, MF_SOLID, ML_BLOCKEVERYTHING, corona, results, 0, CheckForViewpointActor, &Viewpoint))
+		if (!Trace(cPos, corona->Sector, direction, dist, MF_SOLID, ML_BLOCKEVERYTHING, corona, results, 0, CheckForViewpointActor, &Viewpoint))
 		{
 			corona->CoronaFade = std::min(corona->CoronaFade + timeElapsed * fadeSpeed, 1.0f);
 		}
@@ -711,10 +713,10 @@ void HWDrawInfo::EndDrawScene(sector_t * viewsector, FRenderState &state)
 {
 	state.EnableFog(false);
 
-	if (gl_coronas && Coronas.Size() > 0)
+	/*if (gl_coronas && Coronas.Size() > 0)
 	{
 		DrawCoronas(state);
-	}
+	}*/
 
 	// [BB] HUD models need to be rendered here. 
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);

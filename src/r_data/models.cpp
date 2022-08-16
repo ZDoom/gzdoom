@@ -369,7 +369,14 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				}
 			}
 			else
-				boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
+			{
+				if ((!smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
+				{
+					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData);
+					boneStartingPosition = renderer->SetupFrame(mdl, 0, 0, 0, boneData, -1);
+					evaluatedSingle = true;
+				}
+			}
 
 			mdl->RenderFrame(renderer, tex, modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, translation, ssidp, boneData, boneStartingPosition);
 		}

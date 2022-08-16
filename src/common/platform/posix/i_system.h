@@ -70,6 +70,5 @@ inline int I_GetNumaNodeThreadCount(int numaNode) { return std::max<int>(std::th
 inline void I_SetThreadNumaNode(std::thread &thread, int numaNode) { }
 
 void I_OpenShellFolder(const char*);
-void I_OpenShellFile(const char*);
 
 #endif

@@ -447,20 +447,3 @@ void I_OpenShellFolder(const char* folder)
 	chdir(curdir);
 }
 
-void I_OpenShellFile(const char* file)
-{
-	char curdir[256];
-	if (!getcwd (curdir, countof(curdir)))
-	{
-		Printf ("Current path too long\n");
-		return;
-	}
-
-	std::string folder = file;
-	folder.erase(folder.find_last_of('/'), std::string::npos);
-	chdir(folder.c_str());
-	Printf("Opening folder: %s\n", folder.c_str());
-	std::system("xdg-open .");
-	chdir(curdir);
-}
-

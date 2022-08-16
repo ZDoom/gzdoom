@@ -316,7 +316,7 @@ UNSAFE_CCMD (writeini)
 CCMD(openconfig)
 {
 	M_SaveDefaults(nullptr);
-	I_OpenShellFile(GameConfig->GetPathName());
+	I_OpenShellFolder(ExtractFilePath(GameConfig->GetPathName()));
 }
 
 //

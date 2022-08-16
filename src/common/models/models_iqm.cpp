@@ -458,7 +458,11 @@ void IQMModel::LoadBlendWeights(IQMFileReader& reader, const IQMVertexArray& ver
 	{
 		for (FModelVertex& v : Vertices)
 		{
-			v.SetBoneWeight(reader.ReadUByte(), reader.ReadUByte(), reader.ReadUByte(), reader.ReadUByte());
+			int x = reader.ReadUByte();
+			int y = reader.ReadUByte();
+			int z = reader.ReadUByte();
+			int w = reader.ReadUByte();
+			v.SetBoneWeight(x, y, z, w);
 		}
 	}
 	else if (vertexArray.Format == IQM_FLOAT && vertexArray.Size == 4)

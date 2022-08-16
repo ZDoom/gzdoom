@@ -66,6 +66,8 @@
 
 #include <shellapi.h>
 
+#include <direct.h>
+
 #include "hardware.h"
 #include "printf.h"
 
@@ -962,19 +964,33 @@ void I_SetThreadNumaNode(std::thread &thread, int numaNode)
 
 void I_OpenShellFolder(const char* folder)
 {
-	FString proc = folder;
-	proc.ReplaceChars('/', '\\');
-	Printf("Opening folder: %s\n", proc.GetChars());
-	proc.Format("\"%s\"", proc.GetChars());
-	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
+	char curdir[256];
+	if (!getcwd (curdir, countof(curdir)))
+	{
+		Printf ("Current path too long\n");
+		return;
+	}
+
+	chdir(folder);
+	Printf("Opening folder: %s\n", folder);
+	std::system("explorer .");
+	chdir(curdir);
 }
 
 void I_OpenShellFile(const char* file)
 {
-	FString proc = file;
-	proc.ReplaceChars('/', '\\');
-	Printf("Opening folder to file: %s\n", proc.GetChars());
-	proc.Format("/select,\"%s\"", proc.GetChars());
-	ShellExecuteW(NULL, L"open", L"explorer.exe", proc.WideString().c_str(), NULL, SW_SHOWNORMAL);
+	char curdir[256];
+	if (!getcwd (curdir, countof(curdir)))
+	{
+		Printf ("Current path too long\n");
+		return;
+	}
+
+	std::string folder = file;
+	folder.erase(folder.find_last_of('/'), std::string::npos);
+	chdir(folder.c_str());
+	Printf("Opening folder: %s\n", folder.c_str());
+	std::system("explorer .");
+	chdir(curdir);
 }
 

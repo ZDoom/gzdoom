@@ -60,7 +60,7 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		uint32_t ofs_extensions = reader.ReadUInt32();
 
 		if (num_meshes <= 0)
-			I_FatalError("Invalid model: \"%s%s\", no mesh data is unsupported", path, fileSystem.GetLongName(mLumpNum));
+			I_FatalError("Invalid model: \"%s%s\", no mesh data is unsupported", path, fileSystem.GetLongName(mLumpNum).GetChars());
 
 		if (num_text == 0)
 			return false;
@@ -493,9 +493,9 @@ int IQMModel::FindFrame(const char* name, bool nodefault)
 	return FErr_NotFound;
 }
 
-void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame1, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData)
+void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame1, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
 {
-	renderer->SetupFrame(this, 0, 0, NumVertices, boneData, 0);
+	renderer->SetupFrame(this, 0, 0, NumVertices, boneData, boneStartPosition);
 
 	FGameTexture* lastSkin = nullptr;
 	for (int i = 0; i < Meshes.Size(); i++)

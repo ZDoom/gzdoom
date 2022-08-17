@@ -173,14 +173,12 @@ unsigned int I_MakeRNGSeed()
 
 FString I_GetCWD()
 {
-	char* curdir = get_current_dir_name();
-	if (!curdir) 
+	char curdir[PATH_MAX];
+	if (!getcwd(curdir, countof(curdir)))
 	{
 		return "";
 	}
-	FString ret(curdir);
-	free(curdir);
-	return ret;
+	return curdir;
 }
 
 bool I_ChDir(const char* path)
@@ -188,20 +186,18 @@ bool I_ChDir(const char* path)
 	return chdir(path) == 0;
 }
 
-void I_OpenShellFolder(const char* infolder)
+void I_OpenShellFolder(const char* folder)
 {
-	char* curdir = get_current_dir_name();
+	char curdir[PATH_MAX];
+	if (!getcwd (curdir, countof(curdir)))
+	{
+		Printf ("Current path too long\n");
+		return;
+	}
 
-	if (!chdir(infolder))
-	{
-		Printf("Opening folder: %s\n", infolder);
-		system("open .");
-		chdir(curdir);
-	}
-	else
-	{
-		Printf("Unable to open directory '%s\n", infolder);
-	}
-	free(curdir);
+	chdir(folder);
+	Printf("Opening folder: %s\n", folder);
+	std::system("open .");
+	chdir(curdir);
 }
 

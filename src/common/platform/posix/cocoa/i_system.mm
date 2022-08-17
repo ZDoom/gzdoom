@@ -171,9 +171,24 @@ unsigned int I_MakeRNGSeed()
 	return static_cast<unsigned int>(arc4random());
 }
 
+FString I_GetCWD()
+{
+	char curdir[PATH_MAX];
+	if (!getcwd(curdir, countof(curdir)))
+	{
+		return "";
+	}
+	return curdir;
+}
+
+bool I_ChDir(const char* path)
+{
+	return chdir(path) == 0;
+}
+
 void I_OpenShellFolder(const char* folder)
 {
-	char curdir[256];
+	char curdir[PATH_MAX];
 	if (!getcwd (curdir, countof(curdir)))
 	{
 		Printf ("Current path too long\n");

@@ -410,6 +410,21 @@ FString I_GetFromClipboard (bool use_primary_selection)
 	return "";
 }
 
+FString I_GetCWD()
+{
+	char curdir[PATH_MAX];
+	if (!getcwd(curdir, countof(curdir)))
+	{
+		return "";
+	}
+	return curdir;
+}
+
+bool I_ChDir(const char* path)
+{
+	return chdir(path) == 0;
+}
+
 // Return a random seed, preferably one with lots of entropy.
 unsigned int I_MakeRNGSeed()
 {
@@ -434,7 +449,7 @@ unsigned int I_MakeRNGSeed()
 
 void I_OpenShellFolder(const char* folder)
 {
-	char curdir[256];
+	char curdir[PATH_MAX];
 	if (!getcwd (curdir, countof(curdir)))
 	{
 		Printf ("Current path too long\n");

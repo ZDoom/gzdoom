@@ -961,6 +961,25 @@ void I_SetThreadNumaNode(std::thread &thread, int numaNode)
 	}
 }
 
+FString I_GetCWD()
+{
+	auto len = GetCurrentDirectoryW(0, nullptr);
+	TArray<wchar_t> curdir(len + 1, true);
+	if (!GetCurrentDirectoryW(len + 1, curdir.Data()))
+	{
+		return "";
+	}
+	FString returnv(curdir.Data());
+	FixPathSeperator(returnv);
+	return returnv;
+}
+
+bool I_ChDir(const char* path)
+{
+	return SetCurrentDirectoryW(WideString(path).c_str());
+}
+
+
 void I_OpenShellFolder(const char* infolder)
 {
 	auto len = GetCurrentDirectoryW(0, nullptr);

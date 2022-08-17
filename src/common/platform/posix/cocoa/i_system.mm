@@ -173,31 +173,23 @@ unsigned int I_MakeRNGSeed()
 
 FString I_GetCWD()
 {
-	char curdir[PATH_MAX];
-	if (!getcwd(curdir, countof(curdir)))
-	{
-		return "";
-	}
-	return curdir;
+	NSString *currentpath = [[NSFileManager defaultManager] currentDirectoryPath];
+	return currentpath.UTF8String;
 }
 
 bool I_ChDir(const char* path)
 {
-	return chdir(path) == 0;
+	return [[NSFileManager defaultManager] changeCurrentDirectoryPath:[NSString stringWithUTF8String:path]];
 }
 
 void I_OpenShellFolder(const char* folder)
 {
-	char curdir[PATH_MAX];
-	if (!getcwd (curdir, countof(curdir)))
-	{
-		Printf ("Current path too long\n");
-		return;
-	}
+	NSFileManager *filemgr = [NSFileManager defaultManager];
+	NSString *currentpath = [filemgr currentDirectoryPath];
 
-	chdir(folder);
+	[filemgr changeCurrentDirectoryPath:[NSString stringWithUTF8String:folder]];
 	Printf("Opening folder: %s\n", folder);
 	std::system("open .");
-	chdir(curdir);
+	[filemgr changeCurrentDirectoryPath:currentpath];
 }
 

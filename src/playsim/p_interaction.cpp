@@ -251,7 +251,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 			if (GStrings[lookup.GetChars() + 1]) message = lookup;
 			else
 			{
-				lookup.Format("$Obituary_%s", attacker->GetClass()->TypeName.GetChars(), mod.GetChars());
+				lookup.Format("$Obituary_%s", attacker->GetClass()->TypeName.GetChars());
 				if (GStrings[lookup.GetChars() + 1]) message = lookup;
 				else
 				{

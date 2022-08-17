@@ -278,7 +278,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 	bcnt = 0;
 
-	tilebackground = false;
+	if (!isenterpic) tilebackground = false;
 	texture.SetInvalid();
 
 	level_info_t * li = FindLevelInfo(wbs->current);
@@ -329,6 +329,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					}
 				}
 				lumpname = "INTERPIC";
+				tilebackground = false;
 			}
 			break;
 
@@ -345,6 +346,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			{
 				if (isenterpic) return false;
 				lumpname = "FLOOR16";
+				tilebackground = true;
 			}
 			break;
 

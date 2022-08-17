@@ -248,11 +248,11 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		else
 		{
 			lookup.Format("$Obituary_%s_%s", attacker->GetClass()->TypeName.GetChars(), mod.GetChars());
-			if (GStrings[lookup]) message = lookup;
+			if (GStrings[lookup.GetChars() + 1]) message = lookup;
 			else
 			{
 				lookup.Format("$Obituary_%s", attacker->GetClass()->TypeName.GetChars(), mod.GetChars());
-				if (GStrings[lookup]) message = lookup;
+				if (GStrings[lookup.GetChars() + 1]) message = lookup;
 				else
 				{
 					IFVIRTUALPTR(attacker, AActor, GetObituary)

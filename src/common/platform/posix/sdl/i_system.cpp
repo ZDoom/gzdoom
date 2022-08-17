@@ -412,12 +412,14 @@ FString I_GetFromClipboard (bool use_primary_selection)
 
 FString I_GetCWD()
 {
-	char curdir[PATH_MAX];
-	if (!getcwd(curdir, countof(curdir)))
+	char* curdir = get_current_dir_name();
+	if (!curdir) 
 	{
 		return "";
 	}
-	return curdir;
+	FString ret(curdir);
+	free(curdir);
+	return ret;
 }
 
 bool I_ChDir(const char* path)

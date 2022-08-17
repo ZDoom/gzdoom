@@ -1608,17 +1608,17 @@ FileData::~FileData ()
 {
 }
 
-FString::FString (ELumpNum lumpnum)
+FString::FString(ELumpNum lumpnum)
 {
-	auto lumpr = fileSystem.OpenFileReader ((int)lumpnum);
-	auto size = lumpr.GetLength ();
-	AllocBuffer (1 + size);
-	auto numread = lumpr.Read (&Chars[0], size);
+	auto lumpr = fileSystem.OpenFileReader((int)lumpnum);
+	auto size = lumpr.GetLength();
+	AllocBuffer(size);
+	auto numread = lumpr.Read(&Chars[0], size);
 	Chars[size] = '\0';
 
 	if (numread != size)
 	{
-		I_Error ("ConstructStringFromLump: Only read %ld of %ld bytes on lump %i (%s)\n",
+		I_Error("ConstructStringFromLump: Only read %ld of %ld bytes on lump %i (%s)\n",
 			numread, size, lumpnum, fileSystem.GetFileFullName((int)lumpnum));
 	}
 }

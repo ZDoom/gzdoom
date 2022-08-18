@@ -456,7 +456,7 @@ void I_OpenShellFolder(const char* infolder)
 	if (!chdir(infolder))
 	{
 		Printf("Opening folder: %s\n", infolder);
-		system("xdg-open .");
+		std::system("xdg-open .");
 		chdir(curdir);
 	}
 	else

@@ -101,6 +101,16 @@ LightProbe* FindLightProbe(FLevelLocals* level, float x, float y, float z)
 	return foundprobe;
 }
 
+static bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
+{
+	FDynamicLight* light = node->lightsource;
+	if (!light->Trace())
+		return true;
+
+	FTraceResults results;
+	return !Trace(light->Pos, light->Sector, DVector3(-L.X, -L.Y, -L.Z), dist, 0, ML_BLOCKING, nullptr, results);
+}
+
 //==========================================================================
 //
 // Sets a single light value from all dynamic lights affecting the specified location
@@ -114,14 +124,6 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 	float radius;
 	
 	out[0] = out[1] = out[2] = 0.f;
-
-	LightProbe* probe = FindLightProbe(Level, x, y, z);
-	if (probe)
-	{
-		out[0] = probe->Red;
-		out[1] = probe->Green;
-		out[2] = probe->Blue;
-	}
 
 	// Go through both light lists
 	while (node)
@@ -156,38 +158,43 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 			{
 				dist = sqrtf(dist);	// only calculate the square root if we really need it.
 
-				frac = 1.0f - (dist / radius);
-
-				if (light->IsSpot())
-				{
+				if (light->IsSpot() || light->Trace())
 					L *= -1.0f / dist;
-					DAngle negPitch = -*light->pPitch;
-					DAngle Angle = light->target->Angles.Yaw;
-					double xyLen = negPitch.Cos();
-					double spotDirX = -Angle.Cos() * xyLen;
-					double spotDirY = -Angle.Sin() * xyLen;
-					double spotDirZ = -negPitch.Sin();
-					double cosDir = L.X * spotDirX + L.Y * spotDirY + L.Z * spotDirZ;
-					frac *= (float)smoothstep(light->pSpotOuterAngle->Cos(), light->pSpotInnerAngle->Cos(), cosDir);
-				}
 
-				if (frac > 0 && (!light->shadowmapped || (light->GetRadius() > 0 && screen->mShadowMap.ShadowTest(light->Pos, { x, y, z }))))
+				if (TraceLightVisbility(node, L, dist))
 				{
-					lr = light->GetRed() / 255.0f;
-					lg = light->GetGreen() / 255.0f;
-					lb = light->GetBlue() / 255.0f;
-					if (light->IsSubtractive())
+					frac = 1.0f - (dist / radius);
+
+					if (light->IsSpot())
 					{
-						float bright = (float)FVector3(lr, lg, lb).Length();
-						FVector3 lightColor(lr, lg, lb);
-						lr = (bright - lr) * -1;
-						lg = (bright - lg) * -1;
-						lb = (bright - lb) * -1;
+						DAngle negPitch = -*light->pPitch;
+						DAngle Angle = light->target->Angles.Yaw;
+						double xyLen = negPitch.Cos();
+						double spotDirX = -Angle.Cos() * xyLen;
+						double spotDirY = -Angle.Sin() * xyLen;
+						double spotDirZ = -negPitch.Sin();
+						double cosDir = L.X * spotDirX + L.Y * spotDirY + L.Z * spotDirZ;
+						frac *= (float)smoothstep(light->pSpotOuterAngle->Cos(), light->pSpotInnerAngle->Cos(), cosDir);
 					}
 
-					out[0] += lr * frac;
-					out[1] += lg * frac;
-					out[2] += lb * frac;
+					if (frac > 0 && (!light->shadowmapped || (light->GetRadius() > 0 && screen->mShadowMap.ShadowTest(light->Pos, { x, y, z }))))
+					{
+						lr = light->GetRed() / 255.0f;
+						lg = light->GetGreen() / 255.0f;
+						lb = light->GetBlue() / 255.0f;
+						if (light->IsSubtractive())
+						{
+							float bright = (float)FVector3(lr, lg, lb).Length();
+							FVector3 lightColor(lr, lg, lb);
+							lr = (bright - lr) * -1;
+							lg = (bright - lg) * -1;
+							lb = (bright - lb) * -1;
+						}
+
+						out[0] += lr * frac;
+						out[1] += lg * frac;
+						out[2] += lb * frac;
+					}
 				}
 			}
 		}
@@ -249,7 +256,16 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							AddLightToList(modellightdata, group, light, true);
+							FVector3 L(dx, dy, dz);
+							float dist = sqrtf(distSquared);
+							if (light->Trace())
+								L *= 1.0f / dist;
+
+							if (TraceLightVisbility(node, L, dist))
+							{
+								AddLightToList(modellightdata, group, light, true);
+							}
+
 							addedLights.Push(light);
 						}
 					}

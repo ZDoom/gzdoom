@@ -42,7 +42,8 @@ enum LightFlag
 	LF_DONTLIGHTACTORS = 32,
 	LF_SPOT = 64,
 	LF_DONTLIGHTOTHERS = 128,
-	LF_DONTLIGHTMAP = 256
+	LF_DONTLIGHTMAP = 256,
+	LF_TRACE = 512
 };
 
 typedef TFlags<LightFlag> LightFlags;
@@ -76,6 +77,7 @@ public:
 	void SetDontLightActors(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTACTORS; else m_lightFlags &= ~LF_DONTLIGHTACTORS; }
 	void SetDontLightOthers(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTOTHERS; else m_lightFlags &= ~LF_DONTLIGHTOTHERS; }
 	void SetDontLightMap(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTMAP; else m_lightFlags &= ~LF_DONTLIGHTMAP; }
+	void SetTrace(bool on) { if (on) m_lightFlags |= LF_TRACE; else m_lightFlags &= ~LF_TRACE; }
 	void SetNoShadowmap(bool on) { if (on) m_lightFlags |= LF_NOSHADOWMAP; else m_lightFlags &= ~LF_NOSHADOWMAP; }
 	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = DAngle::fromDeg(angle); }
@@ -230,6 +232,7 @@ struct FDynamicLight
 	bool IsAdditive() const { return !!((*pLightFlags) & LF_ADDITIVE); }
 	bool IsSpot() const { return !!((*pLightFlags) & LF_SPOT); }
 	bool IsAttenuated() const { return !!((*pLightFlags) & LF_ATTENUATE); }
+	bool Trace() const { return !!((*pLightFlags) & (LF_TRACE)); }
 	bool DontShadowmap() const { return !!((*pLightFlags) & LF_NOSHADOWMAP); }
 	bool DontLightSelf() const { return !!((*pLightFlags) & (LF_DONTLIGHTSELF|LF_DONTLIGHTACTORS)); }	// dontlightactors implies dontlightself.
 	bool DontLightActors() const { return !!((*pLightFlags) & LF_DONTLIGHTACTORS); }

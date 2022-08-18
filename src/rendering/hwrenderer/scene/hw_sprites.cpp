@@ -295,13 +295,6 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		}
 		else
 		{
-			if (actor && di->Level->LightProbes.Size() > 0)
-			{
-				LightProbe* probe = FindLightProbe(di->Level, actor->X(), actor->Y(), actor->Center());
-				if (probe)
-					state.SetDynLight(probe->Red, probe->Green, probe->Blue);
-			}
-
 			FHWModelRenderer renderer(di, state, dynlightindex);
 			RenderModel(&renderer, x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
 			state.SetVertexBuffer(screen->mVertexData);

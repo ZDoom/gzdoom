@@ -17,6 +17,7 @@ class DynamicLight : Actor
 	flagdef spot: lightflags, 6;
 	flagdef dontlightothers: lightflags, 7;
 	flagdef dontlightmap: lightflags, 8;
+	flagdef trace: lightflags, 9;
 
 	enum EArgs
 	{
@@ -40,6 +41,7 @@ class DynamicLight : Actor
 		LF_SPOT = 64,
 		LF_DONTLIGHTOTHERS = 128,
 		LF_DONTLIGHTMAP = 256,
+		LF_TRACE = 512
 	};
 
 	enum ELightType
@@ -439,6 +441,25 @@ class SpotLightFlickerRandomAttenuated : SpotLightFlickerRandom
 		+DYNAMICLIGHT.ATTENUATE
 	}
 }
+
+class PointLightTraceAttenuated : PointLightAttenuated
+{
+	Default
+	{
+		+DYNAMICLIGHT.TRACE
+		+DYNAMICLIGHT.DONTLIGHTMAP
+	}
+}
+
+class SpotLightTraceAttenuated : SpotLightAttenuated
+{
+	Default
+	{
+		+DYNAMICLIGHT.TRACE
+		+DYNAMICLIGHT.DONTLIGHTMAP
+	}
+}
+
 
 class VavoomLight : DynamicLight 
 {

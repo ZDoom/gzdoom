@@ -141,8 +141,11 @@ int FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned in
 	auto mdbuff = static_cast<FModelVertexBuffer*>(model->GetVertexBuffer(GetType()));
 	boneIndexBase = boneStartIndex >= 0 ? boneStartIndex : screen->mBones->UploadBones(bones);
 	state.SetBoneIndexBase(boneIndexBase);
-	state.SetVertexBuffer(mdbuff->vertexBuffer(), frame1, frame2);
-	if (mdbuff->indexBuffer()) state.SetIndexBuffer(mdbuff->indexBuffer());
+	if (mdbuff)
+	{
+		state.SetVertexBuffer(mdbuff->vertexBuffer(), frame1, frame2);
+		if (mdbuff->indexBuffer()) state.SetIndexBuffer(mdbuff->indexBuffer());
+	}
 	return boneIndexBase;
 }
 

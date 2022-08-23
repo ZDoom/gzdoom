@@ -1200,6 +1200,8 @@ public:
 	sector_t		*BlockingCeiling;	// Sector that blocked the last move (ceiling plane slope)
 	sector_t		*BlockingFloor;		// Sector that blocked the last move (floor plane slope)
 
+	uint32_t		freezetics;	// actor has actions completely frozen (including movement) for this many tics, but they still get Tick() calls
+
 	int PoisonDamage; // Damage received per tic from poison.
 	FName PoisonDamageType; // Damage type dealt by poison.
 	int PoisonDuration; // Duration left for receiving poison damage.

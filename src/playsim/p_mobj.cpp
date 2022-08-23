@@ -332,6 +332,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("damagemultiply", DamageMultiply)
 		A("waveindexxy", WeaveIndexXY)
 		A("weaveindexz", WeaveIndexZ)
+		A("freezetics", freezetics)
 		A("pdmgreceived", PoisonDamageReceived)
 		A("pdurreceived", PoisonDurationReceived)
 		A("ppreceived", PoisonPeriodReceived)
@@ -3374,7 +3375,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 	if (P_CheckSight (this, link))
 	{
 		// AMageStaffFX2::IsOkayToAttack had an extra check here, generalized with a flag,
-		// to only allow the check to succeed if the enemy was in a ~84� FOV of the player
+		// to only allow the check to succeed if the enemy was in a ~84  FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
 			DAngle angle = absangle(Friend->AngleTo(link), Friend->Angles.Yaw);
@@ -3633,6 +3634,11 @@ void AActor::Tick ()
 	static const uint8_t HereticScrollDirs[4] = { 6, 9, 1, 4 };
 	static const uint8_t HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
 
+	if (freezetics > 0)
+	{
+		freezetics--;
+		return;
+	}
 
 	AActor *onmo;
 

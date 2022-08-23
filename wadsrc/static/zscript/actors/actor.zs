@@ -258,6 +258,7 @@ class Actor : Thinker native
 	native int16 lightlevel;
 	native readonly int SpawnTime;
 	private native int InventoryID;	// internal counter.
+	native uint freezetics;
 
 	meta String Obituary;		// Player was killed by this actor
 	meta String HitObituary;		// Player was killed by this actor in melee

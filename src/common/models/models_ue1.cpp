@@ -232,7 +232,7 @@ int FUE1Model::FindFrame( const char *name, bool nodefault )
 void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids)
 {
 	// the moment of magic
-	if ( (frame >= numFrames) || (frame2 >= numFrames) ) return;
+	if ( (frame < 0) || (frame2 < 0) || (frame >= numFrames) || (frame2 >= numFrames) ) return;
 	renderer->SetInterpolation(inter);
 	int vsize, fsize = 0, vofs = 0;
 	for ( int i=0; i<numGroups; i++ ) fsize += groups[i].numPolys*3;

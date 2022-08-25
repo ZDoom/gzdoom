@@ -166,7 +166,7 @@ static void ClearConversationStuff(player_t* player)
 	player->ConversationFaceTalker = false;
 	player->ConversationNPC = nullptr;
 	player->ConversationPC = nullptr;
-	player->ConversationNPCAngle = 0.;
+	player->ConversationNPCAngle = nullAngle;
 }
 
 //============================================================================

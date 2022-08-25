@@ -40,20 +40,9 @@ inline unsigned FloatToAngle(double f)
 	return xs_CRoundToInt((f)* (0x40000000 / 90.));
 }
 
-inline constexpr double AngleToFloat(unsigned f)
-{
-	return f * (90. / 0x40000000);
-}
-
-inline constexpr double AngleToFloat(int f)
-{
-	return f * (90. / 0x40000000);
-}
-
 #define FLOAT2FIXED(f)		FloatToFixed(f)
 #define FIXED2FLOAT(f)		float(FixedToFloat(f))
 #define FIXED2DBL(f)		FixedToFloat(f)
 
-#define ANGLE2DBL(f)		AngleToFloat(f)
 
 #endif

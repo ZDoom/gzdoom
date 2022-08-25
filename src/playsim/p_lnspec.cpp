@@ -78,7 +78,7 @@ static const uint8_t ChangeMap[8] = { 0, 1, 5, 3, 7, 2, 6, 0 };
 #define SPEED(a)		((a) / 8.)
 #define TICS(a)			(((a)*TICRATE)/35)
 #define OCTICS(a)		(((a)*TICRATE)/8)
-#define BYTEANGLE(a)	((a) * (360./256.))
+#define BYTEANGLE(a)	DAngle::fromDeg((a) * (360./256.))
 #define CRUSH(a)		((a) > 0? (a) : -1)
 #define CHANGE(a)		(((a) >= 0 && (a)<=7)? ChangeMap[a]:0)
 
@@ -1736,13 +1736,13 @@ FUNC(LS_Thing_Hate)
 FUNC(LS_Thing_ProjectileAimed)
 // Thing_ProjectileAimed (tid, type, speed, target, newtid)
 {
-	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, 0., SPEED(arg2), 0, arg3, it, 0, arg4, false);
+	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, nullAngle, SPEED(arg2), 0, arg3, it, 0, arg4, false);
 }
 
 FUNC(LS_Thing_ProjectileIntercept)
 // Thing_ProjectileIntercept (tid, type, speed, target, newtid)
 {
-	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, 0., SPEED(arg2), 0, arg3, it, 0, arg4, true);
+	return Level->EV_Thing_Projectile (arg0, it, arg1, NULL, nullAngle, SPEED(arg2), 0, arg3, it, 0, arg4, true);
 }
 
 // [BC] added newtid for next two
@@ -1761,7 +1761,7 @@ FUNC(LS_Thing_SpawnNoFog)
 FUNC(LS_Thing_SpawnFacing)
 // Thing_SpawnFacing (tid, type, nofog, newtid)
 {
-	return Level->EV_Thing_Spawn (arg0, it, arg1, 1000000., arg2 ? false : true, arg3);
+	return Level->EV_Thing_Spawn (arg0, it, arg1, DAngle::fromDeg(1000000.), arg2 ? false : true, arg3);
 }
 
 FUNC(LS_Thing_Raise)
@@ -2583,8 +2583,8 @@ FUNC(LS_Sector_SetCeilingScale2)
 FUNC(LS_Sector_SetRotation)
 // Sector_SetRotation (tag, floor-angle, ceiling-angle)
 {
-	DAngle ceiling = (double)arg2;
-	DAngle floor = (double)arg1;
+	DAngle ceiling = DAngle::fromDeg(arg2);
+	DAngle floor = DAngle::fromDeg(arg1);
 
 	auto itr = Level->GetSectorTagIterator(arg0);
 	int secnum;
@@ -3234,7 +3234,7 @@ FUNC(LS_ForceField)
 	if (it != NULL)
 	{
 		P_DamageMobj (it, NULL, NULL, 16, NAME_None);
-		it->Thrust(it->Angles.Yaw + 180, 7.8125);
+		it->Thrust(it->Angles.Yaw + DAngle::fromDeg(180), 7.8125);
 	}
 	return true;
 }
@@ -3308,7 +3308,7 @@ FUNC(LS_GlassBreak)
 				}
 				if (glass != nullptr)
 				{
-					glass->Angles.Yaw = pr_glass() * (360 / 256.);
+					glass->Angles.Yaw = DAngle::fromDeg(pr_glass() * (360 / 256.));
 					glass->VelFromAngle(pr_glass() & 3);
 					glass->Vel.Z = (pr_glass() & 7);
 					// [RH] Let the shards stick around longer than they did in Strife.

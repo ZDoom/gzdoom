@@ -52,7 +52,7 @@ void C_PrintInfo(AActor *target, bool verbose)
 
 void C_AimLine(FTranslatedLineTarget *t, bool nonshootable)
 {
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE, t, 0.,
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE, t, nullAngle,
 		(nonshootable) ? ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART|ALF_IGNORENOAUTOAIM : ALF_IGNORENOAUTOAIM);
 }
 

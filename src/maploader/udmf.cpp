@@ -262,7 +262,7 @@ double UDMFParserBase::CheckCoordinate(FName key)
 
 DAngle UDMFParserBase::CheckAngle(FName key)
 {
-	return DAngle(CheckFloat(key)).Normalized360();
+	return DAngle::fromDeg(CheckFloat(key)).Normalized360();
 }
 
 bool UDMFParserBase::CheckBool(FName key)

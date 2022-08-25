@@ -615,7 +615,7 @@ inline int DoubleToACS(double val)
 
 inline DAngle ACSToAngle(int acsval)
 {
-	return acsval * (360. / 65536.);
+	return DAngle::fromDeg(acsval * (360. / 65536.));
 }
 
 inline int AngleToACS(DAngle ang)
@@ -3791,7 +3791,7 @@ int DLevelScript::DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle,
 
 int DLevelScript::DoSpawn(int type, int x, int y, int z, int tid, int angle, bool force)
 {
-	return DoSpawn(type, DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), tid, angle * (360. / 256), force);
+	return DoSpawn(type, DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), tid, DAngle::fromDeg(angle * (360. / 256)), force);
 }
 
 
@@ -3806,12 +3806,12 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool forc
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->Pos(), tid, angle * (360. / 256), force);
+			spawned += DoSpawn (type, aspot->Pos(), tid, DAngle::fromDeg(angle * (360. / 256)), force);
 		}
 	}
 	else if (activator != NULL)
 	{
-		spawned += DoSpawn (type, activator->Pos(), tid, angle * (360. / 256), force);
+		spawned += DoSpawn (type, activator->Pos(), tid, DAngle::fromDeg(angle * (360. / 256)), force);
 	}
 	return spawned;
 }
@@ -9652,7 +9652,7 @@ scriptwait:
 			break;
 
 		case PCD_VECTORANGLE:
-			STACK(2) = AngleToACS(VecToAngle(STACK(2), STACK(1)).Degrees);
+			STACK(2) = AngleToACS(VecToAngle(STACK(2), STACK(1)));
 			sp--;
 			break;
 
@@ -9753,14 +9753,14 @@ scriptwait:
 			// Like Thing_Projectile(Gravity) specials, but you can give the
 			// projectile a TID.
 			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
-			Level->EV_Thing_Projectile(STACK(7), activator, STACK(6), NULL, STACK(5) * (360. / 256.),
+			Level->EV_Thing_Projectile(STACK(7), activator, STACK(6), NULL, DAngle::fromDeg(STACK(5) * (360. / 256.)),
 				STACK(4) / 8., STACK(3) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 
 		case PCD_SPAWNPROJECTILE:
 			// Same, but takes an actor name instead of a spawn ID.
-			Level->EV_Thing_Projectile(STACK(7), activator, 0, Level->Behaviors.LookupString(STACK(6)), STACK(5) * (360. / 256.),
+			Level->EV_Thing_Projectile(STACK(7), activator, 0, Level->Behaviors.LookupString(STACK(6)), DAngle::fromDeg(STACK(5) * (360. / 256.)),
 				STACK(4) / 8., STACK(3) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;

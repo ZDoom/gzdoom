@@ -212,7 +212,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 	{
 		//MAKEME: This should be smarter.
 		if ((pr_botdofire()%200)<=skill.reaction)
-			if(Check_LOS(enemy, SHOOTFOV))
+			if(Check_LOS(enemy, DAngle::fromDeg(SHOOTFOV)))
 				no_fire = false;
 	}
 	else if (GetBotInfo(player->ReadyWeapon).projectileType != NULL)
@@ -237,7 +237,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		fm = Dist / GetDefaultByType (GetBotInfo(player->ReadyWeapon).projectileType)->Speed;
 		Level->BotInfo.SetBodyAt(Level, enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
 		Angle = player->mo->AngleTo(Level->BotInfo.body1);
-		if (Check_LOS (enemy, SHOOTFOV))
+		if (Check_LOS (enemy, DAngle::fromDeg(SHOOTFOV)))
 			no_fire = false;
 	}
 	else
@@ -254,9 +254,9 @@ void DBot::Dofire (ticcmd_t *cmd)
 		aiming_value = skill.aiming - aiming_penalty;
 		if (aiming_value <= 0)
 			aiming_value = 1;
-		m = ((SHOOTFOV/2)-(aiming_value*SHOOTFOV/200)); //Higher skill is more accurate
+		m = DAngle::fromDeg(((SHOOTFOV/2)-(aiming_value*SHOOTFOV/200))); //Higher skill is more accurate
 		if (m <= 0)
-			m = 1.; //Prevents lock.
+			m = DAngle::fromDeg(1.); //Prevents lock.
 
 		if (m != 0)
 		{
@@ -271,7 +271,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 			increase = !increase;
 		}
 
-		if (Check_LOS (enemy, (SHOOTFOV/2)))
+		if (Check_LOS (enemy, DAngle::fromDeg(SHOOTFOV/2)))
 			no_fire = false;
 	}
 	if (!no_fire) //If going to fire weapon
@@ -328,7 +328,7 @@ void FCajunMaster::BotTick(AActor *mo)
 		{
 			if (!players[i].Bot->missile && (mo->flags3 & MF3_WARNBOT))
 			{ //warn for incoming missiles.
-				if (mo->target != players[i].mo && players[i].Bot->Check_LOS(mo, 90.))
+				if (mo->target != players[i].mo && players[i].Bot->Check_LOS(mo, DAngle::fromDeg(90.)))
 					players[i].Bot->missile = mo;
 			}
 		}
@@ -425,9 +425,9 @@ AActor *DBot::Find_enemy ()
 
 	//Note: It's hard to ambush a bot who is not alone
 	if (allround || mate)
-		vangle = 360.;
+		vangle = DAngle::fromDeg(360.);
 	else
-		vangle = ENEMY_SCAN_FOV;
+		vangle = DAngle::fromDeg(ENEMY_SCAN_FOV);
 	allround = false;
 
 	target = NULL;
@@ -537,7 +537,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 
 	dist = actor->Distance2D (enemy);
 	if (dist < SAFE_SELF_MISDIST)
-		return 0.;
+		return nullAngle;
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
@@ -563,7 +563,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 			return player->mo->AngleTo(enemy);
 		}
 	}
-	return 0.;
+	return nullAngle;
 }
 
 // [RH] We absolutely do not want to pick things up here. The bot code is

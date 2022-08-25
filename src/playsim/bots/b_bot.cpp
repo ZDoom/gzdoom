@@ -73,7 +73,7 @@ void DBot::Construct()
 void DBot::Clear ()
 {
 	player = nullptr;
-	Angle = 0.;
+	Angle = nullAngle;
 	dest = nullptr;
 	prev = nullptr;
 	enemy = nullptr;

@@ -401,7 +401,7 @@ int P_HitFriend(AActor * self)
 	{
 		DAngle angle = self->AngleTo(self->target);
 		double dist = self->Distance2D(self->target);
-		P_AimLineAttack (self, angle, dist, &t, 0., true);
+		P_AimLineAttack (self, angle, dist, &t, nullAngle, true);
 		if (t.linetarget != NULL && t.linetarget != self->target)
 		{
 			return self->IsFriend (t.linetarget);
@@ -994,7 +994,7 @@ void P_NewChaseDir(AActor * actor)
 				}
 				else if (front == actor->Z() && back < actor->Z() - actor->MaxDropOffHeight)
 				{
-					angle = line->Delta().Angle() + 180.; // back side dropoff
+					angle = line->Delta().Angle() + DAngle::fromDeg(180.); // back side dropoff
 				}
 				else continue;
 		
@@ -1263,7 +1263,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	else
 	{
 		mindist = maxdist = 0;
-		fov = allaround ? 0. : 180.;
+		fov = DAngle::fromDeg(allaround ? 0. : 180.);
 	}
 
 	double dist = lookee->Distance2D (other);
@@ -1999,7 +1999,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 
 	AActor *targ = NULL; // Shuts up gcc
 	double dist;
-	if (fov == 0) fov = 180.;
+	if (fov == nullAngle) fov = DAngle::fromDeg(180.);
 	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
 	if (self->flags5 & MF5_INCONVERSATION)
@@ -2226,15 +2226,15 @@ void A_Wander(AActor *self, int flags)
 	// turn towards movement direction if not there yet
 	if (!(flags & CHF_NODIRECTIONTURN) && (self->movedir < DI_NODIR))
 	{
-		self->Angles.Yaw = floor(self->Angles.Yaw.Degrees / 45) * 45.;
-		DAngle delta = deltaangle(self->Angles.Yaw, (self->movedir * 45));
+		self->Angles.Yaw = DAngle::fromDeg(floor(self->Angles.Yaw.Degrees / 45) * 45.);
+		DAngle delta = deltaangle(self->Angles.Yaw, DAngle::fromDeg(self->movedir * 45));
 		if (delta < 0)
 		{
-			self->Angles.Yaw -= 45;
+			self->Angles.Yaw -= DAngle::fromDeg(45);
 		}
 		else if (delta > 0)
 		{
-			self->Angles.Yaw += 45;
+			self->Angles.Yaw += DAngle::fromDeg(45);
 		}
 	}
 
@@ -2379,15 +2379,15 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	}
 	else if (!(flags & CHF_NODIRECTIONTURN) && actor->movedir < 8)
 	{
-		actor->Angles.Yaw = floor(actor->Angles.Yaw.Degrees / 45) * 45.;
-		DAngle delta = deltaangle(actor->Angles.Yaw, (actor->movedir * 45));
+		actor->Angles.Yaw = DAngle::fromDeg(floor(actor->Angles.Yaw.Degrees / 45) * 45.);
+		DAngle delta = deltaangle(actor->Angles.Yaw, DAngle::fromDeg(actor->movedir * 45));
 		if (delta < 0)
 		{
-			actor->Angles.Yaw -= 45;
+			actor->Angles.Yaw -= DAngle::fromDeg(45);
 		}
 		else if (delta > 0)
 		{
-			actor->Angles.Yaw += 45;
+			actor->Angles.Yaw += DAngle::fromDeg(45);
 		}
 	}
 
@@ -2552,8 +2552,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				if (pr_chase() < 100)
 				{
 					DAngle ang = actor->AngleTo(actor->target);
-					if (pr_chase() < 128) ang += 90.;
-					else ang -= 90.;
+					if (pr_chase() < 128) ang += DAngle::fromDeg(90.);
+					else ang -= DAngle::fromDeg(90.);
 					actor->VelFromAngle(13., ang);
 					actor->FastChaseStrafeCount = 3;		// strafe time
 				}
@@ -3022,7 +3022,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 	// This will never work well if the turn angle is limited.
 	if (max_turn == 0 && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
     {
-		self->Angles.Yaw += pr_facetarget.Random2() * (45 / 256.);
+		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
     }
 }
 
@@ -3058,7 +3058,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		
 	self->Angles.Yaw = self->AngleTo(self->target);
 
-	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, self->target);
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg(60.), 0, self->target);
 	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
@@ -3072,7 +3072,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{
-		self->Angles.Yaw += pr_railface.Random2() * 45./256;
+		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45./256);
 	}
 
 	FRailParams p;

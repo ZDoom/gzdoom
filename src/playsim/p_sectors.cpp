@@ -1401,12 +1401,12 @@ bool FLevelLocals::AlignFlat (int linenum, int side, int fc)
 		return false;
 
 	DAngle angle = line->Delta().Angle();
-	DAngle norm = angle - 90;
+	DAngle norm = angle - DAngle::fromDeg(90.);
 	double dist = -(norm.Cos() * line->v1->fX() + norm.Sin() * line->v1->fY());
 
 	if (side)
 	{
-		angle += 180.;
+		angle += DAngle::fromDeg(180.);
 		dist = -dist;
 	}
 

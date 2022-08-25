@@ -765,7 +765,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 	{
 		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}
-	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90), clamp<int>(ang2, 0, 90), !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
+	if (!P_SeekerMissile(self, DAngle::fromDeg(clamp<int>(ang1, 0, 90)), DAngle::fromDeg(clamp<int>(ang2, 0, 90)), !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
 	{
 		if (flags & SMF_LOOK)
 		{ // This monster is no longer seekable, so let us look for another one next time.
@@ -795,7 +795,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 	S_Sound (self, CHAN_WEAPON, 0, self->AttackSound, 1, ATTN_NORM);
 	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
-		DAngle angle = self->Angles.Yaw + pr_cabullet.Random2() * (5.625 / 256.);
+		DAngle angle = self->Angles.Yaw + DAngle::fromDeg(pr_cabullet.Random2() * (5.625 / 256.));
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
 			NAME_Hitscan, NAME_BulletPuff);
@@ -931,7 +931,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 	{
 		if (ti) 
 		{
-			DAngle angle = self->Angles.Yaw - 90;
+			DAngle angle = self->Angles.Yaw - DAngle::fromDeg(90.);
 			double x = Spawnofs_xy * angle.Cos();
 			double y = Spawnofs_xy * angle.Sin();
 			double z = Spawnheight + self->GetBobOffset() - 32 + (self->player? self->player->crouchoffset : 0.);
@@ -1202,7 +1202,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 	{
 		self->Angles.Yaw = self->AngleTo(self->target);
 	}
-	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, aim ? self->target.Get() : nullptr);
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg(60.), 0, aim ? self->target.Get() : nullptr);
 	if (t.linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
@@ -1228,7 +1228,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 
 		if (self->target->flags & MF_SHADOW)
 		{
-			DAngle rnd = pr_crailgun.Random2() * (45. / 256.);
+			DAngle rnd = DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
 			self->Angles.Yaw += rnd;
 		}
 	}
@@ -1276,7 +1276,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Recoil)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(xyvel);
 
-	self->Thrust(self->Angles.Yaw + 180., xyvel);
+	self->Thrust(self->Angles.Yaw + DAngle::fromDeg(180.), xyvel);
 	return 0;
 }
 
@@ -2423,7 +2423,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 	else
 	{
 		// Does the player aim at something that can be shot?
-		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, (flags & JLOSF_NOAUTOAIM) ? 0.5 : 0., ALF_PORTALRESTRICT);
+		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg((flags & JLOSF_NOAUTOAIM) ? 0.5 : 0.), ALF_PORTALRESTRICT);
 		
 		if (!t.linetarget)
 		{
@@ -2435,14 +2435,14 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 		{
 		case JLOSF_TARGETLOS|JLOSF_FLIPFOV:
 			// target makes sight check, player makes fov check; player has verified fov
-			fov = 0.;
+			fov = nullAngle;
 			// fall-through
 		case JLOSF_TARGETLOS:
 			doCheckSight = !(flags & JLOSF_NOSIGHT); // The target is responsible for sight check and fov
 			break;
 		default:
 			// player has verified sight and fov
-			fov = 0.;
+			fov = nullAngle;
 			// fall-through
 		case JLOSF_FLIPFOV: // Player has verified sight, but target must verify fov
 			doCheckSight = false;
@@ -2473,7 +2473,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0.;
+			fov = nullAngle;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
@@ -2493,7 +2493,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	fov = min<DAngle>(fov, 360.);
+	fov = min<DAngle>(fov, DAngle::fromDeg(360.));
 
 	if (fov > 0)
 	{
@@ -2567,7 +2567,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0.;
+			fov = nullAngle;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
@@ -2798,7 +2798,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRefire)
 DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(angle);
+	PARAM_ANGLE(angle);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
@@ -2821,7 +2821,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(pitch);
+	PARAM_ANGLE(pitch);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
@@ -2845,7 +2845,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 DEFINE_ACTION_FUNCTION(AActor, A_SetRoll)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT		(roll);
+	PARAM_ANGLE		(roll);
 	PARAM_INT	(flags);
 	PARAM_INT	(ptr)	;
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -2870,7 +2870,7 @@ static void SetViewAngleNative(AActor* self, double angle, int flags, int ptr)
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != nullptr)
 	{
-		ref->SetViewAngle(angle, flags);
+		ref->SetViewAngle(DAngle::fromDeg(angle), flags);
 	}
 }
 
@@ -2899,7 +2899,7 @@ static void SetViewPitchNative(AActor* self, double pitch, int flags, int ptr)
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != nullptr)
 	{
-		ref->SetViewPitch(pitch, flags);
+		ref->SetViewPitch(DAngle::fromDeg(pitch), flags);
 	}
 }
 
@@ -2928,7 +2928,7 @@ static void SetViewRollNative(AActor* self, double roll, int flags, int ptr)
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != nullptr)
 	{
-		ref->SetViewRoll(roll, flags);
+		ref->SetViewRoll(DAngle::fromDeg(roll), flags);
 	}
 }
 
@@ -3317,7 +3317,7 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist)
 
 	weaveXY = self->WeaveIndexXY & 63;
 	weaveZ = self->WeaveIndexZ & 63;
-	angle = self->Angles.Yaw + 90;
+	angle = self->Angles.Yaw + DAngle::fromDeg(90);
 
 	if (xydist != 0 && xyspeed != 0)
 	{
@@ -4858,10 +4858,10 @@ enum VRFFlags
 DEFINE_ACTION_FUNCTION(AActor, A_SetVisibleRotation)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE(anglestart)
-	PARAM_ANGLE(angleend)	
-	PARAM_ANGLE(pitchstart)
-	PARAM_ANGLE(pitchend)	
+	PARAM_FANGLE(anglestart)
+	PARAM_FANGLE(angleend)
+	PARAM_FANGLE(pitchstart)
+	PARAM_FANGLE(pitchend)
 	PARAM_INT(flags)		
 	PARAM_INT(ptr)			
 
@@ -4874,19 +4874,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetVisibleRotation)
 		
 	if (!(flags & VRF_NOANGLESTART))
 	{
-		mobj->VisibleStartAngle = anglestart.Degrees;
+		mobj->VisibleStartAngle = anglestart;
 	}
 	if (!(flags & VRF_NOANGLEEND))
 	{
-		mobj->VisibleEndAngle = angleend.Degrees;
+		mobj->VisibleEndAngle = angleend;
 	}
 	if (!(flags & VRF_NOPITCHSTART))
 	{
-		mobj->VisibleStartPitch = pitchstart.Degrees;
+		mobj->VisibleStartPitch = pitchstart;
 	}
 	if (!(flags & VRF_NOPITCHEND))
 	{
-		mobj->VisibleEndPitch = pitchend.Degrees;
+		mobj->VisibleEndPitch = pitchend;
 	}
 
 	ACTION_RETURN_BOOL(true);
@@ -4929,7 +4929,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 		{
 			int anglespeed = self->Level->GetFirstSectorTag(sec) - 100;
 			double speed = (anglespeed % 10) / 16.;
-			DAngle an = (anglespeed / 10) * (360 / 8.);
+			DAngle an = DAngle::fromDeg((anglespeed / 10) * (360 / 8.));
 			self->Thrust(an, speed);
 		}
 	}

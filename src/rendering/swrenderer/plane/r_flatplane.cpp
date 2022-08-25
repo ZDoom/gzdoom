@@ -92,7 +92,7 @@ namespace swrenderer
 		pviewy = _yscale * pviewy;
 
 		// left to right mapping
-		planeang += (Thread->Viewport->viewpoint.Angles.Yaw - 90).Radians();
+		planeang += (Thread->Viewport->viewpoint.Angles.Yaw - DAngle::fromDeg(90)).Radians();
 
 		auto viewport = Thread->Viewport.get();
 

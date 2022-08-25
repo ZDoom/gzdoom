@@ -1514,7 +1514,7 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_INT(damage);
 	PARAM_NAME(mod);
 	PARAM_INT(flags);
-	PARAM_FLOAT(angle);
+	PARAM_ANGLE(angle);
 	ACTION_RETURN_INT(DoDamageMobj(self, inflictor, source, damage, mod, flags, angle));
 }
 

@@ -159,7 +159,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 		// Only used by the GLES2 renderer
 		RenderState.SetSpecialColormap(cm, flash);
 
-		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
+		di->Viewpoint.FieldOfView = DAngle::fromDeg(fov);	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
 		// Stereo mode specific perspective projection
 		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);

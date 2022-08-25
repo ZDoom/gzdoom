@@ -754,7 +754,7 @@ FWorldEvent EventManager::SetupWorldEvent()
 	FWorldEvent e;
 	e.IsSaveGame = savegamerestore;
 	e.IsReopen = Level->FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
-	e.DamageAngle = 0.0;
+	e.DamageAngle = nullAngle;
 	return e;
 }
 

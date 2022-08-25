@@ -70,7 +70,7 @@ namespace swrenderer
 		struct posang
 		{
 			FVector3 vpos = { 0.0f, 0.0f, 0.0f }; // view origin
-			FAngle vang = { 0.0f }; // view angle
+			FAngle vang = nullFAngle; // view angle
 		};
 
 		struct VoxelBlockEntry
@@ -80,7 +80,7 @@ namespace swrenderer
 		};
 
 		posang pa;
-		DAngle Angle = { 0.0 };
+		DAngle Angle = nullAngle;
 		fixed_t xscale = 0;
 		FVoxel *voxel = nullptr;
 		bool bInMirror = false;

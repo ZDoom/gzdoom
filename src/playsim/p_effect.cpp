@@ -341,7 +341,7 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 	if (particle)
 	{
-		DAngle an = M_Random() * (360. / 256);
+		DAngle an = DAngle::fromDeg(M_Random() * (360. / 256));
 		double out = actor->radius * M_Random() / 256.;
 
 		particle->Pos = actor->Vec3Angle(out, an, actor->Height + 1);
@@ -374,7 +374,7 @@ void P_RunEffect (AActor *actor, int effects)
 		double backy = -actor->radius * 2 * moveangle.Sin();
 		double backz = actor->Height * ((2. / 3) - actor->Vel.Z / 8);
 
-		DAngle an = moveangle + 90.;
+		DAngle an = moveangle + DAngle::fromDeg(90.);
 		double speed;
 
 		particle = JitterParticle (actor->Level, 3 + (M_Random() & 31));
@@ -423,7 +423,7 @@ void P_RunEffect (AActor *actor, int effects)
 
 		DVector3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle, -actor->Height * actor->Vel.Z / 8 + actor->Height * (2. / 3));
 
-		P_DrawSplash2 (actor->Level, 6, pos, moveangle + 180, 2, 2);
+		P_DrawSplash2 (actor->Level, 6, pos, moveangle + DAngle::fromDeg(180), 2, 2);
 	}
 	if (actor->fountaincolor)
 	{
@@ -454,7 +454,7 @@ void P_RunEffect (AActor *actor, int effects)
 			particle = JitterParticle (actor->Level, 16);
 			if (particle != NULL)
 			{
-				DAngle ang = M_Random() * (360 / 256.);
+				DAngle ang = DAngle::fromDeg(M_Random() * (360 / 256.));
 				DVector3 pos = actor->Vec3Angle(actor->radius, ang, 0);
 				particle->Pos = pos;
 				particle->color = *protectColors[M_Random() & 1];
@@ -500,7 +500,7 @@ void P_DrawSplash (FLevelLocals *Level, int count, const DVector3 &pos, DAngle a
 		p->Acc.X += (M_Random () - 128) / 8192.;
 		p->Acc.Y += (M_Random () - 128) / 8192.;
 		p->Pos.Z = pos.Z - M_Random () / 64.;
-		angle += M_Random() * (45./256);
+		angle += DAngle::fromDeg(M_Random() * (45./256));
 		p->Pos.X = pos.X + (M_Random() & 15)*angle.Cos();
 		p->Pos.Y = pos.Y + (M_Random() & 15)*angle.Sin();
 	}
@@ -552,13 +552,13 @@ void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle 
 		p->Acc.Z = -1 / 22.;
 		if (kind) 
 		{
-			an = angle + ((M_Random() - 128) * (180 / 256.));
+			an = angle + DAngle::fromDeg((M_Random() - 128) * (180 / 256.));
 			p->Vel.X = M_Random() * an.Cos() / 2048.;
 			p->Vel.Y = M_Random() * an.Sin() / 2048.;
 			p->Acc.X = p->Vel.X / 16.;
 			p->Acc.Y = p->Vel.Y / 16.;
 		}
-		an = angle + ((M_Random() - 128) * (90 / 256.));
+		an = angle + DAngle::fromDeg((M_Random() - 128) * (90 / 256.));
 		p->Pos.X = pos.X + ((M_Random() & 31) - 15) * an.Cos();
 		p->Pos.Y = pos.Y + ((M_Random() & 31) - 15) * an.Sin();
 		p->Pos.Z = pos.Z + (M_Random() + zadd - 128) * zspread;
@@ -687,7 +687,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = trail[0].start;
-		deg = (double)SpiralOffset;
+		deg = DAngle::fromDeg(SpiralOffset);
 		for (i = spiral_steps; i; i--)
 		{
 			particle_t *p = NewParticle (source->Level);
@@ -708,7 +708,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			p->Vel = tempvec * drift / 16.;
 			p->Pos = tempvec + pos;
 			pos += trail[segment].dir * stepsize;
-			deg += double(r_rail_spiralsparsity * 14);
+			deg += DAngle::fromDeg(r_rail_spiralsparsity * 14);
 			lencount -= stepsize;
 			if (color1 == -1)
 			{

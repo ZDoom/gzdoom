@@ -2403,7 +2403,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 							if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
 							{
-								spawned->Angles.Yaw = source->Angles.Yaw - angle;
+								spawned->Angles.Yaw = source->Angles.Yaw - DAngle::fromDeg(angle);
 								spawned->special = special;
 								for(i = 0; i < 5; i++) {
 									spawned->args[i] = args[i];
@@ -2693,8 +2693,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		break;
 
 	case DEM_SETPITCHLIMIT:
-		players[player].MinPitch = -(double)ReadByte(stream);		// up
-		players[player].MaxPitch = (double)ReadByte(stream);		// down
+		players[player].MinPitch = DAngle::fromDeg(-ReadByte(stream));		// up
+		players[player].MaxPitch = DAngle::fromDeg(ReadByte(stream));		// down
 		break;
 
 	case DEM_REVERTCAMERA:

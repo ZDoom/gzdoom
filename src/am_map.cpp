@@ -1284,7 +1284,7 @@ void DAutomap::changeWindowLoc ()
 	oincy = incy = m_paninc.y * twod->GetHeight() / 200;
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		rotate(&incx, &incy, players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.);
+		rotate(&incx, &incy, players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90.));
 	}
 
 	m_x += incx;
@@ -1525,7 +1525,7 @@ void DAutomap::doFollowPlayer ()
 			sy = (f_oldloc.y - ampos.Y);
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
-				rotate(&sx, &sy, cam->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90);
+				rotate(&sx, &sy, cam->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90));
 			}
 			ScrollParchment(sx, sy);
 
@@ -2082,7 +2082,7 @@ void DAutomap::drawSubsectors()
 		// Apply the automap's rotation to the texture origin.
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			rotation = rotation + 90. - players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
+			rotation = rotation + DAngle::fromDeg(90.) - players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 			rotatePoint(&originpt.x, &originpt.y);
 		}
 		originx = f_x + ((originpt.x - m_x) * scale);
@@ -2646,7 +2646,7 @@ void DAutomap::drawWalls (bool allmap)
 
 void DAutomap::rotate(double *xp, double *yp, DAngle a)
 {
-	static DAngle angle_saved = 0.;
+	static DAngle angle_saved = nullAngle;
 	static double sinrot = 0;
 	static double cosrot = 1;
 
@@ -2678,7 +2678,7 @@ void DAutomap::rotatePoint (double *x, double *y)
 	double pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	rotate (x, y, -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.);
+	rotate (x, y, -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + DAngle::fromDeg(90.));
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2758,7 +2758,7 @@ void DAutomap::drawPlayers ()
 		pt.y = pos.Y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			angle = 90.;
+			angle = DAngle::fromDeg(90.);
 			rotatePoint (&pt.x, &pt.y);
 		}
 		else
@@ -2826,7 +2826,7 @@ void DAutomap::drawPlayers ()
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				rotatePoint (&pt.x, &pt.y);
-				angle -= players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.;
+				angle -= players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90.);
 			}
 
 			drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
@@ -2860,7 +2860,7 @@ void DAutomap::drawKeys ()
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			rotatePoint (&p.x, &p.y);
-			angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.;
+			angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + DAngle::fromDeg(90.);
 		}
 
 		if (key->flags & MF_SPECIAL)
@@ -2872,7 +2872,7 @@ void DAutomap::drawKeys ()
 
 			if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 			else color = AMColors[AMColors.ThingColor_CountItem];
-			drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, 0., color, p.x, p.y);
+			drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, nullAngle, color, p.x, p.y);
 		}
 	}
 }
@@ -2914,11 +2914,11 @@ void DAutomap::drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						DAngle angle = 270. + 22.5 - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
-						if (frame->Texture[0] != frame->Texture[1]) angle += 180. / 16;
+						DAngle angle = DAngle::fromDeg(270. + 22.5) - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
+						if (frame->Texture[0] != frame->Texture[1]) angle += DAngle::fromDeg(180. / 16);
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{
-							angle += players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.;
+							angle += players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90.);
 						}
 						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
 
@@ -2944,7 +2944,7 @@ void DAutomap::drawThings ()
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
 						rotatePoint (&p.x, &p.y);
-						angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.;
+						angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + DAngle::fromDeg(90.);
 					}
 
 					color = AMColors[AMColors.ThingColor];
@@ -2974,7 +2974,7 @@ void DAutomap::drawThings ()
 
 								if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 								else color = AMColors[AMColors.ThingColor_CountItem];
-								drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0., color, p.x, p.y);
+								drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, nullAngle, color, p.x, p.y);
 								color.RGB = 0;
 							}
 							else

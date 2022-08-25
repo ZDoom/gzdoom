@@ -208,7 +208,7 @@ static void SetPortalRotation(FLinePortal *port)
 		{
 			line_t *dst = port->mDestination;
 			line_t *line = port->mOrigin;
-			DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + 180.;
+			DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + DAngle::fromDeg(180.);
 			port->mSinRot = sindeg(angle.Degrees);	// Here precision matters so use the slower but more precise versions.
 			port->mCosRot = cosdeg(angle.Degrees);
 			port->mAngleDiff = angle;
@@ -226,7 +226,7 @@ static void SetPortalRotation(FLinePortal *port)
 			// Linked portals have no angular difference.
 			port->mSinRot = 0.;
 			port->mCosRot = 1.;
-			port->mAngleDiff = 0.;
+			port->mAngleDiff = nullAngle;
 		}
 	}
 }

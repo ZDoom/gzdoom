@@ -352,7 +352,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		// Tilt the actor up or down based on pitch (increase 'somersaults' forward).
 		// Then counteract the roll and DO A BARREL ROLL.
 
-		FAngle pitch = (float)-Angles.Pitch.Degrees;
+		FAngle pitch = FAngle::fromDeg(-Angles.Pitch.Degrees);
 		pitch.Normalized180();
 
 		mat.Translate(x, z, y);
@@ -429,7 +429,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 
 		// [fgsfds] calculate yaw vectors
 		float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
-		float angleRad = (270. - HWAngles.Yaw).Radians();
+		float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 		if (actor)	rollDegrees = Angles.Roll.Degrees;
 		if (isFlatSprite)
 		{
@@ -870,16 +870,16 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 				if (sprframe->Texture[0] == sprframe->Texture[1])
 				{
 					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+						rot = (thing->SpriteAngle + DAngle::fromDeg(45.0 / 2 * 9)).BAMs() >> 28;
 					else
-						rot = (sprang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
+						rot = (sprang - (thing->Angles.Yaw + thing->SpriteRotation) + DAngle::fromDeg(45.0 / 2 * 9)).BAMs() >> 28;
 				}
 				else
 				{
 					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+						rot = (thing->SpriteAngle + DAngle::fromDeg(45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 					else
-						rot = (sprang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+						rot = (sprang - (thing->Angles.Yaw + thing->SpriteRotation) + DAngle::fromDeg(45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 				}
 				auto picnum = sprframe->Texture[rot];
 				if (sprframe->Flip & (1 << rot))
@@ -902,7 +902,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			else
 			{
 				// Flat sprites cannot rotate in a predictable manner.
-				sprangle = 0.;
+				sprangle = nullAngle;
 				rot = 0;
 			}
 			patch = sprites[spritenum].GetSpriteFrame(thing->frame, rot, sprangle, &mirror, !!(thing->renderflags & RF_SPRITEFLIP));

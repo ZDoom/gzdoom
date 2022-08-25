@@ -250,7 +250,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewp
 	CameraLight savedCameraLight = *CameraLight::Instance();
 
 	DAngle savedfov = cameraViewpoint.FieldOfView;
-	R_SetFOV (cameraViewpoint, fov);
+	R_SetFOV (cameraViewpoint, DAngle::fromDeg(fov));
 
 	mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), camtex->bFirstUpdate);
 

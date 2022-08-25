@@ -53,7 +53,7 @@
 struct VoxelOptions
 {
 	VoxelOptions()
-		: DroppedSpin(0), PlacedSpin(0), Scale(1.), AngleOffset(90.), OverridePalette(false),
+		: DroppedSpin(0), PlacedSpin(0), Scale(1.), AngleOffset(DAngle::fromDeg(90.)), OverridePalette(false),
 		PitchFromMomentum(false), UseActorPitch(false), UseActorRoll(false)
 	{}
 
@@ -178,7 +178,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			{
 				sc.TokenMustBe(TK_FloatConst);
 			}
-			opts.AngleOffset = mul * sc.Float + 90.;
+			opts.AngleOffset = DAngle::fromDeg(mul * sc.Float + 90.);
 		}
 		else if (sc.Compare("overridepalette"))
 		{

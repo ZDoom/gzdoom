@@ -77,9 +77,9 @@ void DBot::Roam (ticcmd_t *cmd)
 		int delta = angle - (player->mo->movedir << 29);
 
 		if (delta > 0)
-			Angle -= 45;
+			Angle -= DAngle::fromDeg(45);
 		else if (delta < 0)
-			Angle += 45;
+			Angle += DAngle::fromDeg(45);
 	}
 
 	// chase towards destination.
@@ -357,7 +357,7 @@ void DBot::TurnToAng ()
 		if(enemy)
 			if(!dest) //happens when running after item in combat situations, or normal, prevents weak turns
 				if(GetBotInfo(player->ReadyWeapon).projectileType == NULL && GetBotInfo(player->ReadyWeapon).MoveCombatDist > 0)
-					if(Check_LOS(enemy, SHOOTFOV+5))
+					if(Check_LOS(enemy, DAngle::fromDeg(SHOOTFOV+5)))
 						maxturn = 3;
 	}
 
@@ -368,7 +368,7 @@ void DBot::TurnToAng ()
 
 	distance /= TURNSENS;
 	if (fabs (distance) > maxturn)
-		distance = distance < 0 ? -maxturn : maxturn;
+		distance = DAngle::fromDeg(distance < 0 ? -maxturn : maxturn);
 
 	player->mo->Angles.Yaw += distance;
 }

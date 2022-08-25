@@ -1072,16 +1072,16 @@ namespace swrenderer
 				if (sprframe->Texture[0] == sprframe->Texture[1])
 				{
 					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+						rot = (thing->SpriteAngle + DAngle::fromDeg(45.0 / 2 * 9)).BAMs() >> 28;
 					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
+						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + DAngle::fromDeg(45.0 / 2 * 9)).BAMs() >> 28;
 				}
 				else
 				{
 					if (thing->flags7 & MF7_SPRITEANGLE)
-						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+						rot = (thing->SpriteAngle + DAngle::fromDeg(45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 					else
-						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+						rot = (ang - (thing->Angles.Yaw + thing->SpriteRotation) + DAngle::fromDeg(45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 				}
 				sprite.picnum = sprframe->Texture[rot];
 				if (sprframe->Flip & (1 << rot))

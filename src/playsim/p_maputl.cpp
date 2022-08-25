@@ -415,11 +415,11 @@ bool AActor::FixMapthingPos()
 				DAngle ang = ldef->Delta().Angle();
 				if (ldef->backsector != NULL && ldef->backsector == secstart)
 				{
-					ang += 90.;
+					ang += DAngle::fromDeg(90.);
 				}
 				else
 				{
-					ang -= 90.;
+					ang -= DAngle::fromDeg(90.);
 				}
 
 				// Get the distance we have to move the object away from the wall

@@ -511,7 +511,8 @@ bool AssertObject(void * ob);
 #define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FSoundID x = param[p].i;
 #define PARAM_COLOR_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); PalEntry x; x.d = param[p].i;
 #define PARAM_FLOAT_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); double x = param[p].f;
-#define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); DAngle x = param[p].f;
+#define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); DAngle x = DAngle::fromDeg(param[p].f);
+#define PARAM_FANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); FAngle x = FAngle::fromDeg(param[p].f);
 #define PARAM_STRING_VAL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_STRING); FString x = param[p].s();
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(reginfo[p] == REGT_STRING); const FString &x = param[p].s();
 #define PARAM_STATELABEL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_INT); int x = param[p].i;
@@ -538,6 +539,7 @@ bool AssertObject(void * ob);
 #define PARAM_COLOR(x)				++paramnum; PARAM_COLOR_AT(paramnum,x)
 #define PARAM_FLOAT(x)				++paramnum; PARAM_FLOAT_AT(paramnum,x)
 #define PARAM_ANGLE(x)				++paramnum; PARAM_ANGLE_AT(paramnum,x)
+#define PARAM_FANGLE(x)				++paramnum; PARAM_FANGLE_AT(paramnum,x)
 #define PARAM_STRING(x)				++paramnum; PARAM_STRING_AT(paramnum,x)
 #define PARAM_STRING_VAL(x)				++paramnum; PARAM_STRING_VAL_AT(paramnum,x)
 #define PARAM_STATELABEL(x)				++paramnum; PARAM_STATELABEL_AT(paramnum,x)

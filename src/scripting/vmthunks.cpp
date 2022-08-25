@@ -647,7 +647,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetAngle(sector_t *self, int pos, double o)
  {
-	 self->SetAngle(pos, o);
+	 self->SetAngle(pos, DAngle::fromDeg(o));
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAngle, SetAngle)
@@ -674,7 +674,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetBase(sector_t *self, int pos, double o, double a)
  {
-	 self->SetBase(pos, o, a);
+	 self->SetBase(pos, o, DAngle::fromDeg(a));
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetBase, SetBase)
@@ -2427,8 +2427,8 @@ void SphericalCoords(FLevelLocals *self, double vpX, double vpY, double vpZ, dou
 	auto vecTo = absolute ? target - viewpoint : VecDiff(self, viewpoint, target);
 	
 	*result = (DVector3(
-								deltaangle(vecTo.Angle(), viewYaw).Degrees,
-								deltaangle(vecTo.Pitch(), viewPitch).Degrees,
+								deltaangle(vecTo.Angle(), DAngle::fromDeg(viewYaw)).Degrees,
+								deltaangle(vecTo.Pitch(), DAngle::fromDeg(viewPitch)).Degrees,
 								vecTo.Length()
 								));
 

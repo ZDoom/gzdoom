@@ -914,7 +914,7 @@ bool MapLoader::LoadSegs (MapData * map)
 			DAngle seg_angle = DAngle::fromBam(segangle << 16);
 			DAngle delta_angle = absangle(ptp_angle, seg_angle);
 
-			if (delta_angle >= 1.)
+			if (delta_angle >= DAngle::fromDeg(1.))
 			{
 				double dis = (li->v2->fPos() - li->v1->fPos()).Length();
 				DVector2 delta = seg_angle.ToVector(dis);
@@ -2022,7 +2022,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 
 							ang = (ang2 - ang1).Normalized360();
 
-							if (ang != 0 && ang <= bestang)
+							if (ang != nullAngle && ang <= bestang)
 							{
 								bestright = right;
 								bestang = ang;

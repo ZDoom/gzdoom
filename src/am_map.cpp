@@ -2075,7 +2075,7 @@ void DAutomap::drawSubsectors()
 		}
 
 		// Apply the floor's rotation to the texture origin.
-		if (rotation != 0)
+		if (rotation != nullAngle)
 		{
 			rotate(&originpt.x, &originpt.y, rotation);
 		}
@@ -2704,7 +2704,7 @@ void DAutomap::drawLineCharacter(const mline_t *lineguy, size_t lineguylines, do
 			l.a.y *= scale;
 		}
 
-		if (angle != 0)
+		if (angle != nullAngle)
 			rotate(&l.a.x, &l.a.y, angle);
 
 		l.a.x += x;
@@ -2719,7 +2719,7 @@ void DAutomap::drawLineCharacter(const mline_t *lineguy, size_t lineguylines, do
 			l.b.y *= scale;
 		}
 
-		if (angle != 0)
+		if (angle != nullAngle)
 			rotate(&l.b.x, &l.b.y, angle);
 
 		l.b.x += x;

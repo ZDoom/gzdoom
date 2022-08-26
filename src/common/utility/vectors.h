@@ -1260,6 +1260,7 @@ public:
 		return Degrees - other.Degrees;
 	}
 
+	/*
 	constexpr TAngle operator* (TAngle other) const
 	{
 		return Degrees * other.Degrees;
@@ -1269,6 +1270,7 @@ public:
 	{
 		return Degrees / other.Degrees;
 	}
+	 */
 
 	/*
 	TAngle &operator+= (vec_t other)
@@ -1356,6 +1358,7 @@ public:
 		return Degrees != other.Degrees;
 	}
 
+	/*
 	constexpr bool operator< (vec_t other) const
 	{
 		return Degrees < other;
@@ -1385,6 +1388,7 @@ public:
 	{
 		return Degrees != other;
 	}
+	 */
 
 	// Ensure the angle is between [0.0,360.0) degrees
 	TAngle Normalized360() const

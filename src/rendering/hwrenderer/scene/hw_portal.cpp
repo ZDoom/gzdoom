@@ -415,7 +415,7 @@ void HWScenePortalBase::ClearClipper(HWDrawInfo *di, Clipper *clipper)
 		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
 		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
 
-		if (deltaangle(endAngle, startAngle) < 0)
+		if (deltaangle(endAngle, startAngle) < nullAngle)
 		{
 			clipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
 		}

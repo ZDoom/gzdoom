@@ -2739,7 +2739,7 @@ void FParser::SF_MoveCamera(void)
 			DAngle anglenow = targetangle;
 			const DAngle diffangle = deltaangle(cam->Angles.Yaw, targetangle);
 
-			if (movespeed > 0 && anglespeed == 0.)
+			if (movespeed > 0 && anglespeed == nullAngle)
 			{
 				if (!finishedmove)
 				{
@@ -2749,7 +2749,7 @@ void FParser::SF_MoveCamera(void)
 			}
 			else
 			{
-				if (diffangle > 0)
+				if (diffangle > nullAngle)
 				{
 					anglenow = (cam->Angles.Yaw + anglespeed).Normalized360();
 				}

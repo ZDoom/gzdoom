@@ -2970,7 +2970,7 @@ void FSlide::HitSlideLine(line_t* ld)
 	
 	deltaangle = ::deltaangle(lineangle, moveangle);								//   V
 	movelen = tmmove.Length();
-	if (icyfloor && (deltaangle > 45) && (deltaangle < 135))
+	if (icyfloor && (deltaangle > DAngle::fromDeg(45)) && (deltaangle < DAngle::fromDeg(135)))
 	{
 		moveangle = ::deltaangle(deltaangle, lineangle);
 		movelen /= 2; // absorb
@@ -4050,8 +4050,8 @@ struct aim_t
 		lastfloorplane = lastceilingplane = NULL;
 
 		// check the initial sector for 3D-floors and portals
-		bool ceilingportalstate = (aimdir & aim_t::aim_up) && toppitch < 0 && !lastsector->PortalBlocksMovement(sector_t::ceiling);
-		bool floorportalstate = (aimdir & aim_t::aim_down) && bottompitch > 0 && !lastsector->PortalBlocksMovement(sector_t::floor);
+		bool ceilingportalstate = (aimdir & aim_t::aim_up) && toppitch < nullAngle && !lastsector->PortalBlocksMovement(sector_t::ceiling);
+		bool floorportalstate = (aimdir & aim_t::aim_down) && bottompitch > nullAngle && !lastsector->PortalBlocksMovement(sector_t::floor);
 
 		for (auto rover : lastsector->e->XFloor.ffloors)
 		{
@@ -4151,11 +4151,11 @@ struct aim_t
 				sector_t *exitsec = frontflag ? li->backsector : li->frontsector;
 				lastsector = entersec;
 				// check portal in backsector when aiming up/downward is possible, the line doesn't have portals on both sides and there's actually a portal in the backsector
-				if ((planestocheck & aim_up) && toppitch < 0 && open.top != LINEOPEN_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
+				if ((planestocheck & aim_up) && toppitch < nullAngle && open.top != LINEOPEN_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
 				{
 					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, min<DAngle>(nullAngle, bottompitch));
 				}
-				if ((planestocheck & aim_down) && bottompitch > 0 && open.bottom != LINEOPEN_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
+				if ((planestocheck & aim_down) && bottompitch > nullAngle && open.bottom != LINEOPEN_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
 				{
 					EnterSectorPortal(sector_t::floor, in->frac, entersec, max<DAngle>(nullAngle, toppitch), bottompitch);
 				}
@@ -4367,7 +4367,7 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	double shootz = t1->Center() - t1->Floorclip + t1->AttackOffset();
 
 	// can't shoot outside view angles
-	if (vrange == 0)
+	if (vrange == nullAngle)
 	{
 		if (t1->player == NULL || !t1->Level->IsFreelookAllowed())
 		{

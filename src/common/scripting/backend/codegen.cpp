@@ -2596,7 +2596,7 @@ FxExpression *FxMultiAssign::Resolve(FCompileContext &ctx)
 	auto rets = VMRight->GetReturnTypes();
 	if (Base.Size() == 1)
 	{
-		Right->ScriptPosition.Message(MSG_ERROR, "Multi-assignment with only one element", VMRight->Function->SymbolName.GetChars());
+		Right->ScriptPosition.Message(MSG_ERROR, "Multi-assignment with only one element in function %s", VMRight->Function->SymbolName.GetChars());
 		delete this;
 		return nullptr;
 	}

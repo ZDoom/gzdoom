@@ -2495,7 +2495,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 
 	fov = min<DAngle>(fov, DAngle::fromDeg(360.));
 
-	if (fov > 0)
+	if (fov > nullAngle)
 	{
 		DAngle an = absangle(viewport->AngleTo(target), viewport->Angles.Yaw);
 
@@ -2573,7 +2573,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 			doCheckSight = false;
 	}
 
-	if (fov > 0 && (fov < 360.))
+	if (fov > nullAngle && (fov < DAngle::fromDeg(360.)))
 	{
 		DAngle an = absangle(target->AngleTo(self), target->Angles.Yaw);
 
@@ -3432,7 +3432,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 
 	// Target can dodge if it can see enemy
 	DAngle angle = absangle(self->target->Angles.Yaw, self->target->AngleTo(self));
-	bool dodge = (P_CheckSight(self->target, self) && angle < 30. * 256. / 360.);	// 30 byteangles ~ 21°
+	bool dodge = (P_CheckSight(self->target, self) && angle < DAngle::fromDeg(30. * 256. / 360.));	// 30 byteangles ~ 21°
 
 	// Distance check is simplistic
 	DVector2 vec = self->Vec2To(self->target);
@@ -4751,16 +4751,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 		//Done because using anglelimit directly causes a signed/unsigned mismatch.
 
 		//Code borrowed from A_Face*.
-		if (anglelimit > 0)
+		if (anglelimit > nullAngle)
 		{
 			DAngle delta = -deltaangle(current, angle);
 			if (fabs(delta) > anglelimit)
 			{
-				if (delta < 0)
+				if (delta < nullAngle)
 				{
 					current += anglelimit + offset;
 				}
-				else if (delta > 0)
+				else if (delta > nullAngle)
 				{
 					current -= anglelimit + offset;
 				}
@@ -4778,13 +4778,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 		DAngle current = mobj->Angles.Pitch;
 		const DVector2 velocity = mobj->Vel.XY();
 		DAngle pitch = -VecToAngle(velocity.Length(), mobj->Vel.Z);
-		if (pitchlimit > 0)
+		if (pitchlimit > nullAngle)
 		{
 			DAngle pdelta = deltaangle(current, pitch);
 
 			if (fabs(pdelta) > pitchlimit)
 			{
-				if (pdelta > 0)
+				if (pdelta > nullAngle)
 				{
 					current -= min(pitchlimit, pdelta);
 				}

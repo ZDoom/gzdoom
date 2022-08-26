@@ -1692,7 +1692,7 @@ int P_FaceMobj (AActor *source, AActor *target, DAngle *delta)
 	DAngle diff;
 
 	diff = deltaangle(source->Angles.Yaw, source->AngleTo(target));
-	if (diff > 0)
+	if (diff > nullAngle)
 	{
 		*delta = diff;
 		return 1;
@@ -2237,7 +2237,7 @@ explode:
 					// For that we need to adjust the start point, and the movement vector.
 					DAngle anglediff = deltaangle(oldangle, mo->Angles.Yaw);
 
-					if (anglediff != 0)
+					if (anglediff != nullAngle)
 					{
 						move = move.Rotated(anglediff);
 						oldangle = mo->Angles.Yaw;
@@ -3250,7 +3250,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur)
-		if (absangle(angle, thing->Angles.Yaw) > 45)
+		if (absangle(angle, thing->Angles.Yaw) > DAngle::fromDeg(45))
 			return true;	// Let missile explode
 
 		if (thing->flags7 & MF7_NOSHIELDREFLECT) return true;
@@ -3378,7 +3378,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 		if (flags3 & MF3_SCREENSEEKER)
 		{
 			DAngle angle = absangle(Friend->AngleTo(link), Friend->Angles.Yaw);
-			if (angle < 30 * (256./360.))
+			if (angle < DAngle::fromDeg(30 * (256./360.)))
 			{
 				return true;
 			}
@@ -6965,7 +6965,7 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
 	PARAM_BOOL(noautoaim);
 	PARAM_INT(aimflags);
 	AActor *missileactor;
-	if (angle == 1e37) angle = self->Angles.Yaw;
+	if (angle == DAngle::fromDeg(1e37)) angle = self->Angles.Yaw;
 	AActor *misl = P_SpawnPlayerMissile(self, x, y, z, type, angle, lt, &missileactor, nofreeaim, noautoaim, aimflags);
 	if (numret > 0) ret[0].SetObject(misl);
 	if (numret > 1) ret[1].SetObject(missileactor), numret = 2;

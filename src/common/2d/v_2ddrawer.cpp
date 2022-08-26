@@ -739,7 +739,7 @@ void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 	poly.mColor1.g = uint8_t(colormap.FadeColor.g * fadelevel);
 	poly.mColor1.b = uint8_t(colormap.FadeColor.b * fadelevel);
 
-	bool dorotate = rotation != 0;
+	bool dorotate = rotation != nullAngle;
 
 	float cosrot = (float)cos(rotation.Radians());
 	float sinrot = (float)sin(rotation.Radians());

@@ -151,9 +151,9 @@ bool DBot::Check_LOS (AActor *to, DAngle vangle)
 {
 	if (!P_CheckSight (player->mo, to, SF_SEEPASTBLOCKEVERYTHING))
 		return false; // out of sight
-	if (vangle >= 360.)
+	if (vangle >= DAngle::fromDeg(360.))
 		return true;
-	if (vangle == 0)
+	if (vangle == nullAngle)
 		return false; //Looker seems to be blind.
 
 	return absangle(player->mo->AngleTo(to), player->mo->Angles.Yaw) <= (vangle/2);
@@ -221,11 +221,11 @@ void DBot::Dofire (ticcmd_t *cmd)
 		{
 			//Special rules for RL
 			an = FireRox (enemy, cmd);
-			if(an != 0)
+			if(an != nullAngle)
 			{
 				Angle = an;
 				//have to be somewhat precise. to avoid suicide.
-				if (absangle(an, player->mo->Angles.Yaw) < 12.)
+				if (absangle(an, player->mo->Angles.Yaw) < DAngle::fromDeg(12.))
 				{
 					t_rocket = 9;
 					no_fire = false;
@@ -255,10 +255,10 @@ void DBot::Dofire (ticcmd_t *cmd)
 		if (aiming_value <= 0)
 			aiming_value = 1;
 		m = DAngle::fromDeg(((SHOOTFOV/2)-(aiming_value*SHOOTFOV/200))); //Higher skill is more accurate
-		if (m <= 0)
+		if (m <= nullAngle)
 			m = DAngle::fromDeg(1.); //Prevents lock.
 
-		if (m != 0)
+		if (m != nullAngle)
 		{
 			if (increase)
 				Angle += m;
@@ -266,7 +266,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 				Angle -= m;
 		}
 
-		if (absangle(Angle, player->mo->Angles.Yaw) < 4.)
+		if (absangle(Angle, player->mo->Angles.Yaw) < DAngle::fromDeg(4.))
 		{
 			increase = !increase;
 		}

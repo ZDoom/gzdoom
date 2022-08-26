@@ -180,8 +180,8 @@ DEFINE_GLOBAL(LocalViewPitch);
 void R_SetFOV (FRenderViewpoint &viewpoint, DAngle fov)
 {
 
-	if (fov < 5.) fov =  DAngle::fromDeg(5.);
-	else if (fov > 170.) fov = DAngle::fromDeg(170.);
+	if (fov < DAngle::fromDeg(5.)) fov =  DAngle::fromDeg(5.);
+	else if (fov > DAngle::fromDeg(170.)) fov = DAngle::fromDeg(170.);
 	if (fov != viewpoint.FieldOfView)
 	{
 		viewpoint.FieldOfView = fov;
@@ -263,7 +263,7 @@ void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int wind
 	if (viewwindow.centerxwide != viewwindow.centerx)
 	{ // centerxwide is what centerx would be if the display was not widescreen
 		fov = DAngle::ToDegrees(2 * atan(viewwindow.centerx * tan(fov.Radians()/2) / double(viewwindow.centerxwide)));
-		if (fov > 170.) fov =  DAngle::fromDeg(170.);
+		if (fov > DAngle::fromDeg(170.)) fov =  DAngle::fromDeg(170.);
 	}
 	viewwindow.FocalTangent = tan(fov.Radians() / 2);
 }

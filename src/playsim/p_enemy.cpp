@@ -595,7 +595,7 @@ static int P_Move (AActor *actor)
 		{
 			DAngle anglediff = deltaangle(oldangle, actor->Angles.Yaw);
 
-			if (anglediff != 0)
+			if (anglediff != nullAngle)
 			{
 				move = move.Rotated(anglediff);
 				oldangle = actor->Angles.Yaw;
@@ -1274,7 +1274,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	if (mindist && dist < mindist)
 		return false;			// [KS] too close
 
-	if (fov != 0)
+	if (fov != nullAngle)
 	{
 		DAngle an = absangle(lookee->AngleTo(other), lookee->Angles.Yaw);
 
@@ -2228,11 +2228,11 @@ void A_Wander(AActor *self, int flags)
 	{
 		self->Angles.Yaw = DAngle::fromDeg(floor(self->Angles.Yaw.Degrees / 45) * 45.);
 		DAngle delta = deltaangle(self->Angles.Yaw, DAngle::fromDeg(self->movedir * 45));
-		if (delta < 0)
+		if (delta < nullAngle)
 		{
 			self->Angles.Yaw -= DAngle::fromDeg(45);
 		}
-		else if (delta > 0)
+		else if (delta > nullAngle)
 		{
 			self->Angles.Yaw += DAngle::fromDeg(45);
 		}
@@ -2381,11 +2381,11 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	{
 		actor->Angles.Yaw = DAngle::fromDeg(floor(actor->Angles.Yaw.Degrees / 45) * 45.);
 		DAngle delta = deltaangle(actor->Angles.Yaw, DAngle::fromDeg(actor->movedir * 45));
-		if (delta < 0)
+		if (delta < nullAngle)
 		{
 			actor->Angles.Yaw -= DAngle::fromDeg(45);
 		}
-		else if (delta > 0)
+		else if (delta > nullAngle)
 		{
 			actor->Angles.Yaw += DAngle::fromDeg(45);
 		}
@@ -2944,9 +2944,9 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
-	if (max_turn != 0 && (max_turn < fabs(delta)))
+	if (max_turn != nullAngle && (max_turn < fabs(delta)))
 	{
-		if (delta > 0)
+		if (delta > nullAngle)
 		{
 			self->Angles.Yaw -= max_turn + ang_offset;
 		}
@@ -2962,7 +2962,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 	// [DH] Now set pitch. In order to maintain compatibility, this can be
 	// disabled and is so by default.
-	if (max_pitch <= 180.)
+	if (max_pitch <= DAngle::fromDeg(180.))
 	{
 		DVector2 dist = self->Vec2To(other);
 		
@@ -2997,7 +2997,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 		DAngle other_pitch = -DAngle::ToDegrees(g_asin(dist_z / ddist)).Normalized180();
 		
-		if (max_pitch != 0)
+		if (max_pitch != nullAngle)
 		{
 			if (self->Angles.Pitch > other_pitch)
 			{
@@ -3020,7 +3020,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 
 	// This will never work well if the turn angle is limited.
-	if (max_turn == 0 && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
+	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
     {
 		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
     }

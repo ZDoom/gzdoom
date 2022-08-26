@@ -363,12 +363,12 @@ void DBot::TurnToAng ()
 
 	DAngle distance = deltaangle(player->mo->Angles.Yaw, Angle);
 
-	if (fabs (distance) < OKAYRANGE && !enemy)
+	if (fabs (distance) < DAngle::fromDeg(OKAYRANGE) && !enemy)
 		return;
 
 	distance /= TURNSENS;
-	if (fabs (distance) > maxturn)
-		distance = DAngle::fromDeg(distance < 0 ? -maxturn : maxturn);
+	if (fabs (distance) > DAngle::fromDeg(maxturn))
+		distance = DAngle::fromDeg(distance < nullAngle ? -maxturn : maxturn);
 
 	player->mo->Angles.Yaw += distance;
 }

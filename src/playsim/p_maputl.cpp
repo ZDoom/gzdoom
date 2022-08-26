@@ -1686,7 +1686,7 @@ FPathTraverse::~FPathTraverse()
 //
 int P_CheckFov(AActor* t1, AActor* t2, double fov)
 {
-	return absangle(t1->AngleTo(t2), t1->Angles.Yaw) <= fov;
+	return absangle(t1->AngleTo(t2), t1->Angles.Yaw) <= DAngle::fromDeg(fov);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFov, P_CheckFov)

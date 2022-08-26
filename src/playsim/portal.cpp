@@ -209,8 +209,8 @@ static void SetPortalRotation(FLinePortal *port)
 			line_t *dst = port->mDestination;
 			line_t *line = port->mOrigin;
 			DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + DAngle::fromDeg(180.);
-			port->mSinRot = sindeg(angle.Degrees);	// Here precision matters so use the slower but more precise versions.
-			port->mCosRot = cosdeg(angle.Degrees);
+			port->mSinRot = sindeg(angle.Degrees());	// Here precision matters so use the slower but more precise versions.
+			port->mCosRot = cosdeg(angle.Degrees());
 			port->mAngleDiff = angle;
 			if ((line->sidedef[0]->Flags & WALLF_POLYOBJ) || (dst->sidedef[0]->Flags & WALLF_POLYOBJ))
 			{

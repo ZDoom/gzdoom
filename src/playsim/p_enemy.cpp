@@ -2226,7 +2226,7 @@ void A_Wander(AActor *self, int flags)
 	// turn towards movement direction if not there yet
 	if (!(flags & CHF_NODIRECTIONTURN) && (self->movedir < DI_NODIR))
 	{
-		self->Angles.Yaw = DAngle::fromDeg(floor(self->Angles.Yaw.Degrees / 45) * 45.);
+		self->Angles.Yaw = DAngle::fromDeg(floor(self->Angles.Yaw.Degrees() / 45) * 45.);
 		DAngle delta = deltaangle(self->Angles.Yaw, DAngle::fromDeg(self->movedir * 45));
 		if (delta < nullAngle)
 		{
@@ -2379,7 +2379,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	}
 	else if (!(flags & CHF_NODIRECTIONTURN) && actor->movedir < 8)
 	{
-		actor->Angles.Yaw = DAngle::fromDeg(floor(actor->Angles.Yaw.Degrees / 45) * 45.);
+		actor->Angles.Yaw = DAngle::fromDeg(floor(actor->Angles.Yaw.Degrees() / 45) * 45.);
 		DAngle delta = deltaangle(actor->Angles.Yaw, DAngle::fromDeg(actor->movedir * 45));
 		if (delta < nullAngle)
 		{
@@ -2995,7 +2995,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 		double dist_z = target_z - source_z;
 		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
 
-		DAngle other_pitch = -DAngle::ToDegrees(g_asin(dist_z / ddist)).Normalized180();
+		DAngle other_pitch = -DAngle::fromRad(g_asin(dist_z / ddist)).Normalized180();
 		
 		if (max_pitch != nullAngle)
 		{

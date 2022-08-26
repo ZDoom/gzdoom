@@ -164,7 +164,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 		// Stereo mode specific perspective projection
 		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
 		// Stereo mode specific viewpoint adjustment
-		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
+		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees());
 		di->SetupView(RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
 		di->ProcessScene(toscreen);
@@ -280,7 +280,7 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 
 		// This shouldn't overwrite the global viewpoint even for a short time.
 		FRenderViewpoint savevp;
-		sector_t* viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+		sector_t* viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees(), 1.6f, 1.6f, true, false);
 		RenderState.EnableStencil(false);
 		RenderState.SetNoSoftLightLevel();
 
@@ -394,7 +394,7 @@ sector_t* RenderView(player_t* player)
 
 		screen->ImageTransitionScene(true); // Only relevant for Vulkan.
 
-		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees(), ratio, fovratio, true, true);
 	}
 	All.Unclock();
 	return retsec;

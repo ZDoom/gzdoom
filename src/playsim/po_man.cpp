@@ -673,9 +673,9 @@ bool EV_OpenPolyDoor(FLevelLocals *Level, line_t *line, int polyNum, double spee
 		else if (type == PODOOR_SWING)
 		{
 			pd->m_WaitTics = delay;
-			pd->m_Direction.Degrees = swingdir; 
+			pd->m_Direction = DAngle::fromDeg(swingdir);
 			pd->m_Speed = (speed*swingdir*(90. / 64)) / 8;
-			pd->m_Dist = pd->m_TotalDist = angle.Degrees;
+			pd->m_Dist = pd->m_TotalDist = angle.Degrees();
 			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 			swingdir = -swingdir;	// reverse the direction
 		}

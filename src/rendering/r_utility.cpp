@@ -262,7 +262,7 @@ void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int wind
 	// screen that would be visible on a 4:3 display has the requested FOV.
 	if (viewwindow.centerxwide != viewwindow.centerx)
 	{ // centerxwide is what centerx would be if the display was not widescreen
-		fov = DAngle::ToDegrees(2 * atan(viewwindow.centerx * tan(fov.Radians()/2) / double(viewwindow.centerxwide)));
+		fov = DAngle::fromRad(2 * atan(viewwindow.centerx * tan(fov.Radians()/2) / double(viewwindow.centerxwide)));
 		if (fov > DAngle::fromDeg(170.)) fov =  DAngle::fromDeg(170.);
 	}
 	viewwindow.FocalTangent = tan(fov.Radians() / 2);
@@ -599,7 +599,7 @@ void FRenderViewpoint::SetViewAngle (const FViewWindow &viewwindow)
 	DVector2 v = Angles.Yaw.ToVector();
 	ViewVector.X = v.X;
 	ViewVector.Y = v.Y;
-	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees);
+	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
 
 }
 
@@ -1117,7 +1117,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	double alen = sqrt(angx*angx + angy*angy);
 	viewpoint.HWAngles.Pitch = FAngle::fromRad((float)asin(angy / alen));
 	
-	viewpoint.HWAngles.Roll.Degrees = (float)viewpoint.Angles.Roll.Degrees;    // copied for convenience.
+	viewpoint.HWAngles.Roll = FAngle::fromDeg(viewpoint.Angles.Roll.Degrees());    // copied for convenience.
 	
 	// ViewActor only gets set, if the camera actor should not be rendered
 	if (actor->player && actor->player - players == consoleplayer &&

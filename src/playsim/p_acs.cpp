@@ -625,7 +625,7 @@ inline int AngleToACS(DAngle ang)
 
 inline int PitchToACS(DAngle ang)
 {
-	return int(ang.Normalized180().Degrees * (65536. / 360));
+	return int(ang.Normalized180().Degrees() * (65536. / 360));
 }
 
 struct CallReturn

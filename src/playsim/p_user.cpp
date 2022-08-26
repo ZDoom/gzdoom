@@ -1248,7 +1248,7 @@ void P_PlayerThink (player_t *player)
 	{
 		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
-			player->mo->Angles.Yaw.Degrees, player->cmd.ucmd.buttons,
+			player->mo->Angles.Yaw.Degrees(), player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
 			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
 	}

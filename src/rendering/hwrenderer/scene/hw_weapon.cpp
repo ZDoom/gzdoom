@@ -508,7 +508,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 		// Handle PSPF_FLIP.
 		if (flip) anchorx = 1.0 - anchorx;
 
-		FAngle rot = FAngle::fromDeg(float((flip) ? -psp->rotation.Degrees : psp->rotation.Degrees));
+		FAngle rot = FAngle::fromDeg(float((flip) ? -psp->rotation.Degrees() : psp->rotation.Degrees()));
 		const float cosang = rot.Cos();
 		const float sinang = rot.Sin();
 		

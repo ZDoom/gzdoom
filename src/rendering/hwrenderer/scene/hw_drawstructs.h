@@ -84,7 +84,7 @@ struct HWSectorPlane
 		Offs.Y = (float)sec->GetYOffset(ceiling);
 		Scale.X = (float)sec->GetXScale(ceiling);
 		Scale.Y = (float)sec->GetYScale(ceiling);
-		Angle = (float)sec->GetAngle(ceiling).Degrees;
+		Angle = (float)sec->GetAngle(ceiling).Degrees();
 		texture = sec->GetTexture(ceiling);
 		plane = sec->GetSecPlane(ceiling);
 		Texheight = (float)((ceiling == sector_t::ceiling)? plane.fD() : -plane.fD());

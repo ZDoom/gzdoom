@@ -78,8 +78,8 @@ void DBot::Think ()
 		ThinkForMove (cmd);
 		TurnToAng ();
 
-		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / ticdup;
-		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
+		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees() * (65536 / 360.f)) / ticdup;
+		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees() * (65536 / 360.f));
 		if (cmd->ucmd.pitch == -32768)
 			cmd->ucmd.pitch = -32767;
 		cmd->ucmd.pitch /= ticdup;

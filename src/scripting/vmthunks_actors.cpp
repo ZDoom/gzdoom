@@ -239,7 +239,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
 
 static double deltaangleDbl(double a1, double a2)
 {
-	return deltaangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees;
+	return deltaangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, deltaangle, deltaangleDbl)	// should this be global?
@@ -247,12 +247,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, deltaangle, deltaangleDbl)	// should this 
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
 	PARAM_FLOAT(a2);
-	ACTION_RETURN_FLOAT(deltaangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees);
+	ACTION_RETURN_FLOAT(deltaangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees());
 }
 
 static double absangleDbl(double a1, double a2)
 {
-	return absangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees;
+	return absangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, absangle, absangleDbl)	// should this be global?
@@ -260,7 +260,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, absangle, absangleDbl)	// should this be g
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
 	PARAM_FLOAT(a2);
-	ACTION_RETURN_FLOAT(absangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees);
+	ACTION_RETURN_FLOAT(absangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees());
 }
 
 static double Distance2DSquared(AActor *self, AActor *other)
@@ -353,7 +353,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetDamage, SetDamage)
 
 static double PitchFromVel(AActor* self)
 {
-	return self->Vel.Pitch().Degrees;
+	return self->Vel.Pitch().Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, PitchFromVel, PitchFromVel)
@@ -440,7 +440,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Thrust, Thrust)
 
 static double AngleTo(AActor *self, AActor *targ, bool absolute)
 {
-	return self->AngleTo(PARAM_NULLCHECK(targ, targ), absolute).Degrees;
+	return self->AngleTo(PARAM_NULLCHECK(targ, targ), absolute).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, AngleTo, AngleTo)
@@ -448,7 +448,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, AngleTo, AngleTo)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(targ, AActor);
 	PARAM_BOOL(absolute);
-	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
+	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees());
 }
 
 static void AngleToVector(double angle, double length, DVector2 *result)
@@ -480,14 +480,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RotateVector, RotateVector)
 
 static double Normalize180(double angle)
 {
-	return DAngle::fromDeg(angle).Normalized180().Degrees;
+	return DAngle::fromDeg(angle).Normalized180().Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Normalize180, Normalize180)
 {
 	PARAM_PROLOGUE;
 	PARAM_ANGLE(angle);
-	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees);
+	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees());
 }
 
 static double DistanceBySpeed(AActor *self, AActor *targ, double speed)
@@ -1151,7 +1151,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMove, CheckMove)
 static double AimLineAttack(AActor *self, double angle, double distance, FTranslatedLineTarget *pLineTarget, double vrange, int flags, AActor *target, AActor *friender)
 {
 	flags &= ~ALF_IGNORENOAUTOAIM; // just to be safe. This flag is not supposed to be accesible to scripting.
-	return P_AimLineAttack(self, DAngle::fromDeg(angle), distance, pLineTarget, DAngle::fromDeg(vrange), flags, target, friender).Degrees;
+	return P_AimLineAttack(self, DAngle::fromDeg(angle), distance, pLineTarget, DAngle::fromDeg(vrange), flags, target, friender).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, AimLineAttack, AimLineAttack)
@@ -1164,7 +1164,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, AimLineAttack, AimLineAttack)
 	PARAM_INT(flags);
 	PARAM_OBJECT(target, AActor);
 	PARAM_OBJECT(friender, AActor);
-	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees);
+	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees());
 }
 
 static AActor *ZS_LineAttack(AActor *self, double angle, double distance, double pitch, int damage, int damageType, PClassActor *puffType, int flags, FTranslatedLineTarget *victim, double offsetz, double offsetforward, double offsetside, int *actualdamage)

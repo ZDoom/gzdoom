@@ -315,6 +315,10 @@ struct VMValue
 	{
 		i = v;
 	}
+	VMValue(unsigned int v)
+	{
+		i = v;
+	}
 	VMValue(double v)
 	{
 		f = v;

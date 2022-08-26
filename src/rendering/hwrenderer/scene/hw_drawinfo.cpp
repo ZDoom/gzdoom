@@ -346,14 +346,14 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 
 angle_t HWDrawInfo::FrustumAngle()
 {
-	float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees);
+	float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees());
 
 	// If the pitch is larger than this you can look all around at a FOV of 90°
 	if (tilt > 46.0f) return 0xffffffff;
 
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
-	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
+	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees() * 48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
 	angle_t a1 = DAngle::fromDeg(floatangle).BAMs();
 	if (a1 >= ANGLE_180) return 0xffffffff;
 	return a1;
@@ -371,9 +371,9 @@ void HWDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float
 	float planemult = planemirror ? -Level->info->pixelstretch : Level->info->pixelstretch;
 
 	VPUniforms.mViewMatrix.loadIdentity();
-	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees, 0.0f, 0.0f, 1.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees, 0.0f, mult, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees(), 0.0f, 0.0f, 1.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees(), 1.0f, 0.0f, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees(), 0.0f, mult, 0.0f);
 	VPUniforms.mViewMatrix.translate(vx * mult, -vz * planemult, -vy);
 	VPUniforms.mViewMatrix.scale(-mult, planemult, 1);
 }

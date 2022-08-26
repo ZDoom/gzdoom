@@ -78,7 +78,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 		angles = actor->InterpolatedAngles(ticFrac);
 	else
 		angles = actor->Angles;
-	float angle = angles.Yaw.Degrees;
+	float angle = angles.Yaw.Degrees();
 
 	// [BB] Workaround for the missing pitch information.
 	if ((smf->flags & MDL_PITCHFROMMOMENTUM))
@@ -119,11 +119,11 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	// If both flags MDL_USEACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the velocity vector pitch.
 	if (smf->flags & MDL_USEACTORPITCH)
 	{
-		double d = angles.Pitch.Degrees;
+		double d = angles.Pitch.Degrees();
 		if (smf->flags & MDL_BADROTATION) pitch += d;
 		else pitch -= d;
 	}
-	if (smf->flags & MDL_USEACTORROLL) roll += angles.Roll.Degrees;
+	if (smf->flags & MDL_USEACTORROLL) roll += angles.Roll.Degrees();
 
 	VSMatrix objectToWorldMatrix;
 	objectToWorldMatrix.loadIdentity();
@@ -132,7 +132,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	objectToWorldMatrix.translate(x, z, y);
 
 	// [Nash] take SpriteRotation into account
-	angle += actor->SpriteRotation.Degrees;
+	angle += actor->SpriteRotation.Degrees();
 
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
@@ -390,7 +390,7 @@ void InitModels()
 		smf.skinIDs.Alloc(1);
 		smf.skinIDs[0] = md->GetPaletteTexture();
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
-		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
+		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees();
 		if (VoxelDefs[i]->PitchFromMomentum) smf.flags |= MDL_PITCHFROMMOMENTUM;
 		if (VoxelDefs[i]->UseActorPitch) smf.flags |= MDL_USEACTORPITCH;
 		if (VoxelDefs[i]->UseActorRoll) smf.flags |= MDL_USEACTORROLL;

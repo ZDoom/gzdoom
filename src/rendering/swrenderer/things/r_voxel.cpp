@@ -140,7 +140,7 @@ namespace swrenderer
 		}
 
 		vis->pa.vpos = { (float)thread->Viewport->viewpoint.Pos.X, (float)thread->Viewport->viewpoint.Pos.Y, (float)thread->Viewport->viewpoint.Pos.Z };
-		vis->pa.vang = FAngle::fromDeg(((float)thread->Viewport->viewpoint.Angles.Yaw.Degrees));
+		vis->pa.vang = FAngle::fromDeg(((float)thread->Viewport->viewpoint.Angles.Yaw.Degrees()));
 
 		// killough 3/27/98: save sector for special clipping later
 		vis->heightsec = heightsec;

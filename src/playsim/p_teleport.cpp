@@ -154,7 +154,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		int nocancel = 1;
 		IFVIRTUALPTR(thing, AActor, PreTeleport)
 		{
-			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees, flags };
+			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees(), flags };
 			VMReturn ret;
 			ret.IntAt(&nocancel);
 			VMCall(func, params, countof(params), &ret, 1);
@@ -230,7 +230,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 	{
 		IFVIRTUALPTR(thing, AActor, PostTeleport)
 		{
-			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees, flags };
+			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees(), flags };
 			VMCall(func, params, countof(params), nullptr, 1);
 		}
 	}

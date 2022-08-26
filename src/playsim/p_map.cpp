@@ -4101,7 +4101,7 @@ struct aim_t
 				int frontflag = P_PointOnLineSidePrecise(startpos, li);
 
 				if (aimdebug)
-					Printf("Found line %d: toppitch = %f, bottompitch = %f\n", li->Index(), toppitch.Degrees, bottompitch.Degrees);
+					Printf("Found line %d: toppitch = %f, bottompitch = %f\n", li->Index(), toppitch.Degrees(), bottompitch.Degrees());
 
 				if (li->isLinePortal() && frontflag == 0)
 				{
@@ -4145,7 +4145,7 @@ struct aim_t
 					return;
 
 				if (aimdebug)
-					Printf("After line %d: toppitch = %f, bottompitch = %f, planestocheck = %d\n", li->Index(), toppitch.Degrees, bottompitch.Degrees, planestocheck);
+					Printf("After line %d: toppitch = %f, bottompitch = %f, planestocheck = %d\n", li->Index(), toppitch.Degrees(), bottompitch.Degrees(), planestocheck);
 
 				sector_t *entersec = frontflag ? li->frontsector : li->backsector;
 				sector_t *exitsec = frontflag ? li->backsector : li->frontsector;
@@ -4770,7 +4770,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			{
 				IFVIRTUALPTR(trace.Actor, AActor, SpawnLineAttackBlood)
 				{
-					VMValue params[] = { trace.Actor, t1, bleedpos.X, bleedpos.Y, bleedpos.Z, trace.SrcAngleFromTarget.Degrees, damage, newdam };
+					VMValue params[] = { trace.Actor, t1, bleedpos.X, bleedpos.Y, bleedpos.Z, trace.SrcAngleFromTarget.Degrees(), damage, newdam };
 					VMCall(func, params, countof(params), nullptr, 0);
 				}
 				if (damage)
@@ -5098,7 +5098,7 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 		double aim;
 
 		aim = g_atan(missile->Vel.Z / target->Distance2D(missile));
-		pitch = -DAngle::ToDegrees(aim);
+		pitch = -DAngle::fromRad(aim);
 	}
 	else
 	{

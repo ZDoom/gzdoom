@@ -2920,7 +2920,7 @@ void DAutomap::drawThings ()
 						{
 							angle += players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90.);
 						}
-						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
+						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees());
 
 						const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
 						texture = TexMan.GetGameTexture(textureID, true);

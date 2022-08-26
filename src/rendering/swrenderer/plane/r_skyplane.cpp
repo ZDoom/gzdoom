@@ -94,8 +94,8 @@ namespace swrenderer
 			skyiscale = float(r_Yaspect / freelookviewheight);
 			skyscale = freelookviewheight / r_Yaspect;
 
-			skyiscale *= float(thread->Viewport->viewpoint.FieldOfView.Degrees / 90.);
-			skyscale *= float(90. / thread->Viewport->viewpoint.FieldOfView.Degrees);
+			skyiscale *= float(thread->Viewport->viewpoint.FieldOfView.Degrees() / 90.);
+			skyscale *= float(90. / thread->Viewport->viewpoint.FieldOfView.Degrees());
 		}
 
 		if (Level->skystretch)

@@ -1324,7 +1324,7 @@ public:
 		return xs_CRoundToInt(Degrees_ * (0x40000000 / 90.));
 	}
 
-	vec_t Degrees() const
+	constexpr vec_t Degrees() const
 	{
 		return Degrees_;
 	}

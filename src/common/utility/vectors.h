@@ -1208,6 +1208,16 @@ public:
 		return TAngle(f * (90. / 0x40000000));
 	}
 
+	static constexpr TAngle fromBuild(int bang)
+	{
+		return TAngle(bang * (90. / 512));
+	}
+
+	static constexpr TAngle fromQ16(int bang)
+	{
+		return TAngle(bang * (90. / 16384));
+	}
+
 	TAngle(const TAngle &other) = default;
 	TAngle &operator= (const TAngle &other) = default;
 
@@ -1318,6 +1328,16 @@ public:
 	vec_t Degrees() const
 	{
 		return Degrees_;
+	}
+
+	constexpr int Buildang() const
+	{
+		return int(Degrees_ * (512 / 90.0));
+	}
+
+	constexpr int Q16() const
+	{
+		return int(Degrees_ * (16384 / 90.0));
 	}
 
 	TVector2<vec_t> ToVector(vec_t length = 1) const

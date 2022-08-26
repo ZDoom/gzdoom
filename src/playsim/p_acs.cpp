@@ -615,17 +615,17 @@ inline int DoubleToACS(double val)
 
 inline DAngle ACSToAngle(int acsval)
 {
-	return DAngle::fromDeg(acsval * (360. / 65536.));
+	return DAngle::fromQ16(acsval);
 }
 
 inline int AngleToACS(DAngle ang)
 {
-	return ang.BAMs() >> 16;
+	return ang.Q16();
 }
 
 inline int PitchToACS(DAngle ang)
 {
-	return int(ang.Normalized180().Degrees() * (65536. / 360));
+	return ang.Normalized180().Q16();
 }
 
 struct CallReturn

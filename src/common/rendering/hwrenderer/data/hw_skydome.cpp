@@ -471,7 +471,8 @@ void FSkyVertexBuffer::DoRenderDome(FRenderState& state, FGameTexture* tex, int 
 	// The caps only get drawn for the main layer but not for the overlay.
 	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != nullptr)
 	{
-		auto& col = R_GetSkyCapColor(tex);
+		auto col = R_GetSkyCapColor(tex);
+
 		col.first.r = col.first.r * color.r / 255;
 		col.first.g = col.first.g * color.g / 255;
 		col.first.b = col.first.b * color.b / 255;

@@ -47,7 +47,6 @@
 #include "xs_Float.h"
 #include "math/cmath.h"
 
-class FSerializer;
 
 #define EQUAL_EPSILON (1/65536.)
 

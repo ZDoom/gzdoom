@@ -73,11 +73,14 @@ if(UNIX)
     target_link_libraries(discord-rpc PUBLIC pthread)
 
     target_compile_options(discord-rpc PRIVATE
-        -g
         -Wall
         -Wextra
         -Wpedantic
     )
+
+    if (${CMAKE_BUILD_TYPE} STREQUAL Debug OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+        target_compile_options(discord-rpc PRIVATE -g)
+    endif ()
 
     if (${WARNINGS_AS_ERRORS})
       target_compile_options(discord-rpc PRIVATE -Werror)

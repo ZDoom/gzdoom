@@ -269,9 +269,6 @@ int P_CheckMeleeRange (AActor* actor, double range)
 
 	double dist;
 		
-	if (!pl || (actor->Sector->Flags & SECF_NOATTACK))
-		return false;
-				
 	dist = actor->Distance2D (pl);
 	if (range < 0) range = actor->meleerange;
 
@@ -281,6 +278,9 @@ int P_CheckMeleeRange (AActor* actor, double range)
 	// [RH] If moving toward goal, then we've reached it.
 	if (pl == actor->goal)
 		return true;
+
+	if (!pl || (actor->Sector->Flags & SECF_NOATTACK))
+		return false;
 
 	// [RH] Don't melee things too far above or below actor.
 	if (!(actor->flags5 & MF5_NOVERTICALMELEERANGE))

@@ -268,10 +268,11 @@ int P_CheckMeleeRange (AActor* actor, double range)
 	AActor *pl = actor->target;
 
 	double dist;
-		
-	if (!pl || (actor->Sector->Flags & SECF_NOATTACK))
+	
+	// [inkoalawetrust] Monsters inside SECF_NOATTACK sectors still follow their patrol routes.
+	if (!pl || (actor->Sector->Flags & SECF_NOATTACK && pl != actor->goal))
 		return false;
-				
+	
 	dist = actor->Distance2D (pl);
 	if (range < 0) range = actor->meleerange;
 

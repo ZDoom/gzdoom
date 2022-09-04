@@ -110,6 +110,37 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, OffsetSectorPlane)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetSectorPlane)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(sector);
+	PARAM_INT(planeval);
+	PARAM_FLOAT(normal_x);
+	PARAM_FLOAT(normal_y);
+	PARAM_FLOAT(normal_z);
+	PARAM_FLOAT(d);
+
+	if ((unsigned)sector < self->Level->sectors.Size())
+	{
+		sector_t* sec = &self->Level->sectors[sector];
+		secplane_t& plane = sector_t::floor == planeval ? sec->floorplane : sec->ceilingplane;
+		if (normal_z != 0)
+		{
+			plane.normal = DVector3(normal_x, normal_y, normal_z);
+			plane.D = d;
+			plane.negiC = -1 / normal_z;
+		}
+		else
+		{
+			plane.normal = DVector3(0, 0, sector_t::floor == planeval ? 1 : -1);
+			plane.D = d;
+			plane.negiC = -1 / plane.normal.Z;
+		}
+	}
+
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, ClearSectorTags)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
@@ -449,8 +480,8 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetVertexZ)
 	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
 	{
 		vertexdata_t& data = self->loader->vertexdatas[vertex];
-		value = planeval ? data.zFloor : data.zCeiling;
-		isset = data.flags & (planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
+		value = sector_t::floor == planeval ? data.zFloor : data.zCeiling;
+		isset = data.flags & (sector_t::floor == planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
 	}
 
 	if (numret > 1)
@@ -477,7 +508,7 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertexZ)
 	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
 	{
 		vertexdata_t& data = self->loader->vertexdatas[vertex];
-		if (planeval) {
+		if (sector_t::floor == planeval) {
 			data.flags |= VERTEXFLAG_ZFloorEnabled;
 			data.zFloor = z;
 		}
@@ -500,7 +531,7 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, RemoveVertexZ)
 	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
 	{
 		vertexdata_t& data = self->loader->vertexdatas[vertex];
-		data.flags &= ~(planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
+		data.flags &= ~(sector_t::floor == planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
 	}
 
 	return 0;

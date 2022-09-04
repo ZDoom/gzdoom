@@ -49,6 +49,12 @@ inline double sector_t::LowestFloorAt(AActor *a, sector_t **resultsec)
 	return ::LowestFloorAt(this, a->X(), a->Y(), resultsec);
 }
 
+// Emulates the old floatbob offset table with direct calls to trig functions.
+inline double BobSin(double fb)
+{
+	return g_sindeg(double(fb * (180.0 / 32))) * 8;
+}
+
 inline double AActor::GetBobOffset(double ticfrac) const
 {
 	if (!(flags2 & MF2_FLOATBOB))

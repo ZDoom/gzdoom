@@ -41,6 +41,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "r_utility.h"
+#include "actorinlines.h"
 
 //==========================================================================
 //

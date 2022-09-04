@@ -1366,12 +1366,6 @@ public:
 	}
 };
 
-// Emulates the old floatbob offset table with direct calls to trig functions.
-inline double BobSin(double fb)
-{
-	return g_sindeg(double(fb * (180.0 / 32))) * 8;
-}
-
 template<class T>
 inline TAngle<T> fabs (const TAngle<T> &deg)
 {

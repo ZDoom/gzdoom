@@ -437,6 +437,77 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertex)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetVertexZ)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(vertex);
+	PARAM_INT(planeval);
+	
+	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
+	{
+		vertexdata_t& data = self->loader->vertexdatas[vertex];
+		double value = planeval ? data.zFloor : data.zCeiling;
+		ACTION_RETURN_FLOAT(value);
+	}
+
+	ACTION_RETURN_FLOAT(0);
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, IsVertexZSet)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(vertex);
+	PARAM_INT(planeval);
+
+	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
+	{
+		vertexdata_t& data = self->loader->vertexdatas[vertex];
+		bool value = data.flags & (planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
+		ACTION_RETURN_BOOL(value);
+	}
+
+	ACTION_RETURN_BOOL(false);
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertexZ)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(vertex);
+	PARAM_INT(planeval);
+	PARAM_FLOAT(z);
+
+	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
+	{
+		vertexdata_t& data = self->loader->vertexdatas[vertex];
+		if (planeval) {
+			data.flags |= VERTEXFLAG_ZFloorEnabled;
+			data.zFloor = z;
+		}
+		else
+		{
+			data.flags |= VERTEXFLAG_ZCeilingEnabled;
+			data.zCeiling = z;
+		}
+	}
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, UnsetVertexZ)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(vertex);
+	PARAM_INT(planeval);
+
+	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
+	{
+		vertexdata_t& data = self->loader->vertexdatas[vertex];
+		data.flags &= ~(planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
+	}
+
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetLineVertexes)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);

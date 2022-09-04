@@ -12,6 +12,7 @@ class LevelPostProcessor native play
 	protected native void ClearLineIDs(int line);
 	protected native void AddLineID(int line, int tag);
 	protected native void OffsetSectorPlane(int sector, int plane, double offset);
+	protected native void SetSectorPlane(int sector, int plane, vector3 normal, double d);
 
 	const SKILLS_ALL = 31;
 	const MODES_ALL = MTF_SINGLE | MTF_COOPERATIVE | MTF_DEATHMATCH;

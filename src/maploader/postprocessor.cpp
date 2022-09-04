@@ -443,30 +443,28 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetVertexZ)
 	PARAM_UINT(vertex);
 	PARAM_INT(planeval);
 	
-	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
-	{
-		vertexdata_t& data = self->loader->vertexdatas[vertex];
-		double value = planeval ? data.zFloor : data.zCeiling;
-		ACTION_RETURN_FLOAT(value);
-	}
-
-	ACTION_RETURN_FLOAT(0);
-}
-
-DEFINE_ACTION_FUNCTION(DLevelPostProcessor, IsVertexZSet)
-{
-	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
-	PARAM_UINT(vertex);
-	PARAM_INT(planeval);
+	double value = 0;
+	bool isset = false;
 
 	if (vertex < self->Level->vertexes.Size() && vertex < self->loader->vertexdatas.Size())
 	{
 		vertexdata_t& data = self->loader->vertexdatas[vertex];
-		bool value = data.flags & (planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
-		ACTION_RETURN_BOOL(value);
+		value = planeval ? data.zFloor : data.zCeiling;
+		isset = data.flags & (planeval ? VERTEXFLAG_ZFloorEnabled : VERTEXFLAG_ZCeilingEnabled);
 	}
 
-	ACTION_RETURN_BOOL(false);
+	if (numret > 1)
+	{
+		numret = 2;
+		ret[1].SetInt(isset);
+	}
+
+	if (numret > 0)
+	{
+		ret[0].SetFloat(value);
+	}
+
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertexZ)
@@ -493,7 +491,7 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertexZ)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DLevelPostProcessor, UnsetVertexZ)
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, RemoveVertexZ)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
 	PARAM_UINT(vertex);

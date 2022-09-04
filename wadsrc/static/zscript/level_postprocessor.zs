@@ -47,10 +47,9 @@ class LevelPostProcessor native play
 	protected native void SetThingStringArgument(uint thing, Name value);
 
 	protected native void SetVertex(uint vertex, double x, double y);
-	protected native double GetVertexZ(uint vertex, int plane);
-	protected native bool IsVertexZSet(uint vertex, int plane);
+	protected native double, bool GetVertexZ(uint vertex, int plane);
 	protected native void SetVertexZ(uint vertex, int plane, double z);
-	protected native void UnsetVertexZ(uint vertex, int plane);
+	protected native void RemoveVertexZ(uint vertex, int plane);
 	protected native void SetLineVertexes(uint Line, uint v1, uint v2);
 	protected native void FlipLineSideRefs(uint Line);
 	protected native void SetLineSectorRef(uint line, uint side, uint sector);

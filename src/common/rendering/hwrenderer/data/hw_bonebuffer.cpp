@@ -103,8 +103,11 @@ int BoneBuffer::UploadBones(const TArray<VSMatrix>& bones)
 
 int BoneBuffer::GetBinding(unsigned int index, size_t* pOffset, size_t* pSize)
 {
+	unsigned int offset = index;
+
 	// this function will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start.
-	unsigned int offset = (index / mBlockAlign) * mBlockAlign;
+	if (mBlockAlign > 0)
+		offset = (index / mBlockAlign) * mBlockAlign;
 
 	*pOffset = offset * BONE_SIZE;
 	*pSize = mBlockSize * BONE_SIZE;

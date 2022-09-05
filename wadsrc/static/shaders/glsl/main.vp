@@ -169,7 +169,7 @@ void AddWeightedBone(uint boneIndex, float weight, inout vec4 position, inout ve
 {
 	if (weight != 0.0)
 	{
-		mat4 transform = bones[uBoneIndexBase + (int)boneIndex];
+		mat4 transform = bones[uBoneIndexBase + int(boneIndex)];
 		mat3 rotation = mat3(transform);
 		position += (transform * aPosition) * weight;
 		normal += (rotation * aNormal.xyz) * weight;

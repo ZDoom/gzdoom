@@ -97,6 +97,7 @@ void FHWModelRenderer::BeginDrawHUDModel(FRenderStyle style, const VSMatrix &obj
 
 void FHWModelRenderer::EndDrawHUDModel(FRenderStyle style)
 {
+	state.SetBoneIndexBase(-1);
 	state.EnableModelMatrix(false);
 
 	state.SetDepthFunc(DF_Less);

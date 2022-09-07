@@ -47,7 +47,7 @@ BoneBuffer::BoneBuffer(int pipelineNbr) : mPipelineNbr(pipelineNbr)
 	{
 		mBufferType = false;
 		mBlockSize = screen->maxuniformblock / BONE_SIZE;
-		mBlockAlign = screen->uniformblockalignment / BONE_SIZE;
+		mBlockAlign = screen->uniformblockalignment < 64 ? 1 : screen->uniformblockalignment / BONE_SIZE;
 		mMaxUploadSize = (mBlockSize - mBlockAlign);
 	}
 
@@ -103,11 +103,8 @@ int BoneBuffer::UploadBones(const TArray<VSMatrix>& bones)
 
 int BoneBuffer::GetBinding(unsigned int index, size_t* pOffset, size_t* pSize)
 {
-	unsigned int offset = index;
-
 	// this function will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start.
-	if (mBlockAlign > 0)
-		offset = (index / mBlockAlign) * mBlockAlign;
+	unsigned int offset = (index / mBlockAlign) * mBlockAlign;
 
 	*pOffset = offset * BONE_SIZE;
 	*pSize = mBlockSize * BONE_SIZE;

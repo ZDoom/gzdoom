@@ -842,30 +842,45 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Clear, ArrayClear<FDynArray_Ptr>)
 //
 //-----------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Copy, ArrayCopy<FDynArray_Obj>)
+void ObjArrayCopy(FDynArray_Obj *self, FDynArray_Obj *other)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
-	PARAM_POINTER(other, FDynArray_Obj);
 	for (auto& elem : *other) GC::WriteBarrier(elem);
 	*self = *other;
-	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Move, ArrayMove<FDynArray_Obj>)
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Copy, ObjArrayCopy)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
 	PARAM_POINTER(other, FDynArray_Obj);
+	ObjArrayCopy(self, other);
+	return 0;
+}
+
+void ObjArrayMove(FDynArray_Obj *self, FDynArray_Obj *other)
+{
 	for (auto& elem : *other) GC::WriteBarrier(elem);
 	*self = std::move(*other);
-	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Append, ArrayAppend<FDynArray_Obj>)
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Move, ObjArrayMove)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
 	PARAM_POINTER(other, FDynArray_Obj);
+	ObjArrayMove(self, other);
+	return 0;
+}
+
+void ObjArrayAppend(FDynArray_Obj *self, FDynArray_Obj *other)
+{
 	for (auto& elem : *other) GC::WriteBarrier(elem);
 	self->Append(*other);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Append, ObjArrayAppend)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_POINTER(other, FDynArray_Obj);
+	ObjArrayAppend(self, other);
 	return 0;
 }
 
@@ -886,7 +901,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Push, ObjArrayPush)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
 	PARAM_OBJECT(val, DObject);
-	GC::WriteBarrier(val);
 	ACTION_RETURN_INT(ObjArrayPush(self, val));
 }
 

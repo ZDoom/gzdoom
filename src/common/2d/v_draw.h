@@ -266,7 +266,7 @@ enum
 };
 
 template<class T>
-bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, int type, int fill = -1, double fillalpha = 0.0);
+bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, int type, PalEntry fill = ~0u, double fillalpha = 0.0);
 
 template<class T>
 void DrawTextCommon(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, const T* string, DrawParms& parms);

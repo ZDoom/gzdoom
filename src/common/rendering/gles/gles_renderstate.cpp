@@ -32,6 +32,7 @@
 #include "gles_shader.h"
 #include "gles_renderer.h"
 #include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
 #include "gles_renderbuffers.h"
 #include "gles_hwtexture.h"
 #include "gles_buffers.h"
@@ -251,6 +252,7 @@ bool FGLRenderState::ApplyShader()
 	activeShader->cur->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->cur->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->cur->muClipSplit.Set(mClipSplit);
+	activeShader->cur->muBoneIndexBase.Set(-1);
 	activeShader->cur->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 	activeShader->cur->muAddColor.Set(mStreamData.uAddColor);
 	activeShader->cur->muTextureAddColor.Set(mStreamData.uTextureAddColor);
@@ -348,6 +350,9 @@ bool FGLRenderState::ApplyShader()
 
 		activeShader->cur->muLightRange.Set(range);
 	}
+
+	int index = mBoneIndexBase;
+	activeShader->cur->muBoneIndexBase.Set(index);
 
 	return true;
 }

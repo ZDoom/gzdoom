@@ -38,7 +38,6 @@
 #include "shaderuniforms.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"
-#include "hw_bonebuffer.h"
 #include "i_specialpaths.h"
 #include "printf.h"
 #include "version.h"
@@ -322,12 +321,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		// dynamic lights
 		uniform ivec4 uLightRange;
 
-		// bone animation
-		uniform int uBoneIndexBase;
-
-		// bone matrix buffers
-		uniform mat4 bones[NUM_UBO_BONES];
-
 		// Blinn glossiness and specular level
 		uniform vec2 uSpecularMaterial;
 
@@ -398,11 +391,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	FString vp_comb;
 
 	assert(screen->mLights != NULL);
-	assert(screen->mBones != NULL);
 
 	unsigned int lightbuffersize = screen->mLights->GetBlockSize();
 
-	vp_comb.Format("#version 100\n#define NUM_UBO_LIGHTS %d\n#define NO_CLIPDISTANCE_SUPPORT\n#define NUM_UBO_BONES %d\n", lightbuffersize, screen->mBones->GetBlockSize());
+	vp_comb.Format("#version 100\n#define NUM_UBO_LIGHTS %d\n#define NO_CLIPDISTANCE_SUPPORT\n", lightbuffersize);
 
 	FString fp_comb = vp_comb;
 	vp_comb << defines << i_data.GetChars();
@@ -537,8 +529,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		glBindAttribLocation(shaderData->hShader, VATTR_VERTEX2, "aVertex2");
 		glBindAttribLocation(shaderData->hShader, VATTR_NORMAL, "aNormal");
 		glBindAttribLocation(shaderData->hShader, VATTR_NORMAL2, "aNormal2");
-		glBindAttribLocation(shaderData->hShader, VATTR_BONEWEIGHT, "aBoneWeight");
-		glBindAttribLocation(shaderData->hShader, VATTR_BONESELECTOR, "aBoneSelector");
 
 
 		glLinkProgram(shaderData->hShader);
@@ -601,7 +591,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	shaderData->muLightParms.Init(shaderData->hShader, "uLightAttr");
 	shaderData->muClipSplit.Init(shaderData->hShader, "uClipSplit");
 	shaderData->muLightRange.Init(shaderData->hShader, "uLightRange");
-	shaderData->muBoneIndexBase.Init(shaderData->hShader, "uBoneIndexBase");
 	shaderData->muFogColor.Init(shaderData->hShader, "uFogColor");
 	shaderData->muDynLightColor.Init(shaderData->hShader, "uDynLightColor");
 	shaderData->muObjectColor.Init(shaderData->hShader, "uObjectColor");

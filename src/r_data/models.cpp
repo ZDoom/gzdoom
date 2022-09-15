@@ -421,6 +421,8 @@ void InitModels()
 		smf.modelIDs[0] = VoxelDefs[i]->Voxel->VoxelIndex;
 		smf.skinIDs.Alloc(1);
 		smf.skinIDs[0] = md->GetPaletteTexture();
+		smf.animationIDs.Alloc(1);
+		smf.animationIDs[0] = -1;
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
 		if (VoxelDefs[i]->PitchFromMomentum) smf.flags |= MDL_PITCHFROMMOMENTUM;

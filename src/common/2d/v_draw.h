@@ -103,7 +103,7 @@ enum
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
 
-	// New additions. 
+	// New additions.
 	DTA_Color,
 	DTA_FlipY,			// bool: flip image vertically
 	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
@@ -258,8 +258,15 @@ inline int active_con_scale(F2DDrawer *drawer)
 #undef DrawText	// See WinUser.h for the definition of DrawText as a macro
 #endif
 
+enum
+{
+	DrawTexture_Normal,
+	DrawTexture_Text,
+	DrawTexture_Fill,
+};
+
 template<class T>
-bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, bool fortext, bool checkimage = true);
+bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, int type, PalEntry fill = ~0u, double fillalpha = 0.0);
 
 template<class T>
 void DrawTextCommon(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, const T* string, DrawParms& parms);

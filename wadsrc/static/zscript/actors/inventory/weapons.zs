@@ -742,7 +742,7 @@ class Weapon : StateProvider
 
 		// [BC] This behavior is from the original Doom. Give 5/2 times as much ammoitem when
 		// we pick up a weapon in deathmatch.
-		if (( deathmatch ) && ( gameinfo.gametype & GAME_DoomChex ))
+		if (( deathmatch && !sv_noextraammo ) && ( gameinfo.gametype & GAME_DoomChex ))
 			amount = amount * 5 / 2;
 
 		// extra ammoitem in baby mode and nightmare mode

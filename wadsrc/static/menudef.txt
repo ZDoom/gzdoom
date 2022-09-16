@@ -1683,6 +1683,7 @@ OptionMenu DeathmatchOptions protected
 	Option "$GMPLYMNU_LOSEFRAG",				"sv_losefrag", "YesNo"
 	Option "$GMPLYMNU_KEEPFRAGS",				"sv_keepfrags", "YesNo"
 	Option "$GMPLYMNU_NOTEAMSWITCH",			"sv_noteamswitch", "YesNo"
+	Option "$GMPLYMNU_NOEXTRAAMMO",				"sv_noextraammo", "NoYes"
 	Class "GameplayMenu"
 }
 

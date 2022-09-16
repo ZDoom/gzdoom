@@ -767,6 +767,8 @@ void C_HideConsole ()
 static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 {
 	int data1 = ev->data1;
+	int data2 = ev->data2;
+	int data3 = ev->data3;
 	bool keepappending = false;
 
 	switch (ev->subtype)
@@ -796,15 +798,18 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		TabbedList = false;
 		break;
 
-	case EV_GUI_WheelUp:
-	case EV_GUI_WheelDown:
-		if (!(ev->data3 & GKM_SHIFT))
+	case EV_GUI_WheelEvent:
+		switch(ev->data1)
 		{
-			data1 = GK_PGDN + EV_GUI_WheelDown - ev->subtype;
+			case EV_GUI_WheelUp:
+			case EV_GUI_WheelDown:
+				data1 = !(ev->data3 & GKM_SHIFT) ? GK_PGDN + EV_GUI_WheelDown - ev->data1 : GK_DOWN + EV_GUI_WheelDown - ev->data1;
 		}
-		else
+		switch(ev->data2)
 		{
-			data1 = GK_DOWN + EV_GUI_WheelDown - ev->subtype;
+			case EV_GUI_WheelRight:
+			case EV_GUI_WheelLeft:
+				data2 = !(ev->data3 & GKM_SHIFT) ? GK_END + EV_GUI_WheelRight - ev->data2 : GK_RIGHT + EV_GUI_WheelRight - ev->data2;
 		}
 		// Intentional fallthrough
 
@@ -825,46 +830,22 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			}
 			else if (RowAdjust < conbuffer->GetFormattedLineCount())
 			{ // Scroll console buffer up
-				if (ev->subtype == EV_GUI_WheelUp)
-				{
-					RowAdjust += 3;
-				}
-				else
-				{
-					RowAdjust++;
-				}
+				RowAdjust += ev->data1 == EV_GUI_WheelUp ? 3 : 1;
 				if (RowAdjust > conbuffer->GetFormattedLineCount())
-				{
 					RowAdjust = conbuffer->GetFormattedLineCount();
-				}
 			}
 			break;
 
 		case GK_PGDN:
+			// Scroll console buffer down one page
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
-			{ // Scroll console buffer down one page
+			{ 
 				const int scrollamt = (twod->GetHeight()-4)/active_con_scale(twod) /
 					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
-				if (RowAdjust < scrollamt)
-				{
-					RowAdjust = 0;
-				}
-				else
-				{
-					RowAdjust -= scrollamt;
-				}
+				RowAdjust -= (RowAdjust < scrollamt) ? -RowAdjust : scrollamt;
 			}
-			else if (RowAdjust > 0)
-			{ // Scroll console buffer down
-				if (ev->subtype == EV_GUI_WheelDown)
-				{
-					RowAdjust = max (0, RowAdjust - 3);
-				}
-				else
-				{
-					RowAdjust--;
-				}
-			}
+			else if (RowAdjust > 0) 
+				RowAdjust = max(0, RowAdjust - ((ev->data1 == EV_GUI_WheelDown) ? 3 : 1));
 			break;
 
 		case GK_HOME:

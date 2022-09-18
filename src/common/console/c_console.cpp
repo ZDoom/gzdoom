@@ -804,14 +804,12 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			case EV_GUI_WheelUp:
 			case EV_GUI_WheelDown:
 				data1 = !(ev->data3 & GKM_SHIFT) ? GK_PGDN + ilogxid(EV_GUI_WheelDown,2) - ilogxid(ev->data1,2) : GK_DOWN + ilogxid(EV_GUI_WheelDown,2) - ilogxid(ev->data1,2);
-			printf("data1=%d ev->data1=%d\n", data1, ev->data1);
 		}
 		switch(ev->data2)
 		{
 			case EV_GUI_WheelRight:
 			case EV_GUI_WheelLeft:
 				data2 = !(ev->data3 & GKM_SHIFT) ? GK_END + ilogxid(EV_GUI_WheelRight,2) - ilogxid(ev->data2,2) : GK_RIGHT + ilogxid(EV_GUI_WheelRight,2) - ilogxid(ev->data2,2);
-			printf("data2=%d ev->data2%d\n", data2, ev->data2);
 		}
 		// Intentional fallthrough
 

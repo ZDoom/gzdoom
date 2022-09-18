@@ -142,7 +142,7 @@ else()
 
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-		find_package( SDL2 REQUIRED )
+		find_package( SDL2 REQUIRED VERSION 2.0.18 )
 		include_directories( "${SDL2_INCLUDE_DIR}" )
 		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${SDL2_LIBRARY}" )
 	endif()
@@ -628,7 +628,7 @@ file( GLOB HEADER_FILES
 	common/textures/hires/xbr/*.h
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
-	common/thirdparty/math/*h
+	common/thirdparty/math/*.h
 	common/thirdparty/libsmackerdec/include/*.h
 	common/rendering/*.h
 	common/rendering/gl_load/*.h
@@ -1266,6 +1266,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	common/thirdparty/math/tan.c
 	common/thirdparty/math/tanh.c
 	common/thirdparty/math/fastsin.cpp
+	common/thirdparty/math/lzcnt.c
 )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )

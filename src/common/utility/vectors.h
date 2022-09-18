@@ -59,30 +59,30 @@ namespace pi
 
 
 
-template<class vec_t> struct TVector3;
-template<class vec_t> struct TRotator;
-template<class vec_t> struct TAngle;
+template<class scalar_t> struct TVector3;
+template<class scalar_t> struct TRotator;
+template<class scalar_t> struct TAngle;
 
-template<class vec_t>
+template<class scalar_t>
 struct TVector2
 {
-	vec_t X, Y;
+	scalar_t X, Y;
 
 	TVector2() = default;
 
-	TVector2 (vec_t a, vec_t b)
+	TVector2 (scalar_t a, scalar_t b)
 		: X(a), Y(b)
 	{
 	}
 
 	TVector2(const TVector2 &other) = default;
 
-	TVector2 (const TVector3<vec_t> &other)	// Copy the X and Y from the 3D vector and discard the Z
+	TVector2 (const TVector3<scalar_t> &other)	// Copy the X and Y from the 3D vector and discard the Z
 		: X(other.X), Y(other.Y)
 	{
 	}
 
-	TVector2(vec_t *o)
+	TVector2(scalar_t *o)
 		: X(o[0]), Y(o[1])
 	{
 	}
@@ -100,12 +100,12 @@ struct TVector2
 	TVector2 &operator= (const TVector2 &other) = default;
 
 	// Access X and Y as an array
-	vec_t &operator[] (int index)
+	scalar_t &operator[] (int index)
 	{
 		return index == 0 ? X : Y;
 	}
 
-	const vec_t &operator[] (int index) const
+	const scalar_t &operator[] (int index) const
 	{
 		return index == 0 ? X : Y;
 	}
@@ -149,53 +149,53 @@ struct TVector2
 	}
 #endif
 
-	friend TVector2 operator+ (const TVector2 &v, vec_t scalar)
+	friend TVector2 operator+ (const TVector2 &v, scalar_t scalar)
 	{
 		return TVector2(v.X + scalar, v.Y + scalar);
 	}
 
-	friend TVector2 operator+ (vec_t scalar, const TVector2 &v)
+	friend TVector2 operator+ (scalar_t scalar, const TVector2 &v)
 	{
 		return TVector2(v.X + scalar, v.Y + scalar);
 	}
 
 	// Scalar subtraction
-	TVector2 &operator-= (vec_t scalar)
+	TVector2 &operator-= (scalar_t scalar)
 	{
 		X -= scalar, Y -= scalar;
 		return *this;
 	}
 
-	TVector2 operator- (vec_t scalar) const
+	TVector2 operator- (scalar_t scalar) const
 	{
 		return TVector2(X - scalar, Y - scalar);
 	}
 
 	// Scalar multiplication
-	TVector2 &operator*= (vec_t scalar)
+	TVector2 &operator*= (scalar_t scalar)
 	{
 		X *= scalar, Y *= scalar;
 		return *this;
 	}
 
-	friend TVector2 operator* (const TVector2 &v, vec_t scalar)
+	friend TVector2 operator* (const TVector2 &v, scalar_t scalar)
 	{
 		return TVector2(v.X * scalar, v.Y * scalar);
 	}
 
-	friend TVector2 operator* (vec_t scalar, const TVector2 &v)
+	friend TVector2 operator* (scalar_t scalar, const TVector2 &v)
 	{
 		return TVector2(v.X * scalar, v.Y * scalar);
 	}
 
 	// Scalar division
-	TVector2 &operator/= (vec_t scalar)
+	TVector2 &operator/= (scalar_t scalar)
 	{
 		scalar = 1 / scalar, X *= scalar, Y *= scalar;
 		return *this;
 	}
 
-	TVector2 operator/ (vec_t scalar) const
+	TVector2 operator/ (scalar_t scalar) const
 	{
 		scalar = 1 / scalar;
 		return TVector2(X * scalar, Y * scalar);
@@ -226,12 +226,12 @@ struct TVector2
 	}
 
 	// Vector length
-	vec_t Length() const
+	scalar_t Length() const
 	{
-		return (vec_t)g_sqrt (X*X + Y*Y);
+		return (scalar_t)g_sqrt (X*X + Y*Y);
 	}
 
-	vec_t LengthSquared() const
+	scalar_t LengthSquared() const
 	{
 		return X*X + Y*Y;
 	}
@@ -239,15 +239,15 @@ struct TVector2
 	// Return a unit vector facing the same direction as this one
 	TVector2 Unit() const
 	{
-		vec_t len = Length();
+		scalar_t len = Length();
 		if (len != 0) len = 1 / len;
 		return *this * len;
 	}
 
 	// Scales this vector into a unit vector. Returns the old length
-	vec_t MakeUnit()
+	scalar_t MakeUnit()
 	{
-		vec_t len, ilen;
+		scalar_t len, ilen;
 		len = ilen = Length();
 		if (ilen != 0) ilen = 1 / ilen;
 		*this *= ilen;
@@ -258,20 +258,20 @@ struct TVector2
 	TVector2 &MakeResize(double len)
 	{
 		double scale = len / Length();
-		X = vec_t(X * scale);
-		Y = vec_t(Y * scale);
+		X = scalar_t(X * scale);
+		Y = scalar_t(Y * scale);
 		return *this;
 	}
 
 
 	// Dot product
-	vec_t operator | (const TVector2 &other) const
+	scalar_t operator | (const TVector2 &other) const
 	{
 		return X*other.X + Y*other.Y;
 	}
 
 	// Returns the angle that the ray (0,0)-(X,Y) faces
-	TAngle<vec_t> Angle() const;
+	TAngle<scalar_t> Angle() const;
 
 	// Returns a rotated vector. angle is in degrees.
 	TVector2 Rotated (double angle)
@@ -303,21 +303,21 @@ struct TVector2
 	}
 };
 
-template<class vec_t>
+template<class scalar_t>
 struct TVector3
 {
-	typedef TVector2<vec_t> Vector2;
+	typedef TVector2<scalar_t> Vector2;
 
-	vec_t X, Y, Z;
+	scalar_t X, Y, Z;
 
 	TVector3() = default;
 
-	TVector3 (vec_t a, vec_t b, vec_t c)
+	TVector3 (scalar_t a, scalar_t b, scalar_t c)
 		: X(a), Y(b), Z(c)
 	{
 	}
 
-	TVector3(vec_t *o)
+	TVector3(scalar_t *o)
 		: X(o[0]), Y(o[1]), Z(o[2])
 	{
 	}
@@ -326,12 +326,12 @@ struct TVector3
 
 	TVector3(const TVector3 &other) = default;
 
-	TVector3 (const Vector2 &xy, vec_t z)
+	TVector3 (const Vector2 &xy, scalar_t z)
 		: X(xy.X), Y(xy.Y), Z(z)
 	{
 	}
 
-	TVector3 (const TRotator<vec_t> &rot);
+	TVector3 (const TRotator<scalar_t> &rot);
 
 	void Zero()
 	{
@@ -351,12 +351,12 @@ struct TVector3
 	TVector3 &operator= (const TVector3 &other) = default;
 
 	// Access X and Y and Z as an array
-	vec_t &operator[] (int index)
+	scalar_t &operator[] (int index)
 	{
 		return index == 0 ? X : index == 1 ? Y : Z;
 	}
 
-	const vec_t &operator[] (int index) const
+	const scalar_t &operator[] (int index) const
 	{
 		return index == 0 ? X : index == 1 ? Y : Z;
 	}
@@ -393,60 +393,60 @@ struct TVector3
 
 	// Scalar addition
 #if 0
-	TVector3 &operator+= (vec_t scalar)
+	TVector3 &operator+= (scalar_t scalar)
 	{
 		X += scalar, Y += scalar, Z += scalar;
 		return *this;
 	}
 #endif
 
-	friend TVector3 operator+ (const TVector3 &v, vec_t scalar)
+	friend TVector3 operator+ (const TVector3 &v, scalar_t scalar)
 	{
 		return TVector3(v.X + scalar, v.Y + scalar, v.Z + scalar);
 	}
 
-	friend TVector3 operator+ (vec_t scalar, const TVector3 &v)
+	friend TVector3 operator+ (scalar_t scalar, const TVector3 &v)
 	{
 		return TVector3(v.X + scalar, v.Y + scalar, v.Z + scalar);
 	}
 
 	// Scalar subtraction
-	TVector3 &operator-= (vec_t scalar)
+	TVector3 &operator-= (scalar_t scalar)
 	{
 		X -= scalar, Y -= scalar, Z -= scalar;
 		return *this;
 	}
 
-	TVector3 operator- (vec_t scalar) const
+	TVector3 operator- (scalar_t scalar) const
 	{
 		return TVector3(X - scalar, Y - scalar, Z - scalar);
 	}
 
 	// Scalar multiplication
-	TVector3 &operator*= (vec_t scalar)
+	TVector3 &operator*= (scalar_t scalar)
 	{
-		X = vec_t(X *scalar), Y = vec_t(Y * scalar), Z = vec_t(Z * scalar);
+		X = scalar_t(X *scalar), Y = scalar_t(Y * scalar), Z = scalar_t(Z * scalar);
 		return *this;
 	}
 
-	friend TVector3 operator* (const TVector3 &v, vec_t scalar)
+	friend TVector3 operator* (const TVector3 &v, scalar_t scalar)
 	{
 		return TVector3(v.X * scalar, v.Y * scalar, v.Z * scalar);
 	}
 
-	friend TVector3 operator* (vec_t scalar, const TVector3 &v)
+	friend TVector3 operator* (scalar_t scalar, const TVector3 &v)
 	{
 		return TVector3(v.X * scalar, v.Y * scalar, v.Z * scalar);
 	}
 
 	// Scalar division
-	TVector3 &operator/= (vec_t scalar)
+	TVector3 &operator/= (scalar_t scalar)
 	{
-		scalar = 1 / scalar, X = vec_t(X * scalar), Y = vec_t(Y * scalar), Z = vec_t(Z * scalar);
+		scalar = 1 / scalar, X = scalar_t(X * scalar), Y = scalar_t(Y * scalar), Z = scalar_t(Z * scalar);
 		return *this;
 	}
 
-	TVector3 operator/ (vec_t scalar) const
+	TVector3 operator/ (scalar_t scalar) const
 	{
 		scalar = 1 / scalar;
 		return TVector3(X * scalar, Y * scalar, Z * scalar);
@@ -514,7 +514,7 @@ struct TVector3
 
 	// Subtract a 3D vector and a 2D vector.
 	// Discards the Z component of the 3D vector and returns a 2D vector.
-	friend Vector2 operator- (const TVector2<vec_t> &v2, const TVector3 &v3)
+	friend Vector2 operator- (const TVector2<scalar_t> &v2, const TVector3 &v3)
 	{
 		return Vector2(v2.X - v3.X, v2.Y - v3.Y);
 	}
@@ -568,8 +568,8 @@ struct TVector3
 
 
 	// Returns the angle (in radians) that the ray (0,0)-(X,Y) faces
-	TAngle<vec_t> Angle() const;
-	TAngle<vec_t> Pitch() const;
+	TAngle<scalar_t> Angle() const;
+	TAngle<scalar_t> Pitch() const;
 
 	// Vector length
 	double Length() const
@@ -587,7 +587,7 @@ struct TVector3
 	{
 		double len = Length();
 		if (len != 0) len = 1 / len;
-		return *this * (vec_t)len;
+		return *this * (scalar_t)len;
 	}
 
 	// Scales this vector into a unit vector
@@ -595,7 +595,7 @@ struct TVector3
 	{
 		double len = Length();
 		if (len != 0) len = 1 / len;
-		*this *= (vec_t)len;
+		*this *= (scalar_t)len;
 	}
 
 	// Resizes this vector to be the specified length (if it is not 0)
@@ -605,9 +605,9 @@ struct TVector3
 		if (vlen != 0.)
 		{
 			double scale = len / vlen;
-			X = vec_t(X * scale);
-			Y = vec_t(Y * scale);
-			Z = vec_t(Z * scale);
+			X = scalar_t(X * scale);
+			Y = scalar_t(Y * scale);
+			Z = scalar_t(Z * scale);
 		}
 		return *this;
 	}
@@ -618,7 +618,7 @@ struct TVector3
 		if (vlen != 0.)
 		{
 			double scale = len / vlen;
-			return{ vec_t(X * scale), vec_t(Y * scale), vec_t(Z * scale) };
+			return{ scalar_t(X * scale), scalar_t(Y * scale), scalar_t(Z * scale) };
 		}
 		else
 		{
@@ -627,7 +627,7 @@ struct TVector3
 	}
 
 	// Dot product
-	vec_t operator | (const TVector3 &other) const
+	scalar_t operator | (const TVector3 &other) const
 	{
 		return X*other.X + Y*other.Y + Z*other.Z;
 	}
@@ -647,28 +647,28 @@ struct TVector3
 	}
 };
 
-template<class vec_t>
+template<class scalar_t>
 struct TVector4
 {
-	typedef TVector3<vec_t> Vector3;
+	typedef TVector3<scalar_t> Vector3;
 
-	vec_t X, Y, Z, W;
+	scalar_t X, Y, Z, W;
 
 	TVector4() = default;
 
-	TVector4(vec_t a, vec_t b, vec_t c, vec_t d)
+	TVector4(scalar_t a, scalar_t b, scalar_t c, scalar_t d)
 		: X(a), Y(b), Z(c), W(d)
 	{
 	}
 
-	TVector4(vec_t *o)
+	TVector4(scalar_t *o)
 		: X(o[0]), Y(o[1]), Z(o[2]), W(o[3])
 	{
 	}
 
 	TVector4(const TVector4 &other) = default;
 
-	TVector4(const Vector3 &xyz, vec_t w)
+	TVector4(const Vector3 &xyz, scalar_t w)
 		: X(xyz.X), Y(xyz.Y), Z(xyz.Z), W(w)
 	{
 	}
@@ -686,12 +686,12 @@ struct TVector4
 	TVector4 &operator= (const TVector4 &other) = default;
 
 	// Access X and Y and Z as an array
-	vec_t &operator[] (int index)
+	scalar_t &operator[] (int index)
 	{
 		return (&X)[index];
 	}
 
-	const vec_t &operator[] (int index) const
+	const scalar_t &operator[] (int index) const
 	{
 		return (&X)[index];
 	}
@@ -727,59 +727,59 @@ struct TVector4
 	}
 
 	// Scalar addition
-	TVector4 &operator+= (vec_t scalar)
+	TVector4 &operator+= (scalar_t scalar)
 	{
 		X += scalar, Y += scalar, Z += scalar; W += scalar;
 		return *this;
 	}
 
-	friend TVector4 operator+ (const TVector4 &v, vec_t scalar)
+	friend TVector4 operator+ (const TVector4 &v, scalar_t scalar)
 	{
 		return TVector4(v.X + scalar, v.Y + scalar, v.Z + scalar, v.W + scalar);
 	}
 
-	friend TVector4 operator+ (vec_t scalar, const TVector4 &v)
+	friend TVector4 operator+ (scalar_t scalar, const TVector4 &v)
 	{
 		return TVector4(v.X + scalar, v.Y + scalar, v.Z + scalar, v.W + scalar);
 	}
 
 	// Scalar subtraction
-	TVector4 &operator-= (vec_t scalar)
+	TVector4 &operator-= (scalar_t scalar)
 	{
 		X -= scalar, Y -= scalar, Z -= scalar, W -= scalar;
 		return *this;
 	}
 
-	TVector4 operator- (vec_t scalar) const
+	TVector4 operator- (scalar_t scalar) const
 	{
 		return TVector4(X - scalar, Y - scalar, Z - scalar, W - scalar);
 	}
 
 	// Scalar multiplication
-	TVector4 &operator*= (vec_t scalar)
+	TVector4 &operator*= (scalar_t scalar)
 	{
-		X = vec_t(X *scalar), Y = vec_t(Y * scalar), Z = vec_t(Z * scalar), W = vec_t(W * scalar);
+		X = scalar_t(X *scalar), Y = scalar_t(Y * scalar), Z = scalar_t(Z * scalar), W = scalar_t(W * scalar);
 		return *this;
 	}
 
-	friend TVector4 operator* (const TVector4 &v, vec_t scalar)
+	friend TVector4 operator* (const TVector4 &v, scalar_t scalar)
 	{
 		return TVector4(v.X * scalar, v.Y * scalar, v.Z * scalar, v.W * scalar);
 	}
 
-	friend TVector4 operator* (vec_t scalar, const TVector4 &v)
+	friend TVector4 operator* (scalar_t scalar, const TVector4 &v)
 	{
 		return TVector4(v.X * scalar, v.Y * scalar, v.Z * scalar, v.W * scalar);
 	}
 
 	// Scalar division
-	TVector4 &operator/= (vec_t scalar)
+	TVector4 &operator/= (scalar_t scalar)
 	{
-		scalar = 1 / scalar, X = vec_t(X * scalar), Y = vec_t(Y * scalar), Z = vec_t(Z * scalar), W = vec_t(W * scalar);
+		scalar = 1 / scalar, X = scalar_t(X * scalar), Y = scalar_t(Y * scalar), Z = scalar_t(Z * scalar), W = scalar_t(W * scalar);
 		return *this;
 	}
 
-	TVector4 operator/ (vec_t scalar) const
+	TVector4 operator/ (scalar_t scalar) const
 	{
 		scalar = 1 / scalar;
 		return TVector4(X * scalar, Y * scalar, Z * scalar, W * scalar);
@@ -847,7 +847,7 @@ struct TVector4
 
 	// Subtract a 4D vector and a 3D vector.
 	// Discards the W component of the 4D vector and returns a 3D vector.
-	friend Vector3 operator- (const TVector3<vec_t> &v3, const TVector4 &v4)
+	friend Vector3 operator- (const TVector3<scalar_t> &v3, const TVector4 &v4)
 	{
 		return Vector3(v3.X - v4.X, v3.Y - v4.Y, v3.Z - v4.Z);
 	}
@@ -868,7 +868,7 @@ struct TVector4
 	{
 		double len = Length();
 		if (len != 0) len = 1 / len;
-		return *this * (vec_t)len;
+		return *this * (scalar_t)len;
 	}
 
 	// Scales this vector into a unit vector
@@ -876,7 +876,7 @@ struct TVector4
 	{
 		double len = Length();
 		if (len != 0) len = 1 / len;
-		*this *= (vec_t)len;
+		*this *= (scalar_t)len;
 	}
 
 	// Resizes this vector to be the specified length (if it is not 0)
@@ -886,10 +886,10 @@ struct TVector4
 		if (vlen != 0.)
 		{
 			double scale = len / vlen;
-			X = vec_t(X * scale);
-			Y = vec_t(Y * scale);
-			Z = vec_t(Z * scale);
-			W = vec_t(W * scale);
+			X = scalar_t(X * scale);
+			Y = scalar_t(Y * scale);
+			Z = scalar_t(Z * scale);
+			W = scalar_t(W * scale);
 		}
 		return *this;
 	}
@@ -900,7 +900,7 @@ struct TVector4
 		if (vlen != 0.)
 		{
 			double scale = len / vlen;
-			return{ vec_t(X * scale), vec_t(Y * scale), vec_t(Z * scale), vec_t(W * scale) };
+			return{ scalar_t(X * scale), scalar_t(Y * scale), scalar_t(Z * scale), scalar_t(W * scale) };
 		}
 		else
 		{
@@ -909,18 +909,18 @@ struct TVector4
 	}
 
 	// Dot product
-	vec_t operator | (const TVector4 &other) const
+	scalar_t operator | (const TVector4 &other) const
 	{
 		return X*other.X + Y*other.Y + Z*other.Z + W*other.W;
 	}
 };
 
-template<class vec_t>
+template<class scalar_t>
 struct TMatrix3x3
 {
-	typedef TVector3<vec_t> Vector3;
+	typedef TVector3<scalar_t> Vector3;
 
-	vec_t Cells[3][3];
+	scalar_t Cells[3][3];
 
 	TMatrix3x3() = default;
 	TMatrix3x3(const TMatrix3x3 &other) = default;
@@ -961,18 +961,18 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 		double tx, ty, txx, tyy, u, v;
 
 		tx = t*axis.X;
-		Cells[0][0] = vec_t( (txx=tx*axis.X) + c );
-		Cells[0][1] = vec_t(   (u=tx*axis.Y) - sz);
-		Cells[0][2] = vec_t(   (v=tx*axis.Z) + sy);
+		Cells[0][0] = scalar_t( (txx=tx*axis.X) + c );
+		Cells[0][1] = scalar_t(   (u=tx*axis.Y) - sz);
+		Cells[0][2] = scalar_t(   (v=tx*axis.Z) + sy);
 
 		ty = t*axis.Y;
-		Cells[1][0] = vec_t(              u  + sz);
-		Cells[1][1] = vec_t( (tyy=ty*axis.Y) + c );
-		Cells[1][2] = vec_t(   (u=ty*axis.Z) - sx);
+		Cells[1][0] = scalar_t(              u  + sz);
+		Cells[1][1] = scalar_t( (tyy=ty*axis.Y) + c );
+		Cells[1][2] = scalar_t(   (u=ty*axis.Z) - sx);
 
-		Cells[2][0] = vec_t(              v  - sy);
-		Cells[2][1] = vec_t(              u  + sx);
-		Cells[2][2] = vec_t(     (t-txx-tyy) + c );
+		Cells[2][0] = scalar_t(              v  - sy);
+		Cells[2][1] = scalar_t(              u  + sx);
+		Cells[2][2] = scalar_t(     (t-txx-tyy) + c );
 	}
 
 	TMatrix3x3(const Vector3 &axis, double c/*cosine*/, double s/*sine*/)
@@ -982,21 +982,21 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 		double tx, ty, txx, tyy, u, v;
 
 		tx = t*axis.X;
-		Cells[0][0] = vec_t( (txx=tx*axis.X) + c );
-		Cells[0][1] = vec_t(   (u=tx*axis.Y) - sz);
-		Cells[0][2] = vec_t(   (v=tx*axis.Z) + sy);
+		Cells[0][0] = scalar_t( (txx=tx*axis.X) + c );
+		Cells[0][1] = scalar_t(   (u=tx*axis.Y) - sz);
+		Cells[0][2] = scalar_t(   (v=tx*axis.Z) + sy);
 
 		ty = t*axis.Y;
-		Cells[1][0] = vec_t(              u  + sz);
-		Cells[1][1] = vec_t( (tyy=ty*axis.Y) + c );
-		Cells[1][2] = vec_t(   (u=ty*axis.Z) - sx);
+		Cells[1][0] = scalar_t(              u  + sz);
+		Cells[1][1] = scalar_t( (tyy=ty*axis.Y) + c );
+		Cells[1][2] = scalar_t(   (u=ty*axis.Z) - sx);
 
-		Cells[2][0] = vec_t(              v  - sy);
-		Cells[2][1] = vec_t(              u  + sx);
-		Cells[2][2] = vec_t(     (t-txx-tyy) + c );
+		Cells[2][0] = scalar_t(              v  - sy);
+		Cells[2][1] = scalar_t(              u  + sx);
+		Cells[2][2] = scalar_t(     (t-txx-tyy) + c );
 	}
 
-	TMatrix3x3(const Vector3 &axis, TAngle<vec_t> degrees);
+	TMatrix3x3(const Vector3 &axis, TAngle<scalar_t> degrees);
 
 	static TMatrix3x3 Rotate2D(double radians)
 	{
@@ -1009,7 +1009,7 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 		return ret;
 	}
 
-	static TMatrix3x3 Scale2D(TVector2<vec_t> scaleVec)
+	static TMatrix3x3 Scale2D(TVector2<scalar_t> scaleVec)
 	{
 		TMatrix3x3 ret;
 		ret.Cells[0][0] = scaleVec.X; ret.Cells[0][1] =          0; ret.Cells[0][2] = 0;
@@ -1018,7 +1018,7 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 		return ret;
 	}
 
-	static TMatrix3x3 Translate2D(TVector2<vec_t> translateVec)
+	static TMatrix3x3 Translate2D(TVector2<scalar_t> translateVec)
 	{
 		TMatrix3x3 ret;
 		ret.Cells[0][0] = 1; ret.Cells[0][1] = 0; ret.Cells[0][2] = translateVec.X;
@@ -1141,10 +1141,10 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 
 #define BAM_FACTOR (90. / 0x40000000)
 
-template<class vec_t>
+template<class scalar_t>
 struct TAngle
 {
-	vec_t Degrees_;
+	scalar_t Degrees_;
 
 	// This is to catch any accidental attempt to assign an angle_t to this type. Any explicit exception will require a type cast.
 	TAngle(int) = delete;
@@ -1161,16 +1161,16 @@ struct TAngle
 private:
 	// Both constructors are needed to avoid unnecessary conversions when assigning to FAngle.
 	constexpr TAngle (float amt)
-		: Degrees_((vec_t)amt)
+		: Degrees_((scalar_t)amt)
 	{
 	}
 	constexpr TAngle (double amt)
-		: Degrees_((vec_t)amt)
+		: Degrees_((scalar_t)amt)
 	{
 	}
 public:
 
-	vec_t& Degrees__() { return Degrees_; }
+	scalar_t& Degrees__() { return Degrees_; }
 	
 	static constexpr TAngle fromDeg(float deg)
 	{
@@ -1182,11 +1182,11 @@ public:
 	}
 	static constexpr TAngle fromDeg(int deg)
 	{
-		return TAngle((vec_t)deg);
+		return TAngle((scalar_t)deg);
 	}
 	static constexpr TAngle fromDeg(unsigned deg)
 	{
-		return TAngle((vec_t)deg);
+		return TAngle((scalar_t)deg);
 	}
 
 	static constexpr TAngle fromRad(float rad)
@@ -1247,24 +1247,24 @@ public:
 		return Degrees_ - other.Degrees_;
 	}
 
-	constexpr TAngle &operator*= (vec_t other)
+	constexpr TAngle &operator*= (scalar_t other)
 	{
 		Degrees_ = Degrees_ * other;
 		return *this;
 	}
 
-	constexpr TAngle &operator/= (vec_t other)
+	constexpr TAngle &operator/= (scalar_t other)
 	{
 		Degrees_ = Degrees_ / other;
 		return *this;
 	}
 
-	constexpr TAngle operator* (vec_t other) const
+	constexpr TAngle operator* (scalar_t other) const
 	{
 		return Degrees_ * other;
 	}
 
-	constexpr TAngle operator/ (vec_t other) const
+	constexpr TAngle operator/ (scalar_t other) const
 	{
 		return Degrees_ / other;
 	}
@@ -1305,18 +1305,18 @@ public:
 	{
 		// Normalizing the angle converts it to a BAM, which masks it, and converts it back to a float.
 		// Note: We MUST use xs_Float here because it is the only method that guarantees reliable wraparound.
-		return (vec_t)(BAM_FACTOR * BAMs());
+		return (scalar_t)(BAM_FACTOR * BAMs());
 	}
 
 	// Ensures the angle is between (-180.0,180.0] degrees
 	TAngle Normalized180() const
 	{
-		return (vec_t)(BAM_FACTOR * (signed int)BAMs());
+		return (scalar_t)(BAM_FACTOR * (signed int)BAMs());
 	}
 
-	constexpr vec_t Radians() const
+	constexpr scalar_t Radians() const
 	{
-		return vec_t(Degrees_ * (pi::pi() / 180.0));
+		return scalar_t(Degrees_ * (pi::pi() / 180.0));
 	}
 
 	unsigned BAMs() const
@@ -1324,7 +1324,7 @@ public:
 		return xs_CRoundToInt(Degrees_ * (0x40000000 / 90.));
 	}
 
-	constexpr vec_t Degrees() const
+	constexpr scalar_t Degrees() const
 	{
 		return Degrees_;
 	}
@@ -1339,24 +1339,24 @@ public:
 		return int(Degrees_ * (16384 / 90.0));
 	}
 
-	TVector2<vec_t> ToVector(vec_t length = 1) const
+	TVector2<scalar_t> ToVector(scalar_t length = 1) const
 	{
-		return TVector2<vec_t>(length * Cos(), length * Sin());
+		return TVector2<scalar_t>(length * Cos(), length * Sin());
 	}
 
-	vec_t Cos() const
+	scalar_t Cos() const
 	{
-		return vec_t(g_cosdeg(Degrees_));
+		return scalar_t(g_cosdeg(Degrees_));
 	}
 
-	vec_t Sin() const
+	scalar_t Sin() const
 	{
-		return vec_t(g_sindeg(Degrees_));
+		return scalar_t(g_sindeg(Degrees_));
 	}
 
 	double Tan() const
 	{
-		return vec_t(g_tan(Radians()));
+		return scalar_t(g_tan(Radians()));
 	}
 
 	// This is for calculating vertical velocity. For high pitches the tangent will become too large to be useful.
@@ -1426,10 +1426,10 @@ TAngle<T> TVector3<T>::Pitch() const
 }
 
 // Much of this is copied from TVector3. Is all that functionality really appropriate?
-template<class vec_t>
+template<class scalar_t>
 struct TRotator
 {
-	typedef TAngle<vec_t> Angle;
+	typedef TAngle<scalar_t> Angle;
 
 	Angle Pitch;	// up/down
 	Angle Yaw;		// left/right

@@ -35,6 +35,9 @@
 #ifndef __D_GUI_H__
 #define __D_GUI_H__
 
+// include integer logarithm based on lzcnt32 to reverse power of 2 enum constants
+#include "math/ilogxi.h"
+
 // For a GUIEvent, x and y specify absolute location of mouse pointer
 enum EGUIEvent
 {

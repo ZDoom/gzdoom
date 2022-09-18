@@ -7,23 +7,23 @@
 enum EGenericEvent
 {
 	EV_None,
-	EV_KeyDown,		// data1: scan code, data2: Qwerty ASCII code
-	EV_KeyUp,		// same
-	EV_Mouse,		// x, y: mouse movement deltas
-	EV_GUI_Event,	// subtype specifies actual event
-	EV_DeviceChange,// a device has been connected or removed
+	EV_KeyDown,      // data1: scan code, data2: Qwerty ASCII code
+	EV_KeyUp,        // same
+	EV_Mouse,        // x, y: mouse movement deltas
+	EV_GUI_Event,    // subtype specifies actual event
+	EV_DeviceChange, // a device has been connected or removed
 };
 
 // Event structure.
 struct event_t
 {
-	uint8_t		type;
-	uint8_t		subtype;
-	int16_t 	data1;		// keys / mouse/joystick buttons
-	int16_t		data2;
-	int16_t		data3;
-	float 		x;			// mouse/joystick x move
-	float 		y;			// mouse/joystick y move
+	uint32_t	type;
+	uint32_t	subtype;
+	int32_t 	data1;    // mouse[wheel]/joystick buttons
+	int32_t		data2;
+	int32_t		data3;
+	float 		x;        // mouse[wheel]/joystick x-axis
+	float 		y;        // mouse[wheel]/joystick y-axis
 };
 
 

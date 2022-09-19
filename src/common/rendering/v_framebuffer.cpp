@@ -234,15 +234,15 @@ int DFrameBuffer::ScreenToWindowY(int y)
 	return mScreenViewport.top + mScreenViewport.height - (int)round(y * mScreenViewport.height / (float)GetHeight());
 }
 
-void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
+void DFrameBuffer::ScaleCoordsFromWindow(int32_t &x, int32_t &y)
 {
 	int letterboxX = mOutputLetterbox.left;
 	int letterboxY = mOutputLetterbox.top;
 	int letterboxWidth = mOutputLetterbox.width;
 	int letterboxHeight = mOutputLetterbox.height;
 
-	x = int16_t((x - letterboxX) * Width / letterboxWidth);
-	y = int16_t((y - letterboxY) * Height / letterboxHeight);
+	x = int32_t((x - letterboxX) * Width / letterboxWidth);
+	y = int32_t((y - letterboxY) * Height / letterboxHeight);
 }
 
 void DFrameBuffer::FPSLimit()

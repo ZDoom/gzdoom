@@ -131,7 +131,7 @@ struct VMReturn
 		*(double *)Location = val;
 	}
 	void SetVector(const double val[3])
-	{	
+	{
 		assert(RegType == (REGT_FLOAT|REGT_MULTIREG3));
 		((double *)Location)[0] = val[0];
 		((double *)Location)[1] = val[1];
@@ -513,7 +513,7 @@ bool AssertObject(void * ob);
 #define PARAM_BOOL_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); bool x = !!param[p].i;
 #define PARAM_NAME_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FName x = ENamedName(param[p].i);
 #define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FSoundID x = param[p].i;
-#define PARAM_COLOR_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); PalEntry x; x.d = param[p].i;
+#define PARAM_COLOR_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); PalEntry x = param[p].i;
 #define PARAM_FLOAT_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); double x = param[p].f;
 #define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); DAngle x = DAngle::fromDeg(param[p].f);
 #define PARAM_FANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); FAngle x = FAngle::fromDeg(param[p].f);

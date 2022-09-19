@@ -246,14 +246,14 @@ void MessagePump (const SDL_Event &sev)
 
 			switch (sev.button.button)
 			{
-			case SDL_BUTTON_LEFT:	event.data1 = KEY_MOUSE1;		break;
-			case SDL_BUTTON_MIDDLE:	event.data1 = KEY_MOUSE3;		break;
-			case SDL_BUTTON_RIGHT:	event.data1 = KEY_MOUSE2;		break;
-			case SDL_BUTTON_X1:		event.data1 = KEY_MOUSE4;		break;
-			case SDL_BUTTON_X2:		event.data1 = KEY_MOUSE5;		break;
-			case 6:		event.data1 = KEY_MOUSE6;		break;
-			case 7:		event.data1 = KEY_MOUSE7;		break;
-			case 8:		event.data1 = KEY_MOUSE8;		break;
+			case SDL_BUTTON_LEFT:   event.data1 = KEY_MOUSE1;		break;
+			case SDL_BUTTON_MIDDLE: event.data1 = KEY_MOUSE3;		break;
+			case SDL_BUTTON_RIGHT:  event.data1 = KEY_MOUSE2;		break;
+			case SDL_BUTTON_X1:     event.data1 = KEY_MOUSE4;		break;
+			case SDL_BUTTON_X2:     event.data1 = KEY_MOUSE5;		break;
+			case 6:                 event.data1 = KEY_MOUSE6;		break;
+			case 7:                 event.data1 = KEY_MOUSE7;		break;
+			case 8:                 event.data1 = KEY_MOUSE8;		break;
 			default:	printf("SDL mouse button %s %d\n",
 				sev.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", sev.button.button);	break;
 			}
@@ -319,42 +319,41 @@ void MessagePump (const SDL_Event &sev)
 			event.type = EV_GUI_Event;
 			event.subtype = EV_GUI_MouseMove;
 
-			SDL_Keymod kmod = SDL_GetModState();
-			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
-			              ((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
-			              ((kmod & KMOD_ALT) ? GKM_ALT : 0);
+			event.data3 = SDL_GetModState();
+			event.data3 = ((event.data3 & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+			              ((event.data3 & KMOD_CTRL) ? GKM_CTRL : 0) |
+			              ((event.data3 & KMOD_ALT) ? GKM_ALT : 0);
 
 			D_PostEvent(&event);
 		}
 		break;
 
 	case SDL_MOUSEWHEEL:
-		if (GUICapture)
+		event.y = (sev.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0f : 1.0f) * sev.wheel.preciseY;
+		event.x = (sev.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0f : 1.0f) * sev.wheel.preciseX;
+
+		event.type    = GUICapture ? EV_GUI_Event      : EV_KeyDown;
+		event.subtype = GUICapture ? EV_GUI_WheelEvent : EV_GUI_None;
+
+		/* vertical wheel */
+		if (sev.wheel.y != 0)
+			event.data1 = (sev.wheel.y > 0) ? (GUICapture ? (int)EV_GUI_WheelUp    : (int)KEY_MWHEELUP)    : 
+				                          (GUICapture ? (int)EV_GUI_WheelDown  : (int)KEY_MWHEELDOWN);
+		/* horizontal wheel */
+		if (sev.wheel.x != 0)
+			event.data2 = (sev.wheel.x > 0) ? (GUICapture ? (int)EV_GUI_WheelRight : (int)KEY_MWHEELRIGHT) :
+				                          (GUICapture ? (int)EV_GUI_WheelLeft  : (int)KEY_MWHEELLEFT);
+
+		/* keyboard modifier state */
+		event.data3 = SDL_GetModState();
+		event.data3 = ((event.data3 & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+		              ((event.data3 & KMOD_CTRL)  ? GKM_CTRL  : 0) |
+		              ((event.data3 & KMOD_ALT)   ? GKM_ALT   : 0);
+
+		D_PostEvent (&event);
+
+		if(!GUICapture)
 		{
-			event.type = EV_GUI_Event;
-
-			if (sev.wheel.y == 0)
-				event.subtype = sev.wheel.x > 0 ? EV_GUI_WheelRight : EV_GUI_WheelLeft;
-			else
-				event.subtype = sev.wheel.y > 0 ? EV_GUI_WheelUp : EV_GUI_WheelDown;
-
-			SDL_Keymod kmod = SDL_GetModState();
-			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
-				((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
-				((kmod & KMOD_ALT) ? GKM_ALT : 0);
-
-			D_PostEvent (&event);
-		}
-		else
-		{
-			event.type = EV_KeyDown;
-
-			if (sev.wheel.y != 0)
-				event.data1 = sev.wheel.y > 0 ? KEY_MWHEELUP : KEY_MWHEELDOWN;
-			else
-				event.data1 = sev.wheel.x > 0 ? KEY_MWHEELRIGHT : KEY_MWHEELLEFT;
-
-			D_PostEvent (&event);
 			event.type = EV_KeyUp;
 			D_PostEvent (&event);
 		}

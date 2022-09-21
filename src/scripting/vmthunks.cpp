@@ -562,7 +562,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(o);
-	 self->SetXOffset(pos, o);
+	 self->SetYOffset(pos, o);
 	 return 0;
  }
 

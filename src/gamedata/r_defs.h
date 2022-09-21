@@ -61,7 +61,6 @@ class AActor;
 struct FSection;
 struct FLevelLocals;
 struct LightmapSurface;
-struct LightProbe;
 
 const uint16_t NO_INDEX = 0xffffu;
 const uint32_t NO_SIDE = 0xffffffffu;
@@ -1708,18 +1707,6 @@ struct LightmapSurface
 	sector_t *ControlSector;
 	uint32_t LightmapNum;
 	float *TexCoords;
-};
-
-struct LightProbe
-{
-	float X, Y, Z;
-	float Red, Green, Blue;
-};
-
-struct LightProbeCell
-{
-	LightProbe* FirstProbe = nullptr;
-	int NumProbes = 0;
 };
 
 //

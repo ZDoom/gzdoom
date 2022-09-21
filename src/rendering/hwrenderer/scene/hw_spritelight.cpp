@@ -46,61 +46,6 @@ T smoothstep(const T edge0, const T edge1, const T x)
 	return t * t * (3.0 - 2.0 * t);
 }
 
-LightProbe* FindLightProbe(FLevelLocals* level, float x, float y, float z)
-{
-	LightProbe* foundprobe = nullptr;
-	if (level->LightProbes.Size() > 0)
-	{
-#if 1
-		double rcpCellSize = 1.0 / level->LPCellSize;
-		int gridCenterX = (int)std::floor(x * rcpCellSize) - level->LPMinX;
-		int gridCenterY = (int)std::floor(y * rcpCellSize) - level->LPMinY;
-		int gridWidth = level->LPWidth;
-		int gridHeight = level->LPHeight;
-		float lastdist = 0.0f;
-		for (int gridY = gridCenterY - 1; gridY <= gridCenterY + 1; gridY++)
-		{
-			for (int gridX = gridCenterX - 1; gridX <= gridCenterX + 1; gridX++)
-			{
-				if (gridX >= 0 && gridY >= 0 && gridX < gridWidth && gridY < gridHeight)
-				{
-					const LightProbeCell& cell = level->LPCells[gridX + (size_t)gridY * gridWidth];
-					for (int i = 0; i < cell.NumProbes; i++)
-					{
-						LightProbe* probe = cell.FirstProbe + i;
-						float dx = probe->X - x;
-						float dy = probe->Y - y;
-						float dz = probe->Z - z;
-						float dist = dx * dx + dy * dy + dz * dz;
-						if (!foundprobe || dist < lastdist)
-						{
-							foundprobe = probe;
-							lastdist = dist;
-						}
-					}
-				}
-			}
-		}
-#else
-		float lastdist = 0.0f;
-		for (unsigned int i = 0; i < level->LightProbes.Size(); i++)
-		{
-			LightProbe *probe = &level->LightProbes[i];
-			float dx = probe->X - x;
-			float dy = probe->Y - y;
-			float dz = probe->Z - z;
-			float dist = dx * dx + dy * dy + dz * dz;
-			if (i == 0 || dist < lastdist)
-			{
-				foundprobe = probe;
-				lastdist = dist;
-			}
-		}
-#endif
-	}
-	return foundprobe;
-}
-
 static bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
 {
 	FDynamicLight* light = node->lightsource;

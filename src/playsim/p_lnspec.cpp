@@ -2736,40 +2736,47 @@ FUNC(LS_Line_SetTextureScale)
 FUNC(LS_Line_SetBlocking)
 // Line_SetBlocking (id, setflags, clearflags)
 {
-	static const int flagtrans[] =
-	{
-		ML_BLOCKING,
-		ML_BLOCKMONSTERS,
-		ML_BLOCK_PLAYERS,
-		ML_BLOCK_FLOATERS,
-		ML_BLOCKPROJECTILE,
-		ML_BLOCKEVERYTHING,
-		ML_RAILING,
-		ML_BLOCKUSE,
-		ML_BLOCKSIGHT,
-		ML_BLOCKHITSCAN,
-		ML_SOUNDBLOCK,
-		-1
-	};
+    struct FlagTransEntry
+    {
+        int fieldIndex, bitmask;
+    };
 
-	if (arg0 == 0) return false;
+    static const FlagTransEntry flagtrans[] =
+    {
+        {0, ML_BLOCKING},
+        {0, ML_BLOCKMONSTERS},
+        {0, ML_BLOCK_PLAYERS},
+        {0, ML_BLOCK_FLOATERS},
+        {0, ML_BLOCKPROJECTILE},
+        {0, ML_BLOCKEVERYTHING},
+        {0, ML_RAILING},
+        {0, ML_BLOCKUSE},
+        {0, ML_BLOCKSIGHT},
+        {0, ML_BLOCKHITSCAN},
+        {0, ML_SOUNDBLOCK},
+        {1, ML2_BLOCKLANDMONSTERS},
+        {-1, -1},
+    };
 
-	int setflags = 0;
-	int clearflags = 0;
+    if (arg0 == 0) return false;
 
-	for(int i = 0; flagtrans[i] != -1; i++, arg1 >>= 1, arg2 >>= 1)
-	{
-		if (arg1 & 1) setflags |= flagtrans[i];
-		if (arg2 & 1) clearflags |= flagtrans[i];
-	}
+    int setflags[2] = {};
+    int clearflags[2] = {};
 
-	auto itr = Level->GetLineIdIterator(arg0);
-	int line;
-	while ((line = itr.Next()) >= 0)
-	{
-		Level->lines[line].flags = (Level->lines[line].flags & ~clearflags) | setflags;
-	}
-	return true;
+    for (int i = 0; flagtrans[i].bitmask != -1; i++, arg1 >>= 1, arg2 >>= 1)
+    {
+        if (arg1 & 1) setflags[flagtrans[i].fieldIndex] |= flagtrans[i].bitmask;
+        if (arg2 & 1) clearflags[flagtrans[i].fieldIndex] |= flagtrans[i].bitmask;
+    }
+
+    auto itr = Level->GetLineIdIterator(arg0);
+    int line;
+    while ((line = itr.Next()) >= 0)
+    {
+        Level->lines[line].flags = (Level->lines[line].flags & ~clearflags[0]) | setflags[0];
+        Level->lines[line].flags2 = (Level->lines[line].flags2 & ~clearflags[1]) | setflags[1];
+    }
+    return true;
 }
 
 FUNC(LS_Line_SetAutomapFlags)

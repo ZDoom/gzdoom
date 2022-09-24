@@ -451,6 +451,7 @@ enum EBlockFlags
 	BLOCKF_SIGHT = 256,
 	BLOCKF_HITSCAN = 512,
 	BLOCKF_SOUND = 1024,
+	BLOCKF_LANDMONSTERS = 2048,
 };
 
 // Pointer constants, bitfield-enabled

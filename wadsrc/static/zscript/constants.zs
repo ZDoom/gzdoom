@@ -643,6 +643,7 @@ enum EQuakeFlags
 	QF_FULLINTENSITY =	1 << 4,
 	QF_WAVE =			1 << 5,
 	QF_3D =				1 << 6,
+	QF_GROUNDONLY =		1 << 7,
 };
 
 // A_CheckProximity flags

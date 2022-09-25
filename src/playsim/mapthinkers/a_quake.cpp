@@ -132,7 +132,7 @@ void DEarthquake::Tick ()
 					continue;
 
 
-				DoQuakeDamage(m_Spot, mo);
+				DoQuakeDamage(this, mo);
 			}
 		}
 		else
@@ -142,7 +142,7 @@ void DEarthquake::Tick ()
 				if (Level->PlayerInGame(i) && !(Level->Players[i]->cheats & CF_NOCLIP))
 				{
 					AActor* victim = Level->Players[i]->mo;
-						DoQuakeDamage(m_Spot, victim);
+						DoQuakeDamage(this, victim);
 				}
 			}
 		}
@@ -168,15 +168,17 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-void DEarthquake::DoQuakeDamage(AActor *m_Spot, AActor *victim) const
+void DEarthquake::DoQuakeDamage(DEarthquake *quake, AActor *victim) const
 {
 	double dist;
 
-	dist = m_Spot->Distance2D(victim, true);
+	if (!quake || !victim) return;
+
+	dist = quake->m_Spot->Distance2D(victim, true);
 	// Check if in damage radius
 	if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
 	{
-		if (pr_quake() < 50)
+		if (!(quake->m_Flags & QF_SHAKEONLY) && pr_quake() < 50)
 		{
 			P_DamageMobj(victim, NULL, NULL, pr_quake.HitDice(1), NAME_Quake);
 		}

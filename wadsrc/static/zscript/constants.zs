@@ -644,6 +644,8 @@ enum EQuakeFlags
 	QF_WAVE =			1 << 5,
 	QF_3D =				1 << 6,
 	QF_GROUNDONLY =		1 << 7,
+	QF_AFFECTACTORS =	1 << 8,
+	QF_SHAKEONLY =		1 << 9,
 };
 
 // A_CheckProximity flags

@@ -49,11 +49,14 @@ T smoothstep(const T edge0, const T edge1, const T x)
 static bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
 {
 	FDynamicLight* light = node->lightsource;
-	if (!light->Trace())
+	if (!light->Trace() || !level.levelMesh)
 		return true;
 
-	FTraceResults results;
-	return !Trace(light->Pos, light->Sector, DVector3(-L.X, -L.Y, -L.Z), dist, 0, ML_BLOCKING, nullptr, results);
+	// Note: this is not thread safe (modifies validcount and calls other setup functions)
+	// FTraceResults results;
+	// return !Trace(light->Pos, light->Sector, DVector3(-L.X, -L.Y, -L.Z), dist, 0, ML_BLOCKING, nullptr, results);
+
+	return level.levelMesh->Trace(FVector3((float)light->Pos.X, (float)light->Pos.Y, (float)light->Pos.Z), FVector3(-L.X, -L.Y, -L.Z), dist);
 }
 
 //==========================================================================

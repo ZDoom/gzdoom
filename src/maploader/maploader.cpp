@@ -3331,8 +3331,8 @@ void MapLoader::LoadLightmap(MapData *map)
 	Level->LMTextureCount = 0;
 	Level->LMTextureSize = 0;
 
-	if (!Args->CheckParm("-enablelightmaps"))
-		return;		// this feature is still too early WIP to allow general access
+	//if (!Args->CheckParm("-enablelightmaps"))
+	//	return;		// this feature is still too early WIP to allow general access
 
 	if (!map->Size(ML_LIGHTMAP))
 		return;

@@ -56,6 +56,8 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 			}
 		}
 	}
+
+	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
 }
 
 void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)

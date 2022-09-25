@@ -295,7 +295,7 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 
 	while ( (quake = iterator.Next()) != nullptr)
 	{
-		if (quake->m_Spot != nullptr)
+		if (quake->m_Spot != nullptr && !(quake->m_Flags & QF_GROUNDONLY && victim->Z() > victim->floorz))
 		{
 			double dist;
 

@@ -295,7 +295,7 @@ public:
 		if(delay < 0.0)
 		{
 			// If diff < 0, duplicate samples. Don't duplicate a full update (we need at
-			// least one sample frame to duplicate).
+			// least one new sample frame to duplicate).
 			int dup = std::min(int(-delay*samplerate)*framesize, len-framesize);
 			if(!ZMusic_FillStream(MusicStream, (char*)buff+dup, len-dup))
 				return false;
@@ -501,7 +501,8 @@ public:
 					int channels = abs(info.mNumChannels);
 					samplerate = info.mSampleRate;
 					framesize = channels * ((info.mNumChannels < 0) ? sizeof(int16_t) : sizeof(float));
-					AudioStream = S_CreateCustomStream(6000, info.mSampleRate, channels,
+					int bufsize = 40 * info.mSampleRate / 1000 * framesize;
+					AudioStream = S_CreateCustomStream(bufsize, info.mSampleRate, channels,
 						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat,
 						&StreamCallbackC, this);
 				}

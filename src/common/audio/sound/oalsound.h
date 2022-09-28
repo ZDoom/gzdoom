@@ -97,6 +97,7 @@ private:
         bool EXT_SOURCE_RADIUS;
         bool SOFT_deferred_updates;
         bool SOFT_loop_points;
+        bool SOFT_source_latency;
         bool SOFT_source_resampler;
         bool SOFT_source_spatialize;
     } AL;
@@ -145,6 +146,8 @@ private:
     ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
 
     LPALGETSTRINGISOFT alGetStringiSOFT;
+
+    LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
 
     void (ALC_APIENTRY*alcDevicePauseSOFT)(ALCdevice *device);
     void (ALC_APIENTRY*alcDeviceResumeSOFT)(ALCdevice *device);

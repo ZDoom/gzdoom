@@ -335,18 +335,36 @@ public:
 		using namespace std::chrono;
 
 		std::lock_guard _{Mutex};
-		// TODO: Get latency using AL_SOFT_source_latency
-		ALint state{}, offset{}, queued{};
+		ALint64SOFT offset[2]{};
+		ALint state{}, queued{};
 		alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
-		alGetSourcei(Source, AL_SAMPLE_OFFSET, &offset);
+		if(Renderer->AL.SOFT_source_latency)
+		{
+			// AL_SAMPLE_OFFSET_LATENCY_SOFT fills offset[0] with the source sample
+			// offset in 32.32 fixed-point (which we chop off the sub-sample position
+			// since it's not crucial), and offset[1] with the playback latency in
+			// nanoseconds (how many nanoseconds until the sample point in offset[0]
+			// reaches the DAC).
+			Renderer->alGetSourcei64vSOFT(Source, AL_SAMPLE_OFFSET_LATENCY_SOFT, offset);
+			offset[0] >>= 32;
+		}
+		else
+		{
+			// Without AL_SOFT_source_latency, we can only get the sample offset, no
+			// latency info.
+			ALint ioffset{};
+			alGetSourcei(Source, AL_SAMPLE_OFFSET, &ioffset);
+			offset[0] = ioffset;
+			offset[1] = 0;
+		}
 		alGetSourcei(Source, AL_SOURCE_STATE, &state);
 		// If the source is stopped, there was an underrun, so the play position is
 		// the end of the queue.
 		if(state == AL_STOPPED)
-			return Position{Offset + queued*(Data.Size()/FrameSize), nanoseconds{0}};
+			return Position{Offset + queued*(Data.Size()/FrameSize), nanoseconds{offset[1]}};
 		// The offset is otherwise valid as long as the source has been started.
 		if(state != AL_INITIAL)
-			return Position{Offset + offset, nanoseconds{0}};
+			return Position{Offset + offset[0], nanoseconds{offset[1]}};
 		return Position{0, nanoseconds{0}};
 	}
 
@@ -652,6 +670,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	AL.EXT_SOURCE_RADIUS = !!alIsExtensionPresent("AL_EXT_SOURCE_RADIUS");
 	AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");
 	AL.SOFT_loop_points = !!alIsExtensionPresent("AL_SOFT_loop_points");
+	AL.SOFT_source_latency = !!alIsExtensionPresent("AL_SOFT_source_latency");
 	AL.SOFT_source_resampler = !!alIsExtensionPresent("AL_SOFT_source_resampler");
 	AL.SOFT_source_spatialize = !!alIsExtensionPresent("AL_SOFT_source_spatialize");
 
@@ -679,6 +698,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 		alProcessUpdatesSOFT = _wrap_ProcessUpdatesSOFT;
 	}
 
+	if(AL.SOFT_source_latency)
+		LOAD_FUNC(alGetSourcei64vSOFT);
 	if(AL.SOFT_source_resampler)
 		LOAD_FUNC(alGetStringiSOFT);
 

@@ -291,7 +291,7 @@ bool InterplayDecoder::RunFrame(uint64_t clock)
                 if (!bAudioStarted)
                 {
                     // start audio playback
-                    stream = S_CreateCustomStream(6000, audio.nSampleRate, audio.nChannels, StreamCallbackFunc, this);
+                    stream = S_CreateCustomStream(6000, audio.nSampleRate, audio.nChannels, MusicSamples16bit, StreamCallbackFunc, this);
                     bAudioStarted = true;
                 }
 

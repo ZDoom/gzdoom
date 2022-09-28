@@ -271,7 +271,9 @@ public:
 		// Calculate the difference in time between the movie clock and the audio position.
 		auto pos = stream->GetPlayPosition();
 		uint64_t clock = clocktime.load(std::memory_order_acquire);
-		double delay = FilterDelay(clock/1'000'000'000.0 - double(int64_t(pos.samplesplayed)+audiooffset)/samplerate);
+		double delay = FilterDelay(clock / 1'000'000'000.0 -
+			double(int64_t(pos.samplesplayed)+audiooffset) / samplerate +
+			pos.latency.count() / 1'000'000'000.0);
 
 		if(delay > 0.0)
 		{

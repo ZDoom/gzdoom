@@ -280,14 +280,15 @@ public:
 			if(!ZMusic_FillStream(MusicStream, buff, len))
 				return false;
 
+			// Offset the measured audio position to account for the skipped samples.
+			audiooffset += skip/framesize;
+
 			if(skip == len)
 				return ZMusic_FillStream(MusicStream, buff, len);
 			memmove(buff, (char*)buff+skip, len-skip);
 			if(!ZMusic_FillStream(MusicStream, (char*)buff+len-skip, skip))
 				memset((char*)buff+len-skip, 0, skip);
 
-			// Offset the measured audio position to account for the skipped samples.
-			audiooffset += skip/framesize;
 			return true;
 		}
 

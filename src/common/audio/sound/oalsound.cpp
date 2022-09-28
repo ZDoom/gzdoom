@@ -183,6 +183,8 @@ class OpenALSoundStream : public SoundStream
 	std::atomic<bool> Playing;
 	//bool Looping;
 	ALfloat Volume;
+	uint64_t Offset = 0;
+	std::mutex Mutex;
 
 	bool SetupSource()
 	{
@@ -263,6 +265,7 @@ public:
 			return true;
 
 		/* Clear the buffer queue, then fill and queue each buffer */
+		Offset = 0;
 		alSourcei(Source, AL_BUFFER, 0);
 		for(int i = 0;i < BufferCount;i++)
 		{
@@ -297,6 +300,7 @@ public:
 		alSourcei(Source, AL_BUFFER, 0);
 		getALError();
 
+		Offset = 0;
 		Playing.store(false);
 	}
 
@@ -325,6 +329,26 @@ public:
 	{
 		return !Playing.load();
 			}
+
+	Position GetPlayPosition() override
+	{
+		using namespace std::chrono;
+
+		std::lock_guard _{Mutex};
+		// TODO: Get latency using AL_SOFT_source_latency
+		ALint state{}, offset{}, queued{};
+		alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
+		alGetSourcei(Source, AL_SAMPLE_OFFSET, &offset);
+		alGetSourcei(Source, AL_SOURCE_STATE, &state);
+		// If the source is stopped, there was an underrun, so the play position is
+		// the end of the queue.
+		if(state == AL_STOPPED)
+			return Position{Offset + queued*(Data.Size()/FrameSize), nanoseconds{0}};
+		// The offset is otherwise valid as long as the source has been started.
+		if(state != AL_INITIAL)
+			return Position{Offset + offset, nanoseconds{0}};
+		return Position{0, nanoseconds{0}};
+	}
 
 	virtual FString GetStats()
 		{
@@ -386,8 +410,12 @@ public:
 
 			// Unqueue the oldest buffer, fill it with more data, and queue it
 			// on the end
-			alSourceUnqueueBuffers(Source, 1, &bufid);
-			processed--;
+			{
+				std::lock_guard _{Mutex};
+				alSourceUnqueueBuffers(Source, 1, &bufid);
+				Offset += Data.Size() / FrameSize;
+				processed--;
+			}
 
 			if(Callback(this, &Data[0], Data.Size(), UserData))
 			{

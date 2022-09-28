@@ -47,6 +47,8 @@
 #include "filesystem.h"
 #include "vm.h"
 #include "printf.h"
+#include <atomic>
+#include <cmath>
 #include <zmusic.h>
 #include "filereadermusicinterface.h"
 
@@ -67,6 +69,11 @@ public:
 	virtual ~MoviePlayer() = default;
 	virtual FTextureID GetTexture() = 0;
 };
+
+// A simple filter is used to smooth out jittery timers
+static const double AudioAvgFilterCoeff{std::pow(0.01, 1.0/20.0)};
+// A threshold is in place to avoid constantly skipping due to imprecise timers.
+static constexpr double AudioSyncThreshold{0.03};
 
 //---------------------------------------------------------------------------
 //
@@ -224,6 +231,11 @@ class VpxPlayer : public MoviePlayer
 
 	ZMusic_MusicStream MusicStream = nullptr;
 	SoundStream *AudioStream = nullptr;
+	std::atomic<uint64_t> clocktime = 0;
+	int64_t audiooffset = 0;
+	double ClockDiffAvg = 0;
+	int samplerate = 0;
+	int framesize = 0;
 
 	unsigned width, height;
 	TArray<uint8_t> Pic;
@@ -244,8 +256,62 @@ class VpxPlayer : public MoviePlayer
 public:
 	int soundtrack = -1;
 
-	bool StreamCallback(SoundStream*, void *buff, int len)
+	double FilterDelay(double diff)
 	{
+		ClockDiffAvg = ClockDiffAvg*AudioAvgFilterCoeff + diff;
+		diff = ClockDiffAvg*(1.0 - AudioAvgFilterCoeff);
+		if(diff < AudioSyncThreshold/2.0 && diff > -AudioSyncThreshold)
+			return 0.0;
+
+		return diff;
+	}
+
+	bool StreamCallback(SoundStream *stream, void *buff, int len)
+	{
+		// Calculate the difference in time between the movie clock and the audio position.
+		auto pos = stream->GetPlayPosition();
+		uint64_t clock = clocktime.load(std::memory_order_acquire);
+		double delay = FilterDelay(clock/1'000'000'000.0 - double(int64_t(pos.samplesplayed)+audiooffset)/samplerate);
+
+		if(delay > 0.0)
+		{
+			// If diff > 0, skip samples. Don't skip more than a full update at once.
+			int skip = std::min(int(delay*samplerate)*framesize, len);
+			if(!ZMusic_FillStream(MusicStream, buff, len))
+				return false;
+
+			if(skip == len)
+				return ZMusic_FillStream(MusicStream, buff, len);
+			memmove(buff, (char*)buff+skip, len-skip);
+			if(!ZMusic_FillStream(MusicStream, (char*)buff+len-skip, skip))
+				memset((char*)buff+len-skip, 0, skip);
+
+			// Offset the measured audio position to account for the skipped samples.
+			audiooffset += skip/framesize;
+			return true;
+		}
+
+		if(delay < 0.0)
+		{
+			// If diff < 0, duplicate samples. Don't duplicate a full update (we need at
+			// least one sample frame to duplicate).
+			int dup = std::min(int(-delay*samplerate)*framesize, len-framesize);
+			if(!ZMusic_FillStream(MusicStream, (char*)buff+dup, len-dup))
+				return false;
+
+			if(framesize == 1)
+				memset(buff, ((char*)buff)[dup], dup);
+			else
+			{
+				for(int i=0;i < dup;++i)
+					((char*)buff)[i] = ((char*)buff+dup)[i%framesize];
+			}
+
+			// Offset the measured audio position to account for the duplicated samples.
+			audiooffset -= dup/framesize;
+			return true;
+		}
+
 		return ZMusic_FillStream(MusicStream, buff, len);
 	}
 	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
@@ -431,7 +497,10 @@ public:
 				// Windows' MIDI synth), which we can't keep synced. Play anyway?
 				if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
 				{
-					AudioStream = S_CreateCustomStream(6000, info.mSampleRate, abs(info.mNumChannels),
+					int channels = abs(info.mNumChannels);
+					samplerate = info.mSampleRate;
+					framesize = channels * ((info.mNumChannels < 0) ? sizeof(int16_t) : sizeof(float));
+					AudioStream = S_CreateCustomStream(6000, info.mSampleRate, channels,
 						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat,
 						&StreamCallbackC, this);
 				}
@@ -457,6 +526,8 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
+		clocktime.store(clock, std::memory_order_release);
+
 		bool stop = false;
 		if (clock > nextframetime)
 		{

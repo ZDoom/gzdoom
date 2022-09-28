@@ -47,6 +47,8 @@
 #include "filesystem.h"
 #include "vm.h"
 #include "printf.h"
+#include <zmusic.h>
+#include "filereadermusicinterface.h"
 
 class MoviePlayer
 {
@@ -220,6 +222,9 @@ class VpxPlayer : public MoviePlayer
 	AnimTextures animtex;
 	const TArray<int> animSnd;
 
+	ZMusic_MusicStream MusicStream = nullptr;
+	SoundStream *AudioStream = nullptr;
+
 	unsigned width, height;
 	TArray<uint8_t> Pic;
 	TArray<uint8_t> readBuf;
@@ -239,6 +244,12 @@ class VpxPlayer : public MoviePlayer
 public:
 	int soundtrack = -1;
 
+	bool StreamCallback(SoundStream*, void *buff, int len)
+	{
+		return ZMusic_FillStream(MusicStream, buff, len);
+	}
+	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
+	{ return static_cast<VpxPlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 public:
 	bool isvalid() { return !failed; }
@@ -404,9 +415,36 @@ public:
 
 	void Start() override
 	{
-		if (soundtrack > 0)
+		if (soundtrack >= 0 && !AudioStream)
 		{
-			S_ChangeMusic(fileSystem.GetFileFullName(soundtrack, false), 0, false);
+			S_StopMusic(true);
+			FileReader reader = fileSystem.OpenFileReader(soundtrack);
+			if (reader.isOpen())
+			{
+				MusicStream = ZMusic_OpenSong(GetMusicReader(reader), MDEV_DEFAULT, nullptr);
+			}
+			if (MusicStream)
+			{
+				SoundStreamInfo info{};
+				ZMusic_GetStreamInfo(MusicStream, &info);
+				// if mBufferSize == 0, the music stream is played externally (e.g.
+				// Windows' MIDI synth), which we can't keep synced. Play anyway?
+				if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
+				{
+					AudioStream = S_CreateCustomStream(6000, info.mSampleRate, abs(info.mNumChannels),
+						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat,
+						&StreamCallbackC, this);
+				}
+				if (!AudioStream)
+				{
+					ZMusic_Close(MusicStream);
+					MusicStream = nullptr;
+				}
+			}
+		}
+		else if (AudioStream)
+		{
+			AudioStream->SetPaused(false);
 		}
 		animtex.SetSize(AnimTexture::YUV, width, height);
 	}
@@ -460,9 +498,12 @@ public:
 		return !stop;
 	}
 
-	void Stop()
+	void Stop() override
 	{
-		S_StopMusic(true);
+		if (AudioStream)
+		{
+			AudioStream->SetPaused(true);
+		}
 		bool nostopsound = (flags & NOSOUNDCUTOFF);
 		if (!nostopsound) soundEngine->StopAllChannels();
 	}
@@ -471,6 +512,11 @@ public:
 	{
 		vpx_codec_destroy(&codec);
 		animtex.Clean();
+		if(AudioStream)
+		{
+			S_StopCustomStream(AudioStream);
+			ZMusic_Close(MusicStream);
+		}
 	}
 
 	FTextureID GetTexture() override
@@ -617,7 +663,7 @@ public:
 				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
 				else copy16bitSamples(read);
 				if (!stream && read) // the sound may not start in the first frame, but the stream cannot start without any sound data present.
-					stream = S_CreateCustomStream(6000, adata.inf.sampleRate, adata.inf.nChannels, StreamCallbackFunc, this);
+					stream = S_CreateCustomStream(6000, adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackFunc, this);
 
 			}
 

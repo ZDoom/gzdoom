@@ -56,7 +56,7 @@ void InitDoomFonts()
 	}
 	else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
 	{
-		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
+		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true, true);
 	}
 
 

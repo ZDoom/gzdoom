@@ -87,7 +87,7 @@ bool FLevelLocals::EV_Thing_Spawn (int tid, AActor *source, int type, DAngle ang
 			if (P_TestMobjLocation (mobj))
 			{
 				rtn++;
-				mobj->Angles.Yaw = (angle != 1000000. ? angle : spot->Angles.Yaw);
+				mobj->Angles.Yaw = (angle != DAngle::fromDeg(1000000.) ? angle : spot->Angles.Yaw);
 				if (fog)
 				{
 					P_SpawnTeleportFog(mobj, spot->Pos(), false, true);
@@ -776,7 +776,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 			if (flags & WARPF_COPYPITCH)
 				caller->SetPitch(reference->Angles.Pitch, false);
 			
-			if (pitch != 0)
+			if (pitch != nullAngle)
 				caller->SetPitch(caller->Angles.Pitch + pitch, false);
 			
 			if (flags & WARPF_COPYVELOCITY)

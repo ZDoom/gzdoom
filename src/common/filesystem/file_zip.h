@@ -15,7 +15,7 @@ struct FZipLump : public FResourceLump
 	uint8_t	Method;
 	bool	NeedFileStart;
 	int		CompressedSize;
-	int		Position;
+	int64_t		Position;
 	unsigned CRC32;
 
 	virtual FileReader *GetReader();

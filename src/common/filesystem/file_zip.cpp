@@ -115,7 +115,7 @@ bool FCompressedBuffer::Decompress(char *destbuffer)
 //
 //-----------------------------------------------------------------------
 
-static uint32_t Zip_FindCentralDir(FileReader &fin)
+static uint32_t Zip_FindCentralDir(FileReader &fin, bool* zip64)
 {
 	unsigned char buf[BUFREADCOMMENT + 4];
 	uint32_t FileSize;
@@ -145,15 +145,18 @@ static uint32_t Zip_FindCentralDir(FileReader &fin)
 
 		for (i = (int)uReadSize - 3; (i--) > 0;)
 		{
-			if (buf[i] == 'P' && buf[i+1] == 'K' && buf[i+2] == 5 && buf[i+3] == 6)
+			if (buf[i] == 'P' && buf[i+1] == 'K' && buf[i+2] == 5 && buf[i+3] == 6 && !*zip64 && uPosFound == 0)
 			{
+				*zip64 = false;
 				uPosFound = uReadPos + i;
-				break;
+			}
+			if (buf[i] == 'P' && buf[i+1] == 'K' && buf[i+2] == 6 && buf[i+3] == 6)
+			{
+				*zip64 = true;
+				uPosFound = uReadPos + i;
+				return uPosFound;
 			}
 		}
-
-		if (uPosFound != 0)
-			break;
 	}
 	return uPosFound;
 }
@@ -172,8 +175,8 @@ FZipFile::FZipFile(const char * filename, FileReader &file)
 
 bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 {
-	uint32_t centraldir = Zip_FindCentralDir(Reader);
-	FZipEndOfCentralDirectory info;
+	bool zip64 = false;
+	uint32_t centraldir = Zip_FindCentralDir(Reader, &zip64);
 	int skipped = 0;
 
 	Lumps = NULL;
@@ -184,25 +187,50 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		return false;
 	}
 
-	// Read the central directory info.
-	Reader.Seek(centraldir, FileReader::SeekSet);
-	Reader.Read(&info, sizeof(FZipEndOfCentralDirectory));
-
-	// No multi-disk zips!
-	if (info.NumEntries != info.NumEntriesOnAllDisks ||
-		info.FirstDisk != 0 || info.DiskNumber != 0)
+	uint64_t dirsize, DirectoryOffset;
+	if (!zip64)
 	{
-		if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Multipart Zip files are not supported.\n", FileName.GetChars());
-		return false;
-	}
+		FZipEndOfCentralDirectory info;
+		// Read the central directory info.
+		Reader.Seek(centraldir, FileReader::SeekSet);
+		Reader.Read(&info, sizeof(FZipEndOfCentralDirectory));
 
-	NumLumps = LittleShort(info.NumEntries);
+		// No multi-disk zips!
+		if (info.NumEntries != info.NumEntriesOnAllDisks ||
+			info.FirstDisk != 0 || info.DiskNumber != 0)
+		{
+			if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Multipart Zip files are not supported.\n", FileName.GetChars());
+			return false;
+		}
+		
+		NumLumps = LittleShort(info.NumEntries);
+		dirsize = LittleLong(info.DirectorySize);
+		DirectoryOffset = LittleLong(info.DirectoryOffset);
+	}
+	else
+	{
+		FZipEndOfCentralDirectory64 info;
+		// Read the central directory info.
+		Reader.Seek(centraldir, FileReader::SeekSet);
+		Reader.Read(&info, sizeof(FZipEndOfCentralDirectory64));
+
+		// No multi-disk zips!
+		if (info.NumEntries != info.NumEntriesOnAllDisks ||
+			info.FirstDisk != 0 || info.DiskNumber != 0)
+		{
+			if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Multipart Zip files are not supported.\n", FileName.GetChars());
+			return false;
+		}
+		
+		NumLumps = (uint32_t)info.NumEntries;
+		dirsize = info.DirectorySize;
+		DirectoryOffset = info.DirectoryOffset;
+	}
 	Lumps = new FZipLump[NumLumps];
 
 	// Load the entire central directory. Too bad that this contains variable length entries...
-	int dirsize = LittleLong(info.DirectorySize);
 	void *directory = malloc(dirsize);
-	Reader.Seek(LittleLong(info.DirectoryOffset), FileReader::SeekSet);
+	Reader.Seek(DirectoryOffset, FileReader::SeekSet);
 	Reader.Read(directory, dirsize);
 
 	char *dirptr = (char*)directory;
@@ -305,7 +333,7 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		if (name0.IsNotEmpty()) name = name.Mid(name0.Len());
 
 		// skip Directories
-		if (name.IsEmpty() || (name.Back() == '/' && LittleLong(zip_fh->UncompressedSize) == 0))
+		if (name.IsEmpty() || (name.Back() == '/' && LittleLong(zip_fh->UncompressedSize32) == 0))
 		{
 			skipped++;
 			continue;
@@ -335,9 +363,39 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 
 		FixPathSeperator(name);
 		name.ToLower();
+		
+		uint32_t UncompressedSize =LittleLong(zip_fh->UncompressedSize32);
+		uint32_t CompressedSize = LittleLong(zip_fh->CompressedSize32);
+		uint64_t LocalHeaderOffset = LittleLong(zip_fh->LocalHeaderOffset32);
+		if (zip_fh->ExtraLength > 0)
+		{
+			uint8_t* rawext = (uint8_t*)zip_fh + sizeof(*zip_fh) + zip_fh->NameLength;
+			uint32_t ExtraLength = LittleLong(zip_fh->ExtraLength);
+			
+			while (ExtraLength > 0)
+			{
+				auto zip_64 = (FZipCentralDirectoryInfo64BitExt*)rawext;
+				uint32_t BlockLength = LittleLong(zip_64->Length);
+				rawext += BlockLength + 4;
+				ExtraLength -= BlockLength + 4;
+				if (LittleLong(zip_64->Type) == 1 && BlockLength >= 0x18)
+				{
+					if (zip_64->CompressedSize > 0x7fffffff || zip_64->UncompressedSize > 0x7fffffff)
+					{
+						// The file system is limited to 32 bit file sizes;
+						if (!quiet) Printf(TEXTCOLOR_YELLOW "\n%s: '%s' is too large.\n", FileName.GetChars(), name.GetChars());
+						skipped++;
+						continue;
+					}
+					UncompressedSize = (uint32_t)zip_64->UncompressedSize;
+					CompressedSize = (uint32_t)zip_64->CompressedSize;
+					LocalHeaderOffset = zip_64->LocalHeaderOffset;
+				}
+			}
+		}
 
 		lump_p->LumpNameSetup(name);
-		lump_p->LumpSize = LittleLong(zip_fh->UncompressedSize);
+		lump_p->LumpSize = UncompressedSize;
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.
 		lump_p->Flags = LUMPF_FULLPATH;
@@ -346,8 +404,8 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		if (lump_p->Method != METHOD_STORED) lump_p->Flags |= LUMPF_COMPRESSED;
 		lump_p->GPFlags = zip_fh->Flags;
 		lump_p->CRC32 = zip_fh->CRC32;
-		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
-		lump_p->Position = LittleLong(zip_fh->LocalHeaderOffset);
+		lump_p->CompressedSize = CompressedSize;
+		lump_p->Position = LocalHeaderOffset;
 		lump_p->CheckEmbedded(filter);
 
 		lump_p++;
@@ -463,7 +521,7 @@ int FZipLump::GetFileOffset()
 {
 	if (Method != METHOD_STORED) return -1;
 	if (NeedFileStart) SetLumpAddress();
-	return Position;
+	return (int)Position;
 }
 
 //==========================================================================
@@ -585,15 +643,15 @@ int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompress
 	dir.ModTime = LittleShort(dostime.first);
 	dir.ModDate = LittleShort(dostime.second);
 	dir.CRC32 = content.mCRC32;
-	dir.CompressedSize = LittleLong(content.mCompressedSize);
-	dir.UncompressedSize = LittleLong(content.mSize);
+	dir.CompressedSize32 = LittleLong(content.mCompressedSize);
+	dir.UncompressedSize32 = LittleLong(content.mSize);
 	dir.NameLength = LittleShort((unsigned short)strlen(filename));
 	dir.ExtraLength = 0;
 	dir.CommentLength = 0;
 	dir.StartingDiskNumber = 0;
 	dir.InternalAttributes = 0;
 	dir.ExternalAttributes = 0;
-	dir.LocalHeaderOffset = LittleLong(position);
+	dir.LocalHeaderOffset32 = LittleLong(position);
 
 	if (zip_file->Write(&dir, sizeof(dir)) != sizeof(dir) ||
 		zip_file->Write(filename,  strlen(filename)) != strlen(filename))

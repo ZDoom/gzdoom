@@ -81,17 +81,7 @@ struct wbstartstruct_t
 	
 };
 
-// Intermission stats.
-// Parameters for world map / intermission.
-
-// Called by main loop, animate the intermission.
-void WI_Ticker ();
-
-// Called by main loop,
-// draws the intermission directly into the screen buffer.
-void WI_Drawer ();
-
 // Setup for an intermission screen.
-void WI_Start (wbstartstruct_t *wbstartstruct);
+DObject* WI_Start (wbstartstruct_t *wbstartstruct);
 
 #endif

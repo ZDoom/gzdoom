@@ -44,18 +44,12 @@
 #include "version.h"
 #include "printf.h"
 #include "win32glvideo.h"
-#ifdef HAVE_SOFTPOLY
-#include "win32polyvideo.h"
-#endif
 #ifdef HAVE_VULKAN
 #include "win32vulkanvideo.h"
 #endif
 #include "engineerrors.h"
 #include "i_system.h"
-
-EXTERN_CVAR(Int, vid_preferbackend)
-
-extern HWND Window;
+#include "i_mainwindow.h"
 
 IVideo *Video;
 
@@ -117,12 +111,12 @@ void I_InitGraphics ()
 
 	// If the focus window is destroyed, it doesn't go back to the active window.
 	// (e.g. because the net pane was up, and a button on it had focus)
-	if (GetFocus() == NULL && GetActiveWindow() == Window)
+	if (GetFocus() == NULL && GetActiveWindow() == mainwindow.GetHandle())
 	{
 		// Make sure it's in the foreground and focused. (It probably is
 		// already foregrounded but may not be focused.)
-		SetForegroundWindow(Window);
-		SetFocus(Window);
+		SetForegroundWindow(mainwindow.GetHandle());
+		SetFocus(mainwindow.GetHandle());
 		// Note that when I start a 2-player game on the same machine, the
 		// window for the game that isn't focused, active, or foregrounded
 		// still receives a WM_ACTIVATEAPP message telling it that it's the
@@ -131,15 +125,8 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-#ifdef HAVE_SOFTPOLY
-	if (vid_preferbackend == 2)
-	{
-		Video = new Win32PolyVideo();
-	}
-	else
-#endif
 #ifdef HAVE_VULKAN
-	if (vid_preferbackend == 1)
+	if (V_GetBackend() == 1)
 	{
 		// first try Vulkan, if that fails OpenGL
 		try
@@ -158,10 +145,6 @@ void I_InitGraphics ()
 		Video = new Win32GLVideo();
 	}
 
-#ifdef HAVE_SOFTPOLY
-	if (Video == NULL)
-		Video = new Win32PolyVideo();
-#endif
 	// we somehow STILL don't have a display!!
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

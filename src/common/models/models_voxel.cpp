@@ -356,7 +356,7 @@ void FVoxelModel::BuildVertexBuffer(FModelRenderer *renderer)
 //
 //===========================================================================
 
-void FVoxelModel::AddSkins(uint8_t *hitlist)
+void FVoxelModel::AddSkins(uint8_t *hitlist, const FTextureID*)
 {
 	hitlist[mPalette.GetIndex()] |= FTextureManager::HIT_Flat;
 }
@@ -378,9 +378,9 @@ bool FVoxelModel::Load(const char * fn, int lumpnum, const char * buffer, int le
 //
 //===========================================================================
 
-int FVoxelModel::FindFrame(const char * name)
+int FVoxelModel::FindFrame(const char * name, bool nodefault)
 {
-	return 0;
+	return nodefault? FErr_Voxel : 0; // -2, not -1 because voxels are special.
 }
 
 //===========================================================================
@@ -400,7 +400,7 @@ float FVoxelModel::getAspectFactor(float stretch)
 //
 //===========================================================================
 
-void FVoxelModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation)
+void FVoxelModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation, const FTextureID*)
 {
 	renderer->SetMaterial(skin, true, translation);
 	renderer->SetupFrame(this, 0, 0, 0);

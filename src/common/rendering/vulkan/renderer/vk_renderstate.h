@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vulkan/system/vk_buffers.h"
+#include "vulkan/system/vk_hwbuffer.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/renderer/vk_streambuffer.h"
@@ -11,13 +11,14 @@
 #include "hw_renderstate.h"
 #include "hw_material.h"
 
+class VulkanFrameBuffer;
 class VkRenderPassSetup;
 class VkTextureImage;
 
 class VkRenderState : public FRenderState
 {
 public:
-	VkRenderState();
+	VkRenderState(VulkanFrameBuffer* fb);
 	virtual ~VkRenderState() = default;
 
 	// Draw commands
@@ -59,12 +60,14 @@ protected:
 	void ApplyStreamData();
 	void ApplyMatrices();
 	void ApplyPushConstants();
-	void ApplyDynamicSet();
+	void ApplyHWBufferSet();
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
 
 	void BeginRenderPass(VulkanCommandBuffer *cmdbuffer);
 	void WaitForStreamBuffers();
+
+	VulkanFrameBuffer* fb = nullptr;
 
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;

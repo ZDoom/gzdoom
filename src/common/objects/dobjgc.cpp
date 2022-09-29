@@ -277,7 +277,7 @@ void MarkArray(DObject **obj, size_t count)
 
 static size_t CalcStepSize()
 {
-	int time_passed = CheckTime - LastCollectTime;
+	int time_passed = int(CheckTime - LastCollectTime);
 	auto alloc = min(LastCollectAlloc, Estimate);
 	size_t bytes_gained = AllocBytes > alloc ? AllocBytes - alloc : 0;
 	return (StepMul > 0 && time_passed > 0)
@@ -390,7 +390,7 @@ static size_t SingleStep()
 	case GCS_Finalize:
 		State = GCS_Pause;		// end collection
 		LastCollectAlloc = AllocBytes;
-		LastCollectTime = CheckTime;
+		LastCollectTime = (int)CheckTime;
 		return 0;
 
 	default:

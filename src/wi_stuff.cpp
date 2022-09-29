@@ -93,6 +93,7 @@ static const char *WI_Cmd[] = {
 
 	"NoAutostartMap",
 	"Screensize",
+	"TileBackground",
 
 	NULL
 };
@@ -142,7 +143,7 @@ class DInterBackground : public DObject
 		int 		period;	// period in tics between animations
 		yahpt_t 	loc;	// location of animation
 		int 		data;	// ALWAYS: n/a, RANDOM: period deviation (<256)
-		TArray<FGameTexture*>	frames;	// actual graphics for frames of animations
+		TArray<FTextureID>	frames;	// actual graphics for frames of animations
 
 									// following must be initialized to zero before use!
 		int 		nexttic;	// next value of bcnt (used in conjunction with period)
@@ -165,13 +166,14 @@ private:
 	TArray<lnode_t> lnodes;
 	TArray<in_anim_t> anims;
 	int				bcnt = 0;				// used for timing of background animation
-	TArray<FGameTexture *> yah; 		// You Are Here graphic
-	FGameTexture* 	splat = nullptr;		// splat
-	FGameTexture	*background = nullptr;
+	TArray<FTextureID> yah; 		// You Are Here graphic
+	FTextureID		splat{};		// splat
+	FTextureID		background{};
 	wbstartstruct_t *wbs;
 	level_info_t	*exitlevel;
 	int			bgwidth = -1;
 	int			bgheight = -1;
+	bool		tilebackground = false;
 
 
 public:
@@ -215,7 +217,7 @@ private:
 	//
 	//====================================================================
 
-	void drawOnLnode(int   n, FGameTexture * c[], int numc, double backwidth, double backheight)
+	void drawOnLnode(int   n, FTextureID c[], int numc, double backwidth, double backheight)
 	{
 		int   i;
 		for (i = 0; i<numc; i++)
@@ -225,17 +227,17 @@ private:
 			double            right;
 			double            bottom;
 
-
-			right = c[i]->GetDisplayWidth();
-			bottom = c[i]->GetDisplayHeight();
-			left = lnodes[n].x - c[i]->GetDisplayLeftOffset();
-			top = lnodes[n].y - c[i]->GetDisplayTopOffset();
+			auto tex = TexMan.GetGameTexture(c[i]);
+			right = tex->GetDisplayWidth();
+			bottom = tex->GetDisplayHeight();
+			left = lnodes[n].x - tex->GetDisplayLeftOffset();
+			top = lnodes[n].y - tex->GetDisplayTopOffset();
 			right += left;
 			bottom += top;
 
 			if (left >= 0 && right < 320 && top >= 0 && bottom < 200)
 			{
-				DrawTexture(twod, c[i], lnodes[n].x, lnodes[n].y, DTA_FullscreenScale, FSMode_ScaleToFit43, DTA_VirtualWidthF, backwidth, DTA_VirtualHeightF, backheight, TAG_DONE);
+				DrawTexture(twod, tex, lnodes[n].x, lnodes[n].y, DTA_FullscreenScale, FSMode_ScaleToFit43, DTA_VirtualWidthF, backwidth, DTA_VirtualHeightF, backheight, TAG_DONE);
 				break;
 			}
 		}
@@ -276,6 +278,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 	bcnt = 0;
 
+	if (!isenterpic) tilebackground = false;
 	texture.SetInvalid();
 
 	level_info_t * li = FindLevelInfo(wbs->current);
@@ -326,6 +329,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					}
 				}
 				lumpname = "INTERPIC";
+				tilebackground = false;
 			}
 			break;
 
@@ -342,6 +346,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			{
 				if (isenterpic) return false;
 				lumpname = "FLOOR16";
+				tilebackground = true;
 			}
 			break;
 
@@ -355,20 +360,21 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			// Strife doesn't have an intermission pic so choose something neutral.
 			if (isenterpic) return false;
 			lumpname = gameinfo.BorderFlat;
+			tilebackground = true;
 			break;
 		}
 	}
 	if (lumpname == NULL)
 	{
 		// shouldn't happen!
-		background = NULL;
+		background.SetInvalid();
 		return false;
 	}
 
 	lnodes.Clear();
 	anims.Clear();
 	yah.Clear();
-	splat = NULL;
+	splat.SetInvalid();
 
 	// a name with a starting '$' indicates an intermission script
 	if (*lumpname != '$')
@@ -394,13 +400,13 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 				case 1:		// Splat
 					sc.MustGetString();
-					splat = TexMan.GetGameTextureByName(sc.String);
+					splat = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
 					break;
 
 				case 2:		// Pointers
 					while (sc.GetString() && !sc.Crossed)
 					{
-						yah.Push(TexMan.GetGameTextureByName(sc.String));
+						yah.Push(TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny));
 					}
 					if (sc.Crossed)
 						sc.UnGet();
@@ -466,6 +472,10 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					sc.MustGetNumber();
 					bgheight = sc.Number;
 					break;
+					
+				case 16:	// tilebackground
+					tilebackground = true;
+					break;
 
 				readanimation:
 					sc.MustGetString();
@@ -500,14 +510,14 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						if (!sc.CheckString("{"))
 						{
 							sc.MustGetString();
-							an.frames.Push(TexMan.GetGameTextureByName(sc.String));
+							an.frames.Push(TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny));
 						}
 						else
 						{
 							while (!sc.CheckString("}"))
 							{
 								sc.MustGetString();
-								an.frames.Push(TexMan.GetGameTextureByName(sc.String));
+								an.frames.Push(TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny));
 							}
 						}
 						an.ctr = -1;
@@ -522,7 +532,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						an.loc.y = sc.Number;
 						sc.MustGetString();
 						an.frames.Reserve(1);	// allocate exactly one element
-						an.frames[0] = TexMan.GetGameTextureByName(sc.String);
+						an.frames[0] = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
 						anims.Push(an);
 						break;
 
@@ -538,7 +548,11 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			texture = TexMan.GetTextureID("INTERPIC", ETextureType::MiscPatch);
 		}
 	}
-	background = TexMan.GetGameTexture(texture);
+	background = texture;
+	auto tex= TexMan.GetGameTexture(texture);
+	// extremely small textures will always be tiled.
+	if (tex && tex->GetDisplayWidth() < 128 && tex->GetDisplayHeight() < 128) 
+		tilebackground = true;
 	return noautostartmap;
 }
 
@@ -605,25 +619,26 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	double animwidth = bgwidth;		// For a flat fill or clear background scale animations to 320x200
 	double animheight = bgheight;
 
-	if (background)
+	if (background.isValid())
 	{
+		auto bgtex = TexMan.GetGameTexture(background);
 		// background
-		if (background->isMiscPatch())
+		if (!tilebackground)
 		{
 			// if no explicit size was set scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
 			if (bgwidth < 0 || bgheight < 0)
 			{
-				animwidth = background->GetDisplayWidth();
-				animheight = background->GetDisplayHeight();
+				animwidth = bgtex->GetDisplayWidth();
+				animheight = bgtex->GetDisplayHeight();
 				if (animheight == 200) animwidth = 320;	// deal with widescreen replacements that keep the original coordinates.
 			}
-			DrawTexture(twod, background, 0, 0, DTA_FullscreenEx, FSMode_ScaleToFit43, TAG_DONE);
+			DrawTexture(twod, bgtex, 0, 0, DTA_FullscreenEx, FSMode_ScaleToFit43, TAG_DONE);
 		}
 		else
 		{
-			twod->AddFlatFill(0, 0, twod->GetWidth(), twod->GetHeight(), background, (inter_classic_scaling ? -1 : 0));
+			twod->AddFlatFill(0, 0, twod->GetWidth(), twod->GetHeight(), bgtex, (inter_classic_scaling ? -1 : 0));
 		}
 	}
 	else
@@ -674,7 +689,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			break;
 		}
 		if (a->ctr >= 0)
-			DrawTexture(twod, a->frames[a->ctr], a->loc.x, a->loc.y,
+			DrawTexture(twod, a->frames[a->ctr], false, a->loc.x, a->loc.y,
 				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, DTA_FullscreenScale, FSMode_ScaleToFit43, TAG_DONE);
 	}
 
@@ -708,66 +723,13 @@ DEFINE_ACTION_FUNCTION(DInterBackground, drawBackground)
 
 IMPLEMENT_CLASS(DInterBackground, true, false)
 
-DObject *WI_Screen;
-
-//====================================================================
-// 
-//
-//
-//====================================================================
-
-void WI_Ticker()
-{
-	if (WI_Screen)
-	{
-		ScaleOverrider s(twod);
-		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
-		{
-			VMValue self = WI_Screen;
-			VMCall(func, &self, 1, nullptr, 0);
-		}
-	}
-}
-
-//====================================================================
-// 
-// Called by main loop,
-// draws the intermission directly into the screen buffer.
-//
-//====================================================================
-
-void WI_Drawer()
-{
-	if (WI_Screen)
-	{
-		ScaleOverrider s(twod);
-		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
-		{
-			twod->ClearClipRect();
-			twod->ClearScreen();
-			VMValue self = WI_Screen;
-			VMCall(func, &self, 1, nullptr, 0);
-			twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
-
-			// The internal handling here is somewhat poor. After being set to 'LeavingIntermission'
-			// the screen is needed for one more draw operation so we cannot delete it right away but only here.
-			if (WI_Screen->IntVar("CurState") == LeavingIntermission)
-			{
-				WI_Screen->Destroy();
-				GC::DelSoftRoot(WI_Screen);
-				WI_Screen = nullptr;
-			}
-		}
-	}
-}
-
 //====================================================================
 // 
 // Setup for an intermission screen.
 //
 //====================================================================
 
-void WI_Start(wbstartstruct_t *wbstartstruct)
+DObject* WI_Start(wbstartstruct_t *wbstartstruct)
 {
 	FName screenclass = deathmatch ? gameinfo.statusscreen_dm : multiplayer ? gameinfo.statusscreen_coop : gameinfo.statusscreen_single;
 	auto cls = PClass::FindClass(screenclass);
@@ -784,7 +746,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 	
-	WI_Screen = cls->CreateNew();
+	auto WI_Screen = cls->CreateNew();
 
 
 	ScaleOverrider s(twod);
@@ -814,7 +776,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 
-	GC::AddSoftRoot(WI_Screen);
+	return WI_Screen;
 }
 
 //====================================================================

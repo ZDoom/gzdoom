@@ -423,6 +423,11 @@ enum ActorFlag8
 	MF8_MAP07BOSS2		= 0x00800000,	// MBF21 boss death.
 	MF8_AVOIDHAZARDS	= 0x01000000,	// MBF AI enhancement.
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
+	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
+	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
+	MF8_CROSSLINECHECK	= 0x10000000,	// [MC]Enables CanCrossLine virtual
+	MF8_MASTERNOSEE		= 0x20000000,	// Don't show object in first person if their master is the current camera.
+	MF8_ADDLIGHTLEVEL	= 0x40000000,	// [MC] Actor light level is additive with sector.
 };
 
 // --- mobj.renderflags ---
@@ -470,6 +475,12 @@ enum ActorRenderFlag
 	RF_CASTSPRITESHADOW = 0x20000000,	// actor will cast a sprite shadow
 	RF_NOINTERPOLATEVIEW = 0x40000000,	// don't interpolate the view next frame if this actor is a camera.
 	RF_NOSPRITESHADOW = 0x80000000,		// actor will not cast a sprite shadow
+};
+
+enum ActorRenderFlag2
+{
+	RF2_INVISIBLEINMIRRORS		= 0x0001,	// [Nash] won't render in mirrors
+	RF2_ONLYVISIBLEINMIRRORS	= 0x0002,	// [Nash] only renders in mirrors
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -574,6 +585,7 @@ typedef TFlags<ActorFlag6> ActorFlags6;
 typedef TFlags<ActorFlag7> ActorFlags7;
 typedef TFlags<ActorFlag8> ActorFlags8;
 typedef TFlags<ActorRenderFlag> ActorRenderFlags;
+typedef TFlags<ActorRenderFlag2> ActorRenderFlags2;
 typedef TFlags<ActorBounceFlag> ActorBounceFlags;
 typedef TFlags<ActorRenderFeatureFlag> ActorRenderFeatureFlags;
 DEFINE_TFLAGS_OPERATORS (ActorFlags)
@@ -585,6 +597,7 @@ DEFINE_TFLAGS_OPERATORS (ActorFlags6)
 DEFINE_TFLAGS_OPERATORS (ActorFlags7)
 DEFINE_TFLAGS_OPERATORS (ActorFlags8)
 DEFINE_TFLAGS_OPERATORS (ActorRenderFlags)
+DEFINE_TFLAGS_OPERATORS (ActorRenderFlags2)
 DEFINE_TFLAGS_OPERATORS (ActorBounceFlags)
 DEFINE_TFLAGS_OPERATORS (ActorRenderFeatureFlags)
 
@@ -660,9 +673,24 @@ enum EViewPosFlags // [MC] Flags for SetViewPos.
 	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
 };
 
-class FViewPosition : public DObject
+class DActorModelData : public DObject
 {
-	DECLARE_CLASS(FViewPosition, DObject);
+	DECLARE_CLASS(DActorModelData, DObject);
+public:
+	FName				modelDef;
+	bool				hasModel;
+	TArray<int>			modelIDs;
+	TArray<FTextureID>	skinIDs;
+	TArray<FTextureID>	surfaceSkinIDs;
+	TArray<int>			modelFrameGenerators;
+
+	DActorModelData() = default;
+	virtual void Serialize(FSerializer& arc) override;
+};
+
+class DViewPosition : public DObject
+{
+	DECLARE_CLASS(DViewPosition, DObject);
 public:
 	// Variables
 	// Exposed to ZScript
@@ -670,7 +698,7 @@ public:
 	int			Flags;
 
 	// Functions
-	FViewPosition()
+	DViewPosition()
 	{
 		Offset = { 0,0,0 };
 		Flags = 0;
@@ -768,6 +796,10 @@ public:
 	// Something just touched this actor.
 	virtual void Touch(AActor *toucher);
 	void CallTouch(AActor *toucher);
+
+	// Apply gravity and/or make actor sink in water.
+	virtual void FallAndSink(double grav, double oldfloorz);
+	void CallFallAndSink(double grav, double oldfloorz);
 
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	// Made a metadata property so no longer virtual
@@ -1011,7 +1043,7 @@ public:
 	DAngle			SpriteRotation;
 	DRotator		Angles;
 	DRotator		ViewAngles;			// Angle offsets for cameras
-	FViewPosition	*ViewPos;			// Position offsets for cameras
+	TObjPtr<DViewPosition*> ViewPos;			// Position offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 
@@ -1028,6 +1060,7 @@ public:
 	uint32_t			RenderHidden;		// current renderer must *not* have any of these features
 
 	ActorRenderFlags	renderflags;		// Different rendering flags
+	ActorRenderFlags2	renderflags2;		// More rendering flags...
 	ActorFlags		flags;
 	ActorFlags2		flags2;			// Heretic flags
 	ActorFlags3		flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
@@ -1047,8 +1080,10 @@ public:
 	DVector3		OldRenderPos;
 	DVector3		Vel;
 	DVector2		SpriteOffset;
+	DVector3		WorldOffset;
 	double			Speed;
 	double			FloatSpeed;
+	TObjPtr<DActorModelData*>		modelData;
 
 // interaction info
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
@@ -1080,32 +1115,36 @@ public:
 	FState			*state;
 	//VMFunction		*Damage;			// For missiles and monster railgun
 	int				DamageVal;
-	VMFunction		*DamageFunc;
 	int				projectileKickback;
+	VMFunction		*DamageFunc;
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
-	uint32_t			VisibleToTeam;
 
 	int				special1;		// Special info
 	int				special2;		// Special info
 	double			specialf1;		// With floats we cannot use the int versions for storing position or angle data without reverting to fixed point (which we do not want.)
 	double			specialf2;
 
+	uint32_t			VisibleToTeam;
 	int				weaponspecial;	// Special info for weapons.
 	int 			health;
-	uint8_t			movedir;		// 0-7
-	int8_t			visdir;
-	int16_t			movecount;		// when 0, select a new dir
-	int16_t			strafecount;	// for MF3_AVOIDMELEE
-	uint16_t			SpawnAngle;
-	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)
-									// also the originator for missiles
-	TObjPtr<AActor*>	lastenemy;		// Last known enemy -- killough 2/15/98
-	TObjPtr<AActor*> LastHeard;		// [RH] Last actor this one heard
 	int32_t			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
 	int32_t			threshold;		// if > 0, the target will be chased
 	int32_t			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
+
+	uint8_t			movedir;		// 0-7
+	int8_t			visdir;
+	int16_t			movecount;		// when 0, select a new dir
+
+	int16_t			strafecount;	// for MF3_AVOIDMELEE
+	int16_t			LightLevel;		// Allows for overriding sector light levels.
+	uint16_t			SpawnAngle;
+
+	TObjPtr<AActor*> target;			// thing being chased/attacked (or NULL)
+									// also the originator for missiles
+	TObjPtr<AActor*>	lastenemy;		// Last known enemy -- killough 2/15/98
+	TObjPtr<AActor*> LastHeard;		// [RH] Last actor this one heard
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of PlayerPawn
 	TObjPtr<AActor*>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
@@ -1129,6 +1168,7 @@ public:
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	TObjPtr<AActor*> goal;			// Monster's goal if not chasing anything
 	int				waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
+	double			waterdepth;		// Stores how deep into water you are, in map units
 	uint8_t			boomwaterlevel;	// splash information for non-swimmable water sectors
 	uint8_t			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	int8_t			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
@@ -1159,6 +1199,8 @@ public:
 	sector_t		*Blocking3DFloor;	// 3D floor that blocked the last move (if any)
 	sector_t		*BlockingCeiling;	// Sector that blocked the last move (ceiling plane slope)
 	sector_t		*BlockingFloor;		// Sector that blocked the last move (floor plane slope)
+
+	uint32_t		freezetics;	// actor has actions completely frozen (including movement) for this many tics, but they still get Tick() calls
 
 	int PoisonDamage; // Damage received per tic from poison.
 	FName PoisonDamageType; // Damage type dealt by poison.
@@ -1267,6 +1309,7 @@ public:
 	bool IsMapActor();
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
+	double UpdateWaterDepth(bool splash);
 	virtual void SplashCheck();
 	virtual bool UpdateWaterLevel (bool splash=true);
 	bool isFast();
@@ -1493,6 +1536,7 @@ public:
 		return max(1., Distance2D(dest) / speed);
 	}
 
+	int GetLightLevel(sector_t* rendersector);
 	int ApplyDamageFactor(FName damagetype, int damage) const;
 	int GetModifiedDamage(FName damagetype, int damage, bool passive, AActor *inflictor, AActor *source, int flags = 0);
 	void DeleteAttachedLights();

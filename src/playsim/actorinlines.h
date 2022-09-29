@@ -49,6 +49,12 @@ inline double sector_t::LowestFloorAt(AActor *a, sector_t **resultsec)
 	return ::LowestFloorAt(this, a->X(), a->Y(), resultsec);
 }
 
+// Emulates the old floatbob offset table with direct calls to trig functions.
+inline double BobSin(double fb)
+{
+	return g_sindeg(double(fb * (180.0 / 32))) * 8;
+}
+
 inline double AActor::GetBobOffset(double ticfrac) const
 {
 	if (!(flags2 & MF2_FLOATBOB))
@@ -159,6 +165,8 @@ inline DVector3 AActor::Vec3Angle(double length, DAngle angle, double dz, bool a
 
 inline bool AActor::isFrozen() const
 {
+	if (freezetics > 0)
+		return true;
 	if (!(flags5 & MF5_NOTIMEFREEZE))
 	{
 		auto state = Level->isFrozen();
@@ -177,6 +185,22 @@ inline bool AActor::isFrozen() const
 	}
 	return false;
 }
+
+inline int AActor::GetLightLevel(sector_t* rendersector)
+{
+	int lightlevel = rendersector->GetSpriteLight();
+
+	if (flags8 & MF8_ADDLIGHTLEVEL)
+	{
+		lightlevel += LightLevel;
+	}
+	else if (LightLevel > -1)
+	{
+		lightlevel = LightLevel;
+	}
+	return lightlevel;
+}
+
 
 // Consolidated from all (incomplete) variants that check if a line should block.
 inline bool P_IsBlockedByLine(AActor* actor, line_t* line)

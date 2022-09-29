@@ -56,7 +56,6 @@ CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 extern int paused, chatmodeon;
-extern constate_e ConsoleState;
 extern bool ToggleFullscreen;
 bool GUICapture;
 

@@ -35,6 +35,9 @@
 #define __STATS_H__
 
 #include "zstring.h"
+#if defined __i386__
+#include "x86.h"
+#endif
 
 #if !defined _WIN32 && !defined __APPLE__
 
@@ -76,8 +79,9 @@ inline uint64_t rdtsc()
 	while (upper != temp);
 	return (static_cast<unsigned long long>(upper) << 32) | lower;
 #elif defined __aarch64__
-	// TODO: Implement and test on ARM64
-	return 0;
+	uint64_t vct;
+	asm volatile("mrs %0, cntvct_el0":"=r"(vct));
+	return vct;
 #elif defined __i386__
 	if (CPU.bRDTSC)
 	{
@@ -186,14 +190,15 @@ inline uint64_t rdtsc()
 	unsigned int lower, upper, temp;
 	do
 	{
-		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n" 
+		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n"
 			: "=r"(upper), "=r"(lower), "=r"(temp));
 	}
 	while (upper != temp);
 	return (static_cast<unsigned long long>(upper) << 32) | lower;
 #elif defined __aarch64__
-	// TODO: Implement and test on ARM64
-	return 0;
+	uint64_t vct;
+	asm volatile("mrs %0, cntvct_el0":"=r"(vct));
+	return vct;
 #elif defined __i386__ // i386
 	if (CPU.bRDTSC)
 	{

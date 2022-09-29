@@ -60,11 +60,22 @@ public:
 	std::vector<const char *> EnabledExtensions;
 	std::vector<const char *> OptionalExtensions = { VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME };
 	std::vector<const char*> EnabledValidationLayers;
+	uint32_t ApiVersion = {};
 
 	// Device setup
 	VkPhysicalDeviceFeatures UsedDeviceFeatures = {};
 	std::vector<const char *> EnabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-	std::vector<const char *> OptionalDeviceExtensions = { VK_EXT_HDR_METADATA_EXTENSION_NAME, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME };
+	std::vector<const char *> OptionalDeviceExtensions =
+	{
+		VK_EXT_HDR_METADATA_EXTENSION_NAME,
+		VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
+		VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+		VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+		VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+		VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+		VK_KHR_RAY_QUERY_EXTENSION_NAME
+	};
 	VulkanPhysicalDevice PhysicalDevice;
 	bool DebugLayerActive = false;
 
@@ -80,6 +91,8 @@ public:
 	int presentFamily = -1;
 	bool graphicsTimeQueries = false;
 
+	bool SupportsDeviceExtension(const char* ext) const;
+
 private:
 	void CreateInstance();
 	void CreateSurface();
@@ -88,8 +101,6 @@ private:
 	void CreateDevice();
 	void CreateAllocator();
 	void ReleaseResources();
-
-	bool SupportsDeviceExtension(const char *ext) const;
 
 	static bool CheckRequiredFeatures(const VkPhysicalDeviceFeatures &f);
 

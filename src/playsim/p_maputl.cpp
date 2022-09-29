@@ -415,11 +415,11 @@ bool AActor::FixMapthingPos()
 				DAngle ang = ldef->Delta().Angle();
 				if (ldef->backsector != NULL && ldef->backsector == secstart)
 				{
-					ang += 90.;
+					ang += DAngle::fromDeg(90.);
 				}
 				else
 				{
-					ang -= 90.;
+					ang -= DAngle::fromDeg(90.);
 				}
 
 				// Get the distance we have to move the object away from the wall
@@ -1686,7 +1686,7 @@ FPathTraverse::~FPathTraverse()
 //
 int P_CheckFov(AActor* t1, AActor* t2, double fov)
 {
-	return absangle(t1->AngleTo(t2), t1->Angles.Yaw) <= fov;
+	return absangle(t1->AngleTo(t2), t1->Angles.Yaw) <= DAngle::fromDeg(fov);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFov, P_CheckFov)

@@ -296,7 +296,7 @@ static void parseSector(FScanner &sc, TMap<int, EDSector> &EDSectors)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.angle[sector_t::floor] = sc.Float;
+			sec.angle[sector_t::floor] = DAngle::fromDeg(sc.Float);
 		}
 		else if (sc.Compare("flooroffsetx"))
 		{
@@ -320,7 +320,7 @@ static void parseSector(FScanner &sc, TMap<int, EDSector> &EDSectors)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.angle[sector_t::ceiling] = sc.Float;
+			sec.angle[sector_t::ceiling] = DAngle::fromDeg(sc.Float);
 		}
 		else if (sc.Compare("ceilingoffsetx"))
 		{

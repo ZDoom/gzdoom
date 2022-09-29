@@ -130,7 +130,7 @@ FRenderViewpoint::FRenderViewpoint()
 	player = nullptr;
 	Pos = { 0.0, 0.0, 0.0 };
 	ActorPos = { 0.0, 0.0, 0.0 };
-	Angles = { 0.0, 0.0, 0.0 };
+	Angles = { nullAngle, nullAngle, nullAngle };
 	Path[0] = { 0.0, 0.0, 0.0 };
 	Path[1] = { 0.0, 0.0, 0.0 };
 	Cos = 0.0;
@@ -139,7 +139,7 @@ FRenderViewpoint::FRenderViewpoint()
 	TanSin = 0.0;
 	camera = nullptr;
 	sector = nullptr;
-	FieldOfView = 90.; // Angles in the SCREENWIDTH wide window
+	FieldOfView =  DAngle::fromDeg(90.); // Angles in the SCREENWIDTH wide window
 	TicFrac = 0.0;
 	FrameTime = 0;
 	extralight = 0;
@@ -180,8 +180,8 @@ DEFINE_GLOBAL(LocalViewPitch);
 void R_SetFOV (FRenderViewpoint &viewpoint, DAngle fov)
 {
 
-	if (fov < 5.) fov = 5.;
-	else if (fov > 170.) fov = 170.;
+	if (fov < DAngle::fromDeg(5.)) fov =  DAngle::fromDeg(5.);
+	else if (fov > DAngle::fromDeg(170.)) fov = DAngle::fromDeg(170.);
 	if (fov != viewpoint.FieldOfView)
 	{
 		viewpoint.FieldOfView = fov;
@@ -262,8 +262,8 @@ void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int wind
 	// screen that would be visible on a 4:3 display has the requested FOV.
 	if (viewwindow.centerxwide != viewwindow.centerx)
 	{ // centerxwide is what centerx would be if the display was not widescreen
-		fov = DAngle::ToDegrees(2 * atan(viewwindow.centerx * tan(fov.Radians()/2) / double(viewwindow.centerxwide)));
-		if (fov > 170.) fov = 170.;
+		fov = DAngle::fromRad(2 * atan(viewwindow.centerx * tan(fov.Radians()/2) / double(viewwindow.centerxwide)));
+		if (fov > DAngle::fromDeg(170.)) fov =  DAngle::fromDeg(170.);
 	}
 	viewwindow.FocalTangent = tan(fov.Radians() / 2);
 }
@@ -393,7 +393,6 @@ FRenderer* SWRenderer;
 
 void R_Init ()
 {
-	StartScreen->Progress();
 	R_InitTranslationTables ();
 	R_SetViewSize (screenblocks);
 
@@ -455,12 +454,12 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 				double pathlen = 0;
 				double zdiff = 0;
 				double totalzdiff = 0;
-				DAngle adiff = 0.;
-				DAngle totaladiff = 0.;
+				DAngle adiff = nullAngle;
+				DAngle totaladiff = nullAngle;
 				double oviewz = iview->Old.Pos.Z;
 				double nviewz = iview->New.Pos.Z;
-				DVector3a oldpos = { { iview->Old.Pos.X, iview->Old.Pos.Y, 0 }, 0. };
-				DVector3a newpos = { { iview->New.Pos.X, iview->New.Pos.Y, 0 }, 0. };
+				DVector3a oldpos = { { iview->Old.Pos.X, iview->Old.Pos.Y, 0 }, nullAngle };
+				DVector3a newpos = { { iview->New.Pos.X, iview->New.Pos.Y, 0 }, nullAngle };
 				InterpolationPath.Push(newpos);	// add this to  the array to simplify the loops below
 
 				for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
@@ -528,8 +527,8 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		(!netgame || !cl_noprediction) &&
 		!LocalKeyboardTurner)
 	{
-		viewpoint.Angles.Yaw = (nviewangle + AngleToFloat(LocalViewAngle & 0xFFFF0000)).Normalized180();
-		DAngle delta = player->centering ? DAngle(0.) : AngleToFloat(int(LocalViewPitch & 0xFFFF0000));
+		viewpoint.Angles.Yaw = (nviewangle + DAngle::fromBam(LocalViewAngle & 0xFFFF0000)).Normalized180();
+		DAngle delta = player->centering ? nullAngle : DAngle::fromBam(int(LocalViewPitch & 0xFFFF0000));
 		viewpoint.Angles.Pitch = clamp<DAngle>((iview->New.Angles.Pitch - delta).Normalized180(), player->MinPitch, player->MaxPitch);
 		viewpoint.Angles.Roll = iview->New.Angles.Roll.Normalized180();
 	}
@@ -600,7 +599,7 @@ void FRenderViewpoint::SetViewAngle (const FViewWindow &viewwindow)
 	DVector2 v = Angles.Yaw.ToVector();
 	ViewVector.X = v.X;
 	ViewVector.Y = v.Y;
-	HWAngles.Yaw = float(270.0 - Angles.Yaw.Degrees);
+	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
 
 }
 
@@ -793,7 +792,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	// Handles offsetting the camera with ChaseCam and/or viewpos.
 	{
 		AActor *mo = viewpoint.camera;
-		FViewPosition *VP = mo->ViewPos;
+		DViewPosition *VP = mo->ViewPos;
 		const DVector3 orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
 		viewpoint.ActorPos = orig;
 
@@ -801,7 +800,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
 		if (gamestate != GS_TITLELEVEL &&
-			(player && ((player->cheats & CF_CHASECAM)) || (r_deathcamera && viewpoint.camera->health <= 0)))
+			((player && (player->cheats & CF_CHASECAM)) || (r_deathcamera && viewpoint.camera->health <= 0)))
 		{
 			// [RH] Use chasecam view
 			DefaultDraw = false;
@@ -959,7 +958,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			DVector3 pos; pos.Zero();
 			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
 			{
-				viewpoint.Angles.Roll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave);
+				viewpoint.Angles.Roll += DAngle::fromDeg(QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave));
 			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
@@ -1116,9 +1115,9 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * actor->Level->info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
-	viewpoint.HWAngles.Pitch = RAD2DEG((float)asin(angy / alen));
+	viewpoint.HWAngles.Pitch = FAngle::fromRad((float)asin(angy / alen));
 	
-	viewpoint.HWAngles.Roll.Degrees = (float)viewpoint.Angles.Roll.Degrees;    // copied for convenience.
+	viewpoint.HWAngles.Roll = FAngle::fromDeg(viewpoint.Angles.Roll.Degrees());    // copied for convenience.
 	
 	// ViewActor only gets set, if the camera actor should not be rendered
 	if (actor->player && actor->player - players == consoleplayer &&

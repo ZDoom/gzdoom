@@ -30,43 +30,43 @@ jobs:
           }
         - {
             name: "macOS",
-            os: macos-11,
+            os: macos-12,
+            deps_cmdline: "brew install libvpx",
             build_type: "Release"
           }
         - {
             name: "macOS",
-            os: macos-11,
-            extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
+            os: macos-12,
+            extra_options: "-G Xcode -DDYN_OPENAL=OFF",
+            deps_cmdline: "brew install libvpx fluidsynth mpg123 libsndfile",
             build_type: "Debug"
           }
         - {
             name: "Linux GCC 7",
             os: ubuntu-20.04,
             extra_options: "-DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7",
-            deps_cmdline: "sudo apt update && sudo apt install g++-7 libsdl2-dev libgtk2.0-dev",
+            deps_cmdline: "sudo apt update && sudo apt install g++-7 libsdl2-dev libvpx-dev libgtk2.0-dev",
             build_type: "RelWithDebInfo"
           }
         - {
             name: "Linux GCC 11",
             os: ubuntu-20.04,
             extra_options: "-DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11",
-            deps_cmdline: "sudo apt update && sudo apt install g++-11 libsdl2-dev libgtk-3-dev",
+            deps_cmdline: "sudo apt update && sudo apt install g++-11 libsdl2-dev libvpx-dev libgtk-3-dev",
             build_type: "MinSizeRel"
           }
         - {
             name: "Linux Clang 6",
             os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 \
-                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
-            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
+            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DDYN_OPENAL=OFF",
+            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev libvpx-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
             build_type: "Debug"
           }
         - {
             name: "Linux Clang 12",
             os: ubuntu-20.04,
             extra_options: "-DCMAKE_C_COMPILER=clang-12 -DCMAKE_CXX_COMPILER=clang++-12",
-            deps_cmdline: "sudo apt update && sudo apt install clang-12 libsdl2-dev",
+            deps_cmdline: "sudo apt update && sudo apt install clang-12 libsdl2-dev libvpx-dev",
             build_type: "Release"
           }
 
@@ -81,9 +81,9 @@ jobs:
         fi
         mkdir build
         if [[ "${{ runner.os }}" == 'macOS' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.7-macos.tar.bz2
+          export ZMUSIC_PACKAGE=zmusic-1.1.9-macos.tar.xz
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.7-linux.tar.bz2
+          export ZMUSIC_PACKAGE=zmusic-1.1.9-linux.tar.xz
         fi
         if [[ ! -z "${ZMUSIC_PACKAGE}" ]]; then
           cd build

@@ -37,6 +37,7 @@
 #include "r_data/r_translate.h"
 #include "texmanip.h"
 #include "fcolormap.h"
+#include "r_sky.h"
 #include "p_terrain.h"
 
 #include "hwrenderer/data/buffers.h"
@@ -797,6 +798,7 @@ public:
 
 	int GetFloorLight() const;
 	int GetCeilingLight() const;
+	int GetSpriteLight() const;
 
 	sector_t *GetHeightSec() const
 	{
@@ -1454,10 +1456,24 @@ enum AutomapLineStyle : int
 	AMLS_COUNT
 };
 
-struct line_t
+struct linebase_t
 {
-	vertex_t	*v1, *v2;	// vertices, from v1 to v2
+	vertex_t* v1, * v2;	// vertices, from v1 to v2
 	DVector2	delta;		// precalculated v2 - v1 for side checking
+
+	DVector2 Delta() const
+	{
+		return delta;
+	}
+
+	void setDelta(double x, double y)
+	{
+		delta = { x, y };
+	}
+};
+
+struct line_t : public linebase_t
+{
 	uint32_t	flags, flags2;
 	uint32_t	activation;	// activation type
 	int			special;
@@ -1474,16 +1490,6 @@ struct line_t
 	int			health;		// [ZZ] for destructible geometry (0 = no special behavior)
 	int			healthgroup; // [ZZ] this is the "destructible object" id
 	int			linenum;
-
-	DVector2 Delta() const
-	{
-		return delta;
-	}
-
-	void setDelta(double x, double y)
-	{
-		delta = { x, y };
-	}
 
 	void setAlpha(double a)
 	{
@@ -1795,6 +1801,10 @@ inline void sector_t::SetColor(PalEntry pe, int desat) { ::SetColor(this, pe, de
 inline void sector_t::SetFade(PalEntry pe) { ::SetFade(this, pe); }
 inline int sector_t::GetFloorLight() const { return ::GetFloorLight(this); }
 inline int sector_t::GetCeilingLight() const { return ::GetCeilingLight(this); }
+inline int sector_t::GetSpriteLight() const 
+{
+	return GetTexture(ceiling) == skyflatnum ? GetCeilingLight() : GetFloorLight();
+}
 inline double sector_t::GetFriction(int plane, double *movefac) const { return ::GetFriction(this, plane, movefac); }
 
 inline void sector_t::CheckExColorFlag()

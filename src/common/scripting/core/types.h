@@ -537,6 +537,7 @@ public:
 	PStruct(FName name, PTypeBase *outer, bool isnative = false);
 
 	bool isNative;
+	bool isOrdered = false;
 	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use these two functions for it.
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;
@@ -612,8 +613,10 @@ extern PSound *TypeSound;
 extern PColor *TypeColor;
 extern PTextureID *TypeTextureID;
 extern PSpriteID *TypeSpriteID;
-extern PStruct *TypeVector2;
-extern PStruct *TypeVector3;
+extern PStruct* TypeVector2;
+extern PStruct* TypeVector3;
+extern PStruct* TypeFVector2;
+extern PStruct* TypeFVector3;
 extern PStruct *TypeColorStruct;
 extern PStruct *TypeStringStruct;
 extern PStatePointer *TypeState;

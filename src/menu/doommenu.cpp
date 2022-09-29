@@ -56,7 +56,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "p_tick.h"
-#include "st_start.h"
+#include "startscreen.h"
 #include "d_main.h"
 #include "i_system.h"
 #include "doommenu.h"
@@ -64,6 +64,8 @@
 #include "gameconfigfile.h"
 #include "d_player.h"
 #include "teaminfo.h"
+#include "i_time.h"
+#include "shiftstate.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
@@ -71,16 +73,17 @@ EXTERN_CVAR(Bool, m_quickexit)
 EXTERN_CVAR(Bool, saveloadconfirmation) // [mxd]
 EXTERN_CVAR(Bool, quicksaverotation)
 EXTERN_CVAR(Bool, show_messages)
+EXTERN_CVAR(Float, hud_scalefactor)
 
 CVAR(Bool, m_simpleoptions, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 typedef void(*hfunc)();
 DMenu* CreateMessageBoxMenu(DMenu* parent, const char* message, int messagemode, bool playsound, FName action = NAME_None, hfunc handler = nullptr);
 bool OkForLocalization(FTextureID texnum, const char* substitute);
-void I_WaitVBL(int count);
 
 
 FNewGameStartup NewGameStartupInfo;
+int LastSkill = -1;
 
 
 bool M_SetSpecialMenu(FName& menu, int param)
@@ -147,6 +150,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 	{
 		// sent from the skill menu for a skill that needs to be confirmed
 		NewGameStartupInfo.Skill = param;
+		LastSkill = param;
 
 		const char *msg = AllSkills[param].MustConfirmText;
 		if (*msg==0) msg = GStrings("NIGHTMARE");
@@ -157,6 +161,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 	case NAME_Startgame:
 		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
 		// Now we can finally start the game. Ugh...
+		LastSkill = param;
 		NewGameStartupInfo.Skill = param;
 		[[fallthrough]];
 	case NAME_StartgameConfirmed:
@@ -501,14 +506,28 @@ EXTERN_CVAR (Int, screenblocks)
 
 CCMD (sizedown)
 {
-	screenblocks = screenblocks - 1;
+	if (shiftState.ShiftPressed())
+	{
+		hud_scalefactor = hud_scalefactor - 0.04f;
+	}
+	else
+	{
+		screenblocks = screenblocks - 1;
+	}
 	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
-	screenblocks = screenblocks + 1;
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	if (shiftState.ShiftPressed())
+	{
+		hud_scalefactor = hud_scalefactor + 0.04f;
+	}
+	else
+	{
+		screenblocks = screenblocks + 1;
+	}
+	S_Sound(CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(reset2defaults)
@@ -1048,7 +1067,7 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 	}
 	if (MenuSkills.Size() == 0) I_Error("No valid skills for menu found. At least one must be defined.");
 
-	int defskill = DefaultSkill;
+	int defskill = LastSkill > -1? LastSkill : DefaultSkill; // use the last selected skill, if available.
 	if ((unsigned int)defskill >= MenuSkills.Size())
 	{
 		defskill = SkillIndices[(MenuSkills.Size() - 1) / 2];

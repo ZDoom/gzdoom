@@ -162,6 +162,7 @@ enum EDemoCommand
 	DEM_NETEVENT,		// 70 String: Event name, Byte: Arg count; each arg is a 4-byte int
 	DEM_MDK,			// 71 String: Damage type
 	DEM_SETINV,			// 72 SetInventory
+	DEM_ENDSCREENJOB,
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

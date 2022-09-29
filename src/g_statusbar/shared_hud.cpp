@@ -65,6 +65,7 @@ CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
 CVAR (Bool,  hud_showweapons,	true, CVAR_ARCHIVE);	// Show weapons collected
 CVAR (Int ,  hud_showammo,		2, CVAR_ARCHIVE);		// Show ammo collected
 CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
+CVAR (Int ,  hud_showtimestat,	0,	    CVAR_ARCHIVE);	// Show time on HUD as statistics widget
 CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 CVAR (Int ,  hud_showlag,		0, CVAR_ARCHIVE);		// Show input latency (maketic - gametic difference)
 
@@ -159,17 +160,32 @@ void DBaseStatusBar::CreateAltHUD()
 //
 //---------------------------------------------------------------------------
 EXTERN_CVAR(Bool, hud_aspectscale)
+EXTERN_CVAR(Bool, hud_oldscale)
+EXTERN_CVAR(Float, hud_scalefactor)
 
 void DBaseStatusBar::DrawAltHUD()
 {
 	player_t * CPlayer = StatusBar->CPlayer;
 
 	players[consoleplayer].inventorytics = 0;
-	int scale = GetUIScale(twod, hud_althudscale);
-	int hudwidth = twod->GetWidth() / scale;
-	int hudheight = hud_aspectscale ? int(twod->GetHeight() / (scale*1.2)) : twod->GetHeight() / scale;
+	int hudwidth;
+	int hudheight;
 
-	IFVM(AltHud, Draw)
+	if (hud_oldscale)
+	{
+		int scale = GetUIScale(twod, hud_althudscale);
+		hudwidth = twod->GetWidth() / scale;
+		hudheight = twod->GetHeight() / scale;
+	}
+	else
+	{
+		hudwidth = int(640 / hud_scalefactor);
+		hudheight = hudwidth * twod->GetHeight() / twod->GetWidth();
+	}
+	if (hud_aspectscale) hudheight = hudheight * 5 / 6;
+
+
+	IFVIRTUALPTRNAME(AltHud, "AltHud", Draw)
 	{
 		VMValue params[] = { AltHud, CPlayer, hudwidth, hudheight };
 		VMCall(func, params, countof(params), nullptr, 0);

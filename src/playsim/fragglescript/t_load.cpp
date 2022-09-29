@@ -315,6 +315,6 @@ void T_AddSpawnedThing(FLevelLocals *Level, AActor * ac)
 	if (Level->FraggleScriptThinker)
 	{
 		auto &SpawnedThings = Level->FraggleScriptThinker->SpawnedThings;
-		SpawnedThings.Push(GC::ReadBarrier(ac));
+		SpawnedThings.Push(MakeObjPtr<AActor*>(ac));
 	}
 }

@@ -23,8 +23,11 @@
 #include "vk_renderstate.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/system/vk_buffer.h"
 #include "vulkan/renderer/vk_renderpass.h"
-#include "vulkan/renderer/vk_renderbuffers.h"
+#include "vulkan/renderer/vk_descriptorset.h"
+#include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
 
 #include "hw_skydome.h"
@@ -39,7 +42,7 @@
 CVAR(Int, vk_submit_size, 1000, 0);
 EXTERN_CVAR(Bool, r_skipmats)
 
-VkRenderState::VkRenderState()
+VkRenderState::VkRenderState(VulkanFrameBuffer* fb) : fb(fb), mStreamBufferWriter(fb), mMatrixBufferWriter(fb)
 {
 	Reset();
 }
@@ -182,7 +185,7 @@ void VkRenderState::Apply(int dt)
 	mApplyCount++;
 	if (mApplyCount >= vk_submit_size)
 	{
-		GetVulkanFrameBuffer()->FlushCommands(false);
+		fb->GetCommands()->FlushCommands(false);
 		mApplyCount = 0;
 	}
 
@@ -195,7 +198,7 @@ void VkRenderState::Apply(int dt)
 	ApplyDepthBias();
 	ApplyPushConstants();
 	ApplyVertexBuffers();
-	ApplyDynamicSet();
+	ApplyHWBufferSet();
 	ApplyMaterial();
 	mNeedApply = false;
 
@@ -216,7 +219,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	// Find a pipeline that matches our state
 	VkPipelineKey pipelineKey;
 	pipelineKey.DrawType = dt;
-	pipelineKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
+	pipelineKey.VertexFormat = static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	pipelineKey.RenderStyle = mRenderStyle;
 	pipelineKey.DepthTest = mDepthTest;
 	pipelineKey.DepthWrite = mDepthTest && mDepthWrite;
@@ -251,7 +254,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (!inRenderPass)
 	{
-		mCommandBuffer = GetVulkanFrameBuffer()->GetDrawCommands();
+		mCommandBuffer = fb->GetCommands()->GetDrawCommands();
 		mScissorChanged = true;
 		mViewportChanged = true;
 		mStencilRefChanged = true;
@@ -333,10 +336,9 @@ void VkRenderState::ApplyViewport()
 
 void VkRenderState::ApplyStreamData()
 {
-	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
 
-	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
+	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->Source())
 		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->GetShaderSpeed() / 1000.);
@@ -391,7 +393,6 @@ void VkRenderState::ApplyPushConstants()
 	mPushConstants.uLightIndex = mLightIndex;
 	mPushConstants.uDataIndex = mStreamBufferWriter.DataIndex();
 
-	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
 	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 }
@@ -409,8 +410,8 @@ void VkRenderState::ApplyVertexBuffers()
 {
 	if ((mVertexBuffer != mLastVertexBuffer || mVertexOffsets[0] != mLastVertexOffsets[0] || mVertexOffsets[1] != mLastVertexOffsets[1]) && mVertexBuffer)
 	{
-		auto vkbuf = static_cast<VKVertexBuffer*>(mVertexBuffer);
-		const VkVertexFormat *format = GetVulkanFrameBuffer()->GetRenderPassManager()->GetVertexFormat(vkbuf->VertexFormat);
+		auto vkbuf = static_cast<VkHardwareVertexBuffer*>(mVertexBuffer);
+		const VkVertexFormat *format = fb->GetRenderPassManager()->GetVertexFormat(vkbuf->VertexFormat);
 		VkBuffer vertexBuffers[2] = { vkbuf->mBuffer->buffer, vkbuf->mBuffer->buffer };
 		VkDeviceSize offsets[] = { mVertexOffsets[0] * format->Stride, mVertexOffsets[1] * format->Stride };
 		mCommandBuffer->bindVertexBuffers(0, 2, vertexBuffers, offsets);
@@ -421,7 +422,7 @@ void VkRenderState::ApplyVertexBuffers()
 
 	if (mIndexBuffer != mLastIndexBuffer && mIndexBuffer)
 	{
-		mCommandBuffer->bindIndexBuffer(static_cast<VKIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+		mCommandBuffer->bindIndexBuffer(static_cast<VkHardwareIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
 		mLastIndexBuffer = mIndexBuffer;
 	}
 }
@@ -430,29 +431,31 @@ void VkRenderState::ApplyMaterial()
 {
 	if (mMaterial.mChanged)
 	{
-		auto fb = GetVulkanFrameBuffer();
 		auto passManager = fb->GetRenderPassManager();
+		auto descriptors = fb->GetDescriptorSetManager();
 
 		if (mMaterial.mMaterial && mMaterial.mMaterial->Source()->isHardwareCanvas()) static_cast<FCanvasTexture*>(mMaterial.mMaterial->Source()->GetTexture())->NeedUpdate();
 
-		VulkanDescriptorSet* descriptorset = mMaterial.mMaterial ? static_cast<VkMaterial*>(mMaterial.mMaterial)->GetDescriptorSet(mMaterial) : passManager->GetNullTextureDescriptorSet();
+		VulkanDescriptorSet* descriptorset = mMaterial.mMaterial ? static_cast<VkMaterial*>(mMaterial.mMaterial)->GetDescriptorSet(mMaterial) : descriptors->GetNullTextureDescriptorSet();
 
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptorset);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, fb->GetRenderPassManager()->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 2, descriptorset);
 		mMaterial.mChanged = false;
 	}
 }
 
-void VkRenderState::ApplyDynamicSet()
+void VkRenderState::ApplyHWBufferSet()
 {
-	auto fb = GetVulkanFrameBuffer();
 	uint32_t matrixOffset = mMatrixBufferWriter.Offset();
 	uint32_t streamDataOffset = mStreamBufferWriter.StreamDataOffset();
 	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset)
 	{
 		auto passManager = fb->GetRenderPassManager();
+		auto descriptors = fb->GetDescriptorSetManager();
 
 		uint32_t offsets[3] = { mViewpointOffset, matrixOffset, streamDataOffset };
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, passManager->DynamicSet.get(), 3, offsets);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetHWBufferDescriptorSet(), 3, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastMatricesOffset = matrixOffset;
@@ -462,7 +465,7 @@ void VkRenderState::ApplyDynamicSet()
 
 void VkRenderState::WaitForStreamBuffers()
 {
-	GetVulkanFrameBuffer()->WaitForCommands(false);
+	fb->WaitForCommands(false);
 	mApplyCount = 0;
 	mStreamBufferWriter.Reset();
 	mMatrixBufferWriter.Reset();
@@ -528,8 +531,6 @@ void VkRenderState::SetRenderTarget(VkTextureImage *image, VulkanImageView *dept
 
 void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 {
-	auto fb = GetVulkanFrameBuffer();
-
 	VkRenderPassKey key = {};
 	key.DrawBufferFormat = mRenderTarget.Format;
 	key.Samples = mRenderTarget.Samples;
@@ -543,17 +544,17 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 	{
 		auto buffers = fb->GetBuffers();
 		FramebufferBuilder builder;
-		builder.setRenderPass(mPassSetup->GetRenderPass(0));
-		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
-		builder.addAttachment(mRenderTarget.Image->View.get());
+		builder.RenderPass(mPassSetup->GetRenderPass(0));
+		builder.Size(mRenderTarget.Width, mRenderTarget.Height);
+		builder.AddAttachment(mRenderTarget.Image->View.get());
 		if (key.DrawBuffers > 1)
-			builder.addAttachment(buffers->SceneFog.View.get());
+			builder.AddAttachment(buffers->SceneFog.View.get());
 		if (key.DrawBuffers > 2)
-			builder.addAttachment(buffers->SceneNormal.View.get());
+			builder.AddAttachment(buffers->SceneNormal.View.get());
 		if (key.DepthStencil)
-			builder.addAttachment(mRenderTarget.DepthStencil);
-		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
-		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
+			builder.AddAttachment(mRenderTarget.DepthStencil);
+		builder.DebugName("VkRenderPassSetup.Framebuffer");
+		framebuffer = builder.Create(fb->device);
 	}
 
 	// Only clear depth+stencil if the render target actually has that
@@ -583,7 +584,7 @@ void VkRenderStateMolten::Draw(int dt, int index, int count, bool apply)
 	if (dt == DT_TriangleFan)
 	{
 		IIndexBuffer *oldIndexBuffer = mIndexBuffer;
-		mIndexBuffer = GetVulkanFrameBuffer()->FanToTrisIndexBuffer.get();
+		mIndexBuffer = fb->GetBufferManager()->FanToTrisIndexBuffer.get();
 
 		if (apply || mNeedApply)
 			Apply(DT_Triangles);

@@ -911,10 +911,10 @@ bool MapLoader::LoadSegs (MapData * map)
 			// errors _can_ cause firelines.
 
 			DAngle ptp_angle = (li->v2->fPos() - li->v1->fPos()).Angle();
-			DAngle seg_angle = AngleToFloat(segangle << 16);
+			DAngle seg_angle = DAngle::fromBam(segangle << 16);
 			DAngle delta_angle = absangle(ptp_angle, seg_angle);
 
-			if (delta_angle >= 1.)
+			if (delta_angle >= DAngle::fromDeg(1.))
 			{
 				double dis = (li->v2->fPos() - li->v1->fPos()).Length();
 				DVector2 delta = seg_angle.ToVector(dis);
@@ -1996,7 +1996,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 			if (sidetemp[right].b.next != NO_SIDE)
 			{
 				int bestright = right;	// Shut up, GCC
-				DAngle bestang = 360.;
+				DAngle bestang = DAngle::fromDeg(360.);
 				line_t *leftline, *rightline;
 				DAngle ang1, ang2, ang;
 
@@ -2004,7 +2004,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 				ang1 = leftline->Delta().Angle();
 				if (!sidetemp[i].b.lineside)
 				{
-					ang1 += 180;
+					ang1 += DAngle::fromDeg(180);
 				}
 
 				while (right != NO_SIDE)
@@ -2017,12 +2017,12 @@ void MapLoader::LoopSidedefs (bool firstloop)
 							ang2 = rightline->Delta().Angle();
 							if (sidetemp[right].b.lineside)
 							{
-								ang2 += 180;
+								ang2 += DAngle::fromDeg(180);
 							}
 
 							ang = (ang2 - ang1).Normalized360();
 
-							if (ang != 0 && ang <= bestang)
+							if (ang != nullAngle && ang <= bestang)
 							{
 								bestright = right;
 								bestang = ang;
@@ -3249,7 +3249,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	CreateVBO(screen->mVertexData, Level->sectors);
 
-	screen->InitLightmap(Level);
+	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
 
 	for (auto &sec : Level->sectors)
 	{
@@ -3266,6 +3266,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 
 	Level->aabbTree = new DoomLevelAABBTree(Level);
+	Level->levelMesh = new DoomLevelMesh(*Level);
 }
 
 //==========================================================================

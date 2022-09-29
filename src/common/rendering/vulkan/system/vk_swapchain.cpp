@@ -41,12 +41,11 @@ VulkanSwapChain::~VulkanSwapChain()
 	ReleaseResources();
 }
 
-uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *semaphore, VulkanFence *fence)
+uint32_t VulkanSwapChain::AcquireImage(int width, int height, bool vsync, VulkanSemaphore *semaphore, VulkanFence *fence)
 {
-	auto vsync = static_cast<VulkanFrameBuffer*>(screen)->cur_vsync;
 	if (lastSwapWidth != width || lastSwapHeight != height || lastVsync != vsync || lastHdr != vk_hdr || !swapChain)
 	{
-		Recreate();
+		Recreate(vsync);
 		lastSwapWidth = width;
 		lastSwapHeight = height;
 		lastVsync = vsync;
@@ -77,7 +76,7 @@ uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *s
 		}
 		else if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
-			Recreate();
+			Recreate(vsync);
 		}
 		else if (result == VK_NOT_READY || result == VK_TIMEOUT)
 		{
@@ -133,13 +132,13 @@ void VulkanSwapChain::QueuePresent(uint32_t imageIndex, VulkanSemaphore *semapho
 	}
 }
 
-void VulkanSwapChain::Recreate()
+void VulkanSwapChain::Recreate(bool vsync)
 {
 	ReleaseViews();
 	swapChainImages.clear();
 
 	VkSwapchainKHR oldSwapChain = swapChain;
-	CreateSwapChain(oldSwapChain);
+	CreateSwapChain(vsync, oldSwapChain);
 	if (oldSwapChain)
 		vkDestroySwapchainKHR(device->device, oldSwapChain, nullptr);
 
@@ -150,10 +149,10 @@ void VulkanSwapChain::Recreate()
 	}
 }
 
-bool VulkanSwapChain::CreateSwapChain(VkSwapchainKHR oldSwapChain)
+bool VulkanSwapChain::CreateSwapChain(bool vsync, VkSwapchainKHR oldSwapChain)
 {
 	SelectFormat();
-	SelectPresentMode();
+	SelectPresentMode(vsync);
 
 	int width, height;
 	I_GetVulkanDrawableSize(&width, &height);
@@ -301,7 +300,7 @@ void VulkanSwapChain::SelectFormat()
 	swapChainFormat = surfaceFormats.front();
 }
 
-void VulkanSwapChain::SelectPresentMode()
+void VulkanSwapChain::SelectPresentMode(bool vsync)
 {
 	std::vector<VkPresentModeKHR> presentModes = GetPresentModes();
 
@@ -309,7 +308,6 @@ void VulkanSwapChain::SelectPresentMode()
 		VulkanError("No surface present modes supported");
 
 	swapChainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-	auto vsync = static_cast<VulkanFrameBuffer*>(screen)->cur_vsync;
 	if (vsync)
 	{
 		bool supportsFifoRelaxed = std::find(presentModes.begin(), presentModes.end(), VK_PRESENT_MODE_FIFO_RELAXED_KHR) != presentModes.end();

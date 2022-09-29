@@ -50,7 +50,7 @@ struct secplane_t;
 struct FCheckPosition;
 struct FTranslatedLineTarget;
 struct FLinePortal;
-class FViewPosition;
+class DViewPosition;
 
 #include <stdlib.h>
 
@@ -93,7 +93,7 @@ void	P_PredictionLerpReset();
 #define SPF_WEAPONFULLYUP	2	// spawn with weapon already raised
 
 int P_FaceMobj (AActor *source, AActor *target, DAngle *delta);
-bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise = false, bool usecurspeed=false);
+bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise = false, bool usecurspeed=false);
 
 enum EPuffFlags
 {
@@ -299,7 +299,7 @@ void	P_FindFloorCeiling (AActor *actor, int flags=0);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, double amt, int floorOrCeil, bool isreset, bool instant = false);
 
-DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget = NULL, DAngle vrange = 0., int flags = 0, AActor *target = NULL, AActor *friender = NULL);
+DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget = NULL, DAngle vrange = nullAngle, int flags = 0, AActor *target = NULL, AActor *friender = NULL);
 
 enum	// P_AimLineAttack flags
 {
@@ -310,6 +310,7 @@ enum	// P_AimLineAttack flags
 	ALF_NOFRIENDS = 16,
 	ALF_PORTALRESTRICT = 32,	// only work through portals with a global offset (to be used for stuff that cannot remember the calculated FTranslatedLineTarget info)
 	ALF_NOWEAPONCHECK = 64,		// ignore NOAUTOAIM flag on a player's weapon.
+	ALF_IGNORENOAUTOAIM = 128,	// for informative stuff like 'linetarget' CCMD.
 };
 
 enum	// P_LineAttack flags
@@ -362,8 +363,8 @@ struct FRailParams
 	double maxdiff = 0;
 	int flags = 0;
 	PClassActor *puff = nullptr;
-	DAngle angleoffset = 0.;
-	DAngle pitchoffset = 0.;
+	DAngle angleoffset = nullAngle;
+	DAngle pitchoffset = nullAngle;
 	double distance = 8192;
 	int duration = 0;
 	double sparsity = 1.0;
@@ -394,7 +395,7 @@ void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 void	P_AimCamera (AActor *t1, DVector3 &, DAngle &, sector_t *&sec, bool &unlinked);
 
 // [MC] Aiming for ViewPos
-void	P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &, sector_t *&sec, bool &unlinked, FViewPosition *VP);
+void	P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &, sector_t *&sec, bool &unlinked, DViewPosition *VP);
 
 
 // [RH] Means of death
@@ -431,7 +432,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move);
 // P_INTER
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher);
-int  P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags=0, DAngle angle = 0.);
+int  P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags=0, DAngle angle = nullAngle);
 void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period, FName type);
 bool P_GiveBody (AActor *actor, int num, int max=0);
 bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);

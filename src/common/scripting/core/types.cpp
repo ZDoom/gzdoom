@@ -61,6 +61,8 @@ PPointer *TypeFont;
 PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
+PStruct* TypeFVector2;
+PStruct* TypeFVector3;
 PStruct *TypeColorStruct;
 PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
@@ -332,6 +334,7 @@ void PType::StaticInit()
 	TypeVector2->moveOp = OP_MOVEV2;
 	TypeVector2->RegType = REGT_FLOAT;
 	TypeVector2->RegCount = 2;
+	TypeVector2->isOrdered = true;
 
 	TypeVector3 = new PStruct(NAME_Vector3, nullptr);
 	TypeVector3->AddField(NAME_X, TypeFloat64);
@@ -345,8 +348,33 @@ void PType::StaticInit()
 	TypeVector3->moveOp = OP_MOVEV3;
 	TypeVector3->RegType = REGT_FLOAT;
 	TypeVector3->RegCount = 3;
+	TypeVector3->isOrdered = true;
 
 
+	TypeFVector2 = new PStruct(NAME_FVector2, nullptr);
+	TypeFVector2->AddField(NAME_X, TypeFloat32);
+	TypeFVector2->AddField(NAME_Y, TypeFloat32);
+	TypeTable.AddType(TypeFVector2, NAME_Struct);
+	TypeFVector2->loadOp = OP_LFV2;
+	TypeFVector2->storeOp = OP_SFV2;
+	TypeFVector2->moveOp = OP_MOVEV2;
+	TypeFVector2->RegType = REGT_FLOAT;
+	TypeFVector2->RegCount = 2;
+	TypeFVector2->isOrdered = true;
+
+	TypeFVector3 = new PStruct(NAME_FVector3, nullptr);
+	TypeFVector3->AddField(NAME_X, TypeFloat32);
+	TypeFVector3->AddField(NAME_Y, TypeFloat32);
+	TypeFVector3->AddField(NAME_Z, TypeFloat32);
+	// allow accessing xy as a vector2
+	TypeFVector3->Symbols.AddSymbol(Create<PField>(NAME_XY, TypeFVector2, VARF_Transient, 0));
+	TypeTable.AddType(TypeFVector3, NAME_Struct);
+	TypeFVector3->loadOp = OP_LFV3;
+	TypeFVector3->storeOp = OP_SFV3;
+	TypeFVector3->moveOp = OP_MOVEV3;
+	TypeFVector3->RegType = REGT_FLOAT;
+	TypeFVector3->RegCount = 3;
+	TypeFVector3->isOrdered = true;
 
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_sByte, TypeSInt8));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Byte, TypeUInt8));
@@ -366,6 +394,8 @@ void PType::StaticInit()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_State, TypeState));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector2, TypeVector2));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector3, TypeVector3));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector2, TypeFVector2));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector3, TypeFVector3));
 }
 
 
@@ -888,7 +918,7 @@ void PFloat::SetValue(void *addr, double val)
 
 int PFloat::GetValueInt(void *addr) const
 {
-	return xs_ToInt(GetValueFloat(addr));
+	return int(GetValueFloat(addr));
 }
 
 //==========================================================================
@@ -2321,6 +2351,29 @@ PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
 PPrototype::PPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes)
 : ArgumentTypes(argtypes), ReturnTypes(rettypes)
 {
+	for (auto& type: ArgumentTypes)
+	{
+		if (type == TypeFVector2)
+		{
+			type = TypeVector2;
+		}
+		else if (type == TypeFVector3)
+		{
+			type = TypeVector3;
+		}
+	}
+
+	for (auto& type : ReturnTypes)
+	{
+		if (type == TypeFVector2)
+		{
+			type = TypeVector2;
+		}
+		else if (type == TypeFVector3)
+		{
+			type = TypeVector3;
+		}
+	}
 }
 
 //==========================================================================

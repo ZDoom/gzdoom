@@ -208,7 +208,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	}
 #endif
 
-	if (flags & HWWall::HWF_CLAMPY && (type == RENDERWALL_M2S || type == RENDERWALL_M2SNF))
+	if (flags & HWWall::HWF_CLAMPY && (type == RENDERWALL_M2S || type == RENDERWALL_M2SNF) && !texture->isWarped())
 	{
 		state.SetTextureClamp(true);
 	}
@@ -420,7 +420,7 @@ void HWWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 	// Iterate through all dynamic lights which touch this wall and render them
 	while (node)
 	{
-		if (node->lightsource->IsActive())
+		if (node->lightsource->IsActive() && !node->lightsource->DontLightMap())
 		{
 			iter_dlight++;
 

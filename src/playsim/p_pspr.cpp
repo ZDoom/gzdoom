@@ -173,7 +173,6 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   Tics(0),
   Translation(0),
   Flags(0),
-  Caller(caller),
   Owner(owner),
   State(nullptr),
   Sprite(0),
@@ -181,8 +180,9 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   ID(id),
   processPending(true)
 {
+	Caller = caller;
 	baseScale = {1.0, 1.2};
-	rotation = 0.;
+	rotation = nullAngle;
 	scale = {1.0, 1.0};
 	pivot = {0.0, 0.0};
 	for (int i = 0; i < 4; i++)
@@ -316,7 +316,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		newcaller = ReadyWeapon;
 	}
 
-	if (newcaller == nullptr) return nullptr; // Error case was not handled properly. This function cannot give a guarantee to always succeed!
+	if (newcaller == nullptr || layer == PSP_CALLERID) return nullptr; // Error case was not handled properly. This function cannot give a guarantee to always succeed!
 	
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
@@ -1198,13 +1198,14 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	DAngle pitch;
 	FTranslatedLineTarget scratch;
 
+	aimflags &= ~ALF_IGNORENOAUTOAIM; // just to be safe.
 	if (pLineTarget == NULL) pLineTarget = &scratch;
 	// see which target is to be aimed at
 	i = 2;
 	do
 	{
-		an = mo->Angles.Yaw + angdiff[i];
-		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
+		an = mo->Angles.Yaw + DAngle::fromDeg(angdiff[i]);
+		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, nullAngle, aimflags);
 
 		if (mo->player != nullptr &&
 			mo->Level->IsFreelookAllowed() &&
@@ -1222,7 +1223,7 @@ DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(t, FTranslatedLineTarget);
 	PARAM_INT(aimflags);
-	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
+	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees());
 }
 
 //------------------------------------------------------------------------

@@ -313,6 +313,12 @@ UNSAFE_CCMD (writeini)
 	}
 }
 
+CCMD(openconfig)
+{
+	M_SaveDefaults(nullptr);
+	I_OpenShellFolder(ExtractFilePath(GameConfig->GetPathName()));
+}
+
 //
 // M_LoadDefaults
 //
@@ -655,5 +661,34 @@ UNSAFE_CCMD (screenshot)
 		G_ScreenShot (NULL);
 	else
 		G_ScreenShot (argv[1]);
+}
+
+CCMD(openscreenshots)
+{
+	size_t dirlen;
+	FString autoname;
+	autoname = Args->CheckValue("-shotdir");
+	if (autoname.IsEmpty())
+	{
+		autoname = screenshot_dir;
+	}
+	dirlen = autoname.Len();
+	if (dirlen == 0)
+	{
+		autoname = M_GetScreenshotsPath();
+		dirlen = autoname.Len();
+	}
+	if (dirlen > 0)
+	{
+		if (autoname[dirlen-1] != '/' && autoname[dirlen-1] != '\\')
+		{
+			autoname += '/';
+		}
+	}
+	autoname = NicePath(autoname);
+
+	CreatePath(autoname);
+
+	I_OpenShellFolder(autoname.GetChars());
 }
 

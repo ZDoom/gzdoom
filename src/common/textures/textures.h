@@ -302,6 +302,8 @@ public:
 	friend class FTextureManager;
 };
 
+class FCanvas;
+extern TArray<FCanvas*> AllCanvases;
 
 // A texture that can be drawn to.
 
@@ -317,10 +319,22 @@ public:
 		aspectRatio = (float)width / height;
 	}
 
+	~FCanvasTexture()
+	{
+		if (Canvas)
+		{
+			AllCanvases.Delete(AllCanvases.Find(Canvas));
+			Canvas = nullptr;
+		}
+	}
+
 	void NeedUpdate() { bNeedsUpdate = true; }
 	void SetUpdated(bool rendertype) { bNeedsUpdate = false; bFirstUpdate = false; bLastUpdateType = rendertype; }
+	bool CheckNeedsUpdate() const { return bNeedsUpdate; }
 
 	void SetAspectRatio(double aspectScale, bool useTextureRatio) { aspectRatio = (float)aspectScale * (useTextureRatio? ((float)Width / Height) : 1); }
+
+	FCanvas* Canvas = nullptr;
 
 protected:
 

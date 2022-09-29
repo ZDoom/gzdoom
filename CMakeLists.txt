@@ -139,12 +139,12 @@ else()
 endif()
 
 if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
-	set( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE TRUE )
+	set( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE TRUE )
 else()
-	set( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE FALSE )
+	set( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE FALSE )
 endif()
 
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 
 	if( CMAKE_CXX_STANDARD )
@@ -157,7 +157,7 @@ endif()
 
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
 elseif( MSVC )
 	set( ZD_FASTMATH_FLAG "/fp:fast" )
@@ -189,13 +189,14 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( JPEG )
+find_package( VPX )
 find_package( ZLIB )
 
 include( TargetArch )
 
-target_architecture(ZDOOM_TARGET_ARCH)
+target_architecture(TARGET_ARCHITECTURE)
 
-if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
+if( ${TARGET_ARCHITECTURE} MATCHES "x86_64" )
 	set( HAVE_VM_JIT ON )
 endif()
 
@@ -217,7 +218,7 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
-	set( ALL_C_FLAGS "/GF /Gy /permissive- /DHAVE_SOFTPOLY" )
+	set( ALL_C_FLAGS "/GF /Gy /permissive-" )
 
 	if ( HAVE_VULKAN )
 		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_VULKAN" )
@@ -259,7 +260,7 @@ if( MSVC )
 	string(REPLACE "/MDd " " " CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} )
 else()
 	set( REL_LINKER_FLAGS "" )
-	set( ALL_C_FLAGS "-ffp-contract=off -DHAVE_SOFTPOLY" )
+	set( ALL_C_FLAGS "-ffp-contract=off" )
 
 	if ( HAVE_VULKAN )
 		set( ALL_C_FLAGS "${ALL_C_FLAGS} -DHAVE_VULKAN" )
@@ -328,7 +329,7 @@ if (HAVE_VULKAN)
 	add_subdirectory( libraries/glslang/OGLCompilersDLL )
 endif()
 
-add_subdirectory( libraries/discordrpc )
+add_subdirectory( libraries/discordrpc EXCLUDE_FROM_ALL )
 set( DRPC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/discordrpc/include" )
 set( DRPC_LIBRARIES discord-rpc )
 set( DRPC_LIBRARY discord-rpc )

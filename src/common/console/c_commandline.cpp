@@ -57,17 +57,19 @@
 //							\c becomes just TEXTCOLOR_ESCAPE
 //   $<cvar> is replaced by the contents of <cvar>
 
-static long ParseCommandLine(const char* args, int* argc, char** argv, bool no_escapes)
+static size_t ParseCommandLine(const char* args, int* argc, char** argv, bool no_escapes)
 {
 	int count;
+	char* buffstart;
 	char* buffplace;
 
 	count = 0;
-	buffplace = NULL;
+	buffstart = NULL;
 	if (argv != NULL)
 	{
-		buffplace = argv[0];
+		buffstart = argv[0];
 	}
+	buffplace = buffstart;
 
 	for (;;)
 	{
@@ -154,7 +156,7 @@ static long ParseCommandLine(const char* args, int* argc, char** argv, bool no_e
 	{
 		*argc = count;
 	}
-	return (long)(buffplace - (char*)0);
+	return (buffplace - buffstart);
 }
 
 FCommandLine::FCommandLine (const char *commandline, bool no_escapes)

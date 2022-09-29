@@ -56,7 +56,6 @@ class FTTYStartupScreen : public FStartupScreen
 		void Progress();
 		void NetInit(const char *message, int num_players);
 		void NetProgress(int count);
-		void NetMessage(const char *format, ...);	// cover for printf
 		void NetDone();
 		bool NetLoop(bool (*timer_callback)(void *), void *userdata);
 	protected:
@@ -70,22 +69,6 @@ class FTTYStartupScreen : public FStartupScreen
 
 extern void RedrawProgressBar(int CurPos, int MaxPos);
 extern void CleanProgressBar();
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-FStartupScreen *StartScreen;
-
-CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0) self = 0;
-	else if (self > 2) self=2;
-}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -102,7 +85,7 @@ static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
 //
 //==========================================================================
 
-FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
+FStartupScreen *FStartupScreen::CreateInstance(int max_progress, bool)
 {
 	return new FTTYStartupScreen(max_progress);
 }
@@ -216,27 +199,6 @@ void FTTYStartupScreen::NetDone()
 
 //===========================================================================
 //
-// FTTYStartupScreen :: NetMessage
-//
-// Call this between NetInit() and NetDone() instead of Printf() to
-// display messages, because the progress meter is mixed in the same output
-// stream as normal messages.
-//
-//===========================================================================
-
-void FTTYStartupScreen::NetMessage(const char *format, ...)
-{
-	FString str;
-	va_list argptr;
-
-	va_start (argptr, format);
-	str.VFormat (format, argptr);
-	va_end (argptr);
-	fprintf (stderr, "\r%-40s\n", str.GetChars());
-}
-
-//===========================================================================
-//
 // FTTYStartupScreen :: NetProgress
 //
 // Sets the network progress meter. If count is 0, it gets bumped by 1.
@@ -331,7 +293,3 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 	}
 }
 
-void ST_Endoom()
-{
-	throw CExitEvent(0);
-}

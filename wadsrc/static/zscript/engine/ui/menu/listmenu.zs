@@ -120,7 +120,7 @@ class ListMenu : Menu
 			mDesc.mItems[i].OnMenuCreated();
 		}
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -136,7 +136,7 @@ class ListMenu : Menu
 		}
 		return NULL;
 	}
-	
+
 
 	//=============================================================================
 	//
@@ -243,7 +243,7 @@ class ListMenu : Menu
 			int h = mDesc.DisplayHeight();
 			double fx, fy, fw, fh;
 			[fx, fy, fw, fh] = Screen.GetFullscreenRect(w, h, FSMode_ScaleToFit43);
-			
+
 			x = int((x - fx) * w / fw);
 			y = int((y - fy) * h / fh);
 		}
@@ -311,7 +311,7 @@ class ListMenu : Menu
 		}
 		Super.Drawer();
 	}
-	
+
 	//=============================================================================
 	//
 	//

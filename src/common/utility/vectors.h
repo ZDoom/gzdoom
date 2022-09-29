@@ -141,11 +141,13 @@ struct TVector2
 	}
 
 	// Scalar addition
+#if 0
 	TVector2 &operator+= (double scalar)
 	{
 		X += scalar, Y += scalar;
 		return *this;
 	}
+#endif
 
 	friend TVector2 operator+ (const TVector2 &v, vec_t scalar)
 	{
@@ -341,6 +343,11 @@ struct TVector3
 		return X == 0 && Y == 0 && Z == 0;
 	}
 
+	TVector3 plusZ(double z)
+	{
+		return { X, Y, Z + z };
+	}
+
 	TVector3 &operator= (const TVector3 &other) = default;
 
 	// Access X and Y and Z as an array
@@ -385,11 +392,13 @@ struct TVector3
 	}
 
 	// Scalar addition
+#if 0
 	TVector3 &operator+= (vec_t scalar)
 	{
 		X += scalar, Y += scalar, Z += scalar;
 		return *this;
 	}
+#endif
 
 	friend TVector3 operator+ (const TVector3 &v, vec_t scalar)
 	{
@@ -915,6 +924,7 @@ struct TMatrix3x3
 
 	TMatrix3x3() = default;
 	TMatrix3x3(const TMatrix3x3 &other) = default;
+	TMatrix3x3& operator=(const TMatrix3x3& other) = default;
 
 	TMatrix3x3(const Vector3 &row1, const Vector3 &row2, const Vector3 &row3)
 	{
@@ -1134,7 +1144,7 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 template<class vec_t>
 struct TAngle
 {
-	vec_t Degrees;
+	vec_t Degrees_;
 
 	// This is to catch any accidental attempt to assign an angle_t to this type. Any explicit exception will require a type cast.
 	TAngle(int) = delete;
@@ -1148,180 +1158,146 @@ struct TAngle
 
 	TAngle() = default;
 
-	TAngle (vec_t amt)
-		: Degrees(amt)
+private:
+	// Both constructors are needed to avoid unnecessary conversions when assigning to FAngle.
+	constexpr TAngle (float amt)
+		: Degrees_((vec_t)amt)
 	{
+	}
+	constexpr TAngle (double amt)
+		: Degrees_((vec_t)amt)
+	{
+	}
+public:
+
+	vec_t& Degrees__() { return Degrees_; }
+	
+	static constexpr TAngle fromDeg(float deg)
+	{
+		return TAngle(deg);
+	}
+	static constexpr TAngle fromDeg(double deg)
+	{
+		return TAngle(deg);
+	}
+	static constexpr TAngle fromDeg(int deg)
+	{
+		return TAngle((vec_t)deg);
+	}
+	static constexpr TAngle fromDeg(unsigned deg)
+	{
+		return TAngle((vec_t)deg);
+	}
+
+	static constexpr TAngle fromRad(float rad)
+	{
+		return TAngle(float(rad * (180.0f / pi::pif())));
+	}
+	static constexpr TAngle fromRad(double rad)
+	{
+		return TAngle(double(rad * (180.0 / pi::pi())));
+	}
+
+	static constexpr TAngle fromBam(int f)
+	{
+		return TAngle(f * (90. / 0x40000000));
+	}
+	static constexpr TAngle fromBam(unsigned f)
+	{
+		return TAngle(f * (90. / 0x40000000));
+	}
+
+	static constexpr TAngle fromBuild(int bang)
+	{
+		return TAngle(bang * (90. / 512));
+	}
+
+	static constexpr TAngle fromQ16(int bang)
+	{
+		return TAngle(bang * (90. / 16384));
 	}
 
 	TAngle(const TAngle &other) = default;
 	TAngle &operator= (const TAngle &other) = default;
 
-	TAngle &operator= (double other)
+	constexpr TAngle operator- () const
 	{
-		Degrees = (decltype(Degrees))other;
+		return TAngle(-Degrees_);
+	}
+
+	constexpr TAngle &operator+= (TAngle other)
+	{
+		Degrees_ += other.Degrees_;
 		return *this;
 	}
 
-	// intentionally disabled so that common math functions cannot be accidentally called with a TAngle.
-	//operator vec_t() const { return Degrees; }
-
-	TAngle operator- () const
+	constexpr TAngle &operator-= (TAngle other)
 	{
-		return TAngle(-Degrees);
-	}
-
-	TAngle &operator+= (TAngle other)
-	{
-		Degrees += other.Degrees;
+		Degrees_ -= other.Degrees_;
 		return *this;
 	}
 
-	TAngle &operator-= (TAngle other)
+	constexpr TAngle operator+ (TAngle other) const
 	{
-		Degrees -= other.Degrees;
+		return Degrees_ + other.Degrees_;
+	}
+
+	constexpr TAngle operator- (TAngle other) const
+	{
+		return Degrees_ - other.Degrees_;
+	}
+
+	constexpr TAngle &operator*= (vec_t other)
+	{
+		Degrees_ = Degrees_ * other;
 		return *this;
 	}
 
-	TAngle &operator*= (TAngle other)
+	constexpr TAngle &operator/= (vec_t other)
 	{
-		Degrees *= other.Degrees;
+		Degrees_ = Degrees_ / other;
 		return *this;
 	}
 
-	TAngle &operator/= (TAngle other)
+	constexpr TAngle operator* (vec_t other) const
 	{
-		Degrees /= other.Degrees;
-		return *this;
+		return Degrees_ * other;
 	}
 
-	TAngle operator+ (TAngle other) const
+	constexpr TAngle operator/ (vec_t other) const
 	{
-		return Degrees + other.Degrees;
-	}
-
-	TAngle operator- (TAngle other) const
-	{
-		return Degrees - other.Degrees;
-	}
-
-	TAngle operator* (TAngle other) const
-	{
-		return Degrees * other.Degrees;
-	}
-
-	TAngle operator/ (TAngle other) const
-	{
-		return Degrees / other.Degrees;
-	}
-
-	TAngle &operator+= (vec_t other)
-	{
-		Degrees = Degrees + other;
-		return *this;
-	}
-
-	TAngle &operator-= (vec_t other)
-	{
-		Degrees = Degrees - other;
-		return *this;
-	}
-
-	TAngle &operator*= (vec_t other)
-	{
-		Degrees = Degrees * other;
-		return *this;
-	}
-
-	TAngle &operator/= (vec_t other)
-	{
-		Degrees = Degrees / other;
-		return *this;
-	}
-
-	TAngle operator+ (vec_t other) const
-	{
-		return Degrees + other;
-	}
-
-	TAngle operator- (vec_t other) const
-	{
-		return Degrees - other;
-	}
-
-	friend TAngle operator- (vec_t o1, TAngle o2)
-	{
-		return TAngle(o1 - o2.Degrees);
-	}
-
-	TAngle operator* (vec_t other) const
-	{
-		return Degrees * other;
-	}
-
-	TAngle operator/ (vec_t other) const
-	{
-		return Degrees / other;
+		return Degrees_ / other;
 	}
 
 	// Should the comparisons consider an epsilon value?
-	bool operator< (TAngle other) const
+	constexpr bool operator< (TAngle other) const
 	{
-		return Degrees < other.Degrees;
+		return Degrees_ < other.Degrees_;
 	}
 
-	bool operator> (TAngle other) const
+	constexpr bool operator> (TAngle other) const
 	{
-		return Degrees > other.Degrees;
+		return Degrees_ > other.Degrees_;
 	}
 
-	bool operator<= (TAngle other) const
+	constexpr bool operator<= (TAngle other) const
 	{
-		return Degrees <= other.Degrees;
+		return Degrees_ <= other.Degrees_;
 	}
 
-	bool operator>= (TAngle other) const
+	constexpr bool operator>= (TAngle other) const
 	{
-		return Degrees >= other.Degrees;
+		return Degrees_ >= other.Degrees_;
 	}
 
-	bool operator== (TAngle other) const
+	constexpr bool operator== (TAngle other) const
 	{
-		return Degrees == other.Degrees;
+		return Degrees_ == other.Degrees_;
 	}
 
-	bool operator!= (TAngle other) const
+	constexpr bool operator!= (TAngle other) const
 	{
-		return Degrees != other.Degrees;
-	}
-
-	bool operator< (vec_t other) const
-	{
-		return Degrees < other;
-	}
-
-	bool operator> (vec_t other) const
-	{
-		return Degrees > other;
-	}
-
-	bool operator<= (vec_t other) const
-	{
-		return Degrees <= other;
-	}
-
-	bool operator>= (vec_t other) const
-	{
-		return Degrees >= other;
-	}
-
-	bool operator== (vec_t other) const
-	{
-		return Degrees == other;
-	}
-
-	bool operator!= (vec_t other) const
-	{
-		return Degrees != other;
+		return Degrees_ != other.Degrees_;
 	}
 
 	// Ensure the angle is between [0.0,360.0) degrees
@@ -1338,14 +1314,29 @@ struct TAngle
 		return (vec_t)(BAM_FACTOR * (signed int)BAMs());
 	}
 
-	vec_t Radians() const
+	constexpr vec_t Radians() const
 	{
-		return vec_t(Degrees * (pi::pi() / 180.0));
+		return vec_t(Degrees_ * (pi::pi() / 180.0));
 	}
 
 	unsigned BAMs() const
 	{
-		return xs_CRoundToInt(Degrees * (0x40000000 / 90.));
+		return xs_CRoundToInt(Degrees_ * (0x40000000 / 90.));
+	}
+
+	constexpr vec_t Degrees() const
+	{
+		return Degrees_;
+	}
+
+	constexpr int Buildang() const
+	{
+		return int(Degrees_ * (512 / 90.0));
+	}
+
+	constexpr int Q16() const
+	{
+		return int(Degrees_ * (16384 / 90.0));
 	}
 
 	TVector2<vec_t> ToVector(vec_t length = 1) const
@@ -1355,12 +1346,12 @@ struct TAngle
 
 	vec_t Cos() const
 	{
-		return vec_t(g_cosdeg(Degrees));
+		return vec_t(g_cosdeg(Degrees_));
 	}
 
 	vec_t Sin() const
 	{
-		return vec_t(g_sindeg(Degrees));
+		return vec_t(g_sindeg(Degrees_));
 	}
 
 	double Tan() const
@@ -1373,40 +1364,22 @@ struct TAngle
 	{
 		return clamp(Tan(), -max, max);
 	}
-
-	static inline TAngle ToDegrees(double rad)
-	{
-		return TAngle(double(rad * (180.0 / pi::pi())));
-	}
-
 };
-
-// Emulates the old floatbob offset table with direct calls to trig functions.
-inline double BobSin(double fb)
-{
-	return TAngle<double>(double(fb * (180.0 / 32))).Sin() * 8;
-}
 
 template<class T>
 inline TAngle<T> fabs (const TAngle<T> &deg)
 {
-	return TAngle<T>(fabs(deg.Degrees));
+	return TAngle<T>::fromDeg(fabs(deg.Degrees()));
+}
+
+template<class T>
+inline TAngle<T> abs (const TAngle<T> &deg)
+{
+	return TAngle<T>::fromDeg(fabs(deg.Degrees()));
 }
 
 template<class T>
 inline TAngle<T> deltaangle(const TAngle<T> &a1, const TAngle<T> &a2)
-{
-	return (a2 - a1).Normalized180();
-}
-
-template<class T>
-inline TAngle<T> deltaangle(const TAngle<T> &a1, double a2)
-{
-	return (a2 - a1).Normalized180();
-}
-
-template<class T>
-inline TAngle<T> deltaangle(double a1, const TAngle<T> &a2)
 {
 	return (a2 - a1).Normalized180();
 }
@@ -1417,27 +1390,21 @@ inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 	return fabs((a1 - a2).Normalized180());
 }
 
-template<class T>
-inline TAngle<T> absangle(const TAngle<T> &a1, double a2)
-{
-	return fabs((a1 - a2).Normalized180());
-}
-
 inline TAngle<double> VecToAngle(double x, double y)
 {
-	return g_atan2(y, x) * (180.0 / pi::pi());
+	return TAngle<double>::fromRad(g_atan2(y, x));
 }
 
 template<class T>
 inline TAngle<T> VecToAngle (const TVector2<T> &vec)
 {
-	return (T)g_atan2(vec.Y, vec.X) * (180.0 / pi::pi());
+	return TAngle<T>::fromRad(g_atan2(vec.Y, vec.X));
 }
 
 template<class T>
 inline TAngle<T> VecToAngle (const TVector3<T> &vec)
 {
-	return (T)g_atan2(vec.Y, vec.X) * (180.0 / pi::pi());
+	return TAngle<T>::fromRad(g_atan2(vec.Y, vec.X));
 }
 
 template<class T>
@@ -1557,14 +1524,14 @@ struct TRotator
 	// Scalar division
 	TRotator &operator/= (const Angle &scalar)
 	{
-		Angle mul(1 / scalar.Degrees);
+		Angle mul(1 / scalar.Degrees_);
 		Pitch *= scalar, Yaw *= scalar, Roll *= scalar;
 		return *this;
 	}
 
 	TRotator operator/ (const Angle &scalar) const
 	{
-		Angle mul(1 / scalar.Degrees);
+		Angle mul(1 / scalar.Degrees_);
 		return TRotator(Pitch * mul, Yaw * mul, Roll * mul);
 	}
 
@@ -1641,6 +1608,8 @@ typedef TRotator<double>		DRotator;
 typedef TMatrix3x3<double>		DMatrix3x3;
 typedef TAngle<double>			DAngle;
 
+constexpr DAngle nullAngle = DAngle::fromDeg(0.);
+constexpr FAngle nullFAngle = FAngle::fromDeg(0.);
 
 class Plane
 {

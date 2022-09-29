@@ -672,7 +672,7 @@ bool FShader::Bind()
 FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType)
 {
 	FString defines;
-	defines += shaderdefines;
+	if (shaderdefines) defines += shaderdefines;
 	// this can't be in the shader code due to ATI strangeness.
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
 	if (passType == GBUFFER_PASS) defines += "#define GBUFFER_PASS\n";
@@ -707,6 +707,20 @@ FShaderManager::FShaderManager()
 		mPassShaders.Push(new FShaderCollection((EPassType)passType));
 }
 
+bool FShaderManager::CompileNextShader()
+{
+	if (mPassShaders[mCompilePass]->CompileNextShader())
+	{
+		mCompilePass++;
+		if (mCompilePass >= MAX_PASS_TYPES)
+		{
+			mCompilePass = -1;
+			return true;
+		}
+	}
+	return false;
+}
+
 FShaderManager::~FShaderManager()
 {
 	glUseProgram(0);
@@ -727,7 +741,7 @@ void FShaderManager::SetActiveShader(FShader *sh)
 
 FShader *FShaderManager::BindEffect(int effect, EPassType passType)
 {
-	if (passType < mPassShaders.Size())
+	if (passType < mPassShaders.Size() && mCompilePass == -1)
 		return mPassShaders[passType]->BindEffect(effect);
 	else
 		return nullptr;
@@ -735,7 +749,11 @@ FShader *FShaderManager::BindEffect(int effect, EPassType passType)
 
 FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)
 {
-	if (r_skipmats && eff >= 3 && eff <= 4)
+	if (mCompilePass > -1)
+	{
+		return mPassShaders[0]->Get(0, false);
+	}
+	if ((r_skipmats && eff >= 3 && eff <= 4))
 		eff = 0;
 
 	if (passType < mPassShaders.Size())
@@ -752,7 +770,14 @@ FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passT
 
 FShaderCollection::FShaderCollection(EPassType passType)
 {
-	CompileShaders(passType);
+	mPassType = passType;
+	mMaterialShaders.Clear();
+	mMaterialShadersNAT.Clear();
+	for (int i = 0; i < MAX_EFFECTS; i++)
+	{
+		mEffectShaders[i] = NULL;
+	}
+	CompileNextShader();
 }
 
 //==========================================================================
@@ -772,35 +797,47 @@ FShaderCollection::~FShaderCollection()
 //
 //==========================================================================
 
-void FShaderCollection::CompileShaders(EPassType passType)
+bool FShaderCollection::CompileNextShader()
 {
-	mMaterialShaders.Clear();
-	mMaterialShadersNAT.Clear();
-	for (int i = 0; i < MAX_EFFECTS; i++)
+	int i = mCompileIndex;
+	if (mCompileState == 0)
 	{
-		mEffectShaders[i] = NULL;
-	}
-
-	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
-	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, passType);
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, mPassType);
 		mMaterialShaders.Push(shc);
-		if (i < SHADER_NoTexture)
+		mCompileIndex++;
+		if (defaultshaders[mCompileIndex].ShaderName == nullptr)
 		{
-			FShader *shc1 = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, passType);
-			mMaterialShadersNAT.Push(shc1);
+			mCompileIndex = 0;
+			mCompileState++;
+			
 		}
 	}
-
-	for(unsigned i = 0; i < usershaders.Size(); i++)
+	else if (mCompileState == 1)
+	{
+		FShader *shc1 = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, mPassType);
+		mMaterialShadersNAT.Push(shc1);
+		mCompileIndex++;
+		if (mCompileIndex >= SHADER_NoTexture)
+		{
+			mCompileIndex = 0;
+			mCompileState++;
+			if (usershaders.Size() == 0) mCompileState++;
+		}
+	}
+	else if (mCompileState == 2)
 	{
 		FString name = ExtractFileBase(usershaders[i].shader);
 		FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
-		FShader *shc = Compile(name, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, passType);
+		FShader *shc = Compile(name, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, mPassType);
 		mMaterialShaders.Push(shc);
+		mCompileIndex++;
+		if (mCompileIndex >= (int)usershaders.Size())
+		{
+			mCompileIndex = 0;
+			mCompileState++;
+		}
 	}
-
-	for(int i=0;i<MAX_EFFECTS;i++)
+	else if (mCompileState == 3)
 	{
 		FShader *eff = new FShader(effectshaders[i].ShaderName);
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
@@ -809,7 +846,13 @@ void FShaderCollection::CompileShaders(EPassType passType)
 			delete eff;
 		}
 		else mEffectShaders[i] = eff;
+		mCompileIndex++;
+		if (mCompileIndex >= MAX_EFFECTS)
+		{
+			return true;
+		}
 	}
+	return false;
 }
 
 //==========================================================================

@@ -429,11 +429,6 @@ void HWDrawInfo::AddPolyobjs(subsector_t *sub)
 	if (sub->BSP == nullptr || sub->BSP->bDirty)
 	{
 		sub->BuildPolyBSP();
-		for (unsigned i = 0; i < sub->BSP->Segs.Size(); i++)
-		{
-			sub->BSP->Segs[i].Subsector = sub;
-			sub->BSP->Segs[i].PartnerSeg = nullptr;
-		}
 	}
 	if (sub->BSP->Nodes.Size() == 0)
 	{
@@ -490,13 +485,13 @@ void HWDrawInfo::AddLines(subsector_t * sub, sector_t * sector)
 //
 //==========================================================================
 
-inline bool PointOnLine(const DVector2 &pos, const line_t *line)
+inline bool PointOnLine(const DVector2 &pos, const linebase_t *line)
 {
 	double v = (pos.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pos.X) * line->Delta().Y;
 	return fabs(v) <= EQUAL_EPSILON;
 }
 
-void HWDrawInfo::AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line)
+void HWDrawInfo::AddSpecialPortalLines(subsector_t * sub, sector_t * sector, linebase_t *line)
 {
 	currentsector = sector;
 	currentsubsector = sub;
@@ -658,7 +653,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		int clipres = mClipPortal->ClipSubsector(sub);
 		if (clipres == PClip_InFront)
 		{
-			line_t *line = mClipPortal->ClipLine();
+			auto line = mClipPortal->ClipLine();
 			// The subsector is out of range, but we still have to check lines that lie directly on the boundary and may expose their upper or lower parts.
 			if (line) AddSpecialPortalLines(sub, fakesector, line);
 			return;

@@ -160,22 +160,22 @@ void MapLoader::SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi
 
 	if (zangi >= 180)
 	{
-		zang = 179.;
+		zang =  DAngle::fromDeg(179.);
 	}
 	else if (zangi <= 0)
 	{
-		zang = 1.;
+		zang =  DAngle::fromDeg(1.);
 	}
 	else
 	{
-		zang = (double)zangi;
+		zang =  DAngle::fromDeg(zangi);
 	}
 	if (setCeil)
 	{
-		zang += 180.;
+		zang +=  DAngle::fromDeg(180.);
 	}
 
-	xyang = (double)xyangi;
+	xyang =  DAngle::fromDeg(xyangi);
 
 	DVector3 norm;
 

@@ -209,13 +209,14 @@ typedef void (*CopyFunc)(uint8_t *pout, const uint8_t *pin, int count, int step,
 		iCopyColors<cIA, cBGRA, op>, \
 		iCopyColors<cCMYK, cBGRA, op>, \
 		iCopyColors<cYCbCr, cBGRA, op>, \
+		iCopyColors<cYCCK, cBGRA, op>, \
 		iCopyColors<cBGR, cBGRA, op>, \
 		iCopyColors<cBGRA, cBGRA, op>, \
 		iCopyColors<cI16, cBGRA, op>, \
 		iCopyColors<cRGB555, cBGRA, op>, \
 		iCopyColors<cPalEntry, cBGRA, op> \
 	}
-static const CopyFunc copyfuncs[][11]={
+static const CopyFunc copyfuncs[][12]={
 	COPY_FUNCS(bCopy),
 	COPY_FUNCS(bBlend),
 	COPY_FUNCS(bAdd),
@@ -401,7 +402,6 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, i
 		}
 	}
 }
-
 
 template<class TDest, class TBlend> 
 void iCopyPaletted(uint8_t *buffer, const uint8_t * patch, int srcwidth, int srcheight, int Pitch,

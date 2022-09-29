@@ -48,6 +48,10 @@ namespace swrenderer
 		int WindowRight = 0;
 		uint16_t MirrorFlags = 0;
 
+		// [Nash] this is set when first entering a mirror portal, and is unset when leaving the final mirror portal recursion
+		// Used for the RF2_INVISIBLEINMIRRORS and RF2_ONLYVISIBLEINMIRRORS features
+		bool IsInMirrorRecursively = false;
+
 		PortalDrawseg* CurrentPortal = nullptr;
 		int CurrentPortalUniq = 0;
 		bool CurrentPortalInSkybox = false;

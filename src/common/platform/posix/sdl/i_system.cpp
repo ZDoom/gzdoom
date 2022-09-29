@@ -79,10 +79,28 @@ double PerfToSec, PerfToMillisec;
 CVAR(Bool, con_printansi, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR(Bool, con_4bitansi, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 
-extern FStartupScreen *StartScreen;
+extern FStartupScreen *StartWindow;
 
 void I_SetIWADInfo()
 {
+}
+
+static bool I_KDialogAvailable()
+{
+	// Is KDE running?
+	const char* str = getenv("KDE_FULL_SESSION");
+	if (str && strcmp(str, "true") == 0)
+	{
+		// Is kdialog available?
+		FILE* f = popen("which kdialog >/dev/null 2>&1", "r");
+		if (f != NULL)
+		{
+			int status = pclose(f);
+			return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+		}
+	}
+
+	return false;
 }
 
 //
@@ -99,8 +117,7 @@ void Unix_I_FatalError(const char* errortext)
 	// Close window or exit fullscreen and release mouse capture
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
-	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if(I_KDialogAvailable())
 	{
 		FString cmd;
 		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
@@ -144,7 +161,15 @@ void CalculateCPUSpeed()
 {
 	PerfAvailable = false;
 	PerfToMillisec = PerfToSec = 0.;
-#ifdef __linux__
+#ifdef __aarch64__
+	// [MK] on aarch64 rather than having to calculate cpu speed, there is
+	// already an independent frequency for the perf timer
+	uint64_t frq;
+	asm volatile("mrs %0, cntfrq_el0":"=r"(frq));
+	PerfAvailable = true;
+	PerfToSec = 1./frq;
+	PerfToMillisec = PerfToSec*1000.;
+#elif defined(__linux__)
 	// [MK] read from perf values if we can
 	struct perf_event_attr pe;
 	memset(&pe,0,sizeof(struct perf_event_attr));
@@ -270,10 +295,10 @@ void I_PrintStr(const char *cp)
 		}
 	}
 
-	if (StartScreen) CleanProgressBar();
+	if (StartWindow) CleanProgressBar();
 	fputs(printData.GetChars(),stdout);
 	if (terminal) fputs("\033[0m",stdout);
-	if (StartScreen) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
+	if (StartWindow) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
 }
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
@@ -286,8 +311,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	}
 
 #ifndef __APPLE__
-	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if(I_KDialogAvailable())
 	{
 		FString cmd("kdialog --title \"" GAMENAME " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
@@ -386,6 +410,23 @@ FString I_GetFromClipboard (bool use_primary_selection)
 	return "";
 }
 
+FString I_GetCWD()
+{
+	char* curdir = get_current_dir_name();
+	if (!curdir) 
+	{
+		return "";
+	}
+	FString ret(curdir);
+	free(curdir);
+	return ret;
+}
+
+bool I_ChDir(const char* path)
+{
+	return chdir(path) == 0;
+}
+
 // Return a random seed, preferably one with lots of entropy.
 unsigned int I_MakeRNGSeed()
 {
@@ -407,3 +448,21 @@ unsigned int I_MakeRNGSeed()
 	}
 	return seed;
 }
+
+void I_OpenShellFolder(const char* infolder)
+{
+	char* curdir = get_current_dir_name();
+
+	if (!chdir(infolder))
+	{
+		Printf("Opening folder: %s\n", infolder);
+		std::system("xdg-open .");
+		chdir(curdir);
+	}
+	else
+	{
+		Printf("Unable to open directory '%s\n", infolder);
+	}
+	free(curdir);
+}
+

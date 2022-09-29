@@ -51,7 +51,7 @@ enum ESlotDef
 struct FWeaponSlots
 {
 	FWeaponSlots() { Clear(); }
-	FWeaponSlots(const FWeaponSlots &other);
+	FWeaponSlots(const FWeaponSlots &other) = default;
 
 private:
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];

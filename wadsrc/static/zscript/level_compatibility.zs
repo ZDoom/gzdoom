@@ -987,6 +987,13 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '30D1480A6D4F3A3153739D4CCF659C4E': // heretic.wad E4M8
+			{
+				// multiplayer teleporter prevents exit on cooperative
+				SetThingFlags(78,MTF_DEATHMATCH);
+				break;
+			}
+
 			case '6CDA2721AA1076F063557CF89D88E92B': // hexen.wad map08
 			{
 				// Amulet of warding accidentally shifted outside of map
@@ -2134,6 +2141,13 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				// Fix impassable exit line
 				SetLineFlags(6842, 0, Line.ML_BLOCKING); 
+				break;
+			}
+			
+			case '50E394239FF64264950D11883E933553': // 1024.wad map05
+			{
+				// Change duplicate player 2 start to player 3 start
+				SetThingEdNum(59, 3);
 				break;
 			}
 		}

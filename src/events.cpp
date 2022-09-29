@@ -162,7 +162,7 @@ bool EventManager::UnregisterHandler(DStaticEventHandler* handler)
 
 bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
 {
-	if (gamestate != GS_LEVEL)
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 		return false;
 
 	Net_WriteByte(DEM_NETEVENT);
@@ -754,7 +754,7 @@ FWorldEvent EventManager::SetupWorldEvent()
 	FWorldEvent e;
 	e.IsSaveGame = savegamerestore;
 	e.IsReopen = Level->FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
-	e.DamageAngle = 0.0;
+	e.DamageAngle = nullAngle;
 	return e;
 }
 

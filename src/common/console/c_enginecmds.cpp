@@ -52,6 +52,8 @@
 #include "version.h"
 #include "findfile.h"
 #include "md5.h"
+#include "i_specialpaths.h"
+#include "i_system.h"
 
 extern FILE* Logfile;
 
@@ -177,12 +179,12 @@ UNSAFE_CCMD (crashout)
 UNSAFE_CCMD (dir)
 {
 	FString dir, path;
-	char curdir[256];
 	const char *match;
 	findstate_t c_file;
 	void *file;
 
-	if (!getcwd (curdir, countof(curdir)))
+	FString curdir = I_GetCWD();
+	if (curdir.IsEmpty())
 	{
 		Printf ("Current path too long\n");
 		return;
@@ -191,7 +193,7 @@ UNSAFE_CCMD (dir)
 	if (argv.argc() > 1)
 	{
 		path = NicePath(argv[1]);
-		if (chdir(path))
+		if (!I_ChDir(path))
 		{
 			match = path;
 			dir = ExtractFilePath(path);
@@ -207,7 +209,7 @@ UNSAFE_CCMD (dir)
 			{
 				match = "*";
 			}
-			if (chdir (dir))
+			if (!I_ChDir(dir))
 			{
 				Printf ("%s not found\n", dir.GetChars());
 				return;
@@ -244,7 +246,7 @@ UNSAFE_CCMD (dir)
 		I_FindClose (file);
 	}
 
-	chdir (curdir);
+	I_ChDir(curdir);
 }
 
 //==========================================================================
@@ -336,3 +338,4 @@ CCMD(printlocalized)
 	}
 
 }
+

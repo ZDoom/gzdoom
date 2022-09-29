@@ -42,6 +42,7 @@
 #include "modelrenderer.h"
 
 
+TArray<FString> savedModelFiles;
 TDeletingArray<FModel*> Models;
 TArray<FSpriteModelFrame> SpriteModelFrames;
 
@@ -154,12 +155,13 @@ unsigned FindModel(const char * path, const char * modelfile)
 	FModel * model = nullptr;
 	FString fullname;
 
-	fullname.Format("%s%s", path, modelfile);
+	if (path) fullname.Format("%s%s", path, modelfile);
+	else fullname = modelfile;
 	int lump = fileSystem.CheckNumForFullName(fullname);
 
 	if (lump<0)
 	{
-		Printf("FindModel: '%s' not found\n", fullname.GetChars());
+		Printf(PRINT_HIGH, "FindModel: '%s' not found\n", fullname.GetChars());
 		return -1;
 	}
 
@@ -225,7 +227,7 @@ unsigned FindModel(const char * path, const char * modelfile)
 		}
 		else
 		{
-			Printf("LoadModel: Unknown model format in '%s'\n", fullname.GetChars());
+			Printf(PRINT_HIGH, "LoadModel: Unknown model format in '%s'\n", fullname.GetChars());
 			return -1;
 		}
 	}

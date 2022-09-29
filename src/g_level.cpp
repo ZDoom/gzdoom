@@ -82,8 +82,11 @@
 #include "p_effect.h"
 #include "stringtable.h"
 #include "c_buttons.h"
+#include "screenjob.h"
+#include "types.h"
 
 #include "gi.h"
+
 
 #include "g_hub.h"
 #include "g_levellocals.h"
@@ -177,7 +180,59 @@ void *statcopy;					// for statistics driver
 FLevelLocals level;			// info about current level
 FLevelLocals *primaryLevel = &level;	// level for which to display the user interface.
 FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
+static PType* maprecordtype;
 
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void Local_Job_Init()
+{
+	maprecordtype = NewPointer(NewStruct("MapRecord", nullptr, true));
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void CallCreateMapFunction(const char* qname, DObject* runner, level_info_t* map)
+{
+	auto func = LookupFunction(qname);
+	if (func->Proto->ArgumentTypes.Size() == 1) return CallCreateFunction(qname, runner);	// accept functions without map parameter as well here.
+	if (func->Proto->ArgumentTypes.Size() != 2) I_Error("Bad map-cutscene function %s. Must receive precisely two arguments.", qname);
+	if (func->Proto->ArgumentTypes[0] != cutscene.runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
+		I_Error("Bad cutscene function %s. Must receive ScreenJobRunner and LevelInfo reference.", qname);
+	VMValue val[2] = { runner, map };
+	VMCall(func, val, 2, nullptr, 0);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool CreateCutscene(CutsceneDef* cs, DObject* runner, level_info_t* map)
+{
+	if (cs->function.CompareNoCase("none") == 0)
+		return true;	// play nothing but return as being validated
+	if (cs->function.IsNotEmpty())
+	{
+		CallCreateMapFunction(cs->function, runner, map);
+		return true;
+	}
+	else if (cs->video.IsNotEmpty())
+	{
+		AddGenericVideo(runner, cs->video, cs->GetSound(), cs->framespersec);
+		return true;
+	}
+	return false;
+}
 
 //==========================================================================
 //
@@ -206,6 +261,26 @@ void G_DeferedInitNew (FNewGameStartup *gs)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 	finishstate = FINISH_NoHub;
+
+	if (AllEpisodes[gs->Episode].mIntro.isdefined())
+	{
+		cutscene.runner = CreateRunner(false);
+		GC::WriteBarrier(cutscene.runner);
+
+		if (!CreateCutscene(&AllEpisodes[gs->Episode].mIntro, cutscene.runner, nullptr))
+		{
+			return;
+		}
+
+		cutscene.completion = [](bool) { gameaction = ga_newgame2; };
+		if (!ScreenJobValidate())
+		{
+			DeleteScreenJob();
+			cutscene.completion = nullptr;
+			return;
+		}
+		gameaction = ga_intermission;
+	}
 }
 
 //==========================================================================
@@ -828,6 +903,172 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SecretExitLevel, LevelLocals_SecretE
 //==========================================================================
 static wbstartstruct_t staticWmInfo;
 
+DIntermissionController* FLevelLocals::CreateIntermission()
+{
+	DIntermissionController* controller = nullptr;
+	cluster_info_t *nextcluster;
+	cluster_info_t *thiscluster;
+
+	if (flags & LEVEL_CHANGEMAPCHEAT)
+		return nullptr;
+
+	thiscluster = FindClusterInfo (cluster);
+
+	bool endgame = strncmp (nextlevel, "enDSeQ", 6) == 0;
+	if (endgame)
+	{
+		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
+		if (endsequence == NAME_Inter_Strife)
+		{
+			if (Players[0]->mo->FindInventory (NAME_QuestItem25) ||
+				Players[0]->mo->FindInventory (NAME_QuestItem28))
+			{
+				endsequence = NAME_Inter_Strife_Good;
+			}
+			else
+			{
+				endsequence = NAME_Inter_Strife_Sad;
+			}
+		}
+
+		auto ext = info->ExitMapTexts.CheckKey(flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
+		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
+		{
+			controller = F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
+				ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+				-1, 0,
+				ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
+				ext->mText,
+				false,
+				ext->mDefined & FExitText::DEF_PIC,
+				ext->mDefined & FExitText::DEF_LOOKUP,
+				true, endsequence);
+		}
+		else if (!(info->flags2 & LEVEL2_NOCLUSTERTEXT))
+		{
+			controller = F_StartFinale(thiscluster->MessageMusic, thiscluster->musicorder,
+				thiscluster->cdtrack, thiscluster->cdid,
+				thiscluster->FinaleFlat, thiscluster->ExitText,
+				thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+				thiscluster->flags & CLUSTER_FINALEPIC,
+				thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+				true, endsequence);
+		}
+	}
+	else if (!deathmatch)
+	{
+		FExitText *ext = nullptr;
+		
+		if (flags3 & LEVEL3_EXITSECRETUSED) ext = info->ExitMapTexts.CheckKey(NAME_Secret);
+		else if (flags3 & LEVEL3_EXITNORMALUSED) ext = info->ExitMapTexts.CheckKey(NAME_Normal);
+		if (ext == nullptr) ext = info->ExitMapTexts.CheckKey(nextlevel);
+
+		if (ext != nullptr)
+		{
+			if ((ext->mDefined & FExitText::DEF_TEXT))
+			{
+				controller = F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
+					ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+					-1, 0,
+					ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
+					ext->mText,
+					false,
+					ext->mDefined & FExitText::DEF_PIC,
+					ext->mDefined & FExitText::DEF_LOOKUP,
+					false);
+			}
+			return controller;
+		}
+
+		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
+
+		if (nextcluster->cluster != cluster && !(info->flags2 & LEVEL2_NOCLUSTERTEXT))
+		{
+			// Only start the finale if the next level's cluster is different
+			// than the current one and we're not in deathmatch.
+			if (nextcluster->EnterText.IsNotEmpty())
+			{
+				controller = F_StartFinale (nextcluster->MessageMusic, nextcluster->musicorder,
+					nextcluster->cdtrack, nextcluster->cdid,
+					nextcluster->FinaleFlat, nextcluster->EnterText,
+					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
+					nextcluster->flags & CLUSTER_FINALEPIC,
+					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
+					false);
+			}
+			else if (thiscluster->ExitText.IsNotEmpty())
+			{
+				controller = F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
+					thiscluster->cdtrack, nextcluster->cdid,
+					thiscluster->FinaleFlat, thiscluster->ExitText,
+					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+					thiscluster->flags & CLUSTER_FINALEPIC,
+					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+					false);
+			}
+		}
+	}
+	return controller;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
+{
+	if (!intermissionScreen && !statusScreen)
+	{
+		completionf(false);
+		return;
+	}
+	cutscene.runner = CreateRunner(false);
+	GC::WriteBarrier(cutscene.runner);
+	cutscene.completion = std::move(completionf);
+	
+	// retrieve cluster relations for cluster-based cutscenes.
+	cluster_info_t* fromcluster = nullptr, *tocluster = nullptr;
+	if (fromMap) fromcluster = FindClusterInfo(fromMap->cluster);
+	if (toMap) tocluster = FindClusterInfo(toMap->cluster);
+	if (fromcluster == tocluster) fromcluster = tocluster = nullptr;
+
+	if (fromMap)
+	{
+		if (!CreateCutscene(&fromMap->outro, cutscene.runner, fromMap))
+		{
+			if (fromcluster != nullptr) CreateCutscene(&fromcluster->outro, cutscene.runner, fromMap);
+		}
+	}
+
+	auto func = LookupFunction("DoomCutscenes.BuildMapTransition");
+	if (func == nullptr)
+	{
+		I_Error("Script function 'DoomCutscenes.BuildMapTransition' not found");
+	}
+	VMValue val[3] = { cutscene.runner, intermissionScreen, statusScreen };
+	VMCall(func, val, 3, nullptr, 0);
+
+	if (toMap)
+	{
+		if (!CreateCutscene(&toMap->intro, cutscene.runner, toMap))
+		{
+			if  (tocluster != nullptr) CreateCutscene(&tocluster->intro, cutscene.runner, toMap);
+		}
+	}
+
+	if (!ScreenJobValidate())
+	{
+		DeleteScreenJob();
+		if (cutscene.completion) cutscene.completion(false);
+		cutscene.completion = nullptr;
+		return;
+	}
+	gameaction = ga_intermission;
+}
+
 void G_DoCompleted (void)
 {
 	gameaction = ga_nothing;
@@ -860,18 +1101,25 @@ void G_DoCompleted (void)
 		SN_StopAllSequences(Level);
 	}
 
+	// todo: create end of level screenjob
+	DObject* statusScreen = nullptr;
+	DIntermissionController* intermissionScreen = nullptr;
 	if (playinter)
 	{
-		gamestate = GS_INTERMISSION;
-		viewactive = false;
-		automapactive = false;
-		
 		// [RH] If you ever get a statistics driver operational, adapt this.
 		//	if (statcopy)
 		//		memcpy (statcopy, &wminfo, sizeof(wminfo));
 		
-		WI_Start (&staticWmInfo);
+		statusScreen = WI_Start (&staticWmInfo);
 	}
+	bool endgame = strncmp(nextlevel, "enDSeQ", 6) == 0;
+	intermissionScreen = primaryLevel->CreateIntermission();
+	auto nextinfo = !playinter || endgame? nullptr : FindLevelInfo(nextlevel, false);
+	RunIntermission(playinter? primaryLevel->info : nullptr, nextinfo, intermissionScreen, statusScreen, [=](bool)
+	{
+		if (!endgame) primaryLevel->WorldDone();
+		else D_StartTitle();
+	});
 }
 
 //==========================================================================
@@ -1281,10 +1529,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 //==========================================================================
 
 void FLevelLocals::WorldDone (void) 
-{ 
-	cluster_info_t *nextcluster;
-	cluster_info_t *thiscluster;
-
+{
 	gameaction = ga_worlddone; 
 
 
@@ -1294,110 +1539,11 @@ void FLevelLocals::WorldDone (void)
 		BotInfo.RemoveAllBots(this, consoleplayer != Net_Arbitrator);
 	}
 
-	if (flags & LEVEL_CHANGEMAPCHEAT)
-		return;
-
-	thiscluster = FindClusterInfo (cluster);
-
-	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
-	{
-		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
-		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
-		if (endsequence == NAME_Inter_Strife)
-		{
-			if (Players[0]->mo->FindInventory (NAME_QuestItem25) ||
-				Players[0]->mo->FindInventory (NAME_QuestItem28))
-			{
-				endsequence = NAME_Inter_Strife_Good;
-			}
-			else
-			{
-				endsequence = NAME_Inter_Strife_Sad;
-			}
-		}
-
-		auto ext = info->ExitMapTexts.CheckKey(flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
-		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
-		{
-			F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
-				ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
-				-1, 0,
-				ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
-				ext->mText,
-				false,
-				ext->mDefined & FExitText::DEF_PIC,
-				ext->mDefined & FExitText::DEF_LOOKUP,
-				true, endsequence);
-		}
-		else if (!(info->flags2 & LEVEL2_NOCLUSTERTEXT))
-		{
-			F_StartFinale(thiscluster->MessageMusic, thiscluster->musicorder,
-				thiscluster->cdtrack, thiscluster->cdid,
-				thiscluster->FinaleFlat, thiscluster->ExitText,
-				thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-				thiscluster->flags & CLUSTER_FINALEPIC,
-				thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-				true, endsequence);
-		}
-	}
-	else if (!deathmatch)
-	{
-		FExitText *ext = nullptr;
-		
-		if (flags3 & LEVEL3_EXITSECRETUSED) ext = info->ExitMapTexts.CheckKey(NAME_Secret);
-		else if (flags3 & LEVEL3_EXITNORMALUSED) ext = info->ExitMapTexts.CheckKey(NAME_Normal);
-		if (ext == nullptr) ext = info->ExitMapTexts.CheckKey(nextlevel);
-
-		if (ext != nullptr)
-		{
-			if ((ext->mDefined & FExitText::DEF_TEXT))
-			{
-				F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
-					ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
-					-1, 0,
-					ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
-					ext->mText,
-					false,
-					ext->mDefined & FExitText::DEF_PIC,
-					ext->mDefined & FExitText::DEF_LOOKUP,
-					false);
-			}
-			return;
-		}
-
-		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
-
-		if (nextcluster->cluster != cluster && !(info->flags2 & LEVEL2_NOCLUSTERTEXT))
-		{
-			// Only start the finale if the next level's cluster is different
-			// than the current one and we're not in deathmatch.
-			if (nextcluster->EnterText.IsNotEmpty())
-			{
-				F_StartFinale (nextcluster->MessageMusic, nextcluster->musicorder,
-					nextcluster->cdtrack, nextcluster->cdid,
-					nextcluster->FinaleFlat, nextcluster->EnterText,
-					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
-					nextcluster->flags & CLUSTER_FINALEPIC,
-					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
-					false);
-			}
-			else if (thiscluster->ExitText.IsNotEmpty())
-			{
-				F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
-					thiscluster->cdtrack, nextcluster->cdid,
-					thiscluster->FinaleFlat, thiscluster->ExitText,
-					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-					thiscluster->flags & CLUSTER_FINALEPIC,
-					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-					false);
-			}
-		}
-	}
-} 
+}
  
 DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 {
-	primaryLevel->WorldDone();
+	// This is just a dummy to make old status screens happy.
 	return 0;
 }
 
@@ -1540,6 +1686,7 @@ int FLevelLocals::FinishTravel ()
 			pawn->ceilingpic = pawndup->ceilingpic;
 			pawn->Floorclip = pawndup->Floorclip;
 			pawn->waterlevel = pawndup->waterlevel;
+			pawn->waterdepth = pawndup->waterdepth;
 		}
 		else if (failnum == 0)	// In the failure case this may run into some undefined data.
 		{

@@ -282,6 +282,7 @@ TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 		jpeg_read_header(&cinfo, TRUE);
 		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
+			(cinfo.out_color_space == JCS_YCCK && cinfo.num_components == 4) ||
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
@@ -350,6 +351,24 @@ TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 					}
 					break;
 
+				case JCS_YCCK:
+					// Probably useless but since I had the formula available...
+					for (int x = Width; x > 0; --x)
+					{
+						double Y = in[0], Cb = in[1], Cr = in[2];
+						int K = in[3];
+						int r = clamp((int)(Y + 1.40200 * (Cr - 0x80)), 0, 255);
+						int g = clamp((int)(Y - 0.34414 * (Cb - 0x80) - 0.71414 * (Cr - 0x80)), 0, 255);
+						int b = clamp((int)(Y + 1.77200 * (Cb - 0x80)), 0, 255);
+						r = r - ((r * K) >> 8);
+						g = g - ((g * K) >> 8);
+						b = b - ((b * K) >> 8);
+						*out = ImageHelpers::RGBToPalette(doalpha, r, g, b);
+						out += Height;
+						in += 4;
+					}
+					break;
+
 				default:
 					// The other colorspaces were considered above and discarded,
 					// but GCC will complain without a default for them here.
@@ -402,6 +421,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 
 		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
+			(cinfo.out_color_space == JCS_YCCK && cinfo.num_components == 4) ||
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
@@ -437,6 +457,11 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 			case JCS_CMYK:
 				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
 					4, cinfo.output_width * cinfo.output_components, 0, CF_CMYK);
+				break;
+
+			case JCS_YCCK:
+				bmp->CopyPixelDataRGB(0, 0, buff.Data(), cinfo.output_width, cinfo.output_height,
+					4, cinfo.output_width * cinfo.output_components, 0, CF_YCCK);
 				break;
 
 			case JCS_YCbCr:

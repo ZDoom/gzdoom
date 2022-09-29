@@ -46,6 +46,7 @@
 #include "menustate.h"
 #include "keydef.h"
 #include "i_interface.h"
+#include "i_mainwindow.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -138,9 +139,7 @@ static void CenterMouse(int x, int y, LONG *centx, LONG *centy);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern HWND Window;
 extern LPDIRECTINPUT8 g_pdi;
-extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
 extern int BlockMouseMove; 
 
@@ -193,11 +192,11 @@ CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 static void SetCursorState(bool visible)
 {
 	CursorState = visible || !m_hidepointer;
-	if (GetForegroundWindow() == Window)
+	if (GetForegroundWindow() == mainwindow.GetHandle())
 	{
 		if (CursorState)
 		{
-			SetCursor((HCURSOR)(intptr_t)GetClassLongPtr(Window, GCLP_HCURSOR));
+			SetCursor((HCURSOR)(intptr_t)GetClassLongPtr(mainwindow.GetHandle(), GCLP_HCURSOR));
 		}
 		else
 		{
@@ -219,7 +218,7 @@ static void CenterMouse(int curx, int cury, LONG *centxp, LONG *centyp)
 {
 	RECT rect;
 
-	GetWindowRect(Window, &rect);
+	GetWindowRect(mainwindow.GetHandle(), &rect);
 
 	int centx = (rect.left + rect.right) >> 1;
 	int centy = (rect.top + rect.bottom) >> 1;
@@ -258,7 +257,7 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 	}
 	else
 	{
-		if ((GetForegroundWindow() != Window) || preferNative || !use_mouse)
+		if ((GetForegroundWindow() != mainwindow.GetHandle()) || preferNative || !use_mouse)
 		{
 			want_native = true;
 		}
@@ -305,7 +304,6 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 
 FMouse::FMouse()
 {
-	LastX = LastY = 0;
 	ButtonState = 0;
 	WheelMove[0] = 0;
 	WheelMove[1] = 0;
@@ -490,7 +488,7 @@ bool FRawMouse::GetDevice()
 	rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
 	rid.usUsage = HID_GDP_MOUSE;
 	rid.dwFlags = 0;
-	rid.hwndTarget = Window;
+	rid.hwndTarget = mainwindow.GetHandle();
 	if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
 	{
 		return false;
@@ -516,7 +514,7 @@ void FRawMouse::Grab()
 		rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
 		rid.usUsage = HID_GDP_MOUSE;
 		rid.dwFlags = RIDEV_CAPTUREMOUSE | RIDEV_NOLEGACY;
-		rid.hwndTarget = Window;
+		rid.hwndTarget = mainwindow.GetHandle();
 		if (RegisterRawInputDevices(&rid, 1, sizeof(rid)))
 		{
 			GetCursorPos(&UngrabbedPointerPos);
@@ -681,17 +679,13 @@ bool FDInputMouse::GetDevice()
 {
 	HRESULT hr;
 
-	if (g_pdi3 != NULL)
-	{ // DirectInput3 interface
-		hr = g_pdi3->CreateDevice(GUID_SysMouse, (LPDIRECTINPUTDEVICE*)&Device, NULL);
-	}
-	else if (g_pdi != NULL)
+	if (g_pdi != NULL)
 	{ // DirectInput8 interface
 		hr = g_pdi->CreateDevice(GUID_SysMouse, &Device, NULL);
 	}
 	else
 	{
-		hr = -1;
+		hr = E_FAIL;
 	}
 	if (FAILED(hr))
 	{
@@ -718,7 +712,7 @@ ufailit:
 		return false;
 	}
 
-	hr = Device->SetCooperativeLevel(Window, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+	hr = Device->SetCooperativeLevel(mainwindow.GetHandle(), DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 	if (FAILED(hr))
 	{
 		goto ufailit;
@@ -784,7 +778,7 @@ void FDInputMouse::ProcessInput()
 	event_t ev = { 0 };
 	for (;;)
 	{
-		DWORD cbObjectData = g_pdi3 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA);
+		DWORD cbObjectData = sizeof(DIDEVICEOBJECTDATA);
 		dwElements = 1;
 		hr = Device->GetDeviceData(cbObjectData, &od, &dwElements, 0);
 		if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
@@ -1066,11 +1060,11 @@ void FWin32Mouse::Grab()
 
 	GetCursorPos(&UngrabbedPointerPos);
 	ClipCursor(NULL);		// helps with Win95?
-	GetClientRect(Window, &rect);
+	GetClientRect(mainwindow.GetHandle(), &rect);
 
 	// Reposition the rect so that it only covers the client area.
-	ClientToScreen(Window, (LPPOINT)&rect.left);
-	ClientToScreen(Window, (LPPOINT)&rect.right);
+	ClientToScreen(mainwindow.GetHandle(), (LPPOINT)&rect.left);
+	ClientToScreen(mainwindow.GetHandle(), (LPPOINT)&rect.right);
 
 	ClipCursor(&rect);
 	SetCursorState(false);

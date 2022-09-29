@@ -16,7 +16,7 @@ const int skyoffsetfactor = 57;
 
 struct FSkyVertex
 {
-	float x, y, z, u, v;
+	float x, y, z, u, v, lu, lv, lindex;
 	PalEntry color;
 
 	void Set(float xx, float zz, float yy, float uu=0, float vv=0, PalEntry col=0xffffffff)
@@ -26,6 +26,9 @@ struct FSkyVertex
 		y = yy;
 		u = uu;
 		v = vv;
+		lu = 0.0f;
+		lv = 0.0f;
+		lindex = -1.0f;
 		color = col;
 	}
 
@@ -36,6 +39,9 @@ struct FSkyVertex
 		z = zz;
 		u = uu;
 		v = vv;
+		lu = 0.0f;
+		lv = 0.0f;
+		lindex = -1.0f;
 		color = col;
 	}
 
@@ -90,8 +96,8 @@ public:
 	}
 
 	void RenderRow(FRenderState& state, EDrawType prim, int row, TArray<unsigned int>& mPrimStart, bool apply = true);
-	void RenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which);
-	void RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale = 0, float yscale = 0);
-	void RenderBox(FRenderState& state, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2);
+	void DoRenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which, PalEntry color = 0xffffffff);
+	void RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale = 0, float yscale = 0, PalEntry color = 0xffffffff);
+	void RenderBox(FRenderState& state, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2, PalEntry color = 0xffffffff);
 
 };

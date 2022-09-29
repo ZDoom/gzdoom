@@ -68,6 +68,7 @@
 #include "vm.h"
 #include "gstrings.h"
 #include "s_music.h"
+#include "screenjob.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -124,7 +125,7 @@ int				playerfornode[MAXNETNODES];
 
 int 			maketic;
 int 			skiptics;
-int 			ticdup;
+int 			ticdup = 1;
 
 void D_ProcessEvents (void); 
 void G_BuildTiccmd (ticcmd_t *cmd); 
@@ -1451,7 +1452,7 @@ bool DoArbitrate (void *userdata)
 
 				data->playersdetected[0] |= 1 << netbuffer[1];
 
-				StartScreen->NetMessage ("Found %s (node %d, player %d)",
+				I_NetMessage ("Found %s (node %d, player %d)",
 						players[netbuffer[1]].userinfo.GetName(),
 						node, netbuffer[1]+1);
 			}
@@ -1460,7 +1461,7 @@ bool DoArbitrate (void *userdata)
 		{
 			data->gotsetup[0] = 0x80;
 
-			ticdup = doomcom.ticdup = netbuffer[1];
+			ticdup = doomcom.ticdup = clamp<int>(netbuffer[1], 1, MAXTICDUP);
 			NetMode = netbuffer[2];
 
 			stream = &netbuffer[3];
@@ -1599,8 +1600,8 @@ bool D_ArbitrateNetStart (void)
 		data.gotsetup[0] = 0x80;
 	}
 
-	StartScreen->NetInit ("Exchanging game information", 1);
-	if (!StartScreen->NetLoop (DoArbitrate, &data))
+	I_NetInit ("Exchanging game information", 1);
+	if (!I_NetLoop (DoArbitrate, &data))
 	{
 		return false;
 	}
@@ -1618,7 +1619,7 @@ bool D_ArbitrateNetStart (void)
 			fprintf (debugfile, "player %d is on node %d\n", i, nodeforplayer[i]);
 		}
 	}
-	StartScreen->NetDone();
+	I_NetDone();
 	return true;
 }
 
@@ -1851,7 +1852,7 @@ void TryRunTics (void)
 	int 		counts;
 	int 		numplaying;
 
-	bool doWait = (cl_capfps || pauseext || (r_NoInterpolate && !M_IsAnimated() /*&& gamestate != GS_INTERMISSION && gamestate != GS_INTRO*/));
+	bool doWait = (cl_capfps || pauseext || (r_NoInterpolate && !M_IsAnimated()));
 
 	// get real tics
 	if (doWait)
@@ -1883,7 +1884,7 @@ void TryRunTics (void)
 		}
 	}
 
-	if (ticdup == 1)
+	if (ticdup <= 1)
 	{
 		availabletics = lowtic - gametic;
 	}
@@ -2402,7 +2403,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 							if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
 							{
-								spawned->Angles.Yaw = source->Angles.Yaw - angle;
+								spawned->Angles.Yaw = source->Angles.Yaw - DAngle::fromDeg(angle);
 								spawned->special = special;
 								for(i = 0; i < 5; i++) {
 									spawned->args[i] = args[i];
@@ -2692,12 +2693,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		break;
 
 	case DEM_SETPITCHLIMIT:
-		players[player].MinPitch = -(double)ReadByte(stream);		// up
-		players[player].MaxPitch = (double)ReadByte(stream);		// down
-		break;
-
-	case DEM_ADVANCEINTER:
-		F_AdvanceIntermission();
+		players[player].MinPitch = DAngle::fromDeg(-ReadByte(stream));		// up
+		players[player].MaxPitch = DAngle::fromDeg(ReadByte(stream));		// down
 		break;
 
 	case DEM_REVERTCAMERA:
@@ -2721,6 +2718,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		}
 		break;
 
+	case DEM_ENDSCREENJOB:
+		EndScreenJob();
+		break;
+		
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;

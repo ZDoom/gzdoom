@@ -93,7 +93,7 @@ struct FCompileContext
 	FString VersionString;
 
 	FCompileContext(PNamespace *spc, PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump, const VersionInfo &ver);
-	FCompileContext(PNamespace *spc, PContainerType *cls, bool fromdecorate);	// only to be used to resolve constants!
+	FCompileContext(PNamespace *spc, PContainerType *cls, bool fromdecorate, const VersionInfo& ver);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);
@@ -336,7 +336,9 @@ public:
 	bool IsFloat() const { return ValueType->isFloat(); }
 	bool IsInteger() const { return ValueType->isNumeric() && ValueType->isIntCompatible(); }
 	bool IsPointer() const { return ValueType->isPointer(); }
-	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
+	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3 || ValueType == TypeFVector2 || ValueType == TypeFVector3; };
+	bool IsVector2() const { return ValueType == TypeVector2 || ValueType == TypeFVector2; };
+	bool IsVector3() const { return ValueType == TypeVector3 || ValueType == TypeFVector3; };
 	bool IsBoolCompat() const { return ValueType->isScalar(); }
 	bool IsObject() const { return ValueType->isObjectPointer(); }
 	bool IsArray() const { return ValueType->isArray() || (ValueType->isPointer() && ValueType->toPointer()->PointedType->isArray()); }
@@ -908,7 +910,7 @@ public:
 
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
-	bool Promote(FCompileContext &ctx, bool forceint = false);
+	bool Promote(FCompileContext &ctx, bool forceint = false, bool shiftop = false);
 };
 
 //==========================================================================

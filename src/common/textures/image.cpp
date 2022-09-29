@@ -335,6 +335,7 @@ FImageSource *FlatImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PatchImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *EmptyImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *AutomapImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *StartupPageImage_TryCreate(FileReader &, int lumpnum);
 
 
 // Examines the lump contents to decide what type of texture to create,
@@ -350,6 +351,7 @@ FImageSource * FImageSource::GetImage(int lumpnum, bool isflat)
 		{ StbImage_TryCreate,			false },
 		{ TGAImage_TryCreate,			false },
 		{ AnmImage_TryCreate,			false },
+		{ StartupPageImage_TryCreate,	false },
 		{ RawPageImage_TryCreate,		false },
 		{ FlatImage_TryCreate,			true },	// flat detection is not reliable, so only consider this for real flats.
 		{ PatchImage_TryCreate,			false },

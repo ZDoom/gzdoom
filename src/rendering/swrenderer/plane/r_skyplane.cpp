@@ -94,8 +94,8 @@ namespace swrenderer
 			skyiscale = float(r_Yaspect / freelookviewheight);
 			skyscale = freelookviewheight / r_Yaspect;
 
-			skyiscale *= float(thread->Viewport->viewpoint.FieldOfView.Degrees / 90.);
-			skyscale *= float(90. / thread->Viewport->viewpoint.FieldOfView.Degrees);
+			skyiscale *= float(thread->Viewport->viewpoint.FieldOfView.Degrees() / 90.);
+			skyscale *= float(90. / thread->Viewport->viewpoint.FieldOfView.Degrees());
 		}
 
 		if (Level->skystretch)
@@ -267,8 +267,6 @@ namespace swrenderer
 		else
 			drawerargs.DrawDoubleSkyColumn(Thread);
 
-		if (r_modelscene)
-			drawerargs.DrawDepthSkyColumn(Thread, 1.0f / 65536.0f);
 	}
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)

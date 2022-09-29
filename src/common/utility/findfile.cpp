@@ -37,6 +37,7 @@
 #include "cmdlib.h"
 #include "printf.h"
 #include "configfile.h"
+#include "i_system.h"
 
 #ifndef _WIN32
 
@@ -369,9 +370,8 @@ void D_AddConfigFiles(TArray<FString>& wadfiles, const char* section, const char
 
 void D_AddDirectory(TArray<FString>& wadfiles, const char* dir, const char *filespec, FConfigFile* config)
 {
-	char curdir[ZPATH_MAX];
-
-	if (getcwd(curdir, ZPATH_MAX))
+	FString curdir = I_GetCWD();
+	if (curdir.IsNotEmpty())
 	{
 		char skindir[ZPATH_MAX];
 		findstate_t findstate;
@@ -387,7 +387,7 @@ void D_AddDirectory(TArray<FString>& wadfiles, const char* dir, const char *file
 			skindir[--stuffstart] = 0;
 		}
 
-		if (!chdir(skindir))
+		if (I_ChDir(skindir))
 		{
 			skindir[stuffstart++] = '/';
 			if ((handle = I_FindFirst(filespec, &findstate)) != (void*)-1)
@@ -403,7 +403,7 @@ void D_AddDirectory(TArray<FString>& wadfiles, const char* dir, const char *file
 				I_FindClose(handle);
 			}
 		}
-		chdir(curdir);
+		I_ChDir(curdir);
 	}
 }
 
@@ -417,27 +417,27 @@ void D_AddDirectory(TArray<FString>& wadfiles, const char* dir, const char *file
 //
 //==========================================================================
 
+static FString BFSwad; // outside the function to evade C++'s insane rules for constructing static variables inside functions.
+
 const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinprogdir, FConfigFile* config)
 {
-	static char wad[ZPATH_MAX];
-
 	if (file == nullptr || *file == '\0')
 	{
 		return nullptr;
 	}
 	if (lookfirstinprogdir)
 	{
-		mysnprintf(wad, countof(wad), "%s%s%s", progdir.GetChars(), progdir.Back() == '/' ? "" : "/", file);
-		if (DirEntryExists(wad))
+		BFSwad.Format("%s%s%s", progdir.GetChars(), progdir.Back() == '/' ? "" : "/", file);
+		if (DirEntryExists(BFSwad))
 		{
-			return wad;
+			return BFSwad.GetChars();
 		}
 	}
 
 	if (DirEntryExists(file))
 	{
-		mysnprintf(wad, countof(wad), "%s", file);
-		return wad;
+		BFSwad.Format("%s", file);
+		return BFSwad.GetChars();
 	}
 
 	if (config != nullptr && config->SetSection("FileSearch.Directories"))
@@ -454,10 +454,10 @@ const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinpr
 				dir = NicePath(value);
 				if (dir.IsNotEmpty())
 				{
-					mysnprintf(wad, countof(wad), "%s%s%s", dir.GetChars(), dir.Back() == '/' ? "" : "/", file);
-					if (DirEntryExists(wad))
+					BFSwad.Format("%s%s%s", dir.GetChars(), dir.Back() == '/' ? "" : "/", file);
+					if (DirEntryExists(BFSwad))
 					{
-						return wad;
+						return BFSwad.GetChars();
 					}
 				}
 			}

@@ -47,7 +47,7 @@
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);
 
-FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames);
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames = -1);
 
 // Physical device info
 static std::vector<VulkanPhysicalDevice> AvailableDevices;
@@ -216,8 +216,11 @@ bool VulkanDevice::SupportsDeviceExtension(const char *ext) const
 void VulkanDevice::CreateAllocator()
 {
 	VmaAllocatorCreateInfo allocinfo = {};
+	allocinfo.vulkanApiVersion = ApiVersion;
 	if (SupportsDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && SupportsDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
-		allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+		allocinfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+	if (SupportsDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+		allocinfo.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 	allocinfo.physicalDevice = PhysicalDevice.Device;
 	allocinfo.device = device;
 	allocinfo.instance = instance;
@@ -245,14 +248,47 @@ void VulkanDevice::CreateDevice()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkDeviceCreateInfo deviceCreateInfo = {};
-	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	VkDeviceCreateInfo deviceCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+	VkPhysicalDeviceFeatures2 deviceFeatures2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+	VkPhysicalDeviceBufferDeviceAddressFeatures deviceAddressFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES };
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR deviceAccelFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR };
+	VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR };
+
 	deviceCreateInfo.queueCreateInfoCount = (uint32_t)queueCreateInfos.size();
 	deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-	deviceCreateInfo.pEnabledFeatures = &UsedDeviceFeatures;
 	deviceCreateInfo.enabledExtensionCount = (uint32_t)EnabledDeviceExtensions.size();
 	deviceCreateInfo.ppEnabledExtensionNames = EnabledDeviceExtensions.data();
 	deviceCreateInfo.enabledLayerCount = 0;
+	deviceFeatures2.features = UsedDeviceFeatures;
+	deviceAddressFeatures.bufferDeviceAddress = true;
+	deviceAccelFeatures.accelerationStructure = true;
+	rayQueryFeatures.rayQuery = true;
+
+	void** next = const_cast<void**>(&deviceCreateInfo.pNext);
+	if (SupportsDeviceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+	{
+		*next = &deviceFeatures2;
+		next = &deviceFeatures2.pNext;
+	}
+	else // vulkan 1.0 specified features in a different way
+	{
+		deviceCreateInfo.pEnabledFeatures = &deviceFeatures2.features;
+	}
+	if (SupportsDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+	{
+		*next = &deviceAddressFeatures;
+		next = &deviceAddressFeatures.pNext;
+	}
+	if (SupportsDeviceExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
+	{
+		*next = &deviceAccelFeatures;
+		next = &deviceAccelFeatures.pNext;
+	}
+	if (SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+	{
+		*next = &rayQueryFeatures;
+		next = &rayQueryFeatures.pNext;
+	}
 
 	VkResult result = vkCreateDevice(PhysicalDevice.Device, &deviceCreateInfo, nullptr, &device);
 	CheckVulkanError(result, "Could not create vulkan device");
@@ -277,16 +313,20 @@ void VulkanDevice::CreateInstance()
 	Extensions = GetExtensions();
 	EnabledExtensions = GetPlatformExtensions();
 
-	std::string debugLayer = "VK_LAYER_LUNARG_standard_validation";
+	std::string debugLayer = "VK_LAYER_KHRONOS_validation";
 	bool wantDebugLayer = vk_debug;
 	bool debugLayerFound = false;
-	for (const VkLayerProperties &layer : AvailableLayers)
+	if (wantDebugLayer)
 	{
-		if (layer.layerName == debugLayer && wantDebugLayer)
+		for (const VkLayerProperties& layer : AvailableLayers)
 		{
-			EnabledValidationLayers.push_back(debugLayer.c_str());
-			EnabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			debugLayerFound = true;
+			if (layer.layerName == debugLayer)
+			{
+				EnabledValidationLayers.push_back(layer.layerName);
+				EnabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+				debugLayerFound = true;
+				break;
+			}
 		}
 	}
 
@@ -302,23 +342,33 @@ void VulkanDevice::CreateInstance()
 		}
 	}
 
-	VkApplicationInfo appInfo = {};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "GZDoom";
-	appInfo.applicationVersion = VK_MAKE_VERSION(VER_MAJOR, VER_MINOR, VER_REVISION);
-	appInfo.pEngineName = "GZDoom";
-	appInfo.engineVersion = VK_MAKE_VERSION(ENG_MAJOR, ENG_MINOR, ENG_REVISION);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	// Try get the highest vulkan version we can get
+	VkResult result = VK_ERROR_INITIALIZATION_FAILED;
+	for (uint32_t apiVersion : { VK_API_VERSION_1_2, VK_API_VERSION_1_1, VK_API_VERSION_1_0 })
+	{
+		VkApplicationInfo appInfo = {};
+		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		appInfo.pApplicationName = "GZDoom";
+		appInfo.applicationVersion = VK_MAKE_VERSION(VER_MAJOR, VER_MINOR, VER_REVISION);
+		appInfo.pEngineName = "GZDoom";
+		appInfo.engineVersion = VK_MAKE_VERSION(ENG_MAJOR, ENG_MINOR, ENG_REVISION);
+		appInfo.apiVersion = apiVersion;
 
-	VkInstanceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.pApplicationInfo = &appInfo;
-	createInfo.enabledExtensionCount = (uint32_t)EnabledExtensions.size();
-	createInfo.enabledLayerCount = (uint32_t)EnabledValidationLayers.size();
-	createInfo.ppEnabledLayerNames = EnabledValidationLayers.data();
-	createInfo.ppEnabledExtensionNames = EnabledExtensions.data();
+		VkInstanceCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		createInfo.pApplicationInfo = &appInfo;
+		createInfo.enabledExtensionCount = (uint32_t)EnabledExtensions.size();
+		createInfo.enabledLayerCount = (uint32_t)EnabledValidationLayers.size();
+		createInfo.ppEnabledLayerNames = EnabledValidationLayers.data();
+		createInfo.ppEnabledExtensionNames = EnabledExtensions.data();
 
-	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+		result = vkCreateInstance(&createInfo, nullptr, &instance);
+		if (result >= VK_SUCCESS)
+		{
+			ApiVersion = apiVersion;
+			break;
+		}
+	}
 	CheckVulkanError(result, "Could not create vulkan instance");
 
 	volkLoadInstance(instance);
@@ -355,14 +405,28 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 
 	FString msg = callbackData->pMessage;
 
-	// For patent-pending reasons the validation layer apparently can't do this itself..
-	for (uint32_t i = 0; i < callbackData->objectCount; i++)
+	// Attempt to parse the string because the default formatting is totally unreadable and half of what it writes is totally useless!
+	auto parts = msg.Split(" | ");
+	if (parts.Size() == 3)
 	{
-		if (callbackData->pObjects[i].pObjectName)
+		msg = parts[2];
+		auto pos = msg.IndexOf(" The Vulkan spec states:");
+		if (pos >= 0)
+			msg = msg.Left(pos);
+
+		if (callbackData->objectCount > 0)
 		{
-			FString hexname;
-			hexname.Format("0x%" PRIx64, callbackData->pObjects[i].objectHandle);
-			msg.Substitute(hexname.GetChars(), callbackData->pObjects[i].pObjectName);
+			msg += " (";
+			for (uint32_t i = 0; i < callbackData->objectCount; i++)
+			{
+				if (i > 0)
+					msg += ", ";
+				if (callbackData->pObjects[i].pObjectName)
+					msg += callbackData->pObjects[i].pObjectName;
+				else
+					msg += "<noname>";
+			}
+			msg += ")";
 		}
 	}
 
@@ -405,7 +469,7 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 
 			if (vk_debug_callstack && showcallstack)
 			{
-				FString callstack = JitCaptureStackTrace(0, true);
+				FString callstack = JitCaptureStackTrace(0, true, 5);
 				if (!callstack.IsEmpty())
 					Printf("%s\n", callstack.GetChars());
 			}

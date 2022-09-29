@@ -23,13 +23,15 @@
 #include "volk/volk.h"
 #include "c_cvars.h"
 #include "v_video.h"
-
 #include "hw_cvars.h"
 #include "vulkan/system/vk_device.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "vk_samplers.h"
 #include "hw_material.h"
 #include "i_interface.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
 
 struct VkTexFilter
 {
@@ -37,16 +39,17 @@ struct VkTexFilter
 	VkFilter magFilter;
 	VkSamplerMipmapMode mipfilter;
 	bool mipmapping;
-} ;
+};
 
-VkTexFilter TexFilter[]={
+static VkTexFilter TexFilter[] =
+{
 	{VK_FILTER_NEAREST,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_NEAREST, false},
 	{VK_FILTER_NEAREST,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_NEAREST, true},
 	{VK_FILTER_LINEAR,		VK_FILTER_LINEAR,		VK_SAMPLER_MIPMAP_MODE_NEAREST, false},
 	{VK_FILTER_LINEAR,		VK_FILTER_LINEAR,		VK_SAMPLER_MIPMAP_MODE_NEAREST, true},
 	{VK_FILTER_LINEAR,		VK_FILTER_LINEAR,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true},
 	{VK_FILTER_NEAREST,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true},
-	{VK_FILTER_LINEAR,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true},
+	{VK_FILTER_LINEAR,		VK_FILTER_NEAREST,		VK_SAMPLER_MIPMAP_MODE_LINEAR, true}
 };
 
 struct VkTexClamp
@@ -55,89 +58,132 @@ struct VkTexClamp
 	VkSamplerAddressMode clamp_v;
 };
 
-VkTexClamp TexClamp[] ={
+static VkTexClamp TexClamp[] =
+{
 	{ VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT },
 	{ VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_REPEAT },
 	{ VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE },
 	{ VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE },
 };
 
-VkSamplerManager::VkSamplerManager(VulkanDevice *dev)
+VkSamplerManager::VkSamplerManager(VulkanFrameBuffer* fb) : fb(fb)
 {
-	vDevice = dev;
-	Create();
+	CreateHWSamplers();
+	CreateShadowmapSampler();
+	CreateLightmapSampler();
 }
 
 VkSamplerManager::~VkSamplerManager()
 {
-	Destroy();
 }
 
-void VkSamplerManager::SetTextureFilterMode()
+void VkSamplerManager::ResetHWSamplers()
 {
-	Destroy();
-	Create();
+	DeleteHWSamplers();
+	CreateHWSamplers();
 }
 
-void VkSamplerManager::Create()
+void VkSamplerManager::CreateHWSamplers()
 {
 	int filter = sysCallbacks.DisableTextureFilter && sysCallbacks.DisableTextureFilter()? 0 : gl_texture_filter;
 
 	for (int i = CLAMP_NONE; i <= CLAMP_XY; i++)
 	{
 		SamplerBuilder builder;
-		builder.setMagFilter(TexFilter[filter].magFilter);
-		builder.setMinFilter(TexFilter[filter].minFilter);
-		builder.setAddressMode(TexClamp[i].clamp_u, TexClamp[i].clamp_v, VK_SAMPLER_ADDRESS_MODE_REPEAT);
-		builder.setMipmapMode(TexFilter[filter].mipfilter);
+		builder.MagFilter(TexFilter[filter].magFilter);
+		builder.MinFilter(TexFilter[filter].minFilter);
+		builder.AddressMode(TexClamp[i].clamp_u, TexClamp[i].clamp_v, VK_SAMPLER_ADDRESS_MODE_REPEAT);
+		builder.MipmapMode(TexFilter[filter].mipfilter);
 		if (TexFilter[filter].mipmapping)
 		{
-			builder.setAnisotropy(gl_texture_filter_anisotropic);
-			builder.setMaxLod(100.0f); // According to the spec this value is clamped so something high makes it usable for all textures.
+			builder.Anisotropy(gl_texture_filter_anisotropic);
+			builder.MaxLod(100.0f); // According to the spec this value is clamped so something high makes it usable for all textures.
 		}
 		else
 		{
-			builder.setMaxLod(0.25f);
+			builder.MaxLod(0.25f);
 		}
-		mSamplers[i] = builder.create(vDevice);
-		mSamplers[i]->SetDebugName("VkSamplerManager.mSamplers");
+		builder.DebugName("VkSamplerManager.mSamplers");
+		mSamplers[i] = builder.Create(fb->device);
 	}
-	{
-		SamplerBuilder builder;
-		builder.setMagFilter(TexFilter[filter].magFilter);
-		builder.setMinFilter(TexFilter[filter].magFilter);
-		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_REPEAT);
-		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
-		builder.setMaxLod(0.25f);
-		mSamplers[CLAMP_XY_NOMIP] = builder.create(vDevice);
-		mSamplers[CLAMP_XY_NOMIP]->SetDebugName("VkSamplerManager.mSamplers");
-	}
+
+	mSamplers[CLAMP_XY_NOMIP] = SamplerBuilder()
+		.MagFilter(TexFilter[filter].magFilter)
+		.MinFilter(TexFilter[filter].magFilter)
+		.AddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_REPEAT)
+		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
+		.MaxLod(0.25f)
+		.DebugName("VkSamplerManager.mSamplers")
+		.Create(fb->device);
+
 	for (int i = CLAMP_NOFILTER; i <= CLAMP_NOFILTER_XY; i++)
 	{
-		SamplerBuilder builder;
-		builder.setMagFilter(VK_FILTER_NEAREST);
-		builder.setMinFilter(VK_FILTER_NEAREST);
-		builder.setAddressMode(TexClamp[i - CLAMP_NOFILTER].clamp_u, TexClamp[i - CLAMP_NOFILTER].clamp_v, VK_SAMPLER_ADDRESS_MODE_REPEAT);
-		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
-		builder.setMaxLod(0.25f);
-		mSamplers[i] = builder.create(vDevice);
-		mSamplers[i]->SetDebugName("VkSamplerManager.mSamplers");
+		mSamplers[i] = SamplerBuilder()
+			.MagFilter(VK_FILTER_NEAREST)
+			.MinFilter(VK_FILTER_NEAREST)
+			.AddressMode(TexClamp[i - CLAMP_NOFILTER].clamp_u, TexClamp[i - CLAMP_NOFILTER].clamp_v, VK_SAMPLER_ADDRESS_MODE_REPEAT)
+			.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
+			.MaxLod(0.25f)
+			.DebugName("VkSamplerManager.mSamplers")
+			.Create(fb->device);
 	}
+
 	// CAMTEX is repeating with texture filter and no mipmap
+	mSamplers[CLAMP_CAMTEX] = SamplerBuilder()
+		.MagFilter(TexFilter[filter].magFilter)
+		.MinFilter(TexFilter[filter].magFilter)
+		.AddressMode(VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT)
+		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
+		.MaxLod(0.25f)
+		.DebugName("VkSamplerManager.mSamplers")
+		.Create(fb->device);
+}
+
+void VkSamplerManager::DeleteHWSamplers()
+{
+	for (auto& sampler : mSamplers)
 	{
-		SamplerBuilder builder;
-		builder.setMagFilter(TexFilter[filter].magFilter);
-		builder.setMinFilter(TexFilter[filter].magFilter);
-		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT);
-		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
-		builder.setMaxLod(0.25f);
-		mSamplers[CLAMP_CAMTEX] = builder.create(vDevice);
-		mSamplers[CLAMP_CAMTEX]->SetDebugName("VkSamplerManager.mSamplers");
+		if (sampler)
+			fb->GetCommands()->DrawDeleteList->Add(std::move(sampler));
 	}
 }
 
-void VkSamplerManager::Destroy()
+VulkanSampler* VkSamplerManager::Get(PPFilterMode filter, PPWrapMode wrap)
 {
-	for (int i = 0; i < NUMSAMPLERS; i++)
-		mSamplers[i].reset();
+	int index = (((int)filter) << 1) | (int)wrap;
+	auto& sampler = mPPSamplers[index];
+	if (sampler)
+		return sampler.get();
+
+	sampler = SamplerBuilder()
+		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
+		.MinFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR)
+		.MagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR)
+		.AddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT)
+		.DebugName("VkPostprocess.mSamplers")
+		.Create(fb->device);
+
+	return sampler.get();
+}
+
+void VkSamplerManager::CreateShadowmapSampler()
+{
+	ShadowmapSampler = SamplerBuilder()
+		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
+		.MinFilter(VK_FILTER_NEAREST)
+		.MagFilter(VK_FILTER_NEAREST)
+		.AddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+		.DebugName("VkRenderBuffers.ShadowmapSampler")
+		.Create(fb->device);
+}
+
+void VkSamplerManager::CreateLightmapSampler()
+{
+	LightmapSampler = SamplerBuilder()
+		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
+		.MinFilter(VK_FILTER_LINEAR)
+		.MagFilter(VK_FILTER_LINEAR)
+		.AddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
+		.DebugName("VkRenderBuffers.LightmapSampler")
+		.Create(fb->device);
 }

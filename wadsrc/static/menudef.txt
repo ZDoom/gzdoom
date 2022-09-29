@@ -380,6 +380,9 @@ OptionMenu "OptionsMenu" protected
 	SafeCommand	"$OPTMNU_WRITEINI",		"writeini"
 	
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	Command "$OPTMNU_OPENCONFIG",		"openconfig"
+	Command "$OPTMNU_OPENSCREENSHOTS",	"openscreenshots"
+	Command "$OPTMNU_OPENSAVES",		"opensaves"
 	StaticText " "
 }
 
@@ -443,6 +446,7 @@ OptionMenu "NewPlayerMenu" protected
 	PlayerSkinItem "$PLYRMNU_PLAYERSKIN", "PlayerSkin"
 	PlayerGenderItem "$PLYRMNU_PLAYERGENDER", "Gender"
 	AutoaimSlider "$PLYRMNU_AUTOAIM"
+	Option "$PLYRMNU_VERTSPREAD", vertspread, "OnOff"
 	PlayerSwitchOnPickupItem "$PLYRMNU_SWITCHONPICKUP", "OffOn"
 	Option "$PLYRMNU_ALWAYSRUN", cl_run, "OnOff"
 	Class "NewPlayerMenu"
@@ -488,6 +492,7 @@ ListMenu "PlayerMenu"
 	ValueText "$PLYRMNU_PLAYERSKIN", "Skin"
 	ValueText "$PLYRMNU_PLAYERGENDER", "Gender", "Gender"
 	Slider "$PLYRMNU_AUTOAIM", "Autoaim", 0, 35, 1
+	ValueText "$PLYRMNU_VERTSPREAD", vertspread, "OnOff"
 	ValueText "$PLYRMNU_SWITCHONPICKUP", "Switch", "OffOn"
 	ValueText "$PLYRMNU_ALWAYSRUN", "AlwaysRun", "OnOff"
 	Class "PlayerMenu"
@@ -735,7 +740,6 @@ OptionMenu "MouseOptions" protected
 	StaticText 	""
 	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
 	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
-	Option "$MOUSEMNU_SMOOTHMOUSE",		"m_filter", "YesNo"
 	StaticText 	""
 	Slider "$MOUSEMNU_TURNSPEED",		"m_yaw", 0, 2.5, 0.1
 	Slider "$MOUSEMNU_MOUSELOOKSPEED",	"m_pitch", 0, 2.5, 0.1
@@ -1150,6 +1154,7 @@ OptionMenu "AltHUDOptions" protected
 	Option "$ALTHUDMNU_SHOWSTATS",				"hud_showstats", "OnOff"
 	Option "$ALTHUDMNU_SHOWBERSERK",			"hud_berserk_health", "OnOff"
 	Option "$ALTHUDMNU_SHOWWEAPONS",			"hud_showweapons", "OnOff"
+	Option "$ALTHUDMNU_SHOWTIMESTAT",			"hud_showtimestat", "OnOff"
 	Option "$ALTHUDMNU_SHOWAMMO",				"hud_showammo", "AltHUDAmmo"
 	Option "$ALTHUDMNU_SHOWTIME",				"hud_showtime", "AltHUDTime"
 	Option "$ALTHUDMNU_TIMECOLOR",				"hud_timecolor", "TextColors"
@@ -1228,6 +1233,7 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
 	Option "$MISCMNU_SETSLOTSTRICT",			"setslotstrict", "YesNo"
 	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
+	Option "$MISCMNU_PAUSEINBACKGROUND",		"i_pauseinbackground", "OnOff"
 	StaticText " "
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
 	Slider "$MISCMNU_CACHETIME",				"gl_cachetime", 0.0, 2.0, 0.1
@@ -1238,11 +1244,9 @@ OptionMenu "MiscOptions" protected
 	StaticText " "
 	Option "$MISCMNU_QUICKEXIT",				"m_quickexit", "OnOff"
 
-	IfOption(Windows)
-	{
-		StaticText " "
-		Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
-	}
+	StaticText " "
+	Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
+
 	StaticText " "
 	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OffOn"
 	Option "$MISCMNU_CLEANSTAT",				"wi_cleantextscale", "OnOff"
@@ -1643,6 +1647,7 @@ OptionMenu GameplayOptions protected
 	Option "$GMPLYMNU_INSTANTREACTION",			"sv_instantreaction", "YesNo"
 	Option "$GMPLYMNU_DEGENERATION",			"sv_degeneration", "YesNo"
 	Option "$GMPLYMNU_NOAUTOAIM",				"sv_noautoaim", "NoYes"
+	Option "$GMPLYMNU_NOVERTSPREAD",			"sv_novertspread", "NoYes"
 	Option "$GMPLYMNU_ALLOWSUICIDE",			"sv_disallowsuicide", "NoYes"
 	Option "$GMPLYMNU_ALLOWJUMP",				"sv_jump", "JumpCrouchFreeLook"
 	Option "$GMPLYMNU_ALLOWCROUCH",				"sv_crouch", "JumpCrouchFreeLook"
@@ -1678,6 +1683,7 @@ OptionMenu DeathmatchOptions protected
 	Option "$GMPLYMNU_LOSEFRAG",				"sv_losefrag", "YesNo"
 	Option "$GMPLYMNU_KEEPFRAGS",				"sv_keepfrags", "YesNo"
 	Option "$GMPLYMNU_NOTEAMSWITCH",			"sv_noteamswitch", "YesNo"
+	Option "$GMPLYMNU_NOEXTRAAMMO",				"sv_noextraammo", "NoYes"
 	Class "GameplayMenu"
 }
 
@@ -1737,7 +1743,7 @@ OptionMenu "CompatActorMenu" protected
 {
 	Position -35
 	Title "$CMPTMNU_ACTORBEHAVIOR"
-	Option "$CMPTMNU_CORPSEGIBS",					"compat_CORPSEGIBS", "YesNo"
+	Option "$CMPTMNU_VILEGHOSTS",					"compat_VILEGHOSTS", "YesNo"
 	Option "$CMPTMNU_NOBLOCKFRIENDS",				"compat_NOBLOCKFRIENDS", "YesNo"
 	Option "$CMPTMNU_LIMITPAIN",					"compat_LIMITPAIN", "YesNo"
 	Option "$CMPTMNU_MBFMONSTERMOVE",				"compat_MBFMONSTERMOVE", "YesNo"
@@ -1775,7 +1781,7 @@ OptionMenu "CompatMapMenu" protected
 	Option "$CMPTMNU_PUSHWINDOW",					"compat_pushwindow", "YesNo"
 	Option "$CMPTMNU_CHECKSWITCHRANGE",				"compat_checkswitchrange", "YesNo"
 	Option "$CMPTMNU_RAILINGHACK",					"compat_railing", "YesNo"
-	Option "$CMPTMNU_NOMBF21",						"compat_nombf21", "YeaNo"
+	Option "$CMPTMNU_NOMBF21",						"compat_nombf21", "YesNo"
 	Class "CompatibilityMenu"
 }
 
@@ -1815,7 +1821,6 @@ OptionMenu "CompatSoundMenu" protected
 	Option "$CMPTMNU_SILENTPICKUP",					"compat_SILENTPICKUP", "YesNo"
 	Option "$CMPTMNU_SILENTINSTANTFLOORS",			"compat_silentinstantfloors", "YesNo"
 	Option "$CMPTMNU_SECTORSOUNDS",					"compat_SECTORSOUNDS", "YesNo"
-	Option "$CMPTMNU_SOUNDCUTOFF",					"compat_soundcutoff", "YesNo"
 	Option "$CMPTMNU_SOUNDTARGET",					"compat_SOUNDTARGET", "YesNo"
 	Class "CompatibilityMenu"
 }
@@ -2102,7 +2107,7 @@ OptionMenu ModReplayerOptions protected
 	Title "$ADVSNDMNU_TIMIDITY"
 	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"timidity_config", "TimidityConfigMenu"
 	Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "TimidityReverb"
-	Slider "$ADVSNDMNU_REVERB_LEVEL", 		"timidity_reverb_level", 9, 127, 1, 0
+	Slider "$ADVSNDMNU_REVERB_LEVEL", 		"timidity_reverb_level", 0, 127, 1, 0
 	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
 	// other CVARs need to be revieved for usefulness
  }
@@ -2636,6 +2641,7 @@ OptionMenu "OpenGLOptions" protected
 	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
 	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
 	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
+	Option "$GLPREFMNU_CORONAS",				gl_coronas,						"OnOff"
 	StaticText " "
 	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
 	StaticText " "
@@ -2774,6 +2780,7 @@ OptionString "LanguageOptions"
 	"eo", "Esperanto"
 	"fi", "Suomi (Finnish)"
 	"fr", "Français (French)"
+	"hu", "Magyar (Hungarian)"
 	"it", "Italiano (Italian)"
 	"jp", "日本語 (Japanese)"
 	"ko", "한국어 (Korean)"

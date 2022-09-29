@@ -216,8 +216,8 @@ private:
 	void (*m_Callback)(FBaseCVar &);
 	FBaseCVar *m_Next;
 
-	static bool m_UseCallback;
-	static bool m_DoNoSet;
+	static inline bool m_UseCallback = false;
+	static inline bool m_DoNoSet = false;
 
 	void *m_ExtraDataPointer;
 

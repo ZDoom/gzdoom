@@ -45,6 +45,7 @@ class CeilingTurret : Actor
 		+DONTFALL
 		MinMissileChance 150;
 		Tag "$TAG_CEILINGTURRET";
+		Obituary "$OB_TURRET";
 		DeathSound "turret/death";
 	}
 	States

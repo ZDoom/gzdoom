@@ -50,18 +50,6 @@
 #pragma warning(disable:4244)
 #endif
 
-// Compensate for w32api's lack
-#ifndef WM_WTSSESSION_CHANGE
-#define WM_WTSSESSION_CHANGE 0x02B1
-#define WTS_CONSOLE_CONNECT 1
-#define WTS_CONSOLE_DISCONNECT 2
-#define WTS_SESSION_LOCK 7
-#define WTS_SESSION_UNLOCK 8
-#endif
-#ifndef PBT_APMSUSPEND
-// w32api does not #define the PBT_ macros in winuser.h like the PSDK does
-#include <pbt.h>
-#endif
 #ifndef GET_RAWINPUT_CODE_WPARAM
 #define GET_RAWINPUT_CODE_WPARAM(wParam)	((wParam) & 0xff)
 #endif
@@ -86,6 +74,7 @@
 #include "printf.h"
 #include "c_buttons.h"
 #include "cmdlib.h"
+#include "i_mainwindow.h"
 
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
@@ -104,9 +93,6 @@ FJoystickCollection *JoyDevices[NUM_JOYDEVICES];
 
 
 extern HINSTANCE g_hInst;
-extern DWORD SessionID;
-
-static HMODULE DInputDLL;
 
 bool GUICapture;
 extern FMouse *Mouse;
@@ -116,7 +102,6 @@ extern bool ToggleFullscreen;
 bool VidResizing;
 
 extern BOOL vidactive;
-extern HWND Window, ConWindow;
 
 EXTERN_CVAR (String, language)
 EXTERN_CVAR (Bool, lookstrafe)
@@ -130,11 +115,9 @@ extern BOOL paused;
 static bool noidle = false;
 
 LPDIRECTINPUT8			g_pdi;
-LPDIRECTINPUT			g_pdi3;
 
 extern bool AppActive;
 
-int SessionState = 0;
 int BlockMouseMove;
 
 static bool EventHandlerResultForNativeMouse;
@@ -160,7 +143,7 @@ static void I_CheckGUICapture ()
 
 void I_SetMouseCapture()
 {
-	SetCapture(Window);
+	SetCapture(mainwindow.GetHandle());
 }
 
 void I_ReleaseMouseCapture()
@@ -444,7 +427,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SIZE:
-		InvalidateRect (Window, NULL, FALSE);
+		InvalidateRect (hWnd, NULL, FALSE);
 		break;
 
 	case WM_KEYDOWN:
@@ -510,65 +493,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		S_SetSoundPaused (wParam);
 		break;
 
-	case WM_WTSSESSION_CHANGE:
-	case WM_POWERBROADCAST:
-		{
-			if (message == WM_WTSSESSION_CHANGE && lParam == (LPARAM)SessionID)
-			{
-#ifdef _DEBUG
-				OutputDebugStringA ("SessionID matched\n");
-#endif
-				// When using fast user switching, XP will lock a session before
-				// disconnecting it, and the session will be unlocked before reconnecting it.
-				// For our purposes, video output will only happen when the session is
-				// both unlocked and connected (that is, SessionState is 0).
-				switch (wParam)
-				{
-				case WTS_SESSION_LOCK:
-					SessionState |= 1;
-					break;
-				case WTS_SESSION_UNLOCK:
-					SessionState &= ~1;
-					break;
-				case WTS_CONSOLE_DISCONNECT:
-					SessionState |= 2;
-					break;
-				case WTS_CONSOLE_CONNECT:
-					SessionState &= ~2;
-					break;
-				}
-			}
-			else if (message == WM_POWERBROADCAST)
-			{
-				switch (wParam)
-				{
-				case PBT_APMSUSPEND:
-					SessionState |= 4;
-					break;
-				case PBT_APMRESUMESUSPEND:
-					SessionState &= ~4;
-					break;
-				}
-			}
-
-			if (GSnd != NULL)
-			{
-#if 0
-				// Do we actually need this here?
-				if (!oldstate && SessionState)
-				{
-					GSnd->SuspendSound ();
-				}
-#endif
-			}
-#ifdef _DEBUG
-			char foo[256];
-			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", (long)lParam, (int)wParam);
-			OutputDebugStringA (foo);
-#endif
-		}
-		break;
-
 	case WM_ERASEBKGND:
 		return true;
 
@@ -597,58 +521,12 @@ bool I_InitInput (void *hwnd)
 
 	noidle = !!Args->CheckParm ("-noidle");
 	g_pdi = NULL;
-	g_pdi3 = NULL;
 
-	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
-	DInputDLL = LoadLibraryA("dinput8.dll");
-	if (DInputDLL != NULL)
+	hr = DirectInput8Create(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void **)&g_pdi, NULL);
+	if (FAILED(hr))
 	{
-		typedef HRESULT (WINAPI *blah)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
-		blah di8c = (blah)GetProcAddress(DInputDLL, "DirectInput8Create");
-		if (di8c != NULL)
-		{
-			hr = di8c(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void **)&g_pdi, NULL);
-			if (FAILED(hr))
-			{
-				Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx\n", hr);
-				g_pdi = NULL;	// Just to be sure DirectInput8Create didn't change it
-			}
-		}
-		else
-		{
-			Printf(TEXTCOLOR_ORANGE "Could not find DirectInput8Create in dinput8.dll\n");
-		}
-	}
-
-	if (g_pdi == NULL)
-	{
-		if (DInputDLL != NULL)
-		{
-			FreeLibrary(DInputDLL);
-		}
-		DInputDLL = LoadLibraryA ("dinput.dll");
-		if (DInputDLL == NULL)
-		{
-			I_FatalError ("Could not load dinput.dll: %08lx", GetLastError());
-		}
-
-		typedef HRESULT (WINAPI *blah)(HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
-#ifdef UNICODE
-		blah dic = (blah)GetProcAddress (DInputDLL, "DirectInputCreateW");
-#else
-		blah dic = (blah)GetProcAddress(DInputDLL, "DirectInputCreateA");
-#endif
-
-		if (dic == NULL)
-		{
-			I_FatalError ("dinput.dll is corrupt");
-		}
-
-		hr = dic (g_hInst, 0x0300, &g_pdi3, NULL);
-		if (FAILED(hr))
-		{
-			I_FatalError ("DirectInputCreate failed: %08lx", hr);
-		}
+		Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx\n", hr);
+		g_pdi = NULL;	// Just to be sure DirectInput8Create didn't change it
 	}
 
 	Printf ("I_StartupMouse\n");
@@ -695,16 +573,6 @@ void I_ShutdownInput ()
 	{
 		g_pdi->Release ();
 		g_pdi = NULL;
-	}
-	if (g_pdi3)
-	{
-		g_pdi3->Release ();
-		g_pdi3 = NULL;
-	}
-	if (DInputDLL != NULL)
-	{
-		FreeLibrary (DInputDLL);
-		DInputDLL = NULL;
 	}
 }
 
@@ -820,7 +688,7 @@ IJoystickConfig *I_UpdateDeviceList()
 
 void I_PutInClipboard (const char *str)
 {
-	if (str == NULL || !OpenClipboard (Window))
+	if (str == NULL || !OpenClipboard (mainwindow.GetHandle()))
 		return;
 	EmptyClipboard ();
 
@@ -842,7 +710,7 @@ FString I_GetFromClipboard (bool return_nothing)
 	HGLOBAL cliphandle;
 	wchar_t *clipstr;
 
-	if (return_nothing || !IsClipboardFormatAvailable (CF_UNICODETEXT) || !OpenClipboard (Window))
+	if (return_nothing || !IsClipboardFormatAvailable (CF_UNICODETEXT) || !OpenClipboard (mainwindow.GetHandle()))
 		return retstr;
 
 	cliphandle = GetClipboardData (CF_UNICODETEXT);

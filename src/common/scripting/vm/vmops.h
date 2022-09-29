@@ -53,6 +53,10 @@ xx(LV3,		lv3,	RVRPKI,		LV3_R,	4, REGT_INT)	// load vector3
 xx(LV3_R,	lv3,	RVRPRI,		NOP,	0, 0)
 xx(LCS,		lcs,	RSRPKI,		LCS_R,	4, REGT_INT)	// load string from char ptr.
 xx(LCS_R,	lcs,	RSRPRI,		NOP,	0, 0)
+xx(LFV2,	lfv2,	RVRPKI,		LFV2_R,	4, REGT_INT)	// load fvector2
+xx(LFV2_R,	lfv2,	RVRPRI,		NOP,	0, 0)
+xx(LFV3,	lfv3,	RVRPKI,		LFV3_R,	4, REGT_INT)	// load fvector3
+xx(LFV3_R,	lfv3,	RVRPRI,		NOP,	0, 0)
 
 xx(LBIT,	lbit,	RIRPI8,		NOP,	0, 0)	// rA = !!(*rB & C)  -- *rB is a byte
 
@@ -77,6 +81,10 @@ xx(SV2,		sv2,	RPRVKI,		SV2_R,	4, REGT_INT)		// store vector2
 xx(SV2_R,	sv2,	RPRVRI,		NOP,	0, 0)
 xx(SV3,		sv3,	RPRVKI,		SV3_R,	4, REGT_INT)		// store vector3
 xx(SV3_R,	sv3,	RPRVRI,		NOP,	0, 0)
+xx(SFV2,	sfv2,	RPRVKI,		SFV2_R,	4, REGT_INT)		// store fvector2
+xx(SFV2_R,	sfv2,	RPRVRI,		NOP,	0, 0)
+xx(SFV3,	sfv3,	RPRVKI,		SFV3_R,	4, REGT_INT)		// store fvector3
+xx(SFV3_R,	sfv3,	RPRVRI,		NOP,	0, 0)
 
 xx(SBIT,	sbit,	RPRII8,		NOP,	0, 0)		// *rA |= C if rB is true, *rA &= ~C otherwise
 

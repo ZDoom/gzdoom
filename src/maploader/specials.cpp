@@ -1148,8 +1148,8 @@ AActor *MapLoader::GetPushThing(int s)
 	thing = sec->thinglist;
 
 	while (thing &&
-		thing->GetClass()->TypeName != NAME_PointPusher &&
-		thing->GetClass()->TypeName != NAME_PointPuller)
+		!thing->IsKindOf(NAME_PointPusher) &&
+		!thing->IsKindOf(NAME_PointPuller))
 	{
 		thing = thing->snext;
 	}
@@ -1208,8 +1208,8 @@ void MapLoader::SpawnPushers()
 
 				while ((thing = iterator.Next()))
 				{
-					if (thing->GetClass()->TypeName == NAME_PointPusher ||
-						thing->GetClass()->TypeName == NAME_PointPuller)
+					if (thing->IsKindOf(NAME_PointPusher) ||
+						thing->IsKindOf(NAME_PointPuller))
 					{
 						Level->CreateThinker<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
 					}

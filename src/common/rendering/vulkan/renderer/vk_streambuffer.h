@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vulkan/system/vk_buffers.h"
+#include "vulkan/system/vk_hwbuffer.h"
 #include "vulkan/shaders/vk_shader.h"
 
 class VkStreamBuffer;
@@ -10,7 +10,7 @@ class VkMatrixBuffer;
 class VkStreamBufferWriter
 {
 public:
-	VkStreamBufferWriter();
+	VkStreamBufferWriter(VulkanFrameBuffer* fb);
 
 	bool Write(const StreamData& data);
 	void Reset();
@@ -27,7 +27,7 @@ private:
 class VkMatrixBufferWriter
 {
 public:
-	VkMatrixBufferWriter();
+	VkMatrixBufferWriter(VulkanFrameBuffer* fb);
 
 	bool Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled);
 	void Reset();
@@ -39,20 +39,4 @@ private:
 	MatricesUBO mMatrices = {};
 	VSMatrix mIdentityMatrix;
 	uint32_t mOffset = 0;
-};
-
-class VkStreamBuffer
-{
-public:
-	VkStreamBuffer(size_t structSize, size_t count);
-	~VkStreamBuffer();
-
-	uint32_t NextStreamDataBlock();
-	void Reset() { mStreamDataOffset = 0; }
-
-	VKDataBuffer* UniformBuffer = nullptr;
-
-private:
-	uint32_t mBlockSize = 0;
-	uint32_t mStreamDataOffset = 0;
 };

@@ -143,6 +143,41 @@ enum EPrintLevel
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
+enum EConsoleState
+{
+	c_up = 0,
+	c_down = 1,
+	c_falling = 2,
+	c_rising = 3
+};
+
+/*
+// These are here to document the intrinsic methods and fields available on
+// the built-in ZScript types
+struct Vector2
+{
+	Vector2(x, y);
+	double x, y;
+	native double Length();
+	native Vector2 Unit();
+	// The dot product of two vectors can be calculated like this:
+	// double d = a dot b;
+}
+
+struct Vector3
+{
+	Vector3(x, y, z);
+	double x, y, z;
+	Vector2 xy; // Convenient access to the X and Y coordinates of a 3D vector
+	native double Length();
+	native Vector3 Unit();
+	// The dot product of two vectors can be calculated like this:
+	// double d = a dot b;
+	// The cross product of two vectors can be calculated like this:
+	// Vector3 d = a cross b;
+}
+*/
+
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
@@ -184,6 +219,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int consoleplayer;
 	native readonly double NotifyFontScale;
 	native readonly int paused;
+	native readonly ui uint8 ConsoleState;
 }
 
 struct System native
@@ -193,13 +229,17 @@ struct System native
 	native static bool SoundEnabled();
 	native static bool MusicEnabled();
 	native static double GetTimeFrac();
-	
+
 	static bool specialKeyEvent(InputEvent ev)
 	{
 		if (ev.type == InputEvent.Type_KeyDown || ev.type == InputEvent.Type_KeyUp)
 		{
 			int key = ev.KeyScan;
-			if (key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP || (key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT)) return true;
+			let binding = Bindings.GetBinding(key);
+			bool volumekeys = key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP;
+			bool gamepadkeys = key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT;
+			bool altkeys = key == InputEvent.KEY_LALT || key == InputEvent.KEY_RALT;
+			if (volumekeys || gamepadkeys || altkeys || binding ~== "screenshot") return true;
 		}
 		return false;
 	}
@@ -267,7 +307,49 @@ struct TexMan
 	native static int CheckRealHeight(TextureID tex);
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
 	native static bool UseGamePalette(TextureID tex);
+	native static Canvas GetCanvas(String texture);
 }
+
+/*
+// Intrinsic TextureID methods
+// This isn't really a class, and can be used as an integer
+struct TextureID
+{
+	native bool IsValid();
+	native bool IsNull();
+	native bool Exists();
+	native void SetInvalid();
+	native void SetNull();
+}
+
+// 32-bit RGBA color - each component is one byte, or 8-bit
+// This isn't really a class, and can be used as an integer
+struct Color
+{
+	// Constructor - alpha channel is optional
+	Color(int alpha, int red, int green, int blue);
+	Color(int red, int green, int blue); // Alpha is 0 if omitted
+	int r; // Red
+	int g; // Green
+	int b; // Blue
+	int a; // Alpha
+}
+
+// Name - a string with an integer ID
+struct Name
+{
+	Name(Name name);
+	Name(String name);
+}
+
+// Sound ID - can be created by casting from a string (name from SNDINFO) or an
+// integer (sound ID as integer).
+struct Sound
+{
+	Sound(String soundName);
+	Sound(int id);
+}
+*/
 
 enum EScaleMode
 {
@@ -382,12 +464,26 @@ enum DrawTextureTags
 
 };
 
+enum StencilOp
+{
+	SOP_Keep = 0,
+	SOP_Increment = 1,
+	SOP_Decrement = 2
+};
+enum StencilFlags
+{
+	SF_AllOn = 0,
+	SF_ColorMaskOff = 1,
+	SF_DepthMaskOff = 2
+};
+
 class Shape2DTransform : Object native
 {
 	native void Clear();
 	native void Rotate(double angle);
 	native void Scale(Vector2 scaleVec);
 	native void Translate(Vector2 translateVec);
+	native void From2D(double m00, double m01, double m10, double m11, double vx, double vy);
 }
 
 class Shape2D : Object native
@@ -407,16 +503,47 @@ class Shape2D : Object native
 	native void PushTriangle( int a, int b, int c );
 }
 
+class Canvas : Object native abstract
+{
+	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+	native void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
+
+	native vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
+	native vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
+	native vararg void DrawShapeFill(Color col, double amount, Shape2D s, ...);
+	native vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
+	native vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
+	native void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
+	native void DrawLineFrame(Color color, int x0, int y0, int w, int h, int thickness = 1);
+	native void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
+	native Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
+	native void SetClipRect(int x, int y, int w, int h);
+	native void ClearClipRect();
+	native int, int, int, int GetClipRect();
+	native double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
+	native Vector2 SetOffset(double x, double y);
+	native void ClearScreen(color col = 0);
+	native void SetScreenFade(double factor);
+
+	native void EnableStencil(bool on);
+	native void SetStencil(int offs, int op, int flags = -1);
+	native void ClearStencil();
+	native void SetTransform(Shape2DTransform transform);
+	native void ClearTransform();
+}
+
 struct Screen native
 {
 	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();
+	native static Vector2 GetTextScreenSize();
 	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
 	native static void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
+	native static vararg void DrawShapeFill(Color col, double amount, Shape2D s, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
 	native static void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
@@ -432,6 +559,12 @@ struct Screen native
 	native static Vector2 SetOffset(double x, double y);
 	native static void ClearScreen(color col = 0);
 	native static void SetScreenFade(double factor);
+
+	native static void EnableStencil(bool on);
+	native static void SetStencil(int offs, int op, int flags = -1);
+	native static void ClearStencil();
+	native static void SetTransform(Shape2DTransform transform);
+	native static void ClearTransform();
 }
 
 struct Font native
@@ -503,7 +636,8 @@ struct Font native
 
 	const TEXTCOLOR_CHAT			= "\034*";
 	const TEXTCOLOR_TEAMCHAT		= "\034!";
-	
+	// native Font(const String name);  // String/name to font casts
+	// native Font(const Name name);
 
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
@@ -526,6 +660,7 @@ struct Console native
 {
 	native static void HideConsole();
 	native static vararg void Printf(string fmt, ...);
+	native static vararg void PrintfEx(int printlevel, string fmt, ...);
 }
 
 struct CVar native
@@ -586,13 +721,63 @@ class Object native
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
-	native static uint MSTime();
+	deprecated("4.8", "Use MSTimeF instead") native static uint MSTime();
+	native static double MSTimeF();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native virtualscope void Destroy();
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.
 	virtual virtualscope void OnDestroy() {}
+	//
+	// Object intrinsics
+	// Every ZScript "class" inherits from Object, and so inherits these methods as well
+	// clearscope bool IsAbstract(); // Query whether or not the class of this object is abstract
+	// clearscope Object GetParentClass(); // Get the parent class of this object
+	// clearscope Name GetClassName(); // Get the name of this object's class
+	// clearscope Class<Object> GetClass(); // Get the object's class
+	// clearscope Object new(class<Object> type); // Create a new object with this class. This is only valid for thinkers and plain objects, except menus. For actors, use Actor.Spawn();
+	//
+	//
+	// Intrinsic random number generation functions. Note that the square
+	// bracket syntax for specifying an RNG ID is only available for these
+	// functions.
+	// clearscope void SetRandomSeed[Name rngId = 'None'](int seed); // Set the seed for the given RNG.
+	// clearscope int Random[Name rngId = 'None'](int min, int max); // Use the given RNG to generate a random integer number in the range (min, max) inclusive.
+	// clearscope int Random2[Name rngId = 'None'](int mask); // Use the given RNG to generate a random integer number, and do a "union" (bitwise AND, AKA &) operation with the bits in the mask integer.
+	// clearscope double FRandom[Name rngId = 'None'](double min, double max); // Use the given RNG to generate a random real number in the range (min, max) inclusive.
+	// clearscope int RandomPick[Name rngId = 'None'](int choices...); // Use the given RNG to generate a random integer from the given choices.
+	// clearscope double FRandomPick[Name rngId = 'None'](double choices...); // Use the given RNG to generate a random real number from the given choices.
+	//
+	//
+	// Intrinsic math functions - the argument and return types for these
+	// functions depend on the arguments given. Other than that, they work the
+	// same way similarly-named functions in other programming languages work.
+	// Note that trigonometric functions work with degrees instead of radians
+	// clearscope T abs(T x);
+	// clearscope T atan2(T y, T x); // NOTE: Returns a value in degrees instead of radians
+	// clearscope T vectorangle(T x, T y); // Same as Atan2 with the arguments in a different order
+	// clearscope T min(T x...);
+	// clearscope T max(T x...);
+	// clearscope T clamp(T x, T min, T max);
+	//
+	// These math functions only work with doubles - they are defined in FxFlops
+	// clearscope double exp(double x);
+	// clearscope double log(double x);
+	// clearscope double log10(double x);
+	// clearscope double sqrt(double x);
+	// clearscope double ceil(double x);
+	// clearscope double floor(double x);
+	// clearscope double acos(double x);
+	// clearscope double asin(double x);
+	// clearscope double atan(double x);
+	// clearscope double cos(double x);
+	// clearscope double sin(double x);
+	// clearscope double tan(double x);
+	// clearscope double cosh(double x);
+	// clearscope double sinh(double x);
+	// clearscope double tanh(double x);
+	// clearscope double round(double x);
 }
 
 class BrokenLines : Object native version("2.4")
@@ -644,6 +829,7 @@ struct Wads	// todo: make FileSystem an alias to 'Wads'
 	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
 	native static int CheckNumForFullName(string name);
 	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
+	native static int FindLumpFullName(string name, int startlump = 0, bool noext = false);
 	native static string ReadLump(int lump);
 
 	native static int GetNumLumps();
@@ -659,11 +845,15 @@ enum EmptyTokenType
 }
 
 // Although String is a builtin type, this is a convenient way to attach methods to it.
+// All of these methods are available on strings
 struct StringStruct native
 {
 	native static vararg String Format(String fmt, ...);
 	native vararg void AppendFormat(String fmt, ...);
-
+	// native int Length();  // Intrinsic
+	// native bool operator==(String other); // Equality comparison
+	// native bool operator~==(String other);  // Case-insensitive equality comparison
+	// native String operator..(String other);  // Concatenate with another String
 	native void Replace(String pattern, String replacement);
 	native String Left(int len) const;
 	native String Mid(int pos = 0, int len = 2147483647) const;

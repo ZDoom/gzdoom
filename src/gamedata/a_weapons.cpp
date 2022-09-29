@@ -210,20 +210,6 @@ void FWeaponSlot::Sort()
 
 //===========================================================================
 //
-// FWeaponSlots - Copy Constructor
-//
-//===========================================================================
-
-FWeaponSlots::FWeaponSlots(const FWeaponSlots &other)
-{
-	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
-	{
-		Slots[i] = other.Slots[i];
-	}
-}
-
-//===========================================================================
-//
 // FWeaponSlots :: Clear
 //
 // Removes all weapons from every slot.

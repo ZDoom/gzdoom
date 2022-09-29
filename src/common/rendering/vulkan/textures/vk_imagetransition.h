@@ -3,20 +3,25 @@
 
 #include "vulkan/system/vk_objects.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/renderer/vk_renderpass.h"
 
 class VkTextureImage
 {
 public:
-	void reset()
+	void Reset(VulkanFrameBuffer* fb)
 	{
 		AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		Layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		PPFramebuffer.reset();
+		auto deletelist = fb->GetCommands()->DrawDeleteList.get();
+		deletelist->Add(std::move(PPFramebuffer));
+		for (auto &it : RSFramebuffers)
+			deletelist->Add(std::move(it.second));
 		RSFramebuffers.clear();
-		DepthOnlyView.reset();
-		View.reset();
-		Image.reset();
+		deletelist->Add(std::move(DepthOnlyView));
+		deletelist->Add(std::move(View));
+		deletelist->Add(std::move(Image));
 	}
 
 	void GenerateMipmaps(VulkanCommandBuffer *cmdbuffer);
@@ -33,8 +38,8 @@ public:
 class VkImageTransition
 {
 public:
-	void addImage(VkTextureImage *image, VkImageLayout targetLayout, bool undefinedSrcLayout, int baseMipLevel = 0, int levelCount = 1);
-	void execute(VulkanCommandBuffer *cmdbuffer);
+	VkImageTransition& AddImage(VkTextureImage *image, VkImageLayout targetLayout, bool undefinedSrcLayout, int baseMipLevel = 0, int levelCount = 1);
+	void Execute(VulkanCommandBuffer *cmdbuffer);
 
 private:
 	PipelineBarrier barrier;

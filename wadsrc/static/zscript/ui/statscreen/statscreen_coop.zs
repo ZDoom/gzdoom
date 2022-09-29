@@ -216,16 +216,8 @@ class CoopStatusScreen : StatusScreen
 		}
 		else if (ng_state == 12)
 		{
-			int i;
-			for (i = 0; i < MAXPLAYERS; i++)
-			{
-				// If the player is in the game and not ready, stop checking
-				if (playeringame[i] && players[i].Bot == NULL && !playerready[i])
-					break;
-			}
-
 			// All players are ready; proceed.
-			if ((i == MAXPLAYERS && acceleratestage) || autoskip)
+			if ((acceleratestage) || autoskip)
 			{
 				PlaySound("intermission/pastcoopstats");
 				initShowNextLoc();
@@ -311,7 +303,7 @@ class CoopStatusScreen : StatusScreen
 
 			screen.Dim(player.GetDisplayColor(), 0.8f, x, y - ypadding, (secret_x - x) + (8 * CleanXfac), lineheight);
 
-			if (playerready[i] || player.Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
+			//if (playerready[i] || player.Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
 				screen.DrawTexture(readyico, true, x - (readysize.Y * CleanXfac), y, DTA_CleanNoMove, true);
 
 			Color thiscolor = GetRowColor(player, i == consoleplayer);

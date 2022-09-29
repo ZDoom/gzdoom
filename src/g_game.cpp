@@ -77,6 +77,8 @@
 #include "v_palette.h"
 #include "s_music.h"
 #include "p_setup.h"
+#include "d_event.h"
+#include "model.h"
 
 #include "v_video.h"
 #include "g_hub.h"
@@ -86,6 +88,7 @@
 #include "d_buttons.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "doommenu.h"
+#include "screenjob.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -114,7 +117,7 @@ CVAR(Bool, save_formatted, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// use forma
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, longsavemessages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, longsavemessages, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, save_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -142,7 +145,6 @@ extern bool playedtitlemusic;
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
-FName			SelectedSlideshow;		// what to start when ga_slideshow
 
 int 			paused;
 bool			pauseext;
@@ -969,6 +971,11 @@ bool G_Responder (event_t *ev)
 	if (ev->type != EV_Mouse && primaryLevel->localEventManager->Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 		return true;
 	
+	if (gamestate == GS_INTRO || gamestate == GS_CUTSCENE)
+	{
+		return ScreenJobResponder(ev);
+	}
+	
 	// any other key pops up menu if in demos
 	// [RH] But only if the key isn't bound to a "special" command
 	if (gameaction == ga_nothing && 
@@ -1016,11 +1023,6 @@ bool G_Responder (event_t *ev)
 			return true;		// status window ate it
 		if (!viewactive && primaryLevel->automap && primaryLevel->automap->Responder (ev, false))
 			return true;		// automap ate it
-	}
-	else if (gamestate == GS_FINALE)
-	{
-		if (F_Responder (ev))
-			return true;		// finale ate the event
 	}
 
 	switch (ev->type)
@@ -1173,9 +1175,6 @@ void G_Ticker ()
 		case ga_completed:
 			G_DoCompleted ();
 			break;
-		case ga_slideshow:
-			if (gamestate == GS_LEVEL) F_StartIntermission(SelectedSlideshow, FSTATE_InLevel);
-			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
 			break;
@@ -1196,19 +1195,25 @@ void G_Ticker ()
 			P_ResumeConversation ();
 			gameaction = ga_nothing;
 			break;
+		case ga_intermission:
+			gamestate = GS_CUTSCENE;
+			gameaction = ga_nothing;
+			break;
+		case ga_titleloop:
+			D_StartTitle();
+			break;
+		case ga_intro:
+			gamestate = GS_INTRO;
+			gameaction = ga_nothing;
+			break;
+
+
+
 		default:
 		case ga_nothing:
 			break;
 		}
 		C_AdjustBottom ();
-	}
-
-	if (oldgamestate != gamestate)
-	{
-		if (oldgamestate == GS_FINALE)
-		{
-			F_EndFinale ();
-		}
 	}
 
 	// get commands, check consistancy, and build new consistancy check
@@ -1293,14 +1298,6 @@ void G_Ticker ()
 		P_Ticker ();
 		break;
 
-	case GS_INTERMISSION:
-		WI_Ticker ();
-		break;
-
-	case GS_FINALE:
-		F_Ticker ();
-		break;
-
 	case GS_DEMOSCREEN:
 		D_PageTicker ();
 		break;
@@ -1310,6 +1307,15 @@ void G_Ticker ()
 		{
 			gamestate = GS_FULLCONSOLE;
 			gameaction = ga_fullconsole;
+		}
+		break;
+
+	case GS_CUTSCENE:
+	case GS_INTRO:
+		if (ScreenJobTick())
+		{
+			// synchronize termination with the playsim.
+			Net_WriteByte(DEM_ENDSCREENJOB);
 		}
 		break;
 
@@ -2114,6 +2120,14 @@ void G_DoLoadGame ()
 
 	BackupSaveName = savename;
 
+	//Push any added models from A_ChangeModel
+	for (auto& smf : savedModelFiles)
+	{
+		FString modelFilePath = smf.Left(smf.LastIndexOf("/")+1);
+		FString modelFileName = smf.Right(smf.Len() - smf.Left(smf.LastIndexOf("/") + 1).Len());
+		FindModel(modelFilePath, modelFileName);
+	}
+
 	// At this point, the GC threshold is likely a lot higher than the
 	// amount of memory in use, so bring it down now by starting a
 	// collection.
@@ -2181,6 +2195,33 @@ FString G_BuildSaveName (const char *prefix, int slot)
 		name.AppendFormat("%d." SAVEGAME_EXT, slot);
 	}
 	return name;
+}
+
+CCMD(opensaves)
+{
+	FString name;
+	FString leader;
+	const char *slash = "";
+
+	leader = Args->CheckValue ("-savedir");
+	if (leader.IsEmpty())
+	{
+		leader = save_dir;
+		if (leader.IsEmpty())
+		{
+			leader = M_GetSavegamesPath();
+		}
+	}
+	size_t len = leader.Len();
+	if (leader[0] != '\0' && leader[len-1] != '\\' && leader[len-1] != '/')
+	{
+		slash = "/";
+	}
+	name << leader << slash;
+	name = NicePath(name);
+	CreatePath(name);
+
+	I_OpenShellFolder(name);
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -3078,8 +3119,16 @@ bool G_CheckDemoStatus (void)
 
 void G_StartSlideshow(FLevelLocals *Level, FName whichone)
 {
-	gameaction = ga_slideshow;
-	SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
+	auto SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
+	auto slide = F_StartIntermission(SelectedSlideshow);
+	RunIntermission(nullptr, nullptr, slide, nullptr, [](bool)
+	{
+		primaryLevel->SetMusic();
+		gamestate = GS_LEVEL;
+		wipegamestate = GS_LEVEL;
+		gameaction = ga_resumeconversation;
+
+	});
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)

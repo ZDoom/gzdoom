@@ -302,14 +302,13 @@ void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 //
 //===========================================================================
 
-void FMD3Model::AddSkins(uint8_t *hitlist)
+void FMD3Model::AddSkins(uint8_t *hitlist, const FTextureID* surfaceskinids)
 {
 	for (unsigned i = 0; i < Surfaces.Size(); i++)
 	{
-		int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-		if (curSpriteMDLFrame && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+		if (surfaceskinids && surfaceskinids[i].isValid())
 		{
-			hitlist[curSpriteMDLFrame->surfaceskinIDs[ssIndex].GetIndex()] |= FTextureManager::HIT_Flat;
+			hitlist[surfaceskinids[i].GetIndex()] |= FTextureManager::HIT_Flat;
 		}
 
 		MD3Surface * surf = &Surfaces[i];
@@ -329,13 +328,13 @@ void FMD3Model::AddSkins(uint8_t *hitlist)
 //
 //===========================================================================
 
-int FMD3Model::FindFrame(const char * name)
+int FMD3Model::FindFrame(const char * name, bool nodefault)
 {
 	for (unsigned i = 0; i < Frames.Size(); i++)
 	{
 		if (!stricmp(name, Frames[i].Name)) return i;
 	}
-	return -1;
+	return FErr_NotFound;
 }
 
 //===========================================================================
@@ -344,7 +343,7 @@ int FMD3Model::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const FTextureID* surfaceskinids)
 {
 	if ((unsigned)frameno >= Frames.Size() || (unsigned)frameno2 >= Frames.Size()) return;
 
@@ -358,17 +357,13 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		FGameTexture *surfaceSkin = skin;
 		if (!surfaceSkin)
 		{
-			if (curSpriteMDLFrame)
+			if (surfaceskinids && surfaceskinids[i].isValid())
 			{
-				int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-				if (curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
-				{
-					surfaceSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[ssIndex], true);
-				}
-				else if (surf->numSkins > 0 && surf->Skins[0].isValid())
-				{
-					surfaceSkin = TexMan.GetGameTexture(surf->Skins[0], true);
-				}
+				surfaceSkin = TexMan.GetGameTexture(surfaceskinids[i], true);
+			}
+			else if (surf->numSkins > 0 && surf->Skins[0].isValid())
+			{
+				surfaceSkin = TexMan.GetGameTexture(surf->Skins[0], true);
 			}
 
 			if (!surfaceSkin)

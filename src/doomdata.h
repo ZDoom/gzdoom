@@ -373,7 +373,7 @@ struct FMapThing
 	double		Gravity;
 	double		Alpha;
 	uint32_t		fillcolor;
-	DVector2	Scale;
+	FVector2	Scale;
 	double		Health;
 	int			score;
 	int16_t		pitch;

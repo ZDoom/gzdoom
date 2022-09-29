@@ -104,8 +104,8 @@ FCompileContext::FCompileContext(PNamespace *cg, PFunction *fnc, PPrototype *ret
 	if (fnc != nullptr) Class = fnc->OwningClass;
 }
 
-FCompileContext::FCompileContext(PNamespace *cg, PContainerType *cls, bool fromdecorate) 
-	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1), CurGlobals(cg)
+FCompileContext::FCompileContext(PNamespace *cg, PContainerType *cls, bool fromdecorate, const VersionInfo& info) 
+	: ReturnProto(nullptr), Function(nullptr), Class(cls), FromDecorate(fromdecorate), StateIndex(-1), StateCount(0), Lump(-1), CurGlobals(cg), Version(info)
 {
 }
 
@@ -1688,6 +1688,13 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
+	else if ((basex->IsVector2() && IsVector2()) || (basex->IsVector3() && IsVector3()))
+	{
+		auto x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
 	// todo: pointers to class objects. 
 	// All other types are only compatible to themselves and have already been handled above by the equality check.
 	// Anything that falls through here is not compatible and must print an error.
@@ -1843,7 +1850,7 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 
 ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType == Operand->ValueType);
+	//assert(ValueType == Operand->ValueType);
 	ExpEmit from = Operand->Emit(build);
 	ExpEmit to;
 	assert(from.Konst == 0);
@@ -2587,6 +2594,12 @@ FxExpression *FxMultiAssign::Resolve(FCompileContext &ctx)
 	}
 	auto VMRight = static_cast<FxVMFunctionCall *>(Right);
 	auto rets = VMRight->GetReturnTypes();
+	if (Base.Size() == 1)
+	{
+		Right->ScriptPosition.Message(MSG_ERROR, "Multi-assignment with only one element in function %s", VMRight->Function->SymbolName.GetChars());
+		delete this;
+		return nullptr;
+	}
 	if (rets.Size() < Base.Size())
 	{
 		Right->ScriptPosition.Message(MSG_ERROR, "Insufficient returns in function %s", VMRight->Function->SymbolName.GetChars());
@@ -2665,11 +2678,24 @@ FxBinary::~FxBinary()
 //
 //==========================================================================
 
-bool FxBinary::Promote(FCompileContext &ctx, bool forceint)
+bool FxBinary::Promote(FCompileContext &ctx, bool forceint, bool shiftop)
 {
 	// math operations of unsigned ints results in an unsigned int. (16 and 8 bit values never get here, they get promoted to regular ints elsewhere already.)
 	if (left->ValueType == TypeUInt32 && right->ValueType == TypeUInt32)
 	{
+		ValueType = TypeUInt32;
+	}
+	// If one side is an unsigned 32-bit int and the other side is a signed 32-bit int, the signed side is implicitly converted to unsigned,
+	else if (!ctx.FromDecorate && left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32 && !shiftop && ctx.Version >= MakeVersion(4, 9, 0))
+	{
+		right = new FxIntCast(right, false, false, true);
+		right = right->Resolve(ctx);
+		ValueType = TypeUInt32;
+	}
+	else if (!ctx.FromDecorate && left->ValueType == TypeSInt32 && right->ValueType == TypeUInt32 && !shiftop && ctx.Version >= MakeVersion(4, 9, 0))
+	{
+		left = new FxIntCast(left, false, false, true);
+		left = left->Resolve(ctx);
 		ValueType = TypeUInt32;
 	}
 	else if (left->IsInteger() && right->IsInteger())
@@ -2715,6 +2741,15 @@ bool FxBinary::Promote(FCompileContext &ctx, bool forceint)
 		delete this;
 		return false;
 	}
+
+	// shift operators are different: The left operand defines the type and the right operand must always be made unsigned
+	if (shiftop)
+	{
+		ValueType = left->ValueType == TypeUInt32 ? TypeUInt32 : TypeSInt32;
+		right = new FxIntCast(right, false, false, true);
+		right = right->Resolve(ctx);
+	}
+
 	return true;
 }
 
@@ -2764,7 +2799,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	else if (left->IsVector() && right->IsVector())
 	{
 		// a vector2 can be added to or subtracted from a vector 3 but it needs to be the right operand.
-		if (left->ValueType == right->ValueType || (left->ValueType == TypeVector3 && right->ValueType == TypeVector2))
+		if (((left->IsVector3() || left->IsVector2()) && right->IsVector2()) || (left->IsVector3() && right->IsVector3()))
 		{
 			ValueType = left->ValueType;
 		}
@@ -2857,8 +2892,9 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
-			build->Emit(right->ValueType == TypeVector2? OP_ADDV2_RR : OP_ADDV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
-			if (left->ValueType == TypeVector3 && right->ValueType == TypeVector2 && to.RegNum != op1.RegNum)
+
+			build->Emit(right->IsVector2() ? OP_ADDV2_RR : OP_ADDV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			if (left->IsVector3() && right->IsVector2() && to.RegNum != op1.RegNum)
 			{
 				// must move the z-coordinate
 				build->Emit(OP_MOVEF, to.RegNum + 2, op1.RegNum + 2);
@@ -2890,7 +2926,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
-			build->Emit(right->ValueType == TypeVector2 ? OP_SUBV2_RR : OP_SUBV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			build->Emit(right->IsVector2() ? OP_SUBV2_RR : OP_SUBV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
 		else if (ValueType->GetRegType() == REGT_FLOAT)
@@ -3093,11 +3129,11 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		int op;
 		if (op2.Konst)
 		{
-			op = Operator == '*' ? (ValueType == TypeVector2 ? OP_MULVF2_RK : OP_MULVF3_RK) : (ValueType == TypeVector2 ? OP_DIVVF2_RK : OP_DIVVF3_RK);
+			op = Operator == '*' ? (IsVector2() ? OP_MULVF2_RK : OP_MULVF3_RK) : (IsVector2() ? OP_DIVVF2_RK : OP_DIVVF3_RK);
 		}
 		else
 		{
-			op = Operator == '*' ? (ValueType == TypeVector2 ? OP_MULVF2_RR : OP_MULVF3_RR) : (ValueType == TypeVector2 ? OP_DIVVF2_RR : OP_DIVVF3_RR);
+			op = Operator == '*' ? (IsVector2() ? OP_MULVF2_RR : OP_MULVF3_RR) : (IsVector2() ? OP_DIVVF2_RR : OP_DIVVF3_RR);
 		}
 		op1.Free(build);
 		op2.Free(build);
@@ -3310,6 +3346,59 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 	}
 	else if (left->IsNumeric() && right->IsNumeric())
 	{
+		if (left->IsInteger() && right->IsInteger())
+		{
+			if (ctx.Version >= MakeVersion(4, 9, 0))
+			{
+				// We need to do more checks here to catch problem cases.
+				if (left->ValueType == TypeUInt32 && right->ValueType == TypeSInt32)
+				{
+					if (left->isConstant() && !right->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(left)->GetValue().GetUInt();
+						if (val > INT_MAX)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison of signed value with out of range unsigned constant");
+						}
+					}
+					else if (right->isConstant() && !left->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(right)->GetValue().GetInt();
+						if (val < 0)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison of unsigned value with negative constant");
+						}
+					}
+					else if (!left->isConstant() && !right->isConstant())
+					{
+						ScriptPosition.Message(MSG_WARNING, "Comparison between signed and unsigned value");
+					}
+				}
+				else if (left->ValueType == TypeSInt32 && right->ValueType == TypeUInt32)
+				{
+					if (left->isConstant() && !right->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(left)->GetValue().GetInt();
+						if (val < 0)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison of unsigned value with negative constant");
+						}
+					}
+					else if (right->isConstant() && !left->isConstant())
+					{
+						auto val = static_cast<FxConstant*>(right)->GetValue().GetUInt();
+						if (val > INT_MAX)
+						{
+							ScriptPosition.Message(MSG_WARNING, "Comparison of signed value with out of range unsigned constant");
+						}
+					}
+					else if (!left->isConstant() && !right->isConstant())
+					{
+						ScriptPosition.Message(MSG_WARNING, "Comparison between signed and unsigned value");
+					}
+				}
+			}
+		}
 		Promote(ctx);
 	}
 	else
@@ -3508,7 +3597,8 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
-	if (left->ValueType != right->ValueType)	// identical types are always comparable, if they can be placed in a register, so we can save most checks if this is the case.
+	// identical types are always comparable, if they can be placed in a register, so we can save most checks if this is the case.
+	if (left->ValueType != right->ValueType && !(left->IsVector2() && right->IsVector2()) && !(left->IsVector3() && right->IsVector3()))
 	{
 		FxExpression *x;
 		if (left->IsNumeric() && right->ValueType == TypeString && (x = StringConstToChar(right)))
@@ -3914,7 +4004,7 @@ FxExpression *FxShift::Resolve(FCompileContext& ctx)
 
 	if (left->IsNumeric() && right->IsNumeric())
 	{
-		if (!Promote(ctx, true)) return nullptr;
+		if (!Promote(ctx, true, true)) return nullptr;
 		if ((left->ValueType == TypeUInt32 && ctx.Version >= MakeVersion(3, 7)) && Operator == TK_RShift) Operator = TK_URShift;
 	}
 	else
@@ -8218,7 +8308,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					member->membervar = newfield;
 					Self = nullptr;
 					delete this;
-					member->ValueType = TypeUInt32;
+					member->ValueType = TypeSInt32;
 					return member;
 				}
 				else
@@ -9067,13 +9157,13 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 	ExpEmit op = Self->Emit(build);
 	if (Function == NAME_Length)
 	{
-		build->Emit(Self->ValueType == TypeVector2 ? OP_LENV2 : OP_LENV3, to.RegNum, op.RegNum);
+		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_LENV2 : OP_LENV3, to.RegNum, op.RegNum);
 	}
 	else
 	{
 		ExpEmit len(build, REGT_FLOAT);
-		build->Emit(Self->ValueType == TypeVector2 ? OP_LENV2 : OP_LENV3, len.RegNum, op.RegNum);
-		build->Emit(Self->ValueType == TypeVector2 ? OP_DIVVF2_RR : OP_DIVVF3_RR, to.RegNum, op.RegNum, len.RegNum);
+		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_LENV2 : OP_LENV3, len.RegNum, op.RegNum);
+		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_DIVVF2_RR : OP_DIVVF3_RR, to.RegNum, op.RegNum, len.RegNum);
 		len.Free(build);
 	}
 	op.Free(build);
@@ -10734,6 +10824,10 @@ ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)
 FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p)
 	:FxExpression(EFX_LocalVariableDeclaration, p)
 {
+	// Local FVector isn't different from Vector
+	if (type == TypeFVector2) type = TypeVector2;
+	else if (type == TypeFVector3) type = TypeVector3;
+
 	ValueType = type;
 	VarFlags = varflags;
 	Name = name;
@@ -11158,7 +11252,7 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 
 	auto zero = build->GetConstantInt(0);
 	auto elementSizeConst = build->GetConstantInt(static_cast<PArray *>(ValueType)->ElementSize);
-	int arrOffsetReg;
+	int arrOffsetReg = 0;
 	if (!isDynamicArray)
 	{
 		arrOffsetReg = build->Registers[REGT_POINTER].Get(1);

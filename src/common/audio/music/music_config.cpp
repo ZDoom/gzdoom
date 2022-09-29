@@ -278,7 +278,7 @@ CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL)
 //==========================================================================
 
 
-CUSTOM_CVAR(String, midi_config, GAMENAMELOWERCASE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, midi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_STRING_CVAR(gus_config);
 }

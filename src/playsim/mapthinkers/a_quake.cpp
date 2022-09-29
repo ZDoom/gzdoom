@@ -137,7 +137,7 @@ void DEarthquake::Tick ()
 						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_Quake);
 					}
 					// Thrust player around
-					DAngle an = victim->Angles.Yaw + pr_quake();
+					DAngle an = victim->Angles.Yaw + DAngle::fromDeg(pr_quake());
 					victim->Vel.X += m_Intensity.X * an.Cos() * 0.5;
 					victim->Vel.Y += m_Intensity.Y * an.Sin() * 0.5;
 				}
@@ -297,7 +297,11 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 	{
 		if (quake->m_Spot != nullptr)
 		{
-			const double dist = quake->m_Spot->Distance2D(victim, true);
+			double dist;
+
+			if (quake->m_Flags & QF_3D)	dist = quake->m_Spot->Distance3D(victim, true);
+			else						dist = quake->m_Spot->Distance2D(victim, true);
+
 			if (dist < quake->m_TremorRadius)
 			{
 				++count;

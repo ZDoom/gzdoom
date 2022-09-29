@@ -127,9 +127,10 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 	static const FVertexBufferAttribute format[] = {
 		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FSkyVertex, x) },
 		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FSkyVertex, u) },
-		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(FSkyVertex, color) }
+		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(FSkyVertex, color) },
+		{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FSkyVertex, lu) },
 	};
-	mVertexBuffer->SetFormat(1, 3, sizeof(FSkyVertex), format);
+	mVertexBuffer->SetFormat(1, 4, sizeof(FSkyVertex), format);
 	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], BufferUsageType::Static);
 }
 
@@ -146,10 +147,10 @@ FSkyVertexBuffer::~FSkyVertexBuffer()
 
 void FSkyVertexBuffer::SkyVertexDoom(int r, int c, bool zflip)
 {
-	static const FAngle maxSideAngle = 60.f;
+	static const FAngle maxSideAngle = FAngle::fromDeg(60.f);
 	static const float scale = 10000.;
 
-	FAngle topAngle = (c / (float)mColumns * 360.f);
+	FAngle topAngle = FAngle::fromDeg((c / (float)mColumns * 360.f));
 	FAngle sideAngle = maxSideAngle * float(mRows - r) / float(mRows);
 	float height = sideAngle.Sin();
 	float realRadius = scale * sideAngle.Cos();
@@ -189,10 +190,10 @@ void FSkyVertexBuffer::SkyVertexDoom(int r, int c, bool zflip)
 
 void FSkyVertexBuffer::SkyVertexBuild(int r, int c, bool zflip)
 {
-	static const FAngle maxSideAngle = 60.f;
+	static const FAngle maxSideAngle = FAngle::fromDeg(60.f);
 	static const float scale = 10000.;
 
-	FAngle topAngle = (c / (float)mColumns * 360.f);
+	FAngle topAngle = FAngle::fromDeg((c / (float)mColumns * 360.f));
 	FVector2 pos = topAngle.ToVector(scale);
 	float z = (!zflip) ? (mRows - r) * 4000.f : -(mRows - r) * 4000.f;
 
@@ -455,7 +456,7 @@ void FSkyVertexBuffer::RenderRow(FRenderState& state, EDrawType prim, int row, T
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which)
+void FSkyVertexBuffer::DoRenderDome(FRenderState& state, FGameTexture* tex, int mode, bool which, PalEntry color)
 {
 	auto& primStart = which ? mPrimStartBuild : mPrimStartDoom;
 	if (tex && tex->isValid())
@@ -470,7 +471,15 @@ void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, int mo
 	// The caps only get drawn for the main layer but not for the overlay.
 	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != nullptr)
 	{
-		auto& col = R_GetSkyCapColor(tex);
+		auto col = R_GetSkyCapColor(tex);
+
+		col.first.r = col.first.r * color.r / 255;
+		col.first.g = col.first.g * color.g / 255;
+		col.first.b = col.first.b * color.b / 255;
+		col.second.r = col.second.r * color.r / 255;
+		col.second.g = col.second.g * color.g / 255;
+		col.second.b = col.second.b * color.b / 255;
+
 		state.SetObjectColor(col.first);
 		state.EnableTexture(false);
 		RenderRow(state, DT_TriangleFan, 0, primStart);
@@ -497,13 +506,13 @@ void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, int mo
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale, float yscale)
+void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale, float yscale, PalEntry color)
 {
 	if (tex)
 	{
 		SetupMatrices(tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix, tiled, xscale, yscale);
 	}
-	RenderDome(state, tex, mode, false);
+	DoRenderDome(state, tex, mode, false, color);
 }
 
 
@@ -513,10 +522,11 @@ void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float 
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderBox(FRenderState& state, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2)
+void FSkyVertexBuffer::RenderBox(FRenderState& state, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2, PalEntry color)
 {
 	int faces;
 
+	state.SetObjectColor(color);
 	state.EnableModelMatrix(true);
 	state.mModelMatrix.loadIdentity();
 	state.mModelMatrix.scale(1, 1 / stretch, 1); // Undo the map's vertical scaling as skyboxes are true cubes.
@@ -562,5 +572,6 @@ void FSkyVertexBuffer::RenderBox(FRenderState& state, FSkyBox* tex, float x_offs
 	state.Draw(DT_TriangleStrip, FaceStart(4), 4);
 
 	state.EnableModelMatrix(false);
+	state.SetObjectColor(0xffffffff);
 }
 

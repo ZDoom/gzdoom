@@ -613,9 +613,9 @@ FVector3 FOBJModel::CalculateNormalSmooth(unsigned int vidx, unsigned int smooth
  * @param name The name of the frame
  * @return The index of the frame
  */
-int FOBJModel::FindFrame(const char* name)
+int FOBJModel::FindFrame(const char* name, bool nodefault)
 {
-	return 0; // OBJs are not animated.
+	return nodefault? FErr_Singleframe : 0; // OBJs are not animated.
 }
 
 /**
@@ -623,24 +623,26 @@ int FOBJModel::FindFrame(const char* name)
  *
  * @param renderer The model renderer
  * @param skin The loaded skin for the surface
- * @param frameno Unused
- * @param frameno2 Unused
- * @param inter Unused
+ * @param frameno The first frame to interpolate between. Only prevents the model from rendering if it is < 0, since OBJ models are static.
+ * @param frameno2 The second frame to interpolate between.
+ * @param inter The amount to interpolate the two frames.
  * @param translation The translation for the skin
  */
-void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const FTextureID* surfaceskinids)
 {
+	// Prevent the model from rendering if the frame number is < 0
+	if (frameno < 0 || frameno2 < 0) return;
+
 	for (unsigned int i = 0; i < surfaces.Size(); i++)
 	{
 		OBJSurface *surf = &surfaces[i];
 
 		FGameTexture *userSkin = skin;
-		if (!userSkin && curSpriteMDLFrame)
+		if (!userSkin)
 		{
-			int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-			if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+			if (surfaceskinids && surfaceskinids[i].isValid())
 			{
-				userSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[ssIndex], true);
+				userSkin = TexMan.GetGameTexture(surfaceskinids[i], true);
 			}
 			else if (surf->skin.isValid())
 			{
@@ -665,18 +667,17 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
  *
  * @param hitlist The list of textures
  */
-void FOBJModel::AddSkins(uint8_t* hitlist)
+void FOBJModel::AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids)
 {
 	for (size_t i = 0; i < surfaces.Size(); i++)
 	{
-		size_t ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-		if (curSpriteMDLFrame && i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+		if (surfaceskinids && i < MD3_MAX_SURFACES && surfaceskinids[i].isValid())
 		{
 			// Precache skins manually reassigned by the user.
 			// On OBJs with lots of skins, such as Doom map OBJs exported from GZDB,
 			// there may be too many skins for the user to manually change, unless
 			// the limit is bumped or surfaceskinIDs is changed to a TArray<FTextureID>.
-			hitlist[curSpriteMDLFrame->surfaceskinIDs[ssIndex].GetIndex()] |= FTextureManager::HIT_Flat;
+			hitlist[surfaceskinids[i].GetIndex()] |= FTextureManager::HIT_Flat;
 			return; // No need to precache skin that was replaced
 		}
 

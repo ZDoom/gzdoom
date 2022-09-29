@@ -51,6 +51,7 @@ class player_t;
 enum PSPLayers
 {
 	PSP_STRIFEHANDS = -1,
+	PSP_CALLERID = 0,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
 	PSP_TARGETCENTER = INT_MAX - 2,

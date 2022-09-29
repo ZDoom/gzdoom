@@ -23,7 +23,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define USE_GLES2 0
+#define USE_GLES2 0 // For Desktop PC leave as 0, it will use the exisiting OpenGL context creationg code but run with the GLES2 renderer
+                    // Set to 1 for when comipling for a real GLES device
 
 #if (USE_GLES2)
 	#include "glad/glad.h"
@@ -43,6 +44,7 @@ GLAPI PFNGLUNMAPBUFFEROESPROC glUnmapBuffer;
 #define GL_MAP_INVALIDATE_BUFFER_BIT      0x0008
 #define GL_BGRA                           0x80E1
 #define GL_DEPTH_CLAMP                    0x864F
+#define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
 
 #else
 	#include "gl_load/gl_load.h"
@@ -71,6 +73,7 @@ namespace OpenGLESRenderer
 		bool npotAvailable;
 		bool forceGLSLv100;
 		bool depthClampAvailable;
+		bool anistropicFilterAvailable;
 		int max_texturesize;
 		char* vendorstring;
 		char* modelstring;

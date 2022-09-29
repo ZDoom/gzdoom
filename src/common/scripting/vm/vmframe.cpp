@@ -56,7 +56,7 @@ CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 }
 #else
 CVAR(Bool, vm_jit, false, CVAR_NOINITCALL|CVAR_NOSET)
-FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames) { return FString(); }
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames) { return FString(); }
 void JitRelease() {}
 #endif
 

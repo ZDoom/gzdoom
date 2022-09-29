@@ -11,6 +11,8 @@ void D_ConfirmSendStats()
 
 #else // !NO_SEND_STATS
 
+#include "i_mainwindow.h"
+
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -174,20 +176,24 @@ bool I_HTTPRequest(const char* request)
 static int GetOSVersion()
 {
 #ifdef _WIN32
+#ifndef _M_ARM64
 	if (sizeof(void*) == 4)	// 32 bit
 	{
 		BOOL res;
 		if (IsWow64Process(GetCurrentProcess(), &res) && res)
 		{
-			return 2;
+			return 1;
 		}
-		return 1;
+		return 0;
 	}
 	else
 	{
-		if (sys_ostype == 2) return 3;
-		else return 4;
+		if (sys_ostype == 2) return 2;
+		else return 3;
 	}
+#else
+	return 4;
+#endif
 
 #elif defined __APPLE__
 
@@ -196,9 +202,8 @@ static int GetOSVersion()
 #else
 	return 5;
 #endif
-#else
 
-// fall-through linux stuff here
+#else // fall-through linux stuff here
 #ifdef __arm__
 	return 9;
 #else
@@ -262,12 +267,12 @@ static int GetCoreInfo()
 
 static int GetRenderInfo()
 {
+	if (screen->Backend() == 0) return 1;
 	if (screen->Backend() == 1) return 4;
 	auto info = gl_getInfo();
 	if (!info.second)
 	{
-		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 2;
-		return 1;
+		return 2;
 	}
 	return 3;
 }
@@ -340,8 +345,7 @@ void D_ConfirmSendStats()
 	UCVarValue enabled = { 0 };
 
 #ifdef _WIN32
-	extern HWND Window;
-	enabled.Int = MessageBoxA(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
+	enabled.Int = MessageBoxA(mainwindow.GetHandle(), MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
 #elif defined __APPLE__
 	const CFStringRef messageString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, MESSAGE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
 	const CFStringRef titleString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, TITLE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);

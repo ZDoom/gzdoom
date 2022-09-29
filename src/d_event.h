@@ -27,31 +27,9 @@
 #include "basics.h"
 #include <functional>
 #include "d_eventbase.h"
-
+#include "gamestate.h"
 
  
-enum gameaction_t : int
-{
-	ga_nothing,
-	ga_loadlevel, // not used.
-	ga_newgame,
-	ga_newgame2,
-	ga_recordgame,
-	ga_loadgame,
-	ga_loadgamehidecon,
-	ga_loadgameplaydemo,
-	ga_autoloadgame,
-	ga_savegame,
-	ga_autosave,
-	ga_playdemo,
-	ga_completed,
-	ga_slideshow,
-	ga_worlddone,
-	ga_screenshot,
-	ga_togglemap,
-	ga_fullconsole,
-	ga_resumeconversation,
-};
 
 
 
@@ -97,6 +75,31 @@ typedef enum
 // Called by IO functions when input is detected.
 void D_Render(std::function<void()> action, bool interpolate);
 
+enum gameaction_t : int
+{
+	ga_nothing,
+	ga_loadlevel, // not used.
+	ga_newgame,
+	ga_newgame2,
+	ga_recordgame,
+	ga_loadgame,
+	ga_loadgamehidecon,
+	ga_loadgameplaydemo,
+	ga_autoloadgame,
+	ga_savegame,
+	ga_autosave,
+	ga_playdemo,
+	ga_completed,
+	ga_slideshow,
+	ga_worlddone,
+	ga_screenshot,
+	ga_togglemap,
+	ga_fullconsole,
+	ga_resumeconversation,
+	ga_intro,
+	ga_intermission,
+	ga_titleloop,
+};
 
 extern	gameaction_t	gameaction;
 

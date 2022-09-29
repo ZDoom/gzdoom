@@ -65,6 +65,7 @@
 #include "zstring.h"
 #include "printf.h"
 #include "cmdlib.h"
+#include "i_mainwindow.h"
 
 #include <time.h>
 #include <zlib.h>
@@ -211,9 +212,6 @@ struct MiniDumpThreadData
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-void I_FlushBufferedConsoleStuff();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -445,41 +443,6 @@ void Writef (HANDLE file, const char *format, ...)
 //
 //==========================================================================
 
-static DWORD CALLBACK WriteLogFileStreamer(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *pcb)
-{
-	DWORD didwrite;
-	LONG p, pp;
-
-	// Replace gray foreground color with black.
-	static const char *badfg = "\\red223\\green223\\blue223;";
-	//                           4321098 765432109 876543210
-	//                               2          1          0
-	for (p = pp = 0; p < cb; ++p)
-	{
-		if (buffer[p] == badfg[pp])
-		{
-			++pp;
-			if (pp == 25)
-			{
-				buffer[p - 1] = buffer[p - 2] = buffer[p - 3] =
-				buffer[p - 9] = buffer[p -10] = buffer[p -11] =
-				buffer[p -18] = buffer[p -19] = buffer[p -20] = '0';
-				break;
-			}
-		}
-		else
-		{
-			pp = 0;
-		}
-	}
-
-	if (!WriteFile((HANDLE)cookie, buffer, cb, &didwrite, NULL))
-	{
-		return 1;
-	}
-	*pcb = didwrite;
-	return 0;
-}
 
 //==========================================================================
 //
@@ -489,15 +452,21 @@ static DWORD CALLBACK WriteLogFileStreamer(DWORD_PTR cookie, LPBYTE buffer, LONG
 //
 //==========================================================================
 
-HANDLE WriteLogFile(HWND edit)
+HANDLE WriteLogFile()
 {
 	HANDLE file;
 
 	file = CreateTempFile();
 	if (file != INVALID_HANDLE_VALUE)
 	{
-		EDITSTREAM streamer = { (DWORD_PTR)file, 0, WriteLogFileStreamer };
-		SendMessage(edit, EM_STREAMOUT, SF_RTF, (LPARAM)&streamer);
+		auto writeFile = [&](const void* data, uint32_t size, uint32_t& written) -> bool
+		{
+			DWORD tmp = 0;
+			BOOL result = WriteFile(file, data, size, &tmp, nullptr);
+			written = tmp;
+			return result == TRUE;
+		};
+		mainwindow.GetLog(writeFile);
 	}
 	return file;
 }
@@ -510,7 +479,7 @@ HANDLE WriteLogFile(HWND edit)
 //
 //==========================================================================
 
-void CreateCrashLog (const char *custominfo, DWORD customsize, HWND richlog)
+void CreateCrashLog (const char *custominfo, DWORD customsize)
 {
 	// Do not collect information more than once.
 	if (NumFiles != 0)
@@ -560,11 +529,7 @@ void CreateCrashLog (const char *custominfo, DWORD customsize, HWND richlog)
 			AddFile (file, "local.txt");
 		}
 	}
-	if (richlog != NULL)
-	{
-		I_FlushBufferedConsoleStuff();
-		AddFile (WriteLogFile(richlog), "log.rtf");
-	}
+	AddFile (WriteLogFile(), "log.rtf");
 	CloseHandle (DbgProcess);
 }
 

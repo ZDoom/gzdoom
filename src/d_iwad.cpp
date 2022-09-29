@@ -294,8 +294,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 // Look for IWAD definition lump
 //
 //==========================================================================
-extern const char* iwad_folders[14];
-extern const char* iwad_reserved[12];
+void GetReserved(LumpFilterInfo& lfi);
 
 FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
@@ -382,8 +381,7 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 	FileSystem check;
 
 	LumpFilterInfo lfi;
-	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
-	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+	GetReserved(lfi);
 
 	TArray<FString> filenames;
 	filenames.Push(fn);

@@ -268,10 +268,10 @@ int P_CheckMeleeRange (AActor* actor, double range)
 	AActor *pl = actor->target;
 
 	double dist;
-		
-	if (!pl || (actor->Sector->Flags & SECF_NOATTACK))
+	
+	if (!pl)
 		return false;
-				
+
 	dist = actor->Distance2D (pl);
 	if (range < 0) range = actor->meleerange;
 
@@ -281,6 +281,9 @@ int P_CheckMeleeRange (AActor* actor, double range)
 	// [RH] If moving toward goal, then we've reached it.
 	if (pl == actor->goal)
 		return true;
+
+	if (actor->Sector->Flags & SECF_NOATTACK)
+		return false;
 
 	// [RH] Don't melee things too far above or below actor.
 	if (!(actor->flags5 & MF5_NOVERTICALMELEERANGE))
@@ -401,7 +404,7 @@ int P_HitFriend(AActor * self)
 	{
 		DAngle angle = self->AngleTo(self->target);
 		double dist = self->Distance2D(self->target);
-		P_AimLineAttack (self, angle, dist, &t, 0., true);
+		P_AimLineAttack (self, angle, dist, &t, nullAngle, true);
 		if (t.linetarget != NULL && t.linetarget != self->target)
 		{
 			return self->IsFriend (t.linetarget);
@@ -595,7 +598,7 @@ static int P_Move (AActor *actor)
 		{
 			DAngle anglediff = deltaangle(oldangle, actor->Angles.Yaw);
 
-			if (anglediff != 0)
+			if (anglediff != nullAngle)
 			{
 				move = move.Rotated(anglediff);
 				oldangle = actor->Angles.Yaw;
@@ -994,7 +997,7 @@ void P_NewChaseDir(AActor * actor)
 				}
 				else if (front == actor->Z() && back < actor->Z() - actor->MaxDropOffHeight)
 				{
-					angle = line->Delta().Angle() + 180.; // back side dropoff
+					angle = line->Delta().Angle() + DAngle::fromDeg(180.); // back side dropoff
 				}
 				else continue;
 		
@@ -1092,7 +1095,7 @@ void P_RandomChaseDir (AActor *actor)
 	int turndir;
 
 	// Friendly monsters like to head toward a player
-	if (actor->flags & MF_FRIENDLY)
+	if (actor->flags & MF_FRIENDLY && !(actor->flags8 & MF8_DONTFOLLOWPLAYERS))
 	{
 		AActor *player;
 		DVector2 delta;
@@ -1263,7 +1266,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	else
 	{
 		mindist = maxdist = 0;
-		fov = allaround ? 0. : 180.;
+		fov = DAngle::fromDeg(allaround ? 0. : 180.);
 	}
 
 	double dist = lookee->Distance2D (other);
@@ -1274,7 +1277,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	if (mindist && dist < mindist)
 		return false;			// [KS] too close
 
-	if (fov != 0)
+	if (fov != nullAngle)
 	{
 		DAngle an = absangle(lookee->AngleTo(other), lookee->Angles.Yaw);
 
@@ -1555,25 +1558,32 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 			continue;
 
 		other = NULL;
-		if (link->flags & MF_FRIENDLY)
+		if (lookee->flags & MF_FRIENDLY)
 		{
-			if (!lookee->IsFriend(link))
+			if (link->flags & MF_FRIENDLY)
 			{
-				// This is somebody else's friend, so go after it
-				other = link;
-			}
-			else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
-			{
-				other = link->target;
-				if (!(other->flags & MF_SHOOTABLE) ||
-					other->health <= 0 ||
-					(other->flags2 & MF2_DORMANT))
+				if (!lookee->IsFriend(link))
 				{
-					other = NULL;;
+					// This is somebody else's friend, so go after it
+					other = link;
+				}
+				else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
+				{
+					other = link->target;
+					if (!(other->flags & MF_SHOOTABLE) ||
+						other->health <= 0 ||
+						(other->flags2 & MF2_DORMANT))
+					{
+						other = NULL;;
+					}
 				}
 			}
+			else
+			{
+				other = link;
+			}
 		}
-		else
+		else if (lookee->flags8 & MF8_SEEFRIENDLYMONSTERS && link->flags & MF_FRIENDLY)
 		{
 			other = link;
 		}
@@ -1617,7 +1627,7 @@ int P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	AActor *other;
 
-	other = P_BlockmapSearch (actor, actor->friendlyseeblocks, LookForEnemiesInBlock, params);
+	other = P_BlockmapSearch(actor, actor->friendlyseeblocks, LookForEnemiesInBlock, params);
 
 	if (other != NULL)
 	{
@@ -1726,6 +1736,12 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 
 	}	// [SP] if false, and in deathmatch, intentional fall-through
+	else if (actor->flags8 & MF8_SEEFRIENDLYMONSTERS)
+	{
+		bool result = P_LookForEnemies (actor, allaround, params);
+
+		if (result) return true;
+	}
 
 	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		actor->Level->isPrimaryLevel() &&
@@ -1986,7 +2002,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 
 	AActor *targ = NULL; // Shuts up gcc
 	double dist;
-	if (fov == 0) fov = 180.;
+	if (fov == nullAngle) fov = DAngle::fromDeg(180.);
 	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
 	if (self->flags5 & MF5_INCONVERSATION)
@@ -2189,6 +2205,7 @@ enum ChaseFlags
 	CHF_NODIRECTIONTURN = 64,
 	CHF_NOPOSTATTACKTURN = 128,
 	CHF_STOPIFBLOCKED = 256,
+	CHF_DONTIDLE = 512,
 };
 
 void A_Wander(AActor *self, int flags)
@@ -2212,15 +2229,15 @@ void A_Wander(AActor *self, int flags)
 	// turn towards movement direction if not there yet
 	if (!(flags & CHF_NODIRECTIONTURN) && (self->movedir < DI_NODIR))
 	{
-		self->Angles.Yaw = floor(self->Angles.Yaw.Degrees / 45) * 45.;
-		DAngle delta = deltaangle(self->Angles.Yaw, (self->movedir * 45));
-		if (delta < 0)
+		self->Angles.Yaw = DAngle::fromDeg(floor(self->Angles.Yaw.Degrees() / 45) * 45.);
+		DAngle delta = deltaangle(self->Angles.Yaw, DAngle::fromDeg(self->movedir * 45));
+		if (delta < nullAngle)
 		{
-			self->Angles.Yaw -= 45;
+			self->Angles.Yaw -= DAngle::fromDeg(45);
 		}
-		else if (delta > 0)
+		else if (delta > nullAngle)
 		{
-			self->Angles.Yaw += 45;
+			self->Angles.Yaw += DAngle::fromDeg(45);
 		}
 	}
 
@@ -2365,15 +2382,15 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	}
 	else if (!(flags & CHF_NODIRECTIONTURN) && actor->movedir < 8)
 	{
-		actor->Angles.Yaw = floor(actor->Angles.Yaw.Degrees / 45) * 45.;
-		DAngle delta = deltaangle(actor->Angles.Yaw, (actor->movedir * 45));
-		if (delta < 0)
+		actor->Angles.Yaw = DAngle::fromDeg(floor(actor->Angles.Yaw.Degrees() / 45) * 45.);
+		DAngle delta = deltaangle(actor->Angles.Yaw, DAngle::fromDeg(actor->movedir * 45));
+		if (delta < nullAngle)
 		{
-			actor->Angles.Yaw -= 45;
+			actor->Angles.Yaw -= DAngle::fromDeg(45);
 		}
-		else if (delta > 0)
+		else if (delta > nullAngle)
 		{
-			actor->Angles.Yaw += 45;
+			actor->Angles.Yaw += DAngle::fromDeg(45);
 		}
 	}
 
@@ -2430,7 +2447,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 		if (actor->target == NULL)
 		{
-			if (actor->flags & MF_FRIENDLY)
+			if (flags & CHF_DONTIDLE || actor->flags & MF_FRIENDLY)
 			{
 				//A_Look(actor);
 				if (actor->target == NULL)
@@ -2538,8 +2555,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				if (pr_chase() < 100)
 				{
 					DAngle ang = actor->AngleTo(actor->target);
-					if (pr_chase() < 128) ang += 90.;
-					else ang -= 90.;
+					if (pr_chase() < 128) ang += DAngle::fromDeg(90.);
+					else ang -= DAngle::fromDeg(90.);
 					actor->VelFromAngle(13., ang);
 					actor->FastChaseStrafeCount = 3;		// strafe time
 				}
@@ -2827,7 +2844,7 @@ bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nu
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}
-				if (self->Level->ib_compatflags & BCOMPATF_VILEGHOSTS)
+				if (self->Level->i_compatflags & COMPATF_VILEGHOSTS)
 				{
 					corpsehit->Height *= 4;
 					// [GZ] This was a commented-out feature, so let's make use of it,
@@ -2930,9 +2947,9 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
-	if (max_turn != 0 && (max_turn < fabs(delta)))
+	if (max_turn != nullAngle && (max_turn < fabs(delta)))
 	{
-		if (delta > 0)
+		if (delta > nullAngle)
 		{
 			self->Angles.Yaw -= max_turn + ang_offset;
 		}
@@ -2948,7 +2965,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 	// [DH] Now set pitch. In order to maintain compatibility, this can be
 	// disabled and is so by default.
-	if (max_pitch <= 180.)
+	if (max_pitch <= DAngle::fromDeg(180.))
 	{
 		DVector2 dist = self->Vec2To(other);
 		
@@ -2981,9 +2998,9 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 		double dist_z = target_z - source_z;
 		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
 
-		DAngle other_pitch = -DAngle::ToDegrees(g_asin(dist_z / ddist)).Normalized180();
+		DAngle other_pitch = -DAngle::fromRad(g_asin(dist_z / ddist)).Normalized180();
 		
-		if (max_pitch != 0)
+		if (max_pitch != nullAngle)
 		{
 			if (self->Angles.Pitch > other_pitch)
 			{
@@ -3006,9 +3023,9 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 
 	// This will never work well if the turn angle is limited.
-	if (max_turn == 0 && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
+	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
     {
-		self->Angles.Yaw += pr_facetarget.Random2() * (45 / 256.);
+		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
     }
 }
 
@@ -3044,7 +3061,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		
 	self->Angles.Yaw = self->AngleTo(self->target);
 
-	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, self->target);
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg(60.), 0, self->target);
 	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
@@ -3058,7 +3075,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{
-		self->Angles.Yaw += pr_railface.Random2() * 45./256;
+		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45./256);
 	}
 
 	FRailParams p;

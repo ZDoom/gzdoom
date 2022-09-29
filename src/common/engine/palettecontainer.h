@@ -15,7 +15,9 @@ enum
 struct FRemapTable
 {
 	FRemapTable(int count = 256) { NumEntries = count; }
+
 	FRemapTable(const FRemapTable& o) = default;
+	FRemapTable& operator=(const FRemapTable& o) = default;
 
 	bool operator==(const FRemapTable& o);
 	void MakeIdentity();
@@ -135,16 +137,19 @@ public:
 
 	FRemapTable* GetTranslation(int slot, int index)
 	{
+		if (TranslationTables.Size() <= (unsigned)slot) return nullptr;
 		return TranslationTables[slot].GetVal(index);
 	}
 
 	void ClearTranslationSlot(int slot)
 	{
+		if (TranslationTables.Size() <= (unsigned)slot) return;
 		TranslationTables[slot].Clear();
 	}
 
 	unsigned NumTranslations(int slot) const
 	{
+		if (TranslationTables.Size() <= (unsigned)slot) return 0;
 		return TranslationTables[slot].Size();
 	}
 

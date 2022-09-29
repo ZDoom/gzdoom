@@ -201,7 +201,7 @@ vec4 getTexel(vec2 st)
 #if (DEF_BLEND_FLAGS != 0)	
 
 	// only apply the texture manipulation if it contains something.
-	texel = ApplyTextureManipulation(texel, DEF_BLEND_FLAGS);
+	texel = ApplyTextureManipulation(texel);
 
 #endif
 

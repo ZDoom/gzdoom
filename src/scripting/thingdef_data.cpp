@@ -338,6 +338,11 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, MAP07BOSS2, AActor, flags8),
 	DEFINE_FLAG(MF8, AVOIDHAZARDS, AActor, flags8),
 	DEFINE_FLAG(MF8, STAYONLIFT, AActor, flags8),
+	DEFINE_FLAG(MF8, DONTFOLLOWPLAYERS, AActor, flags8),
+	DEFINE_FLAG(MF8, SEEFRIENDLYMONSTERS, AActor, flags8),
+	DEFINE_FLAG(MF8, CROSSLINECHECK, AActor, flags8),
+	DEFINE_FLAG(MF8, MASTERNOSEE, AActor, flags8),
+	DEFINE_FLAG(MF8, ADDLIGHTLEVEL, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -363,6 +368,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, ZDOOMTRANS, AActor, renderflags),
 	DEFINE_FLAG(RF, CASTSPRITESHADOW, AActor, renderflags),
 	DEFINE_FLAG(RF, NOSPRITESHADOW, AActor, renderflags),
+	DEFINE_FLAG(RF2, INVISIBLEINMIRRORS, AActor, renderflags2),
+	DEFINE_FLAG(RF2, ONLYVISIBLEINMIRRORS, AActor, renderflags2),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
@@ -727,21 +734,6 @@ void InitThingdef()
 		}
 	);
 
-	auto fontstruct = NewStruct("FFont", nullptr, true);
-	fontstruct->Size = sizeof(FFont);
-	fontstruct->Align = alignof(FFont);
-	NewPointer(fontstruct, false)->InstallHandlers(
-		[](FSerializer &ar, const char *key, const void *addr)
-		{
-			ar(key, *(FFont **)addr);
-		},
-			[](FSerializer &ar, const char *key, void *addr)
-		{
-			Serialize<FFont>(ar, key, *(FFont **)addr, nullptr);
-			return true;
-		}
-	);
-
 	auto wbplayerstruct = NewStruct("WBPlayerStruct", nullptr, true);
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
@@ -813,7 +805,7 @@ void SynthesizeFlagFields()
 DEFINE_ACTION_FUNCTION(DObject, BAM)
 {
 	PARAM_PROLOGUE;
-	PARAM_FLOAT(ang);
-	ACTION_RETURN_INT(DAngle(ang).BAMs());
+	PARAM_ANGLE(ang);
+	ACTION_RETURN_INT(ang.BAMs());
 }
 

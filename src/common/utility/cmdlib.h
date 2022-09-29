@@ -100,7 +100,7 @@ inline void fillshort(void* buff, size_t count, uint16_t clear)
 	}
 }
 
-template<typename T> inline constexpr T Sgn(const T& val) { return (val > 0) - (val < 0); }
+template<typename T> inline constexpr int Sgn(const T& val) { return (val > 0) - (val < 0); }
 
 
 inline int sizeToBits(int w)

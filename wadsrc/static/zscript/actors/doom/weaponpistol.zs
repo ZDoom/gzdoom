@@ -65,6 +65,11 @@ extend class StateProvider
 		if (!accurate)
 		{
 			ang += Random2[GunShot]() * (5.625 / 256);
+
+			if (GetCVar ("vertspread") && !sv_novertspread)
+			{
+				pitch += Random2[GunShot]() * (3.549 / 256);
+			}
 		}
 
 		LineAttack(ang, PLAYERMISSILERANGE, pitch, damage, 'Hitscan', pufftype);

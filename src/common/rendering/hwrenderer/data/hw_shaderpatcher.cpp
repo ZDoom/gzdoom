@@ -34,7 +34,11 @@
 */
 
 
+#include "cmdlib.h"
 #include "hw_shaderpatcher.h"
+#include "textures.h"
+#include "hw_renderstate.h"
+#include "v_video.h"
 
 
 static bool IsGlslWhitespace(char c)
@@ -296,3 +300,12 @@ const FEffectShader effectshaders[] =
 	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 };
+
+int DFrameBuffer::GetShaderCount()
+{
+	int i;
+	for (i = 0; defaultshaders[i].ShaderName != nullptr; i++);
+
+	return MAX_PASS_TYPES * (countof(defaultshaders) - 1 + usershaders.Size() + MAX_EFFECTS + SHADER_NoTexture);
+}
+

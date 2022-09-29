@@ -204,6 +204,18 @@ class AltHud ui
 					? String.Format("%i/%i/%i ", CPlayer.killcount, Level.killed_monsters, Level.total_monsters)
 					: String.Format("%i/%i ", Level.killed_monsters, Level.total_monsters));
 			}
+
+			if (hud_showtimestat)
+			{
+				String s;
+				let seconds = Thinker.Tics2Seconds(level.time);
+				if (seconds >= 3600)
+					s = String.Format("%02i:%02i:%02i", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+				else
+					s = String.Format("%02i:%02i", seconds / 60, seconds % 60);
+				DrawStatLine(x, y, "T:", s);
+			}
+
 		}
 	}
 

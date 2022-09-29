@@ -309,10 +309,12 @@ public:
 	FShader *Get(unsigned int eff, bool alphateston, EPassType passType);
 
 	void SetActiveShader(FShader *sh);
+	bool CompileNextShader();
 private:
 
 	FShader *mActiveShader = nullptr;
 	TArray<FShaderCollection*> mPassShaders;
+	int mCompilePass = 0;
 
 	friend class FShader;
 };
@@ -322,21 +324,23 @@ class FShaderCollection
 	TArray<FShader*> mMaterialShaders;
 	TArray<FShader*> mMaterialShadersNAT;
 	FShader *mEffectShaders[MAX_EFFECTS];
+	int mCompileState = 0, mCompileIndex = 0;
+	EPassType mPassType;
 
 	void Clean();
-	void CompileShaders(EPassType passType);
 
 public:
 	FShaderCollection(EPassType passType);
 	~FShaderCollection();
 	FShader *Compile(const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType);
 	int Find(const char *mame);
+	bool CompileNextShader();
 	FShader *BindEffect(int effect);
 
 	FShader *Get(unsigned int eff, bool alphateston)
 	{
 		// indices 0-2 match the warping modes, 3 no texture, the following are custom
-		if (!alphateston && eff <= 2)
+		if (!alphateston && eff < SHADER_NoTexture && mCompileState == -1)
 		{
 			return mMaterialShadersNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
 		}

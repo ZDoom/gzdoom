@@ -121,7 +121,7 @@ namespace swrenderer
 			xform = &nulltransform;
 			nulltransform.xOffs = nulltransform.yOffs = nulltransform.baseyOffs = 0;
 			nulltransform.xScale = nulltransform.yScale = 1;
-			nulltransform.Angle = nulltransform.baseAngle = 0.0;
+			nulltransform.Angle = nulltransform.baseAngle = nullAngle;
 			additive = false;
 			// [RH] Map floor skies and ceiling skies to separate visplanes. This isn't
 			// always necessary, but it is needed if a floor and ceiling sky are in the

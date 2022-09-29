@@ -42,7 +42,6 @@ if(WIN32)
             endforeach()
         endif(USE_STATIC_CRT)
         target_compile_options(discord-rpc PRIVATE /EHsc
-            /Wall
             /wd4100 # unreferenced formal parameter
             /wd4514 # unreferenced inline
             /wd4625 # copy constructor deleted
@@ -73,16 +72,15 @@ if(UNIX)
     add_library(discord-rpc ${BASE_RPC_SRC})
     target_link_libraries(discord-rpc PUBLIC pthread)
 
-    if (APPLE)
-        target_link_libraries(discord-rpc PRIVATE "-framework AppKit, -mmacosx-version-min=10.10")
-    endif (APPLE)
-
     target_compile_options(discord-rpc PRIVATE
-        -g
         -Wall
         -Wextra
         -Wpedantic
     )
+
+    if (${CMAKE_BUILD_TYPE} STREQUAL Debug OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+        target_compile_options(discord-rpc PRIVATE -g)
+    endif ()
 
     if (${WARNINGS_AS_ERRORS})
       target_compile_options(discord-rpc PRIVATE -Werror)

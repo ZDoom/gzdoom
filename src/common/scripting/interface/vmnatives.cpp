@@ -719,6 +719,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDefaultKerning, GetDefaultKerning)
 	ACTION_RETURN_INT(self->GetDefaultKerning());
 }
 
+static double GetDisplayTopOffset(FFont* font, int c)
+{
+	auto texc = font->GetChar(c, CR_UNDEFINED, nullptr);
+	return texc ? texc->GetDisplayTopOffset() : 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDisplayTopOffset, GetDisplayTopOffset)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_FLOAT(GetDisplayTopOffset(self, code));
+}
+
 //==========================================================================
 //
 // file system

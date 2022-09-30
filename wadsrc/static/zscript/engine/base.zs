@@ -649,6 +649,7 @@ struct Font native
 
 	native static int FindFontColor(Name color);
 	native double GetBottomAlignOffset(int code);
+	native double GetDisplayTopOffset(int code);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
 	native BrokenLines BreakLines(String text, int maxlen);

@@ -125,6 +125,7 @@ class SmackerDecoder
 		void GetPalette(uint8_t *palette);
 		void GetFrame(uint8_t *frame);
 
+		uint32_t GetNumAudioTracks();
 		SmackerAudioInfo GetAudioTrackDetails(uint32_t trackIndex);
 		uint32_t GetAudioData(uint32_t trackIndex, int16_t *audioBuffer);
 		void DisableAudioTrack(uint32_t trackIndex);

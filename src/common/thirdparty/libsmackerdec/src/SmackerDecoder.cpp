@@ -94,10 +94,9 @@ void Smacker_Close(SmackerHandle &handle)
 	handle.isValid = false;
 }
 
-uint32_t Smacker_GetNumAudioTracks(SmackerHandle &)
+uint32_t Smacker_GetNumAudioTracks(SmackerHandle &handle)
 {
-	// TODO: fixme
-	return 1;
+	return classInstances[handle.instanceIndex]->GetNumAudioTracks();
 }
 
 SmackerAudioInfo Smacker_GetAudioTrackDetails(SmackerHandle &handle, uint32_t trackIndex)
@@ -398,8 +397,9 @@ bool SmackerDecoder::Open(const char *fileName)
 		audioTracks[i].bufferSize = 0;
 		audioTracks[i].bytesReadThisFrame = 0;
 
-		// FIXME: Only disable non-consecutive enabled tracks
-		if (i > 0 /*&& !(audioTracks[i-1].flags & SMK_AUD_PRESENT)*/)
+		// Disable non-consecutive enabled tracks. Not sure how to otherwise report
+		// them properly for Smacker_GetNumAudioTracks.
+		if (i > 0 && !(audioTracks[i-1].flags & SMK_AUD_PRESENT))
 			audioTracks[i].flags &= ~SMK_AUD_PRESENT;
 
 		if (audioTracks[i].flags & 0xFFFFFF)
@@ -1182,6 +1182,16 @@ void SmackerDecoder::GotoFrame(uint32_t frameNum)
     }
 
     GetNextFrame();
+}
+
+uint32_t SmackerDecoder::GetNumAudioTracks()
+{
+	for(uint32_t i = 0;i < kMaxAudioTracks;++i)
+	{
+		if (!(audioTracks[i].flags & SMK_AUD_PRESENT))
+			return i;
+	}
+	return kMaxAudioTracks;
 }
 
 SmackerAudioInfo SmackerDecoder::GetAudioTrackDetails(uint32_t trackIndex)

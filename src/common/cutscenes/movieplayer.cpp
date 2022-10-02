@@ -71,7 +71,7 @@ public:
 };
 
 // A simple filter is used to smooth out jittery timers
-static const double AudioAvgFilterCoeff{std::pow(0.01, 1.0/20.0)};
+static const double AudioAvgFilterCoeff{std::pow(0.01, 1.0/10.0)};
 // A threshold is in place to avoid constantly skipping due to imprecise timers.
 static constexpr double AudioSyncThreshold{0.03};
 
@@ -608,13 +608,11 @@ public:
 
 struct AudioData
 {
-	int hFx;
 	SmackerAudioInfo inf;
 
-	int16_t samples[6000 * 20]; // must be a multiple of the stream buffer size and larger than the initial chunk of audio
-
-	int nWrite;
-	int nRead;
+	std::vector<uint16_t> samples;
+	int nWrite = 0;
+	int nRead = 0;
 };
 
 class SmkPlayer : public MoviePlayer
@@ -635,39 +633,123 @@ class SmkPlayer : public MoviePlayer
 	FString filename;
 	SoundStream* stream = nullptr;
 	bool hassound = false;
+	std::atomic<uint64_t> clocktime = 0;
+	int64_t audiooffset = 0;
+	double ClockDiffAvg = 0;
+	int samplerate = 0;
+	int framesize = 0;
 
 public:
 	bool isvalid() { return hSMK.isValid; }
 
+	double FilterDelay(double diff)
+	{
+		ClockDiffAvg = ClockDiffAvg*AudioAvgFilterCoeff + diff;
+		diff = ClockDiffAvg*(1.0 - AudioAvgFilterCoeff);
+		if(diff < AudioSyncThreshold/2.0 && diff > -AudioSyncThreshold)
+			return 0.0;
+
+		return diff;
+	}
+
 	bool StreamCallback(SoundStream* stream, void* buff, int len)
 	{
-		int avail = (adata.nWrite >= adata.nRead) ?
-			adata.nWrite - adata.nRead :
-			(std::size(adata.samples) + adata.nWrite - adata.nRead);
-		avail *= 2;
+		auto pos = stream->GetPlayPosition();
+		uint64_t clock = clocktime.load(std::memory_order_acquire);
+		double delay = FilterDelay(clock / 1'000'000'000.0 -
+			double(int64_t(pos.samplesplayed)+audiooffset) / samplerate +
+			pos.latency.count() / 1'000'000'000.0);
 
-		while (avail < len)
+		int avail = (adata.nWrite - adata.nRead) * 2;
+
+		if(delay > 0.0)
 		{
-			auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
-			if (read == 0) break;
+			// If diff > 0, skip samples. Don't skip more than a full update at once.
+			int skip = std::min(int(delay*samplerate)*framesize, len);
+			while (skip > 0)
+			{
+				if (avail >= skip)
+				{
+					audiooffset += skip / framesize;
+					adata.nRead += skip / 2;
+					if (adata.nRead >= adata.nWrite)
+						adata.nRead = adata.nWrite = 0;
+					avail -= skip;
+					break;
+				}
 
-			if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-			else copy16bitSamples(read);
-			avail += read;
+				audiooffset += avail / framesize;
+				adata.nWrite = 0;
+				adata.nRead = 0;
+				skip -= avail;
+				avail = 0;
+
+				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
+				if (read == 0) break;
+
+				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
+				else copy16bitSamples(read);
+				avail += read;
+			}
+		}
+		else if(delay < 0.0)
+		{
+			// If diff < 0, duplicate samples. Don't duplicate more than a full update.
+			int dup = std::min(int(-delay*samplerate)*framesize, len-framesize);
+
+			if(avail == 0)
+			{
+				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
+				if (read == 0) return false;
+
+				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
+				else copy16bitSamples(read);
+				avail += read;
+			}
+
+			// Offset the measured audio position to account for the duplicated samples.
+			audiooffset -= dup/framesize;
+
+			char *src = (char*)&adata.samples[adata.nRead];
+			char *dst = (char*)buff;
+
+			for(int i=0;i < dup;++i)
+				*(dst++) = src[i%framesize];
+
+			buff = dst;
+			len -= dup;
 		}
 
-		if (avail == 0)
-			return false;
-
-		if (avail > 0)
+		int wrote = 0;
+		while(wrote < len)
 		{
-			int remaining = std::min(len, avail);
-			memcpy(buff, &adata.samples[adata.nRead], remaining);
-			adata.nRead += remaining / 2;
-			if (adata.nRead >= (int)std::size(adata.samples)) adata.nRead = 0;
+			if (avail == 0)
+			{
+				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
+				if (read == 0)
+				{
+					if (wrote == 0)
+						return false;
+					break;
+				}
+
+				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
+				else copy16bitSamples(read);
+				avail += read;
+			}
+
+			int todo = std::min(len-wrote, avail);
+
+			memcpy((char*)buff+wrote, &adata.samples[adata.nRead], todo);
+			adata.nRead += todo / 2;
+			if(adata.nRead == adata.nWrite)
+				adata.nRead = adata.nWrite = 0;
+			avail -= todo;
+			wrote += todo;
 		}
-		if (len > avail)
-			memset((char*)buff+avail, 0, len-avail);
+
+		if (wrote < len)
+			memset((char*)buff+wrote, 0, len-wrote);
 		return true;
 	}
 	static bool StreamCallbackC(SoundStream* stream, void* buff, int len, void* userdata)
@@ -675,20 +757,28 @@ public:
 
 	void copy8bitSamples(unsigned count)
 	{
-		for (unsigned i = 0; i < count; i++)
+		for (unsigned i = 0; i < count;)
 		{
-			adata.samples[adata.nWrite] = (audioBuffer[i] - 128) << 8;
-			if (++adata.nWrite >= (int)countof(adata.samples)) adata.nWrite = 0;
+			unsigned todo = std::min<unsigned>(count-i, std::size(adata.samples)-adata.nWrite);
+			for (unsigned j = 0;j < todo;++j)
+				adata.samples[adata.nWrite+j] = (audioBuffer[i+j] - 128) << 8;
+			adata.nWrite += todo;
+			if (adata.nWrite >= (int)std::size(adata.samples)) adata.nWrite = 0;
+			i += todo;
 		}
 	}
 
 	void copy16bitSamples(unsigned count)
 	{
 		auto ptr = (uint16_t*)audioBuffer.Data();
-		for (unsigned i = 0; i < count/2; i++)
+		count /= 2;
+		for (unsigned i = 0; i < count;)
 		{
-			adata.samples[adata.nWrite] = *ptr++;
-			if (++adata.nWrite >= (int)countof(adata.samples)) adata.nWrite = 0;
+			unsigned todo = std::min<unsigned>(count-i, std::size(adata.samples)-adata.nWrite);
+			memcpy(&adata.samples[adata.nWrite], ptr, todo*2);
+			adata.nWrite += todo;
+			if (adata.nWrite >= (int)std::size(adata.samples)) adata.nWrite = 0;
+			i += todo;
 		}
 	}
 
@@ -717,6 +807,7 @@ public:
 			if (adata.inf.idealBufferSize > 0)
 			{
 				audioBuffer.Resize(adata.inf.idealBufferSize);
+				adata.samples.resize(adata.inf.idealBufferSize);
 				hassound = true;
 			}
 		}
@@ -749,31 +840,31 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
+		clocktime.store(clock, std::memory_order_release);
 		int frame = int(clock / nFrameNs);
 
 		twod->ClearScreen();
 		if (frame > nFrame)
 		{
+			nFrame++;
+			Smacker_GetNextFrame(hSMK);
 			Smacker_GetPalette(hSMK, palette);
 			Smacker_GetFrame(hSMK, pFrame.Data());
 			animtex.SetFrame(palette, pFrame.Data());
+
 			if (!stream && hassound)
 			{
 				S_StopMusic(true);
 
-				stream = S_CreateCustomStream(6000, adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this);
-				if (!stream)
-				{
-					Smacker_DisableAudioTrack(hSMK, 0);
-					hassound = false;
-				}
-			}
-		}
+				samplerate = adata.inf.sampleRate;
+				framesize = adata.inf.nChannels * 2;
 
-		if (frame > nFrame)
-		{
-			nFrame++;
-			Smacker_GetNextFrame(hSMK);
+				int bufsize = 40 * samplerate / 1000 * framesize;
+				stream = S_CreateCustomStream(bufsize, adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this);
+				if (!stream)
+					Smacker_DisableAudioTrack(hSMK, 0);
+			}
+
 			bool nostopsound = (flags & NOSOUNDCUTOFF);
 			if (!hassound) for (unsigned i = 0; i < animSnd.Size(); i += 2)
 			{

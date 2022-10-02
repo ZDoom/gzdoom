@@ -9,6 +9,7 @@ class FRenderState;
 class FGameTexture;
 class FTextureID;
 enum EUpscaleFlags : int;
+class FConfigFile;
 
 struct SystemCallbacks
 {
@@ -44,6 +45,7 @@ struct SystemCallbacks
 	void (*OnMenuOpen)(bool makesound);
 	void (*LanguageChanged)(const char*);
 	bool (*OkForLocalization)(FTextureID, const char*);
+	FConfigFile* (*GetConfig)();
 };
 
 extern SystemCallbacks sysCallbacks;

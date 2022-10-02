@@ -35,7 +35,8 @@
 #include <math.h>
 #include "vectors.h"
 #include "m_joy.h"
-#include "gameconfigfile.h"
+#include "configfile.h"
+#include "i_interface.h"
 #include "d_eventbase.h"
 #include "cmdlib.h"
 #include "printf.h"
@@ -92,10 +93,11 @@ IJoystickConfig::~IJoystickConfig()
 //
 //==========================================================================
 
-static bool M_SetJoystickConfigSection(IJoystickConfig *joy, bool create)
+static bool M_SetJoystickConfigSection(IJoystickConfig *joy, bool create, FConfigFile* GameConfig)
 {
 	FString id = "Joy:";
 	id += joy->GetIdentifier();
+	if (!GameConfig) return false;
 	return GameConfig->SetSection(id, create);
 }
 
@@ -107,13 +109,14 @@ static bool M_SetJoystickConfigSection(IJoystickConfig *joy, bool create)
 
 bool M_LoadJoystickConfig(IJoystickConfig *joy)
 {
+	FConfigFile* GameConfig = sysCallbacks.GetConfig ? sysCallbacks.GetConfig() : nullptr;
 	char key[32];
 	const char *value;
 	int axislen;
 	int numaxes;
 
 	joy->SetDefaultConfig();
-	if (!M_SetJoystickConfigSection(joy, false))
+	if (!M_SetJoystickConfigSection(joy, false, GameConfig))
 	{
 		return false;
 	}
@@ -166,10 +169,11 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 
 void M_SaveJoystickConfig(IJoystickConfig *joy)
 {
+	FConfigFile* GameConfig = sysCallbacks.GetConfig ? sysCallbacks.GetConfig() : nullptr;
 	char key[32], value[32];
 	int axislen, numaxes;
 
-	if (GameConfig != NULL && M_SetJoystickConfigSection(joy, true))
+	if (GameConfig != NULL && M_SetJoystickConfigSection(joy, true, GameConfig))
 	{
 		GameConfig->ClearCurrentSection();
 		if (!joy->IsSensitivityDefault())

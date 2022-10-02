@@ -40,6 +40,7 @@ struct SystemCallbacks
 	void (*HudScaleChanged)();
 	bool (*SetSpecialMenu)(FName& menu, int param);
 	void (*OnMenuOpen)(bool makesound);
+	void (*LanguageChanged)(const char*);
 };
 
 extern SystemCallbacks sysCallbacks;

@@ -3,6 +3,7 @@
 #include "gamestate.h"
 #include "startupinfo.h"
 #include "c_cvars.h"
+#include "gstrings.h"
 
 static_assert(sizeof(void*) == 8, "32 builds are not supported");
 
@@ -25,4 +26,13 @@ FStartupInfo GameStartupInfo;
 CVAR(Bool, queryiwad, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(String, defaultiwad, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, vid_fps, false, 0)
+
+EXTERN_CVAR(Bool, ui_generic)
+
+CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+{
+	GStrings.UpdateLanguage(self);
+	UpdateGenericUI(ui_generic);
+	if (sysCallbacks.LanguageChanged) sysCallbacks.LanguageChanged(self);
+}
 

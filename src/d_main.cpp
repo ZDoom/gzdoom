@@ -2769,6 +2769,16 @@ void System_ConsoleToggled(int state)
 		D_ToggleHud();
 }
 
+void System_LanguageChanged(const char* lang)
+{
+	for (auto Level : AllLevels())
+	{
+		// does this even make sense on secondary levels...?
+		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
+	}
+	I_UpdateWindowTitle();
+}
+
 //==========================================================================
 //
 // DoomSpecificInfo
@@ -3543,6 +3553,7 @@ static int D_DoomMain_Internal (void)
 		System_HudScaleChanged,
 		M_SetSpecialMenu,
 		OnMenuOpen,
+		System_LanguageChanged,
 	};
 
 	

@@ -265,7 +265,6 @@ DEFINE_ACTION_FUNCTION(FFont, BreakLines)
 
 
 bool generic_ui;
-EXTERN_CVAR(String, language)
 
 bool CheckFontComplete(FFont* font)
 {

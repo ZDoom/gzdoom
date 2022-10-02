@@ -639,14 +639,39 @@ class SmkPlayer : public MoviePlayer
 public:
 	bool isvalid() { return hSMK.isValid; }
 
-	static bool StreamCallbackFunc(SoundStream* stream, void* buff, int len, void* userdata)
+	bool StreamCallback(SoundStream* stream, void* buff, int len)
 	{
-		SmkPlayer* pId = (SmkPlayer*)userdata;
-		memcpy(buff, &pId->adata.samples[pId->adata.nRead], len);
-		pId->adata.nRead += len / 2;
-		if (pId->adata.nRead >= (int)countof(pId->adata.samples)) pId->adata.nRead = 0;
+		int avail = (adata.nWrite >= adata.nRead) ?
+			adata.nWrite - adata.nRead :
+			(std::size(adata.samples) + adata.nWrite - adata.nRead);
+		avail *= 2;
+
+		while (avail < len)
+		{
+			auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
+			if (read == 0) break;
+
+			if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
+			else copy16bitSamples(read);
+			avail += read;
+		}
+
+		if (avail == 0)
+			return false;
+
+		if (avail > 0)
+		{
+			int remaining = std::min(len, avail);
+			memcpy(buff, &adata.samples[adata.nRead], remaining);
+			adata.nRead += remaining / 2;
+			if (adata.nRead >= (int)std::size(adata.samples)) adata.nRead = 0;
+		}
+		if (len > avail)
+			memset((char*)buff+avail, 0, len-avail);
 		return true;
 	}
+	static bool StreamCallbackC(SoundStream* stream, void* buff, int len, void* userdata)
+	{ return static_cast<SmkPlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 	void copy8bitSamples(unsigned count)
 	{
@@ -684,7 +709,7 @@ public:
 		Smacker_GetPalette(hSMK, palette);
 
 		numAudioTracks = Smacker_GetNumAudioTracks(hSMK);
-		if (numAudioTracks)
+		if (numAudioTracks && SoundEnabled())
 		{
 			adata.nWrite = 0;
 			adata.nRead = 0;
@@ -692,17 +717,16 @@ public:
 			if (adata.inf.idealBufferSize > 0)
 			{
 				audioBuffer.Resize(adata.inf.idealBufferSize);
-				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
-				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-				else copy16bitSamples(read);
 				hassound = true;
 			}
 		}
 		if (!hassound)
 		{
 			adata.inf = {};
+			Smacker_DisableAudioTrack(hSMK, 0);
 		}
-
+		for (int i = 1;i < numAudioTracks;++i)
+			Smacker_DisableAudioTrack(hSMK, i);
 	}
 
 	//---------------------------------------------------------------------------
@@ -714,6 +738,7 @@ public:
 	void Start() override
 	{
 		animtex.SetSize(AnimTexture::Paletted, nWidth, nHeight);
+		if (stream) stream->SetPaused(false);
 	}
 
 	//---------------------------------------------------------------------------
@@ -732,16 +757,17 @@ public:
 			Smacker_GetPalette(hSMK, palette);
 			Smacker_GetFrame(hSMK, pFrame.Data());
 			animtex.SetFrame(palette, pFrame.Data());
-			if (numAudioTracks && SoundEnabled())
+			if (!stream && hassound)
 			{
-				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
-				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-				else copy16bitSamples(read);
-				if (!stream && read) // the sound may not start in the first frame, but the stream cannot start without any sound data present.
-					stream = S_CreateCustomStream(6000, adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackFunc, this);
+				S_StopMusic(true);
 
+				stream = S_CreateCustomStream(6000, adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this);
+				if (!stream)
+				{
+					Smacker_DisableAudioTrack(hSMK, 0);
+					hassound = false;
+				}
 			}
-
 		}
 
 		if (frame > nFrame)
@@ -767,13 +793,14 @@ public:
 
 	void Stop() override
 	{
-		if (stream) S_StopCustomStream(stream);
+		if (stream) stream->SetPaused(true);
 		bool nostopsound = (flags & NOSOUNDCUTOFF);
 		if (!nostopsound && !hassound) soundEngine->StopAllChannels();
 	}
 
 	~SmkPlayer()
 	{
+		if (stream) S_StopCustomStream(stream);
 		Smacker_Close(hSMK);
 		animtex.Clean();
 	}

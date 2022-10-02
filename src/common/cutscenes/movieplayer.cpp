@@ -610,7 +610,6 @@ struct AudioData
 {
 	SmackerAudioInfo inf;
 
-	std::vector<uint16_t> samples;
 	int nWrite = 0;
 	int nRead = 0;
 };
@@ -624,7 +623,7 @@ class SmkPlayer : public MoviePlayer
 	uint8_t palette[768];
 	AnimTextures animtex;
 	TArray<uint8_t> pFrame;
-	TArray<uint8_t> audioBuffer;
+	TArray<int16_t> audioBuffer;
 	int nFrames;
 	bool fullscreenScale;
 	uint64_t nFrameNs;
@@ -671,10 +670,13 @@ public:
 				if (avail >= skip)
 				{
 					audiooffset += skip / framesize;
-					adata.nRead += skip / 2;
-					if (adata.nRead >= adata.nWrite)
-						adata.nRead = adata.nWrite = 0;
-					avail -= skip;
+					if (avail > skip)
+					{
+						adata.nRead += skip / 2;
+						avail -= skip;
+					}
+					else
+						adata.nRead = adata.nWrite = avail = 0;
 					break;
 				}
 
@@ -684,12 +686,11 @@ public:
 				skip -= avail;
 				avail = 0;
 
-				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
+				auto read = Smacker_GetAudioData(hSMK, 0, audioBuffer.Data());
 				if (read == 0) break;
 
-				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-				else copy16bitSamples(read);
-				avail += read;
+				adata.nWrite = read / 2;
+				avail = read;
 			}
 		}
 		else if(delay < 0.0)
@@ -699,18 +700,17 @@ public:
 
 			if(avail == 0)
 			{
-				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
+				auto read = Smacker_GetAudioData(hSMK, 0, audioBuffer.Data());
 				if (read == 0) return false;
 
-				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-				else copy16bitSamples(read);
-				avail += read;
+				adata.nWrite = read / 2;
+				avail = read;
 			}
 
 			// Offset the measured audio position to account for the duplicated samples.
 			audiooffset -= dup/framesize;
 
-			char *src = (char*)&adata.samples[adata.nRead];
+			char *src = (char*)&audioBuffer[adata.nRead];
 			char *dst = (char*)buff;
 
 			for(int i=0;i < dup;++i)
@@ -725,7 +725,7 @@ public:
 		{
 			if (avail == 0)
 			{
-				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
+				auto read = Smacker_GetAudioData(hSMK, 0, audioBuffer.Data());
 				if (read == 0)
 				{
 					if (wrote == 0)
@@ -733,14 +733,13 @@ public:
 					break;
 				}
 
-				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-				else copy16bitSamples(read);
-				avail += read;
+				adata.nWrite = read / 2;
+				avail = read;
 			}
 
 			int todo = std::min(len-wrote, avail);
 
-			memcpy((char*)buff+wrote, &adata.samples[adata.nRead], todo);
+			memcpy((char*)buff+wrote, &audioBuffer[adata.nRead], todo);
 			adata.nRead += todo / 2;
 			if(adata.nRead == adata.nWrite)
 				adata.nRead = adata.nWrite = 0;
@@ -754,33 +753,6 @@ public:
 	}
 	static bool StreamCallbackC(SoundStream* stream, void* buff, int len, void* userdata)
 	{ return static_cast<SmkPlayer*>(userdata)->StreamCallback(stream, buff, len); }
-
-	void copy8bitSamples(unsigned count)
-	{
-		for (unsigned i = 0; i < count;)
-		{
-			unsigned todo = std::min<unsigned>(count-i, std::size(adata.samples)-adata.nWrite);
-			for (unsigned j = 0;j < todo;++j)
-				adata.samples[adata.nWrite+j] = (audioBuffer[i+j] - 128) << 8;
-			adata.nWrite += todo;
-			if (adata.nWrite >= (int)std::size(adata.samples)) adata.nWrite = 0;
-			i += todo;
-		}
-	}
-
-	void copy16bitSamples(unsigned count)
-	{
-		auto ptr = (uint16_t*)audioBuffer.Data();
-		count /= 2;
-		for (unsigned i = 0; i < count;)
-		{
-			unsigned todo = std::min<unsigned>(count-i, std::size(adata.samples)-adata.nWrite);
-			memcpy(&adata.samples[adata.nWrite], ptr, todo*2);
-			adata.nWrite += todo;
-			if (adata.nWrite >= (int)std::size(adata.samples)) adata.nWrite = 0;
-			i += todo;
-		}
-	}
 
 
 	SmkPlayer(const char *fn, TArray<int>& ans, int flags_) : animSnd(std::move(ans))
@@ -806,8 +778,7 @@ public:
 			adata.inf = Smacker_GetAudioTrackDetails(hSMK, 0);
 			if (adata.inf.idealBufferSize > 0)
 			{
-				audioBuffer.Resize(adata.inf.idealBufferSize);
-				adata.samples.resize(adata.inf.idealBufferSize);
+				audioBuffer.Resize(adata.inf.idealBufferSize / 2);
 				hassound = true;
 			}
 		}

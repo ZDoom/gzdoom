@@ -1854,11 +1854,6 @@ CCMD(snd_status)
 	GSnd->PrintStatus();
 }
 
-CCMD(snd_reset)
-{
-	S_SoundReset();
-}
-
 CCMD(snd_listdrivers)
 {
 	GSnd->PrintDriversList();

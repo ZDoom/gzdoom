@@ -1484,7 +1484,7 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	if (lumpnum >= 0)
 	{
 		auto file = fileSystem.OpenFileReader (lumpnum); 
-		uint32_t numtex = file.ReadUInt32();;
+		uint32_t numtex = file.ReadUInt32();
 
 		return int(numtex) >= 0 ? numtex : 0;
 	}

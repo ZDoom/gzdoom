@@ -49,8 +49,8 @@
 #include "findfile.h"
 #include "i_interface.h"
 
-CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+EXTERN_CVAR(Bool, queryiwad);
+EXTERN_CVAR(Bool, defaultiwad);
 
 //==========================================================================
 //

@@ -2,6 +2,7 @@
 #include "st_start.h"
 #include "gamestate.h"
 #include "startupinfo.h"
+#include "c_cvars.h"
 
 static_assert(sizeof(void*) == 8, "32 builds are not supported");
 
@@ -18,3 +19,7 @@ gamestate_t 	gamestate = GS_STARTUP;
 bool ToggleFullscreen;
 
 FStartupInfo GameStartupInfo;
+
+CVAR(Bool, queryiwad, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(String, defaultiwad, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+

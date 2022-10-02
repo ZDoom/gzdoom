@@ -2961,6 +2961,14 @@ static void System_SetTransition(int type)
 	if (type != wipe_None) wipegamestate = type == wipe_Burn? GS_FORCEWIPEBURN : type == wipe_Fade? GS_FORCEWIPEFADE : GS_FORCEWIPEMELT;
 }
 
+static void System_HudScaleChanged()
+{
+	if (StatusBar)
+	{
+		StatusBar->SetScale();
+		setsizeneeded = true;
+	}
+}
 
 bool  CheckSkipGameOptionBlock(const char* str);
 
@@ -3531,6 +3539,7 @@ static int D_DoomMain_Internal (void)
 		System_StartCutscene,
 		System_SetTransition,
 		CheckCheatmode,
+		System_HudScaleChanged,
 	};
 
 	

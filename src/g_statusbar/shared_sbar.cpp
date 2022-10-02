@@ -103,17 +103,6 @@ CVAR (Flag, pf_poison,		paletteflash, PF_POISON)
 CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
 CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
 
-CUSTOM_CVARD(Float, hud_scalefactor, 1, CVAR_ARCHIVE, "changes the hud scale")
-{
-	if (self < 0.36f) self = 0.36f;
-	else if (self > 1) self = 1;
-	else if (StatusBar)
-	{
-		StatusBar->SetScale();
-		setsizeneeded = true;
-	}
-}
-
 
 // Stretch status bar to full screen width?
 CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
@@ -129,14 +118,9 @@ CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
 		setsizeneeded = true;
 	}
 }
-CUSTOM_CVAR(Bool, hud_aspectscale, false, CVAR_ARCHIVE)
-{
-	if (StatusBar)
-	{
-		StatusBar->SetScale();
-		setsizeneeded = true;
-	}
-}
+
+EXTERN_CVAR(Float, hud_scalefactor)
+EXTERN_CVAR(Bool, hud_aspectscale)
 
 CVAR (Bool, crosshairon, true, CVAR_ARCHIVE);
 CVAR (Int, crosshair, 0, CVAR_ARCHIVE)

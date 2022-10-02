@@ -36,6 +36,7 @@ struct SystemCallbacks
 	void (*StartCutscene)(bool blockui);
 	void (*SetTransition)(int type);
 	bool (*CheckCheatmode)(bool printmsg, bool sponly);
+	void (*HudScaleChanged)();
 };
 
 extern SystemCallbacks sysCallbacks;

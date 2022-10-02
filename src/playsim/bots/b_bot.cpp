@@ -51,6 +51,7 @@
 #include "filesystem.h"
 #include "vm.h"
 #include "g_levellocals.h"
+#include "d_main.h"
 
 IMPLEMENT_CLASS(DBot, false, true)
 

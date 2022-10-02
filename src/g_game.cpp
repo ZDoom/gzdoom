@@ -89,6 +89,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "doommenu.h"
 #include "screenjob.h"
+#include "i_interface.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -145,8 +146,6 @@ extern bool playedtitlemusic;
 
 gameaction_t	gameaction;
 
-int 			paused;
-bool			pauseext;
 bool 			sendpause;				// send a pause event next tic 
 bool			sendsave;				// send a save event next tic 
 bool			sendturn180;			// [RH] send a 180 degree turn next tic

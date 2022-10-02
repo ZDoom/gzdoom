@@ -65,6 +65,7 @@
 #include "g_game.h"
 #include "i_system.h"
 #include "v_draw.h"
+#include "i_interface.h"
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 

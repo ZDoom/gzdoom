@@ -69,6 +69,7 @@
 #include "s_music.h"
 #include "texturemanager.h"
 #include "v_draw.h"
+#include "d_main.h"
 
 extern FILE *Logfile;
 extern bool insave;

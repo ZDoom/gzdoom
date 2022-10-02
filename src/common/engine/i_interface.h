@@ -35,6 +35,7 @@ struct SystemCallbacks
 	void (*ToggleFullConsole)();
 	void (*StartCutscene)(bool blockui);
 	void (*SetTransition)(int type);
+	bool (*CheckCheatmode)(bool printmsg, bool sponly);
 };
 
 extern SystemCallbacks sysCallbacks;
@@ -50,5 +51,7 @@ extern FString endoomName;
 extern bool batchrun;
 extern float menuBlurAmount;
 extern bool generic_ui;
+extern int 	paused;
+extern bool pauseext;
 
 void UpdateGenericUI(bool cvar);

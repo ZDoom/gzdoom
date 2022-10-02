@@ -50,7 +50,7 @@
 #include "i_interface.h"
 
 EXTERN_CVAR(Bool, queryiwad);
-EXTERN_CVAR(Bool, defaultiwad);
+EXTERN_CVAR(String, defaultiwad);
 
 //==========================================================================
 //

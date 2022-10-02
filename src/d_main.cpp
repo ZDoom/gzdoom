@@ -3529,6 +3529,7 @@ static int D_DoomMain_Internal (void)
 		System_ToggleFullConsole,
 		System_StartCutscene,
 		System_SetTransition,
+		CheckCheatmode,
 	};
 
 	

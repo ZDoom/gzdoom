@@ -69,6 +69,8 @@
 #include "gstrings.h"
 #include "s_music.h"
 #include "screenjob.h"
+#include "d_main.h"
+#include "i_interface.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)

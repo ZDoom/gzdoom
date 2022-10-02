@@ -34,6 +34,7 @@
 #include "po_man.h"
 #include "gi.h"
 #include "c_dispatch.h"
+#include "i_interface.h"
 
 #include "g_level.h"
 #include "serializer_doom.h"

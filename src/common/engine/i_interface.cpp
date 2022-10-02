@@ -17,6 +17,8 @@ bool AppActive = true;
 int chatmodeon;
 gamestate_t 	gamestate = GS_STARTUP;
 bool ToggleFullscreen;
+int 			paused;
+bool			pauseext;
 
 FStartupInfo GameStartupInfo;
 

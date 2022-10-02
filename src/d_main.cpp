@@ -158,6 +158,7 @@ void R_Shutdown();
 void I_ShutdownInput();
 void SetConsoleNotifyBuffer();
 void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const char* appid, const char* steamappid);
+bool M_SetSpecialMenu(FName& menu, int param);	// game specific checks
 
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -197,6 +198,7 @@ EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, show_messages)
 EXTERN_CVAR(Bool, ticker)
+EXTERN_CVAR(Bool, vid_fps)
 
 extern bool setmodeneeded;
 extern bool demorecording;
@@ -299,7 +301,6 @@ CVAR(Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 CVAR(Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR(Bool, autoloadwidescreen, true, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR(Bool, r_debug_disable_vis_filter, false, 0)
-CVAR(Bool, vid_fps, false, 0)
 CVAR(Int, vid_showpalette, 0, 0)
 
 CUSTOM_CVAR (Bool, i_discordrpc, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -3540,6 +3541,8 @@ static int D_DoomMain_Internal (void)
 		System_SetTransition,
 		CheckCheatmode,
 		System_HudScaleChanged,
+		M_SetSpecialMenu,
+		OnMenuOpen,
 	};
 
 	

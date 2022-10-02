@@ -2,6 +2,7 @@
 
 #include "zstring.h"
 #include "intrect.h"
+#include "name.h"
 
 struct event_t;
 class FRenderState;
@@ -37,6 +38,8 @@ struct SystemCallbacks
 	void (*SetTransition)(int type);
 	bool (*CheckCheatmode)(bool printmsg, bool sponly);
 	void (*HudScaleChanged)();
+	bool (*SetSpecialMenu)(FName& menu, int param);
+	void (*OnMenuOpen)(bool makesound);
 };
 
 extern SystemCallbacks sysCallbacks;

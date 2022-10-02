@@ -2,9 +2,6 @@
 #include "menu.h"
 #include "savegamemanager.h"
 
-void M_StartControlPanel (bool makeSound, bool scaleoverride = false);
-
-
 struct FNewGameStartup
 {
 	const char *PlayerClass;
@@ -17,6 +14,7 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs);
 void M_StartupSkillMenu(FNewGameStartup *gs);
 void M_CreateGameMenus();
 void SetDefaultMenuColors();
+void OnMenuOpen(bool makeSound);
 
 class FSavegameManager : public FSavegameManagerBase
 {

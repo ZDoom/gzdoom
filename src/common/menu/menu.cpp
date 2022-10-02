@@ -55,8 +55,6 @@
 #include "i_time.h"
 #include "printf.h"
 
-void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
-
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
 //
@@ -434,8 +432,10 @@ bool DMenu::TranslateKeyboardEvents()
 //
 //=============================================================================
 
-void M_DoStartControlPanel (bool scaleoverride)
+
+void M_StartControlPanel (bool makesound, bool scaleoverride)
 {
+	if (sysCallbacks.OnMenuOpen) sysCallbacks.OnMenuOpen(makesound);
 	// intro might call this repeatedly
 	if (CurrentMenu != nullptr)
 		return;
@@ -504,11 +504,9 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
-bool M_SetSpecialMenu(FName& menu, int param);	// game specific checks
-
 void M_SetMenu(FName menu, int param)
 {
-	if (!M_SetSpecialMenu(menu, param)) return;
+	if (sysCallbacks.SetSpecialMenu && !sysCallbacks.SetSpecialMenu(menu, param)) return;
 
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != nullptr)

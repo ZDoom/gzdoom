@@ -234,7 +234,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 //
 //=============================================================================
 
-void M_StartControlPanel(bool makeSound, bool scaleoverride)
+void OnMenuOpen(bool makeSound)
 {
 	if (hud_toggled)
 		D_ToggleHud();
@@ -249,7 +249,6 @@ void M_StartControlPanel(bool makeSound, bool scaleoverride)
 	{
 		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
-	M_DoStartControlPanel(scaleoverride);
 }
 
 

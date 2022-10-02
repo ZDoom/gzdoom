@@ -329,7 +329,6 @@ FTextureID Advisory;
 FTextureID Page;
 const char *Subtitle;
 bool nospriterename;
-FStartupInfo GameStartupInfo;
 FString lastIWAD;
 int restart = 0;
 extern bool AppActive;

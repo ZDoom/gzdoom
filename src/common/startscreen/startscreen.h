@@ -38,6 +38,7 @@
 #include <stdint.h>
 #include <functional>
 #include "bitmap.h"
+#include "zstring.h"
 
 class FGameTexture;
 

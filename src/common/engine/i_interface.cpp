@@ -1,6 +1,7 @@
 #include "i_interface.h"
 #include "st_start.h"
 #include "gamestate.h"
+#include "startupinfo.h"
 
 static_assert(sizeof(void*) == 8, "32 builds are not supported");
 
@@ -14,4 +15,6 @@ float menuBlurAmount;
 bool AppActive = true;
 int chatmodeon;
 gamestate_t 	gamestate = GS_STARTUP;
+bool ToggleFullscreen;
 
+FStartupInfo GameStartupInfo;

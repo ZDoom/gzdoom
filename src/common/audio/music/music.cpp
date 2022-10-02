@@ -51,8 +51,8 @@
 #include <zmusic.h>
 #include "md5.h"
 #include "gain_analysis.h"
-#include "gameconfigfile.h"
 #include "i_specialpaths.h"
+#include "configfile.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

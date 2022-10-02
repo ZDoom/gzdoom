@@ -36,7 +36,7 @@
 #include "d_gui.h"
 #include "g_input.h"
 #include "d_net.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "sbar.h"
 #include "v_video.h"
 #include "utf8.h"

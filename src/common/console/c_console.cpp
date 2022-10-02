@@ -45,7 +45,7 @@
 #include "filesystem.h"
 #include "d_gui.h"
 #include "cmdlib.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "c_consolebuffer.h"
 #include "utf8.h"
 #include "v_2ddrawer.h"

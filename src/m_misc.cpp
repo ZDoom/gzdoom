@@ -292,7 +292,7 @@ bool M_SaveDefaults (const char *filename)
 void M_SaveDefaultsFinal ()
 {
 	if (GameConfig == nullptr) return;
-	while (!M_SaveDefaults (nullptr) && I_WriteIniFailed ())
+	while (!M_SaveDefaults (nullptr) && I_WriteIniFailed (GameConfig->GetPathName()))
 	{
 		/* Loop until the config saves or I_WriteIniFailed() returns false */
 	}

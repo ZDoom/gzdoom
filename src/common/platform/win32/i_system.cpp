@@ -80,7 +80,6 @@
 #include "i_input.h"
 #include "c_dispatch.h"
 
-#include "gameconfigfile.h"
 #include "v_font.h"
 #include "i_system.h"
 #include "bitmap.h"
@@ -764,7 +763,7 @@ void DestroyCustomCursor()
 //
 //==========================================================================
 
-bool I_WriteIniFailed()
+bool I_WriteIniFailed(const char* filename)
 {
 	char *lpMsgBuf;
 	FString errortext;
@@ -779,7 +778,7 @@ bool I_WriteIniFailed()
 		0,
 		NULL 
 	);
-	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
+	errortext.Format ("The config file %s could not be written:\n%s", filename, lpMsgBuf);
 	LocalFree (lpMsgBuf);
 	return MessageBoxA(mainwindow.GetHandle(), errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
 }

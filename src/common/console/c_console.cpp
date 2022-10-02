@@ -70,8 +70,8 @@
 #define RIGHTMARGIN 8
 #define BOTTOMARGIN 12
 
+// todo: move these variables to a better place.
 extern bool AppActive;
-int chatmodeon;
 
 CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {

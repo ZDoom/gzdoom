@@ -144,7 +144,6 @@ CVAR(Int, nametagcolor, CR_GOLD, CVAR_ARCHIVE)
 extern bool playedtitlemusic;
 
 gameaction_t	gameaction;
-gamestate_t 	gamestate = GS_STARTUP;
 
 int 			paused;
 bool			pauseext;

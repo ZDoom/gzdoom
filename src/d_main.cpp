@@ -332,7 +332,7 @@ bool nospriterename;
 FStartupInfo GameStartupInfo;
 FString lastIWAD;
 int restart = 0;
-bool AppActive = true;
+extern bool AppActive;
 bool playedtitlemusic;
 
 FStartScreen* StartScreen;

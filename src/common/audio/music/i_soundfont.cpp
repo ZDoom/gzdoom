@@ -38,12 +38,12 @@
 #include "i_soundinternal.h"
 #include "cmdlib.h"
 #include "i_system.h"
-#include "gameconfigfile.h"
 #include "filereadermusicinterface.h"
 #include <zmusic.h>
 #include "resourcefile.h"
 #include "version.h"
 #include "findfile.h"
+#include "gameconfigfile.h"
 
 //==========================================================================
 //

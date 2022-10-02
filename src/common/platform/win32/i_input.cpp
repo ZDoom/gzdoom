@@ -125,8 +125,6 @@ static bool EventHandlerResultForNativeMouse;
 
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-extern int chatmodeon;
-
 static void I_CheckGUICapture ()
 {
 	bool wantCapt = sysCallbacks.WantGuiCapture && sysCallbacks.WantGuiCapture();

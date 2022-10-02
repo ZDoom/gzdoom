@@ -59,7 +59,6 @@ void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
-extern int chatmodeon;
 //
 // Todo: Move these elsewhere
 //

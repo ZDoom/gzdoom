@@ -65,8 +65,6 @@ void CT_Drawer ();
 bool CT_Responder (event_t *ev);
 void CT_PasteChat(const char *clip);
 
-int chatmodeon;
-
 // Private data
 
 static void CT_ClearChatMessage ();

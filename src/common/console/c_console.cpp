@@ -71,6 +71,7 @@
 #define BOTTOMARGIN 12
 
 extern bool AppActive;
+int chatmodeon;
 
 CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -95,7 +96,6 @@ static FTextureID conflat;
 static uint32_t conshade;
 static bool conline;
 
-extern int chatmodeon;
 extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 

@@ -449,13 +449,18 @@ bool SmackerDecoder::Open(const char *fileName)
 	{
 		if (frameFlag & 1) 
 		{
-			// skip size
-			file.Skip(4);
-			
+			uint32_t size = file.ReadUint32LE();
 			uint32_t unpackedSize = file.ReadUint32LE();
+
+			// If the track isn't 16-bit, double the buffer size for converting 8-bit to 16-bit.
+			if (!(audioTracks[i].flags & SMK_AUD_16BITS))
+				unpackedSize *= 2;
 
 			audioTracks[i].bufferSize = unpackedSize;
 			audioTracks[i].buffer = new uint8_t[unpackedSize];
+
+			// skip size
+			file.Skip(size - 8);
 		}	
 		frameFlag >>= 1;
 	}
@@ -725,6 +730,7 @@ void SmackerDecoder::GetNextFrame()
 	}
 	SmackerPacket pkt = std::move(framePacketData.front());
 	framePacketData.pop_front();
+	flock.unlock();
 
 	uint32_t frameSize = pkt.size;
 	uint8_t frameFlag  = frameFlags[currentFrame];
@@ -1017,18 +1023,14 @@ int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAu
     int pred[2] = {0, 0};
 
 	int16_t *samples = reinterpret_cast<int16_t*>(track.buffer);
-    int8_t *samples8 = reinterpret_cast<int8_t*>(track.buffer);
-
-	int buf_size = track.bufferSize;
-
-    if (buf_size <= 4) {
-        Printf("SmackerDecoder::DecodeAudio() - Packet is too small\n");
-		return -1;
-    }
 
 	SmackerCommon::BitReader bits(dataPtr, size);
 
     unpackedSize = bits.GetBits(32);
+    if (unpackedSize <= 4) {
+        Printf("SmackerDecoder::DecodeAudio() - Packet is too small\n");
+		return -1;
+    }
 
     if (!bits.GetBit()) {
 		// no sound data
@@ -1101,7 +1103,7 @@ int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAu
         for (i = stereo; i >= 0; i--)
             pred[i] = bits.GetBits(8);
         for (i = 0; i <= stereo; i++)
-            *samples8++ = pred[i];
+            *samples++ = (pred[i]-128) << 8;
         for (; i < unpackedSize; i++) {
             if (i & stereo){
 				if (VLC_GetSize(vlc[1]))
@@ -1109,16 +1111,17 @@ int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAu
                 else
                     res = 0;
                 pred[1] += (int8_t)h[1].values[res];
-                *samples8++ = pred[1];
+                *samples++ = (pred[1]-128) << 8;
             } else {
 				if (VLC_GetSize(vlc[0]))
 				res = VLC_GetCodeBits(bits, vlc[0]);
                 else
                     res = 0;
                 pred[0] += (int8_t)h[0].values[res];
-                *samples8++ = pred[0];
+                *samples++ = (pred[0]-128) << 8;
             }
         }
+        unpackedSize *= 2;
     }
 
 	track.bytesReadThisFrame = unpackedSize;
@@ -1201,7 +1204,6 @@ SmackerAudioInfo SmackerDecoder::GetAudioTrackDetails(uint32_t trackIndex)
 
 	info.sampleRate = track->sampleRate;
 	info.nChannels  = track->nChannels;
-	info.bitsPerSample = track->bitsPerSample;
 
 	// audio buffer size in bytes
 	info.idealBufferSize = track->bufferSize;
@@ -1228,6 +1230,7 @@ uint32_t SmackerDecoder::GetAudioData(uint32_t trackIndex, int16_t *audioBuffer)
 	}
 	SmackerPacket pkt = std::move(track->packetData.front());
 	track->packetData.pop_front();
+	flock.unlock();
 
 	track->bytesReadThisFrame = 0;
 

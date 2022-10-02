@@ -64,7 +64,6 @@ struct SmackerAudioInfo
 {
 	uint32_t sampleRate;
 	uint8_t  nChannels;
-	uint8_t  bitsPerSample;
 
 	uint32_t idealBufferSize;
 };

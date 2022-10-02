@@ -522,11 +522,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckRealHeight, CheckRealHeight)
 	ACTION_RETURN_INT(CheckRealHeight(texid));
 }
 
-bool OkForLocalization(FTextureID texnum, const char* substitute);
-
 static int OkForLocalization_(int index, const FString& substitute)
 {
-	return OkForLocalization(FSetTextureID(index), substitute);
+	return sysCallbacks.OkForLocalization? sysCallbacks.OkForLocalization(FSetTextureID(index), substitute) : false;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization_)

@@ -111,8 +111,6 @@ extern PClass *DefaultOptionMenuClass;
 #define KEY_REPEAT_DELAY	(GameTicRate*5/12)
 #define KEY_REPEAT_RATE		(3)
 
-bool OkForLocalization(FTextureID texnum, const char* substitute);
-
 //============================================================================
 //
 //

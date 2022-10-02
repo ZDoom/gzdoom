@@ -178,6 +178,7 @@ void S_ParseMusInfo();
 void D_GrabCVarDefaults();
 void LoadHexFont(const char* filename);
 void InitBuildTiles();
+bool OkForLocalization(FTextureID texnum, const char* substitute);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -3524,6 +3525,7 @@ static int D_DoomMain_Internal (void)
 	buttonMap.GetButton(Button_Klook)->bReleaseLock = true;
 
 	sysCallbacks = {
+		G_Responder,
 		System_WantGuiCapture,
 		System_WantLeftButton,
 		System_NetGame,
@@ -3554,6 +3556,8 @@ static int D_DoomMain_Internal (void)
 		M_SetSpecialMenu,
 		OnMenuOpen,
 		System_LanguageChanged,
+		OkForLocalization,
+
 	};
 
 	

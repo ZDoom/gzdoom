@@ -7,10 +7,12 @@
 struct event_t;
 class FRenderState;
 class FGameTexture;
+class FTextureID;
 enum EUpscaleFlags : int;
 
 struct SystemCallbacks
 {
+	bool (*G_Responder)(event_t* ev);	// this MUST be set, otherwise nothing will work
 	bool (*WantGuiCapture)();
 	bool (*WantLeftButton)();
 	bool (*NetGame)();
@@ -41,6 +43,7 @@ struct SystemCallbacks
 	bool (*SetSpecialMenu)(FName& menu, int param);
 	void (*OnMenuOpen)(bool makesound);
 	void (*LanguageChanged)(const char*);
+	bool (*OkForLocalization)(FTextureID, const char*);
 };
 
 extern SystemCallbacks sysCallbacks;

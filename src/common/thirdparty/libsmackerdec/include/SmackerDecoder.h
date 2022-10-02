@@ -135,6 +135,8 @@ class SmackerDecoder
 
 		bool isVer4;
 
+		std::vector<uint8_t> packetData;
+		uint8_t *packetDataPtr = nullptr;
 		SmackerAudioTrack audioTracks[kMaxAudioTracks];
 
 		uint32_t treeSize;

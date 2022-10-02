@@ -111,10 +111,6 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 
 EXTERN_CVAR (Bool, queryiwad);
 // Used on welcome/IWAD screen.
-EXTERN_CVAR (Bool, disableautoload)
-EXTERN_CVAR (Bool, autoloadlights)
-EXTERN_CVAR (Bool, autoloadbrightmaps)
-EXTERN_CVAR (Bool, autoloadwidescreen)
 EXTERN_CVAR (Int, vid_preferbackend)
 
 extern HANDLE StdOut;
@@ -356,9 +352,12 @@ static void SetQueryIWad(HWND dialog)
 // Dialog proc for the IWAD selector.
 //
 //==========================================================================
+static int* pAutoloadflags;
 
 BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	int& flags = *pAutoloadflags;;
+
 	HWND ctrl;
 	int i;
 
@@ -402,10 +401,10 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 
 		// [SP] This is our's
-		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, disableautoload ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_LIGHTS, BM_SETCHECK, autoloadlights ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_BRIGHTMAPS, BM_SETCHECK, autoloadbrightmaps ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_SETCHECK, autoloadwidescreen ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, (flags & 1) ? BST_CHECKED : BST_UNCHECKED, 0);
+		SendDlgItemMessage( hDlg, IDC_WELCOME_LIGHTS, BM_SETCHECK, (flags & 2) ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_BRIGHTMAPS, BM_SETCHECK, (flags & 4) ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_SETCHECK, (flags & 8) ? BST_CHECKED : BST_UNCHECKED, 0 );
 
 		// Set up our version string.
 		sprintf(szString, "Version %s.", GetVersionString());
@@ -460,10 +459,11 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 				vid_preferbackend = 0;
 
 			// [SP] This is our's.
-			disableautoload = SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-			autoloadlights = SendDlgItemMessage( hDlg, IDC_WELCOME_LIGHTS, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-			autoloadbrightmaps = SendDlgItemMessage( hDlg, IDC_WELCOME_BRIGHTMAPS, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-			autoloadwidescreen = SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+			flags = 0;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 1;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_LIGHTS, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 2;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_BRIGHTMAPS, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 4;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_WIDESCREEN, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 8;
 			ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
 			EndDialog(hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
 		}
@@ -480,10 +480,10 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 //
 //==========================================================================
 
-int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
+int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
 {
 	int vkey;
-
+	pAutoloadflags = &autoloadflags;
 	if (stricmp(queryiwad_key, "shift") == 0)
 	{
 		vkey = VK_SHIFT;

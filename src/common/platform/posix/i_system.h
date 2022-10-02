@@ -49,7 +49,7 @@ TArray<FString> I_GetGogPaths();
 TArray<FString> I_GetBethesdaPath();
 
 // The ini could not be saved at exit
-bool I_WriteIniFailed ();
+bool I_WriteIniFailed (const char* filename);
 
 class FGameTexture;
 bool I_SetCursor(FGameTexture *);

@@ -555,23 +555,9 @@ public:
 			{
 				MusicStream = ZMusic_OpenSong(GetMusicReader(reader), MDEV_DEFAULT, nullptr);
 			}
-			if (MusicStream)
+			if (!MusicStream)
 			{
-				bool ok = false;
-				SoundStreamInfo info{};
-				ZMusic_GetStreamInfo(MusicStream, &info);
-				// if mBufferSize == 0, the music stream is played externally (e.g.
-				// Windows' MIDI synth), which we can't keep synced. Play anyway?
-				if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
-				{
-					ok = AudioTrack.Start(info.mSampleRate, abs(info.mNumChannels),
-						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat, &StreamCallbackC, this);
-				}
-				if (!ok)
-				{
-					ZMusic_Close(MusicStream);
-					MusicStream = nullptr;
-				}
+				Printf(PRINT_BOLD, "Failed to decode %s\n", fileSystem.GetFileFullName(soundtrack, false));
 			}
 		}
 		animtex.SetSize(AnimTexture::YUV, width, height);
@@ -603,6 +589,25 @@ public:
 			}
 			framenum++;
 			if (framenum >= numframes) stop = true;
+
+			if (!AudioTrack.GetAudioStream() && MusicStream)
+			{
+				bool ok = false;
+				SoundStreamInfo info{};
+				ZMusic_GetStreamInfo(MusicStream, &info);
+				// if mBufferSize == 0, the music stream is played externally (e.g.
+				// Windows' MIDI synth), which we can't keep synced. Play anyway?
+				if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
+				{
+					ok = AudioTrack.Start(info.mSampleRate, abs(info.mNumChannels),
+						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat, &StreamCallbackC, this);
+				}
+				if (!ok)
+				{
+					ZMusic_Close(MusicStream);
+					MusicStream = nullptr;
+				}
+			}
 
 			bool nostopsound = (flags & NOSOUNDCUTOFF);
 			int soundframe = convdenom ? Scale(framenum, convnumer, convdenom) : framenum;

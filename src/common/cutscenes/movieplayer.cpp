@@ -70,10 +70,87 @@ public:
 	virtual FTextureID GetTexture() = 0;
 };
 
+//---------------------------------------------------------------------------
+//
+//
+//
+//---------------------------------------------------------------------------
+
 // A simple filter is used to smooth out jittery timers
 static const double AudioAvgFilterCoeff{std::pow(0.01, 1.0/10.0)};
 // A threshold is in place to avoid constantly skipping due to imprecise timers.
 static constexpr double AudioSyncThreshold{0.03};
+
+class MovieAudioTrack
+{
+	SoundStream *AudioStream = nullptr;
+	std::atomic<uint64_t> ClockTime = 0;
+	int64_t AudioOffset = 0;
+	double ClockDiffAvg = 0;
+	int SampleRate = 0;
+	int FrameSize = 0;
+
+	double FilterDelay(double diff)
+	{
+		ClockDiffAvg = ClockDiffAvg*AudioAvgFilterCoeff + diff;
+		diff = ClockDiffAvg*(1.0 - AudioAvgFilterCoeff);
+		if(diff < AudioSyncThreshold/2.0 && diff > -AudioSyncThreshold)
+			return 0.0;
+
+		return diff;
+	}
+
+public:
+	MovieAudioTrack() = default;
+	~MovieAudioTrack()
+	{
+		if(AudioStream)
+			S_StopCustomStream(AudioStream);
+	}
+
+	bool Start(int srate, int channels, MusicCustomStreamType sampletype, StreamCallback callback, void *ptr)
+	{
+		SampleRate = srate;
+		FrameSize = channels * ((sampletype == MusicSamples16bit) ? sizeof(int16_t) : sizeof(float));
+		int bufsize = 40 * SampleRate / 1000 * FrameSize;
+		AudioStream = S_CreateCustomStream(bufsize, SampleRate, channels, sampletype, callback, ptr);
+		return !!AudioStream;
+	}
+
+	void Finish()
+	{
+		if(AudioStream)
+			S_StopCustomStream(AudioStream);
+		AudioStream = nullptr;
+	}
+
+	void SetClock(uint64_t clock) noexcept
+	{
+		ClockTime.store(clock, std::memory_order_release);
+	}
+
+	// NOTE: The callback (and thus GetClockDiff) can be called before
+	// S_CreateCustomStream returns, and thus before AudioStream gets set. So the
+	// caller needs to pass in the SoundStream given to the callback.
+	double GetClockDiff(SoundStream *stream)
+	{
+		// Calculate the difference in time between the movie clock and the audio position.
+		auto pos = stream->GetPlayPosition();
+		uint64_t clock = ClockTime.load(std::memory_order_acquire);
+		return FilterDelay(clock / 1'000'000'000.0 -
+			double(int64_t(pos.samplesplayed)+AudioOffset) / SampleRate +
+			pos.latency.count() / 1'000'000'000.0);
+	}
+
+	void AdjustOffset(int adjust) noexcept
+	{
+		AudioOffset += adjust;
+	}
+
+	SoundStream *GetAudioStream() const noexcept { return AudioStream; }
+	int GetSampleRate() const noexcept { return SampleRate; }
+	int GetFrameSize() const noexcept { return FrameSize; }
+};
 
 //---------------------------------------------------------------------------
 //
@@ -230,12 +307,7 @@ class VpxPlayer : public MoviePlayer
 	const TArray<int> animSnd;
 
 	ZMusic_MusicStream MusicStream = nullptr;
-	SoundStream *AudioStream = nullptr;
-	std::atomic<uint64_t> clocktime = 0;
-	int64_t audiooffset = 0;
-	double ClockDiffAvg = 0;
-	int samplerate = 0;
-	int framesize = 0;
+	MovieAudioTrack AudioTrack;
 
 	unsigned width, height;
 	TArray<uint8_t> Pic;
@@ -256,24 +328,11 @@ class VpxPlayer : public MoviePlayer
 public:
 	int soundtrack = -1;
 
-	double FilterDelay(double diff)
-	{
-		ClockDiffAvg = ClockDiffAvg*AudioAvgFilterCoeff + diff;
-		diff = ClockDiffAvg*(1.0 - AudioAvgFilterCoeff);
-		if(diff < AudioSyncThreshold/2.0 && diff > -AudioSyncThreshold)
-			return 0.0;
-
-		return diff;
-	}
-
 	bool StreamCallback(SoundStream *stream, void *buff, int len)
 	{
-		// Calculate the difference in time between the movie clock and the audio position.
-		auto pos = stream->GetPlayPosition();
-		uint64_t clock = clocktime.load(std::memory_order_acquire);
-		double delay = FilterDelay(clock / 1'000'000'000.0 -
-			double(int64_t(pos.samplesplayed)+audiooffset) / samplerate +
-			pos.latency.count() / 1'000'000'000.0);
+		const double delay = AudioTrack.GetClockDiff(stream);
+		const int samplerate = AudioTrack.GetSampleRate();
+		const int framesize = AudioTrack.GetFrameSize();
 
 		if(delay > 0.0)
 		{
@@ -283,7 +342,7 @@ public:
 				return false;
 
 			// Offset the measured audio position to account for the skipped samples.
-			audiooffset += skip/framesize;
+			AudioTrack.AdjustOffset(skip/framesize);
 
 			if(skip == len)
 				return ZMusic_FillStream(MusicStream, buff, len);
@@ -311,7 +370,7 @@ public:
 			}
 
 			// Offset the measured audio position to account for the duplicated samples.
-			audiooffset -= dup/framesize;
+			AudioTrack.AdjustOffset(-dup/framesize);
 			return true;
 		}
 
@@ -484,7 +543,11 @@ public:
 
 	void Start() override
 	{
-		if (soundtrack >= 0 && !AudioStream)
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
+		{
+			stream->SetPaused(false);
+		}
+		else if (soundtrack >= 0)
 		{
 			S_StopMusic(true);
 			FileReader reader = fileSystem.OpenFileReader(soundtrack);
@@ -494,30 +557,22 @@ public:
 			}
 			if (MusicStream)
 			{
+				bool ok = false;
 				SoundStreamInfo info{};
 				ZMusic_GetStreamInfo(MusicStream, &info);
 				// if mBufferSize == 0, the music stream is played externally (e.g.
 				// Windows' MIDI synth), which we can't keep synced. Play anyway?
 				if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
 				{
-					int channels = abs(info.mNumChannels);
-					samplerate = info.mSampleRate;
-					framesize = channels * ((info.mNumChannels < 0) ? sizeof(int16_t) : sizeof(float));
-					int bufsize = 40 * info.mSampleRate / 1000 * framesize;
-					AudioStream = S_CreateCustomStream(bufsize, info.mSampleRate, channels,
-						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat,
-						&StreamCallbackC, this);
+					ok = AudioTrack.Start(info.mSampleRate, abs(info.mNumChannels),
+						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat, &StreamCallbackC, this);
 				}
-				if (!AudioStream)
+				if (!ok)
 				{
 					ZMusic_Close(MusicStream);
 					MusicStream = nullptr;
 				}
 			}
-		}
-		else if (AudioStream)
-		{
-			AudioStream->SetPaused(false);
 		}
 		animtex.SetSize(AnimTexture::YUV, width, height);
 	}
@@ -530,7 +585,7 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
-		clocktime.store(clock, std::memory_order_release);
+		AudioTrack.SetClock(clock);
 
 		bool stop = false;
 		if (clock > nextframetime)
@@ -575,23 +630,21 @@ public:
 
 	void Stop() override
 	{
-		if (AudioStream)
-		{
-			AudioStream->SetPaused(true);
-		}
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
+			stream->SetPaused(true);
 		bool nostopsound = (flags & NOSOUNDCUTOFF);
 		if (!nostopsound) soundEngine->StopAllChannels();
 	}
 
 	~VpxPlayer()
 	{
-		vpx_codec_destroy(&codec);
-		animtex.Clean();
-		if(AudioStream)
+		if(MusicStream)
 		{
-			S_StopCustomStream(AudioStream);
+			AudioTrack.Finish();
 			ZMusic_Close(MusicStream);
 		}
+		vpx_codec_destroy(&codec);
+		animtex.Clean();
 	}
 
 	FTextureID GetTexture() override
@@ -630,34 +683,17 @@ class SmkPlayer : public MoviePlayer
 	int nFrame = 0;
 	const TArray<int> animSnd;
 	FString filename;
-	SoundStream* stream = nullptr;
+	MovieAudioTrack AudioTrack;
 	bool hassound = false;
-	std::atomic<uint64_t> clocktime = 0;
-	int64_t audiooffset = 0;
-	double ClockDiffAvg = 0;
-	int samplerate = 0;
-	int framesize = 0;
 
 public:
 	bool isvalid() { return hSMK.isValid; }
 
-	double FilterDelay(double diff)
-	{
-		ClockDiffAvg = ClockDiffAvg*AudioAvgFilterCoeff + diff;
-		diff = ClockDiffAvg*(1.0 - AudioAvgFilterCoeff);
-		if(diff < AudioSyncThreshold/2.0 && diff > -AudioSyncThreshold)
-			return 0.0;
-
-		return diff;
-	}
-
 	bool StreamCallback(SoundStream* stream, void* buff, int len)
 	{
-		auto pos = stream->GetPlayPosition();
-		uint64_t clock = clocktime.load(std::memory_order_acquire);
-		double delay = FilterDelay(clock / 1'000'000'000.0 -
-			double(int64_t(pos.samplesplayed)+audiooffset) / samplerate +
-			pos.latency.count() / 1'000'000'000.0);
+		const double delay = AudioTrack.GetClockDiff(stream);
+		const int samplerate = AudioTrack.GetSampleRate();
+		const int framesize = AudioTrack.GetFrameSize();
 
 		int avail = (adata.nWrite - adata.nRead) * 2;
 
@@ -669,7 +705,7 @@ public:
 			{
 				if (avail >= skip)
 				{
-					audiooffset += skip / framesize;
+					AudioTrack.AdjustOffset(skip / framesize);
 					if (avail > skip)
 					{
 						adata.nRead += skip / 2;
@@ -680,7 +716,7 @@ public:
 					break;
 				}
 
-				audiooffset += avail / framesize;
+				AudioTrack.AdjustOffset(avail / framesize);
 				adata.nWrite = 0;
 				adata.nRead = 0;
 				skip -= avail;
@@ -708,7 +744,7 @@ public:
 			}
 
 			// Offset the measured audio position to account for the duplicated samples.
-			audiooffset -= dup/framesize;
+			AudioTrack.AdjustOffset(-dup/framesize);
 
 			char *src = (char*)&audioBuffer[adata.nRead];
 			char *dst = (char*)buff;
@@ -781,14 +817,16 @@ public:
 				audioBuffer.Resize(adata.inf.idealBufferSize / 2);
 				hassound = true;
 			}
+			for (int i = 1;i < numAudioTracks;++i)
+				Smacker_DisableAudioTrack(hSMK, i);
+			numAudioTracks = 1;
 		}
 		if (!hassound)
 		{
 			adata.inf = {};
 			Smacker_DisableAudioTrack(hSMK, 0);
+			numAudioTracks = 0;
 		}
-		for (int i = 1;i < numAudioTracks;++i)
-			Smacker_DisableAudioTrack(hSMK, i);
 	}
 
 	//---------------------------------------------------------------------------
@@ -800,7 +838,8 @@ public:
 	void Start() override
 	{
 		animtex.SetSize(AnimTexture::Paletted, nWidth, nHeight);
-		if (stream) stream->SetPaused(false);
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
+			stream->SetPaused(false);
 	}
 
 	//---------------------------------------------------------------------------
@@ -811,7 +850,7 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
-		clocktime.store(clock, std::memory_order_release);
+		AudioTrack.SetClock(clock);
 		int frame = int(clock / nFrameNs);
 
 		twod->ClearScreen();
@@ -823,17 +862,15 @@ public:
 			Smacker_GetFrame(hSMK, pFrame.Data());
 			animtex.SetFrame(palette, pFrame.Data());
 
-			if (!stream && hassound)
+			if (!AudioTrack.GetAudioStream() && numAudioTracks)
 			{
 				S_StopMusic(true);
 
-				samplerate = adata.inf.sampleRate;
-				framesize = adata.inf.nChannels * 2;
-
-				int bufsize = 40 * samplerate / 1000 * framesize;
-				stream = S_CreateCustomStream(bufsize, adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this);
-				if (!stream)
+				if (!AudioTrack.Start(adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this))
+				{
 					Smacker_DisableAudioTrack(hSMK, 0);
+					numAudioTracks = 0;
+				}
 			}
 
 			bool nostopsound = (flags & NOSOUNDCUTOFF);
@@ -855,14 +892,15 @@ public:
 
 	void Stop() override
 	{
-		if (stream) stream->SetPaused(true);
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
+			stream->SetPaused(true);
 		bool nostopsound = (flags & NOSOUNDCUTOFF);
 		if (!nostopsound && !hassound) soundEngine->StopAllChannels();
 	}
 
 	~SmkPlayer()
 	{
-		if (stream) S_StopCustomStream(stream);
+		AudioTrack.Finish();
 		Smacker_Close(hSMK);
 		animtex.Clean();
 	}

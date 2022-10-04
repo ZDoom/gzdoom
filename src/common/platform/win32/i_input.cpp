@@ -63,7 +63,6 @@
 #include "d_gui.h"
 #include "c_console.h"
 #include "s_soundinternal.h"
-#include "gameconfigfile.h"
 #include "hardware.h"
 #include "d_eventbase.h"
 #include "v_text.h"
@@ -124,8 +123,6 @@ static bool EventHandlerResultForNativeMouse;
 
 
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-extern int chatmodeon;
 
 static void I_CheckGUICapture ()
 {

@@ -522,11 +522,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckRealHeight, CheckRealHeight)
 	ACTION_RETURN_INT(CheckRealHeight(texid));
 }
 
-bool OkForLocalization(FTextureID texnum, const char* substitute);
-
 static int OkForLocalization_(int index, const FString& substitute)
 {
-	return OkForLocalization(FSetTextureID(index), substitute);
+	return sysCallbacks.OkForLocalization? sysCallbacks.OkForLocalization(FSetTextureID(index), substitute) : false;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization_)
@@ -717,6 +715,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDefaultKerning, GetDefaultKerning)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FFont);
 	ACTION_RETURN_INT(self->GetDefaultKerning());
+}
+
+static double GetDisplayTopOffset(FFont* font, int c)
+{
+	auto texc = font->GetChar(c, CR_UNDEFINED, nullptr);
+	return texc ? texc->GetDisplayTopOffset() : 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDisplayTopOffset, GetDisplayTopOffset)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_FLOAT(GetDisplayTopOffset(self, code));
 }
 
 //==========================================================================

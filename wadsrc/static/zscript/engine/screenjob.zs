@@ -234,6 +234,12 @@ class MoviePlayerJob : SkippableScreenJob
 		return self;
 	}
 
+	override void Start()
+	{
+		System.StopMusic();
+	}
+
+
 	static ScreenJob CreateWithSoundInfo(String filename, Array<int> soundinfo, int flags, int frametime, int firstframetime = -1, int lastframetime = -1)
 	{
 		let movie = MoviePlayer.Create(filename, soundinfo, flags, frametime, firstframetime, lastframetime);

@@ -54,6 +54,7 @@
 #include "a_morph.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "d_main.h"
 
 uint8_t globalfreeze, globalchangefreeze;	// user's freeze state.
 

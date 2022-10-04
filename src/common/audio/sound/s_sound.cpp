@@ -44,8 +44,11 @@
 #include "m_random.h"
 #include "printf.h"
 #include "c_cvars.h"
+#include "gamestate.h"
 
 CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
+CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, i_pauseinbackground, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 int SoundEnabled()
 {
@@ -1709,4 +1712,156 @@ void S_SoundReset()
 	soundEngine->Reset();
 	S_RestartMusic();
 }
+
+//==========================================================================
+//
+// CCMD cachesound <sound name>
+//
+//==========================================================================
+
+#include "s_music.h"
+#include "vm.h"
+#include "c_dispatch.h"
+#include "stats.h"
+#include "i_net.h"
+#include "i_interface.h"
+
+
+CCMD(cachesound)
+{
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: cachesound <sound> ...\n");
+		return;
+	}
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		FSoundID sfxnum = argv[i];
+		if (sfxnum != FSoundID(0))
+		{
+			soundEngine->CacheSound(sfxnum);
+		}
+	}
+}
+
+
+CCMD(listsoundchannels)
+{
+	Printf("%s", soundEngine->ListSoundChannels().GetChars());
+}
+
+// intentionally moved here to keep the s_music include out of the rest of the file.
+
+//==========================================================================
+//
+// S_PauseSound
+//
+// Stop music and sound effects, during game PAUSE.
+//==========================================================================
+
+void S_PauseSound(bool notmusic, bool notsfx)
+{
+	if (!notmusic)
+	{
+		S_PauseMusic();
+	}
+	if (!notsfx)
+	{
+		soundEngine->SetPaused(true);
+		GSnd->SetSfxPaused(true, 0);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DObject, S_PauseSound)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(notmusic);
+	PARAM_BOOL(notsfx);
+	S_PauseSound(notmusic, notsfx);
+	return 0;
+}
+
+//==========================================================================
+//
+// S_ResumeSound
+//
+// Resume music and sound effects, after game PAUSE.
+//==========================================================================
+
+void S_ResumeSound(bool notsfx)
+{
+	S_ResumeMusic();
+	if (!notsfx)
+	{
+		soundEngine->SetPaused(false);
+		GSnd->SetSfxPaused(false, 0);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(notsfx);
+	S_ResumeSound(notsfx);
+	return 0;
+}
+
+//==========================================================================
+//
+// S_SetSoundPaused
+//
+// Called with state non-zero when the app is active, zero when it isn't.
+//
+//==========================================================================
+
+void S_SetSoundPaused(int state)
+{
+	if (!netgame && (i_pauseinbackground))
+	{
+		pauseext = !state;
+	}
+
+	if ((state || i_soundinbackground) && !pauseext)
+	{
+		if (paused == 0)
+		{
+			S_ResumeSound(true);
+			if (GSnd != nullptr)
+			{
+				GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
+			}
+		}
+	}
+	else
+	{
+		if (paused == 0)
+		{
+			S_PauseSound(false, true);
+			if (GSnd != nullptr)
+			{
+				GSnd->SetInactive(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL ?
+					SoundRenderer::INACTIVE_Complete :
+					SoundRenderer::INACTIVE_Mute);
+			}
+		}
+	}
+}
+
+
+
+CCMD(snd_status)
+{
+	GSnd->PrintStatus();
+}
+
+CCMD(snd_listdrivers)
+{
+	GSnd->PrintDriversList();
+}
+
+ADD_STAT(sound)
+{
+	return GSnd->GatherStats();
+}
+
 

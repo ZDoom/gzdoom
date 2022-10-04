@@ -44,6 +44,7 @@
 #include "c_functions.h"
 #include "gstrings.h"
 #include "texturemanager.h"
+#include "d_main.h"
 
 //==========================================================================
 //

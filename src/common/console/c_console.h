@@ -85,5 +85,6 @@ extern double NotifyFontScale;
 void C_SetNotifyFontScale(double scale);
 
 extern const char *console_bar;
+extern int chatmodeon;
 
 #endif

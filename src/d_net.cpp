@@ -51,7 +51,7 @@
 #include "st_start.h"
 #include "teaminfo.h"
 #include "p_conversation.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "p_enemy.h"
 #include "m_argv.h"
 #include "p_lnspec.h"
@@ -69,6 +69,8 @@
 #include "gstrings.h"
 #include "s_music.h"
 #include "screenjob.h"
+#include "d_main.h"
+#include "i_interface.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)

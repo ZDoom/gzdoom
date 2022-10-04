@@ -124,7 +124,7 @@ public:
 	void LoadTextureX(int wadnum, FMultipatchTextureBuilder &build);
 	void AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build);
 	void Init();
-	void AddTextures(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo&));
+	void AddTextures(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo&), void (*customtexturehandler)() = nullptr);
 	void DeleteAll();
 
 	void ReplaceTexture (FTextureID picnum, FGameTexture *newtexture, bool free);

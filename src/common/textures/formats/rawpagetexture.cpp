@@ -73,7 +73,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 
 	data.Seek(0, FileReader::SeekSet);
 	auto bits = data.Read(data.GetLength());
-	foo = (patch_t *)bits.Data();;
+	foo = (patch_t *)bits.Data();
 
 	height = LittleShort(foo->height);
 	width = LittleShort(foo->width);

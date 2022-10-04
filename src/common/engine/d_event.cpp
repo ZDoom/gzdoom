@@ -94,7 +94,7 @@ void D_ProcessEvents (void)
 				continue;				// menu ate the event
 		}
 
-		if (G_Responder(ev) && ev->type == EV_KeyDown) keywasdown.Set(ev->data1);
+		if (sysCallbacks.G_Responder(ev) && ev->type == EV_KeyDown) keywasdown.Set(ev->data1);
 	}
 
 	for (auto& ev: delayedevents)

@@ -38,12 +38,13 @@
 #include "i_soundinternal.h"
 #include "cmdlib.h"
 #include "i_system.h"
-#include "gameconfigfile.h"
 #include "filereadermusicinterface.h"
 #include <zmusic.h>
 #include "resourcefile.h"
 #include "version.h"
 #include "findfile.h"
+#include "i_interface.h"
+#include "configfile.h"
 
 //==========================================================================
 //
@@ -392,6 +393,7 @@ void FSoundFontManager::CollectSoundfonts()
 	findstate_t c_file;
 	void *file;
 
+	FConfigFile* GameConfig = sysCallbacks.GetConfig ? sysCallbacks.GetConfig() : nullptr;
 	if (GameConfig != NULL && GameConfig->SetSection ("SoundfontSearch.Directories"))
 	{
 		const char *key;

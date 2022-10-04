@@ -49,8 +49,12 @@
 #include "findfile.h"
 #include "i_interface.h"
 
-CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+EXTERN_CVAR(Bool, queryiwad);
+EXTERN_CVAR(String, defaultiwad);
+EXTERN_CVAR(Bool, disableautoload)
+EXTERN_CVAR(Bool, autoloadlights)
+EXTERN_CVAR(Bool, autoloadbrightmaps)
+EXTERN_CVAR(Bool, autoloadwidescreen)
 
 //==========================================================================
 //
@@ -749,9 +753,21 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 					stuff.Path = ExtractFileBase(found.mFullPath);
 					wads.Push(stuff);
 				}
-				pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick);
+				int flags = 0;;
+
+				if (disableautoload) flags |= 1;
+				if (autoloadlights) flags |= 2;
+				if (autoloadbrightmaps) flags |= 4;
+				if (autoloadwidescreen) flags |= 8;
+
+				pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick, flags);
 				if (pick >= 0)
 				{
+					disableautoload = !!(flags & 1);
+					autoloadlights = !!(flags & 2);
+					autoloadbrightmaps = !!(flags & 4);
+					autoloadwidescreen = !!(flags & 8);
+
 					// The newly selected IWAD becomes the new default
 					defaultiwad = mIWadInfos[picks[pick].mInfoIndex].Name;
 				}

@@ -148,18 +148,4 @@ CUSTOM_CVAR(Float, teamdamage, 0.f, CVAR_SERVERINFO | CVAR_NOINITCALL)
 	}
 }
 
-EXTERN_CVAR(Bool, ui_generic)
-
-CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
-{
-	GStrings.UpdateLanguage(self);
-	for (auto Level : AllLevels())
-	{
-		// does this even make sense on secondary levels...?
-		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
-	}
-	UpdateGenericUI(ui_generic);
-	I_UpdateWindowTitle();
-}
-
 CVAR(Float, cl_scaleweaponfov, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

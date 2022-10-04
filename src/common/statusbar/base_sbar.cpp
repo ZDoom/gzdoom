@@ -46,6 +46,7 @@
 #include "utf8.h"
 #include "v_text.h"
 #include "vm.h"
+#include "i_interface.h"
 
 FGameTexture* CrosshairImage;
 static int CrosshairNum;
@@ -60,8 +61,18 @@ CVAR(Int, crosshairhealth, 2, CVAR_ARCHIVE);
 CVARD(Float, crosshairscale, 0.5, CVAR_ARCHIVE, "changes the size of the crosshair");
 CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
 
-EXTERN_CVAR(Float, hud_scalefactor)
-EXTERN_CVAR(Bool, hud_aspectscale)
+CUSTOM_CVARD(Float, hud_scalefactor, 1, CVAR_ARCHIVE, "changes the hud scale")
+{
+	if (self < 0.36f) self = 0.36f;
+	else if (self > 1) self = 1;
+	else if (sysCallbacks.HudScaleChanged) sysCallbacks.HudScaleChanged();
+}
+
+CUSTOM_CVARD(Bool, hud_aspectscale, true, CVAR_ARCHIVE, "enables aspect ratio correction for the status bar")
+{
+	if (sysCallbacks.HudScaleChanged) sysCallbacks.HudScaleChanged();
+}
+
 
 void ST_LoadCrosshair(int num, bool alwaysload)
 {

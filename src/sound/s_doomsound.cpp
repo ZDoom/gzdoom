@@ -71,8 +71,6 @@
 
 
 FBoolCVar noisedebug("noise", false, 0);	// [RH] Print sound debugging info?
-CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, i_pauseinbackground, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
 static FString LastLocalSndInfo;
@@ -924,52 +922,6 @@ void S_SerializeSounds(FSerializer &arc)
 
 //==========================================================================
 //
-// S_SetSoundPaused
-//
-// Called with state non-zero when the app is active, zero when it isn't.
-//
-//==========================================================================
-
-void S_SetSoundPaused(int state)
-{
-	if (!netgame && (i_pauseinbackground)
-#ifdef _DEBUG
-		&& !demoplayback
-#endif
-		)
-	{
-		pauseext = !state;
-	}
-
-	if ((state || i_soundinbackground) && !pauseext)
-	{
-		if (paused == 0)
-		{
-			S_ResumeSound(true);
-			if (GSnd != nullptr)
-			{
-				GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
-			}
-		}
-	}
-	else
-	{
-		if (paused == 0)
-		{
-			S_PauseSound(false, true);
-			if (GSnd != nullptr)
-			{
-				GSnd->SetInactive(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL ?
-					SoundRenderer::INACTIVE_Complete :
-					SoundRenderer::INACTIVE_Mute);
-			}
-		}
-	}
-}
-
-
-//==========================================================================
-//
 // CalcSectorSoundOrg
 //
 // Returns the perceived sound origin for a sector. If the listener is
@@ -1475,111 +1427,8 @@ CCMD (loopsound)
 	}
 }
 
-//==========================================================================
-//
-// CCMD cachesound <sound name>
-//
-//==========================================================================
-
-CCMD (cachesound)
-{
-	if (argv.argc() < 2)
-	{
-		Printf ("Usage: cachesound <sound> ...\n");
-		return;
-	}
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		FSoundID sfxnum = argv[i];
-		if (sfxnum != FSoundID(0))
-		{
-			soundEngine->CacheSound(sfxnum);
-		}
-	}
-}
-
-
-CCMD(listsoundchannels)
-{	
-	Printf("%s", soundEngine->ListSoundChannels().GetChars());
-}
-
-// intentionally moved here to keep the s_music include out of the rest of the file.
-
-//==========================================================================
-//
-// S_PauseSound
-//
-// Stop music and sound effects, during game PAUSE.
-//==========================================================================
-#include "s_music.h"
-
-void S_PauseSound (bool notmusic, bool notsfx)
-{
-	if (!notmusic)
-	{
-		S_PauseMusic();
-	}
-	if (!notsfx)
-	{
-		soundEngine->SetPaused(true);
-		GSnd->SetSfxPaused (true, 0);
-	}
-}
-
-DEFINE_ACTION_FUNCTION(DObject, S_PauseSound)
-{
-	PARAM_PROLOGUE;
-	PARAM_BOOL(notmusic);
-	PARAM_BOOL(notsfx);
-	S_PauseSound(notmusic, notsfx);
-	return 0;
-}
-
-//==========================================================================
-//
-// S_ResumeSound
-//
-// Resume music and sound effects, after game PAUSE.
-//==========================================================================
-
-void S_ResumeSound (bool notsfx)
-{
-	S_ResumeMusic();
-	if (!notsfx)
-	{
-		soundEngine->SetPaused(false);
-		GSnd->SetSfxPaused (false, 0);
-	}
-}
-
-DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
-{
-	PARAM_PROLOGUE;
-	PARAM_BOOL(notsfx);
-	S_ResumeSound(notsfx);
-	return 0;
-}
-
-
-CCMD (snd_status)
-{
-	GSnd->PrintStatus ();
-}
-
-CCMD (snd_reset)
+CCMD(snd_reset)
 {
 	S_SoundReset();
 }
-
-CCMD (snd_listdrivers)
-{
-	GSnd->PrintDriversList ();
-}
-
-ADD_STAT (sound)
-{
-	return GSnd->GatherStats ();
-}
-
 

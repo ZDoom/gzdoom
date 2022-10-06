@@ -44,6 +44,9 @@
 
 #pragma once
 
+#include <deque>
+#include <memory>
+#include <mutex>
 #include <vector>
 
 #include "files.h"
@@ -55,6 +58,21 @@
 
 class InterplayDecoder
 {
+    struct AudioPacket
+    {
+        size_t nSize = 0;
+        std::unique_ptr<uint8_t[]> pData;
+    };
+
+    struct VideoPacket
+    {
+        uint16_t nPalStart=0, nPalCount=0;
+        uint32_t nDecodeMapSize = 0;
+        uint32_t nVideoDataSize = 0;
+        bool bSendFlag = false;
+        std::unique_ptr<uint8_t[]> pData;
+    };
+
 public:
     enum
     {
@@ -109,15 +127,16 @@ public:
 
     struct AudioData
     {
-        int hFx;
-        int nChannels;
-        uint16_t nSampleRate;
-        uint8_t nBitDepth;
-        bool bCompressed;
+        int nChannels = 0;
+        uint16_t nSampleRate = 0;
+        uint8_t nBitDepth = 0;
+        bool bCompressed = false;
 
-        int16_t samples[6000 * kAudioBlocks]; // must be a multiple of the stream buffer size
-        int nWrite;
-        int nRead;
+        std::unique_ptr<int16_t[]> samples;
+        int nWrite = 0;
+        int nRead = 0;
+
+        std::deque<AudioPacket> Packets;
     };
 
     AudioData audio;
@@ -126,6 +145,10 @@ public:
     AnimTextures& animTex() { return animtex; }
 
 private:
+    bool StreamCallback(SoundStream *stream, void *buff, int len);
+    static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
+    { return static_cast<InterplayDecoder*>(userdata)->StreamCallback(stream, buff, len); }
+
     struct DecodeMap
     {
         uint8_t* pData;
@@ -159,9 +182,11 @@ private:
     void DecodeBlock14(int32_t offset);
     void DecodeBlock15(int32_t offset);
 
+    std::mutex PacketMutex;
     FileReader fr;
 
     bool bIsPlaying, bAudioStarted;
+    bool bAudioEnabled;
 
     uint32_t nTimerRate, nTimerDiv;
     uint32_t nWidth, nHeight, nFrame;
@@ -169,12 +194,14 @@ private:
     uint64_t nFrameDuration;
 
     std::vector<uint8_t> ChunkData;
-    const uint8_t *ChunkPtr = nullptr;
+    int ProcessNextChunk();
 
+    std::deque<VideoPacket> VideoPackets;
     uint8_t* pVideoBuffers[2];
     uint32_t nCurrentVideoBuffer, nPreviousVideoBuffer;
     int32_t videoStride;
 
+    const uint8_t *ChunkPtr = nullptr;
     DecodeMap decodeMap;
 
     Palette palette[256];

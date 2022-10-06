@@ -259,7 +259,15 @@ public:
 class MvePlayer : public MoviePlayer
 {
 	InterplayDecoder decoder;
+	SoundStream* stream = nullptr;
 	bool failed = false;
+
+	bool StreamCallback(SoundStream *stream, void *buff, int len)
+	{
+		return decoder.FillSamples(buff, len);
+	}
+	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
+	{ return static_cast<MvePlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 public:
 	bool isvalid() { return !failed; }
@@ -278,12 +286,29 @@ public:
 	bool Frame(uint64_t clock) override
 	{
 		if (failed) return false;
+
 		bool playon = decoder.RunFrame(clock);
+		if (playon)
+		{
+			if (!stream && decoder.HasAudio())
+			{
+				S_StopMusic(true);
+				// start audio playback
+				stream = S_CreateCustomStream(6000, decoder.GetSampleRate(), decoder.NumChannels(), MusicSamples16bit, StreamCallbackC, this);
+				if (!stream)
+					decoder.DisableAudio();
+			}
+		}
+
 		return playon;
 	}
 
 	~MvePlayer()
 	{
+		if (stream)
+			S_StopCustomStream(stream);
+		stream = nullptr;
+
 		decoder.Close();
 	}
 

@@ -58,21 +58,6 @@
 
 class InterplayDecoder
 {
-    struct AudioPacket
-    {
-        size_t nSize = 0;
-        std::unique_ptr<uint8_t[]> pData;
-    };
-
-    struct VideoPacket
-    {
-        uint16_t nPalStart=0, nPalCount=0;
-        uint32_t nDecodeMapSize = 0;
-        uint32_t nVideoDataSize = 0;
-        bool bSendFlag = false;
-        std::unique_ptr<uint8_t[]> pData;
-    };
-
 public:
     enum
     {
@@ -123,7 +108,33 @@ public:
 
     bool Open(FileReader &fr);
     void Close();
+
     bool RunFrame(uint64_t clock);
+
+    bool FillSamples(void *buff, int len);
+
+    bool HasAudio() const noexcept { return bAudioEnabled; }
+    int NumChannels() const noexcept { return audio.nChannels; }
+    int GetSampleRate() const noexcept { return audio.nSampleRate; }
+    void DisableAudio();
+
+    AnimTextures& animTex() { return animtex; }
+
+private:
+    struct AudioPacket
+    {
+        size_t nSize = 0;
+        std::unique_ptr<uint8_t[]> pData;
+    };
+
+    struct VideoPacket
+    {
+        uint16_t nPalStart=0, nPalCount=0;
+        uint32_t nDecodeMapSize = 0;
+        uint32_t nVideoDataSize = 0;
+        bool bSendFlag = false;
+        std::unique_ptr<uint8_t[]> pData;
+    };
 
     struct AudioData
     {
@@ -138,16 +149,7 @@ public:
 
         std::deque<AudioPacket> Packets;
     };
-
     AudioData audio;
-    AnimTextures animtex;
-
-    AnimTextures& animTex() { return animtex; }
-
-private:
-    bool StreamCallback(SoundStream *stream, void *buff, int len);
-    static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
-    { return static_cast<InterplayDecoder*>(userdata)->StreamCallback(stream, buff, len); }
 
     struct DecodeMap
     {
@@ -185,8 +187,7 @@ private:
     std::mutex PacketMutex;
     FileReader fr;
 
-    bool bIsPlaying, bAudioStarted;
-    bool bAudioEnabled;
+    bool bIsPlaying, bAudioEnabled;
 
     uint32_t nTimerRate, nTimerDiv;
     uint32_t nWidth, nHeight, nFrame;
@@ -204,9 +205,9 @@ private:
     const uint8_t *ChunkPtr = nullptr;
     DecodeMap decodeMap;
 
+    AnimTextures animtex;
     Palette palette[256];
     uint64_t nNextFrameTime = 0;
-    SoundStream* stream = nullptr;
 };
 
 #endif

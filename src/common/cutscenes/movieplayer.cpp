@@ -259,11 +259,55 @@ public:
 class MvePlayer : public MoviePlayer
 {
 	InterplayDecoder decoder;
-	SoundStream* stream = nullptr;
+	MovieAudioTrack audioTrack;
 	bool failed = false;
 
 	bool StreamCallback(SoundStream *stream, void *buff, int len)
 	{
+		const double delay = audioTrack.GetClockDiff(stream);
+		const int samplerate = audioTrack.GetSampleRate();
+		const int framesize = audioTrack.GetFrameSize();
+
+		if(delay > 0.0)
+		{
+			// If diff > 0, skip samples. Don't skip more than a full update at once.
+			int skip = std::min(int(delay*samplerate)*framesize, len);
+			if(!decoder.FillSamples(buff, len))
+				return false;
+
+			// Offset the measured audio position to account for the skipped samples.
+			audioTrack.AdjustOffset(skip/framesize);
+
+			if(skip == len)
+				return decoder.FillSamples(buff, len);
+			memmove(buff, (char*)buff+skip, len-skip);
+			if(!decoder.FillSamples((char*)buff+len-skip, skip))
+				memset((char*)buff+len-skip, 0, skip);
+
+			return true;
+		}
+
+		if(delay < 0.0)
+		{
+			// If diff < 0, duplicate samples. Don't duplicate a full update (we need at
+			// least one new sample frame to duplicate).
+			int dup = std::min(int(-delay*samplerate)*framesize, len-framesize);
+			if(!decoder.FillSamples((char*)buff+dup, len-dup))
+				return false;
+
+			if(framesize == 1)
+				memset(buff, ((char*)buff)[dup], dup);
+			else
+			{
+				for(int i=0;i < dup;++i)
+					((char*)buff)[i] = ((char*)buff+dup)[i%framesize];
+			}
+
+			// Offset the measured audio position to account for the duplicated samples.
+			audioTrack.AdjustOffset(-dup/framesize);
+			return true;
+		}
+
 		return decoder.FillSamples(buff, len);
 	}
 	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
@@ -287,15 +331,15 @@ public:
 	{
 		if (failed) return false;
 
+		audioTrack.SetClock(clock);
 		bool playon = decoder.RunFrame(clock);
 		if (playon)
 		{
-			if (!stream && decoder.HasAudio())
+			if (!audioTrack.GetAudioStream() && decoder.HasAudio())
 			{
 				S_StopMusic(true);
 				// start audio playback
-				stream = S_CreateCustomStream(6000, decoder.GetSampleRate(), decoder.NumChannels(), MusicSamples16bit, StreamCallbackC, this);
-				if (!stream)
+				if (!audioTrack.Start(decoder.GetSampleRate(), decoder.NumChannels(), MusicSamples16bit, StreamCallbackC, this))
 					decoder.DisableAudio();
 			}
 		}
@@ -305,9 +349,7 @@ public:
 
 	~MvePlayer()
 	{
-		if (stream)
-			S_StopCustomStream(stream);
-		stream = nullptr;
+		audioTrack.Finish();
 
 		decoder.Close();
 	}

@@ -95,7 +95,7 @@ static const int16_t delta_table[] = {
 #define LE_64(x)  (LE_32(x) | ((uint64_t)LE_32(x+4) << 32))
 
 
-bool InterplayDecoder::StreamCallback(SoundStream *stream, void *buff, int len)
+bool InterplayDecoder::FillSamples(void *buff, int len)
 {
     for (int i = 0; i < len;)
     {
@@ -174,10 +174,20 @@ bool InterplayDecoder::StreamCallback(SoundStream *stream, void *buff, int len)
     return true;
 }
 
+void InterplayDecoder::DisableAudio()
+{
+    if (bAudioEnabled)
+    {
+        std::unique_lock plock(PacketMutex);
+        bAudioEnabled = false;
+        audio.Packets.clear();
+    }
+}
+
+
 InterplayDecoder::InterplayDecoder(bool soundenabled)
 {
     bIsPlaying = false;
-    bAudioStarted = false;
     bAudioEnabled = soundenabled;
 
     nWidth  = 0;
@@ -485,9 +495,6 @@ int InterplayDecoder::ProcessNextChunk()
 void InterplayDecoder::Close()
 {
     bIsPlaying = false;
-    if (stream)
-        S_StopCustomStream(stream);
-    stream = nullptr;
     fr.Close();
 
     if (decodeMap.pData) {
@@ -561,14 +568,6 @@ bool InterplayDecoder::RunFrame(uint64_t clock)
         return true;
     }
     nNextFrameTime += nFrameDuration;
-
-    if (!bAudioStarted && bAudioEnabled)
-    {
-        S_StopMusic(true);
-        // start audio playback
-        stream = S_CreateCustomStream(6000, audio.nSampleRate, audio.nChannels, MusicSamples16bit, StreamCallbackC, this);
-        bAudioStarted = true;
-    }
 
     bool doFrame = false;
     do

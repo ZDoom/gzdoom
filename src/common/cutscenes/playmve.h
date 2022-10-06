@@ -44,6 +44,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "files.h"
 #include "animtexture.h"
 #include "s_music.h"
@@ -111,6 +113,7 @@ public:
         int nChannels;
         uint16_t nSampleRate;
         uint8_t nBitDepth;
+        bool bCompressed;
 
         int16_t samples[6000 * kAudioBlocks]; // must be a multiple of the stream buffer size
         int nWrite;
@@ -164,6 +167,9 @@ private:
     uint32_t nWidth, nHeight, nFrame;
     double nFps;
     uint64_t nFrameDuration;
+
+    std::vector<uint8_t> ChunkData;
+    const uint8_t *ChunkPtr = nullptr;
 
     uint8_t* pVideoBuffers[2];
     uint32_t nCurrentVideoBuffer, nPreviousVideoBuffer;

@@ -641,7 +641,7 @@ public:
 		AudioTrack.SetClock(clock);
 
 		bool stop = false;
-		if (clock > nextframetime)
+		if (clock >= nextframetime)
 		{
 			nextframetime += nsecsperframe;
 
@@ -926,7 +926,7 @@ public:
 		int frame = int(clock / nFrameNs);
 
 		twod->ClearScreen();
-		if (frame > nFrame)
+		if (frame >= nFrame)
 		{
 			nFrame++;
 			Smacker_GetNextFrame(hSMK);

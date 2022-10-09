@@ -46,6 +46,7 @@
 #include <string.h>
 #include "xs_Float.h"
 #include "math/cmath.h"
+#include "basics.h"
 
 
 #define EQUAL_EPSILON (1/65536.)
@@ -307,6 +308,8 @@ template<class vec_t>
 struct TVector3
 {
 	typedef TVector2<vec_t> Vector2;
+	// this does not compile - should be true on all relevant hardware.
+	//static_assert(myoffsetof(TVector3, X) == myoffsetof(Vector2, X) && myoffsetof(TVector3, Y) == myoffsetof(Vector2, Y), "TVector2 and TVector3 are not aligned");
 
 	vec_t X, Y, Z;
 
@@ -343,7 +346,7 @@ struct TVector3
 		return X == 0 && Y == 0 && Z == 0;
 	}
 
-	TVector3 plusZ(double z)
+	TVector3 plusZ(double z) const
 	{
 		return { X, Y, Z + z };
 	}
@@ -491,9 +494,14 @@ struct TVector3
 	}
 
 	// returns the XY fields as a 2D-vector.
-	Vector2 XY() const
+	const Vector2& XY() const
 	{
-		return{ X, Y };
+		return *reinterpret_cast<const Vector2*>(this);
+	}
+
+	Vector2& XY()
+	{
+		return *reinterpret_cast<Vector2*>(this);
 	}
 
 	// Add a 3D vector and a 2D vector.
@@ -1212,6 +1220,11 @@ public:
 		return TAngle(bang * (90. / 512));
 	}
 
+	static constexpr TAngle fromBuildf(double bang)
+	{
+		return TAngle(bang * (90. / 512));
+	}
+
 	static constexpr TAngle fromQ16(int bang)
 	{
 		return TAngle(bang * (90. / 16384));
@@ -1334,6 +1347,11 @@ public:
 		return int(Degrees_ * (512 / 90.0));
 	}
 
+	constexpr double Buildfang() const
+	{
+		return Degrees_ * (512 / 90.0);
+	}
+
 	constexpr int Q16() const
 	{
 		return int(Degrees_ * (16384 / 90.0));
@@ -1363,6 +1381,12 @@ public:
 	double TanClamped(double max = 5.) const
 	{
 		return clamp(Tan(), -max, max);
+	}
+
+	int Sgn() const
+	{
+		const auto normalized = (signed int)BAMs();
+		return (normalized > 0) - (normalized < 0);
 	}
 };
 
@@ -1610,6 +1634,11 @@ typedef TAngle<double>			DAngle;
 
 constexpr DAngle nullAngle = DAngle::fromDeg(0.);
 constexpr FAngle nullFAngle = FAngle::fromDeg(0.);
+
+constexpr DAngle DAngle90 = DAngle::fromBam(ANGLE_90);
+constexpr DAngle DAngle180 = DAngle::fromBam(ANGLE_180);
+constexpr DAngle DAngle270 = DAngle::fromBam(ANGLE_270);
+constexpr DAngle DAngle360 = DAngle::fromBam(ANGLE_MAX);
 
 class Plane
 {

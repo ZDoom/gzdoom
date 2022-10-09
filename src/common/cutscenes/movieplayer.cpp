@@ -55,6 +55,7 @@ protected:
 	{
 		NOSOUNDCUTOFF = 1,
 		FIXEDVIEWPORT = 2,	// Forces fixed 640x480 screen size like for Blood's intros.
+		NOMUSICCUTOFF = 4,
 	};
 
 	int flags;

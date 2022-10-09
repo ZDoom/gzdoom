@@ -3688,6 +3688,7 @@ int GameMain()
 {
 	int ret = 0;
 	GameTicRate = TICRATE;
+	I_InitTime();
 
 	ConsoleCallbacks cb = {
 		D_UserInfoChanged,

@@ -9,7 +9,7 @@ GPL v3 with permission.
 The majority of original code uses a BSD-like lincese. See bsd.txt.
 
 The OpenGL renderer is released under the LGPL v3, except some bits
-of code that were inherited fro ZDoomGL.
+of code that were inherited from ZDoomGL.
 
 Some code was taken from the Eternity Engine.
 Copyright (c) James Haley, Stephen McGranahan, et al.

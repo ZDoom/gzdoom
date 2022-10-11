@@ -956,30 +956,6 @@ namespace swrenderer
 			wpos += wstepX;
 			curlight += lightstep;
 		}
-
-		if (r_modelscene)
-		{
-			for (int x = x1; x < x2; x++)
-			{
-				int y1 = uwal[x];
-				int y2 = dwal[x];
-				if (y2 > y1)
-				{
-					int count = y2 - y1;
-
-					float w1 = 1.0f / wallargs.WallC.sz1;
-					float w2 = 1.0f / wallargs.WallC.sz2;
-					float t = (x - wallargs.WallC.sx1 + 0.5f) / (wallargs.WallC.sx2 - wallargs.WallC.sx1);
-					float wcol = w1 * (1.0f - t) + w2 * t;
-					float zcol = 1.0f / wcol;
-					float zbufferdepth = 1.0f / (zcol / wallargs.FocalTangent);
-
-					wallcolargs.SetDest(x, y1);
-					wallcolargs.SetCount(count);
-					DrawDepthColumn(wallcolargs, zbufferdepth);
-				}
-			}
-		}
 	}
 
 	template<typename DrawerT>

@@ -250,7 +250,7 @@ void VulkanSwapChain::CreateViews()
 
 bool VulkanSwapChain::IsHdrModeActive() const
 {
-	return swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT || swapChainFormat.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT;
+	return swapChainFormat.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT;
 }
 
 void VulkanSwapChain::SelectFormat()
@@ -271,16 +271,6 @@ void VulkanSwapChain::SelectFormat()
 		for (const auto& format : surfaceFormats)
 		{
 			if (format.format == VK_FORMAT_R16G16B16A16_SFLOAT && format.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT)
-			{
-				swapChainFormat = format;
-				return;
-			}
-		}
-
-		// For older drivers that reported the wrong colorspace
-		for (const auto &format : surfaceFormats)
-		{
-			if (format.format == VK_FORMAT_R16G16B16A16_SFLOAT && format.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
 			{
 				swapChainFormat = format;
 				return;

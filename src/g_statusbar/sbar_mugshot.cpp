@@ -355,11 +355,11 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 					// The next 12 lines are from the Doom statusbar code.
 					DAngle badguyangle = player->mo->AngleTo(player->attacker);
 					DAngle diffang = deltaangle(player->mo->Angles.Yaw, badguyangle);
-					if (diffang > 45.)
+					if (diffang > DAngle::fromDeg(45.))
 					{ // turn face right
 						damage_angle = 2;
 					}
-					else if (diffang < -45.)
+					else if (diffang < DAngle::fromDeg(-45.))
 					{ // turn face left
 						damage_angle = 0;
 					}

@@ -108,8 +108,6 @@ EXTERN_CVAR (Float, snd_musicvolume)	// maximum volume for music
 #include "menustate.h"
 
 extern	bool			automapactive;	// In AutoMap mode?
-extern	int				paused; 		// Game Pause?
-extern	bool			pauseext;
 
 
 extern	bool			viewactive;

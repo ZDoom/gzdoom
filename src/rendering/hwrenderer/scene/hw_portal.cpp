@@ -415,7 +415,7 @@ void HWScenePortalBase::ClearClipper(HWDrawInfo *di, Clipper *clipper)
 		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
 		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
 
-		if (deltaangle(endAngle, startAngle) < 0)
+		if (deltaangle(endAngle, startAngle) < nullAngle)
 		{
 			clipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
 		}
@@ -447,7 +447,7 @@ int HWLinePortal::ClipSeg(seg_t *seg, const DVector3 &viewpos)
 	{
 		return PClip_Inside;	// should be handled properly.
 	}
-	return P_ClipLineToPortal(linedef, line(), viewpos) ? PClip_InFront : PClip_Inside;
+	return P_ClipLineToPortal(linedef, this, viewpos) ? PClip_InFront : PClip_Inside;
 }
 
 int HWLinePortal::ClipSubsector(subsector_t *sub)
@@ -455,14 +455,14 @@ int HWLinePortal::ClipSubsector(subsector_t *sub)
 	// this seg is completely behind the mirror
 	for (unsigned int i = 0; i<sub->numlines; i++)
 	{
-		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), line()) == 0) return PClip_Inside;
+		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), this) == 0) return PClip_Inside;
 	}
 	return PClip_InFront;
 }
 
 int HWLinePortal::ClipPoint(const DVector2 &pos)
 {
-	if (P_PointOnLineSidePrecise(pos, line()))
+	if (P_PointOnLineSidePrecise(pos, this))
 	{
 		return PClip_InFront;
 	}

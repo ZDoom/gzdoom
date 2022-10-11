@@ -46,6 +46,7 @@
 #include "utf8.h"
 #include "v_text.h"
 #include "vm.h"
+#include "i_interface.h"
 
 FGameTexture* CrosshairImage;
 static int CrosshairNum;
@@ -60,8 +61,18 @@ CVAR(Int, crosshairhealth, 2, CVAR_ARCHIVE);
 CVARD(Float, crosshairscale, 0.5, CVAR_ARCHIVE, "changes the size of the crosshair");
 CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
 
-EXTERN_CVAR(Float, hud_scalefactor)
-EXTERN_CVAR(Bool, hud_aspectscale)
+CUSTOM_CVARD(Float, hud_scalefactor, 1, CVAR_ARCHIVE, "changes the hud scale")
+{
+	if (self < 0.36f) self = 0.36f;
+	else if (self > 1) self = 1;
+	else if (sysCallbacks.HudScaleChanged) sysCallbacks.HudScaleChanged();
+}
+
+CUSTOM_CVARD(Bool, hud_aspectscale, true, CVAR_ARCHIVE, "enables aspect ratio correction for the status bar")
+{
+	if (sysCallbacks.HudScaleChanged) sysCallbacks.HudScaleChanged();
+}
+
 
 void ST_LoadCrosshair(int num, bool alwaysload)
 {
@@ -745,7 +756,7 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 	{
 		if (ch == ' ')
 		{
-			x += monospaced ? spacing : font->GetSpaceWidth() + spacing;
+			x += (monospaced ? spacing : font->GetSpaceWidth() + spacing) * scaleX;
 			continue;
 		}
 		else if (ch == TEXTCOLOR_ESCAPE)
@@ -765,7 +776,7 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 		width += font->GetDefaultKerning();
 
 		if (!monospaced) //If we are monospaced lets use the offset
-			x += (c->GetDisplayLeftOffset() + 1); //ignore x offsets since we adapt to character size
+			x += (c->GetDisplayLeftOffset() * scaleX + 1); //ignore x offsets since we adapt to character size
 
 		double rx, ry, rw, rh;
 		rx = x + drawOffset.X;
@@ -816,12 +827,12 @@ void DStatusBarCore::DrawString(FFont* font, const FString& cstring, double x, d
 			DTA_LegacyRenderStyle, ERenderStyle(style),
 			TAG_DONE);
 
-		dx = monospaced
-			? spacing
-			: width + spacing - (c->GetDisplayLeftOffset() + 1);
-
 		// Take text scale into account
-		x += dx * scaleX;
+		dx = monospaced
+			? spacing * scaleX
+			: (double(width) + spacing - c->GetDisplayLeftOffset()) * scaleX - 1;
+
+		x += dx;
 	}
 }
 

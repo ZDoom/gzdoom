@@ -339,7 +339,7 @@ inline FSerializer& Serialize(FSerializer& arc, const char* key, FVector2& p, FV
 template<class T>
 inline FSerializer &Serialize(FSerializer &arc, const char *key, TAngle<T> &p, TAngle<T> *def)
 {
-	return Serialize(arc, key, p.Degrees, def? &def->Degrees : nullptr);
+	return Serialize(arc, key, p.Degrees__(), def ? &def->Degrees__() : nullptr);
 }
 
 inline FSerializer &Serialize(FSerializer &arc, const char *key, PalEntry &pe, PalEntry *def)

@@ -278,6 +278,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 	bcnt = 0;
 
+	if (!isenterpic) tilebackground = false;
 	texture.SetInvalid();
 
 	level_info_t * li = FindLevelInfo(wbs->current);
@@ -328,6 +329,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					}
 				}
 				lumpname = "INTERPIC";
+				tilebackground = false;
 			}
 			break;
 
@@ -344,6 +346,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			{
 				if (isenterpic) return false;
 				lumpname = "FLOOR16";
+				tilebackground = true;
 			}
 			break;
 
@@ -548,7 +551,8 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	background = texture;
 	auto tex= TexMan.GetGameTexture(texture);
 	// extremely small textures will always be tiled.
-	if (tex && tex->GetDisplayWidth() < 128 && tex->GetDisplayHeight() < 128) tilebackground = true;
+	if (tex && tex->GetDisplayWidth() < 128 && tex->GetDisplayHeight() < 128) 
+		tilebackground = true;
 	return noautostartmap;
 }
 

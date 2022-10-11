@@ -365,6 +365,14 @@ enum ERadiusGiveFlags
 	RGF_EITHER		=	1 << 17,
 };
 
+// Change model flags
+enum ChangeModelFlags
+{
+	CMDL_WEAPONTOPLAYER = 1,
+	CMDL_HIDEMODEL = 1 << 1,
+	CMDL_USESURFACESKIN = 1 << 2,
+};
+
 // Activation flags
 enum EActivationFlags
 {
@@ -443,6 +451,7 @@ enum EBlockFlags
 	BLOCKF_SIGHT = 256,
 	BLOCKF_HITSCAN = 512,
 	BLOCKF_SOUND = 1024,
+	BLOCKF_LANDMONSTERS = 2048,
 };
 
 // Pointer constants, bitfield-enabled

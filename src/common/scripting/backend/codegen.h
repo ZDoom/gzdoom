@@ -93,7 +93,7 @@ struct FCompileContext
 	FString VersionString;
 
 	FCompileContext(PNamespace *spc, PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump, const VersionInfo &ver);
-	FCompileContext(PNamespace *spc, PContainerType *cls, bool fromdecorate);	// only to be used to resolve constants!
+	FCompileContext(PNamespace *spc, PContainerType *cls, bool fromdecorate, const VersionInfo& ver);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);
@@ -910,7 +910,7 @@ public:
 
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
-	bool Promote(FCompileContext &ctx, bool forceint = false);
+	bool Promote(FCompileContext &ctx, bool forceint = false, bool shiftop = false);
 };
 
 //==========================================================================

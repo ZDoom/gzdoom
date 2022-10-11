@@ -160,7 +160,10 @@ static struct SteamAppInfo
 	{"Hexen Deathkings of the Dark Citadel/base", 2370},
 	{"Ultimate Doom/base", 2280},
 	{"DOOM 3 BFG Edition/base/wads", 208200},
-	{"Strife", 317040}
+	{"Strife", 317040},
+	{"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets", 2280},
+	{"Doom 2/rerelease/DOOM II_Data/StreamingAssets", 2300},
+	{"Doom 2/finaldoombase", 2300}
 };
 
 TArray<FString> I_GetSteamPath()

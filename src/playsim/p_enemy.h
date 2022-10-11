@@ -72,7 +72,7 @@ void A_Wander(AActor *self, int flags = 0);
 void A_DoChase(AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags);
 void A_Chase(AActor *self);
 void A_FaceTarget(AActor *actor);
-void A_Face(AActor *self, AActor *other, DAngle max_turn = 0., DAngle max_pitch = 270., DAngle ang_offset = 0., DAngle pitch_offset = 0., int flags = 0, double z_add = 0);
+void A_Face(AActor *self, AActor *other, DAngle max_turn = nullAngle, DAngle max_pitch = DAngle::fromDeg(270.), DAngle ang_offset = nullAngle, DAngle pitch_offset = nullAngle, int flags = 0, double z_add = 0);
 class FSoundID;
 
 int CheckBossDeath (AActor *);

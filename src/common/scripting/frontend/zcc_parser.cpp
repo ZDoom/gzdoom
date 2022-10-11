@@ -52,12 +52,15 @@ static FString ResolveIncludePath(const FString &path,const FString &lumpname){
 
 		auto end = lumpname.LastIndexOf("/"); // find last '/'
 
-		FString fullPath = lumpname.Mid(start + 1, end - start - 1); // get path from lumpname (format 'wad:filepath/filename')
+		// it's a top-level file, if it's a folder being loaded ( /xxx/yyy/:whatever.zs ) end is before than start, or if it's a zip ( xxx.zip/whatever.zs ) end would be -1
+		bool topLevelFile = start > end ;
 
-		if (start != -1 && end != -1)
+		FString fullPath = topLevelFile ? FString {} : lumpname.Mid(start + 1, end - start - 1); // get path from lumpname (format 'wad:filepath/filename')
+
+		if (start != -1)
 		{
 			FString relativePath = path;
-			if ( relativePath.IndexOf("./") == 0 ) // strip initial marker
+			if (relativePath.IndexOf("./") == 0) // strip initial marker
 			{
 				relativePath = relativePath.Mid(2);
 			}
@@ -77,7 +80,7 @@ static FString ResolveIncludePath(const FString &path,const FString &lumpname){
 			}
 			if (pathOk) // if '..' parsing was successful
 			{
-				return fullPath + "/" + relativePath;
+				return topLevelFile ? relativePath : fullPath + "/" + relativePath;
 			}
 		}
 	}

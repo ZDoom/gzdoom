@@ -805,7 +805,7 @@ void SynthesizeFlagFields()
 DEFINE_ACTION_FUNCTION(DObject, BAM)
 {
 	PARAM_PROLOGUE;
-	PARAM_FLOAT(ang);
-	ACTION_RETURN_INT(DAngle(ang).BAMs());
+	PARAM_ANGLE(ang);
+	ACTION_RETURN_INT(ang.BAMs());
 }
 

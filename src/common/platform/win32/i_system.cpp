@@ -6,6 +6,7 @@
 ** Copyright 1998-2009 Randy Heit
 ** Copyright (C) 2007-2012 Skulltag Development Team
 ** Copyright (C) 2007-2016 Zandronum Development Team
+** Copyright (C) 2017-2022 GZDoom Development Team
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -49,9 +50,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdexcept>
 #include <process.h>
 #include <time.h>
 #include <map>
+#include <codecvt>
 
 #include <stdarg.h>
 
@@ -61,6 +64,8 @@
 #include <richedit.h>
 #include <wincrypt.h>
 #include <shlwapi.h>
+
+#include <shellapi.h>
 
 #include "hardware.h"
 #include "printf.h"
@@ -75,7 +80,6 @@
 #include "i_input.h"
 #include "c_dispatch.h"
 
-#include "gameconfigfile.h"
 #include "v_font.h"
 #include "i_system.h"
 #include "bitmap.h"
@@ -107,10 +111,6 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 
 EXTERN_CVAR (Bool, queryiwad);
 // Used on welcome/IWAD screen.
-EXTERN_CVAR (Bool, disableautoload)
-EXTERN_CVAR (Bool, autoloadlights)
-EXTERN_CVAR (Bool, autoloadbrightmaps)
-EXTERN_CVAR (Bool, autoloadwidescreen)
 EXTERN_CVAR (Int, vid_preferbackend)
 
 extern HANDLE StdOut;
@@ -278,97 +278,38 @@ void CalculateCPUSpeed()
 
 static void PrintToStdOut(const char *cpt, HANDLE StdOut)
 {
-	if (StdOut == nullptr && !con_debugoutput)
-		return;
+	const char* srcp = cpt;
+	FString printData = "";
+	bool terminal = FancyStdOut;
 
-	wchar_t wbuf[256];
-	int bpos = 0;
-
-	const uint8_t *cptr = (const uint8_t*)cpt;
-
-	auto outputIt = [&]()
+	while (*srcp != 0)
 	{
-		wbuf[bpos] = 0;
-		if (con_debugoutput)
+		if (*srcp == 0x1c && terminal)
 		{
-			OutputDebugStringW(wbuf);
-		}
-		if (StdOut != nullptr)
-		{
-			// Convert back to UTF-8.
-			DWORD bytes_written;
-			if (!FancyStdOut)
+			srcp += 1;
+			const uint8_t* scratch = (const uint8_t*)srcp; // GCC does not like direct casting of the parameter.
+			EColorRange range = V_ParseFontColor(scratch, CR_UNTRANSLATED, CR_YELLOW);
+			srcp = (char*)scratch;
+			if (range != CR_UNDEFINED)
 			{
-				FString conout(wbuf);
-				WriteFile(StdOut, conout.GetChars(), (DWORD)conout.Len(), &bytes_written, NULL);
-			}
-			else
-			{
-				WriteConsoleW(StdOut, wbuf, bpos, &bytes_written, nullptr);
+				PalEntry color = V_LogColorFromColorRange(range);
+				printData.AppendFormat("\033[38;2;%u;%u;%um", color.r, color.g, color.b);
 			}
 		}
-		bpos = 0;
-	};
-
-	while (int chr = GetCharFromString(cptr))
-	{
-		if ((chr == TEXTCOLOR_ESCAPE && bpos != 0) || bpos == 255)
+		else if (*srcp != 0x1c && *srcp != 0x1d && *srcp != 0x1e && *srcp != 0x1f)
 		{
-			outputIt();
-		}
-		if (chr != TEXTCOLOR_ESCAPE)
-		{
-			if (chr >= 0x1D && chr <= 0x1F)
-			{ // The bar characters, most commonly used to indicate map changes
-				chr = 0x2550;	// Box Drawings Double Horizontal
-			}
-			wbuf[bpos++] = chr;
+			printData += *srcp++;
 		}
 		else
 		{
-			EColorRange range = V_ParseFontColor(cptr, CR_UNTRANSLATED, CR_YELLOW);
-
-			if (range != CR_UNDEFINED)
-			{
-				// Change the color of future text added to the control.
-				PalEntry color = V_LogColorFromColorRange(range);
-				if (StdOut != NULL && FancyStdOut)
-				{
-					// Unfortunately, we are pretty limited here: There are only
-					// eight basic colors, and each comes in a dark and a bright
-					// variety.
-					float h, s, v, r, g, b;
-					int attrib = 0;
-
-					RGBtoHSV(color.r / 255.f, color.g / 255.f, color.b / 255.f, &h, &s, &v);
-					if (s != 0)
-					{ // color
-						HSVtoRGB(&r, &g, &b, h, 1, 1);
-						if (r == 1)  attrib  = FOREGROUND_RED;
-						if (g == 1)  attrib |= FOREGROUND_GREEN;
-						if (b == 1)  attrib |= FOREGROUND_BLUE;
-						if (v > 0.6) attrib |= FOREGROUND_INTENSITY;
-					}
-					else
-					{ // gray
-						     if (v < 0.33) attrib = FOREGROUND_INTENSITY;
-						else if (v < 0.90) attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-						else			   attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
-					}
-					SetConsoleTextAttribute(StdOut, (WORD)attrib);
-				}
-			}
+			if (srcp[1] != 0) srcp += 2;
+			else break;
 		}
 	}
-	if (bpos != 0)
-	{
-		outputIt();
-	}
-
-	if (StdOut != NULL && FancyStdOut)
-	{ // Set text back to gray, in case it was changed.
-		SetConsoleTextAttribute(StdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-	}
+	DWORD bytes_written;
+	WriteFile(StdOut, printData.GetChars(), (DWORD)printData.Len(), &bytes_written, NULL);
+	if (terminal) 
+		WriteFile(StdOut, "\033[0m", 4, &bytes_written, NULL);
 }
 
 void I_PrintStr(const char *cp)
@@ -411,9 +352,12 @@ static void SetQueryIWad(HWND dialog)
 // Dialog proc for the IWAD selector.
 //
 //==========================================================================
+static int* pAutoloadflags;
 
 BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	int& flags = *pAutoloadflags;;
+
 	HWND ctrl;
 	int i;
 
@@ -457,10 +401,10 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 
 		// [SP] This is our's
-		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, disableautoload ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_LIGHTS, BM_SETCHECK, autoloadlights ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_BRIGHTMAPS, BM_SETCHECK, autoloadbrightmaps ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_SETCHECK, autoloadwidescreen ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, (flags & 1) ? BST_CHECKED : BST_UNCHECKED, 0);
+		SendDlgItemMessage( hDlg, IDC_WELCOME_LIGHTS, BM_SETCHECK, (flags & 2) ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_BRIGHTMAPS, BM_SETCHECK, (flags & 4) ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_SETCHECK, (flags & 8) ? BST_CHECKED : BST_UNCHECKED, 0 );
 
 		// Set up our version string.
 		sprintf(szString, "Version %s.", GetVersionString());
@@ -506,21 +450,20 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			vid_fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
 #ifdef HAVE_GLES2
 			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN4, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 3;
+				vid_preferbackend = 2;
 			else 
 #endif
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN3, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 2;
-			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
 				vid_preferbackend = 1;
 			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN1, BM_GETCHECK, 0, 0) == BST_CHECKED)
 				vid_preferbackend = 0;
 
 			// [SP] This is our's.
-			disableautoload = SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-			autoloadlights = SendDlgItemMessage( hDlg, IDC_WELCOME_LIGHTS, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-			autoloadbrightmaps = SendDlgItemMessage( hDlg, IDC_WELCOME_BRIGHTMAPS, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-			autoloadwidescreen = SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+			flags = 0;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 1;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_LIGHTS, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 2;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_BRIGHTMAPS, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 4;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_WIDESCREEN, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 8;
 			ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
 			EndDialog(hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
 		}
@@ -537,10 +480,10 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 //
 //==========================================================================
 
-int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad)
+int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
 {
 	int vkey;
-
+	pAutoloadflags = &autoloadflags;
 	if (stricmp(queryiwad_key, "shift") == 0)
 	{
 		vkey = VK_SHIFT;
@@ -820,7 +763,7 @@ void DestroyCustomCursor()
 //
 //==========================================================================
 
-bool I_WriteIniFailed()
+bool I_WriteIniFailed(const char* filename)
 {
 	char *lpMsgBuf;
 	FString errortext;
@@ -835,7 +778,7 @@ bool I_WriteIniFailed()
 		0,
 		NULL 
 	);
-	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
+	errortext.Format ("The config file %s could not be written:\n%s", filename, lpMsgBuf);
 	LocalFree (lpMsgBuf);
 	return MessageBoxA(mainwindow.GetHandle(), errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
 }
@@ -1016,3 +959,43 @@ void I_SetThreadNumaNode(std::thread &thread, int numaNode)
 		SetThreadAffinityMask(handle, (DWORD_PTR)numaNodes[numaNode].affinityMask);
 	}
 }
+
+FString I_GetCWD()
+{
+	auto len = GetCurrentDirectoryW(0, nullptr);
+	TArray<wchar_t> curdir(len + 1, true);
+	if (!GetCurrentDirectoryW(len + 1, curdir.Data()))
+	{
+		return "";
+	}
+	FString returnv(curdir.Data());
+	FixPathSeperator(returnv);
+	return returnv;
+}
+
+bool I_ChDir(const char* path)
+{
+	return SetCurrentDirectoryW(WideString(path).c_str());
+}
+
+
+void I_OpenShellFolder(const char* infolder)
+{
+	auto len = GetCurrentDirectoryW(0, nullptr);
+	TArray<wchar_t> curdir(len + 1, true);
+	if (!GetCurrentDirectoryW(len + 1, curdir.Data()))
+	{
+		Printf("Unable to retrieve current directory\n");
+	}
+	else if (SetCurrentDirectoryW(WideString(infolder).c_str()))
+	{
+		Printf("Opening folder: %s\n", infolder);
+		ShellExecuteW(NULL, L"open", L"explorer.exe", L".", NULL, SW_SHOWNORMAL);
+		SetCurrentDirectoryW(curdir.Data());
+	}
+	else
+	{
+		Printf("Unable to open directory '%s\n", infolder);
+	}
+}
+

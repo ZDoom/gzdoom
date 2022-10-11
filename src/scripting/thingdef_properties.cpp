@@ -959,7 +959,7 @@ DEFINE_PROPERTY(gravity, F, Actor)
 DEFINE_PROPERTY(spriteangle, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	defaults->SpriteAngle = i;
+	defaults->SpriteAngle = DAngle::fromDeg(i);
 }
 
 //==========================================================================

@@ -161,4 +161,6 @@ inline bool V_IsTrueColor()
 	return vid_rendermode == 1 || vid_rendermode == 4;
 }
 
+bool CheckCheatmode(bool printmsg = true, bool sponly = false);
+
 #endif

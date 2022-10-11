@@ -78,16 +78,16 @@ public:
 	void SetDontLightMap(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTMAP; else m_lightFlags &= ~LF_DONTLIGHTMAP; }
 	void SetNoShadowmap(bool on) { if (on) m_lightFlags |= LF_NOSHADOWMAP; else m_lightFlags &= ~LF_NOSHADOWMAP; }
 	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
-	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
-	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
+	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = DAngle::fromDeg(angle); }
+	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = DAngle::fromDeg(angle); }
 	void SetSpotPitch(double pitch)
 	{
-		m_pitch = pitch;
+		m_pitch = DAngle::fromDeg(pitch);
 		m_explicitPitch = true;
 	}
 	void UnsetSpotPitch()
 	{
-		m_pitch = 0.;
+		m_pitch = nullAngle;
 		m_explicitPitch = false;
 	}
 	
@@ -125,9 +125,9 @@ protected:
 	bool m_swapped = false;
 	bool m_spot = false;
 	bool m_explicitPitch = false;
-	DAngle m_spotInnerAngle = 10.0;
-	DAngle m_spotOuterAngle = 25.0;
-	DAngle m_pitch = 0.0;
+	DAngle m_spotInnerAngle = DAngle::fromDeg(10.0);
+	DAngle m_spotOuterAngle = DAngle::fromDeg(25.0);
+	DAngle m_pitch = nullAngle;
 	
 	friend FSerializer &Serialize(FSerializer &arc, const char *key, FLightDefaults &value, FLightDefaults *def);
 };

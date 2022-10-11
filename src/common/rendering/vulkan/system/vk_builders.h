@@ -100,6 +100,23 @@ private:
 	const char* debugName = nullptr;
 };
 
+class AccelerationStructureBuilder
+{
+public:
+	AccelerationStructureBuilder();
+
+	AccelerationStructureBuilder& Type(VkAccelerationStructureTypeKHR type);
+	AccelerationStructureBuilder& Buffer(VulkanBuffer* buffer, VkDeviceSize size);
+	AccelerationStructureBuilder& Buffer(VulkanBuffer* buffer, VkDeviceSize offset, VkDeviceSize size);
+	AccelerationStructureBuilder& DebugName(const char* name) { debugName = name; return *this; }
+
+	std::unique_ptr<VulkanAccelerationStructure> Create(VulkanDevice* device);
+
+private:
+	VkAccelerationStructureCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR };
+	const char* debugName = nullptr;
+};
+
 class ComputePipelineBuilder
 {
 public:

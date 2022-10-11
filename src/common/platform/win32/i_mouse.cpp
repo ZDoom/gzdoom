@@ -140,7 +140,6 @@ static void CenterMouse(int x, int y, LONG *centx, LONG *centy);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern LPDIRECTINPUT8 g_pdi;
-extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
 extern int BlockMouseMove; 
 
@@ -680,17 +679,13 @@ bool FDInputMouse::GetDevice()
 {
 	HRESULT hr;
 
-	if (g_pdi3 != NULL)
-	{ // DirectInput3 interface
-		hr = g_pdi3->CreateDevice(GUID_SysMouse, (LPDIRECTINPUTDEVICE*)&Device, NULL);
-	}
-	else if (g_pdi != NULL)
+	if (g_pdi != NULL)
 	{ // DirectInput8 interface
 		hr = g_pdi->CreateDevice(GUID_SysMouse, &Device, NULL);
 	}
 	else
 	{
-		hr = -1;
+		hr = E_FAIL;
 	}
 	if (FAILED(hr))
 	{
@@ -783,7 +778,7 @@ void FDInputMouse::ProcessInput()
 	event_t ev = { 0 };
 	for (;;)
 	{
-		DWORD cbObjectData = g_pdi3 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA);
+		DWORD cbObjectData = sizeof(DIDEVICEOBJECTDATA);
 		dwElements = 1;
 		hr = Device->GetDeviceData(cbObjectData, &od, &dwElements, 0);
 		if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)

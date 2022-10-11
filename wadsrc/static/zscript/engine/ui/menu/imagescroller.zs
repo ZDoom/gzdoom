@@ -154,7 +154,7 @@ class ImageScrollerMenu : Menu
 	{
 		if (AnimatedTransition)
 		{
-			start = MSTime() * (120. / 1000.);
+			start = MSTimeF() * (120. / 1000.);
 			length = 30;
 			dir = animtype;
 			previous = current;
@@ -247,7 +247,7 @@ class ImageScrollerMenu : Menu
 
 	private bool DrawTransition()
 	{
-		double now = MSTime() * (120. / 1000.);
+		double now = MSTimeF() * (120. / 1000.);
 		if (now < start + length)
 		{
 			double factor = screen.GetWidth()/2;

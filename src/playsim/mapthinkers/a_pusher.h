@@ -26,7 +26,7 @@ public:
 	int CheckForSectorMatch (EPusher type, int tag);
 	void ChangeValues (int magnitude, int angle)
 	{
-		DAngle ang = angle * (360. / 256.);
+		DAngle ang =  DAngle::fromDeg(angle * (360. / 256.));
 		m_PushVec = ang.ToVector(magnitude);
 		m_Magnitude = magnitude;
 	}

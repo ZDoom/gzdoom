@@ -56,8 +56,7 @@ static bool NativeMouse = true;
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
-extern int WaitingForKey, chatmodeon;
-extern constate_e ConsoleState;
+extern int WaitingForKey;
 
 static const SDL_Keycode DIKToKeySym[256] =
 {

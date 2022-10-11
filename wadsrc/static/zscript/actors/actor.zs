@@ -115,7 +115,7 @@ class Actor : Thinker native
 	native double FloatSpeed;
 	native SpriteID sprite;
 	native uint8 frame;
-	native fvector2 Scale;
+	native vector2 Scale;
 	native TextureID picnum;
 	native double Alpha;
 	native readonly color fillcolor;	// must be set with SetShade to initialize correctly.
@@ -258,6 +258,7 @@ class Actor : Thinker native
 	native int16 lightlevel;
 	native readonly int SpawnTime;
 	private native int InventoryID;	// internal counter.
+	native uint freezetics;
 
 	meta String Obituary;		// Player was killed by this actor
 	meta String HitObituary;		// Player was killed by this actor in melee
@@ -374,8 +375,8 @@ class Actor : Thinker native
 	native readonly deprecated("2.3", "Use Vel.X instead") double MomX;
 	native readonly deprecated("2.3", "Use Vel.Y instead") double MomY;
 	native readonly deprecated("2.3", "Use Vel.Z instead") double MomZ;
-	native deprecated("2.3", "Use Scale.X instead") float ScaleX;
-	native deprecated("2.3", "Use Scale.Y instead") float ScaleY;
+	native deprecated("2.3", "Use Scale.X instead") double ScaleX;
+	native deprecated("2.3", "Use Scale.Y instead") double ScaleY;
 
 	//FStrifeDialogueNode *Conversation; // [RH] The dialogue to show when this actor is used.;
 	
@@ -1132,6 +1133,7 @@ class Actor : Thinker native
 	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0, double alpha2 = 0.);
 	deprecated("2.3", "Use 'b<FlagName> = [true/false]' instead") native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
+	action native void A_ChangeModel(name modeldef, int modelindex = 0, string modelpath = "", name model = "", int skinindex = 0, string skinpath = "", name skin = "", int flags = 0, int generatorindex = -1);
 
 	void A_SetFriendly (bool set)
 	{

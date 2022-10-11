@@ -182,7 +182,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
 {
 	Caller = caller;
 	baseScale = {1.0, 1.2};
-	rotation = 0.;
+	rotation = nullAngle;
 	scale = {1.0, 1.0};
 	pivot = {0.0, 0.0};
 	for (int i = 0; i < 4; i++)
@@ -1204,8 +1204,8 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	i = 2;
 	do
 	{
-		an = mo->Angles.Yaw + angdiff[i];
-		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
+		an = mo->Angles.Yaw + DAngle::fromDeg(angdiff[i]);
+		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, nullAngle, aimflags);
 
 		if (mo->player != nullptr &&
 			mo->Level->IsFreelookAllowed() &&
@@ -1223,7 +1223,7 @@ DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(t, FTranslatedLineTarget);
 	PARAM_INT(aimflags);
-	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
+	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees());
 }
 
 //------------------------------------------------------------------------

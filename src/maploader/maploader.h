@@ -110,8 +110,6 @@ private:
 	int firstglvertex;	// helpers for loading GL nodes from GWA files.
 	bool format5;
 
-	TArray<vertexdata_t> vertexdatas;
-
 	TMap<unsigned, unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
 	TArray<FUDMFKey> MapThingsUserData;
 	int sidecount = 0;
@@ -120,6 +118,8 @@ private:
 public:	// for the scripted compatibility system these two members need to be public.
 	TArray<FMapThing> MapThingsConverted;
 	bool ForceNodeBuild = false;
+	// This needs to be public to fetch this from DLevelPostProcessor native functions
+	TArray<vertexdata_t> vertexdatas;
 private:
 
 	// Extradata loader

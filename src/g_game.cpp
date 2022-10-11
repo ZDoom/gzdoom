@@ -78,6 +78,7 @@
 #include "s_music.h"
 #include "p_setup.h"
 #include "d_event.h"
+#include "model.h"
 
 #include "v_video.h"
 #include "g_hub.h"
@@ -88,6 +89,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "doommenu.h"
 #include "screenjob.h"
+#include "i_interface.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -116,7 +118,7 @@ CVAR(Bool, save_formatted, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// use forma
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, longsavemessages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, longsavemessages, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, save_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -143,10 +145,7 @@ CVAR(Int, nametagcolor, CR_GOLD, CVAR_ARCHIVE)
 extern bool playedtitlemusic;
 
 gameaction_t	gameaction;
-gamestate_t 	gamestate = GS_STARTUP;
 
-int 			paused;
-bool			pauseext;
 bool 			sendpause;				// send a pause event next tic 
 bool			sendsave;				// send a save event next tic 
 bool			sendturn180;			// [RH] send a 180 degree turn next tic
@@ -2119,6 +2118,14 @@ void G_DoLoadGame ()
 
 	BackupSaveName = savename;
 
+	//Push any added models from A_ChangeModel
+	for (auto& smf : savedModelFiles)
+	{
+		FString modelFilePath = smf.Left(smf.LastIndexOf("/")+1);
+		FString modelFileName = smf.Right(smf.Len() - smf.Left(smf.LastIndexOf("/") + 1).Len());
+		FindModel(modelFilePath, modelFileName);
+	}
+
 	// At this point, the GC threshold is likely a lot higher than the
 	// amount of memory in use, so bring it down now by starting a
 	// collection.
@@ -2186,6 +2193,33 @@ FString G_BuildSaveName (const char *prefix, int slot)
 		name.AppendFormat("%d." SAVEGAME_EXT, slot);
 	}
 	return name;
+}
+
+CCMD(opensaves)
+{
+	FString name;
+	FString leader;
+	const char *slash = "";
+
+	leader = Args->CheckValue ("-savedir");
+	if (leader.IsEmpty())
+	{
+		leader = save_dir;
+		if (leader.IsEmpty())
+		{
+			leader = M_GetSavegamesPath();
+		}
+	}
+	size_t len = leader.Len();
+	if (leader[0] != '\0' && leader[len-1] != '\\' && leader[len-1] != '/')
+	{
+		slash = "/";
+	}
+	name << leader << slash;
+	name = NicePath(name);
+	CreatePath(name);
+
+	I_OpenShellFolder(name);
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

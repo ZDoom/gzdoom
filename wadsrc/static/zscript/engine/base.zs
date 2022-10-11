@@ -143,6 +143,14 @@ enum EPrintLevel
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
+enum EConsoleState
+{
+	c_up = 0,
+	c_down = 1,
+	c_falling = 2,
+	c_rising = 3
+};
+
 /*
 // These are here to document the intrinsic methods and fields available on
 // the built-in ZScript types
@@ -211,6 +219,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int consoleplayer;
 	native readonly double NotifyFontScale;
 	native readonly int paused;
+	native readonly ui uint8 ConsoleState;
 }
 
 struct System native
@@ -298,6 +307,7 @@ struct TexMan
 	native static int CheckRealHeight(TextureID tex);
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
 	native static bool UseGamePalette(TextureID tex);
+	native static Canvas GetCanvas(String texture);
 }
 
 /*
@@ -454,12 +464,26 @@ enum DrawTextureTags
 
 };
 
+enum StencilOp
+{
+	SOP_Keep = 0,
+	SOP_Increment = 1,
+	SOP_Decrement = 2
+};
+enum StencilFlags
+{
+	SF_AllOn = 0,
+	SF_ColorMaskOff = 1,
+	SF_DepthMaskOff = 2
+};
+
 class Shape2DTransform : Object native
 {
 	native void Clear();
 	native void Rotate(double angle);
 	native void Scale(Vector2 scaleVec);
 	native void Translate(Vector2 translateVec);
+	native void From2D(double m00, double m01, double m10, double m11, double vx, double vy);
 }
 
 class Shape2D : Object native
@@ -479,6 +503,35 @@ class Shape2D : Object native
 	native void PushTriangle( int a, int b, int c );
 }
 
+class Canvas : Object native abstract
+{
+	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+	native void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
+
+	native vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
+	native vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
+	native vararg void DrawShapeFill(Color col, double amount, Shape2D s, ...);
+	native vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
+	native vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
+	native void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
+	native void DrawLineFrame(Color color, int x0, int y0, int w, int h, int thickness = 1);
+	native void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
+	native Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
+	native void SetClipRect(int x, int y, int w, int h);
+	native void ClearClipRect();
+	native int, int, int, int GetClipRect();
+	native double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
+	native Vector2 SetOffset(double x, double y);
+	native void ClearScreen(color col = 0);
+	native void SetScreenFade(double factor);
+
+	native void EnableStencil(bool on);
+	native void SetStencil(int offs, int op, int flags = -1);
+	native void ClearStencil();
+	native void SetTransform(Shape2DTransform transform);
+	native void ClearTransform();
+}
+
 struct Screen native
 {
 	native static Color PaletteColor(int index);
@@ -490,6 +543,7 @@ struct Screen native
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
+	native static vararg void DrawShapeFill(Color col, double amount, Shape2D s, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
 	native static void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
@@ -505,6 +559,12 @@ struct Screen native
 	native static Vector2 SetOffset(double x, double y);
 	native static void ClearScreen(color col = 0);
 	native static void SetScreenFade(double factor);
+
+	native static void EnableStencil(bool on);
+	native static void SetStencil(int offs, int op, int flags = -1);
+	native static void ClearStencil();
+	native static void SetTransform(Shape2DTransform transform);
+	native static void ClearTransform();
 }
 
 struct Font native
@@ -589,6 +649,7 @@ struct Font native
 
 	native static int FindFontColor(Name color);
 	native double GetBottomAlignOffset(int code);
+	native double GetDisplayTopOffset(int code);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
 	native BrokenLines BreakLines(String text, int maxlen);
@@ -600,6 +661,7 @@ struct Console native
 {
 	native static void HideConsole();
 	native static vararg void Printf(string fmt, ...);
+	native static vararg void PrintfEx(int printlevel, string fmt, ...);
 }
 
 struct CVar native
@@ -660,7 +722,7 @@ class Object native
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
-	deprecated("4.8", "Use MSTimeF instead") native static uint MSTime();
+	native static uint MSTime();
 	native static double MSTimeF();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
@@ -768,6 +830,7 @@ struct Wads	// todo: make FileSystem an alias to 'Wads'
 	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
 	native static int CheckNumForFullName(string name);
 	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
+	native static int FindLumpFullName(string name, int startlump = 0, bool noext = false);
 	native static string ReadLump(int lump);
 
 	native static int GetNumLumps();

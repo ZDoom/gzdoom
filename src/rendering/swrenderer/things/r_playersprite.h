@@ -92,11 +92,10 @@ namespace swrenderer
 	private:
 		void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int lightlevel, FDynamicColormap *basecolormap, bool foggy);
 
-		enum { BASEXCENTER = 160 };
-		enum { BASEYCENTER = 100 };
+		static constexpr int BASEXCENTER = 160;
+		static constexpr int BASEYCENTER = 100;
 
 		TArray<HWAccelPlayerSprite> AcceleratedSprites;
 		sector_t tempsec;
-		bool renderHUDModel = false;
 	};
 }

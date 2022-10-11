@@ -83,23 +83,6 @@ namespace swrenderer
 				SortedSprites[i] = Sprites[first + count - i - 1];
 		}
 
-		if (r_modelscene)
-		{
-			for (unsigned int i = 0; i < count; i++)
-			{
-				FVector2 worldPos = SortedSprites[i]->WorldPos().XY();
-				SortedSprites[i]->SubsectorDepth = FindSubsectorDepth(thread, { worldPos.X, worldPos.Y });
-			}
-
-			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
-			{
-				if (a->SubsectorDepth != b->SubsectorDepth)
-					return a->SubsectorDepth < b->SubsectorDepth;
-				else
-					return a->SortDist() > b->SortDist();
-			});
-		}
-		else
 		{
 			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
 			{

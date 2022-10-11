@@ -57,14 +57,14 @@ typedef enum
 #endif
 #endif
 
+// State updates, number of tics / second.
+constexpr int TICRATE = 35;
+
 // Global constants that were defines.
 enum
 {
 	// The maximum number of players, multiplayer/networking.
 	MAXPLAYERS = 8,
-
-	// State updates, number of tics / second.
-	TICRATE = 35,
 
 	// Amount of damage done by a telefrag.
 	TELEFRAG_DAMAGE = 1000000
@@ -173,6 +173,7 @@ enum
 	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
 	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
 	DF2_NOVERTSPREAD		= 1 << 30,	// Don't allow vertical spread for hitscan weapons (excluding ssg)
+	DF2_NO_EXTRA_AMMO		= 1 << 31,	// Don't add extra ammo when picking up weapons (like in original Doom)
 };
 
 // [RH] Compatibility flags.

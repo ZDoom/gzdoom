@@ -36,7 +36,8 @@ class ArtiTeleport : Inventory
 		{
 			[dest, destAngle] = level.PickPlayerStart(Owner.PlayerNumber());
 		}
-		dest.Z = ONFLOORZ;
+		if (!level.useplayerstartz)
+			dest.Z = ONFLOORZ;
 		Owner.Teleport (dest, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 		bool canlaugh = true;
 		Playerinfo p = Owner.player;

@@ -7,18 +7,20 @@
 
 struct FAnimDef
 {
+	struct FAnimFrame
+	{
+		uint32_t	SpeedMin;		// Speeds are in ms, not tics
+		uint32_t	SpeedRange;
+		FTextureID	FramePic;
+	};
+
 	FTextureID 	BasePic;
 	uint16_t	NumFrames;
 	uint16_t	CurFrame;
 	uint8_t	AnimType;
 	bool	bDiscrete;			// taken out of AnimType to have better control
 	uint64_t	SwitchTime;			// Time to advance to next frame
-	struct FAnimFrame
-	{
-		uint32_t	SpeedMin;		// Speeds are in ms, not tics
-		uint32_t	SpeedRange;
-		FTextureID	FramePic;
-	} Frames[1];
+	FAnimFrame* Frames;
 	enum
 	{
 		ANIM_Forward,
@@ -59,7 +61,7 @@ struct FDoorAnimation
 
 class FTextureAnimator
 {
-	TArray<FAnimDef*> mAnimations;
+	TArray<FAnimDef> mAnimations;
 	TArray<FSwitchDef*> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
 
@@ -67,6 +69,7 @@ class FTextureAnimator
 	FAnimDef* ParseRangeAnim(FScanner& sc, FTextureID picnum, ETextureType usetype, bool missing);
 	void ParsePicAnim(FScanner& sc, FTextureID picnum, ETextureType usetype, bool missing, TArray<FAnimDef::FAnimFrame>& frames);
 	void ParseWarp(FScanner& sc);
+	void ParseCanvasTexture(FScanner& sc);
 	void ParseCameraTexture(FScanner& sc);
 	FTextureID ParseFramenum(FScanner& sc, FTextureID basepicnum, ETextureType usetype, bool allowMissing);
 	void ParseTime(FScanner& sc, uint32_t& min, uint32_t& max);
@@ -88,7 +91,7 @@ public:
 	}
 
 	// Animation stuff
-	FAnimDef* AddAnim(FAnimDef* anim);
+	FAnimDef* AddAnim(FAnimDef& anim);
 	void DeleteAll();
 
 	FAnimDef* AddSimpleAnim(FTextureID picnum, int animcount, uint32_t speedmin, uint32_t speedrange = 0);
@@ -98,7 +101,7 @@ public:
 	FDoorAnimation* FindAnimatedDoor(FTextureID picnum);
 	void UpdateAnimations(uint64_t mstime);
 
-	const TArray<FAnimDef*>& GetAnimations() const { return mAnimations; }
+	const TArray<FAnimDef>& GetAnimations() const { return mAnimations; }
 
 	void Init()
 	{

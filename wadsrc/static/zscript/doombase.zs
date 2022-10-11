@@ -437,6 +437,7 @@ struct LevelLocals native
 	native readonly bool no_dlg_freeze;
 	native readonly bool keepfullinventory;
 	native readonly bool removeitems;
+	native readonly bool useplayerstartz;
 	native readonly int fogdensity;
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;

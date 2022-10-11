@@ -522,11 +522,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckRealHeight, CheckRealHeight)
 	ACTION_RETURN_INT(CheckRealHeight(texid));
 }
 
-bool OkForLocalization(FTextureID texnum, const char* substitute);
-
 static int OkForLocalization_(int index, const FString& substitute)
 {
-	return OkForLocalization(FSetTextureID(index), substitute);
+	return sysCallbacks.OkForLocalization? sysCallbacks.OkForLocalization(FSetTextureID(index), substitute) : false;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization_)
@@ -550,6 +548,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, UseGamePalette, UseGamePalette)
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
 	ACTION_RETURN_INT(UseGamePalette(texid));
+}
+
+FCanvas* GetTextureCanvas(const FString& texturename);
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetCanvas)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(texturename);
+	ACTION_RETURN_POINTER(GetTextureCanvas(texturename));
 }
 
 //=====================================================================================
@@ -710,6 +717,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDefaultKerning, GetDefaultKerning)
 	ACTION_RETURN_INT(self->GetDefaultKerning());
 }
 
+static double GetDisplayTopOffset(FFont* font, int c)
+{
+	auto texc = font->GetChar(c, CR_UNDEFINED, nullptr);
+	return texc ? texc->GetDisplayTopOffset() : 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDisplayTopOffset, GetDisplayTopOffset)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(code);
+	ACTION_RETURN_FLOAT(GetDisplayTopOffset(self, code));
+}
+
 //==========================================================================
 //
 // file system
@@ -747,6 +767,16 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLump)
 	PARAM_INT(ns);
 	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
 	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLump(name, &startlump, 0 != ns) : -1);
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, FindLumpFullName)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(startlump);
+	PARAM_BOOL(noext);
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
+	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLumpFullName(name, &startlump, noext) : -1);
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, GetLumpName)
@@ -989,7 +1019,7 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	}
 
 	UnsafeExecutionScope scope(unsafe);
-	C_DoCommand(cmd);
+	AddCommandString(cmd);
 	return 0;
 }
 
@@ -1006,6 +1036,18 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 
 	FString s = FStringFormat(VM_ARGS_NAMES);
 	Printf("%s\n", s.GetChars());
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Console, PrintfEx)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(printlevel);
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
+	FString s = FStringFormat(VM_ARGS_NAMES,1);
+
+	Printf(printlevel,"%s\n", s.GetChars());
 	return 0;
 }
 

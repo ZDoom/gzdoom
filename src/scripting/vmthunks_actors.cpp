@@ -239,7 +239,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
 
 static double deltaangleDbl(double a1, double a2)
 {
-	return deltaangle(DAngle(a1), DAngle(a2)).Degrees;
+	return deltaangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, deltaangle, deltaangleDbl)	// should this be global?
@@ -247,12 +247,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, deltaangle, deltaangleDbl)	// should this 
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
 	PARAM_FLOAT(a2);
-	ACTION_RETURN_FLOAT(deltaangle(DAngle(a1), DAngle(a2)).Degrees);
+	ACTION_RETURN_FLOAT(deltaangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees());
 }
 
 static double absangleDbl(double a1, double a2)
 {
-	return absangle(DAngle(a1), DAngle(a2)).Degrees;
+	return absangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, absangle, absangleDbl)	// should this be global?
@@ -260,7 +260,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, absangle, absangleDbl)	// should this be g
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(a1);
 	PARAM_FLOAT(a2);
-	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
+	ACTION_RETURN_FLOAT(absangle(DAngle::fromDeg(a1), DAngle::fromDeg(a2)).Degrees());
 }
 
 static double Distance2DSquared(AActor *self, AActor *other)
@@ -353,7 +353,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetDamage, SetDamage)
 
 static double PitchFromVel(AActor* self)
 {
-	return self->Vel.Pitch().Degrees;
+	return self->Vel.Pitch().Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, PitchFromVel, PitchFromVel)
@@ -379,7 +379,7 @@ static void VelFromAngle(AActor *self, double speed, double angle)
 		}
 		else
 		{
-			self->VelFromAngle(speed, angle);
+			self->VelFromAngle(speed, DAngle::fromDeg(angle));
 		}
 	}
 }
@@ -395,7 +395,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, VelFromAngle, VelFromAngle)
 
 static void Vel3DFromAngle(AActor *self, double speed, double angle, double pitch)
 {
-	self->Vel3DFromAngle(angle, pitch, speed);
+	self->Vel3DFromAngle(DAngle::fromDeg(angle), DAngle::fromDeg(pitch), speed);
 }
 
 // This combines all 3 variations of the internal function
@@ -424,7 +424,7 @@ static void Thrust(AActor *self, double speed, double angle)
 		}
 		else
 		{
-			self->Thrust(angle, speed);
+			self->Thrust(DAngle::fromDeg(angle), speed);
 		}
 	}
 }
@@ -440,7 +440,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Thrust, Thrust)
 
 static double AngleTo(AActor *self, AActor *targ, bool absolute)
 {
-	return self->AngleTo(PARAM_NULLCHECK(targ, targ), absolute).Degrees;
+	return self->AngleTo(PARAM_NULLCHECK(targ, targ), absolute).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, AngleTo, AngleTo)
@@ -448,12 +448,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, AngleTo, AngleTo)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(targ, AActor);
 	PARAM_BOOL(absolute);
-	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees);
+	ACTION_RETURN_FLOAT(self->AngleTo(targ, absolute).Degrees());
 }
 
 static void AngleToVector(double angle, double length, DVector2 *result)
 {
-	*result = DAngle(angle).ToVector(length);
+	*result = DAngle::fromDeg(angle).ToVector(length);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, AngleToVector, AngleToVector)
@@ -480,14 +480,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RotateVector, RotateVector)
 
 static double Normalize180(double angle)
 {
-	return DAngle(angle).Normalized180().Degrees;
+	return DAngle::fromDeg(angle).Normalized180().Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Normalize180, Normalize180)
 {
 	PARAM_PROLOGUE;
 	PARAM_ANGLE(angle);
-	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees);
+	ACTION_RETURN_FLOAT(angle.Normalized180().Degrees());
 }
 
 static double DistanceBySpeed(AActor *self, AActor *targ, double speed)
@@ -520,7 +520,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetXYZ, SetXYZ)
 
 static void Vec2Angle(AActor *self, double length, double angle, bool absolute, DVector2 *result)
 {
-	*result = self->Vec2Angle(length, angle, absolute);
+	*result = self->Vec2Angle(length, DAngle::fromDeg(angle), absolute);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2Angle, Vec2Angle)
@@ -558,7 +558,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2To, Vec2To)
 
 static void Vec3Angle(AActor *self, double length, double angle, double z, bool absolute, DVector3 *result)
 {
-	*result = self->Vec3Angle(length, angle, z, absolute);
+	*result = self->Vec3Angle(length, DAngle::fromDeg(angle), z, absolute);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec3Angle, Vec3Angle)
@@ -1151,7 +1151,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMove, CheckMove)
 static double AimLineAttack(AActor *self, double angle, double distance, FTranslatedLineTarget *pLineTarget, double vrange, int flags, AActor *target, AActor *friender)
 {
 	flags &= ~ALF_IGNORENOAUTOAIM; // just to be safe. This flag is not supposed to be accesible to scripting.
-	return P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees;
+	return P_AimLineAttack(self, DAngle::fromDeg(angle), distance, pLineTarget, DAngle::fromDeg(vrange), flags, target, friender).Degrees();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, AimLineAttack, AimLineAttack)
@@ -1164,13 +1164,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, AimLineAttack, AimLineAttack)
 	PARAM_INT(flags);
 	PARAM_OBJECT(target, AActor);
 	PARAM_OBJECT(friender, AActor);
-	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees);
+	ACTION_RETURN_FLOAT(P_AimLineAttack(self, angle, distance, pLineTarget, vrange, flags, target, friender).Degrees());
 }
 
 static AActor *ZS_LineAttack(AActor *self, double angle, double distance, double pitch, int damage, int damageType, PClassActor *puffType, int flags, FTranslatedLineTarget *victim, double offsetz, double offsetforward, double offsetside, int *actualdamage)
 {
 	if (puffType == nullptr) puffType = PClass::FindActor(NAME_BulletPuff);	// P_LineAttack does not work without a puff to take info from.
-	return P_LineAttack(self, angle, distance, pitch, damage, ENamedName(damageType), puffType, flags, victim, actualdamage, offsetz, offsetforward, offsetside);
+	return P_LineAttack(self, DAngle::fromDeg(angle), distance, DAngle::fromDeg(pitch), damage, ENamedName(damageType), puffType, flags, victim, actualdamage, offsetz, offsetforward, offsetside);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineAttack, ZS_LineAttack)
@@ -1197,7 +1197,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineAttack, ZS_LineAttack)
 
 static int LineTrace(AActor *self, double angle, double distance, double pitch, int flags, double offsetz, double offsetforward, double offsetside, FLineTraceData *data)
 {
-	return P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data);
+	return P_LineTrace(self,DAngle::fromDeg(angle),distance,DAngle::fromDeg(pitch),flags,offsetz,offsetforward,offsetside,data);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineTrace, LineTrace)
@@ -1211,12 +1211,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineTrace, LineTrace)
 	PARAM_FLOAT(offsetforward);
 	PARAM_FLOAT(offsetside);
 	PARAM_OUTPOINTER(data, FLineTraceData);
-	ACTION_RETURN_BOOL(P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data));
+	ACTION_RETURN_BOOL(P_LineTrace(self,DAngle::fromDeg(angle),distance,DAngle::fromDeg(pitch),flags,offsetz,offsetforward,offsetside,data));
 }
 
 static void TraceBleedAngle(AActor *self, int damage, double angle, double pitch)
 {
-	P_TraceBleed(damage, self, angle, pitch);
+	P_TraceBleed(damage, self, DAngle::fromDeg(angle), DAngle::fromDeg(pitch));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, TraceBleedAngle, TraceBleedAngle)
@@ -1226,7 +1226,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, TraceBleedAngle, TraceBleedAngle)
 	PARAM_FLOAT(angle);
 	PARAM_FLOAT(pitch);
 	
-	P_TraceBleed(damage, self, angle, pitch);
+	P_TraceBleed(damage, self, DAngle::fromDeg(angle), DAngle::fromDeg(pitch));
 	return 0;
 }
 
@@ -1348,7 +1348,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacee, ZS_GetReplacee)
 
 static void DrawSplash(AActor *self, int count, double angle, int kind)
 {
-	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), DAngle::fromDeg(angle), kind);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
@@ -1357,7 +1357,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
 	PARAM_INT(count);
 	PARAM_FLOAT(angle);
 	PARAM_INT(kind);
-	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), DAngle::fromDeg(angle), kind);
 	return 0;
 }
 
@@ -1628,7 +1628,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_CheckForResurrection, CheckForResurrecti
 
 static void ZS_Face(AActor *self, AActor *faceto, double max_turn, double max_pitch, double ang_offset, double pitch_offset, int flags, double z_add)
 {
-	A_Face(self, faceto, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
+	A_Face(self, faceto, DAngle::fromDeg(max_turn), DAngle::fromDeg(max_pitch), DAngle::fromDeg(ang_offset), DAngle::fromDeg(pitch_offset), flags, z_add);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Face, ZS_Face)
@@ -1969,6 +1969,7 @@ DEFINE_FIELD(AActor, BlockingLine)
 DEFINE_FIELD(AActor, Blocking3DFloor)
 DEFINE_FIELD(AActor, BlockingCeiling)
 DEFINE_FIELD(AActor, BlockingFloor)
+DEFINE_FIELD(AActor, freezetics)
 DEFINE_FIELD(AActor, PoisonDamage)
 DEFINE_FIELD(AActor, PoisonDamageType)
 DEFINE_FIELD(AActor, PoisonDuration)

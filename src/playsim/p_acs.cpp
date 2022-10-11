@@ -615,17 +615,17 @@ inline int DoubleToACS(double val)
 
 inline DAngle ACSToAngle(int acsval)
 {
-	return acsval * (360. / 65536.);
+	return DAngle::fromQ16(acsval);
 }
 
 inline int AngleToACS(DAngle ang)
 {
-	return ang.BAMs() >> 16;
+	return ang.Q16();
 }
 
 inline int PitchToACS(DAngle ang)
 {
-	return int(ang.Normalized180().Degrees * (65536. / 360));
+	return ang.Normalized180().Q16();
 }
 
 struct CallReturn
@@ -3791,7 +3791,7 @@ int DLevelScript::DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle,
 
 int DLevelScript::DoSpawn(int type, int x, int y, int z, int tid, int angle, bool force)
 {
-	return DoSpawn(type, DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), tid, angle * (360. / 256), force);
+	return DoSpawn(type, DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), tid, DAngle::fromDeg(angle * (360. / 256)), force);
 }
 
 
@@ -3806,12 +3806,12 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool forc
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->Pos(), tid, angle * (360. / 256), force);
+			spawned += DoSpawn (type, aspot->Pos(), tid, DAngle::fromDeg(angle * (360. / 256)), force);
 		}
 	}
 	else if (activator != NULL)
 	{
-		spawned += DoSpawn (type, activator->Pos(), tid, angle * (360. / 256), force);
+		spawned += DoSpawn (type, activator->Pos(), tid, DAngle::fromDeg(angle * (360. / 256)), force);
 	}
 	return spawned;
 }
@@ -4045,6 +4045,7 @@ enum
 	APROP_MaxDropOffHeight= 45,
 	APROP_DamageType	= 46,
 	APROP_SoundClass	= 47,
+	APROP_FriendlySeeBlocks= 48,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -4317,6 +4318,9 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			}
 		}	
 		break;
+	case APROP_FriendlySeeBlocks:
+		actor->friendlyseeblocks = value;
+		break;
 
 	default:
 		// do nothing.
@@ -4416,6 +4420,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_MaxDropOffHeight: return DoubleToACS(actor->MaxDropOffHeight);
 	case APROP_DamageType:	return GlobalACSStrings.AddString(actor->DamageType.GetChars());
 	case APROP_SoundClass:	return GlobalACSStrings.AddString(S_GetSoundClass(actor));
+	case APROP_FriendlySeeBlocks: return actor->friendlyseeblocks;
 
 	default:				return 0;
 	}
@@ -4465,6 +4470,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MaxStepHeight:
 		case APROP_MaxDropOffHeight:
 		case APROP_StencilColor:
+		case APROP_FriendlySeeBlocks:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -9652,7 +9658,7 @@ scriptwait:
 			break;
 
 		case PCD_VECTORANGLE:
-			STACK(2) = AngleToACS(VecToAngle(STACK(2), STACK(1)).Degrees);
+			STACK(2) = AngleToACS(VecToAngle(STACK(2), STACK(1)));
 			sp--;
 			break;
 
@@ -9753,14 +9759,14 @@ scriptwait:
 			// Like Thing_Projectile(Gravity) specials, but you can give the
 			// projectile a TID.
 			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
-			Level->EV_Thing_Projectile(STACK(7), activator, STACK(6), NULL, STACK(5) * (360. / 256.),
+			Level->EV_Thing_Projectile(STACK(7), activator, STACK(6), NULL, DAngle::fromDeg(STACK(5) * (360. / 256.)),
 				STACK(4) / 8., STACK(3) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 
 		case PCD_SPAWNPROJECTILE:
 			// Same, but takes an actor name instead of a spawn ID.
-			Level->EV_Thing_Projectile(STACK(7), activator, 0, Level->Behaviors.LookupString(STACK(6)), STACK(5) * (360. / 256.),
+			Level->EV_Thing_Projectile(STACK(7), activator, 0, Level->Behaviors.LookupString(STACK(6)), DAngle::fromDeg(STACK(5) * (360. / 256.)),
 				STACK(4) / 8., STACK(3) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;

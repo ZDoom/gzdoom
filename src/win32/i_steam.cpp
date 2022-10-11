@@ -144,12 +144,26 @@ TArray<FString> I_GetGogPaths()
 		result.Push(path);	// directly in install folder
 	}
 
+	// Look for Doom I Enhanced
+	gamepath = gogregistrypath + L"\\2015545325";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
+	{
+		result.Push(path + "/DOOM_Data/StreamingAssets");	// in a subdirectory
+	}
+
 	// Look for Doom II
 	gamepath = gogregistrypath + L"\\1435848814";
 	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path + "/doom2");	// in a subdirectory
 		// If direct support for the Master Levels is ever added, they are in path + /master/wads
+	}
+
+	// Look for Doom II Enhanced
+	gamepath = gogregistrypath + L"\\1426071866";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
+	{
+		result.Push(path + "/DOOM II_Data/StreamingAssets");	// in a subdirectory
 	}
 
 	// Look for Final Doom
@@ -222,7 +236,8 @@ TArray<FString> I_GetSteamPath()
 		"DOOM 3 BFG Edition/base/wads",
 		"Strife",
 		"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets",
-		"Doom 2/rerelease/DOOM II_Data/StreamingAssets"
+		"Doom 2/rerelease/DOOM II_Data/StreamingAssets",
+		"Doom 2/finaldoombase"
 	};
 
 	FString path;

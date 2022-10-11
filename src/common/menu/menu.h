@@ -303,7 +303,7 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_PreviousMenu ();
 void M_ParseMenuDefs();
-void M_DoStartControlPanel(bool scaleoverride);
+void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);

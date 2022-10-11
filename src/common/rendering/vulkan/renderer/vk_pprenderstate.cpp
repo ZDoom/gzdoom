@@ -71,12 +71,12 @@ void VkPPRenderState::Draw()
 
 	if (Output.Type == PPTextureType::SceneColor)
 	{
-		key.StencilTest = 1;
+		key.StencilTest = WhichDepthStencil::Scene;
 		key.Samples = fb->GetBuffers()->GetSceneSamples();
 	}
 	else
 	{
-		key.StencilTest = 0;
+		key.StencilTest = WhichDepthStencil::None;
 		key.Samples = VK_SAMPLE_COUNT_1_BIT;
 	}
 
@@ -86,7 +86,7 @@ void VkPPRenderState::Draw()
 	VulkanDescriptorSet *input = fb->GetDescriptorSetManager()->GetInput(passSetup, Textures, ShadowMapBuffers);
 	VulkanFramebuffer *output = fb->GetBuffers()->GetOutput(passSetup, Output, key.StencilTest, framebufferWidth, framebufferHeight);
 
-	RenderScreenQuad(passSetup, input, output, framebufferWidth, framebufferHeight, Viewport.left, Viewport.top, Viewport.width, Viewport.height, Uniforms.Data.Data(), Uniforms.Data.Size(), key.StencilTest);
+	RenderScreenQuad(passSetup, input, output, framebufferWidth, framebufferHeight, Viewport.left, Viewport.top, Viewport.width, Viewport.height, Uniforms.Data.Data(), Uniforms.Data.Size(), key.StencilTest == WhichDepthStencil::Scene);
 
 	// Advance to next PP texture if our output was sent there
 	if (Output.Type == PPTextureType::NextPipelineTexture)

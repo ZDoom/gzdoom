@@ -156,6 +156,23 @@ int wipe_CalcBurn (uint8_t *burnarray, int width, int height, int density)
 
 // TYPES -------------------------------------------------------------------
 
+class Wiper
+{
+protected:
+	FGameTexture* startScreen = nullptr, * endScreen = nullptr;
+public:
+	virtual ~Wiper();
+	virtual bool Run(int ticks) = 0;
+	virtual void SetTextures(FGameTexture* startscreen, FGameTexture* endscreen)
+	{
+		startScreen = startscreen;
+		endScreen = endscreen;
+	}
+
+	static Wiper* Create(int type);
+};
+
+
 class Wiper_Crossfade : public Wiper
 {
 public:

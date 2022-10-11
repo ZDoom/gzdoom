@@ -970,7 +970,7 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	if (player->userinfo.GetSkin() != 0 && !(actor->flags4 & MF4_NOSKIN))
 	{
 		// Convert from default scale to skin scale.
-		FVector2 defscale = actor->GetDefault()->Scale;
+		DVector2 defscale = actor->GetDefault()->Scale;
 		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / double(defscale.X);
 		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / double(defscale.Y);
 	}
@@ -1248,7 +1248,7 @@ void P_PlayerThink (player_t *player)
 	{
 		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
-			player->mo->Angles.Yaw.Degrees, player->cmd.ucmd.buttons,
+			player->mo->Angles.Yaw.Degrees(), player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
 			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
 	}

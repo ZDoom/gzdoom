@@ -40,8 +40,6 @@ void CT_Init (void);
 bool CT_Responder (event_t* ev);
 void CT_Drawer (void);
 
-extern int chatmodeon;
-
 // [RH] Draw deathmatch scores
 
 void HU_DrawScores (player_t *me);

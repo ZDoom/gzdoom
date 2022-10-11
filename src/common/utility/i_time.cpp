@@ -44,6 +44,7 @@
 //
 //==========================================================================
 
+static uint64_t StartupTimeNS;
 static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
@@ -52,11 +53,22 @@ int GameTicRate = 35;	// make sure it is not 0, even if the client doesn't set i
 
 double TimeScale = 1.0;
 
-static uint64_t GetClockTimeNS()
+static uint64_t GetTimePoint()
 {
 	using namespace std::chrono;
-	if (TimeScale == 1.0) return (uint64_t)(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count());
-	else return (uint64_t)((duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count()) * (uint64_t)(TimeScale * 1000));
+	return (uint64_t)(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count());
+}
+
+void I_InitTime()
+{
+	StartupTimeNS = GetTimePoint();
+}
+
+static uint64_t GetClockTimeNS()
+{
+	auto tp = GetTimePoint() - StartupTimeNS;
+	if (TimeScale == 1.0) return tp;
+	else return tp / 1000 * TimeScale * 1000;
 }
 
 static uint64_t MSToNS(unsigned int ms)

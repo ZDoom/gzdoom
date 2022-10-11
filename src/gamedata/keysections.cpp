@@ -282,6 +282,16 @@ CCMD(addplayerclass)
 
 			newclass.Type = ti;
 			newclass.Flags = 0;
+			
+			// If this class was already added, don't add it again			
+			for(unsigned i = 0; i < PlayerClasses.Size(); i++)
+			{
+				if(PlayerClasses[i].Type == ti)
+				{
+					return;
+				}
+			}
+			
 
 			int arg = 2;
 			while (arg < argv.argc())

@@ -78,6 +78,8 @@ public:
 	int UseVertexData;
 };
 
+enum class WhichDepthStencil;
+
 class VkPPRenderPassKey
 {
 public:
@@ -88,7 +90,7 @@ public:
 	VkFormat OutputFormat;
 	int SwapChain;
 	int ShadowMapBuffers;
-	int StencilTest;
+	WhichDepthStencil StencilTest;
 	VkSampleCountFlagBits Samples;
 
 	bool operator<(const VkPPRenderPassKey& other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) < 0; }

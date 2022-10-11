@@ -2901,7 +2901,7 @@ struct PlayerSkin native
 	native readonly uint8		range0start;
 	native readonly uint8		range0end;
 	native readonly bool		othergame;
-	native readonly FVector2	Scale;
+	native readonly Vector2		Scale;
 	native readonly int			sprite;
 	native readonly int			crouchsprite;
 	native readonly int			namespc;

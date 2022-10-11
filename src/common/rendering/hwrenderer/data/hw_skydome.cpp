@@ -147,10 +147,10 @@ FSkyVertexBuffer::~FSkyVertexBuffer()
 
 void FSkyVertexBuffer::SkyVertexDoom(int r, int c, bool zflip)
 {
-	static const FAngle maxSideAngle = 60.f;
+	static const FAngle maxSideAngle = FAngle::fromDeg(60.f);
 	static const float scale = 10000.;
 
-	FAngle topAngle = (c / (float)mColumns * 360.f);
+	FAngle topAngle = FAngle::fromDeg((c / (float)mColumns * 360.f));
 	FAngle sideAngle = maxSideAngle * float(mRows - r) / float(mRows);
 	float height = sideAngle.Sin();
 	float realRadius = scale * sideAngle.Cos();
@@ -190,10 +190,10 @@ void FSkyVertexBuffer::SkyVertexDoom(int r, int c, bool zflip)
 
 void FSkyVertexBuffer::SkyVertexBuild(int r, int c, bool zflip)
 {
-	static const FAngle maxSideAngle = 60.f;
+	static const FAngle maxSideAngle = FAngle::fromDeg(60.f);
 	static const float scale = 10000.;
 
-	FAngle topAngle = (c / (float)mColumns * 360.f);
+	FAngle topAngle = FAngle::fromDeg((c / (float)mColumns * 360.f));
 	FVector2 pos = topAngle.ToVector(scale);
 	float z = (!zflip) ? (mRows - r) * 4000.f : -(mRows - r) * 4000.f;
 
@@ -471,7 +471,8 @@ void FSkyVertexBuffer::DoRenderDome(FRenderState& state, FGameTexture* tex, int 
 	// The caps only get drawn for the main layer but not for the overlay.
 	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != nullptr)
 	{
-		auto& col = R_GetSkyCapColor(tex);
+		auto col = R_GetSkyCapColor(tex);
+
 		col.first.r = col.first.r * color.r / 255;
 		col.first.g = col.first.g * color.g / 255;
 		col.first.b = col.first.b * color.b / 255;

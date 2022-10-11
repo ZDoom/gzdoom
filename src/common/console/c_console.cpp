@@ -45,7 +45,7 @@
 #include "filesystem.h"
 #include "d_gui.h"
 #include "cmdlib.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "c_consolebuffer.h"
 #include "utf8.h"
 #include "v_2ddrawer.h"
@@ -95,7 +95,6 @@ static FTextureID conflat;
 static uint32_t conshade;
 static bool conline;
 
-extern int chatmodeon;
 extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 
@@ -104,7 +103,9 @@ bool		vidactive = false;
 bool		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
 uint64_t	CursorTicker;
-constate_e	ConsoleState = c_up;
+uint8_t		ConsoleState = c_up;
+
+DEFINE_GLOBAL(ConsoleState)
 
 static int TopLine, InsertLine;
 

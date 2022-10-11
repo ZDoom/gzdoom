@@ -49,7 +49,6 @@
 #include "v_draw.h"
 #include "g_input.h"
 #include "texturemanager.h"
-#include "gi.h"
 
 // Text mode color values
 enum{

@@ -46,6 +46,7 @@
 #include "filesystem.h"
 #include "am_map.h"
 #include "c_dispatch.h"
+#include "i_interface.h"
 
 #include "p_setup.h"
 #include "p_local.h"

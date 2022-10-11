@@ -1,6 +1,6 @@
 /*
-**  Polygon Doom software renderer
-**  Copyright (c) 2016 Magnus Norddahl
+**  Light Coronas
+**  Copyright (c) 2022 Nash Muhandes, Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied
 **  warranty.  In no event will the authors be held liable for any damages
@@ -17,11 +17,16 @@
 **  2. Altered source versions must be plainly marked as such, and must not be
 **     misrepresented as being the original software.
 **  3. This notice may not be removed or altered from any source distribution.
-**
 */
 
-#pragma once
 
-class PolyTriangleThreadData;
+#include "actor.h"
+#include "a_corona.h"
+#include "a_dynlight.h"
 
-void SelectFragmentShader(PolyTriangleThreadData* thread);
+IMPLEMENT_CLASS(ACorona, false, false)
+
+void ACorona::Tick()
+{
+	Super::Tick();
+}

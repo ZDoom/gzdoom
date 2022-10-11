@@ -26,11 +26,9 @@
 #include <thread>
 
 class RenderMemory;
-class PolyTriangleThreadData;
 struct FDynamicLight;
 
 EXTERN_CVAR(Bool, r_models);
-extern bool r_modelscene;
 
 namespace swrenderer
 {
@@ -75,7 +73,6 @@ namespace swrenderer
 		std::unique_ptr<RenderClipSegment> ClipSegments;
 		std::unique_ptr<RenderViewport> Viewport;
 		std::unique_ptr<LightVisibility> Light;
-		std::unique_ptr<PolyTriangleThreadData> Poly;
 
 		TArray<FDynamicLight*> AddedLightsArray;
 

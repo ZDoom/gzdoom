@@ -137,7 +137,7 @@ void DEarthquake::Tick ()
 						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_Quake);
 					}
 					// Thrust player around
-					DAngle an = victim->Angles.Yaw + pr_quake();
+					DAngle an = victim->Angles.Yaw + DAngle::fromDeg(pr_quake());
 					victim->Vel.X += m_Intensity.X * an.Cos() * 0.5;
 					victim->Vel.Y += m_Intensity.Y * an.Sin() * 0.5;
 				}

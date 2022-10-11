@@ -36,12 +36,11 @@
 
 #include "cmdlib.h"
 #include "i_system.h"
-#include "gameconfigfile.h"
 
 
-bool I_WriteIniFailed()
+bool I_WriteIniFailed(const char * filename)
 {
-	printf("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));
+	printf("The config file %s could not be saved:\n%s\n", filename, strerror(errno));
 	return false; // return true to retry
 }
 

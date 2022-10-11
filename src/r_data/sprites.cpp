@@ -77,19 +77,19 @@ FTextureID spritedef_t::GetSpriteFrame(int frame, int rot, DAngle ang, bool *mir
 		{
 			if ((sprframe->Texture[0] == sprframe->Texture[1]) && flipagain)
 			{
-				rot = (360.0 - ang + 45.0 / 2 * 9).BAMs() >> 28;
+				rot = (- ang + DAngle::fromDeg(360.0 + 45.0 / 2 * 9)).BAMs() >> 28;
 			}
 			else if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang + 45.0 / 2 * 9).BAMs() >> 28;
+				rot = (ang + DAngle::fromDeg(45.0 / 2 * 9)).BAMs() >> 28;
 			}
 			else if (flipagain)
 			{
-				rot = (360.0 - ang + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				rot = (- ang + DAngle::fromDeg(360.0 + (45.0 / 2 * 9 - 180.0 / 16))).BAMs() >> 28;
 			}
 			else
 			{
-				rot = (ang + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				rot = (ang +  DAngle::fromDeg(45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 		}
 		if (mirror) *mirror = !!(sprframe->Flip&(1 << rot));

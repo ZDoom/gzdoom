@@ -97,10 +97,10 @@ public:
 	FOBJModel(): hasMissingNormals(false), hasSmoothGroups(false), vertFaces(nullptr) {}
 	~FOBJModel();
 	bool Load(const char* fn, int lumpnum, const char* buffer, int length) override;
-	int FindFrame(const char* name) override;
-	void RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame, int frame2, double inter, int translation=0) override;
+	int FindFrame(const char* name, bool nodefault) override;
+	void RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids) override;
 	void BuildVertexBuffer(FModelRenderer* renderer) override;
-	void AddSkins(uint8_t* hitlist) override;
+	void AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids) override;
 };
 
 #endif

@@ -38,10 +38,10 @@ void I_PrintStr (const char *cp);
 void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
-int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
+int I_PickIWad(WadStuff* wads, int numwads, bool queryiwad, int defaultiwad, int& autoloadflags);
 
 // The ini could not be saved at exit
-bool I_WriteIniFailed ();
+bool I_WriteIniFailed (const char* filename);
 
 // [RH] Checks the registry for Steam's install path, so we can scan its
 // directories for IWADs if the user purchased any through Steam.
@@ -78,5 +78,9 @@ FString I_GetLongPathName(const FString &shortpath);
 int I_GetNumaNodeCount();
 int I_GetNumaNodeThreadCount(int numaNode);
 void I_SetThreadNumaNode(std::thread &thread, int numaNode);
+
+void I_OpenShellFolder(const char*);
+FString I_GetCWD();
+bool I_ChDir(const char* path);
 
 #endif

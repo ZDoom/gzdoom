@@ -70,6 +70,9 @@ struct FVoxelDef
 	int VoxeldefIndex;		// Needed by GZDoom
 	double		Scale;
 	DAngle		AngleOffset;// added to actor's angle to compensate for wrong-facing voxels
+	bool		PitchFromMomentum;
+	bool		UseActorPitch;
+	bool		UseActorRoll;
 };
 
 extern TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.

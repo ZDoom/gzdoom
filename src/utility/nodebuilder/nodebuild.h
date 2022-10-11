@@ -173,8 +173,8 @@ class FNodeBuilder
 		fixed64_t MinX, MinY, MaxX, MaxY;
 		int BlocksWide, BlocksTall;
 
-		enum { BLOCK_SHIFT = 8 + FRACBITS };
-		enum { BLOCK_SIZE = 1 << BLOCK_SHIFT };
+		static constexpr int BLOCK_SHIFT = 8 + FRACBITS;
+		static constexpr int BLOCK_SIZE = 1 << BLOCK_SHIFT;
 
 		int InsertVertex (FPrivVert &vert);
 		inline int GetBlock (fixed64_t x, fixed64_t y)

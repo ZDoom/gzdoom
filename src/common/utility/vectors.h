@@ -1635,10 +1635,11 @@ typedef TAngle<double>			DAngle;
 constexpr DAngle nullAngle = DAngle::fromDeg(0.);
 constexpr FAngle nullFAngle = FAngle::fromDeg(0.);
 
-constexpr DAngle DAngle90 = DAngle::fromBam(ANGLE_90);
-constexpr DAngle DAngle180 = DAngle::fromBam(ANGLE_180);
-constexpr DAngle DAngle270 = DAngle::fromBam(ANGLE_270);
-constexpr DAngle DAngle360 = DAngle::fromBam(ANGLE_MAX);
+constexpr DAngle DAngle45 = DAngle::fromDeg(45);
+constexpr DAngle DAngle90 = DAngle::fromDeg(90);
+constexpr DAngle DAngle180 = DAngle::fromDeg(180);
+constexpr DAngle DAngle270 = DAngle::fromDeg(270);
+constexpr DAngle DAngle360 = DAngle::fromDeg(360);
 
 class Plane
 {

@@ -134,6 +134,11 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	// [Nash] take SpriteRotation into account
 	angle += actor->SpriteRotation.Degrees();
 
+	// consider the pixel stretching. For non-voxels this must be factored out here
+	// [MK] must be applied before any rotations, otherwise distortions may happen
+	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
+	objectToWorldMatrix.scale(1, stretch, 1);
+
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
 	if (smf->flags & MDL_USEROTATIONCENTER)
@@ -168,10 +173,6 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	objectToWorldMatrix.rotate(-smf->angleoffset, 0, 1, 0);
 	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
-
-	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
-	objectToWorldMatrix.scale(1, stretch, 1);
 
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 

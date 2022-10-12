@@ -35,7 +35,6 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
-#include <chrono>
 #include <vector>
 #include "i_soundinternal.h"
 #include "zstring.h"
@@ -63,7 +62,7 @@ enum ECodecType
 class SoundStream
 {
 public:
-	virtual ~SoundStream() = default;
+	virtual ~SoundStream () {}
 
 	enum
 	{	// For CreateStream
@@ -76,18 +75,11 @@ public:
 		Loop = 16
 	};
 
-	struct Position {
-		uint64_t samplesplayed;
-		std::chrono::nanoseconds latency;
-	};
-
 	virtual bool Play(bool looping, float volume) = 0;
 	virtual void Stop() = 0;
 	virtual void SetVolume(float volume) = 0;
 	virtual bool SetPaused(bool paused) = 0;
 	virtual bool IsEnded() = 0;
-	// Be aware this can be called during the callback invocation after Play is called.
-	virtual Position GetPlayPosition() = 0;
 	virtual FString GetStats();
 };
 

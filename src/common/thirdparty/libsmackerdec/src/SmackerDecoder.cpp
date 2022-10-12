@@ -49,7 +49,6 @@
 #include "limits.h"
 #include <assert.h>
 #include <algorithm>
-#include <memory>
 
 std::vector<class SmackerDecoder*> classInstances;
 
@@ -94,9 +93,10 @@ void Smacker_Close(SmackerHandle &handle)
 	handle.isValid = false;
 }
 
-uint32_t Smacker_GetNumAudioTracks(SmackerHandle &handle)
+uint32_t Smacker_GetNumAudioTracks(SmackerHandle &)
 {
-	return classInstances[handle.instanceIndex]->GetNumAudioTracks();
+	// TODO: fixme
+	return 1;
 }
 
 SmackerAudioInfo Smacker_GetAudioTrackDetails(SmackerHandle &handle, uint32_t trackIndex)
@@ -113,18 +113,6 @@ SmackerAudioInfo Smacker_GetAudioTrackDetails(SmackerHandle &handle, uint32_t tr
 uint32_t Smacker_GetAudioData(SmackerHandle &handle, uint32_t trackIndex, int16_t *data)
 {
 	return classInstances[handle.instanceIndex]->GetAudioData(trackIndex, data);
-}
-
-/* Disables an audio track if it's enabled.
- *
- * When getting video or audio data, encoded data is stored for other tracks so
- * they can be read and decoded later. This function prevents a build-up of
- * encoded audio data for the specified track if such data isn't going to be
- * decoded and read by the caller.
- */
-void Smacker_DisableAudioTrack(SmackerHandle &handle, uint32_t trackIndex)
-{
-	classInstances[handle.instanceIndex]->DisableAudioTrack(trackIndex);
 }
 
 uint32_t Smacker_GetNumFrames(SmackerHandle &handle)
@@ -177,7 +165,6 @@ void Smacker_GotoFrame(SmackerHandle &handle, uint32_t frameNum)
 SmackerDecoder::SmackerDecoder()
 {
 	isVer4 = false;
-	currentReadFrame = 0;
 	currentFrame = 0;
 	picture = 0;
 	nextPos = 0;
@@ -236,7 +223,6 @@ static const uint8_t smk_pal[64] = {
 
 enum SAudFlags {
     SMK_AUD_PACKED  = 0x80000000, 
-    SMK_AUD_PRESENT = 0x40000000,
     SMK_AUD_16BITS  = 0x20000000, 
     SMK_AUD_STEREO  = 0x10000000, 
     SMK_AUD_BINKAUD = 0x08000000, 
@@ -386,21 +372,12 @@ bool SmackerDecoder::Open(const char *fileName)
 		frameFlags[i] = file.ReadByte();
 	}
 
-	auto maxFrameSize = std::max_element(frameSizes.begin(), frameSizes.end());
-	if (maxFrameSize != frameSizes.end())
-		packetData.reserve(*maxFrameSize);
-
 	// handle possible audio streams
 	for (int i = 0; i < kMaxAudioTracks; i++)
 	{
 		audioTracks[i].buffer = 0;
 		audioTracks[i].bufferSize = 0;
 		audioTracks[i].bytesReadThisFrame = 0;
-
-		// Disable non-consecutive enabled tracks. Not sure how to otherwise report
-		// them properly for Smacker_GetNumAudioTracks.
-		if (i > 0 && !(audioTracks[i-1].flags & SMK_AUD_PRESENT))
-			audioTracks[i].flags &= ~SMK_AUD_PRESENT;
 
 		if (audioTracks[i].flags & 0xFFFFFF)
 		{
@@ -449,18 +426,13 @@ bool SmackerDecoder::Open(const char *fileName)
 	{
 		if (frameFlag & 1) 
 		{
-			uint32_t size = file.ReadUint32LE();
+			// skip size
+			file.Skip(4);
+			
 			uint32_t unpackedSize = file.ReadUint32LE();
-
-			// If the track isn't 16-bit, double the buffer size for converting 8-bit to 16-bit.
-			if (!(audioTracks[i].flags & SMK_AUD_16BITS))
-				unpackedSize *= 2;
 
 			audioTracks[i].bufferSize = unpackedSize;
 			audioTracks[i].buffer = new uint8_t[unpackedSize];
-
-			// skip size
-			file.Skip(size - 8);
 		}	
 		frameFlag >>= 1;
 	}
@@ -661,10 +633,7 @@ int SmackerDecoder::DecodeHeaderTree(SmackerCommon::BitReader &bits, std::vector
 // static int decode_header_trees(SmackVContext *smk) {
 bool SmackerDecoder::DecodeHeaderTrees()
 {
-	auto treeData = std::make_unique<uint8_t[]>(treeSize);
-	file.ReadBytes(treeData.get(), treeSize);
-
-	SmackerCommon::BitReader bits(treeData.get(), treeSize);
+	SmackerCommon::BitReader bits(file, treeSize);
 
 	if (!bits.GetBit())
 	{
@@ -714,53 +683,58 @@ bool SmackerDecoder::DecodeHeaderTrees()
 		DecodeHeaderTree(bits, type_tbl, type_last, typeSize);
 	}
 
+	/* FIXME - we don't seems to read/use EVERY bit we 'load' into the bit reader
+	 * and as my bitreader reads from the file rather than a buffer read from file
+	 * of size 'treeSize', I need to make sure I consume the remaining bits (and thus increment
+	 * the file read position to where the code expects it to be when this function returns (ie 
+	 * 'treeSize' number of bytes must be read
+	 */
+	uint32_t left = bits.GetSize() - bits.GetPosition();
+	bits.SkipBits(left);
+
 	return true;
 }
 
 void SmackerDecoder::GetNextFrame()
 {
+	ReadPacket();
+}
+
+int SmackerDecoder::ReadPacket()
+{
+	// test-remove
 	if (currentFrame >= nFrames)
-		return;
+		return 1;
 
-	std::unique_lock flock(fileMutex);
-	while (framePacketData.empty())
-	{
-		if (ReadPacket() > 0)
-			return;
-	}
-	SmackerPacket pkt = std::move(framePacketData.front());
-	framePacketData.pop_front();
-	flock.unlock();
+	// seek to next frame position
+	file.Seek(nextPos, SmackerCommon::FileStream::kSeekStart);
 
-	uint32_t frameSize = pkt.size;
+	uint32_t frameSize = frameSizes[currentFrame] & (~3);
 	uint8_t frameFlag  = frameFlags[currentFrame];
-
-	const uint8_t *packetDataPtr = pkt.data.get();
 
 	// handle palette change
 	if (frameFlag & kSMKpal)
 	{
-		int size, sz, t, off, j;
+		int size, sz, t, off, j, pos;
         uint8_t *pal = palette;
         uint8_t oldpal[768];
-        const uint8_t *dataEnd;
 
         memcpy(oldpal, pal, 768);
-        size = *(packetDataPtr++);
+        size = file.ReadByte();
         size = size * 4 - 1;
         frameSize -= size;
         frameSize--;
         sz = 0;
-        dataEnd = packetDataPtr + size;
+        pos = file.GetPosition() + size;
 
         while (sz < 256)
 		{
-            t = *(packetDataPtr++);
+            t = file.ReadByte();
             if (t & 0x80){ /* skip palette entries */
                 sz  += (t & 0x7F)  + 1;
                 pal += ((t & 0x7F) + 1) * 3;
             } else if (t & 0x40){ /* copy with offset */
-                off = *(packetDataPtr++) * 3;
+                off = file.ReadByte() * 3;
                 j = (t & 0x3F) + 1;
                 while (j-- && sz < 256) {
                     *pal++ = oldpal[off + 0];
@@ -771,92 +745,47 @@ void SmackerDecoder::GetNextFrame()
                 }
             } else { /* new entries */
                 *pal++ = smk_pal[t];
-                *pal++ = smk_pal[*(packetDataPtr++) & 0x3F];
-                *pal++ = smk_pal[*(packetDataPtr++) & 0x3F];
+                *pal++ = smk_pal[file.ReadByte() & 0x3F];
+                *pal++ = smk_pal[file.ReadByte() & 0x3F];
                 sz++;
             }
         }
-
-		packetDataPtr = dataEnd;
-	}
-
-	if (frameSize > 0)
-		DecodeFrame(packetDataPtr, frameSize);
-
-	currentFrame++;
-}
-
-int SmackerDecoder::ReadPacket()
-{
-	// test-remove
-	if (currentReadFrame >= nFrames)
-		return 1;
-
-	// seek to next frame position
-	file.Seek(nextPos, SmackerCommon::FileStream::kSeekStart);
-
-	uint32_t frameSize = frameSizes[currentReadFrame] & (~3);
-	uint8_t frameFlag  = frameFlags[currentReadFrame];
-
-	packetData.resize(frameSize);
-	file.ReadBytes(packetData.data(), frameSize);
-
-	const uint8_t *packetDataPtr = packetData.data();
-
-	// skip pal data for later, after getting audio data
-	if (frameFlag & kSMKpal)
-	{
-		int size = (*packetDataPtr * 4);
-		packetDataPtr += size;
-		frameSize -= size;
+        
+		file.Seek(pos, SmackerCommon::FileStream::kSeekStart);
 	}
 
 	frameFlag >>= 1;
-	for (int i = 0; i < kMaxAudioTracks; i++)
-	{
-		if (frameFlag & 1)
-		{
-			uint32_t size = *(packetDataPtr++);
-			size |= *(packetDataPtr++) << 8;
-			size |= *(packetDataPtr++) << 16;
-			size |= *(packetDataPtr++) << 24;
-			frameSize -= size;
-			size -= 4;
 
-			if (audioTracks[i].flags & SMK_AUD_PRESENT)
-			{
-				SmackerPacket pkt;
-				pkt.size = size;
-				pkt.data = std::make_unique<uint8_t[]>(size);
-				memcpy(pkt.data.get(), packetDataPtr, size);
-				audioTracks[i].packetData.emplace_back(std::move(pkt));
-			}
-			packetDataPtr += size;
+	// check for and handle audio
+	for (int i = 0; i < kMaxAudioTracks; i++) 
+	{
+		audioTracks[i].bytesReadThisFrame = 0;
+
+		if (frameFlag & 1) 
+		{
+			uint32_t size = file.ReadUint32LE() - 4;
+			frameSize -= size;
+			frameSize -= 4;
+
+			DecodeAudio(size, audioTracks[i]);
 		}
 		frameFlag >>= 1;
 	}
 
-	SmackerPacket pkt;
-	frameFlag = frameFlags[currentReadFrame];
-	if (frameSize != 0 || (frameFlag & kSMKpal))
-	{
-		int palsize = (frameFlag & kSMKpal) ? packetData[0] * 4 : 0;
-		int totalSize = frameSize + palsize;
-		pkt.size = totalSize;
-		pkt.data = std::make_unique<uint8_t[]>(totalSize);
-		memcpy(pkt.data.get(), packetData.data(), palsize);
-		memcpy(pkt.data.get()+palsize, packetDataPtr, frameSize);
+	if (frameSize == 0) {
+		return -1;
 	}
-	framePacketData.emplace_back(std::move(pkt));
 
-	++currentReadFrame;
+	DecodeFrame(frameSize);
+
+	currentFrame++;
 
 	nextPos = file.GetPosition();
 
 	return 0;
 }
 
-int SmackerDecoder::DecodeFrame(const uint8_t *dataPtr, uint32_t frameSize)
+int SmackerDecoder::DecodeFrame(uint32_t frameSize)
 {
 	last_reset(mmap_tbl, mmap_last);
     last_reset(mclr_tbl, mclr_last);
@@ -876,8 +805,7 @@ int SmackerDecoder::DecodeFrame(const uint8_t *dataPtr, uint32_t frameSize)
 
 	stride = frameWidth;
 
-	SmackerCommon::BitReader bits(dataPtr, frameSize);
-	dataPtr += frameSize;
+	SmackerCommon::BitReader bits(file, frameSize);
 
 	while (blk < blocks)
 	{
@@ -1007,14 +935,24 @@ int SmackerDecoder::DecodeFrame(const uint8_t *dataPtr, uint32_t frameSize)
         }
 	}
 
+	/* FIXME - we don't seems to read/use EVERY bit we 'load' into the bit reader
+	 * and as my bitreader reads from the file rather than a buffer read from file
+	 * of size 'frameSize', I need to make sure I consume the remaining bits (and thus increment
+	 * the file read position to where the code expects it to be when this function returns (ie 
+	 * 'frameSize' number of bytes must be read
+	 */
+	uint32_t left = bits.GetSize() - bits.GetPosition();
+	bits.SkipBits(left);
+
 	return 0;
 }
 
 /**
  * Decode Smacker audio data
  */
-int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAudioTrack &track)
+int SmackerDecoder::DecodeAudio(uint32_t size, SmackerAudioTrack &track)
 {
+    HuffContext h[4];
 	SmackerCommon::VLCtable vlc[4];
     int val;
     int i, res;
@@ -1023,14 +961,18 @@ int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAu
     int pred[2] = {0, 0};
 
 	int16_t *samples = reinterpret_cast<int16_t*>(track.buffer);
+    int8_t *samples8 = reinterpret_cast<int8_t*>(track.buffer);
 
-	SmackerCommon::BitReader bits(dataPtr, size);
+	int buf_size = track.bufferSize;
 
-    unpackedSize = bits.GetBits(32);
-    if (unpackedSize <= 4) {
+    if (buf_size <= 4) {
         Printf("SmackerDecoder::DecodeAudio() - Packet is too small\n");
 		return -1;
     }
+
+	SmackerCommon::BitReader bits(file, size);
+
+    unpackedSize = bits.GetBits(32);
 
     if (!bits.GetBit()) {
 		// no sound data
@@ -1045,7 +987,7 @@ int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAu
 		return -1;
     }
 
-    HuffContext h[4];
+    memset(h, 0, sizeof(HuffContext) * 4);
 
     // Initialize
     for (i = 0; i < (1 << (sampleBits + stereo)); i++) {
@@ -1103,7 +1045,7 @@ int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAu
         for (i = stereo; i >= 0; i--)
             pred[i] = bits.GetBits(8);
         for (i = 0; i <= stereo; i++)
-            *samples++ = (pred[i]-128) << 8;
+            *samples8++ = pred[i];
         for (; i < unpackedSize; i++) {
             if (i & stereo){
 				if (VLC_GetSize(vlc[1]))
@@ -1111,20 +1053,22 @@ int SmackerDecoder::DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAu
                 else
                     res = 0;
                 pred[1] += (int8_t)h[1].values[res];
-                *samples++ = (pred[1]-128) << 8;
+                *samples8++ = pred[1];
             } else {
 				if (VLC_GetSize(vlc[0]))
 				res = VLC_GetCodeBits(bits, vlc[0]);
                 else
                     res = 0;
                 pred[0] += (int8_t)h[0].values[res];
-                *samples++ = (pred[0]-128) << 8;
+                *samples8++ = pred[0];
             }
         }
-        unpackedSize *= 2;
     }
 
 	track.bytesReadThisFrame = unpackedSize;
+
+	uint32_t left = bits.GetSize() - bits.GetPosition();
+	bits.SkipBits(left);
 
 	return 0;
 }
@@ -1169,32 +1113,11 @@ void SmackerDecoder::GotoFrame(uint32_t frameNum)
 
 //    file.Seek(firstFrameFilePos, SmackerCommon::FileStream::kSeekStart);
 
-    currentReadFrame = 0;
     currentFrame = 0;
     nextPos = firstFrameFilePos;
 
-    framePacketData.clear();
-    for (unsigned j = 0; j < kMaxAudioTracks; j++)
-        audioTracks[j].packetData.clear();
-
-    for (unsigned i = 0; i < frameNum; i++)
-    {
+    for (unsigned i = 0; i < frameNum + 1; i++)
         GetNextFrame();
-        for (unsigned j = 0; j < kMaxAudioTracks; j++)
-            audioTracks[j].packetData.clear();
-    }
-
-    GetNextFrame();
-}
-
-uint32_t SmackerDecoder::GetNumAudioTracks()
-{
-	for(uint32_t i = 0;i < kMaxAudioTracks;++i)
-	{
-		if (!(audioTracks[i].flags & SMK_AUD_PRESENT))
-			return i;
-	}
-	return kMaxAudioTracks;
 }
 
 SmackerAudioInfo SmackerDecoder::GetAudioTrackDetails(uint32_t trackIndex)
@@ -1204,6 +1127,7 @@ SmackerAudioInfo SmackerDecoder::GetAudioTrackDetails(uint32_t trackIndex)
 
 	info.sampleRate = track->sampleRate;
 	info.nChannels  = track->nChannels;
+	info.bitsPerSample = track->bitsPerSample;
 
 	// audio buffer size in bytes
 	info.idealBufferSize = track->bufferSize;
@@ -1219,37 +1143,9 @@ uint32_t SmackerDecoder::GetAudioData(uint32_t trackIndex, int16_t *audioBuffer)
 
 	SmackerAudioTrack *track = &audioTracks[trackIndex];
 
-	std::unique_lock flock(fileMutex);
-	if (!(track->flags & SMK_AUD_PRESENT))
-		return 0;
-
-	while (track->packetData.empty())
-	{
-		if (ReadPacket() > 0)
-			return 0;
-	}
-	SmackerPacket pkt = std::move(track->packetData.front());
-	track->packetData.pop_front();
-	flock.unlock();
-
-	track->bytesReadThisFrame = 0;
-
-	const uint8_t *packetDataPtr = pkt.data.get();
-	uint32_t size = pkt.size;
-
-	DecodeAudio(packetDataPtr, size, *track);
-
 	if (track->bytesReadThisFrame) {
 		memcpy(audioBuffer, track->buffer, std::min(track->bufferSize, track->bytesReadThisFrame));
 	}
 
 	return track->bytesReadThisFrame;
-}
-
-void SmackerDecoder::DisableAudioTrack(uint32_t trackIndex)
-{
-	SmackerAudioTrack *track = &audioTracks[trackIndex];
-	std::unique_lock flock(fileMutex);
-	track->flags &= ~SMK_AUD_PRESENT;
-	track->packetData.clear();
 }

@@ -48,9 +48,6 @@
 #include <stdint.h>
 #include "FileStream.h"
 #include "BitReader.h"
-#include <deque>
-#include <memory>
-#include <mutex>
 #include <vector>
 
 // exportable interface
@@ -64,6 +61,7 @@ struct SmackerAudioInfo
 {
 	uint32_t sampleRate;
 	uint8_t  nChannels;
+	uint8_t  bitsPerSample;
 
 	uint32_t idealBufferSize;
 };
@@ -73,7 +71,6 @@ void              Smacker_Close                (SmackerHandle &handle);
 uint32_t          Smacker_GetNumAudioTracks    (SmackerHandle &handle);
 SmackerAudioInfo  Smacker_GetAudioTrackDetails (SmackerHandle &handle, uint32_t trackIndex);
 uint32_t          Smacker_GetAudioData         (SmackerHandle &handle, uint32_t trackIndex, int16_t *data);
-void              Smacker_DisableAudioTrack    (SmackerHandle &handle, uint32_t trackIndex);
 uint32_t          Smacker_GetNumFrames         (SmackerHandle &handle);
 void              Smacker_GetFrameSize         (SmackerHandle &handle, uint32_t &width, uint32_t &height);
 uint32_t          Smacker_GetCurrentFrameNum   (SmackerHandle &handle);
@@ -89,12 +86,6 @@ const int kMaxAudioTracks = 7;
 struct HuffContext;
 struct DBCtx;
 
-struct SmackerPacket
-{
-	size_t size = 0;
-	std::unique_ptr<uint8_t[]> data;
-};
-
 struct SmackerAudioTrack
 {
 	uint32_t sizeInBytes;
@@ -108,7 +99,6 @@ struct SmackerAudioTrack
 	uint32_t bufferSize;
 
 	uint32_t bytesReadThisFrame;
-	std::deque<SmackerPacket> packetData;
 };
 
 class SmackerDecoder
@@ -124,10 +114,8 @@ class SmackerDecoder
 		void GetPalette(uint8_t *palette);
 		void GetFrame(uint8_t *frame);
 
-		uint32_t GetNumAudioTracks();
 		SmackerAudioInfo GetAudioTrackDetails(uint32_t trackIndex);
 		uint32_t GetAudioData(uint32_t trackIndex, int16_t *audioBuffer);
-		void DisableAudioTrack(uint32_t trackIndex);
 		uint32_t GetNumFrames();
 		uint32_t GetCurrentFrameNum();
 		float GetFrameRate();
@@ -137,7 +125,6 @@ class SmackerDecoder
 	private:
 		SmackerCommon::FileStream file;
 		char signature[4];
-		std::mutex fileMutex;
 
 		// video related members
 		uint32_t nFrames;
@@ -148,10 +135,6 @@ class SmackerDecoder
 
 		bool isVer4;
 
-		uint32_t currentReadFrame;
-		std::vector<uint8_t> packetData;
-
-		std::deque<SmackerPacket> framePacketData;
 		SmackerAudioTrack audioTracks[kMaxAudioTracks];
 
 		uint32_t treeSize;
@@ -177,9 +160,9 @@ class SmackerDecoder
 		int DecodeBigTree(SmackerCommon::BitReader &bits, HuffContext *hc, DBCtx *ctx);
 		int GetCode(SmackerCommon::BitReader &bits, std::vector<int> &recode, int *last);
 		int ReadPacket();
-		int DecodeFrame(const uint8_t *dataPtr, uint32_t frameSize);
+		int DecodeFrame(uint32_t frameSize);
 		void GetFrameSize(uint32_t &width, uint32_t &height);
-		int DecodeAudio(const uint8_t *dataPtr, uint32_t size, SmackerAudioTrack &track);
+		int DecodeAudio(uint32_t size, SmackerAudioTrack &track);
 };
 
 #endif

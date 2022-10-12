@@ -21,7 +21,100 @@
 #include "alc.h"
 #endif
 
-#include "alext.h"
+#include "efx.h"
+
+#ifndef ALC_ENUMERATE_ALL_EXT
+#define ALC_ENUMERATE_ALL_EXT 1
+#define ALC_DEFAULT_ALL_DEVICES_SPECIFIER        0x1012
+#define ALC_ALL_DEVICES_SPECIFIER                0x1013
+#endif
+
+#ifndef ALC_EXT_disconnect
+#define ALC_EXT_disconnect 1
+#define ALC_CONNECTED                            0x313
+#endif
+
+#ifndef ALC_SOFT_HRTF
+#define ALC_SOFT_HRTF 1
+#define ALC_HRTF_SOFT                            0x1992
+#define ALC_DONT_CARE_SOFT                       0x0002
+#define ALC_HRTF_STATUS_SOFT                     0x1993
+#define ALC_HRTF_DISABLED_SOFT                   0x0000
+#define ALC_HRTF_ENABLED_SOFT                    0x0001
+#define ALC_HRTF_DENIED_SOFT                     0x0002
+#define ALC_HRTF_REQUIRED_SOFT                   0x0003
+#define ALC_HRTF_HEADPHONES_DETECTED_SOFT        0x0004
+#define ALC_HRTF_UNSUPPORTED_FORMAT_SOFT         0x0005
+#define ALC_NUM_HRTF_SPECIFIERS_SOFT             0x1994
+#define ALC_HRTF_SPECIFIER_SOFT                  0x1995
+#define ALC_HRTF_ID_SOFT                         0x1996
+#define ALC_OUTPUT_LIMITER_SOFT                  0x199A 
+
+typedef const ALCchar* (ALC_APIENTRY*LPALCGETSTRINGISOFT)(ALCdevice *device, ALCenum paramName, ALCsizei index);
+typedef ALCboolean (ALC_APIENTRY*LPALCRESETDEVICESOFT)(ALCdevice *device, const ALCint *attribs);
+#ifdef AL_ALEXT_PROTOTYPES
+ALC_API const ALCchar* ALC_APIENTRY alcGetStringiSOFT(ALCdevice *device, ALCenum paramName, ALCsizei index);
+ALC_API ALCboolean ALC_APIENTRY alcResetDeviceSOFT(ALCdevice *device, const ALCint *attribs);
+#endif
+#endif
+
+#ifndef AL_EXT_source_distance_model
+#define AL_EXT_source_distance_model 1
+#define AL_SOURCE_DISTANCE_MODEL                 0x200
+#endif
+
+#ifndef AL_SOFT_loop_points
+#define AL_SOFT_loop_points 1
+#define AL_LOOP_POINTS_SOFT                      0x2015
+#endif
+
+#ifndef AL_EXT_float32
+#define AL_EXT_float32 1
+#define AL_FORMAT_MONO_FLOAT32                   0x10010
+#define AL_FORMAT_STEREO_FLOAT32                 0x10011
+#endif
+
+#ifndef AL_EXT_MCFORMATS
+#define AL_EXT_MCFORMATS 1
+#define AL_FORMAT_QUAD8                          0x1204
+#define AL_FORMAT_QUAD16                         0x1205
+#define AL_FORMAT_QUAD32                         0x1206
+#define AL_FORMAT_REAR8                          0x1207
+#define AL_FORMAT_REAR16                         0x1208
+#define AL_FORMAT_REAR32                         0x1209
+#define AL_FORMAT_51CHN8                         0x120A
+#define AL_FORMAT_51CHN16                        0x120B
+#define AL_FORMAT_51CHN32                        0x120C
+#define AL_FORMAT_61CHN8                         0x120D
+#define AL_FORMAT_61CHN16                        0x120E
+#define AL_FORMAT_61CHN32                        0x120F
+#define AL_FORMAT_71CHN8                         0x1210
+#define AL_FORMAT_71CHN16                        0x1211
+#define AL_FORMAT_71CHN32                        0x1212
+#endif
+
+#ifndef AL_EXT_SOURCE_RADIUS
+#define AL_EXT_SOURCE_RADIUS 1
+#define AL_SOURCE_RADIUS                         0x1031
+#endif
+
+#ifndef AL_SOFT_source_resampler
+#define AL_SOFT_source_resampler 1
+#define AL_NUM_RESAMPLERS_SOFT                   0x1210
+#define AL_DEFAULT_RESAMPLER_SOFT                0x1211
+#define AL_SOURCE_RESAMPLER_SOFT                 0x1212
+#define AL_RESAMPLER_NAME_SOFT                   0x1213
+typedef const ALchar* (AL_APIENTRY*LPALGETSTRINGISOFT)(ALenum pname, ALsizei index);
+#ifdef AL_ALEXT_PROTOTYPES
+AL_API const ALchar* AL_APIENTRY alGetStringiSOFT(ALenum pname, ALsizei index);
+#endif
+#endif
+
+#ifndef AL_SOFT_source_spatialize
+#define AL_SOFT_source_spatialize
+#define AL_SOURCE_SPATIALIZE_SOFT                0x1214
+#define AL_AUTO_SOFT                             0x0002
+#endif
 
 
 class OpenALSoundStream;
@@ -97,7 +190,6 @@ private:
         bool EXT_SOURCE_RADIUS;
         bool SOFT_deferred_updates;
         bool SOFT_loop_points;
-        bool SOFT_source_latency;
         bool SOFT_source_resampler;
         bool SOFT_source_spatialize;
     } AL;
@@ -146,8 +238,6 @@ private:
     ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
 
     LPALGETSTRINGISOFT alGetStringiSOFT;
-
-    LPALGETSOURCEI64VSOFT alGetSourcei64vSOFT;
 
     void (ALC_APIENTRY*alcDevicePauseSOFT)(ALCdevice *device);
     void (ALC_APIENTRY*alcDeviceResumeSOFT)(ALCdevice *device);

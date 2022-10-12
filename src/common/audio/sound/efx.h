@@ -1,7 +1,6 @@
 #ifndef AL_EFX_H
 #define AL_EFX_H
 
-#include <float.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -202,12 +201,12 @@ extern "C" {
 
 /* Effect object function types. */
 typedef void (AL_APIENTRY *LPALGENEFFECTS)(ALsizei, ALuint*);
-typedef void (AL_APIENTRY *LPALDELETEEFFECTS)(ALsizei, const ALuint*);
+typedef void (AL_APIENTRY *LPALDELETEEFFECTS)(ALsizei, ALuint*);
 typedef ALboolean (AL_APIENTRY *LPALISEFFECT)(ALuint);
 typedef void (AL_APIENTRY *LPALEFFECTI)(ALuint, ALenum, ALint);
-typedef void (AL_APIENTRY *LPALEFFECTIV)(ALuint, ALenum, const ALint*);
+typedef void (AL_APIENTRY *LPALEFFECTIV)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALEFFECTF)(ALuint, ALenum, ALfloat);
-typedef void (AL_APIENTRY *LPALEFFECTFV)(ALuint, ALenum, const ALfloat*);
+typedef void (AL_APIENTRY *LPALEFFECTFV)(ALuint, ALenum, ALfloat*);
 typedef void (AL_APIENTRY *LPALGETEFFECTI)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALGETEFFECTIV)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALGETEFFECTF)(ALuint, ALenum, ALfloat*);
@@ -215,12 +214,12 @@ typedef void (AL_APIENTRY *LPALGETEFFECTFV)(ALuint, ALenum, ALfloat*);
 
 /* Filter object function types. */
 typedef void (AL_APIENTRY *LPALGENFILTERS)(ALsizei, ALuint*);
-typedef void (AL_APIENTRY *LPALDELETEFILTERS)(ALsizei, const ALuint*);
+typedef void (AL_APIENTRY *LPALDELETEFILTERS)(ALsizei, ALuint*);
 typedef ALboolean (AL_APIENTRY *LPALISFILTER)(ALuint);
 typedef void (AL_APIENTRY *LPALFILTERI)(ALuint, ALenum, ALint);
-typedef void (AL_APIENTRY *LPALFILTERIV)(ALuint, ALenum, const ALint*);
+typedef void (AL_APIENTRY *LPALFILTERIV)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALFILTERF)(ALuint, ALenum, ALfloat);
-typedef void (AL_APIENTRY *LPALFILTERFV)(ALuint, ALenum, const ALfloat*);
+typedef void (AL_APIENTRY *LPALFILTERFV)(ALuint, ALenum, ALfloat*);
 typedef void (AL_APIENTRY *LPALGETFILTERI)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALGETFILTERIV)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALGETFILTERF)(ALuint, ALenum, ALfloat*);
@@ -228,87 +227,87 @@ typedef void (AL_APIENTRY *LPALGETFILTERFV)(ALuint, ALenum, ALfloat*);
 
 /* Auxiliary Effect Slot object function types. */
 typedef void (AL_APIENTRY *LPALGENAUXILIARYEFFECTSLOTS)(ALsizei, ALuint*);
-typedef void (AL_APIENTRY *LPALDELETEAUXILIARYEFFECTSLOTS)(ALsizei, const ALuint*);
+typedef void (AL_APIENTRY *LPALDELETEAUXILIARYEFFECTSLOTS)(ALsizei, ALuint*);
 typedef ALboolean (AL_APIENTRY *LPALISAUXILIARYEFFECTSLOT)(ALuint);
 typedef void (AL_APIENTRY *LPALAUXILIARYEFFECTSLOTI)(ALuint, ALenum, ALint);
-typedef void (AL_APIENTRY *LPALAUXILIARYEFFECTSLOTIV)(ALuint, ALenum, const ALint*);
+typedef void (AL_APIENTRY *LPALAUXILIARYEFFECTSLOTIV)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALAUXILIARYEFFECTSLOTF)(ALuint, ALenum, ALfloat);
-typedef void (AL_APIENTRY *LPALAUXILIARYEFFECTSLOTFV)(ALuint, ALenum, const ALfloat*);
+typedef void (AL_APIENTRY *LPALAUXILIARYEFFECTSLOTFV)(ALuint, ALenum, ALfloat*);
 typedef void (AL_APIENTRY *LPALGETAUXILIARYEFFECTSLOTI)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALGETAUXILIARYEFFECTSLOTIV)(ALuint, ALenum, ALint*);
 typedef void (AL_APIENTRY *LPALGETAUXILIARYEFFECTSLOTF)(ALuint, ALenum, ALfloat*);
 typedef void (AL_APIENTRY *LPALGETAUXILIARYEFFECTSLOTFV)(ALuint, ALenum, ALfloat*);
 
 #ifdef AL_ALEXT_PROTOTYPES
-AL_API void AL_APIENTRY alGenEffects(ALsizei n, ALuint *effects);
-AL_API void AL_APIENTRY alDeleteEffects(ALsizei n, const ALuint *effects);
+AL_API ALvoid AL_APIENTRY alGenEffects(ALsizei n, ALuint *effects);
+AL_API ALvoid AL_APIENTRY alDeleteEffects(ALsizei n, ALuint *effects);
 AL_API ALboolean AL_APIENTRY alIsEffect(ALuint effect);
-AL_API void AL_APIENTRY alEffecti(ALuint effect, ALenum param, ALint iValue);
-AL_API void AL_APIENTRY alEffectiv(ALuint effect, ALenum param, const ALint *piValues);
-AL_API void AL_APIENTRY alEffectf(ALuint effect, ALenum param, ALfloat flValue);
-AL_API void AL_APIENTRY alEffectfv(ALuint effect, ALenum param, const ALfloat *pflValues);
-AL_API void AL_APIENTRY alGetEffecti(ALuint effect, ALenum param, ALint *piValue);
-AL_API void AL_APIENTRY alGetEffectiv(ALuint effect, ALenum param, ALint *piValues);
-AL_API void AL_APIENTRY alGetEffectf(ALuint effect, ALenum param, ALfloat *pflValue);
-AL_API void AL_APIENTRY alGetEffectfv(ALuint effect, ALenum param, ALfloat *pflValues);
+AL_API ALvoid AL_APIENTRY alEffecti(ALuint effect, ALenum param, ALint iValue);
+AL_API ALvoid AL_APIENTRY alEffectiv(ALuint effect, ALenum param, ALint *piValues);
+AL_API ALvoid AL_APIENTRY alEffectf(ALuint effect, ALenum param, ALfloat flValue);
+AL_API ALvoid AL_APIENTRY alEffectfv(ALuint effect, ALenum param, ALfloat *pflValues);
+AL_API ALvoid AL_APIENTRY alGetEffecti(ALuint effect, ALenum param, ALint *piValue);
+AL_API ALvoid AL_APIENTRY alGetEffectiv(ALuint effect, ALenum param, ALint *piValues);
+AL_API ALvoid AL_APIENTRY alGetEffectf(ALuint effect, ALenum param, ALfloat *pflValue);
+AL_API ALvoid AL_APIENTRY alGetEffectfv(ALuint effect, ALenum param, ALfloat *pflValues);
 
-AL_API void AL_APIENTRY alGenFilters(ALsizei n, ALuint *filters);
-AL_API void AL_APIENTRY alDeleteFilters(ALsizei n, const ALuint *filters);
+AL_API ALvoid AL_APIENTRY alGenFilters(ALsizei n, ALuint *filters);
+AL_API ALvoid AL_APIENTRY alDeleteFilters(ALsizei n, ALuint *filters);
 AL_API ALboolean AL_APIENTRY alIsFilter(ALuint filter);
-AL_API void AL_APIENTRY alFilteri(ALuint filter, ALenum param, ALint iValue);
-AL_API void AL_APIENTRY alFilteriv(ALuint filter, ALenum param, const ALint *piValues);
-AL_API void AL_APIENTRY alFilterf(ALuint filter, ALenum param, ALfloat flValue);
-AL_API void AL_APIENTRY alFilterfv(ALuint filter, ALenum param, const ALfloat *pflValues);
-AL_API void AL_APIENTRY alGetFilteri(ALuint filter, ALenum param, ALint *piValue);
-AL_API void AL_APIENTRY alGetFilteriv(ALuint filter, ALenum param, ALint *piValues);
-AL_API void AL_APIENTRY alGetFilterf(ALuint filter, ALenum param, ALfloat *pflValue);
-AL_API void AL_APIENTRY alGetFilterfv(ALuint filter, ALenum param, ALfloat *pflValues);
+AL_API ALvoid AL_APIENTRY alFilteri(ALuint filter, ALenum param, ALint iValue);
+AL_API ALvoid AL_APIENTRY alFilteriv(ALuint filter, ALenum param, ALint *piValues);
+AL_API ALvoid AL_APIENTRY alFilterf(ALuint filter, ALenum param, ALfloat flValue);
+AL_API ALvoid AL_APIENTRY alFilterfv(ALuint filter, ALenum param, ALfloat *pflValues);
+AL_API ALvoid AL_APIENTRY alGetFilteri(ALuint filter, ALenum param, ALint *piValue);
+AL_API ALvoid AL_APIENTRY alGetFilteriv(ALuint filter, ALenum param, ALint *piValues);
+AL_API ALvoid AL_APIENTRY alGetFilterf(ALuint filter, ALenum param, ALfloat *pflValue);
+AL_API ALvoid AL_APIENTRY alGetFilterfv(ALuint filter, ALenum param, ALfloat *pflValues);
 
-AL_API void AL_APIENTRY alGenAuxiliaryEffectSlots(ALsizei n, ALuint *effectslots);
-AL_API void AL_APIENTRY alDeleteAuxiliaryEffectSlots(ALsizei n, const ALuint *effectslots);
+AL_API ALvoid AL_APIENTRY alGenAuxiliaryEffectSlots(ALsizei n, ALuint *effectslots);
+AL_API ALvoid AL_APIENTRY alDeleteAuxiliaryEffectSlots(ALsizei n, ALuint *effectslots);
 AL_API ALboolean AL_APIENTRY alIsAuxiliaryEffectSlot(ALuint effectslot);
-AL_API void AL_APIENTRY alAuxiliaryEffectSloti(ALuint effectslot, ALenum param, ALint iValue);
-AL_API void AL_APIENTRY alAuxiliaryEffectSlotiv(ALuint effectslot, ALenum param, const ALint *piValues);
-AL_API void AL_APIENTRY alAuxiliaryEffectSlotf(ALuint effectslot, ALenum param, ALfloat flValue);
-AL_API void AL_APIENTRY alAuxiliaryEffectSlotfv(ALuint effectslot, ALenum param, const ALfloat *pflValues);
-AL_API void AL_APIENTRY alGetAuxiliaryEffectSloti(ALuint effectslot, ALenum param, ALint *piValue);
-AL_API void AL_APIENTRY alGetAuxiliaryEffectSlotiv(ALuint effectslot, ALenum param, ALint *piValues);
-AL_API void AL_APIENTRY alGetAuxiliaryEffectSlotf(ALuint effectslot, ALenum param, ALfloat *pflValue);
-AL_API void AL_APIENTRY alGetAuxiliaryEffectSlotfv(ALuint effectslot, ALenum param, ALfloat *pflValues);
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSloti(ALuint effectslot, ALenum param, ALint iValue);
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotiv(ALuint effectslot, ALenum param, ALint *piValues);
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotf(ALuint effectslot, ALenum param, ALfloat flValue);
+AL_API ALvoid AL_APIENTRY alAuxiliaryEffectSlotfv(ALuint effectslot, ALenum param, ALfloat *pflValues);
+AL_API ALvoid AL_APIENTRY alGetAuxiliaryEffectSloti(ALuint effectslot, ALenum param, ALint *piValue);
+AL_API ALvoid AL_APIENTRY alGetAuxiliaryEffectSlotiv(ALuint effectslot, ALenum param, ALint *piValues);
+AL_API ALvoid AL_APIENTRY alGetAuxiliaryEffectSlotf(ALuint effectslot, ALenum param, ALfloat *pflValue);
+AL_API ALvoid AL_APIENTRY alGetAuxiliaryEffectSlotfv(ALuint effectslot, ALenum param, ALfloat *pflValues);
 #endif
 
 /* Filter ranges and defaults. */
 
 /* Lowpass filter */
-#define AL_LOWPASS_MIN_GAIN                      (0.0f)
-#define AL_LOWPASS_MAX_GAIN                      (1.0f)
-#define AL_LOWPASS_DEFAULT_GAIN                  (1.0f)
+#define LOWPASS_MIN_GAIN                         (0.0f)
+#define LOWPASS_MAX_GAIN                         (1.0f)
+#define LOWPASS_DEFAULT_GAIN                     (1.0f)
 
-#define AL_LOWPASS_MIN_GAINHF                    (0.0f)
-#define AL_LOWPASS_MAX_GAINHF                    (1.0f)
-#define AL_LOWPASS_DEFAULT_GAINHF                (1.0f)
+#define LOWPASS_MIN_GAINHF                       (0.0f)
+#define LOWPASS_MAX_GAINHF                       (1.0f)
+#define LOWPASS_DEFAULT_GAINHF                   (1.0f)
 
 /* Highpass filter */
-#define AL_HIGHPASS_MIN_GAIN                     (0.0f)
-#define AL_HIGHPASS_MAX_GAIN                     (1.0f)
-#define AL_HIGHPASS_DEFAULT_GAIN                 (1.0f)
+#define HIGHPASS_MIN_GAIN                        (0.0f)
+#define HIGHPASS_MAX_GAIN                        (1.0f)
+#define HIGHPASS_DEFAULT_GAIN                    (1.0f)
 
-#define AL_HIGHPASS_MIN_GAINLF                   (0.0f)
-#define AL_HIGHPASS_MAX_GAINLF                   (1.0f)
-#define AL_HIGHPASS_DEFAULT_GAINLF               (1.0f)
+#define HIGHPASS_MIN_GAINLF                      (0.0f)
+#define HIGHPASS_MAX_GAINLF                      (1.0f)
+#define HIGHPASS_DEFAULT_GAINLF                  (1.0f)
 
 /* Bandpass filter */
-#define AL_BANDPASS_MIN_GAIN                     (0.0f)
-#define AL_BANDPASS_MAX_GAIN                     (1.0f)
-#define AL_BANDPASS_DEFAULT_GAIN                 (1.0f)
+#define BANDPASS_MIN_GAIN                        (0.0f)
+#define BANDPASS_MAX_GAIN                        (1.0f)
+#define BANDPASS_DEFAULT_GAIN                    (1.0f)
 
-#define AL_BANDPASS_MIN_GAINHF                   (0.0f)
-#define AL_BANDPASS_MAX_GAINHF                   (1.0f)
-#define AL_BANDPASS_DEFAULT_GAINHF               (1.0f)
+#define BANDPASS_MIN_GAINHF                      (0.0f)
+#define BANDPASS_MAX_GAINHF                      (1.0f)
+#define BANDPASS_DEFAULT_GAINHF                  (1.0f)
 
-#define AL_BANDPASS_MIN_GAINLF                   (0.0f)
-#define AL_BANDPASS_MAX_GAINLF                   (1.0f)
-#define AL_BANDPASS_DEFAULT_GAINLF               (1.0f)
+#define BANDPASS_MIN_GAINLF                      (0.0f)
+#define BANDPASS_MAX_GAINLF                      (1.0f)
+#define BANDPASS_DEFAULT_GAINLF                  (1.0f)
 
 
 /* Effect parameter ranges and defaults. */

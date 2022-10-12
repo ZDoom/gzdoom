@@ -89,112 +89,31 @@ static const int16_t delta_table[] = {
 };
 
 
-// macros to fetch little-endian words from a bytestream
-#define LE_16(x)  ((uint16_t)((*(x)) | ((*((x)+1)) << 8)))
-#define LE_32(x)  (LE_16(x) | ((uint32_t)LE_16(x+2) << 16))
-#define LE_64(x)  (LE_32(x) | ((uint64_t)LE_32(x+4) << 32))
+// macro to fetch 16-bit little-endian words from a bytestream
+#define LE_16(x)  ((*x) | ((*(x+1)) << 8))
 
-
-bool InterplayDecoder::FillSamples(void *buff, int len)
+static bool StreamCallbackFunc(SoundStream* stream, void* buff, int len, void* userdata)
 {
-    for (int i = 0; i < len;)
-    {
-        if(audio.nRead < audio.nWrite)
-        {
-            int todo = std::min(audio.nWrite-audio.nRead, (len-i) / 2);
-            memcpy((char*)buff+i, &audio.samples[audio.nRead], todo*2);
-            audio.nRead += todo;
-            if (audio.nRead == audio.nWrite)
-                audio.nRead = audio.nWrite = 0;
-            i += todo*2;
-            continue;
-        }
-
-        std::unique_lock plock(PacketMutex);
-        while (audio.Packets.empty())
-        {
-            if (!bIsPlaying || ProcessNextChunk() >= CHUNK_SHUTDOWN)
-            {
-                bIsPlaying = false;
-                if (i == 0)
-                    return false;
-                memset((char*)buff+i, 0, len-i);
-                return true;
-            }
-        }
-        AudioPacket pkt = std::move(audio.Packets.front());
-        audio.Packets.pop_front();
-        plock.unlock();
-
-        int nSamples = pkt.nSize;
-        const uint8_t *samplePtr = pkt.pData.get();
-        if (audio.bCompressed)
-        {
-            int predictor[2];
-
-            for (int ch = 0; ch < audio.nChannels; ch++)
-            {
-                predictor[ch] = (int16_t)LE_16(samplePtr);
-                samplePtr += 2;
-
-                audio.samples[audio.nWrite++] = predictor[ch];
-            }
-
-            bool stereo = audio.nChannels == 2;
-            nSamples -= 2*audio.nChannels;
-            nSamples &= ~(int)stereo;
-
-            int ch = 0;
-            for (int j = 0; j < nSamples; ++j)
-            {
-                predictor[ch] += delta_table[*samplePtr++];
-                predictor[ch] = clamp(predictor[ch], -32768, 32767);
-
-                audio.samples[audio.nWrite++] = predictor[ch];
-
-                // toggle channel
-                ch ^= stereo;
-            }
-        }
-        else if (audio.nBitDepth == 8)
-        {
-            for (int j = 0; j < nSamples; ++j)
-                audio.samples[audio.nWrite++] = ((*samplePtr++)-128) << 8;
-        }
-        else
-        {
-            nSamples /= 2;
-            for (int j = 0; j < nSamples; ++j)
-            {
-                audio.samples[audio.nWrite++] = (int16_t)LE_16(samplePtr);
-                samplePtr += 2;
-            }
-        }
-    }
+    InterplayDecoder* pId = (InterplayDecoder*)userdata;
+    memcpy(buff, &pId->audio.samples[pId->audio.nRead], len);
+    pId->audio.nRead += len / 2;
+    if (pId->audio.nRead >= (int)countof(pId->audio.samples)) pId->audio.nRead = 0;
     return true;
 }
-
-void InterplayDecoder::DisableAudio()
-{
-    if (bAudioEnabled)
-    {
-        std::unique_lock plock(PacketMutex);
-        bAudioEnabled = false;
-        audio.Packets.clear();
-    }
-}
-
 
 InterplayDecoder::InterplayDecoder(bool soundenabled)
 {
     bIsPlaying = false;
-    bAudioEnabled = soundenabled;
+    bAudioStarted = !soundenabled;  // This prevents the stream from getting created
 
     nWidth  = 0;
     nHeight = 0;
     nFrame  = 0;
 
     memset(palette, 0, sizeof(palette));
+    memset(&audio, 0, sizeof(audio));
+    audio.nRead = 18000;    // skip the initial silence. This is needed to sync audio and video because OpenAL's lag is a bit on the high side.
+
 
     nFps = 0.0;
     nFrameDuration = 0;
@@ -225,277 +144,13 @@ void InterplayDecoder::SwapFrames()
     nCurrentVideoBuffer = t;
 }
 
-int InterplayDecoder::ProcessNextChunk()
-{
-    uint8_t chunkPreamble[CHUNK_PREAMBLE_SIZE];
-    if (fr.Read(chunkPreamble, CHUNK_PREAMBLE_SIZE) != CHUNK_PREAMBLE_SIZE) {
-        Printf(TEXTCOLOR_RED "InterplayDecoder: could not read from file (EOF?)\n");
-        return CHUNK_EOF;
-    }
-
-    int chunkSize = LE_16(&chunkPreamble[0]);
-    int chunkType = LE_16(&chunkPreamble[2]);
-
-    ChunkData.resize(chunkSize);
-    if (fr.Read(ChunkData.data(), chunkSize) != chunkSize) {
-        Printf(TEXTCOLOR_RED "InterplayDecoder: could not read from file (EOF?)\n");
-        return CHUNK_BAD;
-    }
-
-    const uint8_t *palPtr = nullptr;
-    const uint8_t *mapPtr = nullptr;
-    const uint8_t *vidPtr = nullptr;
-    int palStart = 0, palCount = 0;
-    int mapSize = 0, vidSize = 0;
-
-    // iterate through individual opcodes
-    const uint8_t *chunkPtr = ChunkData.data();
-    while (chunkSize > 0 && chunkType != CHUNK_BAD)
-    {
-        if (chunkSize < OPCODE_PREAMBLE_SIZE)
-        {
-            Printf(TEXTCOLOR_RED "InterplayDecoder: opcode size too small\n");
-            return CHUNK_BAD;
-        }
-        int opcodeSize = LE_16(chunkPtr);
-        int opcodeType = chunkPtr[2];
-        int opcodeVersion = chunkPtr[3];
-
-        chunkPtr += OPCODE_PREAMBLE_SIZE;
-        chunkSize -= OPCODE_PREAMBLE_SIZE;
-        if (chunkSize < opcodeSize)
-        {
-            Printf(TEXTCOLOR_RED "InterplayDecoder: opcode size too large for chunk\n");
-            return CHUNK_BAD;
-        }
-        chunkSize -= opcodeSize;
-
-        switch (opcodeType)
-        {
-        case OPCODE_END_OF_STREAM:
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_END_OF_CHUNK:
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_CREATE_TIMER:
-            nTimerRate = LE_32(chunkPtr);
-            nTimerDiv  = LE_16(chunkPtr+4);
-            chunkPtr += 6;
-            nFrameDuration = ((uint64_t)nTimerRate * nTimerDiv) * 1000;
-            break;
-
-        case OPCODE_INIT_AUDIO_BUFFERS:
-        {
-            // Skip 2 bytes
-            uint16_t flags = LE_16(chunkPtr+2);
-            audio.nSampleRate = LE_16(chunkPtr+4);
-            chunkPtr += 6;
-
-            uint32_t nBufferBytes = (opcodeVersion == 0) ? LE_16(chunkPtr) : LE_32(chunkPtr);
-            chunkPtr += (opcodeVersion == 0) ? 2 : 4;
-
-            audio.nChannels = (flags & 0x1) ? 2 : 1;
-            audio.nBitDepth = (flags & 0x2) ? 16 : 8;
-            audio.bCompressed = (opcodeVersion > 0 && (flags & 0x4));
-            audio.samples = std::make_unique<int16_t[]>(nBufferBytes / (audio.nBitDepth/8));
-            audio.nRead = audio.nWrite = 0;
-            break;
-        }
-
-        case OPCODE_START_STOP_AUDIO:
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_INIT_VIDEO_BUFFERS:
-        {
-            assert(((opcodeVersion == 0 && opcodeSize >= 4) ||
-                (opcodeVersion == 1 && opcodeSize >= 6) ||
-                (opcodeVersion == 2 && opcodeSize >= 8)) &&
-                opcodeSize <= 8 && ! videoStride);
-
-            nWidth  = LE_16(chunkPtr) * 8;
-            nHeight = LE_16(chunkPtr+2) * 8;
-
-            int count, truecolour;
-            if (opcodeVersion > 0)
-            {
-                count = LE_16(chunkPtr+4);
-                if (opcodeVersion > 1)
-                {
-                    truecolour = LE_16(chunkPtr+6);
-                    assert(truecolour == 0);
-                }
-            }
-            chunkPtr += opcodeSize;
-
-            pVideoBuffers[0] = new uint8_t[nWidth * nHeight];
-            pVideoBuffers[1] = new uint8_t[nWidth * nHeight];
-
-            videoStride = nWidth;
-
-            animtex.SetSize(AnimTexture::Paletted, nWidth, nHeight);
-            break;
-        }
-
-        case OPCODE_UNKNOWN_06:
-        case OPCODE_UNKNOWN_0E:
-        case OPCODE_UNKNOWN_10:
-        case OPCODE_UNKNOWN_12:
-        case OPCODE_UNKNOWN_13:
-        case OPCODE_UNKNOWN_14:
-        case OPCODE_UNKNOWN_15:
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_SEND_BUFFER:
-            //int nPalStart = LE_16(chunkPtr);
-            //int nPalCount = LE_16(chunkPtr+2);
-
-            {
-                VideoPacket pkt;
-                pkt.pData = std::make_unique<uint8_t[]>(palCount*3 + mapSize + vidSize);
-                pkt.nPalStart = palStart;
-                pkt.nPalCount = palCount;
-                pkt.nDecodeMapSize = mapSize;
-                pkt.nVideoDataSize = vidSize;
-
-                if (palPtr)
-                    memcpy(pkt.pData.get(), palPtr, palCount*3);
-                if (mapPtr)
-                    memcpy(pkt.pData.get() + palCount*3, mapPtr, mapSize);
-                if (vidPtr)
-                    memcpy(pkt.pData.get() + palCount*3 + mapSize, vidPtr, vidSize);
-                pkt.bSendFlag = true;
-                VideoPackets.emplace_back(std::move(pkt));
-            }
-
-            palPtr = nullptr;
-            palStart = palCount = 0;
-            mapPtr = nullptr;
-            mapSize = 0;
-            vidPtr = nullptr;
-            vidSize = 0;
-
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_AUDIO_FRAME:
-        {
-            uint16_t seqIndex   = LE_16(chunkPtr);
-            uint16_t streamMask = LE_16(chunkPtr+2);
-            uint16_t nSamples   = LE_16(chunkPtr+4); // number of samples this chunk(?)
-            chunkPtr += 6;
-
-            // We only bother with stream 0
-            if (!(streamMask & 1) || !bAudioEnabled)
-            {
-                chunkPtr += opcodeSize - 6;
-                break;
-            }
-
-            AudioPacket pkt;
-            pkt.nSize = opcodeSize - 6;
-            pkt.pData = std::make_unique<uint8_t[]>(pkt.nSize);
-            memcpy(pkt.pData.get(), chunkPtr, pkt.nSize);
-            audio.Packets.emplace_back(std::move(pkt));
-
-            chunkPtr += opcodeSize - 6;
-            break;
-        }
-
-        case OPCODE_SILENCE_FRAME:
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_INIT_VIDEO_MODE:
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_CREATE_GRADIENT:
-            chunkPtr += opcodeSize;
-            Printf("InterplayDecoder: Create gradient not supported.\n");
-            break;
-
-        case OPCODE_SET_PALETTE:
-            if (opcodeSize > 0x304 || opcodeSize < 4) {
-                Printf("set_palette opcode with invalid size\n");
-                chunkType = CHUNK_BAD;
-                break;
-            }
-
-            palStart = LE_16(chunkPtr);
-            palCount = LE_16(chunkPtr+2);
-            palPtr = chunkPtr + 4;
-            if (palStart > 255 || palStart+palCount > 256) {
-                Printf("set_palette indices out of range (%d -> %d)\n", palStart, palStart+palCount-1);
-                chunkType = CHUNK_BAD;
-                break;
-            }
-            if (opcodeSize-4 < palCount*3) {
-                Printf("set_palette opcode too small (%d < %d)\n", opcodeSize-4, palCount*3);
-                chunkType = CHUNK_BAD;
-                break;
-            }
-
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_SET_PALETTE_COMPRESSED:
-            chunkPtr += opcodeSize;
-            Printf("InterplayDecoder: Set palette compressed not supported.\n");
-            break;
-
-        case OPCODE_SET_DECODING_MAP:
-            mapPtr = chunkPtr;
-            mapSize = opcodeSize;
-
-            chunkPtr += opcodeSize;
-            break;
-
-        case OPCODE_VIDEO_DATA:
-            vidPtr = chunkPtr;
-            vidSize = opcodeSize;
-
-            chunkPtr += opcodeSize;
-            break;
-
-        default:
-            Printf("InterplayDecoder: Unknown opcode (0x%x v%d, %d bytes).\n", opcodeType, opcodeVersion, opcodeSize);
-            chunkPtr += opcodeSize;
-            break;
-        }
-    }
-
-    if (chunkType < CHUNK_SHUTDOWN && (palPtr || mapPtr || vidPtr))
-    {
-        VideoPacket pkt;
-        pkt.pData = std::make_unique<uint8_t[]>(palCount*3 + mapSize + vidSize);
-        pkt.nPalStart = palStart;
-        pkt.nPalCount = palCount;
-        pkt.nDecodeMapSize = mapSize;
-        pkt.nVideoDataSize = vidSize;
-
-        if (palPtr)
-            memcpy(pkt.pData.get(), palPtr, palCount*3);
-        if(mapPtr)
-            memcpy(pkt.pData.get() + palCount*3, mapPtr, mapSize);
-        if(vidPtr)
-            memcpy(pkt.pData.get() + palCount*3 + mapSize, vidPtr, vidSize);
-        pkt.bSendFlag = false;
-        VideoPackets.emplace_back(std::move(pkt));
-    }
-
-    return chunkType;
-}
-
-
 void InterplayDecoder::Close()
 {
-    bIsPlaying = false;
     fr.Close();
+    bIsPlaying = false;
+    if (stream)
+        S_StopCustomStream(stream);
+    stream = nullptr;
 
     if (decodeMap.pData) {
         delete[] decodeMap.pData;
@@ -530,191 +185,373 @@ bool InterplayDecoder::Open(FileReader &fr_)
     fr_.Seek(6, FileReader::SeekCur);
     fr = std::move(fr_);
 
-    if (ProcessNextChunk() != CHUNK_INIT_VIDEO)
-    {
-        Printf(TEXTCOLOR_RED "InterplayDecoder: First chunk not CHUNK_INIT_VIDEO\n");
-        return false;
-    }
-
-    uint8_t chunkPreamble[CHUNK_PREAMBLE_SIZE];
-    if (fr.Read(chunkPreamble, CHUNK_PREAMBLE_SIZE) != CHUNK_PREAMBLE_SIZE) {
-        Printf(TEXTCOLOR_RED "InterplayDecoder: could not read from file (EOF?)\n");
-        return false;
-    }
-    fr.Seek(-CHUNK_PREAMBLE_SIZE, FileReader::SeekCur);
-
-    int chunkType = LE_16(&chunkPreamble[2]);
-    if (chunkType == CHUNK_VIDEO)
-        bAudioEnabled = false;
-    else
-    {
-        if (ProcessNextChunk() != CHUNK_INIT_AUDIO)
-        {
-            Printf(TEXTCOLOR_RED "InterplayDecoder: Second non-video chunk not CHUNK_INIT_AUDIO\n");
-            return false;
-        }
-        bAudioEnabled = audio.nSampleRate > 0;
-    }
-
-    bIsPlaying = true;
+    //Run();
 
     return true;
 }
 
 bool InterplayDecoder::RunFrame(uint64_t clock)
 {
-    // handle timing - wait until we're ready to process the next frame.
-    if (nNextFrameTime > clock) {
-        return true;
-    }
-    nNextFrameTime += nFrameDuration;
+    uint8_t chunkPreamble[CHUNK_PREAMBLE_SIZE];
+    uint8_t opcodePreamble[OPCODE_PREAMBLE_SIZE];
+    uint8_t opcodeType;
+    uint8_t opcodeVersion;
+    int opcodeSize, chunkSize;
+    int chunkType = 0;
 
-    bool doFrame = false;
+    // iterate through the chunks in the file
     do
     {
-        std::unique_lock plock(PacketMutex);
-        while (VideoPackets.empty())
+        // handle timing - wait until we're ready to process the next frame.
+        if (nNextFrameTime > clock) {
+            return true;
+        }
+        else {
+            nNextFrameTime += nFrameDuration;
+        }
+
+        if (fr.Read(chunkPreamble, CHUNK_PREAMBLE_SIZE) != CHUNK_PREAMBLE_SIZE) {
+            Printf(TEXTCOLOR_RED "InterplayDecoder: could not read from file (EOF?)\n");
+            return false;
+        }
+
+        chunkSize = LE_16(&chunkPreamble[0]);
+        chunkType = LE_16(&chunkPreamble[2]);
+
+        // iterate through individual opcodes
+        while (chunkSize > 0)
         {
-            if (!bIsPlaying || ProcessNextChunk() >= CHUNK_SHUTDOWN)
+            if (fr.Read(opcodePreamble, OPCODE_PREAMBLE_SIZE) != OPCODE_PREAMBLE_SIZE)
             {
-                bIsPlaying = false;
+                Printf(TEXTCOLOR_RED "InterplayDecoder: could not read from file (EOF?)\n");
                 return false;
             }
-        }
-        VideoPacket pkt = std::move(VideoPackets.front());
-        VideoPackets.pop_front();
-        plock.unlock();
 
-        const uint8_t *palData = pkt.pData.get();
-        const uint8_t *mapData = palData + pkt.nPalCount*3;
-        const uint8_t *vidData = mapData + pkt.nDecodeMapSize;
+            opcodeSize = LE_16(&opcodePreamble[0]);
+            opcodeType = opcodePreamble[2];
+            opcodeVersion = opcodePreamble[3];
 
-        if (pkt.nPalCount > 0)
-        {
-            int nPalEnd = pkt.nPalStart + pkt.nPalCount;
-            for (int i = pkt.nPalStart; i < nPalEnd; i++)
+            chunkSize -= OPCODE_PREAMBLE_SIZE;
+            chunkSize -= opcodeSize;
+
+            switch (opcodeType)
             {
-                palette[i].r = (*palData++) << 2;
-                palette[i].g = (*palData++) << 2;
-                palette[i].b = (*palData++) << 2;
-                palette[i].r |= palette[i].r >> 6;
-                palette[i].g |= palette[i].g >> 6;
-                palette[i].b |= palette[i].b >> 6;
+            case OPCODE_END_OF_STREAM:
+            {
+                fr.Seek(opcodeSize, FileReader::SeekCur);
+                break;
             }
-        }
 
-        if (pkt.nDecodeMapSize > 0)
-        {
-            if (!decodeMap.pData)
+            case OPCODE_END_OF_CHUNK:
             {
-                decodeMap.pData = new uint8_t[pkt.nDecodeMapSize];
-                decodeMap.nSize = pkt.nDecodeMapSize;
+                fr.Seek(opcodeSize, FileReader::SeekCur);
+                break;
             }
-            else
+
+            case OPCODE_CREATE_TIMER:
             {
-                if (pkt.nDecodeMapSize != decodeMap.nSize) {
-                    delete[] decodeMap.pData;
-                    decodeMap.pData = new uint8_t[pkt.nDecodeMapSize];
-                    decodeMap.nSize = pkt.nDecodeMapSize;
+                nTimerRate = fr.ReadUInt32();
+                nTimerDiv  = fr.ReadUInt16();
+                nFrameDuration = ((uint64_t)nTimerRate * nTimerDiv) * 1000;
+                break;
+            }
+
+            case OPCODE_INIT_AUDIO_BUFFERS:
+            {
+                fr.Seek(2, FileReader::SeekCur);
+                uint16_t flags = fr.ReadUInt16();
+                audio.nSampleRate = fr.ReadUInt16();
+
+                uint32_t nBufferBytes;
+
+                if (opcodeVersion == 0) {
+                    nBufferBytes = fr.ReadUInt16();
                 }
+                else {
+                    nBufferBytes = fr.ReadUInt32();
+                }
+
+                if (flags & 0x1) {
+                    audio.nChannels = 2;
+                }
+                else {
+                    audio.nChannels = 1;
+                }
+                if (flags & 0x2) {
+                    audio.nBitDepth = 16;
+                }
+                else {
+                    audio.nBitDepth = 8;
+                }
+                break;
             }
 
-            memcpy(decodeMap.pData, mapData, pkt.nDecodeMapSize);
-        }
-
-        if (pkt.nVideoDataSize > 0 && decodeMap.nSize > 0)
-        {
-            auto pStart = vidData;
-
-            // need to skip 14 bytes
-            ChunkPtr = pStart + 14;
-
-            int i = 0;
-            for (uint32_t y = 0; y < nHeight; y += 8)
+            case OPCODE_START_STOP_AUDIO:
             {
-                for (uint32_t x = 0; x < nWidth; x += 8)
+                if (!bAudioStarted)
                 {
-                    uint32_t opcode;
+                    // start audio playback
+                    stream = S_CreateCustomStream(6000, audio.nSampleRate, audio.nChannels, StreamCallbackFunc, this);
+                    bAudioStarted = true;
+                }
 
-                    // alternate between getting low and high 4 bits
-                    if (i & 1) {
-                        opcode = decodeMap.pData[i >> 1] >> 4;
-                    }
-                    else {
-                        opcode = decodeMap.pData[i >> 1] & 0x0F;
-                    }
+                fr.Seek(opcodeSize, FileReader::SeekCur);
+                break;
+            }
+
+            case OPCODE_INIT_VIDEO_BUFFERS:
+            {
+                assert(opcodeSize == 8);
+                nWidth  = fr.ReadUInt16() * 8;
+                nHeight = fr.ReadUInt16() * 8;
+
+                int count = fr.ReadUInt16();
+                int truecolour = fr.ReadUInt16();
+                assert(truecolour == 0);
+
+                pVideoBuffers[0] = new uint8_t[nWidth * nHeight];
+                pVideoBuffers[1] = new uint8_t[nWidth * nHeight];
+
+                videoStride = nWidth;
+
+                animtex.SetSize(AnimTexture::Paletted, nWidth, nHeight);
+                break;
+            }
+
+            case OPCODE_UNKNOWN_06:
+            case OPCODE_UNKNOWN_0E:
+            case OPCODE_UNKNOWN_10:
+            case OPCODE_UNKNOWN_12:
+            case OPCODE_UNKNOWN_13:
+            case OPCODE_UNKNOWN_14:
+            case OPCODE_UNKNOWN_15:
+            {
+                fr.Seek(opcodeSize, FileReader::SeekCur);
+                break;
+            }
+
+            case OPCODE_SEND_BUFFER:
+            {
+                int nPalStart = fr.ReadUInt16();
+                int nPalCount = fr.ReadUInt16();
+
+                animtex.SetFrame(&palette[0].r , GetCurrentFrame());
+
+                nFrame++;
+                SwapFrames();
+
+                fr.Seek(opcodeSize-4, FileReader::SeekCur);
+                break;
+            }
+
+            case OPCODE_AUDIO_FRAME:
+            {
+                int nStart = (int)fr.Tell();
+                uint16_t seqIndex   = fr.ReadUInt16();
+                uint16_t streamMask = fr.ReadUInt16();
+                uint16_t nSamples   = fr.ReadUInt16(); // number of samples this chunk
+
+                int predictor[2];
+                int i = 0;
+
+                for (int ch = 0; ch < audio.nChannels; ch++)
+                {
+                    predictor[ch] = fr.ReadUInt16();
                     i++;
 
-                    int32_t offset = x + (y * videoStride);
-
-                    switch (opcode)
-                    {
-                        default:
-                            break;
-                        case 0:
-                            DecodeBlock0(offset);
-                            break;
-                        case 1:
-                            DecodeBlock1(offset);
-                            break;
-                        case 2:
-                            DecodeBlock2(offset);
-                            break;
-                        case 3:
-                            DecodeBlock3(offset);
-                            break;
-                        case 4:
-                            DecodeBlock4(offset);
-                            break;
-                        case 5:
-                            DecodeBlock5(offset);
-                            break;
-                        case 7:
-                            DecodeBlock7(offset);
-                            break;
-                        case 8:
-                            DecodeBlock8(offset);
-                            break;
-                        case 9:
-                            DecodeBlock9(offset);
-                            break;
-                        case 10:
-                            DecodeBlock10(offset);
-                            break;
-                        case 11:
-                            DecodeBlock11(offset);
-                            break;
-                        case 12:
-                            DecodeBlock12(offset);
-                            break;
-                        case 13:
-                            DecodeBlock13(offset);
-                            break;
-                        case 14:
-                            DecodeBlock14(offset);
-                            break;
-                        case 15:
-                            DecodeBlock15(offset);
-                            break;
+                    if (predictor[ch] & 0x8000) {
+                        predictor[ch] |= 0xFFFF0000; // sign extend
                     }
+
+                    audio.samples[audio.nWrite++] = predictor[ch];
+                    if (audio.nWrite >= (int)countof(audio.samples)) audio.nWrite = 0;
                 }
+
+                int ch = 0;
+                for (; i < (nSamples / 2); i++)
+                {
+                    predictor[ch] += delta_table[fr.ReadUInt8()];
+                    predictor[ch] = clamp(predictor[ch], -32768, 32768);
+
+                    audio.samples[audio.nWrite++] = predictor[ch];
+                    if (audio.nWrite >= (int)countof(audio.samples)) audio.nWrite = 0;
+
+                    // toggle channel
+                    ch ^= audio.nChannels - 1;
+                }
+
+                int nEnd = (int)fr.Tell();
+                int nRead = nEnd - nStart;
+                assert(opcodeSize == nRead);
+                break;
             }
 
-            auto pEnd = ChunkPtr;
-            // we can end up with 1 byte left we need to skip
-            int nSkipBytes = pkt.nVideoDataSize - (int)(pEnd - pStart);
-            assert(nSkipBytes <= 1);
+            case OPCODE_SILENCE_FRAME:
+            {
+                uint16_t seqIndex = fr.ReadUInt16();
+                uint16_t streamMask = fr.ReadUInt16();
+                uint16_t nStreamLen = fr.ReadUInt16();
+                break;
+            }
+
+            case OPCODE_INIT_VIDEO_MODE:
+            {
+                fr.Seek(opcodeSize, FileReader::SeekCur);
+                break;
+            }
+
+            case OPCODE_CREATE_GRADIENT:
+            {
+                fr.Seek(opcodeSize, FileReader::SeekCur);
+                Printf("InterplayDecoder: Create gradient not supported.\n");
+                break;
+            }
+
+            case OPCODE_SET_PALETTE:
+            {
+                if (opcodeSize > 0x304 || opcodeSize < 4) {
+                    Printf("set_palette opcode with invalid size\n");
+                    chunkType = CHUNK_BAD;
+                    break;
+                }
+
+                int nPalStart = fr.ReadUInt16();
+                int nPalCount = fr.ReadUInt16();
+                for (int i = nPalStart; i <= nPalCount; i++)
+                {
+                    palette[i].r = fr.ReadUInt8() << 2;
+                    palette[i].g = fr.ReadUInt8() << 2;
+                    palette[i].b = fr.ReadUInt8() << 2;
+                }
+                break;
+            }
+
+            case OPCODE_SET_PALETTE_COMPRESSED:
+            {
+                fr.Seek(opcodeSize, FileReader::SeekCur);
+                Printf("InterplayDecoder: Set palette compressed not supported.\n");
+                break;
+            }
+
+            case OPCODE_SET_DECODING_MAP:
+            {
+                if (!decodeMap.pData)
+                {
+                    decodeMap.pData = new uint8_t[opcodeSize];
+                    decodeMap.nSize = opcodeSize;
+                }
+                else
+                {
+                    if (opcodeSize != (int)decodeMap.nSize) {
+                        delete[] decodeMap.pData;
+                        decodeMap.pData = new uint8_t[opcodeSize];
+                        decodeMap.nSize = opcodeSize;
+                    }
+                }
+
+                int nRead = (int)fr.Read(decodeMap.pData, opcodeSize);
+                assert(nRead == opcodeSize);
+                break;
+            }
+
+            case OPCODE_VIDEO_DATA:
+            {
+                int nStart = (int)fr.Tell();
+
+                // need to skip 14 bytes
+                fr.Seek(14, FileReader::SeekCur);
+
+                if (decodeMap.nSize)
+                {
+                    int i = 0;
+
+                    for (uint32_t y = 0; y < nHeight; y += 8)
+                    {
+                        for (uint32_t x = 0; x < nWidth; x += 8)
+                        {
+                            uint32_t opcode;
+
+                            // alternate between getting low and high 4 bits
+                            if (i & 1) {
+                                opcode = decodeMap.pData[i >> 1] >> 4;
+                            }
+                            else {
+                                opcode = decodeMap.pData[i >> 1] & 0x0F;
+                            }
+                            i++;
+
+                            int32_t offset = x + (y * videoStride);
+
+                            switch (opcode)
+                            {
+                                default:
+                                    break;
+                                case 0:
+                                    DecodeBlock0(offset);
+                                    break;
+                                case 1:
+                                    DecodeBlock1(offset);
+                                    break;
+                                case 2:
+                                    DecodeBlock2(offset);
+                                    break;
+                                case 3:
+                                    DecodeBlock3(offset);
+                                    break;
+                                case 4:
+                                    DecodeBlock4(offset);
+                                    break;
+                                case 5:
+                                    DecodeBlock5(offset);
+                                    break;
+                                case 7:
+                                    DecodeBlock7(offset);
+                                    break;
+                                case 8:
+                                    DecodeBlock8(offset);
+                                    break;
+                                case 9:
+                                    DecodeBlock9(offset);
+                                    break;
+                                case 10:
+                                    DecodeBlock10(offset);
+                                    break;
+                                case 11:
+                                    DecodeBlock11(offset);
+                                    break;
+                                case 12:
+                                    DecodeBlock12(offset);
+                                    break;
+                                case 13:
+                                    DecodeBlock13(offset);
+                                    break;
+                                case 14:
+                                    DecodeBlock14(offset);
+                                    break;
+                                case 15:
+                                    DecodeBlock15(offset);
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                int nEnd = (int)fr.Tell();
+                int nSkipBytes = opcodeSize - (nEnd - nStart); // we can end up with 1 byte left we need to skip
+                assert(nSkipBytes <= 1);
+
+                fr.Seek(nSkipBytes, FileReader::SeekCur);
+                break;
+            }
+
+            default:
+                break;
+            }
         }
 
-        doFrame = pkt.bSendFlag;
-    } while(!doFrame);
-
-    animtex.SetFrame(&palette[0].r , GetCurrentFrame());
-
-    nFrame++;
-    SwapFrames();
-
-    return true;
+    }
+    while (chunkType < CHUNK_VIDEO && bIsPlaying);
+    return chunkType != CHUNK_END;
 }
 
 void InterplayDecoder::CopyBlock(uint8_t* pDest, uint8_t* pSrc)
@@ -744,7 +581,7 @@ void InterplayDecoder::DecodeBlock1(int32_t offset)
 void InterplayDecoder::DecodeBlock2(int32_t offset)
 {
     // copy block from 2 frames ago using a motion vector; need 1 more byte
-    uint8_t B = *ChunkPtr++;
+    uint8_t B = fr.ReadUInt8();
 
     int x, y;
 
@@ -766,7 +603,7 @@ void InterplayDecoder::DecodeBlock2(int32_t offset)
 void InterplayDecoder::DecodeBlock3(int32_t offset)
 {
     // copy 8x8 block from current frame from an up/left block
-    uint8_t B = *ChunkPtr++;
+    uint8_t B = fr.ReadUInt8();
 
     int x, y;
 
@@ -792,7 +629,7 @@ void InterplayDecoder::DecodeBlock4(int32_t offset)
     int x, y;
     uint8_t B, BL, BH;
 
-    B = *ChunkPtr++;
+    B = fr.ReadUInt8();
 
     BL = B & 0x0F;
     BH = (B >> 4) & 0x0F;
@@ -808,8 +645,8 @@ void InterplayDecoder::DecodeBlock4(int32_t offset)
 void InterplayDecoder::DecodeBlock5(int32_t offset)
 {
     // copy a block from the previous frame using an expanded range; need 2 more bytes
-    int8_t x = *ChunkPtr++;
-    int8_t y = *ChunkPtr++;
+    int8_t x = fr.ReadUInt8();
+    int8_t y = fr.ReadUInt8();
 
     uint8_t* pDest = GetCurrentFrame() + (intptr_t)offset;
     uint8_t* pSrc = GetPreviousFrame() + (intptr_t)(int64_t)offset + (int64_t)x + (int64_t(y) * (int64_t)videoStride);
@@ -825,8 +662,8 @@ void InterplayDecoder::DecodeBlock7(int32_t offset)
     uint32_t flags = 0;
 
     uint8_t P[2];
-    P[0] = *ChunkPtr++;
-    P[1] = *ChunkPtr++;
+    P[0] = fr.ReadUInt8();
+    P[1] = fr.ReadUInt8();
 
     // 2-color encoding
     if (P[0] <= P[1])
@@ -834,7 +671,7 @@ void InterplayDecoder::DecodeBlock7(int32_t offset)
         // need 8 more bytes from the stream
         for (int y = 0; y < 8; y++)
         {
-            flags = (*ChunkPtr++) | 0x100;
+            flags = fr.ReadUInt8() | 0x100;
             for (; flags != 1; flags >>= 1) {
                 *pBuffer++ = P[flags & 1];
             }
@@ -844,8 +681,7 @@ void InterplayDecoder::DecodeBlock7(int32_t offset)
     else
     {
         // need 2 more bytes from the stream
-        flags = LE_16(ChunkPtr);
-        ChunkPtr += 2;
+        flags = fr.ReadUInt16();
 
         for (int y = 0; y < 8; y += 2)
         {
@@ -868,8 +704,8 @@ void InterplayDecoder::DecodeBlock8(int32_t offset)
     uint8_t P[4];
 
     // 2-color encoding for each 4x4 quadrant, or 2-color encoding on either top and bottom or left and right halves
-    P[0] = *ChunkPtr++;
-    P[1] = *ChunkPtr++;
+    P[0] = fr.ReadUInt8();
+    P[1] = fr.ReadUInt8();
 
     if (P[0] <= P[1])
     {
@@ -879,11 +715,10 @@ void InterplayDecoder::DecodeBlock8(int32_t offset)
             if (!(y & 3))
             {
                 if (y) {
-                    P[0] = *ChunkPtr++;
-                    P[1] = *ChunkPtr++;
+                    P[0] = fr.ReadUInt8();
+                    P[1] = fr.ReadUInt8();
                 }
-                flags = LE_16(ChunkPtr);
-                ChunkPtr += 2;
+                flags = fr.ReadUInt16();
             }
 
             for (int x = 0; x < 4; x++, flags >>= 1) {
@@ -897,10 +732,9 @@ void InterplayDecoder::DecodeBlock8(int32_t offset)
     }
     else
     {
-        flags = LE_32(ChunkPtr);
-        ChunkPtr += 4;
-        P[2] = *ChunkPtr++;
-        P[3] = *ChunkPtr++;
+        flags = fr.ReadUInt32();
+        P[2] = fr.ReadUInt8();
+        P[3] = fr.ReadUInt8();
 
         if (P[2] <= P[3])
         {
@@ -918,8 +752,7 @@ void InterplayDecoder::DecodeBlock8(int32_t offset)
                     pBuffer -= 8 * videoStride - 4;
                     P[0] = P[2];
                     P[1] = P[3];
-                    flags = LE_32(ChunkPtr);
-                    ChunkPtr += 4;
+                    flags = fr.ReadUInt32();
                 }
             }
         }
@@ -931,8 +764,7 @@ void InterplayDecoder::DecodeBlock8(int32_t offset)
                 if (y == 4) {
                     P[0] = P[2];
                     P[1] = P[3];
-                    flags = LE_32(ChunkPtr);
-                    ChunkPtr += 4;
+                    flags = fr.ReadUInt32();
                 }
 
                 for (int x = 0; x < 8; x++, flags >>= 1)
@@ -949,8 +781,7 @@ void InterplayDecoder::DecodeBlock9(int32_t offset)
     uint8_t* pBuffer = GetCurrentFrame() + (intptr_t)offset;
     uint8_t P[4];
 
-    memcpy(P, ChunkPtr, 4);
-    ChunkPtr += 4;
+    fr.Read(P, 4);
 
     // 4-color encoding
     if (P[0] <= P[1])
@@ -961,8 +792,7 @@ void InterplayDecoder::DecodeBlock9(int32_t offset)
             for (int y = 0; y < 8; y++)
             {
                 // get the next set of 8 2-bit flags
-                int flags = LE_16(ChunkPtr);
-                ChunkPtr += 2;
+                int flags = fr.ReadUInt16();
 
                 for (int x = 0; x < 8; x++, flags >>= 2) {
                     *pBuffer++ = P[flags & 0x03];
@@ -974,8 +804,7 @@ void InterplayDecoder::DecodeBlock9(int32_t offset)
         else
         {
             // 1 of 4 colors for each 2x2 block, need 4 more bytes
-            uint32_t flags = LE_32(ChunkPtr);
-            ChunkPtr += 4;
+            uint32_t flags = fr.ReadUInt32();
 
             for (int y = 0; y < 8; y += 2)
             {
@@ -994,8 +823,7 @@ void InterplayDecoder::DecodeBlock9(int32_t offset)
     else
     {
         // 1 of 4 colors for each 2x1 or 1x2 block, need 8 more bytes
-        uint64_t flags = LE_64(ChunkPtr);
-        ChunkPtr += 8;
+        uint64_t flags = fr.ReadUInt64();
 
         if (P[2] <= P[3])
         {
@@ -1029,8 +857,7 @@ void InterplayDecoder::DecodeBlock10(int32_t offset)
     uint8_t* pBuffer = GetCurrentFrame() + (intptr_t)offset;
     uint8_t P[8];
 
-    memcpy(P, ChunkPtr, 4);
-    ChunkPtr += 4;
+    fr.Read(P, 4);
 
     // 4-color encoding for each 4x4 quadrant, or 4-color encoding on either top and bottom or left and right halves
     if (P[0] <= P[1])
@@ -1042,12 +869,8 @@ void InterplayDecoder::DecodeBlock10(int32_t offset)
         {
             // new values for each 4x4 block
             if (!(y & 3)) {
-                if (y) {
-                    memcpy(P, ChunkPtr, 4);
-                    ChunkPtr += 4;
-                }
-                flags = LE_32(ChunkPtr);
-                ChunkPtr += 4;
+                if (y) fr.Read(P, 4);
+                flags = fr.ReadUInt32();
             }
 
             for (int x = 0; x < 4; x++, flags >>= 2) {
@@ -1063,11 +886,9 @@ void InterplayDecoder::DecodeBlock10(int32_t offset)
     {
         // vertical split?
         int vert;
-        uint64_t flags = LE_64(ChunkPtr);
-        ChunkPtr += 8;
+        uint64_t flags = fr.ReadUInt64();
 
-        memcpy(P + 4, ChunkPtr, 4);
-        ChunkPtr += 4;
+        fr.Read(P + 4, 4);
         vert = P[4] <= P[5];
 
         // 4-color encoding for either left and right or top and bottom halves
@@ -1087,8 +908,7 @@ void InterplayDecoder::DecodeBlock10(int32_t offset)
             // load values for second half
             if (y == 7) {
                 memcpy(P, P + 4, 4);
-                flags = LE_64(ChunkPtr);
-                ChunkPtr += 8;
+                flags = fr.ReadUInt64();
             }
         }
     }
@@ -1101,8 +921,7 @@ void InterplayDecoder::DecodeBlock11(int32_t offset)
 
     for (int y = 0; y < 8; y++)
     {
-        memcpy(pBuffer, ChunkPtr, 8);
-        ChunkPtr += 8;
+        fr.Read(pBuffer, 8);
         pBuffer += videoStride;
     }
 }
@@ -1119,7 +938,7 @@ void InterplayDecoder::DecodeBlock12(int32_t offset)
             pBuffer[x] =
                 pBuffer[x + 1] =
                 pBuffer[x + videoStride] =
-                pBuffer[x + 1 + videoStride] = *ChunkPtr++;
+                pBuffer[x + 1 + videoStride] = fr.ReadUInt8();
         }
         pBuffer += videoStride * 2;
     }
@@ -1135,8 +954,8 @@ void InterplayDecoder::DecodeBlock13(int32_t offset)
     {
         if (!(y & 3))
         {
-            P[0] = *ChunkPtr++;
-            P[1] = *ChunkPtr++;
+            P[0] = fr.ReadUInt8();
+            P[1] = fr.ReadUInt8();
         }
 
         memset(pBuffer,     P[0], 4);
@@ -1149,7 +968,7 @@ void InterplayDecoder::DecodeBlock14(int32_t offset)
 {
     // 1-color encoding : the whole block is 1 solid color
     uint8_t* pBuffer = GetCurrentFrame() + (intptr_t)offset;
-    uint8_t pix = *ChunkPtr++;
+    uint8_t pix = fr.ReadUInt8();
 
     for (int y = 0; y < 8; y++)
     {
@@ -1164,8 +983,8 @@ void InterplayDecoder::DecodeBlock15(int32_t offset)
     uint8_t* pBuffer = GetCurrentFrame() + (intptr_t)offset;
     uint8_t P[2];
 
-    P[0] = *ChunkPtr++;
-    P[1] = *ChunkPtr++;
+    P[0] = fr.ReadUInt8();
+    P[1] = fr.ReadUInt8();
 
     for (int y = 0; y < 8; y++)
     {

@@ -22,25 +22,6 @@
 
 namespace SmackerCommon {
 
-BitReader::BitReader(SmackerCommon::FileStream &file, uint32_t size)
-{
-	this->file = &file;
-	this->totalSize = size;
-	this->currentOffset = 0;
-	this->bytesRead = 0;
-
-    this->Cache.Resize(size);
-    file.ReadBytes(this->Cache.Data(), size);
-}
-
-BitReader::~BitReader()
-{
-}
-
-void BitReader::FillCache()
-{
-}
-
 uint32_t BitReader::GetSize()
 {
 	return totalSize * 8;
@@ -53,7 +34,7 @@ uint32_t BitReader::GetPosition()
 
 uint32_t BitReader::GetBit()
 {
-	uint32_t ret = (Cache[currentOffset>>3]>>(currentOffset&7))&1;
+	uint32_t ret = (bitData[currentOffset>>3]>>(currentOffset&7))&1;
     currentOffset++;
 	return ret;
 }

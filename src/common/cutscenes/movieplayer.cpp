@@ -85,21 +85,9 @@ static constexpr double AudioSyncThreshold{0.03};
 class MovieAudioTrack
 {
 	SoundStream *AudioStream = nullptr;
-	std::atomic<uint64_t> ClockTime = 0;
-	int64_t AudioOffset = 0;
-	double ClockDiffAvg = 0;
 	int SampleRate = 0;
 	int FrameSize = 0;
-
-	double FilterDelay(double diff)
-	{
-		ClockDiffAvg = ClockDiffAvg*AudioAvgFilterCoeff + diff;
-		diff = ClockDiffAvg*(1.0 - AudioAvgFilterCoeff);
-		if(diff < AudioSyncThreshold/2.0 && diff > -AudioSyncThreshold)
-			return 0.0;
-
-		return diff;
-	}
+	int64_t EndClockDiff = 0;
 
 public:
 	MovieAudioTrack() = default;
@@ -125,27 +113,29 @@ public:
 		AudioStream = nullptr;
 	}
 
-	void SetClock(uint64_t clock) noexcept
+	uint64_t GetClockTime(uint64_t clock)
 	{
-		ClockTime.store(clock, std::memory_order_release);
-	}
+		// If there's no stream playing, report the frame clock adjusted by the audio
+		// end time. This ensures the returned clock keeps incrementing even after
+		// the audio stopped.
+		if(!AudioStream || EndClockDiff != 0)
+			return clock + EndClockDiff;
 
-	// NOTE: The callback (and thus GetClockDiff) can be called before
-	// S_CreateCustomStream returns, and thus before AudioStream gets set. So the
-	// caller needs to pass in the SoundStream given to the callback.
-	double GetClockDiff(SoundStream *stream)
-	{
-		// Calculate the difference in time between the movie clock and the audio position.
-		auto pos = stream->GetPlayPosition();
-		uint64_t clock = ClockTime.load(std::memory_order_acquire);
-		return FilterDelay(clock / 1'000'000'000.0 -
-			double(int64_t(pos.samplesplayed)+AudioOffset) / SampleRate +
-			pos.latency.count() / 1'000'000'000.0);
-	}
+		auto pos = AudioStream->GetPlayPosition();
+		int64_t postime = static_cast<int64_t>(pos.samplesplayed / double(SampleRate) * 1'000'000'000.0);
+		postime = std::max<int64_t>(0, postime - pos.latency.count());
 
-	void AdjustOffset(int adjust) noexcept
-	{
-		AudioOffset += adjust;
+		if(AudioStream->IsEnded())
+		{
+			// If the stream just ended, get the difference between the frame clock and
+			// the audio end time, so future calls keep incrementing the clock from this
+			// point. An alternative option may be to allow the AudioStream to hook into
+			// the audio device clock, which can keep incrementing at the same rate
+			// without the stream itself actually playing.
+			EndClockDiff = postime - clock;
+		}
+
+		return static_cast<uint64_t>(postime);
 	}
 
 	SoundStream *GetAudioStream() const noexcept { return AudioStream; }
@@ -263,52 +253,8 @@ class MvePlayer : public MoviePlayer
 	MovieAudioTrack audioTrack;
 	bool failed = false;
 
-	bool StreamCallback(SoundStream *stream, void *buff, int len)
+	bool StreamCallback(SoundStream*, void *buff, int len)
 	{
-		const double delay = audioTrack.GetClockDiff(stream);
-		const int samplerate = audioTrack.GetSampleRate();
-		const int framesize = audioTrack.GetFrameSize();
-
-		if(delay > 0.0)
-		{
-			// If diff > 0, skip samples. Don't skip more than a full update at once.
-			int skip = std::min(int(delay*samplerate)*framesize, len);
-			if(!decoder.FillSamples(buff, len))
-				return false;
-
-			// Offset the measured audio position to account for the skipped samples.
-			audioTrack.AdjustOffset(skip/framesize);
-
-			if(skip == len)
-				return decoder.FillSamples(buff, len);
-			memmove(buff, (char*)buff+skip, len-skip);
-			if(!decoder.FillSamples((char*)buff+len-skip, skip))
-				memset((char*)buff+len-skip, 0, skip);
-
-			return true;
-		}
-
-		if(delay < 0.0)
-		{
-			// If diff < 0, duplicate samples. Don't duplicate a full update (we need at
-			// least one new sample frame to duplicate).
-			int dup = std::min(int(-delay*samplerate)*framesize, len-framesize);
-			if(!decoder.FillSamples((char*)buff+dup, len-dup))
-				return false;
-
-			if(framesize == 1)
-				memset(buff, ((char*)buff)[dup], dup);
-			else
-			{
-				for(int i=0;i < dup;++i)
-					((char*)buff)[i] = ((char*)buff+dup)[i%framesize];
-			}
-
-			// Offset the measured audio position to account for the duplicated samples.
-			audioTrack.AdjustOffset(-dup/framesize);
-			return true;
-		}
-
 		return decoder.FillSamples(buff, len);
 	}
 	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
@@ -332,19 +278,15 @@ public:
 	{
 		if (failed) return false;
 
-		audioTrack.SetClock(clock);
-		bool playon = decoder.RunFrame(clock);
-		if (playon)
+		if (!audioTrack.GetAudioStream() && decoder.HasAudio() && clock != 0)
 		{
-			if (!audioTrack.GetAudioStream() && decoder.HasAudio())
-			{
-				S_StopMusic(true);
-				// start audio playback
-				if (!audioTrack.Start(decoder.GetSampleRate(), decoder.NumChannels(), MusicSamples16bit, StreamCallbackC, this))
-					decoder.DisableAudio();
-			}
+			S_StopMusic(true);
+			// start audio playback
+			if (!audioTrack.Start(decoder.GetSampleRate(), decoder.NumChannels(), MusicSamples16bit, StreamCallbackC, this))
+				decoder.DisableAudio();
 		}
 
+		bool playon = decoder.RunFrame(audioTrack.GetClockTime(clock));
 		return playon;
 	}
 
@@ -396,52 +338,8 @@ class VpxPlayer : public MoviePlayer
 public:
 	int soundtrack = -1;
 
-	bool StreamCallback(SoundStream *stream, void *buff, int len)
+	bool StreamCallback(SoundStream*, void *buff, int len)
 	{
-		const double delay = AudioTrack.GetClockDiff(stream);
-		const int samplerate = AudioTrack.GetSampleRate();
-		const int framesize = AudioTrack.GetFrameSize();
-
-		if(delay > 0.0)
-		{
-			// If diff > 0, skip samples. Don't skip more than a full update at once.
-			int skip = std::min(int(delay*samplerate)*framesize, len);
-			if(!ZMusic_FillStream(MusicStream, buff, len))
-				return false;
-
-			// Offset the measured audio position to account for the skipped samples.
-			AudioTrack.AdjustOffset(skip/framesize);
-
-			if(skip == len)
-				return ZMusic_FillStream(MusicStream, buff, len);
-			memmove(buff, (char*)buff+skip, len-skip);
-			if(!ZMusic_FillStream(MusicStream, (char*)buff+len-skip, skip))
-				memset((char*)buff+len-skip, 0, skip);
-
-			return true;
-		}
-
-		if(delay < 0.0)
-		{
-			// If diff < 0, duplicate samples. Don't duplicate a full update (we need at
-			// least one new sample frame to duplicate).
-			int dup = std::min(int(-delay*samplerate)*framesize, len-framesize);
-			if(!ZMusic_FillStream(MusicStream, (char*)buff+dup, len-dup))
-				return false;
-
-			if(framesize == 1)
-				memset(buff, ((char*)buff)[dup], dup);
-			else
-			{
-				for(int i=0;i < dup;++i)
-					((char*)buff)[i] = ((char*)buff+dup)[i%framesize];
-			}
-
-			// Offset the measured audio position to account for the duplicated samples.
-			AudioTrack.AdjustOffset(-dup/framesize);
-			return true;
-		}
-
 		return ZMusic_FillStream(MusicStream, buff, len);
 	}
 	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
@@ -617,7 +515,6 @@ public:
 		}
 		else if (soundtrack >= 0)
 		{
-			S_StopMusic(true);
 			FileReader reader = fileSystem.OpenFileReader(soundtrack);
 			if (reader.isOpen())
 			{
@@ -639,7 +536,28 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
-		AudioTrack.SetClock(clock);
+		if (!AudioTrack.GetAudioStream() && MusicStream && clock != 0)
+		{
+			S_StopMusic(true);
+
+			bool ok = false;
+			SoundStreamInfo info{};
+			ZMusic_GetStreamInfo(MusicStream, &info);
+			// if mBufferSize == 0, the music stream is played externally (e.g.
+			// Windows' MIDI synth), which we can't keep synced. Play anyway?
+			if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
+			{
+				ok = AudioTrack.Start(info.mSampleRate, abs(info.mNumChannels),
+					(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat, &StreamCallbackC, this);
+			}
+			if (!ok)
+			{
+				ZMusic_Close(MusicStream);
+				MusicStream = nullptr;
+			}
+		}
+
+		clock = AudioTrack.GetClockTime(clock);
 
 		bool stop = false;
 		if (clock >= nextframetime)
@@ -657,25 +575,6 @@ public:
 			}
 			framenum++;
 			if (framenum >= numframes) stop = true;
-
-			if (!AudioTrack.GetAudioStream() && MusicStream)
-			{
-				bool ok = false;
-				SoundStreamInfo info{};
-				ZMusic_GetStreamInfo(MusicStream, &info);
-				// if mBufferSize == 0, the music stream is played externally (e.g.
-				// Windows' MIDI synth), which we can't keep synced. Play anyway?
-				if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
-				{
-					ok = AudioTrack.Start(info.mSampleRate, abs(info.mNumChannels),
-						(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat, &StreamCallbackC, this);
-				}
-				if (!ok)
-				{
-					ZMusic_Close(MusicStream);
-					MusicStream = nullptr;
-				}
-			}
 
 			bool nostopsound = (flags & NOSOUNDCUTOFF);
 			int soundframe = convdenom ? Scale(framenum, convnumer, convdenom) : framenum;
@@ -764,70 +663,10 @@ public:
 
 	bool StreamCallback(SoundStream* stream, void* buff, int len)
 	{
-		const double delay = AudioTrack.GetClockDiff(stream);
 		const int samplerate = AudioTrack.GetSampleRate();
 		const int framesize = AudioTrack.GetFrameSize();
 
 		int avail = (adata.nWrite - adata.nRead) * 2;
-
-		if(delay > 0.0)
-		{
-			// If diff > 0, skip samples. Don't skip more than a full update at once.
-			int skip = std::min(int(delay*samplerate)*framesize, len);
-			while (skip > 0)
-			{
-				if (avail >= skip)
-				{
-					AudioTrack.AdjustOffset(skip / framesize);
-					if (avail > skip)
-					{
-						adata.nRead += skip / 2;
-						avail -= skip;
-					}
-					else
-						adata.nRead = adata.nWrite = avail = 0;
-					break;
-				}
-
-				AudioTrack.AdjustOffset(avail / framesize);
-				adata.nWrite = 0;
-				adata.nRead = 0;
-				skip -= avail;
-				avail = 0;
-
-				auto read = Smacker_GetAudioData(hSMK, 0, audioBuffer.Data());
-				if (read == 0) break;
-
-				adata.nWrite = read / 2;
-				avail = read;
-			}
-		}
-		else if(delay < 0.0)
-		{
-			// If diff < 0, duplicate samples. Don't duplicate more than a full update.
-			int dup = std::min(int(-delay*samplerate)*framesize, len-framesize);
-
-			if(avail == 0)
-			{
-				auto read = Smacker_GetAudioData(hSMK, 0, audioBuffer.Data());
-				if (read == 0) return false;
-
-				adata.nWrite = read / 2;
-				avail = read;
-			}
-
-			// Offset the measured audio position to account for the duplicated samples.
-			AudioTrack.AdjustOffset(-dup/framesize);
-
-			char *src = (char*)&audioBuffer[adata.nRead];
-			char *dst = (char*)buff;
-
-			for(int i=0;i < dup;++i)
-				*(dst++) = src[i%framesize];
-
-			buff = dst;
-			len -= dup;
-		}
 
 		int wrote = 0;
 		while(wrote < len)
@@ -923,7 +762,18 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
-		AudioTrack.SetClock(clock);
+		if (!AudioTrack.GetAudioStream() && numAudioTracks && clock != 0)
+		{
+			S_StopMusic(true);
+
+			if (!AudioTrack.Start(adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this))
+			{
+				Smacker_DisableAudioTrack(hSMK, 0);
+				numAudioTracks = 0;
+			}
+		}
+
+		clock = AudioTrack.GetClockTime(clock);
 		int frame = int(clock / nFrameNs);
 
 		twod->ClearScreen();
@@ -934,17 +784,6 @@ public:
 			Smacker_GetPalette(hSMK, palette);
 			Smacker_GetFrame(hSMK, pFrame.Data());
 			animtex.SetFrame(palette, pFrame.Data());
-
-			if (!AudioTrack.GetAudioStream() && numAudioTracks)
-			{
-				S_StopMusic(true);
-
-				if (!AudioTrack.Start(adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this))
-				{
-					Smacker_DisableAudioTrack(hSMK, 0);
-					numAudioTracks = 0;
-				}
-			}
 
 			bool nostopsound = (flags & NOSOUNDCUTOFF);
 			if (!hassound) for (unsigned i = 0; i < animSnd.Size(); i += 2)

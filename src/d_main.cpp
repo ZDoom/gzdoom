@@ -933,9 +933,9 @@ void D_Display ()
 	}
 
 	// [RH] Allow temporarily disabling wipes
-	if (NoWipe)
+	if (NoWipe || !CanWipe())
 	{
-		NoWipe--;
+		if (NoWipe > 0) NoWipe--;
 		wipestart = nullptr;
 		wipegamestate = gamestate;
 	}

@@ -328,7 +328,7 @@ public:
 	virtual bool IsEnded()
 	{
 		return !Playing.load();
-			}
+	}
 
 	Position GetPlayPosition() override
 	{

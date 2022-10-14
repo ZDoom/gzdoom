@@ -47,6 +47,7 @@
 #include "xs_Float.h"
 #include "math/cmath.h"
 #include "basics.h"
+#include "cmdlib.h"
 
 
 #define EQUAL_EPSILON (1/65536.)
@@ -275,7 +276,7 @@ struct TVector2
 	TAngle<vec_t> Angle() const;
 
 	// Returns a rotated vector. angle is in degrees.
-	TVector2 Rotated (double angle)
+	TVector2 Rotated (double angle) const
 	{
 		double cosval = g_cosdeg (angle);
 		double sinval = g_sindeg (angle);
@@ -284,10 +285,16 @@ struct TVector2
 
 	// Returns a rotated vector. angle is in degrees.
 	template<class T>
-	TVector2 Rotated(TAngle<T> angle)
+	TVector2 Rotated(TAngle<T> angle) const
 	{
 		double cosval = angle.Cos();
 		double sinval = angle.Sin();
+		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
+	}
+
+	// Returns a rotated vector. angle is in degrees.
+	TVector2 Rotated(const double cosval, const double sinval) const
+	{
 		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
 	}
 
@@ -1385,8 +1392,7 @@ public:
 
 	int Sgn() const
 	{
-		const auto normalized = (signed int)BAMs();
-		return (normalized > 0) - (normalized < 0);
+		return ::Sgn(int(BAMs()));
 	}
 };
 
@@ -1412,6 +1418,12 @@ template<class T>
 inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
 	return fabs((a1 - a2).Normalized180());
+}
+
+template<class T>
+inline TAngle<T> clamp(const TAngle<T> &angle, const TAngle<T> &min, const TAngle<T> &max)
+{
+	return TAngle<T>::fromDeg(clamp(angle.Degrees(), min.Degrees(), max.Degrees()));
 }
 
 inline TAngle<double> VecToAngle(double x, double y)
@@ -1449,6 +1461,36 @@ TAngle<T> TVector3<T>::Pitch() const
 	return -VecToAngle(TVector2<T>(X, Y).Length(), Z);
 }
 
+template<class T>
+inline TVector2<T> clamp(const TVector2<T> &vec, const TVector2<T> &min, const TVector2<T> &max)
+{
+	return TVector2<T>(clamp(vec.X, min.X, max.X), clamp(vec.Y, min.Y, max.Y));
+}
+
+template<class T>
+inline TVector2<T> interpolatedvec2(const TVector2<T> &ovec, const TVector2<T> &vec, const double scale)
+{
+	return ovec + ((vec - ovec) * scale);
+}
+
+template<class T>
+inline TVector3<T> interpolatedvec3(const TVector3<T> &ovec, const TVector3<T> &vec, const double scale)
+{
+	return ovec + ((vec - ovec) * scale);
+}
+
+template<class T>
+inline TVector4<T> interpolatedvec4(const TVector4<T> &ovec, const TVector4<T> &vec, const double scale)
+{
+	return ovec + ((vec - ovec) * scale);
+}
+
+template<class T>
+inline TAngle<T> interpolatedangle(const TAngle<T> &oang, const TAngle<T> &ang, const double scale)
+{
+	return oang + (deltaangle(oang, ang) * scale);
+}
+
 // Much of this is copied from TVector3. Is all that functionality really appropriate?
 template<class vec_t>
 struct TRotator
@@ -1458,7 +1500,6 @@ struct TRotator
 	Angle Pitch;	// up/down
 	Angle Yaw;		// left/right
 	Angle Roll;		// rotation about the forward axis.
-	Angle CamRoll;	// Roll specific to actor cameras. Used by quakes.
 
 	TRotator() = default;
 
@@ -1635,7 +1676,9 @@ typedef TAngle<double>			DAngle;
 constexpr DAngle nullAngle = DAngle::fromDeg(0.);
 constexpr FAngle nullFAngle = FAngle::fromDeg(0.);
 
+constexpr DAngle DAngle22_5 = DAngle::fromDeg(22.5);
 constexpr DAngle DAngle45 = DAngle::fromDeg(45);
+constexpr DAngle DAngle60 = DAngle::fromDeg(60);
 constexpr DAngle DAngle90 = DAngle::fromDeg(90);
 constexpr DAngle DAngle180 = DAngle::fromDeg(180);
 constexpr DAngle DAngle270 = DAngle::fromDeg(270);

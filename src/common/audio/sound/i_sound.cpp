@@ -302,6 +302,7 @@ const char *GetSampleTypeName(SampleType type)
     {
         case SampleType_UInt8: return "Unsigned 8-bit";
         case SampleType_Int16: return "Signed 16-bit";
+		default: break;
     }
     return "(invalid sample type)";
 }

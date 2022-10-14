@@ -1742,10 +1742,10 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 		const int x2 = f_x + fl.b.x;
 		const int y2 = f_y + fl.b.y;
 		if (am_linethickness >= 2) {
-			twod->AddThickLine(x1, y1, x2, y2, am_linethickness, color.RGB, uint8_t(am_linealpha * 255));
+			twod->AddThickLine(DVector2(x1, y1), DVector2(x2, y2), am_linethickness, color.RGB, uint8_t(am_linealpha * 255));
 		} else {
 			// Use more efficient thin line drawing routine.
-			twod->AddLine(x1, y1, x2, y2, nullptr, color.RGB, uint8_t(am_linealpha * 255));
+			twod->AddLine(DVector2(x1, y1), DVector2(x2, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255));
 		}
 	}
 }

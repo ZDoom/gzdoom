@@ -1555,10 +1555,10 @@ void VirtualToRealCoordsInt(F2DDrawer *drawer, int &x, int &y, int &w, int &h,
 //
 //==========================================================================
 
-static void DrawLine(const DVector2& v1, const DVector2& v2, uint32_t realcolor, int alpha)
+static void DrawLine(double x1, double y1, double x2, double y2, uint32_t realcolor, int alpha)
 {
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	twod->AddLine(v1, v2, nullptr, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
+	twod->AddLine(DVector2(x1, y1), DVector2(x2, y2), nullptr, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
@@ -1570,7 +1570,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
 	PARAM_INT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	DrawLine(DVector2(x0, y0), DVector2(x1, y1), color, alpha);
+	DrawLine(x0, y0, x1, y1, color, alpha);
 	return 0;
 }
 
@@ -1588,10 +1588,10 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawLine)
 	return 0;
 }
 
-static void DrawThickLine(const DVector2& v1, const DVector2& v2, double thickness, uint32_t realcolor, int alpha)
+static void DrawThickLine(double x1, double y1, double x2, double y2, double thickness, uint32_t realcolor, int alpha)
 {
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	twod->AddThickLine(v1, v2, thickness, realcolor, alpha);
+	twod->AddThickLine(DVector2(x1, y1), DVector2(x2, y2), thickness, realcolor, alpha);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawThickLine, DrawThickLine)
@@ -1604,7 +1604,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawThickLine, DrawThickLine)
 	PARAM_FLOAT(thickness);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	DrawThickLine(DVector2(x0, y0), DVector2(x1, y1), thickness, color, alpha);
+	DrawThickLine(x0, y0, x1, y1, thickness, color, alpha);
 	return 0;
 }
 

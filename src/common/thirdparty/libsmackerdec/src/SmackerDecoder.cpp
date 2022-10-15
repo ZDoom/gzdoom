@@ -732,7 +732,7 @@ void SmackerDecoder::GetNextFrame()
 	framePacketData.pop_front();
 	flock.unlock();
 
-	uint32_t frameSize = pkt.size;
+	uint32_t frameSize = (uint32_t)pkt.size;
 	uint8_t frameFlag  = frameFlags[currentFrame];
 
 	const uint8_t *packetDataPtr = pkt.data.get();
@@ -1235,7 +1235,7 @@ uint32_t SmackerDecoder::GetAudioData(uint32_t trackIndex, int16_t *audioBuffer)
 	track->bytesReadThisFrame = 0;
 
 	const uint8_t *packetDataPtr = pkt.data.get();
-	uint32_t size = pkt.size;
+	uint32_t size = (uint32_t)pkt.size;
 
 	DecodeAudio(packetDataPtr, size, *track);
 

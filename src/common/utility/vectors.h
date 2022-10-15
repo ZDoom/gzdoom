@@ -577,7 +577,7 @@ struct TVector3
 		}
 
 		up = n ^right;
-		right.MakeUnit();;
+		right.MakeUnit();
 		up.MakeUnit();
 	}
 
@@ -665,6 +665,7 @@ struct TVector3
 template<class vec_t>
 struct TVector4
 {
+	typedef TVector2<vec_t> Vector2;
 	typedef TVector3<vec_t> Vector3;
 
 	vec_t X, Y, Z, W;
@@ -722,6 +723,29 @@ struct TVector4
 	{
 		return X != other.X || Y != other.Y || Z != other.Z || W != other.W;
 	}
+
+	// returns the XY fields as a 2D-vector.
+	const Vector2& XY() const
+	{
+		return *reinterpret_cast<const Vector2*>(this);
+	}
+
+	Vector2& XY()
+	{
+		return *reinterpret_cast<Vector2*>(this);
+	}
+
+	// returns the XY fields as a 2D-vector.
+	const Vector3& XYZ() const
+	{
+		return *reinterpret_cast<const Vector3*>(this);
+	}
+
+	Vector3& XYZ()
+	{
+		return *reinterpret_cast<Vector3*>(this);
+	}
+
 
 	// Test for approximate equality
 	bool ApproximatelyEquals(const TVector4 &other) const
@@ -836,12 +860,6 @@ struct TVector4
 	{
 		X -= other.X, Y -= other.Y, Z -= other.Z;
 		return *this;
-	}
-
-	// returns the XYZ fields as a 3D-vector.
-	Vector3 XYZ() const
-	{
-		return{ X, Y, Z };
 	}
 
 	// Add a 4D vector and a 3D vector.

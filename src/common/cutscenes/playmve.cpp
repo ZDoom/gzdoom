@@ -126,7 +126,7 @@ bool InterplayDecoder::FillSamples(void *buff, int len)
         audio.Packets.pop_front();
         plock.unlock();
 
-        int nSamples = pkt.nSize;
+        int nSamples = (int)pkt.nSize;
         const uint8_t *samplePtr = pkt.pData.get();
         if (audio.bCompressed)
         {
@@ -153,7 +153,7 @@ bool InterplayDecoder::FillSamples(void *buff, int len)
                 audio.samples[audio.nWrite++] = predictor[ch];
 
                 // toggle channel
-                ch ^= stereo;
+                ch ^= stereo ? 1 : 0;
             }
         }
         else if (audio.nBitDepth == 8)

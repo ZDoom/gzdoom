@@ -964,6 +964,14 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 			
+			case 'FAA0550BE9923B3A3332B4F7DB897A4A': // heretic.wad e2m7
+			{
+				// missing texture
+				TextureID looserck = TexMan.CheckForTexture("LOOSERCK", TexMan.Type_Wall);
+				SetWallTextureID( 477, Line.back,  Side.top, looserck);				
+				break;
+			}
+			
 			case 'CA3773ED313E8899311F3DD0CA195A68': // heretic.wad e3m6
 			{
 				// Quartz flask outside of map

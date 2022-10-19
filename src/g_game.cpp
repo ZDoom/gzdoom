@@ -119,7 +119,6 @@ CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, longsavemessages, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (String, save_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
@@ -2170,61 +2169,10 @@ void G_SaveGame (const char *filename, const char *description)
 	}
 }
 
-FString G_BuildSaveName (const char *prefix, int slot)
-{
-	FString name;
-	FString leader;
-	const char *slash = "";
-
-	leader = Args->CheckValue ("-savedir");
-	if (leader.IsEmpty())
-	{
-		leader = save_dir;
-		if (leader.IsEmpty())
-		{
-			leader = M_GetSavegamesPath();
-		}
-	}
-	size_t len = leader.Len();
-	if (leader[0] != '\0' && leader[len-1] != '\\' && leader[len-1] != '/')
-	{
-		slash = "/";
-	}
-	name << leader << slash;
-	name = NicePath(name);
-	CreatePath(name);
-	name << prefix;
-	if (slot >= 0)
-	{
-		name.AppendFormat("%d." SAVEGAME_EXT, slot);
-	}
-	return name;
-}
-
 CCMD(opensaves)
 {
-	FString name;
-	FString leader;
-	const char *slash = "";
-
-	leader = Args->CheckValue ("-savedir");
-	if (leader.IsEmpty())
-	{
-		leader = save_dir;
-		if (leader.IsEmpty())
-		{
-			leader = M_GetSavegamesPath();
-		}
-	}
-	size_t len = leader.Len();
-	if (leader[0] != '\0' && leader[len-1] != '\\' && leader[len-1] != '/')
-	{
-		slash = "/";
-	}
-	name << leader << slash;
-	name = NicePath(name);
+	FString name = G_GetSavegamesFolder();
 	CreatePath(name);
-
 	I_OpenShellFolder(name);
 }
 
@@ -2263,7 +2211,7 @@ void G_DoAutoSave ()
 	num.Int = nextautosave;
 	autosavenum->ForceSet (num, CVAR_Int);
 
-	file = G_BuildSaveName ("auto", nextautosave);
+	file = G_BuildSaveName(FStringf("auto%02d", nextautosave));
 
 	// The hint flag is only relevant on the primary level.
 	if (!(primaryLevel->flags2 & LEVEL2_NOAUTOSAVEHINT))
@@ -2302,7 +2250,7 @@ void G_DoQuickSave ()
 	num.Int = lastquicksave;
 	quicksavenum->ForceSet (num, CVAR_Int);
 
-	file = G_BuildSaveName ("quick", lastquicksave);
+	file = G_BuildSaveName(FStringf("quick%02d", nextautosave));
 
 	readableTime = myasctime ();
 	description.Format("Quicksave %s", readableTime);
@@ -2377,7 +2325,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 
 	if (demoplayback)
 	{
-		filename = G_BuildSaveName ("demosave." SAVEGAME_EXT, -1);
+		filename = G_BuildSaveName ("demosave");
 	}
 
 	if (cl_waitforsave)

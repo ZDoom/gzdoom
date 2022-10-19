@@ -59,3 +59,6 @@ public:
 
 };
 
+extern FString SavegameFolder;	// specifies a subdirectory for the current IWAD.
+FString G_GetSavegamesFolder();
+FString G_BuildSaveName(const char* prefix);

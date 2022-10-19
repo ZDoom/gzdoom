@@ -70,6 +70,7 @@
 #include "texturemanager.h"
 #include "v_draw.h"
 #include "d_main.h"
+#include "savegamemanager.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -639,6 +640,11 @@ UNSAFE_CCMD (load)
 		Printf("saving to an absolute path is not allowed\n");
 		return;
 	}
+	if (fname.IndexOf("..") > 0)
+	{
+		Printf("'..' not allowed in file names\n");
+		return;
+	}
 #ifdef _WIN32
 	// block all invalid characters for Windows file names
 	if (fname.IndexOfAny(":?*<>|") >= 0)
@@ -647,8 +653,7 @@ UNSAFE_CCMD (load)
 		return;
 	}
 #endif
-	fname = G_BuildSaveName(fname, -1);
-	DefaultExtension(fname, "." SAVEGAME_EXT);
+	fname = G_BuildSaveName(fname);
 	G_LoadGame (fname);
 }
 
@@ -674,6 +679,11 @@ UNSAFE_CCMD(save)
 		Printf("saving to an absolute path is not allowed\n");
 		return;
 	}
+	if (fname.IndexOf("..") > 0)
+	{
+		Printf("'..' not allowed in file names\n");
+		return;
+	}
 #ifdef _WIN32
 	// block all invalid characters for Windows file names
 	if (fname.IndexOfAny(":?*<>|") >= 0)
@@ -682,8 +692,7 @@ UNSAFE_CCMD(save)
 		return;
 	}
 #endif
-    fname = G_BuildSaveName(fname, -1);
-	DefaultExtension(fname, "." SAVEGAME_EXT);
+    fname = G_BuildSaveName(fname);
 	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
 }
 

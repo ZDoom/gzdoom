@@ -71,6 +71,7 @@
 #include "screenjob.h"
 #include "d_main.h"
 #include "i_interface.h"
+#include "savegamemanager.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -2457,21 +2458,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			{
 				// Paths sent over the network will be valid for the system that sent
 				// the save command. For other systems, the path needs to be changed.
-				const char *fileonly = savegamefile.GetChars();
-				const char *slash = strrchr (fileonly, '\\');
-				if (slash != NULL)
-				{
-					fileonly = slash + 1;
-				}
-				slash = strrchr (fileonly, '/');
-				if (slash != NULL)
-				{
-					fileonly = slash + 1;
-				}
-				if (fileonly != savegamefile.GetChars())
-				{
-					savegamefile = G_BuildSaveName (fileonly, -1);
-				}
+				FString basename = ExtractFileBase(savegamefile, true);
+				savegamefile = G_BuildSaveName (basename);
 			}
 		}
 		gameaction = ga_savegame;

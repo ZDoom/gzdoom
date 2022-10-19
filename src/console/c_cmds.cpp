@@ -633,8 +633,23 @@ UNSAFE_CCMD (load)
 		return;
 	}
 	FString fname = argv[1];
-	DefaultExtension (fname, "." SAVEGAME_EXT);
-    G_LoadGame (fname);
+	FixPathSeperator(fname);
+	if (fname[0] == '/')
+	{
+		Printf("saving to an absolute path is not allowed\n");
+		return;
+	}
+#ifdef _WIN32
+	// block all invalid characters for Windows file names
+	if (fname.IndexOfAny(":?*<>|") >= 0)
+	{
+		Printf("file name contains invalid characters\n");
+		return;
+	}
+#endif
+	fname = G_BuildSaveName(fname, -1);
+	DefaultExtension(fname, "." SAVEGAME_EXT);
+	G_LoadGame (fname);
 }
 
 //==========================================================================
@@ -645,15 +660,30 @@ UNSAFE_CCMD (load)
 //
 //==========================================================================
 
-UNSAFE_CCMD (save)
+UNSAFE_CCMD(save)
 {
-    if (argv.argc() < 2 || argv.argc() > 3)
+	if (argv.argc() < 2 || argv.argc() > 3 || argv[1][0] == 0)
 	{
         Printf ("usage: save <filename> [description]\n");
         return;
     }
-    FString fname = argv[1];
-	DefaultExtension (fname, "." SAVEGAME_EXT);
+	FString fname = argv[1];
+	FixPathSeperator(fname);
+	if (fname[0] == '/')
+	{
+		Printf("saving to an absolute path is not allowed\n");
+		return;
+	}
+#ifdef _WIN32
+	// block all invalid characters for Windows file names
+	if (fname.IndexOfAny(":?*<>|") >= 0)
+	{
+		Printf("file name contains invalid characters\n");
+		return;
+	}
+#endif
+    fname = G_BuildSaveName(fname, -1);
+	DefaultExtension(fname, "." SAVEGAME_EXT);
 	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
 }
 

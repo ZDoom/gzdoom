@@ -1564,10 +1564,10 @@ static void DrawLine(double x1, double y1, double x2, double y2, uint32_t realco
 DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(x0);
-	PARAM_INT(y0);
-	PARAM_INT(x1);
-	PARAM_INT(y1);
+	PARAM_FLOAT(x0);
+	PARAM_FLOAT(y0);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
 	DrawLine(x0, y0, x1, y1, color, alpha);
@@ -1577,10 +1577,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
 DEFINE_ACTION_FUNCTION(FCanvas, DrawLine)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
-	PARAM_INT(x0);
-	PARAM_INT(y0);
-	PARAM_INT(x1);
-	PARAM_INT(y1);
+	PARAM_FLOAT(x0);
+	PARAM_FLOAT(y0);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
 	self->Drawer.AddLine(DVector2(x0, y0), DVector2(x1, y1), nullptr, color | MAKEARGB(255, 0, 0, 0), alpha);
@@ -1597,10 +1597,10 @@ static void DrawThickLine(double x1, double y1, double x2, double y2, double thi
 DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawThickLine, DrawThickLine)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(x0);
-	PARAM_INT(y0);
-	PARAM_INT(x1);
-	PARAM_INT(y1);
+	PARAM_FLOAT(x0);
+	PARAM_FLOAT(y0);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
 	PARAM_FLOAT(thickness);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
@@ -1611,10 +1611,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawThickLine, DrawThickLine)
 DEFINE_ACTION_FUNCTION(FCanvas, DrawThickLine)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
-	PARAM_INT(x0);
-	PARAM_INT(y0);
-	PARAM_INT(x1);
-	PARAM_INT(y1);
+	PARAM_FLOAT(x0);
+	PARAM_FLOAT(y0);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
 	PARAM_FLOAT(thickness);
 	PARAM_INT(color);
 	PARAM_INT(alpha);

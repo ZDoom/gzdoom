@@ -388,7 +388,7 @@ generator Beastling			BulletChip
 generator Follower			BulletChip
 generator Soldier			BulletChip
 generator WalkingPhage2		BulletChip
-generator Echida			BulletChip
+generator Echidna			BulletChip
 
 generator PhageNeutron		ArachnotronScorch
 generator GrenadeExplosion	CacoScorch

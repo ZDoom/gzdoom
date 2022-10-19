@@ -548,7 +548,7 @@ actor Mine replaces LostSoul
 	}
 }
 
-actor Echida replaces SpiderMastermind
+actor Echidna replaces SpiderMastermind
 {
 	scale 0.33
 	health 5000

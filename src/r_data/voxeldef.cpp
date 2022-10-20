@@ -52,19 +52,14 @@
 
 struct VoxelOptions
 {
-	VoxelOptions()
-		: DroppedSpin(0), PlacedSpin(0), Scale(1.), AngleOffset(DAngle::fromDeg(90.)), OverridePalette(false),
-		PitchFromMomentum(false), UseActorPitch(false), UseActorRoll(false)
-	{}
-
-	int			DroppedSpin;
-	int			PlacedSpin;
-	double		Scale;
-	DAngle		AngleOffset;
-	bool		OverridePalette;
-	bool		PitchFromMomentum;
-	bool		UseActorPitch;
-	bool		UseActorRoll;
+	int			DroppedSpin = 0;
+	int			PlacedSpin = 0;
+	double		Scale = 1;
+	DAngle		AngleOffset = DAngle90;
+	bool		OverridePalette = false;
+	bool		PitchFromMomentum = false;
+	bool		UseActorPitch = false;
+	bool		UseActorRoll = false;
 };
 
 void VOX_AddVoxel(int sprnum, int frame, FVoxelDef* def);

@@ -425,9 +425,11 @@ void InitModels()
 		smf.animationIDs[0] = -1;
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees();
-		if (VoxelDefs[i]->PitchFromMomentum == true) smf.flags |= MDL_PITCHFROMMOMENTUM;
-		if (VoxelDefs[i]->UseActorPitch == true) smf.flags |= MDL_USEACTORPITCH;
-		if (VoxelDefs[i]->UseActorRoll == true) smf.flags |= MDL_USEACTORROLL;
+		// this helps catching uninitialized data.
+		assert(VoxelDefs[i]->PitchFromMomentum == true || VoxelDefs[i]->PitchFromMomentum == false);
+		if (VoxelDefs[i]->PitchFromMomentum) smf.flags |= MDL_PITCHFROMMOMENTUM;
+		if (VoxelDefs[i]->UseActorPitch) smf.flags |= MDL_USEACTORPITCH;
+		if (VoxelDefs[i]->UseActorRoll) smf.flags |= MDL_USEACTORROLL;
 		if (VoxelDefs[i]->PlacedSpin != 0)
 		{
 			smf.yrotate = 1.f;

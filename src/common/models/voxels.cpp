@@ -314,6 +314,7 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 	else
 	{
 		FVoxelDef *voxdef = new FVoxelDef;
+		*voxdef = {};
 		voxdef->Voxel = vox;
 		voxdef->Scale = 1.;
 		voxdef->DroppedSpin = voxdef->PlacedSpin = spin;

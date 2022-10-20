@@ -204,6 +204,7 @@ struct MoviePlayer native
 	{
 		NOSOUNDCUTOFF = 1,
 		FIXEDVIEWPORT = 2,	// Forces fixed 640x480 screen size like for Blood's intros.
+		NOMUSICCUTOFF = 4,
 	}
 
 	native static MoviePlayer Create(String filename, Array<int> soundinfo, int flags, int frametime, int firstframetime, int lastframetime);
@@ -236,7 +237,7 @@ class MoviePlayerJob : SkippableScreenJob
 
 	override void Start()
 	{
-		System.StopMusic();
+		if (!(flag & MoviePlayer.NOMUSICCUTOFF)) System.StopMusic();
 	}
 
 

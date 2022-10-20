@@ -217,16 +217,7 @@ double I_GetInputFrac(bool const synchronised)
 		const double now = I_msTimeF();
 		const double result = (now - lastinputtime) * GameTicRate * (1. / 1000.);
 		lastinputtime = now;
-
-		if (result < 1)
-		{
-			// Calculate an amplification to apply to the result before returning,
-			// factoring in the game's ticrate and the value of the result.
-			// This rectifies a deviation of 100+ ms or more depending on the length
-			// of the operation to be within 1-2 ms of synchronised input
-			// from 60 fps to at least 1000 fps at ticrates of 30 and 40 Hz.
-			return result * (1. + 0.35 * (1. - GameTicRate * (1. / 50.)) * (1. - result));
-		}
+		return result;
 	}
 
 	return 1;

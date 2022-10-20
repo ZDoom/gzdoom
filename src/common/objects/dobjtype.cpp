@@ -187,7 +187,7 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 //
 //==========================================================================
 
-static int cregcmp (const void *a, const void *b) NO_SANITIZE
+static NO_SANITIZE_M int cregcmp (const void *a, const void *b) NO_SANITIZE
 {
 	const PClass *class1 = *(const PClass **)a;
 	const PClass *class2 = *(const PClass **)b;

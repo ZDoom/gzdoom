@@ -159,7 +159,7 @@ public:
 	template<class T>
 	FSerializer &Array(const char *key, T *obj, T *def, int count, bool fullcompare = false)
 	{
-		if (!save_full && fullcompare && isWriting() && def != nullptr && !memcmp(obj, def, count * sizeof(T)))
+		if (!save_full && fullcompare && isWriting() && key != nullptr && def != nullptr && !memcmp(obj, def, count * sizeof(T)))
 		{
 			return *this;
 		}

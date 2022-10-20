@@ -47,6 +47,12 @@
 #define NO_SANITIZE
 #endif
 
+#if defined _MSC_VER
+#define NO_SANITIZE_M __declspec(no_sanitize_address)
+#else
+#define NO_SANITIZE_M
+#endif
+
 class FAutoSeg
 {
 	const char *name;
@@ -102,14 +108,14 @@ public:
 	}
 
 	template <typename Func>
-	void ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, void>> * = nullptr)
+	void NO_SANITIZE_M ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, void>> * = nullptr)
 	{
 		using CallableType = decltype(&Func::operator());
 		using ArgType = typename ArgumentType<CallableType>::Type;
 
 		for (void **it = begin; it < end; ++it)
 		{
-			if (*it)
+			if (intptr_t(it) > 0xffff && *it && intptr_t(*it) > 0xffff)
 			{
 				func(reinterpret_cast<ArgType>(*it));
 			}
@@ -117,14 +123,14 @@ public:
 	}
 
 	template <typename Func>
-	void ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, bool>> * = nullptr)
+	void NO_SANITIZE_M ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, bool>> * = nullptr)
 	{
 		using CallableType = decltype(&Func::operator());
 		using ArgType = typename ArgumentType<CallableType>::Type;
 
 		for (void **it = begin; it < end; ++it)
 		{
-			if (*it)
+			if (intptr_t(it) > 0xffff && *it && intptr_t(*it) > 0xffff)
 			{
 				if (!func(reinterpret_cast<ArgType>(*it)))
 				{

@@ -27,6 +27,7 @@ EXTERN_CVAR(Bool, gl_coronas)
 
 class AActor;
 
+#if 0
 class ACorona : public AActor
 {
 	DECLARE_CLASS(ACorona, AActor)
@@ -36,3 +37,4 @@ public:
 
 	float CoronaFade = 0.0f;
 };
+#endif

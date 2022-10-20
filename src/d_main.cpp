@@ -1231,14 +1231,14 @@ void D_DoomLoop ()
 		{
 			if (error.GetMessage ())
 			{
-				Printf (PRINT_BOLD, "\n%s\n", error.GetMessage());
+				Printf (PRINT_NONOTIFY | PRINT_BOLD, "\n%s\n", error.GetMessage());
 			}
 			D_ErrorCleanup ();
 		}
 		catch (CVMAbortException &error)
 		{
 			error.MaybePrintMessage();
-			Printf("%s", error.stacktrace.GetChars());
+			Printf(PRINT_NONOTIFY, "%s", error.stacktrace.GetChars());
 			D_ErrorCleanup();
 		}
 	}

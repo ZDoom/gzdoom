@@ -393,10 +393,14 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawShapeFill)
 
 void F2DDrawer::SetClipRect(int x, int y, int w, int h)
 {
-	clipleft = clamp(x, 0, GetWidth());
-	clipwidth = clamp(w, -1, GetWidth() - x);
-	cliptop = clamp(y, 0, GetHeight());
-	clipheight = clamp(h, -1, GetHeight() - y);
+	if (x < 0) { w += x; x = 0; }
+	if (y < 0) { h += y; y = 0; }
+	if (x >= GetWidth()) { x = GetWidth(); w = 0; }
+	if (y >= GetHeight()) { x = GetHeight(); h = 0; }
+	clipleft = x;
+	clipwidth = w;
+	cliptop = y;
+	clipheight = h;
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, SetClipRect)

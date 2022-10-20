@@ -1,5 +1,4 @@
 cmake_minimum_required( VERSION 3.1.0 )
-cmake_minimum_required( VERSION 3.1.0 )
 
 include(precompiled_headers)
 
@@ -85,7 +84,6 @@ if( WIN32 )
 		if( DX_dxguid_LIBRARY )
 			list( APPEND PROJECT_LIBRARIES "${DX_dxguid_LIBRARY}" )
 		endif()
-		list( APPEND PROJECT_LIBRARIES d3d9 )
 	endif()
 else()
 	if( APPLE )
@@ -1388,10 +1386,6 @@ install(DIRECTORY "${PROJECT_BINARY_DIR}/soundfonts" "${PROJECT_BINARY_DIR}/fm_b
 		DESTINATION ${INSTALL_SOUNDFONT_PATH}
 		COMPONENT "Soundfont resources")
 
-if( CMAKE_COMPILER_IS_GNUCXX )
-	# GCC misoptimizes this file
-	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
-endif()
 if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
 	set_property( SOURCE

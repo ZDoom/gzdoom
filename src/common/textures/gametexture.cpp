@@ -96,8 +96,11 @@ void FGameTexture::Setup(FTexture *wrap)
 
 FGameTexture::~FGameTexture()
 {
-	FGameTexture* link = fileSystem.GetLinkedTexture(GetSourceLump());
-	if (link == this) fileSystem.SetLinkedTexture(GetSourceLump(), nullptr);
+	if (Base != nullptr)
+	{
+		FGameTexture* link = fileSystem.GetLinkedTexture(GetSourceLump());
+		if (link == this) fileSystem.SetLinkedTexture(GetSourceLump(), nullptr);
+	}
 	if (SoftwareTexture != nullptr)
 	{
 		delete SoftwareTexture;

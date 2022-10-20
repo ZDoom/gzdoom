@@ -1064,7 +1064,7 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit from = basex->Emit(build);
-	assert(!from.Konst);
+	//assert(!from.Konst);
 	assert(basex->ValueType->GetRegType() == REGT_INT);
 	from.Free(build);
 	ExpEmit to(build, REGT_FLOAT);
@@ -7506,7 +7506,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		else
 		{
 			static int LKR_Ops[] = { OP_LK_R, OP_LKF_R, OP_LKS_R, OP_LKP_R };
-			assert(start.RegType == ValueType->GetRegType());
+			//assert(start.RegType == ValueType->GetRegType());
 			ExpEmit dest(build, start.RegType);
 			if (start.RegNum <= 255)
 			{

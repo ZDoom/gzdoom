@@ -5,7 +5,6 @@
 #include "texturemanager.h"
 #include "modelrenderer.h"
 #include "engineerrors.h"
-#include "r_utility.h"
 
 IQMModel::IQMModel()
 {
@@ -502,7 +501,7 @@ void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int fra
 	renderer->SetupFrame(this, 0, 0, NumVertices, boneData, boneStartPosition);
 
 	FGameTexture* lastSkin = nullptr;
-	for (int i = 0; i < Meshes.Size(); i++)
+	for (unsigned i = 0; i < Meshes.Size(); i++)
 	{
 		FGameTexture* meshSkin = skin;
 
@@ -556,7 +555,7 @@ void IQMModel::BuildVertexBuffer(FModelRenderer* renderer)
 
 void IQMModel::AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids)
 {
-	for (int i = 0; i < Meshes.Size(); i++)
+	for (unsigned i = 0; i < Meshes.Size(); i++)
 	{
 		if (surfaceskinids && surfaceskinids[i].isValid())
 			hitlist[surfaceskinids[i].GetIndex()] |= FTextureManager::HIT_Flat;
@@ -590,9 +589,9 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 
 		// Interpolate bone between the two frames
 		float bone[16];
-		for (int i = 0; i < 16; i++)
+		for (int j = 0; j < 16; j++)
 		{
-			bone[i] = from[i] * invt + to[i] * t;
+			bone[j] = from[j] * invt + to[j] * t;
 		}
 
 		// Apply parent bone

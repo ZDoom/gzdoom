@@ -130,7 +130,7 @@ struct FLevelLocals
 	void AddScroller(int secnum);
 	void SetInterMusic(const char *nextmap);
 	void SetMusicVolume(float v);
-	void ClearLevelData();
+	void ClearLevelData(bool fullgc = true);
 	void ClearPortals();
 	bool CheckIfExitIsGood(AActor *self, level_info_t *newmap);
 	void FormatMapName(FString &mapname, const char *mapnamecolor);

@@ -279,7 +279,7 @@ void FLevelLocals::ClearPortals()
 //
 //==========================================================================
 
-void FLevelLocals::ClearLevelData()
+void FLevelLocals::ClearLevelData(bool fullgc)
 {
 	{
 		auto it = GetThinkerIterator<AActor>(NAME_None, STAT_TRAVELLING);
@@ -291,7 +291,7 @@ void FLevelLocals::ClearLevelData()
 	}
 	
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
-	Thinkers.DestroyAllThinkers();
+	Thinkers.DestroyAllThinkers(fullgc);
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 
 	total_monsters = total_items = total_secrets =
@@ -383,13 +383,13 @@ void FLevelLocals::ClearLevelData()
 //
 //==========================================================================
 
-void P_FreeLevelData ()
+void P_FreeLevelData (bool fullgc)
 {
 	R_FreePastViewers();
 
 	for (auto Level : AllLevels())
 	{
-		Level->ClearLevelData();
+		Level->ClearLevelData(fullgc);
 	}
 	// primaryLevel->FreeSecondaryLevels();
 }

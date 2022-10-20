@@ -1069,7 +1069,7 @@ static void G_FullConsole()
 		primaryLevel->Music = "";
 		S_Start();
 		S_StopMusic(true);
-		P_FreeLevelData();
+		P_FreeLevelData(false);
 	}
 
 }

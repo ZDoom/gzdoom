@@ -302,16 +302,6 @@ endif()
 
 # Check for functions that may or may not exist.
 
-CHECK_FUNCTION_EXISTS( filelength FILELENGTH_EXISTS )
-if( FILELENGTH_EXISTS )
-	add_definitions( -DHAVE_FILELENGTH=1 )
-endif()
-
-CHECK_FUNCTION_EXISTS( strupr STRUPR_EXISTS )
-if( NOT STRUPR_EXISTS )
-	add_definitions( -DNEED_STRUPR=1 )
-endif()
-
 require_stricmp()
 require_strnicmp()
 

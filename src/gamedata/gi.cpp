@@ -470,7 +470,7 @@ void FMapInfoParser::ParseGameInfo()
 			SkipToNext();
 		}
 	}
-	turbo.Callback();
+	turbo->Callback();
 }
 
 const char *gameinfo_t::GetFinalePage(unsigned int num) const

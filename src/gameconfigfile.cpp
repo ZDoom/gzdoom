@@ -922,40 +922,40 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 	UCVarValue val;
 
 	val.Bool = false;
-	wi_percents.SetGenericRepDefault (val, CVAR_Bool);
+	wi_percents->SetGenericRepDefault (val, CVAR_Bool);
 	val.Bool = true;
-	con_centernotify.SetGenericRepDefault (val, CVAR_Bool);
-	snd_pitched.SetGenericRepDefault (val, CVAR_Bool);
+	con_centernotify->SetGenericRepDefault (val, CVAR_Bool);
+	snd_pitched->SetGenericRepDefault (val, CVAR_Bool);
 	val.Int = 9;
-	msg0color.SetGenericRepDefault (val, CVAR_Int);
+	msg0color->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_WHITE;
-	msgmidcolor.SetGenericRepDefault (val, CVAR_Int);
+	msgmidcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_YELLOW;
-	msgmidcolor2.SetGenericRepDefault (val, CVAR_Int);
+	msgmidcolor2->SetGenericRepDefault (val, CVAR_Int);
 
 	val.Int = 0x543b17;
-	am_wallcolor.SetGenericRepDefault (val, CVAR_Int);
+	am_wallcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = 0xd0b085;
-	am_fdwallcolor.SetGenericRepDefault (val, CVAR_Int);
+	am_fdwallcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = 0x734323;
-	am_cdwallcolor.SetGenericRepDefault (val, CVAR_Int);
+	am_cdwallcolor->SetGenericRepDefault (val, CVAR_Int);
 
 	val.Int = 0;
-	wipetype.SetGenericRepDefault(val, CVAR_Int);
+	wipetype->SetGenericRepDefault(val, CVAR_Int);
 
 	// Fix the Heretic/Hexen automap colors so they are correct.
 	// (They were wrong on older versions.)
 	if (*am_wallcolor == 0x2c1808 && *am_fdwallcolor == 0x887058 && *am_cdwallcolor == 0x4c3820)
 	{
-		am_wallcolor.ResetToDefault ();
-		am_fdwallcolor.ResetToDefault ();
-		am_cdwallcolor.ResetToDefault ();
+		am_wallcolor->ResetToDefault ();
+		am_fdwallcolor->ResetToDefault ();
+		am_cdwallcolor->ResetToDefault ();
 	}
 
 	if (!isHexen)
 	{
 		val.Int = 0x3f6040;
-		color.SetGenericRepDefault (val, CVAR_Int);
+		color->SetGenericRepDefault (val, CVAR_Int);
 	}
 }
 
@@ -963,7 +963,7 @@ void FGameConfigFile::SetStrifeDefaults ()
 {
 	UCVarValue val;
 	val.Int = 3;
-	wipetype.SetGenericRepDefault(val, CVAR_Int);
+	wipetype->SetGenericRepDefault(val, CVAR_Int);
 }
 
 CCMD (whereisini)

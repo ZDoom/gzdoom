@@ -421,11 +421,11 @@ struct AMColorset
 	bool forcebackground;
 	bool defined;	// only for mod specific colorsets: must be true to be usable
 
-	void initFromCVars(FColorCVar **values)
+	void initFromCVars(FColorCVarRef **values)
 	{
 		for(int i=0;i<AlmostBackgroundColor; i++)
 		{
-			c[i].FromCVar(*values[i]);
+			c[i].FromCVar(*(values[i]->get()));
 		}
 
 		uint32_t ba = *(values[0]);
@@ -513,7 +513,7 @@ static const int AUTOMAP_LINE_COLORS[AMLS_COUNT] =
 //
 //=============================================================================
 
-static FColorCVar *cv_standard[] = {
+static FColorCVarRef *cv_standard[] = {
 	&am_backcolor,
 	&am_yourcolor,
 	&am_wallcolor,
@@ -540,7 +540,7 @@ static FColorCVar *cv_standard[] = {
 	&am_portalcolor
 };
 
-static FColorCVar *cv_overlay[] = {
+static FColorCVarRef *cv_overlay[] = {
 	&am_backcolor,	// this will not be used in overlay mode
 	&am_ovyourcolor,
 	&am_ovwallcolor,
@@ -571,11 +571,11 @@ CCMD(am_restorecolors)
 {
 	for (unsigned i = 0; i < countof(cv_standard); i++)
 	{
-		cv_standard[i]->ResetToDefault();
+		cv_standard[i]->get()->ResetToDefault();
 	}
 	for (unsigned i = 0; i < countof(cv_overlay); i++)
 	{
-		cv_overlay[i]->ResetToDefault();
+		cv_overlay[i]->get()->ResetToDefault();
 	}
 }
 

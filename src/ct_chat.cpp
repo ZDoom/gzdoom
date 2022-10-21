@@ -86,7 +86,7 @@ CVAR (String, chatmacro8, "I'll take care of it.", CVAR_ARCHIVE)
 CVAR (String, chatmacro9, "Yes", CVAR_ARCHIVE)
 CVAR (String, chatmacro0, "No", CVAR_ARCHIVE)
 
-FStringCVar *chat_macros[10] =
+FStringCVarRef *chat_macros[10] =
 {
 	&chatmacro0,
 	&chatmacro1,

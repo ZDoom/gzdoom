@@ -241,15 +241,15 @@ static bool S_StartMusicPlaying(ZMusic_MusicStream song, bool loop, float rel_vo
 	}
 	ZMusic_Stop(song);
 	// make sure the volume modifiers update properly in case replay gain settings have changed.
-	fluid_gain.Callback();
-	mod_dumb_mastervolume.Callback();
+	fluid_gain->Callback();
+	mod_dumb_mastervolume->Callback();
 	if (!ZMusic_Start(song, subsong, loop))
 	{
 		return false;
 	}
 
 	// Notify the sound system of the changed relative volume
-	snd_musicvolume.Callback();
+	snd_musicvolume->Callback();
 	return true;
 }
 
@@ -517,8 +517,8 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 {
 	mus_playing.replayGain = 0.f;
 	mus_playing.replayGainFactor = dBToAmplitude(mus_gainoffset);
-	fluid_gain.Callback();
-	mod_dumb_mastervolume.Callback();
+	fluid_gain->Callback();
+	mod_dumb_mastervolume->Callback();
 	if (!mus_usereplaygain) return;
 
 	FileReader reader = mus_cb.OpenMusic(musicname);

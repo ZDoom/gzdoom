@@ -399,7 +399,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// If regional settings were changed, reget preferred languages
 		if (wParam == 0 && lParam != 0 && strcmp ((const char *)lParam, "intl") == 0)
 		{
-			language.Callback ();
+			language->Callback ();
 		}
 		return 0;
 

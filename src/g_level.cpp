@@ -1369,7 +1369,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		UCVarValue val;
 		val.Int = NextSkill;
-		gameskill.ForceSet (val, CVAR_Int);
+		gameskill->ForceSet (val, CVAR_Int);
 		NextSkill = -1;
 	}
 
@@ -1861,8 +1861,8 @@ void FLevelLocals::Init()
 
 	pixelstretch = info->pixelstretch;
 
-	compatflags.Callback();
-	compatflags2.Callback();
+	compatflags->Callback();
+	compatflags2->Callback();
 
 	DefaultEnvironment = info->DefaultEnvironment;
 

@@ -70,9 +70,6 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 
-FBoolCVar noisedebug("noise", false, 0);	// [RH] Print sound debugging info?
-
-
 static FString LastLocalSndInfo;
 static FString LastLocalSndSeq;
 void S_AddLocalSndInfo(int lump);
@@ -1321,9 +1318,10 @@ void DoomSoundEngine::NoiseDebug()
 	}
 }
 
-void S_NoiseDebug(void)
+ADD_STAT(sounddebug)
 {
 	static_cast<DoomSoundEngine*>(soundEngine)->NoiseDebug();
+	return "";
 }
 
 

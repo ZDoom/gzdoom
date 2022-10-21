@@ -148,6 +148,7 @@ namespace AutoSegs
 	extern FAutoSeg ClassFields;
 	extern FAutoSeg Properties;
 	extern FAutoSeg MapInfoOptions;
+	extern FAutoSeg CVarDecl;
 }
 
 #define AUTOSEG_AREG areg
@@ -155,6 +156,7 @@ namespace AutoSegs
 #define AUTOSEG_FREG freg
 #define AUTOSEG_GREG greg
 #define AUTOSEG_YREG yreg
+#define AUTOSEG_VREG vreg
 
 #define AUTOSEG_STR(string) AUTOSEG_STR2(string)
 #define AUTOSEG_STR2(string) #string
@@ -167,12 +169,14 @@ namespace AutoSegs
 #define SECTION_FREG AUTOSEG_MACH_SECTION(AUTOSEG_FREG)
 #define SECTION_GREG AUTOSEG_MACH_SECTION(AUTOSEG_GREG)
 #define SECTION_YREG AUTOSEG_MACH_SECTION(AUTOSEG_YREG)
+#define SECTION_VREG AUTOSEG_MACH_SECTION(AUTOSEG_VREG)
 #else
 #define SECTION_AREG AUTOSEG_STR(AUTOSEG_AREG)
 #define SECTION_CREG AUTOSEG_STR(AUTOSEG_CREG)
 #define SECTION_FREG AUTOSEG_STR(AUTOSEG_FREG)
 #define SECTION_GREG AUTOSEG_STR(AUTOSEG_GREG)
 #define SECTION_YREG AUTOSEG_STR(AUTOSEG_YREG)
+#define SECTION_VREG AUTOSEG_STR(AUTOSEG_VREG)
 #endif
 
 #endif

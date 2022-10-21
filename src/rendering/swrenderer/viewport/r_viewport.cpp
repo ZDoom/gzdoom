@@ -134,7 +134,7 @@ namespace swrenderer
 
 			mysnprintf(temp, countof(temp), "%d x %d", viewwidth, viewheight);
 			value.String = temp;
-			r_viewsize.ForceSet(value, CVAR_String);
+			r_viewsize->ForceSet(value, CVAR_String);
 		}
 
 		fuzzviewheight = viewheight - 2;	// Maximum row the fuzzer can draw to

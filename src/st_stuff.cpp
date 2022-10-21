@@ -38,7 +38,6 @@
 #include "d_main.h"
 
 EXTERN_CVAR (Bool, ticker);
-EXTERN_CVAR (Bool, noisedebug);
 EXTERN_CVAR (Int, am_cheat);
 EXTERN_CVAR (Int, cl_blockcheats);
 
@@ -525,7 +524,6 @@ static bool Cht_Ticker (cheatseq_t *cheat)
 
 static bool Cht_Sound (cheatseq_t *cheat)
 {
-	noisedebug = !noisedebug;
-	Printf ("%s\n", GStrings(noisedebug ? "TXT_CHEATSOUNDON" : "TXT_CHEATSOUNDOFF"));
+	AddCommandString("stat sounddebug");
 	return true;
 }

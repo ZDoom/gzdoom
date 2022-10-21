@@ -62,9 +62,9 @@ EXTERN_CVAR(Bool, joy_xinput)
 CUSTOM_CVARD(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "enables input from the joystick if it is present") 
 {
 #ifdef _WIN32
-	joy_ps2raw.Callback();
-	joy_dinput.Callback();
-	joy_xinput.Callback();
+	joy_ps2raw->Callback();
+	joy_dinput->Callback();
+	joy_xinput->Callback();
 #endif
 }
 

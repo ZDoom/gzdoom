@@ -85,7 +85,6 @@ EXTERN_CVAR (Bool, am_showsecrets)
 EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
-EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR(Bool, inter_subtitles)
 EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
 
@@ -1225,11 +1224,6 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	DrawConsistancy ();
 	DrawWaiting ();
 	if ((ShowLog && MustDrawLog(state)) || (inter_subtitles && CPlayer->SubtitleCounter > 0)) DrawLog ();
-
-	if (noisedebug)
-	{
-		S_NoiseDebug ();
-	}
 }
 
 

@@ -394,7 +394,7 @@ void V_Init2()
 	UCVarValue val;
 
 	val.Bool = !!Args->CheckParm("-devparm");
-	ticker.SetGenericRepDefault(val, CVAR_Bool);
+	ticker->SetGenericRepDefault(val, CVAR_Bool);
 
 
 	I_InitGraphics();

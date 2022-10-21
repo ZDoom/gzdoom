@@ -113,7 +113,7 @@ void	G_DoQuickSave ();
 void STAT_Serialize(FSerializer &file);
 bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content);
 
-FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
+CVARD_NAMED(Int, gameskill, skill, 2, CVAR_SERVERINFO|CVAR_LATCH, "sets the skill for the next newly started game")
 CVAR(Bool, save_formatted, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// use formatted JSON for saves (more readable but a larger files and a bit slower.
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Bool, chasedemo, false, 0);
@@ -196,7 +196,7 @@ EXTERN_CVAR (Int, turnspeedwalkslow)
 EXTERN_CVAR (Int, turnspeedsprintslow)
 
 int				forwardmove[2], sidemove[2];
-FIntCVar		*angleturn[4] = {&turnspeedwalkfast, &turnspeedsprintfast, &turnspeedwalkslow, &turnspeedsprintslow};
+FIntCVarRef		*angleturn[4] = {&turnspeedwalkfast, &turnspeedsprintfast, &turnspeedwalkslow, &turnspeedsprintslow};
 int				flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
@@ -1925,8 +1925,12 @@ void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter)
 	{
 		if (arc.isWriting())
 		{
-			for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
+			decltype(cvarMap)::Iterator it(cvarMap);
+			decltype(cvarMap)::Pair *pair;
+			while (it.NextPair(pair))
 			{
+				auto cvar = pair->Value;
+				
 				if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE | CVAR_IGNORE | CVAR_CONFIG_ONLY)))
 				{
 					UCVarValue val = cvar->GetGenericRep(CVAR_String);
@@ -1937,8 +1941,11 @@ void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter)
 		}
 		else
 		{
-			for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
+			decltype(cvarMap)::Iterator it(cvarMap);
+			decltype(cvarMap)::Pair *pair;
+			while (it.NextPair(pair))
 			{
+				auto cvar = pair->Value;
 				if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE | CVAR_IGNORE | CVAR_CONFIG_ONLY)))
 				{
 					UCVarValue val;
@@ -2255,7 +2262,7 @@ void G_DoAutoSave ()
 	}
 
 	num.Int = nextautosave;
-	autosavenum.ForceSet (num, CVAR_Int);
+	autosavenum->ForceSet (num, CVAR_Int);
 
 	file = G_BuildSaveName ("auto", nextautosave);
 
@@ -2294,7 +2301,7 @@ void G_DoQuickSave ()
 	}
 
 	num.Int = lastquicksave;
-	quicksavenum.ForceSet (num, CVAR_Int);
+	quicksavenum->ForceSet (num, CVAR_Int);
 
 	file = G_BuildSaveName ("quick", lastquicksave);
 

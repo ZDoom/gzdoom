@@ -99,8 +99,8 @@ CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVA
 		self = 1.f;
 
 	ChangeMusicSetting(zmusic_snd_mastervolume, nullptr, self);
-	snd_sfxvolume.Callback();
-	snd_musicvolume.Callback();
+	snd_sfxvolume->Callback();
+	snd_musicvolume->Callback();
 }
 
 //==========================================================================
@@ -283,7 +283,7 @@ void I_InitSound ()
 		GSnd = new NullSoundRenderer;
 		Printf (TEXTCOLOR_RED"Sound init failed. Using nosound.\n");
 	}
-	snd_sfxvolume.Callback ();
+	snd_sfxvolume->Callback ();
 }
 
 

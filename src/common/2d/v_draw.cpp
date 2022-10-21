@@ -864,7 +864,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 	parms->top = INT_MAX;
 	parms->destwidth = INT_MAX;
 	parms->destheight = INT_MAX;
-	parms->Alpha = type == DrawTexture_Fill ? fillalpha : 1.f;
+	parms->Alpha = type == DrawTexture_Fill ? (float)fillalpha : 1.f;
 	parms->fillcolor = type == DrawTexture_Fill ? fill : PalEntry(~0u);
 	parms->TranslationId = -1;
 	parms->colorOverlay = 0;

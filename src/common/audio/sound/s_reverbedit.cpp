@@ -469,12 +469,12 @@ static void SelectEnvironment(const char *envname)
 			int newid = FirstFreeID(env->ID, env->Builtin);
 			UCVarValue cv;
 			cv.Int = HIBYTE(newid);
-			reverbedit_id1.ForceSet(cv, CVAR_Int);
+			reverbedit_id1->ForceSet(cv, CVAR_Int);
 			cv.Int = LOBYTE(newid);
-			reverbedit_id2.ForceSet(cv, CVAR_Int);
+			reverbedit_id2->ForceSet(cv, CVAR_Int);
 			FString selectname = SuggestNewName(env);
 			cv.String = selectname.GetChars();
-			reverbedit_name.ForceSet(cv, CVAR_String);
+			reverbedit_name->ForceSet(cv, CVAR_String);
 			return;
 		}
 	}

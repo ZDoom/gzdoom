@@ -61,7 +61,7 @@ CVAR(Int, crosshairhealth, 2, CVAR_ARCHIVE);
 CVARD(Float, crosshairscale, 0.5, CVAR_ARCHIVE, "changes the size of the crosshair");
 CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
 
-CUSTOM_CVARD(Float, hud_scalefactor, 1, CVAR_ARCHIVE, "changes the hud scale")
+CUSTOM_CVARD(Float, hud_scalefactor, 1.f, CVAR_ARCHIVE, "changes the hud scale")
 {
 	if (self < 0.36f) self = 0.36f;
 	else if (self > 1) self = 1;

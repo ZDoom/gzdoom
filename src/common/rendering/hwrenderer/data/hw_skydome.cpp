@@ -70,7 +70,7 @@
 // also shamelessly lifted from ZDoomGL! ;)
 //
 //-----------------------------------------------------------------------------
-CVAR(Float, skyoffset, 0, 0)	// for testing
+CVAR(Float, skyoffset, 0.f, 0)	// for testing
 
 
 struct SkyColor

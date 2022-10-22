@@ -78,7 +78,7 @@
 //
 //==========================================================================
 
-CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, r_fakecontrast, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0) self = 1;
 	else if (self > 2) self = 2;

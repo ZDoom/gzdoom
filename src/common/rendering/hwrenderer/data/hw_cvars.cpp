@@ -115,7 +115,7 @@ CVAR(Int, gl_satformula, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 // Texture CVARs
 //
 //==========================================================================
-CUSTOM_CVARD(Float, gl_texture_filter_anisotropic, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL, "changes the OpenGL texture anisotropy setting")
+CUSTOM_CVARD(Float, gl_texture_filter_anisotropic, 8.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL, "changes the OpenGL texture anisotropy setting")
 {
 	screen->SetTextureFilterMode();
 }

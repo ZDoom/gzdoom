@@ -1918,7 +1918,6 @@ static void LoadGameError(const char *label, const char *append = "")
 
 void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter)
 {
-	FBaseCVar* cvar;
 	FString dump;
 
 	if (arc.BeginObject(label))

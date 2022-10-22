@@ -54,8 +54,8 @@
 #include "swrenderer/scene/r_light.h"
 #include "playsim/a_dynlight.h"
 
-CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Bool, r_fuzzscale, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_dynlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_fuzzscale, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 namespace swrenderer
 {

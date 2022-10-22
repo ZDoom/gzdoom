@@ -90,7 +90,7 @@ enum EWRF_Options
 
 // [SO] 1=Weapons states are all 1 tick
 //		2=states with a function 1 tick, others 0 ticks.
-CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
+CVAR(Int, sv_fastweapons, 0, CVAR_SERVERINFO);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

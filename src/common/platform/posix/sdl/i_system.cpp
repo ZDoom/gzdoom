@@ -85,22 +85,18 @@ void I_SetIWADInfo()
 {
 }
 
-static bool I_KDialogAvailable()
+extern "C" int I_FileAvailable(const char* filename)
 {
-	// Is KDE running?
-	const char* str = getenv("KDE_FULL_SESSION");
-	if (str && strcmp(str, "true") == 0)
+	FString cmd = "which {0} >/dev/null 2>&1";
+	cmd.Substitute("{0}", filename);
+
+	if (FILE* f = popen(cmd.GetChars(), "r"))
 	{
-		// Is kdialog available?
-		FILE* f = popen("which kdialog >/dev/null 2>&1", "r");
-		if (f != NULL)
-		{
-			int status = pclose(f);
-			return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-		}
+		int status = pclose(f);
+		return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 	}
 
-	return false;
+	return 0;
 }
 
 //
@@ -117,7 +113,7 @@ void Unix_I_FatalError(const char* errortext)
 	// Close window or exit fullscreen and release mouse capture
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
-	if(I_KDialogAvailable())
+	if(I_FileAvailable("kdialog"))
 	{
 		FString cmd;
 		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
@@ -311,7 +307,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int&
 	}
 
 #ifndef __APPLE__
-	if(I_KDialogAvailable())
+	if(I_FileAvailable("kdialog"))
 	{
 		FString cmd("kdialog --title \"" GAMENAME " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""

@@ -196,7 +196,7 @@ CUSTOM_CVAR(Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 CVAR(Bool, am_followplayer, true, CVAR_ARCHIVE)
 CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
 CVAR(Bool, am_showgrid, false, CVAR_ARCHIVE)
-CVAR(Float, am_zoomdir, 0, CVAR_ARCHIVE)
+CVAR(Float, am_zoomdir, 0.f, CVAR_ARCHIVE)
 
 static const char *const DEFAULT_FONT_NAME = "AMMNUMx";
 CVAR(String, am_markfont, DEFAULT_FONT_NAME, CVAR_ARCHIVE)

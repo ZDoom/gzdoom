@@ -102,16 +102,6 @@ void C_InitCVars(int which)
 			newcvar = new FStringCVar(cvInfo->name, cvInfo->defaultval.String, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
 			break;
 		}
-		case CVAR_Flag:
-		{
-			newcvar = new FFlagCVar(cvInfo->name, *cvInfo->defaultval.Pointer->get(), cvInfo->flags, cvInfo->description);
-			break;
-		}
-		case CVAR_Mask:
-		{
-			newcvar = new FMaskCVar(cvInfo->name, *cvInfo->defaultval.Pointer->get(), cvInfo->flags, cvInfo->description);
-			break;
-		}
 		case CVAR_Color:
 		{
 			using callbacktype = void (*)(FColorCVar &);
@@ -122,6 +112,28 @@ void C_InitCVars(int which)
 		}
 		*(void**)cvInfo->refAddr = newcvar;
 	});
+	AutoSegs::CVarDecl.ForEach([](FCVarDecl* cvInfo)
+		{
+			FBaseCVar* newcvar;
+			switch (cvInfo->type)
+			{
+			default:
+				return;
+
+			case CVAR_Flag:
+			{
+				newcvar = new FFlagCVar(cvInfo->name, *cvInfo->defaultval.Pointer->get(), cvInfo->flags, cvInfo->description);
+				break;
+			}
+			case CVAR_Mask:
+			{
+				newcvar = new FMaskCVar(cvInfo->name, *cvInfo->defaultval.Pointer->get(), cvInfo->flags, cvInfo->description);
+				break;
+			}
+
+			}
+			*(void**)cvInfo->refAddr = newcvar;
+		});
 }
 
 void C_UninitCVars()

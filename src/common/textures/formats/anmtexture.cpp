@@ -66,7 +66,8 @@ FImageSource *AnmImage_TryCreate(FileReader & file, int lumpnum)
 {
 	file.Seek(0, FileReader::SeekSet);
 	char check[4];
-	file.Read(check, 4);
+	auto num = file.Read(check, 4);
+	if (num < 4) return nullptr;
 	if (memcmp(check, "LPF ", 4)) return nullptr;
 	file.Seek(0, FileReader::SeekSet);
 	auto buffer = file.ReadPadded(1);

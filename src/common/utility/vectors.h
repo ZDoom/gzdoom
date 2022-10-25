@@ -310,13 +310,13 @@ struct TVector2
 	}
 
 	// Returns a vector rotated 90 degrees clockwise.
-	TVector2 Rotated90CW()
+	TVector2 Rotated90CW() const
 	{
 		return TVector2(Y, -X);
 	}
 
 	// Returns a vector rotated 90 degrees counterclockwise.
-	TVector2 Rotated90CCW()
+	TVector2 Rotated90CCW() const
 	{
 		return TVector2(-Y, X);
 	}
@@ -662,6 +662,11 @@ struct TVector3
 	vec_t operator | (const TVector3 &other) const
 	{
 		return X*other.X + Y*other.Y + Z*other.Z;
+	}
+
+	vec_t dot (const TVector3& other) const
+	{
+		return X * other.X + Y * other.Y + Z * other.Z;
 	}
 
 	// Cross product
@@ -1624,7 +1629,7 @@ struct TRotator
 	TRotator &operator/= (const Angle &scalar)
 	{
 		Angle mul(1 / scalar.Degrees_);
-		Pitch *= scalar, Yaw *= scalar, Roll *= scalar;
+		Pitch *= mul, Yaw *= mul, Roll *= mul;
 		return *this;
 	}
 

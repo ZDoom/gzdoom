@@ -841,7 +841,7 @@ int FileSystem::GetFileFlags (int lump)
 
 uint32_t FileSystem::LumpNameHash (const char *s)
 {
-	const uint32_t *table = GetCRCTable ();;
+	const uint32_t *table = GetCRCTable ();
 	uint32_t hash = 0xffffffff;
 	int i;
 

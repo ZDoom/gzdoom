@@ -973,9 +973,31 @@ class AltHud ui
 		let amstr = Level.FormatMapName(hudcolor_titl);
 		font = generic_ui? NewSmallFont : SmallFont.CanPrint(amstr)? SmallFont : OriginalSmallFont;
 
-		screen.DrawText(font, Font.CR_BRICK, 2, hudheight - fonth - 1, amstr,
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+		bottom = hudheight - fonth - 1;
+
+		screen.DrawText(font, Font.CR_BRICK, 2, bottom, amstr,
+			DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+
+		if (am_showcluster && (Level.clusterflags & Level.CLUSTER_HUB))
+		{
+			let text = Level.GetClusterName();
+			if (text != "")
+			{
+				bottom -= fonth;
+				screen.DrawText(font, Font.CR_ORANGE, 2, bottom, text,
+					DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+			}
+		}
+		if (am_showepisode)
+		{
+			let text = Level.GetEpisodeName();
+			if (text != "")
+			{
+				bottom -= fonth;
+				screen.DrawText(font, Font.CR_RED, 2, bottom, text,
+					DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+			}
+		}
 
 		DrawCoordinates(CPlayer, false);
 	}

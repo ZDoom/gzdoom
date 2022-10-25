@@ -85,6 +85,7 @@
 #include "c_buttons.h"
 #include "screenjob.h"
 #include "types.h"
+#include "gstrings.h"
 
 #include "gi.h"
 
@@ -101,6 +102,7 @@
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl, FLevelLocals *Level);
+FString STAT_EpisodeName();
 
 EXTERN_CVAR(Bool, save_formatted)
 EXTERN_CVAR (Float, sv_gravity)
@@ -2430,3 +2432,31 @@ void FLevelLocals::SetMusic()
 {
 	S_ChangeMusic(Music, musicorder);
 }
+
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetClusterName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals)
+	cluster_info_t* cluster = FindClusterInfo(self->cluster);
+	FString retval;
+
+	if (cluster)
+	{
+		if (cluster->flags & CLUSTER_LOOKUPNAME)
+			retval = GStrings(cluster->ClusterName);
+		else
+			retval = cluster->ClusterName;
+	}
+	ACTION_RETURN_STRING(retval);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetEpisodeName)
+{
+	// this is a bit of a crapshoot because ZDoom never assigned a level to an episode
+	// and retroactively fixing this is not possible.
+	// This will need some heuristics to assign a proper episode to each existing level.
+	// Stuff for later. for now this just checks the STAT module for the currently running episode,
+	// which should be fine unless cheating.
+	ACTION_RETURN_STRING(GStrings.localize(STAT_EpisodeName()));
+}
+

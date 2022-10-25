@@ -63,6 +63,8 @@ CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
 CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
 CVAR (Bool,  hud_showweapons,	true, CVAR_ARCHIVE);	// Show weapons collected
+CVAR (Bool,  am_showepisode,	false, CVAR_ARCHIVE);	// Show current episode name
+CVAR (Bool,  am_showcluster,	false, CVAR_ARCHIVE);	// Show current cluster name
 CVAR (Int ,  hud_showammo,		2, CVAR_ARCHIVE);		// Show ammo collected
 CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
 CVAR (Int ,  hud_showtimestat,	0,	    CVAR_ARCHIVE);	// Show time on HUD as statistics widget

@@ -31,10 +31,6 @@
 #include <direct.h>
 #endif
 
-#ifdef HAVE_FPU_CONTROL
-#include <fpu_control.h>
-#endif
-
 #if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
 #endif

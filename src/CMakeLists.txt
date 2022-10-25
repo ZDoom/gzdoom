@@ -37,9 +37,6 @@ endif()
 # Right now only 64 bit is supported.
 if( ${TARGET_ARCHITECTURE} MATCHES "x86_64" )
 	set( X64 64 )
-endif()
-
-if( X64 OR ${TARGET_ARCHITECTURE} MATCHES "i386" )
 	add_definitions( -DARCH_IA32 )
 endif()
 
@@ -48,23 +45,13 @@ if( NOT PROJECT_LIBRARIES )
 endif()
 
 if( WIN32 )
-	if( X64 )
-		set( WIN_TYPE Win64 )
-		set( XBITS x64 )
-	else()
-		set( WIN_TYPE Win32 )
-		set( XBITS x86 )
-	endif()
 
 	add_definitions( -D_WIN32 )
-
-
-	set( DX_dinput8_LIBRARY dinput8 )
 
 	set( PROJECT_LIBRARIES
 		wsock32
 		winmm
-		"${DX_dinput8_LIBRARY}"
+		dinput8
 		ole32
 		user32
 		gdi32
@@ -75,10 +62,6 @@ if( WIN32 )
 		oleaut32
 		dbghelp
 		legacy_stdio_definitions )
-
-	if( NOT DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} DelayImp )
-	endif()
 
 	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		if( DX_dxguid_LIBRARY )
@@ -145,11 +128,6 @@ else()
 		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${SDL2_LIBRARY}" )
 	endif()
 
-	find_path( FPU_CONTROL_DIR fpu_control.h )
-	if( FPU_CONTROL_DIR )
-		include_directories( ${FPU_CONTROL_DIR} )
-		add_definitions( -DHAVE_FPU_CONTROL )
-	endif()
 endif()
 
 if( NOT NO_OPENAL )
@@ -180,7 +158,6 @@ endif()
 
 if( X64 )
 	set( HAVE_MMX 1 )
-else( X64 )
 endif( X64 )
 
 CHECK_CXX_SOURCE_COMPILES("#include <ppl.h>
@@ -208,7 +185,6 @@ if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -pg" )
 	endif()
 
-	#set( REL_CXX_FLAGS "-fno-rtti" )
 	if( NOT PROFILE AND NOT APPLE )
 		# On OS X frame pointers are required for exception handling, at least with Clang
 		set( REL_CXX_FLAGS "${REL_CXX_FLAGS} -fomit-frame-pointer" )

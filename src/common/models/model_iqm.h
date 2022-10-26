@@ -112,8 +112,8 @@ public:
 	void RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition) override;
 	void BuildVertexBuffer(FModelRenderer* renderer) override;
 	void AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids) override;
-	const TArray<VSMatrix>* AttachAnimationData() override;
-	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<VSMatrix>& animationData) override;
+	const TArray<TRS>* AttachAnimationData() override;
+	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, AActor* actor) override;
 
 private:
 	void LoadGeometry();
@@ -132,7 +132,6 @@ private:
 	TArray<IQMJoint> Joints;
 	TArray<IQMPose> Poses;
 	TArray<IQMAnim> Anims;
-	TArray<VSMatrix> FrameTransforms;
 	TArray<IQMBounds> Bounds;
 	TArray<IQMVertexArray> VertexArrays;
 	uint32_t NumVertices = 0;
@@ -141,6 +140,7 @@ private:
 
 	TArray<VSMatrix> baseframe;
 	TArray<VSMatrix> inversebaseframe;
+	TArray<TRS> TRSData;
 };
 
 struct IQMReadErrorException { };

@@ -47,6 +47,8 @@
 #include "g_level.h"
 #include "tflags.h"
 #include "portal.h"
+#include "matrix.h"
+#include "TRS.h"
 
 struct subsector_t;
 struct FBlockNode;
@@ -689,6 +691,16 @@ public:
 	virtual void Serialize(FSerializer& arc) override;
 };
 
+class DBoneComponents : public DObject
+{
+	DECLARE_CLASS(DBoneComponents, DObject);
+public:
+	TArray<TRS>			trscomponents;
+	TArray<VSMatrix>	trsmatrix;
+
+	DBoneComponents() = default;
+};
+
 class DViewPosition : public DObject
 {
 	DECLARE_CLASS(DViewPosition, DObject);
@@ -1085,6 +1097,7 @@ public:
 	double			Speed;
 	double			FloatSpeed;
 	TObjPtr<DActorModelData*>		modelData;
+	TObjPtr<DBoneComponents*>		boneComponentData;
 
 // interaction info
 	FBlockNode		*BlockNode;			// links in blocks (if needed)

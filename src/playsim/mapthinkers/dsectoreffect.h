@@ -22,7 +22,7 @@ public:
 
 class DMover : public DSectorEffect
 {
-	DECLARE_ABSTRACT_CLASS (DMover, DSectorEffect)
+	DECLARE_CLASS (DMover, DSectorEffect)
 	HAS_OBJECT_POINTERS
 protected:
 	void Construct(sector_t *sector);
@@ -39,14 +39,14 @@ protected:
 
 class DMovingFloor : public DMover
 {
-	DECLARE_ABSTRACT_CLASS (DMovingFloor, DMover)
+	DECLARE_CLASS (DMovingFloor, DMover)
 protected:
 	void Construct(sector_t *sector);
 };
 
 class DMovingCeiling : public DMover
 {
-	DECLARE_ABSTRACT_CLASS (DMovingCeiling, DMover)
+	DECLARE_CLASS (DMovingCeiling, DMover)
 protected:
 	void Construct(sector_t *sector, bool interpolate = true);
 };

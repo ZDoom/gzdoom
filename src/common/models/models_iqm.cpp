@@ -543,15 +543,35 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 	for (int i = 0; i < numbones; i++)
 	{
 		TRS bone;
-		bone.translation = animationFrames[offset1 + i].translation * invt + animationFrames[offset2 + i].translation * t;
-		bone.rotation = animationFrames[offset1 + i].rotation * invt;
-		if ((bone.rotation | animationFrames[offset2 + i].rotation * t) < 0)
+		TRS from = animationFrames[offset1 + i];
+		TRS to = animationFrames[offset2 + i];
+
+		if (actor->boneManipulationData != nullptr)
+		{
+			if (i < actor->boneManipulationData->boneComponentsOld.Size())
+			{
+				from.translation += actor->boneManipulationData->boneComponentsOld[i].translation;
+				from.rotation += actor->boneManipulationData->boneComponentsOld[i].rotation;
+				from.scaling += actor->boneManipulationData->boneComponentsOld[i].scaling;
+			}
+
+			if (i < actor->boneManipulationData->boneComponentsNew.Size())
+			{
+				to.translation += actor->boneManipulationData->boneComponentsNew[i].translation;
+				to.rotation += actor->boneManipulationData->boneComponentsNew[i].rotation;
+				to.scaling += actor->boneManipulationData->boneComponentsNew[i].scaling;
+			}
+		}
+
+		bone.translation = from.translation * invt + to.translation * t;
+		bone.rotation = from.rotation * invt;
+		if ((bone.rotation | to.rotation * t) < 0)
 		{
 			bone.rotation.X *= -1; bone.rotation.Y *= -1; bone.rotation.Z *= -1; bone.rotation.W *= -1;
 		}
-		bone.rotation += animationFrames[offset2 + i].rotation * t;
+		bone.rotation += to.rotation * t;
 		bone.rotation.MakeUnit();
-		bone.scaling = animationFrames[offset1 + i].scaling * invt + animationFrames[offset2 + i].scaling * t;
+		bone.scaling = from.scaling * invt + to.scaling * t;
 
 		if (actor->boneComponentData->trscomponents[i].Equals(bone))
 		{

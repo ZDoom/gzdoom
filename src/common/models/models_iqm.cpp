@@ -59,8 +59,11 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		uint32_t num_extensions = reader.ReadUInt32();
 		uint32_t ofs_extensions = reader.ReadUInt32();
 
-		if (num_meshes <= 0)
-			I_FatalError("Invalid model: \"%s%s\", no mesh data is unsupported", path, fileSystem.GetLongName(mLumpNum).GetChars());
+		if (num_joints <= 0)
+		{
+			Printf("Invalid model: \"%s%s\", no joint data is present\n", path, fileSystem.GetLongName(mLumpNum).GetChars());
+			return false;
+		}
 
 		if (num_text == 0)
 			return false;
@@ -200,12 +203,6 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 				TRSData[i * num_poses + j].translation = translate;
 				TRSData[i * num_poses + j].rotation = quaternion;
 				TRSData[i * num_poses + j].scaling = scale;
-
-				VSMatrix m;
-				m.loadIdentity();
-				m.translate(translate.X, translate.Y, translate.Z);
-				m.multQuaternion(quaternion);
-				m.scale(scale.X, scale.Y, scale.Z);
 			}
 		}
 
@@ -213,6 +210,7 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		if (num_frames <= 0)
 		{
 			num_frames = 1;
+			TRSData.Resize(num_joints);
 
 			for (uint32_t j = 0; j < num_joints; j++)
 			{
@@ -233,11 +231,9 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 				scale.Y = Joints[j].Scale.Y;
 				scale.Z = Joints[j].Scale.Z;
 
-				VSMatrix m;
-				m.loadIdentity();
-				m.translate(translate.X, translate.Y, translate.Z);
-				m.multQuaternion(quaternion);
-				m.scale(scale.X, scale.Y, scale.Z);
+				TRSData[j].translation = translate;
+				TRSData[j].rotation = quaternion;
+				TRSData[j].scaling = scale;
 			}
 		}
 
@@ -318,8 +314,8 @@ void IQMModel::LoadPosition(IQMFileReader& reader, const IQMVertexArray& vertexA
 		for (FModelVertex& v : Vertices)
 		{
 			v.x = reader.ReadFloat();
-			v.y = reader.ReadFloat();
 			v.z = reader.ReadFloat();
+			v.y = reader.ReadFloat();
 
 			v.lu = lu;
 			v.lv = lv;
@@ -358,7 +354,7 @@ void IQMModel::LoadNormal(IQMFileReader& reader, const IQMVertexArray& vertexArr
 			float y = reader.ReadFloat();
 			float z = reader.ReadFloat();
 
-			v.SetNormal(x, y, z);
+			v.SetNormal(x, z, y);
 		}
 	}
 	else
@@ -537,6 +533,12 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 	float t = (float)inter;
 	float invt = 1.0f - t;
 
+	float swapYZ[16] = { 0.0f };
+	swapYZ[0 + 0 * 4] = 1.0f;
+	swapYZ[1 + 2 * 4] = 1.0f;
+	swapYZ[2 + 1 * 4] = 1.0f;
+	swapYZ[3 + 3 * 4] = 1.0f;
+
 	TArray<VSMatrix> bones(numbones, true);
 	for (int i = 0; i < numbones; i++)
 	{
@@ -583,6 +585,15 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 	}
 
 	actor->boneComponentData->trsmatrix = bones;
+
+	for (uint32_t j = 0; j < numbones; j++)
+	{
+		VSMatrix m;
+		m.loadMatrix(swapYZ);
+		m.multMatrix(bones[j]);
+		m.multMatrix(swapYZ);
+		bones[j] = m;
+	}
 
 	return bones;
 }

@@ -5195,3 +5195,86 @@ DEFINE_ACTION_FUNCTION(AActor, GetRenderStyle)
 	}
 	ACTION_RETURN_INT(-1);	// no symbolic constant exists to handle this style.
 }
+
+//==========================================================================
+//
+// A_ManipulateBone(a bunch of crap)
+//
+// This function allows manipulating a bone
+//==========================================================================
+
+enum ManipulateBoneFlags
+{
+	BM_USEEULER = 1
+};
+
+DEFINE_ACTION_FUNCTION(AActor, A_ManipulateBone)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(modelindex);
+	PARAM_INT(boneindex);
+	PARAM_FLOAT(positionX);
+	PARAM_FLOAT(positionY);
+	PARAM_FLOAT(positionZ);
+	PARAM_FLOAT(rotationX);
+	PARAM_FLOAT(rotationY);
+	PARAM_FLOAT(rotationZ);
+	PARAM_FLOAT(rotationW);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
+	PARAM_FLOAT(scaleZ);
+	PARAM_INT(flags);
+
+	if (self == nullptr)
+		ACTION_RETURN_BOOL(false);
+
+	AActor* mobj = ACTION_CALL_FROM_INVENTORY() ? self : stateowner;
+
+	if (mobj->boneManipulationData == nullptr)
+	{
+		auto ptr = Create<DBoneManipulations>();
+		ptr->boneComponentsNew = *new TArray<TRS>();
+		ptr->boneComponentsOld = *new TArray<TRS>();
+		mobj->boneManipulationData = ptr;
+		GC::WriteBarrier(mobj, ptr);
+	}
+
+	while(boneindex >= mobj->boneManipulationData->boneComponentsNew.Size())
+		mobj->boneManipulationData->boneComponentsNew.Push(TRS());
+	while (boneindex >= mobj->boneManipulationData->boneComponentsOld.Size())
+		mobj->boneManipulationData->boneComponentsOld.Push(TRS());
+
+	if (flags & BM_USEEULER)
+	{
+		double cr = cos(rotationZ * 0.5);
+		double sr = sin(rotationZ * 0.5);
+		double cp = cos(rotationY * 0.5);
+		double sp = sin(rotationY * 0.5);
+		double cy = cos(rotationX * 0.5);
+		double sy = sin(rotationX * 0.5);
+
+		rotationW = cr * cp * cy + sr * sp * sy;
+		rotationX = sr * cp * cy - cr * sp * sy;
+		rotationY = cr * sp * cy + sr * cp * sy;
+		rotationZ = cr * cp * sy - sr * sp * cy;
+
+		//Printf("Rotation X is: %f\n", rotationX);
+		//Printf("Rotation Y is: %f\n", rotationY);
+		//Printf("Rotation Z is: %f\n", rotationZ);
+		//Printf("Rotation W is: %f\n", rotationW);
+	}
+
+	mobj->boneManipulationData->boneComponentsOld[boneindex] = mobj->boneManipulationData->boneComponentsNew[boneindex];
+	mobj->boneManipulationData->boneComponentsNew[boneindex].translation.X = positionX;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].translation.Y = positionZ;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].translation.Z = positionY;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].rotation.X = rotationX;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].rotation.Y = rotationY;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].rotation.Z = rotationZ;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].rotation.W = rotationW;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].scaling.X = scaleX;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].scaling.Y = scaleZ;
+	mobj->boneManipulationData->boneComponentsNew[boneindex].scaling.Z = scaleY;
+
+	return 0;
+}

@@ -1134,7 +1134,6 @@ class Actor : Thinker native
 	deprecated("2.3", "Use 'b<FlagName> = [true/false]' instead") native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
 	action native void A_ChangeModel(name modeldef, int modelindex = 0, string modelpath = "", name model = "", int skinindex = 0, string skinpath = "", name skin = "", int flags = 0, int generatorindex = -1, int animationindex = 0, string animationpath = "", name animation = "");
-	action native void A_ManipulateBone(int modelindex, int boneindex, float positionX = 0, float positionY = 0, float positionZ = 0, float rotationX = 0, float rotationY = 0, float rotationZ = 0, float rotationW = 0, float scaleX = 0, float scaleY = 0, float scaleZ = 0, int flags = 0);
 
 	void A_SetFriendly (bool set)
 	{

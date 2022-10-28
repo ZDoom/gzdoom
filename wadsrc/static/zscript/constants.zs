@@ -373,12 +373,6 @@ enum ChangeModelFlags
 	CMDL_USESURFACESKIN = 1 << 2,
 };
 
-// Manipulate Bone Flags
-enum ManipulateBoneFlags
-{
-	BM_USEEULER = 1
-};
-
 // Activation flags
 enum EActivationFlags
 {

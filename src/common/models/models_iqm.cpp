@@ -510,20 +510,16 @@ const TArray<TRS>* IQMModel::AttachAnimationData()
 	return &TRSData;
 }
 
-const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, AActor* actor)
+const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, AActor* actor, int index)
 {
 	const TArray<TRS>& animationFrames = &animationData ? animationData : TRSData;
 
 	int numbones = Joints.Size();
 
-	if (actor->boneComponentData == nullptr)
-	{
-		auto ptr = Create<DBoneComponents>();
-		ptr->trscomponents.Resize(numbones);
-		ptr->trsmatrix.Resize(numbones);
-		actor->boneComponentData = ptr;
-		GC::WriteBarrier(actor, ptr);
-	}
+	if(actor->boneComponentData->trscomponents[index].Size() != numbones)
+		actor->boneComponentData->trscomponents[index].Resize(numbones);
+	if (actor->boneComponentData->trsmatrix[index].Size() != numbones)
+		actor->boneComponentData->trsmatrix[index].Resize(numbones);
 
 	frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1) / numbones);
 	frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1) / numbones);
@@ -547,23 +543,6 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 		TRS from = animationFrames[offset1 + i];
 		TRS to = animationFrames[offset2 + i];
 
-		if (actor->boneManipulationData != nullptr)
-		{
-			if (i < actor->boneManipulationData->boneComponentsOld.Size())
-			{
-				from.translation += actor->boneManipulationData->boneComponentsOld[i].translation;
-				from.rotation *= actor->boneManipulationData->boneComponentsOld[i].rotation;
-				from.scaling += actor->boneManipulationData->boneComponentsOld[i].scaling;
-			}
-
-			if (i < actor->boneManipulationData->boneComponentsNew.Size())
-			{
-				to.translation += actor->boneManipulationData->boneComponentsNew[i].translation;
-				to.rotation *= actor->boneManipulationData->boneComponentsNew[i].rotation;
-				to.scaling += actor->boneManipulationData->boneComponentsNew[i].scaling;
-			}
-		}
-
 		bone.translation = from.translation * invt + to.translation * t;
 		bone.rotation = from.rotation * invt;
 		if ((bone.rotation | to.rotation * t) < 0)
@@ -576,18 +555,18 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 
 		if (Joints[i].Parent >= 0 && modifiedBone[Joints[i].Parent])
 		{
-			actor->boneComponentData->trscomponents[i] = bone;
+			actor->boneComponentData->trscomponents[index][i] = bone;
 			modifiedBone[i] = true;
 		}
-		else if (actor->boneComponentData->trscomponents[i].Equals(bone))
+		else if (actor->boneComponentData->trscomponents[index][i].Equals(bone))
 		{
-			bones[i] = actor->boneComponentData->trsmatrix[i];
+			bones[i] = actor->boneComponentData->trsmatrix[index][i];
 			modifiedBone[i] = false;
 			continue;
 		}
 		else
 		{
-			actor->boneComponentData->trscomponents[i] = bone;
+			actor->boneComponentData->trscomponents[index][i] = bone;
 			modifiedBone[i] = true;
 		}
 
@@ -612,7 +591,7 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 		}
 	}
 
-	actor->boneComponentData->trsmatrix = bones;
+	actor->boneComponentData->trsmatrix[index] = bones;
 
 	for (uint32_t j = 0; j < numbones; j++)
 	{

@@ -833,6 +833,25 @@ struct TVector4
 		return TVector4(v.X * scalar, v.Y * scalar, v.Z * scalar, v.W * scalar);
 	}
 
+	// Multiply as Quaternion
+	TVector4& operator*= (const TVector4& v)
+	{
+		X = v.W * X + v.X * W + v.Y * Z - v.Z * Y;
+		Y = v.W * Y + v.Y * W + v.Z * X - v.X * Z;
+		Z = v.W * Z + v.Z * W + v.X * Y - v.Y * X;
+		W = v.W * W - v.X * X - v.Y * Y - v.Z * Z;
+		return *this;
+	}
+
+	friend TVector4 operator* (const TVector4& v1, const TVector4& v2)
+	{
+		return TVector4(v2.W * v1.X + v2.X * v1.W + v2.Y * v1.Z - v1.Z * v1.Y,
+			v2.W * v1.Y + v2.Y * v1.W + v2.Z * v1.X - v2.X * v1.Z,
+			v2.W * v1.Z + v2.Z * v1.W + v2.X * v1.Y - v2.Y * v1.X,
+			v2.W * v1.W - v2.X * v1.X - v2.Y * v1.Y - v2.Z * v1.Z
+		);
+	}
+
 	// Scalar division
 	TVector4 &operator/= (vec_t scalar)
 	{

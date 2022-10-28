@@ -41,6 +41,13 @@ public:
 	FVector4 rotation;
 	FVector3 scaling;
 
+	TRS()
+	{
+		translation = FVector3(0,0,0);
+		rotation = FVector4(0,0,0,1);
+		scaling = FVector3(0,0,0);
+	}
+
 	bool Equals(TRS& compare)
 	{
 		return compare.translation == this->translation && compare.rotation == this->rotation && compare.scaling == this->scaling;

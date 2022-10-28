@@ -147,6 +147,8 @@ public:
 	BoneBuffer* mBones = nullptr;				// Model bones
 	IShadowMap mShadowMap;
 
+	int mGameScreenWidth = 0;
+	int mGameScreenHeight = 0;
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;
 	IntRect mOutputLetterbox;

@@ -540,6 +540,7 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 	swapYZ[3 + 3 * 4] = 1.0f;
 
 	TArray<VSMatrix> bones(numbones, true);
+	TArray<bool> modifiedBone(numbones, true);
 	for (int i = 0; i < numbones; i++)
 	{
 		TRS bone;
@@ -551,14 +552,14 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 			if (i < actor->boneManipulationData->boneComponentsOld.Size())
 			{
 				from.translation += actor->boneManipulationData->boneComponentsOld[i].translation;
-				from.rotation += actor->boneManipulationData->boneComponentsOld[i].rotation;
+				from.rotation *= actor->boneManipulationData->boneComponentsOld[i].rotation;
 				from.scaling += actor->boneManipulationData->boneComponentsOld[i].scaling;
 			}
 
 			if (i < actor->boneManipulationData->boneComponentsNew.Size())
 			{
 				to.translation += actor->boneManipulationData->boneComponentsNew[i].translation;
-				to.rotation += actor->boneManipulationData->boneComponentsNew[i].rotation;
+				to.rotation *= actor->boneManipulationData->boneComponentsNew[i].rotation;
 				to.scaling += actor->boneManipulationData->boneComponentsNew[i].scaling;
 			}
 		}
@@ -573,14 +574,21 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 		bone.rotation.MakeUnit();
 		bone.scaling = from.scaling * invt + to.scaling * t;
 
-		if (actor->boneComponentData->trscomponents[i].Equals(bone))
+		if (Joints[i].Parent >= 0 && modifiedBone[Joints[i].Parent])
+		{
+			actor->boneComponentData->trscomponents[i] = bone;
+			modifiedBone[i] = true;
+		}
+		else if (actor->boneComponentData->trscomponents[i].Equals(bone))
 		{
 			bones[i] = actor->boneComponentData->trsmatrix[i];
+			modifiedBone[i] = false;
 			continue;
 		}
 		else
 		{
 			actor->boneComponentData->trscomponents[i] = bone;
+			modifiedBone[i] = true;
 		}
 
 		VSMatrix m;

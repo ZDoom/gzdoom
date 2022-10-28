@@ -5246,12 +5246,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_ManipulateBone)
 
 	if (flags & BM_USEEULER)
 	{
-		double cr = cos(rotationZ * 0.5);
-		double sr = sin(rotationZ * 0.5);
-		double cp = cos(rotationY * 0.5);
-		double sp = sin(rotationY * 0.5);
-		double cy = cos(rotationX * 0.5);
-		double sy = sin(rotationX * 0.5);
+		rotationX = rotationX * 3.14159265359f / 180.0f;
+		rotationY = rotationY * 3.14159265359f / 180.0f;
+		rotationZ = rotationZ * 3.14159265359f / 180.0f;
+
+		double cr = cos(rotationX * 0.5);
+		double sr = sin(rotationX * 0.5);
+		double cp = cos(rotationZ * 0.5);
+		double sp = sin(rotationZ * 0.5);
+		double cy = cos(rotationY * 0.5);
+		double sy = sin(rotationY * 0.5);
 
 		rotationW = cr * cp * cy + sr * sp * sy;
 		rotationX = sr * cp * cy - cr * sp * sy;

@@ -894,9 +894,14 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		}
 		Results = res;
 	}
-	if (Results->HitType == TRACE_HitNone && Results->Distance == 0)
+	if (Results->HitType == TRACE_HitNone)
 	{
-		Results->HitPos = Start + Vec * MaxDist;
+		// [MK] If we didn't cross anything, it's an easy guess,
+		// otherwise, complete the line using the remaining distance
+		if (Results->Distance == 0)
+			Results->HitPos = Start + Vec * MaxDist;
+		else
+			Results->HitPos += Vec * (MaxDist - Results->Distance);
 		SetSourcePosition();
 		Results->Distance = MaxDist;
 		Results->Fraction = 1.;

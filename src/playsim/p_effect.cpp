@@ -248,6 +248,13 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
+
+		if(particle->doRoll)
+		{
+			particle->Roll += particle->RollVel;
+			particle->RollVel += particle->RollAcc;
+		}
+		
 		particle->subsector = Level->PointInRenderSubsector(particle->Pos);
 		sector_t *s = particle->subsector->sector;
 		// Handle crossing a sector portal.
@@ -275,10 +282,11 @@ enum PSFlag
 {
 	PS_FULLBRIGHT =		1,
 	PS_NOTIMEFREEZE =	1 << 5,
+	PS_ROLL =			1 << 6,
 };
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
-	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style)
+	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
 {
 	particle_t *particle = NewParticle(Level);
 
@@ -298,6 +306,10 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->notimefreeze = !!(flags & PS_NOTIMEFREEZE);
 		particle->texture = texture;
 		particle->style = style;
+		particle->Roll = startroll;
+		particle->RollVel = rollvel;
+		particle->RollAcc = rollacc;
+		particle->doRoll = !!(flags & PS_ROLL);
 	}
 }
 

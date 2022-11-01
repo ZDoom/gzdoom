@@ -1619,6 +1619,7 @@ enum SPFflag
 	SPF_RELACCEL =			1 << 3,
 	SPF_RELANG =			1 << 4,
 	SPF_NOTIMEFREEZE =		1 << 5,
+	SPF_ROLL =				1 << 6,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
@@ -1698,6 +1699,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
 	PARAM_FLOAT	(startalpha)
 	PARAM_FLOAT	(fadestep)	
 	PARAM_FLOAT (sizestep)	
+	PARAM_FLOAT	(startroll)	
+	PARAM_FLOAT	(rollvel)	
+	PARAM_FLOAT	(rollacc)
 
 	startalpha = clamp(startalpha, 0., 1.);
 	if (fadestep > 0) fadestep = clamp(fadestep, 0., 1.);
@@ -1737,7 +1741,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
 			style = STYLE_None;
 		}
 
-		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags, texid, ERenderStyle(style));
+		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags, texid, ERenderStyle(style), startroll, rollvel, rollacc);
 	}
 	return 0;
 }

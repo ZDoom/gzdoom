@@ -390,6 +390,8 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	// [Nash] has +ROLLSPRITE
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 
+	const bool drawRollParticle = (particle != nullptr && particle->doRoll);
+
 
 	// [fgsfds] check sprite type mask
 	uint32_t spritetype = (uint32_t)-1;
@@ -430,7 +432,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		// [fgsfds] calculate yaw vectors
 		float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
 		float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
-		if (actor)	rollDegrees = Angles.Roll.Degrees();
+		if (actor || drawRollParticle)	rollDegrees = Angles.Roll.Degrees();
 		if (isFlatSprite)
 		{
 			yawvecX = Angles.Yaw.Cos();
@@ -448,7 +450,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 				if (useOffsets) mat.Translate(-xx, -zz, -yy);
 			}
 		}
-		else if (drawRollSpriteActor)
+		else if (drawRollSpriteActor || drawRollParticle)
 		{
 			if (useOffsets) mat.Translate(xx, zz, yy);
 			if (drawWithXYBillboard)
@@ -1340,6 +1342,12 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	x = float(particle->Pos.X) + xvf;
 	y = float(particle->Pos.Y) + yvf;
 	z = float(particle->Pos.Z) + zvf;
+
+	if(particle->doRoll)
+	{
+		float rvf = (particle->RollVel) * timefrac;
+		Angles.Roll = TAngle<double>::fromDeg(particle->Roll + rvf);
+	}
 	
 	float factor;
 	if (particle_style == 1) factor = 1.3f / 7.f;

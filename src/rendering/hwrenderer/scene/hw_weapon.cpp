@@ -619,7 +619,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (!psp->GetState()) continue;
-		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
 		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
 		if (smf && !hudModelStep) continue;
 		if (!smf && hudModelStep) continue;

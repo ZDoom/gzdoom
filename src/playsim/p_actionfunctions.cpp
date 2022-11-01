@@ -1676,6 +1676,72 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_COLOR		(color);
+	PARAM_INT   (i_texid)
+	PARAM_INT   (style)
+	PARAM_INT	(flags)		
+	PARAM_INT	(lifetime)	
+	PARAM_FLOAT	(size)		
+	PARAM_ANGLE	(angle)		
+	PARAM_FLOAT	(xoff)		
+	PARAM_FLOAT	(yoff)		
+	PARAM_FLOAT	(zoff)		
+	PARAM_FLOAT	(xvel)		
+	PARAM_FLOAT	(yvel)		
+	PARAM_FLOAT	(zvel)		
+	PARAM_FLOAT	(accelx)	
+	PARAM_FLOAT	(accely)	
+	PARAM_FLOAT	(accelz)	
+	PARAM_FLOAT	(startalpha)
+	PARAM_FLOAT	(fadestep)	
+	PARAM_FLOAT (sizestep)	
+
+	startalpha = clamp(startalpha, 0., 1.);
+	if (fadestep > 0) fadestep = clamp(fadestep, 0., 1.);
+	size = fabs(size);
+	if (lifetime != 0)
+	{
+		if (flags & SPF_RELANG) angle += self->Angles.Yaw;
+		double s = angle.Sin();
+		double c = angle.Cos();
+		DVector3 pos(xoff, yoff, zoff + self->GetBobOffset());
+		DVector3 vel(xvel, yvel, zvel);
+		DVector3 acc(accelx, accely, accelz);
+		//[MC] Code ripped right out of A_SpawnItemEx.
+		if (flags & SPF_RELPOS)
+		{
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+			pos.X = xoff * c + yoff * s;
+			pos.Y = xoff * s - yoff * c;
+		}
+		if (flags & SPF_RELVEL)
+		{
+			vel.X = xvel * c + yvel * s;
+			vel.Y = xvel * s - yvel * c;
+		}
+		if (flags & SPF_RELACCEL)
+		{
+			acc.X = accelx * c + accely * s;
+			acc.Y = accelx * s - accely * c;
+		}
+		
+		FTextureID texid;
+		texid.SetIndex(i_texid);
+		
+		if(style < 0 || style >= STYLE_Count)
+		{
+			style = STYLE_None;
+		}
+
+		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags, texid, ERenderStyle(style));
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // A_CheckSight

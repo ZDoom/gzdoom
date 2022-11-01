@@ -1277,7 +1277,16 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	}
 
 	trans=particle->alpha;
-	RenderStyle = STYLE_Translucent;
+
+	if(particle->style != STYLE_None)
+	{
+		RenderStyle = particle->style;
+	}
+	else
+	{
+		RenderStyle = STYLE_Translucent;
+	}
+
 	OverrideShader = 0;
 
 	ThingColor = particle->color;
@@ -1289,17 +1298,21 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	bottomclip = -LARGE_VALUE;
 	index = 0;
 
+	bool has_texture = !particle->texture.isNull();
+
+	int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
+
 	// [BB] Load the texture for round or smooth particles
-	if (gl_particles_style)
+	if (particle_style)
 	{
 		FTextureID lump;
-		if (gl_particles_style == 1)
+		if (particle_style == 1)
 		{
 			lump = TexMan.glPart2;
 		}
-		else if (gl_particles_style == 2)
+		else if (particle_style == 2)
 		{
-			lump = TexMan.glPart;
+			lump = has_texture ? particle -> texture : TexMan.glPart;
 		}
 		else lump.SetNull();
 
@@ -1329,8 +1342,8 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	z = float(particle->Pos.Z) + zvf;
 	
 	float factor;
-	if (gl_particles_style == 1) factor = 1.3f / 7.f;
-	else if (gl_particles_style == 2) factor = 2.5f / 7.f;
+	if (particle_style == 1) factor = 1.3f / 7.f;
+	else if (particle_style == 2) factor = 2.5f / 7.f;
 	else factor = 1 / 7.f;
 	float scalefac=particle->size * factor;
 
@@ -1351,7 +1364,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	fullbright = !!particle->bright;
 	
 	// [BB] Translucent particles have to be rendered without the alpha test.
-	if (gl_particles_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
+	if (particle_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
 	else hw_styleflags = STYLEHW_NoAlphaTest;
 
 	if (sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright)

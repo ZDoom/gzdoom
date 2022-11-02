@@ -390,7 +390,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	// [Nash] has +ROLLSPRITE
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 
-	const bool drawRollParticle = (particle != nullptr && particle->doRoll);
+	const bool drawRollParticle = (particle != nullptr && particle->flags & PT_DOROLL);
 
 
 	// [fgsfds] check sprite type mask
@@ -1343,7 +1343,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	y = float(particle->Pos.Y) + yvf;
 	z = float(particle->Pos.Z) + zvf;
 
-	if(particle->doRoll)
+	if(particle->flags & PT_DOROLL)
 	{
 		float rvf = (particle->RollVel) * timefrac;
 		Angles.Roll = TAngle<double>::fromDeg(particle->Roll + rvf);

@@ -210,6 +210,105 @@ void P_InitEffects ()
 	blood2 = ParticleColor(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 }
 
+static void ParticleCeilingFloorAtZ(particle_t *particle)
+{
+	const DVector3 pos = particle->Pos;
+
+	sector_t * sec = particle->subsector->sector;
+
+	const double baseFloorZ = sec->floorplane.ZatPoint(pos);
+	const double baseCeilingZ = sec->ceilingplane.ZatPoint(pos);
+
+	const auto n = sec->e->XFloor.ffloors.Size();
+	
+	double floorZ;
+
+	if(sec->PortalBlocksMovement(sector_t::floor))
+	{
+		floorZ = baseFloorZ;
+		particle->floorPlane = &sec->floorplane;
+	}
+	else
+	{
+		floorZ = -DBL_MAX;
+		particle->floorPlane = nullptr;
+	}
+
+	double ceilingZ;
+
+	if(sec->PortalBlocksMovement(sector_t::ceiling) && sec->GetTexture(sector_t::ceiling) != skyflatnum)
+	{
+		ceilingZ = baseCeilingZ;
+		particle->ceilingPlane = &sec->ceilingplane;
+	}
+	else
+	{
+		ceilingZ = DBL_MAX;
+		particle->ceilingPlane = nullptr;
+	}
+
+
+
+	bool floorOk = false;
+	bool ceilingOk = false;
+
+	for (unsigned int i = 0; i < n; i++)
+	{
+		F3DFloor *f = sec->e->XFloor.ffloors[i];
+
+		if((f->flags & (FF_EXISTS | FF_SOLID)) != (FF_EXISTS | FF_SOLID)) continue;
+		
+		if(!ceilingOk)
+		{
+			auto p = f->bottom.plane;
+			double z = p->ZatPoint(pos);
+			if(z < baseCeilingZ)
+			{
+				if(z < pos.Z)
+				{
+					ceilingOk = true;
+				}
+				else
+				{
+					ceilingZ = z;
+					particle->ceilingPlane = p;
+				}
+
+			}
+		}
+		if(!floorOk)
+		{
+			auto p = f->top.plane;
+			double z = p->ZatPoint(pos);
+			if(z > baseFloorZ)
+			{
+				if(z > pos.Z)
+				{
+					floorOk = true;
+				}
+				else
+				{
+					floorZ = z;
+					particle->floorPlane = p;
+				}
+			}
+		}
+		if(floorOk && ceilingOk) break;
+	}
+
+}
+
+static inline DVector3 planeIntersectPoint(const secplane_t * plane, DVector3 pos, DVector3 vel)
+{	// Math by Gutawer
+	double t = -((plane->Normal() | pos) + plane->fD() ) / (plane->Normal() | vel);
+	return pos + vel * t;
+}
+
+static inline bool doesPlaneIntersect(const secplane_t * plane, DVector3 a, DVector3 b)
+{
+	return plane && (plane->PointOnSide(a) != plane->PointOnSide(b));
+}
+
 void P_ThinkParticles (FLevelLocals *Level)
 {
 	int i;
@@ -242,20 +341,101 @@ void P_ThinkParticles (FLevelLocals *Level)
 			continue;
 		}
 
-		// Handle crossing a line portal
-		DVector2 newxy = Level->GetPortalOffsetPosition(particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
-		particle->Pos.X = newxy.X;
-		particle->Pos.Y = newxy.Y;
-		particle->Pos.Z += particle->Vel.Z;
-		particle->Vel += particle->Acc;
-
-		if(particle->doRoll)
+		if(particle->flags & PT_DOROLL)
 		{
 			particle->Roll += particle->RollVel;
 			particle->RollVel += particle->RollAcc;
 		}
+
+		if(particle->flags & PT_COLLIDE)
+		{
+			
+			if(particle->flags & PT_COLLIDE_FAST_NO_WALLS)
+			{
+				// Handle crossing a line portal
+				DVector2 newxy = Level->GetPortalOffsetPosition(particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
+				DVector3 newPos (newxy, particle->Pos.Z + particle->Vel.Z);
+
+				DVector3 npNewPos = particle->Pos + particle->Vel; // New position without portal adjustment, for plane collision checking
+
+				assert(particle->subsector);
+
+				if(!particle->zCache)
+				{
+					ParticleCeilingFloorAtZ(particle);
+					particle->zCache = true;
+				}
+
+				bool intersect_floor;
+				if((intersect_floor = doesPlaneIntersect(particle->floorPlane,particle->Pos,npNewPos)) || doesPlaneIntersect(particle->ceilingPlane,particle->Pos,npNewPos))
+				{	// Floor / Ceiling collision detected
+					if(particle->flags & PT_COLLIDE_DESTROY)
+					{
+						particle->alpha = 0;
+					}
+					else
+					{
+						auto point = planeIntersectPoint(intersect_floor ? particle->floorPlane : particle->ceilingPlane,particle->Pos,particle->Vel);
+						
+						if(particle->flags & PT_COLLIDE_STICK)
+						{
+							newPos = point;
+							particle->Vel.Zero();
+							particle->Acc.Zero();
+						}
+						else if(particle->flags & PT_COLLIDE_BOUNCE)
+						{
+							newPos.XY() = point.XY();
+							newPos.Z = point.Z + (point.Z - newPos.Z);
+							particle->Vel.Z *= (particle->flags & PT_BOUNCE_SLOW_DOWN) ? -0.9 : -1;
+						}
+						else
+						{
+							newPos = point;
+							particle->Vel.Z = 0;
+							if(intersect_floor ? (particle->Acc.Z < 0) : (particle->Acc.Z > 0))
+							{
+								particle->Acc.Z = 0;
+							}
+						}
+					}
+				}
+				else if (	(particle->floorPlane   && particle->Pos.Z < particle->floorPlane  ->ZatPoint(particle->Pos)) ||
+							(particle->ceilingPlane && particle->Pos.Z > particle->ceilingPlane->ZatPoint(particle->Pos)) )
+				{
+					particle->alpha = 0;
+				}
+				
+				subsector_t * subsector = Level->PointInRenderSubsector(newPos);
+
+				assert(subsector);
+
+				if(subsector->sector != particle->subsector->sector)
+				{
+					particle->zCache = false;
+				}
+
+				particle->Pos = newPos;
+				particle->Vel += particle->Acc;
+				particle->subsector = subsector;
+			}
+			else
+			{
+				//TODO precise collisions
+			}
+		}
+		else
+		{
+			// Handle crossing a line portal
+			DVector2 newxy = Level->GetPortalOffsetPosition(particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
+			particle->Pos.X = newxy.X;
+			particle->Pos.Y = newxy.Y;
+			particle->Pos.Z += particle->Vel.Z;
+			particle->Vel += particle->Acc;
 		
-		particle->subsector = Level->PointInRenderSubsector(particle->Pos);
+			particle->subsector = Level->PointInRenderSubsector(particle->Pos);
+		}
+
 		sector_t *s = particle->subsector->sector;
 		// Handle crossing a sector portal.
 		if (!s->PortalBlocksMovement(sector_t::ceiling))
@@ -263,7 +443,8 @@ void P_ThinkParticles (FLevelLocals *Level)
 			if (particle->Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
 			{
 				particle->Pos += s->GetPortalDisplacement(sector_t::ceiling);
-				particle->subsector = NULL;
+				particle->subsector = Level->PointInRenderSubsector(particle->Pos);
+				particle->zCache = false;
 			}
 		}
 		else if (!s->PortalBlocksMovement(sector_t::floor))
@@ -271,7 +452,8 @@ void P_ThinkParticles (FLevelLocals *Level)
 			if (particle->Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
 			{
 				particle->Pos += s->GetPortalDisplacement(sector_t::floor);
-				particle->subsector = NULL;
+				particle->subsector = Level->PointInRenderSubsector(particle->Pos);
+				particle->zCache = false;
 			}
 		}
 		prev = particle;
@@ -280,9 +462,14 @@ void P_ThinkParticles (FLevelLocals *Level)
 
 enum PSFlag
 {
-	PS_FULLBRIGHT =		1,
-	PS_NOTIMEFREEZE =	1 << 5,
-	PS_ROLL =			1 << 6,
+	PS_FULLBRIGHT =			1,
+	PS_NOTIMEFREEZE =		1 << 5,
+	PS_ROLL =				1 << 6,
+	PS_COLLIDE =			1 << 7,
+	PS_STICK =				1 << 8,
+	PS_BOUNCE =				1 << 9,
+	PS_BOUNCE_SLOW_DOWN =	1 << 10,
+	PS_COLLIDE_DESTROY =	1 << 11,
 };
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
@@ -309,7 +496,42 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Roll = startroll;
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
-		particle->doRoll = !!(flags & PS_ROLL);
+
+
+		if (flags & PS_ROLL)
+		{
+			particle->flags |= PT_DOROLL;
+		}
+
+		if (flags & PS_STICK)
+		{
+			particle->flags |= PT_COLLIDE | PT_COLLIDE_STICK;
+		}
+		else if (flags & PS_BOUNCE)
+		{
+			particle->flags |= PT_COLLIDE | PT_COLLIDE_BOUNCE;
+
+			if(flags & PS_BOUNCE_SLOW_DOWN)
+			{
+				particle->flags |= PT_BOUNCE_SLOW_DOWN;
+			}
+		}
+		else if (flags & PS_COLLIDE)
+		{
+			particle->flags |= PT_COLLIDE;
+
+			if(flags & PS_COLLIDE_DESTROY)
+			{
+				particle-> flags |= PT_COLLIDE_DESTROY;
+			}
+		}
+
+		// make sure particles with collision enabled don't start with a null subsector
+		if (particle->flags & PT_COLLIDE)
+		{
+			particle->subsector = Level->PointInRenderSubsector(pos);
+			particle->flags |= PT_COLLIDE_FAST_NO_WALLS;
+		}
 	}
 }
 

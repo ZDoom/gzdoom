@@ -50,6 +50,17 @@ struct FLevelLocals;
 
 // [RH] Particle details
 
+enum EParticleFlags
+{
+	PT_DOROLL = 1,
+	PT_COLLIDE = 1 << 1,
+	PT_COLLIDE_BOUNCE = 1 << 2,
+	PT_COLLIDE_STICK = 1 << 3,
+	PT_COLLIDE_DESTROY = 1 << 4,
+	PT_BOUNCE_SLOW_DOWN = 1 << 5,
+	PT_COLLIDE_FAST_NO_WALLS = 1 << 6,
+};
+
 struct particle_t
 {
 	DVector3 Pos;
@@ -71,7 +82,10 @@ struct particle_t
 	double Roll;
 	double RollVel;
 	double RollAcc;
-	bool doRoll;
+	int flags;
+	bool zCache;
+	const secplane_t * floorPlane;
+	const secplane_t * ceilingPlane;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;

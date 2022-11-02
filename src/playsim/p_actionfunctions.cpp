@@ -1620,6 +1620,11 @@ enum SPFflag
 	SPF_RELANG =			1 << 4,
 	SPF_NOTIMEFREEZE =		1 << 5,
 	SPF_ROLL =				1 << 6,
+	SPF_COLLIDE =			1 << 7,
+	SPF_STICK =				1 << 8,
+	SPF_BOUNCE =			1 << 9,
+	SPF_BOUNCE_SLOW_DOWN =	1 << 10,
+	SPF_COLLIDE_DESTROY =	1 << 11,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)

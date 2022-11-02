@@ -271,7 +271,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (Level->isFrozen() && !particle->notimefreeze)
+		if (Level->isFrozen() && !(particle->flags &PT_NOTIMEFREEZE))
 		{
 			prev = particle;
 			continue;
@@ -305,7 +305,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
 
-		if(particle->doRoll)
+		if(particle->flags & PT_DOROLL)
 		{
 			particle->Roll += particle->RollVel;
 			particle->RollVel += particle->RollAcc;
@@ -336,10 +336,11 @@ void P_ThinkParticles (FLevelLocals *Level)
 
 enum PSFlag
 {
-	PS_FULLBRIGHT =		1,
-	PS_NOTIMEFREEZE =	1 << 5,
-	PS_ROLL =			1 << 6,
-	PS_REPLACE =		1 << 7,
+	PS_FULLBRIGHT =		    1,
+	PS_NOTIMEFREEZE =	    1 << 5,
+	PS_ROLL =			    1 << 6,
+	PS_REPLACE =		    1 << 7,
+	PS_NO_XY_BILLBOARD =	1 << 8,
 };
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
@@ -360,13 +361,23 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->bright = !!(flags & PS_FULLBRIGHT);
 		particle->size = size;
 		particle->sizestep = sizestep;
-		particle->notimefreeze = !!(flags & PS_NOTIMEFREEZE);
 		particle->texture = texture;
 		particle->style = style;
 		particle->Roll = startroll;
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
-		particle->doRoll = !!(flags & PS_ROLL);
+		if(flags & PS_NOTIMEFREEZE)
+		{
+			particle->flags |= PT_NOTIMEFREEZE;
+		}
+		if(flags & PS_ROLL)
+		{
+			particle->flags |= PT_DOROLL;
+		}
+		if(flags & PS_NO_XY_BILLBOARD)
+		{
+			particle->flags |= PT_NOXYBILLBOARD;
+		}
 	}
 }
 

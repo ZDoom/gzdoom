@@ -1620,6 +1620,8 @@ enum SPFflag
 	SPF_RELANG =			1 << 4,
 	SPF_NOTIMEFREEZE =		1 << 5,
 	SPF_ROLL =				1 << 6,
+	SPF_REPLACE =           1 << 7,
+	SPF_NO_XY_BILLBOARD =	1 << 8,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)

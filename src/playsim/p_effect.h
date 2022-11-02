@@ -50,6 +50,13 @@ struct FLevelLocals;
 
 // [RH] Particle details
 
+enum EParticleFlags
+{
+    PT_NOTIMEFREEZE = 1,
+	PT_DOROLL = 1 << 1,
+	PT_NOXYBILLBOARD = 1 << 2,
+};
+
 struct particle_t
 {
     DVector3 Pos;
@@ -65,7 +72,7 @@ struct particle_t
     double Roll, RollVel, RollAcc;
     uint16_t    tnext, snext, tprev;
     uint8_t    bright;
-    bool notimefreeze, doRoll;
+	uint8_t flags;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;

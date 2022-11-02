@@ -683,14 +683,15 @@ enum ECheckBlockFlags
 
 enum EParticleFlags
 {
-	SPF_FULLBRIGHT =	1,
-	SPF_RELPOS =		1 << 1,
-	SPF_RELVEL =		1 << 2,
-	SPF_RELACCEL =		1 << 3,
-	SPF_RELANG =		1 << 4,
-	SPF_NOTIMEFREEZE =	1 << 5,
-	SPF_ROLL =			1 << 6,
-	SPF_REPLACE =		1 << 7,
+	SPF_FULLBRIGHT =	    1,
+	SPF_RELPOS =		    1 << 1,
+	SPF_RELVEL =		    1 << 2,
+	SPF_RELACCEL =		    1 << 3,
+	SPF_RELANG =		    1 << 4,
+	SPF_NOTIMEFREEZE =	    1 << 5,
+	SPF_ROLL =			    1 << 6,
+	SPF_REPLACE =		    1 << 7,
+	SPF_NO_XY_BILLBOARD =	1 << 8,
 
 	SPF_RELATIVE =	SPF_RELPOS|SPF_RELVEL|SPF_RELACCEL|SPF_RELANG
 };

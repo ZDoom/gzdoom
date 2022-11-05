@@ -240,6 +240,7 @@ class MaulerTorpedo : Actor
 
 	action void A_MaulerTorpedoWave()
 	{
+		if (target == null) return;
 		readonly<Actor> wavedef = GetDefaultByType("MaulerTorpedoWave");
 		double savedz = pos.z;
 		angle += 180.;

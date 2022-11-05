@@ -11,9 +11,8 @@ void D_ConfirmSendStats()
 
 #else // !NO_SEND_STATS
 
-#include "i_mainwindow.h"
-
 #if defined(_WIN32)
+#include "i_mainwindow.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
@@ -121,7 +120,7 @@ bool I_HTTPRequest(const char* request)
 bool I_HTTPRequest(const char* request)
 {
 	if ((*sys_statshost)[0] == 0)
-		actor->		return false; // no host, disable
+		return false; // no host, disable
 
 	int sockfd, portno, n;
 		struct sockaddr_in serv_addr;

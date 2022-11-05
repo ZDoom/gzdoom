@@ -177,7 +177,7 @@ static void setmsgcolor (int index, int color);
 FILE *Logfile = NULL;
 
 
-CVARD_NAMED(Int, msglevel, "msg", 0, CVAR_ARCHIVE, "Filters HUD message by importance");
+CVARD_NAMED(Int, msglevel, msg, 0, CVAR_ARCHIVE, "Filters HUD message by importance");
 
 CUSTOM_CVAR (Int, msg0color, CR_UNTRANSLATED, CVAR_ARCHIVE)
 {

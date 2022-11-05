@@ -45,12 +45,12 @@ Acquired: Grenades.,GOTROCKBOX,,,,Ziskány granáty.,Erhalten: Granaten,,Akiris:
 Acquired: box of shotgun shells.,GOTSHELLBOX,,,,Získána krabice broků.,Erhalten: Schrotpatronen,,Akiris: Skatolon da kartoĉoj.,Adquirido: Caja de cartuchos de escopeta.,,Saatu: laatikollinen haulikon patruunoita.,Acquis: Boîte de cartouches.,Megszerezve: doboznyi puska sörét,Acquisito: scatola di cartucce per fucile.,シュトク: シェル ボックス,획득: 산탄총 탄약.,Verworven: doos met shotgun schelpen.,Zdobyto: pudełko loftek do strzelby.,Pegou uma caixa de cartuchos de espingarda.,,Achiziționat: Cutie de muniție pentru pușcă.,Получена: Коробка патронов для дробовика.,
 Acquired: ammo backpack.,GOTBACKPACK,,,,Ziskán batoh s municí.,Erhalten: Munitionsrucksack,,Akiris: Tornistron da municioj.,Adquirido: Mochila de municiones.,,Saatu: ammusreppu.,Acquis: Sac de munitions.,Megszerezve: lőszeres hátizsák,Acquisito: zaino munizioni.,シュトク: バックパック,획득: 탄약 가방.,Verworven: munitie rugzak.,Zdobyto: plecak z amunicją.,Pegou uma mochila de munição.,,Achiziționat: Raniță.,Получен: Ранец для боеприпасов.,
 Acquired: Grenade.,GOTBFG9000,,,,Získán granát.,Erhalten: Granate,,Akiris: Grenadon.,Adquirido: Granada.,,Saatu: kranaatti.,Acquis: Grenade.,Megszerezve: Gránát.,Acquisito: Granata.,シュトク: グレネード,획득: 세열탄.,Verworven: Granaat.,Zdobyto: Granat.,Pegou uma granada.,,Achiziționat: Grenadă.,Получена: Граната.,
-Acquired: Minigun.,GOTCHAINGUN,,,,Získán kulomet.,Erhalten: Minigun,,Akiris: Maŝinpafilon.,Adquirido: Ametralladora.,,Saatu: minigun.,Acquis: Minigun.,Megszerezve: Gépfegyver.,Acquisito: Minigun.,シュトク: ミニガン,획득: 회전포.,Verworven: Minigun.,Zdobyto: Minigun.,Pegou uma metralhadora giratória.,,Achiziționat: Minimitralieră.,Получен: Миниган.,
+Acquired: Minigun.,GOTCHAINGUN,,,,Získán kulomet.,Erhalten: Minigun,,Akiris: Maŝinpafilon.,Adquirido: Ametralladora.,,Saatu: minigun.,Acquis: Minigun.,Megszerezve: Gépfegyver.,Acquisito: Minigun.,シュトク: ミニガン,획득: 회전포.,Verworven: Minigun.,Zdobyto: Minigun.,Pegou uma metralhadora giratória.,,Achiziționat: Minimitralieră.,Получен: Пулемёт.,
 Acquired: Grenade launcher.,GOTLAUNCHER,,,,Získán granátomet.,Erhalten: Granatwerfer,,Akiris: Grenadlanĉilon.,Adquirido: Lanzagranadas.,,Saatu: kranaatinheitin.,Acquis: Lance-Grenades,Megszerezve: Gránátvető,Acquisito: Lanciagranate.,シュトク: グレネードランチャー,획득: 세열탄 추진기.,Verworven: Granaatwerper.,Zdobyto: Wyrzutnię granatów.,Pegou um lança-granadas.,,Achiziționat: Lansator de grenade.,Получен: Гранатомёт.,
 Entropy thrower!,GOTPLASMA,,,,Vrhač entropie!,Entropiewerfer,,Entropi-ĵetilon!,¡Lanzador de Entropía!,,Entropianheitin!,Acquis: Lanceur d'Entropie!,Entrópiavető!,Lancia entropia!,エントロピースロワー!,획득: 엔트로피 방사기!,Entropiewerper!,Miotacz Entropii!,Lançador de entropia!,,Aruncător entropic!,Энтропиемёт!,
 Acquired: Shotgun.,GOTSHOTGUN,,,,Získána brokovnice.,Erhalten: Schrotflinte,,Akiris: Ĉaspafilon.,Adquirido: Escopeta.,,Saatu: haulikko.,Acquis: Fusil à pompe.,Megszerezve: Sörétes puska,Acquisito: Fucile.,シュトク: ショットガン,획득: 산탄총.,Verworven: Shotgun.,Zdobyto: Strzelbę.,Pegou uma espingarda.,,Achiziționat: Pușcă.,Получен: Дробовик.,
-God Mode ON,STSTR_DQDON,,,,Nesmrtelnost ZAP,Gott-Modus AN,,Dio-Reĝimo AKTIVA,Modo Dios ACTIVADO,,Kuolemattomuustila PÄÄLLÄ,Mode invulnérable ON,Isten mód BE,Modo Dio ATTIVADA,ゴッドモード オン,무적 치트: ON,God Modus AAN,Tryb Boga WŁĄCZONY,Modo Deus LIGADO,,Modul Invincibil PORNIT,Режим Бога вкл.,
-God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,Dio-Reĝimo NEAKTIVA,Modo Dios DESACTIVADO,,Kuolemattomuustila POIS PÄÄLTÄ,Mode invulnérable OFF,Isten mód KI,Modo Dio DISATTIVADA,ゴッドモード オフ,무적 치트: OFF,God Modus UIT,Tryb Boga WYŁĄCZONY,Modo Deus DESLIGADO,,Modul Invincibil OPRIT,Режим Бога откл.,
+God Mode ON,STSTR_DQDON,,,,Nesmrtelnost ZAP,Gott-Modus AN,,Dio-Reĝimo AKTIVA,Modo Dios ACTIVADO,,Kuolemattomuustila PÄÄLLÄ,Mode invulnérable ON,Isten mód BE,Modo Dio ATTIVADA,ゴッドモード オン,무적 치트: ON,God Modus AAN,Tryb Boga WŁĄCZONY,Modo Deus LIGADO,,Modul Invincibil PORNIT,Режим Бога включён.,
+God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,Dio-Reĝimo NEAKTIVA,Modo Dios DESACTIVADO,,Kuolemattomuustila POIS PÄÄLTÄ,Mode invulnérable OFF,Isten mód KI,Modo Dio DISATTIVADA,ゴッドモード オフ,무적 치트: OFF,God Modus UIT,Tryb Boga WYŁĄCZONY,Modo Deus DESLIGADO,,Modul Invincibil OPRIT,Режим Бога отключён.,
 All weapons/ ammo/ keys,STSTR_KFAADDED,,,,Všechny zbraně/munice/klíče,"Alle Waffen, Munition und Schlüssel",,Ĉiuj armiloj/municioj/ŝlosiloj,Todas las armas/municiones/llaves,,Kaikki aseet/ ammukset/ avaimet,Toutes les armes/munitions/clés,Minden fegyver / lőszer / kulcs,Tutte le armi / munizioni / chiavi,スベテノ ブキ/カギ/ダンヤク,추가: 모든 무기/탄약/열쇠 치트,Alle wapens / munitie / sleutels,Wszystkie bronie/amunicja/klucze,Todas as armas/munição/chaves,,Toate armele/muniție/chei,Всё оружие/боеприпасы/ключи,
 All weapons and ammo,STSTR_FAADDED,,,,Všechny zbraně a munice,Alle Waffen und Munition,,Ĉiuj armiloj kaj municioj,Todas las armas y municiones,,Kaikki aseet ja ammukset,Toutes les armes et munitions,Minden fegyver és lőszer,Tutte le armi e le munizioni,スベテノ ブキ/ダンヤク,추가: 모든 무기/탄약 치트,Alle wapens en munitie,Wszystkie bronie i amunicja,Todas as armas e munição completa,,Toate armele și muniție,Всё оружие и боеприпасы,
 Abduction,TXT_HARMMAP01,,,,Únos,Entführung,,Forkapto,Abducción,,Sieppaus,Enlèvement,Elrablás,Il rapimento,アブダクション,유괴,Ontvoering,Porwanie,Sequestro,,Răpire,Похищение,
@@ -257,23 +257,23 @@ vermoorden door je vriend...
 ""De hel heeft geen woede zoals een vrouw
 die wordt geminacht!""
 
- = EINDE =","Czujesz się niedobrze...
-Patrząc na twarz królowej mutantów...
-Ale rzecz w tym, że... to była kiedyś...
+ = EINDE =","Jest ci niedobrze...
+Patrzysz królowej mutantów prosto w twarz...
+Ta maszkara... to tak naprawdę...
 Twoja przyjaciółka... Amira!
 
 Te potwory znalazły sposób, aby ją
 zmutować i zamienić ją w tą ohydną
 poczwarę, by mogły się rozmnażać.
 
-Ehh...
+Ech...
 
 Bierzesz się w garść...
 Zapłacą za to, że musiałaś zabić
 swoją przyjaciółkę...
 
-""Nawet piekło nie może być tak wściekłe
-jak zlekceważnona kobieta!""
+""Nawet piekło nie powstrzyma
+zlekceważnonej kobiety!""
 
      =K O N I E C=","Você sente vontade de vomitar...
 Vendo o rosto da rainha mutante...
@@ -334,10 +334,10 @@ Te aduni...
 ",
 ,WI_FINISHED,This text is deliberately empty,,,,,,,,,,,,,,,,,,,,,
 Loading,WI_ENTERING,Yellow needs retranslation,,,Načítá se,Lade,,Ŝargante,Cargando,,Ladattavana,Chargement,Betöltés,Caricamento,ローディング,불러오는 중,Laden van,Ładowanie,Carregando,,Se încarcă,Загрузка уровня,
-Very Easy,SKILL_BABY,,,,Velmi snadné,Sehr einfach,,Tre Facila,Muy facil,,Erittäin helppo,Trés facile,Nagyon könnyű,Molto facile,ベリーイージー,아주 쉬움,Zeer gemakkelijk,Bardzo Łatwy,Muito fácil,,Foarte Ușor,Очень лёгкий,
-Easy,SKILL_EASY,,,,Snadný,Einfach,,Facila,Facil,,Helppo,Facile,Könnyű,Facile,イージー,쉬움,Gemakkelijk,Łatwy,Fácil,,Ușor,Лёгкий,
-Medium,SKILL_NORMAL,,,,Střední,Mittel,,Meza,Medio,,Keskivaikea,Moyen,Normál,Medio,ミディアム,중간,Middel,Średni,Médio,,Mediu,Средний,
-Hard,SKILL_HARD,,,,Obtížný,Schwer,,Malfacila,Difícil,,Vaikea,Difficile,Nehéz,Difficile,ハード,어려움,Moeilijk,Trudny,Difícil,,Greu,Тяжёлый,
-Very Hard,SKILL_NIGHTMARE,,,,Velmi obtížné,Sehr schwer,,Tre Malfacila,Muy difícil,,Erittäin vaikea,Très difficile,Nagyon nehéz,Molto difficile,ベリーハード,아주 어려윰,Zeer moeilijk,Bardzo Trudny,Muito difícil,,Foarte Greu,Очень тяжёлый,
+Very Easy,SKILL_BABY,,,,Velmi snadné,Sehr einfach,,Tre Facila,Muy facil,,Erittäin helppo,Trés facile,Nagyon könnyű,Molto facile,ベリーイージー,아주 쉬움,Zeer gemakkelijk,Bardzo Łatwy,Muito fácil,,Foarte Ușor,Очень легко,
+Easy,SKILL_EASY,,,,Snadný,Einfach,,Facila,Facil,,Helppo,Facile,Könnyű,Facile,イージー,쉬움,Gemakkelijk,Łatwy,Fácil,,Ușor,Легко,
+Medium,SKILL_NORMAL,,,,Střední,Mittel,,Meza,Medio,,Keskivaikea,Moyen,Normál,Medio,ミディアム,중간,Middel,Średni,Médio,,Mediu,Средне,
+Hard,SKILL_HARD,,,,Obtížný,Schwer,,Malfacila,Difícil,,Vaikea,Difficile,Nehéz,Difficile,ハード,어려움,Moeilijk,Trudny,Difícil,,Greu,Тяжело,
+Very Hard,SKILL_NIGHTMARE,,,,Velmi obtížné,Sehr schwer,,Tre Malfacila,Muy difícil,,Erittäin vaikea,Très difficile,Nagyon nehéz,Molto difficile,ベリーハード,아주 어려윰,Zeer moeilijk,Bardzo Trudny,Muito difícil,,Foarte Greu,Очень тяжело,
 Thanks for playing,HARMQUITMSG,,,,Díky za hraní,Danke fürs Spielen,,Dankon pro ludado,Gracias por jugar,,Kiitos pelaamisesta,Merci d'avoir joué,"Köszönjük, hogy játszottál!",Grazie per aver giocato,プレイ シテクレテ カンシャスル,플레이 해주셔서 감사드립니다,Bedankt voor het spelen,Dziękuję za grę,Obrigado por jogar,,Mulțumim că ai jucat,"Спасибо, что сыграли в Harmony",
-Harmony,TXT_D2E1,,,,,,,Harmonio,,,Harmonia,,Harmónia,,,,,Harmonia,Harmony,,,,
+Harmony,TXT_D2E1,,,,,,,Harmonio,,,Harmonia,,Harmónia,,,,,Harmonia,Harmony,,,Harmony,

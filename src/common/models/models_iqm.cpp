@@ -59,11 +59,11 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		uint32_t num_extensions = reader.ReadUInt32();
 		uint32_t ofs_extensions = reader.ReadUInt32();
 
-		if (num_joints <= 0)
+		/*if (num_joints <= 0)
 		{
 			Printf("Invalid model: \"%s%s\", no joint data is present\n", path, fileSystem.GetLongName(mLumpNum).GetChars());
 			return false;
-		}
+		}*/
 
 		if (num_text == 0)
 			return false;
@@ -513,94 +513,91 @@ const TArray<TRS>* IQMModel::AttachAnimationData()
 const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, AActor* actor, int index)
 {
 	const TArray<TRS>& animationFrames = &animationData ? animationData : TRSData;
-
-	int numbones = Joints.Size();
-
-	if(actor->boneComponentData->trscomponents[index].Size() != numbones)
-		actor->boneComponentData->trscomponents[index].Resize(numbones);
-	if (actor->boneComponentData->trsmatrix[index].Size() != numbones)
-		actor->boneComponentData->trsmatrix[index].Resize(numbones);
-
-	frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1) / numbones);
-	frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1) / numbones);
-
-	int offset1 = frame1 * numbones;
-	int offset2 = frame2 * numbones;
-	float t = (float)inter;
-	float invt = 1.0f - t;
-
-	float swapYZ[16] = { 0.0f };
-	swapYZ[0 + 0 * 4] = 1.0f;
-	swapYZ[1 + 2 * 4] = 1.0f;
-	swapYZ[2 + 1 * 4] = 1.0f;
-	swapYZ[3 + 3 * 4] = 1.0f;
-
-	TArray<VSMatrix> bones(numbones, true);
-	TArray<bool> modifiedBone(numbones, true);
-	for (int i = 0; i < numbones; i++)
+	if (Joints.Size() > 0)
 	{
-		TRS bone;
-		TRS from = animationFrames[offset1 + i];
-		TRS to = animationFrames[offset2 + i];
+		int numbones = Joints.Size();
 
-		bone.translation = from.translation * invt + to.translation * t;
-		bone.rotation = from.rotation * invt;
-		if ((bone.rotation | to.rotation * t) < 0)
-		{
-			bone.rotation.X *= -1; bone.rotation.Y *= -1; bone.rotation.Z *= -1; bone.rotation.W *= -1;
-		}
-		bone.rotation += to.rotation * t;
-		bone.rotation.MakeUnit();
-		bone.scaling = from.scaling * invt + to.scaling * t;
+		if (actor->boneComponentData->trscomponents[index].Size() != numbones)
+			actor->boneComponentData->trscomponents[index].Resize(numbones);
+		if (actor->boneComponentData->trsmatrix[index].Size() != numbones)
+			actor->boneComponentData->trsmatrix[index].Resize(numbones);
 
-		if (Joints[i].Parent >= 0 && modifiedBone[Joints[i].Parent])
+		frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1) / numbones);
+		frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1) / numbones);
+
+		int offset1 = frame1 * numbones;
+		int offset2 = frame2 * numbones;
+		float t = (float)inter;
+		float invt = 1.0f - t;
+
+		float swapYZ[16] = { 0.0f };
+		swapYZ[0 + 0 * 4] = 1.0f;
+		swapYZ[1 + 2 * 4] = 1.0f;
+		swapYZ[2 + 1 * 4] = 1.0f;
+		swapYZ[3 + 3 * 4] = 1.0f;
+
+		TArray<VSMatrix> bones(numbones, true);
+		TArray<bool> modifiedBone(numbones, true);
+		for (int i = 0; i < numbones; i++)
 		{
-			actor->boneComponentData->trscomponents[index][i] = bone;
-			modifiedBone[i] = true;
-		}
-		else if (actor->boneComponentData->trscomponents[index][i].Equals(bone))
-		{
-			bones[i] = actor->boneComponentData->trsmatrix[index][i];
-			modifiedBone[i] = false;
-			continue;
-		}
-		else
-		{
-			actor->boneComponentData->trscomponents[index][i] = bone;
-			modifiedBone[i] = true;
+			TRS bone;
+			TRS from = animationFrames[offset1 + i];
+			TRS to = animationFrames[offset2 + i];
+
+			bone.translation = from.translation * invt + to.translation * t;
+			bone.rotation = from.rotation * invt;
+			if ((bone.rotation | to.rotation * t) < 0)
+			{
+				bone.rotation.X *= -1; bone.rotation.Y *= -1; bone.rotation.Z *= -1; bone.rotation.W *= -1;
+			}
+			bone.rotation += to.rotation * t;
+			bone.rotation.MakeUnit();
+			bone.scaling = from.scaling * invt + to.scaling * t;
+
+			if (Joints[i].Parent >= 0 && modifiedBone[Joints[i].Parent])
+			{
+				actor->boneComponentData->trscomponents[index][i] = bone;
+				modifiedBone[i] = true;
+			}
+			else if (actor->boneComponentData->trscomponents[index][i].Equals(bone))
+			{
+				bones[i] = actor->boneComponentData->trsmatrix[index][i];
+				modifiedBone[i] = false;
+				continue;
+			}
+			else
+			{
+				actor->boneComponentData->trscomponents[index][i] = bone;
+				modifiedBone[i] = true;
+			}
+
+			VSMatrix m;
+			m.loadIdentity();
+			m.translate(bone.translation.X, bone.translation.Y, bone.translation.Z);
+			m.multQuaternion(bone.rotation);
+			m.scale(bone.scaling.X, bone.scaling.Y, bone.scaling.Z);
+
+			VSMatrix& result = bones[i];
+			if (Joints[i].Parent >= 0)
+			{
+				result = bones[Joints[i].Parent];
+				result.multMatrix(swapYZ);
+				result.multMatrix(baseframe[Joints[i].Parent]);
+				result.multMatrix(m);
+				result.multMatrix(inversebaseframe[i]);
+			}
+			else
+			{
+				result.loadMatrix(swapYZ);
+				result.multMatrix(m);
+				result.multMatrix(inversebaseframe[i]);
+			}
+			result.multMatrix(swapYZ);
 		}
 
-		VSMatrix m;
-		m.loadIdentity();
-		m.translate(bone.translation.X, bone.translation.Y, bone.translation.Z);
-		m.multQuaternion(bone.rotation);
-		m.scale(bone.scaling.X, bone.scaling.Y, bone.scaling.Z);
+		actor->boneComponentData->trsmatrix[index] = bones;
 
-		VSMatrix& result = bones[i];
-		if (Joints[i].Parent >= 0)
-		{
-			result = bones[Joints[i].Parent];
-			result.multMatrix(baseframe[Joints[i].Parent]);
-			result.multMatrix(m);
-			result.multMatrix(inversebaseframe[i]);
-		}
-		else
-		{
-			result = m;
-			result.multMatrix(inversebaseframe[i]);
-		}
+		return bones;
 	}
-
-	actor->boneComponentData->trsmatrix[index] = bones;
-
-	for (int j = 0; j < numbones; j++)
-	{
-		VSMatrix m;
-		m.loadMatrix(swapYZ);
-		m.multMatrix(bones[j]);
-		m.multMatrix(swapYZ);
-		bones[j] = m;
-	}
-
-	return bones;
+	return {};
 }

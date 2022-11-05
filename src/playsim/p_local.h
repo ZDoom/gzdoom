@@ -92,7 +92,6 @@ void	P_PredictionLerpReset();
 #define SPF_TEMPPLAYER		1	// spawning a short-lived dummy player
 #define SPF_WEAPONFULLYUP	2	// spawn with weapon already raised
 
-int P_FaceMobj (AActor *source, AActor *target, DAngle *delta);
 bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise = false, bool usecurspeed=false);
 
 enum EPuffFlags

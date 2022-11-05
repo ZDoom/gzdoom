@@ -688,14 +688,14 @@ void CVMAbortException::MaybePrintMessage()
 }
 
 
-void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...)
+[[noreturn]] void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...)
 {
 	va_list ap;
 	va_start(ap, moreinfo);
 	throw CVMAbortException(reason, moreinfo, ap);
 }
 
-void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...)
+[[noreturn]] void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...)
 {
 	va_list ap;
 	va_start(ap, moreinfo);
@@ -711,10 +711,9 @@ DEFINE_ACTION_FUNCTION(DObject, ThrowAbortException)
 	PARAM_PROLOGUE;
 	FString s = FStringFormat(VM_ARGS_NAMES);
 	ThrowAbortException(X_OTHER, s.GetChars());
-	return 0;
 }
 
-void NullParam(const char *varname)
+[[noreturn]] void NullParam(const char *varname)
 {
 	ThrowAbortException(X_READ_NIL, "In function parameter %s", varname);
 }

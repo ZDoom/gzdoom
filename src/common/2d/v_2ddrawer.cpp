@@ -138,7 +138,7 @@ IMPLEMENT_CLASS(DShape2D, false, false)
 
 static void Shape2D_SetTransform(DShape2D* self, DShape2DTransform *transform)
 {
-	self->transform = transform->transform;
+	self->transform = PARAM_NULLCHECK(transform, transform)->transform;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, SetTransform, Shape2D_SetTransform)

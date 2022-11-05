@@ -593,7 +593,7 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 
 	actor->boneComponentData->trsmatrix[index] = bones;
 
-	for (uint32_t j = 0; j < numbones; j++)
+	for (int j = 0; j < numbones; j++)
 	{
 		VSMatrix m;
 		m.loadMatrix(swapYZ);

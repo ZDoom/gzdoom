@@ -110,8 +110,8 @@ public:
 };
 
 // This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
-void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
-void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...);
+[[noreturn]] void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
+[[noreturn]] void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...);
 
 void ClearGlobalVMStack();
 
@@ -496,6 +496,7 @@ inline int VMCallAction(VMFunction *func, VMValue *params, int numparams, VMRetu
 
 // Use these to collect the parameters in a native function.
 // variable name <x> at position <p>
+[[noreturn]]
 void NullParam(const char *varname);
 
 #ifndef NDEBUG

@@ -2640,7 +2640,7 @@ OptionMenu "OpenGLOptions" protected
 	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
 	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
 	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
-	Option "$GLPREFMNU_CORONAS",				gl_coronas,						"OnOff"
+	//Option "$GLPREFMNU_CORONAS",				gl_coronas,						"OnOff"
 	StaticText " "
 	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
 	StaticText " "

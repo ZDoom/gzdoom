@@ -515,5 +515,4 @@ void *DObject::ScriptVar(FName field, PType *type)
 	}
 	// This is only for internal use so I_Error is fine.
 	I_Error("Variable %s not found in %s\n", field.GetChars(), cls->TypeName.GetChars());
-	return nullptr;
 }

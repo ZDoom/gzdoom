@@ -528,7 +528,9 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	*defaults = *GetDefault<AActor>();
+	// major hack job alert. This is only supposed to copy the parts that actually are defined by AActor itself.
+	memcpy(&defaults->snext, &GetDefault<AActor>()->snext, (uint8_t*)&defaults[1] - (uint8_t*)&defaults->snext);
+
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 	static_cast<PClassActor*>(bag.Info)->ActorInfo()->SkipSuperSet = true;	// ZScript processes the states later so this property must be flagged for later handling.
 }

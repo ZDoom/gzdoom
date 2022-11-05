@@ -178,20 +178,11 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(boneComponentData)
 IMPLEMENT_POINTERS_END
 
-AActor::~AActor ()
-{
-	// Please avoid calling the destructor directly (or through delete)!
-	// Use Destroy() instead.
-}
-
-
 //==========================================================================
 //
 // AActor :: Serialize
 //
 //==========================================================================
-
-
 
 #define A(a,b) ((a), (b), def->b)
 
@@ -421,13 +412,6 @@ void AActor::PostSerialize()
 }
 
 
-
-AActor &AActor::operator= (const AActor &other)
-{
-	memcpy (&snext, &other.snext, (uint8_t *)&this[1] - (uint8_t *)&snext);
-	return *this;
-}
-
 //==========================================================================
 //
 // AActor::InStateSequence
@@ -484,14 +468,14 @@ bool AActor::IsMapActor()
 //
 //==========================================================================
 
-int AActor::GetTics(FState * newstate)
+inline int GetTics(AActor* actor, FState * newstate)
 {
 	int tics = newstate->GetTics();
-	if (isFast() && newstate->GetFast())
+	if (actor->isFast() && newstate->GetFast())
 	{
 		return tics - (tics>>1);
 	}
-	else if (isSlow() && newstate->GetSlow())
+	else if (actor->isSlow() && newstate->GetSlow())
 	{
 		return tics<<1;
 	}
@@ -538,7 +522,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 			return false;
 		}
 		state = newstate;
-		tics = GetTics(newstate);
+		tics = GetTics(this, newstate);
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (newstate->GetFullbright());
 		newsprite = newstate->sprite;
 		if (newsprite != SPR_FIXED)
@@ -616,13 +600,14 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 
 //============================================================================
 //
-// AActor :: DestroyAllInventory
+// DestroyAllInventory
+// Destroys all the inventory the actor is holding.
 //
 //============================================================================
 
-void AActor::DestroyAllInventory ()
+static void DestroyAllInventory(AActor* actor)
 {
-	AActor *inv = Inventory;
+	AActor *inv = PARAM_NULLCHECK(actor, self)->Inventory;
 	if (inv != nullptr)
 	{
 		TArray<AActor *> toDelete;
@@ -649,10 +634,10 @@ void AActor::DestroyAllInventory ()
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AActor, DestroyAllInventory)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, DestroyAllInventory, DestroyAllInventory)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->DestroyAllInventory();
+	DestroyAllInventory(self);
 	return 0;
 }
 //============================================================================
@@ -772,23 +757,6 @@ DEFINE_ACTION_FUNCTION(AActor, GiveInventoryType)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS(type, AActor);
 	ACTION_RETURN_OBJECT(self->GiveInventoryType(type));
-}
-
-//============================================================================
-//
-// AActor :: ClearInventory
-//
-// Clears the inventory of a single actor.
-//
-//============================================================================
-
-void AActor::ClearInventory()
-{
-	IFVIRTUAL(AActor, ClearInventory)
-	{
-		VMValue params[] = { this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
 }
 
 //============================================================================
@@ -1142,18 +1110,6 @@ void AActor::ConversationAnimation (int animnum)
 //
 //============================================================================
 
-void AActor::Touch (AActor *toucher)
-{
-}
-
-DEFINE_ACTION_FUNCTION(AActor, Touch)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(toucher, AActor);
-	self->Touch(toucher);
-	return 0;
-}
-
 void AActor::CallTouch(AActor *toucher)
 {
 	IFVIRTUAL(AActor, Touch)
@@ -1161,7 +1117,6 @@ void AActor::CallTouch(AActor *toucher)
 		VMValue params[2] = { (DObject*)this, toucher };
 		VMCall(func, params, 2, nullptr, 0);
 	}
-	else Touch(toucher);
 }
 
 //============================================================================
@@ -1174,21 +1129,22 @@ void AActor::CallTouch(AActor *toucher)
 // Bool items is true if it should destroy() dropped items, false otherwise.
 //============================================================================
 
-bool AActor::Grind(bool items)
+static int Grind(AActor* actor, int items)
 {
+	PARAM_NULLCHECK(actor, actor);
 	// crunch bodies to giblets
-	if ((flags & MF_CORPSE) && !(flags3 & MF3_DONTGIB) && (health <= 0))
+	if ((actor->flags & MF_CORPSE) && !(actor->flags3 & MF3_DONTGIB) && (actor->health <= 0))
 	{
-		FState * state = FindState(NAME_Crush);
+		FState * state = actor->FindState(NAME_Crush);
 
 		// In Heretic and Chex Quest we don't change the actor's sprite, just its size.
 		if (state == NULL && gameinfo.dontcrunchcorpses)
 		{
-			flags &= ~MF_SOLID;
-			flags3 |= MF3_DONTGIB;
-			Height = 0;
-			radius = 0;
-			Vel.Zero();
+			actor->flags &= ~MF_SOLID;
+			actor->flags3 |= MF3_DONTGIB;
+			actor->Height = 0;
+			actor->radius = 0;
+			actor->Vel.Zero();
 			return false;
 		}
 
@@ -1197,46 +1153,46 @@ bool AActor::Grind(bool items)
 		// The reason for the change was originally because of a problem with players,
 		// see rh_log entry for February 21, 1999. Don't know if it is still relevant.
 		if (state == NULL 									// Only use the default crushed state if:
-			&& !(flags & MF_NOBLOOD)						// 1. the monster bleeeds,
-			&& player == NULL)								// 3. and the thing isn't a player.
+			&& !(actor->flags & MF_NOBLOOD)						// 1. the monster bleeeds,
+			&& actor->player == NULL)								// 3. and the thing isn't a player.
 		{
 			isgeneric = true;
-			state = FindState(NAME_GenericCrush);
+			state = actor->FindState(NAME_GenericCrush);
 			if (state != NULL && (sprites[state->sprite].numframes <= 0))
 				state = NULL; // If one of these tests fails, do not use that state.
 		}
-		if (state != NULL && !(flags & MF_ICECORPSE))
+		if (state != NULL && !(actor->flags & MF_ICECORPSE))
 		{
-			if (this->flags4 & MF4_BOSSDEATH) 
+			if (actor->flags4 & MF4_BOSSDEATH)
 			{
-				A_BossDeath(this);
+				A_BossDeath(actor);
 			}
-			flags &= ~MF_SOLID;
-			flags3 |= MF3_DONTGIB;
-			Height = 0;
-			radius = 0;
-			Vel.Zero();
-			SetState (state);
+			actor->flags &= ~MF_SOLID;
+			actor->flags3 |= MF3_DONTGIB;
+			actor->Height = 0;
+			actor->radius = 0;
+			actor->Vel.Zero();
+			actor->SetState (state);
 			if (isgeneric)	// Not a custom crush state, so colorize it appropriately.
 			{
-				S_Sound (this, CHAN_BODY, 0, "misc/fallingsplat", 1, ATTN_IDLE);
-				Translation = BloodTranslation;
+				S_Sound (actor, CHAN_BODY, 0, "misc/fallingsplat", 1, ATTN_IDLE);
+				actor->Translation = actor->BloodTranslation;
 			}
-			Level->localEventManager->WorldThingGround(this, state);
+			actor->Level->localEventManager->WorldThingGround(actor, state);
 			return false;
 		}
-		if (!(flags & MF_NOBLOOD))
+		if (!(actor->flags & MF_NOBLOOD))
 		{
-			if (this->flags4 & MF4_BOSSDEATH) 
+			if (actor->flags4 & MF4_BOSSDEATH)
 			{
-				A_BossDeath(this);
+				A_BossDeath(actor);
 			}
 
 			PClassActor *i = PClass::FindActor("RealGibs");
 
 			if (i != NULL)
 			{
-				i = i->GetReplacement(Level);
+				i = i->GetReplacement(actor->Level);
 
 				const AActor *defaults = GetDefaultByType (i);
 				if (defaults->SpawnState == NULL ||
@@ -1248,69 +1204,69 @@ bool AActor::Grind(bool items)
 			if (i == NULL)
 			{
 				// if there's no gib sprite don't crunch it.
-				flags &= ~MF_SOLID;
-				flags3 |= MF3_DONTGIB;
-				Height = 0;
-				radius = 0;
-				Vel.Zero();
+				actor->flags &= ~MF_SOLID;
+				actor->flags3 |= MF3_DONTGIB;
+				actor->Height = 0;
+				actor->radius = 0;
+				actor->Vel.Zero();
 				return false;
 			}
 
-			AActor *gib = Spawn (Level, i, Pos(), ALLOW_REPLACE);
+			AActor *gib = Spawn (actor->Level, i, actor->Pos(), ALLOW_REPLACE);
 			if (gib != NULL)
 			{
-				gib->RenderStyle = RenderStyle;
-				gib->Alpha = Alpha;
+				gib->RenderStyle = actor->RenderStyle;
+				gib->Alpha = actor->Alpha;
 				gib->Height = 0;
 				gib->radius = 0;
-				gib->Translation = BloodTranslation;
+				gib->Translation = actor->BloodTranslation;
 			}
-			S_Sound (this, CHAN_BODY, 0, "misc/fallingsplat", 1, ATTN_IDLE);
-			Level->localEventManager->WorldThingGround(this, nullptr);
+			S_Sound (actor, CHAN_BODY, 0, "misc/fallingsplat", 1, ATTN_IDLE);
+			actor->Level->localEventManager->WorldThingGround(actor, nullptr);
 		}
-		if (flags & MF_ICECORPSE)
+		if (actor->flags & MF_ICECORPSE)
 		{
-			tics = 1;
-			Vel.Zero();
+			actor->tics = 1;
+			actor->Vel.Zero();
 		}
-		else if (player)
+		else if (actor->player)
 		{
-			flags |= MF_NOCLIP;
-			flags3 |= MF3_DONTGIB;
-			renderflags |= RF_INVISIBLE;
+			actor->flags |= MF_NOCLIP;
+			actor->flags3 |= MF3_DONTGIB;
+			actor->renderflags |= RF_INVISIBLE;
 		}
 		else
 		{
-			Destroy ();
+			actor->Destroy ();
 		}
 		return false;		// keep checking
 	}
 
 	// killough 11/98: kill touchy things immediately
-	if (flags6 & MF6_TOUCHY && (flags6 & MF6_ARMED || IsSentient()))
+	if (actor->flags6 & MF6_TOUCHY && (actor->flags6 & MF6_ARMED || actor->IsSentient()))
     {
-		flags6 &= ~MF6_ARMED; // Disarm
-		P_DamageMobj (this, NULL, NULL, health, NAME_Crush, DMG_FORCED);  // kill object
+		actor->flags6 &= ~MF6_ARMED; // Disarm
+		P_DamageMobj (actor, NULL, NULL, actor->health, NAME_Crush, DMG_FORCED);  // kill object
 		return true;   // keep checking
     }
 
-	if (!(flags & MF_SOLID) || (flags & MF_NOCLIP))
+	if (!(actor->flags & MF_SOLID) || (actor->flags & MF_NOCLIP))
 	{
 		return false;
 	}
 
-	if (!(flags & MF_SHOOTABLE))
+	if (!(actor->flags & MF_SHOOTABLE))
 	{
 		return false;		// assume it is bloody gibs or something
 	}
 	return true;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Grind)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Grind, Grind)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(items);
-	ACTION_RETURN_BOOL(self->Grind(items));
+	ACTION_RETURN_BOOL(Grind(self, items));
 }
 
 bool AActor::CallGrind(bool items)
@@ -1323,7 +1279,7 @@ bool AActor::CallGrind(bool items)
 		VMCall(func, params, 2, &ret, 1);
 		return !!retv;
 	}
-	return Grind(items);
+	return false;
 }
 
 //============================================================================
@@ -1694,7 +1650,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 //
 //----------------------------------------------------------------------------
 
-int P_FaceMobj (AActor *source, AActor *target, DAngle *delta)
+static int P_FaceMobj (AActor *source, AActor *target, DAngle *delta)
 {
 	DAngle diff;
 
@@ -1829,7 +1785,7 @@ bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise
 #define STOPSPEED			(0x1000/65536.)
 #define CARRYSTOPSPEED		((0x1000*32/3)/65536.)
 
-double P_XYMovement (AActor *mo, DVector2 scroll) 
+static double P_XYMovement (AActor *mo, DVector2 scroll) 
 {
 	static int pushtime = 0;
 	bool bForceSlide = !scroll.isZero();
@@ -2380,8 +2336,8 @@ explode:
 	return Oldfloorz;
 }
 
-// Move this to p_inter ***
-void P_MonsterFallingDamage (AActor *mo)
+
+static void P_MonsterFallingDamage (AActor *mo)
 {
 	int damage;
 	double vel;
@@ -2408,7 +2364,7 @@ void P_MonsterFallingDamage (AActor *mo)
 // P_ZMovement
 //
 
-void P_ZMovement (AActor *mo, double oldfloorz)
+static void P_ZMovement (AActor *mo, double oldfloorz)
 {
 	double dist;
 	double delta;
@@ -2731,11 +2687,11 @@ DEFINE_ACTION_FUNCTION(AActor, CheckFakeFloorTriggers)
 //
 //===========================================================================
 
-void AActor::PlayerLandedMakeGruntSound(AActor *onmobj)
+static void PlayerLandedMakeGruntSound(AActor* self, AActor *onmobj)
 {
-	IFVIRTUAL(AActor, PlayerLandedMakeGruntSound)
+	IFVIRTUALPTR(self, AActor, PlayerLandedMakeGruntSound)
 	{
-		VMValue params[2] = { (AActor*)this, (AActor*)onmobj };
+		VMValue params[2] = { self, onmobj };
 		VMCall(func, params, 2, nullptr, 0);
 	}
 }
@@ -2755,7 +2711,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 
 	P_FallingDamage (mo);
 
-	mo->PlayerLandedMakeGruntSound(onmobj);
+	PlayerLandedMakeGruntSound(mo, onmobj);
 
 //	mo->player->centering = true;
 }
@@ -4295,7 +4251,7 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 
 //==========================================================================
 //
-// AActor::UpdateWaterDepth
+// UpdateWaterDepth
 //
 // Updates the actor's current waterlevel and waterdepth.
 // Consolidates common code in UpdateWaterLevel and SplashCheck.
@@ -4305,46 +4261,46 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 //
 //==========================================================================
 
-double AActor::UpdateWaterDepth(bool splash)
+static double UpdateWaterDepth(AActor* actor, bool splash)
 {
 	double fh = -FLT_MAX;
 	bool reset = false;
 
-	waterlevel = 0;
-	waterdepth = 0;
+	actor->waterlevel = 0;
+	actor->waterdepth = 0;
 
-	if (Sector == NULL)
+	if (actor->Sector == NULL)
 	{
 		return fh;
 	}
 
-	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
+	if (actor->Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 	{
-		waterdepth = Height;
+		actor->waterdepth = actor->Height;
 	}
 	else
 	{
-		const sector_t *hsec = Sector->GetHeightSec();
+		const sector_t *hsec = actor->Sector->GetHeightSec();
 		if (hsec != NULL)
 		{
-			fh = hsec->floorplane.ZatPoint(this);
+			fh = hsec->floorplane.ZatPoint(actor);
 
 			// splash checks also check Boom-style non-swimmable sectors
 			//  as well as non-solid, visible 3D floors (below)
 			if (splash || hsec->MoreFlags & SECMF_UNDERWATERMASK)
 			{
-				waterdepth = fh - Z();
+				actor->waterdepth = fh - actor->Z();
 
-				if (waterdepth <= 0 && !(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
+				if (actor->waterdepth <= 0 && !(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (actor->Top() > hsec->ceilingplane.ZatPoint(actor)))
 				{
-					waterdepth = Height;
+					actor->waterdepth = actor->Height;
 				}
 			}
 		}
 		else
 		{
 			// Check 3D floors as well!
-			for (auto rover : Sector->e->XFloor.ffloors)
+			for (auto rover : actor->Sector->e->XFloor.ffloors)
 			{
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (rover->flags & FF_SOLID) continue;
@@ -4353,36 +4309,36 @@ double AActor::UpdateWaterDepth(bool splash)
 				if (splash) { reset &= rover->alpha == 0; }
 				if (reset) continue;
 
-				double ff_bottom = rover->bottom.plane->ZatPoint(this);
-				double ff_top = rover->top.plane->ZatPoint(this);
+				double ff_bottom = rover->bottom.plane->ZatPoint(actor);
+				double ff_top = rover->top.plane->ZatPoint(actor);
 
-				if (ff_top <= Z() || ff_bottom > Center()) continue;
+				if (ff_top <= actor->Z() || ff_bottom > actor->Center()) continue;
 
 				fh = ff_top;
-				waterdepth = ff_top - Z();
+				actor->waterdepth = ff_top - actor->Z();
 				break;
 			}
 		}
 	}
 
-	if (waterdepth < 0) { waterdepth = 0; }
+	if (actor->waterdepth < 0) { actor->waterdepth = 0; }
 
-	if (waterdepth > (Height / 2))
+	if (actor->waterdepth > (actor->Height / 2))
 	{
 		// When noclipping around and going from low to high sector, your view height
 		//  can go negative, which is why this is nested inside here
-		if ((player && (waterdepth >= player->viewheight)) || (waterdepth >= Height))
+		if ((actor->player && (actor->waterdepth >= actor->player->viewheight)) || (actor->waterdepth >= actor->Height))
 		{
-			waterlevel = 3;
+			actor->waterlevel = 3;
 		}
 		else
 		{
-			waterlevel = 2;
+			actor->waterlevel = 2;
 		}
 	}
-	else if (waterdepth > 0)
+	else if (actor->waterdepth > 0)
 	{
-		waterlevel = 1;
+		actor->waterlevel = 1;
 	}
 
 	return fh;
@@ -4398,7 +4354,7 @@ double AActor::UpdateWaterDepth(bool splash)
 
 void AActor::SplashCheck()
 {
-	double fh = UpdateWaterDepth(true);
+	double fh = UpdateWaterDepth(this, true);
 
 	// some additional checks to make deep sectors like Boom's splash without setting
 	// the water flags. 
@@ -4423,7 +4379,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 	int oldlevel = waterlevel;
 
 	if (dosplash) SplashCheck();
-	UpdateWaterDepth(false);
+	UpdateWaterDepth(this, false);
 
 	// Play surfacing and diving sounds, as appropriate.
 	//
@@ -4945,7 +4901,7 @@ void AActor::OnDestroy ()
 	ClearRenderLineList();
 
 	// [RH] Destroy any inventory this actor is carrying
-	DestroyAllInventory ();
+	DestroyAllInventory (this);
 
 	// [RH] Unlink from tid chain
 	RemoveFromHash ();
@@ -5321,7 +5277,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	if (oldactor != NULL)
 	{ // Remove any inventory left from the old actor. Coop handles
 	  // it above, but the other modes don't.
-		oldactor->DestroyAllInventory();
+		DestroyAllInventory(oldactor);
 	}
 	// [BC] Handle temporary invulnerability when respawned
 	if (state == PST_REBORN || state == PST_ENTER)

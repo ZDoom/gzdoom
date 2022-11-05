@@ -5776,7 +5776,12 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	else
 		mobj->health = -int(mthing->Health);
 	if (mthing->Health == 0)
-		mobj->CallDie(NULL, NULL);
+	{
+		// We cannot call 'Die' here directly because the level is not yet fully set up.
+		// This needs to be delayed by one tic.
+		auto state = mobj->FindState(NAME_DieFromSpawn);
+		if (state) mobj->SetState(state, true);
+	}
 	else if (mthing->Health != 1)
 		mobj->StartHealth = mobj->health;
 

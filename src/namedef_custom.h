@@ -347,6 +347,7 @@ xx(Greetings)
 xx(Idle)
 xx(GenericFreezeDeath)
 xx(GenericCrush)
+xx(DieFromSpawn)
 
 // Bounce state names
 xx(Bounce)

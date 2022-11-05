@@ -1360,6 +1360,9 @@ class Actor : Thinker native
 	GenericCrush:
 		POL5 A -1;
 		Stop;
+	DieFromSpawn:
+		TNT1 A 1;
+		TNT1 A 1 { self.Die(null, null); }
 	}
 
 	// Internal functions

@@ -849,10 +849,7 @@ struct TVector4
 	// Multiply as Quaternion
 	TVector4& operator*= (const TVector4& v)
 	{
-		X = v.W * X + v.X * W + v.Y * Z - v.Z * Y;
-		Y = v.W * Y + v.Y * W + v.Z * X - v.X * Z;
-		Z = v.W * Z + v.Z * W + v.X * Y - v.Y * X;
-		W = v.W * W - v.X * X - v.Y * Y - v.Z * Z;
+		*this = *this * v;
 		return *this;
 	}
 

@@ -302,6 +302,7 @@ FString M_GetConfigPath(bool for_reading)
 			if (action == IDNO)
 			{
 				path.Format("%s" GAMENAMELOWERCASE "_portable.ini", progdir.GetChars());
+				isportable = true;
 			}
 		}
 		bool res = MoveFileExW(WideString(oldpath).c_str(), WideString(path).c_str(), MOVEFILE_COPY_ALLOWED);

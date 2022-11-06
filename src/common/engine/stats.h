@@ -48,6 +48,7 @@ public:
 	cycle_t &operator= (const cycle_t &o) { return *this; }
 	void Reset() {}
 	void Clock() {}
+	void ResetAndClock() {}
 	void Unclock() {}
 	double Time() { return 0; }
 	double TimeMS() { return 0; }
@@ -118,6 +119,12 @@ public:
 
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		Sec -= ts.tv_sec + ts.tv_nsec * 1e-9;
+	}
+
+	void ResetAndClock()
+	{
+		Reset();
+		Clock();
 	}
 
 	void Unclock()

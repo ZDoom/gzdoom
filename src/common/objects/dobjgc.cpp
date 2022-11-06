@@ -780,7 +780,7 @@ ADD_STAT(gc)
 
 void FStepStats::Reset()
 {
-	for (int i = 0; i < countof(Count); ++i)
+	for (unsigned i = 0; i < countof(Count); ++i)
 	{
 		Count[i] = 0;
 		BytesCovered[i] = 0;

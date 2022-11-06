@@ -37,11 +37,20 @@ namespace GC
 		GCS_Pause,
 		GCS_Propagate,
 		GCS_Sweep,
-		GCS_Finalize
+		GCS_Destroy,
+		GCS_Done,
+
+		GCS_COUNT
 	};
 
 	// Number of bytes currently allocated through M_Malloc/M_Realloc.
 	extern size_t AllocBytes;
+
+	// Number of bytes allocated since last collection step.
+	extern size_t RunningAllocBytes;
+
+	// Number of bytes freed since last collection step.
+	extern size_t RunningDeallocBytes;
 
 	// Amount of memory to allocate before triggering a collection.
 	extern size_t Threshold;
@@ -70,17 +79,11 @@ namespace GC
 	// Is this the final collection just before exit?
 	extern bool FinalGC;
 
-	// Counts the number of times CheckGC has been called.
-	extern uint64_t CheckTime;
-
 	// Current white value for known-dead objects.
 	static inline uint32_t OtherWhite()
 	{
 		return CurrentWhite ^ OF_WhiteBits;
 	}
-
-	// Frees all objects, whether they're dead or not.
-	void FreeAll();
 
 	// Does one collection step.
 	void Step();
@@ -118,12 +121,7 @@ namespace GC
 	}
 
 	// Check if it's time to collect, and do a collection step if it is.
-	static inline void CheckGC()
-	{
-		CheckTime++;
-		if (AllocBytes >= Threshold)
-			Step();
-	}
+	void CheckGC();
 
 	// Forces a collection to start now.
 	static inline void StartCollection()
@@ -176,6 +174,32 @@ namespace GC
 	using GCMarkerFunc = void(*)();
 	void AddMarkerFunc(GCMarkerFunc func);
 
+	// Report an allocation to the GC
+	static inline void ReportAlloc(size_t alloc)
+	{
+		AllocBytes += alloc;
+		RunningAllocBytes += alloc;
+	}
+
+	// Report a deallocation to the GC
+	static inline void ReportDealloc(size_t dealloc)
+	{
+		AllocBytes -= dealloc;
+		RunningDeallocBytes += dealloc;
+	}
+
+	// Report a reallocation to the GC
+	static inline void ReportRealloc(size_t oldsize, size_t newsize)
+	{
+		if (oldsize < newsize)
+		{
+			ReportAlloc(newsize - oldsize);
+		}
+		else
+		{
+			ReportDealloc(oldsize - newsize);
+		}
+	}
 }
 
 // A template class to help with handling read barriers. It does not

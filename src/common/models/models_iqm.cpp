@@ -6,6 +6,11 @@
 #include "modelrenderer.h"
 #include "engineerrors.h"
 #include "r_utility.h"
+#include "dobject.h"
+#include "bonecomponents.h"
+
+IMPLEMENT_CLASS(DBoneComponents, false, false);
+
 
 IQMModel::IQMModel()
 {

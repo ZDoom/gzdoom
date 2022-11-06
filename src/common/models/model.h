@@ -6,6 +6,7 @@
 #include "matrix.h"
 #include "TRS.h"
 
+class DBoneComponents;
 class FModelRenderer;
 class FGameTexture;
 class IModelVertexBuffer;

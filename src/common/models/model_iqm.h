@@ -5,6 +5,9 @@
 #include "vectors.h"
 #include "matrix.h"
 #include "common/rendering/i_modelvertexbuffer.h"
+#include "m_swap.h"
+
+class DBoneComponents;
 
 struct IQMMesh
 {

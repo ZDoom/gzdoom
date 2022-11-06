@@ -4,7 +4,10 @@
 #include <stdint.h>
 // [RH] Voxels from Build
 
-#define MAXVOXMIPS 5
+enum
+{
+	MAXVOXMIPS = 5,
+};
 
 struct kvxslab_t
 {

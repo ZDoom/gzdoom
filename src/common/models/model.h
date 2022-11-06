@@ -83,6 +83,7 @@ public:
 	IModelVertexBuffer *GetVertexBuffer(int type) const { return mVBuf[type]; }
 	void DestroyVertexBuffer();
 
+	bool hasSurfaces = false;
 	FString mFileName;
 
 private:
@@ -90,5 +91,5 @@ private:
 };
 
 int ModelFrameHash(FSpriteModelFrame* smf);
-unsigned FindModel(const char* path, const char* modelfile);
+unsigned FindModel(const char* path, const char* modelfile, bool silent = false);
 

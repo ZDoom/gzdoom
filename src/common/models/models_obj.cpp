@@ -222,6 +222,8 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 	curSurface->faceStart = aggSurfFaceCount;
 	surfaces.Push(*curSurface);
 	delete curSurface;
+	hasSurfaces = surfaces.Size() > 1;
+
 
 	if (uvs.Size() == 0)
 	{ // Needed so that OBJs without UVs can work

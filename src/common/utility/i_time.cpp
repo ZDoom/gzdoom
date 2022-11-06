@@ -68,7 +68,7 @@ static uint64_t GetClockTimeNS()
 {
 	auto tp = GetTimePoint() - StartupTimeNS;
 	if (TimeScale == 1.0) return tp;
-	else return tp / 1000 * TimeScale * 1000;
+	else return uint64_t(tp / 1000 * TimeScale * 1000);
 }
 
 static uint64_t MSToNS(unsigned int ms)

@@ -48,6 +48,7 @@ float unpackuvert( uint32_t n, int c )
 bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int length )
 {
 	int lumpnum2;
+	hasSurfaces = true;
 	FString realfilename = fileSystem.GetFileFullName(lumpnum);
 	if ( (size_t)realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
 	{

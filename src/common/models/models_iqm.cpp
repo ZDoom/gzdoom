@@ -5,7 +5,6 @@
 #include "texturemanager.h"
 #include "modelrenderer.h"
 #include "engineerrors.h"
-#include "r_utility.h"
 #include "dobject.h"
 #include "bonecomponents.h"
 

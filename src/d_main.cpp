@@ -3510,7 +3510,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 
 static int D_DoomMain_Internal (void)
 {
-	const char *v;
 	const char *wad;
 	FIWadManager *iwad_man;
 

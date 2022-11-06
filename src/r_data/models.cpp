@@ -372,7 +372,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
 				{
-					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor, i);
+					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor->boneComponentData, i);
 					boneStartingPosition = renderer->SetupFrame(animation, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}
@@ -381,7 +381,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
 				{
-					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor, i);
+					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor->boneComponentData, i);
 					boneStartingPosition = renderer->SetupFrame(mdl, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}

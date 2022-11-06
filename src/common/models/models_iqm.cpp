@@ -510,17 +510,17 @@ const TArray<TRS>* IQMModel::AttachAnimationData()
 	return &TRSData;
 }
 
-const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, AActor* actor, int index)
+const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, DBoneComponents* boneComponentData, int index)
 {
 	const TArray<TRS>& animationFrames = &animationData ? animationData : TRSData;
 	if (Joints.Size() > 0)
 	{
 		int numbones = Joints.Size();
 
-		if (actor->boneComponentData->trscomponents[index].Size() != numbones)
-			actor->boneComponentData->trscomponents[index].Resize(numbones);
-		if (actor->boneComponentData->trsmatrix[index].Size() != numbones)
-			actor->boneComponentData->trsmatrix[index].Resize(numbones);
+		if (boneComponentData->trscomponents[index].Size() != numbones)
+			boneComponentData->trscomponents[index].Resize(numbones);
+		if (boneComponentData->trsmatrix[index].Size() != numbones)
+			boneComponentData->trsmatrix[index].Resize(numbones);
 
 		frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1) / numbones);
 		frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1) / numbones);
@@ -556,18 +556,18 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 
 			if (Joints[i].Parent >= 0 && modifiedBone[Joints[i].Parent])
 			{
-				actor->boneComponentData->trscomponents[index][i] = bone;
+				boneComponentData->trscomponents[index][i] = bone;
 				modifiedBone[i] = true;
 			}
-			else if (actor->boneComponentData->trscomponents[index][i].Equals(bone))
+			else if (boneComponentData->trscomponents[index][i].Equals(bone))
 			{
-				bones[i] = actor->boneComponentData->trsmatrix[index][i];
+				bones[i] = boneComponentData->trsmatrix[index][i];
 				modifiedBone[i] = false;
 				continue;
 			}
 			else
 			{
-				actor->boneComponentData->trscomponents[index][i] = bone;
+				boneComponentData->trscomponents[index][i] = bone;
 				modifiedBone[i] = true;
 			}
 
@@ -595,7 +595,7 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 			result.multMatrix(swapYZ);
 		}
 
-		actor->boneComponentData->trsmatrix[index] = bones;
+		boneComponentData->trsmatrix[index] = bones;
 
 		return bones;
 	}

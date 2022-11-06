@@ -371,7 +371,7 @@ class ScreenJobRunner : Object UI
 
 	bool CanWipe()
 	{
-		if (index < jobs.Size()) return !jobs[index].nowipe;
+		if (index < jobs.Size()) return !jobs[max(0, index)].nowipe;
 		return true;		
 	}
 

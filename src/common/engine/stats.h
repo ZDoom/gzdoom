@@ -221,6 +221,11 @@ public:
 		Counter = 0;
 	}
 
+	void ResetAndClock()
+	{
+		Counter = -static_cast<int64_t>(rdtsc());
+	}
+
 	void Clock()
 	{
 		int64_t time = rdtsc();

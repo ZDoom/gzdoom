@@ -18,18 +18,18 @@ add_definitions( -DINFNAN_CHECK -DMULTIPLE_THREADS )
 if( NOT MSVC AND NOT APPLE )
 	if( NOT CMAKE_CROSSCOMPILING )
 		add_executable( arithchk arithchk.c )
+		add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/arith.h
+			COMMAND arithchk >${CMAKE_CURRENT_BINARY_DIR}/arith.h
+			DEPENDS arithchk )
 	endif()
-	add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/arith.h 
-		COMMAND arithchk >${CMAKE_CURRENT_BINARY_DIR}/arith.h
-		DEPENDS arithchk )
 
 	if( NOT CMAKE_CROSSCOMPILING )
 		add_executable( qnan qnan.c arith.h )
 		set( CROSS_EXPORTS ${CROSS_EXPORTS} arithchk qnan PARENT_SCOPE )
+		add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
+			COMMAND qnan >${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
+			DEPENDS qnan )
 	endif()
-	add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
-		COMMAND qnan >${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
-		DEPENDS qnan )
 		
 	set( GEN_FP_FILES arith.h gd_qnan.h )
 	set( GEN_FP_DEPS ${CMAKE_CURRENT_BINARY_DIR}/arith.h ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h )

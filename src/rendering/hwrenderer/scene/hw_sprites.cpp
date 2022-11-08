@@ -1327,7 +1327,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 			ur = 1;
 			vt = 0;
 			vb = 1;
-			texture = TexMan.GetGameTexture(lump, false);
+			texture = TexMan.GetGameTexture(lump, true);
 		}
 	}
 

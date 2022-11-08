@@ -2271,7 +2271,10 @@ OptionMenu VideoModeMenu protected
 
 	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
 	StaticText " "
-	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	IfOption(SWRender)
+	{
+		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	}
 	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
 
 	IfOption(Mac)

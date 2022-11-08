@@ -47,7 +47,10 @@ OptionMenu VideoOptionsSimple protected
 	Title "$DSPLYMNU_TITLE"
 
 	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
-	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	IfOption(SWRender)
+	{
+		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	}
 	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
 	IfOption(Mac)
 	{

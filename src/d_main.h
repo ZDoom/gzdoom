@@ -149,7 +149,11 @@ public:
 
 };
 
+#ifndef NO_SWRENDERER
 EXTERN_CVAR(Int, vid_rendermode)
+#else
+constexpr int vid_rendermode = 4;
+#endif
 
 inline bool V_IsHardwareRenderer()
 {

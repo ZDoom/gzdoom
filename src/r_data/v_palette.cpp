@@ -84,35 +84,3 @@ void InitPalette ()
 
 }
 
-CCMD (testblend)
-{
-	FString colorstring;
-	int color;
-	float amt;
-
-	if (argv.argc() < 3)
-	{
-		Printf ("testblend <color> <amount>\n");
-	}
-	else
-	{
-		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
-		{
-			color = V_GetColorFromString (colorstring);
-		}
-		else
-		{
-			color = V_GetColorFromString (argv[1]);
-		}
-		amt = (float)atof (argv[2]);
-		if (amt > 1.0f)
-			amt = 1.0f;
-		else if (amt < 0.0f)
-			amt = 0.0f;
-		BaseBlendR = RPART(color);
-		BaseBlendG = GPART(color);
-		BaseBlendB = BPART(color);
-		BaseBlendA = amt;
-	}
-}
-

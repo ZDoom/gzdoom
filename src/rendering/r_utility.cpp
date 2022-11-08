@@ -1058,18 +1058,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	if (R_OldBlend != newblend)
 	{
 		R_OldBlend = newblend;
-		if (APART(newblend))
-		{
-			BaseBlendR = RPART(newblend);
-			BaseBlendG = GPART(newblend);
-			BaseBlendB = BPART(newblend);
-			BaseBlendA = APART(newblend) / 255.f;
-		}
-		else
-		{
-			BaseBlendR = BaseBlendG = BaseBlendB = 0;
-			BaseBlendA = 0.f;
-		}
 	}
 
 	validcount++;

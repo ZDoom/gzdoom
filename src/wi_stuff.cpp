@@ -268,8 +268,8 @@ DEFINE_ACTION_FUNCTION(DInterBackground, Create)
 
 bool DInterBackground::LoadBackground(bool isenterpic)
 {
-	const char *lumpname = nullptr;
-	const char *exitpic = nullptr;
+	const char* lumpname = nullptr;
+	const char* exitpic = nullptr;
 	char buffer[10];
 	in_anim_t an;
 	lnode_t pt;
@@ -281,14 +281,22 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	if (!isenterpic) tilebackground = false;
 	texture.SetInvalid();
 
-	level_info_t * li = FindLevelInfo(wbs->current);
-	if (li != nullptr) exitpic = li->ExitPic;
+	level_info_t* li = FindLevelInfo(wbs->current);
+	if (li != nullptr)
+	{
+		exitpic = li->ExitPic;
+		if (li->ExitPic.IsNotEmpty()) tilebackground = false;
+	}
 	lumpname = exitpic;
 
 	if (isenterpic)
 	{
-		level_info_t * li = FindLevelInfo(wbs->next);
-		if (li != NULL) lumpname = li->EnterPic;
+		level_info_t* li = FindLevelInfo(wbs->next);
+		if (li != NULL)
+		{
+			lumpname = li->EnterPic;
+			if (li->EnterPic.IsNotEmpty()) tilebackground = false;
+		}
 	}
 
 	// Try to get a default if nothing specified
@@ -301,11 +309,12 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		case GAME_Doom:
 			if (!(gameinfo.flags & GI_MAPxx))
 			{
-				const char *levelname = isenterpic ? wbs->next : wbs->current;
+				const char* levelname = isenterpic ? wbs->next : wbs->current;
 				if (IsExMy(levelname))
 				{
 					mysnprintf(buffer, countof(buffer), "$IN_EPI%c", levelname[1]);
 					lumpname = buffer;
+					tilebackground = false;
 				}
 			}
 			if (!lumpname)
@@ -340,6 +349,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 				{
 					mysnprintf(buffer, countof(buffer), "$IN_HTC%c", wbs->next[1]);
 					lumpname = buffer;
+					tilebackground = false;
 				}
 			}
 			if (!lumpname)
@@ -472,7 +482,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					sc.MustGetNumber();
 					bgheight = sc.Number;
 					break;
-					
+
 				case 16:	// tilebackground
 					tilebackground = true;
 					break;
@@ -549,9 +559,9 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		}
 	}
 	background = texture;
-	auto tex= TexMan.GetGameTexture(texture);
+	auto tex = TexMan.GetGameTexture(texture);
 	// extremely small textures will always be tiled.
-	if (tex && tex->GetDisplayWidth() < 128 && tex->GetDisplayHeight() < 128) 
+	if (tex && tex->GetDisplayWidth() < 128 && tex->GetDisplayHeight() < 128)
 		tilebackground = true;
 	return noautostartmap;
 }

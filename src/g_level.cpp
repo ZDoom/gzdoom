@@ -1784,8 +1784,7 @@ void FLevelLocals::Init()
 {
 	P_InitParticles(this);
 	P_ClearParticles(this);
-	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
-
+	
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
 	AirControlChanged();

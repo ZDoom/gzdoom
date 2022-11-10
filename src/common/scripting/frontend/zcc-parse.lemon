@@ -861,6 +861,7 @@ type_name1(X) ::= DOUBLE(T).				{ X.Int = ZCC_Float64; X.SourceLoc = T.SourceLoc
 //type_name1(X) ::= STRING(T).				{ X.Int = ZCC_String; X.SourceLoc = T.SourceLoc; } // [ZZ] it's handled elsewhere. this particular line only causes troubles in the form of String.Format being invalid.
 type_name1(X) ::= VECTOR2(T).				{ X.Int = ZCC_Vector2; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= VECTOR3(T).				{ X.Int = ZCC_Vector3; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= VECTOR4(T).				{ X.Int = ZCC_Vector4; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= NAME(T).					{ X.Int = ZCC_Name; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= SOUND(T).					{ X.Int = ZCC_Sound; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= STATE(T).					{ X.Int = ZCC_State; X.SourceLoc = T.SourceLoc; }
@@ -931,7 +932,7 @@ type_name(X) ::= DOT dottable_id(A).
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16 PROPERTY.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 VECTOR4 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16 PROPERTY.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}
@@ -1303,6 +1304,17 @@ primary(X) ::= SUPER(T).
 	X = expr;
 }
 primary(X) ::= constant(A).				{ X = A; /*X-overwrites-A*/ }
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) COMMA expr(D) RPAREN. [DOT]
+{
+	NEW_AST_NODE(VectorValue, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector4;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = C;
+	expr->W = D;
+	XX = expr;
+}
 primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN. [DOT]
 {
 	NEW_AST_NODE(VectorValue, expr, A);
@@ -1311,6 +1323,7 @@ primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN. [DOT]
 	expr->X = A;
 	expr->Y = B;
 	expr->Z = C;
+	expr->W = nullptr;
 	XX = expr;
 }
 primary(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN. [DOT]
@@ -1321,6 +1334,7 @@ primary(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN. [DOT]
 	expr->X = A;
 	expr->Y = B;
 	expr->Z = nullptr;
+	expr->W = nullptr;
 	XX = expr;
 }
 primary(X) ::= LPAREN expr(A) RPAREN.

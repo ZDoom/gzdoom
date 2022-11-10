@@ -2353,7 +2353,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 					int flags = 0;
-					if ((type->isStruct() && type != TypeVector2 && type != TypeVector3) || type->isDynArray())
+					if ((type->isStruct() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4) || type->isDynArray())
 					{
 						// Structs are being passed by pointer, but unless marked 'out' that pointer must be readonly.
 						type = NewPointer(type /*, !(p->Flags & ZCC_Out)*/);

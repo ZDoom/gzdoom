@@ -170,7 +170,7 @@ void JitCompiler::EmitSV4()
 	cc.movsd(asmjit::x86::qword_ptr(tmp), regF[B]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp, 8), regF[B + 1]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp, 16), regF[B + 2]);
-	cc.movsd(asmjit::x86::qword_ptr(tmp, 32), regF[B + 3]);
+	cc.movsd(asmjit::x86::qword_ptr(tmp, 24), regF[B + 3]);
 }
 
 void JitCompiler::EmitSV4_R()
@@ -182,7 +182,7 @@ void JitCompiler::EmitSV4_R()
 	cc.movsd(asmjit::x86::qword_ptr(tmp), regF[B]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp, 8), regF[B + 1]);
 	cc.movsd(asmjit::x86::qword_ptr(tmp, 16), regF[B + 2]);
-	cc.movsd(asmjit::x86::qword_ptr(tmp, 32), regF[B + 3]);
+	cc.movsd(asmjit::x86::qword_ptr(tmp, 24), regF[B + 3]);
 }
 
 void JitCompiler::EmitSFV2()
@@ -257,7 +257,7 @@ void JitCompiler::EmitSFV4()
 	cc.cvtsd2ss(tmpF, regF[B + 2]);
 	cc.movss(asmjit::x86::qword_ptr(tmp, 8), tmpF);
 	cc.cvtsd2ss(tmpF, regF[B + 3]);
-	cc.movss(asmjit::x86::qword_ptr(tmp, 16), tmpF);
+	cc.movss(asmjit::x86::qword_ptr(tmp, 12), tmpF);
 }
 
 void JitCompiler::EmitSFV4_R()
@@ -274,7 +274,7 @@ void JitCompiler::EmitSFV4_R()
 	cc.cvtsd2ss(tmpF, regF[B + 2]);
 	cc.movss(asmjit::x86::qword_ptr(tmp, 8), tmpF);
 	cc.cvtsd2ss(tmpF, regF[B + 3]);
-	cc.movss(asmjit::x86::qword_ptr(tmp, 16), tmpF);
+	cc.movss(asmjit::x86::qword_ptr(tmp, 12), tmpF);
 }
 
 void JitCompiler::EmitSBIT()

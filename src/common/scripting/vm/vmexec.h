@@ -512,6 +512,28 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			v[2] = reg.f[B+2];
 		}
 		NEXTOP;
+	OP(SV4):
+		ASSERTA(a); ASSERTF(B+3); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		{
+			auto v = (double *)ptr;
+			v[0] = reg.f[B];
+			v[1] = reg.f[B+1];
+			v[2] = reg.f[B+2];
+			v[3] = reg.f[B+3];
+		}
+		NEXTOP;
+	OP(SV4_R):
+		ASSERTA(a); ASSERTF(B+3); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		{
+			auto v = (double *)ptr;
+			v[0] = reg.f[B];
+			v[1] = reg.f[B+1];
+			v[2] = reg.f[B+2];
+			v[3] = reg.f[B+3];
+		}
+		NEXTOP;
 	OP(SFV2):
 		ASSERTA(a); ASSERTF(B+1); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);
@@ -548,6 +570,28 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			v[0] = (float)reg.f[B];
 			v[1] = (float)reg.f[B+1];
 			v[2] = (float)reg.f[B+2];
+		}
+		NEXTOP;
+	OP(SFV4):
+		ASSERTA(a); ASSERTF(B+3); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
+			v[3] = (float)reg.f[B+3];
+		}
+		NEXTOP;
+	OP(SFV4_R):
+		ASSERTA(a); ASSERTF(B+3); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
+			v[3] = (float)reg.f[B+3];
 		}
 		NEXTOP;
 	OP(SBIT):
@@ -766,6 +810,15 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 					::new(param + 1) VMValue(reg.f[b + 1]);
 					::new(param + 2) VMValue(reg.f[b + 2]);
 					f->NumParam += 2;
+					break;
+				case REGT_FLOAT | REGT_MULTIREG4:
+					assert(b < f->NumRegF - 3);
+					assert(f->NumParam < sfunc->MaxParam - 2);
+					::new(param) VMValue(reg.f[b]);
+					::new(param + 1) VMValue(reg.f[b + 1]);
+					::new(param + 2) VMValue(reg.f[b + 2]);
+					::new(param + 3) VMValue(reg.f[b + 3]);
+					f->NumParam += 3;
 					break;
 				case REGT_FLOAT | REGT_ADDROF:
 					assert(b < f->NumRegF);
@@ -2173,7 +2226,11 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 			assert(regnum < frame->NumRegF);
 			src = &reg.f[regnum];
 		}
-		if (regtype & REGT_MULTIREG3)
+		if (regtype & REGT_MULTIREG4)
+		{
+			ret->SetVector4((double*)src);
+		}
+		else if (regtype & REGT_MULTIREG3)
 		{
 			ret->SetVector((double *)src);
 		}

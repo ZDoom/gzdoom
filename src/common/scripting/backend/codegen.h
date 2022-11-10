@@ -336,7 +336,7 @@ public:
 	bool IsFloat() const { return ValueType->isFloat(); }
 	bool IsInteger() const { return ValueType->isNumeric() && ValueType->isIntCompatible(); }
 	bool IsPointer() const { return ValueType->isPointer(); }
-	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3 || ValueType == TypeFVector2 || ValueType == TypeFVector3; };
+	bool IsVector() const { return IsVector2() || IsVector3() || IsVector4(); };
 	bool IsVector2() const { return ValueType == TypeVector2 || ValueType == TypeFVector2; };
 	bool IsVector3() const { return ValueType == TypeVector3 || ValueType == TypeFVector3; };
 	bool IsVector4() const { return ValueType == TypeVector4 || ValueType == TypeFVector4; };
@@ -551,7 +551,9 @@ public:
 
 class FxVectorValue : public FxExpression
 {
-	FxExpression *xyzw[4];
+	constexpr static int maxVectorDimensions = 4;
+
+	FxExpression *xyzw[maxVectorDimensions];
 	bool isConst;	// gets set to true if all element are const (used by function defaults parser)
 
 public:
@@ -563,8 +565,9 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	bool isConstVector(int dim)
 	{
-		if (!isConst) return false;
-		return dim == 2 ? xyzw[2] == nullptr : xyzw[2] != nullptr;
+		if (!isConst)
+			return false;
+		return dim >= 0 && dim <= maxVectorDimensions && xyzw[dim - 1] && (dim == maxVectorDimensions || !xyzw[dim]);
 	}
 
 	ExpEmit Emit(VMFunctionBuilder *build);

@@ -85,8 +85,8 @@ xx(SV2,		sv2,	RPRVKI,		SV2_R,	4, REGT_INT)		// store vector2
 xx(SV2_R,	sv2,	RPRVRI,		NOP,	0, 0)
 xx(SV3,		sv3,	RPRVKI,		SV3_R,	4, REGT_INT)		// store vector3
 xx(SV3_R,	sv3,	RPRVRI,		NOP,	0, 0)
-xx(SV4,		sv3,	RPRVKI,		SV4_R,	4, REGT_INT)		// store vector4
-xx(SV4_R,	sv3,	RPRVRI,		NOP,	0, 0)
+xx(SV4,		sv4,	RPRVKI,		SV4_R,	4, REGT_INT)		// store vector4
+xx(SV4_R,	sv4,	RPRVRI,		NOP,	0, 0)
 xx(SFV2,	sfv2,	RPRVKI,		SFV2_R,	4, REGT_INT)		// store fvector2
 xx(SFV2_R,	sfv2,	RPRVRI,		NOP,	0, 0)
 xx(SFV3,	sfv3,	RPRVKI,		SFV3_R,	4, REGT_INT)		// store fvector3
@@ -265,7 +265,7 @@ xx(LENV3,		lenv3,	RFRV,		NOP,	0, 0)			// fA = vB.Length
 xx(EQV3_R,		beqv3,	CVRR,		NOP,	0, 0)			// if ((vB == vkC) != A) then pc++ (inexact if A & 33)
 xx(EQV3_K,		beqv3,	CVRK,		NOP,	0, 0)			// this will never be used.
 
-// Vector math (4D/Quaternion)
+// Vector math (4D)
 xx(NEGV4,		negv4,		RVRV,	NOP,	0, 0)			// vA = -vB
 xx(ADDV4_RR,	addv4,		RVRVRV,	NOP,	0, 0)		// vA = vB + vkC
 xx(SUBV4_RR,	subv4,		RVRVRV,	NOP,	0, 0)		// vA = vkB - vkC

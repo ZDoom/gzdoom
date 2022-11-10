@@ -1297,7 +1297,8 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 		// ZCC_VectorValue
 		copy->X = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->X, true, copiedNodesList));
 		copy->Y = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Y, true, copiedNodesList));
-		copy->Z = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Z, true, copiedNodesList));
+		copy->Z = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->Z, true, copiedNodesList));
+		copy->W = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->W, true, copiedNodesList));
 
 		break;
 	}

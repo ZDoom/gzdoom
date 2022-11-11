@@ -2450,6 +2450,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SphericalCoords, SphericalCoords)
 	ACTION_RETURN_VEC3(result);
 }
 
+static void LookupString(FLevelLocals *level, uint32_t index, FString *res)
+{
+	*res = level->Behaviors.LookupString(index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, LookupString, LookupString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_UINT(index);
+	FString res;
+	LookupString(self, index, &res);
+	ACTION_RETURN_STRING(res);
+}
 
 static int isFrozen(FLevelLocals *self)
 {

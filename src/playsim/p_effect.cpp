@@ -99,15 +99,57 @@ static const struct ColorList {
 	{NULL, 0, 0, 0 }
 };
 
-inline particle_t *NewParticle (FLevelLocals *Level)
+inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 {
 	particle_t *result = nullptr;
-	if (Level->InactiveParticles != NO_PARTICLE)
+	// [MC] Thanks to RaveYard and randi for helping me with this addition.
+	// Array's filled up
+	if (Level->InactiveParticles == NO_PARTICLE)
 	{
-		result = &Level->Particles[Level->InactiveParticles];
-		Level->InactiveParticles = result->tnext;
-		result->tnext = Level->ActiveParticles;
-		Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
+		if (replace)
+		{
+			result = &Level->Particles[Level->OldestParticle];
+
+			// There should be NO_PARTICLE for the oldest's tnext
+			if (result->tprev != NO_PARTICLE)
+			{
+				// tnext: youngest to oldest
+				// tprev: oldest to youngest
+				
+				// 2nd oldest -> oldest
+				particle_t *nbottom = &Level->Particles[result->tprev];
+				nbottom->tnext = NO_PARTICLE;
+
+				// now oldest becomes youngest
+				Level->OldestParticle = result->tprev;
+				result->tnext = Level->ActiveParticles;
+				result->tprev = NO_PARTICLE;
+				Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
+
+				// youngest -> 2nd youngest
+				particle_t* ntop = &Level->Particles[result->tnext];
+				ntop->tprev = Level->ActiveParticles;
+			}
+		}
+		return result;
+	}
+	
+	// Array isn't full.
+	uint32_t current = Level->ActiveParticles;
+	result = &Level->Particles[Level->InactiveParticles];
+	Level->InactiveParticles = result->tnext;
+	result->tnext = current;
+	result->tprev = NO_PARTICLE;
+	Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
+
+	if (current != NO_PARTICLE) // More than one active particles
+	{
+		particle_t* next = &Level->Particles[current];
+		next->tprev = Level->ActiveParticles;
+	}
+	else // Just one active particle
+	{
+		Level->OldestParticle = Level->ActiveParticles;
 	}
 	return result;
 }
@@ -139,11 +181,16 @@ void P_ClearParticles (FLevelLocals *Level)
 {
 	int i = 0;
 	memset (Level->Particles.Data(), 0, Level->Particles.Size() * sizeof(particle_t));
+	Level->OldestParticle = NO_PARTICLE;
 	Level->ActiveParticles = NO_PARTICLE;
 	Level->InactiveParticles = 0;
 	for (auto &p : Level->Particles)
+	{
+		p.tprev = i - 1;
 		p.tnext = ++i;
+	}
 	Level->Particles.Last().tnext = NO_PARTICLE;
+	Level->Particles.Data()->tprev = NO_PARTICLE;
 }
 
 // Group particles by subsectors. Because particles are always
@@ -212,16 +259,13 @@ void P_InitEffects ()
 
 void P_ThinkParticles (FLevelLocals *Level)
 {
-	int i;
-	particle_t *particle, *prev;
-
-	i = Level->ActiveParticles;
-	prev = NULL;
+	int i = Level->ActiveParticles;
+	particle_t *particle = nullptr, *prev = nullptr;
 	while (i != NO_PARTICLE)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (!particle->notimefreeze && Level->isFrozen())
+		if (Level->isFrozen() && !particle->notimefreeze)
 		{
 			prev = particle;
 			continue;
@@ -237,6 +281,12 @@ void P_ThinkParticles (FLevelLocals *Level)
 				prev->tnext = i;
 			else
 				Level->ActiveParticles = i;
+
+			if (i != NO_PARTICLE)
+			{
+				particle_t *next = &Level->Particles[i];
+				next->tprev = particle->tprev;
+			}
 			particle->tnext = Level->InactiveParticles;
 			Level->InactiveParticles = (int)(particle - Level->Particles.Data());
 			continue;
@@ -283,12 +333,13 @@ enum PSFlag
 	PS_FULLBRIGHT =		1,
 	PS_NOTIMEFREEZE =	1 << 5,
 	PS_ROLL =			1 << 6,
+	PS_REPLACE =		1 << 7,
 };
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
 	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
 {
-	particle_t *particle = NewParticle(Level);
+	particle_t *particle = NewParticle(Level, !!(flags & PS_REPLACE));
 
 	if (particle)
 	{

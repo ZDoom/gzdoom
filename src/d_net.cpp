@@ -2704,7 +2704,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			for (int i = 0; i < 3; i++)
 				arg[i] = ReadLong(stream);
 			bool manual = !!ReadByte(stream);
-			primaryLevel->localEventManager->Console(player, s, arg[0], arg[1], arg[2], manual);
+			primaryLevel->localEventManager->Console(player, s, arg[0], arg[1], arg[2], manual, false);
 		}
 		break;
 

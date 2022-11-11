@@ -148,4 +148,5 @@ class EventHandler : StaticEventHandler native version("2.4")
 {
     clearscope static native StaticEventHandler Find(class<StaticEventHandler> type);
     clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
+    clearscope static native void SendConsoleEvent(int playerNum, string name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
 }

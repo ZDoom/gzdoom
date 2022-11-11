@@ -782,6 +782,10 @@ void InitThingdef()
 	auto fltd = NewStruct("FLineTraceData", nullptr);
 	fltd->Size = sizeof(FLineTraceData);
 	fltd->Align = alignof(FLineTraceData);
+
+	auto fspp = NewStruct("FSpawnParticleParams", nullptr);
+	fspp->Size = sizeof(FSpawnParticleParams);
+	fspp->Align = alignof(FSpawnParticleParams);
 }
 
 void SynthesizeFlagFields()

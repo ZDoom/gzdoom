@@ -369,6 +369,29 @@ struct LevelInfo native
 	native static String MapChecksum(String mapname);
 }
 
+struct FSpawnParticleParams
+{
+	native Color color1;
+	native TextureID texture;
+	native int style;
+	native int flags;
+	native int lifetime;
+
+	native double size;
+	native double sizestep;
+
+	native Vector3 pos;
+	native Vector3 vel;
+	native Vector3 accel;
+	
+	native double startalpha;
+	native double fadestep;
+
+	native double startroll;
+	native double rollvel;
+	native double rollacc;
+};
+
 struct LevelLocals native
 {
 	enum EUDMF
@@ -517,6 +540,8 @@ struct LevelLocals native
 
 	native String GetClusterName();
 	native String GetEpisodeName();
+
+	native void SpawnParticle(FSpawnParticleParams p);
 }
 
 // a few values of this need to be readable by the play code.
@@ -756,4 +781,3 @@ struct FRailParams
 	native int SpiralOffset;
 	native int limit;
 };	// [RH] Shoot a railgun
-

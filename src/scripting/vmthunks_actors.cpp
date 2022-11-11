@@ -2090,3 +2090,36 @@ DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LinePart);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, SectorPlane);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitType);
+
+DEFINE_FIELD_NAMED_X(FSpawnParticleParams, FSpawnParticleParams, color, color1);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, texture);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, style);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, flags);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, lifetime);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, size);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, sizestep);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, pos);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, vel);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, accel);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, startalpha);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, fadestep);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, startroll);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, rollvel);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, rollacc);
+
+static void SpawnParticle(FLevelLocals *Level, FSpawnParticleParams *params)
+{
+	P_SpawnParticle(Level,	params->pos, params->vel, params->accel,
+		params->color, params->startalpha, params->lifetime,
+		params->size, params->fadestep, params->sizestep,
+		params->flags, params->texture, ERenderStyle(params->style),
+		params->startroll, params->rollvel, params->rollacc);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnParticle, SpawnParticle)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_POINTER(p, FSpawnParticleParams);
+	SpawnParticle(self, p);
+	return 0;
+}

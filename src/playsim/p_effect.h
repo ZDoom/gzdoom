@@ -52,26 +52,20 @@ struct FLevelLocals;
 
 struct particle_t
 {
-	DVector3 Pos;
-	DVector3 Vel;
-	DVector3 Acc;
-	double	size;
-	double	sizestep;
-	subsector_t * subsector;
-	int32_t	ttl;
-	uint8_t	bright;
-	bool	notimefreeze;
-	float	fadestep;
-	float	alpha;
-	int		color;
-	uint16_t	tnext;
-	uint16_t	snext;
-	FTextureID texture;
-	ERenderStyle style;
-	double Roll;
-	double RollVel;
-	double RollAcc;
-	bool doRoll;
+    DVector3 Pos;
+    DVector3 Vel;
+    DVector3 Acc;
+    double    size, sizestep;
+    float    fadestep, alpha;
+    subsector_t* subsector;
+    int32_t    ttl;
+    int        color;
+    FTextureID texture;
+    ERenderStyle style;
+    double Roll, RollVel, RollAcc;
+    uint16_t    tnext, snext, tprev;
+    uint8_t    bright;
+    bool notimefreeze, doRoll;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;

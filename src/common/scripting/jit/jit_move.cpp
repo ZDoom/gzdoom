@@ -39,11 +39,20 @@ void JitCompiler::EmitMOVEV3()
 	cc.movsd(regF[A + 2], regF[B + 2]);
 }
 
+void JitCompiler::EmitMOVEV4()
+{
+	cc.movsd(regF[A], regF[B]);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+}
+
 static void CastI2S(FString *a, int b) { a->Format("%d", b); }
 static void CastU2S(FString *a, int b) { a->Format("%u", b); }
 static void CastF2S(FString *a, double b) { a->Format("%.5f", b); }
 static void CastV22S(FString *a, double b, double b1) { a->Format("(%.5f, %.5f)", b, b1); }
 static void CastV32S(FString *a, double b, double b1, double b2) { a->Format("(%.5f, %.5f, %.5f)", b, b1, b2); }
+static void CastV42S(FString *a, double b, double b1, double b2, double b3) { a->Format("(%.5f, %.5f, %.5f, %.5f)", b, b1, b2, b3); }
 static void CastP2S(FString *a, void *b) { if (b == nullptr) *a = "null"; else a->Format("%p", b); }
 static int CastS2I(FString *b) { return (int)b->ToLong(); }
 static double CastS2F(FString *b) { return b->ToDouble(); }
@@ -108,6 +117,14 @@ void JitCompiler::EmitCAST()
 		call->setArg(1, regF[B]);
 		call->setArg(2, regF[B + 1]);
 		call->setArg(3, regF[B + 2]);
+		break;
+	case CAST_V42S:
+		call = CreateCall<void, FString*, double, double, double>(CastV42S);
+		call->setArg(0, regS[A]);
+		call->setArg(1, regF[B]);
+		call->setArg(2, regF[B + 1]);
+		call->setArg(3, regF[B + 2]);
+		call->setArg(4, regF[B + 3]);
 		break;
 	case CAST_P2S:
 		call = CreateCall<void, FString*, void*>(CastP2S);

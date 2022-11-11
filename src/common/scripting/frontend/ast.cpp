@@ -53,6 +53,7 @@ static const char *BuiltInTypeNames[] =
 	"string",
 	"vector2",
 	"vector3",
+	"vector4",
 	"name",
 
 	"color",
@@ -684,6 +685,7 @@ static void PrintVectorInitializer(FLispString &out, ZCC_TreeNode *node)
 	PrintNodes(out, enode->X);
 	PrintNodes(out, enode->Y);
 	PrintNodes(out, enode->Z);
+	PrintNodes(out, enode->W);
 	out.Close();
 }
 

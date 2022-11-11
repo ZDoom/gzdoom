@@ -158,6 +158,7 @@ enum EZCCBuiltinType
 	ZCC_String,
 	ZCC_Vector2,
 	ZCC_Vector3,
+	ZCC_Vector4,
 	ZCC_Name,
 
 	ZCC_Color,		// special types for ZDoom.
@@ -442,7 +443,7 @@ struct ZCC_ExprTrinary : ZCC_Expression
 
 struct ZCC_VectorValue : ZCC_Expression
 {
-	ZCC_Expression *X, *Y, *Z;
+	ZCC_Expression *X, *Y, *Z, *W;
 };
 
 struct ZCC_Statement : ZCC_TreeNode

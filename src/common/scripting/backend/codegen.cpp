@@ -573,19 +573,20 @@ ExpEmit FxConstant::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxVectorValue::FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc)
+FxVectorValue::FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, FxExpression* w, const FScriptPosition &sc)
 	:FxExpression(EFX_VectorValue, sc)
 {
-	xyz[0] = x;
-	xyz[1] = y;
-	xyz[2] = z;
+	xyzw[0] = x;
+	xyzw[1] = y;
+	xyzw[2] = z;
+	xyzw[3] = w;
 	isConst = false;
 	ValueType = TypeVoid;	// we do not know yet
 }
 
 FxVectorValue::~FxVectorValue()
 {
-	for (auto &a : xyz)
+	for (auto &a : xyzw)
 	{
 		SAFE_DELETE(a);
 	}
@@ -595,7 +596,7 @@ FxExpression *FxVectorValue::Resolve(FCompileContext&ctx)
 {
 	bool fails = false;
 
-	for (auto &a : xyz)
+	for (auto &a : xyzw)
 	{
 		if (a != nullptr)
 		{
@@ -617,33 +618,50 @@ FxExpression *FxVectorValue::Resolve(FCompileContext&ctx)
 		delete this;
 		return nullptr;
 	}
-	// at this point there are three legal cases:
+	// at this point there are five legal cases:
 	// * two floats = vector2
 	// * three floats = vector3
+	// * four floats = vector4
 	// * vector2 + float = vector3
-	if (xyz[0]->ValueType == TypeVector2)
+	// * vector3 + float = vector4
+	if (xyzw[0]->ValueType == TypeVector2)
 	{
-		if (xyz[1]->ValueType != TypeFloat64 || xyz[2] != nullptr)
+		if (xyzw[1]->ValueType != TypeFloat64 || xyzw[2] != nullptr)
 		{
 			ScriptPosition.Message(MSG_ERROR, "Not a valid vector");
 			delete this;
 			return nullptr;
 		}
 		ValueType = TypeVector3;
-		if (xyz[0]->ExprType == EFX_VectorValue)
+		if (xyzw[0]->ExprType == EFX_VectorValue)
 		{
 			// If two vector initializers are nested, unnest them now.
-			auto vi = static_cast<FxVectorValue*>(xyz[0]);
-			xyz[2] = xyz[1];
-			xyz[1] = vi->xyz[1];
-			xyz[0] = vi->xyz[0];
-			vi->xyz[0] = vi->xyz[1] = nullptr; // Don't delete our own expressions.
+			auto vi = static_cast<FxVectorValue*>(xyzw[0]);
+			xyzw[2] = xyzw[1];
+			xyzw[1] = vi->xyzw[1];
+			xyzw[0] = vi->xyzw[0];
+			vi->xyzw[0] = vi->xyzw[1] = nullptr; // Don't delete our own expressions.
+			delete vi;
+		}
+		ValueType = TypeVector4;
+		if (xyzw[0]->ExprType == EFX_VectorValue)
+		{
+			// If two vector initializers are nested, unnest them now.
+			auto vi = static_cast<FxVectorValue*>(xyzw[0]);
+			xyzw[2] = xyzw[1];
+			xyzw[1] = vi->xyzw[1];
+			xyzw[0] = vi->xyzw[0];
+			vi->xyzw[0] = vi->xyzw[1] = nullptr; // Don't delete our own expressions.
 			delete vi;
 		}
 	}
-	else if (xyz[0]->ValueType == TypeFloat64 && xyz[1]->ValueType == TypeFloat64)
+	else if (xyzw[0]->ValueType == TypeFloat64 && xyzw[1]->ValueType == TypeFloat64)
 	{
-		ValueType = xyz[2] == nullptr ? TypeVector2 : TypeVector3;
+		ValueType = xyzw[2] == nullptr ? TypeVector2 : TypeVector3;
+	}
+	else if (xyzw[0]->ValueType == TypeFloat64 && xyzw[1]->ValueType == TypeFloat64 && xyzw[2]->ValueType == TypeFloat64)
+	{
+		ValueType = xyzw[3] == nullptr ? TypeVector3 : TypeVector4;
 	}
 	else
 	{
@@ -654,7 +672,7 @@ FxExpression *FxVectorValue::Resolve(FCompileContext&ctx)
 
 	// check if all elements are constant. If so this can be emitted as a constant vector.
 	isConst = true;
-	for (auto &a : xyz)
+	for (auto &a : xyzw)
 	{
 		if (a != nullptr && !a->isConstant()) isConst = false;
 	}
@@ -676,12 +694,12 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 {
 	// no const handling here. Ultimately it's too rarely used (i.e. the only fully constant vector ever allocated in ZDoom is the 0-vector in a very few places)
 	// and the negatives (excessive allocation of float constants) outweigh the positives (saved a few instructions)
-	assert(xyz[0] != nullptr);
-	assert(xyz[1] != nullptr);
+	assert(xyzw[0] != nullptr);
+	assert(xyzw[1] != nullptr);
 	if (ValueType == TypeVector2)
 	{
-		ExpEmit tempxval = xyz[0]->Emit(build);
-		ExpEmit tempyval = xyz[1]->Emit(build);
+		ExpEmit tempxval = xyzw[0]->Emit(build);
+		ExpEmit tempyval = xyzw[1]->Emit(build);
 		ExpEmit xval = EmitKonst(build, tempxval);
 		ExpEmit yval = EmitKonst(build, tempyval);
 		assert(xval.RegType == REGT_FLOAT && yval.RegType == REGT_FLOAT);
@@ -702,10 +720,10 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 			return out;
 		}
 	}
-	else if (xyz[0]->ValueType == TypeVector2)	// vec2+float
+	else if (xyzw[0]->ValueType == TypeVector2)	// vec2+float
 	{
-		ExpEmit xyval = xyz[0]->Emit(build);
-		ExpEmit tempzval = xyz[1]->Emit(build);
+		ExpEmit xyval = xyzw[0]->Emit(build);
+		ExpEmit tempzval = xyzw[1]->Emit(build);
 		ExpEmit zval = EmitKonst(build, tempzval);
 		assert(xyval.RegType == REGT_FLOAT && xyval.RegCount == 2 && zval.RegType == REGT_FLOAT);
 		if (zval.RegNum == xyval.RegNum + 2)
@@ -717,7 +735,7 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 		else
 		{
 			// The values are not in continuous registers so they need to be copied together now.
-			ExpEmit out(build, REGT_FLOAT, 3);
+			ExpEmit out(build, REGT_FLOAT, 4);
 			build->Emit(OP_MOVEV2, out.RegNum, xyval.RegNum);
 			build->Emit(OP_MOVEF, out.RegNum + 2, zval.RegNum);
 			xyval.Free(build);
@@ -725,12 +743,12 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 			return out;
 		}
 	}
-	else // 3*float
+	else if (xyzw[0]->ValueType == TypeVector3)	// vec3+float
 	{
-		assert(xyz[2] != nullptr);
-		ExpEmit tempxval = xyz[0]->Emit(build);
-		ExpEmit tempyval = xyz[1]->Emit(build);
-		ExpEmit tempzval = xyz[2]->Emit(build);
+		assert(xyzw[2] != nullptr);
+		ExpEmit tempxval = xyzw[0]->Emit(build);
+		ExpEmit tempyval = xyzw[1]->Emit(build);
+		ExpEmit tempzval = xyzw[2]->Emit(build);
 		ExpEmit xval = EmitKonst(build, tempxval);
 		ExpEmit yval = EmitKonst(build, tempyval);
 		ExpEmit zval = EmitKonst(build, tempzval);
@@ -744,7 +762,52 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 		else
 		{
 			// The values are not in continuous registers so they need to be copied together now.
-			ExpEmit out(build, REGT_FLOAT, 3);
+			ExpEmit out(build, REGT_FLOAT, 4);
+			//Try to optimize a bit...
+			if (yval.RegNum == xval.RegNum + 1)
+			{
+				build->Emit(OP_MOVEV2, out.RegNum, xval.RegNum);
+				build->Emit(OP_MOVEF, out.RegNum + 2, zval.RegNum);
+			}
+			else if (zval.RegNum == yval.RegNum + 1)
+			{
+				build->Emit(OP_MOVEF, out.RegNum, xval.RegNum);
+				build->Emit(OP_MOVEV2, out.RegNum+1, yval.RegNum);
+			}
+			else
+			{
+				build->Emit(OP_MOVEF, out.RegNum, xval.RegNum);
+				build->Emit(OP_MOVEF, out.RegNum + 1, yval.RegNum);
+				build->Emit(OP_MOVEF, out.RegNum + 2, zval.RegNum);
+			}
+			xval.Free(build);
+			yval.Free(build);
+			zval.Free(build);
+			return out;
+		}
+	}
+	else
+	{
+		assert(xyzw[3] != nullptr);
+		ExpEmit tempxval = xyzw[0]->Emit(build);
+		ExpEmit tempyval = xyzw[1]->Emit(build);
+		ExpEmit tempzval = xyzw[2]->Emit(build);
+		ExpEmit tempwval = xyzw[3]->Emit(build);
+		ExpEmit xval = EmitKonst(build, tempxval);
+		ExpEmit yval = EmitKonst(build, tempyval);
+		ExpEmit zval = EmitKonst(build, tempzval);
+		ExpEmit wval = EmitKonst(build, tempwval);
+		assert(xval.RegType == REGT_FLOAT && yval.RegType == REGT_FLOAT && zval.RegType == REGT_FLOAT && wval.RegType == REGT_FLOAT);
+		if (yval.RegNum == xval.RegNum + 1 && zval.RegNum == xval.RegNum + 2)
+		{
+			// The results are already in three continuous registers so just return them as-is.
+			xval.RegCount += 3;
+			return xval;
+		}
+		else
+		{
+			// The values are not in continuous registers so they need to be copied together now.
+			ExpEmit out(build, REGT_FLOAT, 4);
 			//Try to optimize a bit...
 			if (yval.RegNum == xval.RegNum + 1)
 			{
@@ -1688,7 +1751,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 		delete this;
 		return x;
 	}
-	else if ((basex->IsVector2() && IsVector2()) || (basex->IsVector3() && IsVector3()))
+	else if ((basex->IsVector2() && IsVector2()) || (basex->IsVector3() && IsVector3()) || (basex->IsVector4() && IsVector4()))
 	{
 		auto x = basex;
 		basex = nullptr;
@@ -1885,6 +1948,10 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 
 		case 3:
 			build->Emit(OP_NEGV3, to.RegNum, from.RegNum);
+			break;
+
+		case 4:
+			build->Emit(OP_NEGV4, to.RegNum, from.RegNum);
 			break;
 
 		}
@@ -2799,7 +2866,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 	else if (left->IsVector() && right->IsVector())
 	{
 		// a vector2 can be added to or subtracted from a vector 3 but it needs to be the right operand.
-		if (((left->IsVector3() || left->IsVector2()) && right->IsVector2()) || (left->IsVector3() && right->IsVector3()))
+		if (((left->IsVector3() || left->IsVector2()) && right->IsVector2()) || (left->IsVector3() && right->IsVector3()) || (left->IsVector4() && right->IsVector4()))
 		{
 			ValueType = left->ValueType;
 		}
@@ -2893,7 +2960,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
 
-			build->Emit(right->IsVector2() ? OP_ADDV2_RR : OP_ADDV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			build->Emit(right->IsVector4() ? OP_ADDV4_RR : right->IsVector3() ? OP_ADDV3_RR : OP_ADDV2_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			if (left->IsVector3() && right->IsVector2() && to.RegNum != op1.RegNum)
 			{
 				// must move the z-coordinate
@@ -2926,7 +2993,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		if (IsVector())
 		{
 			assert(op1.RegType == REGT_FLOAT && op2.RegType == REGT_FLOAT);
-			build->Emit(right->IsVector2() ? OP_SUBV2_RR : OP_SUBV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
+			build->Emit(right->IsVector4() ? OP_SUBV4_RR : right->IsVector3() ? OP_SUBV3_RR : OP_SUBV2_RR, to.RegNum, op1.RegNum, op2.RegNum);
 			return to;
 		}
 		else if (ValueType->GetRegType() == REGT_FLOAT)
@@ -3598,7 +3665,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 	}
 
 	// identical types are always comparable, if they can be placed in a register, so we can save most checks if this is the case.
-	if (left->ValueType != right->ValueType && !(left->IsVector2() && right->IsVector2()) && !(left->IsVector3() && right->IsVector3()))
+	if (left->ValueType != right->ValueType && !(left->IsVector2() && right->IsVector2()) && !(left->IsVector3() && right->IsVector3()) && !(left->IsVector4() && right->IsVector4()))
 	{
 		FxExpression *x;
 		if (left->IsNumeric() && right->ValueType == TypeString && (x = StringConstToChar(right)))
@@ -3840,7 +3907,7 @@ ExpEmit FxCompareEq::EmitCommon(VMFunctionBuilder *build, bool forcompare, bool 
 
 		ExpEmit to(build, REGT_INT);
 
-		static int flops[] = { OP_EQF_R, OP_EQV2_R, OP_EQV3_R };
+		static int flops[] = { OP_EQF_R, OP_EQV2_R, OP_EQV3_R, OP_EQV4_R };
 		instr = op1.RegType == REGT_INT ? OP_EQ_R :
 			op1.RegType == REGT_FLOAT ? flops[op1.RegCount - 1] :
 			OP_EQA_R;
@@ -4256,7 +4323,7 @@ ExpEmit FxConcat::Emit(VMFunctionBuilder *build)
 			build->Emit(op1.RegType == REGT_INT ? OP_LK : op1.RegType == REGT_FLOAT ? OP_LKF : OP_LKP, nonconst.RegNum, op1.RegNum);
 			op1 = nonconst;
 		}
-		if (op1.RegType == REGT_FLOAT) cast = op1.RegCount == 1 ? CAST_F2S : op1.RegCount == 2 ? CAST_V22S : CAST_V32S;
+		if (op1.RegType == REGT_FLOAT) cast = op1.RegCount == 1 ? CAST_F2S : op1.RegCount == 2 ? CAST_V22S : op1.RegCount == 3 ? CAST_V32S : CAST_V42S;
 		else if (left->ValueType == TypeUInt32) cast = CAST_U2S;
 		else if (left->ValueType == TypeName) cast = CAST_N2S;
 		else if (left->ValueType == TypeSound) cast = CAST_So2S;
@@ -4289,7 +4356,7 @@ ExpEmit FxConcat::Emit(VMFunctionBuilder *build)
 			build->Emit(op2.RegType == REGT_INT ? OP_LK : op2.RegType == REGT_FLOAT ? OP_LKF : OP_LKP, nonconst.RegNum, op2.RegNum);
 			op2 = nonconst;
 		}
-		if (op2.RegType == REGT_FLOAT) cast = op2.RegCount == 1 ? CAST_F2S : op2.RegCount == 2 ? CAST_V22S : CAST_V32S;
+		if (op1.RegType == REGT_FLOAT) cast = op1.RegCount == 1 ? CAST_F2S : op1.RegCount == 2 ? CAST_V22S : op1.RegCount == 3 ? CAST_V32S : CAST_V42S;
 		else if (right->ValueType == TypeUInt32) cast = CAST_U2S;
 		else if (right->ValueType == TypeName) cast = CAST_N2S;
 		else if (right->ValueType == TypeSound) cast = CAST_So2S;
@@ -4552,7 +4619,7 @@ ExpEmit FxDotCross::Emit(VMFunctionBuilder *build)
 	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
-	int op = Operator == TK_Cross ? OP_CROSSV_RR : left->ValueType == TypeVector3 ? OP_DOTV3_RR : OP_DOTV2_RR;
+	int op = Operator == TK_Cross ? OP_CROSSV_RR : left->ValueType == TypeVector4 ? OP_DOTV4_RR : left->ValueType == TypeVector3 ? OP_DOTV3_RR : OP_DOTV2_RR;
 	build->Emit(op, to.RegNum, op1.RegNum, op2.RegNum);
 	op1.Free(build);
 	op2.Free(build);
@@ -8740,12 +8807,12 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 							else 
 							{
 								// Vectors need special treatment because they are not normal constants
-								FxConstant *cs[3] = { nullptr };
+								FxConstant *cs[4] = { nullptr };
 								for (int l = 0; l < ntype->GetRegCount(); l++)
 								{
 									cs[l] = new FxConstant(TypeFloat64, defaults[l + i + k + skipdefs + implicit], ScriptPosition);
 								}
-								FxExpression *x = new FxVectorValue(cs[0], cs[1], cs[2], ScriptPosition);
+								FxExpression *x = new FxVectorValue(cs[0], cs[1], cs[2], cs[3], ScriptPosition);
 								ArgList.Insert(i + k, x);
 								skipdefs += ntype->GetRegCount() - 1;
 							}
@@ -9157,13 +9224,13 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 	ExpEmit op = Self->Emit(build);
 	if (Function == NAME_Length)
 	{
-		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_LENV2 : OP_LENV3, to.RegNum, op.RegNum);
+		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_LENV2 : Self->ValueType == TypeFVector3 ? OP_LENV3 : OP_LENV4, to.RegNum, op.RegNum);
 	}
 	else
 	{
 		ExpEmit len(build, REGT_FLOAT);
-		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_LENV2 : OP_LENV3, len.RegNum, op.RegNum);
-		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_DIVVF2_RR : OP_DIVVF3_RR, to.RegNum, op.RegNum, len.RegNum);
+		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_LENV2 : Self->ValueType == TypeFVector3 ? OP_LENV3 : OP_LENV4, to.RegNum, op.RegNum);
+		build->Emit(Self->ValueType == TypeVector2 || Self->ValueType == TypeFVector2 ? OP_DIVVF2_RR : Self->ValueType == TypeFVector3 ? OP_DIVVF3_RR : OP_DIVVF4_RR, to.RegNum, op.RegNum, len.RegNum);
 		len.Free(build);
 	}
 	op.Free(build);

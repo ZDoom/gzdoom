@@ -1790,6 +1790,10 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			retval = TypeVector3;
 			break;
 
+		case ZCC_Vector4:
+			retval = TypeVector4;
+			break;
+
 		case ZCC_State:
 			retval = TypeState;
 			break;
@@ -2150,7 +2154,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
-				if (type->isContainer() && type != TypeVector2 && type != TypeVector3 && type != TypeFVector2 && type != TypeFVector3)
+				if (type->isContainer() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4)
 				{
 					// structs and classes only get passed by pointer.
 					type = NewPointer(type);
@@ -2167,6 +2171,10 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				else if (type == TypeFVector3)
 				{
 					type = TypeVector3;
+				}
+				else if (type == TypeFVector4)
+				{
+					type = TypeVector4;
 				}
 				// TBD: disallow certain types? For now, let everything pass that isn't an array.
 				rets.Push(type);
@@ -2340,7 +2348,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				int elementcount = 1;
-				TypedVMValue vmval[3];	// default is REGT_NIL which means 'no default value' here.
+				TypedVMValue vmval[4];	// default is REGT_NIL which means 'no default value' here.
 				if (p->Type != nullptr)
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
@@ -2362,8 +2370,12 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						{
 							elementcount = 3;
 						}
+						else if (type == TypeVector4 || type == TypeFVector4)
+						{
+							elementcount = 4;
+						}
 					}
-					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3 && type != TypeFVector2 && type != TypeFVector3)
+					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4)
 					{
 						// If it's TypeError, then an error was already given
 						if (type != TypeError)
@@ -2407,15 +2419,23 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							if ((type == TypeVector2 || type == TypeFVector2) && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(2))
 							{
 								auto vx = static_cast<FxVectorValue *>(x);
-								vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
-								vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
+								vmval[0] = static_cast<FxConstant *>(vx->xyzw[0])->GetValue().GetFloat();
+								vmval[1] = static_cast<FxConstant *>(vx->xyzw[1])->GetValue().GetFloat();
 							}
 							else if ((type == TypeVector3 || type == TypeFVector3) && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue *>(x)->isConstVector(3))
 							{
 								auto vx = static_cast<FxVectorValue *>(x);
-								vmval[0] = static_cast<FxConstant *>(vx->xyz[0])->GetValue().GetFloat();
-								vmval[1] = static_cast<FxConstant *>(vx->xyz[1])->GetValue().GetFloat();
-								vmval[2] = static_cast<FxConstant *>(vx->xyz[2])->GetValue().GetFloat();
+								vmval[0] = static_cast<FxConstant *>(vx->xyzw[0])->GetValue().GetFloat();
+								vmval[1] = static_cast<FxConstant *>(vx->xyzw[1])->GetValue().GetFloat();
+								vmval[2] = static_cast<FxConstant *>(vx->xyzw[2])->GetValue().GetFloat();
+							}
+							else if ((type == TypeVector4 || type == TypeFVector4) && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue*>(x)->isConstVector(4))
+							{
+								auto vx = static_cast<FxVectorValue*>(x);
+								vmval[0] = static_cast<FxConstant*>(vx->xyzw[0])->GetValue().GetFloat();
+								vmval[1] = static_cast<FxConstant*>(vx->xyzw[1])->GetValue().GetFloat();
+								vmval[2] = static_cast<FxConstant*>(vx->xyzw[2])->GetValue().GetFloat();
+								vmval[3] = static_cast<FxConstant*>(vx->xyzw[3])->GetValue().GetFloat();
 							}
 							else if (!x->isConstant())
 							{
@@ -3038,7 +3058,8 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		auto xx = ConvertNode(vecini->X);
 		auto yy = ConvertNode(vecini->Y);
 		auto zz = ConvertNode(vecini->Z);
-		return new FxVectorValue(xx, yy, zz, *ast);
+		auto ww = ConvertNode(vecini->W);
+		return new FxVectorValue(xx, yy, zz, ww, *ast);
 	}
 
 	case AST_LocalVarStmt:

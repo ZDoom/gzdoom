@@ -287,8 +287,8 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		{
 			auto v = (double*)ptr;
 			reg.f[a] = v[0];
-			reg.f[a + 1] = v[1];
-			reg.f[a + 2] = v[2];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
 		}
 		NEXTOP;
 	OP(LV3_R) :
@@ -297,8 +297,30 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		{
 			auto v = (double*)ptr;
 			reg.f[a] = v[0];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
+		}
+		NEXTOP;
+	OP(LV4) :
+		ASSERTF(a + 3); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB, KC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
 			reg.f[a + 1] = v[1];
 			reg.f[a + 2] = v[2];
+			reg.f[a + 3] = v[3];
+		}
+		NEXTOP;
+	OP(LV4_R) :
+		ASSERTF(a + 3); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB, RC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a + 1] = v[1];
+			reg.f[a + 2] = v[2];
+			reg.f[a + 3] = v[3];
 		}
 		NEXTOP;
 	OP(LFV2):
@@ -337,6 +359,28 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			reg.f[a] = v[0];
 			reg.f[a+1] = v[1];
 			reg.f[a+2] = v[2];
+		}
+		NEXTOP;
+	OP(LFV4) :
+			ASSERTF(a + 3); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB, KC, X_READ_NIL);
+		{
+			auto v = (float*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
+			reg.f[a+3] = v[3];
+		}
+		NEXTOP;
+	OP(LFV4_R) :
+			ASSERTF(a + 3); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB, RC, X_READ_NIL);
+		{
+			auto v = (float*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
+			reg.f[a+3] = v[3];
 		}
 		NEXTOP;
 	OP(LBIT):
@@ -553,6 +597,16 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		reg.f[a] = reg.f[b];
 		reg.f[a + 1] = reg.f[b + 1];
 		reg.f[a + 2] = reg.f[b + 2];
+		NEXTOP;
+	}
+	OP(MOVEV4) :
+	{
+		ASSERTF(a); ASSERTF(B);
+		b = B;
+		reg.f[a] = reg.f[b];
+		reg.f[a + 1] = reg.f[b + 1];
+		reg.f[a + 2] = reg.f[b + 2];
+		reg.f[a + 3] = reg.f[b + 3];
 		NEXTOP;
 	}
 	OP(DYNCAST_R) :
@@ -1689,6 +1743,97 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		ASSERTF(B+2); ASSERTKF(C+2);
 		fcp = &konstf[C];
 		goto Do_EQV3;
+
+	OP(NEGV4):
+		ASSERTF(a+3); ASSERTF(B+3);
+		reg.f[a] = -reg.f[B];
+		reg.f[a+1] = -reg.f[B+1];
+		reg.f[a+2] = -reg.f[B+2];
+		reg.f[a+3] = -reg.f[B+3];
+		NEXTOP;
+
+	OP(ADDV4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C+3);
+		fcp = &reg.f[C];
+		fbp = &reg.f[B];
+		reg.f[a] = fbp[0] + fcp[0];
+		reg.f[a+1] = fbp[1] + fcp[1];
+		reg.f[a+2] = fbp[2] + fcp[2];
+		reg.f[a+3] = fbp[3] + fcp[3];
+		NEXTOP;
+
+	OP(SUBV4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C+3);
+		fbp = &reg.f[B];
+		fcp = &reg.f[C];
+		reg.f[a] = fbp[0] - fcp[0];
+		reg.f[a+1] = fbp[1] - fcp[1];
+		reg.f[a+2] = fbp[2] - fcp[2];
+		reg.f[a+3] = fbp[3] - fcp[3];
+		NEXTOP;
+
+	OP(DOTV4_RR):
+		ASSERTF(a); ASSERTF(B+3); ASSERTF(C+3);
+		reg.f[a] = reg.f[B] * reg.f[C] + reg.f[B+1] * reg.f[C+1] + reg.f[B+2] * reg.f[C+2] + reg.f[B+3] * reg.f[C+3];
+		NEXTOP;
+
+	OP(MULVF4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C);
+		fc = reg.f[C];
+		fbp = &reg.f[B];
+	Do_MULV4:
+		reg.f[a] = fbp[0] * fc;
+		reg.f[a+1] = fbp[1] * fc;
+		reg.f[a+2] = fbp[2] * fc;
+		reg.f[a+3] = fbp[3] * fc;
+		NEXTOP;
+	OP(MULVF4_RK):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTKF(C);
+		fc = konstf[C];
+		fbp = &reg.f[B];
+		goto Do_MULV4;
+
+	OP(DIVVF4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C);
+		fc = reg.f[C];
+		fbp = &reg.f[B];
+	Do_DIVV4:
+		reg.f[a] = fbp[0] / fc;
+		reg.f[a+1] = fbp[1] / fc;
+		reg.f[a+2] = fbp[2] / fc;
+		reg.f[a+3] = fbp[3] / fc;
+		NEXTOP;
+	OP(DIVVF4_RK):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTKF(C);
+		fc = konstf[C];
+		fbp = &reg.f[B];
+		goto Do_DIVV4;
+
+	OP(LENV4):
+		ASSERTF(a); ASSERTF(B+3);
+		reg.f[a] = g_sqrt(reg.f[B] * reg.f[B] + reg.f[B+1] * reg.f[B+1] + reg.f[B+2] * reg.f[B+2]+ reg.f[B+3] * reg.f[B+3]);
+		NEXTOP;
+
+	OP(EQV4_R):
+		ASSERTF(B+3); ASSERTF(C+3);
+		fcp = &reg.f[C];
+	Do_EQV4:
+		if (a & CMP_APPROX)
+		{
+			CMPJMP(fabs(reg.f[B  ] - fcp[0]) < VM_EPSILON &&
+				   fabs(reg.f[B+1] - fcp[1]) < VM_EPSILON &&
+				   fabs(reg.f[B+2] - fcp[2]) < VM_EPSILON &&
+				   fabs(reg.f[B+3] - fcp[3]) < VM_EPSILON);
+		}
+		else
+		{
+			CMPJMP(reg.f[B] == fcp[0] && reg.f[B+1] == fcp[1] && reg.f[B+2] == fcp[2] && reg.f[B+3] == fcp[3]);
+		}
+		NEXTOP;
+	OP(EQV4_K):
+		ASSERTF(B+3); ASSERTKF(C+3);
+		fcp = &konstf[C];
+		goto Do_EQV4;
 
 	OP(ADDA_RR):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);

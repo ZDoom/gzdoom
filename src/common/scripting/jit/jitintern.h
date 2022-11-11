@@ -241,6 +241,7 @@ private:
 	asmjit::X86Xmm CheckRegF(int r0, int r1);
 	asmjit::X86Xmm CheckRegF(int r0, int r1, int r2);
 	asmjit::X86Xmm CheckRegF(int r0, int r1, int r2, int r3);
+	asmjit::X86Xmm CheckRegF(int r0, int r1, int r2, int r3, int r4);
 	asmjit::X86Gp CheckRegS(int r0, int r1);
 	asmjit::X86Gp CheckRegA(int r0, int r1);
 

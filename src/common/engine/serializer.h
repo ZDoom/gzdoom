@@ -326,6 +326,11 @@ inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector2 &p, DV
 	return arc.Array<double>(key, &p[0], def? &(*def)[0] : nullptr, 2, true);
 }
 
+inline FSerializer& Serialize(FSerializer& arc, const char* key, FVector4& p, FVector4* def)
+{
+	return arc.Array<float>(key, &p[0], def ? &(*def)[0] : nullptr, 4, true);
+}
+
 inline FSerializer& Serialize(FSerializer& arc, const char* key, FVector3& p, FVector3* def)
 {
 	return arc.Array<float>(key, &p[0], def ? &(*def)[0] : nullptr, 3, true);

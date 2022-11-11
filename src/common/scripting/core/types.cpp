@@ -61,8 +61,10 @@ PPointer *TypeFont;
 PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
+PStruct* TypeVector4;
 PStruct* TypeFVector2;
 PStruct* TypeFVector3;
+PStruct* TypeFVector4;
 PStruct *TypeColorStruct;
 PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
@@ -350,6 +352,21 @@ void PType::StaticInit()
 	TypeVector3->RegCount = 3;
 	TypeVector3->isOrdered = true;
 
+	TypeVector4 = new PStruct(NAME_Vector4, nullptr);
+	TypeVector4->AddField(NAME_X, TypeFloat64);
+	TypeVector4->AddField(NAME_Y, TypeFloat64);
+	TypeVector4->AddField(NAME_Z, TypeFloat64);
+	TypeVector4->AddField(NAME_W, TypeFloat64);
+	// allow accessing xyz as a vector3. This is not supposed to be serialized so it's marked transient
+	TypeVector4->Symbols.AddSymbol(Create<PField>(NAME_XYZ, TypeVector3, VARF_Transient, 0));
+	TypeTable.AddType(TypeVector4, NAME_Struct);
+	TypeVector4->loadOp = OP_LV4;
+	TypeVector4->storeOp = OP_SV4;
+	TypeVector4->moveOp = OP_MOVEV4;
+	TypeVector4->RegType = REGT_FLOAT;
+	TypeVector4->RegCount = 3;
+	TypeVector4->isOrdered = true;
+
 
 	TypeFVector2 = new PStruct(NAME_FVector2, nullptr);
 	TypeFVector2->AddField(NAME_X, TypeFloat32);
@@ -376,6 +393,21 @@ void PType::StaticInit()
 	TypeFVector3->RegCount = 3;
 	TypeFVector3->isOrdered = true;
 
+	TypeFVector4 = new PStruct(NAME_FVector4, nullptr);
+	TypeFVector4->AddField(NAME_X, TypeFloat32);
+	TypeFVector4->AddField(NAME_Y, TypeFloat32);
+	TypeFVector4->AddField(NAME_Z, TypeFloat32);
+	TypeFVector4->AddField(NAME_W, TypeFloat32);
+	// allow accessing xy as a vector2
+	TypeFVector4->Symbols.AddSymbol(Create<PField>(NAME_XYZ, TypeFVector3, VARF_Transient, 0));
+	TypeTable.AddType(TypeFVector4, NAME_Struct);
+	TypeFVector4->loadOp = OP_LFV4;
+	TypeFVector4->storeOp = OP_SFV4;
+	TypeFVector4->moveOp = OP_MOVEV4;
+	TypeFVector4->RegType = REGT_FLOAT;
+	TypeFVector4->RegCount = 4;
+	TypeFVector4->isOrdered = true;
+
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_sByte, TypeSInt8));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Byte, TypeUInt8));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Short, TypeSInt16));
@@ -394,8 +426,10 @@ void PType::StaticInit()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_State, TypeState));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector2, TypeVector2));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector3, TypeVector3));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector4, TypeVector4));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector2, TypeFVector2));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector3, TypeFVector3));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector4, TypeFVector4));
 }
 
 

@@ -686,6 +686,21 @@ DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
 	ACTION_RETURN_BOOL(currentVMLevel->localEventManager->SendNetworkEvent(name, arg1, arg2, arg3, false));
 }
 
+DEFINE_ACTION_FUNCTION(DEventHandler, SendConsoleEvent)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(playerNum);
+	PARAM_STRING(name);
+	PARAM_INT(arg1);
+	PARAM_INT(arg2);
+	PARAM_INT(arg3);
+
+	if (playerNum == consoleplayer)
+		primaryLevel->localEventManager->Console(-1, name, arg1, arg2, arg3, false);
+
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DEventHandler, Find)
 {
 	PARAM_PROLOGUE;

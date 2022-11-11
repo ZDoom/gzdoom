@@ -227,6 +227,7 @@ class Actor : Thinker native
 	native sound BounceSound;
 	native sound WallBounceSound;
 	native sound CrushPainSound;
+	native sound PushSound;
 	native double MaxDropoffHeight;
 	native double MaxStepHeight;
 	native double MaxSlopeSteepness;
@@ -323,6 +324,7 @@ class Actor : Thinker native
 	property DeathSound: DeathSound;
 	property ActiveSound: ActiveSound;
 	property CrushPainSound: CrushPainSound;
+	property PushSound: PushSound;
 	property Alpha: Alpha;
 	property MaxTargetRange: MaxTargetRange;
 	property MeleeThreshold: MeleeThreshold;
@@ -468,6 +470,7 @@ class Actor : Thinker native
 		MarkSound(CrushPainSound);
 		MarkSound(HowlSound);
 		MarkSound(MeleeSound);
+		MarkSound(PushSound);
 	}
 
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)
@@ -805,6 +808,7 @@ class Actor : Thinker native
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
 	native void DoMissileDamage(Actor target);
+	native void PlayPushSound();
 
 	//==========================================================================
 	//

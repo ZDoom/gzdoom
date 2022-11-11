@@ -280,6 +280,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("bouncesound", BounceSound)
 		A("wallbouncesound", WallBounceSound)
 		A("crushpainsound", CrushPainSound)
+		A("pushsound", PushSound)
 		A("speed", Speed)
 		A("floatspeed", FloatSpeed)
 		A("mass", Mass)
@@ -3310,6 +3311,21 @@ DEFINE_ACTION_FUNCTION(AActor, PlayActiveSound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	self->PlayActiveSound();
+	return 0;
+}
+
+void AActor::PlayPushSound()
+{
+	if (PushSound && !S_IsActorPlayingSomething(this, CHAN_VOICE, -1))
+	{
+		S_Sound(this, CHAN_VOICE, 0, PushSound, 1, ATTN_IDLE);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, PlayPushSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->PlayPushSound();
 	return 0;
 }
 

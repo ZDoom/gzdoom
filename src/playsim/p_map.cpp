@@ -1686,6 +1686,17 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			thing->Vel += tm.thing->Vel.XY() * thing->pushfactor;
 			thing->lastpush = tm.PushTime;
+
+			FState* push = thing->FindState(NAME_Slide);
+			if (push != NULL)
+			{
+				thing->SetState(push);
+				thing->PlayPushSound();
+			}
+			else
+			{
+				thing->SetIdle();
+			}
 		}
 	}
 	solid = (thing->flags & MF_SOLID) &&

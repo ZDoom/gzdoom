@@ -227,7 +227,6 @@ class Actor : Thinker native
 	native sound BounceSound;
 	native sound WallBounceSound;
 	native sound CrushPainSound;
-	native sound PushSound;
 	native double MaxDropoffHeight;
 	native double MaxStepHeight;
 	native double MaxSlopeSteepness;
@@ -279,6 +278,7 @@ class Actor : Thinker native
 	meta double MissileHeight;
 	meta Name MissileName;
 	meta double FastSpeed;		// speed in fast mode
+	meta Sound PushSound;		// Sound being played when pushed by something
 
 	// todo: implement access to native meta properties.
 	// native meta int infighting_group;

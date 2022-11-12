@@ -4672,7 +4672,7 @@ static FSoundID GetActorSound(AActor *actor, int soundtype)
 	case SOUND_WallBounce:	return actor->WallBounceSound;
 	case SOUND_CrushPain:	return actor->CrushPainSound;
 	case SOUND_Howl:		return actor->SoundVar(NAME_HowlSound);
-	case SOUND_Push:		return actor->PushSound;
+	case SOUND_Push:		return actor->SoundVar(NAME_PushSound);
 	default:				return 0;
 	}
 }

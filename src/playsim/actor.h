@@ -1240,7 +1240,6 @@ public:
 	FSoundIDNoInit BounceSound;
 	FSoundIDNoInit WallBounceSound;
 	FSoundIDNoInit CrushPainSound;
-	FSoundIDNoInit PushSound;		// [UZ] Sound to play when an actor is being pushed around.
 
 	double MaxDropOffHeight;
 	double MaxStepHeight;

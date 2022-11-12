@@ -7,6 +7,8 @@ extern PString *TypeString;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 extern PStruct* TypeVector4;
+extern PStruct* TypeQuaternion;
+extern PStruct* TypeFQuaternion;
 
 static void OutputJitLog(const asmjit::StringLogger &logger);
 
@@ -316,7 +318,7 @@ void JitCompiler::SetupSimpleFrame()
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 		}
-		else if (type == TypeVector4 || type == TypeFVector4)
+		else if (type == TypeVector4 || type == TypeFVector4 || type == TypeQuaternion || type == TypeFQuaternion)
 		{
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));

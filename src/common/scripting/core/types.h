@@ -619,6 +619,8 @@ extern PStruct* TypeVector4;
 extern PStruct* TypeFVector2;
 extern PStruct* TypeFVector3;
 extern PStruct* TypeFVector4;
+extern PStruct* TypeQuaternion;
+extern PStruct* TypeFQuaternion;
 extern PStruct *TypeColorStruct;
 extern PStruct *TypeStringStruct;
 extern PStatePointer *TypeState;

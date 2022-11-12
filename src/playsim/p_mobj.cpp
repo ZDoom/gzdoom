@@ -280,7 +280,6 @@ void AActor::Serialize(FSerializer &arc)
 		A("bouncesound", BounceSound)
 		A("wallbouncesound", WallBounceSound)
 		A("crushpainsound", CrushPainSound)
-		A("pushsound", PushSound)
 		A("speed", Speed)
 		A("floatspeed", FloatSpeed)
 		A("mass", Mass)
@@ -3316,9 +3315,10 @@ DEFINE_ACTION_FUNCTION(AActor, PlayActiveSound)
 
 void AActor::PlayPushSound()
 {
-	if (PushSound && !S_IsActorPlayingSomething(this, CHAN_VOICE, -1))
+	FSoundID push = SoundVar(NAME_PushSound);
+	if (!S_IsActorPlayingSomething(this, CHAN_BODY, push))
 	{
-		S_Sound(this, CHAN_VOICE, 0, PushSound, 1, ATTN_IDLE);
+		S_Sound(this, CHAN_BODY, 0, push, 1, ATTN_NORM);
 	}
 }
 

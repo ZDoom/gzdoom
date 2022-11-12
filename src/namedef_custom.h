@@ -526,6 +526,7 @@ xx(ExplosionDamage)
 xx(ExplosionRadius)
 xx(DontHurtShooter)
 xx(Noattack)
+xx(PushSound)
 
 //xx(X)
 //xx(Y)

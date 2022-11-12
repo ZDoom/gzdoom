@@ -62,9 +62,11 @@ PStateLabel *TypeStateLabel;
 PStruct *TypeVector2;
 PStruct *TypeVector3;
 PStruct* TypeVector4;
+PStruct* TypeQuaternion;
 PStruct* TypeFVector2;
 PStruct* TypeFVector3;
 PStruct* TypeFVector4;
+PStruct* TypeFQuaternion;
 PStruct *TypeColorStruct;
 PStruct *TypeStringStruct;
 PPointer *TypeNullPtr;
@@ -410,6 +412,40 @@ void PType::StaticInit()
 	TypeFVector4->RegCount = 4;
 	TypeFVector4->isOrdered = true;
 
+
+	TypeQuaternion = new PStruct(NAME_Quat, nullptr);
+	TypeQuaternion->AddField(NAME_X, TypeFloat64);
+	TypeQuaternion->AddField(NAME_Y, TypeFloat64);
+	TypeQuaternion->AddField(NAME_Z, TypeFloat64);
+	TypeQuaternion->AddField(NAME_W, TypeFloat64);
+	// allow vector access.
+	TypeQuaternion->Symbols.AddSymbol(Create<PField>(NAME_XYZ, TypeVector3, VARF_Transient, 0));
+	TypeQuaternion->Symbols.AddSymbol(Create<PField>(NAME_XY, TypeVector2, VARF_Transient, 0));
+	TypeTable.AddType(TypeQuaternion, NAME_Struct);
+	TypeQuaternion->loadOp = OP_LV4;
+	TypeQuaternion->storeOp = OP_SV4;
+	TypeQuaternion->moveOp = OP_MOVEV4;
+	TypeQuaternion->RegType = REGT_FLOAT;
+	TypeQuaternion->RegCount = 4;
+	TypeQuaternion->isOrdered = true;
+
+	TypeFQuaternion = new PStruct(NAME_FQuat, nullptr);
+	TypeFQuaternion->AddField(NAME_X, TypeFloat32);
+	TypeFQuaternion->AddField(NAME_Y, TypeFloat32);
+	TypeFQuaternion->AddField(NAME_Z, TypeFloat32);
+	TypeFQuaternion->AddField(NAME_W, TypeFloat32);
+	// allow accessing xyz as a vector3
+	TypeFQuaternion->Symbols.AddSymbol(Create<PField>(NAME_XYZ, TypeFVector3, VARF_Transient, 0));
+	TypeFQuaternion->Symbols.AddSymbol(Create<PField>(NAME_XY, TypeFVector2, VARF_Transient, 0));
+	TypeTable.AddType(TypeFQuaternion, NAME_Struct);
+	TypeFQuaternion->loadOp = OP_LFV4;
+	TypeFQuaternion->storeOp = OP_SFV4;
+	TypeFQuaternion->moveOp = OP_MOVEV4;
+	TypeFQuaternion->RegType = REGT_FLOAT;
+	TypeFQuaternion->RegCount = 4;
+	TypeFQuaternion->isOrdered = true;
+
+
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_sByte, TypeSInt8));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Byte, TypeUInt8));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Short, TypeSInt16));
@@ -429,9 +465,11 @@ void PType::StaticInit()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector2, TypeVector2));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector3, TypeVector3));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector4, TypeVector4));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Quat, TypeQuaternion));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector2, TypeFVector2));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector3, TypeFVector3));
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FVector4, TypeFVector4));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FQuat, TypeFQuaternion));
 }
 
 

@@ -2154,7 +2154,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			do
 			{
 				auto type = DetermineType(c->Type(), f, f->Name, t, false, false);
-				if (type->isContainer() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4)
+				if (type->isContainer() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeQuaternion && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4 && type != TypeFQuaternion)
 				{
 					// structs and classes only get passed by pointer.
 					type = NewPointer(type);
@@ -2175,6 +2175,10 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				else if (type == TypeFVector4)
 				{
 					type = TypeVector4;
+				}
+				else if (type == TypeFQuaternion)
+				{
+					type = TypeQuaternion;
 				}
 				// TBD: disallow certain types? For now, let everything pass that isn't an array.
 				rets.Push(type);
@@ -2353,7 +2357,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 					int flags = 0;
-					if ((type->isStruct() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4) || type->isDynArray())
+					if ((type->isStruct() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeQuaternion && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4 && type != TypeFQuaternion) || type->isDynArray())
 					{
 						// Structs are being passed by pointer, but unless marked 'out' that pointer must be readonly.
 						type = NewPointer(type /*, !(p->Flags & ZCC_Out)*/);
@@ -2370,12 +2374,12 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						{
 							elementcount = 3;
 						}
-						else if (type == TypeVector4 || type == TypeFVector4)
+						else if (type == TypeVector4 || type == TypeFVector4 || type == TypeQuaternion || type == TypeFQuaternion)
 						{
 							elementcount = 4;
 						}
 					}
-					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4)
+					if (type->GetRegType() == REGT_NIL && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeQuaternion && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4 && type != TypeFQuaternion)
 					{
 						// If it's TypeError, then an error was already given
 						if (type != TypeError)
@@ -2430,6 +2434,14 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 								vmval[2] = static_cast<FxConstant *>(vx->xyzw[2])->GetValue().GetFloat();
 							}
 							else if ((type == TypeVector4 || type == TypeFVector4) && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue*>(x)->isConstVector(4))
+							{
+								auto vx = static_cast<FxVectorValue*>(x);
+								vmval[0] = static_cast<FxConstant*>(vx->xyzw[0])->GetValue().GetFloat();
+								vmval[1] = static_cast<FxConstant*>(vx->xyzw[1])->GetValue().GetFloat();
+								vmval[2] = static_cast<FxConstant*>(vx->xyzw[2])->GetValue().GetFloat();
+								vmval[3] = static_cast<FxConstant*>(vx->xyzw[3])->GetValue().GetFloat();
+							}
+							else if ((type == TypeQuaternion || type == TypeFQuaternion) && x->ExprType == EFX_VectorValue && static_cast<FxVectorValue*>(x)->isConstVector(4))
 							{
 								auto vx = static_cast<FxVectorValue*>(x);
 								vmval[0] = static_cast<FxConstant*>(vx->xyzw[0])->GetValue().GetFloat();

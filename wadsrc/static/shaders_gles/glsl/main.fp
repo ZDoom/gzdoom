@@ -7,6 +7,10 @@ varying vec3 gradientdist;
 varying vec4 vWorldNormal;
 varying vec4 vEyeNormal;
 
+#if __VERSION__ == 300
+varying vec3 vLightmap;
+#endif
+
 #ifdef NO_CLIPDISTANCE_SUPPORT
 varying vec4 ClipDistanceA;
 varying vec4 ClipDistanceB;
@@ -444,6 +448,16 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	// apply other light manipulation by custom shaders, default is a NOP.
 	//
 	color = ProcessLight(material, color);
+	
+#if __VERSION__ == 300
+	//
+	// apply lightmaps
+	//
+	if (vLightmap.z >= 0.0)
+	{
+		color.rgb += texture(LightMap, vLightmap).rgb;
+	}
+#endif
 
 	//
 	// apply dynamic lights

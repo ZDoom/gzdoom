@@ -56,6 +56,8 @@ public:
 	FGLRenderBuffers *mScreenBuffers = nullptr;
 	FPresentShader *mPresentShader = nullptr;
 
+	int mLightMapID = 0;
+
 	//FRotator mAngles;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);

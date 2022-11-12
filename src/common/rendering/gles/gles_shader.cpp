@@ -237,7 +237,7 @@ void FShader::LoadVariant()
 	Load(mName.GetChars(), mVertProg, mFragProg, mFragProg2, mLightProg, mDefinesBase);
 }
 
-bool FShader::Load(const char * name, const char * vert_prog_lump_, const char * frag_prog_lump_, const char * proc_prog_lump_, const char * light_fragprog_, const char * defines)
+bool FShader::Load(const char* name, const char* vert_prog_lump_, const char* frag_prog_lump_, const char* proc_prog_lump_, const char* light_fragprog_, const char* defines)
 {
 	ShaderVariantData* shaderData = new ShaderVariantData();
 
@@ -253,7 +253,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 	//light_fragprog.Substitute("material_pbr", "material_normal");
 
-	if(light_fragprog.Len())
+	if (light_fragprog.Len())
 		light_fragprog = "shaders_gles/glsl/material_normal.fp"; // NOTE: Always use normal material for now, ignore others
 
 
@@ -261,6 +261,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	FString error;
 
 	FString i_data = GetGLSLPrecision();
+
+	// Add lightmap texture array if enabled
+	if (gles.lighmapsAvailable)
+	{
+		i_data += 
+			"precision lowp sampler2DArray;\n" \
+			"uniform sampler2DArray LightMap;\n";
+	}
 
 	i_data += R"(
 
@@ -385,16 +393,18 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 
 
-//
-// The following code uses GetChars on the strings to get rid of terminating 0 characters. Do not remove or the code may break!
-//
+	//
+	// The following code uses GetChars on the strings to get rid of terminating 0 characters. Do not remove or the code may break!
+	//
 	FString vp_comb;
 
 	assert(screen->mLights != NULL);
 
 	unsigned int lightbuffersize = screen->mLights->GetBlockSize();
 
-	vp_comb.Format("#version 100\n#define NUM_UBO_LIGHTS %d\n#define NO_CLIPDISTANCE_SUPPORT\n", lightbuffersize);
+	vp_comb.Format("#version %s\n#define NUM_UBO_LIGHTS %d\n#define NO_CLIPDISTANCE_SUPPORT\n", 
+		gles.lighmapsAvailable ? "300 es" : "100", 
+		lightbuffersize);
 
 	FString fp_comb = vp_comb;
 	vp_comb << defines << i_data.GetChars();
@@ -510,8 +520,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		int vp_size = (int)vp_comb.Len();
 		int fp_size = (int)fp_comb.Len();
 
-		const char *vp_ptr = vp_comb.GetChars();
-		const char *fp_ptr = fp_comb.GetChars();
+		const char* vp_ptr = vp_comb.GetChars();
+		const char* fp_ptr = fp_comb.GetChars();
 
 		glShaderSource(shaderData->hVertProg, 1, &vp_ptr, &vp_size);
 		glShaderSource(shaderData->hFragProg, 1, &fp_ptr, &fp_size);
@@ -529,6 +539,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		glBindAttribLocation(shaderData->hShader, VATTR_VERTEX2, "aVertex2");
 		glBindAttribLocation(shaderData->hShader, VATTR_NORMAL, "aNormal");
 		glBindAttribLocation(shaderData->hShader, VATTR_NORMAL2, "aNormal2");
+		
+		if (gles.lighmapsAvailable)
+			glBindAttribLocation(shaderData->hShader, VATTR_LIGHTMAP, "aLightmap");
 
 
 		glLinkProgram(shaderData->hShader);
@@ -627,7 +640,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	glUseProgram(shaderData->hShader);
 
 	// set up other texture units (if needed by the shader)
-	for (int i = 2; i<16; i++)
+	for (int i = 2; i < 16; i++)
 	{
 		char stringbuf[20];
 		mysnprintf(stringbuf, 20, "texture%d", i);
@@ -637,6 +650,13 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 	int shadowmapindex = glGetUniformLocation(shaderData->hShader, "ShadowMap");
 	if (shadowmapindex >= 0) glUniform1i(shadowmapindex, 16);
+
+	if (gles.lighmapsAvailable)
+	{
+		int lightmapindex = glGetUniformLocation(shaderData->hShader, "LightMap");
+		if (lightmapindex >= 0) glUniform1i(lightmapindex, 17);
+	}
+
 
 	glUseProgram(0);
 

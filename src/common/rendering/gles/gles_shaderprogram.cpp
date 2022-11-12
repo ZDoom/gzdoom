@@ -236,7 +236,7 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 {
 	FString patchedCode;
 
-	patchedCode.AppendFormat("#version %d\n", 100); // Set to GLES2 
+	patchedCode.AppendFormat("#version %s\n", gles.lighmapsAvailable ? "300 es" : "100"); // GLES3 if using lightmaps
 
 	patchedCode += GetGLSLPrecision();
 

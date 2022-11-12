@@ -779,6 +779,11 @@ void HWSectorStackPortal::SetupCoverage(HWDrawInfo *di)
 bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper)
 {
 	auto state = mState;
+	if (state->renderdepth > 100) // energency abort in case a map manages to set up a recursion.
+	{
+		return false;
+	}
+
 	FSectorPortalGroup *portal = origin;
 	auto &vp = di->Viewpoint;
 

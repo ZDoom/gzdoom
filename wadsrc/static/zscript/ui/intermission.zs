@@ -32,7 +32,8 @@ class IntermissionScreenJob : ScreenJob
 
 	override void OnDestroy()
 	{
-        controller.Destroy();
+        if (controller)
+            controller.Destroy();
         Super.OnDestroy();
 	}
 }

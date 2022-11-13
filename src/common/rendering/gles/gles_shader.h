@@ -326,6 +326,7 @@ public: class ShaderVariantData
 		FBufferedUniform1i muTextureMode;
 		FBufferedUniform4f muLightParms;
 		FBufferedUniform2f muClipSplit;
+		FBufferedUniform1i muBoneIndexBase;
 		FBufferedUniform4i muLightRange;
 		FBufferedUniformPE muFogColor;
 		FBufferedUniform4f muDynLightColor;
@@ -356,6 +357,7 @@ public: class ShaderVariantData
 
 
 		int lights_index = 0;
+		int bones_index = 0;
 		int modelmatrix_index = 0;
 		int normalmodelmatrix_index = 0;
 		int texturematrix_index = 0;

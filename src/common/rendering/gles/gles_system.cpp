@@ -16,6 +16,7 @@ void setGlVersion(double glv);
 
 PFNGLMAPBUFFERRANGEEXTPROC glMapBufferRange = NULL;
 PFNGLUNMAPBUFFEROESPROC glUnmapBuffer = NULL;
+PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer = NULL;
 
 #ifdef __ANDROID__
 #include <dlfcn.h>
@@ -134,7 +135,7 @@ namespace OpenGLESRenderer
 
 		glMapBufferRange = (PFNGLMAPBUFFERRANGEEXTPROC)LoadGLES2Proc("glMapBufferRange");
 		glUnmapBuffer = (PFNGLUNMAPBUFFEROESPROC)LoadGLES2Proc("glUnmapBuffer");
-
+		glVertexAttribIPointer = (PFNGLVERTEXATTRIBIPOINTERPROC)LoadGLES2Proc("glVertexAttribIPointer");
 #else
 		static bool first = true;
 
@@ -181,11 +182,16 @@ namespace OpenGLESRenderer
 		Printf("GL_MAX_TEXTURE_SIZE: %d\n", gles.max_texturesize);
 
 #if USE_GLES2
+		gles.gles3Features = false; // Enales IQM bones
+		gles.shaderVersionString = "100";
+
 		gles.depthStencilAvailable = CheckExtension("GL_OES_packed_depth_stencil");
 		gles.npotAvailable = CheckExtension("GL_OES_texture_npot");
 		gles.depthClampAvailable = CheckExtension("GL_EXT_depth_clamp");
 		gles.anistropicFilterAvailable = CheckExtension("GL_EXT_texture_filter_anisotropic");
 #else
+		gles.gles3Features = true;
+		gles.shaderVersionString = "330";
 		gles.depthStencilAvailable = true;
 		gles.npotAvailable = true;
 		gles.useMappedBuffers = true;

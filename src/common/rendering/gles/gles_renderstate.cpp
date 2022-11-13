@@ -32,6 +32,7 @@
 #include "gles_shader.h"
 #include "gles_renderer.h"
 #include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
 #include "gles_renderbuffers.h"
 #include "gles_hwtexture.h"
 #include "gles_buffers.h"
@@ -110,15 +111,13 @@ bool FGLRenderState::ApplyShader()
 	{
 		lightPtr = ((float*)screen->mLights->GetBuffer()->Memory());
 		lightPtr += ((int64_t)mLightIndex * 4);
-		//float array[64];
-		//memcpy(array, ptr, 4 * 64);
 
 		// Calculate how much light data there is to upload, this is stored in the first 4 floats
 		modLights = int(lightPtr[1]) / LIGHT_VEC4_NUM;
 		subLights = (int(lightPtr[2]) - int(lightPtr[1])) / LIGHT_VEC4_NUM;
 		addLights = (int(lightPtr[3]) - int(lightPtr[2])) / LIGHT_VEC4_NUM;
 
-		// Here we limit the number of lights, but dont' change the light data so priority has to be mod, sub then add
+		// Here we limit the number of lights, but don't change the light data so priority has to be mod, sub then add
 		if (modLights > (int)gles.maxlights)
 			modLights = gles.maxlights;
 
@@ -224,12 +223,9 @@ bool FGLRenderState::ApplyShader()
 		activeShader->cur->muProjectionMatrix.Set(&mHwUniforms->mProjectionMatrix);
 		activeShader->cur->muViewMatrix.Set(&mHwUniforms->mViewMatrix);
 		activeShader->cur->muNormalViewMatrix.Set(&mHwUniforms->mNormalViewMatrix);
-
 		activeShader->cur->muCameraPos.Set(&mHwUniforms->mCameraPos.X);
 		activeShader->cur->muClipLine.Set(&mHwUniforms->mClipLine.X);
-
 		activeShader->cur->muGlobVis.Set(mHwUniforms->mGlobVis);
-
 		activeShader->cur->muPalLightLevels.Set(mHwUniforms->mPalLightLevels & 0xFF); // JUST pass the pal levels, clear the top bits
 		activeShader->cur->muViewHeight.Set(mHwUniforms->mViewHeight);
 		activeShader->cur->muClipHeight.Set(mHwUniforms->mClipHeight);
@@ -250,6 +246,7 @@ bool FGLRenderState::ApplyShader()
 	activeShader->cur->muInterpolationFactor.Set(mStreamData.uInterpolationFactor);
 	activeShader->cur->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->cur->muAlphaThreshold.Set(mAlphaThreshold);
+	activeShader->cur->muBoneIndexBase.Set(-1);
 	activeShader->cur->muClipSplit.Set(mClipSplit);
 	activeShader->cur->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 	activeShader->cur->muAddColor.Set(mStreamData.uAddColor);
@@ -349,6 +346,23 @@ bool FGLRenderState::ApplyShader()
 		activeShader->cur->muLightRange.Set(range);
 	}
 
+	if (gles.gles3Features)
+	{
+		// Upload bone data
+		// NOTE, this is pretty inefficient, it will be reloading the same data over and over in a single frame
+		// Need to add something to detect a start of new frame then only update the data when it's been changed
+		if ((mBoneIndexBase >= 0))
+		{
+			float* bonesPtr = ((float*)screen->mBones->GetBuffer()->Memory());
+
+			int number = screen->mBones->GetCurrentIndex();
+
+			glUniformMatrix4fv(activeShader->cur->bones_index, number, false, bonesPtr);
+
+			activeShader->cur->muBoneIndexBase.Set(mBoneIndexBase);
+		}
+	}
+
 	return true;
 }
 
@@ -369,18 +383,6 @@ void FGLRenderState::ApplyState()
 
 	if (mSplitEnabled != stSplitEnabled)
 	{
-		/*
-		if (mSplitEnabled)
-		{
-			glEnable(GL_CLIP_DISTANCE3);
-			glEnable(GL_CLIP_DISTANCE4);
-		}
-		else
-		{
-			glDisable(GL_CLIP_DISTANCE3);
-			glDisable(GL_CLIP_DISTANCE4);
-		}
-		*/
 		stSplitEnabled = mSplitEnabled;
 	}
 

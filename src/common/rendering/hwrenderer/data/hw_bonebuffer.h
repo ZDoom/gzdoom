@@ -35,6 +35,9 @@ public:
 	bool GetBufferType() const { return mBufferType; }
 	int GetBinding(unsigned int index, size_t* pOffset, size_t* pSize);
 
+	// Only for GLES to determin how much data is in the buffer
+	int GetCurrentIndex() { return mIndex; };
+
 	// OpenGL needs the buffer to mess around with the binding.
 	IDataBuffer* GetBuffer() const
 	{

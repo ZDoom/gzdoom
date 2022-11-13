@@ -267,6 +267,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		// light buffers
 		uniform vec4 lights[MAXIMUM_LIGHT_VECTORS];
 
+		// bone matrix buffers
+		uniform mat4 bones[MAXIMUM_LIGHT_VECTORS];
+
 		uniform	mat4 ProjectionMatrix;
 		uniform	mat4 ViewMatrix;
 		uniform	mat4 NormalViewMatrix;
@@ -320,6 +323,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 		// dynamic lights
 		uniform ivec4 uLightRange;
+
+		// bone animation
+		uniform int uBoneIndexBase;
 
 		// Blinn glossiness and specular level
 		uniform vec2 uSpecularMaterial;
@@ -391,10 +397,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	FString vp_comb;
 
 	assert(screen->mLights != NULL);
+	assert(screen->mBones != NULL);
 
 	unsigned int lightbuffersize = screen->mLights->GetBlockSize();
 
-	vp_comb.Format("#version 100\n#define NUM_UBO_LIGHTS %d\n#define NO_CLIPDISTANCE_SUPPORT\n", lightbuffersize);
+	vp_comb.Format("#version %s\n\n#define NO_CLIPDISTANCE_SUPPORT\n", gles.shaderVersionString);
 
 	FString fp_comb = vp_comb;
 	vp_comb << defines << i_data.GetChars();
@@ -529,6 +536,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		glBindAttribLocation(shaderData->hShader, VATTR_VERTEX2, "aVertex2");
 		glBindAttribLocation(shaderData->hShader, VATTR_NORMAL, "aNormal");
 		glBindAttribLocation(shaderData->hShader, VATTR_NORMAL2, "aNormal2");
+		glBindAttribLocation(shaderData->hShader, VATTR_BONEWEIGHT, "aBoneWeight");
+		glBindAttribLocation(shaderData->hShader, VATTR_BONESELECTOR, "aBoneSelector");
 
 
 		glLinkProgram(shaderData->hShader);
@@ -569,10 +578,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	shaderData->muViewMatrix.Init(shaderData->hShader, "ViewMatrix");
 	shaderData->muNormalViewMatrix.Init(shaderData->hShader, "NormalViewMatrix");
 
-	//shaderData->ProjectionMatrix_index = glGetUniformLocation(shaderData->hShader, "ProjectionMatrix");
-	//shaderData->ViewMatrix_index = glGetUniformLocation(shaderData->hShader, "ViewMatrix");
-	//shaderData->NormalViewMatrix_index = glGetUniformLocation(shaderData->hShader, "NormalViewMatrix");
-
 	shaderData->muCameraPos.Init(shaderData->hShader, "uCameraPos");
 	shaderData->muClipLine.Init(shaderData->hShader, "uClipLine");
 
@@ -591,6 +596,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	shaderData->muLightParms.Init(shaderData->hShader, "uLightAttr");
 	shaderData->muClipSplit.Init(shaderData->hShader, "uClipSplit");
 	shaderData->muLightRange.Init(shaderData->hShader, "uLightRange");
+	shaderData->muBoneIndexBase.Init(shaderData->hShader, "uBoneIndexBase");
 	shaderData->muFogColor.Init(shaderData->hShader, "uFogColor");
 	shaderData->muDynLightColor.Init(shaderData->hShader, "uDynLightColor");
 	shaderData->muObjectColor.Init(shaderData->hShader, "uObjectColor");
@@ -619,6 +625,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	shaderData->muFixedColormapRange.Init(shaderData->hShader, "uFixedColormapRange");
 
 	shaderData->lights_index = glGetUniformLocation(shaderData->hShader, "lights");
+	shaderData->bones_index = glGetUniformLocation(shaderData->hShader, "bones");
 	shaderData->modelmatrix_index = glGetUniformLocation(shaderData->hShader, "ModelMatrix");
 	shaderData->texturematrix_index = glGetUniformLocation(shaderData->hShader, "TextureMatrix");
 	shaderData->normalmodelmatrix_index = glGetUniformLocation(shaderData->hShader, "NormalModelMatrix");

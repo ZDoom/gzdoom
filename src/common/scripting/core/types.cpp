@@ -69,6 +69,7 @@ PStruct* TypeFVector4;
 PStruct* TypeFQuaternion;
 PStruct *TypeColorStruct;
 PStruct *TypeStringStruct;
+PStruct* TypeQuaternionStruct;
 PPointer *TypeNullPtr;
 PPointer *TypeVoidPtr;
 
@@ -316,6 +317,7 @@ void PType::StaticInit()
 	TypeVoidPtr = NewPointer(TypeVoid, false);
 	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
 	TypeStringStruct = NewStruct("Stringstruct", nullptr, true);
+	TypeQuaternionStruct = NewStruct("QuatStruct", nullptr, true);
 	TypeFont = NewPointer(NewStruct("Font", nullptr, true));
 #ifdef __BIG_ENDIAN__
 	TypeColorStruct->AddField(NAME_a, TypeUInt8);

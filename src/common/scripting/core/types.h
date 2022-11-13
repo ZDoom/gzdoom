@@ -623,6 +623,7 @@ extern PStruct* TypeQuaternion;
 extern PStruct* TypeFQuaternion;
 extern PStruct *TypeColorStruct;
 extern PStruct *TypeStringStruct;
+extern PStruct* TypeQuaternionStruct;
 extern PStatePointer *TypeState;
 extern PPointer *TypeFont;
 extern PStateLabel *TypeStateLabel;

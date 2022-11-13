@@ -724,6 +724,11 @@ struct TVector4
 	{
 	}
 
+	TVector4(const vec_t v[4])
+		: TVector4(v[0], v[1], v[2], v[3])
+	{
+	}
+
 	void Zero()
 	{
 		Z = Y = X = W = 0;
@@ -844,22 +849,6 @@ struct TVector4
 	friend TVector4 operator* (vec_t scalar, const TVector4 &v)
 	{
 		return TVector4(v.X * scalar, v.Y * scalar, v.Z * scalar, v.W * scalar);
-	}
-
-	// Multiply as Quaternion
-	TVector4& operator*= (const TVector4& v)
-	{
-		*this = *this * v;
-		return *this;
-	}
-
-	friend TVector4 operator* (const TVector4& v1, const TVector4& v2)
-	{
-		return TVector4(v2.W * v1.X + v2.X * v1.W + v2.Y * v1.Z - v1.Z * v1.Y,
-			v2.W * v1.Y + v2.Y * v1.W + v2.Z * v1.X - v2.X * v1.Z,
-			v2.W * v1.Z + v2.Z * v1.W + v2.X * v1.Y - v2.Y * v1.X,
-			v2.W * v1.W - v2.X * v1.X - v2.Y * v1.Y - v2.Z * v1.Z
-		);
 	}
 
 	// Scalar division
@@ -1727,12 +1716,48 @@ inline TMatrix3x3<T>::TMatrix3x3(const TVector3<T> &axis, TAngle<T> degrees)
 }
 
 
+template<typename vec_t>
+class TQuaternion : public TVector4<vec_t>
+{
+public:
+	TQuaternion() = default;
+	TQuaternion(vec_t a, vec_t b, vec_t c, vec_t d) : TVector4<vec_t>(a, b, c, d) {}
+	TQuaternion(const vec_t* o) : TVector4<vec_t>(o[0], o[1], o[2], o[3]) {}
+	TQuaternion(const TQuaternion& other) = default;
+
+	TQuaternion& operator*= (const TQuaternion& q)
+	{
+		*this = *this * q;
+		return *this;
+	}
+
+	friend TQuaternion<vec_t> operator* (const TQuaternion<vec_t>& q1, const TQuaternion<vec_t>& q2)
+	{
+		return TQuaternion(
+			q1.W * q2.X + q1.X * q2.W + q1.Y * q2.Z - q1.Z * q2.Y,
+			q1.W * q2.Y - q1.X * q2.Z + q1.Y * q2.W + q1.Z * q2.X,
+			q1.W * q2.Z + q1.X * q2.Y - q1.Y * q2.X + q1.Z * q2.W,
+			q1.W * q2.W - q1.X * q2.X - q1.Y * q2.Y - q1.Z * q2.Z
+		);
+	}
+
+	// Rotate Vector3 by Quaternion q
+	friend TVector3<vec_t> operator* (const TQuaternion<vec_t>& q, const TVector3<vec_t>& v)
+	{
+		auto r = TQuaternion({ v.X, v.Y, v.Z, 0 }) * TQuaternion({ -q.X, -q.Y, -q.Z, q.W });
+		r = q * r;
+		return TVector3(r.X, r.Y, r.Z);
+	}
+};
+
+
 typedef TVector2<float>		FVector2;
 typedef TVector3<float>		FVector3;
 typedef TVector4<float>		FVector4;
 typedef TRotator<float>		FRotator;
 typedef TMatrix3x3<float>	FMatrix3x3;
 typedef TAngle<float>		FAngle;
+typedef TQuaternion<float>	FQuaternion;
 
 typedef TVector2<double>		DVector2;
 typedef TVector3<double>		DVector3;
@@ -1740,6 +1765,7 @@ typedef TVector4<double>		DVector4;
 typedef TRotator<double>		DRotator;
 typedef TMatrix3x3<double>		DMatrix3x3;
 typedef TAngle<double>			DAngle;
+typedef TQuaternion<double>		DQuaternion;
 
 constexpr DAngle nullAngle = DAngle::fromDeg(0.);
 constexpr DAngle minAngle = DAngle::fromDeg(1. / 65536.);

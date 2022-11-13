@@ -344,7 +344,7 @@ public:
 	bool IsVector2() const { return ValueType == TypeVector2 || ValueType == TypeFVector2; };
 	bool IsVector3() const { return ValueType == TypeVector3 || ValueType == TypeFVector3; };
 	bool IsVector4() const { return ValueType == TypeVector4 || ValueType == TypeFVector4; };
-	bool IsQuaternion() const { return ValueType == TypeQuaternion || ValueType == TypeFQuaternion; };
+	bool IsQuaternion() const { return ValueType == TypeQuaternion || ValueType == TypeFQuaternion || ValueType == TypeQuaternionStruct; };
 	bool IsBoolCompat() const { return ValueType->isScalar(); }
 	bool IsObject() const { return ValueType->isObjectPointer(); }
 	bool IsArray() const { return ValueType->isArray() || (ValueType->isPointer() && ValueType->toPointer()->PointedType->isArray()); }

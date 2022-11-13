@@ -1887,7 +1887,22 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		ASSERTF(B+3); ASSERTKF(C+3);
 		fcp = &konstf[C];
 		goto Do_EQV4;
-
+	OP(MULQV3_RR):
+		ASSERTF(a + 2); ASSERTF(B + 3); ASSERTF(C + 2);
+		{
+			const DQuaternion& q = reinterpret_cast<DQuaternion&>(reg.f[B]);
+			const DVector3& v = reinterpret_cast<DVector3&>(reg.f[C]);
+			reinterpret_cast<DVector3&>(reg.f[A]) = q * v;
+		}
+		NEXTOP;
+	OP(MULQQ_RR):
+		ASSERTF(a + 3); ASSERTF(B + 3); ASSERTF(C + 3);
+		{
+			const DQuaternion& q1 = reinterpret_cast<DQuaternion&>(reg.f[B]);
+			const DQuaternion& q2 = reinterpret_cast<DQuaternion&>(reg.f[C]);
+			reinterpret_cast<DQuaternion&>(reg.f[A]) = q1 * q2;
+		}
+		NEXTOP;
 	OP(ADDA_RR):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		c = reg.d[C];

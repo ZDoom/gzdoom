@@ -481,7 +481,7 @@ xx(ResolveState)
 
 // UDMF keywords (todo: take these out of the global name table
 xx(Alpha)
-xx(Angle)
+//xx(Angle)
 xx(Args)
 xx(CeilingZ)
 xx(FloorZ)

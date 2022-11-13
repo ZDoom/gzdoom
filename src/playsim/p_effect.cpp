@@ -130,6 +130,11 @@ inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 				particle_t* ntop = &Level->Particles[result->tnext];
 				ntop->tprev = Level->ActiveParticles;
 			}
+			auto tnext = result->tnext;
+			auto tprev = result->tprev;
+			memset(result, 0, sizeof(particle_t));
+			result->tnext = tnext;
+			result->tprev = tprev;
 		}
 		return result;
 	}

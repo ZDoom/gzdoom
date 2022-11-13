@@ -285,6 +285,7 @@ enum EFxType
 	EFX_SwitchStatement,
 	EFX_CaseStatement,
 	EFX_VectorValue,
+	EFX_VectorPlusZ,
 	EFX_VectorBuiltin,
 	EFX_TypeCheck,
 	EFX_DynamicCast,
@@ -306,6 +307,7 @@ enum EFxType
 	EFX_FontCast,
 	EFX_LocalArrayDeclaration,
 	EFX_OutVarDereference,
+	EFX_ToVector,
 	EFX_COUNT
 };
 
@@ -1609,6 +1611,44 @@ public:
 	~FxVectorBuiltin();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxPlusZ
+//
+//==========================================================================
+
+class FxVectorPlusZ : public FxExpression
+{
+	FName Function;
+	FxExpression* Self;
+	FxExpression* Z;
+
+public:
+
+	FxVectorPlusZ(FxExpression* self, FName name, FxExpression*);
+	~FxVectorPlusZ();
+	FxExpression* Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder* build);
+};
+
+//==========================================================================
+//
+//	FxPlusZ
+//
+//==========================================================================
+
+class FxToVector : public FxExpression
+{
+	FxExpression* Self;
+
+public:
+
+	FxToVector(FxExpression* self);
+	~FxToVector();
+	FxExpression* Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder* build);
 };
 
 //==========================================================================

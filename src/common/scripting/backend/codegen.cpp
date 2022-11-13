@@ -8218,6 +8218,15 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	// Note: These builtins would better be relegated to the actual type objects, instead of polluting this file, but that's a task for later.
 
 	// Texture builtins.
+	if (Self->ValueType->isNumeric())
+	{
+		if (MethodName == NAME_ToVector)
+		{
+			Self = new FxToVector(Self);
+			SAFE_RESOLVE(Self, ctx);
+			return Self;
+		}
+	}
 	else if (Self->ValueType == TypeTextureID)
 	{
 		if (MethodName == NAME_IsValid || MethodName == NAME_IsNull || MethodName == NAME_Exists || MethodName == NAME_SetInvalid || MethodName == NAME_SetNull)
@@ -8263,7 +8272,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 	else if (Self->IsVector())
 	{
-		// handle builtins: Vectors got 2: Length and Unit.
+		// handle builtins: Vectors got 5.
 		if (MethodName == NAME_Length || MethodName == NAME_LengthSquared || MethodName == NAME_Unit || MethodName == NAME_Angle)
 		{
 			if (ArgList.Size() > 0)
@@ -8274,6 +8283,20 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			}
 			auto x = new FxVectorBuiltin(Self, MethodName);
 			Self = nullptr;
+			delete this;
+			return x->Resolve(ctx);
+		}
+		else if (MethodName == NAME_PlusZ && Self->IsVector3())
+		{
+			if (ArgList.Size() != 1)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Incorrect number of parameters in call to %s", MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
+			auto x = new FxVectorPlusZ(Self, MethodName, ArgList[0]);
+			Self = nullptr;
+			ArgList[0] = nullptr;
 			delete this;
 			return x->Resolve(ctx);
 		}
@@ -9303,6 +9326,86 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 	op.Free(build);
 	return to;
 }
+
+//==========================================================================
+//
+//	FxPlusZ
+//
+//==========================================================================
+
+
+FxVectorPlusZ::FxVectorPlusZ(FxExpression* self, FName name, FxExpression* z)
+	:FxExpression(EFX_VectorBuiltin, self->ScriptPosition), Function(name), Self(self), Z(new FxFloatCast(z))
+{
+}
+
+FxVectorPlusZ::~FxVectorPlusZ()
+{
+	SAFE_DELETE(Self);
+	SAFE_DELETE(Z);
+}
+
+FxExpression* FxVectorPlusZ::Resolve(FCompileContext& ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+	SAFE_RESOLVE(Z, ctx);
+	assert(Self->IsVector3());	// should never be created for anything else.
+	ValueType = Self->ValueType;
+	return this;
+}
+
+ExpEmit FxVectorPlusZ::Emit(VMFunctionBuilder* build)
+{
+	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+	ExpEmit op = Self->Emit(build);
+	ExpEmit z = Z->Emit(build);
+
+	build->Emit(OP_MOVEV2, to.RegNum, op.RegNum);
+	build->Emit(z.Konst ? OP_ADDF_RK : OP_ADDF_RR, to.RegNum + 2, op.RegNum + 2, z.RegNum);
+
+	op.Free(build);
+	z.Free(build);
+	return to;
+}
+
+
+//==========================================================================
+//
+//	FxPlusZ
+//
+//==========================================================================
+
+
+FxToVector::FxToVector(FxExpression* self)
+	:FxExpression(EFX_ToVector, self->ScriptPosition), Self(new FxFloatCast(self))
+{
+}
+
+FxToVector::~FxToVector()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression* FxToVector::Resolve(FCompileContext& ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+	assert(Self->IsNumeric());	// should never be created for anything else.
+	ValueType = TypeVector2;
+	return this;
+}
+
+ExpEmit FxToVector::Emit(VMFunctionBuilder* build)
+{
+	ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+	ExpEmit op = Self->Emit(build);
+
+	build->Emit(OP_FLOP, to.RegNum, op.RegNum, FLOP_COS_DEG);
+	build->Emit(OP_FLOP, to.RegNum + 1, op.RegNum, FLOP_SIN_DEG);
+
+	op.Free(build);
+	return to;
+}
+
 
 //==========================================================================
 //

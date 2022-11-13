@@ -130,9 +130,10 @@ inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 				particle_t* ntop = &Level->Particles[result->tnext];
 				ntop->tprev = Level->ActiveParticles;
 			}
+			// [MC] Future proof this by resetting everything when replacing a particle.
 			auto tnext = result->tnext;
 			auto tprev = result->tprev;
-			memset(result, 0, sizeof(particle_t));
+			*result = {};
 			result->tnext = tnext;
 			result->tprev = tprev;
 		}
@@ -185,12 +186,12 @@ void P_InitParticles (FLevelLocals *Level)
 void P_ClearParticles (FLevelLocals *Level)
 {
 	int i = 0;
-	memset (Level->Particles.Data(), 0, Level->Particles.Size() * sizeof(particle_t));
 	Level->OldestParticle = NO_PARTICLE;
 	Level->ActiveParticles = NO_PARTICLE;
 	Level->InactiveParticles = 0;
 	for (auto &p : Level->Particles)
 	{
+		p = {};
 		p.tprev = i - 1;
 		p.tnext = ++i;
 	}
@@ -281,7 +282,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || oldtrans < particle->alpha || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
-			memset (particle, 0, sizeof(particle_t));
+			*particle = {};
 			if (prev)
 				prev->tnext = i;
 			else

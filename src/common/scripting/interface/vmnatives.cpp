@@ -1129,3 +1129,66 @@ DEFINE_FIELD(DStatusBarCore, drawClip);
 DEFINE_FIELD(DStatusBarCore, fullscreenOffsets);
 DEFINE_FIELD(DStatusBarCore, defaultScale);
 DEFINE_FIELD(DHUDFont, mFont);
+
+//
+// Quaternion
+DEFINE_ACTION_FUNCTION(_QuatStruct, FromEuler)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(yaw);
+	PARAM_FLOAT(pitch);
+	PARAM_FLOAT(roll);
+
+	I_Error("Quat.FromEuler not implemented");
+	ret->SetVector4({0, 1, 2, 3}); // X Y Z W
+	return 1;
+}
+
+DEFINE_ACTION_FUNCTION(_QuatStruct, AxisAngle)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(angle);
+
+	I_Error("Quat.AxisAngle not implemented");
+	ret->SetVector4({ 0, 1, 2, 3 }); // X Y Z W
+	return 1;
+}
+
+DEFINE_ACTION_FUNCTION(_QuatStruct, Nlerp)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(ax);
+	PARAM_FLOAT(ay);
+	PARAM_FLOAT(az);
+	PARAM_FLOAT(aw);
+	PARAM_FLOAT(bx);
+	PARAM_FLOAT(by);
+	PARAM_FLOAT(bz);
+	PARAM_FLOAT(bw);
+	PARAM_FLOAT(f);
+
+	I_Error("Quat.NLerp not implemented");
+	ret->SetVector4({ 0, 1, 2, 3 }); // X Y Z W
+	return 1;
+}
+
+DEFINE_ACTION_FUNCTION(_QuatStruct, Slerp)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(ax);
+	PARAM_FLOAT(ay);
+	PARAM_FLOAT(az);
+	PARAM_FLOAT(aw);
+	PARAM_FLOAT(bx);
+	PARAM_FLOAT(by);
+	PARAM_FLOAT(bz);
+	PARAM_FLOAT(bw);
+	PARAM_FLOAT(f);
+
+	I_Error("Quat.SLerp not implemented");
+	ret->SetVector4({ 0, 1, 2, 3 }); // X Y Z W
+	return 1;
+}

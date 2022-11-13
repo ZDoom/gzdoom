@@ -3093,7 +3093,14 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 			[[fallthrough]];
 
 		case '*':
-			if ((left->IsVector() || left->IsQuaternion()) && right->IsNumeric())
+			if (Operator == '*' && left->IsQuaternion() && (right->IsVector3() || right->IsQuaternion()))
+			{
+				// quat * vec3
+				// quat * quat
+				ValueType = right->ValueType;
+				break;
+			}
+			else if ((left->IsVector() || left->IsQuaternion()) && right->IsNumeric())
 			{
 				if (right->IsInteger())
 				{
@@ -3208,10 +3215,26 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
 
-	if (IsVector() || IsQuaternion())
+	if (Operator == '*' && left->IsQuaternion() && right->IsQuaternion())
+	{
+		op1.Free(build);
+		op2.Free(build);
+		ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+		build->Emit(OP_MULQQ_RR, to.RegNum, op1.RegNum, op2.RegNum);
+		return to;
+	}
+	else if (Operator == '*' && left->IsQuaternion() && right->IsVector3())
+	{
+		op1.Free(build);
+		op2.Free(build);
+		ExpEmit to(build, ValueType->GetRegType(), ValueType->GetRegCount());
+		build->Emit(OP_MULQV3_RR, to.RegNum, op1.RegNum, op2.RegNum);
+		return to;
+	}
+	else if (IsVector() || IsQuaternion())
 	{
 		assert(Operator != '%');
-		if (right->IsVector())
+		if (left->IsFloat())
 		{
 			std::swap(op1, op2);
 		}
@@ -8385,9 +8408,9 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			delete this;
 			return x->Resolve(ctx);
 		}
+
+		Self->ValueType = TypeQuaternionStruct;
 	}
-
-
 	else if (Self->ValueType == TypeString)
 	{
 		if (MethodName == NAME_Length)	// This is an intrinsic because a dedicated opcode exists for it.

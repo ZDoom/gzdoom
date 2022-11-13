@@ -1606,6 +1606,62 @@ void JitCompiler::EmitEQV4_K()
 	I_Error("EQV4_K is not used.");
 }
 
+// Quaternion ops
+void FuncMULQQ(void *result, double ax, double ay, double az, double aw, double bx, double by, double bz, double bw)
+{
+	*reinterpret_cast<DQuaternion*>(result) = DQuaternion(ax, ay, az, aw) * DQuaternion(bx, by, bz, bw);
+}
+
+void FuncMULQV3(void *result, double ax, double ay, double az, double aw, double bx, double by, double bz)
+{
+	*reinterpret_cast<DVector3*>(result) = DQuaternion(ax, ay, az, aw) * DVector3(bx, by, bz);
+}
+
+void JitCompiler::EmitMULQQ_RR()
+{
+	auto stack = GetTemporaryVectorStackStorage();
+	auto tmp = newTempIntPtr();
+	cc.lea(tmp, stack);
+
+	auto call = CreateCall<void, void*, double, double, double, double, double, double, double, double>(FuncMULQQ);
+	call->setArg(0, tmp);
+	call->setArg(1, regF[B + 0]);
+	call->setArg(2, regF[B + 1]);
+	call->setArg(3, regF[B + 2]);
+	call->setArg(4, regF[B + 3]);
+	call->setArg(5, regF[C + 0]);
+	call->setArg(6, regF[C + 1]);
+	call->setArg(7, regF[C + 2]);
+	call->setArg(8, regF[C + 3]);
+
+	cc.movsd(regF[A + 0], asmjit::x86::qword_ptr(tmp, 0));
+	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+	cc.movsd(regF[A + 3], asmjit::x86::qword_ptr(tmp, 24));
+}
+
+void JitCompiler::EmitMULQV3_RR()
+{
+	auto stack = GetTemporaryVectorStackStorage();
+	auto tmp = newTempIntPtr();
+	cc.lea(tmp, stack);
+	
+	auto call = CreateCall<void, void*, double, double, double, double, double, double, double>(FuncMULQV3);
+	call->setArg(0, tmp);
+	call->setArg(1, regF[B + 0]);
+	call->setArg(2, regF[B + 1]);
+	call->setArg(3, regF[B + 2]);
+	call->setArg(4, regF[B + 3]);
+	call->setArg(5, regF[C + 0]);
+	call->setArg(6, regF[C + 1]);
+	call->setArg(7, regF[C + 2]);
+
+	cc.movsd(regF[A + 0], asmjit::x86::qword_ptr(tmp, 0));
+	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 // Pointer math.
 

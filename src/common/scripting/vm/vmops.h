@@ -278,6 +278,10 @@ xx(LENV4,		lenv4,		RFRV,	NOP,	0, 0)			// fA = vB.Length
 xx(EQV4_R,		beqv4,		CVRR,	NOP,	0, 0)			// if ((vB == vkC) != A) then pc++ (inexact if A & 33)
 xx(EQV4_K,		beqv4,		CVRK,	NOP,	0, 0)			// this will never be used.
 
+// Quaternion math
+xx(MULQQ_RR,	mulqq,		RVRVRV, NOP,	0, 0)		// qA = qB * qC
+xx(MULQV3_RR,	mulqv3,		RVRVRV, NOP,	0, 0)		// qA = qB * vC
+
 // Pointer math.
 xx(ADDA_RR,		add,	RPRPRI,		NOP,	0, 0)		// pA = pB + dkC
 xx(ADDA_RK,		add,	RPRPKI,		ADDA_RR,4, REGT_INT)

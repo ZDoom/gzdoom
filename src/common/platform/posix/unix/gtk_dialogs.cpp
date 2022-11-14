@@ -133,11 +133,11 @@ DYN_GTK_SYM(gtk_widget_set_vexpand);
 DYN_GTK_SYM(gtk_window_activate_default);
 DYN_GTK_SYM(gtk_window_get_type);
 DYN_GTK_SYM(gtk_window_new);
+DYN_GTK_SYM(gtk_window_set_default_size);
 DYN_GTK_SYM(gtk_window_set_gravity);
 DYN_GTK_SYM(gtk_window_set_position);
 DYN_GTK_SYM(gtk_window_set_title);
 DYN_GTK_SYM(gtk_window_set_resizable);
-DYN_GTK_SYM(gtk_window_set_default_size);
 DYN_GTK_SYM(gtk_dialog_run);
 DYN_GTK_SYM(gtk_dialog_get_type);
 
@@ -230,8 +230,8 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	g_signal_connect (window, "key_press_event", G_CALLBACK(CheckEscape), NULL);
 
 	// Get the display height and use it to set the default size for the window.
-	monitor = gdk_display_get_primary_monitor(gdk_display_get_default());
-	gdk_monitor_get_geometry(GDK_MONITOR(monitor), &monitor_geom);
+	monitor = gdk_display_get_primary_monitor (gdk_display_get_default());
+	gdk_monitor_get_geometry (GDK_MONITOR(monitor), &monitor_geom);
 	gtk_window_set_default_size (GTK_WINDOW(window), -1, (monitor_geom.height / 2));
 
 	// Create the vbox container.

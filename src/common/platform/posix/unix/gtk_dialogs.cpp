@@ -86,6 +86,10 @@ DYN_GTK_SYM(g_type_check_instance_cast);
 DYN_GTK_SYM(g_type_check_instance_is_a);
 DYN_GTK_SYM(g_value_get_int);
 DYN_GTK_SYM(g_value_unset);
+DYN_GTK_SYM(gdk_display_get_default);
+DYN_GTK_SYM(gdk_display_get_primary_monitor);
+DYN_GTK_SYM(gdk_monitor_get_geometry);
+DYN_GTK_SYM(gdk_monitor_get_type);
 DYN_GTK_SYM(gtk_box_get_type);
 DYN_GTK_SYM(gtk_box_pack_end);
 DYN_GTK_SYM(gtk_box_pack_start);
@@ -103,6 +107,7 @@ DYN_GTK_SYM(gtk_label_new);
 DYN_GTK_SYM(gtk_list_store_append);
 DYN_GTK_SYM(gtk_list_store_new);
 DYN_GTK_SYM(gtk_list_store_set);
+DYN_GTK_SYM(gtk_scrolled_window_new);
 DYN_GTK_SYM(gtk_toggle_button_get_type);
 DYN_GTK_SYM(gtk_toggle_button_set_active);
 DYN_GTK_SYM(gtk_tree_model_get_type);
@@ -122,7 +127,9 @@ DYN_GTK_SYM(gtk_widget_destroy);
 DYN_GTK_SYM(gtk_widget_grab_default);
 DYN_GTK_SYM(gtk_widget_get_type);
 DYN_GTK_SYM(gtk_widget_set_can_default);
+DYN_GTK_SYM(gtk_widget_set_hexpand);
 DYN_GTK_SYM(gtk_widget_show_all);
+DYN_GTK_SYM(gtk_widget_set_vexpand);
 DYN_GTK_SYM(gtk_window_activate_default);
 DYN_GTK_SYM(gtk_window_get_type);
 DYN_GTK_SYM(gtk_window_new);
@@ -130,6 +137,7 @@ DYN_GTK_SYM(gtk_window_set_gravity);
 DYN_GTK_SYM(gtk_window_set_position);
 DYN_GTK_SYM(gtk_window_set_title);
 DYN_GTK_SYM(gtk_window_set_resizable);
+DYN_GTK_SYM(gtk_window_set_default_size);
 DYN_GTK_SYM(gtk_dialog_run);
 DYN_GTK_SYM(gtk_dialog_get_type);
 
@@ -199,11 +207,14 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	GtkWidget *widget;
 	GtkWidget *tree;
 	GtkWidget *check;
+	GtkWidget *scrolled_window;
 	GtkListStore *store;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
 	GtkTreeSelection *selection;
 	GtkTreeIter iter, defiter;
+	GdkMonitor *monitor;
+	GdkRectangle monitor_geom{};
 	int close_style = 0;
 	int i;
 	char caption[100];
@@ -217,6 +228,11 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	gtk_container_set_border_width (GTK_CONTAINER(window), 10);
 	g_signal_connect (window, "delete_event", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect (window, "key_press_event", G_CALLBACK(CheckEscape), NULL);
+
+	// Get the display height and use it to set the default size for the window.
+	monitor = gdk_display_get_primary_monitor(gdk_display_get_default());
+	gdk_monitor_get_geometry(GDK_MONITOR(monitor), &monitor_geom);
+	gtk_window_set_default_size (GTK_WINDOW(window), -1, (monitor_geom.height / 2));
 
 	// Create the vbox container.
 	if (gtk_box_new) // Gtk3
@@ -260,14 +276,18 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	}
 
 	// Create the tree view control to show the list.
+	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_widget_set_hexpand (scrolled_window, TRUE);
+	gtk_widget_set_vexpand (scrolled_window, TRUE);
 	tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
+	gtk_container_add (GTK_CONTAINER(scrolled_window), tree);
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_column_new_with_attributes ("IWAD", renderer, "text", 0, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(tree), column);
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_column_new_with_attributes ("Game", renderer, "text", 1, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(tree), column);
-	gtk_box_pack_start (GTK_BOX(vbox), GTK_WIDGET(tree), true, true, 0);
+	gtk_box_pack_start (GTK_BOX(vbox), GTK_WIDGET(scrolled_window), true, true, 0);
 	g_signal_connect(G_OBJECT(tree), "button_press_event", G_CALLBACK(DoubleClickChecker), &close_style);
 	g_signal_connect(G_OBJECT(tree), "key_press_event", G_CALLBACK(AllowDefault), window);
 

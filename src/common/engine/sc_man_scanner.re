@@ -174,7 +174,7 @@ std2:
 
 		/* Other keywords from UnrealScript */
 		'abstract'					{ RET(TK_Abstract); }
-		'foreach'					{ RET(TK_ForEach); }
+		'foreach'					{ RET(ParseVersion >= MakeVersion(4, 10, 0)? TK_ForEach : TK_Identifier); }
 		'true'						{ RET(TK_True); }
 		'false'						{ RET(TK_False); }
 		'none'						{ RET(TK_None); }

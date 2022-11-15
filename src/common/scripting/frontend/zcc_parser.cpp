@@ -240,6 +240,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Return,		ZCC_RETURN);
 	TOKENDEF (TK_Do,			ZCC_DO);
 	TOKENDEF (TK_For,			ZCC_FOR);
+	TOKENDEF (TK_ForEach,		ZCC_FOREACH);
 	TOKENDEF (TK_While,			ZCC_WHILE);
 	TOKENDEF (TK_Until,			ZCC_UNTIL);
 	TOKENDEF (TK_If,			ZCC_IF);
@@ -1119,6 +1120,18 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 		copy->LoopStatement = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
 		copy->LoopBumper = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopBumper, true, copiedNodesList));
 		copy->CheckAt = origCasted->CheckAt;
+
+		break;
+	}
+
+	case AST_ArrayIterationStmt:
+	{
+		TreeNodeDeepCopy_Start(ArrayIterationStmt);
+
+		// ZCC_IterationStmt
+		copy->ItName = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItName, true, copiedNodesList));
+		copy->LoopStatement = static_cast<ZCC_Statement*>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
+		copy->ItArray = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItArray, true, copiedNodesList));
 
 		break;
 	}

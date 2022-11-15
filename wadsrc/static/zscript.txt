@@ -1,4 +1,4 @@
-version "4.9"
+version "4.10"
 
 // Generic engine code
 #include "zscript/engine/base.zs"

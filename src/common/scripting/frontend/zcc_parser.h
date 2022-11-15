@@ -138,6 +138,7 @@ enum EZCCTreeNodeType
 	AST_FlagDef,
 	AST_MixinDef,
 	AST_MixinStmt,
+	AST_ArrayIterationStmt,
 
 	NUM_AST_NODE_TYPES
 };
@@ -490,6 +491,13 @@ struct ZCC_IterationStmt : ZCC_Statement
 	// start of the loop (before the LoopStatement)
 	// or at the end (after the LoopStatement)?
 	enum { Start, End } CheckAt;
+};
+
+struct ZCC_ArrayIterationStmt : ZCC_Statement
+{
+	ZCC_VarName* ItName;
+	ZCC_Expression* ItArray;
+	ZCC_Statement* LoopStatement;
 };
 
 struct ZCC_IfStmt : ZCC_Statement

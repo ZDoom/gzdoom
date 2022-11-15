@@ -272,6 +272,7 @@ enum EFxType
 	EFX_WhileLoop,
 	EFX_DoWhileLoop,
 	EFX_ForLoop,
+	EFX_ForEachLoop,
 	EFX_JumpStatement,
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
@@ -349,6 +350,7 @@ public:
 	bool IsArray() const { return ValueType->isArray() || (ValueType->isPointer() && ValueType->toPointer()->PointedType->isArray()); }
 	bool isStaticArray() const { return (ValueType->isPointer() && ValueType->toPointer()->PointedType->isStaticArray()); } // can only exist in pointer form.
 	bool IsDynamicArray() const { return (ValueType->isDynArray()); }
+	bool IsStruct() const { return ValueType->isStruct(); }
 	bool IsNativeStruct() const { return (ValueType->isStruct() && static_cast<PStruct*>(ValueType)->isNative); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
@@ -1541,8 +1543,9 @@ public:
 	bool AddressRequested;
 	bool AddressWritable;
 	bool arrayispointer = false;
+	bool noboundscheck;
 
-	FxArrayElement(FxExpression*, FxExpression*);
+	FxArrayElement(FxExpression*, FxExpression*, bool = false);
 	~FxArrayElement();
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
@@ -2000,7 +2003,26 @@ public:
 	FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos);
 	~FxForLoop();
 	FxExpression *DoResolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
+	ExpEmit Emit(VMFunctionBuilder* build);
+};
+
+//==========================================================================
+//
+// FxForLoop
+//
+//==========================================================================
+
+class FxForEachLoop : public FxLoopStatement
+{
+	FName loopVarName;
+	FxExpression* Array;
+	FxExpression* Array2;
+	FxExpression* Code;
+
+public:
+	FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* code, const FScriptPosition& pos);
+	~FxForEachLoop();
+	FxExpression* DoResolve(FCompileContext&);
 };
 
 //==========================================================================

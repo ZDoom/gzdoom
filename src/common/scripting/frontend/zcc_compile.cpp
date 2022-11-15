@@ -3179,6 +3179,17 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		return new FxIfStatement(ConvertNode(iff->Condition), truePath, falsePath, *ast);
 	}
 
+	case AST_ArrayIterationStmt:
+	{
+		auto iter = static_cast<ZCC_ArrayIterationStmt*>(ast);
+		auto var = iter->ItName->Name;
+		FxExpression* const itArray = ConvertNode(iter->ItArray);
+		FxExpression* const itArray2 = ConvertNode(iter->ItArray);	// the handler needs two copies of this - here's the easiest place to create them.
+		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
+		return new FxForEachLoop(iter->ItName->Name, itArray, itArray2, body, *ast);
+
+	}
+
 	case AST_IterationStmt:
 	{
 		auto iter = static_cast<ZCC_IterationStmt *>(ast);

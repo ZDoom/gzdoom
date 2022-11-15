@@ -1829,6 +1829,7 @@ statement(X) ::= compound_statement(A).				{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
+statement(X) ::= array_iteration_statement(X).
 statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
@@ -1984,6 +1985,17 @@ iteration_statement(X) ::= FOR(T) LPAREN for_init(IN) SEMICOLON opt_expr(EX) SEM
 	NEW_AST_NODE(CompoundStmt, wrap, T);
 	wrap->Content = IN;
 	X = wrap;
+}
+
+%type array_iteration_statement{ZCC_Statement *}
+
+array_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(IN) COLON expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(ArrayIterationStmt, iter, T);
+	iter->ItName = IN;
+	iter->ItArray = EX;
+	iter->LoopStatement = ST;
+	X = iter;
 }
 
 while_or_until(X) ::= WHILE(T).

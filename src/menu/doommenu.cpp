@@ -66,6 +66,7 @@
 #include "teaminfo.h"
 #include "i_time.h"
 #include "shiftstate.h"
+#include "s_music.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
@@ -294,6 +295,14 @@ void System_M_Dim()
 }
 
 
+static void M_Quit()
+{
+	S_StopAllChannels();
+	S_StopMusic(true);
+	CleanSWDrawer();
+	ST_Endoom();
+}
+
 //=============================================================================
 //
 //
@@ -304,8 +313,7 @@ CCMD (menu_quit)
 {	// F10
 	if (m_quickexit)
 	{
-		CleanSWDrawer();
-		ST_Endoom();
+		M_Quit();
 	}
 
 	M_StartControlPanel (true);
@@ -336,8 +344,7 @@ CCMD (menu_quit)
 				I_WaitVBL(105);
 			}
 		}
-		CleanSWDrawer();
-		ST_Endoom();
+		M_Quit();
 	});
 
 

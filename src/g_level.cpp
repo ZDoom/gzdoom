@@ -1023,11 +1023,6 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 
 void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
 {
-	if (!intermissionScreen && !statusScreen)
-	{
-		completionf(false);
-		return;
-	}
 	cutscene.runner = CreateRunner(false);
 	GC::WriteBarrier(cutscene.runner);
 	cutscene.completion = std::move(completionf);
@@ -1118,7 +1113,7 @@ void G_DoCompleted (void)
 	bool endgame = strncmp(nextlevel, "enDSeQ", 6) == 0;
 	intermissionScreen = primaryLevel->CreateIntermission();
 	auto nextinfo = !playinter || endgame? nullptr : FindLevelInfo(nextlevel, false);
-	RunIntermission(playinter? primaryLevel->info : nullptr, nextinfo, intermissionScreen, statusScreen, [=](bool)
+	RunIntermission(primaryLevel->info, nextinfo, intermissionScreen, statusScreen, [=](bool)
 	{
 		if (!endgame) primaryLevel->WorldDone();
 		else D_StartTitle();
@@ -1287,12 +1282,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 
 	finishstate = mode;
 
-	if (!ShouldDoIntermission(nextcluster, thiscluster))
-	{
-		WorldDone ();
-		return false;
-	}
-	return true;
+	return ShouldDoIntermission(nextcluster, thiscluster);
 }
 
 //==========================================================================

@@ -86,10 +86,6 @@ DYN_GTK_SYM(g_type_check_instance_cast);
 DYN_GTK_SYM(g_type_check_instance_is_a);
 DYN_GTK_SYM(g_value_get_int);
 DYN_GTK_SYM(g_value_unset);
-DYN_GTK_SYM(gdk_display_get_default);
-DYN_GTK_SYM(gdk_display_get_primary_monitor);
-DYN_GTK_SYM(gdk_monitor_get_geometry);
-DYN_GTK_SYM(gdk_monitor_get_type);
 DYN_GTK_SYM(gtk_box_get_type);
 DYN_GTK_SYM(gtk_box_pack_end);
 DYN_GTK_SYM(gtk_box_pack_start);
@@ -213,8 +209,6 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	GtkTreeViewColumn *column;
 	GtkTreeSelection *selection;
 	GtkTreeIter iter, defiter;
-	GdkMonitor *monitor;
-	GdkRectangle monitor_geom{};
 	int close_style = 0;
 	int i;
 	char caption[100];
@@ -228,11 +222,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	gtk_container_set_border_width (GTK_CONTAINER(window), 10);
 	g_signal_connect (window, "delete_event", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect (window, "key_press_event", G_CALLBACK(CheckEscape), NULL);
-
-	// Get the display height and use it to set the default size for the window.
-	monitor = gdk_display_get_primary_monitor (gdk_display_get_default());
-	gdk_monitor_get_geometry (GDK_MONITOR(monitor), &monitor_geom);
-	gtk_window_set_default_size (GTK_WINDOW(window), -1, (monitor_geom.height / 2));
+	gtk_window_set_default_size (GTK_WINDOW(window), -1, 280);
 
 	// Create the vbox container.
 	if (gtk_box_new) // Gtk3

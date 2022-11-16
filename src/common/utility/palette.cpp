@@ -424,13 +424,42 @@ void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap)
 	PalEntry color0 = BaseColors[0];
 	int i;
 
-	// First try for an exact match of color 0. Only Hexen does not have one.
-	for (i = 1; i < 256; ++i)
+	// we have to load the colormap ourselves, because at this stage the colormaps have not yet been loaded
+	int lump = fileSystem.CheckNumForFullName ("COLORMAP", true, ns_colormaps);
+	if (lump == -1)
+		lump = fileSystem.CheckNumForName ("COLORMAP", ns_global);
+
+	FileReader readlump;
+	TArray<uint8_t> maincolormap(8192);
+	uint8_t *lastcolormap = maincolormap.Data() + 7936;
+
+	if (lump != -1)
 	{
-		if (BaseColors[i] == color0)
+		readlump = fileSystem.OpenFileReader (lump);
+		readlump.Read (maincolormap.Data(), 8192);
+	}
+
+	// First try for an exact match of color 0. Only Hexen does not have one.
+	if ((lump == -1) || !lastcolormap)
+	{
+		for (i = 1; i < 256; ++i)
 		{
-			Remap[0] = i;
-			break;
+			if (BaseColors[i] == color0)
+			{
+				Remap[0] = i;
+				break;
+			}
+		}
+	}
+	else
+	{
+		for (i = 1; i < 256; ++i)
+		{
+			if ((BaseColors[i] == color0) && (lastcolormap[i] == lastcolormap[0]))
+			{
+				Remap[0] = i;
+				break;
+			}
 		}
 	}
 
@@ -448,21 +477,44 @@ void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap)
 			sortcopy[i] = (BaseColors[i] & 0xffffff) | (i << 24);
 		}
 		qsort(sortcopy, 256, 4, sortforremap);
-		for (i = 255; i > 0; --i)
+		if ((lump == -1) || !lastcolormap)
 		{
-			if ((sortcopy[i] & 0xFFFFFF) == (sortcopy[i - 1] & 0xFFFFFF))
+			for (i = 255; i > 0; --i)
 			{
-				int new0 = sortcopy[i].a;
-				int dup = sortcopy[i - 1].a;
-				if (new0 > dup)
+				if ((sortcopy[i] & 0xFFFFFF) == (sortcopy[i - 1] & 0xFFFFFF))
 				{
-					// Make the lower-numbered entry a copy of color 0. (Just because.)
-					std::swap(new0, dup);
+					int new0 = sortcopy[i].a;
+					int dup = sortcopy[i - 1].a;
+					if (new0 > dup)
+					{
+						// Make the lower-numbered entry a copy of color 0. (Just because.)
+						std::swap(new0, dup);
+					}
+					Remap[0] = new0;
+					Remap[new0] = dup;
+					BaseColors[new0] = color0;
+					break;
 				}
-				Remap[0] = new0;
-				Remap[new0] = dup;
-				BaseColors[new0] = color0;
-				break;
+			}
+		}
+		else
+		{
+			for (i = 255; i > 0; --i)
+			{
+				if (((sortcopy[i] & 0xFFFFFF) == (sortcopy[i - 1] & 0xFFFFFF)) && (lastcolormap[sortcopy[i].a] == lastcolormap[sortcopy[i - 1].a]))
+				{
+					int new0 = sortcopy[i].a;
+					int dup = sortcopy[i - 1].a;
+					if (new0 > dup)
+					{
+						// Make the lower-numbered entry a copy of color 0. (Just because.)
+						std::swap(new0, dup);
+					}
+					Remap[0] = new0;
+					Remap[new0] = dup;
+					BaseColors[new0] = color0;
+					break;
+				}
 			}
 		}
 	}

@@ -124,7 +124,8 @@ class CustomMessageBoxMenuBase : Menu abstract
 		mMouseY = int(y);
 		
 		let n = optionCount();
-		for(uint i = 0; i < n; i++){
+		for(uint i = 0; i < n; i++)
+        {
 			screen.DrawText(textFont, messageSelection == i? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, (destWidth / 2) + OptionXOffset(i), y + (fontheight * i), Stringtable.Localize(optionName(i)), DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, 	true, DTA_ScaleX, NotifyFontScale, DTA_ScaleY, NotifyFontScale);
 		}
 
@@ -209,7 +210,7 @@ class CustomMessageBoxMenuBase : Menu abstract
 		if (mkey == MKEY_Up)
 		{
 			MenuSound("menu/cursor");
-			if(messageSelection == 0) messageSelection = optionCount();
+			if (messageSelection == 0) messageSelection = optionCount();
 			messageSelection--;
 			return true;
 		}
@@ -217,7 +218,7 @@ class CustomMessageBoxMenuBase : Menu abstract
 		{
 			MenuSound("menu/cursor");
 			messageSelection++;
-			if(messageSelection == optionCount()) messageSelection = 0;
+			if (messageSelection == optionCount()) messageSelection = 0;
 			return true;
 		}
 		else if (mkey == MKEY_Enter)

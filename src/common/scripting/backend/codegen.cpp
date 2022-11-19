@@ -8229,6 +8229,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		// because the resulting value type would cause problems in nearly every other place where identifiers are being used.
 		// [ZZ] substitute ccls for String internal type.
 		if (id == NAME_String) ccls = TypeStringStruct;
+		else if (id == NAME_Quat || id == NAME_FQuat) ccls = TypeQuaternionStruct;
 		else ccls = FindContainerType(id, ctx);
 		if (ccls != nullptr) static_cast<FxIdentifier *>(Self)->noglobal = true;
 	}

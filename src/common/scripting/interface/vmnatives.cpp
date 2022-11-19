@@ -1132,19 +1132,31 @@ DEFINE_FIELD(DHUDFont, mFont);
 
 //
 // Quaternion
-DEFINE_ACTION_FUNCTION(_QuatStruct, FromEuler)
+void QuatFromAngles(double yaw, double pitch, double roll, DQuaternion* pquat)
+{
+	*pquat = DQuaternion::FromAngles(yaw, pitch, roll);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, FromAngles, QuatFromAngles)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(yaw);
 	PARAM_FLOAT(pitch);
 	PARAM_FLOAT(roll);
 
-	I_Error("Quat.FromEuler not implemented");
-	ret->SetVector4({0, 1, 2, 3}); // X Y Z W
-	return 1;
+	DQuaternion quat;
+	QuatFromAngles(yaw, pitch, roll, &quat);
+	ACTION_RETURN_QUAT(quat);
 }
 
-DEFINE_ACTION_FUNCTION(_QuatStruct, AxisAngle)
+void QuatAxisAngle(double x, double y, double z, double angleDeg, DQuaternion* pquat)
+{
+	auto axis = DVector3(x, y, z);
+	auto angle = DAngle::fromDeg(angleDeg);
+	*pquat = DQuaternion::AxisAngle(axis, angle);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, AxisAngle, QuatAxisAngle)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(x);
@@ -1152,12 +1164,24 @@ DEFINE_ACTION_FUNCTION(_QuatStruct, AxisAngle)
 	PARAM_FLOAT(z);
 	PARAM_FLOAT(angle);
 
-	I_Error("Quat.AxisAngle not implemented");
-	ret->SetVector4({ 0, 1, 2, 3 }); // X Y Z W
-	return 1;
+	DQuaternion quat;
+	QuatAxisAngle(x, y, z, angle, &quat);
+	ACTION_RETURN_QUAT(quat);
 }
 
-DEFINE_ACTION_FUNCTION(_QuatStruct, Nlerp)
+void QuatNLerp(
+	double ax, double ay, double az, double aw,
+	double bx, double by, double bz, double bw,
+	double t,
+	DQuaternion* pquat
+)
+{
+	auto from = DQuaternion { ax, ay, az, aw };
+	auto to   = DQuaternion { bx, by, bz, bw };
+	*pquat = DQuaternion::NLerp(from, to, t);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, NLerp, QuatNLerp)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(ax);
@@ -1168,14 +1192,26 @@ DEFINE_ACTION_FUNCTION(_QuatStruct, Nlerp)
 	PARAM_FLOAT(by);
 	PARAM_FLOAT(bz);
 	PARAM_FLOAT(bw);
-	PARAM_FLOAT(f);
+	PARAM_FLOAT(t);
 
-	I_Error("Quat.NLerp not implemented");
-	ret->SetVector4({ 0, 1, 2, 3 }); // X Y Z W
-	return 1;
+	DQuaternion quat;
+	QuatNLerp(ax, ay, az, aw, bx, by, bz, bw, t, &quat);
+	ACTION_RETURN_QUAT(quat);
 }
 
-DEFINE_ACTION_FUNCTION(_QuatStruct, Slerp)
+void QuatSLerp(
+	double ax, double ay, double az, double aw,
+	double bx, double by, double bz, double bw,
+	double t,
+	DQuaternion* pquat
+)
+{
+	auto from = DQuaternion { ax, ay, az, aw };
+	auto to   = DQuaternion { bx, by, bz, bw };
+	*pquat = DQuaternion::SLerp(from, to, t);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, SLerp, QuatSLerp)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(ax);
@@ -1186,9 +1222,43 @@ DEFINE_ACTION_FUNCTION(_QuatStruct, Slerp)
 	PARAM_FLOAT(by);
 	PARAM_FLOAT(bz);
 	PARAM_FLOAT(bw);
-	PARAM_FLOAT(f);
+	PARAM_FLOAT(t);
 
-	I_Error("Quat.SLerp not implemented");
-	ret->SetVector4({ 0, 1, 2, 3 }); // X Y Z W
-	return 1;
+	DQuaternion quat;
+	QuatSLerp(ax, ay, az, aw, bx, by, bz, bw, t, &quat);
+	ACTION_RETURN_QUAT(quat);
+}
+
+void QuatConjugate(
+	double x, double y, double z, double w,
+	DQuaternion* pquat
+)
+{
+	*pquat = DQuaternion(x, y, z, w).Conjugate();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Conjugate, QuatConjugate)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(DQuaternion);
+
+	DQuaternion quat;
+	QuatConjugate(self->X, self->Y, self->Z, self->W, &quat);
+	ACTION_RETURN_QUAT(quat);
+}
+
+void QuatInverse(
+	double x, double y, double z, double w,
+	DQuaternion* pquat
+)
+{
+	*pquat = DQuaternion(x, y, z, w).Inverse();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Inverse, QuatInverse)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(DQuaternion);
+
+	DQuaternion quat;
+	QuatInverse(self->X, self->Y, self->Z, self->W, &quat);
+	ACTION_RETURN_QUAT(quat);
 }

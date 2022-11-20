@@ -1134,7 +1134,7 @@ DEFINE_FIELD(DHUDFont, mFont);
 // Quaternion
 void QuatFromAngles(double yaw, double pitch, double roll, DQuaternion* pquat)
 {
-	*pquat = DQuaternion::FromAngles(yaw, pitch, roll);
+	*pquat = DQuaternion::FromAngles(DAngle::fromDeg(yaw), DAngle::fromDeg(pitch), DAngle::fromDeg(roll));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, FromAngles, QuatFromAngles)

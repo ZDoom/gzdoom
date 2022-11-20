@@ -39,6 +39,7 @@
 #include "autosegs.h"
 #include "zstring.h"
 #include "vectors.h"
+#include "quaternion.h"
 #include "cmdlib.h"
 #include "engineerrors.h"
 #include "memarena.h"

@@ -134,18 +134,22 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	// [Nash] take SpriteRotation into account
 	angle += actor->SpriteRotation.Degrees();
 
+	// consider the pixel stretching. For non-voxels this must be factored out here
+	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
+	objectToWorldMatrix.scale(1, stretch, 1);
+
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
 	if (smf->flags & MDL_USEROTATIONCENTER)
 	{
-		objectToWorldMatrix.translate(smf->rotationCenterX, smf->rotationCenterZ, smf->rotationCenterY);
+		objectToWorldMatrix.translate(smf->rotationCenterX, smf->rotationCenterZ/stretch, smf->rotationCenterY);
 	}
 	objectToWorldMatrix.rotate(-angle, 0, 1, 0);
 	objectToWorldMatrix.rotate(pitch, 0, 0, 1);
 	objectToWorldMatrix.rotate(-roll, 1, 0, 0);
 	if (smf->flags & MDL_USEROTATIONCENTER)
 	{
-		objectToWorldMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterZ, -smf->rotationCenterY);
+		objectToWorldMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterZ/stretch, -smf->rotationCenterY);
 	}
 
 	// 2) Applying Doomsday like rotation of the weapon pickup models
@@ -153,25 +157,21 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 
 	if (smf->flags & MDL_ROTATING)
 	{
-		objectToWorldMatrix.translate(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
+		objectToWorldMatrix.translate(smf->rotationCenterX, smf->rotationCenterY/stretch, smf->rotationCenterZ);
 		objectToWorldMatrix.rotate(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
-		objectToWorldMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
+		objectToWorldMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterY/stretch, -smf->rotationCenterZ);
 	}
 
 	// 3) Scaling model.
 	objectToWorldMatrix.scale(scaleFactorX, scaleFactorZ, scaleFactorY);
 
 	// 4) Aplying model offsets (model offsets do not depend on model scalings).
-	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / (smf->zscale*stretch), smf->yoffset / smf->yscale);
 
 	// 5) Applying model rotations.
 	objectToWorldMatrix.rotate(-smf->angleoffset, 0, 1, 0);
 	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
-
-	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
-	objectToWorldMatrix.scale(1, stretch, 1);
 
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
@@ -291,7 +291,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	bool evaluatedSingle = false;
 
 	for (int i = 0; i < modelsamount; i++)
-	{	
+	{
 		int modelid = -1;
 		int animationid = -1;
 		int modelframe = -1;

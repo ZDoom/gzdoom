@@ -94,6 +94,7 @@ public:
 	int mVirtWidth;
 	int mVirtHeight;
 	bool mCustomSizeSet;
+	bool mForceList;
 
 	void Reset();
 };

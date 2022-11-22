@@ -616,9 +616,9 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 			// center the menu on the screen if the top space is larger than the bottom space
 			int totalheight = posy + AllEpisodes.Size() * spacing - topy;
 
-			if (totalheight < 190 || AllEpisodes.Size() == 1)
+			if (ld->mForceList || totalheight < 190 || AllEpisodes.Size() == 1)
 			{
-				int newtop = (200 - totalheight) / 2;
+				int newtop = max(10, 200 - totalheight) / 2;
 				int topdelta = newtop - topy;
 				if (topdelta < 0)
 				{
@@ -760,9 +760,9 @@ static void BuildPlayerclassMenu()
 				ld->mAutoselect = ld->mItems.Push(it);
 				success = true;
 			}
-			else if (totalheight <= 190)
+			else if (ld->mForceList || totalheight <= 190)
 			{
-				int newtop = (200 - totalheight + topy) / 2;
+				int newtop = (max(10, 200 - totalheight) + topy) / 2;
 				int topdelta = newtop - topy;
 				if (topdelta < 0)
 				{
@@ -1146,9 +1146,9 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				// center the menu on the screen if the top space is larger than the bottom space
 				int totalheight = posy + MenuSkills.Size() * spacing - topy;
 
-				if (totalheight < 190 || MenuSkills.Size() == 1)
+				if (ld->mForceList || totalheight < 190 || MenuSkills.Size() == 1)
 				{
-					int newtop = (200 - totalheight) / 2;
+					int newtop = max(10, 200 - totalheight) / 2;
 					int topdelta = newtop - topy;
 					if (topdelta < 0)
 					{

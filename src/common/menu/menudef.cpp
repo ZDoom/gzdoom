@@ -419,6 +419,10 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 				}
 			}
 		}
+		else if (sc.Compare("ForceList"))
+		{
+			desc->mForceList = true;
+		}
 		else
 		{
 			// all item classes from which we know that they support sized scaling.
@@ -759,6 +763,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 	desc->mVirtWidth = -2;
 	desc->mCustomSizeSet = false;
+	desc->mForceList = false;
 	if (DefaultListMenuSettings->mCustomSizeSet)
 	{
 		desc->mVirtHeight = DefaultListMenuSettings->mVirtHeight;
@@ -1028,13 +1033,19 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
 					TArray<VMValue> params;
+					int start = 1;
 
 					params.Push(0);
+					if (args.Size() > 1 && args[1] == NewPointer(PClass::FindClass("OptionMenuDescriptor")))
+					{
+						params.Push(desc);
+						start = 2;
+					}
 					auto TypeCVar = NewPointer(NewStruct("CVar", nullptr, true));
 
 					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
 					TArray<FString> strings(args.Size());
-					for (unsigned i = 1; i < args.Size(); i++)
+					for (unsigned i = start; i < args.Size(); i++)
 					{
 						sc.MustGetString();
 						if (args[i] == TypeString)
@@ -1049,6 +1060,24 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 						else if (args[i] == TypeColor)
 						{
 							params.Push(V_GetColor(sc));
+						}
+						else if (args[i] == TypeFont)
+						{
+							auto f = V_GetFont(sc.String);
+							if (f == nullptr)
+							{
+								sc.ScriptError("Unknown font %s", sc.String);
+							}
+							params.Push(f);
+						}
+						else if (args[i] == TypeTextureID)
+						{
+							auto f = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+							if (!f.Exists())
+							{
+								sc.ScriptMessage("Unknown texture %s", sc.String);
+							}
+							params.Push(f.GetIndex());
 						}
 						else if (args[i]->isIntCompatible())
 						{
@@ -1228,6 +1257,16 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 				ParseImageScrollerBody(sc, desc);
 			}
 		}
+		else if (sc.Compare("Class"))
+		{
+			sc.MustGetString();
+			PClass* cls = PClass::FindClass(sc.String);
+			if (cls == nullptr || !cls->IsDescendantOf("ImageScrollerMenu"))
+			{
+				sc.ScriptError("Unknown menu class '%s'", sc.String);
+			}
+			desc->mClass = cls;
+		}
 		else if (sc.Compare("animatedtransition"))
 		{
 			desc->mAnimatedTransition = true;
@@ -1299,6 +1338,24 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 						else if (args[i] == TypeColor)
 						{
 							params.Push(V_GetColor(sc));
+						}
+						else if (args[i] == TypeFont)
+						{
+							auto f = V_GetFont(sc.String);
+							if (f == nullptr)
+							{
+								sc.ScriptError("Unknown font %s", sc.String);
+							}
+							params.Push(f);
+						}
+						else if (args[i] == TypeTextureID)
+						{
+							auto f = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+							if (!f.Exists())
+							{
+								sc.ScriptMessage("Unknown texture %s", sc.String);
+							}
+							params.Push(f.GetIndex());
 						}
 						else if (args[i]->isIntCompatible())
 						{

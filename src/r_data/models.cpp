@@ -135,8 +135,15 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	angle += actor->SpriteRotation.Degrees();
 
 	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
-	objectToWorldMatrix.scale(1, stretch, 1);
+	float stretch = 1.f;
+
+	// [MK] distortions might happen depending on when the pixel stretch is compensated for
+	// so we make the "undistorted" behavior opt-in
+	if (smf->flags & MDL_CORRECTPIXELSTRETCH)
+	{
+		stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
+		objectToWorldMatrix.scale(1, stretch, 1);
+	}
 
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
@@ -172,6 +179,12 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	objectToWorldMatrix.rotate(-smf->angleoffset, 0, 1, 0);
 	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
+
+	if (!(smf->flags & MDL_CORRECTPIXELSTRETCH))
+	{
+		stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
+		objectToWorldMatrix.scale(1, stretch, 1);
+	}
 
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
@@ -845,6 +858,10 @@ static void ParseModelDefLump(int Lump)
 					smf.rotationCenterX = 0.;
 					smf.rotationCenterY = 0.;
 					smf.rotationCenterZ = 0.;
+				}
+				else if (sc.Compare("correctpixelstretch"))
+				{
+					smf.flags |= MDL_CORRECTPIXELSTRETCH;
 				}
 				else
 				{

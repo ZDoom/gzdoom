@@ -503,7 +503,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	{
 		mCastSounds[i].mSequence = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSequence;
 		mCastSounds[i].mIndex = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mIndex;
-		mCastSounds[i].mSound = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound;
+		mCastSounds[i].mSound = S_FindSound(static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound);
 	}
 	caststate = mDefaults->SeeState;
 	if (mClass->IsDescendantOf(NAME_PlayerPawn))
@@ -551,7 +551,7 @@ int DIntermissionScreenCast::Responder (FInputEvent *ev)
 
 		if (mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
-			auto snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
+			auto snd = S_FindSkinnedSound(players[consoleplayer].mo, S_FindSound("*death"));
 			if (snd != NO_SOUND) S_Sound (CHAN_VOICE, CHANF_UI, snd, 1, ATTN_NONE);
 		}
 		else if (mDefaults->DeathSound.isvalid())

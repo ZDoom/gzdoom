@@ -2161,7 +2161,7 @@ FUNC(LS_Light_Stop)
 FUNC(LS_Radius_Quake)
 // Radius_Quake (intensity, duration, damrad, tremrad, tid)
 {
-	return P_StartQuake (Level, it, arg4, arg0, arg1, arg2*64, arg3*64, "world/quake");
+	return P_StartQuake (Level, it, arg4, arg0, arg1, arg2*64, arg3*64, S_FindSound("world/quake"));
 }
 
 FUNC(LS_UsePuzzleItem)
@@ -3218,8 +3218,9 @@ FUNC(LS_SendToCommunicator)
 		if (it->CheckLocalView())
 		{
 			S_StopSound (CHAN_VOICE);
-			it->player->SetSubtitle(arg0, name);
-			S_Sound (CHAN_VOICE, 0, name, 1, ATTN_NORM);
+			auto snd = S_FindSound(name);
+			it->player->SetSubtitle(arg0, snd);
+			S_Sound (CHAN_VOICE, 0, snd, 1, ATTN_NORM);
 
 			// Get the message from the LANGUAGE lump.
 			FString msg;

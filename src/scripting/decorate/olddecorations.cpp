@@ -504,17 +504,17 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			sc.Compare ("DeathSound"))
 		{
 			sc.MustGetString ();
-			defaults->DeathSound = sc.String;
+			defaults->DeathSound = S_FindSound(sc.String);
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnDeathSound"))
 		{
 			sc.MustGetString ();
-			defaults->ActiveSound = sc.String;
+			defaults->ActiveSound = S_FindSound(sc.String);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("SpawnSound"))
 		{
 			sc.MustGetString ();
-			defaults->SeeSound = sc.String;
+			defaults->SeeSound = S_FindSound(sc.String);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoomBounce"))
 		{

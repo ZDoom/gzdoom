@@ -467,7 +467,7 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 		}
 		else if (f->Type == TypeSound)
 		{
-			*(FSoundID*)addr = GetStringConst(ex, ctx);
+			*(FSoundID*)addr = S_FindSound(GetStringConst(ex, ctx));
 		}
 		else if (f->Type == TypeColor && ex->ValueType == TypeString)	// colors can also be specified as ints.
 		{

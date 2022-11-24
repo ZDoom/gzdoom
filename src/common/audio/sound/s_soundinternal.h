@@ -34,14 +34,6 @@ public:
 	{
 		return FSoundID(i);
 	}
-	FSoundID(const char *name)
-	{
-		ID = GetSoundIndex(name);
-	}
-	FSoundID(const FString &name)
-	{
-		ID = GetSoundIndex(name.GetChars());
-	}
 	FSoundID(const FSoundID &other) = default;
 	FSoundID &operator=(const FSoundID &other) = default;
 	bool operator !=(FSoundID other) const
@@ -63,7 +55,6 @@ public:
 		return ID > 0;
 	}
 private:
-	static inline int GetSoundIndex(const char* name);
 
 	int ID;
 };
@@ -223,8 +214,6 @@ private:
 	// Checks if a copy of this sound is already playing.
 	bool CheckSingular(FSoundID sound_id);
 	virtual TArray<uint8_t> ReadSound(int lumpnum) = 0;
-	int GetSoundIndex(const char* logicalname);	// this is only for setting up FSoundID
-	friend class FSoundID;
 
 protected:
 	virtual bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel, float attenuation);
@@ -398,10 +387,7 @@ public:
 	virtual void SoundDone(FISoundChannel* ichan); // gets called when the sound has been completely taken down.
 
 	// Lookup utilities.
-	inline FSoundID FindSound(const char* logicalname)
-	{
-		return FSoundID::fromInt(GetSoundIndex(logicalname));
-	}
+	FSoundID FindSound(const char* logicalname);
 	FSoundID FindSoundByResID(int rid);
 	FSoundID FindSoundNoHash(const char* logicalname);
 	FSoundID FindSoundByLump(int lump);
@@ -434,11 +420,6 @@ inline FSoundID S_FindSoundByResID(int ndx)
 inline FSoundID S_FindSound(const char* name)
 {
 	return soundEngine->FindSound(name);
-}
-
-inline int FSoundID::GetSoundIndex(const char* name)
-{
-	return soundEngine->GetSoundIndex(name);
 }
 
 int SoundEnabled();

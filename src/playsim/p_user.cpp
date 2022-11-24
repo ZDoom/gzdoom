@@ -908,7 +908,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
 		self->Vel.Z <= -39)
 	{
-		sound = S_FindSkinnedSound (self, "*splat");
+		sound = S_FindSkinnedSound (self, S_FindSound("*splat"));
 		chan = CHAN_BODY;
 	}
 
@@ -1169,7 +1169,7 @@ void P_CheckEnvironment(player_t *player)
 		player->mo->Vel.Z >= -player->mo->FloatVar(NAME_FallingScreamMaxSpeed) && !player->morphTics &&
 		player->mo->waterlevel == 0)
 	{
-		auto id = S_FindSkinnedSound(player->mo, "*falling");
+		auto id = S_FindSkinnedSound(player->mo, S_FindSound("*falling"));
 		if (id != NO_SOUND && !S_IsActorPlayingSomething(player->mo, CHAN_VOICE, id))
 		{
 			S_Sound(player->mo, CHAN_VOICE, 0, id, 1, ATTN_NORM);

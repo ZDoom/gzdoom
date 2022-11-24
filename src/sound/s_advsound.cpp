@@ -1514,11 +1514,11 @@ FSoundID S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *exte
 	fullname = name;
 	fullname += '-';
 	fullname += extendedname;
-	FSoundID id = fullname;
+	FSoundID id = S_FindSound(fullname);
 
 	if (!id.isvalid())
 	{ // Look for "name"
-		id = name;
+		id = S_FindSound(name);
 	}
 	return S_FindSkinnedSound (actor, id);
 }

@@ -1386,7 +1386,7 @@ CCMD (playsound)
 {
 	if (argv.argc() > 1)
 	{
-		FSoundID id = argv[1];
+		FSoundID id = S_FindSound(argv[1]);
 		if (!id.isvalid())
 		{
 			Printf("'%s' is not a sound\n", argv[1]);
@@ -1408,7 +1408,7 @@ CCMD (loopsound)
 {
 	if (players[consoleplayer].mo != nullptr && !netgame && argv.argc() > 1)
 	{
-		FSoundID id = argv[1];
+		FSoundID id = S_FindSound(argv[1]);
 		if (!id.isvalid())
 		{
 			Printf("'%s' is not a sound\n", argv[1]);

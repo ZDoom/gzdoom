@@ -404,7 +404,7 @@ void DActiveButton::Tick ()
 			{
 				m_Frame = -1;
 				S_Sound (Level, DVector3(m_Pos, 0), CHAN_VOICE, CHANF_LISTENERZ,
-					def->Sound != NO_SOUND ? FSoundID(def->Sound) : FSoundID("switches/normbutn"),
+					def->Sound != NO_SOUND ? FSoundID(def->Sound) : S_FindSound("switches/normbutn"),
 					1, ATTN_STATIC);
 				bFlippable = false;
 			}

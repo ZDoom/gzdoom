@@ -1394,7 +1394,7 @@ static int PatchThing (int thingy)
 					{ // Sound was not a (valid) number,
 						// so treat it as an actual sound name.
 						stripwhite (Line2);
-						snd = Line2;
+						snd = S_FindSound(Line2);
 					}
 				}
 				else

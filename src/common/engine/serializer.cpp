@@ -1354,7 +1354,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 			assert(val->IsString() || val->IsNull());
 			if (val->IsString())
 			{
-				sid = UnicodeToString(val->GetString());
+				sid = S_FindSound(UnicodeToString(val->GetString()));
 			}
 			else if (val->IsNull())
 			{

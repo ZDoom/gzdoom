@@ -242,7 +242,7 @@ FSwitchDef *FTextureAnimator::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				sc.ScriptError ("Switch state already has a sound");
 			}
 			sc.MustGetString ();
-			sound = sc.String;
+			sound = S_FindSound(sc.String);
 		}
 		else if (sc.Compare ("pic"))
 		{

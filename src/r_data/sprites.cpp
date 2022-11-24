@@ -583,7 +583,7 @@ void R_InitSkins (void)
 
 	for (j = 0; j < NUMSKINSOUNDS; ++j)
 	{
-		playersoundrefs[j] = skinsoundnames[j][1];
+		playersoundrefs[j] = S_FindSound(skinsoundnames[j][1]);
 	}
 
 	while ((base = fileSystem.FindLump ("S_SKIN", &lastlump, true)) != -1)

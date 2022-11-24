@@ -2836,7 +2836,7 @@ bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nu
 						self->SetState(archvile->FindState(NAME_Heal));
 					}
 				}
-				if (sound == NO_SOUND) sound = "vile/raise";
+				if (sound == NO_SOUND) sound = S_FindSound("vile/raise");
 				S_Sound(corpsehit, CHAN_BODY, 0, sound, 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
@@ -3131,18 +3131,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 			FString pain_sound = pain_amount;
 			pain_sound += '-';
 			pain_sound += self->player->LastDamageType.GetChars();
-			sfx_id = pain_sound;
+			sfx_id = S_FindSound(pain_sound);
 			if (sfx_id == NO_SOUND)
 			{
 				// Try again without a specific pain amount.
 				pain_sound = "*pain-";
 				pain_sound += self->player->LastDamageType.GetChars();
-				sfx_id = pain_sound;
+				sfx_id = S_FindSound(pain_sound);
 			}
 		}
 		if (sfx_id == NO_SOUND)
 		{
-			sfx_id = pain_amount;
+			sfx_id = S_FindSound(pain_amount);
 		}
 
 		S_Sound (self, CHAN_VOICE, 0, sfx_id, 1, ATTN_NORM);

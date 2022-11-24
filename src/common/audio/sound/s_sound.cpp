@@ -1463,7 +1463,7 @@ void SoundEngine::Reset()
 // Given a logical name, find the sound's index in S_sfx.
 //==========================================================================
 
-int SoundEngine::GetSoundIndex(const char* logicalname)
+FSoundID SoundEngine::FindSound(const char* logicalname)
 {
 	int i;
 
@@ -1474,11 +1474,11 @@ int SoundEngine::GetSoundIndex(const char* logicalname)
 		while ((i != 0) && stricmp(S_sfx[i].name, logicalname))
 			i = S_sfx[i].next;
 
-		return i;
+		return FSoundID::fromInt(i);
 	}
 	else
 	{
-		return 0;
+		return NO_SOUND;
 	}
 }
 

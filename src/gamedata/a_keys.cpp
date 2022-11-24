@@ -254,8 +254,8 @@ static void ParseLock(FScanner &sc, int &currentnumber)
 
 	auto lock = keynum == -1? &sink : &Locks.InsertNew(keynum);
 
-	lock->locksound.Push("*keytry");
-	lock->locksound.Push("misc/keytry");
+	lock->locksound.Push(S_FindSound("*keytry"));
+	lock->locksound.Push(S_FindSound("misc/keytry"));
 
 	while (!sc.CheckString("}"))
 	{
@@ -298,7 +298,7 @@ static void ParseLock(FScanner &sc, int &currentnumber)
 			for (;;)
 			{
 				sc.MustGetString();
-				lock->locksound.Push(sc.String);
+				lock->locksound.Push(S_FindSound(sc.String));
 				if (!sc.GetString())
 				{
 					break;
@@ -469,7 +469,7 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 	// Just a safety precaution. The messages should have been initialized upon game start.
 	if (!keysdone) P_InitKeyMessages();
 
-	FSoundID failage[2] = { "*keytry", "misc/keytry" };
+	FSoundID failage[2] = { S_FindSound("*keytry"), S_FindSound("misc/keytry") };
 
 	auto lock = Locks.CheckKey(keynum);
 	if (!lock) 

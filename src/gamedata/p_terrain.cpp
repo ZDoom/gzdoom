@@ -537,7 +537,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 
 		case GEN_Sound:
 			sc.MustGetString ();
-			SET_FIELD (FSoundID, FSoundID(sc.String));
+			SET_FIELD (FSoundID, S_FindSound(sc.String));
 			/* unknown sounds never produce errors anywhere else so they shouldn't here either.
 			if (val == 0)
 			{

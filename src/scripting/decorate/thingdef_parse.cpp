@@ -144,7 +144,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type)
 	if (type == TypeSound)
 	{
 		sc.MustGetString();
-		x = new FxConstant(FSoundID(sc.String), sc);
+		x = new FxConstant(S_FindSound(sc.String), sc);
 	}
 	else if (type == TypeBool || type == TypeSInt32 || type == TypeFloat64)
 	{
@@ -879,7 +879,7 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		else if (f->Type == TypeSound)
 		{
 			sc.MustGetString();
-			*(FSoundID*)addr = sc.String;
+			*(FSoundID*)addr = S_FindSound(sc.String);
 		}
 		else if (f->Type == TypeColor)
 		{

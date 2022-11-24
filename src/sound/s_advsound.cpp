@@ -163,7 +163,7 @@ struct FSavedPlayerSoundInfo
 {
 	FName pclass;
 	int gender;
-	int refid;
+	FSoundID refid;
 	int lumpnum;
 	bool alias;
 };
@@ -180,8 +180,8 @@ extern bool IsFloat (const char *str);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int SortPlayerClasses (const void *a, const void *b);
-static int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref);
-static void S_SavePlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool alias);
+static FSoundID S_DupPlayerSound (const char *pclass, int gender, FSoundID refid, FSoundID aliasref);
+static void S_SavePlayerSound (const char *pclass, int gender, FSoundID refid, int lumpnum, bool alias);
 static void S_RestorePlayerSounds();
 static int S_AddPlayerClass (const char *name);
 static int S_AddPlayerGender (int classnum, int gender);
@@ -468,8 +468,7 @@ static FSoundID S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 // Adds the given sound lump to the player sound lists.
 //==========================================================================
 
-int S_AddPlayerSound (const char *pclass, int gender, int refid,
-	const char *lumpname)
+int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, const char *lumpname)
 {
 	int lump=-1;
 	
@@ -481,7 +480,7 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	return S_AddPlayerSound (pclass, gender, refid, lump);
 }
 
-int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool fromskin)
+int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int lumpnum, bool fromskin)
 {
 	FString fakename;
 	int id;
@@ -513,7 +512,7 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bo
 // Adds the player sound as an alias to an existing sound.
 //==========================================================================
 
-int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid, int aliasto, bool fromskin)
+int S_AddPlayerSoundExisting (const char *pclass, int gender, FSoundID refid, FSoundID aliasto, bool fromskin)
 {
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
@@ -522,7 +521,7 @@ int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid, int ali
 
 	PlayerSounds[soundlist].AddSound (sfx->link, aliasto);
 
-	if (fromskin) S_SavePlayerSound(pclass, gender, refid, aliasto, true);
+	if (fromskin) S_SavePlayerSound(pclass, gender, refid, aliasto.index(), true);
 
 	return aliasto;
 }
@@ -534,7 +533,7 @@ int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid, int ali
 // Adds a player sound that uses the same sound as an existing player sound.
 //==========================================================================
 
-int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
+FSoundID S_DupPlayerSound (const char *pclass, int gender, FSoundID refid, FSoundID aliasref)
 {
 	int aliasto = S_LookupPlayerSound (pclass, gender, aliasref);
 	return S_AddPlayerSoundExisting (pclass, gender, refid, aliasto);
@@ -1369,7 +1368,7 @@ static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 //
 //==========================================================================
 
-static void S_SavePlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool alias)
+static void S_SavePlayerSound (const char *pclass, int gender, FSoundID refid, int lumpnum, bool alias)
 {
 	FSavedPlayerSoundInfo spi;
 
@@ -1388,7 +1387,7 @@ static void S_RestorePlayerSounds()
 		FSavedPlayerSoundInfo * spi = &SavedPlayerSounds[i];
 		if (spi->alias)
 		{
-			S_AddPlayerSoundExisting(spi->pclass.GetChars(), spi->gender, spi->refid, spi->lumpnum);
+			S_AddPlayerSoundExisting(spi->pclass.GetChars(), spi->gender, spi->refid, FSoundID::fromInt(spi->lumpnum));
 		}
 		else
 		{

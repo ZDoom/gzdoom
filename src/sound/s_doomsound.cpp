@@ -413,7 +413,7 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 	PARAM_FLOAT(attn);
 	PARAM_FLOAT(pitch);
 	PARAM_FLOAT(startTime);
-	S_SoundPitch(channel & 7, EChanFlags::FromInt(channel & ~7), id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
+	S_SoundPitch(channel & 7, EChanFlags::FromInt(channel & ~7), FSoundID::fromInt(id), static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
 	return 0;
 }
 
@@ -427,7 +427,7 @@ DEFINE_ACTION_FUNCTION(DObject, S_StartSound)
 	PARAM_FLOAT(attn);
 	PARAM_FLOAT(pitch);
 	PARAM_FLOAT(startTime);
-	S_SoundPitch(channel, EChanFlags::FromInt(flags), id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
+	S_SoundPitch(channel, EChanFlags::FromInt(flags), FSoundID::fromInt(id), static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
 	return 0;
 }
 
@@ -620,7 +620,7 @@ void S_PlaySound(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol,
 
 void A_StartSound(AActor *self, int soundid, int channel, int flags, double volume, double attenuation, double pitch, double startTime)
 {
-	S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), soundid, (float)volume, (float)attenuation, (float)pitch, (float)startTime);
+	S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), FSoundID::fromInt(soundid), (float)volume, (float)attenuation, (float)pitch, (float)startTime);
 }
 
 void A_PlaySound(AActor* self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch)
@@ -727,17 +727,17 @@ void S_ChangeActorSoundPitch(AActor *actor, int channel, double pitch)
 // Is a sound being played by a specific emitter?
 //==========================================================================
 
-bool S_GetSoundPlayingInfo (const AActor *actor, int sound_id)
+bool S_GetSoundPlayingInfo (const AActor *actor, FSoundID sound_id)
 {
 	return soundEngine->GetSoundPlayingInfo(SOURCE_Actor, actor, sound_id);
 }
 
-bool S_GetSoundPlayingInfo (const sector_t *sec, int sound_id)
+bool S_GetSoundPlayingInfo (const sector_t *sec, FSoundID sound_id)
 {
 	return soundEngine->GetSoundPlayingInfo(SOURCE_Sector, sec, sound_id);
 }
 
-bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id)
+bool S_GetSoundPlayingInfo (const FPolyObj *poly, FSoundID sound_id)
 {
 	return soundEngine->GetSoundPlayingInfo(SOURCE_Polyobj, poly, sound_id);
 }
@@ -748,7 +748,7 @@ bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id)
 //
 //==========================================================================
 
-int S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id)
+bool S_IsActorPlayingSomething (AActor *actor, int channel, FSoundID sound_id)
 {
 	if (compatflags & COMPATF_MAGICSILENCE)
 	{

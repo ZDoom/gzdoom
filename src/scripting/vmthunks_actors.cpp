@@ -208,8 +208,8 @@ void A_StartSoundIfNotSame(AActor *self, int soundid, int checksoundid, int chan
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSoundIfNotSame, A_StartSoundIfNotSame)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_SOUND(soundid);
-	PARAM_SOUND(checksoundid);
+	PARAM_INT(soundid);
+	PARAM_INT(checksoundid);
 	PARAM_INT(channel);
 	PARAM_INT(flags);
 	PARAM_FLOAT(volume);
@@ -220,7 +220,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSoundIfNotSame, A_StartSoundIfNotSa
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
+// direct native scripting export.
+static int S_IsActorPlayingSomethingID(AActor* actor, int channel, int sound_id)
+{
+	return S_IsActorPlayingSomething(actor, channel, FSoundID::fromInt(sound_id));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomethingID)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);

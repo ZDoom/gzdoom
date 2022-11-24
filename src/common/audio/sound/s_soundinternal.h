@@ -27,10 +27,6 @@ class FSoundID
 public:
 	FSoundID() = default;
 
-	static FSoundID byResId(int ndx)
-	{
-		return FSoundID(S_FindSoundByResID(ndx)); 
-	}
 	constexpr FSoundID(int id) : ID(id)
 	{
 	}

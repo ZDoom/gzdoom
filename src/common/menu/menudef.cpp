@@ -358,6 +358,14 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 		{
 			desc->mAnimated = true;
 		}
+		else if (sc.Compare("DontDim"))
+		{
+			desc->mDontDim = true;
+		}
+		else if (sc.Compare("DontBlur"))
+		{
+			desc->mDontBlur = true;
+		}
 		else if (sc.Compare("MouseWindow"))
 		{
 			sc.MustGetNumber();
@@ -763,6 +771,10 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 	desc->mVirtWidth = -2;
 	desc->mCustomSizeSet = false;
+	desc->mAnimatedTransition = false;
+	desc->mAnimated = false;
+	desc->mDontDim = false;
+	desc->mDontBlur = false;
 	desc->mForceList = false;
 	if (DefaultListMenuSettings->mCustomSizeSet)
 	{
@@ -1020,6 +1032,22 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 			sc.MustGetNumber();
 			desc->mIndent = sc.Number;
 		}
+		else if (sc.Compare("AnimatedTransition"))
+		{
+			desc->mAnimatedTransition = true;
+		}
+		else if (sc.Compare("Animated"))
+		{
+			desc->mAnimated = true;
+		}
+		else if (sc.Compare("DontDim"))
+		{
+			desc->mDontDim = true;
+		}
+		else if (sc.Compare("DontBlur"))
+		{
+			desc->mDontBlur = true;
+		}
 		else
 		{
 			bool success = false;
@@ -1189,7 +1217,10 @@ static void ParseOptionMenu(FScanner &sc)
 	desc->mPosition = DefaultOptionMenuSettings->mPosition;
 	desc->mScrollTop = DefaultOptionMenuSettings->mScrollTop;
 	desc->mIndent =  DefaultOptionMenuSettings->mIndent;
-	desc->mDontDim =  DefaultOptionMenuSettings->mDontDim;
+	desc->mDontDim = false;
+	desc->mDontBlur = false;
+	desc->mAnimatedTransition = false;
+	desc->mAnimated = false;
 	desc->mProtected = sc.CheckString("protected");
 
 	ParseOptionMenuBody(sc, desc, -1);
@@ -1274,6 +1305,14 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 		else if (sc.Compare("animated"))
 		{
 			desc->mAnimated = true;
+		}
+		else if (sc.Compare("DontDim"))
+		{
+			desc->mDontDim = true;
+		}
+		else if (sc.Compare("DontBlur"))
+		{
+			desc->mDontBlur = true;
 		}
 		else if (sc.Compare("textBackground"))
 		{
@@ -1450,7 +1489,10 @@ static void ParseImageScroller(FScanner& sc)
 	desc->textBackgroundBrightness = 0xffffffff;
 	desc->textFont = SmallFont;
 	desc->textScale = 1;
+	desc->mDontDim = false;
+	desc->mDontBlur = false;
 	desc->mAnimatedTransition = false;
+	desc->mAnimated = false;
 	desc->virtWidth = 320;
 	desc->virtHeight = 200;
 

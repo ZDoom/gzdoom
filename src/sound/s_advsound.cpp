@@ -186,12 +186,12 @@ static void S_RestorePlayerSounds();
 static int S_AddPlayerClass (const char *name);
 static int S_AddPlayerGender (int classnum, int gender);
 static int S_FindPlayerClass (const char *name);
-static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid);
+static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid);
 static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender, int &refid);
 static void S_AddSNDINFO (int lumpnum);
 static void S_AddBloodSFX (int lumpnum);
 static void S_AddStrifeVoice (int lumpnum);
-static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc=NULL);
+static FSoundID S_AddSound (const char *logicalname, int lumpnum, FScanner *sc=NULL);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -406,13 +406,13 @@ DEFINE_ACTION_FUNCTION(DObject,S_GetLength)
 // lump. Otherwise, adds the new mapping by using S_AddSoundLump().
 //==========================================================================
 
-int S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc)
+FSoundID S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc)
 {
 	int lump = fileSystem.CheckNumForFullName (lumpname, true, ns_sounds);
 	return S_AddSound (logicalname, lump);
 }
 
-static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
+static FSoundID S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 {
 	FSoundID sfxid = soundEngine->FindSoundNoHash (logicalname);
 
@@ -635,7 +635,7 @@ void S_AddLocalSndInfo(int lump)
 static void S_AddSNDINFO (int lump)
 {
 	bool skipToEndIf;
-	TArray<uint32_t> list;
+	TArray<FSoundID> list;
 	int wantassigns = -1;
 
 	FScanner sc(lump);
@@ -804,7 +804,7 @@ static void S_AddSNDINFO (int lump)
 				// $playercompat <player class> <gender> <logical name> <compat sound name>
 				FString pclass;
 				int gender, refid;
-				int sfxfrom, aliasto;
+				FSoundID sfxfrom, aliasto;
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				sfxfrom = S_AddSound (sc.String, -1, &sc);
@@ -839,7 +839,7 @@ static void S_AddSNDINFO (int lump)
 				{
 					sfxfrom = sfx->link;
 				}
-				sfx->link = soundEngine->FindSoundTentative (sc.String);
+				sfx->link = FSoundID::fromInt(soundEngine->FindSoundTentative (sc.String));
 				sfx->NearLimit = -1;	// Aliases must use the original sound's limit.
 				}
 				break;
@@ -1155,7 +1155,7 @@ static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender
 	}
 	if (sfx->bTentative)
 	{
-		sfx->link = NumPlayerReserves++;
+		sfx->link = FSoundID::fromInt(NumPlayerReserves++);
 		sfx->bTentative = false;
 		sfx->UserData[0] |= SND_PlayerReserve;
 	}
@@ -1293,17 +1293,7 @@ static int SortPlayerClasses (const void *a, const void *b)
 // Returns the sound for the given player class, gender, and sound name.
 //==========================================================================
 
-int S_LookupPlayerSound (const char *pclass, int gender, const char *name)
-{
-	int refid = S_FindSound (name);
-	if (refid != 0)
-	{
-		refid = S_LookupPlayerSound (pclass, gender, refid);
-	}
-	return refid;
-}
-
-int S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
+FSoundID S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
 {
 	auto sfxp = soundEngine->GetWritableSfx(refid);
 
@@ -1315,7 +1305,7 @@ int S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
 	return S_LookupPlayerSound (S_FindPlayerClass (pclass), gender, refid);
 }
 
-static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
+static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 {
 	int ingender = gender;
 
@@ -1414,12 +1404,7 @@ static void S_RestorePlayerSounds()
 // Returns true if two sounds are essentially the same thing
 //==========================================================================
 
-bool S_AreSoundsEquivalent (AActor *actor, const char *name1, const char *name2)
-{
-	return S_AreSoundsEquivalent (actor, S_FindSound (name1), S_FindSound (name2));
-}
-
-bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
+bool S_AreSoundsEquivalent (AActor *actor, FSoundID id1, FSoundID id2)
 {
 	sfxinfo_t *sfx;
 
@@ -1494,7 +1479,7 @@ const char *S_GetSoundClass(AActor *pp)
 // Calls S_LookupPlayerSound, deducing the class and gender from actor.
 //==========================================================================
 
-int S_FindSkinnedSound (AActor *actor, FSoundID refid)
+FSoundID S_FindSkinnedSound (AActor *actor, FSoundID refid)
 {
 	const char *pclass;
 	int gender = 0;

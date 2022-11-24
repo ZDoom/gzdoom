@@ -738,7 +738,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 				(!sfx->bLoadRAW || (sfx->RawRate == S_sfx[i].RawRate)))	// Raw sounds with different sample rates may not share buffers, even if they use the same source data.
 			{
 				DPrintf (DMSG_NOTIFY, "Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
-				sfx->link = i;
+				sfx->link = FSoundID::fromInt(i);
 				// This is necessary to avoid using the rolloff settings of the linked sound if its
 				// settings are different.
 				if (sfx->Rolloff.MinDistance == 0) sfx->Rolloff = S_Rolloff;
@@ -1695,13 +1695,13 @@ void SoundEngine::HashSounds()
 	S_rnd.ShrinkToFit();
 }
 
-void SoundEngine::AddRandomSound(int Owner, TArray<uint32_t> list)
+void SoundEngine::AddRandomSound(FSoundID Owner, TArray<FSoundID> list)
 {
 	auto index = S_rnd.Reserve(1);
 	auto& random = S_rnd.Last();
 	random.Choices = std::move(list);
 	random.Owner = Owner;
-	S_sfx[Owner].link = index;
+	S_sfx[Owner].link = FSoundID::fromInt(index);
 	S_sfx[Owner].bRandomHeader = true;
 	S_sfx[Owner].NearLimit = -1;
 }

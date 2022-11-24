@@ -2,59 +2,12 @@
 
 #include "i_sound.h"
 
-struct FRandomSoundList
-{
-	TArray<uint32_t> Choices;
-	uint32_t Owner = 0;
-};
-
 enum
 {
 	sfx_empty = -1
 };
 
 
-
-//
-// SoundFX struct.
-//
-struct sfxinfo_t
-{
-	// Next field is for use by the system sound interface.
-	// A non-null data means the sound has been loaded.
-	SoundHandle	data{};
-
-	FString		name;								// [RH] Sound name defined in SNDINFO
-	int 		lumpnum = sfx_empty;				// lump number of sfx
-
-	unsigned int next = -1, index = 0;				// [RH] For hashing
-	float		Volume = 1.f;
-
-	int			ResourceId = -1;					// Resource ID as implemented by Blood. Not used by Doom but added for completeness.
-	float		LimitRange = 256*256;				// Range for sound limiting (squared for faster computations)
-	float		DefPitch = 0.f;						// A defined pitch instead of a random one the sound plays at, similar to A_StartSound.
-	float		DefPitchMax = 0.f;					// Randomized range with stronger control over pitch itself.
-
-	int16_t		NearLimit = 4;						// 0 means unlimited.
-	uint8_t		PitchMask = 0;
-	bool		bRandomHeader = false;
-	bool		bLoadRAW = false;
-	bool		b16bit = false;
-	bool		bUsed = false;
-	bool		bSingular = false;
-	bool		bTentative = true;
-
-	TArray<int> UserData;
-
-	int			RawRate = 0;				// Sample rate to use when bLoadRAW is true
-	int			LoopStart = -1;				// -1 means no specific loop defined
-
-	unsigned int link = NO_LINK;;
-	enum { NO_LINK = 0xffffffff };
-
-	FRolloffInfo	Rolloff{};
-	float		Attenuation = 1.f;			// Multiplies the attenuation passed to S_Sound.
-};
 
 // Rolloff types
 enum
@@ -78,9 +31,12 @@ public:
 	{
 		return FSoundID(S_FindSoundByResID(ndx)); 
 	}
-	FSoundID(int id)
+	constexpr FSoundID(int id) : ID(id)
 	{
-		ID = id;
+	}
+	static constexpr FSoundID fromInt(int i)
+	{
+		return FSoundID(i);
 	}
 	FSoundID(const char *name)
 	{
@@ -118,20 +74,64 @@ public:
 	{
 		return ID;
 	}
+	constexpr bool isvalid() const
+	{
+		return ID > 0;
+	}
 private:
 	int ID;
-protected:
-	enum EDummy { NoInit };
-	FSoundID(EDummy) {}
 };
 
- class FSoundIDNoInit : public FSoundID
-{
-public:
-	FSoundIDNoInit() : FSoundID(NoInit) {}
-	using FSoundID::operator=;
-};
+ struct FRandomSoundList
+ {
+	 TArray<FSoundID> Choices;
+	 FSoundID Owner = 0;
+ };
 
+
+ //
+// SoundFX struct.
+//
+ struct sfxinfo_t
+ {
+	 // Next field is for use by the system sound interface.
+	 // A non-null data means the sound has been loaded.
+	 SoundHandle	data{};
+
+	 FString		name;								// [RH] Sound name defined in SNDINFO
+	 int 		lumpnum = sfx_empty;				// lump number of sfx
+
+	 unsigned int next = -1, index = 0;				// [RH] For hashing
+	 float		Volume = 1.f;
+
+	 int			ResourceId = -1;					// Resource ID as implemented by Blood. Not used by Doom but added for completeness.
+	 float		LimitRange = 256 * 256;				// Range for sound limiting (squared for faster computations)
+	 float		DefPitch = 0.f;						// A defined pitch instead of a random one the sound plays at, similar to A_StartSound.
+	 float		DefPitchMax = 0.f;					// Randomized range with stronger control over pitch itself.
+
+	 int16_t		NearLimit = 4;						// 0 means unlimited.
+	 uint8_t		PitchMask = 0;
+	 bool		bRandomHeader = false;
+	 bool		bLoadRAW = false;
+	 bool		b16bit = false;
+	 bool		bUsed = false;
+	 bool		bSingular = false;
+	 bool		bTentative = true;
+
+	 TArray<int> UserData;
+
+	 int			RawRate = 0;				// Sample rate to use when bLoadRAW is true
+	 int			LoopStart = -1;				// -1 means no specific loop defined
+
+	 FSoundID link = NO_LINK;
+	 constexpr static FSoundID NO_LINK = FSoundID::fromInt(-1);
+
+	 FRolloffInfo	Rolloff{};
+	 float		Attenuation = 1.f;			// Multiplies the attenuation passed to S_Sound.
+ };
+
+ constexpr FSoundID NO_SOUND = FSoundID::fromInt(0);
+ constexpr FSoundID INVALID_SOUND = FSoundID::fromInt(-1);
 
 
 struct FSoundChan : public FISoundChannel
@@ -418,7 +418,7 @@ public:
 	unsigned int GetMSLength(FSoundID sound);
 	int PickReplacement(int refid);
 	void HashSounds();
-	void AddRandomSound(int Owner, TArray<uint32_t> list);
+	void AddRandomSound(FSoundID Owner, TArray<FSoundID> list);
 };
 
 

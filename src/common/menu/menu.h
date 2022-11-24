@@ -91,6 +91,8 @@ public:
 	bool mFromEngine;
 	bool mAnimated;
 	bool mAnimatedTransition;
+	bool mDontDim;
+	bool mDontBlur;
 	int mVirtWidth;
 	int mVirtHeight;
 	bool mCustomSizeSet;
@@ -124,6 +126,9 @@ public:
 	int mIndent;
 	int mPosition;
 	bool mDontDim;
+	bool mDontBlur;
+	bool mAnimatedTransition;
+	bool mAnimated;
 	FFont *mFont;
 
 	void CalcIndent();
@@ -143,6 +148,8 @@ public:
 	double textScale;
 	bool mAnimatedTransition;
 	bool mAnimated;
+	bool mDontDim;
+	bool mDontBlur;
 	int virtWidth, virtHeight;
 
 };

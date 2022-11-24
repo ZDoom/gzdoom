@@ -57,6 +57,8 @@ class ListMenuDescriptor : MenuDescriptor native
 	native bool mCenter;
 	native bool mAnimatedTransition;
 	native bool mAnimated;
+	native bool mDontBlur;
+	native bool mDontDim;
 	native int mVirtWidth, mVirtHeight;
 
 	native void Reset();
@@ -89,6 +91,8 @@ class ListMenu : Menu
 		mDesc = desc;
 		AnimatedTransition = mDesc.mAnimatedTransition;
 		Animated = mDesc.mAnimated;
+		DontBlur = mDesc.mDontBlur;
+		DontDim = mDesc.mDontDim;
 		if (desc.mCenter)
 		{
 			double center = 160;

@@ -228,3 +228,9 @@ TArray<FString> I_GetSteamPath()
 
 	return result;
 }
+
+TArray<FString> I_GetGogPaths()
+{
+	// GOG's Doom games are Windows only at the moment
+	return TArray<FString>();
+}

@@ -723,16 +723,17 @@ ExpEmit FxVectorValue::Emit(VMFunctionBuilder *build)
 	{
 		if (e) vectorElements++;
 	}
-	assert(vectorElements > 0);
+	assert(vectorElements > 0 && vectorElements <= 4);
 
-	ExpEmit* tempVal = (ExpEmit*)calloc(vectorElements, sizeof(ExpEmit));
-	ExpEmit* val = (ExpEmit*)calloc(vectorElements, sizeof(ExpEmit));
+	// We got at most 4 elements
+	ExpEmit tempVal[4];
+	ExpEmit val[4];
 
 	// Init ExpEmit
 	for (int i = 0; i < vectorElements; ++i)
 	{
-		new(tempVal + i) ExpEmit(xyzw[i]->Emit(build));
-		new(val + i) ExpEmit(EmitKonst(build, tempVal[i]));
+		tempVal[i] = ExpEmit(xyzw[i]->Emit(build));
+		val[i] = EmitKonst(build, tempVal[i]);
 	}
 
 	{

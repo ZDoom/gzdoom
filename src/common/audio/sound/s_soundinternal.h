@@ -44,16 +44,6 @@ public:
 	}
 	FSoundID(const FSoundID &other) = default;
 	FSoundID &operator=(const FSoundID &other) = default;
-	FSoundID &operator=(const char *name)
-	{
-		ID = GetSoundIndex(name);
-		return *this;
-	}
-	FSoundID &operator=(const FString &name)
-	{
-		ID = GetSoundIndex(name.GetChars());
-		return *this;
-	}
 	bool operator !=(FSoundID other) const
 	{
 		return ID != other.ID;

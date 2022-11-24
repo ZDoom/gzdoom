@@ -3489,7 +3489,7 @@ bool FSlide::BounceWall(AActor *mo)
 
 	if (line->special == Line_Horizon || ((mo->BounceFlags & BOUNCE_NotOnSky) && line->hitSkyWall(mo)))
 	{
-		mo->SeeSound = mo->BounceSound = 0;	// it might make a sound otherwise
+		mo->SeeSound = mo->BounceSound = NO_SOUND;	// it might make a sound otherwise
 		mo->Destroy();
 		return true;
 	}

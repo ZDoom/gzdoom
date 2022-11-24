@@ -355,7 +355,7 @@ static void ParseOuter (FScanner &sc)
 static void SetSplashDefaults (FSplashDef *splashdef)
 {
 	splashdef->SmallSplashSound =
-		splashdef->NormalSplashSound = 0;
+		splashdef->NormalSplashSound = NO_SOUND;
 	splashdef->SmallSplash =
 		splashdef->SplashBase =
 		splashdef->SplashChunk = NULL;

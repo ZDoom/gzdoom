@@ -419,7 +419,7 @@ FStrifeDialogueNode *MapLoader::ReadTeaserNode (const char *name, FileReader &lu
 	}
 	else
 	{
-		node->SpeakerVoice = 0;
+		node->SpeakerVoice = NO_SOUND;
 	}
 
 	// The speaker's name, if any.

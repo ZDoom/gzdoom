@@ -1358,12 +1358,12 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 			}
 			else if (val->IsNull())
 			{
-				sid = 0;
+				sid = NO_SOUND;
 			}
 			else
 			{
 				Printf(TEXTCOLOR_RED "string type expected for '%s'\n", key);
-				sid = 0;
+				sid = NO_SOUND;
 				arc.mErrors++;
 			}
 		}

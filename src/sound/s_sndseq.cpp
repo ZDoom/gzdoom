@@ -581,7 +581,7 @@ void S_ParseSndSeq (int levellump)
 	S_ClearSndSeq();
 
 	// be gone, compiler warnings
-	stopsound = 0;
+	stopsound = NO_SOUND;
 
 	memset (SeqTrans, -1, sizeof(SeqTrans));
 	lastlump = 0;
@@ -618,7 +618,7 @@ void S_ParseSndSeq (int levellump)
 					Sequences.Push (NULL);
 				}
 				ScriptTemp.Clear();
-				stopsound = 0;
+				stopsound = NO_SOUND;
 				slot = NAME_None;
 				if (seqtype == '[')
 				{
@@ -828,7 +828,7 @@ void DSeqNode::ActivateSequence (int sequence)
 	m_Sequence = sequence;
 	m_DelayTics = 0;
 	m_StopSound = Sequences[sequence]->StopSound;
-	m_CurrentSoundID = 0;
+	m_CurrentSoundID = NO_SOUND;
 	m_Volume = 1;			// Start at max volume...
 	m_Atten = ATTN_IDLE;	// ...and idle attenuation
 }
@@ -1214,7 +1214,7 @@ void DSeqNode::Tick ()
 			if (!IsPlaying())
 			{
 				m_SequencePtr++;
-				m_CurrentSoundID = 0;
+				m_CurrentSoundID = NO_SOUND;
 			}
 			else
 			{
@@ -1273,13 +1273,13 @@ void DSeqNode::Tick ()
 		case SS_CMD_DELAY:
 			m_DelayTics = GetData(*m_SequencePtr);
 			m_SequencePtr++;
-			m_CurrentSoundID = 0;
+			m_CurrentSoundID = NO_SOUND;
 			return;
 
 		case SS_CMD_DELAYRAND:
 			m_DelayTics = GetData(m_SequencePtr[0]) + pr_sndseq(m_SequencePtr[1]);
 			m_SequencePtr += 2;
-			m_CurrentSoundID = 0;
+			m_CurrentSoundID = NO_SOUND;
 			return;
 
 		case SS_CMD_VOLUME:
@@ -1383,7 +1383,7 @@ void SN_StopAllSequences (FLevelLocals *Level)
 	for (node = Level->SequenceListHead; node; )
 	{
 		DSeqNode *next = node->NextSequence();
-		node->m_StopSound = 0; // don't play any stop sounds
+		node->m_StopSound = NO_SOUND; // don't play any stop sounds
 		node->Destroy ();
 		node = next;
 	}

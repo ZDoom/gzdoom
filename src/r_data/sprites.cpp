@@ -886,7 +886,7 @@ void R_InitSkins (void)
 		}
 
 		// Register any sounds this skin provides
-		aliasid = 0;
+		aliasid = NO_SOUND;
 		for (j = 0; j < NUMSKINSOUNDS; j++)
 		{
 			if (sndlumps[j] != -1)

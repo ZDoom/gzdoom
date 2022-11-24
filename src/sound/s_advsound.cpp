@@ -337,7 +337,7 @@ void S_CheckIntegrity()
 			auto& sfx = *soundEngine->GetWritableSfx(FSoundID::fromInt(i));
 			Printf(TEXTCOLOR_RED "Sound %s has been disabled\n", sfx.name.GetChars());
 			sfx.bRandomHeader = false;
-			sfx.link = 0;	// link to the empty sound.
+			sfx.link = NO_SOUND;	// link to the empty sound.
 		}
 	}
 }
@@ -440,7 +440,7 @@ static FSoundID S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 		{
 			FRandomSoundList* rnd = soundEngine->ResolveRandomSound(sfx);
 			rnd->Choices.Reset();
-			rnd->Owner = 0;
+			rnd->Owner = NO_SOUND;
 		}
 		sfx->lumpnum = lumpnum;
 		sfx->bRandomHeader = false;
@@ -668,7 +668,7 @@ static void S_AddSNDINFO (int lump)
 				ambient->periodmax = 0;
 				ambient->volume = 0;
 				ambient->attenuation = 0;
-				ambient->sound = 0;
+				ambient->sound = NO_SOUND;
 
 				sc.MustGetString ();
 				ambient->sound = FSoundID(soundEngine->FindSoundTentative(sc.String));

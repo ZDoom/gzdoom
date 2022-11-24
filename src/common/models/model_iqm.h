@@ -116,7 +116,7 @@ public:
 	void BuildVertexBuffer(FModelRenderer* renderer) override;
 	void AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids) override;
 	const TArray<TRS>* AttachAnimationData() override;
-	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, DBoneComponents* bones, int index) override;
+	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>* animationData, DBoneComponents* bones, int index) override;
 
 private:
 	void LoadGeometry();

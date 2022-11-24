@@ -365,7 +365,6 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			auto& ssids = surfaceskinids.Size() > 0 ? surfaceskinids : smf->surfaceskinIDs;
 			auto ssidp = (unsigned)(i * MD3_MAX_SURFACES) < ssids.Size() ? &ssids[i * MD3_MAX_SURFACES] : nullptr;
 
-			const TArray<TRS>* animationData = nullptr;
 
 			bool nextFrame = smfNext && modelframe != modelframenext;
 
@@ -381,11 +380,11 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			if (animationid >= 0)
 			{
 				FModel* animation = Models[animationid];
-				animationData = animation->AttachAnimationData();
+				const TArray<TRS>* animationData = animation->AttachAnimationData();
 
 				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
 				{
-					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor->boneComponentData, i);
+					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, animationData, actor->boneComponentData, i);
 					boneStartingPosition = renderer->SetupFrame(animation, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}
@@ -394,7 +393,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
 				{
-					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, *animationData, actor->boneComponentData, i);
+					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, nullptr, actor->boneComponentData, i);
 					boneStartingPosition = renderer->SetupFrame(mdl, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}

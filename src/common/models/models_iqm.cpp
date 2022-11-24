@@ -434,10 +434,19 @@ void IQMModel::UnloadGeometry()
 
 int IQMModel::FindFrame(const char* name, bool nodefault)
 {
-	// This doesn't really mean all that much for IQM
+	// [MK] allow looking up frames by animation name plus offset (using a colon as separator)
+	const char* colon = strrchr(name,':');
+	int nlen = (colon==nullptr)?strlen(name):(colon-name);
 	for (unsigned i = 0; i < Anims.Size(); i++)
 	{
-		if (!stricmp(name, Anims[i].Name.GetChars())) return i;
+		if (!strnicmp(name, Anims[i].Name.GetChars(), nlen))
+		{
+			// if no offset is given, return the first frame
+			if (colon == nullptr) return Anims[i].FirstFrame;
+			unsigned offset = atoi(colon+1);
+			if (offset >= Anims[i].NumFrames) return FErr_NotFound;
+			return Anims[i].FirstFrame+offset;
+		}
 	}
 	return FErr_NotFound;
 }

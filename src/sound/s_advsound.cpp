@@ -248,7 +248,6 @@ static uint8_t CurrentPitchMask;
 
 static bool S_CheckSound(sfxinfo_t *startsfx, sfxinfo_t *sfx, TArray<sfxinfo_t *> &chain)
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	sfxinfo_t *me = sfx;
 	bool success = true;
 	unsigned siz = chain.Size();
@@ -271,7 +270,7 @@ static bool S_CheckSound(sfxinfo_t *startsfx, sfxinfo_t *sfx, TArray<sfxinfo_t *
 		const FRandomSoundList* list = soundEngine->ResolveRandomSound(me);
 		for (unsigned i = 0; i < list->Choices.Size(); ++i)
 		{
-			auto rsfx = &S_sfx[list->Choices[i]];
+			auto rsfx = soundEngine->GetWritableSfx(list->Choices[i]);
 			if (rsfx == startsfx)
 			{
 				Printf(TEXTCOLOR_RED "recursive sound $random found for %s:\n", startsfx->name.GetChars());
@@ -289,7 +288,7 @@ static bool S_CheckSound(sfxinfo_t *startsfx, sfxinfo_t *sfx, TArray<sfxinfo_t *
 	}
 	else if (me->link != sfxinfo_t::NO_LINK)
 	{
-		me = &S_sfx[me->link];
+		me = soundEngine->GetWritableSfx(me->link);
 		if (me == startsfx)
 		{
 			Printf(TEXTCOLOR_RED "recursive sound $alias found for %s:\n", startsfx->name.GetChars());
@@ -314,19 +313,18 @@ void S_CheckIntegrity()
 	TArray<sfxinfo_t *> chain;
 	TArray<bool> broken;
 
-	auto &S_sfx = soundEngine->GetSounds();
-	broken.Resize(S_sfx.Size());
-	memset(&broken[0], 0, sizeof(bool)*S_sfx.Size());
-	for (unsigned i = 0; i < S_sfx.Size(); i++)
+	broken.Resize(soundEngine->GetNumSounds());
+	memset(&broken[0], 0, sizeof(bool) * soundEngine->GetNumSounds());
+	for (unsigned i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
-		auto &sfx = S_sfx[i];
+		auto &sfx = *soundEngine->GetWritableSfx(i);
 		broken[i] = !S_CheckSound(&sfx, &sfx, chain);
 	}
-	for (unsigned i = 0; i < S_sfx.Size(); i++)
+	for (unsigned i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
 		if (broken[i])
 		{
-			auto &sfx = S_sfx[i];
+			auto& sfx = *soundEngine->GetWritableSfx(i);
 			Printf(TEXTCOLOR_RED "Sound %s has been disabled\n", sfx.name.GetChars());
 			sfx.bRandomHeader = false;
 			sfx.link = 0;	// link to the empty sound.
@@ -345,20 +343,15 @@ void S_CheckIntegrity()
 
 unsigned int S_GetMSLength(FSoundID sound)
 {
-	auto &S_sfx = soundEngine->GetSounds();
-	if ((unsigned int)sound >= S_sfx.Size())
-	{
-		return 0;
-	}
-
-	sfxinfo_t *sfx = &S_sfx[sound];
+	sfxinfo_t* sfx = soundEngine->GetWritableSfx(sound);
+	if (!sfx) return 0;
 
 	// Resolve player sounds, random sounds, and aliases
 	if (sfx->link != sfxinfo_t::NO_LINK)
 	{
 		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
-			sfx = &S_sfx[S_FindSkinnedSound (NULL, sound)];
+			sfx = soundEngine->GetWritableSfx(S_FindSkinnedSound(NULL, sound));
 		}
 		else if (sfx->bRandomHeader)
 		{
@@ -379,7 +372,7 @@ unsigned int S_GetMSLength(FSoundID sound)
 		}
 		else
 		{
-			sfx = &S_sfx[sfx->link];
+			sfx = soundEngine->GetWritableSfx(sfx->link);
 		}
 	}
 
@@ -411,14 +404,11 @@ int S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc)
 
 static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 {
-	auto &S_sfx = soundEngine->GetSounds();
-	int sfxid;
+	FSoundID sfxid = soundEngine->FindSoundNoHash (logicalname);
 
-	sfxid = soundEngine->FindSoundNoHash (logicalname);
-
-	if (sfxid > 0 && (unsigned int)sfxid < S_sfx.Size())
+	if (sfxid > 0)
 	{ // If the sound has already been defined, change the old definition
-		sfxinfo_t *sfx = &S_sfx[sfxid];
+		auto sfx = soundEngine->GetWritableSfx(sfxid);
 
 		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
@@ -434,7 +424,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 		// Redefining a player compatibility sound will redefine the target instead.
 		if (sfx->UserData[0] & SND_PlayerCompat)
 		{
-			sfx = &S_sfx[sfx->link];
+			sfx = soundEngine->GetWritableSfx(sfx->link);
 		}
 		if (sfx->bRandomHeader)
 		{
@@ -455,7 +445,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 	}
 	else
 	{ // Otherwise, create a new definition.
-		sfxid = soundEngine->AddSoundLump (logicalname, lumpnum, CurrentPitchMask);
+		sfxid = FSoundID(soundEngine->AddSoundLump (logicalname, lumpnum, CurrentPitchMask));
 	}
 
 	return sfxid;
@@ -483,23 +473,23 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 
 int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool fromskin)
 {
-
-	auto &S_sfx = soundEngine->GetSounds();
-
 	FString fakename;
 	int id;
+
+	auto sfx = soundEngine->GetSfx(refid);
+	if (refid == 0 || !sfx) return 0;
 
 	fakename = pclass;
 	fakename += '"';
 	fakename += '0' + gender;
 	fakename += '"';
-	fakename += S_sfx[refid].name;
+	fakename += sfx->name;
 
 	id = soundEngine->AddSoundLump (fakename, lumpnum, CurrentPitchMask);
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
 
-	PlayerSounds[soundlist].AddSound (S_sfx[refid].link, id);
+	PlayerSounds[soundlist].AddSound (sfx->link, id);
 
 	if (fromskin) S_SavePlayerSound(pclass, gender, refid, lumpnum, false);
 
@@ -513,14 +503,14 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bo
 // Adds the player sound as an alias to an existing sound.
 //==========================================================================
 
-int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid,
-	int aliasto, bool fromskin)
+int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid, int aliasto, bool fromskin)
 {
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
+	auto sfx = soundEngine->GetSfx(refid);
+	if (refid == 0 || !sfx) return 0;
 
-	auto &S_sfx = soundEngine->GetSounds();
-	PlayerSounds[soundlist].AddSound (S_sfx[refid].link, aliasto);
+	PlayerSounds[soundlist].AddSound (sfx->link, aliasto);
 
 	if (fromskin) S_SavePlayerSound(pclass, gender, refid, aliasto, true);
 
@@ -739,7 +729,6 @@ void S_ClearSoundData()
 
 void S_ParseSndInfo (bool redefine)
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	int lump;
 
 	if (!redefine) SavedPlayerSounds.Clear();	// clear skin sounds only for initial parsing.
@@ -796,7 +785,6 @@ void S_AddLocalSndInfo(int lump)
 
 static void S_AddSNDINFO (int lump)
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	bool skipToEndIf;
 	TArray<uint32_t> list;
 	int wantassigns = -1;
@@ -942,7 +930,7 @@ static void S_AddSNDINFO (int lump)
 				sfxnum = S_AddPlayerSound (pclass, gender, refid, sc.String);
 				if (0 == stricmp(sc.String, "dsempty"))
 				{
-					S_sfx[sfxnum].UserData[0] |= SND_PlayerSilent;
+					soundEngine->GetWritableSfx(sfxnum)->UserData[0] |= SND_PlayerSilent;
 				}
 				}
 				break;
@@ -954,9 +942,10 @@ static void S_AddSNDINFO (int lump)
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				targid = soundEngine->FindSoundNoHash (sc.String);
-				if (!(S_sfx[targid].UserData[0] & SND_PlayerReserve))
+				auto sfx = soundEngine->GetWritableSfx(targid);
+				if (!sfx || !(sfx->UserData[0] & SND_PlayerReserve))
 				{
-					sc.ScriptError ("%s is not a player sound", sc.String);
+					sc.ScriptError("%s is not a player sound", sc.String);
 				}
 				S_DupPlayerSound (pclass, gender, refid, targid);
 				}
@@ -971,8 +960,9 @@ static void S_AddSNDINFO (int lump)
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				sfxfrom = S_AddSound (sc.String, -1, &sc);
 				aliasto = S_LookupPlayerSound (pclass, gender, refid);
-				S_sfx[sfxfrom].link = aliasto;
-				S_sfx[sfxfrom].UserData[0] |= SND_PlayerCompat;
+				auto sfx = soundEngine->GetWritableSfx(sfxfrom);
+				sfx->link = aliasto;
+				sfx->UserData[0] |= SND_PlayerCompat;
 				}
 				break;
 
@@ -995,26 +985,28 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString ();
 				sfxfrom = S_AddSound (sc.String, -1, &sc);
 				sc.MustGetString ();
-				if (S_sfx[sfxfrom].UserData[0] & SND_PlayerCompat)
+				auto sfx = soundEngine->GetWritableSfx(sfxfrom);
+				if (sfx->UserData[0] & SND_PlayerCompat)
 				{
-					sfxfrom = S_sfx[sfxfrom].link;
+					sfxfrom = sfx->link;
 				}
-				S_sfx[sfxfrom].link = soundEngine->FindSoundTentative (sc.String);
-				S_sfx[sfxfrom].NearLimit = -1;	// Aliases must use the original sound's limit.
+				sfx->link = soundEngine->FindSoundTentative (sc.String);
+				sfx->NearLimit = -1;	// Aliases must use the original sound's limit.
 				}
 				break;
 
 			case SI_Limit: {
 				// $limit <logical name> <max channels> [<distance>]
-				int sfx;
+				int sfxfrom;
 
 				sc.MustGetString ();
-				sfx = soundEngine->FindSoundTentative (sc.String);
+				sfxfrom = soundEngine->FindSoundTentative (sc.String);
 				sc.MustGetNumber ();
-				S_sfx[sfx].NearLimit = min(max(sc.Number, 0), 255);
+				auto sfx = soundEngine->GetWritableSfx(sfxfrom);
+				sfx->NearLimit = min(max(sc.Number, 0), 255);
 				if (sc.CheckFloat())
 				{
-					S_sfx[sfx].LimitRange = float(sc.Float * sc.Float);
+					sfx->LimitRange = float(sc.Float * sc.Float);
 				}
 				}
 				break;
@@ -1025,7 +1017,8 @@ static void S_AddSNDINFO (int lump)
 
 				sc.MustGetString ();
 				sfx = soundEngine->FindSoundTentative (sc.String);
-				S_sfx[sfx].bSingular = true;
+				auto sfxp = soundEngine->GetWritableSfx(sfx);
+				sfxp->bSingular = true;
 				}
 				break;
 
@@ -1036,7 +1029,8 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString ();
 				sfx = soundEngine->FindSoundTentative (sc.String);
 				sc.MustGetNumber ();
-				S_sfx[sfx].PitchMask = (1 << clamp (sc.Number, 0, 7)) - 1;
+				auto sfxp = soundEngine->GetWritableSfx(sfx);
+				sfxp->PitchMask = (1 << clamp (sc.Number, 0, 7)) - 1;
 				}
 				break;
 
@@ -1047,14 +1041,15 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString();
 				sfx = soundEngine->FindSoundTentative(sc.String);
 				sc.MustGetFloat();
-				S_sfx[sfx].DefPitch = (float)sc.Float;
+				auto sfxp = soundEngine->GetWritableSfx(sfx);
+				sfxp->DefPitch = (float)sc.Float;
 				if (sc.CheckFloat())
 				{
-					S_sfx[sfx].DefPitchMax = (float)sc.Float;
+					sfxp->DefPitchMax = (float)sc.Float;
 				}
 				else
 				{
-					S_sfx[sfx].DefPitchMax = 0;
+					sfxp->DefPitchMax = 0;
 				}
 				}
 				break;
@@ -1072,7 +1067,8 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString();
 				sfx = soundEngine->FindSoundTentative(sc.String);
 				sc.MustGetFloat();
-				S_sfx[sfx].Volume = (float)sc.Float;
+				auto sfxp = soundEngine->GetWritableSfx(sfx);
+				sfxp->Volume = (float)sc.Float;
 				}
 				break;
 
@@ -1083,7 +1079,8 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString();
 				sfx = soundEngine->FindSoundTentative(sc.String);
 				sc.MustGetFloat();
-				S_sfx[sfx].Attenuation = (float)sc.Float;
+				auto sfxp = soundEngine->GetWritableSfx(sfx);
+				sfxp->Attenuation = (float)sc.Float;
 				}
 				break;
 
@@ -1103,7 +1100,8 @@ static void S_AddSNDINFO (int lump)
 				else
 				{
 					sfx = soundEngine->FindSoundTentative(sc.String);
-					rolloff = &S_sfx[sfx].Rolloff;
+					auto sfxp = soundEngine->GetWritableSfx(sfx);
+					sfxp->Rolloff;
 				}
 				type = ROLLOFF_Doom;
 				if (!sc.CheckFloat())
@@ -1153,8 +1151,9 @@ static void S_AddSNDINFO (int lump)
 				}
 				if (list.Size() == 1)
 				{ // Only one sound: treat as $alias
-					S_sfx[Owner].link = list[0];
-					S_sfx[Owner].NearLimit = -1;
+					auto sfxp = soundEngine->GetWritableSfx(Owner);
+					sfxp->link = list[0];
+					sfxp->NearLimit = -1;
 				}
 				else if (list.Size() > 1)
 				{ // Only add non-empty random lists
@@ -1294,21 +1293,22 @@ static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender
 	gender = D_GenderToInt (sc.String);
 	sc.MustGetString ();
 	refid = soundEngine->FindSoundNoHash (sc.String);
-	auto &S_sfx = soundEngine->GetSounds();
-	if (refid != 0 && !(S_sfx[refid].UserData[0] & SND_PlayerReserve) && !S_sfx[refid].bTentative)
+	auto sfx = soundEngine->GetWritableSfx(refid);
+	if (refid > 0 && sfx && !(sfx->UserData[0] & SND_PlayerReserve) && !sfx->bTentative)
 	{
 		sc.ScriptError ("%s has already been used for a non-player sound.", sc.String);
 	}
 	if (refid == 0)
 	{
 		refid = S_AddSound (sc.String, -1, &sc);
-		S_sfx[refid].bTentative = true;
+		sfx = soundEngine->GetWritableSfx(refid);
+		sfx->bTentative = true;
 	}
-	if (S_sfx[refid].bTentative)
+	if (sfx->bTentative)
 	{
-		S_sfx[refid].link = NumPlayerReserves++;
-		S_sfx[refid].bTentative = false;
-		S_sfx[refid].UserData[0] |= SND_PlayerReserve;
+		sfx->link = NumPlayerReserves++;
+		sfx->bTentative = false;
+		sfx->UserData[0] |= SND_PlayerReserve;
 	}
 	sc.MustGetString ();
 }
@@ -1456,8 +1456,9 @@ int S_LookupPlayerSound (const char *pclass, int gender, const char *name)
 
 int S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
 {
-	auto &S_sfx = soundEngine->GetSounds();
-	if (!(S_sfx[refid].UserData[0] & SND_PlayerReserve))
+	auto sfxp = soundEngine->GetWritableSfx(refid);
+
+	if (sfxp && !(sfxp->UserData[0] & SND_PlayerReserve))
 	{ // Not a player sound, so just return this sound
 		return refid;
 	}
@@ -1467,7 +1468,6 @@ int S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
 
 static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	int ingender = gender;
 
 	if (classidx == -1)
@@ -1495,15 +1495,18 @@ static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 		}
 		gender = g;
 	}
+	auto sfxp = soundEngine->GetWritableSfx(refid);
+	if (!sfxp) return 0;
 
-	int sndnum = PlayerSounds[listidx].LookupSound (S_sfx[refid].link);
+	int sndnum = PlayerSounds[listidx].LookupSound (sfxp->link);
+	sfxp = soundEngine->GetWritableSfx(sndnum);
 
 	// If we're not done parsing SNDINFO yet, assume that the target sound is valid
 	if (PlayerClassesIsSorted &&
-		(sndnum == 0 ||
-		((S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty) &&
-		 S_sfx[sndnum].link == sfxinfo_t::NO_LINK &&
-		 !(S_sfx[sndnum].UserData[0] & SND_PlayerSilent))))
+		(!sfxp || sndnum == 0 ||
+		((sfxp->lumpnum == -1 || sfxp->lumpnum == sfx_empty) &&
+		 sfxp->link == sfxinfo_t::NO_LINK &&
+		 !(sfxp->UserData[0] & SND_PlayerSilent))))
 	{ // This sound is unavailable.
 		if (ingender != 0)
 		{ // Try "male"
@@ -1571,7 +1574,6 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 {
 	sfxinfo_t *sfx;
 
-	auto &S_sfx = soundEngine->GetSounds();
 	if (id1 == id2)
 	{
 		return true;
@@ -1581,7 +1583,7 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 		return false;
 	}
 	// Dereference aliases, but not random or player sounds
-	while ((sfx = &S_sfx[id1])->link != sfxinfo_t::NO_LINK)
+	while (sfx = soundEngine->GetWritableSfx(id1), sfx->link != sfxinfo_t::NO_LINK)
 	{
 		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
@@ -1596,7 +1598,7 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 			id1 = sfx->link;
 		}
 	}
-	while ((sfx = &S_sfx[id2])->link != sfxinfo_t::NO_LINK)
+	while (sfx = soundEngine->GetWritableSfx(id2), sfx->link != sfxinfo_t::NO_LINK)
 	{
 		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
@@ -1720,18 +1722,17 @@ void S_MarkPlayerSounds (AActor *player)
 
 CCMD (soundlinks)
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	unsigned int i;
 
-	for (i = 0; i < S_sfx.Size (); i++)
+	for (i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
-		const sfxinfo_t *sfx = &S_sfx[i];
+		const sfxinfo_t* sfx = soundEngine->GetSfx(i);
 
 		if (sfx->link != sfxinfo_t::NO_LINK &&
 			!sfx->bRandomHeader &&
 			!(sfx->UserData[0] & SND_PlayerReserve))
 		{
-			Printf ("%s -> %s\n", sfx->name.GetChars(), S_sfx[sfx->link].name.GetChars());
+			Printf ("%s -> %s\n", sfx->name.GetChars(), soundEngine->GetSfx(sfx->link)->name.GetChars());
 		}
 	}
 }
@@ -1744,19 +1745,19 @@ CCMD (soundlinks)
 
 CCMD (playersounds)
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	const char *reserveNames[256];
 	unsigned int i;
 	int j, k, l;
 
 	// Find names for the player sounds
 	memset (reserveNames, 0, sizeof(reserveNames));
-	for (i = j = 0; j < NumPlayerReserves && i < S_sfx.Size(); ++i)
+	for (i = j = 0; j < NumPlayerReserves && i < soundEngine->GetNumSounds(); ++i)
 	{
-		if (S_sfx[i].UserData[0] & SND_PlayerReserve)
+		auto sfx = soundEngine->GetSfx(i);
+		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			++j;
-			reserveNames[S_sfx[i].link] = S_sfx[i].name;
+			reserveNames[sfx->link] = sfx->name;
 		}
 	}
 
@@ -1769,7 +1770,9 @@ CCMD (playersounds)
 				Printf ("\n%s, %s:\n", PlayerClassLookups[i].Name.GetChars(), GenderNames[j]);
 				for (k = 0; k < NumPlayerReserves; ++k)
 				{
-					Printf (" %-16s%s\n", reserveNames[k], S_sfx[PlayerSounds[l].LookupSound (k)].name.GetChars());
+					auto sndid = PlayerSounds[l].LookupSound(k);
+					auto sfx = soundEngine->GetSfx(sndid);
+					Printf (" %-16s%s\n", reserveNames[k], sfx->name.GetChars());
 				}
 			}
 		}

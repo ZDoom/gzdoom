@@ -114,6 +114,10 @@ public:
 	{
 		return ID;
 	}
+	constexpr int index() const
+	{
+		return ID;
+	}
 private:
 	int ID;
 protected:
@@ -251,10 +255,25 @@ public:
 
 	virtual void StopChannel(FSoundChan* chan);
 	sfxinfo_t* LoadSound(sfxinfo_t* sfx);
-	const sfxinfo_t* GetSfx(unsigned snd)
+	sfxinfo_t* GetWritableSfx(FSoundID snd)
 	{
-		if (snd >= S_sfx.Size()) return nullptr;
-		return &S_sfx[snd];
+		if ((unsigned)snd.index() >= S_sfx.Size()) return nullptr;
+		return &S_sfx[snd.index()];
+	}
+
+	const sfxinfo_t* GetSfx(FSoundID snd)
+	{
+		return GetWritableSfx(snd);
+	}
+
+	unsigned GetNumSounds() const
+	{
+		return S_sfx.Size();
+	}
+
+	sfxinfo_t* AllocateSound()
+	{
+		return &S_sfx[S_sfx.Reserve(1)];
 	}
 
 	// Initializes sound stuff, including volume
@@ -341,11 +360,7 @@ public:
 	{
 		return id == 0 ? "" : S_sfx[id].name.GetChars();
 	}
-	TArray<sfxinfo_t> &GetSounds()	//This should only be used for constructing the sound list or for diagnostics code prinring information about the sound list.
-	{
-		return S_sfx;
-	}
-	FRolloffInfo& GlobalRolloff() // like GetSounds this is meant for sound list generators, not for gaining cheap access to the sound engine's innards.
+	FRolloffInfo& GlobalRolloff() // this is meant for sound list generators, not for gaining cheap access to the sound engine's innards.
 	{
 		return S_Rolloff;
 	}

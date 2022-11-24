@@ -1333,14 +1333,13 @@ ADD_STAT(sounddebug)
 
 void DoomSoundEngine::PrintSoundList()
 {
-	auto &S_sfx = soundEngine->GetSounds();
 	char lumpname[9];
 	unsigned int i;
 
 	lumpname[8] = 0;
-	for (i = 0; i < S_sfx.Size(); i++)
+	for (i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
-		const sfxinfo_t* sfx = &S_sfx[i];
+		const sfxinfo_t* sfx = soundEngine->GetSfx(i);
 		if (sfx->bRandomHeader)
 		{
 			Printf("%3d. %s -> #%d {", i, sfx->name.GetChars(), sfx->link);

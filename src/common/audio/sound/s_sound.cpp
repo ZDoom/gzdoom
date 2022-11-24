@@ -89,7 +89,7 @@ void SoundEngine::Clear()
 {
 	StopAllChannels();
 	UnloadAllSounds();
-	GetSounds().Clear();
+	S_sfx.Clear();
 	ClearRandoms();
 }
 

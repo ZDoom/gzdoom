@@ -70,11 +70,11 @@ bool S_AreSoundsEquivalent (AActor *actor, FSoundID id1, FSoundID id2);
 FSoundID S_LookupPlayerSound (const char *playerclass, int gender, FSoundID refid);
 const char *S_GetSoundClass(AActor *pp);
 FSoundID S_FindSkinnedSound (AActor *actor, FSoundID refid);
-int S_FindSkinnedSoundEx (AActor *actor, const char *logicalname, const char *extendedname);
+FSoundID S_FindSkinnedSoundEx (AActor *actor, const char *logicalname, const char *extendedname);
 FSoundID S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc=NULL);	// Add sound by lumpname
-int S_AddPlayerSound (const char *playerclass, const int gender, FSoundID refid, const char *lumpname);
-int S_AddPlayerSound (const char *playerclass, const int gender, FSoundID refid, int lumpnum, bool fromskin=false);
-int S_AddPlayerSoundExisting (const char *playerclass, const int gender, FSoundID refid, FSoundID aliasto, bool fromskin=false);
+FSoundID S_AddPlayerSound (const char *playerclass, const int gender, FSoundID refid, const char *lumpname);
+FSoundID S_AddPlayerSound (const char *playerclass, const int gender, FSoundID refid, int lumpnum, bool fromskin=false);
+FSoundID S_AddPlayerSoundExisting (const char *playerclass, const int gender, FSoundID refid, FSoundID aliasto, bool fromskin=false);
 void S_MarkPlayerSounds (AActor *player);
 void S_ShrinkPlayerSoundLists ();
 unsigned int S_GetMSLength(FSoundID sound);

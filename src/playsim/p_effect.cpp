@@ -719,8 +719,8 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				// Allow other sounds than 'weapons/railgf'!
 				if (!source->player) sound = source->AttackSound;
 				else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
-				else sound = 0;
-				if (!sound) sound = "weapons/railgf";
+				else sound = NO_SOUND;
+				if (!sound.isvalid()) sound = "weapons/railgf";
 				
 				// The railgun's sound is special. It gets played from the
 				// point on the slug's trail that is closest to the hearing player.

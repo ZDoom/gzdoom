@@ -4,6 +4,7 @@
 #include "name.h"
 #include "textureid.h"
 #include "tarray.h"
+#include "s_soundinternal.h"
 
 struct FAnimDef
 {
@@ -39,7 +40,7 @@ struct FSwitchDef
 	FSwitchDef* PairDef;		// switch def to use to return to PreTexture
 	uint16_t NumFrames;		// # of animation frames
 	bool QuestPanel;	// Special texture for Strife mission
-	int Sound;			// sound to play at start of animation. Changed to int to avoiud having to include s_sound here.
+	FSoundID Sound;			// sound to play at start of animation. Changed to int to avoiud having to include s_sound here.
 	struct frame		// Array of times followed by array of textures
 	{					//   actual length of each array is <NumFrames>
 		uint16_t TimeMin;

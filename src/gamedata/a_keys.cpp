@@ -501,10 +501,10 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 		// Play the first defined key sound.
 		for (int i = 0; i < numfailsounds; ++i)
 		{
-			if (failsound[i] != 0)
+			if (failsound[i] != NO_SOUND)
 			{
-				int snd = S_FindSkinnedSound(owner, failsound[i]);
-				if (snd != 0)
+				auto snd = S_FindSkinnedSound(owner, failsound[i]);
+				if (snd != NO_SOUND)
 				{
 					S_Sound (owner, CHAN_VOICE, 0, snd, 1, ATTN_NORM);
 					break;

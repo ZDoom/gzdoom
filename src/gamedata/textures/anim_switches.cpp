@@ -237,7 +237,7 @@ FSwitchDef *FTextureAnimator::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	{
 		if (sc.Compare ("sound"))
 		{
-			if (sound != 0)
+			if (sound != NO_SOUND)
 			{
 				sc.ScriptError ("Switch state already has a sound");
 			}

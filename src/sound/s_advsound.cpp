@@ -187,7 +187,7 @@ static int S_AddPlayerClass (const char *name);
 static int S_AddPlayerGender (int classnum, int gender);
 static int S_FindPlayerClass (const char *name);
 static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid);
-static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender, int &refid);
+static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender, FSoundID &refid);
 static void S_AddSNDINFO (int lumpnum);
 static void S_AddBloodSFX (int lumpnum);
 static void S_AddStrifeVoice (int lumpnum);
@@ -416,7 +416,7 @@ static FSoundID S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 {
 	FSoundID sfxid = soundEngine->FindSoundNoHash (logicalname);
 
-	if (sfxid > 0)
+	if (sfxid.isvalid())
 	{ // If the sound has already been defined, change the old definition
 		auto sfx = soundEngine->GetWritableSfx(sfxid);
 
@@ -468,7 +468,7 @@ static FSoundID S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 // Adds the given sound lump to the player sound lists.
 //==========================================================================
 
-int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, const char *lumpname)
+FSoundID S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, const char *lumpname)
 {
 	int lump=-1;
 	
@@ -480,13 +480,13 @@ int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, const char
 	return S_AddPlayerSound (pclass, gender, refid, lump);
 }
 
-int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int lumpnum, bool fromskin)
+FSoundID S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int lumpnum, bool fromskin)
 {
 	FString fakename;
 	FSoundID id;
 
 	auto sfx = soundEngine->GetSfx(refid);
-	if (refid == 0 || !sfx) return 0;
+	if (refid == NO_SOUND || !sfx) return 0;
 
 	fakename = pclass;
 	fakename += '"';
@@ -512,12 +512,12 @@ int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int lumpnu
 // Adds the player sound as an alias to an existing sound.
 //==========================================================================
 
-int S_AddPlayerSoundExisting (const char *pclass, int gender, FSoundID refid, FSoundID aliasto, bool fromskin)
+FSoundID S_AddPlayerSoundExisting (const char *pclass, int gender, FSoundID refid, FSoundID aliasto, bool fromskin)
 {
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
 	auto sfx = soundEngine->GetSfx(refid);
-	if (refid == 0 || !sfx) return 0;
+	if (refid == NO_SOUND || !sfx) return 0;
 
 	PlayerSounds[soundlist].AddSound (sfx->link, aliasto);
 
@@ -535,7 +535,7 @@ int S_AddPlayerSoundExisting (const char *pclass, int gender, FSoundID refid, FS
 
 FSoundID S_DupPlayerSound (const char *pclass, int gender, FSoundID refid, FSoundID aliasref)
 {
-	int aliasto = S_LookupPlayerSound (pclass, gender, aliasref);
+	auto aliasto = S_LookupPlayerSound (pclass, gender, aliasref);
 	return S_AddPlayerSoundExisting (pclass, gender, refid, aliasto);
 }
 
@@ -772,7 +772,8 @@ static void S_AddSNDINFO (int lump)
 			case SI_PlayerSound: {
 				// $playersound <player class> <gender> <logical name> <lump name>
 				FString pclass;
-				int gender, refid, sfxnum;
+				int gender;
+				FSoundID refid, sfxnum;
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				sfxnum = S_AddPlayerSound (pclass, gender, refid, sc.String);
@@ -786,7 +787,8 @@ static void S_AddSNDINFO (int lump)
 			case SI_PlayerSoundDup: {
 				// $playersounddup <player class> <gender> <logical name> <target sound name>
 				FString pclass;
-				int gender, refid, targid;
+				int gender;
+				FSoundID refid, targid;
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				targid = soundEngine->FindSoundNoHash (sc.String);
@@ -802,7 +804,8 @@ static void S_AddSNDINFO (int lump)
 			case SI_PlayerCompat: {
 				// $playercompat <player class> <gender> <logical name> <compat sound name>
 				FString pclass;
-				int gender, refid;
+				int gender;
+				FSoundID refid;
 				FSoundID sfxfrom, aliasto;
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
@@ -817,8 +820,8 @@ static void S_AddSNDINFO (int lump)
 			case SI_PlayerAlias: {
 				// $playeralias <player class> <gender> <logical name> <logical name of existing sound>
 				FString pclass;
-				int gender, refid;
-				int soundnum;
+				int gender;
+				FSoundID refid, soundnum;
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				soundnum = soundEngine->FindSoundTentative (sc.String);
@@ -828,7 +831,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_Alias: {
 				// $alias <name of alias> <name of real sound>
-				int sfxfrom;
+				FSoundID sfxfrom;
 
 				sc.MustGetString ();
 				sfxfrom = S_AddSound (sc.String, -1, &sc);
@@ -838,14 +841,14 @@ static void S_AddSNDINFO (int lump)
 				{
 					sfxfrom = sfx->link;
 				}
-				sfx->link = FSoundID::fromInt(soundEngine->FindSoundTentative (sc.String));
+				sfx->link = soundEngine->FindSoundTentative (sc.String);
 				sfx->NearLimit = -1;	// Aliases must use the original sound's limit.
 				}
 				break;
 
 			case SI_Limit: {
 				// $limit <logical name> <max channels> [<distance>]
-				int sfxfrom;
+				FSoundID sfxfrom;
 
 				sc.MustGetString ();
 				sfxfrom = soundEngine->FindSoundTentative (sc.String);
@@ -861,7 +864,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_Singular: {
 				// $singular <logical name>
-				int sfx;
+				FSoundID sfx;
 
 				sc.MustGetString ();
 				sfx = soundEngine->FindSoundTentative (sc.String);
@@ -872,7 +875,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_PitchShift: {
 				// $pitchshift <logical name> <pitch shift amount>
-				int sfx;
+				FSoundID sfx;
 
 				sc.MustGetString ();
 				sfx = soundEngine->FindSoundTentative (sc.String);
@@ -884,7 +887,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_PitchSet: {
 				// $pitchset <logical name> <pitch amount as float> [range maximum]
-				int sfx;
+				FSoundID sfx;
 
 				sc.MustGetString();
 				sfx = soundEngine->FindSoundTentative(sc.String);
@@ -910,7 +913,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_Volume: {
 				// $volume <logical name> <volume>
-				int sfx;
+				FSoundID sfx;
 
 				sc.MustGetString();
 				sfx = soundEngine->FindSoundTentative(sc.String);
@@ -922,7 +925,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_Attenuation: {
 				// $attenuation <logical name> <attenuation>
-				int sfx;
+				FSoundID sfx;
 
 				sc.MustGetString();
 				sfx = soundEngine->FindSoundTentative(sc.String);
@@ -937,12 +940,12 @@ static void S_AddSNDINFO (int lump)
 				// Using * for the name makes it the default for sounds that don't specify otherwise.
 				FRolloffInfo *rolloff;
 				int type;
-				int sfx;
+				FSoundID sfx;
 
 				sc.MustGetString();
 				if (sc.Compare("*"))
 				{
-					sfx = -1;
+					sfx = INVALID_SOUND;
 					rolloff = &soundEngine->GlobalRolloff();
 				}
 				else
@@ -985,11 +988,11 @@ static void S_AddSNDINFO (int lump)
 
 				list.Clear ();
 				sc.MustGetString ();
-				uint32_t Owner = S_AddSound (sc.String, -1, &sc);
+				FSoundID Owner = S_AddSound (sc.String, -1, &sc);
 				sc.MustGetStringName ("{");
 				while (sc.GetString () && !sc.Compare ("}"))
 				{
-					uint32_t sfxto = soundEngine->FindSoundTentative (sc.String);
+					FSoundID sfxto = soundEngine->FindSoundTentative (sc.String);
 					if (sfxto == random.Owner)
 					{
 						Printf("Definition of random sound '%s' refers to itself recursively.\n", sc.String);
@@ -1133,7 +1136,7 @@ static void S_AddStrifeVoice (int lumpnum)
 //	(player class, gender, and ref id)
 //==========================================================================
 
-static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender, int &refid)
+static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender, FSoundID &refid)
 {
 	sc.MustGetString ();
 	pclass = sc.String;
@@ -1142,11 +1145,11 @@ static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender
 	sc.MustGetString ();
 	refid = soundEngine->FindSoundNoHash (sc.String);
 	auto sfx = soundEngine->GetWritableSfx(refid);
-	if (refid > 0 && sfx && !(sfx->UserData[0] & SND_PlayerReserve) && !sfx->bTentative)
+	if (refid.isvalid() && sfx && !(sfx->UserData[0] & SND_PlayerReserve) && !sfx->bTentative)
 	{
 		sc.ScriptError ("%s has already been used for a non-player sound.", sc.String);
 	}
-	if (refid == 0)
+	if (refid == NO_SOUND)
 	{
 		refid = S_AddSound (sc.String, -1, &sc);
 		sfx = soundEngine->GetWritableSfx(refid);
@@ -1336,12 +1339,12 @@ static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	auto sfxp = soundEngine->GetWritableSfx(refid);
 	if (!sfxp) return 0;
 
-	int sndnum = PlayerSounds[listidx].LookupSound (sfxp->link);
+	FSoundID sndnum = PlayerSounds[listidx].LookupSound (sfxp->link);
 	sfxp = soundEngine->GetWritableSfx(sndnum);
 
 	// If we're not done parsing SNDINFO yet, assume that the target sound is valid
 	if (PlayerClassesIsSorted &&
-		(!sfxp || sndnum == 0 ||
+		(!sfxp || sndnum == NO_SOUND ||
 		((sfxp->lumpnum == -1 || sfxp->lumpnum == sfx_empty) &&
 		 sfxp->link == sfxinfo_t::NO_LINK &&
 		 !(sfxp->UserData[0] & SND_PlayerSilent))))
@@ -1411,7 +1414,7 @@ bool S_AreSoundsEquivalent (AActor *actor, FSoundID id1, FSoundID id2)
 	{
 		return true;
 	}
-	if (id1 == 0 || id2 == 0)
+	if (!id1.isvalid() || !id2.isvalid())
 	{
 		return false;
 	}
@@ -1503,7 +1506,7 @@ FSoundID S_FindSkinnedSound (AActor *actor, FSoundID refid)
 // Tries looking for both "name-extendedname" and "name" in that order.
 //==========================================================================
 
-int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedname)
+FSoundID S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedname)
 {
 	FString fullname;
 
@@ -1513,7 +1516,7 @@ int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedn
 	fullname += extendedname;
 	FSoundID id = fullname;
 
-	if (id == 0)
+	if (!id.isvalid())
 	{ // Look for "name"
 		id = name;
 	}
@@ -1590,7 +1593,7 @@ CCMD (playersounds)
 		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			++j;
-			reserveNames[sfx->link] = sfx->name;
+			reserveNames[sfx->link.index()] = sfx->name;
 		}
 	}
 
@@ -1757,7 +1760,7 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Activate)
 	{
 		if ((amb->type & 3) == 0 && amb->periodmin == 0)
 		{
-			if (amb->sound == 0)
+			if (!amb->sound.isvalid())
 			{
 				self->Destroy ();
 				return 0;

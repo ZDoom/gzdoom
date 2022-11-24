@@ -450,7 +450,7 @@ public:
 	FxConstant(FSoundID val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeSound;
-		value.Int = val;
+		value.Int = val.index();
 		isresolved = true;
 	}
 

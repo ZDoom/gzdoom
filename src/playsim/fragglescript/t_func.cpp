@@ -349,7 +349,7 @@ static FSoundID T_FindSound(const char * name)
 	char buffer[40];
 	FSoundID so=S_FindSound(name);
 
-	if (so>0) return so;
+	if (so.isvalid()) return so;
 
 	// Now it gets dirty!
 
@@ -364,9 +364,9 @@ static FSoundID T_FindSound(const char * name)
 		if (fileSystem.CheckNumForName(buffer, ns_sounds)<0) mysnprintf(buffer, countof(buffer), "DS%.35s", name);
 	}
 
-	int id = S_AddSound(name, buffer);
+	FSoundID id = S_AddSound(name, buffer);
 	soundEngine->HashSounds();
-	return FSoundID(id);
+	return id;
 }
 
 
@@ -2912,7 +2912,7 @@ void FParser::SF_SpawnExplosion()
 		{
 			spawn->ClearCounters();
 			t_return.value.i = spawn->SetState(spawn->FindState(NAME_Death));
-			if(spawn->DeathSound) S_Sound (spawn, CHAN_BODY, 0, spawn->DeathSound, 1, ATTN_NORM);
+			if(spawn->DeathSound.isvalid()) S_Sound (spawn, CHAN_BODY, 0, spawn->DeathSound, 1, ATTN_NORM);
 		}
 	}
 }

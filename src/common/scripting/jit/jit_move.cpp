@@ -60,7 +60,7 @@ static int CastS2N(FString *b) { return b->Len() == 0 ? NAME_None : FName(*b).Ge
 static void CastN2S(FString *a, int b) { FName name = FName(ENamedName(b)); *a = name.IsValidName() ? name.GetChars() : ""; }
 static int CastS2Co(FString *b) { return V_GetColor(*b); }
 static void CastCo2S(FString *a, int b) { PalEntry c(b); a->Format("%02x %02x %02x", c.r, c.g, c.b); }
-static int CastS2So(FString *b) { return FSoundID(*b); }
+static int CastS2So(FString *b) { return S_FindSound(*b).index(); }
 static void CastSo2S(FString* a, int b) { *a = soundEngine->GetSoundName(b); }
 static void CastSID2S(FString* a, unsigned int b) { VM_CastSpriteIDToString(a, b); }
 static void CastTID2S(FString *a, int b) { auto tex = TexMan.GetGameTexture(*(FTextureID*)&b); *a = (tex == nullptr) ? "(null)" : tex->GetName().GetChars(); }

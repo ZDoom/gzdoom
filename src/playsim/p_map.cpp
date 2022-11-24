@@ -4613,7 +4613,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	if (!Trace(tempos, t1->Sector, direction, distance, MF_SHOOTABLE, 
 		ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN, t1, trace, tflags, CheckForActor, &TData))
 	{ // hit nothing
-		if (!nointeract && puffDefaults && puffDefaults->ActiveSound)
+		if (!nointeract && puffDefaults && puffDefaults->ActiveSound.isvalid())
 		{ // Play miss sound
 			S_Sound(t1, CHAN_WEAPON, 0, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
@@ -6379,7 +6379,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 					P_DrawSplash2(thing->Level, 32,  thing->PosPlusZ(thing->Height/2), an, 2, thing->BloodColor);
 				}
 			}
-			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))
+			if (thing->CrushPainSound != NO_SOUND && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))
 			{
 				S_Sound(thing, CHAN_VOICE, 0, thing->CrushPainSound, 1.f, ATTN_NORM);
 			}

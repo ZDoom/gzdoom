@@ -1076,7 +1076,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	A_FaceTarget (self);
 	if (P_CheckMeleeRange(self))
 	{
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
@@ -1084,7 +1084,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	}
 	else
 	{
-		if (misssound)
+		if (misssound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, misssound, 1, ATTN_NORM);
 	}
 	return 0;
@@ -1113,7 +1113,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 	{
 		if (damagetype == NAME_None)
 			damagetype = NAME_Melee;	// Melee is the default type
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)

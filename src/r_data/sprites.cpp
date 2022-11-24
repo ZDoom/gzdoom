@@ -573,7 +573,7 @@ void R_InitSkins (void)
 	unsigned i;
 	int j, k, base;
 	int lastlump;
-	int aliasid;
+	FSoundID aliasid;
 	bool remove;
 	PClassActor *basetype, *transtype;
 
@@ -733,8 +733,8 @@ void R_InitSkins (void)
 					}
 					else
 					{
-						int sndref = soundEngine->FindSoundNoHash (key);
-						if (sndref != 0)
+						auto sndref = soundEngine->FindSoundNoHash (key);
+						if (sndref.isvalid())
 						{
 							S_AddPlayerSound (Skins[i].Name, Skins[i].gender, sndref, lump, true);
 						}

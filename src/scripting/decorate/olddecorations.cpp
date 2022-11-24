@@ -531,7 +531,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupSound"))
 		{
 			sc.MustGetString ();
-			defaults->IntVar(NAME_PickupSound) = FSoundID(sc.String);
+			defaults->IntVar(NAME_PickupSound) = S_FindSound(sc.String).index();
 		}
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{

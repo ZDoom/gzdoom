@@ -155,7 +155,7 @@ public:
 	}
 	bool IsPlaying()
 	{
-		return m_CurrentSoundID != 0 && S_GetSoundPlayingInfo (m_Poly, m_CurrentSoundID);
+		return m_CurrentSoundID.isvalid() && S_GetSoundPlayingInfo (m_Poly, m_CurrentSoundID);
 	}
 	void *Source()
 	{
@@ -184,7 +184,7 @@ public:
 	}
 	bool IsPlaying()
 	{
-		return m_CurrentSoundID != 0 && S_GetSoundPlayingInfo (m_Sector, m_CurrentSoundID);
+		return m_CurrentSoundID.isvalid() && S_GetSoundPlayingInfo (m_Sector, m_CurrentSoundID);
 	}
 	void *Source()
 	{
@@ -570,7 +570,7 @@ void S_ParseSndSeq (int levellump)
 	char seqtype = ':';
 	FName seqname = NAME_None;
 	FName slot = NAME_None;
-	int stopsound;
+	FSoundID stopsound;
 	int delaybase;
 	float volumebase;
 	int curseq = -1;
@@ -636,7 +636,7 @@ void S_ParseSndSeq (int levellump)
 				if (sc.String[0] == ']')
 				{ // End of this definition
 					ScriptTemp[0] = MakeCommand(SS_CMD_SELECT, (ScriptTemp.Size()-1)/2);
-					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp);
+					AddSequence (curseq, seqname, slot, stopsound.index(), ScriptTemp);
 					curseq = -1;
 					sc.SetCMode (false);
 				}
@@ -661,30 +661,30 @@ void S_ParseSndSeq (int levellump)
 			{
 				case SS_STRING_PLAYUNTILDONE:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String).index()));
 					ScriptTemp.Push(MakeCommand(SS_CMD_WAITUNTILDONE, 0));
 					break;
 
 				case SS_STRING_PLAY:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String).index()));
 					break;
 
 				case SS_STRING_PLAYTIME:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String).index()));
 					sc.MustGetNumber ();
 					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc.Number));
 					break;
 
 				case SS_STRING_PLAYREPEAT:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYREPEAT, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYREPEAT, S_FindSound (sc.String).index()));
 					break;
 
 				case SS_STRING_PLAYLOOP:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYLOOP, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYLOOP, S_FindSound (sc.String).index()));
 					sc.MustGetNumber ();
 					ScriptTemp.Push(sc.Number);
 					break;
@@ -733,7 +733,7 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_NOSTOPCUTOFF:
-					stopsound = -1;
+					stopsound = INVALID_SOUND;
 					ScriptTemp.Push(MakeCommand(SS_CMD_STOPSOUND, 0));
 					break;
 
@@ -759,7 +759,7 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_END:
-					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp);
+					AddSequence (curseq, seqname, slot, stopsound.index(), ScriptTemp);
 					curseq = -1;
 					break;
 
@@ -1127,27 +1127,27 @@ void SN_DoStop (FLevelLocals *Level, void *source)
 
 void DSeqActorNode::OnDestroy ()
 {
-	if (m_StopSound >= 0)
+	if (m_StopSound != INVALID_SOUND)
 		S_StopSound (m_Actor, CHAN_BODY);
-	if (m_StopSound >= 1)
+	if (m_StopSound.isvalid())
 		MakeSound (0, m_StopSound);
 	Super::OnDestroy();
 }
 
 void DSeqSectorNode::OnDestroy ()
 {
-	if (m_StopSound >= 0)
+	if (m_StopSound != INVALID_SOUND)
 		S_StopSound (m_Sector, Channel & 7);
-	if (m_StopSound >= 1)
+	if (m_StopSound.isvalid())
 		MakeSound (0, m_StopSound);
 	Super::OnDestroy();
 }
 
 void DSeqPolyNode::OnDestroy ()
 {
-	if (m_StopSound >= 0)
+	if (m_StopSound != INVALID_SOUND)
 		S_StopSound (m_Poly, CHAN_BODY);
-	if (m_StopSound >= 1)
+	if (m_StopSound.isvalid())
 		MakeSound (0, m_StopSound);
 	Super::OnDestroy();
 }

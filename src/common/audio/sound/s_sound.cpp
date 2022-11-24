@@ -119,11 +119,11 @@ void SoundEngine::Shutdown ()
 //
 //==========================================================================
 
-void SoundEngine::MarkUsed(int id)
+void SoundEngine::MarkUsed(FSoundID sid)
 {
-	if ((unsigned)id < S_sfx.Size())
+	if (isValidSoundId(sid))
 	{
-		S_sfx[id].bUsed = true;
+		S_sfx[sid.index()].bUsed = true;
 	}
 }
 
@@ -167,9 +167,9 @@ void SoundEngine::CacheSound (sfxinfo_t *sfx)
 {
 	if (GSnd && !sfx->bTentative)
 	{
-		while (!sfx->bRandomHeader && sfx->link != sfxinfo_t::NO_LINK)
+		while (!sfx->bRandomHeader && isValidSoundId(sfx->link))
 		{
-			sfx = &S_sfx[sfx->link];
+			sfx = &S_sfx[sfx->link.index()];
 		}
 		if (sfx->bRandomHeader)
 		{
@@ -315,7 +315,7 @@ FString SoundEngine::ListSoundChannels()
 
 			CalcPosVel(chan, &chanorigin, nullptr);
 
-			output.AppendFormat("%s at (%1.5f, %1.5f, %1.5f)\n", (const char*)S_sfx[chan->SoundID].name.GetChars(), chanorigin.X, chanorigin.Y, chanorigin.Z);
+			output.AppendFormat("%s at (%1.5f, %1.5f, %1.5f)\n", (const char*)S_sfx[chan->SoundID.index()].name.GetChars(), chanorigin.X, chanorigin.Y, chanorigin.Z);
 			count++;
 		}
 	}
@@ -354,7 +354,7 @@ bool SoundEngine::ValidatePosVel(const FSoundChan* const chan, const FVector3& p
 
 FSoundID SoundEngine::ResolveSound(const void *, int, FSoundID soundid, float &attenuation)
 {
-	const sfxinfo_t &sfx = S_sfx[soundid];
+	const sfxinfo_t &sfx = S_sfx[soundid.index()];
 
 	if (sfx.bRandomHeader)
 	{
@@ -391,13 +391,13 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
 
-	if (sound_id <= 0 || volume <= 0 || nosfx || !SoundEnabled() || blockNewSounds || (unsigned)sound_id >= S_sfx.Size())
+	if (!isValidSoundId(sound_id) || volume <= 0 || nosfx || !SoundEnabled() || blockNewSounds)
 		return NULL;
 
 	// prevent crashes.
 	if (type == SOURCE_Unattached && pt == nullptr) type = SOURCE_None;
 
-	org_id = sound_id;
+	org_id = sound_id.index();
 
 	CalcPosVel(type, source, &pt->X, channel, chanflags, sound_id, &pos, &vel, nullptr);
 
@@ -406,7 +406,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		return nullptr;
 	}
 
-	sfx = &S_sfx[sound_id];
+	sfx = &S_sfx[org_id];
 
 	// Scale volume according to SNDINFO data.
 	volume = min(volume * sfx->Volume, 1.f);
@@ -426,8 +426,8 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	while (sfx->link != sfxinfo_t::NO_LINK)
 	{
 		sound_id = ResolveSound(source, type, sound_id, attenuation);
-		if (sound_id < 0) return nullptr;
-		auto newsfx = &S_sfx[sound_id];
+		if (!isValidSoundId(sound_id)) return nullptr;
+		auto newsfx = &S_sfx[sound_id.index()];
 		if (newsfx != sfx)
 		{
 			if (near_limit < 0)
@@ -653,7 +653,7 @@ void SoundEngine::RestartChannel(FSoundChan *chan)
 	assert(chan->ChanFlags & CHANF_EVICTED);
 
 	FSoundChan *ochan;
-	sfxinfo_t *sfx = &S_sfx[chan->SoundID];
+	sfxinfo_t *sfx = &S_sfx[chan->SoundID.index()];
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && CheckSingular(chan->SoundID))
@@ -688,7 +688,7 @@ void SoundEngine::RestartChannel(FSoundChan *chan)
 
 		// If this sound doesn't like playing near itself, don't play it if
 		// that's what would happen.
-		if (chan->NearLimit > 0 && CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange, 0, NULL, 0, chan->DistanceScale))
+		if (chan->NearLimit > 0 && CheckSoundLimit(&S_sfx[chan->SoundID.index()], pos, chan->NearLimit, chan->LimitRange, 0, NULL, 0, chan->DistanceScale))
 		{
 			return;
 		}
@@ -799,7 +799,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 //
 //==========================================================================
 
-bool SoundEngine::CheckSingular(int sound_id)
+bool SoundEngine::CheckSingular(FSoundID sound_id)
 {
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
@@ -837,7 +837,7 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 	for (chan = Channels, count = 0; chan != NULL && count < near_limit; chan = chan->NextChan)
 	{
 		if (chan->ChanFlags & CHANF_FORGETTABLE) continue;
-		if (!(chan->ChanFlags & CHANF_EVICTED) && &S_sfx[chan->SoundID] == sfx)
+		if (!(chan->ChanFlags & CHANF_EVICTED) && &S_sfx[chan->SoundID.index()] == sfx)
 		{
 			FVector3 chanorigin;
 
@@ -895,7 +895,7 @@ void SoundEngine::StopSound (int channel, FSoundID sound_id)
 	while (chan != NULL)
 	{
 		FSoundChan *next = chan->NextChan;
-		if ((chan->SourceType == SOURCE_None && (sound_id == -1 || sound_id == chan->OrgID)) && (channel == CHAN_AUTO || channel == chan->EntChannel))
+		if ((chan->SourceType == SOURCE_None && (sound_id == INVALID_SOUND || sound_id == chan->OrgID)) && (channel == CHAN_AUTO || channel == chan->EntChannel))
 		{
 			StopChannel(chan);
 		}
@@ -919,7 +919,7 @@ void SoundEngine::StopSound(int sourcetype, const void* actor, int channel, FSou
 		FSoundChan* next = chan->NextChan;
 		if (chan->SourceType == sourcetype &&
 			chan->Source == actor &&
-			(sound_id == -1? (chan->EntChannel == channel || channel < 0) : (chan->OrgID == sound_id)))
+			(sound_id == INVALID_SOUND? (chan->EntChannel == channel || channel < 0) : (chan->OrgID == sound_id)))
 		{
 			StopChannel(chan);
 		}
@@ -1065,7 +1065,7 @@ void SoundEngine::ChangeSoundPitch(int sourcetype, const void *source, int chann
 	{
 		if (chan->SourceType == sourcetype &&
 			chan->Source == source &&
-			(sound_id == -1? (chan->EntChannel == channel) : (chan->OrgID == sound_id)))
+			(sound_id == INVALID_SOUND? (chan->EntChannel == channel) : (chan->OrgID == sound_id)))
 		{
 			SetPitch(chan, (float)pitch);
 		}
@@ -1090,7 +1090,7 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, FSoundID sound_id, int chann)
 {
 	int count = 0;
-	if (sound_id > 0)
+	if (sound_id.isvalid())
 	{
 		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
@@ -1159,7 +1159,7 @@ bool SoundEngine::IsSourcePlayingSomething (int sourcetype, const void *actor, i
 	{
 		if (chan->SourceType == sourcetype && (sourcetype == SOURCE_None || sourcetype == SOURCE_Unattached || chan->Source == actor))
 		{
-			if ((channel == 0 || chan->EntChannel == channel) && (sound_id <= 0 || chan->OrgID == sound_id))
+			if ((channel == 0 || chan->EntChannel == channel) && (sound_id == INVALID_SOUND || chan->OrgID == sound_id))
 			{
 				return true;
 			}
@@ -1355,7 +1355,7 @@ void SoundEngine::ChannelEnded(FISoundChannel *ichan)
 		else
 		{ 
 			unsigned int pos = GSnd->GetPosition(schan);
-			unsigned int len = GSnd->GetSampleLength(S_sfx[schan->SoundID].data);
+			unsigned int len = GSnd->GetSampleLength(S_sfx[schan->SoundID.index()].data);
 			if (pos == 0)
 			{
 				evicted = !!(schan->ChanFlags & CHANF_JUSTSTARTED);
@@ -1463,7 +1463,7 @@ void SoundEngine::Reset()
 // Given a logical name, find the sound's index in S_sfx.
 //==========================================================================
 
-FSoundID SoundEngine::FindSound(const char* logicalname)
+int SoundEngine::GetSoundIndex(const char* logicalname)
 {
 	int i;
 
@@ -1564,13 +1564,13 @@ FSoundID SoundEngine::AddSoundLump(const char* logicalname, int lump, int Curren
 // an associated lump is created.
 //==========================================================================
 
-int SoundEngine::FindSoundTentative(const char* name)
+FSoundID SoundEngine::FindSoundTentative(const char* name)
 {
 	auto id = FindSoundNoHash(name);
-	if (id == 0)
+	if (id == NO_SOUND)
 	{
 		id = AddSoundLump(name, -1, 0);
-		S_sfx[id].bTentative = true;
+		S_sfx[id.index()].bTentative = true;
 	}
 	return id;
 }
@@ -1588,12 +1588,12 @@ void SoundEngine::CacheRandomSound(sfxinfo_t* sfx)
 {
 	if (sfx->bRandomHeader)
 	{
-		const FRandomSoundList* list = &S_rnd[sfx->link];
+		const FRandomSoundList* list = &S_rnd[sfx->link.index()];
 		for (unsigned i = 0; i < list->Choices.Size(); ++i)
 		{
-			sfx = &S_sfx[list->Choices[i]];
+			sfx = &S_sfx[list->Choices[i].index()];
 			sfx->bUsed = true;
-			CacheSound(&S_sfx[list->Choices[i]]);
+			CacheSound(&S_sfx[list->Choices[i].index()]);
 		}
 	}
 }
@@ -1609,12 +1609,12 @@ void SoundEngine::CacheRandomSound(sfxinfo_t* sfx)
 
 unsigned int SoundEngine::GetMSLength(FSoundID sound)
 {
-	if ((unsigned int)sound >= S_sfx.Size())
+	if (!isValidSoundId(sound))
 	{
 		return 0;
 	}
 
-	sfxinfo_t* sfx = &S_sfx[sound];
+	sfxinfo_t* sfx = &S_sfx[sound.index()];
 
 	// Resolve player sounds, random sounds, and aliases
 	if (sfx->link != sfxinfo_t::NO_LINK)
@@ -1626,7 +1626,7 @@ unsigned int SoundEngine::GetMSLength(FSoundID sound)
 			// I think the longest one makes more sense.
 
 			int length = 0;
-			const FRandomSoundList* list = &S_rnd[sfx->link];
+			const FRandomSoundList* list = &S_rnd[sfx->link.index()];
 
 			for (auto& me : list->Choices)
 			{
@@ -1638,7 +1638,7 @@ unsigned int SoundEngine::GetMSLength(FSoundID sound)
 		}
 		else
 		{
-			sfx = &S_sfx[sfx->link];
+			sfx = &S_sfx[sfx->link.index()];
 		}
 	}
 
@@ -1655,11 +1655,11 @@ unsigned int SoundEngine::GetMSLength(FSoundID sound)
 // is not the head of a random list, then the sound passed is returned.
 //==========================================================================
 
-int SoundEngine::PickReplacement(int refid)
+FSoundID SoundEngine::PickReplacement(FSoundID refid)
 {
-	while (S_sfx[refid].bRandomHeader)
+	while (S_sfx[refid.index()].bRandomHeader)
 	{
-		const FRandomSoundList* list = &S_rnd[S_sfx[refid].link];
+		const FRandomSoundList* list = &S_rnd[S_sfx[refid.index()].link.index()];
 		refid = list->Choices[rand() % int(list->Choices.Size())];
 	}
 	return refid;
@@ -1701,9 +1701,9 @@ void SoundEngine::AddRandomSound(FSoundID Owner, TArray<FSoundID> list)
 	auto& random = S_rnd.Last();
 	random.Choices = std::move(list);
 	random.Owner = Owner;
-	S_sfx[Owner].link = FSoundID::fromInt(index);
-	S_sfx[Owner].bRandomHeader = true;
-	S_sfx[Owner].NearLimit = -1;
+	S_sfx[Owner.index()].link = FSoundID::fromInt(index);
+	S_sfx[Owner.index()].bRandomHeader = true;
+	S_sfx[Owner.index()].NearLimit = -1;
 }
 
 void S_SoundReset()

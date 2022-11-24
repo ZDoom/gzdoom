@@ -173,7 +173,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeActorSoundVolume)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_SOUND(soundid);
+	PARAM_INT(soundid);
 	PARAM_INT(channel);
 	PARAM_FLOAT(volume);
 	PARAM_BOOL(looping);
@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_SOUND(soundid);
+	PARAM_INT(soundid);
 	PARAM_INT(channel);
 	PARAM_INT(flags);
 	PARAM_FLOAT(volume);

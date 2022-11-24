@@ -18,8 +18,6 @@ enum
 	ROLLOFF_Custom		// Lookup volume from SNDCURVE
 };
 
-inline int S_FindSoundByResID(int ndx);
-inline int S_FindSound(const char* name);
 
 // An index into the S_sfx[] array.
 class FSoundID
@@ -36,36 +34,40 @@ public:
 	}
 	FSoundID(const char *name)
 	{
-		ID = S_FindSound(name);
+		ID = GetSoundIndex(name);
 	}
 	FSoundID(const FString &name)
 	{
-		ID = S_FindSound(name.GetChars());
+		ID = GetSoundIndex(name.GetChars());
 	}
 	FSoundID(const FSoundID &other) = default;
 	FSoundID &operator=(const FSoundID &other) = default;
 	FSoundID &operator=(const char *name)
 	{
-		ID = S_FindSound(name);
+		ID = GetSoundIndex(name);
 		return *this;
 	}
 	FSoundID &operator=(const FString &name)
 	{
-		ID = S_FindSound(name.GetChars());
+		ID = GetSoundIndex(name.GetChars());
 		return *this;
 	}
 	bool operator !=(FSoundID other) const
 	{
 		return ID != other.ID;
 	}
-	bool operator !=(int other) const
+	bool operator ==(FSoundID other) const
 	{
-		return ID != other;
+		return ID == other.ID;
 	}
+	bool operator ==(int other) const = delete;
+	bool operator !=(int other) const = delete;
+	/*
 	operator int() const
 	{
 		return ID;
 	}
+	*/
 	constexpr int index() const
 	{
 		return ID;
@@ -75,6 +77,8 @@ public:
 		return ID > 0;
 	}
 private:
+	static inline int GetSoundIndex(const char* name);
+
 	int ID;
 };
 
@@ -231,8 +235,11 @@ private:
 	bool ValidatePosVel(const FSoundChan* const chan, const FVector3& pos, const FVector3& vel);
 
 	// Checks if a copy of this sound is already playing.
-	bool CheckSingular(int sound_id);
+	bool CheckSingular(FSoundID sound_id);
 	virtual TArray<uint8_t> ReadSound(int lumpnum) = 0;
+	int GetSoundIndex(const char* logicalname);	// this is only for setting up FSoundID
+	friend class FSoundID;
+
 protected:
 	virtual bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel, float attenuation);
 	virtual FSoundID ResolveSound(const void *ent, int srctype, FSoundID soundid, float &attenuation);
@@ -291,7 +298,7 @@ public:
 
 	// Loads a sound, including any random sounds it might reference.
 	virtual void CacheSound(sfxinfo_t* sfx);
-	void CacheSound(int sfx) { CacheSound(&S_sfx[sfx]); }
+	void CacheSound(FSoundID sfx) { CacheSound(&S_sfx[sfx.index()]); }
 	void UnloadSound(sfxinfo_t* sfx);
 	void UnloadSound(int sfx)
 	{
@@ -318,7 +325,7 @@ public:
 	int GetSoundPlayingInfo(int sourcetype, const void* source, FSoundID sound_id, int chan = -1);
 	void UnloadAllSounds();
 	void Reset();
-	void MarkUsed(int num);
+	void MarkUsed(FSoundID num);
 	void CacheMarkedSounds();
 	TArray<FSoundChan*> AllActiveChannels();
 	virtual void SetSoundPaused(int state) {}
@@ -354,7 +361,7 @@ public:
 	}
 	const char *GetSoundName(FSoundID id)
 	{
-		return id == 0 ? "" : S_sfx[id].name.GetChars();
+		return !id.isvalid() ? "" : S_sfx[id.index()].name.GetChars();
 	}
 	FRolloffInfo& GlobalRolloff() // this is meant for sound list generators, not for gaining cheap access to the sound engine's innards.
 	{
@@ -362,15 +369,15 @@ public:
 	}
 	FRandomSoundList *ResolveRandomSound(sfxinfo_t* sfx)
 	{
-		return &S_rnd[sfx->link];
+		return &S_rnd[sfx->link.index()];
 	}
 	void ClearRandoms()
 	{
 		S_rnd.Clear();
 	}
-	int *GetUserData(int snd)
+	int *GetUserData(FSoundID snd)
 	{
-		return S_sfx[snd].UserData.Data();
+		return S_sfx[snd.index()].UserData.Data();
 	}
 	bool isValidSoundId(FSoundID sid)
 	{
@@ -405,15 +412,18 @@ public:
 	virtual void SoundDone(FISoundChannel* ichan); // gets called when the sound has been completely taken down.
 
 	// Lookup utilities.
-	FSoundID FindSound(const char* logicalname);
+	inline FSoundID FindSound(const char* logicalname)
+	{
+		return FSoundID::fromInt(GetSoundIndex(logicalname));
+	}
 	FSoundID FindSoundByResID(int rid);
 	FSoundID FindSoundNoHash(const char* logicalname);
 	FSoundID FindSoundByLump(int lump);
 	virtual FSoundID AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
-	int FindSoundTentative(const char* name);
+	FSoundID FindSoundTentative(const char* name);
 	void CacheRandomSound(sfxinfo_t* sfx);
 	unsigned int GetMSLength(FSoundID sound);
-	int PickReplacement(int refid);
+	FSoundID PickReplacement(FSoundID refid);
 	void HashSounds();
 	void AddRandomSound(FSoundID Owner, TArray<FSoundID> list);
 };
@@ -430,14 +440,19 @@ struct FReverbField
 };
 
 
-inline int S_FindSoundByResID(int ndx)
+inline FSoundID S_FindSoundByResID(int ndx)
 {
 	return soundEngine->FindSoundByResID(ndx);
 }
 
-inline int S_FindSound(const char* name)
+inline FSoundID S_FindSound(const char* name)
 {
 	return soundEngine->FindSound(name);
+}
+
+inline int FSoundID::GetSoundIndex(const char* name)
+{
+	return soundEngine->GetSoundIndex(name);
 }
 
 int SoundEnabled();

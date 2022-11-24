@@ -153,10 +153,10 @@ void AddGenericVideo(DObject* runner, const FString& fn, int soundid, int fps)
 
 int CutsceneDef::GetSound()
 {
-	int id = -1;
+	FSoundID id = INVALID_SOUND;
 	if (soundName.IsNotEmpty()) id = soundEngine->FindSound(soundName);
-	if (id <= 0) id = soundEngine->FindSoundByResID(soundID);
-	return id;
+	if (id == INVALID_SOUND) id = soundEngine->FindSoundByResID(soundID);
+	return id.index();
 }
 
 void CutsceneDef::Create(DObject* runner)

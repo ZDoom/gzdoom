@@ -184,7 +184,7 @@ struct MBFParamState
 	int GetSoundArg(int i, int def = 0)
 	{
 		int num = argsused & (1 << i) ? (int)args[i] : def;
-		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1];
+		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1].index();
 		return 0;
 	}
 
@@ -724,7 +724,7 @@ static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2
 static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_CustomMeleeAttack
 	emitters.AddParameterIntConst(value1);								// damage
-	emitters.AddParameterIntConst(value2 ? (int)SoundMap[value2 - 1] : 0);	// hit sound
+	emitters.AddParameterIntConst(value2 ? (int)SoundMap[value2 - 1].index() : 0);	// hit sound
 	emitters.AddParameterIntConst(0);									// miss sound
 	emitters.AddParameterIntConst(NAME_None);							// damage type
 	emitters.AddParameterIntConst(true);								// bleed
@@ -733,7 +733,7 @@ static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int val
 // misc1 = sound, misc2 = attenuation none (true) or normal (false)
 static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_PlaySound
-	emitters.AddParameterIntConst(value1 ? (int)SoundMap[value1 - 1] : 0);	// soundid
+	emitters.AddParameterIntConst(value1 ? (int)SoundMap[value1 - 1].index() : 0);	// soundid
 	emitters.AddParameterIntConst(CHAN_BODY);							// channel
 	emitters.AddParameterFloatConst(1);									// volume
 	emitters.AddParameterIntConst(false);								// looping
@@ -2207,7 +2207,7 @@ static int PatchWeapon (int weapNum)
 			FState* state = FindState(67); // S_SAW
 			if (readyState == state)
 			{
-				info->IntVar(NAME_ReadySound) = S_FindSound("weapons/sawidle");
+				info->IntVar(NAME_ReadySound) = S_FindSound("weapons/sawidle").index();
 			}
 			else
 			{

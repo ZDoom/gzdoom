@@ -81,7 +81,7 @@ class DoomSoundEngine : public SoundEngine
 	void CalcPosVel(int type, const void* source, const float pt[3], int channum, int chanflags, FSoundID soundid, FVector3* pos, FVector3* vel, FSoundChan *) override;
 	bool ValidatePosVel(int sourcetype, const void* source, const FVector3& pos, const FVector3& vel);
 	TArray<uint8_t> ReadSound(int lumpnum);
-	int PickReplacement(int refid);
+	FSoundID PickReplacement(FSoundID refid);
 	FSoundID ResolveSound(const void *ent, int type, FSoundID soundid, float &attenuation) override;
 	void CacheSound(sfxinfo_t* sfx) override;
 	void StopChannel(FSoundChan* chan) override;
@@ -413,7 +413,7 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 	PARAM_FLOAT(attn);
 	PARAM_FLOAT(pitch);
 	PARAM_FLOAT(startTime);
-	S_SoundPitch(channel & 7, EChanFlags::FromInt(channel & ~7), FSoundID::fromInt(id), static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
+	S_SoundPitch(channel & 7, EChanFlags::FromInt(channel & ~7), id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
 	return 0;
 }
 
@@ -427,7 +427,7 @@ DEFINE_ACTION_FUNCTION(DObject, S_StartSound)
 	PARAM_FLOAT(attn);
 	PARAM_FLOAT(pitch);
 	PARAM_FLOAT(startTime);
-	S_SoundPitch(channel, EChanFlags::FromInt(flags), FSoundID::fromInt(id), static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
+	S_SoundPitch(channel, EChanFlags::FromInt(flags), id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
 	return 0;
 }
 
@@ -451,7 +451,7 @@ void DoomSoundEngine::CacheSound(sfxinfo_t* sfx)
 
 FSoundID DoomSoundEngine::ResolveSound(const void * ent, int type, FSoundID soundid, float &attenuation)
 {
-	auto sfx = &S_sfx[soundid];
+	auto sfx = &S_sfx[soundid.index()];
 	if (sfx->UserData[0] & SND_PlayerReserve)
 	{
 		AActor *src;
@@ -1177,11 +1177,11 @@ TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 //==========================================================================
 static FRandom pr_randsound("RandSound");
 
-int DoomSoundEngine::PickReplacement(int refid)
+FSoundID DoomSoundEngine::PickReplacement(FSoundID refid)
 {
-	while (S_sfx[refid].bRandomHeader)
+	while (S_sfx[refid.index()].bRandomHeader)
 	{
-		const FRandomSoundList* list = &S_rnd[S_sfx[refid].link];
+		const FRandomSoundList* list = &S_rnd[S_sfx[refid.index()].link.index()];
 		refid = list->Choices[pr_randsound(list->Choices.Size())];
 	}
 	return refid;
@@ -1238,7 +1238,7 @@ void DoomSoundEngine::NoiseDebug()
 		color = (chan->ChanFlags & CHANF_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		fileSystem.GetFileShortName(temp, S_sfx[chan->SoundID].lumpnum);
+		fileSystem.GetFileShortName(temp, S_sfx[chan->SoundID.index()].lumpnum);
 		temp[8] = 0;
 		DrawText(twod, NewConsoleFont, color, 0, y, temp, TAG_DONE);
 
@@ -1343,10 +1343,10 @@ void DoomSoundEngine::PrintSoundList()
 		if (sfx->bRandomHeader)
 		{
 			Printf("%3d. %s -> #%d {", i, sfx->name.GetChars(), sfx->link);
-			const FRandomSoundList* list = &S_rnd[sfx->link];
+			const FRandomSoundList* list = &S_rnd[sfx->link.index()];
 			for (auto& me : list->Choices)
 			{
-				Printf(" %s ", S_sfx[me].name.GetChars());
+				Printf(" %s ", S_sfx[me.index()].name.GetChars());
 			}
 			Printf("}\n");
 		}
@@ -1361,7 +1361,7 @@ void DoomSoundEngine::PrintSoundList()
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)
 		{
-			Printf("%3d. %s -> %s\n", i, sfx->name.GetChars(), S_sfx[sfx->link].name.GetChars());
+			Printf("%3d. %s -> %s\n", i, sfx->name.GetChars(), S_sfx[sfx->link.index()].name.GetChars());
 		}
 		else
 		{
@@ -1387,7 +1387,7 @@ CCMD (playsound)
 	if (argv.argc() > 1)
 	{
 		FSoundID id = argv[1];
-		if (id == 0)
+		if (!id.isvalid())
 		{
 			Printf("'%s' is not a sound\n", argv[1]);
 		}
@@ -1409,7 +1409,7 @@ CCMD (loopsound)
 	if (players[consoleplayer].mo != nullptr && !netgame && argv.argc() > 1)
 	{
 		FSoundID id = argv[1];
-		if (id == 0)
+		if (!id.isvalid())
 		{
 			Printf("'%s' is not a sound\n", argv[1]);
 		}

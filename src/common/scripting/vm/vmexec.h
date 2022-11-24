@@ -2122,7 +2122,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_S2So:
 		ASSERTD(a); ASSERTS(b);
-		reg.d[a] = FSoundID(reg.s[b]);
+		reg.d[a] = S_FindSound(reg.s[b]).index();
 		break;
 
 	case CAST_So2S:

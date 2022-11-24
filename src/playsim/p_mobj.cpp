@@ -1436,7 +1436,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky, FNa
 	}
 
 	// play the sound before changing the state, so that AActor::OnDestroy can call S_RelinkSounds on it and the death state can override it.
-	if (mo->DeathSound)
+	if (mo->DeathSound.isvalid())
 	{
 		S_Sound (mo, CHAN_VOICE, 0, mo->DeathSound, 1,
 			(mo->flags3 & MF3_FULLVOLDEATH) ? ATTN_NONE : ATTN_NORM);
@@ -1504,7 +1504,7 @@ void AActor::PlayBounceSound(bool onfloor)
 		{
 			S_Sound (this, CHAN_VOICE, 0, SeeSound, 1, ATTN_IDLE);
 		}
-		else if (onfloor || WallBounceSound <= 0)
+		else if (onfloor || !WallBounceSound.isvalid())
 		{
 			S_Sound (this, CHAN_VOICE, 0, BounceSound, 1, ATTN_IDLE);
 		}
@@ -3299,7 +3299,7 @@ void AActor::AlterWeaponSprite(visstyle_t *vis)
 
 void AActor::PlayActiveSound ()
 {
-	if (ActiveSound && !S_IsActorPlayingSomething (this, CHAN_VOICE, -1))
+	if (ActiveSound.isvalid() && !S_IsActorPlayingSomething(this, CHAN_VOICE, -1))
 	{
 		S_Sound (this, CHAN_VOICE, 0, ActiveSound, 1,
 			(flags3 & MF3_FULLVOLACTIVE) ? ATTN_NONE : ATTN_IDLE);
@@ -5864,11 +5864,11 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 			if (cl_pufftype == 1) puff->renderflags |= RF_INVISIBLE;
 		}
 
-		if ((flags & PF_HITTHING) && puff->SeeSound)
+		if ((flags & PF_HITTHING) && puff->SeeSound.isvalid())
 		{ // Hit thing sound
 			S_Sound (puff, CHAN_BODY, 0, puff->SeeSound, 1, ATTN_NORM);
 		}
-		else if (puff->AttackSound)
+		else if (puff->AttackSound.isvalid())
 		{
 			S_Sound (puff, CHAN_BODY, 0, puff->AttackSound, 1, ATTN_NORM);
 		}
@@ -6498,7 +6498,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckMissileSpawn)
 
 void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 {
-	if (missile->SeeSound != 0)
+	if (missile->SeeSound != NO_SOUND)
 	{
 		if (!(missile->flags & MF_SPAWNSOUNDSOURCE))
 		{

@@ -1243,7 +1243,7 @@ DEFINE_MAP_OPTION(PrecacheSounds, true)
 	{
 		parse.sc.MustGetString();
 		FSoundID snd = parse.sc.String;
-		if (snd == 0)
+		if (snd == NO_SOUND)
 		{
 			parse.sc.ScriptMessage("Unknown sound \"%s\"", parse.sc.String);
 		}

@@ -359,10 +359,10 @@ class USDFParser : public UDMFParserBase
 						{
 							FString soundname = "svox/";
 							soundname += name;
-							node->SpeakerVoice = FSoundID(S_FindSound(soundname));
-							if (node->SpeakerVoice == 0 && (namespace_bits & ( Zd | Gz )))
+							node->SpeakerVoice = S_FindSound(soundname);
+							if (node->SpeakerVoice == NO_SOUND && (namespace_bits & ( Zd | Gz )))
 							{
-								node->SpeakerVoice = FSoundID(S_FindSound(name));
+								node->SpeakerVoice = S_FindSound(name);
 							}
 						}
 					}

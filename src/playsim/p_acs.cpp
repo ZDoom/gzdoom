@@ -5259,7 +5259,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 			}
 			else if (argtype == TypeSound)
 			{
-				params.Push(int(FSoundID(Level->Behaviors.LookupString(args[i]))));
+				params.Push(S_FindSound(Level->Behaviors.LookupString(args[i])).index());
 			}
 			else
 			{
@@ -5913,7 +5913,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 						sid = lookup;
 					}
 				}
-				if (sid != 0 || funcIndex == ACSF_PlayActorSound)
+				if (sid != NO_SOUND || funcIndex == ACSF_PlayActorSound)
 				{
 					auto it = Level->GetActorIterator(args[0]);
 					AActor *spot;
@@ -5935,7 +5935,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 						{
 							sid = GetActorSound(spot, args[1]);
 						}
-						if (sid != 0)
+						if (sid != NO_SOUND)
 						{
 							// What a mess. I think it's a given that this was used with sound flags so it will forever be restricted to the original 8 channels.
 							if (local) chan |= CHANF_LOCAL;

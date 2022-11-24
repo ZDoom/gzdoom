@@ -514,9 +514,9 @@ const TArray<TRS>* IQMModel::AttachAnimationData()
 	return &TRSData;
 }
 
-const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>& animationData, DBoneComponents* boneComponentData, int index)
+const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>* animationData, DBoneComponents* boneComponentData, int index)
 {
-	const TArray<TRS>& animationFrames = &animationData ? animationData : TRSData;
+	const TArray<TRS>& animationFrames = animationData ? *animationData : TRSData;
 	if (Joints.Size() > 0)
 	{
 		int numbones = Joints.Size();

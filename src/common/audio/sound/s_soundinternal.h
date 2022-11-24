@@ -304,18 +304,18 @@ public:
 		const FVector3* pt, int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation, FRolloffInfo* rolloff = nullptr, float spitch = 0.0f, float startTime = 0.0f);
 
 	// Stops an origin-less sound from playing from this channel.
-	void StopSoundID(int sound_id);
-	void StopSound(int channel, int sound_id = -1);
-	void StopSound(int sourcetype, const void* actor, int channel, int sound_id = -1);
+	void StopSoundID(FSoundID sound_id);
+	void StopSound(int channel, FSoundID sound_id = INVALID_SOUND);
+	void StopSound(int sourcetype, const void* actor, int channel, FSoundID sound_id = INVALID_SOUND);
 	void StopActorSounds(int sourcetype, const void* actor, int chanmin, int chanmax);
 
 	void RelinkSound(int sourcetype, const void* from, const void* to, const FVector3* optpos);
 	void ChangeSoundVolume(int sourcetype, const void* source, int channel, double dvolume);
-	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch, int sound_id = -1);
-	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, int sound_id = -1);
+	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch, FSoundID sound_id = INVALID_SOUND);
+	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, FSoundID sound_id = INVALID_SOUND);
 
 	// Stop and resume music, during game PAUSE.
-	int GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id, int chan = -1);
+	int GetSoundPlayingInfo(int sourcetype, const void* source, FSoundID sound_id, int chan = -1);
 	void UnloadAllSounds();
 	void Reset();
 	void MarkUsed(int num);
@@ -372,8 +372,9 @@ public:
 	{
 		return S_sfx[snd].UserData.Data();
 	}
-	bool isValidSoundId(int id)
+	bool isValidSoundId(FSoundID sid)
 	{
+		int id = sid.index();
 		return id > 0 && id < (int)S_sfx.Size() && !S_sfx[id].bTentative && S_sfx[id].lumpnum != sfx_empty;
 	}
 
@@ -404,11 +405,11 @@ public:
 	virtual void SoundDone(FISoundChannel* ichan); // gets called when the sound has been completely taken down.
 
 	// Lookup utilities.
-	int FindSound(const char* logicalname);
-	int FindSoundByResID(int rid);
-	int FindSoundNoHash(const char* logicalname);
-	int FindSoundByLump(int lump);
-	virtual int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
+	FSoundID FindSound(const char* logicalname);
+	FSoundID FindSoundByResID(int rid);
+	FSoundID FindSoundNoHash(const char* logicalname);
+	FSoundID FindSoundByLump(int lump);
+	virtual FSoundID AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
 	int FindSoundTentative(const char* name);
 	void CacheRandomSound(sfxinfo_t* sfx);
 	unsigned int GetMSLength(FSoundID sound);

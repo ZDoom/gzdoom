@@ -867,7 +867,7 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 //
 //==========================================================================
 
-void SoundEngine::StopSoundID(int sound_id)
+void SoundEngine::StopSoundID(FSoundID sound_id)
 {
 	FSoundChan* chan = Channels;
 	while (chan != NULL)
@@ -889,7 +889,7 @@ void SoundEngine::StopSoundID(int sound_id)
 //
 //==========================================================================
 
-void SoundEngine::StopSound (int channel, int sound_id)
+void SoundEngine::StopSound (int channel, FSoundID sound_id)
 {
 	FSoundChan *chan = Channels;
 	while (chan != NULL)
@@ -911,7 +911,7 @@ void SoundEngine::StopSound (int channel, int sound_id)
 //
 //==========================================================================
 
-void SoundEngine::StopSound(int sourcetype, const void* actor, int channel, int sound_id)
+void SoundEngine::StopSound(int sourcetype, const void* actor, int channel, FSoundID sound_id)
 {
 	FSoundChan* chan = Channels;
 	while (chan != NULL)
@@ -1059,7 +1059,7 @@ void SoundEngine::SetVolume(FSoundChan* chan, float volume)
 //
 //==========================================================================
 
-void SoundEngine::ChangeSoundPitch(int sourcetype, const void *source, int channel, double pitch, int sound_id)
+void SoundEngine::ChangeSoundPitch(int sourcetype, const void *source, int channel, double pitch, FSoundID sound_id)
 {
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
@@ -1087,7 +1087,7 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 // Is a sound being played by a specific emitter?
 //==========================================================================
 
-int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id, int chann)
+int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, FSoundID sound_id, int chann)
 {
 	int count = 0;
 	if (sound_id > 0)
@@ -1153,7 +1153,7 @@ bool SoundEngine::IsChannelUsed(int sourcetype, const void *actor, int channel, 
 //
 //==========================================================================
 
-bool SoundEngine::IsSourcePlayingSomething (int sourcetype, const void *actor, int channel, int sound_id)
+bool SoundEngine::IsSourcePlayingSomething (int sourcetype, const void *actor, int channel, FSoundID sound_id)
 {
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
@@ -1463,7 +1463,7 @@ void SoundEngine::Reset()
 // Given a logical name, find the sound's index in S_sfx.
 //==========================================================================
 
-int SoundEngine::FindSound(const char* logicalname)
+FSoundID SoundEngine::FindSound(const char* logicalname)
 {
 	int i;
 
@@ -1482,7 +1482,7 @@ int SoundEngine::FindSound(const char* logicalname)
 	}
 }
 
-int SoundEngine::FindSoundByResID(int resid)
+FSoundID SoundEngine::FindSoundByResID(int resid)
 {
 	auto p = ResIdMap.CheckKey(resid);
 	return p ? *p : 0;
@@ -1496,7 +1496,7 @@ int SoundEngine::FindSoundByResID(int resid)
 // using the hash table.
 //==========================================================================
 
-int SoundEngine::FindSoundNoHash(const char* logicalname)
+FSoundID SoundEngine::FindSoundNoHash(const char* logicalname)
 {
 	unsigned int i;
 
@@ -1517,7 +1517,7 @@ int SoundEngine::FindSoundNoHash(const char* logicalname)
 // Given a sound lump, find the sound's index in S_sfx.
 //==========================================================================
 
-int SoundEngine::FindSoundByLump(int lump)
+FSoundID SoundEngine::FindSoundByLump(int lump)
 {
 	if (lump != -1)
 	{
@@ -1537,7 +1537,7 @@ int SoundEngine::FindSoundByLump(int lump)
 // Adds a new sound mapping to S_sfx.
 //==========================================================================
 
-int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid, int nearlimit)
+FSoundID SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid, int nearlimit)
 {
 	S_sfx.Reserve(1);
 	sfxinfo_t &newsfx = S_sfx.Last();
@@ -1566,7 +1566,7 @@ int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitc
 
 int SoundEngine::FindSoundTentative(const char* name)
 {
-	int id = FindSoundNoHash(name);
+	auto id = FindSoundNoHash(name);
 	if (id == 0)
 	{
 		id = AddSoundLump(name, -1, 0);

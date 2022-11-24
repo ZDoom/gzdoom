@@ -85,11 +85,11 @@ class DoomSoundEngine : public SoundEngine
 	FSoundID ResolveSound(const void *ent, int type, FSoundID soundid, float &attenuation) override;
 	void CacheSound(sfxinfo_t* sfx) override;
 	void StopChannel(FSoundChan* chan) override;
-	int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2) override
+	FSoundID AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2) override
 	{
 		auto ndx = SoundEngine::AddSoundLump(logicalname, lump, CurrentPitchMask, resid, nearlimit);
-		S_sfx[ndx].UserData.Resize(1);
-		S_sfx[ndx].UserData[0] = 0;
+		S_sfx[ndx.index()].UserData.Resize(1);
+		S_sfx[ndx.index()].UserData[0] = 0;
 		return ndx;
 	}
 	bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel, float attenuation) override

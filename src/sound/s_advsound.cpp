@@ -455,7 +455,7 @@ static FSoundID S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 	}
 	else
 	{ // Otherwise, create a new definition.
-		sfxid = FSoundID(soundEngine->AddSoundLump (logicalname, lumpnum, CurrentPitchMask));
+		sfxid = soundEngine->AddSoundLump (logicalname, lumpnum, CurrentPitchMask);
 	}
 
 	return sfxid;
@@ -483,7 +483,7 @@ int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, const char
 int S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int lumpnum, bool fromskin)
 {
 	FString fakename;
-	int id;
+	FSoundID id;
 
 	auto sfx = soundEngine->GetSfx(refid);
 	if (refid == 0 || !sfx) return 0;

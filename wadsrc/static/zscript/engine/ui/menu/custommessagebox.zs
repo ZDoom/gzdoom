@@ -35,7 +35,6 @@
 class CustomMessageBoxMenuBase : Menu abstract
 {
 	BrokenLines mMessage;
-	voidptr Handler;
 	uint messageSelection;
 	int mMouseLeft, mMouseRight, mMouseY;
 

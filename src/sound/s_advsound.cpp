@@ -799,6 +799,7 @@ static void S_AddSNDINFO (int lump)
 	auto &S_sfx = soundEngine->GetSounds();
 	bool skipToEndIf;
 	TArray<uint32_t> list;
+	int wantassigns = -1;
 
 	FScanner sc(lump);
 	skipToEndIf = false;
@@ -1247,6 +1248,15 @@ static void S_AddSNDINFO (int lump)
 		else
 		{ // Got a logical sound mapping
 			FString name (sc.String);
+			if (wantassigns == -1)
+			{
+				wantassigns = sc.CheckString("=");
+			}
+			else if (wantassigns)
+			{
+				sc.MustGetStringName("=");
+			}
+
 			sc.MustGetString ();
 			S_AddSound (name, sc.String, &sc);
 		}

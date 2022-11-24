@@ -2822,7 +2822,7 @@ OptionValue "os_isanyof_values"
 OptionMenu "vkoptions"
 {
 	Title "$VK_TITLE"
-	StaticText "$VK_WARNING"
+	//StaticText "$VK_WARNING"
 	StaticText "$VK_RESTART"
 	StaticText ""
 	TextField "$VKMNU_DEVICE",			vk_device

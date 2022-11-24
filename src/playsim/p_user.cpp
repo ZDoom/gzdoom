@@ -887,7 +887,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 
-	FSoundID sound = 0;
+	FSoundID sound = NO_SOUND;
 	int chan = CHAN_VOICE;
 
 	if (self->player == NULL || self->DeathSound != NO_SOUND)

@@ -80,7 +80,7 @@ public:
 	FSoundID LookupSound(FSoundID player_sound_id)
 	{
 		auto v = map.CheckKey(player_sound_id.index());
-		return v ? *v : FSoundID(0);
+		return v ? *v : NO_SOUND;
 	}
 	void MarkUsed()
 	{
@@ -327,14 +327,14 @@ void S_CheckIntegrity()
 	memset(&broken[0], 0, sizeof(bool) * soundEngine->GetNumSounds());
 	for (unsigned i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
-		auto &sfx = *soundEngine->GetWritableSfx(i);
+		auto &sfx = *soundEngine->GetWritableSfx(FSoundID::fromInt(i));
 		broken[i] = !S_CheckSound(&sfx, &sfx, chain);
 	}
 	for (unsigned i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
 		if (broken[i])
 		{
-			auto& sfx = *soundEngine->GetWritableSfx(i);
+			auto& sfx = *soundEngine->GetWritableSfx(FSoundID::fromInt(i));
 			Printf(TEXTCOLOR_RED "Sound %s has been disabled\n", sfx.name.GetChars());
 			sfx.bRandomHeader = false;
 			sfx.link = 0;	// link to the empty sound.
@@ -486,7 +486,7 @@ FSoundID S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int l
 	FSoundID id;
 
 	auto sfx = soundEngine->GetSfx(refid);
-	if (refid == NO_SOUND || !sfx) return 0;
+	if (refid == NO_SOUND || !sfx) return NO_SOUND;
 
 	fakename = pclass;
 	fakename += '"';
@@ -517,7 +517,7 @@ FSoundID S_AddPlayerSoundExisting (const char *pclass, int gender, FSoundID refi
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
 	auto sfx = soundEngine->GetSfx(refid);
-	if (refid == NO_SOUND || !sfx) return 0;
+	if (refid == NO_SOUND || !sfx) return NO_SOUND;
 
 	PlayerSounds[soundlist].AddSound (sfx->link, aliasto);
 
@@ -1332,12 +1332,12 @@ static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 			{
 				return S_LookupPlayerSound (DefPlayerClass, gender, refid);
 			}
-			return 0;
+			return NO_SOUND;
 		}
 		gender = g;
 	}
 	auto sfxp = soundEngine->GetWritableSfx(refid);
-	if (!sfxp) return 0;
+	if (!sfxp) return NO_SOUND;
 
 	FSoundID sndnum = PlayerSounds[listidx].LookupSound (sfxp->link);
 	sfxp = soundEngine->GetWritableSfx(sndnum);
@@ -1562,7 +1562,7 @@ CCMD (soundlinks)
 
 	for (i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
-		const sfxinfo_t* sfx = soundEngine->GetSfx(i);
+		const sfxinfo_t* sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
 
 		if (sfx->link != sfxinfo_t::NO_LINK &&
 			!sfx->bRandomHeader &&
@@ -1589,7 +1589,7 @@ CCMD (playersounds)
 	memset (reserveNames, 0, sizeof(reserveNames));
 	for (i = j = 0; j < NumPlayerReserves && i < soundEngine->GetNumSounds(); ++i)
 	{
-		auto sfx = soundEngine->GetSfx(i);
+		auto sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
 		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			++j;
@@ -1606,7 +1606,7 @@ CCMD (playersounds)
 				Printf ("\n%s, %s:\n", PlayerClassLookups[i].Name.GetChars(), GenderNames[j]);
 				for (k = 0; k < NumPlayerReserves; ++k)
 				{
-					auto sndid = PlayerSounds[l].LookupSound(k);
+					auto sndid = PlayerSounds[l].LookupSound(FSoundID::fromInt(k));
 					auto sfx = soundEngine->GetSfx(sndid);
 					Printf (" %-16s%s\n", reserveNames[k], sfx->name.GetChars());
 				}
@@ -1691,7 +1691,7 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Tick)
 		loop = CHANF_LOOP;
 	}
 
-	if (ambient->sound != FSoundID(0))
+	if (ambient->sound != NO_SOUND)
 	{
 		// The second argument scales the ambient sound's volume.
 		// 0 and 100 are normal volume. The maximum volume level

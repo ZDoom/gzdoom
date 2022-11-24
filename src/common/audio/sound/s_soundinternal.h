@@ -25,9 +25,11 @@ class FSoundID
 public:
 	FSoundID() = default;
 
+private:
 	constexpr FSoundID(int id) : ID(id)
 	{
 	}
+public:
 	static constexpr FSoundID fromInt(int i)
 	{
 		return FSoundID(i);
@@ -62,12 +64,6 @@ public:
 	}
 	bool operator ==(int other) const = delete;
 	bool operator !=(int other) const = delete;
-	/*
-	operator int() const
-	{
-		return ID;
-	}
-	*/
 	constexpr int index() const
 	{
 		return ID;
@@ -82,10 +78,13 @@ private:
 	int ID;
 };
 
+constexpr FSoundID NO_SOUND = FSoundID::fromInt(0);
+constexpr FSoundID INVALID_SOUND = FSoundID::fromInt(-1);
+
  struct FRandomSoundList
  {
 	 TArray<FSoundID> Choices;
-	 FSoundID Owner = 0;
+	 FSoundID Owner = NO_SOUND;
  };
 
 
@@ -129,9 +128,6 @@ private:
 	 FRolloffInfo	Rolloff{};
 	 float		Attenuation = 1.f;			// Multiplies the attenuation passed to S_Sound.
  };
-
- constexpr FSoundID NO_SOUND = FSoundID::fromInt(0);
- constexpr FSoundID INVALID_SOUND = FSoundID::fromInt(-1);
 
 
 struct FSoundChan : public FISoundChannel
@@ -215,7 +211,7 @@ protected:
 	TArray<sfxinfo_t> S_sfx;
 	FRolloffInfo S_Rolloff{};
 	TArray<uint8_t> S_SoundCurve;
-	TMap<int, int> ResIdMap;
+	TMap<int, FSoundID> ResIdMap;
 	TArray<FRandomSoundList> S_rnd;
 	bool blockNewSounds = false;
 

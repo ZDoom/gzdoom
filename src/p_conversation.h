@@ -29,7 +29,7 @@ struct FStrifeDialogueNode
 
 	PClassActor *SpeakerType = nullptr;
 	FString SpeakerName;
-	FSoundID SpeakerVoice = 0;
+	FSoundID SpeakerVoice = NO_SOUND;
 	FString Backdrop;
 	FString Dialogue;
 	FString Goodbye; // must init to null for binary scripts to work as intended

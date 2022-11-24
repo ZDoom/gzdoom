@@ -1334,7 +1334,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 		//If sound name here is not reliable, we need to save by index instead.
 		int id = sid.index();
 		Serialize(arc, key, id, nullptr);
-		if (arc.isReading()) sid = FSoundID(id);
+		if (arc.isReading()) sid = FSoundID::fromInt(id);
 	}
 	else if (arc.isWriting())
 	{

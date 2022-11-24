@@ -229,7 +229,7 @@ FSwitchDef *FTextureAnimator::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	FSwitchDef::frame thisframe;
 	FTextureID picnum;
 	bool bad;
-	FSoundID sound = 0;
+	FSoundID sound = NO_SOUND;
 
 	bad = false;
 

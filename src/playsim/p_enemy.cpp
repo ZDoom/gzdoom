@@ -2735,7 +2735,7 @@ bool P_CanResurrect(AActor *raiser, AActor *thing)
 //
 //==========================================================================
 
-bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = 0)
+bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = NO_SOUND)
 {
 	const AActor *info;
 	AActor *temp;
@@ -3114,7 +3114,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	if (self->player && self->player->morphTics == 0)
 	{
 		const char *pain_amount;
-		FSoundID sfx_id = 0;
+		FSoundID sfx_id = NO_SOUND;
 
 		if (self->health < 25)
 			pain_amount = "*pain25";

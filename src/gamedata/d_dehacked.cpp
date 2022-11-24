@@ -1386,7 +1386,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
-				FSoundID snd = 0;
+				FSoundID snd = NO_SOUND;
 				
 				if (val == 0 || val >= SoundMap.Size())
 				{

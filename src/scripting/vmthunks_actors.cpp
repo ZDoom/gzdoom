@@ -59,7 +59,7 @@
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
 void PrintPickupMessage(bool localview, const FString &str);
-bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = 0);
+bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nullptr, FSoundID sound = NO_SOUND);
 
 // FCheckPosition requires explicit construction and destruction when used in the VM
 
@@ -201,7 +201,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
 
 void A_StartSoundIfNotSame(AActor *self, int soundid, int checksoundid, int channel, int flags, double volume, double attenuation, double pitch, double startTime)
 {
-	if (!S_AreSoundsEquivalent (self, soundid, checksoundid))
+	if (!S_AreSoundsEquivalent (self, FSoundID::fromInt(soundid), FSoundID::fromInt(checksoundid)))
 		A_StartSound(self, soundid, channel, flags, volume, attenuation, pitch, startTime);
 }
 
@@ -1621,7 +1621,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_ExtChase, A_ExtChase)
 
 int CheckForResurrection(AActor *self, FState* state, int sound)
 {
-	return P_CheckForResurrection(self, false, state, sound);
+	return P_CheckForResurrection(self, false, state, FSoundID::fromInt(sound));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_CheckForResurrection, CheckForResurrection)
@@ -1629,7 +1629,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_CheckForResurrection, CheckForResurrecti
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STATE(state);
 	PARAM_INT(sound);
-	ACTION_RETURN_BOOL(P_CheckForResurrection(self, false, state, sound));
+	ACTION_RETURN_BOOL(CheckForResurrection(self, state, sound));
 }
 
 static void ZS_Face(AActor *self, AActor *faceto, double max_turn, double max_pitch, double ang_offset, double pitch_offset, int flags, double z_add)

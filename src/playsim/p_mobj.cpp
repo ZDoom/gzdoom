@@ -3299,7 +3299,7 @@ void AActor::AlterWeaponSprite(visstyle_t *vis)
 
 void AActor::PlayActiveSound ()
 {
-	if (ActiveSound.isvalid() && !S_IsActorPlayingSomething(this, CHAN_VOICE, -1))
+	if (ActiveSound.isvalid() && !S_IsActorPlayingSomething(this, CHAN_VOICE))
 	{
 		S_Sound (this, CHAN_VOICE, 0, ActiveSound, 1,
 			(flags3 & MF3_FULLVOLACTIVE) ? ATTN_NONE : ATTN_IDLE);

@@ -210,14 +210,14 @@ public:
 		{
 			if (animSnd[i] == curframe)
 			{
-				int sound = animSnd[i+1];
-				if (sound == -1)
+				auto sound = FSoundID::fromInt(animSnd[i+1]);
+				if (sound == INVALID_SOUND)
 					soundEngine->StopAllChannels();
 				else
 					soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound? CHANF_UI : CHANF_NONE, sound, 1.f, ATTN_NONE);
 			}
 		}
-		if (!nostopsound && curframe == numframes && soundEngine->GetSoundPlayingInfo(SOURCE_None, nullptr, -1)) return true;
+		if (!nostopsound && curframe == numframes && soundEngine->GetSoundPlayingInfo(SOURCE_None, nullptr, INVALID_SOUND)) return true;
 		curframe++;
 		return curframe < numframes;
 	}
@@ -586,8 +586,8 @@ public:
 					{
 						if (animSnd[i] == soundframe)
 						{
-							int sound = animSnd[i + 1];
-							if (sound == -1)
+							auto sound = FSoundID::fromInt(animSnd[i + 1]);
+							if (sound == INVALID_SOUND)
 								soundEngine->StopAllChannels();
 							else
 								soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound ? CHANF_UI : CHANF_NONE, sound, 1.f, ATTN_NONE);
@@ -790,8 +790,8 @@ public:
 			{
 				if (animSnd[i] == nFrame)
 				{
-					int sound = animSnd[i + 1];
-					if (sound == -1)
+					auto sound = FSoundID::fromInt(animSnd[i + 1]);
+					if (sound == INVALID_SOUND)
 						soundEngine->StopAllChannels();
 					else
 						soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound ? CHANF_UI : CHANF_NONE, sound, 1.f, ATTN_NONE);

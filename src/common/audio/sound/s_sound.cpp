@@ -385,7 +385,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	sfxinfo_t *sfx;
 	EChanFlags chanflags = flags;
 	int basepriority;
-	int org_id;
+	FSoundID org_id;
 	int pitch;
 	FSoundChan *chan;
 	FVector3 pos, vel;
@@ -397,7 +397,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	// prevent crashes.
 	if (type == SOURCE_Unattached && pt == nullptr) type = SOURCE_None;
 
-	org_id = sound_id.index();
+	org_id = sound_id;
 
 	CalcPosVel(type, source, &pt->X, channel, chanflags, sound_id, &pos, &vel, nullptr);
 
@@ -406,7 +406,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		return nullptr;
 	}
 
-	sfx = &S_sfx[org_id];
+	sfx = &S_sfx[sound_id.index()];
 
 	// Scale volume according to SNDINFO data.
 	volume = min(volume * sfx->Volume, 1.f);
@@ -595,7 +595,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	if (chan != NULL)
 	{
 		chan->SoundID = sound_id;
-		chan->OrgID = FSoundID(org_id);
+		chan->OrgID = org_id;
 		chan->EntChannel = channel;
 		chan->Volume = float(volume);
 		chan->ChanFlags |= chanflags;
@@ -1485,7 +1485,7 @@ int SoundEngine::GetSoundIndex(const char* logicalname)
 FSoundID SoundEngine::FindSoundByResID(int resid)
 {
 	auto p = ResIdMap.CheckKey(resid);
-	return p ? *p : 0;
+	return p ? *p : NO_SOUND;
 }
 
 //==========================================================================
@@ -1504,10 +1504,10 @@ FSoundID SoundEngine::FindSoundNoHash(const char* logicalname)
 	{
 		if (stricmp(S_sfx[i].name, logicalname) == 0)
 		{
-			return i;
+			return FSoundID::fromInt(i);
 		}
 	}
-	return 0;
+	return NO_SOUND;
 }
 
 //==========================================================================
@@ -1525,9 +1525,9 @@ FSoundID SoundEngine::FindSoundByLump(int lump)
 
 		for (i = 1; i < S_sfx.Size(); i++)
 			if (S_sfx[i].lumpnum == lump)
-				return i;
+				return FSoundID::fromInt(i);
 	}
-	return 0;
+	return NO_SOUND;
 }
 
 //==========================================================================
@@ -1549,9 +1549,10 @@ FSoundID SoundEngine::AddSoundLump(const char* logicalname, int lump, int Curren
 	newsfx.NearLimit = nearlimit;
 	newsfx.ResourceId = resid;
 	newsfx.bTentative = false;
+	auto id = FSoundID::fromInt(S_sfx.Size() - 1);
 
-	if (resid >= 0) ResIdMap[resid] = S_sfx.Size() - 1;
-	return (int)S_sfx.Size()-1;
+	if (resid >= 0) ResIdMap[resid] = id;
+	return id;
 }
 
 
@@ -1736,8 +1737,8 @@ CCMD(cachesound)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		FSoundID sfxnum = argv[i];
-		if (sfxnum != FSoundID(0))
+		FSoundID sfxnum = S_FindSound(argv[i]);
+		if (sfxnum != NO_SOUND)
 		{
 			soundEngine->CacheSound(sfxnum);
 		}

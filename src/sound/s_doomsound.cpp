@@ -1339,7 +1339,7 @@ void DoomSoundEngine::PrintSoundList()
 	lumpname[8] = 0;
 	for (i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
-		const sfxinfo_t* sfx = soundEngine->GetSfx(i);
+		const sfxinfo_t* sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
 		if (sfx->bRandomHeader)
 		{
 			Printf("%3d. %s -> #%d {", i, sfx->name.GetChars(), sfx->link);

@@ -4673,7 +4673,7 @@ static FSoundID GetActorSound(AActor *actor, int soundtype)
 	case SOUND_CrushPain:	return actor->CrushPainSound;
 	case SOUND_Howl:		return actor->SoundVar(NAME_HowlSound);
 	case SOUND_Push:		return actor->SoundVar(NAME_PushSound);
-	default:				return 0;
+	default:				return NO_SOUND;
 	}
 }
 
@@ -5292,7 +5292,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 				}
 				else if (rettype == TypeSound)
 				{
-					retval = GlobalACSStrings.AddString(S_GetSoundName(FSoundID(retval)));
+					retval = GlobalACSStrings.AddString(S_GetSoundName(FSoundID::fromInt(retval)));
 				}
 			}
 			else if (rettype == TypeFloat64)
@@ -5903,7 +5903,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_PlayActorSound:
 			// PlaySound(tid, "SoundName", channel, volume, looping, attenuation, local)
 			{
-				FSoundID sid = 0;
+				FSoundID sid = NO_SOUND;
 
 				if (funcIndex == ACSF_PlaySound)
 				{
@@ -6732,7 +6732,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				if (activator != nullptr && activator->player != nullptr)
 				{
 					int logNum = args[0];
-					FSoundID sid = 0;
+					FSoundID sid = NO_SOUND;
 
 					const char* lookup = Level->Behaviors.LookupString(args[1]);
 					if (lookup != nullptr)

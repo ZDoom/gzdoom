@@ -313,7 +313,7 @@ void DSeqNode::Serialize(FSerializer &arc)
 	unsigned int i;
 	FName seqName = NAME_None;
 	int delayTics = 0;
-	FSoundID id = 0;
+	FSoundID id = NO_SOUND;
 	float volume;
 	float atten = ATTN_NORM;
 	int seqnum;
@@ -796,13 +796,13 @@ static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, c
 	Sequences[curseq] = (FSoundSequence *)M_Malloc (sizeof(FSoundSequence) + sizeof(uint32_t)*ScriptTemp.Size());
 	Sequences[curseq]->SeqName = seqname;
 	Sequences[curseq]->Slot = slot;
-	Sequences[curseq]->StopSound = FSoundID(stopsound);
+	Sequences[curseq]->StopSound = FSoundID::fromInt(stopsound);
 	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(uint32_t)*ScriptTemp.Size());
 	Sequences[curseq]->Script[ScriptTemp.Size()] = MakeCommand(SS_CMD_END, 0);
 }
 
 DSeqNode::DSeqNode (FLevelLocals *l, int sequence, int modenum)
-: m_CurrentSoundID(0), m_ModeNum(modenum), m_SequenceChoices(0)
+: m_CurrentSoundID(NO_SOUND), m_ModeNum(modenum), m_SequenceChoices(0)
 {
 	Level = l;
 	ActivateSequence (sequence);
@@ -1204,7 +1204,7 @@ void DSeqNode::Tick ()
 		case SS_CMD_PLAY:
 			if (!IsPlaying())
 			{
-				m_CurrentSoundID = FSoundID(GetData(*m_SequencePtr));
+				m_CurrentSoundID = FSoundID::fromInt(GetData(*m_SequencePtr));
 				MakeSound (0, m_CurrentSoundID);
 			}
 			m_SequencePtr++;
@@ -1226,7 +1226,7 @@ void DSeqNode::Tick ()
 			if (!IsPlaying())
 			{
 				// Does not advance sequencePtr, so it will repeat as necessary.
-				m_CurrentSoundID = FSoundID(GetData(*m_SequencePtr));
+				m_CurrentSoundID = FSoundID::fromInt(GetData(*m_SequencePtr));
 				MakeSound (CHANF_LOOP, m_CurrentSoundID);
 			}
 			return;
@@ -1234,7 +1234,7 @@ void DSeqNode::Tick ()
 		case SS_CMD_PLAYLOOP:
 			// Like SS_CMD_PLAYREPEAT, sequencePtr is not advanced, so this
 			// command will repeat until the sequence is stopped.
-			m_CurrentSoundID = FSoundID(GetData(m_SequencePtr[0]));
+			m_CurrentSoundID = FSoundID::fromInt(GetData(m_SequencePtr[0]));
 			MakeSound (0, m_CurrentSoundID);
 			m_DelayTics = m_SequencePtr[1];
 			return;
@@ -1444,7 +1444,7 @@ void SN_MarkPrecacheSounds(int sequence, seqtype_t type)
 			int cmd = GetCommand(seq->Script[i]);
 			if (cmd == SS_CMD_PLAY || cmd == SS_CMD_PLAYREPEAT || cmd == SS_CMD_PLAYLOOP)
 			{
-				soundEngine->MarkUsed(GetData(seq->Script[i]));
+				soundEngine->MarkUsed(FSoundID::fromInt(GetData(seq->Script[i])));
 			}
 		}
 	}
@@ -1468,7 +1468,7 @@ DEFINE_ACTION_FUNCTION(DSeqNode, MarkPrecacheSounds)
 //==========================================================================
 
 void SN_ChangeNodeData (FLevelLocals *Level, int nodeNum, int seqOffset, int delayTics, float volume,
-	int currentSoundID)
+	FSoundID currentSoundID)
 {
 	int i;
 	DSeqNode *node;

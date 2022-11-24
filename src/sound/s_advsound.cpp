@@ -70,28 +70,38 @@ struct FPlayerClassLookup
 // a particular class and gender.
 class FPlayerSoundHashTable
 {
+	TMap<int, FSoundID> map;
 public:
-	FPlayerSoundHashTable();
-	FPlayerSoundHashTable(const FPlayerSoundHashTable &other);
-	~FPlayerSoundHashTable();
 
-	void AddSound (int player_sound_id, int sfx_id);
-	int LookupSound (int player_sound_id);
-	FPlayerSoundHashTable &operator= (const FPlayerSoundHashTable &other);
-	void MarkUsed();
+	void AddSound(FSoundID player_sound_id, FSoundID sfx_id)
+	{
+		map.Insert(player_sound_id.index(), sfx_id);
+	}
+	FSoundID LookupSound(FSoundID player_sound_id)
+	{
+		auto v = map.CheckKey(player_sound_id.index());
+		return v ? *v : FSoundID(0);
+	}
+	void MarkUsed()
+	{
+		decltype(map)::Iterator it(map);
+		decltype(map)::Pair* pair;
+
+		while (it.NextPair(pair))
+		{
+			soundEngine->MarkUsed(pair->Value);
+		}
+	}
 
 protected:
 	struct Entry
 	{
-		Entry *Next;
-		int PlayerSoundID;
-		int SfxID;
+		Entry* Next;
+		FSoundID PlayerSoundID;
+		FSoundID SfxID;
 	};
 	enum { NUM_BUCKETS = 23 };
-	Entry *Buckets[NUM_BUCKETS];
-
-	void Init ();
-	void Free ();
+	Entry* Buckets[NUM_BUCKETS];
 };
 
 struct FAmbientSound
@@ -528,167 +538,6 @@ int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
 {
 	int aliasto = S_LookupPlayerSound (pclass, gender, aliasref);
 	return S_AddPlayerSoundExisting (pclass, gender, refid, aliasto);
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable constructor
-//
-//==========================================================================
-
-FPlayerSoundHashTable::FPlayerSoundHashTable ()
-{
-	Init();
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable copy constructor
-//
-//==========================================================================
-
-FPlayerSoundHashTable::FPlayerSoundHashTable (const FPlayerSoundHashTable &other)
-{
-	Init();
-	*this = other;
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable destructor
-//
-//==========================================================================
-
-FPlayerSoundHashTable::~FPlayerSoundHashTable ()
-{
-	Free ();
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable :: Init
-//
-//==========================================================================
-
-void FPlayerSoundHashTable::Init ()
-{
-	for (int i = 0; i < NUM_BUCKETS; ++i)
-	{
-		Buckets[i] = NULL;
-	}
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable :: Free
-//
-//==========================================================================
-
-void FPlayerSoundHashTable::Free ()
-{
-	for (int i = 0; i < NUM_BUCKETS; ++i)
-	{
-		Entry *entry, *next;
-
-		for (entry = Buckets[i]; entry != NULL; )
-		{
-			next = entry->Next;
-			delete entry;
-			entry = next;
-		}
-		Buckets[i] = NULL;
-	}
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable :: operator=
-//
-//==========================================================================
-
-FPlayerSoundHashTable &FPlayerSoundHashTable::operator= (const FPlayerSoundHashTable &other)
-{
-	Free ();
-	for (int i = 0; i < NUM_BUCKETS; ++i)
-	{
-		Entry *entry;
-
-		for (entry = other.Buckets[i]; entry != NULL; entry = entry->Next)
-		{
-			AddSound (entry->PlayerSoundID, entry->SfxID);
-		}
-	}
-	return *this;
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable :: AddSound
-//
-//==========================================================================
-
-void FPlayerSoundHashTable::AddSound (int player_sound_id, int sfx_id)
-{
-	Entry *entry;
-	unsigned bucket_num = (unsigned)player_sound_id % NUM_BUCKETS;
-
-	// See if the entry exists already.
-	for (entry = Buckets[bucket_num];
-		 entry != NULL && entry->PlayerSoundID != player_sound_id;
-		 entry = entry->Next)
-	{ }
-
-	if (entry != NULL)
-	{ // If the player sound is already present, redefine it.
-		entry->SfxID = sfx_id;
-	}
-	else
-	{ // Otherwise, add it to the start of its bucket.
-		entry = new Entry;
-		entry->Next = Buckets[bucket_num];
-		entry->PlayerSoundID = player_sound_id;
-		entry->SfxID = sfx_id;
-		Buckets[bucket_num] = entry;
-	}
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable :: LookupSound
-//
-//==========================================================================
-
-int FPlayerSoundHashTable::LookupSound (int player_sound_id)
-{
-	Entry *entry;
-	unsigned bucket_num = (unsigned)player_sound_id % NUM_BUCKETS;
-
-	// See if the entry exists already.
-	for (entry = Buckets[bucket_num];
-		 entry != NULL && entry->PlayerSoundID != player_sound_id;
-		 entry = entry->Next)
-	{ }
-
-	return entry != NULL ? entry->SfxID : 0;
-}
-
-//==========================================================================
-//
-// FPlayerSoundHashTable :: Mark
-//
-// Marks all sounds defined for this class/gender as used.
-//
-//==========================================================================
-
-void FPlayerSoundHashTable::MarkUsed()
-{
-	for (size_t i = 0; i < NUM_BUCKETS; ++i)
-	{
-		for (Entry *probe = Buckets[i]; probe != NULL; probe = probe->Next)
-		{
-			soundEngine->MarkUsed(probe->SfxID);
-		}
-	}
 }
 
 //==========================================================================

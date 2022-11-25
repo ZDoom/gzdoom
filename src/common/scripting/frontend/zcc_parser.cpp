@@ -1128,7 +1128,7 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 	{
 		TreeNodeDeepCopy_Start(ArrayIterationStmt);
 
-		// ZCC_IterationStmt
+		// ZCC_ArrayIterationStmt
 		copy->ItName = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItName, true, copiedNodesList));
 		copy->LoopStatement = static_cast<ZCC_Statement*>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
 		copy->ItArray = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItArray, true, copiedNodesList));

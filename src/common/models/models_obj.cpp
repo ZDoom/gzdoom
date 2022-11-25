@@ -544,7 +544,7 @@ inline FVector3 FOBJModel::RealignVector(FVector3 vecToRealign)
  */
 inline FVector2 FOBJModel::FixUV(FVector2 vecToRealign)
 {
-	vecToRealign.Y *= -1;
+	vecToRealign.Y = 1-vecToRealign.Y;
 	return vecToRealign;
 }
 

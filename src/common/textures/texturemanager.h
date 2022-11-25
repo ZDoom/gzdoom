@@ -77,7 +77,15 @@ public:
 
 	void FlushAll();
 	FTextureID GetFrontSkyLayer(FTextureID);
-	FTextureID GetRawTexture(FTextureID);
+	FTextureID GetRawTexture(FTextureID tex, bool dontlookup = false);
+	void SetRawTexture(FTextureID texid) 
+	{ 
+		int texidx = texid.GetIndex();
+		if ((unsigned)texidx < Textures.Size())
+		{
+			Textures[texidx].RawTexture = texidx;
+		}
+	}
 
 
 	enum

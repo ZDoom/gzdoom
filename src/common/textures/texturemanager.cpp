@@ -1300,11 +1300,12 @@ void FTextureManager::InitPalettedVersions()
 //
 //==========================================================================
 
-FTextureID FTextureManager::GetRawTexture(FTextureID texid)
+FTextureID FTextureManager::GetRawTexture(FTextureID texid, bool dontlookup)
 {
 	int texidx = texid.GetIndex();
 	if ((unsigned)texidx >= Textures.Size()) return texid;
-	if (Textures[texidx].FrontSkyLayer != -1) return FSetTextureID(Textures[texidx].FrontSkyLayer);
+	if (Textures[texidx].RawTexture != -1) return FSetTextureID(Textures[texidx].RawTexture);
+	if (dontlookup) return texid;
 
 	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
 	auto tex = Textures[texidx].Texture;

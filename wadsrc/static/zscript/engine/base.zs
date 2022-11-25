@@ -429,6 +429,7 @@ enum DrawTextureTags
 
 	// For DrawText calls only:
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
+	DTA_Localize,		// localize drawn string
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
 
@@ -640,9 +641,9 @@ struct Font native
 	// native Font(const Name name);
 
 	native int GetCharWidth(int code);
-	native int StringWidth(String code);
-	native int GetMaxAscender(String code);
-	native bool CanPrint(String code);
+	native int StringWidth(String code, bool localize = true);
+	native int GetMaxAscender(String code, bool localize = true);
+	native bool CanPrint(String code, bool localize = true);
 	native int GetHeight();
 	native int GetDisplacement();
 	native String GetCursor();

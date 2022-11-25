@@ -82,6 +82,8 @@ DEFINE_GLOBAL(WP_NOCHANGE);
 // A harmless non-nullptr FlatPointer for classes without pointers.
 static const size_t TheEnd = ~(size_t)0;
 
+static const std::pair<size_t,PType *> TheMapEnd = {~(size_t)0 , nullptr};
+
 //==========================================================================
 //
 // PClass :: WriteValue
@@ -873,6 +875,68 @@ void PClass::BuildArrayPointers()
 			}
 			flat[numSuperPointers + ScriptPointers.Size()] = ~(size_t)0;
 			ArrayPointers = flat;
+		}
+	}
+}
+
+//==========================================================================
+//
+// PClass :: BuildMapPointers
+//
+// same as above, but creates a list to dynamic object arrays
+//
+//==========================================================================
+
+void PClass::BuildMapPointers()
+{
+	if (MapPointers != nullptr)
+	{ // Already built: Do nothing.
+		return;
+	}
+	else if (ParentClass == nullptr)
+	{ // No parent (i.e. DObject: FlatPointers is the same as Pointers.
+		MapPointers = &TheMapEnd;
+	}
+	else
+	{
+		ParentClass->BuildMapPointers();
+
+		TArray<std::pair<size_t,PType *>> ScriptPointers;
+
+		// Collect all arrays to pointers in scripted fields.
+		for (auto field : Fields)
+		{
+			if (!(field->Flags & VARF_Native))
+			{
+				field->Type->SetPointerMap(Defaults, unsigned(field->Offset), &ScriptPointers);
+			}
+		}
+
+		if (ScriptPointers.Size() == 0)
+		{ // No new pointers: Just use the same ArrayPointers as the parent.
+			MapPointers = ParentClass->MapPointers;
+		}
+		else
+		{ // New pointers: Create a new FlatPointers array and add them.
+			int numSuperPointers;
+
+			// Count pointers defined by superclasses.
+			for (numSuperPointers = 0; ParentClass->MapPointers[numSuperPointers].first != ~(size_t)0; numSuperPointers++)
+			{
+			}
+
+			// Concatenate them into a new array
+			std::pair<size_t,PType *> *flat = (std::pair<size_t,PType *>*)ClassDataAllocator.Alloc(sizeof(std::pair<size_t,PType *>) * (numSuperPointers + ScriptPointers.Size() + 1));
+			if (numSuperPointers > 0)
+			{
+				memcpy(flat, ParentClass->MapPointers, sizeof(std::pair<size_t,PType *>)*numSuperPointers);
+			}
+			if (ScriptPointers.Size() > 0)
+			{
+				memcpy(flat + numSuperPointers, &ScriptPointers[0], sizeof(std::pair<size_t,PType *>) * ScriptPointers.Size());
+			}
+			flat[numSuperPointers + ScriptPointers.Size()] = TheMapEnd;
+			MapPointers = flat;
 		}
 	}
 }

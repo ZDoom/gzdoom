@@ -33,11 +33,14 @@
 **
 */
 
+#include <cinttypes>
+
 #include "vmintern.h"
 #include "s_soundinternal.h"
 #include "types.h"
 #include "printf.h"
 #include "textureid.h"
+#include "maps.h"
 
 
 FTypeTable TypeTable;
@@ -183,7 +186,7 @@ void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> 
 
 //==========================================================================
 //
-// PType :: SetDefaultValue
+// PType :: SetPointer*
 //
 //==========================================================================
 
@@ -192,6 +195,10 @@ void PType::SetPointer(void *base, unsigned offset, TArray<size_t> *stroffs)
 }
 
 void PType::SetPointerArray(void *base, unsigned offset, TArray<size_t> *stroffs)
+{
+}
+
+void PType::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *ptrofs)
 {
 }
 
@@ -1873,6 +1880,23 @@ void PArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *specia
 
 //==========================================================================
 //
+// PArray :: SetPointerMap
+//
+//==========================================================================
+
+void PArray::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *special)
+{
+	if(ElementType->isStruct() || ElementType->isMap())
+	{
+		for (unsigned int i = 0; i < ElementCount; ++i)
+		{
+			ElementType->SetPointerMap(base, offset + ElementSize * i, special);
+		}
+	}
+}
+
+//==========================================================================
+//
 // NewArray
 //
 // Returns a PArray for the given type and size, making sure not to create
@@ -2202,12 +2226,89 @@ PDynArray *NewDynArray(PType *type)
 //
 //==========================================================================
 
-PMap::PMap(PType *keytype, PType *valtype)
-: KeyType(keytype), ValueType(valtype)
+enum OverrideFunctionRetType {
+	OFN_RET_VOID,
+	OFN_RET_VAL,
+	OFN_RET_KEY,
+	OFN_RET_BOOL,
+};
+enum OverrideFunctionArgType {
+	OFN_ARG_VOID,
+	OFN_ARG_KEY,
+	OFN_ARG_VAL,
+	OFN_ARG_KEY_VAL,
+};
+
+template<class MT, OverrideFunctionRetType RetType, OverrideFunctionArgType ArgType >
+void CreateOverrideFunction(MT *self, FName name)
+{
+	auto Fn = Create<PFunction>(self->BackingType, name);
+	auto NativeFn = FindFunction(self->BackingType, name.GetChars());
+
+	assert(NativeFn);
+	assert(NativeFn->VMPointer);
+
+
+	TArray<PType*> ret;
+	TArray<PType*> args;
+	TArray<uint32_t> argflags;
+	TArray<FName> argnames;
+
+	if constexpr(RetType == OFN_RET_VAL)
+	{
+		ret.Push(self->ValueType);
+	}
+	else if constexpr(RetType == OFN_RET_KEY)
+	{
+		ret.Push(self->KeyType);
+	}
+	else if constexpr(RetType == OFN_RET_BOOL)
+	{
+		ret.Push(TypeBool);
+	}
+
+	args.Push(NewPointer(self->BackingType));
+	argnames.Push(NAME_self);
+	argflags.Push(VARF_Implicit | VARF_ReadOnly);
+
+	if constexpr(ArgType == OFN_ARG_KEY)
+	{
+		args.Push(self->KeyType);
+		argflags.Push(0);
+		argnames.Push(NAME_Key);
+	}
+	else if constexpr(ArgType == OFN_ARG_VAL)
+	{
+
+		args.Push(self->ValueType);
+		argflags.Push(0);
+		argnames.Push(NAME_Value);
+	}
+	else if constexpr(ArgType == OFN_ARG_KEY_VAL)
+	{
+		args.Push(self->KeyType);
+		args.Push(self->ValueType);
+		argflags.Push(0);
+		argflags.Push(0);
+		argnames.Push(NAME_Key);
+		argnames.Push(NAME_Value);
+	}
+
+	Fn->AddVariant(NewPrototype(ret, args), argflags, argnames, *NativeFn->VMPointer, VARF_Method | VARF_Native,SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM);
+	self->FnOverrides.Insert(name, Fn);
+}
+
+PMap::PMap(PType *keytype, PType *valtype, PStruct *backing, int backing_class)
+: KeyType(keytype), ValueType(valtype), BackingType(backing), BackingClass((decltype(BackingClass)) backing_class)
 {
 	mDescriptiveName.Format("Map<%s, %s>", keytype->DescriptiveName(), valtype->DescriptiveName());
-	Size = sizeof(FMap);
-	Align = alignof(FMap);
+	Size = sizeof(ZSFMap);
+	Align = alignof(ZSFMap);
+	CreateOverrideFunction<PMap, OFN_RET_VAL, OFN_ARG_KEY>(this, NAME_Get);
+	CreateOverrideFunction<PMap, OFN_RET_BOOL, OFN_ARG_KEY>(this, NAME_CheckKey);
+	CreateOverrideFunction<PMap, OFN_RET_VOID, OFN_ARG_KEY_VAL>(this, NAME_Insert);
+	CreateOverrideFunction<PMap, OFN_RET_VOID, OFN_ARG_KEY>(this, NAME_InsertNew);
+	CreateOverrideFunction<PMap, OFN_RET_VOID, OFN_ARG_KEY>(this, NAME_Remove);
 }
 
 //==========================================================================
@@ -2238,6 +2339,345 @@ void PMap::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 //==========================================================================
 //
+// PMap :: InitializeValue
+//
+//==========================================================================
+
+void PMap::Construct(void * addr) const {
+	switch(BackingClass)
+	{
+	case MAP_I32_I8:
+		new(addr) ZSMap<uint32_t, uint8_t>();
+		break;
+	case MAP_I32_I16:
+		new(addr) ZSMap<uint32_t, uint16_t>();
+		break;
+	case MAP_I32_I32:
+		new(addr) ZSMap<uint32_t, uint32_t>();
+		break;
+	case MAP_I32_F32:
+		new(addr) ZSMap<uint32_t, float>();
+		break;
+	case MAP_I32_F64:
+		new(addr) ZSMap<uint32_t, double>();
+		break;
+	case MAP_I32_OBJ:
+		new(addr) ZSMap<uint32_t, DObject*>();
+		break;
+	case MAP_I32_PTR:
+		new(addr) ZSMap<uint32_t, void*>();
+		break;
+	case MAP_I32_STR:
+		new(addr) ZSMap<uint32_t, FString>();
+		break;
+	case MAP_STR_I8:
+		new(addr) ZSMap<FString, uint8_t>();
+		break;
+	case MAP_STR_I16:
+		new(addr) ZSMap<FString, uint16_t>();
+		break;
+	case MAP_STR_I32:
+		new(addr) ZSMap<FString, uint32_t>();
+		break;
+	case MAP_STR_F32:
+		new(addr) ZSMap<FString, float>();
+		break;
+	case MAP_STR_F64:
+		new(addr) ZSMap<FString, double>();
+		break;
+	case MAP_STR_OBJ:
+		new(addr) ZSMap<FString, DObject*>();
+		break;
+	case MAP_STR_PTR:
+		new(addr) ZSMap<FString, void*>();
+		break;
+	case MAP_STR_STR:
+		new(addr) ZSMap<FString, FString>();
+		break;
+	};
+}
+
+void PMap::InitializeValue(void *addr, const void *def) const
+{
+	if (def != nullptr)
+	{
+		I_Error("Map cannot have default values");
+	}
+	Construct(addr);
+}
+
+//==========================================================================
+//
+// PMap :: DestroyValue
+//
+//==========================================================================
+
+void PMap::DestroyValue(void *addr) const
+{
+	switch(BackingClass)
+	{
+	case MAP_I32_I8:
+		static_cast<ZSMap<uint32_t, uint8_t>*>(addr)->~ZSMap();
+		break;
+	case MAP_I32_I16:
+		static_cast<ZSMap<uint32_t, uint16_t>*>(addr)->~ZSMap();
+		break;
+	case MAP_I32_I32:
+		static_cast<ZSMap<uint32_t, uint32_t>*>(addr)->~ZSMap();
+		break;
+	case MAP_I32_F32:
+		static_cast<ZSMap<uint32_t, float>*>(addr)->~ZSMap();
+		break;
+	case MAP_I32_F64:
+		static_cast<ZSMap<uint32_t, double>*>(addr)->~ZSMap();
+		break;
+	case MAP_I32_OBJ:
+		static_cast<ZSMap<uint32_t, DObject*>*>(addr)->~ZSMap();
+		break;
+	case MAP_I32_PTR:
+		static_cast<ZSMap<uint32_t, void*>*>(addr)->~ZSMap();
+		break;
+	case MAP_I32_STR:
+		static_cast<ZSMap<uint32_t, FString>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_I8:
+		static_cast<ZSMap<FString, uint8_t>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_I16:
+		static_cast<ZSMap<FString, uint16_t>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_I32:
+		static_cast<ZSMap<FString, uint32_t>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_F32:
+		static_cast<ZSMap<FString, float>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_F64:
+		static_cast<ZSMap<FString, double>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_OBJ:
+		static_cast<ZSMap<FString, DObject*>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_PTR:
+		static_cast<ZSMap<FString, void*>*>(addr)->~ZSMap();
+		break;
+	case MAP_STR_STR:
+		static_cast<ZSMap<FString, FString>*>(addr)->~ZSMap();
+		break;
+	}
+}
+
+//==========================================================================
+//
+// PMap :: SetDefaultValue
+//
+//==========================================================================
+
+void PMap::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
+{
+	assert(!(base && special));
+	if (base != nullptr)
+	{
+		Construct(((uint8_t*)base)+offset); // is this needed? string/dynarray do this initialization if base != nullptr, but their initialization doesn't need to allocate
+											// it might lead to double allocations (and memory leakage) for Map if both base and special != nullptr
+	}
+	if (special != nullptr)
+	{
+		special->Push(std::make_pair(this, offset));
+	}
+	else
+	{
+		I_Error("null special");
+	}
+}
+
+//==========================================================================
+//
+// PMap :: SetPointer
+//
+//==========================================================================
+
+void PMap::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *special)
+{
+	if (ValueType->isObjectPointer())
+	{
+		// Add to the list of pointer arrays for this class.
+		special->Push(std::make_pair(offset,KeyType));
+	}
+}
+
+//==========================================================================
+//
+// PMap :: WriteValue
+//
+//==========================================================================
+
+template<typename M>
+static void PMapValueWriter(FSerializer &ar, const M *map, const PMap *m)
+{
+	TMapConstIterator<typename M::KeyType, typename M::ValueType> it(*map);
+	const typename M::Pair * p;
+	while(it.NextPair(p))
+	{
+		if constexpr(std::is_same_v<typename M::KeyType,FString>)
+		{
+			m->ValueType->WriteValue(ar,p->Key.GetChars(),static_cast<const void *>(&p->Value));
+		}
+		else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+		{
+			FString key;
+			key.Format("%u",p->Key);
+			m->ValueType->WriteValue(ar,key.GetChars(),static_cast<const void *>(&p->Value));
+		}
+		//else unknown key type
+	}
+}
+
+void PMap::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	if(ar.BeginObject(key))
+	{
+		switch(BackingClass)
+		{
+		case MAP_I32_I8:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, uint8_t>*>(addr), this);
+			break;
+		case MAP_I32_I16:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, uint16_t>*>(addr), this);
+			break;
+		case MAP_I32_I32:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, uint32_t>*>(addr), this);
+			break;
+		case MAP_I32_F32:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, float>*>(addr), this);
+			break;
+		case MAP_I32_F64:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, double>*>(addr), this);
+			break;
+		case MAP_I32_OBJ:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, DObject*>*>(addr), this);
+			break;
+		case MAP_I32_PTR:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, void*>*>(addr), this);
+			break;
+		case MAP_I32_STR:
+			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, FString>*>(addr), this);
+			break;
+		case MAP_STR_I8:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, uint8_t>*>(addr), this);
+			break;
+		case MAP_STR_I16:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, uint16_t>*>(addr), this);
+			break;
+		case MAP_STR_I32:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, uint32_t>*>(addr), this);
+			break;
+		case MAP_STR_F32:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, float>*>(addr), this);
+			break;
+		case MAP_STR_F64:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, double>*>(addr), this);
+			break;
+		case MAP_STR_OBJ:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, DObject*>*>(addr), this);
+			break;
+		case MAP_STR_PTR:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, void*>*>(addr), this);
+			break;
+		case MAP_STR_STR:
+			PMapValueWriter(ar, static_cast<const ZSMap<FString, FString>*>(addr), this);
+			break;
+		}
+		ar.EndObject();
+	}
+}
+
+//==========================================================================
+//
+// PMap :: ReadValue
+//
+//==========================================================================
+
+
+template<typename M>
+static bool PMapValueReader(FSerializer &ar, M *map, const PMap *m)
+{
+	const char * k;
+	while(k = ar.GetKey())
+	{
+		typename M::ValueType * val;
+		if constexpr(std::is_same_v<typename M::KeyType,FString>)
+		{
+			val = &map->InsertNew(k);
+		}
+		else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+		{
+			FString s(k);
+			if(!s.IsInt())
+			{
+				ar.EndObject();
+				return false;
+			}
+			val = &map->InsertNew(static_cast<uint32_t>(s.ToULong()));
+		}
+		if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
+		{
+			ar.EndObject();
+			return false;
+		}
+	}
+	ar.EndObject();
+	return true;
+}
+
+
+bool PMap::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	DestroyValue(addr);
+	InitializeValue(addr, nullptr);
+	if(ar.BeginObject(key))
+	{
+		switch(BackingClass)
+		{
+		case MAP_I32_I8:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, uint8_t>*>(addr), this);
+		case MAP_I32_I16:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, uint16_t>*>(addr), this);
+		case MAP_I32_I32:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, uint32_t>*>(addr), this);
+		case MAP_I32_F32:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, float>*>(addr), this);
+		case MAP_I32_F64:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, double>*>(addr), this);
+		case MAP_I32_OBJ:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, DObject*>*>(addr), this);
+		case MAP_I32_PTR:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, void*>*>(addr), this);
+		case MAP_I32_STR:
+			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, FString>*>(addr), this);
+		case MAP_STR_I8:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, uint8_t>*>(addr), this);
+		case MAP_STR_I16:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, uint16_t>*>(addr), this);
+		case MAP_STR_I32:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, uint32_t>*>(addr), this);
+		case MAP_STR_F32:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, float>*>(addr), this);
+		case MAP_STR_F64:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, double>*>(addr), this);
+		case MAP_STR_OBJ:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, DObject*>*>(addr), this);
+		case MAP_STR_PTR:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, void*>*>(addr), this);
+		case MAP_STR_STR:
+			return PMapValueReader(ar, static_cast<ZSMap<FString, FString>*>(addr), this);
+		}
+	}
+	return false;
+}
+
+//==========================================================================
+//
 // NewMap
 //
 // Returns a PMap for the given key and value types, ensuring not to create
@@ -2245,16 +2685,330 @@ void PMap::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 //
 //==========================================================================
 
-PMap *NewMap(PType *keytype, PType *valuetype)
+int PMapBackingClass(PType *keytype, PType *valuetype, FString &backingName) {
+	int backingClass;
+	auto key_rtype = keytype->GetRegType();
+	auto value_rtype = valuetype->GetRegType();
+	if (key_rtype == REGT_INT)
+	{
+		if(keytype->Size != 4)
+		{
+			I_Error("Unsupported map requested");
+		}
+		else
+		{
+			backingName += "I32_";
+			backingClass = PMap::MAP_I32_I8;
+		}
+	}
+	else if (key_rtype == REGT_STRING)
+	{
+		backingName += "Str_";
+		backingClass = PMap::MAP_STR_I8;
+	}
+	else
+	{
+		I_Error("Unsupported map requested");
+	}
+	switch (valuetype->GetRegType())
+	{
+	case REGT_INT:
+		backingName.AppendFormat("I%d", valuetype->Size * 8);
+		backingClass += (valuetype->Size >> 1);
+		break;
+	case REGT_FLOAT:
+		backingName.AppendFormat("F%d", valuetype->Size * 8);
+		backingClass += PMap::MAP_I32_F32 + (valuetype->Size == 8);
+		break;
+	case REGT_STRING:
+		backingName += "Str";
+		backingClass += PMap::MAP_I32_STR;
+		break;
+
+	case REGT_POINTER:
+		if (valuetype->isObjectPointer())
+		{
+			backingName += "Obj";
+			backingClass += PMap::MAP_I32_OBJ;
+		}
+		else
+		{
+			backingName += "Ptr";
+			backingClass += PMap::MAP_I32_PTR;
+		}
+		break;
+	default:
+		I_Error("Unsupported map requested");
+		break;
+	}
+	return backingClass;
+}
+
+PMap *NewMap(PType *keyType, PType *valueType)
 {
 	size_t bucket;
-	PType *maptype = TypeTable.FindType(NAME_Map, (intptr_t)keytype, (intptr_t)valuetype, &bucket);
-	if (maptype == nullptr)
+	PType *mapType = TypeTable.FindType(NAME_Map, (intptr_t)keyType, (intptr_t)valueType, &bucket);
+	if (mapType == nullptr)
 	{
-		maptype = new PMap(keytype, valuetype);
-		TypeTable.AddType(maptype, NAME_Map, (intptr_t)keytype, (intptr_t)valuetype, bucket);
+		FString backingName = "Map_";
+		int backingClass = PMapBackingClass(keyType, valueType, backingName);
+		
+		auto backing = NewStruct(backingName, nullptr, true);
+		mapType = new PMap(keyType, valueType, backing, backingClass);
+		TypeTable.AddType(mapType, NAME_Map, (intptr_t)keyType, (intptr_t)valueType, bucket);
+		
 	}
-	return (PMap *)maptype;
+	return (PMap *)mapType;
+}
+
+/* PMap *******************************************************************/
+
+//==========================================================================
+//
+// PMap - Parameterized Constructor
+//
+//==========================================================================
+
+PMapIterator::PMapIterator(PType *keytype, PType *valtype, PStruct *backing, int backing_class)
+	: KeyType(keytype), ValueType(valtype), BackingType(backing), BackingClass((decltype(BackingClass)) backing_class)
+{
+	mDescriptiveName.Format("MapIterator<%s, %s>", keytype->DescriptiveName(), valtype->DescriptiveName());
+	Size = sizeof(ZSFMap);
+	Align = alignof(ZSFMap);
+	CreateOverrideFunction<PMapIterator, OFN_RET_KEY, OFN_ARG_VOID>(this, NAME_GetKey);
+	CreateOverrideFunction<PMapIterator, OFN_RET_VAL, OFN_ARG_VOID>(this, NAME_GetValue);
+	CreateOverrideFunction<PMapIterator, OFN_RET_VOID, OFN_ARG_VAL>(this, NAME_SetValue);
+}
+
+//==========================================================================
+//
+// PMapIterator :: IsMatch
+//
+//==========================================================================
+
+bool PMapIterator::IsMatch(intptr_t id1, intptr_t id2) const
+{
+	const PType *keyty = (const PType *)id1;
+	const PType *valty = (const PType *)id2;
+
+	return keyty == KeyType && valty == ValueType;
+}
+
+//==========================================================================
+//
+// PMapIterator :: GetTypeIDs
+//
+//==========================================================================
+
+void PMapIterator::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
+{
+	id1 = (intptr_t)KeyType;
+	id2 = (intptr_t)ValueType;
+}
+
+//==========================================================================
+//
+// PMapIterator :: InitializeValue
+//
+//==========================================================================
+
+void PMapIterator::Construct(void * addr) const {
+	switch(BackingClass)
+	{
+	case PMap::MAP_I32_I8:
+		new(addr) ZSMapIterator<uint32_t, uint8_t>();
+		break;
+	case PMap::MAP_I32_I16:
+		new(addr) ZSMapIterator<uint32_t, uint16_t>();
+		break;
+	case PMap::MAP_I32_I32:
+		new(addr) ZSMapIterator<uint32_t, uint32_t>();
+		break;
+	case PMap::MAP_I32_F32:
+		new(addr) ZSMapIterator<uint32_t, float>();
+		break;
+	case PMap::MAP_I32_F64:
+		new(addr) ZSMapIterator<uint32_t, double>();
+		break;
+	case PMap::MAP_I32_OBJ:
+		new(addr) ZSMapIterator<uint32_t, DObject*>();
+		break;
+	case PMap::MAP_I32_PTR:
+		new(addr) ZSMapIterator<uint32_t, void*>();
+		break;
+	case PMap::MAP_I32_STR:
+		new(addr) ZSMapIterator<uint32_t, FString>();
+		break;
+	case PMap::MAP_STR_I8:
+		new(addr) ZSMapIterator<FString, uint8_t>();
+		break;
+	case PMap::MAP_STR_I16:
+		new(addr) ZSMapIterator<FString, uint16_t>();
+		break;
+	case PMap::MAP_STR_I32:
+		new(addr) ZSMapIterator<FString, uint32_t>();
+		break;
+	case PMap::MAP_STR_F32:
+		new(addr) ZSMapIterator<FString, float>();
+		break;
+	case PMap::MAP_STR_F64:
+		new(addr) ZSMapIterator<FString, double>();
+		break;
+	case PMap::MAP_STR_OBJ:
+		new(addr) ZSMapIterator<FString, DObject*>();
+		break;
+	case PMap::MAP_STR_PTR:
+		new(addr) ZSMapIterator<FString, void*>();
+		break;
+	case PMap::MAP_STR_STR:
+		new(addr) ZSMapIterator<FString, FString>();
+		break;
+	};
+}
+
+void PMapIterator::InitializeValue(void *addr, const void *def) const
+{
+	if (def != nullptr)
+	{
+		I_Error("Map cannot have default values");
+	}
+	Construct(addr);
+}
+
+//==========================================================================
+//
+// PMapIterator :: DestroyValue
+//
+//==========================================================================
+
+void PMapIterator::DestroyValue(void *addr) const
+{
+	switch(BackingClass)
+	{
+	case PMap::MAP_I32_I8:
+		static_cast<ZSMapIterator<uint32_t, uint8_t>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_I32_I16:
+		static_cast<ZSMapIterator<uint32_t, uint16_t>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_I32_I32:
+		static_cast<ZSMapIterator<uint32_t, uint32_t>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_I32_F32:
+		static_cast<ZSMapIterator<uint32_t, float>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_I32_F64:
+		static_cast<ZSMapIterator<uint32_t, double>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_I32_OBJ:
+		static_cast<ZSMapIterator<uint32_t, DObject*>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_I32_PTR:
+		static_cast<ZSMapIterator<uint32_t, void*>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_I32_STR:
+		static_cast<ZSMapIterator<uint32_t, FString>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_I8:
+		static_cast<ZSMapIterator<FString, uint8_t>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_I16:
+		static_cast<ZSMapIterator<FString, uint16_t>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_I32:
+		static_cast<ZSMapIterator<FString, uint32_t>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_F32:
+		static_cast<ZSMapIterator<FString, float>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_F64:
+		static_cast<ZSMapIterator<FString, double>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_OBJ:
+		static_cast<ZSMapIterator<FString, DObject*>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_PTR:
+		static_cast<ZSMapIterator<FString, void*>*>(addr)->~ZSMapIterator();
+		break;
+	case PMap::MAP_STR_STR:
+		static_cast<ZSMapIterator<FString, FString>*>(addr)->~ZSMapIterator();
+		break;
+	}
+}
+
+//==========================================================================
+//
+// PMapIterator :: SetDefaultValue
+//
+//==========================================================================
+
+void PMapIterator::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
+{
+	assert(!(base && special));
+	if (base != nullptr)
+	{
+		Construct(((uint8_t*)base)+offset);
+	}
+	if (special != nullptr)
+	{
+		special->Push(std::make_pair(this, offset));
+	}
+	else
+	{
+		I_Error("null special");
+	}
+}
+
+//==========================================================================
+//
+// PMapIterator :: WriteValue
+//
+//==========================================================================
+
+void PMapIterator::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	ar.BeginObject(key);
+	ar.EndObject();
+}
+
+//==========================================================================
+//
+// PMapIterator :: ReadValue
+//
+//==========================================================================
+
+bool PMapIterator::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	DestroyValue(addr);
+	InitializeValue(addr, nullptr);
+	ar.BeginObject(key);
+	ar.EndObject();
+	return true;
+}
+
+//==========================================================================
+//
+// NewMapIterator
+//
+// Returns a PMapIterator for the given key and value types, ensuring not to create
+// duplicates.
+//
+//==========================================================================
+
+PMapIterator *NewMapIterator(PType *keyType, PType *valueType)
+{
+	size_t bucket;
+	PType *mapIteratorType = TypeTable.FindType(NAME_MapIterator, (intptr_t)keyType, (intptr_t)valueType, &bucket);
+	if (mapIteratorType == nullptr)
+	{
+		FString backingName = "MapIterator_";
+		int backingClass = PMapBackingClass(keyType, valueType, backingName);
+
+		auto backing = NewStruct(backingName, nullptr, true);
+		mapIteratorType = new PMapIterator(keyType, valueType, backing, backingClass);
+		TypeTable.AddType(mapIteratorType, NAME_MapIterator, (intptr_t)keyType, (intptr_t)valueType, bucket);
+	}
+	return (PMapIterator *)mapIteratorType;
 }
 
 /* PStruct ****************************************************************/
@@ -2329,6 +3083,26 @@ void PStruct::SetPointerArray(void *base, unsigned offset, TArray<size_t> *speci
 		if (field && !(field->Flags & VARF_Transient))
 		{
 			field->Type->SetPointerArray(base, unsigned(offset + field->Offset), special);
+		}
+	}
+}
+
+//==========================================================================
+//
+// PStruct :: SetPointerMap
+//
+//==========================================================================
+
+void PStruct::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *special)
+{
+	auto it = Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto field = dyn_cast<PField>(pair->Value);
+		if (field && !(field->Flags & VARF_Transient))
+		{
+			field->Type->SetPointerMap(base, unsigned(offset + field->Offset), special);
 		}
 	}
 }

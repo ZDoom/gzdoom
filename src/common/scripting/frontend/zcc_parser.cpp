@@ -220,6 +220,7 @@ static void InitTokenMap()
 	TOKENDEF2(TK_Vector3,		ZCC_VECTOR3,	NAME_Vector3);
 	TOKENDEF2(TK_Name,			ZCC_NAME,		NAME_Name);
 	TOKENDEF2(TK_Map,			ZCC_MAP,		NAME_Map);
+	TOKENDEF2(TK_MapIterator,	ZCC_MAPITERATOR,NAME_MapIterator);
 	TOKENDEF2(TK_Array,			ZCC_ARRAY,		NAME_Array);
 	TOKENDEF2(TK_Include,		ZCC_INCLUDE,	NAME_Include);
 	TOKENDEF (TK_Void,			ZCC_VOID);
@@ -890,6 +891,19 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 		// ZCC_Type
 		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
 		// ZCC_MapType
+		copy->KeyType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->KeyType, true, copiedNodesList));
+		copy->ValueType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->ValueType, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_MapIteratorType:
+	{
+		TreeNodeDeepCopy_Start(MapIteratorType);
+
+		// ZCC_Type
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+		// AST_MapIteratorType
 		copy->KeyType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->KeyType, true, copiedNodesList));
 		copy->ValueType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->ValueType, true, copiedNodesList));
 

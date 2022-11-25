@@ -42,6 +42,7 @@
 #include "types.h"
 #include "i_time.h"
 #include "printf.h"
+#include "maps.h"
 
 //==========================================================================
 //
@@ -342,6 +343,17 @@ DEFINE_ACTION_FUNCTION(DObject, Destroy)
 //
 //==========================================================================
 
+template<typename M>
+static void PropagateMarkMap(M *map)
+{
+	TMapIterator<typename M::KeyType,DObject*> it(*map);
+	typename M::Pair * p;
+	while(it.NextPair(p))
+	{
+		GC::Mark(&p->Value);
+	}
+}
+
 size_t DObject::PropagateMark()
 {
 	const PClass *info = GetClass();
@@ -375,6 +387,27 @@ size_t DObject::PropagateMark()
 			offsets++;
 		}
 
+		{
+			const std::pair<size_t,PType *> *maps = info->MapPointers;
+			if (maps == NULL)
+			{
+				const_cast<PClass *>(info)->BuildMapPointers();
+				maps = info->MapPointers;
+			}
+			while (maps->first != ~(size_t)0)
+			{
+				if(maps->second->RegType == REGT_STRING)
+				{ // FString,DObject*
+					PropagateMarkMap((ZSMap<FString,DObject*>*)((uint8_t *)this + maps->first));
+				}
+				else
+				{ // uint32_t,DObject*
+					PropagateMarkMap((ZSMap<uint32_t,DObject*>*)((uint8_t *)this + maps->first));
+				}
+				maps++;
+			}
+
+		}
 		return info->Size;
 	}
 	return 0;

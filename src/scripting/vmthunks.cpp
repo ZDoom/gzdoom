@@ -2436,6 +2436,12 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetDisplacement)
 	ACTION_RETURN_VEC2(ofs);
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetPortalGroupCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_INT(self->Displacements.size);
+}
+
 void SphericalCoords(FLevelLocals *self, double vpX, double vpY, double vpZ, double tX, double tY, double tZ, double viewYaw, double viewPitch, int absolute, DVector3 *result)
 {
 	

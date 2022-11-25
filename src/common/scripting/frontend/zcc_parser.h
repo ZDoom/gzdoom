@@ -601,7 +601,7 @@ struct ZCC_MixinStmt : ZCC_Statement
 	ENamedName MixinName;
 };
 
-FString ZCC_PrintAST(ZCC_TreeNode *root);
+FString ZCC_PrintAST(const ZCC_TreeNode *root);
 
 
 struct ZCC_AST

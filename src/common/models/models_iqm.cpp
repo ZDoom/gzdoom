@@ -436,7 +436,7 @@ int IQMModel::FindFrame(const char* name, bool nodefault)
 {
 	// [MK] allow looking up frames by animation name plus offset (using a colon as separator)
 	const char* colon = strrchr(name,':');
-	int nlen = (colon==nullptr)?strlen(name):(colon-name);
+	size_t nlen = (colon==nullptr)?strlen(name):(colon-name);
 	for (unsigned i = 0; i < Anims.Size(); i++)
 	{
 		if (!strnicmp(name, Anims[i].Name.GetChars(), nlen))

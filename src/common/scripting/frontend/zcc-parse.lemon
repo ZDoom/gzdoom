@@ -932,7 +932,7 @@ type_name(X) ::= DOT dottable_id(A).
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 VECTOR4 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16 PROPERTY.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 VECTOR4 NAME MAP MAPITERATOR ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16 PROPERTY.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}
@@ -944,12 +944,20 @@ type_name(X) ::= DOT dottable_id(A).
 %type array_size{ZCC_Expression *}
 %type array_size_expr{ZCC_Expression *}
 
-aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* Hash table */
+aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* ZSMap<K, V> */
 {
 	NEW_AST_NODE(MapType,map,T);
 	map->KeyType = A;
 	map->ValueType = B;
 	X = map;
+}
+
+aggregate_type(X) ::= MAPITERATOR(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* ZSMapIterator<K, V> */
+{
+	NEW_AST_NODE(MapIteratorType,map_it,T);
+	map_it->KeyType = A;
+	map_it->ValueType = B;
+	X = map_it;
 }
 
 aggregate_type(X) ::= ARRAY(T) LT type_or_array(A) GT.							/* TArray<type> */

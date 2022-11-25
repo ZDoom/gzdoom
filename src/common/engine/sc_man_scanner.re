@@ -167,6 +167,7 @@ std2:
 		'vector2'					{ RET(TK_Vector2); }
 		'vector3'					{ RET(TK_Vector3); }
 		'map'						{ RET(TK_Map); }
+		'mapiterator'				{ RET(TK_MapIterator); }
 		'array'						{ RET(TK_Array); }
 		'in'						{ RET(TK_In); }
 		'sizeof'					{ RET(TK_SizeOf); }

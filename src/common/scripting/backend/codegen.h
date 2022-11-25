@@ -350,6 +350,8 @@ public:
 	bool IsArray() const { return ValueType->isArray() || (ValueType->isPointer() && ValueType->toPointer()->PointedType->isArray()); }
 	bool isStaticArray() const { return (ValueType->isPointer() && ValueType->toPointer()->PointedType->isStaticArray()); } // can only exist in pointer form.
 	bool IsDynamicArray() const { return (ValueType->isDynArray()); }
+	bool IsMap() const { return ValueType->isMap(); }
+	bool IsMapIterator() const { return ValueType->isMapIterator(); }
 	bool IsStruct() const { return ValueType->isStruct(); }
 	bool IsNativeStruct() const { return (ValueType->isStruct() && static_cast<PStruct*>(ValueType)->isNative); }
 

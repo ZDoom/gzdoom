@@ -98,6 +98,7 @@ enum EZCCTreeNodeType
 	AST_Type,
 	AST_BasicType,
 	AST_MapType,
+	AST_MapIteratorType,
 	AST_DynArrayType,
 	AST_ClassType,
 	AST_Expression,
@@ -362,6 +363,12 @@ struct ZCC_BasicType : ZCC_Type
 };
 
 struct ZCC_MapType : ZCC_Type
+{
+	ZCC_Type *KeyType;
+	ZCC_Type *ValueType;
+};
+
+struct ZCC_MapIteratorType : ZCC_Type
 {
 	ZCC_Type *KeyType;
 	ZCC_Type *ValueType;

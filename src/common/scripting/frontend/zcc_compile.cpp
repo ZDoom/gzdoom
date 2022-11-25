@@ -1853,16 +1853,96 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 	}
 
 	case AST_MapType:
-		if (allowarraytypes)
+	{
+		if(AST.ParseVersion < MakeVersion(4, 10, 0))
 		{
-			Error(field, "%s: Map types not implemented yet", name.GetChars());
-			// Todo: Decide what we allow here and if it makes sense to allow more complex constructs.
-			auto mtype = static_cast<ZCC_MapType *>(ztype);
-			retval = NewMap(DetermineType(outertype, field, name, mtype->KeyType, false, false), DetermineType(outertype, field, name, mtype->ValueType, false, false));
+			Error(field, "Map not accessible to ZScript version %d.%d.%d", AST.ParseVersion.major, AST.ParseVersion.minor, AST.ParseVersion.revision);
 			break;
 		}
-		break;
 
+		// Todo: Decide what we allow here and if it makes sense to allow more complex constructs.
+		auto mtype = static_cast<ZCC_MapType *>(ztype);
+
+		auto keytype = DetermineType(outertype, field, name, mtype->KeyType, false, false);
+		auto valuetype = DetermineType(outertype, field, name, mtype->ValueType, false, false);
+
+		if (keytype->GetRegType() == REGT_INT)
+		{
+			if (keytype->Size != 4)
+			{
+				Error(field, "Map<%s , ...> not implemented yet", keytype->DescriptiveName());
+				break;
+			}
+		}
+		else if (keytype->GetRegType() != REGT_STRING)
+		{
+			Error(field, "Map<%s , ...> not implemented yet", keytype->DescriptiveName());
+			break;
+		}
+
+		switch(valuetype->GetRegType())
+		{
+		case REGT_FLOAT:
+		case REGT_INT:
+		case REGT_STRING:
+		case REGT_POINTER:
+			if (valuetype->GetRegCount() > 1)
+			{
+				Error(field, "%s : Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+				break;
+			}
+
+			retval = NewMap(keytype, valuetype);
+			break;
+		default:
+			Error(field, "%s: Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+		}
+
+		break;
+	}
+	case AST_MapIteratorType:
+	{
+		if(AST.ParseVersion < MakeVersion(4, 10, 0))
+		{
+			Error(field, "MapIterator not accessible to ZScript version %d.%d.%d", AST.ParseVersion.major, AST.ParseVersion.minor, AST.ParseVersion.revision);
+			break;
+		}
+		// Todo: Decide what we allow here and if it makes sense to allow more complex constructs.
+		auto mtype = static_cast<ZCC_MapIteratorType *>(ztype);
+
+		auto keytype = DetermineType(outertype, field, name, mtype->KeyType, false, false);
+		auto valuetype = DetermineType(outertype, field, name, mtype->ValueType, false, false);
+
+		if (keytype->GetRegType() == REGT_INT)
+		{
+			if (keytype->Size != 4)
+			{
+				Error(field, "MapIterator<%s , ...> not implemented yet", keytype->DescriptiveName());
+			}
+		}
+		else if (keytype->GetRegType() != REGT_STRING)
+		{
+			Error(field, "MapIterator<%s , ...> not implemented yet", keytype->DescriptiveName());
+		}
+
+		switch(valuetype->GetRegType())
+		{
+		case REGT_FLOAT:
+		case REGT_INT:
+		case REGT_STRING:
+		case REGT_POINTER:
+			if (valuetype->GetRegCount() > 1)
+			{
+				Error(field, "%s : Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+				break;
+			}
+			retval = NewMapIterator(keytype, valuetype);
+			break;
+		default:
+			Error(field, "%s: Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+		}
+		break;
+	}
 	case AST_DynArrayType:
 	{
 		auto atype = static_cast<ZCC_DynArrayType *>(ztype);
@@ -2357,7 +2437,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 					int flags = 0;
-					if ((type->isStruct() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeQuaternion && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4 && type != TypeFQuaternion) || type->isDynArray())
+					if ((type->isStruct() && type != TypeVector2 && type != TypeVector3 && type != TypeVector4 && type != TypeQuaternion && type != TypeFVector2 && type != TypeFVector3 && type != TypeFVector4 && type != TypeFQuaternion) || type->isDynArray() || type->isMap() || type->isMapIterator())
 					{
 						// Structs are being passed by pointer, but unless marked 'out' that pointer must be readonly.
 						type = NewPointer(type /*, !(p->Flags & ZCC_Out)*/);

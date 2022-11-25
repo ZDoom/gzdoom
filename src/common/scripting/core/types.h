@@ -129,6 +129,7 @@ public:
 	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL);
 	virtual void SetPointer(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL);
 	virtual void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL);
+	virtual void SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *ptrofs = NULL);
 
 	// Initialize the value, if needed (e.g. strings)
 	virtual void InitializeValue(void *addr, const void *def) const;
@@ -200,6 +201,8 @@ public:
 	bool isArray() const { return !!(Flags & TYPE_Array); }
 	bool isStaticArray() const { return TypeTableType == NAME_StaticArray; }
 	bool isDynArray() const { return TypeTableType == NAME_DynArray; }
+	bool isMap() const { return TypeTableType == NAME_Map; }
+	bool isMapIterator() const { return TypeTableType == NAME_MapIterator; }
 	bool isStruct() const { return TypeTableType == NAME_Struct; }
 	bool isClass() const { return TypeTableType == NAME_Object; }
 	bool isPrototype() const { return TypeTableType == NAME_Prototype; }
@@ -489,6 +492,7 @@ public:
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *special) override;
 	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) override;
+	void SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *ptrofs = NULL) override;
 };
 
 class PStaticArray : public PArray
@@ -521,14 +525,72 @@ public:
 
 class PMap : public PCompoundType
 {
+	void Construct(void * addr) const;
 public:
-	PMap(PType *keytype, PType *valtype);
+	PMap(PType *keytype, PType *valtype, PStruct *backing, int backing_class);
 
 	PType *KeyType;
 	PType *ValueType;
 
+	TMap<FName,PFunction*> FnOverrides;
+
+	PStruct *BackingType;
+
+	enum EBackingClass {
+		MAP_I32_I8,
+		MAP_I32_I16,
+		MAP_I32_I32,
+		MAP_I32_F32,
+		MAP_I32_F64,
+		MAP_I32_OBJ,
+		MAP_I32_PTR,
+		MAP_I32_STR,
+
+		MAP_STR_I8,
+		MAP_STR_I16,
+		MAP_STR_I32,
+		MAP_STR_F32,
+		MAP_STR_F64,
+		MAP_STR_OBJ,
+		MAP_STR_PTR,
+		MAP_STR_STR,
+	} BackingClass;
+
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
+	void InitializeValue(void *addr, const void *def) const override;
+	void DestroyValue(void *addr) const override;
+	void SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *ptrofs) override;
+};
+
+
+class PMapIterator : public PCompoundType
+{
+	void Construct(void * addr) const;
+public:
+	PMapIterator(PType *keytype, PType *valtype, PStruct *backing, int backing_class);
+
+	PType *KeyType;
+	PType *ValueType;
+
+	TMap<FName,PFunction*> FnOverrides;
+
+	PStruct *BackingType;
+
+	PMap::EBackingClass BackingClass;
+
+	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
+	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	void WriteValue(FSerializer &ar, const char *key, const void *addr) const override;
+	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
+	void InitializeValue(void *addr, const void *def) const override;
+	void DestroyValue(void *addr) const override;
 };
 
 class PStruct : public PContainerType
@@ -550,6 +612,7 @@ public:
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) override;
 	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *special) override;
+	void SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *ptrofs) override;
 };
 
 class PPrototype : public PCompoundType
@@ -586,6 +649,7 @@ inline PClass *PObjectPointer::PointedClass() const
 
 // Returns a type from the TypeTable. Will create one if it isn't present.
 PMap *NewMap(PType *keytype, PType *valuetype);
+PMapIterator *NewMapIterator(PType *keytype, PType *valuetype);
 PArray *NewArray(PType *type, unsigned int count);
 PStaticArray *NewStaticArray(PType *type);
 PDynArray *NewDynArray(PType *type);

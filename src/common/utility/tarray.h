@@ -316,7 +316,14 @@ public:
 	// Returns a reference to the last element
 	T &Last() const
 	{
+		assert(Count > 0);
 		return Array[Count-1];
+	}
+
+	T SafeGet (size_t index, const T& defaultval) const
+	{
+		if (index <= Count) return Array[index];
+		else return defaultval;
 	}
 
 	// returns address of first element

@@ -357,7 +357,7 @@ public:
 	bool isValidSoundId(FSoundID sid)
 	{
 		int id = sid.index();
-		return id > 0 && id < (int)S_sfx.Size() && !S_sfx[id].bTentative && S_sfx[id].lumpnum != sfx_empty;
+		return id > 0 && id < (int)S_sfx.Size() && !S_sfx[id].bTentative && (S_sfx[id].lumpnum != sfx_empty || S_sfx[id].bRandomHeader || S_sfx[id].link != sfxinfo_t::NO_LINK);
 	}
 
 	template<class func> bool EnumerateChannels(func callback)

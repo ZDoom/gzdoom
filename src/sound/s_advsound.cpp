@@ -952,7 +952,7 @@ static void S_AddSNDINFO (int lump)
 				{
 					sfx = soundEngine->FindSoundTentative(sc.String);
 					auto sfxp = soundEngine->GetWritableSfx(sfx);
-					sfxp->Rolloff;
+					rolloff = &sfxp->Rolloff;
 				}
 				type = ROLLOFF_Doom;
 				if (!sc.CheckFloat())

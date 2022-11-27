@@ -191,7 +191,7 @@ void PolyRenderer::SetupPerspectiveMatrix()
 
 	if (!bDidSetup)
 	{
-		InitGLRMapinfoData();
+		//InitGLRMapinfoData();
 		bDidSetup = true;
 	}
 

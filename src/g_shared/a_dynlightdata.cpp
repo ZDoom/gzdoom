@@ -1340,19 +1340,19 @@ static void DoParseDefs(FScanner &sc, int workingLump)
 			ParseGldefSkybox(sc);
 			break;
 		case TAG_GLOW:
-			gl_InitGlow(sc);
+//			gl_InitGlow(sc);
 			break;
 		case TAG_BRIGHTMAP:
-			gl_ParseBrightmap(sc, workingLump);
+//			gl_ParseBrightmap(sc, workingLump);
 			break;
 		case TAG_MATERIAL:
-			gl_ParseMaterial(sc, workingLump);
+//			gl_ParseMaterial(sc, workingLump);
 			break;
 		case TAG_HARDWARESHADER:
-			gl_ParseHardwareShader(sc, workingLump);
+//			gl_ParseHardwareShader(sc, workingLump);
 			break;
 		case TAG_DETAIL:
-			gl_ParseDetailTexture(sc);
+//			gl_ParseDetailTexture(sc);
 			break;
 		case TAG_DISABLE_FB:
 			{
@@ -1402,7 +1402,7 @@ void ParseGLDefs()
 
 	LightAssociations.Clear();
 	LightDefaults.Clear();
-	gl_DestroyUserShaders();
+//	gl_DestroyUserShaders();
 	switch (gameinfo.gametype)
 	{
 	case GAME_Heretic:

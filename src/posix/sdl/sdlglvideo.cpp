@@ -48,17 +48,17 @@
 #include "videomodes.h"
 #include "sdlglvideo.h"
 #include "sdlvideo.h"
-#include "gl/system/gl_system.h"
+//#include "gl/system/gl_system.h"
 #include "r_defs.h"
-#include "gl/gl_functions.h"
+//#include "gl/gl_functions.h"
 //#include "gl/gl_intern.h"
 
-#include "gl/renderer/gl_renderer.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/utility/gl_templates.h"
-#include "gl/textures/gl_material.h"
-#include "gl/system/gl_cvars.h"
+//#include "gl/renderer/gl_renderer.h"
+//#include "gl/system/gl_framebuffer.h"
+//#include "gl/shaders/gl_shader.h"
+//#include "gl/utility/gl_templates.h"
+//#include "gl/textures/gl_material.h"
+//#include "gl/system/gl_cvars.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -123,7 +123,7 @@ SDLGLVideo::SDLGLVideo (int parm)
 
 SDLGLVideo::~SDLGLVideo ()
 {
-	if (GLRenderer != NULL) GLRenderer->FlushTextures();
+	//if (GLRenderer != NULL) GLRenderer->FlushTextures();
 }
 
 void SDLGLVideo::StartModeIterator (int bits, bool fs)
@@ -181,7 +181,8 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	SDLBaseFB *fb;
 	if (vid_renderer == 1)
 	{
-		fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
+        throw std::runtime_error("OpenGL renderer nuked lol");
+		//fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
 	}
 	else if (vid_glswfb == 0)
 	{
@@ -189,12 +190,12 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	}
 	else
 	{
-		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
-		if (!fb->IsValid())
-		{
-			delete fb;
+//		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
+//		if (!fb->IsValid())
+//		{
+//			delete fb;
 			fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
-		}
+//		}
 	}
 
 	retry = 0;
@@ -256,7 +257,8 @@ bool SDLGLVideo::SetResolution (int width, int height, int bits)
 	// interface?
 #ifndef NO_GL
 
-	if (GLRenderer != NULL) GLRenderer->FlushTextures();
+    //throw std::runtime_error("OpenGL renderer nuked lol");
+	//if (GLRenderer != NULL) GLRenderer->FlushTextures();
 	I_ShutdownGraphics();
 
 	Video = new SDLGLVideo(0);

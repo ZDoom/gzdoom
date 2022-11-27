@@ -355,6 +355,7 @@ protected:
 		CopySize(other);
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
+#if 0
 		gl_info = other->gl_info;
 		gl_info.Brightmap = NULL;
 		gl_info.Normal = NULL;
@@ -363,6 +364,7 @@ protected:
 		gl_info.Roughness = NULL;
 		gl_info.AmbientOcclusion = NULL;
 		gl_info.areas = NULL;
+#endif
 	}
 
 	std::vector<uint32_t> PixelsBgra;
@@ -390,7 +392,7 @@ public:
 	friend class OpenGLSWFrameBuffer;
 
 public:
-
+#if 0
 	struct MiscGLInfo
 	{
 		FMaterial *Material[2];
@@ -424,10 +426,10 @@ public:
 		~MiscGLInfo();
 	};
 	MiscGLInfo gl_info;
-
+#endif
 	void GetGlowColor(float *data);
-	bool isGlowing() { return gl_info.bGlowing; }
-	bool isFullbright() { return gl_info.bFullbright; }
+//	bool isGlowing() { return gl_info.bGlowing; }
+//	bool isFullbright() { return gl_info.bFullbright; }
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);

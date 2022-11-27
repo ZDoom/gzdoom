@@ -80,8 +80,8 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 	WidthBits = 4;
 	HeightBits = 4;
 	WidthMask = 15;
-	gl_info.bNoFilter = true;
-	gl_info.bNoCompress = true;
+//	gl_info.bNoFilter = true;
+//	gl_info.bNoCompress = true;
 }
 
 //===========================================================================

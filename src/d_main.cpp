@@ -2675,7 +2675,7 @@ void D_DoomMain (void)
 			}
 
 			V_Init2();
-			gl_PatchMenu();
+			//gl_PatchMenu();
 			UpdateJoystickMenu(NULL);
 
 			v = Args->CheckValue ("-loadgame");

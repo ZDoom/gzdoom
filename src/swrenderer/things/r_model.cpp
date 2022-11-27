@@ -82,11 +82,13 @@ namespace swrenderer
 
 	SWModelRenderer::SWModelRenderer(RenderThread *thread) : Thread(thread)
 	{
+#if 0
 		if (polymodelsInUse)
 		{
 			gl_FlushModels();
 			polymodelsInUse = false;
 		}
+#endif
 	}
 
 	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)

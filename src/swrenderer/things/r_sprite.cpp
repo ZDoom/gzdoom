@@ -245,7 +245,7 @@ namespace swrenderer
 
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
-		
+#if 0
 		if (r_dynlights && gl_light_sprites)
 		{
 			float lit_red = 0;
@@ -295,8 +295,11 @@ namespace swrenderer
 		}
 		else
 		{
+#endif
 			vis->dynlightcolor = 0;
+#if 0
 		}
+#endif
 
 		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 

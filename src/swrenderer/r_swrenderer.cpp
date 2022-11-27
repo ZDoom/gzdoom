@@ -172,6 +172,7 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 
 void FSoftwareRenderer::RenderView(player_t *player)
 {
+#if 0
 	if (r_polyrenderer)
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
@@ -181,6 +182,7 @@ void FSoftwareRenderer::RenderView(player_t *player)
 		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
 	else
+#endif
 	{
 		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
 		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
@@ -208,6 +210,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 
 	// Take a snapshot of the player's view
 	pic->Lock ();
+#if 0
 	if (r_polyrenderer)
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
@@ -217,6 +220,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
 	else
+#endif
 	{
 		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
 		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
@@ -240,6 +244,7 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
+#if 0
 	else
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
@@ -248,6 +253,7 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
 		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
+#endif
 }
 
 int FSoftwareRenderer::GetMaxViewPitch(bool down)
@@ -274,9 +280,12 @@ void FSoftwareRenderer::SetClearColor(int color)
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov)
 {
-	auto renderTarget = r_polyrenderer ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
-	auto &cameraViewpoint = r_polyrenderer ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
-	auto &cameraViewwindow = r_polyrenderer ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
+//    auto renderTarget = r_polyrenderer ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
+//    auto &cameraViewpoint = r_polyrenderer ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
+//    auto &cameraViewwindow = r_polyrenderer ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
+    auto renderTarget = mScene.MainThread()->Viewport->RenderTarget;
+    auto &cameraViewpoint = mScene.MainThread()->Viewport->viewpoint;
+    auto &cameraViewwindow = mScene.MainThread()->Viewport->viewwindow;
 
 	// Grab global state shared with rest of zdoom
 	cameraViewpoint = r_viewpoint;
@@ -291,10 +300,11 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 	DAngle savedfov = cameraViewpoint.FieldOfView;
 	R_SetFOV (cameraViewpoint, fov);
-
+#if 0
 	if (r_polyrenderer)
 		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	else
+#endif
 		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 
 	R_SetFOV (cameraViewpoint, savedfov);

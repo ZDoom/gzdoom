@@ -1862,7 +1862,7 @@ void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 
 void PArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special)
 {
-	if (ElementType->isStruct())
+	if (ElementType->isStruct() || ElementType->isDynArray())
 	{
 		for (unsigned int i = 0; i < ElementCount; ++i)
 		{

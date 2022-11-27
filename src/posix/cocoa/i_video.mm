@@ -57,13 +57,6 @@
 #include "version.h"
 #include "videomodes.h"
 
-//#include "gl/system/gl_system.h"
-//#include "gl/data/gl_vertexbuffer.h"
-//#include "gl/renderer/gl_renderer.h"
-//#include "gl/system/gl_framebuffer.h"
-//#include "gl/system/gl_interface.h"
-//#include "gl/textures/gl_samplers.h"
-//#include "gl/utility/gl_clock.h"
 
 #undef Class
 

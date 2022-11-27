@@ -57,7 +57,6 @@
 #include "textures/textures.h"
 #include "vm.h"
 #include "events.h"
-//#include "gl/renderer/gl_renderer.h" // for menu blur
 #include "scripting/types.h"
 
 //
@@ -790,8 +789,6 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-//		if (GLRenderer)
-//			GLRenderer->BlurScene(gameinfo.bluramount);
 		if (!CurrentMenu->DontDim)
 		{
 			screen->Dim(fade);

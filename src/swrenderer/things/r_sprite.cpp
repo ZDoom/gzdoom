@@ -68,7 +68,7 @@
 #include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
-EXTERN_CVAR(Bool, gl_light_sprites)
+CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 namespace swrenderer
 {
@@ -245,7 +245,7 @@ namespace swrenderer
 
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
-#if 0
+#if 0 // TODO dynamic lights not supported for now
 		if (r_dynlights && gl_light_sprites)
 		{
 			float lit_red = 0;

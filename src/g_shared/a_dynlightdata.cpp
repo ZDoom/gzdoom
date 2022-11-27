@@ -54,12 +54,6 @@
 #include "textures/skyboxtexture.h"
 
 int ScriptDepth;
-void gl_InitGlow(FScanner &sc);
-void gl_ParseBrightmap(FScanner &sc, int);
-void gl_ParseMaterial(FScanner &sc, int);
-void gl_DestroyUserShaders();
-void gl_ParseHardwareShader(FScanner &sc, int deflump);
-void gl_ParseDetailTexture(FScanner &sc);
 
 //==========================================================================
 //
@@ -1340,19 +1334,19 @@ static void DoParseDefs(FScanner &sc, int workingLump)
 			ParseGldefSkybox(sc);
 			break;
 		case TAG_GLOW:
-//			gl_InitGlow(sc);
+            // OpenGL renderer removed
 			break;
 		case TAG_BRIGHTMAP:
-//			gl_ParseBrightmap(sc, workingLump);
+            // OpenGL renderer removed
 			break;
 		case TAG_MATERIAL:
-//			gl_ParseMaterial(sc, workingLump);
+            // OpenGL renderer removed
 			break;
 		case TAG_HARDWARESHADER:
-//			gl_ParseHardwareShader(sc, workingLump);
+            // OpenGL renderer removed
 			break;
 		case TAG_DETAIL:
-//			gl_ParseDetailTexture(sc);
+            // OpenGL renderer removed
 			break;
 		case TAG_DISABLE_FB:
 			{
@@ -1402,7 +1396,6 @@ void ParseGLDefs()
 
 	LightAssociations.Clear();
 	LightDefaults.Clear();
-//	gl_DestroyUserShaders();
 	switch (gameinfo.gametype)
 	{
 	case GAME_Heretic:

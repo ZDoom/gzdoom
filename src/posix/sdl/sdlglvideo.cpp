@@ -48,17 +48,7 @@
 #include "videomodes.h"
 #include "sdlglvideo.h"
 #include "sdlvideo.h"
-//#include "gl/system/gl_system.h"
 #include "r_defs.h"
-//#include "gl/gl_functions.h"
-//#include "gl/gl_intern.h"
-
-//#include "gl/renderer/gl_renderer.h"
-//#include "gl/system/gl_framebuffer.h"
-//#include "gl/shaders/gl_shader.h"
-//#include "gl/utility/gl_templates.h"
-//#include "gl/textures/gl_material.h"
-//#include "gl/system/gl_cvars.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -123,7 +113,6 @@ SDLGLVideo::SDLGLVideo (int parm)
 
 SDLGLVideo::~SDLGLVideo ()
 {
-	//if (GLRenderer != NULL) GLRenderer->FlushTextures();
 }
 
 void SDLGLVideo::StartModeIterator (int bits, bool fs)
@@ -182,20 +171,10 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	if (vid_renderer == 1)
 	{
         throw std::runtime_error("OpenGL renderer nuked lol");
-		//fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
-	}
-	else if (vid_glswfb == 0)
-	{
-		fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
 	}
 	else
 	{
-//		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
-//		if (!fb->IsValid())
-//		{
-//			delete fb;
-			fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
-//		}
+        fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
 	}
 
 	retry = 0;
@@ -257,8 +236,6 @@ bool SDLGLVideo::SetResolution (int width, int height, int bits)
 	// interface?
 #ifndef NO_GL
 
-    //throw std::runtime_error("OpenGL renderer nuked lol");
-	//if (GLRenderer != NULL) GLRenderer->FlushTextures();
 	I_ShutdownGraphics();
 
 	Video = new SDLGLVideo(0);
@@ -366,22 +343,8 @@ SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen, bool
 		Screen = SDL_CreateWindow (caption,
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-			width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_OPENGL
+			width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
 		);
-		if (Screen != NULL)
-		{
-			GLContext = SDL_GL_CreateContext(Screen);
-			if (GLContext != NULL)
-			{
-				m_supportsGamma = -1 != SDL_GetWindowGammaRamp(Screen,
-					 m_origGamma[0], m_origGamma[1], m_origGamma[2]
-				);
-				return;
-			}
-
-			SDL_DestroyWindow(Screen);
-			Screen = NULL;
-		}
 	}
 }
 
@@ -390,17 +353,9 @@ SDLGLFB::~SDLGLFB ()
 	if (Screen)
 	{
 		ResetGammaTable();
-
-		if (GLContext)
-		{
-			SDL_GL_DeleteContext(GLContext);
-		}
-
 		SDL_DestroyWindow(Screen);
 	}
 }
-
-
 
 
 void SDLGLFB::InitializeState() 

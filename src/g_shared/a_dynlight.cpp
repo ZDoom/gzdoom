@@ -73,7 +73,6 @@
 #include "a_dynlight.h"
 #include "actorinlines.h"
 #include "c_cvars.h"
-//#include "gl/system//gl_interface.h"
 #include "vm.h"
 
 extern int currentrenderer;
@@ -182,11 +181,9 @@ void ADynamicLight::BeginPlay()
 	specialf1 = DAngle(double(SpawnAngle)).Normalized360().Degrees;
 	visibletoplayer = true;
 
-	if (currentrenderer == 1/* && gl.legacyMode && (lightflags & LF_ATTENUATE)*/)
+	if (currentrenderer == 1)
 	{
         throw std::runtime_error("OpenGL renderer nuked lol");
-		args[LIGHT_INTENSITY] = args[LIGHT_INTENSITY] * 2 / 3;
-		args[LIGHT_SECONDARY_INTENSITY] = args[LIGHT_SECONDARY_INTENSITY] * 2 / 3;
 	}
 }
 

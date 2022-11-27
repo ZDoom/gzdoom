@@ -42,7 +42,6 @@
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Float, r_visibility)
-void InitGLRMapinfoData();
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -187,14 +186,6 @@ void PolyRenderer::SetSceneViewport()
 
 void PolyRenderer::SetupPerspectiveMatrix()
 {
-	static bool bDidSetup = false;
-
-	if (!bDidSetup)
-	{
-		//InitGLRMapinfoData();
-		bDidSetup = true;
-	}
-
 	// Code provided courtesy of Graf Zahl. Now we just have to plug it into the viewmatrix code...
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
 	double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();

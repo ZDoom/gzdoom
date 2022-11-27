@@ -63,19 +63,6 @@ EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from OpenGL Renderer
 EXTERN_CVAR(Bool, r_drawvoxels)
 
-CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self == 1 && !hasglnodes)
-	{
-		Printf("No GL BSP detected. You must restart the map before rendering will be correct\n");
-	}
-
-	if (usergame)
-	{
-		// [SP] Update pitch limits to the netgame/gamesim.
-		players[consoleplayer].SendPitchLimits();
-	}
-}
 
 using namespace swrenderer;
 
@@ -172,24 +159,11 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 
 void FSoftwareRenderer::RenderView(player_t *player)
 {
-#if 0
-	if (r_polyrenderer)
-	{
-		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderView(player);
-		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
-	}
-	else
-#endif
-	{
-		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
-		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.RenderView(player);
-		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
-		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
-	}
+    mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
+    mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
+    mScene.RenderView(player);
+    r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
+    r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 
 	FCanvasTextureInfo::UpdateAll();
 }
@@ -210,24 +184,13 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 
 	// Take a snapshot of the player's view
 	pic->Lock ();
-#if 0
-	if (r_polyrenderer)
-	{
-		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
-		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
-	}
-	else
-#endif
-	{
-		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
-		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.RenderViewToCanvas(player->mo, pic, 0, 0, width, height);
-		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
-		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
-	}
+
+    mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
+    mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
+    mScene.RenderViewToCanvas(player->mo, pic, 0, 0, width, height);
+    r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
+    r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
+
 	screen->GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch(), Gamma);
 	pic->Unlock ();
@@ -236,31 +199,18 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()
 {
-	if (!r_polyrenderer)
-	{
-		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
-		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.MainThread()->PlayerSprites->RenderRemaining();
-		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
-		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
-	}
-#if 0
-	else
-	{
-		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderRemainingPlayerSprites();
-		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
-	}
-#endif
+    mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
+    mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
+    mScene.MainThread()->PlayerSprites->RenderRemaining();
+    r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
+    r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 }
 
 int FSoftwareRenderer::GetMaxViewPitch(bool down)
 {
 	int MAX_DN_ANGLE = MIN(56, (int)maxviewpitch); // Max looking down angle
 	int MAX_UP_ANGLE = MIN(32, (int)maxviewpitch); // Max looking up angle
-	return (r_polyrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE));
+	return down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE);
 }
 
 bool FSoftwareRenderer::RequireGLNodes()
@@ -280,9 +230,6 @@ void FSoftwareRenderer::SetClearColor(int color)
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov)
 {
-//    auto renderTarget = r_polyrenderer ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
-//    auto &cameraViewpoint = r_polyrenderer ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
-//    auto &cameraViewwindow = r_polyrenderer ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
     auto renderTarget = mScene.MainThread()->Viewport->RenderTarget;
     auto &cameraViewpoint = mScene.MainThread()->Viewport->viewpoint;
     auto &cameraViewwindow = mScene.MainThread()->Viewport->viewwindow;
@@ -300,12 +247,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 	DAngle savedfov = cameraViewpoint.FieldOfView;
 	R_SetFOV (cameraViewpoint, fov);
-#if 0
-	if (r_polyrenderer)
-		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
-	else
-#endif
-		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
+
+    mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 
 	R_SetFOV (cameraViewpoint, savedfov);
 
@@ -394,14 +337,9 @@ uint32_t FSoftwareRenderer::GetCaps()
 {
 	ActorRenderFeatureFlags FlagSet = 0;
 
-	if (r_polyrenderer)
-		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH | RFF_SLOPE3DFLOORS;
-	else
-	{
-		FlagSet |= RFF_UNCLIPPEDTEX;
-		if (r_drawvoxels)
-			FlagSet |= RFF_VOXELS;
-	}
+    FlagSet |= RFF_UNCLIPPEDTEX;
+    if (r_drawvoxels)
+        FlagSet |= RFF_VOXELS;
 
 	if (screen && screen->IsBgra())
 		FlagSet |= RFF_TRUECOLOR;

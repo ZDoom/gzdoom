@@ -44,9 +44,6 @@
 
 #include "v_video.h"
 
-//#include "gl/shaders/gl_shader.h"
-//#include "gl/textures/gl_hwtexture.h"
-
 
 class SDLGLFB : public DFrameBuffer
 {

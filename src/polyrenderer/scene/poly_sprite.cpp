@@ -37,8 +37,6 @@ EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR (Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Int, gl_spriteclip)
-//EXTERN_CVAR(Float, gl_sclipthreshold)
-//EXTERN_CVAR(Float, gl_sclipfactor)
 CVAR(Float, gl_sclipthreshold, 10.0, CVAR_ARCHIVE)
 CVAR(Float, gl_sclipfactor, 1.8, CVAR_ARCHIVE)
 extern uint32_t r_renderercaps;

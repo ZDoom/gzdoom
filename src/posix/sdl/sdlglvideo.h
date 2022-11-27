@@ -4,7 +4,6 @@
 #include "hardware.h"
 #include "v_video.h"
 #include <SDL.h>
-//#include "gl/system/gl_system.h"
 
 EXTERN_CVAR (Float, dimamount)
 EXTERN_CVAR (Color, dimcolor)
@@ -87,8 +86,6 @@ protected:
 	bool UpdatePending;
 
 	SDL_Window *Screen;
-
-	SDL_GLContext GLContext;
 
 	void UpdateColors ();
 

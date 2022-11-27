@@ -355,16 +355,6 @@ protected:
 		CopySize(other);
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
-#if 0
-		gl_info = other->gl_info;
-		gl_info.Brightmap = NULL;
-		gl_info.Normal = NULL;
-		gl_info.Specular = NULL;
-		gl_info.Metallic = NULL;
-		gl_info.Roughness = NULL;
-		gl_info.AmbientOcclusion = NULL;
-		gl_info.areas = NULL;
-#endif
 	}
 
 	std::vector<uint32_t> PixelsBgra;
@@ -392,44 +382,7 @@ public:
 	friend class OpenGLSWFrameBuffer;
 
 public:
-#if 0
-	struct MiscGLInfo
-	{
-		FMaterial *Material[2];
-		FGLTexture *SystemTexture[2];
-		FTexture *Brightmap;
-		FTexture *Normal;						// Normal map texture
-		FTexture *Specular;						// Specular light texture for the diffuse+normal+specular light model
-		FTexture *Metallic;						// Metalness texture for the physically based rendering (PBR) light model
-		FTexture *Roughness;					// Roughness texture for PBR
-		FTexture *AmbientOcclusion;				// Ambient occlusion texture for PBR
-		float Glossiness;
-		float SpecularLevel;
-		PalEntry GlowColor;
-		int GlowHeight;
-		FloatRect *areas;
-		int areacount;
-		int shaderindex;
-		float shaderspeed;
-		int mIsTransparent:2;
-		bool bGlowing:1;						// Texture glows
-		bool bAutoGlowing : 1;					// Glow info is determined from texture image.
-		bool bFullbright:1;						// always draw fullbright
-		bool bSkybox:1;							// This is a skybox
-		char bBrightmapChecked:1;				// Set to 1 if brightmap has been checked
-		bool bDisableFullbright:1;				// This texture will not be displayed as fullbright sprite
-		bool bNoFilter:1;
-		bool bNoCompress:1;
-		bool bNoExpand:1;
-
-		MiscGLInfo() throw ();
-		~MiscGLInfo();
-	};
-	MiscGLInfo gl_info;
-#endif
 	void GetGlowColor(float *data);
-//	bool isGlowing() { return gl_info.bGlowing; }
-//	bool isFullbright() { return gl_info.bFullbright; }
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);

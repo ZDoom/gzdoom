@@ -1071,19 +1071,10 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 
 #endif
 
-EXTERN_CVAR(Bool, r_polyrenderer)
 
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	if (r_polyrenderer)
-	{
-		TriangleBlock block(args, thread);
-		block.Render();
-	}
-	else
-	{
-		DrawSWRender(args, thread);
-	}
+    DrawSWRender(args, thread);
 }
 
 static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sortedVertices)

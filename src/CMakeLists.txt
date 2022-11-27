@@ -572,21 +572,6 @@ endif()
 
 if( HAVE_MMX )
 	add_definitions( -DHAVE_MMX=1 )
-
-#	set( SYSTEM_SOURCES ${SYSTEM_SOURCES}
-#		gl/hqnx_asm/hq2x_asm.cpp
-#		gl/hqnx_asm/hq3x_asm.cpp
-#		gl/hqnx_asm/hq4x_asm.cpp
-#		gl/hqnx_asm/hqnx_asm_Image.cpp)
-#
-#	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-#		set_source_files_properties(
-#			gl/hqnx_asm/hq2x_asm.cpp
-#			gl/hqnx_asm/hq3x_asm.cpp
-#			gl/hqnx_asm/hq4x_asm.cpp
-#			gl/textures/gl_hqresize.cpp
-#			PROPERTIES COMPILE_FLAGS "-mmmx" )
-#	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
 
 if( HAVE_PARALLEL_FOR )
@@ -710,25 +695,6 @@ file( GLOB HEADER_FILES
 	swrenderer/plane/*.h
 	swrenderer/things/*.h
 	swrenderer/viewport/*.h
-#	polyrenderer/*.h
-#	polyrenderer/math/*.h
-#	polyrenderer/drawers/*.h
-#	polyrenderer/scene/*.h
-#	gl/*.h
-#	gl/api/*.h
-#	gl/data/*.h
-#	gl/dynlights/*.h
-#	gl/hqnx/*.h
-#	gl/hqnx_asm/*.h
-#	gl/xbr/*.h
-#	gl/models/*.h
-#	gl/renderer/*.h
-#	gl/scene/*.h
-#	gl/stereo3d/*.h
-#	gl/shaders/*.h
-#	gl/system/*.h
-#	gl/textures/*.h
-#	gl/utility/*.h
 	*.h
 )
 
@@ -781,25 +747,6 @@ set ( SWRENDER_SOURCES
 )
 
 set( POLYRENDER_SOURCES
-	polyrenderer/poly_renderer.cpp
-	polyrenderer/poly_renderthread.cpp
-	polyrenderer/scene/poly_scene.cpp
-	polyrenderer/scene/poly_portal.cpp
-	polyrenderer/scene/poly_cull.cpp
-	polyrenderer/scene/poly_decal.cpp
-	polyrenderer/scene/poly_particle.cpp
-	polyrenderer/scene/poly_plane.cpp
-	polyrenderer/scene/poly_playersprite.cpp
-	polyrenderer/scene/poly_wall.cpp
-	polyrenderer/scene/poly_wallsprite.cpp
-	polyrenderer/scene/poly_sprite.cpp
-	polyrenderer/scene/poly_model.cpp
-	polyrenderer/scene/poly_sky.cpp
-	polyrenderer/scene/poly_light.cpp
-	polyrenderer/drawers/poly_buffer.cpp
-	polyrenderer/drawers/poly_triangle.cpp
-	polyrenderer/drawers/poly_draw_args.cpp
-	polyrenderer/drawers/screen_triangle.cpp
 	polyrenderer/math/tri_matrix.cpp
 )
 
@@ -835,34 +782,6 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/timiditypp/fft4g.cpp
 	sound/timiditypp/reverb.cpp
-#	gl/utility/gl_clock.cpp
-#	gl/renderer/gl_2ddrawer.cpp
-#	gl/hqnx/init.cpp
-#	gl/hqnx/hq2x.cpp
-#	gl/hqnx/hq3x.cpp
-#	gl/hqnx/hq4x.cpp
-#	gl/xbr/xbrz.cpp
-#	gl/xbr/xbrz_old.cpp
-#	gl/scene/gl_bsp.cpp
-#	gl/scene/gl_fakeflat.cpp
-#	gl/scene/gl_clipper.cpp
-#	gl/scene/gl_decal.cpp
-#	gl/scene/gl_drawinfo.cpp
-#	gl/scene/gl_flats.cpp
-#	gl/scene/gl_walls.cpp
-#	gl/scene/gl_sprite.cpp
-#	gl/scene/gl_skydome.cpp
-#	gl/scene/gl_renderhacks.cpp
-#	gl/scene/gl_weapon.cpp
-#	gl/scene/gl_scene.cpp
-#	gl/scene/gl_sky.cpp
-#	gl/scene/gl_portal.cpp
-#	gl/scene/gl_walls_draw.cpp
-#	gl/scene/gl_vertex.cpp
-#	gl/scene/gl_spritelight.cpp
-#	gl/dynlights/gl_dynlight1.cpp
-#	gl/system/gl_load.c
-#	gl/models/gl_models.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp
@@ -1044,58 +963,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-#	gl/compatibility/gl_20.cpp
-#	gl/data/gl_data.cpp
-#	gl/data/gl_portaldata.cpp
-#	gl/data/gl_setup.cpp
-#	gl/data/gl_vertexbuffer.cpp
-#	gl/dynlights/gl_glow.cpp
-#	gl/dynlights/gl_lightbuffer.cpp
-#	gl/dynlights/gl_aabbtree.cpp
-#	gl/dynlights/gl_shadowmap.cpp
-#	gl/renderer/gl_quaddrawer.cpp
-#	gl/renderer/gl_renderer.cpp
-#	gl/renderer/gl_renderstate.cpp
-#	gl/renderer/gl_renderbuffers.cpp
-#	gl/renderer/gl_lightdata.cpp
-#	gl/renderer/gl_postprocess.cpp
-#	gl/renderer/gl_postprocessstate.cpp
-#	gl/shaders/gl_shader.cpp
-#	gl/shaders/gl_texshader.cpp
-#	gl/shaders/gl_shaderprogram.cpp
-#	gl/shaders/gl_postprocessshader.cpp
-#	gl/shaders/gl_shadowmapshader.cpp
-#	gl/shaders/gl_presentshader.cpp
-#	gl/shaders/gl_present3dRowshader.cpp
-#	gl/shaders/gl_bloomshader.cpp
-#	gl/shaders/gl_ambientshader.cpp
-#	gl/shaders/gl_blurshader.cpp
-#	gl/shaders/gl_colormapshader.cpp
-#	gl/shaders/gl_tonemapshader.cpp
-#	gl/shaders/gl_lensshader.cpp
-#	gl/shaders/gl_fxaashader.cpp
-#	gl/stereo3d/gl_stereo3d.cpp
-#	gl/stereo3d/gl_stereo_cvars.cpp
-#	gl/stereo3d/gl_stereo_leftright.cpp
-#	gl/stereo3d/scoped_view_shifter.cpp
-#	gl/stereo3d/gl_anaglyph.cpp
-#	gl/stereo3d/gl_quadstereo.cpp
-#	gl/stereo3d/gl_sidebyside3d.cpp
-#	gl/stereo3d/gl_interleaved3d.cpp
-#	gl/system/gl_interface.cpp
-#	gl/system/gl_framebuffer.cpp
-#	gl/system/gl_swframebuffer.cpp
-#	gl/system/gl_swwipe.cpp
-#	gl/system/gl_debug.cpp
-#	gl/system/gl_menu.cpp
-#	gl/system/gl_wipe.cpp
-#	gl/textures/gl_hwtexture.cpp
-#	gl/textures/gl_texture.cpp
-#	gl/textures/gl_material.cpp
-#	gl/textures/gl_hirestex.cpp
-#	gl/textures/gl_samplers.cpp
-#	gl/textures/gl_translate.cpp
-#	gl/textures/gl_hqresize.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
@@ -1373,8 +1240,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
 	if( SSE_MATTERS )
 		set_source_files_properties(
-#			gl/system/gl_swframebuffer.cpp
-#			polyrenderer/poly_all.cpp
+			polyrenderer/poly_all.cpp
 			swrenderer/r_all.cpp
 			x86.cpp
 			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
@@ -1438,10 +1304,6 @@ source_group("Software Renderer\\Line" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOUR
 source_group("Software Renderer\\Plane" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/plane/.+")
 source_group("Software Renderer\\Things" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/things/.+")
 source_group("Software Renderer\\Viewport" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/swrenderer/viewport/.+")
-#source_group("Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/.+")
-#source_group("Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/math/.+")
-#source_group("Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/drawers/.+")
-#source_group("Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/scene/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")
 source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")

@@ -140,7 +140,7 @@ void I_CreateRenderer()
 	if (Renderer == NULL)
 	{
 		if (currentrenderer==1)
-            throw std::runtime_error("OpenGL renderer nuked lol");//Renderer = gl_CreateInterface();
+            throw std::runtime_error("OpenGL renderer nuked lol");
 		else Renderer = new FSoftwareRenderer;
 		atterm(I_DeleteRenderer);
 	}

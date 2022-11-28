@@ -599,9 +599,9 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRE
 	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/zcc-parse.lemon
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/zcc-parse.lemon )
 
-add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
-	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
+add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/doom/sc_man_scanner.h
+	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/doom/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/doom/sc_man_scanner.re
+	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/doom/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
@@ -654,6 +654,7 @@ else()
 endif()
 file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
+	doom/*.h
 	fragglescript/*.h
 	g_shared/*.h
 	g_statusbar/*.h
@@ -750,8 +751,8 @@ set ( SWRENDER_SOURCES
 set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	${SWRENDER_SOURCES}
-	sc_man_scanner.h
-	sc_man_scanner.re
+	doom/sc_man_scanner.h
+	doom/sc_man_scanner.re
 	g_statusbar/sbarinfo_commands.cpp
 	xlat/xlat_parser.y
 	xlat_parser.c
@@ -794,151 +795,151 @@ set( FASTMATH_SOURCES
 )
 
 set (PCH_SOURCES
-	actorptrselect.cpp
-	am_map.cpp
-	b_bot.cpp
-	b_func.cpp
-	b_game.cpp
-	b_move.cpp
-	b_think.cpp
-	bbannouncer.cpp
-	c_bind.cpp
-	c_cmds.cpp
-	c_console.cpp
-	c_consolebuffer.cpp
-	c_cvars.cpp
-	c_dispatch.cpp
-	c_expr.cpp
-	c_functions.cpp
-	cmdlib.cpp
-	colormatcher.cpp
-	compatibility.cpp
-	configfile.cpp
-	ct_chat.cpp
-	cycler.cpp
-	d_dehacked.cpp
-	d_iwad.cpp
-	d_main.cpp
-	d_stats.cpp
-	d_net.cpp
-	d_netinfo.cpp
-	d_protocol.cpp
-	decallib.cpp
-	dobject.cpp
-	dobjgc.cpp
-	dobjtype.cpp
-	doomstat.cpp
-	dsectoreffect.cpp
-	dthinker.cpp
-	edata.cpp
-	f_wipe.cpp
-	files.cpp
-	files_decompress.cpp
-	g_doomedmap.cpp
-	g_game.cpp
-	g_hub.cpp
-	g_level.cpp
-	g_mapinfo.cpp
-	g_skill.cpp
-	gameconfigfile.cpp
-	gi.cpp
-	gitinfo.cpp
-	hu_scores.cpp
-	i_module.cpp
-	i_net.cpp
-	i_time.cpp
-	info.cpp
-	keysections.cpp
-	lumpconfigfile.cpp
-	m_alloc.cpp
-	m_argv.cpp
-	m_bbox.cpp
-	m_cheat.cpp
-	m_joy.cpp
-	m_misc.cpp
-	m_png.cpp
-	m_random.cpp
-	memarena.cpp
-	md5.cpp
-	name.cpp
-	nodebuild.cpp
-	nodebuild_classify_nosse2.cpp
-	nodebuild_events.cpp
-	nodebuild_extract.cpp
-	nodebuild_gl.cpp
-	nodebuild_utility.cpp
-	p_3dfloors.cpp
-	p_3dmidtex.cpp
-	p_acs.cpp
-	p_actionfunctions.cpp
-	p_ceiling.cpp
-	p_conversation.cpp
-	p_doors.cpp
-	p_effect.cpp
-	p_enemy.cpp
-	p_floor.cpp
-	p_glnodes.cpp
-	p_interaction.cpp
-	p_lights.cpp
-	p_linkedsectors.cpp
-	p_lnspec.cpp
-	p_map.cpp
-	p_maputl.cpp
-	p_mobj.cpp
-	p_pillar.cpp
-	p_plats.cpp
-	p_pspr.cpp
-	p_pusher.cpp
-	p_saveg.cpp
-	p_scroll.cpp
-	p_secnodes.cpp
-	p_sectors.cpp
-	p_setup.cpp
-	p_sight.cpp
-	p_slopes.cpp
-	p_spec.cpp
-	p_states.cpp
-	p_switch.cpp
-	p_tags.cpp
-	p_teleport.cpp
-	p_terrain.cpp
-	p_things.cpp
-	p_tick.cpp
-	p_trace.cpp
-	p_udmf.cpp
-	p_usdf.cpp
-	p_user.cpp
-	p_xlat.cpp
-	parsecontext.cpp
-	po_man.cpp
-	portal.cpp
-	r_utility.cpp
-	r_sky.cpp
-	r_videoscale.cpp
-	s_advsound.cpp
-	s_environment.cpp
-	s_playlist.cpp
-	s_sndseq.cpp
-	s_sound.cpp
-	serializer.cpp
-	sc_man.cpp
-	st_stuff.cpp
-	statistics.cpp
-	stats.cpp
-	stringtable.cpp
-	teaminfo.cpp
-	umapinfo.cpp
-	v_blend.cpp
-	v_collection.cpp
-	v_draw.cpp
-	v_font.cpp
-	v_palette.cpp
-	v_pfx.cpp
-	v_text.cpp
-	v_video.cpp
-	w_wad.cpp
-	wi_stuff.cpp
-	zstrformat.cpp
+	doom/actorptrselect.cpp
+	doom/am_map.cpp
+	doom/b_bot.cpp
+	doom/b_func.cpp
+	doom/b_game.cpp
+	doom/b_move.cpp
+	doom/b_think.cpp
+	doom/bbannouncer.cpp
+	doom/c_bind.cpp
+	doom/c_cmds.cpp
+	doom/c_console.cpp
+	doom/c_consolebuffer.cpp
+	doom/c_cvars.cpp
+	doom/c_dispatch.cpp
+	doom/c_expr.cpp
+	doom/c_functions.cpp
+	doom/cmdlib.cpp
+	doom/colormatcher.cpp
+	doom/compatibility.cpp
+	doom/configfile.cpp
+	doom/ct_chat.cpp
+	doom/cycler.cpp
+	doom/d_dehacked.cpp
+	doom/d_iwad.cpp
+	doom/d_main.cpp
+	doom/d_stats.cpp
+	doom/d_net.cpp
+	doom/d_netinfo.cpp
+	doom/d_protocol.cpp
+	doom/decallib.cpp
+	doom/dobject.cpp
+	doom/dobjgc.cpp
+	doom/dobjtype.cpp
+	doom/doomstat.cpp
+	doom/dsectoreffect.cpp
+	doom/dthinker.cpp
+	doom/edata.cpp
+	doom/f_wipe.cpp
+	doom/files.cpp
+	doom/files_decompress.cpp
+	doom/g_doomedmap.cpp
+	doom/g_game.cpp
+	doom/g_hub.cpp
+	doom/g_level.cpp
+	doom/g_mapinfo.cpp
+	doom/g_skill.cpp
+	doom/gameconfigfile.cpp
+	doom/gi.cpp
+	doom/gitinfo.cpp
+	doom/hu_scores.cpp
+	doom/i_module.cpp
+	doom/i_net.cpp
+	doom/i_time.cpp
+	doom/info.cpp
+	doom/keysections.cpp
+	doom/lumpconfigfile.cpp
+	doom/m_alloc.cpp
+	doom/m_argv.cpp
+	doom/m_bbox.cpp
+	doom/m_cheat.cpp
+	doom/m_joy.cpp
+	doom/m_misc.cpp
+	doom/m_png.cpp
+	doom/m_random.cpp
+	doom/memarena.cpp
+	doom/md5.cpp
+	doom/name.cpp
+	doom/nodebuild.cpp
+	doom/nodebuild_classify_nosse2.cpp
+	doom/nodebuild_events.cpp
+	doom/nodebuild_extract.cpp
+	doom/nodebuild_gl.cpp
+	doom/nodebuild_utility.cpp
+	doom/p_3dfloors.cpp
+	doom/p_3dmidtex.cpp
+	doom/p_acs.cpp
+	doom/p_actionfunctions.cpp
+	doom/p_ceiling.cpp
+	doom/p_conversation.cpp
+	doom/p_doors.cpp
+	doom/p_effect.cpp
+	doom/p_enemy.cpp
+	doom/p_floor.cpp
+	doom/p_glnodes.cpp
+	doom/p_interaction.cpp
+	doom/p_lights.cpp
+	doom/p_linkedsectors.cpp
+	doom/p_lnspec.cpp
+	doom/p_map.cpp
+	doom/p_maputl.cpp
+	doom/p_mobj.cpp
+	doom/p_pillar.cpp
+	doom/p_plats.cpp
+	doom/p_pspr.cpp
+	doom/p_pusher.cpp
+	doom/p_saveg.cpp
+	doom/p_scroll.cpp
+	doom/p_secnodes.cpp
+	doom/p_sectors.cpp
+	doom/p_setup.cpp
+	doom/p_sight.cpp
+	doom/p_slopes.cpp
+	doom/p_spec.cpp
+	doom/p_states.cpp
+	doom/p_switch.cpp
+	doom/p_tags.cpp
+	doom/p_teleport.cpp
+	doom/p_terrain.cpp
+	doom/p_things.cpp
+	doom/p_tick.cpp
+	doom/p_trace.cpp
+	doom/p_udmf.cpp
+	doom/p_usdf.cpp
+	doom/p_user.cpp
+	doom/p_xlat.cpp
+	doom/parsecontext.cpp
+	doom/po_man.cpp
+	doom/portal.cpp
+	doom/r_utility.cpp
+	doom/r_sky.cpp
+	doom/r_videoscale.cpp
+	doom/s_advsound.cpp
+	doom/s_environment.cpp
+	doom/s_playlist.cpp
+	doom/s_sndseq.cpp
+	doom/s_sound.cpp
+	doom/serializer.cpp
+	doom/sc_man.cpp
+	doom/st_stuff.cpp
+	doom/statistics.cpp
+	doom/stats.cpp
+	doom/stringtable.cpp
+	doom/teaminfo.cpp
+	doom/umapinfo.cpp
+	doom/v_blend.cpp
+	doom/v_collection.cpp
+	doom/v_draw.cpp
+	doom/v_font.cpp
+	doom/v_palette.cpp
+	doom/v_pfx.cpp
+	doom/v_text.cpp
+	doom/v_video.cpp
+	doom/w_wad.cpp
+	doom/wi_stuff.cpp
+	doom/zstrformat.cpp
 	g_inventory/a_keys.cpp
 	g_inventory/a_pickups.cpp
 	g_inventory/a_weapons.cpp
@@ -1105,9 +1106,9 @@ set (PCH_SOURCES
 	sound/wildmidi/reverb.cpp
 	sound/wildmidi/wildmidi_lib.cpp
 	sound/wildmidi/wm_error.cpp
-	events.cpp
-	GuillotineBinPack.cpp
-	SkylineBinPack.cpp
+	doom/events.cpp
+	doom/GuillotineBinPack.cpp
+	doom/SkylineBinPack.cpp
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
@@ -1115,14 +1116,14 @@ enable_precompiled_headers( g_pch.h PCH_SOURCES )
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
-	__autostart.cpp
+	doom/__autostart.cpp
 	${SYSTEM_SOURCES}
 	${X86_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
-	x86.cpp
-	strnatcmp.c
-	zstring.cpp
+	doom/x86.cpp
+	doom/strnatcmp.c
+	doom/zstring.cpp
 	math/asin.c
 	math/atan.c
 	math/const.c
@@ -1141,7 +1142,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/tan.c
 	math/tanh.c
 	math/fastsin.cpp
-	zzautozend.cpp
+	doom/zzautozend.cpp
 )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
@@ -1161,6 +1162,7 @@ endif()
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 
 include_directories( .
+	doom
 	g_statusbar
 	g_shared
 	g_inventory

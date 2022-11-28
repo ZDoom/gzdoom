@@ -63,7 +63,7 @@
 #include "sbarinfo.h"
 #include "events.h"
 
-#include "../version.h"
+#include "version.h"
 
 #define XHAIRSHRINKSIZE		(1./18)
 #define XHAIRPICKUPSIZE		(2+XHAIRSHRINKSIZE)

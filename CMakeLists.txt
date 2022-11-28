@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 2.8.7 )
-project(GZDoom)
+project(GViZDoom)
 
 if( COMMAND cmake_policy )
 	if( POLICY CMP0011 )

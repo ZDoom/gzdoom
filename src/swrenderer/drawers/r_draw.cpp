@@ -267,6 +267,7 @@ namespace swrenderer
 
 		void Execute(DrawerThread *thread) override
 		{
+#if 0 // TODO depth
 			auto zbuffer = PolyZBuffer::Instance();
 			int pitch = PolyStencilBuffer::Instance()->BlockWidth() * 8;
 			float *values = zbuffer->Values() + y * pitch + x;
@@ -282,6 +283,7 @@ namespace swrenderer
 				*values = depth;
 				values += pitch;
 			}
+#endif
 		}
 
 	private:
@@ -303,6 +305,7 @@ namespace swrenderer
 
 		void Execute(DrawerThread *thread) override
 		{
+#if 0 // TODO depth
 			if (thread->skipped_by_thread(y))
 				return;
 
@@ -315,6 +318,7 @@ namespace swrenderer
 			{
 				values[x] = depth;
 			}
+#endif
 		}
 
 	private:

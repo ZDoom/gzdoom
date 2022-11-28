@@ -61,6 +61,7 @@ namespace swrenderer
 
 	void RenderViewport::SetupPolyViewport()
 	{
+#if 0 // TODO depth
 		PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
 		PolyZBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
 
@@ -68,6 +69,7 @@ namespace swrenderer
 		WorldToView = TriMatrix::worldToView(viewpoint);
 		ViewToClip = TriMatrix::viewToClip(viewwindow.FocalTangent, CenterY, YaspectMul);
 		WorldToClip = ViewToClip * WorldToView;
+#endif
 	}
 
 	void RenderViewport::SetViewport(RenderThread *thread, int fullWidth, int fullHeight, float trueratio)

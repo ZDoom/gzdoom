@@ -48,7 +48,7 @@
 
 // [SP] r_blendmethod - false = rgb555 matching (ZDoom classic), true = rgb666 (refactored)
 CVAR(Bool, r_blendmethod, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
-EXTERN_CVAR(Int, gl_particles_style)
+CVAR(Int, gl_particles_style, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // 0 = square, 1 = round, 2 = smooth
 
 /*
 	[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses

@@ -5,7 +5,6 @@
 #include <memory>
 #include "v_video.h"
 #include "r_defs.h"
-#include "polyrenderer/math/tri_matrix.h"
 
 namespace swrenderer
 {
@@ -21,10 +20,6 @@ namespace swrenderer
 		void SetupFreelook();
 		
 		void SetupPolyViewport();
-
-		TriMatrix WorldToView;
-		TriMatrix ViewToClip;
-		TriMatrix WorldToClip;
 
 		DCanvas *RenderTarget = nullptr;
 

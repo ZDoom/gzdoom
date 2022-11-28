@@ -737,7 +737,6 @@ set ( SWRENDER_SOURCES
 	swrenderer/things/r_sprite.cpp
 	swrenderer/things/r_wallsprite.cpp
 	swrenderer/things/r_decal.cpp
-	swrenderer/things/r_model.cpp
 	swrenderer/plane/r_visibleplane.cpp
 	swrenderer/plane/r_visibleplanelist.cpp
 	swrenderer/plane/r_skyplane.cpp
@@ -746,16 +745,11 @@ set ( SWRENDER_SOURCES
 	swrenderer/plane/r_slopeplane.cpp
 )
 
-set( POLYRENDER_SOURCES
-	polyrenderer/math/tri_matrix.cpp
-)
-
 # These files will be flagged as "headers" so that they appear in project files
 # without being compiled.
 set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	${SWRENDER_SOURCES}
-	${POLYRENDER_SOURCES}
 	sc_man_scanner.h
 	sc_man_scanner.re
 	g_statusbar/sbarinfo_commands.cpp
@@ -774,7 +768,6 @@ set( NOT_COMPILED_SOURCE_FILES
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
 	swrenderer/r_all.cpp
-	polyrenderer/poly_all.cpp
 	sound/oplsynth/opl_mus_player.cpp
 	sound/mpg123_decoder.cpp
 	sound/music_midi_base.cpp
@@ -1240,7 +1233,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
 	if( SSE_MATTERS )
 		set_source_files_properties(
-			polyrenderer/poly_all.cpp
 			swrenderer/r_all.cpp
 			x86.cpp
 			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )

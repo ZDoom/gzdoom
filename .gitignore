@@ -47,7 +47,6 @@
 /build_vc2015-32
 /build_vc2015-64
 /build_vc2017-64
-/build
 /llvm
 /src/r_drawersasm.obj
 /src/r_drawersasm.o
@@ -55,3 +54,10 @@
 /src/gl/unused
 /mapfiles_release/*.map
 .DS_Store
+/build_vc2017-32
+/build2
+/build_vc2019-64
+/build_vc2019-32
+*.code-workspace
+cmake-build*/
+.idea/

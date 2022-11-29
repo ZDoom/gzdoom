@@ -486,6 +486,10 @@ if( NOT DYN_FLUIDSYNTH )
 	endif()
 endif()
 
+# TODO opencv temp
+find_package(OpenCV REQUIRED)
+# TODO end of opencv temp
+
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	sound/mididevices/music_win_mididevice.cpp
@@ -1111,6 +1115,18 @@ set (PCH_SOURCES
 	doom/SkylineBinPack.cpp
 )
 
+set(GVIZDOOM_SOURCES
+	gvizdoom/DoomGame.cpp
+	gvizdoom/gzdoom_main_wrapper.cpp
+	gvizdoom/Action.cpp
+)
+
+set(GVIZDOOM_CLIENT_SOURCES
+	gvizdoom_client/App.cpp
+	gvizdoom_client/main.cpp
+	gvizdoom_client/SDLActionMapper.cpp
+)
+
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
 
 add_executable( zdoom WIN32 MACOSX_BUNDLE
@@ -1144,6 +1160,73 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/fastsin.cpp
 	doom/zzautozend.cpp
 )
+
+add_library(gvizdoom SHARED
+	${HEADER_FILES}
+	${NOT_COMPILED_SOURCE_FILES}
+	doom/__autostart.cpp
+	${SYSTEM_SOURCES}
+	${X86_SOURCES}
+	${FASTMATH_SOURCES}
+	${PCH_SOURCES}
+	${GVIZDOOM_SOURCES}
+	doom/x86.cpp
+	doom/strnatcmp.c
+	doom/zstring.cpp
+	math/asin.c
+	math/atan.c
+	math/const.c
+	math/cosh.c
+	math/exp.c
+	math/isnan.c
+	math/log.c
+	math/log10.c
+	math/mtherr.c
+	math/polevl.c
+	math/pow.c
+	math/powi.c
+	math/sin.c
+	math/sinh.c
+	math/sqrt.c
+	math/tan.c
+	math/tanh.c
+	math/fastsin.cpp
+	doom/zzautozend.cpp
+)
+
+target_include_directories(gvizdoom
+PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/../include/gvizdoom
+	${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
+target_link_libraries(gvizdoom
+PUBLIC
+	${ZDOOM_LIBS} gdtoa dumb lzma
+)
+
+add_executable(gvizdoom_client
+	${GVIZDOOM_CLIENT_SOURCES}
+)
+
+target_include_directories(gvizdoom_client
+PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/../include/gvizdoom_client
+	//../ext/CLI11/include // TODO
+
+PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/../include
+	${SDL2_INCLUDE_DIR}
+	${OpenCV_INCLUDE_DIRS} # TODO opencv temp
+)
+
+target_link_libraries(gvizdoom_client
+PUBLIC
+	gvizdoom
+	${SDL2_LIBRARY}
+	${OpenCV_LIBS} # TODO opencv temp
+)
+
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )

@@ -35,4 +35,4 @@ else()
 endif()
 
 add_library( lzma ${LZMA_FILES} )
-target_link_libraries( lzma )
+set_target_properties(lzma PROPERTIES POSITION_INDEPENDENT_CODE ON)

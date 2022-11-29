@@ -148,6 +148,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # Add library to be compiled.
 add_library(gme ${libgme_SRCS})
 
+set_target_properties(gme PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 # The version is the release.  The "soversion" is the API version.  As long
 # as only build fixes are performed (i.e. no backwards-incompatible changes
 # to the API), the SOVERSION should be the same even when bumping up VERSION.
@@ -166,5 +168,3 @@ install(TARGETS gme LIBRARY DESTINATION lib${LIB_SUFFIX}
 install(FILES ${EXPORTED_HEADERS} DESTINATION include/gme)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libgme.pc DESTINATION lib${LIB_SUFFIX}/pkgconfig)
 endif()
-
-target_link_libraries(gme)

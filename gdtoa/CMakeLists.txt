@@ -40,6 +40,6 @@ add_library( gdtoa
 	dmisc.c
 	dtoa.c
 	misc.c
-	)
-target_link_libraries( gdtoa )
+)
 
+set_target_properties(gdtoa PROPERTIES POSITION_INDEPENDENT_CODE ON)

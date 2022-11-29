@@ -110,7 +110,8 @@ add_library( dumb
     src/helpers/resampler.c
     src/helpers/lpc.c
 )
-target_link_libraries( dumb )
+
+set_target_properties(dumb PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	CHECK_CXX_COMPILER_FLAG( -msse DUMB_CAN_USE_SSE )

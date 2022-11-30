@@ -820,6 +820,10 @@ static void ParseModelDefLump(int Lump)
 						if (smf.modelIDs[index] != -1)
 						{
 							FModel *model = Models[smf.modelIDs[index]];
+							if (smf.animationIDs[index] != -1)
+							{
+								model = Models[smf.animationIDs[index]];
+							}
 							smf.modelframes[index] = model->FindFrame(sc.String);
 							if (smf.modelframes[index]==-1) sc.ScriptError("Unknown frame '%s' in %s", sc.String, type->TypeName.GetChars());
 						}

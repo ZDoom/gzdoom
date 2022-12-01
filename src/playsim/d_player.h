@@ -449,6 +449,10 @@ public:
 	void SetFOV(float fov);
 	bool HasWeaponsInSlot(int slot) const;
 	bool Resurrect();
+
+	// Scaled angle adjustment info. Not for direct manipulation.
+	DRotator angleTargets;
+	DRotator angleAppliedAmounts;
 };
 
 // Bookkeeping on players - state.

@@ -764,6 +764,35 @@ static double QuakePower(double factor, double intensity, double offset)
 
 //==========================================================================
 //
+// R_DoActorTickerAngleChanges
+//
+//==========================================================================
+
+static void R_DoActorTickerAngleChanges(player_t* const player, AActor* const actor, const double scale)
+{
+	for (unsigned i = 0; i < 3; i++)
+	{
+		if (player->angleTargets[i].Sgn())
+		{
+			// Calculate scaled amount of target and add to the accumlation buffer.
+			DAngle addition = player->angleTargets[i] * scale;
+			player->angleAppliedAmounts[i] += addition;
+
+			// Test whether we're now reached/exceeded our target.
+			if (abs(player->angleAppliedAmounts[i]) >= abs(player->angleTargets[i]))
+			{
+				addition -= player->angleAppliedAmounts[i] - player->angleTargets[i];
+				player->angleTargets[i] = player->angleAppliedAmounts[i] = nullAngle;
+			}
+
+			// Apply the scaled addition to the angle.
+			actor->Angles[i] += addition;
+		}
+	}
+}
+
+//==========================================================================
+//
 // R_SetupFrame
 //
 //==========================================================================
@@ -797,6 +826,12 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	if (viewpoint.camera == NULL)
 	{
 		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
+	}
+
+	// [MR] Process player angle changes if permitted to do so.
+	if (player && P_NoInterpolation(player, viewpoint.camera))
+	{
+		R_DoActorTickerAngleChanges(player, viewpoint.camera, I_GetInputFrac(false));
 	}
 
 	iview = FindPastViewer (viewpoint.camera);

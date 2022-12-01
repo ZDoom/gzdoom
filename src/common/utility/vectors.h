@@ -1547,6 +1547,16 @@ inline TAngle<T> interpolatedvalue(const TAngle<T> &oang, const TAngle<T> &ang, 
 	return oang + (deltaangle(oang, ang) * interpfrac);
 }
 
+template<class T>
+inline TRotator<T> interpolatedvalue(const TRotator<T> &oang, const TRotator<T> &ang, const double interpfrac)
+{
+	return TRotator<T>(
+		interpolatedvalue(oang.Pitch, ang.Pitch, interpfrac),
+		interpolatedvalue(oang.Yaw, ang.Yaw, interpfrac),
+		interpolatedvalue(oang.Roll, ang.Roll, interpfrac)
+	);
+}
+
 template <class T>
 inline T interpolatedvalue(const T& oval, const T& val, const double interpfrac)
 {

@@ -528,8 +528,8 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		(!netgame || !cl_noprediction) &&
 		!LocalKeyboardTurner)
 	{
-		viewpoint.Angles.Yaw = (nviewangle + DAngle::fromBam(LocalViewAngle & 0xFFFF0000)).Normalized180();
-		DAngle delta = player->centering ? nullAngle : DAngle::fromBam(int(LocalViewPitch & 0xFFFF0000));
+		viewpoint.Angles.Yaw = (nviewangle + DAngle::fromBam(LocalViewAngle)).Normalized180();
+		DAngle delta = player->centering ? nullAngle : DAngle::fromBam(LocalViewPitch);
 		viewpoint.Angles.Pitch = clamp<DAngle>((iview->New.Angles.Pitch - delta).Normalized180(), player->MinPitch, player->MaxPitch);
 		viewpoint.Angles.Roll = iview->New.Angles.Roll.Normalized180();
 	}

@@ -481,4 +481,6 @@ inline bool AActor::IsNoClip2() const
 
 bool P_IsPlayerTotallyFrozen(const player_t *player);
 
+bool P_NoInterpolation(player_t const *player, AActor const *actor);
+
 #endif // __D_PLAYER_H__

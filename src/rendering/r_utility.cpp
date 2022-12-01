@@ -420,12 +420,34 @@ void R_Shutdown ()
 
 //==========================================================================
 //
-// R_InterpolateView
+// P_NoInterpolation
 //
 //==========================================================================
 
 //CVAR (Int, tf, 0, 0)
 EXTERN_CVAR (Bool, cl_noprediction)
+
+bool P_NoInterpolation(player_t const *player, AActor const *actor)
+{
+	return player != NULL &&
+		!(player->cheats & CF_INTERPVIEW) &&
+		player - players == consoleplayer &&
+		actor == player->mo &&
+		!demoplayback &&
+		!(player->cheats & (CF_TOTALLYFROZEN | CF_FROZEN)) &&
+		player->playerstate == PST_LIVE &&
+		player->mo->reactiontime == 0 &&
+		!NoInterpolateView &&
+		!paused &&
+		(!netgame || !cl_noprediction) &&
+		!LocalKeyboardTurner;
+}
+
+//==========================================================================
+//
+// R_InterpolateView
+//
+//==========================================================================
 
 void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Frac, InterpolationViewer *iview)
 {
@@ -514,20 +536,9 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		viewpoint.Pos = iview->New.Pos;
 		viewpoint.Path[0] = viewpoint.Path[1] = iview->New.Pos;
 	}
-	if (player != NULL &&
-		!(player->cheats & CF_INTERPVIEW) &&
-		player - players == consoleplayer &&
-		viewpoint.camera == player->mo &&
-		!demoplayback &&
+	if (P_NoInterpolation(player, viewpoint.camera) &&
 		iview->New.Pos.X == viewpoint.camera->X() &&
-		iview->New.Pos.Y == viewpoint.camera->Y() && 
-		!(player->cheats & (CF_TOTALLYFROZEN|CF_FROZEN)) &&
-		player->playerstate == PST_LIVE &&
-		player->mo->reactiontime == 0 &&
-		!NoInterpolateView &&
-		!paused &&
-		(!netgame || !cl_noprediction) &&
-		!LocalKeyboardTurner)
+		iview->New.Pos.Y == viewpoint.camera->Y())
 	{
 		viewpoint.Angles.Yaw = (nviewangle + DAngle::fromBam(LocalViewAngle)).Normalized180();
 		DAngle delta = player->centering ? nullAngle : DAngle::fromBam(LocalViewPitch);

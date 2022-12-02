@@ -218,6 +218,7 @@ enum SPF
 {
 	SPF_FORCECLAMP = 1,	// players always clamp
 	SPF_INTERPOLATE = 2,
+	SPF_SCALEDNOLERP = 4,
 };
 
 enum PCM

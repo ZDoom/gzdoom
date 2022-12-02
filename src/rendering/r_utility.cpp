@@ -828,10 +828,13 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
 	}
 
+	// [MR] Get the input fraction, even if we don't need it this frame. Must run every frame.
+	const auto scaleAdjust = I_GetInputFrac(false);
+
 	// [MR] Process player angle changes if permitted to do so.
-	if (player && P_NoInterpolation(player, viewpoint.camera))
+	if (player && (player->cheats & CF_SCALEDNOLERP) && P_NoInterpolation(player, viewpoint.camera))
 	{
-		R_DoActorTickerAngleChanges(player, viewpoint.camera, I_GetInputFrac(false));
+		R_DoActorTickerAngleChanges(player, viewpoint.camera, scaleAdjust);
 	}
 
 	iview = FindPastViewer (viewpoint.camera);

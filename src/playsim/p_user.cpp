@@ -1258,6 +1258,7 @@ void P_PlayerThink (player_t *player)
 	player->original_cmd = cmd->ucmd;
 	// Don't interpolate the view for more than one tic
 	player->cheats &= ~CF_INTERPVIEW;
+	player->cheats &= ~CF_INTERPVIEWANGLES;
 	player->mo->FloatVar("prevBob") = player->bob;
 
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, PlayerThink)

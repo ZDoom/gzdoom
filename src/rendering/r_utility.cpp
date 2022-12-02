@@ -80,6 +80,7 @@ struct InterpolationViewer
 	{
 		DVector3 Pos;
 		DRotator Angles;
+		DRotator ViewAngles;
 	};
 
 	AActor *ViewActor;
@@ -539,7 +540,13 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		viewpoint.Angles.Yaw = (oviewangle + deltaangle(oviewangle, nviewangle) * Frac).Normalized180();
 		viewpoint.Angles.Roll = (iview->Old.Angles.Roll + deltaangle(iview->Old.Angles.Roll, iview->New.Angles.Roll) * Frac).Normalized180();
 	}
-	
+
+	// [MR] Apply the view angles as an offset if ABSVIEWANGLES isn't specified.
+	if (!(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES))
+	{
+		viewpoint.Angles += (!player || (player->cheats & CF_INTERPVIEWANGLES)) ? interpolatedvalue(iview->Old.ViewAngles, iview->New.ViewAngles, Frac) : iview->New.ViewAngles;
+	}
+
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 	bool moved = false;
@@ -898,16 +905,10 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		}
 	}
 
-	// [MC] Apply the view angles first, which is the offsets. If the absolute isn't desired,
-	// add the standard angles on top of it.
-	viewpoint.Angles = viewpoint.camera->ViewAngles;
+	// [MR] Apply view angles as the viewpoint angles if asked to do so.
+	iview->New.Angles = !(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES) ? viewpoint.camera->Angles : viewpoint.camera->ViewAngles;
+	iview->New.ViewAngles = viewpoint.camera->ViewAngles;
 
-	if (!(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES))
-	{
-		viewpoint.Angles += viewpoint.camera->Angles;
-	}
-
-	iview->New.Angles = viewpoint.Angles;
 	if (viewpoint.camera->player != 0)
 	{
 		player = viewpoint.camera->player;

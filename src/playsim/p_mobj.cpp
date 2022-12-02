@@ -3429,18 +3429,22 @@ void AActor::SetPitch(DAngle p, int fflags)
 	{
 		if (player != nullptr)
 		{
-			if (fflags & SPF_INTERPOLATE)
+			const bool mustLerp = !P_NoInterpolation(player, this);
+
+			if ((fflags & SPF_INTERPOLATE) || ((fflags & SPF_SCALEDNOLERP) && mustLerp))
 			{
-				if (P_NoInterpolation(player, this))
-				{
-					player->angleTargets.Pitch = deltaangle(Angles.Pitch, p);
-					player->angleAppliedAmounts.Pitch = nullAngle;
-				}
-				else
-				{
-					Angles.Pitch = p;
-					player->cheats |= CF_INTERPVIEW;
-				}
+				Angles.Pitch = p;
+				player->cheats |= CF_INTERPVIEW;
+			}
+			else if ((fflags & SPF_SCALEDNOLERP) && !mustLerp)
+			{
+				player->angleTargets.Pitch = deltaangle(Angles.Pitch, p);
+				player->angleAppliedAmounts.Pitch = nullAngle;
+				player->cheats |= CF_SCALEDNOLERP;
+			}
+			else
+			{
+				Angles.Pitch = p;
 			}
 		}
 		else
@@ -3457,18 +3461,22 @@ void AActor::SetAngle(DAngle ang, int fflags)
 	{
 		if (player != nullptr)
 		{
-			if (fflags & SPF_INTERPOLATE)
+			const bool mustLerp = !P_NoInterpolation(player, this);
+
+			if ((fflags & SPF_INTERPOLATE) || ((fflags & SPF_SCALEDNOLERP) && mustLerp))
 			{
-				if (P_NoInterpolation(player, this))
-				{
-					player->angleTargets.Yaw = deltaangle(Angles.Yaw, ang);
-					player->angleAppliedAmounts.Yaw = nullAngle;
-				}
-				else
-				{
-					Angles.Yaw = ang;
-					player->cheats |= CF_INTERPVIEW;
-				}
+				Angles.Yaw = ang;
+				player->cheats |= CF_INTERPVIEW;
+			}
+			else if ((fflags & SPF_SCALEDNOLERP) && !mustLerp)
+			{
+				player->angleTargets.Yaw = deltaangle(Angles.Yaw, ang);
+				player->angleAppliedAmounts.Yaw = nullAngle;
+				player->cheats |= CF_SCALEDNOLERP;
+			}
+			else
+			{
+				Angles.Yaw = ang;
 			}
 		}
 		else
@@ -3485,18 +3493,22 @@ void AActor::SetRoll(DAngle r, int fflags)
 	{
 		if (player != nullptr)
 		{
-			if (fflags & SPF_INTERPOLATE)
+			const bool mustLerp = !P_NoInterpolation(player, this);
+
+			if ((fflags & SPF_INTERPOLATE) || ((fflags & SPF_SCALEDNOLERP) && mustLerp))
 			{
-				if (P_NoInterpolation(player, this))
-				{
-					player->angleTargets.Roll = deltaangle(Angles.Roll, r);
-					player->angleAppliedAmounts.Roll = nullAngle;
-				}
-				else
-				{
-					Angles.Roll = r;
-					player->cheats |= CF_INTERPVIEW;
-				}
+				Angles.Roll = r;
+				player->cheats |= CF_INTERPVIEW;
+			}
+			else if ((fflags & SPF_SCALEDNOLERP) && !mustLerp)
+			{
+				player->angleTargets.Roll = deltaangle(Angles.Roll, r);
+				player->angleAppliedAmounts.Roll = nullAngle;
+				player->cheats |= CF_SCALEDNOLERP;
+			}
+			else
+			{
+				Angles.Roll = r;
 			}
 		}
 		else

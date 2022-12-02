@@ -3473,7 +3473,7 @@ void AActor::SetViewPitch(DAngle p, int fflags)
 		ViewAngles.Pitch = p;
 		if (player != nullptr && (fflags & SPF_INTERPOLATE))
 		{
-			player->cheats |= CF_INTERPVIEW;
+			player->cheats |= CF_INTERPVIEWANGLES;
 		}
 	}
 
@@ -3486,7 +3486,7 @@ void AActor::SetViewAngle(DAngle ang, int fflags)
 		ViewAngles.Yaw = ang;
 		if (player != nullptr && (fflags & SPF_INTERPOLATE))
 		{
-			player->cheats |= CF_INTERPVIEW;
+			player->cheats |= CF_INTERPVIEWANGLES;
 		}
 	}
 
@@ -3499,7 +3499,7 @@ void AActor::SetViewRoll(DAngle r, int fflags)
 		ViewAngles.Roll = r;
 		if (player != nullptr && (fflags & SPF_INTERPOLATE))
 		{
-			player->cheats |= CF_INTERPVIEW;
+			player->cheats |= CF_INTERPVIEWANGLES;
 		}
 	}
 }

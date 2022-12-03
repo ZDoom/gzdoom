@@ -1,15 +1,15 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
+#include "zvulkan/vulkanobjects.h"
 #include "hw_levelmesh.h"
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 
 class VkRaytrace
 {
 public:
-	VkRaytrace(VulkanFrameBuffer* fb);
+	VkRaytrace(VulkanRenderDevice* fb);
 
 	void SetLevelMesh(hwrenderer::LevelMesh* mesh);
 
@@ -22,7 +22,7 @@ private:
 	void CreateBottomLevelAccelerationStructure();
 	void CreateTopLevelAccelerationStructure();
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 
 	hwrenderer::LevelMesh NullMesh;
 	hwrenderer::LevelMesh* Mesh = nullptr;

@@ -6,8 +6,8 @@
 #include <array>
 
 #include "hwrenderer/postprocessing/hw_postprocess.h"
-#include "vulkan/system/vk_objects.h"
-#include "vulkan/system/vk_builders.h"
+#include "zvulkan/vulkanobjects.h"
+#include "zvulkan/vulkanbuilders.h"
 #include "vulkan/textures/vk_imagetransition.h"
 
 class FString;
@@ -15,12 +15,12 @@ class FString;
 class VkPPShader;
 class VkPPTexture;
 class PipelineBarrier;
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 
 class VkPostprocess
 {
 public:
-	VkPostprocess(VulkanFrameBuffer* fb);
+	VkPostprocess(VulkanRenderDevice* fb);
 	~VkPostprocess();
 
 	void SetActiveRenderTarget();
@@ -43,7 +43,7 @@ public:
 private:
 	void NextEye(int eyeCount);
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 
 	int mCurrentPipelineImage = 0;
 

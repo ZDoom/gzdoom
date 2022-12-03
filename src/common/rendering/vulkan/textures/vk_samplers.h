@@ -1,17 +1,17 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
+#include "zvulkan/vulkanobjects.h"
 #include <array>
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 enum class PPFilterMode;
 enum class PPWrapMode;
 
 class VkSamplerManager
 {
 public:
-	VkSamplerManager(VulkanFrameBuffer* fb);
+	VkSamplerManager(VulkanRenderDevice* fb);
 	~VkSamplerManager();
 
 	void ResetHWSamplers();
@@ -28,7 +28,7 @@ private:
 	void CreateShadowmapSampler();
 	void CreateLightmapSampler();
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 	std::array<std::unique_ptr<VulkanSampler>, NUMSAMPLERS> mSamplers;
 	std::array<std::unique_ptr<VulkanSampler>, 4> mPPSamplers;
 };

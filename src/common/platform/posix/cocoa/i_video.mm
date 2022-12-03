@@ -34,9 +34,7 @@
 #include "gl_load.h"
 
 #ifdef HAVE_VULKAN
-#define VK_USE_PLATFORM_MACOS_MVK
-#define VK_USE_PLATFORM_METAL_EXT
-#include "volk/volk.h"
+#include <zvulkan/vulkansurface.h>
 #endif
 
 #include "i_common.h"
@@ -58,7 +56,7 @@
 #endif
 
 #ifdef HAVE_VULKAN
-#include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_renderdevice.h"
 #endif
 
 extern bool ToggleFullscreen;
@@ -377,9 +375,7 @@ public:
 
 	~CocoaVideo()
 	{
-#ifdef HAVE_VULKAN
-		delete m_vulkanDevice;
-#endif
+		m_vulkanSurface.reset();
 		ms_window = nil;
 	}
 
@@ -433,8 +429,24 @@ public:
 
 			try
 			{
-				m_vulkanDevice = new VulkanDevice();
-				fb = new VulkanFrameBuffer(nullptr, vid_fullscreen, m_vulkanDevice);
+				unsigned int count = 64;
+				const char* names[64];
+				if (!I_GetVulkanPlatformExtensions(&count, names))
+					VulkanError("I_GetVulkanPlatformExtensions failed");
+
+				VulkanInstanceBuilder builder;
+				builder.DebugLayer(vk_debug);
+				for (unsigned int i = 0; i < count; i++)
+					builder.RequireExtension(names[i]);
+				auto vulkanInstance = builder.Create();
+
+				VkSurfaceKHR surfacehandle = nullptr;
+				if (!I_CreateVulkanSurface(vulkanInstance->Instance, &surfacehandle))
+					VulkanError("I_CreateVulkanSurface failed");
+
+				m_vulkanSurface = std::make_shared<VulkanSurface>(vulkanInstance, surfacehandle);
+
+				fb = new VulkanRenderDevice(nullptr, vid_fullscreen, m_vulkanSurface);
 			}
 			catch (std::exception const&)
 			{
@@ -484,7 +496,7 @@ public:
 
 private:
 #ifdef HAVE_VULKAN
-	VulkanDevice *m_vulkanDevice = nullptr;
+	std::shared_ptr<VulkanSurface> m_vulkanSurface;
 #endif
 	static CocoaWindow* ms_window;
 

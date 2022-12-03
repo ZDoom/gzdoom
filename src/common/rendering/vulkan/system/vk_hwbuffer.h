@@ -1,7 +1,7 @@
 #pragma once
 
 #include "hwrenderer/data/buffers.h"
-#include "vk_objects.h"
+#include "zvulkan/vulkanobjects.h"
 #include "tarray.h"
 #include <list>
 
@@ -11,12 +11,12 @@
 #pragma warning(disable:4250) 
 #endif
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 
 class VkHardwareBuffer : virtual public IBuffer
 {
 public:
-	VkHardwareBuffer(VulkanFrameBuffer* fb);
+	VkHardwareBuffer(VulkanRenderDevice* fb);
 	~VkHardwareBuffer();
 
 	void Reset();
@@ -31,7 +31,7 @@ public:
 	void *Lock(unsigned int size) override;
 	void Unlock() override;
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 	std::list<VkHardwareBuffer*>::iterator it;
 
 	VkBufferUsageFlags mBufferType = 0;
@@ -44,7 +44,7 @@ public:
 class VkHardwareVertexBuffer : public IVertexBuffer, public VkHardwareBuffer
 {
 public:
-	VkHardwareVertexBuffer(VulkanFrameBuffer* fb) : VkHardwareBuffer(fb) { mBufferType = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; }
+	VkHardwareVertexBuffer(VulkanRenderDevice* fb) : VkHardwareBuffer(fb) { mBufferType = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; }
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
 
 	int VertexFormat = -1;
@@ -53,13 +53,13 @@ public:
 class VkHardwareIndexBuffer : public IIndexBuffer, public VkHardwareBuffer
 {
 public:
-	VkHardwareIndexBuffer(VulkanFrameBuffer* fb) : VkHardwareBuffer(fb) { mBufferType = VK_BUFFER_USAGE_INDEX_BUFFER_BIT; }
+	VkHardwareIndexBuffer(VulkanRenderDevice* fb) : VkHardwareBuffer(fb) { mBufferType = VK_BUFFER_USAGE_INDEX_BUFFER_BIT; }
 };
 
 class VkHardwareDataBuffer : public IDataBuffer, public VkHardwareBuffer
 {
 public:
-	VkHardwareDataBuffer(VulkanFrameBuffer* fb, int bindingpoint, bool ssbo, bool needresize) : VkHardwareBuffer(fb), bindingpoint(bindingpoint)
+	VkHardwareDataBuffer(VulkanRenderDevice* fb, int bindingpoint, bool ssbo, bool needresize) : VkHardwareBuffer(fb), bindingpoint(bindingpoint)
 	{
 		mBufferType = ssbo ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		if (needresize)

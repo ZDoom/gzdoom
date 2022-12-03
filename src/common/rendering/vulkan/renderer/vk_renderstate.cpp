@@ -21,8 +21,8 @@
 */
 
 #include "vk_renderstate.h"
-#include "vulkan/system/vk_framebuffer.h"
-#include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_renderdevice.h"
+#include "zvulkan/vulkanbuilders.h"
 #include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/system/vk_buffer.h"
 #include "vulkan/renderer/vk_renderpass.h"
@@ -42,7 +42,7 @@
 CVAR(Int, vk_submit_size, 1000, 0);
 EXTERN_CVAR(Bool, r_skipmats)
 
-VkRenderState::VkRenderState(VulkanFrameBuffer* fb) : fb(fb), mStreamBufferWriter(fb), mMatrixBufferWriter(fb)
+VkRenderState::VkRenderState(VulkanRenderDevice* fb) : fb(fb), mStreamBufferWriter(fb), mMatrixBufferWriter(fb)
 {
 	Reset();
 }
@@ -555,7 +555,7 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 		if (key.DepthStencil)
 			builder.AddAttachment(mRenderTarget.DepthStencil);
 		builder.DebugName("VkRenderPassSetup.Framebuffer");
-		framebuffer = builder.Create(fb->device);
+		framebuffer = builder.Create(fb->device.get());
 	}
 
 	// Only clear depth+stencil if the render target actually has that
@@ -563,16 +563,16 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 		mClearTargets &= ~(CT_Depth | CT_Stencil);
 
 	RenderPassBegin beginInfo;
-	beginInfo.setRenderPass(mPassSetup->GetRenderPass(mClearTargets));
-	beginInfo.setRenderArea(0, 0, mRenderTarget.Width, mRenderTarget.Height);
-	beginInfo.setFramebuffer(framebuffer.get());
-	beginInfo.addClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
+	beginInfo.RenderPass(mPassSetup->GetRenderPass(mClearTargets));
+	beginInfo.RenderArea(0, 0, mRenderTarget.Width, mRenderTarget.Height);
+	beginInfo.Framebuffer(framebuffer.get());
+	beginInfo.AddClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
 	if (key.DrawBuffers > 1)
-		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		beginInfo.AddClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	if (key.DrawBuffers > 2)
-		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	beginInfo.addClearDepthStencil(1.0f, 0);
-	cmdbuffer->beginRenderPass(beginInfo);
+		beginInfo.AddClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	beginInfo.AddClearDepthStencil(1.0f, 0);
+	beginInfo.Execute(cmdbuffer);
 
 	mMaterial.mChanged = true;
 	mClearTargets = 0;

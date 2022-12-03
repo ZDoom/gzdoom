@@ -1,16 +1,16 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
-#include "vulkan/system/vk_builders.h"
-#include "vulkan/system/vk_framebuffer.h"
+#include "zvulkan/vulkanobjects.h"
+#include "zvulkan/vulkanbuilders.h"
+#include "vulkan/system/vk_renderdevice.h"
 #include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/renderer/vk_renderpass.h"
 
 class VkTextureImage
 {
 public:
-	void Reset(VulkanFrameBuffer* fb)
+	void Reset(VulkanRenderDevice* fb)
 	{
 		AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		Layout = VK_IMAGE_LAYOUT_UNDEFINED;

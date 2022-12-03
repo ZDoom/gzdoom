@@ -22,10 +22,10 @@
 
 #include "vk_postprocess.h"
 #include "vulkan/shaders/vk_shader.h"
-#include "vulkan/system/vk_builders.h"
-#include "vulkan/system/vk_framebuffer.h"
+#include <zvulkan/vulkanswapchain.h>
+#include <zvulkan/vulkanbuilders.h>
+#include "vulkan/system/vk_renderdevice.h"
 #include "vulkan/system/vk_hwbuffer.h"
-#include "vulkan/system/vk_swapchain.h"
 #include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_pprenderstate.h"
@@ -34,6 +34,7 @@
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_imagetransition.h"
 #include "vulkan/textures/vk_texture.h"
+#include "vulkan/textures/vk_framebuffer.h"
 #include "hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
@@ -43,7 +44,7 @@
 
 EXTERN_CVAR(Int, gl_dither_bpc)
 
-VkPostprocess::VkPostprocess(VulkanFrameBuffer* fb) : fb(fb)
+VkPostprocess::VkPostprocess(VulkanRenderDevice* fb) : fb(fb)
 {
 }
 
@@ -217,7 +218,7 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 		uniforms.Offset = { 0.0f, 1.0f };
 	}
 
-	if (applyGamma && fb->GetCommands()->swapChain->IsHdrModeActive() && !screenshot)
+	if (applyGamma && fb->GetFramebufferManager()->SwapChain->Format().colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT && !screenshot)
 	{
 		uniforms.HdrMode = 1;
 	}

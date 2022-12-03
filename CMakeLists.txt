@@ -324,9 +324,7 @@ option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
 if (HAVE_VULKAN)
-	add_subdirectory( libraries/glslang/glslang)
-	add_subdirectory( libraries/glslang/spirv )
-	add_subdirectory( libraries/glslang/OGLCompilersDLL )
+	add_subdirectory( libraries/ZVulkan )
 endif()
 
 add_subdirectory( libraries/discordrpc EXCLUDE_FROM_ALL )

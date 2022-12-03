@@ -28,8 +28,8 @@
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
 #include "vulkan/textures/vk_texture.h"
-#include "vulkan/system/vk_builders.h"
-#include "vulkan/system/vk_framebuffer.h"
+#include <zvulkan/vulkanbuilders.h>
+#include "vulkan/system/vk_renderdevice.h"
 #include "vulkan/system/vk_hwbuffer.h"
 #include "vulkan/system/vk_commandbuffer.h"
 #include "vulkan/system/vk_buffer.h"
@@ -37,7 +37,7 @@
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
 
-VkDescriptorSetManager::VkDescriptorSetManager(VulkanFrameBuffer* fb) : fb(fb)
+VkDescriptorSetManager::VkDescriptorSetManager(VulkanRenderDevice* fb) : fb(fb)
 {
 	CreateHWBufferSetLayout();
 	CreateFixedSetLayout();
@@ -86,7 +86,7 @@ void VkDescriptorSetManager::UpdateHWBufferSet()
 		.AddBuffer(HWBufferSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO))
 		.AddBuffer(HWBufferSet.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightBufferSSO->mBuffer.get())
 		.AddBuffer(HWBufferSet.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->BoneBufferSSO->mBuffer.get())
-		.Execute(fb->device);
+		.Execute(fb->device.get());
 }
 
 void VkDescriptorSetManager::UpdateFixedSet()
@@ -105,7 +105,7 @@ void VkDescriptorSetManager::UpdateFixedSet()
 	update.AddCombinedImageSampler(FixedSet.get(), 1, fb->GetTextureManager()->Lightmap.View.get(), fb->GetSamplerManager()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	if (fb->RaytracingEnabled())
 		update.AddAccelerationStructure(FixedSet.get(), 2, fb->GetRaytrace()->GetAccelStruct());
-	update.Execute(fb->device);
+	update.Execute(fb->device.get());
 }
 
 void VkDescriptorSetManager::ResetHWTextureSets()
@@ -136,7 +136,7 @@ VulkanDescriptorSet* VkDescriptorSetManager::GetNullTextureDescriptorSet()
 		{
 			update.AddCombinedImageSampler(NullTextureDescriptorSet.get(), i, fb->GetTextureManager()->GetNullTextureView(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
-		update.Execute(fb->device);
+		update.Execute(fb->device.get());
 	}
 
 	return NullTextureDescriptorSet.get();
@@ -153,7 +153,7 @@ std::unique_ptr<VulkanDescriptorSet> VkDescriptorSetManager::AllocateTextureDesc
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, TextureDescriptorsLeft)
 			.MaxSets(TextureDescriptorSetsLeft)
 			.DebugName("VkDescriptorSetManager.TextureDescriptorPool")
-			.Create(fb->device));
+			.Create(fb->device.get()));
 	}
 
 	TextureDescriptorSetsLeft--;
@@ -176,7 +176,7 @@ VulkanDescriptorSetLayout* VkDescriptorSetManager::GetTextureSetLayout(int numLa
 		builder.AddBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 	builder.DebugName("VkDescriptorSetManager.TextureSetLayout");
-	layout = builder.Create(fb->device);
+	layout = builder.Create(fb->device.get());
 	return layout.get();
 }
 
@@ -217,7 +217,7 @@ VulkanDescriptorSet* VkDescriptorSetManager::GetInput(VkPPRenderPassSetup* passS
 		write.AddBuffer(descriptors.get(), LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightList->mBuffer.get());
 	}
 
-	write.Execute(fb->device);
+	write.Execute(fb->device.get());
 	imageTransition.Execute(fb->GetCommands()->GetDrawCommands());
 
 	VulkanDescriptorSet* set = descriptors.get();
@@ -241,7 +241,7 @@ std::unique_ptr<VulkanDescriptorSet> VkDescriptorSetManager::AllocatePPDescripto
 		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4)
 		.MaxSets(100)
 		.DebugName("PPDescriptorPool")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	return PPDescriptorPool->allocate(layout);
 }
@@ -255,7 +255,7 @@ void VkDescriptorSetManager::CreateHWBufferSetLayout()
 		.AddBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
 		.AddBinding(4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
 		.DebugName("VkDescriptorSetManager.HWBufferSetLayout")
-		.Create(fb->device);
+		.Create(fb->device.get());
 }
 
 void VkDescriptorSetManager::CreateFixedSetLayout()
@@ -266,7 +266,7 @@ void VkDescriptorSetManager::CreateFixedSetLayout()
 	if (fb->RaytracingEnabled())
 		builder.AddBinding(2, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.DebugName("VkDescriptorSetManager.FixedSetLayout");
-	FixedSetLayout = builder.Create(fb->device);
+	FixedSetLayout = builder.Create(fb->device.get());
 }
 
 void VkDescriptorSetManager::CreateHWBufferPool()
@@ -276,7 +276,7 @@ void VkDescriptorSetManager::CreateHWBufferPool()
 		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2 * maxSets)
 		.MaxSets(maxSets)
 		.DebugName("VkDescriptorSetManager.HWBufferDescriptorPool")
-		.Create(fb->device);
+		.Create(fb->device.get());
 }
 
 void VkDescriptorSetManager::CreateFixedSetPool()
@@ -287,5 +287,5 @@ void VkDescriptorSetManager::CreateFixedSetPool()
 		poolbuilder.AddPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 * maxSets);
 	poolbuilder.MaxSets(maxSets);
 	poolbuilder.DebugName("VkDescriptorSetManager.FixedDescriptorPool");
-	FixedDescriptorPool = poolbuilder.Create(fb->device);
+	FixedDescriptorPool = poolbuilder.Create(fb->device.get());
 }

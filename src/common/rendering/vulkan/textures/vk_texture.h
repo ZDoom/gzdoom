@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
+#include <zvulkan/vulkanobjects.h>
 #include "vulkan/textures/vk_imagetransition.h"
 #include <list>
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 class VkHardwareTexture;
 class VkMaterial;
 class VkPPTexture;
@@ -16,7 +16,7 @@ class PPTexture;
 class VkTextureManager
 {
 public:
-	VkTextureManager(VulkanFrameBuffer* fb);
+	VkTextureManager(VulkanRenderDevice* fb);
 	~VkTextureManager();
 
 	void Deinit();
@@ -47,7 +47,7 @@ private:
 
 	VkPPTexture* GetVkTexture(PPTexture* texture);
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 
 	std::list<VkHardwareTexture*> Textures;
 	std::list<VkPPTexture*> PPTextures;

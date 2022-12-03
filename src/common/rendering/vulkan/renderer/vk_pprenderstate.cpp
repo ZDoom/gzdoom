@@ -22,20 +22,21 @@
 
 #include "vk_pprenderstate.h"
 #include "vk_postprocess.h"
-#include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_renderdevice.h"
 #include "vulkan/system/vk_commandbuffer.h"
-#include "vulkan/system/vk_swapchain.h"
+#include <zvulkan/vulkanswapchain.h>
 #include "vulkan/system/vk_buffer.h"
 #include "vulkan/shaders/vk_ppshader.h"
 #include "vulkan/textures/vk_pptexture.h"
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_texture.h"
+#include "vulkan/textures/vk_framebuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_descriptorset.h"
 #include "flatvertices.h"
 
-VkPPRenderState::VkPPRenderState(VulkanFrameBuffer* fb) : fb(fb)
+VkPPRenderState::VkPPRenderState(VulkanRenderDevice* fb) : fb(fb)
 {
 }
 
@@ -63,7 +64,7 @@ void VkPPRenderState::Draw()
 	if (Output.Type == PPTextureType::PPTexture)
 		key.OutputFormat = fb->GetTextureManager()->GetTextureFormat(Output.Texture);
 	else if (Output.Type == PPTextureType::SwapChain)
-		key.OutputFormat = fb->GetCommands()->swapChain->swapChainFormat.format;
+		key.OutputFormat = fb->GetFramebufferManager()->SwapChain->Format().format;
 	else if (Output.Type == PPTextureType::ShadowMap)
 		key.OutputFormat = VK_FORMAT_R32_SFLOAT;
 	else
@@ -114,16 +115,16 @@ void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDes
 	scissor.extent.width = framebufferWidth;
 	scissor.extent.height = framebufferHeight;
 
-	RenderPassBegin beginInfo;
-	beginInfo.setRenderPass(passSetup->RenderPass.get());
-	beginInfo.setRenderArea(0, 0, framebufferWidth, framebufferHeight);
-	beginInfo.setFramebuffer(framebuffer);
-	beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	RenderPassBegin()
+		.RenderPass(passSetup->RenderPass.get())
+		.RenderArea(0, 0, framebufferWidth, framebufferHeight)
+		.Framebuffer(framebuffer)
+		.AddClearColor(0.0f, 0.0f, 0.0f, 1.0f)
+		.Execute(cmdbuffer);
 
 	VkBuffer vertexBuffers[] = { static_cast<VkHardwareVertexBuffer*>(screen->mVertexData->GetBufferObjects().first)->mBuffer->buffer };
 	VkDeviceSize offsets[] = { 0 };
 
-	cmdbuffer->beginRenderPass(beginInfo);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->PipelineLayout.get(), 0, descriptorSet);
 	cmdbuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);

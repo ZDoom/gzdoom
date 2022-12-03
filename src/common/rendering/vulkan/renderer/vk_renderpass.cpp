@@ -28,14 +28,14 @@
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/shaders/vk_ppshader.h"
-#include "vulkan/system/vk_builders.h"
-#include "vulkan/system/vk_framebuffer.h"
+#include <zvulkan/vulkanbuilders.h>
+#include "vulkan/system/vk_renderdevice.h"
 #include "vulkan/system/vk_hwbuffer.h"
 #include "flatvertices.h"
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
 
-VkRenderPassManager::VkRenderPassManager(VulkanFrameBuffer* fb) : fb(fb)
+VkRenderPassManager::VkRenderPassManager(VulkanRenderDevice* fb) : fb(fb)
 {
 }
 
@@ -118,7 +118,7 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 		builder.AddSetLayout(descriptors->GetTextureSetLayout(numLayers));
 	builder.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
 	builder.DebugName("VkRenderPassManager.PipelineLayout");
-	layout = builder.Create(fb->device);
+	layout = builder.Create(fb->device.get());
 	return layout.get();
 }
 
@@ -132,7 +132,7 @@ VkPPRenderPassSetup* VkRenderPassManager::GetPPRenderPass(const VkPPRenderPassKe
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkRenderPassSetup::VkRenderPassSetup(VulkanFrameBuffer* fb, const VkRenderPassKey &key) : PassKey(key), fb(fb)
+VkRenderPassSetup::VkRenderPassSetup(VulkanRenderDevice* fb, const VkRenderPassKey &key) : PassKey(key), fb(fb)
 {
 }
 
@@ -185,7 +185,7 @@ std::unique_ptr<VulkanRenderPass> VkRenderPassSetup::CreateRenderPass(int clearT
 			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
 	}
 	builder.DebugName("VkRenderPassSetup.RenderPass");
-	return builder.Create(fb->device);
+	return builder.Create(fb->device.get());
 }
 
 VulkanRenderPass *VkRenderPassSetup::GetRenderPass(int clearTargets)
@@ -273,7 +273,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	builder.Topology(vktopology[key.DrawType]);
 	builder.DepthStencilEnable(key.DepthTest, key.DepthWrite, key.StencilTest);
 	builder.DepthFunc(depthfunc2vk[key.DepthFunc]);
-	if (fb->device->UsedDeviceFeatures.depthClamp)
+	if (fb->device->EnabledFeatures.Features.depthClamp)
 		builder.DepthClampEnable(key.DepthClamp);
 	builder.DepthBias(key.DepthBias, 0.0f, 0.0f, 0.0f);
 
@@ -283,7 +283,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 
 	builder.ColorWriteMask((VkColorComponentFlags)key.ColorMask);
 	builder.Stencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
-	builder.BlendMode(key.RenderStyle);
+	BlendMode(builder, key.RenderStyle);
 	builder.SubpassColorAttachmentCount(PassKey.DrawBuffers);
 	builder.RasterizationSamples((VkSampleCountFlagBits)PassKey.Samples);
 
@@ -291,12 +291,12 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	builder.RenderPass(GetRenderPass(0));
 	builder.DebugName("VkRenderPassSetup.Pipeline");
 
-	return builder.Create(fb->device);
+	return builder.Create(fb->device.get());
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkPPRenderPassSetup::VkPPRenderPassSetup(VulkanFrameBuffer* fb, const VkPPRenderPassKey& key) : fb(fb)
+VkPPRenderPassSetup::VkPPRenderPassSetup(VulkanRenderDevice* fb, const VkPPRenderPassKey& key) : fb(fb)
 {
 	CreateDescriptorLayout(key);
 	CreatePipelineLayout(key);
@@ -316,7 +316,7 @@ void VkPPRenderPassSetup::CreateDescriptorLayout(const VkPPRenderPassKey& key)
 		builder.AddBinding(LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 	builder.DebugName("VkPPRenderPassSetup.DescriptorLayout");
-	DescriptorLayout = builder.Create(fb->device);
+	DescriptorLayout = builder.Create(fb->device.get());
 }
 
 void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey& key)
@@ -326,7 +326,7 @@ void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey& key)
 	if (key.Uniforms > 0)
 		builder.AddPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, 0, key.Uniforms);
 	builder.DebugName("VkPPRenderPassSetup.PipelineLayout");
-	PipelineLayout = builder.Create(fb->device);
+	PipelineLayout = builder.Create(fb->device.get());
 }
 
 void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey& key)
@@ -350,12 +350,12 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey& key)
 		builder.Stencil(VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
 	}
 	builder.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-	builder.BlendMode(key.BlendMode);
+	BlendMode(builder, key.BlendMode);
 	builder.RasterizationSamples(key.Samples);
 	builder.Layout(PipelineLayout.get());
 	builder.RenderPass(RenderPass.get());
 	builder.DebugName("VkPPRenderPassSetup.Pipeline");
-	Pipeline = builder.Create(fb->device);
+	Pipeline = builder.Create(fb->device.get());
 }
 
 void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
@@ -403,5 +403,46 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey& key)
 	}
 
 	builder.DebugName("VkPPRenderPassSetup.RenderPass");
-	RenderPass = builder.Create(fb->device);
+	RenderPass = builder.Create(fb->device.get());
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+GraphicsPipelineBuilder& BlendMode(GraphicsPipelineBuilder& builder, const FRenderStyle& style)
+{
+	// Just in case Vulkan doesn't do this optimization itself
+	if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero && style.Flags == 0)
+	{
+		return builder;
+	}
+
+	static const int blendstyles[] = {
+		VK_BLEND_FACTOR_ZERO,
+		VK_BLEND_FACTOR_ONE,
+		VK_BLEND_FACTOR_SRC_ALPHA,
+		VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		VK_BLEND_FACTOR_SRC_COLOR,
+		VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+		VK_BLEND_FACTOR_DST_COLOR,
+		VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+		VK_BLEND_FACTOR_DST_ALPHA,
+		VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,
+	};
+
+	static const int renderops[] = {
+		0, VK_BLEND_OP_ADD, VK_BLEND_OP_SUBTRACT, VK_BLEND_OP_REVERSE_SUBTRACT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+	};
+
+	int srcblend = blendstyles[style.SrcAlpha % STYLEALPHA_MAX];
+	int dstblend = blendstyles[style.DestAlpha % STYLEALPHA_MAX];
+	int blendequation = renderops[style.BlendOp & 15];
+
+	if (blendequation == -1)	// This was a fuzz style.
+	{
+		srcblend = VK_BLEND_FACTOR_DST_COLOR;
+		dstblend = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		blendequation = VK_BLEND_OP_ADD;
+	}
+
+	return builder.BlendMode((VkBlendOp)blendequation, (VkBlendFactor)srcblend, (VkBlendFactor)dstblend);
 }

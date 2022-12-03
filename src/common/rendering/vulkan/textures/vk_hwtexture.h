@@ -9,7 +9,7 @@
 
 #include "tarray.h"
 #include "hw_ihwtexture.h"
-#include "volk/volk.h"
+#include <zvulkan/vulkanobjects.h>
 #include "vk_imagetransition.h"
 #include "hw_material.h"
 #include <list>
@@ -19,14 +19,14 @@ class VulkanDescriptorSet;
 class VulkanImage;
 class VulkanImageView;
 class VulkanBuffer;
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 class FGameTexture;
 
 class VkHardwareTexture : public IHardwareTexture
 {
 	friend class VkMaterial;
 public:
-	VkHardwareTexture(VulkanFrameBuffer* fb, int numchannels);
+	VkHardwareTexture(VulkanRenderDevice* fb, int numchannels);
 	~VkHardwareTexture();
 
 	void Reset();
@@ -42,7 +42,7 @@ public:
 	VkTextureImage *GetImage(FTexture *tex, int translation, int flags);
 	VkTextureImage *GetDepthStencil(FTexture *tex);
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 	std::list<VkHardwareTexture*>::iterator it;
 
 private:
@@ -62,14 +62,14 @@ private:
 class VkMaterial : public FMaterial
 {
 public:
-	VkMaterial(VulkanFrameBuffer* fb, FGameTexture* tex, int scaleflags);
+	VkMaterial(VulkanRenderDevice* fb, FGameTexture* tex, int scaleflags);
 	~VkMaterial();
 
 	VulkanDescriptorSet* GetDescriptorSet(const FMaterialState& state);
 
 	void DeleteDescriptors() override;
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 	std::list<VkMaterial*>::iterator it;
 
 private:

@@ -22,12 +22,12 @@
 
 #include "vk_ppshader.h"
 #include "vk_shader.h"
-#include "vulkan/system/vk_framebuffer.h"
-#include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_renderdevice.h"
+#include "zvulkan/vulkanbuilders.h"
 #include "vulkan/system/vk_commandbuffer.h"
 #include "filesystem.h"
 
-VkPPShader::VkPPShader(VulkanFrameBuffer* fb, PPShader *shader) : fb(fb)
+VkPPShader::VkPPShader(VulkanRenderDevice* fb, PPShader *shader) : fb(fb)
 {
 	FString prolog;
 	if (!shader->Uniforms.empty())
@@ -35,14 +35,14 @@ VkPPShader::VkPPShader(VulkanFrameBuffer* fb, PPShader *shader) : fb(fb)
 	prolog += shader->Defines;
 
 	VertexShader = ShaderBuilder()
-		.VertexShader(LoadShaderCode(shader->VertexShader, "", shader->Version))
+		.VertexShader(LoadShaderCode(shader->VertexShader, "", shader->Version).GetChars())
 		.DebugName(shader->VertexShader.GetChars())
-		.Create(shader->VertexShader.GetChars(), fb->device);
+		.Create(shader->VertexShader.GetChars(), fb->device.get());
 
 	FragmentShader = ShaderBuilder()
-		.FragmentShader(LoadShaderCode(shader->FragmentShader, prolog, shader->Version))
+		.FragmentShader(LoadShaderCode(shader->FragmentShader, prolog, shader->Version).GetChars())
 		.DebugName(shader->FragmentShader.GetChars())
-		.Create(shader->FragmentShader.GetChars(), fb->device);
+		.Create(shader->FragmentShader.GetChars(), fb->device.get());
 
 	fb->GetShaderManager()->AddVkPPShader(this);
 }

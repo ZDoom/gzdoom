@@ -349,9 +349,9 @@ float R_DoomLightingEquation(float light)
 
 float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
-	vec3 origin = pixelpos.xyz;
-	vec3 direction = normalize(lightpos.xyz - pixelpos.xyz);
-	float lightDistance = distance(pixelpos.xyz, lightpos.xyz);
+	vec3 origin = pixelpos.xzy;
+	vec3 direction = normalize(lightpos.xzy - pixelpos.xzy);
+	float lightDistance = distance(pixelpos.xzy, lightpos.xzy);
 
 	rayQueryEXT rayQuery;
 	rayQueryInitializeEXT(rayQuery, TopLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, origin, 0.01f, direction, lightDistance);

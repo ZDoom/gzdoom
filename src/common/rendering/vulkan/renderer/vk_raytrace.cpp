@@ -21,12 +21,12 @@
 */
 
 #include "vk_raytrace.h"
-#include "vulkan/system/vk_builders.h"
-#include "vulkan/system/vk_framebuffer.h"
+#include "zvulkan/vulkanbuilders.h"
+#include "vulkan/system/vk_renderdevice.h"
 #include "vulkan/system/vk_commandbuffer.h"
 #include "hw_levelmesh.h"
 
-VkRaytrace::VkRaytrace(VulkanFrameBuffer* fb) : fb(fb)
+VkRaytrace::VkRaytrace(VulkanRenderDevice* fb) : fb(fb)
 {
 	NullMesh.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
 	NullMesh.MeshVertices.Push({ 1.0f, -1.0f, -1.0f });
@@ -99,7 +99,7 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
 		.Size(transferbuffersize)
 		.DebugName("transferBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	uint8_t* data = (uint8_t*)transferBuffer->Map(0, transferbuffersize);
 	memcpy(data + vertexoffset, Mesh->MeshVertices.Data(), vertexbuffersize);
@@ -114,7 +114,7 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR)
 		.Size(vertexbuffersize)
 		.DebugName("vertexBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	indexBuffer = BufferBuilder()
 		.Usage(
@@ -124,7 +124,7 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR)
 		.Size(indexbuffersize)
 		.DebugName("indexBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset);
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset);
@@ -168,19 +168,19 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 		.Usage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
 		.Size(sizeInfo.accelerationStructureSize)
 		.DebugName("blAccelStructBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	blAccelStruct = AccelerationStructureBuilder()
 		.Type(VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR)
 		.Buffer(blAccelStructBuffer.get(), sizeInfo.accelerationStructureSize)
 		.DebugName("blAccelStruct")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	blScratchBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size(sizeInfo.buildScratchSize)
 		.DebugName("blScratchBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	buildInfo.dstAccelerationStructure = blAccelStruct->accelstruct;
 	buildInfo.scratchData.deviceAddress = blScratchBuffer->GetDeviceAddress();
@@ -208,7 +208,7 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
 		.Size(sizeof(VkAccelerationStructureInstanceKHR))
 		.DebugName("tlTransferBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	auto data = (uint8_t*)tlTransferBuffer->Map(0, sizeof(VkAccelerationStructureInstanceKHR));
 	memcpy(data, &instance, sizeof(VkAccelerationStructureInstanceKHR));
@@ -218,7 +218,7 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 		.Size(sizeof(VkAccelerationStructureInstanceKHR))
 		.DebugName("tlInstanceBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	fb->GetCommands()->GetTransferCommands()->copyBuffer(tlTransferBuffer.get(), tlInstanceBuffer.get());
 
@@ -252,19 +252,19 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 		.Usage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
 		.Size(sizeInfo.accelerationStructureSize)
 		.DebugName("tlAccelStructBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	tlAccelStruct = AccelerationStructureBuilder()
 		.Type(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR)
 		.Buffer(tlAccelStructBuffer.get(), sizeInfo.accelerationStructureSize)
 		.DebugName("tlAccelStruct")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	tlScratchBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size(sizeInfo.buildScratchSize)
 		.DebugName("tlScratchBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	buildInfo.dstAccelerationStructure = tlAccelStruct->accelstruct;
 	buildInfo.scratchData.deviceAddress = tlScratchBuffer->GetDeviceAddress();

@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
+#include "zvulkan/vulkanobjects.h"
 #include "vulkan/textures/vk_imagetransition.h"
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 class VkPPRenderPassSetup;
 class PPOutput;
 
@@ -17,7 +17,7 @@ enum class WhichDepthStencil {
 class VkRenderBuffers
 {
 public:
-	VkRenderBuffers(VulkanFrameBuffer* fb);
+	VkRenderBuffers(VulkanRenderDevice* fb);
 	~VkRenderBuffers();
 
 	void BeginFrame(int width, int height, int sceneWidth, int sceneHeight);
@@ -53,7 +53,7 @@ private:
 	void CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples);
 	VkSampleCountFlagBits GetBestSampleCount();
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 
 	int mWidth = 0;
 	int mHeight = 0;

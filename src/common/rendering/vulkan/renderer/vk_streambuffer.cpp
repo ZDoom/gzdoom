@@ -21,12 +21,12 @@
 */
 
 #include "vk_renderstate.h"
-#include "vulkan/system/vk_framebuffer.h"
-#include "vulkan/system/vk_builders.h"
+#include "vulkan/system/vk_renderdevice.h"
+#include "zvulkan/vulkanbuilders.h"
 #include "vulkan/system/vk_buffer.h"
 #include "vulkan/renderer/vk_streambuffer.h"
 
-VkStreamBufferWriter::VkStreamBufferWriter(VulkanFrameBuffer* fb)
+VkStreamBufferWriter::VkStreamBufferWriter(VulkanRenderDevice* fb)
 {
 	mBuffer = fb->GetBufferManager()->StreamBuffer.get();
 }
@@ -55,7 +55,7 @@ void VkStreamBufferWriter::Reset()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkMatrixBufferWriter::VkMatrixBufferWriter(VulkanFrameBuffer* fb)
+VkMatrixBufferWriter::VkMatrixBufferWriter(VulkanRenderDevice* fb)
 {
 	mBuffer = fb->GetBufferManager()->MatrixBuffer.get();
 	mIdentityMatrix.loadIdentity();

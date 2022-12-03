@@ -2,21 +2,21 @@
 #pragma once
 
 #include "hwrenderer/postprocessing/hw_postprocess.h"
-#include "vulkan/system/vk_objects.h"
+#include <zvulkan/vulkanobjects.h>
 #include "vulkan/textures/vk_imagetransition.h"
 #include <list>
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 
 class VkPPTexture : public PPTextureBackend
 {
 public:
-	VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture);
+	VkPPTexture(VulkanRenderDevice* fb, PPTexture *texture);
 	~VkPPTexture();
 
 	void Reset();
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 	std::list<VkPPTexture*>::iterator it;
 
 	VkTextureImage TexImage;

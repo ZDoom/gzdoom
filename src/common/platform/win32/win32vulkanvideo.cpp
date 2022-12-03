@@ -6,7 +6,7 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
-#include "volk/volk.h"
+#include <zvulkan/vulkansurface.h>
 #include "i_mainwindow.h"
 
 void I_GetVulkanDrawableSize(int *width, int *height)

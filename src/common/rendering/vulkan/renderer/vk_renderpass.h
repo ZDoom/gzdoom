@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
+#include "zvulkan/vulkanobjects.h"
 #include "renderstyle.h"
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
@@ -9,8 +9,9 @@
 #include <string.h>
 #include <map>
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 class VkPPShader;
+class GraphicsPipelineBuilder;
 
 class VkPipelineKey
 {
@@ -53,7 +54,7 @@ public:
 class VkRenderPassSetup
 {
 public:
-	VkRenderPassSetup(VulkanFrameBuffer* fb, const VkRenderPassKey &key);
+	VkRenderPassSetup(VulkanRenderDevice* fb, const VkRenderPassKey &key);
 
 	VulkanRenderPass *GetRenderPass(int clearTargets);
 	VulkanPipeline *GetPipeline(const VkPipelineKey &key);
@@ -66,7 +67,7 @@ private:
 	std::unique_ptr<VulkanRenderPass> CreateRenderPass(int clearTargets);
 	std::unique_ptr<VulkanPipeline> CreatePipeline(const VkPipelineKey &key);
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 };
 
 class VkVertexFormat
@@ -101,7 +102,7 @@ public:
 class VkPPRenderPassSetup
 {
 public:
-	VkPPRenderPassSetup(VulkanFrameBuffer* fb, const VkPPRenderPassKey& key);
+	VkPPRenderPassSetup(VulkanRenderDevice* fb, const VkPPRenderPassKey& key);
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DescriptorLayout;
 	std::unique_ptr<VulkanPipelineLayout> PipelineLayout;
@@ -114,13 +115,15 @@ private:
 	void CreatePipeline(const VkPPRenderPassKey& key);
 	void CreateRenderPass(const VkPPRenderPassKey& key);
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 };
+
+GraphicsPipelineBuilder& BlendMode(GraphicsPipelineBuilder& builder, const FRenderStyle& style);
 
 class VkRenderPassManager
 {
 public:
-	VkRenderPassManager(VulkanFrameBuffer* fb);
+	VkRenderPassManager(VulkanRenderDevice* fb);
 	~VkRenderPassManager();
 
 	void RenderBuffersReset();
@@ -133,7 +136,7 @@ public:
 	VkPPRenderPassSetup* GetPPRenderPass(const VkPPRenderPassKey& key);
 
 private:
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 
 	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 	std::vector<std::unique_ptr<VulkanPipelineLayout>> PipelineLayouts;

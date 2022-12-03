@@ -27,7 +27,7 @@
 #include "vulkan/renderer/vk_postprocess.h"
 #include "hw_cvars.h"
 
-VkTextureManager::VkTextureManager(VulkanFrameBuffer* fb) : fb(fb)
+VkTextureManager::VkTextureManager(VulkanRenderDevice* fb) : fb(fb)
 {
 	CreateNullTexture();
 	CreateShadowmap();
@@ -148,12 +148,12 @@ void VkTextureManager::CreateNullTexture()
 		.Size(1, 1)
 		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT)
 		.DebugName("VkDescriptorSetManager.NullTexture")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	NullTextureView = ImageViewBuilder()
 		.Image(NullTexture.get(), VK_FORMAT_R8G8B8A8_UNORM)
 		.DebugName("VkDescriptorSetManager.NullTextureView")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	PipelineBarrier()
 		.AddImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT)
@@ -167,12 +167,12 @@ void VkTextureManager::CreateShadowmap()
 		.Format(VK_FORMAT_R32_SFLOAT)
 		.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
 		.DebugName("VkRenderBuffers.Shadowmap")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	Shadowmap.View = ImageViewBuilder()
 		.Image(Shadowmap.Image.get(), VK_FORMAT_R32_SFLOAT)
 		.DebugName("VkRenderBuffers.ShadowmapView")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	VkImageTransition()
 		.AddImage(&Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true)
@@ -203,13 +203,13 @@ void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const 
 		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
 		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 		.DebugName("VkRenderBuffers.Lightmap")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	Lightmap.View = ImageViewBuilder()
 		.Type(VK_IMAGE_VIEW_TYPE_2D_ARRAY)
 		.Image(Lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
 		.DebugName("VkRenderBuffers.LightmapView")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
@@ -219,7 +219,7 @@ void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const 
 		.Size(totalSize)
 		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
 		.DebugName("VkHardwareTexture.mStagingBuffer")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	uint16_t one = 0x3c00; // half-float 1.0
 	const uint16_t* src = LMTextureData.Data();

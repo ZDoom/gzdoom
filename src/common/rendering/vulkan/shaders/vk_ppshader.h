@@ -2,20 +2,20 @@
 #pragma once
 
 #include "hwrenderer/postprocessing/hw_postprocess.h"
-#include "vulkan/system/vk_objects.h"
+#include <zvulkan/vulkanobjects.h>
 #include <list>
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 
 class VkPPShader : public PPShaderBackend
 {
 public:
-	VkPPShader(VulkanFrameBuffer* fb, PPShader *shader);
+	VkPPShader(VulkanRenderDevice* fb, PPShader *shader);
 	~VkPPShader();
 
 	void Reset();
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 	std::list<VkPPShader*>::iterator it;
 
 	std::unique_ptr<VulkanShader> VertexShader;

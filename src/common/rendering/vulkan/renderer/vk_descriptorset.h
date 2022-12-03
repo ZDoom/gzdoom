@@ -1,10 +1,11 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
+#include "zvulkan/vulkanobjects.h"
 #include <list>
+#include "tarray.h"
 
-class VulkanFrameBuffer;
+class VulkanRenderDevice;
 class VkMaterial;
 class PPTextureInput;
 class VkPPRenderPassSetup;
@@ -12,7 +13,7 @@ class VkPPRenderPassSetup;
 class VkDescriptorSetManager
 {
 public:
-	VkDescriptorSetManager(VulkanFrameBuffer* fb);
+	VkDescriptorSetManager(VulkanRenderDevice* fb);
 	~VkDescriptorSetManager();
 
 	void Init();
@@ -45,7 +46,7 @@ private:
 
 	std::unique_ptr<VulkanDescriptorSet> AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout);
 
-	VulkanFrameBuffer* fb = nullptr;
+	VulkanRenderDevice* fb = nullptr;
 
 	std::unique_ptr<VulkanDescriptorSetLayout> HWBufferSetLayout;
 	std::unique_ptr<VulkanDescriptorSetLayout> FixedSetLayout;

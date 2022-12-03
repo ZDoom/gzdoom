@@ -22,10 +22,10 @@
 
 #include "vk_pptexture.h"
 #include "vk_texture.h"
-#include "vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_renderdevice.h"
 #include "vulkan/system/vk_commandbuffer.h"
 
-VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture) : fb(fb)
+VkPPTexture::VkPPTexture(VulkanRenderDevice* fb, PPTexture *texture) : fb(fb)
 {
 	VkFormat format;
 	int pixelsize;
@@ -47,15 +47,15 @@ VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture) : fb(fb)
 	else
 		imgbuilder.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 	imgbuilder.DebugName("VkPPTexture");
-	if (!imgbuilder.IsFormatSupported(fb->device))
+	if (!imgbuilder.IsFormatSupported(fb->device.get()))
 		I_FatalError("Vulkan device does not support the image format required by a postprocess texture\n");
-	TexImage.Image = imgbuilder.Create(fb->device);
+	TexImage.Image = imgbuilder.Create(fb->device.get());
 	Format = format;
 
 	TexImage.View = ImageViewBuilder()
 		.Image(TexImage.Image.get(), format)
 		.DebugName("VkPPTextureView")
-		.Create(fb->device);
+		.Create(fb->device.get());
 
 	if (texture->Data)
 	{
@@ -65,7 +65,7 @@ VkPPTexture::VkPPTexture(VulkanFrameBuffer* fb, PPTexture *texture) : fb(fb)
 			.Size(totalsize)
 			.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
 			.DebugName("VkPPTextureStaging")
-			.Create(fb->device);
+			.Create(fb->device.get());
 
 		VkImageTransition()
 			.AddImage(&TexImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true)

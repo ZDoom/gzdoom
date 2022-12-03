@@ -443,4 +443,5 @@ void LoadHexFont(const char* filename)
 	auto hexfont = resf->FindLump("newconsolefont.hex");
 	if (hexfont == nullptr) I_FatalError("Unable to find newconsolefont.hex in %s", filename);
 	hexdata.ParseDefinition(hexfont);
+	delete resf;
 }

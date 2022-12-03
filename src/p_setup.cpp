@@ -372,7 +372,9 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 	Behaviors.UnloadModules();
 	localEventManager->Shutdown();
 	if (aabbTree) delete aabbTree;
+	if (levelMesh) delete levelMesh;
 	aabbTree = nullptr;
+	levelMesh = nullptr;
 	if (screen)
 		screen->SetAABBTree(nullptr);
 }

@@ -61,9 +61,9 @@ class OptionMenuItem : MenuItemBase
 		return x;
 	}
 
-	protected void drawValue(int indent, int y, int color, String text, bool grayed = false, bool localize = true)
+	protected void drawValue(int indent, int y, int color, String text, bool grayed = false)
 	{
-		Menu.DrawOptionText(indent + CursorSpace(), y, color, text, grayed, localize);
+		Menu.DrawOptionText(indent + CursorSpace(), y, color, text, grayed);
 	}
 
 
@@ -999,7 +999,7 @@ class OptionMenuFieldBase : OptionMenuItem
 	{
 		bool grayed = mGrayCheck != null && !mGrayCheck.GetInt();
 		drawLabel(indent, y, selected ? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, grayed);
-		drawValue(indent, y, OptionMenuSettings.mFontColorValue, Represent(), grayed, false);
+		drawValue(indent, y, OptionMenuSettings.mFontColorValue, Represent(), grayed);
 		return indent;
 	}
 
@@ -1068,7 +1068,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 		{
 			// reposition the text so that the cursor is visible when in entering mode.
 			String text = Represent();
-			int tlen = Menu.OptionWidth(text, false) * CleanXfac_1;
+			int tlen = Menu.OptionWidth(text) * CleanXfac_1;
 			int newindent = screen.GetWidth() - tlen - CursorSpace();
 			if (newindent < indent) indent = newindent;
 		}

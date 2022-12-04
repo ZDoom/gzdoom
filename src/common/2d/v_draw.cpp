@@ -831,7 +831,7 @@ static inline FSpecialColormap * ListGetSpecialColormap(VMVa_List &tags)
 //==========================================================================
 
 template<class T>
-bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, int type, PalEntry fill, double fillalpha, bool scriptDifferences)
+bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, int type, PalEntry fill, double fillalpha)
 {
 	INTBOOL boolval;
 	int intval;
@@ -886,7 +886,6 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 	parms->scalex = parms->scaley = 1;
 	parms->cellx = parms->celly = 0;
 	parms->maxstrlen = INT_MAX;
-	parms->localize = scriptDifferences ? false : true;
 	parms->virtBottom = false;
 	parms->srcx = 0.;
 	parms->srcy = 0.;
@@ -1324,10 +1323,6 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			parms->maxstrlen = ListGetInt(tags);
 			break;
 
-		case DTA_Localize:
-			parms->localize = ListGetInt(tags);
-			break;
-
 		case DTA_CellX:
 			parms->cellx = ListGetInt(tags);
 			break;
@@ -1439,8 +1434,8 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 }
 // explicitly instantiate both versions for v_text.cpp.
 
-template bool ParseDrawTextureTags<Va_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, int type, PalEntry fill, double fillalpha, bool scriptDifferences);
-template bool ParseDrawTextureTags<VMVa_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, int type, PalEntry fill, double fillalpha, bool scriptDifferences);
+template bool ParseDrawTextureTags<Va_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, int type, PalEntry fill, double fillalpha);
+template bool ParseDrawTextureTags<VMVa_List>(F2DDrawer* drawer, FGameTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, int type, PalEntry fill, double fillalpha);
 
 //==========================================================================
 //

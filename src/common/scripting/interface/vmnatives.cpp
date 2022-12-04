@@ -631,9 +631,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
 	ACTION_RETURN_FLOAT(GetBottomAlignOffset(self, code));
 }
 
-static int StringWidth(FFont *font, const FString &str, bool localize)
+static int StringWidth(FFont *font, const FString &str)
 {
-	const char *txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
+	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
 	return font->StringWidth(txt);
 }
 
@@ -641,13 +641,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FFont);
 	PARAM_STRING(str);
-	PARAM_BOOL(localize);
-	ACTION_RETURN_INT(StringWidth(self, str, localize));
+	ACTION_RETURN_INT(StringWidth(self, str));
 }
 
-static int GetMaxAscender(FFont* font, const FString& str, bool localize)
+static int GetMaxAscender(FFont* font, const FString& str)
 {
-	const char* txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
+	const char* txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
 	return font->GetMaxAscender(txt);
 }
 
@@ -655,13 +654,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetMaxAscender, GetMaxAscender)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FFont);
 	PARAM_STRING(str);
-	PARAM_BOOL(localize);
-	ACTION_RETURN_INT(GetMaxAscender(self, str, localize));
+	ACTION_RETURN_INT(GetMaxAscender(self, str));
 }
 
-static int CanPrint(FFont *font, const FString &str, bool localize)
+static int CanPrint(FFont *font, const FString &str)
 {
-	const char *txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
+	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
 	return font->CanPrint(txt);
 }
 
@@ -669,8 +667,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, CanPrint, CanPrint)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FFont);
 	PARAM_STRING(str);
-	PARAM_BOOL(localize);
-	ACTION_RETURN_INT(CanPrint(self, str, localize));
+	ACTION_RETURN_INT(CanPrint(self, str));
 }
 
 static int FindFontColor(int name)

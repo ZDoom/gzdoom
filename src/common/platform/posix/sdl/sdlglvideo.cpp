@@ -59,6 +59,7 @@
 #include <zvulkan/vulkaninstance.h>
 #include <zvulkan/vulkansurface.h>
 #include <zvulkan/vulkandevice.h>
+#include <zvulkan/vulkanbuilders.h>
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -81,6 +82,7 @@ EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR(Bool, vk_debug)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -278,8 +280,6 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 	{
 		try
 		{
-			assert(device == nullptr);
-
 			unsigned int count = 64;
 			const char* names[64];
 			if (!I_GetVulkanPlatformExtensions(&count, names))

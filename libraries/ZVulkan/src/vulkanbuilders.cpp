@@ -1543,11 +1543,11 @@ std::shared_ptr<VulkanInstance> VulkanInstanceBuilder::Create()
 
 /////////////////////////////////////////////////////////////////////////////
 
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+
 VulkanSurfaceBuilder::VulkanSurfaceBuilder()
 {
 }
-
-#ifdef VK_USE_PLATFORM_WIN32_KHR
 
 VulkanSurfaceBuilder& VulkanSurfaceBuilder::Win32Window(HWND hwnd)
 {
@@ -1555,26 +1555,12 @@ VulkanSurfaceBuilder& VulkanSurfaceBuilder::Win32Window(HWND hwnd)
 	return *this;
 }
 
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-
-VulkanSurfaceBuilder& VulkanSurfaceBuilder::X11Window(Display* disp, Window wind)
-{
-	this->disp = disp;
-	this->wind = wind;
-}
-
-#endif
-
 std::shared_ptr<VulkanSurface> VulkanSurfaceBuilder::Create(std::shared_ptr<VulkanInstance> instance)
 {
-#ifdef VK_USE_PLATFORM_WIN32_KHR
 	return std::make_shared<VulkanSurface>(std::move(instance), hwnd);
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-	return std::make_shared<VulkanSurface>(std::move(instance), disp, wind);
-#else
-	return std::make_shared<VulkanSurface>(std::move(instance));
-#endif
 }
+
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 

@@ -24,24 +24,4 @@ VulkanSurface::VulkanSurface(std::shared_ptr<VulkanInstance> instance, HWND wind
 		VulkanError("Could not create vulkan surface");
 }
 
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-
-VulkanSurface::VulkanSurface(std::shared_ptr<VulkanInstance> instance, Display* disp, Window wind) : Instance(std::move(instance)), disp(disp), wind(wind)
-{
-	VkXlibSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR };
-	createInfo.dpy = disp;
-	createInfo.window = wind;
-
-	VkResult result = vkCreateXlibSurfaceKHR(Instance->Instance, &createInfo, nullptr, &Surface);
-	if (result != VK_SUCCESS)
-		VulkanError("Could not create vulkan surface");
-}
-
-#else
-
-VulkanSurface::VulkanSurface(std::shared_ptr<VulkanInstance> instance) : Instance(std::move(instance))
-{
-	VulkanError("VulkanSurface not implemented on this platform");
-}
-
 #endif

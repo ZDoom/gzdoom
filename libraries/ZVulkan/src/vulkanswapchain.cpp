@@ -135,6 +135,7 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 {
 	lost = false;
 
+	VkResult result;
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
 #ifdef WIN32
 	if (exclusivefullscreen && device->SupportsDeviceExtension(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME))
@@ -152,7 +153,7 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 		VkSurfaceCapabilitiesFullScreenExclusiveEXT exclusiveCapabilities = { VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_FULL_SCREEN_EXCLUSIVE_EXT };
 		capabilites.pNext = &exclusiveCapabilities;
 
-		VkResult result = vkGetPhysicalDeviceSurfaceCapabilities2KHR(device->PhysicalDevice.Device, &info, &capabilites);
+		result = vkGetPhysicalDeviceSurfaceCapabilities2KHR(device->PhysicalDevice.Device, &info, &capabilites);
 		if (result != VK_SUCCESS)
 			throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilities2EXT failed");
 
@@ -161,11 +162,16 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 	}
 	else
 	{
-		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->PhysicalDevice.Device, device->Surface->Surface, &surfaceCapabilities);
+		result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->PhysicalDevice.Device, device->Surface->Surface, &surfaceCapabilities);
 		if (result != VK_SUCCESS)
 			throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
 		exclusivefullscreen = false;
 	}
+#else
+	result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->PhysicalDevice.Device, device->Surface->Surface, &surfaceCapabilities);
+	if (result != VK_SUCCESS)
+		throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
+	exclusivefullscreen = false;
 #endif
 
 	actualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
@@ -221,7 +227,7 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 	}
 #endif
 
-	VkResult result = vkCreateSwapchainKHR(device->device, &swapChainCreateInfo, nullptr, &swapchain);
+	result = vkCreateSwapchainKHR(device->device, &swapChainCreateInfo, nullptr, &swapchain);
 	if (result != VK_SUCCESS)
 	{
 		swapchain = VK_NULL_HANDLE;

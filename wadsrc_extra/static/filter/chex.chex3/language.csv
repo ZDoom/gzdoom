@@ -47,7 +47,7 @@ You need a yellow flemkey to open this door,PD_YELLOWF,,,,Potřebuješ žlutý s
 %o was hit by inter-dimensional slime!,OB_POWERSTRAND,,,,%o byl@[ao_cs] zasažen@[ao_cs] mezidimenzionálním slizem!,%o wurde von interdimensionalem Schleim getroffen,,%o estas trafita de interdimensia ŝlimo!,¡%o fue alcanzad@[ao_esp] por baba interdimensional!,,%o parkaan osui interdimensionaalista limaa!,%o s'est fait@[e_fr] toucher par de la morve interdimensionelle!,%o interdimenzionális trutyi áldozata lett!,%o è stato colpito da melma interdimensionale!,%o は いじげんスライムまみれになった!,%o 는(은) 차원균열 점액에 맞았습니다!,%o werd geraakt door interdimensionaal slijm!,%o został@[ao_pl] uderzon@[adj_pl] przez międzywymiarowy szlam!,%o foi atingid@[ao_ptb] por gosma interdimensional!,,%o a fost lovit de mâzgă interdimensională!,В игрока %o попала межпространственная слизь!,
 %o was hit by inter-dimensional slime!,OB_KILLEDSELF,,,,%o byl@[ao_cs] zasažen@[ao_cs] mezidimenzionálním slizem!,%o wurde von interdimensionalem Schleim getroffen,,%o estas trafita de interdimensia ŝlimo!,¡%o fue alcanzad@[ao_esp] por baba interdimensional!,,%o parkaan osui interdimensionaalista limaa!,%o s'est fait@[e_fr] toucher par de la morve interdimensionelle!,%o interdimenzionális trutyi áldozata lett!,%o è stato colpito da melma interdimensionale!,%o は いじげんスライムまみれになった!,%o 는(은) 모르는 사이에 점액에 당했습니다!,%o werd geraakt door interdimensionaal slijm!,%o został@[ao_pl] uderzon@[adj_pl] przez międzywymiarowy szlam!,%o foi atingid@[ao_ptb] por gosma interdimensional!,,%o a fost lovit de mâzgă interdimensională!,В игрока %o попала межпространственная слизь!,
 %o was boogered by a stridicus.,OB_STRIDICUS,,,,%o dostal@[ao_cs] holuby od běhakem.,%o wurde von einem Stridicus bepopelt.,,%o estas mukiga de paŝmukulo.,%o fue moquead@[ao_esp] por un stridicus.,,%o joutui stridicuksen räkäämäksi.,%o s'est fait@[e_fr] engluer par un stridicus.,%o taknyos lett egy lépkedüsztől.,%o è stato colpito da uno Stridicus.,%o は ステュリクスに おびやかされた。,%o 는(은) 스트리디쿠스의 코딱지에 당했습니다.,%o werd door een stridicus gezoomd.,%o został@[ao_pl] zaglutowan@[adj_pl] przez stridicusa.,%o foi melecad@[ao_ptb] por um stridicus.,,%o a fost speriat de către un picioare-lungi.,Игрока %o облепила соплями длинноножка. ,
-%o was gooed by a flem mine.,OB_FLEMMINE,,,,%o byl@[ao_cs] zablácen@[ao_cs] sliznou minou.,%o wurde von einer Flem-Mine beschmiert.,,%o estas ŝlimiga de muksentinelo.,%o fue pegotead@[ao_esp] por una flem-mina.,,%o joutui limamiinan mönjäämäksi.,%o s'est fait@[e_fr] éclabousser par une flem mine.,%o-t összenyálkázta egy slejmakna.,%o è stata colpita da una bomba a flem.,%o はフレムマインに ヒドいめにあった。,%o 는(은) 플렘 지뢰에 의해 점액 범벅이 됐습니다.,%o werd door een Flemmijn getreiterd.,"%o został@[ao_pl] zabrejowan@[adj_pl] przez flemową minę.
+%o was gooed by a flem mine.,OB_FLEMMINE,,,,%o byl@[ao_cs] zablácen@[ao_cs] sliznou minou.,%o wurde von einer Flem-Mine beschmiert.,,%o estas ŝlimiga de muksentinelo.,%o fue pegotead@[ao_esp] por una flem-mina.,,%o joutui limamiinan mönjäämäksi.,%o s'est fait@[e_fr] éclabousser par une flem mine.,%o-t összenyálkázta egy slejmakna.,%o è stato colpito da una bomba a flem.,%o はフレムマインに ヒドいめにあった。,%o 는(은) 플렘 지뢰에 의해 점액 범벅이 됐습니다.,%o werd door een Flemmijn getreiterd.,"%o został@[ao_pl] zabrejowan@[adj_pl] przez flemową minę.
 ",%o foi engosmad@[ao_ptb] por uma mina flem.,,%o a fost lovit de mâzga unei flem mine.,Игрока %o забрызгала флем-мина.,
 %o was slimed by a super cycloptis.,OB_SUPERCYCLOPTIS,,,,%o byl@[ao_cs] osliznut@[ao_cs] superkykloptem.,%o wurde von einem Super Cycloptis vollgeschleimt.,,%o estas ŝlimiga de supera ciklopmukulo.,%o fue enlodad@[ao_esp] por un super cycloptis.,,%o joutui supercycloptiksen limaamaksi.,%o s'est fait@[e_fr] gélifier par un super cycloptis.,%o-t összenyálkázta egy Szuper Kükloptisz.,%o è stato snellito da una Super Ciyloptis.,%o はスーパーサイクロプティスに とかされた。,%o 는(은) 슈퍼 사이클롭티스의 점액에 당했습니다.,%o werd afgeslankt door een Super Cycloptis.,%o został@[ao_pl] oszlamion@[adj_pl] przez super cykloptisa.,%o foi lambuzad@[ao_ptb] por um super cyclóptis.,,%o a fost transformat în mâzgă de către un super cicloptic.,Игрока %o обслюнявил супер-циклоптис.,
 %o was defeated by a Maximus.,OB_MAXIMUS,,,,%o byl@[ao_cs] poražen@[ao_cs] Maximem.,%o wurde von einem Maximus besiegt.,,%o estas venkita de ĉefmukulo.,%o fue derrotad@[ao_esp] por un Maximus.,,%o joutui Maximuksen päihittämäksi.,%o s'est fait@[e_fr] battre par un Maximus.,%o-t legyőzte egy Maximusz.,%o è stato sconfitto da un Maximus.,%o はマクシムスに 敗北した。,%o 는(은) 맥시무스에게 패배했습니다.,%o werd verslagen door een Maximus.,%o został@[ao_pl] pokonan@[adj_pl] przez Maximusa.,%o foi derrotad@[ao_ptb] por um Maximus.,,%o a fost înfrânt de către un Maxim.,Игрок %o проиграл Максимусу.,
@@ -179,20 +179,20 @@ azonban figyelmeztetsz mindenkit: nem utoljára láttuk a slejmoidokat.
 Sajnos igazad lett. Amint megérkeztél, szembesülsz azzal, 
 hogy a slejmoidok valahogy hazáig követtek.
 Készülj fel a terrorra Chexvárosban, jön a Chex Quest 2!","Dopo aver rispedito il mostruoso Flembrane
-nella sua dimensione, si liberano i prigionieri.
+nella sua dimensione, puoi liberare i prigionieri.
 Eppure i flemoidi sono ovunque! Tu e i
-prigionieri fare una pausa per la vostra
-astronave. I flemoidi melma la vostra nave,
-ma si fuggire di poco in orbita.
-Durante il ritorno ci si congratula per
-l'audace salvataggio, ma si emette un
+prigionieri vi avviate per la tua astronave.
+I flemoidi coprono di melma la tua astronave,
+ma riuscite per poco a scappare in orbita.
+Dopo il vostro ritorno vieni congratulato per
+l'audace salvataggio, ma comunicate un
 avvertimento...
-Non abbiamo visto l'ultimo dei Flemoidi.
+Troveremo ancora i Flemoidi...
 
-Purtroppo hai ragione. Infatti, al vostro
-ritorno a casa, vi accorgerete che le
-flotte vi hanno in qualche modo seguito qui.
-Preparatevi per 
+Purtroppo hai ragione. Infatti, al tuo
+ritorno a casa, ti accorgi che le loro
+flotte ti hanno in qualche modo seguito qui.
+Preparati per 
 Chex Quest 2: Terrore a Chex City!","巨大なフレムブレンを元の次元に送り ほりょを解放した。
 けれども、フレモイドはまだまだいる!
 フレモイドは 君の宇宙船を スライムまみれにしたため、
@@ -413,9 +413,9 @@ mit sem csökkent.
 Összegyűlt erőik gigantikus interdimenzionális rést ütöttek az űrben, 
 és most egy óriási trutyilabda száguld egyenesen a gabonapelyhek bolygója felé!
 
-Készülj fel az invázióra a Chex Quest 3-ban!","Hai zorch il restante flemoidi che si erano
+Készülj fel az invázióra a Chex Quest 3-ban!","Hai neutralizzato restante flemoidi che si erano
 riuniti nelle fogne. Chex City è stata
-salvata. Sembra che la minaccia Flemoid è
+salvata. Sembra che la minaccia Flemoid sia
 finalmente finita.
 
 Dieci anni passano in pace e prosperità.
@@ -428,8 +428,7 @@ spaccatura interdimensionale nello spazio
 e ora una grande palla di melma è diretta
 direttamente verso il pianeta dei cereali!
 Preparati per
-Chex Quest 3: Invasione!
-","君は 下水道に集まっていたフレモイドを
+Chex Quest 3: Invasione!","君は 下水道に集まっていたフレモイドを
 ぶっとばして、チェックス シティーを守った。
 フレモイドの きょういはようやく なくなったようだ。
 
@@ -621,18 +620,16 @@ dimenziójába.
 
 
 De ha mégis visszatérnek, te készen állsz majd!
-","Con un ultimo colpo, hai zorch Lord Snotfolus
-torna alla sua dimensione! contro tutte
-le probabilità che hai sventato
-l'invasione con una sola mano!
+","Con un ultimo colpo, hai neutralizzato Lord
+Snotfolus, che ritorna alla sua dimensione!
+Contro tutte le probabilità hai sventato
+l'invasione tutto da solo!
 
-Speri davvero che i flemoidi hanno
+Speri davvero che i flemoidi abbiano
 finalmente imparato la lezione e non
-torneranno mai più alla dimensione dei cereali.
+torneranno mai più nella dimensione dei cereali.
 
-Ma se lo sai che sarai pronto per loro!
-
-","さいごのいちげきで、ロード スノフォールスを元の次元に
+Ma se lo faranno, sai che sarai pronto per loro!","さいごのいちげきで、ロード スノフォールスを元の次元に
 もどした。君一人で全てのオーズのしゅうげきを 阻止した!
 
 君は フレモイド達のことを みんなに教え、再び

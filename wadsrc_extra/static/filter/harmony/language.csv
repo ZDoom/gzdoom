@@ -49,8 +49,8 @@ Acquired: Minigun.,GOTCHAINGUN,,,,Získán kulomet.,Erhalten: Minigun,,Akiris: M
 Acquired: Grenade launcher.,GOTLAUNCHER,,,,Získán granátomet.,Erhalten: Granatwerfer,,Akiris: Grenadlanĉilon.,Adquirido: Lanzagranadas.,,Saatu: kranaatinheitin.,Acquis: Lance-Grenades,Megszerezve: Gránátvető,Acquisito: Lanciagranate.,シュトク: グレネードランチャー,획득: 세열탄 추진기.,Verworven: Granaatwerper.,Zdobyto: Wyrzutnię granatów.,Pegou um lança-granadas.,,Achiziționat: Lansator de grenade.,Получен: Гранатомёт.,
 Entropy thrower!,GOTPLASMA,,,,Vrhač entropie!,Entropiewerfer,,Entropi-ĵetilon!,¡Lanzador de Entropía!,,Entropianheitin!,Acquis: Lanceur d'Entropie!,Entrópiavető!,Lancia entropia!,エントロピースロワー!,획득: 엔트로피 방사기!,Entropiewerper!,Miotacz Entropii!,Lançador de entropia!,,Aruncător entropic!,Энтропиемёт!,
 Acquired: Shotgun.,GOTSHOTGUN,,,,Získána brokovnice.,Erhalten: Schrotflinte,,Akiris: Ĉaspafilon.,Adquirido: Escopeta.,,Saatu: haulikko.,Acquis: Fusil à pompe.,Megszerezve: Sörétes puska,Acquisito: Fucile.,シュトク: ショットガン,획득: 산탄총.,Verworven: Shotgun.,Zdobyto: Strzelbę.,Pegou uma espingarda.,,Achiziționat: Pușcă.,Получен: Дробовик.,
-God Mode ON,STSTR_DQDON,,,,Nesmrtelnost ZAP,Gott-Modus AN,,Dio-Reĝimo AKTIVA,Modo Dios ACTIVADO,,Kuolemattomuustila PÄÄLLÄ,Mode invulnérable ON,Isten mód BE,Modo Dio ATTIVADA,ゴッドモード オン,무적 치트: ON,God Modus AAN,Tryb Boga WŁĄCZONY,Modo Deus LIGADO,,Modul Invincibil PORNIT,Режим Бога включён.,
-God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,Dio-Reĝimo NEAKTIVA,Modo Dios DESACTIVADO,,Kuolemattomuustila POIS PÄÄLTÄ,Mode invulnérable OFF,Isten mód KI,Modo Dio DISATTIVADA,ゴッドモード オフ,무적 치트: OFF,God Modus UIT,Tryb Boga WYŁĄCZONY,Modo Deus DESLIGADO,,Modul Invincibil OPRIT,Режим Бога отключён.,
+God Mode ON,STSTR_DQDON,,,,Nesmrtelnost ZAP,Gott-Modus AN,,Dio-Reĝimo AKTIVA,Modo Dios ACTIVADO,,Kuolemattomuustila PÄÄLLÄ,Mode invulnérable ON,Isten mód BE,Modalità Dio ATTIVATA,ゴッドモード オン,무적 치트: ON,God Modus AAN,Tryb Boga WŁĄCZONY,Modo Deus LIGADO,,Modul Invincibil PORNIT,Режим Бога включён.,
+God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,Dio-Reĝimo NEAKTIVA,Modo Dios DESACTIVADO,,Kuolemattomuustila POIS PÄÄLTÄ,Mode invulnérable OFF,Isten mód KI,Modalità Dio DISATTIVATA,ゴッドモード オフ,무적 치트: OFF,God Modus UIT,Tryb Boga WYŁĄCZONY,Modo Deus DESLIGADO,,Modul Invincibil OPRIT,Режим Бога отключён.,
 All weapons/ ammo/ keys,STSTR_KFAADDED,,,,Všechny zbraně/munice/klíče,"Alle Waffen, Munition und Schlüssel",,Ĉiuj armiloj/municioj/ŝlosiloj,Todas las armas/municiones/llaves,,Kaikki aseet/ ammukset/ avaimet,Toutes les armes/munitions/clés,Minden fegyver / lőszer / kulcs,Tutte le armi / munizioni / chiavi,スベテノ ブキ/カギ/ダンヤク,추가: 모든 무기/탄약/열쇠 치트,Alle wapens / munitie / sleutels,Wszystkie bronie/amunicja/klucze,Todas as armas/munição/chaves,,Toate armele/muniție/chei,Всё оружие/боеприпасы/ключи,
 All weapons and ammo,STSTR_FAADDED,,,,Všechny zbraně a munice,Alle Waffen und Munition,,Ĉiuj armiloj kaj municioj,Todas las armas y municiones,,Kaikki aseet ja ammukset,Toutes les armes et munitions,Minden fegyver és lőszer,Tutte le armi e le munizioni,スベテノ ブキ/ダンヤク,추가: 모든 무기/탄약 치트,Alle wapens en munitie,Wszystkie bronie i amunicja,Todas as armas e munição completa,,Toate armele și muniție,Всё оружие и боеприпасы,
 Abduction,TXT_HARMMAP01,,,,Únos,Entführung,,Forkapto,Abducción,,Sieppaus,Enlèvement,Elrablás,Il rapimento,アブダクション,유괴,Ontvoering,Porwanie,Sequestro,,Răpire,Похищение,
@@ -60,7 +60,7 @@ Megalapolis,TXT_HARMMAP04,,,,Megalopole,Megalopolis,,Megtropolo,Megalópolis,,Me
 The Hospital,TXT_HARMMAP05,,,,Nemocnice,Das Hospital,,La Malsanulejo,El Hospital,,Sairaala,L'Hôpital,Kórház,L'ospedale,ホスピタル,병동,Het ziekenhuis,Szpital,O Hospital,,Spitalul,Больница,
 The Weapons Factory,TXT_HARMMAP06,,,,Továrna na zbraně,Die Waffenfabrik,,La Arm-fabrikejo,La Fábrica de Armas,,Asetehdas,L'Usine d'Armes,Fegyvergyár,La fabbrica di armi,ウェポンファクトリー,무기 공장,De Wapenfabriek,Fabryka Broni,A Fábrica de Armamentos,,Fabrica de Arme,Оружейный завод,
 The Underwater Lab,TXT_HARMMAP07,,,,Podvodní laboratoř,Das Unterwasserlabor,,La Subakva Labotorio,El Laboratorio Submarino,,Vedenalainen laboratorio,Le Laboratoire Sous-marin,Vízalatti labor,Il laboratorio subacqueo,アンダーウォーターラボ,해저 연구소,Het onderwaterlaboratorium,Podwodne Laboratorium,O Laboratório Submarino,,Laboratorul Subacvatic,Подводная лаборатория,
-Airstrip One,TXT_HARMMAP08,,,,Přistávací dráha jedna,Flugplatz Eins,,Surteriĝejo Numero Unu,Pista de Aterrizaje Uno,,Kiitorata Yksi,Piste D'Atterrisage Un,1-es kifutó,Pista di atterraggio Uno,エアーシップ ワン,활주로 1호,Vliegveld Een,Lądowisko Numer Jeden,Base Aérea Um,,Pista Unu,Взлётная полоса №1,
+Airstrip One,TXT_HARMMAP08,,,,Přistávací dráha jedna,Flugplatz Eins,,Surteriĝejo Numero Unu,Pista de Aterrizaje Uno,,Kiitorata Yksi,Piste D'Atterrisage Un,1-es kifutó,Pista Uno,エアーシップ ワン,활주로 1호,Vliegveld Een,Lądowisko Numer Jeden,Base Aérea Um,,Pista Unu,Взлётная полоса №1,
 The Launch Base,TXT_HARMMAP09,,,,Vzletová základna,Die Startbasis,,La Lanĉbazo,La Base de Despegue,,Laukaisutukikohta,La Base de Lancement,Kilövő Állomás,La base di lancio,ランチャーベース,발진기지,De lanceerbasis,Baza Startowa,A Base de Lançamento,,Baza de Lansare,Пусковая площадка,
 The Radioactive Zone,TXT_HARMMAP10,,,,Radioaktivní zóna,Die radioaktive Zone,,La Radioaktiva Zono,La Zona Radioactiva,,Radioaktiivinen vyöhyke,La Zone Radioactive,Radioaktív Zóna,La zona radioattiva,ラディオアクティブ ゾーン,방사능 처리소,De Radioactieve Zone,Radioaktywna Strefa,A Zona Radioativa,,Zona Radioactivă,Заражённая зона,
 Echidna,TXT_HARMMAP11,,,,,,,Ekidno,,,Nokkasiili,,Hangyászsün,,エキドナ,에키드나,,,Equidna,,,Ехидна,
@@ -199,23 +199,22 @@ Ezek a szörnyek minden bizonnyal meglelték a módját, hogy ezzé a borzasztó
 
      = V É G E =","Ti senti male allo stomaco...
 Guardando in faccia alla regina mutante... 
-Quella cosa... Quello era... 
+Quella cosa... Quella era... 
 La tua amica... Amira!
 
 Quei mostri devono aver trovato il modo
 di mutarla e trasformarla in questa
-orrenda creatura per portare i loro figli.
+orrenda creatura per generare i loro figli.
 
-- sospiro -
+*sospiro*
 
-Ti riunisci... 
-Pagheranno per farti uccidere la tuo amica...
+Ti ricomponi... 
+Pagheranno per averti farti uccidere la tua amica...
 
-""L'inferno non ha furia come una donna disprezzata!""
+""L'inferno non ha furia come una donna oltraggiata!""
 
     = L A  F I N E =
-        
-","貴方はミュータントの女王の顔を見た時
+        ","貴方はミュータントの女王の顔を見た時
 気分が凄まじく悪くなった...
 その顔は... 見覚えがあった...
 私の親友... アミラ!

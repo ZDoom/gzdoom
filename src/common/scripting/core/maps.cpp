@@ -162,7 +162,15 @@ template<typename M> void MapInsert(M * self, expand_types_vm<typename M::KeyTyp
         MAP_GC_WRITE_BARRIER(self);
         GC::WriteBarrier(value);
     }
-    self->Insert(key, value);
+
+    if constexpr(std::is_same_v<typename M::ValueType, float>)
+    {
+        self->Insert(key,static_cast<float>(value));
+    }
+    else
+    {
+        self->Insert(key, value);
+    }
     self->info->rev++; // invalidate iterators
 }
 
@@ -246,7 +254,15 @@ template<typename I> void MapIteratorSetValue(I * self, expand_types_vm<typename
         GC::WriteBarrier(val);
         GC::WriteBarrier(value);
     }
-    val = value;
+
+    if constexpr(std::is_same_v<typename I::ValueType, float>)
+    {
+        val = static_cast<float>(value);
+    }
+    else
+    {
+        val = value;
+    }
 }
 
 

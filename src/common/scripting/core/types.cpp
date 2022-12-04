@@ -2603,7 +2603,7 @@ template<typename M>
 static bool PMapValueReader(FSerializer &ar, M *map, const PMap *m)
 {
 	const char * k;
-	while(k = ar.GetKey())
+	while((k = ar.GetKey()))
 	{
 		typename M::ValueType * val;
 		if constexpr(std::is_same_v<typename M::KeyType,FString>)

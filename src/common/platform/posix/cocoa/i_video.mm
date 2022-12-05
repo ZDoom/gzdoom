@@ -432,11 +432,6 @@ public:
 
 			try
 			{
-				unsigned int count = 64;
-				const char* names[64];
-				if (!I_GetVulkanPlatformExtensions(&count, names))
-					VulkanError("I_GetVulkanPlatformExtensions failed");
-
 				VulkanInstanceBuilder builder;
 				builder.DebugLayer(vk_debug);
 				builder.RequireExtension(VK_KHR_SURFACE_EXTENSION_NAME); // KHR_surface, required

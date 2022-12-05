@@ -1769,7 +1769,8 @@ void S_StopAllChannels ()
 		S_StopChannel(chan);
 		chan = next;
 	}
-	GSnd->UpdateSounds();
+    if (GSnd != nullptr)
+	    GSnd->UpdateSounds();
 }
 
 //==========================================================================

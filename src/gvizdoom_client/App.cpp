@@ -29,6 +29,7 @@ App::App(
     _appContext     (*this),
     _renderContext  (renderContext)
 {
+#if 0
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("Error: Could not initialize SDL!\n");
@@ -46,16 +47,18 @@ App::App(
         printf("Error: SDL Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return;
     }
-
+#endif
     _doomGame = std::make_unique<DoomGame>();
     _doomGame->init(std::move(gameConfig));
 }
 
 App::~App()
 {
+#if 0
     // Destroy window and quit SDL subsystems
     SDL_DestroyWindow(_window);
     SDL_Quit();
+#endif
 }
 
 void App::loop(void)
@@ -83,7 +86,7 @@ void App::loop(void)
 
     // Application main loop
     while (!_quit) {
-#if 1
+#if 0
         // Event handling
         SDL_Event event;
         while (SDL_PollEvent(&event) != 0) {
@@ -127,12 +130,13 @@ void App::loop(void)
         // User-defined render
         if (_renderContext != nullptr && _settings.render != nullptr)
             _settings.render(*_renderContext, _appContext);
-
+#if 0
         SDL_Delay(1000/_settings.window.framerateLimit);
 
         uint32_t curTicks = SDL_GetTicks();
         _frameTicks = curTicks - _lastTicks;
         _lastTicks = curTicks;
+#endif
     }
 }
 

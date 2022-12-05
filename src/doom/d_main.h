@@ -30,24 +30,134 @@
 
 #include "doomtype.h"
 #include "gametype.h"
+#include "m_argv.h"
+#include <memory>
+
 
 struct event_t;
 
-//
-// D_DoomMain()
-// Not a globally visible function, just included for source reference,
-// calls all startup code, parses command line options.
-// If not overrided by user input, calls N_AdvanceDemo.
-//
 
 struct CRestartException
 {
 	char dummy;
 };
 
-void D_DoomMain (void);
+struct WadStuff
+{
+    FString Path;
+    FString Name;
+};
+
+struct FStartupInfo
+{
+    FString Name;
+    uint32_t FgColor;			// Foreground color for title banner
+    uint32_t BkColor;			// Background color for title banner
+    FString Song;
+    int Type;
+    enum
+    {
+        DefaultStartup,
+        DoomStartup,
+        HereticStartup,
+        HexenStartup,
+        StrifeStartup,
+    };
+};
+
+struct FIWADInfo
+{
+    FString Name;			// Title banner text for this IWAD
+    FString Autoname;		// Name of autoload ini section for this IWAD
+    FString IWadname;		// Default name this game would use - this is for IWAD detection in GAMEINFO.
+    int prio = 0;			// selection priority for given IWAD name.
+    FString Configname;		// Name of config section for this IWAD
+    FString Required;		// Requires another IWAD
+    uint32_t FgColor = 0;	// Foreground color for title banner
+    uint32_t BkColor = 0xc0c0c0;		// Background color for title banner
+    EGameType gametype = GAME_Doom;		// which game are we playing?
+    int StartupType = FStartupInfo::DefaultStartup;		// alternate startup type
+    FString MapInfo;		// Base mapinfo to load
+    TArray<FString> Load;	// Wads to be loaded with this one.
+    TArray<FString> Lumps;	// Lump names for identification
+    int flags = 0;
+};
+
+struct FFoundWadInfo
+{
+    FString mFullPath;
+    FString mRequiredPath;
+    int mInfoIndex = -1;	// must be an index because of reallocation
+
+    FFoundWadInfo() {}
+    FFoundWadInfo(const FString &s1, const FString &s2, int index)
+        : mFullPath(s1), mRequiredPath(s2), mInfoIndex(index)
+    {
+    }
+};
+
+//==========================================================================
+//
+// IWAD identifier class
+//
+//==========================================================================
+
+class FIWadManager
+{
+    TArray<FIWADInfo> mIWadInfos;
+    TArray<FString> mIWadNames;
+    TArray<FString> mSearchPaths;
+    TArray<FString> mOrderNames;
+    TArray<FFoundWadInfo> mFoundWads;
+    TArray<int> mLumpsFound;
+
+    void ParseIWadInfo(const char *fn, const char *data, int datasize, FIWADInfo *result = nullptr);
+    int ScanIWAD (const char *iwad);
+    int CheckIWADInfo(const char *iwad);
+    int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad);
+    void CollectSearchPaths();
+    void AddIWADCandidates(const char *dir);
+    void ValidateIWADs();
+public:
+    FIWadManager(const char *fn);
+    const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
+    const FString *GetAutoname(unsigned int num) const
+    {
+        if (num < mIWadInfos.Size()) return &mIWadInfos[num].Autoname;
+        else return NULL;
+    }
+    int GetIWadFlags(unsigned int num) const
+    {
+        if (num < mIWadInfos.Size()) return mIWadInfos[num].flags;
+        else return false;
+    }
+
+};
+
+struct DoomMain {
+    int Init();
+    void ReInit();
+    void Cleanup();
+
+    FString*                        _args;
+    const char*                     _v;
+    int                             _argcount;
+    TArray<FString>                 _pwads;
+    std::unique_ptr<FIWadManager>   _iwad_man;
+    FString                         _basewad;
+    FString                         _optionalwad;
+};
+
+struct DoomLoop {
+    void Init();
+    void Iter();
+
+    int _lasttic;
+};
 
 
+void D_DoomLoop ();
+void D_DoomLoopIter ();
 void D_Display ();
 
 
@@ -67,99 +177,7 @@ extern const char *D_DrawIcon;
 // [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
 extern uint32_t r_renderercaps;
 
-
-struct WadStuff
-{
-	FString Path;
-	FString Name;
-};
-
-struct FStartupInfo
-{
-	FString Name;
-	uint32_t FgColor;			// Foreground color for title banner
-	uint32_t BkColor;			// Background color for title banner
-	FString Song;
-	int Type;
-	enum
-	{
-		DefaultStartup,
-		DoomStartup,
-		HereticStartup,
-		HexenStartup,
-		StrifeStartup,
-	};
-};
-
-struct FIWADInfo
-{
-	FString Name;			// Title banner text for this IWAD
-	FString Autoname;		// Name of autoload ini section for this IWAD
-	FString IWadname;		// Default name this game would use - this is for IWAD detection in GAMEINFO.
-	int prio = 0;			// selection priority for given IWAD name.
-	FString Configname;		// Name of config section for this IWAD
-	FString Required;		// Requires another IWAD
-	uint32_t FgColor = 0;	// Foreground color for title banner
-	uint32_t BkColor = 0xc0c0c0;		// Background color for title banner
-	EGameType gametype = GAME_Doom;		// which game are we playing?
-	int StartupType = FStartupInfo::DefaultStartup;		// alternate startup type
-	FString MapInfo;		// Base mapinfo to load
-	TArray<FString> Load;	// Wads to be loaded with this one.
-	TArray<FString> Lumps;	// Lump names for identification
-	int flags = 0;
-};
-
-struct FFoundWadInfo
-{
-	FString mFullPath;
-	FString mRequiredPath;
-	int mInfoIndex = -1;	// must be an index because of reallocation
-
-	FFoundWadInfo() {}
-	FFoundWadInfo(const FString &s1, const FString &s2, int index)
-		: mFullPath(s1), mRequiredPath(s2), mInfoIndex(index)
-	{
-	}
-};
-
 extern FStartupInfo DoomStartupInfo;
 
-//==========================================================================
-//
-// IWAD identifier class
-//
-//==========================================================================
-
-class FIWadManager
-{
-	TArray<FIWADInfo> mIWadInfos;
-	TArray<FString> mIWadNames;
-	TArray<FString> mSearchPaths;
-	TArray<FString> mOrderNames;
-	TArray<FFoundWadInfo> mFoundWads;
-	TArray<int> mLumpsFound;
-
-	void ParseIWadInfo(const char *fn, const char *data, int datasize, FIWADInfo *result = nullptr);
-	int ScanIWAD (const char *iwad);
-	int CheckIWADInfo(const char *iwad);
-	int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad);
-	void CollectSearchPaths();
-	void AddIWADCandidates(const char *dir);
-	void ValidateIWADs();
-public:
-	FIWadManager(const char *fn);
-	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
-	const FString *GetAutoname(unsigned int num) const
-	{
-		if (num < mIWadInfos.Size()) return &mIWadInfos[num].Autoname;
-		else return NULL;
-	}
-	int GetIWadFlags(unsigned int num) const
-	{
-		if (num < mIWadInfos.Size()) return mIWadInfos[num].flags;
-		else return false;
-	}
-
-};
 
 #endif

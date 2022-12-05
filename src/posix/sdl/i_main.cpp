@@ -32,6 +32,8 @@
 **
 */
 
+#ifndef BUILD_GVIZDOOM
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <SDL.h>
@@ -260,7 +262,16 @@ int main (int argc, char **argv)
 
 		I_StartupJoysticks();
 		C_InitConsole (80*8, 25*8, false);
-		D_DoomMain ();
+
+        DoomMain doomMain;
+        doomMain.Init();
+
+        while (true) {
+            doomMain.ReInit();
+            D_DoomLoop();
+            doomMain.Cleanup();
+        }
+
     }
     catch (class CDoomError &error)
     {
@@ -285,3 +296,5 @@ int main (int argc, char **argv)
     }
     return 0;
 }
+
+#endif // BUILD_GVIZDOOM

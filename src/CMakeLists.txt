@@ -1194,6 +1194,7 @@ add_library(gvizdoom SHARED
 	doom/zzautozend.cpp
 )
 
+# Setup GViZDoom library target
 target_include_directories(gvizdoom
 PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../include/gvizdoom
@@ -1205,6 +1206,14 @@ PUBLIC
 	${ZDOOM_LIBS} gdtoa dumb lzma
 )
 
+target_compile_definitions(gvizdoom
+PUBLIC
+	BUILD_GVIZDOOM
+)
+
+set_target_properties(gvizdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+
+# Setup GViZDoom client application
 add_executable(gvizdoom_client
 	${GVIZDOOM_CLIENT_SOURCES}
 )
@@ -1227,6 +1236,7 @@ PUBLIC
 	${OpenCV_LIBS} # TODO opencv temp
 )
 
+set_target_properties(gvizdoom_client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )

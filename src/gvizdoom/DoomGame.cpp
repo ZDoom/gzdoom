@@ -28,43 +28,45 @@ DoomGame::DoomGame() :
 
 DoomGame::~DoomGame()
 {
-#if 0 // TODO
-    GameMain_Cleanup();
-#endif
+    _doomMain.Cleanup();
 }
 
 void DoomGame::init(GameConfig&& gameConfig)
 {
-#if 0 // TODO
     gzdoom_main_init(gameConfig.argc, gameConfig.argv);
-    _status = GameMain_Init(_state);
+    _status = _doomMain.Init();
     if (_status != 0) {
-        GameMain_Cleanup();
+        _doomMain.Cleanup();
         return;
     }
 
-    try {
-        D_DoomMain_Internal_ReInit(_state);
-        _status = 0;
-    }
-    catch (const CExitEvent& exit)
-    {
-        _status = exit.Reason();
-        return;
-    }
-    catch (const std::exception& error) {
-        I_ShowFatalError(error.what());
-        _status = -1;
-        return;
-    }
+//    try {
+    _doomMain.ReInit();
+    _doomLoop.Init();
+
+//        _status = 0;
+//    }
+//    catch (const CExitEvent& exit)
+//    {
+//        _status = exit.Reason();
+//        return;
+//    }
+//    catch (const std::exception& error) {
+//        I_ShowFatalError(error.what());
+//        _status = -1;
+//        return;
+//    }
 
     // Choose between human player and AI player
-    _state.singletics = gameConfig.interactive;
-#endif
+    //_state.singletics = gameConfig.interactive;
 }
 
 void DoomGame::restart()
 {
+    _doomMain.Cleanup();
+    _doomMain.ReInit();
+    _doomLoop.Init();
+
 #if 0 // TODO
     // TODO does this do anything? should the whole function be removed?
     try {
@@ -100,6 +102,8 @@ bool DoomGame::update(const Action& action)
         _status = -1;
     }
 #endif
+
+    _doomLoop.Iter();
 
     return false;
 }

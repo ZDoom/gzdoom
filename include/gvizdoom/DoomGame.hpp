@@ -41,10 +41,11 @@ public:
     void updateCanvas();
 
 private:
-    GameConfig                  _gameConfig;
-    int                         _status;
-    //D_DoomMain_Internal_State   _state; // TODO
-    const DCanvas*              _canvas;
+    GameConfig      _gameConfig;
+    int             _status;
+    DoomMain        _doomMain;
+    DoomLoop        _doomLoop;
+    const DCanvas*  _canvas;
 };
 
 } // namespace gvizdoom

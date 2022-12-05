@@ -2399,10 +2399,6 @@ void PMap::Construct(void * addr) const {
 
 void PMap::InitializeValue(void *addr, const void *def) const
 {
-	if (def != nullptr)
-	{
-		I_Error("Map cannot have default values");
-	}
 	Construct(addr);
 }
 
@@ -2475,7 +2471,6 @@ void PMap::DestroyValue(void *addr) const
 
 void PMap::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
 {
-	assert(!(base && special));
 	if (base != nullptr)
 	{
 		Construct(((uint8_t*)base)+offset); // is this needed? string/dynarray do this initialization if base != nullptr, but their initialization doesn't need to allocate
@@ -2868,10 +2863,6 @@ void PMapIterator::Construct(void * addr) const {
 
 void PMapIterator::InitializeValue(void *addr, const void *def) const
 {
-	if (def != nullptr)
-	{
-		I_Error("Map cannot have default values");
-	}
 	Construct(addr);
 }
 
@@ -2944,7 +2935,6 @@ void PMapIterator::DestroyValue(void *addr) const
 
 void PMapIterator::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special)
 {
-	assert(!(base && special));
 	if (base != nullptr)
 	{
 		Construct(((uint8_t*)base)+offset);

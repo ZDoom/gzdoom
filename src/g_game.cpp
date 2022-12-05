@@ -2250,7 +2250,7 @@ void G_DoQuickSave ()
 	num.Int = lastquicksave;
 	quicksavenum->ForceSet (num, CVAR_Int);
 
-	file = G_BuildSaveName(FStringf("quick%02d", nextautosave));
+	file = G_BuildSaveName(FStringf("quick%02d", lastquicksave));
 
 	readableTime = myasctime ();
 	description.Format("Quicksave %s", readableTime);

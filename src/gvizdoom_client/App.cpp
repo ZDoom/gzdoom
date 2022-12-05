@@ -111,7 +111,6 @@ void App::loop(void)
         }
 
         // TODO opencv temp
-        _doomGame->updateCanvas();
         if (_doomGame->getPixelsRGBA() != nullptr) {
             auto h = _doomGame->getScreenHeight();
             auto w = _doomGame->getScreenWidth();
@@ -119,10 +118,11 @@ void App::loop(void)
             // render RGBA
             cv::Mat rgbaMat(h, w, CV_8UC4, _doomGame->getPixelsRGBA());
             cv::imshow("rgba", rgbaMat);
-
+#if 0
             // render depth
             cv::Mat depthMat(h, w, CV_32FC1, _doomGame->getPixelsDepth());
             cv::imshow("depth", depthMat);
+#endif
             cv::waitKey(1);
         }
         // TODO end of opencv temp

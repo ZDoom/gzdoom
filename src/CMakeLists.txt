@@ -1119,7 +1119,7 @@ set(GVIZDOOM_SOURCES
 	gvizdoom/DoomGame.cpp
 	gvizdoom/gzdoom_main_wrapper.cpp
 	gvizdoom/Action.cpp
-)
+    gvizdoom/HeadlessFrameBuffer.cpp)
 
 set(GVIZDOOM_CLIENT_SOURCES
 	gvizdoom_client/App.cpp

@@ -31,6 +31,7 @@
 #include "doomtype.h"
 #include "gametype.h"
 #include "m_argv.h"
+#include "v_video.h"
 #include <memory>
 
 
@@ -150,15 +151,14 @@ struct DoomMain {
 
 struct DoomLoop {
     void Init();
-    void Iter();
+    void Iter(DFrameBuffer* frameBuffer = nullptr);
 
     int _lasttic;
 };
 
 
 void D_DoomLoop ();
-void D_DoomLoopIter ();
-void D_Display ();
+void D_Display(DFrameBuffer* frameBuffer);
 
 
 //

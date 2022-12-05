@@ -10,19 +10,18 @@
 
 #include "gvizdoom/DoomGame.hpp"
 #include "gvizdoom/gzdoom_main_wrapper.hpp"
+#include "v_video.h"
 
 
-#if 0 // TODO
-const DCanvas* GetCanvas(); // TODO remove once proper way of fetching canvas is implemented
-#endif
+extern DFrameBuffer *screen;
 
 
 using namespace gvizdoom;
 
 
 DoomGame::DoomGame() :
-    _status (-1),
-    _canvas (nullptr)
+    _status         (-1),
+    _frameBuffer    (nullptr)
 {
 }
 
@@ -40,25 +39,14 @@ void DoomGame::init(GameConfig&& gameConfig)
         return;
     }
 
-//    try {
     _doomMain.ReInit();
     _doomLoop.Init();
-
-//        _status = 0;
-//    }
-//    catch (const CExitEvent& exit)
-//    {
-//        _status = exit.Reason();
-//        return;
-//    }
-//    catch (const std::exception& error) {
-//        I_ShowFatalError(error.what());
-//        _status = -1;
-//        return;
-//    }
-
-    // Choose between human player and AI player
-    //_state.singletics = gameConfig.interactive;
+    if (screen) {
+        _frameBuffer = std::make_unique<HeadlessFrameBuffer>(screen->GetWidth(), screen->GetHeight(), true);
+    }
+    else {
+        printf("Omg no screen!\n");
+    }
 }
 
 void DoomGame::restart()
@@ -66,44 +54,11 @@ void DoomGame::restart()
     _doomMain.Cleanup();
     _doomMain.ReInit();
     _doomLoop.Init();
-
-#if 0 // TODO
-    // TODO does this do anything? should the whole function be removed?
-    try {
-        D_DoomMain_Internal_Cleanup();
-        D_DoomMain_Internal_ReInit(_state);
-    }
-    catch (const CExitEvent& exit)
-    {
-        _status = exit.Reason();
-    }
-    catch (const std::exception& error) {
-        D_DoomMain_Internal_Cleanup();
-        I_ShowFatalError(error.what());
-        _status = -1;
-    }
-#endif
 }
 
 bool DoomGame::update(const Action& action)
 {
-#if 0 // TODO
-    try {
-        // run one cycle
-        DoomLoopCycle(_state, action);
-    }
-    catch (const CExitEvent& exit) // This is a regular exit initiated from deeply nested code.
-    {
-        _status = exit.Reason();
-        return true;
-    }
-    catch (const std::exception& error) {
-        I_ShowFatalError(error.what());
-        _status = -1;
-    }
-#endif
-
-    _doomLoop.Iter();
+    _doomLoop.Iter(_frameBuffer.get());
 
     return false;
 }
@@ -115,26 +70,23 @@ int DoomGame::getStatus() const
 
 int DoomGame::getScreenWidth() const
 {
-    if (_canvas == nullptr)
+    if (_frameBuffer == nullptr)
         return 0;
-    return _canvas->GetWidth();
+    return _frameBuffer->GetWidth();
 }
 
 int DoomGame::getScreenHeight() const
 {
-    if (_canvas == nullptr)
+    if (_frameBuffer == nullptr)
         return 0;
-    return _canvas->GetHeight();
+    return _frameBuffer->GetHeight();
 }
 
 uint8_t* DoomGame::getPixelsRGBA() const
 {
-#if 0 // TODO
-    if (_canvas == nullptr)
+    if (_frameBuffer == nullptr)
         return nullptr;
-    return _canvas->GetPixels();
-#endif
-    return nullptr;
+    return _frameBuffer->getMemBuffer();
 }
 
 float* DoomGame::getPixelsDepth() const
@@ -145,12 +97,4 @@ float* DoomGame::getPixelsDepth() const
     return _canvas->GetDepthPixels();
 #endif
     return nullptr;
-}
-
-void DoomGame::updateCanvas()
-{
-#if 0 // TODO
-    if (_canvas == nullptr)
-        _canvas = GetCanvas();
-#endif
 }

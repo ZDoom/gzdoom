@@ -326,6 +326,8 @@ public:
 	bool Lock (bool buffered=true);
 	void Unlock ();
 
+    uint8_t* getMemBuffer() { return MemBuffer; }
+
 protected:
 	void Resize(int width, int height);
 

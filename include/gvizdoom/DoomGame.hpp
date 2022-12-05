@@ -14,7 +14,7 @@
 #include "gvizdoom/Action.hpp"
 #include "gvizdoom/GameConfig.hpp"
 #include "d_main.h"
-#include "v_video.h"
+#include "gvizdoom/HeadlessFrameBuffer.hpp"
 
 
 namespace gvizdoom {
@@ -38,14 +38,13 @@ public:
     int getScreenHeight() const;
     uint8_t* getPixelsRGBA() const;
     float* getPixelsDepth() const;
-    void updateCanvas();
 
 private:
-    GameConfig      _gameConfig;
-    int             _status;
-    DoomMain        _doomMain;
-    DoomLoop        _doomLoop;
-    const DCanvas*  _canvas;
+    GameConfig                              _gameConfig;
+    int                                     _status;
+    DoomMain                                _doomMain;
+    DoomLoop                                _doomLoop;
+    std::unique_ptr<HeadlessFrameBuffer>    _frameBuffer;
 };
 
 } // namespace gvizdoom

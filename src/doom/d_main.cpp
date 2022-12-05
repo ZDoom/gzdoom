@@ -665,8 +665,13 @@ CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 //
 //==========================================================================
 
-void D_Display ()
+void D_Display(DFrameBuffer* frameBuffer)
 {
+    DFrameBuffer* oldScreen = screen;
+    if (frameBuffer != nullptr) {
+        screen = frameBuffer;
+    }
+
 	bool wipe;
 	bool hw2d;
 
@@ -743,13 +748,14 @@ void D_Display ()
 	}
 
 	// [RH] Allow temporarily disabling wipes
-	if (NoWipe)
+	if (true)//(NoWipe)
 	{
 		V_SetBorderNeedRefresh();
 		NoWipe--;
 		wipe = false;
 		wipegamestate = gamestate;
 	}
+#if 0
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
 	{ // save the current screen if about to wipe
 		V_SetBorderNeedRefresh();
@@ -777,6 +783,7 @@ void D_Display ()
 	{
 		wipe = false;
 	}
+#endif
 
 	hw2d = false;
 
@@ -979,6 +986,9 @@ void D_Display ()
 	screen->End2D();
 	cycles.Unclock();
 	FrameCycles = cycles;
+
+    screen = oldScreen;
+    screen->Update();
 }
 
 //==========================================================================
@@ -1066,7 +1076,7 @@ void D_DoomLoop ()
 			}
 			// Update display, next frame, with current state.
 			I_StartTic ();
-			D_Display ();
+            D_Display(nullptr);
 			if (wantToRestart)
 			{
 				wantToRestart = false;
@@ -1101,7 +1111,7 @@ void DoomLoop::Init()
     vid_cursor.Callback();
 }
 
-void DoomLoop::Iter()
+void DoomLoop::Iter(DFrameBuffer* frameBuffer)
 {
     try
     {
@@ -1137,7 +1147,7 @@ void DoomLoop::Iter()
         }
         // Update display, next frame, with current state.
         I_StartTic ();
-        D_Display ();
+        D_Display(frameBuffer);
         if (wantToRestart)
         {
             wantToRestart = false;

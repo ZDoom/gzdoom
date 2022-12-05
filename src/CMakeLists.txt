@@ -1137,6 +1137,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${X86_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
+    ../src/gvizdoom/Action.cpp
 	doom/x86.cpp
 	doom/strnatcmp.c
 	doom/zstring.cpp
@@ -1196,7 +1197,7 @@ add_library(gvizdoom SHARED
 
 # Setup GViZDoom library target
 target_include_directories(gvizdoom
-PRIVATE
+PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/../include/gvizdoom
 	${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
@@ -1270,7 +1271,10 @@ include_directories( .
 	../gdtoa
 	../dumb/include
 	${CMAKE_BINARY_DIR}/gdtoa
-	${SYSTEM_SOURCES_DIR} )
+	${SYSTEM_SOURCES_DIR}
+    ../include
+    ../include/gvizdoom
+)
 
 add_dependencies( zdoom revision_check )
 

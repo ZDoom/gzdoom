@@ -1085,8 +1085,10 @@ void NetUpdate (void)
 	int count = 1;
 	int quitcount = 0;
 
+    // This branch probably does nothing
 	if (consoleplayer == Net_Arbitrator)
 	{
+        // Always false, NetMode==0
 		if (NetMode == NET_PacketServer)
 		{
 			for (j = 0; j < MAXPLAYERS; j++)
@@ -1823,6 +1825,8 @@ void TryRunTics (void)
 	// will all be wasted anyway.
 	if (pauseext) 
 		r_NoInterpolate = true;
+    
+    // Happens upon game start (?) or if press ESC
 	bool doWait = cl_capfps || r_NoInterpolate /*|| netgame*/;
 
 	// get real tics

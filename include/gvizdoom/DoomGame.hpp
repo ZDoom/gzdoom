@@ -45,6 +45,7 @@ private:
     DoomMain                                _doomMain;
     DoomLoop                                _doomLoop;
     std::unique_ptr<HeadlessFrameBuffer>    _frameBuffer;
+    MainDebugInfo                           _dbgInfo;
 };
 
 } // namespace gvizdoom

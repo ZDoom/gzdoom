@@ -309,13 +309,15 @@ void MessagePump (const SDL_Event &sev)
 		exit (0);
 
 	case SDL_WINDOWEVENT:
-		switch (sev.window.event)
-		{
-			case SDL_WINDOWEVENT_FOCUS_GAINED:
-			case SDL_WINDOWEVENT_FOCUS_LOST:
-				S_SetSoundPaused((!!i_soundinbackground) || sev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
-				break;
-		}
+        // Commented away: pause sound if focus lost
+        
+		// switch (sev.window.event)
+		// {
+		// 	case SDL_WINDOWEVENT_FOCUS_GAINED:
+		// 	case SDL_WINDOWEVENT_FOCUS_LOST:
+		// 		S_SetSoundPaused((!!i_soundinbackground) || sev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
+		// 		break;
+		// }
 		break;
 
 	case SDL_MOUSEBUTTONDOWN:

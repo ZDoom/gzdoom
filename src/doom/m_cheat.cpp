@@ -554,6 +554,7 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
+
 	else if (cheat != CHT_CHASECAM)
 		Printf ("%s cheats: %s\n", player->userinfo.GetName(), msg);
 }

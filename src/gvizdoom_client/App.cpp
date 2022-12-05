@@ -12,6 +12,9 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <chrono>
+#include <thread>
+
 
 using namespace gvizdoom;
 
@@ -137,6 +140,8 @@ void App::loop(void)
         _frameTicks = curTicks - _lastTicks;
         _lastTicks = curTicks;
 #endif
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(8));
     }
 }
 

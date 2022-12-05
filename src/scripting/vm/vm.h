@@ -619,6 +619,10 @@ unsigned GetVirtualIndex(PClass *cls, const char *funcname);
 
 #define IFVIRTUAL(cls, funcname) IFVIRTUALPTR(this, cls, funcname)
 
+// Try find the vnirtual index of a class and function name
+// If found, find function of the given name from the class
+// If function is not nullptr, ... (continue action after that)
+// So in short: summon a function from a class
 #define IFVIRTUALPTRNAME(self, cls, funcname) \
 	static unsigned VIndex = ~0u; \
 	if (VIndex == ~0u) { \
@@ -626,7 +630,7 @@ unsigned GetVirtualIndex(PClass *cls, const char *funcname);
 		assert(VIndex != ~0u); \
 	} \
 	auto clss = self->GetClass(); \
-	VMFunction *func = clss->Virtuals.Size() > VIndex? clss->Virtuals[VIndex] : nullptr;  \
+	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;  \
 	if (func != nullptr)
 
 #endif

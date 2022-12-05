@@ -552,7 +552,9 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
-		S_SetSoundPaused ((!!i_soundinbackground) || wParam);
+
+        // commented away: pause sound if lost focus in window
+		// S_SetSoundPaused ((!!i_soundinbackground) || wParam);
 		break;
 
 	case WM_WTSSESSION_CHANGE:

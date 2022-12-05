@@ -278,6 +278,8 @@ void D_ProcessEvents (void)
 	event_t *ev;
 		
 	// [RH] If testing mode, do not accept input until test is over
+    // [HYRTSI] this is not used for some reason
+    // where, how and why this is set is very very confusing
 	if (testingmode)
 	{
 		if (testingmode == 1)
@@ -1029,7 +1031,7 @@ void D_ErrorCleanup ()
 // calls I_GetTime, I_StartFrame, and I_StartTic
 //
 //==========================================================================
-
+// Not used in gvizdoom client
 void D_DoomLoop ()
 {
 	int lasttic = 0;
@@ -1109,9 +1111,16 @@ void DoomLoop::Init()
     Page = Advisory = NULL;
 
     vid_cursor.Callback();
+
+    // Some cheats such as 'iddqd' can be added here
+    // Some, like 'idkfa' will not work unless certain game
+    // states have been initialized
+    cht_DoCheat (&players[0], CHT_IDDQD);
 }
 
-void DoomLoop::Iter(DFrameBuffer* frameBuffer)
+void DoomLoop::Iter(MainDebugInfo& out_dbgInfo,
+    DFrameBuffer* frameBuffer,
+    const Action& action)
 {
     try
     {
@@ -1124,13 +1133,18 @@ void DoomLoop::Iter(DFrameBuffer* frameBuffer)
         I_SetFrameTime();
 
         // process one or more tics
-        if (singletics)
+        if (singletics or true)
         {
             I_StartTic ();
             D_ProcessEvents ();
-            G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
+
+            Button_Forward.bDown = true or action.isSet(gvizdoom::Action::Key::ACTION_FORWARD);
+
+            G_BuildTiccmd(&netcmds[consoleplayer][maketic%BACKUPTICS]);
+            
             if (advancedemo)
                 D_DoAdvanceDemo ();
+            
             C_Ticker ();
             M_Ticker ();
             G_Ticker ();
@@ -1145,6 +1159,17 @@ void DoomLoop::Iter(DFrameBuffer* frameBuffer)
         {
             TryRunTics (); // will run at least one tic
         }
+
+        // Add IDKFA here, it must happen after
+        // TryRunTics() if multi tick mode
+        // and if single tick mode, unknown
+        static bool addCheat = true;
+        if (addCheat)
+        {
+            cht_DoCheat(&players[0], CHT_IDKFA);
+            addCheat = false;
+        }
+        
         // Update display, next frame, with current state.
         I_StartTic ();
         D_Display(frameBuffer);
@@ -1168,6 +1193,24 @@ void DoomLoop::Iter(DFrameBuffer* frameBuffer)
         Printf("%s", error.stacktrace.GetChars());
         D_ErrorCleanup();
     }
+
+    _dbgInfo.gametic = gametic;
+    _dbgInfo.singletics = singletics;
+    _dbgInfo.wantToRestart = wantToRestart;
+    _dbgInfo.gamestate = gamestate;
+    _dbgInfo.gameaction = gameaction;
+    _dbgInfo.paused = static_cast<bool>(paused);
+    _dbgInfo.level = level;
+    _dbgInfo.wminfo = wminfo;
+    _dbgInfo.levelNum = level.levelnum;
+    _dbgInfo.mapName = static_cast<std::string>(level.MapName.GetChars());
+    _dbgInfo.levelName = static_cast<std::string>(level.LevelName.GetChars());
+    _dbgInfo.foundItems = level.found_items;
+    _dbgInfo.foundSecrets = level.found_secrets;
+    _dbgInfo.killedMonsters = level.killed_monsters;
+
+    // Tunik tunik tun
+    out_dbgInfo = _dbgInfo;
 }
 
 //==========================================================================
@@ -1230,7 +1273,7 @@ void D_AdvanceDemo (void)
 // D_DoStrifeAdvanceDemo
 //
 //==========================================================================
-
+// not needed
 void D_DoStrifeAdvanceDemo ()
 {
 	static const char *const fullVoices[6] =

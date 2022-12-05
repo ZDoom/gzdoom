@@ -174,8 +174,8 @@ static int FindWadClusterInfo (int cluster)
 }
 
 //==========================================================================
-//
-//
+// https://zdoom.org/wiki/Cluster
+// A cluster is a group of levels linked together.
 //==========================================================================
 
 cluster_info_t *FindClusterInfo (int cluster)

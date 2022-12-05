@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <string>
 
 //
 // Global parameters/defines.
@@ -91,6 +92,42 @@ enum gamestate_t : int
 	GS_FORCEWIPEMELT = -4
 };
 
+static std::string gamestateToStr(const gamestate_t& g)
+{
+    switch (g)
+    {
+
+    case GS_LEVEL:
+        return "GS_LEVEL";
+    case GS_INTERMISSION:
+        return "GS_INTERMISSION";
+    case GS_FINALE:
+        return "GS_FINALE";
+    case GS_DEMOSCREEN:
+        return "GS_DEMOSCREEN";
+    case GS_FULLCONSOLE:
+        return "GS_FULLCONSOLE";
+    case GS_HIDECONSOLE:
+        return "GS_HIDECONSOLE";
+    case GS_STARTUP:
+        return "GS_STARTUP";
+    case GS_TITLELEVEL:
+        return "GS_TITLELEVEL";
+    case GS_FORCEWIPE:
+        return "GS_FORCEWIPE";
+    case GS_FORCEWIPEFADE:
+        return "GS_FORCEWIPEFADE";
+    case GS_FORCEWIPEBURN:
+        return "GS_FORCEWIPEBURN";
+    case GS_FORCEWIPEMELT:
+        return "GS_FORCEWIPEMELT";
+
+    default:
+        break; 
+    }
+
+    return "ERROR: Did not find gamestate";
+}
 extern	gamestate_t 	gamestate;
 
 // wipegamestate can be set to -1

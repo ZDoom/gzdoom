@@ -465,6 +465,8 @@ void RunNetSpecs (int player, int buf)
 				int type = ReadByte (&stream);
 				Net_DoCommand (type, &stream, player);
 			}
+
+            // Clear the buffer
 			if (!demorecording)
 				NetSpecs[player][buf].SetData (NULL, 0);
 		}

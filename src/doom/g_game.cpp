@@ -1046,20 +1046,20 @@ void G_Ticker ()
 	gamestate_t	oldgamestate;
 
 	// do player reborns if needed
-	for (i = 0; i < MAXPLAYERS; i++)
-	{
-		if (playeringame[i])
-		{
-			if (players[i].playerstate == PST_GONE)
-			{
-				G_DoPlayerPop(i);
-			}
-			if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
-			{
-				G_DoReborn(i, false);
-			}
-		}
-	}
+	// for (i = 0; i < MAXPLAYERS; i++)
+	// {
+	// 	if (playeringame[i])
+	// 	{
+	// 		if (players[i].playerstate == PST_GONE)
+	// 		{
+	// 			G_DoPlayerPop(i);
+	// 		}
+	// 		if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
+	// 		{
+	// 			G_DoReborn(i, false);
+	// 		}
+	// 	}
+	// }
 
 	if (ToggleFullscreen)
 	{
@@ -1153,75 +1153,60 @@ void G_Ticker ()
 	}
 
 	// get commands, check consistancy, and build new consistancy check
-	int buf = (gametic/ticdup)%BACKUPTICS;
+    // 0,1,2,...,35
+	int buf = (gametic/ticdup) % BACKUPTICS;
 
 	// [RH] Include some random seeds and player stuff in the consistancy
 	// check, not just the player's x position like BOOM.
-	uint32_t rngsum = FRandom::StaticSumSeeds ();
+	// uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
 	bglobal.Main ();
 
-	for (i = 0; i < MAXPLAYERS; i++)
-	{
-		if (playeringame[i])
-		{
-			ticcmd_t *cmd = &players[i].cmd;
-			ticcmd_t *newcmd = &netcmds[i][buf];
+    constexpr size_t playerIdx{0LLU};
+    if (not playeringame[playerIdx])
+    {
+        printf(">>> Unexpected error: No player!!!\n");
+    }
+    else
+    {
+        ticcmd_t *cmd = &players[playerIdx].cmd;
+        ticcmd_t *newcmd = &netcmds[playerIdx][buf];
 
-			if ((gametic % ticdup) == 0)
-			{
-				RunNetSpecs (i, buf);
-			}
-			if (demorecording)
-			{
-				G_WriteDemoTiccmd (newcmd, i, buf);
-			}
-			players[i].oldbuttons = cmd->ucmd.buttons;
-			// If the user alt-tabbed away, paused gets set to -1. In this case,
-			// we do not want to read more demo commands until paused is no
-			// longer negative.
-			if (demoplayback)
-			{
-				G_ReadDemoTiccmd (cmd, i);
-			}
-			else
-			{
-				memcpy(cmd, newcmd, sizeof(ticcmd_t));
-			}
+        if ((gametic % ticdup) == 0)
+        {
+            RunNetSpecs(playerIdx, buf);
+        }
+        
+        if (demorecording)
+        {
+            G_WriteDemoTiccmd (newcmd, playerIdx, buf);
+        }
 
-			// check for turbo cheats
-			if (multiplayer && turbo > 100.f && cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
-				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
-			{
-				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
-			}
+        players[playerIdx].oldbuttons = cmd->ucmd.buttons;
 
-			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%ticdup) == 0)
-			{
-				//players[i].inconsistant = 0;
-				if (gametic > BACKUPTICS*ticdup && consistancy[i][buf] != cmd->consistancy)
-				{
-					players[i].inconsistant = gametic - BACKUPTICS*ticdup;
-				}
-				if (players[i].mo)
-				{
-					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
-					sum ^= players[i].health;
-					consistancy[i][buf] = sum;
-				}
-				else
-				{
-					consistancy[i][buf] = rngsum;
-				}
-			}
-		}
-	}
+        // If the user alt-tabbed away, paused gets set to -1. In this case,
+        // we do not want to read more demo commands until paused is no
+        // longer negative.
+        // TODO: do not set paused if alt-tabbed
+        if (demoplayback)
+        {
+            G_ReadDemoTiccmd (cmd, playerIdx);
+        }
+        else
+        {
+            memcpy(cmd, newcmd, sizeof(ticcmd_t));
+        }
+    }
 
 	// [ZZ] also tick the UI part of the events
 	E_UiTick();
 
-	// do main actions
+    // printf("Gamestate: %d gameaction: %d\n",
+    //     (int)gamestate,
+    //     (int)gameaction);
+	
+    // do main actions
 	switch (gamestate)
 	{
 	case GS_LEVEL:

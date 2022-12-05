@@ -28,15 +28,53 @@
 #ifndef __D_MAIN__
 #define __D_MAIN__
 
+#include "gvizdoom/Action.hpp"
 #include "doomtype.h"
 #include "gametype.h"
 #include "m_argv.h"
 #include "v_video.h"
 #include <memory>
 
+#include "d_event.h"
+#include "doomdef.h"
+#include "wi_stuff.h"
+#include "g_levellocals.h"
+
+using Action = gvizdoom::Action;
 
 struct event_t;
 
+struct MainDebugInfo
+{
+    int gametic;
+    bool singletics;
+    bool wantToRestart;
+    gamestate_t gamestate;
+    gameaction_t gameaction;
+    bool paused;
+    
+    FLevelLocals level;
+    int levelHubTime;
+    int levelMapTime;
+    int levelGameTime;
+    int levelStartTime;
+    int levelNum;
+    std::string mapName;
+    std::string levelName;
+
+    // level.vertexes
+    // level.sectors
+    // level.linebuffer
+    // level.lines
+    // level.sides
+    // etc...
+
+    int foundItems;
+    int foundSecrets;
+    int killedMonsters;
+
+    wbstartstruct_t wminfo;
+};
 
 struct CRestartException
 {
@@ -151,9 +189,12 @@ struct DoomMain {
 
 struct DoomLoop {
     void Init();
-    void Iter(DFrameBuffer* frameBuffer = nullptr);
+    void Iter(MainDebugInfo& out_dbgInfo,
+        DFrameBuffer* frameBuffer = nullptr,
+        const Action& action = Action());
 
     int _lasttic;
+    MainDebugInfo _dbgInfo;
 };
 
 
@@ -178,6 +219,5 @@ extern const char *D_DrawIcon;
 extern uint32_t r_renderercaps;
 
 extern FStartupInfo DoomStartupInfo;
-
 
 #endif

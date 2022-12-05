@@ -25,7 +25,7 @@
 
 
 #include "basictypes.h"
-
+#include <string>
 
 //
 // Event handling.
@@ -77,7 +77,32 @@ enum gameaction_t : int
 	ga_fullconsole,
 };
 
-
+static std::string gameactionToStr(const gameaction_t& g)
+{
+    switch (g)
+    {
+        case ga_nothing: return "ga_nothing";
+        case ga_loadlevel: return "ga_loadlevel";
+        case ga_newgame: return "ga_newgame";
+        case ga_newgame2: return "ga_newgame2";
+        case ga_recordgame: return "ga_recordgame";
+        case ga_loadgamehidecon: return "ga_loadgamehidecon";
+        case ga_loadgameplaydemo: return "ga_loadgameplaydemo";
+        case ga_autoloadgame: return "ga_autoloadgame";
+        case ga_savegame: return "ga_savegame";
+        case ga_autosave: return "ga_autosave";
+        case ga_playdemo: return "ga_playdemo";
+        case ga_completed: return "ga_completed";
+        case ga_slideshow: return "ga_slideshow";
+        case ga_worlddone: return "ga_worlddone";
+        case ga_screenshot: return "ga_screenshot";
+        case ga_togglemap: return "ga_togglemap";
+        case ga_fullconsole: return "ga_fullconsole";
+        default:
+            break;
+    }
+    return "ERROR: no gameaction";
+}
 
 //
 // Button/action code definitions.

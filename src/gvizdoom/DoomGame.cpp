@@ -58,7 +58,43 @@ void DoomGame::restart()
 
 bool DoomGame::update(const Action& action)
 {
-    _doomLoop.Iter(_frameBuffer.get());
+    _doomLoop.Iter(_dbgInfo, _frameBuffer.get(), action);
+
+    // Print periodically or upon interesting changes info of the
+    // game state
+    // This will turn into our way of getting interesting data out of the
+    // doom game. For now it will be just printing.
+    // We will get map info, game state changes, rewards, enemies,
+    // bullets, health, player position, etc
+    {    
+        static MainDebugInfo previousDbgInfo;
+        static bool firstStatusPrinted = false;
+
+        if ((  (_dbgInfo.gametic % 100 == 0 or not firstStatusPrinted) and
+                _dbgInfo.gametic != previousDbgInfo.gametic) or
+            _dbgInfo.wantToRestart or
+            _dbgInfo.gamestate != previousDbgInfo.gamestate or
+            _dbgInfo.gameaction != previousDbgInfo.gameaction or 
+            _dbgInfo.paused != previousDbgInfo.paused)
+        {
+
+            printf(">> tic: %d, %s, %s, gstate: %s, gaction: %s, %s lnum %d map %s level %s killed %d\n",
+                _dbgInfo.gametic,
+                _dbgInfo.singletics ? "single tics" : "multi tics",
+                _dbgInfo.wantToRestart ? "restart" : "no restart",
+                gamestateToStr(_dbgInfo.gamestate).c_str(),
+                gameactionToStr(_dbgInfo.gameaction).c_str(),
+                _dbgInfo.paused ? "paused" : "running",
+                _dbgInfo.levelNum,
+                _dbgInfo.mapName.c_str(),
+                _dbgInfo.levelName.c_str(),
+                _dbgInfo.killedMonsters);
+            
+            firstStatusPrinted = true;
+        }
+
+        previousDbgInfo = _dbgInfo;
+    }
 
     return false;
 }

@@ -736,6 +736,7 @@ void G_DoCompleted (void)
 	}
 
 	// [RH] Mark this level as having been visited
+    // Why?
 	if (!(level.flags & LEVEL_CHANGEMAPCHEAT))
 		FindLevelInfo (level.MapName)->flags |= LEVEL_VISITED;
 
@@ -746,6 +747,7 @@ void G_DoCompleted (void)
 	wminfo.LName0 = TexMan.CheckForTexture(level.info->PName, ETextureType::MiscPatch);
 	wminfo.current = level.MapName;
 
+    /*
 	if (deathmatch &&
 		(dmflags & DF_SAME_LEVEL) &&
 		!(level.flags & LEVEL_CHANGEMAPCHEAT))
@@ -754,6 +756,9 @@ void G_DoCompleted (void)
 		wminfo.LName1 = wminfo.LName0;
 	}
 	else
+    */
+
+    // Find next level
 	{
 		level_info_t *nextinfo = FindLevelInfo (nextlevel, false);
 		if (nextinfo == NULL || strncmp (nextlevel, "enDSeQ", 6) == 0)
@@ -781,8 +786,9 @@ void G_DoCompleted (void)
 	wminfo.pnum = consoleplayer;
 	wminfo.totaltime = level.totaltime;
 
-	for (i=0 ; i<MAXPLAYERS ; i++)
+	// for (i=0 ; i<MAXPLAYERS ; i++)
 	{
+        i = 0; // player index
 		wminfo.plyr[i].skills = players[i].killcount;
 		wminfo.plyr[i].sitems = players[i].itemcount;
 		wminfo.plyr[i].ssecret = players[i].secretcount;
@@ -791,6 +797,13 @@ void G_DoCompleted (void)
 				, sizeof(wminfo.plyr[i].frags));
 		wminfo.plyr[i].fragcount = players[i].fragcount;
 	}
+
+    // https://zdoom.org/wiki/Hub
+    // A hub is a cluster of interconnected levels. 
+    // In a hub, all visited maps that are part of the same cluster as
+    // the current map are kept in memory. This allows to find them as they were left each time.
+    
+    // A cluster is a group of levels linked together.
 
 	// [RH] If we're in a hub and staying within that hub, take a snapshot
 	//		of the level. If we're traveling to a new hub, take stuff from
@@ -821,8 +834,10 @@ void G_DoCompleted (void)
 	// Intermission stats for entire hubs
 	G_LeavingHub(mode, thiscluster, &wminfo);
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	// for (i = 0; i < MAXPLAYERS; i++)
 	{
+        i = 0; // player
+
 		if (playeringame[i])
 		{ // take away appropriate inventory
 			G_PlayerFinishLevel (i, mode, changeflags);
@@ -868,10 +883,6 @@ void G_DoCompleted (void)
 	gamestate = GS_INTERMISSION;
 	viewactive = false;
 	automapactive = false;
-
-// [RH] If you ever get a statistics driver operational, adapt this.
-//	if (statcopy)
-//		memcpy (statcopy, &wminfo, sizeof(wminfo));
 
 	WI_Start (&wminfo);
 }

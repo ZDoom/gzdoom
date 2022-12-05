@@ -550,28 +550,34 @@ void Step()
 
 void FullGC()
 {
-	if (State <= GCS_Propagate)
+	bool ContinueCheck = true;
+	while (ContinueCheck)
 	{
-		// Reset sweep mark to sweep all elements (returning them to white)
-		SweepPos = &Root;
-		// Reset other collector lists
-		Gray = nullptr;
-		State = GCS_Sweep;
-	}
-	// Finish any pending GC stages
-	while (State != GCS_Pause)
-	{
-		SingleStep();
-	}
-	// Loop until everything that can be destroyed and freed is
-	do
-	{
-		MarkRoot();
+		ContinueCheck = false;
+		if (State <= GCS_Propagate)
+		{
+			// Reset sweep mark to sweep all elements (returning them to white)
+			SweepPos = &Root;
+			// Reset other collector lists
+			Gray = nullptr;
+			State = GCS_Sweep;
+		}
+		// Finish any pending GC stages
 		while (State != GCS_Pause)
 		{
 			SingleStep();
 		}
-	} while (HadToDestroy);
+		// Loop until everything that can be destroyed and freed is
+		do
+		{
+			MarkRoot();
+			while (State != GCS_Pause)
+			{
+				SingleStep();
+			}
+			ContinueCheck |= HadToDestroy;
+		} while (HadToDestroy);
+	}
 }
 
 //==========================================================================

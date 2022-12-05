@@ -60,6 +60,9 @@
 #include "vulkan/system/vk_renderdevice.h"
 #endif
 
+bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);
+bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);
+
 extern bool ToggleFullscreen;
 
 @implementation NSWindow(ExitAppOnClose)

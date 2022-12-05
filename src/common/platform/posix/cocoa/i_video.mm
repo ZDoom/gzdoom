@@ -35,6 +35,7 @@
 
 #ifdef HAVE_VULKAN
 #include <zvulkan/vulkansurface.h>
+#include <zvulkan/vulkanbuilders.h>
 #endif
 
 #include "i_common.h"

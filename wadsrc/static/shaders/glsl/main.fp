@@ -347,25 +347,77 @@ float R_DoomLightingEquation(float light)
 
 #ifdef SUPPORTS_RAYTRACING
 
+bool traceHit(vec3 origin, vec3 direction, float dist)
+{
+	rayQueryEXT rayQuery;
+	rayQueryInitializeEXT(rayQuery, TopLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, origin, 0.01f, direction, dist);
+	while(rayQueryProceedEXT(rayQuery)) { }
+	return rayQueryGetIntersectionTypeEXT(rayQuery, true) != gl_RayQueryCommittedIntersectionNoneEXT;
+}
+
+vec2 softshadow[9 * 3] = vec2[](
+	vec2( 0.0, 0.0),
+	vec2(-2.0,-2.0),
+	vec2( 2.0, 2.0),
+	vec2( 2.0,-2.0),
+	vec2(-2.0, 2.0),
+	vec2(-1.0,-1.0),
+	vec2( 1.0, 1.0),
+	vec2( 1.0,-1.0),
+	vec2(-1.0, 1.0),
+
+	vec2( 0.0, 0.0),
+	vec2(-1.5,-1.5),
+	vec2( 1.5, 1.5),
+	vec2( 1.5,-1.5),
+	vec2(-1.5, 1.5),
+	vec2(-0.5,-0.5),
+	vec2( 0.5, 0.5),
+	vec2( 0.5,-0.5),
+	vec2(-0.5, 0.5),
+
+	vec2( 0.0, 0.0),
+	vec2(-1.25,-1.75),
+	vec2( 1.75, 1.25),
+	vec2( 1.25,-1.75),
+	vec2(-1.75, 1.75),
+	vec2(-0.75,-0.25),
+	vec2( 0.25, 0.75),
+	vec2( 0.75,-0.25),
+	vec2(-0.25, 0.75)
+);
+
 float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
+	float shadowIndex = abs(lightcolorA) - 1.0;
+	if (shadowIndex >= 1024.0)
+		return 1.0; // Don't cast rays for this light
+
 	vec3 origin = pixelpos.xzy;
-	vec3 direction = normalize(lightpos.xzy - pixelpos.xzy);
-	float lightDistance = distance(pixelpos.xzy, lightpos.xzy);
+	vec3 target = lightpos.xzy + 0.01; // nudge light position slightly as Doom maps tend to have their lights perfectly aligned with planes
 
-	rayQueryEXT rayQuery;
-	rayQueryInitializeEXT(rayQuery, TopLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, origin, 0.01f, direction, lightDistance);
+	vec3 direction = normalize(target - origin);
+	float dist = distance(origin, target);
 
-	while(rayQueryProceedEXT(rayQuery))
+	if (uShadowmapFilter <= 0)
 	{
+		return traceHit(origin, direction, dist) ? 0.0 : 1.0;
 	}
-
-	if (rayQueryGetIntersectionTypeEXT(rayQuery, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+	else
 	{
-		return 0.0;
-	}
+		vec3 v = (abs(direction.x) > abs(direction.y)) ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+		vec3 xdir = normalize(cross(direction, v));
+		vec3 ydir = cross(direction, xdir);
 
-	return 1.0;
+		float sum = 0.0;
+		int step_count = uShadowmapFilter * 9;
+		for (int i = 0; i <= step_count; i++)
+		{
+			vec3 pos = target + xdir * softshadow[i].x + ydir * softshadow[i].y;
+			sum += traceHit(origin, normalize(pos - origin), dist) ? 0.0 : 1.0;
+		}
+		return sum / step_count;
+	}
 }
 
 #else

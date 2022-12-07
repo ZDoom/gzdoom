@@ -175,6 +175,8 @@ static const char *shaderBindings = R"(
 		float uClipHeight;
 		float uClipHeightDirection;
 		int uShadowmapFilter;
+		
+		int uLightBlendMode;
 	};
 
 	layout(set = 1, binding = 1, std140) uniform MatricesUBO {

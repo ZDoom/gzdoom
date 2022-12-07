@@ -59,7 +59,21 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 		}
 	}
 
-	vec3 frag = material.Base.rgb * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+	vec3 frag;
+
+	if ( uLightBlendMode == 1 )
+	{	// COLOR_CORRECT_CLAMPING 
+		vec3 lightcolor = color + desaturate(dynlight).rgb;
+		frag = material.Base.rgb * ((lightcolor / max(max(max(lightcolor.r, lightcolor.g), lightcolor.b), 1.4) * 1.4));
+	}
+	else if ( uLightBlendMode == 2 )
+	{	// UNCLAMPED 
+		frag = material.Base.rgb * (color + desaturate(dynlight).rgb);
+	}
+	else
+	{
+		frag = material.Base.rgb * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+	}
 
 	if (uLightIndex >= 0)
 	{

@@ -29,6 +29,8 @@
 
 #include "stats.h"
 
+#include "g_levellocals.h"
+
 Postprocess hw_postprocess;
 
 PPResource *PPResource::First = nullptr;
@@ -570,7 +572,8 @@ void PPColormap::Render(PPRenderState *renderstate, int fixedcm, float flash)
 
 void PPTonemap::UpdateTextures()
 {
-	if (gl_tonemap == Palette && !PaletteTexture.Data)
+	// level.info->tonemap cannot be ETonemapMode::Palette, so it's fine to only check gl_tonemap here
+	if (ETonemapMode((int)gl_tonemap) == ETonemapMode::Palette && !PaletteTexture.Data)
 	{
 		std::shared_ptr<void> data(new uint32_t[512 * 512], [](void *p) { delete[](uint32_t*)p; });
 
@@ -598,7 +601,9 @@ void PPTonemap::UpdateTextures()
 
 void PPTonemap::Render(PPRenderState *renderstate)
 {
-	if (gl_tonemap == 0)
+	ETonemapMode level_tonemap = (level.info && level.info->tonemap != ETonemapMode::None) ? level.info->tonemap : ETonemapMode((int)gl_tonemap);
+
+	if (level_tonemap == ETonemapMode::None)
 	{
 		return;
 	}
@@ -606,14 +611,14 @@ void PPTonemap::Render(PPRenderState *renderstate)
 	UpdateTextures();
 
 	PPShader *shader = nullptr;
-	switch (gl_tonemap)
+	switch (level_tonemap)
 	{
 	default:
-	case Linear:		shader = &LinearShader; break;
-	case Reinhard:		shader = &ReinhardShader; break;
-	case HejlDawson:	shader = &HejlDawsonShader; break;
-	case Uncharted2:	shader = &Uncharted2Shader; break;
-	case Palette:		shader = &PaletteShader; break;
+	case ETonemapMode::Linear:		shader = &LinearShader; break;
+	case ETonemapMode::Reinhard:		shader = &ReinhardShader; break;
+	case ETonemapMode::HejlDawson:	shader = &HejlDawsonShader; break;
+	case ETonemapMode::Uncharted2:	shader = &Uncharted2Shader; break;
+	case ETonemapMode::Palette:		shader = &PaletteShader; break;
 	}
 
 	renderstate->PushGroup("tonemap");
@@ -622,7 +627,7 @@ void PPTonemap::Render(PPRenderState *renderstate)
 	renderstate->Shader = shader;
 	renderstate->Viewport = screen->mScreenViewport;
 	renderstate->SetInputCurrent(0);
-	if (gl_tonemap == Palette)
+	if (level_tonemap == ETonemapMode::Palette)
 		renderstate->SetInputTexture(1, &PaletteTexture);
 	renderstate->SetOutputNext();
 	renderstate->SetNoBlend();

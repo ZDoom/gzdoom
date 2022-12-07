@@ -62,4 +62,15 @@ enum class ELightBlendMode : uint8_t
 	DEFAULT = CLAMP,
 };
 
+enum class ETonemapMode : uint8_t
+{
+	None,
+	Uncharted2,
+	HejlDawson,
+	Reinhard,
+	Linear,
+	Palette,
+	NumTonemapModes
+};
+
 #endif

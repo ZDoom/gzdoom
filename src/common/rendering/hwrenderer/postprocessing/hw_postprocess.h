@@ -555,16 +555,6 @@ private:
 	PPShader Uncharted2Shader = { "shaders/pp/tonemap.fp", "#define UNCHARTED2\n", {} };
 	PPShader PaletteShader = { "shaders/pp/tonemap.fp", "#define PALETTE\n", {} };
 
-	enum TonemapMode
-	{
-		None,
-		Uncharted2,
-		HejlDawson,
-		Reinhard,
-		Linear,
-		Palette,
-		NumTonemapModes
-	};
 };
 
 /////////////////////////////////////////////////////////////////////////////

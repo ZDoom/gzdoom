@@ -303,6 +303,7 @@ void level_info_t::Reset()
 	skyrotatevector = FVector3(0, 0, 1);
 	skyrotatevector2 = FVector3(0, 0, 1);
 	lightblendmode = ELightBlendMode::DEFAULT;
+	tonemap = ETonemapMode::None;
 }
 
 
@@ -1501,17 +1502,41 @@ DEFINE_MAP_OPTION(lightblendmode, false)
 	parse.ParseAssign();
 	parse.sc.MustGetString();
 
-	if(strcmp(parse.sc.String,"DEFAULT") == 0 || strcmp(parse.sc.String,"CLAMP") == 0)
+	if (parse.sc.Compare("Default") || parse.sc.Compare("Clamp"))
 	{
 		info->lightblendmode = ELightBlendMode::DEFAULT;
 	}
-	else if(strcmp(parse.sc.String,"COLOR_CORRECT_CLAMP") == 0)
+	else if (parse.sc.Compare("ColoredClamp"))
 	{
 		info->lightblendmode = ELightBlendMode::CLAMP_COLOR;
 	}
-	else if(strcmp(parse.sc.String,"UNCLAMPED") == 0)
+	else if (parse.sc.Compare("Unclamped"))
 	{
 		info->lightblendmode = ELightBlendMode::NOCLAMP;
+		if(parse.sc.CheckString(","))
+		{
+			parse.sc.MustGetString();
+			if (parse.sc.Compare("None"))
+			{
+				info->tonemap = ETonemapMode::None;
+			}
+			else if (parse.sc.Compare("Linear"))
+			{
+				info->tonemap = ETonemapMode::Linear;
+			}
+			else if (parse.sc.Compare("Uncharted2"))
+			{
+				info->tonemap = ETonemapMode::Uncharted2;
+			}
+			else if (parse.sc.Compare("HejlDawson"))
+			{
+				info->tonemap = ETonemapMode::HejlDawson;
+			}
+			else if (parse.sc.Compare("Reinhard"))
+			{
+				info->tonemap = ETonemapMode::Reinhard;
+			}
+		}
 	}
 	else
 	{

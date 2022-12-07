@@ -30,6 +30,7 @@
 #include "hw_renderstate.h"
 #include "hw_viewpointbuffer.h"
 #include "hw_cvars.h"
+#include "g_levellocals.h"
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
 
@@ -91,6 +92,7 @@ void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height, int pll)
 	matrices.mPalLightLevels = pll;
 	matrices.mClipLine.X = -10000000.0f;
 	matrices.mShadowmapFilter = gl_shadowmap_filter;
+	matrices.mLightBlendMode = (level.info ? (int)level.info->lightblendmode : 0);
 
 	matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 	matrices.CalcDependencies();

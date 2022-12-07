@@ -302,7 +302,7 @@ void level_info_t::Reset()
 	lightadditivesurfaces = -1;
 	skyrotatevector = FVector3(0, 0, 1);
 	skyrotatevector2 = FVector3(0, 0, 1);
-
+	lightblendmode = ELightBlendMode::DEFAULT;
 }
 
 
@@ -1493,6 +1493,29 @@ DEFINE_MAP_OPTION(lightmode, false)
 	else
 	{
 		parse.sc.ScriptMessage("Invalid light mode %d", parse.sc.Number);
+	}
+}
+
+DEFINE_MAP_OPTION(lightblendmode, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+
+	if(strcmp(parse.sc.String,"DEFAULT") == 0 || strcmp(parse.sc.String,"CLAMP") == 0)
+	{
+		info->lightblendmode = ELightBlendMode::DEFAULT;
+	}
+	else if(strcmp(parse.sc.String,"COLOR_CORRECT_CLAMP") == 0)
+	{
+		info->lightblendmode = ELightBlendMode::CLAMP_COLOR;
+	}
+	else if(strcmp(parse.sc.String,"UNCLAMPED") == 0)
+	{
+		info->lightblendmode = ELightBlendMode::NOCLAMP;
+	}
+	else
+	{
+		parse.sc.ScriptMessage("Invalid light blend mode %s", parse.sc.String);
 	}
 }
 

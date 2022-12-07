@@ -66,9 +66,25 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 			}
 		}
 	}
+	
+	if ( uLightBlendMode == 1 )
+	{	// COLOR_CORRECT_CLAMPING 
+		dynlight.rgb = color + desaturate(dynlight).rgb;
+		specular.rgb = desaturate(specular).rgb;
 
-	dynlight.rgb = clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
-	specular.rgb = clamp(desaturate(specular).rgb, 0.0, 1.4);
+		dynlight.rgb = ((dynlight.rgb / max(max(max(dynlight.r, dynlight.g), dynlight.b), 1.4) * 1.4));
+		specular.rgb = ((specular.rgb / max(max(max(specular.r, specular.g), specular.b), 1.4) * 1.4));
+	}
+	else if ( uLightBlendMode == 2 )
+	{	// UNCLAMPED 
+		dynlight.rgb = color + desaturate(dynlight).rgb;
+		specular.rgb = desaturate(specular).rgb;
+	}
+	else
+	{
+		dynlight.rgb = clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+		specular.rgb = clamp(desaturate(specular).rgb, 0.0, 1.4);
+	}
 
 	vec3 frag = material.Base.rgb * dynlight.rgb + material.Specular * specular.rgb;
 

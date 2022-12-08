@@ -158,7 +158,7 @@ void HeadlessFrameBuffer::Update ()
     BlitCycles.Clock();
 #endif
     void *pixels = MemBuffer;
-    int pitch = Pitch;
+    int pitch = Pitch * 4;
 #if 0
     if (UsingRenderer)
     {
@@ -174,7 +174,7 @@ void HeadlessFrameBuffer::Update ()
         pitch = Surface->pitch;
     }
 #endif
-#if 0 // TODO maybe needed for gammaslääkäri
+#if 1 // TODO maybe needed for gammaslääkäri
     if (Bgra)
     {
         CopyWithGammaBgra(pixels, pitch, GammaTable[0], GammaTable[1], GammaTable[2], Flash, FlashAmount);

@@ -567,6 +567,7 @@ class FxVectorValue : public FxExpression
 public:
 
 	friend class ZCCCompiler;
+	friend class ZCCDoomCompiler;
 
 	FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, FxExpression* w, const FScriptPosition &sc);
 	~FxVectorValue();

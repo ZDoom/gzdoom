@@ -19,7 +19,7 @@ class HeadlessFrameBuffer : public DFrameBuffer
 {
     typedef DFrameBuffer Super;
 public:
-    HeadlessFrameBuffer(int width, int height, bool bgra, bool fullscreen = false);
+    HeadlessFrameBuffer(int width, int height, bool bgra);
     ~HeadlessFrameBuffer();
 
     bool Lock(bool buffer);
@@ -34,7 +34,6 @@ public:
     bool SetGamma(float gamma);
     bool SetFlash(PalEntry rgb, int amount);
     void GetFlash(PalEntry &rgb, int &amount);
-    void SetFullscreen(bool fullscreen);
     int GetPageCount();
     bool IsFullscreen();
 

@@ -27,7 +27,7 @@ EXTERN_CVAR (Float, bgamma)
 using namespace gvizdoom;
 
 
-HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra, bool fullscreen)
+HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra)
     : DFrameBuffer (width, height, bgra)
 {
     int i;
@@ -37,32 +37,7 @@ HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra, bool
     UpdatePending = false;
     NotPaletted = false;
     FlashAmount = 0;
-#if 0
-    if (oldwin)
-    {
-        // In some cases (Mac OS X fullscreen) SDL2 doesn't like having multiple windows which
-        // appears to inevitably happen while compositor animations are running. So lets try
-        // to reuse the existing window.
-        Screen = oldwin;
-        SDL_SetWindowSize (Screen, width, height);
-        SetFullscreen (fullscreen);
-    }
-    else
-    {
-        FString caption;
-        caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
 
-        Screen = SDL_CreateWindow (caption,
-            SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-            width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_RESIZABLE);
-
-        if (Screen == NULL)
-            return;
-    }
-
-    Renderer = NULL;
-    Texture = NULL;
-#endif
     ResetSDLRenderer ();
 
     for (i = 0; i < 256; i++)
@@ -323,25 +298,9 @@ void HeadlessFrameBuffer::GetFlashedPalette (PalEntry pal[256])
     }
 }
 
-void HeadlessFrameBuffer::SetFullscreen (bool fullscreen)
-{
-    if (IsFullscreen() == fullscreen)
-        return;
-#if 0
-    SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-    if (!fullscreen)
-    {
-        // Restore proper window size
-        SDL_SetWindowSize (Screen, Width, Height);
-    }
-#endif
-
-    ResetSDLRenderer ();
-}
-
 bool HeadlessFrameBuffer::IsFullscreen ()
 {
-    return false;//(SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+    return false;
 }
 
 void HeadlessFrameBuffer::ResetSDLRenderer ()
@@ -407,15 +366,6 @@ void HeadlessFrameBuffer::ResetSDLRenderer ()
             NotPaletted = false;
     }
 
-    // In fullscreen, set logical size according to animorphic ratio.
-    // Windowed modes are rendered to fill the window (usually 1:1)
-    if (IsFullscreen ())
-    {
-        int w, h;
-        SDL_GetWindowSize (Screen, &w, &h);
-        ScaleWithAspect (w, h, Width, Height);
-        SDL_RenderSetLogicalSize (Renderer, w, h);
-    }
 #endif
     GPfx.SetFormat(32, 0xff0000, 0x00ff00, 0x0000ff);
 }
@@ -440,33 +390,7 @@ void HeadlessFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
     int h = Height;
     //SDL_GetWindowSize (Screen, &w, &h);
 
-    // Detect if we're doing scaling in the Window and adjust the mouse
-    // coordinates accordingly. This could be more efficent, but I
-    // don't think performance is an issue in the menus.
-    if(IsFullscreen())
-    {
-        int realw = w, realh = h;
-        ScaleWithAspect (realw, realh, SCREENWIDTH, SCREENHEIGHT);
-        if (realw != SCREENWIDTH || realh != SCREENHEIGHT)
-        {
-            double xratio = (double)SCREENWIDTH/realw;
-            double yratio = (double)SCREENHEIGHT/realh;
-            if (realw < w)
-            {
-                x = (x - (w - realw)/2)*xratio;
-                y *= yratio;
-            }
-            else
-            {
-                y = (y - (h - realh)/2)*yratio;
-                x *= xratio;
-            }
-        }
-    }
-    else
-    {
-        x = (int16_t)(x*Width/w);
-        y = (int16_t)(y*Height/h);
-    }
+    x = (int16_t)(x*Width/w);
+    y = (int16_t)(y*Height/h);
 }
 

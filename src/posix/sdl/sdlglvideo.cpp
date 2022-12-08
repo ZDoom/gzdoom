@@ -179,7 +179,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
         fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
 	}
 #else
-    DFrameBuffer* fb = new gvizdoom::HeadlessFrameBuffer(width, height, bgra, fullscreen);
+    DFrameBuffer* fb = new gvizdoom::HeadlessFrameBuffer(width, height, bgra);
 #endif
 
 	retry = 0;

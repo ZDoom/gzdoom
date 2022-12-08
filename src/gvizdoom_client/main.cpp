@@ -65,6 +65,8 @@ int main(int argc, char** argv)
     App::Settings appSettings;
     appSettings.handleEvents = &handleEvents;
     appSettings.render = &render;
+    appSettings.window.width = 640;
+    appSettings.window.height = 480;
 
     RenderContext renderContext;
 

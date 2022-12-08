@@ -2824,8 +2824,10 @@ void DoomMain::ReInit()
 
     D_DoAnonStats();
 
+#if 0
     if (I_FriendlyWindowTitle)
         I_SetWindowTitle(DoomStartupInfo.Name.GetChars());
+#endif
 }
 
 //    D_DoomLoop ();		// this only returns if a 'restart' CCMD is given.

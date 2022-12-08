@@ -62,8 +62,9 @@ HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra, bool
 
     Renderer = NULL;
     Texture = NULL;
-    ResetSDLRenderer ();
 #endif
+    ResetSDLRenderer ();
+
     for (i = 0; i < 256; i++)
     {
         GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
@@ -333,9 +334,9 @@ void HeadlessFrameBuffer::SetFullscreen (bool fullscreen)
         // Restore proper window size
         SDL_SetWindowSize (Screen, Width, Height);
     }
+#endif
 
     ResetSDLRenderer ();
-#endif
 }
 
 bool HeadlessFrameBuffer::IsFullscreen ()
@@ -421,8 +422,7 @@ void HeadlessFrameBuffer::ResetSDLRenderer ()
 
 void HeadlessFrameBuffer::SetVSync (bool vsync)
 {
-#if 0
-#ifdef __APPLE__
+#if 0 // #ifdef __APPLE__
     if (CGLContextObj context = CGLGetCurrentContext())
 	{
 		// Apply vsync for native backend only (where OpenGL context is set)
@@ -432,7 +432,6 @@ void HeadlessFrameBuffer::SetVSync (bool vsync)
 #else
     ResetSDLRenderer ();
 #endif // __APPLE__
-#endif
 }
 
 void HeadlessFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)

@@ -49,6 +49,7 @@
 #include "sdlglvideo.h"
 #include "sdlvideo.h"
 #include "r_defs.h"
+#include "HeadlessFrameBuffer.hpp"
 
 // MACROS ------------------------------------------------------------------
 
@@ -166,7 +167,8 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 		flashColor = 0;
 //		flashAmount = 0;
 	}
-	
+
+#if 0
 	SDLBaseFB *fb;
 	if (vid_renderer == 1)
 	{
@@ -176,6 +178,9 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	{
         fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
 	}
+#else
+    DFrameBuffer* fb = new gvizdoom::HeadlessFrameBuffer(width, height, bgra, fullscreen);
+#endif
 
 	retry = 0;
 	

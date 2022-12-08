@@ -1142,7 +1142,7 @@ static int PatchThing (int thingy)
 		size_t linelen = strlen (Line1);
 
 		// Supported value range is all valid representations of signed int and unsigned int.
-		if (errno == ERANGE || val < INT_MIN || val > UINT_MAX)
+		if (val < INT_MIN || val > UINT_MAX)
 		{
 			Printf("Bad numeric constant %s for %s\n", Line2, Line1);
 		}

@@ -516,6 +516,9 @@ struct LevelLocals native
 	native clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false) const;
 	native clearscope Vector2 GetDisplacement(int pg1, int pg2) const;
 	native clearscope int GetPortalGroupCount() const;
+	native clearscope int PointOnLineSide(Vector2 pos, Line l, bool precise = false) const;
+	native clearscope int ActorOnLineSide(Actor mo, Line l) const;
+	native clearscope int BoxOnLineSide(Vector2 pos, double radius, Line l) const;
 
 	native String GetChecksum() const;
 

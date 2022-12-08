@@ -2092,3 +2092,42 @@ int BoxOnLineSide(const FBoundingBox &box, const line_t* ld)
 	return (p1 == p2) ? p1 : -1;
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, PointOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_POINTER(l, line_t);
+	PARAM_BOOL(precise);
+
+	int res;
+	if (precise) // allow forceful overriding of compat flag
+		res = P_PointOnLineSidePrecise(x, y, l);
+	else
+		res = P_PointOnLineSide(x, y, l);
+
+	ACTION_RETURN_INT(res);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, ActorOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_OBJECT(mo, AActor);
+	PARAM_POINTER(l, line_t);
+
+	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
+	ACTION_RETURN_INT(BoxOnLineSide(box, l));
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, BoxOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(radius);
+	PARAM_POINTER(l, line_t);
+
+	FBoundingBox box(x, y, radius);
+	ACTION_RETURN_INT(BoxOnLineSide(box, l));
+}
+

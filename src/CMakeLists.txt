@@ -1129,38 +1129,37 @@ set(GVIZDOOM_CLIENT_SOURCES
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
 
-add_executable( zdoom WIN32 MACOSX_BUNDLE
-	${HEADER_FILES}
-	${NOT_COMPILED_SOURCE_FILES}
-	doom/__autostart.cpp
-	${SYSTEM_SOURCES}
-	${X86_SOURCES}
-	${FASTMATH_SOURCES}
-	${PCH_SOURCES}
-    ../src/gvizdoom/Action.cpp
-	doom/x86.cpp
-	doom/strnatcmp.c
-	doom/zstring.cpp
-	math/asin.c
-	math/atan.c
-	math/const.c
-	math/cosh.c
-	math/exp.c
-	math/isnan.c
-	math/log.c
-	math/log10.c
-	math/mtherr.c
-	math/polevl.c
-	math/pow.c
-	math/powi.c
-	math/sin.c
-	math/sinh.c
-	math/sqrt.c
-	math/tan.c
-	math/tanh.c
-	math/fastsin.cpp
-	doom/zzautozend.cpp
-)
+#add_executable( zdoom WIN32 MACOSX_BUNDLE
+#	${HEADER_FILES}
+#	${NOT_COMPILED_SOURCE_FILES}
+#	doom/__autostart.cpp
+#	${SYSTEM_SOURCES}
+#	${X86_SOURCES}
+#	${FASTMATH_SOURCES}
+#	${PCH_SOURCES}
+#	doom/x86.cpp
+#	doom/strnatcmp.c
+#	doom/zstring.cpp
+#	math/asin.c
+#	math/atan.c
+#	math/const.c
+#	math/cosh.c
+#	math/exp.c
+#	math/isnan.c
+#	math/log.c
+#	math/log10.c
+#	math/mtherr.c
+#	math/polevl.c
+#	math/pow.c
+#	math/powi.c
+#	math/sin.c
+#	math/sinh.c
+#	math/sqrt.c
+#	math/tan.c
+#	math/tanh.c
+#	math/fastsin.cpp
+#	doom/zzautozend.cpp
+#)
 
 add_library(gvizdoom SHARED
 	${HEADER_FILES}
@@ -1253,7 +1252,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+#target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 
 include_directories( .
 	doom
@@ -1276,83 +1275,83 @@ include_directories( .
     ../include/gvizdoom
 )
 
-add_dependencies( zdoom revision_check )
+#add_dependencies( zdoom revision_check )
 
 # Due to some quirks, we need to do this in this order
-if( NOT ZDOOM_OUTPUT_OLDSTYLE )
-	# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
-	# Linux distributions are slow to adopt 2.6. :(
-	set_target_properties( zdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
-	set_target_properties( zdoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
-else()
-	set_target_properties( zdoom PROPERTIES
-		RUNTIME_OUTPUT_NAME ${ZDOOM_EXE_NAME}
-		RUNTIME_OUTPUT_DIRECTORY_RELEASE ${ZDOOM_OUTPUT_DIR}
-		RUNTIME_OUTPUT_NAME_DEBUG ${ZDOOM_EXE_NAME}d
-		RUNTIME_OUTPUT_DIRECTORY_DEBUG ${ZDOOM_OUTPUT_DIR}
-		RUNTIME_OUTPUT_NAME_MINSIZEREL ${ZDOOM_EXE_NAME}msr
-		RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${ZDOOM_OUTPUT_DIR}
-		RUNTIME_OUTPUT_NAME_RELWITHDEBINFO ${ZDOOM_EXE_NAME}rd
-		RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${ZDOOM_OUTPUT_DIR}
-	)
-endif()
+#if( NOT ZDOOM_OUTPUT_OLDSTYLE )
+#	# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
+#	# Linux distributions are slow to adopt 2.6. :(
+#	set_target_properties( zdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+#	set_target_properties( zdoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
+#else()
+#	set_target_properties( zdoom PROPERTIES
+#		RUNTIME_OUTPUT_NAME ${ZDOOM_EXE_NAME}
+#		RUNTIME_OUTPUT_DIRECTORY_RELEASE ${ZDOOM_OUTPUT_DIR}
+#		RUNTIME_OUTPUT_NAME_DEBUG ${ZDOOM_EXE_NAME}d
+#		RUNTIME_OUTPUT_DIRECTORY_DEBUG ${ZDOOM_OUTPUT_DIR}
+#		RUNTIME_OUTPUT_NAME_MINSIZEREL ${ZDOOM_EXE_NAME}msr
+#		RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${ZDOOM_OUTPUT_DIR}
+#		RUNTIME_OUTPUT_NAME_RELWITHDEBINFO ${ZDOOM_EXE_NAME}rd
+#		RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${ZDOOM_OUTPUT_DIR}
+#	)
+#endif()
 
-if( MSVC )
-	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
-	set( LINKERSTUFF "/MANIFEST:NO" )
-
-	if( ZDOOM_GENERATE_MAPFILE )
-		set( LINKERSTUFF "${LINKERSTUFF} /MAP" )
-	endif()
-	set_target_properties(zdoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
-
-	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
-		COMMENT "Adding manifest..."
-	)
-
-endif()
-
-if( NOT WIN32 AND NOT APPLE )
-	FILE( WRITE ${CMAKE_CURRENT_BINARY_DIR}/link-make "if [ ! -e ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME} ]; then ln -sf ${CMAKE_CURRENT_BINARY_DIR}/${ZDOOM_EXE_NAME} ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME}; fi" )
-	add_custom_command( TARGET zdoom POST_BUILD
-		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
-		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
-endif()
-
-add_custom_command(TARGET zdoom POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:zdoom>/soundfonts/gzdoom.sf2)
-
-if( CMAKE_COMPILER_IS_GNUCXX )
-	# GCC misoptimizes this file
-	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
-endif()
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	# Need to enable intrinsics for these files.
-	if( SSE_MATTERS )
-		set_source_files_properties(
-			swrenderer/r_all.cpp
-			x86.cpp
-			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
-	endif()
-endif()
-
-if( APPLE )
-	set_target_properties(zdoom PROPERTIES
-		LINK_FLAGS "-framework Cocoa -framework IOKit -framework OpenGL"
-		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
-
-endif()
-
-if( WIN32 )
-	set( INSTALL_PATH . CACHE STRING "Directory where the zdoom executable will be placed during install." )
-else()
-	set( INSTALL_PATH bin CACHE STRING "Directory where the zdoom executable will be placed during install." )
-endif()
-install(TARGETS zdoom
-		DESTINATION ${INSTALL_PATH}
-		COMPONENT "Game executable")
+#if( MSVC )
+#	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
+#	set( LINKERSTUFF "/MANIFEST:NO" )
+#
+#	if( ZDOOM_GENERATE_MAPFILE )
+#		set( LINKERSTUFF "${LINKERSTUFF} /MAP" )
+#	endif()
+#	set_target_properties(zdoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
+#
+#	add_custom_command(TARGET zdoom POST_BUILD
+#		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
+#		COMMENT "Adding manifest..."
+#	)
+#
+#endif()
+#
+#if( NOT WIN32 AND NOT APPLE )
+#	FILE( WRITE ${CMAKE_CURRENT_BINARY_DIR}/link-make "if [ ! -e ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME} ]; then ln -sf ${CMAKE_CURRENT_BINARY_DIR}/${ZDOOM_EXE_NAME} ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME}; fi" )
+#	add_custom_command( TARGET zdoom POST_BUILD
+#		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
+#		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
+#endif()
+#
+#add_custom_command(TARGET zdoom POST_BUILD
+#	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:zdoom>/soundfonts/gzdoom.sf2)
+#
+#if( CMAKE_COMPILER_IS_GNUCXX )
+#	# GCC misoptimizes this file
+#	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
+#endif()
+#if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+#	# Need to enable intrinsics for these files.
+#	if( SSE_MATTERS )
+#		set_source_files_properties(
+#			swrenderer/r_all.cpp
+#			x86.cpp
+#			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
+#	endif()
+#endif()
+#
+#if( APPLE )
+#	set_target_properties(zdoom PROPERTIES
+#		LINK_FLAGS "-framework Cocoa -framework IOKit -framework OpenGL"
+#		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
+#
+#endif()
+#
+#if( WIN32 )
+#	set( INSTALL_PATH . CACHE STRING "Directory where the zdoom executable will be placed during install." )
+#else()
+#	set( INSTALL_PATH bin CACHE STRING "Directory where the zdoom executable will be placed during install." )
+#endif()
+#install(TARGETS zdoom
+#		DESTINATION ${INSTALL_PATH}
+#		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
 source_group("Audio Files\\ADL MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/adlmidi/.+")

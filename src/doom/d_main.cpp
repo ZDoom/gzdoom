@@ -1031,76 +1031,6 @@ void D_ErrorCleanup ()
 // calls I_GetTime, I_StartFrame, and I_StartTic
 //
 //==========================================================================
-// Not used in gvizdoom client
-void D_DoomLoop ()
-{
-	int lasttic = 0;
-
-	// Clamp the timer to TICRATE until the playloop has been entered.
-	r_NoInterpolate = true;
-	Page = Advisory = NULL;
-
-	vid_cursor.Callback();
-
-	for (;;)
-	{
-		try
-		{
-			// frame syncronous IO operations
-			if (gametic > lasttic)
-			{
-				lasttic = gametic;
-				I_StartFrame ();
-			}
-			I_SetFrameTime();
-
-			// process one or more tics
-			if (singletics)
-			{
-				I_StartTic ();
-				D_ProcessEvents ();
-				G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
-				if (advancedemo)
-					D_DoAdvanceDemo ();
-				C_Ticker ();
-				M_Ticker ();
-				G_Ticker ();
-				// [RH] Use the consoleplayer's camera to update sounds
-				S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
-				gametic++;
-				maketic++;
-				GC::CheckGC ();
-				Net_NewMakeTic ();
-			}
-			else
-			{
-				TryRunTics (); // will run at least one tic
-			}
-			// Update display, next frame, with current state.
-			I_StartTic ();
-            D_Display(nullptr);
-			if (wantToRestart)
-			{
-				wantToRestart = false;
-				return;
-			}
-		}
-		catch (CRecoverableError &error)
-		{
-			if (error.GetMessage ())
-			{
-				Printf (PRINT_BOLD, "\n%s\n", error.GetMessage());
-			}
-			D_ErrorCleanup ();
-		}
-		catch (CVMAbortException &error)
-		{
-			error.MaybePrintMessage();
-			Printf("%s", error.stacktrace.GetChars());
-			D_ErrorCleanup();
-		}
-	}
-}
 
 void DoomLoop::Init()
 {
@@ -2780,12 +2710,14 @@ void DoomMain::ReInit()
         if (_v != NULL) {
             singledemo = true;                // quit after one demo
             G_DeferedPlayDemo(_v);
-            D_DoomLoop();    // never returns
+            // TODO manually construct DoomLoop here
+            //D_DoomLoop();    // never returns
         } else {
             _v = Args->CheckValue("-timedemo");
             if (_v) {
                 G_TimeDemo(_v);
-                D_DoomLoop();    // never returns
+                // TODO manually construct DoomLoop here
+                //D_DoomLoop();    // never returns
             } else {
                 if (gameaction != ga_loadgame && gameaction != ga_loadgamehidecon) {
                     if (autostart || netgame) {

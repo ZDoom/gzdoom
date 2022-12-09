@@ -10,18 +10,15 @@
 
 #include "gvizdoom/DoomGame.hpp"
 #include "gvizdoom/gzdoom_main_wrapper.hpp"
+#include "gvizdoom/HeadlessFrameBuffer.hpp"
 #include "v_video.h"
-
-
-extern DFrameBuffer *screen;
 
 
 using namespace gvizdoom;
 
 
 DoomGame::DoomGame() :
-    _status         (-1),
-    _frameBuffer    (nullptr)
+    _status         (-1)
 {
 }
 
@@ -32,6 +29,11 @@ DoomGame::~DoomGame()
 
 void DoomGame::init(GameConfig&& gameConfig)
 {
+    // Context init
+    _context.frameBuffer = std::make_unique<HeadlessFrameBuffer>(
+        gameConfig.videoWidth, gameConfig.videoHeight, true);
+
+    // Doom init
     gzdoom_main_init(gameConfig.argc, gameConfig.argv);
     _status = _doomMain.Init();
     if (_status != 0) {
@@ -39,26 +41,20 @@ void DoomGame::init(GameConfig&& gameConfig)
         return;
     }
 
-    _doomMain.ReInit();
+    _doomMain.ReInit(_context);
     _doomLoop.Init();
-    if (screen) {
-        _frameBuffer = std::make_unique<HeadlessFrameBuffer>(screen->GetWidth(), screen->GetHeight(), true);
-    }
-    else {
-        printf("Omg no screen!\n");
-    }
 }
 
 void DoomGame::restart()
 {
     _doomMain.Cleanup();
-    _doomMain.ReInit();
+    _doomMain.ReInit(_context);
     _doomLoop.Init();
 }
 
 bool DoomGame::update(const Action& action)
 {
-    _doomLoop.Iter(_dbgInfo, _frameBuffer.get(), action);
+    _doomLoop.Iter(_context, _dbgInfo, action);
 
     // Print periodically or upon interesting changes info of the
     // game state
@@ -106,23 +102,23 @@ int DoomGame::getStatus() const
 
 int DoomGame::getScreenWidth() const
 {
-    if (_frameBuffer == nullptr)
+    if (_context.frameBuffer == nullptr)
         return 0;
-    return _frameBuffer->GetWidth();
+    return _context.frameBuffer->GetWidth();
 }
 
 int DoomGame::getScreenHeight() const
 {
-    if (_frameBuffer == nullptr)
+    if (_context.frameBuffer == nullptr)
         return 0;
-    return _frameBuffer->GetHeight();
+    return _context.frameBuffer->GetHeight();
 }
 
 uint8_t* DoomGame::getPixelsRGBA() const
 {
-    if (_frameBuffer == nullptr)
+    if (_context.frameBuffer == nullptr)
         return nullptr;
-    return _frameBuffer->getMemBuffer();
+    return _context.frameBuffer->getMemBuffer();
 }
 
 float* DoomGame::getPixelsDepth() const

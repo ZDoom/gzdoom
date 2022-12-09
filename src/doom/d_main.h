@@ -33,6 +33,7 @@
 #include "gametype.h"
 #include "m_argv.h"
 #include "v_video.h"
+#include "gvizdoom/Context.hpp"
 #include <memory>
 
 #include "d_event.h"
@@ -175,7 +176,7 @@ public:
 
 struct DoomMain {
     int Init();
-    void ReInit();
+    void ReInit(gvizdoom::Context& context);
     void Cleanup();
 
     FString*                        _args;
@@ -189,17 +190,14 @@ struct DoomMain {
 
 struct DoomLoop {
     void Init();
-    void Iter(MainDebugInfo& out_dbgInfo,
-        DFrameBuffer* frameBuffer = nullptr,
-        const Action& action = Action());
+    void Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, const Action& action = Action());
 
     int _lasttic;
     MainDebugInfo _dbgInfo;
 };
 
 
-void D_DoomLoop ();
-void D_Display(DFrameBuffer* frameBuffer);
+void D_Display(gvizdoom::Context& context);
 
 
 //

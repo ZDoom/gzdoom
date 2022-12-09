@@ -41,6 +41,8 @@
 #include "dobject.h"
 #include "r_data/renderstyle.h"
 #include "c_cvars.h"
+#include "gvizdoom/Context.hpp"
+
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
@@ -535,10 +537,10 @@ extern uint32_t Col2RGB8_Inverse[65][256];
 //		--111111111111111111111111111111	= 0x3FFFFFFF
 
 // Allocates buffer screens, call before R_Init.
-void V_Init (bool restart);
+void V_Init(bool restart, gvizdoom::Context& context);
 
 // Initializes graphics mode for the first time.
-void V_Init2 ();
+void V_Init2(gvizdoom::Context& context);
 
 void V_Shutdown ();
 

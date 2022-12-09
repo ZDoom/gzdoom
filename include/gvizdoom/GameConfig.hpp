@@ -18,7 +18,9 @@ class GameConfig {
 public:
     int     argc; // TODO remove raw CLI parameters, use high-level abstraction
     char**  argv;
-    bool interactive{false};
+    bool    interactive {false};
+    int     videoWidth  {640};
+    int     videoHeight {480};
 };
 
 } // namespace gvizdoom

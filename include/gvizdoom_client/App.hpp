@@ -30,18 +30,12 @@ public:
     // Settings for the application
     struct WindowSettings {
         std::string name;
-        int64_t width;
-        int64_t height;
         int64_t framerateLimit;
 
         explicit WindowSettings(
             const std::string& name = "GViZDoom",
-            int64_t width = 640,
-            int64_t height = 480,
             int64_t framerateLimit = 60) :
             name(name),
-            width(width),
-            height(height),
             framerateLimit(framerateLimit)
         {}
     };

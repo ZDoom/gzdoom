@@ -105,6 +105,7 @@ void I_ShutdownGraphics ()
 
 void I_InitGraphics ()
 {
+#if 0
 	if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0)
 	{
 		I_FatalError ("Could not initialize SDL video:\n%s\n", SDL_GetError());
@@ -112,6 +113,7 @@ void I_InitGraphics ()
 	}
 
 	Printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
+#endif
 
 	UCVarValue val;
 

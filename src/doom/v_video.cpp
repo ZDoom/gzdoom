@@ -85,6 +85,9 @@
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"
+#include "Context.hpp"
+#include "gvizdoom/HeadlessFrameBuffer.hpp"
+
 
 EXTERN_CVAR(Bool, r_blendmethod)
 
@@ -1286,6 +1289,7 @@ CCMD(clean)
 //
 bool V_DoModeSetup (int width, int height, int bits)
 {
+#if 0
 	DFrameBuffer *buff = I_SetMode (width, height, screen);
 
 	if (buff == NULL)
@@ -1294,6 +1298,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 	}
 
 	screen = buff;
+#endif
 	screen->SetGamma (Gamma);
 
 	// Load fonts now so they can be packed into textures straight away,
@@ -1499,7 +1504,7 @@ CCMD (vid_setmode)
 // V_Init
 //
 
-void V_Init (bool restart) 
+void V_Init(bool restart, gvizdoom::Context& context)
 { 
 	const char *i;
 	int width, height, bits;
@@ -1508,7 +1513,7 @@ void V_Init (bool restart)
 
 	// [RH] Initialize palette management
 	InitPalette ();
-
+#if 0
 	if (!restart)
 	{
 		width = height = bits = 0;
@@ -1547,28 +1552,31 @@ void V_Init (bool restart)
 	}
 	// Update screen palette when restarting
 	else
+#endif
 	{
-		PalEntry *palette = screen->GetPalette ();
+		PalEntry *palette = context.frameBuffer->GetPalette ();
 		for (int i = 0; i < 256; ++i)
 			*palette++ = GPalette.BaseColors[i];
-		screen->UpdatePalette();
+        context.frameBuffer->UpdatePalette();
 	}
 
 	BuildTransTable (GPalette.BaseColors);
+
+    screen = context.frameBuffer.get();
 }
 
-void V_Init2()
+void V_Init2(gvizdoom::Context& context)
 {
-	int width = screen->GetWidth();
-	int height = screen->GetHeight();
-	float gamma = static_cast<DDummyFrameBuffer *>(screen)->Gamma;
-
+	int width = context.frameBuffer->GetWidth();
+	int height = context.frameBuffer->GetHeight();
+	//float gamma = static_cast<DDummyFrameBuffer *>(screen)->Gamma;
+#if 0
 	{
 		DFrameBuffer *s = screen;
 		screen = NULL;
 		delete s;
 	}
-
+#endif
 	I_InitGraphics();
 	I_ClosestResolution (&width, &height, 8);
 
@@ -1577,7 +1585,7 @@ void V_Init2()
 	else
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
-	screen->SetGamma (gamma);
+	//screen->SetGamma (gamma);
 	Renderer->RemapVoxels();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
@@ -1588,12 +1596,14 @@ void V_Init2()
 
 void V_Shutdown()
 {
+#if 0
 	if (screen)
 	{
 		DFrameBuffer *s = screen;
 		screen = NULL;
 		delete s;
 	}
+#endif
 	V_ClearFonts();
 }
 

@@ -106,10 +106,12 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 SDLGLVideo::SDLGLVideo (int parm)
 {
 	IteratorBits = 0;
+#if 0
     if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
         fprintf( stderr, "Video initialization failed: %s\n",
              SDL_GetError( ) );
     }
+#endif
 }
 
 SDLGLVideo::~SDLGLVideo ()
@@ -147,16 +149,19 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		SDLBaseFB *fb = static_cast<SDLBaseFB *> (old);
-		if (fb->Width == width &&
-			fb->Height == height)
+		//SDLBaseFB *fb = static_cast<SDLBaseFB *> (old);
+		if (old->GetWidth() == width &&
+			old->GetHeight() == height &&
+            old->IsBgra() == bgra)
 		{
+#if 0
 			bool fsnow = (SDL_GetWindowFlags (fb->GetSDLWindow()) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 	
 			if (fsnow != fullscreen)
 			{
 				SDL_SetWindowFullscreen (fb->GetSDLWindow(), fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 			}
+#endif
 			return old;
 		}
 //		old->GetFlash (flashColor, flashAmount);
@@ -239,7 +244,7 @@ bool SDLGLVideo::SetResolution (int width, int height, int bits)
 {
 	// FIXME: Is it possible to do this without completely destroying the old
 	// interface?
-#ifndef NO_GL
+#if 0 // #ifndef NO_GL
 
 	I_ShutdownGraphics();
 
@@ -251,9 +256,11 @@ bool SDLGLVideo::SetResolution (int width, int height, int bits)
 #else
 	bits=24;
 #endif
-	
+
 	V_DoModeSetup(width, height, bits);
 #endif
+    V_DoModeSetup(width, height, bits);
+
 	return true;	// We must return true because the old video context no longer exists.
 }
 

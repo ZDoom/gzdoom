@@ -42,8 +42,8 @@ App::App(
         _settings.window.name.c_str(),
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        (int)_settings.window.width,
-        (int)_settings.window.height,
+        gameConfig.videoWidth,
+        gameConfig.videoHeight,
         SDL_WINDOW_SHOWN);
     if (_window == nullptr) {
         printf("Error: SDL Window could not be created! SDL_Error: %s\n", SDL_GetError());

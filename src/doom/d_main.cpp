@@ -118,6 +118,8 @@
 #include "vm.h"
 #include "types.h"
 #include "r_data/r_vanillatrans.h"
+#include "gvizdoom/HeadlessFrameBuffer.hpp"
+
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -667,11 +669,11 @@ CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 //
 //==========================================================================
 
-void D_Display(DFrameBuffer* frameBuffer)
+void D_Display(gvizdoom::Context& context)
 {
     DFrameBuffer* oldScreen = screen;
-    if (frameBuffer != nullptr) {
-        screen = frameBuffer;
+    if (context.frameBuffer != nullptr) {
+        screen = context.frameBuffer.get();
     }
 
 	bool wipe;
@@ -1048,9 +1050,7 @@ void DoomLoop::Init()
     cht_DoCheat (&players[0], CHT_IDDQD);
 }
 
-void DoomLoop::Iter(MainDebugInfo& out_dbgInfo,
-    DFrameBuffer* frameBuffer,
-    const Action& action)
+void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, const Action& action)
 {
     try
     {
@@ -1102,7 +1102,7 @@ void DoomLoop::Iter(MainDebugInfo& out_dbgInfo,
         
         // Update display, next frame, with current state.
         I_StartTic ();
-        D_Display(frameBuffer);
+        D_Display(context);
         if (wantToRestart)
         {
             wantToRestart = false;
@@ -2413,7 +2413,7 @@ int DoomMain::Init()
     return 0;
 }
 
-void DoomMain::ReInit()
+void DoomMain::ReInit(gvizdoom::Context& context)
 {
     // reinit from here
 
@@ -2518,7 +2518,7 @@ void DoomMain::ReInit()
     }
 
     if (!batchrun) Printf("V_Init: allocate screen.\n");
-    V_Init(!!restart);
+    V_Init(!!restart, context);
 
     // Base systems have been inited; enable cvar callbacks
     FBaseCVar::EnableCallbacks();
@@ -2695,7 +2695,7 @@ void DoomMain::ReInit()
             throw CNoRunExit();
         }
 
-        V_Init2();
+        V_Init2(context);
         UpdateJoystickMenu(NULL);
 
         _v = Args->CheckValue("-loadgame");

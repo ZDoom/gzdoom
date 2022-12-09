@@ -13,8 +13,8 @@
 
 #include "gvizdoom/Action.hpp"
 #include "gvizdoom/GameConfig.hpp"
+#include "gvizdoom/Context.hpp"
 #include "d_main.h"
-#include "gvizdoom/HeadlessFrameBuffer.hpp"
 
 
 namespace gvizdoom {
@@ -40,12 +40,12 @@ public:
     float* getPixelsDepth() const;
 
 private:
-    GameConfig                              _gameConfig;
-    int                                     _status;
-    DoomMain                                _doomMain;
-    DoomLoop                                _doomLoop;
-    std::unique_ptr<HeadlessFrameBuffer>    _frameBuffer;
-    MainDebugInfo                           _dbgInfo;
+    GameConfig      _gameConfig;
+    int             _status;
+    DoomMain        _doomMain;
+    DoomLoop        _doomLoop;
+    Context         _context;
+    MainDebugInfo   _dbgInfo;
 };
 
 } // namespace gvizdoom

@@ -216,6 +216,9 @@ private:
 	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
 	bool CheckFog(sector_t *frontsector, sector_t *backsector);
 	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
+
+	void PreparePlayerSprites2D(sector_t * viewsector, area_t in_area);
+	void PreparePlayerSprites3D(sector_t * viewsector, area_t in_area);
 public:
 
 	void SetCameraPos(const DVector3 &pos)

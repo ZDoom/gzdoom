@@ -37,6 +37,8 @@ class Weapon : StateProvider
 											// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
 	meta int SlotNumber;
 	meta double SlotPriority;
+
+	Vector3 BobPivot3D;	// Pivot used for BobWeapon3D
 	
 	property AmmoGive: AmmoGive1;
 	property AmmoGive1: AmmoGive1;
@@ -63,6 +65,7 @@ class Weapon : StateProvider
 	property SlotNumber: SlotNumber;
 	property SlotPriority: SlotPriority;
 	property LookScale: LookScale;
+	property BobPivot3D : BobPivot3D;
 
 	flagdef NoAutoFire: WeaponFlags, 0;			// weapon does not autofire
 	flagdef ReadySndHalf: WeaponFlags, 1;		// ready sound is played ~1/2 the time
@@ -102,6 +105,7 @@ class Weapon : StateProvider
 		Weapon.WeaponScaleY 1.2;
 		Weapon.SlotNumber -1;
 		Weapon.SlotPriority 32767;
+		Weapon.BobPivot3D (0.0, 0.0, 0.0);
 		+WEAPONSPAWN
 		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_WEAPON;
 	}

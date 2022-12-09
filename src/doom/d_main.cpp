@@ -1063,7 +1063,7 @@ void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, cons
         I_SetFrameTime();
 
         // process one or more tics
-        if (singletics or true)
+        if (singletics)
         {
             I_StartTic ();
             D_ProcessEvents ();

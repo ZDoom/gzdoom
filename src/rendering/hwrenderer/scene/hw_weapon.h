@@ -11,10 +11,22 @@ struct HWDrawInfo;
 class FGameTexture;
 
 
-struct WeaponPosition
+struct WeaponPosition2D
 {
 	float wx, wy;
 	float bobx, boby;
+	DPSprite *weapon;
+};
+
+struct WeaponPosition3D
+{
+	float wx,
+		  wy;
+
+	FVector3 translation,
+			 rotation,
+			 pivot;
+
 	DPSprite *weapon;
 };
 
@@ -42,6 +54,8 @@ struct HUDSprite
 
 	float mx, my;
 	float dynrgb[3];
+
+	FVector3 rotation, translation, pivot;
 
 	int lightindex;
 

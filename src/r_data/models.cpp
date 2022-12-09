@@ -193,10 +193,9 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	renderer->EndDrawModel(actor->RenderStyle, smf);
 }
 
-void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float ofsY)
+void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translation, FVector3 rotation, FVector3 rotation_pivot, FSpriteModelFrame *smf)
 {
 	AActor * playermo = players[consoleplayer].camera;
-	FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
 
 	// [BB] No model found for this sprite, so we can't render anything.
 	if (smf == nullptr)
@@ -221,8 +220,19 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float o
 	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	objectToWorldMatrix.rotate(ofsX / 4, 0, 1, 0);
-	objectToWorldMatrix.rotate((ofsY - WEAPONTOP) / -4., 1, 0, 0);
+
+	
+
+	objectToWorldMatrix.translate(rotation_pivot.X, rotation_pivot.Y, rotation_pivot.Z);
+	
+	objectToWorldMatrix.rotate(rotation.X, 0, 1, 0);
+	objectToWorldMatrix.rotate(rotation.Y, 1, 0, 0);
+	objectToWorldMatrix.rotate(rotation.Z, 0, 0, 1);
+
+	objectToWorldMatrix.translate(-rotation_pivot.X, -rotation_pivot.Y, -rotation_pivot.Z);
+	
+	objectToWorldMatrix.translate(translation.X, translation.Y, translation.Z);
+	
 
 	// [BB] For some reason the jDoom models need to be rotated.
 	objectToWorldMatrix.rotate(90.f, 0, 1, 0);

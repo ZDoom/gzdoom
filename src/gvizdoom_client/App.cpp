@@ -135,16 +135,10 @@ void App::loop(void)
         auto screenWidth = _doomGame->getScreenWidth();
 
         // TODO opencv temp
-        if (_doomGame->getPixelsRGBA() != nullptr) {
-
-            // render RGBA
-            cv::Mat rgbaMat(screenHeight, screenWidth, CV_8UC4, const_cast<uint8_t*>(_doomGame->getPixelsRGBA()));
-            cv::imshow("rgba", rgbaMat);
-#if 0
+        if (_doomGame->getPixelsDepth() != nullptr) {
             // render depth
-            cv::Mat depthMat(h, w, CV_32FC1, _doomGame->getPixelsDepth());
+            cv::Mat depthMat(screenHeight, screenWidth, CV_32FC1, _doomGame->getPixelsDepth());
             cv::imshow("depth", depthMat);
-#endif
             cv::waitKey(1);
         }
         // TODO end of opencv temp

@@ -134,7 +134,7 @@ void HeadlessFrameBuffer::Update ()
     BlitCycles.Clock();
 #endif
     void *pixels = MemBuffer;
-    int pitch = Pitch * 4;
+    int pitch = Bgra ? Pitch * 4 : Pitch;
 #if 0
     if (UsingRenderer)
     {

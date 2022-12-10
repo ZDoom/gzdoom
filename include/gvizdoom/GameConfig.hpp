@@ -18,12 +18,20 @@ class GameConfig {
 public:
     int     argc; // TODO remove raw CLI parameters, use high-level abstraction
     char**  argv;
-    bool    interactive {false};
+    bool    interactive     {false};
 
     // Video parameters
     int     videoWidth      {640};
     int     videoHeight     {480};
     int     videoTrueColor  {true};
+
+    // HUD parameters
+    enum HUDType : uint32_t {
+        HUD_STATUSBAR = 0, // original Doom HUD with mugshot and grey bar
+        HUD_FLOATING = 1, // more minimal HUD with floating icons and ammo/health/other amounts
+        HUD_ALTERNATIVE = 2 // alternative floating HUD with more info
+    }       hudType         {HUD_STATUSBAR};
+    int     hudScale        {2};
 };
 
 } // namespace gvizdoom

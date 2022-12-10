@@ -686,7 +686,7 @@ void DSimpleCanvas::Resize(int width, int height)
 	// for each column drawing operation by making the pitch slightly
 	// longer than the width. The values used here are all based on
 	// empirical evidence.
-
+#if 0
 	if (width <= 640)
 	{
 		// For low resolutions, just keep the pitch the same as the width.
@@ -716,6 +716,8 @@ void DSimpleCanvas::Resize(int width, int height)
 			Pitch = width + MAX(0, CPU.DataL1LineSize - 8);
 		}
 	}
+#endif
+    Pitch = width;
 	int bytes_per_pixel = Bgra ? 4 : 1;
 	MemBuffer = new uint8_t[Pitch * height * bytes_per_pixel];
 	memset (MemBuffer, 0, Pitch * height * bytes_per_pixel);

@@ -114,7 +114,7 @@ int DoomGame::getScreenHeight() const
     return _context.frameBuffer->GetHeight();
 }
 
-const uint8_t* DoomGame::getPixelsRGBA() const
+const uint8_t* DoomGame::getPixelsBGRA() const
 {
     if (_context.frameBuffer == nullptr)
         return nullptr;

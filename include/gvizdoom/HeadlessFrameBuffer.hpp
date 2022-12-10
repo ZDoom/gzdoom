@@ -34,6 +34,7 @@ public:
     int GetPageCount() override;
     bool IsFullscreen() override;
 
+    // Get pixels in BGRA8888 format
     const uint8_t* getPixels() const;
 
     void SetVSync(bool vsync) override;

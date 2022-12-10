@@ -154,7 +154,7 @@ void App::loop(void)
         int pitch;
         SDL_LockTexture(_texture, nullptr, reinterpret_cast<void**>(&sdlPixels), &pitch);
         assert(pitch == screenWidth*4);
-        memcpy(sdlPixels, _doomGame->getPixelsRGBA(), sizeof(uint8_t)*screenWidth*screenHeight*4);
+        memcpy(sdlPixels, _doomGame->getPixelsBGRA(), sizeof(uint8_t)*screenWidth*screenHeight*4);
         SDL_UnlockTexture(_texture);
         SDL_RenderCopy(_renderer, _texture, nullptr, nullptr);
         SDL_RenderPresent(_renderer);

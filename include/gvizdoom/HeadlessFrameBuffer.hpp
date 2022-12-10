@@ -11,6 +11,7 @@
 #pragma once
 
 #include "v_video.h"
+#include <vector>
 
 
 namespace gvizdoom {
@@ -37,6 +38,8 @@ public:
     int GetPageCount();
     bool IsFullscreen();
 
+    const uint8_t* getPixels() const;
+
     //friend class SDLGLVideo;
 
     virtual void SetVSync(bool vsync);
@@ -44,6 +47,7 @@ public:
 
 private:
     PalEntry SourcePalette[256];
+    PalEntry    _activePalette[256];
     uint8_t GammaTable[3][256];
     PalEntry Flash;
     int FlashAmount;
@@ -55,8 +59,12 @@ private:
     bool NeedGammaUpdate;
     bool NotPaletted;
 
+    size_t                  _nPixels;
+    std::vector<uint8_t>    _bgraBuffer; // used for paletted -> bgra conversion
+
     void UpdateColors();
     void ResetSDLRenderer();
+    void convertToBGRA();
 
     HeadlessFrameBuffer() {}
 };

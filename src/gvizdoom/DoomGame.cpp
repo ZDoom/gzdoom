@@ -31,7 +31,7 @@ void DoomGame::init(GameConfig&& gameConfig)
 {
     // Context init
     _context.frameBuffer = std::make_unique<HeadlessFrameBuffer>(
-        gameConfig.videoWidth, gameConfig.videoHeight, true);
+        gameConfig.videoWidth, gameConfig.videoHeight, gameConfig.videoTrueColor);
 
     // Doom init
     gzdoom_main_init(gameConfig.argc, gameConfig.argv);
@@ -114,11 +114,11 @@ int DoomGame::getScreenHeight() const
     return _context.frameBuffer->GetHeight();
 }
 
-uint8_t* DoomGame::getPixelsRGBA() const
+const uint8_t* DoomGame::getPixelsRGBA() const
 {
     if (_context.frameBuffer == nullptr)
         return nullptr;
-    return _context.frameBuffer->getMemBuffer();
+    return _context.frameBuffer->getPixels();
 }
 
 float* DoomGame::getPixelsDepth() const

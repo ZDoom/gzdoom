@@ -36,7 +36,7 @@ public:
 
     int getScreenWidth() const;
     int getScreenHeight() const;
-    uint8_t* getPixelsRGBA() const;
+    const uint8_t* getPixelsRGBA() const;
     float* getPixelsDepth() const;
 
 private:

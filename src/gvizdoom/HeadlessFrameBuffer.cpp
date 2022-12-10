@@ -27,8 +27,10 @@ EXTERN_CVAR (Float, bgamma)
 using namespace gvizdoom;
 
 
-HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra)
-    : DFrameBuffer (width, height, bgra)
+HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra) :
+    DFrameBuffer    (width, height, bgra),
+    _nPixels        (width * height),
+    _bgraBuffer     (bgra ? 0 : 4 * _nPixels)
 {
     int i;
 
@@ -161,6 +163,7 @@ void HeadlessFrameBuffer::Update ()
             pixels, pitch, Width, Height,
             FRACUNIT, FRACUNIT, 0, 0);
     }
+#if 0
     else
     {
         if (pitch == Pitch)
@@ -175,6 +178,7 @@ void HeadlessFrameBuffer::Update ()
             }
         }
     }
+#endif
 #endif
 #if 0
     if (UsingRenderer)
@@ -213,27 +217,30 @@ void HeadlessFrameBuffer::Update ()
         NeedPalUpdate = false;
         UpdateColors ();
     }
+
+    if (!Bgra)
+        convertToBGRA();
 }
 
 void HeadlessFrameBuffer::UpdateColors ()
 {
     //if (NotPaletted)
     {
-        PalEntry palette[256];
+        //PalEntry palette[256];
 
         for (int i = 0; i < 256; ++i)
         {
-            palette[i].r = GammaTable[0][SourcePalette[i].r];
-            palette[i].g = GammaTable[1][SourcePalette[i].g];
-            palette[i].b = GammaTable[2][SourcePalette[i].b];
+            _activePalette[i].r = GammaTable[0][SourcePalette[i].r];
+            _activePalette[i].g = GammaTable[1][SourcePalette[i].g];
+            _activePalette[i].b = GammaTable[2][SourcePalette[i].b];
         }
         if (FlashAmount)
         {
-            DoBlending (palette, palette,
+            DoBlending (_activePalette, _activePalette,
                 256, GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
                 FlashAmount);
         }
-        GPfx.SetPalette (palette);
+        //GPfx.SetPalette (palette);
     }
 #if 0
     else
@@ -301,6 +308,14 @@ void HeadlessFrameBuffer::GetFlashedPalette (PalEntry pal[256])
 bool HeadlessFrameBuffer::IsFullscreen ()
 {
     return false;
+}
+
+const uint8_t* HeadlessFrameBuffer::getPixels() const
+{
+    if (Bgra)
+        return MemBuffer;
+    else
+        return _bgraBuffer.data();
 }
 
 void HeadlessFrameBuffer::ResetSDLRenderer ()
@@ -394,3 +409,13 @@ void HeadlessFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
     y = (int16_t)(y*Height/h);
 }
 
+void HeadlessFrameBuffer::convertToBGRA()
+{
+    for (size_t i=0; i<_nPixels; ++i) {
+        // TODO maybe could benefit from SSE?
+        _bgraBuffer[i*4+0] = _activePalette[MemBuffer[i]].b;
+        _bgraBuffer[i*4+1] = _activePalette[MemBuffer[i]].g;
+        _bgraBuffer[i*4+2] = _activePalette[MemBuffer[i]].r;
+        _bgraBuffer[i*4+3] = _activePalette[MemBuffer[i]].a;
+    }
+}

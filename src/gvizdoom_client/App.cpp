@@ -116,7 +116,7 @@ void App::loop(void)
             auto w = _doomGame->getScreenWidth();
 
             // render RGBA
-            cv::Mat rgbaMat(h, w, CV_8UC4, _doomGame->getPixelsRGBA());
+            cv::Mat rgbaMat(h, w, CV_8UC4, const_cast<uint8_t*>(_doomGame->getPixelsRGBA()));
             cv::imshow("rgba", rgbaMat);
 #if 0
             // render depth

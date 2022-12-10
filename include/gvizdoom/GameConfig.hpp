@@ -19,8 +19,11 @@ public:
     int     argc; // TODO remove raw CLI parameters, use high-level abstraction
     char**  argv;
     bool    interactive {false};
-    int     videoWidth  {640};
-    int     videoHeight {480};
+
+    // Video parameters
+    int     videoWidth      {640};
+    int     videoHeight     {480};
+    int     videoTrueColor  {true};
 };
 
 } // namespace gvizdoom

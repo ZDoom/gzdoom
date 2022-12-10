@@ -30,7 +30,8 @@ public:
     ~DoomGame();
 
     void init(GameConfig&& gameConfig);
-    void restart(); // TODO is this necessary? Does this do anything?
+    void restart();
+    void restart(const GameConfig& gameConfig);
     bool update(const Action& action); // returns true upon exit
     int getStatus() const;
 
@@ -46,6 +47,8 @@ private:
     DoomLoop        _doomLoop;
     Context         _context;
     MainDebugInfo   _dbgInfo;
+
+    void reinit();
 };
 
 } // namespace gvizdoom

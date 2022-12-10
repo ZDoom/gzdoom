@@ -35,7 +35,7 @@ void DoomGame::init(GameConfig&& gameConfig)
     _context.frameBuffer = std::make_unique<HeadlessFrameBuffer>(
         _gameConfig.videoWidth, _gameConfig.videoHeight, _gameConfig.videoTrueColor);
 
-    // Doom init
+    // Doom main init
     gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
     _status = _doomMain.Init();
     if (_status != 0) {
@@ -43,15 +43,20 @@ void DoomGame::init(GameConfig&& gameConfig)
         return;
     }
 
-    _doomMain.ReInit(_context);
-    _doomLoop.Init();
+    reinit();
 }
 
 void DoomGame::restart()
 {
     _doomMain.Cleanup();
-    _doomMain.ReInit(_context);
-    _doomLoop.Init();
+    reinit();
+}
+
+void DoomGame::restart(const GameConfig& gameConfig)
+{
+    _gameConfig = gameConfig;
+    _doomMain.Cleanup();
+    reinit();
 }
 
 bool DoomGame::update(const Action& action)
@@ -131,4 +136,10 @@ float* DoomGame::getPixelsDepth() const
     return _canvas->GetDepthPixels();
 #endif
     return nullptr;
+}
+
+void DoomGame::reinit()
+{
+    _doomMain.ReInit(_context);
+    _doomLoop.Init();
 }

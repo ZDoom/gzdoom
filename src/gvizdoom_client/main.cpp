@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 
     RenderContext renderContext;
 
-    GameConfig gameConfig{argc, argv, interactive, 1280, 960, false};
+    GameConfig gameConfig{argc, argv, interactive, 1280, 960, true};
 
     App app(appSettings, &renderContext, gameConfig);
 

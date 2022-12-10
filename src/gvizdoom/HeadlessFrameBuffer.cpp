@@ -19,9 +19,27 @@ EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, vid_vsync)
 
-EXTERN_CVAR (Float, rgamma)
-EXTERN_CVAR (Float, ggamma)
-EXTERN_CVAR (Float, bgamma)
+CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+    if (screen != NULL)
+    {
+        screen->SetGamma (Gamma);
+    }
+}
+CUSTOM_CVAR (Float, ggamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+    if (screen != NULL)
+    {
+        screen->SetGamma (Gamma);
+    }
+}
+CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+    if (screen != NULL)
+    {
+        screen->SetGamma (Gamma);
+    }
+}
 
 
 using namespace gvizdoom;

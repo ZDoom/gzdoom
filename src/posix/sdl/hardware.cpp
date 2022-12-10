@@ -43,13 +43,12 @@
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
-#include "sdlvideo.h"
 #include "v_text.h"
 #include "doomstat.h"
 #include "m_argv.h"
-#include "sdlglvideo.h"
 #include "r_renderer.h"
 #include "swrenderer/r_swrenderer.h"
+#include "gvizdoom/HeadlessVideo.hpp"
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
@@ -120,10 +119,10 @@ void I_InitGraphics ()
 	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 	
-	//currentrenderer = vid_renderer;
-	Video = new SDLGLVideo(0);
+	currentrenderer = vid_renderer;
+	Video = new gvizdoom::HeadlessVideo(0);
 	
-	if (Video == NULL)
+	if (Video == nullptr)
 		I_FatalError ("Failed to initialize display");
 
 	atterm (I_ShutdownGraphics);

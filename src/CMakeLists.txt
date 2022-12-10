@@ -525,8 +525,6 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
 	posix/sdl/i_system.cpp
-	posix/sdl/sdlvideo.cpp
-	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
 	posix/unix/i_specialpaths.cpp
@@ -1116,10 +1114,11 @@ set (PCH_SOURCES
 )
 
 set(GVIZDOOM_SOURCES
-	gvizdoom/DoomGame.cpp
-	gvizdoom/gzdoom_main_wrapper.cpp
-	gvizdoom/Action.cpp
+    gvizdoom/DoomGame.cpp
+    gvizdoom/gzdoom_main_wrapper.cpp
+    gvizdoom/Action.cpp
     gvizdoom/HeadlessFrameBuffer.cpp
+    gvizdoom/HeadlessVideo.cpp
 )
 
 set(GVIZDOOM_CLIENT_SOURCES

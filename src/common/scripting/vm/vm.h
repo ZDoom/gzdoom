@@ -220,6 +220,11 @@ struct VMReturn
 		Location = loc;
 		RegType = REGT_FLOAT | REGT_MULTIREG3;
 	}
+	void Vec4At(DVector4 *loc)
+	{
+		Location = loc;
+		RegType = REGT_FLOAT | REGT_MULTIREG4;
+	}
 	void StringAt(FString *loc)
 	{
 		Location = loc;

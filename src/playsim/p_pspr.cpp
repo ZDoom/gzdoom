@@ -641,14 +641,15 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 	*x = *y = 0;
 }
 
-void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation, double ticfrac) {
+void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector4 *rotation, double ticfrac) {
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, BobWeapon3D)
 	{
 		VMValue param[] = { player->mo, ticfrac };
-		DVector3 t, r;
+		DVector3 t;
+		DVector4 r;
 		VMReturn returns[2];
 		returns[0].Vec3At(&t);
-		returns[1].Vec3At(&r);
+		returns[1].Vec4At(&r);
 		VMCall(func, param, 2, returns, 2);
 		translation->X = (float)t.X;
 		translation->Y = (float)t.Y;
@@ -656,9 +657,11 @@ void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation,
 		rotation->X = (float)r.X;
 		rotation->Y = (float)r.Y;
 		rotation->Z = (float)r.Z;
+		rotation->W = (float)r.W;
 		return;
 	}
-	*translation = *rotation = {};
+	*translation = {};
+	*rotation = {};
 }
 
 //---------------------------------------------------------------------------

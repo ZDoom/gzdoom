@@ -193,7 +193,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	renderer->EndDrawModel(actor->RenderStyle, smf);
 }
 
-void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translation, FVector3 rotation, FVector3 rotation_pivot, FSpriteModelFrame *smf)
+void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translation, FVector4 rotation, FVector3 rotation_pivot, FSpriteModelFrame *smf)
 {
 	AActor * playermo = players[consoleplayer].camera;
 
@@ -224,10 +224,11 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 	
 
 	objectToWorldMatrix.translate(rotation_pivot.X, rotation_pivot.Y, rotation_pivot.Z);
-	
-	objectToWorldMatrix.rotate(rotation.X, 0, 1, 0);
-	objectToWorldMatrix.rotate(rotation.Y, 1, 0, 0);
-	objectToWorldMatrix.rotate(rotation.Z, 0, 0, 1);
+
+	objectToWorldMatrix.rotate(rotation.X, 0, 0, 1); // rollBefore
+	objectToWorldMatrix.rotate(rotation.Y, 0, 1, 0); // angle
+	objectToWorldMatrix.rotate(rotation.Z, 1, 0, 0); // pitch
+	objectToWorldMatrix.rotate(rotation.W, 0, 0, 1); // rollAfter
 
 	objectToWorldMatrix.translate(-rotation_pivot.X, -rotation_pivot.Y, -rotation_pivot.Z);
 	

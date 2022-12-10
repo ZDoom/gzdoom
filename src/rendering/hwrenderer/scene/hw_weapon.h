@@ -24,8 +24,8 @@ struct WeaponPosition3D
 		  wy;
 
 	FVector3 translation,
-			 rotation,
 			 pivot;
+	FVector4 rotation;
 
 	DPSprite *weapon;
 };
@@ -55,7 +55,8 @@ struct HUDSprite
 	float mx, my;
 	float dynrgb[3];
 
-	FVector3 rotation, translation, pivot;
+	FVector3 translation, pivot;
+	FVector4 rotation;
 
 	int lightindex;
 

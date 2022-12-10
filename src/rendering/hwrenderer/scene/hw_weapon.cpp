@@ -89,7 +89,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 		state.AlphaFunc(Alpha_GEqual, 0);
 
 		FHWModelRenderer renderer(this, state, huds->lightindex);
-		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector3(huds->mx / 4., (huds->my - WEAPONTOP) / 4., 0), FVector3(0, 0, 0), huds->mframe);
+		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector4(0, huds->mx / 4., (huds->my - WEAPONTOP) / 4., 0), FVector3(0, 0, 0), huds->mframe);
 		state.SetVertexBuffer(screen->mVertexData);
 	}
 	else
@@ -255,7 +255,7 @@ static FVector2 BobWeapon2D(WeaponPosition2D &weap, DPSprite *psp, double ticFra
 	return { sx, sy };
 }
 
-static FVector2 BobWeapon3D(WeaponPosition3D &weap, DPSprite *psp, FVector3 &translation, FVector3 &rotation, FVector3 &pivot, double ticFrac)
+static FVector2 BobWeapon3D(WeaponPosition3D &weap, DPSprite *psp, FVector3 &translation, FVector4 &rotation, FVector3 &pivot, double ticFrac)
 {
 	if (psp->firstTic)
 	{ // Can't interpolate the first tic.
@@ -269,13 +269,14 @@ static FVector2 BobWeapon3D(WeaponPosition3D &weap, DPSprite *psp, FVector3 &tra
 
 	if (psp->Flags & PSPF_ADDBOB)
 	{
-		translation = (psp->Flags & PSPF_MIRROR) ? FVector3(-weap.translation.X, weap.translation.Y, weap.translation.Z) : weap.translation ; // TODO handle PSPF_MIRROR?
+		translation = (psp->Flags & PSPF_MIRROR) ? FVector3(-weap.translation.X, weap.translation.Y, weap.translation.Z) : weap.translation ;
 		rotation = weap.rotation;
 		pivot = weap.pivot;
 	}
 	else
 	{
-		translation = rotation = pivot = FVector3(0,0,0);
+		translation = pivot = FVector3(0,0,0);
+		rotation = FVector4(0,0,0,0);
 	}
 
 	if (psp->Flags & PSPF_ADDWEAPON && psp->GetID() != PSP_WEAPON)

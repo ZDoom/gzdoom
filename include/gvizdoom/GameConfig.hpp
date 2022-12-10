@@ -32,6 +32,11 @@ public:
         HUD_ALTERNATIVE = 2 // alternative floating HUD with more info
     }       hudType         {HUD_STATUSBAR};
     int     hudScale        {2};
+
+    // Game parameters
+    int     skill           {3};
+    int     episode         {1};
+    int     map             {1};
 };
 
 } // namespace gvizdoom

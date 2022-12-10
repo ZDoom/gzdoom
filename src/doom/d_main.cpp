@@ -119,6 +119,8 @@
 #include "types.h"
 #include "r_data/r_vanillatrans.h"
 #include "gvizdoom/HeadlessFrameBuffer.hpp"
+#include "gvizdoom/Action.hpp"
+#include "gvizdoom/Context.hpp"
 
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -1050,7 +1052,7 @@ void DoomLoop::Init()
     cht_DoCheat (&players[0], CHT_IDDQD);
 }
 
-void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, const Action& action)
+void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, const gvizdoom::Action& action)
 {
     try
     {

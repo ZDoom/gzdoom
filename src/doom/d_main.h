@@ -28,12 +28,10 @@
 #ifndef __D_MAIN__
 #define __D_MAIN__
 
-#include "gvizdoom/Action.hpp"
 #include "doomtype.h"
 #include "gametype.h"
 #include "m_argv.h"
 #include "v_video.h"
-#include "gvizdoom/Context.hpp"
 #include <memory>
 
 #include "d_event.h"
@@ -41,7 +39,14 @@
 #include "wi_stuff.h"
 #include "g_levellocals.h"
 
-using Action = gvizdoom::Action;
+
+namespace gvizdoom {
+
+    class Action;
+    struct Context;
+
+} // namespace gvizdoom
+
 
 struct event_t;
 
@@ -190,7 +195,10 @@ struct DoomMain {
 
 struct DoomLoop {
     void Init();
-    void Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, const Action& action = Action());
+    void Iter(
+        gvizdoom::Context& context,
+        MainDebugInfo& out_dbgInfo,
+        const gvizdoom::Action& action);
 
     int _lasttic;
     MainDebugInfo _dbgInfo;

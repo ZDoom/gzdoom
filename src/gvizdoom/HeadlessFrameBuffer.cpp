@@ -29,8 +29,7 @@ using namespace gvizdoom;
 
 HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra) :
     DFrameBuffer    (width, height, bgra),
-    _nPixels        (width * height),
-    _bgraBuffer     (bgra ? 0 : 4 * _nPixels)
+    _bgraBuffer     ((!bgra || Pitch != Width) ? 4 * width * height : 0)
 {
     int i;
 
@@ -218,8 +217,12 @@ void HeadlessFrameBuffer::Update ()
         UpdateColors ();
     }
 
-    if (!Bgra)
+    if (!Bgra) {
         convertToBGRA();
+    }
+    else if (Pitch != Width) {
+        removePitchOverhead();
+    }
 }
 
 void HeadlessFrameBuffer::UpdateColors ()
@@ -312,7 +315,7 @@ bool HeadlessFrameBuffer::IsFullscreen ()
 
 const uint8_t* HeadlessFrameBuffer::getPixels() const
 {
-    if (Bgra)
+    if (Bgra && Pitch == Width)
         return MemBuffer;
     else
         return _bgraBuffer.data();
@@ -411,11 +414,20 @@ void HeadlessFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 
 void HeadlessFrameBuffer::convertToBGRA()
 {
-    for (size_t i=0; i<_nPixels; ++i) {
-        // TODO maybe could benefit from SSE?
-        _bgraBuffer[i*4+0] = _activePalette[MemBuffer[i]].b;
-        _bgraBuffer[i*4+1] = _activePalette[MemBuffer[i]].g;
-        _bgraBuffer[i*4+2] = _activePalette[MemBuffer[i]].r;
-        _bgraBuffer[i*4+3] = _activePalette[MemBuffer[i]].a;
+    for (int j=0; j<Height; ++j) {
+        auto* row = reinterpret_cast<uint32_t*>(_bgraBuffer.data() + (j * Width)*4);
+        for (int i=0; i<Width; ++i) {
+            auto& p = _activePalette[MemBuffer[j*Pitch + i]];
+            row[i] = p.d;
+        }
+    }
+}
+
+void HeadlessFrameBuffer::removePitchOverhead()
+{
+    for (int j=0; j<Height; ++j) {
+        uint8_t* srcRow = MemBuffer + (j * Pitch) * 4;
+        uint8_t* destRow = _bgraBuffer.data() + (j * Width) * 4;
+        memcpy(destRow, srcRow, sizeof(uint8_t) * Width * 4);
     }
 }

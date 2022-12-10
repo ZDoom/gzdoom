@@ -59,12 +59,12 @@ private:
     bool NeedGammaUpdate;
     bool NotPaletted;
 
-    size_t                  _nPixels;
-    std::vector<uint8_t>    _bgraBuffer; // used for paletted -> bgra conversion
+    std::vector<uint8_t>    _bgraBuffer; // required for paletted drawing and when width != pitch
 
     void UpdateColors();
     void ResetSDLRenderer();
     void convertToBGRA();
+    void removePitchOverhead(); // in truecolor mode, remove the possible buffer overhead when width != pitch
 
     HeadlessFrameBuffer() {}
 };

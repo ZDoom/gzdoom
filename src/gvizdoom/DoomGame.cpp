@@ -29,12 +29,14 @@ DoomGame::~DoomGame()
 
 void DoomGame::init(GameConfig&& gameConfig)
 {
+    _gameConfig = gameConfig;
+
     // Context init
     _context.frameBuffer = std::make_unique<HeadlessFrameBuffer>(
-        gameConfig.videoWidth, gameConfig.videoHeight, gameConfig.videoTrueColor);
+        _gameConfig.videoWidth, _gameConfig.videoHeight, _gameConfig.videoTrueColor);
 
     // Doom init
-    gzdoom_main_init(gameConfig.argc, gameConfig.argv);
+    gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
     _status = _doomMain.Init();
     if (_status != 0) {
         _doomMain.Cleanup();

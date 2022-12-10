@@ -20,12 +20,14 @@ using namespace gvizdoom;
 
 
 App::App(
-    const App::Settings &settings,
+    const App::Settings& settings,
     RenderContext* renderContext,
     GameConfig gameConfig
 ) :
     _settings       (settings),
     _window         (nullptr),
+    _renderer       (nullptr),
+    _texture        (nullptr),
     _quit           (false),
     _lastTicks      (0),
     _frameTicks     (0),
@@ -37,7 +39,6 @@ App::App(
         printf("Error: Could not initialize SDL!\n");
         return;
     }
-
     _window = SDL_CreateWindow(
         _settings.window.name.c_str(),
         SDL_WINDOWPOS_UNDEFINED,
@@ -49,6 +50,21 @@ App::App(
         printf("Error: SDL Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return;
     }
+    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+    if (_renderer == nullptr) {
+        printf("Error: SDL Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
+        return;
+    }
+    _texture = SDL_CreateTexture(
+        _renderer,
+        SDL_PIXELFORMAT_BGRA32,
+        SDL_TEXTUREACCESS_STREAMING,
+        gameConfig.videoWidth,
+        gameConfig.videoHeight);
+    if (_texture == nullptr) {
+        printf("Error: SDL Texture could not be created! SDL_Error: %s\n", SDL_GetError());
+        return;
+    }
 
     _doomGame = std::make_unique<DoomGame>();
     _doomGame->init(std::move(gameConfig));
@@ -56,8 +72,13 @@ App::App(
 
 App::~App()
 {
-    // Destroy window and quit SDL subsystems
-    SDL_DestroyWindow(_window);
+    // Destroy SDL objects and quit SDL subsystems
+    if (_texture != nullptr)
+        SDL_DestroyTexture(_texture);
+    if (_renderer != nullptr)
+        SDL_DestroyRenderer(_renderer);
+    if (_window != nullptr)
+        SDL_DestroyWindow(_window);
     SDL_Quit();
 }
 
@@ -110,13 +131,14 @@ void App::loop(void)
             break;
         }
 
+        auto screenHeight = _doomGame->getScreenHeight();
+        auto screenWidth = _doomGame->getScreenWidth();
+
         // TODO opencv temp
         if (_doomGame->getPixelsRGBA() != nullptr) {
-            auto h = _doomGame->getScreenHeight();
-            auto w = _doomGame->getScreenWidth();
 
             // render RGBA
-            cv::Mat rgbaMat(h, w, CV_8UC4, const_cast<uint8_t*>(_doomGame->getPixelsRGBA()));
+            cv::Mat rgbaMat(screenHeight, screenWidth, CV_8UC4, const_cast<uint8_t*>(_doomGame->getPixelsRGBA()));
             cv::imshow("rgba", rgbaMat);
 #if 0
             // render depth
@@ -130,6 +152,18 @@ void App::loop(void)
         // User-defined render
         if (_renderContext != nullptr && _settings.render != nullptr)
             _settings.render(*_renderContext, _appContext);
+
+        // Render screen
+        //SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255); // clearing is not actually required
+        //SDL_RenderClear(_renderer);
+        uint8_t* sdlPixels;
+        int pitch;
+        SDL_LockTexture(_texture, nullptr, reinterpret_cast<void**>(&sdlPixels), &pitch);
+        assert(pitch == screenWidth*4);
+        memcpy(sdlPixels, _doomGame->getPixelsRGBA(), sizeof(uint8_t)*screenWidth*screenHeight*4);
+        SDL_UnlockTexture(_texture);
+        SDL_RenderCopy(_renderer, _texture, nullptr, nullptr);
+        SDL_RenderPresent(_renderer);
 #if 0
         SDL_Delay(1000/_settings.window.framerateLimit);
 

@@ -49,6 +49,7 @@ private:
     MainDebugInfo   _dbgInfo;
 
     void reinit();
+    void initHUD() const;
 };
 
 } // namespace gvizdoom

@@ -14,6 +14,14 @@
 #include "v_video.h"
 
 
+//CVars for HUD config
+EXTERN_CVAR(Int, hud_scale);
+EXTERN_CVAR(Int, st_scale);
+EXTERN_CVAR(Int, screenblocks);
+EXTERN_CVAR(Bool, hud_althud);
+EXTERN_CVAR(Int, hud_althudscale);
+
+
 using namespace gvizdoom;
 
 
@@ -141,5 +149,31 @@ float* DoomGame::getPixelsDepth() const
 void DoomGame::reinit()
 {
     _doomMain.ReInit(_context);
+    // Override cvars with values from gameConfig
+    initHUD();
     _doomLoop.Init();
+}
+
+void DoomGame::initHUD() const
+{
+    hud_scale = _gameConfig.hudScale;
+    st_scale = _gameConfig.hudScale;
+
+    switch (_gameConfig.hudType) {
+        case GameConfig::HUD_STATUSBAR:
+            screenblocks = 10;
+            hud_althud = false;
+            st_scale = _gameConfig.hudScale;
+            break;
+        case GameConfig::HUD_FLOATING:
+            screenblocks = 11;
+            hud_althud = false;
+            hud_scale = _gameConfig.hudScale;
+            break;
+        case GameConfig::HUD_ALTERNATIVE:
+            screenblocks = 11;
+            hud_althud = true;
+            hud_althudscale = _gameConfig.hudScale;
+            break;
+    }
 }

@@ -99,6 +99,9 @@ private:
 
     App::Context                _appContext;
     RenderContext*              _renderContext;
+
+    void createSDLObjects(const GameConfig& gameConfig);
+    void destroySDLObjects();
 };
 
 } // namespace gvizdoom

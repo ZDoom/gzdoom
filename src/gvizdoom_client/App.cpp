@@ -40,32 +40,7 @@ App::App(
         printf("Error: Could not initialize SDL!\n");
         return;
     }
-    _window = SDL_CreateWindow(
-        _settings.window.name.c_str(),
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        gameConfig.videoWidth,
-        gameConfig.videoHeight,
-        SDL_WINDOW_SHOWN);
-    if (_window == nullptr) {
-        printf("Error: SDL Window could not be created! SDL_Error: %s\n", SDL_GetError());
-        return;
-    }
-    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
-    if (_renderer == nullptr) {
-        printf("Error: SDL Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
-        return;
-    }
-    _texture = SDL_CreateTexture(
-        _renderer,
-        SDL_PIXELFORMAT_BGRA32,
-        SDL_TEXTUREACCESS_STREAMING,
-        gameConfig.videoWidth,
-        gameConfig.videoHeight);
-    if (_texture == nullptr) {
-        printf("Error: SDL Texture could not be created! SDL_Error: %s\n", SDL_GetError());
-        return;
-    }
+    createSDLObjects(gameConfig);
 
     _doomGame = std::make_unique<DoomGame>();
     _doomGame->init(std::move(gameConfig));
@@ -73,13 +48,7 @@ App::App(
 
 App::~App()
 {
-    // Destroy SDL objects and quit SDL subsystems
-    if (_texture != nullptr)
-        SDL_DestroyTexture(_texture);
-    if (_renderer != nullptr)
-        SDL_DestroyRenderer(_renderer);
-    if (_window != nullptr)
-        SDL_DestroyWindow(_window);
+    destroySDLObjects();
     SDL_Quit();
 }
 
@@ -174,4 +143,45 @@ void App::loop(void)
 void App::setRenderContext(RenderContext* renderContext)
 {
     _renderContext = renderContext;
+}
+
+void App::createSDLObjects(const GameConfig& gameConfig)
+{
+    _window = SDL_CreateWindow(
+        _settings.window.name.c_str(),
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        gameConfig.videoWidth,
+        gameConfig.videoHeight,
+        SDL_WINDOW_SHOWN);
+    if (_window == nullptr) {
+        printf("Error: SDL Window could not be created! SDL_Error: %s\n", SDL_GetError());
+        return;
+    }
+    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+    if (_renderer == nullptr) {
+        printf("Error: SDL Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
+        return;
+    }
+    _texture = SDL_CreateTexture(
+        _renderer,
+        SDL_PIXELFORMAT_BGRA32,
+        SDL_TEXTUREACCESS_STREAMING,
+        gameConfig.videoWidth,
+        gameConfig.videoHeight);
+    if (_texture == nullptr) {
+        printf("Error: SDL Texture could not be created! SDL_Error: %s\n", SDL_GetError());
+        return;
+    }
+}
+
+void App::destroySDLObjects()
+{
+    // Destroy SDL objects and quit SDL subsystems
+    if (_texture != nullptr)
+        SDL_DestroyTexture(_texture);
+    if (_renderer != nullptr)
+        SDL_DestroyRenderer(_renderer);
+    if (_window != nullptr)
+        SDL_DestroyWindow(_window);
 }

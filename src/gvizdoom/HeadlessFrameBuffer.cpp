@@ -33,48 +33,22 @@ HeadlessFrameBuffer::HeadlessFrameBuffer (int width, int height, bool bgra) :
 {
     int i;
 
-    NeedPalUpdate = false;
-    NeedGammaUpdate = false;
-    UpdatePending = false;
-    NotPaletted = false;
-    FlashAmount = 0;
-
-    ResetSDLRenderer ();
+    _needPalUpdate = false;
+    _needGammaUpdate = false;
+    _updatePending = false;
+    _flashAmount = 0;
 
     for (i = 0; i < 256; i++)
     {
-        GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
+        _gammaTable[0][i] = _gammaTable[1][i] = _gammaTable[2][i] = i;
     }
 
-    memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
+    memcpy (_sourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
     UpdateColors ();
 
 #ifdef __APPLE__
     SetVSync (vid_vsync);
 #endif
-}
-
-
-HeadlessFrameBuffer::~HeadlessFrameBuffer ()
-{
-#if 0
-    if (Renderer)
-    {
-        if (Texture)
-            SDL_DestroyTexture (Texture);
-        SDL_DestroyRenderer (Renderer);
-    }
-
-    if(Screen)
-    {
-        SDL_DestroyWindow (Screen);
-    }
-#endif
-}
-
-bool HeadlessFrameBuffer::IsValid ()
-{
-    return DFrameBuffer::IsValid()/* && Screen != NULL*/;
 }
 
 int HeadlessFrameBuffer::GetPageCount ()
@@ -87,14 +61,9 @@ bool HeadlessFrameBuffer::Lock (bool buffered)
     return DSimpleCanvas::Lock ();
 }
 
-bool HeadlessFrameBuffer::Relock ()
-{
-    return DSimpleCanvas::Lock ();
-}
-
 void HeadlessFrameBuffer::Unlock ()
 {
-    if (UpdatePending && LockCount == 1)
+    if (_updatePending && LockCount == 1)
     {
         Update ();
     }
@@ -111,7 +80,7 @@ void HeadlessFrameBuffer::Update ()
     {
         if (LockCount > 0)
         {
-            UpdatePending = true;
+            _updatePending = true;
             --LockCount;
         }
         return;
@@ -128,92 +97,26 @@ void HeadlessFrameBuffer::Update ()
 
     Buffer = NULL;
     LockCount = 0;
-    UpdatePending = false;
-#if 0
-    BlitCycles.Reset();
-    SDLFlipCycles.Reset();
-    BlitCycles.Clock();
-#endif
+    _updatePending = false;
+
     void *pixels = MemBuffer;
     int pitch = Bgra ? Pitch * 4 : Pitch;
-#if 0
-    if (UsingRenderer)
-    {
-        if (SDL_LockTexture (Texture, NULL, &pixels, &pitch))
-            return;
-    }
-    else
-    {
-        if (SDL_LockSurface (Surface))
-            return;
 
-        pixels = Surface->pixels;
-        pitch = Surface->pitch;
+    if (Bgra) {
+        CopyWithGammaBgra(pixels, pitch, _gammaTable[0], _gammaTable[1], _gammaTable[2], _flash, _flashAmount);
     }
-#endif
-#if 1 // TODO maybe needed for gammaslääkäri
-    if (Bgra)
-    {
-        CopyWithGammaBgra(pixels, pitch, GammaTable[0], GammaTable[1], GammaTable[2], Flash, FlashAmount);
-    }
-    else if (NotPaletted)
-    {
-        GPfx.Convert (MemBuffer, Pitch,
-            pixels, pitch, Width, Height,
-            FRACUNIT, FRACUNIT, 0, 0);
-    }
-#if 0
-    else
-    {
-        if (pitch == Pitch)
-        {
-            memcpy (pixels, MemBuffer, Width*Height);
-        }
-        else
-        {
-            for (int y = 0; y < Height; ++y)
-            {
-                memcpy ((uint8_t *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
-            }
-        }
-    }
-#endif
-#endif
-#if 0
-    if (UsingRenderer)
-    {
-        SDL_UnlockTexture (Texture);
 
-        SDLFlipCycles.Clock();
-        SDL_RenderClear(Renderer);
-        SDL_RenderCopy(Renderer, Texture, NULL, NULL);
-        SDL_RenderPresent(Renderer);
-        SDLFlipCycles.Unclock();
-    }
-    else
-    {
-        SDL_UnlockSurface (Surface);
-
-        SDLFlipCycles.Clock();
-        SDL_UpdateWindowSurface (Screen);
-        SDLFlipCycles.Unclock();
-    }
-#endif
-    //BlitCycles.Unclock();
-
-    if (NeedGammaUpdate)
-    {
+    if (_needGammaUpdate) {
         bool Windowed = false;
-        NeedGammaUpdate = false;
-        CalcGamma ((Windowed || rgamma == 0.f) ? Gamma : (Gamma * rgamma), GammaTable[0]);
-        CalcGamma ((Windowed || ggamma == 0.f) ? Gamma : (Gamma * ggamma), GammaTable[1]);
-        CalcGamma ((Windowed || bgamma == 0.f) ? Gamma : (Gamma * bgamma), GammaTable[2]);
-        NeedPalUpdate = true;
+        _needGammaUpdate = false;
+        CalcGamma ((Windowed || rgamma == 0.f) ? _gamma : (_gamma * rgamma), _gammaTable[0]);
+        CalcGamma ((Windowed || ggamma == 0.f) ? _gamma : (_gamma * ggamma), _gammaTable[1]);
+        CalcGamma ((Windowed || bgamma == 0.f) ? _gamma : (_gamma * bgamma), _gammaTable[2]);
+        _needPalUpdate = true;
     }
 
-    if (NeedPalUpdate)
-    {
-        NeedPalUpdate = false;
+    if (_needPalUpdate) {
+        _needPalUpdate = false;
         UpdateColors ();
     }
 
@@ -227,84 +130,58 @@ void HeadlessFrameBuffer::Update ()
 
 void HeadlessFrameBuffer::UpdateColors ()
 {
-    //if (NotPaletted)
+    for (int i = 0; i < 256; ++i)
     {
-        //PalEntry palette[256];
-
-        for (int i = 0; i < 256; ++i)
-        {
-            _activePalette[i].r = GammaTable[0][SourcePalette[i].r];
-            _activePalette[i].g = GammaTable[1][SourcePalette[i].g];
-            _activePalette[i].b = GammaTable[2][SourcePalette[i].b];
-        }
-        if (FlashAmount)
-        {
-            DoBlending (_activePalette, _activePalette,
-                256, GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
-                FlashAmount);
-        }
-        //GPfx.SetPalette (palette);
+        _activePalette[i].r = _gammaTable[0][_sourcePalette[i].r];
+        _activePalette[i].g = _gammaTable[1][_sourcePalette[i].g];
+        _activePalette[i].b = _gammaTable[2][_sourcePalette[i].b];
     }
-#if 0
-    else
+    if (_flashAmount)
     {
-        SDL_Color colors[256];
-
-        for (int i = 0; i < 256; ++i)
-        {
-            colors[i].r = GammaTable[0][SourcePalette[i].r];
-            colors[i].g = GammaTable[1][SourcePalette[i].g];
-            colors[i].b = GammaTable[2][SourcePalette[i].b];
-        }
-        if (FlashAmount)
-        {
-            DoBlending ((PalEntry *)colors, (PalEntry *)colors,
-                256, GammaTable[2][Flash.b], GammaTable[1][Flash.g], GammaTable[0][Flash.r],
-                FlashAmount);
-        }
-        SDL_SetPaletteColors (Surface->format->palette, colors, 0, 256);
+        DoBlending (_activePalette, _activePalette,
+            256, _gammaTable[0][_flash.r], _gammaTable[1][_flash.g], _gammaTable[2][_flash.b],
+            _flashAmount);
     }
-#endif
 }
 
 PalEntry *HeadlessFrameBuffer::GetPalette ()
 {
-    return SourcePalette;
+    return _sourcePalette;
 }
 
 void HeadlessFrameBuffer::UpdatePalette ()
 {
-    NeedPalUpdate = true;
+    _needPalUpdate = true;
 }
 
 bool HeadlessFrameBuffer::SetGamma (float gamma)
 {
-    Gamma = gamma;
-    NeedGammaUpdate = true;
+    _gamma = gamma;
+    _needGammaUpdate = true;
     return true;
 }
 
 bool HeadlessFrameBuffer::SetFlash (PalEntry rgb, int amount)
 {
-    Flash = rgb;
-    FlashAmount = amount;
-    NeedPalUpdate = true;
+    _flash = rgb;
+    _flashAmount = amount;
+    _needPalUpdate = true;
     return true;
 }
 
 void HeadlessFrameBuffer::GetFlash (PalEntry &rgb, int &amount)
 {
-    rgb = Flash;
-    amount = FlashAmount;
+    rgb = _flash;
+    amount = _flashAmount;
 }
 
 // Q: Should I gamma adjust the returned palette?
 void HeadlessFrameBuffer::GetFlashedPalette (PalEntry pal[256])
 {
-    memcpy (pal, SourcePalette, 256*sizeof(PalEntry));
-    if (FlashAmount)
+    memcpy (pal, _sourcePalette, 256*sizeof(PalEntry));
+    if (_flashAmount)
     {
-        DoBlending (pal, pal, 256, Flash.r, Flash.g, Flash.b, FlashAmount);
+        DoBlending (pal, pal, 256, _flash.r, _flash.g, _flash.b, _flashAmount);
     }
 }
 
@@ -321,84 +198,15 @@ const uint8_t* HeadlessFrameBuffer::getPixels() const
         return _bgraBuffer.data();
 }
 
-void HeadlessFrameBuffer::ResetSDLRenderer ()
-{
-#if 0
-    if (Renderer)
-    {
-        if (Texture)
-            SDL_DestroyTexture (Texture);
-        SDL_DestroyRenderer (Renderer);
-    }
-
-    UsingRenderer = !vid_forcesurface;
-    if (UsingRenderer)
-    {
-        Renderer = SDL_CreateRenderer (Screen, -1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE|
-            (vid_vsync ? SDL_RENDERER_PRESENTVSYNC : 0));
-        if (!Renderer)
-            return;
-
-        SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
-
-        Uint32 fmt;
-        if (Bgra)
-        {
-            fmt = SDL_PIXELFORMAT_ARGB8888;
-        }
-        else
-        {
-            switch (vid_displaybits)
-            {
-                default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
-                case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
-                case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
-                case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
-                case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
-            }
-        }
-        Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
-
-        {
-            NotPaletted = true;
-
-            Uint32 format;
-            SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
-
-            Uint32 Rmask, Gmask, Bmask, Amask;
-            int bpp;
-            SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
-            GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
-        }
-    }
-    else
-    {
-        Surface = SDL_GetWindowSurface (Screen);
-
-        if (Surface->format->palette == NULL)
-        {
-            NotPaletted = true;
-            GPfx.SetFormat (Surface->format->BitsPerPixel, Surface->format->Rmask, Surface->format->Gmask, Surface->format->Bmask);
-        }
-        else
-            NotPaletted = false;
-    }
-
-#endif
-    GPfx.SetFormat(32, 0xff0000, 0x00ff00, 0x0000ff);
-}
-
 void HeadlessFrameBuffer::SetVSync (bool vsync)
 {
-#if 0 // #ifdef __APPLE__
+#ifdef __APPLE__
     if (CGLContextObj context = CGLGetCurrentContext())
 	{
 		// Apply vsync for native backend only (where OpenGL context is set)
 		const GLint value = vsync ? 1 : 0;
 		CGLSetParameter(context, kCGLCPSwapInterval, &value);
 	}
-#else
-    ResetSDLRenderer ();
 #endif // __APPLE__
 }
 
@@ -406,7 +214,6 @@ void HeadlessFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 {
     int w = Width;
     int h = Height;
-    //SDL_GetWindowSize (Screen, &w, &h);
 
     x = (int16_t)(x*Width/w);
     y = (int16_t)(y*Height/h);

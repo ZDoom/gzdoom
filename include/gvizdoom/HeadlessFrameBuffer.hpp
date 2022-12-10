@@ -21,52 +21,41 @@ class HeadlessFrameBuffer : public DFrameBuffer
     typedef DFrameBuffer Super;
 public:
     HeadlessFrameBuffer(int width, int height, bool bgra);
-    ~HeadlessFrameBuffer();
 
-    bool Lock(bool buffer);
-    void Unlock();
-    bool Relock();
-    void ForceBuffering(bool force);
-    bool IsValid();
-    void Update();
-    PalEntry *GetPalette();
-    void GetFlashedPalette(PalEntry pal[256]);
-    void UpdatePalette();
-    bool SetGamma(float gamma);
-    bool SetFlash(PalEntry rgb, int amount);
-    void GetFlash(PalEntry &rgb, int &amount);
-    int GetPageCount();
-    bool IsFullscreen();
+    bool Lock(bool buffer) override;
+    void Unlock() override;
+    void Update() override;
+    PalEntry *GetPalette() override;
+    void GetFlashedPalette(PalEntry pal[256]) override;
+    void UpdatePalette() override;
+    bool SetGamma(float gamma) override;
+    bool SetFlash(PalEntry rgb, int amount) override;
+    void GetFlash(PalEntry &rgb, int &amount) override;
+    int GetPageCount() override;
+    bool IsFullscreen() override;
 
     const uint8_t* getPixels() const;
 
-    //friend class SDLGLVideo;
-
-    virtual void SetVSync(bool vsync);
-    virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
+    void SetVSync(bool vsync) override;
+    void ScaleCoordsFromWindow(int16_t &x, int16_t &y) override;
 
 private:
-    PalEntry SourcePalette[256];
-    PalEntry    _activePalette[256];
-    uint8_t GammaTable[3][256];
-    PalEntry Flash;
-    int FlashAmount;
-    float Gamma;
-    bool UpdatePending;
-
-    bool UsingRenderer;
-    bool NeedPalUpdate;
-    bool NeedGammaUpdate;
-    bool NotPaletted;
-
+    PalEntry                _sourcePalette[256];
+    PalEntry                _activePalette[256];
+    uint8_t                 _gammaTable[3][256];
+    PalEntry                _flash;
+    int                     _flashAmount;
+    float                   _gamma;
+    bool                    _updatePending;
+    bool                    _needPalUpdate;
+    bool                    _needGammaUpdate;
     std::vector<uint8_t>    _bgraBuffer; // required for paletted drawing and when width != pitch
 
     void UpdateColors();
-    void ResetSDLRenderer();
     void convertToBGRA();
     void removePitchOverhead(); // in truecolor mode, remove the possible buffer overhead when width != pitch
 
-    HeadlessFrameBuffer() {}
+    HeadlessFrameBuffer() = default;
 };
 
 } // namespace gvizdoom

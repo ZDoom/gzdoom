@@ -1213,6 +1213,18 @@ PUBLIC
 	BUILD_GVIZDOOM
 )
 
+if (WITH_ASAN)
+    target_compile_options(gvizdoom
+    PRIVATE
+        ${SANITIZER_FLAG}
+    )
+
+    target_link_options(gvizdoom
+    PRIVATE
+        ${SANITIZER_FLAG}
+    )
+endif()
+
 set_target_properties(gvizdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 
 # Setup GViZDoom client application
@@ -1237,6 +1249,18 @@ PUBLIC
 	${SDL2_LIBRARY}
 	${OpenCV_LIBS} # TODO opencv temp
 )
+
+if (WITH_ASAN)
+    target_compile_options(gvizdoom_client
+    PRIVATE
+        ${SANITIZER_FLAG}
+    )
+
+    target_link_options(gvizdoom_client
+    PRIVATE
+        ${SANITIZER_FLAG}
+    )
+endif()
 
 set_target_properties(gvizdoom_client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 

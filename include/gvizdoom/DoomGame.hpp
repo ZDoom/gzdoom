@@ -14,6 +14,7 @@
 #include "gvizdoom/Action.hpp"
 #include "gvizdoom/GameConfig.hpp"
 #include "gvizdoom/Context.hpp"
+#include "gvizdoom/HeadlessFrameBuffer.hpp"
 #include "d_main.h"
 
 

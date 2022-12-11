@@ -10,7 +10,6 @@
 
 #include "gvizdoom/DoomGame.hpp"
 #include "gvizdoom/gzdoom_main_wrapper.hpp"
-#include "gvizdoom/HeadlessFrameBuffer.hpp"
 #include "v_video.h"
 
 

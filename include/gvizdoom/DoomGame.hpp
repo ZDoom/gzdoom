@@ -30,6 +30,7 @@ public:
     DoomGame& operator=(DoomGame&&) = default;
 
     void init(GameConfig&& gameConfig);
+    void init(const GameConfig& gameConfig);
     void restart();
     void restart(const GameConfig& gameConfig);
     bool update(const Action& action); // returns true upon exit
@@ -48,6 +49,7 @@ private:
     Context         _context;
     MainDebugInfo   _dbgInfo;
 
+    void init();
     void reinit();
     void initHUD() const;
 };

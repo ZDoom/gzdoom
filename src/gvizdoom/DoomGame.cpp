@@ -25,22 +25,20 @@ using namespace gvizdoom;
 
 
 DoomGame::DoomGame() :
-    _status         (-1)
+    _status (-1)
 {
 }
 
 void DoomGame::init(GameConfig&& gameConfig)
 {
     _gameConfig = gameConfig;
+    init();
+}
 
-    // Doom main init
-    gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
-    _status = _doomMain.Init();
-    if (_status != 0) {
-        return;
-    }
-
-    reinit();
+void DoomGame::init(const GameConfig& gameConfig)
+{
+    _gameConfig = gameConfig;
+    init();
 }
 
 void DoomGame::restart()
@@ -133,6 +131,18 @@ float* DoomGame::getPixelsDepth() const
     return _canvas->GetDepthPixels();
 #endif
     return nullptr;
+}
+
+void DoomGame::init()
+{
+    // Doom main init
+    gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
+    _status = _doomMain.Init();
+    if (_status != 0) {
+        return;
+    }
+
+    reinit();
 }
 
 void DoomGame::reinit()

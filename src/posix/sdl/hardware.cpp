@@ -32,7 +32,6 @@
 **
 */
 
-#include <SDL.h>
 #include <signal.h>
 #include <time.h>
 
@@ -90,30 +89,12 @@ CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 
 void I_ShutdownGraphics ()
 {
-	if (screen)
-	{
-		DFrameBuffer *s = screen;
-		screen = NULL;
-		delete s;
-	}
 	if (Video)
 		delete Video, Video = NULL;
-
-	SDL_QuitSubSystem (SDL_INIT_VIDEO);
 }
 
 void I_InitGraphics ()
 {
-#if 0
-	if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0)
-	{
-		I_FatalError ("Could not initialize SDL video:\n%s\n", SDL_GetError());
-		return;
-	}
-
-	Printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
-#endif
-
 	UCVarValue val;
 
 	val.Bool = !!Args->CheckParm ("-devparm");

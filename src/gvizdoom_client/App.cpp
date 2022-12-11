@@ -75,6 +75,7 @@ void App::loop(void)
 #endif
     size_t actionIndex = 0LLU;
 
+    int i=0; // TODO temp for testing restart
     // Application main loop
     while (!_quit) {
 #if 0
@@ -112,6 +113,10 @@ void App::loop(void)
             cv::waitKey(1);
         }
         // TODO end of opencv temp
+
+        if (++i > 300) { // TODO temp for testing restart
+            break;
+        }
 
         // User-defined render
         if (_renderContext != nullptr && _settings.render != nullptr)

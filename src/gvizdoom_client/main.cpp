@@ -68,11 +68,19 @@ int main(int argc, char** argv)
 
     RenderContext renderContext;
 
-    GameConfig gameConfig{argc, argv, interactive, 1280, 960, true};
-
+    GameConfig gameConfig{argc, argv, interactive, 640, 480, true, GameConfig::HUD_STATUSBAR, 2, 3, 1, 1};
     App app(appSettings, &renderContext, gameConfig);
-
     app.loop();
+
+    // TODO temp for testing restart
+    GameConfig gameConfig2{argc, argv, interactive, 320, 240, true, GameConfig::HUD_FLOATING, 1, 3, 1, 2};
+    app.restart(gameConfig2);
+    app.loop();
+
+    GameConfig gameConfig3{argc, argv, interactive, 1280, 960, true, GameConfig::HUD_ALTERNATIVE, 3, 3, 1, 2};
+    app.restart(gameConfig3);
+    app.loop();
+    // TODO end of temp
 
     return 0;
 }

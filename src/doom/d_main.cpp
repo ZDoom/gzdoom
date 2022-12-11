@@ -48,6 +48,7 @@
 #include <math.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <algorithm>
 
 #include "doomerrors.h"
 
@@ -2252,39 +2253,7 @@ static void CheckCmdLine()
 		startmap = "&wt@01";
 	}
 	autostart = StoredWarp.IsNotEmpty();
-				
-	const char *val = Args->CheckValue ("-skill");
-	if (val)
-	{
-		gameskill = val[0] - '1';
-		autostart = true;
-	}
-
-	p = Args->CheckParm ("-warp");
-	if (p && p < Args->NumArgs() - 1)
-	{
-		int ep, map;
-
-		if (gameinfo.flags & GI_MAPxx)
-		{
-			ep = 1;
-			map = atoi (Args->GetArg(p+1));
-		}
-		else 
-		{
-			ep = atoi (Args->GetArg(p+1));
-			map = p < Args->NumArgs() - 2 ? atoi (Args->GetArg(p+2)) : 10;
-			if (map < 1 || map > 9)
-			{
-				map = ep;
-				ep = 1;
-			}
-		}
-
-		startmap = CalcMapName (ep, map);
-		autostart = true;
-	}
-
+    
 	// [RH] Hack to handle +map. The standard console command line handler
 	// won't be able to handle it, so we take it out of the command line and set
 	// it up like -warp.
@@ -2539,6 +2508,15 @@ void DoomMain::ReInit(gvizdoom::Context& context, const gvizdoom::GameConfig& ga
     ParseCompatibility();
 
     CheckCmdLine();
+
+    // Skill and map, from gameConfig
+    gameskill = std::clamp(gameConfig.skill, 0, 4);
+    startmap = CalcMapName(
+        gameConfig.map < 1 || gameConfig.map > 9 ? 1 : gameConfig.episode,
+        gameConfig.map);
+
+    // No start screen
+    autostart = true;
 
     // [RH] Load sound environments
     S_ParseReverbDef();

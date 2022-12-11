@@ -9,6 +9,7 @@
 //
 
 #include "gvizdoom_client/App.hpp"
+#include "gvizdoom/HeadlessFrameBuffer.hpp"
 
 #include <opencv2/opencv.hpp>
 

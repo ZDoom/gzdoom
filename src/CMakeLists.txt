@@ -1321,10 +1321,10 @@ include_directories( .
 #		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
 #endif()
 #
-#add_custom_command(TARGET zdoom POST_BUILD
-#	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:zdoom>/soundfonts/gzdoom.sf2)
-#
+add_custom_command(TARGET gvizdoom POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:gvizdoom>/soundfonts/gzdoom.sf2)
+
 #if( CMAKE_COMPILER_IS_GNUCXX )
 #	# GCC misoptimizes this file
 #	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )

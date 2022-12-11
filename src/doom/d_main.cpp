@@ -1103,11 +1103,13 @@ void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, cons
         // Update display, next frame, with current state.
         I_StartTic ();
         D_Display(context);
+#if 0 // Not needed since the loop has been spliced and we can terminate it whenever we want
         if (wantToRestart)
         {
             wantToRestart = false;
             return;
         }
+#endif
     }
     catch (CRecoverableError &error)
     {
@@ -2678,7 +2680,8 @@ void DoomMain::ReInit(gvizdoom::Context& context)
     DThinker::RunThinkers();
     gamestate = GS_STARTUP;
 
-    if (!restart) {
+    //if (!restart)
+    {
         // start the apropriate game based on parms
         _v = Args->CheckValue("-record");
 
@@ -2743,7 +2746,9 @@ void DoomMain::ReInit(gvizdoom::Context& context)
                 atterm(D_QuitNetGame);        // killough
             }
         }
-    } else {
+    }
+#if 0 // this branch seems to be broken
+    else {
         // let the renderer reinitialize some stuff if needed
         screen->GameRestart();
         // These calls from inside V_Init2 are still necessary
@@ -2753,7 +2758,7 @@ void DoomMain::ReInit(gvizdoom::Context& context)
         D_StartTitle();                // start up intro loop
         setmodeneeded = false;            // This may be set to true here, but isn't needed for a restart
     }
-
+#endif
     D_DoAnonStats();
 
 #if 0

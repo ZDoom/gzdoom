@@ -15,8 +15,8 @@ namespace gvizdoom {
 
 // GameConfig class encapsulates all information required for DoomGame initialization
 struct GameConfig {
-    int     argc; // TODO remove raw CLI parameters, use high-level abstraction
-    char**  argv;
+    int     argc            {0}; // TODO remove raw CLI parameters, use high-level abstraction
+    char**  argv            {nullptr};
     bool    interactive     {false};
 
     // Video parameters

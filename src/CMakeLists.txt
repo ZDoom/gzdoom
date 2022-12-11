@@ -1345,7 +1345,7 @@ include_directories( .
 #
 add_custom_command(TARGET gvizdoom POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:gvizdoom>/soundfonts/gzdoom.sf2)
+	${CMAKE_SOURCE_DIR}/assets/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:gvizdoom>/assets/soundfonts/gzdoom.sf2)
 
 #if( CMAKE_COMPILER_IS_GNUCXX )
 #	# GCC misoptimizes this file

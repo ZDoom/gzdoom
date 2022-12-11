@@ -334,10 +334,10 @@ install(DIRECTORY docs/
 
 add_subdirectory(ext)
 add_subdirectory( tools )
-add_subdirectory( wadsrc )
-add_subdirectory( wadsrc_bm )
-add_subdirectory( wadsrc_lights )
-add_subdirectory( wadsrc_extra )
+add_subdirectory(assets/wadsrc)
+add_subdirectory(assets/wadsrc_bm)
+add_subdirectory(assets/wadsrc_lights)
+add_subdirectory(assets/wadsrc_extra)
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )

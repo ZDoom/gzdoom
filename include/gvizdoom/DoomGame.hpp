@@ -27,7 +27,6 @@ public:
     DoomGame(DoomGame&&) = default;
     DoomGame& operator=(const DoomGame&) = delete;
     DoomGame& operator=(DoomGame&&) = default;
-    ~DoomGame();
 
     void init(GameConfig&& gameConfig);
     void restart();

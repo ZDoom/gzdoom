@@ -30,11 +30,6 @@ DoomGame::DoomGame() :
 {
 }
 
-DoomGame::~DoomGame()
-{
-    _doomMain.Cleanup();
-}
-
 void DoomGame::init(GameConfig&& gameConfig)
 {
     _gameConfig = gameConfig;
@@ -43,7 +38,6 @@ void DoomGame::init(GameConfig&& gameConfig)
     gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
     _status = _doomMain.Init();
     if (_status != 0) {
-        _doomMain.Cleanup();
         return;
     }
 

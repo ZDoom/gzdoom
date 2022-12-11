@@ -19,6 +19,7 @@
 #include <new>
 #include <sys/param.h>
 #include <locale.h>
+#include <filesystem>
 
 #include "doomerrors.h"
 #include "m_argv.h"
@@ -168,7 +169,8 @@ int gzdoom_main_init(int argc, char **argv) // TODO can this stuff be moved to D
 #if !defined (__APPLE__)
     {
         int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
-        cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", DoomSpecificInfo);
+        if (argc != 0 && argv != nullptr)
+            cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", DoomSpecificInfo);
     }
 #endif // !__APPLE__
 
@@ -197,44 +199,46 @@ int gzdoom_main_init(int argc, char **argv) // TODO can this stuff be moved to D
     try
     {
 #endif
-        Args = new FArgs(argc, argv);
+    Args = new FArgs(argc, argv);
 
-        /*
-          killough 1/98:
+    /*
+      killough 1/98:
 
-          This fixes some problems with exit handling
-          during abnormal situations.
+      This fixes some problems with exit handling
+      during abnormal situations.
 
-          The old code called I_Quit() to end program,
-          while now I_Quit() is installed as an exit
-          handler and exit() is called to exit, either
-          normally or abnormally. Seg faults are caught
-          and the error handler is used, to prevent
-          being left in graphics mode or having very
-          loud SFX noise because the sound card is
-          left in an unstable state.
-        */
+      The old code called I_Quit() to end program,
+      while now I_Quit() is installed as an exit
+      handler and exit() is called to exit, either
+      normally or abnormally. Seg faults are caught
+      and the error handler is used, to prevent
+      being left in graphics mode or having very
+      loud SFX noise because the sound card is
+      left in an unstable state.
+    */
 
-        atexit (call_terms);
-        atterm (I_Quit);
+    atexit (call_terms);
+    atterm (I_Quit);
 
-        // Should we even be doing anything with progdir on Unix systems?
+    // Should we even be doing anything with progdir on Unix systems?
+    if (argc != 0 && argv != nullptr) {
         char program[PATH_MAX];
-        if (realpath (argv[0], program) == NULL)
-            strcpy (program, argv[0]);
-        char *slash = strrchr (program, '/');
-        if (slash != NULL)
-        {
+        if (realpath(argv[0], program) == NULL)
+            strcpy(program, argv[0]);
+        char* slash = strrchr(program, '/');
+        if (slash != NULL) {
             *(slash + 1) = '\0';
             progdir = program;
-        }
-        else
-        {
+        } else {
             progdir = "./";
         }
+    }
+    else {
+        progdir = std::filesystem::current_path().c_str();
+    }
 
-        I_StartupJoysticks();
-        C_InitConsole (80*8, 25*8, false);
+    I_StartupJoysticks();
+    C_InitConsole(80 * 8, 25 * 8, false);
 #if 0
         D_DoomMain ();
     }

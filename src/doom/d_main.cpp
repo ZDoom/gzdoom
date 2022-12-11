@@ -2121,7 +2121,7 @@ static void D_DoomInit()
 	gamestate = GS_STARTUP;
 
 	SetLanguageIDs ();
-
+#if 0
 	const char *v = Args->CheckValue("-rngseed");
 	if (v)
 	{
@@ -2135,6 +2135,8 @@ static void D_DoomInit()
 		use_staticrng = false;
 	}
 	srand(rngseed);
+#endif
+    rngseed = 69420; // use static rng seed
 		
 	FRandom::StaticClearRandom ();
 

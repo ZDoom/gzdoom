@@ -23,11 +23,12 @@ namespace gvizdoom {
 // DoomGame serves as the top-level interface for the GViZDoom library
 class DoomGame {
 public:
-    DoomGame();
     DoomGame(const DoomGame&) = delete;
-    DoomGame(DoomGame&&) = default;
+    DoomGame(DoomGame&&) = delete;
     DoomGame& operator=(const DoomGame&) = delete;
-    DoomGame& operator=(DoomGame&&) = default;
+    DoomGame& operator=(DoomGame&&) = delete;
+
+    static DoomGame& instance();
 
     void init(GameConfig&& gameConfig);
     void init(const GameConfig& gameConfig);
@@ -42,6 +43,8 @@ public:
     float* getPixelsDepth() const;
 
 private:
+    DoomGame();
+
     GameConfig      _gameConfig;
     int             _status;
     DoomMain        _doomMain;

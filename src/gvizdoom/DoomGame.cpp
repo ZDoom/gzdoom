@@ -24,9 +24,10 @@ EXTERN_CVAR(Int, hud_althudscale);
 using namespace gvizdoom;
 
 
-DoomGame::DoomGame() :
-    _status (-1)
+DoomGame& DoomGame::instance()
 {
+    static DoomGame singletonInstance; // singleton instance
+    return singletonInstance;
 }
 
 void DoomGame::init(GameConfig&& gameConfig)
@@ -133,8 +134,18 @@ float* DoomGame::getPixelsDepth() const
     return nullptr;
 }
 
+DoomGame::DoomGame() :
+    _status (-1)
+{
+}
+
 void DoomGame::init()
 {
+    if (_status != -1) { // already initialized, restart instead
+        restart();
+        return;
+    }
+
     // Doom main init
     gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
     _status = _doomMain.Init();

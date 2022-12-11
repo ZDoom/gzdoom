@@ -18,8 +18,9 @@ using namespace gvizdoom;
 
 
 // Test first BGRA frame on default game config
-TEST(TestGameConfig, DefaultValues) {
-    DoomGame doomGame;
+TEST(TestGameConfig, DefaultValues)
+{
+    auto& doomGame = DoomGame::instance();
     doomGame.init(GameConfig()); // init with default config
     doomGame.update(Action()); // pass a single default action
 

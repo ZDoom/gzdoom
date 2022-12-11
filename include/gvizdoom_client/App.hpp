@@ -16,7 +16,6 @@
 #include <SDL.h>
 
 #include "gvizdoom/GameConfig.hpp"
-#include "gvizdoom/DoomGame.hpp"
 
 #include "gvizdoom_client/SDLActionMapper.hpp"
 
@@ -45,14 +44,12 @@ public:
         WindowSettings*     windowSettings;
         SDL_Window*         window;
         bool*               quit;
-        DoomGame*           doomGame;
         SDLActionMapper*    actionMapper;
 
         Context(App& app) :
             windowSettings  (&app._settings.window),
             window          (app._window),
             quit            (&app._quit),
-            doomGame        (app._doomGame.get()),
             actionMapper    (&app._actionMapper)
         {}
     };
@@ -88,18 +85,17 @@ public:
     void setRenderContext(RenderContext* renderContext);
 
 private:
-    Settings                    _settings;
-    SDL_Window*                 _window;
-    SDL_Renderer*               _renderer;
-    SDL_Texture*                _texture;
-    bool                        _quit; // flag for quitting the application
-    uint32_t                    _lastTicks;
-    uint32_t                    _frameTicks;
-    std::unique_ptr<DoomGame>   _doomGame;
-    SDLActionMapper             _actionMapper;
+    Settings        _settings;
+    SDL_Window*     _window;
+    SDL_Renderer*   _renderer;
+    SDL_Texture*    _texture;
+    bool            _quit; // flag for quitting the application
+    uint32_t        _lastTicks;
+    uint32_t        _frameTicks;
+    SDLActionMapper _actionMapper;
 
-    App::Context                _appContext;
-    RenderContext*              _renderContext;
+    App::Context    _appContext;
+    RenderContext*  _renderContext;
 
     void createSDLObjects(const GameConfig& gameConfig);
     void destroySDLObjects();

@@ -10,6 +10,7 @@
 
 #include "gvizdoom_client/App.hpp"
 #include "gvizdoom/HeadlessFrameBuffer.hpp"
+#include "DoomGame.hpp"
 
 #include <opencv2/opencv.hpp>
 
@@ -42,8 +43,8 @@ App::App(
     }
     createSDLObjects(gameConfig);
 
-    _doomGame = std::make_unique<DoomGame>();
-    _doomGame->init(std::move(gameConfig));
+
+    DoomGame::instance().init(std::move(gameConfig));
 }
 
 App::~App()
@@ -54,9 +55,11 @@ App::~App()
 
 void App::loop(void)
 {
-    if (_doomGame->getStatus()) {
+    auto& doomGame = DoomGame::instance();
+
+    if (doomGame.getStatus()) {
         // DoomGame uninitialized / in error state: cannot run loop
-        printf("App::loop: Invalid DoomGame status: %d\n", _doomGame->getStatus());
+        printf("App::loop: Invalid DoomGame status: %d\n", doomGame.getStatus());
         return;
     }
 
@@ -94,21 +97,21 @@ void App::loop(void)
         }
 #endif
         // Update game
-        //_quit = _doomGame->update(actions.at(actionIndex++));
-        _quit = _quit || _doomGame->update(_actionMapper);
+        //_quit = doomGame.update(actions.at(actionIndex++));
+        _quit = _quit || doomGame.update(_actionMapper);
 
         if (_quit) {
             printf("App: got quit\n");
             break;
         }
 
-        auto screenHeight = _doomGame->getScreenHeight();
-        auto screenWidth = _doomGame->getScreenWidth();
+        auto screenHeight = doomGame.getScreenHeight();
+        auto screenWidth = doomGame.getScreenWidth();
 
         // TODO opencv temp
-        if (_doomGame->getPixelsDepth() != nullptr) {
+        if (doomGame.getPixelsDepth() != nullptr) {
             // render depth
-            cv::Mat depthMat(screenHeight, screenWidth, CV_32FC1, _doomGame->getPixelsDepth());
+            cv::Mat depthMat(screenHeight, screenWidth, CV_32FC1, doomGame.getPixelsDepth());
             cv::imshow("depth", depthMat);
             cv::waitKey(1);
         }
@@ -129,7 +132,7 @@ void App::loop(void)
         int pitch;
         SDL_LockTexture(_texture, nullptr, reinterpret_cast<void**>(&sdlPixels), &pitch);
         assert(pitch == screenWidth*4);
-        memcpy(sdlPixels, _doomGame->getPixelsBGRA(), sizeof(uint8_t)*screenWidth*screenHeight*4);
+        memcpy(sdlPixels, doomGame.getPixelsBGRA(), sizeof(uint8_t)*screenWidth*screenHeight*4);
         SDL_UnlockTexture(_texture);
         SDL_RenderCopy(_renderer, _texture, nullptr, nullptr);
         SDL_RenderPresent(_renderer);
@@ -148,7 +151,7 @@ void App::loop(void)
 void App::restart(GameConfig gameConfig)
 {
     destroySDLObjects();
-    _doomGame->restart(gameConfig);
+    DoomGame::instance().restart(gameConfig);
     createSDLObjects(gameConfig);
 }
 

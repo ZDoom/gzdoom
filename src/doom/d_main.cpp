@@ -121,6 +121,7 @@
 #include "gvizdoom/HeadlessFrameBuffer.hpp"
 #include "gvizdoom/Action.hpp"
 #include "gvizdoom/Context.hpp"
+#include "gvizdoom/GameConfig.hpp"
 
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -2415,7 +2416,7 @@ int DoomMain::Init()
     return 0;
 }
 
-void DoomMain::ReInit(gvizdoom::Context& context)
+void DoomMain::ReInit(gvizdoom::Context& context, const gvizdoom::GameConfig& gameConfig)
 {
     // reinit from here
 

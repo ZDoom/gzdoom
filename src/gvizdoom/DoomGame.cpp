@@ -142,7 +142,7 @@ void DoomGame::reinit()
     _context.frameBuffer = std::make_unique<HeadlessFrameBuffer>(
         _gameConfig.videoWidth, _gameConfig.videoHeight, _gameConfig.videoTrueColor);
 
-    _doomMain.ReInit(_context);
+    _doomMain.ReInit(_context, _gameConfig);
     // Override cvars with values from gameConfig
     initHUD();
     _doomLoop.Init();

@@ -44,9 +44,9 @@ namespace gvizdoom {
 
     class Action;
     struct Context;
+    struct GameConfig;
 
 } // namespace gvizdoom
-
 
 struct event_t;
 
@@ -181,7 +181,7 @@ public:
 
 struct DoomMain {
     int Init();
-    void ReInit(gvizdoom::Context& context);
+    void ReInit(gvizdoom::Context& context, const gvizdoom::GameConfig& gameConfig);
     void Cleanup();
 
     FString*                        _args;

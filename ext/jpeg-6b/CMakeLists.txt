@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8.7 )
+cmake_minimum_required(VERSION 3.20)
 
 make_release_only()
 

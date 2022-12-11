@@ -39,10 +39,6 @@ void DoomGame::init(GameConfig&& gameConfig)
 {
     _gameConfig = gameConfig;
 
-    // Context init
-    _context.frameBuffer = std::make_unique<HeadlessFrameBuffer>(
-        _gameConfig.videoWidth, _gameConfig.videoHeight, _gameConfig.videoTrueColor);
-
     // Doom main init
     gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
     _status = _doomMain.Init();
@@ -148,6 +144,10 @@ float* DoomGame::getPixelsDepth() const
 
 void DoomGame::reinit()
 {
+    // Context init
+    _context.frameBuffer = std::make_unique<HeadlessFrameBuffer>(
+        _gameConfig.videoWidth, _gameConfig.videoHeight, _gameConfig.videoTrueColor);
+
     _doomMain.ReInit(_context);
     // Override cvars with values from gameConfig
     initHUD();

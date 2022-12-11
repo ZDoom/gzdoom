@@ -1106,6 +1106,10 @@ set(GVIZDOOM_CLIENT_SOURCES
 	gvizdoom_client/SDLActionMapper.cpp
 )
 
+set(GVIZDOOM_TESTS_SOURCES
+	gvizdoom_tests/TestGameConfig.cpp
+)
+
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
 
 add_library(gvizdoom SHARED
@@ -1206,6 +1210,35 @@ if (WITH_ASAN)
 endif()
 
 set_target_properties(gvizdoom_client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+
+# Setup GViZDoom tests
+include(FetchContent)
+FetchContent_Declare(
+	googletest
+	URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(gvizdoom_tests
+	${GVIZDOOM_TESTS_SOURCES}
+)
+target_include_directories(gvizdoom_tests
+PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/../include/gvizdoom_tests
+)
+target_link_libraries(gvizdoom_tests
+PUBLIC
+	gvizdoom
+	GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(gvizdoom_tests)
+
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )

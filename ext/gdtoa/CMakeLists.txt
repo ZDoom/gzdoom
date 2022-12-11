@@ -12,8 +12,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra" )
 endif()
 
-include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
-add_definitions( -DINFNAN_CHECK -DMULTIPLE_THREADS )
 
 if( NOT MSVC AND NOT APPLE )
 	if( NOT CMAKE_CROSSCOMPILING )
@@ -25,6 +23,10 @@ if( NOT MSVC AND NOT APPLE )
 
 	if( NOT CMAKE_CROSSCOMPILING )
 		add_executable( qnan qnan.c arith.h )
+		target_include_directories(qnan
+		PUBLIC
+			${CMAKE_CURRENT_BINARY_DIR}
+		)
 		set( CROSS_EXPORTS ${CROSS_EXPORTS} arithchk qnan PARENT_SCOPE )
 	endif()
 	add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
@@ -40,6 +42,18 @@ add_library( gdtoa
 	dmisc.c
 	dtoa.c
 	misc.c
+)
+
+target_include_directories(gdtoa
+PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_compile_definitions(gdtoa
+PRIVATE
+	-DINFNAN_CHECK
+	-DMULTIPLE_THREADS
 )
 
 set_target_properties(gdtoa PROPERTIES POSITION_INDEPENDENT_CODE ON)

@@ -142,12 +142,12 @@ endif()
 # only defined when building the library to allow us to tell which is which.
 #add_definitions(-DBLARGG_BUILD_DLL)
 
-# For the gme_types.h
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 # Add library to be compiled.
 add_library(gme ${libgme_SRCS})
-
+target_include_directories(gme
+PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
 set_target_properties(gme PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # The version is the release.  The "soversion" is the API version.  As long

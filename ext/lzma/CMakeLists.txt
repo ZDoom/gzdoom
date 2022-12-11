@@ -34,5 +34,8 @@ else()
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_ST" )
 endif()
 
-add_library( lzma ${LZMA_FILES} )
-set_target_properties(lzma PROPERTIES POSITION_INDEPENDENT_CODE ON)
+add_library(lzma ${LZMA_FILES})
+target_include_directories(lzma PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/C)
+set_target_properties(lzma PROPERTIES
+	POSITION_INDEPENDENT_CODE ON
+)

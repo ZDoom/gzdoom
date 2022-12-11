@@ -26,5 +26,8 @@ add_library( jpeg
     jerror.c
     jidctint.c
     jmemmgr.c
-    jutils.c )
-target_link_libraries( jpeg )
+    jutils.c)
+
+set_target_properties(jpeg PROPERTIES
+	POSITION_INDEPENDENT_CODE ON
+)

@@ -98,10 +98,3 @@ endif()
 
 # Shared library defined here
 add_subdirectory(gme)
-
-# EXCLUDE_FROM_ALL adds build rules but keeps it out of default build
-# [ZDoom] Not needed.
-if( FALSE )
-add_subdirectory(player EXCLUDE_FROM_ALL)
-add_subdirectory(demo EXCLUDE_FROM_ALL)
-endif()

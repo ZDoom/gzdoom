@@ -1,5 +1,5 @@
 #include <winver.h>
-#include "../zlib.h"
+#include "src/GViZDoom/ext/zlib/zlib.h"
 
 #ifdef GCC_WINDRES
 VS_VERSION_INFO		VERSIONINFO

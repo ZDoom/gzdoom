@@ -22,7 +22,7 @@ if( NOT ITOA_EXISTS )
 	add_definitions( -DNEED_ITOA=1 )
 endif()
 
-include_directories( include )
+include_directories(include)
 
 add_library( dumb
     src/core/unload.c

@@ -8,7 +8,7 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "-ffast-math -g -O2 -DNDEBUG")
 set(CMAKE_C_FLAGS_MINSIZEREL "-ffast-math -Os -DNDEBUG")
 
 link_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(../include/)
+include_directories(../include)
 
 SET(SOURCES
     ../src/core/unload.c

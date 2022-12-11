@@ -1293,8 +1293,6 @@ include_directories( .
 	xlat
 	scripting
 	scripting/vm
-	../gdtoa
-	../dumb/include
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR}
     ../include

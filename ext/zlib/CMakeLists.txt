@@ -62,7 +62,7 @@ if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+    include_directories(.)
 endif()
 
 #if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -121,7 +121,7 @@ set(ZLIB_SRCS
 )
 
 # parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
+file(READ zlib.h _zlib_h_contents)
 string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([0-9A-Za-z.]+)\".*"
     "\\1" ZLIB_FULL_VERSION ${_zlib_h_contents})
 
@@ -130,10 +130,10 @@ if(MINGW)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
                        COMMAND windres.exe
                             -D GCC_WINDRES
-                            -I ${CMAKE_CURRENT_SOURCE_DIR}
+                            -I .
                             -I ${CMAKE_CURRENT_BINARY_DIR}
                             -o ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
-                            -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zlib1.rc)
+                            -i win32/zlib1.rc)
     set(ZLIB_SRCS ${ZLIB_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
 endif()
 
@@ -141,6 +141,9 @@ add_library(${ZLIBNAME} ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 set_target_properties(${ZLIBNAME} PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
 
 set_target_properties(${ZLIBNAME} PROPERTIES SOVERSION 1)
+set_target_properties(${ZLIBNAME} PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+)
 
 if(NOT CYGWIN)
     # This property causes shared libraries on Linux to have the full version

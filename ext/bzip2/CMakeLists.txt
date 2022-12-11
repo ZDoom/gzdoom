@@ -14,5 +14,8 @@ add_library( bz2
     crctable.c
     decompress.c
     huffman.c
-    randtable.c )
-target_link_libraries( bz2 )
+    randtable.c)
+
+set_target_properties(bz2 PROPERTIES
+	POSITION_INDEPENDENT_CODE ON
+)

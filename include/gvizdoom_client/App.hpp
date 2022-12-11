@@ -83,6 +83,7 @@ public:
     ~App();
 
     void loop(void);
+    void restart(GameConfig gameConfig);
 
     void setRenderContext(RenderContext* renderContext);
 

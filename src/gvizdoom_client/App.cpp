@@ -140,6 +140,13 @@ void App::loop(void)
     }
 }
 
+void App::restart(GameConfig gameConfig)
+{
+    destroySDLObjects();
+    _doomGame->restart(gameConfig);
+    createSDLObjects(gameConfig);
+}
+
 void App::setRenderContext(RenderContext* renderContext)
 {
     _renderContext = renderContext;

@@ -14,15 +14,16 @@
 #include <cstdint>
 
 
-inline uint32_t xorHash(const uint32_t* buffer, std::size_t size)
+inline uint32_t imageHash(const uint32_t* buffer, int width, int height)
 {
-    if (buffer == nullptr || size == 0)
+    if (buffer == nullptr || width == 0 || height == 0)
         return 0;
 
-    // just a simple running XOR hash with rotation
-    uint32_t hash = buffer[0];
-    for (std::size_t i=1; i<size; ++i) {
-        hash ^= std::rotl(buffer[i], (int)i);
+    uint32_t hash = 0x00000000;
+    for (int j=0; j<height; ++j) {
+        for (int i=0; i<width; ++i) {
+            hash ^= std::rotl(buffer[width*j+i], i) * std::rotr(buffer[width*j+i], j);
+        }
     }
     return hash;
 }

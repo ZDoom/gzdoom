@@ -215,13 +215,11 @@ FBaseCVar::~FBaseCVar ()
 void FBaseCVar::SetCallback(void (*callback)(FBaseCVar&))
 {
 	m_Callback = callback;
-	m_UseCallback = true;
 }
 
 void FBaseCVar::ClearCallback()
 {
 	m_Callback = nullptr;
-	m_UseCallback = false;
 }
 
 void FBaseCVar::SetExtraDataPointer(void *pointer)

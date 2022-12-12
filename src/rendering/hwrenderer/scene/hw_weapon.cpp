@@ -89,7 +89,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 		state.AlphaFunc(Alpha_GEqual, 0);
 
 		FHWModelRenderer renderer(this, state, huds->lightindex);
-		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector3(huds->mx / 4., (huds->my - WEAPONTOP) / 4., 0), FVector3(0, 0, 0), huds->mframe);
+		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector3(huds->mx / 4., (huds->my - WEAPONTOP) / -4., 0), huds->pivot, huds->mframe);
 		state.SetVertexBuffer(screen->mVertexData);
 	}
 	else
@@ -202,8 +202,10 @@ static WeaponPosition3D GetWeaponPosition3D(player_t *player, double ticFrac)
 			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * ticFrac);
 			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * ticFrac);
 		}
+		
 		auto weaponActor = w.weapon->GetCaller();
-		if(weaponActor && weaponActor->IsKindOf(NAME_Weapon))
+
+		if (weaponActor && weaponActor->IsKindOf(NAME_Weapon))
 		{
 			DVector3 *dPivot = (DVector3*) weaponActor->ScriptVar(NAME_BobPivot3D, nullptr);
 			w.pivot.X = (float) dPivot->X;
@@ -269,9 +271,18 @@ static FVector2 BobWeapon3D(WeaponPosition3D &weap, DPSprite *psp, FVector3 &tra
 
 	if (psp->Flags & PSPF_ADDBOB)
 	{
-		translation = (psp->Flags & PSPF_MIRROR) ? FVector3(-weap.translation.X, weap.translation.Y, weap.translation.Z) : weap.translation ; // TODO handle PSPF_MIRROR?
-		rotation = weap.rotation;
-		pivot = weap.pivot;
+		if (psp->Flags & PSPF_MIRROR)
+		{
+			translation = FVector3(-weap.translation.X, weap.translation.Y, weap.translation.Z);
+			rotation = FVector3(-weap.rotation.X, weap.rotation.Y, weap.rotation.Z);
+			pivot = FVector3(-weap.pivot.X, weap.pivot.Y, weap.pivot.Z);
+		}
+		else
+		{
+			translation = weap.translation ;
+			rotation = weap.rotation ;
+			pivot = weap.pivot ;
+		}
 	}
 	else
 	{

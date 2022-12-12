@@ -1047,11 +1047,14 @@ void DoomLoop::Init()
     Page = Advisory = NULL;
 
     vid_cursor.Callback();
+    P_BringUpWeapon(&players[0]); // start with weapon up
 
+#if 0 // TODO disabled for now, messes with restart and therefore the image hashes, make enableable via config
     // Some cheats such as 'iddqd' can be added here
     // Some, like 'idkfa' will not work unless certain game
     // states have been initialized
     cht_DoCheat (&players[0], CHT_IDDQD);
+#endif
 }
 
 void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, const gvizdoom::Action& action)
@@ -1091,7 +1094,7 @@ void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, cons
         {
             TryRunTics (); // will run at least one tic
         }
-
+#if 0 // TODO disabled for now, messes with restart and therefore the image hashes, make enableable via config
         // Add IDKFA here, it must happen after
         // TryRunTics() if multi tick mode
         // and if single tick mode, unknown
@@ -1101,7 +1104,7 @@ void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, cons
             cht_DoCheat(&players[0], CHT_IDKFA);
             addCheat = false;
         }
-        
+#endif
         // Update display, next frame, with current state.
         I_StartTic ();
         D_Display(context);
@@ -2137,7 +2140,6 @@ static void D_DoomInit()
 	srand(rngseed);
 #endif
     rngseed = 69420; // use static rng seed
-		
 	FRandom::StaticClearRandom ();
 
 	if (!batchrun) Printf ("M_LoadDefaults: Load system defaults.\n");
@@ -2390,6 +2392,10 @@ int DoomMain::Init()
 void DoomMain::ReInit(gvizdoom::Context& context, const gvizdoom::GameConfig& gameConfig)
 {
     // reinit from here
+
+    // use static rng seed
+    rngseed = 69420;
+    FRandom::StaticClearRandom ();
 
     //do // Loop moved to outside of the function
     //{

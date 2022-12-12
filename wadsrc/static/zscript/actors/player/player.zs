@@ -2440,7 +2440,8 @@ class PlayerPawn : Actor
 
 	virtual Vector3 /*translation*/ , Vector3 /*rotation*/ BobWeapon3D (double ticfrac)
 	{
-		return (0, 0, 0) , (BobWeapon(ticfrac) / 4, 0);
+		Vector2 oldBob = BobWeapon(ticfrac);
+		return (0, 0, 0) , ( oldBob.x / 4, oldBob.y / -4, 0);
 	}
 	
 	//----------------------------------------------------------------------------

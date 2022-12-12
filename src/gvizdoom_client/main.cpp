@@ -72,15 +72,5 @@ int main(int argc, char** argv)
     App app(appSettings, &renderContext, gameConfig);
     app.loop();
 
-    // TODO temp for testing restart
-    GameConfig gameConfig2{argc, argv, interactive, 320, 240, true, GameConfig::HUD_FLOATING, 1, 3, 1, 2};
-    app.restart(gameConfig2);
-    app.loop();
-
-    GameConfig gameConfig3{argc, argv, interactive, 1280, 960, true, GameConfig::HUD_ALTERNATIVE, 3, 3, 1, 2};
-    app.restart(gameConfig3);
-    app.loop();
-    // TODO end of temp
-
     return 0;
 }

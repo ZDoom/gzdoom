@@ -37,6 +37,7 @@
 #include "tarray.h"
 #include "autosegs.h"
 #include "name.h"
+#include "dobjgc.h"
 
 class FSerializer; // this needs to go away.
 /*
@@ -72,6 +73,7 @@ enum
 	CVAR_VIRTUAL       = 1 << 17, // do not invoke the callback recursively so it can be used to
 	                              // mirror an external variable.
 	CVAR_CONFIG_ONLY   = 1 << 18, // do not save var to savegame and do not send it across network.
+	CVAR_ZS_CUSTOM	   = 1 << 19, // Custom CVar backed by a ZScript class
 };
 
 enum ECVarType
@@ -188,6 +190,8 @@ public:
 	static void EnableNoSet ();		// enable the honoring of CVAR_NOSET
 	static void EnableCallbacks ();
 	static void DisableCallbacks ();
+	static void InitZSCallbacks ();
+	static void MarkZSCallbacks ();
 	static void ResetColors ();		// recalc color cvars' indices after screen change
 
 	static void ListVars (const char *filter, bool plain);
@@ -209,6 +213,10 @@ public:
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;
+	virtual void InstantiateZSCVar()
+	{}
+	virtual void MarkZSCVar()
+	{}
 
 	static bool ToBool (UCVarValue value, ECVarType type);
 	static int ToInt (UCVarValue value, ECVarType type);
@@ -278,6 +286,7 @@ FBaseCVar *GetCVar(int playernum, const char *cvarname);
 
 // Create a new cvar with the specified name and type
 FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, uint32_t flags);
+FBaseCVar *C_CreateZSCustomCVar(const char *var_name, ECVarType var_type, uint32_t flags, FName className);
 
 // Called from G_InitNew()
 void UnlatchCVars (void);
@@ -480,6 +489,71 @@ protected:
 	FIntCVar &ValueVar;
 	uint32_t BitVal;
 	int BitNum;
+};
+
+class FZSIntCVar : public FIntCVar
+{
+	TObjPtr<DObject*> customCVarHandler;
+	FName cvarName;
+	FName className;
+
+	static void CallCVarCallback(FZSIntCVar &);
+public:
+	FZSIntCVar(const char *name, int def, uint32_t flags, FName className, const char* descr = nullptr);
+	void InstantiateZSCVar() override;
+	void MarkZSCVar() override;
+};
+
+class FZSFloatCVar : public FFloatCVar
+{
+	TObjPtr<DObject*> customCVarHandler;
+	FName cvarName;
+	FName className;
+
+	static void CallCVarCallback(FZSFloatCVar &);
+public:
+	FZSFloatCVar(const char *name, float def, uint32_t flags, FName className, const char* descr = nullptr);
+	void InstantiateZSCVar() override;
+	void MarkZSCVar() override;
+};
+
+class FZSStringCVar : public FStringCVar
+{
+	TObjPtr<DObject*> customCVarHandler;
+	FName cvarName;
+	FName className;
+
+	static void CallCVarCallback(FZSStringCVar &);
+public:
+	FZSStringCVar(const char *name, const char * def, uint32_t flags, FName className, const char* descr = nullptr);
+	void InstantiateZSCVar() override;
+	void MarkZSCVar() override;
+};
+
+class FZSBoolCVar : public FBoolCVar
+{
+	TObjPtr<DObject*> customCVarHandler;
+	FName cvarName;
+	FName className;
+
+	static void CallCVarCallback(FZSBoolCVar &);
+public:
+	FZSBoolCVar(const char *name, bool def, uint32_t flags, FName className, const char* descr = nullptr);
+	void InstantiateZSCVar() override;
+	void MarkZSCVar() override;
+};
+
+class FZSColorCVar : public FColorCVar
+{
+	TObjPtr<DObject*> customCVarHandler;
+	FName cvarName;
+	FName className;
+
+	static void CallCVarCallback(FZSColorCVar &);
+public:
+	FZSColorCVar(const char *name, int def, uint32_t flags, FName className, const char* descr = nullptr);
+	void InstantiateZSCVar() override;
+	void MarkZSCVar() override;
 };
 
 class FBoolCVarRef

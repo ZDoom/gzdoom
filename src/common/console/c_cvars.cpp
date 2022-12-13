@@ -45,6 +45,14 @@
 #include "palutil.h"
 #include "i_interface.h"
 
+#include "dobject.h"
+#include "dobjtype.h"
+#include "dobjgc.h"
+
+#include "vm.h"
+
+#include "doomstat.h"
+
 
 struct FLatchedValue
 {
@@ -597,6 +605,34 @@ void FBaseCVar::EnableCallbacks ()
 		if (!(cvar->Flags & CVAR_NOINITCALL))
 		{
 			cvar->Callback ();
+		}
+	}
+}
+
+void FBaseCVar::InitZSCallbacks ()
+{
+	CVarMap::Iterator it(cvarMap);
+	CVarMap::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto cvar = pair->Value;
+		if (cvar->Flags & CVAR_ZS_CUSTOM)
+		{
+			cvar->InstantiateZSCVar();
+		}
+	}
+	GC::AddMarkerFunc(FBaseCVar::MarkZSCallbacks);
+}
+
+void FBaseCVar::MarkZSCallbacks () {
+	CVarMap::Iterator it(cvarMap);
+	CVarMap::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto cvar = pair->Value;
+		if (cvar->Flags & CVAR_ZS_CUSTOM)
+		{
+			cvar->MarkZSCVar();
 		}
 	}
 }
@@ -1430,6 +1466,21 @@ FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, uint32_t flags
 	}
 }
 
+FBaseCVar * C_CreateZSCustomCVar(const char *var_name, ECVarType var_type, uint32_t flags, FName className)
+{
+	assert(FindCVar(var_name, NULL) == NULL);
+	flags |= CVAR_AUTO | CVAR_ZS_CUSTOM;
+	switch (var_type)
+	{
+	case CVAR_Bool:		return new FZSBoolCVar(var_name, 0, flags, className);
+	case CVAR_Int:		return new FZSIntCVar(var_name, 0, flags, className);
+	case CVAR_Float:	return new FZSFloatCVar(var_name, 0, flags, className);
+	case CVAR_String:	return new FZSStringCVar(var_name, NULL, flags, className);
+	case CVAR_Color:	return new FZSColorCVar(var_name, 0, flags, className);
+	default:			return NULL;
+	}
+}
+
 void UnlatchCVars (void)
 {
 	for (const FLatchedValue& var : LatchedValues)
@@ -1734,4 +1785,223 @@ void C_ListCVarsWithoutDescription()
 CCMD(listcvarswithoutdescription)
 {
 	C_ListCVarsWithoutDescription();
+}
+
+
+//===========================================================================
+//
+// FZSIntCVar
+//
+//===========================================================================
+
+
+FZSIntCVar::FZSIntCVar(const char *name, int def, uint32_t flags, FName _className, const char* descr)
+	: FIntCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
+{ customCVarHandler = nullptr; }
+
+void FZSIntCVar::CallCVarCallback(FZSIntCVar &self)
+{
+	if (!self.customCVarHandler) {
+		I_Error("Handler for CustomIntCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
+	}
+	IFVIRTUALPTRNAME(self.customCVarHandler, "CustomIntCVar", ModifyValue)
+	{
+		VMValue param[] = { self.customCVarHandler.Get() , self.cvarName.GetIndex() , self.Value };
+		VMReturn ret(&self.Value);
+		VMCall(func, param, 3, &ret, 1);
+	}
+}
+
+void FZSIntCVar::InstantiateZSCVar()
+{
+	static PClass * baseClass = PClass::FindClass("CustomIntCVar");
+	assert(baseClass);
+	PClass * classPtr = PClass::FindClass(className);
+	if (!classPtr || !classPtr->IsDescendantOf(baseClass))
+	{
+		I_Error("Instantiating CVar '%s': Class '%s' %s",cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomIntCVar" : "does not exist"));
+	}
+	customCVarHandler = classPtr->CreateNew();
+	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+}
+
+void FZSIntCVar::MarkZSCVar()
+{
+	GC::Mark(customCVarHandler);
+}
+
+
+//===========================================================================
+//
+// FZSFloatCVar
+//
+//===========================================================================
+
+
+FZSFloatCVar::FZSFloatCVar(const char *name, float def, uint32_t flags, FName _className, const char* descr)
+	: FFloatCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
+{ customCVarHandler = nullptr; }
+
+void FZSFloatCVar::CallCVarCallback(FZSFloatCVar &self)
+{
+	if (!self.customCVarHandler) {
+		I_Error("Handler for CustomFloatCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
+	}
+	IFVIRTUALPTRNAME(self.customCVarHandler, "CustomFloatCVar", ModifyValue)
+	{
+		VMValue param[] = { self.customCVarHandler.Get() , self.cvarName.GetIndex() , (double)self.Value };
+		double v;
+		VMReturn ret(&v);
+		VMCall(func, param, 3, &ret, 1);
+		self.Value = float(v);
+	}
+}
+
+void FZSFloatCVar::InstantiateZSCVar()
+{
+	static PClass * baseClass = PClass::FindClass("CustomFloatCVar");
+	assert(baseClass);
+	PClass * classPtr = PClass::FindClass(className);
+	if (!classPtr || !classPtr->IsDescendantOf(baseClass))
+	{
+		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomFloatCVar" : "does not exist"));
+	}
+	customCVarHandler = classPtr->CreateNew();
+	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+}
+
+void FZSFloatCVar::MarkZSCVar()
+{
+	GC::Mark(customCVarHandler);
+}
+
+
+//===========================================================================
+//
+// FZSStringCVar
+//
+//===========================================================================
+
+
+FZSStringCVar::FZSStringCVar(const char *name, const char * def, uint32_t flags, FName _className, const char* descr)
+	: FStringCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
+{ customCVarHandler = nullptr; }
+
+void FZSStringCVar::CallCVarCallback(FZSStringCVar &self)
+{
+	if (!self.customCVarHandler) {
+		I_Error("Handler for CustomStringCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
+	}
+	IFVIRTUALPTRNAME(self.customCVarHandler, "CustomStringCVar", ModifyValue)
+	{
+		VMValue param[] = { self.customCVarHandler.Get() , self.cvarName.GetIndex() , &self.mValue };
+		VMReturn ret(&self.mValue);
+		VMCall(func, param, 3, &ret, 1);
+	}
+}
+
+void FZSStringCVar::InstantiateZSCVar()
+{
+	static PClass * baseClass = PClass::FindClass("CustomStringCVar");
+	assert(baseClass);
+	PClass * classPtr = PClass::FindClass(className);
+	if (!classPtr || !classPtr->IsDescendantOf(baseClass))
+	{
+		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomStringCVar" : "does not exist"));
+	}
+	customCVarHandler = classPtr->CreateNew();
+	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+}
+
+void FZSStringCVar::MarkZSCVar()
+{
+	GC::Mark(customCVarHandler);
+}
+
+
+//===========================================================================
+//
+// FZSBoolCVar
+//
+//===========================================================================
+
+
+FZSBoolCVar::FZSBoolCVar(const char *name, bool def, uint32_t flags, FName _className, const char* descr)
+	: FBoolCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
+{ customCVarHandler = nullptr; }
+
+void FZSBoolCVar::CallCVarCallback(FZSBoolCVar &self)
+{
+	if (!self.customCVarHandler) {
+		I_Error("Handler for CustomBoolCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
+	}
+	IFVIRTUALPTRNAME(self.customCVarHandler, "CustomBoolCVar", ModifyValue)
+	{
+		VMValue param[] = { self.customCVarHandler.Get() , self.cvarName.GetIndex() , self.Value };
+		int v;
+		VMReturn ret(&v);
+		VMCall(func, param, 3, &ret, 1);
+		self.Value = v;
+	}
+}
+
+void FZSBoolCVar::InstantiateZSCVar()
+{
+	static PClass * baseClass = PClass::FindClass("CustomBoolCVar");
+	assert(baseClass);
+	PClass * classPtr = PClass::FindClass(className);
+	if (!classPtr || !classPtr->IsDescendantOf(baseClass))
+	{
+		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomBoolCVar" : "does not exist"));
+	}
+	customCVarHandler = classPtr->CreateNew();
+	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+}
+
+void FZSBoolCVar::MarkZSCVar()
+{
+	GC::Mark(customCVarHandler);
+}
+
+
+//===========================================================================
+//
+// FZSIntCVar
+//
+//===========================================================================
+
+
+FZSColorCVar::FZSColorCVar(const char *name, int def, uint32_t flags, FName _className, const char* descr)
+	: FColorCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
+{ customCVarHandler = nullptr; }
+
+void FZSColorCVar::CallCVarCallback(FZSColorCVar &self)
+{
+	if (!self.customCVarHandler) {
+		I_Error("Handler for CustomColorCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
+	}
+	IFVIRTUALPTRNAME(self.customCVarHandler, "CustomColorCVar", ModifyValue)
+	{
+		VMValue param[] = { self.customCVarHandler.Get() , self.cvarName.GetIndex() , self.Value };
+		VMReturn ret(&self.Value);
+		VMCall(func, param, 3, &ret, 1);
+	}
+}
+
+void FZSColorCVar::InstantiateZSCVar()
+{
+	static PClass * baseClass = PClass::FindClass("CustomColorCVar");
+	assert(baseClass);
+	PClass * classPtr = PClass::FindClass(className);
+	if (!classPtr || !classPtr->IsDescendantOf(baseClass))
+	{
+		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomColorCVar" : "does not exist"));
+	}
+	customCVarHandler = classPtr->CreateNew();
+	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+}
+
+void FZSColorCVar::MarkZSCVar()
+{
+	GC::Mark(customCVarHandler);
 }

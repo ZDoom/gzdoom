@@ -1108,6 +1108,7 @@ set(GVIZDOOM_CLIENT_SOURCES
 
 set(GVIZDOOM_TESTS_SOURCES
 	gvizdoom_tests/TestGameConfig.cpp
+	gvizdoom_tests/TestGameState.cpp
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )

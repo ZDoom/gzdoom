@@ -19,11 +19,11 @@ TEST(TestGameState, PlaceHolder)
 {
     GameStateContainer gameState;
 
-    gameState.set<GameState::EpisodeFinished>(true);
+    gameState.set<GameState::LevelFinished>(true);
     gameState.set<GameState::Health>(83);
 
-    auto episodeFinished = gameState.get<GameState::EpisodeFinished>();
-    ASSERT_EQ(episodeFinished, true);
+    auto levelFinished = gameState.get<GameState::LevelFinished>();
+    ASSERT_EQ(levelFinished, true);
 
     auto numberOfKills = gameState.get<GameState::NumberOfKills>();
     ASSERT_EQ(numberOfKills, 0);

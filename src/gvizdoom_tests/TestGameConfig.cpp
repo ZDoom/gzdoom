@@ -21,7 +21,6 @@
 
 using namespace gvizdoom;
 
-
 // Test different video parameters
 TEST(TestGameConfig, VideoParams)
 {

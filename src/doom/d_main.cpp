@@ -123,6 +123,7 @@
 #include "gvizdoom/Action.hpp"
 #include "gvizdoom/Context.hpp"
 #include "gvizdoom/GameConfig.hpp"
+#include "gvizdoom/GameState.hpp"
 
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -1057,7 +1058,7 @@ void DoomLoop::Init()
 #endif
 }
 
-void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, const gvizdoom::Action& action)
+void DoomLoop::Iter(gvizdoom::Context& context, gvizdoom::GameStateContainer& out_gameState, const gvizdoom::Action& action)
 {
     try
     {
@@ -1074,6 +1075,20 @@ void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, cons
         {
             I_StartTic ();
             D_ProcessEvents ();
+
+            // Edit the button statuses before building the tic command
+            Button_Forward.bDown = action.isSet(gvizdoom::Action::Key::ACTION_FORWARD);
+            Button_Attack.bDown = action.isSet(gvizdoom::Action::Key::ACTION_ATTACK);
+            Button_AltAttack.bDown = action.isSet(gvizdoom::Action::Key::ACTION_ALTATTACK);
+            Button_Back.bDown = action.isSet(gvizdoom::Action::Key::ACTION_BACK);
+            Button_MoveLeft.bDown = action.isSet(gvizdoom::Action::Key::ACTION_LEFT);
+            Button_MoveRight.bDown = action.isSet(gvizdoom::Action::Key::ACTION_RIGHT);
+            
+            
+            Button_Reload.bDown = action.isSet(gvizdoom::Action::Key::ACTION_RELOAD);
+            Button_Use.bDown = action.isSet(gvizdoom::Action::Key::ACTION_USE);
+
+            G_AddViewAngle(action.angle(), false);
 
             G_BuildTiccmd(&netcmds[consoleplayer][maketic%BACKUPTICS]);
             
@@ -1131,6 +1146,7 @@ void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, cons
         D_ErrorCleanup();
     }
 
+#if 0
     _dbgInfo.gametic = gametic;
     _dbgInfo.singletics = singletics;
     _dbgInfo.wantToRestart = wantToRestart;
@@ -1148,6 +1164,28 @@ void DoomLoop::Iter(gvizdoom::Context& context, MainDebugInfo& out_dbgInfo, cons
 
     // Tunik tunik tun
     out_dbgInfo = _dbgInfo;
+#endif
+
+    player_t* player = &players[consoleplayer];
+    AInventory *armor = player->mo->FindInventory(NAME_BasicArmor);
+    DVector3 pos = player->mo->Pos();
+
+    out_gameState.set<gvizdoom::GameState::LevelFinished>(false);
+    out_gameState.set<gvizdoom::GameState::NumberOfKills>(level.killed_monsters);
+    out_gameState.set<gvizdoom::GameState::Health>(player->health);
+    out_gameState.set<gvizdoom::GameState::Armor>(armor->Amount);
+    out_gameState.set<gvizdoom::GameState::AttackDown>(player->attackdown);
+    out_gameState.set<gvizdoom::GameState::UseDown>(player->usedown);
+    out_gameState.set<gvizdoom::GameState::WeaponState>(player->WeaponState);
+    out_gameState.set<gvizdoom::GameState::ItemCount>(player->itemcount);
+    out_gameState.set<gvizdoom::GameState::SecretCount>(player->secretcount);
+    out_gameState.set<gvizdoom::GameState::DamageCount>(player->damagecount);
+    out_gameState.set<gvizdoom::GameState::BonusCount>(player->bonuscount);
+    out_gameState.set<gvizdoom::GameState::OnGround>(player->onground);
+    out_gameState.set<gvizdoom::GameState::X>(pos.X);
+    out_gameState.set<gvizdoom::GameState::Y>(pos.Y);
+    out_gameState.set<gvizdoom::GameState::Z>(pos.Z);
+    out_gameState.set<gvizdoom::GameState::Angle>(pos.Angle().Degrees);
 }
 
 //==========================================================================
@@ -2327,8 +2365,9 @@ static void CheckCmdLine()
 //
 //==========================================================================
 
-int DoomMain::Init()
+int DoomMain::Init(bool interactive)
 {
+    singletics = !interactive;
     const char* wad;
     const char* batchout = Args->CheckValue("-errorlog");
 

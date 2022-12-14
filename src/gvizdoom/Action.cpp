@@ -52,7 +52,7 @@ int Action::angle() const
     return _angle;
 }
 
-int Action::setAngle(int angle)
+void Action::setAngle(int angle)
 {
     _angle = angle;
 }

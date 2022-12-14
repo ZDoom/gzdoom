@@ -13,6 +13,7 @@
 
 #include "gvizdoom/Action.hpp"
 #include "gvizdoom/GameConfig.hpp"
+#include "gvizdoom/GameState.hpp"
 #include "gvizdoom/Context.hpp"
 #include "gvizdoom/HeadlessFrameBuffer.hpp"
 #include "d_main.h"
@@ -42,15 +43,21 @@ public:
     const uint8_t* getPixelsBGRA() const;
     float* getPixelsDepth() const;
 
+    template <GameState T_GameState>
+    const typename GameStateInfo<T_GameState>::Type& getGameState()
+    {
+        return _gameState.get<T_GameState>();
+    }
+
 private:
     DoomGame();
 
-    GameConfig      _gameConfig;
-    int             _status;
-    DoomMain        _doomMain;
-    DoomLoop        _doomLoop;
-    Context         _context;
-    MainDebugInfo   _dbgInfo;
+    GameConfig           _gameConfig;
+    int                  _status;
+    DoomMain             _doomMain;
+    DoomLoop             _doomLoop;
+    Context              _context;
+    GameStateContainer   _gameState;
 
     void init();
     void reinit();

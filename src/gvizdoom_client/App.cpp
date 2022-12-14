@@ -64,16 +64,16 @@ void App::loop(void)
     }
 
     std::vector<Action> actions;
-#if 0
+#if 1
     {
         for (size_t i = 0; i < 50; ++i)
-            actions.emplace_back(Action::Key::ACTION_ATTACK);
+            actions.emplace_back(Action::Key::ACTION_ATTACK, 0);
 
         for (size_t i = 0; i < 50; ++i)
-            actions.emplace_back(static_cast<int>(Action::Key::ACTION_FORWARD | Action::Key::ACTION_ATTACK));
+            actions.emplace_back(static_cast<int>(Action::Key::ACTION_FORWARD | Action::Key::ACTION_ATTACK), 100);
 
         for (size_t i = 0; i < 50; ++i)
-            actions.emplace_back(Action::Key::ACTION_FORWARD);
+            actions.emplace_back(Action::Key::ACTION_FORWARD, 0);
     }
 #endif
     size_t actionIndex = 0LLU;
@@ -96,7 +96,7 @@ void App::loop(void)
         }
 #endif
         // Update game
-        //_quit = doomGame.update(actions.at(actionIndex++));
+        // _quit = doomGame.update(actionIndex < actions.size() ? actions.at(actionIndex++) : Action());
         _quit = _quit || doomGame.update(_actionMapper);
 
         if (_quit) {

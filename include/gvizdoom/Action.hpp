@@ -32,6 +32,15 @@ public:
         ACTION_NONE = 0,
         ACTION_FORWARD = 1 << 0,
         ACTION_ATTACK = 1 << 1,
+        ACTION_ALTATTACK = 1 << 2,
+        ACTION_BACK = 1 << 3,
+        ACTION_LEFT = 1 << 4,
+        ACTION_RIGHT = 1 << 5,
+        ACTION_RELOAD = 1 << 6,
+        ACTION_USE = 1 << 7
+        /*
+        TODO: change weapons?
+        */
     };
 
     Action();
@@ -49,7 +58,7 @@ public:
     bool isSet(Key key) const;
 
     int angle(void) const;
-    int setAngle(int angle);
+    void setAngle(int angle);
 private:
     Key _action;
     int _angle;

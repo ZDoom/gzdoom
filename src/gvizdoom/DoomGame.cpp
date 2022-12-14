@@ -9,6 +9,7 @@
 //
 
 #include "gvizdoom/DoomGame.hpp"
+#include "gvizdoom/GameState.hpp"
 #include "gvizdoom/gzdoom_main_wrapper.hpp"
 #include "v_video.h"
 
@@ -57,7 +58,7 @@ void DoomGame::restart(const GameConfig& gameConfig)
 
 bool DoomGame::update(const Action& action)
 {
-    _doomLoop.Iter(_context, _dbgInfo, action);
+    _doomLoop.Iter(_context, _gameState, action);
 
     // Print periodically or upon interesting changes info of the
     // game state
@@ -65,6 +66,7 @@ bool DoomGame::update(const Action& action)
     // doom game. For now it will be just printing.
     // We will get map info, game state changes, rewards, enemies,
     // bullets, health, player position, etc
+#if 0
     {    
         static MainDebugInfo previousDbgInfo;
         static bool firstStatusPrinted = false;
@@ -94,6 +96,7 @@ bool DoomGame::update(const Action& action)
 
         previousDbgInfo = _dbgInfo;
     }
+#endif
 
     return false;
 }
@@ -148,7 +151,7 @@ void DoomGame::init()
 
     // Doom main init
     gzdoom_main_init(_gameConfig.argc, _gameConfig.argv);
-    _status = _doomMain.Init();
+    _status = _doomMain.Init(_gameConfig.interactive);
     if (_status != 0) {
         return;
     }

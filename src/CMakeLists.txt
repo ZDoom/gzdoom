@@ -1107,6 +1107,7 @@ set(GVIZDOOM_CLIENT_SOURCES
 )
 
 set(GVIZDOOM_TESTS_SOURCES
+    gvizdoom_tests/TestActions.cpp
 	gvizdoom_tests/TestGameConfig.cpp
 	gvizdoom_tests/TestGameState.cpp
 )
@@ -1235,6 +1236,7 @@ target_link_libraries(gvizdoom_tests
 PUBLIC
 	gvizdoom
 	GTest::gtest_main
+    ${OpenCV_LIBS}
 )
 
 include(GoogleTest)

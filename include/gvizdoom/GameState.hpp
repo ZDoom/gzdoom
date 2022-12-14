@@ -10,13 +10,25 @@
 
 #pragma once
 
+#include <type_traits>
 
 #define GVIZDOOM_GAMESTATES(GAMESTATE) \
-    GAMESTATE(bool, EpisodeFinished)   \
-    GAMESTATE(int,  NumberOfKills)     \
-    GAMESTATE(int,  Health)            \
-    GAMESTATE(int,  Armour)            \
-
+    GAMESTATE(bool,  LevelFinished)    \
+    GAMESTATE(int,   NumberOfKills)    \
+    GAMESTATE(int,   Health)           \
+    GAMESTATE(int,   Armor)            \
+    GAMESTATE(bool,  AttackDown)       \
+    GAMESTATE(bool,  UseDown)          \
+    GAMESTATE(int,   WeaponState)      \
+    GAMESTATE(int,   ItemCount)        \
+    GAMESTATE(int,   SecretCount)      \
+    GAMESTATE(int,   DamageCount)      \
+    GAMESTATE(int,   BonusCount)       \
+    GAMESTATE(bool,  OnGround)         \
+    GAMESTATE(float, X)                \
+    GAMESTATE(float, Y)                \
+    GAMESTATE(float, Z)                \
+    GAMESTATE(float, Angle)            \
 
 namespace gvizdoom {
 
@@ -77,7 +89,7 @@ GVIZDOOM_GAMESTATES(GVIZDOOM_GAMESTATE_MAP)
 // Implement deleter function for all the pointers in the container
 namespace detail {
     template<GameState First, GameState... Rest>
-    void deleteGameStateArray(void* gameStates[])
+    inline void deleteGameStateArray(void* gameStates[])
     {
         if (gameStates[0] != nullptr)
             delete static_cast<typename GameStateInfo<First>::Type*>(gameStates[0]);
@@ -85,7 +97,7 @@ namespace detail {
     }
 
     template<>
-    void deleteGameStateArray<GameState::Undefined>(void* gameStates[]) {}
+    inline void deleteGameStateArray<GameState::Undefined>(void* gameStates[]) {}
 }
 
 

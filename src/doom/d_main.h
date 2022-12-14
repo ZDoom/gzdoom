@@ -39,12 +39,12 @@
 #include "wi_stuff.h"
 #include "g_levellocals.h"
 
-
 namespace gvizdoom {
 
     class Action;
     struct Context;
     struct GameConfig;
+    class GameStateContainer;
 
 } // namespace gvizdoom
 
@@ -180,7 +180,7 @@ public:
 };
 
 struct DoomMain {
-    int Init();
+    int Init(bool interactive);
     void ReInit(gvizdoom::Context& context, const gvizdoom::GameConfig& gameConfig);
     void Cleanup();
 
@@ -197,11 +197,10 @@ struct DoomLoop {
     void Init();
     void Iter(
         gvizdoom::Context& context,
-        MainDebugInfo& out_dbgInfo,
+        gvizdoom::GameStateContainer& out_gameState,
         const gvizdoom::Action& action);
 
     int _lasttic;
-    MainDebugInfo _dbgInfo;
 };
 
 

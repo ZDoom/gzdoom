@@ -1,5 +1,4 @@
 *		text=auto
-
 *.h		text
 *.c		text
 *.cc		text
@@ -11,14 +10,11 @@
 *.i		text
 *.asm		text
 *.S		text
-
 *.vcproj	text eol=crlf
 *.sln		text eol=crlf
 *.bat		text eol=crlf
-
 *.txt		text
 language.*	text
-
 *.png		binary
 *.imgz		binary
 *.lmp		binary

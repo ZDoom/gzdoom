@@ -589,6 +589,12 @@ ComputePipelineBuilder::ComputePipelineBuilder()
 	stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 }
 
+ComputePipelineBuilder& ComputePipelineBuilder::Cache(VulkanPipelineCache* cache)
+{
+	this->cache = cache;
+	return *this;
+}
+
 ComputePipelineBuilder& ComputePipelineBuilder::Layout(VulkanPipelineLayout* layout)
 {
 	pipelineInfo.layout = layout->layout;
@@ -608,7 +614,7 @@ ComputePipelineBuilder& ComputePipelineBuilder::ComputeShader(VulkanShader* shad
 std::unique_ptr<VulkanPipeline> ComputePipelineBuilder::Create(VulkanDevice* device)
 {
 	VkPipeline pipeline;
-	vkCreateComputePipelines(device->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
+	vkCreateComputePipelines(device->device, cache ? cache->cache : VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
 	auto obj = std::make_unique<VulkanPipeline>(device, pipeline);
 	if (debugName)
 		obj->SetDebugName(debugName);
@@ -871,6 +877,12 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::RasterizationSamples(VkSampleC
 	return *this;
 }
 
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::Cache(VulkanPipelineCache* cache)
+{
+	this->cache = cache;
+	return *this;
+}
+
 GraphicsPipelineBuilder& GraphicsPipelineBuilder::Subpass(int subpass)
 {
 	pipelineInfo.subpass = subpass;
@@ -1087,7 +1099,7 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::AddDynamicState(VkDynamicState
 std::unique_ptr<VulkanPipeline> GraphicsPipelineBuilder::Create(VulkanDevice* device)
 {
 	VkPipeline pipeline = 0;
-	VkResult result = vkCreateGraphicsPipelines(device->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
+	VkResult result = vkCreateGraphicsPipelines(device->device, cache ? cache->cache : VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
 	CheckVulkanError(result, "Could not create graphics pipeline");
 	auto obj = std::make_unique<VulkanPipeline>(device, pipeline);
 	if (debugName)
@@ -1128,6 +1140,54 @@ std::unique_ptr<VulkanPipelineLayout> PipelineLayoutBuilder::Create(VulkanDevice
 	VkResult result = vkCreatePipelineLayout(device->device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
 	CheckVulkanError(result, "Could not create pipeline layout");
 	auto obj = std::make_unique<VulkanPipelineLayout>(device, pipelineLayout);
+	if (debugName)
+		obj->SetDebugName(debugName);
+	return obj;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PipelineCacheBuilder::PipelineCacheBuilder()
+{
+	pipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+}
+
+PipelineCacheBuilder& PipelineCacheBuilder::InitialData(const void* data, size_t size)
+{
+	initData.resize(size);
+	memcpy(initData.data(), data, size);
+	return *this;
+}
+
+PipelineCacheBuilder& PipelineCacheBuilder::Flags(VkPipelineCacheCreateFlags flags)
+{
+	pipelineCacheInfo.flags = flags;
+	return *this;
+}
+
+std::unique_ptr<VulkanPipelineCache> PipelineCacheBuilder::Create(VulkanDevice* device)
+{
+	pipelineCacheInfo.pInitialData = nullptr;
+	pipelineCacheInfo.initialDataSize = 0;
+
+	// Check if the saved cache data is compatible with our device:
+	if (initData.size() >= sizeof(VkPipelineCacheHeaderVersionOne))
+	{
+		VkPipelineCacheHeaderVersionOne* header = (VkPipelineCacheHeaderVersionOne*)initData.data();
+		if (header->headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_ONE &&
+			header->vendorID == device->PhysicalDevice.Properties.vendorID &&
+			header->deviceID == device->PhysicalDevice.Properties.deviceID &&
+			memcmp(header->pipelineCacheUUID, device->PhysicalDevice.Properties.pipelineCacheUUID, VK_UUID_SIZE) == 0)
+		{
+			pipelineCacheInfo.pInitialData = initData.data();
+			pipelineCacheInfo.initialDataSize = initData.size();
+		}
+	}
+
+	VkPipelineCache pipelineCache;
+	VkResult result = vkCreatePipelineCache(device->device, &pipelineCacheInfo, nullptr, &pipelineCache);
+	CheckVulkanError(result, "Could not create pipeline cache");
+	auto obj = std::make_unique<VulkanPipelineCache>(device, pipelineCache);
 	if (debugName)
 		obj->SetDebugName(debugName);
 	return obj;

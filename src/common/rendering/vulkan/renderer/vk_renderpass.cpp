@@ -34,13 +34,49 @@
 #include "flatvertices.h"
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
+#include "i_specialpaths.h"
 
 VkRenderPassManager::VkRenderPassManager(VulkanRenderDevice* fb) : fb(fb)
 {
+	FString path = M_GetCachePath(true);
+	CreatePath(path);
+	CacheFilename = path + "/pipelinecache.zdpc";
+
+	PipelineCacheBuilder builder;
+	builder.DebugName("PipelineCache");
+
+	try
+	{
+		FileReader fr;
+		if (fr.OpenFile(CacheFilename))
+		{
+			std::vector<uint8_t> data;
+			data.resize(fr.GetLength());
+			if (fr.Read(data.data(), data.size()) == data.size())
+			{
+				builder.InitialData(data.data(), data.size());
+			}
+		}
+	}
+	catch (...)
+	{
+	}
+
+	PipelineCache = builder.Create(fb->device.get());
 }
 
 VkRenderPassManager::~VkRenderPassManager()
 {
+	try
+	{
+		auto data = PipelineCache->GetCacheData();
+		std::unique_ptr<FileWriter> fw(FileWriter::Open(CacheFilename));
+		if (fw)
+			fw->Write(data.data(), data.size());
+	}
+	catch (...)
+	{
+	}
 }
 
 void VkRenderPassManager::RenderBuffersReset()
@@ -206,6 +242,7 @@ VulkanPipeline *VkRenderPassSetup::GetPipeline(const VkPipelineKey &key)
 std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipelineKey &key)
 {
 	GraphicsPipelineBuilder builder;
+	builder.Cache(fb->GetRenderPassManager()->GetCache());
 
 	VkShaderProgram *program;
 	if (key.SpecialEffect != EFF_NONE)
@@ -332,6 +369,7 @@ void VkPPRenderPassSetup::CreatePipelineLayout(const VkPPRenderPassKey& key)
 void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey& key)
 {
 	GraphicsPipelineBuilder builder;
+	builder.Cache(fb->GetRenderPassManager()->GetCache());
 	builder.AddVertexShader(key.Shader->VertexShader.get());
 	builder.AddFragmentShader(key.Shader->FragmentShader.get());
 

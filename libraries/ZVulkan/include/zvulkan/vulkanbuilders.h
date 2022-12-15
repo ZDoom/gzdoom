@@ -236,6 +236,7 @@ class ComputePipelineBuilder
 public:
 	ComputePipelineBuilder();
 
+	ComputePipelineBuilder& Cache(VulkanPipelineCache* cache);
 	ComputePipelineBuilder& Layout(VulkanPipelineLayout *layout);
 	ComputePipelineBuilder& ComputeShader(VulkanShader *shader);
 	ComputePipelineBuilder& DebugName(const char* name) { debugName = name; return *this; }
@@ -245,6 +246,7 @@ public:
 private:
 	VkComputePipelineCreateInfo pipelineInfo = {};
 	VkPipelineShaderStageCreateInfo stageInfo = {};
+	VulkanPipelineCache* cache = nullptr;
 	const char* debugName = nullptr;
 };
 
@@ -324,6 +326,7 @@ class GraphicsPipelineBuilder
 public:
 	GraphicsPipelineBuilder();
 
+	GraphicsPipelineBuilder& Cache(VulkanPipelineCache* cache);
 	GraphicsPipelineBuilder& Subpass(int subpass);
 	GraphicsPipelineBuilder& Layout(VulkanPipelineLayout *layout);
 	GraphicsPipelineBuilder& RenderPass(VulkanRenderPass *renderPass);
@@ -377,6 +380,7 @@ private:
 	std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
 	std::vector<VkDynamicState> dynamicStates;
 
+	VulkanPipelineCache* cache = nullptr;
 	const char* debugName = nullptr;
 };
 
@@ -396,6 +400,24 @@ private:
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	std::vector<VkDescriptorSetLayout> setLayouts;
 	std::vector<VkPushConstantRange> pushConstantRanges;
+	const char* debugName = nullptr;
+};
+
+class PipelineCacheBuilder
+{
+public:
+	PipelineCacheBuilder();
+
+	PipelineCacheBuilder& InitialData(const void* data, size_t size);
+	PipelineCacheBuilder& Flags(VkPipelineCacheCreateFlags flags);
+
+	PipelineCacheBuilder& DebugName(const char* name) { debugName = name; return *this; }
+
+	std::unique_ptr<VulkanPipelineCache> Create(VulkanDevice* device);
+
+private:
+	VkPipelineCacheCreateInfo pipelineCacheInfo = {};
+	std::vector<uint8_t> initData;
 	const char* debugName = nullptr;
 };
 

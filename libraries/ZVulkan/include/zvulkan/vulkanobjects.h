@@ -305,6 +305,24 @@ private:
 	VulkanPipelineLayout &operator=(const VulkanPipelineLayout &) = delete;
 };
 
+class VulkanPipelineCache
+{
+public:
+	VulkanPipelineCache(VulkanDevice* device, VkPipelineCache cache);
+	~VulkanPipelineCache();
+
+	void SetDebugName(const char* name) { device->SetObjectName(name, (uint64_t)cache, VK_OBJECT_TYPE_PIPELINE_CACHE); }
+
+	std::vector<uint8_t> GetCacheData();
+
+	VulkanDevice* device;
+	VkPipelineCache cache;
+
+private:
+	VulkanPipelineCache(const VulkanPipelineCache&) = delete;
+	VulkanPipelineCache& operator=(const VulkanPipelineCache&) = delete;
+};
+
 class VulkanRenderPass
 {
 public:
@@ -1175,6 +1193,33 @@ inline VulkanPipelineLayout::VulkanPipelineLayout(VulkanDevice *device, VkPipeli
 inline VulkanPipelineLayout::~VulkanPipelineLayout()
 {
 	vkDestroyPipelineLayout(device->device, layout, nullptr);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+inline VulkanPipelineCache::VulkanPipelineCache(VulkanDevice* device, VkPipelineCache cache) : device(device), cache(cache)
+{
+}
+
+inline VulkanPipelineCache::~VulkanPipelineCache()
+{
+	vkDestroyPipelineCache(device->device, cache, nullptr);
+}
+
+inline std::vector<uint8_t> VulkanPipelineCache::GetCacheData()
+{
+	size_t dataSize = 0;
+	VkResult result = vkGetPipelineCacheData(device->device, cache, &dataSize, nullptr);
+	CheckVulkanError(result, "Could not get cache data size");
+
+	std::vector<uint8_t> buffer;
+	buffer.resize(dataSize);
+	result = vkGetPipelineCacheData(device->device, cache, &dataSize, buffer.data());
+	if (result == VK_INCOMPLETE)
+		VulkanError("Could not get cache data (incomplete)");
+	CheckVulkanError(result, "Could not get cache data");
+	buffer.resize(dataSize);
+	return buffer;
 }
 
 /////////////////////////////////////////////////////////////////////////////

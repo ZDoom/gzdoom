@@ -226,6 +226,10 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FFloatCVar *>(*CheckKey(NAME_MoveBob));
 	}
+    double GetFViewBob() const
+    {
+        return *static_cast<FBoolCVar *>(*CheckKey(NAME_FViewBob));
+    }
 	double GetStillBob() const
 	{
 		return *static_cast<FFloatCVar *>(*CheckKey(NAME_StillBob));

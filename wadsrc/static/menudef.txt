@@ -1053,6 +1053,7 @@ OptionMenu "HUDOptions" protected
 	Option "$HUDMNU_OLDOUCH",				"st_oldouch", "OnOff"
 	StaticText " "
 	Slider "$DSPLYMNU_MOVEBOB",				"movebob", 0, 1.0, 0.05, 2
+	Option "$DSPLYMNU_FVIEWBOB",            "fviewbob", "OnOff"
 	Slider "$DSPLYMNU_STILLBOB",			"stillbob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_BOBSPEED",			"wbobspeed", 0, 2.0, 0.1
 	Slider "$DSPLYMNU_BOBFIRE",				"wbobfire", 0, 1.0, 0.1

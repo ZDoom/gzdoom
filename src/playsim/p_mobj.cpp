@@ -2410,7 +2410,10 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 	}
 	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->Z() > mo->floorz))
 	{
-		if (!mo->IsNoClip2())
+        FBaseCVar* const fViewBobCvar = G_GetUserCVar(int(mo->player - players),"FViewBob");
+        bool const fViewBob = fViewBobCvar->GetGenericRep(fViewBobCvar->GetRealType()).Bool;
+
+		if (!mo->IsNoClip2() && fViewBob)
 		{
 			mo->AddZ(DAngle::fromDeg(360 / 80.f * mo->Level->maptime).Sin() / 8);
 		}

@@ -531,11 +531,11 @@
 		PLAYERINFO_GENDER,
 		PLAYERINFO_NEVERSWITCH,
 		PLAYERINFO_MOVEBOB,
-        PLAYERINFO_FVIEWBOB,
 		PLAYERINFO_STILLBOB,
 		PLAYERINFO_PLAYERCLASS,
 		PLAYERINFO_FOV,
 		PLAYERINFO_DESIREDFOV,
+		PLAYERINFO_FVIEWBOB,
 	};
 
 
@@ -9955,11 +9955,11 @@ scriptwait:
 				case PLAYERINFO_GENDER:			STACK(2) = userinfo->GetGender(); break;
 				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->GetNeverSwitch(); break;
 				case PLAYERINFO_MOVEBOB:		STACK(2) = DoubleToACS(userinfo->GetMoveBob()); break;
-                case PLAYERINFO_FVIEWBOB:		STACK(2) = DoubleToACS(userinfo->GetFViewBob()); break;
 				case PLAYERINFO_STILLBOB:		STACK(2) = DoubleToACS(userinfo->GetStillBob()); break;
 				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->GetPlayerClassNum(); break;
 				case PLAYERINFO_DESIREDFOV:		STACK(2) = (int)pl->DesiredFOV; break;
 				case PLAYERINFO_FOV:			STACK(2) = (int)pl->FOV; break;
+				case PLAYERINFO_FVIEWBOB:		STACK(2) = DoubleToACS(userinfo->GetFViewBob()); break;
 				default:						STACK(2) = 0; break;
 				}
 			}

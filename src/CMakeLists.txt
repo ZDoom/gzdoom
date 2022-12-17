@@ -49,6 +49,8 @@ if( NOT PROJECT_LIBRARIES )
 	set( PROJECT_LIBRARIES "" )
 endif()
 
+add_definitions( -DTHIS_IS_GZDOOM )
+
 if( WIN32 )
 
 	add_definitions( -D_WIN32 )

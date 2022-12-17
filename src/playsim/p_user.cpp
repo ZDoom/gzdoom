@@ -798,8 +798,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetMoveBob)
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetFViewBob)
 {
-    PARAM_SELF_STRUCT_PROLOGUE(player_t);
-    ACTION_RETURN_BOOL(self->userinfo.GetFViewBob());
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_BOOL(self->userinfo.GetFViewBob());
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)

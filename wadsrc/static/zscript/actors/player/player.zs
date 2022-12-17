@@ -592,7 +592,7 @@ class PlayerPawn : Actor
 
 		if (bFly && !GetCVar("FViewBob"))
 		{
-		    bob = 0;
+			bob = 0;
 		}
 		else if (still)
 		{

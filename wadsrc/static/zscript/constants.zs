@@ -1140,6 +1140,7 @@ enum EPlayerCheats
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
 	CF_INTERPVIEWANGLES	= 1 << 15,		// [MR] flag for interpolating view angles without interpolating the entire frame
 	CF_SCALEDNOLERP		= 1 << 15,		// [MR] flag for applying angles changes in the ticrate without interpolating the frame
+	CF_NOFOVINTERP		= 1 << 16,		// [B] Disable FOV interpolation when instantly zooming
 
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 

@@ -1266,6 +1266,7 @@ void P_PlayerThink (player_t *player)
 	player->cheats &= ~CF_INTERPVIEW;
 	player->cheats &= ~CF_INTERPVIEWANGLES;
 	player->cheats &= ~CF_SCALEDNOLERP;
+	player->cheats &= ~CF_NOFOVINTERP;
 	player->mo->FloatVar("prevBob") = player->bob;
 
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, PlayerThink)

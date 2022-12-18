@@ -1702,6 +1702,7 @@ int FLevelLocals::FinishTravel ()
 		}
 		pawn->LinkToWorld (nullptr);
 		pawn->ClearInterpolation();
+		pawn->ClearFOVInterpolation();
 		const int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
 		pawn->tid = 0;				// Reset TID
 		pawn->SetTID(tid);			// Set TID (and link actor into the hash chain)

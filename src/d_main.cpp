@@ -899,11 +899,8 @@ void D_Display ()
 		DAngle fov = DAngle::fromDeg(90.);
 		AActor *cam = players[consoleplayer].camera;
 		if (cam)
-		{
-			if (cam->player)
-				fov = DAngle::fromDeg(cam->player->FOV);
-			else fov = DAngle::fromDeg(cam->CameraFOV);
-		}
+			fov = DAngle::fromDeg(cam->GetFOV(I_GetTimeFrac()));
+
 		R_SetFOV(vp, fov);
 	}
 

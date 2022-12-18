@@ -669,6 +669,7 @@ class Actor : Thinker native
 	native bool UpdateWaterLevel (bool splash = true);
 	native bool IsZeroDamage();
 	native void ClearInterpolation();
+	native void ClearFOVInterpolation();
 	native clearscope Vector3 PosRelative(sector sec) const;
 	native void RailAttack(FRailParams p);
 		

@@ -464,6 +464,7 @@ class Weapon : StateProvider
 			if (flags & 1)
 			{ // Make the zoom instant.
 				player.FOV = player.DesiredFOV * zoom;
+				player.cheats |= CF_NOFOVINTERP;
 			}
 			if (flags & 2)
 			{ // Disable pitch/yaw scaling.

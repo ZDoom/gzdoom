@@ -34,6 +34,14 @@ inline void AActor::ClearInterpolation()
 	else PrevPortalGroup = 0;
 }
 
+inline void AActor::ClearFOVInterpolation()
+{
+	if (player)
+		PrevFOV = DAngle::fromDeg(player->FOV);
+	else
+		PrevFOV = DAngle::fromDeg(CameraFOV);
+}
+
 inline double secplane_t::ZatPoint(const AActor *ac) const
 {
 	return (D + normal.X*ac->X() + normal.Y*ac->Y()) * negiC;

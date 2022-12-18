@@ -89,7 +89,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 		state.AlphaFunc(Alpha_GEqual, 0);
 
 		FHWModelRenderer renderer(this, state, huds->lightindex);
-		RenderHUDModel(&renderer, huds->weapon, huds->mx, huds->my);
+		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector3(huds->mx / 4., (huds->my - WEAPONTOP) / -4., 0), huds->pivot, huds->mframe);
 		state.SetVertexBuffer(screen->mVertexData);
 	}
 	else
@@ -157,9 +157,9 @@ static bool isBright(DPSprite *psp)
 //
 //==========================================================================
 
-static WeaponPosition GetWeaponPosition(player_t *player, double ticFrac)
+static WeaponPosition2D GetWeaponPosition2D(player_t *player, double ticFrac)
 {
-	WeaponPosition w;
+	WeaponPosition2D w;
 	P_BobWeapon(player, &w.bobx, &w.boby, ticFrac);
 
 	// Interpolate the main weapon layer once so as to be able to add it to other layers.
@@ -184,13 +184,55 @@ static WeaponPosition GetWeaponPosition(player_t *player, double ticFrac)
 	return w;
 }
 
+static WeaponPosition3D GetWeaponPosition3D(player_t *player, double ticFrac)
+{
+	WeaponPosition3D w;
+	P_BobWeapon3D(player, &w.translation, &w.rotation, ticFrac);
+
+	// Interpolate the main weapon layer once so as to be able to add it to other layers.
+	if ((w.weapon = player->FindPSprite(PSP_WEAPON)) != nullptr)
+	{
+		if (w.weapon->firstTic)
+		{
+			w.wx = (float)w.weapon->x;
+			w.wy = (float)w.weapon->y;
+		}
+		else
+		{
+			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * ticFrac);
+			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * ticFrac);
+		}
+		
+		auto weaponActor = w.weapon->GetCaller();
+
+		if (weaponActor && weaponActor->IsKindOf(NAME_Weapon))
+		{
+			DVector3 *dPivot = (DVector3*) weaponActor->ScriptVar(NAME_BobPivot3D, nullptr);
+			w.pivot.X = (float) dPivot->X;
+			w.pivot.Y = (float) dPivot->Y;
+			w.pivot.Z = (float) dPivot->Z;
+		}
+		else
+		{
+			w.pivot = FVector3(0,0,0);
+		}
+	}
+	else
+	{
+		w.wx = 0;
+		w.wy = 0;
+		w.pivot = FVector3(0,0,0);
+	}
+	return w;
+}
+
 //==========================================================================
 //
 // Bobbing
 //
 //==========================================================================
 
-static FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp, double ticFrac)
+static FVector2 BobWeapon2D(WeaponPosition2D &weap, DPSprite *psp, double ticFrac)
 {
 	if (psp->firstTic)
 	{ // Can't interpolate the first tic.
@@ -205,6 +247,46 @@ static FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp, double ticFrac)
 	{
 		sx += (psp->Flags & PSPF_MIRROR) ? -weap.bobx : weap.bobx;
 		sy += weap.boby;
+	}
+
+	if (psp->Flags & PSPF_ADDWEAPON && psp->GetID() != PSP_WEAPON)
+	{
+		sx += weap.wx;
+		sy += weap.wy;
+	}
+	return { sx, sy };
+}
+
+static FVector2 BobWeapon3D(WeaponPosition3D &weap, DPSprite *psp, FVector3 &translation, FVector3 &rotation, FVector3 &pivot, double ticFrac)
+{
+	if (psp->firstTic)
+	{ // Can't interpolate the first tic.
+		psp->firstTic = false;
+		psp->ResetInterpolation();
+	}
+
+	float sx = float(psp->oldx + (psp->x - psp->oldx) * ticFrac);
+	float sy = float(psp->oldy + (psp->y - psp->oldy) * ticFrac);
+	float sz = 0;
+
+	if (psp->Flags & PSPF_ADDBOB)
+	{
+		if (psp->Flags & PSPF_MIRROR)
+		{
+			translation = FVector3(-weap.translation.X, weap.translation.Y, weap.translation.Z);
+			rotation = FVector3(-weap.rotation.X, weap.rotation.Y, weap.rotation.Z);
+			pivot = FVector3(-weap.pivot.X, weap.pivot.Y, weap.pivot.Z);
+		}
+		else
+		{
+			translation = weap.translation ;
+			rotation = weap.rotation ;
+			pivot = weap.pivot ;
+		}
+	}
+	else
+	{
+		translation = rotation = pivot = FVector3(0,0,0);
 	}
 
 	if (psp->Flags & PSPF_ADDWEAPON && psp->GetID() != PSP_WEAPON)
@@ -587,11 +669,119 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 // R_DrawPlayerSprites
 //
 //==========================================================================
+void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
+{
+	AActor * playermo = players[consoleplayer].camera;
+	player_t * player = playermo->player;
+
+	const auto &vp = Viewpoint;
+
+	AActor *camera = vp.camera;
+
+	WeaponPosition2D weap = GetWeaponPosition2D(camera->player, vp.TicFrac);
+	WeaponLighting light = GetWeaponLighting(viewsector, vp.Pos, isFullbrightScene(), in_area, camera->Pos());
+
+	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
+	// light mode here to draw the weapon sprite.
+	auto oldlightmode = lightmode;
+	if (isSoftwareLighting()) SetFallbackLightMode();
+
+	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
+	{
+		if (!psp->GetState()) continue;
+		
+		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+
+		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
+		if (smf) continue;
+
+		HUDSprite hudsprite;
+		hudsprite.owner = playermo;
+		hudsprite.mframe = smf;
+		hudsprite.weapon = psp;
+
+		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
+
+		FVector2 spos = BobWeapon2D(weap, psp, vp.TicFrac);
+
+		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
+		hudsprite.lightindex = -1;
+		// set the lighting parameters
+		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && Level->HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
+		{
+			GetDynSpriteLight(playermo, nullptr, hudsprite.dynrgb);
+		}
+
+		if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player, vp.TicFrac)) continue;
+		hudsprites.Push(hudsprite);
+	}
+	lightmode = oldlightmode;
+}
+
+void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
+{
+	AActor * playermo = players[consoleplayer].camera;
+	player_t * player = playermo->player;
+
+	const auto &vp = Viewpoint;
+
+	AActor *camera = vp.camera;
+
+	WeaponPosition3D weap = GetWeaponPosition3D(camera->player, vp.TicFrac);
+	WeaponLighting light = GetWeaponLighting(viewsector, vp.Pos, isFullbrightScene(), in_area, camera->Pos());
+
+	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
+	// light mode here to draw the weapon sprite.
+	auto oldlightmode = lightmode;
+	if (isSoftwareLighting()) SetFallbackLightMode();
+
+	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
+	{
+		if (!psp->GetState()) continue;
+		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+
+		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
+		if (!smf) continue;
+
+		HUDSprite hudsprite;
+		hudsprite.owner = playermo;
+		hudsprite.mframe = smf;
+		hudsprite.weapon = psp;
+
+		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
+
+		//FVector2 spos = BobWeapon3D(weap, psp, hudsprite.translation, hudsprite.rotation, hudsprite.pivot, vp.TicFrac);
+
+		FVector2 spos = BobWeapon3D(weap, psp, hudsprite.translation, hudsprite.rotation, hudsprite.pivot, vp.TicFrac);
+
+		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
+		hudsprite.lightindex = -1;
+		// set the lighting parameters
+		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && Level->HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
+		{
+			hw_GetDynModelLight(playermo, lightdata);
+			hudsprite.lightindex = screen->mLights->UploadLights(lightdata);
+			LightProbe* probe = FindLightProbe(playermo->Level, playermo->X(), playermo->Y(), playermo->Center());
+			if (probe)
+			{
+				hudsprite.dynrgb[0] = probe->Red;
+				hudsprite.dynrgb[1] = probe->Green;
+				hudsprite.dynrgb[2] = probe->Blue;
+			}
+		}
+
+		// [BB] In the HUD model step we just render the model and break out. 
+		hudsprite.mx = spos.X;
+		hudsprite.my = spos.Y;
+
+		hudsprites.Push(hudsprite);
+	}
+	lightmode = oldlightmode;
+}
 
 void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 {
 
-	bool brightflash = false;
 	AActor * playermo = players[consoleplayer].camera;
 	player_t * player = playermo->player;
 	
@@ -608,67 +798,16 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		return;
 
 	const bool hudModelStep = IsHUDModelForPlayerAvailable(camera->player);
-	WeaponPosition weap = GetWeaponPosition(camera->player, vp.TicFrac);
-	WeaponLighting light = GetWeaponLighting(viewsector, vp.Pos, isFullbrightScene(), in_area, camera->Pos());
-
-	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
-	// light mode here to draw the weapon sprite.
-	auto oldlightmode = lightmode;
-	if (isSoftwareLighting()) SetFallbackLightMode();
-
-	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
+	
+	if(hudModelStep)
 	{
-		if (!psp->GetState()) continue;
-		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
-		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
-		if (smf && !hudModelStep) continue;
-		if (!smf && hudModelStep) continue;
-
-		HUDSprite hudsprite;
-		hudsprite.owner = playermo;
-		hudsprite.mframe = smf;
-		hudsprite.weapon = psp;
-
-		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
-
-		FVector2 spos = BobWeapon(weap, psp, vp.TicFrac);
-
-		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
-		hudsprite.lightindex = -1;
-		// set the lighting parameters
-		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && Level->HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
-		{
-			if (!hudModelStep)
-			{
-				GetDynSpriteLight(playermo, nullptr, hudsprite.dynrgb);
-			}
-			else
-			{
-				hw_GetDynModelLight(playermo, lightdata);
-				hudsprite.lightindex = screen->mLights->UploadLights(lightdata);
-				LightProbe* probe = FindLightProbe(playermo->Level, playermo->X(), playermo->Y(), playermo->Center());
-				if (probe)
-				{
-					hudsprite.dynrgb[0] = probe->Red;
-					hudsprite.dynrgb[1] = probe->Green;
-					hudsprite.dynrgb[2] = probe->Blue;
-				}
-			}
-		}
-
-		// [BB] In the HUD model step we just render the model and break out. 
-		if (hudModelStep)
-		{
-			hudsprite.mx = spos.X;
-			hudsprite.my = spos.Y;
-		}
-		else
-		{
-			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player, vp.TicFrac)) continue;
-		}
-		hudsprites.Push(hudsprite);
+		PreparePlayerSprites3D(viewsector,in_area);
 	}
-	lightmode = oldlightmode;
+	else
+	{
+		PreparePlayerSprites2D(viewsector,in_area);
+	}
+
 	PrepareTargeterSprites(vp.TicFrac);
 }
 

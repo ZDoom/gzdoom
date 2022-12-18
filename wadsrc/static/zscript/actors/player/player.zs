@@ -590,7 +590,11 @@ class PlayerPawn : Actor
 			return;
 		}
 
-		if (still)
+		if (bFly && !GetCVar("FViewBob"))
+		{
+			bob = 0;
+		}
+		else if (still)
 		{
 			if (player.health > 0)
 			{
@@ -638,6 +642,7 @@ class PlayerPawn : Actor
 			bob = 0;
 		}
 		player.viewz = pos.Z + player.viewheight + (bob * clamp(ViewBob, 0. , 1.5)); // [SP] Allow DECORATE changes to view bobbing speed.
+
 		if (Floorclip && player.playerstate != PST_DEAD
 			&& pos.Z <= floorz)
 		{
@@ -2437,6 +2442,12 @@ class PlayerPawn : Actor
 		}
 		return p1 * (1. - ticfrac) + p2 * ticfrac;
 	}
+
+	virtual Vector3 /*translation*/ , Vector3 /*rotation*/ BobWeapon3D (double ticfrac)
+	{
+		Vector2 oldBob = BobWeapon(ticfrac);
+		return (0, 0, 0) , ( oldBob.x / 4, oldBob.y / -4, 0);
+	}
 	
 	//----------------------------------------------------------------------------
 	//
@@ -2794,6 +2805,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native double GetWBobSpeed() const;
 	native double GetWBobFire() const;
 	native double GetMoveBob() const;
+	native bool GetFViewBob() const;
 	native double GetStillBob() const;
 	native void SetFOV(float fov);
 	native clearscope bool GetClassicFlight() const;

@@ -716,6 +716,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearInterpolation, ClearInterpolation)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ClearFOVInterpolation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearFOVInterpolation();
+	return 0;
+}
+
 static int ApplyDamageFactors(PClassActor *itemcls, int damagetype, int damage, int defdamage)
 {
 	DmgFactors &df = itemcls->ActorInfo()->DamageFactors;

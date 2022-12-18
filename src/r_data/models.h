@@ -110,7 +110,7 @@ void BSPWalkCircle(FLevelLocals *Level, float x, float y, float radiusSquared, c
 }
 
 void RenderModel(FModelRenderer* renderer, float x, float y, float z, FSpriteModelFrame* smf, AActor* actor, double ticFrac);
-void RenderHUDModel(FModelRenderer* renderer, DPSprite* psp, float ofsX, float ofsY);
+void RenderHUDModel(FModelRenderer* renderer, DPSprite* psp, FVector3 translation, FVector3 rotation, FVector3 rotation_pivot, FSpriteModelFrame *smf);
 
 EXTERN_CVAR(Float, cl_scaleweaponfov)
 

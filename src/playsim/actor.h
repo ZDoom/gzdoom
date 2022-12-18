@@ -929,6 +929,8 @@ public:
 	void SetViewAngle(DAngle ang, int fflags);
 	void SetViewRoll(DAngle roll, int fflags);
 
+	double GetFOV(double ticFrac);
+
 	PClassActor *GetBloodType(int type = 0) const;
 
 	double Distance2DSquared(AActor *other, bool absolute = false)
@@ -998,6 +1000,7 @@ public:
 	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false);
 
 	void ClearInterpolation();
+	void ClearFOVInterpolation();
 
 	void Move(const DVector3 &vel)
 	{
@@ -1278,6 +1281,7 @@ public:
 	// [RH] Used to interpolate the view to get >35 FPS
 	DVector3 Prev;
 	DRotator PrevAngles;
+	DAngle   PrevFOV;
 	int PrevPortalGroup;
 	TArray<FDynamicLight *> AttachedLights;
 	TDeletingArray<FLightDefaults *> UserLights;

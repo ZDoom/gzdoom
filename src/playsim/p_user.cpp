@@ -796,6 +796,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetMoveBob)
 	ACTION_RETURN_FLOAT(self->userinfo.GetMoveBob());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetFViewBob)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_BOOL(self->userinfo.GetFViewBob());
+}
+
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
@@ -1260,6 +1266,7 @@ void P_PlayerThink (player_t *player)
 	player->cheats &= ~CF_INTERPVIEW;
 	player->cheats &= ~CF_INTERPVIEWANGLES;
 	player->cheats &= ~CF_SCALEDNOLERP;
+	player->cheats &= ~CF_NOFOVINTERP;
 	player->mo->FloatVar("prevBob") = player->bob;
 
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, PlayerThink)

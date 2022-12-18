@@ -824,6 +824,10 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 					assert(b < f->NumRegF);
 					::new(param) VMValue(&reg.f[b]);
 					break;
+				case REGT_FLOAT | REGT_MULTIREG2 | REGT_ADDROF:
+				case REGT_FLOAT | REGT_MULTIREG3 | REGT_ADDROF:
+				case REGT_FLOAT | REGT_MULTIREG4 | REGT_ADDROF:
+					I_Error("REGT_ADDROF not implemented for vectors\n");
 				case REGT_FLOAT | REGT_KONST:
 					assert(b < sfunc->NumKonstF);
 					::new(param) VMValue(konstf[b]);

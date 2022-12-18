@@ -10,7 +10,7 @@ class FFont;
 extern FGameTexture* CrosshairImage;
 void ST_LoadCrosshair(int num, bool alwaysload);
 void ST_UnloadCrosshair();
-void ST_DrawCrosshair(int phealth, double xpos, double ypos, double scale);
+void ST_DrawCrosshair(int phealth, double xpos, double ypos, double scale, DAngle angle = nullAngle);
 
 
 enum DI_Flags

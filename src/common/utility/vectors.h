@@ -1428,11 +1428,6 @@ public:
 		return int(Degrees_ * (512 / 90.0));
 	}
 
-	constexpr double Buildfang() const
-	{
-		return Degrees_ * (512 / 90.0);
-	}
-
 	constexpr int Q16() const
 	{
 		return int(Degrees_ * (16384 / 90.0));
@@ -1455,7 +1450,8 @@ public:
 
 	double Tan() const
 	{
-		return vec_t(g_tan(Radians()));
+		auto bam = BAMs();
+		return g_sinbam(bam) / g_cosbam(bam);
 	}
 
 	// This is for calculating vertical velocity. For high pitches the tangent will become too large to be useful.

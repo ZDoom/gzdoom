@@ -1465,21 +1465,11 @@ void SoundEngine::Reset()
 
 FSoundID SoundEngine::FindSound(const char* logicalname)
 {
-	int i;
-
-	if (logicalname != NULL)
-	{
-		i = S_sfx[MakeKey(logicalname) % S_sfx.Size()].index;
-
-		while ((i != 0) && stricmp(S_sfx[i].name, logicalname))
-			i = S_sfx[i].next;
-
-		return FSoundID::fromInt(i);
-	}
-	else
-	{
-		return NO_SOUND;
-	}
+	if (!logicalname) return NO_SOUND;
+	FName name(logicalname, true);
+	if (name == NAME_None) return NO_SOUND;
+	auto p = SoundMap.CheckKey(name);
+	return p ? *p : NO_SOUND;
 }
 
 FSoundID SoundEngine::FindSoundByResID(int resid)
@@ -1498,11 +1488,34 @@ FSoundID SoundEngine::FindSoundByResID(int resid)
 
 FSoundID SoundEngine::FindSoundNoHash(const char* logicalname)
 {
+	if (!logicalname) return NO_SOUND;
+	FName name(logicalname, true);
+	if (name == NAME_None) return NO_SOUND;
+
+	for (unsigned i = 1; i < S_sfx.Size(); i++)
+	{
+		if (S_sfx[i].name == name)
+		{
+			return FSoundID::fromInt(i);
+		}
+	}
+	return NO_SOUND;
+}
+
+//==========================================================================
+//
+// S_FindSoundByResIDNoHash
+//
+// same with resource IDs.
+//==========================================================================
+
+FSoundID SoundEngine::FindSoundByResIDNoHash(int resid)
+{
 	unsigned int i;
 
 	for (i = 1; i < S_sfx.Size(); i++)
 	{
-		if (stricmp(S_sfx[i].name, logicalname) == 0)
+		if (S_sfx[i].ResourceId == resid)
 		{
 			return FSoundID::fromInt(i);
 		}
@@ -1544,14 +1557,11 @@ FSoundID SoundEngine::AddSoundLump(const char* logicalname, int lump, int Curren
 
 	newsfx.name = logicalname;
 	newsfx.lumpnum = lump;
-	newsfx.next = 0;
 	newsfx.PitchMask = CurrentPitchMask;
 	newsfx.NearLimit = nearlimit;
 	newsfx.ResourceId = resid;
 	newsfx.bTentative = false;
 	auto id = FSoundID::fromInt(S_sfx.Size() - 1);
-
-	if (resid >= 0) ResIdMap[resid] = id;
 	return id;
 }
 
@@ -1565,12 +1575,12 @@ FSoundID SoundEngine::AddSoundLump(const char* logicalname, int lump, int Curren
 // an associated lump is created.
 //==========================================================================
 
-FSoundID SoundEngine::FindSoundTentative(const char* name)
+FSoundID SoundEngine::FindSoundTentative(const char* name, int nearlimit)
 {
 	auto id = FindSoundNoHash(name);
 	if (id == NO_SOUND)
 	{
-		id = AddSoundLump(name, -1, 0);
+		id = AddSoundLump(name, -1, 0, -1, nearlimit);
 		S_sfx[id.index()].bTentative = true;
 	}
 	return id;
@@ -1675,25 +1685,21 @@ FSoundID SoundEngine::PickReplacement(FSoundID refid)
 
 void SoundEngine::HashSounds()
 {
-	unsigned int i;
-	unsigned int j;
-	unsigned int size;
-
 	S_sfx.ShrinkToFit();
-	size = S_sfx.Size();
+	SoundMap.Clear();
+	ResIdMap.Clear();
 
-	// Mark all buckets as empty
-	for (i = 0; i < size; i++)
-		S_sfx[i].index = 0;
-
-	// Now set up the chains
-	for (i = 1; i < size; i++)
+	for (unsigned i = 1; i < S_sfx.Size(); i++)
 	{
-		j = MakeKey(S_sfx[i].name) % size;
-		S_sfx[i].next = S_sfx[j].index;
-		S_sfx[j].index = i;
+		SoundMap.Insert(S_sfx[i].name, FSoundID::fromInt(i));
+		if (S_sfx[i].ResourceId != -1)
+		{
+			ResIdMap.Insert(S_sfx[i].ResourceId, FSoundID::fromInt(i));
+		}
 	}
 	S_rnd.ShrinkToFit();
+
+
 }
 
 void SoundEngine::AddRandomSound(FSoundID Owner, TArray<FSoundID> list)
@@ -1824,26 +1830,20 @@ void S_SetSoundPaused(int state)
 
 	if ((state || i_soundinbackground) && !pauseext)
 	{
-		if (paused == 0)
+		S_ResumeSound(true);
+		if (GSnd != nullptr)
 		{
-			S_ResumeSound(true);
-			if (GSnd != nullptr)
-			{
-				GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
-			}
+			GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
 		}
 	}
 	else
 	{
-		if (paused == 0)
+		S_PauseSound(false, true);
+		if (GSnd != nullptr)
 		{
-			S_PauseSound(false, true);
-			if (GSnd != nullptr)
-			{
-				GSnd->SetInactive(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL ?
-					SoundRenderer::INACTIVE_Complete :
-					SoundRenderer::INACTIVE_Mute);
-			}
+			GSnd->SetInactive(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL ?
+				SoundRenderer::INACTIVE_Complete :
+				SoundRenderer::INACTIVE_Mute);
 		}
 	}
 }

@@ -124,7 +124,7 @@ void ST_UnloadCrosshair()
 //
 //---------------------------------------------------------------------------
 
-void ST_DrawCrosshair(int phealth, double xpos, double ypos, double scale)
+void ST_DrawCrosshair(int phealth, double xpos, double ypos, double scale, DAngle angle)
 {
 	uint32_t color;
 	double size;
@@ -207,6 +207,7 @@ void ST_DrawCrosshair(int phealth, double xpos, double ypos, double scale)
 		xpos, ypos,
 		DTA_DestWidth, w,
 		DTA_DestHeight, h,
+		DTA_Rotate, angle.Degrees(),
 		DTA_AlphaChannel, true,
 		DTA_FillColor, color & 0xFFFFFF,
 		TAG_DONE);

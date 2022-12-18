@@ -476,8 +476,8 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 						return;
 					}
 					(*(FVector2*)addr) = FVector2(
-						static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat(),
-						static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat()
+						float(static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat()),
+						float(static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat())
 					);
 					goto vector_ok;
 				}
@@ -503,9 +503,9 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 						return;
 					}
 					(*(FVector3*)addr) = FVector3(
-						static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat(),
-						static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat(),
-						static_cast<FxConstant *>(v->xyzw[2])->GetValue().GetFloat()
+						float(static_cast<FxConstant*>(v->xyzw[0])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[1])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[2])->GetValue().GetFloat())
 					);
 					goto vector_ok;
 				}
@@ -532,10 +532,10 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 						return;
 					}
 					(*(FVector4*)addr) = FVector4(
-						static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat(),
-						static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat(),
-						static_cast<FxConstant *>(v->xyzw[2])->GetValue().GetFloat(),
-						static_cast<FxConstant *>(v->xyzw[3])->GetValue().GetFloat()
+						float(static_cast<FxConstant*>(v->xyzw[0])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[1])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[2])->GetValue().GetFloat()),
+						float(static_cast<FxConstant *>(v->xyzw[3])->GetValue().GetFloat())
 					);
 					goto vector_ok;
 				}

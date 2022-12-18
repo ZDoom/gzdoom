@@ -184,6 +184,7 @@ xx(IsNull)
 xx(Exists)
 xx(SetInvalid)
 xx(SetNull)
+xx(Key)
 
 // color channels
 xx(a)

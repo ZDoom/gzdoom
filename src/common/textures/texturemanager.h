@@ -25,50 +25,50 @@ public:
 private:
 	int ResolveLocalizedTexture(int texnum);
 
-	int ResolveTextureIndex(int texnum, bool animate, bool localize)
+	int ResolveTextureIndex(int texnum, bool animate) const
 	{
 		if ((unsigned)texnum >= Textures.Size()) return -1;
 		if (animate) texnum = Translation[texnum];
-		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
+		//if (localize && Textures[texnum].Flags & TEXFLAG_HASLOCALIZATION) texnum = ResolveLocalizedTexture(texnum);
 		return texnum;
 	}
 
-	FGameTexture *InternalGetTexture(int texnum, bool animate, bool localize)
+	FGameTexture *InternalGetTexture(int texnum, bool animate) const
 	{
-		texnum = ResolveTextureIndex(texnum, animate, localize);
+		texnum = ResolveTextureIndex(texnum, animate);
 		if (texnum == -1) return nullptr;
 		return Textures[texnum].Texture;
 	}
 
-public:
-	FTextureID ResolveTextureIndex(FTextureID texid, bool animate, bool localize)
+	FTextureID ResolveTextureIndex(FTextureID texid, bool animate) const
 	{
-		return FSetTextureID(ResolveTextureIndex(texid.GetIndex(), animate, localize));
+		return FSetTextureID(ResolveTextureIndex(texid.GetIndex(), animate));
 	}
 
+public:
 	// This only gets used in UI code so we do not need PALVERS handling.
 	FGameTexture* GetGameTextureByName(const char *name, bool animate = false, int flags = 0)
 	{
 		FTextureID texnum = GetTextureID(name, ETextureType::MiscPatch, flags);
-		return InternalGetTexture(texnum.GetIndex(), animate, true);
+		return InternalGetTexture(texnum.GetIndex(), animate);
 	}
 
-	FGameTexture* GetGameTexture(FTextureID texnum, bool animate = false)
+	FGameTexture* GetGameTexture(FTextureID texnum, bool animate = false) const
 	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true);
+		return InternalGetTexture(texnum.GetIndex(), animate);
 	}
 
-	FGameTexture* GetPalettedTexture(FTextureID texnum, bool animate = false, bool allowsubstitute = true)
+	FGameTexture* GetPalettedTexture(FTextureID texnum, bool animate = false, bool allowsubstitute = true) const
 	{
-		auto texid = ResolveTextureIndex(texnum.GetIndex(), animate, true);
+		auto texid = ResolveTextureIndex(texnum.GetIndex(), animate);
 		if (texid == -1) return nullptr;
 		if (allowsubstitute && Textures[texid].Paletted > 0) texid = Textures[texid].Paletted;
 		return Textures[texid].Texture;
 	}
 
-	FGameTexture* GameByIndex(int i, bool animate = false)
+	FGameTexture* GameByIndex(int i, bool animate = false) const
 	{
-		return InternalGetTexture(i, animate, true);
+		return InternalGetTexture(i, animate);
 	}
 
 	FGameTexture* FindGameTexture(const char* texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
@@ -76,6 +76,7 @@ public:
 	bool OkForLocalization(FTextureID texnum, const char *substitute, int locnum);
 
 	void FlushAll();
+	void Listaliases();
 	FTextureID GetFrontSkyLayer(FTextureID);
 	FTextureID GetRawTexture(FTextureID tex, bool dontlookup = false);
 	void SetRawTexture(FTextureID texid) 
@@ -99,6 +100,7 @@ public:
 		TEXMAN_Localize = 64,
 		TEXMAN_ForceLookup = 128,
 		TEXMAN_NoAlias = 256,
+		TEXMAN_ReturnAll = 512,
 	};
 
 	enum
@@ -154,7 +156,11 @@ public:
 		tmanips.Remove(cname);
 	}
 
-	void AddAlias(const char* name, FGameTexture* tex);
+	void AddAlias(const char* name, int texindex);
+	void AddAlias(const char* name, FTextureID texindex)
+	{
+		AddAlias(name, texindex.GetIndex());
+	}
 
 private:
 
@@ -173,6 +179,10 @@ public:
 		BuildTileData.Reserve(1);
 		return BuildTileData.Last();
 	}
+	TArray<TArray<uint8_t>>& GetBuildTileDataStore()
+	{
+		return BuildTileData;
+	}
 
 	FGameTexture* GameTexture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation(FTextureID fromtexnum, FTextureID totexnum);
@@ -183,17 +193,26 @@ private:
 
 	// Switches
 
-	struct TextureHash
+	struct TextureDescriptor
 	{
 		FGameTexture* Texture;
 		int Paletted;		// redirection to paletted variant
 		int FrontSkyLayer;	// and front sky layer,
 		int RawTexture;		
 		int HashNext;
-		bool HasLocalization;
+		uint64_t Flags;
 	};
+
+	enum : uint64_t
+	{
+		TEXFLAG_HASLOCALIZATION = 1,
+	};
+public:
+	constexpr static int TEXFLAG_FIRSTUSER = 65536;	// this leaves 16 flags to the texture manager and 48 flags to the user
+private:
+
 	enum { HASH_END = -1, HASH_SIZE = 1027 };
-	TArray<TextureHash> Textures;
+	TArray<TextureDescriptor> Textures;
 	TMap<uint64_t, int> LocalizedTextures;
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;

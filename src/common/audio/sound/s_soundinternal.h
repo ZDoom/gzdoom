@@ -1,6 +1,7 @@
 #pragma once
 
 #include "i_sound.h"
+#include "name.h"
 
 enum
 {
@@ -78,10 +79,9 @@ constexpr FSoundID INVALID_SOUND = FSoundID::fromInt(-1);
 	 // A non-null data means the sound has been loaded.
 	 SoundHandle	data{};
 
-	 FString		name;								// [RH] Sound name defined in SNDINFO
+	 FName		name;								// [RH] Sound name defined in SNDINFO
 	 int 		lumpnum = sfx_empty;				// lump number of sfx
 
-	 unsigned int next = -1, index = 0;				// [RH] For hashing
 	 float		Volume = 1.f;
 
 	 int			ResourceId = -1;					// Resource ID as implemented by Blood. Not used by Doom but added for completeness.
@@ -192,6 +192,7 @@ protected:
 	TArray<sfxinfo_t> S_sfx;
 	FRolloffInfo S_Rolloff{};
 	TArray<uint8_t> S_SoundCurve;
+	TMap<FName, FSoundID> SoundMap;
 	TMap<int, FSoundID> ResIdMap;
 	TArray<FRandomSoundList> S_rnd;
 	bool blockNewSounds = false;
@@ -390,9 +391,10 @@ public:
 	FSoundID FindSound(const char* logicalname);
 	FSoundID FindSoundByResID(int rid);
 	FSoundID FindSoundNoHash(const char* logicalname);
+	FSoundID FindSoundByResIDNoHash(int rid);
 	FSoundID FindSoundByLump(int lump);
 	virtual FSoundID AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
-	FSoundID FindSoundTentative(const char* name);
+	FSoundID FindSoundTentative(const char* name, int nearlimit = 2);
 	void CacheRandomSound(sfxinfo_t* sfx);
 	unsigned int GetMSLength(FSoundID sound);
 	FSoundID PickReplacement(FSoundID refid);

@@ -472,7 +472,6 @@ xx(Strength)
 xx(Mode)
 xx(PowerupType)
 xx(PlayerPawn)
-xx(Key)
 xx(RipSound)
 xx(Archvile)
 

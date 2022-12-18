@@ -213,7 +213,7 @@ public:
 	{
 	}
 	////////
-	TArray ()
+	constexpr TArray ()
 	{
 		Most = 0;
 		Count = 0;

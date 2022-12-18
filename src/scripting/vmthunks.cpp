@@ -2428,7 +2428,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetDisplacement)
 	DVector2 ofs(0, 0);
 	if (pg1 != pg2)
 	{
-		int i = pg1 + self->Displacements.size * pg2;
+		unsigned i = pg1 + self->Displacements.size * pg2;
 		if (i < self->Displacements.data.Size())
 			ofs = self->Displacements.data[i].pos;
 	}

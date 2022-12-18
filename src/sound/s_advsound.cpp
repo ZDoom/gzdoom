@@ -492,7 +492,7 @@ FSoundID S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int l
 	fakename += '"';
 	fakename += '0' + gender;
 	fakename += '"';
-	fakename += sfx->name;
+	fakename += sfx->name.GetChars();
 
 	id = soundEngine->AddSoundLump (fakename, lumpnum, CurrentPitchMask);
 	int classnum = S_AddPlayerClass (pclass);
@@ -1593,7 +1593,7 @@ CCMD (playersounds)
 		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			++j;
-			reserveNames[sfx->link.index()] = sfx->name;
+			reserveNames[sfx->link.index()] = sfx->name.GetChars();
 		}
 	}
 

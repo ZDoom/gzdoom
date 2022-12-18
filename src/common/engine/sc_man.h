@@ -54,16 +54,18 @@ public:
 		double Float;
 	};
 
+	using SymbolMap = TMap<FName, Symbol>;
 
-	TMap<FName, Symbol> symbols;
+	SymbolMap mysymbols;
+	SymbolMap& symbols;
+	TMap<FName, Symbol>& GetSymbols() { return symbols; }
 
 	// Methods ------------------------------------------------------
-	FScanner();
-	FScanner(const FScanner &other);
-	FScanner(int lumpnum);
-	~FScanner();
-
-	FScanner &operator=(const FScanner &other);
+	FScanner(TMap<FName, Symbol>* extsymbols = nullptr);
+	FScanner(const FScanner& other) = delete;
+	FScanner& operator=(const FScanner& other) = delete;
+	FScanner(int lumpnum, TMap<FName, Symbol>* extsymbols = nullptr);
+	~FScanner() = default;
 
 	void Open(const char *lumpname);
 	bool OpenFile(const char *filename);
@@ -115,6 +117,13 @@ public:
 	void MustGetNumber(bool evaluate = false);
 	bool CheckNumber(bool evaluate = false);
 
+	bool GetNumber(int16_t& var, bool evaluate = false)
+	{
+		if (!GetNumber(evaluate)) return false;
+		var = Number;
+		return true;
+	}
+
 	bool GetNumber(int& var, bool evaluate = false)
 	{
 		if (!GetNumber(evaluate)) return false;
@@ -155,9 +164,9 @@ public:
 	void MustGetFloat(bool evaluate = false);
 	bool CheckFloat(bool evaluate = false);
 
-	double *LookupConstant(FName name)
+	Symbol *LookupSymbol(FName name)
 	{
-		return constants.CheckKey(name);
+		return symbols.CheckKey(name);
 	}
 
 	// Token based variant

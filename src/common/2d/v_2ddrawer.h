@@ -193,7 +193,7 @@ public:
 	TArray<RenderCommand> mData;
 	int Width, Height;
 	bool isIn2D;
-	bool locked;	// prevents clearing of the data so it can be reused multiple times (useful for screen fades)
+	bool locked = false;	// prevents clearing of the data so it can be reused multiple times (useful for screen fades)
 	float screenFade = 1.f;
 	DVector2 offset;
 	DMatrix3x3 transform;

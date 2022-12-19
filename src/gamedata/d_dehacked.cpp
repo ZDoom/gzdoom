@@ -2670,7 +2670,7 @@ static int PatchMusic (int dummy)
 		
 		keystring << "MUSIC_" << Line1;
 
-		TableElement te = { LumpFileNum, { newname, newname, newname, newname } };
+		TableElement te = { LumpFileNum, newname, newname, newname, newname };
 		DehStrings.Insert(keystring, te);
 		DPrintf (DMSG_SPAMMY, "Music %s set to:\n%s\n", keystring.GetChars(), newname.GetChars());
 	}
@@ -2782,7 +2782,7 @@ static int PatchText (int oldSize)
 	if (!stricmp(oldStr, "Doom"))
 	{
 		str = "MUSIC_DOOM";
-		TableElement te = { LumpFileNum, { newStrData, newStrData, newStrData, newStrData } };
+		TableElement te = { LumpFileNum, newStrData, newStrData, newStrData, newStrData };
 		DehStrings.Insert(str, te);
 		good = true;
 	}
@@ -2792,7 +2792,7 @@ static int PatchText (int oldSize)
 		str = EnglishStrings.MatchString(oldStr);
 		if (str != NULL)
 		{
-			TableElement te = { LumpFileNum, { newStrData, newStrData, newStrData, newStrData } };
+			TableElement te = { LumpFileNum, newStrData, newStrData, newStrData, newStrData };
 			DehStrings.Insert(str, te);
 			EnglishStrings.Remove(str);	// remove entry so that it won't get found again by the next iteration or  by another replacement later
 			good = true;
@@ -2842,7 +2842,7 @@ static int PatchStrings (int dummy)
 		// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
 		const char *ll = Line1;
 		if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
-		TableElement te = { LumpFileNum, { holdstring, holdstring, holdstring, holdstring } };
+		TableElement te = { LumpFileNum, holdstring, holdstring, holdstring, holdstring };
 		DehStrings.Insert(ll, te);
 		DPrintf (DMSG_SPAMMY, "%s set to:\n%s\n", Line1, holdstring.GetChars());
 	}

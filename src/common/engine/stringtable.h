@@ -49,11 +49,160 @@
 #include "tarray.h"
 #include "name.h"
 
+class StringMap;
 
 struct TableElement
 {
 	int filenum;
-	FString strings[4];
+private:
+	bool is_random;
+	union
+	{
+		FString strings[4]; // is_random = false
+		TArray<FName> rand_alternatives; // is_random = true , can only point to non-random entries
+	};
+public:
+	FString& Get(int gender,StringMap&);
+	const FString& Get(int gender, const StringMap&) const;
+
+	bool isRandom() const
+		{ return is_random; }
+
+	const TArray<FName> * GetAll() const
+		{ return is_random ? &rand_alternatives : nullptr; }
+
+	TableElement()
+		: filenum(0), is_random(false) , strings()
+	{}
+
+	TableElement(int _filenum, FString g1, FString g2, FString g3, FString g4)  // non-random
+		: filenum(_filenum), is_random(false) , strings {g1, g2, g3, g4}
+	{}
+	
+	TableElement(int _filenum, const TArray<FName> &_rand_alternatives) // random
+		: filenum(_filenum), is_random(true) , rand_alternatives(_rand_alternatives)
+	{}
+
+	TableElement(int _filenum, TArray<FName> && _rand_alternatives) // random
+		: filenum(_filenum), is_random(true) , rand_alternatives(std::move(_rand_alternatives))
+	{}
+
+	TableElement(const TableElement &other)
+		: filenum(other.filenum) , is_random(other.is_random)
+	{
+		if(other.is_random)
+		{
+			new(&rand_alternatives) TArray<FName>(other.rand_alternatives);
+		}
+		else
+		{
+			new(&strings) FString[4] {other.strings[0] , other.strings[1] , other.strings[2] , other.strings[3]};
+		}
+	}
+
+	TableElement(TableElement && other)
+		: filenum(other.filenum) , is_random(other.is_random)
+	{
+		if(other.is_random)
+		{
+			new(&rand_alternatives) TArray<FName>(std::move(other.rand_alternatives));
+		}
+		else
+		{
+			new(&strings) FString[4] {std::move(other.strings[0]) , std::move(other.strings[1]) , std::move(other.strings[2]) , std::move(other.strings[3])};
+		}
+	}
+
+	TableElement& operator=(const TableElement &other)
+	{
+		if(other.is_random)
+		{
+			if(!is_random)
+			{
+				strings[0].~FString();
+				strings[1].~FString();
+				strings[2].~FString();
+				strings[3].~FString();
+				new(&rand_alternatives) TArray<FName>(other.rand_alternatives);
+			}
+			else
+			{
+				rand_alternatives = other.rand_alternatives;
+			}
+		}
+		else
+		{
+			if(is_random)
+			{
+				rand_alternatives.~TArray();
+				new(&strings) FString[4] {other.strings[0] , other.strings[1] , other.strings[2] , other.strings[3]};
+			}
+			else
+			{
+				strings[0] = other.strings[0];
+				strings[1] = other.strings[1];
+				strings[2] = other.strings[2];
+				strings[3] = other.strings[3];
+			}
+		}
+		filenum = other.filenum;
+		is_random = other.is_random;
+		return *this;
+	}
+
+	TableElement& operator=(TableElement && other)
+	{
+		if(other.is_random)
+		{
+			if(!is_random)
+			{
+				strings[0].~FString();
+				strings[1].~FString();
+				strings[2].~FString();
+				strings[3].~FString();
+				new(&rand_alternatives) TArray<FName>(std::move(other.rand_alternatives));
+			}
+			else
+			{
+				rand_alternatives = std::move(other.rand_alternatives);
+			}
+		}
+		else
+		{
+			if(is_random)
+			{
+				rand_alternatives.~TArray();
+				new(&strings) FString[4] {std::move(other.strings[0]) , std::move(other.strings[1]) , std::move(other.strings[2]) , std::move(other.strings[3])};
+			}
+			else
+			{
+				strings[0] = std::move(other.strings[0]);
+				strings[1] = std::move(other.strings[1]);
+				strings[2] = std::move(other.strings[2]);
+				strings[3] = std::move(other.strings[3]);
+			}
+		}
+		filenum = other.filenum;
+		is_random = other.is_random;
+		return *this;
+	}
+
+	~TableElement()
+	{
+		if(is_random)
+		{
+			rand_alternatives.~TArray();
+		}
+		else
+		{
+			strings[0].~FString();
+			strings[1].~FString();
+			strings[2].~FString();
+			strings[3].~FString();
+		}
+	}
+
+	friend class FStringTable;
 };
 
 // This public interface is for Dehacked
@@ -68,7 +217,6 @@ struct StringMacro
 {
 	FString Replacements[4];
 };
-
 
 class FStringTable
 {
@@ -121,6 +269,18 @@ private:
 	void DeleteForLabel(int lumpnum, FName label);
 
 	static size_t ProcessEscapes (char *str);
+
+	struct LangRandomEntry
+	{
+		bool operator == (const LangRandomEntry& other) const
+			{ return name == other.name; }
+
+		FName name;
+		bool persistent;
+		TArray<FName> alternatives;
+	};
+	void ProcessRandomEntries(int lumpnum, TArray<LangRandomEntry> &entries, StringMap &map);
+
 public:
 	static FString MakeMacro(const char *str)
 	{

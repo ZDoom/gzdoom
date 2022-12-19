@@ -41,6 +41,11 @@
 #include "printf.h"
 #include "i_interface.h"
 
+#include "m_random.h"
+
+static FRandom pr_langrandom ("LangRandom");
+
+
 //==========================================================================
 //
 //
@@ -282,6 +287,69 @@ bool FStringTable::ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer)
 //
 //==========================================================================
 
+void FStringTable::ProcessRandomEntries(int lumpnum, TArray<LangRandomEntry> &entries, StringMap &map)
+{
+	TArray<LangRandomEntry> resolved_entries;
+	for(auto &entry : entries)
+	{
+		TArray<FName> resolved_alternatives;
+		for(FName alternative : entry.alternatives)
+		{
+			const auto * real_entry = map.CheckKey(alternative);
+			if(!real_entry) goto bad;
+			if(const TArray<FName> * r; r = real_entry->GetAll())
+			{
+				resolved_alternatives.Append(*r);
+			}
+			else
+			{
+				resolved_alternatives.Push(alternative);
+			}
+		}
+		resolved_entries.Push({entry.name , entry.persistent , std::move(resolved_alternatives)});
+	bad:;
+	}
+
+	if(resolved_entries.Size() == 0)
+	{
+		FString err("Couldn't resolve LANGUAGE $random for: '");
+		bool first = true;
+		for(auto &entry : entries)
+		{
+			if(!first)
+			{
+				err+= "', '";
+			}
+
+			err += entry.name.GetChars();
+
+			first = false;
+		}
+		err += "'";
+		I_Error("%s", err.GetChars());
+	} else {
+		for(auto &entry : resolved_entries)
+		{
+			entries.Delete(entries.Find(entry));
+			if(entry.persistent)
+			{
+				TArray<FName> e;
+				e.Push(entry.alternatives[pr_langrandom(entry.alternatives.Size())]);
+				map.Insert(entry.name , { fileSystem.GetFileContainer(lumpnum) , std::move(e) });
+			}
+			else
+			{
+				map.Insert(entry.name , { fileSystem.GetFileContainer(lumpnum) , std::move(entry.alternatives) });
+			}
+		}
+
+		if(entries.Size() > 0)
+		{
+			ProcessRandomEntries(lumpnum, entries, map);
+		}
+	}
+}
+
 void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 {
 	bool errordone = false;
@@ -291,6 +359,9 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 
 	sc.OpenMem("LANGUAGE", buffer);
 	sc.SetCMode (true);
+
+	TArray<LangRandomEntry> random_entries;
+
 	while (sc.GetString ())
 	{
 		if (sc.Compare ("["))
@@ -350,42 +421,81 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 				}
 				sc.ScriptError ("Found a string without a language specified.");
 			}
-
+			bool random = false;
+			bool random_persistent = false;
 			bool skip = false;
-			if (sc.Compare("$"))
+			if (sc.Compare("$") && ((random = sc.CheckString("random")) || (random = random_persistent = sc.CheckString("random_persistent"))))
 			{
+				sc.MustGetString();
+			}
+			if (sc.Compare("$")) {
 				sc.MustGetStringName("ifgame");
 				sc.MustGetStringName("(");
 				sc.MustGetString();
 				skip |= (!sysCallbacks.CheckGame || !sysCallbacks.CheckGame(sc.String));
 				sc.MustGetStringName(")");
 				sc.MustGetString();
-
+				if(sc.Compare("$") && ((random = sc.CheckString("random")) || (random = random_persistent = sc.CheckString("random_persistent"))) && !random)
+				{
+					sc.MustGetString();
+				}
 			}
 
 			FName strName (sc.String);
 			sc.MustGetStringName ("=");
 			sc.MustGetString ();
-			FString strText (sc.String, ProcessEscapes (sc.String));
-			sc.MustGetString ();
-			while (!sc.Compare (";"))
+
+			if (random)
 			{
-				ProcessEscapes (sc.String);
-				strText += sc.String;
-				sc.MustGetString ();
-			}
-			if (!skip)
-			{
+				TArray<FName> alternatives;
+				while (true)
+				{
+					ProcessEscapes(sc.String);
+					alternatives.Push(sc.String);
+
+					if(sc.CheckString(";")) break;
+
+					sc.MustGetStringName(",");
+					sc.MustGetString();
+				}
 				if (hasDefaultEntry)
 				{
 					DeleteForLabel(lumpnum, strName);
 				}
-				// Insert the string into all relevant tables.
-				for (auto map : activeMaps)
+				random_entries.Push( {strName , random_persistent ,std::move(alternatives)});
+			}
+			else
+			{
+				FString strText (sc.String, ProcessEscapes (sc.String));
+				sc.MustGetString ();
+				while (!sc.Compare (";"))
 				{
-					InsertString(lumpnum, map, strName, strText);
+					ProcessEscapes (sc.String);
+					strText += sc.String;
+					sc.MustGetString ();
+				}
+				if (!skip)
+				{
+					if (hasDefaultEntry)
+					{
+						DeleteForLabel(lumpnum, strName);
+					}
+					// Insert the string into all relevant tables.
+					for (auto map : activeMaps)
+					{
+						InsertString(lumpnum, map, strName, strText);
+					}
 				}
 			}
+
+		}
+	}
+	if (random_entries.Size() > 0)
+	{
+		for (auto map : activeMaps)
+		{
+			TArray<LangRandomEntry> entries (random_entries);
+			ProcessRandomEntries(lumpnum, entries, allStrings[map]);
 		}
 	}
 }
@@ -434,7 +544,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 void FStringTable::InsertString(int lumpnum, int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
-	TableElement te = { fileSystem.GetFileContainer(lumpnum), { string, string, string, string } };
+	TableElement te = { fileSystem.GetFileContainer(lumpnum), string, string, string, string };
 	ptrdiff_t index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{
@@ -596,7 +706,7 @@ const char *FStringTable::GetString(const char *name, uint32_t *langtable, int g
 			if (item)
 			{
 				if (langtable) *langtable = map.first;
-				auto c = item->strings[gender].GetChars();
+				auto c = item->Get(gender, *map.second).GetChars();
 				if (c && *c == '$' && c[1] == '$')
 					return GetString(c + 2, langtable, gender);
 				return c;
@@ -628,10 +738,36 @@ const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable
 		auto item = map->CheckKey(nm);
 		if (item)
 		{
-			return item->strings[gender].GetChars();
+			return item->Get(gender, *map).GetChars();
 		}
 	}
 	return nullptr;
+}
+
+
+
+const FString& TableElement::Get(int gender,const StringMap & m) const
+{
+	if(is_random)
+	{
+		return m.CheckKey(rand_alternatives[pr_langrandom(rand_alternatives.Size())])->strings[gender];
+	}
+	else
+	{
+		return strings[gender];
+	}
+}
+
+FString& TableElement::Get(int gender, StringMap &m)
+{
+	if(is_random)
+	{
+		return m.CheckKey(rand_alternatives[pr_langrandom(rand_alternatives.Size())])->strings[gender];
+	}
+	else
+	{
+		return strings[gender];
+	}
 }
 
 bool FStringTable::MatchDefaultString(const char *name, const char *content) const
@@ -677,7 +813,7 @@ const char *StringMap::MatchString (const char *string) const
 
 	while (it.NextPair(pair))
 	{
-		if (pair->Value.strings[0].CompareNoCase(string) == 0)
+		if (pair->Value.Get(0, *this).CompareNoCase(string) == 0)
 		{
 			return pair->Key.GetChars();
 		}

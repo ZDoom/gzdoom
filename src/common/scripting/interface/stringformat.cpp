@@ -578,6 +578,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, StripRight, StringStripRight)
 	return 0;
 }
 
+static void StringStripLeft(FString* self, const FString& junk)
+{
+	if (junk.IsNotEmpty()) self->StripLeft(junk);
+	else self->StripLeft();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, StripLeft, StringStripLeft)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(junk);
+	StringStripLeft(self, junk);
+	return 0;
+}
+
+static void StringStripLeftRight(FString* self, const FString& junk)
+{
+	if (junk.IsNotEmpty()) self->StripLeftRight(junk);
+	else self->StripLeftRight();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, StripLeftRight, StringStripLeftRight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(junk);
+	StringStripLeftRight(self, junk);
+	return 0;
+}
+
 static void StringSplit(FString* self, TArray<FString>* tokens, const FString& delimiter, int keepEmpty)
 {
 	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));

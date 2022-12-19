@@ -881,7 +881,9 @@ struct StringStruct native
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
 	native void Substitute(String str, String replace);
+	native void StripLeft(String junk = "");
 	native void StripRight(String junk = "");
+	native void StripLeftRight(String junk = "");
 }
 
 struct Translation version("2.4")

@@ -35,7 +35,6 @@ public:
 	{
 		mDataLump = -1;
 		mAnivLump = -1;
-		mDataLoaded = false;
 		dhead = NULL;
 		dpolys = NULL;
 		ahead = NULL;
@@ -49,7 +48,6 @@ public:
 
 private:
 	int mDataLump, mAnivLump;
-	bool mDataLoaded;
 
 	// raw data structures
 	struct d3dhead
@@ -105,9 +103,10 @@ private:
 	int numFrames;
 	int numPolys;
 	int numGroups;
-	TArray<int> specialPolys;	// for future model attachment support, unused for now
+	bool hasWeaponTriangle;
 
 	TArray<UE1Vertex> verts;
 	TArray<UE1Poly> polys;
 	TArray<UE1Group> groups;
+	//TArray<TRS> weapondata;	// pseudo-bone generated from weapon triangle (not yet implemented)
 };

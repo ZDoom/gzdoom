@@ -165,13 +165,17 @@ void FUE1Model::LoadGeometry()
 	// populate poly groups (subdivided by texture number and type)
 	// this method minimizes searches in the group list as much as possible
 	// while still doing a single pass through the poly list
+	groups.Reset();
 	int curgroup = -1;
 	UE1Group Group;
+	hasWeaponTriangle = false;
+	int weapontri = -1;
 	for ( int i=0; i<numPolys; i++ )
 	{
-		// while we're at it, look for attachment triangles
-		// technically only one should exist, but we ain't following the specs 100% here
-		if ( dpolys[i].type&PT_WeaponTriangle ) specialPolys.Push(i);
+		// while we're at it, look for a weapon triangle
+		// (technically only one should exist)
+		if ( dpolys[i].type&PT_WeaponTriangle )
+			weapontri = i;
 		if ( curgroup == -1 )
 		{
 			// no group, create it
@@ -201,25 +205,24 @@ void FUE1Model::LoadGeometry()
 		groups[curgroup].P.Push(i);
 		groups[curgroup].numPolys++;
 	}
-	// ... and it's finally done
-	mDataLoaded = true;
+	if ( weapontri != -1 )
+	{
+		// TODO: generate TRS array from special poly to interface as a pseudo-bone
+		hasWeaponTriangle = true;
+	}
 }
 
 void FUE1Model::UnloadGeometry()
 {
-	mDataLoaded = false;
-	specialPolys.Reset();
-	numVerts = 0;
-	numFrames = 0;
-	numPolys = 0;
-	numGroups = 0;
+	for ( unsigned i=0; i<verts.Size(); i++ )
+		verts[i].P.Reset();
 	verts.Reset();
-	for ( int i=0; i<numPolys; i++ )
+	for ( unsigned i=0; i<polys.Size(); i++ )
 		polys[i].Normals.Reset();
 	polys.Reset();
-	for ( int i=0; i<numGroups; i++ )
+	for ( unsigned i=0; i<groups.Size(); i++ )
 		groups[i].P.Reset();
-	groups.Reset();
+	// do not unload groups themselves, they're needed for rendering
 }
 
 int FUE1Model::FindFrame(const char* name, bool nodefault)
@@ -272,8 +275,7 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 {
 	if (GetVertexBuffer(renderer->GetType()))
 		return;
-	if ( !mDataLoaded )
-		LoadGeometry();
+	LoadGeometry();
 	int vsize = 0;
 	for ( int i=0; i<numGroups; i++ )
 		vsize += groups[i].numPolys*3;
@@ -306,6 +308,7 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 		}
 	}
 	vbuf->UnlockVertexBuffer();
+	UnloadGeometry(); // don't forget this, save precious RAM
 }
 
 void FUE1Model::AddSkins( uint8_t *hitlist, const FTextureID* surfaceskinids)
@@ -320,5 +323,5 @@ void FUE1Model::AddSkins( uint8_t *hitlist, const FTextureID* surfaceskinids)
 
 FUE1Model::~FUE1Model()
 {
-	UnloadGeometry();
+	groups.Reset();
 }

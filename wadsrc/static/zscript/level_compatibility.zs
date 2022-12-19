@@ -968,7 +968,7 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				// missing texture
 				TextureID looserck = TexMan.CheckForTexture("LOOSERCK", TexMan.Type_Wall);
-				SetWallTextureID( 477, Line.back,  Side.top, looserck);				
+				SetWallTextureID( 629, Line.back,  Side.top, looserck);				
 				break;
 			}
 			

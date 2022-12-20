@@ -1195,6 +1195,18 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 		break;
 	}
 
+	case AST_AssignDeclStmt:
+	{
+		TreeNodeDeepCopy_Start(AssignDeclStmt);
+
+		// ZCC_AssignDeclStmt
+		copy->Dests = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Dests, true, copiedNodesList));
+		copy->Sources = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Sources, true, copiedNodesList));
+		copy->AssignOp = origCasted->AssignOp;
+
+		break;
+	}
+
 	case AST_LocalVarStmt:
 	{
 		TreeNodeDeepCopy_Start(LocalVarStmt);

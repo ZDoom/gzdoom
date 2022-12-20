@@ -3350,6 +3350,28 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		return new FxMultiAssign(args, ConvertNode(ass->Sources), *ast);
 	}
 
+	case AST_AssignDeclStmt:
+	{
+		auto ass = static_cast<ZCC_AssignDeclStmt *>(ast);
+		FArgumentList args;
+		{
+			ZCC_TreeNode *n = ass->Dests;
+			if(n) do
+			{
+				args.Push(new FxIdentifier(static_cast<ZCC_Identifier*>(n)->Id,*n));
+				n = n->SiblingNext;
+			} while(n != ass->Dests);
+		}
+		assert(ass->Sources->SiblingNext == ass->Sources);	// right side should be a single function call - nothing else
+		if (ass->Sources->NodeType != AST_ExprFuncCall)
+		{
+			// don't let this through to the code generator. This node is only used to assign multiple returns of a function to more than one variable.
+			Error(ass, "Right side of multi-assignment must be a function call");
+			return new FxNop(*ast);	// allow compiler to continue looking for errors.
+		}
+		return new FxMultiAssignDecl(args, ConvertNode(ass->Sources), *ast);
+	}
+
 	default:
 		break;
 	}

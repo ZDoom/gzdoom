@@ -122,6 +122,7 @@ enum EZCCTreeNodeType
 	AST_SwitchStmt,
 	AST_CaseStmt,
 	AST_AssignStmt,
+	AST_AssignDeclStmt,
 	AST_LocalVarStmt,
 	AST_FuncParamDecl,
 	AST_ConstantDef,
@@ -529,6 +530,13 @@ struct ZCC_CaseStmt : ZCC_Statement
 struct ZCC_AssignStmt : ZCC_Statement
 {
 	ZCC_Expression *Dests;
+	ZCC_Expression *Sources;
+	int AssignOp;
+};
+
+struct ZCC_AssignDeclStmt : ZCC_Statement
+{
+	ZCC_Identifier *Dests;
 	ZCC_Expression *Sources;
 	int AssignOp;
 };

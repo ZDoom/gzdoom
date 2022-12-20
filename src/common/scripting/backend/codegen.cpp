@@ -2718,6 +2718,75 @@ ExpEmit FxMultiAssign::Emit(VMFunctionBuilder *build)
 	return LocalVarContainer->Emit(build);
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxMultiAssignDecl::FxMultiAssignDecl(FArgumentList &base, FxExpression *right, const FScriptPosition &pos)
+	:FxExpression(EFX_MultiAssign, pos)
+{
+	Base = std::move(base);
+	Right = right;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxMultiAssignDecl::~FxMultiAssignDecl()
+{
+	SAFE_DELETE(Right);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxMultiAssignDecl::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Right, ctx);
+	if (Right->ExprType != EFX_VMFunctionCall)
+	{
+		Right->ScriptPosition.Message(MSG_ERROR, "Function call expected on right side of multi-assigment");
+		delete this;
+		return nullptr;
+	}
+	auto VMRight = static_cast<FxVMFunctionCall *>(Right);
+	auto rets = VMRight->GetReturnTypes();
+	if (Base.Size() == 1)
+	{
+		Right->ScriptPosition.Message(MSG_ERROR, "Multi-assignment with only one element in function %s", VMRight->Function->SymbolName.GetChars());
+		delete this;
+		return nullptr;
+	}
+	if (rets.Size() < Base.Size())
+	{
+		Right->ScriptPosition.Message(MSG_ERROR, "Insufficient returns in function %s", VMRight->Function->SymbolName.GetChars());
+		delete this;
+		return nullptr;
+	}
+	FxSequence * DeclAndAssign = new FxSequence(ScriptPosition);
+	const unsigned int n = Base.Size();
+	for (unsigned int i = 0; i < n; i++)
+	{
+		assert(Base[i]->ExprType == EFX_Identifier);
+		DeclAndAssign->Add(new FxLocalVariableDeclaration(rets[i], ((FxIdentifier*)Base[i])->Identifier, nullptr, 0, Base[i]->ScriptPosition));
+	}
+	DeclAndAssign->Add(new FxMultiAssign(Base, Right, ScriptPosition));
+	Right = nullptr;
+	delete this;
+	return DeclAndAssign->Resolve(ctx);
+}
+
+
 //==========================================================================
 //
 //

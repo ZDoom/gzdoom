@@ -904,6 +904,17 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+class FxMultiAssignDecl : public FxExpression
+{
+	FArgumentList Base;
+	FxExpression *Right;
+public:
+	FxMultiAssignDecl(FArgumentList &base, FxExpression *right, const FScriptPosition &pos);
+	~FxMultiAssignDecl();
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed into Declarations + FxMultiAssign , so it won't ever be emitted itself
+};
+
 //==========================================================================
 //
 //	FxAssignSelf

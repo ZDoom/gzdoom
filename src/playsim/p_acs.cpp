@@ -9959,7 +9959,7 @@ scriptwait:
 				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->GetPlayerClassNum(); break;
 				case PLAYERINFO_DESIREDFOV:		STACK(2) = (int)pl->DesiredFOV; break;
 				case PLAYERINFO_FOV:			STACK(2) = (int)pl->FOV; break;
-				case PLAYERINFO_FVIEWBOB:		STACK(2) = DoubleToACS(userinfo->GetFViewBob()); break;
+				case PLAYERINFO_FVIEWBOB:		STACK(2) = (bool)userinfo->GetFViewBob(); break;
 				default:						STACK(2) = 0; break;
 				}
 			}

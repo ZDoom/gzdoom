@@ -104,6 +104,9 @@ public:
 	virtual bool IsAxisMapDefault(int axis);
 	virtual bool IsAxisScaleDefault(int axis);
 
+	virtual bool GetEnabled();
+	virtual void SetEnabled(bool enabled);
+
 	virtual void SetDefaultConfig();
 	virtual FString GetIdentifier();
 
@@ -165,6 +168,7 @@ private:
 	TArray<DigitalButton> m_buttons;
 	TArray<DigitalButton> m_POVs;
 
+	bool m_enabled;
 	bool m_useAxesPolling;
 
 	io_object_t m_notification;
@@ -279,6 +283,7 @@ IOKitJoystick::IOKitJoystick(const io_object_t device)
 : m_interface(CreateDeviceInterface(device))
 , m_queue(CreateDeviceQueue(m_interface))
 , m_sensitivity(DEFAULT_SENSITIVITY)
+, m_enabled(true)
 , m_useAxesPolling(true)
 , m_notification(0)
 {
@@ -430,6 +435,17 @@ bool IOKitJoystick::IsAxisScaleDefault(int axis)
 		: true;
 }
 
+
+
+bool IOKitJoystick::GetEnabled()
+{
+	return m_enabled;
+}
+void IOKitJoystick::SetEnabled(bool enabled)
+{
+	m_enabled = enabled;
+}
+
 #undef IS_AXIS_VALID
 
 void IOKitJoystick::SetDefaultConfig()
@@ -547,7 +563,7 @@ void IOKitJoystick::Update()
 
 	if (kIOReturnSuccess == eventResult)
 	{
-		if (use_joystick)
+		if (use_joystick && m_enabled)
 		{
 			ProcessAxis(event) || ProcessButton(event) || ProcessPOV(event);
 		}
@@ -557,7 +573,7 @@ void IOKitJoystick::Update()
 		Printf(TEXTCOLOR_RED "IOHIDQueueInterface::getNextEvent() failed with code 0x%08X\n", eventResult);
 	}
 
-	ProcessAxes();
+	if(m_enabled) ProcessAxes();
 }
 
 

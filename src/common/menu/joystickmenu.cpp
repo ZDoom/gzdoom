@@ -119,6 +119,20 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, GetNumAxes)
 	ACTION_RETURN_INT(self->GetNumAxes());
 }
 
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetEnabled)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_BOOL(self->GetEnabled());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabled)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_BOOL(enabled);
+	self->SetEnabled(enabled);
+	return 0;
+}
+
 
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {

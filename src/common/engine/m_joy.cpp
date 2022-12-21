@@ -120,6 +120,11 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 	{
 		return false;
 	}
+	value = GameConfig->GetValueForKey("Enabled");
+	if (value != NULL)
+	{
+		joy->SetEnabled((bool)atoi(value));
+	}
 	value = GameConfig->GetValueForKey("Sensitivity");
 	if (value != NULL)
 	{
@@ -176,6 +181,10 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 	if (GameConfig != NULL && M_SetJoystickConfigSection(joy, true, GameConfig))
 	{
 		GameConfig->ClearCurrentSection();
+		if (!joy->GetEnabled())
+		{
+			GameConfig->SetValueForKey("Enabled", "0");
+		}
 		if (!joy->IsSensitivityDefault())
 		{
 			mysnprintf(value, countof(value), "%g", joy->GetSensitivity());

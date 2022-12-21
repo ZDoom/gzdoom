@@ -1170,7 +1170,7 @@ void DoomLoop::Iter(gvizdoom::Context& context, gvizdoom::GameStateContainer& ou
     AInventory *armor = player->mo->FindInventory(NAME_BasicArmor);
     DVector3 pos = player->mo->Pos();
 
-    out_gameState.set<gvizdoom::GameState::LevelFinished>(false);
+    out_gameState.set<gvizdoom::GameState::LevelFinished>(gameaction == ga_completed);
     out_gameState.set<gvizdoom::GameState::NumberOfKills>(level.killed_monsters);
     out_gameState.set<gvizdoom::GameState::Health>(player->health);
     out_gameState.set<gvizdoom::GameState::Armor>(armor->Amount);

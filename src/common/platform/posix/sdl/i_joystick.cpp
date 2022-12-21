@@ -263,6 +263,8 @@ protected:
 	TArray<AxisInfo>	Axes;
 	int					NumAxes;
 	int					NumHats;
+
+	friend class SDLInputJoystickManager;
 };
 const EJoyAxis SDLInputJoystick::DefaultAxes[5] = {JOYAXIS_Side, JOYAXIS_Forward, JOYAXIS_Pitch, JOYAXIS_Yaw, JOYAXIS_Up};
 

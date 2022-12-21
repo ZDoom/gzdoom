@@ -102,6 +102,9 @@ public:
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
 
+	bool GetEnabled();
+	void SetEnabled(bool enabled);
+
 	void SetDefaultConfig();
 	FString GetIdentifier();
 
@@ -138,6 +141,7 @@ protected:
 	DWORD LastPacketNumber;
 	int LastButtons;
 	bool Connected;
+	bool Enabled;
 
 	void Attached();
 	void Detached();
@@ -221,6 +225,7 @@ FXInputController::FXInputController(int index)
 {
 	Index = index;
 	Connected = false;
+	Enabled = true;
 	M_LoadJoystickConfig(this);
 }
 
@@ -269,7 +274,7 @@ void FXInputController::ProcessInput()
 	{
 		Attached();
 	}
-	if (state.dwPacketNumber == LastPacketNumber)
+	if (state.dwPacketNumber == LastPacketNumber || !Enabled)
 	{ // Nothing has changed since last time.
 		return;
 	}
@@ -626,6 +631,28 @@ bool FXInputController::IsAxisScaleDefault(int axis)
 		return Axes[axis].Multiplier == DefaultAxes[axis].Multiplier;
 	}
 	return true;
+}
+
+//===========================================================================
+//
+// FXInputController :: GetEnabled
+//
+//===========================================================================
+
+bool FXInputController::GetEnabled()
+{
+	return Enabled;
+}
+
+//===========================================================================
+//
+// FXInputController :: SetEnabled
+//
+//===========================================================================
+
+void FXInputController::SetEnabled(bool enabled)
+{
+	Enabled = enabled;
 }
 
 //===========================================================================

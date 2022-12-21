@@ -44,7 +44,7 @@
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
-	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(1.0f)
+	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(1.0f) , Enabled(true)
 	{
 		Device = SDL_JoystickOpen(DeviceIndex);
 		if(Device != NULL)
@@ -154,6 +154,17 @@ public:
 			Axes.Push(info);
 		}
 	}
+
+	bool GetEnabled()
+	{
+		return Enabled;
+	}
+	
+	void SetEnabled(bool enabled)
+	{
+		Enabled = enabled;
+	}
+
 	FString GetIdentifier()
 	{
 		char id[16];
@@ -248,6 +259,7 @@ protected:
 	SDL_Joystick		*Device;
 
 	float				Multiplier;
+	bool				Enabled;
 	TArray<AxisInfo>	Axes;
 	int					NumAxes;
 	int					NumHats;
@@ -291,7 +303,7 @@ public:
 	void ProcessInput() const
 	{
 		for(unsigned int i = 0;i < Joysticks.Size();++i)
-			Joysticks[i]->ProcessInput();
+			if(Joysticks[i]->Enabled) Joysticks[i]->ProcessInput();
 	}
 protected:
 	TArray<SDLInputJoystick *> Joysticks;

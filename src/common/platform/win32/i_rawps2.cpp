@@ -114,6 +114,9 @@ public:
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
 
+	bool GetEnabled();
+	void SetEnabled(bool enabled);
+
 	void SetDefaultConfig();
 	FString GetIdentifier();
 
@@ -153,6 +156,7 @@ protected:
 	bool Connected;
 	bool Marked;
 	bool Active;
+	bool Enabled;
 
 	void Attached();
 	void Detached();
@@ -376,6 +380,7 @@ FRawPS2Controller::FRawPS2Controller(HANDLE handle, EAdapterType type, int seque
 	ControllerNumber = controller;
 	Sequence = sequence;
 	DeviceID = devid;
+	Enabled = true;
 
 	// The EMS USB2 controller provides attachment status. The others do not.
 	Connected = (Descriptors[type].ControllerStatus < 0);
@@ -851,6 +856,28 @@ bool FRawPS2Controller::IsAxisScaleDefault(int axis)
 
 //===========================================================================
 //
+// FRawPS2Controller :: GetEnabled
+//
+//===========================================================================
+
+bool FRawPS2Controller::GetEnabled()
+{
+	return Enabled;
+}
+
+//===========================================================================
+//
+// FRawPS2Controller :: SetEnabled
+//
+//===========================================================================
+
+void FRawPS2Controller::SetEnabled(bool enabled)
+{
+	Enabled = enabled;
+}
+
+//===========================================================================
+//
 // FRawPS2Controller :: IsAxisMapDefault
 //
 //===========================================================================
@@ -972,7 +999,7 @@ bool FRawPS2Manager::ProcessRawInput(RAWINPUT *raw, int code)
 	{
 		if (Devices[i]->Handle == raw->header.hDevice)
 		{
-			if (Devices[i]->ProcessInput(&raw->data.hid, code))
+			if (Devices[i]->Enabled && Devices[i]->ProcessInput(&raw->data.hid, code))
 			{
 				return true;
 			}

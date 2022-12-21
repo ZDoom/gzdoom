@@ -36,6 +36,9 @@ struct NOVTABLE IJoystickConfig
 	virtual void SetAxisMap(int axis, EJoyAxis gameaxis) = 0;
 	virtual void SetAxisScale(int axis, float scale) = 0;
 
+	virtual bool GetEnabled() = 0;
+	virtual void SetEnabled(bool enabled) = 0;
+
 	// Used by the saver to not save properties that are at their defaults.
 	virtual bool IsSensitivityDefault() = 0;
 	virtual bool IsAxisDeadZoneDefault(int axis) = 0;

@@ -37,6 +37,7 @@
 #include <thread>
 #include <assert.h>
 #include "i_time.h"
+#include "doomdef.h"
 
 //==========================================================================
 //
@@ -49,7 +50,7 @@ static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
 static double lastinputtime;
-int GameTicRate = 35;	// make sure it is not 0, even if the client doesn't set it.
+int GameTicRate = DEFAULT_TICRATE;	// make sure it is not 0, even if the client doesn't set it.
 
 double TimeScale = 1.0;
 

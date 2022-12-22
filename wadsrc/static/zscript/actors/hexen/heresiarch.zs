@@ -26,7 +26,7 @@ class Heresiarch : Actor
 	const SORCBALL_SPEED_ROTATIONS 		= 5;
 	const SORC_DEFENSE_TIME				= 255;
 	const SORC_DEFENSE_HEIGHT			= 45;
-	const BOUNCE_TIME_UNIT				= (35/2);
+	//const BOUNCE_TIME_UNIT				= (35/2);
 	const SORCFX4_RAPIDFIRE_TIME		= (6*3);		// 3 seconds
 	const SORCFX4_SPREAD_ANGLE			= 20;
 
@@ -453,7 +453,7 @@ class SorcBall : Actor
 		Actor mo = parent.SpawnMissileAngle("SorcFX4", ang1, 0);
 		if (mo)
 		{
-			mo.special2 = 35*5/2;		// 5 seconds
+			mo.special2 = (gameTicRate * 5) /2;		// 5 seconds
 			double dist = mo.DistanceBySpeed(dest, mo.Speed);
 			mo.Vel.Z = (dest.pos.z - mo.pos.z) / dist;
 		}
@@ -532,7 +532,7 @@ class SorcBall : Actor
 		Vel.X = random[Heresiarch](-5, 4);
 		Vel.Y = random[Heresiarch](-5, 4);
 		Vel.Z = random[Heresiarch](2, 4);
-		args[4] = Heresiarch.BOUNCE_TIME_UNIT;	// Bounce time unit
+		args[4] = (GameTicRate / 2) /*BOUNCE_TIME_UNIT*/;
 		args[3] = 5;					// Bounce time in seconds
 	}
 	
@@ -553,7 +553,7 @@ class SorcBall : Actor
 			}
 			else
 			{
-				args[4] = Heresiarch.BOUNCE_TIME_UNIT;
+				args[4] = (GameTicRate / 2) /*BOUNCE_TIME_UNIT*/;
 			}
 		}
 	}
@@ -608,7 +608,7 @@ class SorcBall1 : SorcBall
 		{
 			mo.target = parent;
 			mo.tracer = parent.target;
-			mo.args[4] = Heresiarch.BOUNCE_TIME_UNIT;
+			mo.args[4] = (GameTicRate / 2) /*BOUNCE_TIME_UNIT*/;
 			mo.args[3] = 15;				// Bounce time in seconds
 		}
 		mo = parent.SpawnMissileAngle (cls, ang2, 0);
@@ -616,7 +616,7 @@ class SorcBall1 : SorcBall
 		{
 			mo.target = parent;
 			mo.tracer = parent.target;
-			mo.args[4] = Heresiarch.BOUNCE_TIME_UNIT;
+			mo.args[4] = (GameTicRate / 2) /*BOUNCE_TIME_UNIT*/;
 			mo.args[3] = 15;				// Bounce time in seconds
 		}
 	}
@@ -823,7 +823,7 @@ class SorcFX1 : Actor
 			}
 			else
 			{
-				args[4] = Heresiarch.BOUNCE_TIME_UNIT;
+				args[4] = (GameTicRate / 2) /*BOUNCE_TIME_UNIT*/;
 			}
 		}
 		A_SeekerMissile(2, 6);

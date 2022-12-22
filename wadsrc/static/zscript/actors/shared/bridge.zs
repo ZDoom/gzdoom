@@ -56,8 +56,8 @@ class BridgeBall : Actor
 		// If the bridge is custom, set non-default values if any.
 
 		// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
-		if (target.args[3] > 128) rotationspeed = 45. / 32 * (target.args[3] - 256) / TICRATE;
-		else if (target.args[3] > 0) rotationspeed = 45. / 32 * (target.args[3]) / TICRATE;
+		if (target.args[3] > 128) rotationspeed = 45. / 32 * (target.args[3] - 256) / GameTicRate;
+		else if (target.args[3] > 0) rotationspeed = 45. / 32 * (target.args[3]) / GameTicRate;
 		// Set rotation radius
 		if (target.args[4]) rotationradius = ((target.args[4] * target.radius) / 100);
 

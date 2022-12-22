@@ -185,7 +185,7 @@ class Thinker : Object native play
 	
 	static clearscope int Tics2Seconds(int tics)
 	{
-		return int(tics / TICRATE);
+		return int(tics / GameTicRate);
 	}
 
 }

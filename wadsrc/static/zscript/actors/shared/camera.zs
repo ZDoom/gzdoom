@@ -30,7 +30,7 @@ class SecurityCamera : Actor
 		Super.PostBeginPlay ();
 		Center = Angle;
 		if (args[2])
-			Delta = 360. / (args[2] * TICRATE / 8);
+			Delta = 360. / (args[2] * GameTicRate / 8);
 		else
 			Delta = 0.;
 		if (args[1])
@@ -63,8 +63,8 @@ class AimingCamera : SecurityCamera
 
 		args[2] = 0;
 		Super.PostBeginPlay ();
-		MaxPitchChange = double(changepitch) / TICRATE;
-		Range /= TICRATE;
+		MaxPitchChange = double(changepitch) / GameTicRate;
+		Range /= GameTicRate;
 
 		ActorIterator it = Level.CreateActorIterator(args[3]);
 		tracer = it.Next ();

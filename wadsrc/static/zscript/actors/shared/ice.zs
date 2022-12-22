@@ -122,7 +122,7 @@ extend class Actor
 	{
 		if (Vel != (0,0,0) && !bShattering)
 		{
-			tics = 3*TICRATE;
+			tics = 3*GameTicRate;
 			return;
 		}
 		Vel = (0,0,0);

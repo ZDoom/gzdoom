@@ -3,13 +3,13 @@ class StrifeStatusBar : BaseStatusBar
 {
 	
 	// Number of tics to move the popscreen up and down.
-	const POP_TIME = (Thinker.TICRATE/8);
+	//const POP_TIME = (GameTicRate/8);
 
 	// Popscreen height when fully extended
 	const POP_HEIGHT = 104;
 
 	// Number of tics to scroll keys left
-	const KEY_TIME = (Thinker.TICRATE/3);
+	//const KEY_TIME = (GameTicRate/3);
 
 	enum eImg
 	{
@@ -167,8 +167,8 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			if (PopHeight < 0)
 			{
-				PopHeightChange = POP_HEIGHT / POP_TIME;
-				PopHeight += POP_HEIGHT / POP_TIME;
+				PopHeightChange = POP_HEIGHT / (GameTicRate/8) /*POP_TIME*/;
+				PopHeight += POP_HEIGHT / (GameTicRate/8) /*POP_TIME*/;
 			}
 			else
 			{
@@ -184,19 +184,19 @@ class StrifeStatusBar : BaseStatusBar
 			}
 			else if (PopHeight > -POP_HEIGHT)
 			{
-				PopHeight -= POP_HEIGHT / POP_TIME;
+				PopHeight -= POP_HEIGHT / (GameTicRate/8) /*POP_TIME*/;
 				if (PopHeight < -POP_HEIGHT)
 				{
 					PopHeight = -POP_HEIGHT;
 				}
 				else
 				{
-					PopHeightChange = -POP_HEIGHT / POP_TIME;
+					PopHeightChange = -POP_HEIGHT / (GameTicRate/8) /*POP_TIME*/;
 				}
 			}
 			if (KeyPopScroll > 0)
 			{
-				KeyPopScroll -= 280 / KEY_TIME;
+				KeyPopScroll -= 280 / (GameTicRate/3) /*KEY_TIME*/;
 				if (KeyPopScroll < 0)
 				{
 					KeyPopScroll = 0;
@@ -318,10 +318,10 @@ class StrifeStatusBar : BaseStatusBar
 			int flags = item.Amount <= 0? DI_ITEM_OFFSETS|DI_DIM : DI_ITEM_OFFSETS;
 			if (item == CPlayer.mo.InvSel)
 			{
-				DrawTexture (Images[CursorImage], (42 + TICRATE*i, 180), flags, 1. - itemflashFade);
+				DrawTexture (Images[CursorImage], (42 + GameTicRate*i, 180), flags, 1. - itemflashFade);
 			}
-			DrawInventoryIcon (item, (48 + TICRATE*i, 182), flags);
-			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + TICRATE*i, 191), DI_TEXT_ALIGN_RIGHT);
+			DrawInventoryIcon (item, (48 + GameTicRate*i, 182), flags);
+			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + GameTicRate*i, 191), DI_TEXT_ALIGN_RIGHT);
 			i++;
 		}
 	}
@@ -388,13 +388,13 @@ class StrifeStatusBar : BaseStatusBar
 				{
 					if (item == CPlayer.mo.InvSel)
 					{
-						DrawTexture(Images[CursorImage], (-90+i*TICRATE, -3), DI_SCREEN_CENTER_BOTTOM, 0.75);
+						DrawTexture(Images[CursorImage], (-90+i*GameTicRate, -3), DI_SCREEN_CENTER_BOTTOM, 0.75);
 					}
 					if (item.Icon.isValid())
 					{
-						DrawInventoryIcon(item, (-90+i*TICRATE, -5), DI_SCREEN_CENTER_BOTTOM|DI_DIMDEPLETED, 0.75);
+						DrawInventoryIcon(item, (-90+i*GameTicRate, -5), DI_SCREEN_CENTER_BOTTOM|DI_DIMDEPLETED, 0.75);
 					}
-					DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (-72 + i*TICRATE, -8), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM);
+					DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (-72 + i*GameTicRate, -8), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM);
 					++i;
 				}
 			}
@@ -456,7 +456,7 @@ class StrifeStatusBar : BaseStatusBar
 			if (KeyPopScroll > 0)
 			{
 				// Extrapolate the scroll position for smoother scrolling
-				int scroll = MAX (0, KeyPopScroll - int(TicFrac * (280./KEY_TIME)));
+				int scroll = MAX (0, KeyPopScroll - int(TicFrac * (280./(GameTicRate/3) /*KEY_TIME*/)));
 				pos -= 10;
 				leftcol = leftcol - 280 + scroll;
 			}

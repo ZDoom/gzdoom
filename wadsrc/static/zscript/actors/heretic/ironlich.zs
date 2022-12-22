@@ -123,7 +123,7 @@ class Ironlich : Actor
 			{
 				mo.AddZ(-32);
 				mo.tracer = targ;
-				mo.health = 20*TICRATE; // Duration
+				mo.health = 20*GameTicRate; // Duration
 				A_StartSound ("ironlich/attack3", CHAN_BODY);
 			}
 		}

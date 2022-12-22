@@ -1353,7 +1353,7 @@ class PowerTargeter : Powerup
 			let player = Owner.player;
 
 			PositionAccuracy ();
-			if (EffectTics < 5*TICRATE)
+			if (EffectTics < 5*GameTicRate)
 			{
 				let stat = FindState("Targeter");
 

@@ -78,7 +78,7 @@ extend class PlayerPawn
 			}
 			if (InvSel) InvSel.DisplayNameTag();
 		}
-		player.inventorytics = 5*TICRATE;
+		player.inventorytics = 5*GameTicRate;
 		if (old != InvSel)
 		{
 			A_StartSound("misc/invchange", CHAN_AUTO, CHANF_DEFAULT, 1., ATTN_NONE);

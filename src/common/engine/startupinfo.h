@@ -13,6 +13,7 @@ struct FStartupInfo
 	FString def;
 	FString DiscordAppId = nullptr;
 	FString SteamAppId = nullptr;
+	int TicRate = -1;
 	int Type;
 	int LoadLights = -1;
 	int LoadBrightmaps = -1;

@@ -255,6 +255,12 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetString();
 					iwad->SteamAppId = sc.String;
 				}
+				else if (sc.Compare("TicRate"))
+				{
+					sc.MustGetStringName("=");
+					sc.MustGetNumber();
+					iwad->TicRate = sc.Number;
+				}
 				else
 				{
 					sc.ScriptError("Unknown keyword '%s'", sc.String);
@@ -859,6 +865,7 @@ const FIWADInfo *FIWadManager::FindIWAD(TArray<FString> &wadfiles, const char *i
 	if (GameStartupInfo.Song.IsEmpty()) GameStartupInfo.Song = iwad_info->Song;
 	if (GameStartupInfo.DiscordAppId.IsEmpty()) GameStartupInfo.DiscordAppId = iwad_info->DiscordAppId;
 	if (GameStartupInfo.SteamAppId.IsEmpty()) GameStartupInfo.SteamAppId = iwad_info->SteamAppId;
+	if (GameStartupInfo.TicRate == -1) GameStartupInfo.TicRate = iwad_info->TicRate;
 	I_SetIWADInfo();
 	return iwad_info;
 }

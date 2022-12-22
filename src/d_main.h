@@ -33,6 +33,9 @@
 #include "startupinfo.h"
 #include "c_cvars.h"
 
+#define TICRATEMIN 25
+#define TICRATEMAX 50
+
 extern bool		advancedemo;
 extern bool hud_toggled;
 void D_ToggleHud();
@@ -95,6 +98,7 @@ struct FIWADInfo
 	int LoadLights = -1;
 	FString DiscordAppId = nullptr;
 	FString SteamAppId = nullptr;
+	int TicRate = -1;
 };
 
 struct FFoundWadInfo

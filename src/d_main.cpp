@@ -1876,6 +1876,11 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetString();
 			GameStartupInfo.SteamAppId = sc.String;
 		}
+		else if (!nextKey.CompareNoCase("TICRATE"))
+		{
+			sc.MustGetNumber();
+			GameStartupInfo.TicRate = sc.Number;
+		}
 		else
 		{
 			// Silently ignore unknown properties
@@ -3654,9 +3659,16 @@ static int D_DoomMain_Internal (void)
 		delete iwad_man;	// now we won't need this anymore
 		iwad_man = NULL;
 		if (ret != 0) return ret;
-
+		if ((GameStartupInfo.TicRate) != -1)
+		{
+			if (((GameStartupInfo.TicRate) < TICRATEMIN) || ((GameStartupInfo.TicRate) > TICRATEMAX))
+				I_FatalError("TicRate can only be in the range of %i to %i! (Default TicRate for Doom engine games: 35)", TICRATEMIN, TICRATEMAX);
+			else
+				GameTicRate = GameStartupInfo.TicRate;
+		}
 		D_DoAnonStats();
 		I_UpdateWindowTitle();
+		
 		D_DoomLoop ();		// this only returns if a 'restart' CCMD is given.
 		// 
 		// Clean up after a restart
@@ -3667,6 +3679,28 @@ static int D_DoomMain_Internal (void)
 		gamestate = GS_STARTUP;
 	}
 	while (1);
+}
+
+CCMD(debug_SetTicRate)
+{
+	if (argv.argc() < 2)
+		Printf("Current game ticrate is: %i\n", GameTicRate);
+	else
+	{
+		uint32_t value = atoi(argv[1]);
+		if (netgame)
+			Printf("Time scale cannot be changed in net games.\n");
+		else if (value < TICRATEMIN)
+			Printf("TicRate must be at least %i!\n", TICRATEMIN);
+		else if (value > TICRATEMAX)
+			Printf("TicRate must be at most %i!\n", TICRATEMAX);
+		else
+		{
+			GameTicRate = value;
+			I_ResetFrameTime();
+			Printf("Testing game tic rate: %i\n", value);
+		}
+	}
 }
 
 int GameMain()

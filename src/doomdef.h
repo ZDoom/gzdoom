@@ -58,7 +58,11 @@ typedef enum
 #endif
 
 // State updates, number of tics / second.
-constexpr int TICRATE = 35;
+constexpr int DEFAULT_TICRATE = 35;
+
+extern int GameTicRate;
+
+#define TICRATE GameTicRate
 
 // Global constants that were defines.
 enum

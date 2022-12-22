@@ -1336,7 +1336,7 @@ void D_DoStrifeAdvanceDemo ()
 	case 1:
 		// [RH] Strife fades to black and then to the Rogue logo, but
 		// I think it looks better if it doesn't fade.
-		pagetic = 10 * TICRATE/35;
+		pagetic = 10;
 		pagename = "";	// PANEL0, but strife0.wad doesn't have it, so don't use it.
 		PageBlank = true;
 		S_Sound (CHAN_VOICE, CHANF_UI, "bishop/active", 1, ATTN_NORM);
@@ -3706,7 +3706,7 @@ CCMD(debug_SetTicRate)
 int GameMain()
 {
 	int ret = 0;
-	GameTicRate = TICRATE;
+	//GameTicRate = DEFAULT_TICRATE;
 	I_InitTime();
 
 	ConsoleCallbacks cb = {

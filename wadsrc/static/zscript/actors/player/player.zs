@@ -14,7 +14,7 @@ class PlayerPawn : Actor
 {
 	const CROUCHSPEED = (1./12);
 	// [RH] # of ticks to complete a turn180
-	const TURN180_TICKS = ((TICRATE / 4) + 1);
+	//const TURN180_TICKS = ((TICRATE / 4) + 1);
 	// 16 pixels of bob
 	const MAXBOB = 16.;
 	
@@ -1250,7 +1250,7 @@ class PlayerPawn : Actor
 		if (player.turnticks)
 		{
 			player.turnticks--;
-			Angle += (180. / TURN180_TICKS);
+			Angle += (180. / ((GameTicRate / 4) + 1) /*TURN180_TICKS*/);
 		}
 		else
 		{
@@ -1486,7 +1486,7 @@ class PlayerPawn : Actor
 		// [RH] Check for fast turn around
 		if (player.cmd.buttons & BT_TURN180 && !(player.oldbuttons & BT_TURN180))
 		{
-			player.turnticks = TURN180_TICKS;
+			player.turnticks = ((GameTicRate / 4) + 1) /*TURN180_TICKS*/;
 		}
 
 		// Handle movement

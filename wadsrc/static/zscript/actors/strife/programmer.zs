@@ -207,7 +207,7 @@ class ProgLevelEnder : Inventory
 	{
 		if (special2 == 0)
 		{ // fade out over .66 second
-			special1 += 255 / (TICRATE*2/3);
+			special1 += 255 / (GameTicRate*2/3);
 			if (++special1 >= 255)
 			{
 				special1 = 255;
@@ -217,7 +217,7 @@ class ProgLevelEnder : Inventory
 		}
 		else
 		{ // fade in over two seconds
-			special1 -= 255 / (TICRATE*2);
+			special1 -= 255 / (GameTicRate*2);
 			if (special1 <= 0)
 			{
 				Destroy ();

@@ -269,7 +269,7 @@ class PathFollower : Actor
 			bJustStepped = false;
 			if (CurrNode.args[2])
 			{
-				HoldTime = Level.maptime + CurrNode.args[2] * TICRATE / 8;
+				HoldTime = Level.maptime + CurrNode.args[2] * GameTicRate / 8;
 				SetXYZ(CurrNode.Pos);
 			}
 		}
@@ -293,7 +293,7 @@ class PathFollower : Actor
 
 		if (Interpolate ())
 		{
-			Time += (8. / (max(1, CurrNode.args[1]) * TICRATE));
+			Time += (8. / (max(1, CurrNode.args[1]) * GameTicRate));
 			if (Time > 1.)
 			{
 				Time -= 1.;

@@ -128,7 +128,7 @@ extend class Actor
 		morphed.RenderStyle = RenderStyle;
 		morphed.Score = Score;
 
-		morphed.UnmorphTime = level.time + ((duration) ? duration : DEFMORPHTICS) + random[morphmonst]();
+		morphed.UnmorphTime = level.time + ((duration) ? duration : (40 * GameTicRate) /*DEFMORPHTICS*/) + random[morphmonst]();
 		morphed.MorphStyle = style;
 		morphed.MorphExitFlash = (exit_flash) ? exit_flash : (class<Actor>)("TeleportFog");
 		morphed.FlagsSave = bSolid * 2 + bShootable * 4 + bInvisible * 0x40;	// The factors are for savegame compatibility

@@ -36,7 +36,7 @@ class Korax : Actor
 	const KORAX_COMMAND_HEIGHT	= 120;
 	const KORAX_COMMAND_OFFSET	= 27;
 
-	const KORAX_SPIRIT_LIFETIME = 5*TICRATE/5;	// 5 seconds
+	//const KORAX_SPIRIT_LIFETIME = 5*TICRATE/5;	// 5 seconds
 
 	Default
 	{
@@ -226,7 +226,7 @@ class Korax : Actor
 
 	private void KSpiritInit (Actor spirit)
 	{
-		spirit.health = KORAX_SPIRIT_LIFETIME;
+		spirit.health = (5*GameTicRate/5) /*KORAX_SPIRIT_LIFETIME*/;
 
 		spirit.tracer = self;						// Swarm around korax
 		spirit.WeaveIndexZ = random[Kspiritnit](32, 39);	// Float bob index

@@ -1749,11 +1749,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(AInventory, PrintPickupMessage, PrintPickupMessage
 //
 //=====================================================================================
 
-DEFINE_ACTION_FUNCTION_NATIVE(AKey, ValidLock, P_ValidLock)
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, IsLockDefined, P_IsLockDefined)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(locknum);
-	ACTION_RETURN_BOOL(P_ValidLock(locknum));
+	ACTION_RETURN_BOOL(P_IsLockDefined(locknum));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetMapColorForLock, P_GetMapColorForLock)

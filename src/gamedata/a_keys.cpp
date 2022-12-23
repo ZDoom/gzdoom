@@ -517,7 +517,7 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 }
 
 // [MK] for ZScript, simply returns if a lock is defined or not
-int P_ValidLock(int keynum)
+int P_IsLockDefined(int keynum)
 {
 	return !!Locks.CheckKey(keynum);
 }

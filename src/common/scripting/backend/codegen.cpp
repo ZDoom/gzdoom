@@ -2726,7 +2726,7 @@ ExpEmit FxMultiAssign::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxMultiAssignDecl::FxMultiAssignDecl(FArgumentList &base, FxExpression *right, const FScriptPosition &pos)
-	:FxExpression(EFX_MultiAssign, pos)
+	:FxExpression(EFX_MultiAssignDecl, pos)
 {
 	Base = std::move(base);
 	Right = right;

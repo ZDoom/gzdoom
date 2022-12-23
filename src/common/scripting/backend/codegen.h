@@ -294,6 +294,7 @@ enum EFxType
 	EFX_Super,
 	EFX_StackVariable,
 	EFX_MultiAssign,
+	EFX_MultiAssignDecl,
 	EFX_StaticArray,
 	EFX_StaticArrayVariable,
 	EFX_CVar,

@@ -1749,6 +1749,27 @@ DEFINE_ACTION_FUNCTION_NATIVE(AInventory, PrintPickupMessage, PrintPickupMessage
 //
 //=====================================================================================
 
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, ValidLock, P_ValidLock)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(locknum);
+	ACTION_RETURN_BOOL(P_ValidLock(locknum));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetMapColorForLock, P_GetMapColorForLock)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(locknum);
+	ACTION_RETURN_INT(P_GetMapColorForLock(locknum));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetMapColorForKey, P_GetMapColorForKey)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(key, AActor);
+	ACTION_RETURN_INT(P_GetMapColorForKey(key));
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyTypeCount, P_GetKeyTypeCount)
 {
 	PARAM_PROLOGUE;

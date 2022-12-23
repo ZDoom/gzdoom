@@ -37,7 +37,7 @@ class Key : Inventory
 		Inventory.PickupSound "misc/k_pkup";
 	}
 
-	static native clearscope bool ValidLock(int locknum);
+	static native clearscope bool IsLockDefined(int locknum);
 	static native clearscope Color GetMapColorForLock(int locknum);
 	static native clearscope Color GetMapColorForKey(Key key);
 	static native clearscope int GetKeyTypeCount();

@@ -133,8 +133,8 @@ class DEarthquake : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	static const int DEFAULT_STAT = STAT_EARTHQUAKE;
-	void Construct(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
-		int damrad, int tremrad, FSoundID quakesfx, int flags, 
+	void Construct(AActor *center, double intensityX, double intensityY, double intensityZ, int duration,
+		int damrad, int tremrad, FSoundID quakesfx, int flags,
 		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
 
 	void Serialize(FSerializer &arc);

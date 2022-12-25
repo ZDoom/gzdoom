@@ -48,7 +48,7 @@ IMPLEMENT_POINTERS_END
 //
 //==========================================================================
 
-void DEarthquake::Construct(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
+void DEarthquake::Construct(AActor *center, double intensityX, double intensityY, double intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesound, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
 	double rollIntensity, double rollWave)
@@ -408,7 +408,7 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 //
 //==========================================================================
 
-bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, int intensityX, int intensityY, int intensityZ, int duration,
+bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double intensityX, double intensityY, double intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesfx, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
 	double rollIntensity, double rollWave)
@@ -416,9 +416,9 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, int intens
 	AActor *center;
 	bool res = false;
 
-	if (intensityX)		intensityX = clamp(intensityX, 1, 9);
-	if (intensityY)		intensityY = clamp(intensityY, 1, 9);
-	if (intensityZ)		intensityZ = clamp(intensityZ, 1, 9);
+	intensityX = clamp<double>(intensityX, 0.0, 9.0);
+	intensityY = clamp<double>(intensityY, 0.0, 9.0);
+	intensityZ = clamp<double>(intensityZ, 0.0, 9.0);
 
 	if (tid == 0)
 	{
@@ -443,7 +443,7 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, int intens
 	return res;
 }
 
-bool P_StartQuake(FLevelLocals *Level, AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx)
+bool P_StartQuake(FLevelLocals *Level, AActor *activator, int tid, double intensity, int duration, int damrad, int tremrad, FSoundID quakesfx)
 {	//Maintains original behavior by passing 0 to intensityZ, flags, and everything else after QSFX.
 	return P_StartQuakeXYZ(Level, activator, tid, intensity, intensity, 0, duration, damrad, tremrad, quakesfx, 0, 0, 0, 0, 0, 0, 0, 0);
 }

@@ -3333,7 +3333,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT		(intensity);
+	PARAM_FLOAT		(intensity);
 	PARAM_INT		(duration);
 	PARAM_INT		(damrad);
 	PARAM_INT		(tremrad);
@@ -3354,9 +3354,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 DEFINE_ACTION_FUNCTION(AActor, A_QuakeEx)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(intensityX);
-	PARAM_INT(intensityY);
-	PARAM_INT(intensityZ);
+	PARAM_FLOAT(intensityX);
+	PARAM_FLOAT(intensityY);
+	PARAM_FLOAT(intensityZ);
 	PARAM_INT(duration);
 	PARAM_INT(damrad);
 	PARAM_INT(tremrad);

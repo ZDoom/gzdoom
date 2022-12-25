@@ -2161,7 +2161,7 @@ FUNC(LS_Light_Stop)
 FUNC(LS_Radius_Quake)
 // Radius_Quake (intensity, duration, damrad, tremrad, tid)
 {
-	return P_StartQuake (Level, it, arg4, arg0, arg1, arg2*64, arg3*64, S_FindSound("world/quake"));
+	return P_StartQuake (Level, it, arg4, (double)arg0, arg1, arg2*64, arg3*64, S_FindSound("world/quake"));
 }
 
 FUNC(LS_UsePuzzleItem)

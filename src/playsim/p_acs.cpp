@@ -5624,7 +5624,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		}
 
 		case ACSF_Radius_Quake2:
-			P_StartQuake(Level, activator, args[0], args[1], args[2], args[3], args[4], S_FindSound(Level->Behaviors.LookupString(args[5])));
+			P_StartQuake(Level, activator, args[0], (double)args[1], args[2], args[3], args[4], S_FindSound(Level->Behaviors.LookupString(args[5])));
 			break;
 
 		case ACSF_CheckActorClass:

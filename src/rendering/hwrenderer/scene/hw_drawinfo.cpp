@@ -63,6 +63,8 @@ CVAR(Float, gl_mask_sprite_threshold, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR(Bool, gl_coronas, true, CVAR_ARCHIVE);
 
+CVAR(Bool, gl_meshcache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
 //==========================================================================
@@ -452,7 +454,8 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	screen->mLights->Map();
 	screen->mBones->Map();
 
-	//RenderBSP(Level->HeadNode(), drawpsprites);
+	if (!gl_meshcache)
+		RenderBSP(Level->HeadNode(), drawpsprites);
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend
@@ -509,10 +512,13 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 	drawlists[GLDL_PLAINWALLS].DrawWalls(this, state, false);
 	drawlists[GLDL_PLAINFLATS].DrawFlats(this, state, false);
 
-	for (HWCachedSector& cachedsector : meshcache.Sectors)
+	if (gl_meshcache)
 	{
-		if (cachedsector.Opaque)
-			cachedsector.Opaque->Draw(state);
+		for (HWCachedSector& cachedsector : meshcache.Sectors)
+		{
+			if (cachedsector.Opaque)
+				cachedsector.Opaque->Draw(state);
+		}
 	}
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -520,10 +526,13 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, state, false);
 	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, state, false);
 
-	for (HWCachedSector& cachedsector : meshcache.Sectors)
+	if (gl_meshcache)
 	{
-		if (cachedsector.Translucent)
-			cachedsector.Translucent->Draw(state);
+		for (HWCachedSector& cachedsector : meshcache.Sectors)
+		{
+			if (cachedsector.Translucent)
+				cachedsector.Translucent->Draw(state);
+		}
 	}
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
@@ -534,13 +543,16 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 		state.ClearDepthBias();
 	}
 
-	state.SetDepthBias(-1, -128);
-	for (HWCachedSector& cachedsector : meshcache.Sectors)
+	if (gl_meshcache)
 	{
-		if (cachedsector.TranslucentDepthBiased)
-			cachedsector.TranslucentDepthBiased->Draw(state);
+		state.SetDepthBias(-1, -128);
+		for (HWCachedSector& cachedsector : meshcache.Sectors)
+		{
+			if (cachedsector.TranslucentDepthBiased)
+				cachedsector.TranslucentDepthBiased->Draw(state);
+		}
+		state.ClearDepthBias();
 	}
-	state.ClearDepthBias();
 
 	drawlists[GLDL_MODELS].Draw(this, state, false);
 

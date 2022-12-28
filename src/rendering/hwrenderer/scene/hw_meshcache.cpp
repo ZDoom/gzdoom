@@ -10,6 +10,7 @@
 
 EXTERN_CVAR(Bool, gl_texture)
 EXTERN_CVAR(Float, gl_mask_threshold)
+EXTERN_CVAR(Bool, gl_meshcache)
 
 HWMeshCache meshcache;
 
@@ -21,6 +22,9 @@ void HWMeshCache::Clear()
 
 void HWMeshCache::Update(FRenderViewpoint& vp)
 {
+	if (!gl_meshcache)
+		return;
+
 	auto level = vp.ViewLevel;
 	unsigned int count = level->sectors.Size();
 	Sectors.Resize(count);

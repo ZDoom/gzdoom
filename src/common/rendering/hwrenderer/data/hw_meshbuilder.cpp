@@ -2,6 +2,22 @@
 #include "hw_meshbuilder.h"
 #include "hw_mesh.h"
 
+MeshBuilder::MeshBuilder()
+{
+	Reset();
+
+	// Initialize state same way as it begins in HWDrawInfo::RenderScene:
+	SetTextureMode(TM_NORMAL);
+	SetDepthMask(true);
+	EnableFog(true);
+	SetRenderStyle(STYLE_Source);
+	SetDepthFunc(DF_Less);
+	AlphaFunc(Alpha_GEqual, 0.f);
+	ClearDepthBias();
+	EnableTexture(1);
+	EnableBrightmap(true);
+}
+
 void MeshBuilder::Draw(int dt, int index, int count, bool apply)
 {
 	if (apply)
@@ -33,17 +49,18 @@ void MeshBuilder::Apply()
 	state.streamData = mStreamData;
 	state.material = mMaterial;
 
-	state.uClipSplit = { mClipSplit[0], mClipSplit[1] };
-
 	state.FogEnabled = mFogEnabled;
 	state.BrightmapEnabled = mBrightmapEnabled;
 	state.TextureClamp = mTextureClamp;
 	state.TextureMode = mTextureMode;
+	state.TextureModeFlags = mTextureModeFlags;
 
 	state.uLightDist = mLightParms[0];
 	state.uLightFactor = mLightParms[1];
 	state.uFogDensity = mLightParms[2];
 	state.uLightLevel = mLightParms[3];
+
+	state.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 
 	mApplys.Push(state);
 }

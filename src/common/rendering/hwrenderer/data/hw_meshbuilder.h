@@ -18,17 +18,18 @@ public:
 	StreamData streamData;
 	FMaterialState material;
 
-	FVector2 uClipSplit;
-
 	uint8_t FogEnabled;
 	uint8_t BrightmapEnabled;
 	int TextureClamp;
 	int TextureMode;
+	int TextureModeFlags;
 
 	float uLightLevel;
 	float uFogDensity;
 	float uLightFactor;
 	float uLightDist;
+
+	FVector2 uClipSplit;
 };
 
 class MeshDrawCommand
@@ -43,6 +44,8 @@ public:
 class MeshBuilder : public FRenderState
 {
 public:
+	MeshBuilder();
+
 	// Vertices
 	std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) override;
 
@@ -63,7 +66,7 @@ public:
 	void EnableDrawBuffers(int count, bool apply) override { }
 	void EnableClipDistance(int num, bool state) override { }
 	void SetDepthRange(float min, float max) override { }
-	bool SetDepthClamp(bool on) override { }
+	bool SetDepthClamp(bool on) override { return false; }
 	void SetDepthMask(bool on) override { }
 	void SetColorMask(bool r, bool g, bool b, bool a) override { }
 	void SetStencil(int offs, int op, int flags = -1) override { }

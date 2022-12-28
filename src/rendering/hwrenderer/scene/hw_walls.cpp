@@ -565,6 +565,9 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 
 void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 {
+	if (di->MeshBuilding)
+		return;
+
 	HWPortal * portal = nullptr;
 
 	MakeVertices(di, *screen->RenderState(), false);

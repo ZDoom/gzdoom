@@ -182,6 +182,8 @@ struct HWDrawInfo
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
 	bool multithread;
 
+	bool MeshBuilding = false;
+
 private:
     // For ProcessLowerMiniseg
     bool inview;

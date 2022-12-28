@@ -38,6 +38,7 @@
 #include "cmdlib.h"
 #include "printf.h"
 #include "hwrenderer/data/buffers.h"
+#include "hw_renderstate.h"
 
 //==========================================================================
 //
@@ -176,3 +177,9 @@ void FFlatVertexBuffer::Copy(int start, int count)
 	mVertexBuffer = old;
 }
 
+//==========================================================================
+
+std::pair<FFlatVertex*, unsigned int> FRenderState::AllocVertices(unsigned int count)
+{
+	return screen->mVertexData->AllocVertices(count);
+}

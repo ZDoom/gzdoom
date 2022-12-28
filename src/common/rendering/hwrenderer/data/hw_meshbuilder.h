@@ -51,7 +51,7 @@ public:
 
 	// Draw commands
 	void Draw(int dt, int index, int count, bool apply = true) override;
-	void DrawIndexed(int dt, int index, int count, bool apply = true) override { } // TBD: this is only used for the sector flat rendering.
+	void DrawIndexed(int dt, int index, int count, bool apply = true) override;
 
 	// Immediate render state change commands. These only change infrequently and should not clutter the render state.
 	void SetDepthFunc(int func) override;
@@ -81,6 +81,7 @@ private:
 
 	TArray<MeshApplyState> mApplys;
 	TArray<MeshDrawCommand> mDraws;
+	TArray<MeshDrawCommand> mIndexedDraws;
 	TArray<FFlatVertex> mVertices;
 	int mDepthFunc = 0;
 };

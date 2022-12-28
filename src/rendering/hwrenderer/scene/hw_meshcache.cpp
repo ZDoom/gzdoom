@@ -3,35 +3,100 @@
 #include "hw_drawinfo.h"
 #include "hw_drawstructs.h"
 #include "hw_mesh.h"
+#include "hw_fakeflat.h"
+#include "hw_vertexbuilder.h"
 #include "g_levellocals.h"
+#include <unordered_set>
 
 EXTERN_CVAR(Bool, gl_texture)
 EXTERN_CVAR(Float, gl_mask_threshold)
 
 HWMeshCache meshcache;
 
+void HWMeshCache::Clear()
+{
+	Sectors.Reset();
+	nextRefresh = 0;
+}
+
 void HWMeshCache::Update(FRenderViewpoint& vp)
 {
 	auto level = vp.ViewLevel;
 	unsigned int count = level->sectors.Size();
 	Sectors.Resize(count);
+
+	// Look for changes
 	for (unsigned int i = 0; i < count; i++)
 	{
 		auto sector = &level->sectors[i];
-		if (Sectors[i].Sector != sector) // Note: this is just a stupid way to detect we changed map. What is the proper way?
+		auto cacheitem = &Sectors[i];
+		if (cacheitem->Floorplane != sector->floorplane || cacheitem->Ceilingplane != sector->ceilingplane) // Sector height changes
 		{
-			Sectors[i].Sector = sector;
-			Sectors[i].Update(vp);
+			cacheitem->NeedsUpdate = true;
+			for (line_t* line : sector->Lines)
+			{
+				sector_t* backsector = (line->frontsector == sector) ? line->backsector : line->frontsector;
+				if (backsector)
+				{
+					Sectors[backsector->Index()].NeedsUpdate = true;
+				}
+			}
+		}
+	}
+
+	// Refresh 10 sectors per frame. Shouldn't be needed but for some reason some initial flats are black!!
+	for (int i = 0; i < 10; i++)
+	{
+		if (nextRefresh < count)
+		{
+			Sectors[nextRefresh].NeedsUpdate = true;
+		}
+		if (count > 0)
+			nextRefresh = (nextRefresh + 1) % count;
+	}
+
+	// Update changed sectors
+	for (unsigned int i = 0; i < count; i++)
+	{
+		auto sector = &level->sectors[i];
+		auto cacheitem = &Sectors[i];
+		if (cacheitem->NeedsUpdate)
+		{
+			cacheitem->NeedsUpdate = false;
+			cacheitem->Sector = sector;
+			cacheitem->Floorplane = sector->floorplane;
+			cacheitem->Ceilingplane = sector->ceilingplane;
+			cacheitem->Update(vp);
 		}
 	}
 }
 
 void HWCachedSector::Update(FRenderViewpoint& vp)
 {
+	Opaque.reset();
+	Translucent.reset();
+	TranslucentDepthBiased.reset();
+
 	HWDrawInfo* di = HWDrawInfo::StartDrawInfo(vp.ViewLevel, nullptr, vp, nullptr);
 	di->MeshBuilding = true;
 
-	// Add all the walls to the draw lists
+	// Add to the draw lists
+
+	CheckUpdate(screen->mVertexData, Sector);
+	std::unordered_set<FSection*> seenSections;
+	for (int i = 0, count = Sector->subsectorcount; i < count; i++)
+	{
+		subsector_t* subsector = Sector->subsectors[i];
+		if (seenSections.find(subsector->section) == seenSections.end())
+		{
+			seenSections.insert(subsector->section);
+
+			HWFlat flat;
+			flat.section = subsector->section;
+			sector_t* front = hw_FakeFlat(subsector->render_sector, area_default, false);
+			flat.ProcessSector(di, front);
+		}
+	}
 
 	for (line_t* line : Sector->Lines)
 	{

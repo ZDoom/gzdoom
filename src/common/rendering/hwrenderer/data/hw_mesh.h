@@ -12,6 +12,7 @@ private:
 
 	TArray<MeshApplyState> mApplys;
 	TArray<MeshDrawCommand> mDraws;
+	TArray<MeshDrawCommand> mIndexedDraws;
 	TArray<FFlatVertex> mVertices;
 
 	friend class MeshBuilder;

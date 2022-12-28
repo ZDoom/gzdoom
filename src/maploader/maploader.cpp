@@ -83,6 +83,7 @@
 #include "vm.h"
 #include "texturemanager.h"
 #include "hw_vertexbuilder.h"
+#include "scene/hw_meshcache.h"
 #include "version.h"
 
 enum
@@ -3243,6 +3244,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	InitRenderInfo();				// create hardware independent renderer resources for the level. This must be done BEFORE the PolyObj Spawn!!!
 	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
 	CreateVBO(screen->mVertexData, Level->sectors);
+	meshcache.Clear();
 
 	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
 

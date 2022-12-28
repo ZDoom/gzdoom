@@ -45,6 +45,24 @@ void Mesh::Draw(FRenderState& renderstate)
 		renderstate.Draw(cmd.DrawType, pair.second + cmd.Start, cmd.Count, apply);
 	}
 
+	for (const MeshDrawCommand& cmd : mIndexedDraws)
+	{
+		bool apply = applyIndex != cmd.ApplyIndex;
+		if (apply)
+		{
+			int newDepthFunc = mApplys[cmd.ApplyIndex].DepthFunc;
+			if (depthFunc != newDepthFunc)
+			{
+				depthFunc = newDepthFunc;
+				renderstate.SetDepthFunc(depthFunc);
+			}
+
+			applyIndex = cmd.ApplyIndex;
+			Apply(renderstate, mApplys[cmd.ApplyIndex]);
+		}
+		renderstate.DrawIndexed(cmd.DrawType, cmd.Start, cmd.Count, apply);
+	}
+
 	Apply(renderstate, origState);
 }
 

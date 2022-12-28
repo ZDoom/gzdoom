@@ -31,6 +31,19 @@ void MeshBuilder::Draw(int dt, int index, int count, bool apply)
 	mDraws.Push(command);
 }
 
+void MeshBuilder::DrawIndexed(int dt, int index, int count, bool apply)
+{
+	if (apply)
+		Apply();
+
+	MeshDrawCommand command;
+	command.DrawType = dt;
+	command.Start = index;
+	command.Count = count;
+	command.ApplyIndex = mApplys.Size() - 1;
+	mIndexedDraws.Push(command);
+}
+
 void MeshBuilder::SetDepthFunc(int func)
 {
 	mDepthFunc = func;
@@ -67,16 +80,18 @@ void MeshBuilder::Apply()
 
 std::unique_ptr<Mesh> MeshBuilder::Create()
 {
-	if (mDraws.Size() == 0)
+	if (mDraws.Size() == 0 && mIndexedDraws.Size() == 0)
 		return {};
 
 	auto mesh = std::make_unique<Mesh>();
 	mesh->mApplys = std::move(mApplys);
 	mesh->mDraws = std::move(mDraws);
+	mesh->mIndexedDraws = std::move(mIndexedDraws);
 	mesh->mVertices = std::move(mVertices);
 
 	mApplys.Clear();
 	mDraws.Clear();
+	mIndexedDraws.Clear();
 	mVertices.Clear();
 
 	return mesh;

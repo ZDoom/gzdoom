@@ -23,6 +23,7 @@
 
 #include "r_defs.h"
 #include "flatvertices.h"
+#include "hw_renderstate.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 
@@ -282,12 +283,12 @@ int HWWall::CountVertices()
 //
 //==========================================================================
 
-void HWWall::MakeVertices(HWDrawInfo *di, bool nosplit)
+void HWWall::MakeVertices(HWDrawInfo *di, FRenderState& state, bool nosplit)
 {
 	if (vertcount == 0)
 	{
 		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & HWF_NOSPLIT));
-		auto ret = screen->mVertexData->AllocVertices(split ? CountVertices() : 4);
+		auto ret = state.AllocVertices(split ? CountVertices() : 4);
 		vertindex = ret.second;
 		vertcount = CreateVertices(ret.first, split);
 	}

@@ -346,7 +346,7 @@ void HWWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			SetupLights(di, lightdata);
 		}
-		MakeVertices(di, !!(flags & HWWall::HWF_TRANSLUCENT));
+		MakeVertices(di, state, !!(flags & HWWall::HWF_TRANSLUCENT));
 	}
 
 	state.SetNormal(glseg.Normal());
@@ -523,7 +523,7 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 		{
 			SetupLights(di, lightdata);
 		}
-		MakeVertices(di, translucent);
+		MakeVertices(di, *screen->RenderState(), translucent);
 	}
 
 
@@ -567,7 +567,7 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 {
 	HWPortal * portal = nullptr;
 
-	MakeVertices(di, false);
+	MakeVertices(di, *screen->RenderState(), false);
 	switch (ptype)
 	{
 		// portals don't go into the draw list.

@@ -214,7 +214,7 @@ public:
 
 	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata);
 
-	void MakeVertices(HWDrawInfo *di, bool nosplit);
+	void MakeVertices(HWDrawInfo *di, FRenderState& state, bool nosplit);
 
 	void SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowmirror);
 	void SkyLine(HWDrawInfo *di, sector_t *sec, line_t *line);

@@ -44,7 +44,8 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 		}
 	}
 
-	// Refresh 10 sectors per frame. Shouldn't be needed but for some reason some initial flats are black!!
+#if 0
+	// Refresh 10 sectors per frame.
 	for (int i = 0; i < 10; i++)
 	{
 		if (nextRefresh < count)
@@ -54,6 +55,7 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 		if (count > 0)
 			nextRefresh = (nextRefresh + 1) % count;
 	}
+#endif
 
 	// Update changed sectors
 	for (unsigned int i = 0; i < count; i++)

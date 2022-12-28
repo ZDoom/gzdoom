@@ -44,6 +44,7 @@
 #include "hw_bonebuffer.h"
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
+#include "hw_meshcache.h"
 #include "v_draw.h"
 #include "a_corona.h"
 #include "texturemanager.h"
@@ -451,7 +452,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	screen->mLights->Map();
 	screen->mBones->Map();
 
-	RenderBSP(Level->HeadNode(), drawpsprites);
+	//RenderBSP(Level->HeadNode(), drawpsprites);
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend
@@ -508,11 +509,22 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 	drawlists[GLDL_PLAINWALLS].DrawWalls(this, state, false);
 	drawlists[GLDL_PLAINFLATS].DrawFlats(this, state, false);
 
+	for (HWCachedSector& cachedsector : meshcache.Sectors)
+	{
+		if (cachedsector.Opaque)
+			cachedsector.Opaque->Draw(state);
+	}
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
 	state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, state, false);
 	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, state, false);
+
+	for (HWCachedSector& cachedsector : meshcache.Sectors)
+	{
+		if (cachedsector.Translucent)
+			cachedsector.Translucent->Draw(state);
+	}
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
 	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
@@ -521,6 +533,14 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, state, false);
 		state.ClearDepthBias();
 	}
+
+	state.SetDepthBias(-1, -128);
+	for (HWCachedSector& cachedsector : meshcache.Sectors)
+	{
+		if (cachedsector.TranslucentDepthBiased)
+			cachedsector.TranslucentDepthBiased->Draw(state);
+	}
+	state.ClearDepthBias();
 
 	drawlists[GLDL_MODELS].Draw(this, state, false);
 

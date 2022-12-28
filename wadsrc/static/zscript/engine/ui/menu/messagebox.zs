@@ -79,7 +79,7 @@ class MessageBoxMenu : Menu
 		}
 		else
 		{
-			arrowFont = ConFont;
+			arrowFont = ((textFont && textFont.GetGlyphHeight(0xd) > 0) ? textFont : ConFont);
 			destWidth = CleanWidth;
 			destHeight = CleanHeight;
 			selector = "\xd";
@@ -134,7 +134,7 @@ class MessageBoxMenu : Menu
 				if ((MenuTime() % 8) < 6)
 				{
 					screen.DrawText(arrowFont, OptionMenuSettings.mFontColorSelection,
-						destWidth/2 - 11, y + fontheight * messageSelection, selector, DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, true);
+						destWidth/2 - 3 - arrowFont.StringWidth(selector), y + fontheight * messageSelection, selector, DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, true);
 				}
 			}
 		}

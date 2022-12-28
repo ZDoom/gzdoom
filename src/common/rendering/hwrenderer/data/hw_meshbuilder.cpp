@@ -51,7 +51,9 @@ void MeshBuilder::Apply()
 std::unique_ptr<Mesh> MeshBuilder::Create()
 {
 	auto mesh = std::make_unique<Mesh>();
-
+	mesh->mApplys = std::move(mApplys);
+	mesh->mDraws = std::move(mDraws);
+	mesh->mVertices = std::move(mVertices);
 	return mesh;
 }
 

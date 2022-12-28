@@ -765,5 +765,6 @@ public:
 		SetColorMask(on, on, on, on);
 	}
 
+	friend class Mesh;
 };
 

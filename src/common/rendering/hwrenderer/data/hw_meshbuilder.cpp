@@ -67,10 +67,18 @@ void MeshBuilder::Apply()
 
 std::unique_ptr<Mesh> MeshBuilder::Create()
 {
+	if (mDraws.Size() == 0)
+		return {};
+
 	auto mesh = std::make_unique<Mesh>();
 	mesh->mApplys = std::move(mApplys);
 	mesh->mDraws = std::move(mDraws);
 	mesh->mVertices = std::move(mVertices);
+
+	mApplys.Clear();
+	mDraws.Clear();
+	mVertices.Clear();
+
 	return mesh;
 }
 

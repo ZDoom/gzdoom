@@ -56,6 +56,22 @@ void NetUpdate (void);
 //	to notify of game exit
 void D_QuitNetGame (void);
 
+
+enum EMultiplayerHostFlags
+{
+	MP_EXTRATIC = 1,
+	MP_PACKET_SERVER = 2,
+	MP_DEATHMATCH = 4,
+	MP_ALTDEATH = 8,
+};
+
+
+void D_RestartHostMultiplayer(int numplayers, FString map= "", int ticdup = -1, int port = -1, int skill = -1, FString loadsave = "", int flags = 0);
+
+void D_RestartJoinMultiplayer(const char * host_addr, int port = -1, FString loadsave = "");
+
+
+
 //? how many ticks to run?
 void TryRunTics (void);
 

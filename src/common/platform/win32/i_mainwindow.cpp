@@ -95,20 +95,22 @@ int MainWindow::GetGameTitleWindowHeight()
 // Sets the main WndProc, hides all the child windows, and starts up in-game input.
 void MainWindow::ShowGameView()
 {
-	if (GetWindowLongPtr(Window, GWLP_USERDATA) == 0)
+	if (GetWindowLongPtr(Window, GWLP_USERDATA) != 1)
 	{
-		SetWindowLongPtr(Window, GWLP_USERDATA, 1);
 		SetWindowLongPtr(Window, GWLP_WNDPROC, (LONG_PTR)WndProc);
 		ShowWindow(ConWindow, SW_HIDE);
 		ShowWindow(ProgressBar, SW_HIDE);
 		ConWindowHidden = true;
 		ShowWindow(GameTitleWindow, SW_HIDE);
-		I_InitInput(Window);
+
+		if (GetWindowLongPtr(Window, GWLP_USERDATA) != 2) I_InitInput(Window);
+
+		SetWindowLongPtr(Window, GWLP_USERDATA, 1);
 	}
 }
 
 // Returns the main window to its startup state.
-void MainWindow::RestoreConView()
+void MainWindow::RestoreConView(bool netgame_restart)
 {
 	HDC screenDC = GetDC(0);
 	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
@@ -118,25 +120,62 @@ void MainWindow::RestoreConView()
 
 	// Make sure the window has a frame in case it was fullscreened.
 	SetWindowLongPtr(Window, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW);
-	if (GetWindowLong(Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
+	if(netgame_restart)
 	{
-		SetWindowPos(Window, HWND_BOTTOM, 0, 0, width, height, SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE);
-		SetWindowPos(Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
+		DEVMODE displaysettings;
+		// Many Windows structures that specify their size do so with the first
+		// element. DEVMODE is not one of those structures.
+		memset (&displaysettings, 0, sizeof(displaysettings));
+		displaysettings.dmSize = sizeof(displaysettings);
+		EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+		int x = (displaysettings.dmPelsWidth - width) / 2;
+		int y = (displaysettings.dmPelsHeight - height) / 2;
+
+		// Make sure the window has a frame in case it was fullscreened.
+		SetWindowLongPtr(Window, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW);
+		if (GetWindowLong(Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
+		{
+			SetWindowPos(Window, HWND_BOTTOM, x, y, width, height, SWP_DRAWFRAME | SWP_NOCOPYBITS);
+			SetWindowPos(Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
+		}
+		else
+		{
+			SetWindowPos(Window, NULL, x, y, width, height, SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOZORDER);
+		}
 	}
 	else
 	{
-		SetWindowPos(Window, NULL, 0, 0, width, height, SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+		if (GetWindowLong(Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
+		{
+			SetWindowPos(Window, HWND_BOTTOM, 0, 0, width, height, SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE);
+			SetWindowPos(Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
+		}
+		else
+		{
+			SetWindowPos(Window, NULL, 0, 0, width, height, SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+		}
 	}
 
 	SetWindowLongPtr(Window, GWLP_WNDPROC, (LONG_PTR)LConProc);
 	ShowWindow(ConWindow, SW_SHOW);
 	ConWindowHidden = false;
 	ShowWindow(GameTitleWindow, SW_SHOW);
-	I_ShutdownInput();		// Make sure the mouse pointer is available.
+
+	if(netgame_restart) 
+	{	// Make sure the input system isn't reset
+		I_CheckNativeMouse(true, false);
+	}
+	else
+	{	// Make sure the mouse pointer is available.
+		I_ShutdownInput();
+	}
 	// Make sure the progress bar isn't visible.
 	DeleteStartupScreen();
 
 	FlushBufferedConsoleStuff();
+
+	// Make sure the input system isn't reset
+	SetWindowLongPtr(Window, GWLP_USERDATA, 2);
 }
 
 // Shows an error message, preferably in the main window, but it can use a normal message box too.

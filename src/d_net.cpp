@@ -1802,6 +1802,116 @@ void D_QuitNetGame (void)
 		fclose (debugfile);
 }
 
+
+
+extern bool wantToRestart;
+extern bool restart_multiplayer;
+
+void D_RestartHostMultiplayer(int numplayers, FString map, int ticdup, int port, int skill, FString loadsave, int flags)
+{
+	if(netgame || multiplayer)
+	{
+		I_FatalError ("You must not be in a net game before starting one");
+	}
+
+	Args->RemoveArgs("-join");
+	Args->RemoveArgs("-host");
+	Args->RemoveArgs("-net");
+	Args->RemoveArgs("-netmode");
+	Args->RemoveArgs("-port");
+	Args->RemoveArgs("-dup");
+	Args->RemoveArgs("-extratic");
+	Args->RemoveArgs("+map");
+
+	FString tmp;
+
+	tmp.Format("%d",numplayers);
+	Args->AppendArg("-host");
+	Args->AppendArg(tmp);
+
+	if(!map.IsEmpty()) {
+		Args->AppendArg("+map");
+		Args->AppendArg(map);
+	}
+	if(ticdup > 0)
+	{
+		tmp.Format("%d",ticdup);
+		Args->AppendArg("-dup");
+		Args->AppendArg(tmp);
+	}
+	if(port >= 0)
+	{
+		tmp.Format("%d",port);
+		Args->AppendArg("-port");
+		Args->AppendArg(tmp);
+	}
+	if(skill >= 0)
+	{
+		tmp.Format("%d",skill);
+		Args->AppendArg("-skill");
+		Args->AppendArg(tmp);
+	}
+	if(!loadsave.IsEmpty())
+	{
+		Args->AppendArg("+loadsave");
+		Args->AppendArg(loadsave);
+	}
+	if(flags & MP_EXTRATIC)
+	{
+		Args->AppendArg("-extratic");
+	}
+	if(flags & MP_PACKET_SERVER)
+	{
+		Args->AppendArg("-netmode");
+		Args->AppendArg("1");
+	}
+	if(flags & MP_DEATHMATCH)
+	{
+		Args->AppendArg("-deathmatch");
+		if(flags & MP_ALTDEATH)
+		{
+			Args->AppendArg("-altdeath");
+		}
+	}
+	wantToRestart = true;
+	restart_multiplayer = true;
+}
+
+void D_RestartJoinMultiplayer(const char * host_addr, int port, FString loadsave)
+{
+	if(netgame || multiplayer)
+	{
+		I_FatalError ("You must not be in a net game before starting one");
+	}
+
+	Args->RemoveArgs("-join");
+	Args->RemoveArgs("-host");
+	Args->RemoveArgs("-net");
+	Args->RemoveArgs("-netmode");
+	Args->RemoveArgs("-port");
+	Args->RemoveArgs("-dup");
+	Args->RemoveArgs("-extratic");
+	Args->RemoveArgs("+map");
+
+	Args->AppendArg("-join");
+	Args->AppendArg(host_addr);
+	if(port >= 0)
+	{
+		FString tmp;
+		tmp.Format("%d",port);
+		Args->AppendArg("-port");
+		Args->AppendArg(tmp);
+	}
+	if(!loadsave.IsEmpty())
+	{
+		Args->AppendArg("+loadsave");
+		Args->AppendArg(loadsave);
+	}
+	wantToRestart = true;
+	restart_multiplayer = true;
+}
+
+
 // Forces playsim processing time to be consistent across frames.
 // This improves interpolation for frames in between tics.
 //

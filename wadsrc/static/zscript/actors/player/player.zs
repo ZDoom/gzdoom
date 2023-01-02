@@ -47,6 +47,7 @@ class PlayerPawn : Actor
 	Class<Inventory> FlechetteType;
 	color 		DamageFade;				// [CW] Fades for when you are being damaged.
 	double		ViewBob;				// [SP] ViewBob Multiplier
+	double		WaterClimbSpeed;		// [B] Speed when climbing up walls in water
 	double		FullHeight;
 	double		curBob;
 	double		prevBob;
@@ -76,6 +77,7 @@ class PlayerPawn : Actor
 	property Portrait: Portrait;
 	property TeleportFreezeTime: TeleportFreezeTime;
 	property ViewBob: ViewBob;
+	property WaterClimbSpeed : WaterClimbSpeed;
 	
 	flagdef NoThrustWhenInvul: PlayerFlags, 0;
 	flagdef CanSuperMorph: PlayerFlags, 1;
@@ -118,6 +120,7 @@ class PlayerPawn : Actor
 		Player.FlechetteType "ArtiPoisonBag3";
 		Player.AirCapacity 1;
 		Player.ViewBob 1;
+		Player.WaterClimbSpeed 3.5;
 		Player.TeleportFreezeTime 18;
 		Obituary "$OB_MPDEFAULT";
 	}

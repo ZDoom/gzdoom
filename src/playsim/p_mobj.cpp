@@ -1997,7 +1997,9 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 						(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove) &&
 						mo->BlockingLine->sidedef[1] != NULL)
 					{
-						mo->Vel.Z = WATER_JUMP_SPEED;
+						double spd = mo->FloatVar(NAME_WaterClimbSpeed);
+						if (fabs(spd) >= EQUAL_EPSILON)
+							mo->Vel.Z = spd;
 					}
 					// If the blocked move executed any push specials that changed the
 					// actor's velocity, do not attempt to slide.

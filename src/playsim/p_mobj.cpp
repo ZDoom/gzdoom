@@ -2416,7 +2416,7 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 
 		if (!mo->IsNoClip2() && fViewBob)
 		{
-			mo->AddZ(DAngle::fromDeg(360 / 80.f * mo->Level->maptime).Sin() / 8);
+			mo->AddZ(DAngle::fromDeg(360 / 80.f * mo->Level->maptime).Sin() / 8 * mo->FloatVar(NAME_FlyBob));
 		}
 
 		if (!(mo->flags8 & MF8_NOFRICTION))

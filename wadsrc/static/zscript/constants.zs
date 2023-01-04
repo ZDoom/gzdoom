@@ -435,6 +435,12 @@ enum EPlayerProperties
 	PROP_FLIGHT = 12, // (Deprecated)
 	PROP_SPEED = 15, // (Deprecated)
 	PROP_BUDDHA = 16,
+	PROP_BUDDHA2 = 17,
+	PROP_FRIGHTENING = 18,
+	PROP_NOCLIP = 19,
+	PROP_NOCLIP2 = 20,
+	PROP_GODMODE = 21,
+	PROP_GODMODE2 = 22,
 }
 
 // Line_SetBlocking

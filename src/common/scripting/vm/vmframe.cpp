@@ -682,7 +682,7 @@ void CVMAbortException::MaybePrintMessage()
 	auto m = GetMessage();
 	if (m != nullptr)
 	{
-		Printf(PRINT_NONOTIFY, TEXTCOLOR_RED "%s\n", m);
+		Printf(PRINT_NONOTIFY | PRINT_BOLD, TEXTCOLOR_RED "%s\n", m);
 		SetMessage("");
 	}
 }

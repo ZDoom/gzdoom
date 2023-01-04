@@ -925,7 +925,7 @@ void M_Init (void)
 	catch (CVMAbortException &err)
 	{
 		err.MaybePrintMessage();
-		Printf(PRINT_NONOTIFY, "%s", err.stacktrace.GetChars());
+		Printf(PRINT_NONOTIFY | PRINT_BOLD, "%s", err.stacktrace.GetChars());
 		I_FatalError("Failed to initialize menus");
 	}
 	M_CreateMenus();

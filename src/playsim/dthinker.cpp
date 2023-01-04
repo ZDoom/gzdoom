@@ -538,7 +538,7 @@ bool FThinkerList::DoDestroyThinkers()
 			{
 				Printf("VM exception in DestroyThinkers:\n");
 				exception.MaybePrintMessage();
-				Printf(PRINT_NONOTIFY, "%s", exception.stacktrace.GetChars());
+				Printf(PRINT_NONOTIFY | PRINT_BOLD, "%s", exception.stacktrace.GetChars());
 				// forcibly delete this. Cleanup may be incomplete, though.
 				node->ObjectFlags |= OF_YesReallyDelete;
 				delete node;
@@ -546,7 +546,7 @@ bool FThinkerList::DoDestroyThinkers()
 			}
 			catch (CRecoverableError &exception)
 			{
-				Printf(PRINT_NONOTIFY, "Error in DestroyThinkers: %s\n", exception.GetMessage());
+				Printf(PRINT_NONOTIFY | PRINT_BOLD, "Error in DestroyThinkers: %s\n", exception.GetMessage());
 				// forcibly delete this. Cleanup may be incomplete, though.
 				node->ObjectFlags |= OF_YesReallyDelete;
 				delete node;

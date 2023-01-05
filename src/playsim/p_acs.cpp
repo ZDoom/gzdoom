@@ -3998,55 +3998,56 @@ int DoGetMasterTID (AActor *self)
 
 enum
 {
-	APROP_Health		= 0,
-	APROP_Speed			= 1,
-	APROP_Damage		= 2,
-	APROP_Alpha			= 3,
-	APROP_RenderStyle	= 4,
-	APROP_SeeSound		= 5,	// Sounds can only be set, not gotten
-	APROP_AttackSound	= 6,
-	APROP_PainSound		= 7,
-	APROP_DeathSound	= 8,
-	APROP_ActiveSound	= 9,
-	APROP_Ambush		= 10,
-	APROP_Invulnerable	= 11,
-	APROP_JumpZ			= 12,	// [GRB]
-	APROP_ChaseGoal		= 13,
-	APROP_Frightened	= 14,
-	APROP_Gravity		= 15,
-	APROP_Friendly		= 16,
-	APROP_SpawnHealth   = 17,
-	APROP_Dropped		= 18,
-	APROP_Notarget		= 19,
-	APROP_Species		= 20,
-	APROP_NameTag		= 21,
-	APROP_Score			= 22,
-	APROP_Notrigger		= 23,
-	APROP_DamageFactor	= 24,
-	APROP_MasterTID     = 25,
-	APROP_TargetTID		= 26,
-	APROP_TracerTID		= 27,
-	APROP_WaterLevel	= 28,
-	APROP_ScaleX        = 29,
-	APROP_ScaleY        = 30,
-	APROP_Dormant		= 31,
-	APROP_Mass			= 32,
-	APROP_Accuracy      = 33,
-	APROP_Stamina       = 34,
-	APROP_Height		= 35,
-	APROP_Radius		= 36,
-	APROP_ReactionTime  = 37,
-	APROP_MeleeRange	= 38,
-	APROP_ViewHeight	= 39,
-	APROP_AttackZOffset	= 40,
-	APROP_StencilColor	= 41,
-	APROP_Friction		= 42,
-	APROP_DamageMultiplier=43,
-	APROP_MaxStepHeight	= 44,
-	APROP_MaxDropOffHeight= 45,
-	APROP_DamageType	= 46,
-	APROP_SoundClass	= 47,
-	APROP_FriendlySeeBlocks= 48,
+	APROP_Health				= 0,
+	APROP_Speed					= 1,
+	APROP_Damage				= 2,
+	APROP_Alpha					= 3,
+	APROP_RenderStyle			= 4,
+	APROP_SeeSound				= 5,	// Sounds can only be set, not gotten
+	APROP_AttackSound			= 6,
+	APROP_PainSound				= 7,
+	APROP_DeathSound			= 8,
+	APROP_ActiveSound			= 9,
+	APROP_Ambush				= 10,
+	APROP_Invulnerable			= 11,
+	APROP_JumpZ					= 12,	// [GRB]
+	APROP_ChaseGoal				= 13,
+	APROP_Frightened			= 14,
+	APROP_Gravity				= 15,
+	APROP_Friendly				= 16,
+	APROP_SpawnHealth			= 17,
+	APROP_Dropped				= 18,
+	APROP_Notarget				= 19,
+	APROP_Species				= 20,
+	APROP_NameTag				= 21,
+	APROP_Score					= 22,
+	APROP_Notrigger				= 23,
+	APROP_DamageFactor			= 24,
+	APROP_MasterTID				= 25,
+	APROP_TargetTID				= 26,
+	APROP_TracerTID				= 27,
+	APROP_WaterLevel			= 28,
+	APROP_ScaleX				= 29,
+	APROP_ScaleY				= 30,
+	APROP_Dormant				= 31,
+	APROP_Mass					= 32,
+	APROP_Accuracy				= 33,
+	APROP_Stamina				= 34,
+	APROP_Height				= 35,
+	APROP_Radius				= 36,
+	APROP_ReactionTime			= 37,
+	APROP_MeleeRange			= 38,
+	APROP_ViewHeight			= 39,
+	APROP_AttackZOffset			= 40,
+	APROP_StencilColor			= 41,
+	APROP_Friction				= 42,
+	APROP_DamageMultiplier		= 43,
+	APROP_MaxStepHeight			= 44,
+	APROP_MaxDropOffHeight		= 45,
+	APROP_DamageType			= 46,
+	APROP_SoundClass			= 47,
+	APROP_FriendlySeeBlocks		= 48,
+	APROP_WaterDepth			= 49,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -4422,6 +4423,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_DamageType:	return GlobalACSStrings.AddString(actor->DamageType.GetChars());
 	case APROP_SoundClass:	return GlobalACSStrings.AddString(S_GetSoundClass(actor));
 	case APROP_FriendlySeeBlocks: return actor->friendlyseeblocks;
+	case APROP_WaterDepth: return DoubleToACS(actor->waterdepth);
 
 	default:				return 0;
 	}
@@ -4472,6 +4474,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MaxDropOffHeight:
 		case APROP_StencilColor:
 		case APROP_FriendlySeeBlocks:
+		case APROP_WaterDepth:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value

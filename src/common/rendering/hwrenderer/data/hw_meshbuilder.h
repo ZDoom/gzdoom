@@ -3,33 +3,55 @@
 #include "hw_renderstate.h"
 #include "hw_material.h"
 #include "flatvertices.h"
+#include <map>
 
 class Mesh;
 
 class MeshApplyState
 {
 public:
-	FRenderStyle RenderStyle;
-	int SpecialEffect;
-	bool TextureEnabled;
-	float AlphaThreshold;
-	int DepthFunc;
+	struct ApplyData
+	{
+		FRenderStyle RenderStyle;
+		int SpecialEffect;
+		int TextureEnabled;
+		float AlphaThreshold;
+		int DepthFunc;
+		int FogEnabled;
+		int BrightmapEnabled;
+		int TextureClamp;
+		int TextureMode;
+		int TextureModeFlags;
+		float uFogDensity;
+		float uLightFactor;
+		float uLightDist;
+		FVector2 uClipSplit;
+	};
 
+	float uLightLevel;
+
+	ApplyData applyData;
 	StreamData streamData;
 	FMaterialState material;
 
-	uint8_t FogEnabled;
-	uint8_t BrightmapEnabled;
-	int TextureClamp;
-	int TextureMode;
-	int TextureModeFlags;
+	bool operator<(const MeshApplyState& other) const
+	{
+		if (material.mMaterial != other.material.mMaterial)
+			return material.mMaterial < other.material.mMaterial;
+		if (material.mClampMode != other.material.mClampMode)
+			return material.mClampMode < other.material.mClampMode;
+		if (material.mTranslation != other.material.mTranslation)
+			return material.mTranslation < other.material.mTranslation;
+		if (material.mOverrideShader != other.material.mOverrideShader)
+			return material.mOverrideShader < other.material.mOverrideShader;
 
-	float uLightLevel;
-	float uFogDensity;
-	float uLightFactor;
-	float uLightDist;
+		int result = memcmp(&applyData, &other.applyData, sizeof(ApplyData));
+		if (result != 0)
+			return result < 0;
 
-	FVector2 uClipSplit;
+		result = memcmp(&streamData, &other.streamData, sizeof(StreamData));
+		return result < 0;
+	}
 };
 
 class MeshDrawCommand
@@ -79,9 +101,14 @@ public:
 private:
 	void Apply();
 
-	TArray<MeshApplyState> mApplys;
-	TArray<MeshDrawCommand> mDraws;
-	TArray<MeshDrawCommand> mIndexedDraws;
+	struct DrawLists
+	{
+		TArray<MeshDrawCommand> mDraws;
+		TArray<MeshDrawCommand> mIndexedDraws;
+	};
+	std::map<MeshApplyState, DrawLists> mSortedLists;
+	DrawLists* mDrawLists = nullptr;
+
 	TArray<FFlatVertex> mVertices;
 	int mDepthFunc = 0;
 };

@@ -512,13 +512,9 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 	drawlists[GLDL_PLAINWALLS].DrawWalls(this, state, false);
 	drawlists[GLDL_PLAINFLATS].DrawFlats(this, state, false);
 
-	if (gl_meshcache)
+	if (gl_meshcache && meshcache.Opaque)
 	{
-		for (HWCachedSector& cachedsector : meshcache.Sectors)
-		{
-			if (cachedsector.Opaque)
-				cachedsector.Opaque->Draw(state);
-		}
+		meshcache.Opaque->Draw(state);
 	}
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -526,13 +522,9 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, state, false);
 	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, state, false);
 
-	if (gl_meshcache)
+	if (gl_meshcache && meshcache.Translucent)
 	{
-		for (HWCachedSector& cachedsector : meshcache.Sectors)
-		{
-			if (cachedsector.Translucent)
-				cachedsector.Translucent->Draw(state);
-		}
+		meshcache.Translucent->Draw(state);
 	}
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
@@ -543,14 +535,10 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 		state.ClearDepthBias();
 	}
 
-	if (gl_meshcache)
+	if (gl_meshcache && meshcache.TranslucentDepthBiased)
 	{
 		state.SetDepthBias(-1, -128);
-		for (HWCachedSector& cachedsector : meshcache.Sectors)
-		{
-			if (cachedsector.TranslucentDepthBiased)
-				cachedsector.TranslucentDepthBiased->Draw(state);
-		}
+		meshcache.TranslucentDepthBiased->Draw(state);
 		state.ClearDepthBias();
 	}
 

@@ -33,23 +33,23 @@ void Mesh::Draw(FRenderState& renderstate)
 #endif
 
 	MeshApplyState origState;
-	origState.RenderStyle = renderstate.mRenderStyle;
-	origState.SpecialEffect = renderstate.mSpecialEffect;
-	origState.TextureEnabled = renderstate.mTextureEnabled;
-	origState.AlphaThreshold = renderstate.mAlphaThreshold;
+	origState.applyData.RenderStyle = renderstate.mRenderStyle;
+	origState.applyData.SpecialEffect = renderstate.mSpecialEffect;
+	origState.applyData.TextureEnabled = renderstate.mTextureEnabled;
+	origState.applyData.AlphaThreshold = renderstate.mAlphaThreshold;
+	origState.applyData.FogEnabled = renderstate.mFogEnabled;
+	origState.applyData.BrightmapEnabled = renderstate.mBrightmapEnabled;
+	origState.applyData.TextureClamp = renderstate.mTextureClamp;
+	origState.applyData.TextureMode = renderstate.mTextureMode;
+	origState.applyData.TextureModeFlags = renderstate.mTextureModeFlags;
+	origState.applyData.uLightDist = renderstate.mLightParms[0];
+	origState.applyData.uLightFactor = renderstate.mLightParms[1];
+	origState.applyData.uFogDensity = renderstate.mLightParms[2];
+	origState.applyData.uClipSplit[0] = renderstate.mClipSplit[0];
+	origState.applyData.uClipSplit[1] = renderstate.mClipSplit[1];
+	origState.uLightLevel = renderstate.mLightParms[3];
 	origState.streamData = renderstate.mStreamData;
 	origState.material = renderstate.mMaterial;
-	origState.FogEnabled = renderstate.mFogEnabled;
-	origState.BrightmapEnabled = renderstate.mBrightmapEnabled;
-	origState.TextureClamp = renderstate.mTextureClamp;
-	origState.TextureMode = renderstate.mTextureMode;
-	origState.TextureModeFlags = renderstate.mTextureModeFlags;
-	origState.uLightDist = renderstate.mLightParms[0];
-	origState.uLightFactor = renderstate.mLightParms[1];
-	origState.uFogDensity = renderstate.mLightParms[2];
-	origState.uLightLevel = renderstate.mLightParms[3];
-	origState.uClipSplit[0] = renderstate.mClipSplit[0];
-	origState.uClipSplit[1] = renderstate.mClipSplit[1];
 
 	int applyIndex = -1;
 	int depthFunc = -1;
@@ -58,7 +58,7 @@ void Mesh::Draw(FRenderState& renderstate)
 		bool apply = applyIndex != cmd.ApplyIndex;
 		if (apply)
 		{
-			int newDepthFunc = mApplys[cmd.ApplyIndex].DepthFunc;
+			int newDepthFunc = mApplys[cmd.ApplyIndex].applyData.DepthFunc;
 			if (depthFunc != newDepthFunc)
 			{
 				depthFunc = newDepthFunc;
@@ -86,7 +86,7 @@ void Mesh::Draw(FRenderState& renderstate)
 		bool apply = applyIndex != cmd.ApplyIndex;
 		if (apply)
 		{
-			int newDepthFunc = mApplys[cmd.ApplyIndex].DepthFunc;
+			int newDepthFunc = mApplys[cmd.ApplyIndex].applyData.DepthFunc;
 			if (depthFunc != newDepthFunc)
 			{
 				depthFunc = newDepthFunc;
@@ -104,21 +104,21 @@ void Mesh::Draw(FRenderState& renderstate)
 
 void Mesh::Apply(FRenderState& renderstate, const MeshApplyState& state)
 {
-	renderstate.mRenderStyle = state.RenderStyle;
-	renderstate.mSpecialEffect = state.SpecialEffect;
-	renderstate.mTextureEnabled = state.TextureEnabled;
-	renderstate.mAlphaThreshold = state.AlphaThreshold;
+	renderstate.mRenderStyle = state.applyData.RenderStyle;
+	renderstate.mSpecialEffect = state.applyData.SpecialEffect;
+	renderstate.mTextureEnabled = state.applyData.TextureEnabled;
+	renderstate.mAlphaThreshold = state.applyData.AlphaThreshold;
+	renderstate.mFogEnabled = state.applyData.FogEnabled;
+	renderstate.mBrightmapEnabled = state.applyData.BrightmapEnabled;
+	renderstate.mTextureClamp = state.applyData.TextureClamp;
+	renderstate.mTextureMode = state.applyData.TextureMode;
+	renderstate.mTextureModeFlags = state.applyData.TextureModeFlags;
+	renderstate.mLightParms[0] = state.applyData.uLightDist;
+	renderstate.mLightParms[1] = state.applyData.uLightFactor;
+	renderstate.mLightParms[2] = state.applyData.uFogDensity;
+	renderstate.mClipSplit[0] = state.applyData.uClipSplit[0];
+	renderstate.mClipSplit[1] = state.applyData.uClipSplit[1];
+	renderstate.mLightParms[3] = state.uLightLevel;
 	renderstate.mStreamData = state.streamData;
 	renderstate.mMaterial = state.material;
-	renderstate.mFogEnabled = state.FogEnabled;
-	renderstate.mBrightmapEnabled = state.BrightmapEnabled;
-	renderstate.mTextureClamp = state.TextureClamp;
-	renderstate.mTextureMode = state.TextureMode;
-	renderstate.mTextureModeFlags = state.TextureModeFlags;
-	renderstate.mLightParms[0] = state.uLightDist;
-	renderstate.mLightParms[1] = state.uLightFactor;
-	renderstate.mLightParms[2] = state.uFogDensity;
-	renderstate.mLightParms[3] = state.uLightLevel;
-	renderstate.mClipSplit[0] = state.uClipSplit[0];
-	renderstate.mClipSplit[1] = state.uClipSplit[1];
 }

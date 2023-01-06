@@ -16,8 +16,12 @@ HWMeshCache meshcache;
 
 void HWMeshCache::Clear()
 {
+#if 0
 	Sectors.Reset();
-	nextRefresh = 0;
+#endif
+	Opaque.reset();
+	Translucent.reset();
+	TranslucentDepthBiased.reset();
 }
 
 void HWMeshCache::Update(FRenderViewpoint& vp)
@@ -26,6 +30,9 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 		return;
 
 	auto level = vp.ViewLevel;
+
+#if 0
+
 	unsigned int count = level->sectors.Size();
 	Sectors.Resize(count);
 
@@ -48,19 +55,6 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 		}
 	}
 
-#if 0
-	// Refresh 10 sectors per frame.
-	for (int i = 0; i < 10; i++)
-	{
-		if (nextRefresh < count)
-		{
-			Sectors[nextRefresh].NeedsUpdate = true;
-		}
-		if (count > 0)
-			nextRefresh = (nextRefresh + 1) % count;
-	}
-#endif
-
 	// Update changed sectors
 	for (unsigned int i = 0; i < count; i++)
 	{
@@ -75,87 +69,91 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 			cacheitem->Update(vp);
 		}
 	}
-}
 
-void HWCachedSector::Update(FRenderViewpoint& vp)
-{
-	Opaque.reset();
-	Translucent.reset();
-	TranslucentDepthBiased.reset();
+#endif
 
-	HWDrawInfo* di = HWDrawInfo::StartDrawInfo(vp.ViewLevel, nullptr, vp, nullptr);
-	di->MeshBuilding = true;
-
-	// Add to the draw lists
-
-	CheckUpdate(screen->mVertexData, Sector);
-	std::unordered_set<FSection*> seenSections;
-	for (int i = 0, count = Sector->subsectorcount; i < count; i++)
+	if (!Opaque)
 	{
-		subsector_t* subsector = Sector->subsectors[i];
-		if (seenSections.find(subsector->section) == seenSections.end())
+		HWDrawInfo* di = HWDrawInfo::StartDrawInfo(vp.ViewLevel, nullptr, vp, nullptr);
+		di->MeshBuilding = true;
+
+		// Add to the draw lists
+
+		unsigned int count = level->sectors.Size();
+		for (unsigned int i = 0; i < count; i++)
 		{
-			seenSections.insert(subsector->section);
+			auto sector = &level->sectors[i];
 
-			HWFlat flat;
-			flat.section = subsector->section;
-			sector_t* front = hw_FakeFlat(subsector->render_sector, area_default, false);
-			flat.ProcessSector(di, front);
+			CheckUpdate(screen->mVertexData, sector);
+			std::unordered_set<FSection*> seenSections;
+			for (int i = 0, count = sector->subsectorcount; i < count; i++)
+			{
+				subsector_t* subsector = sector->subsectors[i];
+				if (seenSections.find(subsector->section) == seenSections.end())
+				{
+					seenSections.insert(subsector->section);
+
+					HWFlat flat;
+					flat.section = subsector->section;
+					sector_t* front = hw_FakeFlat(subsector->render_sector, area_default, false);
+					flat.ProcessSector(di, front);
+				}
+			}
+
+			for (line_t* line : sector->Lines)
+			{
+				side_t* side = (line->sidedef[0]->sector == sector) ? line->sidedef[0] : line->sidedef[1];
+
+				HWWall wall;
+				wall.sub = sector->subsectors[0];
+				wall.Process(di, side->segs[0], sector, (line->sidedef[0]->sector == sector) ? line->backsector : line->frontsector);
+			}
 		}
-	}
 
-	for (line_t* line : Sector->Lines)
-	{
-		side_t* side = (line->sidedef[0]->sector == Sector) ? line->sidedef[0] : line->sidedef[1];
+		// Convert draw lists to meshes
 
-		HWWall wall;
-		wall.sub = Sector->subsectors[0];
-		wall.Process(di, side->segs[0], Sector, (line->sidedef[0]->sector == Sector) ? line->backsector : line->frontsector);
-	}
+		MeshBuilder state;
 
-	// Convert draw lists to meshes
+		state.SetDepthMask(true);
+		state.EnableFog(true);
+		state.SetRenderStyle(STYLE_Source);
 
-	MeshBuilder state;
+		di->drawlists[GLDL_PLAINWALLS].SortWalls();
+		di->drawlists[GLDL_PLAINFLATS].SortFlats();
+		di->drawlists[GLDL_MASKEDWALLS].SortWalls();
+		di->drawlists[GLDL_MASKEDFLATS].SortFlats();
+		di->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
 
-	state.SetDepthMask(true);
-	state.EnableFog(true);
-	state.SetRenderStyle(STYLE_Source);
-
-	di->drawlists[GLDL_PLAINWALLS].SortWalls();
-	di->drawlists[GLDL_PLAINFLATS].SortFlats();
-	di->drawlists[GLDL_MASKEDWALLS].SortWalls();
-	di->drawlists[GLDL_MASKEDFLATS].SortFlats();
-	di->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
-
-	// Part 1: solid geometry. This is set up so that there are no transparent parts
-	state.SetDepthFunc(DF_Less);
-	state.AlphaFunc(Alpha_GEqual, 0.f);
-	state.ClearDepthBias();
-	state.EnableTexture(gl_texture);
-	state.EnableBrightmap(true);
-	di->drawlists[GLDL_PLAINWALLS].DrawWalls(di, state, false);
-	di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, state, false);
-	Opaque = state.Create();
-
-	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
-	state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
-	di->drawlists[GLDL_MASKEDWALLS].DrawWalls(di, state, false);
-	di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, state, false);
-	Translucent = state.Create();
-
-	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
-	if (di->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
-	{
-		state.SetDepthBias(-1, -128);
-		di->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(di, state, false);
+		// Part 1: solid geometry. This is set up so that there are no transparent parts
+		state.SetDepthFunc(DF_Less);
+		state.AlphaFunc(Alpha_GEqual, 0.f);
 		state.ClearDepthBias();
-		TranslucentDepthBiased = state.Create();
-	}
-	else
-	{
-		TranslucentDepthBiased.reset();
-	}
+		state.EnableTexture(gl_texture);
+		state.EnableBrightmap(true);
+		di->drawlists[GLDL_PLAINWALLS].DrawWalls(di, state, false);
+		di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, state, false);
+		Opaque = state.Create();
 
-	di->MeshBuilding = false;
-	di->EndDrawInfo();
+		// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
+		state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+		di->drawlists[GLDL_MASKEDWALLS].DrawWalls(di, state, false);
+		di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, state, false);
+		Translucent = state.Create();
+
+		// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
+		if (di->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
+		{
+			state.SetDepthBias(-1, -128);
+			di->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(di, state, false);
+			state.ClearDepthBias();
+			TranslucentDepthBiased = state.Create();
+		}
+		else
+		{
+			TranslucentDepthBiased.reset();
+		}
+
+		di->MeshBuilding = false;
+		di->EndDrawInfo();
+	}
 }

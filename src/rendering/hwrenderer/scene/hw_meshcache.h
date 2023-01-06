@@ -5,6 +5,7 @@
 
 struct FRenderViewpoint;
 
+#if 0
 class HWCachedSector
 {
 public:
@@ -13,13 +14,8 @@ public:
 	sector_t* Sector = nullptr;
 	secplane_t Floorplane;
 	secplane_t Ceilingplane;
-
-	std::unique_ptr<Mesh> Opaque;
-	std::unique_ptr<Mesh> Translucent;
-	std::unique_ptr<Mesh> TranslucentDepthBiased;
-
-	void Update(FRenderViewpoint& vp);
 };
+#endif
 
 class HWMeshCache
 {
@@ -27,10 +23,13 @@ public:
 	void Clear();
 	void Update(FRenderViewpoint& vp);
 
+#if 0
 	TArray<HWCachedSector> Sectors;
+#endif
 
-private:
-	unsigned int nextRefresh = 0;
+	std::unique_ptr<Mesh> Opaque;
+	std::unique_ptr<Mesh> Translucent;
+	std::unique_ptr<Mesh> TranslucentDepthBiased;
 };
 
 extern HWMeshCache meshcache;

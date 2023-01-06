@@ -27,8 +27,8 @@ void MeshBuilder::Draw(int dt, int index, int count, bool apply)
 	command.DrawType = dt;
 	command.Start = index;
 	command.Count = count;
-	command.ApplyIndex = mApplys.Size() - 1;
-	mDraws.Push(command);
+	command.ApplyIndex = -1;
+	mDrawLists->mDraws.Push(command);
 }
 
 void MeshBuilder::DrawIndexed(int dt, int index, int count, bool apply)
@@ -40,8 +40,8 @@ void MeshBuilder::DrawIndexed(int dt, int index, int count, bool apply)
 	command.DrawType = dt;
 	command.Start = index;
 	command.Count = count;
-	command.ApplyIndex = mApplys.Size() - 1;
-	mIndexedDraws.Push(command);
+	command.ApplyIndex = -1;
+	mDrawLists->mIndexedDraws.Push(command);
 }
 
 void MeshBuilder::SetDepthFunc(int func)
@@ -53,45 +53,54 @@ void MeshBuilder::Apply()
 {
 	MeshApplyState state;
 
-	state.RenderStyle = mRenderStyle;
-	state.SpecialEffect = mSpecialEffect;
-	state.TextureEnabled = mTextureEnabled;
-	state.AlphaThreshold = mAlphaThreshold;
-	state.DepthFunc = mDepthFunc;
-
+	state.applyData.RenderStyle = mRenderStyle;
+	state.applyData.SpecialEffect = mSpecialEffect;
+	state.applyData.TextureEnabled = mTextureEnabled;
+	state.applyData.AlphaThreshold = mAlphaThreshold;
+	state.applyData.DepthFunc = mDepthFunc;
+	state.applyData.FogEnabled = mFogEnabled;
+	state.applyData.BrightmapEnabled = mBrightmapEnabled;
+	state.applyData.TextureClamp = mTextureClamp;
+	state.applyData.TextureMode = mTextureMode;
+	state.applyData.TextureModeFlags = mTextureModeFlags;
+	state.applyData.uLightDist = mLightParms[0];
+	state.applyData.uLightFactor = mLightParms[1];
+	state.applyData.uFogDensity = mLightParms[2];
+	state.applyData.uClipSplit = { mClipSplit[0], mClipSplit[1] };
+	state.uLightLevel = mLightParms[3];
 	state.streamData = mStreamData;
 	state.material = mMaterial;
 
-	state.FogEnabled = mFogEnabled;
-	state.BrightmapEnabled = mBrightmapEnabled;
-	state.TextureClamp = mTextureClamp;
-	state.TextureMode = mTextureMode;
-	state.TextureModeFlags = mTextureModeFlags;
+	state.streamData.uVertexNormal = FVector4(0.0f, 0.0f, 0.0f, 0.0f); // Grr, this should be part of the vertex!!
 
-	state.uLightDist = mLightParms[0];
-	state.uLightFactor = mLightParms[1];
-	state.uFogDensity = mLightParms[2];
-	state.uLightLevel = mLightParms[3];
-
-	state.uClipSplit = { mClipSplit[0], mClipSplit[1] };
-
-	mApplys.Push(state);
+	mDrawLists = &mSortedLists[state];
 }
 
 std::unique_ptr<Mesh> MeshBuilder::Create()
 {
-	if (mDraws.Size() == 0 && mIndexedDraws.Size() == 0)
+	if (mSortedLists.empty())
 		return {};
 
 	auto mesh = std::make_unique<Mesh>();
-	mesh->mApplys = std::move(mApplys);
-	mesh->mDraws = std::move(mDraws);
-	mesh->mIndexedDraws = std::move(mIndexedDraws);
-	mesh->mVertices = std::move(mVertices);
 
-	mApplys.Clear();
-	mDraws.Clear();
-	mIndexedDraws.Clear();
+	int applyIndex = 0;
+	for (auto& it : mSortedLists)
+	{
+		mesh->mApplys.Push(it.first);
+		for (MeshDrawCommand& command : it.second.mDraws)
+		{
+			command.ApplyIndex = applyIndex;
+			mesh->mDraws.Push(command);
+		}
+		for (MeshDrawCommand& command : it.second.mIndexedDraws)
+		{
+			command.ApplyIndex = applyIndex;
+			mesh->mIndexedDraws.Push(command);
+		}
+		applyIndex++;
+	}
+
+	mesh->mVertices = std::move(mVertices);
 	mVertices.Clear();
 
 	return mesh;

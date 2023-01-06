@@ -262,6 +262,7 @@ enum EExplodeFlags
 	XF_NOSPLASH = 16,
 	XF_THRUSTZ = 32,
 	XF_THRUSTLESS = 64,
+	XF_NOALLIES = 128,
 };
 
 // Flags for A_RadiusThrust
@@ -1222,7 +1223,8 @@ enum RadiusDamageFlags
 	RADF_NODAMAGE = 8,
 	RADF_THRUSTZ = 16,
 	RADF_OLDRADIUSDAMAGE = 32,
-	RADF_THRUSTLESS = 64
+	RADF_THRUSTLESS = 64,
+	RADF_NOALLIES = 128
 };
 
 enum IntermissionSequenceType

@@ -6072,10 +6072,12 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			)
 			)	continue;
 
-		if((species != NAME_None) && (thing->Species != species))
-		{
+		if ((species != NAME_None) && (thing->Species != species))
 			continue;
-		}
+
+		//[inkoalawetrust] Don't harm actors friendly to the explosions' source.
+		if ((flags & RADF_NOALLIES) && bombsource->IsFriend(thing))
+			continue;
 
 		if (bombsource && thing != bombsource && bombsource->player && P_ShouldPassThroughPlayer(bombsource, thing))
 			continue;

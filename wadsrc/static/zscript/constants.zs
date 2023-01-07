@@ -653,6 +653,7 @@ enum EQuakeFlags
 	QF_GROUNDONLY =		1 << 7,
 	QF_AFFECTACTORS =	1 << 8,
 	QF_SHAKEONLY =		1 << 9,
+	QF_DAMAGEFALLOFF =	1 << 10,
 };
 
 // A_CheckProximity flags

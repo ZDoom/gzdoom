@@ -116,6 +116,7 @@ enum
 	QF_GROUNDONLY =		1 << 7,
 	QF_AFFECTACTORS =	1 << 8,
 	QF_SHAKEONLY =		1 << 9,
+	QF_DAMAGEFALLOFF =	1 << 10,
 };
 
 struct FQuakeJiggers
@@ -153,8 +154,8 @@ public:
 
 	double GetModIntensity(double intensity, bool fake = false) const;
 	double GetModWave(double ticFrac, double waveMultiplier) const;
-	double GetFalloff(double dist) const;
-	void DoQuakeDamage(DEarthquake *quake, AActor *victim) const;
+	double GetFalloff(double dist, double radius) const;
+	void DoQuakeDamage(DEarthquake *quake, AActor *victim, bool falloff) const;
 
 	static int StaticGetQuakeIntensities(double ticFrac, AActor *viewer, FQuakeJiggers &jiggers);
 };

@@ -33,6 +33,7 @@
 #include "d_player.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include <p_maputl.h>
 
 static FRandom pr_quake ("Quake");
 
@@ -123,16 +124,17 @@ void DEarthquake::Tick ()
 	{
 		if (m_Flags & QF_AFFECTACTORS)
 		{
-			auto iterator = m_Spot->Level->GetThinkerIterator<AActor>();
-			AActor* mo = nullptr;
+			FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
+			FMultiBlockThingsIterator it(check,m_Spot,m_DamageRadius,false);
+			FMultiBlockThingsIterator::CheckResult cres;
 
-			while ((mo = iterator.Next()) != NULL)
+			while (it.Next(&cres))
 			{
-				if (mo == m_Spot) //Ignore the earthquake origin.
+				AActor *mo = cres.thing;
+				if (mo == nullptr || mo == m_Spot) //Ignore null references and the earthquake origin.
 					continue;
 
-
-				DoQuakeDamage(this, mo);
+				DoQuakeDamage(this, mo, !!(m_Flags & QF_DAMAGEFALLOFF));
 			}
 		}
 		else
@@ -142,7 +144,7 @@ void DEarthquake::Tick ()
 				if (Level->PlayerInGame(i) && !(Level->Players[i]->cheats & CF_NOCLIP))
 				{
 					AActor* victim = Level->Players[i]->mo;
-						DoQuakeDamage(this, victim);
+					DoQuakeDamage(this, victim, !!(m_Flags & QF_DAMAGEFALLOFF));
 				}
 			}
 		}
@@ -168,26 +170,33 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-void DEarthquake::DoQuakeDamage(DEarthquake *quake, AActor *victim) const
+//[inkoalawetrust] Todo: Add a damage multiplier variable to DEarthquake ? Could be useful for making stronger earthquakes more damaging and stuff.
+void DEarthquake::DoQuakeDamage(DEarthquake *quake, AActor *victim, bool falloff) const
 {
 	double dist;
+	double thrustfalloff = 0.f;
+	int damage = 0;
 
 	if (!quake || !victim) return;
 
 	dist = quake->m_Spot->Distance2D(victim, true);
+	thrustfalloff = falloff ? GetFalloff(dist, m_DamageRadius) : 1.0;
 	// Check if in damage radius
 	if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
 	{
 		if (!(quake->m_Flags & QF_SHAKEONLY) && pr_quake() < 50)
 		{
-			P_DamageMobj(victim, NULL, NULL, pr_quake.HitDice(1), NAME_Quake);
+			damage = falloff ? pr_quake.HitDice(1) * GetFalloff(dist, m_DamageRadius) : pr_quake.HitDice(1);
+			damage = damage < 1 ? 1 : damage; //Do at least a tiny bit of damage when in radius.
+			
+			P_DamageMobj(victim, NULL, NULL, damage, NAME_Quake);
 		}
-		// Thrust player or thrustable actor around
-		if (victim->player || !(victim->flags7 & MF7_DONTTHRUST))
+		// Thrust pushable actor around
+		if (!(victim->flags7 & MF7_DONTTHRUST))
 		{
 			DAngle an = victim->Angles.Yaw + DAngle::fromDeg(pr_quake());
-			victim->Vel.X += m_Intensity.X * an.Cos() * 0.5;
-			victim->Vel.Y += m_Intensity.Y * an.Sin() * 0.5;
+			victim->Vel.X += m_Intensity.X * an.Cos() * 0.5 * thrustfalloff;
+			victim->Vel.Y += m_Intensity.Y * an.Sin() * 0.5 * thrustfalloff;
 		}
 	}
 	return;
@@ -285,19 +294,19 @@ double DEarthquake::GetModIntensity(double intensity, bool fake) const
 //
 // DEarthquake :: GetFalloff
 //
-// Given the distance of the player from the quake, find the multiplier.
+// Given the distance of the actor from the quake, find the multiplier.
 //
 //==========================================================================
 
-double DEarthquake::GetFalloff(double dist) const
+double DEarthquake::GetFalloff(double dist, double radius) const
 {
-	if ((dist < m_Falloff) || (m_Falloff >= m_TremorRadius) || (m_Falloff <= 0) || (m_TremorRadius - m_Falloff <= 0))
-	{ //Player inside the minimum falloff range, or safety check kicked in.
+	if ((dist < m_Falloff) || (m_Falloff >= radius) || (m_Falloff <= 0) || (radius - m_Falloff <= 0))
+	{ //Actor inside the minimum falloff range, or safety check kicked in.
 		return 1.;
 	}
-	else if ((dist > m_Falloff) && (dist < m_TremorRadius))
-	{ //Player inside the radius, and outside the min distance for falloff.
-		double tremorsize = m_TremorRadius - m_Falloff;
+	else if ((dist > m_Falloff) && (dist < radius))
+	{ //Actor inside the radius, and outside the min distance for falloff.
+		double tremorsize = radius - m_Falloff;
 		assert(tremorsize > 0);
 		return (1. - ((dist - m_Falloff) / tremorsize));
 	}
@@ -341,7 +350,7 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 			if (dist < quake->m_TremorRadius)
 			{
 				++count;
-				const double falloff = quake->GetFalloff(dist);
+				const double falloff = quake->GetFalloff(dist, quake->m_TremorRadius);
 				const double r = quake->GetModIntensity(quake->m_RollIntensity);
 				const double strength = quake->GetModIntensity(1.0, true);
 				DVector3 intensity;

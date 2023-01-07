@@ -62,7 +62,7 @@ public:
 //
 //==========================================================================
 
-bool CheckIfRaw(FileReader & data, int desiredsize)
+bool CheckIfRaw(FileReader & data, unsigned desiredsize)
 {
 	if (data.GetLength() != desiredsize) return false;
 

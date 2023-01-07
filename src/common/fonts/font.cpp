@@ -59,6 +59,7 @@
 
 #include "fontinternals.h"
 
+TArray<FBitmap> sheetBitmaps;
 
 
 //==========================================================================
@@ -367,10 +368,32 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	}
 }
 
+class FSheetTexture : public FImageSource
+{
+	unsigned baseSheet;
+	int X, Y;
+
+public:
+
+	FSheetTexture(unsigned source, int x, int y, int width, int height)
+	{
+		baseSheet = source;
+		Width = width;
+		Height = height;
+		X = x;
+		Y = y;
+	}
+
+	int CopyPixels(FBitmap* dest, int conversion)
+	{
+		auto& pic = sheetBitmaps[baseSheet];
+		dest->CopyPixelDataRGB(0, 0, pic.GetPixels() + 4 * (X + pic.GetWidth() * Y), Width, Height, 4, pic.GetWidth() * 4, 0, CF_BGRA);
+		return 0;
+	}
+
+};
 void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
 {
-	// all valid lumps must be named with a hex number that represents the Unicode character index for its first character,
-	TArray<TexPartBuild> part(1, true);
 	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;
 	int maxchar = INT_MIN;
@@ -391,14 +414,15 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 				if (minchar > position) minchar = int(position);
 				if (maxchar < maxinsheet) maxchar = maxinsheet;
 
+				FBitmap* sheetimg = &sheetBitmaps[sheetBitmaps.Reserve(1)];
+				sheetimg->Create(tex->GetTexelWidth(), tex->GetTexelHeight());
+				tex->GetTexture()->GetImage()->CopyPixels(sheetimg, FImageSource::normal);
+
 				for (int y = 0; y < numtex_y; y++)
 				{
 					for (int x = 0; x < numtex_x; x++)
 					{
-						part[0].OriginX = -width * x;
-						part[0].OriginY = -height * y;
-						part[0].TexImage = static_cast<FImageTexture*>(tex->GetTexture());
-						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
+						auto image = new FSheetTexture(sheetBitmaps.Size() - 1, x * width, y * width, width, height);
 						FImageTexture *imgtex = new FImageTexture(image);
 						auto gtex = MakeGameTexture(imgtex, nullptr, ETextureType::FontChar);
 						gtex->SetWorldPanning(true);

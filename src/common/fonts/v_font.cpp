@@ -73,6 +73,7 @@ static int TranslationMapCompare (const void *a, const void *b);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int PrintColors[];
+extern TArray<FBitmap> sheetBitmaps;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 FFont* SmallFont, * SmallFont2, * BigFont, * BigUpper, * ConFont, * IntermissionFont, * NewConsoleFont, * NewSmallFont, 
@@ -863,6 +864,7 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 
 void V_InitFonts()
 {
+	sheetBitmaps.Clear();
 	CreateLuminosityTranslationRanges();
 	V_InitCustomFonts();
 
@@ -929,6 +931,7 @@ void V_ClearFonts()
 	}
 	FFont::FirstFont = nullptr;
 	AlternativeSmallFont = OriginalSmallFont = CurrentConsoleFont = NewSmallFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
+	sheetBitmaps.Clear();
 }
 
 //==========================================================================

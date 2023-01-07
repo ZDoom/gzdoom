@@ -1302,7 +1302,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetRadiusDamage, P_GetRadiusDamage)
 	PARAM_INT(distance);
 	PARAM_INT(fulldmgdistance);
 	PARAM_BOOL(oldradiusdmg);
-	ACTION_RETURN_INT(P_GetRadiusDamage(self, thing, damage, distance, fulldmgdistance, oldradiusdmg));
+	PARAM_BOOL(circular);
+	ACTION_RETURN_INT(P_GetRadiusDamage(self, thing, damage, distance, fulldmgdistance, oldradiusdmg, circular));
 }
 
 static int RadiusAttack(AActor *self, AActor *bombsource, int bombdamage, int bombdistance, int damagetype, int flags, int fulldamagedistance, int species)

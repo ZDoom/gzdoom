@@ -5838,7 +5838,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 //==========================================================================
 //
 // RADIUS ATTACK
-//
+// Most of the explosion code resides here. Except P_GeometryRadiusAttack().
 //
 //==========================================================================
 
@@ -5864,7 +5864,7 @@ CUSTOM_CVAR(Float, splashfactor, 1.f, CVAR_SERVERINFO)
 // Used by anything without OLDRADIUSDMG flag
 //==========================================================================
 
-static double GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource)
+static double GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource, bool round)
 {
 	// [RH] New code. The bounding box only covers the
 	// height of the thing and not the height of the map.
@@ -5876,41 +5876,49 @@ static double GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, 
 	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
 	double bombdamagefloat = (double)bombdamage;
 
-	DVector2 vec = bombspot->Vec2To(thing);
-	dx = fabs(vec.X);
-	dy = fabs(vec.Y);
-	boxradius = thing->radius;
-
-	// The damage pattern is square, not circular.
-	len = double(dx > dy ? dx : dy);
-
-	if (bombspot->Z() < thing->Z() || bombspot->Z() >= thing->Top())
+	if (!round)
 	{
-		double dz;
+		DVector2 vec = bombspot->Vec2To(thing);
+		dx = fabs(vec.X);
+		dy = fabs(vec.Y);
+		boxradius = thing->radius;
 
-		if (bombspot->Z() > thing->Z())
+		// The damage pattern is square, not circular.
+		len = double(dx > dy ? dx : dy);
+
+		if (bombspot->Z() < thing->Z() || bombspot->Z() >= thing->Top())
 		{
-			dz = double(bombspot->Z() - thing->Top());
-		}
-		else
-		{
-			dz = double(thing->Z() - bombspot->Z());
-		}
-		if (len <= boxradius)
-		{
-			len = dz;
+			double dz;
+
+			if (bombspot->Z() > thing->Z())
+			{
+				dz = double(bombspot->Z() - thing->Top());
+			}
+			else
+			{
+				dz = double(thing->Z() - bombspot->Z());
+			}
+			if (len <= boxradius)
+			{
+				len = dz;
+			}
+			else
+			{
+				len -= boxradius;
+				len = g_sqrt(len*len + dz*dz);
+			}
 		}
 		else
 		{
 			len -= boxradius;
-			len = g_sqrt(len*len + dz*dz);
+			if (len < 0.f)
+				len = 0.f;
 		}
 	}
+	//[inkoalwetrust]: Round explosions just use the actual distance between the source and victim.
 	else
 	{
-		len -= boxradius;
-		if (len < 0.f)
-			len = 0.f;
+		len = bombspot->Distance3D (thing);
 	}
 	len = clamp<double>(len - (double)fulldamagedistance, 0, len);
 	points = bombdamagefloat * (1. - len * bombdistancefloat);
@@ -5985,7 +5993,7 @@ static int GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, 
 // damage and not taking into account any damage reduction.
 //==========================================================================
 
-int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int fulldmgdistance, bool oldradiusdmg)
+int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int fulldmgdistance, bool oldradiusdmg, bool circular)
 {
 
 	if (!thing)
@@ -6005,7 +6013,7 @@ int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int
 
 	const int newdam = oldradiusdmg
 		? GetOldRadiusDamage(true, self, thing, damage, distance, fulldmgdistance)
-		: int(GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance, false));
+		: int(GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance, false, circular));
 
 	return newdam;
 }
@@ -6075,8 +6083,8 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		if ((species != NAME_None) && (thing->Species != species))
 			continue;
 
-		//[inkoalawetrust] Don't harm actors friendly to the explosions' source.
-		if ((flags & RADF_NOALLIES) && bombsource->IsFriend(thing))
+		//[inkoalawetrust] Don't harm actors friendly to the explosions' source. But do harm the source.
+		if ((flags & RADF_NOALLIES) && bombsource->IsFriend(thing) && !(thing == bombsource || thing == bombspot))
 			continue;
 
 		if (bombsource && thing != bombsource && bombsource->player && P_ShouldPassThroughPlayer(bombsource, thing))
@@ -6094,7 +6102,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		if ((flags & RADF_NODAMAGE) || (!((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG) && 
 			!(flags & RADF_OLDRADIUSDAMAGE) && !(thing->Level->i_compatflags2 & COMPATF2_EXPLODE2)))
 		{
-			double points = GetRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance, bombsource == thing);
+			double points = GetRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance, bombsource == thing,!!(flags & RADF_CIRCULAR));
 			double check = int(points) * bombdamage;
 			// points and bombdamage should be the same sign (the double cast of 'points' is needed to prevent overflows and incorrect values slipping through.)
 			if ((check > 0 || (check == 0 && bombspot->flags7 & MF7_FORCEZERORADIUSDMG)) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))

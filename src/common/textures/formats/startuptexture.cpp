@@ -77,7 +77,7 @@ class FStartupTexture : public FImageSource
 {
 public:
 	FStartupTexture (int lumpnum);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -85,7 +85,7 @@ class FNotchTexture : public FImageSource
 {
 public:
 	FNotchTexture (int lumpnum, int width, int height);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -93,14 +93,14 @@ class FStrifeStartupTexture : public FImageSource
 {
 public:
 	FStrifeStartupTexture (int lumpnum, int w, int h);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 };
 
 class FStrifeStartupBackground : public FImageSource
 {
 public:
 	FStrifeStartupBackground (int lumpnum);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -231,7 +231,7 @@ void PlanarToChunky(T* dest, const uint8_t* src, const T* remap, int width, int 
 //
 //==========================================================================
 
-TArray<uint8_t> FStartupTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FStartupTexture::CreatePalettedPixels(int conversion)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
@@ -239,7 +239,7 @@ TArray<uint8_t> FStartupTexture::CreatePalettedPixels(int conversion)
 
 
 	TArray<uint8_t> Work(Width*Height, true);
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	PlanarToChunky(Work.Data(), source + 48, startuppalette8, Width, Height);
 	ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), Work.Data(), Width, Height, Width, remap);
 	return Pixels;
@@ -279,14 +279,14 @@ FNotchTexture::FNotchTexture (int lumpnum, int width, int height)
 //
 //==========================================================================
 
-TArray<uint8_t> FNotchTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FNotchTexture::CreatePalettedPixels(int conversion)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 
 	TArray<uint8_t> Work(Width*Height, true);
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	for(int i=0; i * Width * Height / 2; i++)
 	{
 		Work[i * 2] = startuppalette8[source[i] >> 4];
@@ -336,11 +336,11 @@ FStrifeStartupTexture::FStrifeStartupTexture (int lumpnum, int w, int h)
 //
 //==========================================================================
 
-TArray<uint8_t> FStrifeStartupTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FStrifeStartupTexture::CreatePalettedPixels(int conversion)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 	ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), source, Width, Height, Width, remap);
 	return Pixels;
@@ -366,7 +366,7 @@ FStrifeStartupBackground::FStrifeStartupBackground (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FStrifeStartupBackground::CreatePalettedPixels(int conversion)
+PalettedPixels FStrifeStartupBackground::CreatePalettedPixels(int conversion)
 {
 	TArray<uint8_t> source(64000, true);
 	memset(source.Data(), 0xF0, 64000);
@@ -374,7 +374,7 @@ TArray<uint8_t> FStrifeStartupBackground::CreatePalettedPixels(int conversion)
 	lumpr.Seek(57 * 320, FileReader::SeekSet);
 	lumpr.Read(source.Data() + 41 * 320, 95 * 320);
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 	ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), source.Data(), Width, Height, Width, remap);
 	return Pixels;

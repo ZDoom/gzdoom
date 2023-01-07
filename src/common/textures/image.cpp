@@ -48,7 +48,7 @@ static PrecacheInfo precacheInfo;
 
 struct PrecacheDataPaletted
 {
-	TArray<uint8_t> Pixels;
+	PalettedPixels Pixels;
 	int RefCount;
 	int ImageID;
 };
@@ -71,9 +71,9 @@ TArray<PrecacheDataRgba> precacheDataRgba;
 //
 //===========================================================================
 
-TArray<uint8_t> FImageSource::CreatePalettedPixels(int conversion)
+PalettedPixels FImageSource::CreatePalettedPixels(int conversion)
 {
-	TArray<uint8_t> Pixels(Width * Height, true);
+	PalettedPixels Pixels(Width * Height);
 	memset(Pixels.Data(), 0, Width * Height);
 	return Pixels;
 }
@@ -99,8 +99,7 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
 		else if (cache->Pixels.Size() > 0)
 		{
 			//Printf("returning contents of %s, refcount = %d\n", name.GetChars(), cache->RefCount);
-			ret.PixelStore = std::move(cache->Pixels);
-			ret.Pixels.Set(ret.PixelStore.Data(), ret.PixelStore.Size());
+			ret = std::move(cache->Pixels);
 			precacheDataPaletted.Delete(index);
 		}
 		else
@@ -116,8 +115,7 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
 		{
 			// This is either the only copy needed or some access outside the caching block. In these cases create a new one and directly return it.
 			//Printf("returning fresh copy of %s\n", name.GetChars());
-			ret.PixelStore = CreatePalettedPixels(conversion);
-			ret.Pixels.Set(ret.PixelStore.Data(), ret.PixelStore.Size());
+			return CreatePalettedPixels(conversion);
 		}
 		else
 		{
@@ -171,6 +169,7 @@ int FImageSource::CopyPixels(FBitmap *bmp, int conversion)
 {
 	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
 	PalEntry *palette = GPalette.BaseColors;
+
 	auto ppix = CreatePalettedPixels(conversion);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
 	return 0;
@@ -178,7 +177,7 @@ int FImageSource::CopyPixels(FBitmap *bmp, int conversion)
 
 int FImageSource::CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap)
 {
-	auto ppix = CreatePalettedPixels(false);
+	auto ppix = CreatePalettedPixels(normal);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
 	return 0;
 }

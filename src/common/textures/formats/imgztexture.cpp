@@ -66,7 +66,7 @@ class FIMGZTexture : public FImageSource
 
 public:
 	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool isalpha);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -118,7 +118,7 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 //
 //==========================================================================
 
-TArray<uint8_t> FIMGZTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FIMGZTexture::CreatePalettedPixels(int conversion)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
@@ -128,7 +128,7 @@ TArray<uint8_t> FIMGZTexture::CreatePalettedPixels(int conversion)
 	int dest_adv = Height;
 	int dest_rew = Width * Height - 1;
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	dest_p = Pixels.Data();
 
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance, isalpha);

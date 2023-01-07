@@ -163,7 +163,7 @@ class FDDSTexture : public FImageSource
 public:
 	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
 
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 
 protected:
 	uint32_t Format;
@@ -371,11 +371,11 @@ void FDDSTexture::CalcBitShift (uint32_t mask, uint8_t *lshiftp, uint8_t *rshift
 //
 //==========================================================================
 
-TArray<uint8_t> FDDSTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FDDSTexture::CreatePalettedPixels(int conversion)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump);
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 
 	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 

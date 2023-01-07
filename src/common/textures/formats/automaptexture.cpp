@@ -50,7 +50,7 @@ class FAutomapTexture : public FImageSource
 {
 public:
 	FAutomapTexture(int lumpnum);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -89,13 +89,13 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FAutomapTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FAutomapTexture::CreatePalettedPixels(int conversion)
 {
 	int x, y;
 	FileData data = fileSystem.ReadFile (SourceLump);
 	const uint8_t *indata = (const uint8_t *)data.GetMem();
 
-	TArray<uint8_t> Pixels(Width * Height, true);
+	PalettedPixels Pixels(Width * Height);
 
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 	for (x = 0; x < Width; ++x)

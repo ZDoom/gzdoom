@@ -51,7 +51,7 @@ class FAnmTexture : public FImageSource
 public:
 	FAnmTexture (int lumpnum, int w, int h);
 	void ReadFrame(uint8_t *buffer, uint8_t *palette);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -127,9 +127,9 @@ void FAnmTexture::ReadFrame(uint8_t *pixels, uint8_t *palette)
 //
 //==========================================================================
 
-TArray<uint8_t> FAnmTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FAnmTexture::CreatePalettedPixels(int conversion)
 {
-	TArray<uint8_t> pixels(Width*Height, true);
+	PalettedPixels pixels(Width*Height);
 	uint8_t buffer[64000];
 	uint8_t palette[768];
 	uint8_t remap[256];

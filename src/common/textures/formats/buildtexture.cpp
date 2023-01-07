@@ -55,9 +55,9 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	TopOffset = top;
 }
 
-TArray<uint8_t> FBuildTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FBuildTexture::CreatePalettedPixels(int conversion)
 {
-	TArray<uint8_t> Pixels(Width * Height, true);
+	PalettedPixels Pixels(Width * Height);
 	FRemapTable *Remap = Translation;
 	for (int i = 0; i < Width*Height; i++)
 	{

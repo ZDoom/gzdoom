@@ -91,7 +91,7 @@ protected:
 	void ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
 	void ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr, int planes);
 
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 };
 
 
@@ -344,7 +344,7 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 //
 //==========================================================================
 
-TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FPCXTexture::CreatePalettedPixels(int conversion)
 {
 	uint8_t PaletteMap[256];
 	PCXHeader header;
@@ -355,7 +355,7 @@ TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 	lump.Read(&header, sizeof(header));
 
 	bitcount = header.bitsPerPixel * header.numColorPlanes;
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 
 	bool alphatex = conversion == luminance;
 	if (bitcount < 24)
@@ -402,7 +402,7 @@ TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 		}
 		else
 		{
-			TArray<uint8_t> newpix(Width*Height, true);
+			PalettedPixels newpix(Width*Height);
 			ImageHelpers::FlipNonSquareBlockRemap (newpix.Data(), Pixels.Data(), Width, Height, Width, PaletteMap);
 			return newpix;
 		}

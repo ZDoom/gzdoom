@@ -51,7 +51,7 @@ class FRawPageTexture : public FImageSource
 	int mPaletteLump = -1;
 public:
 	FRawPageTexture (int lumpnum);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -170,14 +170,14 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FRawPageTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	dest_p = Pixels.Data();
 
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);

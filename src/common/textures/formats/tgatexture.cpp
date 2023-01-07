@@ -83,7 +83,7 @@ public:
 
 protected:
 	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -177,7 +177,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 //
 //==========================================================================
 
-TArray<uint8_t> FTGATexture::CreatePalettedPixels(int conversion)
+PalettedPixels FTGATexture::CreatePalettedPixels(int conversion)
 {
 	uint8_t PaletteMap[256];
 	auto lump = fileSystem.OpenFileReader (SourceLump);
@@ -185,7 +185,7 @@ TArray<uint8_t> FTGATexture::CreatePalettedPixels(int conversion)
 	uint16_t w;
 	uint8_t r,g,b,a;
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	lump.Read(&hdr, sizeof(hdr));
 	lump.Seek(hdr.id_len, FileReader::SeekCur);
 

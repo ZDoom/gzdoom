@@ -98,9 +98,9 @@ public:
 		}
 	}
 
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override
+	PalettedPixels CreatePalettedPixels(int conversion) override
 	{
-		TArray<uint8_t> Pix(512, true);
+		PalettedPixels Pix(512);
 		if (conversion == luminance)
 		{
 			memcpy(Pix.Data(), Pixels, 512);

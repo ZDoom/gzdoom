@@ -94,7 +94,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 			{
 				gapAtStart = false;
 			}
-			else if (ofs >= 64000-1)	// Need one byte for an empty column
+			else if (ofs >= desiredsize-1)	// Need one byte for an empty column
 			{
 				return true;
 			}
@@ -102,7 +102,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 			{
 				// Ensure this column does not extend beyond the end of the patch
 				const uint8_t *foo2 = (const uint8_t *)foo;
-				while (ofs < 64000)
+				while (ofs < desiredsize)
 				{
 					if (foo2[ofs] == 255)
 					{
@@ -110,7 +110,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 					}
 					ofs += foo2[ofs+1] + 4;
 				}
-				if (ofs >= 64000)
+				if (ofs >= desiredsize)
 				{
 					return true;
 				}

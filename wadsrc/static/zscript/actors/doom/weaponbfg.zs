@@ -230,8 +230,7 @@ extend class Actor
 				if (spray != null)
 				{
 					if ((spray.bMThruSpecies && target.GetSpecies() == t.linetarget.GetSpecies()) || 
-						(!(flags & BFGF_HURTSOURCE) && target == t.linetarget) || // [XA] Don't hit oneself unless we say so.
-						(multiplayer && !deathmatch) && sv_noplayerclip && (target.player && t.linetarget.player))
+						(!(flags & BFGF_HURTSOURCE) && target == t.linetarget)) // [XA] Don't hit oneself unless we say so.
 					{
 						spray.Destroy(); // [MC] Remove it because technically, the spray isn't trying to "hit" them.
 						continue;

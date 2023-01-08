@@ -111,6 +111,31 @@ static FRandom pr_crunch("DoCrunch");
 TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
+//==========================================================================
+//
+// P_ShouldPassThroughPlayer
+// Allows players to walk through and shoot through each other (useful in
+// multiplayer)
+//
+//==========================================================================
+
+bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
+{
+	if (!(dmflags3 & DF3_NO_PLAYER_CLIP))
+		return false;
+
+	if (!self->player || !other->player)
+		return false;
+
+	// voodoo doll?
+	if (other->player->mo != other)
+		return false;
+
+	if (!self->IsFriend(other))
+		return false;
+
+	return true;
+}
 
 //==========================================================================
 //
@@ -492,7 +517,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if (tmf.thing->flags6 & MF6_THRUSPECIES && tmf.thing->GetSpecies() == th->GetSpecies())
 			continue;
 
-		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (tmf.thing->player && th->player))
+		if (P_ShouldPassThroughPlayer(tmf.thing, th))
 			continue;
 
 		// [RH] Z-Check
@@ -1374,7 +1399,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->GetSpecies() == thing->GetSpecies()))
 		return true;
 
-	if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && tm.thing->player))
+	if (P_ShouldPassThroughPlayer(tm.thing, thing))
 		return true;
 
 	tm.thing->BlockingMobj = thing;
@@ -1558,7 +1583,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			&& (tm.thing->target->GetSpecies() == thing->GetSpecies()))
 			return true;
 
-		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (tm.thing->target->player && thing->player))
+		if (P_ShouldPassThroughPlayer(tm.thing->target, thing) && (!(tm.thing->flags8 & MF8_HITOWNER) || tm.thing->target->player != thing->player))
 			return true;
 
 		// Check for rippers passing through corpses
@@ -2072,7 +2097,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
-		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && actor->player))
+		if (P_ShouldPassThroughPlayer(actor, thing))
 		{
 			continue;
 		}
@@ -4181,6 +4206,9 @@ struct aim_t
 			if (th == shootthing)
 				continue;					// can't shoot self
 
+			if (P_ShouldPassThroughPlayer(shootthing, th))
+				continue;
+
 			if (aimtarget != NULL && th != aimtarget)
 				continue;					// only care about target, and you're not it
 
@@ -4476,7 +4504,7 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST) ||
-		((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (res.Actor->player && data->Caller->player)))
+		P_ShouldPassThroughPlayer(data->Caller, res.Actor))
 	{
 		return TRACE_Skip;
 	}
@@ -5217,7 +5245,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST) ||
-		((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (res.Actor->player && data->Caller->player)))
+		P_ShouldPassThroughPlayer(data->Caller, res.Actor))
 	{
 		return TRACE_Skip;
 	}
@@ -6031,7 +6059,8 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
 			continue;
 
-		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && bombsource->player))
+		// allow rocket splash damage
+		if (P_ShouldPassThroughPlayer(bombsource, thing) && thing != bombsource)
 			continue;
 
 		if (!(flags & RADF_HURTSOURCE) && (thing == bombsource || thing == bombspot))
@@ -6447,7 +6476,7 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		if (!P_CanCollideWith(thing, intersect))
 			continue;
 
-		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && intersect->player))
+		if (P_ShouldPassThroughPlayer(thing, intersect))
 			continue;
 
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
@@ -6514,7 +6543,7 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 		if (!P_CanCollideWith(thing, intersect))
 			continue;
 
-		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && intersect->player))
+		if (P_ShouldPassThroughPlayer(thing, intersect))
 			continue;
 
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||

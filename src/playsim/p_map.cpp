@@ -492,6 +492,9 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if (tmf.thing->flags6 & MF6_THRUSPECIES && tmf.thing->GetSpecies() == th->GetSpecies())
 			continue;
 
+		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (tmf.thing->player && th->player))
+			continue;
+
 		// [RH] Z-Check
 		// But not if not MF2_PASSMOBJ or MF3_DONTOVERLAP are set!
 		// Otherwise those things would get stuck inside each other.
@@ -1371,6 +1374,9 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->GetSpecies() == thing->GetSpecies()))
 		return true;
 
+	if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && tm.thing->player))
+		return true;
+
 	tm.thing->BlockingMobj = thing;
 	topz = thing->Top();
 
@@ -1550,6 +1556,9 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		if ((tm.thing->flags6 & MF6_MTHRUSPECIES)
 			&& tm.thing->target // NULL pointer check
 			&& (tm.thing->target->GetSpecies() == thing->GetSpecies()))
+			return true;
+
+		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (tm.thing->target->player && thing->player))
 			return true;
 
 		// Check for rippers passing through corpses
@@ -2060,6 +2069,10 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 			continue;
 		}
 		if ((actor->flags6 & MF6_THRUSPECIES) && (thing->GetSpecies() == actor->GetSpecies()))
+		{
+			continue;
+		}
+		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && actor->player))
 		{
 			continue;
 		}
@@ -4456,12 +4469,14 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 	// 3. MTHRUSPECIES on puff and the shooter has same species as the hit actor
 	// 4. THRUSPECIES on puff and the puff has same species as the hit actor
 	// 5. THRUGHOST on puff and the GHOST flag on the hit actor
+	// 6. Skip through players in coop if sv_noplayerclip is enabled
 
 	if ((data->ThruActors) || 
 		(!(data->Spectral) && res.Actor->flags4 & MF4_SPECTRAL) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
-		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST))
+		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST) ||
+		((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (res.Actor->player && data->Caller->player)))
 	{
 		return TRACE_Skip;
 	}
@@ -5195,12 +5210,14 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	// 2. MTHRUSPECIES on puff and the shooter has same species as the hit actor
 	// 3. THRUSPECIES on puff and the puff has same species as the hit actor
 	// 4. THRUGHOST on puff and the GHOST flag on the hit actor
+	// 5. Skip through players in coop if sv_noplayerclip is enabled
 
 	if ((data->ThruActors) ||
 		(data->UseThruBits && (data->ThruBits & res.Actor->ThruBits)) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
-		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST))
+		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST) ||
+		((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (res.Actor->player && data->Caller->player)))
 	{
 		return TRACE_Skip;
 	}
@@ -6014,6 +6031,9 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
 			continue;
 
+		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && bombsource->player))
+			continue;
+
 		if (!(flags & RADF_HURTSOURCE) && (thing == bombsource || thing == bombspot))
 		{ // don't damage the source of the explosion
 			continue;
@@ -6427,6 +6447,9 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		if (!P_CanCollideWith(thing, intersect))
 			continue;
 
+		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && intersect->player))
+			continue;
+
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
 			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
 			(intersect->flags4 & MF4_ACTLIKEBRIDGE)
@@ -6489,6 +6512,9 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 		if ((thing->flags & MF_MISSILE) && (intersect->flags2 & MF2_REFLECTIVE) && (intersect->flags7 & MF7_THRUREFLECT))
 			continue;
 		if (!P_CanCollideWith(thing, intersect))
+			continue;
+
+		if ((multiplayer && !deathmatch) && (dmflags3 & DF3_NO_PLAYER_CLIP) && (thing->player && intersect->player))
 			continue;
 
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||

@@ -569,6 +569,23 @@ CVAR (Flag, sv_noextraammo,			dmflags2, DF2_NO_EXTRA_AMMO);
 
 //==========================================================================
 //
+// CVAR dmflags3
+//
+//==========================================================================
+
+CUSTOM_CVAR(Int, dmflags3, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
+{
+	if ((self & DF3_NO_PLAYER_CLIP) && (!multiplayer || deathmatch))
+	{
+		self = self & ~DF3_NO_PLAYER_CLIP;
+		Printf("No player clipping is only available in coop\n");
+	}
+}
+
+CVAR(Flag, sv_noplayerclip, dmflags3, DF3_NO_PLAYER_CLIP);
+
+//==========================================================================
+//
 // CVAR compatflags
 //
 //==========================================================================

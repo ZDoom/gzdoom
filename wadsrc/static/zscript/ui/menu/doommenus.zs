@@ -4,7 +4,7 @@ class GameplayMenu : OptionMenu
 	{
 		Super.Drawer();
 
-		String s = String.Format("dmflags = %d   dmflags2 = %d", dmflags, dmflags2);
+		String s = String.Format("dmflags = %d  dmflags2 = %d  dmflags3 = %d", dmflags, dmflags2, dmflags3);
 		screen.DrawText (OptionFont(), OptionMenuSettings.mFontColorValue,
 			(screen.GetWidth() - OptionWidth (s) * CleanXfac_1) / 2, 35 * CleanXfac_1, s,
 			DTA_CleanNoMove_1, true);

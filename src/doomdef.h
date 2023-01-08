@@ -176,6 +176,12 @@ enum : unsigned
 	DF2_NO_EXTRA_AMMO		= 1u << 31,	// Don't add extra ammo when picking up weapons (like in original Doom)
 };
 
+// [Nash] dmflags3 in 2023 let's gooooo
+enum : unsigned
+{
+	DF3_NO_PLAYER_CLIP		= 1 << 0,	// Players can walk through and shoot through each other
+};
+
 // [RH] Compatibility flags.
 enum : unsigned int
 {

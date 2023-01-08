@@ -136,7 +136,7 @@ public:
 	static const int DEFAULT_STAT = STAT_EARTHQUAKE;
 	void Construct(AActor *center, double intensityX, double intensityY, double intensityZ, int duration,
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
-		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier);
+		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier, int damage);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -152,6 +152,7 @@ public:
 	int m_Highpoint, m_MiniCount;
 	double m_RollIntensity, m_RollWave;
 	double m_DamageMultiplier, m_ThrustMultiplier;
+	int m_Damage;
 
 	double GetModIntensity(double intensity, bool fake = false) const;
 	double GetModWave(double ticFrac, double waveMultiplier) const;

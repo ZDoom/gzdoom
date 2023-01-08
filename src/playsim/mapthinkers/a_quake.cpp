@@ -52,7 +52,7 @@ IMPLEMENT_POINTERS_END
 void DEarthquake::Construct(AActor *center, double intensityX, double intensityY, double intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesound, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
-	double rollIntensity, double rollWave)
+	double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier)
 {
 	m_QuakeSFX = quakesound;
 	m_Spot = center;
@@ -69,6 +69,8 @@ void DEarthquake::Construct(AActor *center, double intensityX, double intensityY
 	m_MiniCount = highpoint;
 	m_RollIntensity = rollIntensity;
 	m_RollWave = rollWave;
+	m_DamageMultiplier = damageMultiplier;
+	m_ThrustMultiplier = thrustMultiplier;
 }
 
 //==========================================================================
@@ -94,13 +96,15 @@ void DEarthquake::Serialize(FSerializer &arc)
 		("minicount", m_MiniCount)
 		("rollintensity", m_RollIntensity)
 		("rollwave", m_RollWave);
+		("damagemultiplier", m_DamageMultiplier);
+		("thrustmultiplier", m_ThrustMultiplier);
 }
 
 //==========================================================================
 //
 // DEarthquake :: Tick
 //
-// Deals damage to any players near the earthquake and makes sure it's
+// Deals damage to any actors near the earthquake and makes sure it's
 // making noise.
 //
 //==========================================================================
@@ -186,7 +190,7 @@ void DEarthquake::DoQuakeDamage(DEarthquake *quake, AActor *victim, bool falloff
 	{
 		if (!(quake->m_Flags & QF_SHAKEONLY) && pr_quake() < 50)
 		{
-			damage = falloff ? pr_quake.HitDice(1) * GetFalloff(dist, m_DamageRadius) : pr_quake.HitDice(1);
+			damage = falloff ? pr_quake.HitDice(1) * GetFalloff(dist, m_DamageRadius) * m_DamageMultiplier : pr_quake.HitDice(1) * m_DamageMultiplier;
 			damage = damage < 1 ? 1 : damage; //Do at least a tiny bit of damage when in radius.
 			
 			P_DamageMobj(victim, NULL, NULL, damage, NAME_Quake);
@@ -195,8 +199,8 @@ void DEarthquake::DoQuakeDamage(DEarthquake *quake, AActor *victim, bool falloff
 		if (!(victim->flags7 & MF7_DONTTHRUST))
 		{
 			DAngle an = victim->Angles.Yaw + DAngle::fromDeg(pr_quake());
-			victim->Vel.X += m_Intensity.X * an.Cos() * 0.5 * thrustfalloff;
-			victim->Vel.Y += m_Intensity.Y * an.Sin() * 0.5 * thrustfalloff;
+			victim->Vel.X += m_Intensity.X * an.Cos() * m_ThrustMultiplier * thrustfalloff;
+			victim->Vel.Y += m_Intensity.Y * an.Sin() * m_ThrustMultiplier * thrustfalloff;
 		}
 	}
 	return;
@@ -420,7 +424,7 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double intensityX, double intensityY, double intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesfx, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
-	double rollIntensity, double rollWave)
+	double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier)
 {
 	AActor *center;
 	bool res = false;
@@ -434,7 +438,7 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double int
 		if (activator != NULL)
 		{
 			Level->CreateThinker<DEarthquake>(activator, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
-				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave);
+				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave, damageMultiplier, thrustMultiplier);
 			return true;
 		}
 	}
@@ -445,7 +449,7 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double int
 		{
 			res = true;
 			Level->CreateThinker<DEarthquake>(center, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
-				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave);
+				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave, damageMultiplier, thrustMultiplier);
 		}
 	}
 	
@@ -454,5 +458,5 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double int
 
 bool P_StartQuake(FLevelLocals *Level, AActor *activator, int tid, double intensity, int duration, int damrad, int tremrad, FSoundID quakesfx)
 {	//Maintains original behavior by passing 0 to intensityZ, flags, and everything else after QSFX.
-	return P_StartQuakeXYZ(Level, activator, tid, intensity, intensity, 0, duration, damrad, tremrad, quakesfx, 0, 0, 0, 0, 0, 0, 0, 0);
+	return P_StartQuakeXYZ(Level, activator, tid, intensity, intensity, 0, duration, damrad, tremrad, quakesfx, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }

@@ -6244,8 +6244,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				argCount > 13 ? args[13] : 0,
 				argCount > 14 ? ACSToDouble(args[14]) : 0,
 				argCount > 15 ? ACSToDouble(args[15]) : 0,
-				argCount > 16 ? ACSToDouble(args[16]) : 0,
-				argCount > 17 ? ACSToDouble(args[17]) : 0);
+				argCount > 16 ? ACSToDouble(args[16]) : 1.0,
+				argCount > 17 ? ACSToDouble(args[17]) : 0.5,
+				argCount > 18 ? args[18] : 0);
 		}
 
 		case ACSF_SetLineActivation:

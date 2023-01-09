@@ -266,6 +266,8 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 			continue; // 'filter' is a reserved name of the file system.
 		if (name.IndexOf("__macosx") == 0) 
 			continue; // skip Apple garbage. At this stage only the root folder matters.
+		if (name.IndexOf(".bat") >= 0 || name.IndexOf(".exe") >= 0)
+			continue; // also ignore executables for this.
 		if (!foundprefix)
 		{
 			// check for special names, if one of these gets found this must be treated as a normal zip.

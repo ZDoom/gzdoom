@@ -47,6 +47,7 @@
 #include "v_text.h"
 #include "vm.h"
 #include "i_interface.h"
+#include "r_videoscale.h"
 
 FGameTexture* CrosshairImage;
 static int CrosshairNum;
@@ -367,9 +368,11 @@ void DStatusBarCore::SetScale()
 	double screenaspect = w / double(h);
 	double aspectscale = 1.0;
 
+	double ViewportAspect = ViewportPixelAspect();
+
 	if ((horz == 320 && vert == 200) || (horz == 640 && vert == 400))
 	{
-		refaspect = 1.333;
+		refaspect = (4. / 3.);
 		if (!hud_aspectscale) aspectscale = 1 / 1.2;
 	}
 
@@ -384,9 +387,9 @@ void DStatusBarCore::SetScale()
 		refw = h * refaspect;
 	}
 	refw *= hud_scalefactor;
-	refh *= hud_scalefactor * aspectscale;
+	refh *= hud_scalefactor * aspectscale / ViewportAspect;
 
-	int sby = vert - int(RelTop * hud_scalefactor * aspectscale);
+	int sby = vert - int(RelTop * hud_scalefactor * aspectscale / ViewportAspect);
 	// Use full pixels for destination size.
 
 	ST_X = xs_CRoundToInt((w - refw) / 2);

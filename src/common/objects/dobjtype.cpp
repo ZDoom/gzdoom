@@ -252,6 +252,7 @@ void PClass::StaticShutdown ()
 	// Make a full garbage collection here so that all destroyed but uncollected higher level objects 
 	// that still exist are properly taken down before the low level data is deleted.
 	GC::FullGC();
+	GC::FullGC();
 
 
 	Namespaces.ReleaseSymbols();

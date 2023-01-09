@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <algorithm>
+#include "xs_Float.h"
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -103,12 +104,12 @@ inline double RAD2DEG(double rad)
 
 inline angle_t RAD2BAM(float rad)
 {
-	return angle_t(rad * float(0x80000000u / M_PI));
+	return angle_t(xs_RoundToUInt(rad * float(0x80000000u / M_PI)));
 }
 
 inline angle_t RAD2BAM(double rad)
 {
-	return angle_t(rad * (0x80000000u / M_PI));
+	return angle_t(xs_RoundToUInt(rad * (0x80000000u / M_PI)));
 }
 
 

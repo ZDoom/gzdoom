@@ -121,7 +121,7 @@ TArray<spechit_t> portalhit;
 
 bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
 {
-  return (dmgflags3 & DF3_NO_PLAYER_CLIP) &&
+  return (dmflags3 & DF3_NO_PLAYER_CLIP) &&
           other->player && other->player->mo == other &&
           self->IsFriend(other);
 }
@@ -526,7 +526,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if ((thing->IsKindOf(NAME_Inventory) || (thing->flags2 & MF2_TELESTOMP)) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
 			continue;
 
-		if (thing->player && P_ShouldPassThroughPlayer(tmf.thing, th))
+		if (tmf.thing->player && P_ShouldPassThroughPlayer(tmf.thing, th))
 			continue;
 
 		// monsters don't stomp things except on boss level
@@ -1389,7 +1389,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->GetSpecies() == thing->GetSpecies()))
 		return true;
 
-	if (thing->player && P_ShouldPassThroughPlayer(tm.thing, thing))
+	if (tm.thing->player && P_ShouldPassThroughPlayer(tm.thing, thing))
 		return true;
 
 	tm.thing->BlockingMobj = thing;
@@ -1579,7 +1579,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			return true;
 		}
 
-		if (thing->player && P_ShouldPassThroughPlayer(tm.thing->target, thing) && (!(tm.thing->flags8 & MF8_HITOWNER) || tm.thing->target->player != thing->player))
+		if (tm.thing->player && P_ShouldPassThroughPlayer(tm.thing->target, thing) && (!(tm.thing->flags8 & MF8_HITOWNER) || tm.thing->target->player != thing->player))
 			return true;
 
 		double clipheight;
@@ -2128,7 +2128,7 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{ // If they cannot collide, they cannot block each other.
 			continue;
 		}
-		if (thing->player && P_ShouldPassThroughPlayer(actor, thing))
+		if (actor->player && P_ShouldPassThroughPlayer(actor, thing))
 		{
 			continue;
 		}
@@ -4198,7 +4198,7 @@ struct aim_t
 			if (aimtarget != NULL && th != aimtarget)
 				continue;					// only care about target, and you're not it
 
-			if (thing->player && P_ShouldPassThroughPlayer(shootthing, th))
+			if (shootthing->player && P_ShouldPassThroughPlayer(shootthing, th))
 				continue;
 
 			// If we want to start a conversation anything that has one should be
@@ -4493,7 +4493,7 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST) ||
-		(thing->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
+		(data->Caller->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
 	{
 		return TRACE_Skip;
 	}
@@ -5234,7 +5234,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST) ||
-		(thing->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
+		(data->Caller->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
 	{
 		return TRACE_Skip;
 	}
@@ -6054,7 +6054,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			continue;
 		}
 
-		if (thing->player && P_ShouldPassThroughPlayer(bombsource, thing) && thing != bombsource)
+		if (bombsource->player && P_ShouldPassThroughPlayer(bombsource, thing) && thing != bombsource)
 			continue;
 
 		// MBF21

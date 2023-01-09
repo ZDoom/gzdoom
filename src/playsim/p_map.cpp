@@ -1579,8 +1579,11 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			return true;
 		}
 
-		if (tm.thing->player && P_ShouldPassThroughPlayer(tm.thing->target, thing) && (!(tm.thing->flags8 & MF8_HITOWNER) || tm.thing->target->player != thing->player))
+		if (tm.thing->target && tm.thing->target != thing &&
+			tm.thing->target->player && P_ShouldPassThroughPlayer(tm.thing->target, thing))
+		{
 			return true;
+		}
 
 		double clipheight;
 
@@ -4486,20 +4489,19 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 	// 3. MTHRUSPECIES on puff and the shooter has same species as the hit actor
 	// 4. THRUSPECIES on puff and the puff has same species as the hit actor
 	// 5. THRUGHOST on puff and the GHOST flag on the hit actor
-	// 6. Skip through players in coop if sv_noplayerclip is enabled
+	// 6. Matching ThruBits
+	// 7. A player caller with no player clip enabled
 
 	if ((data->ThruActors) || 
 		(!(data->Spectral) && res.Actor->flags4 & MF4_SPECTRAL) ||
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST) ||
+		(data->UseThruBits && (data->ThruBits & res.Actor->ThruBits)) ||
 		(data->Caller->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
 	{
 		return TRACE_Skip;
 	}
-
-	if (data->UseThruBits && (data->ThruBits & res.Actor->ThruBits))
-		return TRACE_Skip;
 
 	return TRACE_Stop;
 }
@@ -6054,9 +6056,6 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			continue;
 		}
 
-		if (bombsource->player && P_ShouldPassThroughPlayer(bombsource, thing) && thing != bombsource)
-			continue;
-
 		// MBF21
 		auto targetgroup = thing->GetClass()->ActorInfo()->splash_group;
 		auto sourcegroup = bombspot->GetClass()->ActorInfo()->splash_group;
@@ -6077,6 +6076,9 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		{
 			continue;
 		}
+
+		if (thing != bombsource && bombsource->player && P_ShouldPassThroughPlayer(bombsource, thing))
+			continue;
 
 		targets.Push(thing);
 	}

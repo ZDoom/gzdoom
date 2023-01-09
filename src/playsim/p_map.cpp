@@ -119,7 +119,7 @@ TArray<spechit_t> portalhit;
 //
 //==========================================================================
 
-bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
+static inline bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
 {
 	if (!(dmflags3 & DF3_NO_PLAYER_CLIP))
 		return false;

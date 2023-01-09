@@ -119,22 +119,11 @@ TArray<spechit_t> portalhit;
 //
 //==========================================================================
 
-static inline bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
+bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
 {
-	if (!(dmflags3 & DF3_NO_PLAYER_CLIP))
-		return false;
-
-	if (!self->player || !other->player)
-		return false;
-
-	// voodoo doll?
-	if (other->player->mo != other)
-		return false;
-
-	if (!self->IsFriend(other))
-		return false;
-
-	return true;
+  return (dmgflags3 & DF3_NO_PLAYER_CLIP) &&
+          other->player && other->player->mo == other &&
+          self->IsFriend(other);
 }
 
 //==========================================================================
@@ -517,9 +506,6 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if (tmf.thing->flags6 & MF6_THRUSPECIES && tmf.thing->GetSpecies() == th->GetSpecies())
 			continue;
 
-		if (P_ShouldPassThroughPlayer(tmf.thing, th))
-			continue;
-
 		// [RH] Z-Check
 		// But not if not MF2_PASSMOBJ or MF3_DONTOVERLAP are set!
 		// Otherwise those things would get stuck inside each other.
@@ -540,6 +526,9 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		if ((thing->IsKindOf(NAME_Inventory) || (thing->flags2 & MF2_TELESTOMP)) && !(thing->flags & MF_SOLID) && ((th->flags3 & MF3_ISMONSTER) || th->player != nullptr))
 			continue;
 
+		if (thing->player && P_ShouldPassThroughPlayer(tmf.thing, th))
+			continue;
+
 		// monsters don't stomp things except on boss level
 		// [RH] Some Heretic/Hexen monsters can telestomp
 		// ... and some items can never be telefragged while others will be telefragged by everything that teleports upon them.
@@ -550,6 +539,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 				P_DamageMobj(th, thing, thing, TELEFRAG_DAMAGE, NAME_Telefrag, DMG_THRUSTLESS);
 			continue;
 		}
+
 		return false;
 	}
 
@@ -1399,7 +1389,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if ((tm.thing->flags6 & MF6_THRUSPECIES) && (tm.thing->GetSpecies() == thing->GetSpecies()))
 		return true;
 
-	if (P_ShouldPassThroughPlayer(tm.thing, thing))
+	if (thing->player && P_ShouldPassThroughPlayer(tm.thing, thing))
 		return true;
 
 	tm.thing->BlockingMobj = thing;
@@ -1583,14 +1573,14 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			&& (tm.thing->target->GetSpecies() == thing->GetSpecies()))
 			return true;
 
-		if (P_ShouldPassThroughPlayer(tm.thing->target, thing) && (!(tm.thing->flags8 & MF8_HITOWNER) || tm.thing->target->player != thing->player))
-			return true;
-
 		// Check for rippers passing through corpses
 		if ((thing->flags & MF_CORPSE) && (tm.thing->flags2 & MF2_RIP) && !(thing->flags & MF_SHOOTABLE))
 		{
 			return true;
 		}
+
+		if (thing->player && P_ShouldPassThroughPlayer(tm.thing->target, thing) && (!(tm.thing->flags8 & MF8_HITOWNER) || tm.thing->target->player != thing->player))
+			return true;
 
 		double clipheight;
 
@@ -2097,10 +2087,6 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
-		if (P_ShouldPassThroughPlayer(actor, thing))
-		{
-			continue;
-		}
 		if (!(thing->flags & MF_SOLID))
 		{ // Can't hit thing
 			continue;
@@ -2142,7 +2128,10 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{ // If they cannot collide, they cannot block each other.
 			continue;
 		}
-
+		if (thing->player && P_ShouldPassThroughPlayer(actor, thing))
+		{
+			continue;
+		}
 
 		onmobj = thing;
 		if (quick) break;
@@ -4206,11 +4195,11 @@ struct aim_t
 			if (th == shootthing)
 				continue;					// can't shoot self
 
-			if (P_ShouldPassThroughPlayer(shootthing, th))
-				continue;
-
 			if (aimtarget != NULL && th != aimtarget)
 				continue;					// only care about target, and you're not it
+
+			if (thing->player && P_ShouldPassThroughPlayer(shootthing, th))
+				continue;
 
 			// If we want to start a conversation anything that has one should be
 			// found, regardless of other settings.
@@ -4504,7 +4493,7 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST) ||
-		P_ShouldPassThroughPlayer(data->Caller, res.Actor))
+		(thing->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
 	{
 		return TRACE_Skip;
 	}
@@ -5245,7 +5234,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
 		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
 		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST) ||
-		P_ShouldPassThroughPlayer(data->Caller, res.Actor))
+		(thing->player && P_ShouldPassThroughPlayer(data->Caller, res.Actor)))
 	{
 		return TRACE_Skip;
 	}
@@ -6060,13 +6049,13 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			continue;
 
 		// allow rocket splash damage
-		if (P_ShouldPassThroughPlayer(bombsource, thing) && thing != bombsource)
-			continue;
-
 		if (!(flags & RADF_HURTSOURCE) && (thing == bombsource || thing == bombspot))
 		{ // don't damage the source of the explosion
 			continue;
 		}
+
+		if (thing->player && P_ShouldPassThroughPlayer(bombsource, thing) && thing != bombsource)
+			continue;
 
 		// MBF21
 		auto targetgroup = thing->GetClass()->ActorInfo()->splash_group;
@@ -6476,7 +6465,7 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		if (!P_CanCollideWith(thing, intersect))
 			continue;
 
-		if (P_ShouldPassThroughPlayer(thing, intersect))
+		if (thing->player && P_ShouldPassThroughPlayer(thing, intersect))
 			continue;
 
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
@@ -6543,7 +6532,7 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 		if (!P_CanCollideWith(thing, intersect))
 			continue;
 
-		if (P_ShouldPassThroughPlayer(thing, intersect))
+		if (thing->player && P_ShouldPassThroughPlayer(thing, intersect))
 			continue;
 
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||

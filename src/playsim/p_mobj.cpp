@@ -6647,7 +6647,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 
 	if (dest == NULL)
 	{
-		Printf ("P_SpawnMissilyXYZ: Tried to shoot %s from %s with no dest\n",
+		Printf ("P_SpawnMissileXYZ: Tried to shoot %s from %s with no destination\n",
 			type->TypeName.GetChars(), source->GetClass()->TypeName.GetChars());
 		return NULL;
 	}
@@ -6688,7 +6688,8 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 
 	// invisible target: rotate velocity vector in 2D
 	// [RC] Now monsters can aim at invisible player as if they were fully visible.
-	if (dest->flags & MF_SHADOW && !(source->flags6 & MF6_SEEINVISIBLE))
+	// [inkoalawetrust] Unless the actor should get the aim penalty anyway.
+	if (dest->flags & MF_SHADOW && (!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)))
 	{
 		DAngle an = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256));
 		double c = an.Cos();
@@ -6821,7 +6822,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 
 	an = source->Angles.Yaw;
 
-	if (dest->flags & MF_SHADOW)
+	if (dest->flags & MF_SHADOW && (!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)))
 	{
 		an += DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.));
 	}

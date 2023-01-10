@@ -3023,7 +3023,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 
 	// This will never work well if the turn angle is limited.
-	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
+	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && (!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)))
     {
 		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
     }
@@ -3073,7 +3073,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	// Let the aim trail behind the player
 	self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 
-	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
+	if (self->target->flags & MF_SHADOW && (!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)))
 	{
 		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45./256);
 	}

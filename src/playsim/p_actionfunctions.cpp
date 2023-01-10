@@ -2092,6 +2092,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 		self->flags6 = defs->flags6;
 		self->flags7 = defs->flags7;
 		self->flags8 = defs->flags8;
+		self->flags9 = defs->flags9;
 		self->SetState (self->SpawnState);
 		self->renderflags &= ~RF_INVISIBLE;
 

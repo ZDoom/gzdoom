@@ -133,12 +133,15 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 			if (index >= FIRST_USER_SHADER)
 			{
 				const UserShaderDesc& usershader = usershaders[index - FIRST_USER_SHADER];
-				if (tx->Layers && usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
+				if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
 				{
-					for (auto& texture : tx->Layers->CustomShaderTextures)
+					if (tx->Layers)
 					{
-						if (texture == nullptr) continue;
-						mTextureLayers.Push({ texture.get(), 0 });	// scalability should be user-definable.
+						for (auto& texture : tx->Layers->CustomShaderTextures)
+						{
+							if (texture == nullptr) continue;
+							mTextureLayers.Push({ texture.get(), 0 });	// scalability should be user-definable.
+						}
 					}
 					mShaderIndex = index;
 				}

@@ -2944,6 +2944,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 	DAngle other_angle = self->AngleTo(other);
 	DAngle delta = -deltaangle(self->Angles.Yaw, other_angle);
+	bool shadowPenalty = ((!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)) && ((other->flags & MF_SHADOW) || (self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, other, self->PosAtZ(self->Center())))));
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
@@ -3018,12 +3019,17 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 			self->Angles.Pitch = other_pitch;
 		}
 		self->Angles.Pitch += pitch_offset;
+
+		//Randomly offset the pitch when looking at shadows.
+		if (self->flags9 & MF9_SHADOWAIMVERT && max_pitch == nullAngle && (self->Angles.Pitch == other_pitch) && shadowPenalty)
+		{
+			self->Angles.Pitch += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
+		}
 	}
 	
 
-	bool doshadow = !(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM);
 	// This will never work well if the turn angle is limited.
-	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && doshadow && (other->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, other, self->PosAtZ(self->Center()))))
+	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && shadowPenalty)
     {
 		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
     }
@@ -3077,6 +3083,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (((!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)) && (self->target->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, self->target, self->PosAtZ(shootZ)))))
 	{
 		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45./256);
+		if (self->flags9 & MF9_SHADOWAIMVERT)
+			self->Angles.Pitch += DAngle::fromDeg(pr_railface.Random2() * 45. / 256);
 	}
 
 	FRailParams p;

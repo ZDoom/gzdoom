@@ -269,8 +269,19 @@ inline bool P_CheckForShadowBlock(AActor* t1, AActor* t2, DVector3 pos)
 	FTraceResults result;
 	ShadowCheckData ShadowCheck;
 	ShadowCheck.HitShadow = false;
-	DVector3 dir = t1->Vec3To(t2);
-	double dist = dir.Length();
+	DVector3 dir;
+	double dist;
+	if (t2)
+	{
+		dir = t1->Vec3To(t2);
+		dist = dir.Length();
+	}
+	//No second actor, fall back to shooting at facing direction.
+	else
+	{
+		dir = DRotator(-(t1->Angles.Pitch), t1->Angles.Yaw, t1->Angles.Yaw);
+		dist = 65536.0; //Arbitrary large value.
+	}
 
 	Trace(pos, t1->Sector, dir, dist, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, t1, result, 0, CheckForShadowBlockers, &ShadowCheck);
 

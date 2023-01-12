@@ -104,6 +104,7 @@ static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff
 static FRandom pr_tracebleed("TraceBleed");
 static FRandom pr_checkthing("CheckThing");
 static FRandom pr_lineattack("LineAttack");
+static FRandom pr_shadowaimz("VerticalShadowAim");
 static FRandom pr_crunch("DoCrunch");
 
 // keep track of special lines as they are hit,
@@ -4452,6 +4453,23 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	{
 		*pLineTarget = *result;
 	}
+
+	AActor* mo;
+	if (target)
+		mo = target;
+	else
+		mo = result->linetarget;
+	bool shadowPenalty = ((!(t1->flags6 & MF6_SEEINVISIBLE) || (t1->flags9 & MF9_SHADOWAIM)) && ((mo && mo->flags & MF_SHADOW) || (t1->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(t1, mo, t1->PosAtZ(shootz)))));
+
+	// [inkoalawetrust] Randomly offset the vertical aim of monsters. Roughly uses the SSG vertical spread.
+	if (t1->player == NULL && t1->flags9 & MF9_SHADOWAIMVERT && shadowPenalty)
+	{
+		if (result->linetarget)
+			result->pitch = DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.));
+		else
+			t1->Angles.Pitch = DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.));
+	}
+
 	return result->linetarget ? result->pitch : t1->Angles.Pitch;
 }
 

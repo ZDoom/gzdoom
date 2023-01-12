@@ -1234,12 +1234,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 		checkPos.X = shootXY.X;
 		checkPos.Y = shootXY.Y;
 		checkPos.Z = shootZ;
-
+		
 		bool doshadow = !(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM);
 		if (doshadow && (self->target->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, self->target, checkPos)))
 		{
-			DAngle rnd = DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
-			self->Angles.Yaw += rnd;
+			self->Angles.Yaw += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
+			if (self->flags9 & MF9_SHADOWAIMVERT)
+			{
+				self->Angles.Pitch += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
+			}
 		}
 	}
 

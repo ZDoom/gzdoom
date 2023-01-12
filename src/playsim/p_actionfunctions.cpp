@@ -1226,7 +1226,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * veleffect, -self->target->Vel.Y * veleffect);
 		}
 
-		if (self->target->flags & MF_SHADOW)
+		// [inkoalawetrust] The exact formula P_RailAttack uses to determine where the railgun trace should spawn from.
+		DVector2 shootXY = (self->Vec2Angle(spawnofs_xy, (self->Angles.Yaw + spread_xy) - DAngle::fromDeg(90.)));
+		double shootZ = self->Center() - self->FloatSpeed + spawnofs_z - self->Floorclip;
+		if (flags & 16) shootZ += self->AttackOffset(); //16 is RGF_CENTERZ 
+		DVector3 checkPos;
+		checkPos.X = shootXY.X;
+		checkPos.Y = shootXY.Y;
+		checkPos.Z = shootZ;
+
+		bool doshadow = !(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM);
+		if (doshadow && (self->target->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, self->target, checkPos)))
 		{
 			DAngle rnd = DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
 			self->Angles.Yaw += rnd;

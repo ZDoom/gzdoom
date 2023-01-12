@@ -241,6 +241,42 @@ inline bool P_IsBlockedByLine(AActor* actor, line_t* line)
 	return false;
 }
 
+struct ShadowCheckData
+{
+	bool HitShadow;
+};
+
+static ETraceStatus CheckForShadowBlockers(FTraceResults& res, void* userdata)
+{
+	ShadowCheckData *output = (ShadowCheckData *) userdata;
+	if (res.HitType == TRACE_HitActor && res.Actor && (res.Actor->flags9 & MF9_SHADOWBLOCK))
+	{
+		output->HitShadow = true;
+		return TRACE_Stop;
+	}
+
+	if (res.HitType != TRACE_HitActor)
+	{
+		return TRACE_Stop;
+	}
+
+	return TRACE_Continue;
+}
+
+// [inkoalawetrust] Check if an MF9_SHADOWBLOCK actor is standing between t1 and t2.
+inline bool P_CheckForShadowBlock(AActor* t1, AActor* t2, DVector3 pos)
+{
+	FTraceResults result;
+	ShadowCheckData ShadowCheck;
+	ShadowCheck.HitShadow = false;
+	DVector3 dir = t1->Vec3To(t2);
+	double dist = dir.Length();
+
+	Trace(pos, t1->Sector, dir, dist, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, t1, result, 0, CheckForShadowBlockers, &ShadowCheck);
+
+	return ShadowCheck.HitShadow;
+}
+
 // For Dehacked modified actors we need to dynamically check the bounce factors because MBF didn't bother to implement this properly and with other flags changing this must adjust.
 inline double GetMBFBounceFactor(AActor* actor)
 {

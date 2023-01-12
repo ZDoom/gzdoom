@@ -6689,7 +6689,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	// invisible target: rotate velocity vector in 2D
 	// [RC] Now monsters can aim at invisible player as if they were fully visible.
 	// [inkoalawetrust] Unless the actor should get the aim penalty anyway.
-	if (dest->flags & MF_SHADOW && (!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)))
+	if ((!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)) && (dest->flags & MF_SHADOW || source->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(source, dest, pos)))
 	{
 		DAngle an = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256));
 		double c = an.Cos();
@@ -6822,7 +6822,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 
 	an = source->Angles.Yaw;
 
-	if (dest->flags & MF_SHADOW && (!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)))
+	if ((!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)) && (dest->flags & MF_SHADOW || source->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(source, dest, source->PosAtZ(z))))
 	{
 		an += DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.));
 	}

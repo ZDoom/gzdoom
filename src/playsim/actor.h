@@ -428,7 +428,7 @@ enum ActorFlag8
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
 	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
 	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
-	MF8_CROSSLINECHECK	= 0x10000000,	// [MC]Enables CanCrossLine virtual
+	MF8_CROSSLINECHECK	= 0x10000000,	// [MC] Enables CanCrossLine virtual
 	MF8_MASTERNOSEE		= 0x20000000,	// Don't show object in first person if their master is the current camera.
 	MF8_ADDLIGHTLEVEL	= 0x40000000,	// [MC] Actor light level is additive with sector.
 	MF8_ONLYSLAMSOLID	= 0x80000000,	// [B] Things with skullfly will ignore non-solid Actors.
@@ -438,6 +438,8 @@ enum ActorFlag8
 enum ActorFlag9
 {
 	MF9_SHADOWAIM		= 0x00000001,	// [inkoalawetrust] Monster still gets aim penalty from aiming at shadow actors even with MF6_SEEINVISIBLE on.
+	MF9_DOSHADOWBLOCK	= 0x00000002,	// [inkoalawetrust] Should the monster look for SHADOWBLOCK actors ?
+	MF9_SHADOWBLOCK		= 0x00000004,	// [inkoalawetrust] Actors in the line of fire with this flag trigger the MF_SHADOW aiming penalty.
 };
 
 // --- mobj.renderflags ---

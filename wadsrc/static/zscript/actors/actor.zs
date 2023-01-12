@@ -810,6 +810,10 @@ class Actor : Thinker native
 	native clearscope double GetGravity() const;
 	native void DoMissileDamage(Actor target);
 	native void PlayPushSound();
+	native bool BounceActor(Actor blocking, bool onTop);
+	native bool BounceWall(Line l = null);
+	native bool BouncePlane(SecPlane plane);
+	native void PlayBounceSound(bool onFloor);
 
 	clearscope double PitchTo(Actor target, double zOfs = 0, double targZOfs = 0, bool absolute = false) const
 	{

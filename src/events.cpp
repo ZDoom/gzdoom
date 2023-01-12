@@ -511,7 +511,7 @@ bool EventManager::Responder(const event_t* ev)
 				return true; // event was processed
 		}
 	}
-	if (ShouldCallStatic(false)) uiProcessorsFound = staticEventManager.Responder(ev);
+	if (ShouldCallStatic(false) && staticEventManager.Responder(ev)) return true;
 
 	return false;
 }

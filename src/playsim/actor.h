@@ -1202,6 +1202,8 @@ public:
 	double			Gravity;		// [GRB] Gravity factor
 	double			Friction;
 	double			pushfactor;
+	double			ShadowAimFactor;	// [inkoalawetrust] How much the actors' aim is affected when attacking shadow actors. 
+	double			ShadowPenaltyFactor;// [inkoalawetrust] How much the shadow actor affects its' shooters' aim.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	int 			FastChaseStrafeCount;
 	int				lastpush;

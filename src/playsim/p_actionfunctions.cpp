@@ -1184,6 +1184,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 	DVector3 savedpos = self->Pos();
 	DAngle saved_angle = self->Angles.Yaw;
 	DAngle saved_pitch = self->Angles.Pitch;
+	AActor* penalizer = nullptr;
 
 	if (aim && self->target == NULL)
 	{
@@ -1236,12 +1237,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 		checkPos.Z = shootZ;
 		
 		bool doshadow = !(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM);
-		if (doshadow && (self->target->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, self->target, checkPos)))
+		if (doshadow && (self->target->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && (penalizer = P_CheckForShadowBlock(self, self->target, checkPos))))
 		{
-			self->Angles.Yaw += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
+			if (penalizer == nullptr)
+				penalizer = self->target;
+
+			self->Angles.Yaw += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.)) * self->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
 			if (self->flags9 & MF9_SHADOWAIMVERT)
 			{
-				self->Angles.Pitch += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
+				self->Angles.Pitch += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.)) * self->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
 			}
 		}
 	}

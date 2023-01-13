@@ -2931,6 +2931,8 @@ enum FAF_Flags
 };
 void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAngle ang_offset, DAngle pitch_offset, int flags, double z_add)
 {
+	AActor* penalizer = nullptr;
+
 	if (!other)
 		return;
 
@@ -2944,7 +2946,11 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 
 	DAngle other_angle = self->AngleTo(other);
 	DAngle delta = -deltaangle(self->Angles.Yaw, other_angle);
-	bool shadowPenalty = ((!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)) && ((other->flags & MF_SHADOW) || (self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, other, self->PosAtZ(self->Center())))));
+
+	//Precalculate the shadow actor check.
+	bool shadowPenalty = ((!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)) && ((other->flags & MF_SHADOW) || (self->flags9 & MF9_DOSHADOWBLOCK && (penalizer = P_CheckForShadowBlock(self, other, self->PosAtZ(self->Center()))))));
+	if (penalizer == nullptr)
+		penalizer = other;
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
@@ -3023,7 +3029,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 		//Randomly offset the pitch when looking at shadows.
 		if (self->flags9 & MF9_SHADOWAIMVERT && max_pitch == nullAngle && (self->Angles.Pitch == other_pitch) && shadowPenalty)
 		{
-			self->Angles.Pitch += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
+			self->Angles.Pitch += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.)) * self->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
 		}
 	}
 	
@@ -3031,7 +3037,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 	// This will never work well if the turn angle is limited.
 	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && shadowPenalty)
     {
-		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
+		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.)) * self->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
     }
 }
 
@@ -3079,12 +3085,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	// Let the aim trail behind the player
 	self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 
+	AActor* penalizer = nullptr;
 	double shootZ = self->Center() - self->FloatSpeed - self->Floorclip; // The formula P_RailAttack uses, minus offset_z since this function doesn't use it.
-	if (((!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)) && (self->target->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, self->target, self->PosAtZ(shootZ)))))
+	if (((!(self->flags6 & MF6_SEEINVISIBLE) || (self->flags9 & MF9_SHADOWAIM)) && (self->target->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && (penalizer = P_CheckForShadowBlock(self, self->target, self->PosAtZ(shootZ))))))
 	{
-		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45./256);
+		if (penalizer == nullptr)
+			penalizer = self->target;
+
+		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45./256) * self->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
 		if (self->flags9 & MF9_SHADOWAIMVERT)
-			self->Angles.Pitch += DAngle::fromDeg(pr_railface.Random2() * 45. / 256);
+			self->Angles.Pitch += DAngle::fromDeg(pr_railface.Random2() * 45. / 256) * self->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
 	}
 
 	FRailParams p;

@@ -243,7 +243,7 @@ inline bool P_IsBlockedByLine(AActor* actor, line_t* line)
 
 struct ShadowCheckData
 {
-	bool HitShadow;
+	AActor* HitShadow;
 };
 
 static ETraceStatus CheckForShadowBlockers(FTraceResults& res, void* userdata)
@@ -251,7 +251,7 @@ static ETraceStatus CheckForShadowBlockers(FTraceResults& res, void* userdata)
 	ShadowCheckData *output = (ShadowCheckData *) userdata;
 	if (res.HitType == TRACE_HitActor && res.Actor && (res.Actor->flags9 & MF9_SHADOWBLOCK))
 	{
-		output->HitShadow = true;
+		output->HitShadow = res.Actor;
 		return TRACE_Stop;
 	}
 
@@ -263,12 +263,12 @@ static ETraceStatus CheckForShadowBlockers(FTraceResults& res, void* userdata)
 	return TRACE_Continue;
 }
 
-// [inkoalawetrust] Check if an MF9_SHADOWBLOCK actor is standing between t1 and t2.
-inline bool P_CheckForShadowBlock(AActor* t1, AActor* t2, DVector3 pos)
+// [inkoalawetrust] Check if an MF9_SHADOWBLOCK actor is standing between t1 and t2 and return it.
+inline AActor* P_CheckForShadowBlock(AActor* t1, AActor* t2, DVector3 pos)
 {
 	FTraceResults result;
 	ShadowCheckData ShadowCheck;
-	ShadowCheck.HitShadow = false;
+	ShadowCheck.HitShadow = nullptr;
 	DVector3 dir;
 	double dist;
 	if (t2)

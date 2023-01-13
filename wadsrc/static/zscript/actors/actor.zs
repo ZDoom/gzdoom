@@ -248,6 +248,7 @@ class Actor : Thinker native
 	native double ViewAngle, ViewPitch, ViewRoll;
 	native double RadiusDamageFactor;		// Radius damage factor
 	native double SelfDamageFactor;
+	native double ShadowAimFactor, ShadowPenaltyFactor;
 	native double StealthAlpha;
 	native int WoundHealth;		// Health needed to enter wound state
 	native readonly color BloodColor;
@@ -361,6 +362,8 @@ class Actor : Thinker native
 	property FriendlySeeBlocks: FriendlySeeBlocks;
 	property ThruBits: ThruBits;
 	property LightLevel: LightLevel;
+	property ShadowAimFactor: ShadowAimFactor;
+	property ShadowPenaltyFactor: ShadowPenaltyFactor;
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
@@ -438,6 +441,8 @@ class Actor : Thinker native
 		FastSpeed -1;
 		RadiusDamageFactor 1;
 		SelfDamageFactor 1;
+		ShadowAimFactor 1;
+		ShadowPenaltyFactor 1;
 		StealthAlpha 0;
 		WoundHealth 6;
 		GibHealth int.min;

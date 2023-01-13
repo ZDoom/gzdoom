@@ -4454,20 +4454,27 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 		*pLineTarget = *result;
 	}
 
-	AActor* mo;
+	AActor* targ = nullptr;
+	AActor* shadow = nullptr;
+	double penalty = 0.0; //Different from how ShadowPenaltyFactor is handled in other functions because here both shadow and target can simply be null.
 	if (target)
-		mo = target;
+		targ = target;
 	else
-		mo = result->linetarget;
-	bool shadowPenalty = ((!(t1->flags6 & MF6_SEEINVISIBLE) || (t1->flags9 & MF9_SHADOWAIM)) && ((mo && mo->flags & MF_SHADOW) || (t1->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(t1, mo, t1->PosAtZ(shootz)))));
+		targ = result->linetarget;
+	bool doShadow = (t1->flags9 & MF9_SHADOWAIMVERT && (!(t1->flags6 & MF6_SEEINVISIBLE) || (t1->flags9 & MF9_SHADOWAIM)));
 
 	// [inkoalawetrust] Randomly offset the vertical aim of monsters. Roughly uses the SSG vertical spread.
-	if (t1->player == NULL && t1->flags9 & MF9_SHADOWAIMVERT && shadowPenalty)
+	if (t1->player == nullptr && doShadow && ((targ && targ->flags & MF_SHADOW) || (t1->flags9 & MF9_DOSHADOWBLOCK && (shadow = P_CheckForShadowBlock(t1, targ, t1->PosAtZ(shootz))))))
 	{
+		if (shadow)
+			penalty = shadow->ShadowPenaltyFactor;
+		else if (targ)
+			penalty = targ->ShadowPenaltyFactor;
+
 		if (result->linetarget)
-			result->pitch = DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.));
+			result->pitch = DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.)) * t1->ShadowAimFactor * penalty;
 		else
-			t1->Angles.Pitch = DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.));
+			t1->Angles.Pitch = DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.)) * t1->ShadowAimFactor * penalty;
 	}
 
 	return result->linetarget ? result->pitch : t1->Angles.Pitch;

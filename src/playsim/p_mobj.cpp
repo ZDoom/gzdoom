@@ -372,6 +372,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("userlights", UserLights)
 		A("WorldOffset", WorldOffset)
 		("modelData", modelData);
+		A("shadowaimfactor", ShadowAimFactor);
+		A("shadowpenaltyfactor", ShadowPenaltyFactor);
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);
@@ -6686,12 +6688,17 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	}
 	th->Vel = velocity.Resized(speed);
 
-	// invisible target: rotate velocity vector in 2D
+	// invisible target: rotate velocity vector in 2D or 3D
 	// [RC] Now monsters can aim at invisible player as if they were fully visible.
 	// [inkoalawetrust] Unless the actor should get the aim penalty anyway.
-	if ((!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)) && (dest->flags & MF_SHADOW || source->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(source, dest, pos)))
+
+	AActor* penalizer = nullptr;
+	if ((!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)) && (dest->flags & MF_SHADOW || source->flags9 & MF9_DOSHADOWBLOCK && (penalizer = P_CheckForShadowBlock(source, dest, pos))))
 	{
-		DAngle an = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256));
+		if (penalizer == nullptr)
+			penalizer = dest;
+
+		DAngle an = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256)) * source->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
 		double c = an.Cos();
 		double s = an.Sin();
 		
@@ -6703,7 +6710,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 
 		if (source->flags9 & MF9_SHADOWAIMVERT)
 		{
-			DAngle pitch = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256));
+			DAngle pitch = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256)) * source->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
 			double newz = -pitch.Sin() * th->Speed;
 			th->Vel.Z = newz;
 		}
@@ -6827,22 +6834,27 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 	double dist;
 	double speed;
 	double vz;
-	bool shadowPenalty = (!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM)) && (dest->flags & MF_SHADOW || source->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(source, dest, source->PosAtZ(z)));
+	bool doShadow = (!(source->flags6 & MF6_SEEINVISIBLE) || (source->flags9 & MF9_SHADOWAIM));
 
 	an = source->Angles.Yaw;
 
-	if (shadowPenalty)
-	{
-		an += DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.));
-	}
 	dist = source->Distance2D (dest);
 	speed = GetDefaultSpeed (type);
 	dist /= speed;
 	vz = dist != 0 ? (dest->Z() - source->Z())/dist : speed;
-	if (shadowPenalty && source->flags9 & MF9_SHADOWAIMVERT)
+	AActor* penalizer = nullptr;
+	AActor* mo;
+	if (doShadow && (dest->flags & MF_SHADOW || source->flags9 & MF9_DOSHADOWBLOCK && (penalizer = P_CheckForShadowBlock(source, dest, source->PosAtZ(z)))))
 	{
-		pitch = DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.));
-		vz += -pitch.Sin() * speed;
+		if (penalizer == nullptr)
+			mo = dest;
+
+		an += DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.)) * source->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
+		if (source->flags9 & MF9_SHADOWAIMVERT)
+		{
+			pitch = DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.)) * source->ShadowAimFactor * penalizer->ShadowPenaltyFactor;
+			vz += -pitch.Sin() * speed;
+		}
 	}
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);
 }

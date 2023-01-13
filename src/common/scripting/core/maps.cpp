@@ -438,10 +438,12 @@ template<typename I> void MapIteratorSetValue(I * self, expand_types_vm<typename
         PARAM_SELF_STRUCT_PROLOGUE( FMapIterator_I32_Str ); \
         ACTION_RETURN_INT( MapIteratorGetKey(self) ); \
     } \
-    DEFINE_ACTION_FUNCTION_NATIVE( FMapIterator_I32_Str , GetValue , MapIteratorGetValue< FMapIterator_I32_Str > ) \
+    DEFINE_ACTION_FUNCTION_NATIVE( FMapIterator_I32_Str , GetValue , MapIteratorGetValueString< FMapIterator_I32_Str > ) \
     { \
         PARAM_SELF_STRUCT_PROLOGUE( FMapIterator_I32_Str ); \
-        ACTION_RETURN_STRING( MapIteratorGetValue(self) ); \
+        FString out; \
+        MapIteratorGetValueString(self , out); \
+        ACTION_RETURN_STRING( out ); \
     }
 
 #define DEF_MAP_IT_S_S() \

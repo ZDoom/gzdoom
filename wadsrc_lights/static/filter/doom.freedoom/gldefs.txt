@@ -337,7 +337,7 @@ object ExplosiveBarrel
 // Floor lamp
 pointlight LAMP
 {
-    color 0.6 1.0 0.6
+    color 1.0 1.0 0.6
     size 84
     offset 0 44 0
 	attenuate 1
@@ -367,9 +367,9 @@ object TechLamp2
 // Tall tech lamp
 pulselight BIGLAMP
 {
-    color 1.0 1.0 0.7
-    size 96
-    secondarySize 99
+    color 1.0 0.4 0.4
+    size 100
+    secondarySize 80
     interval 0.4
     offset 0 72 0
 	attenuate 1
@@ -479,7 +479,7 @@ object ShortBlueTorch
 // Burning barrel
 flickerlight2 FIREBARREL
 {
-    color 0.6 0.6 0.9
+    color 1.0 0.9 0.4
     size 72
     secondarySize 81
     interval 0.1
@@ -545,7 +545,7 @@ object SoulSphere
 // Soul Sphere
 pulselight MEGASPHERE
 {
-    color 0.4 1.0 0.4
+    color 1.0 0.8 0.4
     size 60
     secondarySize 63
     interval 2.0
@@ -561,7 +561,7 @@ object MegaSphere
 // Invulnerability Sphere
 pulselight INVULN
 {
-    color 1.0 0.6 1.0
+    color 0.6 1.0 0.6
     size 60
     secondarySize 63
     interval 2.0
@@ -577,40 +577,8 @@ object InvulnerabilitySphere
 // Blur Sphere
 pointlight BLURSPHERE1
 {
-    color 1.0 0.0 0.0
+    color 0.5 0.5 0.5
     size 60
-    offset 0 16 0
-	attenuate 1
-}
-
-pointlight BLURSPHERE2
-{
-    color 0.0 0.0 1.0
-    size 48
-    offset 0 16 0
-	attenuate 1
-}
-
-pointlight BLURSPHERE3
-{
-    color 0.0 0.0 1.0
-    size 36
-    offset 0 16 0
-	attenuate 1
-}
-
-pointlight BLURSPHERE4
-{
-    color 0.0 0.0 1.0
-    size 24
-    offset 0 16 0
-	attenuate 1
-}
-
-pointlight BLURSPHERE5
-{
-    color 0.0 0.0 1.0
-    size 12
     offset 0 16 0
 	attenuate 1
 }
@@ -618,21 +586,15 @@ pointlight BLURSPHERE5
 object BlurSphere
 {
     frame PINS { light BLURSPHERE1 }
-
-    frame PINSA { light BLURSPHERE2 }
-    frame PINSB { light BLURSPHERE3 }
-    frame PINSC { light BLURSPHERE4 }
-    frame PINSD { light BLURSPHERE5 }
 }
 
-// Armour Helmet
+// Armour Shield
 pulselight ARMORBONUS
 {
     color 0.3 0.1 0.1
     size 16
     secondarySize 20
     interval 1.0
-	dontlightself 1
 	attenuate 1
     offset 0 10 0
 }
@@ -643,14 +605,23 @@ object ArmorBonus
 }
 
 // Blue Keys
+pulselight BLUEKEY
+{
+    color 0.2 0.2 0.8
+    size 15
+    secondarySize 27
+    interval 2.0
+	attenuate 1
+    offset 0 10 0
+}
 object BlueCard
 {
-    frame BKEY { light HEALTHPOTION }
+    frame BKEY { light BLUEKEY }
 }
 
 object BlueSkull
 {
-    frame BSKU { light HEALTHPOTION }
+    frame BSKU { light BLUEKEY }
 }
 
 // Yellow Keys
@@ -695,6 +666,8 @@ object RedSkull
     frame RSKU { light REDKEY }
 }
 
+
+// Both armor pickups have a big red blinking light in the middle
 pointlight GREENARMOR2
 {
     color 0.4 0.0 0.0
@@ -706,6 +679,11 @@ pointlight GREENARMOR2
 object GreenArmor
 {
     frame ARM1B { light GREENARMOR2 }
+}
+
+object BlueArmor
+{
+    frame ARM2B { light GREENARMOR2 }
 }
 
 
@@ -749,7 +727,7 @@ object DoomPlayer
 // Doom Imp Fireball
 pointlight IMPBALL
 {
-    color 1.0 0.7 0.4
+    color 0.8 0.7 0.4
     size 96
 	attenuate 1
 }
@@ -757,7 +735,7 @@ pointlight IMPBALL
 // Doom imp fireball explosion
 flickerlight IMPBALL_X1
 {
-    color 0.7 0.7 0.25
+    color 0.9 0.7 0.25
     size 120
     secondarySize 132
     chance 0.25
@@ -766,7 +744,7 @@ flickerlight IMPBALL_X1
 
 flickerlight IMPBALL_X2
 {
-    color 0.4 0.4 0.1
+    color 0.5 0.4 0.1
     size 144
     secondarySize 156
     chance 0.25
@@ -775,7 +753,7 @@ flickerlight IMPBALL_X2
 
 flickerlight IMPBALL_X3
 {
-    color 0.2 0.2 0.0
+    color 0.3 0.2 0.0
     size 168
     secondarySize 180
     chance 0.25
@@ -901,12 +879,20 @@ object BaronBall
 }
 
 // Lost Soul
-flickerlight LOSTSOUL
+pulselight LOSTSOUL
 {
-    color 1.0 0.6 0.3
+    color 0.4 0.4 0.2
+    size 64
+    secondarysize 44
+    interval 0.9
+	attenuate 1
+}
+flickerlight HATCHLING_ATK
+{
+    color 0.8 0.8 0.5
     size 84
     secondarysize 64
-    chance 0.1
+    chance 0.3
 	attenuate 1
 }
 
@@ -950,8 +936,8 @@ object LostSoul
 {
     frame SKULA { light LOSTSOUL    }
     frame SKULB { light LOSTSOUL    }
-    frame SKULC { light LOSTSOUL    }
-    frame SKULD { light LOSTSOUL    }
+    frame SKULC { light HATCHLING_ATK    }
+    frame SKULD { light HATCHLING_ATK    }
     frame SKULE { light LOSTSOUL    }
     frame SKULF { light LOSTSOUL    }
     frame SKULG { light LOSTSOUL    }

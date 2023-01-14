@@ -1536,6 +1536,10 @@ DEFINE_MAP_OPTION(lightblendmode, false)
 			{
 				info->tonemap = ETonemapMode::Reinhard;
 			}
+			else
+			{
+				parse.sc.ScriptMessage("Invalid tonemap %s", parse.sc.String);
+			}
 		}
 	}
 	else

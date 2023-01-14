@@ -103,7 +103,7 @@ void VkDescriptorSetManager::UpdateFixedSet()
 	WriteDescriptors update;
 	update.AddCombinedImageSampler(FixedSet.get(), 0, fb->GetTextureManager()->Shadowmap.View.get(), fb->GetSamplerManager()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.AddCombinedImageSampler(FixedSet.get(), 1, fb->GetTextureManager()->Lightmap.View.get(), fb->GetSamplerManager()->LightmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	if (fb->RaytracingEnabled())
+	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		update.AddAccelerationStructure(FixedSet.get(), 2, fb->GetRaytrace()->GetAccelStruct());
 	update.Execute(fb->device.get());
 }
@@ -263,7 +263,7 @@ void VkDescriptorSetManager::CreateFixedSetLayout()
 	DescriptorSetLayoutBuilder builder;
 	builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	if (fb->RaytracingEnabled())
+	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		builder.AddBinding(2, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.DebugName("VkDescriptorSetManager.FixedSetLayout");
 	FixedSetLayout = builder.Create(fb->device.get());
@@ -283,7 +283,7 @@ void VkDescriptorSetManager::CreateFixedSetPool()
 {
 	DescriptorPoolBuilder poolbuilder;
 	poolbuilder.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * maxSets);
-	if (fb->RaytracingEnabled())
+	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		poolbuilder.AddPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1 * maxSets);
 	poolbuilder.MaxSets(maxSets);
 	poolbuilder.DebugName("VkDescriptorSetManager.FixedDescriptorPool");

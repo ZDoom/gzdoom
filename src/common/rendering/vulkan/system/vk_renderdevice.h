@@ -91,8 +91,6 @@ public:
 
 	void WaitForCommands(bool finish) override;
 
-	bool RaytracingEnabled();
-
 private:
 	void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc) override;
 	void PrintStartupLog();

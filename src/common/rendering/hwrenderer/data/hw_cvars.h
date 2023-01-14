@@ -15,6 +15,7 @@ EXTERN_CVAR(Int, gl_weaponlight)
 EXTERN_CVAR (Bool, gl_light_sprites);
 EXTERN_CVAR (Bool, gl_light_particles);
 EXTERN_CVAR (Bool, gl_light_shadowmap);
+EXTERN_CVAR (Bool, gl_light_raytrace);
 EXTERN_CVAR (Int, gl_shadowmap_quality);
 
 EXTERN_CVAR(Int, gl_fogmode)

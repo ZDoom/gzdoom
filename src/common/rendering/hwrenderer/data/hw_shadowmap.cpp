@@ -60,6 +60,7 @@ int IShadowMap::LightsProcessed;
 int IShadowMap::LightsShadowmapped;
 
 CVAR(Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, gl_light_raytrace, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 ADD_STAT(shadowmap)
 {

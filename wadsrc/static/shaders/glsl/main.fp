@@ -387,19 +387,15 @@ vec2 softshadow[9 * 3] = vec2[](
 	vec2(-0.25, 0.75)
 );
 
-float shadowAttenuation(vec4 lightpos, float lightcolorA)
+float traceShadow(vec4 lightpos, int quality)
 {
-	float shadowIndex = abs(lightcolorA) - 1.0;
-	if (shadowIndex >= 1024.0)
-		return 1.0; // Don't cast rays for this light
-
 	vec3 origin = pixelpos.xzy;
 	vec3 target = lightpos.xzy + 0.01; // nudge light position slightly as Doom maps tend to have their lights perfectly aligned with planes
 
 	vec3 direction = normalize(target - origin);
 	float dist = distance(origin, target);
 
-	if (uShadowmapFilter <= 0)
+	if (quality == 0)
 	{
 		return traceHit(origin, direction, dist) ? 0.0 : 1.0;
 	}
@@ -410,7 +406,7 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 		vec3 ydir = cross(direction, xdir);
 
 		float sum = 0.0;
-		int step_count = uShadowmapFilter * 9;
+		int step_count = quality * 9;
 		for (int i = 0; i <= step_count; i++)
 		{
 			vec3 pos = target + xdir * softshadow[i].x + ydir * softshadow[i].y;
@@ -421,6 +417,14 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 }
 
 #else
+
+float traceShadow(vec4 lightpos, int quality)
+{
+	return 1.0;
+}
+
+#endif
+
 #ifdef SUPPORTS_SHADOWMAPS
 
 float shadowDirToU(vec2 dir)
@@ -530,9 +534,6 @@ float sampleShadowmapPCF(vec3 planePoint, float v)
 
 float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 {
-	if (shadowIndex >= 1024.0)
-		return 1.0; // No shadowmap available for this light
-
 	vec3 planePoint = pixelpos.xyz - lightpos.xyz;
 	planePoint += 0.01; // nudge light position slightly as Doom maps tend to have their lights perfectly aligned with planes
 
@@ -541,7 +542,7 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 
 	float v = (shadowIndex + 0.5) / 1024.0;
 
-	if (uShadowmapFilter <= 0)
+	if (uShadowmapFilter == 0)
 	{
 		return sampleShadowmap(planePoint, v);
 	}
@@ -554,6 +555,12 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
 	float shadowIndex = abs(lightcolorA) - 1.0;
+	if (shadowIndex >= 1024.0)
+		return 1.0; // No shadowmap available for this light
+
+	if (uShadowmapFilter < 0)
+		return traceShadow(lightpos, 1 - uShadowmapFilter);
+
 	return shadowmapAttenuation(lightpos, shadowIndex);
 }
 
@@ -564,7 +571,6 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 	return 1.0;
 }
 
-#endif
 #endif
 
 float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle, float lightCosOuterAngle)

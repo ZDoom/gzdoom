@@ -422,7 +422,7 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 				{
 					for (int x = 0; x < numtex_x; x++)
 					{
-						auto image = new FSheetTexture(sheetBitmaps.Size() - 1, x * width, y * width, width, height);
+						auto image = new FSheetTexture(sheetBitmaps.Size() - 1, x * width, y * height, width, height);
 						FImageTexture *imgtex = new FImageTexture(image);
 						auto gtex = MakeGameTexture(imgtex, nullptr, ETextureType::FontChar);
 						gtex->SetWorldPanning(true);

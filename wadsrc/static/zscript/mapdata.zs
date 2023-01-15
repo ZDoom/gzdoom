@@ -28,6 +28,47 @@ struct SectorPortal native play
 	native Actor mSkybox;	
 };
 
+struct LinePortal native play
+{
+	enum EType
+	{
+		PORTT_VISUAL,
+		PORTT_TELEPORT,
+		PORTT_INTERACTIVE,
+		PORTT_LINKED,
+		PORTT_LINKEDEE	// Eternity compatible definition which uses only one line ID and a different anchor type to link to.
+	};
+
+	enum EFlags
+	{
+		PORTF_VISIBLE = 1,
+		PORTF_PASSABLE = 2,
+		PORTF_SOUNDTRAVERSE = 4,
+		PORTF_INTERACTIVE = 8,
+		PORTF_POLYOBJ = 16,
+
+		PORTF_TYPETELEPORT = PORTF_VISIBLE | PORTF_PASSABLE | PORTF_SOUNDTRAVERSE,
+		PORTF_TYPEINTERACTIVE = PORTF_VISIBLE | PORTF_PASSABLE | PORTF_SOUNDTRAVERSE | PORTF_INTERACTIVE,
+	};
+
+	enum EAlignment
+	{
+		PORG_ABSOLUTE,	// does not align at all. z-ccoordinates must match.
+		PORG_FLOOR,
+		PORG_CEILING,
+	};
+
+	native Line mOrigin;
+	native Line mDestination;
+	native Vector2 mDisplacement;
+	native uint8 mType;
+	native uint8 mFlags;
+	native uint8 mDefFlags;
+	native uint8 mAlign;
+	native double mAngleDiff;
+	native double mSinRot;
+	native double mCosRot;
+}
 
 struct Vertex native play
 {
@@ -189,7 +230,11 @@ struct Line native play
 	native clearscope bool isLinePortal() const;
 	native clearscope bool isVisualPortal() const;
 	native clearscope Line getPortalDestination() const;
+	native clearscope int getPortalFlags() const;
 	native clearscope int getPortalAlignment() const;
+	native clearscope int getPortalType() const;
+	native clearscope Vector2 getPortalDisplacement() const;
+	native clearscope double getPortalAngleDiff() const;
 	native clearscope int Index() const;
 	native bool Activate(Actor activator, int side, int type);
 	native bool RemoteActivate(Actor activator, int side, int type, Vector3 pos);

@@ -1504,7 +1504,11 @@ struct line_t : public linebase_t
 	inline bool isLinePortal() const;
 	inline bool isVisualPortal() const;
 	inline line_t *getPortalDestination() const;
+	inline int getPortalFlags() const;
 	inline int getPortalAlignment() const;
+	inline int getPortalType() const;
+	inline DVector2 getPortalDisplacement() const;
+	inline DAngle getPortalAngleDiff() const;
 	inline bool hitSkyWall(AActor* mo) const;
 
 	int Index() const { return linenum; }

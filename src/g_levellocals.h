@@ -845,9 +845,29 @@ inline line_t *line_t::getPortalDestination() const
 	return portalindex >= GetLevel()->linePortals.Size() ? (line_t*)nullptr : GetLevel()->linePortals[portalindex].mDestination;
 }
 
+inline int line_t::getPortalFlags() const
+{
+	return portalindex >= GetLevel()->linePortals.Size() ? 0 : GetLevel()->linePortals[portalindex].mFlags;
+}
+
 inline int line_t::getPortalAlignment() const
 {
 	return portalindex >= GetLevel()->linePortals.Size() ? 0 : GetLevel()->linePortals[portalindex].mAlign;
+}
+
+inline int line_t::getPortalType() const
+{
+	return portalindex >= GetLevel()->linePortals.Size() ? 0 : GetLevel()->linePortals[portalindex].mType;
+}
+
+inline DVector2 line_t::getPortalDisplacement() const
+{
+	return portalindex >= GetLevel()->linePortals.Size() ? DVector2(0., 0.) : GetLevel()->linePortals[portalindex].mDisplacement;
+}
+
+inline DAngle line_t::getPortalAngleDiff() const
+{
+	return portalindex >= GetLevel()->linePortals.Size() ? DAngle::fromDeg(0.) : GetLevel()->linePortals[portalindex].mAngleDiff;
 }
 
 inline bool line_t::hitSkyWall(AActor* mo) const

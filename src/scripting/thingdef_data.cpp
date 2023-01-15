@@ -708,6 +708,10 @@ void InitThingdef()
 	sectorportalstruct->Size = sizeof(FSectorPortal);
 	sectorportalstruct->Align = alignof(FSectorPortal);
 
+	auto lineportalstruct = NewStruct("LinePortal", nullptr, true);
+	lineportalstruct->Size = sizeof(FLinePortal);
+	lineportalstruct->Align = alignof(FLinePortal);
+
 	auto playerclassstruct = NewStruct("PlayerClass", nullptr, true);
 	playerclassstruct->Size = sizeof(FPlayerClass);
 	playerclassstruct->Align = alignof(FPlayerClass);

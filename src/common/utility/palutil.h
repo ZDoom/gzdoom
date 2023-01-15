@@ -14,7 +14,7 @@ void DoBlending(const PalEntry* from, PalEntry* to, int count, int r, int g, int
 // Given an array of colors, fills in remap with values to remap the
 // passed array of colors to BaseColors. Used for loading palette downconversions of PNGs.
 void MakeRemap(uint32_t* BaseColors, const uint32_t* colors, uint8_t* remap, const uint8_t* useful, int numcolors);
-void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap);
+void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap, const uint8_t* cmapdata = nullptr);
 
 // Colorspace conversion RGB <-> HSV
 void RGBtoHSV (float r, float g, float b, float *h, float *s, float *v);

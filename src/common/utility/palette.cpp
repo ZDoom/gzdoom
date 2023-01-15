@@ -418,29 +418,15 @@ void MakeRemap(uint32_t* BaseColors, const uint32_t* colors, uint8_t* remap, con
 // color, so find a duplicate pair of palette entries, make one of them a
 // duplicate of color 0, and remap every graphic so that it uses that entry
 // instead of entry 0.
-void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap)
+void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap, const uint8_t* lastcolormap)
 {
 	for (int i = 0; i < 256; i++) Remap[i] = i;
 	PalEntry color0 = BaseColors[0];
 	int i;
 
-	// we have to load the colormap ourselves, because at this stage the colormaps have not yet been loaded
-	int lump = fileSystem.CheckNumForFullName ("COLORMAP", true, ns_colormaps);
-	if (lump == -1)
-		lump = fileSystem.CheckNumForName ("COLORMAP", ns_global);
-
-	FileReader readlump;
-	TArray<uint8_t> maincolormap(8192);
-	uint8_t *lastcolormap = maincolormap.Data() + 7936;
-
-	if (lump != -1)
-	{
-		readlump = fileSystem.OpenFileReader (lump);
-		readlump.Read (maincolormap.Data(), 8192);
-	}
 
 	// First try for an exact match of color 0. Only Hexen does not have one.
-	if ((lump == -1) || !lastcolormap)
+	if (!lastcolormap)
 	{
 		for (i = 1; i < 256; ++i)
 		{
@@ -477,7 +463,7 @@ void MakeGoodRemap(uint32_t* BaseColors, uint8_t* Remap)
 			sortcopy[i] = (BaseColors[i] & 0xffffff) | (i << 24);
 		}
 		qsort(sortcopy, 256, 4, sortforremap);
-		if ((lump == -1) || !lastcolormap)
+		if (!lastcolormap)
 		{
 			for (i = 255; i > 0; --i)
 			{

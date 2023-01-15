@@ -65,9 +65,11 @@ void InitPalette ()
 		FileData cmap = fileSystem.ReadFile(lump);
 		const unsigned char* cmapdata = (const unsigned char*)cmap.GetMem();
 		GPalette.GenerateGlobalBrightmapFromColormap(cmapdata, 32);
+		MakeGoodRemap((uint32_t*)GPalette.BaseColors, GPalette.Remap, cmapdata + 7936);	// last entry in colormap
 	}
+	else
+		MakeGoodRemap ((uint32_t*)GPalette.BaseColors, GPalette.Remap);
 
-	MakeGoodRemap ((uint32_t*)GPalette.BaseColors, GPalette.Remap);
 	ColorMatcher.SetPalette ((uint32_t *)GPalette.BaseColors);
 
 	if (GPalette.Remap[0] == 0)

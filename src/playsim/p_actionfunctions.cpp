@@ -70,20 +70,21 @@
 #include "actorinlines.h"
 #include "types.h"
 #include "model.h"
+#include "shadowinlines.h"
 
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
 static FRandom pr_cwjump ("CustomWpJump");
 static FRandom pr_cwpunch ("CustomWpPunch");
 static FRandom pr_grenade ("ThrowGrenade");
-static FRandom pr_crailgun ("CustomRailgun");
+	   FRandom pr_crailgun ("CustomRailgun");
 static FRandom pr_spawndebris ("SpawnDebris");
 static FRandom pr_spawnitemex ("SpawnItemEx");
 static FRandom pr_burst ("Burst");
 static FRandom pr_monsterrefire ("MonsterRefire");
 static FRandom pr_teleport("A_Teleport");
 static FRandom pr_bfgselfdamage("BFGSelfDamage");
-FRandom pr_cajump("CustomJump");
+	   FRandom pr_cajump("CustomJump");
 
 //==========================================================================
 //
@@ -1226,11 +1227,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * veleffect, -self->target->Vel.Y * veleffect);
 		}
 
-		if (self->target->flags & MF_SHADOW)
-		{
-			DAngle rnd = DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
-			self->Angles.Yaw += rnd;
-		}
+		A_CustomRailgun_ShadowHandling(self);
 	}
 
 	if (!(flags & CRF_EXPLICITANGLE))
@@ -3529,7 +3526,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 	hitchance -= idist * (dodge ? 16 : 8);
 
 	// While we're here, we may as well do something for this:
-	if (self->target->flags & MF_SHADOW)
+	if (A_WolfAttack_ShadowHandling(self))
 	{
 		hitchance >>= 2;
 	}

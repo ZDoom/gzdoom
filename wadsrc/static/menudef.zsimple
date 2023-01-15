@@ -117,8 +117,8 @@ OptionMenu "MouseOptionsSimple" protected
 	}
 	Option "$MOUSEMNU_CURSOR",			"vid_cursor", "Cursors"
 	StaticText 	""
-	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
-	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
+	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.1, 8, 0.05
+	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.1, 8, 0.05
 	StaticText 	""
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 }

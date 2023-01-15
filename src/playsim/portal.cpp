@@ -51,6 +51,17 @@ DEFINE_FIELD(FSectorPortal, mDisplacement);
 DEFINE_FIELD(FSectorPortal, mPlaneZ);
 DEFINE_FIELD(FSectorPortal, mSkybox);
 
+DEFINE_FIELD(FLinePortal, mOrigin);
+DEFINE_FIELD(FLinePortal, mDestination);
+DEFINE_FIELD(FLinePortal, mDisplacement);
+DEFINE_FIELD(FLinePortal, mType);
+DEFINE_FIELD(FLinePortal, mFlags);
+DEFINE_FIELD(FLinePortal, mDefFlags);
+DEFINE_FIELD(FLinePortal, mAlign);
+DEFINE_FIELD(FLinePortal, mAngleDiff);
+DEFINE_FIELD(FLinePortal, mSinRot);
+DEFINE_FIELD(FLinePortal, mCosRot);
+
 //============================================================================
 //
 // BuildBlockmap

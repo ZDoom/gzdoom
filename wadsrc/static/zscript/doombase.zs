@@ -409,6 +409,7 @@ struct LevelLocals native
 	native Array<@Line> Lines;
 	native Array<@Side> Sides;
 	native readonly Array<@Vertex> Vertexes;
+	native readonly Array<@LinePortal> LinePortals;
 	native internal Array<@SectorPortal> SectorPortals;
 	
 	native readonly int time;

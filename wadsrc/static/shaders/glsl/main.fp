@@ -99,27 +99,27 @@ const int Tex_Blend_Alpha = 1;
 const int Tex_Blend_Screen = 2;
 const int Tex_Blend_Overlay = 3;
 const int Tex_Blend_Hardlight = 4;
- 
+
  vec4 ApplyTextureManipulation(vec4 texel, int blendflags)
  {
 	// Step 1: desaturate according to the material's desaturation factor. 
 	texel = dodesaturate(texel, uTextureModulateColor.a);
-	
+
 	// Step 2: Invert if requested
 	if ((blendflags & 8) != 0)
 	{
 		texel.rgb = vec3(1.0 - texel.r, 1.0 - texel.g, 1.0 - texel.b);
 	}
-	
+
 	// Step 3: Apply additive color
 	texel.rgb += uTextureAddColor.rgb;
-	
+
 	// Step 4: Colorization, including gradient if set.
 	texel.rgb *= uTextureModulateColor.rgb;
-	
+
 	// Before applying the blend the value needs to be clamped to [0..1] range.
 	texel.rgb = clamp(texel.rgb, 0.0, 1.0);
-	
+
 	// Step 5: Apply a blend. This may just be a translucent overlay or one of the blend modes present in current Build engines.
 	if ((blendflags & 7) != 0)
 	{
@@ -164,7 +164,7 @@ const int Tex_Blend_Hardlight = 4;
 vec4 getTexel(vec2 st)
 {
 	vec4 texel = texture(tex, st);
-	
+
 	//
 	// Apply texture modes
 	//
@@ -173,33 +173,33 @@ vec4 getTexel(vec2 st)
 		case 1:	// TM_STENCIL
 			texel.rgb = vec3(1.0,1.0,1.0);
 			break;
-			
+
 		case 2:	// TM_OPAQUE
 			texel.a = 1.0;
 			break;
-			
+
 		case 3:	// TM_INVERSE
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, texel.a);
 			break;
-			
+
 		case 4:	// TM_ALPHATEXTURE
 		{
 			float gray = grayscale(texel);
 			texel = vec4(1.0, 1.0, 1.0, gray*texel.a);
 			break;
 		}
-			
+
 		case 5:	// TM_CLAMPY
 			if (st.t < 0.0 || st.t > 1.0)
 			{
 				texel.a = 0.0;
 			}
 			break;
-			
+
 		case 6: // TM_OPAQUEINVERSE
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
 			break;
-			
+
 		case 7: //TM_FOGLAYER 
 			return texel;
 
@@ -212,7 +212,7 @@ vec4 getTexel(vec2 st)
 			texel.a = 0.0;
 		}
 	}
-	
+
 	// Apply the texture modification colors.
 	int blendflags = int(uTextureAddColor.a);	// this alpha is unused otherwise
 	if (blendflags != 0)	
@@ -319,7 +319,7 @@ float R_DoomLightingEquation(float light)
 	{
 		z = pixelpos.w;
 	}
-	
+
 	if ((uPalLightLevels >> 16) == 5) // gl_lightmode 5: Build software lighting emulation.
 	{
 		// This is a lot more primitive than Doom's lighting...
@@ -509,7 +509,7 @@ float sampleShadowmapPCF(vec3 planePoint, float v)
 
 	float sum = 0.0;
 	float step_count = uShadowmapFilter;
-		
+
 	texelPos -= step_count + 0.5;
 	for (float x = -step_count; x <= step_count; x++)
 	{
@@ -653,13 +653,13 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 #ifndef NO_LAYERS
 	if ((uTextureMode & TEXF_Brightmap) != 0)
 		material.Bright = desaturate(texture(brighttexture, texCoord.st));
-		
+
 	if ((uTextureMode & TEXF_Detailmap) != 0)
 	{
 		vec4 Detail = texture(detailtexture, texCoord.st * uDetailParms.xy) * uDetailParms.z;
 		material.Base.rgb *= Detail.rgb;
 	}
-	
+
 	if ((uTextureMode & TEXF_Glowmap) != 0)
 		material.Glow = desaturate(texture(glowtexture, texCoord.st));
 #endif
@@ -682,7 +682,7 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 vec4 getLightColor(Material material, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
-	
+
 	if (uLightLevel >= 0.0)
 	{
 		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel);
@@ -695,13 +695,13 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 		{
 			color.rgb *= uLightFactor - (fogdist / uLightDist) * (uLightFactor - 1.0);
 		}
-		
+
 		//
 		// apply light diminishing through fog equation
 		//
 		color.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogfactor);
 	}
-	
+
 	//
 	// handle glowing walls
 	//
@@ -727,7 +727,7 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	//
 	color.rgb = min(color.rgb + material.Bright.rgb, 1.0);
 #endif
-	
+
 	//
 	// apply other light manipulation by custom shaders, default is a NOP.
 	//
@@ -768,7 +768,7 @@ vec3 AmbientOcclusionColor()
 {
 	float fogdist;
 	float fogfactor;
-			
+
 	//
 	// calculate fog factor
 	//
@@ -781,7 +781,7 @@ vec3 AmbientOcclusionColor()
 		fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 	}
 	fogfactor = exp2 (uFogDensity * fogdist);
-			
+
 	return mix(uFogColor.rgb, vec3(0.0), fogfactor);
 }
 
@@ -799,7 +799,7 @@ void main()
 
 #ifndef LEGACY_USER_SHADER
 	Material material;
-	
+
 	material.Base = vec4(0.0);
 	material.Bright = vec4(0.0);
 	material.Glow = vec4(0.0);
@@ -815,7 +815,7 @@ void main()
 	Material material = ProcessMaterial();
 #endif
 	vec4 frag = material.Base;
-	
+
 #ifndef NO_ALPHATEST
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
@@ -824,7 +824,7 @@ void main()
 	{
 		float fogdist = 0.0;
 		float fogfactor = 0.0;
-		
+
 		//
 		// calculate fog factor
 		//
@@ -840,7 +840,7 @@ void main()
 			}
 			fogfactor = exp2 (uFogDensity * fogdist);
 		}
-		
+
 		if ((uTextureMode & 0xffff) != 7)
 		{
 			frag = getLightColor(material, fogdist, fogfactor);

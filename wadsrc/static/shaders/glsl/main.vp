@@ -78,7 +78,7 @@ void main()
 			glowdist.y = worldcoord.y - bottomatpoint;
 			glowdist.z = clamp(glowdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
 		}
-		
+
 		if (uObjectColor2.a != 0)
 		{
 			float topatpoint = (uGradientTopPlane.w + uGradientTopPlane.x * worldcoord.x + uGradientTopPlane.y * worldcoord.z) * uGradientTopPlane.z;
@@ -97,7 +97,7 @@ void main()
 		vWorldNormal = NormalModelMatrix * vec4(normalize(bones.Normal), 1.0);
 		vEyeNormal = NormalViewMatrix * vec4(normalize(vWorldNormal.xyz), 1.0);
 	#endif
-	
+
 	#ifdef SPHEREMAP
 		vec3 u = normalize(eyeCoordPos.xyz);
 		vec4 n = normalize(NormalViewMatrix * vec4(parmTexCoord.x, 0.0, parmTexCoord.y, 0.0));
@@ -108,7 +108,7 @@ void main()
 	#else
 		vTexCoord = TextureMatrix * vec4(parmTexCoord, 0.0, 1.0);
 	#endif
-	
+
 	gl_Position = ProjectionMatrix * eyeCoordPos;
 
 	#ifdef VULKAN_COORDINATE_SYSTEM

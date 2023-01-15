@@ -8,7 +8,7 @@ vec2 lightAttenuation(int i, vec3 normal, vec3 viewdir, float lightcolorA)
 	float lightdistance = distance(lightpos.xyz, pixelpos.xyz);
 	if (lightpos.w < lightdistance)
 		return vec2(0.0); // Early out lights touching surface but not this fragment
-	
+
 	float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
 
 	if (lightspot1.w == 1.0)

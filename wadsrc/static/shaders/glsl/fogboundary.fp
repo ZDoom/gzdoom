@@ -15,7 +15,7 @@ void main()
 {
 	float fogdist;
 	float fogfactor;
-	
+
 	//
 	// calculate fog factor
 	//

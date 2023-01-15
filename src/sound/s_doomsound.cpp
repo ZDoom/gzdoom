@@ -841,6 +841,8 @@ static FSerializer &Serialize(FSerializer &arc, const char *key, FSoundChan &cha
 			("rolloffmax", chan.Rolloff.MaxDistance)
 			("limitrange", chan.LimitRange);
 
+		if (SaveVersion < 4560) chan.Pitch /= 128.f;
+
 		switch (chan.SourceType)
 		{
 		case SOURCE_None:										break;

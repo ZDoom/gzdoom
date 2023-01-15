@@ -49,6 +49,8 @@
 CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
 CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, i_pauseinbackground, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+// killough 2/21/98: optionally use varying pitched sounds
+CVAR(Bool, snd_pitched, false, CVAR_ARCHIVE)
 
 int SoundEnabled()
 {
@@ -370,6 +372,31 @@ FSoundID SoundEngine::ResolveSound(const void *, int, FSoundID soundid, float &a
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+static float CalcPitch(int pitchmask, float defpitch, float defpitchmax)
+{
+	if (defpitch > 0.0)	// $PitchSet overrides $PitchShift
+	{
+		if (defpitchmax > 0.0 && defpitch != defpitchmax)
+		{
+			defpitch = pr_soundpitch.GenRand_Real1() * (defpitchmax - defpitch) + defpitch;
+		}
+		return defpitch;
+	}
+
+	// Vary the sfx pitches. Overridden by $PitchSet and A_StartSound.
+	if (pitchmask != 0 && snd_pitched)
+	{
+		return (DEFAULT_PITCH - (pr_soundpitch() & pitchmask) + (pr_soundpitch() & pitchmask)) / (float)DEFAULT_PITCH;
+	}
+	return 1.f;
+}
+
+//==========================================================================
+//
 // S_StartSound
 //
 // 0 attenuation means full volume over whole primaryLevel->
@@ -386,7 +413,6 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	EChanFlags chanflags = flags;
 	int basepriority;
 	FSoundID org_id;
-	int pitch;
 	FSoundChan *chan;
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
@@ -419,7 +445,6 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	float limit_range = sfx->LimitRange;
 	float defpitch = sfx->DefPitch;
 	float defpitchmax = sfx->DefPitchMax;
-	auto pitchmask = sfx->PitchMask;
 	rolloff = &sfx->Rolloff;
 
 	// Resolve player sounds, random sounds, and aliases
@@ -542,16 +567,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		return NULL;
 	}
 
-	// Vary the sfx pitches. Overridden by $PitchSet and A_StartSound.
-	if (pitchmask != 0)
-	{
-		pitch = DEFAULT_PITCH - (rand() & pitchmask) + (rand() & pitchmask);
-	}
-	else
-	{
-		pitch = DEFAULT_PITCH;
-	}
-
+	float pitch = spitch > 0 ? spitch : CalcPitch(sfx->PitchMask, defpitch, defpitchmax);
 	if (chanflags & CHANF_EVICTED)
 	{
 		chan = NULL;
@@ -613,27 +629,6 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		else if (type != SOURCE_None)
 		{
 			chan->Source = source;
-		}
-
-		if (spitch > 0.0)				// A_StartSound has top priority over all others.
-			SetPitch(chan, spitch);
-		else if (defpitch > 0.0)	// $PitchSet overrides $PitchShift
-		{
-			if (defpitchmax > 0.0)
-			{
-				if (defpitchmax < defpitch)
-					std::swap(defpitch, defpitchmax);
-
-				if (defpitch != defpitchmax)
-				{
-					FRandom &rng = pr_soundpitch;
-					int random = (rng)(0x7FFF);
-					float frandom = random / float(0x7FFF);
-
-					defpitch = frandom * (defpitchmax - defpitch) + defpitch;
-				}
-			}
-			SetPitch(chan, defpitch);
 		}
 	}
 
@@ -1077,7 +1072,7 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 {
 	assert(chan != nullptr);
 	GSnd->ChannelPitch(chan, max(0.0001f, pitch));
-	chan->Pitch = max(1, int(float(DEFAULT_PITCH) * pitch));
+	chan->Pitch = pitch;
 }
 
 //==========================================================================

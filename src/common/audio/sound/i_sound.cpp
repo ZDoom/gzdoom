@@ -70,9 +70,6 @@ CVAR(Int, snd_hrtf, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR(String, snd_backend, DEF_BACKEND, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-// killough 2/21/98: optionally use varying pitched sounds
-CVAR (Bool, snd_pitched, false, CVAR_ARCHIVE)
-
 SoundRenderer *GSnd;
 bool nosound;
 bool nosfx;
@@ -178,11 +175,11 @@ public:
 	}
 
 	// Starts a sound.
-	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
+	FISoundChannel *StartSound (SoundHandle sfx, float vol, float pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
 	{
 		return NULL;
 	}
-	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan, float startTime)
+	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, float pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan, float startTime)
 	{
 		return NULL;
 	}

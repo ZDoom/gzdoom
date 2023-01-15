@@ -110,7 +110,6 @@ ReverbContainer *ForcedEnvironment;
 EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_waterreverb)
-EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Int, snd_hrtf)
 
 
@@ -526,8 +525,6 @@ public:
 #define AREA_SOUND_RADIUS  (32.f)
 
 #define PITCH_MULT (0.7937005f) /* Approx. 4 semitones lower; what Nash suggested */
-
-#define PITCH(pitch) (snd_pitched ? (pitch)/128.f : 1.f)
 
 static size_t GetChannelCount(ChannelConfig chans)
 {
@@ -1224,7 +1221,7 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 	return stream;
 }
 
-FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
+FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, float pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
 {
 	if(FreeSfx.Size() == 0)
 	{
@@ -1270,9 +1267,9 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 		alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
 	}
 	if(WasInWater && !(chanflags&SNDF_NOREVERB))
-		alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
+		alSourcef(source, AL_PITCH, pitch * PITCH_MULT);
 	else
-		alSourcef(source, AL_PITCH, PITCH(pitch));
+		alSourcef(source, AL_PITCH, pitch);
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
 	{
@@ -1326,7 +1323,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 }
 
 FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *listener, float vol,
-	FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
+	FRolloffInfo *rolloff, float distscale, float pitch, int priority, const FVector3 &pos, const FVector3 &vel,
 	int channum, int chanflags, FISoundChannel *reuse_chan, float startTime)
 {
 	float dist_sqr = (float)(pos - listener->position).LengthSquared();
@@ -1438,9 +1435,9 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 		alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
 	}
 	if(WasInWater && !(chanflags&SNDF_NOREVERB))
-		alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
+		alSourcef(source, AL_PITCH, pitch * PITCH_MULT);
 	else
-		alSourcef(source, AL_PITCH, PITCH(pitch));
+		alSourcef(source, AL_PITCH, pitch);
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
 	{
@@ -1762,7 +1759,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 			{
 				ALuint source = GET_PTRID(schan->SysChannel);
 				if (source && !(schan->ChanFlags & CHANF_UI))
-					alSourcef(source, AL_PITCH, schan->Pitch / 128.0f * PITCH_MULT);
+					alSourcef(source, AL_PITCH, schan->Pitch * PITCH_MULT);
 				schan = schan->NextChan;
 			}
 			getALError();
@@ -1800,7 +1797,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 		{
 			ALuint source = GET_PTRID(schan->SysChannel);
 			if (source && !(schan->ChanFlags & CHANF_UI))
-				alSourcef(source, AL_PITCH, schan->Pitch / 128.0f);
+				alSourcef(source, AL_PITCH, schan->Pitch);
 			schan = schan->NextChan;
 		}
 		getALError();

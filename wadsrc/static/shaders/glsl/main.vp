@@ -87,7 +87,7 @@ void main()
 			gradientdist.y = worldcoord.y - bottomatpoint;
 			gradientdist.z = clamp(gradientdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
 		}
-		
+
 		if (uSplitBottomPlane.z != 0.0)
 		{
 			ClipDistance3 = ((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;

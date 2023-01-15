@@ -536,6 +536,7 @@
 		PLAYERINFO_FOV,
 		PLAYERINFO_DESIREDFOV,
 		PLAYERINFO_FVIEWBOB,
+		PLAYERINFO_CAMERABOB,
 	};
 
 
@@ -9963,6 +9964,7 @@ scriptwait:
 				case PLAYERINFO_DESIREDFOV:		STACK(2) = (int)pl->DesiredFOV; break;
 				case PLAYERINFO_FOV:			STACK(2) = (int)pl->FOV; break;
 				case PLAYERINFO_FVIEWBOB:		STACK(2) = (bool)userinfo->GetFViewBob(); break;
+				case PLAYERINFO_CAMERABOB:		STACK(2) = DoubleToACS(userinfo->GetCameraBob()); break;
 				default:						STACK(2) = 0; break;
 				}
 			}

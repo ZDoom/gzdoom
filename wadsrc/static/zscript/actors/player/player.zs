@@ -618,6 +618,8 @@ class PlayerPawn : Actor
 			bob = player.bob * sin(angle) * (waterlevel > 1 ? 0.25f : 0.5f);
 		}
 
+		bob *= GetCVar("CameraBob");
+
 		// move viewheight
 		if (player.playerstate == PST_LIVE)
 		{
@@ -2813,6 +2815,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native double GetMoveBob() const;
 	native bool GetFViewBob() const;
 	native double GetStillBob() const;
+	native double GetCameraBob() const;
 	native void SetFOV(float fov);
 	native clearscope bool GetClassicFlight() const;
 	native void SendPitchLimits();

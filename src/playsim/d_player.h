@@ -235,6 +235,10 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FFloatCVar *>(*CheckKey(NAME_StillBob));
 	}
+	double GetCameraBob() const
+	{
+		return *static_cast<FFloatCVar *>(*CheckKey(NAME_CameraBob));
+	}
 	float GetWBobSpeed() const
 	{
 		return *static_cast<FFloatCVar *>(*CheckKey(NAME_WBobSpeed));

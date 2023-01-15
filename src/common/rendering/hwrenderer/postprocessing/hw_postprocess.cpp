@@ -29,8 +29,6 @@
 
 #include "stats.h"
 
-#include "g_levellocals.h"
-
 Postprocess hw_postprocess;
 
 PPResource *PPResource::First = nullptr;
@@ -601,9 +599,9 @@ void PPTonemap::UpdateTextures()
 
 void PPTonemap::Render(PPRenderState *renderstate)
 {
-	ETonemapMode level_tonemap = (level.info && level.info->tonemap != ETonemapMode::None) ? level.info->tonemap : ETonemapMode((int)gl_tonemap);
+	ETonemapMode current_tonemap = (level_tonemap != ETonemapMode::None) ? level_tonemap : ETonemapMode((int)gl_tonemap);
 
-	if (level_tonemap == ETonemapMode::None)
+	if (current_tonemap == ETonemapMode::None)
 	{
 		return;
 	}
@@ -611,7 +609,7 @@ void PPTonemap::Render(PPRenderState *renderstate)
 	UpdateTextures();
 
 	PPShader *shader = nullptr;
-	switch (level_tonemap)
+	switch (current_tonemap)
 	{
 	default:
 	case ETonemapMode::Linear:		shader = &LinearShader; break;
@@ -627,7 +625,7 @@ void PPTonemap::Render(PPRenderState *renderstate)
 	renderstate->Shader = shader;
 	renderstate->Viewport = screen->mScreenViewport;
 	renderstate->SetInputCurrent(0);
-	if (level_tonemap == ETonemapMode::Palette)
+	if (current_tonemap == ETonemapMode::Palette)
 		renderstate->SetInputTexture(1, &PaletteTexture);
 	renderstate->SetOutputNext();
 	renderstate->SetNoBlend();

@@ -53,24 +53,4 @@ enum class ELightMode : int8_t
 	DoomSoftware = 16
 };
 
-enum class ELightBlendMode : uint8_t
-{
-	CLAMP = 0,
-	CLAMP_COLOR = 1,
-	NOCLAMP = 2,
-
-	DEFAULT = CLAMP,
-};
-
-enum class ETonemapMode : uint8_t
-{
-	None,
-	Uncharted2,
-	HejlDawson,
-	Reinhard,
-	Linear,
-	Palette,
-	NumTonemapModes
-};
-
 #endif

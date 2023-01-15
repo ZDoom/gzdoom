@@ -4,6 +4,15 @@
 
 struct HWDrawInfo;
 
+enum class ELightBlendMode : uint8_t
+{
+	CLAMP = 0,
+	CLAMP_COLOR = 1,
+	NOCLAMP = 2,
+
+	DEFAULT = CLAMP,
+};
+
 struct HWViewpointUniforms
 {
 	VSMatrix mProjectionMatrix;

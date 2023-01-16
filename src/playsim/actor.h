@@ -393,7 +393,7 @@ enum ActorFlag7
 	MF7_SPRITEANGLE		= 0x02000000,	// [MC] Utilize the SpriteAngle property and lock the rotation to the degrees specified.
 	MF7_SMASHABLE		= 0x04000000,	// dies if hitting the floor.
 	MF7_NOSHIELDREFLECT = 0x08000000,	// will not be reflected by shields.
-	MF7_FORCEZERORADIUSDMG = 0x10000000,	// passes zero radius damage on to P_DamageMobj, this is necessary in some cases where DoSpecialDamage gets overrideen.
+	MF7_FORCEZERORADIUSDMG = 0x10000000,// passes zero radius damage on to P_DamageMobj, this is necessary in some cases where DoSpecialDamage gets overrideen.
 	MF7_NOINFIGHTSPECIES = 0x20000000,	// don't start infights with one's own species.
 	MF7_FORCEINFIGHTING	= 0x40000000,	// overrides a map setting of 'no infighting'.
 	MF7_INCHASE			= 0x80000000,	// [RH] used by A_Chase and A_Look to avoid recursion
@@ -429,7 +429,7 @@ enum ActorFlag8
 	MF8_STAYONLIFT		= 0x02000000,	// MBF AI enhancement.
 	MF8_DONTFOLLOWPLAYERS	= 0x04000000,	// [inkoalawetrust] Friendly monster will not follow players.
 	MF8_SEEFRIENDLYMONSTERS	= 0X08000000,	// [inkoalawetrust] Hostile monster can see friendly monsters.
-	MF8_CROSSLINECHECK	= 0x10000000,	// [MC]Enables CanCrossLine virtual
+	MF8_CROSSLINECHECK	= 0x10000000,	// [MC] Enables CanCrossLine virtual
 	MF8_MASTERNOSEE		= 0x20000000,	// Don't show object in first person if their master is the current camera.
 	MF8_ADDLIGHTLEVEL	= 0x40000000,	// [MC] Actor light level is additive with sector.
 	MF8_ONLYSLAMSOLID	= 0x80000000,	// [B] Things with skullfly will ignore non-solid Actors.
@@ -438,7 +438,7 @@ enum ActorFlag8
 // --- mobj.flags9 ---
 enum ActorFlag9
 {
-
+	MF9_SHADOWAIM = 0x00000001,	// [inkoalawetrust] Monster still gets aim penalty from aiming at shadow actors even with MF6_SEEINVISIBLE on.
 };
 
 // --- mobj.renderflags ---

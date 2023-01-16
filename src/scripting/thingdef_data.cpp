@@ -347,6 +347,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, ADDLIGHTLEVEL, AActor, flags8),
 	DEFINE_FLAG(MF8, ONLYSLAMSOLID, AActor, flags8),
 
+	DEFINE_FLAG(MF9, SHADOWAIM, AActor, flags9),
+
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
 	DEFINE_FLAG2(FX_ROCKET, ROCKETTRAIL, AActor, effects),

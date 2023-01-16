@@ -6667,7 +6667,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 
 	if (dest == NULL)
 	{
-		Printf ("P_SpawnMissileXYZ: Tried to shoot %s from %s with no dest\n",
+		Printf ("P_SpawnMissileXYZ: Tried to shoot %s from %s with no destination\n",
 			type->TypeName.GetChars(), source->GetClass()->TypeName.GetChars());
 		return NULL;
 	}

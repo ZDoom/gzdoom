@@ -346,6 +346,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, ONLYSLAMSOLID, AActor, flags8),
 
 	DEFINE_FLAG(MF9, SHADOWAIM, AActor, flags9),
+	DEFINE_FLAG(MF9, DOSHADOWBLOCK, AActor, flags9),
+	DEFINE_FLAG(MF9, SHADOWBLOCK, AActor, flags9),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -355,8 +357,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, FORCEYBILLBOARD, AActor, renderflags),
 	DEFINE_FLAG(RF, FORCEXYBILLBOARD, AActor, renderflags),
 	DEFINE_FLAG(RF, ROLLSPRITE, AActor, renderflags), // [marrub] roll the sprite billboard
-			// [fgsfds] Flat sprites
-	DEFINE_FLAG(RF, FLATSPRITE, AActor, renderflags),
+	DEFINE_FLAG(RF, FLATSPRITE, AActor, renderflags), // [fgsfds] Flat sprites
 	DEFINE_FLAG(RF, WALLSPRITE, AActor, renderflags),
 	DEFINE_FLAG(RF, DONTFLIP, AActor, renderflags),
 	DEFINE_FLAG(RF, ROLLCENTER, AActor, renderflags),

@@ -1227,7 +1227,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * veleffect, -self->target->Vel.Y * veleffect);
 		}
 
-		A_CustomRailgun_ShadowHandling(self);
+		A_CustomRailgun_ShadowHandling(self, spawnofs_xy, spawnofs_z, spread_xy, flags);
 	}
 
 	if (!(flags & CRF_EXPLICITANGLE))

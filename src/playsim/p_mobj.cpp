@@ -6706,7 +6706,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	}
 	th->Vel = velocity.Resized(speed);
 
-	P_SpawnMissileXYZ_ShadowHandling(source,dest,th);
+	P_SpawnMissileXYZ_ShadowHandling(source,dest,th,pos);
 	
 	th->AngleFromVel();
 
@@ -6828,7 +6828,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 
 	an = source->Angles.Yaw;
 
-	an += P_SpawnMissileZAimed_ShadowHandling(source,dest);
+	an += P_SpawnMissileZAimed_ShadowHandling(source,dest,source->PosAtZ(z));
 
 	dist = source->Distance2D (dest);
 	speed = GetDefaultSpeed (type);

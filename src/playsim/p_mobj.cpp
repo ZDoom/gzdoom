@@ -234,6 +234,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("flags6", flags6)
 		A("flags7", flags7)
 		A("flags8", flags8)
+		A("flags9", flags9)
 		A("weaponspecial", weaponspecial)
 		A("special1", special1)
 		A("special2", special2)
@@ -6666,7 +6667,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 
 	if (dest == NULL)
 	{
-		Printf ("P_SpawnMissilyXYZ: Tried to shoot %s from %s with no dest\n",
+		Printf ("P_SpawnMissileXYZ: Tried to shoot %s from %s with no dest\n",
 			type->TypeName.GetChars(), source->GetClass()->TypeName.GetChars());
 		return NULL;
 	}
@@ -7697,6 +7698,9 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\n   flags8: %x", query->flags8.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags8 & ActorFlags8::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags8));
+		Printf("\n   flags9: %x", query->flags9.GetValue());
+		for (flagi = 0; flagi <= 31; flagi++)
+			if (query->flags9 & ActorFlags9::FromInt(1 << flagi)) Printf(" %s", FLAG_NAME(1 << flagi, flags9));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags.GetValue(), query->bouncefactor,
 			query->wallbouncefactor);

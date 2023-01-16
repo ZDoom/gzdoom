@@ -206,8 +206,7 @@ enum ActorFlag2
 										// but still considered solid
 	MF2_INVULNERABLE	= 0x08000000,	// mobj is invulnerable
 	MF2_DORMANT			= 0x10000000,	// thing is dormant
-	MF2_ARGSDEFINED		= 0x20000000,	// Internal flag used by DECORATE to signal that the 
-										// args should not be taken from the mapthing definition
+	MF2_ARGSDEFINED		= 0x20000000,	// Internal flag used by DECORATE to signal that the args should not be taken from the mapthing definition
 	MF2_SEEKERMISSILE	= 0x40000000,	// is a seeker (for reflection)
 	MF2_REFLECTIVE		= 0x80000000,	// reflects missiles
 };
@@ -399,6 +398,8 @@ enum ActorFlag7
 	MF7_FORCEINFIGHTING	= 0x40000000,	// overrides a map setting of 'no infighting'.
 	MF7_INCHASE			= 0x80000000,	// [RH] used by A_Chase and A_Look to avoid recursion
 };
+
+// --- mobj.flags8 ---
 enum ActorFlag8
 {
 	MF8_FRIGHTENING		= 0x00000001,	// for those moments when halloween just won't do
@@ -432,6 +433,12 @@ enum ActorFlag8
 	MF8_MASTERNOSEE		= 0x20000000,	// Don't show object in first person if their master is the current camera.
 	MF8_ADDLIGHTLEVEL	= 0x40000000,	// [MC] Actor light level is additive with sector.
 	MF8_ONLYSLAMSOLID	= 0x80000000,	// [B] Things with skullfly will ignore non-solid Actors.
+};
+
+// --- mobj.flags9 ---
+enum ActorFlag9
+{
+
 };
 
 // --- mobj.renderflags ---
@@ -588,6 +595,7 @@ typedef TFlags<ActorFlag5> ActorFlags5;
 typedef TFlags<ActorFlag6> ActorFlags6;
 typedef TFlags<ActorFlag7> ActorFlags7;
 typedef TFlags<ActorFlag8> ActorFlags8;
+typedef TFlags<ActorFlag9> ActorFlags9;
 typedef TFlags<ActorRenderFlag> ActorRenderFlags;
 typedef TFlags<ActorRenderFlag2> ActorRenderFlags2;
 typedef TFlags<ActorBounceFlag> ActorBounceFlags;
@@ -600,6 +608,7 @@ DEFINE_TFLAGS_OPERATORS (ActorFlags5)
 DEFINE_TFLAGS_OPERATORS (ActorFlags6)
 DEFINE_TFLAGS_OPERATORS (ActorFlags7)
 DEFINE_TFLAGS_OPERATORS (ActorFlags8)
+DEFINE_TFLAGS_OPERATORS (ActorFlags9)
 DEFINE_TFLAGS_OPERATORS (ActorRenderFlags)
 DEFINE_TFLAGS_OPERATORS (ActorRenderFlags2)
 DEFINE_TFLAGS_OPERATORS (ActorBounceFlags)
@@ -1080,6 +1089,7 @@ public:
 	ActorFlags6		flags6;			// Shit! Where did all the flags go?
 	ActorFlags7		flags7;			// WHO WANTS TO BET ON 8!?
 	ActorFlags8		flags8;			// I see your 8, and raise you a bet for 9.
+	ActorFlags9		flags9;			// Happy ninth actor flag field GZDoom !
 	double			Floorclip;		// value to use for floor clipping
 	double			radius, Height;		// for movement checking
 

@@ -3910,6 +3910,10 @@ UNSAFE_CCMD(host)
 			{
 				flags |= MP_ALTDEATH;
 			}
+			else if(arg.CompareNoCase("NOMONSTERS") == 0)
+			{
+				flags |= MP_NOMONSTERS;
+			}
 			else
 			{
 				Printf ("Invalid argument for host: %s\n",arg.GetChars());

@@ -63,6 +63,7 @@ enum EMultiplayerHostFlags
 	MP_PACKET_SERVER = 2,
 	MP_DEATHMATCH = 4,
 	MP_ALTDEATH = 8,
+	MP_NOMONSTERS = 16,
 };
 
 

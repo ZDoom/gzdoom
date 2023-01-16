@@ -6809,12 +6809,11 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 
 	an = source->Angles.Yaw;
 
-	an += P_SpawnMissileZAimed_ShadowHandling(source,dest,source->PosAtZ(z));
-
 	dist = source->Distance2D (dest);
 	speed = GetDefaultSpeed (type);
 	dist /= speed;
 	vz = dist != 0 ? (dest->Z() - source->Z())/dist : speed;
+	an += P_SpawnMissileZAimed_ShadowHandling(source, dest, vz, speed, source->PosAtZ(z));
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);
 }
 

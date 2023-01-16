@@ -3894,19 +3894,19 @@ UNSAFE_CCMD(host)
 		auto sep = arg.IndexOf('=');
 		if(sep == -1)
 		{
-			if(arg.CompareNoCase("EXTRATIC"))
+			if(arg.CompareNoCase("EXTRATIC") == 0)
 			{
 				flags |= MP_EXTRATIC;
 			}
-			else if(arg.CompareNoCase("PACKET_SERVER"))
+			else if(arg.CompareNoCase("PACKET_SERVER") == 0)
 			{
 				flags |= MP_PACKET_SERVER;
 			}
-			else if(arg.CompareNoCase("DEATHMATCH"))
+			else if(arg.CompareNoCase("DEATHMATCH") == 0)
 			{
 				flags |= MP_DEATHMATCH;
 			}
-			else if(arg.CompareNoCase("ALTDEATH"))
+			else if(arg.CompareNoCase("ALTDEATH") == 0)
 			{
 				flags |= MP_ALTDEATH;
 			}

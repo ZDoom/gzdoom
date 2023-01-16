@@ -26,7 +26,7 @@ extern FRandom pr_crailgun;
 
 inline bool CheckShadowFlags(AActor* self, AActor* other)
 {
-	return (other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE));
+	return (other->flags & MF_SHADOW && (!(self->flags6 & MF6_SEEINVISIBLE) || self->flags9 & MF9_SHADOWAIM));
 }
 
 //==========================================================================

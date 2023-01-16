@@ -3019,10 +3019,11 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 			self->Angles.Pitch = other_pitch;
 		}
 		self->Angles.Pitch += pitch_offset;
+		A_Face_ShadowHandling(self, other, max_pitch, other_pitch, true);
 	}
 	
 
-	A_Face_ShadowHandling(self,other,max_turn,other_angle);
+	A_Face_ShadowHandling(self,other,max_turn,other_angle,false);
 }
 
 void A_FaceTarget(AActor *self)

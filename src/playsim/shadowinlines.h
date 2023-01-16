@@ -17,6 +17,7 @@ extern FRandom pr_spawnmissile;
 extern FRandom pr_facetarget;
 extern FRandom pr_railface;
 extern FRandom pr_crailgun;
+static FRandom pr_shadowaimz("VerticalShadowAim");
 
 //==========================================================================
 //
@@ -52,8 +53,19 @@ inline bool P_CheckForShadowBlock(AActor* t1, AActor* t2, DVector3 pos)
 	FTraceResults result;
 	ShadowCheckData ShadowCheck;
 	ShadowCheck.HitShadow = false;
-	DVector3 dir = t1->Vec3To(t2);
-	double dist = dir.Length();
+	DVector3 dir;
+	double dist;
+	if (t2)
+	{
+		dir = t1->Vec3To(t2);
+		dist = dir.Length();
+	}
+	//No second actor, fall back to shooting at facing direction.
+	else
+	{
+		dir = DRotator(-(t1->Angles.Pitch), t1->Angles.Yaw, t1->Angles.Yaw);
+		dist = 65536.0; //Arbitrary large value.
+	}
 
 	Trace(pos, t1->Sector, dir, dist, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, t1, result, 0, CheckForShadowBlockers, &ShadowCheck);
 
@@ -67,7 +79,7 @@ inline bool AffectedByShadows(AActor* self, AActor* other)
 
 inline bool CheckForShadows(AActor* self, AActor* other, DVector3 pos)
 {
-	return (other->flags & MF_SHADOW || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, other, pos));
+	return ((other && other->flags & MF_SHADOW) || self->flags9 & MF9_DOSHADOWBLOCK && P_CheckForShadowBlock(self, other, pos));
 }
 
 inline bool PerformShadowChecks(AActor* self, AActor* other, DVector3 pos)
@@ -96,26 +108,49 @@ inline void P_SpawnMissileXYZ_ShadowHandling(AActor* source, AActor* target, AAc
 
 		missile->Vel.X = newx;
 		missile->Vel.Y = newy;
+
+		if (source->flags9 & MF9_SHADOWAIMVERT)
+		{
+			DAngle pitch = DAngle::fromDeg(pr_spawnmissile.Random2() * (22.5 / 256));
+			double newz = -pitch.Sin() * missile->Speed;
+			missile->Vel.Z = newz;
+		}
 	}
 	return;
 }
 
 //P_SpawnMissileZAimed uses a local variable for the angle it passes on.
-inline DAngle P_SpawnMissileZAimed_ShadowHandling(AActor* source, AActor* target, DVector3 pos)
+inline DAngle P_SpawnMissileZAimed_ShadowHandling(AActor* source, AActor* target, double& vz, double speed, DVector3 pos)
 {
 	if (PerformShadowChecks(source,target,pos))
 	{
+		if (source->flags9 & MF9_SHADOWAIMVERT)
+		{
+			DAngle pitch = DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.));
+			vz += -pitch.Sin() * speed; //Modify the Z velocity pointer that is then passed to P_SpawnMissileAngleZSpeed.
+		}
 		return DAngle::fromDeg(pr_spawnmissile.Random2() * (16. / 360.));
 	}
 	return nullAngle;
 }
 
-inline void A_Face_ShadowHandling(AActor* self, AActor* other, DAngle max_turn, DAngle other_angle)
+inline void A_Face_ShadowHandling(AActor* self, AActor* other, DAngle max_turn, DAngle other_angle, bool vertical)
 {
-	// This will never work well if the turn angle is limited.
-	if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && PerformShadowChecks(self, other,self->PosAtZ(self->Center())))
+	if (!vertical)
 	{
-		self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
+		// This will never work well if the turn angle is limited.
+		if (max_turn == nullAngle && (self->Angles.Yaw == other_angle) && PerformShadowChecks(self, other, self->PosAtZ(self->Center())))
+		{
+			self->Angles.Yaw += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
+		}
+	}
+	else
+	{
+		//Randomly offset the pitch when looking at shadows.
+		if (self->flags9 & MF9_SHADOWAIMVERT && max_turn == nullAngle && (self->Angles.Pitch == other_angle) && PerformShadowChecks(self, other, self->PosAtZ(self->Center())))
+		{
+			self->Angles.Pitch += DAngle::fromDeg(pr_facetarget.Random2() * (45 / 256.));
+		}
 	}
 	return;
 }
@@ -127,6 +162,8 @@ inline void A_MonsterRail_ShadowHandling(AActor* self)
 	if (PerformShadowChecks(self, self->target,self->PosAtZ(shootZ)))
 	{
 		self->Angles.Yaw += DAngle::fromDeg(pr_railface.Random2() * 45. / 256);
+		if (self->flags9 & MF9_SHADOWAIMVERT)
+			self->Angles.Pitch += DAngle::fromDeg(pr_railface.Random2() * 45. / 256);
 	}
 	return;
 }
@@ -145,10 +182,33 @@ inline void A_CustomRailgun_ShadowHandling(AActor* self, double spawnofs_xy, dou
 
 	if (PerformShadowChecks(self, self->target, checkPos))
 	{
-		DAngle rnd = DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
-		self->Angles.Yaw += rnd;
+		self->Angles.Yaw += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
+		if (self->flags9 & MF9_SHADOWAIMVERT)
+		{
+			self->Angles.Pitch += DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
+		}
 	}
 	return;
+}
+
+//If anything is returned, then AimLineAttacks' result pitch is changed to that value.
+inline DAngle P_AimLineAttack_ShadowHandling(AActor*source, AActor* target, AActor* linetarget, double shootZ)
+{
+	AActor* mo;
+	if (target)
+		mo = target;
+	else
+		mo = linetarget;
+
+	// [inkoalawetrust] Randomly offset the vertical aim of monsters. Roughly uses the SSG vertical spread.
+	if (source->player == NULL && source->flags9 & MF9_SHADOWAIMVERT && PerformShadowChecks (source, target, source->PosAtZ (shootZ)))
+	{
+		if (linetarget)
+			return DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.)); //Change the autoaims' pitch to this.
+		else
+			source->Angles.Pitch = DAngle::fromDeg(pr_shadowaimz.Random2() * (28.388 / 256.));
+	}
+	return nullAngle;
 }
 
 //A_WolfAttack directly harms the target instead of firing a hitscan or projectile. So it handles shadows by lowering the chance of harming the target.

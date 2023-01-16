@@ -3184,11 +3184,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	TexMan.Init();
 	
 	if (!batchrun) Printf ("V_Init: allocate screen.\n");
-#ifdef _WIN32
-	if (!restart || restart_multiplayer)
-#else
 	if (!restart)
-#endif
 	{
 		V_InitScreenSize();
 		// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.

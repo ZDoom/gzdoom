@@ -23,12 +23,12 @@ public:
 	void ToggleFullscreen(bool yes) override;
 	void SetWindowSize(int client_w, int client_h);
 
+	void PositionWindow(bool fullscreen, bool initialcall = false); // RicardoLuis0: this needs to be public for proper fullscreen handling in netgame restarts
+
 protected:
 
 	void GetCenteredPos(int in_w, int in_h, int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight);
 	void KeepWindowOnScreen(int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight);
-
-	void PositionWindow(bool fullscreen, bool initialcall = false);
 
 	float m_Gamma, m_Brightness, m_Contrast;
 	uint16_t m_origGamma[768];

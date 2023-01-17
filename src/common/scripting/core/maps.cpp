@@ -142,9 +142,57 @@ template<typename M> void MapGetString(M * self,expand_types_vm<typename M::KeyT
     }
 }
 
+template<typename M> expand_types_vm<typename M::ValueType> MapGetIfExists(M * self,expand_types_vm<typename M::KeyType> key)
+{
+    typename M::ValueType * v = self->CheckKey(key);
+    if (v) {
+        return *v;
+    }
+    else
+    {
+        return {};
+    }
+}
+
+template<typename M> void MapGetIfExistsString(M * self,expand_types_vm<typename M::KeyType> key, FString &out)
+{
+    FString * v = self->CheckKey(key);
+    if (v) {
+        out = *v;
+    }
+    else
+    {
+        out = FString();
+    }
+}
+
 template<typename M> int MapCheckKey(M * self, expand_types_vm<typename M::KeyType> key)
 {
     return self->CheckKey(key) != nullptr;
+}
+
+template<typename M> expand_types_vm<typename M::ValueType> MapCheckValue(M * self,expand_types_vm<typename M::KeyType> key, int * exists)
+{
+    typename M::ValueType * v = self->CheckKey(key);
+    if ((*exists = !!v)) {
+        return *v;
+    }
+    else
+    {
+        return {};
+    }
+}
+
+template<typename M> void MapCheckValueString(M * self,expand_types_vm<typename M::KeyType> key, int * exists, FString &out)
+{
+    FString * v = self->CheckKey(key);
+    if ((*exists = !!v)) {
+        out = *v;
+    }
+    else
+    {
+        out = FString();
+    }
 }
 
 
@@ -345,6 +393,19 @@ template<typename I> void MapIteratorSetValue(I * self, expand_types_vm<typename
         PARAM_SELF_STRUCT_PROLOGUE( name ); \
         PARAM_KEY( key ); \
         ACTION_RETURN_VALUE( MapGet(self, key) ); \
+    } \
+    DEFINE_ACTION_FUNCTION_NATIVE( name, GetIfExists, MapGetIfExists< name >) \
+    { \
+        PARAM_SELF_STRUCT_PROLOGUE( name ); \
+        PARAM_KEY( key ); \
+        ACTION_RETURN_VALUE( MapGetIfExists(self, key) ); \
+    } \
+    DEFINE_ACTION_FUNCTION_NATIVE( name, CheckValue, MapCheckValue< name >) \
+    { \
+        PARAM_SELF_STRUCT_PROLOGUE( name ); \
+        PARAM_KEY( key ); \
+        PARAM_OUTPOINTER( exists, int); \
+        ACTION_RETURN_VALUE( MapCheckValue(self, key, exists) ); \
     }
 
 #define DEF_MAP_X_S( name, key_type, PARAM_KEY ) \
@@ -355,6 +416,23 @@ template<typename I> void MapIteratorSetValue(I * self, expand_types_vm<typename
         PARAM_KEY( key ); \
         FString out; \
         MapGetString(self, key, out); \
+        ACTION_RETURN_STRING( out ); \
+    } \
+    DEFINE_ACTION_FUNCTION_NATIVE( name, GetIfExists, MapGetIfExistsString< name >) \
+    { \
+        PARAM_SELF_STRUCT_PROLOGUE( name ); \
+        PARAM_KEY( key ); \
+        FString out; \
+        MapGetIfExistsString(self, key, out); \
+        ACTION_RETURN_STRING( out ); \
+    } \
+    DEFINE_ACTION_FUNCTION_NATIVE( name, CheckValue, MapCheckValueString< name >) \
+    { \
+        PARAM_SELF_STRUCT_PROLOGUE( name ); \
+        PARAM_KEY( key ); \
+        PARAM_OUTPOINTER( exists, int); \
+        FString out; \
+        MapCheckValueString(self, key, exists, out); \
         ACTION_RETURN_STRING( out ); \
     }
 

@@ -85,6 +85,8 @@
 // The main window's title.
 #ifdef _M_X64
 #define X64 " 64-bit"
+#elif _M_ARM64
+#define X64 " ARM-64"
 #else
 #define X64 ""
 #endif

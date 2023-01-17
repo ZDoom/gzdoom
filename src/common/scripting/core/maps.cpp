@@ -125,6 +125,7 @@ template<typename M> expand_types_vm<typename M::ValueType> MapGet(M * self,expa
     {
         typename M::ValueType n {};
         self->Insert(key,n);
+        self->info->rev++; // invalidate iterators
         return n;
     }
 }
@@ -139,6 +140,7 @@ template<typename M> void MapGetString(M * self,expand_types_vm<typename M::KeyT
     {
         out = FString();
         self->Insert(key,out);
+        self->info->rev++; // invalidate iterators
     }
 }
 

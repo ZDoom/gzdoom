@@ -90,7 +90,7 @@ bool IsPortable()
 	}
 
 	// A portable INI means that this storage location should also be portable if the file can be written to.
-	FStringf path("%s" GAMENAME "_portable.ini", progdir.GetChars());
+	FStringf path("%s" GAMENAMELOWERCASE "_portable.ini", progdir.GetChars());
 	if (FileExists(path))
 	{
 		file = CreateFile(path.WideString().c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,

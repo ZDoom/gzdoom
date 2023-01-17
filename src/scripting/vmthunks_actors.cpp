@@ -1860,6 +1860,15 @@ DEFINE_ACTION_FUNCTION(AActor, PlayBounceSound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, ReflectOffActor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(blocking, AActor);
+
+	ACTION_RETURN_BOOL(P_ReflectOffActor(self, blocking));
+}
+
+
 
 static int isFrozen(AActor *self)
 {

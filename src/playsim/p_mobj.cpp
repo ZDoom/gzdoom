@@ -2093,57 +2093,11 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 						return Oldfloorz;
 					}
 				}
-				if (BlockingMobj && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+				if (BlockingMobj && P_ReflectOffActor(mo, BlockingMobj))
 				{
-					bool seeker = (mo->flags2 & MF2_SEEKERMISSILE) ? true : false;
-					// Don't change the angle if there's THRUREFLECT on the monster.
-					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
-					{
-						DAngle angle = BlockingMobj->AngleTo(mo);
-						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
-						// Change angle for deflection/reflection
-
-						if (!dontReflect)
-						{
-							bool tg = (mo->target != NULL);
-							bool blockingtg = (BlockingMobj->target != NULL);
-							if ((BlockingMobj->flags7 & MF7_AIMREFLECT) && (tg | blockingtg))
-							{
-								AActor *origin = tg ? mo->target : BlockingMobj->target;
-
-								//dest->x - source->x
-								DVector3 vect = mo->Vec3To(origin);
-								vect.Z += origin->Height / 2;
-								mo->Vel = vect.Resized(mo->Speed);
-							}
-							else
-							{
-								if ((BlockingMobj->flags7 & MF7_MIRRORREFLECT) && (tg | blockingtg))
-								{
-									mo->Angles.Yaw += DAngle::fromDeg(180.);
-									mo->Vel *= -.5;
-								}
-								else
-								{
-									mo->Angles.Yaw = angle;
-									mo->VelFromAngle(mo->Speed / 2);
-									mo->Vel.Z *= -.5;
-								}
-							}
-						}
-						else
-						{
-							goto explode;
-						}						
-					}
-					if (mo->flags2 & MF2_SEEKERMISSILE)
-					{
-						mo->tracer = mo->target;
-					}
-					mo->target = BlockingMobj;
 					return Oldfloorz;
 				}
-explode:
+
 				// explode a missile
 				bool onsky = false;
 				if (tm.ceilingline && tm.ceilingline->hitSkyWall(mo))
@@ -3229,10 +3183,8 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur)
-		if (absangle(angle, thing->Angles.Yaw) > DAngle::fromDeg(45))
+		if ((flags7 & MF7_NOSHIELDREFLECT) || absangle(angle, thing->Angles.Yaw) > DAngle::fromDeg(45))
 			return true;	// Let missile explode
-
-		if (thing->flags7 & MF7_NOSHIELDREFLECT) return true;
 
 		if (pr_reflect () < 128)
 			angle += DAngle::fromDeg(45);

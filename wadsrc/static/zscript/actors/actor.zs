@@ -819,6 +819,7 @@ class Actor : Thinker native
 	native bool BounceWall(Line l = null);
 	native bool BouncePlane(SecPlane plane);
 	native void PlayBounceSound(bool onFloor);
+	native bool ReflectOffActor(Actor blocking);
 
 	clearscope double PitchTo(Actor target, double zOfs = 0, double targZOfs = 0, bool absolute = false) const
 	{

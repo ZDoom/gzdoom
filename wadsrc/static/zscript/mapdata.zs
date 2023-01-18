@@ -254,6 +254,9 @@ struct Line native play
 
     native clearscope int GetHealth() const;
     native void SetHealth(int newhealth);
+	
+	native int CountIDs() const;
+	native int GetID(int index) const;
 }
 
 struct SecPlane native play
@@ -646,6 +649,9 @@ struct Sector native play
 	
     native clearscope int GetHealth(SectorPart part) const;
     native void SetHealth(SectorPart part, int newhealth);
+
+	native int CountTags() const;
+	native int GetTag(int index) const;
 }
 
 class SectorTagIterator : Object native

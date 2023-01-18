@@ -316,6 +316,92 @@ void FTagManager::DumpTags()
 
 //-----------------------------------------------------------------------------
 //
+//
+//
+//-----------------------------------------------------------------------------
+
+int FTagManager::CountSectorTags(const sector_t *sector)
+{
+	int i = sector->Index();
+
+	if (SectorHasTags(i))
+	{
+		const int n = allTags.Size();
+		
+		int j = startForSector[i]; 
+		int c = 0;
+
+		while(j < n && allTags[j].target == i)
+		{
+			j++;
+			c++;
+		}
+
+		return c;
+	}
+
+	return 0;
+}
+
+int FTagManager::GetSectorTag(const sector_t *sector, int index)
+{
+	int i = sector->Index();
+
+	if (SectorHasTags(i))
+	{
+		const int n = allTags.Size();
+
+		int j = startForSector[i] + index;
+
+		return (j < n && allTags[j].target == i) ? allTags[j].tag : 0;
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+int FTagManager::CountLineIDs(const line_t *line)
+{
+	int i = line->Index();
+
+	if (LineHasIDs(i))
+	{
+		const int n = allTags.Size();
+
+		int j = startForLine[i];
+		int c = 0;
+
+		while(j < n && allTags[j].target == i)
+		{
+			j++;
+			c++;
+		}
+
+		return c;
+	}
+
+	return 0;
+}
+
+int FTagManager::GetLineID(const line_t *line, int index)
+{
+	int i = line->Index();
+
+	if (LineHasIDs(i))
+	{
+		const int n = allTags.Size();
+
+		int j = startForLine[i] + index;
+
+		return (j < n && allTags[j].target == i) ? allTags[j].tag : 0;
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
 // RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
 //
 // Find the next sector with a specified tag.

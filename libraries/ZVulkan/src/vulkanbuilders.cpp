@@ -527,13 +527,27 @@ BufferBuilder& BufferBuilder::MemoryType(VkMemoryPropertyFlags requiredFlags, Vk
 	return *this;
 }
 
+BufferBuilder& BufferBuilder::MinAlignment(VkDeviceSize memoryAlignment)
+{
+	minAlignment = memoryAlignment;
+	return *this;
+}
+
 std::unique_ptr<VulkanBuffer> BufferBuilder::Create(VulkanDevice* device)
 {
 	VkBuffer buffer;
 	VmaAllocation allocation;
 
-	VkResult result = vmaCreateBuffer(device->allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
-	CheckVulkanError(result, "Could not allocate memory for vulkan buffer");
+	if (minAlignment == 0)
+	{
+		VkResult result = vmaCreateBuffer(device->allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
+		CheckVulkanError(result, "Could not allocate memory for vulkan buffer");
+	}
+	else
+	{
+		VkResult result = vmaCreateBufferWithAlignment(device->allocator, &bufferInfo, &allocInfo, minAlignment, &buffer, &allocation, nullptr);
+		CheckVulkanError(result, "Could not allocate memory for vulkan buffer");
+	}
 
 	auto obj = std::make_unique<VulkanBuffer>(device, buffer, allocation, bufferInfo.size);
 	if (debugName)
@@ -1175,9 +1189,9 @@ std::unique_ptr<VulkanPipelineCache> PipelineCacheBuilder::Create(VulkanDevice* 
 	{
 		VkPipelineCacheHeaderVersionOne* header = (VkPipelineCacheHeaderVersionOne*)initData.data();
 		if (header->headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_ONE &&
-			header->vendorID == device->PhysicalDevice.Properties.vendorID &&
-			header->deviceID == device->PhysicalDevice.Properties.deviceID &&
-			memcmp(header->pipelineCacheUUID, device->PhysicalDevice.Properties.pipelineCacheUUID, VK_UUID_SIZE) == 0)
+			header->vendorID == device->PhysicalDevice.Properties.Properties.vendorID &&
+			header->deviceID == device->PhysicalDevice.Properties.Properties.deviceID &&
+			memcmp(header->pipelineCacheUUID, device->PhysicalDevice.Properties.Properties.pipelineCacheUUID, VK_UUID_SIZE) == 0)
 		{
 			pipelineCacheInfo.pInitialData = initData.data();
 			pipelineCacheInfo.initialDataSize = initData.size();
@@ -1767,13 +1781,13 @@ std::vector<VulkanCompatibleDevice> VulkanDeviceBuilder::FindDevices(const std::
 	{
 		// Sort by GPU type first. This will ensure the "best" device is most likely to map to vk_device 0
 		static const int typeSort[] = { 4, 1, 0, 2, 3 };
-		int sortA = a.Device->Properties.deviceType < 5 ? typeSort[a.Device->Properties.deviceType] : (int)a.Device->Properties.deviceType;
-		int sortB = b.Device->Properties.deviceType < 5 ? typeSort[b.Device->Properties.deviceType] : (int)b.Device->Properties.deviceType;
+		int sortA = a.Device->Properties.Properties.deviceType < 5 ? typeSort[a.Device->Properties.Properties.deviceType] : (int)a.Device->Properties.Properties.deviceType;
+		int sortB = b.Device->Properties.Properties.deviceType < 5 ? typeSort[b.Device->Properties.Properties.deviceType] : (int)b.Device->Properties.Properties.deviceType;
 		if (sortA != sortB)
 			return sortA < sortB;
 
 		// Then sort by the device's unique ID so that vk_device uses a consistent order
-		int sortUUID = memcmp(a.Device->Properties.pipelineCacheUUID, b.Device->Properties.pipelineCacheUUID, VK_UUID_SIZE);
+		int sortUUID = memcmp(a.Device->Properties.Properties.pipelineCacheUUID, b.Device->Properties.Properties.pipelineCacheUUID, VK_UUID_SIZE);
 		return sortUUID < 0;
 	};
 	std::stable_sort(supportedDevices.begin(), supportedDevices.end(), sortFunc);

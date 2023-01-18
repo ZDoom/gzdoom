@@ -163,9 +163,6 @@ std::vector<VulkanPhysicalDevice> VulkanInstance::GetPhysicalDevices(VkInstance 
 		auto& dev = devinfo[i];
 		dev.Device = devices[i];
 
-		vkGetPhysicalDeviceMemoryProperties(dev.Device, &dev.MemoryProperties);
-		vkGetPhysicalDeviceProperties(dev.Device, &dev.Properties);
-
 		uint32_t queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(dev.Device, &queueFamilyCount, nullptr);
 		dev.QueueFamilies.resize(queueFamilyCount);
@@ -186,11 +183,32 @@ std::vector<VulkanPhysicalDevice> VulkanInstance::GetPhysicalDevices(VkInstance 
 			return false;
 		};
 
+		vkGetPhysicalDeviceMemoryProperties(dev.Device, &dev.Properties.Memory);
+
 		if (apiVersion != VK_API_VERSION_1_0)
 		{
+			VkPhysicalDeviceProperties2 deviceProperties2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+
+			void** next = const_cast<void**>(&deviceProperties2.pNext);
+			if (checkForExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
+			{
+				*next = &dev.Properties.AccelerationStructure;
+				next = &dev.Properties.AccelerationStructure.pNext;
+			}
+			if (checkForExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
+			{
+				*next = &dev.Properties.DescriptorIndexing;
+				next = &dev.Properties.DescriptorIndexing.pNext;
+			}
+
+			vkGetPhysicalDeviceProperties2(dev.Device, &deviceProperties2);
+			dev.Properties.Properties = deviceProperties2.properties;
+			dev.Properties.AccelerationStructure.pNext = nullptr;
+			dev.Properties.DescriptorIndexing.pNext = nullptr;
+
 			VkPhysicalDeviceFeatures2 deviceFeatures2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 
-			void** next = const_cast<void**>(&deviceFeatures2.pNext);
+			next = const_cast<void**>(&deviceFeatures2.pNext);
 			if (checkForExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
 			{
 				*next = &dev.Features.BufferDeviceAddress;
@@ -221,6 +239,7 @@ std::vector<VulkanPhysicalDevice> VulkanInstance::GetPhysicalDevices(VkInstance 
 		}
 		else
 		{
+			vkGetPhysicalDeviceProperties(dev.Device, &dev.Properties.Properties);
 			vkGetPhysicalDeviceFeatures(dev.Device, &dev.Features.Features);
 		}
 	}

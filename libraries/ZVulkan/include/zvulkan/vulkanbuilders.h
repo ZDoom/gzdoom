@@ -184,6 +184,7 @@ public:
 	BufferBuilder& Size(size_t size);
 	BufferBuilder& Usage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
 	BufferBuilder& MemoryType(VkMemoryPropertyFlags requiredFlags, VkMemoryPropertyFlags preferredFlags, uint32_t memoryTypeBits = 0);
+	BufferBuilder& MinAlignment(VkDeviceSize memoryAlignment);
 	BufferBuilder& DebugName(const char* name) { debugName = name; return *this; }
 
 	std::unique_ptr<VulkanBuffer> Create(VulkanDevice *device);
@@ -192,6 +193,7 @@ private:
 	VkBufferCreateInfo bufferInfo = {};
 	VmaAllocationCreateInfo allocInfo = {};
 	const char* debugName = nullptr;
+	VkDeviceSize minAlignment = 0;
 };
 
 class ShaderBuilder

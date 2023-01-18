@@ -179,6 +179,7 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	blScratchBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size(sizeInfo.buildScratchSize)
+		.MinAlignment(fb->device->PhysicalDevice.Properties.AccelerationStructure.minAccelerationStructureScratchOffsetAlignment)
 		.DebugName("blScratchBuffer")
 		.Create(fb->device.get());
 
@@ -263,6 +264,7 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	tlScratchBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size(sizeInfo.buildScratchSize)
+		.MinAlignment(fb->device->PhysicalDevice.Properties.AccelerationStructure.minAccelerationStructureScratchOffsetAlignment)
 		.DebugName("tlScratchBuffer")
 		.Create(fb->device.get());
 

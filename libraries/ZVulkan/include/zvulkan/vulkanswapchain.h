@@ -6,6 +6,15 @@
 class VulkanSemaphore;
 class VulkanFence;
 
+class VulkanSurfaceCapabilities
+{
+public:
+	VkSurfaceCapabilitiesKHR Capabilites = { };
+	VkSurfaceCapabilitiesFullScreenExclusiveEXT FullScreenExclusive = { VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_FULL_SCREEN_EXCLUSIVE_EXT };
+	std::vector<VkPresentModeKHR> PresentModes;
+	std::vector<VkSurfaceFormatKHR> Formats;
+};
+
 class VulkanSwapChain
 {
 public:
@@ -27,13 +36,11 @@ public:
 	void QueuePresent(int imageIndex, VulkanSemaphore* semaphore = nullptr);
 
 private:
-	void SelectFormat(bool hdr);
-	void SelectPresentMode(bool vsync, bool exclusivefullscreen);
+	void SelectFormat(const VulkanSurfaceCapabilities& caps, bool hdr);
 
-	bool CreateSwapchain(int width, int height, int imageCount, bool exclusivefullscreen, VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+	bool CreateSwapchain(int width, int height, int imageCount, bool vsync, bool hdr, bool exclusivefullscreen);
 
-	std::vector<VkSurfaceFormatKHR> GetSurfaceFormats();
-	std::vector<VkPresentModeKHR> GetPresentModes(bool exclusivefullscreen);
+	VulkanSurfaceCapabilities GetSurfaceCapabilities(bool exclusivefullscreen);
 
 	VulkanDevice* device = nullptr;
 	bool lost = true;

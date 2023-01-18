@@ -77,6 +77,12 @@ public:	// The ones below are called by functions that cannot be declared as fri
 	void RemoveLineIDs(int line);
 
 	void DumpTags();
+
+	int CountSectorTags(const sector_t *sector);
+	int GetSectorTag(const sector_t *sector, int index);
+
+	int CountLineIDs(const line_t *line);
+	int GetLineID(const line_t *line, int index);
 };
 
 class FSectorTagIterator

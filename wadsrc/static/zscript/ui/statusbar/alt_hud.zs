@@ -718,9 +718,10 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 	
-	void DrawCoordinateEntry(int xpos, int ypos, String coordstr)
+	void DrawCoordinateEntry(int xpos, int ypos, String coordstr, Font fnt = nullptr)
 	{
-		screen.DrawText(SmallFont, hudcolor_xyco, xpos, ypos, coordstr,
+		if (fnt == nullptr) fnt = SmallFont;
+		screen.DrawText(fnt, hudcolor_xyco, xpos, ypos, coordstr,
 						 DTA_KeepRatio, true,
 						 DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 	}
@@ -729,7 +730,8 @@ class AltHud ui
 	{
 		Vector3 pos;
 		String coordstr;
-		int h = SmallFont.GetHeight();
+		let fnt = generic_ui ? NewSmallFont : SmallFont;
+		int h = fnt.GetHeight();
 		let mo = CPlayer.mo;
 		
 		if (!map_point_coordinates || !automapactive) 
@@ -742,7 +744,7 @@ class AltHud ui
 			pos.z = Level.PointInSector(pos.xy).floorplane.ZatPoint(pos.xy);
 		}
 
-		int xpos = hudwidth - SmallFont.StringWidth("X: -00000")-6;
+		int xpos = hudwidth - fnt.StringWidth("X: -00000")-6;
 		int ypos = 18;
 
 		if (withmapname)
@@ -761,20 +763,20 @@ class AltHud ui
 			ypos += 2 * hh + h;
 		}
 		
-		DrawCoordinateEntry(xpos, ypos, String.Format("X: %.0f", pos.X));
+		DrawCoordinateEntry(xpos, ypos, String.Format("X: %.0f", pos.X), fnt);
 		ypos += h;
-		DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", pos.Y));
+		DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", pos.Y), fnt);
 		ypos += h;
-		DrawCoordinateEntry(xpos, ypos, String.Format("Z: %.0f", pos.Z));
+		DrawCoordinateEntry(xpos, ypos, String.Format("Z: %.0f", pos.Z), fnt);
 		ypos += h;
 
 		if (hud_showangles)
 		{
-			DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", Actor.Normalize180(mo.Angle)));
+			DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", Actor.Normalize180(mo.Angle)), fnt);
 			ypos += h;
-			DrawCoordinateEntry(xpos, ypos, String.Format("P: %.0f", Actor.Normalize180(mo.Pitch)));
+			DrawCoordinateEntry(xpos, ypos, String.Format("P: %.0f", Actor.Normalize180(mo.Pitch)), fnt);
 			ypos += h;
-			DrawCoordinateEntry(xpos, ypos, String.Format("R: %.0f", Actor.Normalize180(mo.Roll)));
+			DrawCoordinateEntry(xpos, ypos, String.Format("R: %.0f", Actor.Normalize180(mo.Roll)), fnt);
 		}
 	}
 	

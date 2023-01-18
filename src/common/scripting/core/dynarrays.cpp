@@ -81,12 +81,19 @@ template<class T> int ArrayPop(T *self)
 	return self->Pop();
 }
 
-template<class T> void ArrayDelete(T *self, int index, int count)
+template<class T> void ArrayDelete(T *self, unsigned int index, int count)
 {
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 }
 
-template<class T, class U, int fill = 1> void ArrayInsert(T *self, int index, U val)
+template<class T, class U, int fill = 1> void ArrayInsert(T *self, unsigned int index, U val)
 {
 	int oldSize = self->Size();
 	self->Insert(index, static_cast<typename T::value_type>(val));
@@ -101,12 +108,12 @@ template<class T> void ArrayShrinkToFit(T *self)
 	self->ShrinkToFit();
 }
 
-template<class T> void ArrayGrow(T *self, int amount)
+template<class T> void ArrayGrow(T *self, unsigned int amount)
 {
 	self->Grow(amount);
 }
 
-template<class T, int fill = 1> void ArrayResize(T *self, int amount)
+template<class T, int fill = 1> void ArrayResize(T *self, unsigned int amount)
 {
 	int oldSize = self->Size();
 	self->Resize(amount);
@@ -118,12 +125,12 @@ template<class T, int fill = 1> void ArrayResize(T *self, int amount)
 	}
 }
 
-template<class T> unsigned int ArrayReserve(T *self, int amount)
+template<class T> unsigned int ArrayReserve(T *self, unsigned int amount)
 {
 	return self->Reserve(amount);
 }
 
-template<> unsigned int ArrayReserve(TArray<DObject*> *self, int amount)
+template<> unsigned int ArrayReserve(TArray<DObject*> *self, unsigned int amount)
 {
 	const unsigned int oldSize = self->Reserve(amount);
 	const unsigned int fillCount = self->Size() - oldSize;
@@ -200,16 +207,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Pop, ArrayPop<FDynArray_I8>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Delete, ArrayDelete<FDynArray_I8>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Insert, ArrayInsert<FDynArray_I8 COMMA int>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(val);
 	ArrayInsert(self, index, val);
 	return 0;
@@ -225,7 +239,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, ShrinkToFit, ArrayShrinkToFit<FDynAr
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Grow, ArrayGrow<FDynArray_I8>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -233,7 +247,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Grow, ArrayGrow<FDynArray_I8>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Resize, ArrayResize<FDynArray_I8>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ArrayResize(self, count);
 	return 0;
 }
@@ -241,7 +255,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Resize, ArrayResize<FDynArray_I8>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Reserve, ArrayReserve<FDynArray_I8>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(self->Reserve(count));
 }
 
@@ -311,16 +325,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Pop, ArrayPop<FDynArray_I16>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Delete, ArrayDelete<FDynArray_I16>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Insert, ArrayInsert<FDynArray_I16 COMMA int>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(val);
 	ArrayInsert(self, index, val);
 	return 0;
@@ -336,7 +357,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, ShrinkToFit, ArrayShrinkToFit<FDynA
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Grow, ArrayGrow<FDynArray_I16>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -344,7 +365,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Grow, ArrayGrow<FDynArray_I16>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Resize, ArrayResize<FDynArray_I16>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ArrayResize(self, count);
 	return 0;
 }
@@ -352,7 +373,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Resize, ArrayResize<FDynArray_I16>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Reserve, ArrayReserve<FDynArray_I16>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(self->Reserve(count));
 }
 
@@ -444,16 +465,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Pop, ArrayPop<FDynArray_I32>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Delete, ArrayDelete<FDynArray_I32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Insert, ArrayInsert<FDynArray_I32 COMMA int>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(val);
 	ArrayInsert(self, index, val);
 	return 0;
@@ -469,7 +497,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, ShrinkToFit, ArrayShrinkToFit<FDynA
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Grow, ArrayGrow<FDynArray_I32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -477,7 +505,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Grow, ArrayGrow<FDynArray_I32>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Resize, ArrayResize<FDynArray_I32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ArrayResize(self, count);
 	return 0;
 }
@@ -485,7 +513,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Resize, ArrayResize<FDynArray_I32>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Reserve, ArrayReserve<FDynArray_I32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(self->Reserve(count));
 }
 
@@ -555,16 +583,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Pop, ArrayPop<FDynArray_F32>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Delete, ArrayDelete<FDynArray_F32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Insert, ArrayInsert<FDynArray_F32 COMMA double>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_FLOAT(val);
 	ArrayInsert(self, index, val);
 	return 0;
@@ -580,7 +615,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, ShrinkToFit, ArrayShrinkToFit<FDynA
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Grow, ArrayGrow<FDynArray_F32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -588,7 +623,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Grow, ArrayGrow<FDynArray_F32>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Resize, ArrayResize<FDynArray_F32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ArrayResize(self, count);
 	return 0;
 }
@@ -596,7 +631,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Resize, ArrayResize<FDynArray_F32>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Reserve, ArrayReserve<FDynArray_F32>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(self->Reserve(count));
 }
 
@@ -666,16 +701,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Pop, ArrayPop<FDynArray_F64>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Delete, ArrayDelete<FDynArray_F64>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Insert, ArrayInsert<FDynArray_F64 COMMA double>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_FLOAT(val);
 	ArrayInsert(self, index, val);
 	return 0;
@@ -691,7 +733,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, ShrinkToFit, ArrayShrinkToFit<FDynA
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Grow, ArrayGrow<FDynArray_F64>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -699,7 +741,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Grow, ArrayGrow<FDynArray_F64>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Resize, ArrayResize<FDynArray_F64>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ArrayResize(self, count);
 	return 0;
 }
@@ -707,7 +749,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Resize, ArrayResize<FDynArray_F64>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Reserve, ArrayReserve<FDynArray_F64>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(self->Reserve(count));
 }
 
@@ -777,16 +819,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Pop, ArrayPop<FDynArray_Ptr>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Delete, ArrayDelete<FDynArray_Ptr>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Insert, ArrayInsert<FDynArray_Ptr COMMA void*>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_POINTER(val, void);
 	ArrayInsert(self, index, val);
 	return 0;
@@ -802,7 +851,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, ShrinkToFit, ArrayShrinkToFit<FDynA
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Grow, ArrayGrow<FDynArray_Ptr>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -810,7 +859,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Grow, ArrayGrow<FDynArray_Ptr>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Resize, ArrayResize<FDynArray_Ptr>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ArrayResize(self, count);
 	return 0;
 }
@@ -818,7 +867,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Resize, ArrayResize<FDynArray_Ptr>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Reserve, ArrayReserve<FDynArray_Ptr>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(self->Reserve(count));
 }
 
@@ -913,9 +962,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Pop, ArrayPop<FDynArray_Obj>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Delete, ArrayDelete<FDynArray_Obj>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
@@ -930,7 +986,7 @@ void ObjArrayInsert(FDynArray_Obj *self,int index, DObject *obj)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Insert, ObjArrayInsert)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_OBJECT(val, DObject);
 	ObjArrayInsert(self, index, val);
 	return 0;
@@ -946,7 +1002,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, ShrinkToFit, ArrayShrinkToFit<FDynA
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Grow, ArrayGrow<FDynArray_Obj>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -954,7 +1010,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Grow, ArrayGrow<FDynArray_Obj>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Resize, ArrayResize<FDynArray_Obj>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ArrayResize(self, count);
 	return 0;
 }
@@ -962,7 +1018,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Resize, ArrayResize<FDynArray_Obj>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Reserve, ArrayReserve<FDynArray_Obj>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(ArrayReserve(self, count));
 }
 
@@ -1049,16 +1105,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Pop, ArrayPop<FDynArray_String>)
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Delete, ArrayDelete<FDynArray_String>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_INT(count);
-	self->Delete(index, count);
+	if(index >= self->Size())
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "In Array::Delete, Size = %u, Index = %u",self->Size(), index);
+	}
+	else
+	{
+		self->Delete(index, count);
+	}
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Insert, ArrayInsert<FDynArray_String COMMA const FString & COMMA 0>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
-	PARAM_INT(index);
+	PARAM_UINT(index);
 	PARAM_STRING(val);
 	self->Insert(index, val);
 	return 0;
@@ -1074,7 +1137,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, ShrinkToFit, ArrayShrinkToFit<FD
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Grow, ArrayGrow<FDynArray_String>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Grow(count);
 	return 0;
 }
@@ -1082,7 +1145,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Grow, ArrayGrow<FDynArray_String
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Resize, ArrayResize<FDynArray_String COMMA 0>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	self->Resize(count);
 	return 0;
 }
@@ -1090,7 +1153,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Resize, ArrayResize<FDynArray_St
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Reserve, ArrayReserve<FDynArray_String>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
-	PARAM_INT(count);
+	PARAM_UINT(count);
 	ACTION_RETURN_INT(self->Reserve(count));
 }
 

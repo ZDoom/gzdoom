@@ -202,6 +202,7 @@ class Actor : Thinker native
 	native int DesignatedTeam;
 	native Actor BlockingMobj;
 	native Line BlockingLine;
+	native Line MovementBlockingLine;
 	native Sector Blocking3DFloor;
 	native Sector BlockingCeiling;
 	native Sector BlockingFloor;
@@ -693,7 +694,7 @@ class Actor : Thinker native
 	native void CheckFakeFloorTriggers (double oldz, bool oldz_has_viewheight = false);
 	native bool CheckFor3DFloorHit(double z, bool trigger);
 	native bool CheckFor3DCeilingHit(double z, bool trigger);
-	native int CheckMonsterUseSpecials();
+	native int CheckMonsterUseSpecials(Line blocking = null);
 	
 	native bool CheckMissileSpawn(double maxdist);
 	native bool CheckPosition(Vector2 pos, bool actorsonly = false, FCheckPosition tm = null);

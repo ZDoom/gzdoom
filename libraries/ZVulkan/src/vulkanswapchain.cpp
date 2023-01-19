@@ -117,10 +117,20 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 	}
 	else
 	{
-		if (supportsImmediate)
-			presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-		else if (supportsMailbox)
-			presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+		if (exclusivefullscreen) // Exclusive full screen doesn't seem to support mailbox for some reason, even if it is advertised
+		{
+			if (supportsImmediate)
+				presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+			else if (supportsMailbox)
+				presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+		}
+		else
+		{
+			if (supportsMailbox)
+				presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+			else if (supportsImmediate)
+				presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+		}
 	}
 
 	SelectFormat(caps, hdr);
@@ -140,8 +150,8 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 	imageCount = std::max(caps.Capabilites.minImageCount, (uint32_t)imageCount);
 
 	VkSwapchainCreateInfoKHR swapChainCreateInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
-	VkSurfaceFullScreenExclusiveInfoEXT exclusiveInfo = { VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT };
 #ifdef WIN32
+	VkSurfaceFullScreenExclusiveInfoEXT exclusiveInfo = { VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT };
 	VkSurfaceFullScreenExclusiveWin32InfoEXT exclusiveWin32Info = { VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT };
 #endif
 
@@ -173,17 +183,15 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 	swapChainCreateInfo.clipped = VK_TRUE; // Applications SHOULD set this value to VK_TRUE if they do not expect to read back the content of presentable images before presenting them or after reacquiring them, and if their fragment shaders do not have any side effects that require them to run for all pixels in the presentable image
 	swapChainCreateInfo.oldSwapchain = swapchain;
 
+#ifdef WIN32
 	if (exclusivefullscreen)
 	{
 		swapChainCreateInfo.pNext = &exclusiveInfo;
-#ifdef WIN32
 		exclusiveInfo.pNext = &exclusiveWin32Info;
 		exclusiveInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
 		exclusiveWin32Info.hmonitor = MonitorFromWindow(device->Surface->Window, MONITOR_DEFAULTTONEAREST);
-#else
-		exclusiveInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
-#endif
 	}
+#endif
 
 	VkResult result = vkCreateSwapchainKHR(device->device, &swapChainCreateInfo, nullptr, &swapchain);
 
@@ -281,20 +289,18 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 	VulkanSurfaceCapabilities caps;
 
 	VkPhysicalDeviceSurfaceInfo2KHR surfaceInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR };
-	VkSurfaceFullScreenExclusiveInfoEXT exclusiveInfo = { VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT };
 #ifdef WIN32
+	VkSurfaceFullScreenExclusiveInfoEXT exclusiveInfo = { VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT };
 	VkSurfaceFullScreenExclusiveWin32InfoEXT exclusiveWin32Info = { VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT };
 #endif
 
+#ifdef WIN32
 	if (exclusivefullscreen)
 	{
-#ifdef WIN32
 		exclusiveInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
 		exclusiveWin32Info.hmonitor = MonitorFromWindow(device->Surface->Window, MONITOR_DEFAULTTONEAREST);
-#else
-		exclusiveInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
-#endif
 	}
+#endif
 
 	surfaceInfo.surface = device->Surface->Surface;
 
@@ -302,24 +308,27 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 	{
 		const void** next = &surfaceInfo.pNext;
 
+#ifdef WIN32
 		if (exclusivefullscreen && device->SupportsExtension(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME))
 		{
 			*next = &exclusiveInfo;
 			next = const_cast<const void**>(&exclusiveInfo.pNext);
 
-#ifdef WIN32
-			* next = &exclusiveWin32Info;
+			*next = &exclusiveWin32Info;
 			next = &exclusiveWin32Info.pNext;
-#endif
 		}
+#endif
 
 		VkSurfaceCapabilities2KHR caps2 = { VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR };
 		next = const_cast<const void**>(&caps2.pNext);
+
+#ifdef WIN32
 		if (exclusivefullscreen && device->SupportsExtension(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME))
 		{
 			*next = &caps.FullScreenExclusive;
 			next = const_cast<const void**>(&caps.FullScreenExclusive.pNext);
 		}
+#endif
 
 		VkResult result = vkGetPhysicalDeviceSurfaceCapabilities2KHR(device->PhysicalDevice.Device, &surfaceInfo, &caps2);
 		if (result != VK_SUCCESS)
@@ -334,6 +343,7 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 			throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
 	}
 
+#ifdef WIN32
 	if (exclusivefullscreen && device->SupportsExtension(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME))
 	{
 		const void** next = &surfaceInfo.pNext;
@@ -352,6 +362,7 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 		}
 	}
 	else
+#endif
 	{
 		uint32_t presentModeCount = 0;
 		VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->PhysicalDevice.Device, device->Surface->Surface, &presentModeCount, nullptr);

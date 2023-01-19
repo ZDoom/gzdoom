@@ -285,7 +285,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 		auto it = GetThinkerIterator<AActor>(NAME_None, STAT_TRAVELLING);
 		for (AActor *actor = it.Next(); actor != nullptr; actor = it.Next())
 		{
-			actor->BlockingLine = nullptr;
+			actor->BlockingLine = actor->MovementBlockingLine = nullptr;
 			actor->BlockingFloor = actor->BlockingCeiling = actor->Blocking3DFloor = nullptr;
 		}
 	}

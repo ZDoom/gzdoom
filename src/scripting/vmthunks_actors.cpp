@@ -1539,20 +1539,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForPlayers, P_LookForPlayers)
 	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
 }
 
-static int CheckMonsterUseSpecials(AActor *self)
+static int CheckMonsterUseSpecials(AActor *self, line_t *blocking)
 {
 	spechit_t spec;
 	int good = 0;
 
 	if (!(self->flags6 & MF6_NOTRIGGER))
 	{
+		auto checkLine = blocking ? blocking : self->BlockingLine;
 		while (spechit.Pop (spec))
 		{
 			// [RH] let monsters push lines, as well as use them
 			if (((self->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (spec.line, self, 0, SPAC_Use)) ||
 				((self->flags2 & MF2_PUSHWALL) && P_ActivateLine (spec.line, self, 0, SPAC_Push)))
 			{
-				good |= spec.line == self->BlockingLine ? 1 : 2;
+				good |= spec.line == checkLine ? 1 : 2;
 			}
 		}
 	}
@@ -1564,8 +1565,9 @@ static int CheckMonsterUseSpecials(AActor *self)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMonsterUseSpecials, CheckMonsterUseSpecials)
 {
 	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(blocking, line_t);
 
-	ACTION_RETURN_INT(CheckMonsterUseSpecials(self));
+	ACTION_RETURN_INT(CheckMonsterUseSpecials(self, blocking));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Wander, A_Wander)
@@ -2055,6 +2057,7 @@ DEFINE_FIELD(AActor, lastbump)
 DEFINE_FIELD(AActor, DesignatedTeam)
 DEFINE_FIELD(AActor, BlockingMobj)
 DEFINE_FIELD(AActor, BlockingLine)
+DEFINE_FIELD(AActor, MovementBlockingLine)
 DEFINE_FIELD(AActor, Blocking3DFloor)
 DEFINE_FIELD(AActor, BlockingCeiling)
 DEFINE_FIELD(AActor, BlockingFloor)

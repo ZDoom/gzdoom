@@ -1971,6 +1971,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 	FCheckPosition tm(!!(mo->flags2 & MF2_RIP));
 
 	DAngle oldangle = mo->Angles.Yaw;
+	line_t* blocker = nullptr;
 	do
 	{
 		if (mo->Level->i_compatflags & COMPATF_WALLRUN) pushtime++;
@@ -1986,7 +1987,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 		{
 			// blocked move
 			AActor *BlockingMobj = mo->BlockingMobj;
-			line_t *BlockingLine = mo->BlockingLine;
+			line_t *BlockingLine = blocker = mo->BlockingLine;
 
 			// [ZZ] 
 			if (!BlockingLine && !BlockingMobj) // hit floor or ceiling while XY movement - sector actions
@@ -2187,6 +2188,9 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 			}
 		}
 	} while (++step <= steps);
+
+	// Correctly update whether the Actor was truly blocked by a wall or not
+	mo->BlockingLine = blocker;
 
 	// Friction
 
@@ -4057,6 +4061,7 @@ void AActor::Tick ()
 
 		// Handle X and Y velocities
 		BlockingMobj = nullptr;
+		BlockingLine = nullptr;
 		sector_t* oldBlockingCeiling = BlockingCeiling;
 		sector_t* oldBlockingFloor = BlockingFloor;
 		Blocking3DFloor = nullptr;

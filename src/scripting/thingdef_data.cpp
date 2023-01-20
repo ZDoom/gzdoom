@@ -724,6 +724,10 @@ void InitThingdef()
 	teamstruct->Size = sizeof(FTeam);
 	teamstruct->Align = alignof(FTeam);
 
+	auto terraindefstruct = NewStruct("TerrainDef", nullptr, true);
+	terraindefstruct->Size = sizeof(FTerrainDef);
+	terraindefstruct->Align = alignof(FTerrainDef);
+
 	PStruct *pstruct = NewStruct("PlayerInfo", nullptr, true);
 	pstruct->Size = sizeof(player_t);
 	pstruct->Align = alignof(player_t);

@@ -3512,6 +3512,8 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		D_StartTitle ();				// start up intro loop
 		setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 	}
+
+	staticEventManager.OnEngineInitialize();
 	return 0;
 }
 //==========================================================================

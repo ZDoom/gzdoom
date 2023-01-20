@@ -3517,6 +3517,16 @@ bool FSlide::BounceWall(AActor *mo)
 	}
 	line = bestslideline;
 
+	if (mo->flags & MF_MISSILE)
+	{
+		switch (mo->SpecialBounceHit(nullptr, line, nullptr))
+		{
+			case 1:		return true;
+			case 0:		return false;
+			default:	break;
+		}
+	}
+
 	if (line->special == Line_Horizon || ((mo->BounceFlags & BOUNCE_NotOnSky) && line->hitSkyWall(mo)))
 	{
 		mo->SeeSound = mo->BounceSound = NO_SOUND;	// it might make a sound otherwise
@@ -3602,6 +3612,13 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 	if (mo && (mo->flags & MF_MISSILE) && BlockingMobj)
 	{
 		switch (mo->SpecialMissileHit(BlockingMobj))
+		{
+			case 1:		return true;
+			case 0:		return false;
+			default:	break;
+		}
+
+		switch (mo->SpecialBounceHit(BlockingMobj, nullptr, nullptr))
 		{
 			case 1:		return true;
 			case 0:		return false;

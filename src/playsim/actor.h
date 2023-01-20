@@ -830,6 +830,11 @@ public:
 	// (virtual on the script side only)
 	int SpecialMissileHit (AActor *victim);
 
+	// Called when bouncing to allow for custom behavior.
+	// Returns -1 for normal behavior, 0 to stop, and 1 to keep going.
+	// (virtual on the script side only)
+	int SpecialBounceHit(AActor* bounceMobj, line_t* bounceLine, secplane_t* bouncePlane);
+
 	// Returns true if it's okay to switch target to "other" after being attacked by it.
 	bool CallOkayToSwitchTarget(AActor *other);
 	bool OkayToSwitchTarget (AActor *other);

@@ -89,6 +89,7 @@ class StaticEventHandler : Object native play version("2.4")
     virtual void OnUnregister() {}
 
     // actual handlers are here
+    virtual void OnEngineInitialize() {}
 	virtual void WorldLoaded(WorldEvent e) {}
     virtual void WorldUnloaded(WorldEvent e) {}
     virtual void WorldThingSpawned(WorldEvent e) {}

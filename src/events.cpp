@@ -280,6 +280,14 @@ void EventManager::Shutdown()
 		handler->name(); \
 }
 
+void EventManager::OnEngineInitialize()
+{
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsStatic())
+			handler->OnEngineInitialize();
+	}
+}
 
 // note for the functions below.
 // *Unsafe is executed on EVERY map load/close, including savegame loading, etc.
@@ -772,6 +780,18 @@ FWorldEvent EventManager::SetupWorldEvent()
 	e.DamageAngle = nullAngle;
 	return e;
 }
+
+void DStaticEventHandler::OnEngineInitialize()
+{
+	IFVIRTUAL(DStaticEventHandler, OnEngineInitialize)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		VMCall(func, params, 1, nullptr, 0);
+	}
+}
+
 
 void DStaticEventHandler::WorldLoaded()
 {

@@ -137,7 +137,6 @@ PField::PField()
 {
 }
 
-
 PField::PField(FName name, PType *type, uint32_t flags, size_t offset, int bitvalue)
 	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
 {
@@ -331,9 +330,11 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 //
 //==========================================================================
 
-PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align)
+PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align, int fileno)
 {
 	PField *field = Create<PField>(name, type, flags);
+
+	field->mDefFileNo = fileno;
 
 	// The new field is added to the end of this struct, alignment permitting.
 	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
@@ -365,9 +366,11 @@ PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned
 //
 //==========================================================================
 
-PField *PSymbolTable::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
+PField *PSymbolTable::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue, int fileno)
 {
 	PField *field = Create<PField>(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
+
+	field->mDefFileNo = fileno;
 
 	if (AddSymbol(field) == nullptr)
 	{ // name is already in use

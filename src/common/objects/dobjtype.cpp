@@ -531,7 +531,7 @@ void PClass::Derive(PClass *newclass, FName name)
 //
 //==========================================================================
 
-PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycreated)
+PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycreated, int fileno)
 {
 	assert(size >= Size);
 	PClass *type;
@@ -571,7 +571,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycre
 	type->Size = size;
 	if (size != TentativeClass)
 	{
-		NewClassType(type);
+		NewClassType(type, fileno);
 		if (newlycreated) *newlycreated = true;
 		type->Virtuals = Virtuals;
 	}

@@ -628,6 +628,7 @@ struct ZCC_AST
 	FMemArena SyntaxArena;
 	struct ZCC_TreeNode *TopNode;
 	VersionInfo ParseVersion;
+	int FileNo;
 };
 
 struct ZCCParseState : public ZCC_AST

@@ -3009,12 +3009,13 @@ PMapIterator *NewMapIterator(PType *keyType, PType *valueType)
 //
 //==========================================================================
 
-PStruct::PStruct(FName name, PTypeBase *outer, bool isnative)
+PStruct::PStruct(FName name, PTypeBase *outer, bool isnative, int fileno)
 : PContainerType(name, outer)
 {
 	mDescriptiveName.Format("%sStruct<%s>", isnative? "Native" : "", name.GetChars());
 	Size = 0;
 	isNative = isnative;
+	mDefFileNo = fileno;
 }
 
 //==========================================================================
@@ -3166,14 +3167,14 @@ PField *PStruct::AddNativeField(FName name, PType *type, size_t address, uint32_
 //
 //==========================================================================
 
-PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
+PStruct *NewStruct(FName name, PTypeBase *outer, bool native, int fileno)
 {
 	size_t bucket;
 	if (outer == nullptr) outer = Namespaces.GlobalNamespace;
 	PType *stype = TypeTable.FindType(NAME_Struct, (intptr_t)outer, name.GetIndex(), &bucket);
 	if (stype == nullptr)
 	{
-		stype = new PStruct(name, outer, native);
+		stype = new PStruct(name, outer, native, fileno);
 		TypeTable.AddType(stype, NAME_Struct, (intptr_t)outer, name.GetIndex(), bucket);
 	}
 	return static_cast<PStruct *>(stype);
@@ -3271,7 +3272,7 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 //
 //==========================================================================
 
-PClassType::PClassType(PClass *cls)
+PClassType::PClassType(PClass *cls, int fileno)
 {
 	assert(cls->VMType == nullptr);
 	Descriptor = cls;
@@ -3284,6 +3285,7 @@ PClassType::PClassType(PClass *cls)
 		ScopeFlags = ParentType->ScopeFlags;
 	}
 	cls->VMType = this;
+	mDefFileNo = fileno;
 	mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
 }
 
@@ -3317,13 +3319,13 @@ PField *PClassType::AddNativeField(FName name, PType *type, size_t address, uint
 //
 //==========================================================================
 
-PClassType *NewClassType(PClass *cls)
+PClassType *NewClassType(PClass *cls, int fileno)
 {
 	size_t bucket;
 	PType *ptype = TypeTable.FindType(NAME_Object, 0, cls->TypeName.GetIndex(), &bucket);
 	if (ptype == nullptr)
 	{
-		ptype = new PClassType(cls);
+		ptype = new PClassType(cls, fileno);
 		TypeTable.AddType(ptype, NAME_Object, 0, cls->TypeName.GetIndex(), bucket);
 	}
 	return static_cast<PClassType *>(ptype);

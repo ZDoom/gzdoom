@@ -80,7 +80,7 @@ public:
 	~PClass();
 	void InsertIntoHash(bool native);
 	DObject *CreateNew();
-	PClass *CreateDerivedClass(FName name, unsigned int size, bool *newlycreated = nullptr);
+	PClass *CreateDerivedClass(FName name, unsigned int size, bool *newlycreated = nullptr, int fileno = 0);
 
 	void InitializeActorInfo();
 	void BuildFlatPointers();

@@ -596,13 +596,14 @@ public:
 class PStruct : public PContainerType
 {
 public:
-	PStruct(FName name, PTypeBase *outer, bool isnative = false);
+	PStruct(FName name, PTypeBase *outer, bool isnative = false, int fileno = 0);
 
 	bool isNative;
 	bool isOrdered = false;
 	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use these two functions for it.
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;
+	int mDefFileNo;
 
 	 PField *AddField(FName name, PType *type, uint32_t flags=0) override;
 	 PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0) override;
@@ -635,8 +636,9 @@ class PClassType : public PContainerType
 public:
 	PClass *Descriptor;
 	PClassType *ParentType;
+	int mDefFileNo;
 
-	PClassType(PClass *cls = nullptr);
+	PClassType(PClass *cls = nullptr, int fileno = 0);
 	PField *AddField(FName name, PType *type, uint32_t flags = 0) override;
 	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0) override;
 };
@@ -657,9 +659,9 @@ PPointer *NewPointer(PType *type, bool isconst = false);
 PPointer *NewPointer(PClass *type, bool isconst = false);
 PClassPointer *NewClassPointer(PClass *restrict);
 PEnum *NewEnum(FName name, PTypeBase *outer);
-PStruct *NewStruct(FName name, PTypeBase *outer, bool native = false);
+PStruct *NewStruct(FName name, PTypeBase *outer, bool native = false, int fileno = 0);
 PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
-PClassType *NewClassType(PClass *cls);
+PClassType *NewClassType(PClass *cls, int fileno);
 
 // Built-in types -----------------------------------------------------------
 

@@ -407,6 +407,10 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 	int lumpnum = baselump;
 	auto fileno = fileSystem.GetFileContainer(lumpnum);
 
+	FString file  = fileSystem.GetFileFullPath(lumpnum);
+
+	state.FileNo = fileno;
+
 	if (TokenMap.CountUsed() == 0)
 	{
 		InitTokenMap();

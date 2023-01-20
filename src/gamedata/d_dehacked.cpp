@@ -3539,11 +3539,11 @@ void FinishDehPatch ()
 			// Retry until we find a free name. This is unlikely to happen but not impossible.
 			mysnprintf(typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", nameindex++);
 			bool newlycreated;
-			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size, &newlycreated));
+			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size, &newlycreated, 0));
 			if (newlycreated) subclass->InitializeDefaults();
 		} 
 		while (subclass == nullptr);
-		NewClassType(subclass);	// This needs a VM type to work as intended.
+		NewClassType(subclass, 0);	// This needs a VM type to work as intended.
 
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));

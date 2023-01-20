@@ -720,11 +720,11 @@ void ZCCCompiler::CreateStructTypes()
 		}
 		else if (s->strct->Flags & ZCC_Native)
 		{
-			s->strct->Type = NewStruct(s->NodeName(), outer, true);
+			s->strct->Type = NewStruct(s->NodeName(), outer, true, AST.FileNo);
 		}
 		else
 		{
-			s->strct->Type = NewStruct(s->NodeName(), outer);
+			s->strct->Type = NewStruct(s->NodeName(), outer, false, AST.FileNo);
 		}
 		if (s->strct->Flags & ZCC_Version)
 		{
@@ -832,7 +832,7 @@ void ZCCCompiler::CreateClassTypes()
 					{
 						DPrintf(DMSG_SPAMMY, "Registered %s as native with parent %s\n", me->TypeName.GetChars(), parent->TypeName.GetChars());
 					}
-					c->cls->Type = NewClassType(me);
+					c->cls->Type = NewClassType(me, AST.FileNo);
 					me->SourceLumpName = *c->cls->SourceName;
 				}
 				else
@@ -844,14 +844,14 @@ void ZCCCompiler::CreateClassTypes()
 						{
 							Error(c->cls, "Parent class %s of %s not accessible to ZScript version %d.%d.%d", parent->TypeName.GetChars(), c->NodeName().GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
 						}
-						auto newclass = parent->CreateDerivedClass(c->NodeName(), TentativeClass);
+						auto newclass = parent->CreateDerivedClass(c->NodeName(), TentativeClass, nullptr, AST.FileNo);
 						if (newclass == nullptr)
 						{
 							Error(c->cls, "Class name %s already exists", c->NodeName().GetChars());
 						}
 						else
 						{
-							c->cls->Type = NewClassType(newclass);
+							c->cls->Type = NewClassType(newclass, AST.FileNo);
 							DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->ClassType()->ParentClass->TypeName.GetChars());
 						}
 					}
@@ -864,7 +864,7 @@ void ZCCCompiler::CreateClassTypes()
 				if (c->Type() == nullptr)
 				{
 					// create a placeholder so that the compiler can continue looking for errors.
-					c->cls->Type = NewClassType(parent->FindClassTentative(c->NodeName()));
+					c->cls->Type = NewClassType(parent->FindClassTentative(c->NodeName()), AST.FileNo);
 				}
 
 				if (c->cls->Flags & ZCC_Abstract)
@@ -928,7 +928,7 @@ void ZCCCompiler::CreateClassTypes()
 				{
 					Error(c->cls, "Class %s has unknown base class %s", c->NodeName().GetChars(), FName(c->cls->ParentName->Id).GetChars());
 					// create a placeholder so that the compiler can continue looking for errors.
-					c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()));
+					c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()), AST.FileNo);
 					c->cls->Symbol = Create<PSymbolType>(c->NodeName(), c->Type());
 					OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 					Classes.Push(c);
@@ -944,7 +944,7 @@ void ZCCCompiler::CreateClassTypes()
 	for (auto c : OrigClasses)
 	{
 		Error(c->cls, "Class %s has circular inheritance", FName(c->NodeName()).GetChars());
-		c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()));
+		c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()), AST.FileNo);
 		c->cls->Symbol = Create<PSymbolType>(c->NodeName(), c->Type());
 		OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 		Classes.Push(c);

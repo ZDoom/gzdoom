@@ -3156,7 +3156,7 @@ PField *PStruct::AddField(FName name, PType *type, uint32_t flags)
 
 PField *PStruct::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
-	return Symbols.AddNativeField(name, type, address, flags, bitvalue);
+	return Symbols.AddNativeField(name, type, address, flags, bitvalue, mDefFileNo);
 }
 
 //==========================================================================
@@ -3297,7 +3297,7 @@ PClassType::PClassType(PClass *cls, int fileno)
 
 PField *PClassType::AddField(FName name, PType *type, uint32_t flags)
 {
-	return Descriptor->AddField(name, type, flags);
+	return Descriptor->AddField(name, type, flags, mDefFileNo);
 }
 
 //==========================================================================
@@ -3308,7 +3308,7 @@ PField *PClassType::AddField(FName name, PType *type, uint32_t flags)
 
 PField *PClassType::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
-	auto field = Symbols.AddNativeField(name, type, address, flags, bitvalue);
+	auto field = Symbols.AddNativeField(name, type, address, flags, bitvalue, mDefFileNo);
 	if (field != nullptr) Descriptor->Fields.Push(field);
 	return field;
 }

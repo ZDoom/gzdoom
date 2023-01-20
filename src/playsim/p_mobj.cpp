@@ -1546,6 +1546,17 @@ void AActor::PlayBounceSound(bool onfloor)
 
 bool AActor::FloorBounceMissile (secplane_t &plane)
 {
+	if (flags & MF_MISSILE)
+	{
+		switch (SpecialBounceHit(nullptr, nullptr, &plane))
+		{
+			// This one is backwards for some reason...
+			case 1:		return false;
+			case 0:		return true;
+			default:	break;
+		}
+	}
+
 	// [ZZ] if bouncing missile hits a damageable sector(plane), it dies
 	if (P_ProjectileHitPlane(this, -1) && bouncecount > 0)
 	{
@@ -3192,6 +3203,21 @@ int AActor::SpecialMissileHit (AActor *victim)
 		int retval;
 		ret.IntAt(&retval);
 		VMCall(func, params, 2, &ret, 1);
+		return retval;
+	}
+	else return -1;
+}
+
+// This virtual method only exists on the script side.
+int AActor::SpecialBounceHit(AActor* bounceMobj, line_t* bounceLine, secplane_t* bouncePlane)
+{
+	IFVIRTUAL(AActor, SpecialBounceHit)
+	{
+		VMValue params[4] = { (DObject*)this, bounceMobj, bounceLine, bouncePlane };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		VMCall(func, params, 4, &ret, 1);
 		return retval;
 	}
 	else return -1;

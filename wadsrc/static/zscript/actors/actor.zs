@@ -543,6 +543,12 @@ class Actor : Thinker native
 		return -1;
 	}
 
+	// This is called when a missile bounces off something.
+	virtual int SpecialBounceHit(Actor bounceMobj, Line bounceLine, SecPlane bouncePlane)
+	{
+		return -1;
+	}
+
 	// Called when the player presses 'use' and an actor is found, except if the
 	// UseSpecial flag is set. Use level.ExecuteSpecial to call action specials
 	// instead.

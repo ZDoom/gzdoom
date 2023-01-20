@@ -101,7 +101,7 @@ struct FCompileContext
 
 	void HandleJumps(int token, FxExpression *handler);
 	void CheckReturn(PPrototype *proto, FScriptPosition &pos);
-	bool IsWritable(int flags);
+	bool IsWritable(int flags, int checkFileNo = 0);
 	FxLocalVariableDeclaration *FindLocalVariable(FName name);
 };
 

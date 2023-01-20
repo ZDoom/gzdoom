@@ -177,9 +177,9 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	}
 }
 
-bool FCompileContext::IsWritable(int flags)
+bool FCompileContext::IsWritable(int flags, int checkFileNo)
 {
-	return !(flags & VARF_ReadOnly) || ((flags & VARF_InternalAccess) && fileSystem.GetFileContainer(Lump) == 0);
+	return !(flags & VARF_ReadOnly) || ((flags & VARF_InternalAccess) && fileSystem.GetFileContainer(Lump) == checkFileNo);
 }
 
 FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
@@ -6882,7 +6882,7 @@ FxGlobalVariable::FxGlobalVariable(PField* mem, const FScriptPosition &pos)
 bool FxGlobalVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = AddressWritable && ctx.IsWritable(membervar->Flags);
+	if (writable != nullptr) *writable = AddressWritable && ctx.IsWritable(membervar->Flags, membervar->mDefFileNo);
 	return true;
 }
 
@@ -7075,7 +7075,7 @@ FxStackVariable::~FxStackVariable()
 bool FxStackVariable::RequestAddress(FCompileContext &ctx, bool *writable)
 {
 	AddressRequested = true;
-	if (writable != nullptr) *writable = AddressWritable && ctx.IsWritable(membervar->Flags);
+	if (writable != nullptr) *writable = AddressWritable && ctx.IsWritable(membervar->Flags, membervar->mDefFileNo);
 	return true;
 }
 
@@ -7177,7 +7177,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 	else if (writable != nullptr)
 	{
 		// [ZZ] original check.
-		bool bWritable = (AddressWritable && ctx.IsWritable(membervar->Flags) &&
+		bool bWritable = (AddressWritable && ctx.IsWritable(membervar->Flags, membervar->mDefFileNo) &&
 			(!classx->ValueType->isPointer() || !classx->ValueType->toPointer()->IsConst));
 		// [ZZ] implement write barrier between different scopes
 		if (bWritable)

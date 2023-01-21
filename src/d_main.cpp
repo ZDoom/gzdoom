@@ -174,6 +174,7 @@ void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_LoadWadSettings ();
 void ParseGLDefs();
+void ClearGLDefs();
 void DrawFullscreenSubtitle(FFont* font, const char *text);
 void D_Cleanup();
 void FreeSBarInfoScript();
@@ -3047,6 +3048,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	gameinfo.flags = iwad_info->flags;
 	gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
 	gameinfo.ConfigName = iwad_info->Configname;
+
+	// make sure shaders/etc aren't loaded twice when restarting the engine
+	ClearGLDefs();
 
 	const char *v = Args->CheckValue("-rngseed");
 	if (v)

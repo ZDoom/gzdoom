@@ -355,6 +355,8 @@ int FTagManager::GetSectorTag(const sector_t *sector, int index)
 
 		return (j < n && allTags[j].target == i) ? allTags[j].tag : 0;
 	}
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -398,6 +400,8 @@ int FTagManager::GetLineID(const line_t *line, int index)
 
 		return (j < n && allTags[j].target == i) ? allTags[j].tag : 0;
 	}
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------

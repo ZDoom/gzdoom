@@ -2237,6 +2237,7 @@ enum OverrideFunctionArgType {
 	OFN_ARG_KEY,
 	OFN_ARG_VAL,
 	OFN_ARG_KEY_VAL,
+	OFN_ARG_KEY_OUT_BOOL,
 };
 
 template<class MT, OverrideFunctionRetType RetType, OverrideFunctionArgType ArgType >
@@ -2247,7 +2248,6 @@ void CreateOverrideFunction(MT *self, FName name)
 
 	assert(NativeFn);
 	assert(NativeFn->VMPointer);
-
 
 	TArray<PType*> ret;
 	TArray<PType*> args;
@@ -2293,6 +2293,15 @@ void CreateOverrideFunction(MT *self, FName name)
 		argnames.Push(NAME_Key);
 		argnames.Push(NAME_Value);
 	}
+	else if constexpr(ArgType == OFN_ARG_KEY_OUT_BOOL)
+	{
+		args.Push(self->KeyType);
+		args.Push(TypeBool);
+		argflags.Push(0);
+		argflags.Push(VARF_Out);
+		argnames.Push(NAME_Key);
+		argnames.Push(NAME_Exists);
+	}
 
 	Fn->AddVariant(NewPrototype(ret, args), argflags, argnames, *NativeFn->VMPointer, VARF_Method | VARF_Native,SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM);
 	self->FnOverrides.Insert(name, Fn);
@@ -2304,8 +2313,10 @@ PMap::PMap(PType *keytype, PType *valtype, PStruct *backing, int backing_class)
 	mDescriptiveName.Format("Map<%s, %s>", keytype->DescriptiveName(), valtype->DescriptiveName());
 	Size = sizeof(ZSFMap);
 	Align = alignof(ZSFMap);
-	CreateOverrideFunction<PMap, OFN_RET_VAL, OFN_ARG_KEY>(this, NAME_Get);
+	CreateOverrideFunction<PMap, OFN_RET_VAL,  OFN_ARG_KEY>(this, NAME_Get);
+	CreateOverrideFunction<PMap, OFN_RET_VAL,  OFN_ARG_KEY>(this, NAME_GetIfExists);
 	CreateOverrideFunction<PMap, OFN_RET_BOOL, OFN_ARG_KEY>(this, NAME_CheckKey);
+	CreateOverrideFunction<PMap, OFN_RET_VAL,  OFN_ARG_KEY_OUT_BOOL>(this, NAME_CheckValue);
 	CreateOverrideFunction<PMap, OFN_RET_VOID, OFN_ARG_KEY_VAL>(this, NAME_Insert);
 	CreateOverrideFunction<PMap, OFN_RET_VOID, OFN_ARG_KEY>(this, NAME_InsertNew);
 	CreateOverrideFunction<PMap, OFN_RET_VOID, OFN_ARG_KEY>(this, NAME_Remove);

@@ -45,6 +45,7 @@
 #include "findfile.h"
 #include "i_interface.h"
 #include "configfile.h"
+#include "printf.h"
 
 //==========================================================================
 //
@@ -447,6 +448,7 @@ const FSoundFontInfo *FSoundFontManager::FindSoundFont(const char *name, int all
 		// an empty name will pick the first one in a compatible format.
 		if (allowed & sfi.type && (name == nullptr || *name == 0 || !sfi.mName.CompareNoCase(name) || !sfi.mNameExt.CompareNoCase(name)))
 		{
+			DPrintf(DMSG_NOTIFY, "Found compatible soundfont %s\n", sfi.mNameExt.GetChars());
 			return &sfi;
 		}
 	}
@@ -455,6 +457,7 @@ const FSoundFontInfo *FSoundFontManager::FindSoundFont(const char *name, int all
 	{
 		if (allowed & sfi.type)
 		{
+			DPrintf(DMSG_NOTIFY, "Unable to find %s soundfont. Falling back to %s\n", name, sfi.mNameExt.GetChars());
 			return &sfi;
 		}
 	}

@@ -79,6 +79,7 @@
 #include "printf.h"
 
 #include "i_mainwindow.h"
+#include "base_sysfb.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -312,6 +313,17 @@ void I_ShowFatalError(const char *msg)
 	{
 		Printf("%s\n", msg);
 	}
+}
+
+void I_NetRestartShowConsole()
+{
+	if(vid_fullscreen)
+	{
+		static_cast<SystemBaseFrameBuffer*>(screen)->PositionWindow(false, true);
+		screen->Update();
+		vid_fullscreen = true; // vid_fullscreen is forced to false by PositionWindow
+	}
+	mainwindow.RestoreConView(true);
 }
 
 // Here is how the error logging system works.

@@ -142,6 +142,14 @@ void Local_Job_Init();
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void I_SetWindowTitle(const char* caption);
+
+#ifdef _WIN32
+	extern void I_NetRestartShowConsole();
+	//RicardoLuis0: TODO fix host/join CCMD startup window on non-windows platforms
+#else
+	#define I_NetRestartShowConsole()
+#endif
+
 extern void ReadStatistics();
 extern void M_SetDefaultMode ();
 extern void G_NewInit ();
@@ -166,6 +174,7 @@ void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_LoadWadSettings ();
 void ParseGLDefs();
+void ClearGLDefs();
 void DrawFullscreenSubtitle(FFont* font, const char *text);
 void D_Cleanup();
 void FreeSBarInfoScript();
@@ -332,6 +341,7 @@ const char *Subtitle;
 bool nospriterename;
 FString lastIWAD;
 int restart = 0;
+bool restart_multiplayer = false;
 extern bool AppActive;
 bool playedtitlemusic;
 
@@ -3039,6 +3049,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
 	gameinfo.ConfigName = iwad_info->Configname;
 
+	// make sure shaders/etc aren't loaded twice when restarting the engine
+	ClearGLDefs();
+
 	const char *v = Args->CheckValue("-rngseed");
 	if (v)
 	{
@@ -3163,7 +3176,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 
 	CT_Init ();
 
-	if (!restart)
+	if (!restart || restart_multiplayer)
 	{
 		if (!batchrun) Printf ("I_Init: Setting up machine state.\n");
 		CheckCPUID(&CPU);
@@ -3205,7 +3218,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	}
 
 	if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
-	if (!restart)
+	if (!restart || restart_multiplayer)
 	{
 		StartWindow = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5, StartScreen == nullptr);
 	}
@@ -3370,7 +3383,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		}
 	}
 
-	if (!restart)
+	if (!restart || restart_multiplayer)
 	{
 		if (!batchrun) Printf ("D_CheckNetGame: Checking network game status.\n");
 		if (StartScreen) StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
@@ -3397,7 +3410,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	if (cl_customizeinvulmap)
 		R_UpdateInvulnerabilityColormap();
 
-	if (!restart)
+	if (!restart || restart_multiplayer)
 	{
 		// start the apropriate game based on parms
 		auto v = Args->CheckValue ("-record");
@@ -3450,7 +3463,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		}
 
 		v = Args->CheckValue("-playdemo");
-		if (v != NULL)
+		if (v && !restart_multiplayer)
 		{
 			singledemo = true;				// quit after one demo
 			G_DeferedPlayDemo (v);
@@ -3458,7 +3471,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		else
 		{
 			v = Args->CheckValue("-timedemo");
-			if (v)
+			if (v && !restart_multiplayer)
 			{
 				G_TimeDemo(v);
 			}
@@ -3512,6 +3525,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		D_StartTitle ();				// start up intro loop
 		setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 	}
+	restart_multiplayer = false;
 	return 0;
 }
 //==========================================================================
@@ -3632,6 +3646,10 @@ static int D_DoomMain_Internal (void)
 		if (restart)
 		{
 			C_InitConsole(SCREENWIDTH, SCREENHEIGHT, false);
+			if(restart_multiplayer)
+			{
+				I_NetRestartShowConsole();
+			}
 		}
 		nospriterename = false;
 
@@ -3842,6 +3860,148 @@ UNSAFE_CCMD(restart)
 	}
 
 	wantToRestart = true;
+}
+
+UNSAFE_CCMD(host)
+{
+	if(netgame || multiplayer)
+	{
+		Printf ("You must not be in a net game when hosting\n");
+		return;
+	}
+	int numplayers = 0;
+	FString map = "";
+	int ticdup = -1;
+	int port = -1;
+	int skill = -1;
+	FString loadsave = "";
+	int flags = 0;
+
+	const auto n = argv.argc();
+
+	if(n <= 1)
+	{
+		Printf ("Not enough arguments for host\n");
+		return;
+	}
+	
+	numplayers = atoi(argv[1]);
+
+	for(int i = 2; i < n; i++)
+	{
+		FString arg(argv[i]);
+
+		auto sep = arg.IndexOf('=');
+		if(sep == -1)
+		{
+			if(arg.CompareNoCase("EXTRATIC") == 0)
+			{
+				flags |= MP_EXTRATIC;
+			}
+			else if(arg.CompareNoCase("PACKET_SERVER") == 0)
+			{
+				flags |= MP_PACKET_SERVER;
+			}
+			else if(arg.CompareNoCase("DEATHMATCH") == 0)
+			{
+				flags |= MP_DEATHMATCH;
+			}
+			else if(arg.CompareNoCase("ALTDEATH") == 0)
+			{
+				flags |= MP_ALTDEATH;
+			}
+			else if(arg.CompareNoCase("NOMONSTERS") == 0)
+			{
+				flags |= MP_NOMONSTERS;
+			}
+			else
+			{
+				Printf ("Invalid argument for host: %s\n",arg.GetChars());
+				return;
+			}
+		}
+		else
+		{
+			if(strnicmp(arg.GetChars(),"MAP",sep) == 0)
+			{
+				map = FString(arg.GetChars() + sep + 1);
+			}
+			else if(strnicmp(arg.GetChars(),"LOADSAVE",sep) == 0)
+			{
+				loadsave = FString(arg.GetChars() + sep + 1);
+			}
+			else if(strnicmp(arg.GetChars(),"PORT",sep) == 0)
+			{
+				port = atoi(arg.GetChars() + sep + 1);
+			}
+			else if(strnicmp(arg.GetChars(),"SKILL",sep) == 0)
+			{
+				skill = atoi(arg.GetChars() + sep + 1);
+			}
+			else if(strnicmp(arg.GetChars(),"TICDUP",sep) == 0)
+			{
+				ticdup = atoi(arg.GetChars() + sep + 1);
+			}
+			else
+			{
+				Printf ("Invalid argument for host: %s\n",arg.GetChars());
+				return;
+			}
+		}
+	}
+	D_RestartHostMultiplayer(numplayers,map,ticdup,port,skill,loadsave,flags);
+
+}
+
+UNSAFE_CCMD(join)
+{
+	if(netgame || multiplayer)
+	{
+		Printf ("You must not be in a net game when joining\n");
+		return;
+	}
+	FString addr = "";
+	int port = -1;
+	FString loadsave = "";
+
+	const auto n = argv.argc();
+
+	if(n <= 1)
+	{
+		Printf ("Not enough arguments for host\n");
+		return;
+	}
+
+	addr = FString(argv[1]);
+
+	for(int i = 2; i < n; i++)
+	{
+		FString arg(argv[i]);
+
+		auto sep = arg.IndexOf('=');
+		if(sep == -1)
+		{
+			Printf ("Invalid argument for host: %s\n",arg.GetChars());
+			return;
+		}
+		else
+		{
+			if(strnicmp(arg.GetChars(),"LOADSAVE",sep) == 0)
+			{
+				loadsave = FString(arg.GetChars() + sep + 1);
+			}
+			else if(strnicmp(arg.GetChars(),"PORT",sep) == 0)
+			{
+				port = atoi(arg.GetChars() + sep + 1);
+			}
+			else
+			{
+				Printf ("Invalid argument for host: %s\n",arg.GetChars());
+				return;
+			}
+		}
+	}
+	D_RestartJoinMultiplayer(addr,port,loadsave);
 }
 
 DEFINE_FIELD_X(InputEventData, event_t, type)

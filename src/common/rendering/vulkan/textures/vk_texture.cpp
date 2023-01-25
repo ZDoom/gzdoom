@@ -136,7 +136,7 @@ VkFormat VkTextureManager::GetTextureFormat(PPTexture* texture)
 
 VkPPTexture* VkTextureManager::GetVkTexture(PPTexture* texture)
 {
-	if (!texture->Backend)
+	if (!texture->Backend || !static_cast<VkPPTexture*>(texture->Backend.get())->TexImage.View)
 		texture->Backend = std::make_unique<VkPPTexture>(fb, texture);
 	return static_cast<VkPPTexture*>(texture->Backend.get());
 }

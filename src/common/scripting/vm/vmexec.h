@@ -849,6 +849,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 				return 0;
 			}
 			auto p = o->GetClass();
+			if(p->Virtuals.Size() <= 0) ThrowAbortException(X_OTHER,"Attempted to call an invalid virtual function in class %s",p->TypeName.GetChars());
 			assert(C < p->Virtuals.Size());
 			reg.a[a] = p->Virtuals[C];
 		}

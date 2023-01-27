@@ -96,6 +96,7 @@ void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height, int pll)
 	matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 	matrices.CalcDependencies();
 
+	CheckSize();
 	mBuffer->Map();
 	memcpy(((char*)mBuffer->Memory()) + mUploadIndex * mBlockAlign, &matrices, sizeof(matrices));
 	mBuffer->Unmap();

@@ -36,6 +36,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "gi.h"
+#include <vm.h>
 
 static FRandom pr_lightning ("Lightning");
 
@@ -296,4 +297,12 @@ void FLevelLocals::ForceLightning (int mode)
 	{
 		lightning->ForceLightning (mode);
 	}
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, ForceLightning)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(mode);
+	self->ForceLightning(mode);
+	return 0;
 }

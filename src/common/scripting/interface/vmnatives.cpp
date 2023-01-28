@@ -1239,10 +1239,14 @@ void QuatConjugate(
 
 DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Conjugate, QuatConjugate)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(DQuaternion);
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(w);
 
 	DQuaternion quat;
-	QuatConjugate(self->X, self->Y, self->Z, self->W, &quat);
+	QuatConjugate(x, y, z, w, &quat);
 	ACTION_RETURN_QUAT(quat);
 }
 
@@ -1256,9 +1260,13 @@ void QuatInverse(
 
 DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Inverse, QuatInverse)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(DQuaternion);
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(w);
 
 	DQuaternion quat;
-	QuatInverse(self->X, self->Y, self->Z, self->W, &quat);
+	QuatInverse(x, y, z, w, &quat);
 	ACTION_RETURN_QUAT(quat);
 }

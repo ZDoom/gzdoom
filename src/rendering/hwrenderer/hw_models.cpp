@@ -140,7 +140,9 @@ void FHWModelRenderer::DrawElements(int numIndices, size_t offset)
 int FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix>& bones, int boneStartIndex)
 {
 	auto mdbuff = static_cast<FModelVertexBuffer*>(model->GetVertexBuffer(GetType()));
+	screen->mBones->Map();
 	boneIndexBase = boneStartIndex >= 0 ? boneStartIndex : screen->mBones->UploadBones(bones);
+	screen->mBones->Unmap();
 	state.SetBoneIndexBase(boneIndexBase);
 	if (mdbuff)
 	{

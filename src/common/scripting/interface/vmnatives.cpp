@@ -852,7 +852,22 @@ DEFINE_ACTION_FUNCTION(_CVar, SetInt)
 	PARAM_INT(val);
 	UCVarValue v;
 	v.Int = val;
-	self->SetGenericRep(v, CVAR_Int);
+
+	if(self->GetFlags() & CVAR_ZS_CUSTOM_CLONE)
+	{
+		auto realCVar = (FBaseCVar*)(self->GetExtraDataPointer());
+		assert(realCVar->GetFlags() & CVAR_ZS_CUSTOM);
+		
+		v = realCVar->GenericZSCVarCallback(v, CVAR_Int);
+		self->SetGenericRep(v, realCVar->GetRealType());
+
+		if(realCVar->GetRealType() == CVAR_String) delete[] v.String;
+	}
+	else
+	{
+		self->SetGenericRep(v, CVAR_Int);
+	}
+
 	return 0;
 }
 
@@ -870,7 +885,22 @@ DEFINE_ACTION_FUNCTION(_CVar, SetFloat)
 	PARAM_FLOAT(val);
 	UCVarValue v;
 	v.Float = (float)val;
-	self->SetGenericRep(v, CVAR_Float);
+
+	if(self->GetFlags() & CVAR_ZS_CUSTOM_CLONE)
+	{
+		auto realCVar = (FBaseCVar*)(self->GetExtraDataPointer());
+		assert(realCVar->GetFlags() & CVAR_ZS_CUSTOM);
+
+		v = realCVar->GenericZSCVarCallback(v, CVAR_Float);
+		self->SetGenericRep(v, realCVar->GetRealType());
+
+		if(realCVar->GetRealType() == CVAR_String) delete[] v.String;
+	}
+	else
+	{
+		self->SetGenericRep(v, CVAR_Float);
+	}
+
 	return 0;
 }
 
@@ -889,7 +919,22 @@ DEFINE_ACTION_FUNCTION(_CVar, SetString)
 	PARAM_STRING(val);
 	UCVarValue v;
 	v.String = val.GetChars();
-	self->SetGenericRep(v, CVAR_String);
+
+	if(self->GetFlags() & CVAR_ZS_CUSTOM_CLONE)
+	{
+		auto realCVar = (FBaseCVar*)(self->GetExtraDataPointer());
+		assert(realCVar->GetFlags() & CVAR_ZS_CUSTOM);
+
+		v = realCVar->GenericZSCVarCallback(v, CVAR_String);
+		self->SetGenericRep(v, realCVar->GetRealType());
+
+		if(realCVar->GetRealType() == CVAR_String) delete[] v.String;
+	}
+	else
+	{
+		self->SetGenericRep(v, CVAR_String);
+	}
+
 	return 0;
 }
 

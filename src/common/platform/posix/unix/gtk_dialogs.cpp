@@ -108,6 +108,7 @@ DYN_GTK_SYM(gtk_label_new);
 DYN_GTK_SYM(gtk_list_store_append);
 DYN_GTK_SYM(gtk_list_store_new);
 DYN_GTK_SYM(gtk_list_store_set);
+DYN_GTK_REQ_SYM(gtk_scrolled_window_new, GtkWidget* (*)(GtkAdjustment* hadjustment, GtkAdjustment* vadjustment));
 DYN_GTK_SYM(gtk_toggle_button_get_type);
 DYN_GTK_SYM(gtk_toggle_button_set_active);
 DYN_GTK_SYM(gtk_tree_model_get_type);
@@ -144,6 +145,7 @@ DYN_GTK_OPT3_SYM(gtk_button_box_new, GtkWidget *(*)(GtkOrientation));
 DYN_GTK_OPT3_SYM(gtk_widget_set_halign, void(*)(GtkWidget *, GtkAlign));
 DYN_GTK_OPT3_SYM(gtk_widget_set_valign, void(*)(GtkWidget *, GtkAlign));
 DYN_GTK_OPT3_SYM(gtk_message_dialog_new, GtkWidget* (*)(GtkWindow*, GtkDialogFlags, GtkMessageType, GtkButtonsType, const gchar*, ...));
+DYN_GTK_OPT3_SYM(gtk_scrolled_window_set_min_content_height, void (*)(GtkScrolledWindow*, gint));
 
 // Gtk2 Only
 DYN_GTK_OPT2_SYM(gtk_misc_get_type, GType(*)());
@@ -336,7 +338,7 @@ public:
 
 	void ConnectButtonPress(int *close_style)
 	{
-		g_signal_connect(G_OBJECT(widget), "button_press_event", G_CALLBACK(DoubleClickChecker), &close_style);
+		g_signal_connect(G_OBJECT(widget), "button_press_event", G_CALLBACK(DoubleClickChecker), close_style);
 	}
 
 	void ConnectKeyPress(ZUIWindow* window)
@@ -349,6 +351,17 @@ public:
 	GtkTreeViewColumn *column = nullptr;
 	GtkTreeSelection *selection = nullptr;
 	GtkTreeIter iter, defiter;
+};
+
+class ZUIScrolledWindow : public ZUIWidget
+{
+public:
+	ZUIScrolledWindow(ZUIWidget* child)
+	{
+		widget = gtk_scrolled_window_new(NULL, NULL);
+		if(gtk_scrolled_window_set_min_content_height) gtk_scrolled_window_set_min_content_height((GtkScrolledWindow*)widget,150);
+		gtk_container_add(GTK_CONTAINER(widget), child->widget);
+	}
 };
 
 class ZUIHBox : public ZUIWidget
@@ -483,6 +496,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 
 	ZUILabel label(GAMENAME " found more than one IWAD\nSelect from the list below to determine which one to use:");
 	ZUIListView listview(wads, numwads, defaultiwad);
+	ZUIScrolledWindow scroll((ZUIWidget*)&listview);
 
 	ZUIHBox hboxOptions;
 
@@ -511,7 +525,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 
 	window.AddWidget(&vbox);
 	vbox.PackStart(&label, false, false, 0);
-	vbox.PackStart(&listview, true, true, 0);
+	vbox.PackStart(&scroll, true, true, 0);
 	vbox.PackEnd(&hboxButtons, false, false, 0);
 	vbox.PackEnd(&hboxOptions, false, false, 0);
 	hboxOptions.PackStart(&vboxVideo, false, false, 15);

@@ -458,8 +458,17 @@ void userinfo_t::Reset()
 			case NAME_PlayerClass:	type = CVAR_Int; break;
 			default:				type = cvar->GetRealType(); break;
 			}
-			newcvar = C_CreateCVar(NULL, type, cvar->GetFlags() & CVAR_MOD);
+			
+			int flags = cvar->GetFlags();
+			
+			newcvar = C_CreateCVar(NULL, type, (flags & CVAR_MOD) | ((flags & CVAR_ZS_CUSTOM) << 1) );
 			newcvar->SetGenericRepDefault(cvar->GetGenericRepDefault(CVAR_String), CVAR_String);
+
+			if(flags & CVAR_ZS_CUSTOM)
+			{
+				newcvar->SetExtraDataPointer(cvar); // store backing cvar
+			}
+
 			Insert(cvarname, newcvar);
 		}
 	}

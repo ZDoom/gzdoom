@@ -302,6 +302,7 @@ bool FBaseCVar::ToBool (UCVarValue value, ECVarType type)
 	case CVAR_Bool:
 		return value.Bool;
 
+	case CVAR_Color:
 	case CVAR_Int:
 		return !!value.Int;
 
@@ -331,6 +332,7 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 	switch (type)
 	{
 	case CVAR_Bool:			res = (int)value.Bool; break;
+	case CVAR_Color:
 	case CVAR_Int:			res = value.Int; break;
 #if __GNUC__ <= 2
 	case CVAR_Float:		tmp = value.Float; res = (int)tmp; break;
@@ -359,6 +361,7 @@ float FBaseCVar::ToFloat (UCVarValue value, ECVarType type)
 	case CVAR_Bool:
 		return (float)value.Bool;
 
+	case CVAR_Color:
 	case CVAR_Int:
 		return (float)value.Int;
 
@@ -388,6 +391,7 @@ const char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 	case CVAR_String:
 		return value.String;
 
+	case CVAR_Color:
 	case CVAR_Int:
 		mysnprintf (cstrbuf, countof(cstrbuf), "%i", value.Int);
 		break;
@@ -1830,6 +1834,21 @@ void FZSIntCVar::MarkZSCVar()
 	GC::Mark(customCVarHandler);
 }
 
+UCVarValue FZSIntCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type) {
+	int val = ToInt(value, type);
+
+	IFVIRTUALPTRNAME(customCVarHandler, "CustomIntCVar", ModifyValue)
+	{
+		VMValue param[] = { customCVarHandler.Get() , cvarName.GetIndex() , val };
+		VMReturn ret(&val);
+		VMCall(func, param, 3, &ret, 1);
+	}
+
+	UCVarValue v;
+	v.Int = val;
+	return v;
+}
+
 
 //===========================================================================
 //
@@ -1849,11 +1868,11 @@ void FZSFloatCVar::CallCVarCallback(FZSFloatCVar &self)
 	}
 	IFVIRTUALPTRNAME(self.customCVarHandler, "CustomFloatCVar", ModifyValue)
 	{
-		VMValue param[] = { self.customCVarHandler.Get() , self.cvarName.GetIndex() , (double)self.Value };
+		VMValue param[] = { self.customCVarHandler.Get() , self.cvarName.GetIndex() , (double) self.Value };
 		double v;
 		VMReturn ret(&v);
 		VMCall(func, param, 3, &ret, 1);
-		self.Value = float(v);
+		self.Value = (float) v;
 	}
 }
 
@@ -1873,6 +1892,23 @@ void FZSFloatCVar::InstantiateZSCVar()
 void FZSFloatCVar::MarkZSCVar()
 {
 	GC::Mark(customCVarHandler);
+}
+
+UCVarValue FZSFloatCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type) {
+	float val = ToFloat(value, type);
+
+	IFVIRTUALPTRNAME(customCVarHandler, "CustomFloatCVar", ModifyValue)
+	{
+		VMValue param[] = { customCVarHandler.Get() , cvarName.GetIndex() , (double) val };
+		double v;
+		VMReturn ret(&v);
+		VMCall(func, param, 3, &ret, 1);
+		val = (float) v;
+	}
+
+	UCVarValue v;
+	v.Float = val;
+	return v;
 }
 
 
@@ -1916,6 +1952,25 @@ void FZSStringCVar::InstantiateZSCVar()
 void FZSStringCVar::MarkZSCVar()
 {
 	GC::Mark(customCVarHandler);
+}
+
+UCVarValue FZSStringCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type) {
+	FString val = ToString(value, type);
+
+	IFVIRTUALPTRNAME(customCVarHandler, "CustomStringCVar", ModifyValue)
+	{
+		VMValue param[] = { customCVarHandler.Get() , cvarName.GetIndex() , &val };
+		VMReturn ret(&val);
+		VMCall(func, param, 3, &ret, 1);
+	}
+	
+	char * str = new char[val.Len() + 1];
+	memcpy(str, val.GetChars(), val.Len() * sizeof(char));
+	str[val.Len()] = '\0';
+
+	UCVarValue v;
+	v.String = str;
+	return v;
 }
 
 
@@ -1963,10 +2018,27 @@ void FZSBoolCVar::MarkZSCVar()
 	GC::Mark(customCVarHandler);
 }
 
+UCVarValue FZSBoolCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type) {
+	bool val = ToFloat(value, type);
+
+	IFVIRTUALPTRNAME(customCVarHandler, "CustomBoolCVar", ModifyValue)
+	{
+		VMValue param[] = { customCVarHandler.Get() , cvarName.GetIndex() , val };
+		int v;
+		VMReturn ret(&v);
+		VMCall(func, param, 3, &ret, 1);
+		val = v;
+	}
+
+	UCVarValue v;
+	v.Bool = val;
+	return v;
+}
+
 
 //===========================================================================
 //
-// FZSIntCVar
+// FZSColorCVar
 //
 //===========================================================================
 
@@ -2004,4 +2076,19 @@ void FZSColorCVar::InstantiateZSCVar()
 void FZSColorCVar::MarkZSCVar()
 {
 	GC::Mark(customCVarHandler);
+}
+
+UCVarValue FZSColorCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type) {
+	int val = ToInt(value, type);
+
+	IFVIRTUALPTRNAME(customCVarHandler, "CustomColorCVar", ModifyValue)
+	{
+		VMValue param[] = { customCVarHandler.Get() , cvarName.GetIndex() , val };
+		VMReturn ret(&val);
+		VMCall(func, param, 3, &ret, 1);
+	}
+
+	UCVarValue v;
+	v.Int = val;
+	return v;
 }

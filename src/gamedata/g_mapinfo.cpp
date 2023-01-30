@@ -274,6 +274,8 @@ void level_info_t::Reset()
 	Translator = "";
 	RedirectType = NAME_None;
 	RedirectMapName = "";
+	RedirectCVAR = NAME_None;
+	RedirectCVARMapName = "";
 	EnterPic = "";
 	ExitPic = "";
 	Intermission = NAME_None;
@@ -386,6 +388,27 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 					break;
 				}
 			}
+		}
+	}
+	if (RedirectCVAR != NAME_None)
+	{
+		auto var = FindCVar(RedirectCVAR.GetChars(), NULL);
+		if ((var->GetRealType() == CVAR_Bool) && !(var->GetFlags() & CVAR_IGNORE))	// only check Bool cvars that are currently defined
+		{
+			if (var->GetFlags() & CVAR_USERINFO)
+			{
+				// user sync'd cvar, check for all players
+				for (int i = 0; i < MAXPLAYERS; ++i)
+				{
+					if (playeringame[i] && (var = GetCVar(i, RedirectCVAR.GetChars())))
+					{
+						if (var->ToInt())
+							return FindLevelInfo(RedirectCVARMapName);
+					}
+				}
+			}
+			else if (var->ToInt())
+				return FindLevelInfo(RedirectCVARMapName);
 		}
 	}
 	return NULL;
@@ -1297,6 +1320,15 @@ DEFINE_MAP_OPTION(redirect, true)
 	info->RedirectType = parse.sc.String;
 	parse.ParseComma();
 	parse.ParseNextMap(info->RedirectMapName);
+}
+
+DEFINE_MAP_OPTION(cvar_redirect, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->RedirectCVAR = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseNextMap(info->RedirectCVARMapName);
 }
 
 DEFINE_MAP_OPTION(sndseq, true)

@@ -380,6 +380,11 @@ struct level_info_t
 	FName		RedirectType;
 	FString		RedirectMapName;
 
+	// CVAR Redirection: If the CVAR Bool returns true, then
+	// you go to the RedirectMap instead of this one.
+	FName		RedirectCVAR;
+	FString		RedirectCVARMapName;
+
 	FString		EnterPic;
 	FString		ExitPic;
 	FString 	InterMusic;

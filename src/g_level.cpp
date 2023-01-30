@@ -557,6 +557,12 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// [RH] Mark all levels as not visited
 		for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
+
+		auto redirectmap = FindLevelInfo(mapname);
+		if (redirectmap->RedirectCVAR != NAME_None)
+			redirectmap = redirectmap->CheckLevelRedirect();
+		if (redirectmap)
+			mapname = redirectmap->MapName;
 	}
 
 	UnlatchCVars ();

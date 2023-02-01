@@ -830,4 +830,16 @@ unsigned GetVirtualIndex(PClass *cls, const char *funcname);
 	VMFunction *func = clss->Virtuals.Size() > VIndex? clss->Virtuals[VIndex] : nullptr;  \
 	if (func != nullptr)
 
+#define IFOVERRIDENVIRTUALPTRNAME(self, clsname, funcname) \
+	static VMFunction *orig_func = nullptr; \
+	static unsigned VIndex = ~0u; \
+	if (VIndex == ~0u) { \
+		PClass *cls = PClass::FindClass(clsname); \
+		VIndex = GetVirtualIndex(cls, #funcname); \
+		orig_func = cls->Virtuals.Size() > VIndex? cls->Virtuals[VIndex] : nullptr; \
+		assert(VIndex != ~0u); \
+	} \
+	auto *clss = self->GetClass(); \
+	VMFunction *func = clss->Virtuals.Size() > VIndex? clss->Virtuals[VIndex] : nullptr;  \
+	if (func && func != orig_func )
 #endif

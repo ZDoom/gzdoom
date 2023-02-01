@@ -1021,6 +1021,10 @@ class Inventory : Actor
 	//===========================================================================
 
 	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor = null, Actor source = null, int flags = 0) {}
+
+	virtual Vector2 ModifyBob(Vector2 Bob, double ticfrac) {return Bob;}
+
+	virtual Vector3, Vector3 ModifyBob3D(Vector3 Translation, Vector3 Rotation, double ticfrac) {return Translation, Rotation;}
 	
 
 	virtual bool Use (bool pickup) { return false; }

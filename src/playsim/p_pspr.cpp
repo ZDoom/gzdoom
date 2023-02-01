@@ -634,6 +634,19 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 		DVector2 result;
 		VMReturn ret(&result);
 		VMCall(func, param, 2, &ret, 1);
+		
+		auto inv = player->mo->Inventory;
+		while(inv != nullptr && !(inv->ObjectFlags & OF_EuthanizeMe)) // same loop as ModifyDamage, except it actually checks if it's overriden before calling
+		{
+			auto nextinv = inv->Inventory;
+			IFOVERRIDENVIRTUALPTRNAME(inv, NAME_Inventory, ModifyBob)
+			{
+				VMValue param[] = { (DObject*)inv, result.X, result.Y, ticfrac };
+				VMCall(func, param, 4, &ret, 1);
+			}
+			inv = nextinv;
+		}
+
 		*x = (float)result.X;
 		*y = (float)result.Y;
 		return;
@@ -650,6 +663,19 @@ void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation,
 		returns[0].Vec3At(&t);
 		returns[1].Vec3At(&r);
 		VMCall(func, param, 2, returns, 2);
+
+		auto inv = player->mo->Inventory;
+		while(inv != nullptr && !(inv->ObjectFlags & OF_EuthanizeMe))
+		{
+			auto nextinv = inv->Inventory;
+			IFOVERRIDENVIRTUALPTRNAME(inv, NAME_Inventory, ModifyBob3D)
+			{
+				VMValue param[] = { (DObject*)inv, t.X, t.Y, t.Z, r.X, r.Y, r.Z, ticfrac };
+				VMCall(func, param, 8, returns, 2);
+			}
+			inv = nextinv;
+		}
+
 		translation->X = (float)t.X;
 		translation->Y = (float)t.Y;
 		translation->Z = (float)t.Z;

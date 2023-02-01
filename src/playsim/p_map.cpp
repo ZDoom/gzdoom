@@ -136,34 +136,40 @@ bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
 
 bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 {
+	static VMFunction *orig_func = nullptr;
 	static unsigned VIndex = ~0u;
 	if (VIndex == ~0u)
 	{
-		VIndex = GetVirtualIndex(RUNTIME_CLASS(AActor), "CanCollideWith");
+		PClass * cls = RUNTIME_CLASS(AActor);
+		VIndex = GetVirtualIndex(cls, "CanCollideWith");
 		assert(VIndex != ~0u);
+		orig_func = cls->Virtuals.Size() > VIndex? cls->Virtuals[VIndex] : nullptr;
 	}
+
+	auto clssA = tmthing->GetClass();
+	VMFunction *funcA = clssA->Virtuals.Size() > VIndex ? clssA->Virtuals[VIndex] : nullptr;
+	auto clssB = thing->GetClass();
+	VMFunction *funcB = clssB->Virtuals.Size() > VIndex ? clssB->Virtuals[VIndex] : nullptr;
+
+	if (funcA == orig_func && funcB == orig_func) return true;
 
 	VMValue params[3] = { tmthing, thing, false };
 	VMReturn ret;
 	int retval;
 	ret.IntAt(&retval);
 
-	auto clss = tmthing->GetClass();
-	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
-	if (func != nullptr)
+	if (funcA && funcA != orig_func)
 	{
-		VMCall(func, params, 3, &ret, 1);
+		VMCall(funcA, params, 3, &ret, 1);
 		if (!retval) return false;
 	}
+
 	std::swap(params[0].a, params[1].a);
 	params[2].i = true;
 
-	// re-get for the other actor.
-	clss = thing->GetClass();
-	func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
-	if (func != nullptr)
+	if (funcB && funcB != orig_func)
 	{
-		VMCall(func, params, 3, &ret, 1);
+		VMCall(funcB, params, 3, &ret, 1);
 		if (!retval) return false;
 	}
 	return true;
@@ -179,20 +185,25 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 
 bool P_CanCrossLine(AActor *mo, line_t *line, DVector3 next)
 {
+	static VMFunction *orig_func = nullptr;
 	static unsigned VIndex = ~0u;
 	if (VIndex == ~0u)
 	{
-		VIndex = GetVirtualIndex(RUNTIME_CLASS(AActor), "CanCrossLine");
+		PClass * cls = RUNTIME_CLASS(AActor);
+		VIndex = GetVirtualIndex(cls, "CanCrossLine");
 		assert(VIndex != ~0u);
+		orig_func = cls->Virtuals.Size() > VIndex? cls->Virtuals[VIndex] : nullptr;
 	}
+
+	auto clss = mo->GetClass();
+	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
+
+	if (func == orig_func) return true;
 
 	VMValue params[] = { mo, line, next.X, next.Y, next.Z, false };
 	VMReturn ret;
 	int retval;
 	ret.IntAt(&retval);
-
-	auto clss = mo->GetClass();
-	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
 	if (func != nullptr)
 	{
 		VMCall(func, params, countof(params), &ret, 1);

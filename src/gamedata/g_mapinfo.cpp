@@ -393,7 +393,7 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 	if (RedirectCVAR != NAME_None)
 	{
 		auto var = FindCVar(RedirectCVAR.GetChars(), NULL);
-		if ((var->GetRealType() == CVAR_Bool) && !(var->GetFlags() & CVAR_IGNORE))	// only check Bool cvars that are currently defined
+		if (var && (var->GetRealType() == CVAR_Bool) && !(var->GetFlags() & CVAR_IGNORE))	// only check Bool cvars that are currently defined
 		{
 			if (var->GetFlags() & CVAR_USERINFO)
 			{

@@ -926,8 +926,12 @@ class AltHud ui
 			DrawStatus(CPlayer, 5, hudheight-75);
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
-		DrawHealth(CPlayer, 5, hudheight-45);
-		DrawArmor(BasicArmor(CPlayer.mo.FindInventory('BasicArmor')), HexenArmor(CPlayer.mo.FindInventory('HexenArmor')), 5, hudheight-20);
+
+		int armory = hud_swaphealtharmor ? hudheight-45 : hudheight-20;
+		int healthy = hud_swaphealtharmor ? hudheight-20 : hudheight-45;
+		DrawHealth(CPlayer, 5, healthy);
+		DrawArmor(BasicArmor(CPlayer.mo.FindInventory('BasicArmor')), HexenArmor(CPlayer.mo.FindInventory('HexenArmor')), 5, armory);
+
 		int y = DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		y = DrawAmmo(CPlayer, hudwidth-5, y);
 		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, y);

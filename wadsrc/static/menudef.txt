@@ -1155,6 +1155,7 @@ OptionMenu "AltHUDOptions" protected
 	Option "$ALTHUDMNU_AMMOORDER",				"hud_ammo_order", "AltHUDAmmoOrder"
 	Slider "$ALTHUDMNU_AMMORED",				"hud_ammo_red", 0, 100, 1, 0
 	Slider "$ALTHUDMNU_AMMOYELLOW",				"hud_ammo_yellow", 0, 100, 1, 0
+	Option "$ALTHUDMNU_SWAPHEALTHARMOR",		"hud_swaphealtharmor", "OnOff"
 	Slider "$ALTHUDMNU_HEALTHRED",				"hud_health_red", 0, 100, 1, 0
 	Slider "$ALTHUDMNU_HEALTHYELLOW",			"hud_health_yellow", 0, 100, 1, 0
 	Slider "$ALTHUDMNU_HEALTHGREEN",			"hud_health_green", 0, 100, 1, 0

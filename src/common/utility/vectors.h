@@ -89,6 +89,11 @@ struct TVector2
 	{
 	}
 
+	template<typename U>
+	explicit operator TVector2<U> () const noexcept {
+		return TVector2<U>(static_cast<U>(X), static_cast<U>(Y));
+	}
+
 	void Zero()
 	{
 		Y = X = 0;
@@ -366,6 +371,11 @@ struct TVector3
 	}
 
 	TVector3 (const TRotator<vec_t> &rot);
+	
+	template<typename U>
+	explicit operator TVector3<U> () const noexcept {
+		return TVector3<U>(static_cast<U>(X), static_cast<U>(Y), static_cast<U>(Z));
+	}
 
 	void Zero()
 	{
@@ -727,6 +737,11 @@ struct TVector4
 	TVector4(const vec_t v[4])
 		: TVector4(v[0], v[1], v[2], v[3])
 	{
+	}
+
+	template<typename U>
+	explicit operator TVector4<U> () const noexcept {
+		return TVector4<U>(static_cast<U>(X), static_cast<U>(Y), static_cast<U>(Z), static_cast<U>(W));
 	}
 
 	void Zero()

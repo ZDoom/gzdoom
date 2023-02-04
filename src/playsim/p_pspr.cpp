@@ -641,7 +641,8 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 	*x = *y = 0;
 }
 
-void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation, double ticfrac) {
+void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation, double ticfrac)
+{
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, BobWeapon3D)
 	{
 		VMValue param[] = { player->mo, ticfrac };

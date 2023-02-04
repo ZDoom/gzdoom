@@ -234,8 +234,7 @@ void GLBuffer::Resize(size_t newsize)
 
 void GLBuffer::GPUDropSync()
 {
-#if !(USE_GLES2)  // Only applicable when running on desktop for now
-	if (gles.useMappedBuffers && glFenceSync && glClientWaitSync)
+	if (gles.glesMode > GLES_MODE_GLES && gles.useMappedBuffers && glFenceSync && glDeleteSync)
 	{
 		if (mGLSync != NULL)
 		{
@@ -244,13 +243,11 @@ void GLBuffer::GPUDropSync()
 
 		mGLSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 	}
-#endif
 }
 
 void GLBuffer::GPUWaitSync()
 {
-#if !(USE_GLES2)  // Only applicable when running on desktop for now
-	if (gles.useMappedBuffers && glFenceSync && glClientWaitSync)
+	if (gles.glesMode > GLES_MODE_GLES && gles.useMappedBuffers && glDeleteSync && glClientWaitSync)
 	{
 		GLenum status = glClientWaitSync(mGLSync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000 * 1000 * 50); // Wait for a max of 50ms...
 
@@ -263,7 +260,6 @@ void GLBuffer::GPUWaitSync()
 
 		mGLSync = NULL;
 	}
-#endif
 }
 
 
@@ -318,7 +314,7 @@ void GLVertexBuffer::Bind(int *offsets)
 				glVertexAttribPointer(i, attrinf.size, attrinf.format, attrinf.normalize, (GLsizei)mStride, (void*)(intptr_t)ofs);
 			else
 			{
-				if (gles.gles3Features)
+				if (gles.glesMode >= GLES_MODE_OGL3)
 					glVertexAttribIPointer(i, attrinf.size, attrinf.format, (GLsizei)mStride, (void*)(intptr_t)ofs);
 			}
 		}

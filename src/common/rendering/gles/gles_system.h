@@ -23,32 +23,47 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define USE_GLES2 0 // For Desktop PC leave as 0, it will use the exisiting OpenGL context creationg code but run with the GLES2 renderer
-                    // Set to 1 for when comipling for a real GLES device
+#define USE_GLAD_LOADER 0 // Set to 1 to use the GLAD loader, otherwise use noramal GZDoom loader for PC
 
-#if (USE_GLES2)
+#if (USE_GLAD_LOADER)
 	#include "glad/glad.h"
 
-// Below are used extensions for GLES
-typedef void* (APIENTRYP PFNGLMAPBUFFERRANGEEXTPROC)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
-GLAPI PFNGLMAPBUFFERRANGEEXTPROC glMapBufferRange;
+	// Below are used extensions for GLES
+	typedef void* (APIENTRYP PFNGLMAPBUFFERRANGEEXTPROC)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+	GLAPI PFNGLMAPBUFFERRANGEEXTPROC glMapBufferRange;
 
-typedef GLboolean(APIENTRYP PFNGLUNMAPBUFFEROESPROC)(GLenum target);
-GLAPI PFNGLUNMAPBUFFEROESPROC glUnmapBuffer;
+	typedef GLboolean(APIENTRYP PFNGLUNMAPBUFFEROESPROC)(GLenum target);
+	GLAPI PFNGLUNMAPBUFFEROESPROC glUnmapBuffer;
 
-typedef void (APIENTRYP PFNGLVERTEXATTRIBIPOINTERPROC) (GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer);
-GLAPI PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer;
+	typedef void (APIENTRYP PFNGLVERTEXATTRIBIPOINTERPROC) (GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer);
+	GLAPI PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer;
 
-#define GL_DEPTH24_STENCIL8               0x88F0
-#define GL_MAP_PERSISTENT_BIT             0x0040
-#define GL_MAP_READ_BIT                   0x0001
-#define GL_MAP_WRITE_BIT                  0x0002
-#define GL_MAP_UNSYNCHRONIZED_BIT         0x0020
-#define GL_MAP_INVALIDATE_BUFFER_BIT      0x0008
-#define GL_BGRA                           0x80E1
-#define GL_DEPTH_CLAMP                    0x864F
-#define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
-#define GL_INT_2_10_10_10_REV             0x8D9F
+	typedef GLsync(APIENTRYP PFNGLFENCESYNCPROC)(GLenum condition, GLbitfield flags);
+	GLAPI PFNGLFENCESYNCPROC glFenceSync;
+	
+	typedef GLenum(APIENTRYP PFNGLCLIENTWAITSYNCPROC)(GLsync sync, GLbitfield flags, GLuint64 timeout);
+	GLAPI PFNGLCLIENTWAITSYNCPROC glClientWaitSync;
+
+	typedef void (APIENTRYP PFNGLDELETESYNCPROC)(GLsync sync);
+	GLAPI PFNGLDELETESYNCPROC glDeleteSync;
+
+	#define GL_DEPTH24_STENCIL8               0x88F0
+	#define GL_MAP_PERSISTENT_BIT             0x0040
+	#define GL_MAP_READ_BIT                   0x0001
+	#define GL_MAP_WRITE_BIT                  0x0002
+	#define GL_MAP_UNSYNCHRONIZED_BIT         0x0020
+	#define GL_MAP_INVALIDATE_BUFFER_BIT      0x0008
+	#define GL_BGRA                           0x80E1
+	#define GL_DEPTH_CLAMP                    0x864F
+	#define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+	#define GL_INT_2_10_10_10_REV             0x8D9F
+	#define GL_RED                            0x1903
+	#define GL_TEXTURE_SWIZZLE_RGBA           0x8E46
+	#define GL_SYNC_GPU_COMMANDS_COMPLETE     0x9117
+	#define GL_SYNC_FLUSH_COMMANDS_BIT        0x00000001
+	#define GL_ALREADY_SIGNALED               0x911A
+	#define GL_CONDITION_SATISFIED            0x911C
+
 #else
 	#include "gl_load/gl_load.h"
 #endif
@@ -66,6 +81,13 @@ GLAPI PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer;
 
 namespace OpenGLESRenderer
 {
+	enum 
+	{
+		GLES_MODE_GLES = 0,
+		GLES_MODE_OGL2 = 1,
+		GLES_MODE_OGL3 = 2,
+	};
+
 	struct RenderContextGLES
 	{
 		unsigned int flags;
@@ -77,7 +99,7 @@ namespace OpenGLESRenderer
 		bool forceGLSLv100;
 		bool depthClampAvailable;
 		bool anistropicFilterAvailable;
-		bool gles3Features;
+		int glesMode;
 		const char* shaderVersionString;
 		int max_texturesize;
 		char* vendorstring;

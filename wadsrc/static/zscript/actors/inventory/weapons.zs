@@ -39,6 +39,12 @@ class Weapon : StateProvider
 	meta double SlotPriority;
 
 	Vector3 BobPivot3D;	// Pivot used for BobWeapon3D
+
+	virtual ui Vector2 ModifyBobLayer(Vector2 Bob, int layer, double ticfrac) { return Bob; }
+
+	virtual ui Vector3, Vector3 ModifyBobLayer3D(Vector3 Translation, Vector3 Rotation, int layer, double ticfrac) { return Translation, Rotation; }
+
+	virtual ui Vector3 ModifyBobPivotLayer3D(int layer, double ticfrac) { return BobPivot3D; }
 	
 	property AmmoGive: AmmoGive1;
 	property AmmoGive1: AmmoGive1;

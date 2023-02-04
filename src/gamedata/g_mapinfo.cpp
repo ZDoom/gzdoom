@@ -403,12 +403,14 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 					if (playeringame[i] && (var = GetCVar(i, RedirectCVAR.GetChars())))
 					{
 						if (var->ToInt())
-							return FindLevelInfo(RedirectCVARMapName);
+							if (P_CheckMapData(RedirectCVARMapName))
+								return FindLevelInfo(RedirectCVARMapName);
 					}
 				}
 			}
 			else if (var->ToInt())
-				return FindLevelInfo(RedirectCVARMapName);
+				if (P_CheckMapData(RedirectCVARMapName))
+					return FindLevelInfo(RedirectCVARMapName);
 		}
 	}
 	return NULL;

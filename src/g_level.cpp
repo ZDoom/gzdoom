@@ -562,8 +562,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		auto redirectmap = FindLevelInfo(mapname);
 		if (redirectmap->RedirectCVAR != NAME_None)
 			redirectmap = redirectmap->CheckLevelRedirect();
-		if (redirectmap)
-			mapname = redirectmap->MapName;
+		if (redirectmap && redirectmap->MapName.GetChars()[0])
+				mapname = redirectmap->MapName;
 	}
 
 	G_VerifySkill();

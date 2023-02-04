@@ -346,7 +346,7 @@ bool FGLRenderState::ApplyShader()
 		activeShader->cur->muLightRange.Set(range);
 	}
 
-	if (gles.gles3Features)
+	if (gles.glesMode >= GLES_MODE_OGL3)
 	{
 		// Upload bone data
 		// NOTE, this is pretty inefficient, it will be reloading the same data over and over in a single frame

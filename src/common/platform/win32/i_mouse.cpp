@@ -196,10 +196,12 @@ static void SetCursorState(bool visible)
 	{
 		if (CursorState)
 		{
+			ShowCursor(1);
 			SetCursor((HCURSOR)(intptr_t)GetClassLongPtr(mainwindow.GetHandle(), GCLP_HCURSOR));
 		}
 		else
 		{
+			ShowCursor(0);
 			SetCursor(NULL);
 		}
 	}

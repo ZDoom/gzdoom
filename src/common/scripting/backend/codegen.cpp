@@ -274,6 +274,14 @@ bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 	{
 		auto fromtype = source->toPointer();
 		auto totype = dest->toPointer();
+		// implicit pointer casts
+        if( fromtype->isClassPointer() && !totype->isClassPointer() ) totype->toClassPointer(fromtype); // just to make sure they're compatible pointer types
+        else if( !fromtype->isClassPointer() && totype->isClassPointer() ) fromtype->toClassPointer(totype); // just to make sure they're compatible pointer types
+        else if( fromtype->PointedType != totype->PointedType )
+        {
+            auto res = fromtype->PointedType->toClass(totype->PointedType);
+            if(!res || res != totype->PointedType) return false;
+        }
 		// null pointers can be assigned to everything, everything can be assigned to void pointers.
 		if (fromtype == nullptr || totype == TypeVoidPtr) return true;
 		// when comparing const-ness does not matter.

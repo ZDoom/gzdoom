@@ -512,6 +512,8 @@ public:
 	PType *ElementType;
 	PStruct *BackingType;
 
+	TMap<FName,PFunction*> FnOverrides;
+
 	bool IsMatch(intptr_t id1, intptr_t id2) const override;
 	void GetTypeIDs(intptr_t &id1, intptr_t &id2) const override;
 

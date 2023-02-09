@@ -187,6 +187,8 @@ xx(Exists)
 xx(SetInvalid)
 xx(SetNull)
 xx(Key)
+xx(Index)
+xx(Find)
 
 // color channels
 xx(a)

@@ -2002,7 +2002,7 @@ enum OverrideFunctionArgType {
 	OFN_ARG_INT_ELEM,
 };
 
-template<OverrideFunctionRetType RetType, OverrideFunctionArgType ArgType , class MT>
+template<OverrideFunctionRetType RetType, OverrideFunctionArgType ArgType , int ExtraFlags = 0, class MT>
 void CreateOverrideFunction(MT *self, FName name)
 {
 	auto Fn = Create<PFunction>(self->BackingType, name);
@@ -2080,7 +2080,7 @@ void CreateOverrideFunction(MT *self, FName name)
 		argnames.Push(NAME_Item);
 	}
 
-	Fn->AddVariant(NewPrototype(ret, args), argflags, argnames, *NativeFn->VMPointer, VARF_Method | VARF_Native, SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM);
+	Fn->AddVariant(NewPrototype(ret, args), argflags, argnames, *NativeFn->VMPointer, VARF_Method | VARF_Native | ExtraFlags, SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM);
 	self->FnOverrides.Insert(name, Fn);
 }
 
@@ -2090,7 +2090,7 @@ PDynArray::PDynArray(PType *etype,PStruct *backing)
 	mDescriptiveName.Format("DynArray<%s>", etype->DescriptiveName());
 	Size = sizeof(FArray);
 	Align = alignof(FArray);
-	CreateOverrideFunction<OFN_RET_INT ,  OFN_ARG_ELEM     > (this, NAME_Find);
+	CreateOverrideFunction<OFN_RET_INT ,  OFN_ARG_ELEM     , VARF_ReadOnly> (this, NAME_Find);
 	CreateOverrideFunction<OFN_RET_INT ,  OFN_ARG_ELEM     > (this, NAME_Push);
 	CreateOverrideFunction<OFN_RET_VOID , OFN_ARG_INT_ELEM > (this, NAME_Insert);
 }
@@ -2335,9 +2335,9 @@ PMap::PMap(PType *keytype, PType *valtype, PStruct *backing, int backing_class)
 	Size = sizeof(ZSFMap);
 	Align = alignof(ZSFMap);
 	CreateOverrideFunction< OFN_RET_VAL      , OFN_ARG_KEY     > (this, NAME_Get);
-	CreateOverrideFunction< OFN_RET_VAL      , OFN_ARG_KEY     > (this, NAME_GetIfExists);
-	CreateOverrideFunction< OFN_RET_BOOL     , OFN_ARG_KEY     > (this, NAME_CheckKey);
-	CreateOverrideFunction< OFN_RET_VAL_BOOL , OFN_ARG_KEY     > (this, NAME_CheckValue);
+	CreateOverrideFunction< OFN_RET_VAL      , OFN_ARG_KEY     , VARF_ReadOnly> (this, NAME_GetIfExists);
+	CreateOverrideFunction< OFN_RET_BOOL     , OFN_ARG_KEY     , VARF_ReadOnly> (this, NAME_CheckKey);
+	CreateOverrideFunction< OFN_RET_VAL_BOOL , OFN_ARG_KEY     , VARF_ReadOnly> (this, NAME_CheckValue);
 	CreateOverrideFunction< OFN_RET_VOID     , OFN_ARG_KEY_VAL > (this, NAME_Insert);
 	CreateOverrideFunction< OFN_RET_VOID     , OFN_ARG_KEY     > (this, NAME_InsertNew);
 	CreateOverrideFunction< OFN_RET_VOID     , OFN_ARG_KEY     > (this, NAME_Remove);

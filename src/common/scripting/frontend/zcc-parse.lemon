@@ -967,6 +967,63 @@ aggregate_type(X) ::= ARRAY(T) LT type_or_array(A) GT.							/* TArray<type> */
 	X = arr;
 }
 
+aggregate_type(X) ::= func_ptr_type(A). { X = A; /*X-overwrites-A*/ }
+
+%type func_ptr_type {ZCC_FuncPtrType *}
+%type func_ptr_params {ZCC_FuncPtrParamDecl *}
+%type func_ptr_param_list {ZCC_FuncPtrParamDecl *}
+%type func_ptr_param {ZCC_FuncPtrParamDecl *}
+
+//fn_ptr_flag(X) ::= .				{ X.Int = 0; }	//implicit scope not allowed
+fn_ptr_flag(X) ::= UI.				{ X.Int = ZCC_UIFlag; }
+fn_ptr_flag(X) ::= PLAY.			{ X.Int = ZCC_Play; }
+fn_ptr_flag(X) ::= CLEARSCOPE.		{ X.Int = ZCC_ClearScope; }
+//fn_ptr_flag(X) ::= VIRTUALSCOPE.	{ X.Int = ZCC_VirtualScope; }	//virtual scope not allowed
+
+
+func_ptr_type(X) ::= FNTYPE(T) LT fn_ptr_flag(F) type_list_or_void(A) LPAREN func_ptr_params(B) RPAREN GT. /* Function<...(...)> */
+{
+	NEW_AST_NODE(FuncPtrType,fn_ptr,T);
+	fn_ptr->RetType = A;
+	fn_ptr->Params = B;
+	fn_ptr->Scope = F.Int;
+	X = fn_ptr;
+}
+
+func_ptr_type(X) ::= FNTYPE(T) LT VOID GT. /* Function<void> */
+{
+	NEW_AST_NODE(FuncPtrType,fn_ptr,T);
+	fn_ptr->RetType = nullptr;
+	fn_ptr->Params = nullptr;
+	fn_ptr->Scope = -1;
+	X = fn_ptr;
+}
+
+func_ptr_params(X) ::= .	/* empty */			{ X = NULL; }
+func_ptr_params(X) ::= VOID.					{ X = NULL; }
+func_ptr_params(X) ::= func_ptr_param_list(X).
+
+//	varargs function pointers not currently supported
+//func_ptr_params(X) ::= func_ptr_param_list(A) COMMA ELLIPSIS.
+//{
+//	NEW_AST_NODE(FuncPtrParamDecl,parm,stat->sc->GetMessageLine());
+//	parm->Type = nullptr;
+//	parm->Flags = 0;
+//	X = A; /*X-overwrites-A*/ 
+//	AppendTreeNodeSibling(X, parm);
+//}
+
+func_ptr_param_list(X) ::= func_ptr_param(X).
+func_ptr_param_list(X) ::= func_ptr_param_list(A) COMMA func_ptr_param(B).	{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
+
+func_ptr_param(X) ::= func_param_flags(A) type(B).
+{
+	NEW_AST_NODE(FuncPtrParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Flags = A.Int;
+	X = parm;
+}
+
 aggregate_type(X) ::= CLASS(T) class_restrictor(A).							/* class<type> */
 {
 	NEW_AST_NODE(ClassType,cls,T);
@@ -1367,6 +1424,17 @@ primary(X) ::= LPAREN CLASS LT IDENTIFIER(A) GT RPAREN LPAREN func_expr_list(B) 
 	expr->Parameters = B;
 	X = expr;
 }
+
+primary(X) ::= LPAREN func_ptr_type(A) RPAREN LPAREN expr(B) RPAREN. [DOT]		// function pointer type cast
+{
+	NEW_AST_NODE(FunctionPtrCast, expr, A);
+	expr->Operation = PEX_FunctionPtrCast;
+	A->ArraySize = NULL;
+	expr->PtrType = A;
+	expr->Expr = B;
+	X = expr;
+}
+
 primary(X) ::= primary(A) LBRACKET expr(B) RBRACKET. [DOT]				// Array access
 {
 	NEW_AST_NODE(ExprBinary, expr, B);
@@ -1376,6 +1444,7 @@ primary(X) ::= primary(A) LBRACKET expr(B) RBRACKET. [DOT]				// Array access
 	expr->Right = B;
 	X = expr;
 }
+
 primary(X) ::= primary(A) DOT IDENTIFIER(B).							// Member access
 {
 	NEW_AST_NODE(ExprMemberAccess, expr, B);

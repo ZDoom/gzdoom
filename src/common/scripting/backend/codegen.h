@@ -277,6 +277,7 @@ enum EFxType
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
 	EFX_ClassPtrCast,
+	EFX_FunctionPtrCast,
 	EFX_StateByIndex,
 	EFX_RuntimeStateIndex,
 	EFX_MultiNameState,
@@ -1811,6 +1812,7 @@ class FxVMFunctionCall : public FxExpression
 	bool CheckAccessibility(const VersionInfo &ver);
 
 public:
+	const bool FnPtrCall;
 
 	FArgumentList ArgList;
 	PFunction* Function;
@@ -2110,6 +2112,24 @@ public:
 
 	FxClassPtrCast(PClass *dtype, FxExpression *x);
 	~FxClassPtrCast();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxFunctionPtrCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxFunctionPtrCast (PFunctionPointer *ftype, FxExpression *x);
+	~FxFunctionPtrCast();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

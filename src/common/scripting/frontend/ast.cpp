@@ -521,6 +521,26 @@ static void PrintDynArrayType(FLispString &out, const ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintFuncPtrParamDecl(FLispString &out, const ZCC_TreeNode *node)
+{
+	ZCC_FuncPtrParamDecl *dnode = (ZCC_FuncPtrParamDecl *)node;
+	out.Break();
+	out.Open("func-ptr-param-decl");
+	PrintNodes(out, dnode->Type);
+	out.AddHex(dnode->Flags);
+	out.Close();
+}
+
+static void PrintFuncPtrType(FLispString &out, const ZCC_TreeNode *node){
+	ZCC_FuncPtrType *dnode = (ZCC_FuncPtrType *)node;
+	out.Break();
+	out.Open("func-ptr-type");
+	PrintNodes(out, dnode->RetType);
+	PrintNodes(out, dnode->Params);
+	out.AddHex(dnode->Scope);
+	out.Close();
+}
+
 static void PrintClassType(FLispString &out, const ZCC_TreeNode *node)
 {
 	ZCC_ClassType *tnode = (ZCC_ClassType *)node;
@@ -625,6 +645,16 @@ static void PrintExprClassCast(FLispString &out, const ZCC_TreeNode *node)
 	out.Open("expr-class-cast");
 	out.AddName(enode->ClassName);
 	PrintNodes(out, enode->Parameters, false);
+	out.Close();
+}
+
+static void PrintExprFunctionPtrCast(FLispString &out, const ZCC_TreeNode *node)
+{
+	ZCC_FunctionPtrCast *enode = (ZCC_FunctionPtrCast *)node;
+	assert(enode->Operation == PEX_FunctionPtrCast);
+	out.Open("expr-func-ptr-cast");
+	PrintNodes(out, enode->PtrType, false);
+	PrintNodes(out, enode->Expr, false);
 	out.Close();
 }
 
@@ -976,6 +1006,8 @@ static const NodePrinterFunc TreeNodePrinter[] =
 	PrintMapType,
 	PrintMapIteratorType,
 	PrintDynArrayType,
+	PrintFuncPtrParamDecl,
+	PrintFuncPtrType,
 	PrintClassType,
 	PrintExpression,
 	PrintExprID,
@@ -1011,6 +1043,7 @@ static const NodePrinterFunc TreeNodePrinter[] =
 	PrintVectorInitializer,
 	PrintDeclFlags,
 	PrintExprClassCast,
+	PrintExprFunctionPtrCast,
 	PrintStaticArrayState,
 	PrintProperty,
 	PrintFlagDef,

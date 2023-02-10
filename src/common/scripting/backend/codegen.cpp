@@ -296,6 +296,13 @@ bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 			if (forcompare && tocls->IsDescendantOf(fromcls)) return true;
 			return (fromcls->IsDescendantOf(tocls));
 		}
+		if(source->isFunctionPointer() && dest->isFunctionPointer())
+		{
+			auto from = static_cast<PFunctionPointer*>(source);
+			auto to = static_cast<PFunctionPointer*>(dest);
+			return to->PointedType == TypeVoid || (from->PointedType == to->PointedType && from->ArgFlags == to->ArgFlags && FScopeBarrier::CheckSidesForFunctionPointer(from->Scope, to->Scope));
+			// TODO allow narrowing argument types and widening return types via cast, ex.: Function<Actor(Object or Class<Object>)> to Function<Object(Actor or Class<Actor>)>
+		}
 	}
 	return false;
 }
@@ -8267,6 +8274,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	PContainerType *cls = nullptr;
 	bool staticonly = false;
 	bool novirtual = false;
+	bool fnptr = false;
 	bool isreadonly = false;
 
 	PContainerType *ccls = nullptr;
@@ -8884,6 +8892,22 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		cls = static_cast<PStruct*>(Self->ValueType);
 		Self->ValueType = NewPointer(Self->ValueType);
 	}
+	else if (Self->ValueType->isFunctionPointer())
+	{
+		auto fn = static_cast<PFunctionPointer*>(Self->ValueType);
+
+		if(MethodName == NAME_Call && fn->PointedType != TypeVoid)
+		{ // calling a Function<void> pointer isn't allowed
+			fnptr = true;
+			afd_override = fn->FakeFunction;
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Unknown function %s", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+	}
 	else
 	{
 		ScriptPosition.Message(MSG_ERROR, "Invalid expression on left hand side of %s", MethodName.GetChars());
@@ -9003,8 +9027,8 @@ isresolved:
 	}
 
 	// do not pass the self pointer to static functions.
-	auto self = (afd->Variants[0].Flags & VARF_Method) ? Self : nullptr;
-	auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, staticonly|novirtual);
+	auto self = ( fnptr || (afd->Variants[0].Flags & VARF_Method)) ? Self : nullptr;
+	auto x = new FxVMFunctionCall(self, afd, ArgList, ScriptPosition, (staticonly || novirtual) && !fnptr);
 	if (Self == self) Self = nullptr;
 	delete this;
 	return x->Resolve(ctx);
@@ -9018,7 +9042,7 @@ isresolved:
 //==========================================================================
 
 FxVMFunctionCall::FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual)
-: FxExpression(EFX_VMFunctionCall, pos)
+: FxExpression(EFX_VMFunctionCall, pos) , FnPtrCall((self && self->ValueType) ? self->ValueType->isFunctionPointer() : false)
 {
 	Self = self;
 	Function = func;
@@ -9092,7 +9116,7 @@ VMFunction *FxVMFunctionCall::GetDirectFunction(PFunction *callingfunc, const Ve
 	// definition can call that function directly without wrapping
 	// it inside VM code.
 
-	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual) && CheckAccessibility(ver) && CheckFunctionCompatiblity(ScriptPosition, callingfunc, Function))
+	if (ArgList.Size() == 0 && !(Function->Variants[0].Flags & VARF_Virtual) && !FnPtrCall && CheckAccessibility(ver) && CheckFunctionCompatiblity(ScriptPosition, callingfunc, Function))
 	{
 		unsigned imp = Function->GetImplicitArgs();
 		if (Function->Variants[0].ArgFlags.Size() > imp && !(Function->Variants[0].ArgFlags[imp] & VARF_Optional)) return nullptr;
@@ -9117,7 +9141,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	auto &argtypes = proto->ArgumentTypes;
 	auto &argnames = Function->Variants[0].ArgNames;
 	auto &argflags = Function->Variants[0].ArgFlags;
-	auto &defaults = Function->Variants[0].Implementation->DefaultArgs;
+	auto *defaults = FnPtrCall ? nullptr : &Function->Variants[0].Implementation->DefaultArgs;
 
 	int implicit = Function->GetImplicitArgs();
 
@@ -9185,6 +9209,12 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 			if (ArgList[i]->ExprType == EFX_NamedNode)
 			{
+				if(FnPtrCall)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Named arguments not supported in function pointer calls");
+					delete this;
+					return nullptr;
+				}
 				if (!(flag & VARF_Optional))
 				{
 					ScriptPosition.Message(MSG_ERROR, "Cannot use a named argument here - not all required arguments have been passed.");
@@ -9234,7 +9264,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 							}
 							if (ntype->GetRegCount() == 1)
 							{
-								auto x = new FxConstant(ntype, defaults[i + k + skipdefs + implicit], ScriptPosition);
+								auto x = new FxConstant(ntype, (*defaults)[i + k + skipdefs + implicit], ScriptPosition);
 								ArgList.Insert(i + k, x);
 							}
 							else 
@@ -9243,7 +9273,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 								FxConstant *cs[4] = { nullptr };
 								for (int l = 0; l < ntype->GetRegCount(); l++)
 								{
-									cs[l] = new FxConstant(TypeFloat64, defaults[l + i + k + skipdefs + implicit], ScriptPosition);
+									cs[l] = new FxConstant(TypeFloat64, (*defaults)[l + i + k + skipdefs + implicit], ScriptPosition);
 								}
 								FxExpression *x = new FxVectorValue(cs[0], cs[1], cs[2], cs[3], ScriptPosition);
 								ArgList.Insert(i + k, x);
@@ -9380,6 +9410,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	{
 		ValueType = TypeVoid;
 	}
+
 	return this;
 }
 
@@ -9405,11 +9436,14 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		}
 	}
 
-	VMFunction *vmfunc = Function->Variants[0].Implementation;
-	bool staticcall = ((vmfunc->VarFlags & VARF_Final) || vmfunc->VirtualIndex == ~0u || NoVirtual);
+	VMFunction *vmfunc = FnPtrCall ? nullptr : Function->Variants[0].Implementation;
+	bool staticcall = (FnPtrCall || (vmfunc->VarFlags & VARF_Final) || vmfunc->VirtualIndex == ~0u || NoVirtual);
 
 	count = 0;
-	FunctionCallEmitter emitters(vmfunc);
+
+	assert(!FnPtrCall || (FnPtrCall && Self && Self->ValueType && Self->ValueType->isFunctionPointer()));
+
+	FunctionCallEmitter emitters(FnPtrCall ? FunctionCallEmitter(PType::toFunctionPointer(Self->ValueType)) : FunctionCallEmitter(vmfunc));
 	// Emit code to pass implied parameters
 	ExpEmit selfemit;
 	if (Function->Variants[0].Flags & VARF_Method)
@@ -9453,43 +9487,56 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			}
 		}
 	}
+	else if (FnPtrCall)
+	{
+		assert(Self != nullptr);
+		selfemit = Self->Emit(build);
+		assert(selfemit.RegType == REGT_POINTER);
+		staticcall = false;
+	}
 	else staticcall = true;
 	// Emit code to pass explicit parameters
 	for (unsigned i = 0; i < ArgList.Size(); ++i)
 	{
 		emitters.AddParameter(build, ArgList[i]);
 	}
-	// Complete the parameter list from the defaults.
-	auto &defaults = Function->Variants[0].Implementation->DefaultArgs;
-	for (unsigned i = emitters.Count(); i < defaults.Size(); i++)
+	if(!FnPtrCall)
 	{
-		switch (defaults[i].Type)
+		// Complete the parameter list from the defaults.
+		auto &defaults = Function->Variants[0].Implementation->DefaultArgs;
+		for (unsigned i = emitters.Count(); i < defaults.Size(); i++)
 		{
-		default:
-		case REGT_INT:
-			emitters.AddParameterIntConst(defaults[i].i);
-			break;
-		case REGT_FLOAT:
-			emitters.AddParameterFloatConst(defaults[i].f);
-			break;
-		case REGT_POINTER:
-			emitters.AddParameterPointerConst(defaults[i].a);
-			break;
-		case REGT_STRING:
-			emitters.AddParameterStringConst(defaults[i].s());
-			break;
+			switch (defaults[i].Type)
+			{
+			default:
+			case REGT_INT:
+				emitters.AddParameterIntConst(defaults[i].i);
+				break;
+			case REGT_FLOAT:
+				emitters.AddParameterFloatConst(defaults[i].f);
+				break;
+			case REGT_POINTER:
+				emitters.AddParameterPointerConst(defaults[i].a);
+				break;
+			case REGT_STRING:
+				emitters.AddParameterStringConst(defaults[i].s());
+				break;
+			}
 		}
 	}
 	ArgList.DeleteAndClear();
 	ArgList.ShrinkToFit();
 
 	if (!staticcall) emitters.SetVirtualReg(selfemit.RegNum);
-	int resultcount = vmfunc->Proto->ReturnTypes.Size() == 0 ? 0 : max(AssignCount, 1);
 
-	assert((unsigned)resultcount <= vmfunc->Proto->ReturnTypes.Size());
+	PPrototype * proto = FnPtrCall ? static_cast<PPrototype*>(static_cast<PFunctionPointer*>(Self->ValueType)->PointedType) : vmfunc->Proto;
+
+	int resultcount = proto->ReturnTypes.Size() == 0 ? 0 : max(AssignCount, 1);
+
+	assert((unsigned)resultcount <= proto->ReturnTypes.Size());
 	for (int i = 0; i < resultcount; i++)
 	{
-		emitters.AddReturn(vmfunc->Proto->ReturnTypes[i]->GetRegType(), vmfunc->Proto->ReturnTypes[i]->GetRegCount());
+		emitters.AddReturn(proto->ReturnTypes[i]->GetRegType(), proto->ReturnTypes[i]->GetRegCount());
 	}
 	return emitters.EmitCall(build, resultcount > 1? &ReturnRegs : nullptr);
 }
@@ -11512,6 +11559,107 @@ ExpEmit FxClassPtrCast::Emit(VMFunctionBuilder *build)
 	FunctionCallEmitter emitters(callfunc);
 	emitters.AddParameter(clsname, false);
 	emitters.AddParameterPointerConst(desttype);
+
+	emitters.AddReturn(REGT_POINTER);
+	return emitters.EmitCall(build);
+}
+
+//==========================================================================
+//
+//==========================================================================
+
+FxFunctionPtrCast::FxFunctionPtrCast(PFunctionPointer *ftype, FxExpression *x)
+	: FxExpression(EFX_FunctionPtrCast, x->ScriptPosition)
+{
+	ValueType = ftype;
+	basex = x;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFunctionPtrCast::~FxFunctionPtrCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxFunctionPtrCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (!(basex->ValueType && basex->ValueType->isFunctionPointer()))
+	{
+		delete this;
+		return nullptr;
+	}
+	auto to = static_cast<PFunctionPointer *>(ValueType);
+	auto from = static_cast<PFunctionPointer *>(basex->ValueType);
+
+	if(to->PointedType == TypeVoid)
+	{	// no need to do anything for (Function<void)(...) casts
+		basex->ValueType = ValueType;
+		auto x = basex;
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if(from->PointedType == TypeVoid)
+	{	// nothing to check at compile-time for casts from Function<void>
+		return this;
+	}
+	else
+	{
+		// TODO allow narrowing argument types and widening return types via cast, ex.: Function<Actor(Object or Class<Object>)> to Function<Object(Actor or Class<Actor>)>
+		ScriptPosition.Message(MSG_ERROR, "Cannot cast %s to %s. The types are incompatible.", basex->ValueType->DescriptiveName(), to->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+PFunction *NativeFunctionPointerCast(PFunction *from, const PFunctionPointer *to)
+{
+	// TODO allow narrowing argument types and widening return types via cast, ex.: Function<Actor(Object or Class<Object>)> to Function<Object(Actor or Class<Actor>)>
+	return (to->PointedType == TypeVoid || (from &&
+				(  from->Variants[0].Proto == static_cast<PPrototype*>(to->PointedType)
+				&& from->Variants[0].ArgFlags == to->ArgFlags
+				&& FScopeBarrier::CheckSidesForFunctionPointer(FScopeBarrier::SideFromFlags(from->Variants[0].Flags), to->Scope)
+				))) ? from : nullptr;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinFunctionPtrCast, NativeFunctionPointerCast)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(from, PFunction);
+	PARAM_POINTER(to, PFunctionPointer);
+	ACTION_RETURN_POINTER(NativeFunctionPointerCast(from, to));
+}
+
+ExpEmit FxFunctionPtrCast::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit funcptr = basex->Emit(build);
+
+	auto sym = FindBuiltinFunction(NAME_BuiltinFunctionPtrCast);
+	assert(sym);
+
+	FunctionCallEmitter emitters(sym->Variants[0].Implementation);
+	emitters.AddParameter(funcptr, false);
+	emitters.AddParameterPointerConst(ValueType);
 
 	emitters.AddReturn(REGT_POINTER);
 	return emitters.EmitCall(build);

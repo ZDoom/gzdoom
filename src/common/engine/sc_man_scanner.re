@@ -169,6 +169,7 @@ std2:
 		'map'						{ RET(TK_Map); }
 		'mapiterator'				{ RET(TK_MapIterator); }
 		'array'						{ RET(TK_Array); }
+		'function'					{ RET(ParseVersion >= MakeVersion(4, 11, 0)? TK_FunctionType : TK_Identifier); }
 		'in'						{ RET(TK_In); }
 		'sizeof'					{ RET(TK_SizeOf); }
 		'alignof'					{ RET(TK_AlignOf); }

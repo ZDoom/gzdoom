@@ -222,6 +222,7 @@ static void InitTokenMap()
 	TOKENDEF2(TK_Map,			ZCC_MAP,		NAME_Map);
 	TOKENDEF2(TK_MapIterator,	ZCC_MAPITERATOR,NAME_MapIterator);
 	TOKENDEF2(TK_Array,			ZCC_ARRAY,		NAME_Array);
+	TOKENDEF2(TK_FunctionType,	ZCC_FNTYPE,		NAME_Function);
 	TOKENDEF2(TK_Include,		ZCC_INCLUDE,	NAME_Include);
 	TOKENDEF (TK_Void,			ZCC_VOID);
 	TOKENDEF (TK_True,			ZCC_TRUE);
@@ -926,6 +927,29 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 		break;
 	}
 
+	case AST_FuncPtrParamDecl:
+	{
+		TreeNodeDeepCopy_Start(FuncPtrParamDecl);
+
+		// ZCC_FuncPtrParamDecl
+		copy->Type = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		copy->Flags = origCasted->Flags;
+
+		break;
+	}
+
+	case AST_FuncPtrType:
+	{
+		TreeNodeDeepCopy_Start(FuncPtrType);
+
+		// ZCC_FuncPtrType
+		copy->RetType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->RetType, true, copiedNodesList));
+		copy->Params = static_cast<ZCC_FuncPtrParamDecl *>(TreeNodeDeepCopy_Internal(ast, origCasted->Params, true, copiedNodesList));
+		copy->Scope = origCasted->Scope;
+
+		break;
+	}
+
 	case AST_ClassType:
 	{
 		TreeNodeDeepCopy_Start(ClassType);
@@ -1372,7 +1396,21 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 
 		break;
 	}
+	
+	case AST_FunctionPtrCast:
+	{
+		TreeNodeDeepCopy_Start(FunctionPtrCast);
 
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_FunctionPtrCast
+		copy->PtrType = static_cast<ZCC_FuncPtrType *>(TreeNodeDeepCopy_Internal(ast, origCasted->PtrType, true, copiedNodesList));
+		copy->Expr = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Expr, true, copiedNodesList));
+
+		break;
+	}
+	
 	case AST_StaticArrayStatement:
 	{
 		TreeNodeDeepCopy_Start(StaticArrayStatement);

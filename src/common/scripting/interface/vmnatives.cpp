@@ -1314,3 +1314,35 @@ DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Inverse, QuatInverse)
 	QuatInverse(self->X, self->Y, self->Z, self->W, &quat);
 	ACTION_RETURN_QUAT(quat);
 }
+
+PFunction * FindFunctionPointer(PClass * cls, int fn_name)
+{
+	auto fn = dyn_cast<PFunction>(cls->FindSymbol(ENamedName(fn_name), true));
+	return (fn && fn->GetImplicitArgs() == 0) ? fn : nullptr;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, FindFunction, FindFunctionPointer)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(cls, DObject);
+	PARAM_NAME(fn);
+
+	ACTION_RETURN_POINTER(FindFunctionPointer(cls, fn.GetIndex()));
+}
+
+/*
+PFunction * FindMethodPointer(PClass * cls, int fn_name)
+{
+	auto fn = dyn_cast<PFunction>(cls->FindSymbol(ENamedName(fn_name), true));
+	return (fn && fn->GetImplicitArgs() == 1) ? fn : nullptr;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, FindMethod, FindMethodPointer)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(cls, DObject);
+	PARAM_NAME(fn);
+
+	ACTION_RETURN_POINTER(FindMethodPointer(cls, fn.GetIndex()));
+}
+*/

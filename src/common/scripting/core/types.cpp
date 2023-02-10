@@ -2814,6 +2814,232 @@ PMapIterator *NewMapIterator(PType *keyType, PType *valueType)
 	return (PMapIterator *)mapIteratorType;
 }
 
+/* PFunctionPointer *******************************************************/
+
+//==========================================================================
+//
+// PFunctionPointer - Parameterized Constructor
+//
+//==========================================================================
+
+static FString MakeFunctionPointerDescriptiveName(PPrototype * proto,const TArray<uint32_t> &ArgFlags, int scope)
+{
+	FString mDescriptiveName;
+
+	mDescriptiveName = "Function<";
+	switch(scope)
+	{
+	case FScopeBarrier::Side_PlainData:
+		mDescriptiveName += "clearscope ";
+		break;
+	case FScopeBarrier::Side_Play:
+		mDescriptiveName += "play ";
+		break;
+	case FScopeBarrier::Side_UI:
+		mDescriptiveName += "ui ";
+		break;
+	}
+	if(proto->ReturnTypes.Size() > 0)
+	{
+		mDescriptiveName += proto->ReturnTypes[0]->DescriptiveName();
+
+		const unsigned n = proto->ReturnTypes.Size();
+		for(unsigned i = 1; i < n; i++)
+		{
+			mDescriptiveName += ", ";
+			mDescriptiveName += proto->ReturnTypes[i]->DescriptiveName();
+		}
+		mDescriptiveName += " (";
+	}
+	else
+	{
+		mDescriptiveName += "void (";
+	}
+	if(proto->ArgumentTypes.Size() > 0)
+	{
+		if(ArgFlags[0] == VARF_Out) mDescriptiveName += "out ";
+		mDescriptiveName += proto->ArgumentTypes[0]->DescriptiveName();
+		const unsigned n = proto->ArgumentTypes.Size();
+		for(unsigned i = 1; i < n; i++)
+		{
+			mDescriptiveName += ", ";
+			if(ArgFlags[i] == VARF_Out) mDescriptiveName += "out ";
+			mDescriptiveName += proto->ArgumentTypes[i]->DescriptiveName();
+		}
+		mDescriptiveName += ")>";
+	}
+	else
+	{
+		mDescriptiveName += "void)>";
+	}
+
+	return mDescriptiveName;
+}
+
+PFunctionPointer::PFunctionPointer(PPrototype * proto, TArray<uint32_t> && argflags, int scope)
+	: PPointer(proto ? (PType*) proto : TypeVoid, false), ArgFlags(std::move(argflags)), Scope(scope)
+{
+	if(!proto)
+	{
+		mDescriptiveName = "Function<void>";
+	}
+	else
+	{
+		mDescriptiveName = MakeFunctionPointerDescriptiveName(proto, ArgFlags, scope);
+	}
+
+	Flags |= TYPE_FunctionPointer;
+
+	if(proto)
+	{
+		assert(Scope != -1); // for now, a scope is always required
+
+		TArray<FName> ArgNames;
+		TArray<uint32_t> ArgFlags2(ArgFlags); // AddVariant calls std::move on this, so it needs to be a copy,
+											  // but it takes it as a regular reference, so it needs to be a full variable instead of a temporary
+		ArgNames.Resize(ArgFlags.Size());
+		FakeFunction = Create<PFunction>();
+		FakeFunction->AddVariant(proto, ArgFlags2, ArgNames, nullptr, FScopeBarrier::FlagsFromSide(Scope), 0);
+	}
+	else
+	{
+		FakeFunction = nullptr;
+	}
+}
+
+void PFunctionPointer::WriteValue(FSerializer &ar, const char *key, const void *addr) const
+{
+	auto p = *(const PFunction**)(addr);
+	if(p)
+	{
+		FunctionPointerValue val;
+		FunctionPointerValue *fpv = &val;
+		val.ClassName = FString((p->OwningClass ? p->OwningClass->TypeName : NAME_None).GetChars());
+		val.FunctionName = FString(p->SymbolName.GetChars());
+		SerializeFunctionPointer(ar, key, fpv);
+	}
+	else
+	{
+		FunctionPointerValue *fpv = nullptr;
+		SerializeFunctionPointer(ar, key, fpv);
+	}
+}
+
+PFunction *NativeFunctionPointerCast(PFunction *from, const PFunctionPointer *to);
+
+bool PFunctionPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
+{
+	FunctionPointerValue val;
+	FunctionPointerValue *fpv = &val;
+	SerializeFunctionPointer(ar, key, fpv);
+
+	PFunction ** fn = (PFunction**)(addr);
+
+	if(fpv)
+	{
+		auto cls = PClass::FindClass(val.ClassName);
+		if(!cls)
+		{
+			*fn = nullptr;
+			Printf(TEXTCOLOR_RED "Function Pointer ('%s::%s'): '%s' is not a valid class\n",
+				val.ClassName.GetChars(),
+				val.FunctionName.GetChars(),
+				val.ClassName.GetChars()
+			);
+			ar.mErrors++;
+			return false;
+		}
+		auto sym = cls->FindSymbol(FName(val.FunctionName), true);
+		if(!sym)
+		{
+			*fn = nullptr;
+			Printf(TEXTCOLOR_RED "Function Pointer ('%s::%s'): symbol '%s' does not exist in class '%s'\n",
+				val.ClassName.GetChars(),
+				val.FunctionName.GetChars(),
+				val.FunctionName.GetChars(),
+				val.ClassName.GetChars()
+			);
+			ar.mErrors++;
+			return false;
+		}
+		PFunction* p = dyn_cast<PFunction>(sym);
+		if(!p)
+		{
+			*fn = nullptr;
+			Printf(TEXTCOLOR_RED "Function Pointer (%s::%s): symbol '%s' in class '%s' is a variable, not a function\n",
+				val.ClassName.GetChars(),
+				val.FunctionName.GetChars(),
+				val.FunctionName.GetChars(),
+				val.ClassName.GetChars()
+			);
+			ar.mErrors++;
+			return false;
+		}
+		else if(p->GetImplicitArgs() > 0)
+		{
+			*fn = nullptr;
+			Printf(TEXTCOLOR_RED "Function Pointer (%s::%s): function '%s' in class '%s' is %s, not a static function\n",
+				val.ClassName.GetChars(),
+				val.FunctionName.GetChars(),
+				val.FunctionName.GetChars(),
+				val.ClassName.GetChars(),
+				(p->GetImplicitArgs() == 1 ? "a method" : "an action function")
+			);
+			ar.mErrors++;
+			return false;
+		}
+		*fn = NativeFunctionPointerCast(p, this);
+		if(!*fn)
+		{
+			FString fn_name = MakeFunctionPointerDescriptiveName(p->Variants[0].Proto,p->Variants[0].ArgFlags, FScopeBarrier::SideFromFlags(p->Variants[0].Flags));
+			Printf(TEXTCOLOR_RED "Function Pointer (%s::%s) has incompatible type (Pointer is '%s', Function is '%s')\n",
+						val.ClassName.GetChars(),
+						val.FunctionName.GetChars(),
+						fn_name.GetChars(),
+						mDescriptiveName.GetChars()
+			);
+			ar.mErrors++;
+			return false;
+		}
+		return true;
+	}
+	else
+	{
+		*fn = nullptr;
+	}
+	return true;
+}
+
+bool PFunctionPointer::IsMatch(intptr_t id1, intptr_t id2) const
+{
+	const PPrototype * proto = (const PPrototype*) id1;
+	const PFunctionPointer::FlagsAndScope * flags_and_scope = (const PFunctionPointer::FlagsAndScope *) id2;
+	return (proto == (PointedType == TypeVoid ? nullptr : PointedType))
+		&& (Scope == flags_and_scope->Scope)
+		&& (ArgFlags == *flags_and_scope->ArgFlags);
+}
+
+void PFunctionPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
+{	//NOT SUPPORTED
+	assert(0 && "GetTypeIDs not supported for PFunctionPointer");
+}
+
+PFunctionPointer * NewFunctionPointer(PPrototype * proto, TArray<uint32_t> && argflags, int scope)
+{
+	size_t bucket;
+
+	PFunctionPointer::FlagsAndScope flags_and_scope { &argflags, scope };
+
+	PType *fn = TypeTable.FindType(NAME_Function, (intptr_t)proto, (intptr_t)&flags_and_scope, &bucket);
+	if (fn == nullptr)
+	{
+		fn = new PFunctionPointer(proto, std::move(argflags), scope);
+		flags_and_scope.ArgFlags = &static_cast<PFunctionPointer *>(fn)->ArgFlags;
+		TypeTable.AddType(fn, NAME_Function, (intptr_t)proto, (intptr_t)&flags_and_scope, bucket);
+	}
+	return (PFunctionPointer *)fn;
+}
+
 /* PStruct ****************************************************************/
 
 //==========================================================================
@@ -3223,13 +3449,13 @@ size_t FTypeTable::Hash(FName p1, intptr_t p2, intptr_t p3)
 	// to transform this into a ROR or ROL.
 	i1 = (i1 >> (sizeof(size_t)*4)) | (i1 << (sizeof(size_t)*4));
 
-	if (p1 != NAME_Prototype)
+	if (p1 != NAME_Prototype && p1 != NAME_Function)
 	{
 		size_t i2 = (size_t)p2;
 		size_t i3 = (size_t)p3;
 		return (~i1 ^ i2) + i3 * 961748927;	// i3 is multiplied by a prime
 	}
-	else
+	else if(p1 == NAME_Prototype)
 	{ // Prototypes need to hash the TArrays at p2 and p3
 		const TArray<PType *> *a2 = (const TArray<PType *> *)p2;
 		const TArray<PType *> *a3 = (const TArray<PType *> *)p3;
@@ -3242,6 +3468,18 @@ size_t FTypeTable::Hash(FName p1, intptr_t p2, intptr_t p3)
 			i1 = (i1 * 961748927) + (size_t)((*a3)[i]);
 		}
 		return i1;
+	}
+	else // if(p1 == NAME_Function)
+	{ // functions need custom hashing as well
+		size_t i2 = (size_t)p2;
+		const PFunctionPointer::FlagsAndScope * flags_and_scope = (const PFunctionPointer::FlagsAndScope *) p3;
+		const TArray<uint32_t> * a3 = flags_and_scope->ArgFlags;
+		i1 = (~i1 ^ i2);
+		for (unsigned i = 0; i < a3->Size(); ++i)
+		{
+			i1 = (i1 * 961748927) + (size_t)((*a3)[i]);
+		}
+		return (i1 * 961748927) + (size_t)flags_and_scope->Scope;
 	}
 }
 

@@ -1978,6 +1978,52 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		}
 		break;
 	}
+	case AST_FuncPtrType:
+	{
+		auto fn = static_cast<ZCC_FuncPtrType*>(ztype);
+
+		if(fn->Scope == -1)
+		{	// Function<void>
+			retval = NewFunctionPointer(nullptr, {}, -1);
+		}
+		else
+		{
+			TArray<PType*> returns;
+			TArray<PType*> args;
+			TArray<uint32_t> argflags;
+
+			if(auto *t = fn->RetType; t != nullptr) do {
+				returns.Push(DetermineType(outertype, field, name, t, false, false));
+			} while( (t = (ZCC_Type *)t->SiblingNext) != fn->RetType);
+			
+			if(auto *t = fn->Params; t != nullptr) do {
+				args.Push(DetermineType(outertype, field, name, t->Type, false, false));
+				argflags.Push(t->Flags == ZCC_Out ? VARF_Out : 0);
+			} while( (t = (ZCC_FuncPtrParamDecl *) t->SiblingNext) != fn->Params);
+			
+			auto proto = NewPrototype(returns,args);
+			switch(fn->Scope)
+			{ // only play/ui/clearscope functions are allowed, no data or virtual scope functions
+			case ZCC_Play:
+				fn->Scope = FScopeBarrier::Side_Play;
+				break;
+			case ZCC_UIFlag:
+				fn->Scope = FScopeBarrier::Side_UI;
+				break;
+			case ZCC_ClearScope:
+				fn->Scope = FScopeBarrier::Side_PlainData;
+				break;
+			case 0:
+				fn->Scope = -1;
+				break;
+			default:
+				Error(field, "Invalid Scope for Function Pointer");
+				break;
+			}
+			retval = NewFunctionPointer(proto, std::move(argflags), fn->Scope);
+		}
+		break;
+	}
 	case AST_ClassType:
 	{
 		auto ctype = static_cast<ZCC_ClassType *>(ztype);
@@ -2944,6 +2990,17 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 			return new FxNop(*ast);	// return something so that the compiler can continue.
 		}
 		return new FxClassPtrCast(cls, ConvertNode(cc->Parameters));
+	}
+
+	case AST_FunctionPtrCast:
+	{
+		auto cast = static_cast<ZCC_FunctionPtrCast *>(ast);
+
+		auto type = DetermineType(ConvertClass, cast, NAME_None, cast->PtrType, false, false);
+		assert(type->isFunctionPointer());
+		auto ptrType = static_cast<PFunctionPointer*>(type);
+
+		return new FxFunctionPtrCast(ptrType, ConvertNode(cast->Expr));
 	}
 
 	case AST_StaticArrayStatement:

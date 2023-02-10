@@ -62,6 +62,9 @@ struct FScopeBarrier
 	// This struct is used so that the logic is in a single place.
 	void AddFlags(int flags1, int flags2, const char* name);
 
+
+	static bool CheckSidesForFunctionPointer(int from, int to);
+
 	// this is called from vmexec.h
 	static void ValidateNew(PClass* cls, int scope);
 	static void ValidateCall(PClass* selftype, VMFunction *calledfunc, int outerside);

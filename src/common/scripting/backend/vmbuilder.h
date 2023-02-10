@@ -180,13 +180,12 @@ class FunctionCallEmitter
 	TArray<uint8_t> reginfo;
 	unsigned numparams = 0;	// This counts the number of pushed elements, which can differ from the number of emitters with vectors.
 	VMFunction *target = nullptr;
+	class PFunctionPointer *fnptr = nullptr;
 	int virtualselfreg = -1;
-
+	bool is_vararg;
 public:
-	FunctionCallEmitter(VMFunction *func)
-	{
-		target = func;
-	}
+	FunctionCallEmitter(VMFunction *func);
+	FunctionCallEmitter(class PFunctionPointer *func);
 
 	void SetVirtualReg(int virtreg)
 	{

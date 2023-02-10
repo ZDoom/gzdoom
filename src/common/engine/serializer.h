@@ -54,6 +54,12 @@ struct NumericValue
 	}
 };
 
+struct FunctionPointerValue
+{
+	FString ClassName;
+	FString FunctionName;
+};
+
 
 class FSerializer
 {
@@ -234,6 +240,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelOverride &sid, struct ModelOverride *def);
+
+void SerializeFunctionPointer(FSerializer &arc, const char *key, FunctionPointerValue *&p);
 
 template <typename T/*, typename = std::enable_if_t<std::is_base_of_v<DObject, T>>*/>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)

@@ -18,6 +18,8 @@
 /build
 /llvm
 .vs
+.idea
+.vscode
 /src/gl/unused
 /mapfiles_release/*.map
 .DS_Store

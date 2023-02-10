@@ -309,7 +309,8 @@ static bool UnravelVarArgAJump(FxVMFunctionCall *func, FCompileContext &ctx)
 static bool AJumpProcessing(FxVMFunctionCall *func, FCompileContext &ctx)
 {
 	// Unfortunately the PrintableName is the only safe thing to catch this special case here.
-	if (stricmp(func->Function->Variants[0].Implementation->QualifiedName, "Actor.A_Jump") == 0)
+    // [RL0] It's not valid to access Variant::Implementation on function pointer calls, so skip this
+	if (!func->FnPtrCall && stricmp(func->Function->Variants[0].Implementation->QualifiedName, "Actor.A_Jump") == 0)
 	{
 		// Unravel the varargs part of this function here so that the VM->native interface does not have to deal with it anymore.
 		if (func->ArgList.Size() > 2)

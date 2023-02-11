@@ -2576,7 +2576,15 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 	}
 
 	pointer.Free(build);
-	return result;
+
+	if(intconst)
+	{	//fix int constant return for assignment
+		return Right->Emit(build);
+	}
+	else
+	{
+		return result;
+	}
 }
 
 //==========================================================================

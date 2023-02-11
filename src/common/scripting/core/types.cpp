@@ -2375,59 +2375,49 @@ void PMap::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 //
 //==========================================================================
 
+#define FOR_EACH_MAP_TYPE(FN) \
+		case PMap::MAP_I32_I8: \
+			FN( uint32_t , uint8_t ) \
+		case PMap::MAP_I32_I16: \
+			FN( uint32_t , uint16_t ) \
+		case PMap::MAP_I32_I32: \
+			FN( uint32_t , uint32_t ) \
+		case PMap::MAP_I32_F32: \
+			FN( uint32_t , float ) \
+		case PMap::MAP_I32_F64: \
+			FN( uint32_t , double ) \
+		case PMap::MAP_I32_OBJ: \
+			FN( uint32_t , DObject* ) \
+		case PMap::MAP_I32_PTR: \
+			FN( uint32_t , void* ) \
+		case PMap::MAP_I32_STR: \
+			FN( uint32_t , FString ) \
+		case PMap::MAP_STR_I8: \
+			FN( FString , uint8_t ) \
+		case PMap::MAP_STR_I16: \
+			FN( FString , uint16_t ) \
+		case PMap::MAP_STR_I32: \
+			FN( FString , uint32_t ) \
+		case PMap::MAP_STR_F32: \
+			FN( FString , float ) \
+		case PMap::MAP_STR_F64: \
+			FN( FString , double ) \
+		case PMap::MAP_STR_OBJ: \
+			FN( FString , DObject* ) \
+		case PMap::MAP_STR_PTR: \
+			FN( FString , void* ) \
+		case PMap::MAP_STR_STR: \
+			FN( FString , FString )
+
 void PMap::Construct(void * addr) const {
 	switch(BackingClass)
 	{
-	case MAP_I32_I8:
-		new(addr) ZSMap<uint32_t, uint8_t>();
-		break;
-	case MAP_I32_I16:
-		new(addr) ZSMap<uint32_t, uint16_t>();
-		break;
-	case MAP_I32_I32:
-		new(addr) ZSMap<uint32_t, uint32_t>();
-		break;
-	case MAP_I32_F32:
-		new(addr) ZSMap<uint32_t, float>();
-		break;
-	case MAP_I32_F64:
-		new(addr) ZSMap<uint32_t, double>();
-		break;
-	case MAP_I32_OBJ:
-		new(addr) ZSMap<uint32_t, DObject*>();
-		break;
-	case MAP_I32_PTR:
-		new(addr) ZSMap<uint32_t, void*>();
-		break;
-	case MAP_I32_STR:
-		new(addr) ZSMap<uint32_t, FString>();
-		break;
-	case MAP_STR_I8:
-		new(addr) ZSMap<FString, uint8_t>();
-		break;
-	case MAP_STR_I16:
-		new(addr) ZSMap<FString, uint16_t>();
-		break;
-	case MAP_STR_I32:
-		new(addr) ZSMap<FString, uint32_t>();
-		break;
-	case MAP_STR_F32:
-		new(addr) ZSMap<FString, float>();
-		break;
-	case MAP_STR_F64:
-		new(addr) ZSMap<FString, double>();
-		break;
-	case MAP_STR_OBJ:
-		new(addr) ZSMap<FString, DObject*>();
-		break;
-	case MAP_STR_PTR:
-		new(addr) ZSMap<FString, void*>();
-		break;
-	case MAP_STR_STR:
-		new(addr) ZSMap<FString, FString>();
-		break;
+		#define MAP_CONSTRUCT(KT, VT) new(addr) ZSMap< KT, VT >(); break;
+		FOR_EACH_MAP_TYPE(MAP_CONSTRUCT)
+		#undef MAP_CONSTRUCT
 	};
 }
+
 
 void PMap::InitializeValue(void *addr, const void *def) const
 {
@@ -2444,54 +2434,9 @@ void PMap::DestroyValue(void *addr) const
 {
 	switch(BackingClass)
 	{
-	case MAP_I32_I8:
-		static_cast<ZSMap<uint32_t, uint8_t>*>(addr)->~ZSMap();
-		break;
-	case MAP_I32_I16:
-		static_cast<ZSMap<uint32_t, uint16_t>*>(addr)->~ZSMap();
-		break;
-	case MAP_I32_I32:
-		static_cast<ZSMap<uint32_t, uint32_t>*>(addr)->~ZSMap();
-		break;
-	case MAP_I32_F32:
-		static_cast<ZSMap<uint32_t, float>*>(addr)->~ZSMap();
-		break;
-	case MAP_I32_F64:
-		static_cast<ZSMap<uint32_t, double>*>(addr)->~ZSMap();
-		break;
-	case MAP_I32_OBJ:
-		static_cast<ZSMap<uint32_t, DObject*>*>(addr)->~ZSMap();
-		break;
-	case MAP_I32_PTR:
-		static_cast<ZSMap<uint32_t, void*>*>(addr)->~ZSMap();
-		break;
-	case MAP_I32_STR:
-		static_cast<ZSMap<uint32_t, FString>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_I8:
-		static_cast<ZSMap<FString, uint8_t>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_I16:
-		static_cast<ZSMap<FString, uint16_t>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_I32:
-		static_cast<ZSMap<FString, uint32_t>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_F32:
-		static_cast<ZSMap<FString, float>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_F64:
-		static_cast<ZSMap<FString, double>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_OBJ:
-		static_cast<ZSMap<FString, DObject*>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_PTR:
-		static_cast<ZSMap<FString, void*>*>(addr)->~ZSMap();
-		break;
-	case MAP_STR_STR:
-		static_cast<ZSMap<FString, FString>*>(addr)->~ZSMap();
-		break;
+		#define MAP_DESTRUCT(KT, VT) static_cast<ZSMap< KT, VT >*>(addr)->~ZSMap(); break;
+		FOR_EACH_MAP_TYPE(MAP_DESTRUCT)
+		#undef MAP_DESTRUCT
 	}
 }
 
@@ -2566,54 +2511,9 @@ void PMap::WriteValue(FSerializer &ar, const char *key, const void *addr) const
 	{
 		switch(BackingClass)
 		{
-		case MAP_I32_I8:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, uint8_t>*>(addr), this);
-			break;
-		case MAP_I32_I16:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, uint16_t>*>(addr), this);
-			break;
-		case MAP_I32_I32:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, uint32_t>*>(addr), this);
-			break;
-		case MAP_I32_F32:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, float>*>(addr), this);
-			break;
-		case MAP_I32_F64:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, double>*>(addr), this);
-			break;
-		case MAP_I32_OBJ:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, DObject*>*>(addr), this);
-			break;
-		case MAP_I32_PTR:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, void*>*>(addr), this);
-			break;
-		case MAP_I32_STR:
-			PMapValueWriter(ar, static_cast<const ZSMap<uint32_t, FString>*>(addr), this);
-			break;
-		case MAP_STR_I8:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, uint8_t>*>(addr), this);
-			break;
-		case MAP_STR_I16:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, uint16_t>*>(addr), this);
-			break;
-		case MAP_STR_I32:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, uint32_t>*>(addr), this);
-			break;
-		case MAP_STR_F32:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, float>*>(addr), this);
-			break;
-		case MAP_STR_F64:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, double>*>(addr), this);
-			break;
-		case MAP_STR_OBJ:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, DObject*>*>(addr), this);
-			break;
-		case MAP_STR_PTR:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, void*>*>(addr), this);
-			break;
-		case MAP_STR_STR:
-			PMapValueWriter(ar, static_cast<const ZSMap<FString, FString>*>(addr), this);
-			break;
+			#define MAP_WRITE(KT, VT) PMapValueWriter(ar, static_cast<const ZSMap< KT, VT >*>(addr), this); break;
+			FOR_EACH_MAP_TYPE(MAP_WRITE)
+			#undef MAP_WRITE
 		}
 		ar.EndObject();
 	}
@@ -2666,38 +2566,9 @@ bool PMap::ReadValue(FSerializer &ar, const char *key, void *addr) const
 	{
 		switch(BackingClass)
 		{
-		case MAP_I32_I8:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, uint8_t>*>(addr), this);
-		case MAP_I32_I16:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, uint16_t>*>(addr), this);
-		case MAP_I32_I32:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, uint32_t>*>(addr), this);
-		case MAP_I32_F32:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, float>*>(addr), this);
-		case MAP_I32_F64:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, double>*>(addr), this);
-		case MAP_I32_OBJ:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, DObject*>*>(addr), this);
-		case MAP_I32_PTR:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, void*>*>(addr), this);
-		case MAP_I32_STR:
-			return PMapValueReader(ar, static_cast<ZSMap<uint32_t, FString>*>(addr), this);
-		case MAP_STR_I8:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, uint8_t>*>(addr), this);
-		case MAP_STR_I16:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, uint16_t>*>(addr), this);
-		case MAP_STR_I32:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, uint32_t>*>(addr), this);
-		case MAP_STR_F32:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, float>*>(addr), this);
-		case MAP_STR_F64:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, double>*>(addr), this);
-		case MAP_STR_OBJ:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, DObject*>*>(addr), this);
-		case MAP_STR_PTR:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, void*>*>(addr), this);
-		case MAP_STR_STR:
-			return PMapValueReader(ar, static_cast<ZSMap<FString, FString>*>(addr), this);
+			#define MAP_READ(KT, VT) return PMapValueReader(ar, static_cast<ZSMap< KT, VT >*>(addr), this);
+			FOR_EACH_MAP_TYPE(MAP_READ)
+			#undef MAP_READ
 		}
 	}
 	return false;
@@ -2788,11 +2659,11 @@ PMap *NewMap(PType *keyType, PType *valueType)
 	return (PMap *)mapType;
 }
 
-/* PMap *******************************************************************/
+/* PMapIterator ***********************************************************/
 
 //==========================================================================
 //
-// PMap - Parameterized Constructor
+// PMapIterator - Parameterized Constructor
 //
 //==========================================================================
 
@@ -2842,54 +2713,9 @@ void PMapIterator::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 void PMapIterator::Construct(void * addr) const {
 	switch(BackingClass)
 	{
-	case PMap::MAP_I32_I8:
-		new(addr) ZSMapIterator<uint32_t, uint8_t>();
-		break;
-	case PMap::MAP_I32_I16:
-		new(addr) ZSMapIterator<uint32_t, uint16_t>();
-		break;
-	case PMap::MAP_I32_I32:
-		new(addr) ZSMapIterator<uint32_t, uint32_t>();
-		break;
-	case PMap::MAP_I32_F32:
-		new(addr) ZSMapIterator<uint32_t, float>();
-		break;
-	case PMap::MAP_I32_F64:
-		new(addr) ZSMapIterator<uint32_t, double>();
-		break;
-	case PMap::MAP_I32_OBJ:
-		new(addr) ZSMapIterator<uint32_t, DObject*>();
-		break;
-	case PMap::MAP_I32_PTR:
-		new(addr) ZSMapIterator<uint32_t, void*>();
-		break;
-	case PMap::MAP_I32_STR:
-		new(addr) ZSMapIterator<uint32_t, FString>();
-		break;
-	case PMap::MAP_STR_I8:
-		new(addr) ZSMapIterator<FString, uint8_t>();
-		break;
-	case PMap::MAP_STR_I16:
-		new(addr) ZSMapIterator<FString, uint16_t>();
-		break;
-	case PMap::MAP_STR_I32:
-		new(addr) ZSMapIterator<FString, uint32_t>();
-		break;
-	case PMap::MAP_STR_F32:
-		new(addr) ZSMapIterator<FString, float>();
-		break;
-	case PMap::MAP_STR_F64:
-		new(addr) ZSMapIterator<FString, double>();
-		break;
-	case PMap::MAP_STR_OBJ:
-		new(addr) ZSMapIterator<FString, DObject*>();
-		break;
-	case PMap::MAP_STR_PTR:
-		new(addr) ZSMapIterator<FString, void*>();
-		break;
-	case PMap::MAP_STR_STR:
-		new(addr) ZSMapIterator<FString, FString>();
-		break;
+		#define MAP_IT_CONSTRUCT(KT, VT) new(addr) ZSMapIterator< KT, VT >(); break;
+		FOR_EACH_MAP_TYPE(MAP_IT_CONSTRUCT)
+		#undef MAP_IT_CONSTRUCT
 	};
 }
 
@@ -2908,54 +2734,9 @@ void PMapIterator::DestroyValue(void *addr) const
 {
 	switch(BackingClass)
 	{
-	case PMap::MAP_I32_I8:
-		static_cast<ZSMapIterator<uint32_t, uint8_t>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_I32_I16:
-		static_cast<ZSMapIterator<uint32_t, uint16_t>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_I32_I32:
-		static_cast<ZSMapIterator<uint32_t, uint32_t>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_I32_F32:
-		static_cast<ZSMapIterator<uint32_t, float>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_I32_F64:
-		static_cast<ZSMapIterator<uint32_t, double>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_I32_OBJ:
-		static_cast<ZSMapIterator<uint32_t, DObject*>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_I32_PTR:
-		static_cast<ZSMapIterator<uint32_t, void*>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_I32_STR:
-		static_cast<ZSMapIterator<uint32_t, FString>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_I8:
-		static_cast<ZSMapIterator<FString, uint8_t>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_I16:
-		static_cast<ZSMapIterator<FString, uint16_t>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_I32:
-		static_cast<ZSMapIterator<FString, uint32_t>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_F32:
-		static_cast<ZSMapIterator<FString, float>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_F64:
-		static_cast<ZSMapIterator<FString, double>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_OBJ:
-		static_cast<ZSMapIterator<FString, DObject*>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_PTR:
-		static_cast<ZSMapIterator<FString, void*>*>(addr)->~ZSMapIterator();
-		break;
-	case PMap::MAP_STR_STR:
-		static_cast<ZSMapIterator<FString, FString>*>(addr)->~ZSMapIterator();
-		break;
+		#define MAP_IT_DESTROY(KT, VT) static_cast<ZSMapIterator< KT, VT >*>(addr)->~ZSMapIterator(); break;
+		FOR_EACH_MAP_TYPE(MAP_IT_DESTROY)
+		#undef MAP_IT_DESTROY
 	}
 }
 

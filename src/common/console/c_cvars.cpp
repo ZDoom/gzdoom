@@ -51,7 +51,6 @@
 
 #include "vm.h"
 
-#include "doomstat.h"
 
 
 struct FLatchedValue

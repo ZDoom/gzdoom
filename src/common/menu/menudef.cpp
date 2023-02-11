@@ -150,13 +150,13 @@ void DeinitMenus()
 			pair->Value = nullptr;
 		}
 	}
-	MenuDescriptors.Clear();
-	OptionValues.Clear();
 	if (menuDelegate)
 	{
 		menuDelegate->Destroy();
 		menuDelegate = nullptr;
 	}
+	MenuDescriptors.Clear();
+	OptionValues.Clear();
 }
 
 FTextureID GetMenuTexture(const char* const name)

@@ -368,7 +368,7 @@ void DStatusBarCore::SetScale()
 	double screenaspect = w / double(h);
 	double aspectscale = 1.0;
 
-	double ViewportAspect = ViewportPixelAspect();
+	const double ViewportAspect = 1. / ViewportPixelAspect();
 
 	if ((horz == 320 && vert == 200) || (horz == 640 && vert == 400))
 	{
@@ -387,9 +387,9 @@ void DStatusBarCore::SetScale()
 		refw = h * refaspect;
 	}
 	refw *= hud_scalefactor;
-	refh *= hud_scalefactor * aspectscale / ViewportAspect;
+	refh *= hud_scalefactor * aspectscale * ViewportAspect;
 
-	int sby = vert - int(RelTop * hud_scalefactor * aspectscale / ViewportAspect);
+	int sby = vert - int(RelTop * hud_scalefactor * aspectscale * ViewportAspect);
 	// Use full pixels for destination size.
 
 	ST_X = xs_CRoundToInt((w - refw) / 2);

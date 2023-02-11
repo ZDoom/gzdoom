@@ -120,7 +120,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						sc.MustGetValue(false);
 						GlobalKerning = sc.Number;
 					}
-					if (sc.Compare("Altfont"))
+					else if (sc.Compare("Altfont"))
 					{
 						sc.MustGetString();
 						AltFontName = sc.String;
@@ -179,6 +179,11 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 							sc.ScriptError("Unknown translation type %s", sc.String);
 						}
 					}
+					else if (sc.Compare("lowercaselatinonly"))
+					{
+						lowercaselatinonly = true;
+					}
+					
 				}
 			}
 		}
@@ -755,7 +760,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	// Use different substitution logic based on the fonts content:
 	// In a font which has both upper and lower case, prefer unaccented small characters over capital ones.
 	// In a pure upper-case font, do not check for lower case replacements.
-	if (!MixedCase)
+	if (!MixedCase || (lowercaselatinonly && code >= 0x380 && code < 0x500))
 	{
 		// Try converting lowercase characters to uppercase.
 		if (myislower(code))

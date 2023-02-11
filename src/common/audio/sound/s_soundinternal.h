@@ -97,11 +97,13 @@ constexpr FSoundID INVALID_SOUND = FSoundID::fromInt(-1);
 	 bool		bUsed = false;
 	 bool		bSingular = false;
 	 bool		bTentative = true;
+	 bool		bExternal = false;
 
 	 TArray<int> UserData;
 
 	 int			RawRate = 0;				// Sample rate to use when bLoadRAW is true
 	 int			LoopStart = -1;				// -1 means no specific loop defined
+	 int			LoopEnd = -1;				// -1 means no specific loop defined
 
 	 FSoundID link = NO_LINK;
 	 constexpr static FSoundID NO_LINK = FSoundID::fromInt(-1);

@@ -1096,7 +1096,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, int length, int 
 	return retval;
 }
 
-SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length)
+SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, int def_loop_start, int def_loop_end)
 {
 	SoundHandle retval = { NULL };
 	ALenum format = AL_NONE;
@@ -1106,7 +1106,16 @@ SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length)
 	uint32_t loop_start = 0, loop_end = ~0u;
 	zmusic_bool startass = false, endass = false;
 
-	FindLoopTags(sfxdata, length, &loop_start, &startass, &loop_end, &endass);
+	if (def_loop_start < 0)
+	{
+		FindLoopTags(sfxdata, length, &loop_start, &startass, &loop_end, &endass);
+	}
+	else
+	{
+		loop_start = def_loop_start;
+		loop_end = def_loop_end;
+		startass = endass = true;
+	}
 	auto decoder = CreateDecoder(sfxdata, length, true);
 	if (!decoder)
 		return retval;

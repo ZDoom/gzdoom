@@ -210,17 +210,12 @@ void I_ResetFrameTime()
 	FirstFrameStartTime += (CurrentFrameStartTime - ft);
 }
 
-double I_GetInputFrac(bool const synchronised)
+double I_GetInputFrac()
 {
-	if (!synchronised)
-	{
-		const double now = I_msTimeF();
-		const double result = (now - lastinputtime) * GameTicRate * (1. / 1000.);
-		lastinputtime = now;
-		return result;
-	}
-
-	return 1;
+	const double now = I_msTimeF();
+	const double result = (now - lastinputtime) * GameTicRate * (1. / 1000.);
+	lastinputtime = now;
+	return result;
 }
 
 void I_ResetInputTime()

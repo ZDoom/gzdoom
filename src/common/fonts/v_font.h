@@ -167,6 +167,7 @@ public:
 		forceremap = other.forceremap;
 		Chars = other.Chars;
 		Translations = other.Translations;
+		lowercaselatinonly = other.lowercaselatinonly;
 		Lump = other.Lump;
 	}
 
@@ -189,6 +190,7 @@ protected:
 	bool noTranslate = false;
 	bool MixedCase = false;
 	bool forceremap = false;
+	bool lowercaselatinonly = false;
 	struct CharData
 	{
 		FGameTexture *OriginalPic = nullptr;

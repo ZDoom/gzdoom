@@ -382,7 +382,7 @@ static float CalcPitch(int pitchmask, float defpitch, float defpitchmax)
 	{
 		if (defpitchmax > 0.0 && defpitch != defpitchmax)
 		{
-			defpitch = pr_soundpitch.GenRand_Real1() * (defpitchmax - defpitch) + defpitch;
+			defpitch = (float)pr_soundpitch.GenRand_Real1() * (defpitchmax - defpitch) + defpitch;
 		}
 		return defpitch;
 	}
@@ -769,7 +769,7 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 			// If that fails, let the sound system try and figure it out.
 			else
 			{
-				sfx->data = GSnd->LoadSound(sfxdata.Data(), size);
+				sfx->data = GSnd->LoadSound(sfxdata.Data(), size, sfx->LoopStart, sfx->LoopEnd);
 			}
 		}
 

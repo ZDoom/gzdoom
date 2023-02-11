@@ -230,7 +230,7 @@ struct TVector2
 	// Vector length
 	vec_t Length() const
 	{
-		return (vec_t)g_sqrt (X*X + Y*Y);
+		return (vec_t)g_sqrt (LengthSquared());
 	}
 
 	vec_t LengthSquared() const
@@ -613,7 +613,7 @@ struct TVector3
 	// Vector length
 	double Length() const
 	{
-		return g_sqrt (X*X + Y*Y + Z*Z);
+		return g_sqrt (LengthSquared());
 	}
 
 	double LengthSquared() const
@@ -928,7 +928,7 @@ struct TVector4
 	// Vector length
 	double Length() const
 	{
-		return g_sqrt(X*X + Y*Y + Z*Z + W*W);
+		return g_sqrt(LengthSquared());
 	}
 
 	double LengthSquared() const
@@ -1450,7 +1450,7 @@ public:
 
 	double Tan() const
 	{
-		auto bam = BAMs();
+		const auto bam = BAMs();
 		return g_sinbam(bam) / g_cosbam(bam);
 	}
 
@@ -1487,7 +1487,7 @@ inline TAngle<T> deltaangle(const TAngle<T> &a1, const TAngle<T> &a2)
 template<class T>
 inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
-	return fabs((a1 - a2).Normalized180());
+	return fabs(deltaangle(a2, a1));
 }
 
 template<class T>
@@ -1528,7 +1528,7 @@ TAngle<T> TVector3<T>::Angle() const
 template<class T>
 TAngle<T> TVector3<T>::Pitch() const
 {
-	return -VecToAngle(TVector2<T>(X, Y).Length(), Z);
+	return -VecToAngle(XY().Length(), Z);
 }
 
 template<class T>
@@ -1694,13 +1694,10 @@ struct TRotator
 };
 
 // Create a forward vector from a rotation (ignoring roll)
-
 template<class T>
 inline TVector3<T>::TVector3 (const TRotator<T> &rot)
 {
-	double pcos = rot.Pitch.Cos();
-	X = pcos * rot.Yaw.Cos();
-	Y = pcos * rot.Yaw.Sin();
+	XY() = rot.Pitch.Cos() * rot.Yaw.ToVector();
 	Z = rot.Pitch.Sin();
 }
 

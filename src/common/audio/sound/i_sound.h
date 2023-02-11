@@ -105,7 +105,7 @@ public:
 	virtual bool IsNull() { return false; }
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
-	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length) = 0;
+	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length, int def_loop_start, int def_loop_end) = 0;
 	SoundHandle LoadSoundVoc(uint8_t *sfxdata, int length);
 	virtual SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1) = 0;
 	virtual void UnloadSound (SoundHandle sfx) = 0;	// unloads a sound from memory

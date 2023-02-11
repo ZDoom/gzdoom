@@ -3526,11 +3526,6 @@ void AActor::SetRoll(DAngle r, int fflags)
 
 void AActor::SetViewPitch(DAngle p, int fflags)
 {
-	if (player != NULL || (fflags & SPF_FORCECLAMP))
-	{
-		p = ClampPitch(p);
-	}
-
 	if (p != ViewAngles.Pitch)
 	{
 		ViewAngles.Pitch = p;

@@ -601,6 +601,8 @@ void FSerializer::WriteObjects()
 		{
 			auto obj = w->mDObjects[i];
 
+			if(obj->ObjectFlags & OF_Transient) continue;
+
 			BeginObject(nullptr);
 			w->Key("classtype");
 			w->String(obj->GetClass()->TypeName.GetChars());

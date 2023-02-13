@@ -1681,6 +1681,7 @@ bool AActor::CanSeek(AActor *target) const
 	if ((flags2 & MF2_DONTSEEKINVISIBLE) && 
 		((target->flags & MF_SHADOW) || 
 		 (target->renderflags & RF_INVISIBLE) || 
+		 (target->flags8 & MF8_MNOTVISIBLE) ||
 		 !target->RenderStyle.IsVisible(target->Alpha)
 		)
 	   ) return false;

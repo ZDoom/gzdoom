@@ -2344,7 +2344,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 	// [RH] Don't chase invisible targets
 	if (actor->target != NULL &&
-		actor->target->renderflags & RF_INVISIBLE &&
+		((actor->target->renderflags & RF_INVISIBLE) || (actor->target->flags8 & MF8_MNOTVISIBLE)) &&
 		actor->target != actor->goal)
 	{
 		actor->target = nullptr;

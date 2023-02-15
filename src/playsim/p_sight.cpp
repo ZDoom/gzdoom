@@ -849,7 +849,7 @@ int P_CheckSight (AActor *t1, AActor *t2, int flags)
 		return false;
 	}
 
-	if (t2->flags8 & MF8_VISALWAYSFAIL)
+	if ((t2->flags8 & MF8_VISALWAYSFAIL) && !(flags & SF_IGNOREVISIBILITY))
 	{
 		return false;
 	}

@@ -849,6 +849,11 @@ int P_CheckSight (AActor *t1, AActor *t2, int flags)
 		return false;
 	}
 
+	if (t2->flags8 & MF8_VISALWAYSFAIL)
+	{
+		return false;
+	}
+
 	auto s1 = t1->Sector;
 	auto s2 = t2->Sector;
 	//

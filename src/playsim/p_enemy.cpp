@@ -1252,7 +1252,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	double mindist;
 	DAngle fov;
 
-	if (other == nullptr)
+	if (other == nullptr || (other->flags8 & MF8_VISALWAYSFAIL))
 	{
 		return false;
 	}

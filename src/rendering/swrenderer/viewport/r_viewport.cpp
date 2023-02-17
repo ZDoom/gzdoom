@@ -172,6 +172,9 @@ namespace swrenderer
 
 		WallTMapScale2 = IYaspectMul / CenterX * 1.2 / ypixelstretch;
 
+		// [RicardoLuis0] adjust IYaspectMul for map stretch -- fixes slope rendering on maps that define pixelratio
+		IYaspectMul *= 1.2 / ypixelstretch;
+
 		// thing clipping
 		fillshort(screenheightarray, viewwidth, (short)viewheight);
 

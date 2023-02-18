@@ -171,6 +171,7 @@ namespace swrenderer
 
 		inline static uint8_t AddLightsColumn(const DrawerLight* lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material);
 		inline static uint8_t AddLightsSpan(const DrawerLight* lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material);
+		inline static uint8_t AddLightsTilted(const DrawerLight* lights, int num_lights, float viewpos_x, float viewpos_y, float viewpos_z, float nx, float ny, float nz, uint8_t fg, uint8_t material);
 		inline static uint8_t AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b);
 
 		void CalcTiltedLighting(double lstart, double lend, int width, int planeshade, uint8_t* basecolormapdata);

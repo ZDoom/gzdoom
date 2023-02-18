@@ -82,6 +82,12 @@ namespace swrenderer
 			return (CenterY - screenY - 0.5) / FocalLengthY * viewZ;
 		}
 
+		DVector3 ScreenToViewPos(int screenX, int screenY, const DVector3& plane, double planeD)
+		{
+			double viewZ = -planeD / ((screenX + 0.5 - CenterX) / FocalLengthX * plane.X + (CenterY - screenY - 0.5) / FocalLengthY * plane.Y + plane.Z);
+			return DVector3(ScreenToViewX(screenX, viewZ), ScreenToViewY(screenY, viewZ), viewZ);
+		}
+
 		FLevelLocals *Level()
 		{
 			return viewpoint.ViewLevel;

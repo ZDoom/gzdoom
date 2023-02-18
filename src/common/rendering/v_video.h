@@ -170,13 +170,21 @@ public:
 		mShadowMap.SetAABBTree(tree);
 	}
 	virtual void SetLevelMesh(hwrenderer::LevelMesh *mesh) { }
-	bool allowSSBO()
+	bool allowSSBO() const
 	{
 #ifndef HW_BLOCK_SSBO
 		return true;
 #else
 		return mPipelineType == 0;
 #endif
+	}
+
+	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
+	// We only want to disable using SSBOs for lights but not disable the feature entirely.
+	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
+	bool useSSBO() 
+	{
+		return IsVulkan();// || ((hwcaps & RFL_SHADER_STORAGE_BUFFER) && allowSSBO() && !strstr(vendorstring, "Intel"));
 	}
 
 	virtual DCanvas* GetCanvas() { return nullptr; }

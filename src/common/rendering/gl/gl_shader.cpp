@@ -391,25 +391,17 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	assert(screen->mLights != NULL);
 	assert(screen->mBones != NULL);
 
-	bool lightbuffertype = screen->mLights->GetBufferType();
-	unsigned int lightbuffersize = screen->mLights->GetBlockSize();
-	if (!lightbuffertype)
-	{
-		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n#define NUM_UBO_BONES %d\n", lightbuffersize, screen->mBones->GetBlockSize());
-	}
-	else
-	{
-		// This differentiation is for Intel which do not seem to expose the full extension, even if marked as required.
-		if (gl.glslversion < 4.3f)
-			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n#define SHADER_STORAGE_BONES\n";
-		else
-			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n#define SHADER_STORAGE_BONES\n";
-	}
 
 	if ((gl.flags & RFL_SHADER_STORAGE_BUFFER) && screen->allowSSBO())
-	{
-		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
-	}
+		vp_comb << "#version 430 core\n#define SUPPORTS_SHADOWMAPS\n";
+	else 
+		vp_comb << "#version 330 core\n";
+
+	bool lightbuffertype = screen->mLights->GetBufferType();
+	if (!lightbuffertype)
+		vp_comb.AppendFormat("#define NUM_UBO_LIGHTS %d\n#define NUM_UBO_BONES %d\n", screen->mLights->GetBlockSize(), screen->mBones->GetBlockSize());
+	else
+		vp_comb << "#define SHADER_STORAGE_LIGHTS\n#define SHADER_STORAGE_BONES\n";
 
 	FString fp_comb = vp_comb;
 	vp_comb << defines << i_data.GetChars();

@@ -126,6 +126,8 @@ static FCompatOption Options[] =
 	{ "floatbob",				BCOMPATF_FLOATBOB, SLOT_BCOMPAT },
 	{ "noslopeid",				BCOMPATF_NOSLOPEID, SLOT_BCOMPAT },
 	{ "clipmidtex",				BCOMPATF_CLIPMIDTEX, SLOT_BCOMPAT },
+	{ "nosectionmerge",			BCOMPATF_NOSECTIONMERGE, SLOT_BCOMPAT },
+
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },
@@ -288,12 +290,13 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	Level->ii_compatflags2 = 0;
 	Level->ib_compatflags = 0;
 
-	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
-	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
+	// When playing Doom IWAD levels force BCOMPATF_NOSECTIONMERGE, COMPAT_SHORTTEX and COMPATF_LIGHT.
+	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt. BCOMPATF_NOSECTIONMERGE is mainly for MAP18's sector 0
 	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
 	if (fileSystem.GetFileContainer(map->lumpnum) == fileSystem.GetIwadNum() && (gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
 	{
 		Level->ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
+		Level->ib_compatflags = BCOMPATF_NOSECTIONMERGE;
 		if (gameinfo.flags & GI_COMPATSTAIRS) Level->ii_compatflags |= COMPATF_STAIRINDEX;
 	}
 

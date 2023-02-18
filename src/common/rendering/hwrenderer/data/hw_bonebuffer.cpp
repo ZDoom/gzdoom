@@ -33,10 +33,7 @@ BoneBuffer::BoneBuffer(int pipelineNbr) : mPipelineNbr(pipelineNbr)
 	mBufferSize = maxNumberOfBones;
 	mByteSize = mBufferSize * BONE_SIZE;
 
-	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
-	// We only want to disable using SSBOs for bones but not disable the feature entirely.
-	// Note that using an uniform buffer here will limit the number of bones per model so it isn't done for NVidia and AMD.
-	if (screen->IsVulkan() || screen->IsPoly() || ((screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && screen->allowSSBO() && !strstr(screen->vendorstring, "Intel")))
+	if (screen->useSSBO())
 	{
 		mBufferType = true;
 		mBlockAlign = 0;

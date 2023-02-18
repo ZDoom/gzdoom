@@ -108,6 +108,8 @@ static void InitContext()
 
 void gl_LoadExtensions()
 {
+	int v = 0;
+
 	InitContext();
 	CollectExtensions();
 
@@ -162,32 +164,18 @@ void gl_LoadExtensions()
 #endif
 		gl.glslversion = 3.31f;	// Force GLSL down to 3.3.
 	}
-	else if (gl_version < 4.5f)
-	{
-		// don't use GL 4.x features when running a GL 3.x context.
-		if (CheckExtension("GL_ARB_buffer_storage"))
-		{
-			// work around a problem with older AMD drivers: Their implementation of shader storage buffer objects is piss-poor and does not match uniform buffers even closely.
-			// Recent drivers, GL 4.4 don't have this problem, these can easily be recognized by also supporting the GL_ARB_buffer_storage extension.
-			if (CheckExtension("GL_ARB_shader_storage_buffer_object"))
-			{
-				gl.flags |= RFL_SHADER_STORAGE_BUFFER;
-			}
-			gl.flags |= RFL_BUFFER_STORAGE;
-		}
-	}
-	else
+	else if (gl_version >= 4.5f)
 	{
 		// Assume that everything works without problems on GL 4.5 drivers where these things are core features.
 		gl.flags |= RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+
+		// Mesa implements shader storage only for fragment shaders.
+		// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
+		glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
+		if (v == 0)
+			gl.flags &= ~RFL_SHADER_STORAGE_BUFFER;
 	}
 
-	// Mesa implements shader storage only for fragment shaders.
-	// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
-	int v = 0;
-	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
-	if (v == 0)
-		gl.flags &= ~RFL_SHADER_STORAGE_BUFFER;
 
 
 	if (gl_version >= 4.3f || CheckExtension("GL_ARB_invalidate_subdata")) gl.flags |= RFL_INVALIDATE_BUFFER;

@@ -52,5 +52,6 @@ namespace swrenderer
 
 		DVector3 planeNormal;
 		double planeD;
+		VisiblePlaneLight* light_list;
 	};
 }

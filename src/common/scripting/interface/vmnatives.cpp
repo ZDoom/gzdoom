@@ -53,6 +53,8 @@
 #include "s_soundinternal.h"
 #include "i_time.h"
 
+#include "maps.h"
+
 //==========================================================================
 //
 // status bar exports
@@ -1159,7 +1161,12 @@ DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, handle);
 
+extern ZSMap<FName, DObject* > AllServices;
+
 DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
+
+DEFINE_GLOBAL(AllServices)
+
 DEFINE_GLOBAL(Bindings)
 DEFINE_GLOBAL(AutomapBindings)
 DEFINE_GLOBAL(generic_ui)

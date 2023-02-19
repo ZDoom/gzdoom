@@ -54,6 +54,7 @@
 #include "g_levellocals.h"
 #include "texturemanager.h"
 #include "d_main.h"
+#include "maps.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -64,6 +65,7 @@ FRandom FState::pr_statetics("StateTics");
 
 cycle_t ActionCycles;
 
+void InitServices();
 
 //==========================================================================
 //
@@ -368,6 +370,18 @@ static void LoadAltHudStuff()
 //
 //==========================================================================
 
+ZSMap<FName, DObject*> AllServices;
+
+static void MarkServices(){
+
+	ZSMap<FName, DObject*>::Iterator it(AllServices);
+	ZSMap<FName, DObject*>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		GC::Mark<DObject>(pair->Value);
+	}
+}
+
 void PClassActor::StaticInit()
 {
 	sprites.Clear();
@@ -401,6 +415,19 @@ void PClassActor::StaticInit()
 			AllActorClasses.Push(static_cast<PClassActor*>(cls));
 		}
 	}
+
+	PClass * cls = PClass::FindClass("Service");
+	for(PClass * clss : PClass::AllClasses)
+	{
+		if(clss != cls && cls->IsAncestorOf(clss))
+		{
+			DObject * obj = clss->CreateNew();
+			obj->ObjectFlags |= OF_Transient;
+			AllServices.Insert(clss->TypeName, obj);
+		}
+	}
+
+	GC::AddMarkerFunc(&MarkServices);
 
 	LoadAltHudStuff();
 	InitBotStuff();

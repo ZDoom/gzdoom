@@ -1823,7 +1823,7 @@ namespace swrenderer
 		// Screen space to view space
 		viewpos_z = 1.0f / viewpos_z;
 		viewpos_x *= viewpos_z;
-		viewpos_y *= viewpos_y;
+		viewpos_y *= viewpos_z;
 
 		for (int i = 0; i < num_lights; i++)
 		{
@@ -1843,8 +1843,15 @@ namespace swrenderer
 #else
 			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
 #endif
+			Lx *= rcp_dist;
+			Ly *= rcp_dist;
+			Lz *= rcp_dist;
 			float dist = dist2 * rcp_dist;
-			float distance_attenuation = (256.0f - min(dist * lights[i].radius, 256.0f));
+			float radius = lights[i].radius;
+			bool simpleType = radius < 0.0f;
+			if (simpleType)
+				radius = -radius;
+			float distance_attenuation = (256.0f - min(dist * radius, 256.0f));
 
 			// The simple light type
 			float simple_attenuation = distance_attenuation;
@@ -1852,8 +1859,8 @@ namespace swrenderer
 			// The point light type
 			// diffuse = dot(N,L) * attenuation
 			float dotNL = max(nx * Lx + ny * Ly + nz * Lz, 0.0f);
-			float point_attenuation = dotNL * rcp_dist * distance_attenuation;
-			uint32_t attenuation = (uint32_t)(lights[i].z == 0.0f ? simple_attenuation : point_attenuation);
+			float point_attenuation = dotNL * distance_attenuation;
+			uint32_t attenuation = (uint32_t)(simpleType ? simple_attenuation : point_attenuation);
 
 			lit_r += (light_color_r * attenuation) >> 8;
 			lit_g += (light_color_g * attenuation) >> 8;
@@ -2855,7 +2862,7 @@ namespace swrenderer
 			auto num_lights = args.dc_num_lights;
 			auto normal = args.dc_normal;
 			auto viewpos = args.dc_viewpos;
-			auto dc_viewpos_step = args.dc_viewpos_step;
+			auto viewpos_step = args.dc_viewpos_step;
 			while (width >= SPANSIZE)
 			{
 				iz += izstep;
@@ -2878,7 +2885,7 @@ namespace swrenderer
 					x1++;
 					u += stepu;
 					v += stepv;
-					viewpos += dc_viewpos_step;
+					viewpos += viewpos_step;
 				}
 				startu = endu;
 				startv = endv;
@@ -2918,7 +2925,7 @@ namespace swrenderer
 						x1++;
 						u += stepu;
 						v += stepv;
-						viewpos += dc_viewpos_step;
+						viewpos += viewpos_step;
 					}
 				}
 			}

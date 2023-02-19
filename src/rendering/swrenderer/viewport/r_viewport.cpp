@@ -254,7 +254,7 @@ namespace swrenderer
 		double translatedY = worldPos.Y - viewpoint.Pos.Y;
 		return {
 			translatedX * viewpoint.Sin - translatedY * viewpoint.Cos,
-			translatedX * viewpoint.TanCos + translatedY * viewpoint.TanSin
+			translatedX * viewpoint.Cos + translatedY * viewpoint.Sin
 		};
 	}
 
@@ -266,7 +266,7 @@ namespace swrenderer
 		return {
 			translatedX * viewpoint.Sin - translatedY * viewpoint.Cos,
 			translatedZ,
-			translatedX * viewpoint.TanCos + translatedY * viewpoint.TanSin
+			translatedX * viewpoint.Cos + translatedY * viewpoint.Sin
 		};
 	}
 

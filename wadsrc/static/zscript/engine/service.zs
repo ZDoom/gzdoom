@@ -128,7 +128,7 @@ class ServiceIterator
 		while(it.Next())
 		{
 			String cName = it.GetKey();
-			if(cName.MakeLower().IndexOf(mServiceName) != -1);
+			if(cName.MakeLower().IndexOf(mServiceName) != -1)
 				return it.GetValue();
 		}
 		return null;

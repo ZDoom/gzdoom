@@ -54,6 +54,27 @@ class Service abstract
 	{
 		return null;
 	}
+
+	// data/clearscope variants
+	virtual clearscope String GetStringData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return "";
+	}
+
+	virtual clearscope int GetIntData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return 0;
+	}
+
+	virtual clearscope double GetDoubleData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return 0.0;
+	}
+
+	virtual clearscope Object GetObjectData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return null;
+	}
     
     static Service Find(class<Service> serviceName){
         return AllServices.GetIfExists(serviceName.GetClassName());

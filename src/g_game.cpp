@@ -2015,7 +2015,7 @@ void G_DoLoadGame ()
 		}
 		else
 		{
-			LoadGameError("TXT_IOTHERENGINESG", engine.GetChars());
+			LoadGameError("TXT_OTHERENGINESG", engine.GetChars());
 		}
 		return;
 	}

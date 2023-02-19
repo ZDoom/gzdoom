@@ -497,6 +497,75 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
+	FORCEINLINE static BgraColor AddTiltedLights(BgraColor material, BgraColor fgcolor, const DrawerLight* lights, int num_lights, float viewpos_x, float viewpos_y, float viewpos_z, float nx, float ny, float nz)
+	{
+		using namespace DrawSpan32TModes;
+
+		BgraColor lit;
+		lit.r = 0;
+		lit.g = 0;
+		lit.b = 0;
+
+		// Screen space to view space
+		viewpos_z = 1.0f / viewpos_z;
+		viewpos_x *= viewpos_z;
+		viewpos_y *= viewpos_z;
+
+		for (int i = 0; i != num_lights; i++)
+		{
+			float light_x = lights[i].x;
+			float light_y = lights[i].y;
+			float light_z = lights[i].z;
+			float light_radius = lights[i].radius;
+
+			// L = light-pos
+			// dist = sqrt(dot(L, L))
+			// attenuation = 1 - min(dist * (1/radius), 1)
+			float Lx = lights[i].x - viewpos_x;
+			float Ly = lights[i].y - viewpos_y;
+			float Lz = lights[i].z - viewpos_z;
+			float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
+#ifdef NO_SSE
+			float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
+			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+#endif
+			Lx *= rcp_dist;
+			Ly *= rcp_dist;
+			Lz *= rcp_dist;
+			float dist = dist2 * rcp_dist;
+			float radius = lights[i].radius;
+			bool simpleType = radius < 0.0f;
+			if (simpleType)
+				radius = -radius;
+			float distance_attenuation = (256.0f - min(dist * radius, 256.0f));
+
+			// The simple light type
+			float simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = dot(N,L) * attenuation
+			float dotNL = max(nx * Lx + ny * Ly + nz * Lz, 0.0f);
+			float point_attenuation = dotNL * distance_attenuation;
+			uint32_t attenuation = (uint32_t)(simpleType ? simple_attenuation : point_attenuation);
+
+			BgraColor light_color = lights[i].color;
+
+			lit.r += (light_color.r * attenuation) >> 8;
+			lit.g += (light_color.g * attenuation) >> 8;
+			lit.b += (light_color.b * attenuation) >> 8;
+		}
+
+		lit.r = min<uint32_t>(lit.r, 256);
+		lit.g = min<uint32_t>(lit.g, 256);
+		lit.b = min<uint32_t>(lit.b, 256);
+
+		fgcolor.r = min<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
+		fgcolor.g = min<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
+		fgcolor.b = min<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
+		return fgcolor;
+	}
+
 	void SWTruecolorDrawers::DrawTiltedSpan(const SpanDrawerArgs& drawerargs, const FVector3& _plane_sz, const FVector3& _plane_su, const FVector3& _plane_sv, bool _plane_shade, int _planeshade, float _planelightfloat, fixed_t _pviewx, fixed_t _pviewy, FDynamicColormap* _basecolormap)
 	{
 		int _x1 = drawerargs.DestX1();
@@ -550,23 +619,52 @@ namespace swrenderer
 		double uzstep = _plane_su[0] * SPANSIZE;
 		double vzstep = _plane_sv[0] * SPANSIZE;
 
-		// Linear interpolate in sizes of SPANSIZE to increase speed
-		while (count >= SPANSIZE)
+		if (drawerargs.dc_num_lights == 0)
 		{
-			iz += izstep;
-			uz += uzstep;
-			vz += vzstep;
-
-			double endz = 1.f / iz;
-			double endu = uz*endz;
-			double endv = vz*endz;
-			uint32_t stepu = (uint32_t)(int64_t((endu - startu) * INVSPAN));
-			uint32_t stepv = (uint32_t)(int64_t((endv - startv) * INVSPAN));
-			uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
-			uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
-
-			for (int i = 0; i < SPANSIZE; i++)
+			// Linear interpolate in sizes of SPANSIZE to increase speed
+			while (count >= SPANSIZE)
 			{
+				iz += izstep;
+				uz += uzstep;
+				vz += vzstep;
+
+				double endz = 1.f / iz;
+				double endu = uz * endz;
+				double endv = vz * endz;
+				uint32_t stepu = (uint32_t)(int64_t((endu - startu) * INVSPAN));
+				uint32_t stepv = (uint32_t)(int64_t((endv - startv) * INVSPAN));
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+
+				for (int i = 0; i < SPANSIZE; i++)
+				{
+					uint32_t sx = ((u >> 16) * source_width) >> 16;
+					uint32_t sy = ((v >> 16) * source_height) >> 16;
+					uint32_t fg = _source[sy + sx * source_height];
+
+					if (_shade_constants.simple_shade)
+						*(dest++) = LightBgra::shade_bgra_simple(fg, LightBgra::calc_light_multiplier(light));
+					else
+						*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+					u += stepu;
+					v += stepv;
+					light += steplight;
+				}
+				startu = endu;
+				startv = endv;
+				count -= SPANSIZE;
+			}
+
+			// The last few pixels at the end
+			while (count > 0)
+			{
+				double endz = 1.f / iz;
+				startu = uz * endz;
+				startv = vz * endz;
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+
 				uint32_t sx = ((u >> 16) * source_width) >> 16;
 				uint32_t sy = ((v >> 16) * source_height) >> 16;
 				uint32_t fg = _source[sy + sx * source_height];
@@ -576,38 +674,88 @@ namespace swrenderer
 				else
 					*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
 
-				u += stepu;
-				v += stepv;
+				iz += _plane_sz[0];
+				uz += _plane_su[0];
+				vz += _plane_sv[0];
 				light += steplight;
+				count--;
 			}
-			startu = endu;
-			startv = endv;
-			count -= SPANSIZE;
 		}
-
-		// The last few pixels at the end
-		while (count > 0)
+		else
 		{
-			double endz = 1.f / iz;
-			startu = uz*endz;
-			startv = vz*endz;
-			uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
-			uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+			auto lights = drawerargs.dc_lights;
+			auto num_lights = drawerargs.dc_num_lights;
+			auto normal = drawerargs.dc_normal;
+			auto viewpos = drawerargs.dc_viewpos;
+			auto viewpos_step = drawerargs.dc_viewpos_step;
 
-			uint32_t sx = ((u >> 16) * source_width) >> 16;
-			uint32_t sy = ((v >> 16) * source_height) >> 16;
-			uint32_t fg = _source[sy + sx * source_height];
+			// Linear interpolate in sizes of SPANSIZE to increase speed
+			while (count >= SPANSIZE)
+			{
+				iz += izstep;
+				uz += uzstep;
+				vz += vzstep;
 
-			if (_shade_constants.simple_shade)
-				*(dest++) = LightBgra::shade_bgra_simple(fg, LightBgra::calc_light_multiplier(light));
-			else
-				*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
+				double endz = 1.f / iz;
+				double endu = uz * endz;
+				double endv = vz * endz;
+				uint32_t stepu = (uint32_t)(int64_t((endu - startu) * INVSPAN));
+				uint32_t stepv = (uint32_t)(int64_t((endv - startv) * INVSPAN));
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
 
-			iz += _plane_sz[0];
-			uz += _plane_su[0];
-			vz += _plane_sv[0];
-			light += steplight;
-			count--;
+				for (int i = 0; i < SPANSIZE; i++)
+				{
+					uint32_t sx = ((u >> 16) * source_width) >> 16;
+					uint32_t sy = ((v >> 16) * source_height) >> 16;
+					uint32_t material = _source[sy + sx * source_height];
+
+					uint32_t fg;
+					if (_shade_constants.simple_shade)
+						fg = LightBgra::shade_bgra_simple(material, LightBgra::calc_light_multiplier(light));
+					else
+						fg = LightBgra::shade_bgra(material, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+					*(dest++) = AddTiltedLights(material, fg, lights, num_lights, viewpos.X, viewpos.Y, viewpos.Z, normal.X, normal.Y, normal.Z);
+
+					u += stepu;
+					v += stepv;
+					light += steplight;
+					viewpos += viewpos_step;
+				}
+				startu = endu;
+				startv = endv;
+				count -= SPANSIZE;
+			}
+
+			// The last few pixels at the end
+			while (count > 0)
+			{
+				double endz = 1.f / iz;
+				startu = uz * endz;
+				startv = vz * endz;
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+
+				uint32_t sx = ((u >> 16) * source_width) >> 16;
+				uint32_t sy = ((v >> 16) * source_height) >> 16;
+				uint32_t material = _source[sy + sx * source_height];
+
+				uint32_t fg;
+				if (_shade_constants.simple_shade)
+					fg = LightBgra::shade_bgra_simple(material, LightBgra::calc_light_multiplier(light));
+				else
+					fg = LightBgra::shade_bgra(material, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+				*(dest++) = AddTiltedLights(material, fg, lights, num_lights, viewpos.X, viewpos.Y, viewpos.Z, normal.X, normal.Y, normal.Z);
+
+				iz += _plane_sz[0];
+				uz += _plane_su[0];
+				vz += _plane_sv[0];
+				light += steplight;
+				viewpos += viewpos_step;
+				count--;
+			}
 		}
 	}
 

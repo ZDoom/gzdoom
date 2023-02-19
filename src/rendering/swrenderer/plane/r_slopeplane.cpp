@@ -88,11 +88,14 @@ namespace swrenderer
 
 		auto viewport = Thread->Viewport.get();
 
-		DVector3 worldNormal = pl->height.Normal();
-		planeNormal.X = worldNormal.X * viewport->viewpoint.Sin - worldNormal.Y * viewport->viewpoint.Cos;
-		planeNormal.Y = worldNormal.X * viewport->viewpoint.Cos + worldNormal.Y * viewport->viewpoint.Sin;
-		planeNormal.Z = worldNormal.Z;
-		planeD = -planeNormal.Z * (pl->height.ZatPoint(viewport->viewpoint.Pos.X, viewport->viewpoint.Pos.Y) - viewport->viewpoint.Pos.Z);
+		// Stupid way of doing it, but at least it works
+		DVector3 worldP0(viewport->viewpoint.Pos, pl->height.ZatPoint(viewport->viewpoint.Pos));
+		DVector3 worldP1 = worldP0 + pl->height.Normal();
+		DVector3 viewP0 = viewport->PointWorldToView(worldP0);
+		DVector3 viewP1 = viewport->PointWorldToView(worldP1);
+		planeNormal = viewP1 - viewP0;
+		planeD = -(viewP0 | planeNormal);
+
 		if (Thread->Portal->MirrorFlags & RF_XFLIP)
 			planeNormal.X = -planeNormal.X;
 
@@ -209,11 +212,6 @@ namespace swrenderer
 	{
 		if (r_dynlights)
 		{
-			int tx = x1;
-			bool mirror = !!(Thread->Portal->MirrorFlags & RF_XFLIP);
-			if (mirror)
-				tx = viewwidth - tx - 1;
-
 			// Find row position in view space
 			DVector3 viewposX1 = Thread->Viewport->ScreenToViewPos(x1, y, planeNormal, planeD);
 			DVector3 viewposX2 = Thread->Viewport->ScreenToViewPos(x2, y, planeNormal, planeD);
@@ -229,9 +227,9 @@ namespace swrenderer
 			drawerargs.dc_viewpos.X = viewposX1.X;
 			drawerargs.dc_viewpos.Y = viewposX1.Y;
 			drawerargs.dc_viewpos.Z = viewposX1.Z;
-			drawerargs.dc_viewpos_step.X = viewposX2.X - viewposX1.X;
-			drawerargs.dc_viewpos_step.Y = viewposX2.Y - viewposX1.Y;
-			drawerargs.dc_viewpos_step.Z = viewposX2.Z - viewposX1.Z;
+			drawerargs.dc_viewpos_step.X = (viewposX2.X - viewposX1.X) / (x2 - x1);
+			drawerargs.dc_viewpos_step.Y = (viewposX2.Y - viewposX1.Y) / (x2 - x1);
+			drawerargs.dc_viewpos_step.Z = (viewposX2.Z - viewposX1.Z) / (x2 - x1);
 
 			// Plane normal
 			drawerargs.dc_normal.X = planeNormal.X;
@@ -257,24 +255,22 @@ namespace swrenderer
 			{
 				if (cur_node->lightsource->IsActive())
 				{
-					double lightX = cur_node->lightsource->X() - Thread->Viewport->viewpoint.Pos.X;
-					double lightY = cur_node->lightsource->Y() - Thread->Viewport->viewpoint.Pos.Y;
-					double lightZ = cur_node->lightsource->Z() - Thread->Viewport->viewpoint.Pos.Z;
-
-					float lx = (float)(lightX * Thread->Viewport->viewpoint.Sin - lightY * Thread->Viewport->viewpoint.Cos);
-					float ly = (float)(lightX * Thread->Viewport->viewpoint.TanCos + lightY * Thread->Viewport->viewpoint.TanSin);
-					float lz = (float)lightZ;
+					DVector3 lightPos = Thread->Viewport->PointWorldToView(cur_node->lightsource->Pos);
 
 					uint32_t red = cur_node->lightsource->GetRed();
 					uint32_t green = cur_node->lightsource->GetGreen();
 					uint32_t blue = cur_node->lightsource->GetBlue();
 
 					auto& light = drawerargs.dc_lights[drawerargs.dc_num_lights++];
-					light.x = lx;
-					light.y = ly;
-					light.z = lz;
+					light.x = lightPos.X;
+					light.y = lightPos.Y;
+					light.z = lightPos.Z;
 					light.radius = 256.0f / cur_node->lightsource->GetRadius();
 					light.color = (red << 16) | (green << 8) | blue;
+
+					bool is_point_light = cur_node->lightsource->IsAttenuated();
+					if (is_point_light)
+						light.radius = -light.radius;
 				}
 
 				cur_node = cur_node->next;

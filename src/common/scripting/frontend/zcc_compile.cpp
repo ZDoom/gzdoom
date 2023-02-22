@@ -1866,18 +1866,16 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		auto keytype = DetermineType(outertype, field, name, mtype->KeyType, false, false);
 		auto valuetype = DetermineType(outertype, field, name, mtype->ValueType, false, false);
 
-		if (keytype->GetRegType() == REGT_INT)
+		if (keytype->GetRegType() != REGT_STRING && !(keytype->GetRegType() == REGT_INT && keytype->Size == 4))
 		{
-			if (keytype->Size != 4)
+			if(name != NAME_None)
+			{
+				Error(field, "%s : Map<%s , ...> not implemented yet", name.GetChars(), keytype->DescriptiveName());
+			}
+			else
 			{
 				Error(field, "Map<%s , ...> not implemented yet", keytype->DescriptiveName());
-				break;
 			}
-		}
-		else if (keytype->GetRegType() != REGT_STRING)
-		{
-			Error(field, "Map<%s , ...> not implemented yet", keytype->DescriptiveName());
-			break;
 		}
 
 		switch(valuetype->GetRegType())
@@ -1888,14 +1886,20 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		case REGT_POINTER:
 			if (valuetype->GetRegCount() > 1)
 			{
-				Error(field, "%s : Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+			default:
+				if(name != NAME_None)
+				{
+					Error(field, "%s : Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+				}
+				else
+				{
+					Error(field, "Base type for map value types must be integral, but got %s", valuetype->DescriptiveName());
+				}
 				break;
 			}
 
 			retval = NewMap(keytype, valuetype);
 			break;
-		default:
-			Error(field, "%s: Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
 		}
 
 		break;
@@ -1913,16 +1917,16 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		auto keytype = DetermineType(outertype, field, name, mtype->KeyType, false, false);
 		auto valuetype = DetermineType(outertype, field, name, mtype->ValueType, false, false);
 
-		if (keytype->GetRegType() == REGT_INT)
+		if (keytype->GetRegType() != REGT_STRING && !(keytype->GetRegType() == REGT_INT && keytype->Size == 4))
 		{
-			if (keytype->Size != 4)
+			if(name != NAME_None)
+			{
+				Error(field, "%s : MapIterator<%s , ...> not implemented yet", name.GetChars(), keytype->DescriptiveName());
+			}
+			else
 			{
 				Error(field, "MapIterator<%s , ...> not implemented yet", keytype->DescriptiveName());
 			}
-		}
-		else if (keytype->GetRegType() != REGT_STRING)
-		{
-			Error(field, "MapIterator<%s , ...> not implemented yet", keytype->DescriptiveName());
 		}
 
 		switch(valuetype->GetRegType())
@@ -1933,13 +1937,19 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		case REGT_POINTER:
 			if (valuetype->GetRegCount() > 1)
 			{
-				Error(field, "%s : Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+			default:
+				if(name != NAME_None)
+				{
+					Error(field, "%s : Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
+				}
+				else
+				{
+					Error(field, "Base type for map value types must be integral, but got %s", valuetype->DescriptiveName());
+				}
 				break;
 			}
 			retval = NewMapIterator(keytype, valuetype);
 			break;
-		default:
-			Error(field, "%s: Base type for map value types must be integral, but got %s", name.GetChars(), valuetype->DescriptiveName());
 		}
 		break;
 	}

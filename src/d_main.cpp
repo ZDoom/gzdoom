@@ -1798,6 +1798,8 @@ static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, co
 	bool isDir;
 
 	const char *lastSlash = strrchr (fn, '/');
+	if (lastSlash == NULL)
+	    lastSlash = strrchr (fn, ':');
 
 	sc.OpenMem("GAMEINFO", data, size);
 	while(sc.GetToken())
@@ -1822,8 +1824,7 @@ static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, co
 				FString checkpath;
 				if (lastSlash != NULL)
 				{
-					checkpath = FString(fn, (lastSlash - fn) + 1);
-					checkpath += sc.String;
+					checkpath = FString(fn, lastSlash - fn) + '/' + sc.String;
 				}
 				else
 				{

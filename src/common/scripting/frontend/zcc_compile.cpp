@@ -2254,6 +2254,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					Error(f, "The return type of a function cannot be a dynamic array");
 					break;
 				}
+				else if (type->isMap())
+				{
+					Error(f, "The return type of a function cannot be a map");
+					break;
+				}
 				else if (type == TypeFVector2)
 				{
 					type = TypeVector2;

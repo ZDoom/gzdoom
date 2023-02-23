@@ -1794,6 +1794,8 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 	int pos = 0;
 
 	const char *lastSlash = strrchr (fn, '/');
+	if (lastSlash == NULL)
+	    lastSlash = strrchr (fn, ':');
 
 	sc.OpenMem("GAMEINFO", data, size);
 	while(sc.GetToken())
@@ -1818,8 +1820,7 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 				FString checkpath;
 				if (lastSlash != NULL)
 				{
-					checkpath = FString(fn, (lastSlash - fn) + 1);
-					checkpath += sc.String;
+					checkpath = FString(fn, lastSlash - fn) + '/' + sc.String;
 				}
 				else
 				{

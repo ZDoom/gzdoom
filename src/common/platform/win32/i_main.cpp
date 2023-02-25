@@ -476,6 +476,26 @@ int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE nothing, LPWSTR cmdline, int
 
 	InitCommonControls ();			// Load some needed controls and be pretty under XP
 
+	{ // block bandicam implicit vulkan layer
+		constexpr TCHAR bandicam_layer_no_comma[] = TEXT("VK_LAYER_bandicam_helper");
+		constexpr TCHAR bandicam_layer[] = TEXT(", VK_LAYER_bandicam_helper");
+		constexpr size_t bandicam_layer_len = (sizeof(bandicam_layer) / sizeof(TCHAR));
+
+		DWORD len = GetEnvironmentVariable(TEXT("VK_LOADER_LAYERS_DISABLE"), nullptr, 0);
+		if(len > 0)
+		{
+			TCHAR * buffer = new TCHAR[len + bandicam_layer_len]; // bandicam_layer_len includes +1 for null terminator, len does not
+			GetEnvironmentVariable(TEXT("VK_LOADER_LAYERS_DISABLE"), buffer, len + 1);
+			memcpy(buffer + len, bandicam_layer, bandicam_layer_len);
+			SetEnvironmentVariable(TEXT("VK_LOADER_LAYERS_DISABLE") , buffer);
+			delete[] buffer;
+		}
+		else
+		{
+			assert(GetLastError() == ERROR_ENVVAR_NOT_FOUND);
+			SetEnvironmentVariable(TEXT("VK_LOADER_LAYERS_DISABLE") , bandicam_layer_no_comma);
+		}
+	}
 	// We need to load riched20.dll so that we can create the control.
 	if (NULL == LoadLibraryA ("riched20.dll"))
 	{

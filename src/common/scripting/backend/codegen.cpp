@@ -7180,7 +7180,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 	if (membervar->Flags & VARF_Meta)
 	{
 		// Meta variables are read only.
-		*writable = false;
+		if(writable != nullptr) *writable = false;
 	}
 	else if (writable != nullptr)
 	{

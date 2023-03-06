@@ -1415,12 +1415,37 @@ void ZCCCompiler::CompileAllFields()
 
 bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren)
 {
+	PStruct* selfStruct = type && type->isStruct() ? static_cast<PStruct*>(type) : nullptr;
+
+	if(selfStruct)
+	{
+		selfStruct->isSimple = true;
+	}
+
 	while (Fields.Size() > 0)
 	{
 		auto field = Fields[0];
 		FieldDesc *fd = nullptr;
 
 		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true, true);
+
+		if(selfStruct && selfStruct->isSimple)
+		{
+			if(	fieldtype->isDynArray()
+			 || fieldtype->isMap()
+			 || fieldtype->isMapIterator()
+			 || fieldtype->isObjectPointer()
+			 || (  fieldtype->isStruct()
+			   && !static_cast<PStruct *>(fieldtype)->isNative
+			   && !static_cast<PStruct *>(fieldtype)->isSimple
+				)
+			  )
+			{ // mark and propagate complex structs:
+			  //   maps and dynarrays need a copy function to be called,
+			  //   native structs are pointers, so it's fine to copy even if they're complex
+				selfStruct->isSimple = false;
+			}
+		}
 
 		// For structs only allow 'deprecated', for classes exclude function qualifiers.
 		int notallowed = forstruct? 

@@ -2560,11 +2560,21 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 				}
 				else
 				{
-					ScriptPosition.Message(MSG_ERROR, "Struct assignment not implemented yet");
-					delete this;
-					return nullptr;
-				}
-			}
+                    PStruct * s = static_cast<PStruct*>(btype);
+                    if(s->isSimple)
+                    {
+                        ScriptPosition.Message(MSG_ERROR, "Simple Struct assignment not implemented yet");
+                        delete this;
+                        return nullptr;
+                    }
+                    else
+                    {
+                        ScriptPosition.Message(MSG_ERROR, "Complex Struct assignment not implemented yet");
+                        delete this;
+                        return nullptr;
+                    }
+                }
+            }
 		}
 
 		// Both types are the same so this is ok.

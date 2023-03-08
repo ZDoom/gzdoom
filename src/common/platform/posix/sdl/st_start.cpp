@@ -257,6 +257,7 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 	struct timeval tv;
 	int retval;
 	char k;
+	bool stdin_eof = false;
 
 	for (;;)
 	{
@@ -265,7 +266,10 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 		tv.tv_usec = 500000;
 
 		FD_ZERO (&rfds);
-		FD_SET (STDIN_FILENO, &rfds);
+		if (!stdin_eof)
+		{
+			FD_SET (STDIN_FILENO, &rfds);
+		}
 
 		retval = select (1, &rfds, NULL, NULL, &tv);
 
@@ -281,13 +285,21 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 				return true;
 			}
 		}
-		else if (read (STDIN_FILENO, &k, 1) == 1)
+		else
 		{
-			// Check input on stdin
-			if (k == 'q' || k == 'Q')
+			ssize_t amt = read (STDIN_FILENO, &k, 1);	// Check input on stdin
+			if (amt == 0)
 			{
-				fprintf (stderr, "\nNetwork game synchronization aborted.");
-				return false;
+				// EOF. Stop reading
+				stdin_eof = true;
+			}
+			else if (amt == 1)
+			{
+				if (k == 'q' || k == 'Q')
+				{
+					fprintf (stderr, "\nNetwork game synchronization aborted.");
+					return false;
+				}
 			}
 		}
 	}

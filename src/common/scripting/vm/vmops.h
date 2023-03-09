@@ -289,4 +289,6 @@ xx(SUBA,		sub,	RIRPRP,		NOP,	0, 0)		// dA = pB - pC
 xx(EQA_R,		beq,	CPRR,		NOP,	0, 0)			// if ((pB == pkC) != A) then pc++
 xx(EQA_K,		beq,	CPRK,		EQA_R,	4, REGT_POINTER)
 
+// Memcpy
+xx(MEMCPY_RRK,	memcpy,	RPRPKI,		NOP,	0, 0)
 #undef xx

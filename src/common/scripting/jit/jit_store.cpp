@@ -290,3 +290,13 @@ void JitCompiler::EmitSBIT()
 	cc.cmove(tmp1, tmp2);
 	cc.mov(asmjit::x86::byte_ptr(regA[A]), tmp1);
 }
+
+void JitCompiler::EmitMEMCPY_RRK()
+{
+	EmitNullPointerThrow(A, X_WRITE_NIL);
+	EmitNullPointerThrow(B, X_READ_NIL);
+	auto call = CreateCall<void*, void*, const void*, size_t>(&memcpy);
+	call->setArg(0, regA[A]);
+	call->setArg(1, regA[B]);
+	call->setArg(2, asmjit::Imm{konstd[C]});
+}

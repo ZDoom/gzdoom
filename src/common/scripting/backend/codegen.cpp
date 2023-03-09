@@ -2553,19 +2553,39 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 			}
 			else if (btype->isStruct())
 			{
-				if(Base->ValueType->isRealPointer() && Right->ValueType->isRealPointer())
-				{ // don't break existing code, but warn that it's a no-op
-					ScriptPosition.Message(MSG_WARNING, "Struct assignment not implemented yet\n"
-										  TEXTCOLOR_RED "!! Assigning an out struct pointer to another out struct pointer does not alter either of the underlying structs' values !!");
+				if(ctx.Version < MakeVersion(4, 11, 0))
+				{
+					if(Base->ValueType->isRealPointer() && Right->ValueType->isRealPointer())
+					{ // don't break existing code, but warn that it's a no-op
+						ScriptPosition.Message(MSG_WARNING, "Struct assignments not allowed in zscript versions below 4.11\n"
+							TEXTCOLOR_RED "!! Assigning an out struct pointer to another out struct pointer does not alter either of the underlying structs' values !!");
+					}
+					else
+					{
+						ScriptPosition.Message(MSG_ERROR, "Struct assignments not allowed in zscript versions below 4.11");
+						delete this;
+						return nullptr;
+					}
 				}
 				else
 				{
                     PStruct * s = static_cast<PStruct*>(btype);
+					bool writable;
+					Base->RequestAddress(ctx, &writable);
+
+					if(!writable || !s->SizeKnown)
+					{
+						ScriptPosition.Message(MSG_ERROR, "Struct must be a modifiable value");
+						delete this;
+						return nullptr;
+					}
+
                     if(s->isSimple)
                     {
-                        ScriptPosition.Message(MSG_ERROR, "Simple Struct assignment not implemented yet");
+						auto fx = new FxSimpleStructAssign(Base, Right, s);
+						Base = Right = nullptr;
                         delete this;
-                        return nullptr;
+                        return fx->Resolve(ctx);
                     }
                     else
                     {
@@ -2665,6 +2685,36 @@ ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 
 	pointer.Free(build);
 	return result;
+}
+
+//==========================================================================
+//
+//	FxSimpleStructAssign
+//
+//==========================================================================
+
+FxSimpleStructAssign::FxSimpleStructAssign(FxExpression *base, FxExpression *right, PStruct * type)
+	: FxExpression(EFX_SimpleStructAssign, base->ScriptPosition), Base(base) , Right(right), Type(type)
+{
+
+}
+
+FxExpression *FxSimpleStructAssign::Resolve(FCompileContext &ctx)
+{
+	Base->RequestAddress(ctx,nullptr);
+	Right->RequestAddress(ctx,nullptr);
+	return this;
+}
+
+ExpEmit FxSimpleStructAssign::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit base = Base->Emit(build);
+	ExpEmit right = Right->Emit(build);
+	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
+
+	build->Emit(OP_MEMCPY_RRK, base.RegNum, right.RegNum, build->GetConstantInt(Type->Size));
+	base.Free(build);
+	return right;
 }
 
 //==========================================================================

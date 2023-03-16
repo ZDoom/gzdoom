@@ -29,6 +29,9 @@
 
 #include "stats.h"
 
+CVAR(Int, gl_dither_bpc, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 Postprocess hw_postprocess;
 
 PPResource *PPResource::First = nullptr;

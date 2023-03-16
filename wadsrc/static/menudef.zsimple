@@ -46,7 +46,6 @@ OptionMenu VideoOptionsSimple protected
 {
 	Title "$DSPLYMNU_TITLE"
 
-	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
 	IfOption(SWRender)
 	{
 		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"

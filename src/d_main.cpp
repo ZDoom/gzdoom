@@ -3985,6 +3985,39 @@ void I_UpdateWindowTitle()
 	I_SetWindowTitle(copy.Data());
 }
 
+#ifdef _WIN32
+// For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
+// Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
+// but makes it possible for subsequent "vr_mode 7" to invoke quad-buffered stereo
+CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
+}
+#endif
+
+void UpdateVRModes(bool considerQuadBuffered)
+{
+	FOptionValues** pVRModes = OptionValues.CheckKey("VRMode");
+	if (pVRModes == nullptr) return;
+
+	TArray<FOptionValues::Pair>& vals = (*pVRModes)->mValues;
+	TArray<FOptionValues::Pair> filteredValues;
+	int cnt = vals.Size();
+	for (int i = 0; i < cnt; ++i) {
+		auto const& mode = vals[i];
+		if (mode.Value == 7) {  // Quad-buffered stereo
+#ifdef _WIN32
+			if (!vr_enable_quadbuffered) continue;
+#else
+			continue;  // Remove quad-buffered option on Mac and Linux
+#endif
+			if (!considerQuadBuffered) continue;  // Probably no compatible screen mode was found
+		}
+		filteredValues.Push(mode);
+	}
+	vals = filteredValues;
+}
+
 CCMD(fs_dir)
 {
 	int numfiles = fileSystem.GetNumEntries();

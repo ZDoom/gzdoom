@@ -2266,8 +2266,6 @@ OptionMenu VideoModeMenu protected
 {
 	Title "$VIDMNU_TITLE"
 
-	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
-	StaticText " "
 	IfOption(SWRender)
 	{
 		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"

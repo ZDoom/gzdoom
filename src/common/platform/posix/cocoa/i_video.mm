@@ -31,8 +31,6 @@
  **
  */
 
-#include "gl_load.h"
-
 #ifdef HAVE_VULKAN
 #include <zvulkan/vulkansurface.h>
 #include <zvulkan/vulkanbuilders.h>
@@ -51,10 +49,6 @@
 #include "v_text.h"
 #include "version.h"
 #include "printf.h"
-#include "gl_framebuffer.h"
-#ifdef HAVE_GLES2
-#include "gles_framebuffer.h"
-#endif
 
 #ifdef HAVE_VULKAN
 #include "vulkan/system/vk_renderdevice.h"
@@ -169,54 +163,6 @@ namespace
 	win_y = frame.origin.y;
 	win_w = frame.size.width;
 	win_h = frame.size.height;
-}
-
-@end
-
-
-// ---------------------------------------------------------------------------
-
-
-@interface OpenGLCocoaView : NSOpenGLView
-{
-	NSCursor* m_cursor;
-}
-
-- (void)setCursor:(NSCursor*)cursor;
-
-@end
-
-
-@implementation OpenGLCocoaView
-
-- (void)drawRect:(NSRect)dirtyRect
-{
-	if ([NSGraphicsContext currentContext])
-	{
-		[NSColor.blackColor setFill];
-		NSRectFill(dirtyRect);
-	}
-	else if (self.layer != nil)
-	{
-		self.layer.backgroundColor = CGColorGetConstantColor(kCGColorBlack);
-	}
-}
-
-- (void)resetCursorRects
-{
-	[super resetCursorRects];
-
-	NSCursor* const cursor = nil == m_cursor
-		? [NSCursor arrowCursor]
-		: m_cursor;
-
-	[self addCursorRect:[self bounds]
-				 cursor:cursor];
-}
-
-- (void)setCursor:(NSCursor*)cursor
-{
-	m_cursor = cursor;
 }
 
 @end
@@ -343,25 +289,6 @@ NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
 	return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
-void SetupOpenGLView(CocoaWindow* const window, const OpenGLProfile profile)
-{
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(profile);
-
-	if (nil == pixelFormat)
-	{
-		I_FatalError("Cannot create OpenGL pixel format, graphics hardware is not supported");
-	}
-
-	// Create OpenGL context and view
-
-	const NSRect contentRect = [window contentRectForFrameRect:[window frame]];
-	OpenGLCocoaView* glView = [[OpenGLCocoaView alloc] initWithFrame:contentRect
-														 pixelFormat:pixelFormat];
-	[[glView openGLContext] makeCurrentContext];
-
-	[window setContentView:glView];
-}
-
 } // unnamed namespace
 
 
@@ -373,7 +300,6 @@ class CocoaVideo : public IVideo
 public:
 	CocoaVideo()
 	{
-		ms_isVulkanEnabled = V_GetBackend() == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
 	}
 
 	~CocoaVideo()
@@ -391,83 +317,60 @@ public:
 		SystemBaseFrameBuffer *fb = nullptr;
 
 #ifdef HAVE_VULKAN
-		if (ms_isVulkanEnabled)
+		NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
+		vulkanView.wantsLayer = YES;
+		vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
+
+		[ms_window setContentView:vulkanView];
+
+		// See vk_mvk_moltenvk.h for comprehensive explanation of configuration options set below
+		// https://github.com/KhronosGroup/MoltenVK/blob/master/MoltenVK/MoltenVK/API/vk_mvk_moltenvk.h
+
+		if (vk_debug)
 		{
-			NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
-			vulkanView.wantsLayer = YES;
-			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
+			// Output errors and informational messages
+			setenv("MVK_CONFIG_LOG_LEVEL", "2", 0);
 
-			[ms_window setContentView:vulkanView];
-
-			// See vk_mvk_moltenvk.h for comprehensive explanation of configuration options set below
-			// https://github.com/KhronosGroup/MoltenVK/blob/master/MoltenVK/MoltenVK/API/vk_mvk_moltenvk.h
-
-			if (vk_debug)
+			if (mvk_debug)
 			{
-				// Output errors and informational messages
-				setenv("MVK_CONFIG_LOG_LEVEL", "2", 0);
-
-				if (mvk_debug)
-				{
-					// Extensive MoltenVK logging, too spammy even for vk_debug CVAR
-					setenv("MVK_DEBUG", "1", 0);
-				}
-			}
-			else
-			{
-				// Limit MoltenVK logging to errors only
-				setenv("MVK_CONFIG_LOG_LEVEL", "1", 0);
-			}
-
-			if (!vid_autoswitch)
-			{
-				// CVAR from pre-Vulkan era has a priority over vk_device selection
-				setenv("MVK_CONFIG_FORCE_LOW_POWER_GPU", "1", 0);
-			}
-
-			// The following settings improve performance like suggested at
-			// https://github.com/KhronosGroup/MoltenVK/issues/581#issuecomment-487293665
-			setenv("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", "0", 0);
-			setenv("MVK_CONFIG_PRESENT_WITH_COMMAND_BUFFER", "0", 0);
-
-			try
-			{
-				VulkanInstanceBuilder builder;
-				builder.DebugLayer(vk_debug);
-				builder.RequireExtension(VK_KHR_SURFACE_EXTENSION_NAME); // KHR_surface, required
-				builder.OptionalExtension(VK_EXT_METAL_SURFACE_EXTENSION_NAME); // EXT_metal_surface, optional, preferred
-				builder.OptionalExtension(VK_MVK_MACOS_SURFACE_EXTENSION_NAME); // MVK_macos_surface, optional, deprecated
-				auto vulkanInstance = builder.Create();
-
-				VkSurfaceKHR surfacehandle = nullptr;
-				if (!I_CreateVulkanSurface(vulkanInstance->Instance, &surfacehandle))
-					VulkanError("I_CreateVulkanSurface failed");
-
-				m_vulkanSurface = std::make_shared<VulkanSurface>(vulkanInstance, surfacehandle);
-
-				fb = new VulkanRenderDevice(nullptr, vid_fullscreen, m_vulkanSurface);
-			}
-			catch (std::exception const&)
-			{
-				ms_isVulkanEnabled = false;
-
-				SetupOpenGLView(ms_window, OpenGLProfile::Core);
+				// Extensive MoltenVK logging, too spammy even for vk_debug CVAR
+				setenv("MVK_DEBUG", "1", 0);
 			}
 		}
 		else
-#endif
-
-		SetupOpenGLView(ms_window, OpenGLProfile::Core);
-
-		if (fb == nullptr)
 		{
-#ifdef HAVE_GLES2
-			if(V_GetBackend() == 2)
-				fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
-			else
-#endif
-				fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
+			// Limit MoltenVK logging to errors only
+			setenv("MVK_CONFIG_LOG_LEVEL", "1", 0);
 		}
+
+		if (!vid_autoswitch)
+		{
+			// CVAR from pre-Vulkan era has a priority over vk_device selection
+			setenv("MVK_CONFIG_FORCE_LOW_POWER_GPU", "1", 0);
+		}
+
+		// The following settings improve performance like suggested at
+		// https://github.com/KhronosGroup/MoltenVK/issues/581#issuecomment-487293665
+		setenv("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", "0", 0);
+		setenv("MVK_CONFIG_PRESENT_WITH_COMMAND_BUFFER", "0", 0);
+
+		VulkanInstanceBuilder builder;
+		builder.DebugLayer(vk_debug);
+		builder.RequireExtension(VK_KHR_SURFACE_EXTENSION_NAME); // KHR_surface, required
+		builder.OptionalExtension(VK_EXT_METAL_SURFACE_EXTENSION_NAME); // EXT_metal_surface, optional, preferred
+		builder.OptionalExtension(VK_MVK_MACOS_SURFACE_EXTENSION_NAME); // MVK_macos_surface, optional, deprecated
+		auto vulkanInstance = builder.Create();
+
+		VkSurfaceKHR surfacehandle = nullptr;
+		if (!I_CreateVulkanSurface(vulkanInstance->Instance, &surfacehandle))
+			VulkanError("I_CreateVulkanSurface failed");
+
+		m_vulkanSurface = std::make_shared<VulkanSurface>(vulkanInstance, surfacehandle);
+
+		fb = new VulkanRenderDevice(nullptr, vid_fullscreen, m_vulkanSurface);
+#else
+#error "Vulkan support must be enabled!"
+#endif
 
 		fb->SetWindow(ms_window);
 		fb->SetMode(vid_fullscreen, vid_hidpi);
@@ -478,7 +381,7 @@ public:
 		// with fullscreen window and Core Animation's Metal layer
 		// It is somehow related to initial window level and flags
 		// Toggling fullscreen -> window -> fullscreen mysteriously solves the problem
-		if (ms_isVulkanEnabled && vid_fullscreen)
+		if (vid_fullscreen)
 		{
 			fb->SetMode(false, vid_hidpi);
 			fb->SetMode(true, vid_hidpi);
@@ -498,14 +401,10 @@ private:
 	std::shared_ptr<VulkanSurface> m_vulkanSurface;
 #endif
 	static CocoaWindow* ms_window;
-
-	static bool ms_isVulkanEnabled;
 };
 
 
 CocoaWindow* CocoaVideo::ms_window;
-
-bool CocoaVideo::ms_isVulkanEnabled;
 
 
 // ---------------------------------------------------------------------------
@@ -643,17 +542,9 @@ void SystemBaseFrameBuffer::SetWindowedMode()
 
 void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 {
-	if ([m_window.contentView isKindOfClass:[OpenGLCocoaView class]])
-	{
-		NSOpenGLView* const glView = [m_window contentView];
-		[glView setWantsBestResolutionOpenGLSurface:hiDPI];
-	}
-	else
-    {
-		assert(m_window.screen != nil);
-		assert([m_window.contentView layer] != nil);
-		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
-	}
+	assert(m_window.screen != nil);
+	assert([m_window.contentView layer] != nil);
+	[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
 
 	if (vid_nativefullscreen && fullscreen != m_fullscreen)
 	{
@@ -725,60 +616,6 @@ void SystemBaseFrameBuffer::SetWindowTitle(const char* title)
 			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
 		[frameBuffer->m_window setTitle:nsTitle];
 	}
-}
-
-
-// ---------------------------------------------------------------------------
-
-
-SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
-: SystemBaseFrameBuffer(hMonitor, fullscreen)
-{
-}
-
-
-void SystemGLFrameBuffer::SetVSync(bool vsync)
-{
-	const GLint value = vsync ? 1 : 0;
-
-	[[NSOpenGLContext currentContext] setValues:&value
-								   forParameter:NSOpenGLCPSwapInterval];
-}
-
-
-void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
-{
-	NSOpenGLView* const glView = [m_window contentView];
-	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
-
-	if (vid_nativefullscreen && fullscreen != m_fullscreen)
-	{
-		[m_window toggleFullScreen:(nil)];
-	}
-	else if (fullscreen)
-	{
-		SetFullscreenMode();
-	}
-	else
-	{
-		SetWindowedMode();
-	}
-
-	[m_window updateTitle];
-
-	if (![m_window isKeyWindow])
-	{
-		[m_window makeKeyAndOrderFront:nil];
-	}
-
-	m_fullscreen = fullscreen;
-	m_hiDPI      = hiDPI;
-}
-
-
-void SystemGLFrameBuffer::SwapBuffers()
-{
-	[[NSOpenGLContext currentContext] flushBuffer];
 }
 
 
@@ -954,91 +791,3 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 	return result == VK_SUCCESS;
 }
 #endif
-
-
-namespace
-{
-	TArray<uint8_t> polyPixelBuffer;
-	GLuint polyTexture;
-
-	int polyWidth = -1;
-	int polyHeight = -1;
-	int polyVSync = -1;
-}
-
-void I_PolyPresentInit()
-{
-	ogl_LoadFunctions();
-
-	glGenTextures(1, &polyTexture);
-	assert(polyTexture != 0);
-
-	glEnable(GL_TEXTURE_RECTANGLE_ARB);
-	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, polyTexture);
-
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
-uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
-{
-	static const int PIXEL_BYTES = 4;
-
-	if (polyPixelBuffer.Size() == 0 || w != polyWidth || h != polyHeight)
-	{
-		polyPixelBuffer.Resize(w * h * PIXEL_BYTES);
-
-		polyWidth = w;
-		polyHeight = h;
-
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0.0, w, h, 0.0, -1.0, 1.0);
-
-		glViewport(0, 0, w, h);
-	}
-
-	if (vsync != polyVSync)
-	{
-		const GLint value = vsync ? 1 : 0;
-
-		[[NSOpenGLContext currentContext] setValues:&value
-									   forParameter:NSOpenGLCPSwapInterval];
-	}
-
-	pitch = w * PIXEL_BYTES;
-
-	return &polyPixelBuffer[0];
-}
-
-void I_PolyPresentUnlock(int x, int y, int w, int h)
-{
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, &polyPixelBuffer[0]);
-
-	glBegin(GL_QUADS);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(0.0f, 0.0f);
-	glTexCoord2f(w, 0.0f);
-	glVertex2f(w, 0.0f);
-	glTexCoord2f(w, h);
-	glVertex2f(w, h);
-	glTexCoord2f(0.0f, h);
-	glVertex2f(0.0f, h);
-	glEnd();
-
-	glFlush();
-
-	[[NSOpenGLContext currentContext] flushBuffer];
-}
-
-void I_PolyPresentDeinit()
-{
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDeleteTextures(1, &polyTexture);
-}

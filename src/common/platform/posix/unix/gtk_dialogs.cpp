@@ -64,7 +64,6 @@ typedef enum
 #include "printf.h"
 
 EXTERN_CVAR (Bool, queryiwad);
-EXTERN_CVAR (Int, vid_preferbackend);
 EXTERN_CVAR (Bool, vid_fullscreen);
 
 namespace Gtk {
@@ -502,9 +501,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 
 	ZUIVBox vboxVideo;
 	ZUILabel videoSettings("Video settings");
-	ZUIRadioButton opengl("OpenGL");
-	ZUIRadioButton vulkan(&opengl, "Vulkan");
-	ZUIRadioButton openglES(&opengl, "OpenGL ES");
+	ZUIRadioButton vulkan("Vulkan");
 	ZUICheckButton fullscreen("Full screen");
 
 	ZUIVBox vboxMisc;
@@ -532,9 +529,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 	hboxOptions.PackStart(&vboxMisc, true, false, 15);
 	hboxOptions.PackStart(&vboxExtra, false, false, 15);
 	vboxVideo.PackStart(&videoSettings, false, false, 0);
-	vboxVideo.PackStart(&opengl, false, false, 0);
 	vboxVideo.PackStart(&vulkan, false, false, 0);
-	vboxVideo.PackStart(&openglES, false, false, 0);
 	vboxVideo.PackStart(&fullscreen, false, false, 15);
 	vboxMisc.PackStart(&noautoload, false, false, 0);
 	vboxMisc.PackStart(&dontAskAgain, false, false, 0);
@@ -548,13 +543,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 
 	dontAskAgain.SetChecked(!showwin);
 
-	switch (vid_preferbackend)
-	{
-	case 0: opengl.SetChecked(true); break;
-	case 1: vulkan.SetChecked(true); break;
-	case 2: openglES.SetChecked(true); break;
-	default: break;
-	}
+	vulkan.SetChecked(true);
 
 	if (vid_fullscreen) fullscreen.SetChecked(true);
 
@@ -579,10 +568,6 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad,
 
 		// Set state of queryiwad based on the checkbox.
 		queryiwad = !dontAskAgain.GetChecked();
-
-		if (opengl.GetChecked()) vid_preferbackend = 0;
-		if (vulkan.GetChecked()) vid_preferbackend = 1;
-		if (openglES.GetChecked()) vid_preferbackend = 2;
 
 		vid_fullscreen = fullscreen.GetChecked();
 

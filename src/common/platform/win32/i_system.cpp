@@ -111,7 +111,6 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 
 EXTERN_CVAR (Bool, queryiwad);
 // Used on welcome/IWAD screen.
-EXTERN_CVAR (Int, vid_preferbackend)
 
 extern HANDLE StdOut;
 extern bool FancyStdOut;
@@ -378,22 +377,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 		// Check the current video settings.
 		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, vid_fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
-		switch (vid_preferbackend)
-		{
-		case 1:
-			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN2, BM_SETCHECK, BST_CHECKED, 0 );
-			break;
-#ifdef HAVE_GLES2
-		case 2:
-		case 3:
-			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN4, BM_SETCHECK, BST_CHECKED, 0 );
-			break;
-#endif			
-		default:
-			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN1, BM_SETCHECK, BST_CHECKED, 0 );
-			break;
-		}
-
+		SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN2, BM_SETCHECK, BST_CHECKED, 0 );
 
 		// [SP] This is our's
 		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, (flags & 1) ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -443,15 +427,6 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			SetQueryIWad(hDlg);
 			// [SP] Upstreamed from Zandronum
 			vid_fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-#ifdef HAVE_GLES2
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN4, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 2;
-			else 
-#endif
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 1;
-			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN1, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 0;
 
 			// [SP] This is our's.
 			flags = 0;

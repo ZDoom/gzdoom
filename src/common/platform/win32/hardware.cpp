@@ -43,7 +43,6 @@
 #include "m_argv.h"
 #include "version.h"
 #include "printf.h"
-#include "win32glvideo.h"
 #ifdef HAVE_VULKAN
 #include "win32vulkanvideo.h"
 #endif
@@ -52,9 +51,6 @@
 #include "i_mainwindow.h"
 
 IVideo *Video;
-
-// do not include GL headers here, only declare the necessary functions.
-IVideo *gl_CreateVideo();
 
 void I_RestartRenderer();
 int currentcanvas = -1;
@@ -91,24 +87,8 @@ void I_InitGraphics ()
 	}
 
 #ifdef HAVE_VULKAN
-	if (V_GetBackend() == 1)
-	{
-		// first try Vulkan, if that fails OpenGL
-		try
-		{
-			Video = new Win32VulkanVideo();
-		}
-		catch (CVulkanError &error)
-		{
-			Printf(TEXTCOLOR_RED "Initialization of Vulkan failed: %s\n", error.what());
-			Video = new Win32GLVideo();
-		}
-	}
-	else
+	Video = new Win32VulkanVideo();
 #endif
-	{
-		Video = new Win32GLVideo();
-	}
 
 	// we somehow STILL don't have a display!!
 	if (Video == NULL)

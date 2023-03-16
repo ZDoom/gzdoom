@@ -316,7 +316,6 @@ void V_InitScreen();
 void V_Init2 ();
 
 void V_Shutdown ();
-int V_GetBackend();
 
 inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }
 extern bool setsizeneeded, setmodeneeded;

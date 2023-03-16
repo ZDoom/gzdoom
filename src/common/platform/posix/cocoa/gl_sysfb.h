@@ -82,21 +82,4 @@ protected:
 
 };
 
-class SystemGLFrameBuffer : public SystemBaseFrameBuffer
-{
-	typedef SystemBaseFrameBuffer Super;
-
-public:
-	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
-
-	void SetVSync(bool vsync) override;
-
-	void SetMode(bool fullscreen, bool hiDPI) override;
-
-protected:
-	void SwapBuffers();
-
-	SystemGLFrameBuffer() {}
-};
-
 #endif // COCOA_GL_SYSFB_H_INCLUDED

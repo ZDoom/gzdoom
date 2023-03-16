@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gl_sysfb.h"
+#include "base_sysfb.h"
 #include "engineerrors.h"
 #include <zvulkan/vulkandevice.h>
 #include <zvulkan/vulkanobjects.h>

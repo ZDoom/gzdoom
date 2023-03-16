@@ -93,40 +93,6 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	// [SP] This may seem pointless - but I don't want to implement live switching just
-	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
-	// do it right without memory leaks
-
-	switch(self)
-	{
-#ifdef HAVE_GLES2
-	case 3:
-	case 2:
-		Printf("Selecting OpenGLES 2.0 backend...\n");
-		break;
-#endif
-#ifdef HAVE_VULKAN
-	case 1:
-		Printf("Selecting Vulkan backend...\n");
-		break;
-#endif
-	default:
-		Printf("Selecting OpenGL backend...\n");
-	}
-
-	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
-}
-
-int V_GetBackend()
-{
-	int v = vid_preferbackend;
-	if (v == 3) v = 2;
-	else if (v < 0 || v > 3) v = 0;
-	return v;
-}
-
 
 CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {

@@ -65,7 +65,6 @@ EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Bool, wi_percents)
 EXTERN_CVAR (Int, gl_texture_hqresizemode)
 EXTERN_CVAR (Int, gl_texture_hqresizemult)
-EXTERN_CVAR (Int, vid_preferbackend)
 EXTERN_CVAR (Float, vid_scale_custompixelaspect)
 EXTERN_CVAR (Bool, vid_scale_linear)
 EXTERN_CVAR(Float, m_sensitivity_x)
@@ -497,16 +496,8 @@ void FGameConfigFile::DoGlobalSetup ()
 			}
 			if (last < 219)
 			{
-				// 2019-12-06 - polybackend merge
-				// migrate vid_enablevulkan to vid_preferbackend
-				auto var = FindCVar("vid_enablevulkan", NULL);
-				if (var != NULL)
-				{
-					UCVarValue v = var->GetGenericRep(CVAR_Int);
-					vid_preferbackend = v.Int;
-				}
 				// 2019-12-31 - r_videoscale.cpp changes
-				var = FindCVar("vid_scale_customstretched", NULL);
+				auto var = FindCVar("vid_scale_customstretched", NULL);
 				if (var != NULL)
 				{
 					UCVarValue v = var->GetGenericRep(CVAR_Bool);

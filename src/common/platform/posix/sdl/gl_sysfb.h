@@ -25,25 +25,5 @@ protected:
 	SystemBaseFrameBuffer () {}
 };
 
-class SystemGLFrameBuffer : public SystemBaseFrameBuffer
-{
-	typedef SystemBaseFrameBuffer Super;
-
-public:
-	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
-	~SystemGLFrameBuffer();
-
-	int GetClientWidth() override;
-	int GetClientHeight() override;
-
-	virtual void SetVSync(bool vsync) override;
-	void SwapBuffers();
-
-protected:
-	SDL_GLContext GLContext;
-
-	SystemGLFrameBuffer() {}
-};
-
 #endif // __POSIX_SDL_GL_SYSFB_H__
 

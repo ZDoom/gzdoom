@@ -24,11 +24,9 @@
 #include "a_corona.h"
 #include "a_dynlight.h"
 
-#if 0
 IMPLEMENT_CLASS(ACorona, false, false)
 
 void ACorona::Tick()
 {
 	Super::Tick();
 }
-#endif

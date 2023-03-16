@@ -1,4 +1,4 @@
-/*class Corona : Actor native
+class Corona : Actor native
 {
 	Default
 	{
@@ -7,4 +7,4 @@
 		+NOINTERACTION
 		+FORCEXYBILLBOARD
 	}
-}*/
+}

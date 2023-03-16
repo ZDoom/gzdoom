@@ -707,13 +707,11 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		return;
 	}
 
-#if 0
 	if (thing->IsKindOf(NAME_Corona))
 	{
 		di->Coronas.Push(static_cast<ACorona*>(thing));
 		return;
 	}
-#endif
 
 	const auto &vp = di->Viewpoint;
 	AActor *camera = vp.camera;

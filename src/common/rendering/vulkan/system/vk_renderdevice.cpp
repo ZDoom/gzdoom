@@ -568,8 +568,3 @@ void VulkanRenderDevice::SetSceneRenderTarget(bool useSSAO)
 {
 	mRenderState->SetRenderTarget(&GetBuffers()->SceneColor, GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
 }
-
-bool VulkanRenderDevice::RaytracingEnabled()
-{
-	return vk_raytrace && device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
-}

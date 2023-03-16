@@ -361,7 +361,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
-	if (fb->device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 		code << "\n#define SUPPORTS_RAYTRACING\n";
 	code << defines;
 	code << "\n$placeholder$";	// here the code can later add more needed #defines.

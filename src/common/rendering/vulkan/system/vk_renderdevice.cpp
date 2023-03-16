@@ -72,8 +72,6 @@ EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
 
-CVAR(Bool, vk_raytrace, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
 // Physical device info
 static std::vector<VulkanCompatibleDevice> SupportedDevices;
 int vkversion;

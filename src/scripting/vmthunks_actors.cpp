@@ -1634,7 +1634,7 @@ int CheckForResurrection(AActor *self, FState* state, int sound)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_CheckForResurrection, CheckForResurrection)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(state);
+	PARAM_POINTER(state, FState);
 	PARAM_INT(sound);
 	ACTION_RETURN_BOOL(CheckForResurrection(self, state, sound));
 }

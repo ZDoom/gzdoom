@@ -47,7 +47,7 @@ static F2DDrawer drawer = F2DDrawer();
 F2DDrawer* twod = &drawer;
 
 EXTERN_CVAR(Float, transsouls)
-CVAR(Float, classic_scaling_factor, 1.0, CVAR_ARCHIVE)
+CVAR(Float, classic_scaling_factor, 2.0, CVAR_ARCHIVE)
 CVAR(Float, classic_scaling_pixelaspect, 1.2f, CVAR_ARCHIVE)
 
 IMPLEMENT_CLASS(FCanvas, false, false)

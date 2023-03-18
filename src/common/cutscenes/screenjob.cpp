@@ -52,7 +52,7 @@
 #include "m_argv.h"
 #include "i_interface.h"
 
-CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, inter_subtitles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 CutsceneState cutscene;
 static int ticks;

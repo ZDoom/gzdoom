@@ -222,9 +222,9 @@ public:
 	explicit TArray (size_t max, bool reserve = false)
 	{
 		Most = (unsigned)max;
-		Count = (unsigned)(reserve? max : 0);
-		Array = (T *)M_Malloc (sizeof(T)*max);
-		if (reserve && Count > 0)
+		Count = (unsigned)(reserve ? max : 0);
+		Array = max > 0 ? (T *)M_Malloc (sizeof(T)*max) : nullptr;
+		if (Count > 0)
 		{
 			ConstructEmpty(0, Count - 1);
 		}

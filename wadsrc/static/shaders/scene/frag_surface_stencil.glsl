@@ -1,6 +1,5 @@
 
-#include "layout_frag_scene.glsl"
-#include "material.glsl"
+#include "shaders/scene/material.glsl"
 
 void main()
 {

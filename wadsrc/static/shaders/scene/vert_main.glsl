@@ -1,5 +1,5 @@
 
-#include "bones.glsl"
+#include "shaders/scene/bones.glsl"
 
 void main()
 {

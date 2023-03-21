@@ -1,5 +1,5 @@
 
-#include "grayscale.glsl"
+#include "shaders/scene/grayscale.glsl"
 
 // Desaturate a color
 

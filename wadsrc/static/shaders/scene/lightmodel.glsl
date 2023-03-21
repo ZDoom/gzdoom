@@ -1,6 +1,6 @@
 
-#include "lightmodel_software.glsl"
-#include "material.glsl"
+#include "shaders/scene/lightmodel_software.glsl"
+#include "shaders/scene/material.glsl"
 
 vec4 ProcessLight(Material mat, vec4 color);
 

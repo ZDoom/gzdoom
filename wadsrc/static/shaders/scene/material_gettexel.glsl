@@ -1,5 +1,5 @@
 
-#include "desaturate.glsl"
+#include "shaders/scene/desaturate.glsl"
 
 vec4 ApplyTextureManipulation(vec4 texel, int blendflags);
 
@@ -26,6 +26,7 @@ vec4 getTexel(vec2 st)
 		}
 	#elif (uTextureMode & 0xffff) == 6 // TM_OPAQUEINVERSE
 		texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
+	#endif
 
 	#if (uTextureMode & 0x80000) == 0x80000 // TEXF_ClampY
 		if (st.t < 0.0 || st.t > 1.0)

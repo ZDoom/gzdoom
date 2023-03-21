@@ -1,4 +1,7 @@
 
+#include "shaders/scene/material_getTexel.glsl"
+#include "shaders/scene/material_normalmap.glsl"
+
 struct Material
 {
 	vec4 Base;

@@ -32,8 +32,8 @@
 
 bool VkShaderManager::CompileNextShader()
 {
-	const char *mainvp = "shaders/glsl/vert_scene.vp";
-	const char *mainfp = "shaders/glsl/frag_surface.fp";
+	const char *mainvp = "shaders/scene/vert_main.glsl";
+	const char *mainfp = "shaders/scene/frag_surface.glsl";
 	int i = compileIndex;
 
 	if (compileState == 0)
@@ -155,127 +155,189 @@ VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassT
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)
 {
-	FString code = GetTargetGlslVersion();
-	code << defines;
-	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	FString definesBlock;
+	definesBlock << defines << "\n";
+	definesBlock << "#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
-	code << "#define NPOT_EMULATION\n";
+	definesBlock << "#define NPOT_EMULATION\n";
 #endif
-	code << LoadPrivateShaderLump("shaders/scene/layout_shared.glsl");
-	if (!fb->device->EnabledFeatures.Features.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
-	code << "#line 1\n";
-	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
+	if (!fb->device->EnabledFeatures.Features.shaderClipDistance)
+	{
+		definesBlock << "#define NO_CLIPDISTANCE_SUPPORT\n";
+	}
+
+	FString layoutBlock;
+	layoutBlock << LoadPrivateShaderLump("shaders/scene/layout_shared.glsl").GetChars() << "\n";
+	layoutBlock << LoadPrivateShaderLump("shaders/scene/layout_vert.glsl").GetChars() << "\n";
+
+	FString codeBlock;
+	codeBlock << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
 
 	return ShaderBuilder()
 		.Type(ShaderType::Vertex)
-		.AddSource(shadername.GetChars(), code.GetChars())
 		.DebugName(shadername.GetChars())
+		.AddSource("VersionBlock", GetVersionBlock().GetChars())
+		.AddSource("DefinesBlock", definesBlock.GetChars())
+		.AddSource("LayoutBlock", layoutBlock.GetChars())
+		.AddSource(vert_lump, codeBlock.GetChars())
+		.OnIncludeLocal([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, false); })
+		.OnIncludeSystem([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, true); })
 		.Create(shadername.GetChars(), fb->device.get());
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
-	FString code = GetTargetGlslVersion();
-	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		code << "\n#define SUPPORTS_RAYTRACING\n";
-	code << defines;
-	code << "\n$placeholder$";	// here the code can later add more needed #defines.
-	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	FString definesBlock;
+	definesBlock << defines << "\n";
+	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME)) definesBlock << "\n#define SUPPORTS_RAYTRACING\n";
+	definesBlock << defines;
+	definesBlock << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
-	code << "#define NPOT_EMULATION\n";
+	definesBlock << "#define NPOT_EMULATION\n";
 #endif
-	code << LoadPrivateShaderLump("shaders/scene/layout_shared.glsl");
-	FString placeholder = "\n";
+	if (!fb->device->EnabledFeatures.Features.shaderClipDistance) definesBlock << "#define NO_CLIPDISTANCE_SUPPORT\n";
+	if (!alphatest) definesBlock << "#define NO_ALPHATEST\n";
+	if (gbufferpass) definesBlock << "#define GBUFFER_PASS\n";
 
-	if (!fb->device->EnabledFeatures.Features.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
-	if (!alphatest) code << "#define NO_ALPHATEST\n";
-	if (gbufferpass) code << "#define GBUFFER_PASS\n";
+	FString layoutBlock;
+	layoutBlock << LoadPrivateShaderLump("shaders/scene/layout_shared.glsl").GetChars() << "\n";
+	layoutBlock << LoadPrivateShaderLump("shaders/scene/layout_frag.glsl").GetChars() << "\n";
 
-	code << "\n#line 1\n";
-	code << LoadPrivateShaderLump(frag_lump).GetChars() << "\n";
+	FString codeBlock;
+	codeBlock << LoadPrivateShaderLump(frag_lump).GetChars() << "\n";
 
+	FString materialname = "MaterialBlock";
+	FString materialBlock;
 	if (material_lump)
 	{
 		if (material_lump[0] != '#')
 		{
+			materialname = material_lump;
+
 			FString pp_code = LoadPublicShaderLump(material_lump);
 
 			if (pp_code.IndexOf("ProcessMaterial") < 0 && pp_code.IndexOf("SetupMaterial") < 0)
 			{
 				// this looks like an old custom hardware shader.
-				// add ProcessMaterial function that calls the older ProcessTexel function
 
 				if (pp_code.IndexOf("GetTexCoord") >= 0)
 				{
-					code << "\n" << LoadPrivateShaderLump("shaders/glsl/func_defaultmat2.fp").GetChars() << "\n";
+					materialBlock << LoadPrivateShaderLump("shaders/scene/material_default.glsl").GetChars() << "\n";
 				}
 				else
 				{
-					code << "\n" << LoadPrivateShaderLump("shaders/glsl/func_defaultmat.fp").GetChars() << "\n";
 					if (pp_code.IndexOf("ProcessTexel") < 0)
 					{
 						// this looks like an even older custom hardware shader.
-						// We need to replace the ProcessTexel call to make it work.
-
-						code.Substitute("material.Base = ProcessTexel();", "material.Base = Process(vec4(1.0));");
+						materialBlock << LoadPrivateShaderLump("shaders/scene/material_legacy_process.glsl").GetChars() << "\n";
+					}
+					else
+					{
+						materialBlock << LoadPrivateShaderLump("shaders/scene/material_legacy_ptexel.glsl").GetChars() << "\n";
 					}
 				}
 
 				if (pp_code.IndexOf("ProcessLight") >= 0)
 				{
 					// The ProcessLight signatured changed. Forward to the old one.
-					code << "\nvec4 ProcessLight(vec4 color);\n";
-					code << "\nvec4 ProcessLight(Material material, vec4 color) { return ProcessLight(color); }\n";
+					materialBlock << "\nvec4 ProcessLight(vec4 color);\n";
+					materialBlock << "\nvec4 ProcessLight(Material material, vec4 color) { return ProcessLight(color); }\n";
 				}
 			}
 
-			code << "\n#line 1\n";
-			code << RemoveLegacyUserUniforms(pp_code).GetChars();
-			code.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
+			materialBlock << "\n#line 1\n";
+			materialBlock << RemoveLegacyUserUniforms(pp_code).GetChars();
+			materialBlock.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
 
 			if (pp_code.IndexOf("ProcessLight") < 0)
 			{
-				code << "\n" << LoadPrivateShaderLump("shaders/glsl/func_defaultlight.fp").GetChars() << "\n";
+				materialBlock << "\n" << LoadPrivateShaderLump("shaders/scene/lighteffect_default.glsl").GetChars() << "\n";
 			}
 
 			// ProcessMaterial must be considered broken because it requires the user to fill in data they possibly cannot know all about.
 			if (pp_code.IndexOf("ProcessMaterial") >= 0 && pp_code.IndexOf("SetupMaterial") < 0)
 			{
 				// This reactivates the old logic and disables all features that cannot be supported with that method.
-				placeholder << "#define LEGACY_USER_SHADER\n";
+				definesBlock << "#define LEGACY_USER_SHADER\n";
 			}
 		}
 		else
 		{
 			// material_lump is not a lump name but the source itself (from generated shaders)
-			code << (material_lump + 1) << "\n";
+			materialBlock << (material_lump + 1) << "\n";
 		}
 	}
-	code.Substitute("$placeholder$", placeholder);
 
+	FString lightname = "LightBlock";
+	FString lightBlock;
 	if (light_lump)
 	{
-		code << "\n#line 1\n";
-		code << LoadPrivateShaderLump(light_lump).GetChars();
+		lightname = light_lump;
+		lightBlock << LoadPrivateShaderLump(light_lump).GetChars();
 	}
 
 	return ShaderBuilder()
 		.Type(ShaderType::Fragment)
-		.AddSource(shadername.GetChars(), code.GetChars())
 		.DebugName(shadername.GetChars())
+		.AddSource("VersionBlock", GetVersionBlock().GetChars())
+		.AddSource("DefinesBlock", definesBlock.GetChars())
+		.AddSource("LayoutBlock", layoutBlock.GetChars())
+		.AddSource("shaders/scene/includes.glsl", LoadPrivateShaderLump("shaders/scene/includes.glsl").GetChars())
+		.AddSource("shaders/scene/mateffect_default.glsl", LoadPrivateShaderLump("shaders/scene/mateffect_default.glsl").GetChars())
+		//.AddSource("shaders/scene/lighteffect_default.glsl", LoadPrivateShaderLump("shaders/scene/lighteffect_default.glsl").GetChars())
+		.AddSource(materialname.GetChars(), materialBlock.GetChars())
+		.AddSource(lightname.GetChars(), lightBlock.GetChars())
+		.AddSource(frag_lump, codeBlock.GetChars())
+		.OnIncludeLocal([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, false); })
+		.OnIncludeSystem([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, true); })
 		.Create(shadername.GetChars(), fb->device.get());
 }
 
-FString VkShaderManager::GetTargetGlslVersion()
+FString VkShaderManager::GetVersionBlock()
 {
-	if (fb->device->Instance->ApiVersion == VK_API_VERSION_1_2)
+	FString versionBlock;
+
+	if (fb->device->Instance->ApiVersion >= VK_API_VERSION_1_2)
 	{
-		return "#version 460\n#extension GL_EXT_ray_query : enable\n";
+		versionBlock << "#version 460 core\n";
 	}
 	else
 	{
-		return "#version 450 core\n";
+		versionBlock << "#version 450 core\n";
 	}
+
+	versionBlock << "#extension GL_GOOGLE_include_directive : enable\n";
+
+	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+	{
+		versionBlock << "#extension GL_EXT_ray_query : enable\n";
+	}
+
+	return versionBlock;
+}
+
+ShaderIncludeResult VkShaderManager::OnInclude(FString headerName, FString includerName, size_t depth, bool system)
+{
+	if (depth > 8)
+		I_Error("Too much include recursion!");
+
+	FString includeguardname;
+	includeguardname << "_HEADERGUARD_" << headerName.GetChars();
+	includeguardname.ReplaceChars("/\\.", '_');
+
+	FString code;
+	code << "#ifndef " << includeguardname.GetChars() << "\n";
+	code << "#define " << includeguardname.GetChars() << "\n";
+	code << "#line 1\n";
+
+	if (system)
+		code << LoadPrivateShaderLump(headerName.GetChars()).GetChars() << "\n";
+	else
+		code << LoadPublicShaderLump(headerName.GetChars()).GetChars() << "\n";
+
+	code << "#endif\n";
+
+	return ShaderIncludeResult(headerName.GetChars(), code.GetChars());
 }
 
 FString VkShaderManager::LoadPublicShaderLump(const char *lumpname)

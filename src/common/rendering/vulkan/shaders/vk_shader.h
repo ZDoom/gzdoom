@@ -11,6 +11,7 @@
 
 #define SHADER_MIN_REQUIRED_TEXTURE_LAYERS 11
 
+class ShaderIncludeResult;
 class VulkanRenderDevice;
 class VulkanDevice;
 class VulkanShader;
@@ -85,7 +86,9 @@ private:
 	std::unique_ptr<VulkanShader> LoadVertShader(FString shadername, const char *vert_lump, const char *defines);
 	std::unique_ptr<VulkanShader> LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass);
 
-	FString GetTargetGlslVersion();
+	ShaderIncludeResult OnInclude(FString headerName, FString includerName, size_t depth, bool system);
+
+	FString GetVersionBlock();
 	FString LoadPublicShaderLump(const char *lumpname);
 	FString LoadPrivateShaderLump(const char *lumpname);
 

@@ -453,6 +453,8 @@ public:
 
 	void Delete (unsigned int index, int deletecount)
 	{
+        if(index >= Count) return;
+        
 		if (index + deletecount > Count)
 		{
 			deletecount = Count - index;

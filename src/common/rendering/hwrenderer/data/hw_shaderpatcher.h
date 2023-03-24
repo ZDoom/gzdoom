@@ -11,18 +11,19 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword);
 struct FDefaultShader
 {
 	const char * ShaderName;
-	const char * gettexelfunc;
-	const char * lightfunc;
+	const char * material_lump;
+	const char * mateffect_lump;
+	const char * lightmodel_lump;
 	const char * Defines;
 };
 
 struct FEffectShader
 {
 	const char *ShaderName;
-	const char *vp;
 	const char *fp1;
 	const char *fp2;
 	const char *fp3;
+	const char *fp4;
 	const char *defines;
 };
 

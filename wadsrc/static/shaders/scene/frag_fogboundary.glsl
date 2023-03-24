@@ -1,11 +1,4 @@
 
-layout(location=2) in vec4 pixelpos;
-layout(location=0) out vec4 FragColor;
-#ifdef GBUFFER_PASS
-layout(location=1) out vec4 FragFog;
-layout(location=2) out vec4 FragNormal;
-#endif
-
 void main()
 {
 	float fogdist;

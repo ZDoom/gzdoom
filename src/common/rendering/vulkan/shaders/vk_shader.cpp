@@ -42,7 +42,7 @@ bool VkShaderManager::CompileNextShader()
 		
 		VkShaderProgram prog;
 		prog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
-		prog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, compilePass == GBUFFER_PASS);
+		prog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].material_lump, defaultshaders[i].mateffect_lump, defaultshaders[i].lightmodel_lump, defaultshaders[i].Defines, true, compilePass == GBUFFER_PASS);
 		mMaterialShaders[compilePass].push_back(std::move(prog));
 		
 		compileIndex++;
@@ -58,7 +58,7 @@ bool VkShaderManager::CompileNextShader()
 		
 		VkShaderProgram natprog;
 		natprog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
-		natprog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, compilePass == GBUFFER_PASS);
+		natprog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].material_lump, defaultshaders[i].mateffect_lump, defaultshaders[i].lightmodel_lump, defaultshaders[i].Defines, false, compilePass == GBUFFER_PASS);
 		mMaterialShadersNAT[compilePass].push_back(std::move(natprog));
 
 		compileIndex++;
@@ -78,7 +78,7 @@ bool VkShaderManager::CompileNextShader()
 
 		VkShaderProgram prog;
 		prog.vert = LoadVertShader(name, mainvp, defines);
-		prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, compilePass == GBUFFER_PASS);
+		prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].mateffect_lump, defaultshaders[usershaders[i].shaderType].lightmodel_lump, defines, true, compilePass == GBUFFER_PASS);
 		mMaterialShaders[compilePass].push_back(std::move(prog));
 
 		compileIndex++;
@@ -93,8 +93,8 @@ bool VkShaderManager::CompileNextShader()
 		// Effect shaders
 		
 		VkShaderProgram prog;
-		prog.vert = LoadVertShader(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].defines);
-		prog.frag = LoadFragShader(effectshaders[i].ShaderName, effectshaders[i].fp1, effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines, true, compilePass == GBUFFER_PASS);
+		prog.vert = LoadVertShader(effectshaders[i].ShaderName, mainvp, effectshaders[i].defines);
+		prog.frag = LoadFragShader(effectshaders[i].ShaderName, effectshaders[i].fp1, effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].fp4, effectshaders[i].defines, true, compilePass == GBUFFER_PASS);
 		mEffectShaders[compilePass].push_back(std::move(prog));
 
 		compileIndex++;
@@ -185,7 +185,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 		.Create(shadername.GetChars(), fb->device.get());
 }
 
-std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
+std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString definesBlock;
 	definesBlock << defines << "\n";
@@ -210,62 +210,8 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	FString materialBlock;
 	if (material_lump)
 	{
-		if (material_lump[0] != '#')
-		{
-			materialname = material_lump;
-
-			FString pp_code = LoadPublicShaderLump(material_lump);
-
-			if (pp_code.IndexOf("ProcessMaterial") < 0 && pp_code.IndexOf("SetupMaterial") < 0)
-			{
-				// this looks like an old custom hardware shader.
-
-				if (pp_code.IndexOf("GetTexCoord") >= 0)
-				{
-					materialBlock << LoadPrivateShaderLump("shaders/scene/material_default.glsl").GetChars() << "\n";
-				}
-				else
-				{
-					if (pp_code.IndexOf("ProcessTexel") < 0)
-					{
-						// this looks like an even older custom hardware shader.
-						materialBlock << LoadPrivateShaderLump("shaders/scene/material_legacy_process.glsl").GetChars() << "\n";
-					}
-					else
-					{
-						materialBlock << LoadPrivateShaderLump("shaders/scene/material_legacy_ptexel.glsl").GetChars() << "\n";
-					}
-				}
-
-				if (pp_code.IndexOf("ProcessLight") >= 0)
-				{
-					// The ProcessLight signatured changed. Forward to the old one.
-					materialBlock << "\nvec4 ProcessLight(vec4 color);\n";
-					materialBlock << "\nvec4 ProcessLight(Material material, vec4 color) { return ProcessLight(color); }\n";
-				}
-			}
-
-			materialBlock << "\n#line 1\n";
-			materialBlock << RemoveLegacyUserUniforms(pp_code).GetChars();
-			materialBlock.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
-
-			if (pp_code.IndexOf("ProcessLight") < 0)
-			{
-				materialBlock << "\n" << LoadPrivateShaderLump("shaders/scene/lighteffect_default.glsl").GetChars() << "\n";
-			}
-
-			// ProcessMaterial must be considered broken because it requires the user to fill in data they possibly cannot know all about.
-			if (pp_code.IndexOf("ProcessMaterial") >= 0 && pp_code.IndexOf("SetupMaterial") < 0)
-			{
-				// This reactivates the old logic and disables all features that cannot be supported with that method.
-				definesBlock << "#define LEGACY_USER_SHADER\n";
-			}
-		}
-		else
-		{
-			// material_lump is not a lump name but the source itself (from generated shaders)
-			materialBlock << (material_lump + 1) << "\n";
-		}
+		materialname = material_lump;
+		materialBlock = LoadPublicShaderLump(material_lump);
 	}
 
 	FString lightname = "LightBlock";
@@ -276,6 +222,14 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 		lightBlock << LoadPrivateShaderLump(light_lump).GetChars();
 	}
 
+	FString mateffectname = "MaterialEffectBlock";
+	FString mateffectBlock;
+	if (mateffect_lump)
+	{
+		mateffectname = mateffect_lump;
+		mateffectBlock << LoadPrivateShaderLump(mateffect_lump).GetChars();
+	}
+
 	return ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.DebugName(shadername.GetChars())
@@ -283,8 +237,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 		.AddSource("DefinesBlock", definesBlock.GetChars())
 		.AddSource("LayoutBlock", layoutBlock.GetChars())
 		.AddSource("shaders/scene/includes.glsl", LoadPrivateShaderLump("shaders/scene/includes.glsl").GetChars())
-		.AddSource("shaders/scene/mateffect_default.glsl", LoadPrivateShaderLump("shaders/scene/mateffect_default.glsl").GetChars())
-		//.AddSource("shaders/scene/lighteffect_default.glsl", LoadPrivateShaderLump("shaders/scene/lighteffect_default.glsl").GetChars())
+		.AddSource(mateffectname.GetChars(), mateffectBlock.GetChars())
 		.AddSource(materialname.GetChars(), materialBlock.GetChars())
 		.AddSource(lightname.GetChars(), lightBlock.GetChars())
 		.AddSource(frag_lump, codeBlock.GetChars())

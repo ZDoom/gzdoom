@@ -275,30 +275,30 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 // Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
 const FDefaultShader defaultshaders[] =
 {
-	{"Default",	            "shaders/scene/material_default.glsl",                 /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Warp 1",	            "shaders/scene/material_default.glsl",                 /*"shaders/scene/mateffect_warp1.glsl",*/   "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Warp 2",	            "shaders/scene/material_default.glsl",                 /*"shaders/scene/mateffect_warp2.glsl",*/   "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Specular",            "shaders/scene/material_spec.glsl",                    /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_specular.glsl", "#define SPECULAR\n#define NORMALMAP\n"},
-	{"PBR",                 "shaders/scene/material_pbr.glsl",                     /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_pbr.glsl",      "#define PBR\n#define NORMALMAP\n"},
-	{"Paletted",	        "shaders/scene/material_paletted.glsl",                /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_nolights.glsl", "#define PALETTE_EMULATION\n"},
-	{"No Texture",          "shaders/scene/material_notexture.glsl",               /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   "#define NO_LAYERS\n"},
-	{"Basic Fuzz",          "shaders/scene/material_fuzz_standard.glsl",           /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Smooth Fuzz",         "shaders/scene/material_fuzz_smooth.glsl",             /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Swirly Fuzz",         "shaders/scene/material_fuzz_swirly.glsl",             /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Translucent Fuzz",    "shaders/scene/material_fuzz_smoothtranslucent.glsl",  /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Jagged Fuzz",         "shaders/scene/material_fuzz_jagged.glsl",             /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Noise Fuzz",          "shaders/scene/material_fuzz_noise.glsl",              /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Smooth Noise Fuzz",   "shaders/scene/material_fuzz_smoothnoise.glsl",        /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
-	{"Software Fuzz",       "shaders/scene/material_fuzz_software.glsl",           /*"shaders/scene/mateffect_default.glsl",*/ "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Default",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Warp 1",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp1.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Warp 2",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp2.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Specular",            "shaders/scene/material_spec.glsl",                    "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_specular.glsl", "#define SPECULAR\n#define NORMALMAP\n"},
+	{"PBR",                 "shaders/scene/material_pbr.glsl",                     "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_pbr.glsl",      "#define PBR\n#define NORMALMAP\n"},
+	{"Paletted",	        "shaders/scene/material_paletted.glsl",                "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_nolights.glsl", "#define PALETTE_EMULATION\n"},
+	{"No Texture",          "shaders/scene/material_notexture.glsl",               "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   "#define NO_LAYERS\n"},
+	{"Basic Fuzz",          "shaders/scene/material_fuzz_standard.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Smooth Fuzz",         "shaders/scene/material_fuzz_smooth.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Swirly Fuzz",         "shaders/scene/material_fuzz_swirly.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Translucent Fuzz",    "shaders/scene/material_fuzz_smoothtranslucent.glsl",  "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Jagged Fuzz",         "shaders/scene/material_fuzz_jagged.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Noise Fuzz",          "shaders/scene/material_fuzz_noise.glsl",              "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Smooth Noise Fuzz",   "shaders/scene/material_fuzz_smoothnoise.glsl",        "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+	{"Software Fuzz",       "shaders/scene/material_fuzz_software.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
 	{nullptr,nullptr,nullptr,nullptr}
 };
 
 const FEffectShader effectshaders[] =
 {
-	{ "fogboundary",  "shaders/scene/vert_main.glsl", "shaders/scene/frag_fogboundary.glsl", nullptr,                               nullptr,                                "#define NO_ALPHATEST\n" },
-	{ "spheremap",    "shaders/scene/vert_main.glsl", "shaders/scene/frag_surface.glsl",     "shaders/scene/material_default.glsl", "shaders/scene/lightmodel_normal.glsl", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
-	{ "burn",         "shaders/scene/vert_main.glsl", "shaders/scene/frag_burn.glsl",        nullptr,                               nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
-	{ "stencil",      "shaders/scene/vert_main.glsl", "shaders/scene/frag_stencil.glsl",     nullptr,                               nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "fogboundary",  "shaders/scene/frag_fogboundary.glsl", nullptr,                               nullptr,                                nullptr,                                "#define NO_ALPHATEST\n" },
+	{ "spheremap",    "shaders/scene/frag_surface.glsl",     "shaders/scene/material_default.glsl", "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
+	{ "burn",         "shaders/scene/frag_burn.glsl",        nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "stencil",      "shaders/scene/frag_stencil.glsl",     nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
 };
 
 int DFrameBuffer::GetShaderCount()

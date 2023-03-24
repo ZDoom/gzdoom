@@ -2,8 +2,6 @@
 #include "shaders/scene/lightmodel_software.glsl"
 #include "shaders/scene/material.glsl"
 
-vec4 ProcessLight(Material mat, vec4 color);
-
 //===========================================================================
 //
 // Calculate light
@@ -82,11 +80,6 @@ vec4 getLightColor(Material material)
 	//
 	color.rgb = min(color.rgb + material.Bright.rgb, 1.0);
 #endif
-
-	//
-	// apply other light manipulation by custom shaders, default is a NOP.
-	//
-	color = ProcessLight(material, color);
 
 	//
 	// apply lightmaps

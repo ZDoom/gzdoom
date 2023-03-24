@@ -1,6 +1,4 @@
 
-#include "shaders/scene/material.glsl"
-
 void main()
 {
 #ifdef NO_CLIPDISTANCE_SUPPORT

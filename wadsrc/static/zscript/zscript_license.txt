@@ -2,7 +2,7 @@ Unless noted differently in the file, the following license applies to all ZScri
 
 //-----------------------------------------------------------------------------
 //
-// Copyright 1993-2020 id Software, Randy Heit, Christoph Oelckers et.al.
+// Copyright 1993-2023 id Software, Randy Heit, Christoph Oelckers et.al.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ Unless noted differently in the file, the following license applies to all ZScri
 /*
 **
 **---------------------------------------------------------------------------
-** Copyright 2005-2020 Randy Heit, Christoph Oelckers et.al.
+** Copyright 2005-2023 Randy Heit, Christoph Oelckers et.al.
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

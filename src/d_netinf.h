@@ -58,7 +58,7 @@ bool D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type);
 bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent);
 void D_DoServerInfoChange (uint8_t **stream, bool singlebit);
 
-void D_WriteUserInfoStrings (int player, uint8_t **stream, bool compact=false);
+FString D_GetUserInfoStrings(int pnum, bool compact = false);
 void D_ReadUserInfoStrings (int player, uint8_t **stream, bool update);
 
 struct FPlayerColorSet;

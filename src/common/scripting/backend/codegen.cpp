@@ -2421,6 +2421,21 @@ bool FxAssign::RequestAddress(FCompileContext &ctx, bool *writable)
 }
 */
 
+static bool IsWholeStructWritable(FCompileContext &ctx, PStruct *s)
+{
+	auto it = s->Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *p;
+	while(it.NextPair(p))
+	{
+		PField * f;
+		if(p && (f = dyn_cast<PField>(p->Value)) && !ctx.IsWritable(f->Flags, f->mDefFileNo))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
@@ -2596,6 +2611,13 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 					if(!writable || !s->SizeKnown)
 					{
 						ScriptPosition.Message(MSG_ERROR, "Struct must be a modifiable value");
+						delete this;
+						return nullptr;
+					}
+
+					if(!IsWholeStructWritable(ctx, s))
+					{
+						ScriptPosition.Message(MSG_ERROR, "All Struct fields must be modifiable");
 						delete this;
 						return nullptr;
 					}

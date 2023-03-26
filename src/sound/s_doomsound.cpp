@@ -1344,7 +1344,7 @@ void DoomSoundEngine::PrintSoundList()
 		const sfxinfo_t* sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
 		if (sfx->bRandomHeader)
 		{
-			Printf("%3d. %s -> #%d {", i, sfx->name.GetChars(), sfx->link);
+			Printf("%3d. %s -> #%d {", i, sfx->name.GetChars(), sfx->link.index());
 			const FRandomSoundList* list = &S_rnd[sfx->link.index()];
 			for (auto& me : list->Choices)
 			{
@@ -1354,7 +1354,7 @@ void DoomSoundEngine::PrintSoundList()
 		}
 		else if (sfx->UserData[0] & SND_PlayerReserve)
 		{
-			Printf("%3d. %s <<player sound %d>>\n", i, sfx->name.GetChars(), sfx->link);
+			Printf("%3d. %s <<player sound %d>>\n", i, sfx->name.GetChars(), sfx->link.index());
 		}
 		else if (S_sfx[i].lumpnum != -1)
 		{

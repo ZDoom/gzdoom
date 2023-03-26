@@ -528,15 +528,15 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 	const TArray<TRS>& animationFrames = animationData ? *animationData : TRSData;
 	if (Joints.Size() > 0)
 	{
-		int numbones = Joints.Size();
+		int numbones = Joints.SSize();
 
-		if (boneComponentData->trscomponents[index].Size() != numbones)
+		if (boneComponentData->trscomponents[index].SSize() != numbones)
 			boneComponentData->trscomponents[index].Resize(numbones);
-		if (boneComponentData->trsmatrix[index].Size() != numbones)
+		if (boneComponentData->trsmatrix[index].SSize() != numbones)
 			boneComponentData->trsmatrix[index].Resize(numbones);
 
-		frame1 = clamp(frame1, 0, ((int)animationFrames.Size() - 1) / numbones);
-		frame2 = clamp(frame2, 0, ((int)animationFrames.Size() - 1) / numbones);
+		frame1 = clamp(frame1, 0, (animationFrames.SSize() - 1) / numbones);
+		frame2 = clamp(frame2, 0, (animationFrames.SSize() - 1) / numbones);
 
 		int offset1 = frame1 * numbones;
 		int offset2 = frame2 * numbones;

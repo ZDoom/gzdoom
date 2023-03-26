@@ -99,7 +99,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 
 		// Use the CRT's printf so the formatting matches ZDBSP's
 		D(char buff[200]);
-		D(sprintf(buff, "Considering events on seg %d(%d[%d,%d]->%d[%d,%d]) [%g:%g]\n", seg,
+		D(snprintf(buff, sizeof(buff), "Considering events on seg %d(%d[%d,%d]->%d[%d,%d]) [%g:%g]\n", seg,
 			Segs[seg].v1,
 			Vertices[Segs[seg].v1].x>>16,
 			Vertices[Segs[seg].v1].y>>16,

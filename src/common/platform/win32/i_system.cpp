@@ -405,7 +405,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_SETCHECK, (flags & 8) ? BST_CHECKED : BST_UNCHECKED, 0 );
 
 		// Set up our version string.
-		sprintf(szString, "Version %s.", GetVersionString());
+		snprintf(szString, sizeof(szString), "Version %s.", GetVersionString());
 		SetDlgItemTextA (hDlg, IDC_WELCOME_VERSION, szString);
 
 		// Populate the list with all the IWADs found

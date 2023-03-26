@@ -52,7 +52,7 @@ VkRenderPassManager::VkRenderPassManager(VulkanRenderDevice* fb) : fb(fb)
 		{
 			std::vector<uint8_t> data;
 			data.resize(fr.GetLength());
-			if (fr.Read(data.data(), data.size()) == data.size())
+			if (fr.Read(data.data(), data.size()) == (FileReader::Size)data.size())
 			{
 				builder.InitialData(data.data(), data.size());
 			}

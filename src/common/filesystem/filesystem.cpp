@@ -395,7 +395,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 
 				for (size_t j = 0; j < sizeof(cksum); ++j)
 				{
-					sprintf(cksumout + (j * 2), "%02X", cksum[j]);
+					snprintf(cksumout + (j * 2), 3, "%02X", cksum[j]);
 				}
 
 				fprintf(hashfile, "file: %s, hash: %s, size: %d\n", filename, cksumout, (int)filereader.GetLength());
@@ -417,7 +417,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)
 					{
-						sprintf(cksumout + (j * 2), "%02X", cksum[j]);
+						snprintf(cksumout + (j * 2), 3, "%02X", cksum[j]);
 					}
 
 					fprintf(hashfile, "file: %s, lump: %s, hash: %s, size: %d\n", filename, lump->getName(), cksumout, lump->LumpSize);

@@ -580,6 +580,10 @@ public:
 	{
 		return Count;
 	}
+	int SSize() const
+	{
+		return (int)Count;
+	}
 	unsigned int Max () const
 	{
 		return Most;

@@ -410,7 +410,7 @@ static FString ReplayGainHash(ZMusicCustomReader* reader, int flength, int playe
 
 	for (size_t j = 0; j < sizeof(digest); ++j)
 	{
-		sprintf(digestout + (j * 2), "%02X", digest[j]);
+		snprintf(digestout + (j * 2), 3, "%02X", digest[j]);
 	}
 	digestout[32] = 0;
 

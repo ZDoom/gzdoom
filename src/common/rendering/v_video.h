@@ -179,12 +179,10 @@ public:
 #endif
 	}
 
-	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
-	// We only want to disable using SSBOs for lights but not disable the feature entirely.
-	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
+	// SSBOs have quite worse performance for read only data, so keep this around only as long as Vulkan has not been adapted yet.
 	bool useSSBO() 
 	{
-		return IsVulkan();// || ((hwcaps & RFL_SHADER_STORAGE_BUFFER) && allowSSBO() && !strstr(vendorstring, "Intel"));
+		return IsVulkan();
 	}
 
 	virtual DCanvas* GetCanvas() { return nullptr; }

@@ -794,6 +794,7 @@ void MapLoader::SpawnSpecials ()
 			// This also cannot consider lifts triggered by scripts etc.
 		case Generic_Lift:
 			if (line.args[3] != 1) continue;
+			[[fallthrough]];
 		case Plat_DownWaitUpStay:
 		case Plat_DownWaitUpStayLip:
 		case Plat_UpWaitDownStay:

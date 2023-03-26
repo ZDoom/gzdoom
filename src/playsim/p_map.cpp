@@ -2510,8 +2510,8 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	while (true)
 	{
 		double bestfrac = 1.1;
-		spechit_t besthit;
-		int besthitnum;
+		spechit_t besthit{};
+		int besthitnum = -1;
 		// find the portal nearest to the crossing actor
 		for (unsigned i = 0; i < portalhit.Size();i++)
 		{

@@ -166,7 +166,7 @@ void MapLoader::SpawnLinePortal(line_t* line)
 				line->portalindex = Level->linePortals.Reserve(1);
 				FLinePortal *port = &Level->linePortals.Last();
 
-				memset(port, 0, sizeof(FLinePortal));
+				port->Clear();
 				port->mOrigin = line;
 				port->mDestination = &ln;
 				port->mType = PORTT_LINKED;
@@ -177,7 +177,7 @@ void MapLoader::SpawnLinePortal(line_t* line)
 				ln.portalindex = Level->linePortals.Reserve(1);
 				port = &Level->linePortals.Last();
 
-				memset(port, 0, sizeof(FLinePortal));
+				port->Clear();
 				port->mOrigin = &ln;
 				port->mDestination = line;
 				port->mType = PORTT_LINKED;

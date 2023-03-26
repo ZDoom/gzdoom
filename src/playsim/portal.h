@@ -197,7 +197,12 @@ struct FLinePortal
 
 	FLinePortal()
 	{
-		memset(this, 0, sizeof *this);
+		Clear();
+	}
+
+	void Clear()
+	{
+		memset((void*)this, 0, sizeof * this);
 	}
 };
 
@@ -246,7 +251,12 @@ struct FSectorPortal
 
 	FSectorPortal()
 	{
-		memset(this, 0, sizeof * this);
+		Clear();
+	}
+
+	void Clear()
+	{
+		memset((void*)this, 0, sizeof * this);
 	}
 
 	bool MergeAllowed() const

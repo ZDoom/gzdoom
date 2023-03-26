@@ -245,11 +245,11 @@ void FLevelLocals::ClearPortals()
 	PortalBlockmap.Clear();
 
 	// The first entry must always be the default skybox. This is what every sector gets by default.
-	memset(&sectorPortals[0], 0, sizeof(sectorPortals[0]));
+	sectorPortals[0].Clear();
 	sectorPortals[0].mType = PORTS_SKYVIEWPOINT;
 	sectorPortals[0].mFlags = PORTSF_SKYFLATONLY;
 	// The second entry will be the default sky. This is for forcing a regular sky through the skybox picker
-	memset(&sectorPortals[1], 0, sizeof(sectorPortals[0]));
+	sectorPortals[1].Clear();
 	sectorPortals[1].mType = PORTS_SKYVIEWPOINT;
 	sectorPortals[1].mFlags = PORTSF_SKYFLATONLY;
 

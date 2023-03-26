@@ -369,18 +369,7 @@ static void LoadAltHudStuff()
 // PClassActor :: StaticInit										STATIC
 //
 //==========================================================================
-
-ZSMap<FName, DObject*> AllServices;
-
-static void MarkServices(){
-
-	ZSMap<FName, DObject*>::Iterator it(AllServices);
-	ZSMap<FName, DObject*>::Pair *pair;
-	while (it.NextPair(pair))
-	{
-		GC::Mark<DObject>(pair->Value);
-	}
-}
+void InitServices();
 
 void PClassActor::StaticInit()
 {
@@ -407,6 +396,8 @@ void PClassActor::StaticInit()
 	if (!batchrun) Printf ("LoadActors: Load actor definitions.\n");
 	ClearStrifeTypes();
 	LoadActors ();
+	InitServices();
+
 
 	for (auto cls : AllClasses)
 	{
@@ -415,19 +406,6 @@ void PClassActor::StaticInit()
 			AllActorClasses.Push(static_cast<PClassActor*>(cls));
 		}
 	}
-
-	PClass * cls = PClass::FindClass("Service");
-	for(PClass * clss : PClass::AllClasses)
-	{
-		if(clss != cls && cls->IsAncestorOf(clss))
-		{
-			DObject * obj = clss->CreateNew();
-			obj->ObjectFlags |= OF_Transient;
-			AllServices.Insert(clss->TypeName, obj);
-		}
-	}
-
-	GC::AddMarkerFunc(&MarkServices);
 
 	LoadAltHudStuff();
 	InitBotStuff();

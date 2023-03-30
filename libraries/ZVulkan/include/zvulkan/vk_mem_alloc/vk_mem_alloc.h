@@ -104,6 +104,8 @@ Documentation of all members: vk_mem_alloc.h
 - [Source repository on GitHub](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 */
 
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

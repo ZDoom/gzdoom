@@ -481,6 +481,11 @@ void PType::StaticInit()
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_FQuat, TypeFQuaternion));
 }
 
+PType * PType::underlyingArrayType(PType *p)
+{
+	while(p->isArray()) p = static_cast<PArray*>(p)->ElementType;
+	return p;
+}
 
 /* PBasicType *************************************************************/
 

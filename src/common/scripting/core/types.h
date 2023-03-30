@@ -215,6 +215,8 @@ public:
 	static PClassPointer *toClassPointer(PType *t) { return t && t->isClassPointer() ? (PClassPointer*)t : nullptr; }
 	static PFunctionPointer *toFunctionPointer(PType *t) { return t && t->isFunctionPointer() ? (PFunctionPointer*)t : nullptr; }
 	static PClassType *toClass(PType *t) { return t && t->isClass() ? (PClassType*)t : nullptr; }
+
+	static PType * underlyingArrayType(PType *p);
 };
 
 // Not-really-a-type types --------------------------------------------------

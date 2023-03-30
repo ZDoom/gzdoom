@@ -1413,6 +1413,17 @@ void ZCCCompiler::CompileAllFields()
 //
 //==========================================================================
 
+static bool isComplexStructType(PType * fieldtype){
+	return fieldtype->isDynArray()
+		|| fieldtype->isMap()
+		|| fieldtype->isMapIterator()
+		|| fieldtype->isObjectPointer()
+		|| (  fieldtype->isStruct()
+			&& !static_cast<PStruct *>(fieldtype)->isNative
+			&& !static_cast<PStruct *>(fieldtype)->isSimple
+		   );
+}
+
 bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren)
 {
 	PStruct* selfStruct = type && type->isStruct() ? static_cast<PStruct*>(type) : nullptr;
@@ -1431,15 +1442,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 
 		if(selfStruct && selfStruct->isSimple)
 		{
-			if(	fieldtype->isDynArray()
-			 || fieldtype->isMap()
-			 || fieldtype->isMapIterator()
-			 || fieldtype->isObjectPointer()
-			 || (  fieldtype->isStruct()
-			   && !static_cast<PStruct *>(fieldtype)->isNative
-			   && !static_cast<PStruct *>(fieldtype)->isSimple
-				)
-			  )
+			if(	isComplexStructType(PType::underlyingArrayType(fieldtype)) )
 			{ // mark and propagate complex structs:
 			  //   maps and dynarrays need a copy function to be called,
 			  //   native structs are pointers, so it's fine to copy even if they're complex

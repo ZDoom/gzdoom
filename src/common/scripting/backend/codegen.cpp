@@ -2428,9 +2428,20 @@ static bool IsWholeStructWritable(FCompileContext &ctx, PStruct *s)
 	while(it.NextPair(p))
 	{
 		PField * f;
-		if(p && (f = dyn_cast<PField>(p->Value)) && !ctx.IsWritable(f->Flags, f->mDefFileNo))
+		if((f = dyn_cast<PField>(p->Value)))
 		{
-			return false;
+			if(!ctx.IsWritable(f->Flags, f->mDefFileNo))
+			{
+				return false;
+			}
+			else if(f->Type->isMapIterator())
+			{ // map iterators aren't assignable
+				return false;
+			}
+			else if(f->Type->isStruct() && !static_cast<PStruct*>(f->Type)->isNative && !IsWholeStructWritable(ctx,static_cast<PStruct*>(f->Type)))
+			{ // recurse for nested structs, TODO calculate this on compile-time
+				return false;
+			}
 		}
 	}
 	return true;
@@ -2631,9 +2642,10 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
                     }
                     else
                     {
-                        ScriptPosition.Message(MSG_ERROR, "Complex Struct assignment not implemented yet");
-                        delete this;
-                        return nullptr;
+						auto fx = new FxComplexStructAssign(Base, Right, s);
+						Base = Right = nullptr;
+						delete this;
+						return fx->Resolve(ctx);
                     }
                 }
             }
@@ -2755,6 +2767,96 @@ ExpEmit FxSimpleStructAssign::Emit(VMFunctionBuilder *build)
 	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
 
 	build->Emit(OP_MEMCPY_RRK, base.RegNum, right.RegNum, build->GetConstantInt(Type->Size));
+	base.Free(build);
+	return right;
+}
+
+//==========================================================================
+//
+//	FxComplexStructAssign
+//
+//==========================================================================
+
+FxComplexStructAssign::FxComplexStructAssign(FxExpression *base, FxExpression *right, PStruct * type)
+	: FxExpression(EFX_ComplexStructAssign, base->ScriptPosition), Base(base) , Right(right), Type(type)
+{
+
+}
+
+FxExpression *FxComplexStructAssign::Resolve(FCompileContext &ctx)
+{
+	Base->RequestAddress(ctx,nullptr);
+	Right->RequestAddress(ctx,nullptr);
+	ScriptPosition.Message(MSG_ERROR, "FxComplexStructAssign unimplemented");
+	delete this;
+	return nullptr;
+
+
+
+
+	return this;
+}
+
+/*
+static bool IsStructFieldComplex(const PType *fieldtype){
+	return fieldtype->isDynArray()
+		|| fieldtype->isMap()
+		|| fieldtype->isMapIterator()
+		|| fieldtype->isObjectPointer()
+		|| (  fieldtype->isStruct()
+		&& !static_cast<PStruct *>(fieldtype)->isNative
+		&& !static_cast<PStruct *>(fieldtype)->isSimple;
+}
+*/
+ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
+{ //  assign each member one at a time (TODO optimization: use memcpy for groups of simple values)
+	ExpEmit base = Base->Emit(build);
+	ExpEmit right = Right->Emit(build);
+	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
+
+	TArray<PField*> sortedFields;
+
+	{
+		auto it = Type->Symbols.GetIterator();
+		PSymbolTable::MapType::Pair *p;
+		while(it.NextPair(p))
+		{
+			if(PField * f; f = dyn_cast<PField>(p->Value))
+			{
+				sortedFields.Push(f);
+			}
+		}
+	}
+
+	std::sort(sortedFields.begin(), sortedFields.end(),
+		[](const PField* a, const PField* b)
+		{
+			return a->Offset < b->Offset;
+		}
+	);
+
+	struct field_group
+	{
+		int start_offset;
+		int size;
+	};
+
+	TArray<field_group> simple_variables;
+	
+	TArray<PField *> arrays;
+	TArray<PField *> dynarrays;
+	TArray<PField *> maps;
+
+	TArray<PField *> objects;
+
+	for(int i = 0; i < sortedFields.Size(); i++)
+	{
+	}
+
+	//TODO complex assignment
+
+	return {};
+
 	base.Free(build);
 	return right;
 }

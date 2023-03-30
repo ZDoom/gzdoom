@@ -242,6 +242,7 @@ enum EFxType
 	EFX_PostIncrDecr,
 	EFX_Assign,
 	EFX_SimpleStructAssign,
+	EFX_ComplexStructAssign,
 	EFX_AssignSelf,
 	EFX_Binary,	// one token fits all, the operator is enough to distinguish them.
 	EFX_BinaryLogical,
@@ -898,6 +899,23 @@ class FxSimpleStructAssign : public FxExpression
 	PStruct * Type;
 public:
 	FxSimpleStructAssign(FxExpression *base, FxExpression *right, PStruct *type);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxSimpleStructAssign
+//
+//==========================================================================
+
+class FxComplexStructAssign : public FxExpression
+{ // struct has complex fields
+	FxExpression *Base;
+	FxExpression *Right;
+	PStruct * Type;
+public:
+	FxComplexStructAssign(FxExpression *base, FxExpression *right, PStruct *type);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

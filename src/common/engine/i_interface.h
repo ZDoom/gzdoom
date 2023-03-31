@@ -62,6 +62,7 @@ extern FString endoomName;
 extern bool batchrun;
 extern float menuBlurAmount;
 extern bool generic_ui;
+extern bool special_i;
 extern int 	paused;
 extern bool pauseext;
 

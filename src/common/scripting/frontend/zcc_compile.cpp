@@ -1413,7 +1413,8 @@ void ZCCCompiler::CompileAllFields()
 //
 //==========================================================================
 
-static bool isComplexStructType(PType * fieldtype){
+bool isComplexTypeForStruct(PType * fieldtype)
+{
 	return fieldtype->isDynArray()
 		|| fieldtype->isMap()
 		|| fieldtype->isMapIterator()
@@ -1431,6 +1432,8 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 	if(selfStruct)
 	{
 		selfStruct->isSimple = true;
+		selfStruct->isAssignable = true;
+		selfStruct->isInternallyAssignable = true;
 	}
 
 	while (Fields.Size() > 0)
@@ -1440,14 +1443,11 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 
 		PType *fieldtype = DetermineType(type, field, field->Names->Name, field->Type, true, true);
 
-		if(selfStruct && selfStruct->isSimple)
-		{
-			if(	isComplexStructType(PType::underlyingArrayType(fieldtype)) )
-			{ // mark and propagate complex structs:
-			  //   maps and dynarrays need a copy function to be called,
-			  //   native structs are pointers, so it's fine to copy even if they're complex
-				selfStruct->isSimple = false;
-			}
+		if(selfStruct && selfStruct->isSimple && isComplexTypeForStruct(PType::underlyingArrayType(fieldtype)) )
+		{ // mark and propagate complex structs:
+		  //   maps and dynarrays need a copy function to be called,
+		  //   native structs are pointers, so it's fine to copy even if they're complex
+			selfStruct->isSimple = false;
 		}
 
 		// For structs only allow 'deprecated', for classes exclude function qualifiers.
@@ -1518,6 +1518,26 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		if (field->Flags & ZCC_Meta)
 		{
 			varflags |= VARF_Meta | VARF_Static | VARF_ReadOnly;	// metadata implies readonly
+		}
+		else if (selfStruct && (selfStruct->isAssignable || selfStruct->isInternallyAssignable))
+		{ // mark structs with readonly fields as non-assignable
+			if(varflags  & VARF_ReadOnly)
+			{
+				selfStruct->isAssignable = false;
+				if(!(varflags & VARF_InternalAccess))
+				{
+					selfStruct->isInternallyAssignable = false;
+				}
+			}
+
+			if(PStruct * other; fieldtype->isStruct() && !(other = static_cast<PStruct*>(fieldtype))->isNative && !other->isAssignable)
+			{
+				selfStruct->isAssignable = false;
+				if(selfStruct->isInternallyAssignable && (!other->isInternallyAssignable || other->mDefFileNo != selfStruct->mDefFileNo))
+				{
+					selfStruct->isInternallyAssignable = false;
+				}
+			}
 		}
 
 		if (field->Type->ArraySize != nullptr)

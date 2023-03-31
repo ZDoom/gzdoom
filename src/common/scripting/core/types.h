@@ -631,9 +631,12 @@ class PStruct : public PContainerType
 public:
 	PStruct(FName name, PTypeBase *outer, bool isnative = false, int fileno = 0);
 
+	//TODO: turn bools into flags?
 	bool isNative;
 	bool isOrdered = false;
 	bool isSimple = false;
+	bool isAssignable = false;
+	bool isInternallyAssignable = false;
 	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use these two functions for it.
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;

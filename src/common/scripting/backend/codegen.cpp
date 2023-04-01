@@ -2780,35 +2780,33 @@ extern bool isComplexTypeForStruct(PType * fieldtype);
 
 enum class StructCopyOpType
 {
-
 	ObjBarrier,
 	ObjArrayBarrier,
 	
-	ArrayCopyMap,
-	ArrayCopyDynArray,
+	ArrayCopyDynArrayMap, // copy using the `X.Copy(Y)` function call
 	ArrayCopyStruct, // non-array structs are flattened into regular operations, so only this needs to be aware of them
 	
 	Memcpy,
-	DynArrayCopy,
-	MapCopy,
+	DynArrayMapCopy,
 };
 
 struct StructCopyOp
 {
 	StructCopyOpType op;
-	int offset;
-	int size;
-	PType * type; // used for struct, dynarray and map copies
+	size_t offset;
+	size_t size; // bytes for memcpy, unused otherwise
+	PType * type; // used for struct, dynarray, map and non-dynamic array copies, null for memcpy
 };
 
 static TMap<PStruct*,TArray<StructCopyOp>> struct_copy_ops;
 
 static TArray<StructCopyOp>& GetCopyOps(PStruct * s)
 {
-	auto op = struct_copy_ops.CheckKey(s);
-	if(op)
-		return *op;
-
+	{
+		auto op = struct_copy_ops.CheckKey(s);
+		if(op)
+			return *op;
+	}
 	TArray<PField*> sortedFields;
 
 	TArray<StructCopyOp> ops;
@@ -2820,6 +2818,7 @@ static TArray<StructCopyOp>& GetCopyOps(PStruct * s)
 		{
 			if(PField * f; (f = dyn_cast<PField>(p->Value)) && !(f->Flags & VARF_Meta))
 			{ // store all fields
+				assert(f->Type->SizeKnown);
 				sortedFields.Push(f);
 			}
 		}
@@ -2834,23 +2833,128 @@ static TArray<StructCopyOp>& GetCopyOps(PStruct * s)
 
 	struct field_group
 	{
-		int start_index;
-		int end_index;
+		size_t start_index;
+		size_t end_index;
 	};
 
-	TArray<field_group> simple_variables;
-
-	TArray<PField *> arrays;
-	TArray<PField *> dynarrays;
-	TArray<PField *> maps;
+	TArray<field_group> memcpys;
 
 	TArray<PField *> objects;
 
-	int simple_start = -1;
+	TArray<PField *> complex;
+
+	size_t simple_start = SIZE_MAX;
 
 	for(size_t i = 0; i < sortedFields.Size(); i++)
 	{
-		// TODO: gen copy ops
+		auto *t = sortedFields[i]->Type;
+		
+		auto * baseType = PType::underlyingArrayType(t);
+
+		//if(t->isStaticArray()) // this doesn't need to be checked, since it's only used for internal Array<@Type> arrays
+		if(isComplexTypeForStruct(baseType))
+		{
+			if(baseType->isObjectPointer())
+			{
+				objects.Push(sortedFields[i]);
+				if(simple_start == SIZE_MAX) simple_start = i;
+			}
+			else
+			{
+				complex.Push(sortedFields[i]);
+				if(simple_start != SIZE_MAX)
+				{
+					memcpys.Push({simple_start, i-1});
+					simple_start = SIZE_MAX;
+				}
+			}
+		}
+		else
+		{
+			if(simple_start == SIZE_MAX) simple_start = i;
+		}
+	}
+	{
+		TArray<StructCopyOp> memcpy_ops;
+		TArray<StructCopyOp> complex_ops; // array/dynarray/map copies
+		
+		for(PField * obj : objects)
+		{ // object barriers go before anything else
+			ops.Push({
+				obj->Type->isArray() ? StructCopyOpType::ObjArrayBarrier : StructCopyOpType::ObjBarrier,
+				obj->Offset,
+				obj->Type->Size,
+				obj->Type
+			});
+		}
+
+		for(field_group mem : memcpys)
+		{ // place memcpy calls together
+			assert(mem.start_index != SIZE_MAX && mem.end_index != mem.start_index && mem.end_index >= mem.end_index);
+
+			PField * start = sortedFields[mem.start_index];
+			PField * end = sortedFields[mem.end_index];
+			// start = offset1 , end = offset2 + size2
+			memcpy_ops.Push({
+				StructCopyOpType::Memcpy,
+				start->Offset,
+				(end->Offset + end->Type->Size) - start->Offset,
+				nullptr
+			});
+		}
+
+		for(PField * cmp : complex)
+		{
+			if(cmp->Type->isArray())
+			{
+				complex_ops.Push({
+					PType::underlyingArrayType(cmp->Type)->isStruct() ? StructCopyOpType::ArrayCopyStruct : StructCopyOpType::ArrayCopyDynArrayMap,
+					cmp->Offset,
+					cmp->Type->Size,
+					cmp->Type
+				});
+			}
+			else if(!cmp->Type->isStruct())
+			{
+				complex_ops.Push({
+					StructCopyOpType::DynArrayMapCopy,
+					cmp->Offset,
+					cmp->Type->Size,
+					cmp->Type
+				});
+			}
+			else // if(cmp->Type->isStruct())
+			{ // flatten structs into existing op list
+			  // TODO optimization: fold memcpy ops in the start and end complex of complex struct into pre-existing memcpy ops
+				auto copyops = GetCopyOps(static_cast<PStruct*>(cmp->Type));
+				auto off = cmp->Offset;
+				for(auto op : copyops)
+				{
+					StructCopyOp newop {
+						op.op,
+						op.offset + off,
+						op.size,
+						op.type
+					};
+
+					if(op.op == StructCopyOpType::ObjArrayBarrier || op.op == StructCopyOpType::ObjBarrier)
+					{
+						ops.Push(newop);
+					}
+					else if(op.op == StructCopyOpType::Memcpy)
+					{
+						memcpy_ops.Push(newop);
+					}
+					else
+					{
+						complex_ops.Push(newop);
+					}
+				}
+			}
+		}
+
+		ops.Append(memcpy_ops);
+		ops.Append(complex_ops);
 	}
 
 	return struct_copy_ops.Insert(s,std::move(ops));

@@ -1128,12 +1128,12 @@ public:
 		Node *n = FindKey(key);
 		if (n != NULL)
 		{
-			n->Pair.Value = value;
+			n->Pair.Value = std::move(value);
 		}
 		else
 		{
 			n = NewKey(key);
-			::new(&n->Pair.Value) VT(value);
+			::new(&n->Pair.Value) VT(std::move(value));
 		}
 		return n->Pair.Value;
 	}

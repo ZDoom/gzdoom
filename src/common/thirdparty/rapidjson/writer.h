@@ -552,30 +552,38 @@ inline bool Writer<StringBuffer>::WriteUint64(uint64_t u) {
 
 template<>
 inline bool Writer<StringBuffer>::WriteDouble(double d) {
+    bool ret = true;
     if (internal::Double(d).IsNanOrInf()) {
         // Note: This code path can only be reached if (RAPIDJSON_WRITE_DEFAULT_FLAGS & kWriteNanAndInfFlag).
         if (!(kWriteDefaultFlags & kWriteNanAndInfFlag))
-            return false;
-        if (internal::Double(d).IsNan()) {
-            PutReserve(*os_, 3);
-            PutUnsafe(*os_, 'N'); PutUnsafe(*os_, 'a'); PutUnsafe(*os_, 'N');
-            return true;
-        }
-        if (internal::Double(d).Sign()) {
-            PutReserve(*os_, 9);
-            PutUnsafe(*os_, '-');
+        {
+            // if we abort here, the writer is left in a broken state, unable to recover, so better write a 0 in addition to returning an error.
+            ret = false;
+            d = 0;
         }
         else
-            PutReserve(*os_, 8);
-        PutUnsafe(*os_, 'I'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'f');
-        PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 't'); PutUnsafe(*os_, 'y');
-        return true;
+        {
+            if (internal::Double(d).IsNan()) {
+                PutReserve(*os_, 3);
+                PutUnsafe(*os_, 'N'); PutUnsafe(*os_, 'a'); PutUnsafe(*os_, 'N');
+                return true;
+            }
+            if (internal::Double(d).Sign()) {
+                PutReserve(*os_, 9);
+                PutUnsafe(*os_, '-');
+            }
+            else
+                PutReserve(*os_, 8);
+            PutUnsafe(*os_, 'I'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'f');
+            PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 'n'); PutUnsafe(*os_, 'i'); PutUnsafe(*os_, 't'); PutUnsafe(*os_, 'y');
+            return true;
+        }
     }
     
     char *buffer = os_->Push(25);
     char* end = internal::dtoa(d, buffer, maxDecimalPlaces_);
     os_->Pop(static_cast<size_t>(25 - (end - buffer)));
-    return true;
+    return ret;
 }
 
 #if defined(RAPIDJSON_SSE2) || defined(RAPIDJSON_SSE42)

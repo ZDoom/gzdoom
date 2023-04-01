@@ -2778,16 +2778,43 @@ FxExpression *FxComplexStructAssign::Resolve(FCompileContext &ctx)
 
 extern bool isComplexTypeForStruct(PType * fieldtype);
 
-ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
-{ //  assign each member one at a time (TODO optimization: use memcpy for groups of simple values)
-	ExpEmit base = Base->Emit(build);
-	ExpEmit right = Right->Emit(build);
-	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
+enum class StructCopyOpType
+{
+
+	ObjBarrier,
+	ObjArrayBarrier,
+	
+	ArrayCopyMap,
+	ArrayCopyDynArray,
+	ArrayCopyStruct, // non-array structs are flattened into regular operations, so only this needs to be aware of them
+	
+	Memcpy,
+	DynArrayCopy,
+	MapCopy,
+};
+
+struct StructCopyOp
+{
+	StructCopyOpType op;
+	int offset;
+	int size;
+	PType * type; // used for struct, dynarray and map copies
+};
+
+static TMap<PStruct*,TArray<StructCopyOp>> struct_copy_ops;
+
+static TArray<StructCopyOp>& GetCopyOps(PStruct * s)
+{
+	auto op = struct_copy_ops.CheckKey(s);
+	if(op)
+		return *op;
 
 	TArray<PField*> sortedFields;
 
-	{ // TODO: cache this per type
-		auto it = Type->Symbols.GetIterator();
+	TArray<StructCopyOp> ops;
+
+	{
+		auto it = s->Symbols.GetIterator();
 		PSymbolTable::MapType::Pair *p;
 		while(it.NextPair(p))
 		{
@@ -2812,7 +2839,7 @@ ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
 	};
 
 	TArray<field_group> simple_variables;
-	
+
 	TArray<PField *> arrays;
 	TArray<PField *> dynarrays;
 	TArray<PField *> maps;
@@ -2823,9 +2850,21 @@ ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
 
 	for(size_t i = 0; i < sortedFields.Size(); i++)
 	{
+		// TODO: gen copy ops
 	}
 
-	//TODO complex assignment
+	return struct_copy_ops.Insert(s,std::move(ops));
+}
+
+ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
+{ //  assign each member one at a time (TODO optimization: use memcpy for groups of simple values)
+	ExpEmit base = Base->Emit(build);
+	ExpEmit right = Right->Emit(build);
+	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
+
+	auto ops = GetCopyOps(Type);
+
+	//TODO: apply copy ops
 
 	return {};
 

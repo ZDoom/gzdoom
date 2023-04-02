@@ -914,11 +914,13 @@ enum class StructCopyOpType
 	ObjBarrier,
 	ObjArrayBarrier,
 
-	ArrayCopyDynArrayMap, // copy using the `X.Copy(Y)` function call
-	ArrayCopyStruct, // non-array structs are flattened into regular operations, so only this needs to be aware of them
-
 	Memcpy,
 	DynArrayMapCopy,
+	StringCopy,
+
+	ArrayCopyDynArrayMap, // copy using the `X.Copy(Y)` function call
+	ArrayCopyString,
+	ArrayCopyStruct, // non-array structs are flattened into regular operations, so only this needs to be aware of them
 };
 
 struct StructCopyOp

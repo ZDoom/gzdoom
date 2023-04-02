@@ -2884,8 +2884,9 @@ void GenStructCopyOps(PStruct * s)
 		{
 			if(cmp->Type->isArray())
 			{
+				auto realType = PType::underlyingArrayType(cmp->Type);
 				complex_ops.Push({
-					PType::underlyingArrayType(cmp->Type)->isStruct() ? StructCopyOpType::ArrayCopyStruct : StructCopyOpType::ArrayCopyDynArrayMap,
+					realType->isStruct() ? StructCopyOpType::ArrayCopyStruct : cmp->Type == TypeString ? StructCopyOpType::ArrayCopyString : StructCopyOpType::ArrayCopyDynArrayMap,
 					cmp->Offset,
 					cmp->Type->Size,
 					cmp->Type
@@ -2894,7 +2895,7 @@ void GenStructCopyOps(PStruct * s)
 			else if(!cmp->Type->isStruct())
 			{
 				complex_ops.Push({
-					StructCopyOpType::DynArrayMapCopy,
+					cmp->Type == TypeString ? StructCopyOpType::StringCopy : StructCopyOpType::DynArrayMapCopy,
 					cmp->Offset,
 					cmp->Type->Size,
 					cmp->Type

@@ -1423,6 +1423,7 @@ bool isComplexTypeForStruct(PType * fieldtype)
 		|| fieldtype->isMap()
 		|| fieldtype->isMapIterator()
 		|| fieldtype->isObjectPointer()
+		|| fieldtype == TypeString
 		|| (  fieldtype->isStruct()
 			&& !static_cast<PStruct *>(fieldtype)->isNative
 			&& !static_cast<PStruct *>(fieldtype)->isSimple

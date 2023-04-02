@@ -399,9 +399,16 @@ public:
 		Grow(item.Size());
 		Count += item.Size();
 
-		for (unsigned i = 0; i < item.Size(); i++)
+		if constexpr (std::is_trivially_copyable<T>::value)
 		{
-			new(&Array[start + i]) T(item[i]);
+			memcpy(Array + start,item.Array,item.Size() * sizeof(T));
+		}
+		else
+		{
+			for (unsigned i = 0; i < item.Size(); i++)
+			{
+				new(&Array[start + i]) T(item[i]);
+			}
 		}
 		return start;
 	}
@@ -413,9 +420,16 @@ public:
 		Grow(item.Size());
 		Count += item.Size();
 
-		for (unsigned i = 0; i < item.Size(); i++)
+		if constexpr (std::is_trivially_copyable<T>::value)
 		{
-			new(&Array[start + i]) T(std::move(item[i]));
+			memcpy(Array + start,item.Array,item.Size() * sizeof(T));
+		}
+		else
+		{
+			for (unsigned i = 0; i < item.Size(); i++)
+			{
+				new(&Array[start + i]) T(std::move(item[i]));
+			}
 		}
 		item.Clear();
 		return start;

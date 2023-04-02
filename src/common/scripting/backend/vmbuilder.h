@@ -155,7 +155,7 @@ class FFunctionBuildList
 
 	TArray<Item> mItems;
 
-	void DumpJit();
+	void DumpJit(bool include_gzdoom_pk3);
 
 public:
 	VMFunction *AddFunction(PNamespace *curglobals, const VersionInfo &ver, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);

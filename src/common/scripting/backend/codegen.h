@@ -909,15 +909,39 @@ public:
 //
 //==========================================================================
 
+enum class StructCopyOpType
+{
+	ObjBarrier,
+	ObjArrayBarrier,
+
+	ArrayCopyDynArrayMap, // copy using the `X.Copy(Y)` function call
+	ArrayCopyStruct, // non-array structs are flattened into regular operations, so only this needs to be aware of them
+
+	Memcpy,
+	DynArrayMapCopy,
+};
+
+struct StructCopyOp
+{
+	StructCopyOpType op;
+	size_t offset;
+	size_t size; // bytes for memcpy, unused otherwise
+	PType * type; // used for struct, dynarray, map and non-dynamic array copies, null for memcpy
+};
+
 class FxComplexStructAssign : public FxExpression
 { // struct has complex fields
 	FxExpression *Base;
 	FxExpression *Right;
 	PStruct * Type;
+	const TArray<StructCopyOp> *CopyOps;
+	static TMap<const PStruct*,TArray<StructCopyOp>> struct_copy_ops;
+	friend void GenStructCopyOps(PStruct * s);
 public:
 	FxComplexStructAssign(FxExpression *base, FxExpression *right, PStruct *type);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	static const TArray<StructCopyOp> * GetCopyOps(const PStruct *p) { return struct_copy_ops.CheckKey(p); }
 };
 
 //==========================================================================

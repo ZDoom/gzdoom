@@ -2766,47 +2766,24 @@ FxExpression *FxComplexStructAssign::Resolve(FCompileContext &ctx)
 {
 	Base->RequestAddress(ctx,nullptr);
 	Right->RequestAddress(ctx,nullptr);
+
+	CopyOps = GetCopyOps(Type);
+
+	assert(CopyOps);
+
 	ScriptPosition.Message(MSG_ERROR, "FxComplexStructAssign unimplemented");
 	delete this;
 	return nullptr;
-
-
-
 
 	return this;
 }
 
 extern bool isComplexTypeForStruct(PType * fieldtype);
 
-enum class StructCopyOpType
-{
-	ObjBarrier,
-	ObjArrayBarrier,
-	
-	ArrayCopyDynArrayMap, // copy using the `X.Copy(Y)` function call
-	ArrayCopyStruct, // non-array structs are flattened into regular operations, so only this needs to be aware of them
-	
-	Memcpy,
-	DynArrayMapCopy,
-};
+TMap<const PStruct*,TArray<StructCopyOp>> FxComplexStructAssign::struct_copy_ops;
 
-struct StructCopyOp
+void GenStructCopyOps(PStruct * s)
 {
-	StructCopyOpType op;
-	size_t offset;
-	size_t size; // bytes for memcpy, unused otherwise
-	PType * type; // used for struct, dynarray, map and non-dynamic array copies, null for memcpy
-};
-
-static TMap<PStruct*,TArray<StructCopyOp>> struct_copy_ops;
-
-static TArray<StructCopyOp>& GetCopyOps(PStruct * s)
-{
-	{
-		auto op = struct_copy_ops.CheckKey(s);
-		if(op)
-			return *op;
-	}
 	TArray<PField*> sortedFields;
 
 	TArray<StructCopyOp> ops;
@@ -2926,9 +2903,10 @@ static TArray<StructCopyOp>& GetCopyOps(PStruct * s)
 			else // if(cmp->Type->isStruct())
 			{ // flatten structs into existing op list
 			  // TODO optimization: fold memcpy ops in the start and end complex of complex struct into pre-existing memcpy ops
-				auto copyops = GetCopyOps(static_cast<PStruct*>(cmp->Type));
+				const TArray<StructCopyOp>& copyOps = *FxComplexStructAssign::GetCopyOps(static_cast<PStruct*>(cmp->Type));
+							   // this is guaranteed to exist, since copy ops are being generated in order of dependence during CompileAllFields
 				auto off = cmp->Offset;
-				for(auto op : copyops)
+				for(auto op : copyOps)
 				{
 					StructCopyOp newop {
 						op.op,
@@ -2957,7 +2935,7 @@ static TArray<StructCopyOp>& GetCopyOps(PStruct * s)
 		ops.Append(complex_ops);
 	}
 
-	return struct_copy_ops.Insert(s,std::move(ops));
+	FxComplexStructAssign::struct_copy_ops.Insert(s,std::move(ops));
 }
 
 ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
@@ -2965,8 +2943,6 @@ ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
 	ExpEmit base = Base->Emit(build);
 	ExpEmit right = Right->Emit(build);
 	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
-
-	auto ops = GetCopyOps(Type);
 
 	//TODO: apply copy ops
 

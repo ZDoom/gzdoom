@@ -1321,6 +1321,8 @@ ZCC_ExprTypeRef *ZCCCompiler::NodeFromSymbolType(PSymbolType *sym, ZCC_Expressio
 //
 //==========================================================================
 
+extern void GenStructCopyOps(PStruct * s);
+
 void ZCCCompiler::CompileAllFields()
 {
 	// Create copies of the arrays which can be altered
@@ -1356,6 +1358,8 @@ void ZCCCompiler::CompileAllFields()
 		{
 			if (CompileFields(Structs[i]->Type(), Structs[i]->Fields, Structs[i]->Outer, Structs[i]->Type() == 0? GlobalTreeNodes : &Structs[i]->TreeNodes, true))
 			{
+				// Generate copy ops for non-native structs
+				if(Structs[i]->Type() && !static_cast<PStruct*>(Structs[i]->Type())->isNative) GenStructCopyOps(static_cast<PStruct*>(Structs[i]->Type()));
 				// Remove from the list if all fields got compiled.
 				Structs.Delete(i--);
 				donesomething = true;

@@ -37,6 +37,7 @@
 #include "m_argv.h"
 #include "c_cvars.h"
 #include "jit.h"
+#include "filesystem.h"
 
 CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
@@ -922,13 +923,17 @@ void FFunctionBuildList::Build()
 	VMFunction::CreateRegUseInfo();
 	FScriptPosition::StrictErrors = strictdecorate;
 
-	if (FScriptPosition::ErrorCounter == 0 && Args->CheckParm("-dumpjit")) DumpJit();
+	if (FScriptPosition::ErrorCounter == 0)
+	{
+		if (Args->CheckParm("-dumpjit")) DumpJit(true);
+		else if (Args->CheckParm("-dumpjitmod")) DumpJit(false);
+	}
 	mItems.Clear();
 	mItems.ShrinkToFit();
 	FxAlloc.FreeAllBlocks();
 }
 
-void FFunctionBuildList::DumpJit()
+void FFunctionBuildList::DumpJit(bool include_gzdoom_pk3)
 {
 #ifdef HAVE_VM_JIT
 	FILE *dump = fopen("dumpjit.txt", "w");
@@ -937,7 +942,7 @@ void FFunctionBuildList::DumpJit()
 
 	for (auto &item : mItems)
 	{
-		JitDumpLog(dump, item.Function);
+		if(include_gzdoom_pk3 || fileSystem.GetFileContainer(item.Lump)) JitDumpLog(dump, item.Function);
 	}
 
 	fclose(dump);

@@ -245,15 +245,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	GraphicsPipelineBuilder builder;
 	builder.Cache(fb->GetRenderPassManager()->GetCache());
 
-	VkShaderProgram *program;
-	if (key.SpecialEffect != EFF_NONE)
-	{
-		program = fb->GetShaderManager()->GetEffect(key.SpecialEffect, PassKey.DrawBuffers > 1 ? GBUFFER_PASS : NORMAL_PASS);
-	}
-	else
-	{
-		program = fb->GetShaderManager()->Get(key.EffectState, key.AlphaTest, PassKey.DrawBuffers > 1 ? GBUFFER_PASS : NORMAL_PASS);
-	}
+	VkShaderProgram *program = fb->GetShaderManager()->Get(key.ShaderKey, PassKey.DrawBuffers > 1 ? GBUFFER_PASS : NORMAL_PASS);
 	builder.AddVertexShader(program->vert.get());
 	builder.AddFragmentShader(program->frag.get());
 

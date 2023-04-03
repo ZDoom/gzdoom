@@ -58,6 +58,33 @@ struct PushConstants
 	int padding1, padding2, padding3;
 };
 
+class VkShaderKey
+{
+public:
+	union
+	{
+		struct
+		{
+			uint32_t AlphaTest : 1;
+			uint32_t Simple2D : 1;      // uFogEnabled == -3
+			uint32_t TextureMode : 3;   // uTextureMode & 0xffff
+			uint32_t ClampY : 1;        // uTextureMode & TEXF_ClampY
+			uint32_t Brightmap : 1;     // uTextureMode & TEXF_Brightmap
+			uint32_t Detailmap : 1;     // uTextureMode & TEXF_Detailmap
+			uint32_t Glowmap : 1;       // uTextureMode & TEXF_Glowmap
+			uint32_t Unused : 23;
+		};
+		uint32_t AsDWORD = 0;
+	};
+
+	int SpecialEffect = 0;
+	int EffectState = 0;
+
+	bool operator<(const VkShaderKey& other) const { return memcmp(this, &other, sizeof(VkShaderKey)) < 0; }
+	bool operator==(const VkShaderKey& other) const { return memcmp(this, &other, sizeof(VkShaderKey)) == 0; }
+	bool operator!=(const VkShaderKey& other) const { return memcmp(this, &other, sizeof(VkShaderKey)) != 0; }
+};
+
 class VkShaderProgram
 {
 public:
@@ -73,8 +100,8 @@ public:
 
 	void Deinit();
 
-	VkShaderProgram *GetEffect(int effect, EPassType passType);
-	VkShaderProgram *Get(unsigned int eff, bool alphateston, EPassType passType);
+	VkShaderProgram* Get(const VkShaderKey& key, EPassType passType);
+
 	bool CompileNextShader();
 
 	VkPPShader* GetVkShader(PPShader* shader);
@@ -83,6 +110,9 @@ public:
 	void RemoveVkPPShader(VkPPShader* shader);
 
 private:
+	VkShaderProgram* GetEffect(int effect, EPassType passType);
+	VkShaderProgram* Get(unsigned int eff, bool alphateston, EPassType passType);
+
 	std::unique_ptr<VulkanShader> LoadVertShader(FString shadername, const char *vert_lump, const char *defines);
 	std::unique_ptr<VulkanShader> LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *lightmodel_lump, const char *defines, bool alphatest, bool gbufferpass);
 

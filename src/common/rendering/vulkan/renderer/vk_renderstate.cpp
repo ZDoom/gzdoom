@@ -234,18 +234,18 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.NumTextureLayers = max(pipelineKey.NumTextureLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS);// Always force minimum 8 textures as the shader requires it
 	if (mSpecialEffect > EFF_NONE)
 	{
-		pipelineKey.SpecialEffect = mSpecialEffect;
-		pipelineKey.EffectState = 0;
-		pipelineKey.AlphaTest = false;
+		pipelineKey.ShaderKey.SpecialEffect = mSpecialEffect;
+		pipelineKey.ShaderKey.EffectState = 0;
+		pipelineKey.ShaderKey.AlphaTest = false;
 	}
 	else
 	{
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
-		pipelineKey.SpecialEffect = EFF_NONE;
-		pipelineKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
-		if (r_skipmats && pipelineKey.EffectState >= 3 && pipelineKey.EffectState <= 4)
-			pipelineKey.EffectState = 0;
-		pipelineKey.AlphaTest = mAlphaThreshold >= 0.f;
+		pipelineKey.ShaderKey.SpecialEffect = EFF_NONE;
+		pipelineKey.ShaderKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
+		if (r_skipmats && pipelineKey.ShaderKey.EffectState >= 3 && pipelineKey.ShaderKey.EffectState <= 4)
+			pipelineKey.ShaderKey.EffectState = 0;
+		pipelineKey.ShaderKey.AlphaTest = mAlphaThreshold >= 0.f;
 	}
 
 	// Is this the one we already have?

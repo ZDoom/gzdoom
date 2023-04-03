@@ -6,6 +6,7 @@
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hw_renderstate.h"
+#include "common/rendering/vulkan/shaders/vk_shader.h"
 #include <string.h>
 #include <map>
 
@@ -17,21 +18,29 @@ class VkPipelineKey
 {
 public:
 	FRenderStyle RenderStyle;
-	int SpecialEffect;
-	int EffectState;
-	int AlphaTest;
-	int DepthWrite;
-	int DepthTest;
-	int DepthFunc;
-	int DepthClamp;
-	int DepthBias;
-	int StencilTest;
-	int StencilPassOp;
-	int ColorMask;
-	int CullMode;
-	int VertexFormat;
-	int DrawType;
-	int NumTextureLayers;
+
+	union
+	{
+		struct
+		{
+			uint32_t DrawType : 3;
+			uint32_t CullMode : 2;
+			uint32_t ColorMask : 4;
+			uint32_t DepthWrite : 1;
+			uint32_t DepthTest : 1;
+			uint32_t DepthClamp : 1;
+			uint32_t DepthBias : 1;
+			uint32_t DepthFunc : 2;
+			uint32_t StencilTest : 1;
+			uint32_t StencilPassOp : 2;
+			uint32_t Unused : 14;
+		};
+		uint32_t AsDWORD = 0;
+	};
+
+	VkShaderKey ShaderKey;
+	int VertexFormat = 0;
+	int NumTextureLayers = 0;
 
 	bool operator<(const VkPipelineKey &other) const { return memcmp(this, &other, sizeof(VkPipelineKey)) < 0; }
 	bool operator==(const VkPipelineKey &other) const { return memcmp(this, &other, sizeof(VkPipelineKey)) == 0; }
@@ -41,10 +50,10 @@ public:
 class VkRenderPassKey
 {
 public:
-	int DepthStencil;
-	int Samples;
-	int DrawBuffers;
-	VkFormat DrawBufferFormat;
+	int DepthStencil = 0;
+	int Samples = 0;
+	int DrawBuffers = 0;
+	VkFormat DrawBufferFormat = VK_FORMAT_UNDEFINED;
 
 	bool operator<(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) < 0; }
 	bool operator==(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) == 0; }

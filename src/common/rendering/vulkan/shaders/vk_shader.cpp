@@ -128,6 +128,18 @@ void VkShaderManager::Deinit()
 		RemoveVkPPShader(PPShaders.back());
 }
 
+VkShaderProgram* VkShaderManager::Get(const VkShaderKey& key, EPassType passType)
+{
+	if (key.SpecialEffect != EFF_NONE)
+	{
+		return GetEffect(key.SpecialEffect, passType);
+	}
+	else
+	{
+		return Get(key.EffectState, key.AlphaTest, passType);
+	}
+}
+
 VkShaderProgram *VkShaderManager::GetEffect(int effect, EPassType passType)
 {
 	if (compileIndex == -1 && effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[passType][effect].frag)

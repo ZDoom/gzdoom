@@ -312,7 +312,7 @@ void UpdateGenericUI(bool cvar)
 	}
 	// Turkish i crap. What a mess, just to save two code points... :(
 	switchstr = GStrings["REQUIRED_CHARACTERS"];
-	special_i = strstr(switchstr, "\xc4\xb0") != nullptr; // capital dotted i (İ).
+	special_i = switchstr && strstr(switchstr, "\xc4\xb0") != nullptr; // capital dotted i (İ).
 	if (special_i) 
 	{
 		upperforlower['i'] = 0x130;

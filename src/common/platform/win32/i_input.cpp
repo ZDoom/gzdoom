@@ -635,15 +635,9 @@ void I_StartFrame ()
 
 void I_GetAxes(float axes[NUM_JOYAXIS])
 {
-	int i;
-
-	for (i = 0; i < NUM_JOYAXIS; ++i)
-	{
-		axes[i] = 0;
-	}
 	if (use_joystick)
 	{
-		for (i = 0; i < NUM_JOYDEVICES; ++i)
+		for (unsigned i = 0; i < NUM_JOYDEVICES; ++i)
 		{
 			if (JoyDevices[i] != NULL)
 			{

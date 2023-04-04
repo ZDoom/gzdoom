@@ -1202,11 +1202,6 @@ void I_GetJoysticks(TArray<IJoystickConfig*>& sticks)
 
 void I_GetAxes(float axes[NUM_JOYAXIS])
 {
-	for (size_t i = 0; i < NUM_JOYAXIS; ++i)
-	{
-		axes[i] = 0.0f;
-	}
-
 	if (use_joystick && NULL != s_joystickManager)
 	{
 		s_joystickManager->AddAxes(axes);

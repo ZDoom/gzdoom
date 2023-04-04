@@ -689,7 +689,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (speed) cmd->ucmd.buttons |= BT_RUN;
 
 	// Handle joysticks/game controllers.
-	float joyaxes[NUM_JOYAXIS];
+	float joyaxes[NUM_JOYAXIS] = {};
 
 	I_GetAxes(joyaxes);
 

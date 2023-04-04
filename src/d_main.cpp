@@ -186,8 +186,6 @@ EXTERN_CVAR (Float, turbo)
 EXTERN_CVAR (Bool, freelook)
 EXTERN_CVAR (Float, m_pitch)
 EXTERN_CVAR (Float, m_yaw)
-EXTERN_CVAR (Bool, invertmouse)
-EXTERN_CVAR (Bool, invertmousex)
 EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, sv_cheats)
@@ -2672,15 +2670,12 @@ static bool System_DispatchEvent(event_t* ev)
 		if (buttonMap.ButtonDown(Button_Mlook) || freelook)
 		{
 			int look = int(ev->y * m_pitch * 16.0);
-			if (invertmouse) look = -look;
 			G_AddViewPitch(look, true);
 			ev->y = 0;
 		}
 		if (!buttonMap.ButtonDown(Button_Strafe) && !lookstrafe)
 		{
 			int turn = int(ev->x * m_yaw * 16.0);
-			if (invertmousex)
-				turn = -turn;
 			G_AddViewAngle(turn, true);
 			ev->x = 0;
 		}

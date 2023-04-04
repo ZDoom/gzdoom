@@ -50,6 +50,8 @@ event_t events[MAXEVENTS];
 
 CVAR(Float, m_sensitivity_x, 2.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Float, m_sensitivity_y, 2.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, invertmouse, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE);  // Invert mouse look down/up?
+CVAR(Bool, invertmousex, false,	CVAR_GLOBALCONFIG | CVAR_ARCHIVE);  // Invert mouse look left/right?
 
 
 //==========================================================================
@@ -170,6 +172,9 @@ void PostMouseMove(int xx, int yy)
 
 	ev.x = float(xx) * m_sensitivity_x;
 	ev.y = -float(yy) * m_sensitivity_y;
+
+	if (invertmousex) ev.x = -ev.x;
+	if (invertmouse) ev.y = -ev.y;
 
 	if (ev.x || ev.y)
 	{

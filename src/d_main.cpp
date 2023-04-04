@@ -2678,7 +2678,7 @@ static bool System_DispatchEvent(event_t* ev)
 		}
 		if (!buttonMap.ButtonDown(Button_Strafe) && !lookstrafe)
 		{
-			int turn = int(ev->x * m_yaw * 8.0);
+			int turn = int(ev->x * m_yaw * 16.0);
 			if (invertmousex)
 				turn = -turn;
 			G_AddViewAngle(turn, true);

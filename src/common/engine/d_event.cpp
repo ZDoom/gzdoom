@@ -48,7 +48,7 @@ int eventhead;
 int eventtail;
 event_t events[MAXEVENTS];
 
-CVAR(Float, m_sensitivity_x, 4.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, m_sensitivity_x, 2.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Float, m_sensitivity_y, 2.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 

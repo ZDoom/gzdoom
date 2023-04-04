@@ -598,6 +598,15 @@ void FGameConfigFile::DoGlobalSetup ()
 				// ooooh boy did i open a can of worms with this one.
 				i_pauseinbackground = !(i_soundinbackground);
 			}
+			if (last < 224)
+			{
+				if (const auto var = FindCVar("m_sensitivity_x", NULL))
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					v.Float *= 0.5f;
+					var->SetGenericRep(v, CVAR_Float);
+				}
+			}
 		}
 	}
 }

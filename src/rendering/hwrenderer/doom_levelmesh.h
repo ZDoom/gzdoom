@@ -24,6 +24,18 @@ class DoomLevelMesh : public hwrenderer::LevelMesh
 public:
 	DoomLevelMesh(FLevelLocals &doomMap);
 
+	bool TraceSky(const FVector3& start, FVector3 direction, float dist)
+	{
+		FVector3 end = start + direction * dist;
+		TraceHit hit = TriangleMeshShape::find_first_hit(Collision.get(), start, end);
+		if (hit.fraction == 1.0f)
+			return true;
+
+		int surfaceIndex = MeshSurfaces[hit.triangle];
+		const Surface& surface = Surfaces[surfaceIndex];
+		return surface.bSky;
+	}
+
 	TArray<Surface> Surfaces;
 
 private:

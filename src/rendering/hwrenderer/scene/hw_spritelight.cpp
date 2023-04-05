@@ -59,6 +59,11 @@ static bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
 	return level.levelMesh->Trace(FVector3((float)light->Pos.X, (float)light->Pos.Y, (float)light->Pos.Z), FVector3(-L.X, -L.Y, -L.Z), dist);
 }
 
+static bool TraceSunVisibility(float x, float y, float z)
+{
+	return level.levelMesh->TraceSky(FVector3(x, y, z), FVector3(0.0f, 0.0, 1.0f), 10000.0f);
+}
+
 //==========================================================================
 //
 // Sets a single light value from all dynamic lights affecting the specified location
@@ -72,6 +77,11 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 	float radius;
 	
 	out[0] = out[1] = out[2] = 0.f;
+
+	if (TraceSunVisibility(x, y, z))
+	{
+		//out[0] = 1.0f;
+	}
 
 	// Go through both light lists
 	while (node)
@@ -182,6 +192,11 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 		float actorradius = (float)self->RenderRadius();
 		float radiusSquared = actorradius * actorradius;
 		dl_validcount++;
+
+		if (TraceSunVisibility(x, y, z))
+		{
+			//AddSunLightToList(modellightdata);
+		}
 
 		BSPWalkCircle(self->Level, x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 		{

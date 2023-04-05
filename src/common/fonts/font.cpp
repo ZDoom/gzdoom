@@ -763,7 +763,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 		// a similar check is needed for the small i in allcaps fonts. Here we cannot simply remap to an existing character, so the small dotted i must be placed at code point 0080.
 		if (code == 'i' && LastChar >= 0x80 && Chars[0x80 - FirstChar].OriginalPic != nullptr)
 		{
-			return 0x131;
+			return 0x80;
 		}
 	}
 		

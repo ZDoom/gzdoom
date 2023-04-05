@@ -1138,6 +1138,8 @@ struct InitLowerUpper
 		// Turkish 'I's.
 		upperforlower[0x131] = 'I';
 		lowerforupper[0x130] = 'i';
+		islowermap[0x131] = true;
+		isuppermap[0x130] = true;
 	}
 };
 

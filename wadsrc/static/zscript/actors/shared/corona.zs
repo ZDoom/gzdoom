@@ -5,6 +5,7 @@ class Corona : Actor native
 		RenderStyle "Add";
 		RenderRadius 1024.0;
 		+NOINTERACTION
+		+NOGRAVITY
 		+FORCEXYBILLBOARD
 	}
 }

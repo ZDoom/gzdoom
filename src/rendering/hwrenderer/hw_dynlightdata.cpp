@@ -155,3 +155,32 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 	data[15] = 0.0f; // unused
 }
 
+void AddSunLightToList(FDynLightData& dld, float x, float y, float z, float r, float g, float b)
+{
+	int i = 0;
+	float lightType = 0.0f;
+	float spotInnerAngle = 0.0f;
+	float spotOuterAngle = 0.0f;
+	float spotDirX = 0.0f;
+	float spotDirY = 0.0f;
+	float spotDirZ = 0.0f;
+	float shadowIndex = -1025.f; // Note: 1025 disables shadowmap and the attenuate flag is in the sign bit of the float
+
+	float* data = &dld.arrays[i][dld.arrays[i].Reserve(16)];
+	data[0] = float(x);
+	data[1] = float(z);
+	data[2] = float(y);
+	data[3] = 100000.0f;
+	data[4] = r;
+	data[5] = g;
+	data[6] = b;
+	data[7] = shadowIndex;
+	data[8] = spotDirX;
+	data[9] = spotDirY;
+	data[10] = spotDirZ;
+	data[11] = lightType;
+	data[12] = spotInnerAngle;
+	data[13] = spotOuterAngle;
+	data[14] = 0.0f; // unused
+	data[15] = 0.0f; // unused
+}

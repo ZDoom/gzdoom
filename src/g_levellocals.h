@@ -459,6 +459,8 @@ public:
 	int LMTextureCount = 0;
 	int LMTextureSize = 0;
 	TArray<uint16_t> LMTextureData;
+	FVector3 SunDirection;
+	FVector3 SunColor;
 
 	// Portal information.
 	FDisplacementTable Displacements;

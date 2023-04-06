@@ -61,7 +61,7 @@ static bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
 
 static bool TraceSunVisibility(float x, float y, float z)
 {
-	return level.levelMesh->TraceSky(FVector3(x, y, z), FVector3(0.0f, 0.0, 1.0f), 10000.0f);
+	return level.LMTextureCount != 0 && level.levelMesh->TraceSky(FVector3(x, y, z), level.SunDirection, 10000.0f);
 }
 
 //==========================================================================
@@ -80,7 +80,9 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 
 	if (TraceSunVisibility(x, y, z))
 	{
-		//out[0] = 1.0f;
+		out[0] = Level->SunColor.X;
+		out[1] = Level->SunColor.Y;
+		out[2] = Level->SunColor.Z;
 	}
 
 	// Go through both light lists
@@ -195,7 +197,10 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 
 		if (TraceSunVisibility(x, y, z))
 		{
-			//AddSunLightToList(modellightdata);
+			const FVector3& sundir = self->Level->SunDirection;
+			const FVector3& suncolor = self->Level->SunColor;
+			float dist = 100000.0f; // Cheap way of faking a directional light
+			AddSunLightToList(modellightdata, x - sundir.X * dist, y - sundir.Y * dist, z - sundir.Z * dist, suncolor.X, suncolor.Y, suncolor.Z);
 		}
 
 		BSPWalkCircle(self->Level, x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor

@@ -441,4 +441,5 @@ struct FDynLightData;
 struct FDynamicLight;
 bool GetLight(FDynLightData& dld, int group, Plane& p, FDynamicLight* light, bool checkside);
 void AddLightToList(FDynLightData &dld, int group, FDynamicLight* light, bool forceAttenuate);
+void AddSunLightToList(FDynLightData& dld, float x, float y, float z, float r, float g, float b);
 void SetSplitPlanes(FRenderState& state, const secplane_t& top, const secplane_t& bottom);

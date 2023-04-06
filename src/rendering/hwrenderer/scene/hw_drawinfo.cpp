@@ -174,7 +174,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
 	hudsprites.Clear();
-//	Coronas.Clear();
+	Coronas.Clear();
 	vpIndex = 0;
 
 	// Fullbright information needs to be propagated from the main view.

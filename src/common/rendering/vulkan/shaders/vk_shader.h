@@ -115,7 +115,7 @@ public:
 
 private:
 	std::unique_ptr<VulkanShader> LoadVertShader(FString shadername, const char *vert_lump, const char *defines);
-	std::unique_ptr<VulkanShader> LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *lightmodel_lump, const char *defines, bool alphatest, bool gbufferpass);
+	std::unique_ptr<VulkanShader> LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *lightmodel_lump, const char *defines, const VkShaderKey& key);
 
 	ShaderIncludeResult OnInclude(FString headerName, FString includerName, size_t depth, bool system);
 

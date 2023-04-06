@@ -21,11 +21,6 @@ void SetupMaterial(inout Material mat);
 vec3 ProcessMaterialLight(Material material, vec3 color);
 vec2 GetTexCoord();
 
-// These get Or'ed into uTextureMode because it only uses its 3 lowermost bits.
-const int TEXF_Brightmap = 0x10000;
-const int TEXF_Detailmap = 0x20000;
-const int TEXF_Glowmap = 0x40000;
-
 Material CreateMaterial()
 {
 	Material material;
@@ -58,16 +53,17 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 
 // OpenGL doesn't care, but Vulkan pukes all over the place if these texture samplings are included in no-texture shaders, even though never called.
 #ifndef NO_LAYERS
-	if ((uTextureMode & TEXF_Brightmap) != 0)
+	#if defined(TEXF_Brightmap)
 		material.Bright = desaturate(texture(brighttexture, texCoord.st));
+	#endif
 
-	if ((uTextureMode & TEXF_Detailmap) != 0)
-	{
+	#if defined(TEXF_Detailmap)
 		vec4 Detail = texture(detailtexture, texCoord.st * uDetailParms.xy) * uDetailParms.z;
 		material.Base.rgb *= Detail.rgb;
-	}
+	#endif
 
-	if ((uTextureMode & TEXF_Glowmap) != 0)
+	#if defined(TEXF_Glowmap)
 		material.Glow = desaturate(texture(glowtexture, texCoord.st));
+	#endif
 #endif
 }

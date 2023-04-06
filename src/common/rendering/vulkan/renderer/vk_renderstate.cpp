@@ -248,6 +248,14 @@ void VkRenderState::ApplyRenderPass(int dt)
 		pipelineKey.ShaderKey.AlphaTest = mAlphaThreshold >= 0.f;
 	}
 
+	int uTextureMode = GetTextureModeAndFlags((mMaterial.mMaterial && mMaterial.mMaterial->Source()->isHardwareCanvas()) ? TM_OPAQUE : TM_NORMAL);
+	pipelineKey.ShaderKey.TextureMode = uTextureMode & 0xffff;
+	pipelineKey.ShaderKey.ClampY = (uTextureMode & TEXF_ClampY) != 0;
+	pipelineKey.ShaderKey.Brightmap = (uTextureMode & TEXF_Brightmap) != 0;
+	pipelineKey.ShaderKey.Detailmap = (uTextureMode & TEXF_Detailmap) != 0;
+	pipelineKey.ShaderKey.Glowmap = (uTextureMode & TEXF_Glowmap) != 0;
+	pipelineKey.ShaderKey.Simple2D = (mFogEnabled == 2);
+
 	// Is this the one we already have?
 	bool inRenderPass = mCommandBuffer;
 	bool changingPipeline = (!inRenderPass) || (pipelineKey != mPipelineKey);
@@ -371,12 +379,7 @@ void VkRenderState::ApplyPushConstants()
 		}
 	}
 
-	int tempTM = TM_NORMAL;
-	if (mMaterial.mMaterial && mMaterial.mMaterial->Source()->isHardwareCanvas())
-		tempTM = TM_OPAQUE;
-
 	mPushConstants.uFogEnabled = fogset;
-	mPushConstants.uTextureMode = GetTextureModeAndFlags(tempTM);
 	mPushConstants.uLightDist = mLightParms[0];
 	mPushConstants.uLightFactor = mLightParms[1];
 	mPushConstants.uFogDensity = mLightParms[2];

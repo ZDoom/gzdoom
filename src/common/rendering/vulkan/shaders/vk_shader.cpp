@@ -53,21 +53,69 @@ VkShaderProgram* VkShaderManager::Get(const VkShaderKey& k, EPassType passType)
 	if (!program.frag)
 	{
 		const char* mainvp = "shaders/scene/vert_main.glsl";
-		const char* mainfp = "shaders/scene/frag_surface.glsl";
+		const char* mainfp = "shaders/scene/frag_main.glsl";
 
 		if (key.SpecialEffect != EFF_NONE)
 		{
+			struct FEffectShader
+			{
+				const char* ShaderName;
+				const char* fp1;
+				const char* fp2;
+				const char* fp3;
+				const char* fp4;
+				const char* defines;
+			};
+
+			static const FEffectShader effectshaders[] =
+			{
+				{ "fogboundary",  "shaders/scene/frag_fogboundary.glsl", nullptr,                               nullptr,                                nullptr,                                "#define NO_ALPHATEST\n" },
+				{ "spheremap",    "shaders/scene/frag_main.glsl",        "shaders/scene/material_default.glsl", "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
+				{ "burn",         "shaders/scene/frag_burn.glsl",        nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
+				{ "stencil",      "shaders/scene/frag_stencil.glsl",     nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
+			};
+
 			const auto& desc = effectshaders[key.SpecialEffect];
 			program.vert = LoadVertShader(desc.ShaderName, mainvp, desc.defines);
-			program.frag = LoadFragShader(desc.ShaderName, desc.fp1, desc.fp2, desc.fp3, desc.fp4, desc.defines, true, key.GBufferPass);
+			program.frag = LoadFragShader(desc.ShaderName, desc.fp1, desc.fp2, desc.fp3, desc.fp4, desc.defines, key);
 		}
 		else
 		{
+			struct FDefaultShader
+			{
+				const char* ShaderName;
+				const char* material_lump;
+				const char* mateffect_lump;
+				const char* lightmodel_lump;
+				const char* Defines;
+			};
+
+			// Note: the MaterialShaderIndex enum needs to be updated whenever this array is modified.
+			static const FDefaultShader defaultshaders[] =
+			{
+				{"Default",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Warp 1",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp1.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Warp 2",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp2.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Specular",            "shaders/scene/material_spec.glsl",                    "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_specular.glsl", "#define SPECULAR\n#define NORMALMAP\n"},
+				{"PBR",                 "shaders/scene/material_pbr.glsl",                     "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_pbr.glsl",      "#define PBR\n#define NORMALMAP\n"},
+				{"Paletted",	        "shaders/scene/material_paletted.glsl",                "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_nolights.glsl", "#define PALETTE_EMULATION\n"},
+				{"No Texture",          "shaders/scene/material_notexture.glsl",               "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   "#define NO_LAYERS\n"},
+				{"Basic Fuzz",          "shaders/scene/material_fuzz_standard.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Smooth Fuzz",         "shaders/scene/material_fuzz_smooth.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Swirly Fuzz",         "shaders/scene/material_fuzz_swirly.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Translucent Fuzz",    "shaders/scene/material_fuzz_smoothtranslucent.glsl",  "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Jagged Fuzz",         "shaders/scene/material_fuzz_jagged.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Noise Fuzz",          "shaders/scene/material_fuzz_noise.glsl",              "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Smooth Noise Fuzz",   "shaders/scene/material_fuzz_smoothnoise.glsl",        "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{"Software Fuzz",       "shaders/scene/material_fuzz_software.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+				{nullptr,nullptr,nullptr,nullptr}
+			};
+
 			if (key.EffectState < FIRST_USER_SHADER)
 			{
 				const auto& desc = defaultshaders[key.EffectState];
 				program.vert = LoadVertShader(desc.ShaderName, mainvp, desc.Defines);
-				program.frag = LoadFragShader(desc.ShaderName, mainfp, desc.material_lump, desc.mateffect_lump, desc.lightmodel_lump, desc.Defines, key.AlphaTest, key.GBufferPass);
+				program.frag = LoadFragShader(desc.ShaderName, mainfp, desc.material_lump, desc.mateffect_lump, desc.lightmodel_lump, desc.Defines, key);
 			}
 			else
 			{
@@ -76,7 +124,7 @@ VkShaderProgram* VkShaderManager::Get(const VkShaderKey& k, EPassType passType)
 				FString defines = defaultshaders[desc.shaderType].Defines + desc.defines;
 
 				program.vert = LoadVertShader(name, mainvp, defines);
-				program.frag = LoadFragShader(name, mainfp, desc.shader, defaultshaders[desc.shaderType].mateffect_lump, defaultshaders[desc.shaderType].lightmodel_lump, defines, key.AlphaTest, key.GBufferPass);
+				program.frag = LoadFragShader(name, mainfp, desc.shader, defaultshaders[desc.shaderType].mateffect_lump, defaultshaders[desc.shaderType].lightmodel_lump, defines, key);
 			}
 		}
 	}
@@ -115,7 +163,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 		.Create(shadername.GetChars(), fb->device.get());
 }
 
-std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
+std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *light_lump, const char *defines, const VkShaderKey& key)
 {
 	FString definesBlock;
 	definesBlock << defines << "\n";
@@ -126,8 +174,25 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	definesBlock << "#define NPOT_EMULATION\n";
 #endif
 	if (!fb->device->EnabledFeatures.Features.shaderClipDistance) definesBlock << "#define NO_CLIPDISTANCE_SUPPORT\n";
-	if (!alphatest) definesBlock << "#define NO_ALPHATEST\n";
-	if (gbufferpass) definesBlock << "#define GBUFFER_PASS\n";
+	if (!key.AlphaTest) definesBlock << "#define NO_ALPHATEST\n";
+	if (key.GBufferPass) definesBlock << "#define GBUFFER_PASS\n";
+
+	if (key.Simple2D) definesBlock << "#define SIMPLE2D\n";
+	if (key.ClampY) definesBlock << "#define TEXF_ClampY\n";
+	if (key.Brightmap) definesBlock << "#define TEXF_Brightmap\n";
+	if (key.Detailmap) definesBlock << "#define TEXF_Detailmap\n";
+	if (key.Glowmap) definesBlock << "#define TEXF_Glowmap\n";
+
+	switch (key.TextureMode)
+	{
+	case TM_STENCIL: definesBlock << "#define TM_STENCIL\n"; break;
+	case TM_OPAQUE: definesBlock << "#define TM_OPAQUE\n"; break;
+	case TM_INVERSE: definesBlock << "#define TM_INVERSE\n"; break;
+	case TM_ALPHATEXTURE: definesBlock << "#define TM_ALPHATEXTURE\n"; break;
+	case TM_CLAMPY: definesBlock << "#define TM_CLAMPY\n"; break;
+	case TM_INVERTOPAQUE: definesBlock << "#define TM_INVERTOPAQUE\n"; break;
+	case TM_FOGLAYER: definesBlock << "#define TM_FOGLAYER\n"; break;
+	}
 
 	FString layoutBlock;
 	layoutBlock << LoadPrivateShaderLump("shaders/scene/layout_shared.glsl").GetChars() << "\n";

@@ -10,25 +10,27 @@ vec4 getTexel(vec2 st)
 	vec4 texel = texture(tex, st);
 
 	// Apply texture modes
-	#if (uTextureMode & 0xffff) == 1 // TM_STENCIL
+	#if defined(TM_STENCIL)
 		texel.rgb = vec3(1.0,1.0,1.0);
-	#elif (uTextureMode & 0xffff) == 2 // TM_OPAQUE
+	#elif defined(TM_OPAQUE)
 		texel.a = 1.0;
-	#elif (uTextureMode & 0xffff) == 3 // TM_INVERSE
+	#elif defined(TM_INVERSE)
 		texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, texel.a);
-	#elif (uTextureMode & 0xffff) == 3 // TM_ALPHATEXTURE
+	#elif defined(TM_ALPHATEXTURE)
 		float gray = grayscale(texel);
 		texel = vec4(1.0, 1.0, 1.0, gray*texel.a);
-	#elif (uTextureMode & 0xffff) == 5 // TM_CLAMPY
+	#elif defined(TM_CLAMPY)
 		if (st.t < 0.0 || st.t > 1.0)
 		{
 			texel.a = 0.0;
 		}
-	#elif (uTextureMode & 0xffff) == 6 // TM_OPAQUEINVERSE
+	#elif defined(TM_INVERTOPAQUE)
 		texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
+	#elif defined(TM_FOGLAYER)
+		return texel;
 	#endif
 
-	#if (uTextureMode & 0x80000) == 0x80000 // TEXF_ClampY
+	#if defined(TEXF_ClampY)
 		if (st.t < 0.0 || st.t > 1.0)
 		{
 			texel.a = 0.0;

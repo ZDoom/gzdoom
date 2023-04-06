@@ -100,7 +100,7 @@ layout(set = 2, binding = 11) uniform sampler2D texture12;
 // This must match the PushConstants struct
 layout(push_constant) uniform PushConstants
 {
-	int uTextureMode;
+	int padding0; // was uTextureMode;
 	float uAlphaThreshold;
 	vec2 uClipSplit;
 

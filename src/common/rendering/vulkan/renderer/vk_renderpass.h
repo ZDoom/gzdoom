@@ -17,35 +17,41 @@ class GraphicsPipelineBuilder;
 class VkPipelineKey
 {
 public:
-	FRenderStyle RenderStyle;
-
 	union
 	{
 		struct
 		{
-			uint32_t DrawType : 3;
-			uint32_t CullMode : 2;
-			uint32_t ColorMask : 4;
-			uint32_t DepthWrite : 1;
-			uint32_t DepthTest : 1;
-			uint32_t DepthClamp : 1;
-			uint32_t DepthBias : 1;
-			uint32_t DepthFunc : 2;
-			uint32_t StencilTest : 1;
-			uint32_t StencilPassOp : 2;
-			uint32_t Unused : 14;
+			uint64_t DrawType : 3;
+			uint64_t CullMode : 2;
+			uint64_t ColorMask : 4;
+			uint64_t DepthWrite : 1;
+			uint64_t DepthTest : 1;
+			uint64_t DepthClamp : 1;
+			uint64_t DepthBias : 1;
+			uint64_t DepthFunc : 2;
+			uint64_t StencilTest : 1;
+			uint64_t StencilPassOp : 2;
+			uint64_t Unused : 46;
 		};
-		uint32_t AsDWORD = 0;
+		uint64_t AsQWORD = 0;
 	};
 
-	VkShaderKey ShaderKey;
 	int VertexFormat = 0;
 	int NumTextureLayers = 0;
+
+	VkShaderKey ShaderKey;
+	FRenderStyle RenderStyle;
+
+	int Padding = 0; // for 64 bit alignment
 
 	bool operator<(const VkPipelineKey &other) const { return memcmp(this, &other, sizeof(VkPipelineKey)) < 0; }
 	bool operator==(const VkPipelineKey &other) const { return memcmp(this, &other, sizeof(VkPipelineKey)) == 0; }
 	bool operator!=(const VkPipelineKey &other) const { return memcmp(this, &other, sizeof(VkPipelineKey)) != 0; }
 };
+
+static_assert(sizeof(FRenderStyle) == 4, "sizeof(FRenderStyle) is not its expected size!");
+static_assert(sizeof(VkShaderKey) == 16, "sizeof(VkShaderKey) is not its expected size!");
+static_assert(sizeof(VkPipelineKey) == 16 + 16 + 8, "sizeof(VkPipelineKey) is not its expected size!"); // If this assert fails, the flags union no longer adds up to 64 bits. Or there are gaps in the class so the memcmp doesn't work.
 
 class VkRenderPassKey
 {

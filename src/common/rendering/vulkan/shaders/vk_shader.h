@@ -8,6 +8,7 @@
 #include "name.h"
 #include "hw_renderstate.h"
 #include <list>
+#include <map>
 
 #define SHADER_MIN_REQUIRED_TEXTURE_LAYERS 11
 
@@ -65,16 +66,17 @@ public:
 	{
 		struct
 		{
-			uint32_t AlphaTest : 1;
-			uint32_t Simple2D : 1;      // uFogEnabled == -3
-			uint32_t TextureMode : 3;   // uTextureMode & 0xffff
-			uint32_t ClampY : 1;        // uTextureMode & TEXF_ClampY
-			uint32_t Brightmap : 1;     // uTextureMode & TEXF_Brightmap
-			uint32_t Detailmap : 1;     // uTextureMode & TEXF_Detailmap
-			uint32_t Glowmap : 1;       // uTextureMode & TEXF_Glowmap
-			uint32_t Unused : 23;
+			uint64_t AlphaTest : 1;     // !NO_ALPHATEST
+			uint64_t Simple2D : 1;      // uFogEnabled == -3
+			uint64_t TextureMode : 3;   // uTextureMode & 0xffff
+			uint64_t ClampY : 1;        // uTextureMode & TEXF_ClampY
+			uint64_t Brightmap : 1;     // uTextureMode & TEXF_Brightmap
+			uint64_t Detailmap : 1;     // uTextureMode & TEXF_Detailmap
+			uint64_t Glowmap : 1;       // uTextureMode & TEXF_Glowmap
+			uint64_t GBufferPass : 1;   // GBUFFER_PASS
+			uint64_t Unused : 54;
 		};
-		uint32_t AsDWORD = 0;
+		uint64_t AsQWORD = 0;
 	};
 
 	int SpecialEffect = 0;
@@ -84,6 +86,8 @@ public:
 	bool operator==(const VkShaderKey& other) const { return memcmp(this, &other, sizeof(VkShaderKey)) == 0; }
 	bool operator!=(const VkShaderKey& other) const { return memcmp(this, &other, sizeof(VkShaderKey)) != 0; }
 };
+
+static_assert(sizeof(VkShaderKey) == 16, "sizeof(VkShaderKey) is not its expected size!"); // If this assert fails, the flags union no longer adds up to 64 bits. Or there are gaps in the class so the memcmp doesn't work.
 
 class VkShaderProgram
 {
@@ -102,7 +106,7 @@ public:
 
 	VkShaderProgram* Get(const VkShaderKey& key, EPassType passType);
 
-	bool CompileNextShader();
+	bool CompileNextShader() { return true; }
 
 	VkPPShader* GetVkShader(PPShader* shader);
 
@@ -110,9 +114,6 @@ public:
 	void RemoveVkPPShader(VkPPShader* shader);
 
 private:
-	VkShaderProgram* GetEffect(int effect, EPassType passType);
-	VkShaderProgram* Get(unsigned int eff, bool alphateston, EPassType passType);
-
 	std::unique_ptr<VulkanShader> LoadVertShader(FString shadername, const char *vert_lump, const char *defines);
 	std::unique_ptr<VulkanShader> LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *lightmodel_lump, const char *defines, bool alphatest, bool gbufferpass);
 
@@ -124,11 +125,7 @@ private:
 
 	VulkanRenderDevice* fb = nullptr;
 
-	std::vector<VkShaderProgram> mMaterialShaders[MAX_PASS_TYPES];
-	std::vector<VkShaderProgram> mMaterialShadersNAT[MAX_PASS_TYPES];
-	std::vector<VkShaderProgram> mEffectShaders[MAX_PASS_TYPES];
-	uint8_t compilePass = 0, compileState = 0;
-	int compileIndex = 0;
+	std::map<VkShaderKey, VkShaderProgram> programs;
 
 	std::list<VkPPShader*> PPShaders;
 };

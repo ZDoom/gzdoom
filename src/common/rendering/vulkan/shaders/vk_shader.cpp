@@ -50,82 +50,82 @@ VkShaderProgram* VkShaderManager::Get(const VkShaderKey& k, EPassType passType)
 	VkShaderKey key = k;
 	key.GBufferPass = passType;
 	auto& program = programs[key];
-	if (!program.frag)
+	if (program.frag)
+		return &program;
+
+	const char* mainvp = "shaders/scene/vert_main.glsl";
+	const char* mainfp = "shaders/scene/frag_main.glsl";
+
+	if (key.SpecialEffect != EFF_NONE)
 	{
-		const char* mainvp = "shaders/scene/vert_main.glsl";
-		const char* mainfp = "shaders/scene/frag_main.glsl";
-
-		if (key.SpecialEffect != EFF_NONE)
+		struct FEffectShader
 		{
-			struct FEffectShader
-			{
-				const char* ShaderName;
-				const char* fp1;
-				const char* fp2;
-				const char* fp3;
-				const char* fp4;
-				const char* defines;
-			};
+			const char* ShaderName;
+			const char* fp1;
+			const char* fp2;
+			const char* fp3;
+			const char* fp4;
+			const char* defines;
+		};
 
-			static const FEffectShader effectshaders[] =
-			{
-				{ "fogboundary",  "shaders/scene/frag_fogboundary.glsl", nullptr,                               nullptr,                                nullptr,                                "#define NO_ALPHATEST\n" },
-				{ "spheremap",    "shaders/scene/frag_main.glsl",        "shaders/scene/material_default.glsl", "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
-				{ "burn",         "shaders/scene/frag_burn.glsl",        nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
-				{ "stencil",      "shaders/scene/frag_stencil.glsl",     nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
-			};
+		static const FEffectShader effectshaders[] =
+		{
+			{ "fogboundary",  "shaders/scene/frag_fogboundary.glsl", nullptr,                               nullptr,                                nullptr,                                "#define NO_ALPHATEST\n" },
+			{ "spheremap",    "shaders/scene/frag_main.glsl",        "shaders/scene/material_default.glsl", "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
+			{ "burn",         "shaders/scene/frag_burn.glsl",        nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
+			{ "stencil",      "shaders/scene/frag_stencil.glsl",     nullptr,                               nullptr,                                nullptr,                                "#define SIMPLE\n#define NO_ALPHATEST\n" },
+		};
 
-			const auto& desc = effectshaders[key.SpecialEffect];
-			program.vert = LoadVertShader(desc.ShaderName, mainvp, desc.defines);
-			program.frag = LoadFragShader(desc.ShaderName, desc.fp1, desc.fp2, desc.fp3, desc.fp4, desc.defines, key);
+		const auto& desc = effectshaders[key.SpecialEffect];
+		program.vert = LoadVertShader(desc.ShaderName, mainvp, desc.defines);
+		program.frag = LoadFragShader(desc.ShaderName, desc.fp1, desc.fp2, desc.fp3, desc.fp4, desc.defines, key);
+	}
+	else
+	{
+		struct FDefaultShader
+		{
+			const char* ShaderName;
+			const char* material_lump;
+			const char* mateffect_lump;
+			const char* lightmodel_lump;
+			const char* Defines;
+		};
+
+		// Note: the MaterialShaderIndex enum needs to be updated whenever this array is modified.
+		static const FDefaultShader defaultshaders[] =
+		{
+			{"Default",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Warp 1",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp1.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Warp 2",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp2.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Specular",            "shaders/scene/material_spec.glsl",                    "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_specular.glsl", "#define SPECULAR\n#define NORMALMAP\n"},
+			{"PBR",                 "shaders/scene/material_pbr.glsl",                     "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_pbr.glsl",      "#define PBR\n#define NORMALMAP\n"},
+			{"Paletted",	        "shaders/scene/material_paletted.glsl",                "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_nolights.glsl", "#define PALETTE_EMULATION\n"},
+			{"No Texture",          "shaders/scene/material_notexture.glsl",               "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   "#define NO_LAYERS\n"},
+			{"Basic Fuzz",          "shaders/scene/material_fuzz_standard.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Smooth Fuzz",         "shaders/scene/material_fuzz_smooth.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Swirly Fuzz",         "shaders/scene/material_fuzz_swirly.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Translucent Fuzz",    "shaders/scene/material_fuzz_smoothtranslucent.glsl",  "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Jagged Fuzz",         "shaders/scene/material_fuzz_jagged.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Noise Fuzz",          "shaders/scene/material_fuzz_noise.glsl",              "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Smooth Noise Fuzz",   "shaders/scene/material_fuzz_smoothnoise.glsl",        "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{"Software Fuzz",       "shaders/scene/material_fuzz_software.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
+			{nullptr,nullptr,nullptr,nullptr}
+		};
+
+		if (key.EffectState < FIRST_USER_SHADER)
+		{
+			const auto& desc = defaultshaders[key.EffectState];
+			program.vert = LoadVertShader(desc.ShaderName, mainvp, desc.Defines);
+			program.frag = LoadFragShader(desc.ShaderName, mainfp, desc.material_lump, desc.mateffect_lump, desc.lightmodel_lump, desc.Defines, key);
 		}
 		else
 		{
-			struct FDefaultShader
-			{
-				const char* ShaderName;
-				const char* material_lump;
-				const char* mateffect_lump;
-				const char* lightmodel_lump;
-				const char* Defines;
-			};
+			const auto& desc = usershaders[key.EffectState - FIRST_USER_SHADER];
+			const FString& name = ExtractFileBase(desc.shader);
+			FString defines = defaultshaders[desc.shaderType].Defines + desc.defines;
 
-			// Note: the MaterialShaderIndex enum needs to be updated whenever this array is modified.
-			static const FDefaultShader defaultshaders[] =
-			{
-				{"Default",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Warp 1",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp1.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Warp 2",	            "shaders/scene/material_default.glsl",                 "shaders/scene/mateffect_warp2.glsl",   "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Specular",            "shaders/scene/material_spec.glsl",                    "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_specular.glsl", "#define SPECULAR\n#define NORMALMAP\n"},
-				{"PBR",                 "shaders/scene/material_pbr.glsl",                     "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_pbr.glsl",      "#define PBR\n#define NORMALMAP\n"},
-				{"Paletted",	        "shaders/scene/material_paletted.glsl",                "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_nolights.glsl", "#define PALETTE_EMULATION\n"},
-				{"No Texture",          "shaders/scene/material_notexture.glsl",               "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   "#define NO_LAYERS\n"},
-				{"Basic Fuzz",          "shaders/scene/material_fuzz_standard.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Smooth Fuzz",         "shaders/scene/material_fuzz_smooth.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Swirly Fuzz",         "shaders/scene/material_fuzz_swirly.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Translucent Fuzz",    "shaders/scene/material_fuzz_smoothtranslucent.glsl",  "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Jagged Fuzz",         "shaders/scene/material_fuzz_jagged.glsl",             "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Noise Fuzz",          "shaders/scene/material_fuzz_noise.glsl",              "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Smooth Noise Fuzz",   "shaders/scene/material_fuzz_smoothnoise.glsl",        "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{"Software Fuzz",       "shaders/scene/material_fuzz_software.glsl",           "shaders/scene/mateffect_default.glsl", "shaders/scene/lightmodel_normal.glsl",   ""},
-				{nullptr,nullptr,nullptr,nullptr}
-			};
-
-			if (key.EffectState < FIRST_USER_SHADER)
-			{
-				const auto& desc = defaultshaders[key.EffectState];
-				program.vert = LoadVertShader(desc.ShaderName, mainvp, desc.Defines);
-				program.frag = LoadFragShader(desc.ShaderName, mainfp, desc.material_lump, desc.mateffect_lump, desc.lightmodel_lump, desc.Defines, key);
-			}
-			else
-			{
-				const auto& desc = usershaders[key.EffectState];
-				const FString& name = ExtractFileBase(desc.shader);
-				FString defines = defaultshaders[desc.shaderType].Defines + desc.defines;
-
-				program.vert = LoadVertShader(name, mainvp, defines);
-				program.frag = LoadFragShader(name, mainfp, desc.shader, defaultshaders[desc.shaderType].mateffect_lump, defaultshaders[desc.shaderType].lightmodel_lump, defines, key);
-			}
+			program.vert = LoadVertShader(name, mainvp, defines);
+			program.frag = LoadFragShader(name, mainfp, desc.shader, defaultshaders[desc.shaderType].mateffect_lump, defaultshaders[desc.shaderType].lightmodel_lump, defines, key);
 		}
 	}
 	return &program;

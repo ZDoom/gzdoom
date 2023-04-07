@@ -69,6 +69,7 @@ EXTERN_CVAR(Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Float, r_actorspriteshadowalpha)
 EXTERN_CVAR(Float, r_actorspriteshadowfadeheight)
+EXTERN_CVAR(Bool, gl_aalines)
 
 //==========================================================================
 //
@@ -89,6 +90,9 @@ CUSTOM_CVAR(Int, gl_fuzztype, 8, CVAR_ARCHIVE)
 {
 	if (self < 0 || self > 8) self = 0;
 }
+
+// [Nash]
+CVARD(Bool, r_showhitbox, false, CVAR_GLOBALCONFIG | CVAR_CHEAT, "show actor hitboxes");
 
 //==========================================================================
 //
@@ -320,6 +324,63 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 	else if (modelframe == nullptr)
 	{
 		state.ClearDepthBias();
+	}
+
+	// [Nash] hitbox debug
+	if (actor && r_showhitbox)
+	{
+		additivefog = false;
+		state.EnableLineSmooth(true);
+
+		PalEntry hitboxColor = 0x640064;
+
+		if (actor->flags & MF_SOLID)
+			hitboxColor = 0x00ff00;
+		if (actor->flags & MF_SHOOTABLE)
+			hitboxColor = 0xffff00;
+		if (actor->flags3 & MF3_ISMONSTER && actor->health > 0)
+			hitboxColor = 0xff0000;
+		if (actor->flags & MF_SPECIAL && actor->health > 0)
+			hitboxColor = 0x00ffff;
+		if (actor->flags & MF_NOBLOCKMAP)
+			hitboxColor = 0x646464;
+
+		hitboxColor.a = 255;
+		state.SetObjectColor(hitboxColor);
+
+		state.SetAddColor(0);
+		state.SetDynLight(0, 0, 0);
+		state.SetRenderStyle(STYLE_Normal);
+		state.SetTextureMode(TM_NORMAL);
+		di->SetFog(state, 0, 0, false, &Colormap, true);
+		di->SetColor(state, 255, 0, true, Colormap, true);
+		state.EnableTexture(false);
+
+		int scales[12][6] =
+		{
+			// bottom
+			{-1, 0, -1, -1, 0, 1}, {-1, 0, 1, 1, 0, 1}, {1, 0, 1, 1, 0, -1}, {1, 0, -1, -1, 0, -1},
+			// top
+			{-1, 1, -1, -1, 1, 1}, {-1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 1, -1}, {1, 1, -1, -1, 1, -1},
+			// vertical
+			{-1, 0, -1, -1, 1, -1}, {-1, 0, 1, -1, 1, 1}, {1, 0, 1, 1, 1, 1}, {1, 0, -1, 1, 1, -1}
+			/*
+			// projectilepassheight
+			{-1, 0, -1, 1, 0, 1}, {-1, 0, 1, 1, 0, -1}
+			*/
+		};
+
+		for (int i = 0; i < 12; i++)
+		{
+			auto vert = screen->mVertexData->AllocVertices(2);
+			auto vp = vert.first;
+			unsigned int vertexindex = vert.second;
+			vp[0].Set(actor->X() + actor->radius * scales[i][0], actor->Z() + actor->Height * scales[i][1], actor->Y() + actor->radius * scales[i][2], 0.0f, 0.0f);
+			vp[1].Set(actor->X() + actor->radius * scales[i][3], actor->Z() + actor->Height * scales[i][4], actor->Y() + actor->radius * scales[i][5], 0.0f, 0.0f);
+			screen->RenderState()->Draw(DT_Lines, vertexindex, 2);
+		}
+
+		state.EnableTexture(true);
 	}
 
 	state.SetObjectColor(0xffffffff);

@@ -43,6 +43,8 @@
 #include "i_time.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "i_interface.h"
+#include "p_tick.h"
 
 
 #ifdef _MSC_VER
@@ -51,6 +53,7 @@
 
 CVAR(Bool, gl_interpolate_model_frames, true, CVAR_ARCHIVE)
 EXTERN_CVAR (Bool, r_drawvoxels)
+float pauseTimeOffset = .0f;
 
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
@@ -103,9 +106,23 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 
 	if (smf->flags & MDL_ROTATING)
 	{
+		bool isPaused = paused || P_CheckTickerPaused();
+		float timeFloat;
+		if (isPaused)
+		{
+			if (pauseTimeOffset == .0f)
+				pauseTimeOffset = (I_GetTime() + I_GetTimeFrac());
+			timeFloat = pauseTimeOffset;
+		}
+		else
+		{
+			pauseTimeOffset = .0f;
+			timeFloat = (I_GetTime() + I_GetTimeFrac());
+		}
+
 		if (smf->rotationSpeed > 0.0000000001 || smf->rotationSpeed < -0.0000000001)
 		{
-			double turns = (I_GetTime() + I_GetTimeFrac()) / (200.0 / smf->rotationSpeed);
+			double turns = timeFloat / (200.0 / smf->rotationSpeed);
 			turns -= floor(turns);
 			rotateOffset = turns * 360.0;
 		}

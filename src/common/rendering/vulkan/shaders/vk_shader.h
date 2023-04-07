@@ -74,7 +74,9 @@ public:
 			uint64_t Detailmap : 1;     // uTextureMode & TEXF_Detailmap
 			uint64_t Glowmap : 1;       // uTextureMode & TEXF_Glowmap
 			uint64_t GBufferPass : 1;   // GBUFFER_PASS
-			uint64_t Unused : 54;
+			uint64_t UseShadowmap : 1;  // USE_SHADOWMAPS
+			uint64_t UseRaytrace : 1;   // USE_RAYTRACE
+			uint64_t Unused : 52;
 		};
 		uint64_t AsQWORD = 0;
 	};

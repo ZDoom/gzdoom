@@ -166,8 +166,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *light_lump, const char *defines, const VkShaderKey& key)
 {
 	FString definesBlock;
-	definesBlock << defines << "\n";
-	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME)) definesBlock << "\n#define SUPPORTS_RAYTRACING\n";
+	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME)) definesBlock << "\n#define SUPPORTS_RAYQUERY\n";
 	definesBlock << defines;
 	definesBlock << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
@@ -182,6 +181,9 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	if (key.Brightmap) definesBlock << "#define TEXF_Brightmap\n";
 	if (key.Detailmap) definesBlock << "#define TEXF_Detailmap\n";
 	if (key.Glowmap) definesBlock << "#define TEXF_Glowmap\n";
+
+	if (key.UseRaytrace) definesBlock << "\n#define USE_RAYTRACE\n";
+	if (key.UseShadowmap) definesBlock << "\n#define USE_SHADOWMAP\n";
 
 	switch (key.TextureMode)
 	{

@@ -1,7 +1,7 @@
 
 // Check if light is in shadow
 
-#ifdef SUPPORTS_RAYTRACING
+#if defined(USE_RAYTRACE) && defined(SUPPORTS_RAYQUERY)
 
 bool traceHit(vec3 origin, vec3 direction, float dist)
 {
@@ -72,16 +72,12 @@ float traceShadow(vec4 lightpos, int quality)
 	}
 }
 
-#else
-
-float traceShadow(vec4 lightpos, int quality)
+float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
-	return 1.0;
+	return traceShadow(lightpos, uShadowmapFilter);
 }
 
-#endif
-
-#ifdef SUPPORTS_SHADOWMAPS
+#elif defined(USE_SHADOWMAP)
 
 float shadowDirToU(vec2 dir)
 {
@@ -213,9 +209,6 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 	float shadowIndex = abs(lightcolorA) - 1.0;
 	if (shadowIndex >= 1024.0)
 		return 1.0; // No shadowmap available for this light
-
-	if (uShadowmapFilter < 0)
-		return traceShadow(lightpos, 1 - uShadowmapFilter);
 
 	return shadowmapAttenuation(lightpos, shadowIndex);
 }

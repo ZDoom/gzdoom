@@ -1,7 +1,7 @@
 
 layout(set = 0, binding = 0) uniform sampler2D ShadowMap;
 layout(set = 0, binding = 1) uniform sampler2DArray LightMap;
-#ifdef SUPPORTS_RAYTRACING
+#if defined(USE_RAYTRACE) && defined(SUPPORTS_RAYQUERY)
 layout(set = 0, binding = 2) uniform accelerationStructureEXT TopLevelAS;
 #endif
 
@@ -169,7 +169,6 @@ layout(push_constant) uniform PushConstants
 #define uDetailParms data[uDataIndex].uDetailParms
 #define uNpotEmulation data[uDataIndex].uNpotEmulation
 
-#define SUPPORTS_SHADOWMAPS
 #define VULKAN_COORDINATE_SYSTEM
 #define HAS_UNIFORM_VERTEX_DATA
 

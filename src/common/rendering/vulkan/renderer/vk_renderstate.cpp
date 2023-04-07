@@ -255,6 +255,8 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.ShaderKey.Detailmap = (uTextureMode & TEXF_Detailmap) != 0;
 	pipelineKey.ShaderKey.Glowmap = (uTextureMode & TEXF_Glowmap) != 0;
 	pipelineKey.ShaderKey.Simple2D = (mFogEnabled == 2);
+	pipelineKey.ShaderKey.UseShadowmap = gl_light_shadowmap;
+	pipelineKey.ShaderKey.UseRaytrace = gl_light_raytrace;
 
 	// Is this the one we already have?
 	bool inRenderPass = mCommandBuffer;

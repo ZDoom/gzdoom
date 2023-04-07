@@ -46,23 +46,64 @@ T smoothstep(const T edge0, const T edge1, const T x)
 	return t * t * (3.0 - 2.0 * t);
 }
 
-static bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
+class ActorTraceStaticLight
 {
-	FDynamicLight* light = node->lightsource;
-	if (!light->Trace() || !level.levelMesh)
-		return true;
+public:
+	ActorTraceStaticLight(AActor* actor) : Actor(actor)
+	{
+		if (Actor->Pos() != Actor->StaticLightsTraceCache.Pos)
+		{
+			Actor->StaticLightsTraceCache.Pos = Actor->Pos();
+			Actor->StaticLightsTraceCache.Bits = 0;
+			ActorMoved = true;
+		}
+	}
 
-	// Note: this is not thread safe (modifies validcount and calls other setup functions)
-	// FTraceResults results;
-	// return !Trace(light->Pos, light->Sector, DVector3(-L.X, -L.Y, -L.Z), dist, 0, ML_BLOCKING, nullptr, results);
+	bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
+	{
+		FDynamicLight* light = node->lightsource;
+		if (!light->Trace() || !level.levelMesh)
+			return true;
 
-	return level.levelMesh->Trace(FVector3((float)light->Pos.X, (float)light->Pos.Y, (float)light->Pos.Z), FVector3(-L.X, -L.Y, -L.Z), dist);
-}
+		if (!ActorMoved && CurrentBit < 64)
+		{
+			bool traceResult = (Actor->StaticLightsTraceCache.Bits >> CurrentBit) & 1;
+			CurrentBit++;
+			return traceResult;
+		}
+		else
+		{
+			bool traceResult = level.levelMesh->Trace(FVector3((float)light->Pos.X, (float)light->Pos.Y, (float)light->Pos.Z), FVector3(-L.X, -L.Y, -L.Z), dist);
+			Actor->StaticLightsTraceCache.Bits |= ((uint64_t)traceResult) << CurrentBit;
+			CurrentBit++;
+			return traceResult;
+		}
+	}
 
-static bool TraceSunVisibility(float x, float y, float z)
-{
-	return level.LMTextureCount != 0 && level.levelMesh->TraceSky(FVector3(x, y, z), level.SunDirection, 10000.0f);
-}
+	bool TraceSunVisibility(float x, float y, float z)
+	{
+		if (level.LMTextureCount == 0)
+			return false;
+
+		if (!ActorMoved && CurrentBit < 64)
+		{
+			bool traceResult = (Actor->StaticLightsTraceCache.Bits >> CurrentBit) & 1;
+			CurrentBit++;
+			return traceResult;
+		}
+		else
+		{
+			bool traceResult = level.levelMesh->TraceSky(FVector3(x, y, z), level.SunDirection, 10000.0f);
+			Actor->StaticLightsTraceCache.Bits |= ((uint64_t)traceResult) << CurrentBit;
+			CurrentBit++;
+			return traceResult;
+		}
+	}
+
+	AActor* Actor;
+	bool ActorMoved = false;
+	int CurrentBit = 0;
+};
 
 //==========================================================================
 //
@@ -78,7 +119,9 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 	
 	out[0] = out[1] = out[2] = 0.f;
 
-	if (TraceSunVisibility(x, y, z))
+	ActorTraceStaticLight staticLight(self);
+
+	if (staticLight.TraceSunVisibility(x, y, z))
 	{
 		out[0] = Level->SunColor.X;
 		out[1] = Level->SunColor.Y;
@@ -121,7 +164,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 				if (light->IsSpot() || light->Trace())
 					L *= -1.0f / dist;
 
-				if (TraceLightVisbility(node, L, dist))
+				if (staticLight.TraceLightVisbility(node, L, dist))
 				{
 					frac = 1.0f - (dist / radius);
 
@@ -195,7 +238,9 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 		float radiusSquared = actorradius * actorradius;
 		dl_validcount++;
 
-		if (TraceSunVisibility(x, y, z))
+		ActorTraceStaticLight staticLight(self);
+
+		if (staticLight.TraceSunVisibility(x, y, z))
 		{
 			AddSunLightToList(modellightdata, x, y, z, self->Level->SunDirection, self->Level->SunColor);
 		}
@@ -226,7 +271,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 							if (light->Trace())
 								L *= 1.0f / dist;
 
-							if (TraceLightVisbility(node, L, dist))
+							if (staticLight.TraceLightVisbility(node, L, dist))
 							{
 								AddLightToList(modellightdata, group, light, true);
 							}

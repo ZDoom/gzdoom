@@ -155,8 +155,15 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 	data[15] = 0.0f; // unused
 }
 
-void AddSunLightToList(FDynLightData& dld, float x, float y, float z, float r, float g, float b)
+void AddSunLightToList(FDynLightData& dld, float x, float y, float z, const FVector3& sundir, const FVector3& suncolor)
 {
+	// Cheap way of faking a directional light
+	float dist = 100000.0f;
+	float radius = 100000000.0f;
+	x += sundir.X * dist;
+	y += sundir.Y * dist;
+	z += sundir.Z * dist;
+
 	int i = 0;
 	float lightType = 0.0f;
 	float spotInnerAngle = 0.0f;
@@ -170,10 +177,10 @@ void AddSunLightToList(FDynLightData& dld, float x, float y, float z, float r, f
 	data[0] = float(x);
 	data[1] = float(z);
 	data[2] = float(y);
-	data[3] = 100000.0f;
-	data[4] = r;
-	data[5] = g;
-	data[6] = b;
+	data[3] = radius;
+	data[4] = suncolor.X;
+	data[5] = suncolor.Y;
+	data[6] = suncolor.Z;
 	data[7] = shadowIndex;
 	data[8] = spotDirX;
 	data[9] = spotDirY;

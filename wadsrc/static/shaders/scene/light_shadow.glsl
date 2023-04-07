@@ -74,6 +74,8 @@ float traceShadow(vec4 lightpos, int quality)
 
 float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
+	if (lightpos.w > 1000000.0)
+		return 1.0; // Sunlight
 	return traceShadow(lightpos, uShadowmapFilter);
 }
 
@@ -206,6 +208,9 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 
 float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
+	if (lightpos.w > 1000000.0)
+		return 1.0; // Sunlight
+
 	float shadowIndex = abs(lightcolorA) - 1.0;
 	if (shadowIndex >= 1024.0)
 		return 1.0; // No shadowmap available for this light

@@ -197,10 +197,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 
 		if (TraceSunVisibility(x, y, z))
 		{
-			const FVector3& sundir = self->Level->SunDirection;
-			const FVector3& suncolor = self->Level->SunColor;
-			float dist = 100000.0f; // Cheap way of faking a directional light
-			AddSunLightToList(modellightdata, x - sundir.X * dist, y - sundir.Y * dist, z - sundir.Z * dist, suncolor.X, suncolor.Y, suncolor.Z);
+			AddSunLightToList(modellightdata, x, y, z, self->Level->SunDirection, self->Level->SunColor);
 		}
 
 		BSPWalkCircle(self->Level, x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor

@@ -68,6 +68,7 @@
 #include "shiftstate.h"
 #include "s_music.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
 EXTERN_CVAR(Bool, m_quickexit)
@@ -251,6 +252,13 @@ bool M_SetSpecialMenu(FName& menu, int param)
 			M_StartMessage (GStrings("SAVEDEAD"), 1);
 			return false;
 		}
+
+		if ((primaryLevel->flags9 & LEVEL9_NOUSERSAVE))
+		{
+			M_StartMessage(GStrings("SAVEDEAD"), 1);
+			return false;
+		}
+
 		break;
 
 	case NAME_Quitmenu:
@@ -472,6 +480,9 @@ CCMD (quicksave)
 		S_Sound (CHAN_VOICE, CHANF_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
+
+	if ((primaryLevel->flags9 & LEVEL9_NOUSERSAVE))
+		return;
 
 	if (gamestate != GS_LEVEL)
 		return;

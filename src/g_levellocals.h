@@ -607,6 +607,7 @@ public:
 	uint32_t		flags;
 	uint32_t		flags2;
 	uint32_t		flags3;
+	uint32_t		flags9;
 
 	uint32_t		fadeto;					// The color the palette fades to (usually black)
 	uint32_t		outsidefog;				// The fog for sectors with sky ceilings

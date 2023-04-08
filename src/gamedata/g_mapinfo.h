@@ -270,6 +270,10 @@ enum ELevelFlags : unsigned int
 	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
 	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
 	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
+
+	// Deliberately skip ahead...
+	LEVEL9_NOUSERSAVE			= 0x00000001,
+	LEVEL9_NOAUTOMAP			= 0x00000002,
 };
 
 
@@ -342,6 +346,7 @@ struct level_info_t
 	int32_t		flags;
 	uint32_t	flags2;
 	uint32_t	flags3;
+	uint32_t	flags9;
 
 	FString		Music;
 	FString		LevelName;

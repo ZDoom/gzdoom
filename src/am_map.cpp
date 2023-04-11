@@ -2624,7 +2624,7 @@ void DAutomap::drawWalls (bool allmap)
 				}
 				else if (line.flags & ML_SECRET)
 				{ // secret door
-					if (am_cheat != 0 && line.backsector != nullptr)
+					if (am_cheat != 0 && am_cheat < 4 && line.backsector != nullptr)
 						drawMline(&l, AMColors.SecretWallColor);
 					else
 						drawMline(&l, AMColors.WallColor);

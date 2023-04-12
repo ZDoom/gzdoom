@@ -301,3 +301,11 @@ void JitCompiler::EmitMEMCPY_RRK()
 	call->setArg(2, asmjit::Imm{konstd[C]});
 	call->setInlineComment("call memcpy");
 }
+
+void JitCompiler::EmitOBJ_WBARRIER()
+{
+	typedef void(*FuncPtr)(DObject*);
+	auto call = CreateCall<void, DObject*>(static_cast<FuncPtr>(GC::WriteBarrier));
+	call->setArg(0, regA[A]);
+	call->setInlineComment("call GC::WriteBarrier");
+}

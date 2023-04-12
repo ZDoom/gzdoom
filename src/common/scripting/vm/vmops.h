@@ -292,4 +292,7 @@ xx(EQA_K,		beq,	CPRK,		EQA_R,	4, REGT_POINTER)
 
 // Memcpy
 xx(MEMCPY_RRK,	memcpy,	RPRPKI,		NOP,	0, 0) // call memcpy(A, B, C)
+
+// Misc stuff for struct copies
+xx(OBJ_WBARRIER, obj_wbarrier, RP, NOP, 0, 0) // call GC::WriteBarrier(A)
 #undef xx

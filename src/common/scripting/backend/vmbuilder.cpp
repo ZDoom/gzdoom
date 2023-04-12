@@ -220,6 +220,20 @@ unsigned VMFunctionBuilder::GetConstantInt(int val)
 	}
 }
 
+ExpEmit VMFunctionBuilder::EmitConstantInt(int val)
+{
+	ExpEmit exp;
+	exp.RegType = REGT_INT | REGT_KONST;
+	exp.Konst = true;
+	exp.RegNum = GetConstantInt(val);
+	return exp;
+}
+
+int VMFunctionBuilder::ReadConstantInt(unsigned regnum)
+{
+	return (regnum >= IntConstantList.Size()) ? 0 : IntConstantList[regnum];
+}
+
 //==========================================================================
 //
 // VMFunctionBuilder :: GetConstantFloat

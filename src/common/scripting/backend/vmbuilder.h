@@ -65,6 +65,12 @@ public:
 	unsigned GetConstantAddress(void *ptr);
 	unsigned GetConstantString(FString str);
 
+	// Emit constant register holding the value
+	ExpEmit EmitConstantInt(int val);
+
+	// Return the value of the constant register
+	int ReadConstantInt(unsigned regnum);
+
 	unsigned AllocConstantsInt(unsigned int count, int *values);
 	unsigned AllocConstantsFloat(unsigned int count, double *values);
 	unsigned AllocConstantsAddress(unsigned int count, void **ptrs);

@@ -2757,19 +2757,15 @@ ExpEmit FxSimpleStructAssign::Emit(VMFunctionBuilder *build)
 //==========================================================================
 
 FxComplexStructAssign::FxComplexStructAssign(FxExpression *base, FxExpression *right, PStruct * type)
-	: FxExpression(EFX_ComplexStructAssign, base->ScriptPosition), Base(base) , Right(right), Type(type)
+	: FxExpression(EFX_ComplexStructAssign, base->ScriptPosition), Base(base) , Right(right), Type(type), CopyOps(GetCopyOps(Type))
 {
-
+	assert(CopyOps);
 }
 
 FxExpression *FxComplexStructAssign::Resolve(FCompileContext &ctx)
 {
 	Base->RequestAddress(ctx,nullptr);
 	Right->RequestAddress(ctx,nullptr);
-
-	CopyOps = GetCopyOps(Type);
-
-	assert(CopyOps);
 
 	ScriptPosition.Message(MSG_ERROR, "FxComplexStructAssign unimplemented");
 	delete this;
@@ -2940,10 +2936,11 @@ void GenStructCopyOps(PStruct * s)
 }
 
 ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
-{ //  assign each member one at a time (TODO optimization: use memcpy for groups of simple values)
+{
 	ExpEmit base = Base->Emit(build);
 	ExpEmit right = Right->Emit(build);
 	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
+
 
 	//TODO: apply copy ops
 

@@ -28,6 +28,8 @@
 
 VkRaytrace::VkRaytrace(VulkanRenderDevice* fb) : fb(fb)
 {
+	useRayQuery = fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+
 	NullMesh.MeshVertices.Push({ -1.0f, -1.0f, -1.0f });
 	NullMesh.MeshVertices.Push({ 1.0f, -1.0f, -1.0f });
 	NullMesh.MeshVertices.Push({ 1.0f,  1.0f, -1.0f });
@@ -43,6 +45,8 @@ VkRaytrace::VkRaytrace(VulkanRenderDevice* fb) : fb(fb)
 	for (int i = 0; i < 3 * 4; i++)
 		NullMesh.MeshElements.Push(i);
 
+	NullMesh.Collision = std::make_unique<TriangleMeshShape>(NullMesh.MeshVertices.Data(), NullMesh.MeshVertices.Size(), NullMesh.MeshElements.Data(), NullMesh.MeshElements.Size());
+
 	SetLevelMesh(nullptr);
 }
 
@@ -55,10 +59,7 @@ void VkRaytrace::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 	{
 		Reset();
 		Mesh = mesh;
-		if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
-		{
-			CreateVulkanObjects();
-		}
+		CreateVulkanObjects();
 	}
 }
 
@@ -68,6 +69,7 @@ void VkRaytrace::Reset()
 	deletelist->Add(std::move(vertexBuffer));
 	deletelist->Add(std::move(indexBuffer));
 	deletelist->Add(std::move(transferBuffer));
+	deletelist->Add(std::move(nodesBuffer));
 	deletelist->Add(std::move(blScratchBuffer));
 	deletelist->Add(std::move(blAccelStructBuffer));
 	deletelist->Add(std::move(blAccelStruct));
@@ -81,38 +83,35 @@ void VkRaytrace::Reset()
 void VkRaytrace::CreateVulkanObjects()
 {
 	CreateVertexAndIndexBuffers();
-	CreateBottomLevelAccelerationStructure();
-	CreateTopLevelAccelerationStructure();
+	if (useRayQuery)
+	{
+		CreateBottomLevelAccelerationStructure();
+		CreateTopLevelAccelerationStructure();
+	}
 }
 
 void VkRaytrace::CreateVertexAndIndexBuffers()
 {
-	static_assert(sizeof(FVector3) == 3 * 4, "sizeof(FVector3) is not 12 bytes!");
+	std::vector<CollisionNode> nodes = CreateCollisionNodes();
 
-	size_t vertexbuffersize = (size_t)Mesh->MeshVertices.Size() * sizeof(FVector3);
-	size_t indexbuffersize = (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t);
-	size_t transferbuffersize = vertexbuffersize + indexbuffersize;
-	size_t vertexoffset = 0;
-	size_t indexoffset = vertexoffset + vertexbuffersize;
+	// std430 alignment rules forces us to convert the vec3 to a vec4
+	std::vector<FVector4> vertices;
+	vertices.reserve(Mesh->MeshVertices.Size());
+	for (const FVector3& v : Mesh->MeshVertices)
+		vertices.push_back({ v, 1.0f });
 
-	transferBuffer = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
-		.Size(transferbuffersize)
-		.DebugName("transferBuffer")
-		.Create(fb->device.get());
-
-	uint8_t* data = (uint8_t*)transferBuffer->Map(0, transferbuffersize);
-	memcpy(data + vertexoffset, Mesh->MeshVertices.Data(), vertexbuffersize);
-	memcpy(data + indexoffset, Mesh->MeshElements.Data(), indexbuffersize);
-	transferBuffer->Unmap();
+	CollisionNodeBufferHeader nodesHeader;
+	nodesHeader.root = Mesh->Collision->get_root();
 
 	vertexBuffer = BufferBuilder()
 		.Usage(
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR)
-		.Size(vertexbuffersize)
+			(useRayQuery ?
+				VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+				VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR : 0) |
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		.Size(vertices.size() * sizeof(FVector4))
 		.DebugName("vertexBuffer")
 		.Create(fb->device.get());
 
@@ -120,19 +119,29 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 		.Usage(
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR)
-		.Size(indexbuffersize)
+			(useRayQuery ?
+				VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+				VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR : 0) |
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		.Size((size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
 		.DebugName("indexBuffer")
 		.Create(fb->device.get());
 
-	fb->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), vertexBuffer.get(), vertexoffset);
-	fb->GetCommands()->GetTransferCommands()->copyBuffer(transferBuffer.get(), indexBuffer.get(), indexoffset);
+	nodesBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+		.Size(sizeof(CollisionNodeBufferHeader) + nodes.size() * sizeof(CollisionNode))
+		.DebugName("nodesBuffer")
+		.Create(fb->device.get());
 
-	// Finish transfer before using it for building
+	transferBuffer = BufferTransfer()
+		.AddBuffer(vertexBuffer.get(), vertices.data(), vertices.size() * sizeof(FVector4))
+		.AddBuffer(indexBuffer.get(), Mesh->MeshElements.Data(), (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
+		.AddBuffer(nodesBuffer.get(), &nodesHeader, sizeof(CollisionNodeBufferHeader), nodes.data(), nodes.size() * sizeof(CollisionNode))
+		.Execute(fb->device.get(), fb->GetCommands()->GetTransferCommands());
+
 	PipelineBarrier()
 		.AddMemory(VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
-		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR);
+		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, useRayQuery ? VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 void VkRaytrace::CreateBottomLevelAccelerationStructure()
@@ -146,9 +155,9 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	accelStructBLDesc.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
 	accelStructBLDesc.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 	accelStructBLDesc.geometry.triangles = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR };
-	accelStructBLDesc.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+	accelStructBLDesc.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
 	accelStructBLDesc.geometry.triangles.vertexData.deviceAddress = vertexBuffer->GetDeviceAddress();
-	accelStructBLDesc.geometry.triangles.vertexStride = sizeof(FVector3);
+	accelStructBLDesc.geometry.triangles.vertexStride = sizeof(FVector4);
 	accelStructBLDesc.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
 	accelStructBLDesc.geometry.triangles.indexData.deviceAddress = indexBuffer->GetDeviceAddress();
 	accelStructBLDesc.geometry.triangles.maxVertex = Mesh->MeshVertices.Size() - 1;
@@ -276,4 +285,79 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	PipelineBarrier()
 		.AddMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_SHADER_READ_BIT)
 		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+}
+
+std::vector<CollisionNode> VkRaytrace::CreateCollisionNodes()
+{
+	std::vector<CollisionNode> nodes;
+	nodes.reserve(Mesh->Collision->get_nodes().size());
+	for (const auto& node : Mesh->Collision->get_nodes())
+	{
+		CollisionNode info;
+		info.center = node.aabb.Center;
+		info.extents = node.aabb.Extents;
+		info.left = node.left;
+		info.right = node.right;
+		info.element_index = node.element_index;
+		nodes.push_back(info);
+	}
+	if (nodes.empty()) // vulkan doesn't support zero byte buffers
+		nodes.push_back(CollisionNode());
+	return nodes;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+BufferTransfer& BufferTransfer::AddBuffer(VulkanBuffer* buffer, const void* data, size_t size)
+{
+	bufferCopies.push_back({ buffer, data, size, nullptr, 0 });
+	return *this;
+}
+
+BufferTransfer& BufferTransfer::AddBuffer(VulkanBuffer* buffer, const void* data0, size_t size0, const void* data1, size_t size1)
+{
+	bufferCopies.push_back({ buffer, data0, size0, data1, size1 });
+	return *this;
+}
+
+std::unique_ptr<VulkanBuffer> BufferTransfer::Execute(VulkanDevice* device, VulkanCommandBuffer* cmdbuffer)
+{
+	size_t transferbuffersize = 0;
+	for (const auto& copy : bufferCopies)
+		transferbuffersize += copy.size0 + copy.size1;
+
+	if (transferbuffersize == 0)
+		return nullptr;
+
+	auto transferBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+		.Size(transferbuffersize)
+		.DebugName("BufferTransfer.transferBuffer")
+		.Create(device);
+
+	uint8_t* data = (uint8_t*)transferBuffer->Map(0, transferbuffersize);
+	size_t pos = 0;
+	for (const auto& copy : bufferCopies)
+	{
+		memcpy(data + pos, copy.data0, copy.size0);
+		pos += copy.size0;
+		memcpy(data + pos, copy.data1, copy.size1);
+		pos += copy.size1;
+	}
+	transferBuffer->Unmap();
+
+	pos = 0;
+	for (const auto& copy : bufferCopies)
+	{
+		if (copy.size0 > 0)
+			cmdbuffer->copyBuffer(transferBuffer.get(), copy.buffer, pos, 0, copy.size0);
+		pos += copy.size0;
+
+		if (copy.size1 > 0)
+			cmdbuffer->copyBuffer(transferBuffer.get(), copy.buffer, pos, copy.size0, copy.size1);
+		pos += copy.size1;
+	}
+
+	return transferBuffer;
 }

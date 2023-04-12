@@ -64,7 +64,7 @@ class PowerupGiver : Inventory
 
 class Powerup : Inventory
 {
-	int EffectTics;	
+	int EffectTics, MaxEffectTics;	
 	color BlendColor;
 	Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
 	double Strength;		// Meaning depends on powerup - currently used only by Invisibility
@@ -121,6 +121,7 @@ class Powerup : Inventory
 			if (power.bAdditiveTime) 
 			{
 				EffectTics += power.EffectTics;
+				MaxEffectTics = Max(EffectTics, MaxEffectTics);
 				BlendColor = power.BlendColor;
 			}
 			// If it's not blinking yet, you can't replenish the power unless the
@@ -132,7 +133,7 @@ class Powerup : Inventory
 			// Reset the effect duration.
 			else if (power.EffectTics > EffectTics)
 			{
-				EffectTics = power.EffectTics;
+				EffectTics = MaxEffectTics = power.EffectTics;
 				BlendColor = power.BlendColor;
 			}
 			power.bPickupGood = true;
@@ -150,7 +151,7 @@ class Powerup : Inventory
 	override Inventory CreateCopy (Actor other)
 	{
 		// Get the effective effect time.
-		EffectTics = abs (EffectTics);
+		EffectTics = MaxEffectTics = abs (EffectTics);
 		// Abuse the Owner field to tell the
 		// InitEffect method who started it;
 		// this should be cleared afterwards,

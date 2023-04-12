@@ -1978,7 +1978,10 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		NEXTOP;
 	OP(CALL_NATIVE_RR):
 		ASSERTA(a); ASSERTA(B); ASSERTKA(C);
-		(static_cast<void(*)(void*,void*)>(konsta[C].v))(PA,PB);
+		{
+			typedef void(*CopyFn)(void*, const void*);
+			((const CopyFn)(konsta[C].v))(PA,PB);
+		}
 		NEXTOP;
 	OP(JMP_LT):
 		ASSERTD(a); ASSERTD(B); ASSERTKD(C);

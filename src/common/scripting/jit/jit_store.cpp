@@ -328,7 +328,7 @@ void JitCompiler::EmitOBJ_WBARRIER()
 void JitCompiler::EmitCALL_NATIVE_RR()
 {
 	typedef void(*CopyFn)(void*, const void*);
-	auto call = CreateCall<void, void*, const void*>(static_cast<CopyFn>(konsta[C].v));
+	auto call = CreateCall<void, void*, const void*>((const CopyFn)(konsta[C].v));
 	call->setArg(0, regA[A]);
 	call->setArg(1, regA[B]);
 	call->setInlineComment("call C(A, B)");

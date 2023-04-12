@@ -23,6 +23,13 @@ void JitCompiler::EmitJMP()
 	cc.jmp(GetLabel(i));
 }
 
+void JitCompiler::EmitJMP_LT()
+{
+	cc.cmp(regD[A], regD[B]);
+	// does this work?
+	cc.jl(GetLabel(konstd[C]));
+}
+
 void JitCompiler::EmitIJMP()
 {
 	int base = (int)(ptrdiff_t)(pc - sfunc->Code) + 1;

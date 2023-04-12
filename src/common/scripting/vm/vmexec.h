@@ -1980,6 +1980,13 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		ASSERTA(a); ASSERTA(B); ASSERTKA(C);
 		(static_cast<void(*)(void*,void*)>(konsta[C].v))(PA,PB);
 		NEXTOP;
+	OP(JMP_LT):
+		ASSERTD(a); ASSERTD(B); ASSERTKD(C);
+		if(reg.d[a] < reg.d[B])
+		{
+			pc = (sfunc->Code + konstd[C]) - 1;
+		}
+		NEXTOP;
 	OP(NOP):
 		NEXTOP;
 	}

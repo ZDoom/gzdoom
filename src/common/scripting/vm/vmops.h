@@ -298,4 +298,5 @@ xx(COPY_NULLCHECK, copy_nullcheck, RPRP, NOP, 0, 0) // nullcheck_write(A), nullc
 xx(MEMCPY_RRK_UNCHECKED,	memcpy,	RPRPKI,		NOP,	0, 0) // call memcpy(A, B, C), no null checks
 xx(OBJ_WBARRIER, obj_wbarrier, RP, NOP, 0, 0) // call GC::WriteBarrier(A)
 xx(CALL_NATIVE_RR, call, RPRPKP, NOP, 0, 0) // call ((void (*)(void*, const void*))C)(A, B)
+xx(JMP_LT, jl, RIRIKI, NOP, 0, 0) // if(rA < rB) pc = rkC;
 #undef xx

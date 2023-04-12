@@ -2767,10 +2767,6 @@ FxExpression *FxComplexStructAssign::Resolve(FCompileContext &ctx)
 	Base->RequestAddress(ctx,nullptr);
 	Right->RequestAddress(ctx,nullptr);
 
-	ScriptPosition.Message(MSG_ERROR, "FxComplexStructAssign unimplemented");
-	delete this;
-	return nullptr;
-
 	return this;
 }
 
@@ -2855,7 +2851,7 @@ void GenStructCopyOps(PStruct * s)
 		{ // object barriers go before anything else
 			ops.Push({
 				obj->Type->isArray() ? StructCopyOpType::ObjArrayBarrier : StructCopyOpType::ObjBarrier,
-				obj->Offset,
+				unsigned(obj->Offset),
 				obj->Type->Size,
 				obj->Type
 			});
@@ -2870,8 +2866,8 @@ void GenStructCopyOps(PStruct * s)
 			// start = offset1 , end = offset2 + size2
 			memcpy_ops.Push({
 				StructCopyOpType::Memcpy,
-				start->Offset,
-				(end->Offset + end->Type->Size) - start->Offset,
+				unsigned(start->Offset),
+				unsigned((end->Offset + end->Type->Size) - start->Offset),
 				nullptr
 			});
 		}
@@ -2883,7 +2879,7 @@ void GenStructCopyOps(PStruct * s)
 				auto realType = PType::underlyingArrayType(cmp->Type);
 				complex_ops.Push({
 					realType->isStruct() ? StructCopyOpType::ArrayCopyStruct : cmp->Type == TypeString ? StructCopyOpType::ArrayCopyString : StructCopyOpType::ArrayCopyDynArrayMap,
-					cmp->Offset,
+					unsigned(cmp->Offset),
 					cmp->Type->Size,
 					cmp->Type
 				});
@@ -2892,7 +2888,7 @@ void GenStructCopyOps(PStruct * s)
 			{
 				complex_ops.Push({
 					cmp->Type == TypeString ? StructCopyOpType::StringCopy : StructCopyOpType::DynArrayMapCopy,
-					cmp->Offset,
+					unsigned(cmp->Offset),
 					cmp->Type->Size,
 					cmp->Type
 				});
@@ -2902,12 +2898,12 @@ void GenStructCopyOps(PStruct * s)
 			  // TODO optimization: fold memcpy ops in the start and end complex of complex struct into pre-existing memcpy ops
 				const TArray<StructCopyOp>& copyOps = *FxComplexStructAssign::GetCopyOps(static_cast<PStruct*>(cmp->Type));
 							   // this is guaranteed to exist, since copy ops are being generated in order of dependence during CompileAllFields
-				auto off = cmp->Offset;
+				unsigned off = unsigned(cmp->Offset);
 				for(auto op : copyOps)
 				{
 					StructCopyOp newop {
 						op.op,
-						op.offset + off,
+						unsigned(op.offset) + off,
 						op.size,
 						op.type
 					};
@@ -2935,17 +2931,252 @@ void GenStructCopyOps(PStruct * s)
 	FxComplexStructAssign::struct_copy_ops.Insert(s,std::move(ops));
 }
 
+static PStruct * BackingTypeOfDynArrayOrMap(PType * t)
+{
+	return t->isDynArray() ? 
+					static_cast<PDynArray*>(t)->BackingType
+				  : t->isMap() ?
+						static_cast<PMap*>(t)->BackingType
+					  : nullptr;
+}
+
+static void * GetDynArrayOrMapCopyFn(PType * t)
+{
+	PStruct * backing = BackingTypeOfDynArrayOrMap(t);
+	PFunction * fn = dyn_cast<PFunction>(backing->Symbols.FindSymbol(NAME_Copy, false));
+	// Array::Copy and Map::Copy shouldn't ever be missing
+	assert(fn);
+	VMFunction * vfn = fn->Variants[0].Implementation;
+	// Copy's implementation shouldn't ever be missing, and should be a native function with a valid direct call pointer
+	assert(vfn && (vfn->VarFlags & VARF_Native) && static_cast<VMNativeFunction*>(vfn)->DirectNativeCall);
+	return static_cast<VMNativeFunction*>(vfn)->DirectNativeCall;
+}
+
+void FxComplexStructAssign::ApplyCopyOps(VMFunctionBuilder *build, const TArray<StructCopyOp>& ops, ExpEmit base_offset, ExpEmit reg_dest, ExpEmit reg_src)
+{
+	for(const auto &op : ops)
+	{
+		if(op.op >= StructCopyOpType::ObjArrayBarrier)
+		{ // array copy
+			PArray * t = static_cast<PArray*>(op.type);
+			if(t->ElementCount <= 4)
+			{ // inline small arrays
+				const TArray<StructCopyOp> * ops2 = nullptr;
+				if(op.op == StructCopyOpType::ArrayCopyStruct)
+				{
+					ops2 = GetCopyOps(static_cast<PStruct*>(PType::underlyingArrayType(op.type)));
+				}
+
+				if(base_offset.Konst)
+				{
+					for(unsigned i = 0; i < t->ElementCount; i++)
+					{
+						// int off2 = base_offset + op.offset + (t->ElementSize * i);
+						unsigned off2 = unsigned(build->ReadConstantInt(base_offset.RegNum)) + op.offset + (t->ElementSize * i);
+
+						if(op.op == StructCopyOpType::ArrayCopyStruct)
+						{ // inline struct copies
+							assert(ops2);
+							ApplyCopyOps(build, *ops2, build->EmitConstantInt(off2), reg_dest, reg_src);
+						}
+						else
+						{
+							// ptrdest = dest + off2;
+							if(op.op != StructCopyOpType::ObjArrayBarrier) build->Emit(OP_ADDA_RK, reg_ptrdest.RegNum, reg_dest.RegNum, build->GetConstantInt(off2)); 
+							// ptrsrc = src + off2;
+							build->Emit(OP_ADDA_RK, reg_ptrsrc.RegNum, reg_src.RegNum, build->GetConstantInt(off2));
+
+							switch(op.op)
+							{
+							case StructCopyOpType::ObjArrayBarrier:
+								// GC::WriteBarrier(ptrsrc);
+								// this doesn't copy, it only executes the barrier -- object copies are bundled with regular data in memcpy operations
+								build->Emit(OP_OBJ_WBARRIER, reg_ptrsrc.RegNum);
+								break;
+							case StructCopyOpType::ArrayCopyDynArrayMap:
+								// ptrdest->Copy(regptrsrc)
+								build->Emit(OP_CALL_NATIVE_RR, reg_ptrdest.RegNum, reg_ptrsrc.RegNum, build->GetConstantAddress(GetDynArrayOrMapCopyFn(PType::underlyingArrayType(op.type))));
+								break;
+							case StructCopyOpType::ArrayCopyString:
+								// (*(FString*)ptrdest) = (*(FString*)ptrsrc);
+								build->Emit(OP_MOVESA, reg_ptrdest.RegNum, reg_ptrsrc.RegNum);
+								break;
+							}
+						}
+					}
+				}
+				else
+				{
+					// int off2 = base_offset + op.offset;
+					ExpEmit off2(build, REGT_INT, 1);
+					build->Emit(OP_ADD_RK, off2.RegNum, base_offset.RegNum, build->GetConstantInt(op.offset));
+
+					for(unsigned i = 0; i < t->ElementCount; i++)
+					{ // inline struct copies
+						if(op.op == StructCopyOpType::ArrayCopyStruct)
+						{ // inline struct copies
+							assert(ops2);
+							ApplyCopyOps(build, *ops2, off2, reg_dest, reg_src);
+						}
+						else
+						{
+							// ptrdest = dest + off2;
+							if(op.op != StructCopyOpType::ObjArrayBarrier) build->Emit(OP_ADDA_RR, reg_ptrdest.RegNum, reg_dest.RegNum, off2.RegNum); 
+							// ptrsrc = src + off2;
+							build->Emit(OP_ADDA_RR, reg_ptrsrc.RegNum, reg_src.RegNum, off2.RegNum);
+
+							switch(op.op)
+							{
+							case StructCopyOpType::ObjArrayBarrier:
+								// GC::WriteBarrier(ptrsrc);
+								// this doesn't copy, it only executes the barrier -- object copies are bundled with regular data in memcpy operations
+								build->Emit(OP_OBJ_WBARRIER, reg_ptrsrc.RegNum);
+								break;
+							case StructCopyOpType::ArrayCopyDynArrayMap:
+								// ptrdest->Copy(regptrsrc)
+								build->Emit(OP_CALL_NATIVE_RR, reg_ptrdest.RegNum, reg_ptrsrc.RegNum, build->GetConstantAddress(GetDynArrayOrMapCopyFn(PType::underlyingArrayType(op.type))));
+								break;
+							case StructCopyOpType::ArrayCopyString:
+								// (*(FString*)ptrdest) = (*(FString*)ptrsrc);
+								build->Emit(OP_MOVESA, reg_ptrdest.RegNum, reg_ptrsrc.RegNum);
+								break;
+							}
+						}
+						if( i != (t->ElementCount - 1))
+						{
+							// off2 += t->ElementSize;
+							build->Emit(OP_ADD_RK, off2.RegNum, off2.RegNum, build->GetConstantInt(t->ElementSize));
+						}
+					}
+					off2.Free(build);
+				}
+			}
+			else
+			{ // loop for larger arrays
+				// int off2 = base_offset + op.offset;
+				ExpEmit off2(build, REGT_INT, 1);
+				if(base_offset.Konst)
+				{
+					build->Emit(OP_LK, off2.RegNum, build->GetConstantInt(unsigned(build->ReadConstantInt(base_offset.RegNum)) + op.offset));
+				}
+				else
+				{
+					build->Emit(OP_ADD_RK, off2.RegNum, base_offset.RegNum, build->GetConstantInt(op.offset));
+				}
+				//int endoff = off2 + (arr.count * arr.size);
+				ExpEmit endoff(build, REGT_INT, 1);
+				build->Emit(OP_ADD_RK, endoff.RegNum, off2.RegNum, build->GetConstantInt(t->ElementCount * t->ElementSize));
+
+				unsigned loop_addr = unsigned(build->GetAddress()); // this will break if addr > UINT32_MAX, but i don't think that should be much of a concern for now at least
+				/*
+				 * while(off2 < endoff)
+				 * {
+				 *     copy(dest + off2, src + off2);
+				 *     off2 += arr.elemsize;
+				 * }
+				*/
+
+				// copy(dest + off2, src + off2);
+				if(op.op == StructCopyOpType::ArrayCopyStruct)
+				{ // inline struct copies
+					ApplyCopyOps(build, *GetCopyOps(static_cast<PStruct*>(PType::underlyingArrayType(op.type))), off2, reg_dest, reg_src);
+				}
+				else
+				{
+					// ptrdest = dest + off2;
+					if(op.op != StructCopyOpType::ObjArrayBarrier) build->Emit(OP_ADDA_RR, reg_ptrdest.RegNum, reg_dest.RegNum, off2.RegNum); 
+					// ptrsrc = src + off2;
+					build->Emit(OP_ADDA_RR, reg_ptrsrc.RegNum, reg_src.RegNum, off2.RegNum);
+
+					switch(op.op)
+					{
+					case StructCopyOpType::ObjArrayBarrier:
+						// GC::WriteBarrier(ptrsrc);
+						// this doesn't copy, it only executes the barrier -- object copies are bundled with regular data in memcpy operations
+						build->Emit(OP_OBJ_WBARRIER, reg_ptrsrc.RegNum);
+						break;
+					case StructCopyOpType::ArrayCopyDynArrayMap:
+						// ptrdest->Copy(regptrsrc)
+						build->Emit(OP_CALL_NATIVE_RR, reg_ptrdest.RegNum, reg_ptrsrc.RegNum, build->GetConstantAddress(GetDynArrayOrMapCopyFn(PType::underlyingArrayType(op.type))));
+						break;
+					case StructCopyOpType::ArrayCopyString:
+						// (*(FString*)ptrdest) = (*(FString*)ptrsrc);
+						build->Emit(OP_MOVESA, reg_ptrdest.RegNum, reg_ptrsrc.RegNum);
+						break;
+					}
+				}
+				// off2 += arr.elemsize
+				build->Emit(OP_ADD_RK, off2.RegNum, off2.RegNum, build->GetConstantInt(t->ElementSize));
+				// (off2 < endoff)
+				build->Emit(OP_JMP_LT, off2.RegNum, endoff.RegNum, build->GetConstantInt(loop_addr));
+
+				off2.Free(build);
+			}
+		}
+		else
+		{
+			if(base_offset.Konst)
+			{
+				unsigned off2 = build->GetConstantInt(unsigned(build->ReadConstantInt(base_offset.RegNum)) + op.offset);
+				// ptrdest = dest + base_offset + op.offset;
+				if(op.op != StructCopyOpType::ObjBarrier) build->Emit(OP_ADDA_RK, reg_ptrdest.RegNum, reg_dest.RegNum, off2);
+				// ptrsrc = src + base_offset + op.offset;
+				build->Emit(OP_ADDA_RK, reg_ptrsrc.RegNum, reg_src.RegNum, off2);
+			}
+			else
+			{
+				// ptrdest = dest + base_offset;
+				// ptrdest += op.offset;
+				if(op.op != StructCopyOpType::ObjBarrier)
+				{
+					build->Emit(OP_ADDA_RR, reg_ptrdest.RegNum, reg_dest.RegNum, base_offset.RegNum);
+					build->Emit(OP_ADDA_RK, reg_ptrdest.RegNum, reg_ptrdest.RegNum, build->GetConstantInt(op.offset));
+				}
+				// ptrsrc = src + base_offset;
+				// ptrsrc += op.offset;
+				build->Emit(OP_ADDA_RR, reg_ptrsrc.RegNum, reg_src.RegNum,base_offset.RegNum);
+				build->Emit(OP_ADDA_RK, reg_ptrsrc.RegNum, reg_ptrsrc.RegNum, build->GetConstantInt(op.offset));
+			}
+			switch(op.op)
+			{
+			case StructCopyOpType::ObjBarrier:
+				// GC::WriteBarrier(ptrsrc);
+				// this doesn't copy, it only executes the barrier -- object copies are bundled with regular data in memcpy operations
+				build->Emit(OP_OBJ_WBARRIER, reg_ptrsrc.RegNum);
+				break;
+			case StructCopyOpType::Memcpy:
+				// memcpy(ptrdest, ptrsrc, op.size);
+				// NULL is already checked before this, so it's safe to use
+				build->Emit(OP_MEMCPY_RRK_UNCHECKED, reg_ptrdest.RegNum, reg_ptrsrc.RegNum, build->GetConstantInt(op.size));
+				break;
+			case StructCopyOpType::DynArrayMapCopy:
+				// ptrdest->Copy(regptrsrc)
+				build->Emit(OP_CALL_NATIVE_RR, reg_ptrdest.RegNum, reg_ptrsrc.RegNum, build->GetConstantAddress(GetDynArrayOrMapCopyFn(op.type)));
+				break;
+			case StructCopyOpType::StringCopy:
+				// (*(FString*)ptrdest) = (*(FString*)ptrsrc);
+				build->Emit(OP_MOVESA, reg_ptrdest.RegNum, reg_ptrsrc.RegNum);
+				break;
+			}
+		}
+	}
+}
+
 ExpEmit FxComplexStructAssign::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit base = Base->Emit(build);
 	ExpEmit right = Right->Emit(build);
 	assert(base.RegType == REGT_POINTER && right.RegType == REGT_POINTER);
 
+	build->Emit(OP_COPY_NULLCHECK, base.RegNum, right.RegNum);
+	
+	reg_ptrdest = ExpEmit(build, REGT_POINTER, 1);
+	reg_ptrsrc = ExpEmit(build, REGT_POINTER, 1);
+	
+	ApplyCopyOps(build, *CopyOps, build->EmitConstantInt(0), base, right);
 
-	//TODO: apply copy ops
-
-	return {};
-
+	reg_ptrdest.Free(build);
+	reg_ptrsrc.Free(build);
 	base.Free(build);
 	return right;
 }

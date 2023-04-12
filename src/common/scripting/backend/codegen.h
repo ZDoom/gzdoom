@@ -912,11 +912,12 @@ public:
 enum class StructCopyOpType
 {
 	ObjBarrier,
-	ObjArrayBarrier,
 
 	Memcpy,
 	DynArrayMapCopy,
 	StringCopy,
+
+	ObjArrayBarrier,
 
 	ArrayCopyDynArrayMap, // copy using the `X.Copy(Y)` function call
 	ArrayCopyString,
@@ -926,8 +927,8 @@ enum class StructCopyOpType
 struct StructCopyOp
 {
 	StructCopyOpType op;
-	size_t offset;
-	size_t size; // bytes for memcpy, unused otherwise
+	unsigned offset;
+	unsigned size; // bytes for memcpy, unused otherwise
 	PType * type; // used for struct, dynarray, map and non-dynamic array copies, null for memcpy
 };
 
@@ -938,7 +939,11 @@ class FxComplexStructAssign : public FxExpression
 	PStruct * Type;
 	const TArray<StructCopyOp> *CopyOps;
 	static TMap<const PStruct*,TArray<StructCopyOp>> struct_copy_ops;
+
+	ExpEmit reg_ptrdest, reg_ptrsrc;
+
 	friend void GenStructCopyOps(PStruct * s);
+	void ApplyCopyOps(VMFunctionBuilder *build, const TArray<StructCopyOp>& ops, ExpEmit base_offset, ExpEmit reg_dest, ExpEmit reg_source);
 public:
 	FxComplexStructAssign(FxExpression *base, FxExpression *right, PStruct *type);
 	FxExpression *Resolve(FCompileContext&);

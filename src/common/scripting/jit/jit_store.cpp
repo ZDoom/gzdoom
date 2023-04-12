@@ -299,4 +299,5 @@ void JitCompiler::EmitMEMCPY_RRK()
 	call->setArg(0, regA[A]);
 	call->setArg(1, regA[B]);
 	call->setArg(2, asmjit::Imm{konstd[C]});
+	call->setInlineComment("call memcpy");
 }

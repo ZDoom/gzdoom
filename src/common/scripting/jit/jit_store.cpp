@@ -302,10 +302,34 @@ void JitCompiler::EmitMEMCPY_RRK()
 	call->setInlineComment("call memcpy");
 }
 
+void JitCompiler::EmitCOPY_NULLCHECK()
+{
+	EmitNullPointerThrow(A, X_WRITE_NIL);
+	EmitNullPointerThrow(B, X_READ_NIL);
+}
+
+void JitCompiler::EmitMEMCPY_RRK_UNCHECKED()
+{
+	auto call = CreateCall<void*, void*, const void*, size_t>(&memcpy);
+	call->setArg(0, regA[A]);
+	call->setArg(1, regA[B]);
+	call->setArg(2, asmjit::Imm{konstd[C]});
+	call->setInlineComment("call memcpy");
+}
+
 void JitCompiler::EmitOBJ_WBARRIER()
 {
 	typedef void(*FuncPtr)(DObject*);
 	auto call = CreateCall<void, DObject*>(static_cast<FuncPtr>(GC::WriteBarrier));
 	call->setArg(0, regA[A]);
 	call->setInlineComment("call GC::WriteBarrier");
+}
+
+void JitCompiler::EmitCALL_NATIVE_RR()
+{
+	typedef void(*CopyFn)(void*, const void*);
+	auto call = CreateCall<void, void*, const void*>(static_cast<CopyFn>(konsta[C].v));
+	call->setArg(0, regA[A]);
+	call->setArg(1, regA[B]);
+	call->setInlineComment("call C(A, B)");
 }

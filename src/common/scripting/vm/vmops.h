@@ -294,5 +294,8 @@ xx(EQA_K,		beq,	CPRK,		EQA_R,	4, REGT_POINTER)
 xx(MEMCPY_RRK,	memcpy,	RPRPKI,		NOP,	0, 0) // call memcpy(A, B, C)
 
 // Misc stuff for struct copies
+xx(COPY_NULLCHECK, copy_nullcheck, RPRP, NOP, 0, 0) // nullcheck_write(A), nullcheck_read(B)
+xx(MEMCPY_RRK_UNCHECKED,	memcpy,	RPRPKI,		NOP,	0, 0) // call memcpy(A, B, C), no null checks
 xx(OBJ_WBARRIER, obj_wbarrier, RP, NOP, 0, 0) // call GC::WriteBarrier(A)
+xx(CALL_NATIVE_RR, call, RPRPKP, NOP, 0, 0) // call ((void (*)(void*, const void*))C)(A, B)
 #undef xx

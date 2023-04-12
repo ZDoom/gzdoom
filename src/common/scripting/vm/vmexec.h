@@ -1955,9 +1955,30 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		}
 		memcpy(PA, PB, KC);
 		NEXTOP;
+	OP(COPY_NULLCHECK):
+		ASSERTA(a); ASSERTA(B);
+		if (PA == nullptr)
+		{
+			ThrowAbortException(X_WRITE_NIL, nullptr);
+			return 0;
+		}
+		else if (PB == nullptr)
+		{
+			ThrowAbortException(X_READ_NIL, nullptr);
+			return 0;
+		}
+		NEXTOP;
+	OP(MEMCPY_RRK_UNCHECKED):
+		ASSERTA(a); ASSERTA(B); ASSERTKD(C);
+		memcpy(PA, PB, KC);
+		NEXTOP;
 	OP(OBJ_WBARRIER):
 		ASSERTA(a);
 		GC::WriteBarrier((DObject*)PA);
+		NEXTOP;
+	OP(CALL_NATIVE_RR):
+		ASSERTA(a); ASSERTA(B); ASSERTKA(C);
+		(static_cast<void(*)(void*,void*)>(konsta[C].v))(PA,PB);
 		NEXTOP;
 	OP(NOP):
 		NEXTOP;

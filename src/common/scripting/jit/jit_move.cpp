@@ -21,6 +21,13 @@ void JitCompiler::EmitMOVES()
 	call->setArg(1, regS[B]);
 }
 
+void JitCompiler::EmitMOVESA()
+{
+	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
+	call->setArg(0, regA[A]);
+	call->setArg(1, regA[B]);
+}
+
 void JitCompiler::EmitMOVEA()
 {
 	cc.mov(regA[A], regA[B]);

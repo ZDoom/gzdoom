@@ -100,6 +100,7 @@ xx(SBIT,	sbit,	RPRII8,		NOP,	0, 0)		// *rA |= C if rB is true, *rA &= ~C otherwi
 xx(MOVE,	mov,	RIRI,		NOP,	0, 0)		// dA = dB
 xx(MOVEF,	mov,	RFRF,		NOP,	0, 0)		// fA = fB
 xx(MOVES,	mov,	RSRS,		NOP,	0, 0)		// sA = sB
+xx(MOVESA,	mov,	RPRP,		NOP,	0, 0)		// (*(string*)aA) = (*(string*)aB)
 xx(MOVEA,	mov,	RPRP,		NOP,	0, 0)		// aA = aB
 xx(MOVEV2,	mov2,	RFRF,		NOP,	0, 0)		// fA = fB (2 elements)
 xx(MOVEV3,	mov3,	RFRF,		NOP,	0, 0)		// fA = fB (3 elements)

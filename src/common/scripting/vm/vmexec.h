@@ -619,6 +619,10 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		ASSERTS(a); ASSERTS(B);
 		reg.s[a] = reg.s[B];
 		NEXTOP;
+	OP(MOVESA):
+		ASSERTA(a); ASSERTA(B);
+		(*static_cast<FString*>(reg.a[a])) = (*static_cast<FString*>(reg.a[B]));
+		NEXTOP;
 	OP(MOVEA):
 	{
 		ASSERTA(a); ASSERTA(B);

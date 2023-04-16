@@ -585,7 +585,7 @@ void VkRenderStateMolten::Draw(int dt, int index, int count, bool apply)
 {
 	if (dt == DT_TriangleFan)
 	{
-		IIndexBuffer *oldIndexBuffer = mIndexBuffer;
+		IBuffer* oldIndexBuffer = mIndexBuffer;
 		mIndexBuffer = fb->GetBufferManager()->FanToTrisIndexBuffer.get();
 
 		if (apply || mNeedApply)

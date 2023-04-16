@@ -312,42 +312,42 @@ FMaterial* VulkanRenderDevice::CreateMaterial(FGameTexture* tex, int scaleflags)
 	return new VkMaterial(this, tex, scaleflags);
 }
 
-IVertexBuffer *VulkanRenderDevice::CreateVertexBuffer()
+IBuffer*VulkanRenderDevice::CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs)
 {
-	return GetBufferManager()->CreateVertexBuffer();
+	return GetBufferManager()->CreateVertexBuffer(numBindingPoints, numAttributes, stride, attrs);
 }
 
-IIndexBuffer *VulkanRenderDevice::CreateIndexBuffer()
+IBuffer*VulkanRenderDevice::CreateIndexBuffer()
 {
 	return GetBufferManager()->CreateIndexBuffer();
 }
 
-IDataBuffer* VulkanRenderDevice::CreateLightBuffer()
+IBuffer* VulkanRenderDevice::CreateLightBuffer()
 {
 	return GetBufferManager()->CreateLightBuffer();
 }
 
-IDataBuffer* VulkanRenderDevice::CreateBoneBuffer()
+IBuffer* VulkanRenderDevice::CreateBoneBuffer()
 {
 	return GetBufferManager()->CreateBoneBuffer();
 }
 
-IDataBuffer* VulkanRenderDevice::CreateViewpointBuffer()
+IBuffer* VulkanRenderDevice::CreateViewpointBuffer()
 {
 	return GetBufferManager()->CreateViewpointBuffer();
 }
 
-IDataBuffer* VulkanRenderDevice::CreateShadowmapNodesBuffer()
+IBuffer* VulkanRenderDevice::CreateShadowmapNodesBuffer()
 {
 	return GetBufferManager()->CreateShadowmapNodesBuffer();
 }
 
-IDataBuffer* VulkanRenderDevice::CreateShadowmapLinesBuffer()
+IBuffer* VulkanRenderDevice::CreateShadowmapLinesBuffer()
 {
 	return GetBufferManager()->CreateShadowmapLinesBuffer();
 }
 
-IDataBuffer* VulkanRenderDevice::CreateShadowmapLightsBuffer()
+IBuffer* VulkanRenderDevice::CreateShadowmapLightsBuffer()
 {
 	return GetBufferManager()->CreateShadowmapLightsBuffer();
 }

@@ -6,7 +6,7 @@
 #include <memory>
 #include <functional>
 
-class IDataBuffer;
+class IBuffer;
 class DFrameBuffer;
 
 class ShadowMap
@@ -84,11 +84,11 @@ protected:
 	// OpenGL storage buffer with the list of lights in the shadow map texture
 	// These buffers need to be accessed by the OpenGL backend directly so that they can be bound.
 public:
-	IDataBuffer *mLightList = nullptr;
+	IBuffer* mLightList = nullptr;
 
 	// OpenGL storage buffers for the AABB tree
-	IDataBuffer *mNodesBuffer = nullptr;
-	IDataBuffer *mLinesBuffer = nullptr;
+	IBuffer* mNodesBuffer = nullptr;
+	IBuffer* mLinesBuffer = nullptr;
 
 	std::function<void()> CollectLights = nullptr;
 

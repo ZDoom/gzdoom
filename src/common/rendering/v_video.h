@@ -50,9 +50,7 @@
 
 struct FPortalSceneState;
 class FSkyVertexBuffer;
-class IIndexBuffer;
-class IVertexBuffer;
-class IDataBuffer;
+class IBuffer;
 class FFlatVertexBuffer;
 class HWViewpointBuffer;
 class FLightBuffer;
@@ -94,6 +92,7 @@ struct FColormap;
 enum FTextureFormat : uint32_t;
 class FModelRenderer;
 struct SamplerUniform;
+struct FVertexBufferAttribute;
 
 //
 // VIDEO
@@ -236,17 +235,17 @@ public:
 	virtual void InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData) {}
 
     // Interface to hardware rendering resources
-	virtual IVertexBuffer* CreateVertexBuffer() { return nullptr; }
-	virtual IIndexBuffer* CreateIndexBuffer() { return nullptr; }
+	virtual IBuffer* CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs) { return nullptr; }
+	virtual IBuffer* CreateIndexBuffer() { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
 
 	// To do: these buffers shouldn't be created by the hwrenderer layer - it will be simpler if the backend manages them completely
-	virtual IDataBuffer* CreateLightBuffer() { return nullptr; }
-	virtual IDataBuffer* CreateBoneBuffer() { return nullptr; }
-	virtual IDataBuffer* CreateViewpointBuffer() { return nullptr; }
-	virtual IDataBuffer* CreateShadowmapNodesBuffer() { return nullptr; }
-	virtual IDataBuffer* CreateShadowmapLinesBuffer() { return nullptr; }
-	virtual IDataBuffer* CreateShadowmapLightsBuffer() { return nullptr; }
+	virtual IBuffer* CreateLightBuffer() { return nullptr; }
+	virtual IBuffer* CreateBoneBuffer() { return nullptr; }
+	virtual IBuffer* CreateViewpointBuffer() { return nullptr; }
+	virtual IBuffer* CreateShadowmapNodesBuffer() { return nullptr; }
+	virtual IBuffer* CreateShadowmapLinesBuffer() { return nullptr; }
+	virtual IBuffer* CreateShadowmapLightsBuffer() { return nullptr; }
 
 	// This is overridable in case Vulkan does it differently.
 	virtual bool RenderTextureIsFlipped() const

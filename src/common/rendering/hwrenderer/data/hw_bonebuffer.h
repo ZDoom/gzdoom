@@ -12,8 +12,8 @@ class FRenderState;
 class BoneBuffer
 {
 	DFrameBuffer* fb = nullptr;
-	IDataBuffer *mBuffer;
-	IDataBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
+	IBuffer *mBuffer;
+	IBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
 	int mPipelineNbr;
 	int mPipelinePos = 0;
 
@@ -41,7 +41,7 @@ public:
 	int GetCurrentIndex() { return mIndex; };
 
 	// OpenGL needs the buffer to mess around with the binding.
-	IDataBuffer* GetBuffer() const
+	IBuffer* GetBuffer() const
 	{
 		return mBuffer;
 	}

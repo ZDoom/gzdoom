@@ -85,18 +85,15 @@ FFlatVertexBuffer::FFlatVertexBuffer(DFrameBuffer* fb, int width, int height, in
 
 	for (int n = 0; n < mPipelineNbr; n++)
 	{
-		mVertexBufferPipeline[n] = fb->CreateVertexBuffer();
-
-		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
-		mVertexBufferPipeline[n]->SetData(bytesize, nullptr, BufferUsageType::Persistent);
-
-		static const FVertexBufferAttribute format[] = {
+		static const FVertexBufferAttribute format[] =
+		{
 			{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FFlatVertex, x) },
 			{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) },
 			{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FFlatVertex, lu) },
 		};
 
-		mVertexBufferPipeline[n]->SetFormat(1, 3, sizeof(FFlatVertex), format);
+		mVertexBufferPipeline[n] = fb->CreateVertexBuffer(1, 3, sizeof(FFlatVertex), format);
+		mVertexBufferPipeline[n]->SetData(BUFFER_SIZE * sizeof(FFlatVertex), nullptr, BufferUsageType::Persistent);
 	}
 
 	mVertexBuffer = mVertexBufferPipeline[mPipelinePos];
@@ -165,7 +162,7 @@ std::pair<FFlatVertex *, unsigned int> FFlatVertexBuffer::AllocVertices(unsigned
 
 void FFlatVertexBuffer::Copy(int start, int count)
 {
-	IVertexBuffer* old = mVertexBuffer;
+	IBuffer* old = mVertexBuffer;
 
 	for (int n = 0; n < mPipelineNbr; n++)
 	{

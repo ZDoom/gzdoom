@@ -81,22 +81,3 @@ public:
 	void *Memory() { return map; }
 	size_t Size() { return buffersize; }
 };
-
-class IVertexBuffer : virtual public IBuffer
-{
-public:
-	virtual void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) = 0;
-};
-
-// This merely exists to have a dedicated type for index buffers to inherit from.
-class IIndexBuffer : virtual public IBuffer
-{
-	// Element size is fixed to 4, thanks to OpenGL requiring this info to be coded into the glDrawElements call.
-	// This mostly prohibits a more flexible buffer setup but GZDoom doesn't use any other format anyway.
-	// Ob Vulkam, element size is a buffer property and of no concern to the drawing functions (as it should be.)
-};
-
-class IDataBuffer : virtual public IBuffer
-{
-	// Can be either uniform or shader storage buffer, depending on its needs.
-};

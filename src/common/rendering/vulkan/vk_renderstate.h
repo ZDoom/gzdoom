@@ -104,8 +104,8 @@ protected:
 	VkMatrixBufferWriter mMatrixBufferWriter;
 
 	int mLastVertexOffsets[2] = { 0, 0 };
-	IVertexBuffer *mLastVertexBuffer = nullptr;
-	IIndexBuffer *mLastIndexBuffer = nullptr;
+	IBuffer* mLastVertexBuffer = nullptr;
+	IBuffer* mLastIndexBuffer = nullptr;
 
 	bool mLastModelMatrixEnabled = true;
 	bool mLastTextureMatrixEnabled = true;

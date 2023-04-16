@@ -24,6 +24,7 @@
 #include "vk_hwbuffer.h"
 #include "vk_streambuffer.h"
 #include "vulkan/vk_renderdevice.h"
+#include "vulkan/pipelines/vk_renderpass.h"
 
 VkBufferManager::VkBufferManager(VulkanRenderDevice* fb) : fb(fb)
 {
@@ -64,47 +65,47 @@ void VkBufferManager::RemoveBuffer(VkHardwareBuffer* buffer)
 	}
 }
 
-IVertexBuffer* VkBufferManager::CreateVertexBuffer()
+IBuffer* VkBufferManager::CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs)
 {
-	return new VkHardwareVertexBuffer(fb);
+	return new VkHardwareVertexBuffer(fb, fb->GetRenderPassManager()->GetVertexFormat(numBindingPoints, numAttributes, stride, attrs));
 }
 
-IIndexBuffer* VkBufferManager::CreateIndexBuffer()
+IBuffer* VkBufferManager::CreateIndexBuffer()
 {
 	return new VkHardwareIndexBuffer(fb);
 }
 
-IDataBuffer* VkBufferManager::CreateLightBuffer()
+IBuffer* VkBufferManager::CreateLightBuffer()
 {
 	LightBufferSSO = new VkHardwareDataBuffer(fb, true, false);
 	return LightBufferSSO;
 }
 
-IDataBuffer* VkBufferManager::CreateBoneBuffer()
+IBuffer* VkBufferManager::CreateBoneBuffer()
 {
 	BoneBufferSSO = new VkHardwareDataBuffer(fb, true, false);
 	return BoneBufferSSO;
 }
 
-IDataBuffer* VkBufferManager::CreateViewpointBuffer()
+IBuffer* VkBufferManager::CreateViewpointBuffer()
 {
 	ViewpointUBO = new VkHardwareDataBuffer(fb, false, true);
 	return ViewpointUBO;
 }
 
-IDataBuffer* VkBufferManager::CreateShadowmapNodesBuffer()
+IBuffer* VkBufferManager::CreateShadowmapNodesBuffer()
 {
 	LightNodes = new VkHardwareDataBuffer(fb, true, false);
 	return LightNodes;
 }
 
-IDataBuffer* VkBufferManager::CreateShadowmapLinesBuffer()
+IBuffer* VkBufferManager::CreateShadowmapLinesBuffer()
 {
 	LightLines = new VkHardwareDataBuffer(fb, true, false);
 	return LightLines;
 }
 
-IDataBuffer* VkBufferManager::CreateShadowmapLightsBuffer()
+IBuffer* VkBufferManager::CreateShadowmapLightsBuffer()
 {
 	LightList = new VkHardwareDataBuffer(fb, true, false);
 	return LightList;

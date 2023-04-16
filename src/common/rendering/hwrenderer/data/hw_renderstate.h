@@ -8,8 +8,7 @@
 #include "i_interface.h"
 
 struct FColormap;
-class IVertexBuffer;
-class IIndexBuffer;
+class IBuffer;
 
 enum EClearTarget
 {
@@ -240,9 +239,9 @@ protected:
 	FMaterialState mMaterial;
 	FDepthBiasState mBias;
 
-	IVertexBuffer *mVertexBuffer;
+	IBuffer* mVertexBuffer;
 	int mVertexOffsets[2];	// one per binding point
-	IIndexBuffer *mIndexBuffer;
+	IBuffer* mIndexBuffer;
 
 	EPassType mPassType = NORMAL_PASS;
 
@@ -657,7 +656,7 @@ public:
 		mClipSplit[1] = 1000000.f;
 	}
 
-	void SetVertexBuffer(IVertexBuffer *vb, int offset0, int offset1)
+	void SetVertexBuffer(IBuffer* vb, int offset0, int offset1)
 	{
 		assert(vb);
 		mVertexBuffer = vb;
@@ -665,7 +664,7 @@ public:
 		mVertexOffsets[1] = offset1;
 	}
 
-	void SetIndexBuffer(IIndexBuffer *ib)
+	void SetIndexBuffer(IBuffer* ib)
 	{
 		mIndexBuffer = ib;
 	}

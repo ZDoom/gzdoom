@@ -331,8 +331,8 @@ public:
 
 class F2DVertexBuffer
 {
-	IVertexBuffer *mVertexBuffer;
-	IIndexBuffer *mIndexBuffer;
+	IBuffer* mVertexBuffer;
+	IBuffer* mIndexBuffer;
 
 
 public:
@@ -351,7 +351,7 @@ public:
 		mIndexBuffer->SetData(indexcount * sizeof(unsigned int), indices, BufferUsageType::Stream);
 	}
 
-	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
+	std::pair<IBuffer*, IBuffer*> GetBufferObjects() const
 	{
 		return std::make_pair(mVertexBuffer, mIndexBuffer);
 	}

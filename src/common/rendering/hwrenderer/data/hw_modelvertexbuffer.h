@@ -7,8 +7,8 @@ class FModelRenderer;
 
 class FModelVertexBuffer : public IModelVertexBuffer
 {
-	IVertexBuffer *mVertexBuffer;
-	IIndexBuffer *mIndexBuffer;
+	IBuffer* mVertexBuffer;
+	IBuffer* mIndexBuffer;
 
 public:
 
@@ -21,6 +21,6 @@ public:
 	unsigned int *LockIndexBuffer(unsigned int size) override;
 	void UnlockIndexBuffer() override;
 
-	IVertexBuffer* vertexBuffer() const { return mVertexBuffer; }
-	IIndexBuffer* indexBuffer() const { return mIndexBuffer; }
+	IBuffer* vertexBuffer() const { return mVertexBuffer; }
+	IBuffer* indexBuffer() const { return mIndexBuffer; }
 };

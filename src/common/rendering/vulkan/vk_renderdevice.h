@@ -72,15 +72,16 @@ public:
 
 	IHardwareTexture *CreateHardwareTexture(int numchannels) override;
 	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;
-	IVertexBuffer *CreateVertexBuffer() override;
-	IIndexBuffer *CreateIndexBuffer() override;
 
-	IDataBuffer* CreateLightBuffer() override;
-	IDataBuffer* CreateBoneBuffer() override;
-	IDataBuffer* CreateViewpointBuffer() override;
-	IDataBuffer* CreateShadowmapNodesBuffer() override;
-	IDataBuffer* CreateShadowmapLinesBuffer() override;
-	IDataBuffer* CreateShadowmapLightsBuffer() override;
+	IBuffer* CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs) override;
+	IBuffer* CreateIndexBuffer() override;
+
+	IBuffer* CreateLightBuffer() override;
+	IBuffer* CreateBoneBuffer() override;
+	IBuffer* CreateViewpointBuffer() override;
+	IBuffer* CreateShadowmapNodesBuffer() override;
+	IBuffer* CreateShadowmapLinesBuffer() override;
+	IBuffer* CreateShadowmapLightsBuffer() override;
 
 	FTexture *WipeStartScreen() override;
 	FTexture *WipeEndScreen() override;

@@ -8,7 +8,7 @@
 class DFrameBuffer;
 class FGameTexture;
 class FRenderState;
-class IVertexBuffer;
+class IBuffer;
 struct HWSkyPortal;
 struct HWDrawInfo;
 
@@ -63,7 +63,7 @@ public:
 		SKYMODE_FOGLAYER = 2
 	};
 
-	IVertexBuffer *mVertexBuffer;
+	IBuffer* mVertexBuffer;
 
 	TArray<FSkyVertex> mVertices;
 	TArray<unsigned int> mPrimStartDoom;
@@ -86,7 +86,7 @@ public:
 	FSkyVertexBuffer(DFrameBuffer* fb);
 	~FSkyVertexBuffer();
 	void SetupMatrices(FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix, bool tiled, float xscale = 0, float vertscale = 0);
-	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
+	std::pair<IBuffer*, IBuffer*> GetBufferObjects() const
 	{
 		return std::make_pair(mVertexBuffer, nullptr);
 	}

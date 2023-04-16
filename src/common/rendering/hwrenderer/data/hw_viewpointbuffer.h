@@ -9,8 +9,8 @@ class FRenderState;
 class HWViewpointBuffer
 {
 	DFrameBuffer* fb = nullptr;
-	IDataBuffer *mBuffer;
-	IDataBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
+	IBuffer* mBuffer;
+	IBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
 	int mPipelineNbr;
 	int mPipelinePos = 0;
 

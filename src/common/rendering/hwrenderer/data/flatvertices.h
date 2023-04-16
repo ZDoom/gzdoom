@@ -65,9 +65,9 @@ public:
 	int mPipelineNbr;
 	int mPipelinePos = 0;
 
-	IVertexBuffer* mVertexBuffer;
-	IVertexBuffer *mVertexBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
-	IIndexBuffer *mIndexBuffer;
+	IBuffer* mVertexBuffer;
+	IBuffer* mVertexBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
+	IBuffer* mIndexBuffer;
 
 
 
@@ -96,7 +96,7 @@ public:
 	~FFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
-	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const 
+	std::pair<IBuffer*, IBuffer*> GetBufferObjects() const
 	{
 		return std::make_pair(mVertexBuffer, mIndexBuffer);
 	}

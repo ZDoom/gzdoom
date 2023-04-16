@@ -122,7 +122,6 @@ std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex)
 FSkyVertexBuffer::FSkyVertexBuffer(DFrameBuffer* fb) : fb(fb)
 {
 	CreateDome();
-	mVertexBuffer = fb->CreateVertexBuffer();
 
 	static const FVertexBufferAttribute format[] = {
 		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FSkyVertex, x) },
@@ -130,7 +129,7 @@ FSkyVertexBuffer::FSkyVertexBuffer(DFrameBuffer* fb) : fb(fb)
 		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(FSkyVertex, color) },
 		{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FSkyVertex, lu) },
 	};
-	mVertexBuffer->SetFormat(1, 4, sizeof(FSkyVertex), format);
+	mVertexBuffer = fb->CreateVertexBuffer(1, 4, sizeof(FSkyVertex), format);
 	mVertexBuffer->SetData(mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], BufferUsageType::Static);
 }
 

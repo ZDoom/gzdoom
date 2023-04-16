@@ -104,7 +104,7 @@ void VkSamplerManager::CreateHWSamplers()
 			builder.MaxLod(0.25f);
 		}
 		builder.DebugName("VkSamplerManager.mSamplers");
-		mSamplers[i] = builder.Create(fb->device.get());
+		mSamplers[i] = builder.Create(fb->GetDevice());
 	}
 
 	mSamplers[CLAMP_XY_NOMIP] = SamplerBuilder()
@@ -114,7 +114,7 @@ void VkSamplerManager::CreateHWSamplers()
 		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
 		.MaxLod(0.25f)
 		.DebugName("VkSamplerManager.mSamplers")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	for (int i = CLAMP_NOFILTER; i <= CLAMP_NOFILTER_XY; i++)
 	{
@@ -125,7 +125,7 @@ void VkSamplerManager::CreateHWSamplers()
 			.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
 			.MaxLod(0.25f)
 			.DebugName("VkSamplerManager.mSamplers")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 	}
 
 	// CAMTEX is repeating with texture filter and no mipmap
@@ -136,7 +136,7 @@ void VkSamplerManager::CreateHWSamplers()
 		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST)
 		.MaxLod(0.25f)
 		.DebugName("VkSamplerManager.mSamplers")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 void VkSamplerManager::DeleteHWSamplers()
@@ -161,7 +161,7 @@ VulkanSampler* VkSamplerManager::Get(PPFilterMode filter, PPWrapMode wrap)
 		.MagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR)
 		.AddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT)
 		.DebugName("VkPostprocess.mSamplers")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	return sampler.get();
 }
@@ -174,7 +174,7 @@ void VkSamplerManager::CreateShadowmapSampler()
 		.MagFilter(VK_FILTER_NEAREST)
 		.AddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
 		.DebugName("VkRenderBuffers.ShadowmapSampler")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 void VkSamplerManager::CreateLightmapSampler()
@@ -185,5 +185,5 @@ void VkSamplerManager::CreateLightmapSampler()
 		.MagFilter(VK_FILTER_LINEAR)
 		.AddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE)
 		.DebugName("VkRenderBuffers.LightmapSampler")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }

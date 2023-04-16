@@ -34,15 +34,15 @@ CVAR(Bool, vk_exclusivefullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 VkFramebufferManager::VkFramebufferManager(VulkanRenderDevice* fb) : fb(fb)
 {
 	SwapChain = VulkanSwapChainBuilder()
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	SwapChainImageAvailableSemaphore = SemaphoreBuilder()
 		.DebugName("SwapChainImageAvailableSemaphore")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	RenderFinishedSemaphore = SemaphoreBuilder()
 		.DebugName("RenderFinishedSemaphore")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 VkFramebufferManager::~VkFramebufferManager()

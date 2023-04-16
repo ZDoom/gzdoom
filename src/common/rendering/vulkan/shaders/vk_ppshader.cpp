@@ -39,13 +39,13 @@ VkPPShader::VkPPShader(VulkanRenderDevice* fb, PPShader *shader) : fb(fb)
 		.Type(ShaderType::Vertex)
 		.AddSource(shader->VertexShader.GetChars(), LoadShaderCode(shader->VertexShader, "", shader->Version).GetChars())
 		.DebugName(shader->VertexShader.GetChars())
-		.Create(shader->VertexShader.GetChars(), fb->device.get());
+		.Create(shader->VertexShader.GetChars(), fb->GetDevice());
 
 	FragmentShader = ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.AddSource(shader->FragmentShader.GetChars(), LoadShaderCode(shader->FragmentShader, prolog, shader->Version).GetChars())
 		.DebugName(shader->FragmentShader.GetChars())
-		.Create(shader->FragmentShader.GetChars(), fb->device.get());
+		.Create(shader->FragmentShader.GetChars(), fb->GetDevice());
 
 	fb->GetShaderManager()->AddVkPPShader(this);
 }

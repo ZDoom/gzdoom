@@ -139,7 +139,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 #ifdef NPOT_EMULATION
 	definesBlock << "#define NPOT_EMULATION\n";
 #endif
-	if (!fb->device->EnabledFeatures.Features.shaderClipDistance)
+	if (!fb->GetDevice()->EnabledFeatures.Features.shaderClipDistance)
 	{
 		definesBlock << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	}
@@ -160,19 +160,19 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 		.AddSource(vert_lump, codeBlock.GetChars())
 		.OnIncludeLocal([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, false); })
 		.OnIncludeSystem([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, true); })
-		.Create(shadername.GetChars(), fb->device.get());
+		.Create(shadername.GetChars(), fb->GetDevice());
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char* mateffect_lump, const char *light_lump, const char *defines, const VkShaderKey& key)
 {
 	FString definesBlock;
-	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME)) definesBlock << "\n#define SUPPORTS_RAYQUERY\n";
+	if (fb->GetDevice()->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME)) definesBlock << "\n#define SUPPORTS_RAYQUERY\n";
 	definesBlock << defines;
 	definesBlock << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
 	definesBlock << "#define NPOT_EMULATION\n";
 #endif
-	if (!fb->device->EnabledFeatures.Features.shaderClipDistance) definesBlock << "#define NO_CLIPDISTANCE_SUPPORT\n";
+	if (!fb->GetDevice()->EnabledFeatures.Features.shaderClipDistance) definesBlock << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	if (!key.AlphaTest) definesBlock << "#define NO_ALPHATEST\n";
 	if (key.GBufferPass) definesBlock << "#define GBUFFER_PASS\n";
 
@@ -240,14 +240,14 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 		.AddSource(frag_lump, codeBlock.GetChars())
 		.OnIncludeLocal([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, false); })
 		.OnIncludeSystem([=](std::string headerName, std::string includerName, size_t depth) { return OnInclude(headerName.c_str(), includerName.c_str(), depth, true); })
-		.Create(shadername.GetChars(), fb->device.get());
+		.Create(shadername.GetChars(), fb->GetDevice());
 }
 
 FString VkShaderManager::GetVersionBlock()
 {
 	FString versionBlock;
 
-	if (fb->device->Instance->ApiVersion >= VK_API_VERSION_1_2)
+	if (fb->GetDevice()->Instance->ApiVersion >= VK_API_VERSION_1_2)
 	{
 		versionBlock << "#version 460 core\n";
 	}
@@ -258,7 +258,7 @@ FString VkShaderManager::GetVersionBlock()
 
 	versionBlock << "#extension GL_GOOGLE_include_directive : enable\n";
 
-	if (fb->device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+	if (fb->GetDevice()->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 	{
 		versionBlock << "#extension GL_EXT_ray_query : enable\n";
 	}

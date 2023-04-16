@@ -40,24 +40,24 @@ extern FString gpuStatOutput;
 VkCommandBufferManager::VkCommandBufferManager(VulkanRenderDevice* fb) : fb(fb)
 {
 	mCommandPool = CommandPoolBuilder()
-		.QueueFamily(fb->device->GraphicsFamily)
+		.QueueFamily(fb->GetDevice()->GraphicsFamily)
 		.DebugName("mCommandPool")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	for (auto& semaphore : mSubmitSemaphore)
-		semaphore.reset(new VulkanSemaphore(fb->device.get()));
+		semaphore.reset(new VulkanSemaphore(fb->GetDevice()));
 
 	for (auto& fence : mSubmitFence)
-		fence.reset(new VulkanFence(fb->device.get()));
+		fence.reset(new VulkanFence(fb->GetDevice()));
 
 	for (int i = 0; i < maxConcurrentSubmitCount; i++)
 		mSubmitWaitFences[i] = mSubmitFence[i]->fence;
 
-	if (fb->device->GraphicsTimeQueries)
+	if (fb->GetDevice()->GraphicsTimeQueries)
 	{
 		mTimestampQueryPool = QueryPoolBuilder()
 			.QueryType(VK_QUERY_TYPE_TIMESTAMP, MaxTimestampQueries)
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		GetDrawCommands()->resetQueryPool(mTimestampQueryPool.get(), 0, MaxTimestampQueries);
 	}
@@ -104,8 +104,8 @@ void VkCommandBufferManager::FlushCommands(VulkanCommandBuffer** commands, size_
 
 	if (mNextSubmit >= maxConcurrentSubmitCount)
 	{
-		vkWaitForFences(fb->device->device, 1, &mSubmitFence[currentIndex]->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-		vkResetFences(fb->device->device, 1, &mSubmitFence[currentIndex]->fence);
+		vkWaitForFences(fb->GetDevice()->device, 1, &mSubmitFence[currentIndex]->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(fb->GetDevice()->device, 1, &mSubmitFence[currentIndex]->fence);
 	}
 
 	QueueSubmit submit;
@@ -125,7 +125,7 @@ void VkCommandBufferManager::FlushCommands(VulkanCommandBuffer** commands, size_
 	if (!lastsubmit)
 		submit.AddSignal(mSubmitSemaphore[currentIndex].get());
 
-	submit.Execute(fb->device.get(), fb->device->GraphicsQueue, mSubmitFence[currentIndex].get());
+	submit.Execute(fb->GetDevice(), fb->GetDevice()->GraphicsQueue, mSubmitFence[currentIndex].get());
 	mNextSubmit++;
 }
 
@@ -181,8 +181,8 @@ void VkCommandBufferManager::WaitForCommands(bool finish, bool uploadOnly)
 
 	if (numWaitFences > 0)
 	{
-		vkWaitForFences(fb->device->device, numWaitFences, mSubmitWaitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
-		vkResetFences(fb->device->device, numWaitFences, mSubmitWaitFences);
+		vkWaitForFences(fb->GetDevice()->device, numWaitFences, mSubmitWaitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(fb->GetDevice()->device, numWaitFences, mSubmitWaitFences);
 	}
 
 	DeleteFrameObjects(uploadOnly);
@@ -208,7 +208,7 @@ void VkCommandBufferManager::PushGroup(const FString& name)
 	if (!gpuStatActive)
 		return;
 
-	if (mNextTimestampQuery < MaxTimestampQueries && fb->device->GraphicsTimeQueries)
+	if (mNextTimestampQuery < MaxTimestampQueries && fb->GetDevice()->GraphicsTimeQueries)
 	{
 		TimestampQuery q;
 		q.name = name;
@@ -228,7 +228,7 @@ void VkCommandBufferManager::PopGroup()
 	TimestampQuery& q = timeElapsedQueries[mGroupStack.back()];
 	mGroupStack.pop_back();
 
-	if (mNextTimestampQuery < MaxTimestampQueries && fb->device->GraphicsTimeQueries)
+	if (mNextTimestampQuery < MaxTimestampQueries && fb->GetDevice()->GraphicsTimeQueries)
 	{
 		q.endIndex = mNextTimestampQuery++;
 		GetDrawCommands()->writeTimestamp(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mTimestampQueryPool.get(), q.endIndex);
@@ -241,7 +241,7 @@ void VkCommandBufferManager::UpdateGpuStats()
 	if (mNextTimestampQuery > 0)
 		mTimestampQueryPool->getResults(0, mNextTimestampQuery, sizeof(uint64_t) * mNextTimestampQuery, timestamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 
-	double timestampPeriod = fb->device->PhysicalDevice.Properties.Properties.limits.timestampPeriod;
+	double timestampPeriod = fb->GetDevice()->PhysicalDevice.Properties.Properties.limits.timestampPeriod;
 
 	gpuStatOutput = "";
 	for (auto& q : timeElapsedQueries)

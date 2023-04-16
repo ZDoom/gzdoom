@@ -25,12 +25,11 @@ class SWSceneDrawer;
 
 class VulkanRenderDevice : public SystemBaseFrameBuffer
 {
-	typedef SystemBaseFrameBuffer Super;
-
-
 public:
-	std::shared_ptr<VulkanDevice> device;
+	VulkanRenderDevice(void* hMonitor, bool fullscreen, std::shared_ptr<VulkanSurface> surface);
+	~VulkanRenderDevice();
 
+	VulkanDevice* GetDevice() { return mDevice.get(); }
 	VkCommandBufferManager* GetCommands() { return mCommands.get(); }
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
 	VkSamplerManager *GetSamplerManager() { return mSamplerManager.get(); }
@@ -47,8 +46,6 @@ public:
 
 	unsigned int GetLightBufferBlockSize() const;
 
-	VulkanRenderDevice(void *hMonitor, bool fullscreen, std::shared_ptr<VulkanSurface> surface);
-	~VulkanRenderDevice();
 	bool IsVulkan() override { return true; }
 
 	void Update() override;
@@ -96,6 +93,7 @@ private:
 	void PrintStartupLog();
 	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;
 
+	std::shared_ptr<VulkanDevice> mDevice;
 	std::unique_ptr<VkCommandBufferManager> mCommands;
 	std::unique_ptr<VkBufferManager> mBufferManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;

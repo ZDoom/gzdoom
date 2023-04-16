@@ -119,20 +119,19 @@ void VulkanPrintLog(const char* typestr, const std::string& msg)
 	}
 }
 
-VulkanRenderDevice::VulkanRenderDevice(void *hMonitor, bool fullscreen, std::shared_ptr<VulkanSurface> surface) :
-	Super(hMonitor, fullscreen) 
+VulkanRenderDevice::VulkanRenderDevice(void *hMonitor, bool fullscreen, std::shared_ptr<VulkanSurface> surface) : SystemBaseFrameBuffer(hMonitor, fullscreen)
 {
 	VulkanDeviceBuilder builder;
 	builder.OptionalRayQuery();
 	builder.Surface(surface);
 	builder.SelectDevice(vk_device);
 	SupportedDevices = builder.FindDevices(surface->Instance);
-	device = builder.Create(surface->Instance);
+	mDevice = builder.Create(surface->Instance);
 }
 
 VulkanRenderDevice::~VulkanRenderDevice()
 {
-	vkDeviceWaitIdle(device->device); // make sure the GPU is no longer using any objects before RAII tears them down
+	vkDeviceWaitIdle(mDevice->device); // make sure the GPU is no longer using any objects before RAII tears them down
 
 	delete mVertexData;
 	delete mSkyData;
@@ -163,7 +162,7 @@ void VulkanRenderDevice::InitializeState()
 	}
 
 	// Use the same names here as OpenGL returns.
-	switch (device->PhysicalDevice.Properties.Properties.vendorID)
+	switch (mDevice->PhysicalDevice.Properties.Properties.vendorID)
 	{
 	case 0x1002: vendorstring = "ATI Technologies Inc.";     break;
 	case 0x10DE: vendorstring = "NVIDIA Corporation";  break;
@@ -173,8 +172,8 @@ void VulkanRenderDevice::InitializeState()
 
 	hwcaps = RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
 	glslversion = 4.50f;
-	uniformblockalignment = (unsigned int)device->PhysicalDevice.Properties.Properties.limits.minUniformBufferOffsetAlignment;
-	maxuniformblock = device->PhysicalDevice.Properties.Properties.limits.maxUniformBufferRange;
+	uniformblockalignment = (unsigned int)mDevice->PhysicalDevice.Properties.Properties.limits.minUniformBufferOffsetAlignment;
+	maxuniformblock = mDevice->PhysicalDevice.Properties.Properties.limits.maxUniformBufferRange;
 
 	mCommands.reset(new VkCommandBufferManager(this));
 
@@ -228,7 +227,7 @@ void VulkanRenderDevice::Update()
 	mCommands->WaitForCommands(true);
 	mCommands->UpdateGpuStats();
 
-	Super::Update();
+	SystemBaseFrameBuffer::Update();
 }
 
 bool VulkanRenderDevice::CompileNextShader()
@@ -277,7 +276,8 @@ void VulkanRenderDevice::PostProcessScene(bool swscene, int fixedcm, float flash
 
 const char* VulkanRenderDevice::DeviceName() const
 {
-	return device->PhysicalDevice.Properties.Properties.deviceName;
+	const auto &props = mDevice->PhysicalDevice.Properties;
+	return props.Properties.deviceName;
 }
 
 void VulkanRenderDevice::SetVSync(bool vsync)
@@ -390,7 +390,7 @@ void VulkanRenderDevice::CopyScreenToBuffer(int w, int h, uint8_t *data)
 		.Usage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 		.Size(w, h)
 		.DebugName("CopyScreenToBuffer")
-		.Create(device.get());
+		.Create(mDevice.get());
 
 	GetPostprocess()->BlitCurrentToImage(&image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
@@ -399,7 +399,7 @@ void VulkanRenderDevice::CopyScreenToBuffer(int w, int h, uint8_t *data)
 		.Size(w * h * 4)
 		.Usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU)
 		.DebugName("CopyScreenToBuffer")
-		.Create(device.get());
+		.Create(mDevice.get());
 
 	// Copy from image to buffer
 	VkBufferImageCopy region = {};
@@ -496,7 +496,7 @@ unsigned int VulkanRenderDevice::GetLightBufferBlockSize() const
 
 void VulkanRenderDevice::PrintStartupLog()
 {
-	const auto &props = device->PhysicalDevice.Properties.Properties;
+	const auto &props = mDevice->PhysicalDevice.Properties.Properties;
 
 	FString deviceType;
 	switch (props.deviceType)
@@ -519,7 +519,7 @@ void VulkanRenderDevice::PrintStartupLog()
 	Printf("Vulkan version: %s (api) %s (driver)\n", apiVersion.GetChars(), driverVersion.GetChars());
 
 	Printf(PRINT_LOG, "Vulkan extensions:");
-	for (const VkExtensionProperties &p : device->PhysicalDevice.Extensions)
+	for (const VkExtensionProperties &p : mDevice->PhysicalDevice.Extensions)
 	{
 		Printf(PRINT_LOG, " %s", p.extensionName);
 	}

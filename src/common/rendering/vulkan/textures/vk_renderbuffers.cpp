@@ -41,7 +41,7 @@ VkRenderBuffers::~VkRenderBuffers()
 
 VkSampleCountFlagBits VkRenderBuffers::GetBestSampleCount()
 {
-	const auto &limits = fb->device->PhysicalDevice.Properties.Properties.limits;
+	const auto &limits = fb->GetDevice()->PhysicalDevice.Properties.Properties.limits;
 	VkSampleCountFlags deviceSampleCounts = limits.sampledImageColorSampleCounts & limits.sampledImageDepthSampleCounts & limits.sampledImageStencilSampleCounts;
 
 	int requestedSamples = clamp((int)gl_multisample, 0, 64);
@@ -90,29 +90,29 @@ void VkRenderBuffers::CreatePipelineDepthStencil(int width, int height)
 	builder.Size(width, height);
 	builder.Format(PipelineDepthStencilFormat);
 	builder.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	if (!builder.IsFormatSupported(fb->device.get()))
+	if (!builder.IsFormatSupported(fb->GetDevice()))
 	{
 		PipelineDepthStencilFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 		builder.Format(PipelineDepthStencilFormat);
-		if (!builder.IsFormatSupported(fb->device.get()))
+		if (!builder.IsFormatSupported(fb->GetDevice()))
 		{
 			I_FatalError("This device does not support any of the required depth stencil image formats.");
 		}
 	}
 	builder.DebugName("VkRenderBuffers.PipelineDepthStencil");
 
-	PipelineDepthStencil.Image = builder.Create(fb->device.get());
+	PipelineDepthStencil.Image = builder.Create(fb->GetDevice());
 	PipelineDepthStencil.AspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 
 	PipelineDepthStencil.View = ImageViewBuilder()
 		.Image(PipelineDepthStencil.Image.get(), PipelineDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
 		.DebugName("VkRenderBuffers.PipelineDepthStencilView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	PipelineDepthStencil.DepthOnlyView = ImageViewBuilder()
 		.Image(PipelineDepthStencil.Image.get(), PipelineDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT)
 		.DebugName("VkRenderBuffers.PipelineDepthView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 void VkRenderBuffers::CreatePipeline(int width, int height)
@@ -134,12 +134,12 @@ void VkRenderBuffers::CreatePipeline(int width, int height)
 			.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
 			.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 			.DebugName("VkRenderBuffers.PipelineImage")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		PipelineImage[i].View = ImageViewBuilder()
 			.Image(PipelineImage[i].Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
 			.DebugName("VkRenderBuffers.PipelineView")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		barrier.AddImage(&PipelineImage[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
 	}
@@ -174,12 +174,12 @@ void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagB
 		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
 		.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
 		.DebugName("VkRenderBuffers.SceneColor")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	SceneColor.View = ImageViewBuilder()
 		.Image(SceneColor.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
 		.DebugName("VkRenderBuffers.SceneColorView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples)
@@ -189,29 +189,29 @@ void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCou
 	builder.Samples(samples);
 	builder.Format(SceneDepthStencilFormat);
 	builder.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	if (!builder.IsFormatSupported(fb->device.get()))
+	if (!builder.IsFormatSupported(fb->GetDevice()))
 	{
 		SceneDepthStencilFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 		builder.Format(SceneDepthStencilFormat);
-		if (!builder.IsFormatSupported(fb->device.get()))
+		if (!builder.IsFormatSupported(fb->GetDevice()))
 		{
 			I_FatalError("This device does not support any of the required depth stencil image formats.");
 		}
 	}
 	builder.DebugName("VkRenderBuffers.SceneDepthStencil");
 
-	SceneDepthStencil.Image = builder.Create(fb->device.get());
+	SceneDepthStencil.Image = builder.Create(fb->GetDevice());
 	SceneDepthStencil.AspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 
 	SceneDepthStencil.View = ImageViewBuilder()
 		.Image(SceneDepthStencil.Image.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
 		.DebugName("VkRenderBuffers.SceneDepthStencilView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	SceneDepthStencil.DepthOnlyView = ImageViewBuilder()
 		.Image(SceneDepthStencil.Image.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT)
 		.DebugName("VkRenderBuffers.SceneDepthView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBits samples)
@@ -222,12 +222,12 @@ void VkRenderBuffers::CreateSceneFog(int width, int height, VkSampleCountFlagBit
 		.Format(VK_FORMAT_R8G8B8A8_UNORM)
 		.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
 		.DebugName("VkRenderBuffers.SceneFog")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	SceneFog.View = ImageViewBuilder()
 		.Image(SceneFog.Image.get(), VK_FORMAT_R8G8B8A8_UNORM)
 		.DebugName("VkRenderBuffers.SceneFogView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples)
@@ -237,19 +237,19 @@ void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlag
 	builder.Samples(samples);
 	builder.Format(SceneNormalFormat);
 	builder.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	if (!builder.IsFormatSupported(fb->device.get(), VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+	if (!builder.IsFormatSupported(fb->GetDevice(), VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
 	{
 		SceneNormalFormat = VK_FORMAT_R8G8B8A8_UNORM;
 		builder.Format(SceneNormalFormat);
 	}
 	builder.DebugName("VkRenderBuffers.SceneNormal");
 
-	SceneNormal.Image = builder.Create(fb->device.get());
+	SceneNormal.Image = builder.Create(fb->GetDevice());
 
 	SceneNormal.View = ImageViewBuilder()
 		.Image(SceneNormal.Image.get(), SceneNormalFormat)
 		.DebugName("VkRenderBuffers.SceneNormalView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 }
 
 VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, const PPOutput& output, WhichDepthStencil stencilTest, int& framebufferWidth, int& framebufferHeight)
@@ -296,7 +296,7 @@ VulkanFramebuffer* VkRenderBuffers::GetOutput(VkPPRenderPassSetup* passSetup, co
 		if (stencilTest == WhichDepthStencil::Pipeline)
 			builder.AddAttachment(fb->GetBuffers()->PipelineDepthStencil.View.get());
 		builder.DebugName("PPOutputFB");
-		framebuffer = builder.Create(fb->device.get());
+		framebuffer = builder.Create(fb->GetDevice());
 	}
 
 	framebufferWidth = w;

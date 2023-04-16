@@ -87,14 +87,14 @@ VkTextureImage *VkHardwareTexture::GetDepthStencil(FTexture *tex)
 			.Format(format)
 			.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 			.DebugName("VkHardwareTexture.DepthStencil")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		mDepthStencil.AspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 
 		mDepthStencil.View = ImageViewBuilder()
 			.Image(mDepthStencil.Image.get(), format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
 			.DebugName("VkHardwareTexture.DepthStencilView")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		VkImageTransition()
 			.AddImage(&mDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, true)
@@ -122,12 +122,12 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 			.Size(w, h)
 			.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
 			.DebugName("VkHardwareTexture.mImage")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		mImage.View = ImageViewBuilder()
 			.Image(mImage.Image.get(), format)
 			.DebugName("VkHardwareTexture.mImageView")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		VkImageTransition()
 			.AddImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true)
@@ -146,7 +146,7 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 		.Size(totalSize)
 		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
 		.DebugName("VkHardwareTexture.mStagingBuffer")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	uint8_t *data = (uint8_t*)stagingBuffer->Map(0, totalSize);
 	memcpy(data, pixels, totalSize);
@@ -157,12 +157,12 @@ void VkHardwareTexture::CreateTexture(int w, int h, int pixelsize, VkFormat form
 		.Size(w, h, !mipmap ? 1 : GetMipLevels(w, h))
 		.Usage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
 		.DebugName("VkHardwareTexture.mImage")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	mImage.View = ImageViewBuilder()
 		.Image(mImage.Image.get(), format)
 		.DebugName("VkHardwareTexture.mImageView")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
@@ -219,14 +219,14 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.DebugName("VkHardwareTexture.mImage")
-			.Create(fb->device.get(), &allocatedBytes);
+			.Create(fb->GetDevice(), &allocatedBytes);
 
 		mTexelsize = texelsize;
 
 		mImage.View = ImageViewBuilder()
 			.Image(mImage.Image.get(), format)
 			.DebugName("VkHardwareTexture.mImageView")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		VkImageTransition()
 			.AddImage(&mImage, VK_IMAGE_LAYOUT_GENERAL, true)
@@ -260,14 +260,14 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 		.Size(w, h)
 		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY)
 		.DebugName(name)
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	mTexelsize = 4;
 
 	mImage.View = ImageViewBuilder()
 		.Image(mImage.Image.get(), format)
 		.DebugName(name)
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 
 	if (fb->GetBuffers()->GetWidth() > 0 && fb->GetBuffers()->GetHeight() > 0)
 	{
@@ -380,7 +380,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 		update.AddCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
-	update.Execute(fb->device.get());
+	update.Execute(fb->GetDevice());
 	mDescriptorSets.emplace_back(clampmode, translationp, std::move(descriptor));
 	return mDescriptorSets.back().descriptor.get();
 }

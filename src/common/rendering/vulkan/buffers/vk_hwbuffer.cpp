@@ -80,13 +80,13 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 			.Usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | mBufferType, VMA_MEMORY_USAGE_GPU_ONLY)
 			.Size(bufsize)
 			.DebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Static" : "VkHardwareBuffer.Stream")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		mStaging = BufferBuilder()
 			.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
 			.Size(bufsize)
 			.DebugName(usage == BufferUsageType::Static ? "VkHardwareBuffer.Staging.Static" : "VkHardwareBuffer.Staging.Stream")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		if (data)
 		{
@@ -108,7 +108,7 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.Size(bufsize)
 			.DebugName("VkHardwareBuffer.Persistent")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		map = mBuffer->Map(0, bufsize);
 		if (data)
@@ -125,7 +125,7 @@ void VkHardwareBuffer::SetData(size_t size, const void *data, BufferUsageType us
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 			.Size(bufsize)
 			.DebugName("VkHardwareBuffer.Mappable")
-			.Create(fb->device.get());
+			.Create(fb->GetDevice());
 
 		if (data)
 		{
@@ -176,7 +176,7 @@ void VkHardwareBuffer::Resize(size_t newsize)
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		.Size(newsize)
 		.DebugName("VkHardwareBuffer.Resized")
-		.Create(fb->device.get());
+		.Create(fb->GetDevice());
 	buffersize = newsize;
 
 	// Transfer data from old to new

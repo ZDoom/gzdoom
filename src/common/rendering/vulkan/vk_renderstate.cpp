@@ -560,7 +560,7 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 		if (key.DepthStencil)
 			builder.AddAttachment(mRenderTarget.DepthStencil);
 		builder.DebugName("VkRenderPassSetup.Framebuffer");
-		framebuffer = builder.Create(fb->device.get());
+		framebuffer = builder.Create(fb->GetDevice());
 	}
 
 	// Only clear depth+stencil if the render target actually has that

@@ -51,7 +51,7 @@ class ActorTraceStaticLight
 public:
 	ActorTraceStaticLight(AActor* actor) : Actor(actor)
 	{
-		if (Actor->Pos() != Actor->StaticLightsTraceCache.Pos)
+		if (Actor && Actor->Pos() != Actor->StaticLightsTraceCache.Pos)
 		{
 			Actor->StaticLightsTraceCache.Pos = Actor->Pos();
 			Actor->StaticLightsTraceCache.Bits = 0;
@@ -62,7 +62,7 @@ public:
 	bool TraceLightVisbility(FLightNode* node, const FVector3& L, float dist)
 	{
 		FDynamicLight* light = node->lightsource;
-		if (!light->Trace() || !level.levelMesh)
+		if (!light->Trace() || !level.levelMesh || !Actor)
 			return true;
 
 		if (!ActorMoved && CurrentBit < 64)
@@ -82,7 +82,7 @@ public:
 
 	bool TraceSunVisibility(float x, float y, float z)
 	{
-		if (level.LMTextureCount == 0)
+		if (level.LMTextureCount == 0 || !Actor)
 			return false;
 
 		if (!ActorMoved && CurrentBit < 64)

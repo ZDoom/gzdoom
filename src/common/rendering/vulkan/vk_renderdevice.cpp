@@ -45,9 +45,8 @@
 
 #include "vk_renderdevice.h"
 #include "vulkan/vk_renderstate.h"
-#include "vulkan/vk_streambuffer.h"
 #include "vulkan/vk_postprocess.h"
-#include "vulkan/vk_raytrace.h"
+#include "vulkan/accelstructs/vk_raytrace.h"
 #include "vulkan/pipelines/vk_renderpass.h"
 #include "vulkan/descriptorsets/vk_descriptorset.h"
 #include "vulkan/shaders/vk_shader.h"
@@ -59,6 +58,7 @@
 #include "vulkan/commands/vk_commandbuffer.h"
 #include "vulkan/buffers/vk_hwbuffer.h"
 #include "vulkan/buffers/vk_buffer.h"
+#include "vulkan/buffers/vk_streambuffer.h"
 #include <zvulkan/vulkanswapchain.h>
 #include <zvulkan/vulkanbuilders.h>
 #include <zvulkan/vulkansurface.h>

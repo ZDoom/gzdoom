@@ -22,7 +22,7 @@
 
 #include "vk_buffer.h"
 #include "vk_hwbuffer.h"
-#include "vulkan/vk_streambuffer.h"
+#include "vk_streambuffer.h"
 #include "hwrenderer/data/shaderuniforms.h"
 
 VkBufferManager::VkBufferManager(VulkanRenderDevice* fb) : fb(fb)

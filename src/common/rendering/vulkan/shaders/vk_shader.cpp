@@ -22,8 +22,8 @@
 
 #include "vk_shader.h"
 #include "vk_ppshader.h"
-#include "zvulkan/vulkanbuilders.h"
-#include "vulkan/system/vk_renderdevice.h"
+#include "vulkan/vk_renderdevice.h"
+#include <zvulkan/vulkanbuilders.h>
 #include "hw_shaderpatcher.h"
 #include "filesystem.h"
 #include "engineerrors.h"

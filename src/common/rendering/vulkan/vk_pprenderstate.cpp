@@ -22,18 +22,18 @@
 
 #include "vk_pprenderstate.h"
 #include "vk_postprocess.h"
-#include "vulkan/system/vk_renderdevice.h"
-#include "vulkan/system/vk_commandbuffer.h"
-#include <zvulkan/vulkanswapchain.h>
-#include "vulkan/system/vk_buffer.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/vk_renderstate.h"
+#include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/buffers/vk_buffer.h"
 #include "vulkan/shaders/vk_ppshader.h"
 #include "vulkan/textures/vk_pptexture.h"
 #include "vulkan/textures/vk_renderbuffers.h"
-#include "vulkan/textures/vk_samplers.h"
+#include "vulkan/samplers/vk_samplers.h"
 #include "vulkan/textures/vk_texture.h"
-#include "vulkan/textures/vk_framebuffer.h"
-#include "vulkan/renderer/vk_renderstate.h"
-#include "vulkan/renderer/vk_descriptorset.h"
+#include "vulkan/framebuffers/vk_framebuffer.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
+#include <zvulkan/vulkanswapchain.h>
 #include "flatvertices.h"
 
 VkPPRenderState::VkPPRenderState(VulkanRenderDevice* fb) : fb(fb)

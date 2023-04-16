@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vulkan/system/vk_hwbuffer.h"
+#include "vulkan/buffers/vk_hwbuffer.h"
 #include "vulkan/shaders/vk_shader.h"
 
 class VkStreamBuffer;

@@ -597,8 +597,12 @@ file( GLOB HEADER_FILES
 	common/rendering/*.h
 	common/rendering/hwrenderer/data/*.h
 	common/rendering/vulkan/*.h
-	common/rendering/vulkan/system/*.h
-	common/rendering/vulkan/renderer/*.h
+	common/rendering/vulkan/buffers/*.h
+	common/rendering/vulkan/commands/*.h
+	common/rendering/vulkan/descriptorsets/*.h
+	common/rendering/vulkan/framebuffers/*.h
+	common/rendering/vulkan/pipelines/*.h
+	common/rendering/vulkan/samplers/*.h
 	common/rendering/vulkan/shaders/*.h
 	common/rendering/vulkan/textures/*.h
 	common/scripting/core/*h
@@ -734,26 +738,26 @@ set( FASTMATH_SOURCES
 	
 #Vulkan stuff must go into a separate list because it needs to be disabled for some platforms
 set (VULKAN_SOURCES
-	common/rendering/vulkan/system/vk_renderdevice.cpp
-	common/rendering/vulkan/system/vk_commandbuffer.cpp
-	common/rendering/vulkan/system/vk_hwbuffer.cpp
-	common/rendering/vulkan/system/vk_buffer.cpp
-	common/rendering/vulkan/renderer/vk_renderstate.cpp
-	common/rendering/vulkan/renderer/vk_renderpass.cpp
-	common/rendering/vulkan/renderer/vk_streambuffer.cpp
-	common/rendering/vulkan/renderer/vk_postprocess.cpp
-	common/rendering/vulkan/renderer/vk_pprenderstate.cpp
-	common/rendering/vulkan/renderer/vk_descriptorset.cpp
-	common/rendering/vulkan/renderer/vk_raytrace.cpp
+	common/rendering/vulkan/vk_renderdevice.cpp
+	common/rendering/vulkan/vk_renderstate.cpp
+	common/rendering/vulkan/vk_streambuffer.cpp
+	common/rendering/vulkan/vk_postprocess.cpp
+	common/rendering/vulkan/vk_pprenderstate.cpp
+	common/rendering/vulkan/vk_raytrace.cpp
+	common/rendering/vulkan/commands/vk_commandbuffer.cpp
+	common/rendering/vulkan/buffers/vk_hwbuffer.cpp
+	common/rendering/vulkan/buffers/vk_buffer.cpp	
+	common/rendering/vulkan/pipelines/vk_renderpass.cpp
+	common/rendering/vulkan/descriptorsets/vk_descriptorset.cpp
 	common/rendering/vulkan/shaders/vk_shader.cpp
 	common/rendering/vulkan/shaders/vk_ppshader.cpp
-	common/rendering/vulkan/textures/vk_samplers.cpp
+	common/rendering/vulkan/samplers/vk_samplers.cpp
 	common/rendering/vulkan/textures/vk_hwtexture.cpp
 	common/rendering/vulkan/textures/vk_pptexture.cpp
 	common/rendering/vulkan/textures/vk_imagetransition.cpp
 	common/rendering/vulkan/textures/vk_renderbuffers.cpp
 	common/rendering/vulkan/textures/vk_texture.cpp
-	common/rendering/vulkan/textures/vk_framebuffer.cpp
+	common/rendering/vulkan/framebuffers/vk_framebuffer.cpp
 )
 
 if (HAVE_VULKAN)
@@ -1445,8 +1449,13 @@ source_group("Common\\Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR
 source_group("Common\\Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/.+")
 source_group("Common\\Rendering\\Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/data/.+")
 source_group("Common\\Rendering\\Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/postprocessing/.+")
-source_group("Common\\Rendering\\Vulkan Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/system/.+")
-source_group("Common\\Rendering\\Vulkan Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/renderer/.+")
+source_group("Common\\Rendering\\Vulkan Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Buffers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/buffers/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Commands" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/commands/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Descriptorsets" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/descriptorsets/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Framebuffers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/framebuffers/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Pipelines" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/pipelines/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Samplers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/samplers/.+")
 source_group("Common\\Rendering\\Vulkan Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/shaders/.+")
 source_group("Common\\Rendering\\Vulkan Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/textures/.+")
 source_group("Common\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/models/.+")

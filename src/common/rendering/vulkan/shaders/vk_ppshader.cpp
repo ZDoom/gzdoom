@@ -22,9 +22,9 @@
 
 #include "vk_ppshader.h"
 #include "vk_shader.h"
-#include "vulkan/system/vk_renderdevice.h"
-#include "zvulkan/vulkanbuilders.h"
-#include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/commands/vk_commandbuffer.h"
+#include <zvulkan/vulkanbuilders.h>
 #include "filesystem.h"
 #include "cmdlib.h"
 

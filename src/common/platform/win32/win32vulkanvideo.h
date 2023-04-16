@@ -2,7 +2,7 @@
 
 #include "win32basevideo.h"
 #include "c_cvars.h"
-#include "vulkan/system/vk_renderdevice.h"
+#include "vulkan/vk_renderdevice.h"
 #include <zvulkan/vulkansurface.h>
 #include <zvulkan/vulkanbuilders.h>
 

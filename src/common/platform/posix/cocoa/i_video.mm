@@ -51,7 +51,7 @@
 #include "printf.h"
 
 #ifdef HAVE_VULKAN
-#include "vulkan/system/vk_renderdevice.h"
+#include "vulkan/vk_renderdevice.h"
 #endif
 
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);

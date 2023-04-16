@@ -3,9 +3,9 @@
 
 #include "zvulkan/vulkanobjects.h"
 #include "zvulkan/vulkanbuilders.h"
-#include "vulkan/system/vk_renderdevice.h"
-#include "vulkan/system/vk_commandbuffer.h"
-#include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/pipelines/vk_renderpass.h"
 
 class VkTextureImage
 {

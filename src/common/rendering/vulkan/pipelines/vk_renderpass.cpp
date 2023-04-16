@@ -21,16 +21,16 @@
 */
 
 #include "vk_renderpass.h"
-#include "vk_renderstate.h"
-#include "vk_descriptorset.h"
-#include "vk_raytrace.h"
+#include "vulkan/vk_renderstate.h"
+#include "vulkan/vk_raytrace.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
 #include "vulkan/textures/vk_renderbuffers.h"
-#include "vulkan/textures/vk_samplers.h"
+#include "vulkan/samplers/vk_samplers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/shaders/vk_ppshader.h"
+#include "vulkan/buffers/vk_hwbuffer.h"
 #include <zvulkan/vulkanbuilders.h>
-#include "vulkan/system/vk_renderdevice.h"
-#include "vulkan/system/vk_hwbuffer.h"
 #include "flatvertices.h"
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"

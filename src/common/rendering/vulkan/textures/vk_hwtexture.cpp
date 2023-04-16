@@ -27,13 +27,13 @@
 #include "hw_renderstate.h"
 #include <zvulkan/vulkanobjects.h>
 #include <zvulkan/vulkanbuilders.h>
-#include "vulkan/system/vk_renderdevice.h"
-#include "vulkan/system/vk_commandbuffer.h"
-#include "vulkan/textures/vk_samplers.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/vk_postprocess.h"
+#include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/samplers/vk_samplers.h"
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_texture.h"
-#include "vulkan/renderer/vk_descriptorset.h"
-#include "vulkan/renderer/vk_postprocess.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vk_hwtexture.h"
 

@@ -22,8 +22,8 @@
 
 #include "vk_pptexture.h"
 #include "vk_texture.h"
-#include "vulkan/system/vk_renderdevice.h"
-#include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/commands/vk_commandbuffer.h"
 
 VkPPTexture::VkPPTexture(VulkanRenderDevice* fb, PPTexture *texture) : fb(fb)
 {

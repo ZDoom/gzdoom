@@ -21,12 +21,12 @@
 */
 
 #include "vk_hwbuffer.h"
-#include "zvulkan/vulkanbuilders.h"
-#include "vk_renderdevice.h"
-#include "vk_commandbuffer.h"
 #include "vk_buffer.h"
-#include "vulkan/renderer/vk_renderstate.h"
-#include "vulkan/renderer/vk_descriptorset.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/vk_renderstate.h"
+#include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
+#include <zvulkan/vulkanbuilders.h>
 #include "engineerrors.h"
 
 VkHardwareBuffer::VkHardwareBuffer(VulkanRenderDevice* fb) : fb(fb)

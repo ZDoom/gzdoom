@@ -21,14 +21,14 @@
 */
 
 #include "vk_renderstate.h"
-#include "vulkan/system/vk_renderdevice.h"
-#include "zvulkan/vulkanbuilders.h"
-#include "vulkan/system/vk_commandbuffer.h"
-#include "vulkan/system/vk_buffer.h"
-#include "vulkan/renderer/vk_renderpass.h"
-#include "vulkan/renderer/vk_descriptorset.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/buffers/vk_buffer.h"
+#include "vulkan/pipelines/vk_renderpass.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
 #include "vulkan/textures/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
+#include <zvulkan/vulkanbuilders.h>
 
 #include "hw_skydome.h"
 #include "hw_viewpointuniforms.h"

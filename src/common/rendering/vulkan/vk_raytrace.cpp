@@ -22,8 +22,8 @@
 
 #include "vk_raytrace.h"
 #include "zvulkan/vulkanbuilders.h"
-#include "vulkan/system/vk_renderdevice.h"
-#include "vulkan/system/vk_commandbuffer.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/commands/vk_commandbuffer.h"
 #include "hw_levelmesh.h"
 
 VkRaytrace::VkRaytrace(VulkanRenderDevice* fb) : fb(fb)

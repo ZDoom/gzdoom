@@ -21,14 +21,14 @@
 */
 
 #include "vk_renderbuffers.h"
-#include "vulkan/renderer/vk_postprocess.h"
+#include "vulkan/vk_postprocess.h"
+#include "vulkan/vk_renderdevice.h"
 #include "vulkan/textures/vk_texture.h"
-#include "vulkan/textures/vk_framebuffer.h"
+#include "vulkan/framebuffers/vk_framebuffer.h"
 #include "vulkan/shaders/vk_shader.h"
+#include "vulkan/commands/vk_commandbuffer.h"
 #include <zvulkan/vulkanswapchain.h>
 #include <zvulkan/vulkanbuilders.h>
-#include "vulkan/system/vk_renderdevice.h"
-#include "vulkan/system/vk_commandbuffer.h"
 #include "hw_cvars.h"
 
 VkRenderBuffers::VkRenderBuffers(VulkanRenderDevice* fb) : fb(fb)

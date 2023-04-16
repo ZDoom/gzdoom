@@ -24,7 +24,7 @@
 #include "vk_hwtexture.h"
 #include "vk_pptexture.h"
 #include "vk_renderbuffers.h"
-#include "vulkan/renderer/vk_postprocess.h"
+#include "vulkan/vk_postprocess.h"
 #include "hw_cvars.h"
 
 VkTextureManager::VkTextureManager(VulkanRenderDevice* fb) : fb(fb)

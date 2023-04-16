@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include "vulkan/system/vk_hwbuffer.h"
+#include "vulkan/buffers/vk_hwbuffer.h"
 #include "vulkan/shaders/vk_shader.h"
-#include "vulkan/renderer/vk_renderpass.h"
-#include "vulkan/renderer/vk_streambuffer.h"
+#include "vulkan/pipelines/vk_renderpass.h"
+#include "vk_streambuffer.h"
 
 #include "name.h"
 

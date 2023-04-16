@@ -44,25 +44,25 @@
 #include "hw_bonebuffer.h"
 
 #include "vk_renderdevice.h"
-#include "vk_hwbuffer.h"
-#include "vulkan/renderer/vk_renderstate.h"
-#include "vulkan/renderer/vk_renderpass.h"
-#include "vulkan/renderer/vk_descriptorset.h"
-#include "vulkan/renderer/vk_streambuffer.h"
-#include "vulkan/renderer/vk_postprocess.h"
-#include "vulkan/renderer/vk_raytrace.h"
+#include "vulkan/vk_renderstate.h"
+#include "vulkan/vk_streambuffer.h"
+#include "vulkan/vk_postprocess.h"
+#include "vulkan/vk_raytrace.h"
+#include "vulkan/pipelines/vk_renderpass.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
 #include "vulkan/shaders/vk_shader.h"
+#include "vulkan/samplers/vk_samplers.h"
 #include "vulkan/textures/vk_renderbuffers.h"
-#include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_hwtexture.h"
 #include "vulkan/textures/vk_texture.h"
-#include "vulkan/textures/vk_framebuffer.h"
+#include "vulkan/framebuffers/vk_framebuffer.h"
+#include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/buffers/vk_hwbuffer.h"
+#include "vulkan/buffers/vk_buffer.h"
 #include <zvulkan/vulkanswapchain.h>
 #include <zvulkan/vulkanbuilders.h>
 #include <zvulkan/vulkansurface.h>
 #include <zvulkan/vulkancompatibledevice.h>
-#include "vulkan/system/vk_commandbuffer.h"
-#include "vulkan/system/vk_buffer.h"
 #include "engineerrors.h"
 #include "c_dispatch.h"
 

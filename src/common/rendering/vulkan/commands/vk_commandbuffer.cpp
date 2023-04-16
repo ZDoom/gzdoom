@@ -21,12 +21,12 @@
 */
 
 #include "vk_commandbuffer.h"
-#include "vk_renderdevice.h"
-#include "zvulkan/vulkanswapchain.h"
-#include "zvulkan/vulkanbuilders.h"
-#include "vulkan/textures/vk_framebuffer.h"
-#include "vulkan/renderer/vk_renderstate.h"
-#include "vulkan/renderer/vk_postprocess.h"
+#include "vulkan/vk_renderdevice.h"
+#include "vulkan/vk_renderstate.h"
+#include "vulkan/vk_postprocess.h"
+#include "vulkan/framebuffers/vk_framebuffer.h"
+#include <zvulkan/vulkanswapchain.h>
+#include <zvulkan/vulkanbuilders.h>
 #include "hw_clock.h"
 #include "v_video.h"
 

@@ -7,7 +7,6 @@
 enum
 {
 	LIGHTBUF_BINDINGPOINT = 1,
-	POSTPROCESS_BINDINGPOINT = 2,
 	VIEWPOINT_BINDINGPOINT = 3,
 	LIGHTNODES_BINDINGPOINT = 4,
 	LIGHTLINES_BINDINGPOINT = 5,
@@ -35,7 +34,7 @@ enum class UniformType
 class UniformFieldDesc
 {
 public:
-	UniformFieldDesc() { }
+	UniformFieldDesc() = default;
 	UniformFieldDesc(const char *name, UniformType type, std::size_t offset) : Name(name), Type(type), Offset(offset) { }
 
 	const char *Name;
@@ -94,62 +93,3 @@ private:
 		}
 	}
 };
-
-template<typename T, int bindingpoint>
-class ShaderUniforms
-{
-public:
-	ShaderUniforms()
-	{
-		memset(&Values, 0, sizeof(Values));
-	}
-
-	~ShaderUniforms()
-	{
-		if (mBuffer != nullptr)
-			delete mBuffer;
-	}
-
-	int BindingPoint() const
-	{
-		return bindingpoint;
-	}
-
-	FString CreateDeclaration(const char *name, const std::vector<UniformFieldDesc> &fields)
-	{
-		mFields = fields;
-		return UniformBlockDecl::Create(name, fields, bindingpoint);
-	}
-
-	void Init()
-	{
-		if (mBuffer == nullptr)
-			mBuffer = screen->CreateDataBuffer(bindingpoint, false, false);
-	}
-
-	void SetData()
-	{
-		if (mBuffer != nullptr)
-			mBuffer->SetData(sizeof(T), &Values, BufferUsageType::Static);
-	}
-
-	IDataBuffer* GetBuffer() const
-	{
-		// OpenGL needs to mess around with this in ways that should not be part of the interface.
-		return mBuffer;
-	}
-
-	T *operator->() { return &Values; }
-	const T *operator->() const { return &Values; }
-
-	T Values;
-
-private:
-	ShaderUniforms(const ShaderUniforms &) = delete;
-	ShaderUniforms &operator=(const ShaderUniforms &) = delete;
-
-    IDataBuffer *mBuffer = nullptr;
-	std::vector<UniformFieldDesc> mFields;
-};
-
-

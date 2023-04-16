@@ -86,7 +86,6 @@ IDataBuffer* VkBufferManager::CreateDataBuffer(int bindingpoint, bool ssbo, bool
 	case LIGHTLINES_BINDINGPOINT: LightLines = buffer; break;
 	case LIGHTLIST_BINDINGPOINT: LightList = buffer; break;
 	case BONEBUF_BINDINGPOINT: BoneBufferSSO = buffer; break;
-	case POSTPROCESS_BINDINGPOINT: break;
 	default: break;
 	}
 

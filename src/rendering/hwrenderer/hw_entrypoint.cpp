@@ -69,16 +69,16 @@ void CleanSWDrawer()
 
 void CollectLights(FLevelLocals* Level)
 {
-	IShadowMap* sm = &screen->mShadowMap;
+	ShadowMap* sm = screen->mShadowMap;
 	int lightindex = 0;
 
 	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
 	for (auto light = Level->lights; light; light = light->next)
 	{
-		IShadowMap::LightsProcessed++;
+		ShadowMap::LightsProcessed++;
 		if (light->shadowmapped && light->IsActive() && lightindex < 1024)
 		{
-			IShadowMap::LightsShadowmapped++;
+			ShadowMap::LightsShadowmapped++;
 
 			light->mShadowmapIndex = lightindex;
 			sm->SetLight(lightindex, (float)light->X(), (float)light->Y(), (float)light->Z(), light->GetRadius());
@@ -113,7 +113,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 	if (mainview && toscreen && !(camera->Level->flags3 & LEVEL3_NOSHADOWMAP) && camera->Level->HasDynamicLights && gl_light_shadowmap && screen->allowSSBO() && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER))
 	{
 		screen->SetAABBTree(camera->Level->aabbTree);
-		screen->mShadowMap.SetCollectLights([=] {
+		screen->mShadowMap->SetCollectLights([=] {
 			CollectLights(camera->Level);
 		});
 		screen->UpdateShadowMap();
@@ -122,7 +122,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 	{
 		// null all references to the level if we do not need a shadowmap. This will shortcut all internal calculations without further checks.
 		screen->SetAABBTree(nullptr);
-		screen->mShadowMap.SetCollectLights(nullptr);
+		screen->mShadowMap->SetCollectLights(nullptr);
 	}
 
 	screen->SetLevelMesh(camera->Level->levelMesh);

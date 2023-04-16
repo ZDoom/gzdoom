@@ -25,7 +25,7 @@ class HWWall;
 class HWFlat;
 class HWSprite;
 struct HWDecal;
-class IShadowMap;
+class ShadowMap;
 struct particle_t;
 struct FDynLightData;
 struct HUDSprite;

@@ -1,15 +1,20 @@
 #pragma once
 
-#include "hwrenderer/data/shaderuniforms.h"
 #include <memory>
 #include <map>
 #include "intrect.h"
+#include "renderstyle.h"
+#include "tarray.h"
+#include "zstring.h"
+#include "vectors.h"
+#include <vector>
 
 struct PostProcessShader;
 
 typedef FRenderStyle PPBlendMode;
 typedef IntRect PPViewport;
 
+class FTexture;
 class PPTexture;
 class PPShader;
 
@@ -24,6 +29,33 @@ enum class ETonemapMode : uint8_t
 	NumTonemapModes
 };
 
+enum class UniformType
+{
+	Int,
+	UInt,
+	Float,
+	Vec2,
+	Vec3,
+	Vec4,
+	IVec2,
+	IVec3,
+	IVec4,
+	UVec2,
+	UVec3,
+	UVec4,
+	Mat4
+};
+
+class UniformFieldDesc
+{
+public:
+	UniformFieldDesc() = default;
+	UniformFieldDesc(const char* name, UniformType type, std::size_t offset) : Name(name), Type(type), Offset(offset) { }
+
+	const char* Name;
+	UniformType Type;
+	std::size_t Offset;
+};
 
 
 enum class PPFilterMode { Nearest, Linear };

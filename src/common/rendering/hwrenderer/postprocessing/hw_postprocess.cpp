@@ -882,7 +882,7 @@ void PPShadowMap::Update(PPRenderState* renderstate)
 {
 	ShadowMapUniforms uniforms;
 	uniforms.ShadowmapQuality = (float)gl_shadowmap_quality;
-	uniforms.NodesCount = screen->mShadowMap.NodesCount();
+	uniforms.NodesCount = screen->mShadowMap->NodesCount();
 
 	renderstate->PushGroup("shadowmap");
 

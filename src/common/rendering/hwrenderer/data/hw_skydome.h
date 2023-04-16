@@ -5,6 +5,7 @@
 #include "hw_renderstate.h"
 #include "skyboxtexture.h"
 
+class DFrameBuffer;
 class FGameTexture;
 class FRenderState;
 class IVertexBuffer;
@@ -50,6 +51,7 @@ struct FSkyVertex
 class FSkyVertexBuffer
 {
 	friend struct HWSkyPortal;
+	DFrameBuffer* fb = nullptr;
 public:
 	static const int SKYHEMI_UPPER = 1;
 	static const int SKYHEMI_LOWER = 2;
@@ -81,7 +83,7 @@ public:
 
 public:
 
-	FSkyVertexBuffer();
+	FSkyVertexBuffer(DFrameBuffer* fb);
 	~FSkyVertexBuffer();
 	void SetupMatrices(FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix, bool tiled, float xscale = 0, float vertscale = 0);
 	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const

@@ -243,12 +243,3 @@ void VkHardwareVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, 
 {
 	VertexFormat = fb->GetRenderPassManager()->GetVertexFormat(numBindingPoints, numAttributes, stride, attrs);
 }
-
-/////////////////////////////////////////////////////////////////////////////
-
-
-void VkHardwareDataBuffer::BindRange(FRenderState* state, size_t start, size_t length)
-{
-	static_cast<VkRenderState*>(state)->Bind(bindingpoint, (uint32_t)start);
-}
-

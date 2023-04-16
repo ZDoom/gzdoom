@@ -25,24 +25,23 @@
 **
 **/
 
-#include "hwrenderer/data/shaderuniforms.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_renderstate.h"
 #include "hw_viewpointbuffer.h"
 #include "hw_cvars.h"
+#include "v_video.h"
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
 
-HWViewpointBuffer::HWViewpointBuffer(int pipelineNbr):
-	mPipelineNbr(pipelineNbr)
+HWViewpointBuffer::HWViewpointBuffer(DFrameBuffer* fb, int pipelineNbr) : fb(fb), mPipelineNbr(pipelineNbr)
 {
 	mBufferSize = INITIAL_BUFFER_SIZE;
-	mBlockAlign = ((sizeof(HWViewpointUniforms) / screen->uniformblockalignment) + 1) * screen->uniformblockalignment;
+	mBlockAlign = ((sizeof(HWViewpointUniforms) / fb->uniformblockalignment) + 1) * fb->uniformblockalignment;
 	mByteSize = mBufferSize * mBlockAlign;
 
 	for (int n = 0; n < mPipelineNbr; n++)
 	{
-		mBufferPipeline[n] = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false, true);
+		mBufferPipeline[n] = fb->CreateViewpointBuffer();
 		mBufferPipeline[n]->SetData(mByteSize, nullptr, BufferUsageType::Persistent);
 	}
 
@@ -74,7 +73,7 @@ int HWViewpointBuffer::Bind(FRenderState &di, unsigned int index)
 	if (index != mLastMappedIndex)
 	{
 		mLastMappedIndex = index;
-		mBuffer->BindRange(&di, index * mBlockAlign, mBlockAlign);
+		di.SetViewpointOffset(index * mBlockAlign);
 		di.EnableClipDistance(0, mClipPlaneInfo[index]);
 	}
 	return index;

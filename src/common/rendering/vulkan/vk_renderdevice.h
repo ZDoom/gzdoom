@@ -74,7 +74,13 @@ public:
 	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;
-	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) override;
+
+	IDataBuffer* CreateLightBuffer() override;
+	IDataBuffer* CreateBoneBuffer() override;
+	IDataBuffer* CreateViewpointBuffer() override;
+	IDataBuffer* CreateShadowmapNodesBuffer() override;
+	IDataBuffer* CreateShadowmapLinesBuffer() override;
+	IDataBuffer* CreateShadowmapLightsBuffer() override;
 
 	FTexture *WipeStartScreen() override;
 	FTexture *WipeEndScreen() override;

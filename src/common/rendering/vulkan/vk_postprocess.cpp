@@ -275,7 +275,7 @@ void VkPostprocess::ClearTonemapPalette()
 
 void VkPostprocess::UpdateShadowMap()
 {
-	if (screen->mShadowMap.PerformUpdate())
+	if (screen->mShadowMap->PerformUpdate())
 	{
 		VkPPRenderState renderstate(fb);
 		hw_postprocess.shadowmap.Update(&renderstate);
@@ -284,7 +284,7 @@ void VkPostprocess::UpdateShadowMap()
 			.AddImage(&fb->GetTextureManager()->Shadowmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false)
 			.Execute(fb->GetCommands()->GetDrawCommands());
 
-		screen->mShadowMap.FinishUpdate();
+		screen->mShadowMap->FinishUpdate();
 	}
 }
 

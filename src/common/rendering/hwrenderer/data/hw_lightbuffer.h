@@ -7,10 +7,12 @@
 #include <atomic>
 #include <mutex>
 
+class DFrameBuffer;
 class FRenderState;
 
 class FLightBuffer
 {
+	DFrameBuffer* fb = nullptr;
 	IDataBuffer *mBuffer;
 	IDataBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
 	int mPipelineNbr;
@@ -28,7 +30,7 @@ class FLightBuffer
 
 public:
 
-	FLightBuffer(int pipelineNbr = 1);
+	FLightBuffer(DFrameBuffer* fb, int pipelineNbr = 1);
 	~FLightBuffer();
 	void Clear();
 	int UploadLights(FDynLightData &data);

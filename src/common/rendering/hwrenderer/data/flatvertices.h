@@ -7,6 +7,7 @@
 #include <atomic>
 #include <mutex>
 
+class DFrameBuffer;
 class FRenderState;
 struct secplane_t;
 
@@ -56,6 +57,7 @@ struct FFlatVertex
 
 class FFlatVertexBuffer
 {
+	DFrameBuffer* fb = nullptr;
 public:
 	TArray<FFlatVertex> vbo_shadowdata;
 	TArray<uint32_t> ibo_data;
@@ -90,7 +92,7 @@ public:
 		NUM_RESERVED = 20
 	};
 
-	FFlatVertexBuffer(int width, int height, int pipelineNbr = 1);
+	FFlatVertexBuffer(DFrameBuffer* fb, int width, int height, int pipelineNbr = 1);
 	~FFlatVertexBuffer();
 
 	void OutputResized(int width, int height);
@@ -137,16 +139,6 @@ public:
 	{
 		mVertexBuffer->Unmap();
 		mVertexBuffer->Upload(mMapStart * sizeof(FFlatVertex), (mCurIndex - mMapStart) * sizeof(FFlatVertex));
-	}
-
-	void DropSync()
-	{
-		mVertexBuffer->GPUDropSync();
-	}
-
-	void WaitSync()
-	{
-		mVertexBuffer->GPUWaitSync();
 	}
 
 	int GetPipelinePos() 

@@ -737,6 +737,7 @@ public:
 	virtual void EnableMultisampling(bool on) = 0;				// only active for 2D
 	virtual void EnableLineSmooth(bool on) = 0;					// constant setting for each 2D drawer operation
 	virtual void EnableDrawBuffers(int count, bool apply = false) = 0;	// Used by SSAO and EnableDrawBufferAttachments
+	virtual void SetViewpointOffset(uint32_t offset) = 0;		// HWViewpoint uniform binding offset
 
 	void SetColorMask(bool on)
 	{

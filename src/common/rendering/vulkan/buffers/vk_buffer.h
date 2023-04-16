@@ -23,7 +23,13 @@ public:
 
 	IVertexBuffer* CreateVertexBuffer();
 	IIndexBuffer* CreateIndexBuffer();
-	IDataBuffer* CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize);
+
+	IDataBuffer* CreateLightBuffer();
+	IDataBuffer* CreateBoneBuffer();
+	IDataBuffer* CreateViewpointBuffer();
+	IDataBuffer* CreateShadowmapNodesBuffer();
+	IDataBuffer* CreateShadowmapLinesBuffer();
+	IDataBuffer* CreateShadowmapLightsBuffer();
 
 	void AddBuffer(VkHardwareBuffer* buffer);
 	void RemoveBuffer(VkHardwareBuffer* buffer);
@@ -46,6 +52,8 @@ private:
 	VulkanRenderDevice* fb = nullptr;
 
 	std::list<VkHardwareBuffer*> Buffers;
+
+	friend class VkStreamBuffer;
 };
 
 class VkStreamBuffer

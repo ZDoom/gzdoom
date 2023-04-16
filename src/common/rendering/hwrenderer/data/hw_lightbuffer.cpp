@@ -27,40 +27,37 @@
 
 #include "hw_lightbuffer.h"
 #include "hw_dynlightdata.h"
-#include "shaderuniforms.h"
+#include "v_video.h"
 
 static const int ELEMENTS_PER_LIGHT = 4;			// each light needs 4 vec4's.
 static const int ELEMENT_SIZE = (4*sizeof(float));
 
 
-FLightBuffer::FLightBuffer(int pipelineNbr):
-	mPipelineNbr(pipelineNbr)
+FLightBuffer::FLightBuffer(DFrameBuffer* fb, int pipelineNbr) : fb(fb), mPipelineNbr(pipelineNbr)
 {
 	int maxNumberOfLights = 80000;
 
 	mBufferSize = maxNumberOfLights * ELEMENTS_PER_LIGHT;
 	mByteSize = mBufferSize * ELEMENT_SIZE;
 
-	if (screen->useSSBO())
+	//if (fb->useSSBO())
 	{
 		mBufferType = true;
 		mBlockAlign = 0;
 		mBlockSize = mBufferSize;
 		mMaxUploadSize = mBlockSize;
 	}
-	else
+	/*else
 	{
 		mBufferType = false;
-		mBlockSize = screen->maxuniformblock / ELEMENT_SIZE;
-		mBlockAlign = screen->uniformblockalignment / ELEMENT_SIZE;
+		mBlockSize = fb->maxuniformblock / ELEMENT_SIZE;
+		mBlockAlign = fb->uniformblockalignment / ELEMENT_SIZE;
 		mMaxUploadSize = (mBlockSize - mBlockAlign);
-
-		//mByteSize += screen->maxuniformblock;	// to avoid mapping beyond the end of the buffer. REMOVED this...This can try to allocate 100's of MB..
-	}
+	}*/
 
 	for (int n = 0; n < mPipelineNbr; n++)
 	{
-		mBufferPipeline[n] = screen->CreateDataBuffer(LIGHTBUF_BINDINGPOINT, mBufferType, false);
+		mBufferPipeline[n] = fb->CreateLightBuffer();
 		mBufferPipeline[n]->SetData(mByteSize, nullptr, BufferUsageType::Persistent);
 	}
 

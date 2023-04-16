@@ -23,4 +23,6 @@ public:
 
 private:
 	FString LoadShaderCode(const FString &lumpname, const FString &defines, int version);
+	static FString CreateUniformBlockDecl(const char* name, const std::vector<UniformFieldDesc>& fields, int bindingpoint);
+	static const char* GetTypeStr(UniformType type);
 };

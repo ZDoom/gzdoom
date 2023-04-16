@@ -80,8 +80,6 @@ public:
 	virtual void Unmap() {}
 	void *Memory() { return map; }
 	size_t Size() { return buffersize; }
-	virtual void GPUDropSync() {}
-	virtual void GPUWaitSync() {}
 };
 
 class IVertexBuffer : virtual public IBuffer
@@ -101,7 +99,4 @@ class IIndexBuffer : virtual public IBuffer
 class IDataBuffer : virtual public IBuffer
 {
 	// Can be either uniform or shader storage buffer, depending on its needs.
-public:
-	virtual void BindRange(FRenderState *state, size_t start, size_t length) = 0;
-
 };

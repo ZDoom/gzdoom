@@ -45,8 +45,7 @@
 //
 //==========================================================================
 
-FFlatVertexBuffer::FFlatVertexBuffer(int width, int height, int pipelineNbr):
-	mPipelineNbr(pipelineNbr)
+FFlatVertexBuffer::FFlatVertexBuffer(DFrameBuffer* fb, int width, int height, int pipelineNbr) : fb(fb), mPipelineNbr(pipelineNbr)
 {
 	vbo_shadowdata.Resize(NUM_RESERVED);
 
@@ -79,14 +78,14 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height, int pipelineNbr):
 	vbo_shadowdata[18].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
 	vbo_shadowdata[19].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
 
-	mIndexBuffer = screen->CreateIndexBuffer();
+	mIndexBuffer = fb->CreateIndexBuffer();
 	int data[4] = {};
 	mIndexBuffer->SetData(4, data, BufferUsageType::Static); // On Vulkan this may not be empty, so set some dummy defaults to avoid crashes.
 
 
 	for (int n = 0; n < mPipelineNbr; n++)
 	{
-		mVertexBufferPipeline[n] = screen->CreateVertexBuffer();
+		mVertexBufferPipeline[n] = fb->CreateVertexBuffer();
 
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		mVertexBufferPipeline[n]->SetData(bytesize, nullptr, BufferUsageType::Persistent);

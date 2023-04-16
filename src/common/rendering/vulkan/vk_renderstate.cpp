@@ -37,7 +37,6 @@
 #include "hw_clock.h"
 #include "flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
-#include "hwrenderer/data/shaderuniforms.h"
 
 CVAR(Int, vk_submit_size, 1000, 0);
 EXTERN_CVAR(Bool, r_skipmats)
@@ -477,13 +476,10 @@ void VkRenderState::WaitForStreamBuffers()
 	mMatrixBufferWriter.Reset();
 }
 
-void VkRenderState::Bind(int bindingpoint, uint32_t offset)
+void VkRenderState::SetViewpointOffset(uint32_t offset)
 {
-	if (bindingpoint == VIEWPOINT_BINDINGPOINT)
-	{
-		mViewpointOffset = offset;
-		mNeedApply = true;
-	}
+	mViewpointOffset = offset;
+	mNeedApply = true;
 }
 
 void VkRenderState::BeginFrame()

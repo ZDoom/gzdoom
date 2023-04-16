@@ -43,10 +43,10 @@ public:
 	void EnableMultisampling(bool on) override;
 	void EnableLineSmooth(bool on) override;
 	void EnableDrawBuffers(int count, bool apply) override;
+	void SetViewpointOffset(uint32_t offset) override;
 
 	void BeginFrame();
 	void SetRenderTarget(VkTextureImage *image, VulkanImageView *depthStencilView, int width, int height, VkFormat Format, VkSampleCountFlagBits samples);
-	void Bind(int bindingpoint, uint32_t offset);
 	void EndRenderPass();
 	void EndFrame();
 

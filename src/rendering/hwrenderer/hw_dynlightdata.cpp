@@ -108,7 +108,7 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 	}
 
 	float shadowIndex;
-	if (screen->mShadowMap.Enabled()) // note: with shadowmaps switched off, we cannot rely on properly set indices anymore.
+	if (screen->mShadowMap->Enabled()) // note: with shadowmaps switched off, we cannot rely on properly set indices anymore.
 	{
 		shadowIndex = light->mShadowmapIndex + 1.0f;
 	}

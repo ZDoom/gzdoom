@@ -3,10 +3,12 @@
 #include "hwrenderer/data/buffers.h"
 
 struct HWViewpointUniforms;
+class DFrameBuffer;
 class FRenderState;
 
 class HWViewpointBuffer
 {
+	DFrameBuffer* fb = nullptr;
 	IDataBuffer *mBuffer;
 	IDataBuffer* mBufferPipeline[HW_MAX_PIPELINE_BUFFERS];
 	int mPipelineNbr;
@@ -25,7 +27,7 @@ class HWViewpointBuffer
 
 public:
 
-	HWViewpointBuffer(int pipelineNbr = 1);
+	HWViewpointBuffer(DFrameBuffer* fb, int pipelineNbr = 1);
 	~HWViewpointBuffer();
 	void Clear();
 	int Bind(FRenderState &di, unsigned int index);

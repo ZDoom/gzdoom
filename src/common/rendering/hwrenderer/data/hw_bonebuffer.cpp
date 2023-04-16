@@ -22,35 +22,35 @@
 
 #include "hw_bonebuffer.h"
 #include "hw_dynlightdata.h"
-#include "shaderuniforms.h"
+#include "v_video.h"
 
 static const int BONE_SIZE = (16*sizeof(float));
 
-BoneBuffer::BoneBuffer(int pipelineNbr) : mPipelineNbr(pipelineNbr)
+BoneBuffer::BoneBuffer(DFrameBuffer* fb, int pipelineNbr) : fb(fb), mPipelineNbr(pipelineNbr)
 {
 	int maxNumberOfBones = 80000;
 
 	mBufferSize = maxNumberOfBones;
 	mByteSize = mBufferSize * BONE_SIZE;
 
-	if (screen->useSSBO())
+	//if (fb->useSSBO())
 	{
 		mBufferType = true;
 		mBlockAlign = 0;
 		mBlockSize = mBufferSize;
 		mMaxUploadSize = mBlockSize;
 	}
-	else
+	/*else
 	{
 		mBufferType = false;
-		mBlockSize = screen->maxuniformblock / BONE_SIZE;
-		mBlockAlign = screen->uniformblockalignment < 64 ? 1 : screen->uniformblockalignment / BONE_SIZE;
+		mBlockSize = fb->maxuniformblock / BONE_SIZE;
+		mBlockAlign = fb->uniformblockalignment < 64 ? 1 : fb->uniformblockalignment / BONE_SIZE;
 		mMaxUploadSize = (mBlockSize - mBlockAlign);
-	}
+	}*/
 
 	for (int n = 0; n < mPipelineNbr; n++)
 	{
-		mBufferPipeline[n] = screen->CreateDataBuffer(BONEBUF_BINDINGPOINT, mBufferType, false);
+		mBufferPipeline[n] = fb->CreateBoneBuffer();
 		mBufferPipeline[n]->SetData(mByteSize, nullptr, BufferUsageType::Persistent);
 	}
 

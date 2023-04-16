@@ -145,7 +145,7 @@ public:
 	HWViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
 	BoneBuffer* mBones = nullptr;				// Model bones
-	IShadowMap mShadowMap;
+	ShadowMap* mShadowMap = nullptr;
 
 	int mGameScreenWidth = 0;
 	int mGameScreenHeight = 0;
@@ -166,7 +166,7 @@ public:
 	virtual bool CompileNextShader() { return true; }
 	void SetAABBTree(hwrenderer::LevelAABBTree * tree)
 	{
-		mShadowMap.SetAABBTree(tree);
+		mShadowMap->SetAABBTree(tree);
 	}
 	virtual void SetLevelMesh(hwrenderer::LevelMesh *mesh) { }
 	bool allowSSBO() const
@@ -236,10 +236,17 @@ public:
 	virtual void InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData) {}
 
     // Interface to hardware rendering resources
-	virtual IVertexBuffer *CreateVertexBuffer() { return nullptr; }
-	virtual IIndexBuffer *CreateIndexBuffer() { return nullptr; }
-	virtual IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) { return nullptr; }
+	virtual IVertexBuffer* CreateVertexBuffer() { return nullptr; }
+	virtual IIndexBuffer* CreateIndexBuffer() { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
+
+	// To do: these buffers shouldn't be created by the hwrenderer layer - it will be simpler if the backend manages them completely
+	virtual IDataBuffer* CreateLightBuffer() { return nullptr; }
+	virtual IDataBuffer* CreateBoneBuffer() { return nullptr; }
+	virtual IDataBuffer* CreateViewpointBuffer() { return nullptr; }
+	virtual IDataBuffer* CreateShadowmapNodesBuffer() { return nullptr; }
+	virtual IDataBuffer* CreateShadowmapLinesBuffer() { return nullptr; }
+	virtual IDataBuffer* CreateShadowmapLightsBuffer() { return nullptr; }
 
 	// This is overridable in case Vulkan does it differently.
 	virtual bool RenderTextureIsFlipped() const

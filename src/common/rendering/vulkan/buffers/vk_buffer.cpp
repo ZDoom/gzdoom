@@ -23,7 +23,7 @@
 #include "vk_buffer.h"
 #include "vk_hwbuffer.h"
 #include "vk_streambuffer.h"
-#include "hwrenderer/data/shaderuniforms.h"
+#include "vulkan/vk_renderdevice.h"
 
 VkBufferManager::VkBufferManager(VulkanRenderDevice* fb) : fb(fb)
 {
@@ -74,22 +74,40 @@ IIndexBuffer* VkBufferManager::CreateIndexBuffer()
 	return new VkHardwareIndexBuffer(fb);
 }
 
-IDataBuffer* VkBufferManager::CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize)
+IDataBuffer* VkBufferManager::CreateLightBuffer()
 {
-	auto buffer = new VkHardwareDataBuffer(fb, bindingpoint, ssbo, needsresize);
+	LightBufferSSO = new VkHardwareDataBuffer(fb, true, false);
+	return LightBufferSSO;
+}
 
-	switch (bindingpoint)
-	{
-	case LIGHTBUF_BINDINGPOINT: LightBufferSSO = buffer; break;
-	case VIEWPOINT_BINDINGPOINT: ViewpointUBO = buffer; break;
-	case LIGHTNODES_BINDINGPOINT: LightNodes = buffer; break;
-	case LIGHTLINES_BINDINGPOINT: LightLines = buffer; break;
-	case LIGHTLIST_BINDINGPOINT: LightList = buffer; break;
-	case BONEBUF_BINDINGPOINT: BoneBufferSSO = buffer; break;
-	default: break;
-	}
+IDataBuffer* VkBufferManager::CreateBoneBuffer()
+{
+	BoneBufferSSO = new VkHardwareDataBuffer(fb, true, false);
+	return BoneBufferSSO;
+}
 
-	return buffer;
+IDataBuffer* VkBufferManager::CreateViewpointBuffer()
+{
+	ViewpointUBO = new VkHardwareDataBuffer(fb, false, true);
+	return ViewpointUBO;
+}
+
+IDataBuffer* VkBufferManager::CreateShadowmapNodesBuffer()
+{
+	LightNodes = new VkHardwareDataBuffer(fb, true, false);
+	return LightNodes;
+}
+
+IDataBuffer* VkBufferManager::CreateShadowmapLinesBuffer()
+{
+	LightLines = new VkHardwareDataBuffer(fb, true, false);
+	return LightLines;
+}
+
+IDataBuffer* VkBufferManager::CreateShadowmapLightsBuffer()
+{
+	LightList = new VkHardwareDataBuffer(fb, true, false);
+	return LightList;
 }
 
 void VkBufferManager::CreateFanToTrisIndexBuffer()
@@ -110,9 +128,9 @@ void VkBufferManager::CreateFanToTrisIndexBuffer()
 
 VkStreamBuffer::VkStreamBuffer(VkBufferManager* buffers, size_t structSize, size_t count)
 {
-	mBlockSize = static_cast<uint32_t>((structSize + screen->uniformblockalignment - 1) / screen->uniformblockalignment * screen->uniformblockalignment);
+	mBlockSize = static_cast<uint32_t>((structSize + buffers->fb->uniformblockalignment - 1) / buffers->fb->uniformblockalignment * buffers->fb->uniformblockalignment);
 
-	UniformBuffer = (VkHardwareDataBuffer*)buffers->CreateDataBuffer(-1, false, false);
+	UniformBuffer = new VkHardwareDataBuffer(buffers->fb, false, false);
 	UniformBuffer->SetData(mBlockSize * count, nullptr, BufferUsageType::Persistent);
 }
 

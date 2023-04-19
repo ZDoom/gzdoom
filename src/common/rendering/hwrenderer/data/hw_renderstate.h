@@ -222,6 +222,7 @@ protected:
 	int mTextureClamp;
 	int mTextureModeFlags;
 	int mSoftLight;
+	int mLightMode = -1;
 	float mLightParms[4];
 
 	float mAlphaThreshold;
@@ -457,6 +458,11 @@ public:
 	void SetNoSoftLightLevel()
 	{
 		 mLightParms[3] = -1.f;
+	}
+
+	void SetLightMode(int lightmode)
+	{
+		mLightMode = lightmode;
 	}
 
 	void SetGlowPlanes(const FVector4 &tp, const FVector4& bp)

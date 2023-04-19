@@ -5155,13 +5155,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
 	if (mobj->modelData == nullptr)
 	{
 		auto ptr = Create<DActorModelData>();
+		
 		ptr->hasModel = mobj->hasmodel ? 1 : 0;
-		ptr->modelIDs = *new TArray<int>();
-		ptr->skinIDs = *new TArray<FTextureID>();
-		ptr->surfaceSkinIDs = *new TArray<FTextureID>();
-		ptr->animationIDs = *new TArray<int>();
-		ptr->modelFrameGenerators = *new TArray<int>();
 		ptr->modelDef = NAME_None;
+
 		mobj->modelData = ptr;
 		mobj->hasmodel = 1;
 		GC::WriteBarrier(mobj, ptr);

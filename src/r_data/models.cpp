@@ -344,16 +344,40 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				if (actor->modelData->skinIDs[i].isValid())
 					skinid = actor->modelData->skinIDs[i];
 			}
-			for (int surface = i * MD3_MAX_SURFACES; surface < (i + 1) * MD3_MAX_SURFACES; surface++)
+
+			unsigned sz1 = smf->surfaceskinIDs.Size();
+			unsigned sz2 = actor->modelData->surfaceSkinIDs.Size();
+			unsigned end = (i + 1) * MD3_MAX_SURFACES;
+
+			if(actor->modelData->surfaceSkinIDs.Size() > 0)
 			{
-				if (surface < (int)actor->modelData->surfaceSkinIDs.Size())
+				long last_ok = -1;
+				surfaceskinids.Resize(actor->modelData->surfaceSkinIDs.Size());
+				for (unsigned surface = i * MD3_MAX_SURFACES; surface < end; surface++)
 				{
+					if (surface >= sz2) break;
+
 					if (actor->modelData->surfaceSkinIDs[surface].isValid())
 					{
-						// only make a copy of the surfaceskinIDs array if really needed
-						if (surfaceskinids.Size() == 0) surfaceskinids = smf->surfaceskinIDs;
 						surfaceskinids[surface] = actor->modelData->surfaceSkinIDs[surface];
+						last_ok = surface;
 					}
+					else if(surface < sz1)
+					{
+						surfaceskinids[surface] = smf->surfaceskinIDs[surface];
+					}
+					else
+					{
+						surfaceskinids[surface].SetInvalid();
+					}
+				}
+				if(last_ok >= 0)
+				{
+					surfaceskinids.Resize(max(last_ok + 1, (long)sz1)); // clear out
+				}
+				else
+				{
+					surfaceskinids.Clear();
 				}
 			}
 		}

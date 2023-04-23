@@ -296,6 +296,8 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.ShaderKey.UseShadowmap = gl_light_shadowmap;
 	pipelineKey.ShaderKey.UseRaytrace = gl_light_raytrace;
 
+	pipelineKey.ShaderKey.GBufferPass = mRenderTarget.DrawBuffers > 1;
+
 	// Is this the one we already have?
 	bool inRenderPass = mCommandBuffer;
 	bool changingPipeline = (!inRenderPass) || (pipelineKey != mPipelineKey);

@@ -32,7 +32,6 @@
 
 VkShaderManager::VkShaderManager(VulkanRenderDevice* fb) : fb(fb)
 {
-	CompileNextShader();
 }
 
 VkShaderManager::~VkShaderManager()
@@ -45,10 +44,8 @@ void VkShaderManager::Deinit()
 		RemoveVkPPShader(PPShaders.back());
 }
 
-VkShaderProgram* VkShaderManager::Get(const VkShaderKey& k, EPassType passType)
+VkShaderProgram* VkShaderManager::Get(const VkShaderKey& key)
 {
-	VkShaderKey key = k;
-	key.GBufferPass = passType;
 	auto& program = programs[key];
 	if (program.frag)
 		return &program;

@@ -112,7 +112,7 @@ public:
 
 	void Deinit();
 
-	VkShaderProgram* Get(const VkShaderKey& key, EPassType passType);
+	VkShaderProgram* Get(const VkShaderKey& key);
 
 	bool CompileNextShader() { return true; }
 

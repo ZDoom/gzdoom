@@ -67,9 +67,9 @@ enum EMultiplayerHostFlags
 };
 
 
-void D_RestartHostMultiplayer(int numplayers, FString map= "", int ticdup = -1, int port = -1, int skill = -1, FString loadsave = "", int flags = 0);
+void D_RestartHostMultiplayer(int numplayers, const FString &map= "", int ticdup = -1, int port = -1, int skill = -1, const FString &loadsave = "", int flags = 0);
 
-void D_RestartJoinMultiplayer(const char * host_addr, int port = -1, FString loadsave = "");
+void D_RestartJoinMultiplayer(const FString &host_addr, int port = -1, const FString &loadsave = "");
 
 
 

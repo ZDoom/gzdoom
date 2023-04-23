@@ -356,25 +356,83 @@ DefaultOptionMenu
 OptionMenu "OptionsMenu" protected
 {
 	Title "$OPTMNU_TITLE"
+	Submenu "Input Options",			"InputMenu"
+	Submenu "Gameplay Options",			"GameplayMenu"
+	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
+	Submenu "$OPTMNU_SOUND",			"SoundOptions"
+	Submenu "Multiplayer Options",		"MultiplayerMenu"
+	Submenu "System Options",			"SystemMenu"
+	StaticText " "
+	StaticText " "
+	Submenu "$OS_TITLE", "os_Menu"
+	
+	StaticText " "
+	StaticText " "
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Input menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "InputMenu" protected
+{
+	Title "Input Options"
 	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
 	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
+
 	StaticText " "
-	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Gameplay menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "GameplayMenu" protected
+{
+	Title "Gameplay Options"
+
 	Submenu "$OPTMNU_GAMEPLAY",			"GameplayOptions"
 	Submenu "$OPTMNU_COMPATIBILITY",	"CompatibilityOptions"
 	Submenu "$OPTMNU_AUTOMAP",			"AutomapOptions"
 	Submenu "$OPTMNU_HUD",				"HUDOptions"
 	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptions"
+
+	StaticText " "
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Multiplayer menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "MultiplayerMenu" protected
+{
+	Title "Multiplayer Options"
+
+	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
+	Submenu "$GMPLYMNU_DEATHMATCH",		"DeathmatchOptions"
+	Submenu "$GMPLYMNU_COOPERATIVE",	"CoopOptions"
 	Submenu "$OPTMNU_NETWORK",			"NetworkOptions"
-	Submenu "$OPTMNU_SOUND",			"SoundOptions"
-	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
-	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
+
 	StaticText " "
-	Submenu "$OS_TITLE", "os_Menu"
-	Option "$OPTMNU_SIMPLEON",			"m_simpleoptions", "OnOff"
-	
-	StaticText " "
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// System menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "SystemMenu" protected
+{
+	Title "System Options"
+
 	SafeCommand	"$OPTMNU_DEFAULTS",		"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	SafeCommand	"$OPTMNU_WRITEINI",		"writeini"
@@ -383,6 +441,7 @@ OptionMenu "OptionsMenu" protected
 	Command "$OPTMNU_OPENCONFIG",		"openconfig"
 	Command "$OPTMNU_OPENSCREENSHOTS",	"openscreenshots"
 	Command "$OPTMNU_OPENSAVES",		"opensaves"
+
 	StaticText " "
 }
 
@@ -893,37 +952,21 @@ OptionValue PreferBackend
 	2, "$OPTVAL_OPENGLES"
 }
 
-OptionMenu "TrueColorOptions" protected
-{
-	Title "$TCMNU_TITLE"
-	StaticText " "
-	Option "$TCMNU_MINFILTER",				"r_minfilter", "OnOff"
-	Option "$TCMNU_MAGFILTER",				"r_magfilter", "OnOff"
-	Option "$TCMNU_MIPMAP",					"r_mipmap", "OnOff"
-}
-
-OptionMenu "SWROptions" protected
-{
-	Title "$DSPLYMNU_SWOPT"
-	Submenu "$DSPLYMNU_TCOPT",			"TrueColorOptions"
-	Option "$DSPLYMNU_BLENDMETHOD",				"r_blendmethod", "BlendMethods"
-	StaticText " "
-	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
-	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
-	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
-	Option "$DSPLYMNU_SCALEFUZZ",				"r_fuzzscale", "OnOff"
-	Option "$DSPLYMNU_MODELS",					"r_models", "OnOff"
-}
-
 OptionMenu "VideoOptions" protected
 {
 	Title "$DSPLYMNU_TITLE"
 
-	Submenu "$DSPLYMNU_GLOPT", 			"OpenGLOptions"
-	Submenu "$DSPLYMNU_SWOPT", 			"SWROptions"
-	Submenu "$DSPLYMNU_VKOPT",			"VKOptions"
-	Submenu "$GLMNU_TEXOPT", 			"GLTextureGLOptions"
-	Submenu "$GLMNU_DYNLIGHT",			"GLLightOptions"
+	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
+	Submenu "Light Options", 					"LightOptions"
+	Submenu "$GLMNU_TEXOPT", 					"GLTextureGLOptions"
+	Submenu "Sprite Options", 					"SpriteOptions"
+	Submenu "$GLMNU_POSTPROCESS",				"PostProcessMenu"
+	Submenu "$GLPREFMNU_VRMODE",				"VR3DMenu"
+	IfOption(SWRender)
+	{
+		Submenu "Software Renderer",				"SWROptions"
+	}
+
 	StaticText " "
 	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 				3.0, 12.0, 1.0, 0
 
@@ -934,26 +977,85 @@ OptionMenu "VideoOptions" protected
 	StaticText " "
 	Slider "$DSPLYMNU_FOV",						"fov",							75.0, 120.0, 0.1, 1
 	StaticText " "
-	Option "$DSPLYMNU_SPRITESHADOW",			"r_actorspriteshadow", "SpriteShadowModes"
+	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
+	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
+	StaticText " "
+	Option "$DSPLYMNU_DEATHCAM",				"r_deathcamera", "OnOff"
+	Option "$DSPLYMNU_TELEZOOM",				"telezoom", "OnOff"
+	Slider "$DSPLYMNU_QUAKEINTENSITY",			"r_quakeintensity", 0.0, 1.0, 0.05, 2
+	StaticText " "
+	IfOption(SWRender)
+	{
+		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	}
+	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
+}
+
+OptionMenu "SWROptions" protected
+{
+	Option "$TCMNU_DYNLIGHTS",					"r_dynlights", "OnOff"
+	Option "$DSPLYMNU_BLENDMETHOD",				"r_blendmethod", "BlendMethods"
+	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
+	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
+	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
+	Option "$DSPLYMNU_SCALEFUZZ",				"r_fuzzscale", "OnOff"
+	Option "$TCMNU_MINFILTER",					"r_minfilter", "OnOff"
+	Option "$TCMNU_MAGFILTER",					"r_magfilter", "OnOff"
+	Option "$TCMNU_MIPMAP",						"r_mipmap", "OnOff"
+}
+
+OptionMenu "LightOptions" protected
+{
+	Title "Light Options"
+
+	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
+	Option "$GLPREFMNU_FOGMODE",				gl_fogmode,						"FogMode"
+	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"
+	StaticText " "
+	Option "$GLPREFMNU_CORONAS",				gl_coronas,						"OnOff"
+	StaticText " "
+	Option "$GLLIGHTMNU_LIGHTSENABLED",			gl_lights,				"OnOff"
+	Option "$GLLIGHTMNU_LIGHTSPRITES",			gl_light_sprites,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTPARTICLES",		gl_light_particles,		"YesNo"
+	StaticText " "
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",		gl_light_shadowmap,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAPQUALITY", gl_shadowmap_quality,	"ShadowMapQuality"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAPFILTER", 	gl_shadowmap_filter,	"ShadowMapFilter"
+	StaticText " "
+	Option "$GLPREFMNU_SWLMBANDED",				gl_bandedswlight,				"OnOff"
+	Option "$GLPREFMNU_FOGFORCEFULLBRIGHT",		gl_brightfog,					"YesNo"
+	Slider "$GLPREFMNU_WPNLIGHTSTR",			gl_weaponlight,					0,32, 2
+	Option "$GLPREFMNU_ENVIRONMENTMAPMIRROR",	gl_mirror_envmap,				"OnOff"
+	StaticText " "
+	Option "$GLPREFMNU_ENV",					gl_enhanced_nightvision,		"OnOff"
+	Option "$GLPREFMNU_ENVSTEALTH",				gl_enhanced_nv_stealth,			"EnhancedStealth"
+	StaticText " "
 	Option "$DSPLYMNU_CUSTOMINVERTMAP",			"cl_customizeinvulmap", "OnOff"
 	ColorPicker "$DSPLYMNU_CUSTOMINVERTC1",		"cl_custominvulmapcolor1"
 	ColorPicker "$DSPLYMNU_CUSTOMINVERTC2",		"cl_custominvulmapcolor2"
-	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
-	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
+}
+
+OptionMenu "SpriteOptions" protected
+{
+	Title "Sprite Options"
+
+	Option "$DSPLYMNU_SPRITESHADOW",			"r_actorspriteshadow", "SpriteShadowModes"
 	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
-	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"
 	Option "$DSPLYMNU_ROCKETTRAILS",			"cl_rockettrails", "RocketTrailTypes"
 	Option "$DSPLYMNU_BLOODTYPE",				"cl_bloodtype", "BloodTypes"
 	Option "$DSPLYMNU_PUFFTYPE",				"cl_pufftype", "PuffTypes"
 	Slider "$DSPLYMNU_MAXPARTICLES",			"r_maxparticles", 100, 65535, 100, 0
 	Slider "$DSPLYMNU_MAXDECALS",				"cl_maxdecals", 0, 10000, 100, 0
 	Option "$DSPLYMNU_PLAYERSPRITES",			"r_drawplayersprites", "OnOff"
-	Option "$DSPLYMNU_DEATHCAM",				"r_deathcamera", "OnOff"
-	Option "$DSPLYMNU_TELEZOOM",				"telezoom", "OnOff"
-	Slider "$DSPLYMNU_QUAKEINTENSITY",			"r_quakeintensity", 0.0, 1.0, 0.05, 2
-	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
-}
+	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 
+	Option "$GLPREFMNU_SPRCLIP",				gl_spriteclip,					"SpriteclipModes"
+	Option "$GLPREFMNU_SPRBLEND",				gl_sprite_blend,				"OnOff"
+	Option "$GLPREFMNU_FUZZSTYLE",				gl_fuzztype,					"FuzzStyle"
+	Option "$GLPREFMNU_SPRBILLBOARD",			gl_billboard_mode,				"BillboardModes"
+	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
+	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
+}
 
 //-------------------------------------------------------------------------------------------
 //
@@ -2266,10 +2368,6 @@ OptionMenu VideoModeMenu protected
 {
 	Title "$VIDMNU_TITLE"
 
-	IfOption(SWRender)
-	{
-		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
-	}
 	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
 
 	IfOption(Mac)
@@ -2285,7 +2383,14 @@ OptionMenu VideoModeMenu protected
 	StaticText " "
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Slider "$VIDMNU_MAXFPS",					"vid_maxfps", 35, 500, 1
+
+	StaticText " "
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
+	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
+
+	StaticText " "
+	Option "$GLPREFMNU_MULTISAMPLE", 			gl_multisample,					"Multisample"
+	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
 	
 	StaticText ""
 	StaticText "$VIDMNU_CUSTOMRES"
@@ -2298,6 +2403,10 @@ OptionMenu VideoModeMenu protected
 	StaticText ""
 
 	SubMenu "$VIDMNU_RESPRESET", CustomResolutionMenu
+
+	StaticText ""
+	StaticText ""
+	TextField "$VKMNU_DEVICE",			vk_device
 }
 
 OptionMenu CustomResolutionMenu protected
@@ -2575,6 +2684,7 @@ OptionMenu "GLTextureGLOptions" protected
 	Title "$GLTEXMNU_TITLE"
 	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
+	StaticText " "
 
 	ifOption(MMX)
 	{
@@ -2594,46 +2704,6 @@ OptionMenu "GLTextureGLOptions" protected
 	Option "$GLTEXMNU_PRECACHETEX",		gl_precache,					"YesNo"
 	Option "$GLTEXMNU_SORTDRAWLIST", 	gl_sort_textures,				"YesNo"
 	Class "GLTextureGLOptions"
-}
-
-OptionMenu "GLLightOptions" protected
-{
-	Title "$GLLIGHTMNU_TITLE"
-	Option "$TCMNU_DYNLIGHTS",					"r_dynlights", "OnOff"
-	Option "$GLLIGHTMNU_LIGHTSENABLED",			gl_lights,				"OnOff"
-	Option "$GLLIGHTMNU_LIGHTSPRITES",			gl_light_sprites,		"YesNo"
-	Option "$GLLIGHTMNU_LIGHTPARTICLES",		gl_light_particles,		"YesNo"
-	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",		gl_light_shadowmap,		"YesNo"
-	Option "$GLLIGHTMNU_LIGHTSHADOWMAPQUALITY", gl_shadowmap_quality,	"ShadowMapQuality"
-	Option "$GLLIGHTMNU_LIGHTSHADOWMAPFILTER", 	gl_shadowmap_filter,	"ShadowMapFilter"
-}
-
-OptionMenu "OpenGLOptions" protected
-{
-	Title "$GLMNU_TITLE"
-	Submenu "$GLPREFMNU_VRMODE",				"VR3DMenu"
-	Submenu "$GLMNU_POSTPROCESS",				"PostProcessMenu"
-	StaticText " "
-	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
-	Option "$GLPREFMNU_SWLMBANDED",				gl_bandedswlight,				"OnOff"
-	Option "$GLPREFMNU_FOGMODE",				gl_fogmode,						"FogMode"
-	Option "$GLPREFMNU_FOGFORCEFULLBRIGHT",		gl_brightfog,					"YesNo"
-	Slider "$GLPREFMNU_WPNLIGHTSTR",			gl_weaponlight,					0,32, 2
-	Option "$GLPREFMNU_ENVIRONMENTMAPMIRROR",	gl_mirror_envmap,				"OnOff"
-	Option "$GLPREFMNU_ENV",					gl_enhanced_nightvision,		"OnOff"
-	Option "$GLPREFMNU_ENVSTEALTH",				gl_enhanced_nv_stealth,			"EnhancedStealth"
-	Option "$GLPREFMNU_SPRCLIP",				gl_spriteclip,					"SpriteclipModes"
-	Option "$GLPREFMNU_SPRBLEND",				gl_sprite_blend,				"OnOff"
-	Option "$GLPREFMNU_FUZZSTYLE",				gl_fuzztype,					"FuzzStyle"
-	Option "$GLPREFMNU_SPRBILLBOARD",			gl_billboard_mode,				"BillboardModes"
-	Option "$GLPREFMNU_SPRBILLFACECAMERA",		gl_billboard_faces_camera,		"OnOff"
-	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
-	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
-	Option "$GLPREFMNU_CORONAS",				gl_coronas,						"OnOff"
-	StaticText " "
-	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
-	StaticText " "
-	Option "$GLPREFMNU_MULTISAMPLE", 			gl_multisample,					"Multisample"
 }
 
 OptionMenu "VR3DMenu" protected
@@ -2807,16 +2877,6 @@ OptionValue "os_isanyof_values"
  * Vulkan Menu
  *
  *=======================================*/
-
-OptionMenu "vkoptions"
-{
-	Title "$VK_TITLE"
-	//StaticText "$VK_WARNING"
-	StaticText "$VK_RESTART"
-	StaticText ""
-	TextField "$VKMNU_DEVICE",			vk_device
-	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
-}
 
 OptionValue "SpriteShadowModes"
 {

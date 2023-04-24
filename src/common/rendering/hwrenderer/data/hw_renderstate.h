@@ -237,7 +237,6 @@ protected:
 	int mLightMode = -1;
 
 	float mAlphaThreshold;
-	float mClipSplit[2];
 
 
 	int mColorMapSpecial;
@@ -655,24 +654,26 @@ public:
 
 	void SetClipSplit(float bottom, float top)
 	{
-		mClipSplit[0] = bottom;
-		mClipSplit[1] = top;
+		mStreamData.uClipSplit.X = bottom;
+		mStreamData.uClipSplit.Y = top;
 	}
 
 	void SetClipSplit(float *vals)
 	{
-		memcpy(mClipSplit, vals, 2 * sizeof(float));
+		mStreamData.uClipSplit.X = vals[0];
+		mStreamData.uClipSplit.Y = vals[1];
 	}
 
 	void GetClipSplit(float *out)
 	{
-		memcpy(out, mClipSplit, 2 * sizeof(float));
+		out[0] = mStreamData.uClipSplit.X;
+		out[1] = mStreamData.uClipSplit.Y;
 	}
 
 	void ClearClipSplit()
 	{
-		mClipSplit[0] = -1000000.f;
-		mClipSplit[1] = 1000000.f;
+		mStreamData.uClipSplit.X = -1000000.f;
+		mStreamData.uClipSplit.Y = 1000000.f;
 	}
 
 	void SetVertexBuffer(IBuffer* vb, int offset0, int offset1)

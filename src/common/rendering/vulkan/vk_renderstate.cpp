@@ -396,7 +396,6 @@ void VkRenderState::ApplyStreamData()
 		mStreamData.timer = 0.0f;
 
 	mStreamData.uAlphaThreshold = mAlphaThreshold;
-	mStreamData.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 
 	if (mMaterial.mMaterial)
 	{

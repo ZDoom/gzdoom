@@ -235,7 +235,6 @@ protected:
 	int mTextureModeFlags;
 	int mSoftLight;
 	int mLightMode = -1;
-	float mLightParms[4];
 
 	float mAlphaThreshold;
 	float mClipSplit[2];
@@ -287,8 +286,10 @@ public:
 		mStreamData.uTextureAddColor = 0;
 		mStreamData.uTextureModulateColor = 0;
 		mSoftLight = 0;
-		mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
-		mLightParms[3] = -1.f;
+		mStreamData.uLightDist = 0.0f;
+		mStreamData.uLightFactor = 0.0f;
+		mStreamData.uFogDensity = 0.0f;
+		mStreamData.uLightLevel = -1.0f;
 		mSpecialEffect = EFF_NONE;
 		mLightIndex = -1;
 		mBoneIndexBase = -1;
@@ -463,13 +464,13 @@ public:
 
 	void SetSoftLightLevel(int llevel, int blendfactor = 0)
 	{
-		if (blendfactor == 0) mLightParms[3] = llevel / 255.f;
-		else mLightParms[3] = -1.f;
+		if (blendfactor == 0) mStreamData.uLightLevel = llevel / 255.f;
+		else mStreamData.uLightLevel = -1.f;
 	}
 
 	void SetNoSoftLightLevel()
 	{
-		 mLightParms[3] = -1.f;
+		mStreamData.uLightLevel = -1.f;
 	}
 
 	void SetLightMode(int lightmode)
@@ -562,13 +563,13 @@ public:
 		const float LOG2E = 1.442692f;	// = 1/log(2)
 		mFogColor = c;
 		mStreamData.uFogColor = mFogColor;
-		if (d >= 0.0f) mLightParms[2] = d * (-LOG2E / 64000.f);
+		if (d >= 0.0f) mStreamData.uFogDensity = d * (-LOG2E / 64000.f);
 	}
 
 	void SetLightParms(float f, float d)
 	{
-		mLightParms[1] = f;
-		mLightParms[0] = d;
+		mStreamData.uLightFactor = f;
+		mStreamData.uLightDist = d;
 	}
 
 	PalEntry GetFogColor() const

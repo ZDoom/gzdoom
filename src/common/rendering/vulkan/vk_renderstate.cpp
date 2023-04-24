@@ -278,7 +278,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.ShaderKey.SWLightRadial = (gl_fogmode == 2);
 	pipelineKey.ShaderKey.SWLightBanded = false; // gl_bandedswlight;
 
-	float lightlevel = mLightParms[3];
+	float lightlevel = mStreamData.uLightLevel;
 	if (lightlevel < 0.0)
 	{
 		pipelineKey.ShaderKey.LightMode = 0; // Default
@@ -395,10 +395,6 @@ void VkRenderState::ApplyStreamData()
 	else
 		mStreamData.timer = 0.0f;
 
-	mStreamData.uLightDist = mLightParms[0];
-	mStreamData.uLightFactor = mLightParms[1];
-	mStreamData.uFogDensity = mLightParms[2];
-	mStreamData.uLightLevel = mLightParms[3];
 	mStreamData.uAlphaThreshold = mAlphaThreshold;
 	mStreamData.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 

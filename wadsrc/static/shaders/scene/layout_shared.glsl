@@ -87,7 +87,19 @@ struct StreamData
 
 	vec4 uDetailParms;
 	vec4 uNpotEmulation;
-	vec4 padding1, padding2, padding3;
+
+	vec2 uClipSplit;
+	vec2 uSpecularMaterial;
+
+	float uLightLevel;
+	float uFogDensity;
+	float uLightFactor;
+	float uLightDist;
+
+	float uAlphaThreshold;
+	float padding1;
+	float padding2;
+	float padding3;
 };
 
 layout(set = 1, binding = 2, std140) uniform StreamUBO
@@ -123,28 +135,10 @@ layout(set = 2, binding = 10) uniform sampler2D texture11;
 // This must match the PushConstants struct
 layout(push_constant) uniform PushConstants
 {
-	int padding0; // was uTextureMode;
-	float uAlphaThreshold;
-	vec2 uClipSplit;
-
-	// Lighting + Fog
-	float uLightLevel;
-	float uFogDensity;
-	float uLightFactor;
-	float uLightDist;
-	int uFogEnabled;
-
-	// dynamic lights
-	int uLightIndex;
-
-	// Blinn glossiness and specular level
-	vec2 uSpecularMaterial;
-
-	// bone animation
-	int uBoneIndexBase;
-
-	int uDataIndex;
-	int padding2, padding3;
+	int uDataIndex; // streamdata index
+	int uLightIndex; // dynamic lights
+	int uBoneIndexBase; // bone animation
+	int padding;
 };
 
 // material types
@@ -192,6 +186,13 @@ layout(push_constant) uniform PushConstants
 #define uSplitBottomPlane data[uDataIndex].uSplitBottomPlane
 #define uDetailParms data[uDataIndex].uDetailParms
 #define uNpotEmulation data[uDataIndex].uNpotEmulation
+#define uClipSplit data[uDataIndex].uClipSplit
+#define uSpecularMaterial data[uDataIndex].uSpecularMaterial
+#define uLightLevel data[uDataIndex].uLightLevel
+#define uFogDensity data[uDataIndex].uFogDensity
+#define uLightFactor data[uDataIndex].uLightFactor
+#define uLightDist data[uDataIndex].uLightDist
+#define uAlphaThreshold data[uDataIndex].uAlphaThreshold
 
 #define VULKAN_COORDINATE_SYSTEM
 #define HAS_UNIFORM_VERTEX_DATA

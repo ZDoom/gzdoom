@@ -395,6 +395,19 @@ void VkRenderState::ApplyStreamData()
 	else
 		mStreamData.timer = 0.0f;
 
+	mStreamData.uLightDist = mLightParms[0];
+	mStreamData.uLightFactor = mLightParms[1];
+	mStreamData.uFogDensity = mLightParms[2];
+	mStreamData.uLightLevel = mLightParms[3];
+	mStreamData.uAlphaThreshold = mAlphaThreshold;
+	mStreamData.uClipSplit = { mClipSplit[0], mClipSplit[1] };
+
+	if (mMaterial.mMaterial)
+	{
+		auto source = mMaterial.mMaterial->Source();
+		mStreamData.uSpecularMaterial = { source->GetGlossiness(), source->GetSpecularLevel() };
+	}
+
 	if (!mStreamBufferWriter.Write(mStreamData))
 	{
 		WaitForStreamBuffers();
@@ -404,40 +417,9 @@ void VkRenderState::ApplyStreamData()
 
 void VkRenderState::ApplyPushConstants()
 {
-	int fogset = 0;
-	if (mFogEnabled)
-	{
-		if (mFogEnabled == 2)
-		{
-			fogset = -3;	// 2D rendering with 'foggy' overlay.
-		}
-		else if ((GetFogColor() & 0xffffff) == 0)
-		{
-			fogset = gl_fogmode;
-		}
-		else
-		{
-			fogset = -gl_fogmode;
-		}
-	}
-
-	mPushConstants.uFogEnabled = fogset;
-	mPushConstants.uLightDist = mLightParms[0];
-	mPushConstants.uLightFactor = mLightParms[1];
-	mPushConstants.uFogDensity = mLightParms[2];
-	mPushConstants.uLightLevel = mLightParms[3];
-	mPushConstants.uAlphaThreshold = mAlphaThreshold;
-	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
-
-	if (mMaterial.mMaterial)
-	{
-		auto source = mMaterial.mMaterial->Source();
-		mPushConstants.uSpecularMaterial = { source->GetGlossiness(), source->GetSpecularLevel() };
-	}
-
+	mPushConstants.uDataIndex = mStreamBufferWriter.DataIndex();
 	mPushConstants.uLightIndex = mLightIndex;
 	mPushConstants.uBoneIndexBase = mBoneIndexBase;
-	mPushConstants.uDataIndex = mStreamBufferWriter.DataIndex();
 
 	auto passManager = fb->GetRenderPassManager();
 	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);

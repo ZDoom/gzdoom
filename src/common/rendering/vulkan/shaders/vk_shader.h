@@ -35,28 +35,10 @@ struct StreamUBO
 
 struct PushConstants
 {
-	int uTextureMode;
-	float uAlphaThreshold;
-	FVector2 uClipSplit;
-
-	// Lighting + Fog
-	float uLightLevel;
-	float uFogDensity;
-	float uLightFactor;
-	float uLightDist;
-	int uFogEnabled;
-
-	// dynamic lights
-	int uLightIndex;
-
-	// Blinn glossiness and specular level
-	FVector2 uSpecularMaterial;
-
-	// bone animation
-	int uBoneIndexBase;
-
-	int uDataIndex;
-	int padding1, padding2, padding3;
+	int uDataIndex; // streamdata index
+	int uLightIndex; // dynamic lights
+	int uBoneIndexBase; // bone animation
+	int padding;
 };
 
 class VkShaderKey

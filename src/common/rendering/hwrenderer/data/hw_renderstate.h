@@ -200,7 +200,19 @@ struct StreamData
 
 	FVector4 uDetailParms;
 	FVector4 uNpotEmulation;
-	FVector4 padding1, padding2, padding3;
+
+	FVector2 uClipSplit;
+	FVector2 uSpecularMaterial;
+
+	float uLightLevel;
+	float uFogDensity;
+	float uLightFactor;
+	float uLightDist;
+
+	float uAlphaThreshold;
+	float padding1;
+	float padding2;
+	float padding3;
 };
 
 class FRenderState

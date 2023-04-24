@@ -244,7 +244,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 		pipelineKey.ShaderKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
 		if (r_skipmats && pipelineKey.ShaderKey.EffectState >= 3 && pipelineKey.ShaderKey.EffectState <= 4)
 			pipelineKey.ShaderKey.EffectState = 0;
-		pipelineKey.ShaderKey.AlphaTest = mAlphaThreshold >= 0.f;
+		pipelineKey.ShaderKey.AlphaTest = mStreamData.uAlphaThreshold >= 0.f;
 	}
 
 	int uTextureMode = GetTextureModeAndFlags((mMaterial.mMaterial && mMaterial.mMaterial->Source()->isHardwareCanvas()) ? TM_OPAQUE : TM_NORMAL);
@@ -394,8 +394,6 @@ void VkRenderState::ApplyStreamData()
 		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->GetShaderSpeed() / 1000.);
 	else
 		mStreamData.timer = 0.0f;
-
-	mStreamData.uAlphaThreshold = mAlphaThreshold;
 
 	if (mMaterial.mMaterial)
 	{

@@ -236,9 +236,6 @@ protected:
 	int mSoftLight;
 	int mLightMode = -1;
 
-	float mAlphaThreshold;
-
-
 	int mColorMapSpecial;
 	float mColorMapFlash;
 
@@ -274,7 +271,7 @@ public:
 		mTextureClamp = 0;
 		mTextureModeFlags = 0;
 		mStreamData.uDesaturationFactor = 0.0f;
-		mAlphaThreshold = 0.5f;
+		mStreamData.uAlphaThreshold = 0.5f;
 		mModelMatrixEnabled = false;
 		mTextureMatrixEnabled = false;
 		mSplitEnabled = false;
@@ -578,8 +575,8 @@ public:
 
 	void AlphaFunc(int func, float thresh)
 	{
-		if (func == Alpha_Greater) mAlphaThreshold = thresh;
-		else mAlphaThreshold = thresh - 0.001f;
+		if (func == Alpha_Greater) mStreamData.uAlphaThreshold = thresh;
+		else mStreamData.uAlphaThreshold = thresh - 0.001f;
 	}
 
 	void SetLightIndex(int index)

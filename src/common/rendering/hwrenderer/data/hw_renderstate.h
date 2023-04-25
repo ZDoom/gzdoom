@@ -180,11 +180,11 @@ struct StreamData
 	FVector4PalEntry uTextureModulateColor;
 	FVector4PalEntry uTextureBlendColor;
 	FVector4PalEntry uFogColor;
-	float uDesaturationFactor;
+	float uDesaturationFactor; // HWDrawInfo::SetColor
 	float uInterpolationFactor;
 	float timer;
 	int useVertexData;
-	FVector4 uVertexColor;
+	FVector4 uVertexColor; // HWDrawInfo::SetColor
 	FVector4 uVertexNormal;
 
 	FVector4 uGlowTopPlane;
@@ -204,7 +204,7 @@ struct StreamData
 	FVector2 uClipSplit;
 	FVector2 uSpecularMaterial;
 
-	float uLightLevel;
+	float uLightLevel; // HWDrawInfo::SetColor
 	float uFogDensity;
 	float uLightFactor;
 	float uLightDist;

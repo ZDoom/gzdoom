@@ -268,7 +268,7 @@ void HWDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 //
 //
 //==========================================================================
-void HWDrawList::SortWallIntoPlane(HWDrawInfo* di, SortNode * head, SortNode * sort)
+void HWDrawList::SortWallIntoPlane(HWDrawInfo* di, FRenderState& state, SortNode * head, SortNode * sort)
 {
 	HWFlat * fh = flats[drawitems[head->itemindex].index];
 	HWWall * ws = walls[drawitems[sort->itemindex].index];
@@ -304,8 +304,8 @@ void HWDrawList::SortWallIntoPlane(HWDrawInfo* di, SortNode * head, SortNode * s
 				w->tcs[HWWall::UPLFT].v = ws->tcs[HWWall::LOLFT].v = w->tcs[HWWall::UPRGT].v = ws->tcs[HWWall::LORGT].v = newtexv;
 				w->lightuv[HWWall::UPLFT].v = ws->lightuv[HWWall::LOLFT].v = w->lightuv[HWWall::UPRGT].v = ws->lightuv[HWWall::LORGT].v = newlmv;
 			}
-			w->MakeVertices(di, *screen->RenderState(), false);
-			ws->MakeVertices(di, *screen->RenderState(), false);
+			w->MakeVertices(di, state, false);
+			ws->MakeVertices(di, state, false);
 		}
 
 		SortNode * sort2 = SortNodes.GetNew();
@@ -399,7 +399,7 @@ inline double CalcIntersectionVertex(HWWall *w1, HWWall * w2)
 	return ((ay - cy)*(dx - cx) - (ax - cx)*(dy - cy)) / ((bx - ax)*(dy - cy) - (by - ay)*(dx - cx));
 }
 
-void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort)
+void HWDrawList::SortWallIntoWall(HWDrawInfo *di, FRenderState& state, SortNode * head,SortNode * sort)
 {
 	HWWall * wh= walls[drawitems[head->itemindex].index];
 	HWWall * ws= walls[drawitems[sort->itemindex].index];
@@ -451,8 +451,8 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sor
 		w->zbottom[0]=ws->zbottom[1]=izb;
 		w->tcs[HWWall::LOLFT].u = w->tcs[HWWall::UPLFT].u = ws->tcs[HWWall::LORGT].u = ws->tcs[HWWall::UPRGT].u = iu;
 		w->lightuv[HWWall::LOLFT].u = w->lightuv[HWWall::UPLFT].u = ws->lightuv[HWWall::LORGT].u = ws->lightuv[HWWall::UPRGT].u = iu;
-		ws->MakeVertices(di, *screen->RenderState(), false);
-		w->MakeVertices(di, *screen->RenderState(), false);
+		ws->MakeVertices(di, state, false);
+		w->MakeVertices(di, state, false);
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -490,7 +490,7 @@ inline double CalcIntersectionVertex(HWSprite *s, HWWall * w2)
 	return ((ay - cy)*(dx - cx) - (ax - cx)*(dy - cy)) / ((bx - ax)*(dy - cy) - (by - ay)*(dx - cx));
 }
 
-void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort)
+void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, FRenderState& state, SortNode * head,SortNode * sort)
 {
 	HWWall *wh= walls[drawitems[head->itemindex].index];
 	HWSprite * ss= sprites[drawitems[sort->itemindex].index];
@@ -573,8 +573,8 @@ void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * s
 		}
 		else
 		{
-			s->CreateVertices(di);
-			ss->CreateVertices(di);
+			s->CreateVertices(di, state);
+			ss->CreateVertices(di, state);
 		}
 
 	}
@@ -633,7 +633,7 @@ SortNode * HWDrawList::SortSpriteList(SortNode * head)
 //
 //
 //==========================================================================
-SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
+SortNode * HWDrawList::DoSort(HWDrawInfo *di, FRenderState& state, SortNode * head)
 {
 	SortNode * node, * sn, * next;
 
@@ -654,7 +654,7 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 				break;
 
 			case DrawType_WALL:
-				SortWallIntoPlane(di,head,node);
+				SortWallIntoPlane(di,state,head,node);
 				break;
 
 			case DrawType_SPRITE:
@@ -679,11 +679,11 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 				switch(drawitems[node->itemindex].rendertype)
 				{
 				case DrawType_WALL:
-					SortWallIntoWall(di, head,node);
+					SortWallIntoWall(di, state, head, node);
 					break;
 
 				case DrawType_SPRITE:
-					SortSpriteIntoWall(di, head, node);
+					SortSpriteIntoWall(di, state, head, node);
 					break;
 
 				case DrawType_FLAT: break;
@@ -696,8 +696,8 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 			return SortSpriteList(head);
 		}
 	}
-	if (head->left) head->left=DoSort(di, head->left);
-	if (head->right) head->right=DoSort(di, head->right);
+	if (head->left) head->left=DoSort(di, state, head->left);
+	if (head->right) head->right=DoSort(di, state, head->right);
 	return sn;
 }
 
@@ -706,12 +706,12 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 //
 //
 //==========================================================================
-void HWDrawList::Sort(HWDrawInfo *di)
+void HWDrawList::Sort(HWDrawInfo *di, FRenderState& state)
 {
 	reverseSort = !!(di->Level->i_compatflags & COMPATF_SPRITESORT);
     SortZ = di->Viewpoint.Pos.Z;
 	MakeSortList();
-	sorted = DoSort(di, SortNodes[SortNodeStart]);
+	sorted = DoSort(di, state, SortNodes[SortNodeStart]);
 }
 
 //==========================================================================
@@ -940,7 +940,7 @@ void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state)
 	if (!sorted)
 	{
 		screen->mVertexData->Map();
-		Sort(di);
+		Sort(di, state);
 		screen->mVertexData->Unmap();
 	}
 	state.ClearClipSplit();

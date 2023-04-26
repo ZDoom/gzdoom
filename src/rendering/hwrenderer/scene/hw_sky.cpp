@@ -111,7 +111,7 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 //
 //==========================================================================
 
-void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowreflect)
+void HWWall::SkyPlane(HWDrawInfo *di, FRenderState& state, sector_t *sector, int plane, bool allowreflect)
 {
 	int ptype = -1;
 
@@ -125,7 +125,7 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 		skyinfo.init(di, sector->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
 		sky = &skyinfo;
-		PutPortal(di, ptype, plane);
+		PutPortal(di, state, ptype, plane);
 	}
 	else if (sportal != nullptr)
 	{
@@ -165,7 +165,7 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 	}
 	if (ptype != -1)
 	{
-		PutPortal(di, ptype, plane);
+		PutPortal(di, state, ptype, plane);
 	}
 }
 
@@ -176,7 +176,7 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 //
 //==========================================================================
 
-void HWWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
+void HWWall::SkyLine(HWDrawInfo *di, FRenderState& state, sector_t *fs, line_t *line)
 {
 	FSectorPortal *secport = line->GetTransferredPortal();
 	HWSkyInfo skyinfo;
@@ -200,7 +200,7 @@ void HWWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 	ztop[1] = zceil[1];
 	zbottom[0] = zfloor[0];
 	zbottom[1] = zfloor[1];
-	PutPortal(di, ptype, -1);
+	PutPortal(di, state, ptype, -1);
 }
 
 
@@ -210,17 +210,17 @@ void HWWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 //
 //==========================================================================
 
-void HWWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyNormal(HWDrawInfo *di, FRenderState& state, sector_t * fs,vertex_t * v1,vertex_t * v2)
 {
 	ztop[0]=ztop[1]=32768.0f;
 	zbottom[0]=zceil[0];
 	zbottom[1]=zceil[1];
-	SkyPlane(di, fs, sector_t::ceiling, true);
+	SkyPlane(di, state, fs, sector_t::ceiling, true);
 
 	ztop[0]=zfloor[0];
 	ztop[1]=zfloor[1];
 	zbottom[0]=zbottom[1]=-32768.0f;
-	SkyPlane(di, fs, sector_t::floor, true);
+	SkyPlane(di, state, fs, sector_t::floor, true);
 }
 
 //==========================================================================
@@ -229,7 +229,7 @@ void HWWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2
 //
 //==========================================================================
 
-void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyTop(HWDrawInfo *di, FRenderState& state, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
@@ -259,7 +259,7 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 						ztop[0]=ztop[1]=32768.0f;
 						zbottom[0]=zbottom[1]= 
 							bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffset(side_t::mid);
-						SkyPlane(di, fs, sector_t::ceiling, false);
+						SkyPlane(di, state, fs, sector_t::ceiling, false);
 						return;
 					}
 				}
@@ -313,7 +313,7 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 
 	}
 
-	SkyPlane(di, fs, sector_t::ceiling, true);
+	SkyPlane(di, state, fs, sector_t::ceiling, true);
 }
 
 
@@ -323,7 +323,7 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 //
 //==========================================================================
 
-void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyBottom(HWDrawInfo *di, FRenderState& state, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
@@ -391,6 +391,6 @@ void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 		ztop[1] = fs->floorplane.ZatPoint(v2);
 	}
 
-	SkyPlane(di, fs, sector_t::floor, true);
+	SkyPlane(di, state, fs, sector_t::floor, true);
 }
 

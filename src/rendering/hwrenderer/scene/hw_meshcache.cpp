@@ -77,6 +77,8 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 		HWDrawInfo* di = HWDrawInfo::StartDrawInfo(vp.ViewLevel, nullptr, vp, nullptr);
 		di->MeshBuilding = true;
 
+		MeshBuilder state;
+
 		// Add to the draw lists
 
 		unsigned int count = level->sectors.Size();
@@ -96,7 +98,7 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 					HWFlat flat;
 					flat.section = subsector->section;
 					sector_t* front = hw_FakeFlat(subsector->render_sector, area_default, false);
-					flat.ProcessSector(di, front);
+					flat.ProcessSector(di, state, front);
 				}
 			}
 
@@ -106,13 +108,11 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 
 				HWWall wall;
 				wall.sub = sector->subsectors[0];
-				wall.Process(di, side->segs[0], sector, (line->sidedef[0]->sector == sector) ? line->backsector : line->frontsector);
+				wall.Process(di, state, side->segs[0], sector, (line->sidedef[0]->sector == sector) ? line->backsector : line->frontsector);
 			}
 		}
 
 		// Convert draw lists to meshes
-
-		MeshBuilder state;
 
 		state.SetDepthMask(true);
 		state.EnableFog(true);

@@ -204,36 +204,36 @@ public:
 	sector_t *frontsector, *backsector;
 //private:
 
-	void PutWall(HWDrawInfo *di, bool translucent);
-	void PutPortal(HWDrawInfo *di, int ptype, int plane);
+	void PutWall(HWDrawInfo *di, FRenderState& state, bool translucent);
+	void PutPortal(HWDrawInfo *di, FRenderState& state, int ptype, int plane);
 	void CheckTexturePosition(FTexCoordInfo *tci);
 
-	void Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent);
-	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
-	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
+	void Put3DWall(HWDrawInfo *di, FRenderState& state, lightlist_t * lightlist, bool translucent);
+	bool SplitWallComplex(HWDrawInfo *di, FRenderState& state, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
+	void SplitWall(HWDrawInfo *di, FRenderState& state, sector_t * frontsector, bool translucent);
 
 	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata);
 
 	void MakeVertices(HWDrawInfo *di, FRenderState& state, bool nosplit);
 
-	void SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowmirror);
-	void SkyLine(HWDrawInfo *di, sector_t *sec, line_t *line);
-	void SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2);
-	void SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
-	void SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
+	void SkyPlane(HWDrawInfo *di, FRenderState& state, sector_t *sector, int plane, bool allowmirror);
+	void SkyLine(HWDrawInfo *di, FRenderState& state, sector_t *sec, line_t *line);
+	void SkyNormal(HWDrawInfo *di, FRenderState& state, sector_t * fs,vertex_t * v1,vertex_t * v2);
+	void SkyTop(HWDrawInfo *di, FRenderState& state, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
+	void SkyBottom(HWDrawInfo *di, FRenderState& state, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 
-	bool DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
+	bool DoHorizon(HWDrawInfo *di, FRenderState& state, seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
 
 	bool SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float ceilingrefheight,
 		float topleft, float topright, float bottomleft, float bottomright, float t_ofs);
 
-	void DoTexture(HWDrawInfo *di, int type,seg_t * seg,int peg,
+	void DoTexture(HWDrawInfo *di, FRenderState& state, int type,seg_t * seg,int peg,
 						   float ceilingrefheight, float floorrefheight,
 						   float CeilingHeightstart,float CeilingHeightend,
 						   float FloorHeightstart,float FloorHeightend,
 						   float v_offset);
 
-	void DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
+	void DoMidTexture(HWDrawInfo *di, FRenderState& state, seg_t * seg, bool drawfogboundary,
 					  sector_t * front, sector_t * back,
 					  sector_t * realfront, sector_t * realback,
 					  float fch1, float fch2, float ffh1, float ffh2,
@@ -241,21 +241,21 @@ public:
 
 	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
 
-	void BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int roverIndex,
+	void BuildFFBlock(HWDrawInfo *di, FRenderState& state, seg_t * seg, F3DFloor * rover, int roverIndex,
 					  float ff_topleft, float ff_topright, 
 					  float ff_bottomleft, float ff_bottomright);
-	void InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
+	void InverseFloors(HWDrawInfo *di, FRenderState& state, seg_t * seg, sector_t * frontsector,
 					   float topleft, float topright, 
 					   float bottomleft, float bottomright);
-	void ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, int ffloorIndex, sector_t * frontsector,
+	void ClipFFloors(HWDrawInfo *di, FRenderState& state, seg_t * seg, F3DFloor * ffloor, int ffloorIndex, sector_t * frontsector,
 					float topleft, float topright, 
 					float bottomleft, float bottomright);
-	void DoFFloorBlocks(HWDrawInfo *di, seg_t * seg, sector_t * frontsector, sector_t * backsector,
+	void DoFFloorBlocks(HWDrawInfo *di, FRenderState& state, seg_t * seg, sector_t * frontsector, sector_t * backsector,
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
-    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
-    void ProcessDecals(HWDrawInfo *di);
+    void ProcessDecal(HWDrawInfo *di, FRenderState& state, DBaseDecal *decal, const FVector3 &normal);
+    void ProcessDecals(HWDrawInfo *di, FRenderState& state);
 
 	int CreateVertices(FFlatVertex *&ptr, bool nosplit);
 	void SplitLeftEdge (FFlatVertex *&ptr);
@@ -276,8 +276,8 @@ public:
 	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<HWDecal *> &decals);
 
 public:
-	void Process(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
-	void ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
+	void Process(HWDrawInfo *di, FRenderState& state, seg_t *seg, sector_t *frontsector, sector_t *backsector);
+	void ProcessLowerMiniseg(HWDrawInfo *di, FRenderState& state, seg_t *seg, sector_t *frontsector, sector_t *backsector);
 
 	float PointOnSide(float x,float y)
 	{
@@ -324,9 +324,9 @@ public:
 	void SetupLights(HWDrawInfo *di, FLightNode *head, FDynLightData &lightdata, int portalgroup);
 
 	void PutFlat(HWDrawInfo *di, bool fog = false);
-	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
+	void Process(HWDrawInfo *di, FRenderState& state, sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
-	void ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which = 7 /*SSRF_RENDERALL*/);	// cannot use constant due to circular dependencies.
+	void ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * frontsector, int which = 7 /*SSRF_RENDERALL*/);	// cannot use constant due to circular dependencies.
 	
 	void DrawSubsectors(HWDrawInfo *di, FRenderState &state);
 	void DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent);
@@ -380,16 +380,16 @@ public:
 	DRotator Angles;
 
 
-	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
+	void SplitSprite(HWDrawInfo *di, FRenderState& state, sector_t * frontsector, bool translucent);
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
 	bool CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp);
 
 public:
 
-	void CreateVertices(HWDrawInfo *di);
-	void PutSprite(HWDrawInfo *di, bool translucent);
-	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false, bool isSpriteShadow = false);
-	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
+	void CreateVertices(HWDrawInfo *di, FRenderState& state);
+	void PutSprite(HWDrawInfo *di, FRenderState& state, bool translucent);
+	void Process(HWDrawInfo *di, FRenderState& state, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false, bool isSpriteShadow = false);
+	void ProcessParticle (HWDrawInfo *di, FRenderState& state, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 
 	void DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent);
 };

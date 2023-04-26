@@ -405,7 +405,7 @@ inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
 //
 //==========================================================================
 
-void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
+void HWFlat::Process(HWDrawInfo *di, FRenderState& state, sector_t * model, int whichplane, bool fog)
 {
 	plane.GetFromSector(model, whichplane);
 	if (whichplane != int(ceiling))
@@ -433,7 +433,7 @@ void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 	z = plane.plane.ZatPoint(0.f, 0.f);
 	if (sector->special == GLSector_Skybox)
 	{
-		auto vert = screen->mVertexData->AllocVertices(4);
+		auto vert = state.AllocVertices(4);
 		CreateSkyboxVertices(vert.first);
 		iboindex = vert.second;
 	}
@@ -486,7 +486,7 @@ void HWFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 //
 //==========================================================================
 
-void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
+void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * frontsector, int which)
 {
 	lightlist_t * light;
 	FSectorPortal *port;
@@ -562,7 +562,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 				CopyFrom3DLight(Colormap, light);
 			}
 			renderstyle = STYLE_Translucent;
-			Process(di, frontsector, sector_t::floor, false);
+			Process(di, state, frontsector, sector_t::floor, false);
 		}
 	}
 
@@ -618,7 +618,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 				CopyFrom3DLight(Colormap, light);
 			}
 			renderstyle = STYLE_Translucent;
-			Process(di, frontsector, sector_t::ceiling, false);
+			Process(di, state, frontsector, sector_t::ceiling, false);
 		}
 	}
 
@@ -662,7 +662,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
-							Process(di, rover->top.model, rover->top.isceiling, !!(rover->flags&FF_FOG));
+							Process(di, state, rover->top.model, rover->top.isceiling, !!(rover->flags&FF_FOG));
 						}
 						lastceilingheight = ff_top;
 					}
@@ -676,7 +676,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 						{
 							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
-							Process(di, rover->bottom.model, rover->bottom.isceiling, !!(rover->flags&FF_FOG));
+							Process(di, state, rover->bottom.model, rover->bottom.isceiling, !!(rover->flags&FF_FOG));
 						}
 						lastceilingheight = ff_bottom;
 						if (rover->alpha < 255) lastceilingheight += EQUAL_EPSILON;
@@ -709,7 +709,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 								Colormap = rover->GetColormap();
 							}
 
-							Process(di, rover->bottom.model, rover->bottom.isceiling, !!(rover->flags&FF_FOG));
+							Process(di, state, rover->bottom.model, rover->bottom.isceiling, !!(rover->flags&FF_FOG));
 						}
 						lastfloorheight = ff_bottom;
 					}
@@ -723,7 +723,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
-							Process(di, rover->top.model, rover->top.isceiling, !!(rover->flags&FF_FOG));
+							Process(di, state, rover->top.model, rover->top.isceiling, !!(rover->flags&FF_FOG));
 						}
 						lastfloorheight = ff_top;
 						if (rover->alpha < 255) lastfloorheight -= EQUAL_EPSILON;

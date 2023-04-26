@@ -100,14 +100,14 @@ public:
 	SortNode * FindSortPlane(SortNode * head);
 	SortNode * FindSortWall(SortNode * head);
 	void SortPlaneIntoPlane(SortNode * head,SortNode * sort);
-	void SortWallIntoPlane(HWDrawInfo* di, SortNode * head,SortNode * sort);
+	void SortWallIntoPlane(HWDrawInfo* di, FRenderState& state, SortNode * head,SortNode * sort);
 	void SortSpriteIntoPlane(SortNode * head,SortNode * sort);
-	void SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort);
-	void SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort);
+	void SortWallIntoWall(HWDrawInfo *di, FRenderState& state, SortNode * head,SortNode * sort);
+	void SortSpriteIntoWall(HWDrawInfo *di, FRenderState& state, SortNode * head,SortNode * sort);
 	int CompareSprites(SortNode * a,SortNode * b);
 	SortNode * SortSpriteList(SortNode * head);
-	SortNode * DoSort(HWDrawInfo *di, SortNode * head);
-	void Sort(HWDrawInfo *di);
+	SortNode * DoSort(HWDrawInfo *di, FRenderState& state, SortNode * head);
+	void Sort(HWDrawInfo *di, FRenderState& state);
 
 	void DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, int i);
 	void Draw(HWDrawInfo *di, FRenderState &state, bool translucent);

@@ -1,6 +1,7 @@
 
 #include "hw_meshbuilder.h"
 #include "hw_mesh.h"
+#include "v_video.h"
 
 MeshBuilder::MeshBuilder()
 {
@@ -16,6 +17,9 @@ MeshBuilder::MeshBuilder()
 	ClearDepthBias();
 	EnableTexture(1);
 	EnableBrightmap(true);
+
+	// Add the vbo_shadowdata as some geometry might use it
+	mVertices = screen->mVertexData->vbo_shadowdata;
 }
 
 void MeshBuilder::Draw(int dt, int index, int count, bool apply)
@@ -56,18 +60,13 @@ void MeshBuilder::Apply()
 	state.applyData.RenderStyle = mRenderStyle;
 	state.applyData.SpecialEffect = mSpecialEffect;
 	state.applyData.TextureEnabled = mTextureEnabled;
-	state.applyData.AlphaThreshold = mAlphaThreshold;
+	state.applyData.AlphaThreshold = mStreamData.uAlphaThreshold;
 	state.applyData.DepthFunc = mDepthFunc;
 	state.applyData.FogEnabled = mFogEnabled;
 	state.applyData.BrightmapEnabled = mBrightmapEnabled;
 	state.applyData.TextureClamp = mTextureClamp;
 	state.applyData.TextureMode = mTextureMode;
 	state.applyData.TextureModeFlags = mTextureModeFlags;
-	state.applyData.uLightDist = mLightParms[0];
-	state.applyData.uLightFactor = mLightParms[1];
-	state.applyData.uFogDensity = mLightParms[2];
-	state.applyData.uClipSplit = { mClipSplit[0], mClipSplit[1] };
-	state.uLightLevel = mLightParms[3];
 	state.streamData = mStreamData;
 	state.material = mMaterial;
 
@@ -100,8 +99,10 @@ std::unique_ptr<Mesh> MeshBuilder::Create()
 		applyIndex++;
 	}
 
-	mesh->mVertices = std::move(mVertices);
-	mVertices.Clear();
+	// To do: the various mesh layers have to share the vertex buffer since some vertex allocations happen at the Process stage
+	//mesh->mVertices = std::move(mVertices);
+	//mVertices.Clear();
+	mesh->mVertices = mVertices;
 
 	return mesh;
 }

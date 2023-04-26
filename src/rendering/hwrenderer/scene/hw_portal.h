@@ -82,7 +82,7 @@ public:
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
 	virtual void DrawContents(HWDrawInfo *di, FRenderState &state) = 0;
-	virtual void RenderAttached(HWDrawInfo *di) {}
+	virtual void RenderAttached(HWDrawInfo *di, FRenderState& state) {}
 	void SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 	void RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 
@@ -147,7 +147,7 @@ public:
 	{
 		if (Setup(di, state, di->mClipper))
 		{
-			di->DrawScene(DM_PORTAL);
+			di->DrawScene(DM_PORTAL, state);
 			Shutdown(di, state);
 		}
 		else state.ClearScreen();
@@ -225,7 +225,7 @@ protected:
 	virtual void * GetSource() const override { return glport; }
 	virtual const char *GetName() override;
 	virtual linebase_t *ClipLine() override { return this; }
-	virtual void RenderAttached(HWDrawInfo *di) override;
+	virtual void RenderAttached(HWDrawInfo *di, FRenderState& state) override;
 
 public:
 
@@ -323,7 +323,7 @@ protected:
 
 public:
 	
-	HWHorizonPortal(FPortalSceneState *state, HWHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
+	HWHorizonPortal(FPortalSceneState *state, FRenderState& renderstate, HWHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
 };
 
 struct HWEEHorizonPortal : public HWPortal

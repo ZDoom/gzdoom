@@ -68,7 +68,7 @@ void HWDrawInfo::AddWall(HWWall *wall)
 //
 //==========================================================================
 
-void HWDrawInfo::AddMirrorSurface(HWWall *w)
+void HWDrawInfo::AddMirrorSurface(HWWall *w, FRenderState& state)
 {
 	w->type = RENDERWALL_MIRRORSURFACE;
 	auto newwall = drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
@@ -81,14 +81,14 @@ void HWDrawInfo::AddMirrorSurface(HWWall *w)
 	auto tcs = newwall->tcs;
 	tcs[HWWall::LOLFT].u = tcs[HWWall::LORGT].u = tcs[HWWall::UPLFT].u = tcs[HWWall::UPRGT].u = v.X;
 	tcs[HWWall::LOLFT].v = tcs[HWWall::LORGT].v = tcs[HWWall::UPLFT].v = tcs[HWWall::UPRGT].v = v.Z;
-	newwall->MakeVertices(this, *screen->RenderState(), false);
+	newwall->MakeVertices(this, state, false);
 
 	bool hasDecals = newwall->seg->sidedef && newwall->seg->sidedef->AttachedDecals;
 	if (hasDecals && Level->HasDynamicLights && !isFullbrightScene())
 	{
 		newwall->SetupLights(this, lightdata);
 	}
-	newwall->ProcessDecals(this);
+	newwall->ProcessDecals(this, state);
 	newwall->dynlightindex = -1; // the environment map should not be affected by lights - only the decals.
 }
 

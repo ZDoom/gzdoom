@@ -188,7 +188,7 @@ static float mix(float a, float b, float t)
 	return a * (1.0f - t) + b * t;
 }
 
-void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
+void HWWall::ProcessDecal(HWDrawInfo *di, FRenderState& state, DBaseDecal *decal, const FVector3 &normal)
 {
 	line_t * line = seg->linedef;
 	side_t * side = seg->sidedef;
@@ -445,7 +445,7 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	gldecal->lightlist = lightlist;
 	memcpy(gldecal->dv, dv, sizeof(dv));
 	
-	auto verts = screen->mVertexData->AllocVertices(4);
+	auto verts = state.AllocVertices(4);
 	gldecal->vertindex = verts.second;
 	
 	for (i = 0; i < 4; i++)
@@ -460,7 +460,7 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 //
 //==========================================================================
 
-void HWWall::ProcessDecals(HWDrawInfo *di)
+void HWWall::ProcessDecals(HWDrawInfo *di, FRenderState& state)
 {
 	if (seg->sidedef != nullptr)
 	{
@@ -470,7 +470,7 @@ void HWWall::ProcessDecals(HWDrawInfo *di)
 			auto normal = glseg.Normal();	// calculate the normal only once per wall because it requires a square root.
 			while (decal)
 			{
-				ProcessDecal(di, decal, normal);
+				ProcessDecal(di, state, decal, normal);
 				decal = decal->WallNext;
 			}
 		}

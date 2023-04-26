@@ -194,7 +194,7 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 			screen->mVertexData->Map();
 			if (planesused & (1 << sector_t::floor))
 			{
-				auto verts = screen->mVertexData->AllocVertices(4);
+				auto verts = state.AllocVertices(4);
 				auto ptr = verts.first;
 				ptr[0].Set((float)boundingBox.left, -32767.f, (float)boundingBox.top, 0, 0);
 				ptr[1].Set((float)boundingBox.right, -32767.f, (float)boundingBox.top, 0, 0);
@@ -204,7 +204,7 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 			}
 			if (planesused & (1 << sector_t::ceiling))
 			{
-				auto verts = screen->mVertexData->AllocVertices(4);
+				auto verts = state.AllocVertices(4);
 				auto ptr = verts.first;
 				ptr[0].Set((float)boundingBox.left, 32767.f, (float)boundingBox.top, 0, 0);
 				ptr[1].Set((float)boundingBox.right, 32767.f, (float)boundingBox.top, 0, 0);
@@ -641,9 +641,9 @@ bool HWLineToLinePortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *cl
 	return true;
 }
 
-void HWLineToLinePortal::RenderAttached(HWDrawInfo *di)
+void HWLineToLinePortal::RenderAttached(HWDrawInfo *di, FRenderState& state)
 {
-	di->ProcessActorsInPortal(glport, di->in_area);
+	di->ProcessActorsInPortal(glport, di->in_area, state);
 }
 
 const char *HWLineToLinePortal::GetName() { return "LineToLine"; }
@@ -884,7 +884,7 @@ const char *HWPlaneMirrorPortal::GetName() { return origin->fC() < 0? "Planemirr
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, HWHorizonInfo * pt, FRenderViewpoint &vp, bool local)
+HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, FRenderState& renderstate, HWHorizonInfo * pt, FRenderViewpoint &vp, bool local)
 : HWPortal(s, local)
 {
 	origin = pt;
@@ -899,7 +899,7 @@ HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, HWHorizonInfo * pt, FRend
 
 	// Draw to some far away boundary
 	// This is not drawn as larger strips because it causes visual glitches.
-	auto verts = screen->mVertexData->AllocVertices(1024 + 10);
+	auto verts = renderstate.AllocVertices(1024 + 10);
 	auto ptr = verts.first;
 	for (int xx = -32768; xx < 32768; xx += 4096)
 	{
@@ -1044,7 +1044,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		{
 			horz.plane.Texheight = vp.Pos.Z + fabs(horz.plane.Texheight);
 		}
-		HWHorizonPortal ceil(mState, &horz, di->Viewpoint, true);
+		HWHorizonPortal ceil(mState, state, &horz, di->Viewpoint, true);
 		ceil.DrawContents(di, state);
 	}
 	if (sector->GetTexture(sector_t::floor) != skyflatnum)
@@ -1058,7 +1058,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		{
 			horz.plane.Texheight = vp.Pos.Z - fabs(horz.plane.Texheight);
 		}
-		HWHorizonPortal floor(mState, &horz, di->Viewpoint, true);
+		HWHorizonPortal floor(mState, state, &horz, di->Viewpoint, true);
 		floor.DrawContents(di, state);
 	}
 }

@@ -22,13 +22,7 @@ public:
 		int TextureClamp;
 		int TextureMode;
 		int TextureModeFlags;
-		float uFogDensity;
-		float uLightFactor;
-		float uLightDist;
-		FVector2 uClipSplit;
 	};
-
-	float uLightLevel;
 
 	ApplyData applyData;
 	StreamData streamData;
@@ -95,6 +89,7 @@ public:
 	void SetCulling(int mode) override { }
 	void EnableStencil(bool on) override { }
 	void EnableDepthTest(bool on) override { }
+	void SetViewpointOffset(uint32_t offset) override { }
 
 	std::unique_ptr<Mesh> Create();
 

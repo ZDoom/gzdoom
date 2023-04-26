@@ -14,7 +14,7 @@ private:
 	TArray<MeshDrawCommand> mDraws;
 	TArray<MeshDrawCommand> mIndexedDraws;
 	TArray<FFlatVertex> mVertices;
-	std::unique_ptr<IVertexBuffer> mVertexBuffer;
+	std::unique_ptr<IBuffer> mVertexBuffer;
 
 	friend class MeshBuilder;
 };

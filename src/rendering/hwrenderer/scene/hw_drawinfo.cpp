@@ -63,7 +63,7 @@ CVAR(Float, gl_mask_sprite_threshold, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR(Bool, gl_coronas, true, CVAR_ARCHIVE);
 
-CVAR(Bool, gl_meshcache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, gl_meshcache, false, 0/*CVAR_ARCHIVE | CVAR_GLOBALCONFIG*/)
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
@@ -438,7 +438,7 @@ HWDecal *HWDrawInfo::AddDecal(bool onmirror)
 //
 //-----------------------------------------------------------------------------
 
-void HWDrawInfo::CreateScene(bool drawpsprites)
+void HWDrawInfo::CreateScene(bool drawpsprites, FRenderState& state)
 {
 	const auto &vp = Viewpoint;
 	angle_t a1 = FrustumAngle();
@@ -455,16 +455,16 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	screen->mBones->Map();
 
 	if (!gl_meshcache)
-		RenderBSP(Level->HeadNode(), drawpsprites);
+		RenderBSP(Level->HeadNode(), drawpsprites, state);
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend
 	// on the global 'validcount' variable.
 
-	HandleMissingTextures(in_area);	// Missing upper/lower textures
-	HandleHackedSubsectors();	// open sector hacks for deep water
-	PrepareUnhandledMissingTextures();
-	DispatchRenderHacks();
+	HandleMissingTextures(in_area, state);	// Missing upper/lower textures
+	HandleHackedSubsectors(state);	// open sector hacks for deep water
+	PrepareUnhandledMissingTextures(state);
+	DispatchRenderHacks(state);
 	screen->mLights->Unmap();
 	screen->mBones->Unmap();
 	screen->mVertexData->Unmap();
@@ -656,7 +656,7 @@ void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona, double dist)
 	float u0 = 0.0f, v0 = 0.0f;
 	float u1 = 1.0f, v1 = 1.0f;
 
-	auto vert = screen->mVertexData->AllocVertices(4);
+	auto vert = state.AllocVertices(4);
 	auto vp = vert.first;
 	unsigned int vertexindex = vert.second;
 
@@ -817,7 +817,7 @@ void HWDrawInfo::Set3DViewport(FRenderState &state)
 //
 //-----------------------------------------------------------------------------
 
-void HWDrawInfo::DrawScene(int drawmode)
+void HWDrawInfo::DrawScene(int drawmode, FRenderState& state)
 {
 	static int recursion = 0;
 	static int ssao_portals_available = 0;
@@ -842,32 +842,31 @@ void HWDrawInfo::DrawScene(int drawmode)
 	if (vp.camera != nullptr)
 	{
 		ActorRenderFlags savedflags = vp.camera->renderflags;
-		CreateScene(drawmode == DM_MAINVIEW);
+		CreateScene(drawmode == DM_MAINVIEW, state);
 		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
-		CreateScene(false);
+		CreateScene(false, state);
 	}
-	auto& RenderState = *screen->RenderState();
 
-	RenderState.SetDepthMask(true);
-	if (!gl_no_skyclear) portalState.RenderFirstSkyPortal(recursion, this, RenderState);
+	state.SetDepthMask(true);
+	if (!gl_no_skyclear) portalState.RenderFirstSkyPortal(recursion, this, state);
 
-	RenderScene(RenderState);
+	RenderScene(state);
 
-	if (applySSAO && RenderState.GetPassType() == GBUFFER_PASS)
+	if (applySSAO && state.GetPassType() == GBUFFER_PASS)
 	{
 		screen->AmbientOccludeScene(VPUniforms.mProjectionMatrix.get()[5]);
-		screen->mViewpoints->Bind(RenderState, vpIndex);
+		screen->mViewpoints->Bind(state, vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	portalState.EndFrame(this, RenderState);
+	portalState.EndFrame(this, state);
 	recursion--;
-	RenderTranslucent(RenderState);
+	RenderTranslucent(state);
 }
 
 
@@ -877,13 +876,13 @@ void HWDrawInfo::DrawScene(int drawmode)
 //
 //-----------------------------------------------------------------------------
 
-void HWDrawInfo::ProcessScene(bool toscreen)
+void HWDrawInfo::ProcessScene(bool toscreen, FRenderState& state)
 {
 	portalState.BeginScene();
 
 	int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
 	CurrentMapSections.Set(mapsection);
-	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
+	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN, state);
 
 }
 

@@ -197,6 +197,8 @@ CUSTOM_CVAR(Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 CVAR(Bool, am_followplayer, true, CVAR_ARCHIVE)
 CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
 CVAR(Bool, am_showgrid, false, CVAR_ARCHIVE)
+CVAR(Bool, am_path, false, CVAR_ARCHIVE)
+CVAR(Int, am_pathlength, 1000, CVAR_ARCHIVE)
 CVAR(Float, am_zoomdir, 0.f, CVAR_ARCHIVE)
 
 static const char *const DEFAULT_FONT_NAME = "AMMNUMx";
@@ -296,6 +298,7 @@ CVAR (Color, am_thingcolor_ncmonster,	0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_item,	0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_citem,	0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_portalcolor,		0x404040,	CVAR_ARCHIVE);
+CVAR (Color, am_pathcolor,			0x4080c0,	CVAR_ARCHIVE);
 
 CVAR (Color, am_ovyourcolor,		0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_ovwallcolor,		0x00ff00,	CVAR_ARCHIVE);
@@ -318,6 +321,7 @@ CVAR (Color, am_ovthingcolor_ncmonster,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovportalcolor,			0x004022,	CVAR_ARCHIVE);
+CVAR (Color, am_ovpathcolor,			0x4080c0,	CVAR_ARCHIVE);
 
 //=============================================================================
 //
@@ -381,6 +385,7 @@ static const char *ColorNames[] = {
 		"SecretSectorColor",
 		"UnexploredSecretColor",
 		"PortalColor",
+		"PathColor",
 		"AlmostBackgroundColor",
 		nullptr
 };
@@ -413,6 +418,7 @@ struct AMColorset
 		SecretSectorColor,
 		UnexploredSecretColor,
 		PortalColor,
+		PathColor,
 		AlmostBackgroundColor,
 		AM_NUM_COLORS
 	};
@@ -538,7 +544,8 @@ static FColorCVarRef *cv_standard[] = {
 	&am_interlevelcolor,
 	&am_secretsectorcolor,
 	&am_unexploredsecretcolor,
-	&am_portalcolor
+	&am_portalcolor,
+	&am_pathcolor
 };
 
 static FColorCVarRef *cv_overlay[] = {
@@ -565,7 +572,8 @@ static FColorCVarRef *cv_overlay[] = {
 	&am_ovinterlevelcolor,
 	&am_ovsecretsectorcolor,
 	&am_ovunexploredsecretcolor,
-	&am_ovportalcolor
+	&am_ovportalcolor,
+	&am_ovpathcolor
 };
 
 CCMD(am_restorecolors)
@@ -608,8 +616,9 @@ static unsigned char DoomColors[]= {
 	NOT_USED,		// interteleport
 	NOT_USED,		// secretsector
 	NOT_USED,		// unexploredsecretsector
+	0x40,0x40,0x40,	// portal
+	0x40,0x80,0xb0, // path
 	0x10,0x10,0x10,	// almostbackground
-	0x40,0x40,0x40	// portal
 };
 
 static unsigned char StrifeColors[]= {
@@ -636,8 +645,9 @@ static unsigned char StrifeColors[]= {
 	NOT_USED,		// interteleport
 	NOT_USED,		// secretsector
 	NOT_USED,		// unexploredsecretsector
+	0x40,0x40,0x40,	// portal
+	0x40,0x80,0xb0, // path
 	0x10,0x10,0x10,	// almostbackground
-	0x40,0x40,0x40	// portal
 };
 
 static unsigned char RavenColors[]= {
@@ -664,8 +674,9 @@ static unsigned char RavenColors[]= {
 	NOT_USED,		// interteleport
 	NOT_USED,		// secretsector
 	NOT_USED,		// unexploredsecretsector
+	0x50,0x50,0x50,	// portal
+	0x40,0x80,0xb0, // path
 	0x10,0x10,0x10,	// almostbackground
-	0x50,0x50,0x50	// portal
 };
 
 #undef NOT_USED
@@ -971,6 +982,8 @@ class DAutomap :public DAutomapBase
 
 	TArray<FVector2> points;
 
+	TArray<mline_t> path_history; // history of points the local player has travelled to
+
 	// translates between frame-buffer and map distances
 	double FTOM(double x)
 	{
@@ -1015,6 +1028,8 @@ class DAutomap :public DAutomapBase
 	bool clipMline(mline_t *ml, fline_t *fl);
 	void drawMline(mline_t *ml, const AMColor &color);
 	void drawMline(mline_t *ml, int colorindex);
+	void collectPath();
+	void drawPath(int color);
 	void drawGrid(int color);
 	void drawSubsectors();
 	void drawSeg(seg_t *seg, const AMColor &color);
@@ -1544,6 +1559,10 @@ void DAutomap::doFollowPlayer ()
 
 void DAutomap::Ticker ()
 {
+	// Player path is collected even while the automap isn't visible or if am_path is disabled.
+	// This way, you can toggle am_path during gameplay and still see your previously travelled path.
+	collectPath();
+
 	if (!automapactive)
 		return;
 
@@ -1806,6 +1825,88 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 void DAutomap::drawMline (mline_t *ml, int colorindex)
 {
 	drawMline(ml, AMColors[colorindex]);
+}
+
+//=============================================================================
+//
+// Computes the list of lines to be drawn in drawPath() based on local player
+// position.
+//
+//=============================================================================
+
+void DAutomap::collectPath ()
+{
+	DVector2 pos = players[consoleplayer].camera->InterpolatedPosition(r_viewpoint.TicFrac);
+	mline_t ml;
+	if (path_history.Size() >= 1)
+	{
+		// Create a path between the last point and current point if there's enough distance
+		// travelled by the player since the last point.
+		mline_t last_line = path_history.Last();
+		constexpr int MIN_DISTANCE_BETWEEN_POINTS = 32;
+		if (abs(last_line.b.x - pos.X) >= MIN_DISTANCE_BETWEEN_POINTS || abs(last_line.b.y - pos.Y) >= MIN_DISTANCE_BETWEEN_POINTS)
+		{
+			// If the distance between two points is very high, the player has likely teleported so no path should be drawn between the points.
+			constexpr int MAX_DISTANCE_BETWEEN_TICKS = 100;
+			if (abs(last_line.b.x - pos.X) >= MAX_DISTANCE_BETWEEN_TICKS || abs(last_line.b.y - pos.Y) >= MAX_DISTANCE_BETWEEN_TICKS)
+			{
+				ml.a.x = pos.X;
+				ml.a.y = pos.Y;
+			}
+			else
+			{
+				ml.a.x = last_line.b.x;
+				ml.a.y = last_line.b.y;
+			}
+			
+			ml.b.x = pos.X;
+			ml.b.y = pos.Y;
+
+			if (path_history.Size() > am_pathlength)
+			{
+				// Path is too long; remove the oldest lines.
+				path_history.Delete(0);
+			}
+			path_history.Push(ml);
+		}
+	}
+	else
+	{
+		// Create the first line in the path history.
+		ml.a.x = pos.X;
+		ml.a.y = pos.Y;
+		ml.b.x = pos.X;
+		ml.b.y = pos.Y;
+		path_history.Push(ml);
+	}
+}
+
+//=============================================================================
+//
+// Draws the path taken by the local player.
+// This can be useful to avoid getting lost in larger maps.
+//
+//=============================================================================
+
+void DAutomap::drawPath (int color)
+{
+	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+	{
+		TArray<mline_t> path_history_rotated = path_history;
+		for (mline_t line : path_history_rotated)
+		{
+			rotatePoint(&line.a.x, &line.a.y);
+			rotatePoint(&line.b.x, &line.b.y);
+			drawMline(&line, color);
+		}
+	}
+	else
+	{
+		for (mline_t line : path_history) 
+		{
+			drawMline(&line, color);
+		}
+	}
 }
 
 //=============================================================================
@@ -3310,6 +3411,9 @@ void DAutomap::Drawer (int bottom)
 
 	if (am_showgrid)	
 		drawGrid(AMColors.GridColor);
+	
+	if (am_path)
+		drawPath(AMColors.PathColor);
 
 	drawWalls(allmap);
 	drawPlayers();

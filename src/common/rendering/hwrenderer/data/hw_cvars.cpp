@@ -126,7 +126,7 @@ CUSTOM_CVARD(Int, gl_texture_filter, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOIN
 	screen->SetTextureFilterMode();
 }
 
-CVAR(Bool, gl_precache, false, CVAR_ARCHIVE)
+CVAR(Bool, gl_precache, true, CVAR_ARCHIVE)
 
 
 CUSTOM_CVAR(Int, gl_shadowmap_filter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

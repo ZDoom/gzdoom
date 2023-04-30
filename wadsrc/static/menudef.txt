@@ -886,13 +886,6 @@ OptionValue VanillaTrans
 	3.0, "$OPTVAL_VTAVANILLA"
 }
 
-OptionValue GPUSwitch
-{
-	0.0, "$OPTVAL_DEFAULT"
-	1.0, "$OPTVAL_DEDICATED"
-	2.0, "$OPTVAL_INTEGRATED"
-}
-
 OptionValue PreferBackend
 {
 	0, "$OPTVAL_OPENGL"
@@ -2283,10 +2276,6 @@ OptionMenu VideoModeMenu protected
 	IfOption(Mac)
 	{
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
-	}
-	IfOption(Windows)
-	{
-		Option "$DSPLYMNU_GPUSWITCH",			vid_gpuswitch, "GPUSwitch"
 	}
 
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"

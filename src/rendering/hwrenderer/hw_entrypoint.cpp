@@ -43,7 +43,6 @@
 #include "g_cvars.h"
 #include "v_draw.h"
 
-#include "hw_bonebuffer.h"
 #include "hw_cvars.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_clipper.h"
@@ -278,7 +277,6 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 		hw_ClearFakeFlat();
 		screen->mVertexData->Reset();
 		RenderState.SetVertexBuffer(screen->mVertexData);
-		screen->mBones->Clear();
 
 		// This shouldn't overwrite the global viewpoint even for a short time.
 		FRenderViewpoint savevp;
@@ -341,8 +339,6 @@ sector_t* RenderView(player_t* player)
 		// Get this before everything else
 		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
 		else r_viewpoint.TicFrac = I_GetTimeFrac();
-
-		screen->mBones->Clear();
 
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;

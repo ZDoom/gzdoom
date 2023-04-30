@@ -39,7 +39,6 @@
 #include "hw_clock.h"
 #include "hw_cvars.h"
 #include "flatvertices.h"
-#include "hw_bonebuffer.h"
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
 #include "hw_meshcache.h"
@@ -449,7 +448,6 @@ void HWDrawInfo::CreateScene(bool drawpsprites, FRenderState& state)
 
 	// clip the scene and fill the drawlists
 	screen->mVertexData->Map();
-	screen->mBones->Map();
 
 	if (!gl_meshcache)
 		RenderBSP(Level->HeadNode(), drawpsprites, state);
@@ -462,7 +460,6 @@ void HWDrawInfo::CreateScene(bool drawpsprites, FRenderState& state)
 	HandleHackedSubsectors(state);	// open sector hacks for deep water
 	PrepareUnhandledMissingTextures(state);
 	DispatchRenderHacks(state);
-	screen->mBones->Unmap();
 	screen->mVertexData->Unmap();
 
 	ProcessAll.Unclock();

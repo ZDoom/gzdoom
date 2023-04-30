@@ -51,6 +51,7 @@ public:
 	int SetViewpoint(const HWViewpointUniforms& vp) override;
 	void SetViewpoint(int index) override;
 	int UploadLights(const FDynLightData& lightdata) override;
+	int UploadBones(const TArray<VSMatrix>& bones) override;
 
 protected:
 	void Apply(int dt);

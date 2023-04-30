@@ -41,7 +41,6 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hw_renderstate.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hw_bonebuffer.h"
 #include "hw_models.h"
 
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
@@ -157,9 +156,7 @@ void FHWModelRenderer::DrawElements(int numIndices, size_t offset)
 int FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix>& bones, int boneStartIndex)
 {
 	auto mdbuff = static_cast<FModelVertexBuffer*>(model->GetVertexBuffer(GetType()));
-	screen->mBones->Map();
-	boneIndexBase = boneStartIndex >= 0 ? boneStartIndex : screen->mBones->UploadBones(bones);
-	screen->mBones->Unmap();
+	boneIndexBase = boneStartIndex >= 0 ? boneStartIndex : state.UploadBones(bones);
 	state.SetBoneIndexBase(boneIndexBase);
 	if (mdbuff)
 	{

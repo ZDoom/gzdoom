@@ -760,6 +760,7 @@ public:
 	virtual int SetViewpoint(const HWViewpointUniforms& vp) = 0;
 	virtual void SetViewpoint(int index) = 0;
 	virtual int UploadLights(const FDynLightData& lightdata) = 0;
+	virtual int UploadBones(const TArray<VSMatrix>& bones) = 0;
 
 	// Draw commands
 	virtual void ClearScreen() = 0;

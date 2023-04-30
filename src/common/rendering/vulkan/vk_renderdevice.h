@@ -74,7 +74,6 @@ public:
 	IBuffer* CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs) override;
 	IBuffer* CreateIndexBuffer() override;
 
-	IBuffer* CreateBoneBuffer() override;
 	IBuffer* CreateShadowmapNodesBuffer() override;
 	IBuffer* CreateShadowmapLinesBuffer() override;
 	IBuffer* CreateShadowmapLightsBuffer() override;

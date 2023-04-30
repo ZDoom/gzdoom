@@ -554,12 +554,37 @@ int VkRenderState::UploadLights(const FDynLightData& data)
 	}
 }
 
+int VkRenderState::UploadBones(const TArray<VSMatrix>& bones)
+{
+	auto buffers = fb->GetBufferManager();
+
+	int totalsize = bones.Size();
+	if (bones.Size() == 0)
+	{
+		return -1;
+	}
+
+	int thisindex = buffers->Bonebuffer.UploadIndex;
+	buffers->Bonebuffer.UploadIndex += totalsize;
+
+	if (thisindex + totalsize <= buffers->Bonebuffer.Count)
+	{
+		memcpy((VSMatrix*)buffers->Bonebuffer.SSO->Memory() + thisindex, bones.Data(), bones.Size() * sizeof(VSMatrix));
+		return thisindex;
+	}
+	else
+	{
+		return -1;	// Buffer is full. Since it is being used live at the point of the upload we cannot do much here but to abort.
+	}
+}
+
 void VkRenderState::BeginFrame()
 {
 	mMaterial.Reset();
 	mApplyCount = 0;
 	fb->GetBufferManager()->Viewpoint.UploadIndex = 0;
 	fb->GetBufferManager()->Lightbuffer.UploadIndex = 0;
+	fb->GetBufferManager()->Bonebuffer.UploadIndex = 0;
 }
 
 void VkRenderState::EndRenderPass()

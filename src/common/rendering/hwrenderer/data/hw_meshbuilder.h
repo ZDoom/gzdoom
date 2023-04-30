@@ -69,6 +69,7 @@ public:
 	int SetViewpoint(const HWViewpointUniforms& vp) override { return 0; }
 	void SetViewpoint(int index) override { }
 	int UploadLights(const FDynLightData& lightdata) override { return -1; }
+	int UploadBones(const TArray<VSMatrix>& bones) override { return -1; }
 
 	// Draw commands
 	void Draw(int dt, int index, int count, bool apply = true) override;

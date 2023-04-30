@@ -38,7 +38,6 @@
 #include "hw_cvars.h"
 #include "hw_skydome.h"
 #include "flatvertices.h"
-#include "hw_bonebuffer.h"
 
 #include "vk_renderdevice.h"
 #include "vulkan/vk_renderstate.h"
@@ -132,7 +131,6 @@ VulkanRenderDevice::~VulkanRenderDevice()
 
 	delete mVertexData;
 	delete mSkyData;
-	delete mBones;
 	delete mShadowMap;
 
 	if (mDescriptorSetManager)
@@ -189,7 +187,6 @@ void VulkanRenderDevice::InitializeState()
 
 	mVertexData = new FFlatVertexBuffer(this, GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer(this);
-	mBones = new BoneBuffer(this);
 	mShadowMap = new ShadowMap(this);
 
 	mShaderManager.reset(new VkShaderManager(this));
@@ -314,11 +311,6 @@ IBuffer*VulkanRenderDevice::CreateVertexBuffer(int numBindingPoints, int numAttr
 IBuffer*VulkanRenderDevice::CreateIndexBuffer()
 {
 	return GetBufferManager()->CreateIndexBuffer();
-}
-
-IBuffer* VulkanRenderDevice::CreateBoneBuffer()
-{
-	return GetBufferManager()->CreateBoneBuffer();
 }
 
 IBuffer* VulkanRenderDevice::CreateShadowmapNodesBuffer()

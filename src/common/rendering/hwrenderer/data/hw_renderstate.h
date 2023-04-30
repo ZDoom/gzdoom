@@ -6,9 +6,12 @@
 #include "texmanip.h"
 #include "version.h"
 #include "i_interface.h"
+#include "hw_viewpointuniforms.h"
+#include "hw_cvars.h"
 
 struct FColormap;
 class IBuffer;
+struct HWViewpointUniforms;
 
 enum EClearTarget
 {
@@ -731,10 +734,30 @@ public:
 		mColorMapFlash = flash;
 	}
 
+	int Set2DViewpoint(int width, int height, int palLightLevels = 0)
+	{
+		HWViewpointUniforms matrices;
+		matrices.mViewMatrix.loadIdentity();
+		matrices.mNormalViewMatrix.loadIdentity();
+		matrices.mViewHeight = 0;
+		matrices.mGlobVis = 1.f;
+		matrices.mPalLightLevels = palLightLevels;
+		matrices.mClipLine.X = -10000000.0f;
+		matrices.mShadowmapFilter = gl_shadowmap_filter;
+		matrices.mLightBlendMode = 0;
+		matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
+		matrices.CalcDependencies();
+		return SetViewpoint(matrices);
+	}
+
 	// API-dependent render interface
 
 	// Vertices
 	virtual std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count);
+
+	// Buffers
+	virtual int SetViewpoint(const HWViewpointUniforms& vp) = 0;
+	virtual void SetViewpoint(int index) = 0;
 
 	// Draw commands
 	virtual void ClearScreen() = 0;
@@ -749,16 +772,13 @@ public:
 	virtual void SetColorMask(bool r, bool g, bool b, bool a) = 0;	// Used by portals.
 	virtual void SetStencil(int offs, int op, int flags=-1) = 0;	// Used by portal setup and render hacks.
 	virtual void SetCulling(int mode) = 0;						// Used by model drawer only.
-	virtual void EnableClipDistance(int num, bool state) = 0;	// Use by sprite sorter for vertical splits.
 	virtual void Clear(int targets) = 0;						// not used during normal rendering
 	virtual void EnableStencil(bool on) = 0;					// always on for 3D, always off for 2D
 	virtual void SetScissor(int x, int y, int w, int h) = 0;	// constant for 3D, changes for 2D
 	virtual void SetViewport(int x, int y, int w, int h) = 0;	// constant for all 3D and all 2D
 	virtual void EnableDepthTest(bool on) = 0;					// used by 2D, portals and render hacks.
-	virtual void EnableMultisampling(bool on) = 0;				// only active for 2D
 	virtual void EnableLineSmooth(bool on) = 0;					// constant setting for each 2D drawer operation
 	virtual void EnableDrawBuffers(int count, bool apply = false) = 0;	// Used by SSAO and EnableDrawBufferAttachments
-	virtual void SetViewpointOffset(uint32_t offset) = 0;		// HWViewpoint uniform binding offset
 
 	void SetColorMask(bool on)
 	{

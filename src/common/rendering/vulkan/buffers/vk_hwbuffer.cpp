@@ -158,6 +158,7 @@ void VkHardwareBuffer::SetSubData(size_t offset, size_t size, const void *data)
 	}
 }
 
+/*
 void VkHardwareBuffer::Resize(size_t newsize)
 {
 	newsize = max(newsize, (size_t)16); // For supporting zero byte buffers
@@ -188,6 +189,7 @@ void VkHardwareBuffer::Resize(size_t newsize)
 	// Fetch pointer to new buffer
 	map = mBuffer->Map(0, newsize);
 }
+*/
 
 void VkHardwareBuffer::Map()
 {

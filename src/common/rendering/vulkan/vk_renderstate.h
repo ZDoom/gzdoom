@@ -34,21 +34,21 @@ public:
 	void SetColorMask(bool r, bool g, bool b, bool a) override;
 	void SetStencil(int offs, int op, int flags = -1) override;
 	void SetCulling(int mode) override;
-	void EnableClipDistance(int num, bool state) override;
 	void Clear(int targets) override;
 	void EnableStencil(bool on) override;
 	void SetScissor(int x, int y, int w, int h) override;
 	void SetViewport(int x, int y, int w, int h) override;
 	void EnableDepthTest(bool on) override;
-	void EnableMultisampling(bool on) override;
 	void EnableLineSmooth(bool on) override;
 	void EnableDrawBuffers(int count, bool apply) override;
-	void SetViewpointOffset(uint32_t offset) override;
 
 	void BeginFrame();
 	void SetRenderTarget(VkTextureImage *image, VulkanImageView *depthStencilView, int width, int height, VkFormat Format, VkSampleCountFlagBits samples);
 	void EndRenderPass();
 	void EndFrame();
+
+	int SetViewpoint(const HWViewpointUniforms& vp) override;
+	void SetViewpoint(int index) override;
 
 protected:
 	void Apply(int dt);

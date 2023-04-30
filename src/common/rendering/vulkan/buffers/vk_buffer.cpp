@@ -39,11 +39,19 @@ void VkBufferManager::Init()
 	MatrixBuffer.reset(new VkStreamBuffer(this, sizeof(MatricesUBO), 50000));
 	StreamBuffer.reset(new VkStreamBuffer(this, sizeof(StreamUBO), 300));
 
+	Viewpoint.BlockAlign = (sizeof(HWViewpointUniforms) + fb->uniformblockalignment - 1) / fb->uniformblockalignment * fb->uniformblockalignment;
+	Viewpoint.UBO.reset(new VkHardwareDataBuffer(fb, false, true));
+	Viewpoint.UBO->SetData(Viewpoint.Count * Viewpoint.BlockAlign, nullptr, BufferUsageType::Persistent);
+	Viewpoint.UBO->Map();
+
 	CreateFanToTrisIndexBuffer();
 }
 
 void VkBufferManager::Deinit()
 {
+	Viewpoint.UBO->Unmap();
+	Viewpoint.UBO.reset();
+
 	while (!Buffers.empty())
 		RemoveBuffer(Buffers.back());
 }
@@ -59,7 +67,7 @@ void VkBufferManager::RemoveBuffer(VkHardwareBuffer* buffer)
 	buffer->fb = nullptr;
 	Buffers.erase(buffer->it);
 
-	for (VkHardwareDataBuffer** knownbuf : { &ViewpointUBO, &LightBufferSSO, &LightNodes, &LightLines, &LightList, &BoneBufferSSO })
+	for (VkHardwareDataBuffer** knownbuf : { &LightBufferSSO, &LightNodes, &LightLines, &LightList, &BoneBufferSSO})
 	{
 		if (buffer == *knownbuf) *knownbuf = nullptr;
 	}
@@ -85,12 +93,6 @@ IBuffer* VkBufferManager::CreateBoneBuffer()
 {
 	BoneBufferSSO = new VkHardwareDataBuffer(fb, true, false);
 	return BoneBufferSSO;
-}
-
-IBuffer* VkBufferManager::CreateViewpointBuffer()
-{
-	ViewpointUBO = new VkHardwareDataBuffer(fb, false, true);
-	return ViewpointUBO;
 }
 
 IBuffer* VkBufferManager::CreateShadowmapNodesBuffer()

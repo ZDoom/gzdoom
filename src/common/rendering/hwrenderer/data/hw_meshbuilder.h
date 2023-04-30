@@ -65,6 +65,10 @@ public:
 	// Vertices
 	std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) override;
 
+	// Buffers
+	int SetViewpoint(const HWViewpointUniforms& vp) override { return 0; }
+	void SetViewpoint(int index) override { }
+
 	// Draw commands
 	void Draw(int dt, int index, int count, bool apply = true) override;
 	void DrawIndexed(int dt, int index, int count, bool apply = true) override;
@@ -77,10 +81,8 @@ public:
 	void ClearScreen() override { }
 	void SetScissor(int x, int y, int w, int h) override { }
 	void SetViewport(int x, int y, int w, int h) override { }
-	void EnableMultisampling(bool on) override { }
 	void EnableLineSmooth(bool on) override { }
 	void EnableDrawBuffers(int count, bool apply) override { }
-	void EnableClipDistance(int num, bool state) override { }
 	void SetDepthRange(float min, float max) override { }
 	bool SetDepthClamp(bool on) override { return false; }
 	void SetDepthMask(bool on) override { }
@@ -89,7 +91,6 @@ public:
 	void SetCulling(int mode) override { }
 	void EnableStencil(bool on) override { }
 	void EnableDepthTest(bool on) override { }
-	void SetViewpointOffset(uint32_t offset) override { }
 
 	std::unique_ptr<Mesh> Create();
 

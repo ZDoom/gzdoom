@@ -38,7 +38,6 @@
 #include "models.h"
 #include "hw_clock.h"
 #include "hw_cvars.h"
-#include "hw_viewpointbuffer.h"
 #include "flatvertices.h"
 #include "hw_lightbuffer.h"
 #include "hw_bonebuffer.h"
@@ -400,7 +399,7 @@ void HWDrawInfo::SetupView(FRenderState &state, float vx, float vy, float vz, bo
 	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
 	SetCameraPos(vp.Pos);
 	VPUniforms.CalcDependencies();
-	vpIndex = screen->mViewpoints->SetViewpoint(state, &VPUniforms);
+	vpIndex = state.SetViewpoint(VPUniforms);
 }
 
 //-----------------------------------------------------------------------------
@@ -598,7 +597,7 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 	gp->DrawContents(new_di, state);
 	new_di->EndDrawInfo();
 	state.SetVertexBuffer(screen->mVertexData);
-	screen->mViewpoints->Bind(state, vpIndex);
+	state.SetViewpoint(vpIndex);
 	gp->RemoveStencil(this, state, usestencil);
 
 }
@@ -688,7 +687,7 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 	HWViewpointUniforms vp = VPUniforms;
 	vp.mViewMatrix.loadIdentity();
 	vp.mProjectionMatrix = VRMode::GetVRMode(true)->GetHUDSpriteProjection();
-	screen->mViewpoints->SetViewpoint(state, &vp);
+	state.SetViewpoint(vp);
 
 	float timeElapsed = (screen->FrameTime - LastFrameTime) / 1000.0f;
 	LastFrameTime = screen->FrameTime;
@@ -721,7 +720,7 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 	}
 
 	state.SetTextureMode(TM_NORMAL);
-	screen->mViewpoints->Bind(state, vpIndex);
+	state.SetViewpoint(vpIndex);
 	state.EnableDepthTest(true);
 	state.SetDepthMask(true);
 }
@@ -770,9 +769,8 @@ void HWDrawInfo::DrawEndScene2D(sector_t * viewsector, FRenderState &state)
 	HWViewpointUniforms vp = VPUniforms;
 	vp.mViewMatrix.loadIdentity();
 	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
-	screen->mViewpoints->SetViewpoint(state, &vp);
+	state.SetViewpoint(vp);
 	state.EnableDepthTest(false);
-	state.EnableMultisampling(false);
 
 	DrawPlayerSprites(false, state);
 
@@ -802,7 +800,6 @@ void HWDrawInfo::Set3DViewport(FRenderState &state)
 	const auto &bounds = screen->mSceneViewport;
 	state.SetViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 	state.SetScissor(bounds.left, bounds.top, bounds.width, bounds.height);
-	state.EnableMultisampling(true);
 	state.EnableDepthTest(true);
 	state.EnableStencil(true);
 	state.SetStencil(0, SOP_Keep, SF_AllOn);
@@ -858,7 +855,7 @@ void HWDrawInfo::DrawScene(int drawmode, FRenderState& state)
 	if (applySSAO && state.GetPassType() == GBUFFER_PASS)
 	{
 		screen->AmbientOccludeScene(VPUniforms.mProjectionMatrix.get()[5]);
-		screen->mViewpoints->Bind(state, vpIndex);
+		state.SetViewpoint(vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before

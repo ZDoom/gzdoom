@@ -36,7 +36,6 @@
 #include "cmdlib.h"
 #include "hwrenderer/data/buffers.h"
 #include "flatvertices.h"
-#include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hw_clock.h"
 #include "hw_cvars.h"
 #include "hw_renderstate.h"
@@ -62,13 +61,12 @@ void Draw2D(F2DDrawer* drawer, FRenderState& state, int x, int y, int width, int
 	twoD.Clock();
 
 	state.SetViewport(x, y, width, height);
-	screen->mViewpoints->Set2D(state, drawer->GetWidth(), drawer->GetHeight());
+	state.Set2DViewpoint(drawer->GetWidth(), drawer->GetHeight());
 
 	state.EnableStencil(false);
 	state.SetStencil(0, SOP_Keep, SF_AllOn);
 	state.Clear(CT_Stencil);
 	state.EnableDepthTest(false);
-	state.EnableMultisampling(false);
 	state.EnableLineSmooth(gl_aalines);
 
 	auto &vertices = drawer->mVertices;

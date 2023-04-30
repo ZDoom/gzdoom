@@ -17,7 +17,7 @@ public:
 
 	void SetData(size_t size, const void *data, BufferUsageType usage) override;
 	void SetSubData(size_t offset, size_t size, const void *data) override;
-	void Resize(size_t newsize) override;
+	//void Resize(size_t newsize) override;
 
 	void Map() override;
 	void Unmap() override;

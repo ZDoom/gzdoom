@@ -52,7 +52,6 @@ struct FPortalSceneState;
 class FSkyVertexBuffer;
 class IBuffer;
 class FFlatVertexBuffer;
-class HWViewpointBuffer;
 class FLightBuffer;
 struct HWDrawInfo;
 class FMaterial;
@@ -141,7 +140,6 @@ public:
 	const char *vendorstring;					// We have to account for some issues with particular vendors.
 	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
-	HWViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
 	BoneBuffer* mBones = nullptr;				// Model bones
 	ShadowMap* mShadowMap = nullptr;
@@ -242,7 +240,6 @@ public:
 	// To do: these buffers shouldn't be created by the hwrenderer layer - it will be simpler if the backend manages them completely
 	virtual IBuffer* CreateLightBuffer() { return nullptr; }
 	virtual IBuffer* CreateBoneBuffer() { return nullptr; }
-	virtual IBuffer* CreateViewpointBuffer() { return nullptr; }
 	virtual IBuffer* CreateShadowmapNodesBuffer() { return nullptr; }
 	virtual IBuffer* CreateShadowmapLinesBuffer() { return nullptr; }
 	virtual IBuffer* CreateShadowmapLightsBuffer() { return nullptr; }

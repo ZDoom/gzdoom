@@ -72,7 +72,7 @@ public:
 	virtual void SetSubData(size_t offset, size_t size, const void *data) = 0;
 	virtual void *Lock(unsigned int size) = 0;
 	virtual void Unlock() = 0;
-	virtual void Resize(size_t newsize) = 0;
+	//virtual void Resize(size_t newsize) = 0;
 
 	virtual void Upload(size_t start, size_t size) {} // For unmappable buffers
 

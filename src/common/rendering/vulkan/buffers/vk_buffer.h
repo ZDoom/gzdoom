@@ -10,6 +10,7 @@ class VkHardwareDataBuffer;
 class VkStreamBuffer;
 class IBuffer;
 struct FVertexBufferAttribute;
+struct HWViewpointUniforms;
 
 class VkBufferManager
 {
@@ -25,7 +26,6 @@ public:
 
 	IBuffer* CreateLightBuffer();
 	IBuffer* CreateBoneBuffer();
-	IBuffer* CreateViewpointBuffer();
 	IBuffer* CreateShadowmapNodesBuffer();
 	IBuffer* CreateShadowmapLinesBuffer();
 	IBuffer* CreateShadowmapLightsBuffer();
@@ -33,7 +33,14 @@ public:
 	void AddBuffer(VkHardwareBuffer* buffer);
 	void RemoveBuffer(VkHardwareBuffer* buffer);
 
-	VkHardwareDataBuffer* ViewpointUBO = nullptr;
+	struct
+	{
+		int UploadIndex = 0;
+		int BlockAlign = 0;
+		int Count = 1000;
+		std::unique_ptr<VkHardwareDataBuffer> UBO;
+	} Viewpoint;
+
 	VkHardwareDataBuffer* LightBufferSSO = nullptr;
 	VkHardwareDataBuffer* LightNodes = nullptr;
 	VkHardwareDataBuffer* LightLines = nullptr;

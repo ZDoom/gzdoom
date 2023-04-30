@@ -78,7 +78,6 @@ public:
 
 	IBuffer* CreateLightBuffer() override;
 	IBuffer* CreateBoneBuffer() override;
-	IBuffer* CreateViewpointBuffer() override;
 	IBuffer* CreateShadowmapNodesBuffer() override;
 	IBuffer* CreateShadowmapLinesBuffer() override;
 	IBuffer* CreateShadowmapLightsBuffer() override;

@@ -36,7 +36,6 @@
 #include "hw_cvars.h"
 #include "hw_clock.h"
 #include "flatvertices.h"
-#include "hwrenderer/data/hw_viewpointbuffer.h"
 
 CVAR(Int, vk_submit_size, 1000, 0);
 EXTERN_CVAR(Bool, r_skipmats)
@@ -48,7 +47,7 @@ VkRenderState::VkRenderState(VulkanRenderDevice* fb) : fb(fb), mStreamBufferWrit
 
 void VkRenderState::ClearScreen()
 {
-	screen->mViewpoints->Set2D(*this, SCREENWIDTH, SCREENHEIGHT);
+	Set2DViewpoint(SCREENWIDTH, SCREENHEIGHT);
 	SetColor(0, 0, 0);
 	Apply(DT_TriangleStrip);
 	mCommandBuffer->draw(4, 1, FFlatVertexBuffer::FULLSCREEN_INDEX, 0);
@@ -127,10 +126,6 @@ void VkRenderState::SetCulling(int mode)
 	mNeedApply = true;
 }
 
-void VkRenderState::EnableClipDistance(int num, bool state)
-{
-}
-
 void VkRenderState::Clear(int targets)
 {
 	mClearTargets = targets;
@@ -167,10 +162,6 @@ void VkRenderState::EnableDepthTest(bool on)
 {
 	mDepthTest = on;
 	mNeedApply = true;
-}
-
-void VkRenderState::EnableMultisampling(bool on)
-{
 }
 
 void VkRenderState::EnableLineSmooth(bool on)
@@ -492,9 +483,23 @@ void VkRenderState::WaitForStreamBuffers()
 	mMatrixBufferWriter.Reset();
 }
 
-void VkRenderState::SetViewpointOffset(uint32_t offset)
+int VkRenderState::SetViewpoint(const HWViewpointUniforms& vp)
 {
-	mViewpointOffset = offset;
+	auto buffers = fb->GetBufferManager();
+	if (buffers->Viewpoint.Count == buffers->Viewpoint.UploadIndex)
+	{
+		return buffers->Viewpoint.Count - 1;
+	}
+	memcpy(((char*)buffers->Viewpoint.UBO->Memory()) + buffers->Viewpoint.UploadIndex * buffers->Viewpoint.BlockAlign, &vp, sizeof(HWViewpointUniforms));
+	int index = buffers->Viewpoint.UploadIndex++;
+	mViewpointOffset = index * buffers->Viewpoint.BlockAlign;
+	mNeedApply = true;
+	return index;
+}
+
+void VkRenderState::SetViewpoint(int index)
+{
+	mViewpointOffset = index * fb->GetBufferManager()->Viewpoint.BlockAlign;
 	mNeedApply = true;
 }
 

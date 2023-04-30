@@ -44,7 +44,6 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "flatvertices.h"
-#include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
 
 #include "vm.h"
@@ -747,7 +746,7 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area, F
 	lightmode = oldlightmode;
 }
 
-void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
+void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area, FRenderState& state)
 {
 	static PClass * wpCls = PClass::FindClass("Weapon");
 	
@@ -842,7 +841,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && Level->HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
 		{
 			hw_GetDynModelLight(playermo, lightdata);
-			hudsprite.lightindex = screen->mLights->UploadLights(lightdata);
+			hudsprite.lightindex = state.UploadLights(lightdata);
 		}
 
 		// [BB] In the HUD model step we just render the model and break out. 
@@ -876,7 +875,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area, FRe
 	
 	if(hudModelStep)
 	{
-		PreparePlayerSprites3D(viewsector,in_area);
+		PreparePlayerSprites3D(viewsector,in_area,state);
 	}
 	else
 	{

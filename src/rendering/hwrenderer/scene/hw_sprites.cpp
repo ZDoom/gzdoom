@@ -56,7 +56,6 @@
 #include "hw_lighting.h"
 #include "hw_material.h"
 #include "hw_dynlightdata.h"
-#include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
 
 extern TArray<spritedef_t> sprites;
@@ -552,7 +551,7 @@ inline void HWSprite::PutSprite(HWDrawInfo *di, FRenderState& state, bool transl
 	if (modelframe && !modelframe->isVoxel && !(modelframe->flags & MDL_NOPERPIXELLIGHTING) && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && di->Level->HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 	{
 		hw_GetDynModelLight(actor, lightdata);
-		dynlightindex = screen->mLights->UploadLights(lightdata);
+		dynlightindex = state.UploadLights(lightdata);
 	}
 	else
 		dynlightindex = -1;

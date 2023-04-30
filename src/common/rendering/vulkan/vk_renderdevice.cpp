@@ -38,7 +38,6 @@
 #include "hw_cvars.h"
 #include "hw_skydome.h"
 #include "flatvertices.h"
-#include "hw_lightbuffer.h"
 #include "hw_bonebuffer.h"
 
 #include "vk_renderdevice.h"
@@ -133,7 +132,6 @@ VulkanRenderDevice::~VulkanRenderDevice()
 
 	delete mVertexData;
 	delete mSkyData;
-	delete mLights;
 	delete mBones;
 	delete mShadowMap;
 
@@ -191,7 +189,6 @@ void VulkanRenderDevice::InitializeState()
 
 	mVertexData = new FFlatVertexBuffer(this, GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer(this);
-	mLights = new FLightBuffer(this);
 	mBones = new BoneBuffer(this);
 	mShadowMap = new ShadowMap(this);
 
@@ -317,11 +314,6 @@ IBuffer*VulkanRenderDevice::CreateVertexBuffer(int numBindingPoints, int numAttr
 IBuffer*VulkanRenderDevice::CreateIndexBuffer()
 {
 	return GetBufferManager()->CreateIndexBuffer();
-}
-
-IBuffer* VulkanRenderDevice::CreateLightBuffer()
-{
-	return GetBufferManager()->CreateLightBuffer();
 }
 
 IBuffer* VulkanRenderDevice::CreateBoneBuffer()
@@ -478,7 +470,6 @@ TArray<uint8_t> VulkanRenderDevice::GetScreenshotBuffer(int &pitch, ESSType &col
 void VulkanRenderDevice::BeginFrame()
 {
 	SetViewportRects(nullptr);
-	mBufferManager->Viewpoint.UploadIndex = 0;
 	mCommands->BeginFrame();
 	mTextureManager->BeginFrame();
 	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
@@ -504,11 +495,6 @@ void VulkanRenderDevice::Draw2D()
 void VulkanRenderDevice::WaitForCommands(bool finish)
 {
 	mCommands->WaitForCommands(finish);
-}
-
-unsigned int VulkanRenderDevice::GetLightBufferBlockSize() const
-{
-	return mLights->GetBlockSize();
 }
 
 void VulkanRenderDevice::PrintStartupLog()

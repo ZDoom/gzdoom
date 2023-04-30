@@ -39,7 +39,6 @@
 #include "hw_clock.h"
 #include "hw_cvars.h"
 #include "flatvertices.h"
-#include "hw_lightbuffer.h"
 #include "hw_bonebuffer.h"
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
@@ -450,7 +449,6 @@ void HWDrawInfo::CreateScene(bool drawpsprites, FRenderState& state)
 
 	// clip the scene and fill the drawlists
 	screen->mVertexData->Map();
-	screen->mLights->Map();
 	screen->mBones->Map();
 
 	if (!gl_meshcache)
@@ -464,7 +462,6 @@ void HWDrawInfo::CreateScene(bool drawpsprites, FRenderState& state)
 	HandleHackedSubsectors(state);	// open sector hacks for deep water
 	PrepareUnhandledMissingTextures(state);
 	DispatchRenderHacks(state);
-	screen->mLights->Unmap();
 	screen->mBones->Unmap();
 	screen->mVertexData->Unmap();
 

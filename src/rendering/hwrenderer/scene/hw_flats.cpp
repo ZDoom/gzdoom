@@ -43,7 +43,6 @@
 #include "hw_material.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "flatvertices.h"
-#include "hw_lightbuffer.h"
 #include "hw_drawstructs.h"
 #include "hw_renderstate.h"
 #include "texturemanager.h"
@@ -147,7 +146,7 @@ void HWFlat::CreateSkyboxVertices(FFlatVertex *vert)
 //
 //==========================================================================
 
-void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
+void HWFlat::SetupLights(HWDrawInfo *di, FRenderState& state, FLightNode * node, FDynLightData &lightdata, int portalgroup)
 {
 	Plane p;
 
@@ -182,7 +181,7 @@ void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 		node = node->nextLight;
 	}
 
-	dynlightindex = screen->mLights->UploadLights(lightdata);
+	dynlightindex = state.UploadLights(lightdata);
 }
 
 //==========================================================================
@@ -195,7 +194,7 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
 	if (di->Level->HasDynamicLights && screen->BuffersArePersistent() && !di->isFullbrightScene())
 	{
-		SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
+		SetupLights(di, state, section->lighthead, lightdata, sector->PortalGroup);
 	}
 	state.SetLightIndex(dynlightindex);
 
@@ -382,7 +381,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 //
 //==========================================================================
 
-inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
+inline void HWFlat::PutFlat(HWDrawInfo *di, FRenderState& state, bool fog)
 {
 	if (di->isFullbrightScene())
 	{
@@ -392,7 +391,7 @@ inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
 	{
 		if (di->Level->HasDynamicLights && texture != nullptr && !di->isFullbrightScene() && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
 		{
-			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
+			SetupLights(di, state, section->lighthead, lightdata, sector->PortalGroup);
 		}
 	}
 	di->AddFlat(this, fog);
@@ -439,7 +438,7 @@ void HWFlat::Process(HWDrawInfo *di, FRenderState& state, sector_t * model, int 
 	}
 
 	// For hacks this won't go into a render list.
-	PutFlat(di, fog);
+	PutFlat(di, state, fog);
 	rendered_flats++;
 }
 

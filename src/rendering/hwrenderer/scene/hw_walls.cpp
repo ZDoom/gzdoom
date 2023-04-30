@@ -40,7 +40,6 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
 #include "hw_skydome.h"
 
@@ -344,7 +343,7 @@ void HWWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
 	{
 		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
 		{
-			SetupLights(di, lightdata);
+			SetupLights(di, state, lightdata);
 		}
 		MakeVertices(di, state, !!(flags & HWWall::HWF_TRANSLUCENT));
 	}
@@ -379,7 +378,7 @@ void HWWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
 //
 //==========================================================================
 
-void HWWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
+void HWWall::SetupLights(HWDrawInfo *di, FRenderState& state, FDynLightData &lightdata)
 {
 	lightdata.Clear();
 
@@ -471,7 +470,7 @@ void HWWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 		}
 		node = node->nextLight;
 	}
-	dynlightindex = screen->mLights->UploadLights(lightdata);
+	dynlightindex = state.UploadLights(lightdata);
 }
 
 
@@ -521,7 +520,7 @@ void HWWall::PutWall(HWDrawInfo *di, FRenderState& state, bool translucent)
 	{
 		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
 		{
-			SetupLights(di, lightdata);
+			SetupLights(di, state, lightdata);
 		}
 		MakeVertices(di, state, translucent);
 	}
@@ -541,7 +540,7 @@ void HWWall::PutWall(HWDrawInfo *di, FRenderState& state, bool translucent)
 		{
 			if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
 			{
-				SetupLights(di, lightdata);
+				SetupLights(di, state, lightdata);
 			}
 		}
 		ProcessDecals(di, state);

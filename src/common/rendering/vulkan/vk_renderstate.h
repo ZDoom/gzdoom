@@ -47,8 +47,10 @@ public:
 	void EndRenderPass();
 	void EndFrame();
 
+	// Buffers
 	int SetViewpoint(const HWViewpointUniforms& vp) override;
 	void SetViewpoint(int index) override;
+	int UploadLights(const FDynLightData& lightdata) override;
 
 protected:
 	void Apply(int dt);

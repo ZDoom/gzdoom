@@ -22,7 +22,6 @@
 
 #include "hw_dynlightdata.h"
 #include "hw_cvars.h"
-#include "hw_lightbuffer.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hw_material.h"
@@ -86,7 +85,7 @@ void HWDrawInfo::AddMirrorSurface(HWWall *w, FRenderState& state)
 	bool hasDecals = newwall->seg->sidedef && newwall->seg->sidedef->AttachedDecals;
 	if (hasDecals && Level->HasDynamicLights && !isFullbrightScene())
 	{
-		newwall->SetupLights(this, lightdata);
+		newwall->SetupLights(this, state, lightdata);
 	}
 	newwall->ProcessDecals(this, state);
 	newwall->dynlightindex = -1; // the environment map should not be affected by lights - only the decals.

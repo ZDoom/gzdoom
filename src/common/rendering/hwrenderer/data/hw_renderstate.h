@@ -12,6 +12,7 @@
 struct FColormap;
 class IBuffer;
 struct HWViewpointUniforms;
+struct FDynLightData;
 
 enum EClearTarget
 {
@@ -758,6 +759,7 @@ public:
 	// Buffers
 	virtual int SetViewpoint(const HWViewpointUniforms& vp) = 0;
 	virtual void SetViewpoint(int index) = 0;
+	virtual int UploadLights(const FDynLightData& lightdata) = 0;
 
 	// Draw commands
 	virtual void ClearScreen() = 0;

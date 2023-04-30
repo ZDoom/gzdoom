@@ -207,7 +207,7 @@ private:
 	void RenderThings(subsector_t * sub, sector_t * sector, FRenderState& state);
 	void RenderParticles(subsector_t *sub, sector_t *front, FRenderState& state);
 	void DoSubsector(subsector_t * sub, FRenderState& state);
-	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
+	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane, FRenderState& state);
 	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane, FRenderState& state);
 	void DrawPSprite(HUDSprite *huds, FRenderState &state);
 	void SetColor(FRenderState &state, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
@@ -220,7 +220,7 @@ private:
 	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
 
 	void PreparePlayerSprites2D(sector_t * viewsector, area_t in_area, FRenderState& state);
-	void PreparePlayerSprites3D(sector_t * viewsector, area_t in_area);
+	void PreparePlayerSprites3D(sector_t * viewsector, area_t in_area, FRenderState& state);
 public:
 
 	void SetCameraPos(const DVector3 &pos)

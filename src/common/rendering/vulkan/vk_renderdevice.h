@@ -44,8 +44,6 @@ public:
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
 	FRenderState* RenderState() override;
 
-	unsigned int GetLightBufferBlockSize() const;
-
 	bool IsVulkan() override { return true; }
 
 	void Update() override;
@@ -76,7 +74,6 @@ public:
 	IBuffer* CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs) override;
 	IBuffer* CreateIndexBuffer() override;
 
-	IBuffer* CreateLightBuffer() override;
 	IBuffer* CreateBoneBuffer() override;
 	IBuffer* CreateShadowmapNodesBuffer() override;
 	IBuffer* CreateShadowmapLinesBuffer() override;

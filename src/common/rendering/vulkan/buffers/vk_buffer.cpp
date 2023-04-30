@@ -42,15 +42,17 @@ void VkBufferManager::Init()
 	Viewpoint.BlockAlign = (sizeof(HWViewpointUniforms) + fb->uniformblockalignment - 1) / fb->uniformblockalignment * fb->uniformblockalignment;
 	Viewpoint.UBO.reset(new VkHardwareDataBuffer(fb, false, true));
 	Viewpoint.UBO->SetData(Viewpoint.Count * Viewpoint.BlockAlign, nullptr, BufferUsageType::Persistent);
-	Viewpoint.UBO->Map();
+
+	Lightbuffer.SSO.reset(new VkHardwareDataBuffer(fb, true, false));
+	Lightbuffer.SSO->SetData(Lightbuffer.Count * 4 * sizeof(FVector4), nullptr, BufferUsageType::Persistent);
 
 	CreateFanToTrisIndexBuffer();
 }
 
 void VkBufferManager::Deinit()
 {
-	Viewpoint.UBO->Unmap();
 	Viewpoint.UBO.reset();
+	Lightbuffer.SSO.reset();
 
 	while (!Buffers.empty())
 		RemoveBuffer(Buffers.back());
@@ -67,7 +69,7 @@ void VkBufferManager::RemoveBuffer(VkHardwareBuffer* buffer)
 	buffer->fb = nullptr;
 	Buffers.erase(buffer->it);
 
-	for (VkHardwareDataBuffer** knownbuf : { &LightBufferSSO, &LightNodes, &LightLines, &LightList, &BoneBufferSSO})
+	for (VkHardwareDataBuffer** knownbuf : { &LightNodes, &LightLines, &LightList, &BoneBufferSSO})
 	{
 		if (buffer == *knownbuf) *knownbuf = nullptr;
 	}
@@ -81,12 +83,6 @@ IBuffer* VkBufferManager::CreateVertexBuffer(int numBindingPoints, int numAttrib
 IBuffer* VkBufferManager::CreateIndexBuffer()
 {
 	return new VkHardwareIndexBuffer(fb);
-}
-
-IBuffer* VkBufferManager::CreateLightBuffer()
-{
-	LightBufferSSO = new VkHardwareDataBuffer(fb, true, false);
-	return LightBufferSSO;
 }
 
 IBuffer* VkBufferManager::CreateBoneBuffer()

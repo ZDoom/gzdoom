@@ -24,7 +24,6 @@ public:
 	IBuffer* CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs);
 	IBuffer* CreateIndexBuffer();
 
-	IBuffer* CreateLightBuffer();
 	IBuffer* CreateBoneBuffer();
 	IBuffer* CreateShadowmapNodesBuffer();
 	IBuffer* CreateShadowmapLinesBuffer();
@@ -41,7 +40,13 @@ public:
 		std::unique_ptr<VkHardwareDataBuffer> UBO;
 	} Viewpoint;
 
-	VkHardwareDataBuffer* LightBufferSSO = nullptr;
+	struct
+	{
+		int UploadIndex = 0;
+		int Count = 80000;
+		std::unique_ptr<VkHardwareDataBuffer> SSO;
+	} Lightbuffer;
+
 	VkHardwareDataBuffer* LightNodes = nullptr;
 	VkHardwareDataBuffer* LightLines = nullptr;
 	VkHardwareDataBuffer* LightList = nullptr;

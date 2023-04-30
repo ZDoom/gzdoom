@@ -38,7 +38,6 @@
 #include "hw_clock.h"
 #include "hw_dynlightdata.h"
 #include "flatvertices.h"
-#include "hw_lightbuffer.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_fakeflat.h"
 
@@ -108,7 +107,7 @@ static gl_floodrendernode *NewFloodRenderNode()
 //
 //==========================================================================
 
-int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane)
+int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane, FRenderState& state)
 {
 	if (Level->HasDynamicLights && !isFullbrightScene())
 	{
@@ -133,7 +132,7 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 			node = node->nextLight;
 		}
 
-		return screen->mLights->UploadLights(lightdata);
+		return state.UploadLights(lightdata);
 	}
 	else return -1;
 }
@@ -172,7 +171,7 @@ void HWDrawInfo::AddOtherFloorPlane(int sector, gl_subsectorrendernode* node, FR
     auto pNode = otherFloorPlanes.CheckKey(sector);
     
 	node->next = pNode? *pNode : nullptr;
-	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &Level->sectors[sector].floorplane);
+	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &Level->sectors[sector].floorplane, state);
 	node->vertexindex = CreateOtherPlaneVertices(node->sub, &Level->sectors[sector].floorplane, state);
 	otherFloorPlanes[sector] = node;
 }
@@ -182,7 +181,7 @@ void HWDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode* node, 
     auto pNode = otherCeilingPlanes.CheckKey(sector);
     
     node->next = pNode? *pNode : nullptr;
-	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &Level->sectors[sector].ceilingplane);
+	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &Level->sectors[sector].ceilingplane, state);
 	node->vertexindex = CreateOtherPlaneVertices(node->sub, &Level->sectors[sector].ceilingplane, state);
 	otherCeilingPlanes[sector] = node;
 }

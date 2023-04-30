@@ -58,7 +58,6 @@ IVideo *gl_CreateVideo();
 
 void I_RestartRenderer();
 int currentcanvas = -1;
-int currentgpuswitch = -1;
 bool changerenderer;
 
 void I_ShutdownGraphics ()

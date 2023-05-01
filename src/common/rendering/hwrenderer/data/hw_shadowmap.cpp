@@ -92,7 +92,7 @@ bool ShadowMap::ShadowTest(const DVector3 &lpos, const DVector3 &pos)
 		return true;
 }
 
-bool ShadowMap::PerformUpdate()
+void ShadowMap::PerformUpdate()
 {
 	UpdateCycles.Reset();
 
@@ -103,55 +103,18 @@ bool ShadowMap::PerformUpdate()
 	if (CollectLights != nullptr)
 	{
 		UpdateCycles.Clock();
-		UploadAABBTree();
-		UploadLights();
-		return true;
-	}
-	return false;
-}
 
-void ShadowMap::UploadLights()
-{
-	mLights.Resize(1024 * 4);
-	CollectLights();
+		mLights.Resize(1024 * 4);
+		CollectLights();
 
-	if (mLightList == nullptr)
-		mLightList = fb->CreateShadowmapLightsBuffer();
-
-	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0], BufferUsageType::Stream);
-}
-
-
-void ShadowMap::UploadAABBTree()
-{
-	if (mNewTree)
-	{
+		fb->SetShadowMaps(mLights, mAABBTree, mNewTree);
 		mNewTree = false;
 
-		if (!mNodesBuffer)
-			mNodesBuffer = fb->CreateShadowmapNodesBuffer();
-		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes(), BufferUsageType::Static);
-
-		if (!mLinesBuffer)
-			mLinesBuffer = fb->CreateShadowmapLinesBuffer();
-		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines(), BufferUsageType::Static);
+		UpdateCycles.Unclock();
 	}
-	else if (mAABBTree->Update())
-	{
-		mNodesBuffer->SetSubData(mAABBTree->DynamicNodesOffset(), mAABBTree->DynamicNodesSize(), mAABBTree->DynamicNodes());
-		mLinesBuffer->SetSubData(mAABBTree->DynamicLinesOffset(), mAABBTree->DynamicLinesSize(), mAABBTree->DynamicLines());
-	}
-}
-
-void ShadowMap::Reset()
-{
-	delete mLightList; mLightList = nullptr;
-	delete mNodesBuffer; mNodesBuffer = nullptr;
-	delete mLinesBuffer; mLinesBuffer = nullptr;
 }
 
 ShadowMap::~ShadowMap()
 {
-	Reset();
 }
 

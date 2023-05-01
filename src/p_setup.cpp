@@ -376,7 +376,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 	aabbTree = nullptr;
 	levelMesh = nullptr;
 	if (screen)
-		screen->SetAABBTree(nullptr);
+		screen->mShadowMap->SetAABBTree(nullptr);
 }
 
 //==========================================================================

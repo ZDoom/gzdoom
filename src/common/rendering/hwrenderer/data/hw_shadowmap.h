@@ -17,8 +17,6 @@ public:
 	ShadowMap(DFrameBuffer* fb) : fb(fb) { }
 	virtual ~ShadowMap();
 
-	void Reset();
-
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
 	bool ShadowTest(const DVector3 &lpos, const DVector3 &pos);
 
@@ -26,11 +24,7 @@ public:
 	static int LightsProcessed;
 	static int LightsShadowmapped;
 
-	bool PerformUpdate();
-	void FinishUpdate()
-	{
-		UpdateCycles.Clock();
-	}
+	void PerformUpdate();
 
 	unsigned int NodesCount() const
 	{
@@ -67,10 +61,6 @@ public:
 	}
 
 protected:
-	// Upload the AABB-tree to the GPU
-	void UploadAABBTree();
-	void UploadLights();
-
 	// Working buffer for creating the list of lights. Stored here to avoid allocating memory each frame
 	TArray<float> mLights;
 
@@ -81,15 +71,6 @@ protected:
 	ShadowMap(const ShadowMap &) = delete;
 	ShadowMap &operator=(ShadowMap &) = delete;
 
-	// OpenGL storage buffer with the list of lights in the shadow map texture
-	// These buffers need to be accessed by the OpenGL backend directly so that they can be bound.
 public:
-	IBuffer* mLightList = nullptr;
-
-	// OpenGL storage buffers for the AABB tree
-	IBuffer* mNodesBuffer = nullptr;
-	IBuffer* mLinesBuffer = nullptr;
-
 	std::function<void()> CollectLights = nullptr;
-
 };

@@ -313,21 +313,6 @@ IBuffer*VulkanRenderDevice::CreateIndexBuffer()
 	return GetBufferManager()->CreateIndexBuffer();
 }
 
-IBuffer* VulkanRenderDevice::CreateShadowmapNodesBuffer()
-{
-	return GetBufferManager()->CreateShadowmapNodesBuffer();
-}
-
-IBuffer* VulkanRenderDevice::CreateShadowmapLinesBuffer()
-{
-	return GetBufferManager()->CreateShadowmapLinesBuffer();
-}
-
-IBuffer* VulkanRenderDevice::CreateShadowmapLightsBuffer()
-{
-	return GetBufferManager()->CreateShadowmapLightsBuffer();
-}
-
 void VulkanRenderDevice::SetTextureFilterMode()
 {
 	if (mSamplerManager)
@@ -531,8 +516,23 @@ void VulkanRenderDevice::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 	mRaytrace->SetLevelMesh(mesh);
 }
 
-void VulkanRenderDevice::UpdateShadowMap()
+void VulkanRenderDevice::SetShadowMaps(const TArray<float>& lights, hwrenderer::LevelAABBTree* tree, bool newTree)
 {
+	auto buffers = GetBufferManager();
+
+	buffers->Shadowmap.Lights->SetData(sizeof(float) * lights.Size(), lights.Data(), BufferUsageType::Stream);
+
+	if (newTree)
+	{
+		buffers->Shadowmap.Nodes->SetData(tree->NodesSize(), tree->Nodes(), BufferUsageType::Static);
+		buffers->Shadowmap.Lines->SetData(tree->LinesSize(), tree->Lines(), BufferUsageType::Static);
+	}
+	else if (tree->Update())
+	{
+		buffers->Shadowmap.Nodes->SetSubData(tree->DynamicNodesOffset(), tree->DynamicNodesSize(), tree->DynamicNodes());
+		buffers->Shadowmap.Lines->SetSubData(tree->DynamicLinesOffset(), tree->DynamicLinesSize(), tree->DynamicLines());
+	}
+
 	mPostprocess->UpdateShadowMap();
 }
 

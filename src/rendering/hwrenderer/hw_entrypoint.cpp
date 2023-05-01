@@ -110,16 +110,16 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 	if (mainview && toscreen && !(camera->Level->flags3 & LEVEL3_NOSHADOWMAP) && camera->Level->HasDynamicLights && gl_light_shadowmap && screen->allowSSBO() && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER))
 	{
-		screen->SetAABBTree(camera->Level->aabbTree);
+		screen->mShadowMap->SetAABBTree(camera->Level->aabbTree);
 		screen->mShadowMap->SetCollectLights([=] {
 			CollectLights(camera->Level);
 		});
-		screen->UpdateShadowMap();
+		screen->mShadowMap->PerformUpdate();
 	}
 	else
 	{
 		// null all references to the level if we do not need a shadowmap. This will shortcut all internal calculations without further checks.
-		screen->SetAABBTree(nullptr);
+		screen->mShadowMap->SetAABBTree(nullptr);
 		screen->mShadowMap->SetCollectLights(nullptr);
 	}
 

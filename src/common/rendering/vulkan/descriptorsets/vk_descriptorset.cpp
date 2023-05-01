@@ -220,9 +220,9 @@ VulkanDescriptorSet* VkDescriptorSetManager::GetInput(VkPPRenderPassSetup* passS
 
 	if (bindShadowMapBuffers)
 	{
-		write.AddBuffer(descriptors.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightNodes->mBuffer.get());
-		write.AddBuffer(descriptors.get(), 5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightLines->mBuffer.get());
-		write.AddBuffer(descriptors.get(), 6, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->LightList->mBuffer.get());
+		write.AddBuffer(descriptors.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->Shadowmap.Nodes->mBuffer.get());
+		write.AddBuffer(descriptors.get(), 5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->Shadowmap.Lines->mBuffer.get());
+		write.AddBuffer(descriptors.get(), 6, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->Shadowmap.Lights->mBuffer.get());
 	}
 
 	write.Execute(fb->GetDevice());

@@ -24,10 +24,6 @@ public:
 	IBuffer* CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs);
 	IBuffer* CreateIndexBuffer();
 
-	IBuffer* CreateShadowmapNodesBuffer();
-	IBuffer* CreateShadowmapLinesBuffer();
-	IBuffer* CreateShadowmapLightsBuffer();
-
 	void AddBuffer(VkHardwareBuffer* buffer);
 	void RemoveBuffer(VkHardwareBuffer* buffer);
 
@@ -53,9 +49,12 @@ public:
 		std::unique_ptr<VkHardwareDataBuffer> SSO;
 	} Bonebuffer;
 
-	VkHardwareDataBuffer* LightNodes = nullptr;
-	VkHardwareDataBuffer* LightLines = nullptr;
-	VkHardwareDataBuffer* LightList = nullptr;
+	struct
+	{
+		std::unique_ptr<VkHardwareDataBuffer> Nodes;
+		std::unique_ptr<VkHardwareDataBuffer> Lines;
+		std::unique_ptr<VkHardwareDataBuffer> Lights;
+	} Shadowmap;
 
 	std::unique_ptr<VkStreamBuffer> MatrixBuffer;
 	std::unique_ptr<VkStreamBuffer> StreamBuffer;

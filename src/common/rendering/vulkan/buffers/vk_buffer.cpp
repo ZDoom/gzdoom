@@ -49,6 +49,10 @@ void VkBufferManager::Init()
 	Bonebuffer.SSO.reset(new VkHardwareDataBuffer(fb, true, false));
 	Bonebuffer.SSO->SetData(Bonebuffer.Count * sizeof(VSMatrix), nullptr, BufferUsageType::Persistent);
 
+	Shadowmap.Nodes.reset(new VkHardwareDataBuffer(fb, true, false));
+	Shadowmap.Lines.reset(new VkHardwareDataBuffer(fb, true, false));
+	Shadowmap.Lights.reset(new VkHardwareDataBuffer(fb, true, false));
+
 	CreateFanToTrisIndexBuffer();
 }
 
@@ -57,6 +61,9 @@ void VkBufferManager::Deinit()
 	Viewpoint.UBO.reset();
 	Lightbuffer.SSO.reset();
 	Bonebuffer.SSO.reset();
+	Shadowmap.Nodes.reset();
+	Shadowmap.Lines.reset();
+	Shadowmap.Lights.reset();
 
 	while (!Buffers.empty())
 		RemoveBuffer(Buffers.back());
@@ -72,11 +79,6 @@ void VkBufferManager::RemoveBuffer(VkHardwareBuffer* buffer)
 	buffer->Reset();
 	buffer->fb = nullptr;
 	Buffers.erase(buffer->it);
-
-	for (VkHardwareDataBuffer** knownbuf : { &LightNodes, &LightLines, &LightList})
-	{
-		if (buffer == *knownbuf) *knownbuf = nullptr;
-	}
 }
 
 IBuffer* VkBufferManager::CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs)
@@ -87,24 +89,6 @@ IBuffer* VkBufferManager::CreateVertexBuffer(int numBindingPoints, int numAttrib
 IBuffer* VkBufferManager::CreateIndexBuffer()
 {
 	return new VkHardwareIndexBuffer(fb);
-}
-
-IBuffer* VkBufferManager::CreateShadowmapNodesBuffer()
-{
-	LightNodes = new VkHardwareDataBuffer(fb, true, false);
-	return LightNodes;
-}
-
-IBuffer* VkBufferManager::CreateShadowmapLinesBuffer()
-{
-	LightLines = new VkHardwareDataBuffer(fb, true, false);
-	return LightLines;
-}
-
-IBuffer* VkBufferManager::CreateShadowmapLightsBuffer()
-{
-	LightList = new VkHardwareDataBuffer(fb, true, false);
-	return LightList;
 }
 
 void VkBufferManager::CreateFanToTrisIndexBuffer()

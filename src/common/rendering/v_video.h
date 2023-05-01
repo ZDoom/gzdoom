@@ -157,10 +157,6 @@ public:
 	virtual bool IsVulkan() { return false; }
 	virtual bool IsPoly() { return false; }
 	virtual bool CompileNextShader() { return true; }
-	void SetAABBTree(hwrenderer::LevelAABBTree * tree)
-	{
-		mShadowMap->SetAABBTree(tree);
-	}
 	virtual void SetLevelMesh(hwrenderer::LevelMesh *mesh) { }
 	bool allowSSBO() const
 	{
@@ -233,11 +229,6 @@ public:
 	virtual IBuffer* CreateIndexBuffer() { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
 
-	// To do: these buffers shouldn't be created by the hwrenderer layer - it will be simpler if the backend manages them completely
-	virtual IBuffer* CreateShadowmapNodesBuffer() { return nullptr; }
-	virtual IBuffer* CreateShadowmapLinesBuffer() { return nullptr; }
-	virtual IBuffer* CreateShadowmapLightsBuffer() { return nullptr; }
-
 	// This is overridable in case Vulkan does it differently.
 	virtual bool RenderTextureIsFlipped() const
 	{
@@ -252,7 +243,7 @@ public:
 	virtual void FirstEye() {}
 	virtual void NextEye(int eyecount) {}
 	virtual void SetSceneRenderTarget(bool useSSAO) {}
-	virtual void UpdateShadowMap() {}
+	virtual void SetShadowMaps(const TArray<float>& lights, hwrenderer::LevelAABBTree* tree, bool newTree) {}
 	virtual void WaitForCommands(bool finish) {}
 	virtual void SetSaveBuffers(bool yes) {}
 	virtual void ImageTransitionScene(bool unknown) {}

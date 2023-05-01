@@ -63,7 +63,7 @@ public:
 	void AmbientOccludeScene(float m5) override;
 	void SetSceneRenderTarget(bool useSSAO) override;
 	void SetLevelMesh(hwrenderer::LevelMesh* mesh) override;
-	void UpdateShadowMap() override;
+	void SetShadowMaps(const TArray<float>& lights, hwrenderer::LevelAABBTree* tree, bool newTree) override;
 	void SetSaveBuffers(bool yes) override;
 	void ImageTransitionScene(bool unknown) override;
 	void SetActiveRenderTarget() override;
@@ -73,10 +73,6 @@ public:
 
 	IBuffer* CreateVertexBuffer(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute* attrs) override;
 	IBuffer* CreateIndexBuffer() override;
-
-	IBuffer* CreateShadowmapNodesBuffer() override;
-	IBuffer* CreateShadowmapLinesBuffer() override;
-	IBuffer* CreateShadowmapLightsBuffer() override;
 
 	FTexture *WipeStartScreen() override;
 	FTexture *WipeEndScreen() override;

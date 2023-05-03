@@ -226,7 +226,7 @@ void DMovePoly::Serialize(FSerializer &arc)
 void DMovePoly::Construct(FPolyObj *polyNum)
 {
 	Super::Construct(polyNum);
-	m_Angle = 0.;
+	m_Angle = nullAngle;
 	m_Speedv = { 0,0 };
 }
 
@@ -275,7 +275,7 @@ void DPolyDoor::Construct (FPolyObj * polyNum, podoortype_t type)
 {
 	Super::Construct(polyNum);
 	m_Type = type;
-	m_Direction = 0.;
+	m_Direction = nullAngle;
 	m_TotalDist = 0;
 	m_Tics = 0;
 	m_WaitTics = 0;
@@ -300,7 +300,7 @@ void DRotatePoly::Tick ()
 		m_Speed = m_Speed < 0 ? -m_Dist : m_Dist;
 	}
 
-	if (m_PolyObj->RotatePolyobj (m_Speed))
+	if (m_PolyObj->RotatePolyobj (DAngle::fromDeg(m_Speed)))
 	{
 		if (m_Dist == -1)
 		{ // perpetual polyobj
@@ -442,7 +442,7 @@ bool EV_MovePoly (FLevelLocals *Level, line_t *line, int polyNum, double speed, 
 			pe->StopInterpolation ();
 		}
 
-		angle += 180.;	// Reverse the angle.
+		angle += DAngle::fromDeg(180.);	// Reverse the angle.
 	}
 	return pe != nullptr;	// Return true if something started moving.
 }
@@ -585,7 +585,7 @@ void DPolyDoor::Tick ()
 		break;
 
 	case PODOOR_SWING:
-		if (m_Dist <= 0 || m_PolyObj->RotatePolyobj (m_Speed))
+		if (m_Dist <= 0 || m_PolyObj->RotatePolyobj(DAngle::fromDeg(m_Speed)))
 		{
 			double absSpeed = fabs (m_Speed);
 			m_Dist -= absSpeed;
@@ -668,14 +668,14 @@ bool EV_OpenPolyDoor(FLevelLocals *Level, line_t *line, int polyNum, double spee
 			pd->m_Direction = angle;
 			pd->m_Speedv = angle.ToVector(speed);
 			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
-			angle += 180.;	// reverse the angle
+			angle += DAngle::fromDeg(180.);	// reverse the angle
 		}
 		else if (type == PODOOR_SWING)
 		{
 			pd->m_WaitTics = delay;
-			pd->m_Direction.Degrees = swingdir; 
+			pd->m_Direction = DAngle::fromDeg(swingdir);
 			pd->m_Speed = (speed*swingdir*(90. / 64)) / 8;
-			pd->m_Dist = pd->m_TotalDist = angle.Degrees;
+			pd->m_Dist = pd->m_TotalDist = angle.Degrees();
 			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 			swingdir = -swingdir;	// reverse the direction
 		}
@@ -718,7 +718,7 @@ bool EV_StopPoly(FLevelLocals *Level, int polynum)
 FPolyObj::FPolyObj()
 {
 	StartSpot.pos = { 0,0 };
-	Angle = 0.;
+	Angle = nullAngle;
 	tag = 0;
 	memset(bbox, 0, sizeof(bbox));
 	validcount = 0;
@@ -762,7 +762,7 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	}
 	vertex_t *v1 = side->V1();
 	vertex_t *v2 = side->V2();
-	thrustAngle = (v2->fPos() - v1->fPos()).Angle() - 90.;
+	thrustAngle = (v2->fPos() - v1->fPos()).Angle() - DAngle::fromDeg(90.);
 
 	pe = static_cast<DPolyAction *>(specialdata);
 	if (pe)

@@ -50,9 +50,9 @@ public:
 
 private:
 	const char *cmd;
+	bool noescapes;
 	int _argc;
 	char **_argv;
-	long argsize;
-	bool noescapes;
+	size_t argsize;
 };
 

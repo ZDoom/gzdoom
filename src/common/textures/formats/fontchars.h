@@ -6,7 +6,7 @@ class FFontChar2 : public FImageSource
 public:
 	FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
 
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap* bmp, int conversion);
 
 	void SetSourceRemap(const PalEntry* sourceremap)

@@ -110,7 +110,21 @@ void JitCompiler::EmitRET()
 			if (regtype & REGT_KONST)
 			{
 				auto tmp = newTempInt64();
-				if (regtype & REGT_MULTIREG3)
+				if (regtype & REGT_MULTIREG4)
+				{
+					cc.mov(tmp, (((int64_t*)konstf)[regnum]));
+					cc.mov(x86::qword_ptr(location), tmp);
+
+					cc.mov(tmp, (((int64_t*)konstf)[regnum + 1]));
+					cc.mov(x86::qword_ptr(location, 8), tmp);
+
+					cc.mov(tmp, (((int64_t*)konstf)[regnum + 2]));
+					cc.mov(x86::qword_ptr(location, 16), tmp);
+
+					cc.mov(tmp, (((int64_t*)konstf)[regnum + 3]));
+					cc.mov(x86::qword_ptr(location, 24), tmp);
+				}
+				else if (regtype & REGT_MULTIREG3)
 				{
 					cc.mov(tmp, (((int64_t *)konstf)[regnum]));
 					cc.mov(x86::qword_ptr(location), tmp);
@@ -137,7 +151,14 @@ void JitCompiler::EmitRET()
 			}
 			else
 			{
-				if (regtype & REGT_MULTIREG3)
+				if (regtype & REGT_MULTIREG4)
+				{
+					cc.movsd(x86::qword_ptr(location), regF[regnum]);
+					cc.movsd(x86::qword_ptr(location, 8), regF[regnum + 1]);
+					cc.movsd(x86::qword_ptr(location, 16), regF[regnum + 2]);
+					cc.movsd(x86::qword_ptr(location, 24), regF[regnum + 3]);
+				}
+				else if (regtype & REGT_MULTIREG3)
 				{
 					cc.movsd(x86::qword_ptr(location), regF[regnum]);
 					cc.movsd(x86::qword_ptr(location, 8), regF[regnum + 1]);

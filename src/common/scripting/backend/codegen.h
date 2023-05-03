@@ -93,7 +93,7 @@ struct FCompileContext
 	FString VersionString;
 
 	FCompileContext(PNamespace *spc, PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump, const VersionInfo &ver);
-	FCompileContext(PNamespace *spc, PContainerType *cls, bool fromdecorate);	// only to be used to resolve constants!
+	FCompileContext(PNamespace *spc, PContainerType *cls, bool fromdecorate, const VersionInfo& ver);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);
@@ -101,7 +101,7 @@ struct FCompileContext
 
 	void HandleJumps(int token, FxExpression *handler);
 	void CheckReturn(PPrototype *proto, FScriptPosition &pos);
-	bool CheckWritable(int flags);
+	bool IsWritable(int flags, int checkFileNo = 0);
 	FxLocalVariableDeclaration *FindLocalVariable(FName name);
 };
 
@@ -248,6 +248,7 @@ enum EFxType
 	EFX_Conditional,
 	EFX_Abs,
 	EFX_ATan2,
+	EFX_ATan2Vec,
 	EFX_New,
 	EFX_MinMax,
 	EFX_Random,
@@ -271,6 +272,7 @@ enum EFxType
 	EFX_WhileLoop,
 	EFX_DoWhileLoop,
 	EFX_ForLoop,
+	EFX_ForEachLoop,
 	EFX_JumpStatement,
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
@@ -284,6 +286,7 @@ enum EFxType
 	EFX_SwitchStatement,
 	EFX_CaseStatement,
 	EFX_VectorValue,
+	EFX_VectorPlusZ,
 	EFX_VectorBuiltin,
 	EFX_TypeCheck,
 	EFX_DynamicCast,
@@ -291,6 +294,7 @@ enum EFxType
 	EFX_Super,
 	EFX_StackVariable,
 	EFX_MultiAssign,
+	EFX_MultiAssignDecl,
 	EFX_StaticArray,
 	EFX_StaticArrayVariable,
 	EFX_CVar,
@@ -305,6 +309,7 @@ enum EFxType
 	EFX_FontCast,
 	EFX_LocalArrayDeclaration,
 	EFX_OutVarDereference,
+	EFX_ToVector,
 	EFX_COUNT
 };
 
@@ -336,12 +341,19 @@ public:
 	bool IsFloat() const { return ValueType->isFloat(); }
 	bool IsInteger() const { return ValueType->isNumeric() && ValueType->isIntCompatible(); }
 	bool IsPointer() const { return ValueType->isPointer(); }
-	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
+	bool IsVector() const { return IsVector2() || IsVector3() || IsVector4(); };
+	bool IsVector2() const { return ValueType == TypeVector2 || ValueType == TypeFVector2; };
+	bool IsVector3() const { return ValueType == TypeVector3 || ValueType == TypeFVector3; };
+	bool IsVector4() const { return ValueType == TypeVector4 || ValueType == TypeFVector4; };
+	bool IsQuaternion() const { return ValueType == TypeQuaternion || ValueType == TypeFQuaternion || ValueType == TypeQuaternionStruct; };
 	bool IsBoolCompat() const { return ValueType->isScalar(); }
 	bool IsObject() const { return ValueType->isObjectPointer(); }
 	bool IsArray() const { return ValueType->isArray() || (ValueType->isPointer() && ValueType->toPointer()->PointedType->isArray()); }
 	bool isStaticArray() const { return (ValueType->isPointer() && ValueType->toPointer()->PointedType->isStaticArray()); } // can only exist in pointer form.
 	bool IsDynamicArray() const { return (ValueType->isDynArray()); }
+	bool IsMap() const { return ValueType->isMap(); }
+	bool IsMapIterator() const { return ValueType->isMapIterator(); }
+	bool IsStruct() const { return ValueType->isStruct(); }
 	bool IsNativeStruct() const { return (ValueType->isStruct() && static_cast<PStruct*>(ValueType)->isNative); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
@@ -441,7 +453,7 @@ public:
 	FxConstant(FSoundID val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeSound;
-		value.Int = val;
+		value.Int = val.index();
 		isresolved = true;
 	}
 
@@ -548,23 +560,39 @@ public:
 
 class FxVectorValue : public FxExpression
 {
-	FxExpression *xyz[3];
+	constexpr static int maxVectorDimensions = 4;
 	bool isConst;	// gets set to true if all element are const (used by function defaults parser)
 
 public:
+	FxExpression *xyzw[maxVectorDimensions];
 
 	friend class ZCCCompiler;
 
-	FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, const FScriptPosition &sc);
+	FxVectorValue(FxExpression *x, FxExpression *y, FxExpression *z, FxExpression* w, const FScriptPosition &sc);
 	~FxVectorValue();
 	FxExpression *Resolve(FCompileContext&);
 	bool isConstVector(int dim)
 	{
-		if (!isConst) return false;
-		return dim == 2 ? xyz[2] == nullptr : xyz[2] != nullptr;
+		if (!isConst)
+			return false;
+		return dim >= 0 && dim <= maxVectorDimensions && xyzw[dim - 1] && (dim == maxVectorDimensions || !xyzw[dim]);
 	}
 
 	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxQuaternionValue : public FxVectorValue
+{
+public:
+	FxQuaternionValue(FxExpression* x, FxExpression* y, FxExpression* z, FxExpression* w, const FScriptPosition& sc);
+	FxExpression* Resolve(FCompileContext&);
 };
 
 
@@ -877,6 +905,17 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+class FxMultiAssignDecl : public FxExpression
+{
+	FArgumentList Base;
+	FxExpression *Right;
+public:
+	FxMultiAssignDecl(FArgumentList &base, FxExpression *right, const FScriptPosition &pos);
+	~FxMultiAssignDecl();
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed into Declarations + FxMultiAssign , so it won't ever be emitted itself
+};
+
 //==========================================================================
 //
 //	FxAssignSelf
@@ -908,7 +947,7 @@ public:
 
 	FxBinary(int, FxExpression*, FxExpression*);
 	~FxBinary();
-	bool Promote(FCompileContext &ctx, bool forceint = false);
+	bool Promote(FCompileContext &ctx, bool forceint = false, bool shiftop = false);
 };
 
 //==========================================================================
@@ -1193,6 +1232,18 @@ public:
 
 private:
 	ExpEmit ToReg(VMFunctionBuilder *build, FxExpression *val);
+};
+
+class FxATan2Vec : public FxExpression
+{
+	FxExpression* vval;
+
+public:
+
+	FxATan2Vec(FxExpression* y, const FScriptPosition& pos);
+	~FxATan2Vec();
+	FxExpression* Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder* build);
 };
 
 //==========================================================================
@@ -1505,8 +1556,9 @@ public:
 	bool AddressRequested;
 	bool AddressWritable;
 	bool arrayispointer = false;
+	bool noboundscheck;
 
-	FxArrayElement(FxExpression*, FxExpression*);
+	FxArrayElement(FxExpression*, FxExpression*, bool = false);
 	~FxArrayElement();
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
@@ -1590,6 +1642,44 @@ public:
 	~FxVectorBuiltin();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxPlusZ
+//
+//==========================================================================
+
+class FxVectorPlusZ : public FxExpression
+{
+	FName Function;
+	FxExpression* Self;
+	FxExpression* Z;
+
+public:
+
+	FxVectorPlusZ(FxExpression* self, FName name, FxExpression*);
+	~FxVectorPlusZ();
+	FxExpression* Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder* build);
+};
+
+//==========================================================================
+//
+//	FxPlusZ
+//
+//==========================================================================
+
+class FxToVector : public FxExpression
+{
+	FxExpression* Self;
+
+public:
+
+	FxToVector(FxExpression* self);
+	~FxToVector();
+	FxExpression* Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder* build);
 };
 
 //==========================================================================
@@ -1926,7 +2016,26 @@ public:
 	FxForLoop(FxExpression *init, FxExpression *condition, FxExpression *iteration, FxExpression *code, const FScriptPosition &pos);
 	~FxForLoop();
 	FxExpression *DoResolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
+	ExpEmit Emit(VMFunctionBuilder* build);
+};
+
+//==========================================================================
+//
+// FxForLoop
+//
+//==========================================================================
+
+class FxForEachLoop : public FxLoopStatement
+{
+	FName loopVarName;
+	FxExpression* Array;
+	FxExpression* Array2;
+	FxExpression* Code;
+
+public:
+	FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* code, const FScriptPosition& pos);
+	~FxForEachLoop();
+	FxExpression* DoResolve(FCompileContext&);
 };
 
 //==========================================================================

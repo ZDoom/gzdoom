@@ -41,6 +41,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hw_renderstate.h"
 #include "hwrenderer/scene/hw_portal.h"
+#include "hw_bonebuffer.h"
 #include "hw_models.h"
 
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
@@ -71,6 +72,7 @@ void FHWModelRenderer::BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf
 
 void FHWModelRenderer::EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf)
 {
+	state.SetBoneIndexBase(-1);
 	state.EnableModelMatrix(false);
 	state.SetDepthFunc(DF_Less);
 	if (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
@@ -95,6 +97,7 @@ void FHWModelRenderer::BeginDrawHUDModel(FRenderStyle style, const VSMatrix &obj
 
 void FHWModelRenderer::EndDrawHUDModel(FRenderStyle style)
 {
+	state.SetBoneIndexBase(-1);
 	state.EnableModelMatrix(false);
 
 	state.SetDepthFunc(DF_Less);
@@ -134,10 +137,18 @@ void FHWModelRenderer::DrawElements(int numIndices, size_t offset)
 //
 //===========================================================================
 
-void FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size)
+int FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix>& bones, int boneStartIndex)
 {
 	auto mdbuff = static_cast<FModelVertexBuffer*>(model->GetVertexBuffer(GetType()));
-	state.SetVertexBuffer(mdbuff->vertexBuffer(), frame1, frame2);
-	if (mdbuff->indexBuffer()) state.SetIndexBuffer(mdbuff->indexBuffer());
+	screen->mBones->Map();
+	boneIndexBase = boneStartIndex >= 0 ? boneStartIndex : screen->mBones->UploadBones(bones);
+	screen->mBones->Unmap();
+	state.SetBoneIndexBase(boneIndexBase);
+	if (mdbuff)
+	{
+		state.SetVertexBuffer(mdbuff->vertexBuffer(), frame1, frame2);
+		if (mdbuff->indexBuffer()) state.SetIndexBuffer(mdbuff->indexBuffer());
+	}
+	return boneIndexBase;
 }
 

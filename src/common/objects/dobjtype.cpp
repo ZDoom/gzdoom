@@ -82,6 +82,8 @@ DEFINE_GLOBAL(WP_NOCHANGE);
 // A harmless non-nullptr FlatPointer for classes without pointers.
 static const size_t TheEnd = ~(size_t)0;
 
+static const std::pair<size_t,PType *> TheMapEnd = {~(size_t)0 , nullptr};
+
 //==========================================================================
 //
 // PClass :: WriteValue
@@ -187,7 +189,7 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 //
 //==========================================================================
 
-static int cregcmp (const void *a, const void *b) NO_SANITIZE
+static NO_SANITIZE_M int cregcmp (const void *a, const void *b) NO_SANITIZE
 {
 	const PClass *class1 = *(const PClass **)a;
 	const PClass *class2 = *(const PClass **)b;
@@ -249,6 +251,7 @@ void PClass::StaticShutdown ()
 
 	// Make a full garbage collection here so that all destroyed but uncollected higher level objects 
 	// that still exist are properly taken down before the low level data is deleted.
+	GC::FullGC();
 	GC::FullGC();
 
 
@@ -528,7 +531,7 @@ void PClass::Derive(PClass *newclass, FName name)
 //
 //==========================================================================
 
-PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycreated)
+PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycreated, int fileno)
 {
 	assert(size >= Size);
 	PClass *type;
@@ -568,7 +571,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycre
 	type->Size = size;
 	if (size != TentativeClass)
 	{
-		NewClassType(type);
+		NewClassType(type, fileno);
 		if (newlycreated) *newlycreated = true;
 		type->Virtuals = Virtuals;
 	}
@@ -588,13 +591,13 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycre
 //
 //==========================================================================
 
-PField *PClass::AddField(FName name, PType *type, uint32_t flags)
+PField *PClass::AddField(FName name, PType *type, uint32_t flags, int fileno)
 {
 	PField *field;
 	if (!(flags & VARF_Meta))
 	{
 		unsigned oldsize = Size;
-		field = VMType->Symbols.AddField(name, type, flags, Size);
+		field = VMType->Symbols.AddField(name, type, flags, Size, nullptr, fileno);
 
 		// Only initialize the defaults if they have already been created.
 		// For ZScript this is not the case, it will first define all fields before
@@ -609,7 +612,7 @@ PField *PClass::AddField(FName name, PType *type, uint32_t flags)
 	{
 		// Same as above, but a different data storage.
 		unsigned oldsize = MetaSize;
-		field = VMType->Symbols.AddField(name, type, flags, MetaSize);
+		field = VMType->Symbols.AddField(name, type, flags, MetaSize, nullptr, fileno);
 
 		if (field != nullptr && !(flags & VARF_Native) && Meta != nullptr)
 		{
@@ -873,6 +876,68 @@ void PClass::BuildArrayPointers()
 			}
 			flat[numSuperPointers + ScriptPointers.Size()] = ~(size_t)0;
 			ArrayPointers = flat;
+		}
+	}
+}
+
+//==========================================================================
+//
+// PClass :: BuildMapPointers
+//
+// same as above, but creates a list to dynamic object arrays
+//
+//==========================================================================
+
+void PClass::BuildMapPointers()
+{
+	if (MapPointers != nullptr)
+	{ // Already built: Do nothing.
+		return;
+	}
+	else if (ParentClass == nullptr)
+	{ // No parent (i.e. DObject: FlatPointers is the same as Pointers.
+		MapPointers = &TheMapEnd;
+	}
+	else
+	{
+		ParentClass->BuildMapPointers();
+
+		TArray<std::pair<size_t,PType *>> ScriptPointers;
+
+		// Collect all arrays to pointers in scripted fields.
+		for (auto field : Fields)
+		{
+			if (!(field->Flags & VARF_Native))
+			{
+				field->Type->SetPointerMap(Defaults, unsigned(field->Offset), &ScriptPointers);
+			}
+		}
+
+		if (ScriptPointers.Size() == 0)
+		{ // No new pointers: Just use the same ArrayPointers as the parent.
+			MapPointers = ParentClass->MapPointers;
+		}
+		else
+		{ // New pointers: Create a new FlatPointers array and add them.
+			int numSuperPointers;
+
+			// Count pointers defined by superclasses.
+			for (numSuperPointers = 0; ParentClass->MapPointers[numSuperPointers].first != ~(size_t)0; numSuperPointers++)
+			{
+			}
+
+			// Concatenate them into a new array
+			std::pair<size_t,PType *> *flat = (std::pair<size_t,PType *>*)ClassDataAllocator.Alloc(sizeof(std::pair<size_t,PType *>) * (numSuperPointers + ScriptPointers.Size() + 1));
+			if (numSuperPointers > 0)
+			{
+				memcpy(flat, ParentClass->MapPointers, sizeof(std::pair<size_t,PType *>)*numSuperPointers);
+			}
+			if (ScriptPointers.Size() > 0)
+			{
+				memcpy(flat + numSuperPointers, &ScriptPointers[0], sizeof(std::pair<size_t,PType *>) * ScriptPointers.Size());
+			}
+			flat[numSuperPointers + ScriptPointers.Size()] = TheMapEnd;
+			MapPointers = flat;
 		}
 	}
 }

@@ -40,7 +40,6 @@
 #include "vm.h"
 #include "menustate.h"
 
-void M_StartControlPanel(bool makeSound, bool scaleoverride = false);
 FName MessageBoxClass = NAME_MessageBoxMenu;
 
 CVAR(Bool, m_quickexit, false, CVAR_ARCHIVE)

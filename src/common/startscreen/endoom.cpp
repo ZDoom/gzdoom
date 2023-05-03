@@ -192,6 +192,7 @@ int RunEndoom()
 	return 0;
 }
 
+[[noreturn]]
 void ST_Endoom()
 {
 	int code = RunEndoom();

@@ -26,6 +26,7 @@
 
 #include "doomdef.h"
 #include "m_swap.h"
+#include "i_interface.h"
 
 #include "filesystem.h"
 #include "c_console.h"

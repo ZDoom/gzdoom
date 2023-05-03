@@ -45,7 +45,7 @@ public:
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
 	int FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType);
 	PSymbol *FindSymbol(FName symname, bool searchparents) const;
-	PField *AddField(FName name, PType *type, uint32_t flags);
+	PField *AddField(FName name, PType *type, uint32_t flags, int fileno = 0);
 	void InitializeDefaults();
 
 	static void StaticInit();
@@ -56,6 +56,7 @@ public:
 	const size_t		*Pointers = nullptr;		// object pointers defined by this class *only*
 	const size_t		*FlatPointers = nullptr;	// object pointers defined by this class and all its superclasses; not initialized by default
 	const size_t		*ArrayPointers = nullptr;	// dynamic arrays containing object pointers.
+	const std::pair<size_t,PType *>	*MapPointers = nullptr;	// maps containing object pointers.
 	uint8_t				*Defaults = nullptr;
 	uint8_t				*Meta = nullptr;			// Per-class static script data
 	unsigned			 Size = sizeof(DObject);
@@ -79,11 +80,12 @@ public:
 	~PClass();
 	void InsertIntoHash(bool native);
 	DObject *CreateNew();
-	PClass *CreateDerivedClass(FName name, unsigned int size, bool *newlycreated = nullptr);
+	PClass *CreateDerivedClass(FName name, unsigned int size, bool *newlycreated = nullptr, int fileno = 0);
 
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	void BuildArrayPointers();
+	void BuildMapPointers();
 	void DestroySpecials(void *addr);
 	void DestroyMeta(void *addr);
 	const PClass *NativeClass() const;

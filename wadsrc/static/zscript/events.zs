@@ -89,6 +89,7 @@ class StaticEventHandler : Object native play version("2.4")
     virtual void OnUnregister() {}
 
     // actual handlers are here
+    virtual void OnEngineInitialize() {}
 	virtual void WorldLoaded(WorldEvent e) {}
     virtual void WorldUnloaded(WorldEvent e) {}
     virtual void WorldThingSpawned(WorldEvent e) {}
@@ -124,6 +125,7 @@ class StaticEventHandler : Object native play version("2.4")
     
     //
     virtual ui void ConsoleProcess(ConsoleEvent e) {}
+    virtual ui void InterfaceProcess(ConsoleEvent e) {}
     virtual void NetworkProcess(ConsoleEvent e) {}
     
     //
@@ -148,4 +150,5 @@ class EventHandler : StaticEventHandler native version("2.4")
 {
     clearscope static native StaticEventHandler Find(class<StaticEventHandler> type);
     clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
+    clearscope static native void SendInterfaceEvent(int playerNum, string name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
 }

@@ -1,6 +1,8 @@
 #pragma once
 
+class FCanvas;
 class FCanvasTexture;
+
 // This list keeps track of the cameras that draw into canvas textures.
 struct FCanvasTextureEntry
 {

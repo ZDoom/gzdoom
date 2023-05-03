@@ -75,7 +75,7 @@ namespace swrenderer
 		double x1, x2;
 		DVector2 left, right;
 		double gzb, gzt, tz;
-		DAngle ang = thing->Angles.Yaw + 90;
+		DAngle ang = thing->Angles.Yaw + DAngle::fromDeg(90);
 		double angcos = ang.Cos();
 		double angsin = ang.Sin();
 

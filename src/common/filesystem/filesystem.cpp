@@ -395,7 +395,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 
 				for (size_t j = 0; j < sizeof(cksum); ++j)
 				{
-					sprintf(cksumout + (j * 2), "%02X", cksum[j]);
+					snprintf(cksumout + (j * 2), 3, "%02X", cksum[j]);
 				}
 
 				fprintf(hashfile, "file: %s, hash: %s, size: %d\n", filename, cksumout, (int)filereader.GetLength());
@@ -417,7 +417,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, bool quiet, L
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)
 					{
-						sprintf(cksumout + (j * 2), "%02X", cksum[j]);
+						snprintf(cksumout + (j * 2), 3, "%02X", cksum[j]);
 					}
 
 					fprintf(hashfile, "file: %s, lump: %s, hash: %s, size: %d\n", filename, lump->getName(), cksumout, lump->LumpSize);
@@ -841,7 +841,7 @@ int FileSystem::GetFileFlags (int lump)
 
 uint32_t FileSystem::LumpNameHash (const char *s)
 {
-	const uint32_t *table = GetCRCTable ();;
+	const uint32_t *table = GetCRCTable ();
 	uint32_t hash = 0xffffffff;
 	int i;
 
@@ -1696,6 +1696,6 @@ CCMD(fs_dir)
 		auto fnid = fileSystem.GetResourceId(i);
 		auto length = fileSystem.FileLength(i);
 		bool hidden = fileSystem.FindFile(fn1) != i;
-		Printf(PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
 	}
 }

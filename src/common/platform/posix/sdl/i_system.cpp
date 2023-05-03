@@ -69,7 +69,7 @@
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();
-int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
+int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags);
 void I_ShowFatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
@@ -83,6 +83,20 @@ extern FStartupScreen *StartWindow;
 
 void I_SetIWADInfo()
 {
+}
+
+extern "C" int I_FileAvailable(const char* filename)
+{
+	FString cmd = "which {0} >/dev/null 2>&1";
+	cmd.Substitute("{0}", filename);
+
+	if (FILE* f = popen(cmd.GetChars(), "r"))
+	{
+		int status = pclose(f);
+		return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+	}
+
+	return 0;
 }
 
 //
@@ -99,8 +113,7 @@ void Unix_I_FatalError(const char* errortext)
 	// Close window or exit fullscreen and release mouse capture
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
-	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if(I_FileAvailable("kdialog"))
 	{
 		FString cmd;
 		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
@@ -284,7 +297,7 @@ void I_PrintStr(const char *cp)
 	if (StartWindow) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
 }
 
-int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
+int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
 {
 	int i;
 
@@ -294,8 +307,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	}
 
 #ifndef __APPLE__
-	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if(I_FileAvailable("kdialog"))
 	{
 		FString cmd("kdialog --title \"" GAMENAME " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
@@ -349,7 +361,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 #ifndef NO_GTK
 	if (I_GtkAvailable())
 	{
-		return I_PickIWad_Gtk (wads, numwads, showwin, defaultiwad);
+		return I_PickIWad_Gtk (wads, numwads, showwin, defaultiwad, autoloadflags);
 	}
 #endif
 
@@ -394,6 +406,23 @@ FString I_GetFromClipboard (bool use_primary_selection)
 	return "";
 }
 
+FString I_GetCWD()
+{
+	char* curdir = get_current_dir_name();
+	if (!curdir) 
+	{
+		return "";
+	}
+	FString ret(curdir);
+	free(curdir);
+	return ret;
+}
+
+bool I_ChDir(const char* path)
+{
+	return chdir(path) == 0;
+}
+
 // Return a random seed, preferably one with lots of entropy.
 unsigned int I_MakeRNGSeed()
 {
@@ -415,3 +444,21 @@ unsigned int I_MakeRNGSeed()
 	}
 	return seed;
 }
+
+void I_OpenShellFolder(const char* infolder)
+{
+	char* curdir = get_current_dir_name();
+
+	if (!chdir(infolder))
+	{
+		Printf("Opening folder: %s\n", infolder);
+		std::system("xdg-open .");
+		chdir(curdir);
+	}
+	else
+	{
+		Printf("Unable to open directory '%s\n", infolder);
+	}
+	free(curdir);
+}
+

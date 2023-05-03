@@ -131,7 +131,7 @@ struct gameinfo_t
 
 	TArray<FName> PrecachedClasses;
 	TArray<FString> PrecachedTextures;
-	TArray<int> PrecachedSounds;
+	TArray<FSoundID> PrecachedSounds;
 	TArray<FString> EventHandlers;
 
 	FString titleMusic;

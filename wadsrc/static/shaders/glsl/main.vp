@@ -12,6 +12,8 @@ layout(location = 3) in vec4 aVertex2;
 layout(location = 4) in vec4 aNormal;
 layout(location = 5) in vec4 aNormal2;
 layout(location = 6) in vec3 aLightmap;
+layout(location = 7) in vec4 aBoneWeight;
+layout(location = 8) in uvec4 aBoneSelector;
 
 layout(location = 2) out vec4 pixelpos;
 layout(location = 3) out vec3 glowdist;
@@ -25,15 +27,25 @@ layout(location = 7) out vec4 ClipDistanceA;
 layout(location = 8) out vec4 ClipDistanceB;
 #endif
 
+struct BonesResult
+{
+	vec3 Normal;
+	vec4 Position;
+};
+
+BonesResult ApplyBones();
+
 void main()
 {
 	float ClipDistance0, ClipDistance1, ClipDistance2, ClipDistance3, ClipDistance4;
 
 	vec2 parmTexCoord;
 	vec4 parmPosition;
-	
+
+	BonesResult bones = ApplyBones();
+
 	parmTexCoord = aTexCoord;
-	parmPosition = aPosition;
+	parmPosition = bones.Position;
 	
 	#ifndef SIMPLE
 		vec4 worldcoord = ModelMatrix * mix(parmPosition, aVertex2, uInterpolationFactor);
@@ -66,7 +78,7 @@ void main()
 			glowdist.y = worldcoord.y - bottomatpoint;
 			glowdist.z = clamp(glowdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
 		}
-		
+
 		if (uObjectColor2.a != 0)
 		{
 			float topatpoint = (uGradientTopPlane.w + uGradientTopPlane.x * worldcoord.x + uGradientTopPlane.y * worldcoord.z) * uGradientTopPlane.z;
@@ -75,24 +87,17 @@ void main()
 			gradientdist.y = worldcoord.y - bottomatpoint;
 			gradientdist.z = clamp(gradientdist.x / (topatpoint - bottomatpoint), 0.0, 1.0);
 		}
-		
+
 		if (uSplitBottomPlane.z != 0.0)
 		{
 			ClipDistance3 = ((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
 			ClipDistance4 = worldcoord.y - ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
 
-		#ifdef HAS_UNIFORM_VERTEX_DATA
-			if ((useVertexData & 2) == 0)
-				vWorldNormal = NormalModelMatrix * vec4(normalize(uVertexNormal.xyz), 1.0);
-			else
-				vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
-		#else
-			vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
-		#endif
+		vWorldNormal = NormalModelMatrix * vec4(normalize(bones.Normal), 1.0);
 		vEyeNormal = NormalViewMatrix * vec4(normalize(vWorldNormal.xyz), 1.0);
 	#endif
-	
+
 	#ifdef SPHEREMAP
 		vec3 u = normalize(eyeCoordPos.xyz);
 		vec4 n = normalize(NormalViewMatrix * vec4(parmTexCoord.x, 0.0, parmTexCoord.y, 0.0));
@@ -103,7 +108,7 @@ void main()
 	#else
 		vTexCoord = TextureMatrix * vec4(parmTexCoord, 0.0, 1.0);
 	#endif
-	
+
 	gl_Position = ProjectionMatrix * eyeCoordPos;
 
 	#ifdef VULKAN_COORDINATE_SYSTEM
@@ -146,3 +151,66 @@ void main()
 
 	gl_PointSize = 1.0;
 }
+
+#if !defined(SIMPLE)
+vec3 GetAttrNormal()
+{
+	#ifdef HAS_UNIFORM_VERTEX_DATA
+		if ((useVertexData & 2) == 0)
+			return uVertexNormal.xyz;
+		else
+			return mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor);
+	#else
+		return mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor);
+	#endif
+}
+
+void AddWeightedBone(uint boneIndex, float weight, inout vec4 position, inout vec3 normal)
+{
+	if (weight != 0.0)
+	{
+		mat4 transform = bones[uBoneIndexBase + int(boneIndex)];
+		mat3 rotation = mat3(transform);
+		position += (transform * aPosition) * weight;
+		normal += (rotation * aNormal.xyz) * weight;
+	}
+}
+
+BonesResult ApplyBones()
+{
+	BonesResult result;
+	if (uBoneIndexBase >= 0 && aBoneWeight != vec4(0.0))
+	{
+		result.Position = vec4(0.0);
+		result.Normal = vec3(0.0);
+
+		// We use low precision input for our bone weights. Rescale so the sum still is 1.0
+		float totalWeight = aBoneWeight.x + aBoneWeight.y + aBoneWeight.z + aBoneWeight.w;
+		float weightMultiplier = 1.0 / totalWeight;
+		vec4 boneWeight = aBoneWeight * weightMultiplier;
+
+		AddWeightedBone(aBoneSelector.x, boneWeight.x, result.Position, result.Normal);
+		AddWeightedBone(aBoneSelector.y, boneWeight.y, result.Position, result.Normal);
+		AddWeightedBone(aBoneSelector.z, boneWeight.z, result.Position, result.Normal);
+		AddWeightedBone(aBoneSelector.w, boneWeight.w, result.Position, result.Normal);
+
+		result.Position.w = 1.0; // For numerical stability
+	}
+	else
+	{
+		result.Position = aPosition;
+		result.Normal = GetAttrNormal();
+	}
+	return result;
+}
+
+#else
+
+BonesResult ApplyBones()
+{
+	BonesResult result;
+	result.Position = aPosition;
+	return result;
+}
+
+#endif

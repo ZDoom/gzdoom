@@ -98,6 +98,7 @@ enum gameaction_t : int
 	ga_resumeconversation,
 	ga_intro,
 	ga_intermission,
+	ga_titleloop,
 };
 
 extern	gameaction_t	gameaction;

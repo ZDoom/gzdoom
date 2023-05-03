@@ -280,6 +280,14 @@ void EventManager::Shutdown()
 		handler->name(); \
 }
 
+void EventManager::OnEngineInitialize()
+{
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+	{
+		if (handler->IsStatic())
+			handler->OnEngineInitialize();
+	}
+}
 
 // note for the functions below.
 // *Unsafe is executed on EVERY map load/close, including savegame loading, etc.
@@ -511,17 +519,17 @@ bool EventManager::Responder(const event_t* ev)
 				return true; // event was processed
 		}
 	}
-	if (ShouldCallStatic(false)) uiProcessorsFound = staticEventManager.Responder(ev);
+	if (ShouldCallStatic(false) && staticEventManager.Responder(ev)) return true;
 
 	return false;
 }
 
-void EventManager::Console(int player, FString name, int arg1, int arg2, int arg3, bool manual)
+void EventManager::Console(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui)
 {
-	if (ShouldCallStatic(false)) staticEventManager.Console(player, name, arg1, arg2, arg3, manual);
+	if (ShouldCallStatic(false)) staticEventManager.Console(player, name, arg1, arg2, arg3, manual, ui);
 
 	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
-		handler->ConsoleProcess(player, name, arg1, arg2, arg3, manual);
+		handler->ConsoleProcess(player, name, arg1, arg2, arg3, manual, ui);
 }
 
 void EventManager::RenderOverlay(EHudState state)
@@ -686,6 +694,21 @@ DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
 	ACTION_RETURN_BOOL(currentVMLevel->localEventManager->SendNetworkEvent(name, arg1, arg2, arg3, false));
 }
 
+DEFINE_ACTION_FUNCTION(DEventHandler, SendInterfaceEvent)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(playerNum);
+	PARAM_STRING(name);
+	PARAM_INT(arg1);
+	PARAM_INT(arg2);
+	PARAM_INT(arg3);
+
+	if (playerNum == consoleplayer)
+		primaryLevel->localEventManager->Console(-1, name, arg1, arg2, arg3, false, true);
+
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DEventHandler, Find)
 {
 	PARAM_PROLOGUE;
@@ -754,9 +777,21 @@ FWorldEvent EventManager::SetupWorldEvent()
 	FWorldEvent e;
 	e.IsSaveGame = savegamerestore;
 	e.IsReopen = Level->FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
-	e.DamageAngle = 0.0;
+	e.DamageAngle = nullAngle;
 	return e;
 }
+
+void DStaticEventHandler::OnEngineInitialize()
+{
+	IFVIRTUAL(DStaticEventHandler, OnEngineInitialize)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		VMCall(func, params, 1, nullptr, 0);
+	}
+}
+
 
 void DStaticEventHandler::WorldLoaded()
 {
@@ -1143,26 +1178,49 @@ void DStaticEventHandler::PostUiTick()
 	}
 }
 
-void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual)
+void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui)
 {
 	if (player < 0)
 	{
-		IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
+		if (ui)
 		{
-			// don't create excessive DObjects if not going to be processed anyway
-			if (isEmpty(func)) return;
-			FConsoleEvent e;
+			IFVIRTUAL(DStaticEventHandler, InterfaceProcess)
+			{
+				// don't create excessive DObjects if not going to be processed anyway
+				if (isEmpty(func)) return;
+				FConsoleEvent e;
 
-			//
-			e.Player = player;
-			e.Name = name;
-			e.Args[0] = arg1;
-			e.Args[1] = arg2;
-			e.Args[2] = arg3;
-			e.IsManual = manual;
+				//
+				e.Player = player;
+				e.Name = name;
+				e.Args[0] = arg1;
+				e.Args[1] = arg2;
+				e.Args[2] = arg3;
+				e.IsManual = manual;
 
-			VMValue params[2] = { (DStaticEventHandler*)this, &e };
-			VMCall(func, params, 2, nullptr, 0);
+				VMValue params[2] = { (DStaticEventHandler*)this, &e };
+				VMCall(func, params, 2, nullptr, 0);
+			}
+		}
+		else
+		{
+			IFVIRTUAL(DStaticEventHandler, ConsoleProcess)
+			{
+				// don't create excessive DObjects if not going to be processed anyway
+				if (isEmpty(func)) return;
+				FConsoleEvent e;
+
+				//
+				e.Player = player;
+				e.Name = name;
+				e.Args[0] = arg1;
+				e.Args[1] = arg2;
+				e.Args[2] = arg3;
+				e.IsManual = manual;
+
+				VMValue params[2] = { (DStaticEventHandler*)this, &e };
+				VMCall(func, params, 2, nullptr, 0);
+			}
 		}
 	}
 	else
@@ -1238,6 +1296,25 @@ void DStaticEventHandler::OnDestroy()
 
 // console stuff
 // this is kinda like puke, except it distinguishes between local events and playsim events.
+CCMD(interfaceevent)
+{
+	int argc = argv.argc();
+
+	if (argc < 2 || argc > 5)
+	{
+		Printf("Usage: interfaceevent <name> [arg1] [arg2] [arg3]\n");
+	}
+	else
+	{
+		int arg[3] = { 0, 0, 0 };
+		int argn = min<int>(argc - 2, countof(arg));
+		for (int i = 0; i < argn; i++)
+			arg[i] = atoi(argv[2 + i]);
+		// call locally
+		primaryLevel->localEventManager->Console(-1, argv[1], arg[0], arg[1], arg[2], true, true);
+	}
+}
+
 CCMD(event)
 {
 	int argc = argv.argc();
@@ -1253,7 +1330,7 @@ CCMD(event)
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call locally
-		primaryLevel->localEventManager->Console(-1, argv[1], arg[0], arg[1], arg[2], true);
+		primaryLevel->localEventManager->Console(-1, argv[1], arg[0], arg[1], arg[2], true, false);
 	}
 }
 

@@ -25,11 +25,6 @@
 
 namespace swrenderer
 {
-	void SkyDrawerArgs::DrawDepthSkyColumn(RenderThread *thread, float idepth)
-	{
-		thread->Drawers(dc_viewport)->DrawDepthSkyColumn(*this, idepth);
-	}
-
 	void SkyDrawerArgs::DrawSingleSkyColumn(RenderThread *thread)
 	{
 		thread->Drawers(dc_viewport)->DrawSingleSkyColumn(*this);

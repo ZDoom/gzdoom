@@ -51,7 +51,7 @@
 #include "st_start.h"
 #include "teaminfo.h"
 #include "p_conversation.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "p_enemy.h"
 #include "m_argv.h"
 #include "p_lnspec.h"
@@ -69,6 +69,9 @@
 #include "gstrings.h"
 #include "s_music.h"
 #include "screenjob.h"
+#include "d_main.h"
+#include "i_interface.h"
+#include "savegamemanager.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -125,7 +128,7 @@ int				playerfornode[MAXNETNODES];
 
 int 			maketic;
 int 			skiptics;
-int 			ticdup;
+int 			ticdup = 1;
 
 void D_ProcessEvents (void); 
 void G_BuildTiccmd (ticcmd_t *cmd); 
@@ -1461,7 +1464,7 @@ bool DoArbitrate (void *userdata)
 		{
 			data->gotsetup[0] = 0x80;
 
-			ticdup = doomcom.ticdup = netbuffer[1];
+			ticdup = doomcom.ticdup = clamp<int>(netbuffer[1], 1, MAXTICDUP);
 			NetMode = netbuffer[2];
 
 			stream = &netbuffer[3];
@@ -1502,7 +1505,9 @@ bool DoArbitrate (void *userdata)
 		netbuffer[1] = consoleplayer;
 		netbuffer[9] = data->gotsetup[0];
 		stream = &netbuffer[10];
-		D_WriteUserInfoStrings (consoleplayer, &stream, true);
+		auto str = D_GetUserInfoStrings (consoleplayer, true);
+		memcpy(stream, str.GetChars(), str.Len() + 1);
+		stream += str.Len();
 		SendSetup (data->playersdetected, data->gotsetup, int(stream - netbuffer));
 	}
 	else
@@ -1517,7 +1522,9 @@ bool DoArbitrate (void *userdata)
 				{
 					netbuffer[1] = j;
 					stream = &netbuffer[9];
-					D_WriteUserInfoStrings (j, &stream, true);
+					auto str = D_GetUserInfoStrings(j, true);
+					memcpy(stream, str.GetChars(), str.Len() + 1);
+					stream += str.Len();
 					HSendPacket (i, int(stream - netbuffer));
 				}
 			}
@@ -1884,7 +1891,7 @@ void TryRunTics (void)
 		}
 	}
 
-	if (ticdup == 1)
+	if (ticdup <= 1)
 	{
 		availabletics = lowtic - gametic;
 	}
@@ -2403,7 +2410,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 							if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
 							{
-								spawned->Angles.Yaw = source->Angles.Yaw - angle;
+								spawned->Angles.Yaw = source->Angles.Yaw - DAngle::fromDeg(angle);
 								spawned->special = special;
 								for(i = 0; i < 5; i++) {
 									spawned->args[i] = args[i];
@@ -2455,21 +2462,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			{
 				// Paths sent over the network will be valid for the system that sent
 				// the save command. For other systems, the path needs to be changed.
-				const char *fileonly = savegamefile.GetChars();
-				const char *slash = strrchr (fileonly, '\\');
-				if (slash != NULL)
-				{
-					fileonly = slash + 1;
-				}
-				slash = strrchr (fileonly, '/');
-				if (slash != NULL)
-				{
-					fileonly = slash + 1;
-				}
-				if (fileonly != savegamefile.GetChars())
-				{
-					savegamefile = G_BuildSaveName (fileonly, -1);
-				}
+				FString basename = ExtractFileBase(savegamefile, true);
+				savegamefile = G_BuildSaveName (basename);
 			}
 		}
 		gameaction = ga_savegame;
@@ -2693,8 +2687,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		break;
 
 	case DEM_SETPITCHLIMIT:
-		players[player].MinPitch = -(double)ReadByte(stream);		// up
-		players[player].MaxPitch = (double)ReadByte(stream);		// down
+		players[player].MinPitch = DAngle::fromDeg(-ReadByte(stream));		// up
+		players[player].MaxPitch = DAngle::fromDeg(ReadByte(stream));		// down
 		break;
 
 	case DEM_REVERTCAMERA:
@@ -2714,7 +2708,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			for (int i = 0; i < 3; i++)
 				arg[i] = ReadLong(stream);
 			bool manual = !!ReadByte(stream);
-			primaryLevel->localEventManager->Console(player, s, arg[0], arg[1], arg[2], manual);
+			primaryLevel->localEventManager->Console(player, s, arg[0], arg[1], arg[2], manual, false);
 		}
 		break;
 

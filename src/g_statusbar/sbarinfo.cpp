@@ -66,7 +66,6 @@ enum
 
 EXTERN_CVAR(Int, fraglimit)
 EXTERN_CVAR(Int, screenblocks)
-EXTERN_CVAR(Bool, vid_fps)
 
 class DSBarInfo;
 static double nulclip[] = { 0,0,0,0 };
@@ -1287,8 +1286,6 @@ public:
 
 			w = (forceWidth < 0 ? texture->GetDisplayWidth() : forceWidth);
 			h = (forceHeight < 0 ? texture->GetDisplayHeight() : forceHeight);
-			if(vid_fps && rx < 0 && ry >= 0)
-				ry += 10;
 
 			rx *= Scale.X;
 			ry *= Scale.Y;
@@ -1432,8 +1429,6 @@ public:
 			}
 			else
 			{
-				if(vid_fps && ax < 0 && ay >= 0)
-					ry += 10;
 
 				bool xright = rx < 0;
 				bool ybot = ry < 0;

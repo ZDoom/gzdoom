@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -66,6 +66,7 @@ class FGLRenderState final : public FRenderState
 	int lastTranslation = 0;
 	int maxBoundMaterial = -1;
 	size_t mLastMappedLightIndex = SIZE_MAX;
+	size_t mLastMappedBoneIndexBase = SIZE_MAX;
 
 	IVertexBuffer *mCurrentVertexBuffer;
 	int mCurrentVertexOffsets[2];	// one per binding point
@@ -108,16 +109,7 @@ public:
 
 	void EnableDrawBuffers(int count, bool apply = false) override
 	{
-		/*
-		count = min(count, 3);
-		if (mNumDrawBuffers != count)
-		{
-			static GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-			glDrawBuffers(count, buffers);
-			mNumDrawBuffers = count;
-		}
-		if (apply) Apply();
-		*/
+
 	}
 
 	void ToggleState(int state, bool on);

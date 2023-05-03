@@ -184,7 +184,7 @@ struct MBFParamState
 	int GetSoundArg(int i, int def = 0)
 	{
 		int num = argsused & (1 << i) ? (int)args[i] : def;
-		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1];
+		if (num > 0 && num <= int(SoundMap.Size())) return SoundMap[num-1].index();
 		return 0;
 	}
 
@@ -405,7 +405,7 @@ static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
 
-inline double DEHToDouble(int acsval)
+inline double DEHToDouble(int64_t acsval)
 {
 	return acsval / 65536.;
 }
@@ -724,7 +724,7 @@ static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2
 static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_CustomMeleeAttack
 	emitters.AddParameterIntConst(value1);								// damage
-	emitters.AddParameterIntConst(value2 ? (int)SoundMap[value2 - 1] : 0);	// hit sound
+	emitters.AddParameterIntConst(value2 ? (int)SoundMap[value2 - 1].index() : 0);	// hit sound
 	emitters.AddParameterIntConst(0);									// miss sound
 	emitters.AddParameterIntConst(NAME_None);							// damage type
 	emitters.AddParameterIntConst(true);								// bleed
@@ -733,7 +733,7 @@ static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int val
 // misc1 = sound, misc2 = attenuation none (true) or normal (false)
 static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_PlaySound
-	emitters.AddParameterIntConst(value1 ? (int)SoundMap[value1 - 1] : 0);	// soundid
+	emitters.AddParameterIntConst(value1 ? (int)SoundMap[value1 - 1].index() : 0);	// soundid
 	emitters.AddParameterIntConst(CHAN_BODY);							// channel
 	emitters.AddParameterFloatConst(1);									// volume
 	emitters.AddParameterIntConst(false);								// looping
@@ -802,7 +802,7 @@ static void CreateMonsterMeleeAttackFunc(FunctionCallEmitter &emitters, int valu
 	state->ValidateArgCount(4, "A_MonsterMeleeAttack");
 	emitters.AddParameterIntConst(state->GetIntArg(0, 3));
 	emitters.AddParameterIntConst(state->GetIntArg(1, 8));
-	emitters.AddParameterIntConst(state->GetIntArg(2, 0));
+	emitters.AddParameterIntConst(state->GetSoundArg(2, 0));
 	emitters.AddParameterFloatConst(state->GetFloatArg(3));
 
 }
@@ -1138,16 +1138,21 @@ static int PatchThing (int thingy)
 	while ((result = GetLine ()) == 1)
 	{
 		char *endptr;
-		uint32_t val = (uint32_t)strtoull (Line2, &endptr, 10);
+		int64_t val = (int64_t)strtoll (Line2, &endptr, 10);
 		size_t linelen = strlen (Line1);
 
-		if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
+		// Supported value range is all valid representations of signed int and unsigned int.
+		if (val < INT_MIN || val > UINT_MAX)
 		{
-			info->health = val;
+			Printf("Bad numeric constant %s for %s\n", Line2, Line1);
+		}
+		else if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
+		{
+			info->health = (int)val;
 		}
 		else if (linelen == 13 && stricmp (Line1, "Reaction time") == 0)
 		{
-			info->reactiontime = val;
+			info->reactiontime = (int)val;
 		}
 		else if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
 		{
@@ -1169,13 +1174,13 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 14 && stricmp (Line1, "Missile damage") == 0)
 		{
-			info->SetDamage(val);
+			info->SetDamage((int)val);
 		}
 		else if (linelen == 5)
 		{
 			if (stricmp (Line1, "Speed") == 0)
 			{
-				info->Speed = (signed long)val;	// handle fixed point later.
+				info->Speed = (double)val;	// handle fixed point later.
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{
@@ -1188,7 +1193,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Scale") == 0)
 			{
-				info->Scale.Y = info->Scale.X = clamp(atof (Line2), 1./65536, 256.);
+				info->Scale.Y = info->Scale.X = clamp((float)atof (Line2), 1.f/65536, 256.f);
 			}
 			else if (stricmp (Line1, "Decal") == 0)
 			{
@@ -1227,19 +1232,30 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 16 && stricmp(Line1, "infighting group") == 0)
 		{
-			type->ActorInfo()->infighting_group = val;
+			if (val < 0)
+			{
+				Printf("Infighting groups must be >= 0 (check your dehacked)\n");
+				val = 0;
+			}
+			type->ActorInfo()->infighting_group = (int)val;
 		}
 		else if (linelen == 16 && stricmp(Line1, "projectile group") == 0)
 		{
-			type->ActorInfo()->projectile_group = val;
+			if (val < 0) val = -1;
+			type->ActorInfo()->projectile_group = (int)val;
 		}
 		else if (linelen == 12 && stricmp(Line1, "splash group") == 0)
 		{
-			type->ActorInfo()->splash_group = val;
+			if (val < 0)
+			{
+				Printf("Splash groups must be >= 0 (check your dehacked)\n");
+				val = 0;
+			}
+			type->ActorInfo()->splash_group = (int)val;
 		}
 		else if (linelen == 10 && stricmp(Line1, "fast speed") == 0)
 		{
-			double fval = val >= 256 ? DEHToDouble(val) : val;
+			double fval = val >= 256 ? DEHToDouble(val) : double(val);
 			info->FloatVar(NAME_FastSpeed) = fval;
 		}
 		else if (linelen == 11 && stricmp(Line1, "melee range") == 0)
@@ -1278,7 +1294,7 @@ static int PatchThing (int thingy)
 			  0xffff8000, // 8 - Orange
 			};
 
-			if (val > 8) val = 0;
+			if (val > 8 || val < 0) val = 0;
 			unsigned color = bloodcolor[val];
 			info->BloodColor = color;
 			info->BloodTranslation = val == 0? 0 : TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(color));
@@ -1332,7 +1348,7 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1 + linelen - 6, " frame") == 0)
 			{
-				FState *state = FindState (val);
+				FState *state = FindState ((int)val);
 
 				if (type != NULL && !patchedStates)
 				{
@@ -1370,7 +1386,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
-				FSoundID snd = 0;
+				FSoundID snd = NO_SOUND;
 				
 				if (val == 0 || val >= SoundMap.Size())
 				{
@@ -1378,7 +1394,7 @@ static int PatchThing (int thingy)
 					{ // Sound was not a (valid) number,
 						// so treat it as an actual sound name.
 						stripwhite (Line2);
-						snd = Line2;
+						snd = S_FindSound(Line2);
 					}
 				}
 				else
@@ -1405,7 +1421,7 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1, "Mass") == 0)
 			{
-				info->Mass = val;
+				info->Mass = (int)val;
 			}
 			else if (stricmp (Line1, "Bits") == 0)
 			{
@@ -2050,6 +2066,7 @@ static int PatchWeapon (int weapNum)
 		Printf ("Weapon %d out of range.\n", weapNum);
 	}
 
+	FState* readyState = nullptr;
 	while ((result = GetLine ()) == 1)
 	{
 		int val = atoi (Line2);
@@ -2069,8 +2086,11 @@ static int PatchWeapon (int weapNum)
 				statedef.SetStateLabel("Select", state);
 			else if (strnicmp (Line1, "Select", 6) == 0)
 				statedef.SetStateLabel("Deselect", state);
-			else if (strnicmp (Line1, "Bobbing", 7) == 0)
+			else if (strnicmp(Line1, "Bobbing", 7) == 0)
+			{
+				readyState = state;
 				statedef.SetStateLabel("Ready", state);
+			}
 			else if (strnicmp (Line1, "Shooting", 8) == 0)
 				statedef.SetStateLabel("Fire", state);
 			else if (strnicmp (Line1, "Firing", 6) == 0)
@@ -2181,6 +2201,20 @@ static int PatchWeapon (int weapNum)
 
 	if (info)
 	{
+		// Emulate the hard coded ready sound of the chainsaw as good as possible.
+		if (readyState)
+		{
+			FState* state = FindState(67); // S_SAW
+			if (readyState == state)
+			{
+				info->IntVar(NAME_ReadySound) = S_FindSound("weapons/sawidle").index();
+			}
+			else
+			{
+				info->IntVar(NAME_ReadySound) = 0;
+			}
+		}
+
 		if (info->PointerVar<PClassActor>(NAME_AmmoType1) == nullptr)
 		{
 			info->IntVar(NAME_AmmoUse1) = 0;
@@ -3505,11 +3539,11 @@ void FinishDehPatch ()
 			// Retry until we find a free name. This is unlikely to happen but not impossible.
 			mysnprintf(typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", nameindex++);
 			bool newlycreated;
-			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size, &newlycreated));
+			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size, &newlycreated, 0));
 			if (newlycreated) subclass->InitializeDefaults();
 		} 
 		while (subclass == nullptr);
-		NewClassType(subclass);	// This needs a VM type to work as intended.
+		NewClassType(subclass, 0);	// This needs a VM type to work as intended.
 
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));

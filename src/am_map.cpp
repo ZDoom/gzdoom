@@ -133,6 +133,7 @@ struct islope_t
 CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
 CVAR(Float, am_linealpha, 1.0f, CVAR_ARCHIVE)
 CVAR(Int, am_linethickness, 1, CVAR_ARCHIVE)
+CVAR(Int, am_lineantialiasing, 0, CVAR_ARCHIVE)
 CVAR(Bool, am_thingrenderstyles, true, CVAR_ARCHIVE)
 CVAR(Int, am_showsubsector, -1, 0);
 
@@ -196,7 +197,7 @@ CUSTOM_CVAR(Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 CVAR(Bool, am_followplayer, true, CVAR_ARCHIVE)
 CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
 CVAR(Bool, am_showgrid, false, CVAR_ARCHIVE)
-CVAR(Float, am_zoomdir, 0, CVAR_ARCHIVE)
+CVAR(Float, am_zoomdir, 0.f, CVAR_ARCHIVE)
 
 static const char *const DEFAULT_FONT_NAME = "AMMNUMx";
 CVAR(String, am_markfont, DEFAULT_FONT_NAME, CVAR_ARCHIVE)
@@ -421,11 +422,11 @@ struct AMColorset
 	bool forcebackground;
 	bool defined;	// only for mod specific colorsets: must be true to be usable
 
-	void initFromCVars(FColorCVar **values)
+	void initFromCVars(FColorCVarRef **values)
 	{
 		for(int i=0;i<AlmostBackgroundColor; i++)
 		{
-			c[i].FromCVar(*values[i]);
+			c[i].FromCVar(*(values[i]->get()));
 		}
 
 		uint32_t ba = *(values[0]);
@@ -513,7 +514,7 @@ static const int AUTOMAP_LINE_COLORS[AMLS_COUNT] =
 //
 //=============================================================================
 
-static FColorCVar *cv_standard[] = {
+static FColorCVarRef *cv_standard[] = {
 	&am_backcolor,
 	&am_yourcolor,
 	&am_wallcolor,
@@ -540,7 +541,7 @@ static FColorCVar *cv_standard[] = {
 	&am_portalcolor
 };
 
-static FColorCVar *cv_overlay[] = {
+static FColorCVarRef *cv_overlay[] = {
 	&am_backcolor,	// this will not be used in overlay mode
 	&am_ovyourcolor,
 	&am_ovwallcolor,
@@ -571,11 +572,11 @@ CCMD(am_restorecolors)
 {
 	for (unsigned i = 0; i < countof(cv_standard); i++)
 	{
-		cv_standard[i]->ResetToDefault();
+		cv_standard[i]->get()->ResetToDefault();
 	}
 	for (unsigned i = 0; i < countof(cv_overlay); i++)
 	{
-		cv_overlay[i]->ResetToDefault();
+		cv_overlay[i]->get()->ResetToDefault();
 	}
 }
 
@@ -1284,7 +1285,7 @@ void DAutomap::changeWindowLoc ()
 	oincy = incy = m_paninc.y * twod->GetHeight() / 200;
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		rotate(&incx, &incy, players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.);
+		rotate(&incx, &incy, players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90.));
 	}
 
 	m_x += incx;
@@ -1525,7 +1526,7 @@ void DAutomap::doFollowPlayer ()
 			sy = (f_oldloc.y - ampos.Y);
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
-				rotate(&sx, &sy, cam->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90);
+				rotate(&sx, &sy, cam->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90));
 			}
 			ScrollParchment(sx, sy);
 
@@ -1741,11 +1742,63 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 		const int y1 = f_y + fl.a.y;
 		const int x2 = f_x + fl.b.x;
 		const int y2 = f_y + fl.b.y;
-		if (am_linethickness >= 2) {
-			twod->AddThickLine(x1, y1, x2, y2, am_linethickness, color.RGB, uint8_t(am_linealpha * 255));
+
+		if (am_lineantialiasing) {
+			// Draw 5 lines (am_linethickness 2) or 9 lines (am_linethickness >= 3)
+			// slightly offset from each other, but with lower opacity
+			// as a bruteforce way to achieve antialiased line drawing.
+			const int aa_alpha_divide = am_linethickness >= 3 ? 3 : 2;
+
+			// Subtract to line thickness to compensate for the antialiasing making lines thicker.
+			const int aa_linethickness = max(1, am_linethickness - 2);
+
+			if (aa_linethickness >= 2) {
+				// Top row.
+				twod->AddThickLine(DVector2(x1 - 1, y1 - 1), DVector2(x2 - 1, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1 + 1, y1 - 1), DVector2(x2 + 1, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Middle row.
+				twod->AddThickLine(DVector2(x1 - 1, y1), DVector2(x2 - 1, y2), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1 + 1, y1), DVector2(x2 + 1, y2), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1, y1), DVector2(x2, y2), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Bottom row.
+				twod->AddThickLine(DVector2(x1 - 1, y1 + 1), DVector2(x2 - 1, y2 + 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1 + 1, y1 + 1), DVector2(x2 + 1, y2 + 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddThickLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), aa_linethickness, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+			} else {
+				// Use more efficient thin line drawing routine.
+				// Top row.
+				if (am_linethickness >= 3) {
+					// If original line thickness is 2, do not add diagonal lines to allow thin lines to be represented.
+					// This part is not needed for thick antialiased drawing, as original line thickness is always greater than 3.
+					twod->AddLine(DVector2(x1 - 1, y1 - 1), DVector2(x2 - 1, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+					twod->AddLine(DVector2(x1 + 1, y1 - 1), DVector2(x2 + 1, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				}
+				twod->AddLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Middle row.
+				twod->AddLine(DVector2(x1 - 1, y1), DVector2(x2 - 1, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddLine(DVector2(x1 + 1, y1), DVector2(x2 + 1, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				twod->AddLine(DVector2(x1, y1), DVector2(x2, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+
+				// Bottom row.
+				if (am_linethickness >= 3) {
+					// If original line thickness is 2, do not add diagonal lines to allow thin lines to be represented.
+					// This part is not needed for thick antialiased drawing, as original line thickness is always greater than 3.
+					twod->AddLine(DVector2(x1 - 1, y1 + 1), DVector2(x2 - 1, y2 + 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+					twod->AddLine(DVector2(x1 + 1, y1 + 1), DVector2(x2 + 1, y2 + 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+				}
+				twod->AddLine(DVector2(x1, y1 - 1), DVector2(x2, y2 - 1), nullptr, color.RGB, uint8_t(am_linealpha * 255 / aa_alpha_divide));
+			}
 		} else {
-			// Use more efficient thin line drawing routine.
-			twod->AddLine(x1, y1, x2, y2, -1, -1, INT_MAX, INT_MAX, color.RGB, uint8_t(am_linealpha * 255));
+			if (am_linethickness >= 2) {
+				twod->AddThickLine(DVector2(x1, y1), DVector2(x2, y2), am_linethickness, color.RGB, uint8_t(am_linealpha * 255));
+			} else {
+				// Use more efficient thin line drawing routine.
+				twod->AddLine(DVector2(x1, y1), DVector2(x2, y2), nullptr, color.RGB, uint8_t(am_linealpha * 255));
+			}
 		}
 	}
 }
@@ -2075,14 +2128,14 @@ void DAutomap::drawSubsectors()
 		}
 
 		// Apply the floor's rotation to the texture origin.
-		if (rotation != 0)
+		if (rotation != nullAngle)
 		{
 			rotate(&originpt.x, &originpt.y, rotation);
 		}
 		// Apply the automap's rotation to the texture origin.
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			rotation = rotation + 90. - players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
+			rotation = rotation + DAngle::fromDeg(90.) - players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 			rotatePoint(&originpt.x, &originpt.y);
 		}
 		originx = f_x + ((originpt.x - m_x) * scale);
@@ -2646,7 +2699,7 @@ void DAutomap::drawWalls (bool allmap)
 
 void DAutomap::rotate(double *xp, double *yp, DAngle a)
 {
-	static DAngle angle_saved = 0.;
+	static DAngle angle_saved = nullAngle;
 	static double sinrot = 0;
 	static double cosrot = 1;
 
@@ -2678,7 +2731,7 @@ void DAutomap::rotatePoint (double *x, double *y)
 	double pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	rotate (x, y, -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.);
+	rotate (x, y, -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + DAngle::fromDeg(90.));
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2704,7 +2757,7 @@ void DAutomap::drawLineCharacter(const mline_t *lineguy, size_t lineguylines, do
 			l.a.y *= scale;
 		}
 
-		if (angle != 0)
+		if (angle != nullAngle)
 			rotate(&l.a.x, &l.a.y, angle);
 
 		l.a.x += x;
@@ -2719,7 +2772,7 @@ void DAutomap::drawLineCharacter(const mline_t *lineguy, size_t lineguylines, do
 			l.b.y *= scale;
 		}
 
-		if (angle != 0)
+		if (angle != nullAngle)
 			rotate(&l.b.x, &l.b.y, angle);
 
 		l.b.x += x;
@@ -2758,7 +2811,7 @@ void DAutomap::drawPlayers ()
 		pt.y = pos.Y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			angle = 90.;
+			angle = DAngle::fromDeg(90.);
 			rotatePoint (&pt.x, &pt.y);
 		}
 		else
@@ -2826,7 +2879,7 @@ void DAutomap::drawPlayers ()
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				rotatePoint (&pt.x, &pt.y);
-				angle -= players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.;
+				angle -= players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90.);
 			}
 
 			drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
@@ -2860,7 +2913,7 @@ void DAutomap::drawKeys ()
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			rotatePoint (&p.x, &p.y);
-			angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.;
+			angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + DAngle::fromDeg(90.);
 		}
 
 		if (key->flags & MF_SPECIAL)
@@ -2872,7 +2925,7 @@ void DAutomap::drawKeys ()
 
 			if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 			else color = AMColors[AMColors.ThingColor_CountItem];
-			drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, 0., color, p.x, p.y);
+			drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, nullAngle, color, p.x, p.y);
 		}
 	}
 }
@@ -2914,13 +2967,13 @@ void DAutomap::drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						DAngle angle = 270. + 22.5 - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
-						if (frame->Texture[0] != frame->Texture[1]) angle += 180. / 16;
+						DAngle angle = DAngle::fromDeg(270. + 22.5) - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
+						if (frame->Texture[0] != frame->Texture[1]) angle += DAngle::fromDeg(180. / 16);
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{
-							angle += players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - 90.;
+							angle += players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - DAngle::fromDeg(90.);
 						}
-						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
+						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees());
 
 						const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
 						texture = TexMan.GetGameTexture(textureID, true);
@@ -2944,7 +2997,7 @@ void DAutomap::drawThings ()
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
 						rotatePoint (&p.x, &p.y);
-						angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + 90.;
+						angle += -players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw + DAngle::fromDeg(90.);
 					}
 
 					color = AMColors[AMColors.ThingColor];
@@ -2974,7 +3027,7 @@ void DAutomap::drawThings ()
 
 								if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 								else color = AMColors[AMColors.ThingColor_CountItem];
-								drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0., color, p.x, p.y);
+								drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, nullAngle, color, p.x, p.y);
 								color.RGB = 0;
 							}
 							else

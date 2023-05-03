@@ -54,14 +54,14 @@ extern FFastTrig fasttrig;
 #define RAD2BAM(f)		((unsigned)xs_CRoundToInt((f) * (0x80000000/3.14159265358979323846)))
 
 
-inline double fastcosbam(double v)
+inline double fastcosbam(unsigned int v)
 {
-	return fasttrig.cos(xs_CRoundToUInt(v));
+	return fasttrig.cos(v);
 }
 
-inline double fastsinbam(double v)
+inline double fastsinbam(unsigned int v)
 {
-	return fasttrig.sin(xs_CRoundToUInt(v));
+	return fasttrig.sin(v);
 }
 
 inline double fastcosdeg(double v)

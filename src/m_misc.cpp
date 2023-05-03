@@ -74,7 +74,7 @@ CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 EXTERN_CVAR(Bool, longsavemessages);
 
-static long ParseCommandLine (const char *args, int *argc, char **argv);
+static size_t ParseCommandLine (const char *args, int *argc, char **argv);
 
 
 //---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ void M_FindResponseFile (void)
 			TArray<uint8_t> file;
 			int		argc = 0;
 			int 	size;
-			long	argsize = 0;
+			size_t	argsize = 0;
 			int 	index;
 
 			// Any more response files after the limit will be removed from the
@@ -179,17 +179,19 @@ void M_FindResponseFile (void)
 // This is just like the version in c_dispatch.cpp, except it does not
 // do cvar expansion.
 
-static long ParseCommandLine (const char *args, int *argc, char **argv)
+static size_t ParseCommandLine (const char *args, int *argc, char **argv)
 {
 	int count;
+	char* buffstart;
 	char *buffplace;
 
 	count = 0;
-	buffplace = NULL;
+	buffstart = NULL;
 	if (argv != NULL)
 	{
-		buffplace = argv[0];
+		buffstart = argv[0];
 	}
+	buffplace = buffstart;
 
 	for (;;)
 	{
@@ -257,7 +259,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 	{
 		*argc = count;
 	}
-	return (long)(buffplace - (char *)0);
+	return (buffplace - buffstart);
 }
 
 
@@ -292,7 +294,7 @@ bool M_SaveDefaults (const char *filename)
 void M_SaveDefaultsFinal ()
 {
 	if (GameConfig == nullptr) return;
-	while (!M_SaveDefaults (nullptr) && I_WriteIniFailed ())
+	while (!M_SaveDefaults (nullptr) && I_WriteIniFailed (GameConfig->GetPathName()))
 	{
 		/* Loop until the config saves or I_WriteIniFailed() returns false */
 	}
@@ -311,6 +313,12 @@ UNSAFE_CCMD (writeini)
 	{
 		Printf ("Config saved.\n");
 	}
+}
+
+CCMD(openconfig)
+{
+	M_SaveDefaults(nullptr);
+	I_OpenShellFolder(ExtractFilePath(GameConfig->GetPathName()));
 }
 
 //
@@ -655,5 +663,34 @@ UNSAFE_CCMD (screenshot)
 		G_ScreenShot (NULL);
 	else
 		G_ScreenShot (argv[1]);
+}
+
+CCMD(openscreenshots)
+{
+	size_t dirlen;
+	FString autoname;
+	autoname = Args->CheckValue("-shotdir");
+	if (autoname.IsEmpty())
+	{
+		autoname = screenshot_dir;
+	}
+	dirlen = autoname.Len();
+	if (dirlen == 0)
+	{
+		autoname = M_GetScreenshotsPath();
+		dirlen = autoname.Len();
+	}
+	if (dirlen > 0)
+	{
+		if (autoname[dirlen-1] != '/' && autoname[dirlen-1] != '\\')
+		{
+			autoname += '/';
+		}
+	}
+	autoname = NicePath(autoname);
+
+	CreatePath(autoname);
+
+	I_OpenShellFolder(autoname.GetChars());
 }
 

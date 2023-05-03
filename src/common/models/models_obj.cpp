@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -222,6 +222,8 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 	curSurface->faceStart = aggSurfFaceCount;
 	surfaces.Push(*curSurface);
 	delete curSurface;
+	hasSurfaces = surfaces.Size() > 1;
+
 
 	if (uvs.Size() == 0)
 	{ // Needed so that OBJs without UVs can work
@@ -542,7 +544,7 @@ inline FVector3 FOBJModel::RealignVector(FVector3 vecToRealign)
  */
 inline FVector2 FOBJModel::FixUV(FVector2 vecToRealign)
 {
-	vecToRealign.Y *= -1;
+	vecToRealign.Y = 1-vecToRealign.Y;
 	return vecToRealign;
 }
 
@@ -613,9 +615,9 @@ FVector3 FOBJModel::CalculateNormalSmooth(unsigned int vidx, unsigned int smooth
  * @param name The name of the frame
  * @return The index of the frame
  */
-int FOBJModel::FindFrame(const char* name)
+int FOBJModel::FindFrame(const char* name, bool nodefault)
 {
-	return 0; // OBJs are not animated.
+	return nodefault ? FErr_Singleframe : 0; // OBJs are not animated.
 }
 
 /**
@@ -628,7 +630,7 @@ int FOBJModel::FindFrame(const char* name)
  * @param inter The amount to interpolate the two frames.
  * @param translation The translation for the skin
  */
-void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
 {
 	// Prevent the model from rendering if the frame number is < 0
 	if (frameno < 0 || frameno2 < 0) return;
@@ -638,12 +640,11 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		OBJSurface *surf = &surfaces[i];
 
 		FGameTexture *userSkin = skin;
-		if (!userSkin && curSpriteMDLFrame)
+		if (!userSkin)
 		{
-			int ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-			if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+			if (surfaceskinids && surfaceskinids[i].isValid())
 			{
-				userSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[ssIndex], true);
+				userSkin = TexMan.GetGameTexture(surfaceskinids[i], true);
 			}
 			else if (surf->skin.isValid())
 			{
@@ -658,7 +659,7 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		}
 
 		renderer->SetMaterial(userSkin, false, translation);
-		renderer->SetupFrame(this, surf->vbStart, surf->vbStart, surf->numTris * 3);
+		renderer->SetupFrame(this, surf->vbStart, surf->vbStart, surf->numTris * 3, {}, -1);
 		renderer->DrawArrays(0, surf->numTris * 3);
 	}
 }
@@ -668,18 +669,17 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
  *
  * @param hitlist The list of textures
  */
-void FOBJModel::AddSkins(uint8_t* hitlist)
+void FOBJModel::AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids)
 {
 	for (size_t i = 0; i < surfaces.Size(); i++)
 	{
-		size_t ssIndex = i + curMDLIndex * MD3_MAX_SURFACES;
-		if (curSpriteMDLFrame && i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[ssIndex].isValid())
+		if (surfaceskinids && i < MD3_MAX_SURFACES && surfaceskinids[i].isValid())
 		{
 			// Precache skins manually reassigned by the user.
 			// On OBJs with lots of skins, such as Doom map OBJs exported from GZDB,
 			// there may be too many skins for the user to manually change, unless
 			// the limit is bumped or surfaceskinIDs is changed to a TArray<FTextureID>.
-			hitlist[curSpriteMDLFrame->surfaceskinIDs[ssIndex].GetIndex()] |= FTextureManager::HIT_Flat;
+			hitlist[surfaceskinids[i].GetIndex()] |= FTextureManager::HIT_Flat;
 			return; // No need to precache skin that was replaced
 		}
 

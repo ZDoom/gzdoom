@@ -1814,6 +1814,73 @@ namespace swrenderer
 		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
 	}
 
+	uint8_t SWPalDrawers::AddLightsTilted(const DrawerLight* lights, int num_lights, float viewpos_x, float viewpos_y, float viewpos_z, float nx, float ny, float nz, uint8_t fg, uint8_t material)
+	{
+		uint32_t lit_r = 0;
+		uint32_t lit_g = 0;
+		uint32_t lit_b = 0;
+
+		// Screen space to view space
+		viewpos_z = 1.0f / viewpos_z;
+		viewpos_x *= viewpos_z;
+		viewpos_y *= viewpos_z;
+
+		for (int i = 0; i < num_lights; i++)
+		{
+			uint32_t light_color_r = RPART(lights[i].color);
+			uint32_t light_color_g = GPART(lights[i].color);
+			uint32_t light_color_b = BPART(lights[i].color);
+
+			// L = light-pos
+			// dist = sqrt(dot(L, L))
+			// attenuation = 1 - min(dist * (1/radius), 1)
+			float Lx = lights[i].x - viewpos_x;
+			float Ly = lights[i].y - viewpos_y;
+			float Lz = lights[i].z - viewpos_z;
+			float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
+#ifdef NO_SSE
+			float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
+			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+#endif
+			Lx *= rcp_dist;
+			Ly *= rcp_dist;
+			Lz *= rcp_dist;
+			float dist = dist2 * rcp_dist;
+			float radius = lights[i].radius;
+			bool simpleType = radius < 0.0f;
+			if (simpleType)
+				radius = -radius;
+			float distance_attenuation = (256.0f - min(dist * radius, 256.0f));
+
+			// The simple light type
+			float simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = dot(N,L) * attenuation
+			float dotNL = max(nx * Lx + ny * Ly + nz * Lz, 0.0f);
+			float point_attenuation = dotNL * distance_attenuation;
+			uint32_t attenuation = (uint32_t)(simpleType ? simple_attenuation : point_attenuation);
+
+			lit_r += (light_color_r * attenuation) >> 8;
+			lit_g += (light_color_g * attenuation) >> 8;
+			lit_b += (light_color_b * attenuation) >> 8;
+		}
+
+		if (lit_r == 0 && lit_g == 0 && lit_b == 0)
+			return fg;
+
+		uint32_t material_r = GPalette.BaseColors[material].r;
+		uint32_t material_g = GPalette.BaseColors[material].g;
+		uint32_t material_b = GPalette.BaseColors[material].b;
+
+		lit_r = min<uint32_t>(GPalette.BaseColors[fg].r + ((lit_r * material_r) >> 8), 255);
+		lit_g = min<uint32_t>(GPalette.BaseColors[fg].g + ((lit_g * material_g) >> 8), 255);
+		lit_b = min<uint32_t>(GPalette.BaseColors[fg].b + ((lit_b * material_b) >> 8), 255);
+
+		return RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
+	}
+
 	void SWPalDrawers::DrawSpan(const SpanDrawerArgs& args)
 	{
 		const uint8_t* _source = args.TexturePixels();
@@ -2728,61 +2795,138 @@ namespace swrenderer
 		x1 = 0;
 		width++;
 
-		while (width >= SPANSIZE)
+		if (args.dc_num_lights == 0)
 		{
-			iz += izstep;
-			uz += uzstep;
-			vz += vzstep;
-
-			double endz = 1.f / iz;
-			double endu = uz*endz;
-			double endv = vz*endz;
-			uint32_t stepu = (uint32_t)int64_t((endu - startu) * INVSPAN);
-			uint32_t stepv = (uint32_t)int64_t((endv - startv) * INVSPAN);
-			u = (uint32_t)(int64_t(startu) + pviewx);
-			v = (uint32_t)(int64_t(startv) + pviewy);
-
-			for (i = SPANSIZE - 1; i >= 0; i--)
+			while (width >= SPANSIZE)
 			{
-				fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
-				x1++;
-				u += stepu;
-				v += stepv;
-			}
-			startu = endu;
-			startv = endv;
-			width -= SPANSIZE;
-		}
-		if (width > 0)
-		{
-			if (width == 1)
-			{
-				u = (uint32_t)int64_t(startu);
-				v = (uint32_t)int64_t(startv);
-				fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
-			}
-			else
-			{
-				double left = width;
-				iz += plane_sz[0] * left;
-				uz += plane_su[0] * left;
-				vz += plane_sv[0] * left;
+				iz += izstep;
+				uz += uzstep;
+				vz += vzstep;
 
 				double endz = 1.f / iz;
-				double endu = uz*endz;
-				double endv = vz*endz;
-				left = 1.f / left;
-				uint32_t stepu = (uint32_t)int64_t((endu - startu) * left);
-				uint32_t stepv = (uint32_t)int64_t((endv - startv) * left);
+				double endu = uz * endz;
+				double endv = vz * endz;
+				uint32_t stepu = (uint32_t)int64_t((endu - startu) * INVSPAN);
+				uint32_t stepv = (uint32_t)int64_t((endv - startv) * INVSPAN);
 				u = (uint32_t)(int64_t(startu) + pviewx);
 				v = (uint32_t)(int64_t(startv) + pviewy);
 
-				for (; width != 0; width--)
+				for (i = SPANSIZE - 1; i >= 0; i--)
 				{
 					fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
 					x1++;
 					u += stepu;
 					v += stepv;
+				}
+				startu = endu;
+				startv = endv;
+				width -= SPANSIZE;
+			}
+			if (width > 0)
+			{
+				if (width == 1)
+				{
+					u = (uint32_t)int64_t(startu);
+					v = (uint32_t)int64_t(startv);
+					fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
+				}
+				else
+				{
+					double left = width;
+					iz += plane_sz[0] * left;
+					uz += plane_su[0] * left;
+					vz += plane_sv[0] * left;
+
+					double endz = 1.f / iz;
+					double endu = uz * endz;
+					double endv = vz * endz;
+					left = 1.f / left;
+					uint32_t stepu = (uint32_t)int64_t((endu - startu) * left);
+					uint32_t stepv = (uint32_t)int64_t((endv - startv) * left);
+					u = (uint32_t)(int64_t(startu) + pviewx);
+					v = (uint32_t)(int64_t(startv) + pviewy);
+
+					for (; width != 0; width--)
+					{
+						fb[x1] = *(tiltlighting[x1] + _source[(v >> vshift) | ((u >> ushift) & umask)]);
+						x1++;
+						u += stepu;
+						v += stepv;
+					}
+				}
+			}
+		}
+		else
+		{
+			auto lights = args.dc_lights;
+			auto num_lights = args.dc_num_lights;
+			auto normal = args.dc_normal;
+			auto viewpos = args.dc_viewpos;
+			auto viewpos_step = args.dc_viewpos_step;
+			while (width >= SPANSIZE)
+			{
+				iz += izstep;
+				uz += uzstep;
+				vz += vzstep;
+
+				double endz = 1.f / iz;
+				double endu = uz * endz;
+				double endv = vz * endz;
+				uint32_t stepu = (uint32_t)int64_t((endu - startu) * INVSPAN);
+				uint32_t stepv = (uint32_t)int64_t((endv - startv) * INVSPAN);
+				u = (uint32_t)(int64_t(startu) + pviewx);
+				v = (uint32_t)(int64_t(startv) + pviewy);
+
+				for (i = SPANSIZE - 1; i >= 0; i--)
+				{
+					uint8_t material = _source[(v >> vshift) | ((u >> ushift) & umask)];
+					uint8_t fg = *(tiltlighting[x1] + material);
+					fb[x1] = AddLightsTilted(lights, num_lights, viewpos.X, viewpos.Y, viewpos.Z, normal.X, normal.Y, normal.Z, fg, material);
+					x1++;
+					u += stepu;
+					v += stepv;
+					viewpos += viewpos_step;
+				}
+				startu = endu;
+				startv = endv;
+				width -= SPANSIZE;
+			}
+			if (width > 0)
+			{
+				if (width == 1)
+				{
+					u = (uint32_t)int64_t(startu);
+					v = (uint32_t)int64_t(startv);
+					uint8_t material = _source[(v >> vshift) | ((u >> ushift) & umask)];
+					uint8_t fg = *(tiltlighting[x1] + material);
+					fb[x1] = AddLightsTilted(lights, num_lights, viewpos.X, viewpos.Y, viewpos.Z, normal.X, normal.Y, normal.Z, fg, material);
+				}
+				else
+				{
+					double left = width;
+					iz += plane_sz[0] * left;
+					uz += plane_su[0] * left;
+					vz += plane_sv[0] * left;
+
+					double endz = 1.f / iz;
+					double endu = uz * endz;
+					double endv = vz * endz;
+					left = 1.f / left;
+					uint32_t stepu = (uint32_t)int64_t((endu - startu) * left);
+					uint32_t stepv = (uint32_t)int64_t((endv - startv) * left);
+					u = (uint32_t)(int64_t(startu) + pviewx);
+					v = (uint32_t)(int64_t(startv) + pviewy);
+
+					for (; width != 0; width--)
+					{
+						uint8_t material = _source[(v >> vshift) | ((u >> ushift) & umask)];
+						uint8_t fg = *(tiltlighting[x1] + material);
+						fb[x1] = AddLightsTilted(lights, num_lights, viewpos.X, viewpos.Y, viewpos.Z, normal.X, normal.Y, normal.Z, fg, material);
+						x1++;
+						u += stepu;
+						v += stepv;
+						viewpos += viewpos_step;
+					}
 				}
 			}
 		}
@@ -3059,30 +3203,6 @@ namespace swrenderer
 			vpos += vstepX;
 			wpos += wstepX;
 			curlight += lightstep;
-		}
-
-		if (r_modelscene)
-		{
-			for (int x = x1; x < x2; x++)
-			{
-				int y1 = uwal[x];
-				int y2 = dwal[x];
-				if (y2 > y1)
-				{
-					int count = y2 - y1;
-
-					float w1 = 1.0f / wallargs.WallC.sz1;
-					float w2 = 1.0f / wallargs.WallC.sz2;
-					float t = (x - wallargs.WallC.sx1 + 0.5f) / (wallargs.WallC.sx2 - wallargs.WallC.sx1);
-					float wcol = w1 * (1.0f - t) + w2 * t;
-					float zcol = 1.0f / wcol;
-					float zbufferdepth = 1.0f / (zcol / wallargs.FocalTangent);
-
-					wallcolargs.SetDest(x, y1);
-					wallcolargs.SetCount(count);
-					DrawDepthColumn(wallcolargs, zbufferdepth);
-				}
-			}
 		}
 	}
 

@@ -1448,6 +1448,221 @@ void JitCompiler::EmitEQV3_K()
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// Vector math. (4D/Quaternion)
+
+void JitCompiler::EmitNEGV4()
+{
+	auto mask = cc.newDoubleConst(asmjit::kConstScopeLocal, -0.0);
+	auto maskXmm = newTempXmmSd();
+	cc.movsd(maskXmm, mask);
+	cc.movsd(regF[A], regF[B]);
+	cc.xorpd(regF[A], maskXmm);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.xorpd(regF[A + 1], maskXmm);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.xorpd(regF[A + 2], maskXmm);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+	cc.xorpd(regF[A + 3], maskXmm);
+}
+
+void JitCompiler::EmitADDV4_RR()
+{
+	auto rc0 = CheckRegF(C, A);
+	auto rc1 = CheckRegF(C + 1, A + 1);
+	auto rc2 = CheckRegF(C + 2, A + 2);
+	auto rc3 = CheckRegF(C + 3, A + 3);
+	cc.movsd(regF[A], regF[B]);
+	cc.addsd(regF[A], rc0);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.addsd(regF[A + 1], rc1);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.addsd(regF[A + 2], rc2);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+	cc.addsd(regF[A + 3], rc3);
+}
+
+void JitCompiler::EmitSUBV4_RR()
+{
+	auto rc0 = CheckRegF(C, A);
+	auto rc1 = CheckRegF(C + 1, A + 1);
+	auto rc2 = CheckRegF(C + 2, A + 2);
+	auto rc3 = CheckRegF(C + 3, A + 3);
+	cc.movsd(regF[A], regF[B]);
+	cc.subsd(regF[A], rc0);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.subsd(regF[A + 1], rc1);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.subsd(regF[A + 2], rc2);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+	cc.subsd(regF[A + 3], rc3);
+}
+
+void JitCompiler::EmitDOTV4_RR()
+{
+	auto rb1 = CheckRegF(B + 1, A);
+	auto rb2 = CheckRegF(B + 2, A);
+	auto rb3 = CheckRegF(B + 3, A);
+	auto rc0 = CheckRegF(C, A);
+	auto rc1 = CheckRegF(C + 1, A);
+	auto rc2 = CheckRegF(C + 2, A);
+	auto rc3 = CheckRegF(C + 3, A);
+	auto tmp = newTempXmmSd();
+	cc.movsd(regF[A], regF[B]);
+	cc.mulsd(regF[A], rc0);
+	cc.movsd(tmp, rb1);
+	cc.mulsd(tmp, rc1);
+	cc.addsd(regF[A], tmp);
+	cc.movsd(tmp, rb2);
+	cc.mulsd(tmp, rc2);
+	cc.addsd(regF[A], tmp);
+	cc.movsd(tmp, rb3);
+	cc.mulsd(tmp, rc3);
+	cc.addsd(regF[A], tmp);
+}
+
+void JitCompiler::EmitMULVF4_RR()
+{
+	auto rc = CheckRegF(C, A, A + 1, A + 2, A + 3);
+	cc.movsd(regF[A], regF[B]);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+	cc.mulsd(regF[A], rc);
+	cc.mulsd(regF[A + 1], rc);
+	cc.mulsd(regF[A + 2], rc);
+	cc.mulsd(regF[A + 3], rc);
+}
+
+void JitCompiler::EmitMULVF4_RK()
+{
+	auto tmp = newTempIntPtr();
+	cc.movsd(regF[A], regF[B]);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
+	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
+	cc.mulsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
+	cc.mulsd(regF[A + 2], asmjit::x86::qword_ptr(tmp));
+	cc.mulsd(regF[A + 3], asmjit::x86::qword_ptr(tmp));
+}
+
+void JitCompiler::EmitDIVVF4_RR()
+{
+	auto rc = CheckRegF(C, A, A + 1, A + 2, A + 3);
+	cc.movsd(regF[A], regF[B]);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+	cc.divsd(regF[A], rc);
+	cc.divsd(regF[A + 1], rc);
+	cc.divsd(regF[A + 2], rc);
+	cc.divsd(regF[A + 3], rc);
+}
+
+void JitCompiler::EmitDIVVF4_RK()
+{
+	auto tmp = newTempIntPtr();
+	cc.movsd(regF[A], regF[B]);
+	cc.movsd(regF[A + 1], regF[B + 1]);
+	cc.movsd(regF[A + 2], regF[B + 2]);
+	cc.movsd(regF[A + 3], regF[B + 3]);
+	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
+	cc.divsd(regF[A], asmjit::x86::qword_ptr(tmp));
+	cc.divsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
+	cc.divsd(regF[A + 2], asmjit::x86::qword_ptr(tmp));
+	cc.divsd(regF[A + 3], asmjit::x86::qword_ptr(tmp));
+}
+
+void JitCompiler::EmitLENV4()
+{
+	auto rb1 = CheckRegF(B + 1, A);
+	auto rb2 = CheckRegF(B + 2, A);
+	auto rb3 = CheckRegF(B + 3, A);
+	auto tmp = newTempXmmSd();
+	cc.movsd(regF[A], regF[B]);
+	cc.mulsd(regF[A], regF[B]);
+	cc.movsd(tmp, rb1);
+	cc.mulsd(tmp, rb1);
+	cc.addsd(regF[A], tmp);
+	cc.movsd(tmp, rb2);
+	cc.mulsd(tmp, rb2);
+	cc.addsd(regF[A], tmp);
+	cc.movsd(tmp, rb3);
+	cc.mulsd(tmp, rb3);
+	cc.addsd(regF[A], tmp);
+	CallSqrt(regF[A], regF[A]);
+}
+
+void JitCompiler::EmitEQV4_R()
+{
+	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+		EmitVectorComparison<4> (check, fail, success);
+	});
+}
+
+void JitCompiler::EmitEQV4_K()
+{
+	I_Error("EQV4_K is not used.");
+}
+
+// Quaternion ops
+void FuncMULQQ(void *result, double ax, double ay, double az, double aw, double bx, double by, double bz, double bw)
+{
+	*reinterpret_cast<DQuaternion*>(result) = DQuaternion(ax, ay, az, aw) * DQuaternion(bx, by, bz, bw);
+}
+
+void FuncMULQV3(void *result, double ax, double ay, double az, double aw, double bx, double by, double bz)
+{
+	*reinterpret_cast<DVector3*>(result) = DQuaternion(ax, ay, az, aw) * DVector3(bx, by, bz);
+}
+
+void JitCompiler::EmitMULQQ_RR()
+{
+	auto stack = GetTemporaryVectorStackStorage();
+	auto tmp = newTempIntPtr();
+	cc.lea(tmp, stack);
+
+	auto call = CreateCall<void, void*, double, double, double, double, double, double, double, double>(FuncMULQQ);
+	call->setArg(0, tmp);
+	call->setArg(1, regF[B + 0]);
+	call->setArg(2, regF[B + 1]);
+	call->setArg(3, regF[B + 2]);
+	call->setArg(4, regF[B + 3]);
+	call->setArg(5, regF[C + 0]);
+	call->setArg(6, regF[C + 1]);
+	call->setArg(7, regF[C + 2]);
+	call->setArg(8, regF[C + 3]);
+
+	cc.movsd(regF[A + 0], asmjit::x86::qword_ptr(tmp, 0));
+	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+	cc.movsd(regF[A + 3], asmjit::x86::qword_ptr(tmp, 24));
+}
+
+void JitCompiler::EmitMULQV3_RR()
+{
+	auto stack = GetTemporaryVectorStackStorage();
+	auto tmp = newTempIntPtr();
+	cc.lea(tmp, stack);
+	
+	auto call = CreateCall<void, void*, double, double, double, double, double, double, double>(FuncMULQV3);
+	call->setArg(0, tmp);
+	call->setArg(1, regF[B + 0]);
+	call->setArg(2, regF[B + 1]);
+	call->setArg(3, regF[B + 2]);
+	call->setArg(4, regF[B + 3]);
+	call->setArg(5, regF[C + 0]);
+	call->setArg(6, regF[C + 1]);
+	call->setArg(7, regF[C + 2]);
+
+	cc.movsd(regF[A + 0], asmjit::x86::qword_ptr(tmp, 0));
+	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
 // Pointer math.
 
 void JitCompiler::EmitADDA_RR()

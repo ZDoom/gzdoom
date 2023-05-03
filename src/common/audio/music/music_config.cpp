@@ -75,12 +75,12 @@ CUSTOM_CVAR(Int, adl_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIR
 	FORWARD_CVAR(adl_emulator_id);
 }
 
-CUSTOM_CVAR(Bool, adl_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, adl_run_at_pcm_rate, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(adl_run_at_pcm_rate);
 }
 
-CUSTOM_CVAR(Bool, adl_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, adl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(adl_fullpan);
 }
@@ -90,7 +90,7 @@ CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_CVAR(adl_bank);
 }
 
-CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, adl_use_custom_bank, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(adl_use_custom_bank);
 }
@@ -201,7 +201,7 @@ CUSTOM_CVAR(Float, fluid_chorus_speed, 0.3f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 }
 
 // depth is in ms and actual maximum depends on the sample rate
-CUSTOM_CVAR(Float, fluid_chorus_depth, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Float, fluid_chorus_depth, 8.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_CVAR(fluid_chorus_depth);
 }
@@ -251,17 +251,17 @@ CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIR
 	FORWARD_CVAR(opn_emulator_id);
 }
 
-CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(opn_run_at_pcm_rate);
 }
 
-CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, opn_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(opn_fullpan);
 }
 
-CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_VIRTUAL)
+CUSTOM_CVAR(Bool, opn_use_custom_bank, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
 {
 	FORWARD_BOOL_CVAR(opn_use_custom_bank);
 }
@@ -344,7 +344,7 @@ CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCO
 	FORWARD_BOOL_CVAR(timidity_channel_pressure);
 }
 
-CUSTOM_CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Int, timidity_lpf_def, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_CVAR(timidity_lpf_def);
 }
@@ -384,12 +384,12 @@ CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 	FORWARD_CVAR(timidity_key_adjust);
 }
 
-CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Float, timidity_tempo_adjust, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_CVAR(timidity_tempo_adjust);
 }
 
-CUSTOM_CVAR(Float, timidity_min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Float, timidity_min_sustain_time, 5000.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_CVAR(timidity_min_sustain_time);
 }

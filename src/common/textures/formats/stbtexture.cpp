@@ -67,7 +67,7 @@ class FStbTexture : public FImageSource
 
 public:
 	FStbTexture (int lumpnum, int w, int h);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -117,7 +117,7 @@ FStbTexture::FStbTexture (int lumpnum, int w, int h)
 //
 //==========================================================================
 
-TArray<uint8_t> FStbTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FStbTexture::CreatePalettedPixels(int conversion)
 {
 	FBitmap bitmap;
 	bitmap.Create(Width, Height);
@@ -128,7 +128,7 @@ TArray<uint8_t> FStbTexture::CreatePalettedPixels(int conversion)
 	int dest_adv = Height;
 	int dest_rew = Width * Height - 1;
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	dest_p = Pixels.Data();
 
 	bool doalpha = conversion == luminance; 

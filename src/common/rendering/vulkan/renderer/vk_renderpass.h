@@ -1,14 +1,17 @@
 
 #pragma once
 
-#include "vulkan/system/vk_objects.h"
+#include "zvulkan/vulkanobjects.h"
 #include "renderstyle.h"
 #include "hwrenderer/data/buffers.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hw_renderstate.h"
 #include <string.h>
 #include <map>
 
-class VKDataBuffer;
+class VulkanRenderDevice;
+class VkPPShader;
+class GraphicsPipelineBuilder;
 
 class VkPipelineKey
 {
@@ -51,7 +54,7 @@ public:
 class VkRenderPassSetup
 {
 public:
-	VkRenderPassSetup(const VkRenderPassKey &key);
+	VkRenderPassSetup(VulkanRenderDevice* fb, const VkRenderPassKey &key);
 
 	VulkanRenderPass *GetRenderPass(int clearTargets);
 	VulkanPipeline *GetPipeline(const VkPipelineKey &key);
@@ -63,6 +66,8 @@ public:
 private:
 	std::unique_ptr<VulkanRenderPass> CreateRenderPass(int clearTargets);
 	std::unique_ptr<VulkanPipeline> CreatePipeline(const VkPipelineKey &key);
+
+	VulkanRenderDevice* fb = nullptr;
 };
 
 class VkVertexFormat
@@ -74,50 +79,73 @@ public:
 	int UseVertexData;
 };
 
+enum class WhichDepthStencil;
+
+class VkPPRenderPassKey
+{
+public:
+	VkPPShader* Shader;
+	int Uniforms;
+	int InputTextures;
+	PPBlendMode BlendMode;
+	VkFormat OutputFormat;
+	int SwapChain;
+	int ShadowMapBuffers;
+	WhichDepthStencil StencilTest;
+	VkSampleCountFlagBits Samples;
+
+	bool operator<(const VkPPRenderPassKey& other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) < 0; }
+	bool operator==(const VkPPRenderPassKey& other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) == 0; }
+	bool operator!=(const VkPPRenderPassKey& other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) != 0; }
+};
+
+class VkPPRenderPassSetup
+{
+public:
+	VkPPRenderPassSetup(VulkanRenderDevice* fb, const VkPPRenderPassKey& key);
+
+	std::unique_ptr<VulkanDescriptorSetLayout> DescriptorLayout;
+	std::unique_ptr<VulkanPipelineLayout> PipelineLayout;
+	std::unique_ptr<VulkanRenderPass> RenderPass;
+	std::unique_ptr<VulkanPipeline> Pipeline;
+
+private:
+	void CreateDescriptorLayout(const VkPPRenderPassKey& key);
+	void CreatePipelineLayout(const VkPPRenderPassKey& key);
+	void CreatePipeline(const VkPPRenderPassKey& key);
+	void CreateRenderPass(const VkPPRenderPassKey& key);
+
+	VulkanRenderDevice* fb = nullptr;
+};
+
+GraphicsPipelineBuilder& BlendMode(GraphicsPipelineBuilder& builder, const FRenderStyle& style);
+
 class VkRenderPassManager
 {
 public:
-	VkRenderPassManager();
+	VkRenderPassManager(VulkanRenderDevice* fb);
 	~VkRenderPassManager();
 
-	void Init();
 	void RenderBuffersReset();
-	void UpdateDynamicSet();
-	void TextureSetPoolReset();
 
 	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
 	int GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
-
 	VkVertexFormat *GetVertexFormat(int index);
-
-	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 	VulkanPipelineLayout* GetPipelineLayout(int numLayers);
 
-	VulkanDescriptorSet* GetNullTextureDescriptorSet();
-	VulkanImageView* GetNullTextureView();
+	VkPPRenderPassSetup* GetPPRenderPass(const VkPPRenderPassKey& key);
 
-	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
-	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
-
-	std::unique_ptr<VulkanDescriptorSet> DynamicSet;
+	VulkanPipelineCache* GetCache() { return PipelineCache.get(); }
 
 private:
-	void CreateDynamicSetLayout();
-	void CreateDescriptorPool();
-	void CreateDynamicSet();
-	void CreateNullTexture();
+	VulkanRenderDevice* fb = nullptr;
 
-	VulkanDescriptorSetLayout *GetTextureSetLayout(int numLayers);
-
-	int TextureDescriptorSetsLeft = 0;
-	int TextureDescriptorsLeft = 0;
-	std::vector<std::unique_ptr<VulkanDescriptorPool>> TextureDescriptorPools;
-	std::unique_ptr<VulkanDescriptorPool> DynamicDescriptorPool;
-	std::vector<std::unique_ptr<VulkanDescriptorSetLayout>> TextureSetLayouts;
+	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 	std::vector<std::unique_ptr<VulkanPipelineLayout>> PipelineLayouts;
 	std::vector<VkVertexFormat> VertexFormats;
 
-	std::unique_ptr<VulkanImage> NullTexture;
-	std::unique_ptr<VulkanImageView> NullTextureView;
-	std::unique_ptr<VulkanDescriptorSet> NullTextureDescriptorSet;
+	std::map<VkPPRenderPassKey, std::unique_ptr<VkPPRenderPassSetup>> PPRenderPassSetup;
+
+	FString CacheFilename;
+	std::unique_ptr<VulkanPipelineCache> PipelineCache;
 };

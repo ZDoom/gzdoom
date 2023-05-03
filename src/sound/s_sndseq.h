@@ -56,7 +56,7 @@ protected:
 	int m_Sequence;
 
 	FSoundID m_CurrentSoundID;
-	int m_StopSound;
+	FSoundID m_StopSound;
 	int m_DelayTics;
 	float m_Volume;
 	float m_Atten;

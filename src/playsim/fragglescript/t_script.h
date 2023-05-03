@@ -102,7 +102,7 @@ struct svalue_t
 	}
 
 	svalue_t(const svalue_t & other) = default;
-
+	svalue_t& operator=(const svalue_t& other) = default;
 	void setInt(int ip)
 	{
 		value.i = ip;

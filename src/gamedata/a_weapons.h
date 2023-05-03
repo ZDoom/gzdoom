@@ -52,6 +52,7 @@ struct FWeaponSlots
 {
 	FWeaponSlots() { Clear(); }
 	FWeaponSlots(const FWeaponSlots &other) = default;
+	FWeaponSlots& operator=(const FWeaponSlots& other) = default;
 
 private:
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];

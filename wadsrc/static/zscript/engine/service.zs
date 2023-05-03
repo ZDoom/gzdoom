@@ -54,6 +54,31 @@ class Service abstract
 	{
 		return null;
 	}
+
+	// data/clearscope variants
+	virtual clearscope String GetStringData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return "";
+	}
+
+	virtual clearscope int GetIntData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return 0;
+	}
+
+	virtual clearscope double GetDoubleData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return 0.0;
+	}
+
+	virtual clearscope Object GetObjectData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
+	{
+		return null;
+	}
+    
+    static Service Find(class<Service> serviceName){
+        return AllServices.GetIfExists(serviceName.GetClassName());
+    }
 }
 
 /**
@@ -88,54 +113,27 @@ class ServiceIterator
 	static ServiceIterator Find(String serviceName)
 	{
 		let result = new("ServiceIterator");
-
-		result.mServiceName = serviceName;
-		result.mClassIndex = 0;
-		result.FindNextService();
-
+		result.mServiceName = serviceName.MakeLower();
+		result.it.Init(AllServices);
 		return result;
 	}
 
 	/**
 	 * Gets the service and advances the iterator.
 	 *
-	 * @returns service instance, or NULL if no more servers found.
-	 *
-	 * @note Each ServiceIterator will return new instances of services.
+	 * @returns service instance, or NULL if no more services found.
 	 */
 	Service Next()
 	{
-		uint classesNumber = AllClasses.Size();
-		Service result = (mClassIndex == classesNumber)
-			? NULL
-			: Service(new(AllClasses[mClassIndex]));
-
-		++mClassIndex;
-		FindNextService();
-
-		return result;
-	}
-
-	private void FindNextService()
-	{
-		uint classesNumber = AllClasses.size();
-		while (mClassIndex < classesNumber && !ServiceNameContains(AllClasses[mClassIndex], mServiceName))
+		while(it.Next())
 		{
-			++mClassIndex;
+			String cName = it.GetKey();
+			if(cName.MakeLower().IndexOf(mServiceName) != -1)
+				return it.GetValue();
 		}
+		return null;
 	}
 
-	private static bool ServiceNameContains(class aClass, String substring)
-	{
-		if (!(aClass is "Service")) return false;
-
-		String className = aClass.GetClassName();
-		String lowerClassName = className.MakeLower();
-		String lowerSubstring = substring.MakeLower();
-		bool result = lowerClassName.IndexOf(lowerSubstring) != -1;
-		return result;
-	}
-
+	private MapIterator<Name, Service> it;
 	private String mServiceName;
-	private uint mClassIndex;
 }

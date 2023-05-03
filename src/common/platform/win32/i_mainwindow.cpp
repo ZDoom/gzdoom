@@ -10,12 +10,15 @@
 #include "utf8.h"
 #include "v_font.h"
 #include "i_net.h"
+#include "engineerrors.h"
 #include <richedit.h>
 #include <shellapi.h>
 #include <commctrl.h>
 
 #ifdef _M_X64
 #define X64 " 64-bit"
+#elif _M_ARM64
+#define X64 " ARM-64"
 #else
 #define X64 ""
 #endif
@@ -264,7 +267,7 @@ static INT_PTR CALLBACK NetStartPaneProc(HWND hDlg, UINT msg, WPARAM wParam, LPA
 {
 	if (msg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDCANCEL)
 	{
-		PostQuitMessage(0);
+		PostMessage(hDlg, WM_COMMAND, 1337, 1337);
 		return TRUE;
 	}
 	return FALSE;
@@ -357,6 +360,11 @@ bool MainWindow::RunMessageLoop(bool (*timer_callback)(void*), void* userdata)
 		}
 		else
 		{
+			// This must be outside the window function so that the exception does not cross DLL boundaries.
+			if (msg.message == WM_COMMAND && msg.wParam == 1337 && msg.lParam == 1337)
+			{
+				throw CExitEvent(0);
+			}
 			if (msg.message == WM_TIMER && msg.hwnd == Window && msg.wParam == 1337)
 			{
 				if (timer_callback(userdata))

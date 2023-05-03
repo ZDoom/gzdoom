@@ -244,7 +244,7 @@ void DIntermissionScreen::Drawer ()
 	{
 		if (!mFlatfill)
 		{
-			DrawTexture(twod, TexMan.GetGameTexture(mBackground), 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			DrawTexture(twod, mBackground, false, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
 		{
@@ -258,7 +258,7 @@ void DIntermissionScreen::Drawer ()
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
 		if (CheckOverlay(i))
-			DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
+			DrawTexture(twod, mOverlays[i].mPic, false, mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	FFont* font = generic_ui ? NewSmallFont : SmallFont;
 	DrawFullscreenSubtitle(font, mSubtitle);
@@ -311,11 +311,11 @@ void DIntermissionScreenFader::Drawer ()
 		if (mType == FADE_In) factor = 1.0 - factor;
 		int color = MAKEARGB(int(factor*255), 0,0,0);
 
-		DrawTexture(twod, TexMan.GetGameTexture(mBackground), 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
+		DrawTexture(twod, mBackground, false, 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
 		for (unsigned i=0; i < mOverlays.Size(); i++)
 		{
 			if (CheckOverlay(i))
-				DrawTexture(twod, TexMan.GetGameTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
+				DrawTexture(twod, mOverlays[i].mPic, false, mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 		}
 	}
 }
@@ -503,7 +503,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	{
 		mCastSounds[i].mSequence = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSequence;
 		mCastSounds[i].mIndex = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mIndex;
-		mCastSounds[i].mSound = static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound;
+		mCastSounds[i].mSound = S_FindSound(static_cast<FIntermissionActionCast*>(desc)->mCastSounds[i].mSound);
 	}
 	caststate = mDefaults->SeeState;
 	if (mClass->IsDescendantOf(NAME_PlayerPawn))
@@ -524,7 +524,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	castframes = 0;
 	castonmelee = 0;
 	castattacking = false;
-	if (mDefaults->SeeSound)
+	if (mDefaults->SeeSound.isvalid())
 	{
 		S_Sound (CHAN_VOICE, CHANF_UI, mDefaults->SeeSound, 1, ATTN_NONE);
 	}
@@ -551,10 +551,10 @@ int DIntermissionScreenCast::Responder (FInputEvent *ev)
 
 		if (mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
-			int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
-			if (snd != 0) S_Sound (CHAN_VOICE, CHANF_UI, snd, 1, ATTN_NONE);
+			auto snd = S_FindSkinnedSound(players[consoleplayer].mo, S_FindSound("*death"));
+			if (snd != NO_SOUND) S_Sound (CHAN_VOICE, CHANF_UI, snd, 1, ATTN_NONE);
 		}
-		else if (mDefaults->DeathSound)
+		else if (mDefaults->DeathSound.isvalid())
 		{
 			S_Sound (CHAN_VOICE, CHANF_UI, mDefaults->DeathSound, 1, ATTN_NONE);
 		}

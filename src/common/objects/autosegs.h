@@ -47,6 +47,12 @@
 #define NO_SANITIZE
 #endif
 
+#if defined _MSC_VER
+#define NO_SANITIZE_M __declspec(no_sanitize_address)
+#else
+#define NO_SANITIZE_M
+#endif
+
 class FAutoSeg
 {
 	const char *name;
@@ -102,14 +108,14 @@ public:
 	}
 
 	template <typename Func>
-	void ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, void>> * = nullptr)
+	void NO_SANITIZE_M ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, void>> * = nullptr)
 	{
 		using CallableType = decltype(&Func::operator());
 		using ArgType = typename ArgumentType<CallableType>::Type;
 
 		for (void **it = begin; it < end; ++it)
 		{
-			if (*it)
+			if (intptr_t(it) > 0xffff && *it && intptr_t(*it) > 0xffff)
 			{
 				func(reinterpret_cast<ArgType>(*it));
 			}
@@ -117,14 +123,14 @@ public:
 	}
 
 	template <typename Func>
-	void ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, bool>> * = nullptr)
+	void NO_SANITIZE_M ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, bool>> * = nullptr)
 	{
 		using CallableType = decltype(&Func::operator());
 		using ArgType = typename ArgumentType<CallableType>::Type;
 
 		for (void **it = begin; it < end; ++it)
 		{
-			if (*it)
+			if (intptr_t(it) > 0xffff && *it && intptr_t(*it) > 0xffff)
 			{
 				if (!func(reinterpret_cast<ArgType>(*it)))
 				{
@@ -142,6 +148,7 @@ namespace AutoSegs
 	extern FAutoSeg ClassFields;
 	extern FAutoSeg Properties;
 	extern FAutoSeg MapInfoOptions;
+	extern FAutoSeg CVarDecl;
 }
 
 #define AUTOSEG_AREG areg
@@ -149,6 +156,7 @@ namespace AutoSegs
 #define AUTOSEG_FREG freg
 #define AUTOSEG_GREG greg
 #define AUTOSEG_YREG yreg
+#define AUTOSEG_VREG vreg
 
 #define AUTOSEG_STR(string) AUTOSEG_STR2(string)
 #define AUTOSEG_STR2(string) #string
@@ -161,12 +169,14 @@ namespace AutoSegs
 #define SECTION_FREG AUTOSEG_MACH_SECTION(AUTOSEG_FREG)
 #define SECTION_GREG AUTOSEG_MACH_SECTION(AUTOSEG_GREG)
 #define SECTION_YREG AUTOSEG_MACH_SECTION(AUTOSEG_YREG)
+#define SECTION_VREG AUTOSEG_MACH_SECTION(AUTOSEG_VREG)
 #else
 #define SECTION_AREG AUTOSEG_STR(AUTOSEG_AREG)
 #define SECTION_CREG AUTOSEG_STR(AUTOSEG_CREG)
 #define SECTION_FREG AUTOSEG_STR(AUTOSEG_FREG)
 #define SECTION_GREG AUTOSEG_STR(AUTOSEG_GREG)
 #define SECTION_YREG AUTOSEG_STR(AUTOSEG_YREG)
+#define SECTION_VREG AUTOSEG_STR(AUTOSEG_VREG)
 #endif
 
 #endif

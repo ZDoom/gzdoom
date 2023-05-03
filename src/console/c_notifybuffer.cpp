@@ -64,7 +64,7 @@ CUSTOM_CVAR(Int, con_scaletext, 0, CVAR_ARCHIVE)		// Scale notify text at high r
 	if (self < 0) self = 0;
 }
 
-enum { NOTIFYFADETIME = 6 };
+constexpr int NOTIFYFADETIME = 6;
 
 CUSTOM_CVAR(Int, con_notifylines, 4, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 {

@@ -75,8 +75,8 @@ enum
 };
 
 
-void I_Error(const char *fmt, ...) ATTRIBUTE((format(printf,1,2)));
-void I_FatalError(const char* fmt, ...) ATTRIBUTE((format(printf, 1, 2)));
+[[noreturn]] void I_Error(const char *fmt, ...) ATTRIBUTE((format(printf,1,2)));
+[[noreturn]] void I_FatalError(const char* fmt, ...) ATTRIBUTE((format(printf, 1, 2)));
 
 // This really could need some cleanup - the main problem is that it'd create
 // lots of potential for merge conflicts.
@@ -88,7 +88,7 @@ int Printf (const char *format, ...) ATTRIBUTE((format(printf,1,2)));
 int DPrintf (int level, const char *format, ...) ATTRIBUTE((format(printf,2,3)));
 
 void I_DebugPrint(const char* cp);
-void debugprintf(const char* f, ...);	// Prints to the debugger's log.
+void I_DebugPrintf(const char* fmt, ...);	// Prints to the debugger's log.
 
 // flag to silence non-error output
 extern bool batchrun;

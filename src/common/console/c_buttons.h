@@ -72,6 +72,12 @@ public:
 		return Buttons[x].bWentUp;
 	}
 
+	void ButtonSet(int x) const
+	{
+		Buttons[x].bDown = Buttons[x].bWentDown = true;
+		Buttons[x].bWentUp = false;
+	}
+
 	void ClearButton(int x)
 	{
 		Buttons[x].Reset();

@@ -1456,10 +1456,24 @@ enum AutomapLineStyle : int
 	AMLS_COUNT
 };
 
-struct line_t
+struct linebase_t
 {
-	vertex_t	*v1, *v2;	// vertices, from v1 to v2
+	vertex_t* v1, * v2;	// vertices, from v1 to v2
 	DVector2	delta;		// precalculated v2 - v1 for side checking
+
+	DVector2 Delta() const
+	{
+		return delta;
+	}
+
+	void setDelta(double x, double y)
+	{
+		delta = { x, y };
+	}
+};
+
+struct line_t : public linebase_t
+{
 	uint32_t	flags, flags2;
 	uint32_t	activation;	// activation type
 	int			special;
@@ -1477,16 +1491,6 @@ struct line_t
 	int			healthgroup; // [ZZ] this is the "destructible object" id
 	int			linenum;
 
-	DVector2 Delta() const
-	{
-		return delta;
-	}
-
-	void setDelta(double x, double y)
-	{
-		delta = { x, y };
-	}
-
 	void setAlpha(double a)
 	{
 		alpha = a;
@@ -1500,7 +1504,11 @@ struct line_t
 	inline bool isLinePortal() const;
 	inline bool isVisualPortal() const;
 	inline line_t *getPortalDestination() const;
+	inline int getPortalFlags() const;
 	inline int getPortalAlignment() const;
+	inline int getPortalType() const;
+	inline DVector2 getPortalDisplacement() const;
+	inline DAngle getPortalAngleDiff() const;
 	inline bool hitSkyWall(AActor* mo) const;
 
 	int Index() const { return linenum; }

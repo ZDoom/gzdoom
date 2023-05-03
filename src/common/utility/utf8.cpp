@@ -332,11 +332,11 @@ int stripaccent(int code)
 			return accentless[code - 0x100];
 		}
 	}
-	else if (code >= 0x200 && code < 0x218)
+	else if (code >= 0x1fc && code < 0x218)
 	{
 		// 0x200-0x217 are irrelevant but easy to map to other characters more likely to exist.
-		static const uint16_t u200map[] = {0xc4, 0xe4, 0xc2, 0xe2, 0xcb, 0xeb, 0xca, 0xea, 0xcf, 0xef, 0xce, 0xee, 0xd6, 0xf6, 0xd4, 0xe4, 'R', 'r', 'R', 'r', 0xdc, 0xfc, 0xdb, 0xfb};
-		return u200map[code - 0x200];
+		static const uint16_t u200map[] = {0xc6, 0xe6, 0xd8, 0xf8, 0xc4, 0xe4, 0xc2, 0xe2, 0xcb, 0xeb, 0xca, 0xea, 0xcf, 0xef, 0xce, 0xee, 0xd6, 0xf6, 0xd4, 0xe4, 'R', 'r', 'R', 'r', 0xdc, 0xfc, 0xdb, 0xfb};
+		return u200map[code - 0x1fc];
 	}
 	return getAlternative(code);
 }
@@ -527,7 +527,6 @@ static const uint16_t loweruppercase[] = {
 0x012B,0x012A,
 0x012D,0x012C,
 0x012F,0x012E,
-0x0131,0x0049,
 0x0133,0x0132,
 0x0135,0x0134,
 0x0137,0x0136,
@@ -1112,6 +1111,7 @@ static const uint16_t loweruppercase[] = {
 0xFF58, 0xFF38,
 0xFF59, 0xFF39,
 0xFF5A, 0xFF3A,
+
 0, 0
 };
 
@@ -1128,13 +1128,18 @@ struct InitLowerUpper
 		{
 			auto lower = loweruppercase[i];
 			auto upper = loweruppercase[i + 1];
-			if (lowerforupper[upper] == upper) lowerforupper[upper] = lower;	// This mapping is ambiguous (see 0x0131 -> 0x0049, (small Turkish 'i' without dot.) so only pick the first match.
+			if (lowerforupper[upper] == upper) lowerforupper[upper] = lower;	// This mapping is ambiguous so only pick the first match.
 			if (upperforlower[lower] == lower) upperforlower[lower] = upper;
 			isuppermap[upper] = islowermap[lower] = true;
 		}
 		// Special treatment for the two variants of the small sigma in Greek.
 		islowermap[0x3c2] = true;
 		upperforlower[0x3c2] = 0x3a3;
+		// Turkish 'I's.
+		upperforlower[0x131] = 'I';
+		lowerforupper[0x130] = 'i';
+		islowermap[0x131] = true;
+		isuppermap[0x130] = true;
 	}
 };
 

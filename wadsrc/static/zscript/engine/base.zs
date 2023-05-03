@@ -143,6 +143,14 @@ enum EPrintLevel
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
+enum EConsoleState
+{
+	c_up = 0,
+	c_down = 1,
+	c_falling = 2,
+	c_rising = 3
+};
+
 /*
 // These are here to document the intrinsic methods and fields available on
 // the built-in ZScript types
@@ -173,6 +181,7 @@ struct Vector3
 struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
+    native internal readonly Map<Name , Service> AllServices;
 	native readonly bool multiplayer;
 	native @KeyBindings Bindings;
 	native @KeyBindings AutomapBindings;
@@ -211,6 +220,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int consoleplayer;
 	native readonly double NotifyFontScale;
 	native readonly int paused;
+	native readonly ui uint8 ConsoleState;
 }
 
 struct System native
@@ -220,13 +230,17 @@ struct System native
 	native static bool SoundEnabled();
 	native static bool MusicEnabled();
 	native static double GetTimeFrac();
-	
+
 	static bool specialKeyEvent(InputEvent ev)
 	{
 		if (ev.type == InputEvent.Type_KeyDown || ev.type == InputEvent.Type_KeyUp)
 		{
 			int key = ev.KeyScan;
-			if (key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP || (key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT)) return true;
+			let binding = Bindings.GetBinding(key);
+			bool volumekeys = key == InputEvent.KEY_VOLUMEDOWN || key == InputEvent.KEY_VOLUMEUP;
+			bool gamepadkeys = key > InputEvent.KEY_LASTJOYBUTTON && key < InputEvent.KEY_PAD_LTHUMB_RIGHT;
+			bool altkeys = key == InputEvent.KEY_LALT || key == InputEvent.KEY_RALT;
+			if (volumekeys || gamepadkeys || altkeys || binding ~== "screenshot") return true;
 		}
 		return false;
 	}
@@ -294,6 +308,7 @@ struct TexMan
 	native static int CheckRealHeight(TextureID tex);
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
 	native static bool UseGamePalette(TextureID tex);
+	native static Canvas GetCanvas(String texture);
 }
 
 /*
@@ -450,12 +465,26 @@ enum DrawTextureTags
 
 };
 
+enum StencilOp
+{
+	SOP_Keep = 0,
+	SOP_Increment = 1,
+	SOP_Decrement = 2
+};
+enum StencilFlags
+{
+	SF_AllOn = 0,
+	SF_ColorMaskOff = 1,
+	SF_DepthMaskOff = 2
+};
+
 class Shape2DTransform : Object native
 {
 	native void Clear();
 	native void Rotate(double angle);
 	native void Scale(Vector2 scaleVec);
 	native void Translate(Vector2 translateVec);
+	native void From2D(double m00, double m01, double m10, double m11, double vx, double vy);
 }
 
 class Shape2D : Object native
@@ -475,6 +504,35 @@ class Shape2D : Object native
 	native void PushTriangle( int a, int b, int c );
 }
 
+class Canvas : Object native abstract
+{
+	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+	native void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
+
+	native vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
+	native vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
+	native vararg void DrawShapeFill(Color col, double amount, Shape2D s, ...);
+	native vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
+	native vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
+	native void DrawLine(double x0, double y0, double x1, double y1, Color color, int alpha = 255);
+	native void DrawLineFrame(Color color, int x0, int y0, int w, int h, int thickness = 1);
+	native void DrawThickLine(double x0, double y0, double x1, double y1, double thickness, Color color, int alpha = 255);
+	native Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
+	native void SetClipRect(int x, int y, int w, int h);
+	native void ClearClipRect();
+	native int, int, int, int GetClipRect();
+	native double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
+	native Vector2 SetOffset(double x, double y);
+	native void ClearScreen(color col = 0);
+	native void SetScreenFade(double factor);
+
+	native void EnableStencil(bool on);
+	native void SetStencil(int offs, int op, int flags = -1);
+	native void ClearStencil();
+	native void SetTransform(Shape2DTransform transform);
+	native void ClearTransform();
+}
+
 struct Screen native
 {
 	native static Color PaletteColor(int index);
@@ -486,11 +544,12 @@ struct Screen native
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
+	native static vararg void DrawShapeFill(Color col, double amount, Shape2D s, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
-	native static void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
+	native static void DrawLine(double x0, double y0, double x1, double y1, Color color, int alpha = 255);
 	native static void DrawLineFrame(Color color, int x0, int y0, int w, int h, int thickness = 1);
-	native static void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
+	native static void DrawThickLine(double x0, double y0, double x1, double y1, double thickness, Color color, int alpha = 255);
 	native static Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
 	native static double GetAspectRatio();
 	native static void SetClipRect(int x, int y, int w, int h);
@@ -501,6 +560,12 @@ struct Screen native
 	native static Vector2 SetOffset(double x, double y);
 	native static void ClearScreen(color col = 0);
 	native static void SetScreenFade(double factor);
+
+	native static void EnableStencil(bool on);
+	native static void SetStencil(int offs, int op, int flags = -1);
+	native static void ClearStencil();
+	native static void SetTransform(Shape2DTransform transform);
+	native static void ClearTransform();
 }
 
 struct Font native
@@ -585,6 +650,7 @@ struct Font native
 
 	native static int FindFontColor(Name color);
 	native double GetBottomAlignOffset(int code);
+	native double GetDisplayTopOffset(int code);
 	native static Font FindFont(Name fontname);
 	native static Font GetFont(Name fontname);
 	native BrokenLines BreakLines(String text, int maxlen);
@@ -596,6 +662,7 @@ struct Console native
 {
 	native static void HideConsole();
 	native static vararg void Printf(string fmt, ...);
+	native static vararg void PrintfEx(int printlevel, string fmt, ...);
 }
 
 struct CVar native
@@ -620,6 +687,31 @@ struct CVar native
 	native void SetString(String s);
 	native int GetRealType();
 	native int ResetToDefault();
+}
+
+class CustomIntCVar abstract
+{
+    abstract int ModifyValue(Name CVarName, int val);
+}
+
+class CustomFloatCVar abstract
+{
+    abstract double ModifyValue(Name CVarName, double val);
+}
+
+class CustomStringCVar abstract
+{
+    abstract String ModifyValue(Name CVarName, String val);
+}
+
+class CustomBoolCVar abstract
+{
+    abstract bool ModifyValue(Name CVarName, bool val);
+}
+
+class CustomColorCVar abstract
+{
+    abstract Color ModifyValue(Name CVarName, Color val);
 }
 
 struct GIFont version("2.4")
@@ -656,7 +748,7 @@ class Object native
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	
-	deprecated("4.8", "Use MSTimeF instead") native static uint MSTime();
+	native static uint MSTime();
 	native static double MSTimeF();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
@@ -764,6 +856,7 @@ struct Wads	// todo: make FileSystem an alias to 'Wads'
 	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
 	native static int CheckNumForFullName(string name);
 	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
+	native static int FindLumpFullName(string name, int startlump = 0, bool noext = false);
 	native static string ReadLump(int lump);
 
 	native static int GetNumLumps();
@@ -814,7 +907,9 @@ struct StringStruct native
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
 	native void Substitute(String str, String replace);
+	native void StripLeft(String junk = "");
 	native void StripRight(String junk = "");
+	native void StripLeftRight(String junk = "");
 }
 
 struct Translation version("2.4")
@@ -825,3 +920,16 @@ struct Translation version("2.4")
 	}
 }
 
+// Convenient way to attach functions to Quat
+struct QuatStruct native
+{
+	native static Quat SLerp(Quat from, Quat to, double t);
+	native static Quat NLerp(Quat from, Quat to, double t);
+	native static Quat FromAngles(double yaw, double pitch, double roll);
+	native static Quat AxisAngle(Vector3 xyz, double angle);
+	native Quat Conjugate();
+	native Quat Inverse();
+	// native double Length();
+	// native double LengthSquared();
+	// native Quat Unit();
+}

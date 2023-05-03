@@ -528,7 +528,9 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	*defaults = *GetDefault<AActor>();
+	// major hack job alert. This is only supposed to copy the parts that actually are defined by AActor itself.
+	memcpy(&defaults->snext, &GetDefault<AActor>()->snext, (uint8_t*)&defaults[1] - (uint8_t*)&defaults->snext);
+
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 	static_cast<PClassActor*>(bag.Info)->ActorInfo()->SkipSuperSet = true;	// ZScript processes the states later so this property must be flagged for later handling.
 }
@@ -618,7 +620,7 @@ DEFINE_PROPERTY(damage, X, Actor)
 DEFINE_PROPERTY(scale, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
-	defaults->Scale.X = defaults->Scale.Y = id;
+	defaults->Scale.X = defaults->Scale.Y = float(id);
 }
 
 //==========================================================================
@@ -959,7 +961,7 @@ DEFINE_PROPERTY(gravity, F, Actor)
 DEFINE_PROPERTY(spriteangle, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	defaults->SpriteAngle = i;
+	defaults->SpriteAngle = DAngle::fromDeg(i);
 }
 
 //==========================================================================

@@ -332,7 +332,7 @@ void FDMDModel::BuildVertexBuffer(FModelRenderer *renderer)
 //
 //===========================================================================
 
-void FDMDModel::AddSkins(uint8_t *hitlist)
+void FDMDModel::AddSkins(uint8_t *hitlist, const FTextureID*)
 {
 	for (int i = 0; i < info.numSkins; i++)
 	{
@@ -348,13 +348,13 @@ void FDMDModel::AddSkins(uint8_t *hitlist)
 // FDMDModel::FindFrame
 //
 //===========================================================================
-int FDMDModel::FindFrame(const char * name)
+int FDMDModel::FindFrame(const char* name, bool nodefault)
 {
 	for (int i=0;i<info.numFrames;i++)
 	{
 		if (!stricmp(name, frames[i].name)) return i;
 	}
-	return -1;
+	return FErr_NotFound;
 }
 
 //===========================================================================
@@ -363,7 +363,7 @@ int FDMDModel::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const FTextureID*, const TArray<VSMatrix>& boneData, int boneStartPosition)
 {
 	if (frameno >= info.numFrames || frameno2 >= info.numFrames) return;
 
@@ -376,12 +376,10 @@ void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 
 	renderer->SetInterpolation(inter);
 	renderer->SetMaterial(skin, false, translation);
-	renderer->SetupFrame(this, frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
+	renderer->SetupFrame(this, frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3, {}, -1);
 	renderer->DrawArrays(0, lodInfo[0].numTriangles * 3);
 	renderer->SetInterpolation(0.f);
 }
-
-
 
 //===========================================================================
 //
@@ -552,4 +550,3 @@ void FMD2Model::LoadGeometry()
 FMD2Model::~FMD2Model()
 {
 }
-

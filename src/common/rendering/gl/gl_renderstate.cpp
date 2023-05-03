@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -33,6 +33,7 @@
 #include "gl_shader.h"
 #include "gl_renderer.h"
 #include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
 #include "gl_renderbuffers.h"
 #include "gl_hwtexture.h"
 #include "gl_buffers.h"
@@ -133,6 +134,7 @@ bool FGLRenderState::ApplyShader()
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
+	activeShader->muBoneIndexBase.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 	activeShader->muAddColor.Set(mStreamData.uAddColor);
@@ -210,6 +212,21 @@ bool FGLRenderState::ApplyShader()
 	}
 
 	activeShader->muLightIndex.Set(index);
+
+	index = mBoneIndexBase;
+	if (!screen->mBones->GetBufferType() && index >= 0) // Uniform buffer fallback support
+	{
+		size_t start, size;
+		index = screen->mBones->GetBinding(index, &start, &size);
+
+		if (start != mLastMappedBoneIndexBase || screen->mPipelineNbr > 1) // If multiple buffers always bind
+		{
+			mLastMappedBoneIndexBase = start;
+			static_cast<GLDataBuffer*>(screen->mBones->GetBuffer())->BindRange(nullptr, start, size);
+		}
+	}
+	activeShader->muBoneIndexBase.Set(index);
+
 	return true;
 }
 

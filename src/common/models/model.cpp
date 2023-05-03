@@ -36,12 +36,14 @@
 #include "model_md2.h"
 #include "model_md3.h"
 #include "model_kvx.h"
+#include "model_iqm.h"
 #include "i_time.h"
 #include "voxels.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
 
 
+TArray<FString> savedModelFiles;
 TDeletingArray<FModel*> Models;
 TArray<FSpriteModelFrame> SpriteModelFrames;
 
@@ -119,7 +121,7 @@ FTextureID LoadSkin(const char * path, const char * fn)
 
 	int texlump = FindGFXFile(buffer);
 	const char * const texname = texlump < 0 ? fn : fileSystem.GetFileFullName(texlump);
-	return TexMan.CheckForTexture(texname, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+	return TexMan.CheckForTexture(texname, ETextureType::Any, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ForceLookup);
 }
 
 //===========================================================================
@@ -149,17 +151,18 @@ int ModelFrameHash(FSpriteModelFrame * smf)
 //
 //===========================================================================
 
-unsigned FindModel(const char * path, const char * modelfile)
+unsigned FindModel(const char * path, const char * modelfile, bool silent)
 {
 	FModel * model = nullptr;
 	FString fullname;
 
-	fullname.Format("%s%s", path, modelfile);
+	if (path) fullname.Format("%s%s", path, modelfile);
+	else fullname = modelfile;
 	int lump = fileSystem.CheckNumForFullName(fullname);
 
 	if (lump<0)
 	{
-		Printf("FindModel: '%s' not found\n", fullname.GetChars());
+		Printf(PRINT_HIGH, "FindModel: '%s' not found\n", fullname.GetChars());
 		return -1;
 	}
 
@@ -206,6 +209,10 @@ unsigned FindModel(const char * path, const char * modelfile)
 	{
 		model = new FMD3Model;
 	}
+	else if (!memcmp(buffer, "INTERQUAKEMODEL\0", 16))
+	{
+		model = new IQMModel;
+	}
 
 	if (model != nullptr)
 	{
@@ -225,7 +232,7 @@ unsigned FindModel(const char * path, const char * modelfile)
 		}
 		else
 		{
-			Printf("LoadModel: Unknown model format in '%s'\n", fullname.GetChars());
+			Printf(PRINT_HIGH, "LoadModel: Unknown model format in '%s'\n", fullname.GetChars());
 			return -1;
 		}
 	}

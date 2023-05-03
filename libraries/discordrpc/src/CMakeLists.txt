@@ -73,11 +73,14 @@ if(UNIX)
     target_link_libraries(discord-rpc PUBLIC pthread)
 
     target_compile_options(discord-rpc PRIVATE
-        -g
         -Wall
         -Wextra
         -Wpedantic
     )
+
+    if (${CMAKE_BUILD_TYPE} STREQUAL Debug OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+        target_compile_options(discord-rpc PRIVATE -g)
+    endif ()
 
     if (${WARNINGS_AS_ERRORS})
       target_compile_options(discord-rpc PRIVATE -Werror)
@@ -114,10 +117,6 @@ if (${BUILD_SHARED_LIBS})
     target_compile_definitions(discord-rpc PUBLIC -DDISCORD_DYNAMIC_LIB)
     target_compile_definitions(discord-rpc PRIVATE -DDISCORD_BUILDING_SDK)
 endif(${BUILD_SHARED_LIBS})
-
-if (CLANG_FORMAT_CMD)
-    add_dependencies(discord-rpc clangformat)
-endif(CLANG_FORMAT_CMD)
 
 # install
 

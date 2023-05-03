@@ -37,11 +37,20 @@ namespace GC
 		GCS_Pause,
 		GCS_Propagate,
 		GCS_Sweep,
-		GCS_Finalize
+		GCS_Destroy,
+		GCS_Done,
+
+		GCS_COUNT
 	};
 
 	// Number of bytes currently allocated through M_Malloc/M_Realloc.
 	extern size_t AllocBytes;
+
+	// Number of bytes allocated since last collection step.
+	extern size_t RunningAllocBytes;
+
+	// Number of bytes freed since last collection step.
+	extern size_t RunningDeallocBytes;
 
 	// Amount of memory to allocate before triggering a collection.
 	extern size_t Threshold;
@@ -70,17 +79,11 @@ namespace GC
 	// Is this the final collection just before exit?
 	extern bool FinalGC;
 
-	// Counts the number of times CheckGC has been called.
-	extern uint64_t CheckTime;
-
 	// Current white value for known-dead objects.
 	static inline uint32_t OtherWhite()
 	{
 		return CurrentWhite ^ OF_WhiteBits;
 	}
-
-	// Frees all objects, whether they're dead or not.
-	void FreeAll();
 
 	// Does one collection step.
 	void Step();
@@ -107,13 +110,18 @@ namespace GC
 		return obj = NULL;
 	}
 
-	// Check if it's time to collect, and do a collection step if it is.
-	static inline void CheckGC()
+	// Handles a read barrier for a const pointer. This does not alter the source data, but only returns NULL if the object is destroyed.
+	template<class T> inline T* ReadBarrier(const T*& obj)
 	{
-		CheckTime++;
-		if (AllocBytes >= Threshold)
-			Step();
+		if (obj == NULL || !(obj->ObjectFlags & OF_EuthanizeMe))
+		{
+			return obj;
+		}
+		return NULL;
 	}
+
+	// Check if it's time to collect, and do a collection step if it is.
+	void CheckGC();
 
 	// Forces a collection to start now.
 	static inline void StartCollection()
@@ -166,6 +174,32 @@ namespace GC
 	using GCMarkerFunc = void(*)();
 	void AddMarkerFunc(GCMarkerFunc func);
 
+	// Report an allocation to the GC
+	static inline void ReportAlloc(size_t alloc)
+	{
+		AllocBytes += alloc;
+		RunningAllocBytes += alloc;
+	}
+
+	// Report a deallocation to the GC
+	static inline void ReportDealloc(size_t dealloc)
+	{
+		AllocBytes -= dealloc;
+		RunningDeallocBytes += dealloc;
+	}
+
+	// Report a reallocation to the GC
+	static inline void ReportRealloc(size_t oldsize, size_t newsize)
+	{
+		if (oldsize < newsize)
+		{
+			ReportAlloc(newsize - oldsize);
+		}
+		else
+		{
+			ReportDealloc(oldsize - newsize);
+		}
+	}
 }
 
 // A template class to help with handling read barriers. It does not
@@ -180,27 +214,21 @@ class TObjPtr
 		DObject *o;
 	};
 public:
-	TObjPtr() = default;
-	TObjPtr(const TObjPtr<T> &q) = default;
 
-	TObjPtr(T q) noexcept
-		: pp(q)
-	{
-	}
-	T operator=(T q)
+	constexpr TObjPtr<T>& operator=(T q) noexcept
 	{
 		pp = q;
 		return *this;
 	}
 
-	T operator=(std::nullptr_t nul)
+	constexpr TObjPtr<T>& operator=(std::nullptr_t nul) noexcept
 	{
 		o = nullptr;
 		return *this;
 	}
 
 	// To allow NULL, too.
-	T operator=(const int val)
+	TObjPtr<T>& operator=(const int val) noexcept
 	{
 		assert(val == 0);
 		o = nullptr;
@@ -208,42 +236,48 @@ public:
 	}
 
 	// To allow NULL, too. In Clang NULL is a long.
-	T operator=(const long val)
+	TObjPtr<T>& operator=(const long val) noexcept
 	{
 		assert(val == 0);
 		o = nullptr;
 		return *this;
 	}
 
-	T Get() noexcept
+	constexpr T Get() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
 
-	T ForceGet() noexcept	//for situations where the read barrier needs to be skipped.
+	constexpr T Get() const noexcept
+	{
+		auto ppp = pp;
+		return GC::ReadBarrier(ppp);
+	}
+
+	constexpr T ForceGet() const noexcept	//for situations where the read barrier needs to be skipped.
 	{
 		return pp;
 	}
 
-	operator T() noexcept
+	constexpr operator T() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	T &operator*() noexcept
+	constexpr T &operator*() noexcept
 	{
 		T q = GC::ReadBarrier(pp);
 		assert(q != NULL);
 		return *q;
 	}
-	T operator->() noexcept
+	constexpr T operator->() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	bool operator!=(T u) noexcept
+	constexpr bool operator!=(T u) noexcept
 	{
 		return GC::ReadBarrier(o) != u;
 	}
-	bool operator==(T u) noexcept
+	constexpr bool operator==(T u) noexcept
 	{
 		return GC::ReadBarrier(o) == u;
 	}
@@ -254,6 +288,17 @@ public:
 
 	friend class DObject;
 };
+
+// This is only needed because some parts of GCC do not treat a class with any constructor as trivial.
+// TObjPtr needs to be fully trivial, though - some parts in the engine depend on it.
+template<class T>
+constexpr TObjPtr<T> MakeObjPtr(T t) noexcept
+{
+	// since this exists to replace the constructor we cannot initialize in the declaration as this would require the constructor we want to avoid.
+	TObjPtr<T> tt;
+	tt = t;
+	return tt;
+}
 
 // Use barrier_cast instead of static_cast when you need to cast
 // the contents of a TObjPtr to a related type.

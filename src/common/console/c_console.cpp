@@ -45,7 +45,7 @@
 #include "filesystem.h"
 #include "d_gui.h"
 #include "cmdlib.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "c_consolebuffer.h"
 #include "utf8.h"
 #include "v_2ddrawer.h"
@@ -95,8 +95,6 @@ static FTextureID conflat;
 static uint32_t conshade;
 static bool conline;
 
-extern int chatmodeon;
-extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 
 int			ConWidth;
@@ -104,7 +102,9 @@ bool		vidactive = false;
 bool		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
 uint64_t	CursorTicker;
-constate_e	ConsoleState = c_up;
+uint8_t		ConsoleState = c_up;
+
+DEFINE_GLOBAL(ConsoleState)
 
 static int TopLine, InsertLine;
 
@@ -177,7 +177,7 @@ static void setmsgcolor (int index, int color);
 FILE *Logfile = NULL;
 
 
-FIntCVar msglevel ("msg", 0, CVAR_ARCHIVE);
+CVARD_NAMED(Int, msglevel, msg, 0, CVAR_ARCHIVE, "Filters HUD message by importance");
 
 CUSTOM_CVAR (Int, msg0color, CR_UNTRANSLATED, CVAR_ARCHIVE)
 {
@@ -310,22 +310,6 @@ void C_DeinitConsole ()
 		hist = next;
 	}
 	HistTail = HistHead = HistPos = NULL;
-
-	// Free cvars allocated at runtime
-	FBaseCVar *var, *next, **nextp;
-	for (var = CVars, nextp = &CVars; var != NULL; var = next)
-	{
-		next = var->m_Next;
-		if (var->GetFlags() & CVAR_UNSETTABLE)
-		{
-			delete var;
-			*nextp = next;
-		}
-		else
-		{
-			nextp = &var->m_Next;
-		}
-	}
 
 	// Free alias commands. (i.e. The "commands" that can be allocated
 	// at runtime.)
@@ -605,7 +589,7 @@ void C_DrawConsole ()
 
 		if (conback.isValid() && gamestate != GS_FULLCONSOLE)
 		{
-			DrawTexture (twod, TexMan.GetGameTexture(conback), 0, visheight - screen->GetHeight(),
+			DrawTexture (twod, conback, false, 0, visheight - screen->GetHeight(),
 				DTA_DestWidth, twod->GetWidth(),
 				DTA_DestHeight, twod->GetHeight(),
 				DTA_ColorOverlay, conshade,

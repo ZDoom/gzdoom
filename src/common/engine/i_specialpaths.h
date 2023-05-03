@@ -16,6 +16,7 @@ FString M_GetDemoPath();
 
 FString M_GetNormalizedPath(const char* path);
 
+
 #ifdef __APPLE__
 FString M_GetMacAppSupportPath(const bool create = true);
 void M_GetMacSearchDirectories(FString& user_docs, FString& user_app_support, FString& local_app_support);

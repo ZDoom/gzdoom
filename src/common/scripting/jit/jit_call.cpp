@@ -182,6 +182,13 @@ int JitCompiler::StoreCallParams()
 			}
 			numparams += 2;
 			break;
+		case REGT_FLOAT | REGT_MULTIREG4:
+			for (int j = 0; j < 4; j++)
+			{
+				cc.movsd(x86::qword_ptr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, f)), regF[bc + j]);
+			}
+			numparams += 3;
+			break;
 		case REGT_FLOAT | REGT_ADDROF:
 			cc.lea(stackPtr, x86::ptr(vmframe, offsetF + (int)(bc * sizeof(double))));
 			// When passing the address to a float we don't know if the receiving function will treat it as float, vec2 or vec3.
@@ -255,6 +262,12 @@ void JitCompiler::LoadCallResult(int type, int regnum, bool addrof)
 		{
 			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 1) * sizeof(double)));
 			cc.movsd(regF[regnum + 2], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 2) * sizeof(double)));
+		}
+		else if (type & REGT_MULTIREG4)
+		{
+			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 1) * sizeof(double)));
+			cc.movsd(regF[regnum + 2], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 2) * sizeof(double)));
+			cc.movsd(regF[regnum + 3], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 3) * sizeof(double)));
 		}
 		break;
 	case REGT_STRING:
@@ -408,6 +421,11 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 					call->setArg(slot + j, regF[bc + j]);
 				numparams += 2;
 				break;
+			case REGT_FLOAT | REGT_MULTIREG4:
+				for (int j = 0; j < 4; j++)
+					call->setArg(slot + j, regF[bc + j]);
+				numparams += 3;
+				break;
 			case REGT_FLOAT | REGT_KONST:
 				tmp = newTempIntPtr();
 				tmp2 = newTempXmmSd();
@@ -550,6 +568,12 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 1) * sizeof(double)));
 			cc.movsd(regF[regnum + 2], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 2) * sizeof(double)));
 			break;
+		case REGT_FLOAT | REGT_MULTIREG4:
+			cc.movsd(regF[regnum], asmjit::x86::qword_ptr(vmframe, offsetF + regnum * sizeof(double)));
+			cc.movsd(regF[regnum + 1], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 1) * sizeof(double)));
+			cc.movsd(regF[regnum + 2], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 2) * sizeof(double)));
+			cc.movsd(regF[regnum + 3], asmjit::x86::qword_ptr(vmframe, offsetF + (regnum + 3) * sizeof(double)));
+			break;
 		case REGT_STRING:
 			// We don't have to do anything in this case. String values are never moved to virtual registers.
 			break;
@@ -623,6 +647,13 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 				args.Push(TypeIdOf<double>::kTypeId);
 				args.Push(TypeIdOf<double>::kTypeId);
 				key += "fff";
+				break;
+			case REGT_FLOAT | REGT_MULTIREG4:
+				args.Push(TypeIdOf<double>::kTypeId);
+				args.Push(TypeIdOf<double>::kTypeId);
+				args.Push(TypeIdOf<double>::kTypeId);
+				args.Push(TypeIdOf<double>::kTypeId);
+				key += "ffff";
 				break;
 
 			default:

@@ -119,6 +119,15 @@ void D_GrabCVarDefaults()
 			SHOULD_BLACKLIST(queryiwad_key)
 			SHOULD_BLACKLIST(vid_gpuswitch)
 			SHOULD_BLACKLIST(vr_enable_quadbuffered)
+			SHOULD_BLACKLIST(m_filter)
+			SHOULD_BLACKLIST(gl_debug)
+			SHOULD_BLACKLIST(vid_adapter)
+			SHOULD_BLACKLIST(sys_statsenabled47)
+			SHOULD_BLACKLIST(sys_statsenabled49)
+			SHOULD_BLACKLIST(save_dir)
+			SHOULD_BLACKLIST(sys_statsport)
+			SHOULD_BLACKLIST(sys_statshost)
+			SHOULD_BLACKLIST(sentstats_hwr_done)
 
 			var = FindCVar(CurrentFindCVar, NULL);
 

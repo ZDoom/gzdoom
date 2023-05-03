@@ -21,12 +21,13 @@
 */
 
 #include "vk_shader.h"
-#include "vulkan/system/vk_builders.h"
+#include "vk_ppshader.h"
+#include "zvulkan/vulkanbuilders.h"
+#include "vulkan/system/vk_renderdevice.h"
 #include "hw_shaderpatcher.h"
 #include "filesystem.h"
 #include "engineerrors.h"
 #include "version.h"
-#include <ShaderLang.h>
 
 bool VkShaderManager::CompileNextShader()
 {
@@ -111,15 +112,19 @@ bool VkShaderManager::CompileNextShader()
 	return false;
 }
 
-VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
+VkShaderManager::VkShaderManager(VulkanRenderDevice* fb) : fb(fb)
 {
-	ShInitialize();
 	CompileNextShader();
 }
 
 VkShaderManager::~VkShaderManager()
 {
-	ShFinalize();
+}
+
+void VkShaderManager::Deinit()
+{
+	while (!PPShaders.empty())
+		RemoveVkPPShader(PPShaders.back());
 }
 
 VkShaderProgram *VkShaderManager::GetEffect(int effect, EPassType passType)
@@ -133,7 +138,8 @@ VkShaderProgram *VkShaderManager::GetEffect(int effect, EPassType passType)
 
 VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)
 {
-	if (compileIndex != -1) return &mMaterialShaders[0][0];
+	if (compileIndex != -1)
+		return &mMaterialShaders[0][0];
 	// indices 0-2 match the warping modes, 3 no texture, the following are custom
 	if (!alphateston && eff < SHADER_NoTexture)
 	{
@@ -148,8 +154,14 @@ VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassT
 
 static const char *shaderBindings = R"(
 
+	layout(set = 0, binding = 0) uniform sampler2D ShadowMap;
+	layout(set = 0, binding = 1) uniform sampler2DArray LightMap;
+	#ifdef SUPPORTS_RAYTRACING
+	layout(set = 0, binding = 2) uniform accelerationStructureEXT TopLevelAS;
+	#endif
+
 	// This must match the HWViewpointUniforms struct
-	layout(set = 0, binding = 0, std140) uniform ViewpointUBO {
+	layout(set = 1, binding = 0, std140) uniform ViewpointUBO {
 		mat4 ProjectionMatrix;
 		mat4 ViewMatrix;
 		mat4 NormalViewMatrix;
@@ -163,15 +175,11 @@ static const char *shaderBindings = R"(
 		float uClipHeight;
 		float uClipHeightDirection;
 		int uShadowmapFilter;
+		
+		int uLightBlendMode;
 	};
 
-	// light buffers
-	layout(set = 0, binding = 1, std430) buffer LightBufferSSO
-	{
-	    vec4 lights[];
-	};
-
-	layout(set = 0, binding = 2, std140) uniform MatricesUBO {
+	layout(set = 1, binding = 1, std140) uniform MatricesUBO {
 		mat4 ModelMatrix;
 		mat4 NormalModelMatrix;
 		mat4 TextureMatrix;
@@ -210,25 +218,35 @@ static const char *shaderBindings = R"(
 		vec4 padding1, padding2, padding3;
 	};
 
-	layout(set = 0, binding = 3, std140) uniform StreamUBO {
+	layout(set = 1, binding = 2, std140) uniform StreamUBO {
 		StreamData data[MAX_STREAM_DATA];
 	};
 
-	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
-	layout(set = 0, binding = 5) uniform sampler2DArray LightMap;
+	// light buffers
+	layout(set = 1, binding = 3, std430) buffer LightBufferSSO
+	{
+	    vec4 lights[];
+	};
+
+	// bone matrix buffers
+	layout(set = 1, binding = 4, std430) buffer BoneBufferSSO
+	{
+	    mat4 bones[];
+	};
 
 	// textures
-	layout(set = 1, binding = 0) uniform sampler2D tex;
-	layout(set = 1, binding = 1) uniform sampler2D texture2;
-	layout(set = 1, binding = 2) uniform sampler2D texture3;
-	layout(set = 1, binding = 3) uniform sampler2D texture4;
-	layout(set = 1, binding = 4) uniform sampler2D texture5;
-	layout(set = 1, binding = 5) uniform sampler2D texture6;
-	layout(set = 1, binding = 6) uniform sampler2D texture7;
-	layout(set = 1, binding = 7) uniform sampler2D texture8;
-	layout(set = 1, binding = 8) uniform sampler2D texture9;
-	layout(set = 1, binding = 9) uniform sampler2D texture10;
-	layout(set = 1, binding = 10) uniform sampler2D texture11;
+	layout(set = 2, binding = 0) uniform sampler2D tex;
+	layout(set = 2, binding = 1) uniform sampler2D texture2;
+	layout(set = 2, binding = 2) uniform sampler2D texture3;
+	layout(set = 2, binding = 3) uniform sampler2D texture4;
+	layout(set = 2, binding = 4) uniform sampler2D texture5;
+	layout(set = 2, binding = 5) uniform sampler2D texture6;
+	layout(set = 2, binding = 6) uniform sampler2D texture7;
+	layout(set = 2, binding = 7) uniform sampler2D texture8;
+	layout(set = 2, binding = 8) uniform sampler2D texture9;
+	layout(set = 2, binding = 9) uniform sampler2D texture10;
+	layout(set = 2, binding = 10) uniform sampler2D texture11;
+	layout(set = 2, binding = 11) uniform sampler2D texture12;
 
 	// This must match the PushConstants struct
 	layout(push_constant) uniform PushConstants
@@ -250,8 +268,11 @@ static const char *shaderBindings = R"(
 		// Blinn glossiness and specular level
 		vec2 uSpecularMaterial;
 
+		// bone animation
+		int uBoneIndexBase;
+
 		int uDataIndex;
-		int padding1, padding2, padding3;
+		int padding2, padding3;
 	};
 
 	// material types
@@ -325,18 +346,21 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 	code << "#define NPOT_EMULATION\n";
 #endif
 	code << shaderBindings;
-	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
+	if (!fb->device->EnabledFeatures.Features.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	code << "#line 1\n";
 	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
 
-	ShaderBuilder builder;
-	builder.setVertexShader(code);
-	return builder.create(shadername.GetChars(), device);
+	return ShaderBuilder()
+		.VertexShader(code.GetChars())
+		.DebugName(shadername.GetChars())
+		.Create(shadername.GetChars(), fb->device.get());
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
+	if (fb->RaytracingEnabled())
+		code << "\n#define SUPPORTS_RAYTRACING\n";
 	code << defines;
 	code << "\n$placeholder$";	// here the code can later add more needed #defines.
 	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
@@ -346,7 +370,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	code << shaderBindings;
 	FString placeholder = "\n";
 
-	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
+	if (!fb->device->EnabledFeatures.Features.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	if (!alphatest) code << "#define NO_ALPHATEST\n";
 	if (gbufferpass) code << "#define GBUFFER_PASS\n";
 
@@ -418,14 +442,22 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 		code << LoadPrivateShaderLump(light_lump).GetChars();
 	}
 
-	ShaderBuilder builder;
-	builder.setFragmentShader(code);
-	return builder.create(shadername.GetChars(), device);
+	return ShaderBuilder()
+		.FragmentShader(code.GetChars())
+		.DebugName(shadername.GetChars())
+		.Create(shadername.GetChars(), fb->device.get());
 }
 
 FString VkShaderManager::GetTargetGlslVersion()
 {
-	return "#version 450 core\n";
+	if (fb->device->Instance->ApiVersion == VK_API_VERSION_1_2)
+	{
+		return "#version 460\n#extension GL_EXT_ray_query : enable\n";
+	}
+	else
+	{
+		return "#version 450 core\n";
+	}
 }
 
 FString VkShaderManager::LoadPublicShaderLump(const char *lumpname)
@@ -443,4 +475,23 @@ FString VkShaderManager::LoadPrivateShaderLump(const char *lumpname)
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
 	FileData data = fileSystem.ReadFile(lump);
 	return data.GetString();
+}
+
+VkPPShader* VkShaderManager::GetVkShader(PPShader* shader)
+{
+	if (!shader->Backend)
+		shader->Backend = std::make_unique<VkPPShader>(fb, shader);
+	return static_cast<VkPPShader*>(shader->Backend.get());
+}
+
+void VkShaderManager::AddVkPPShader(VkPPShader* shader)
+{
+	shader->it = PPShaders.insert(PPShaders.end(), shader);
+}
+
+void VkShaderManager::RemoveVkPPShader(VkPPShader* shader)
+{
+	shader->Reset();
+	shader->fb = nullptr;
+	PPShaders.erase(shader->it);
 }

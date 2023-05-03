@@ -243,7 +243,8 @@ public:
 				{
 					if (sub->firstline[i].PartnerSeg && sub->firstline[i].Subsector->render_sector == sub->firstline[i].PartnerSeg->Subsector->render_sector)
 					{
-						seglist.Push(sub->firstline[i].PartnerSeg);
+						if (sub->firstline[i].sidedef == nullptr || !(Level->ib_compatflags & BCOMPATF_NOSECTIONMERGE))
+							seglist.Push(sub->firstline[i].PartnerSeg);
 					}
 				}
 			};

@@ -242,7 +242,7 @@ void ZCCDoomCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pr
 		const char * p = prop->params;
 		auto exp = property->Values;
 
-		FCompileContext ctx(OutNamespace, bag.Info->VMType, false);
+		FCompileContext ctx(OutNamespace, bag.Info->VMType, false, mVersion);
 		while (true)
 		{
 			FPropParam conv;
@@ -425,7 +425,7 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 	}
 
 	auto exp = property->Values;
-	FCompileContext ctx(OutNamespace, bag.Info->VMType, false);
+	FCompileContext ctx(OutNamespace, bag.Info->VMType, false, mVersion);
 	for (auto f : prop->Variables)
 	{
 		void *addr;
@@ -452,9 +452,105 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 		}
 		else if (!ex->isConstant())
 		{
+			if (ex->ExprType == EFX_VectorValue && ex->ValueType == f->Type)
+			{
+				auto v = static_cast<FxVectorValue *>(ex);
+				if (f->Type == TypeVector2)
+				{
+					if(!v->isConstVector(2))
+					{
+						Error(exp, "%s: non-constant Vector2 parameter", prop->SymbolName.GetChars());
+						return;
+					}
+					(*(DVector2*)addr) = DVector2(
+						static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat(),
+						static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat()
+					);
+					goto vector_ok;
+				}
+				else if (f->Type == TypeFVector2)
+				{
+					if(!v->isConstVector(2))
+					{
+						Error(exp, "%s: non-constant FVector2 parameter", prop->SymbolName.GetChars());
+						return;
+					}
+					(*(FVector2*)addr) = FVector2(
+						float(static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat()),
+						float(static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat())
+					);
+					goto vector_ok;
+				}
+				else if (f->Type == TypeVector3)
+				{
+					if(!v->isConstVector(3))
+					{
+						Error(exp, "%s: non-constant Vector3 parameter", prop->SymbolName.GetChars());
+						return;
+					}
+					(*(DVector3*)addr) = DVector3(
+						static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat(),
+						static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat(),
+						static_cast<FxConstant *>(v->xyzw[2])->GetValue().GetFloat()
+					);
+					goto vector_ok;
+				}
+				else if (f->Type == TypeFVector3)
+				{
+					if(!v->isConstVector(3))
+					{
+						Error(exp, "%s: non-constant FVector3 parameter", prop->SymbolName.GetChars());
+						return;
+					}
+					(*(FVector3*)addr) = FVector3(
+						float(static_cast<FxConstant*>(v->xyzw[0])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[1])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[2])->GetValue().GetFloat())
+					);
+					goto vector_ok;
+				}
+				else if (f->Type == TypeVector4)
+				{
+					if(!v->isConstVector(4))
+					{
+						Error(exp, "%s: non-constant Vector4 parameter", prop->SymbolName.GetChars());
+						return;
+					}
+					(*(DVector4*)addr) = DVector4(
+						static_cast<FxConstant *>(v->xyzw[0])->GetValue().GetFloat(),
+						static_cast<FxConstant *>(v->xyzw[1])->GetValue().GetFloat(),
+						static_cast<FxConstant *>(v->xyzw[2])->GetValue().GetFloat(),
+						static_cast<FxConstant *>(v->xyzw[3])->GetValue().GetFloat()
+					);
+					goto vector_ok;
+				}
+				else if (f->Type == TypeFVector4)
+				{
+					if(!v->isConstVector(4))
+					{
+						Error(exp, "%s: non-constant FVector4 parameter", prop->SymbolName.GetChars());
+						return;
+					}
+					(*(FVector4*)addr) = FVector4(
+						float(static_cast<FxConstant*>(v->xyzw[0])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[1])->GetValue().GetFloat()),
+						float(static_cast<FxConstant*>(v->xyzw[2])->GetValue().GetFloat()),
+						float(static_cast<FxConstant *>(v->xyzw[3])->GetValue().GetFloat())
+					);
+					goto vector_ok;
+				}
+				else
+				{
+					Error(exp, "%s: invalid vector parameter", prop->SymbolName.GetChars());
+					return;
+				}
+			}
+			else
+			{
+				if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->SymbolName.GetChars());
+				return;
+			}
 			// If we get TypeError, there has already been a message from deeper down so do not print another one.
-			if (exp->Type != TypeError) Error(exp, "%s: non-constant parameter", prop->SymbolName.GetChars());
-			return;
 		}
 
 		if (f->Type == TypeBool)
@@ -467,7 +563,7 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 		}
 		else if (f->Type == TypeSound)
 		{
-			*(FSoundID*)addr = GetStringConst(ex, ctx);
+			*(FSoundID*)addr = S_FindSound(GetStringConst(ex, ctx));
 		}
 		else if (f->Type == TypeColor && ex->ValueType == TypeString)	// colors can also be specified as ints.
 		{
@@ -511,6 +607,7 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 		{
 			Error(property, "unhandled property type %s", f->Type->DescriptiveName());
 		}
+vector_ok:
 		exp->ToErrorNode();	// invalidate after processing.
 		exp = static_cast<ZCC_Expression *>(exp->SiblingNext);
 	}
@@ -907,7 +1004,7 @@ void ZCCDoomCompiler::CompileStates()
 					{
 						state.sprite = GetSpriteIndex(sl->Sprite->GetChars());
 					}
-					FCompileContext ctx(OutNamespace, c->Type(), false);
+					FCompileContext ctx(OutNamespace, c->Type(), false, mVersion);
 					if (CheckRandom(sl->Duration))
 					{
 						auto func = static_cast<ZCC_ExprFuncCall *>(sl->Duration);

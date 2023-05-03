@@ -51,7 +51,7 @@
 #include "g_game.h"
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
-CVAR (Bool, r_rail_smartspiral, 0, CVAR_ARCHIVE);
+CVAR (Bool, r_rail_smartspiral, false, CVAR_ARCHIVE);
 CVAR (Int, r_rail_spiralsparsity, 1, CVAR_ARCHIVE);
 CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_particles, true, 0);
@@ -99,15 +99,63 @@ static const struct ColorList {
 	{NULL, 0, 0, 0 }
 };
 
-inline particle_t *NewParticle (FLevelLocals *Level)
+inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 {
 	particle_t *result = nullptr;
-	if (Level->InactiveParticles != NO_PARTICLE)
+	// [MC] Thanks to RaveYard and randi for helping me with this addition.
+	// Array's filled up
+	if (Level->InactiveParticles == NO_PARTICLE)
 	{
-		result = &Level->Particles[Level->InactiveParticles];
-		Level->InactiveParticles = result->tnext;
-		result->tnext = Level->ActiveParticles;
-		Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
+		if (replace)
+		{
+			result = &Level->Particles[Level->OldestParticle];
+
+			// There should be NO_PARTICLE for the oldest's tnext
+			if (result->tprev != NO_PARTICLE)
+			{
+				// tnext: youngest to oldest
+				// tprev: oldest to youngest
+				
+				// 2nd oldest -> oldest
+				particle_t *nbottom = &Level->Particles[result->tprev];
+				nbottom->tnext = NO_PARTICLE;
+
+				// now oldest becomes youngest
+				Level->OldestParticle = result->tprev;
+				result->tnext = Level->ActiveParticles;
+				result->tprev = NO_PARTICLE;
+				Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
+
+				// youngest -> 2nd youngest
+				particle_t* ntop = &Level->Particles[result->tnext];
+				ntop->tprev = Level->ActiveParticles;
+			}
+			// [MC] Future proof this by resetting everything when replacing a particle.
+			auto tnext = result->tnext;
+			auto tprev = result->tprev;
+			*result = {};
+			result->tnext = tnext;
+			result->tprev = tprev;
+		}
+		return result;
+	}
+	
+	// Array isn't full.
+	uint32_t current = Level->ActiveParticles;
+	result = &Level->Particles[Level->InactiveParticles];
+	Level->InactiveParticles = result->tnext;
+	result->tnext = current;
+	result->tprev = NO_PARTICLE;
+	Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
+
+	if (current != NO_PARTICLE) // More than one active particles
+	{
+		particle_t* next = &Level->Particles[current];
+		next->tprev = Level->ActiveParticles;
+	}
+	else // Just one active particle
+	{
+		Level->OldestParticle = Level->ActiveParticles;
 	}
 	return result;
 }
@@ -138,12 +186,17 @@ void P_InitParticles (FLevelLocals *Level)
 void P_ClearParticles (FLevelLocals *Level)
 {
 	int i = 0;
-	memset (Level->Particles.Data(), 0, Level->Particles.Size() * sizeof(particle_t));
+	Level->OldestParticle = NO_PARTICLE;
 	Level->ActiveParticles = NO_PARTICLE;
 	Level->InactiveParticles = 0;
 	for (auto &p : Level->Particles)
+	{
+		p = {};
+		p.tprev = i - 1;
 		p.tnext = ++i;
+	}
 	Level->Particles.Last().tnext = NO_PARTICLE;
+	Level->Particles.Data()->tprev = NO_PARTICLE;
 }
 
 // Group particles by subsectors. Because particles are always
@@ -212,16 +265,13 @@ void P_InitEffects ()
 
 void P_ThinkParticles (FLevelLocals *Level)
 {
-	int i;
-	particle_t *particle, *prev;
-
-	i = Level->ActiveParticles;
-	prev = NULL;
+	int i = Level->ActiveParticles;
+	particle_t *particle = nullptr, *prev = nullptr;
 	while (i != NO_PARTICLE)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (!particle->notimefreeze && Level->isFrozen())
+		if (Level->isFrozen() && !(particle->flags &PT_NOTIMEFREEZE))
 		{
 			prev = particle;
 			continue;
@@ -232,11 +282,17 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || oldtrans < particle->alpha || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
-			memset (particle, 0, sizeof(particle_t));
+			*particle = {};
 			if (prev)
 				prev->tnext = i;
 			else
 				Level->ActiveParticles = i;
+
+			if (i != NO_PARTICLE)
+			{
+				particle_t *next = &Level->Particles[i];
+				next->tprev = particle->tprev;
+			}
 			particle->tnext = Level->InactiveParticles;
 			Level->InactiveParticles = (int)(particle - Level->Particles.Data());
 			continue;
@@ -248,6 +304,13 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
+
+		if(particle->flags & PT_DOROLL)
+		{
+			particle->Roll += particle->RollVel;
+			particle->RollVel += particle->RollAcc;
+		}
+		
 		particle->subsector = Level->PointInRenderSubsector(particle->Pos);
 		sector_t *s = particle->subsector->sector;
 		// Handle crossing a sector portal.
@@ -273,14 +336,17 @@ void P_ThinkParticles (FLevelLocals *Level)
 
 enum PSFlag
 {
-	PS_FULLBRIGHT =		1,
-	PS_NOTIMEFREEZE =	1 << 5,
+	PS_FULLBRIGHT =		    1,
+	PS_NOTIMEFREEZE =	    1 << 5,
+	PS_ROLL =			    1 << 6,
+	PS_REPLACE =		    1 << 7,
+	PS_NO_XY_BILLBOARD =	1 << 8,
 };
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
-	double fadestep, double sizestep, int flags)
+	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
 {
-	particle_t *particle = NewParticle(Level);
+	particle_t *particle = NewParticle(Level, !!(flags & PS_REPLACE));
 
 	if (particle)
 	{
@@ -295,7 +361,23 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->bright = !!(flags & PS_FULLBRIGHT);
 		particle->size = size;
 		particle->sizestep = sizestep;
-		particle->notimefreeze = !!(flags & PS_NOTIMEFREEZE);
+		particle->texture = texture;
+		particle->style = style;
+		particle->Roll = startroll;
+		particle->RollVel = rollvel;
+		particle->RollAcc = rollacc;
+		if(flags & PS_NOTIMEFREEZE)
+		{
+			particle->flags |= PT_NOTIMEFREEZE;
+		}
+		if(flags & PS_ROLL)
+		{
+			particle->flags |= PT_DOROLL;
+		}
+		if(flags & PS_NO_XY_BILLBOARD)
+		{
+			particle->flags |= PT_NOXYBILLBOARD;
+		}
 	}
 }
 
@@ -341,7 +423,7 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 	if (particle)
 	{
-		DAngle an = M_Random() * (360. / 256);
+		DAngle an = DAngle::fromDeg(M_Random() * (360. / 256));
 		double out = actor->radius * M_Random() / 256.;
 
 		particle->Pos = actor->Vec3Angle(out, an, actor->Height + 1);
@@ -374,7 +456,7 @@ void P_RunEffect (AActor *actor, int effects)
 		double backy = -actor->radius * 2 * moveangle.Sin();
 		double backz = actor->Height * ((2. / 3) - actor->Vel.Z / 8);
 
-		DAngle an = moveangle + 90.;
+		DAngle an = moveangle + DAngle::fromDeg(90.);
 		double speed;
 
 		particle = JitterParticle (actor->Level, 3 + (M_Random() & 31));
@@ -423,7 +505,7 @@ void P_RunEffect (AActor *actor, int effects)
 
 		DVector3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle, -actor->Height * actor->Vel.Z / 8 + actor->Height * (2. / 3));
 
-		P_DrawSplash2 (actor->Level, 6, pos, moveangle + 180, 2, 2);
+		P_DrawSplash2 (actor->Level, 6, pos, moveangle + DAngle::fromDeg(180), 2, 2);
 	}
 	if (actor->fountaincolor)
 	{
@@ -440,6 +522,7 @@ void P_RunEffect (AActor *actor, int effects)
 			  &grey4,	&white
 			};
 		int color = actor->fountaincolor*2;
+		if (color < 0 || color >= 16) color = 0;
 		MakeFountain (actor, *fountainColors[color], *fountainColors[color+1]);
 	}
 	if (effects & FX_RESPAWNINVUL)
@@ -453,7 +536,7 @@ void P_RunEffect (AActor *actor, int effects)
 			particle = JitterParticle (actor->Level, 16);
 			if (particle != NULL)
 			{
-				DAngle ang = M_Random() * (360 / 256.);
+				DAngle ang = DAngle::fromDeg(M_Random() * (360 / 256.));
 				DVector3 pos = actor->Vec3Angle(actor->radius, ang, 0);
 				particle->Pos = pos;
 				particle->color = *protectColors[M_Random() & 1];
@@ -499,7 +582,7 @@ void P_DrawSplash (FLevelLocals *Level, int count, const DVector3 &pos, DAngle a
 		p->Acc.X += (M_Random () - 128) / 8192.;
 		p->Acc.Y += (M_Random () - 128) / 8192.;
 		p->Pos.Z = pos.Z - M_Random () / 64.;
-		angle += M_Random() * (45./256);
+		angle += DAngle::fromDeg(M_Random() * (45./256));
 		p->Pos.X = pos.X + (M_Random() & 15)*angle.Cos();
 		p->Pos.Y = pos.Y + (M_Random() & 15)*angle.Sin();
 	}
@@ -551,13 +634,13 @@ void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle 
 		p->Acc.Z = -1 / 22.;
 		if (kind) 
 		{
-			an = angle + ((M_Random() - 128) * (180 / 256.));
+			an = angle + DAngle::fromDeg((M_Random() - 128) * (180 / 256.));
 			p->Vel.X = M_Random() * an.Cos() / 2048.;
 			p->Vel.Y = M_Random() * an.Sin() / 2048.;
 			p->Acc.X = p->Vel.X / 16.;
 			p->Acc.Y = p->Vel.Y / 16.;
 		}
-		an = angle + ((M_Random() - 128) * (90 / 256.));
+		an = angle + DAngle::fromDeg((M_Random() - 128) * (90 / 256.));
 		p->Pos.X = pos.X + ((M_Random() & 31) - 15) * an.Cos();
 		p->Pos.Y = pos.Y + ((M_Random() & 31) - 15) * an.Sin();
 		p->Pos.Z = pos.Z + (M_Random() + zadd - 128) * zspread;
@@ -647,8 +730,8 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				// Allow other sounds than 'weapons/railgf'!
 				if (!source->player) sound = source->AttackSound;
 				else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
-				else sound = 0;
-				if (!sound) sound = "weapons/railgf";
+				else sound = NO_SOUND;
+				if (!sound.isvalid()) sound = S_FindSound("weapons/railgf");
 				
 				// The railgun's sound is special. It gets played from the
 				// point on the slug's trail that is closest to the hearing player.
@@ -686,7 +769,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = trail[0].start;
-		deg = (double)SpiralOffset;
+		deg = DAngle::fromDeg(SpiralOffset);
 		for (i = spiral_steps; i; i--)
 		{
 			particle_t *p = NewParticle (source->Level);
@@ -707,7 +790,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			p->Vel = tempvec * drift / 16.;
 			p->Pos = tempvec + pos;
 			pos += trail[segment].dir * stepsize;
-			deg += double(r_rail_spiralsparsity * 14);
+			deg += DAngle::fromDeg(r_rail_spiralsparsity * 14);
 			lencount -= stepsize;
 			if (color1 == -1)
 			{

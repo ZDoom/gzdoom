@@ -39,12 +39,6 @@
 #include "d_main.h"
 #include "v_draw.h"
 
-// [RH] Base blending values (for e.g. underwater)
-int BaseBlendR, BaseBlendG, BaseBlendB;
-float BaseBlendA;
-
-
-
 class FSWPaletteTexture : public FImageSource
 {
 public:

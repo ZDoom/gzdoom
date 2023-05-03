@@ -234,8 +234,7 @@ void GLBuffer::Resize(size_t newsize)
 
 void GLBuffer::GPUDropSync()
 {
-#if !(USE_GLES2)  // Only applicable when running on desktop for now
-	if (gles.useMappedBuffers && glFenceSync && glClientWaitSync)
+	if (gles.glesMode > GLES_MODE_GLES && gles.useMappedBuffers && glFenceSync && glDeleteSync)
 	{
 		if (mGLSync != NULL)
 		{
@@ -244,13 +243,11 @@ void GLBuffer::GPUDropSync()
 
 		mGLSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 	}
-#endif
 }
 
 void GLBuffer::GPUWaitSync()
 {
-#if !(USE_GLES2)  // Only applicable when running on desktop for now
-	if (gles.useMappedBuffers && glFenceSync && glClientWaitSync)
+	if (gles.glesMode > GLES_MODE_GLES && gles.useMappedBuffers && glDeleteSync && glClientWaitSync)
 	{
 		GLenum status = glClientWaitSync(mGLSync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000 * 1000 * 50); // Wait for a max of 50ms...
 
@@ -263,7 +260,6 @@ void GLBuffer::GPUWaitSync()
 
 		mGLSync = NULL;
 	}
-#endif
 }
 
 
@@ -275,8 +271,10 @@ void GLBuffer::GPUWaitSync()
 
 void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
 {
-	static int VFmtToGLFmt[] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_FLOAT }; // TODO Fix last entry GL_INT_2_10_10_10_REV, normals for models will be broken
-	static uint8_t VFmtToSize[] = {4, 3, 2, 1, 4, 4};
+	static int VFmtToGLFmt[] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT_2_10_10_10_REV, GL_UNSIGNED_BYTE }; // TODO Fix last entry GL_INT_2_10_10_10_REV, normals for models will be broken
+	static uint8_t VFmtToSize[] = {4, 3, 2, 1, 4, 4, 4};
+	static bool VFmtToNormalize[] = { false, false, false, false, true, true, false };
+	static bool VFmtToIntegerType[] = { false, false, false, false, false, false, true };
 
 	mStride = stride;
 	mNumBindingPoints = numBindingPoints;
@@ -290,6 +288,8 @@ void GLVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 			attrinf.size = VFmtToSize[attrs[i].format];
 			attrinf.offset = attrs[i].offset;
 			attrinf.bindingpoint = attrs[i].binding;
+			attrinf.normalize = VFmtToNormalize[attrs[i].format];
+			attrinf.integerType = VFmtToIntegerType[attrs[i].format];
 		}
 	}
 }
@@ -310,7 +310,13 @@ void GLVertexBuffer::Bind(int *offsets)
 		{
 			glEnableVertexAttribArray(i);
 			size_t ofs = offsets == nullptr ? attrinf.offset : attrinf.offset + mStride * offsets[attrinf.bindingpoint];
-			glVertexAttribPointer(i, attrinf.size, attrinf.format, attrinf.format != GL_FLOAT, (GLsizei)mStride, (void*)(intptr_t)ofs);
+			if (!attrinf.integerType)
+				glVertexAttribPointer(i, attrinf.size, attrinf.format, attrinf.normalize, (GLsizei)mStride, (void*)(intptr_t)ofs);
+			else
+			{
+				if (gles.glesMode >= GLES_MODE_OGL3)
+					glVertexAttribIPointer(i, attrinf.size, attrinf.format, (GLsizei)mStride, (void*)(intptr_t)ofs);
+			}
 		}
 		i++;
 	}

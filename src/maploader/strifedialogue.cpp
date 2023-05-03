@@ -319,7 +319,7 @@ FStrifeDialogueNode *MapLoader::ReadRetailNode (const char *name, FileReader &lu
 	// The speaker's voice for this node, if any.
 	speech.Backdrop[0] = 0; 	//speech.Sound[8] = 0;
 	mysnprintf (fullsound, countof(fullsound), "svox/%s", speech.Sound);
-	node->SpeakerVoice = fullsound;
+	node->SpeakerVoice = S_FindSound(fullsound);
 
 	// The speaker's name, if any.
 	speech.Sound[0] = 0; 		//speech.Name[16] = 0;
@@ -415,11 +415,11 @@ FStrifeDialogueNode *MapLoader::ReadTeaserNode (const char *name, FileReader &lu
 	if (speech.VoiceNumber != 0)
 	{
 		mysnprintf (fullsound, countof(fullsound), "svox/voc%u", speech.VoiceNumber);
-		node->SpeakerVoice = fullsound;
+		node->SpeakerVoice = S_FindSound(fullsound);
 	}
 	else
 	{
-		node->SpeakerVoice = 0;
+		node->SpeakerVoice = NO_SOUND;
 	}
 
 	// The speaker's name, if any.

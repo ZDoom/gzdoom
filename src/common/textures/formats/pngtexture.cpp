@@ -56,7 +56,7 @@ public:
 	FPNGTexture (FileReader &lump, int lumpnum, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
 
 	int CopyPixels(FBitmap *bmp, int conversion) override;
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
@@ -411,7 +411,7 @@ void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 //
 //==========================================================================
 
-TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FPNGTexture::CreatePalettedPixels(int conversion)
 {
 	FileReader *lump;
 	FileReader lfr;
@@ -419,7 +419,7 @@ TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 	lfr = fileSystem.OpenFileReader(SourceLump);
 	lump = &lfr;
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	if (StartOfIDAT == 0)
 	{
 		memset (Pixels.Data(), 0x99, Width*Height);
@@ -456,7 +456,7 @@ TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 			}
 			else
 			{
-				TArray<uint8_t> newpix(Width*Height, true);
+				PalettedPixels newpix(Width*Height);
 				if (conversion != luminance)
 				{
 					if (!PaletteMap) SetupPalette(lfr);

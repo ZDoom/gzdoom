@@ -36,7 +36,7 @@
 #include "d_gui.h"
 #include "g_input.h"
 #include "d_net.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "sbar.h"
 #include "v_video.h"
 #include "utf8.h"
@@ -65,8 +65,6 @@ void CT_Drawer ();
 bool CT_Responder (event_t *ev);
 void CT_PasteChat(const char *clip);
 
-int chatmodeon;
-
 // Private data
 
 static void CT_ClearChatMessage ();
@@ -88,7 +86,7 @@ CVAR (String, chatmacro8, "I'll take care of it.", CVAR_ARCHIVE)
 CVAR (String, chatmacro9, "Yes", CVAR_ARCHIVE)
 CVAR (String, chatmacro0, "No", CVAR_ARCHIVE)
 
-FStringCVar *chat_macros[10] =
+FStringCVarRef *chat_macros[10] =
 {
 	&chatmacro0,
 	&chatmacro1,
@@ -269,7 +267,7 @@ void CT_Drawer (void)
 		y = (viewactive || gamestate != GS_LEVEL) ? -displayfont->GetHeight()-2 : -displayfont->GetHeight() - 22;
 
 		scalex = 1;
-		int scale = active_con_scaletext(drawer);
+		int scale = active_con_scale(drawer);
 		int screen_width = twod->GetWidth() / scale;
 		int screen_height= twod->GetHeight() / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;

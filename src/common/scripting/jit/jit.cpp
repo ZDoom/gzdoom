@@ -6,6 +6,9 @@
 extern PString *TypeString;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
+extern PStruct* TypeVector4;
+extern PStruct* TypeQuaternion;
+extern PStruct* TypeFQuaternion;
 
 static void OutputJitLog(const asmjit::StringLogger &logger);
 
@@ -304,13 +307,20 @@ void JitCompiler::SetupSimpleFrame()
 		{
 			cc.mov(regA[rega++], x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
 		}
-		else if (type == TypeVector2)
+		else if (type == TypeVector2 || type == TypeFVector2)
 		{
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 		}
-		else if (type == TypeVector3)
+		else if (type == TypeVector3 || type == TypeFVector3)
 		{
+			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+		}
+		else if (type == TypeVector4 || type == TypeFVector4 || type == TypeQuaternion || type == TypeFQuaternion)
+		{
+			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
 			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
@@ -540,6 +550,20 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2)
 asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3)
 {
 	if (r0 != r1 && r0 != r2 && r0 != r3)
+	{
+		return regF[r0];
+	}
+	else
+	{
+		auto copy = newTempXmmSd();
+		cc.movsd(copy, regF[r0]);
+		return copy;
+	}
+}
+
+asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3, int r4)
+{
+	if (r0 != r1 && r0 != r2 && r0 != r3 && r0 != r4)
 	{
 		return regF[r0];
 	}

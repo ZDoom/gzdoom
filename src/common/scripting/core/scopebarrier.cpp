@@ -211,6 +211,7 @@ void FScopeBarrier::AddFlags(int flags1, int flags2, const char* name)
 // these are for vmexec.h
 void FScopeBarrier::ValidateNew(PClass* cls, int outerside)
 {
+	if (cls->VMType == nullptr) ThrowAbortException(X_OTHER,"Cannot instantiate invalid class %s", cls->TypeName.GetChars());
 	int innerside = FScopeBarrier::SideFromObjectFlags(cls->VMType->ScopeFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
 		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));

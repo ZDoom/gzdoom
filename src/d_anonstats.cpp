@@ -11,9 +11,8 @@ void D_ConfirmSendStats()
 
 #else // !NO_SEND_STATS
 
-#include "i_mainwindow.h"
-
 #if defined(_WIN32)
+#include "i_mainwindow.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
@@ -39,13 +38,12 @@ extern int sys_ostype;
 #include "gl_interface.h"
 #include "printf.h"
 
-CVAR(Int, sys_statsenabled47, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
+CVAR(Int, sys_statsenabled49, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 
-// Each machine will only send two  reports, one when started with hardware rendering and one when started with software rendering.
-#define CHECKVERSION 470
-#define CHECKVERSIONSTR "470"
+#define CHECKVERSION 490
+#define CHECKVERSIONSTR "490"
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();
@@ -75,7 +73,7 @@ FString URLencode(const char *s)
 
 bool I_HTTPRequest(const char* request)
 {
-	if (sys_statshost.GetHumanString() == NULL)
+	if ((*sys_statshost)[0] == 0)
 		return false; // no host, disable
 
 	WSADATA wsaData;
@@ -86,7 +84,7 @@ bool I_HTTPRequest(const char* request)
 	}
 	SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	struct hostent *host;
-	host = gethostbyname(sys_statshost.GetHumanString());
+	host = gethostbyname(sys_statshost);
 	if (host == nullptr)
 	{
 		DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
@@ -96,10 +94,10 @@ bool I_HTTPRequest(const char* request)
 	SockAddr.sin_port = htons(sys_statsport);
 	SockAddr.sin_family = AF_INET;
 	SockAddr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
-	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", sys_statshost.GetHumanString());
+	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *sys_statshost);
 	if (connect(Socket, (SOCKADDR*)(&SockAddr), sizeof(SockAddr)) != 0)
 	{
-		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", sys_statshost.GetHumanString());
+		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *sys_statshost);
 		return false;
 	}
 	send(Socket, request, (int)strlen(request), 0);
@@ -121,7 +119,7 @@ bool I_HTTPRequest(const char* request)
 #else
 bool I_HTTPRequest(const char* request)
 {
-	if (sys_statshost.GetHumanString() == NULL || sys_statshost.GetHumanString()[0] == 0)
+	if ((*sys_statshost)[0] == 0)
 		return false; // no host, disable
 
 	int sockfd, portno, n;
@@ -137,7 +135,7 @@ bool I_HTTPRequest(const char* request)
 		return false;
 	}
 
-	server = gethostbyname(sys_statshost.GetHumanString());
+	server = gethostbyname(sys_statshost);
 	if (server == NULL)
 	{
 		DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
@@ -150,10 +148,10 @@ bool I_HTTPRequest(const char* request)
 		  server->h_length);
 	serv_addr.sin_port = htons(portno);
 
-	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", sys_statshost.GetHumanString());
+	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *sys_statshost);
 	if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
-		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", sys_statshost.GetHumanString());
+		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *sys_statshost);
 		return false;
 	}
 
@@ -176,20 +174,24 @@ bool I_HTTPRequest(const char* request)
 static int GetOSVersion()
 {
 #ifdef _WIN32
+#ifndef _M_ARM64
 	if (sizeof(void*) == 4)	// 32 bit
 	{
 		BOOL res;
 		if (IsWow64Process(GetCurrentProcess(), &res) && res)
 		{
-			return 2;
+			return 1;
 		}
-		return 1;
+		return 0;
 	}
 	else
 	{
-		if (sys_ostype == 2) return 3;
-		else return 4;
+		if (sys_ostype == 2) return 2;
+		else return 3;
 	}
+#else
+	return 4;
+#endif
 
 #elif defined __APPLE__
 
@@ -198,9 +200,8 @@ static int GetOSVersion()
 #else
 	return 5;
 #endif
-#else
 
-// fall-through linux stuff here
+#else // fall-through linux stuff here
 #ifdef __arm__
 	return 9;
 #else
@@ -264,12 +265,12 @@ static int GetCoreInfo()
 
 static int GetRenderInfo()
 {
+	if (screen->Backend() == 0) return 1;
 	if (screen->Backend() == 1) return 4;
 	auto info = gl_getInfo();
 	if (!info.second)
 	{
-		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 2;
-		return 1;
+		return 2;
 	}
 	return 3;
 }
@@ -293,7 +294,7 @@ void D_DoAnonStats()
 {
 #ifndef _DEBUG
 	// Do not repeat if already sent.
-	if (sys_statsenabled47 != 1 || sentstats_hwr_done >= CHECKVERSION)
+	if (sys_statsenabled49 != 1 || sentstats_hwr_done >= CHECKVERSION)
 	{
 		return;
 	}
@@ -306,7 +307,7 @@ void D_DoAnonStats()
 
 	static char requeststring[1024];
 	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202109.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
+		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), *sys_statshost, GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 #if 1//ndef _DEBUG
 	// Don't send info in debug builds
@@ -319,7 +320,7 @@ void D_DoAnonStats()
 
 void D_ConfirmSendStats()
 {
-	if (sys_statsenabled47 >= 0)
+	if (sys_statsenabled49 >= 0)
 	{
 		return;
 	}
@@ -375,7 +376,7 @@ void D_ConfirmSendStats()
 	enabled.Int = SDL_ShowMessageBox(&messageboxdata, &buttonid) == 0 && buttonid == 0;
 #endif // _WIN32
 
-	sys_statsenabled47.ForceSet(enabled, CVAR_Int);
+	sys_statsenabled49->ForceSet(enabled, CVAR_Int);
 }
 
 #endif // NO_SEND_STATS

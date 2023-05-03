@@ -44,17 +44,12 @@
 #include "version.h"
 #include "printf.h"
 #include "win32glvideo.h"
-#ifdef HAVE_SOFTPOLY
-#include "win32polyvideo.h"
-#endif
 #ifdef HAVE_VULKAN
 #include "win32vulkanvideo.h"
 #endif
 #include "engineerrors.h"
 #include "i_system.h"
 #include "i_mainwindow.h"
-
-EXTERN_CVAR(Int, vid_preferbackend)
 
 IVideo *Video;
 
@@ -63,35 +58,7 @@ IVideo *gl_CreateVideo();
 
 void I_RestartRenderer();
 int currentcanvas = -1;
-int currentgpuswitch = -1;
 bool changerenderer;
-
-// Optimus/Hybrid switcher
-CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self != currentgpuswitch)
-	{
-		switch (self)
-		{
-		case 0:
-			Printf("Selecting default GPU...\n");
-			break;
-		case 1:
-			Printf("Selecting high-performance dedicated GPU...\n");
-			break;
-		case 2:
-			Printf("Selecting power-saving integrated GPU...\n");
-			break;
-		default:
-			Printf("Unknown option (%d) - falling back to 'default'\n", *vid_gpuswitch);
-			self = 0;
-			break;
-		}
-		Printf("You must restart " GAMENAME " for this change to take effect.\n");
-	}
-}
-
-
 
 void I_ShutdownGraphics ()
 {
@@ -107,13 +74,6 @@ void I_ShutdownGraphics ()
 
 void I_InitGraphics ()
 {
-	// todo: implement ATI version of this. this only works for nvidia notebooks, for now.
-	currentgpuswitch = vid_gpuswitch;
-	if (currentgpuswitch == 1)
-		_putenv("SHIM_MCCOMPAT=0x800000001"); // discrete
-	else if (currentgpuswitch == 2)
-		_putenv("SHIM_MCCOMPAT=0x800000000"); // integrated
-
 	// If the focus window is destroyed, it doesn't go back to the active window.
 	// (e.g. because the net pane was up, and a button on it had focus)
 	if (GetFocus() == NULL && GetActiveWindow() == mainwindow.GetHandle())
@@ -130,15 +90,8 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-#ifdef HAVE_SOFTPOLY
-	if (vid_preferbackend == 2)
-	{
-		Video = new Win32PolyVideo();
-	}
-	else
-#endif
 #ifdef HAVE_VULKAN
-	if (vid_preferbackend == 1)
+	if (V_GetBackend() == 1)
 	{
 		// first try Vulkan, if that fails OpenGL
 		try
@@ -157,10 +110,6 @@ void I_InitGraphics ()
 		Video = new Win32GLVideo();
 	}
 
-#ifdef HAVE_SOFTPOLY
-	if (Video == NULL)
-		Video = new Win32PolyVideo();
-#endif
 	// we somehow STILL don't have a display!!
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

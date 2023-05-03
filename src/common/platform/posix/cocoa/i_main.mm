@@ -164,6 +164,9 @@ void I_DetectOS()
 	case 12:
 		name = "macOS Monterey";
 		break;
+	case 13:
+		name = "macOS Ventura";
+		break;
 	}
 
 	char release[16] = "unknown";
@@ -209,13 +212,6 @@ int DoMain(int argc, char** argv)
 	// Note that the LANG environment variable is overridden by LC_*
 	setenv("LC_NUMERIC", "C", 1);
 	setlocale(LC_ALL, "C");
-
-	// Set reasonable default values for video settings
-
-	const NSSize screenSize = [[NSScreen mainScreen] frame].size;
-	vid_defwidth  = static_cast<int>(screenSize.width);
-	vid_defheight = static_cast<int>(screenSize.height);
-	vid_vsync     = true;
 
 	Args = new FArgs(argc, argv);
 

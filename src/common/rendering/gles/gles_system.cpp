@@ -9,51 +9,19 @@ CVAR(Bool, gles_use_mapped_buffer, false, 0);
 CVAR(Bool, gles_force_glsl_v100, false, 0);
 CVAR(Int, gles_max_lights_per_surface, 32, 0);
 EXTERN_CVAR(Bool, gl_customshader);
+void setGlVersion(double glv);
 
 
-#if USE_GLES2
+#if USE_GLAD_LOADER
 
 PFNGLMAPBUFFERRANGEEXTPROC glMapBufferRange = NULL;
 PFNGLUNMAPBUFFEROESPROC glUnmapBuffer = NULL;
+PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer = NULL;
+PFNGLFENCESYNCPROC glFenceSync = NULL;
+PFNGLCLIENTWAITSYNCPROC glClientWaitSync = NULL;
+PFNGLDELETESYNCPROC glDeleteSync = NULL;
 
-#ifdef __ANDROID__
-#include <dlfcn.h>
-
-static void* LoadGLES2Proc(const char* name)
-{
-	static void *glesLib = NULL;
-
-	if(!glesLib)
-	{
-		int flags = RTLD_LOCAL | RTLD_NOW;
-
-		glesLib = dlopen("libGLESv2_CM.so", flags);
-		if(!glesLib)
-		{
-			glesLib = dlopen("libGLESv2.so", flags);
-		}
-		if(!glesLib)
-		{
-			glesLib = dlopen("libGLESv2.so.2", flags);
-		}
-	}
-
-	void * ret = NULL;
-	ret =  dlsym(glesLib, name);
-
-	if(!ret)
-	{
-		//LOGI("Failed to load: %s", name);
-	}
-	else
-	{
-		//LOGI("Loaded %s func OK", name);
-	}
-
-	return ret;
-}
-
-#elif defined _WIN32
+#if defined _WIN32
 
 #include <windows.h>
 
@@ -78,9 +46,38 @@ static void* LoadGLES2Proc(const char* name)
 	}
 }
 
+#else
+
+#include <dlfcn.h>
+
+static void* LoadGLES2Proc(const char* name)
+{
+	static void* glesLib = NULL;
+
+	if (!glesLib)
+	{
+		int flags = RTLD_LOCAL | RTLD_NOW;
+
+		glesLib = dlopen("libGLESv2_CM.so", flags);
+		if (!glesLib)
+		{
+			glesLib = dlopen("libGLESv2.so", flags);
+		}
+		if (!glesLib)
+		{
+			glesLib = dlopen("libGLESv2.so.2", flags);
+		}
+	}
+
+	void* ret = NULL;
+	ret = dlsym(glesLib, name);
+
+	return ret;
+}
+
 #endif
 
-#endif // USE_GLES2
+#endif // USE_GLAD_LOADER
 
 static TArray<FString>  m_Extensions;
 
@@ -124,7 +121,7 @@ namespace OpenGLESRenderer
 	void InitGLES()
 	{
 
-#if USE_GLES2
+#if USE_GLAD_LOADER
 
 		if (!gladLoadGLES2Loader(&LoadGLES2Proc))
 		{
@@ -133,7 +130,11 @@ namespace OpenGLESRenderer
 
 		glMapBufferRange = (PFNGLMAPBUFFERRANGEEXTPROC)LoadGLES2Proc("glMapBufferRange");
 		glUnmapBuffer = (PFNGLUNMAPBUFFEROESPROC)LoadGLES2Proc("glUnmapBuffer");
+		glVertexAttribIPointer = (PFNGLVERTEXATTRIBIPOINTERPROC)LoadGLES2Proc("glVertexAttribIPointer");
 
+		glFenceSync = (PFNGLFENCESYNCPROC)LoadGLES2Proc("glFenceSync");
+		glClientWaitSync = (PFNGLCLIENTWAITSYNCPROC)LoadGLES2Proc("glClientWaitSync");
+		glDeleteSync = (PFNGLDELETESYNCPROC)LoadGLES2Proc("glDeleteSync");
 #else
 		static bool first = true;
 
@@ -159,37 +160,78 @@ namespace OpenGLESRenderer
 		{
 			Printf(" %s\n", m_Extensions[i].GetChars());
 		}
+		const char* glVersionStr = (const char*)glGetString(GL_VERSION);
+		double glVersion = strtod(glVersionStr, NULL);
 
+		Printf("GL Version parsed = %f\n", glVersion);
 
 		gles.flags = RFL_NO_CLIP_PLANES;
 
 		gles.useMappedBuffers = gles_use_mapped_buffer;
 		gles.forceGLSLv100 = gles_force_glsl_v100;
 		gles.maxlights = gles_max_lights_per_surface;
+		gles.numlightvectors = (gles.maxlights * LIGHT_VEC4_NUM);
 
 		gles.modelstring = (char*)glGetString(GL_RENDERER);
 		gles.vendorstring = (char*)glGetString(GL_VENDOR);
 
-		gl_customshader = false;
+
+		gl_customshader = false; // Disable user shaders for GLES renderer
 
 		GLint maxTextureSize[1];
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize);
-
 		gles.max_texturesize = maxTextureSize[0];
 
 		Printf("GL_MAX_TEXTURE_SIZE: %d\n", gles.max_texturesize);
 
-#if USE_GLES2
-		gles.depthStencilAvailable = CheckExtension("GL_OES_packed_depth_stencil");
-		gles.npotAvailable = CheckExtension("GL_OES_texture_npot");
-		gles.depthClampAvailable = CheckExtension("GL_EXT_depth_clamp");
-#else
-		gles.depthStencilAvailable = true;
-		gles.npotAvailable = true;
-		gles.useMappedBuffers = true;
-		gles.depthClampAvailable = true;
-#endif
 
-		gles.numlightvectors = (gles.maxlights * LIGHT_VEC4_NUM);
+		// Check if running on a GLES device, version string will start with 'OpenGL ES'
+		if (!strncmp(glVersionStr, "OpenGL ES", strlen("OpenGL ES")))
+		{
+			gles.glesMode = GLES_MODE_GLES;
+		}
+		else // Else runnning on Desktop, check OpenGL version is 3 or above
+		{
+			if (glVersion > 3.29)
+				gles.glesMode = GLES_MODE_OGL3; // 3.3 or above
+			else
+				gles.glesMode = GLES_MODE_OGL2; // Below 3.3
+		}
+
+
+		if (gles.glesMode == GLES_MODE_GLES)
+		{
+			Printf("GLES choosing mode: GLES_MODE_GLES\n");
+
+			gles.shaderVersionString = "100";
+			gles.depthStencilAvailable = CheckExtension("GL_OES_packed_depth_stencil");
+			gles.npotAvailable = CheckExtension("GL_OES_texture_npot");
+			gles.depthClampAvailable = CheckExtension("GL_EXT_depth_clamp");
+			gles.anistropicFilterAvailable = CheckExtension("GL_EXT_texture_filter_anisotropic");
+		}
+		else if (gles.glesMode == GLES_MODE_OGL2)
+		{
+			Printf("GLES choosing mode: GLES_MODE_OGL2\n");
+
+			gles.shaderVersionString = "100";
+			gles.depthStencilAvailable = true;
+			gles.npotAvailable = true;
+			gles.useMappedBuffers = true;
+			gles.depthClampAvailable = true;
+			gles.anistropicFilterAvailable = true;
+		}
+		else if (gles.glesMode == GLES_MODE_OGL3)
+		{
+			Printf("GLES choosing mode: GLES_MODE_OGL3\n");
+
+			gles.shaderVersionString = "330";
+			gles.depthStencilAvailable = true;
+			gles.npotAvailable = true;
+			gles.useMappedBuffers = true;
+			gles.depthClampAvailable = true;
+			gles.anistropicFilterAvailable = true;
+		}
+		
+		setGlVersion(glVersion);
 	}
 }

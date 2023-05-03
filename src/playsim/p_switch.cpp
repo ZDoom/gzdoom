@@ -250,7 +250,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 bool P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *quest)
 {
 	int texture;
-	int sound;
+	FSoundID sound;
 	FSwitchDef *Switch;
 
 	if ((Switch = TexAnim.FindSwitch (side->GetTexture(side_t::top))) != NULL)
@@ -275,7 +275,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *q
 	}
 
 	// EXIT SWITCH?
-	if (Switch->Sound != 0)
+	if (Switch->Sound != NO_SOUND)
 	{
 		sound = Switch->Sound;
 	}
@@ -404,7 +404,7 @@ void DActiveButton::Tick ()
 			{
 				m_Frame = -1;
 				S_Sound (Level, DVector3(m_Pos, 0), CHAN_VOICE, CHANF_LISTENERZ,
-					def->Sound != 0 ? FSoundID(def->Sound) : FSoundID("switches/normbutn"),
+					def->Sound != NO_SOUND ? FSoundID(def->Sound) : S_FindSound("switches/normbutn"),
 					1, ATTN_STATIC);
 				bFlippable = false;
 			}

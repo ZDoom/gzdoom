@@ -13,6 +13,6 @@ vec4 ProcessTexel()
 
 	basicColor.a = basicColor.a * test;
 	basicColor.r = basicColor.g = basicColor.b = 0.0;
-	
+
 	return basicColor;
 }

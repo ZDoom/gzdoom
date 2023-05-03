@@ -51,7 +51,7 @@ class FRawPageTexture : public FImageSource
 	int mPaletteLump = -1;
 public:
 	FRawPageTexture (int lumpnum);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
 
@@ -62,7 +62,7 @@ public:
 //
 //==========================================================================
 
-bool CheckIfRaw(FileReader & data, int desiredsize)
+bool CheckIfRaw(FileReader & data, unsigned desiredsize)
 {
 	if (data.GetLength() != desiredsize) return false;
 
@@ -73,7 +73,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 
 	data.Seek(0, FileReader::SeekSet);
 	auto bits = data.Read(data.GetLength());
-	foo = (patch_t *)bits.Data();;
+	foo = (patch_t *)bits.Data();
 
 	height = LittleShort(foo->height);
 	width = LittleShort(foo->width);
@@ -94,7 +94,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 			{
 				gapAtStart = false;
 			}
-			else if (ofs >= 64000-1)	// Need one byte for an empty column
+			else if (ofs >= desiredsize-1)	// Need one byte for an empty column
 			{
 				return true;
 			}
@@ -102,7 +102,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 			{
 				// Ensure this column does not extend beyond the end of the patch
 				const uint8_t *foo2 = (const uint8_t *)foo;
-				while (ofs < 64000)
+				while (ofs < desiredsize)
 				{
 					if (foo2[ofs] == 255)
 					{
@@ -110,7 +110,7 @@ bool CheckIfRaw(FileReader & data, int desiredsize)
 					}
 					ofs += foo2[ofs+1] + 4;
 				}
-				if (ofs >= 64000)
+				if (ofs >= desiredsize)
 				{
 					return true;
 				}
@@ -170,14 +170,14 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 //
 //==========================================================================
 
-TArray<uint8_t> FRawPageTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
 
-	TArray<uint8_t> Pixels(Width*Height, true);
+	PalettedPixels Pixels(Width*Height);
 	dest_p = Pixels.Data();
 
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);

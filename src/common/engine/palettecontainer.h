@@ -15,7 +15,9 @@ enum
 struct FRemapTable
 {
 	FRemapTable(int count = 256) { NumEntries = count; }
+
 	FRemapTable(const FRemapTable& o) = default;
+	FRemapTable& operator=(const FRemapTable& o) = default;
 
 	bool operator==(const FRemapTable& o);
 	void MakeIdentity();

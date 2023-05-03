@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <algorithm>
+#include "xs_Float.h"
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -91,15 +92,26 @@ inline double DEG2RAD(double deg)
 	return deg * (M_PI / 180.0);
 }
 
-inline float RAD2DEG(float deg)
+inline float RAD2DEG(float rad)
 {
-	return deg * float(180. / M_PI);
+	return rad * float(180. / M_PI);
 }
 
-inline double RAD2DEG(double deg)
+inline double RAD2DEG(double rad)
 {
-	return deg * (180. / M_PI);
+	return rad * (180. / M_PI);
 }
+
+inline angle_t RAD2BAM(float rad)
+{
+	return angle_t(xs_RoundToUInt(rad * float(0x80000000u / M_PI)));
+}
+
+inline angle_t RAD2BAM(double rad)
+{
+	return angle_t(xs_RoundToUInt(rad * (0x80000000u / M_PI)));
+}
+
 
 // This is needed in common code, despite being Doom specific.
 enum EStateUseFlags

@@ -69,6 +69,7 @@
 #include "sbar.h"
 #include "actorinlines.h"
 #include "types.h"
+#include "model.h"
 
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
@@ -764,7 +765,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 	{
 		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}
-	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90), clamp<int>(ang2, 0, 90), !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
+	if (!P_SeekerMissile(self, DAngle::fromDeg(clamp<int>(ang1, 0, 90)), DAngle::fromDeg(clamp<int>(ang2, 0, 90)), !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
 	{
 		if (flags & SMF_LOOK)
 		{ // This monster is no longer seekable, so let us look for another one next time.
@@ -794,7 +795,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 	S_Sound (self, CHAN_WEAPON, 0, self->AttackSound, 1, ATTN_NORM);
 	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
-		DAngle angle = self->Angles.Yaw + pr_cabullet.Random2() * (5.625 / 256.);
+		DAngle angle = self->Angles.Yaw + DAngle::fromDeg(pr_cabullet.Random2() * (5.625 / 256.));
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
 			NAME_Hitscan, NAME_BulletPuff);
@@ -930,7 +931,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 	{
 		if (ti) 
 		{
-			DAngle angle = self->Angles.Yaw - 90;
+			DAngle angle = self->Angles.Yaw - DAngle::fromDeg(90.);
 			double x = Spawnofs_xy * angle.Cos();
 			double y = Spawnofs_xy * angle.Sin();
 			double z = Spawnheight + self->GetBobOffset() - 32 + (self->player? self->player->crouchoffset : 0.);
@@ -1075,7 +1076,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	A_FaceTarget (self);
 	if (P_CheckMeleeRange(self))
 	{
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
@@ -1083,7 +1084,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	}
 	else
 	{
-		if (misssound)
+		if (misssound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, misssound, 1, ATTN_NORM);
 	}
 	return 0;
@@ -1112,7 +1113,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 	{
 		if (damagetype == NAME_None)
 			damagetype = NAME_Melee;	// Melee is the default type
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
@@ -1201,7 +1202,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 	{
 		self->Angles.Yaw = self->AngleTo(self->target);
 	}
-	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, aim ? self->target : NULL);
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg(60.), 0, aim ? self->target.Get() : nullptr);
 	if (t.linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
@@ -1227,7 +1228,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 
 		if (self->target->flags & MF_SHADOW)
 		{
-			DAngle rnd = pr_crailgun.Random2() * (45. / 256.);
+			DAngle rnd = DAngle::fromDeg(pr_crailgun.Random2() * (45. / 256.));
 			self->Angles.Yaw += rnd;
 		}
 	}
@@ -1275,7 +1276,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Recoil)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(xyvel);
 
-	self->Thrust(self->Angles.Yaw + 180., xyvel);
+	self->Thrust(self->Angles.Yaw + DAngle::fromDeg(180.), xyvel);
 	return 0;
 }
 
@@ -1618,6 +1619,9 @@ enum SPFflag
 	SPF_RELACCEL =			1 << 3,
 	SPF_RELANG =			1 << 4,
 	SPF_NOTIMEFREEZE =		1 << 5,
+	SPF_ROLL =				1 << 6,
+	SPF_REPLACE =           1 << 7,
+	SPF_NO_XY_BILLBOARD =	1 << 8,
 };
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
@@ -1671,6 +1675,75 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
 			acc.Y = accelx * s - accely * c;
 		}
 		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_COLOR		(color);
+	PARAM_INT   (i_texid)
+	PARAM_INT   (style)
+	PARAM_INT	(flags)		
+	PARAM_INT	(lifetime)	
+	PARAM_FLOAT	(size)		
+	PARAM_ANGLE	(angle)		
+	PARAM_FLOAT	(xoff)		
+	PARAM_FLOAT	(yoff)		
+	PARAM_FLOAT	(zoff)		
+	PARAM_FLOAT	(xvel)		
+	PARAM_FLOAT	(yvel)		
+	PARAM_FLOAT	(zvel)		
+	PARAM_FLOAT	(accelx)	
+	PARAM_FLOAT	(accely)	
+	PARAM_FLOAT	(accelz)	
+	PARAM_FLOAT	(startalpha)
+	PARAM_FLOAT	(fadestep)	
+	PARAM_FLOAT (sizestep)	
+	PARAM_FLOAT	(startroll)	
+	PARAM_FLOAT	(rollvel)	
+	PARAM_FLOAT	(rollacc)
+
+	startalpha = clamp(startalpha, 0., 1.);
+	if (fadestep > 0) fadestep = clamp(fadestep, 0., 1.);
+	size = fabs(size);
+	if (lifetime != 0)
+	{
+		if (flags & SPF_RELANG) angle += self->Angles.Yaw;
+		double s = angle.Sin();
+		double c = angle.Cos();
+		DVector3 pos(xoff, yoff, zoff + self->GetBobOffset());
+		DVector3 vel(xvel, yvel, zvel);
+		DVector3 acc(accelx, accely, accelz);
+		//[MC] Code ripped right out of A_SpawnItemEx.
+		if (flags & SPF_RELPOS)
+		{
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+			pos.X = xoff * c + yoff * s;
+			pos.Y = xoff * s - yoff * c;
+		}
+		if (flags & SPF_RELVEL)
+		{
+			vel.X = xvel * c + yvel * s;
+			vel.Y = xvel * s - yvel * c;
+		}
+		if (flags & SPF_RELACCEL)
+		{
+			acc.X = accelx * c + accely * s;
+			acc.Y = accelx * s - accely * c;
+		}
+		
+		FTextureID texid;
+		texid.SetIndex(i_texid);
+		
+		if(style < 0 || style >= STYLE_Count)
+		{
+			style = STYLE_None;
+		}
+
+		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags, texid, ERenderStyle(style), startroll, rollvel, rollacc);
 	}
 	return 0;
 }
@@ -2422,7 +2495,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 	else
 	{
 		// Does the player aim at something that can be shot?
-		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, (flags & JLOSF_NOAUTOAIM) ? 0.5 : 0., ALF_PORTALRESTRICT);
+		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg((flags & JLOSF_NOAUTOAIM) ? 0.5 : 0.), ALF_PORTALRESTRICT);
 		
 		if (!t.linetarget)
 		{
@@ -2434,14 +2507,14 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 		{
 		case JLOSF_TARGETLOS|JLOSF_FLIPFOV:
 			// target makes sight check, player makes fov check; player has verified fov
-			fov = 0.;
+			fov = nullAngle;
 			// fall-through
 		case JLOSF_TARGETLOS:
 			doCheckSight = !(flags & JLOSF_NOSIGHT); // The target is responsible for sight check and fov
 			break;
 		default:
 			// player has verified sight and fov
-			fov = 0.;
+			fov = nullAngle;
 			// fall-through
 		case JLOSF_FLIPFOV: // Player has verified sight, but target must verify fov
 			doCheckSight = false;
@@ -2472,7 +2545,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0.;
+			fov = nullAngle;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
@@ -2492,9 +2565,9 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	fov = min<DAngle>(fov, 360.);
+	fov = min<DAngle>(fov, DAngle::fromDeg(360.));
 
-	if (fov > 0)
+	if (fov > nullAngle)
 	{
 		DAngle an = absangle(viewport->AngleTo(target), viewport->Angles.Yaw);
 
@@ -2566,13 +2639,13 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0.;
+			fov = nullAngle;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
 	}
 
-	if (fov > 0 && (fov < 360.))
+	if (fov > nullAngle && (fov < DAngle::fromDeg(360.)))
 	{
 		DAngle an = absangle(target->AngleTo(self), target->Angles.Yaw);
 
@@ -2797,7 +2870,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRefire)
 DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(angle);
+	PARAM_ANGLE(angle);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
@@ -2820,7 +2893,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(pitch);
+	PARAM_ANGLE(pitch);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
@@ -2844,7 +2917,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 DEFINE_ACTION_FUNCTION(AActor, A_SetRoll)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT		(roll);
+	PARAM_ANGLE		(roll);
 	PARAM_INT	(flags);
 	PARAM_INT	(ptr)	;
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -2869,7 +2942,7 @@ static void SetViewAngleNative(AActor* self, double angle, int flags, int ptr)
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != nullptr)
 	{
-		ref->SetViewAngle(angle, flags);
+		ref->SetViewAngle(DAngle::fromDeg(angle), flags);
 	}
 }
 
@@ -2898,7 +2971,7 @@ static void SetViewPitchNative(AActor* self, double pitch, int flags, int ptr)
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != nullptr)
 	{
-		ref->SetViewPitch(pitch, flags);
+		ref->SetViewPitch(DAngle::fromDeg(pitch), flags);
 	}
 }
 
@@ -2927,7 +3000,7 @@ static void SetViewRollNative(AActor* self, double roll, int flags, int ptr)
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != nullptr)
 	{
-		ref->SetViewRoll(roll, flags);
+		ref->SetViewRoll(DAngle::fromDeg(roll), flags);
 	}
 }
 
@@ -3260,7 +3333,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT		(intensity);
+	PARAM_FLOAT		(intensity);
 	PARAM_INT		(duration);
 	PARAM_INT		(damrad);
 	PARAM_INT		(tremrad);
@@ -3281,9 +3354,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 DEFINE_ACTION_FUNCTION(AActor, A_QuakeEx)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(intensityX);
-	PARAM_INT(intensityY);
-	PARAM_INT(intensityZ);
+	PARAM_FLOAT(intensityX);
+	PARAM_FLOAT(intensityY);
+	PARAM_FLOAT(intensityZ);
 	PARAM_INT(duration);
 	PARAM_INT(damrad);
 	PARAM_INT(tremrad);
@@ -3316,7 +3389,7 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist)
 
 	weaveXY = self->WeaveIndexXY & 63;
 	weaveZ = self->WeaveIndexZ & 63;
-	angle = self->Angles.Yaw + 90;
+	angle = self->Angles.Yaw + DAngle::fromDeg(90);
 
 	if (xydist != 0 && xyspeed != 0)
 	{
@@ -3431,7 +3504,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 
 	// Target can dodge if it can see enemy
 	DAngle angle = absangle(self->target->Angles.Yaw, self->target->AngleTo(self));
-	bool dodge = (P_CheckSight(self->target, self) && angle < 30. * 256. / 360.);	// 30 byteangles ~ 21°
+	bool dodge = (P_CheckSight(self->target, self) && angle < DAngle::fromDeg(30. * 256. / 360.));	// 30 byteangles ~ 21°
 
 	// Distance check is simplistic
 	DVector2 vec = self->Vec2To(self->target);
@@ -4750,16 +4823,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 		//Done because using anglelimit directly causes a signed/unsigned mismatch.
 
 		//Code borrowed from A_Face*.
-		if (anglelimit > 0)
+		if (anglelimit > nullAngle)
 		{
 			DAngle delta = -deltaangle(current, angle);
 			if (fabs(delta) > anglelimit)
 			{
-				if (delta < 0)
+				if (delta < nullAngle)
 				{
 					current += anglelimit + offset;
 				}
-				else if (delta > 0)
+				else if (delta > nullAngle)
 				{
 					current -= anglelimit + offset;
 				}
@@ -4777,13 +4850,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 		DAngle current = mobj->Angles.Pitch;
 		const DVector2 velocity = mobj->Vel.XY();
 		DAngle pitch = -VecToAngle(velocity.Length(), mobj->Vel.Z);
-		if (pitchlimit > 0)
+		if (pitchlimit > nullAngle)
 		{
 			DAngle pdelta = deltaangle(current, pitch);
 
 			if (fabs(pdelta) > pitchlimit)
 			{
-				if (pdelta > 0)
+				if (pdelta > nullAngle)
 				{
 					current -= min(pitchlimit, pdelta);
 				}
@@ -4857,10 +4930,10 @@ enum VRFFlags
 DEFINE_ACTION_FUNCTION(AActor, A_SetVisibleRotation)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE(anglestart)
-	PARAM_ANGLE(angleend)	
-	PARAM_ANGLE(pitchstart)
-	PARAM_ANGLE(pitchend)	
+	PARAM_FANGLE(anglestart)
+	PARAM_FANGLE(angleend)
+	PARAM_FANGLE(pitchstart)
+	PARAM_FANGLE(pitchend)
 	PARAM_INT(flags)		
 	PARAM_INT(ptr)			
 
@@ -4873,19 +4946,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetVisibleRotation)
 		
 	if (!(flags & VRF_NOANGLESTART))
 	{
-		mobj->VisibleStartAngle = anglestart.Degrees;
+		mobj->VisibleStartAngle = anglestart;
 	}
 	if (!(flags & VRF_NOANGLEEND))
 	{
-		mobj->VisibleEndAngle = angleend.Degrees;
+		mobj->VisibleEndAngle = angleend;
 	}
 	if (!(flags & VRF_NOPITCHSTART))
 	{
-		mobj->VisibleStartPitch = pitchstart.Degrees;
+		mobj->VisibleStartPitch = pitchstart;
 	}
 	if (!(flags & VRF_NOPITCHEND))
 	{
-		mobj->VisibleEndPitch = pitchend.Degrees;
+		mobj->VisibleEndPitch = pitchend;
 	}
 
 	ACTION_RETURN_BOOL(true);
@@ -4928,7 +5001,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 		{
 			int anglespeed = self->Level->GetFirstSectorTag(sec) - 100;
 			double speed = (anglespeed % 10) / 16.;
-			DAngle an = (anglespeed / 10) * (360 / 8.);
+			DAngle an = DAngle::fromDeg((anglespeed / 10) * (360 / 8.));
 			self->Thrust(an, speed);
 		}
 	}
@@ -5017,6 +5090,174 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 	PARAM_STRING(name);
 	if (self->CheckLocalView())
 		StatusBar->SetMugShotState(name);
+	return 0;
+}
+
+//==========================================================================
+//
+// A_ChangeModel(modeldef, modelpath, model, modelindex, skinpath, skin, skinid, flags)
+//
+// This function allows the changing of an actor's modeldef, or models and/or skins at a given index
+//==========================================================================
+
+enum ChangeModelFlags
+{
+	CMDL_WEAPONTOPLAYER = 1,
+	CMDL_HIDEMODEL = 1 << 1,
+	CMDL_USESURFACESKIN = 1 << 2,
+};
+
+DEFINE_ACTION_FUNCTION(AActor, A_ChangeModel)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_NAME(modeldef);
+	PARAM_INT(modelindex);
+	PARAM_STRING_VAL(modelpath);
+	PARAM_NAME(model);
+	PARAM_INT(skinindex);
+	PARAM_STRING_VAL(skinpath);
+	PARAM_NAME(skin);
+	PARAM_INT(flags);
+	PARAM_INT(generatorindex);
+	PARAM_INT(animationindex);
+	PARAM_STRING_VAL(animationpath);
+	PARAM_NAME(animation);
+
+	if (self == nullptr)
+		ACTION_RETURN_BOOL(false);
+	else if (modeldef != NAME_None && PClass::FindClass(modeldef.GetChars()) == nullptr)
+	{
+		Printf("Attempt to pass invalid modeldef name %s in %s.", modeldef.GetChars(), self->GetCharacterName());
+		ACTION_RETURN_BOOL(false);
+	}
+	else if (modelindex < 0)
+	{
+		Printf("Attempt to pass invalid model index %d in %s, index must be non-negative.", modelindex, self->GetCharacterName());
+		ACTION_RETURN_BOOL(false);
+	}
+	else if (skinindex < 0)
+	{
+		Printf("Attempt to pass invalid skin index %d in %s, index must be non-negative.", skinindex, self->GetCharacterName());
+		ACTION_RETURN_BOOL(false);
+	}
+	else if (animationindex < 0)
+	{
+		Printf("Attempt to pass invalid animation index %d in %s, index must be non-negative.", animationindex, self->GetCharacterName());
+		ACTION_RETURN_BOOL(false);
+	}
+
+	AActor* mobj = (ACTION_CALL_FROM_PSPRITE() && (flags & CMDL_WEAPONTOPLAYER)) || ACTION_CALL_FROM_INVENTORY() ? self : stateowner;
+
+	if (modelpath[(int)modelpath.Len() - 1] != '/') modelpath += '/';
+	if (skinpath[(int)skinpath.Len() - 1] != '/') skinpath += '/';
+	if (animationpath[(int)animationpath.Len() - 1] != '/') animationpath += '/';
+
+	if (mobj->modelData == nullptr)
+	{
+		auto ptr = Create<DActorModelData>();
+		ptr->hasModel = mobj->hasmodel ? 1 : 0;
+		ptr->modelIDs = *new TArray<int>();
+		ptr->skinIDs = *new TArray<FTextureID>();
+		ptr->surfaceSkinIDs = *new TArray<FTextureID>();
+		ptr->animationIDs = *new TArray<int>();
+		ptr->modelFrameGenerators = *new TArray<int>();
+		ptr->modelDef = NAME_None;
+		mobj->modelData = ptr;
+		mobj->hasmodel = 1;
+		GC::WriteBarrier(mobj, ptr);
+	}
+
+	int maxModels = mobj->modelData->modelIDs.Size();
+	int maxSkins = mobj->modelData->skinIDs.Size();
+	int maxSurfaceSkins = mobj->modelData->surfaceSkinIDs.Size();
+	int maxAnimations = mobj->modelData->animationIDs.Size();
+	int maxGenerators = mobj->modelData->modelFrameGenerators.Size();
+
+	int skinPosition = skinindex + modelindex * MD3_MAX_SURFACES;
+
+	int queryModel = !(flags & CMDL_HIDEMODEL) ? model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1 : -2;
+	int queryAnimation = animation != NAME_None ? FindModel(animationpath.GetChars(), animation.GetChars()) : -1;
+
+	//[SM] - Let's clear out any potential entries at the specified indices
+	mobj->modelData->modelDef = modeldef;
+	if(maxModels > modelindex) mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs[modelindex]);
+	if(maxAnimations > animationindex) mobj->modelData->animationIDs.Pop(mobj->modelData->animationIDs[animationindex]);
+	if(maxGenerators > modelindex) mobj->modelData->modelFrameGenerators.Pop(mobj->modelData->modelFrameGenerators[modelindex]);
+
+	if (flags & CMDL_USESURFACESKIN)
+	{
+		if (maxSurfaceSkins > skinPosition)
+			mobj->modelData->surfaceSkinIDs.Delete(skinPosition); //[SM] - It seems the only way to make sure this does what it's told is from Delete, not Pop
+	}
+	else
+	{
+		if (maxSkins > skinindex)
+			mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs[skinindex]);
+	}
+
+	//[SM] - We need to fill up any holes this new index will make so that it doesn't leave behind any undefined behavior
+	while ((int)mobj->modelData->modelIDs.Size() < modelindex) mobj->modelData->modelIDs.Push(-1);
+	while ((int)mobj->modelData->modelFrameGenerators.Size() < modelindex) mobj->modelData->modelFrameGenerators.Push(-1);
+	while ((int)mobj->modelData->animationIDs.Size() < modelindex) mobj->modelData->animationIDs.Push(-1);
+	if (flags & CMDL_USESURFACESKIN)
+		while ((int)mobj->modelData->surfaceSkinIDs.Size() < skinPosition) mobj->modelData->surfaceSkinIDs.Push(FNullTextureID());
+	else
+		while ((int)mobj->modelData->skinIDs.Size() < skinindex) mobj->modelData->skinIDs.Push(FNullTextureID());
+	
+	mobj->modelData->modelIDs.Insert(modelindex, queryModel);
+	mobj->modelData->modelFrameGenerators.Insert(modelindex, generatorindex);
+	mobj->modelData->animationIDs.Insert(animationindex, queryAnimation);
+	if (flags & CMDL_USESURFACESKIN)
+		mobj->modelData->surfaceSkinIDs.Insert(skinPosition, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
+	else
+		mobj->modelData->skinIDs.Insert(skinindex, skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID());
+
+	//[SM] - We need to serialize file paths and model names so that they are pushed on loading save files. Likewise, let's not include models that were already parsed when initialized.
+	if (queryModel >= 0)
+	{
+		FString fullName;
+		fullName.Format("%s%s", modelpath.GetChars(), model.GetChars());
+		bool allowPush = true;
+		for (unsigned i = 0; i < savedModelFiles.Size(); i++) if (!savedModelFiles[i].CompareNoCase(fullName)) allowPush = false;
+		for (unsigned i = 0; i < Models.Size()-1; i++) if (!Models[i]->mFileName.CompareNoCase(fullName)) allowPush = false;
+
+		if(allowPush) savedModelFiles.Push(fullName);
+	}
+	//Same for animations
+	if (queryAnimation >= 0)
+	{
+		FString fullName;
+		fullName.Format("%s%s", animationpath.GetChars(), animation.GetChars());
+		bool allowPush = true;
+		for (unsigned i = 0; i < savedModelFiles.Size(); i++) if (!savedModelFiles[i].CompareNoCase(fullName)) allowPush = false;
+		for (unsigned i = 0; i < Models.Size() - 1; i++) if (!Models[i]->mFileName.CompareNoCase(fullName)) allowPush = false;
+
+		if (allowPush) savedModelFiles.Push(fullName);
+	}
+
+	//[SM] - if an indice of modelIDs or skinIDs comes up blank and it's the last one, just delete it. For using very large amounts of indices, common sense says to just not run this repeatedly.
+	while (mobj->modelData->modelIDs.Size() > 0 && mobj->modelData->modelIDs.Last() == -1)
+		mobj->modelData->modelIDs.Pop(mobj->modelData->modelIDs.Last());
+	while (mobj->modelData->modelFrameGenerators.Size() > 0 && mobj->modelData->modelFrameGenerators.Last() == -1)
+		mobj->modelData->modelFrameGenerators.Pop(mobj->modelData->modelFrameGenerators.Last());
+	while (mobj->modelData->skinIDs.Size() > 0 && mobj->modelData->skinIDs.Last() == FNullTextureID())
+		mobj->modelData->skinIDs.Pop(mobj->modelData->skinIDs.Last());
+	while (mobj->modelData->surfaceSkinIDs.Size() > 0 && mobj->modelData->surfaceSkinIDs.Last() == FNullTextureID())
+		mobj->modelData->surfaceSkinIDs.Pop(mobj->modelData->surfaceSkinIDs.Last());
+	while (mobj->modelData->animationIDs.Size() > 0 && mobj->modelData->animationIDs.Last() == -1)
+		mobj->modelData->animationIDs.Pop(mobj->modelData->animationIDs.Last());
+	
+	if (mobj->modelData->modelIDs.Size() == 0 && mobj->modelData->modelFrameGenerators.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && mobj->modelData->surfaceSkinIDs.Size() == 0 && mobj->modelData->animationIDs.Size() == 0 && modeldef == NAME_None)
+	{
+		mobj->hasmodel = mobj->modelData->hasModel;
+		mobj->modelData->modelIDs.Reset();
+		mobj->modelData->modelFrameGenerators.Reset();
+		mobj->modelData->skinIDs.Reset();
+		mobj->modelData->surfaceSkinIDs.Reset();
+		mobj->modelData->animationIDs.Reset();
+		mobj->modelData->Destroy();
+	}
+
 	return 0;
 }
 

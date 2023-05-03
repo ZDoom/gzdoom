@@ -47,7 +47,10 @@ OptionMenu VideoOptionsSimple protected
 	Title "$DSPLYMNU_TITLE"
 
 	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
-	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	IfOption(SWRender)
+	{
+		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	}
 	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
 	IfOption(Mac)
 	{
@@ -63,7 +66,7 @@ OptionMenu VideoOptionsSimple protected
 	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
 	StaticText " "
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
-	Option "$VIDMNU_MAXFPS",					"vid_maxfps", "MaxFps"
+	Slider "$VIDMNU_MAXFPS",					"vid_maxfps", 35, 500, 1
 	StaticText " "
 	Slider "$DSPLYMNU_GAMMA",					"vid_gamma",					0.75, 3.0, 0.05, 2
 	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
@@ -100,6 +103,7 @@ OptionMenu MiscOptionsSimple protected
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
 	Option "$OPTMNU_LANGUAGE",					"language", "LanguageOptions"
+	Option "$MSGMNU_LONGSAVEMESSAGES",			"longsavemessages",	"OnOff"
 }
 
 OptionMenu "MouseOptionsSimple" protected
@@ -113,8 +117,8 @@ OptionMenu "MouseOptionsSimple" protected
 	}
 	Option "$MOUSEMNU_CURSOR",			"vid_cursor", "Cursors"
 	StaticText 	""
-	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.5, 8, 0.25
-	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.5, 8, 0.25
+	Slider "$MOUSEMNU_SENSITIVITY_X",	"m_sensitivity_x", 0.1, 8, 0.05
+	Slider "$MOUSEMNU_SENSITIVITY_Y",	"m_sensitivity_y", 0.1, 8, 0.05
 	StaticText 	""
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 }

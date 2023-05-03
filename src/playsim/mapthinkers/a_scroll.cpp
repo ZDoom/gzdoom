@@ -119,7 +119,7 @@ void DScroller::Serialize(FSerializer &arc)
 static void RotationComp(const sector_t *sec, int which, double dx, double dy, double &tdx, double &tdy)
 {
 	DAngle an = sec->GetAngle(which);
-	if (an == 0)
+	if (an == nullAngle)
 	{
 		tdx = dx;
 		tdy = dy;

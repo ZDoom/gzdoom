@@ -843,7 +843,7 @@ void FString::StripLeftRight ()
 	}
 	for (j = max - 1; j >= i; --j)
 	{
-		if (Chars[i] < 0 || !isspace((unsigned char)Chars[j]))
+		if (Chars[j] < 0 || !isspace((unsigned char)Chars[j]))
 			break;
 	}
 	if (i == 0 && j == max - 1)
@@ -863,7 +863,7 @@ void FString::StripLeftRight ()
 	{
 		FStringData *old = Data();
 		AllocBuffer(j - i + 1);
-		StrCopy(Chars, old->Chars(), j - i + 1);
+		StrCopy(Chars, old->Chars() + i, j - i + 1);
 		old->Release();
 	}
 }
@@ -899,8 +899,8 @@ void FString::StripLeftRight (const char *charset)
 	else
 	{
 		FStringData *old = Data();
-		AllocBuffer (j - i);
-		StrCopy (Chars, old->Chars(), j - i);
+		AllocBuffer (j - i + 1);
+		StrCopy (Chars, old->Chars() + i, j - i + 1);
 		old->Release();
 	}
 }

@@ -78,6 +78,7 @@ public:
 	uint32_t Flags;
 	int BitValue;
 	FString DeprecationMessage;
+	int mDefFileNo = 0;
 protected:
 	PField();
 };
@@ -212,8 +213,8 @@ struct PSymbolTable
 	// a symbol with the same name is already in the table. This symbol is
 	// not copied and will be freed when the symbol table is destroyed.
 	PSymbol *AddSymbol (PSymbol *sym);
-	PField *AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align = nullptr);
-	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue);
+	PField *AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align = nullptr, int fileno = 0);
+	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue, int fileno = 0);
 	bool ReadFields(FSerializer &ar, void *addr, const char *TypeName) const;
 	void WriteFields(FSerializer &ar, const void *addr, const void *def = nullptr) const;
 

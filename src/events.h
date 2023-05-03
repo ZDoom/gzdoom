@@ -77,6 +77,7 @@ public:
 	void OnUnregister();
 
 	//
+	void OnEngineInitialize();
 	void WorldLoaded();
 	void WorldUnloaded(const FString& nextmap);
 	void WorldThingSpawned(AActor* actor);
@@ -111,7 +112,7 @@ public:
 	void PostUiTick();
 	
 	// 
-	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);
+	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui);
 
 	//
 	void CheckReplacement(PClassActor* replacee, PClassActor** replacement, bool* final);
@@ -230,6 +231,8 @@ struct EventManager
 	// shutdown handlers
 	void Shutdown();
 
+	// after the engine is done creating data
+	void OnEngineInitialize();
 	// called right after the map has loaded (approximately same time as OPEN ACS scripts)
 	void WorldLoaded();
 	// called when the map is about to unload (approximately same time as UNLOADING ACS scripts)
@@ -281,7 +284,7 @@ struct EventManager
 	// this executes on events.
 	bool Responder(const event_t* ev); // splits events into InputProcess and UiProcess
 	// this executes on console/net events.
-	void Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
+	void Console(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui);
 
 	// called when looking up the replacement for an actor class
 	bool CheckReplacement(PClassActor* replacee, PClassActor** replacement);

@@ -41,9 +41,14 @@
 #include "hw_viewpointbuffer.h"
 #include "flatvertices.h"
 #include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
 #include "v_draw.h"
+#include "a_corona.h"
+#include "texturemanager.h"
+#include "actorinlines.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
@@ -54,6 +59,8 @@ CVAR(Int, gl_enhanced_nv_stealth, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_texture, true, 0)
 CVAR(Float, gl_mask_threshold, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CVAR(Bool, gl_coronas, true, CVAR_ARCHIVE);
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
@@ -158,6 +165,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 		}
 		VPUniforms.mClipLine.X = -10000000.0f;
 		VPUniforms.mShadowmapFilter = gl_shadowmap_filter;
+		VPUniforms.mLightBlendMode = (level.info ? (int)level.info->lightblendmode : 0);
 	}
 	mClipper->SetViewpoint(Viewpoint);
 
@@ -165,6 +173,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
 	hudsprites.Clear();
+//	Coronas.Clear();
 	vpIndex = 0;
 
 	// Fullbright information needs to be propagated from the main view.
@@ -341,15 +350,15 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 
 angle_t HWDrawInfo::FrustumAngle()
 {
-	float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees);
+	float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees());
 
 	// If the pitch is larger than this you can look all around at a FOV of 90°
 	if (tilt > 46.0f) return 0xffffffff;
 
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
-	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
-	angle_t a1 = DAngle(floatangle).BAMs();
+	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees() * 48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
+	angle_t a1 = DAngle::fromDeg(floatangle).BAMs();
 	if (a1 >= ANGLE_180) return 0xffffffff;
 	return a1;
 }
@@ -366,9 +375,9 @@ void HWDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float
 	float planemult = planemirror ? -Level->info->pixelstretch : Level->info->pixelstretch;
 
 	VPUniforms.mViewMatrix.loadIdentity();
-	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees, 0.0f, 0.0f, 1.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees, 0.0f, mult, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees(), 0.0f, 0.0f, 1.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees(), 1.0f, 0.0f, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees(), 0.0f, mult, 0.0f);
 	VPUniforms.mViewMatrix.translate(vx * mult, -vz * planemult, -vy);
 	VPUniforms.mViewMatrix.scale(-mult, planemult, 1);
 }
@@ -439,6 +448,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	// clip the scene and fill the drawlists
 	screen->mVertexData->Map();
 	screen->mLights->Map();
+	screen->mBones->Map();
 
 	RenderBSP(Level->HeadNode(), drawpsprites);
 
@@ -451,6 +461,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	PrepareUnhandledMissingTextures();
 	DispatchRenderHacks();
 	screen->mLights->Unmap();
+	screen->mBones->Unmap();
 	screen->mVertexData->Unmap();
 
 	ProcessAll.Unclock();
@@ -569,6 +580,134 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 
 }
 
+void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona, double dist)
+{
+#if 0
+	spriteframe_t* sprframe = &SpriteFrames[sprites[corona->sprite].spriteframes + (size_t)corona->SpawnState->GetFrame()];
+	FTextureID patch = sprframe->Texture[0];
+	if (!patch.isValid()) return;
+	auto tex = TexMan.GetGameTexture(patch, false);
+	if (!tex || !tex->isValid()) return;
+
+	// Project the corona sprite center
+	FVector4 worldPos((float)corona->X(), (float)corona->Z(), (float)corona->Y(), 1.0f);
+	FVector4 viewPos, clipPos;
+	VPUniforms.mViewMatrix.multMatrixPoint(&worldPos[0], &viewPos[0]);
+	VPUniforms.mProjectionMatrix.multMatrixPoint(&viewPos[0], &clipPos[0]);
+	if (clipPos.W < -1.0f) return; // clip z nearest
+	float halfViewportWidth = screen->GetWidth() * 0.5f;
+	float halfViewportHeight = screen->GetHeight() * 0.5f;
+	float invW = 1.0f / clipPos.W;
+	float screenX = halfViewportWidth + clipPos.X * invW * halfViewportWidth;
+	float screenY = halfViewportHeight - clipPos.Y * invW * halfViewportHeight;
+
+	float alpha = corona->CoronaFade * float(corona->Alpha);
+
+	// distance-based fade - looks better IMO
+	float distNearFadeStart = float(corona->RenderRadius()) * 0.1f;
+	float distFarFadeStart = float(corona->RenderRadius()) * 0.5f;
+	float distFade = 1.0f;
+
+	if (float(dist) < distNearFadeStart)
+		distFade -= abs(((float(dist) - distNearFadeStart) / distNearFadeStart));
+	else if (float(dist) >= distFarFadeStart)
+		distFade -= (float(dist) - distFarFadeStart) / distFarFadeStart;
+
+	alpha *= distFade;
+
+	state.SetColorAlpha(0xffffff, alpha, 0);
+	if (isSoftwareLighting()) state.SetSoftLightLevel(255);
+	else state.SetNoSoftLightLevel();
+
+	state.SetLightIndex(-1);
+	state.SetRenderStyle(corona->RenderStyle);
+	state.SetTextureMode(corona->RenderStyle);
+
+	state.SetMaterial(tex, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, 0, 0);
+
+	float scale = screen->GetHeight() / 1000.0f;
+	float tileWidth = corona->Scale.X * tex->GetDisplayWidth() * scale;
+	float tileHeight = corona->Scale.Y * tex->GetDisplayHeight() * scale;
+	float x0 = screenX - tileWidth, y0 = screenY - tileHeight;
+	float x1 = screenX + tileWidth, y1 = screenY + tileHeight;
+
+	float u0 = 0.0f, v0 = 0.0f;
+	float u1 = 1.0f, v1 = 1.0f;
+
+	auto vert = screen->mVertexData->AllocVertices(4);
+	auto vp = vert.first;
+	unsigned int vertexindex = vert.second;
+
+	vp[0].Set(x0, y0, 1.0f, u0, v0);
+	vp[1].Set(x1, y0, 1.0f, u1, v0);
+	vp[2].Set(x0, y1, 1.0f, u0, v1);
+	vp[3].Set(x1, y1, 1.0f, u1, v1);
+
+	state.Draw(DT_TriangleStrip, vertexindex, 4);
+#endif
+}
+
+static ETraceStatus CheckForViewpointActor(FTraceResults& res, void* userdata)
+{
+	FRenderViewpoint* data = (FRenderViewpoint*)userdata;
+	if (res.HitType == TRACE_HitActor && res.Actor && res.Actor == data->ViewActor)
+	{
+		return TRACE_Skip;
+	}
+
+	return TRACE_Stop;
+}
+
+
+void HWDrawInfo::DrawCoronas(FRenderState& state)
+{
+	state.EnableDepthTest(false);
+	state.SetDepthMask(false);
+
+	HWViewpointUniforms vp = VPUniforms;
+	vp.mViewMatrix.loadIdentity();
+	vp.mProjectionMatrix = VRMode::GetVRMode(true)->GetHUDSpriteProjection();
+	screen->mViewpoints->SetViewpoint(state, &vp);
+
+	float timeElapsed = (screen->FrameTime - LastFrameTime) / 1000.0f;
+	LastFrameTime = screen->FrameTime;
+
+#if 0
+	for (ACorona* corona : Coronas)
+	{
+		auto cPos = corona->Vec3Offset(0., 0., corona->Height * 0.5);
+		DVector3 direction = Viewpoint.Pos - cPos;
+		double dist = direction.Length();
+
+		// skip coronas that are too far
+		if (dist > corona->RenderRadius())
+			continue;
+
+		static const float fadeSpeed = 9.0f;
+
+		direction.MakeUnit();
+		FTraceResults results;
+		if (!Trace(cPos, corona->Sector, direction, dist, MF_SOLID, ML_BLOCKEVERYTHING, corona, results, 0, CheckForViewpointActor, &Viewpoint))
+		{
+			corona->CoronaFade = std::min(corona->CoronaFade + timeElapsed * fadeSpeed, 1.0f);
+		}
+		else
+		{
+			corona->CoronaFade = std::max(corona->CoronaFade - timeElapsed * fadeSpeed, 0.0f);
+		}
+
+		if (corona->CoronaFade > 0.0f)
+			DrawCorona(state, corona, dist);
+	}
+#endif
+
+	state.SetTextureMode(TM_NORMAL);
+	screen->mViewpoints->Bind(state, vpIndex);
+	state.EnableDepthTest(true);
+	state.SetDepthMask(true);
+}
+
+
 //-----------------------------------------------------------------------------
 //
 // Draws player sprites and color blend
@@ -579,6 +718,11 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 void HWDrawInfo::EndDrawScene(sector_t * viewsector, FRenderState &state)
 {
 	state.EnableFog(false);
+
+	/*if (gl_coronas && Coronas.Size() > 0)
+	{
+		DrawCoronas(state);
+	}*/
 
 	// [BB] HUD models need to be rendered here. 
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);

@@ -61,7 +61,7 @@ class FPatchTexture : public FImageSource
 	bool isalpha = false;
 public:
 	FPatchTexture (int lumpnum, int w, int h, int lo, int to, bool isalphatex);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 	bool SupportRemap0() override { return !badflag; }
 	void DetectBadPatches();
@@ -166,7 +166,7 @@ FPatchTexture::FPatchTexture (int lumpnum, int w, int h, int lo, int to, bool is
 //
 //==========================================================================
 
-TArray<uint8_t> FPatchTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FPatchTexture::CreatePalettedPixels(int conversion)
 {
 	uint8_t *remap, remaptable[256];
 	int numspans;
@@ -189,7 +189,7 @@ TArray<uint8_t> FPatchTexture::CreatePalettedPixels(int conversion)
 
 	if (badflag)
 	{
-		TArray<uint8_t> Pixels(Width * Height, true);
+		PalettedPixels Pixels(Width * Height);
 		uint8_t *out;
 
 		// Draw the image to the buffer
@@ -210,7 +210,7 @@ TArray<uint8_t> FPatchTexture::CreatePalettedPixels(int conversion)
 
 	numspans = Width;
 
-	TArray<uint8_t> Pixels(numpix, true);
+	PalettedPixels Pixels(numpix);
 	memset (Pixels.Data(), 0, numpix);
 
 	// Draw the image to the buffer

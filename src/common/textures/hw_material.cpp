@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -79,17 +79,17 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 			mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
 		}
 		// Note that the material takes no ownership of the texture!
-		else if (tx->Normal.get() && tx->Specular.get())
+		else if (tx->Layers && tx->Layers->Normal.get() && tx->Layers->Specular.get())
 		{
-			for (auto &texture : { tx->Normal.get(), tx->Specular.get() })
+			for (auto &texture : { tx->Layers->Normal.get(), tx->Layers->Specular.get() })
 			{
 				mTextureLayers.Push({ texture, 0, -1 });
 			}
 			mShaderIndex = SHADER_Specular;
 		}
-		else if (tx->Normal.get() && tx->Metallic.get() && tx->Roughness.get() && tx->AmbientOcclusion.get())
+		else if (tx->Layers && tx->Layers->Normal.get() && tx->Layers->Metallic.get() && tx->Layers->Roughness.get() && tx->Layers->AmbientOcclusion.get())
 		{
-			for (auto &texture : { tx->Normal.get(), tx->Metallic.get(), tx->Roughness.get(), tx->AmbientOcclusion.get() })
+			for (auto &texture : { tx->Layers->Normal.get(), tx->Layers->Metallic.get(), tx->Layers->Roughness.get(), tx->Layers->AmbientOcclusion.get() })
 			{
 				mTextureLayers.Push({ texture, 0, -1 });
 			}
@@ -108,18 +108,18 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{ 
 			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
 		}
-		if (tx->Detailmap.get())
+		if (tx->Layers && tx->Layers->Detailmap.get())
 		{
-			mTextureLayers.Push({ tx->Detailmap.get(), 0, CLAMP_NONE });
+			mTextureLayers.Push({ tx->Layers->Detailmap.get(), 0, CLAMP_NONE });
 			mLayerFlags |= TEXF_Detailmap;
 		}
 		else
 		{
 			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
 		}
-		if (tx->Glowmap.get())
+		if (tx->Layers && tx->Layers->Glowmap.get())
 		{
-			mTextureLayers.Push({ tx->Glowmap.get(), scaleflags, -1 });
+			mTextureLayers.Push({ tx->Layers->Glowmap.get(), scaleflags, -1 });
 			mLayerFlags |= TEXF_Glowmap;
 		}
 		else
@@ -135,10 +135,13 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 				const UserShaderDesc& usershader = usershaders[index - FIRST_USER_SHADER];
 				if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
 				{
-					for (auto& texture : tx->CustomShaderTextures)
+					if (tx->Layers)
 					{
-						if (texture == nullptr) continue;
-						mTextureLayers.Push({ texture.get(), 0 });	// scalability should be user-definable.
+						for (auto& texture : tx->Layers->CustomShaderTextures)
+						{
+							if (texture == nullptr) continue;
+							mTextureLayers.Push({ texture.get(), 0 });	// scalability should be user-definable.
+						}
 					}
 					mShaderIndex = index;
 				}

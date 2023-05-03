@@ -68,14 +68,14 @@ void FSavegameManager::ReadSaveStrings()
 
 		LastSaved = LastAccessed = -1;
 		quickSaveSlot = nullptr;
-		filter = G_BuildSaveName("*." SAVEGAME_EXT, -1);
+		filter = G_BuildSaveName("*");
 		filefirst = I_FindFirst(filter.GetChars(), &c_file);
 		if (filefirst != ((void *)(-1)))
 		{
 			do
 			{
 				// I_FindName only returns the file's name and not its full path
-				FString filepath = G_BuildSaveName(I_FindName(&c_file), -1);
+				FString filepath = G_BuildSaveName(I_FindName(&c_file));
 
 				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(filepath, true, true));
 				if (savegame != nullptr)
@@ -252,7 +252,7 @@ FString FSavegameManager::ExtractSaveComment(FSerializer &arc)
 
 FString FSavegameManager::BuildSaveName(const char* prefix, int slot)
 {
-	return G_BuildSaveName(prefix, slot);
+	return G_BuildSaveName(FStringf("%s%02d", prefix, slot));
 }
 
 //=============================================================================

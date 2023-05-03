@@ -861,6 +861,7 @@ type_name1(X) ::= DOUBLE(T).				{ X.Int = ZCC_Float64; X.SourceLoc = T.SourceLoc
 //type_name1(X) ::= STRING(T).				{ X.Int = ZCC_String; X.SourceLoc = T.SourceLoc; } // [ZZ] it's handled elsewhere. this particular line only causes troubles in the form of String.Format being invalid.
 type_name1(X) ::= VECTOR2(T).				{ X.Int = ZCC_Vector2; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= VECTOR3(T).				{ X.Int = ZCC_Vector3; X.SourceLoc = T.SourceLoc; }
+type_name1(X) ::= VECTOR4(T).				{ X.Int = ZCC_Vector4; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= NAME(T).					{ X.Int = ZCC_Name; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= SOUND(T).					{ X.Int = ZCC_Sound; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= STATE(T).					{ X.Int = ZCC_State; X.SourceLoc = T.SourceLoc; }
@@ -931,7 +932,7 @@ type_name(X) ::= DOT dottable_id(A).
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 NAME MAP ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16 PROPERTY.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR2 VECTOR3 VECTOR4 NAME MAP MAPITERATOR ARRAY VOID STATE COLOR SOUND UINT8 INT8 UINT16 INT16 PROPERTY.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}
@@ -943,12 +944,20 @@ type_name(X) ::= DOT dottable_id(A).
 %type array_size{ZCC_Expression *}
 %type array_size_expr{ZCC_Expression *}
 
-aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* Hash table */
+aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* ZSMap<K, V> */
 {
 	NEW_AST_NODE(MapType,map,T);
 	map->KeyType = A;
 	map->ValueType = B;
 	X = map;
+}
+
+aggregate_type(X) ::= MAPITERATOR(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* ZSMapIterator<K, V> */
+{
+	NEW_AST_NODE(MapIteratorType,map_it,T);
+	map_it->KeyType = A;
+	map_it->ValueType = B;
+	X = map_it;
 }
 
 aggregate_type(X) ::= ARRAY(T) LT type_or_array(A) GT.							/* TArray<type> */
@@ -1303,6 +1312,17 @@ primary(X) ::= SUPER(T).
 	X = expr;
 }
 primary(X) ::= constant(A).				{ X = A; /*X-overwrites-A*/ }
+primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) COMMA expr(D) RPAREN. [DOT]
+{
+	NEW_AST_NODE(VectorValue, expr, A);
+	expr->Operation = PEX_Vector;
+	expr->Type = TypeVector4;
+	expr->X = A;
+	expr->Y = B;
+	expr->Z = C;
+	expr->W = D;
+	XX = expr;
+}
 primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN. [DOT]
 {
 	NEW_AST_NODE(VectorValue, expr, A);
@@ -1311,6 +1331,7 @@ primary(XX) ::= LPAREN expr(A) COMMA expr(B) COMMA expr(C) RPAREN. [DOT]
 	expr->X = A;
 	expr->Y = B;
 	expr->Z = C;
+	expr->W = nullptr;
 	XX = expr;
 }
 primary(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN. [DOT]
@@ -1321,6 +1342,7 @@ primary(XX) ::= LPAREN expr(A) COMMA expr(B) RPAREN. [DOT]
 	expr->X = A;
 	expr->Y = B;
 	expr->Z = nullptr;
+	expr->W = nullptr;
 	XX = expr;
 }
 primary(X) ::= LPAREN expr(A) RPAREN.
@@ -1815,8 +1837,10 @@ statement(X) ::= compound_statement(A).				{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
+statement(X) ::= array_iteration_statement(X).
 statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= assign_decl_statement(A) SEMICOLON.{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= error SEMICOLON.					{ X = NULL; }
 statement(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
@@ -1972,6 +1996,17 @@ iteration_statement(X) ::= FOR(T) LPAREN for_init(IN) SEMICOLON opt_expr(EX) SEM
 	X = wrap;
 }
 
+%type array_iteration_statement{ZCC_Statement *}
+
+array_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(IN) COLON expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(ArrayIterationStmt, iter, T);
+	iter->ItName = IN;
+	iter->ItArray = EX;
+	iter->LoopStatement = ST;
+	X = iter;
+}
+
 while_or_until(X) ::= WHILE(T).
 {
 	X.Int = ZCC_WHILE;
@@ -2058,6 +2093,17 @@ labeled_statement(X) ::= DEFAULT(T) COLON.
 assign_statement(X) ::= LBRACKET expr_list(A) RBRACKET EQ expr(B). [EQ]
 {
 	NEW_AST_NODE(AssignStmt,stmt,A);
+	stmt->AssignOp = ZCC_EQ;
+	stmt->Dests = A;
+	stmt->Sources = B;
+	X = stmt;
+}
+
+%type assign_decl_statement{ZCC_AssignDeclStmt *}
+
+assign_decl_statement(X) ::= LET LBRACKET identifier_list(A) RBRACKET EQ expr(B). [EQ]
+{
+	NEW_AST_NODE(AssignDeclStmt,stmt,A);
 	stmt->AssignOp = ZCC_EQ;
 	stmt->Dests = A;
 	stmt->Sources = B;

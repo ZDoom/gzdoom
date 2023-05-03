@@ -6,7 +6,7 @@
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
+// the Free Software Foundation, either version 2 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -38,6 +38,7 @@
 #include "shaderuniforms.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
 #include "i_specialpaths.h"
 #include "printf.h"
 #include "version.h"
@@ -234,6 +235,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			float uClipHeight;
 			float uClipHeightDirection;
 			int uShadowmapFilter;
+			
+			int uLightBlendMode;
 		};
 
 		uniform int uTextureMode;
@@ -276,6 +279,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		// dynamic lights
 		uniform int uLightIndex;
 
+		// bone animation
+		uniform int uBoneIndexBase;
+
 		// Blinn glossiness and specular level
 		uniform vec2 uSpecularMaterial;
 
@@ -297,6 +303,19 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		};
 		#endif
 
+		// bone matrix buffers
+		#ifdef SHADER_STORAGE_BONES
+		layout(std430, binding = 7) buffer BoneBufferSSO
+		{
+			mat4 bones[];
+		};
+		#elif defined NUM_UBO_BONES
+		uniform BoneBufferUBO
+		{
+			mat4 bones[NUM_UBO_BONES];
+		};
+		#endif
+
 		// textures
 		uniform sampler2D tex;
 		uniform sampler2D ShadowMap;
@@ -311,6 +330,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		uniform sampler2D texture9;
 		uniform sampler2D texture10;
 		uniform sampler2D texture11;
+		uniform sampler2D texture12;
 
 		// timer data
 		uniform float timer;
@@ -369,26 +389,19 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FString vp_comb;
 
 	assert(screen->mLights != NULL);
+	assert(screen->mBones != NULL);
 
-	bool lightbuffertype = screen->mLights->GetBufferType();
-	unsigned int lightbuffersize = screen->mLights->GetBlockSize();
-	if (!lightbuffertype)
-	{
-		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-	}
-	else
-	{
-		// This differentiation is for Intel which do not seem to expose the full extension, even if marked as required.
-		if (gl.glslversion < 4.3f)
-			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
-		else
-			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
-	}
 
 	if ((gl.flags & RFL_SHADER_STORAGE_BUFFER) && screen->allowSSBO())
-	{
-		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
-	}
+		vp_comb << "#version 430 core\n#define SUPPORTS_SHADOWMAPS\n";
+	else 
+		vp_comb << "#version 330 core\n";
+
+	bool lightbuffertype = screen->mLights->GetBufferType();
+	if (!lightbuffertype)
+		vp_comb.AppendFormat("#define NUM_UBO_LIGHTS %d\n#define NUM_UBO_BONES %d\n", screen->mLights->GetBlockSize(), screen->mBones->GetBlockSize());
+	else
+		vp_comb << "#define SHADER_STORAGE_LIGHTS\n#define SHADER_STORAGE_BONES\n";
 
 	FString fp_comb = vp_comb;
 	vp_comb << defines << i_data.GetChars();
@@ -576,6 +589,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muLightParms.Init(hShader, "uLightAttr");
 	muClipSplit.Init(hShader, "uClipSplit");
 	muLightIndex.Init(hShader, "uLightIndex");
+	muBoneIndexBase.Init(hShader, "uBoneIndexBase");
 	muFogColor.Init(hShader, "uFogColor");
 	muDynLightColor.Init(hShader, "uDynLightColor");
 	muObjectColor.Init(hShader, "uObjectColor");
@@ -610,6 +624,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	{
 		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
+
+		tempindex = glGetUniformBlockIndex(hShader, "BoneBufferUBO");
+		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, BONEBUF_BINDINGPOINT);
 	}
 	int tempindex = glGetUniformBlockIndex(hShader, "ViewpointUBO");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, VIEWPOINT_BINDINGPOINT);

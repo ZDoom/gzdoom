@@ -13,7 +13,7 @@ vec3 lightContribution(int i, vec3 normal)
 	vec3 lightdir = normalize(lightpos.xyz - pixelpos.xyz);
 	float dotprod = dot(normal, lightdir);
 	if (dotprod < -0.0001) return vec3(0.0);	// light hits from the backside. This can happen with full sector light lists and must be rejected for all cases. Note that this can cause precision issues.
-	
+
 	float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
 
 	if (lightspot1.w == 1.0)
@@ -59,7 +59,21 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 		}
 	}
 
-	vec3 frag = material.Base.rgb * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+	vec3 frag;
+
+	if ( uLightBlendMode == 1 )
+	{	// COLOR_CORRECT_CLAMPING 
+		vec3 lightcolor = color + desaturate(dynlight).rgb;
+		frag = material.Base.rgb * ((lightcolor / max(max(max(lightcolor.r, lightcolor.g), lightcolor.b), 1.4) * 1.4));
+	}
+	else if ( uLightBlendMode == 2 )
+	{	// UNCLAMPED 
+		frag = material.Base.rgb * (color + desaturate(dynlight).rgb);
+	}
+	else
+	{
+		frag = material.Base.rgb * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+	}
 
 	if (uLightIndex >= 0)
 	{
@@ -67,7 +81,7 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 		if (lightRange.w > lightRange.z)
 		{
 			vec4 addlight = vec4(0.0,0.0,0.0,0.0);
-				
+
 			// additive lights
 			for(int i=lightRange.z; i<lightRange.w; i+=4)
 			{

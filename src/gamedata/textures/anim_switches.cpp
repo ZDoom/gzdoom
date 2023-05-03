@@ -87,7 +87,7 @@ void FTextureAnimator::InitSwitchList ()
 				def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 				def1->PreTexture = def2->frames[0].Texture = TexMan.CheckForTexture (list_p /* .name1 */, ETextureType::Wall, texflags);
 				def2->PreTexture = def1->frames[0].Texture = TexMan.CheckForTexture (list_p + 9, ETextureType::Wall, texflags);
-				def1->Sound = def2->Sound = 0;
+				def1->Sound = def2->Sound = NO_SOUND;
 				def1->NumFrames = def2->NumFrames = 1;
 				def1->frames[0].TimeMin = def2->frames[0].TimeMin = 0;
 				def1->frames[0].TimeRnd = def2->frames[0].TimeRnd = 0;
@@ -229,7 +229,7 @@ FSwitchDef *FTextureAnimator::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	FSwitchDef::frame thisframe;
 	FTextureID picnum;
 	bool bad;
-	FSoundID sound = 0;
+	FSoundID sound = NO_SOUND;
 
 	bad = false;
 
@@ -237,12 +237,12 @@ FSwitchDef *FTextureAnimator::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	{
 		if (sc.Compare ("sound"))
 		{
-			if (sound != 0)
+			if (sound != NO_SOUND)
 			{
 				sc.ScriptError ("Switch state already has a sound");
 			}
 			sc.MustGetString ();
-			sound = sc.String;
+			sound = S_FindSound(sc.String);
 		}
 		else if (sc.Compare ("pic"))
 		{

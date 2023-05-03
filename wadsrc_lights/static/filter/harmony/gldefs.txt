@@ -131,7 +131,7 @@ object Soldier
 	frame CPOSF { light ZOMBIEATK }
 }
 
-object Echida
+object Echidna
 {
 	frame SPIDG { light ZOMBIEATK }
 }

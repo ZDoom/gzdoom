@@ -81,8 +81,6 @@ bool G_Responder (event_t*	ev);
 void G_ScreenShot (const char* filename);
 void G_StartSlideshow(FLevelLocals *Level, FName whichone);
 
-FString G_BuildSaveName (const char *prefix, int slot);
-
 class FSerializer;
 bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn);
 
@@ -107,7 +105,8 @@ class FBaseCVar;
 FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname);
 
 class DIntermissionController;
-void RunIntermission(DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf);
+struct level_info_t;
+void RunIntermission(level_info_t* oldlevel, level_info_t* newlevel, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf);
 
 extern const AActor *SendItemUse, *SendItemDrop;
 extern int SendItemDropAmount;

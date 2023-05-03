@@ -44,6 +44,7 @@
 #include "c_functions.h"
 #include "gstrings.h"
 #include "texturemanager.h"
+#include "d_main.h"
 
 //==========================================================================
 //
@@ -74,7 +75,7 @@ CCMD(listlights)
 			
 			if (dl->target)
 			{
-				FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, 0., nullptr);
+				FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, nullAngle, nullptr);
 				Printf(", frame = %s ", TexMan.GetGameTexture(spr)->GetName().GetChars());
 			}
 			
@@ -360,6 +361,8 @@ CCMD(targetinv)
 
 CCMD(listmaps)
 {
+	int iwadNum = fileSystem.GetIwadNum();
+
 	for (unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
@@ -367,13 +370,20 @@ CCMD(listmaps)
 
 		if (map != NULL)
 		{
+			int mapWadNum = fileSystem.GetFileContainer(map->lumpnum);
+
 			if (argv.argc() == 1 
 			    || CheckWildcards(argv[1], info->MapName.GetChars()) 
 			    || CheckWildcards(argv[1], info->LookupLevelName().GetChars())
-			    || CheckWildcards(argv[1], fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum))))
+			    || CheckWildcards(argv[1], fileSystem.GetResourceFileName(mapWadNum)))
 			{
-				Printf("%s: '%s' (%s)\n", info->MapName.GetChars(), info->LookupLevelName().GetChars(),
-					fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum)));
+				bool isFromPwad = mapWadNum != iwadNum;
+
+				const char* lineColor = isFromPwad ? TEXTCOLOR_LIGHTBLUE : "";
+
+				Printf("%s%s: '%s' (%s)\n", lineColor, info->MapName.GetChars(),
+					info->LookupLevelName().GetChars(),
+					fileSystem.GetResourceFileName(mapWadNum));
 			}
 			delete map;
 		}

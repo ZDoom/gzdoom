@@ -85,8 +85,6 @@ EXTERN_CVAR (Bool, am_showsecrets)
 EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
-EXTERN_CVAR (Bool, noisedebug)
-EXTERN_CVAR(Bool, vid_fps)
 EXTERN_CVAR(Bool, inter_subtitles)
 EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
 
@@ -104,17 +102,6 @@ CVAR (Flag, pf_poison,		paletteflash, PF_POISON)
 CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
 CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
 
-CUSTOM_CVARD(Float, hud_scalefactor, 1, CVAR_ARCHIVE, "changes the hud scale")
-{
-	if (self < 0.36f) self = 0.36f;
-	else if (self > 1) self = 1;
-	else if (StatusBar)
-	{
-		StatusBar->SetScale();
-		setsizeneeded = true;
-	}
-}
-
 
 // Stretch status bar to full screen width?
 CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
@@ -130,14 +117,9 @@ CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
 		setsizeneeded = true;
 	}
 }
-CUSTOM_CVAR(Bool, hud_aspectscale, false, CVAR_ARCHIVE)
-{
-	if (StatusBar)
-	{
-		StatusBar->SetScale();
-		setsizeneeded = true;
-	}
-}
+
+EXTERN_CVAR(Float, hud_scalefactor)
+EXTERN_CVAR(Bool, hud_aspectscale)
 
 CVAR (Bool, crosshairon, true, CVAR_ARCHIVE);
 CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
@@ -548,11 +530,12 @@ void FormatMapName(FLevelLocals *self, int cr, FString *result);
 
 void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 {
-	auto scale = GetUIScale(twod, hud_scale);
+	auto scalev = GetHUDScale();
+	int vwidth = int(twod->GetWidth() / scalev.X);
+	int vheight = int(twod->GetHeight() / scalev.Y);
+	
 	auto font = generic_ui ? NewSmallFont : SmallFont;
 	auto font2 = font;
-	auto vwidth = twod->GetWidth() / scale;
-	auto vheight = twod->GetHeight() / scale;
 	auto fheight = font->GetHeight();
 	FString textbuffer;
 	int sec;
@@ -568,7 +551,6 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 
 	if (am_showtime)
 	{
-		if (vid_fps) y += (NewConsoleFont->GetHeight() * active_con_scale(twod) + 5) / scale;
 		sec = Tics2Seconds(primaryLevel->time);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 		DrawText(twod, font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
@@ -630,7 +612,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	IFVIRTUAL(DStatusBarCore, GetProtrusion)
 	{
 		int prot = 0;
-		VMValue params[] = { this, double(finalwidth * scale / w) };
+		VMValue params[] = { this, double(finalwidth * scalev.X / w) };
 		VMReturn ret(&prot);
 		VMCall(func, params, 2, &ret, 1);
 		h = prot;
@@ -1242,11 +1224,6 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	DrawConsistancy ();
 	DrawWaiting ();
 	if ((ShowLog && MustDrawLog(state)) || (inter_subtitles && CPlayer->SubtitleCounter > 0)) DrawLog ();
-
-	if (noisedebug)
-	{
-		S_NoiseDebug ();
-	}
 }
 
 

@@ -31,9 +31,14 @@ vec4 Dither(vec4 c)
 	return vec4(floor(c.rgb * ColorScale + threshold) / ColorScale, c.a);
 }
 
-vec4 sRGBtoLinear(vec4 c)
+vec3 sRGBtoLinear(vec3 c)
 {
-	return vec4(mix(c.rgb / 12.92, pow((c.rgb + 0.055) / 1.055, vec3(2.4)), step(c.rgb, vec3(0.04045))), c.a);
+	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
+}
+
+vec3 sRGBtoscRGBLinear(vec3 c)
+{
+	return pow(c, vec3(2.2)) * 1.1;
 }
 
 vec4 ApplyHdrMode(vec4 c)
@@ -41,7 +46,7 @@ vec4 ApplyHdrMode(vec4 c)
 	if (HdrMode == 0)
 		return c;
 	else
-		return sRGBtoLinear(c);
+		return vec4(sRGBtoscRGBLinear(c.rgb), c.a);
 }
 
 void main()

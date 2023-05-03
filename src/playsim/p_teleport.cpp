@@ -154,7 +154,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		int nocancel = 1;
 		IFVIRTUALPTR(thing, AActor, PreTeleport)
 		{
-			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees, flags };
+			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees(), flags };
 			VMReturn ret;
 			ret.IntAt(&nocancel);
 			VMCall(func, params, countof(params), &ret, 1);
@@ -170,7 +170,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		player->viewz = thing->Z() + player->viewheight;
 		if (resetpitch)
 		{
-			player->mo->Angles.Pitch = 0.;
+			player->mo->Angles.Pitch = nullAngle;
 		}
 	}
 	if (!(flags & TELF_KEEPORIENTATION))
@@ -230,7 +230,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 	{
 		IFVIRTUALPTR(thing, AActor, PostTeleport)
 		{
-			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees, flags };
+			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees(), flags };
 			VMCall(func, params, countof(params), nullptr, 1);
 		}
 	}
@@ -359,10 +359,10 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 {
 	AActor *searcher;
 	double z;
-	DAngle angle = 0.;
+	DAngle angle = nullAngle;
 	double s = 0, c = 0;
 	double vx = 0, vy = 0;
-	DAngle badangle = 0.;
+	DAngle badangle = nullAngle;
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -389,7 +389,7 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle = line->Delta().Angle() - searcher->Angles.Yaw + 90.;
+		angle = line->Delta().Angle() - searcher->Angles.Yaw + DAngle::fromDeg(90.);
 		if (flags & TELF_ROTATEBOOMINVERSE) angle = -angle;
 
 		// Sine, cosine of angle adjustment
@@ -412,7 +412,7 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 	}
 	if ((i_compatflags2 & COMPATF2_BADANGLES) && (thing->player != NULL))
 	{
-		badangle = 0.01;
+		badangle = DAngle::fromDeg(0.01);
 	}
 	if (P_Teleport (thing, DVector3(searcher->Pos(), z), searcher->Angles.Yaw + badangle, flags))
 	{
@@ -502,7 +502,7 @@ bool FLevelLocals::EV_SilentLineTeleport (line_t *line, int side, AActor *thing,
 
 			if (!reverse)
 			{
-				angle += 180.;
+				angle += DAngle::fromDeg(180.);
 				pos = 1 - pos;
 			}
 
@@ -666,7 +666,7 @@ bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, b
 
 	bool res =
 		P_Teleport (victim, DVector3(dest->Pos().XY() + newp, z),
-							0., flags);
+							nullAngle, flags);
 	// P_Teleport only changes angle if fog is true
 	victim->Angles.Yaw = (dest->Angles.Yaw + victim->Angles.Yaw - source->Angles.Yaw).Normalized360();
 
@@ -725,7 +725,7 @@ bool FLevelLocals::EV_TeleportGroup (int group_tid, AActor *victim, int source_t
 	if (moveSource && didSomething)
 	{
 		didSomething |=
-			P_Teleport (sourceOrigin, destOrigin->PosAtZ(floorz ? ONFLOORZ : destOrigin->Z()), 0., TELF_KEEPORIENTATION);
+			P_Teleport (sourceOrigin, destOrigin->PosAtZ(floorz ? ONFLOORZ : destOrigin->Z()), nullAngle, TELF_KEEPORIENTATION);
 		sourceOrigin->Angles.Yaw = destOrigin->Angles.Yaw;
 	}
 

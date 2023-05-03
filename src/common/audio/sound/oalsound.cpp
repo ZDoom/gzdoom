@@ -110,7 +110,6 @@ ReverbContainer *ForcedEnvironment;
 EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_waterreverb)
-EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Int, snd_hrtf)
 
 
@@ -183,6 +182,8 @@ class OpenALSoundStream : public SoundStream
 	std::atomic<bool> Playing;
 	//bool Looping;
 	ALfloat Volume;
+	uint64_t Offset = 0;
+	std::mutex Mutex;
 
 	bool SetupSource()
 	{
@@ -263,6 +264,7 @@ public:
 			return true;
 
 		/* Clear the buffer queue, then fill and queue each buffer */
+		Offset = 0;
 		alSourcei(Source, AL_BUFFER, 0);
 		for(int i = 0;i < BufferCount;i++)
 		{
@@ -297,6 +299,7 @@ public:
 		alSourcei(Source, AL_BUFFER, 0);
 		getALError();
 
+		Offset = 0;
 		Playing.store(false);
 	}
 
@@ -324,7 +327,45 @@ public:
 	virtual bool IsEnded()
 	{
 		return !Playing.load();
-			}
+	}
+
+	Position GetPlayPosition() override
+	{
+		using namespace std::chrono;
+
+		std::lock_guard _{Mutex};
+		ALint64SOFT offset[2]{};
+		ALint state{}, queued{};
+		alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
+		if(Renderer->AL.SOFT_source_latency)
+		{
+			// AL_SAMPLE_OFFSET_LATENCY_SOFT fills offset[0] with the source sample
+			// offset in 32.32 fixed-point (which we chop off the sub-sample position
+			// since it's not crucial), and offset[1] with the playback latency in
+			// nanoseconds (how many nanoseconds until the sample point in offset[0]
+			// reaches the DAC).
+			Renderer->alGetSourcei64vSOFT(Source, AL_SAMPLE_OFFSET_LATENCY_SOFT, offset);
+			offset[0] >>= 32;
+		}
+		else
+		{
+			// Without AL_SOFT_source_latency, we can only get the sample offset, no
+			// latency info.
+			ALint ioffset{};
+			alGetSourcei(Source, AL_SAMPLE_OFFSET, &ioffset);
+			offset[0] = ioffset;
+			offset[1] = 0;
+		}
+		alGetSourcei(Source, AL_SOURCE_STATE, &state);
+		// If the source is stopped, there was an underrun, so the play position is
+		// the end of the queue.
+		if(state == AL_STOPPED)
+			return Position{Offset + queued*(Data.Size()/FrameSize), nanoseconds{offset[1]}};
+		// The offset is otherwise valid as long as the source has been started.
+		if(state != AL_INITIAL)
+			return Position{Offset + offset[0], nanoseconds{offset[1]}};
+		return Position{0, nanoseconds{0}};
+	}
 
 	virtual FString GetStats()
 		{
@@ -386,8 +427,12 @@ public:
 
 			// Unqueue the oldest buffer, fill it with more data, and queue it
 			// on the end
-			alSourceUnqueueBuffers(Source, 1, &bufid);
-			processed--;
+			{
+				std::lock_guard _{Mutex};
+				alSourceUnqueueBuffers(Source, 1, &bufid);
+				Offset += Data.Size() / FrameSize;
+				processed--;
+			}
 
 			if(Callback(this, &Data[0], Data.Size(), UserData))
 			{
@@ -480,8 +525,6 @@ public:
 #define AREA_SOUND_RADIUS  (32.f)
 
 #define PITCH_MULT (0.7937005f) /* Approx. 4 semitones lower; what Nash suggested */
-
-#define PITCH(pitch) (snd_pitched ? (pitch)/128.f : 1.f)
 
 static size_t GetChannelCount(ChannelConfig chans)
 {
@@ -624,6 +667,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	AL.EXT_SOURCE_RADIUS = !!alIsExtensionPresent("AL_EXT_SOURCE_RADIUS");
 	AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");
 	AL.SOFT_loop_points = !!alIsExtensionPresent("AL_SOFT_loop_points");
+	AL.SOFT_source_latency = !!alIsExtensionPresent("AL_SOFT_source_latency");
 	AL.SOFT_source_resampler = !!alIsExtensionPresent("AL_SOFT_source_resampler");
 	AL.SOFT_source_spatialize = !!alIsExtensionPresent("AL_SOFT_source_spatialize");
 
@@ -651,6 +695,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 		alProcessUpdatesSOFT = _wrap_ProcessUpdatesSOFT;
 	}
 
+	if(AL.SOFT_source_latency)
+		LOAD_FUNC(alGetSourcei64vSOFT);
 	if(AL.SOFT_source_resampler)
 		LOAD_FUNC(alGetStringiSOFT);
 
@@ -1050,7 +1096,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, int length, int 
 	return retval;
 }
 
-SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length)
+SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, int def_loop_start, int def_loop_end)
 {
 	SoundHandle retval = { NULL };
 	ALenum format = AL_NONE;
@@ -1060,7 +1106,16 @@ SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length)
 	uint32_t loop_start = 0, loop_end = ~0u;
 	zmusic_bool startass = false, endass = false;
 
-	FindLoopTags(sfxdata, length, &loop_start, &startass, &loop_end, &endass);
+	if (def_loop_start < 0)
+	{
+		FindLoopTags(sfxdata, length, &loop_start, &startass, &loop_end, &endass);
+	}
+	else
+	{
+		loop_start = def_loop_start;
+		loop_end = def_loop_end;
+		startass = endass = true;
+	}
 	auto decoder = CreateDecoder(sfxdata, length, true);
 	if (!decoder)
 		return retval;
@@ -1175,7 +1230,7 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 	return stream;
 }
 
-FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
+FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, float pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
 {
 	if(FreeSfx.Size() == 0)
 	{
@@ -1221,9 +1276,9 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 		alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
 	}
 	if(WasInWater && !(chanflags&SNDF_NOREVERB))
-		alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
+		alSourcef(source, AL_PITCH, pitch * PITCH_MULT);
 	else
-		alSourcef(source, AL_PITCH, PITCH(pitch));
+		alSourcef(source, AL_PITCH, pitch);
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
 	{
@@ -1277,7 +1332,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 }
 
 FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *listener, float vol,
-	FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
+	FRolloffInfo *rolloff, float distscale, float pitch, int priority, const FVector3 &pos, const FVector3 &vel,
 	int channum, int chanflags, FISoundChannel *reuse_chan, float startTime)
 {
 	float dist_sqr = (float)(pos - listener->position).LengthSquared();
@@ -1389,9 +1444,9 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 		alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
 	}
 	if(WasInWater && !(chanflags&SNDF_NOREVERB))
-		alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
+		alSourcef(source, AL_PITCH, pitch * PITCH_MULT);
 	else
-		alSourcef(source, AL_PITCH, PITCH(pitch));
+		alSourcef(source, AL_PITCH, pitch);
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
 	{
@@ -1713,7 +1768,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 			{
 				ALuint source = GET_PTRID(schan->SysChannel);
 				if (source && !(schan->ChanFlags & CHANF_UI))
-					alSourcef(source, AL_PITCH, schan->Pitch / 128.0f * PITCH_MULT);
+					alSourcef(source, AL_PITCH, schan->Pitch * PITCH_MULT);
 				schan = schan->NextChan;
 			}
 			getALError();
@@ -1751,7 +1806,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 		{
 			ALuint source = GET_PTRID(schan->SysChannel);
 			if (source && !(schan->ChanFlags & CHANF_UI))
-				alSourcef(source, AL_PITCH, schan->Pitch / 128.0f);
+				alSourcef(source, AL_PITCH, schan->Pitch);
 			schan = schan->NextChan;
 		}
 		getALError();

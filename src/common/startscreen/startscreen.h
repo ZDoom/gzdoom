@@ -38,6 +38,7 @@
 #include <stdint.h>
 #include <functional>
 #include "bitmap.h"
+#include "zstring.h"
 
 class FGameTexture;
 
@@ -101,4 +102,5 @@ protected:
 
 FStartScreen* GetGameStartScreen(int max_progress);
 
-extern void ST_Endoom();
+[[noreturn]]
+void ST_Endoom();

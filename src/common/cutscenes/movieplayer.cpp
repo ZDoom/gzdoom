@@ -47,6 +47,10 @@
 #include "filesystem.h"
 #include "vm.h"
 #include "printf.h"
+#include <atomic>
+#include <cmath>
+#include <zmusic.h>
+#include "filereadermusicinterface.h"
 
 class MoviePlayer
 {
@@ -55,6 +59,7 @@ protected:
 	{
 		NOSOUNDCUTOFF = 1,
 		FIXEDVIEWPORT = 2,	// Forces fixed 640x480 screen size like for Blood's intros.
+		NOMUSICCUTOFF = 4,
 	};
 
 	int flags;
@@ -64,6 +69,78 @@ public:
 	virtual void Stop() {}
 	virtual ~MoviePlayer() = default;
 	virtual FTextureID GetTexture() = 0;
+};
+
+//---------------------------------------------------------------------------
+//
+//
+//
+//---------------------------------------------------------------------------
+
+// A simple filter is used to smooth out jittery timers
+static const double AudioAvgFilterCoeff{std::pow(0.01, 1.0/10.0)};
+// A threshold is in place to avoid constantly skipping due to imprecise timers.
+static constexpr double AudioSyncThreshold{0.03};
+
+class MovieAudioTrack
+{
+	SoundStream *AudioStream = nullptr;
+	int SampleRate = 0;
+	int FrameSize = 0;
+	int64_t EndClockDiff = 0;
+
+public:
+	MovieAudioTrack() = default;
+	~MovieAudioTrack()
+	{
+		if(AudioStream)
+			S_StopCustomStream(AudioStream);
+	}
+
+	bool Start(int srate, int channels, MusicCustomStreamType sampletype, StreamCallback callback, void *ptr)
+	{
+		SampleRate = srate;
+		FrameSize = channels * ((sampletype == MusicSamples16bit) ? sizeof(int16_t) : sizeof(float));
+		int bufsize = 40 * SampleRate / 1000 * FrameSize;
+		AudioStream = S_CreateCustomStream(bufsize, SampleRate, channels, sampletype, callback, ptr);
+		return !!AudioStream;
+	}
+
+	void Finish()
+	{
+		if(AudioStream)
+			S_StopCustomStream(AudioStream);
+		AudioStream = nullptr;
+	}
+
+	uint64_t GetClockTime(uint64_t clock)
+	{
+		// If there's no stream playing, report the frame clock adjusted by the audio
+		// end time. This ensures the returned clock keeps incrementing even after
+		// the audio stopped.
+		if(!AudioStream || EndClockDiff != 0)
+			return clock + EndClockDiff;
+
+		auto pos = AudioStream->GetPlayPosition();
+		int64_t postime = static_cast<int64_t>(pos.samplesplayed / double(SampleRate) * 1'000'000'000.0);
+		postime = std::max<int64_t>(0, postime - pos.latency.count());
+
+		if(AudioStream->IsEnded())
+		{
+			// If the stream just ended, get the difference between the frame clock and
+			// the audio end time, so future calls keep incrementing the clock from this
+			// point. An alternative option may be to allow the AudioStream to hook into
+			// the audio device clock, which can keep incrementing at the same rate
+			// without the stream itself actually playing.
+			EndClockDiff = postime - clock;
+		}
+
+		return static_cast<uint64_t>(postime);
+	}
+
+	SoundStream *GetAudioStream() const noexcept { return AudioStream; }
+	int GetSampleRate() const noexcept { return SampleRate; }
+	int GetFrameSize() const noexcept { return FrameSize; }
 };
 
 //---------------------------------------------------------------------------
@@ -133,14 +210,14 @@ public:
 		{
 			if (animSnd[i] == curframe)
 			{
-				int sound = animSnd[i+1];
-				if (sound == -1)
+				auto sound = FSoundID::fromInt(animSnd[i+1]);
+				if (sound == INVALID_SOUND)
 					soundEngine->StopAllChannels();
 				else
 					soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound? CHANF_UI : CHANF_NONE, sound, 1.f, ATTN_NONE);
 			}
 		}
-		if (!nostopsound && curframe == numframes && soundEngine->GetSoundPlayingInfo(SOURCE_None, nullptr, -1)) return true;
+		if (!nostopsound && curframe == numframes && soundEngine->GetSoundPlayingInfo(SOURCE_None, nullptr, INVALID_SOUND)) return true;
 		curframe++;
 		return curframe < numframes;
 	}
@@ -173,7 +250,15 @@ public:
 class MvePlayer : public MoviePlayer
 {
 	InterplayDecoder decoder;
+	MovieAudioTrack audioTrack;
 	bool failed = false;
+
+	bool StreamCallback(SoundStream*, void *buff, int len)
+	{
+		return decoder.FillSamples(buff, len);
+	}
+	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
+	{ return static_cast<MvePlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 public:
 	bool isvalid() { return !failed; }
@@ -192,12 +277,23 @@ public:
 	bool Frame(uint64_t clock) override
 	{
 		if (failed) return false;
-		bool playon = decoder.RunFrame(clock);
+
+		if (!audioTrack.GetAudioStream() && decoder.HasAudio() && clock != 0)
+		{
+			S_StopMusic(true);
+			// start audio playback
+			if (!audioTrack.Start(decoder.GetSampleRate(), decoder.NumChannels(), MusicSamples16bit, StreamCallbackC, this))
+				decoder.DisableAudio();
+		}
+
+		bool playon = decoder.RunFrame(audioTrack.GetClockTime(clock));
 		return playon;
 	}
 
 	~MvePlayer()
 	{
+		audioTrack.Finish();
+
 		decoder.Close();
 	}
 
@@ -220,6 +316,9 @@ class VpxPlayer : public MoviePlayer
 	AnimTextures animtex;
 	const TArray<int> animSnd;
 
+	ZMusic_MusicStream MusicStream = nullptr;
+	MovieAudioTrack AudioTrack;
+
 	unsigned width, height;
 	TArray<uint8_t> Pic;
 	TArray<uint8_t> readBuf;
@@ -239,6 +338,12 @@ class VpxPlayer : public MoviePlayer
 public:
 	int soundtrack = -1;
 
+	bool StreamCallback(SoundStream*, void *buff, int len)
+	{
+		return ZMusic_FillStream(MusicStream, buff, len);
+	}
+	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
+	{ return static_cast<VpxPlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 public:
 	bool isvalid() { return !failed; }
@@ -382,23 +487,17 @@ public:
 		const int ustride = img->stride[VPX_PLANE_U];
 		const int vstride = img->stride[VPX_PLANE_V];
 
-		for (unsigned int y = 0; y < height; y += 2)
+		for (unsigned int y = 0; y < height; y++)
 		{
-			unsigned int y1 = y + 1;
-			unsigned int wy = width * y;
-			unsigned int wy1 = width * y1;
-
-			for (unsigned int x = 0; x < width; x += 2)
+			for (unsigned int x = 0; x < width; x++)
 			{
 				uint8_t u = uplane[ustride * (y >> 1) + (x >> 1)];
 				uint8_t v = vplane[vstride * (y >> 1) + (x >> 1)];
 
-				SetPixel(&Pic[(wy + x) << 2], yplane[ystride * y + x], u, v);
-				SetPixel(&Pic[(wy + x + 1) << 2], yplane[ystride * y + x + 1], u, v);
-				SetPixel(&Pic[(wy1 + x) << 2], yplane[ystride * y1 + x], u, v);
-				SetPixel(&Pic[(wy1 + x + 1) << 2], yplane[ystride * y1 + x + 1], u, v);
+				SetPixel(&Pic[(x + y * width) << 2], yplane[ystride * y + x], u, v);
 			}
 		}
+
 		return true;
 	}
 
@@ -410,9 +509,21 @@ public:
 
 	void Start() override
 	{
-		if (soundtrack > 0)
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
 		{
-			S_ChangeMusic(fileSystem.GetFileFullName(soundtrack, false), 0, false);
+			stream->SetPaused(false);
+		}
+		else if (soundtrack >= 0)
+		{
+			FileReader reader = fileSystem.OpenFileReader(soundtrack);
+			if (reader.isOpen())
+			{
+				MusicStream = ZMusic_OpenSong(GetMusicReader(reader), MDEV_DEFAULT, nullptr);
+			}
+			if (!MusicStream)
+			{
+				Printf(PRINT_BOLD, "Failed to decode %s\n", fileSystem.GetFileFullName(soundtrack, false));
+			}
 		}
 		animtex.SetSize(AnimTexture::YUV, width, height);
 	}
@@ -425,8 +536,31 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
+		if (!AudioTrack.GetAudioStream() && MusicStream && clock != 0)
+		{
+			S_StopMusic(true);
+
+			bool ok = false;
+			SoundStreamInfo info{};
+			ZMusic_GetStreamInfo(MusicStream, &info);
+			// if mBufferSize == 0, the music stream is played externally (e.g.
+			// Windows' MIDI synth), which we can't keep synced. Play anyway?
+			if (info.mBufferSize > 0 && ZMusic_Start(MusicStream, 0, false))
+			{
+				ok = AudioTrack.Start(info.mSampleRate, abs(info.mNumChannels),
+					(info.mNumChannels < 0) ? MusicSamples16bit : MusicSamplesFloat, &StreamCallbackC, this);
+			}
+			if (!ok)
+			{
+				ZMusic_Close(MusicStream);
+				MusicStream = nullptr;
+			}
+		}
+
+		clock = AudioTrack.GetClockTime(clock);
+
 		bool stop = false;
-		if (clock > nextframetime)
+		if (clock >= nextframetime)
 		{
 			nextframetime += nsecsperframe;
 
@@ -452,8 +586,8 @@ public:
 					{
 						if (animSnd[i] == soundframe)
 						{
-							int sound = animSnd[i + 1];
-							if (sound == -1)
+							auto sound = FSoundID::fromInt(animSnd[i + 1]);
+							if (sound == INVALID_SOUND)
 								soundEngine->StopAllChannels();
 							else
 								soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound ? CHANF_UI : CHANF_NONE, sound, 1.f, ATTN_NONE);
@@ -466,15 +600,21 @@ public:
 		return !stop;
 	}
 
-	void Stop()
+	void Stop() override
 	{
-		S_StopMusic(true);
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
+			stream->SetPaused(true);
 		bool nostopsound = (flags & NOSOUNDCUTOFF);
 		if (!nostopsound) soundEngine->StopAllChannels();
 	}
 
 	~VpxPlayer()
 	{
+		if(MusicStream)
+		{
+			AudioTrack.Finish();
+			ZMusic_Close(MusicStream);
+		}
 		vpx_codec_destroy(&codec);
 		animtex.Clean();
 	}
@@ -493,13 +633,10 @@ public:
 
 struct AudioData
 {
-	int hFx;
 	SmackerAudioInfo inf;
 
-	int16_t samples[6000 * 20]; // must be a multiple of the stream buffer size and larger than the initial chunk of audio
-
-	int nWrite;
-	int nRead;
+	int nWrite = 0;
+	int nRead = 0;
 };
 
 class SmkPlayer : public MoviePlayer
@@ -511,46 +648,59 @@ class SmkPlayer : public MoviePlayer
 	uint8_t palette[768];
 	AnimTextures animtex;
 	TArray<uint8_t> pFrame;
-	TArray<uint8_t> audioBuffer;
+	TArray<int16_t> audioBuffer;
 	int nFrames;
 	bool fullscreenScale;
 	uint64_t nFrameNs;
 	int nFrame = 0;
 	const TArray<int> animSnd;
 	FString filename;
-	SoundStream* stream = nullptr;
+	MovieAudioTrack AudioTrack;
 	bool hassound = false;
 
 public:
 	bool isvalid() { return hSMK.isValid; }
 
-	static bool StreamCallbackFunc(SoundStream* stream, void* buff, int len, void* userdata)
+	bool StreamCallback(SoundStream* stream, void* buff, int len)
 	{
-		SmkPlayer* pId = (SmkPlayer*)userdata;
-		memcpy(buff, &pId->adata.samples[pId->adata.nRead], len);
-		pId->adata.nRead += len / 2;
-		if (pId->adata.nRead >= (int)countof(pId->adata.samples)) pId->adata.nRead = 0;
+		const int samplerate = AudioTrack.GetSampleRate();
+		const int framesize = AudioTrack.GetFrameSize();
+
+		int avail = (adata.nWrite - adata.nRead) * 2;
+
+		int wrote = 0;
+		while(wrote < len)
+		{
+			if (avail == 0)
+			{
+				auto read = Smacker_GetAudioData(hSMK, 0, audioBuffer.Data());
+				if (read == 0)
+				{
+					if (wrote == 0)
+						return false;
+					break;
+				}
+
+				adata.nWrite = read / 2;
+				avail = read;
+			}
+
+			int todo = std::min(len-wrote, avail);
+
+			memcpy((char*)buff+wrote, &audioBuffer[adata.nRead], todo);
+			adata.nRead += todo / 2;
+			if(adata.nRead == adata.nWrite)
+				adata.nRead = adata.nWrite = 0;
+			avail -= todo;
+			wrote += todo;
+		}
+
+		if (wrote < len)
+			memset((char*)buff+wrote, 0, len-wrote);
 		return true;
 	}
-
-	void copy8bitSamples(unsigned count)
-	{
-		for (unsigned i = 0; i < count; i++)
-		{
-			adata.samples[adata.nWrite] = (audioBuffer[i] - 128) << 8;
-			if (++adata.nWrite >= (int)countof(adata.samples)) adata.nWrite = 0;
-		}
-	}
-
-	void copy16bitSamples(unsigned count)
-	{
-		auto ptr = (uint16_t*)audioBuffer.Data();
-		for (unsigned i = 0; i < count/2; i++)
-		{
-			adata.samples[adata.nWrite] = *ptr++;
-			if (++adata.nWrite >= (int)countof(adata.samples)) adata.nWrite = 0;
-		}
-	}
+	static bool StreamCallbackC(SoundStream* stream, void* buff, int len, void* userdata)
+	{ return static_cast<SmkPlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 
 	SmkPlayer(const char *fn, TArray<int>& ans, int flags_) : animSnd(std::move(ans))
@@ -569,25 +719,26 @@ public:
 		Smacker_GetPalette(hSMK, palette);
 
 		numAudioTracks = Smacker_GetNumAudioTracks(hSMK);
-		if (numAudioTracks)
+		if (numAudioTracks && SoundEnabled())
 		{
 			adata.nWrite = 0;
 			adata.nRead = 0;
 			adata.inf = Smacker_GetAudioTrackDetails(hSMK, 0);
 			if (adata.inf.idealBufferSize > 0)
 			{
-				audioBuffer.Resize(adata.inf.idealBufferSize);
-				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
-				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-				else copy16bitSamples(read);
+				audioBuffer.Resize(adata.inf.idealBufferSize / 2);
 				hassound = true;
 			}
+			for (int i = 1;i < numAudioTracks;++i)
+				Smacker_DisableAudioTrack(hSMK, i);
+			numAudioTracks = 1;
 		}
 		if (!hassound)
 		{
 			adata.inf = {};
+			Smacker_DisableAudioTrack(hSMK, 0);
+			numAudioTracks = 0;
 		}
-
 	}
 
 	//---------------------------------------------------------------------------
@@ -599,6 +750,8 @@ public:
 	void Start() override
 	{
 		animtex.SetSize(AnimTexture::Paletted, nWidth, nHeight);
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
+			stream->SetPaused(false);
 	}
 
 	//---------------------------------------------------------------------------
@@ -609,37 +762,36 @@ public:
 
 	bool Frame(uint64_t clock) override
 	{
+		if (!AudioTrack.GetAudioStream() && numAudioTracks && clock != 0)
+		{
+			S_StopMusic(true);
+
+			if (!AudioTrack.Start(adata.inf.sampleRate, adata.inf.nChannels, MusicSamples16bit, StreamCallbackC, this))
+			{
+				Smacker_DisableAudioTrack(hSMK, 0);
+				numAudioTracks = 0;
+			}
+		}
+
+		clock = AudioTrack.GetClockTime(clock);
 		int frame = int(clock / nFrameNs);
 
 		twod->ClearScreen();
-		if (frame > nFrame)
-		{
-			Smacker_GetPalette(hSMK, palette);
-			Smacker_GetFrame(hSMK, pFrame.Data());
-			animtex.SetFrame(palette, pFrame.Data());
-			if (numAudioTracks && SoundEnabled())
-			{
-				auto read = Smacker_GetAudioData(hSMK, 0, (int16_t*)audioBuffer.Data());
-				if (adata.inf.bitsPerSample == 8) copy8bitSamples(read);
-				else copy16bitSamples(read);
-				if (!stream && read) // the sound may not start in the first frame, but the stream cannot start without any sound data present.
-					stream = S_CreateCustomStream(6000, adata.inf.sampleRate, adata.inf.nChannels, StreamCallbackFunc, this);
-
-			}
-
-		}
-
-		if (frame > nFrame)
+		if (frame >= nFrame)
 		{
 			nFrame++;
 			Smacker_GetNextFrame(hSMK);
+			Smacker_GetPalette(hSMK, palette);
+			Smacker_GetFrame(hSMK, pFrame.Data());
+			animtex.SetFrame(palette, pFrame.Data());
+
 			bool nostopsound = (flags & NOSOUNDCUTOFF);
 			if (!hassound) for (unsigned i = 0; i < animSnd.Size(); i += 2)
 			{
 				if (animSnd[i] == nFrame)
 				{
-					int sound = animSnd[i + 1];
-					if (sound == -1)
+					auto sound = FSoundID::fromInt(animSnd[i + 1]);
+					if (sound == INVALID_SOUND)
 						soundEngine->StopAllChannels();
 					else
 						soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound ? CHANF_UI : CHANF_NONE, sound, 1.f, ATTN_NONE);
@@ -652,13 +804,15 @@ public:
 
 	void Stop() override
 	{
-		if (stream) S_StopCustomStream(stream);
+		if (SoundStream *stream = AudioTrack.GetAudioStream())
+			stream->SetPaused(true);
 		bool nostopsound = (flags & NOSOUNDCUTOFF);
 		if (!nostopsound && !hassound) soundEngine->StopAllChannels();
 	}
 
 	~SmkPlayer()
 	{
+		AudioTrack.Finish();
 		Smacker_Close(hSMK);
 		animtex.Clean();
 	}

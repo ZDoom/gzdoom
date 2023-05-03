@@ -415,11 +415,11 @@ bool AActor::FixMapthingPos()
 				DAngle ang = ldef->Delta().Angle();
 				if (ldef->backsector != NULL && ldef->backsector == secstart)
 				{
-					ang += 90.;
+					ang += DAngle::fromDeg(90.);
 				}
 				else
 				{
-					ang -= 90.;
+					ang -= DAngle::fromDeg(90.);
 				}
 
 				// Get the distance we have to move the object away from the wall
@@ -889,7 +889,7 @@ void FMultiBlockLinesIterator::Reset()
 //===========================================================================
 
 FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l)
-: DynHash(0)
+: DynHash()
 {
 	Level = l;
 	minx = maxx = 0;
@@ -899,7 +899,7 @@ FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l)
 }
 
 FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l, int _minx, int _miny, int _maxx, int _maxy)
-: DynHash(0)
+: DynHash()
 {
 	Level = l;
 	minx = _minx;
@@ -1686,7 +1686,7 @@ FPathTraverse::~FPathTraverse()
 //
 int P_CheckFov(AActor* t1, AActor* t2, double fov)
 {
-	return absangle(t1->AngleTo(t2), t1->Angles.Yaw) <= fov;
+	return absangle(t1->AngleTo(t2), t1->Angles.Yaw) <= DAngle::fromDeg(fov);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFov, P_CheckFov)
@@ -2090,5 +2090,44 @@ int BoxOnLineSide(const FBoundingBox &box, const line_t* ld)
 	}
 
 	return (p1 == p2) ? p1 : -1;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, PointOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_POINTER(l, line_t);
+	PARAM_BOOL(precise);
+
+	int res;
+	if (precise) // allow forceful overriding of compat flag
+		res = P_PointOnLineSidePrecise(x, y, l);
+	else
+		res = P_PointOnLineSide(x, y, l);
+
+	ACTION_RETURN_INT(res);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, ActorOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_OBJECT(mo, AActor);
+	PARAM_POINTER(l, line_t);
+
+	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
+	ACTION_RETURN_INT(BoxOnLineSide(box, l));
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, BoxOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(radius);
+	PARAM_POINTER(l, line_t);
+
+	FBoundingBox box(x, y, radius);
+	ACTION_RETURN_INT(BoxOnLineSide(box, l));
 }
 

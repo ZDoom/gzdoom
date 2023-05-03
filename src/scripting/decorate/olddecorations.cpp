@@ -405,7 +405,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (sc.Compare ("Scale"))
 		{
 			sc.MustGetFloat ();
-			defaults->Scale.X = defaults->Scale.Y = sc.Float;
+			defaults->Scale.X = defaults->Scale.Y = float(sc.Float);
 		}
 		else if (sc.Compare ("RenderStyle"))
 		{
@@ -504,17 +504,17 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			sc.Compare ("DeathSound"))
 		{
 			sc.MustGetString ();
-			defaults->DeathSound = sc.String;
+			defaults->DeathSound = S_FindSound(sc.String);
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnDeathSound"))
 		{
 			sc.MustGetString ();
-			defaults->ActiveSound = sc.String;
+			defaults->ActiveSound = S_FindSound(sc.String);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("SpawnSound"))
 		{
 			sc.MustGetString ();
-			defaults->SeeSound = sc.String;
+			defaults->SeeSound = S_FindSound(sc.String);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoomBounce"))
 		{
@@ -531,7 +531,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupSound"))
 		{
 			sc.MustGetString ();
-			defaults->IntVar(NAME_PickupSound) = FSoundID(sc.String);
+			defaults->IntVar(NAME_PickupSound) = S_FindSound(sc.String).index();
 		}
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{

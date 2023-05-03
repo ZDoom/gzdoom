@@ -156,7 +156,7 @@ const char* GameInfoBorders[] =
 			{ \
 				sc.ScriptError("Value for '%s' can not be longer than %d characters.", #key, length); \
 			} \
-			gameinfo.key[gameinfo.key.Reserve(1)] = FSoundID(sc.String); \
+			gameinfo.key[gameinfo.key.Reserve(1)] = S_FindSound(sc.String); \
 		} \
 		while (sc.CheckToken(',')); \
 	}
@@ -274,6 +274,12 @@ void FMapInfoParser::ParseGameInfo()
 		if (sc.TokenType == '}') break;
 
 		sc.TokenMustBe(TK_Identifier);
+		if (sc.Compare("intro"))
+		{
+			ParseCutscene(gameinfo.IntroScene);
+			continue;
+		}
+
 		FString nextKey = sc.String;
 		sc.MustGetToken('=');
 
@@ -361,10 +367,6 @@ void FMapInfoParser::ParseGameInfo()
 			sc.MustGetToken(TK_StringConst);
 			gameinfo.Dialogue = sc.String;
 			gameinfo.AddDialogues.Clear();
-		}
-		else if (nextKey.CompareNoCase("intro") == 0)
-		{
-			ParseCutscene(gameinfo.IntroScene);
 		}
 
 		// Insert valid keys here.
@@ -468,7 +470,7 @@ void FMapInfoParser::ParseGameInfo()
 			SkipToNext();
 		}
 	}
-	turbo.Callback();
+	turbo->Callback();
 }
 
 const char *gameinfo_t::GetFinalePage(unsigned int num) const

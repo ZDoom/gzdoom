@@ -929,7 +929,7 @@ static void SpawnDecal(AActor *self)
 			// Look for a wall within 64 units behind the actor. If none can be
 			// found, then no decal is created, and this actor is destroyed
 			// without effectively doing anything.
-			if (!ShootDecal(self->Level, tpl, self->Sector, self->X(), self->Y(), self->Z(), self->Angles.Yaw + 180, 64., true))
+			if (!ShootDecal(self->Level, tpl, self->Sector, self->X(), self->Y(), self->Z(), self->Angles.Yaw + DAngle::fromDeg(180), 64., true))
 			{
 				DPrintf (DMSG_WARNING, "Could not find a wall to stick decal to at (%f,%f)\n", self->X(), self->Y());
 			}

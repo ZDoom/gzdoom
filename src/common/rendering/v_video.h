@@ -43,6 +43,7 @@
 #include "v_2ddrawer.h"
 #include "intrect.h"
 #include "hw_shadowmap.h"
+#include "hw_levelmesh.h"
 #include "buffers.h"
 
 
@@ -58,6 +59,7 @@ struct HWDrawInfo;
 class FMaterial;
 class FGameTexture;
 class FRenderState;
+class BoneBuffer;
 
 enum EHWCaps
 {
@@ -142,8 +144,11 @@ public:
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
 	HWViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
+	BoneBuffer* mBones = nullptr;				// Model bones
 	IShadowMap mShadowMap;
 
+	int mGameScreenWidth = 0;
+	int mGameScreenHeight = 0;
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;
 	IntRect mOutputLetterbox;
@@ -164,13 +169,20 @@ public:
 	{
 		mShadowMap.SetAABBTree(tree);
 	}
-	bool allowSSBO()
+	virtual void SetLevelMesh(hwrenderer::LevelMesh *mesh) { }
+	bool allowSSBO() const
 	{
 #ifndef HW_BLOCK_SSBO
 		return true;
 #else
 		return mPipelineType == 0;
 #endif
+	}
+
+	// SSBOs have quite worse performance for read only data, so keep this around only as long as Vulkan has not been adapted yet.
+	bool useSSBO() 
+	{
+		return IsVulkan();
 	}
 
 	virtual DCanvas* GetCanvas() { return nullptr; }
@@ -304,6 +316,7 @@ void V_InitScreen();
 void V_Init2 ();
 
 void V_Shutdown ();
+int V_GetBackend();
 
 inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }
 extern bool setsizeneeded, setmodeneeded;

@@ -271,7 +271,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 //
 //==========================================================================
 
-void FThinkerCollection::DestroyAllThinkers()
+void FThinkerCollection::DestroyAllThinkers(bool fullgc)
 {
 	int i;
 	bool error = false;
@@ -285,11 +285,12 @@ void FThinkerCollection::DestroyAllThinkers()
 		}
 	}
 	error |= Thinkers[MAX_STATNUM + 1].DoDestroyThinkers();
-	GC::FullGC();
+	if (fullgc) GC::FullGC();
 	if (error)
 	{
 		ClearGlobalVMStack();
-		I_Error("DestroyAllThinkers failed");
+		if (fullgc) I_Error("DestroyAllThinkers failed");
+		else I_FatalError("DestroyAllThinkers failed");
 	}
 }
 
@@ -537,7 +538,7 @@ bool FThinkerList::DoDestroyThinkers()
 			{
 				Printf("VM exception in DestroyThinkers:\n");
 				exception.MaybePrintMessage();
-				Printf("%s", exception.stacktrace.GetChars());
+				Printf(PRINT_NONOTIFY | PRINT_BOLD, "%s", exception.stacktrace.GetChars());
 				// forcibly delete this. Cleanup may be incomplete, though.
 				node->ObjectFlags |= OF_YesReallyDelete;
 				delete node;
@@ -545,7 +546,7 @@ bool FThinkerList::DoDestroyThinkers()
 			}
 			catch (CRecoverableError &exception)
 			{
-				Printf("Error in DestroyThinkers: %s\n", exception.GetMessage());
+				Printf(PRINT_NONOTIFY | PRINT_BOLD, "Error in DestroyThinkers: %s\n", exception.GetMessage());
 				// forcibly delete this. Cleanup may be incomplete, though.
 				node->ObjectFlags |= OF_YesReallyDelete;
 				delete node;

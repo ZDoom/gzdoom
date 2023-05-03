@@ -82,22 +82,57 @@
 ** infinity, where each step performs a full collection.) You can also
 ** change this value dynamically.
 */
-#define DEFAULT_GCMUL		200 // GC runs 'double the speed' of memory allocation
+#ifndef _DEBUG
+#define DEFAULT_GCMUL		600 // GC runs gcmul% the speed of memory allocation
+#else
+// Higher in debug builds to account for the extra time spent freeing objects
+#define DEFAULT_GCMUL		800
+#endif
 
 // Minimum step size
-#define GCSTEPSIZE		(sizeof(DObject) * 16)
+#define GCMINSTEPSIZE		(sizeof(DObject) * 16)
 
-// Maximum number of elements to sweep in a single step
-#define GCSWEEPMAX		40
+// Sweeps traverse objects in chunks of this size
+#define GCSWEEPGRANULARITY	40
 
-// Cost of sweeping one element (the size of a small object divided by
-// some adjust for the sweep speed)
-#define GCSWEEPCOST		(sizeof(DObject) / 4)
+// Cost of deleting an object
+#ifndef _DEBUG
+#define GCDELETECOST		75
+#else
+// Freeing memory is much more costly in debug builds
+#define GCDELETECOST		230
+#endif
 
-// Cost of calling of one destructor
-#define GCFINALIZECOST	100
+// Cost of destroying an object
+#define GCDESTROYCOST		15
 
 // TYPES -------------------------------------------------------------------
+
+class FAveragizer
+{
+	// Number of allocations to track
+	static inline constexpr unsigned HistorySize = 512;
+
+	size_t History[HistorySize];
+	size_t TotalAmount;
+	int TotalCount;
+	unsigned NewestPos;
+
+public:
+	FAveragizer();
+	void AddAlloc(size_t alloc);
+	size_t GetAverage();
+};
+
+struct FStepStats
+{
+	cycle_t Clock[GC::GCS_COUNT];
+	size_t BytesCovered[GC::GCS_COUNT];
+	int Count[GC::GCS_COUNT];
+
+	void Format(FString &out);
+	void Reset();
+};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -114,27 +149,49 @@ static size_t CalcStepSize();
 namespace GC
 {
 size_t AllocBytes;
+size_t RunningAllocBytes;
+size_t RunningDeallocBytes;
 size_t Threshold;
 size_t Estimate;
 DObject *Gray;
 DObject *Root;
 DObject *SoftRoots;
 DObject **SweepPos;
+DObject *ToDestroy;
 uint32_t CurrentWhite = OF_White0 | OF_Fixed;
 EGCState State = GCS_Pause;
 int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
-int StepCount;
-uint64_t CheckTime;
+FStepStats StepStats;
+FStepStats PrevStepStats;
 bool FinalGC;
+bool HadToDestroy;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int LastCollectTime;		// Time last time collector finished
-static size_t LastCollectAlloc;	// Memory allocation when collector finished
-static size_t MinStepSize;		// Cover at least this much memory per step
+static FAveragizer AllocHistory;// Tracks allocation rate over time
+static cycle_t GCTime;			// Track time spent in GC
 
 // CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// CheckGC
+// 
+// Check if it's time to collect, and do a collection step if it is.
+// Also does some bookkeeping. Should be called fairly consistantly.
+//
+//==========================================================================
+
+void CheckGC()
+{
+	AllocHistory.AddAlloc(RunningAllocBytes);
+	RunningAllocBytes = 0;
+	if (State > GCS_Pause || AllocBytes >= Threshold)
+	{
+		Step();
+	}
+}
 
 //==========================================================================
 //
@@ -146,7 +203,7 @@ static size_t MinStepSize;		// Cover at least this much memory per step
 
 void SetThreshold()
 {
-	Threshold = (Estimate / 100) * Pause;
+	Threshold = (std::min(Estimate, AllocBytes) / 100) * Pause;
 }
 
 //==========================================================================
@@ -170,55 +227,72 @@ size_t PropagateMark()
 
 //==========================================================================
 //
-// SweepList
+// SweepObjects
 //
-// Runs a limited sweep on a list, returning the position in the list just
-// after the last object swept.
+// Runs a limited sweep on the object list, returning the number of bytes
+// swept.
 //
 //==========================================================================
 
-static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
+static size_t SweepObjects(size_t count)
 {
 	DObject *curr;
 	int deadmask = OtherWhite();
-	size_t finalized = 0;
+	size_t swept = 0;
 
-	while ((curr = *p) != NULL && count-- > 0)
+	while ((curr = *SweepPos) != nullptr && count-- > 0)
 	{
+		swept += curr->GetClass()->Size;
 		if ((curr->ObjectFlags ^ OF_WhiteBits) & deadmask)	// not dead?
 		{
 			assert(!curr->IsDead() || (curr->ObjectFlags & OF_Fixed));
 			curr->MakeWhite();	// make it white (for next cycle)
-			p = &curr->ObjNext;
+			SweepPos = &curr->ObjNext;
 		}
-		else	// must erase 'curr'
+		else
 		{
 			assert(curr->IsDead());
-			*p = curr->ObjNext;
 			if (!(curr->ObjectFlags & OF_EuthanizeMe))
-			{	// The object must be destroyed before it can be finalized.
-				// Note that thinkers must already have been destroyed. If they get here without
-				// having been destroyed first, it means they somehow became unattached from the
-				// thinker lists. If I don't maintain the invariant that all live thinkers must
-				// be in a thinker list, then I need to add write barriers for every time a
-				// thinker pointer is changed. This seems easier and perfectly reasonable, since
-				// a live thinker that isn't on a thinker list isn't much of a thinker.
-
-				// However, this can happen during deletion of the thinker list while cleaning up
-				// from a savegame error so we can't assume that any thinker that gets here is an error.
-
-				curr->Destroy();
+			{	// The object must be destroyed before it can be deleted.
+				curr->GCNext = ToDestroy;
+				ToDestroy = curr;
+				SweepPos = &curr->ObjNext;
 			}
-			curr->ObjectFlags |= OF_Cleanup;
-			delete curr;
-			finalized++;
+			else
+			{	// must erase 'curr'
+				*SweepPos = curr->ObjNext;
+				curr->ObjectFlags |= OF_Cleanup;
+				delete curr;
+				swept += GCDELETECOST;
+			}
 		}
 	}
-	if (finalize_count != NULL)
+	return swept;
+}
+
+//==========================================================================
+//
+// DestroyObjects
+//
+// Destroys up to count objects on a list linked on GCNext, returning the
+// size of objects destroyed, for updating the estimate.
+//
+//==========================================================================
+
+static size_t DestroyObjects(size_t count)
+{
+	DObject *curr;
+	size_t bytes_destroyed = 0;
+
+	while ((curr = ToDestroy) != nullptr && count-- > 0)
 	{
-		*finalize_count = finalized;
+		assert(!(curr->ObjectFlags & OF_EuthanizeMe));
+		bytes_destroyed += curr->GetClass()->Size + GCDESTROYCOST;
+		ToDestroy = curr->GCNext;
+		curr->GCNext = nullptr;
+		curr->Destroy();
 	}
-	return p;
+	return bytes_destroyed;
 }
 
 //==========================================================================
@@ -269,20 +343,14 @@ void MarkArray(DObject **obj, size_t count)
 //
 // CalcStepSize
 //
-// Decide how big a step should be based, depending on how long it took to
-// allocate up to the threshold from the amount left after the previous
-// collection.
+// Decide how big a step should be, based on the current allocation rate.
 //
 //==========================================================================
 
 static size_t CalcStepSize()
 {
-	int time_passed = int(CheckTime - LastCollectTime);
-	auto alloc = min(LastCollectAlloc, Estimate);
-	size_t bytes_gained = AllocBytes > alloc ? AllocBytes - alloc : 0;
-	return (StepMul > 0 && time_passed > 0)
-		? std::max<size_t>(GCSTEPSIZE, bytes_gained / time_passed * StepMul / 100)
-		: std::numeric_limits<size_t>::max() / 2;		// no limit
+	size_t avg = AllocHistory.GetAverage();
+	return std::max<size_t>(GCMINSTEPSIZE, avg * StepMul / 100);
 }
 
 //==========================================================================
@@ -302,15 +370,18 @@ void AddMarkerFunc(GCMarkerFunc func)
 
 static void MarkRoot()
 {
-	Gray = NULL;
+	PrevStepStats = StepStats;
+	StepStats.Reset();
+
+	Gray = nullptr;
 
 	for (auto func : markers) func();
 
 	// Mark soft roots.
-	if (SoftRoots != NULL)
+	if (SoftRoots != nullptr)
 	{
 		DObject **probe = &SoftRoots->ObjNext;
-		while (*probe != NULL)
+		while (*probe != nullptr)
 		{
 			DObject *soft = *probe;
 			probe = &soft->ObjNext;
@@ -322,7 +393,6 @@ static void MarkRoot()
 	}
 	// Time to propagate the marks.
 	State = GCS_Propagate;
-	StepCount = 0;
 }
 
 //==========================================================================
@@ -341,10 +411,21 @@ static void Atomic()
 	SweepPos = &Root;
 	State = GCS_Sweep;
 	Estimate = AllocBytes;
+}
 
-	// Now that we are about to start a sweep, establish a baseline minimum
-	// step size for how much memory we want to sweep each CheckGC().
-	MinStepSize = CalcStepSize();
+//==========================================================================
+//
+// SweepDone
+// 
+// Sets up the Destroy phase, if there are any dead objects that haven't
+// been destroyed yet, or skips to the Done state.
+//
+//==========================================================================
+
+static void SweepDone()
+{
+	HadToDestroy = ToDestroy != nullptr;
+	State = HadToDestroy ? GCS_Destroy : GCS_Done;
 }
 
 //==========================================================================
@@ -364,7 +445,7 @@ static size_t SingleStep()
 		return 0;
 
 	case GCS_Propagate:
-		if (Gray != NULL)
+		if (Gray != nullptr)
 		{
 			return PropagateMark();
 		}
@@ -375,22 +456,30 @@ static size_t SingleStep()
 		}
 
 	case GCS_Sweep: {
-		size_t old = AllocBytes;
-		size_t finalize_count;
-		SweepPos = SweepList(SweepPos, GCSWEEPMAX, &finalize_count);
-		if (*SweepPos == NULL)
+		RunningDeallocBytes = 0;
+		size_t swept = SweepObjects(GCSWEEPGRANULARITY);
+		Estimate -= RunningDeallocBytes;
+		if (*SweepPos == nullptr)
 		{ // Nothing more to sweep?
-			State = GCS_Finalize;
+			SweepDone();
 		}
-		//assert(old >= AllocBytes);
-		Estimate -= max<size_t>(0, old - AllocBytes);
-		return (GCSWEEPMAX - finalize_count) * GCSWEEPCOST + finalize_count * GCFINALIZECOST;
+		return swept;
 	  }
 
-	case GCS_Finalize:
+	case GCS_Destroy: {
+		size_t destroy_size;
+		destroy_size = DestroyObjects(GCSWEEPGRANULARITY);
+		Estimate -= destroy_size;
+		if (ToDestroy == nullptr)
+		{ // Nothing more to destroy?
+			State = GCS_Done;
+		}
+		return destroy_size;
+	  }
+
+	case GCS_Done:
 		State = GCS_Pause;		// end collection
-		LastCollectAlloc = AllocBytes;
-		LastCollectTime = (int)CheckTime;
+		SetThreshold();
 		return 0;
 
 	default:
@@ -403,21 +492,27 @@ static size_t SingleStep()
 //
 // Step
 //
-// Performs enough single steps to cover GCSTEPSIZE * StepMul% bytes of
-// memory.
+// Performs enough single steps to cover <StepSize> bytes of memory.
+// Some of those bytes might be "fake" to account for the cost of freeing
+// or destroying object.
 //
 //==========================================================================
 
 void Step()
 {
-	// We recalculate a step size in case the rate of allocation went up
-	// since we started sweeping because we don't want to fall behind.
-	// However, we also don't want to go slower than what was decided upon
-	// when the sweep began if the rate of allocation has slowed.
-	size_t lim = max(CalcStepSize(), MinStepSize);
+	GCTime.ResetAndClock();
+
+	auto enter_state = State;
+	StepStats.Count[enter_state]++;
+	StepStats.Clock[enter_state].Clock();
+
+	size_t did = 0;
+	size_t lim = CalcStepSize();
+
 	do
 	{
 		size_t done = SingleStep();
+		did += done;
 		if (done < lim)
 		{
 			lim -= done;
@@ -426,17 +521,23 @@ void Step()
 		{
 			lim = 0;
 		}
+		if (State != enter_state)
+		{
+			// Finish stats on old state
+			StepStats.Clock[enter_state].Unclock();
+			StepStats.BytesCovered[enter_state] += did;
+
+			// Start stats on new state
+			did = 0;
+			enter_state = State;
+			StepStats.Clock[enter_state].Clock();
+			StepStats.Count[enter_state]++;
+		}
 	} while (lim && State != GCS_Pause);
-	if (State != GCS_Pause)
-	{
-		Threshold = AllocBytes;
-	}
-	else
-	{
-		assert(AllocBytes >= Estimate);
-		SetThreshold();
-	}
-	StepCount++;
+
+	StepStats.Clock[enter_state].Unclock();
+	StepStats.BytesCovered[enter_state] += did;
+	GCTime.Unclock();
 }
 
 //==========================================================================
@@ -449,25 +550,34 @@ void Step()
 
 void FullGC()
 {
-	if (State <= GCS_Propagate)
+	bool ContinueCheck = true;
+	while (ContinueCheck)
 	{
-		// Reset sweep mark to sweep all elements (returning them to white)
-		SweepPos = &Root;
-		// Reset other collector lists
-		Gray = NULL;
-		State = GCS_Sweep;
+		ContinueCheck = false;
+		if (State <= GCS_Propagate)
+		{
+			// Reset sweep mark to sweep all elements (returning them to white)
+			SweepPos = &Root;
+			// Reset other collector lists
+			Gray = nullptr;
+			State = GCS_Sweep;
+		}
+		// Finish any pending GC stages
+		while (State != GCS_Pause)
+		{
+			SingleStep();
+		}
+		// Loop until everything that can be destroyed and freed is
+		do
+		{
+			MarkRoot();
+			while (State != GCS_Pause)
+			{
+				SingleStep();
+			}
+			ContinueCheck |= HadToDestroy;
+		} while (HadToDestroy);
 	}
-	// Finish any pending sweep phase
-	while (State != GCS_Finalize)
-	{
-		SingleStep();
-	}
-	MarkRoot();
-	while (State != GCS_Pause)
-	{
-		SingleStep();
-	}
-	SetThreshold();
 }
 
 //==========================================================================
@@ -481,9 +591,9 @@ void FullGC()
 
 void Barrier(DObject *pointing, DObject *pointed)
 {
-	assert(pointing == NULL || (pointing->IsBlack() && !pointing->IsDead()));
+	assert(pointing == nullptr || (pointing->IsBlack() && !pointing->IsDead()));
 	assert(pointed->IsWhite() && !pointed->IsDead());
-	assert(State != GCS_Finalize && State != GCS_Pause);
+	assert(State != GCS_Destroy && State != GCS_Pause);
 	assert(!(pointed->ObjectFlags & OF_Released));	// if a released object gets here, something must be wrong.
 	if (pointed->ObjectFlags & OF_Released) return;	// don't do anything with non-GC'd objects.
 	// The invariant only needs to be maintained in the propagate state.
@@ -495,7 +605,7 @@ void Barrier(DObject *pointing, DObject *pointed)
 	}
 	// In other states, we can mark the pointing object white so this
 	// barrier won't be triggered again, saving a few cycles in the future.
-	else if (pointing != NULL)
+	else if (pointing != nullptr)
 	{
 		pointing->MakeWhite();
 	}
@@ -503,13 +613,13 @@ void Barrier(DObject *pointing, DObject *pointed)
 
 void DelSoftRootHead()
 {
-	if (SoftRoots != NULL)
+	if (SoftRoots != nullptr)
 	{
 		// Don't let the destructor print a warning message
 		SoftRoots->ObjectFlags |= OF_YesReallyDelete;
 		delete SoftRoots;
 	}
-	SoftRoots = NULL;
+	SoftRoots = nullptr;
 }
 
 //==========================================================================
@@ -526,7 +636,7 @@ void AddSoftRoot(DObject *obj)
 	DObject **probe;
 
 	// Are there any soft roots yet?
-	if (SoftRoots == NULL)
+	if (SoftRoots == nullptr)
 	{
 		// Create a new object to root the soft roots off of, and stick
 		// it at the end of the object list, so we know that anything
@@ -534,17 +644,17 @@ void AddSoftRoot(DObject *obj)
 		SoftRoots = Create<DObject>();
 		SoftRoots->ObjectFlags |= OF_Fixed;
 		probe = &Root;
-		while (*probe != NULL)
+		while (*probe != nullptr)
 		{
 			probe = &(*probe)->ObjNext;
 		}
 		Root = SoftRoots->ObjNext;
-		SoftRoots->ObjNext = NULL;
+		SoftRoots->ObjNext = nullptr;
 		*probe = SoftRoots;
 	}
 	// Mark this object as rooted and move it after the SoftRoots marker.
 	probe = &Root;
-	while (*probe != NULL && *probe != obj)
+	while (*probe != nullptr && *probe != obj)
 	{
 		probe = &(*probe)->ObjNext;
 	}
@@ -567,14 +677,14 @@ void DelSoftRoot(DObject *obj)
 {
 	DObject **probe;
 
-	if (!(obj->ObjectFlags & OF_Rooted))
+	if (obj == nullptr || !(obj->ObjectFlags & OF_Rooted))
 	{ // Not rooted, so nothing to do.
 		return;
 	}
 	obj->ObjectFlags &= ~OF_Rooted;
 	// Move object out of the soft roots part of the list.
 	probe = &SoftRoots;
-	while (*probe != NULL && *probe != obj)
+	while (*probe != nullptr && *probe != obj)
 	{
 		probe = &(*probe)->ObjNext;
 	}
@@ -586,6 +696,52 @@ void DelSoftRoot(DObject *obj)
 	}
 }
 
+}
+
+//==========================================================================
+//
+// FAveragizer - Constructor
+//
+//==========================================================================
+
+FAveragizer::FAveragizer()
+{
+	NewestPos = 0;
+	TotalAmount = 0;
+	TotalCount = 0;
+	memset(History, 0, sizeof(History));
+}
+
+//==========================================================================
+//
+// FAveragizer :: AddAlloc
+//
+//==========================================================================
+
+void FAveragizer::AddAlloc(size_t alloc)
+{
+	NewestPos = (NewestPos + 1) & (HistorySize - 1);
+	if (TotalCount < (int)HistorySize)
+	{
+		TotalCount++;
+	}
+	else
+	{
+		TotalAmount -= History[NewestPos];
+	}
+	History[NewestPos] = alloc;
+	TotalAmount += alloc;
+}
+
+//==========================================================================
+//
+// FAveragizer :: GetAverage
+//
+//==========================================================================
+
+size_t FAveragizer::GetAverage()
+{
+	return TotalCount != 0 ? TotalAmount / TotalCount : 0;
 }
 
 //==========================================================================
@@ -602,16 +758,64 @@ ADD_STAT(gc)
 		"  Pause  ",
 		"Propagate",
 		"  Sweep  ",
-		"Finalize " };
+		" Destroy ",
+		"  Done   "
+	};
 	FString out;
-	out.Format("[%s] Alloc:%6zuK  Thresh:%6zuK  Est:%6zuK  Steps: %d  %zuK",
+	double time = GC::State != GC::GCS_Pause ? GC::GCTime.TimeMS() : 0;
+
+	GC::PrevStepStats.Format(out);
+	out << "\n";
+	GC::StepStats.Format(out);
+	out.AppendFormat("\n%.2fms [%s] Rate:%3zuK (%3zuK)  Alloc:%6zuK  Est:%6zuK  Thresh:%6zuK",
+		time,
 		StateStrings[GC::State],
+		(GC::AllocHistory.GetAverage() + 1023) >> 10,
+		(GC::CalcStepSize() + 1023) >> 10,
 		(GC::AllocBytes + 1023) >> 10,
-		(GC::Threshold + 1023) >> 10,
 		(GC::Estimate + 1023) >> 10,
-		GC::StepCount,
-		(GC::MinStepSize + 1023) >> 10);
+		(GC::Threshold + 1023) >> 10);
 	return out;
+}
+
+//==========================================================================
+//
+// FStepStats :: Reset
+//
+//==========================================================================
+
+void FStepStats::Reset()
+{
+	for (unsigned i = 0; i < countof(Count); ++i)
+	{
+		Count[i] = 0;
+		BytesCovered[i] = 0;
+		Clock[i].Reset();
+	}
+}
+
+//==========================================================================
+//
+// FStepStats :: Format
+//
+// Appends its stats to the given FString.
+//
+//==========================================================================
+
+void FStepStats::Format(FString &out)
+{
+	// Because everything in the default green is hard to distinguish,
+	// each stage has its own color.
+	for (int i = GC::GCS_Propagate; i < GC::GCS_Done; ++i)
+	{
+		int count = Count[i];
+		double time = Clock[i].TimeMS();
+		out.AppendFormat(TEXTCOLOR_ESCAPESTR "%c[%c%6zuK %4d*%.2fms]",
+			"-NKB"[i],	/* Color codes */
+			"-PSD"[i],	/* Stage prefixes: (P)ropagate, (S)weep, (D)estroy */
+			(BytesCovered[i] + 1023) >> 10, count, count != 0 ? time / count : time);
+	}
+	out << TEXTCOLOR_GREEN;
 }
 
 //==========================================================================

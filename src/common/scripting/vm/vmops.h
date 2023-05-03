@@ -51,8 +51,16 @@ xx(LV2,		lv2,	RVRPKI,		LV2_R,	4, REGT_INT)	// load vector2
 xx(LV2_R,	lv2,	RVRPRI,		NOP,	0, 0)
 xx(LV3,		lv3,	RVRPKI,		LV3_R,	4, REGT_INT)	// load vector3
 xx(LV3_R,	lv3,	RVRPRI,		NOP,	0, 0)
+xx(LV4,		lv4,	RVRPKI,		LV4_R,	4, REGT_INT)	// load vector4
+xx(LV4_R,	lv4,	RVRPRI,		NOP,	0, 0)
 xx(LCS,		lcs,	RSRPKI,		LCS_R,	4, REGT_INT)	// load string from char ptr.
 xx(LCS_R,	lcs,	RSRPRI,		NOP,	0, 0)
+xx(LFV2,	lfv2,	RVRPKI,		LFV2_R,	4, REGT_INT)	// load fvector2
+xx(LFV2_R,	lfv2,	RVRPRI,		NOP,	0, 0)
+xx(LFV3,	lfv3,	RVRPKI,		LFV3_R,	4, REGT_INT)	// load fvector3
+xx(LFV3_R,	lfv3,	RVRPRI,		NOP,	0, 0)
+xx(LFV4,	lfv4,	RVRPKI,		LFV4_R, 4, REGT_INT)	// load fvector4
+xx(LFV4_R,	lfv4,	RVRPRI,		NOP,	0, 0)
 
 xx(LBIT,	lbit,	RIRPI8,		NOP,	0, 0)	// rA = !!(*rB & C)  -- *rB is a byte
 
@@ -77,6 +85,14 @@ xx(SV2,		sv2,	RPRVKI,		SV2_R,	4, REGT_INT)		// store vector2
 xx(SV2_R,	sv2,	RPRVRI,		NOP,	0, 0)
 xx(SV3,		sv3,	RPRVKI,		SV3_R,	4, REGT_INT)		// store vector3
 xx(SV3_R,	sv3,	RPRVRI,		NOP,	0, 0)
+xx(SV4,		sv4,	RPRVKI,		SV4_R,	4, REGT_INT)		// store vector4
+xx(SV4_R,	sv4,	RPRVRI,		NOP,	0, 0)
+xx(SFV2,	sfv2,	RPRVKI,		SFV2_R,	4, REGT_INT)		// store fvector2
+xx(SFV2_R,	sfv2,	RPRVRI,		NOP,	0, 0)
+xx(SFV3,	sfv3,	RPRVKI,		SFV3_R,	4, REGT_INT)		// store fvector3
+xx(SFV3_R,	sfv3,	RPRVRI,		NOP,	0, 0)
+xx(SFV4,	sfv4,	RPRVKI,		SFV4_R, 4, REGT_INT)		// store fvector4
+xx(SFV4_R,	sfv4,	RPRVRI,		NOP,	0, 0)
 
 xx(SBIT,	sbit,	RPRII8,		NOP,	0, 0)		// *rA |= C if rB is true, *rA &= ~C otherwise
 
@@ -87,6 +103,7 @@ xx(MOVES,	mov,	RSRS,		NOP,	0, 0)		// sA = sB
 xx(MOVEA,	mov,	RPRP,		NOP,	0, 0)		// aA = aB
 xx(MOVEV2,	mov2,	RFRF,		NOP,	0, 0)		// fA = fB (2 elements)
 xx(MOVEV3,	mov3,	RFRF,		NOP,	0, 0)		// fA = fB (3 elements)
+xx(MOVEV4,	mov4,	RFRF,		NOP,	0, 0)		// fA = fB (4 elements)
 xx(CAST,	cast,	CAST,		NOP,	0, 0)		// xA = xB, conversion specified by C
 xx(CASTB,	castb,	CAST,		NOP,	0, 0)		// xA = !!xB, type specified by C
 xx(DYNCAST_R,	dyncast, RPRPRP,	NOP,	0, 0)		// aA = dyn_cast<aC>(aB);
@@ -247,6 +264,23 @@ xx(DIVVF3_RK,	divv3,	RVRVKF,		DIVVF3_RR,4, REGT_FLOAT)
 xx(LENV3,		lenv3,	RFRV,		NOP,	0, 0)			// fA = vB.Length
 xx(EQV3_R,		beqv3,	CVRR,		NOP,	0, 0)			// if ((vB == vkC) != A) then pc++ (inexact if A & 33)
 xx(EQV3_K,		beqv3,	CVRK,		NOP,	0, 0)			// this will never be used.
+
+// Vector math (4D)
+xx(NEGV4,		negv4,		RVRV,	NOP,	0, 0)			// vA = -vB
+xx(ADDV4_RR,	addv4,		RVRVRV,	NOP,	0, 0)		// vA = vB + vkC
+xx(SUBV4_RR,	subv4,		RVRVRV,	NOP,	0, 0)		// vA = vkB - vkC
+xx(DOTV4_RR,	dotv4,		RVRVRV, NOP,	0, 0)		// va = vB dot vkC
+xx(MULVF4_RR,	mulv4,		RVRVRF, NOP,	0, 0)		// vA = vkB * fkC
+xx(MULVF4_RK,	mulv4,		RVRVKF, MULVF4_RR, 4, REGT_FLOAT)
+xx(DIVVF4_RR,	divv4,		RVRVRF, NOP,	0, 0)		// vA = vkB / fkC
+xx(DIVVF4_RK,	divv4,		RVRVKF, DIVVF4_RR, 4, REGT_FLOAT)
+xx(LENV4,		lenv4,		RFRV,	NOP,	0, 0)			// fA = vB.Length
+xx(EQV4_R,		beqv4,		CVRR,	NOP,	0, 0)			// if ((vB == vkC) != A) then pc++ (inexact if A & 33)
+xx(EQV4_K,		beqv4,		CVRK,	NOP,	0, 0)			// this will never be used.
+
+// Quaternion math
+xx(MULQQ_RR,	mulqq,		RVRVRV, NOP,	0, 0)		// qA = qB * qC
+xx(MULQV3_RR,	mulqv3,		RVRVRV, NOP,	0, 0)		// qA = qB * vC
 
 // Pointer math.
 xx(ADDA_RR,		add,	RPRPRI,		NOP,	0, 0)		// pA = pB + dkC

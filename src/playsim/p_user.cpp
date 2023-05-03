@@ -422,7 +422,7 @@ void player_t::SetLogText (const char *text)
 	if (mo && mo->CheckLocalView())
 	{
 		// Print log text to console
-		Printf(PRINT_NONOTIFY, TEXTCOLOR_GOLD "%s\n", LogText[0] == '$' ? GStrings(text + 1) : text);
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, TEXTCOLOR_GOLD "%s\n", LogText[0] == '$' ? GStrings(text + 1) : text);
 	}
 }
 
@@ -446,7 +446,7 @@ void player_t::SetSubtitle(int num, FSoundID soundid)
 	if (text != nullptr)
 	{
 		SubtitleText = lumpname;
-		int sl = soundid == 0 ? 7000 : max<int>(7000, S_GetMSLength(soundid));
+		int sl = soundid == NO_SOUND ? 7000 : max<int>(7000, S_GetMSLength(soundid));
 		SubtitleCounter = sl * TICRATE / 1000;
 	}
 }
@@ -796,6 +796,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetMoveBob)
 	ACTION_RETURN_FLOAT(self->userinfo.GetMoveBob());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetFViewBob)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_BOOL(self->userinfo.GetFViewBob());
+}
+
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
@@ -887,12 +893,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 
-	int sound = 0;
+	FSoundID sound = NO_SOUND;
 	int chan = CHAN_VOICE;
 
-	if (self->player == NULL || self->DeathSound != 0)
+	if (self->player == NULL || self->DeathSound != NO_SOUND)
 	{
-		if (self->DeathSound != 0)
+		if (self->DeathSound != NO_SOUND)
 		{
 			S_Sound (self, CHAN_VOICE, 0, self->DeathSound, 1, ATTN_NORM);
 		}
@@ -908,31 +914,31 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
 		self->Vel.Z <= -39)
 	{
-		sound = S_FindSkinnedSound (self, "*splat");
+		sound = S_FindSkinnedSound (self, S_FindSound("*splat"));
 		chan = CHAN_BODY;
 	}
 
-	if (!sound && self->special1<10)
+	if (!sound.isvalid() && self->special1<10)
 	{ // Wimpy death sound
 		sound = S_FindSkinnedSoundEx (self, "*wimpydeath", self->player->LastDamageType.GetChars());
 	}
-	if (!sound && self->health <= -50)
+	if (!sound.isvalid() && self->health <= -50)
 	{
 		if (self->health > -100)
 		{ // Crazy death sound
 			sound = S_FindSkinnedSoundEx (self, "*crazydeath", self->player->LastDamageType.GetChars());
 		}
-		if (!sound)
+		if (!sound.isvalid())
 		{ // Extreme death sound
 			sound = S_FindSkinnedSoundEx (self, "*xdeath", self->player->LastDamageType.GetChars());
-			if (!sound)
+			if (!sound.isvalid())
 			{
 				sound = S_FindSkinnedSoundEx (self, "*gibbed", self->player->LastDamageType.GetChars());
 				chan = CHAN_BODY;
 			}
 		}
 	}
-	if (!sound)
+	if (!sound.isvalid())
 	{ // Normal death sound
 		sound = S_FindSkinnedSoundEx (self, "*death", self->player->LastDamageType.GetChars());
 	}
@@ -971,8 +977,8 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	{
 		// Convert from default scale to skin scale.
 		DVector2 defscale = actor->GetDefault()->Scale;
-		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
-		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
+		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / double(defscale.X);
+		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / double(defscale.Y);
 	}
 
 	// Set the crouch sprite?
@@ -1169,8 +1175,8 @@ void P_CheckEnvironment(player_t *player)
 		player->mo->Vel.Z >= -player->mo->FloatVar(NAME_FallingScreamMaxSpeed) && !player->morphTics &&
 		player->mo->waterlevel == 0)
 	{
-		int id = S_FindSkinnedSound(player->mo, "*falling");
-		if (id != 0 && !S_IsActorPlayingSomething(player->mo, CHAN_VOICE, id))
+		auto id = S_FindSkinnedSound(player->mo, S_FindSound("*falling"));
+		if (id != NO_SOUND && !S_IsActorPlayingSomething(player->mo, CHAN_VOICE, id))
 		{
 			S_Sound(player->mo, CHAN_VOICE, 0, id, 1, ATTN_NORM);
 		}
@@ -1248,7 +1254,7 @@ void P_PlayerThink (player_t *player)
 	{
 		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
-			player->mo->Angles.Yaw.Degrees, player->cmd.ucmd.buttons,
+			player->mo->Angles.Yaw.Degrees(), player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
 			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
 	}
@@ -1258,6 +1264,9 @@ void P_PlayerThink (player_t *player)
 	player->original_cmd = cmd->ucmd;
 	// Don't interpolate the view for more than one tic
 	player->cheats &= ~CF_INTERPVIEW;
+	player->cheats &= ~CF_INTERPVIEWANGLES;
+	player->cheats &= ~CF_SCALEDNOLERP;
+	player->cheats &= ~CF_NOFOVINTERP;
 	player->mo->FloatVar("prevBob") = player->bob;
 
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, PlayerThink)

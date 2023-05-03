@@ -150,13 +150,13 @@ void DeinitMenus()
 			pair->Value = nullptr;
 		}
 	}
-	MenuDescriptors.Clear();
-	OptionValues.Clear();
 	if (menuDelegate)
 	{
 		menuDelegate->Destroy();
 		menuDelegate = nullptr;
 	}
+	MenuDescriptors.Clear();
+	OptionValues.Clear();
 }
 
 FTextureID GetMenuTexture(const char* const name)
@@ -249,6 +249,12 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 			#ifdef HAVE_MMX
 				filter = true;
 			#endif
+		}
+		else if (sc.Compare("SWRender"))
+		{
+#ifndef NO_SWRENDERER
+			filter = true;
+#endif
 		}
 	}
 	while (sc.CheckString(","));
@@ -352,6 +358,14 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 		{
 			desc->mAnimated = true;
 		}
+		else if (sc.Compare("DontDim"))
+		{
+			desc->mDontDim = true;
+		}
+		else if (sc.Compare("DontBlur"))
+		{
+			desc->mDontBlur = true;
+		}
 		else if (sc.Compare("MouseWindow"))
 		{
 			sc.MustGetNumber();
@@ -412,6 +426,10 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 					sc.ScriptError("Invalid value '%s' for 'size'", sc.String);
 				}
 			}
+		}
+		else if (sc.Compare("ForceList"))
+		{
+			desc->mForceList = true;
 		}
 		else
 		{
@@ -753,6 +771,11 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 	desc->mVirtWidth = -2;
 	desc->mCustomSizeSet = false;
+	desc->mAnimatedTransition = false;
+	desc->mAnimated = false;
+	desc->mDontDim = false;
+	desc->mDontBlur = false;
+	desc->mForceList = false;
 	if (DefaultListMenuSettings->mCustomSizeSet)
 	{
 		desc->mVirtHeight = DefaultListMenuSettings->mVirtHeight;
@@ -1009,6 +1032,22 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 			sc.MustGetNumber();
 			desc->mIndent = sc.Number;
 		}
+		else if (sc.Compare("AnimatedTransition"))
+		{
+			desc->mAnimatedTransition = true;
+		}
+		else if (sc.Compare("Animated"))
+		{
+			desc->mAnimated = true;
+		}
+		else if (sc.Compare("DontDim"))
+		{
+			desc->mDontDim = true;
+		}
+		else if (sc.Compare("DontBlur"))
+		{
+			desc->mDontBlur = true;
+		}
 		else
 		{
 			bool success = false;
@@ -1022,13 +1061,19 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
 					TArray<VMValue> params;
+					int start = 1;
 
 					params.Push(0);
+					if (args.Size() > 1 && args[1] == NewPointer(PClass::FindClass("OptionMenuDescriptor")))
+					{
+						params.Push(desc);
+						start = 2;
+					}
 					auto TypeCVar = NewPointer(NewStruct("CVar", nullptr, true));
 
 					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
 					TArray<FString> strings(args.Size());
-					for (unsigned i = 1; i < args.Size(); i++)
+					for (unsigned i = start; i < args.Size(); i++)
 					{
 						sc.MustGetString();
 						if (args[i] == TypeString)
@@ -1043,6 +1088,24 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 						else if (args[i] == TypeColor)
 						{
 							params.Push(V_GetColor(sc));
+						}
+						else if (args[i] == TypeFont)
+						{
+							auto f = V_GetFont(sc.String);
+							if (f == nullptr)
+							{
+								sc.ScriptError("Unknown font %s", sc.String);
+							}
+							params.Push(f);
+						}
+						else if (args[i] == TypeTextureID)
+						{
+							auto f = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+							if (!f.Exists())
+							{
+								sc.ScriptMessage("Unknown texture %s", sc.String);
+							}
+							params.Push(f.GetIndex());
 						}
 						else if (args[i]->isIntCompatible())
 						{
@@ -1154,7 +1217,10 @@ static void ParseOptionMenu(FScanner &sc)
 	desc->mPosition = DefaultOptionMenuSettings->mPosition;
 	desc->mScrollTop = DefaultOptionMenuSettings->mScrollTop;
 	desc->mIndent =  DefaultOptionMenuSettings->mIndent;
-	desc->mDontDim =  DefaultOptionMenuSettings->mDontDim;
+	desc->mDontDim = false;
+	desc->mDontBlur = false;
+	desc->mAnimatedTransition = false;
+	desc->mAnimated = false;
 	desc->mProtected = sc.CheckString("protected");
 
 	ParseOptionMenuBody(sc, desc, -1);
@@ -1222,6 +1288,16 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 				ParseImageScrollerBody(sc, desc);
 			}
 		}
+		else if (sc.Compare("Class"))
+		{
+			sc.MustGetString();
+			PClass* cls = PClass::FindClass(sc.String);
+			if (cls == nullptr || !cls->IsDescendantOf("ImageScrollerMenu"))
+			{
+				sc.ScriptError("Unknown menu class '%s'", sc.String);
+			}
+			desc->mClass = cls;
+		}
 		else if (sc.Compare("animatedtransition"))
 		{
 			desc->mAnimatedTransition = true;
@@ -1229,6 +1305,14 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 		else if (sc.Compare("animated"))
 		{
 			desc->mAnimated = true;
+		}
+		else if (sc.Compare("DontDim"))
+		{
+			desc->mDontDim = true;
+		}
+		else if (sc.Compare("DontBlur"))
+		{
+			desc->mDontBlur = true;
 		}
 		else if (sc.Compare("textBackground"))
 		{
@@ -1293,6 +1377,24 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 						else if (args[i] == TypeColor)
 						{
 							params.Push(V_GetColor(sc));
+						}
+						else if (args[i] == TypeFont)
+						{
+							auto f = V_GetFont(sc.String);
+							if (f == nullptr)
+							{
+								sc.ScriptError("Unknown font %s", sc.String);
+							}
+							params.Push(f);
+						}
+						else if (args[i] == TypeTextureID)
+						{
+							auto f = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
+							if (!f.Exists())
+							{
+								sc.ScriptMessage("Unknown texture %s", sc.String);
+							}
+							params.Push(f.GetIndex());
 						}
 						else if (args[i]->isIntCompatible())
 						{
@@ -1387,7 +1489,10 @@ static void ParseImageScroller(FScanner& sc)
 	desc->textBackgroundBrightness = 0xffffffff;
 	desc->textFont = SmallFont;
 	desc->textScale = 1;
+	desc->mDontDim = false;
+	desc->mDontBlur = false;
 	desc->mAnimatedTransition = false;
+	desc->mAnimated = false;
 	desc->virtWidth = 320;
 	desc->virtHeight = 200;
 

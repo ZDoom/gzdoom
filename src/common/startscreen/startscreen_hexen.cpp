@@ -141,7 +141,7 @@ bool FHexenStartScreen::DoProgress(int advance)
 {
 	int notch_pos, x, y;
 
-	if (CurPos < MaxPos)
+	if (CurPos <= MaxPos)
 	{
 		int numnotches = (16 * 32) / NotchBits.GetWidth();
 		notch_pos = ((CurPos + 1) * numnotches) / MaxPos;

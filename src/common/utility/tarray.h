@@ -213,7 +213,7 @@ public:
 	{
 	}
 	////////
-	TArray ()
+	constexpr TArray ()
 	{
 		Most = 0;
 		Count = 0;
@@ -222,9 +222,9 @@ public:
 	explicit TArray (size_t max, bool reserve = false)
 	{
 		Most = (unsigned)max;
-		Count = (unsigned)(reserve? max : 0);
-		Array = (T *)M_Malloc (sizeof(T)*max);
-		if (reserve && Count > 0)
+		Count = (unsigned)(reserve ? max : 0);
+		Array = max > 0 ? (T *)M_Malloc (sizeof(T)*max) : nullptr;
+		if (Count > 0)
 		{
 			ConstructEmpty(0, Count - 1);
 		}
@@ -316,7 +316,14 @@ public:
 	// Returns a reference to the last element
 	T &Last() const
 	{
+		assert(Count > 0);
 		return Array[Count-1];
+	}
+
+	T SafeGet (size_t index, const T& defaultval) const
+	{
+		if (index <= Count) return Array[index];
+		else return defaultval;
 	}
 
 	// returns address of first element
@@ -332,7 +339,7 @@ public:
 
 	unsigned IndexOf(const T* elem) const
 	{
-		return elem - Array;
+		return unsigned(elem - Array);
 	}
 
     unsigned int Find(const T& item) const
@@ -446,6 +453,8 @@ public:
 
 	void Delete (unsigned int index, int deletecount)
 	{
+        if(index >= Count) return;
+        
 		if (index + deletecount > Count)
 		{
 			deletecount = Count - index;
@@ -570,6 +579,10 @@ public:
 	unsigned int Size () const
 	{
 		return Count;
+	}
+	int SSize() const
+	{
+		return (int)Count;
 	}
 	unsigned int Max () const
 	{
@@ -908,6 +921,9 @@ public:
 	typedef class TMapConstIterator<KT, VT, MyType> ConstIterator;
 	typedef struct { const KT Key; VT Value; } Pair;
 	typedef const Pair ConstPair;
+
+	typedef KT KeyType;
+	typedef VT ValueType;
 
 	TMap() { NumUsed = 0; SetNodeVector(1); }
 	TMap(hash_t size) { NumUsed = 0; SetNodeVector(size); }

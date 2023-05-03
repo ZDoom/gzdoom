@@ -26,10 +26,30 @@ struct PalettedPixels
 private:
 	TArray<uint8_t> PixelStore;
 
+public:
+	PalettedPixels() = default;
+	PalettedPixels(unsigned size)
+	{
+		PixelStore.Resize(size);
+		Pixels.Set(PixelStore.Data(), PixelStore.Size());
+	}
+	PalettedPixels(uint8_t* data, unsigned size)
+	{
+		Pixels.Set(data, size);
+	}
 	bool ownsPixels() const
 	{
 		return Pixels.Data() == PixelStore.Data();
 	}
+	uint8_t* Data() const { return Pixels.Data(); }
+	unsigned Size() const { return Pixels.Size(); }
+
+	uint8_t& operator[] (size_t index) const
+	{
+		assert(index < Size());
+		return Pixels[index];
+	}
+
 };
 
 // This represents a naked image. It has no high level logic attached to it.
@@ -51,8 +71,7 @@ protected:
 	// Internal image creation functions. All external access should go through the cache interface,
 	// so that all code can benefit from future improvements to that.
 
-	virtual TArray<uint8_t> CreatePalettedPixels(int conversion);
-	virtual int CopyPixels(FBitmap *bmp, int conversion);			// This will always ignore 'luminance'.
+	virtual PalettedPixels CreatePalettedPixels(int conversion);
 	int CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap);
 
 
@@ -60,7 +79,7 @@ public:
 	virtual bool SupportRemap0() { return false; }		// Unfortunate hackery that's needed for Hexen's skies. Only the image can know about the needed parameters
 	virtual bool IsRawCompatible() { return true; }		// Same thing for mid texture compatibility handling. Can only be determined by looking at the composition data which is private to the image.
 
-	void CopySize(FImageSource &other)
+	void CopySize(FImageSource &other) noexcept
 	{
 		Width = other.Width;
 		Height = other.Height;
@@ -71,6 +90,7 @@ public:
 
 	// Images are statically allocated and freed in bulk. None of the subclasses may hold any destructible data.
 	void *operator new(size_t block) { return ImageArena.Alloc(block); }
+	void* operator new(size_t block, void* mem) { return mem; }
 	void operator delete(void *block) {}
 
 	bool bMasked = true;						// Image (might) have holes (Assume true unless proven otherwise!)
@@ -86,8 +106,8 @@ public:
 	// tries to get a buffer from the cache. If not available, create a new one. If further references are pending, create a copy.
 	TArray<uint8_t> GetPalettedPixels(int conversion);
 
+	virtual int CopyPixels(FBitmap* bmp, int conversion);
 
-	// Unlile for paletted images there is no variant here that returns a persistent bitmap, because all users have to process the returned image into another format.
 	FBitmap GetCachedBitmap(const PalEntry *remap, int conversion, int *trans = nullptr);
 
 	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
@@ -103,8 +123,8 @@ public:
 		noremap0 = 2
 	};
 
-	FImageSource(int sourcelump = -1) : SourceLump(sourcelump) { ImageID = ++NextID; }
-	virtual ~FImageSource() {}
+	FImageSource(int sourcelump = -1) noexcept : SourceLump(sourcelump) { ImageID = ++NextID; }
+	virtual ~FImageSource() = default;
 
 	int GetWidth() const
 	{
@@ -160,7 +180,7 @@ class FBuildTexture : public FImageSource
 {
 public:
 	FBuildTexture(const FString& pathprefix, int tilenum, const uint8_t* pixels, FRemapTable* translation, int width, int height, int left, int top);
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap* bmp, int conversion) override;
 
 protected:

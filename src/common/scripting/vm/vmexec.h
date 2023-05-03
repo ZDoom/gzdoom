@@ -263,42 +263,124 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		GETADDR(PB,RC,X_READ_NIL);
 		reg.a[a] = *(void **)ptr;
 		NEXTOP;
-	OP(LV2):
+	OP(LV2) :
+		ASSERTF(a + 1); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB, KC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a + 1] = v[1];
+		}
+		NEXTOP;
+	OP(LV2_R) :
+		ASSERTF(a + 1); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB, RC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a + 1] = v[1];
+		}
+		NEXTOP;
+	OP(LV3) :
+		ASSERTF(a + 2); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB, KC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
+		}
+		NEXTOP;
+	OP(LV3_R) :
+		ASSERTF(a + 2); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB, RC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
+		}
+		NEXTOP;
+	OP(LV4) :
+		ASSERTF(a + 3); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB, KC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a + 1] = v[1];
+			reg.f[a + 2] = v[2];
+			reg.f[a + 3] = v[3];
+		}
+		NEXTOP;
+	OP(LV4_R) :
+		ASSERTF(a + 3); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB, RC, X_READ_NIL);
+		{
+			auto v = (double*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a + 1] = v[1];
+			reg.f[a + 2] = v[2];
+			reg.f[a + 3] = v[3];
+		}
+		NEXTOP;
+	OP(LFV2):
 		ASSERTF(a+1); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		{
-			auto v = (double *)ptr;
+			auto v = (float *)ptr;
 			reg.f[a] = v[0];
 			reg.f[a+1] = v[1];
 		}
 		NEXTOP;
-	OP(LV2_R):
+	OP(LFV2_R):
 		ASSERTF(a+1); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		{
-			auto v = (double *)ptr;
+			auto v = (float *)ptr;
 			reg.f[a] = v[0];
 			reg.f[a+1] = v[1];
 		}
 		NEXTOP;
-	OP(LV3):
+	OP(LFV3):
 		ASSERTF(a+2); ASSERTA(B); ASSERTKD(C);
 		GETADDR(PB,KC,X_READ_NIL);
 		{
-			auto v = (double *)ptr;
+			auto v = (float *)ptr;
 			reg.f[a] = v[0];
 			reg.f[a+1] = v[1];
 			reg.f[a+2] = v[2];
 		}
 		NEXTOP;
-	OP(LV3_R):
+	OP(LFV3_R):
 		ASSERTF(a+2); ASSERTA(B); ASSERTD(C);
 		GETADDR(PB,RC,X_READ_NIL);
 		{
-			auto v = (double *)ptr;
+			auto v = (float *)ptr;
 			reg.f[a] = v[0];
 			reg.f[a+1] = v[1];
 			reg.f[a+2] = v[2];
+		}
+		NEXTOP;
+	OP(LFV4) :
+			ASSERTF(a + 3); ASSERTA(B); ASSERTKD(C);
+		GETADDR(PB, KC, X_READ_NIL);
+		{
+			auto v = (float*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
+			reg.f[a+3] = v[3];
+		}
+		NEXTOP;
+	OP(LFV4_R) :
+			ASSERTF(a + 3); ASSERTA(B); ASSERTD(C);
+		GETADDR(PB, RC, X_READ_NIL);
+		{
+			auto v = (float*)ptr;
+			reg.f[a] = v[0];
+			reg.f[a+1] = v[1];
+			reg.f[a+2] = v[2];
+			reg.f[a+3] = v[3];
 		}
 		NEXTOP;
 	OP(LBIT):
@@ -430,6 +512,88 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			v[2] = reg.f[B+2];
 		}
 		NEXTOP;
+	OP(SV4):
+		ASSERTA(a); ASSERTF(B+3); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		{
+			auto v = (double *)ptr;
+			v[0] = reg.f[B];
+			v[1] = reg.f[B+1];
+			v[2] = reg.f[B+2];
+			v[3] = reg.f[B+3];
+		}
+		NEXTOP;
+	OP(SV4_R):
+		ASSERTA(a); ASSERTF(B+3); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		{
+			auto v = (double *)ptr;
+			v[0] = reg.f[B];
+			v[1] = reg.f[B+1];
+			v[2] = reg.f[B+2];
+			v[3] = reg.f[B+3];
+		}
+		NEXTOP;
+	OP(SFV2):
+		ASSERTA(a); ASSERTF(B+1); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+		}
+		NEXTOP;
+	OP(SFV2_R):
+		ASSERTA(a); ASSERTF(B+1); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+		}
+		NEXTOP;
+	OP(SFV3):
+		ASSERTA(a); ASSERTF(B+2); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
+		}
+		NEXTOP;
+	OP(SFV3_R):
+		ASSERTA(a); ASSERTF(B+2); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
+		}
+		NEXTOP;
+	OP(SFV4):
+		ASSERTA(a); ASSERTF(B+3); ASSERTKD(C);
+		GETADDR(PA,KC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
+			v[3] = (float)reg.f[B+3];
+		}
+		NEXTOP;
+	OP(SFV4_R):
+		ASSERTA(a); ASSERTF(B+3); ASSERTD(C);
+		GETADDR(PA,RC,X_WRITE_NIL);
+		{
+			auto v = (float *)ptr;
+			v[0] = (float)reg.f[B];
+			v[1] = (float)reg.f[B+1];
+			v[2] = (float)reg.f[B+2];
+			v[3] = (float)reg.f[B+3];
+		}
+		NEXTOP;
 	OP(SBIT):
 		ASSERTA(a); ASSERTD(B);
 		GETADDR(PA,0,X_WRITE_NIL);
@@ -477,6 +641,16 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		reg.f[a] = reg.f[b];
 		reg.f[a + 1] = reg.f[b + 1];
 		reg.f[a + 2] = reg.f[b + 2];
+		NEXTOP;
+	}
+	OP(MOVEV4) :
+	{
+		ASSERTF(a); ASSERTF(B);
+		b = B;
+		reg.f[a] = reg.f[b];
+		reg.f[a + 1] = reg.f[b + 1];
+		reg.f[a + 2] = reg.f[b + 2];
+		reg.f[a + 3] = reg.f[b + 3];
 		NEXTOP;
 	}
 	OP(DYNCAST_R) :
@@ -637,10 +811,23 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 					::new(param + 2) VMValue(reg.f[b + 2]);
 					f->NumParam += 2;
 					break;
+				case REGT_FLOAT | REGT_MULTIREG4:
+					assert(b < f->NumRegF - 3);
+					assert(f->NumParam < sfunc->MaxParam - 2);
+					::new(param) VMValue(reg.f[b]);
+					::new(param + 1) VMValue(reg.f[b + 1]);
+					::new(param + 2) VMValue(reg.f[b + 2]);
+					::new(param + 3) VMValue(reg.f[b + 3]);
+					f->NumParam += 3;
+					break;
 				case REGT_FLOAT | REGT_ADDROF:
 					assert(b < f->NumRegF);
 					::new(param) VMValue(&reg.f[b]);
 					break;
+				case REGT_FLOAT | REGT_MULTIREG2 | REGT_ADDROF:
+				case REGT_FLOAT | REGT_MULTIREG3 | REGT_ADDROF:
+				case REGT_FLOAT | REGT_MULTIREG4 | REGT_ADDROF:
+					I_Error("REGT_ADDROF not implemented for vectors\n");
 				case REGT_FLOAT | REGT_KONST:
 					assert(b < sfunc->NumKonstF);
 					::new(param) VMValue(konstf[b]);
@@ -662,6 +849,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 				return 0;
 			}
 			auto p = o->GetClass();
+			if(p->Virtuals.Size() <= 0) ThrowAbortException(X_OTHER,"Attempted to call an invalid virtual function in class %s",p->TypeName.GetChars());
 			assert(C < p->Virtuals.Size());
 			reg.a[a] = p->Virtuals[C];
 		}
@@ -1614,6 +1802,112 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		fcp = &konstf[C];
 		goto Do_EQV3;
 
+	OP(NEGV4):
+		ASSERTF(a+3); ASSERTF(B+3);
+		reg.f[a] = -reg.f[B];
+		reg.f[a+1] = -reg.f[B+1];
+		reg.f[a+2] = -reg.f[B+2];
+		reg.f[a+3] = -reg.f[B+3];
+		NEXTOP;
+
+	OP(ADDV4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C+3);
+		fcp = &reg.f[C];
+		fbp = &reg.f[B];
+		reg.f[a] = fbp[0] + fcp[0];
+		reg.f[a+1] = fbp[1] + fcp[1];
+		reg.f[a+2] = fbp[2] + fcp[2];
+		reg.f[a+3] = fbp[3] + fcp[3];
+		NEXTOP;
+
+	OP(SUBV4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C+3);
+		fbp = &reg.f[B];
+		fcp = &reg.f[C];
+		reg.f[a] = fbp[0] - fcp[0];
+		reg.f[a+1] = fbp[1] - fcp[1];
+		reg.f[a+2] = fbp[2] - fcp[2];
+		reg.f[a+3] = fbp[3] - fcp[3];
+		NEXTOP;
+
+	OP(DOTV4_RR):
+		ASSERTF(a); ASSERTF(B+3); ASSERTF(C+3);
+		reg.f[a] = reg.f[B] * reg.f[C] + reg.f[B+1] * reg.f[C+1] + reg.f[B+2] * reg.f[C+2] + reg.f[B+3] * reg.f[C+3];
+		NEXTOP;
+
+	OP(MULVF4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C);
+		fc = reg.f[C];
+		fbp = &reg.f[B];
+	Do_MULV4:
+		reg.f[a] = fbp[0] * fc;
+		reg.f[a+1] = fbp[1] * fc;
+		reg.f[a+2] = fbp[2] * fc;
+		reg.f[a+3] = fbp[3] * fc;
+		NEXTOP;
+	OP(MULVF4_RK):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTKF(C);
+		fc = konstf[C];
+		fbp = &reg.f[B];
+		goto Do_MULV4;
+
+	OP(DIVVF4_RR):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTF(C);
+		fc = reg.f[C];
+		fbp = &reg.f[B];
+	Do_DIVV4:
+		reg.f[a] = fbp[0] / fc;
+		reg.f[a+1] = fbp[1] / fc;
+		reg.f[a+2] = fbp[2] / fc;
+		reg.f[a+3] = fbp[3] / fc;
+		NEXTOP;
+	OP(DIVVF4_RK):
+		ASSERTF(a+3); ASSERTF(B+3); ASSERTKF(C);
+		fc = konstf[C];
+		fbp = &reg.f[B];
+		goto Do_DIVV4;
+
+	OP(LENV4):
+		ASSERTF(a); ASSERTF(B+3);
+		reg.f[a] = g_sqrt(reg.f[B] * reg.f[B] + reg.f[B+1] * reg.f[B+1] + reg.f[B+2] * reg.f[B+2]+ reg.f[B+3] * reg.f[B+3]);
+		NEXTOP;
+
+	OP(EQV4_R):
+		ASSERTF(B+3); ASSERTF(C+3);
+		fcp = &reg.f[C];
+	Do_EQV4:
+		if (a & CMP_APPROX)
+		{
+			CMPJMP(fabs(reg.f[B  ] - fcp[0]) < VM_EPSILON &&
+				   fabs(reg.f[B+1] - fcp[1]) < VM_EPSILON &&
+				   fabs(reg.f[B+2] - fcp[2]) < VM_EPSILON &&
+				   fabs(reg.f[B+3] - fcp[3]) < VM_EPSILON);
+		}
+		else
+		{
+			CMPJMP(reg.f[B] == fcp[0] && reg.f[B+1] == fcp[1] && reg.f[B+2] == fcp[2] && reg.f[B+3] == fcp[3]);
+		}
+		NEXTOP;
+	OP(EQV4_K):
+		ASSERTF(B+3); ASSERTKF(C+3);
+		fcp = &konstf[C];
+		goto Do_EQV4;
+	OP(MULQV3_RR):
+		ASSERTF(a + 2); ASSERTF(B + 3); ASSERTF(C + 2);
+		{
+			const DQuaternion& q = reinterpret_cast<DQuaternion&>(reg.f[B]);
+			const DVector3& v = reinterpret_cast<DVector3&>(reg.f[C]);
+			reinterpret_cast<DVector3&>(reg.f[A]) = q * v;
+		}
+		NEXTOP;
+	OP(MULQQ_RR):
+		ASSERTF(a + 3); ASSERTF(B + 3); ASSERTF(C + 3);
+		{
+			const DQuaternion& q1 = reinterpret_cast<DQuaternion&>(reg.f[B]);
+			const DQuaternion& q2 = reinterpret_cast<DQuaternion&>(reg.f[C]);
+			reinterpret_cast<DQuaternion&>(reg.f[A]) = q1 * q2;
+		}
+		NEXTOP;
 	OP(ADDA_RR):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		c = reg.d[C];
@@ -1833,12 +2127,12 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_S2So:
 		ASSERTD(a); ASSERTS(b);
-		reg.d[a] = FSoundID(reg.s[b]);
+		reg.d[a] = S_FindSound(reg.s[b]).index();
 		break;
 
 	case CAST_So2S:
 		ASSERTS(a); ASSERTD(b);
-		reg.s[a] = soundEngine->GetSoundName(reg.d[b]);
+		reg.s[a] = soundEngine->GetSoundName(FSoundID::fromInt(reg.d[b]));
 		break;
 
 	case CAST_SID2S:
@@ -1952,7 +2246,11 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 			assert(regnum < frame->NumRegF);
 			src = &reg.f[regnum];
 		}
-		if (regtype & REGT_MULTIREG3)
+		if (regtype & REGT_MULTIREG4)
+		{
+			ret->SetVector4((double*)src);
+		}
+		else if (regtype & REGT_MULTIREG3)
 		{
 			ret->SetVector((double *)src);
 		}

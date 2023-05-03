@@ -37,6 +37,9 @@ class Key : Inventory
 		Inventory.PickupSound "misc/k_pkup";
 	}
 
+	static native clearscope bool IsLockDefined(int locknum);
+	static native clearscope Color GetMapColorForLock(int locknum);
+	static native clearscope Color GetMapColorForKey(Key key);
 	static native clearscope int GetKeyTypeCount();
 	static native clearscope class<Key> GetKeyType(int index);
 	
@@ -92,9 +95,11 @@ class PuzzleItem : Inventory
 {
 	meta int PuzzleItemNumber;
 	meta String PuzzFailMessage;
+	meta Sound PuzzFailSound;
 	
 	property Number: PuzzleItemNumber;
 	property FailMessage: PuzzFailMessage;
+	property FailSound: PuzzFailSound;
 
 	Default
 	{
@@ -104,6 +109,7 @@ class PuzzleItem : Inventory
 		Inventory.UseSound "PuzzleSuccess";
 		Inventory.PickupSound "misc/i_pkup";
 		PuzzleItem.FailMessage("$TXT_USEPUZZLEFAILED");
+		PuzzleItem.FailSound "*puzzfail";
 	}
 	
 	override bool HandlePickup (Inventory item)
@@ -124,7 +130,7 @@ class PuzzleItem : Inventory
 			return true;
 		}
 		// [RH] Always play the sound if the use fails.
-		Owner.A_StartSound ("*puzzfail", CHAN_VOICE);
+		Owner.A_StartSound (PuzzFailSound, CHAN_VOICE);
 		if (Owner.CheckLocalView())
 		{
 			Console.MidPrint (null, PuzzFailMessage, true);

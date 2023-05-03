@@ -35,6 +35,7 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
+#include <chrono>
 #include <vector>
 #include "i_soundinternal.h"
 #include "zstring.h"
@@ -62,7 +63,7 @@ enum ECodecType
 class SoundStream
 {
 public:
-	virtual ~SoundStream () {}
+	virtual ~SoundStream() = default;
 
 	enum
 	{	// For CreateStream
@@ -75,11 +76,18 @@ public:
 		Loop = 16
 	};
 
+	struct Position {
+		uint64_t samplesplayed;
+		std::chrono::nanoseconds latency;
+	};
+
 	virtual bool Play(bool looping, float volume) = 0;
 	virtual void Stop() = 0;
 	virtual void SetVolume(float volume) = 0;
 	virtual bool SetPaused(bool paused) = 0;
 	virtual bool IsEnded() = 0;
+	// Be aware this can be called during the callback invocation after Play is called.
+	virtual Position GetPlayPosition() = 0;
 	virtual FString GetStats();
 };
 
@@ -97,7 +105,7 @@ public:
 	virtual bool IsNull() { return false; }
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
-	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length) = 0;
+	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length, int def_loop_start, int def_loop_end) = 0;
 	SoundHandle LoadSoundVoc(uint8_t *sfxdata, int length);
 	virtual SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1) = 0;
 	virtual void UnloadSound (SoundHandle sfx) = 0;	// unloads a sound from memory
@@ -109,8 +117,8 @@ public:
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
 
 	// Starts a sound.
-	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime = 0.f) = 0;
-	virtual FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan, float startTime = 0.f) = 0;
+	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, float pitch, int chanflags, FISoundChannel *reuse_chan, float startTime = 0.f) = 0;
+	virtual FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, float pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan, float startTime = 0.f) = 0;
 
 	// Stops a sound channel.
 	virtual void StopChannel (FISoundChannel *chan) = 0;

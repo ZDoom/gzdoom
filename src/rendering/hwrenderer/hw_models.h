@@ -39,6 +39,7 @@ class FHWModelRenderer : public FModelRenderer
 {
 	friend class FModelVertexBuffer;
 	int modellightindex = -1;
+	int boneIndexBase = -1;
 	HWDrawInfo *di;
 	FRenderState &state;
 public:
@@ -55,7 +56,7 @@ public:
 	void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) override;
 	void DrawArrays(int start, int count) override;
 	void DrawElements(int numIndices, size_t offset) override;
-	void SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size) override;
+	int SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix>& bones, int boneStartIndex) override;
 
 };
 

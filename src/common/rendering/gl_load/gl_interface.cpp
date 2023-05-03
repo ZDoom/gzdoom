@@ -44,7 +44,8 @@
 
 static TArray<FString>  m_Extensions;
 RenderContext gl;
-static double realglversion;	// this is public so the statistics code can access it.
+static double realglversion;
+static bool bindless;
 
 //==========================================================================
 //
@@ -107,6 +108,8 @@ static void InitContext()
 
 void gl_LoadExtensions()
 {
+	int v = 0;
+
 	InitContext();
 	CollectExtensions();
 
@@ -156,37 +159,23 @@ void gl_LoadExtensions()
 #ifdef _WIN32
 		if (strstr(gl.vendorstring, "ATI Tech"))
 		{
-			gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows. (TBD: Relegate to vintage build? Maybe after the next survey.)
+			gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows.
 		}
 #endif
 		gl.glslversion = 3.31f;	// Force GLSL down to 3.3.
 	}
-	else if (gl_version < 4.5f)
-	{
-		// don't use GL 4.x features when running a GL 3.x context.
-		if (CheckExtension("GL_ARB_buffer_storage"))
-		{
-			// work around a problem with older AMD drivers: Their implementation of shader storage buffer objects is piss-poor and does not match uniform buffers even closely.
-			// Recent drivers, GL 4.4 don't have this problem, these can easily be recognized by also supporting the GL_ARB_buffer_storage extension.
-			if (CheckExtension("GL_ARB_shader_storage_buffer_object"))
-			{
-				gl.flags |= RFL_SHADER_STORAGE_BUFFER;
-			}
-			gl.flags |= RFL_BUFFER_STORAGE;
-		}
-	}
-	else
+	else if (gl_version >= 4.5f)
 	{
 		// Assume that everything works without problems on GL 4.5 drivers where these things are core features.
 		gl.flags |= RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+
+		// Mesa implements shader storage only for fragment shaders.
+		// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
+		glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
+		if (v == 0)
+			gl.flags &= ~RFL_SHADER_STORAGE_BUFFER;
 	}
 
-	// Mesa implements shader storage only for fragment shaders.
-	// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
-	int v = 0;
-	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
-	if (v == 0)
-		gl.flags &= ~RFL_SHADER_STORAGE_BUFFER;
 
 
 	if (gl_version >= 4.3f || CheckExtension("GL_ARB_invalidate_subdata")) gl.flags |= RFL_INVALIDATE_BUFFER;
@@ -201,6 +190,8 @@ void gl_LoadExtensions()
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	bindless = CheckExtension("GL_ARB_bindless_texture");
 }
 
 //==========================================================================
@@ -247,9 +238,14 @@ void gl_PrintStartupLog()
 	}
 }
 
+void setGlVersion(double glv)
+{
+	realglversion = glv;
+}
+
 std::pair<double, bool> gl_getInfo()
 {
 	// gl_ARB_bindless_texture is the closest we can get to determine Vulkan support from OpenGL.
 	// This isn't foolproof because Intel doesn't support it but for NVidia and AMD support of this extension means Vulkan support.
-	return std::make_pair(realglversion, CheckExtension("GL_ARB_bindless_texture"));
+	return std::make_pair(realglversion, bindless);
 }

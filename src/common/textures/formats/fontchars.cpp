@@ -66,7 +66,7 @@ FFontChar2::FFontChar2(int sourcelump, int sourcepos, int width, int height, int
 //
 //==========================================================================
 
-TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
+PalettedPixels FFontChar2::CreatePalettedPixels(int)
 {
 	auto lump = fileSystem.OpenFileReader(SourceLump);
 	int destSize = Width * Height;
@@ -96,7 +96,7 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 		}
 	}
 
-	TArray<uint8_t> Pixels(destSize, true);
+	PalettedPixels Pixels(destSize);
 
 	int runlen = 0, setlen = 0;
 	uint8_t setval = 0;  // Shut up, GCC!

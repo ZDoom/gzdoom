@@ -29,8 +29,8 @@ namespace SmackerCommon {
 class BitReader
 {
 	public:
-		BitReader(SmackerCommon::FileStream &file, uint32_t size);
-		~BitReader();
+		BitReader(const uint8_t *data, uint32_t size) : bitData(data), totalSize(size) { }
+		~BitReader() = default;
 		uint32_t GetBit();
 		uint32_t GetBits(uint32_t n);
 		void SkipBits(uint32_t n);
@@ -39,15 +39,10 @@ class BitReader
 		uint32_t GetPosition();
 
 	private:
-		uint32_t totalSize;
-		uint32_t currentOffset;
-		uint32_t bytesRead;
-
-		SmackerCommon::FileStream *file;
-
-        TArray<uint8_t> Cache;
-
-		void FillCache();
+		const uint8_t *bitData = nullptr;
+		uint32_t totalSize = 0;
+		uint32_t currentOffset = 0;
+		uint32_t bytesRead = 0;
 };
 
 } // close namespace SmackerCommon

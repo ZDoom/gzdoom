@@ -57,14 +57,14 @@ typedef enum
 #endif
 #endif
 
+// State updates, number of tics / second.
+constexpr int TICRATE = 35;
+
 // Global constants that were defines.
 enum
 {
 	// The maximum number of players, multiplayer/networking.
 	MAXPLAYERS = 8,
-
-	// State updates, number of tics / second.
-	TICRATE = 35,
 
 	// Amount of damage done by a telefrag.
 	TELEFRAG_DAMAGE = 1000000
@@ -102,7 +102,7 @@ enum ESkillLevels
 #include "keydef.h"
 
 // [RH] dmflags bits (based on Q2's)
-enum
+enum : unsigned
 {
 	DF_NO_HEALTH			= 1 << 0,	// Do not spawn health items (DM)
 	DF_NO_ITEMS				= 1 << 1,	// Do not spawn powerups (DM)
@@ -136,11 +136,11 @@ enum
 	DF_COOP_LOSE_POWERUPS	= 1 << 28,	// Lose powerups when respawning in coop
 	DF_COOP_LOSE_AMMO		= 1 << 29,	// Lose ammo when respawning in coop
 	DF_COOP_HALVE_AMMO		= 1 << 30,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
-	DF_INSTANT_REACTION		= 1 << 31,	// Monsters react instantly
+	DF_INSTANT_REACTION		= 1u << 31,	// Monsters react instantly
 };
 
 // [BC] More dmflags. w00p!
-enum
+enum : unsigned
 {
 //	DF2_YES_IMPALING		= 1 << 0,	// Player gets impaled on MF2_IMPALE items
 	DF2_YES_WEAPONDROP		= 1 << 1,	// Drop current weapon upon death
@@ -173,6 +173,13 @@ enum
 	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
 	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
 	DF2_NOVERTSPREAD		= 1 << 30,	// Don't allow vertical spread for hitscan weapons (excluding ssg)
+	DF2_NO_EXTRA_AMMO		= 1u << 31,	// Don't add extra ammo when picking up weapons (like in original Doom)
+};
+
+// [Nash] dmflags3 in 2023 let's gooooo
+enum : unsigned
+{
+	DF3_NO_PLAYER_CLIP		= 1 << 0,	// Players can walk through and shoot through each other
 };
 
 // [RH] Compatibility flags.
@@ -242,6 +249,7 @@ enum
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
 	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
 	BCOMPATF_CLIPMIDTEX			= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps, has no effect in the hardware renderer)
+	BCOMPATF_NOSECTIONMERGE		= 1 << 11,	// (for IWAD maps) keep separate sections for sectors with intra-sector linedefs. 
 };
 
 // phares 3/20/98:

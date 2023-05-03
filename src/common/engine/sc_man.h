@@ -12,19 +12,19 @@ struct VersionInfo
 	uint16_t minor;
 	uint32_t revision;
 
-	bool operator <=(const VersionInfo& o) const
+	constexpr bool operator <=(const VersionInfo& o) const
 	{
 		return o.major > this->major || (o.major == this->major && o.minor > this->minor) || (o.major == this->major && o.minor == this->minor && o.revision >= this->revision);
 	}
-	bool operator >=(const VersionInfo& o) const
+	constexpr bool operator >=(const VersionInfo& o) const
 	{
 		return o.major < this->major || (o.major == this->major && o.minor < this->minor) || (o.major == this->major && o.minor == this->minor && o.revision <= this->revision);
 	}
-	bool operator > (const VersionInfo& o) const
+	constexpr bool operator > (const VersionInfo& o) const
 	{
 		return o.major < this->major || (o.major == this->major && o.minor < this->minor) || (o.major == this->major && o.minor == this->minor && o.revision < this->revision);
 	}
-	bool operator < (const VersionInfo& o) const
+	constexpr bool operator < (const VersionInfo& o) const
 	{
 		return o.major > this->major || (o.major == this->major && o.minor > this->minor) || (o.major == this->major && o.minor == this->minor && o.revision > this->revision);
 	}
@@ -32,7 +32,7 @@ struct VersionInfo
 };
 
 // Cannot be a constructor because Lemon would puke on it.
-inline VersionInfo MakeVersion(unsigned int ma, unsigned int mi, unsigned int re = 0)
+constexpr VersionInfo MakeVersion(unsigned int ma, unsigned int mi, unsigned int re = 0)
 {
 	return{ (uint16_t)ma, (uint16_t)mi, (uint32_t)re };
 }
@@ -54,16 +54,18 @@ public:
 		double Float;
 	};
 
+	using SymbolMap = TMap<FName, Symbol>;
 
-	TMap<FName, Symbol> symbols;
+	SymbolMap mysymbols;
+	SymbolMap& symbols;
+	TMap<FName, Symbol>& GetSymbols() { return symbols; }
 
 	// Methods ------------------------------------------------------
-	FScanner();
-	FScanner(const FScanner &other);
-	FScanner(int lumpnum);
-	~FScanner();
-
-	FScanner &operator=(const FScanner &other);
+	FScanner(TMap<FName, Symbol>* extsymbols = nullptr);
+	FScanner(const FScanner& other) = delete;
+	FScanner& operator=(const FScanner& other) = delete;
+	FScanner(int lumpnum, TMap<FName, Symbol>* extsymbols = nullptr);
+	~FScanner() = default;
 
 	void Open(const char *lumpname);
 	bool OpenFile(const char *filename);
@@ -115,6 +117,13 @@ public:
 	void MustGetNumber(bool evaluate = false);
 	bool CheckNumber(bool evaluate = false);
 
+	bool GetNumber(int16_t& var, bool evaluate = false)
+	{
+		if (!GetNumber(evaluate)) return false;
+		var = Number;
+		return true;
+	}
+
 	bool GetNumber(int& var, bool evaluate = false)
 	{
 		if (!GetNumber(evaluate)) return false;
@@ -155,9 +164,9 @@ public:
 	void MustGetFloat(bool evaluate = false);
 	bool CheckFloat(bool evaluate = false);
 
-	double *LookupConstant(FName name)
+	Symbol *LookupSymbol(FName name)
 	{
-		return constants.CheckKey(name);
+		return symbols.CheckKey(name);
 	}
 
 	// Token based variant

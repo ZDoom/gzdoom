@@ -39,6 +39,7 @@
 #include "autosegs.h"
 #include "zstring.h"
 #include "vectors.h"
+#include "quaternion.h"
 #include "cmdlib.h"
 #include "engineerrors.h"
 #include "memarena.h"
@@ -80,8 +81,9 @@ enum
 	REGT_KONST		= 4,
 	REGT_MULTIREG2	= 8,
 	REGT_MULTIREG3	= 16,	// (e.g. a vector)
-	REGT_MULTIREG	= 24,
+	REGT_MULTIREG	= 8 | 16 | 64,
 	REGT_ADDROF		= 32,	// used with PARAM: pass address of this register
+	REGT_MULTIREG4	= 64,
 
 	REGT_NIL		= 128	// parameter was omitted
 };
@@ -110,8 +112,8 @@ public:
 };
 
 // This must be a separate function because the VC compiler would otherwise allocate memory on the stack for every separate instance of the exception object that may get thrown.
-void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
-void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...);
+[[noreturn]] void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
+[[noreturn]] void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...);
 
 void ClearGlobalVMStack();
 
@@ -130,8 +132,32 @@ struct VMReturn
 		assert(RegType == REGT_FLOAT);
 		*(double *)Location = val;
 	}
+	void SetVector4(const double val[4])
+	{
+		assert(RegType == (REGT_FLOAT|REGT_MULTIREG4));
+		((double *)Location)[0] = val[0];
+		((double *)Location)[1] = val[1];
+		((double *)Location)[2] = val[2];
+		((double *)Location)[3] = val[3];
+	}
+	void SetVector4(const DVector4 &val)
+	{
+		assert(RegType == (REGT_FLOAT | REGT_MULTIREG4));
+		((double *)Location)[0] = val[0];
+		((double *)Location)[1] = val[1];
+		((double *)Location)[2] = val[2];
+		((double *)Location)[3] = val[3];
+	}
+	void SetQuaternion(const DQuaternion &val)
+	{
+		assert(RegType == (REGT_FLOAT | REGT_MULTIREG4));
+		((double *)Location)[0] = val[0];
+		((double *)Location)[1] = val[1];
+		((double *)Location)[2] = val[2];
+		((double *)Location)[3] = val[3];
+	}
 	void SetVector(const double val[3])
-	{	
+	{
 		assert(RegType == (REGT_FLOAT|REGT_MULTIREG3));
 		((double *)Location)[0] = val[0];
 		((double *)Location)[1] = val[1];
@@ -189,6 +215,11 @@ struct VMReturn
 		Location = loc;
 		RegType = REGT_FLOAT | REGT_MULTIREG2;
 	}
+	void Vec3At(DVector3 *loc)
+	{
+		Location = loc;
+		RegType = REGT_FLOAT | REGT_MULTIREG3;
+	}
 	void StringAt(FString *loc)
 	{
 		Location = loc;
@@ -203,6 +234,7 @@ struct VMReturn
 	VMReturn(int *loc) { IntAt(loc); }
 	VMReturn(double *loc) { FloatAt(loc); }
 	VMReturn(DVector2 *loc) { Vec2At(loc); }
+	VMReturn(DVector3 *loc) { Vec3At(loc); }
 	VMReturn(FString *loc) { StringAt(loc); }
 	VMReturn(void **loc) { PointerAt(loc); }
 };
@@ -312,6 +344,10 @@ struct VMValue
 		biggest = o.biggest;
 	}
 	VMValue(int v)
+	{
+		i = v;
+	}
+	VMValue(unsigned int v)
 	{
 		i = v;
 	}
@@ -492,6 +528,7 @@ inline int VMCallAction(VMFunction *func, VMValue *params, int numparams, VMRetu
 
 // Use these to collect the parameters in a native function.
 // variable name <x> at position <p>
+[[noreturn]]
 void NullParam(const char *varname);
 
 #ifndef NDEBUG
@@ -508,10 +545,11 @@ bool AssertObject(void * ob);
 #define PARAM_UINT_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); unsigned x = param[p].i;
 #define PARAM_BOOL_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); bool x = !!param[p].i;
 #define PARAM_NAME_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FName x = ENamedName(param[p].i);
-#define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FSoundID x = param[p].i;
-#define PARAM_COLOR_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); PalEntry x; x.d = param[p].i;
+#define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FSoundID x = FSoundID::fromInt(param[p].i);
+#define PARAM_COLOR_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); PalEntry x = param[p].i;
 #define PARAM_FLOAT_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); double x = param[p].f;
-#define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); DAngle x = param[p].f;
+#define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); DAngle x = DAngle::fromDeg(param[p].f);
+#define PARAM_FANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); FAngle x = FAngle::fromDeg(param[p].f);
 #define PARAM_STRING_VAL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_STRING); FString x = param[p].s();
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(reginfo[p] == REGT_STRING); const FString &x = param[p].s();
 #define PARAM_STATELABEL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_INT); int x = param[p].i;
@@ -538,6 +576,7 @@ bool AssertObject(void * ob);
 #define PARAM_COLOR(x)				++paramnum; PARAM_COLOR_AT(paramnum,x)
 #define PARAM_FLOAT(x)				++paramnum; PARAM_FLOAT_AT(paramnum,x)
 #define PARAM_ANGLE(x)				++paramnum; PARAM_ANGLE_AT(paramnum,x)
+#define PARAM_FANGLE(x)				++paramnum; PARAM_FANGLE_AT(paramnum,x)
 #define PARAM_STRING(x)				++paramnum; PARAM_STRING_AT(paramnum,x)
 #define PARAM_STRING_VAL(x)				++paramnum; PARAM_STRING_VAL_AT(paramnum,x)
 #define PARAM_STATELABEL(x)				++paramnum; PARAM_STATELABEL_AT(paramnum,x)
@@ -599,7 +638,8 @@ struct DirectNativeDesc
 	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11), TP(12)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); VP(12); }
 	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11), TP(12), TP(13)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); VP(12); VP(13); }
 	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11), TP(12), TP(13), TP(14)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); VP(12); VP(13), VP(14); }
-	#undef TP
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11), TP(12), TP(13), TP(14), TP(15)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); VP(12); VP(13), VP(14), VP(15); }
+#undef TP
 	#undef VP
 
 	template<typename T> void ValidateType() { static_assert(native_is_valid<T>::value, "Argument type is not valid as a direct native parameter or return type"); }
@@ -724,6 +764,8 @@ class AActor;
 #define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_VEC2(v) do { DVector2 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector2(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_VEC3(v) do { DVector3 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector(u); return 1; } return 0; } while(0)
+#define ACTION_RETURN_VEC4(v) do { DVector4 u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetVector4(u); return 1; } return 0; } while(0)
+#define ACTION_RETURN_QUAT(v) do { DQuaternion u = v; if (numret > 0) { assert(ret != nullptr); ret[0].SetQuaternion(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_INT(v) do { int u = v; if (numret > 0) { assert(ret != NULL); ret->SetInt(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
 #define ACTION_RETURN_STRING(v) do { FString u = v; if (numret > 0) { assert(ret != NULL); ret->SetString(u); return 1; } return 0; } while(0)

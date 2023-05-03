@@ -57,6 +57,8 @@ class ListMenuDescriptor : MenuDescriptor native
 	native bool mCenter;
 	native bool mAnimatedTransition;
 	native bool mAnimated;
+	native bool mDontBlur;
+	native bool mDontDim;
 	native int mVirtWidth, mVirtHeight;
 
 	native void Reset();
@@ -89,6 +91,8 @@ class ListMenu : Menu
 		mDesc = desc;
 		AnimatedTransition = mDesc.mAnimatedTransition;
 		Animated = mDesc.mAnimated;
+		DontBlur = mDesc.mDontBlur;
+		DontDim = mDesc.mDontDim;
 		if (desc.mCenter)
 		{
 			double center = 160;
@@ -120,7 +124,7 @@ class ListMenu : Menu
 			mDesc.mItems[i].OnMenuCreated();
 		}
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -136,7 +140,7 @@ class ListMenu : Menu
 		}
 		return NULL;
 	}
-	
+
 
 	//=============================================================================
 	//
@@ -243,7 +247,7 @@ class ListMenu : Menu
 			int h = mDesc.DisplayHeight();
 			double fx, fy, fw, fh;
 			[fx, fy, fw, fh] = Screen.GetFullscreenRect(w, h, FSMode_ScaleToFit43);
-			
+
 			x = int((x - fx) * w / fw);
 			y = int((y - fy) * h / fh);
 		}
@@ -311,7 +315,7 @@ class ListMenu : Menu
 		}
 		Super.Drawer();
 	}
-	
+
 	//=============================================================================
 	//
 	//

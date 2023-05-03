@@ -1,12 +1,7 @@
 #pragma once
 
 #include "i_sound.h"
-
-struct FRandomSoundList
-{
-	TArray<uint32_t> Choices;
-	uint32_t Owner = 0;
-};
+#include "name.h"
 
 enum
 {
@@ -14,47 +9,6 @@ enum
 };
 
 
-
-//
-// SoundFX struct.
-//
-struct sfxinfo_t
-{
-	// Next field is for use by the system sound interface.
-	// A non-null data means the sound has been loaded.
-	SoundHandle	data{};
-
-	FString		name;								// [RH] Sound name defined in SNDINFO
-	int 		lumpnum = sfx_empty;				// lump number of sfx
-
-	unsigned int next = -1, index = 0;				// [RH] For hashing
-	float		Volume = 1.f;
-
-	int			ResourceId = -1;					// Resource ID as implemented by Blood. Not used by Doom but added for completeness.
-	float		LimitRange = 256*256;				// Range for sound limiting (squared for faster computations)
-	float		DefPitch = 0.f;						// A defined pitch instead of a random one the sound plays at, similar to A_StartSound.
-	float		DefPitchMax = 0.f;					// Randomized range with stronger control over pitch itself.
-
-	int16_t		NearLimit = 4;						// 0 means unlimited.
-	uint8_t		PitchMask = 0;
-	bool		bRandomHeader = false;
-	bool		bLoadRAW = false;
-	bool		b16bit = false;
-	bool		bUsed = false;
-	bool		bSingular = false;
-	bool		bTentative = true;
-
-	TArray<int> UserData;
-
-	int			RawRate = 0;				// Sample rate to use when bLoadRAW is true
-	int			LoopStart = -1;				// -1 means no specific loop defined
-
-	unsigned int link = NO_LINK;;
-	enum { NO_LINK = 0xffffffff };
-
-	FRolloffInfo	Rolloff{};
-	float		Attenuation = 1.f;			// Multiplies the attenuation passed to S_Sound.
-};
 
 // Rolloff types
 enum
@@ -65,8 +19,6 @@ enum
 	ROLLOFF_Custom		// Lookup volume from SNDCURVE
 };
 
-inline int S_FindSoundByResID(int ndx);
-inline int S_FindSound(const char* name);
 
 // An index into the S_sfx[] array.
 class FSoundID
@@ -74,60 +26,91 @@ class FSoundID
 public:
 	FSoundID() = default;
 
-	static FSoundID byResId(int ndx)
+private:
+	constexpr FSoundID(int id) : ID(id)
 	{
-		return FSoundID(S_FindSoundByResID(ndx)); 
 	}
-	FSoundID(int id)
+public:
+	static constexpr FSoundID fromInt(int i)
 	{
-		ID = id;
-	}
-	FSoundID(const char *name)
-	{
-		ID = S_FindSound(name);
-	}
-	FSoundID(const FString &name)
-	{
-		ID = S_FindSound(name.GetChars());
+		return FSoundID(i);
 	}
 	FSoundID(const FSoundID &other) = default;
 	FSoundID &operator=(const FSoundID &other) = default;
-	FSoundID &operator=(const char *name)
-	{
-		ID = S_FindSound(name);
-		return *this;
-	}
-	FSoundID &operator=(const FString &name)
-	{
-		ID = S_FindSound(name.GetChars());
-		return *this;
-	}
 	bool operator !=(FSoundID other) const
 	{
 		return ID != other.ID;
 	}
-	bool operator !=(int other) const
+	bool operator ==(FSoundID other) const
 	{
-		return ID != other;
+		return ID == other.ID;
 	}
-	operator int() const
+	bool operator ==(int other) const = delete;
+	bool operator !=(int other) const = delete;
+	constexpr int index() const
 	{
 		return ID;
 	}
+	constexpr bool isvalid() const
+	{
+		return ID > 0;
+	}
 private:
+
 	int ID;
-protected:
-	enum EDummy { NoInit };
-	FSoundID(EDummy) {}
 };
 
- class FSoundIDNoInit : public FSoundID
-{
-public:
-	FSoundIDNoInit() : FSoundID(NoInit) {}
-	using FSoundID::operator=;
-};
+constexpr FSoundID NO_SOUND = FSoundID::fromInt(0);
+constexpr FSoundID INVALID_SOUND = FSoundID::fromInt(-1);
 
+ struct FRandomSoundList
+ {
+	 TArray<FSoundID> Choices;
+	 FSoundID Owner = NO_SOUND;
+ };
+
+
+ //
+// SoundFX struct.
+//
+ struct sfxinfo_t
+ {
+	 // Next field is for use by the system sound interface.
+	 // A non-null data means the sound has been loaded.
+	 SoundHandle	data{};
+
+	 FName		name;								// [RH] Sound name defined in SNDINFO
+	 int 		lumpnum = sfx_empty;				// lump number of sfx
+
+	 float		Volume = 1.f;
+
+	 int			ResourceId = -1;					// Resource ID as implemented by Blood. Not used by Doom but added for completeness.
+	 float		LimitRange = 256 * 256;				// Range for sound limiting (squared for faster computations)
+	 float		DefPitch = 0.f;						// A defined pitch instead of a random one the sound plays at, similar to A_StartSound.
+	 float		DefPitchMax = 0.f;					// Randomized range with stronger control over pitch itself.
+
+	 int16_t		NearLimit = 4;						// 0 means unlimited.
+	 uint8_t		PitchMask = 0;
+	 bool		bRandomHeader = false;
+	 bool		bLoadRAW = false;
+	 bool		b16bit = false;
+	 bool		bUsed = false;
+	 bool		bSingular = false;
+	 bool		bTentative = true;
+	 bool		bExternal = false;
+
+	 TArray<int> UserData;
+
+	 int			RawRate = 0;				// Sample rate to use when bLoadRAW is true
+	 int			LoopStart = -1;				// -1 means no specific loop defined
+	 int			LoopEnd = -1;				// -1 means no specific loop defined
+
+	 FSoundID link = NO_LINK;
+	 constexpr static FSoundID NO_LINK = FSoundID::fromInt(-1);
+
+	 FRolloffInfo	Rolloff{};
+	 float		Attenuation = 1.f;			// Multiplies the attenuation passed to S_Sound.
+ };
 
 
 struct FSoundChan : public FISoundChannel
@@ -139,7 +122,7 @@ struct FSoundChan : public FISoundChannel
 	float		Volume;
 	int 		EntChannel;	// Actor's sound channel.
 	int			UserData;	// Not used by the engine, the caller can use this to store some additional info.
-	int16_t		Pitch;		// Pitch variation.
+	float		Pitch;		// Pitch variation.
 	int16_t		NearLimit;
 	int8_t		Priority;
 	uint8_t		SourceType;
@@ -211,7 +194,8 @@ protected:
 	TArray<sfxinfo_t> S_sfx;
 	FRolloffInfo S_Rolloff{};
 	TArray<uint8_t> S_SoundCurve;
-	TMap<int, int> ResIdMap;
+	TMap<FName, FSoundID> SoundMap;
+	TMap<int, FSoundID> ResIdMap;
 	TArray<FRandomSoundList> S_rnd;
 	bool blockNewSounds = false;
 
@@ -231,8 +215,9 @@ private:
 	bool ValidatePosVel(const FSoundChan* const chan, const FVector3& pos, const FVector3& vel);
 
 	// Checks if a copy of this sound is already playing.
-	bool CheckSingular(int sound_id);
+	bool CheckSingular(FSoundID sound_id);
 	virtual TArray<uint8_t> ReadSound(int lumpnum) = 0;
+
 protected:
 	virtual bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel, float attenuation);
 	virtual FSoundID ResolveSound(const void *ent, int srctype, FSoundID soundid, float &attenuation);
@@ -251,10 +236,25 @@ public:
 
 	virtual void StopChannel(FSoundChan* chan);
 	sfxinfo_t* LoadSound(sfxinfo_t* sfx);
-	const sfxinfo_t* GetSfx(unsigned snd)
+	sfxinfo_t* GetWritableSfx(FSoundID snd)
 	{
-		if (snd >= S_sfx.Size()) return nullptr;
-		return &S_sfx[snd];
+		if ((unsigned)snd.index() >= S_sfx.Size()) return nullptr;
+		return &S_sfx[snd.index()];
+	}
+
+	const sfxinfo_t* GetSfx(FSoundID snd)
+	{
+		return GetWritableSfx(snd);
+	}
+
+	unsigned GetNumSounds() const
+	{
+		return S_sfx.Size();
+	}
+
+	sfxinfo_t* AllocateSound()
+	{
+		return &S_sfx[S_sfx.Reserve(1)];
 	}
 
 	// Initializes sound stuff, including volume
@@ -276,7 +276,7 @@ public:
 
 	// Loads a sound, including any random sounds it might reference.
 	virtual void CacheSound(sfxinfo_t* sfx);
-	void CacheSound(int sfx) { CacheSound(&S_sfx[sfx]); }
+	void CacheSound(FSoundID sfx) { CacheSound(&S_sfx[sfx.index()]); }
 	void UnloadSound(sfxinfo_t* sfx);
 	void UnloadSound(int sfx)
 	{
@@ -289,23 +289,24 @@ public:
 		const FVector3* pt, int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation, FRolloffInfo* rolloff = nullptr, float spitch = 0.0f, float startTime = 0.0f);
 
 	// Stops an origin-less sound from playing from this channel.
-	void StopSoundID(int sound_id);
-	void StopSound(int channel, int sound_id = -1);
-	void StopSound(int sourcetype, const void* actor, int channel, int sound_id = -1);
+	void StopSoundID(FSoundID sound_id);
+	void StopSound(int channel, FSoundID sound_id = INVALID_SOUND);
+	void StopSound(int sourcetype, const void* actor, int channel, FSoundID sound_id = INVALID_SOUND);
 	void StopActorSounds(int sourcetype, const void* actor, int chanmin, int chanmax);
 
 	void RelinkSound(int sourcetype, const void* from, const void* to, const FVector3* optpos);
 	void ChangeSoundVolume(int sourcetype, const void* source, int channel, double dvolume);
-	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch, int sound_id = -1);
-	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, int sound_id = -1);
+	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch, FSoundID sound_id = INVALID_SOUND);
+	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, FSoundID sound_id = INVALID_SOUND);
 
 	// Stop and resume music, during game PAUSE.
-	int GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id, int chan = -1);
+	int GetSoundPlayingInfo(int sourcetype, const void* source, FSoundID sound_id, int chan = -1);
 	void UnloadAllSounds();
 	void Reset();
-	void MarkUsed(int num);
+	void MarkUsed(FSoundID num);
 	void CacheMarkedSounds();
 	TArray<FSoundChan*> AllActiveChannels();
+	virtual void SetSoundPaused(int state) {}
 
 	void MarkAllUnused()
 	{
@@ -338,31 +339,28 @@ public:
 	}
 	const char *GetSoundName(FSoundID id)
 	{
-		return id == 0 ? "" : S_sfx[id].name.GetChars();
+		return !id.isvalid() ? "" : S_sfx[id.index()].name.GetChars();
 	}
-	TArray<sfxinfo_t> &GetSounds()	//This should only be used for constructing the sound list or for diagnostics code prinring information about the sound list.
-	{
-		return S_sfx;
-	}
-	FRolloffInfo& GlobalRolloff() // like GetSounds this is meant for sound list generators, not for gaining cheap access to the sound engine's innards.
+	FRolloffInfo& GlobalRolloff() // this is meant for sound list generators, not for gaining cheap access to the sound engine's innards.
 	{
 		return S_Rolloff;
 	}
 	FRandomSoundList *ResolveRandomSound(sfxinfo_t* sfx)
 	{
-		return &S_rnd[sfx->link];
+		return &S_rnd[sfx->link.index()];
 	}
 	void ClearRandoms()
 	{
 		S_rnd.Clear();
 	}
-	int *GetUserData(int snd)
+	int *GetUserData(FSoundID snd)
 	{
-		return S_sfx[snd].UserData.Data();
+		return S_sfx[snd.index()].UserData.Data();
 	}
-	bool isValidSoundId(int id)
+	bool isValidSoundId(FSoundID sid)
 	{
-		return id > 0 && id < (int)S_sfx.Size() && !S_sfx[id].bTentative && S_sfx[id].lumpnum != sfx_empty;
+		int id = sid.index();
+		return id > 0 && id < (int)S_sfx.Size() && !S_sfx[id].bTentative && (S_sfx[id].lumpnum != sfx_empty || S_sfx[id].bRandomHeader || S_sfx[id].link != sfxinfo_t::NO_LINK);
 	}
 
 	template<class func> bool EnumerateChannels(func callback)
@@ -392,17 +390,18 @@ public:
 	virtual void SoundDone(FISoundChannel* ichan); // gets called when the sound has been completely taken down.
 
 	// Lookup utilities.
-	int FindSound(const char* logicalname);
-	int FindSoundByResID(int rid);
-	int FindSoundNoHash(const char* logicalname);
-	int FindSoundByLump(int lump);
-	virtual int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
-	int FindSoundTentative(const char* name);
+	FSoundID FindSound(const char* logicalname);
+	FSoundID FindSoundByResID(int rid);
+	FSoundID FindSoundNoHash(const char* logicalname);
+	FSoundID FindSoundByResIDNoHash(int rid);
+	FSoundID FindSoundByLump(int lump);
+	virtual FSoundID AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
+	FSoundID FindSoundTentative(const char* name, int nearlimit = 2);
 	void CacheRandomSound(sfxinfo_t* sfx);
 	unsigned int GetMSLength(FSoundID sound);
-	int PickReplacement(int refid);
+	FSoundID PickReplacement(FSoundID refid);
 	void HashSounds();
-	void AddRandomSound(int Owner, TArray<uint32_t> list);
+	void AddRandomSound(FSoundID Owner, TArray<FSoundID> list);
 };
 
 
@@ -417,12 +416,12 @@ struct FReverbField
 };
 
 
-inline int S_FindSoundByResID(int ndx)
+inline FSoundID S_FindSoundByResID(int ndx)
 {
 	return soundEngine->FindSoundByResID(ndx);
 }
 
-inline int S_FindSound(const char* name)
+inline FSoundID S_FindSound(const char* name)
 {
 	return soundEngine->FindSound(name);
 }

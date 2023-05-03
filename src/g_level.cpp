@@ -46,6 +46,7 @@
 #include "filesystem.h"
 #include "am_map.h"
 #include "c_dispatch.h"
+#include "i_interface.h"
 
 #include "p_setup.h"
 #include "p_local.h"
@@ -83,8 +84,11 @@
 #include "stringtable.h"
 #include "c_buttons.h"
 #include "screenjob.h"
+#include "types.h"
+#include "gstrings.h"
 
 #include "gi.h"
+
 
 #include "g_hub.h"
 #include "g_levellocals.h"
@@ -98,6 +102,7 @@
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl, FLevelLocals *Level);
+FString STAT_EpisodeName();
 
 EXTERN_CVAR(Bool, save_formatted)
 EXTERN_CVAR (Float, sv_gravity)
@@ -178,7 +183,59 @@ void *statcopy;					// for statistics driver
 FLevelLocals level;			// info about current level
 FLevelLocals *primaryLevel = &level;	// level for which to display the user interface.
 FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
+static PType* maprecordtype;
 
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void Local_Job_Init()
+{
+	maprecordtype = NewPointer(NewStruct("MapRecord", nullptr, true));
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void CallCreateMapFunction(const char* qname, DObject* runner, level_info_t* map)
+{
+	auto func = LookupFunction(qname);
+	if (func->Proto->ArgumentTypes.Size() == 1) return CallCreateFunction(qname, runner);	// accept functions without map parameter as well here.
+	if (func->Proto->ArgumentTypes.Size() != 2) I_Error("Bad map-cutscene function %s. Must receive precisely two arguments.", qname);
+	if (func->Proto->ArgumentTypes[0] != cutscene.runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
+		I_Error("Bad cutscene function %s. Must receive ScreenJobRunner and LevelInfo reference.", qname);
+	VMValue val[2] = { runner, map };
+	VMCall(func, val, 2, nullptr, 0);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool CreateCutscene(CutsceneDef* cs, DObject* runner, level_info_t* map)
+{
+	if (cs->function.CompareNoCase("none") == 0)
+		return true;	// play nothing but return as being validated
+	if (cs->function.IsNotEmpty())
+	{
+		CallCreateMapFunction(cs->function, runner, map);
+		return true;
+	}
+	else if (cs->video.IsNotEmpty())
+	{
+		AddGenericVideo(runner, cs->video, cs->GetSound(), cs->framespersec);
+		return true;
+	}
+	return false;
+}
 
 //==========================================================================
 //
@@ -207,6 +264,26 @@ void G_DeferedInitNew (FNewGameStartup *gs)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 	finishstate = FINISH_NoHub;
+
+	if (AllEpisodes[gs->Episode].mIntro.isdefined())
+	{
+		cutscene.runner = CreateRunner(false);
+		GC::WriteBarrier(cutscene.runner);
+
+		if (!CreateCutscene(&AllEpisodes[gs->Episode].mIntro, cutscene.runner, nullptr))
+		{
+			return;
+		}
+
+		cutscene.completion = [](bool) { gameaction = ga_newgame2; };
+		if (!ScreenJobValidate())
+		{
+			DeleteScreenJob();
+			cutscene.completion = nullptr;
+			return;
+		}
+		gameaction = ga_intermission;
+	}
 }
 
 //==========================================================================
@@ -471,6 +548,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	if (primaryLevel->info != nullptr)
 		staticEventManager.WorldUnloaded(FString());	// [MK] don't pass the new map, as it's not a level transition
 
+	UnlatchCVars ();
 	if (!savegamerestore)
 	{
 		G_ClearHubInfo();
@@ -480,9 +558,14 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// [RH] Mark all levels as not visited
 		for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
+
+		auto redirectmap = FindLevelInfo(mapname);
+		if (redirectmap->RedirectCVAR != NAME_None)
+			redirectmap = redirectmap->CheckLevelRedirect();
+		if (redirectmap && redirectmap->MapName.GetChars()[0])
+				mapname = redirectmap->MapName;
 	}
 
-	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
 	globalfreeze = globalchangefreeze = 0;
@@ -938,30 +1021,53 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 	return controller;
 }
 
-void RunIntermission(DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
 {
-	if (!intermissionScreen && !statusScreen)
+	cutscene.runner = CreateRunner(false);
+	GC::WriteBarrier(cutscene.runner);
+	cutscene.completion = std::move(completionf);
+	
+	// retrieve cluster relations for cluster-based cutscenes.
+	cluster_info_t* fromcluster = nullptr, *tocluster = nullptr;
+	if (fromMap) fromcluster = FindClusterInfo(fromMap->cluster);
+	if (toMap) tocluster = FindClusterInfo(toMap->cluster);
+	if (fromcluster == tocluster) fromcluster = tocluster = nullptr;
+
+	if (fromMap)
 	{
-		completionf(false);
-		return;
+		if (!CreateCutscene(&fromMap->outro, cutscene.runner, fromMap))
+		{
+			if (fromcluster != nullptr) CreateCutscene(&fromcluster->outro, cutscene.runner, fromMap);
+		}
 	}
-	runner = CreateRunner(false);
-	GC::WriteBarrier(runner);
-	completion = std::move(completionf);
 
 	auto func = LookupFunction("DoomCutscenes.BuildMapTransition");
 	if (func == nullptr)
 	{
 		I_Error("Script function 'DoomCutscenes.BuildMapTransition' not found");
 	}
-	VMValue val[3] = { runner, intermissionScreen, statusScreen };
+	VMValue val[3] = { cutscene.runner, intermissionScreen, statusScreen };
 	VMCall(func, val, 3, nullptr, 0);
+
+	if (toMap)
+	{
+		if (!CreateCutscene(&toMap->intro, cutscene.runner, toMap))
+		{
+			if  (tocluster != nullptr) CreateCutscene(&tocluster->intro, cutscene.runner, toMap);
+		}
+	}
 
 	if (!ScreenJobValidate())
 	{
 		DeleteScreenJob();
-		if (completion) completion(false);
-		completion = nullptr;
+		if (cutscene.completion) cutscene.completion(false);
+		cutscene.completion = nullptr;
 		return;
 	}
 	gameaction = ga_intermission;
@@ -1012,7 +1118,8 @@ void G_DoCompleted (void)
 	}
 	bool endgame = strncmp(nextlevel, "enDSeQ", 6) == 0;
 	intermissionScreen = primaryLevel->CreateIntermission();
-	RunIntermission(intermissionScreen, statusScreen, [=](bool)
+	auto nextinfo = !playinter || endgame? nullptr : FindLevelInfo(nextlevel, false);
+	RunIntermission(primaryLevel->info, nextinfo, intermissionScreen, statusScreen, [=](bool)
 	{
 		if (!endgame) primaryLevel->WorldDone();
 		else D_StartTitle();
@@ -1181,12 +1288,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 
 	finishstate = mode;
 
-	if (!ShouldDoIntermission(nextcluster, thiscluster))
-	{
-		WorldDone ();
-		return false;
-	}
-	return true;
+	return ShouldDoIntermission(nextcluster, thiscluster);
 }
 
 //==========================================================================
@@ -1265,7 +1367,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		UCVarValue val;
 		val.Int = NextSkill;
-		gameskill.ForceSet (val, CVAR_Int);
+		gameskill->ForceSet (val, CVAR_Int);
 		NextSkill = -1;
 	}
 
@@ -1289,7 +1391,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		FString mapname = nextmapname;
 		mapname.ToUpper();
-		Printf("\n%s\n\n" TEXTCOLOR_BOLD "%s - %s\n\n", console_bar, mapname.GetChars(), LevelName.GetChars());
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, "\n" TEXTCOLOR_NORMAL "%s\n\n" TEXTCOLOR_BOLD "%s - %s\n\n", console_bar, mapname.GetChars(), LevelName.GetChars());
 	}
 
 	// Set the sky map.
@@ -1606,6 +1708,7 @@ int FLevelLocals::FinishTravel ()
 		}
 		pawn->LinkToWorld (nullptr);
 		pawn->ClearInterpolation();
+		pawn->ClearFOVInterpolation();
 		const int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
 		pawn->tid = 0;				// Reset TID
 		pawn->SetTID(tid);			// Set TID (and link actor into the hash chain)
@@ -1678,8 +1781,7 @@ void FLevelLocals::Init()
 {
 	P_InitParticles(this);
 	P_ClearParticles(this);
-	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
-
+	
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
 	AirControlChanged();
@@ -1757,8 +1859,8 @@ void FLevelLocals::Init()
 
 	pixelstretch = info->pixelstretch;
 
-	compatflags.Callback();
-	compatflags2.Callback();
+	compatflags->Callback();
+	compatflags2->Callback();
 
 	DefaultEnvironment = info->DefaultEnvironment;
 
@@ -2326,3 +2428,31 @@ void FLevelLocals::SetMusic()
 {
 	S_ChangeMusic(Music, musicorder);
 }
+
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetClusterName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals)
+	cluster_info_t* cluster = FindClusterInfo(self->cluster);
+	FString retval;
+
+	if (cluster)
+	{
+		if (cluster->flags & CLUSTER_LOOKUPNAME)
+			retval = GStrings(cluster->ClusterName);
+		else
+			retval = cluster->ClusterName;
+	}
+	ACTION_RETURN_STRING(retval);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetEpisodeName)
+{
+	// this is a bit of a crapshoot because ZDoom never assigned a level to an episode
+	// and retroactively fixing this is not possible.
+	// This will need some heuristics to assign a proper episode to each existing level.
+	// Stuff for later. for now this just checks the STAT module for the currently running episode,
+	// which should be fine unless cheating.
+	ACTION_RETURN_STRING(GStrings.localize(STAT_EpisodeName()));
+}
+

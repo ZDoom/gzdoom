@@ -186,7 +186,13 @@ private:
 	asmjit::CCFuncCall *CreateCall(RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)) { return cc.call(asmjit::imm_ptr(reinterpret_cast<void*>(static_cast<RetType(*)(P1, P2, P3, P4, P5, P6)>(func))), asmjit::FuncSignature6<RetType, P1, P2, P3, P4, P5, P6>()); }
 
 	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
-	asmjit::CCFuncCall *CreateCall(RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)) { return cc.call(asmjit::imm_ptr(reinterpret_cast<void*>(static_cast<RetType(*)(P1, P2, P3, P4, P5, P6, P7)>(func))), asmjit::FuncSignature7<RetType, P1, P2, P3, P4, P5, P6, P7>()); }
+	asmjit::CCFuncCall* CreateCall(RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)) { return cc.call(asmjit::imm_ptr(reinterpret_cast<void*>(static_cast<RetType(*)(P1, P2, P3, P4, P5, P6, P7)>(func))), asmjit::FuncSignature7<RetType, P1, P2, P3, P4, P5, P6, P7>()); }
+
+	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
+	asmjit::CCFuncCall* CreateCall(RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8)) { return cc.call(asmjit::imm_ptr(reinterpret_cast<void*>(static_cast<RetType(*)(P1, P2, P3, P4, P5, P6, P7, P8)>(func))), asmjit::FuncSignature8<RetType, P1, P2, P3, P4, P5, P6, P7, P8>()); }
+
+	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
+	asmjit::CCFuncCall* CreateCall(RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9)) { return cc.call(asmjit::imm_ptr(reinterpret_cast<void*>(static_cast<RetType(*)(P1, P2, P3, P4, P5, P6, P7, P8, P9)>(func))), asmjit::FuncSignature9<RetType, P1, P2, P3, P4, P5, P6, P7, P8, P9>()); }
 
 	FString regname;
 	size_t tmpPosInt32, tmpPosInt64, tmpPosIntPtr, tmpPosXmmSd, tmpPosXmmSs, tmpPosXmmPd, resultPosInt32, resultPosIntPtr, resultPosXmmSd;
@@ -241,6 +247,7 @@ private:
 	asmjit::X86Xmm CheckRegF(int r0, int r1);
 	asmjit::X86Xmm CheckRegF(int r0, int r1, int r2);
 	asmjit::X86Xmm CheckRegF(int r0, int r1, int r2, int r3);
+	asmjit::X86Xmm CheckRegF(int r0, int r1, int r2, int r3, int r4);
 	asmjit::X86Gp CheckRegS(int r0, int r1);
 	asmjit::X86Gp CheckRegA(int r0, int r1);
 
@@ -303,6 +310,19 @@ private:
 	}
 
 	TArray<OpcodeLabel> labels;
+
+	// Get temporary storage enough for DVector4 which is required by operation such as MULQQ and MULQV3
+	bool vectorStackAllocated = false;
+	asmjit::X86Mem vectorStack;
+	asmjit::X86Mem GetTemporaryVectorStackStorage()
+	{
+		if (!vectorStackAllocated)
+		{
+			vectorStack = cc.newStack(sizeof(DVector4), alignof(DVector4), "tmpDVector4");
+			vectorStackAllocated = true;
+		}
+		return vectorStack;
+	}
 
 	const VMOP *pc;
 	VM_UBYTE op;

@@ -185,7 +185,7 @@ public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
 	int CopyPixels(FBitmap *bmp, int conversion) override;
-	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion) override;
 };
 
 //==========================================================================
@@ -259,7 +259,7 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 //
 //==========================================================================
 
-TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump);
 	JSAMPLE *buff = NULL;
@@ -267,7 +267,7 @@ TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 
-	TArray<uint8_t> Pixels(Width * Height, true);
+	PalettedPixels Pixels(Width * Height);
 	memset (Pixels.Data(), 0xBA, Width * Height);
 
 	cinfo.err = jpeg_std_error(&jerr);

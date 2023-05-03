@@ -38,12 +38,14 @@
 #include "i_soundinternal.h"
 #include "cmdlib.h"
 #include "i_system.h"
-#include "gameconfigfile.h"
 #include "filereadermusicinterface.h"
 #include <zmusic.h>
 #include "resourcefile.h"
 #include "version.h"
 #include "findfile.h"
+#include "i_interface.h"
+#include "configfile.h"
+#include "printf.h"
 
 //==========================================================================
 //
@@ -392,6 +394,7 @@ void FSoundFontManager::CollectSoundfonts()
 	findstate_t c_file;
 	void *file;
 
+	FConfigFile* GameConfig = sysCallbacks.GetConfig ? sysCallbacks.GetConfig() : nullptr;
 	if (GameConfig != NULL && GameConfig->SetSection ("SoundfontSearch.Directories"))
 	{
 		const char *key;
@@ -445,6 +448,7 @@ const FSoundFontInfo *FSoundFontManager::FindSoundFont(const char *name, int all
 		// an empty name will pick the first one in a compatible format.
 		if (allowed & sfi.type && (name == nullptr || *name == 0 || !sfi.mName.CompareNoCase(name) || !sfi.mNameExt.CompareNoCase(name)))
 		{
+			DPrintf(DMSG_NOTIFY, "Found compatible soundfont %s\n", sfi.mNameExt.GetChars());
 			return &sfi;
 		}
 	}
@@ -453,6 +457,7 @@ const FSoundFontInfo *FSoundFontManager::FindSoundFont(const char *name, int all
 	{
 		if (allowed & sfi.type)
 		{
+			DPrintf(DMSG_NOTIFY, "Unable to find %s soundfont. Falling back to %s\n", name, sfi.mNameExt.GetChars());
 			return &sfi;
 		}
 	}

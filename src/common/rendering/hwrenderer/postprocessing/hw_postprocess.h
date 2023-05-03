@@ -13,6 +13,19 @@ typedef IntRect PPViewport;
 class PPTexture;
 class PPShader;
 
+enum class ETonemapMode : uint8_t
+{
+	None,
+	Uncharted2,
+	HejlDawson,
+	Reinhard,
+	Linear,
+	Palette,
+	NumTonemapModes
+};
+
+
+
 enum class PPFilterMode { Nearest, Linear };
 enum class PPWrapMode { Clamp, Repeat };
 enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth, SwapChain, ShadowMap };
@@ -541,6 +554,7 @@ private:
 class PPTonemap
 {
 public:
+	void SetTonemapMode(ETonemapMode tm) { level_tonemap = tm; }
 	void Render(PPRenderState *renderstate);
 	void ClearTonemapPalette() { PaletteTexture = {}; }
 
@@ -554,17 +568,7 @@ private:
 	PPShader HejlDawsonShader = { "shaders/pp/tonemap.fp", "#define HEJLDAWSON\n", {} };
 	PPShader Uncharted2Shader = { "shaders/pp/tonemap.fp", "#define UNCHARTED2\n", {} };
 	PPShader PaletteShader = { "shaders/pp/tonemap.fp", "#define PALETTE\n", {} };
-
-	enum TonemapMode
-	{
-		None,
-		Uncharted2,
-		HejlDawson,
-		Reinhard,
-		Linear,
-		Palette,
-		NumTonemapModes
-	};
+	ETonemapMode level_tonemap = ETonemapMode::None;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -840,8 +844,11 @@ public:
 	PPCustomShaders customShaders;
 
 
+	void SetTonemapMode(ETonemapMode tm) { tonemap.SetTonemapMode(tm); }
 	void Pass1(PPRenderState *state, int fixedcm, int sceneWidth, int sceneHeight);
 	void Pass2(PPRenderState* state, int fixedcm, float flash, int sceneWidth, int sceneHeight);
 };
 
+
 extern Postprocess hw_postprocess;
+

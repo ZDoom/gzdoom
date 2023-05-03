@@ -46,8 +46,11 @@
 #include "findfile.h"
 #include "v_draw.h"
 #include "savegamemanager.h"
+#include "m_argv.h"
+#include "i_specialpaths.h"
 
-
+CVAR(String, save_dir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+FString SavegameFolder;
 
 //=============================================================================
 //
@@ -537,4 +540,57 @@ DEFINE_FIELD(FSaveGameNode, bNoDelete);
 DEFINE_FIELD_X(SavegameManager, FSavegameManagerBase, WindowSize);
 DEFINE_FIELD_X(SavegameManager, FSavegameManagerBase, quickSaveSlot);
 DEFINE_FIELD_X(SavegameManager, FSavegameManagerBase, SaveCommentString);
+
+//=============================================================================
+//
+// todo: cache this - it never changes once set up.
+//
+//=============================================================================
+
+FString G_GetSavegamesFolder()
+{
+	FString name;
+	bool usefilter;
+
+	if (const char* const dir = Args->CheckValue("-savedir"))
+	{
+		name = dir;
+		usefilter = false; //-savedir specifies an absolute save directory path.
+	}
+	else
+	{
+		name = **save_dir ? save_dir : M_GetSavegamesPath();
+		usefilter = true;
+	}
+
+	const size_t len = name.Len();
+	if (len > 0)
+	{
+		FixPathSeperator(name);
+		if (name[len - 1] != '/')
+			name << '/';
+	}
+
+	if (usefilter && SavegameFolder.IsNotEmpty())
+		name << SavegameFolder << '/';
+
+	name = NicePath(name);
+	CreatePath(name);
+	return name;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+FString G_BuildSaveName(const char* prefix)
+{
+	FString name = G_GetSavegamesFolder() + prefix;
+	DefaultExtension(name, "." SAVEGAME_EXT); // only add an extension if the prefix doesn't have one already.
+	name = NicePath(name);
+	name.Substitute("\\", "/");
+	return name;
+}
 

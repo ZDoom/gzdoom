@@ -88,12 +88,18 @@ namespace swrenderer
 
 		auto viewport = Thread->Viewport.get();
 
-		DVector3 worldNormal = pl->height.Normal();
-		planeNormal.X = worldNormal.X * viewport->viewpoint.Sin - worldNormal.Y * viewport->viewpoint.Cos;
-		planeNormal.Y = worldNormal.X * viewport->viewpoint.Cos + worldNormal.Y * viewport->viewpoint.Sin;
-		planeNormal.Z = worldNormal.Z;
-		planeD = -planeNormal.Z * (pl->height.ZatPoint(viewport->viewpoint.Pos.X, viewport->viewpoint.Pos.Y) - viewport->viewpoint.Pos.Z);
+		// Stupid way of doing it, but at least it works
+		DVector3 worldP0(viewport->viewpoint.Pos, pl->height.ZatPoint(viewport->viewpoint.Pos));
+		DVector3 worldP1 = worldP0 + pl->height.Normal();
+		DVector3 viewP0 = viewport->PointWorldToView(worldP0);
+		DVector3 viewP1 = viewport->PointWorldToView(worldP1);
+		planeNormal = viewP1 - viewP0;
+		planeD = -(viewP0 | planeNormal);
 
+		if (Thread->Portal->MirrorFlags & RF_XFLIP)
+			planeNormal.X = -planeNormal.X;
+
+		light_list = pl->lights;
 
 		drawerargs.SetSolidColor(3);
 		drawerargs.SetTexture(Thread, texture);
@@ -204,23 +210,77 @@ namespace swrenderer
 
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
-		drawerargs.DrawTiltedSpan(Thread, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, lightlevel, foggy, planelightfloat, pviewx, pviewy, basecolormap);
-
-		if (r_modelscene)
+		if (r_dynlights)
 		{
-			double viewZ = 1.0;
-			double viewX1 = Thread->Viewport->ScreenToViewX(x1, viewZ);
-			double viewX2 = Thread->Viewport->ScreenToViewX(x2 + 1, viewZ);
-			double viewY = Thread->Viewport->ScreenToViewY(y, viewZ);
+			// Find row position in view space
+			DVector3 viewposX1 = Thread->Viewport->ScreenToViewPos(x1, y, planeNormal, planeD);
+			DVector3 viewposX2 = Thread->Viewport->ScreenToViewPos(x2, y, planeNormal, planeD);
 
-			// Find depth values for the span
-			float zbufferdepth1 = (float)(-planeD / (planeNormal | DVector3(viewX1, viewZ, viewY)));
-			float zbufferdepth2 = (float)(-planeD / (planeNormal | DVector3(viewX2, viewZ, viewY)));
+			// Convert to screen space
+			viewposX1.Z = 1.0 / viewposX1.Z;
+			viewposX1.X *= viewposX1.Z;
+			viewposX1.Y *= viewposX1.Z;
+			viewposX2.Z = 1.0 / viewposX2.Z;
+			viewposX2.X *= viewposX2.Z;
+			viewposX2.Y *= viewposX2.Z;
 
-			drawerargs.SetDestX1(x1);
-			drawerargs.SetDestX2(x2);
-			drawerargs.SetDestY(Thread->Viewport.get(), y);
-			drawerargs.DrawDepthSpan(Thread, 1.0f / zbufferdepth1, 1.0f / zbufferdepth2);
+			drawerargs.dc_viewpos.X = viewposX1.X;
+			drawerargs.dc_viewpos.Y = viewposX1.Y;
+			drawerargs.dc_viewpos.Z = viewposX1.Z;
+			drawerargs.dc_viewpos_step.X = (viewposX2.X - viewposX1.X) / (x2 - x1);
+			drawerargs.dc_viewpos_step.Y = (viewposX2.Y - viewposX1.Y) / (x2 - x1);
+			drawerargs.dc_viewpos_step.Z = (viewposX2.Z - viewposX1.Z) / (x2 - x1);
+
+			// Plane normal
+			drawerargs.dc_normal.X = planeNormal.X;
+			drawerargs.dc_normal.Y = planeNormal.Y;
+			drawerargs.dc_normal.Z = planeNormal.Z;
+
+			// Calculate max lights that can touch the row so we can allocate memory for the list
+			int max_lights = 0;
+			VisiblePlaneLight* cur_node = light_list;
+			while (cur_node)
+			{
+				if (cur_node->lightsource->IsActive())
+					max_lights++;
+				cur_node = cur_node->next;
+			}
+
+			drawerargs.dc_num_lights = 0;
+			drawerargs.dc_lights = Thread->FrameMemory->AllocMemory<DrawerLight>(max_lights);
+
+			// Setup lights for row
+			cur_node = light_list;
+			while (cur_node)
+			{
+				if (cur_node->lightsource->IsActive())
+				{
+					DVector3 lightPos = Thread->Viewport->PointWorldToView(cur_node->lightsource->Pos);
+
+					uint32_t red = cur_node->lightsource->GetRed();
+					uint32_t green = cur_node->lightsource->GetGreen();
+					uint32_t blue = cur_node->lightsource->GetBlue();
+
+					auto& light = drawerargs.dc_lights[drawerargs.dc_num_lights++];
+					light.x = lightPos.X;
+					light.y = lightPos.Y;
+					light.z = lightPos.Z;
+					light.radius = 256.0f / cur_node->lightsource->GetRadius();
+					light.color = (red << 16) | (green << 8) | blue;
+
+					bool is_point_light = cur_node->lightsource->IsAttenuated();
+					if (is_point_light)
+						light.radius = -light.radius;
+				}
+
+				cur_node = cur_node->next;
+			}
 		}
+		else
+		{
+			drawerargs.dc_num_lights = 0;
+		}
+
+		drawerargs.DrawTiltedSpan(Thread, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, lightlevel, foggy, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 }

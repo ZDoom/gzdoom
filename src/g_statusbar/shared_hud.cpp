@@ -63,6 +63,8 @@ CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
 CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
 CVAR (Bool,  hud_showweapons,	true, CVAR_ARCHIVE);	// Show weapons collected
+CVAR (Bool,  am_showepisode,	false, CVAR_ARCHIVE);	// Show current episode name
+CVAR (Bool,  am_showcluster,	false, CVAR_ARCHIVE);	// Show current cluster name
 CVAR (Int ,  hud_showammo,		2, CVAR_ARCHIVE);		// Show ammo collected
 CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
 CVAR (Int ,  hud_showtimestat,	0,	    CVAR_ARCHIVE);	// Show time on HUD as statistics widget
@@ -160,15 +162,30 @@ void DBaseStatusBar::CreateAltHUD()
 //
 //---------------------------------------------------------------------------
 EXTERN_CVAR(Bool, hud_aspectscale)
+EXTERN_CVAR(Bool, hud_oldscale)
+EXTERN_CVAR(Float, hud_scalefactor)
 
 void DBaseStatusBar::DrawAltHUD()
 {
 	player_t * CPlayer = StatusBar->CPlayer;
 
 	players[consoleplayer].inventorytics = 0;
-	int scale = GetUIScale(twod, hud_althudscale);
-	int hudwidth = twod->GetWidth() / scale;
-	int hudheight = hud_aspectscale ? int(twod->GetHeight() / (scale*1.2)) : twod->GetHeight() / scale;
+	int hudwidth;
+	int hudheight;
+
+	if (hud_oldscale)
+	{
+		int scale = GetUIScale(twod, hud_althudscale);
+		hudwidth = twod->GetWidth() / scale;
+		hudheight = twod->GetHeight() / scale;
+	}
+	else
+	{
+		hudwidth = int(640 / hud_scalefactor);
+		hudheight = hudwidth * twod->GetHeight() / twod->GetWidth();
+	}
+	if (hud_aspectscale) hudheight = hudheight * 5 / 6;
+
 
 	IFVIRTUALPTRNAME(AltHud, "AltHud", Draw)
 	{

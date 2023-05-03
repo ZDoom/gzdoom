@@ -122,6 +122,9 @@ typedef enum
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
+	CF_INTERPVIEWANGLES	= 1 << 15,		// [MR] flag for interpolating view angles without interpolating the entire frame
+	CF_SCALEDNOLERP		= 1 << 15,		// [MR] flag for applying angles changes in the ticrate without interpolating the frame
+	CF_NOFOVINTERP		= 1 << 16,		// [B] Disable FOV interpolation when instantly zooming
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
 	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.
@@ -223,6 +226,10 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	double GetMoveBob() const
 	{
 		return *static_cast<FFloatCVar *>(*CheckKey(NAME_MoveBob));
+	}
+	bool GetFViewBob() const
+	{
+		return *static_cast<FBoolCVar *>(*CheckKey(NAME_FViewBob));
 	}
 	double GetStillBob() const
 	{
@@ -340,7 +347,7 @@ public:
 
 	AActor	   *ReadyWeapon = nullptr;
 	AActor	   *PendingWeapon = nullptr;			// WP_NOCHANGE if not changing
-	TObjPtr<DPSprite*> psprites = nullptr; // view sprites (gun, etc)
+	TObjPtr<DPSprite*> psprites = MakeObjPtr<DPSprite*>(nullptr); // view sprites (gun, etc)
 
 	int			cheats = 0;					// bit flags
 	int			timefreezer = 0;			// Player has an active time freezer
@@ -355,8 +362,8 @@ public:
 	int			poisoncount = 0;			// screen flash for poison damage
 	FName		poisontype = NAME_None;				// type of poison damage to apply
 	FName		poisonpaintype = NAME_None;			// type of Pain state to enter for poison damage
-	TObjPtr<AActor*>		poisoner = nullptr;		// NULL for non-player actors
-	TObjPtr<AActor*>		attacker = nullptr;		// who did damage (NULL for floors)
+	TObjPtr<AActor*>		poisoner = MakeObjPtr<AActor*>(nullptr);		// NULL for non-player actors
+	TObjPtr<AActor*>		attacker = MakeObjPtr<AActor*>(nullptr);		// who did damage (NULL for floors)
 	int			extralight = 0;				// so gun flashes light up areas
 	short		fixedcolormap = 0;			// can be set to REDCOLORMAP, etc.
 	short		fixedlightlevel = 0;
@@ -364,19 +371,19 @@ public:
 	PClassActor *MorphedPlayerClass = nullptr;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle = 0;				// which effects to apply for this player instance when morphed
 	PClassActor *MorphExitFlash = nullptr;		// flash to apply when demorphing (cache of value given to MorphPlayer)
-	TObjPtr<AActor*>	PremorphWeapon = nullptr;		// ready weapon before morphing
+	TObjPtr<AActor*>	PremorphWeapon = MakeObjPtr<AActor*>(nullptr);		// ready weapon before morphing
 	int			chickenPeck = 0;			// chicken peck countdown
 	int			jumpTics = 0;				// delay the next jump for a moment
 	bool		onground = 0;				// Identifies if this player is on the ground or other object
 
 	int			respawn_time = 0;			// [RH] delay respawning until this tic
-	TObjPtr<AActor*>	camera = nullptr;			// [RH] Whose eyes this player sees through
+	TObjPtr<AActor*>	camera = MakeObjPtr<AActor*>(nullptr);			// [RH] Whose eyes this player sees through
 
 	int			air_finished = 0;			// [RH] Time when you start drowning
 
 	FName		LastDamageType = NAME_None;			// [RH] For damage-specific pain and death sounds
 
-	TObjPtr<AActor*> MUSINFOactor = nullptr;		// For MUSINFO purposes
+	TObjPtr<AActor*> MUSINFOactor = MakeObjPtr<AActor*>(nullptr);		// For MUSINFO purposes
 	int8_t		MUSINFOtics = 0;
 
 	bool		settings_controller = false;	// Player can control game settings.
@@ -384,7 +391,7 @@ public:
 	int8_t		crouchdir = 0;
 
 	//Added by MC:
-	TObjPtr<DBot*> Bot = nullptr;
+	TObjPtr<DBot*> Bot = MakeObjPtr<DBot*>(nullptr);
 
 	float		BlendR = 0;		// [RH] Final blending values
 	float		BlendG = 0;
@@ -396,8 +403,8 @@ public:
 	FString		SubtitleText;
 	int			SubtitleCounter;
 
-	DAngle			MinPitch = 0.;	// Viewpitch limits (negative is up, positive is down)
-	DAngle			MaxPitch = 0.;
+	DAngle			MinPitch = nullAngle;	// Viewpitch limits (negative is up, positive is down)
+	DAngle			MaxPitch = nullAngle;
 
 	double crouchfactor = 0;
 	double crouchoffset = 0;
@@ -406,8 +413,8 @@ public:
 	FWeaponSlots weapons;
 
 	// [CW] I moved these here for multiplayer conversation support.
-	TObjPtr<AActor*> ConversationNPC = nullptr, ConversationPC = nullptr;
-	DAngle ConversationNPCAngle = 0.;
+	TObjPtr<AActor*> ConversationNPC = MakeObjPtr<AActor*>(nullptr), ConversationPC = MakeObjPtr<AActor*>(nullptr);
+	DAngle ConversationNPCAngle = nullAngle;
 	bool ConversationFaceTalker = false;
 
 	double GetDeltaViewHeight() const
@@ -448,6 +455,10 @@ public:
 	void SetFOV(float fov);
 	bool HasWeaponsInSlot(int slot) const;
 	bool Resurrect();
+
+	// Scaled angle adjustment info. Not for direct manipulation.
+	DRotator angleTargets;
+	DRotator angleAppliedAmounts;
 };
 
 // Bookkeeping on players - state.
@@ -479,5 +490,7 @@ inline bool AActor::IsNoClip2() const
 }
 
 bool P_IsPlayerTotallyFrozen(const player_t *player);
+
+bool P_NoInterpolation(player_t const *player, AActor const *actor);
 
 #endif // __D_PLAYER_H__

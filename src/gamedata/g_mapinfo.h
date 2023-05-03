@@ -40,6 +40,8 @@
 #include "sc_man.h"
 #include "file_zip.h"
 #include "screenjob.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
+#include "hw_viewpointuniforms.h"
 
 struct level_info_t;
 struct cluster_info_t;
@@ -78,6 +80,10 @@ struct CutsceneDef;
 
 struct FMapInfoParser
 {
+	FMapInfoParser(FScanner* parent)
+		: sc(parent ? &parent->GetSymbols() : nullptr)
+	{
+	}
 	enum EFormatType
 	{
 		FMT_Unknown,
@@ -374,6 +380,11 @@ struct level_info_t
 	FName		RedirectType;
 	FString		RedirectMapName;
 
+	// CVAR Redirection: If the CVAR Bool returns true, then
+	// you go to the RedirectMap instead of this one.
+	FName		RedirectCVAR;
+	FString		RedirectCVARMapName;
+
 	FString		EnterPic;
 	FString		ExitPic;
 	FString 	InterMusic;
@@ -389,7 +400,7 @@ struct level_info_t
 
 	TArray<FSpecialAction> specialactions;
 
-	TArray<int> PrecacheSounds;
+	TArray<FSoundID> PrecacheSounds;
 	TArray<FString> PrecacheTextures;
 	TArray<FName> PrecacheClasses;
 	
@@ -405,6 +416,8 @@ struct level_info_t
 	FString		EDName;
 	FString		acsName;
 	bool		fs_nocheckposition;
+	ELightBlendMode lightblendmode;
+	ETonemapMode tonemap;
 	
 	CutsceneDef intro, outro;
 

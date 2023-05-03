@@ -849,6 +849,11 @@ int P_CheckSight (AActor *t1, AActor *t2, int flags)
 		return false;
 	}
 
+	if ((t2->flags8 & MF8_MVISBLOCKED) && !(flags & SF_IGNOREVISIBILITY))
+	{
+		return false;
+	}
+
 	auto s1 = t1->Sector;
 	auto s2 = t2->Sector;
 	//
@@ -866,7 +871,10 @@ sightcounts[0]++;
 //
 	// [RH] Andy Baker's stealth monsters:
 	// Cannot see an invisible object
-	if ((flags & SF_IGNOREVISIBILITY) == 0 && ((t2->renderflags & RF_INVISIBLE) || !t2->RenderStyle.IsVisible(t2->Alpha)))
+	if ((flags & SF_IGNOREVISIBILITY) == 0 &&
+		((t2->renderflags & RF_INVISIBLE) ||
+		(t2->flags8 & MF8_MINVISIBLE) ||
+		!t2->RenderStyle.IsVisible(t2->Alpha)))
 	{ // small chance of an attack being made anyway
 		if ((t1->Level->BotInfo.m_Thinking ? pr_botchecksight() : pr_checksight()) > 50)
 		{

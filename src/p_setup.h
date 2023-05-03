@@ -143,7 +143,7 @@ bool P_CheckMapData(const char * mapname);
 void P_SetupLevel (FLevelLocals *Level, int position, bool newGame);
 void P_LoadLightmap(MapData *map);
 
-void P_FreeLevelData();
+void P_FreeLevelData(bool fullgc = true);
 
 // Called by startup code.
 void P_Init (void);

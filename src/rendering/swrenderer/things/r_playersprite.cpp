@@ -97,8 +97,6 @@ namespace swrenderer
 			(r_deathcamera && Thread->Viewport->viewpoint.camera->health <= 0))
 			return;
 		
-		renderHUDModel = r_modelscene && IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
-
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();
 		auto nc = !!(Thread->Viewport->Level()->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
@@ -256,12 +254,6 @@ namespace swrenderer
 			sy += wy;
 		}
 		
-		if (renderHUDModel)
-		{
-			RenderHUDModel(Thread, pspr, (float)sx, (float)sy);
-			return;
-		}
-
 		auto viewport = Thread->Viewport.get();
 
 		double pspritexscale = viewport->viewwindow.centerxwide / 160.0;

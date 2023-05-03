@@ -4,6 +4,15 @@
 
 struct HWDrawInfo;
 
+enum class ELightBlendMode : uint8_t
+{
+	CLAMP = 0,
+	CLAMP_COLOR = 1,
+	NOCLAMP = 2,
+
+	DEFAULT = CLAMP,
+};
+
 struct HWViewpointUniforms
 {
 	VSMatrix mProjectionMatrix;
@@ -18,6 +27,8 @@ struct HWViewpointUniforms
 	float mClipHeight = 0.f;
 	float mClipHeightDirection = 0.f;
 	int mShadowmapFilter = 1;
+
+	int mLightBlendMode = 0;
 
 	void CalcDependencies()
 	{

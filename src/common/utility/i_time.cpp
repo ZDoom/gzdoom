@@ -44,6 +44,7 @@
 //
 //==========================================================================
 
+static uint64_t StartupTimeNS;
 static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
@@ -52,11 +53,22 @@ int GameTicRate = 35;	// make sure it is not 0, even if the client doesn't set i
 
 double TimeScale = 1.0;
 
-static uint64_t GetClockTimeNS()
+static uint64_t GetTimePoint()
 {
 	using namespace std::chrono;
-	if (TimeScale == 1.0) return (uint64_t)(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count());
-	else return (uint64_t)((duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count()) * (uint64_t)(TimeScale * 1000));
+	return (uint64_t)(duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count());
+}
+
+void I_InitTime()
+{
+	StartupTimeNS = GetTimePoint();
+}
+
+static uint64_t GetClockTimeNS()
+{
+	auto tp = GetTimePoint() - StartupTimeNS;
+	if (TimeScale == 1.0) return tp;
+	else return uint64_t(tp / 1000 * TimeScale * 1000);
 }
 
 static uint64_t MSToNS(unsigned int ms)
@@ -198,34 +210,12 @@ void I_ResetFrameTime()
 	FirstFrameStartTime += (CurrentFrameStartTime - ft);
 }
 
-double I_GetInputFrac(bool const synchronised, double const ticrate)
+double I_GetInputFrac()
 {
-	if (!synchronised)
-	{
-		const double max = 1000. / ticrate;
-		const double now = I_msTimeF();
-		const double elapsedInputTicks = std::min(now - lastinputtime, max);
-		lastinputtime = now;
-
-		if (elapsedInputTicks < max)
-		{
-			// Calculate an amplification to apply to the result before returning,
-			// factoring in the game's ticrate and the value of the result.
-			// This rectifies a deviation of 100+ ms or more depending on the length
-			// of the operation to be within 1-2 ms of synchronised input
-			// from 60 fps to at least 1000 fps at ticrates of 30 and 40 Hz.
-			const double result = elapsedInputTicks * ticrate * (1. / 1000.);
-			return result * (1. + 0.35 * (1. - ticrate * (1. / 50.)) * (1. - result));
-		}
-		else
-		{
-			return 1;
-		}
-	}
-	else
-	{
-		return 1;
-	}
+	const double now = I_msTimeF();
+	const double result = (now - lastinputtime) * GameTicRate * (1. / 1000.);
+	lastinputtime = now;
+	return result;
 }
 
 void I_ResetInputTime()

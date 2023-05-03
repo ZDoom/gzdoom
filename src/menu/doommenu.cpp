@@ -65,6 +65,8 @@
 #include "d_player.h"
 #include "teaminfo.h"
 #include "i_time.h"
+#include "shiftstate.h"
+#include "s_music.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
@@ -72,6 +74,7 @@ EXTERN_CVAR(Bool, m_quickexit)
 EXTERN_CVAR(Bool, saveloadconfirmation) // [mxd]
 EXTERN_CVAR(Bool, quicksaverotation)
 EXTERN_CVAR(Bool, show_messages)
+EXTERN_CVAR(Float, hud_scalefactor)
 
 CVAR(Bool, m_simpleoptions, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -232,7 +235,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 //
 //=============================================================================
 
-void M_StartControlPanel(bool makeSound, bool scaleoverride)
+void OnMenuOpen(bool makeSound)
 {
 	if (hud_toggled)
 		D_ToggleHud();
@@ -247,7 +250,6 @@ void M_StartControlPanel(bool makeSound, bool scaleoverride)
 	{
 		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
-	M_DoStartControlPanel(scaleoverride);
 }
 
 
@@ -293,6 +295,14 @@ void System_M_Dim()
 }
 
 
+static void M_Quit()
+{
+	S_StopAllChannels();
+	S_StopMusic(true);
+	CleanSWDrawer();
+	ST_Endoom();
+}
+
 //=============================================================================
 //
 //
@@ -303,8 +313,7 @@ CCMD (menu_quit)
 {	// F10
 	if (m_quickexit)
 	{
-		CleanSWDrawer();
-		ST_Endoom();
+		M_Quit();
 	}
 
 	M_StartControlPanel (true);
@@ -335,8 +344,7 @@ CCMD (menu_quit)
 				I_WaitVBL(105);
 			}
 		}
-		CleanSWDrawer();
-		ST_Endoom();
+		M_Quit();
 	});
 
 
@@ -504,14 +512,28 @@ EXTERN_CVAR (Int, screenblocks)
 
 CCMD (sizedown)
 {
-	screenblocks = screenblocks - 1;
+	if (shiftState.ShiftPressed())
+	{
+		hud_scalefactor = hud_scalefactor - 0.04f;
+	}
+	else
+	{
+		screenblocks = screenblocks - 1;
+	}
 	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
-	screenblocks = screenblocks + 1;
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	if (shiftState.ShiftPressed())
+	{
+		hud_scalefactor = hud_scalefactor + 0.04f;
+	}
+	else
+	{
+		screenblocks = screenblocks + 1;
+	}
+	S_Sound(CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(reset2defaults)
@@ -594,9 +616,9 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 			// center the menu on the screen if the top space is larger than the bottom space
 			int totalheight = posy + AllEpisodes.Size() * spacing - topy;
 
-			if (totalheight < 190 || AllEpisodes.Size() == 1)
+			if (ld->mForceList || totalheight < 190 || AllEpisodes.Size() == 1)
 			{
-				int newtop = (200 - totalheight) / 2;
+				int newtop = max(10, 200 - totalheight) / 2;
 				int topdelta = newtop - topy;
 				if (topdelta < 0)
 				{
@@ -672,6 +694,9 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 		od->mScrollTop = 0;
 		od->mIndent = 160;
 		od->mDontDim = false;
+		od->mDontBlur = false;
+		od->mAnimatedTransition = false;
+		od->mAnimated = false;
 		GC::WriteBarrier(od);
 		for(unsigned i = 0; i < AllEpisodes.Size(); i++)
 		{
@@ -738,9 +763,9 @@ static void BuildPlayerclassMenu()
 				ld->mAutoselect = ld->mItems.Push(it);
 				success = true;
 			}
-			else if (totalheight <= 190)
+			else if (ld->mForceList || totalheight <= 190)
 			{
-				int newtop = (200 - totalheight + topy) / 2;
+				int newtop = (max(10, 200 - totalheight) + topy) / 2;
 				int topdelta = newtop - topy;
 				if (topdelta < 0)
 				{
@@ -807,6 +832,9 @@ static void BuildPlayerclassMenu()
 		od->mScrollTop = 0;
 		od->mIndent = 160;
 		od->mDontDim = false;
+		od->mDontBlur = false;
+		od->mAnimatedTransition = false;
+		od->mAnimated = false;
 		od->mNetgameMessage = "$NEWGAME";
 		GC::WriteBarrier(od);
 		for (unsigned i = 0; i < PlayerClasses.Size (); i++)
@@ -1124,9 +1152,9 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				// center the menu on the screen if the top space is larger than the bottom space
 				int totalheight = posy + MenuSkills.Size() * spacing - topy;
 
-				if (totalheight < 190 || MenuSkills.Size() == 1)
+				if (ld->mForceList || totalheight < 190 || MenuSkills.Size() == 1)
 				{
-					int newtop = (200 - totalheight) / 2;
+					int newtop = max(10, 200 - totalheight) / 2;
 					int topdelta = newtop - topy;
 					if (topdelta < 0)
 					{
@@ -1230,6 +1258,9 @@ fail:
 		od->mScrollTop = 0;
 		od->mIndent = 160;
 		od->mDontDim = false;
+		od->mDontBlur = false;
+		od->mAnimatedTransition = false;
+		od->mAnimated = false;
 		GC::WriteBarrier(od);
 	}
 	else
@@ -1446,32 +1477,4 @@ CCMD (menu_video)
 {
 	M_StartControlPanel (true);
 	M_SetMenu(NAME_VideoModeMenu, -1);
-}
-
-
-#ifdef _WIN32
-EXTERN_CVAR(Bool, vr_enable_quadbuffered)
-#endif
-
-void UpdateVRModes(bool considerQuadBuffered)
-{
-	FOptionValues** pVRModes = OptionValues.CheckKey("VRMode");
-	if (pVRModes == nullptr) return;
-
-	TArray<FOptionValues::Pair>& vals = (*pVRModes)->mValues;
-	TArray<FOptionValues::Pair> filteredValues;
-	int cnt = vals.Size();
-	for (int i = 0; i < cnt; ++i) {
-		auto const& mode = vals[i];
-		if (mode.Value == 7) {  // Quad-buffered stereo
-#ifdef _WIN32
-			if (!vr_enable_quadbuffered) continue;
-#else
-			continue;  // Remove quad-buffered option on Mac and Linux
-#endif
-			if (!considerQuadBuffered) continue;  // Probably no compatible screen mode was found
-		}
-		filteredValues.Push(mode);
-	}
-	vals = filteredValues;
 }

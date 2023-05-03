@@ -56,7 +56,7 @@ CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 }
 #else
 CVAR(Bool, vm_jit, false, CVAR_NOINITCALL|CVAR_NOSET)
-FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames) { return FString(); }
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames) { return FString(); }
 void JitRelease() {}
 #endif
 
@@ -682,21 +682,20 @@ void CVMAbortException::MaybePrintMessage()
 	auto m = GetMessage();
 	if (m != nullptr)
 	{
-		Printf(TEXTCOLOR_RED);
-		Printf("%s\n", m);
+		Printf(PRINT_NONOTIFY | PRINT_BOLD, TEXTCOLOR_RED "%s\n", m);
 		SetMessage("");
 	}
 }
 
 
-void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...)
+[[noreturn]] void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...)
 {
 	va_list ap;
 	va_start(ap, moreinfo);
 	throw CVMAbortException(reason, moreinfo, ap);
 }
 
-void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...)
+[[noreturn]] void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...)
 {
 	va_list ap;
 	va_start(ap, moreinfo);
@@ -712,10 +711,9 @@ DEFINE_ACTION_FUNCTION(DObject, ThrowAbortException)
 	PARAM_PROLOGUE;
 	FString s = FStringFormat(VM_ARGS_NAMES);
 	ThrowAbortException(X_OTHER, s.GetChars());
-	return 0;
 }
 
-void NullParam(const char *varname)
+[[noreturn]] void NullParam(const char *varname)
 {
 	ThrowAbortException(X_READ_NIL, "In function parameter %s", varname);
 }

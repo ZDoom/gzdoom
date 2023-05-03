@@ -562,7 +562,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(o);
-	 self->SetXOffset(pos, o);
+	 self->SetYOffset(pos, o);
 	 return 0;
  }
 
@@ -647,7 +647,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetAngle(sector_t *self, int pos, double o)
  {
-	 self->SetAngle(pos, o);
+	 self->SetAngle(pos, DAngle::fromDeg(o));
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAngle, SetAngle)
@@ -661,7 +661,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static double GetAngle(sector_t *self, int pos, bool addbase)
  {
-	 return self->GetAngle(pos, addbase).Degrees;
+	 return self->GetAngle(pos, addbase).Degrees();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAngle, GetAngle)
@@ -669,12 +669,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_BOOL(addbase);
-	 ACTION_RETURN_FLOAT(self->GetAngle(pos, addbase).Degrees);
+	 ACTION_RETURN_FLOAT(self->GetAngle(pos, addbase).Degrees());
  }
 
  static void SetBase(sector_t *self, int pos, double o, double a)
  {
-	 self->SetBase(pos, o, a);
+	 self->SetBase(pos, o, DAngle::fromDeg(a));
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetBase, SetBase)
@@ -1199,10 +1199,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 return self->getPortalAlignment();
  }
 
+ DEFINE_ACTION_FUNCTION(_Line, getPortalFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(self->getPortalFlags());
+ }
+
  DEFINE_ACTION_FUNCTION_NATIVE(_Line, getPortalAlignment, getPortalAlignment)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 ACTION_RETURN_INT(self->getPortalAlignment());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalType)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(self->getPortalType());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalDisplacement)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_VEC2(self->getPortalDisplacement());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalAngleDiff)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_FLOAT(self->getPortalAngleDiff().Degrees());
  }
 
  static int LineIndex(line_t *self)
@@ -2271,7 +2295,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
 
 	for (int j = 0; j < 16; ++j)
 	{
-		sprintf(md5string + j * 2, "%02x", self->md5[j]);
+		snprintf(md5string + j * 2, 3, "%02x", self->md5[j]);
 	}
 
 	ACTION_RETURN_STRING((const char*)md5string);
@@ -2419,6 +2443,29 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec3Diff, Vec3Diff)
 	ACTION_RETURN_VEC3(VecDiff(self, DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetDisplacement)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(pg1);
+	PARAM_INT(pg2);
+
+	DVector2 ofs(0, 0);
+	if (pg1 != pg2)
+	{
+		unsigned i = pg1 + self->Displacements.size * pg2;
+		if (i < self->Displacements.data.Size())
+			ofs = self->Displacements.data[i].pos;
+	}
+
+	ACTION_RETURN_VEC2(ofs);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetPortalGroupCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_INT(self->Displacements.size);
+}
+
 void SphericalCoords(FLevelLocals *self, double vpX, double vpY, double vpZ, double tX, double tY, double tZ, double viewYaw, double viewPitch, int absolute, DVector3 *result)
 {
 	
@@ -2427,8 +2474,8 @@ void SphericalCoords(FLevelLocals *self, double vpX, double vpY, double vpZ, dou
 	auto vecTo = absolute ? target - viewpoint : VecDiff(self, viewpoint, target);
 	
 	*result = (DVector3(
-								deltaangle(vecTo.Angle(), viewYaw).Degrees,
-								deltaangle(vecTo.Pitch(), viewPitch).Degrees,
+								deltaangle(vecTo.Angle(), DAngle::fromDeg(viewYaw)).Degrees(),
+								deltaangle(vecTo.Pitch(), DAngle::fromDeg(viewPitch)).Degrees(),
 								vecTo.Length()
 								));
 
@@ -2450,6 +2497,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SphericalCoords, SphericalCoords)
 	ACTION_RETURN_VEC3(result);
 }
 
+static void LookupString(FLevelLocals *level, uint32_t index, FString *res)
+{
+	*res = level->Behaviors.LookupString(index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, LookupString, LookupString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_UINT(index);
+	FString res;
+	LookupString(self, index, &res);
+	ACTION_RETURN_STRING(res);
+}
 
 static int isFrozen(FLevelLocals *self)
 {
@@ -2632,7 +2692,7 @@ DEFINE_ACTION_FUNCTION(_LevelInfo, MapChecksum)
 		map->GetChecksum(cksum);
 		for (int j = 0; j < 16; ++j)
 		{
-			sprintf(md5string + j * 2, "%02x", cksum[j]);
+			snprintf(md5string + j * 2, 3, "%02x", cksum[j]);
 		}
 		delete map;
 	}
@@ -2683,6 +2743,7 @@ DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
 DEFINE_FIELD(FLevelLocals, sides)
 DEFINE_FIELD(FLevelLocals, vertexes)
+DEFINE_FIELD(FLevelLocals, linePortals)
 DEFINE_FIELD(FLevelLocals, sectorPortals)
 DEFINE_FIELD(FLevelLocals, time)
 DEFINE_FIELD(FLevelLocals, maptime)
@@ -2732,6 +2793,7 @@ DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
 DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
 DEFINE_FIELD_BIT(FLevelLocals, flags, sndseqtotalctrl, LEVEL_SNDSEQTOTALCTRL)
+DEFINE_FIELD_BIT(FLevelLocals, flags, useplayerstartz, LEVEL_USEPLAYERSTARTZ)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, allmap, LEVEL2_ALLMAP)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, missilesactivateimpact, LEVEL2_MISSILESACTIVATEIMPACT)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, monsterfallingdamage, LEVEL2_MONSTERFALLINGDAMAGE)

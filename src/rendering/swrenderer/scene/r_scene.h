@@ -32,8 +32,6 @@
 
 extern cycle_t FrameCycles;
 
-class PolyDepthStencil;
-
 namespace swrenderer
 {
 	extern cycle_t WallCycles, PlaneCycles, MaskedCycles, DrawerWaitCycles;
@@ -69,7 +67,6 @@ namespace swrenderer
 		bool dontmaplines = false;
 		int clearcolor = 0;
 
-		std::unique_ptr<PolyDepthStencil> DepthStencil;
 		std::vector<std::unique_ptr<RenderThread>> Threads;
 		std::mutex start_mutex;
 		std::condition_variable start_condition;

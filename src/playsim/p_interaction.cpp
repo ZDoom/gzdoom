@@ -61,6 +61,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "actorinlines.h"
+#include "d_main.h"
 
 static FRandom pr_botrespawn ("BotRespawn");
 static FRandom pr_killmobj ("ActorDie");
@@ -188,7 +189,7 @@ void PronounMessage (const char *from, char *to, int pronoun, const char *victim
 //
 void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgflags, FName MeansOfDeath)
 {
-	FString ret;
+	FString ret, lookup;
 	char gendermessage[1024];
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
@@ -239,20 +240,30 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		messagename = "$OB_VOODOO";
 	}
 
-	if (attacker != NULL && message == NULL)
+	if (attacker != nullptr && message == nullptr)
 	{
 		if (attacker == self)
 		{
 			message = "$OB_KILLEDSELF";
 		}
-		else 
+		else
 		{
-			IFVIRTUALPTR(attacker, AActor, GetObituary)
+			lookup.Format("$Obituary_%s_%s", attacker->GetClass()->TypeName.GetChars(), mod.GetChars());
+			if (GStrings[lookup.GetChars() + 1]) message = lookup;
+			else
 			{
-				VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
-				VMReturn rett(&ret);
-				VMCall(func, params, countof(params), &rett, 1);
-				if (ret.IsNotEmpty()) message = ret;
+				lookup.Format("$Obituary_%s", attacker->GetClass()->TypeName.GetChars());
+				if (GStrings[lookup.GetChars() + 1]) message = lookup;
+				else
+				{
+					IFVIRTUALPTR(attacker, AActor, GetObituary)
+					{
+						VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
+						VMReturn rett(&ret);
+						VMCall(func, params, countof(params), &rett, 1);
+						if (ret.IsNotEmpty()) message = ret;
+					}
+				}
 			}
 		}
 	}
@@ -1243,7 +1254,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	{
 		IFVIRTUALPTR(target, AActor, ApplyKickback)
 		{
-			VMValue params[] = { target, inflictor, source, damage, angle.Degrees, mod.GetIndex(), flags };
+			VMValue params[] = { target, inflictor, source, damage, angle.Degrees(), mod.GetIndex(), flags };
 			VMCall(func, params, countof(params), nullptr, 0);
 		}
 	}
@@ -1504,7 +1515,7 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_INT(damage);
 	PARAM_NAME(mod);
 	PARAM_INT(flags);
-	PARAM_FLOAT(angle);
+	PARAM_ANGLE(angle);
 	ACTION_RETURN_INT(DoDamageMobj(self, inflictor, source, damage, mod, flags, angle));
 }
 
@@ -1512,7 +1523,7 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 {
 	IFVIRTUALPTR(target, AActor, DamageMobj)
 	{
-		VMValue params[7] = { target, inflictor, source, damage, mod.GetIndex(), flags, angle.Degrees };
+		VMValue params[7] = { target, inflictor, source, damage, mod.GetIndex(), flags, angle.Degrees() };
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);

@@ -166,7 +166,7 @@ void MapLoader::SpawnLinePortal(line_t* line)
 				line->portalindex = Level->linePortals.Reserve(1);
 				FLinePortal *port = &Level->linePortals.Last();
 
-				memset(port, 0, sizeof(FLinePortal));
+				port->Clear();
 				port->mOrigin = line;
 				port->mDestination = &ln;
 				port->mType = PORTT_LINKED;
@@ -177,7 +177,7 @@ void MapLoader::SpawnLinePortal(line_t* line)
 				ln.portalindex = Level->linePortals.Reserve(1);
 				port = &Level->linePortals.Last();
 
-				memset(port, 0, sizeof(FLinePortal));
+				port->Clear();
 				port->mOrigin = &ln;
 				port->mDestination = line;
 				port->mType = PORTT_LINKED;
@@ -794,6 +794,7 @@ void MapLoader::SpawnSpecials ()
 			// This also cannot consider lifts triggered by scripts etc.
 		case Generic_Lift:
 			if (line.args[3] != 1) continue;
+			[[fallthrough]];
 		case Plat_DownWaitUpStay:
 		case Plat_DownWaitUpStayLip:
 		case Plat_UpWaitDownStay:
@@ -1148,8 +1149,8 @@ AActor *MapLoader::GetPushThing(int s)
 	thing = sec->thinglist;
 
 	while (thing &&
-		thing->GetClass()->TypeName != NAME_PointPusher &&
-		thing->GetClass()->TypeName != NAME_PointPuller)
+		!thing->IsKindOf(NAME_PointPusher) &&
+		!thing->IsKindOf(NAME_PointPuller))
 	{
 		thing = thing->snext;
 	}
@@ -1208,8 +1209,8 @@ void MapLoader::SpawnPushers()
 
 				while ((thing = iterator.Next()))
 				{
-					if (thing->GetClass()->TypeName == NAME_PointPusher ||
-						thing->GetClass()->TypeName == NAME_PointPuller)
+					if (thing->IsKindOf(NAME_PointPusher) ||
+						thing->IsKindOf(NAME_PointPuller))
 					{
 						Level->CreateThinker<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
 					}

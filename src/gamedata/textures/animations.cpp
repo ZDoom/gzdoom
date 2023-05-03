@@ -43,6 +43,7 @@
 #include "serializer.h"
 #include "animations.h"
 #include "texturemanager.h"
+#include "image.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -61,14 +62,6 @@ static FRandom pr_animatepictures ("AnimatePics");
 
 void FTextureAnimator::DeleteAll()
 {
-	for (unsigned i = 0; i < mAnimations.Size(); i++)
-	{
-		if (mAnimations[i] != NULL)
-		{
-			M_Free(mAnimations[i]);
-			mAnimations[i] = NULL;
-		}
-	}
 	mAnimations.Clear();
 
 	for (unsigned i = 0; i < mSwitchDefs.Size(); i++)
@@ -80,15 +73,6 @@ void FTextureAnimator::DeleteAll()
 		}
 	}
 	mSwitchDefs.Clear();
-
-	for (unsigned i = 0; i < mAnimatedDoors.Size(); i++)
-	{
-		if (mAnimatedDoors[i].TextureFrames != NULL)
-		{
-			delete[] mAnimatedDoors[i].TextureFrames;
-			mAnimatedDoors[i].TextureFrames = NULL;
-		}
-	}
 	mAnimatedDoors.Clear();
 }
 
@@ -101,22 +85,21 @@ void FTextureAnimator::DeleteAll()
 //
 //==========================================================================
 
-FAnimDef *FTextureAnimator::AddAnim (FAnimDef *anim)
+FAnimDef *FTextureAnimator::AddAnim (FAnimDef& anim)
 {
 	// Search for existing duplicate.
 	for (unsigned int i = 0; i < mAnimations.Size(); ++i)
 	{
-		if (mAnimations[i]->BasePic == anim->BasePic)
+		if (mAnimations[i].BasePic == anim.BasePic)
 		{
 			// Found one!
-			M_Free (mAnimations[i]);
 			mAnimations[i] = anim;
-			return anim;
+			return &mAnimations[i];
 		}
 	}
 	// Didn't find one, so add it at the end.
 	mAnimations.Push (anim);
-	return anim;
+	return &mAnimations.Last();
 }
 
 //==========================================================================
@@ -132,19 +115,20 @@ FAnimDef *FTextureAnimator::AddSimpleAnim (FTextureID picnum, int animcount, uin
 {
 	if (TexMan.AreTexturesCompatible(picnum, picnum + (animcount - 1)))
 	{
-		FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
-		anim->CurFrame = 0;
-		anim->BasePic = picnum;
-		anim->NumFrames = animcount;
-		anim->AnimType = FAnimDef::ANIM_Forward;
-		anim->bDiscrete = false;
-		anim->SwitchTime = 0;
-		anim->Frames[0].SpeedMin = speedmin;
-		anim->Frames[0].SpeedRange = speedrange;
-		anim->Frames[0].FramePic = anim->BasePic;
+		FAnimDef anim;
+		anim.CurFrame = 0;
+		anim.BasePic = picnum;
+		anim.NumFrames = animcount;
+		anim.AnimType = FAnimDef::ANIM_Forward;
+		anim.bDiscrete = false;
+		anim.SwitchTime = 0;
+		anim.Frames = (FAnimDef::FAnimFrame*)ImageArena.Alloc(sizeof(FAnimDef::FAnimFrame));
+		anim.Frames[0].SpeedMin = speedmin;
+		anim.Frames[0].SpeedRange = speedrange;
+		anim.Frames[0].FramePic = anim.BasePic;
 		return AddAnim (anim);
 	}
-	return NULL;
+	return nullptr;
 }
 
 //==========================================================================
@@ -157,14 +141,15 @@ FAnimDef *FTextureAnimator::AddSimpleAnim (FTextureID picnum, int animcount, uin
 
 FAnimDef *FTextureAnimator::AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames)
 {
-	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef) + (frames.Size()-1) * sizeof(frames[0]));
-	anim->BasePic = picnum;
-	anim->NumFrames = frames.Size();
-	anim->CurFrame = 0;
-	anim->AnimType = FAnimDef::ANIM_Forward;
-	anim->bDiscrete = true;
-	anim->SwitchTime = 0;
-	memcpy (&anim->Frames[0], &frames[0], frames.Size() * sizeof(frames[0]));
+	FAnimDef anim;
+	anim.BasePic = picnum;
+	anim.NumFrames = frames.Size();
+	anim.CurFrame = 0;
+	anim.AnimType = FAnimDef::ANIM_Forward;
+	anim.bDiscrete = true;
+	anim.SwitchTime = 0;
+	anim.Frames = (FAnimDef::FAnimFrame*)ImageArena.Alloc(frames.Size() * sizeof(frames[0]));
+	memcpy (&anim.Frames[0], &frames[0], frames.Size() * sizeof(frames[0]));
 	return AddAnim (anim);
 }
 
@@ -339,6 +324,10 @@ void FTextureAnimator::InitAnimDefs ()
 			else if (sc.Compare ("warp") || sc.Compare ("warp2"))
 			{
 				ParseWarp(sc);
+			}
+			else if (sc.Compare("canvastexture"))
+			{
+				ParseCanvasTexture(sc);
 			}
 			else if (sc.Compare ("cameratexture"))
 			{
@@ -698,6 +687,21 @@ void FTextureAnimator::ParseWarp(FScanner &sc)
 	}
 }
 
+
+//==========================================================================
+//
+// ParseCameraTexture
+//
+// Parses a canvas texture definition
+//
+//==========================================================================
+
+void FTextureAnimator::ParseCanvasTexture(FScanner& sc)
+{
+	// This is currently identical to camera textures.
+	ParseCameraTexture(sc);
+}
+
 //==========================================================================
 //
 // ParseCameraTexture
@@ -783,7 +787,7 @@ void FTextureAnimator::FixAnimations ()
 
 	for (i = 0; i < mAnimations.Size(); ++i)
 	{
-		FAnimDef *anim = mAnimations[i];
+		const FAnimDef *anim = &mAnimations[i];
 		if (!anim->bDiscrete)
 		{
 			bool nodecals;
@@ -870,7 +874,7 @@ void FTextureAnimator::ParseAnimatedDoor(FScanner &sc)
 	}
 	if (!error)
 	{
-		anim.TextureFrames = new FTextureID[frames.Size()];
+		anim.TextureFrames = (FTextureID*)ImageArena.Alloc(sizeof(FTextureID) * frames.Size());
 		memcpy (anim.TextureFrames, &frames[0], sizeof(FTextureID) * frames.Size());
 		anim.NumTextureFrames = frames.Size();
 		mAnimatedDoors.Push (anim);
@@ -928,7 +932,7 @@ void FTextureAnimator::UpdateAnimations (uint64_t mstime)
 {
 	for (unsigned int j = 0; j < mAnimations.Size(); ++j)
 	{
-		FAnimDef *anim = mAnimations[j];
+		FAnimDef *anim = &mAnimations[j];
 
 		// If this is the first time through R_UpdateAnimations, just
 		// initialize the anim's switch time without actually animating.

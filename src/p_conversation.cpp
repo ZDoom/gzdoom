@@ -166,7 +166,7 @@ static void ClearConversationStuff(player_t* player)
 	player->ConversationFaceTalker = false;
 	player->ConversationNPC = nullptr;
 	player->ConversationPC = nullptr;
-	player->ConversationNPCAngle = 0.;
+	player->ConversationNPCAngle = nullAngle;
 }
 
 //============================================================================
@@ -395,12 +395,12 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	}
 
 	// [Nash] Play voice clip from the actor so that positional audio can be heard by all players
-	if (CurNode->SpeakerVoice != 0) S_Sound(npc, CHAN_VOICE, CHANF_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
+	if (CurNode->SpeakerVoice != NO_SOUND) S_Sound(npc, CHAN_VOICE, CHANF_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 
 	// The rest is only done when the conversation is actually displayed.
 	if (pc->player == Level->GetConsolePlayer())
 	{
-		if (CurNode->SpeakerVoice != 0)
+		if (CurNode->SpeakerVoice != NO_SOUND)
 		{
 			I_SetMusicVolume (dlg_musicvolume);
 		}
@@ -718,7 +718,7 @@ static void TerminalResponse (const char *str)
 
 		if (StatusBar != NULL)
 		{
-			Printf(PRINT_NONOTIFY, "%s\n", str);
+			Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s\n", str);
 			// The message is positioned a bit above the menu choices, because
 			// merchants can tell you something like this but continue to show
 			// their dialogue screen. I think most other conversations use this

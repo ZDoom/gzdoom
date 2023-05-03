@@ -38,6 +38,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "g_game.h"
+#include "i_interface.h"
 
 extern gamestate_t wipegamestate;
 extern uint8_t globalfreeze, globalchangefreeze;
@@ -157,6 +158,7 @@ void P_Ticker (void)
 		while ((ac = it.Next()))
 		{
 			ac->ClearInterpolation();
+			ac->ClearFOVInterpolation();
 		}
 
 		P_ThinkParticles(Level);	// [RH] make the particles think

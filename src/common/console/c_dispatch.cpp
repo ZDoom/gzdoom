@@ -308,7 +308,7 @@ void C_DoCommand (const char *cmd, int keynum)
 		}
 		else
 		{ // We don't know how to handle this command
-			Printf ("Unknown command \"%.*s\"\n", (int)len, beg);
+			Printf ("$CONMSG_UNKNOWN_COMMAND_X", (int)len, beg);
 		}
 	}
 }

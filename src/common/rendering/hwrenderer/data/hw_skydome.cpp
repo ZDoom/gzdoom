@@ -384,11 +384,12 @@ void FSkyVertexBuffer::CreateDome()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix, bool tiled, float xscale, float yscale)
+void FSkyVertexBuffer::SetupMatrices(FRenderState& state, FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale, float yscale)
 {
 	float texw = tex->GetDisplayWidth();
 	float texh = tex->GetDisplayHeight();
 
+	VSMatrix modelMatrix;
 	modelMatrix.loadIdentity();
 	modelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
 
@@ -433,9 +434,16 @@ void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_
 		modelMatrix.translate(0.f, (-40 + texskyoffset) * skyoffsetfactor, 0.f);
 		modelMatrix.scale(1.f, 0.8f * 1.17f, 1.f);
 	}
+
+	VSMatrix normalModelMatrix;
+	normalModelMatrix.computeNormalMatrix(modelMatrix);
+	state.SetModelMatrix(modelMatrix, normalModelMatrix);
+
+	VSMatrix textureMatrix;
 	textureMatrix.loadIdentity();
 	textureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
 	textureMatrix.translate(1.f, y_offset / texh, 1.f);
+	state.SetTextureMatrix(textureMatrix);
 }
 
 //-----------------------------------------------------------------------------
@@ -461,8 +469,6 @@ void FSkyVertexBuffer::DoRenderDome(FRenderState& state, FGameTexture* tex, int 
 	if (tex && tex->isValid())
 	{
 		state.SetMaterial(tex, UF_Texture, 0, CLAMP_NONE, 0, -1);
-		state.EnableModelMatrix(true);
-		state.EnableTextureMatrix(true);
 	}
 
 	int rc = mRows + 1;
@@ -494,8 +500,8 @@ void FSkyVertexBuffer::DoRenderDome(FRenderState& state, FGameTexture* tex, int 
 		RenderRow(state, DT_TriangleStrip, rc + i, primStart, false);
 	}
 
-	state.EnableTextureMatrix(false);
-	state.EnableModelMatrix(false);
+	state.SetTextureMatrix(VSMatrix::identity());
+	state.SetModelMatrix(VSMatrix::identity(), VSMatrix::identity());
 }
 
 
@@ -509,7 +515,7 @@ void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float 
 {
 	if (tex)
 	{
-		SetupMatrices(tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix, tiled, xscale, yscale);
+		SetupMatrices(state, tex, x_offset, y_offset, mirror, mode, tiled, xscale, yscale);
 	}
 	DoRenderDome(state, tex, mode, false, color);
 }
@@ -526,14 +532,19 @@ void FSkyVertexBuffer::RenderBox(FRenderState& state, FSkyBox* tex, float x_offs
 	int faces;
 
 	state.SetObjectColor(color);
-	state.EnableModelMatrix(true);
-	state.mModelMatrix.loadIdentity();
-	state.mModelMatrix.scale(1, 1 / stretch, 1); // Undo the map's vertical scaling as skyboxes are true cubes.
+
+	VSMatrix modelMatrix;
+	modelMatrix.loadIdentity();
+	modelMatrix.scale(1, 1 / stretch, 1); // Undo the map's vertical scaling as skyboxes are true cubes.
 
 	if (!sky2)
-		state.mModelMatrix.rotate(-180.0f + x_offset, skyrotatevector.X, skyrotatevector.Z, skyrotatevector.Y);
+		modelMatrix.rotate(-180.0f + x_offset, skyrotatevector.X, skyrotatevector.Z, skyrotatevector.Y);
 	else
-		state.mModelMatrix.rotate(-180.0f + x_offset, skyrotatevector2.X, skyrotatevector2.Z, skyrotatevector2.Y);
+		modelMatrix.rotate(-180.0f + x_offset, skyrotatevector2.X, skyrotatevector2.Z, skyrotatevector2.Y);
+
+	VSMatrix normalModelMatrix;
+	normalModelMatrix.computeNormalMatrix(modelMatrix);
+	state.SetModelMatrix(modelMatrix, normalModelMatrix);
 
 	if (tex->GetSkyFace(5))
 	{
@@ -570,7 +581,7 @@ void FSkyVertexBuffer::RenderBox(FRenderState& state, FSkyBox* tex, float x_offs
 	state.SetMaterial(tex->GetSkyFace(faces + 1), UF_Texture, 0, CLAMP_XY, 0, -1);
 	state.Draw(DT_TriangleStrip, FaceStart(4), 4);
 
-	state.EnableModelMatrix(false);
+	state.SetModelMatrix(VSMatrix::identity(), VSMatrix::identity());
 	state.SetObjectColor(0xffffffff);
 }
 

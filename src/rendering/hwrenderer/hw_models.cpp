@@ -73,14 +73,15 @@ void FHWModelRenderer::BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf
 		state.SetCulling((mirrored ^ portalState.isMirrored()) ? Cull_CCW : Cull_CW);
 	}
 
-	state.mModelMatrix = objectToWorldMatrix;
-	state.EnableModelMatrix(true);
+	VSMatrix normalModelMatrix;
+	normalModelMatrix.computeNormalMatrix(objectToWorldMatrix);
+	state.SetModelMatrix(objectToWorldMatrix, normalModelMatrix);
 }
 
 void FHWModelRenderer::EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf)
 {
 	state.SetBoneIndexBase(-1);
-	state.EnableModelMatrix(false);
+	state.SetModelMatrix(VSMatrix::identity(), VSMatrix::identity());
 	state.SetDepthFunc(DF_Less);
 	if (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
 		state.SetCulling(Cull_None);
@@ -107,14 +108,15 @@ void FHWModelRenderer::BeginDrawHUDModel(FRenderStyle style, const VSMatrix &obj
 		state.SetCulling((mirrored ^ portalState.isMirrored()) ? Cull_CW : Cull_CCW);
 	}
 
-	state.mModelMatrix = objectToWorldMatrix;
-	state.EnableModelMatrix(true);
+	VSMatrix normalModelMatrix;
+	normalModelMatrix.computeNormalMatrix(objectToWorldMatrix);
+	state.SetModelMatrix(objectToWorldMatrix, normalModelMatrix);
 }
 
 void FHWModelRenderer::EndDrawHUDModel(FRenderStyle style)
 {
 	state.SetBoneIndexBase(-1);
-	state.EnableModelMatrix(false);
+	state.SetModelMatrix(VSMatrix::identity(), VSMatrix::identity());
 
 	state.SetDepthFunc(DF_Less);
 	if (!(style == DefaultRenderStyle()))

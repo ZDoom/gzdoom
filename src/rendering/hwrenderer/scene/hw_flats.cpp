@@ -57,7 +57,7 @@ CVAR(Int, gl_breaksec, -1, 0)
 //
 //==========================================================================
 
-bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FGameTexture * gltexture, VSMatrix &dest)
+bool SetPlaneTextureRotation(FRenderState& state, HWSectorPlane* secplane, FGameTexture* gltexture)
 {
 	// only manipulate the texture matrix if needed.
 	if (!secplane->Offs.isZero() ||
@@ -80,22 +80,16 @@ bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FGameTexture * g
 		float xscale2 = 64.f / gltexture->GetDisplayWidth();
 		float yscale2 = 64.f / gltexture->GetDisplayHeight();
 
-		dest.loadIdentity();
-		dest.scale(xscale1, yscale1, 1.0f);
-		dest.translate(uoffs, voffs, 0.0f);
-		dest.scale(xscale2, yscale2, 1.0f);
-		dest.rotate(angle, 0.0f, 0.0f, 1.0f);
+		VSMatrix mat;
+		mat.loadIdentity();
+		mat.scale(xscale1, yscale1, 1.0f);
+		mat.translate(uoffs, voffs, 0.0f);
+		mat.scale(xscale2, yscale2, 1.0f);
+		mat.rotate(angle, 0.0f, 0.0f, 1.0f);
+		state.SetTextureMatrix(mat);
 		return true;
 	}
 	return false;
-}
-
-void SetPlaneTextureRotation(FRenderState &state, HWSectorPlane* plane, FGameTexture* texture)
-{
-	if (hw_SetPlaneTextureRotation(plane, texture, state.mTextureMatrix))
-	{
-		state.EnableTextureMatrix(true);
-	}
 }
 
 
@@ -334,9 +328,10 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		if (sector->special != GLSector_Skybox)
 		{
 			state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
-			SetPlaneTextureRotation(state, &plane, texture);
+			bool texmatrix = SetPlaneTextureRotation(state, &plane, texture);
 			DrawSubsectors(di, state);
-			state.EnableTextureMatrix(false);
+			if (texmatrix)
+				state.SetTextureMatrix(VSMatrix::identity());
 		}
 		else if (!hacktype)
 		{
@@ -362,9 +357,10 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 			if (!texture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 			else state.AlphaFunc(Alpha_GEqual, 0.f);
 			state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
-			SetPlaneTextureRotation(state, &plane, texture);
+			bool texmatrix = SetPlaneTextureRotation(state, &plane, texture);
 			DrawSubsectors(di, state);
-			state.EnableTextureMatrix(false);
+			if (texmatrix)
+				state.SetTextureMatrix(VSMatrix::identity());
 		}
 		state.SetRenderStyle(DefaultRenderStyle());
 	}

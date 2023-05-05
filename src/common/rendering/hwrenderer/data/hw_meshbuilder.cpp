@@ -69,6 +69,7 @@ void MeshBuilder::Apply()
 	state.applyData.TextureModeFlags = mTextureModeFlags;
 	state.streamData = mStreamData;
 	state.material = mMaterial;
+	state.textureMatrix = mTextureMatrix;
 
 	state.streamData.uVertexNormal = FVector4(0.0f, 0.0f, 0.0f, 0.0f); // Grr, this should be part of the vertex!!
 

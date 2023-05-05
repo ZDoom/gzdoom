@@ -40,6 +40,13 @@ class VSMatrix {
 			loadIdentity();
 		}
 
+		static VSMatrix identity()
+		{
+			VSMatrix m;
+			m.loadIdentity();
+			return m;
+		}
+
 		void translate(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z);
 		void scale(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z);
 		void rotate(FLOATTYPE angle, FLOATTYPE x, FLOATTYPE y, FLOATTYPE z);

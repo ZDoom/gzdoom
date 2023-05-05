@@ -228,8 +228,6 @@ protected:
 	uint8_t mTextureEnabled:1;
 	uint8_t mGlowEnabled : 1;
 	uint8_t mGradientEnabled : 1;
-	uint8_t mModelMatrixEnabled : 1;
-	uint8_t mTextureMatrixEnabled : 1;
 	uint8_t mSplitEnabled : 1;
 	uint8_t mBrightmapEnabled : 1;
 
@@ -262,10 +260,6 @@ protected:
 public:
 
 	uint64_t firstFrame = 0;
-	VSMatrix mModelMatrix;
-	VSMatrix mTextureMatrix;
-
-public:
 
 	void Reset()
 	{
@@ -278,8 +272,6 @@ public:
 		mTextureModeFlags = 0;
 		mStreamData.uDesaturationFactor = 0.0f;
 		mStreamData.uAlphaThreshold = 0.5f;
-		mModelMatrixEnabled = false;
-		mTextureMatrixEnabled = false;
 		mSplitEnabled = false;
 		mStreamData.uAddColor = 0;
 		mStreamData.uObjectColor = 0xffffffff;
@@ -322,8 +314,6 @@ public:
 #ifdef NPOT_EMULATION
 		mStreamData.uNpotEmulation = { 0,0,0,0 };
 #endif
-		mModelMatrix.loadIdentity();
-		mTextureMatrix.loadIdentity();
 		ClearClipSplit();
 	}
 
@@ -446,16 +436,6 @@ public:
 			mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 		}
 		mSplitEnabled = on;
-	}
-
-	void EnableModelMatrix(bool on)
-	{
-		mModelMatrixEnabled = on;
-	}
-
-	void EnableTextureMatrix(bool on)
-	{
-		mTextureMatrixEnabled = on;
 	}
 
 	void SetGlowParams(float *t, float *b)
@@ -759,6 +739,8 @@ public:
 	// Buffers
 	virtual int SetViewpoint(const HWViewpointUniforms& vp) = 0;
 	virtual void SetViewpoint(int index) = 0;
+	virtual void SetModelMatrix(const VSMatrix& matrix, const VSMatrix& normalMatrix) = 0;
+	virtual void SetTextureMatrix(const VSMatrix& matrix) = 0;
 	virtual int UploadLights(const FDynLightData& lightdata) = 0;
 	virtual int UploadBones(const TArray<VSMatrix>& bones) = 0;
 

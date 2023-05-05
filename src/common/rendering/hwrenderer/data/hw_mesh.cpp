@@ -43,6 +43,7 @@ void Mesh::Draw(FRenderState& renderstate)
 	origState.applyData.TextureModeFlags = renderstate.mTextureModeFlags;
 	origState.streamData = renderstate.mStreamData;
 	origState.material = renderstate.mMaterial;
+	origState.textureMatrix.loadIdentity();
 
 	int applyIndex = -1;
 	int depthFunc = -1;
@@ -107,4 +108,5 @@ void Mesh::Apply(FRenderState& renderstate, const MeshApplyState& state)
 	renderstate.mTextureModeFlags = state.applyData.TextureModeFlags;
 	renderstate.mStreamData = state.streamData;
 	renderstate.mMaterial = state.material;
+	renderstate.SetTextureMatrix(state.textureMatrix);
 }

@@ -122,9 +122,6 @@ void HWWall::RenderMirrorSurface(HWDrawInfo *di, FRenderState &state)
 
 	state.SetDepthFunc(DF_LEqual);
 
-	// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
-	state.EnableTextureMatrix(true);
-
 	// Use sphere mapping for this
 	state.SetEffect(EFF_SPHEREMAP);
 	di->SetColor(state, lightlevel, 0, di->isFullbrightScene(), Colormap, 0.1f);
@@ -138,7 +135,7 @@ void HWWall::RenderMirrorSurface(HWDrawInfo *di, FRenderState &state)
 	flags &= ~HWWall::HWF_GLOW;
 	RenderWall(di, state, HWWall::RWF_BLANK);
 
-	state.EnableTextureMatrix(false);
+	state.SetTextureMatrix(VSMatrix::identity());
 	state.SetEffect(EFF_NONE);
 	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 

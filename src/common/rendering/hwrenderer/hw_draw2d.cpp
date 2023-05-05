@@ -169,8 +169,13 @@ void Draw2D(F2DDrawer* drawer, FRenderState& state, int x, int y, int width, int
 			{
 				m[4 * 3 + i] = (FLOATTYPE) cmd.transform.Cells[i][2];
 			}
-			state.mModelMatrix.loadMatrix(m);
-			state.EnableModelMatrix(true);
+
+			VSMatrix modelMatrix;
+			modelMatrix.loadMatrix(m);
+
+			VSMatrix normalModelMatrix;
+			normalModelMatrix.computeNormalMatrix(modelMatrix);
+			state.SetModelMatrix(modelMatrix, normalModelMatrix);
 		}
 
 		if (cmd.mTexture != nullptr && cmd.mTexture->isValid())
@@ -184,10 +189,11 @@ void Draw2D(F2DDrawer* drawer, FRenderState& state, int x, int y, int width, int
 			// Canvas textures are stored upside down
 			if (cmd.mTexture->isHardwareCanvas())
 			{
-				state.mTextureMatrix.loadIdentity();
-				state.mTextureMatrix.scale(1.f, -1.f, 1.f);
-				state.mTextureMatrix.translate(0.f, 1.f, 0.0f);
-				state.EnableTextureMatrix(true);
+				VSMatrix textureMatrix;
+				textureMatrix.loadIdentity();
+				textureMatrix.scale(1.f, -1.f, 1.f);
+				textureMatrix.translate(0.f, 1.f, 0.0f);
+				state.SetTextureMatrix(textureMatrix);
 			}
 			if (cmd.mFlags & F2DDrawer::DTF_Burn)
 			{
@@ -238,8 +244,10 @@ void Draw2D(F2DDrawer* drawer, FRenderState& state, int x, int y, int width, int
 		state.SetObjectColor(0xffffffff);
 		state.SetObjectColor2(0);
 		state.SetAddColor(0);
-		state.EnableTextureMatrix(false);
-		state.EnableModelMatrix(false);
+		if (cmd.mTexture != nullptr && cmd.mTexture->isValid() && cmd.mTexture->isHardwareCanvas())
+			state.SetTextureMatrix(VSMatrix::identity());
+		if (cmd.useTransform)
+			state.SetModelMatrix(VSMatrix::identity(), VSMatrix::identity());
 		state.SetEffect(EFF_NONE);
 
 	}

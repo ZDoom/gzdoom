@@ -58,61 +58,16 @@ void VkStreamBufferWriter::Reset()
 VkMatrixBufferWriter::VkMatrixBufferWriter(VulkanRenderDevice* fb)
 {
 	mBuffer = fb->GetBufferManager()->MatrixBuffer.get();
-	mIdentityMatrix.loadIdentity();
 }
 
-template<typename T>
-static void BufferedSet(bool& modified, T& dst, const T& src)
+bool VkMatrixBufferWriter::Write(const MatricesUBO& matrices)
 {
-	if (dst == src)
-		return;
-	dst = src;
-	modified = true;
-}
+	mOffset = mBuffer->NextStreamDataBlock();
+	if (mOffset == 0xffffffff)
+		return false;
 
-static void BufferedSet(bool& modified, VSMatrix& dst, const VSMatrix& src)
-{
-	if (memcmp(dst.get(), src.get(), sizeof(FLOATTYPE) * 16) == 0)
-		return;
-	dst = src;
-	modified = true;
-}
-
-bool VkMatrixBufferWriter::Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled)
-{
-	bool modified = (mOffset == 0); // always modified first call
-
-	if (modelMatrixEnabled)
-	{
-		BufferedSet(modified, mMatrices.ModelMatrix, modelMatrix);
-		if (modified)
-			mMatrices.NormalModelMatrix.computeNormalMatrix(modelMatrix);
-	}
-	else
-	{
-		BufferedSet(modified, mMatrices.ModelMatrix, mIdentityMatrix);
-		BufferedSet(modified, mMatrices.NormalModelMatrix, mIdentityMatrix);
-	}
-
-	if (textureMatrixEnabled)
-	{
-		BufferedSet(modified, mMatrices.TextureMatrix, textureMatrix);
-	}
-	else
-	{
-		BufferedSet(modified, mMatrices.TextureMatrix, mIdentityMatrix);
-	}
-
-	if (modified)
-	{
-		mOffset = mBuffer->NextStreamDataBlock();
-		if (mOffset == 0xffffffff)
-			return false;
-
-		uint8_t* ptr = (uint8_t*)mBuffer->Data;
-		memcpy(ptr + mOffset, &mMatrices, sizeof(MatricesUBO));
-	}
-
+	uint8_t* ptr = (uint8_t*)mBuffer->Data;
+	memcpy(ptr + mOffset, &matrices, sizeof(MatricesUBO));
 	return true;
 }
 

@@ -50,6 +50,8 @@ public:
 	// Buffers
 	int SetViewpoint(const HWViewpointUniforms& vp) override;
 	void SetViewpoint(int index) override;
+	void SetModelMatrix(const VSMatrix& matrix, const VSMatrix& normalMatrix) override;
+	void SetTextureMatrix(const VSMatrix& matrix) override;
 	int UploadLights(const FDynLightData& lightdata) override;
 	int UploadBones(const TArray<VSMatrix>& bones) override;
 
@@ -110,8 +112,8 @@ protected:
 	IBuffer* mLastVertexBuffer = nullptr;
 	IBuffer* mLastIndexBuffer = nullptr;
 
-	bool mLastModelMatrixEnabled = true;
-	bool mLastTextureMatrixEnabled = true;
+	MatricesUBO mMatrices = {};
+	bool mMatricesChanged = true;
 
 	int mApplyCount = 0;
 

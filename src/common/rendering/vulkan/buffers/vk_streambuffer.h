@@ -5,7 +5,6 @@
 #include "vulkan/shaders/vk_shader.h"
 
 class VkStreamBuffer;
-class VkMatrixBuffer;
 
 class VkStreamBufferWriter
 {
@@ -29,14 +28,12 @@ class VkMatrixBufferWriter
 public:
 	VkMatrixBufferWriter(VulkanRenderDevice* fb);
 
-	bool Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled);
+	bool Write(const MatricesUBO& matrices);
 	void Reset();
 
 	uint32_t Offset() const { return mOffset; }
 
 private:
 	VkStreamBuffer* mBuffer;
-	MatricesUBO mMatrices = {};
-	VSMatrix mIdentityMatrix;
 	uint32_t mOffset = 0;
 };

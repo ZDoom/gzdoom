@@ -41,7 +41,7 @@
 EXTERN_CVAR(Int, r_mirror_recursions)
 EXTERN_CVAR(Bool, gl_portals)
 
-void SetPlaneTextureRotation(FRenderState& state, HWSectorPlane* plane, FGameTexture* texture);
+bool SetPlaneTextureRotation(FRenderState& state, HWSectorPlane* plane, FGameTexture* texture);
 
 //-----------------------------------------------------------------------------
 //
@@ -986,10 +986,10 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	state.EnableBrightmap(true);
 	state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
 	state.SetObjectColor(origin->specialcolor);
-
-	SetPlaneTextureRotation(state, sp, texture);
 	state.AlphaFunc(Alpha_GEqual, 0.f);
 	state.SetRenderStyle(STYLE_Source);
+
+	bool texmatrix = SetPlaneTextureRotation(state, sp, texture);
 
 	for (unsigned i = 0; i < vcount; i += 4)
 	{
@@ -997,7 +997,8 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	}
 	state.Draw(DT_TriangleStrip, voffset + vcount, 10, false);
 
-	state.EnableTextureMatrix(false);
+	if (texmatrix)
+		state.SetTextureMatrix(VSMatrix::identity());
 }
 
 

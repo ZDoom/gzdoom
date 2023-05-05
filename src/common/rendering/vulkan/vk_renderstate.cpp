@@ -42,6 +42,10 @@ EXTERN_CVAR(Bool, r_skipmats)
 
 VkRenderState::VkRenderState(VulkanRenderDevice* fb) : fb(fb), mStreamBufferWriter(fb), mMatrixBufferWriter(fb)
 {
+	mMatrices.ModelMatrix.loadIdentity();
+	mMatrices.NormalModelMatrix.loadIdentity();
+	mMatrices.TextureMatrix.loadIdentity();
+
 	Reset();
 }
 
@@ -411,10 +415,14 @@ void VkRenderState::ApplyPushConstants()
 
 void VkRenderState::ApplyMatrices()
 {
-	if (!mMatrixBufferWriter.Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled))
+	if (mMatricesChanged)
 	{
-		WaitForStreamBuffers();
-		mMatrixBufferWriter.Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled);
+		if (!mMatrixBufferWriter.Write(mMatrices))
+		{
+			WaitForStreamBuffers();
+			mMatrixBufferWriter.Write(mMatrices);
+		}
+		mMatricesChanged = false;
 	}
 }
 
@@ -500,6 +508,21 @@ int VkRenderState::SetViewpoint(const HWViewpointUniforms& vp)
 void VkRenderState::SetViewpoint(int index)
 {
 	mViewpointOffset = index * fb->GetBufferManager()->Viewpoint.BlockAlign;
+	mNeedApply = true;
+}
+
+void VkRenderState::SetModelMatrix(const VSMatrix& matrix, const VSMatrix& normalMatrix)
+{
+	mMatrices.ModelMatrix = matrix;
+	mMatrices.NormalModelMatrix = normalMatrix;
+	mMatricesChanged = true;
+	mNeedApply = true;
+}
+
+void VkRenderState::SetTextureMatrix(const VSMatrix& matrix)
+{
+	mMatrices.TextureMatrix = matrix;
+	mMatricesChanged = true;
 	mNeedApply = true;
 }
 
@@ -598,8 +621,6 @@ void VkRenderState::EndRenderPass()
 		mLastViewpointOffset = 0xffffffff;
 		mLastVertexBuffer = nullptr;
 		mLastIndexBuffer = nullptr;
-		mLastModelMatrixEnabled = true;
-		mLastTextureMatrixEnabled = true;
 	}
 }
 

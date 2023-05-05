@@ -41,7 +41,7 @@ bool VkStreamBufferWriter::Write(const StreamData& data)
 		if (mStreamDataOffset == 0xffffffff)
 			return false;
 	}
-	uint8_t* ptr = (uint8_t*)mBuffer->UniformBuffer->Memory();
+	uint8_t* ptr = (uint8_t*)mBuffer->Data;
 	memcpy(ptr + mStreamDataOffset + sizeof(StreamData) * mDataIndex, &data, sizeof(StreamData));
 	return true;
 }
@@ -109,7 +109,7 @@ bool VkMatrixBufferWriter::Write(const VSMatrix& modelMatrix, bool modelMatrixEn
 		if (mOffset == 0xffffffff)
 			return false;
 
-		uint8_t* ptr = (uint8_t*)mBuffer->UniformBuffer->Memory();
+		uint8_t* ptr = (uint8_t*)mBuffer->Data;
 		memcpy(ptr + mOffset, &mMatrices, sizeof(MatricesUBO));
 	}
 

@@ -67,5 +67,5 @@ private:
 
 	std::list<VkMaterial*> Materials;
 
-	static const int maxSets = 10;
+	static const int maxSets = 100;
 };

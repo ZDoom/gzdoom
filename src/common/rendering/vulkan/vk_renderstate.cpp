@@ -490,7 +490,7 @@ int VkRenderState::SetViewpoint(const HWViewpointUniforms& vp)
 	{
 		return buffers->Viewpoint.Count - 1;
 	}
-	memcpy(((char*)buffers->Viewpoint.UBO->Memory()) + buffers->Viewpoint.UploadIndex * buffers->Viewpoint.BlockAlign, &vp, sizeof(HWViewpointUniforms));
+	memcpy(((char*)buffers->Viewpoint.Data) + buffers->Viewpoint.UploadIndex * buffers->Viewpoint.BlockAlign, &vp, sizeof(HWViewpointUniforms));
 	int index = buffers->Viewpoint.UploadIndex++;
 	mViewpointOffset = index * buffers->Viewpoint.BlockAlign;
 	mNeedApply = true;
@@ -540,7 +540,7 @@ int VkRenderState::UploadLights(const FDynLightData& data)
 
 	if (thisindex + totalsize <= buffers->Lightbuffer.Count)
 	{
-		float* copyptr = (float*)buffers->Lightbuffer.SSO->Memory() + thisindex * 4;
+		float* copyptr = (float*)buffers->Lightbuffer.Data + thisindex * 4;
 
 		memcpy(&copyptr[0], parmcnt, sizeof(FVector4));
 		memcpy(&copyptr[4], &data.arrays[0][0], size0 * sizeof(FVector4));
@@ -569,7 +569,7 @@ int VkRenderState::UploadBones(const TArray<VSMatrix>& bones)
 
 	if (thisindex + totalsize <= buffers->Bonebuffer.Count)
 	{
-		memcpy((VSMatrix*)buffers->Bonebuffer.SSO->Memory() + thisindex, bones.Data(), bones.Size() * sizeof(VSMatrix));
+		memcpy((VSMatrix*)buffers->Bonebuffer.Data + thisindex, bones.Data(), bones.Size() * sizeof(VSMatrix));
 		return thisindex;
 	}
 	else

@@ -32,21 +32,24 @@ public:
 		int UploadIndex = 0;
 		int BlockAlign = 0;
 		int Count = 1000;
-		std::unique_ptr<VkHardwareDataBuffer> UBO;
+		std::unique_ptr<VulkanBuffer> UBO;
+		void* Data = nullptr;
 	} Viewpoint;
 
 	struct
 	{
 		int UploadIndex = 0;
 		int Count = 80000;
-		std::unique_ptr<VkHardwareDataBuffer> SSO;
+		std::unique_ptr<VulkanBuffer> SSO;
+		void* Data = nullptr;
 	} Lightbuffer;
 
 	struct
 	{
 		int UploadIndex = 0;
 		int Count = 80000;
-		std::unique_ptr<VkHardwareDataBuffer> SSO;
+		std::unique_ptr<VulkanBuffer> SSO;
+		void* Data = nullptr;
 	} Bonebuffer;
 
 	struct
@@ -80,7 +83,8 @@ public:
 	uint32_t NextStreamDataBlock();
 	void Reset() { mStreamDataOffset = 0; }
 
-	VkHardwareDataBuffer* UniformBuffer = nullptr;
+	std::unique_ptr<VulkanBuffer> UBO;
+	void* Data = nullptr;
 
 private:
 	uint32_t mBlockSize = 0;

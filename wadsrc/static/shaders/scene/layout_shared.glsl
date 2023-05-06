@@ -108,9 +108,9 @@ layout(set = 1, binding = 2, std140) uniform StreamUBO
 };
 
 // light buffers
-layout(set = 1, binding = 3, std430) buffer LightBufferSSO
+layout(set = 1, binding = 3, std140) uniform LightBufferUBO
 {
-	vec4 lights[];
+	vec4 lights[MAX_LIGHT_DATA];
 };
 
 // bone matrix buffers

@@ -131,8 +131,9 @@ VkShaderProgram* VkShaderManager::Get(const VkShaderKey& key)
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)
 {
 	FString definesBlock;
-	definesBlock << defines << "\n";
-	definesBlock << "#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	definesBlock << defines;
+	definesBlock << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	definesBlock << "#define MAX_LIGHT_DATA " << std::to_string(MAX_LIGHT_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
 	definesBlock << "#define NPOT_EMULATION\n";
 #endif
@@ -166,6 +167,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 	if (fb->GetDevice()->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME)) definesBlock << "\n#define SUPPORTS_RAYQUERY\n";
 	definesBlock << defines;
 	definesBlock << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	definesBlock << "#define MAX_LIGHT_DATA " << std::to_string(MAX_LIGHT_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
 	definesBlock << "#define NPOT_EMULATION\n";
 #endif

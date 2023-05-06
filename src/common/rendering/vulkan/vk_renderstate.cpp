@@ -406,7 +406,7 @@ void VkRenderState::ApplyStreamData()
 void VkRenderState::ApplyPushConstants()
 {
 	mPushConstants.uDataIndex = mStreamBufferWriter.DataIndex();
-	mPushConstants.uLightIndex = mLightIndex;
+	mPushConstants.uLightIndex = mLightIndex >= 0 ? (mLightIndex % MAX_LIGHT_DATA) : -1;
 	mPushConstants.uBoneIndexBase = mBoneIndexBase;
 
 	auto passManager = fb->GetRenderPassManager();
@@ -468,18 +468,20 @@ void VkRenderState::ApplyHWBufferSet()
 {
 	uint32_t matrixOffset = mMatrixBufferWriter.Offset();
 	uint32_t streamDataOffset = mStreamBufferWriter.StreamDataOffset();
-	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset)
+	uint32_t lightsOffset = mLightIndex >= 0 ? (uint32_t)(mLightIndex / MAX_LIGHT_DATA) * sizeof(FVector4) : mLastLightsOffset;
+	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset || lightsOffset != mLastLightsOffset)
 	{
 		auto passManager = fb->GetRenderPassManager();
 		auto descriptors = fb->GetDescriptorSetManager();
 
-		uint32_t offsets[3] = { mViewpointOffset, matrixOffset, streamDataOffset };
+		uint32_t offsets[4] = { mViewpointOffset, matrixOffset, streamDataOffset, lightsOffset };
 		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetHWBufferDescriptorSet(), 3, offsets);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetHWBufferDescriptorSet(), 4, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastMatricesOffset = matrixOffset;
 		mLastStreamDataOffset = streamDataOffset;
+		mLastLightsOffset = lightsOffset;
 	}
 }
 
@@ -536,9 +538,10 @@ int VkRenderState::UploadLights(const FDynLightData& data)
 	int size2 = data.arrays[2].Size() / 4;
 	int totalsize = size0 + size1 + size2 + 1;
 
-	if (totalsize > buffers->Lightbuffer.Count)
+	// Clamp lights so they aren't bigger than what fits into a single dynamic uniform buffer page
+	if (totalsize > MAX_LIGHT_DATA)
 	{
-		int diff = totalsize - buffers->Lightbuffer.Count;
+		int diff = totalsize - MAX_LIGHT_DATA;
 
 		size2 -= diff;
 		if (size2 < 0)
@@ -554,17 +557,22 @@ int VkRenderState::UploadLights(const FDynLightData& data)
 		totalsize = size0 + size1 + size2 + 1;
 	}
 
-	if (totalsize <= 1) return -1;	// there are no lights
+	// Check if we still have any lights
+	if (totalsize <= 1)
+		return -1;
+
+	// Make sure the light list doesn't cross a page boundary
+	if (buffers->Lightbuffer.UploadIndex % MAX_LIGHT_DATA + totalsize > MAX_LIGHT_DATA)
+		buffers->Lightbuffer.UploadIndex = buffers->Lightbuffer.UploadIndex / MAX_LIGHT_DATA * MAX_LIGHT_DATA + 1;
 
 	int thisindex = buffers->Lightbuffer.UploadIndex;
-	buffers->Lightbuffer.UploadIndex += totalsize;
-
-	float parmcnt[] = { 0, float(size0), float(size0 + size1), float(size0 + size1 + size2) };
-
 	if (thisindex + totalsize <= buffers->Lightbuffer.Count)
 	{
-		float* copyptr = (float*)buffers->Lightbuffer.Data + thisindex * 4;
+		buffers->Lightbuffer.UploadIndex += totalsize;
 
+		float parmcnt[] = { 0, float(size0), float(size0 + size1), float(size0 + size1 + size2) };
+
+		float* copyptr = (float*)buffers->Lightbuffer.Data + thisindex * 4;
 		memcpy(&copyptr[0], parmcnt, sizeof(FVector4));
 		memcpy(&copyptr[4], &data.arrays[0][0], size0 * sizeof(FVector4));
 		memcpy(&copyptr[4 + 4 * size0], &data.arrays[1][0], size1 * sizeof(FVector4));

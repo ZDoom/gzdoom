@@ -33,6 +33,13 @@ struct StreamUBO
 	StreamData data[MAX_STREAM_DATA];
 };
 
+#define MAX_LIGHT_DATA ((int)(65536 / sizeof(FVector4)))
+
+struct LightBufferUBO
+{
+	FVector4 lights[MAX_LIGHT_DATA];
+};
+
 struct PushConstants
 {
 	int uDataIndex; // streamdata index

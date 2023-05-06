@@ -54,16 +54,16 @@ void VkBufferManager::Init()
 
 	Viewpoint.Data = Viewpoint.UBO->Map(0, Viewpoint.UBO->size);
 
-	Lightbuffer.SSO = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
+	Lightbuffer.UBO = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
 		.MemoryType(
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		.Size(Lightbuffer.Count * 4 * sizeof(FVector4))
-		.DebugName("Lightbuffer.SSO")
+		.DebugName("Lightbuffer.UBO")
 		.Create(fb->GetDevice());
 
-	Lightbuffer.Data = Lightbuffer.SSO->Map(0, Lightbuffer.SSO->size);
+	Lightbuffer.Data = Lightbuffer.UBO->Map(0, Lightbuffer.UBO->size);
 
 	Bonebuffer.SSO = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
@@ -89,9 +89,9 @@ void VkBufferManager::Deinit()
 		Viewpoint.UBO->Unmap();
 	Viewpoint.UBO.reset();
 
-	if (Lightbuffer.SSO)
-		Lightbuffer.SSO->Unmap();
-	Lightbuffer.SSO.reset();
+	if (Lightbuffer.UBO)
+		Lightbuffer.UBO->Unmap();
+	Lightbuffer.UBO.reset();
 
 	if (Bonebuffer.SSO)
 		Bonebuffer.SSO->Unmap();

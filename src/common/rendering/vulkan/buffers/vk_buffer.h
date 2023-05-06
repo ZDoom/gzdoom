@@ -40,7 +40,7 @@ public:
 	{
 		int UploadIndex = 0;
 		int Count = 80000;
-		std::unique_ptr<VulkanBuffer> SSO;
+		std::unique_ptr<VulkanBuffer> UBO;
 		void* Data = nullptr;
 	} Lightbuffer;
 

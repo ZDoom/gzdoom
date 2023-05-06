@@ -33,7 +33,6 @@ class ACorona;
 class Clipper;
 class HWPortal;
 class FFlatVertexBuffer;
-class IRenderQueue;
 class HWScenePortalBase;
 class FRenderState;
 

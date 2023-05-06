@@ -468,7 +468,7 @@ void VkRenderState::ApplyHWBufferSet()
 {
 	uint32_t matrixOffset = mMatrixBufferWriter.Offset();
 	uint32_t streamDataOffset = mStreamBufferWriter.StreamDataOffset();
-	uint32_t lightsOffset = mLightIndex >= 0 ? (uint32_t)(mLightIndex / MAX_LIGHT_DATA) * sizeof(FVector4) : mLastLightsOffset;
+	uint32_t lightsOffset = mLightIndex >= 0 ? (uint32_t)(mLightIndex / MAX_LIGHT_DATA) * sizeof(LightBufferUBO) : mLastLightsOffset;
 	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset || lightsOffset != mLastLightsOffset)
 	{
 		auto passManager = fb->GetRenderPassManager();
@@ -563,7 +563,7 @@ int VkRenderState::UploadLights(const FDynLightData& data)
 
 	// Make sure the light list doesn't cross a page boundary
 	if (buffers->Lightbuffer.UploadIndex % MAX_LIGHT_DATA + totalsize > MAX_LIGHT_DATA)
-		buffers->Lightbuffer.UploadIndex = buffers->Lightbuffer.UploadIndex / MAX_LIGHT_DATA * MAX_LIGHT_DATA + 1;
+		buffers->Lightbuffer.UploadIndex = (buffers->Lightbuffer.UploadIndex / MAX_LIGHT_DATA + 1) * MAX_LIGHT_DATA;
 
 	int thisindex = buffers->Lightbuffer.UploadIndex;
 	if (thisindex + totalsize <= buffers->Lightbuffer.Count)

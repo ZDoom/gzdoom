@@ -276,8 +276,8 @@ public:
 	static float GetZNear() { return 5.f; }
 	static float GetZFar() { return 65536.f; }
 
-	// The original size of the framebuffer as selected in the video menu.
 	uint64_t FrameTime = 0;
+	uint64_t FrameTimeNS = 0;
 
 private:
 	uint64_t fpsLimitTime = 0;

@@ -659,6 +659,7 @@ void FStartScreen::Render(bool force)
 	if (nowtime - screen->FrameTime > 30 || force)
 	{
 		screen->FrameTime = nowtime;
+		screen->FrameTimeNS = I_nsTime();
 		screen->BeginFrame();
 		twod->ClearClipRect();
 		I_GetEvent();

@@ -48,37 +48,6 @@
 
 FFlatVertexBuffer::FFlatVertexBuffer(DFrameBuffer* fb, int width, int height, int pipelineNbr) : fb(fb), mPipelineNbr(pipelineNbr)
 {
-	vbo_shadowdata.Resize(NUM_RESERVED);
-
-	// the first quad is reserved for handling coordinates through uniforms.
-	vbo_shadowdata[0].Set(0, 0, 0, 0, 0);
-	vbo_shadowdata[1].Set(1, 0, 0, 0, 0);
-	vbo_shadowdata[2].Set(2, 0, 0, 0, 0);
-	vbo_shadowdata[3].Set(3, 0, 0, 0, 0);
-
-	// and the second one for the fullscreen quad used for blend overlays.
-	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
-	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
-	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
-	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
-
-	// and this is for the postprocessing copy operation
-	vbo_shadowdata[8].Set(-1.0f, -1.0f, 0, 0.0f, 0.0f);
-	vbo_shadowdata[9].Set(3.0f, -1.0f, 0, 2.f, 0.0f);
-	vbo_shadowdata[10].Set(-1.0f, 3.0f, 0, 0.0f, 2.f);
-	vbo_shadowdata[11].Set(3.0f, 3.0f, 0, 2.f, 2.f); // Note: not used anymore
-
-	// The next two are the stencil caps.
-	vbo_shadowdata[12].Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
-	vbo_shadowdata[13].Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
-	vbo_shadowdata[14].Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
-	vbo_shadowdata[15].Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
-
-	vbo_shadowdata[16].Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
-	vbo_shadowdata[17].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
-	vbo_shadowdata[18].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
-	vbo_shadowdata[19].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
-
 	mIndexBuffer = fb->CreateIndexBuffer();
 	int data[4] = {};
 	mIndexBuffer->SetData(4, data, BufferUsageType::Static); // On Vulkan this may not be empty, so set some dummy defaults to avoid crashes.
@@ -99,9 +68,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(DFrameBuffer* fb, int width, int height, in
 
 	mVertexBuffer = mVertexBufferPipeline[mPipelinePos];
 
-	mIndex = mCurIndex = NUM_RESERVED;
-	mNumReserved = NUM_RESERVED;
-	Copy(0, NUM_RESERVED);
+	mIndex = mCurIndex = 0;
 }
 
 //==========================================================================
@@ -120,21 +87,6 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 	delete mIndexBuffer;
 	mIndexBuffer = nullptr;
 	mVertexBuffer = nullptr;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FFlatVertexBuffer::OutputResized(int width, int height)
-{
-	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
-	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
-	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
-	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
-	Copy(4, 4);
 }
 
 //==========================================================================
@@ -169,7 +121,7 @@ void FFlatVertexBuffer::Copy(int start, int count)
 	{
 		mVertexBuffer = mVertexBufferPipeline[n];
 		Map();
-		memcpy(GetBuffer(start), &vbo_shadowdata[0], count * sizeof(FFlatVertex));
+		memcpy(GetBuffer(start), vbo_shadowdata.Data(), count * sizeof(FFlatVertex));
 		Unmap();
 		mVertexBuffer->Upload(start * sizeof(FFlatVertex), count * sizeof(FFlatVertex));
 	}

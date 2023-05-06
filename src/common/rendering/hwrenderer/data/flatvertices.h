@@ -73,7 +73,6 @@ public:
 
 	unsigned int mIndex;
 	std::atomic<unsigned int> mCurIndex;
-	unsigned int mNumReserved;
 
 	unsigned int mMapStart;
 
@@ -81,21 +80,9 @@ public:
 	static const unsigned int BUFFER_SIZE_TO_USE = BUFFER_SIZE-500;
 
 public:
-	enum
-	{
-		QUAD_INDEX = 0,
-		FULLSCREEN_INDEX = 4,
-		PRESENT_INDEX = 8,
-		STENCILTOP_INDEX = 12,
-		STENCILBOTTOM_INDEX = 16,
-
-		NUM_RESERVED = 20
-	};
-
 	FFlatVertexBuffer(DFrameBuffer* fb, int width, int height, int pipelineNbr = 1);
 	~FFlatVertexBuffer();
 
-	void OutputResized(int width, int height);
 	std::pair<IBuffer*, IBuffer*> GetBufferObjects() const
 	{
 		return std::make_pair(mVertexBuffer, mIndexBuffer);

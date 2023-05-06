@@ -103,7 +103,6 @@ void DFrameBuffer::Update()
 	{
 		SetVirtualSize(clientWidth, clientHeight);
 		V_OutputResized(clientWidth, clientHeight);
-		mVertexData->OutputResized(clientWidth, clientHeight);
 	}
 }
 

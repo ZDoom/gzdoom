@@ -441,7 +441,7 @@ static void UpdatePlaneVertices(FFlatVertexBuffer *fvb, sector_t* sec, int plane
 
 static void CreateVertices(FFlatVertexBuffer* fvb, TArray<sector_t>& sectors)
 {
-	fvb->vbo_shadowdata.Resize(FFlatVertexBuffer::NUM_RESERVED);
+	fvb->vbo_shadowdata.Clear();
 	CreateIndexedFlatVertices(fvb, sectors);
 }
 
@@ -489,7 +489,7 @@ void CheckUpdate(FFlatVertexBuffer* fvb, sector_t* sector)
 
 void CreateVBO(FFlatVertexBuffer* fvb, TArray<sector_t>& sectors)
 {
-	fvb->vbo_shadowdata.Resize(fvb->mNumReserved);
+	fvb->vbo_shadowdata.Clear();
 	CreateVertices(fvb, sectors);
 	fvb->mCurIndex = fvb->mIndex = fvb->vbo_shadowdata.Size();
 	fvb->Copy(0, fvb->mIndex);

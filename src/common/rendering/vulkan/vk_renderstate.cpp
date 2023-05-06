@@ -51,10 +51,21 @@ VkRenderState::VkRenderState(VulkanRenderDevice* fb) : fb(fb), mStreamBufferWrit
 
 void VkRenderState::ClearScreen()
 {
-	Set2DViewpoint(SCREENWIDTH, SCREENHEIGHT);
+	int width = fb->GetWidth();
+	int height = fb->GetHeight();
+
+	auto vertices = AllocVertices(4);
+	FFlatVertex* v = vertices.first;
+	v[0].Set(0, 0, 0, 0, 0);
+	v[1].Set(0, (float)height, 0, 0, 1);
+	v[2].Set((float)width, 0, 0, 1, 0);
+	v[3].Set((float)width, (float)height, 0, 1, 1);
+
+	Set2DViewpoint(width, height);
 	SetColor(0, 0, 0);
 	Apply(DT_TriangleStrip);
-	mCommandBuffer->draw(4, 1, FFlatVertexBuffer::FULLSCREEN_INDEX, 0);
+
+	mCommandBuffer->draw(4, 1, vertices.second, 0);
 }
 
 void VkRenderState::Draw(int dt, int index, int count, bool apply)

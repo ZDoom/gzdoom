@@ -366,9 +366,6 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey& key)
 	builder.AddVertexShader(key.Shader->VertexShader.get());
 	builder.AddFragmentShader(key.Shader->FragmentShader.get());
 
-	builder.AddVertexBufferBinding(0, sizeof(FFlatVertex));
-	builder.AddVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(FFlatVertex, x));
-	builder.AddVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(FFlatVertex, u));
 	builder.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
 	builder.AddDynamicState(VK_DYNAMIC_STATE_SCISSOR);
 	// Note: the actual values are ignored since we use dynamic viewport+scissor states

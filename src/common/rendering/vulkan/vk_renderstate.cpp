@@ -620,6 +620,30 @@ int VkRenderState::UploadBones(const TArray<VSMatrix>& bones)
 	}
 }
 
+std::pair<FFlatVertex*, unsigned int> VkRenderState::AllocVertices(unsigned int count)
+{
+	return fb->mVertexData->AllocVertices(count);
+}
+
+void VkRenderState::SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes)
+{
+	FFlatVertexBuffer* fvb = fb->mVertexData;
+	fvb->vbo_shadowdata = vertices;
+	fvb->ibo_data = indexes;
+	fvb->mCurIndex = fvb->vbo_shadowdata.Size();
+	fvb->mIndex = fvb->vbo_shadowdata.Size();
+	fvb->Copy(0, fvb->mIndex);
+	fvb->mIndexBuffer->SetData(fvb->ibo_data.Size() * sizeof(uint32_t), &fvb->ibo_data[0], BufferUsageType::Static);
+}
+
+void VkRenderState::UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count)
+{
+	FFlatVertexBuffer* fvb = fb->mVertexData;
+	FFlatVertex* mapvt = fvb->GetBuffer(index);
+	memcpy(mapvt, vertices, count * sizeof(FFlatVertex));
+	fvb->mVertexBuffer->Upload(index * sizeof(FFlatVertex), count * sizeof(FFlatVertex));
+}
+
 void VkRenderState::BeginFrame()
 {
 	mMaterial.Reset();

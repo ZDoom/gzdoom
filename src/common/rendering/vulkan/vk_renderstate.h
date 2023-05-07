@@ -55,6 +55,11 @@ public:
 	int UploadLights(const FDynLightData& lightdata) override;
 	int UploadBones(const TArray<VSMatrix>& bones) override;
 
+	// Vertices
+	std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) override;
+	void SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes) override;
+	void UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count) override;
+
 protected:
 	void Apply(int dt);
 	void ApplyRenderPass(int dt);

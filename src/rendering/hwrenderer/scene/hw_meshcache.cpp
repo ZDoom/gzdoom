@@ -78,6 +78,7 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 		di->MeshBuilding = true;
 
 		MeshBuilder state;
+		state.SetShadowData(sector_vertices, sector_indexes);
 
 		// Add to the draw lists
 
@@ -86,7 +87,7 @@ void HWMeshCache::Update(FRenderViewpoint& vp)
 		{
 			auto sector = &level->sectors[i];
 
-			CheckUpdate(screen->mVertexData, sector);
+			// CheckUpdate(state, sector);
 			std::unordered_set<FSection*> seenSections;
 			for (int i = 0, count = sector->subsectorcount; i < count; i++)
 			{

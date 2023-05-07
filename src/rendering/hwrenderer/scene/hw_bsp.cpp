@@ -664,7 +664,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub, FRenderState& state)
 
 	if (sector->validcount != validcount)
 	{
-		CheckUpdate(screen->mVertexData, sector);
+		CheckUpdate(state, sector);
 	}
 
 	// [RH] Add particles

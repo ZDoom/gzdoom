@@ -734,7 +734,9 @@ public:
 	// API-dependent render interface
 
 	// Vertices
-	virtual std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count);
+	virtual std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) = 0;
+	virtual void SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes) = 0;
+	virtual void UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count) = 0;
 
 	// Buffers
 	virtual int SetViewpoint(const HWViewpointUniforms& vp) = 0;

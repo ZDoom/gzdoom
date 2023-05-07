@@ -22,6 +22,12 @@ MeshBuilder::MeshBuilder()
 	mVertices = screen->mVertexData->vbo_shadowdata;
 }
 
+void MeshBuilder::SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes)
+{
+	mVertices = vertices;
+	mIndexes = indexes;
+}
+
 void MeshBuilder::Draw(int dt, int index, int count, bool apply)
 {
 	if (apply)

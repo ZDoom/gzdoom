@@ -1,7 +1,9 @@
 #pragma once
 #include "tarray.h"
 #include "r_defs.h"
+
 struct vertex_t;
+struct FFlatVertex;
 
 struct FQualifiedVertex
 {
@@ -67,7 +69,9 @@ using VertexContainers = TArray<VertexContainer>;
 
 VertexContainers BuildVertices(TArray<sector_t> &sectors);
 
-class FFlatVertexBuffer;
-void CheckUpdate(FFlatVertexBuffer* fvb, sector_t* sector);
-void CreateVBO(FFlatVertexBuffer* fvb, TArray<sector_t>& sectors);
+class FRenderState;
+void CheckUpdate(FRenderState& renderstate, sector_t* sector);
+void CreateVBO(FRenderState& renderstate, TArray<sector_t>& sectors);
 
+extern TArray<FFlatVertex> sector_vertices;
+extern TArray<uint32_t> sector_indexes;

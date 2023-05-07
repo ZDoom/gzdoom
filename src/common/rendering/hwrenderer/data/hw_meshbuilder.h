@@ -69,6 +69,8 @@ public:
 
 	// Vertices
 	std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) override;
+	void SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes) override;
+	void UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count) { }
 
 	// Buffers
 	int SetViewpoint(const HWViewpointUniforms& vp) override { return 0; }
@@ -115,6 +117,7 @@ private:
 	DrawLists* mDrawLists = nullptr;
 
 	TArray<FFlatVertex> mVertices;
+	TArray<uint32_t> mIndexes;
 	int mDepthFunc = 0;
 
 	VSMatrix mTextureMatrix = VSMatrix::identity();

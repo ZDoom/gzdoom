@@ -224,7 +224,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	// Find a pipeline that matches our state
 	VkPipelineKey pipelineKey;
 	pipelineKey.DrawType = dt;
-	pipelineKey.VertexFormat = static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat;
+	pipelineKey.VertexFormat = mVertexBuffer ? static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat : fb->GetBufferManager()->Flatbuffer.VertexFormat;
 	pipelineKey.RenderStyle = mRenderStyle;
 	pipelineKey.DepthTest = mDepthTest;
 	pipelineKey.DepthWrite = mDepthTest && mDepthWrite;
@@ -394,7 +394,7 @@ void VkRenderState::ApplyStreamData()
 {
 	auto passManager = fb->GetRenderPassManager();
 
-	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
+	mStreamData.useVertexData = mVertexBuffer ? passManager->GetVertexFormat(static_cast<VkHardwareVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData : 0;
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->Source())
 		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->GetShaderSpeed() / 1000.);
@@ -439,22 +439,42 @@ void VkRenderState::ApplyMatrices()
 
 void VkRenderState::ApplyVertexBuffers()
 {
-	if ((mVertexBuffer != mLastVertexBuffer || mVertexOffsets[0] != mLastVertexOffsets[0] || mVertexOffsets[1] != mLastVertexOffsets[1]) && mVertexBuffer)
+	if ((mVertexBuffer != mLastVertexBuffer || mVertexOffsets[0] != mLastVertexOffsets[0] || mVertexOffsets[1] != mLastVertexOffsets[1]))
 	{
-		auto vkbuf = static_cast<VkHardwareVertexBuffer*>(mVertexBuffer);
-		const VkVertexFormat *format = fb->GetRenderPassManager()->GetVertexFormat(vkbuf->VertexFormat);
-		VkBuffer vertexBuffers[2] = { vkbuf->mBuffer->buffer, vkbuf->mBuffer->buffer };
-		VkDeviceSize offsets[] = { mVertexOffsets[0] * format->Stride, mVertexOffsets[1] * format->Stride };
-		mCommandBuffer->bindVertexBuffers(0, 2, vertexBuffers, offsets);
+		if (mVertexBuffer)
+		{
+			auto vkbuf = static_cast<VkHardwareVertexBuffer*>(mVertexBuffer);
+			const VkVertexFormat* format = fb->GetRenderPassManager()->GetVertexFormat(vkbuf->VertexFormat);
+			VkBuffer vertexBuffers[2] = { vkbuf->mBuffer->buffer, vkbuf->mBuffer->buffer };
+			VkDeviceSize offsets[] = { mVertexOffsets[0] * format->Stride, mVertexOffsets[1] * format->Stride };
+			mCommandBuffer->bindVertexBuffers(0, 2, vertexBuffers, offsets);
+		}
+		else
+		{
+			auto buffers = fb->GetBufferManager();
+			const VkVertexFormat* format = fb->GetRenderPassManager()->GetVertexFormat(buffers->Flatbuffer.VertexFormat);
+			VkBuffer vertexBuffers[2] = { buffers->Flatbuffer.VertexBuffer->buffer, buffers->Flatbuffer.VertexBuffer->buffer };
+			VkDeviceSize offsets[] = { mVertexOffsets[0] * format->Stride, mVertexOffsets[1] * format->Stride };
+			mCommandBuffer->bindVertexBuffers(0, 2, vertexBuffers, offsets);
+		}
+
 		mLastVertexBuffer = mVertexBuffer;
 		mLastVertexOffsets[0] = mVertexOffsets[0];
 		mLastVertexOffsets[1] = mVertexOffsets[1];
 	}
 
-	if (mIndexBuffer != mLastIndexBuffer && mIndexBuffer)
+	if (mIndexBuffer != mLastIndexBuffer || mIndexBufferNeedsBind)
 	{
-		mCommandBuffer->bindIndexBuffer(static_cast<VkHardwareIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+		if (mIndexBuffer)
+		{
+			mCommandBuffer->bindIndexBuffer(static_cast<VkHardwareIndexBuffer*>(mIndexBuffer)->mBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+		}
+		else
+		{
+			mCommandBuffer->bindIndexBuffer(fb->GetBufferManager()->Flatbuffer.IndexBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+		}
 		mLastIndexBuffer = mIndexBuffer;
+		mIndexBufferNeedsBind = false;
 	}
 }
 
@@ -622,35 +642,77 @@ int VkRenderState::UploadBones(const TArray<VSMatrix>& bones)
 
 std::pair<FFlatVertex*, unsigned int> VkRenderState::AllocVertices(unsigned int count)
 {
-	return fb->mVertexData->AllocVertices(count);
+	auto buffers = fb->GetBufferManager();
+	unsigned int index = buffers->Flatbuffer.CurIndex;
+	if (index + count >= buffers->Flatbuffer.BUFFER_SIZE_TO_USE)
+	{
+		// If a single scene needs 2'000'000 vertices there must be something very wrong. 
+		I_FatalError("Out of vertex memory. Tried to allocate more than %u vertices for a single frame", index + count);
+	}
+	buffers->Flatbuffer.CurIndex += count;
+	return std::make_pair(buffers->Flatbuffer.Vertices + index, index);
 }
 
 void VkRenderState::SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes)
 {
-	FFlatVertexBuffer* fvb = fb->mVertexData;
-	fvb->vbo_shadowdata = vertices;
-	fvb->ibo_data = indexes;
-	fvb->mCurIndex = fvb->vbo_shadowdata.Size();
-	fvb->mIndex = fvb->vbo_shadowdata.Size();
-	fvb->Copy(0, fvb->mIndex);
-	fvb->mIndexBuffer->SetData(fvb->ibo_data.Size() * sizeof(uint32_t), &fvb->ibo_data[0], BufferUsageType::Static);
+	auto buffers = fb->GetBufferManager();
+	auto commands = fb->GetCommands();
+
+	UpdateShadowData(0, vertices.Data(), vertices.Size());
+	buffers->Flatbuffer.ShadowDataSize = vertices.Size();
+	buffers->Flatbuffer.CurIndex = buffers->Flatbuffer.ShadowDataSize;
+
+	if (indexes.Size() > 0)
+	{
+		size_t bufsize = indexes.Size() * sizeof(uint32_t);
+
+		auto buffer = BufferBuilder()
+			.Usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY)
+			.Size(bufsize)
+			.DebugName("Flatbuffer.IndexBuffer")
+			.Create(fb->GetDevice());
+
+		auto staging = BufferBuilder()
+			.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+			.Size(bufsize)
+			.DebugName("Flatbuffer.IndexBuffer.Staging")
+			.Create(fb->GetDevice());
+
+		void* dst = staging->Map(0, bufsize);
+		memcpy(dst, indexes.Data(), bufsize);
+		staging->Unmap();
+
+		commands->GetTransferCommands()->copyBuffer(staging.get(), buffer.get());
+		commands->TransferDeleteList->Add(std::move(staging));
+
+		commands->DrawDeleteList->Add(std::move(buffers->Flatbuffer.IndexBuffer));
+		buffers->Flatbuffer.IndexBuffer = std::move(buffer);
+
+		mIndexBufferNeedsBind = true;
+		mNeedApply = true;
+	}
 }
 
 void VkRenderState::UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count)
 {
-	FFlatVertexBuffer* fvb = fb->mVertexData;
-	FFlatVertex* mapvt = fvb->GetBuffer(index);
-	memcpy(mapvt, vertices, count * sizeof(FFlatVertex));
-	fvb->mVertexBuffer->Upload(index * sizeof(FFlatVertex), count * sizeof(FFlatVertex));
+	memcpy(fb->GetBufferManager()->Flatbuffer.Vertices + index, vertices, count * sizeof(FFlatVertex));
+}
+
+void VkRenderState::ResetVertices()
+{
+	auto buffers = fb->GetBufferManager();
+	buffers->Flatbuffer.CurIndex = buffers->Flatbuffer.ShadowDataSize;
 }
 
 void VkRenderState::BeginFrame()
 {
 	mMaterial.Reset();
 	mApplyCount = 0;
-	fb->GetBufferManager()->Viewpoint.UploadIndex = 0;
-	fb->GetBufferManager()->Lightbuffer.UploadIndex = 0;
-	fb->GetBufferManager()->Bonebuffer.UploadIndex = 0;
+
+	auto buffers = fb->GetBufferManager();
+	buffers->Viewpoint.UploadIndex = 0;
+	buffers->Lightbuffer.UploadIndex = 0;
+	buffers->Bonebuffer.UploadIndex = 0;
 }
 
 void VkRenderState::EndRenderPass()
@@ -661,9 +723,10 @@ void VkRenderState::EndRenderPass()
 		mCommandBuffer = nullptr;
 		mPipelineKey = {};
 
+		// Force rebind of all buffers
 		mLastViewpointOffset = 0xffffffff;
-		mLastVertexBuffer = nullptr;
-		mLastIndexBuffer = nullptr;
+		mLastVertexOffsets[0] = 0xffffffff;
+		mIndexBufferNeedsBind = true;
 	}
 }
 

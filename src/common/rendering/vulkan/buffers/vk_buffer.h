@@ -11,6 +11,7 @@ class VkStreamBuffer;
 class IBuffer;
 struct FVertexBufferAttribute;
 struct HWViewpointUniforms;
+struct FFlatVertex;
 
 class VkBufferManager
 {
@@ -26,6 +27,18 @@ public:
 
 	void AddBuffer(VkHardwareBuffer* buffer);
 	void RemoveBuffer(VkHardwareBuffer* buffer);
+
+	struct
+	{
+		std::unique_ptr<VulkanBuffer> VertexBuffer;
+		int VertexFormat = 0;
+		FFlatVertex* Vertices = nullptr;
+		unsigned int ShadowDataSize = 0;
+		unsigned int CurIndex = 0;
+		static const unsigned int BUFFER_SIZE = 2000000;
+		static const unsigned int BUFFER_SIZE_TO_USE = BUFFER_SIZE - 500;
+		std::unique_ptr<VulkanBuffer> IndexBuffer;
+	} Flatbuffer;
 
 	struct
 	{

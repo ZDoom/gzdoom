@@ -275,8 +275,8 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 
 		hw_postprocess.SetTonemapMode(level.info ? level.info->tonemap : ETonemapMode::None);
 		hw_ClearFakeFlat();
-		screen->mVertexData->Reset();
-		RenderState.SetVertexBuffer(screen->mVertexData);
+		RenderState.ResetVertices();
+		RenderState.SetFlatVertexBuffer();
 
 		// This shouldn't overwrite the global viewpoint even for a short time.
 		FRenderViewpoint savevp;
@@ -313,8 +313,8 @@ static void CheckTimer(FRenderState &state, uint64_t ShaderStartTime)
 sector_t* RenderView(player_t* player)
 {
 	auto RenderState = screen->RenderState();
-	RenderState->SetVertexBuffer(screen->mVertexData);
-	screen->mVertexData->Reset();
+	RenderState->SetFlatVertexBuffer();
+	RenderState->ResetVertices();
 	hw_postprocess.SetTonemapMode(level.info ? level.info->tonemap : ETonemapMode::None);
 
 	sector_t* retsec;

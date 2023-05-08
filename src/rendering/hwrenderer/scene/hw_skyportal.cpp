@@ -58,7 +58,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 
 	di->SetupView(state, 0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
-	state.SetVertexBuffer(vertexBuffer);
+	state.SetVertexBuffer(vertexBuffer->mVertexBuffer);
 	auto skybox = origin->texture[0] ? dynamic_cast<FSkyBox*>(origin->texture[0]->GetTexture()) : nullptr;
 	if (skybox)
 	{

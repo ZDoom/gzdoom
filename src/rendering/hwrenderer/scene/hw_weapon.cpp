@@ -91,7 +91,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 
 		FHWModelRenderer renderer(this, state, huds->lightindex);
 		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector3(huds->mx / 4., (huds->my - WEAPONTOP) / -4., 0), huds->pivot, huds->mframe);
-		state.SetVertexBuffer(screen->mVertexData);
+		state.SetFlatVertexBuffer();
 	}
 	else
 	{

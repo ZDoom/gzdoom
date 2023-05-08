@@ -191,7 +191,6 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 
 		if (NeedCap() && lines.Size() > 1 && planesused != 0)
 		{
-			screen->mVertexData->Map();
 			if (planesused & (1 << sector_t::floor))
 			{
 				auto verts = state.AllocVertices(4);
@@ -212,7 +211,6 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 				ptr[3].Set((float)boundingBox.right, 32767.f, (float)boundingBox.bottom, 0, 0);
 				mTopCap = verts.second;
 			}
-			screen->mVertexData->Unmap();
 		}
 
 	}

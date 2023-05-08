@@ -27,6 +27,8 @@
 #include "vulkan/pipelines/vk_renderpass.h"
 #include "vulkan/commands/vk_commandbuffer.h"
 #include <zvulkan/vulkanbuilders.h>
+#include "flatvertices.h"
+#include "cmdlib.h"
 
 VkBufferManager::VkBufferManager(VulkanRenderDevice* fb) : fb(fb)
 {
@@ -38,6 +40,32 @@ VkBufferManager::~VkBufferManager()
 
 void VkBufferManager::Init()
 {
+	static const FVertexBufferAttribute format[] =
+	{
+		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FFlatVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) },
+		{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FFlatVertex, lu) },
+	};
+
+	Flatbuffer.VertexFormat = fb->GetRenderPassManager()->GetVertexFormat(1, 3, sizeof(FFlatVertex), format);
+
+	Flatbuffer.VertexBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
+		.MemoryType(
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		.Size(Flatbuffer.BUFFER_SIZE * sizeof(FFlatVertex))
+		.DebugName("Flatbuffer.VertexBuffer")
+		.Create(fb->GetDevice());
+
+	Flatbuffer.Vertices = (FFlatVertex*)Flatbuffer.VertexBuffer->Map(0, Flatbuffer.VertexBuffer->size);
+
+	Flatbuffer.IndexBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY)
+		.Size(16)
+		.DebugName("Flatbuffer.IndexBuffer")
+		.Create(fb->GetDevice());
+
 	MatrixBuffer.reset(new VkStreamBuffer(this, sizeof(MatricesUBO), 50000));
 	StreamBuffer.reset(new VkStreamBuffer(this, sizeof(StreamUBO), 300));
 
@@ -85,6 +113,11 @@ void VkBufferManager::Init()
 
 void VkBufferManager::Deinit()
 {
+	if (Flatbuffer.VertexBuffer)
+		Flatbuffer.VertexBuffer->Unmap();
+	Flatbuffer.VertexBuffer.reset();
+	Flatbuffer.IndexBuffer.reset();
+
 	if (Viewpoint.UBO)
 		Viewpoint.UBO->Unmap();
 	Viewpoint.UBO.reset();

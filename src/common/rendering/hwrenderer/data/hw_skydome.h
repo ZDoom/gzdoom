@@ -86,10 +86,6 @@ public:
 	FSkyVertexBuffer(DFrameBuffer* fb);
 	~FSkyVertexBuffer();
 	void SetupMatrices(FRenderState& state, FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled, float xscale = 0, float vertscale = 0);
-	std::pair<IBuffer*, IBuffer*> GetBufferObjects() const
-	{
-		return std::make_pair(mVertexBuffer, nullptr);
-	}
 
 	int FaceStart(int i)
 	{

@@ -939,9 +939,7 @@ void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state)
 
 	if (!sorted)
 	{
-		screen->mVertexData->Map();
 		Sort(di, state);
-		screen->mVertexData->Unmap();
 	}
 	state.ClearClipSplit();
 	DrawSorted(di, state, sorted);

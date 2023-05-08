@@ -659,9 +659,8 @@ public:
 		mStreamData.uClipSplit.Y = 1000000.f;
 	}
 
-	void SetVertexBuffer(IBuffer* vb, int offset0, int offset1)
+	void SetVertexBuffer(IBuffer* vb, int offset0 = 0, int offset1 = 0)
 	{
-		assert(vb);
 		mVertexBuffer = vb;
 		mVertexOffsets[0] = offset0;
 		mVertexOffsets[1] = offset1;
@@ -672,11 +671,10 @@ public:
 		mIndexBuffer = ib;
 	}
 
-	template <class T> void SetVertexBuffer(T *buffer)
+	void SetFlatVertexBuffer()
 	{
-		auto ptrs = buffer->GetBufferObjects(); 
-		SetVertexBuffer(ptrs.first, 0, 0);
-		SetIndexBuffer(ptrs.second);
+		SetVertexBuffer(nullptr);
+		SetIndexBuffer(nullptr);
 	}
 
 	void SetInterpolationFactor(float fac)
@@ -737,6 +735,7 @@ public:
 	virtual std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) = 0;
 	virtual void SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes) = 0;
 	virtual void UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count) = 0;
+	virtual void ResetVertices() = 0;
 
 	// Buffers
 	virtual int SetViewpoint(const HWViewpointUniforms& vp) = 0;

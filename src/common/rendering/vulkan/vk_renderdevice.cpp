@@ -129,7 +129,6 @@ VulkanRenderDevice::~VulkanRenderDevice()
 {
 	vkDeviceWaitIdle(mDevice->device); // make sure the GPU is no longer using any objects before RAII tears them down
 
-	delete mVertexData;
 	delete mSkyData;
 	delete mShadowMap;
 
@@ -174,7 +173,6 @@ void VulkanRenderDevice::InitializeState()
 	mTextureManager.reset(new VkTextureManager(this));
 	mFramebufferManager.reset(new VkFramebufferManager(this));
 	mBufferManager.reset(new VkBufferManager(this));
-	mBufferManager->Init();
 
 	mScreenBuffers.reset(new VkRenderBuffers(this));
 	mSaveBuffers.reset(new VkRenderBuffers(this));
@@ -185,7 +183,8 @@ void VulkanRenderDevice::InitializeState()
 	mRenderPassManager.reset(new VkRenderPassManager(this));
 	mRaytrace.reset(new VkRaytrace(this));
 
-	mVertexData = new FFlatVertexBuffer(this, GetWidth(), GetHeight());
+	mBufferManager->Init();
+
 	mSkyData = new FSkyVertexBuffer(this);
 	mShadowMap = new ShadowMap(this);
 

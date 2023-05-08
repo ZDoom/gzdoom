@@ -32,7 +32,6 @@ struct HUDSprite;
 class ACorona;
 class Clipper;
 class HWPortal;
-class FFlatVertexBuffer;
 class HWScenePortalBase;
 class FRenderState;
 

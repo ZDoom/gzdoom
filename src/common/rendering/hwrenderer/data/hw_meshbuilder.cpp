@@ -17,9 +17,6 @@ MeshBuilder::MeshBuilder()
 	ClearDepthBias();
 	EnableTexture(1);
 	EnableBrightmap(true);
-
-	// Add the vbo_shadowdata as some geometry might use it
-	mVertices = screen->mVertexData->vbo_shadowdata;
 }
 
 void MeshBuilder::SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes)

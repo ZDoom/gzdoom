@@ -59,6 +59,7 @@ public:
 	std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) override;
 	void SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes) override;
 	void UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count) override;
+	void ResetVertices() override;
 
 protected:
 	void Apply(int dt);
@@ -117,6 +118,7 @@ protected:
 	int mLastVertexOffsets[2] = { 0, 0 };
 	IBuffer* mLastVertexBuffer = nullptr;
 	IBuffer* mLastIndexBuffer = nullptr;
+	bool mIndexBufferNeedsBind = true;
 
 	MatricesUBO mMatrices = {};
 	bool mMatricesChanged = true;

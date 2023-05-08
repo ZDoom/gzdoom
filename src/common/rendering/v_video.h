@@ -51,7 +51,6 @@
 struct FPortalSceneState;
 class FSkyVertexBuffer;
 class IBuffer;
-class FFlatVertexBuffer;
 struct HWDrawInfo;
 class FMaterial;
 class FGameTexture;
@@ -137,7 +136,6 @@ public:
 	unsigned int maxuniformblock = 65536;
 	const char *vendorstring;					// We have to account for some issues with particular vendors.
 	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
-	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
 	ShadowMap* mShadowMap = nullptr;
 
 	int mGameScreenWidth = 0;

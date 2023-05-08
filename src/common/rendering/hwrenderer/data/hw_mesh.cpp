@@ -72,7 +72,7 @@ void Mesh::Draw(FRenderState& renderstate)
 
 #ifdef USE_MESH_VERTEX_BUFFER
 	if (mVertexBuffer)
-		renderstate.SetVertexBuffer(screen->mVertexData);
+		renderstate.SetFlatVertexBuffer();
 #endif
 
 	for (const MeshDrawCommand& cmd : mIndexedDraws)

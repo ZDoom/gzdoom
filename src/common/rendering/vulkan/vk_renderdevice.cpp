@@ -193,7 +193,7 @@ void VulkanRenderDevice::InitializeState()
 #ifdef __APPLE__
 	mRenderState.reset(new VkRenderStateMolten(this));
 #else
-	mRenderState.reset(new VkRenderState(this));
+	mRenderState.reset(new VkRenderState(this, 0));
 #endif
 }
 

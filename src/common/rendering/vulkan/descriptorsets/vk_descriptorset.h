@@ -19,15 +19,13 @@ public:
 	void Init();
 	void Deinit();
 	void BeginFrame();
-	void UpdateFixedSet();
-	void UpdateHWBufferSet();
 	void ResetHWTextureSets();
 
-	VulkanDescriptorSetLayout* GetHWBufferSetLayout() { return HWBufferSetLayout.get(); }
+	VulkanDescriptorSetLayout* GetRSBufferSetLayout() { return RSBufferSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetFixedSetLayout() { return FixedSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetTextureSetLayout(int numLayers);
 
-	VulkanDescriptorSet* GetHWBufferDescriptorSet() { return HWBufferSet.get(); }
+	VulkanDescriptorSet* GetRSBufferDescriptorSet(int threadIndex) { return RSBufferSets[threadIndex].get(); }
 	VulkanDescriptorSet* GetFixedDescriptorSet() { return FixedSet.get(); }
 	VulkanDescriptorSet* GetNullTextureDescriptorSet();
 
@@ -39,20 +37,21 @@ public:
 	void RemoveMaterial(VkMaterial* texture);
 
 private:
-	void CreateHWBufferSetLayout();
+	void CreateRSBufferSetLayout();
 	void CreateFixedSetLayout();
-	void CreateHWBufferPool();
+	void CreateRSBufferPool();
 	void CreateFixedSetPool();
+	void UpdateFixedSet();
 
 	std::unique_ptr<VulkanDescriptorSet> AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout);
 
 	VulkanRenderDevice* fb = nullptr;
 
-	std::unique_ptr<VulkanDescriptorSetLayout> HWBufferSetLayout;
+	std::unique_ptr<VulkanDescriptorSetLayout> RSBufferSetLayout;
 	std::unique_ptr<VulkanDescriptorSetLayout> FixedSetLayout;
 	std::vector<std::unique_ptr<VulkanDescriptorSetLayout>> TextureSetLayouts;
 
-	std::unique_ptr<VulkanDescriptorPool> HWBufferDescriptorPool;
+	std::unique_ptr<VulkanDescriptorPool> RSBufferDescriptorPool;
 	std::unique_ptr<VulkanDescriptorPool> FixedDescriptorPool;
 
 	std::unique_ptr<VulkanDescriptorPool> PPDescriptorPool;
@@ -61,7 +60,7 @@ private:
 	int TextureDescriptorsLeft = 0;
 	std::vector<std::unique_ptr<VulkanDescriptorPool>> TextureDescriptorPools;
 
-	std::unique_ptr<VulkanDescriptorSet> HWBufferSet;
+	std::vector<std::unique_ptr<VulkanDescriptorSet>> RSBufferSets;
 	std::unique_ptr<VulkanDescriptorSet> FixedSet;
 	std::unique_ptr<VulkanDescriptorSet> NullTextureDescriptorSet;
 

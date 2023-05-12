@@ -5,11 +5,12 @@
 #include "vulkan/shaders/vk_shader.h"
 
 class VkStreamBuffer;
+class VkRSBuffers;
 
 class VkStreamBufferWriter
 {
 public:
-	VkStreamBufferWriter(VulkanRenderDevice* fb);
+	VkStreamBufferWriter(VkRSBuffers* rsbuffers);
 
 	bool Write(const StreamData& data);
 	void Reset();
@@ -26,7 +27,7 @@ private:
 class VkMatrixBufferWriter
 {
 public:
-	VkMatrixBufferWriter(VulkanRenderDevice* fb);
+	VkMatrixBufferWriter(VkRSBuffers* rsbuffers);
 
 	bool Write(const MatricesUBO& matrices);
 	void Reset();

@@ -78,7 +78,7 @@ VulkanCommandBuffer* VkCommandBufferManager::GetTransferCommands()
 	return mTransferCommands.get();
 }
 
-VulkanCommandBuffer* VkCommandBufferManager::GetDrawCommands()
+VulkanCommandBuffer* VkCommandBufferManager::GetDrawCommands(int threadIndex)
 {
 	if (!mDrawCommands)
 	{

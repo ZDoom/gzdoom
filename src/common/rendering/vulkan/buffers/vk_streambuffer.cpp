@@ -26,9 +26,9 @@
 #include "vulkan/buffers/vk_buffer.h"
 #include <zvulkan/vulkanbuilders.h>
 
-VkStreamBufferWriter::VkStreamBufferWriter(VulkanRenderDevice* fb)
+VkStreamBufferWriter::VkStreamBufferWriter(VkRSBuffers* rsbuffers)
 {
-	mBuffer = fb->GetBufferManager()->StreamBuffer.get();
+	mBuffer = rsbuffers->StreamBuffer.get();
 }
 
 bool VkStreamBufferWriter::Write(const StreamData& data)
@@ -55,9 +55,9 @@ void VkStreamBufferWriter::Reset()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkMatrixBufferWriter::VkMatrixBufferWriter(VulkanRenderDevice* fb)
+VkMatrixBufferWriter::VkMatrixBufferWriter(VkRSBuffers* rsbuffers)
 {
-	mBuffer = fb->GetBufferManager()->MatrixBuffer.get();
+	mBuffer = rsbuffers->MatrixBuffer.get();
 }
 
 bool VkMatrixBufferWriter::Write(const MatricesUBO& matrices)

@@ -158,39 +158,6 @@ void VkHardwareBuffer::SetSubData(size_t offset, size_t size, const void *data)
 	}
 }
 
-/*
-void VkHardwareBuffer::Resize(size_t newsize)
-{
-	newsize = max(newsize, (size_t)16); // For supporting zero byte buffers
-
-	// Grab old buffer
-	size_t oldsize = buffersize;
-	std::unique_ptr<VulkanBuffer> oldBuffer = std::move(mBuffer);
-	oldBuffer->Unmap();
-	map = nullptr;
-
-	// Create new buffer
-	mBuffer = BufferBuilder()
-		.Usage(mBufferType, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
-		.MemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.Size(newsize)
-		.DebugName("VkHardwareBuffer.Resized")
-		.Create(fb->GetDevice());
-	buffersize = newsize;
-
-	// Transfer data from old to new
-	fb->GetCommands()->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
-	fb->GetCommands()->TransferDeleteList->Add(std::move(oldBuffer));
-	fb->GetCommands()->WaitForCommands(false);
-	fb->GetDescriptorSetManager()->UpdateHWBufferSet(); // Old buffer may be part of the bound descriptor set
-
-	// Fetch pointer to new buffer
-	map = mBuffer->Map(0, newsize);
-}
-*/
-
 void VkHardwareBuffer::Map()
 {
 	if (!mPersistent)

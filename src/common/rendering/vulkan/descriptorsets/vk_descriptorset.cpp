@@ -39,9 +39,9 @@
 
 VkDescriptorSetManager::VkDescriptorSetManager(VulkanRenderDevice* fb) : fb(fb)
 {
-	CreateHWBufferSetLayout();
+	CreateRSBufferSetLayout();
 	CreateFixedSetLayout();
-	CreateHWBufferPool();
+	CreateRSBufferPool();
 	CreateFixedSetPool();
 }
 
@@ -54,7 +54,22 @@ VkDescriptorSetManager::~VkDescriptorSetManager()
 void VkDescriptorSetManager::Init()
 {
 	UpdateFixedSet();
-	UpdateHWBufferSet();
+
+	for (int threadIndex = 0; threadIndex < fb->MaxThreads; threadIndex++)
+	{
+		auto rsbuffers = fb->GetBufferManager()->GetRSBuffers(threadIndex);
+		auto rsbufferset = RSBufferDescriptorPool->allocate(RSBufferSetLayout.get());
+
+		WriteDescriptors()
+			.AddBuffer(rsbufferset.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, rsbuffers->Viewpoint.UBO.get(), 0, sizeof(HWViewpointUniforms))
+			.AddBuffer(rsbufferset.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, rsbuffers->MatrixBuffer->UBO.get(), 0, sizeof(MatricesUBO))
+			.AddBuffer(rsbufferset.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, rsbuffers->StreamBuffer->UBO.get(), 0, sizeof(StreamUBO))
+			.AddBuffer(rsbufferset.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, rsbuffers->Lightbuffer.UBO.get(), 0, sizeof(LightBufferUBO))
+			.AddBuffer(rsbufferset.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, rsbuffers->Bonebuffer.SSO.get())
+			.Execute(fb->GetDevice());
+
+		RSBufferSets.push_back(std::move(rsbufferset));
+	}
 }
 
 void VkDescriptorSetManager::Deinit()
@@ -66,27 +81,6 @@ void VkDescriptorSetManager::Deinit()
 void VkDescriptorSetManager::BeginFrame()
 {
 	UpdateFixedSet();
-	UpdateHWBufferSet();
-}
-
-void VkDescriptorSetManager::UpdateHWBufferSet()
-{
-	fb->GetCommands()->DrawDeleteList->Add(std::move(HWBufferSet));
-
-	HWBufferSet = HWBufferDescriptorPool->tryAllocate(HWBufferSetLayout.get());
-	if (!HWBufferSet)
-	{
-		fb->GetCommands()->WaitForCommands(false);
-		HWBufferSet = HWBufferDescriptorPool->allocate(HWBufferSetLayout.get());
-	}
-
-	WriteDescriptors()
-		.AddBuffer(HWBufferSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->Viewpoint.UBO.get(), 0, sizeof(HWViewpointUniforms))
-		.AddBuffer(HWBufferSet.get(), 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->MatrixBuffer->UBO.get(), 0, sizeof(MatricesUBO))
-		.AddBuffer(HWBufferSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->StreamBuffer->UBO.get(), 0, sizeof(StreamUBO))
-		.AddBuffer(HWBufferSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->GetBufferManager()->Lightbuffer.UBO.get(), 0, sizeof(LightBufferUBO))
-		.AddBuffer(HWBufferSet.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetBufferManager()->Bonebuffer.SSO.get())
-		.Execute(fb->GetDevice());
 }
 
 void VkDescriptorSetManager::UpdateFixedSet()
@@ -254,15 +248,15 @@ std::unique_ptr<VulkanDescriptorSet> VkDescriptorSetManager::AllocatePPDescripto
 	return PPDescriptorPool->allocate(layout);
 }
 
-void VkDescriptorSetManager::CreateHWBufferSetLayout()
+void VkDescriptorSetManager::CreateRSBufferSetLayout()
 {
-	HWBufferSetLayout = DescriptorSetLayoutBuilder()
+	RSBufferSetLayout = DescriptorSetLayoutBuilder()
 		.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
 		.AddBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
 		.AddBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
 		.AddBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
 		.AddBinding(4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
-		.DebugName("VkDescriptorSetManager.HWBufferSetLayout")
+		.DebugName("VkDescriptorSetManager.RSBufferSetLayout")
 		.Create(fb->GetDevice());
 }
 
@@ -285,13 +279,13 @@ void VkDescriptorSetManager::CreateFixedSetLayout()
 	FixedSetLayout = builder.Create(fb->GetDevice());
 }
 
-void VkDescriptorSetManager::CreateHWBufferPool()
+void VkDescriptorSetManager::CreateRSBufferPool()
 {
-	HWBufferDescriptorPool = DescriptorPoolBuilder()
-		.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4 * maxSets)
-		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 * maxSets)
-		.MaxSets(maxSets)
-		.DebugName("VkDescriptorSetManager.HWBufferDescriptorPool")
+	RSBufferDescriptorPool = DescriptorPoolBuilder()
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 4 * fb->MaxThreads)
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 * fb->MaxThreads)
+		.MaxSets(fb->MaxThreads)
+		.DebugName("VkDescriptorSetManager.RSBufferDescriptorPool")
 		.Create(fb->GetDevice());
 }
 

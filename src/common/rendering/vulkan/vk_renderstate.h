@@ -18,7 +18,7 @@ class VkTextureImage;
 class VkRenderState : public FRenderState
 {
 public:
-	VkRenderState(VulkanRenderDevice* fb);
+	VkRenderState(VulkanRenderDevice* fb, int threadIndex);
 	virtual ~VkRenderState() = default;
 
 	// Draw commands
@@ -71,7 +71,7 @@ protected:
 	void ApplyStreamData();
 	void ApplyMatrices();
 	void ApplyPushConstants();
-	void ApplyHWBufferSet();
+	void ApplyBufferSets();
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
 
@@ -79,6 +79,9 @@ protected:
 	void WaitForStreamBuffers();
 
 	VulkanRenderDevice* fb = nullptr;
+	int threadIndex = 0;
+
+	VkRSBuffers* mRSBuffers = nullptr;
 
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;

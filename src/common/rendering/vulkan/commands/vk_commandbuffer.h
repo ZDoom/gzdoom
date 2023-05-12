@@ -15,7 +15,7 @@ public:
 	void BeginFrame();
 
 	VulkanCommandBuffer* GetTransferCommands();
-	VulkanCommandBuffer* GetDrawCommands();
+	VulkanCommandBuffer* GetDrawCommands(int threadIndex = 0);
 
 	void FlushCommands(bool finish, bool lastsubmit = false, bool uploadOnly = false);
 

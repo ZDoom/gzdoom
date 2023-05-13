@@ -1429,6 +1429,7 @@ enum ECompatFlags
 	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
+	COMPATF2_VOODOO_ZOMBIES = 1 << 15,  // allow playerinfo, playerpawn, and voodoo health to all be different, and allow monster targetting of 'dead' players that have positive health
 };
 
 const M_E        = 2.7182818284590452354;  // e

@@ -1842,6 +1842,7 @@ MapFlagHandlers[] =
 	{ "compat_avoidhazards",			MITYPE_COMPATFLAG, 0, COMPATF2_AVOID_HAZARDS },
 	{ "compat_stayonlift",				MITYPE_COMPATFLAG, 0, COMPATF2_STAYONLIFT },
 	{ "compat_nombf21",					MITYPE_COMPATFLAG, 0, COMPATF2_NOMBF21 },
+	{ "compat_voodoozombies",			MITYPE_COMPATFLAG, 0, COMPATF2_VOODOO_ZOMBIES },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

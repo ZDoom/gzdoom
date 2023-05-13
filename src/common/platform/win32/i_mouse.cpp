@@ -189,6 +189,8 @@ CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 //
 //==========================================================================
 
+static bool mouse_shown = true;
+
 static void SetCursorState(bool visible)
 {
 	CursorState = visible || !m_hidepointer;
@@ -196,13 +198,19 @@ static void SetCursorState(bool visible)
 	{
 		if (CursorState)
 		{
-			ShowCursor(1);
-			SetCursor((HCURSOR)(intptr_t)GetClassLongPtr(mainwindow.GetHandle(), GCLP_HCURSOR));
+			if(!mouse_shown)
+			{
+				ShowCursor(true);
+				mouse_shown = true;
+			}
 		}
 		else
 		{
-			ShowCursor(0);
-			SetCursor(NULL);
+			if(mouse_shown)
+			{
+				ShowCursor(false);
+				mouse_shown = false;
+			}
 		}
 	}
 }

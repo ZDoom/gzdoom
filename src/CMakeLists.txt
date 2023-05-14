@@ -56,6 +56,7 @@ if( WIN32 )
 	add_definitions( -D_WIN32 )
 
 	set( PROJECT_LIBRARIES
+		psapi
 		wsock32
 		winmm
 		dinput8

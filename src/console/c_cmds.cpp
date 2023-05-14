@@ -408,6 +408,39 @@ CCMD (changemap)
 	}
 }
 
+CCMD (changeskill)
+{
+	if (!players[consoleplayer].mo || !usergame)
+	{
+		Printf ("Use the skill command when not in a game.\n");
+		return;
+	}
+
+	if (!players[consoleplayer].settings_controller && netgame)
+	{
+		Printf ("Only setting controllers can change the skill.\n");
+		return;
+	}
+
+	if (argv.argc() == 2)
+	{
+		int skill = atoi(argv[1]);
+		if (skill < 0 || skill >= AllSkills.Size())
+		{
+			Printf ("Skill %d is out of range.\n", skill);
+		}
+		else
+		{
+			NextSkill = skill;
+			Printf ("Skill %d will take effect on the next map.\n", skill);
+		}
+	}
+	else
+	{
+		Printf ("Usage: changeskill <skill>\n");
+	}
+}
+
 CCMD (give)
 {
 	if (CheckCheatmode () || argv.argc() < 2)

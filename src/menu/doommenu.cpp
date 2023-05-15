@@ -91,33 +91,40 @@ void StartGameDirect(bool hasPlayerClass, bool randomPlayerClass, PClassActor * 
 	// shouldn't work outside of a menu
 	if (DMenu::InMenu)
 	{
-		NewGameStartupInfo.hasPlayerClass = hasPlayerClass;
-
-		if(hasPlayerClass)
+		if(!netgame)
 		{
-			if(randomPlayerClass)
+			NewGameStartupInfo.hasPlayerClass = hasPlayerClass;
+
+			if(hasPlayerClass)
 			{
-				NewGameStartupInfo.PlayerClass = "Random";
+				if(randomPlayerClass)
+				{
+					NewGameStartupInfo.PlayerClass = "Random";
+				}
+				else if(!playerClass)
+				{
+					NullParam("playerClass");
+				}
+				else
+				{
+					NewGameStartupInfo.PlayerClass = playerClass->GetDisplayName();
+				}
 			}
-			else if(!playerClass)
+
+			NewGameStartupInfo.Episode = Episode;
+			NewGameStartupInfo.Skill = Skill;
+
+			G_DeferedInitNew (&NewGameStartupInfo);
+
+			if (gamestate == GS_FULLCONSOLE)
 			{
-				NullParam("playerClass");
-			}
-			else
-			{
-				NewGameStartupInfo.PlayerClass = playerClass->GetDisplayName();
+				gamestate = GS_HIDECONSOLE;
+				gameaction = ga_newgame;
 			}
 		}
-
-		NewGameStartupInfo.Episode = Episode;
-		NewGameStartupInfo.Skill = Skill;
-
-		G_DeferedInitNew (&NewGameStartupInfo);
-
-		if (gamestate == GS_FULLCONSOLE)
+		else
 		{
-			gamestate = GS_HIDECONSOLE;
-			gameaction = ga_newgame;
+			DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Cannot start a new game during a netgame\n");
 		}
 
 		M_ClearMenus ();

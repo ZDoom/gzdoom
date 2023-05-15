@@ -40,6 +40,8 @@ class PlayerMenu : ListMenu
 	PlayerClass mPlayerClass;
 	Array<int> PlayerColorSets;
 	Array<int> mPlayerSkins;
+
+	static native void StartGameDirect(bool hasPlayerClass, bool randomPlayerClass, Class<PlayerPawn> playerClass, int Episode, int Skill);
 	
 	// All write function for the player config are native to prevent abuse.
 	static native void AutoaimChanged(float val);

@@ -4,7 +4,8 @@
 
 struct FNewGameStartup
 {
-	const char *PlayerClass;
+	bool hasPlayerClass;
+	FString PlayerClass;
 	int Episode;
 	int Skill;
 };

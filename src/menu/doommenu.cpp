@@ -86,6 +86,59 @@ bool OkForLocalization(FTextureID texnum, const char* substitute);
 FNewGameStartup NewGameStartupInfo;
 int LastSkill = -1;
 
+void StartGameDirect(bool hasPlayerClass, bool randomPlayerClass, PClassActor * playerClass, int Episode, int Skill)
+{
+	// shouldn't work outside of a menu
+	if (DMenu::InMenu)
+	{
+		NewGameStartupInfo.hasPlayerClass = hasPlayerClass;
+
+		if(hasPlayerClass)
+		{
+			if(randomPlayerClass)
+			{
+				NewGameStartupInfo.PlayerClass = "Random";
+			}
+			else if(!playerClass)
+			{
+				NullParam("playerClass");
+			}
+			else
+			{
+				NewGameStartupInfo.PlayerClass = playerClass->GetDisplayName();
+			}
+		}
+
+		NewGameStartupInfo.Episode = Episode;
+		NewGameStartupInfo.Skill = Skill;
+
+		G_DeferedInitNew (&NewGameStartupInfo);
+
+		if (gamestate == GS_FULLCONSOLE)
+		{
+			gamestate = GS_HIDECONSOLE;
+			gameaction = ga_newgame;
+		}
+
+		M_ClearMenus ();
+	}
+	else
+	{
+		ThrowAbortException(X_OTHER, "Attempt to start a new game outside of menu code");
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DPlayerMenu, StartGameDirect, StartGameDirect)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(hasPlayerClass);
+	PARAM_BOOL(randomPlayerClass);
+	PARAM_POINTER(playerClass, PClassActor);
+	PARAM_INT(Episode);
+	PARAM_INT(Skill);
+	StartGameDirect(hasPlayerClass, randomPlayerClass, playerClass, Episode, Skill);
+	return 0;
+}
 
 bool M_SetSpecialMenu(FName& menu, int param)
 {
@@ -127,9 +180,17 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		// sent from the player class menu
 		NewGameStartupInfo.Skill = -1;
 		NewGameStartupInfo.Episode = -1;
-		NewGameStartupInfo.PlayerClass = 
-			param == -1000? nullptr :
-			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type).GetChars();
+
+		if(param == -1000)
+		{
+			NewGameStartupInfo.hasPlayerClass = false;
+		}
+		else
+		{
+			NewGameStartupInfo.hasPlayerClass = true;
+			NewGameStartupInfo.PlayerClass = (param == -1) ? FString("Random") : PlayerClasses[param].Type->GetDisplayName();
+		}
+
 		M_StartupEpisodeMenu(&NewGameStartupInfo);	// needs player class name from class menu (later)
 		break;
 
@@ -1180,7 +1241,7 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				DMenuItemBase *li = nullptr;
 
 				FString *pItemText = nullptr;
-				if (gs->PlayerClass != nullptr)
+				if (gs->hasPlayerClass)
 				{
 					pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 				}
@@ -1207,7 +1268,7 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 				FName action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
 					NAME_StartgameConfirm : NAME_Startgame;
 				FString *pItemText = nullptr;
-				if (gs->PlayerClass != nullptr)
+				if (gs->hasPlayerClass)
 				{
 					pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 				}
@@ -1277,7 +1338,7 @@ fail:
 			"StartgameConfirm" : "Startgame";
 
 		FString *pItemText = nullptr;
-		if (gs->PlayerClass != nullptr)
+		if (gs->hasPlayerClass)
 		{
 			pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
 		}

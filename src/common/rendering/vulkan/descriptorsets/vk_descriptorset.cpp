@@ -32,6 +32,7 @@
 #include "vulkan/buffers/vk_buffer.h"
 #include "vulkan/buffers/vk_streambuffer.h"
 #include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/pipelines/vk_pprenderpass.h"
 #include <zvulkan/vulkanbuilders.h>
 #include "flatvertices.h"
 #include "hw_viewpointuniforms.h"

@@ -27,6 +27,7 @@
 #include "vulkan/framebuffers/vk_framebuffer.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/pipelines/vk_pprenderpass.h"
 #include <zvulkan/vulkanswapchain.h>
 #include <zvulkan/vulkanbuilders.h>
 #include "hw_cvars.h"

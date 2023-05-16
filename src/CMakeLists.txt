@@ -750,6 +750,7 @@ set (VULKAN_SOURCES
 	common/rendering/vulkan/samplers/vk_samplers.cpp
 	common/rendering/vulkan/descriptorsets/vk_descriptorset.cpp
 	common/rendering/vulkan/pipelines/vk_renderpass.cpp
+	common/rendering/vulkan/pipelines/vk_pprenderpass.cpp
 	common/rendering/vulkan/shaders/vk_shader.cpp
 	common/rendering/vulkan/shaders/vk_ppshader.cpp
 	common/rendering/vulkan/textures/vk_hwtexture.cpp

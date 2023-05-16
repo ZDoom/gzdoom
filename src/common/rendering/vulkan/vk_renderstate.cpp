@@ -420,8 +420,7 @@ void VkRenderState::ApplyPushConstants()
 	mPushConstants.uLightIndex = mLightIndex >= 0 ? (mLightIndex % MAX_LIGHT_DATA) : -1;
 	mPushConstants.uBoneIndexBase = mBoneIndexBase;
 
-	auto passManager = fb->GetRenderPassManager();
-	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
+	mCommandBuffer->pushConstants(GetPipelineLayout(mPipelineKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 }
 
 void VkRenderState::ApplyMatrices()
@@ -481,15 +480,16 @@ void VkRenderState::ApplyMaterial()
 {
 	if (mMaterial.mChanged)
 	{
-		auto passManager = fb->GetRenderPassManager();
 		auto descriptors = fb->GetDescriptorSetManager();
+		VulkanPipelineLayout* layout = GetPipelineLayout(mPipelineKey.NumTextureLayers);
 
-		if (mMaterial.mMaterial && mMaterial.mMaterial->Source()->isHardwareCanvas()) static_cast<FCanvasTexture*>(mMaterial.mMaterial->Source()->GetTexture())->NeedUpdate();
+		if (mMaterial.mMaterial && mMaterial.mMaterial->Source()->isHardwareCanvas())
+			static_cast<FCanvasTexture*>(mMaterial.mMaterial->Source()->GetTexture())->NeedUpdate();
 
 		VulkanDescriptorSet* descriptorset = mMaterial.mMaterial ? static_cast<VkMaterial*>(mMaterial.mMaterial)->GetDescriptorSet(mMaterial) : descriptors->GetNullTextureDescriptorSet();
 
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, fb->GetRenderPassManager()->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 2, descriptorset);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, descriptors->GetFixedDescriptorSet());
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 2, descriptorset);
 		mMaterial.mChanged = false;
 	}
 }
@@ -501,12 +501,12 @@ void VkRenderState::ApplyBufferSets()
 	uint32_t lightsOffset = mLightIndex >= 0 ? (uint32_t)(mLightIndex / MAX_LIGHT_DATA) * sizeof(LightBufferUBO) : mLastLightsOffset;
 	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset || lightsOffset != mLastLightsOffset)
 	{
-		auto passManager = fb->GetRenderPassManager();
 		auto descriptors = fb->GetDescriptorSetManager();
+		VulkanPipelineLayout* layout = GetPipelineLayout(mPipelineKey.NumTextureLayers);
 
 		uint32_t offsets[4] = { mViewpointOffset, matrixOffset, streamDataOffset, lightsOffset };
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, fb->GetDescriptorSetManager()->GetFixedDescriptorSet());
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptors->GetRSBufferDescriptorSet(threadIndex), 4, offsets);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, descriptors->GetFixedDescriptorSet());
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, descriptors->GetRSBufferDescriptorSet(threadIndex), 4, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastMatricesOffset = matrixOffset;
@@ -755,7 +755,7 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 	key.DrawBuffers = mRenderTarget.DrawBuffers;
 	key.DepthStencil = !!mRenderTarget.DepthStencil;
 
-	mPassSetup = fb->GetRenderPassManager()->GetRenderPass(key);
+	mPassSetup = GetRenderPass(key);
 
 	auto &framebuffer = mRenderTarget.Image->RSFramebuffers[key];
 	if (!framebuffer)
@@ -793,6 +793,55 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 
 	mMaterial.mChanged = true;
 	mClearTargets = 0;
+}
+
+VkThreadRenderPassSetup* VkRenderState::GetRenderPass(const VkRenderPassKey& key)
+{
+	auto& item = mRenderPassSetups[key];
+	if (!item)
+		item.reset(new VkThreadRenderPassSetup(fb, key));
+	return item.get();
+}
+
+VulkanPipelineLayout* VkRenderState::GetPipelineLayout(int numLayers)
+{
+	if (mPipelineLayouts.size() <= (size_t)numLayers)
+		mPipelineLayouts.resize(numLayers + 1);
+
+	auto& layout = mPipelineLayouts[numLayers];
+	if (layout)
+		return layout;
+
+	std::unique_lock<std::mutex> lock(fb->ThreadMutex);
+	layout = fb->GetRenderPassManager()->GetPipelineLayout(numLayers);
+	return layout;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+VkThreadRenderPassSetup::VkThreadRenderPassSetup(VulkanRenderDevice* fb, const VkRenderPassKey& key) : PassKey(key), fb(fb)
+{
+}
+
+VulkanRenderPass* VkThreadRenderPassSetup::GetRenderPass(int clearTargets)
+{
+	if (RenderPasses[clearTargets])
+		return RenderPasses[clearTargets];
+
+	std::unique_lock<std::mutex> lock(fb->ThreadMutex);
+	RenderPasses[clearTargets] = fb->GetRenderPassManager()->GetRenderPass(PassKey)->GetRenderPass(clearTargets);
+	return RenderPasses[clearTargets];
+}
+
+VulkanPipeline* VkThreadRenderPassSetup::GetPipeline(const VkPipelineKey& key)
+{
+	auto& item = Pipelines[key];
+	if (item)
+		return item;
+
+	std::unique_lock<std::mutex> lock(fb->ThreadMutex);
+	item = fb->GetRenderPassManager()->GetRenderPass(PassKey)->GetPipeline(key);
+	return item;
 }
 
 /////////////////////////////////////////////////////////////////////////////

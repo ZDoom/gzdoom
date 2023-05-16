@@ -21,7 +21,6 @@ class VkHardwareDataBuffer;
 class VkHardwareTexture;
 class VkRenderBuffers;
 class VkPostprocess;
-class SWSceneDrawer;
 
 class VulkanRenderDevice : public SystemBaseFrameBuffer
 {
@@ -87,6 +86,7 @@ public:
 	void WaitForCommands(bool finish) override;
 
 	int MaxThreads = 8; // To do: this may need to be limited by how much memory is available for dedicated buffer mapping (i.e. is resizeable bar available or not)
+	std::mutex ThreadMutex;
 
 private:
 	void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc) override;

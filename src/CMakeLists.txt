@@ -744,7 +744,7 @@ set (VULKAN_SOURCES
 	common/rendering/vulkan/vk_postprocess.cpp
 	common/rendering/vulkan/vk_pprenderstate.cpp
 	common/rendering/vulkan/commands/vk_commandbuffer.cpp
-	common/rendering/vulkan/buffers/vk_streambuffer.cpp
+	common/rendering/vulkan/buffers/vk_rsbuffers.cpp
 	common/rendering/vulkan/buffers/vk_hwbuffer.cpp
 	common/rendering/vulkan/buffers/vk_buffer.cpp	
 	common/rendering/vulkan/samplers/vk_samplers.cpp

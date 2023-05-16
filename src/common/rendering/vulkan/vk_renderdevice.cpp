@@ -54,7 +54,7 @@
 #include "vulkan/commands/vk_commandbuffer.h"
 #include "vulkan/buffers/vk_hwbuffer.h"
 #include "vulkan/buffers/vk_buffer.h"
-#include "vulkan/buffers/vk_streambuffer.h"
+#include "vulkan/buffers/vk_rsbuffers.h"
 #include <zvulkan/vulkanswapchain.h>
 #include <zvulkan/vulkanbuilders.h>
 #include <zvulkan/vulkansurface.h>

@@ -30,7 +30,7 @@
 #include "vulkan/textures/vk_texture.h"
 #include "vulkan/buffers/vk_hwbuffer.h"
 #include "vulkan/buffers/vk_buffer.h"
-#include "vulkan/buffers/vk_streambuffer.h"
+#include "vulkan/buffers/vk_rsbuffers.h"
 #include "vulkan/commands/vk_commandbuffer.h"
 #include "vulkan/pipelines/vk_pprenderpass.h"
 #include <zvulkan/vulkanbuilders.h>

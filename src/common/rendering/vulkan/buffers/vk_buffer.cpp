@@ -22,12 +22,11 @@
 
 #include "vk_buffer.h"
 #include "vk_hwbuffer.h"
-#include "vk_streambuffer.h"
+#include "vk_rsbuffers.h"
 #include "vulkan/vk_renderdevice.h"
 #include "vulkan/pipelines/vk_renderpass.h"
 #include "vulkan/commands/vk_commandbuffer.h"
 #include <zvulkan/vulkanbuilders.h>
-#include "flatvertices.h"
 #include "cmdlib.h"
 
 VkBufferManager::VkBufferManager(VulkanRenderDevice* fb) : fb(fb)
@@ -98,127 +97,4 @@ void VkBufferManager::CreateFanToTrisIndexBuffer()
 
 	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
 	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data(), BufferUsageType::Static);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-VkRSBuffers::VkRSBuffers(VulkanRenderDevice* fb)
-{
-	static const FVertexBufferAttribute format[] =
-	{
-		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FFlatVertex, x) },
-		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FFlatVertex, u) },
-		{ 0, VATTR_LIGHTMAP, VFmt_Float3, (int)myoffsetof(FFlatVertex, lu) },
-	};
-
-	Flatbuffer.VertexFormat = fb->GetRenderPassManager()->GetVertexFormat(1, 3, sizeof(FFlatVertex), format);
-
-	Flatbuffer.VertexBuffer = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
-		.MemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.Size(Flatbuffer.BUFFER_SIZE * sizeof(FFlatVertex))
-		.DebugName("Flatbuffer.VertexBuffer")
-		.Create(fb->GetDevice());
-
-	Flatbuffer.Vertices = (FFlatVertex*)Flatbuffer.VertexBuffer->Map(0, Flatbuffer.VertexBuffer->size);
-
-	Flatbuffer.IndexBuffer = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY)
-		.Size(16)
-		.DebugName("Flatbuffer.IndexBuffer")
-		.Create(fb->GetDevice());
-
-	MatrixBuffer = std::make_unique<VkStreamBuffer>(fb, sizeof(MatricesUBO), 50000);
-	StreamBuffer = std::make_unique<VkStreamBuffer>(fb, sizeof(StreamUBO), 300);
-
-	Viewpoint.BlockAlign = (sizeof(HWViewpointUniforms) + fb->uniformblockalignment - 1) / fb->uniformblockalignment * fb->uniformblockalignment;
-
-	Viewpoint.UBO = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
-		.MemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.Size(Viewpoint.Count * Viewpoint.BlockAlign)
-		.DebugName("Viewpoint.UBO")
-		.Create(fb->GetDevice());
-
-	Viewpoint.Data = Viewpoint.UBO->Map(0, Viewpoint.UBO->size);
-
-	Lightbuffer.UBO = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
-		.MemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.Size(Lightbuffer.Count * 4 * sizeof(FVector4))
-		.DebugName("Lightbuffer.UBO")
-		.Create(fb->GetDevice());
-
-	Lightbuffer.Data = Lightbuffer.UBO->Map(0, Lightbuffer.UBO->size);
-
-	Bonebuffer.SSO = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
-		.MemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.Size(Bonebuffer.Count * sizeof(VSMatrix))
-		.DebugName("Bonebuffer.SSO")
-		.Create(fb->GetDevice());
-
-	Bonebuffer.Data = Bonebuffer.SSO->Map(0, Bonebuffer.SSO->size);
-}
-
-VkRSBuffers::~VkRSBuffers()
-{
-	if (Flatbuffer.VertexBuffer)
-		Flatbuffer.VertexBuffer->Unmap();
-	Flatbuffer.VertexBuffer.reset();
-	Flatbuffer.IndexBuffer.reset();
-
-	if (Viewpoint.UBO)
-		Viewpoint.UBO->Unmap();
-	Viewpoint.UBO.reset();
-
-	if (Lightbuffer.UBO)
-		Lightbuffer.UBO->Unmap();
-	Lightbuffer.UBO.reset();
-
-	if (Bonebuffer.SSO)
-		Bonebuffer.SSO->Unmap();
-	Bonebuffer.SSO.reset();
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-VkStreamBuffer::VkStreamBuffer(VulkanRenderDevice* fb, size_t structSize, size_t count)
-{
-	mBlockSize = static_cast<uint32_t>((structSize + fb->uniformblockalignment - 1) / fb->uniformblockalignment * fb->uniformblockalignment);
-
-	UBO = BufferBuilder()
-		.Usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
-		.MemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.Size(mBlockSize * count)
-		.DebugName("VkStreamBuffer")
-		.Create(fb->GetDevice());
-
-	Data = UBO->Map(0, UBO->size);
-}
-
-VkStreamBuffer::~VkStreamBuffer()
-{
-	UBO->Unmap();
-}
-
-uint32_t VkStreamBuffer::NextStreamDataBlock()
-{
-	mStreamDataOffset += mBlockSize;
-	if (mStreamDataOffset + (size_t)mBlockSize >= UBO->size)
-	{
-		mStreamDataOffset = 0;
-		return 0xffffffff;
-	}
-	return mStreamDataOffset;
 }

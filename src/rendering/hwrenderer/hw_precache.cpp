@@ -316,7 +316,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		FImageSource::EndPrecaching();
 
 		// cache all used models
-		FModelRenderer* renderer = new FHWModelRenderer(nullptr, *screen->RenderState(), -1);
+		FModelRenderer* renderer = new FHWModelRenderer(nullptr, *screen->RenderState(0), -1);
 		for (unsigned i = 0; i < Models.Size(); i++)
 		{
 			if (modellist[i]) 

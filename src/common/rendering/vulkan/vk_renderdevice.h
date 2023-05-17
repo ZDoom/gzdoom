@@ -38,10 +38,10 @@ public:
 	VkDescriptorSetManager* GetDescriptorSetManager() { return mDescriptorSetManager.get(); }
 	VkRenderPassManager *GetRenderPassManager() { return mRenderPassManager.get(); }
 	VkRaytrace* GetRaytrace() { return mRaytrace.get(); }
-	VkRenderState *GetRenderState() { return mRenderState.get(); }
+	VkRenderState *GetRenderState(int threadIndex) { return mRenderState[threadIndex].get(); }
 	VkPostprocess *GetPostprocess() { return mPostprocess.get(); }
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
-	FRenderState* RenderState() override;
+	FRenderState* RenderState(int threadIndex) override;
 
 	bool IsVulkan() override { return true; }
 
@@ -85,7 +85,6 @@ public:
 
 	void WaitForCommands(bool finish) override;
 
-	int MaxThreads = 8; // To do: this may need to be limited by how much memory is available for dedicated buffer mapping (i.e. is resizeable bar available or not)
 	std::mutex ThreadMutex;
 
 private:
@@ -106,7 +105,7 @@ private:
 	std::unique_ptr<VkDescriptorSetManager> mDescriptorSetManager;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 	std::unique_ptr<VkRaytrace> mRaytrace;
-	std::unique_ptr<VkRenderState> mRenderState;
+	std::vector<std::unique_ptr<VkRenderState>> mRenderState;
 
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
 

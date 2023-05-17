@@ -214,7 +214,7 @@ public:
 	virtual void BeginFrame() {}
 	virtual void SetWindowSize(int w, int h) {}
 	virtual void StartPrecaching() {}
-	virtual FRenderState* RenderState() { return nullptr; }
+	virtual FRenderState* RenderState(int threadIndex) { return nullptr; }
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
@@ -276,6 +276,8 @@ public:
 
 	uint64_t FrameTime = 0;
 	uint64_t FrameTimeNS = 0;
+
+	int MaxThreads = 8; // To do: this may need to be limited by how much memory is available for dedicated buffer mapping (i.e. is resizeable bar available or not)
 
 private:
 	uint64_t fpsLimitTime = 0;

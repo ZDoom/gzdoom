@@ -151,7 +151,7 @@ void VkCommandBufferManager::FlushCommands(VulkanCommandBuffer** commands, size_
 void VkCommandBufferManager::FlushCommands(bool finish, bool lastsubmit, bool uploadOnly)
 {
 	if (!uploadOnly)
-		fb->GetRenderState()->EndRenderPass();
+		fb->GetRenderState(0)->EndRenderPass();
 
 	std::unique_lock<std::mutex> lock(mMutex);
 

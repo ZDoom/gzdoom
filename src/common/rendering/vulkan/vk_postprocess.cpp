@@ -61,11 +61,16 @@ void VkPostprocess::SetActiveRenderTarget()
 		.AddImage(&buffers->PipelineDepthStencil, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, false)
 		.Execute(fb->GetCommands()->GetDrawCommands());
 
-	fb->GetRenderState()->SetRenderTarget(&buffers->PipelineImage[mCurrentPipelineImage], buffers->PipelineDepthStencil.View.get(), buffers->GetWidth(), buffers->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT);
+	for (int i = 0; i < fb->MaxThreads; i++)
+		fb->GetRenderState(i)->SetRenderTarget(&buffers->PipelineImage[mCurrentPipelineImage], buffers->PipelineDepthStencil.View.get(), buffers->GetWidth(), buffers->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT);
 }
 
 void VkPostprocess::PostProcessScene(int fixedcm, float flash, const std::function<void()> &afterBloomDrawEndScene2D)
 {
+	for (int i = 0; i < fb->MaxThreads; i++)
+		fb->GetRenderState(i)->EndRenderPass();
+	fb->GetCommands()->FlushCommands(false);
+
 	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
 	int sceneHeight = fb->GetBuffers()->GetSceneHeight();
 
@@ -79,7 +84,8 @@ void VkPostprocess::PostProcessScene(int fixedcm, float flash, const std::functi
 
 void VkPostprocess::BlitSceneToPostprocess()
 {
-	fb->GetRenderState()->EndRenderPass();
+	for (int i = 0; i < fb->MaxThreads; i++)
+		fb->GetRenderState(i)->EndRenderPass();
 
 	auto buffers = fb->GetBuffers();
 	auto cmdbuffer = fb->GetCommands()->GetDrawCommands();
@@ -148,7 +154,8 @@ void VkPostprocess::ImageTransitionScene(bool undefinedSrcLayout)
 
 void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout finallayout)
 {
-	fb->GetRenderState()->EndRenderPass();
+	for (int i = 0; i < fb->MaxThreads; i++)
+		fb->GetRenderState(i)->EndRenderPass();
 
 	auto srcimage = &fb->GetBuffers()->PipelineImage[mCurrentPipelineImage];
 	auto cmdbuffer = fb->GetCommands()->GetDrawCommands();

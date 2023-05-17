@@ -106,7 +106,7 @@ void HWDrawInfo::WorkerThread()
 {
 	sector_t *front, *back;
 
-	FRenderState& state = *screen->RenderState();
+	FRenderState& state = *screen->RenderState(0);
 
 	WTTotal.Clock();
 	isWorkerThread = true;	// for adding asserts in GL API code. The worker thread may never call any GL API.

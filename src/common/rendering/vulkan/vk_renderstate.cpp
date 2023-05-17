@@ -188,7 +188,7 @@ void VkRenderState::Apply(int dt)
 	drawcalls.Clock();
 
 	mApplyCount++;
-	if (mApplyCount >= vk_submit_size)
+	if (threadIndex == 0 && mApplyCount >= vk_submit_size)
 	{
 		fb->GetCommands()->FlushCommands(false);
 		mApplyCount = 0;
@@ -310,7 +310,16 @@ void VkRenderState::ApplyRenderPass(int dt)
 
 	if (!inRenderPass)
 	{
-		mCommandBuffer = fb->GetCommands()->GetDrawCommands(threadIndex);
+		if (threadIndex == 0)
+		{
+			mCommandBuffer = fb->GetCommands()->GetDrawCommands();
+		}
+		else
+		{
+			mThreadCommandBuffer = fb->GetCommands()->BeginThreadCommands();
+			mCommandBuffer = mThreadCommandBuffer.get();
+		}
+
 		mScissorChanged = true;
 		mViewportChanged = true;
 		mStencilRefChanged = true;
@@ -711,13 +720,18 @@ void VkRenderState::EndRenderPass()
 	{
 		mCommandBuffer->endRenderPass();
 		mCommandBuffer = nullptr;
-		mPipelineKey = {};
-
-		// Force rebind of all buffers
-		mLastViewpointOffset = 0xffffffff;
-		mLastVertexOffsets[0] = 0xffffffff;
-		mIndexBufferNeedsBind = true;
 	}
+
+	if (mThreadCommandBuffer)
+	{
+		fb->GetCommands()->EndThreadCommands(std::move(mThreadCommandBuffer));
+	}
+
+	// Force rebind of everything on next draw
+	mPipelineKey = {};
+	mLastViewpointOffset = 0xffffffff;
+	mLastVertexOffsets[0] = 0xffffffff;
+	mIndexBufferNeedsBind = true;
 }
 
 void VkRenderState::EndFrame()

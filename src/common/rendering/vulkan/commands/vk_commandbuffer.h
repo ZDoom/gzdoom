@@ -15,7 +15,10 @@ public:
 	void BeginFrame();
 
 	VulkanCommandBuffer* GetTransferCommands();
-	VulkanCommandBuffer* GetDrawCommands(int threadIndex = 0);
+	VulkanCommandBuffer* GetDrawCommands();
+
+	std::unique_ptr<VulkanCommandBuffer> BeginThreadCommands();
+	void EndThreadCommands(std::unique_ptr<VulkanCommandBuffer> commands);
 
 	void FlushCommands(bool finish, bool lastsubmit = false, bool uploadOnly = false);
 
@@ -67,6 +70,7 @@ private:
 
 	std::unique_ptr<VulkanCommandBuffer> mTransferCommands;
 	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
+	std::vector<std::unique_ptr<VulkanCommandBuffer>> mThreadCommands;
 
 	enum { maxConcurrentSubmitCount = 8 };
 	std::unique_ptr<VulkanSemaphore> mSubmitSemaphore[maxConcurrentSubmitCount];
@@ -86,4 +90,6 @@ private:
 	int mNextTimestampQuery = 0;
 	std::vector<size_t> mGroupStack;
 	std::vector<TimestampQuery> timeElapsedQueries;
+	std::mutex mMutex;
+	std::vector<VulkanCommandBuffer*> mFlushCommands;
 };

@@ -42,11 +42,6 @@ public:
 	void EnableLineSmooth(bool on) override;
 	void EnableDrawBuffers(int count, bool apply) override;
 
-	void BeginFrame();
-	void SetRenderTarget(VkTextureImage *image, VulkanImageView *depthStencilView, int width, int height, VkFormat Format, VkSampleCountFlagBits samples);
-	void EndRenderPass();
-	void EndFrame();
-
 	// Buffers
 	int SetViewpoint(const HWViewpointUniforms& vp) override;
 	void SetViewpoint(int index) override;
@@ -60,6 +55,14 @@ public:
 	void SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes) override;
 	void UpdateShadowData(unsigned int index, const FFlatVertex* vertices, unsigned int count) override;
 	void ResetVertices() override;
+
+	// Worker threads
+	void FlushCommands() override { EndRenderPass(); }
+
+	void BeginFrame();
+	void SetRenderTarget(VkTextureImage* image, VulkanImageView* depthStencilView, int width, int height, VkFormat Format, VkSampleCountFlagBits samples);
+	void EndRenderPass();
+	void EndFrame();
 
 protected:
 	void Apply(int dt);
@@ -144,6 +147,7 @@ protected:
 
 	std::map<VkRenderPassKey, std::unique_ptr<VkThreadRenderPassSetup>> mRenderPassSetups;
 	std::vector<VulkanPipelineLayout*> mPipelineLayouts;
+	std::unique_ptr<VulkanCommandBuffer> mThreadCommandBuffer;
 };
 
 class VkThreadRenderPassSetup

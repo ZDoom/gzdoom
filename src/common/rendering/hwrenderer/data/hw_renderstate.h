@@ -731,6 +731,9 @@ public:
 
 	// API-dependent render interface
 
+	// Worker threads
+	virtual void FlushCommands() { }
+
 	// Vertices
 	virtual std::pair<FFlatVertex*, unsigned int> AllocVertices(unsigned int count) = 0;
 	virtual void SetShadowData(const TArray<FFlatVertex>& vertices, const TArray<uint32_t>& indexes) = 0;

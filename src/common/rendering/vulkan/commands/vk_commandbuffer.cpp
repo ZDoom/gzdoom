@@ -71,22 +71,41 @@ VulkanCommandBuffer* VkCommandBufferManager::GetTransferCommands()
 {
 	if (!mTransferCommands)
 	{
+		std::unique_lock<std::mutex> lock(mMutex);
 		mTransferCommands = mCommandPool->createBuffer();
-		mTransferCommands->SetDebugName("VulkanRenderDevice.mTransferCommands");
+		mTransferCommands->SetDebugName("TransferCommands");
 		mTransferCommands->begin();
 	}
 	return mTransferCommands.get();
 }
 
-VulkanCommandBuffer* VkCommandBufferManager::GetDrawCommands(int threadIndex)
+VulkanCommandBuffer* VkCommandBufferManager::GetDrawCommands()
 {
 	if (!mDrawCommands)
 	{
+		std::unique_lock<std::mutex> lock(mMutex);
 		mDrawCommands = mCommandPool->createBuffer();
-		mDrawCommands->SetDebugName("VulkanRenderDevice.mDrawCommands");
+		mDrawCommands->SetDebugName("DrawCommands");
 		mDrawCommands->begin();
 	}
 	return mDrawCommands.get();
+}
+
+std::unique_ptr<VulkanCommandBuffer> VkCommandBufferManager::BeginThreadCommands()
+{
+	std::unique_lock<std::mutex> lock(mMutex);
+	auto commands = mCommandPool->createBuffer();
+	commands->SetDebugName("ThreadCommands");
+	lock.unlock();
+	commands->begin();
+	return commands;
+}
+
+void VkCommandBufferManager::EndThreadCommands(std::unique_ptr<VulkanCommandBuffer> commands)
+{
+	commands->end();
+	std::unique_lock<std::mutex> lock(mMutex);
+	mThreadCommands.push_back(std::move(commands));
 }
 
 void VkCommandBufferManager::BeginFrame()
@@ -134,28 +153,37 @@ void VkCommandBufferManager::FlushCommands(bool finish, bool lastsubmit, bool up
 	if (!uploadOnly)
 		fb->GetRenderState()->EndRenderPass();
 
-	if ((!uploadOnly && mDrawCommands) || mTransferCommands)
+	std::unique_lock<std::mutex> lock(mMutex);
+
+	if (mTransferCommands)
 	{
-		VulkanCommandBuffer* commands[2];
-		size_t count = 0;
+		mTransferCommands->end();
+		mFlushCommands.push_back(mTransferCommands.get());
+		TransferDeleteList->Add(std::move(mTransferCommands));
+	}
 
-		if (mTransferCommands)
-		{
-			mTransferCommands->end();
-			commands[count++] = mTransferCommands.get();
-			TransferDeleteList->Add(std::move(mTransferCommands));
-		}
-
-		if (!uploadOnly && mDrawCommands)
+	if (!uploadOnly)
+	{
+		if (mDrawCommands)
 		{
 			mDrawCommands->end();
-			commands[count++] = mDrawCommands.get();
+			mFlushCommands.push_back(mDrawCommands.get());
 			DrawDeleteList->Add(std::move(mDrawCommands));
 		}
 
-		FlushCommands(commands, count, finish, lastsubmit);
+		for (auto& buffer : mThreadCommands)
+		{
+			mFlushCommands.push_back(buffer.get());
+			DrawDeleteList->Add(std::move(buffer));
+		}
+		mThreadCommands.clear();
+	}
 
-		current_rendered_commandbuffers += (int)count;
+	if (!mFlushCommands.empty())
+	{
+		FlushCommands(mFlushCommands.data(), mFlushCommands.size(), finish, lastsubmit);
+		current_rendered_commandbuffers += (int)mFlushCommands.size();
+		mFlushCommands.clear();
 	}
 }
 

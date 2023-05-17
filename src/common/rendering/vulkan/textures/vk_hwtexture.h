@@ -65,14 +65,16 @@ public:
 	VkMaterial(VulkanRenderDevice* fb, FGameTexture* tex, int scaleflags);
 	~VkMaterial();
 
-	VulkanDescriptorSet* GetDescriptorSet(const FMaterialState& state);
-
 	void DeleteDescriptors() override;
 
 	VulkanRenderDevice* fb = nullptr;
 	std::list<VkMaterial*>::iterator it;
 
+	VulkanDescriptorSet* GetDescriptorSet(int threadIndex, const FMaterialState& state);
+
 private:
+	VulkanDescriptorSet* GetDescriptorSet(const FMaterialState& state);
+
 	struct DescriptorEntry
 	{
 		int clampmode;
@@ -87,5 +89,15 @@ private:
 		}
 	};
 
+	struct ThreadDescriptorEntry
+	{
+		int clampmode;
+		intptr_t remap;
+		VulkanDescriptorSet* descriptor;
+
+		ThreadDescriptorEntry(int cm, intptr_t f, VulkanDescriptorSet* d) : clampmode(cm), remap(f), descriptor(d) { }
+	};
+
 	std::vector<DescriptorEntry> mDescriptorSets;
+	std::vector<std::vector<ThreadDescriptorEntry>> mThreadDescriptorSets;
 };

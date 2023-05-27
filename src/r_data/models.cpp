@@ -299,12 +299,12 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		}
 	}
 
-	int modelsamount = smf->modelsAmount;
+	unsigned modelsamount = smf->modelsAmount;
 	//[SM] - if we added any models for the frame to also render, then we also need to update modelsAmount for this smf
 	if (actor->modelData != nullptr)
 	{
-		if (actor->modelData->modelIDs.Size() > (unsigned)modelsamount)
-			modelsamount = actor->modelData->modelIDs.Size();
+		if (actor->modelData->models.Size() > modelsamount)
+			modelsamount = actor->modelData->models.Size();
 	}
 
 	TArray<FTextureID> surfaceskinids;
@@ -313,81 +313,108 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	int boneStartingPosition = 0;
 	bool evaluatedSingle = false;
 
-	for (int i = 0; i < modelsamount; i++)
+	for (unsigned i = 0; i < modelsamount; i++)
 	{
 		int modelid = -1;
 		int animationid = -1;
 		int modelframe = -1;
 		int modelframenext = -1;
-		FTextureID skinid; skinid.SetInvalid();
+		FTextureID skinid; skinid.SetNull();
 
 		surfaceskinids.Clear();
+
 		if (actor->modelData != nullptr)
 		{
-			if (i < (int)actor->modelData->modelIDs.Size())
-				modelid = actor->modelData->modelIDs[i];
+			//modelID
+			if (actor->modelData->models.Size() > i && actor->modelData->models[i].modelID >= 0)
+			{
+				modelid = actor->modelData->models[i].modelID;
+			}
+			else if(smf->modelsAmount > i)
+			{
+				modelid = smf->modelIDs[i];
+			}
 
-			if (i < (int)actor->modelData->animationIDs.Size())
+			//animationID
+			if (actor->modelData->animationIDs.Size() > i && actor->modelData->animationIDs[i] >= 0)
+			{
 				animationid = actor->modelData->animationIDs[i];
-
-			if (i < (int)actor->modelData->modelFrameGenerators.Size())
-			{
-				//[SM] - We will use this little snippet to allow a modder to specify a model index to clone. It's also pointless to clone something that clones something else in this case. And causes me headaches.
-				if (actor->modelData->modelFrameGenerators[i] >= 0 && actor->modelData->modelFrameGenerators[i] <= modelsamount && smf->modelframes[actor->modelData->modelFrameGenerators[i]] != -1)
-				{
-					modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
-					if (smfNext) modelframenext = smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
-				}
 			}
-			if (i < (int)actor->modelData->skinIDs.Size())
+			else if(smf->modelsAmount > i)
 			{
-				if (actor->modelData->skinIDs[i].isValid())
-					skinid = actor->modelData->skinIDs[i];
+				animationid = smf->animationIDs[i];
 			}
 
-			unsigned sz1 = smf->surfaceskinIDs.Size();
-			unsigned sz2 = actor->modelData->surfaceSkinIDs.Size();
-			unsigned end = (i + 1) * MD3_MAX_SURFACES;
+			//modelFrame
+			if (actor->modelData->modelFrameGenerators.Size() > i
+			 && actor->modelData->modelFrameGenerators[i] >= 0
+			 && actor->modelData->modelFrameGenerators[i] < modelsamount
+			 && smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
+			   ) {
+				modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
 
-			if(actor->modelData->surfaceSkinIDs.Size() > 0)
-			{
-				long last_ok = -1;
-				surfaceskinids.Resize(actor->modelData->surfaceSkinIDs.Size());
-				for (unsigned surface = i * MD3_MAX_SURFACES; surface < end; surface++)
+				if (smfNext) 
 				{
-					if (surface >= sz2) break;
-
-					if (actor->modelData->surfaceSkinIDs[surface].isValid())
+					if(smfNext->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0)
 					{
-						surfaceskinids[surface] = actor->modelData->surfaceSkinIDs[surface];
-						last_ok = surface;
-					}
-					else if(surface < sz1)
-					{
-						surfaceskinids[surface] = smf->surfaceskinIDs[surface];
+						modelframenext = smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
 					}
 					else
 					{
-						surfaceskinids[surface].SetInvalid();
+						modelframenext = smfNext->modelframes[i];
 					}
 				}
-				if(last_ok >= 0)
+			}
+			else if(smf->modelsAmount > i)
+			{
+				modelframe = smf->modelframes[i];
+				if (smfNext) modelframenext = smfNext->modelframes[i];
+			}
+
+			//skinID
+			if (actor->modelData->skinIDs.Size() > i && actor->modelData->skinIDs[i].isValid())
+			{
+				skinid = actor->modelData->skinIDs[i];
+			}
+			else if(smf->modelsAmount > i)
+			{
+				skinid = smf->skinIDs[i];
+			}
+
+			//surfaceSkinIDs
+			if(actor->modelData->models.Size() > i && actor->modelData->models[i].surfaceSkinIDs.Size() > 0)
+			{
+				unsigned sz1 = smf->surfaceskinIDs.Size();
+				unsigned sz2 = actor->modelData->models[i].surfaceSkinIDs.Size();
+				unsigned start = i * MD3_MAX_SURFACES;
+
+				surfaceskinids = actor->modelData->models[i].surfaceSkinIDs;
+				surfaceskinids.Resize(MD3_MAX_SURFACES);
+
+				for (unsigned surface = 0; surface < MD3_MAX_SURFACES; surface++)
 				{
-					surfaceskinids.Resize(max(last_ok + 1, (long)sz1)); // clear out
-				}
-				else
-				{
-					surfaceskinids.Clear();
+					if (sz2 > surface && (actor->modelData->models[i].surfaceSkinIDs[surface].isValid()))
+					{
+						continue;
+					}
+					if((surface + start) < sz1)
+					{
+						surfaceskinids[surface] = smf->surfaceskinIDs[surface + start];
+					}
+					else
+					{
+						surfaceskinids[surface].SetNull();
+					}
 				}
 			}
 		}
-		if (i < smf->modelsAmount)
+		else
 		{
-			if (modelid == -1) modelid = smf->modelIDs[i];
-			if (animationid == -1) animationid = smf->animationIDs[i];
-			if (modelframe == -1) modelframe = smf->modelframes[i];
-			if (modelframenext == -1 && smfNext) modelframenext = smfNext->modelframes[i];
-			if (!skinid.isValid()) skinid = smf->skinIDs[i];
+			modelid = smf->modelIDs[i];
+			animationid = smf->animationIDs[i];
+			modelframe = smf->modelframes[i];
+			if (smfNext) modelframenext = smfNext->modelframes[i];
+			skinid = smf->skinIDs[i];
 		}
 
 		if (modelid >= 0)
@@ -396,8 +423,9 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			auto tex = skinid.isValid() ? TexMan.GetGameTexture(skinid, true) : nullptr;
 			mdl->BuildVertexBuffer(renderer);
 
-			auto& ssids = surfaceskinids.Size() > 0 ? surfaceskinids : smf->surfaceskinIDs;
-			auto ssidp = (unsigned)(i * MD3_MAX_SURFACES) < ssids.Size() ? &ssids[i * MD3_MAX_SURFACES] : nullptr;
+			auto ssidp = surfaceskinids.Size() > 0
+					   ? surfaceskinids.Data()
+					   : (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
 
 
 			bool nextFrame = smfNext && modelframe != modelframenext;

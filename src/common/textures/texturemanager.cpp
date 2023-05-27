@@ -498,9 +498,9 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 //
 //==========================================================================
 
-void FTextureManager::ReplaceTexture (FTextureID picnum, FGameTexture *newtexture, bool free)
+void FTextureManager::ReplaceTexture (FTextureID texid, FGameTexture *newtexture, bool free)
 {
-	int index = picnum.GetIndex();
+	int index = texid.GetIndex();
 	if (unsigned(index) >= Textures.Size())
 		return;
 

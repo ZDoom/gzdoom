@@ -138,10 +138,10 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 				return font;
 			}
 		}
-		FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
-		if (picnum.isValid())
+		FTextureID texid = TexMan.CheckForTexture (name, ETextureType::Any);
+		if (texid.isValid())
 		{
-			auto tex = TexMan.GetGameTexture(picnum);
+			auto tex = TexMan.GetGameTexture(texid);
 			if (tex && tex->GetSourceLump() >= folderfile)
 			{
 				FFont *CreateSinglePicFont(const char *name);

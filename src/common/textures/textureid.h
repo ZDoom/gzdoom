@@ -45,7 +45,7 @@ public:
 	bool operator > (FTextureID other) const { return texnum > other.texnum; }
 
 protected:
-	FTextureID(int num) { texnum = num; }
+	constexpr FTextureID(int num) : texnum(num) { }
 private:
 	int texnum;
 };
@@ -53,13 +53,13 @@ private:
 class FNullTextureID : public FTextureID
 {
 public:
-	FNullTextureID() : FTextureID(0) {}
+	constexpr FNullTextureID() : FTextureID(0) {}
 };
 
 // This is for the script interface which needs to do casts from int to texture.
 class FSetTextureID : public FTextureID
 {
 public:
-	FSetTextureID(int v) : FTextureID(v) {}
+	constexpr FSetTextureID(int v) : FTextureID(v) {}
 };
 

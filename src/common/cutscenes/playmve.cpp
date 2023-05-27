@@ -546,7 +546,7 @@ bool InterplayDecoder::Open(FileReader &fr_)
     int chunkType = LE_16(&chunkPreamble[2]);
     if (chunkType == CHUNK_VIDEO)
         bAudioEnabled = false;
-    else
+    else if (bAudioEnabled)
     {
         if (ProcessNextChunk() != CHUNK_INIT_AUDIO)
         {

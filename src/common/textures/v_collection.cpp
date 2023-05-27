@@ -62,8 +62,8 @@ void FImageCollection::Add (const char **patchNames, int numPatches, ETextureTyp
 
 	for (int i = 0; i < numPatches; ++i)
 	{
-		FTextureID picnum = TexMan.CheckForTexture(patchNames[i], namespc);
-		ImageMap[OldCount + i] = picnum;
+		FTextureID texid = TexMan.CheckForTexture(patchNames[i], namespc);
+		ImageMap[OldCount + i] = texid;
 	}
 }
 

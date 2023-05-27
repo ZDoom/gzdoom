@@ -1786,12 +1786,12 @@ DEFINE_ACTION_FUNCTION(FCanvas, Dim)
 //
 //==========================================================================
 
-void DrawBorder (F2DDrawer *drawer, FTextureID picnum, int x1, int y1, int x2, int y2)
+void DrawBorder (F2DDrawer *drawer, FTextureID texid, int x1, int y1, int x2, int y2)
 {
 	int filltype = (ui_screenborder_classic_scaling) ? -1 : 0;
-	if (picnum.isValid())
+	if (texid.isValid())
 	{
-		drawer->AddFlatFill (x1, y1, x2, y2, TexMan.GetGameTexture(picnum, false), filltype);
+		drawer->AddFlatFill (x1, y1, x2, y2, TexMan.GetGameTexture(texid, false), filltype);
 	}
 	else
 	{

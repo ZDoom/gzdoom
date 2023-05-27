@@ -194,6 +194,12 @@ struct VMReturn
 		*(void **)Location = val;
 	}
 
+	void SetConstPointer(const void *val)
+	{
+		assert(RegType == REGT_POINTER);
+		*(const void **)Location = val;
+	}
+
 	void SetObject(DObject *val)
 	{
 		assert(RegType == REGT_POINTER);
@@ -759,6 +765,7 @@ struct AFuncDesc
 class AActor;
 
 #define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state); return 1; } return 0; } while(0)
+#define ACTION_RETURN_CONST_POINTER(v) do { const void *state = v; if (numret > 0) { assert(ret != NULL); ret->SetConstPointer(state); return 1; } return 0; } while(0)
 #define ACTION_RETURN_POINTER(v) do { void *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state); return 1; } return 0; } while(0)
 #define ACTION_RETURN_OBJECT(v) do { auto state = v; if (numret > 0) { assert(ret != NULL); ret->SetObject(state); return 1; } return 0; } while(0)
 #define ACTION_RETURN_FLOAT(v) do { double u = v; if (numret > 0) { assert(ret != nullptr); ret->SetFloat(u); return 1; } return 0; } while(0)

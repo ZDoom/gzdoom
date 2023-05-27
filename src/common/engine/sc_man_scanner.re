@@ -220,6 +220,7 @@ std2:
 		'bright'					{ RET(StateOptions ? TK_Bright : TK_Identifier); }
 		'fast'						{ RET(StateOptions ? TK_Fast : TK_Identifier); }
 		'slow'						{ RET(StateOptions ? TK_Slow : TK_Identifier); }
+		'ticadjust'					{ RET(StateOptions ? TK_NoDelay : TK_Identifier); }	
 		'nodelay'					{ RET(StateOptions ? TK_NoDelay : TK_Identifier); }
 		'canraise'					{ RET(StateOptions ? TK_CanRaise : TK_Identifier); }
 		'offset'					{ RET(StateOptions ? TK_Offset : TK_Identifier); }

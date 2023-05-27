@@ -488,7 +488,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	}
 
 	// If this is a singular sound, don't play it if it's already playing.
-	if (sfx->bSingular && CheckSingular(sound_id))
+	if ((sfx->bSingular || (flags & CHANF_SINGULAR)) && CheckSingular(sound_id))
 	{
 		chanflags |= CHANF_EVICTED;
 	}

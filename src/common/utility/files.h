@@ -184,7 +184,7 @@ public:
 		return mReader->Seek((long)offset, origin);
 	}
 
-	Size Read(void *buffer, Size len)
+	Size Read(void *buffer, Size len) const
 	{
 		return mReader->Read(buffer, (long)len);
 	}

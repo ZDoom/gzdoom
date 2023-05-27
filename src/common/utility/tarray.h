@@ -327,9 +327,10 @@ public:
 	}
 
 	// returns address of first element
-	T *Data() const
+	T *Data(size_t index = 0) const
 	{
-		return &Array[0];
+		assert(index <= Count);
+		return &Array[index];
 	}
 
 	unsigned IndexOf(const T& elem) const

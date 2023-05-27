@@ -272,6 +272,13 @@ dottable_id(X) ::= IDENTIFIER(A).
 	id->Id = A.Name();
 	X = id;
 }
+// this is needed for defining properties named 'action'.
+dottable_id(X) ::= ACTION(A).
+{
+	NEW_AST_NODE(Identifier,id,A);
+	id->Id = NAME_Action;
+	X = id;
+}
 dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 {
 	NEW_AST_NODE(Identifier,id2,A);

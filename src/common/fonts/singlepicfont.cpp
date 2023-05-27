@@ -65,21 +65,21 @@ protected:
 FSinglePicFont::FSinglePicFont(const char *picname) :
 	FFont(-1) // Since lump is only needed for priority information we don't need to worry about this here.
 {
-	FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Any);
+	FTextureID texid = TexMan.CheckForTexture (picname, ETextureType::Any);
 
-	if (!picnum.isValid())
+	if (!texid.isValid())
 	{
 		I_FatalError ("%s is not a font or texture", picname);
 	}
 
-	auto pic = TexMan.GetGameTexture(picnum);
+	auto pic = TexMan.GetGameTexture(texid);
 
 	FontName = picname;
 	FontHeight = (int)pic->GetDisplayHeight();
 	SpaceWidth = (int)pic->GetDisplayWidth();
 	GlobalKerning = 0;
 	FirstChar = LastChar = 'A';
-	PicNum = picnum;
+	PicNum = texid;
 }
 
 //==========================================================================

@@ -677,17 +677,22 @@ enum EViewPosFlags // [MC] Flags for SetViewPos.
 	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
 };
 
+struct ModelOverride
+{
+	int modelID;
+	TArray<FTextureID> surfaceSkinIDs;
+};
+
 class DActorModelData : public DObject
 {
 	DECLARE_CLASS(DActorModelData, DObject);
 public:
-	FName				modelDef;
-	bool				hasModel;
-	TArray<int>			modelIDs;
-	TArray<FTextureID>	skinIDs;
-	TArray<FTextureID>	surfaceSkinIDs;
-	TArray<int>			animationIDs;
-	TArray<int>			modelFrameGenerators;
+	FName					modelDef;
+	bool					hasModel;
+	TArray<ModelOverride>	models;
+	TArray<FTextureID>		skinIDs;
+	TArray<int>				animationIDs;
+	TArray<int>				modelFrameGenerators;
 
 	DActorModelData() = default;
 	virtual void Serialize(FSerializer& arc) override;

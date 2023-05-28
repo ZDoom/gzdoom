@@ -496,8 +496,9 @@ int FNodeBuilder::SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg
 	}
 
 	if (bestseg == UINT_MAX)
-	{ // No lines split any others into two sets, so this is a convex region.
-	D(Printf (PRINT_LOG, "set %d, step %d, nosplit %d has no good splitter (%d)\n", set, step, nosplit, nosplitters));
+	{
+		// No lines split any others into two sets, so this is a convex region.
+		D(Printf (PRINT_LOG, "set %d, step %d, nosplit %d has no good splitter (%d)\n", set, step, nosplit, nosplitters));
 		return nosplitters ? -1 : 0;
 	}
 
@@ -752,6 +753,54 @@ int FNodeBuilder::Heuristic (node_t &node, uint32_t set, bool honorNoSplit)
 	return score;
 }
 
+void FNodeBuilder::DoGLSegSplit (uint32_t set, node_t &node, uint32_t splitseg, uint32_t &outset0, uint32_t &outset1, int side, int sidev0, int sidev1, bool hack)
+{
+	FPrivSeg *seg = &Segs[set];
+
+	if (side >= 0 && GLNodes)
+	{
+		if (sidev0 == 0)
+		{
+			double dist1 = AddIntersection (node, seg->v1);
+			if (sidev1 == 0)
+			{
+				double dist2 = AddIntersection (node, seg->v2);
+				FSplitSharer share = { dist1, set, dist2 > dist1 };
+				SplitSharers.Push (share);
+			}
+		}
+		else if (sidev1 == 0)
+		{
+			AddIntersection (node, seg->v2);
+		}
+	}
+
+	if (hack && GLNodes)
+	{
+		uint32_t newback, newfront;
+
+		newback = AddMiniseg (seg->v2, seg->v1, UINT_MAX, set, splitseg);
+		if (HackMate == UINT_MAX)
+		{
+			newfront = AddMiniseg (Segs[set].v1, Segs[set].v2, newback, set, splitseg);
+			Segs[newfront].next = outset0;
+			outset0 = newfront;
+		}
+		else
+		{
+			newfront = HackMate;
+			Segs[newfront].partner = newback;
+			Segs[newback].partner = newfront;
+		}
+		Segs[newback].frontsector = Segs[newback].backsector =
+			Segs[newfront].frontsector = Segs[newfront].backsector =
+			Segs[set].frontsector;
+
+		Segs[newback].next = outset1;
+		outset1 = newback;
+	}
+}
+
 void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uint32_t &outset0, uint32_t &outset1, unsigned int &count0, unsigned int &count1)
 {
 	unsigned int _count0 = 0;
@@ -760,14 +809,15 @@ void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uin
 	outset1 = UINT_MAX;
 
 	Events.DeleteAll ();
+	UnsetSegs.Clear ();
 	SplitSharers.Clear ();
 
 	while (set != UINT_MAX)
 	{
+		bool unset = false;
 		bool hack;
 		FPrivSeg *seg = &Segs[set];
 		int next = seg->next;
-
 		int sidev[2], side;
 
 		if (HackSeg == set)
@@ -844,73 +894,61 @@ void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uin
 			}
 			else
 			{
-				// all that matters here is to prevent a crash so we must make sure that we do not end up with all segs being sorted to the same side - even if this may not be correct.
-				// But if we do not do that this code would not be able to move on. Just discarding the seg is also not an option because it won't guarantee that we achieve an actual split.
-				if (_count0 == 0)
-				{
-					side = 0;
-					seg->next = outset0;
-					outset0 = set;
-					_count0++;
-				}
-				else
-				{
-					side = 1;
-					seg->next = outset1;
-					outset1 = set;
-					_count1++;
-				}
+				// Sal May 28 2023
+				// If all of the worst stars align:
+				// - The very first seg in the list doesn't know which side it should go to and makes it here. 0 are in front, so it goes to front.
+				// - Literally every other seg in the list all want to go to the front side from the other metrics
+				// - Oops! Now there's nothing in the back side!
+				// So we need to collect these now and do them later, otherwise the crash prevention fails.
+				UnsetSegs.Push(set);
+				unset = true;
 			}
 			break;
 		}
-		if (side >= 0 && GLNodes)
+		if (unset == false)
 		{
-			if (sidev[0] == 0)
-			{
-				double dist1 = AddIntersection (node, seg->v1);
-				if (sidev[1] == 0)
-				{
-					double dist2 = AddIntersection (node, seg->v2);
-					FSplitSharer share = { dist1, set, dist2 > dist1 };
-					SplitSharers.Push (share);
-				}
-			}
-			else if (sidev[1] == 0)
-			{
-				AddIntersection (node, seg->v2);
-			}
-		}
-		if (hack && GLNodes)
-		{
-			uint32_t newback, newfront;
-
-			newback = AddMiniseg (seg->v2, seg->v1, UINT_MAX, set, splitseg);
-			if (HackMate == UINT_MAX)
-			{
-				newfront = AddMiniseg (Segs[set].v1, Segs[set].v2, newback, set, splitseg);
-				Segs[newfront].next = outset0;
-				outset0 = newfront;
-			}
-			else
-			{
-				newfront = HackMate;
-				Segs[newfront].partner = newback;
-				Segs[newback].partner = newfront;
-			}
-			Segs[newback].frontsector = Segs[newback].backsector =
-				Segs[newfront].frontsector = Segs[newfront].backsector =
-				Segs[set].frontsector;
-
-			Segs[newback].next = outset1;
-			outset1 = newback;
+			DoGLSegSplit (set, node, splitseg, outset0, outset1, side, sidev[0], sidev[1], hack);
 		}
 		set = next;
 	}
+
+	for (unsigned int i = 0; i < UnsetSegs.Size(); ++i)
+	{
+		uint32_t unsetID = UnsetSegs[i];
+		FPrivSeg *seg = &Segs[unsetID];
+		int sidev[2], side;
+
+		side = ClassifyLine (node, &Vertices[seg->v1], &Vertices[seg->v2], sidev);
+
+		// all that matters here is to prevent a crash so we must make sure that we do not end up with all segs being sorted to the same side - even if this may not be correct.
+		// But if we do not do that this code would not be able to move on. Just discarding the seg is also not an option because it won't guarantee that we achieve an actual split.
+
+		if (_count0 == 0)
+		{
+			side = 0;
+			seg->next = outset0;
+			outset0 = unsetID;
+			_count0++;
+		}
+		else
+		{
+			side = 1;
+			seg->next = outset1;
+			outset1 = unsetID;
+			_count1++;
+		}
+
+		DoGLSegSplit (unsetID, node, splitseg, outset0, outset1, side, sidev[0], sidev[1], false);
+	}
+
 	FixSplitSharers (node);
 	if (GLNodes)
 	{
 		AddMinisegs (node, splitseg, outset0, outset1);
 	}
+
+	assert(_count0 != 0 && _count1 != 0);
+
 	count0 = _count0;
 	count1 = _count1;
 }

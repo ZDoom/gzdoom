@@ -269,6 +269,7 @@ private:
 	TArray<int> Colinear;	// Loops with edges colinear to a splitter
 	FEventTree Events;		// Vertices intersected by the current splitter
 
+	TArray<uint32_t> UnsetSegs;			// Segs with no definitive side in current splitter
 	TArray<FSplitSharer> SplitSharers;	// Segs colinear with the current splitter
 
 	uint32_t HackSeg;			// Seg to force to back of splitter
@@ -294,7 +295,9 @@ private:
 	void CreateSubsectorsForReal ();
 	bool CheckSubsector (uint32_t set, node_t &node, uint32_t &splitseg);
 	bool CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, uint32_t &splitseg);
-	bool ShoveSegBehind (uint32_t set, node_t &node, uint32_t seg, uint32_t mate);	int SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg, int step, bool nosplit);
+	bool ShoveSegBehind (uint32_t set, node_t &node, uint32_t seg, uint32_t mate);
+	int SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg, int step, bool nosplit);
+	void DoGLSegSplit (uint32_t set, node_t &node, uint32_t splitseg, uint32_t &outset0, uint32_t &outset1, int side, int sidev0, int sidev1, bool hack);
 	void SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uint32_t &outset0, uint32_t &outset1, unsigned int &count0, unsigned int &count1);
 	uint32_t SplitSeg (uint32_t segnum, int splitvert, int v1InFront);
 	int Heuristic (node_t &node, uint32_t set, bool honorNoSplit);

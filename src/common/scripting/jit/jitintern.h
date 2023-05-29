@@ -1,4 +1,4 @@
-
+#pragma once
 #include "jit.h"
 
 #include "types.h"

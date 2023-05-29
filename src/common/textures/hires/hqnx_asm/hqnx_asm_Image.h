@@ -19,6 +19,7 @@
 //#ifdef WIN32
 //#define DLL __declspec(dllexport)
 //#else
+#pragma once
 #define DLL
 //#endif
 

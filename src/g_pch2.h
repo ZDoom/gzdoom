@@ -1,4 +1,5 @@
 // This is separate because the files being compiled with it use different compiler settings which may affect how the header is compiled
+#pragma once
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>

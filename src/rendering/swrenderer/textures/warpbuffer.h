@@ -31,6 +31,7 @@
 **---------------------------------------------------------------------------
 **
 */
+#pragma once
 
 #include "textures.h"
 #include "texturemanager.h"

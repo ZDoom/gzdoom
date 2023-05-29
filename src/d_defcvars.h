@@ -19,6 +19,7 @@
 //		defcvars loader split from d_main.cpp
 //
 //-----------------------------------------------------------------------------
+#pragma once
 
 #define SHOULD_BLACKLIST(name) \
 	if (#name[0]==CurrentFindCVar[0]) \

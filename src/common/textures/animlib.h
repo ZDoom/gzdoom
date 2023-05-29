@@ -24,6 +24,7 @@ Prepared for public release: 03/21/2003 - Charlie Wiederhold, 3D Realms
 Modifications for JonoF's port by Jonathon Fowler (jf@jonof.id.au)
 */
 //-------------------------------------------------------------------------
+#pragma once
 
 #include <stdint.h>
 /////////////////////////////////////////////////////////////////////////////

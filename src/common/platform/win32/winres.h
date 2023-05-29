@@ -10,6 +10,7 @@
 
 // winres.h - Windows resource definitions
 //  extracted from WINUSER.H and COMMCTRL.H
+#pragma once
 
 #ifdef _AFX_MINREBUILD
 #pragma component(minrebuild, off)

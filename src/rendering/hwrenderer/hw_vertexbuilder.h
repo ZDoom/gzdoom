@@ -1,4 +1,4 @@
-
+#pragma once
 #include "tarray.h"
 #include "r_defs.h"
 struct vertex_t;

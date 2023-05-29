@@ -1,6 +1,7 @@
 //
 // Globally visible constants.
 //
+#pragma once
 #define HU_FONTSTART	uint8_t('!')		// the first font characters
 #define HU_FONTEND		uint8_t('\377')	// the last font characters
 

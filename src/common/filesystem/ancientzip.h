@@ -1,3 +1,4 @@
+#pragma once
 #include "files.h"
 #include "engineerrors.h"
 

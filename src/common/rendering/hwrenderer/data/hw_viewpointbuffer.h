@@ -1,4 +1,4 @@
-
+#pragma once
 #include "tarray.h"
 #include "hwrenderer/data/buffers.h"
 

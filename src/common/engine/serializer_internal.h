@@ -1,3 +1,4 @@
+#pragma once
 const char* UnicodeToString(const char* cc);
 const char* StringToUnicode(const char* cc, int size = -1);
 

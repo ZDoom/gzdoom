@@ -330,6 +330,10 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				modelid = actor->modelData->models[i].modelID;
 			}
+			else if(actor->modelData->models.Size() > i && actor->modelData->models[i].modelID == -2)
+			{
+				continue;
+			}
 			else if(smf->modelsAmount > i)
 			{
 				modelid = smf->modelIDs[i];

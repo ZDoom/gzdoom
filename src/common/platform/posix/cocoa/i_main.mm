@@ -167,6 +167,9 @@ void I_DetectOS()
 	case 13:
 		name = "Ventura";
 		break;
+	case 14:
+		name = "Sonoma";
+		break;
 	}
 
 	char release[16] = "unknown";

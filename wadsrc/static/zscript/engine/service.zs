@@ -34,6 +34,12 @@ class Service abstract
 		return null;
 	}
 
+	virtual play Name GetName(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null, Name nameArg = '')
+	{
+		return '';
+	}
+
+
 	// UI variants
 	virtual ui String GetStringUI(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
 	{
@@ -55,6 +61,11 @@ class Service abstract
 		return null;
 	}
 
+	virtual ui Name GetNameUI(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null, Name nameArg = '')
+	{
+		return '';
+	}
+
 	// data/clearscope variants
 	virtual clearscope String GetStringData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
 	{
@@ -74,6 +85,11 @@ class Service abstract
 	virtual clearscope Object GetObjectData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null)
 	{
 		return null;
+	}
+
+	virtual clearscope Name GetNameData(String request, string stringArg = "", int intArg = 0, double doubleArg = 0, Object objectArg = null, Name nameArg = '')
+	{
+		return '';
 	}
     
     static Service Find(class<Service> serviceName){

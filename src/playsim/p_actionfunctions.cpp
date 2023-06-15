@@ -5111,20 +5111,25 @@ void ChangeModelNative(
 	AActor * self,
 	AActor * invoker,
 	FStateParamInfo * stateinfo,
-	FName modeldef,
+	int i_modeldef,
 	int i_modelindex,
 	const FString &p_modelpath,
-	FName model,
+	int i_model,
 	int i_skinindex,
 	const FString &p_skinpath,
-	FName skin,
+	int i_skin,
 	int flags,
 	int generatorindex,
 	int i_animationindex,
 	const FString &p_animationpath,
-	FName animation
+	int i_animation
 ) {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
+
+	FName modeldef { ENamedName(i_modeldef) };
+	FName model { ENamedName(i_model) };
+	FName skin { ENamedName(i_skin) };
+	FName animation { ENamedName(i_animation) };
 
 	if (modeldef != NAME_None && PClass::FindClass(modeldef.GetChars()) == nullptr)
 	{
@@ -5322,7 +5327,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_ChangeModel, ChangeModelNative)
 	PARAM_STRING_VAL(animationpath);
 	PARAM_NAME(animation);
 	
-	ChangeModelNative(self,stateowner,stateinfo,modeldef,modelindex,modelpath,model,skinindex,skinpath,skin,flags,generatorindex,animationindex,animationpath,animation);
+	ChangeModelNative(self,stateowner,stateinfo,modeldef.GetIndex(),modelindex,modelpath,model.GetIndex(),skinindex,skinpath,skin.GetIndex(),flags,generatorindex,animationindex,animationpath,animation.GetIndex());
 
 	return 0;
 }

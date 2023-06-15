@@ -612,7 +612,8 @@ namespace
 	template<typename T> struct native_is_valid<T&> { static const bool value = true; static const bool retval = true; };
 	template<> struct native_is_valid<void> { static const bool value = true; static const bool retval = true; };
 	template<> struct native_is_valid<int> { static const bool value = true;  static const bool retval = true; };
-	template<> struct native_is_valid<FName> { static const bool value = true;  static const bool retval = true; static_assert(sizeof(FName) == sizeof(int)); static_assert(std::is_pod_v<FName>);};
+	// [RL0] this is disabled for now due to graf's concerns
+	// template<> struct native_is_valid<FName> { static const bool value = true;  static const bool retval = true; static_assert(sizeof(FName) == sizeof(int)); static_assert(std::is_pod_v<FName>);};
 	template<> struct native_is_valid<unsigned int> { static const bool value = true; static const bool retval = true; };
 	template<> struct native_is_valid<double> { static const bool value = true; static const bool retval = true; };
 	template<> struct native_is_valid<bool> { static const bool value = true; static const bool retval = false;};	// Bool as return does not work!

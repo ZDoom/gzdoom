@@ -35,6 +35,7 @@
 #include "hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
 #include "i_specialpaths.h"
+#include "cmdlib.h"
 
 VkRenderPassManager::VkRenderPassManager(VulkanRenderDevice* fb) : fb(fb)
 {

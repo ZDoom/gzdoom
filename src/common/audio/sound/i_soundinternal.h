@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include "vectors.h"
-#include "tarray.h"
 #include "tflags.h"
 
 enum EChanFlag
@@ -37,8 +36,6 @@ enum EChanFlag
 
 typedef TFlags<EChanFlag> EChanFlags;
 DEFINE_TFLAGS_OPERATORS(EChanFlags)
-
-class FileReader;
 
 // For convenience, this structure matches FMOD_REVERB_PROPERTIES.
 // Since I can't very well #include system-specific stuff in the
@@ -78,14 +75,17 @@ struct REVERB_PROPERTIES
     unsigned int Flags;
 };
 
-#define REVERB_FLAGS_DECAYTIMESCALE        0x00000001
-#define REVERB_FLAGS_REFLECTIONSSCALE      0x00000002
-#define REVERB_FLAGS_REFLECTIONSDELAYSCALE 0x00000004
-#define REVERB_FLAGS_REVERBSCALE           0x00000008
-#define REVERB_FLAGS_REVERBDELAYSCALE      0x00000010
-#define REVERB_FLAGS_DECAYHFLIMIT          0x00000020
-#define REVERB_FLAGS_ECHOTIMESCALE         0x00000040
-#define REVERB_FLAGS_MODULATIONTIMESCALE   0x00000080
+enum EReverbFlags
+{
+	REVERB_FLAGS_DECAYTIMESCALE        = 0x00000001,
+	REVERB_FLAGS_REFLECTIONSSCALE      = 0x00000002,
+	REVERB_FLAGS_REFLECTIONSDELAYSCALE = 0x00000004,
+	REVERB_FLAGS_REVERBSCALE           = 0x00000008,
+	REVERB_FLAGS_REVERBDELAYSCALE      = 0x00000010,
+	REVERB_FLAGS_DECAYHFLIMIT          = 0x00000020,
+	REVERB_FLAGS_ECHOTIMESCALE         = 0x00000040,
+	REVERB_FLAGS_MODULATIONTIMESCALE   = 0x00000080,
+};
 
 struct ReverbContainer
 {
@@ -143,8 +143,6 @@ struct FISoundChannel
 	bool		ManualRolloff;
 	EChanFlags	ChanFlags;
 };
-
-class SoundStream;
 
 void S_SetSoundPaused(int state);
 

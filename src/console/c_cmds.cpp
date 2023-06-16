@@ -425,7 +425,7 @@ CCMD (changeskill)
 	if (argv.argc() == 2)
 	{
 		int skill = atoi(argv[1]);
-		if (skill < 0 || skill >= AllSkills.Size())
+		if ((unsigned)skill >= AllSkills.Size())
 		{
 			Printf ("Skill %d is out of range.\n", skill);
 		}

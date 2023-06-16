@@ -367,7 +367,7 @@ static bool IndexOutOfRange(const int start1, const int end1, const int start2, 
 //
 //----------------------------------------------------------------------------
 
-bool FRemapTable::operator==(const FRemapTable& o)
+bool FRemapTable::operator==(const FRemapTable& o) const
 {
 	// Two translations are identical when they have the same amount of colors
 	// and the palette values for both are identical.

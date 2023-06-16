@@ -561,7 +561,7 @@ struct TVector3
 	void GetRightUp(TVector3 &right, TVector3 &up)
 	{
 		TVector3 n(X, Y, Z);
-		TVector3 fn(fabs(n.X), fabs(n.Y), fabs(n.Z));
+		TVector3 fn((vec_t)fabs(n.X), (vec_t)fabs(n.Y), (vec_t)fabs(n.Z));
 		int major = 0;
 
 		if (fn[1] > fn[major]) major = 1;

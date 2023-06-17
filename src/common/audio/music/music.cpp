@@ -53,9 +53,11 @@
 #include "gain_analysis.h"
 #include "i_specialpaths.h"
 #include "configfile.h"
+#include "c_cvars.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+extern int nomusic;
 extern float S_GetMusicVolume (const char *music);
 
 static void S_ActivatePlayList(bool goBack);
@@ -81,6 +83,8 @@ static MusicCallbacks mus_cb = { nullptr, DefaultOpenMusic };
 
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+EXTERN_CVAR(Bool, mus_enabled)
+EXTERN_CVAR(Float, snd_musicvolume)
 EXTERN_CVAR(Int, snd_mididevice)
 EXTERN_CVAR(Float, mod_dumb_mastervolume)
 EXTERN_CVAR(Float, fluid_gain)

@@ -40,7 +40,6 @@
 #include <zlib.h>
 
 #include <zmusic.h>
-#include "m_argv.h"
 #include "filesystem.h"
 #include "c_dispatch.h"
 
@@ -218,13 +217,13 @@ static void SetupDMXGUS()
 //
 //==========================================================================
 
-void I_InitMusic(void)
+void I_InitMusic(int musicstate)
 {
     I_InitSoundFonts();
 
 	snd_musicvolume->Callback ();
 
-	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
+	nomusic = musicstate;
 
 	snd_mididevice->Callback();
 

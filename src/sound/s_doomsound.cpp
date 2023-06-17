@@ -66,6 +66,7 @@
 #include "g_game.h"
 #include "s_music.h"
 #include "v_draw.h"
+#include "m_argv.h"
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -229,7 +230,7 @@ void S_Init()
 	}
 
 	I_InitSound();
-	I_InitMusic();
+	I_InitMusic(Args->CheckParm("-nomusic") || Args->CheckParm("-nosound"));
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
 	int curvelump = fileSystem.CheckNumForName("SNDCURVE");

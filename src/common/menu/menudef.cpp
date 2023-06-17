@@ -1662,6 +1662,7 @@ static void InitMusicMenus()
 // Special menus will be created once all engine data is loaded
 //
 //=============================================================================
+void I_BuildMIDIMenuList(FOptionValues*);
 
 void M_CreateMenus()
 {

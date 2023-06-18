@@ -294,10 +294,17 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	// When playing Doom IWAD levels force BCOMPATF_NOSECTIONMERGE, COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
 	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
-	if (fileSystem.GetFileContainer(map->lumpnum) == fileSystem.GetIwadNum() && (gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
+	if (fileSystem.GetFileContainer(map->lumpnum) == fileSystem.GetIwadNum())
 	{
-		Level->ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
-		if (gameinfo.flags & GI_COMPATSTAIRS) Level->ii_compatflags |= COMPATF_STAIRINDEX;
+		if ((gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
+		{
+			Level->ii_compatflags = COMPATF_SHORTTEX | COMPATF_LIGHT;
+			if (gameinfo.flags & GI_COMPATSTAIRS) Level->ii_compatflags |= COMPATF_STAIRINDEX;
+		}
+		if (gameinfo.flags & GI_NOSECTIONMERGE)
+		{
+			Level->ib_compatflags |= BCOMPATF_NOSECTIONMERGE;
+		}
 	}
 
 	map->GetChecksum(md5.Bytes);

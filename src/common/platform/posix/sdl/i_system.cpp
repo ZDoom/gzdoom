@@ -447,7 +447,6 @@ unsigned int I_MakeRNGSeed()
 
 void I_OpenShellFolder(const char* infolder)
 {
-
 	char* curdir = getcwd(NULL,0);
 
 	if (!chdir(infolder))

@@ -51,7 +51,6 @@
 #include <asm/unistd.h>
 #include <linux/perf_event.h>
 #include <sys/mman.h>
-#include "printf.h"
 #endif
 
 #include <SDL.h>
@@ -65,6 +64,7 @@
 #include "c_cvars.h"
 #include "palutil.h"
 #include "st_start.h"
+#include "printf.h"
 
 
 #ifndef NO_GTK
@@ -408,7 +408,7 @@ FString I_GetFromClipboard (bool use_primary_selection)
 
 FString I_GetCWD()
 {
-	char* curdir = get_current_dir_name();
+	char* curdir = getcwd(NULL,0);
 	if (!curdir) 
 	{
 		return "";
@@ -447,7 +447,8 @@ unsigned int I_MakeRNGSeed()
 
 void I_OpenShellFolder(const char* infolder)
 {
-	char* curdir = get_current_dir_name();
+
+	char* curdir = getcwd(NULL,0);
 
 	if (!chdir(infolder))
 	{

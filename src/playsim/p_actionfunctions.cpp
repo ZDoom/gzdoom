@@ -5196,7 +5196,7 @@ void ChangeModelNative(
 			TArray<FTextureID> surfaceSkins;
 			if(skinindex > 0)
 			{
-				surfaceSkins.AppendFill(FNullTextureID(), skinindex - 1);
+				surfaceSkins.AppendFill(FNullTextureID(), skinindex);
 			}
 			surfaceSkins.Push(skindata);
 			mobj->modelData->models.Push({queryModel, std::move(surfaceSkins)});

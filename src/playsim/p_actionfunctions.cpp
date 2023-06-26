@@ -5183,11 +5183,6 @@ void ChangeModelNative(
 
 	auto skindata = skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID();
 
-	if(!(flags & CMDL_USESURFACESKIN) && mobj->modelData->skinIDs.Size() < skinindex)
-	{
-		mobj->modelData->skinIDs.AppendFill(FNullTextureID(), skinindex - mobj->modelData->skinIDs.Size());
-	}
-
 	if(mobj->modelData->models.Size() == modelindex)
 	{
 
@@ -5216,6 +5211,7 @@ void ChangeModelNative(
 			{
 				mobj->modelData->models[modelindex].surfaceSkinIDs.AppendFill(FNullTextureID(), skinindex - mobj->modelData->models[modelindex].surfaceSkinIDs.Size());
 			}
+
 			if(skinindex == mobj->modelData->models[modelindex].surfaceSkinIDs.Size())
 			{
 				mobj->modelData->models[modelindex].surfaceSkinIDs.Push(skindata);
@@ -5225,8 +5221,8 @@ void ChangeModelNative(
 				mobj->modelData->models[modelindex].surfaceSkinIDs[skinindex] = skindata;
 			}
 		}
-		mobj->modelData->models[modelindex].modelID = queryModel;
-		mobj->modelData->modelFrameGenerators[modelindex] = generatorindex;
+		if(queryModel != -1) mobj->modelData->models[modelindex].modelID = queryModel;
+		if(generatorindex != -1) mobj->modelData->modelFrameGenerators[modelindex] = generatorindex;
 	}
 
 	if(mobj->modelData->animationIDs.Size() == animationindex)
@@ -5240,6 +5236,11 @@ void ChangeModelNative(
 
 	if (!(flags & CMDL_USESURFACESKIN))
 	{
+		if(mobj->modelData->skinIDs.Size() < skinindex)
+		{
+			mobj->modelData->skinIDs.AppendFill(FNullTextureID(), skinindex - mobj->modelData->skinIDs.Size());
+		}
+
 		if(mobj->modelData->skinIDs.Size() == skinindex)
 		{
 			mobj->modelData->skinIDs.Push(skindata);

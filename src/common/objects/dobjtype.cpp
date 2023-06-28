@@ -231,6 +231,8 @@ void PClass::StaticInit ()
 //
 //==========================================================================
 
+void ClearServices();
+
 void PClass::StaticShutdown ()
 {
 	if (WP_NOCHANGE != nullptr)
@@ -238,6 +240,7 @@ void PClass::StaticShutdown ()
 		delete WP_NOCHANGE;
 	}
 
+	ClearServices();
 	// delete all variables containing pointers to script functions.
 	for (auto p : FunctionPtrList)
 	{

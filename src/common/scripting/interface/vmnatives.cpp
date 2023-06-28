@@ -57,8 +57,8 @@
 
 static ZSMap<FName, DObject*> AllServices;
 
-static void MarkServices() {
-
+static void MarkServices()
+{
 	ZSMap<FName, DObject*>::Iterator it(AllServices);
 	ZSMap<FName, DObject*>::Pair* pair;
 	while (it.NextPair(pair))
@@ -80,6 +80,11 @@ void InitServices()
 		}
 	}
 	GC::AddMarkerFunc(&MarkServices);
+}
+
+void ClearServices()
+{
+	AllServices.Clear();
 }
 
 

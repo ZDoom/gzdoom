@@ -39,13 +39,6 @@
 #include "g_levellocals.h"
 #include "basics.h"
 
-unsigned Clipper::starttime;
-
-Clipper::Clipper()
-{
-	starttime++;
-}
-
 //-----------------------------------------------------------------------------
 //
 // RemoveRange

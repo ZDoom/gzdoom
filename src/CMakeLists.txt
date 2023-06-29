@@ -721,6 +721,7 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_bsp.cpp
 	rendering/hwrenderer/scene/hw_fakeflat.cpp
 	rendering/hwrenderer/scene/hw_decal.cpp
+	rendering/hwrenderer/scene/hw_drawcontext.cpp
 	rendering/hwrenderer/scene/hw_drawinfo.cpp
 	rendering/hwrenderer/scene/hw_drawlist.cpp
 	rendering/hwrenderer/scene/hw_clipper.cpp

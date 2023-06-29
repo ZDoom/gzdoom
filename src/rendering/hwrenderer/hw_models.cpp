@@ -42,6 +42,7 @@
 #include "hw_renderstate.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_models.h"
+#include "hwrenderer/scene/hw_drawcontext.h"
 
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, gl_texture);
@@ -70,7 +71,7 @@ void FHWModelRenderer::BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf
 	// TO-DO: Implement proper depth sorting.
 	if (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
-		state.SetCulling((mirrored ^ portalState.isMirrored()) ? Cull_CCW : Cull_CW);
+		state.SetCulling((mirrored ^ di->drawctx->portalState.isMirrored()) ? Cull_CCW : Cull_CW);
 	}
 
 	VSMatrix normalModelMatrix;
@@ -105,7 +106,7 @@ void FHWModelRenderer::BeginDrawHUDModel(FRenderStyle style, const VSMatrix &obj
 	// TO-DO: Implement proper depth sorting.
 	if (!(style == DefaultRenderStyle()))
 	{
-		state.SetCulling((mirrored ^ portalState.isMirrored()) ? Cull_CW : Cull_CCW);
+		state.SetCulling((mirrored ^ di->drawctx->portalState.isMirrored()) ? Cull_CW : Cull_CCW);
 	}
 
 	VSMatrix normalModelMatrix;

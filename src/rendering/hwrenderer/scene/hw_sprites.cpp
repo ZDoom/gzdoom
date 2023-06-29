@@ -550,7 +550,7 @@ inline void HWSprite::PutSprite(HWDrawInfo *di, FRenderState& state, bool transl
 	// That's a lot of checks...
 	if (modelframe && !modelframe->isVoxel && !(modelframe->flags & MDL_NOPERPIXELLIGHTING) && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && di->Level->HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 	{
-		hw_GetDynModelLight(actor, lightdata);
+		hw_GetDynModelLight(di->drawctx, actor, lightdata);
 		dynlightindex = state.UploadLights(lightdata);
 	}
 	else
@@ -871,7 +871,7 @@ void HWSprite::Process(HWDrawInfo *di, FRenderState& state, AActor* thing, secto
 	{
 		// This cannot create a copy in the fake sector cache because it'd interfere with the main thread, so provide a local buffer for the copy.
 		// Adding synchronization for this one case would cost more than it might save if the result here could be cached.
-		rendersector = hw_FakeFlat(thing->Sector, in_area, false, &rs);
+		rendersector = hw_FakeFlat(di->drawctx, thing->Sector, in_area, false, &rs);
 	}
 	else
 	{
@@ -1518,11 +1518,11 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area, 
 					// [Nash] draw sprite shadow
 					if (R_ShouldDrawSpriteShadow(th))
 					{
-						spr.Process(this, state, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2, true);
+						spr.Process(this, state, th, hw_FakeFlat(drawctx, th->Sector, in_area, false, &fakesector), in_area, 2, true);
 					}
 
 					// This is called from the worker thread and must not alter the fake sector cache.
-					spr.Process(this, state, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
+					spr.Process(this, state, th, hw_FakeFlat(drawctx, th->Sector, in_area, false, &fakesector), in_area, 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

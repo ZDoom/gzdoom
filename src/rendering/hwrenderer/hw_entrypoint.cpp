@@ -48,6 +48,7 @@
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/scene/hw_meshcache.h"
+#include "hwrenderer/scene/hw_drawcontext.h"
 #include "hw_vrmodes.h"
 
 EXTERN_CVAR(Bool, cl_capfps)
@@ -125,7 +126,11 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 	screen->SetLevelMesh(camera->Level->levelMesh);
 
-	meshcache.Update(mainvp);
+	static HWDrawContext mainthread_drawctx;
+
+	hw_ClearFakeFlat(&mainthread_drawctx);
+
+	meshcache.Update(&mainthread_drawctx, mainvp);
 
 	// Update the attenuation flag of all light defaults for each viewpoint.
 	// This function will only do something if the setting differs.
@@ -149,7 +154,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 			RenderState.EnableDrawBuffers(RenderState.GetPassDrawBufferCount(), true);
 		}
 
-		auto di = HWDrawInfo::StartDrawInfo(mainvp.ViewLevel, nullptr, mainvp, nullptr);
+		auto di = HWDrawInfo::StartDrawInfo(&mainthread_drawctx, mainvp.ViewLevel, nullptr, mainvp, nullptr);
 		auto& vp = di->Viewpoint;
 
 		di->Set3DViewport(RenderState);
@@ -274,7 +279,6 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 		screen->ImageTransitionScene(true);
 
 		hw_postprocess.SetTonemapMode(level.info ? level.info->tonemap : ETonemapMode::None);
-		hw_ClearFakeFlat();
 		RenderState.ResetVertices();
 		RenderState.SetFlatVertexBuffer();
 
@@ -327,8 +331,6 @@ sector_t* RenderView(player_t* player)
 	}
 	else
 	{
-		hw_ClearFakeFlat();
-
 		iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 
 		checkBenchActive();

@@ -316,7 +316,7 @@ WeaponLighting HWDrawInfo::GetWeaponLighting(sector_t *viewsector, const DVector
 	}
 	else
 	{
-		auto fakesec = hw_FakeFlat(viewsector, in_area, false);
+		auto fakesec = hw_FakeFlat(drawctx, viewsector, in_area, false);
 
 		// calculate light level for weapon sprites
 		l.lightlevel = hw_ClampLight(fakesec->lightlevel);
@@ -840,7 +840,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area, F
 		// set the lighting parameters
 		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && Level->HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
 		{
-			hw_GetDynModelLight(playermo, lightdata);
+			hw_GetDynModelLight(drawctx, playermo, lightdata);
 			hudsprite.lightindex = state.UploadLights(lightdata);
 		}
 

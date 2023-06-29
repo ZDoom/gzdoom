@@ -1,5 +1,4 @@
-#ifndef __GL_CLIPPER
-#define __GL_CLIPPER
+#pragma once
 
 #include "doomtype.h"
 #include "xs_Float.h"
@@ -22,7 +21,7 @@ class ClipNode
 
 class Clipper
 {
-	static unsigned starttime;
+	unsigned int starttime = 1;
 	FMemArena nodearena;
 	ClipNode * freelist = nullptr;
 
@@ -40,8 +39,6 @@ class Clipper
 	void DoRemoveClipRange(angle_t start, angle_t end);
 
 public:
-
-	Clipper();
 
 	void Clear();
 
@@ -158,5 +155,3 @@ public:
 	}
 
 };
-
-#endif

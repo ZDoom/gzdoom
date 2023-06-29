@@ -37,41 +37,7 @@
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "hw_fakeflat.h"
-
-FMemArena RenderDataAllocator(1024*1024);	// Use large blocks to reduce allocation time.
-
-void ResetRenderDataAllocator()
-{
-	RenderDataAllocator.FreeAll();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-class StaticSortNodeArray : public TDeletingArray<SortNode*>
-{
-	unsigned usecount;
-public:
-	unsigned Size() { return usecount; }
-	void Clear() { usecount=0; }
-	void Release(int start) { usecount=start; }
-	SortNode * GetNew();
-};
-
-
-SortNode * StaticSortNodeArray::GetNew()
-{
-	if (usecount==TArray<SortNode*>::Size())
-	{
-		Push(new SortNode);
-	}
-	return operator[](usecount++);
-}
-
-
-static StaticSortNodeArray SortNodes;
+#include "hw_drawcontext.h"
 
 //==========================================================================
 //
@@ -80,7 +46,7 @@ static StaticSortNodeArray SortNodes;
 //==========================================================================
 void HWDrawList::Reset()
 {
-	if (sorted) SortNodes.Release(SortNodeStart);
+	if (sorted) drawctx->SortNodes.Release(SortNodeStart);
 	sorted=NULL;
 	walls.Clear();
 	flats.Clear();
@@ -163,9 +129,9 @@ void HWDrawList::MakeSortList()
 	SortNode * p, * n, * c;
 	unsigned i;
 
-	SortNodeStart=SortNodes.Size();
+	SortNodeStart=drawctx->SortNodes.Size();
 	p=NULL;
-	n=SortNodes.GetNew();
+	n=drawctx->SortNodes.GetNew();
 	for(i=0;i<drawitems.Size();i++)
 	{
 		n->itemindex=(int)i;
@@ -174,7 +140,7 @@ void HWDrawList::MakeSortList()
 		p=n;
 		if (i!=drawitems.Size()-1)
 		{
-			c=SortNodes.GetNew();
+			c=drawctx->SortNodes.GetNew();
 			n->next=c;
 			n=c;
 		}
@@ -308,7 +274,7 @@ void HWDrawList::SortWallIntoPlane(HWDrawInfo* di, FRenderState& state, SortNode
 			ws->MakeVertices(di, state, false);
 		}
 
-		SortNode * sort2 = SortNodes.GetNew();
+		SortNode * sort2 = drawctx->SortNodes.GetNew();
 		memset(sort2, 0, sizeof(SortNode));
 		sort2->itemindex = drawitems.Size() - 1;
 
@@ -365,7 +331,7 @@ void HWDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 			}
 		}
 
-		SortNode * sort2 = SortNodes.GetNew();
+		SortNode * sort2 = drawctx->SortNodes.GetNew();
 		memset(sort2, 0, sizeof(SortNode));
 		sort2->itemindex = drawitems.Size() - 1;
 
@@ -454,7 +420,7 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, FRenderState& state, SortNode 
 		ws->MakeVertices(di, state, false);
 		w->MakeVertices(di, state, false);
 
-		SortNode * sort2=SortNodes.GetNew();
+		SortNode * sort2=drawctx->SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
 		sort2->itemindex=drawitems.Size()-1;
 
@@ -553,7 +519,7 @@ void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, FRenderState& state, SortNod
 		s->y1=ss->y2=iy;
 		s->ul=ss->ur=iu;
 
-		SortNode * sort2=SortNodes.GetNew();
+		SortNode * sort2=drawctx->SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
 		sort2->itemindex=drawitems.Size()-1;
 
@@ -711,7 +677,7 @@ void HWDrawList::Sort(HWDrawInfo *di, FRenderState& state)
 	reverseSort = !!(di->Level->i_compatflags & COMPATF_SPRITESORT);
     SortZ = di->Viewpoint.Pos.Z;
 	MakeSortList();
-	sorted = DoSort(di, state, SortNodes[SortNodeStart]);
+	sorted = DoSort(di, state, drawctx->SortNodes[SortNodeStart]);
 }
 
 //==========================================================================
@@ -758,7 +724,7 @@ void HWDrawList::SortFlats()
 
 HWWall *HWDrawList::NewWall()
 {
-	auto wall = (HWWall*)RenderDataAllocator.Alloc(sizeof(HWWall));
+	auto wall = (HWWall*)drawctx->RenderDataAllocator.Alloc(sizeof(HWWall));
 	drawitems.Push(HWDrawItem(DrawType_WALL, walls.Push(wall)));
 	return wall;
 }
@@ -770,7 +736,7 @@ HWWall *HWDrawList::NewWall()
 //==========================================================================
 HWFlat *HWDrawList::NewFlat()
 {
-	auto flat = (HWFlat*)RenderDataAllocator.Alloc(sizeof(HWFlat));
+	auto flat = (HWFlat*)drawctx->RenderDataAllocator.Alloc(sizeof(HWFlat));
 	drawitems.Push(HWDrawItem(DrawType_FLAT,flats.Push(flat)));
 	return flat;
 }
@@ -782,7 +748,7 @@ HWFlat *HWDrawList::NewFlat()
 //==========================================================================
 HWSprite *HWDrawList::NewSprite()
 {	
-	auto sprite = (HWSprite*)RenderDataAllocator.Alloc(sizeof(HWSprite));
+	auto sprite = (HWSprite*)drawctx->RenderDataAllocator.Alloc(sizeof(HWSprite));
 	drawitems.Push(HWDrawItem(DrawType_SPRITE, sprites.Push(sprite)));
 	return sprite;
 }

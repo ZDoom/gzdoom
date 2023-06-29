@@ -144,14 +144,14 @@ void HWDrawInfo::WorkerThread()
 			SetupWall.Clock();
 			wall.sub = job->sub;
 
-			front = hw_FakeFlat(job->sub->sector, in_area, false);
+			front = hw_FakeFlat(drawctx, job->sub->sector, in_area, false);
 			auto seg = job->seg;
 			auto backsector = seg->backsector;
 			if (!backsector && seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0]) // For one-sided portals use the portal's destination sector as backsector.
 			{
 				auto portal = seg->linedef->getPortal();
 				backsector = portal->mDestination->frontsector;
-				back = hw_FakeFlat(backsector, in_area, true);
+				back = hw_FakeFlat(drawctx, backsector, in_area, true);
 				if (front->floorplane.isSlope() || front->ceilingplane.isSlope() || back->floorplane.isSlope() || back->ceilingplane.isSlope())
 				{
 					// Having a one-sided portal like this with slopes is too messy so let's ignore that case.
@@ -166,7 +166,7 @@ void HWDrawInfo::WorkerThread()
 				}
 				else
 				{
-					back = hw_FakeFlat(backsector, in_area, true);
+					back = hw_FakeFlat(drawctx, backsector, in_area, true);
 				}
 			}
 			else back = nullptr;
@@ -182,7 +182,7 @@ void HWDrawInfo::WorkerThread()
 			HWFlat flat;
 			SetupFlat.Clock();
 			flat.section = job->sub->section;
-			front = hw_FakeFlat(job->sub->render_sector, in_area, false);
+			front = hw_FakeFlat(drawctx, job->sub->render_sector, in_area, false);
 			flat.ProcessSector(this, state, front);
 			SetupFlat.Unclock();
 			break;
@@ -190,14 +190,14 @@ void HWDrawInfo::WorkerThread()
 
 		case RenderJob::SpriteJob:
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->sector, in_area, false);
+			front = hw_FakeFlat(drawctx, job->sub->sector, in_area, false);
 			RenderThings(job->sub, front, state);
 			SetupSprite.Unclock();
 			break;
 
 		case RenderJob::ParticleJob:
 			SetupSprite.Clock();
-			front = hw_FakeFlat(job->sub->sector, in_area, false);
+			front = hw_FakeFlat(drawctx, job->sub->sector, in_area, false);
 			RenderParticles(job->sub, front, state);
 			SetupSprite.Unclock();
 			break;
@@ -321,7 +321,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip, FRenderState& state)
 			// clipping checks are only needed when the backsector is not the same as the front sector
 			if (in_area == area_default) in_area = hw_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
 
-			backsector = hw_FakeFlat(seg->backsector, in_area, true);
+			backsector = hw_FakeFlat(drawctx, seg->backsector, in_area, true);
 
 			if (hw_CheckClip(seg->sidedef, currentsector, backsector))
 			{
@@ -648,7 +648,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub, FRenderState& state)
 	}
 	if (mClipper->IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
 
-	fakesector=hw_FakeFlat(sector, in_area, false);
+	fakesector=hw_FakeFlat(drawctx, sector, in_area, false);
 
 	if (mClipPortal)
 	{
@@ -725,7 +725,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub, FRenderState& state)
 					sector = sub->render_sector;
 					// the planes of this subsector are faked to belong to another sector
 					// This means we need the heightsec parts and light info of the render sector, not the actual one.
-					fakesector = hw_FakeFlat(sector, in_area, false);
+					fakesector = hw_FakeFlat(drawctx, sector, in_area, false);
 				}
 
 				uint8_t &srf = section_renderflags[Level->sections.SectionIndex(sub->section)];

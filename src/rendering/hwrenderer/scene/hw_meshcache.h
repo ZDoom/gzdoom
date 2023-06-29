@@ -4,6 +4,7 @@
 #include "r_defs.h"
 
 struct FRenderViewpoint;
+class HWDrawContext;
 
 #if 0
 class HWCachedSector
@@ -21,7 +22,7 @@ class HWMeshCache
 {
 public:
 	void Clear();
-	void Update(FRenderViewpoint& vp);
+	void Update(HWDrawContext* drawctx, FRenderViewpoint& vp);
 
 #if 0
 	TArray<HWCachedSector> Sectors;

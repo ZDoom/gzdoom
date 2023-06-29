@@ -32,6 +32,7 @@
 #include "g_level.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "hw_drawcontext.h"
 #include "hw_dynlightdata.h"
 #include "hw_shadowmap.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
@@ -217,17 +218,14 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 	}
 }
 
-// static so that we build up a reserve (memory allocations stop)
-// For multithread processing each worker thread needs its own copy, though.
-static thread_local TArray<FDynamicLight*> addedLightsArray; 
 
-void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
+void hw_GetDynModelLight(HWDrawContext* drawctx, AActor *self, FDynLightData &modellightdata)
 {
 	modellightdata.Clear();
 
 	if (self)
 	{
-		auto &addedLights = addedLightsArray;	// avoid going through the thread local storage for each use.
+		auto &addedLights = drawctx->addedLightsArray;
 
 		addedLights.Clear();
 

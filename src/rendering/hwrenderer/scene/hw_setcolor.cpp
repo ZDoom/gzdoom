@@ -31,7 +31,7 @@
 #include "hw_portal.h"
 #include "hw_lighting.h"
 #include "hw_cvars.h"
-
+#include "hw_drawcontext.h"
 
 //==========================================================================
 //
@@ -119,7 +119,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 	}
 
 	// Make fog a little denser when inside a skybox
-	if (portalState.inskybox) fogdensity += fogdensity / 2;
+	if (drawctx->portalState.inskybox) fogdensity += fogdensity / 2;
 
 
 	// no fog in enhanced vision modes!

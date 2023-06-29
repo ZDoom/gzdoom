@@ -34,12 +34,9 @@ class Clipper;
 class HWPortal;
 class HWScenePortalBase;
 class FRenderState;
+class HWDrawContext;
 
-//==========================================================================
-//
 // these are used to link faked planes due to missing textures to a sector
-//
-//==========================================================================
 struct gl_subsectorrendernode
 {
 	gl_subsectorrendernode *	next;
@@ -132,6 +129,8 @@ struct HWDrawInfo
 	bool isNightvision() const { return !!(FullbrightFlags & Nightvision); }
 	bool isStealthVision() const { return !!(FullbrightFlags & StealthVision); }
     
+	HWDrawContext* drawctx = nullptr;
+
 	HWDrawList drawlists[GLDL_TYPES];
 	int vpIndex;
 	ELightMode lightmode;
@@ -142,7 +141,6 @@ struct HWDrawInfo
 	std::atomic<int> spriteindex;
 	HWPortal *mClipPortal;
 	HWPortal *mCurrentPortal;
-	//FRotator mAngles;
 	Clipper *mClipper;
 	FRenderViewpoint Viewpoint;
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
@@ -165,9 +163,6 @@ struct HWDrawInfo
     TMap<int, gl_floodrendernode*> floodFloorSegs;
     TMap<int, gl_floodrendernode*> floodCeilingSegs;
 
-	//TArray<sector_t *> CeilingStacks;
-	//TArray<sector_t *> FloorStacks;
-
 	TArray<subsector_t *> HandledSubsectors;
 
 	TArray<uint8_t> section_renderflags;
@@ -182,44 +177,7 @@ struct HWDrawInfo
 
 	bool MeshBuilding = false;
 
-private:
-    // For ProcessLowerMiniseg
-    bool inview;
-    subsector_t * viewsubsector;
-    TArray<seg_t *> lowersegs;
-
-	subsector_t *currentsubsector;	// used by the line processing code.
-	sector_t *currentsector;
-
-	void WorkerThread();
-
-	void UnclipSubsector(subsector_t *sub);
-	
-	void AddLine(seg_t *seg, bool portalclip, FRenderState& state);
-	void PolySubsector(subsector_t * sub, FRenderState& state);
-	void RenderPolyBSPNode(void *node, FRenderState& state);
-	void AddPolyobjs(subsector_t *sub, FRenderState& state);
-	void AddLines(subsector_t * sub, sector_t * sector, FRenderState& state);
-	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, linebase_t *line, FRenderState& state);
-	public:
-	void RenderThings(subsector_t * sub, sector_t * sector, FRenderState& state);
-	void RenderParticles(subsector_t *sub, sector_t *front, FRenderState& state);
-	void DoSubsector(subsector_t * sub, FRenderState& state);
-	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane, FRenderState& state);
-	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane, FRenderState& state);
-	void DrawPSprite(HUDSprite *huds, FRenderState &state);
-	void SetColor(FRenderState &state, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
-	void SetFog(FRenderState &state, int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);
-	void SetShaderLight(FRenderState &state, float level, float olight);
-	int CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor);
-	PalEntry CalcLightColor(int light, PalEntry pe, int blendfactor);
-	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
-	bool CheckFog(sector_t *frontsector, sector_t *backsector);
-	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
-
-	void PreparePlayerSprites2D(sector_t * viewsector, area_t in_area, FRenderState& state);
-	void PreparePlayerSprites3D(sector_t * viewsector, area_t in_area, FRenderState& state);
-public:
+	HWDrawInfo(HWDrawContext* drawctx) : drawctx(drawctx) { for (HWDrawList& list : drawlists) list.drawctx = drawctx; }
 
 	void SetCameraPos(const DVector3 &pos)
 	{
@@ -243,7 +201,7 @@ public:
 	void RenderBSPNode(void *node, FRenderState& state);
 	void RenderBSP(void *node, bool drawpsprites, FRenderState& state);
 
-	static HWDrawInfo *StartDrawInfo(FLevelLocals *lev, HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
+	static HWDrawInfo *StartDrawInfo(HWDrawContext* drawctx, FLevelLocals *lev, HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	void ClearBuffers();
 	HWDrawInfo *EndDrawInfo();
@@ -269,8 +227,6 @@ public:
 	bool CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor);
 	bool CheckAnchorCeiling(subsector_t * sub);
 	bool CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor);
-	void CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor, area_t in_area);
-	void CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor, area_t in_area);
 
 	void DispatchRenderHacks(FRenderState& state);
 	void AddUpperMissingTexture(side_t * side, subsector_t *sub, float backheight);
@@ -284,9 +240,6 @@ public:
 
 	void AddHackedSubsector(subsector_t * sub);
 	void HandleHackedSubsectors(FRenderState& state);
-	void AddFloorStack(sector_t * sec);
-	void AddCeilingStack(sector_t * sec);
-	void ProcessSectorStacks(area_t in_area);
 
 	void ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area, FRenderState& state);
 
@@ -317,6 +270,23 @@ public:
 	void AddFlat(HWFlat *flat, bool fog);
 	void AddSprite(HWSprite *sprite, bool translucent);
 
+	void RenderThings(subsector_t* sub, sector_t* sector, FRenderState& state);
+	void RenderParticles(subsector_t* sub, sector_t* front, FRenderState& state);
+	void DoSubsector(subsector_t* sub, FRenderState& state);
+	int SetupLightsForOtherPlane(subsector_t* sub, FDynLightData& lightdata, const secplane_t* plane, FRenderState& state);
+	int CreateOtherPlaneVertices(subsector_t* sub, const secplane_t* plane, FRenderState& state);
+	void DrawPSprite(HUDSprite* huds, FRenderState& state);
+	void SetColor(FRenderState& state, int sectorlightlevel, int rellight, bool fullbright, const FColormap& cm, float alpha, bool weapon = false);
+	void SetFog(FRenderState& state, int lightlevel, int rellight, bool fullbright, const FColormap* cmap, bool isadditive);
+	void SetShaderLight(FRenderState& state, float level, float olight);
+	int CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor);
+	PalEntry CalcLightColor(int light, PalEntry pe, int blendfactor);
+	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
+	bool CheckFog(sector_t* frontsector, sector_t* backsector);
+	WeaponLighting GetWeaponLighting(sector_t* viewsector, const DVector3& pos, int cm, area_t in_area, const DVector3& playerpos);
+
+	void PreparePlayerSprites2D(sector_t* viewsector, area_t in_area, FRenderState& state);
+	void PreparePlayerSprites3D(sector_t* viewsector, area_t in_area, FRenderState& state);
 
     HWDecal *AddDecal(bool onmirror);
 
@@ -345,6 +315,25 @@ public:
 		lightmode = ELightMode::Doom;
 	}
 
+private:
+	// For ProcessLowerMiniseg
+	bool inview;
+	subsector_t* viewsubsector;
+	TArray<seg_t*> lowersegs;
+
+	subsector_t* currentsubsector;	// used by the line processing code.
+	sector_t* currentsector;
+
+	void WorkerThread();
+
+	void UnclipSubsector(subsector_t* sub);
+
+	void AddLine(seg_t* seg, bool portalclip, FRenderState& state);
+	void PolySubsector(subsector_t* sub, FRenderState& state);
+	void RenderPolyBSPNode(void* node, FRenderState& state);
+	void AddPolyobjs(subsector_t* sub, FRenderState& state);
+	void AddLines(subsector_t* sub, sector_t* sector, FRenderState& state);
+	void AddSpecialPortalLines(subsector_t* sub, sector_t* sector, linebase_t* line, FRenderState& state);
 };
 
 void CleanSWDrawer();

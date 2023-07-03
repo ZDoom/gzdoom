@@ -727,6 +727,7 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_clipper.cpp
 	rendering/hwrenderer/scene/hw_flats.cpp
 	rendering/hwrenderer/scene/hw_portal.cpp
+	rendering/hwrenderer/scene/hw_meshportal.cpp
 	rendering/hwrenderer/scene/hw_renderhacks.cpp
 	rendering/hwrenderer/scene/hw_sky.cpp
 	rendering/hwrenderer/scene/hw_skyportal.cpp

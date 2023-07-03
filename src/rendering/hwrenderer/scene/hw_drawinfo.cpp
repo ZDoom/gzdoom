@@ -141,7 +141,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 
 HWDrawInfo *HWDrawInfo::EndDrawInfo()
 {
-	assert(this == gl_drawinfo);
+	assert(this == drawctx->gl_drawinfo);
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
 	drawctx->gl_drawinfo = outer;
 	drawctx->di_list.Release(this);
@@ -395,8 +395,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites, FRenderState& state)
 
 	// clip the scene and fill the drawlists
 
-	if (!gl_meshcache)
-		RenderBSP(Level->HeadNode(), drawpsprites, state);
+	RenderBSP(Level->HeadNode(), drawpsprites, state);
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend

@@ -42,6 +42,7 @@
 #include "hw_clock.h"
 #include "flatvertices.h"
 #include "hw_vertexbuilder.h"
+#include "hw_meshportal.h"
 
 #ifdef ARCH_IA32
 #include <immintrin.h>
@@ -50,6 +51,7 @@
 CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR(Float, r_actorspriteshadowdist)
+EXTERN_CVAR(Bool, gl_meshcache)
 
 thread_local bool isWorkerThread;
 ctpl::thread_pool renderPool(1);
@@ -346,6 +348,14 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip, FRenderState& state)
 			if (multithread)
 			{
 				jobQueue.AddJob(RenderJob::WallJob, seg->Subsector, seg);
+			}
+			else if (MeshBSP)
+			{
+				SetupWall.Clock();
+				HWPortalWall portalwall;
+				portalwall.Process(this, state, seg, currentsector, backsector);
+				rendered_lines++;
+				SetupWall.Unclock();
 			}
 			else
 			{
@@ -737,7 +747,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub, FRenderState& state)
 					{
 						jobQueue.AddJob(RenderJob::FlatJob, sub);
 					}
-					else
+					else if (!MeshBSP)
 					{
 						HWFlat flat;
 						flat.section = sub->section;
@@ -843,7 +853,8 @@ void HWDrawInfo::RenderBSP(void *node, bool drawpsprites, FRenderState& state)
 
 	validcount++;	// used for processing sidedefs only once by the renderer.
 
-	multithread = gl_multithread;
+	MeshBSP = gl_meshcache;
+	multithread = gl_multithread && !MeshBSP;
 	if (multithread)
 	{
 		jobQueue.ReleaseAll();

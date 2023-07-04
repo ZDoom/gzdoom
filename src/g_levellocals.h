@@ -683,7 +683,6 @@ public:
 	float		MusicVolume;
 
 	// Hardware render stuff that can either be set via CVAR or MAPINFO
-	ELightMode	lightMode;
 	bool		brightfog;
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
@@ -883,3 +882,5 @@ inline TArrayView<FLevelLocals *> AllLevels()
 {
 	return TArrayView<FLevelLocals *>(&primaryLevel, 1);
 }
+
+ELightMode getRealLightmode(FLevelLocals* Level, bool for3d);

@@ -146,17 +146,30 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 	}
 }
 
-CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL) // this is just for testing. -1 means 'inactive'
 {
-	int newself = self;
-	if (newself > 8) newself = 16;	// use 8 and 16 for software lighting to avoid conflicts with the bit mask ( in hindsight a bad idea.)
-	else if (newself > 5) newself = 8;
-	else if (newself < 0) newself = 0;
-	if (self != newself) self = newself;
-	else for (auto Level : AllLevels())
+	if (self > 5 || self < -1) self = -1;
+}
+
+CUSTOM_CVAR(Int, gl_lightmode, 1, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (self < 0 || self > 2) self = 2;
+}
+
+ELightMode getRealLightmode(FLevelLocals* Level, bool for3d)
+{
+	auto lightmode = Level->info->lightmode;
+	if (lightmode == ELightMode::NotSet)
 	{
-		if ((Level->info == nullptr || Level->info->lightmode == ELightMode::NotSet)) Level->lightMode = (ELightMode)*self;
+		if (gl_maplightmode != -1) Level->info->lightmode == (ELightMode)*gl_maplightmode;
+		else Level->info->lightmode = ELightMode::Doom;
 	}
+	if (lightmode == ELightMode::Doom && for3d)
+	{
+		if (gl_lightmode == 1) lightmode = ELightMode::ZDoomSoftware;
+		else if (gl_lightmode == 2) lightmode = ELightMode::DoomSoftware;
+	}
+	return lightmode;
 }
 
 CVAR(Int, sv_alwaystally, 0, CVAR_SERVERINFO)
@@ -1864,7 +1877,6 @@ void FLevelLocals::Init()
 
 	DefaultEnvironment = info->DefaultEnvironment;
 
-	lightMode = info->lightmode == ELightMode::NotSet? (ELightMode)*gl_lightmode : info->lightmode;
 	brightfog = info->brightfog < 0? gl_brightfog : !!info->brightfog;
 	lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
 	notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;

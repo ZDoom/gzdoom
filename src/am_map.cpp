@@ -2012,6 +2012,9 @@ void DAutomap::drawSubsectors()
 	PalEntry flatcolor;
 	mpoint_t originpt;
 
+	auto lm = getRealLightmode(Level, false);
+	bool softlightramp = !V_IsHardwareRenderer() || lm == ELightMode::Doom || lm == ELightMode::DoomDark;
+
 	auto &subsectors = Level->subsectors;
 	for (unsigned i = 0; i < subsectors.Size(); ++i)
 	{
@@ -2186,15 +2189,14 @@ void DAutomap::drawSubsectors()
 			// Why the +12? I wish I knew, but experimentation indicates it
 			// is necessary in order to best reproduce Doom's original lighting.
 			double fadelevel;
-
-			if (!V_IsHardwareRenderer() || primaryLevel->lightMode == ELightMode::DoomDark || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
+			if (softlightramp)
 			{
 				double map = (NUMCOLORMAPS * 2.) - ((floorlight + 12) * (NUMCOLORMAPS / 128.));
 				fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);
 			}
 			else
 			{
-				// The hardware renderer's light modes 0, 1 and 4 use a linear light scale which must be used here as well. Otherwise the automap gets too dark.
+				// for the hardware renderer's light modes that use a linear light scale this must do the same. Otherwise the automap gets too dark.
 				fadelevel = 1. - clamp(floorlight, 0, 255) / 255.f;
 			}
 

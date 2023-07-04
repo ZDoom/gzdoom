@@ -18,7 +18,6 @@ EXTERN_CVAR (Bool, gl_light_shadowmap);
 EXTERN_CVAR (Int, gl_shadowmap_quality);
 
 EXTERN_CVAR(Int, gl_fogmode)
-EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool,gl_mirror_envmap)
 
 EXTERN_CVAR(Bool,gl_mirrors)

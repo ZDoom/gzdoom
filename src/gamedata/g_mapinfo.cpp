@@ -1521,7 +1521,8 @@ DEFINE_MAP_OPTION(lightmode, false)
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 
-	if ((parse.sc.Number >= 0 && parse.sc.Number <= 4) || parse.sc.Number == 8 || parse.sc.Number == 16)
+	if (parse.sc.Number == 8 || parse.sc.Number == 16) info->lightmode = ELightMode::NotSet;
+	else if (parse.sc.Number >= 0 && parse.sc.Number <= 5)
 	{
 		info->lightmode = ELightMode(parse.sc.Number);
 	}

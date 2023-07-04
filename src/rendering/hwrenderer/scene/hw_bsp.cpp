@@ -142,10 +142,6 @@ void HWDrawInfo::WorkerThread()
 
 		case RenderJob::WallJob:
 		{
-			HWWall wall;
-			SetupWall.Clock();
-			wall.sub = job->sub;
-
 			front = hw_FakeFlat(drawctx, job->sub->sector, in_area, false);
 			auto seg = job->seg;
 			auto backsector = seg->backsector;
@@ -173,9 +169,23 @@ void HWDrawInfo::WorkerThread()
 			}
 			else back = nullptr;
 
-			wall.Process(this, state, job->seg, front, back);
-			rendered_lines++;
-			SetupWall.Unclock();
+			if (MeshBSP)
+			{
+				SetupWall.Clock();
+				HWPortalWall portalwall;
+				portalwall.Process(this, state, job->seg, front, back);
+				rendered_lines++;
+				SetupWall.Unclock();
+			}
+			else
+			{
+				HWWall wall;
+				SetupWall.Clock();
+				wall.sub = job->sub;
+				wall.Process(this, state, job->seg, front, back);
+				rendered_lines++;
+				SetupWall.Unclock();
+			}
 			break;
 		}
 
@@ -743,17 +753,20 @@ void HWDrawInfo::DoSubsector(subsector_t * sub, FRenderState& state)
 				{
 					srf |= SSRF_PROCESSED;
 
-					if (multithread)
+					if (!MeshBSP)
 					{
-						jobQueue.AddJob(RenderJob::FlatJob, sub);
-					}
-					else if (!MeshBSP)
-					{
-						HWFlat flat;
-						flat.section = sub->section;
-						SetupFlat.Clock();
-						flat.ProcessSector(this, state, fakesector);
-						SetupFlat.Unclock();
+						if (multithread)
+						{
+							jobQueue.AddJob(RenderJob::FlatJob, sub);
+						}
+						else
+						{
+							HWFlat flat;
+							flat.section = sub->section;
+							SetupFlat.Clock();
+							flat.ProcessSector(this, state, fakesector);
+							SetupFlat.Unclock();
+						}
 					}
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.
@@ -854,7 +867,7 @@ void HWDrawInfo::RenderBSP(void *node, bool drawpsprites, FRenderState& state)
 	validcount++;	// used for processing sidedefs only once by the renderer.
 
 	MeshBSP = gl_meshcache;
-	multithread = gl_multithread && !MeshBSP;
+	multithread = gl_multithread;
 	if (multithread)
 	{
 		jobQueue.ReleaseAll();

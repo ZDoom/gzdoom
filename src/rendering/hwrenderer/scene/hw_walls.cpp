@@ -44,6 +44,7 @@
 #include "hw_renderstate.h"
 #include "hw_skydome.h"
 
+EXTERN_CVAR(Bool, gl_meshcache);
 
 void SetGlowPlanes(FRenderState &state, const secplane_t& top, const secplane_t& bottom)
 {
@@ -492,6 +493,9 @@ const char HWWall::passflag[] = {
 //==========================================================================
 void HWWall::PutWall(HWDrawInfo *di, FRenderState& state, bool translucent)
 {
+	if (gl_meshcache && !di->MeshBuilding) // Don't draw walls when only collecting portals
+		return;
+
 	if (texture && texture->GetTranslucency() && passflag[type] == 2)
 	{
 		translucent = true;

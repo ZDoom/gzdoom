@@ -24,5 +24,5 @@ To build GZDoom, please see the [wiki](https://zdoom.org/wiki/) and see the "Pro
 - https://zdoom.org/ - Home Page
 - https://forum.zdoom.org/ - Forum
 - https://zdoom.org/wiki/ - Wiki
-- https://discord.gg/zdoom - Discord Server
+- https://dsc.gg/zdoom - Discord Server
 - https://docs.google.com/spreadsheets/d/1pvwXEgytkor9SClCiDn4j5AH7FedyXS-ocCbsuQIXDU/edit?usp=sharing - Translation sheet (Google Docs)

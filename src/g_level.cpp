@@ -161,7 +161,7 @@ ELightMode getRealLightmode(FLevelLocals* Level, bool for3d)
 	auto lightmode = Level->info->lightmode;
 	if (lightmode == ELightMode::NotSet)
 	{
-		if (gl_maplightmode != -1) Level->info->lightmode == (ELightMode)*gl_maplightmode;
+		if (gl_maplightmode != -1) Level->info->lightmode = (ELightMode)*gl_maplightmode;
 		else Level->info->lightmode = ELightMode::Doom;
 	}
 	if (lightmode == ELightMode::Doom && for3d)

@@ -42,6 +42,7 @@ struct UMapEntry
 	FString InterText;
 	FString InterTextSecret;
 	TArray<FSpecialAction> BossActions;
+	bool BossCleared = false;
 
 	char levelpic[9] = "";
 	char nextmap[9] = "";
@@ -268,6 +269,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			// mark level free of boss actions
 			classnum = special = tag = -1;
 			mape->BossActions.Clear();
+			mape->BossCleared = true;
 		}
 		else
 		{
@@ -446,11 +448,12 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 			levelinfo->InterMusic = map.intermusic;
 			levelinfo->intermusicorder = 0;
 		}
-		if (map.BossActions.Size() > 0)
+		if (map.BossActions.Size() > 0 || map.BossCleared)
 		{
 			// Setting a boss action will deactivate the flag based monster actions.
 			levelinfo->specialactions = std::move(map.BossActions);
 			levelinfo->flags &= ~(LEVEL_BRUISERSPECIAL | LEVEL_CYBORGSPECIAL | LEVEL_SPIDERSPECIAL | LEVEL_MAP07SPECIAL | LEVEL_MINOTAURSPECIAL | LEVEL_HEADSPECIAL | LEVEL_SORCERER2SPECIAL | LEVEL_SPECACTIONSMASK | LEVEL_SPECKILLMONSTERS);
+			levelinfo->flags3 &= ~(LEVEL3_E1M8SPECIAL | LEVEL3_E2M8SPECIAL | LEVEL3_E3M8SPECIAL | LEVEL3_E4M8SPECIAL | LEVEL3_E4M6SPECIAL);
 		}
 
 		const int exflags = FExitText::DEF_TEXT | FExitText::DEF_BACKDROP | FExitText::DEF_MUSIC;

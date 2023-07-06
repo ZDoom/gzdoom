@@ -198,7 +198,7 @@ TArray<FString> I_GetSteamPath()
 		// .steam at some point. Not sure if it's just my setup so I guess we
 		// can fall back on it?
 		if(!FileExists(regPath))
-			regPath.Format("%s/.local/share/Steam/config/config.vdf", home);
+			regPath.Format("%s/.steam/steam/config/config.vdf", home);
 
 		try
 		{
@@ -210,7 +210,7 @@ TArray<FString> I_GetSteamPath()
 			return result;
 		}
 
-		regPath.Format("%s/.local/share/Steam/steamapps/common", home);
+		regPath.Format("%s/.steam/steam/steamapps/common", home);
 		SteamInstallFolders.Push(regPath);
 	}
 #endif

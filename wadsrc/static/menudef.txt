@@ -363,11 +363,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "Multiplayer Options",		"MultiplayerMenu"
 	Submenu "System Options",			"SystemMenu"
 	StaticText " "
-	StaticText " "
 	Submenu "$OS_TITLE", "os_Menu"
-	
-	StaticText " "
-	StaticText " "
 }
 
 //-------------------------------------------------------------------------------------------
@@ -383,6 +379,22 @@ OptionMenu "InputMenu" protected
 	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
 
+	IfOption(Windows)
+	{
+		StaticText ""
+		Option "$MISCMNU_MERGEKEYS", 			"k_mergekeys", "OnOff"
+		Option "$MISCMNU_WINFULLSCREENTOGGLE",	"k_allowfullscreentoggle", "OnOff"
+	}
+	IfOption(Mac)
+	{
+		StaticText ""
+		Option "$MISCMNU_MACFULLSCREENTOGGLE",	"k_allowfullscreentoggle", "OnOff"
+	}
+
+	StaticText ""
+	Option "$CNTRLMNU_LAYOUT",			"cl_defaultconfiguration", "Layouts"
+	SafeCommand "$OPTMNU_DEFAULTS",		"resetb2defaults"
+
 	StaticText " "
 }
 
@@ -396,6 +408,10 @@ OptionMenu "GameplayMenu" protected
 {
 	Title "Gameplay Options"
 
+	Option "$MISCMNU_NOCHEATS",					"nocheats", "OnOff"
+	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
+	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
+	StaticText " "
 	Submenu "$OPTMNU_GAMEPLAY",			"GameplayOptions"
 	Submenu "$OPTMNU_COMPATIBILITY",	"CompatibilityOptions"
 	Submenu "$OPTMNU_AUTOMAP",			"AutomapOptions"
@@ -581,9 +597,6 @@ OptionMenu "CustomizeControls" protected
 	Submenu    "$CNTRLMNU_OTHER"       , "OtherControlsMenu"
 	Submenu    "$CNTRLMNU_POPUPS"      , "StrifeControlsMenu"
 	Submenu    "$MNU_MULTIPLAYER"        , "ChatControlsMenu"
-	StaticText ""
-	Option "$CNTRLMNU_LAYOUT",			"cl_defaultconfiguration", "Layouts"
-	SafeCommand "$OPTMNU_DEFAULTS",		"resetb2defaults"
 }
 
 OptionMenu "ActionControlsMenu" protected
@@ -956,40 +969,77 @@ OptionMenu "VideoOptions" protected
 {
 	Title "$DSPLYMNU_TITLE"
 
+	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
+	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes" // should only be on/off!
+	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
+	Option "$GLPREFMNU_MULTISAMPLE", 			gl_multisample,					"Multisample"
+	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
+	IfOption(SWRender)
+	{
+		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
+	}
+	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
+	Slider "$VIDMNU_MAXFPS",					"vid_maxfps", 35, 500, 1
+	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
+	StaticText " "
+
+	Slider "$DSPLYMNU_GAMMA",					"vid_gamma",					0.75, 3.0, 0.05, 2
+	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
+	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
+	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
+
+	StaticText " "
+	ScaleSlider "$HUDMNU_UISCALE",				"uiscale", 0.0, 8.0, 1.0, "$SCALEMNU_ADAPT"
+	Option "$SCALEMNU_HUDASPECT", 				"hud_aspectscale", "OnOff"
+	Option "$MSGMNU_SHOWMESSAGES",				"show_messages", "OnOff" // needs to be on the top level because it can be disabled with a single keypress.
+	
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
-	Submenu "Light Options", 					"LightOptions"
+	Submenu "$DSPLYMNU_APPEARANCE",				"AppearOptions"
+	Submenu "$DSPLYMNU_ADVANCED",				"AdvDisplayOptions"
+	Submenu "$OPTMNU_SPRITE", 					"SpriteOptions"
+
+}
+
+OptionMenu "AdvDisplayOptions" protected
+{
+	Title "$DSPLYMNU_ADVANCED"
+	Submenu "$OPTMNU_LIGHT", 					"LightOptions"
 	Submenu "$GLMNU_TEXOPT", 					"GLTextureGLOptions"
-	Submenu "Sprite Options", 					"SpriteOptions"
 	Submenu "$GLMNU_POSTPROCESS",				"PostProcessMenu"
 	Submenu "$GLPREFMNU_VRMODE",				"VR3DMenu"
 	IfOption(SWRender)
 	{
 		Submenu "Software Renderer",				"SWROptions"
 	}
+}
 
-	StaticText " "
+OptionMenu "AppearOptions" protected
+{
+	Title "$DSPLYMNU_APPEARANCE"
+
 	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 				3.0, 12.0, 1.0, 0
-
-	Slider "$DSPLYMNU_GAMMA",					"vid_gamma",					0.75, 3.0, 0.05, 2
-	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
-	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
-	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
-	StaticText " "
 	Slider "$DSPLYMNU_FOV",						"fov",							75.0, 120.0, 0.1, 1
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
-	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
-	StaticText " "
 	Option "$DSPLYMNU_DEATHCAM",				"r_deathcamera", "OnOff"
 	Option "$DSPLYMNU_TELEZOOM",				"telezoom", "OnOff"
 	Slider "$DSPLYMNU_QUAKEINTENSITY",			"r_quakeintensity", 0.0, 1.0, 0.05, 2
+	Option "$MISCMNU_FVIEWBOB",		           "fviewbob", "OnOff"
 	StaticText " "
-	IfOption(SWRender)
-	{
-		Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
-	}
-	Option "$GLPREFMNU_RENDERQUALITY",			gl_seamless,					"Precision"
+	Option "$HUDMNU_CROSSHAIRON",			"crosshairon", "OnOff"
+	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
+	Option "$HUDMNU_FORCECROSSHAIR",		"crosshairforce", "OnOff"
+	Option "$HUDMNU_GROWCROSSHAIR",			"crosshairgrow", "OnOff"
+	ColorPicker "$HUDMNU_CROSSHAIRCOLOR", 	"crosshaircolor"
+	Option "$HUDMNU_CROSSHAIRHEALTH",		"crosshairhealth", "CrosshairHealthTypes"
+	Slider "$HUDMNU_CROSSHAIRSCALE",		"crosshairscale", 0.0, 2.0, 0.05, 2
+	StaticText " "
+	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OffOn"
+	Option "$MISCMNU_CLEANSTAT",				"wi_cleantextscale", "OnOff"
+	Option "$MISCMNU_WIPERCENT",				"wi_percents", "OnOff"
+
 }
+
 
 OptionMenu "SWROptions" protected
 {
@@ -1039,6 +1089,7 @@ OptionMenu "SpriteOptions" protected
 {
 	Title "Sprite Options"
 
+	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
 	Option "$DSPLYMNU_SPRITESHADOW",			"r_actorspriteshadow", "SpriteShadowModes"
 	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
 	Option "$DSPLYMNU_ROCKETTRAILS",			"cl_rockettrails", "RocketTrailTypes"
@@ -1048,7 +1099,7 @@ OptionMenu "SpriteOptions" protected
 	Slider "$DSPLYMNU_MAXDECALS",				"cl_maxdecals", 0, 10000, 100, 0
 	Option "$DSPLYMNU_PLAYERSPRITES",			"r_drawplayersprites", "OnOff"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
-
+	StaticText "$DSPLYMNU_GLOPT"
 	Option "$GLPREFMNU_SPRCLIP",				gl_spriteclip,					"SpriteclipModes"
 	Option "$GLPREFMNU_SPRBLEND",				gl_sprite_blend,				"OnOff"
 	Option "$GLPREFMNU_FUZZSTYLE",				gl_fuzztype,					"FuzzStyle"
@@ -1128,21 +1179,6 @@ OptionValue ZDoomStrife
 OptionMenu "HUDOptions" protected
 {
 	Title "$HUDMNU_TITLE"
-	Submenu "$HUDMNU_SCALEOPT",				"ScalingOptions"
-	Submenu "$HUDMNU_ALTHUD",				"AltHudOptions"
-	Submenu "$HUDMNU_MESSAGE", 				"MessageOptions"
-	Submenu "$HUDMNU_FLASH", 				"FlashOptions"
-	Submenu "$DSPLYMNU_SCOREBOARD", 		"ScoreboardOptions"
-	Submenu "$HUDMNU_FONTOPTIONS",			"FontOptions"
-	StaticText " "
-	Option "$HUDMNU_CROSSHAIRON",			"crosshairon", "OnOff"
-	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
-	Option "$HUDMNU_FORCECROSSHAIR",		"crosshairforce", "OnOff"
-	Option "$HUDMNU_GROWCROSSHAIR",			"crosshairgrow", "OnOff"
-	ColorPicker "$HUDMNU_CROSSHAIRCOLOR", 	"crosshaircolor"
-	Option "$HUDMNU_CROSSHAIRHEALTH",		"crosshairhealth", "CrosshairHealthTypes"
-	Slider "$HUDMNU_CROSSHAIRSCALE",		"crosshairscale", 0.0, 2.0, 0.05, 2
-	StaticText " "
 	Option "$HUDMNU_NAMETAGS",				"displaynametags", "DisplayTagsTypes"
 	Option "$HUDMNU_NAMETAGCOLOR",			"nametagcolor", "TextColors", "displaynametags"
 	Option "$HUDMNU_OLDOUCH",				"st_oldouch", "OnOff"
@@ -1154,6 +1190,13 @@ OptionMenu "HUDOptions" protected
 	StaticText " "
 	Slider "$DSPLYMNU_MENUDIM",					"dimamount", 0, 1.0, 0.05, 2
 	ColorPicker "$DSPLYMNU_DIMCOLOR",			"dimcolor"
+	StaticText " "
+	Submenu "$HUDMNU_SCALEOPT",				"ScalingOptions"
+	Submenu "$HUDMNU_ALTHUD",				"AltHudOptions"
+	Submenu "$HUDMNU_MESSAGE", 				"MessageOptions"
+	Submenu "$HUDMNU_FLASH", 				"FlashOptions"
+	Submenu "$DSPLYMNU_SCOREBOARD", 		"ScoreboardOptions"
+	Submenu "$HUDMNU_FONTOPTIONS",			"FontOptions"
 
 }
 
@@ -1305,20 +1348,8 @@ OptionMenu "MiscOptions" protected
 {
 	Title "$MISCMNU_TITLE"
 	//Indent 220
-	IfOption(Windows)
-	{
-		Option "$MISCMNU_MERGEKEYS", 			"k_mergekeys", "OnOff"
-		Option "$MISCMNU_WINFULLSCREENTOGGLE",	"k_allowfullscreentoggle", "OnOff"
-	}
-	IfOption(Mac)
-	{
-		Option "$MISCMNU_MACFULLSCREENTOGGLE",	"k_allowfullscreentoggle", "OnOff"
-	}
 	Option "$MISCMNU_QUERYIWAD",				"queryiwad", "OnOff"
 	StaticText " "
-	Option "$MISCMNU_FVIEWBOB",            "fviewbob", "OnOff"
-	Option "$MISCMNU_NOCHEATS",					"nocheats", "OnOff"
-	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
 	Option "$MISCMNU_ENABLEAUTOSAVES",			"disableautosave", "Autosave"
 	Option "$MISCMNU_SAVELOADCONFIRMATION",		"saveloadconfirmation", "OnOff"
 	Slider "$MISCMNU_AUTOSAVECOUNT",			"autosavecount", 1, 20, 1, 0
@@ -1327,7 +1358,6 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
 	Option "$MISCMNU_SETSLOTSTRICT",			"setslotstrict", "YesNo"
-	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
 	Option "$MISCMNU_PAUSEINBACKGROUND",		"i_pauseinbackground", "OnOff"
 	StaticText " "
 	Option "$MISCMNU_CACHENODES",				"gl_cachenodes", "OnOff"
@@ -1341,11 +1371,6 @@ OptionMenu "MiscOptions" protected
 
 	StaticText " "
 	Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
-
-	StaticText " "
-	Option "$MISCMNU_CLEANMENU",				"m_cleanscale", "OffOn"
-	Option "$MISCMNU_CLEANSTAT",				"wi_cleantextscale", "OnOff"
-	Option "$MISCMNU_WIPERCENT",				"wi_percents", "OnOff"
 
 	StaticText " "
 	Option "$MISCMNU_ALWAYSTALLY",				"sv_alwaystally", "AlwaysTally"
@@ -1516,10 +1541,6 @@ OptionMenu MapColorMenu protected
 	Title "$MAPCOLORMNU_TITLE"
 	SafeCommand "$MAPCOLORMNU_DEFAULTMAPCOLORS", 		"am_restorecolors"
 	StaticText " "
-	Submenu "$MAPCOLORMNU_CHEATMODE",					"MapColorMenuCheats"
-	Submenu "$MAPCOLORMNU_OVERLAY",						"MapColorMenuOverlay"
-	Submenu "$MAPCOLORMNU_OVCHEATMODE",					"MapColorMenuCheatsOverlay"
-	StaticText " "
 	ColorPicker "$MAPCOLORMNU_BACKCOLOR",				"am_backcolor"
 	ColorPicker "$MAPCOLORMNU_YOURCOLOR",				"am_yourcolor"
 	ColorPicker "$MAPCOLORMNU_WALLCOLOR",				"am_wallcolor"
@@ -1536,6 +1557,10 @@ OptionMenu MapColorMenu protected
 	ColorPicker "$MAPCOLORMNU_UNEXPLOREDSECRETCOLOR",	"am_unexploredsecretcolor"
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_specialwallcolor"
 	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_portalcolor"
+	StaticText " "
+	Submenu "$MAPCOLORMNU_CHEATMODE",					"MapColorMenuCheats"
+	Submenu "$MAPCOLORMNU_OVERLAY",						"MapColorMenuOverlay"
+	Submenu "$MAPCOLORMNU_OVCHEATMODE",					"MapColorMenuCheatsOverlay"
 }
 
 OptionMenu MapColorMenuCheats protected
@@ -2368,8 +2393,6 @@ OptionMenu VideoModeMenu protected
 {
 	Title "$VIDMNU_TITLE"
 
-	Option "$VIDMNU_FULLSCREEN",		"vid_fullscreen", "YesNo"
-
 	IfOption(Mac)
 	{
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
@@ -2381,16 +2404,11 @@ OptionMenu VideoModeMenu protected
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
 
 	StaticText " "
-	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
-	Slider "$VIDMNU_MAXFPS",					"vid_maxfps", 35, 500, 1
-
-	StaticText " "
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
-	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
+
 
 	StaticText " "
-	Option "$GLPREFMNU_MULTISAMPLE", 			gl_multisample,					"Multisample"
-	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
+//	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
 	
 	StaticText ""
 	StaticText "$VIDMNU_CUSTOMRES"
@@ -2405,7 +2423,7 @@ OptionMenu VideoModeMenu protected
 	SubMenu "$VIDMNU_RESPRESET", CustomResolutionMenu
 
 	StaticText ""
-	StaticText ""
+	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
 	TextField "$VKMNU_DEVICE",			vk_device
 }
 

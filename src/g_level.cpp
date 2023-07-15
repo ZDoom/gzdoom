@@ -1521,6 +1521,12 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 
+	// [Nash] allow modder control of autosaving
+	if (flags9 & LEVEL9_NOAUTOSAVEONENTER)
+	{
+		autosave = false;
+	}
+
 	// [RH] Always save the game when entering a new 
 	if (autosave && !savegamerestore && disableautosave < 1)
 	{

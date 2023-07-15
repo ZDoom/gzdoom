@@ -1437,6 +1437,10 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		flags2 |= LEVEL2_PRERAISEWEAPON;
 	}
+	if (changeflags & CHANGELEVEL_NOAUTOSAVE)
+	{
+		flags9 |= LEVEL9_NOAUTOSAVEONENTER;
+	}
 
 	maptime = 0;
 

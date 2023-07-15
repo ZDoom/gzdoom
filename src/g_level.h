@@ -27,6 +27,7 @@ enum
 	CHANGELEVEL_NOINTERMISSION = 16,
 	CHANGELEVEL_RESETHEALTH = 32,
 	CHANGELEVEL_PRERAISEWEAPON = 64,
+	CHANGELEVEL_NOAUTOSAVE = 128,
 };
 
 void G_DoLoadLevel (const FString &MapName, int position, bool autosave, bool newGame);

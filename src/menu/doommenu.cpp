@@ -135,7 +135,7 @@ void StartGameDirect(bool hasPlayerClass, bool randomPlayerClass, PClassActor * 
 	}
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DPlayerMenu, StartGameDirect, StartGameDirect)
+DEFINE_ACTION_FUNCTION_NATIVE(DMenu, StartGameDirect, StartGameDirect)
 {
 	PARAM_PROLOGUE;
 	PARAM_BOOL(hasPlayerClass);

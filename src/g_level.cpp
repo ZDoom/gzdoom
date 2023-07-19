@@ -1437,10 +1437,6 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		flags2 |= LEVEL2_PRERAISEWEAPON;
 	}
-	if (changeflags & CHANGELEVEL_NOAUTOSAVE)
-	{
-		flags9 |= LEVEL9_NOAUTOSAVEONENTER;
-	}
 
 	maptime = 0;
 
@@ -1527,10 +1523,8 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 
 #ifdef UNFRIENDLY_OPTIONS
 	// [Nash] allow modder control of autosaving
-	if (flags9 & LEVEL9_NOAUTOSAVEONENTER)
-	{
+	if (changeflags & CHANGELEVEL_NOAUTOSAVE)
 		autosave = false;
-	}
 #endif
 
 	// [RH] Always save the game when entering a new 

@@ -2450,14 +2450,9 @@ OptionValue "Colormaps"
 
 OptionValue "LightingModes"
 {
-	0, "$OPTVAL_STANDARD"
-	1, "$OPTVAL_BRIGHT"
-	2, "$OPTVAL_DOOM"
-	3, "$OPTVAL_DARK"
-	4, "$OPTVAL_LEGACY"
-	5, "$OPTVAL_BUILD"
-	8, "$OPTVAL_SOFTWARE"
-	16, "$OPTVAL_VANILLA"
+	0, "$OPTVAL_CLASSIC"
+	1, "$OPTVAL_SOFTWARE"
+	2, "$OPTVAL_VANILLA"
 }
 
 OptionValue "Precision"

@@ -866,7 +866,7 @@ void FFunctionBuildList::Build()
 			item.Proto = ctx.ReturnProto;
 			if (item.Proto == nullptr)
 			{
-				item.Code->ScriptPosition.Message(MSG_ERROR, "Function %s without prototype", item.PrintableName);
+				item.Code->ScriptPosition.Message(MSG_ERROR, "Function %s without prototype", item.PrintableName.GetChars());
 				continue;
 			}
 
@@ -913,7 +913,7 @@ void FFunctionBuildList::Build()
 			catch (CRecoverableError &err)
 			{
 				// catch errors from the code generator and pring something meaningful.
-				item.Code->ScriptPosition.Message(MSG_ERROR, "%s in %s", err.GetMessage(), item.PrintableName);
+				item.Code->ScriptPosition.Message(MSG_ERROR, "%s in %s", err.GetMessage(), item.PrintableName.GetChars());
 			}
 		}
 		delete item.Code;

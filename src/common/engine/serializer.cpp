@@ -55,6 +55,7 @@
 #include "textures.h"
 #include "texturemanager.h"
 #include "base64.h"
+#include "vm.h"
 
 extern DObject *WP_NOCHANGE;
 bool save_full = false;	// for testing. Should be removed afterward.
@@ -1563,6 +1564,35 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, Dictionary 
 		dict = DictionaryFromString(contents);
 		return arc;
 	}
+}
+
+template<> FSerializer& Serialize(FSerializer& arc, const char* key, VMFunction*& func, VMFunction**)
+{
+	if (arc.isWriting())
+	{
+		arc.WriteKey(key);
+		if (func) arc.w->String(func->QualifiedName);
+		else arc.w->Null();
+	}
+	else
+	{
+		func = nullptr;
+
+		auto val = arc.r->FindKey(key);
+		if (val != nullptr && val->IsString())
+		{
+			auto qname = val->GetString();
+			size_t p = strcspn(qname, ".");
+			if (p != 0)
+			{
+				FName clsname(qname, p, true);
+				FName funcname(qname + p + 1, true);
+				func = PClass::FindFunction(clsname, funcname);
+			}
+		}
+
+	}
+	return arc;
 }
 
 //==========================================================================

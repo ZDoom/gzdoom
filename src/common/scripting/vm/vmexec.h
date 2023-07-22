@@ -895,7 +895,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 				catch (CVMAbortException &err)
 				{
 					err.MaybePrintMessage();
-					err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName.GetChars());
+					err.stacktrace.AppendFormat("Called from %s\n", call->PrintableName);
 					// PrintParameters(reg.param + f->NumParam - B, B);
 					throw;
 				}
@@ -2000,7 +2000,7 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 	catch (CVMAbortException &err)
 	{
 		err.MaybePrintMessage();
-		err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars(), sfunc->PCToLine(pc));
+		err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName, sfunc->SourceFileName.GetChars(), sfunc->PCToLine(pc));
 		// PrintParameters(reg.param + f->NumParam - B, B);
 		throw;
 	}

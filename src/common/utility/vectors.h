@@ -55,7 +55,7 @@ namespace pi
 	inline constexpr float pif() { return 3.14159265358979323846f; }
 }
 
-// optionally use reliable math routines if reproducability across hardware is important., but let this still compile without them.
+// optionally use reliable math routines if reproducability across hardware is important, but let this still compile without them.
 #if __has_include("math/cmath.h")
 #include "math/cmath.h"
 #else
@@ -1504,12 +1504,6 @@ template<class T>
 inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
 	return fabs(deltaangle(a2, a1));
-}
-
-template<class T>
-inline TAngle<T> clamp(const TAngle<T> &angle, const TAngle<T> &min, const TAngle<T> &max)
-{
-	return TAngle<T>::fromDeg(clamp(angle.Degrees(), min.Degrees(), max.Degrees()));
 }
 
 inline TAngle<double> VecToAngle(double x, double y)

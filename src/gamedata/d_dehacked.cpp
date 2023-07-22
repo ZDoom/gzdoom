@@ -1016,7 +1016,7 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 		sfunc->NumArgs = numargs;
 		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
-		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
+		sfunc->PrintableName = ClassDataAllocator.Strdup(FStringf("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2));
 
 		disasmdump.Write(sfunc, sfunc->PrintableName);
 

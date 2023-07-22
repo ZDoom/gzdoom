@@ -132,16 +132,16 @@ void FState::CheckCallerType(AActor *self, AActor *stateowner)
 		// This should really never happen. Any valid action function must have actor pointers here.
 		if (!requiredType->isObjectPointer())
 		{
-			ThrowAbortException(X_OTHER, "Bad function prototype in function call to %s", ActionFunc->PrintableName.GetChars());
+			ThrowAbortException(X_OTHER, "Bad function prototype in function call to %s", ActionFunc->PrintableName);
 		}
 		auto cls = static_cast<PObjectPointer*>(requiredType)->PointedClass();
 		if (check == nullptr)
 		{
-			ThrowAbortException(X_OTHER, "%s called without valid caller. %s expected", ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+			ThrowAbortException(X_OTHER, "%s called without valid caller. %s expected", ActionFunc->PrintableName, cls->TypeName.GetChars());
 		}
 		if (!(StateFlags & STF_DEHACKED) && !check->IsKindOf(cls))
 		{
-			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName, cls->TypeName.GetChars());
 		}
 	};
 	

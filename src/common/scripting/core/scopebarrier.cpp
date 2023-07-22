@@ -221,5 +221,5 @@ void FScopeBarrier::ValidateCall(PClass* selftype, VMFunction *calledfunc, int o
 {
 	int innerside = FScopeBarrier::SideFromObjectFlags(selftype->VMType->ScopeFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData))
-		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->PrintableName.GetChars(), FScopeBarrier::StringFromSide(outerside));
+		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->PrintableName, FScopeBarrier::StringFromSide(outerside));
 }

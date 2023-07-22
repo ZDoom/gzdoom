@@ -306,7 +306,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 	if (result == 0)
 		I_Error("RtlAddFunctionTable failed");
 
-	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
+	JitDebugInfo.Push({ FString(compiler->GetScriptFunction()->PrintableName), compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
 #endif
 
 	return p;

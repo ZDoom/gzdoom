@@ -15,7 +15,7 @@ static void OutputJitLog(const asmjit::StringLogger &logger);
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if 0
-	if (strcmp(sfunc->PrintableName.GetChars(), "StatusScreen.drawNum") != 0)
+	if (strcmp(sfunc->PrintableName, "StatusScreen.drawNum") != 0)
 		return nullptr;
 #endif
 
@@ -35,7 +35,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 	catch (const CRecoverableError &e)
 	{
 		OutputJitLog(logger);
-		Printf("%s: Unexpected JIT error: %s\n",sfunc->PrintableName.GetChars(), e.what());
+		Printf("%s: Unexpected JIT error: %s\n",sfunc->PrintableName, e.what());
 		return nullptr;
 	}
 }
@@ -237,7 +237,7 @@ void JitCompiler::Setup()
 	cc.comment(marks, 56);
 
 	FString funcname;
-	funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
+	funcname.Format("Function: %s", sfunc->PrintableName);
 	cc.comment(funcname.GetChars(), funcname.Len());
 
 	cc.comment(marks, 56);
@@ -364,7 +364,7 @@ void JitCompiler::SetupSimpleFrame()
 
 	if (errorDetails)
 	{
-		I_FatalError("JIT: inconsistent number of %s for function %s", errorDetails, sfunc->PrintableName.GetChars());
+		I_FatalError("JIT: inconsistent number of %s for function %s", errorDetails, sfunc->PrintableName);
 	}
 
 	for (int i = regd; i < sfunc->NumRegD; i++)

@@ -309,7 +309,7 @@ static bool UnravelVarArgAJump(FxVMFunctionCall *func, FCompileContext &ctx)
 static bool AJumpProcessing(FxVMFunctionCall *func, FCompileContext &ctx)
 {
 	// Unfortunately the PrintableName is the only safe thing to catch this special case here.
-	if (func->Function->Variants[0].Implementation->PrintableName.CompareNoCase("Actor.A_Jump [Native]") == 0)
+	if (stricmp(func->Function->Variants[0].Implementation->QualifiedName, "Actor.A_Jump") == 0)
 	{
 		// Unravel the varargs part of this function here so that the VM->native interface does not have to deal with it anymore.
 		if (func->ArgList.Size() > 2)

@@ -351,8 +351,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 			//modelFrame
 			if (actor->modelData->modelFrameGenerators.Size() > i
-			 && actor->modelData->modelFrameGenerators[i] >= 0
-			 && actor->modelData->modelFrameGenerators[i] < modelsamount
+			 && (unsigned)actor->modelData->modelFrameGenerators[i] < modelsamount
 			 && smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
 			   ) {
 				modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];

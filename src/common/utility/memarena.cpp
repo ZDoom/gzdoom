@@ -132,6 +132,13 @@ void* FMemArena::Calloc(size_t size)
 	return mem;
 }
 
+const char* FMemArena::Strdup(const char* str)
+{
+	char* p = (char*)Alloc(strlen(str) + 1);
+	strcpy(p, str);
+	return p;
+}
+
 //==========================================================================
 //
 // FMemArena :: FreeAll

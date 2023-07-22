@@ -790,7 +790,7 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo
 	it.PrintableName = name;
 	it.Function = new VMScriptFunction;
 	it.Function->Name = functype->SymbolName;
-	it.Function->PrintableName = name;
+	it.Function->QualifiedName = it.Function->PrintableName = ClassDataAllocator.Strdup(name);
 	it.Function->ImplicitArgs = functype->GetImplicitArgs();
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
@@ -866,7 +866,7 @@ void FFunctionBuildList::Build()
 			item.Proto = ctx.ReturnProto;
 			if (item.Proto == nullptr)
 			{
-				item.Code->ScriptPosition.Message(MSG_ERROR, "Function %s without prototype", item.PrintableName.GetChars());
+				item.Code->ScriptPosition.Message(MSG_ERROR, "Function %s without prototype", item.PrintableName);
 				continue;
 			}
 
@@ -913,7 +913,7 @@ void FFunctionBuildList::Build()
 			catch (CRecoverableError &err)
 			{
 				// catch errors from the code generator and pring something meaningful.
-				item.Code->ScriptPosition.Message(MSG_ERROR, "%s in %s", err.GetMessage(), item.PrintableName.GetChars());
+				item.Code->ScriptPosition.Message(MSG_ERROR, "%s in %s", err.GetMessage(), item.PrintableName);
 			}
 		}
 		delete item.Code;

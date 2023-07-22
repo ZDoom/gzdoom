@@ -2798,7 +2798,7 @@ void ZCCCompiler::InitFunctions()
 			{
 				if (v->VarFlags & VARF_Abstract)
 				{
-					Error(c->cls, "Non-abstract class %s must override abstract function %s", c->Type()->TypeName.GetChars(), v->PrintableName.GetChars());
+					Error(c->cls, "Non-abstract class %s must override abstract function %s", c->Type()->TypeName.GetChars(), v->PrintableName);
 				}
 			}
 		}

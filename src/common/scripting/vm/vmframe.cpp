@@ -80,7 +80,7 @@ void VMFunction::CreateRegUse()
 	if (!Proto)
 	{
 		//if (RegTypes) return;
-		//Printf(TEXTCOLOR_ORANGE "Function without prototype needs register info manually set: %s\n", PrintableName.GetChars());
+		//Printf(TEXTCOLOR_ORANGE "Function without prototype needs register info manually set: %s\n", PrintableName);
 		return;
 	}
 	assert(Proto->isPrototype());
@@ -277,7 +277,7 @@ static bool CanJit(VMScriptFunction *func)
 	if (func->NumRegA + func->NumRegD + func->NumRegF + func->NumRegS < maxregs)
 		return true;
 
-	Printf(TEXTCOLOR_ORANGE "%s is using too many registers (%d of max %d)! Function will not use native code.\n", func->PrintableName.GetChars(), func->NumRegA + func->NumRegD + func->NumRegF + func->NumRegS, maxregs);
+	Printf(TEXTCOLOR_ORANGE "%s is using too many registers (%d of max %d)! Function will not use native code.\n", func->PrintableName, func->NumRegA + func->NumRegD + func->NumRegF + func->NumRegS, maxregs);
 
 	return false;
 }
@@ -289,7 +289,7 @@ int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int num
 	// rather than let GZDoom crash.
 	if (func->VarFlags & VARF_Abstract)
 	{
-		ThrowAbortException(X_OTHER, "attempt to call abstract function %s.", func->PrintableName.GetChars());
+		ThrowAbortException(X_OTHER, "attempt to call abstract function %s.", func->PrintableName);
 	}
 #ifdef HAVE_VM_JIT
 	if (vm_jit && CanJit(static_cast<VMScriptFunction*>(func)))
@@ -320,7 +320,7 @@ int VMNativeFunction::NativeScriptCall(VMFunction *func, VMValue *params, int nu
 	catch (CVMAbortException &err)
 	{
 		err.MaybePrintMessage();
-		err.stacktrace.AppendFormat("Called from %s\n", func->PrintableName.GetChars());
+		err.stacktrace.AppendFormat("Called from %s\n", func->PrintableName);
 		throw;
 	}
 }
@@ -702,7 +702,7 @@ void CVMAbortException::MaybePrintMessage()
 
 	CVMAbortException err(reason, moreinfo, ap);
 
-	err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars(), sfunc->PCToLine(line));
+	err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName, sfunc->SourceFileName.GetChars(), sfunc->PCToLine(line));
 	throw err;
 }
 

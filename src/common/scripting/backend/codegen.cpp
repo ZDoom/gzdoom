@@ -8858,7 +8858,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
-	if (Self->ValueType->isRealPointer())
+	if (Self->ValueType->isRealPointer() && Self->ValueType->toPointer()->PointedType)
 	{
 		auto ptype = Self->ValueType->toPointer()->PointedType;
 		cls = ptype->toContainer();
@@ -9151,7 +9151,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	// [Player701] Catch attempts to call abstract functions directly at compile time
 	if (NoVirtual && Function->Variants[0].Implementation->VarFlags & VARF_Abstract)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Cannot call abstract function %s", Function->Variants[0].Implementation->PrintableName.GetChars());
+		ScriptPosition.Message(MSG_ERROR, "Cannot call abstract function %s", Function->Variants[0].Implementation->PrintableName);
 		delete this;
 		return nullptr;
 	}

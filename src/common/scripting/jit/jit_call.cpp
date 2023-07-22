@@ -97,7 +97,7 @@ void JitCompiler::EmitVMCall(asmjit::X86Gp vmfunc, VMFunction *target)
 	call->setArg(2, Imm(B));
 	call->setArg(3, GetCallReturns());
 	call->setArg(4, Imm(C));
-	call->setInlineComment(target ? target->PrintableName.GetChars() : "VMCall");
+	call->setInlineComment(target ? target->PrintableName : "VMCall");
 
 	LoadInOuts();
 	LoadReturns(pc + 1, C);
@@ -360,7 +360,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 
 	asmjit::CBNode *cursorBefore = cc.getCursor();
 	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature());
-	call->setInlineComment(target->PrintableName.GetChars());
+	call->setInlineComment(target->PrintableName);
 	asmjit::CBNode *cursorAfter = cc.getCursor();
 	cc.setCursor(cursorBefore);
 

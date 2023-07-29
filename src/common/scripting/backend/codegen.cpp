@@ -2788,35 +2788,23 @@ void GenStructCopyOps(PStruct * s)
 			if(PField * f; (f = dyn_cast<PField>(p->Value)) && !(f->Flags & VARF_Meta))
 			{ // store all fields
 				assert(f->Type->SizeKnown);
-				sortedFields.Push(f);
+				sortedFields.Insert(sortedFields.SortedFind(f, [](const PField* a, const PField* b)
+				{
+					return a->Offset < b->Offset;
+				}, false),f);
 			}
 		}
 	}
 
-	std::sort(sortedFields.begin(), sortedFields.end(),
-		[](const PField* a, const PField* b)
-		{
-			return a->Offset < b->Offset;
-		}
-	);
-
-	struct field_group
-	{
-		size_t start_index;
-		size_t end_index;
-	};
-
-	TArray<field_group> memcpys;
-
 	TArray<PField *> objects;
-
 	TArray<PField *> complex;
 
-	size_t simple_start = SIZE_MAX;
+	TArray<StructCopyOp> memcpy_ops;
+	TArray<StructCopyOp> complex_ops; // array/dynarray/map copies
 
 	for(size_t i = 0; i < sortedFields.Size(); i++)
 	{
-		auto *t = sortedFields[i]->Type;
+		auto * t = sortedFields[i]->Type;
 		
 		auto * baseType = PType::underlyingArrayType(t);
 
@@ -2826,107 +2814,125 @@ void GenStructCopyOps(PStruct * s)
 			if(baseType->isObjectPointer())
 			{
 				objects.Push(sortedFields[i]);
-				if(simple_start == SIZE_MAX) simple_start = i;
+				memcpy_ops.Push({
+					StructCopyOpType::Memcpy,
+					unsigned(sortedFields[i]->Offset),
+					unsigned(sortedFields[i]->Type->Size),
+					nullptr
+				});
 			}
 			else
 			{
 				complex.Push(sortedFields[i]);
-				if(simple_start != SIZE_MAX)
-				{
-					memcpys.Push({simple_start, i-1});
-					simple_start = SIZE_MAX;
-				}
 			}
 		}
 		else
 		{
-			if(simple_start == SIZE_MAX) simple_start = i;
-		}
-	}
-	{
-		TArray<StructCopyOp> memcpy_ops;
-		TArray<StructCopyOp> complex_ops; // array/dynarray/map copies
-		
-		for(PField * obj : objects)
-		{ // object barriers go before anything else
-			ops.Push({
-				obj->Type->isArray() ? StructCopyOpType::ObjArrayBarrier : StructCopyOpType::ObjBarrier,
-				unsigned(obj->Offset),
-				obj->Type->Size,
-				obj->Type
-			});
-		}
-
-		for(field_group mem : memcpys)
-		{ // place memcpy calls together
-			assert(mem.start_index != SIZE_MAX && mem.end_index != mem.start_index && mem.end_index >= mem.end_index);
-
-			PField * start = sortedFields[mem.start_index];
-			PField * end = sortedFields[mem.end_index];
-			// start = offset1 , end = offset2 + size2
 			memcpy_ops.Push({
 				StructCopyOpType::Memcpy,
-				unsigned(start->Offset),
-				unsigned((end->Offset + end->Type->Size) - start->Offset),
+				unsigned(sortedFields[i]->Offset),
+				unsigned(sortedFields[i]->Type->Size),
 				nullptr
 			});
 		}
+	}
 
-		for(PField * cmp : complex)
+	assert(memcpy_ops.IsSorted());
+
+	for(PField * obj : objects)
+	{ // object barriers go before anything else
+		ops.Push({
+			obj->Type->isArray() ? StructCopyOpType::ObjArrayBarrier : StructCopyOpType::ObjBarrier,
+			unsigned(obj->Offset),
+			obj->Type->Size,
+			obj->Type
+		});
+	}
+
+	for(PField * cmp : complex)
+	{
+		if(cmp->Type->isArray())
 		{
-			if(cmp->Type->isArray())
+			auto realType = PType::underlyingArrayType(cmp->Type);
+			complex_ops.Push({
+				realType->isStruct() ? StructCopyOpType::ArrayCopyStruct : cmp->Type == TypeString ? StructCopyOpType::ArrayCopyString : StructCopyOpType::ArrayCopyDynArrayMap,
+				unsigned(cmp->Offset),
+				cmp->Type->Size,
+				cmp->Type
+			});
+		}
+		else if(!cmp->Type->isStruct())
+		{
+			complex_ops.Push({
+				cmp->Type == TypeString ? StructCopyOpType::StringCopy : StructCopyOpType::DynArrayMapCopy,
+				unsigned(cmp->Offset),
+				cmp->Type->Size,
+				cmp->Type
+			});
+		}
+		else // if(cmp->Type->isStruct())
+		{ // flatten structs into existing op list
+			const TArray<StructCopyOp>& copyOps = *FxComplexStructAssign::GetCopyOps(static_cast<PStruct*>(cmp->Type));
+							// this is guaranteed to exist, since copy ops are being generated in order of dependence during CompileAllFields
+			unsigned off = unsigned(cmp->Offset);
+			for(auto op : copyOps)
 			{
-				auto realType = PType::underlyingArrayType(cmp->Type);
-				complex_ops.Push({
-					realType->isStruct() ? StructCopyOpType::ArrayCopyStruct : cmp->Type == TypeString ? StructCopyOpType::ArrayCopyString : StructCopyOpType::ArrayCopyDynArrayMap,
-					unsigned(cmp->Offset),
-					cmp->Type->Size,
-					cmp->Type
-				});
-			}
-			else if(!cmp->Type->isStruct())
-			{
-				complex_ops.Push({
-					cmp->Type == TypeString ? StructCopyOpType::StringCopy : StructCopyOpType::DynArrayMapCopy,
-					unsigned(cmp->Offset),
-					cmp->Type->Size,
-					cmp->Type
-				});
-			}
-			else // if(cmp->Type->isStruct())
-			{ // flatten structs into existing op list
-			  // TODO optimization: fold memcpy ops in the start and end complex of complex struct into pre-existing memcpy ops
-				const TArray<StructCopyOp>& copyOps = *FxComplexStructAssign::GetCopyOps(static_cast<PStruct*>(cmp->Type));
-							   // this is guaranteed to exist, since copy ops are being generated in order of dependence during CompileAllFields
-				unsigned off = unsigned(cmp->Offset);
-				for(auto op : copyOps)
-				{
-					StructCopyOp newop {
-						op.op,
-						unsigned(op.offset) + off,
-						op.size,
-						op.type
-					};
+				StructCopyOp newop {
+					op.op,
+					unsigned(op.offset) + off,
+					op.size,
+					op.type
+				};
 
-					if(op.op == StructCopyOpType::ObjArrayBarrier || op.op == StructCopyOpType::ObjBarrier)
-					{
-						ops.Push(newop);
-					}
-					else if(op.op == StructCopyOpType::Memcpy)
-					{
-						memcpy_ops.Push(newop);
-					}
-					else
-					{
-						complex_ops.Push(newop);
-					}
+				if(op.op == StructCopyOpType::ObjArrayBarrier || op.op == StructCopyOpType::ObjBarrier)
+				{
+					ops.Push(newop);
+				}
+				else if(op.op == StructCopyOpType::Memcpy)
+				{ // make sure copy ops are in order
+					memcpy_ops.SortedInsert(newop);
+				}
+				else
+				{
+					complex_ops.Push(newop);
 				}
 			}
 		}
-
-		ops.Append(memcpy_ops);
-		ops.Append(complex_ops);
 	}
+		
+	{
+		// fold memcpy ops
+		TArray<StructCopyOp> memcpy_ops_tmp;
+
+		assert(memcpy_ops.IsSorted());
+
+		unsigned n = memcpy_ops.Size();
+
+		for(unsigned i = 0; i < n; i++)
+		{
+			unsigned j;
+			for(j = i; (j + 1) < n; j++)
+			{
+				StructCopyOp cur = memcpy_ops[j];
+				StructCopyOp next = memcpy_ops[j + 1];
+				if((cur.offset + cur.size) != next.offset) break;
+			}
+
+			StructCopyOp op = memcpy_ops[i];
+			if(j != i)
+			{
+				StructCopyOp merge_op = memcpy_ops[j];
+				op.size = (merge_op.offset + merge_op.size) - op.offset;
+				i = j;
+			}
+			memcpy_ops_tmp.Push(op);
+		}
+		assert(memcpy_ops_tmp.IsSorted());
+		memcpy_ops = std::move(memcpy_ops_tmp);
+	}
+
+	ops.Append(memcpy_ops);
+	ops.Append(complex_ops);
 
 	FxComplexStructAssign::struct_copy_ops.Insert(s,std::move(ops));
 }

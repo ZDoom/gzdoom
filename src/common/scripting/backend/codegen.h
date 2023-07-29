@@ -930,6 +930,10 @@ struct StructCopyOp
 	unsigned offset;
 	unsigned size; // bytes for memcpy, unused otherwise
 	PType * type; // used for struct, dynarray, map and non-dynamic array copies, null for memcpy
+	bool operator< (const StructCopyOp& other) const noexcept
+	{
+		return offset < other.offset;
+	}
 };
 
 class FxComplexStructAssign : public FxExpression

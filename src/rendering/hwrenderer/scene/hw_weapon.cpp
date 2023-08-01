@@ -690,7 +690,7 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
 	VMFunction * ModifyBobLayer = nullptr;
 	DVector2 bobxy = DVector2(weap.bobx , weap.boby);
 
-	if(weap.weapon)
+	if(weap.weapon && weap.weapon->GetCaller())
 	{
 		PClass * cls = weap.weapon->GetCaller()->GetClass();
 		ModifyBobLayer = cls->Virtuals.Size() > ModifyBobLayerVIndex ? cls->Virtuals[ModifyBobLayerVIndex] : nullptr;
@@ -774,7 +774,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 	DVector3 rotation = DVector3(weap.rotation);
 	DVector3 pivot = DVector3(weap.pivot);
 
-	if(weap.weapon)
+	if(weap.weapon && weap.weapon->GetCaller())
 	{
 		PClass * cls = weap.weapon->GetCaller()->GetClass();
 		ModifyBobLayer3D = cls->Virtuals.Size() > ModifyBobLayer3DVIndex ? cls->Virtuals[ModifyBobLayer3DVIndex] : nullptr;

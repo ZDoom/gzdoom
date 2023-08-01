@@ -691,10 +691,12 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area, F
 
 	if(weap.weapon && weap.weapon->GetCaller())
 	{
-		PClass * cls = weap.weapon->GetCaller()->GetClass();
-		ModifyBobLayer = cls->Virtuals.Size() > ModifyBobLayerVIndex ? cls->Virtuals[ModifyBobLayerVIndex] : nullptr;
-
-		if( ModifyBobLayer == ModifyBobLayerOrigFunc) ModifyBobLayer = nullptr;
+		if(auto caller = weap.weapon->GetCaller())
+		{
+			PClass* cls = caller->GetClass();
+			ModifyBobLayer = cls->Virtuals.Size() > ModifyBobLayerVIndex ? cls->Virtuals[ModifyBobLayerVIndex] : nullptr;
+			if( ModifyBobLayer == ModifyBobLayerOrigFunc) ModifyBobLayer = nullptr;
+		}
 	}
 
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change

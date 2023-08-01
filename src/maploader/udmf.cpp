@@ -1481,6 +1481,16 @@ public:
 					sd->Flags |= WALLF_EXTCOLOR;
 				break;
 
+			case NAME_lm_lightcolorline:
+			case NAME_lm_lightintensityline:
+			case NAME_lm_lightdistanceline:
+			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist_top:
+			case NAME_lm_sampledist_mid:
+			case NAME_lm_sampledist_bot:
+				CHECK_N(Zd | Zdt)
+					break;
+
 			default:
 				if (strnicmp("user_", key.GetChars(), 5))
 					DPrintf(DMSG_WARNING, "Unknown UDMF sidedef key %s\n", key.GetChars());

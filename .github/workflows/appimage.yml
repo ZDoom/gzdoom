@@ -43,7 +43,7 @@ jobs:
           cmake --build AppDir --config Release --parallel `nproc`
           cp ./AppDir/zmusic/lib/* ./AppDir/
           mkdir -p ./AppDir/usr/share/icons
-          convert ./source/platform/win32/game_icon.ico[0] -flatten ./AppDir/usr/share/icons/game_icon.png
+          convert ./src/win32/icon1.ico[0] -flatten ./AppDir/usr/share/icons/game_icon.png
       - name: Build AppImage
         run: |
           appimage-builder --skip-tests

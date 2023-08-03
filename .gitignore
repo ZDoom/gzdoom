@@ -22,6 +22,9 @@
 .vscode
 /src/gl/unused
 /mapfiles_release/*.map
+/AppDir
+/appimage-build
+*.AppImage
 .DS_Store
 /build_vc2017-32
 /build2

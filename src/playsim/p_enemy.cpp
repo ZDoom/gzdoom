@@ -2207,6 +2207,7 @@ enum ChaseFlags
 	CHF_NOPOSTATTACKTURN = 128,
 	CHF_STOPIFBLOCKED = 256,
 	CHF_DONTIDLE = 512,
+	CHF_DONTLOOKALLAROUND = 1024,
 };
 
 void A_Wander(AActor *self, int flags)
@@ -2441,7 +2442,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			// hurt our old one temporarily.
 			actor->threshold = 0;
 		}
-		if (P_LookForPlayers (actor, true, NULL) && actor->target != actor->goal)
+		if (P_LookForPlayers (actor, !(flags & CHF_DONTLOOKALLAROUND), NULL) && actor->target != actor->goal)
 		{ // got a new target
 			actor->flags7 &= ~MF7_INCHASE;
 			return;
@@ -2616,7 +2617,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			lookForBetter = true;
 		}
 		AActor * oldtarget = actor->target;
-		gotNew = P_LookForPlayers (actor, true, NULL);
+		gotNew = P_LookForPlayers (actor, !(flags & CHF_DONTLOOKALLAROUND), NULL);
 		if (lookForBetter)
 		{
 			actor->flags3 |= MF3_NOSIGHTCHECK;

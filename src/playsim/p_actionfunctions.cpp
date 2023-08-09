@@ -1396,7 +1396,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LogFloat)
 
 	if (local && !self->CheckLocalView()) return 0;
 	IGNORE_FORMAT_PRE
-	Printf("%H\n", num);
+	Printf("%g\n", num);
 	IGNORE_FORMAT_POST
 	return 0;
 }

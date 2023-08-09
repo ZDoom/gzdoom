@@ -364,7 +364,7 @@ protected:
 	void AllocBuffer (size_t len);
 	void ReallocBuffer (size_t newlen);
 
-	static int FormatHelper (void *data, const char *str, int len);
+	static char* FormatHelper (const char *str, void* data, int len);
 	static void StrCopy (char *to, const char *from, size_t len);
 	static void StrCopy (char *to, const FString &from);
 
@@ -431,6 +431,7 @@ public:
 };
 
 
+/*
 namespace StringFormat
 {
 	enum
@@ -461,6 +462,7 @@ namespace StringFormat
 	int VWorker (OutputFunc output, void *outputData, const char *fmt, va_list arglist);
 	int Worker (OutputFunc output, void *outputData, const char *fmt, ...);
 };
+*/
 
 #undef PRINTFISH
 

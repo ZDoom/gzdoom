@@ -7,8 +7,9 @@
 # define ATTRIBUTE(attrlist)
 #endif
 
-// This header collects all things printf, so that this doesn't need to pull in other, far more dirty headers, just for outputting some text.
+#include "stb_sprintf.h"
 
+// This header collects all things printf, so that this doesn't need to pull in other, far more dirty headers, just for outputting some text.
 extern "C" int mysnprintf(char* buffer, size_t count, const char* format, ...) ATTRIBUTE((format(printf, 3, 4)));
 extern "C" int myvsnprintf(char* buffer, size_t count, const char* format, va_list argptr) ATTRIBUTE((format(printf, 3, 0)));
 

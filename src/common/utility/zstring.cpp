@@ -39,6 +39,7 @@
 
 #include "zstring.h"
 #include "utf8.h"
+#include "stb_sprintf.h"
 
 extern uint16_t lowerforupper[65536];
 extern uint16_t upperforlower[65536];
@@ -274,25 +275,28 @@ void FString::Format (const char *fmt, ...)
 
 void FString::AppendFormat (const char *fmt, ...)
 {
+	char workbuf[STB_SPRINTF_MIN];
 	va_list arglist;
 	va_start (arglist, fmt);
-	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
+	stbsp_vsprintfcb(FormatHelper, this, workbuf, fmt, arglist);
 	va_end (arglist);
 }
 
 void FString::VFormat (const char *fmt, va_list arglist)
 {
+	char workbuf[STB_SPRINTF_MIN];
 	Data()->Release();
 	Chars = (char *)(FStringData::Alloc(128) + 1);
-	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
+	stbsp_vsprintfcb(FormatHelper, this, workbuf, fmt, arglist);
 }
 
 void FString::VAppendFormat (const char *fmt, va_list arglist)
 {
-	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
+	char workbuf[STB_SPRINTF_MIN];
+	stbsp_vsprintfcb(FormatHelper, this, workbuf, fmt, arglist);
 }
 
-int FString::FormatHelper (void *data, const char *cstr, int len)
+char* FString::FormatHelper (const char *cstr, void* data, int len)
 {
 	FString *str = (FString *)data;
 	size_t len1 = str->Len();
@@ -302,7 +306,7 @@ int FString::FormatHelper (void *data, const char *cstr, int len)
 	}
 	StrCopy (str->Chars + len1, cstr, len);
 	str->Data()->Len = (unsigned int)(len1 + len);
-	return len;
+	return (char*)cstr;
 }
 
 FString FString::operator + (const FString &tail) const

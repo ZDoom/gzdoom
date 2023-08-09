@@ -397,7 +397,7 @@ const char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 
 	case CVAR_Float:
 		IGNORE_FORMAT_PRE
-		mysnprintf (cstrbuf, countof(cstrbuf), "%H", value.Float);
+		mysnprintf (cstrbuf, countof(cstrbuf), "%g", value.Float);
 		IGNORE_FORMAT_POST
 		break;
 
@@ -489,7 +489,7 @@ UCVarValue FBaseCVar::FromFloat (float value, ECVarType type)
 
 	case CVAR_String:
 		IGNORE_FORMAT_PRE
-		mysnprintf (cstrbuf, countof(cstrbuf), "%H", value);
+		mysnprintf (cstrbuf, countof(cstrbuf), "%g", value);
 		IGNORE_FORMAT_POST
 		ret.String = cstrbuf;
 		break;

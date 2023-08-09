@@ -1,4 +1,5 @@
 #define STB_SPRINTF_IMPLEMENTATION
+#define STB_SPRINTF_UTF8_CHARS
 #include "stb_sprintf.h"
 
 // We still need our own wrappers because they use a size_t for count, not an int.

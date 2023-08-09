@@ -271,6 +271,42 @@ static struct
    "75767778798081828384858687888990919293949596979899"
 };
 
+#ifdef STB_SPRINTF_UTF8_CHARS
+static int stbsp_utf8_encode(int codepoint, char* buffer)
+{
+    if (codepoint < -0x80 || codepoint > 0x10FFFF)
+    {
+        codepoint = 0xfffd;
+    }
+    if (codepoint < 0x80)
+    {
+        buffer[0] = (char)codepoint;
+        return 1;
+    }
+    else if (codepoint < 0x800)
+    {
+        buffer[0] = 0xC0 + ((codepoint & 0x7C0) >> 6);
+        buffer[1] = 0x80 + ((codepoint & 0x03F));
+        return 2;
+    }
+    else if (codepoint < 0x10000)
+    {
+        buffer[0] = 0xE0 + ((codepoint & 0xF000) >> 12);
+        buffer[1] = 0x80 + ((codepoint & 0x0FC0) >> 6);
+        buffer[2] = 0x80 + ((codepoint & 0x003F));
+        return 3;
+    }
+    else
+    {
+        buffer[0] = 0xF0 + ((codepoint & 0x1C0000) >> 18);
+        buffer[1] = 0x80 + ((codepoint & 0x03F000) >> 12);
+        buffer[2] = 0x80 + ((codepoint & 0x000FC0) >> 6);
+        buffer[3] = 0x80 + ((codepoint & 0x00003F));
+        return 4;
+    }
+}
+#endif
+
 STBSP__PUBLICDEF void STB_SPRINTF_DECORATE(set_separators)(char pcomma, char pperiod)
 {
    stbsp__period = pperiod;
@@ -602,9 +638,14 @@ STBSP__PUBLICDEF int STB_SPRINTF_DECORATE(vsprintfcb)(STBSP_SPRINTFCB *callback,
 
       case 'c': // char
          // get the character
+#ifndef STB_SPRINTF_UTF8_CHARS
          s = num + STBSP__NUMSZ - 1;
          *s = (char)va_arg(va, int);
          l = 1;
+#else
+         s = num + STBSP__NUMSZ - 4; // UTF-8 needs 4 bytes at most.
+         l = stbsp_utf8_encode(va_arg(va, int), s);
+#endif
          lead[0] = 0;
          tail[0] = 0;
          pr = 0;

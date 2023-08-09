@@ -870,11 +870,17 @@ void V_InitFonts()
 
 	FFont *CreateHexLumpFont(const char *fontname, int lump);
 	FFont *CreateHexLumpFont2(const char *fontname, int lump);
+	FFont* CreateTTFFont(const char* fontname, int height, int lump);
 
 	auto lump = fileSystem.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
 	if (lump == -1) I_FatalError("newconsolefont.hex not found");	// This font is needed - do not start up without it.
 	NewConsoleFont = CreateHexLumpFont("NewConsoleFont", lump);
-	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
+	//NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
+
+	lump = fileSystem.CheckNumForFullName("newmenufont.ttf", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
+	if (lump == -1) I_FatalError("newmenufont.ttf not found");	// This font is needed - do not start up without it.
+	NewSmallFont = CreateTTFFont("NewSmallFont", 18, lump);
+
 	CurrentConsoleFont = NewConsoleFont;
 	ConFont = V_GetFont("ConsoleFont", "CONFONT");
 	V_GetFont("IndexFont", "INDEXFON");	// detect potential replacements for this one.

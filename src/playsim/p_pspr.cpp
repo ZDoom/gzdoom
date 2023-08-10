@@ -326,6 +326,13 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	else
 	{
 		oldcaller = pspr->Caller;
+
+		// update scaling properties here
+		if (newcaller != nullptr && newcaller->IsKindOf(NAME_Weapon))
+		{
+			pspr->baseScale.X = newcaller->FloatVar(NAME_WeaponScaleX);
+			pspr->baseScale.Y = newcaller->FloatVar(NAME_WeaponScaleY);
+		}
 	}
 
 	// Always update the caller here in case we switched weapon

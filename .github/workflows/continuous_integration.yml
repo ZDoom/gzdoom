@@ -55,13 +55,13 @@ jobs:
             deps_cmdline: "sudo apt update && sudo apt install g++-11 libsdl2-dev libvpx-dev libgtk-3-dev",
             build_type: "MinSizeRel"
           }
-        - {
-            name: "Linux Clang 6",
-            os: ubuntu-20.04,
-            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DDYN_OPENAL=OFF",
-            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev libvpx-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
-            build_type: "Debug"
-          }
+#        - {
+#            name: "Linux Clang 6",
+#            os: ubuntu-20.04,
+#            extra_options: "-DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DDYN_OPENAL=OFF",
+#            deps_cmdline: "sudo apt update && sudo apt install clang-6.0 libsdl2-dev libvpx-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
+#            build_type: "Debug"
+#          }
         - {
             name: "Linux Clang 12",
             os: ubuntu-20.04,

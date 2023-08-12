@@ -208,26 +208,11 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 
 	TextColor = textColor;
 	State = 0;
-	SourceText = copystring (text);
+	SourceText = text;
 	VisibilityFlags = 0;
 	Style = STYLE_Translucent;
 	Alpha = 1.;
 	ResetText (SourceText);
-}
-
-//============================================================================
-//
-// DHUDMessage Destructor
-//
-//============================================================================
-
-void DHUDMessage::OnDestroy()
-{
-	if (SourceText != NULL)
-	{
-		delete[] SourceText;
-		SourceText = nullptr;
-	}
 }
 
 //============================================================================
@@ -263,7 +248,7 @@ void DHUDMessage::Serialize(FSerializer &arc)
 
 	if (arc.isReading())
 	{
-		ResetText(SourceText);
+		ResetText(SourceText.GetChars());
 	}
 }
 
@@ -277,7 +262,7 @@ void DHUDMessage::ScreenSizeChanged ()
 {
 	if (HUDWidth == 0)
 	{
-		ResetText (SourceText);
+		ResetText (SourceText.GetChars());
 	}
 }
 

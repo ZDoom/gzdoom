@@ -743,6 +743,17 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 	}
 	if (sc.GetString())
 	{
+		if (sc.Compare ("hdr"))
+		{
+			canvas->SetHDR(true);
+		}
+		else
+		{
+			sc.UnGet();
+		}
+	}
+	if (sc.GetString())
+	{
 		if (sc.Compare ("fit"))
 		{
 			sc.MustGetNumber ();

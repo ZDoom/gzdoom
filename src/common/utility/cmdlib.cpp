@@ -122,25 +122,6 @@ char *copystring (const char *s)
 	return b;
 }
 
-//==========================================================================
-//
-// ReplaceString
-//
-// Do not use in new code.
-//
-//==========================================================================
-
-void ReplaceString (char **ptr, const char *str)
-{
-	if (*ptr)
-	{
-		if (*ptr == str)
-			return;
-		delete[] *ptr;
-	}
-	*ptr = copystring (str);
-}
-
 /*
 =============================================================================
 

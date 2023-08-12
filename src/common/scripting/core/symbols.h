@@ -9,6 +9,16 @@ class PPrototype;
 struct ZCC_TreeNode;
 class PContainerType;
 
+// This is needed in common code, despite being Doom specific.
+enum EStateUseFlags
+{
+	SUF_ACTOR = 1,
+	SUF_OVERLAY = 2,
+	SUF_WEAPON = 4,
+	SUF_ITEM = 8,
+};
+
+
 // Symbol information -------------------------------------------------------
 
 class PTypeBase

@@ -96,25 +96,6 @@ inline double RAD2DEG(double rad)
 	return rad * (180. / M_PI);
 }
 
-inline angle_t RAD2BAM(float rad)
-{
-	return angle_t(xs_RoundToUInt(rad * float(0x80000000u / M_PI)));
-}
-
-inline angle_t RAD2BAM(double rad)
-{
-	return angle_t(xs_RoundToUInt(rad * (0x80000000u / M_PI)));
-}
-
-
-// This is needed in common code, despite being Doom specific.
-enum EStateUseFlags
-{
-	SUF_ACTOR = 1,
-	SUF_OVERLAY = 2,
-	SUF_WEAPON = 4,
-	SUF_ITEM = 8,
-};
 
 using std::min;
 using std::max;

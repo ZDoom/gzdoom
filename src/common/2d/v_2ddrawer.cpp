@@ -68,7 +68,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2DTransform, Clear, Shape2DTransform_Clear)
 
 static void Shape2DTransform_Rotate(DShape2DTransform* self, double angle)
 {
-	self->transform = DMatrix3x3::Rotate2D(DEG2RAD(angle)) * self->transform;
+	self->transform = DMatrix3x3::Rotate2D(angle) * self->transform;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DShape2DTransform, Rotate, Shape2DTransform_Rotate)

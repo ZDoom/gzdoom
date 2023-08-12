@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <algorithm>
-#include "xs_Float.h"
 
 #define MAXWIDTH 12000
 #define MAXHEIGHT 5000
@@ -22,7 +21,6 @@ typedef int32_t							fixed_t;
 // the last remnants of tables.h
 #define ANGLE_90		(0x40000000)
 #define ANGLE_180		(0x80000000)
-#define ANGLE_270		(0xc0000000)
 #define ANGLE_MAX		(0xffffffff)
 
 typedef uint32_t			angle_t;
@@ -38,14 +36,6 @@ typedef uint32_t			angle_t;
 #else
 #define FORCE_PACKED
 #endif
-
-// Todo: get rid of this. Static file name buffers suck.
-#ifndef PATH_MAX
-#define BMAX_PATH 256
-#else
-#define BMAX_PATH PATH_MAX
-#endif
-
 
 #ifdef __GNUC__
 #define GCCPRINTF(stri,firstargi)		__attribute__((format(printf,stri,firstargi)))
@@ -75,27 +65,6 @@ using BITFIELD = uint32_t;
 #endif
 
 const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
-
-inline float DEG2RAD(float deg)
-{
-	return deg * float(M_PI / 180.0);
-}
-
-inline double DEG2RAD(double deg)
-{
-	return deg * (M_PI / 180.0);
-}
-
-inline float RAD2DEG(float rad)
-{
-	return rad * float(180. / M_PI);
-}
-
-inline double RAD2DEG(double rad)
-{
-	return rad * (180. / M_PI);
-}
-
 
 using std::min;
 using std::max;

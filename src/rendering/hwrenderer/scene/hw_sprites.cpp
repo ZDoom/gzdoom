@@ -423,7 +423,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			// which is nicer in VR
 			float xrel = xcenter - vp->X;
 			float yrel = ycenter - vp->Y;
-			float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
+			float absAngleDeg = atan2(-yrel, xrel) * (180 / M_PI);
 			float counterRotationDeg = 270. - HWAngles.Yaw.Degrees(); // counteracts existing sprite rotation
 			float relAngleDeg = counterRotationDeg + absAngleDeg;
 

@@ -34,7 +34,7 @@
 **
 */
 
-#include "vectors.h" // RAD2DEG
+#include "vectors.h"
 #include "hw_cvars.h"
 #include "hw_vrmodes.h"
 #include "v_video.h"
@@ -66,6 +66,16 @@ static VRMode vrmi_lefteye = { 1, 1.f, 1.f, 1.f, { { -.5f, 1.f },{ 0.f, 0.f } } 
 static VRMode vrmi_righteye = { 1, 1.f, 1.f, 1.f,{ { .5f, 1.f },{ 0.f, 0.f } } };
 static VRMode vrmi_topbottom = { 2, 1.f, .5f, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } } };
 static VRMode vrmi_checker = { 2, isqrt2, isqrt2, 1.f,{ { -.5f, 1.f },{ .5f, 1.f } } };
+
+static float DEG2RAD(float deg)
+{
+	return deg * float(M_PI / 180.0);
+}
+
+static float RAD2DEG(float rad)
+{
+	return rad * float(180. / M_PI);
+}
 
 const VRMode *VRMode::GetVRMode(bool toscreen)
 {

@@ -1043,44 +1043,9 @@ struct TMatrix3x3
 
 	// Construct a rotation matrix about an arbitrary axis.
 	// (The axis vector must be normalized.)
-	TMatrix3x3(const Vector3 &axis, double radians)
+	TMatrix3x3(const Vector3 &axis, double degrees)
+		: TMatrix3x3(axis, g_sindeg(degrees), g_cosdeg(degrees))
 	{
-		double c = g_cos(radians), s = g_sin(radians), t = 1 - c;
-/* In comments: A more readable version of the matrix setup.
-This was found in Diana Gruber's article "The Mathematics of the
-3D Rotation Matrix" at <http://www.makegames.com/3drotation/> and is
-attributed to Graphics Gems (Glassner, Academic Press, 1990).
-
-		Cells[0][0] = t*axis.X*axis.X + c;
-		Cells[0][1] = t*axis.X*axis.Y - s*axis.Z;
-		Cells[0][2] = t*axis.X*axis.Z + s*axis.Y;
-
-		Cells[1][0] = t*axis.Y*axis.X + s*axis.Z;
-		Cells[1][1] = t*axis.Y*axis.Y + c;
-		Cells[1][2] = t*axis.Y*axis.Z - s*axis.X;
-
-		Cells[2][0] = t*axis.Z*axis.X - s*axis.Y;
-		Cells[2][1] = t*axis.Z*axis.Y + s*axis.X;
-		Cells[2][2] = t*axis.Z*axis.Z + c;
-
-Outside comments: A faster version with only 10 (not 24) multiplies.
-*/
-		double sx = s*axis.X, sy = s*axis.Y, sz = s*axis.Z;
-		double tx, ty, txx, tyy, u, v;
-
-		tx = t*axis.X;
-		Cells[0][0] = vec_t( (txx=tx*axis.X) + c );
-		Cells[0][1] = vec_t(   (u=tx*axis.Y) - sz);
-		Cells[0][2] = vec_t(   (v=tx*axis.Z) + sy);
-
-		ty = t*axis.Y;
-		Cells[1][0] = vec_t(              u  + sz);
-		Cells[1][1] = vec_t( (tyy=ty*axis.Y) + c );
-		Cells[1][2] = vec_t(   (u=ty*axis.Z) - sx);
-
-		Cells[2][0] = vec_t(              v  - sy);
-		Cells[2][1] = vec_t(              u  + sx);
-		Cells[2][2] = vec_t(     (t-txx-tyy) + c );
 	}
 
 	TMatrix3x3(const Vector3 &axis, double c/*cosine*/, double s/*sine*/)
@@ -1106,10 +1071,10 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 
 	TMatrix3x3(const Vector3 &axis, TAngle<vec_t> degrees);
 
-	static TMatrix3x3 Rotate2D(double radians)
+	static TMatrix3x3 Rotate2D(double degrees)
 	{
-		double c = g_cos(radians);
-		double s = g_sin(radians);
+		double c = g_cosdeg(degrees);
+		double s = g_sindeg(degrees);
 		TMatrix3x3 ret;
 		ret.Cells[0][0] = c; ret.Cells[0][1] = -s; ret.Cells[0][2] = 0;
 		ret.Cells[1][0] = s; ret.Cells[1][1] =  c; ret.Cells[1][2] = 0;

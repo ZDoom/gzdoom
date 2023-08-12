@@ -69,12 +69,6 @@ using INTBOOL = int;
 using BITFIELD = uint32_t;
 
 
-#if defined(_MSC_VER)
-#define NOVTABLE __declspec(novtable)
-#else
-#define NOVTABLE
-#endif
-
 // always use our own definition for consistency.
 #ifdef M_PI
 #undef M_PI

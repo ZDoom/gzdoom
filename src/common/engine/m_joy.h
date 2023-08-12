@@ -18,7 +18,7 @@ enum EJoyAxis
 };
 
 // Generic configuration interface for a controller.
-struct NOVTABLE IJoystickConfig
+struct IJoystickConfig
 {
 	virtual ~IJoystickConfig() = 0;
 

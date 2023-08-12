@@ -115,7 +115,7 @@ protected:
 	void PostKeyEvent(int keynum, INTBOOL down, bool foreground);
 };
 
-class NOVTABLE FJoystickCollection : public FInputDevice
+class FJoystickCollection : public FInputDevice
 {
 public:
 	virtual void AddAxes(float axes[NUM_JOYAXIS]) = 0;

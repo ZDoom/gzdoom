@@ -374,14 +374,13 @@ static void ShoveChatStr (const char *str, uint8_t who)
 	Net_WriteByte (DEM_SAY);
 	Net_WriteByte (who);
 
-	if (!chat_substitution || !DoSubstitution (substBuff, str))
+	if (chat_substitution && DoSubstitution (substBuff, str))
 	{
-		Net_WriteString(MakeUTF8(str));
+		str = substBuff.GetChars();
 	}
-	else
-	{
-		Net_WriteString(MakeUTF8(substBuff));
-	}
+
+	Net_WriteString(CleanseString(const_cast<char*>(MakeUTF8(str))));
+
 }
 
 //===========================================================================

@@ -113,7 +113,7 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 	}
 	else
 	{
-		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+		VkFormat format = tex->IsHDR() ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_UNORM;
 		int w = tex->GetWidth();
 		int h = tex->GetHeight();
 

@@ -35,17 +35,6 @@
 #include "imagehelpers.h"
 #include "image.h"
 
-#define QOI_OP_INDEX 0x00 /* 00xxxxxx */
-#define QOI_OP_DIFF 0x40  /* 01xxxxxx */
-#define QOI_OP_LUMA 0x80  /* 10xxxxxx */
-#define QOI_OP_RUN 0xc0	  /* 11xxxxxx */
-#define QOI_OP_RGB 0xfe	  /* 11111110 */
-#define QOI_OP_RGBA 0xff  /* 11111111 */
-
-#define QOI_MASK_2 0xc0 /* 11000000 */
-
-#define QOI_COLOR_HASH(C) (C.rgba.r * 3 + C.rgba.g * 5 + C.rgba.b * 7 + C.rgba.a * 11)
-
 #pragma pack(1)
 
 struct QOIHeader
@@ -58,21 +47,10 @@ struct QOIHeader
 };
 #pragma pack()
 
-typedef union
-{
-	struct
-	{
-		unsigned char r, g, b, a;
-	} rgba;
-	unsigned int v;
-} QOIRgba;
-
 class FQOITexture : public FImageSource
 {
-	QOIHeader header;
-
 public:
-	FQOITexture(int lumpnum, QOIHeader header);
+	FQOITexture(int lumpnum, QOIHeader& header);
 	PalettedPixels CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 };
@@ -101,12 +79,13 @@ FImageSource *QOIImage_TryCreate(FileReader &file, int lumpnum)
 	return new FQOITexture(lumpnum, header);
 }
 
-FQOITexture::FQOITexture(int lumpnum, QOIHeader qoi_header)
-	: FImageSource(lumpnum), header(qoi_header)
+FQOITexture::FQOITexture(int lumpnum, QOIHeader& header)
+	: FImageSource(lumpnum)
 {
 	LeftOffset = TopOffset = 0;
 	Width = header.width;
 	Height = header.height;
+	if (header.channels == 3) bMasked = bTranslucent = false;
 }
 
 PalettedPixels FQOITexture::CreatePalettedPixels(int conversion)
@@ -146,74 +125,88 @@ PalettedPixels FQOITexture::CreatePalettedPixels(int conversion)
 
 int FQOITexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	QOIRgba index[64];
-	QOIRgba px;
-	size_t px_len = 0, chunks_len = 0, px_pos = 0;
-	int run = 0;
-	auto file = fileSystem.OpenFileReader(SourceLump);
-
-	memset((void *)index, 0x00, sizeof(index));
-
-	uint8_t *Pixels = new uint8_t[Width * Height * 4];
-
-	px.rgba.r = 0;
-	px.rgba.g = 0;
-	px.rgba.b = 0;
-	px.rgba.a = 255;
-
-	chunks_len = file.GetLength() - 8;
-
-	for (px_pos = 0; px_pos < px_len; px_pos += 4)
+	enum
 	{
-		if (run > 0)
-		{
-			run--;
-		}
-		else if (file.Tell() < (FileReader::Size)chunks_len)
-		{
-			int b1 = file.ReadUInt8();
+		QOI_OP_INDEX = 0x00, /* 00xxxxxx */
+		QOI_OP_DIFF = 0x40, /* 01xxxxxx */
+		QOI_OP_LUMA = 0x80, /* 10xxxxxx */
+		QOI_OP_RUN = 0xc0, /* 11xxxxxx */
+		QOI_OP_RGB = 0xfe, /* 11111110 */
+		QOI_OP_RGBA = 0xff, /* 11111111 */
 
-			if (b1 == QOI_OP_RGB || b1 == QOI_OP_RGBA)
+		QOI_MASK_2 = 0xc0, /* 11000000 */
+	};
+
+	constexpr auto QOI_COLOR_HASH = [](PalEntry C) { return (C.r * 3 + C.g * 5 + C.b * 7 + C.a * 11); };
+
+	auto lump = fileSystem.OpenFileReader(SourceLump);
+	auto bytes = lump.Read();
+	if (bytes.Size() < 22) return 0;	// error
+	PalEntry index[64] = {};
+	PalEntry pe = 0xff000000;
+
+	size_t p = 14, run = 0;
+
+	size_t chunks_len = bytes.Size() - 8;
+
+	for (int h = 0; h < Height; h++)
+	{
+		auto pixels = bmp->GetPixels() + h * bmp->GetPitch();
+		for (int w = 0; w < Width; w++)
+		{
+			if (run > 0)
 			{
-				px.rgba.r = file.ReadUInt8();
-				px.rgba.g = file.ReadUInt8();
-				px.rgba.b = file.ReadUInt8();
-				if (b1 == QOI_OP_RGBA)
-					px.rgba.a = file.ReadUInt8();
+				run--;
 			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_INDEX)
+			else if (p < chunks_len)
 			{
-				px = index[b1];
+				int b1 = bytes[p++];
+
+				if (b1 == QOI_OP_RGB)
+				{
+					pe.r = bytes[p++];
+					pe.g = bytes[p++];
+					pe.b = bytes[p++];
+				}
+				else if (b1 == QOI_OP_RGBA)
+				{
+					pe.r = bytes[p++];
+					pe.g = bytes[p++];
+					pe.b = bytes[p++];
+					pe.a = bytes[p++];
+				}
+				else if ((b1 & QOI_MASK_2) == QOI_OP_INDEX)
+				{
+					pe = index[b1];
+				}
+				else if ((b1 & QOI_MASK_2) == QOI_OP_DIFF)
+				{
+					pe.r += ((b1 >> 4) & 0x03) - 2;
+					pe.g += ((b1 >> 2) & 0x03) - 2;
+					pe.b += (b1 & 0x03) - 2;
+				}
+				else if ((b1 & QOI_MASK_2) == QOI_OP_LUMA)
+				{
+					int b2 = bytes[p++];
+					int vg = (b1 & 0x3f) - 32;
+					pe.r += vg - 8 + ((b2 >> 4) & 0x0f);
+					pe.g += vg;
+					pe.b += vg - 8 + (b2 & 0x0f);
+				}
+				else if ((b1 & QOI_MASK_2) == QOI_OP_RUN)
+				{
+					run = (b1 & 0x3f);
+				}
+
+				index[QOI_COLOR_HASH(pe) % 64] = pe;
 			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_DIFF)
-			{
-				px.rgba.r += ((b1 >> 4) & 0x03) - 2;
-				px.rgba.g += ((b1 >> 2) & 0x03) - 2;
-				px.rgba.b += (b1 & 0x03) - 2;
-			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_LUMA)
-			{
-				int b2 = file.ReadUInt8();
-				int vg = (b1 & 0x3f) - 32;
-				px.rgba.r += vg - 8 + ((b2 >> 4) & 0x0f);
-				px.rgba.g += vg;
-				px.rgba.b += vg - 8 + (b2 & 0x0f);
-			}
-			else if ((b1 & QOI_MASK_2) == QOI_OP_RUN)
-			{
-				run = (b1 & 0x3f);
-			}
-			index[QOI_COLOR_HASH(px) % 64] = px;
 		}
 
-		Pixels[px_pos + 0] = px.rgba.r;
-		Pixels[px_pos + 1] = px.rgba.g;
-		Pixels[px_pos + 2] = px.rgba.b;
-		Pixels[px_pos + 3] = px.rgba.a;
+		pixels[0] = pe.b;
+		pixels[1] = pe.g;
+		pixels[2] = pe.r;
+		pixels[3] = pe.a;
+		pixels += 4;
 	}
-
-	bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 4, Width * 4, 0, CF_RGBA);
-	delete[] Pixels;
-
-	return -1;
+	return bMasked? -1 : 0;
 }

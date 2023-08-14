@@ -1221,7 +1221,7 @@ set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_F
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
-set_source_files_properties( ${ZDOOM_NONPCH_SOURCES} PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
+set_source_files_properties( ${ZDOOM_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")

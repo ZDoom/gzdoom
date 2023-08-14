@@ -278,10 +278,7 @@ endif()
 
 # Check for thread_local keyword, it's optional at the moment
 
-CHECK_CXX_SOURCE_COMPILES("thread_local int i; int main() { i = 0; }"
-	HAVE_THREAD_LOCAL)
-
-if( NOT HAVE_THREAD_LOCAL )
+if ( NOT (cxx_thread_local IN_LIST CMAKE_CXX_COMPILE_FEATURES) )
 	message( SEND_ERROR "C++ compiler doesn't support thread_local storage duration specifier" )
 endif()
 

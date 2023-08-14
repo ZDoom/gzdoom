@@ -1,5 +1,8 @@
 #pragma once
 
+#include "zstring.h"
+#include "tarray.h"
+
 enum class PostProcessUniformType
 {
 	Undefined,

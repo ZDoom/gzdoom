@@ -30,6 +30,8 @@
 
 struct event_t;
 
+#include <functional>
+
 #include "dobjgc.h"
 #include "name.h"
 #include "gamestate.h"

@@ -1,10 +1,4 @@
-cmake_minimum_required( VERSION 3.1.0 )
-project(GZDoom)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF) 
-
+cmake_minimum_required( VERSION 3.16 )
 
 if( COMMAND cmake_policy )
 	if( POLICY CMP0011 )
@@ -13,7 +7,21 @@ if( COMMAND cmake_policy )
 	if( POLICY CMP0054 )
 		cmake_policy( SET CMP0054 NEW )
 	endif()
+	if ( POLICY CMP0067 )
+		cmake_policy( SET CMP0067 NEW )
+	endif()
+	if ( POLICY CMP0091 )
+		cmake_policy( SET CMP0091 NEW )
+		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	endif()
 endif()
+
+project(GZDoom)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF) 
+
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( FindPackageHandleStandardArgs )
@@ -146,13 +154,6 @@ endif()
 
 if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
-
-	if( CMAKE_CXX_STANDARD )
-		# By default, try_compile() invocations ignore CXX_STANDARD value
-		# CMake 3.8 and newer have CMP0067 policy that fixes the issue, but it should be enabled explicitly
-		# Older versions require manual specification of the corresponding command line option
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${CMAKE_CXX_STANDARD}" )
-	endif()
 endif()
 
 # Fast math flags, required by some subprojects
@@ -236,28 +237,19 @@ if( MSVC )
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
 	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
 	if( ZDOOM_GENERATE_ASM )
-		set( REL_C_FLAGS "/MT /Oy /Oi /FAcs /GS-" )
+		set( REL_C_FLAGS "/Oy /Oi /FAcs /GS-" )
 	else()
-		set( REL_C_FLAGS "/MT /Oy /Oi /GS-" )
+		set( REL_C_FLAGS "/Oy /Oi /GS-" )
 	endif()
 
 
 	# Debug allocations in debug builds
-	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
+	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC" )
 
 	# Disable warnings for unsecure CRT functions from VC8+
 	set( ALL_C_FLAGS "${ALL_C_FLAGS} /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS" )
 
-	# The CMake configurations set /GR and /MD by default, which conflict with our settings.
-	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} )
-	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL} )
-	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
 	string(REPLACE "/Ob1 " "/Ob2 " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
-	string(REPLACE "/MDd " " " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} )
-	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} )
-	string(REPLACE "/MD " " " CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL} )
-	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO} )
-	string(REPLACE "/MDd " " " CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} )
 else()
 	set( REL_LINKER_FLAGS "" )
 	set( ALL_C_FLAGS "-ffp-contract=off" )

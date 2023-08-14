@@ -36,6 +36,7 @@
 */
 
 #include <time.h>
+#include <string.h>
 
 #include "common/engine/printf.h"
 #include "discord_rpc.h"

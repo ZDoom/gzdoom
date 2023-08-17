@@ -33,7 +33,6 @@
 */
 
 #include "resourcefile.h"
-#include "printf.h"
 
 //==========================================================================
 //
@@ -65,7 +64,7 @@ class FPakFile : public FUncompressedFile
 {
 public:
 	FPakFile(const char * filename, FileReader &file);
-	bool Open(bool quiet, LumpFilterInfo* filter);
+	bool Open(LumpFilterInfo* filter);
 };
 
 
@@ -88,7 +87,7 @@ FPakFile::FPakFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
+bool FPakFile::Open(LumpFilterInfo* filter)
 {
 	dpackheader_t header;
 
@@ -123,7 +122,7 @@ bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	char head[4];
 
@@ -135,7 +134,7 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet, Lump
 		if (!memcmp(head, "PACK", 4))
 		{
 			auto rf = new FPakFile(filename, file);
-			if (rf->Open(quiet, filter)) return rf;
+			if (rf->Open(filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

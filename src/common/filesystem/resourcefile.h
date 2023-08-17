@@ -8,6 +8,7 @@
 #include "files.h"
 #include "zstring.h"
 
+// user context in which the file system gets opened. This also contains a few callbacks to avoid direct dependencies on the engine.
 struct LumpFilterInfo
 {
 	TArray<FString> gameTypeFilter;	// this can contain multiple entries
@@ -19,6 +20,20 @@ struct LumpFilterInfo
 	TArray<FString> embeddings;
 	std::function<void()> postprocessFunc;
 };
+
+enum class FSMessageLevel
+{
+	Error = 1,
+	Warning = 2,
+	Attention = 3,
+	Message = 4,
+	DebugWarn = 5,
+	DebugNotify = 6,
+};
+
+// pass the text output function as parameter to avoid a hard dependency on higher level code.
+using FileSystemMessageFunc = int(*)(FSMessageLevel msglevel, const char* format, ...);
+
 
 class FResourceFile;
 
@@ -151,12 +166,12 @@ private:
 	int FilterLumpsByGameType(LumpFilterInfo *filter, void *lumps, size_t lumpsize, uint32_t max);
 	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, uint32_t max, uint32_t &start, uint32_t &end);
 	void JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max);
-	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool quiet, bool containeronly, LumpFilterInfo* filter);
+	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 
 public:
-	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool quiet = false, bool containeronly = false, LumpFilterInfo* filter = nullptr);
-	static FResourceFile *OpenResourceFile(const char *filename, bool quiet = false, bool containeronly = false, LumpFilterInfo* filter = nullptr);
-	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false, LumpFilterInfo* filter = nullptr);
+	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool containeronly = false, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr);
+	static FResourceFile *OpenResourceFile(const char *filename, bool containeronly = false, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr);
+	static FResourceFile *OpenDirectory(const char *filename, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr);
 	virtual ~FResourceFile();
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
     FileReader *GetReader() { return Reader.isOpen()? &Reader : nullptr; }

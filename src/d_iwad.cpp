@@ -308,8 +308,7 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 	fns.Push(firstfn);
 	if (optfn) fns.Push(optfn);
 
-	check.InitMultipleFiles(fns, true);
-	if (check.GetNumEntries() > 0)
+	if (check.InitMultipleFiles(fns, nullptr, nullptr))
 	{
 		int num = check.CheckNumForName("IWADINFO");
 		if (num >= 0)
@@ -331,7 +330,7 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 int FIWadManager::ScanIWAD (const char *iwad)
 {
 	FileSystem check;
-	check.InitSingleFile(iwad, true);
+	check.InitSingleFile(iwad, nullptr);
 
 	mLumpsFound.Resize(mIWadInfos.Size());
 
@@ -390,8 +389,7 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 
 	TArray<FString> filenames;
 	filenames.Push(fn);
-	check.InitMultipleFiles(filenames, true, &lfi);
-	if (check.GetNumEntries() > 0)
+	if (check.InitMultipleFiles(filenames, &lfi, nullptr))
 	{
 		int num = check.CheckNumForName("IWADINFO");
 		if (num >= 0)

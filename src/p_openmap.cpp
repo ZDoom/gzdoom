@@ -125,7 +125,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			delete map;
 			return NULL;
 		}
-		map->resource = FResourceFile::OpenResourceFile(mapname, true);
+		map->resource = FResourceFile::OpenResourceFile(mapname);
 		wadReader = map->resource->GetReader();
 	}
 	else

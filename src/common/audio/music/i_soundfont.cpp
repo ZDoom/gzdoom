@@ -197,7 +197,7 @@ FileReader FSF2Reader::OpenFile(const char *name)
 FZipPatReader::FZipPatReader(const char *filename)
 {
 	mAllowAbsolutePaths = true;
-	resf = FResourceFile::OpenResourceFile(filename, true);
+	resf = FResourceFile::OpenResourceFile(filename);
 }
 
 FZipPatReader::~FZipPatReader()

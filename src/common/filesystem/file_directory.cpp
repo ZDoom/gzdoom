@@ -38,7 +38,6 @@
 
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "printf.h"
 #include "findfile.h"
 
 //==========================================================================
@@ -67,12 +66,12 @@ class FDirectory : public FResourceFile
 	TArray<FDirectoryLump> Lumps;
 	const bool nosubdir;
 
-	int AddDirectory(const char *dirpath);
+	int AddDirectory(const char* dirpath, FileSystemMessageFunc Printf);
 	void AddEntry(const char *fullpath, int size);
 
 public:
 	FDirectory(const char * dirname, bool nosubdirflag = false);
-	bool Open(bool quiet, LumpFilterInfo* filter);
+	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
@@ -110,7 +109,7 @@ FDirectory::FDirectory(const char * directory, bool nosubdirflag)
 //
 //==========================================================================
 
-int FDirectory::AddDirectory(const char *dirpath)
+int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
 {
 	void * handle;
 	int count = 0;
@@ -122,7 +121,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 	handle = I_FindFirst(dirmatch.GetChars(), &find);
 	if (handle == ((void *)(-1)))
 	{
-		Printf("Could not scan '%s': %s\n", dirpath, strerror(errno));
+		Printf(FSMessageLevel::Error, "Could not scan '%s': %s\n", dirpath, strerror(errno));
 	}
 	else
 	{
@@ -148,7 +147,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 				}
 				FString newdir = dirpath;
 				newdir << fi << '/';
-				count += AddDirectory(newdir);
+				count += AddDirectory(newdir, Printf);
 			}
 			else
 			{
@@ -193,9 +192,9 @@ int FDirectory::AddDirectory(const char *dirpath)
 //
 //==========================================================================
 
-bool FDirectory::Open(bool quiet, LumpFilterInfo* filter)
+bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
-	NumLumps = AddDirectory(FileName);
+	NumLumps = AddDirectory(FileName, Printf);
 	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }
@@ -265,10 +264,10 @@ int FDirectoryLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckDir(const char *filename, bool quiet, bool nosubdirflag, LumpFilterInfo* filter)
+FResourceFile *CheckDir(const char *filename, bool nosubdirflag, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	auto rf = new FDirectory(filename, nosubdirflag);
-	if (rf->Open(quiet, filter)) return rf;
+	if (rf->Open(filter, Printf)) return rf;
 	delete rf;
 	return nullptr;
 }

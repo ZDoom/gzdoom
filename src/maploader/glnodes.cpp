@@ -883,7 +883,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					strcpy(ext, ".gwa");
 					// Todo: Compare file dates
 
-					f_gwa = FResourceFile::OpenResourceFile(path, true);
+					f_gwa = FResourceFile::OpenResourceFile(path);
 					if (f_gwa==nullptr) return false;
 
 					strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(map->lumpnum), 8);

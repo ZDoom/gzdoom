@@ -35,8 +35,6 @@
 
 #include "resourcefile.h"
 
-#include "printf.h"
-
 //==========================================================================
 //
 //
@@ -111,7 +109,7 @@ class FRFFFile : public FResourceFile
 public:
 	FRFFFile(const char * filename, FileReader &file);
 	virtual ~FRFFFile();
-	virtual bool Open(bool quiet, LumpFilterInfo* filter);
+	virtual bool Open(LumpFilterInfo* filter);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
@@ -134,7 +132,7 @@ FRFFFile::FRFFFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FRFFFile::Open(bool quiet, LumpFilterInfo*)
+bool FRFFFile::Open(LumpFilterInfo*)
 {
 	RFFLump *lumps;
 	RFFInfo header;
@@ -237,7 +235,7 @@ int FRFFLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckRFF(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	char head[4];
 
@@ -249,7 +247,7 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, bool quiet, Lump
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
 			auto rf = new FRFFFile(filename, file);
-			if (rf->Open(quiet, filter)) return rf;
+			if (rf->Open(filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

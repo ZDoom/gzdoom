@@ -39,7 +39,6 @@
 
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "printf.h"
 
 
 
@@ -189,7 +188,7 @@ class F7ZFile : public FResourceFile
 
 public:
 	F7ZFile(const char * filename, FileReader &filer);
-	bool Open(bool quiet, LumpFilterInfo* filter);
+	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual ~F7ZFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
@@ -216,7 +215,7 @@ F7ZFile::F7ZFile(const char * filename, FileReader &filer)
 //
 //==========================================================================
 
-bool F7ZFile::Open(bool quiet, LumpFilterInfo *filter)
+bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 {
 	Archive = new C7zArchive(Reader);
 	int skipped = 0;
@@ -227,25 +226,21 @@ bool F7ZFile::Open(bool quiet, LumpFilterInfo *filter)
 	{
 		delete Archive;
 		Archive = NULL;
-		if (!quiet)
+		if (res == SZ_ERROR_UNSUPPORTED)
 		{
-			Printf("\n" TEXTCOLOR_RED "%s: ", FileName.GetChars());
-			if (res == SZ_ERROR_UNSUPPORTED)
-			{
-				Printf("Decoder does not support this archive\n");
-			}
-			else if (res == SZ_ERROR_MEM)
-			{
-				Printf("Cannot allocate memory\n");
-			}
-			else if (res == SZ_ERROR_CRC)
-			{
-				Printf("CRC error\n");
-			}
-			else
-			{
-				Printf("error #%d\n", res);
-			}
+			Printf(FSMessageLevel::Error, "%s: Decoder does not support this archive\n", FileName.GetChars());
+		}
+		else if (res == SZ_ERROR_MEM)
+		{
+			Printf(FSMessageLevel::Error, "Cannot allocate memory\n");
+		}
+		else if (res == SZ_ERROR_CRC)
+		{
+			Printf(FSMessageLevel::Error, "CRC error\n");
+		}
+		else
+		{
+			Printf(FSMessageLevel::Error, "error #%d\n", res);
 		}
 		return false;
 	}
@@ -308,7 +303,7 @@ bool F7ZFile::Open(bool quiet, LumpFilterInfo *filter)
 
 		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
 		{
-			if (!quiet) Printf("\n%s: unsupported 7z/LZMA file!\n", FileName.GetChars());
+			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName.GetChars());
 			return false;
 		}
 	}
@@ -356,7 +351,7 @@ int F7ZLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *Check7Z(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	char head[k7zSignatureSize];
 
@@ -368,7 +363,7 @@ FResourceFile *Check7Z(const char *filename, FileReader &file, bool quiet, LumpF
 		if (!memcmp(head, k7zSignature, k7zSignatureSize))
 		{
 			auto rf = new F7ZFile(filename, file);
-			if (rf->Open(quiet, filter)) return rf;
+			if (rf->Open(filter, Printf)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

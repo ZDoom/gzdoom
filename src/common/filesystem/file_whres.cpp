@@ -35,7 +35,6 @@
 */
 
 #include "resourcefile.h"
-#include "printf.h"
 #include "cmdlib.h"
 
 //==========================================================================
@@ -68,7 +67,7 @@ class FWHResFile : public FUncompressedFile
 	FString basename;
 public:
 	FWHResFile(const char * filename, FileReader &file);
-	bool Open(bool quiet, LumpFilterInfo* filter);
+	bool Open(LumpFilterInfo* filter);
 };
 
 
@@ -92,7 +91,7 @@ FWHResFile::FWHResFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FWHResFile::Open(bool quiet, LumpFilterInfo*)
+bool FWHResFile::Open(LumpFilterInfo*)
 {
 	int directory[1024];
 
@@ -129,7 +128,7 @@ bool FWHResFile::Open(bool quiet, LumpFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile *CheckWHRes(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	if (file.GetLength() >= 8192) // needs to be at least 8192 to contain one file and the directory.
 	{
@@ -149,7 +148,7 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, bool quiet, Lu
 			checkpos += (length+4095) / 4096;
 		}
 		auto rf = new FWHResFile(filename, file);
-		if (rf->Open(quiet, filter)) return rf;
+		if (rf->Open(filter)) return rf;
 		file = std::move(rf->Reader); // to avoid destruction of reader
 		delete rf;
 	}

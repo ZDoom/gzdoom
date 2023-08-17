@@ -1924,8 +1924,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 	GetReserved(lfi);
 
 	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
-	check.InitMultipleFiles(pwads, true, &lfi);
-	if (check.GetNumEntries() > 0)
+	if (check.InitMultipleFiles(pwads, &lfi, nullptr))
 	{
 		int num = check.CheckNumForName("GAMEINFO");
 		if (num >= 0)
@@ -3031,6 +3030,35 @@ static FILE* D_GetHashFile()
 	return hashfile;
 }
 
+static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
+{
+	va_list arg;
+	va_start(arg, fmt);
+	FString text;
+	text.VFormat(fmt, arg);
+	switch (level)
+	{
+	case FSMessageLevel::Error:
+		return Printf(TEXTCOLOR_RED "%s", text.GetChars());
+		break;
+	case FSMessageLevel::Warning:
+		Printf(TEXTCOLOR_YELLOW "%s", text.GetChars());
+		break;
+	case FSMessageLevel::Attention:
+		Printf(TEXTCOLOR_BLUE "%s", text.GetChars());
+		break;
+	case FSMessageLevel::Message:
+		Printf("%s", text.GetChars());
+		break;
+	case FSMessageLevel::DebugWarn:
+		DPrintf(DMSG_WARNING, "%s", text.GetChars());
+		break;
+	case FSMessageLevel::DebugNotify:
+		DPrintf(DMSG_NOTIFY, "%s", text.GetChars());
+		break;
+	}
+	return text.Len();
+}
 //==========================================================================
 //
 // D_InitGame
@@ -3119,7 +3147,10 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 
 	bool allowduplicates = Args->CheckParm("-allowduplicates");
 	auto hashfile = D_GetHashFile();
-	fileSystem.InitMultipleFiles (allwads, false, &lfi, allowduplicates, hashfile);
+	if (!fileSystem.InitMultipleFiles(allwads, &lfi, FileSystemPrintf, allowduplicates, hashfile))
+	{
+		I_FatalError("FileSystem: no files found");
+	}
 	allwads.Clear();
 	allwads.ShrinkToFit();
 	SetMapxxFlag();
@@ -3913,4 +3944,20 @@ void I_UpdateWindowTitle()
 	else
 		I_UpdateDiscordPresence(false, nullptr, nullptr, nullptr);
 	I_SetWindowTitle(copy.Data());
+}
+
+CCMD(fs_dir)
+{
+	int numfiles = fileSystem.GetNumEntries();
+
+	for (int i = 0; i < numfiles; i++)
+	{
+		auto container = fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(i));
+		auto fn1 = fileSystem.GetFileFullName(i);
+		auto fns = fileSystem.GetFileShortName(i);
+		auto fnid = fileSystem.GetResourceId(i);
+		auto length = fileSystem.FileLength(i);
+		bool hidden = fileSystem.FindFile(fn1) != i;
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
+	}
 }

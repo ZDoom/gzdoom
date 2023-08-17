@@ -35,7 +35,6 @@
 
 #include <ctype.h>
 #include "resourcefile.h"
-#include "v_text.h"
 #include "filesystem.h"
 #include "engineerrors.h"
 
@@ -125,13 +124,13 @@ class FWadFile : public FResourceFile
 	TArray<FWadFileLump> Lumps;
 
 	bool IsMarker(int lump, const char *marker);
-	void SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, bool flathack=false);
-	void SkinHack ();
+	void SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, FileSystemMessageFunc Printf, bool flathack=false);
+	void SkinHack (FileSystemMessageFunc Printf);
 
 public:
 	FWadFile(const char * filename, FileReader &file);
 	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
-	bool Open(bool quiet, LumpFilterInfo* filter);
+	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 };
 
 
@@ -154,7 +153,7 @@ FWadFile::FWadFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FWadFile::Open(bool quiet, LumpFilterInfo*)
+bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 {
 	wadinfo_t header;
 	uint32_t InfoTableOfs;
@@ -176,7 +175,8 @@ bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 		// Check again to detect broken wads
 		if (InfoTableOfs + NumLumps*sizeof(wadlump_t) > (unsigned)wadSize)
 		{
-			I_Error("Cannot load broken WAD file %s\n", FileName.GetChars());
+			Printf(FSMessageLevel::Error, "%s: Bad directory offset.\n", FileName.GetChars());
+			return false;
 		}
 	}
 
@@ -212,7 +212,7 @@ bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 		{
 			if (Lumps[i].LumpSize != 0)
 			{
-				Printf(PRINT_HIGH, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName.GetChars(), Lumps[i].getName());
+				Printf(FSMessageLevel::Warning, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName.GetChars(), Lumps[i].getName());
 				Lumps[i].LumpNameSetup("");
 			}
 			Lumps[i].LumpSize = Lumps[i].Position = 0;
@@ -221,18 +221,15 @@ bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 
 	GenerateHash(); // Do this before the lump processing below.
 
-	if (!quiet)	// don't bother with namespaces in quiet mode. We won't need them.
-	{
-		SetNamespace("S_START", "S_END", ns_sprites);
-		SetNamespace("F_START", "F_END", ns_flats, true);
-		SetNamespace("C_START", "C_END", ns_colormaps);
-		SetNamespace("A_START", "A_END", ns_acslibrary);
-		SetNamespace("TX_START", "TX_END", ns_newtextures);
-		SetNamespace("V_START", "V_END", ns_strifevoices);
-		SetNamespace("HI_START", "HI_END", ns_hires);
-		SetNamespace("VX_START", "VX_END", ns_voxels);
-		SkinHack();
-	}
+	SetNamespace("S_START", "S_END", ns_sprites, Printf);
+	SetNamespace("F_START", "F_END", ns_flats, Printf, true);
+	SetNamespace("C_START", "C_END", ns_colormaps, Printf);
+	SetNamespace("A_START", "A_END", ns_acslibrary, Printf);
+	SetNamespace("TX_START", "TX_END", ns_newtextures, Printf);
+	SetNamespace("V_START", "V_END", ns_strifevoices, Printf);
+	SetNamespace("HI_START", "HI_END", ns_hires, Printf);
+	SetNamespace("VX_START", "VX_END", ns_voxels, Printf);
+	SkinHack(Printf);
 	return true;
 }
 
@@ -273,7 +270,7 @@ struct Marker
 	unsigned int index;
 };
 
-void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, bool flathack)
+void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, FileSystemMessageFunc Printf, bool flathack)
 {
 	bool warned = false;
 	int numstartmarkers = 0, numendmarkers = 0;
@@ -300,7 +297,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 	{
 		if (numendmarkers == 0) return;	// no markers found
 
-		Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", endmarker, startmarker);
+		Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName.GetChars(), endmarker, startmarker);
 
 
 		if (flathack)
@@ -314,7 +311,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
-					DPrintf(DMSG_NOTIFY, "Marking %s as potential flat\n", Lumps[ii].getName());
+					Printf(FSMessageLevel::DebugNotify, "%s: Marking %s as potential flat\n", FileName.GetChars(), Lumps[ii].getName());
 					Lumps[ii].Flags |= LUMPF_MAYBEFLAT;
 				}
 			}
@@ -328,7 +325,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		int start, end;
 		if (markers[i].markertype != 0)
 		{
-			Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", endmarker, startmarker);
+			Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName.GetChars(), endmarker, startmarker);
 			i++;
 			continue;
 		}
@@ -337,21 +334,21 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		// skip over subsequent x_START markers
 		while (i < markers.Size() && markers[i].markertype == 0)
 		{
-			Printf(TEXTCOLOR_YELLOW"WARNING: duplicate %s marker found.\n", startmarker);
+			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName.GetChars(), startmarker);
 			i++;
 			continue;
 		}
 		// same for x_END markers
 		while (i < markers.Size()-1 && (markers[i].markertype == 1 && markers[i+1].markertype == 1))
 		{
-			Printf(TEXTCOLOR_YELLOW"WARNING: duplicate %s marker found.\n", endmarker);
+			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName.GetChars(), endmarker);
 			i++;
 			continue;
 		}
 		// We found a starting marker but no end marker. Ignore this block.
 		if (i >= markers.Size())
 		{
-			Printf(TEXTCOLOR_YELLOW"WARNING: %s marker without corresponding %s found.\n", startmarker, endmarker);
+			Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName.GetChars(), startmarker, endmarker);
 			end = NumLumps;
 		}
 		else
@@ -360,14 +357,14 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		}
 
 		// we found a marked block
-		DPrintf(DMSG_NOTIFY, "Found %s block at (%d-%d)\n", startmarker, markers[start].index, end);
+		Printf(FSMessageLevel::DebugNotify, "%s: Found %s block at (%d-%d)\n", FileName.GetChars(), startmarker, markers[start].index, end);
 		for(int j = markers[start].index + 1; j < end; j++)
 		{
 			if (Lumps[j].Namespace != ns_global)
 			{
 				if (!warned)
 				{
-					Printf(TEXTCOLOR_YELLOW"WARNING: Overlapping namespaces found (lump %d)\n", j);
+					Printf(FSMessageLevel::Warning, "%s: Overlapping namespaces found (lump %d)\n", FileName.GetChars(), j);
 				}
 				warned = true;
 			}
@@ -377,7 +374,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				// ignore sprite lumps smaller than 8 bytes (the smallest possible)
 				// in size -- this was used by some dmadds wads
 				// as an 'empty' graphics resource
-				DPrintf(DMSG_WARNING, " Skipped empty sprite %s (lump %d)\n", Lumps[j].getName(), j);
+				Printf(FSMessageLevel::DebugWarn, "%s: Skipped empty sprite %s (lump %d)\n", FileName.GetChars(), Lumps[j].getName(), j);
 			}
 			else
 			{
@@ -401,7 +398,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 //
 //==========================================================================
 
-void FWadFile::SkinHack ()
+void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 {
 	// this being static is not a problem. The only relevant thing is that each skin gets a different number.
 	static int namespc = ns_firstskin;
@@ -447,11 +444,8 @@ void FWadFile::SkinHack ()
 	}
 	if (skinned && hasmap)
 	{
-		Printf (TEXTCOLOR_BLUE
-			"The maps in %s will not be loaded because it has a skin.\n"
-			TEXTCOLOR_BLUE
-			"You should remove the skin from the wad to play these maps.\n",
-			FileName.GetChars());
+		Printf(FSMessageLevel::Attention, "%s: The maps will not be loaded because it has a skin.\n", FileName.GetChars());
+		Printf(FSMessageLevel::Attention, "You should remove the skin from the wad to play these maps.\n");
 	}
 }
 
@@ -462,7 +456,7 @@ void FWadFile::SkinHack ()
 //
 //==========================================================================
 
-FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
+FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	char head[4];
 
@@ -474,7 +468,7 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet, Lump
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
 			auto rf = new FWadFile(filename, file);
-			if (rf->Open(quiet, filter)) return rf;
+			if (rf->Open(filter, Printf)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

@@ -34,7 +34,6 @@
 */
 
 #include "resourcefile.h"
-#include "printf.h"
 
 //==========================================================================
 //
@@ -46,7 +45,7 @@ class FSSIFile : public FUncompressedFile
 {
 public:
 	FSSIFile(const char * filename, FileReader &file);
-	bool Open(bool quiet, int version, int lumpcount, LumpFilterInfo* filter);
+	bool Open(int version, int lumpcount, LumpFilterInfo* filter);
 };
 
 
@@ -68,7 +67,7 @@ FSSIFile::FSSIFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FSSIFile::Open(bool quiet, int version, int lumpcount, LumpFilterInfo*)
+bool FSSIFile::Open(int version, int lumpcount, LumpFilterInfo*)
 {
 	NumLumps = lumpcount*2;
 	Lumps.Resize(lumpcount*2);
@@ -115,7 +114,7 @@ bool FSSIFile::Open(bool quiet, int version, int lumpcount, LumpFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile* CheckSSI(const char* filename, FileReader& file, bool quiet, LumpFilterInfo* filter)
+FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	char zerobuf[72];
 	char buf[72];
@@ -146,7 +145,7 @@ FResourceFile* CheckSSI(const char* filename, FileReader& file, bool quiet, Lump
 				if (!skipstring(70)) return nullptr;
 			}
 			auto ssi = new FSSIFile(filename, file);
-			if (ssi->Open(filename, version, numfiles, filter)) return ssi;
+			if (ssi->Open(version, numfiles, filter)) return ssi;
 			file = std::move(ssi->Reader); // to avoid destruction of reader
 			delete ssi;
 		}

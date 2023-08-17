@@ -77,7 +77,7 @@ void FSavegameManager::ReadSaveStrings()
 				// I_FindName only returns the file's name and not its full path
 				FString filepath = G_BuildSaveName(I_FindName(&c_file));
 
-				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(filepath, true, true));
+				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(filepath, true));
 				if (savegame != nullptr)
 				{
 					bool oldVer = false;

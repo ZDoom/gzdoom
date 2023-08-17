@@ -64,6 +64,7 @@ FImageSource *QOIImage_TryCreate(FileReader &file, int lumpnum)
 		return nullptr;
 	}
 
+        file.Seek(0, FileReader::SeekSet);
 	file.Read((void *)&header, sizeof(header));
 
 	if (header.magic[0] != 'q' || header.magic[1] != 'o' || header.magic[2] != 'i' || header.magic[3] != 'f')

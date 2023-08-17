@@ -34,8 +34,8 @@
 */
 
 #include "files.h"
-	// just for 'clamp'
-#include "zstring.h"
+#include "utf8.h"
+#include "stb_sprintf.h"
 
 
 FILE *myfopen(const char *filename, const char *flags)
@@ -472,13 +472,18 @@ long FileWriter::Seek(long offset, int mode)
 
 size_t FileWriter::Printf(const char *fmt, ...)
 {
-	va_list ap;
-	FString out;
+	char workbuf[STB_SPRINTF_MIN];
+	va_list arglist;
+	va_start(arglist, fmt);
+	auto r = stbsp_vsprintfcb([](const char* cstr, void* data, int len) -> char*
+		{
+			auto fr = (FileWriter*)data;
+			auto writ = fr->Write(cstr, len);
+			return writ == (size_t)len? (char*)cstr : nullptr; // abort if writing caused an error.
+		}, this, workbuf, fmt, arglist);
 
-	va_start(ap, fmt);
-	out.VFormat(fmt, ap);
-	va_end(ap);
-	return Write(out.GetChars(), out.Len());
+	va_end(arglist);
+	return r;
 }
 
 size_t BufferWriter::Write(const void *buffer, size_t len)

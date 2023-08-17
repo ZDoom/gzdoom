@@ -1326,19 +1326,6 @@ FString &FString::operator=(const wchar_t *copyStr)
 	return *this;
 }
 
-std::wstring WideString(const char *cin)
-{
-	if (!cin) return L"";
-	const uint8_t *in = (const uint8_t*)cin;
-	// This is a bit tricky because we need to support both UTF-8 and legacy content in ISO-8859-1
-	// and thanks to user-side string manipulation it can be that a text mixes both.
-	// To convert the string this uses the same function as all text printing in the engine.
-	TArray<wchar_t> buildbuffer;
-	while (*in) buildbuffer.Push((wchar_t)GetCharFromString(in));
-	buildbuffer.Push(0);
-	return std::wstring(buildbuffer.Data());
-}
-
 static HANDLE StringHeap;
 const SIZE_T STRING_HEAP_SIZE = 64*1024;
 #endif

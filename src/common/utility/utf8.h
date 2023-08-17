@@ -18,3 +18,8 @@ int getAlternative(int code);
 extern uint16_t win1252map[];
 extern uint16_t lowerforupper[65536];
 extern uint16_t upperforlower[65536];
+
+// make this only visible on Windows, on other platforms this should not be called.
+#ifdef _WIN32
+std::wstring WideString(const char*);
+#endif

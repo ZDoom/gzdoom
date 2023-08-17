@@ -39,6 +39,7 @@
 #include <stddef.h>
 #include <string>
 #include "tarray.h"
+#include "utf8.h"
 
 #ifdef __GNUC__
 #define PRINTFISH(x) __attribute__((format(printf, 2, x)))
@@ -55,10 +56,6 @@
 #else
 #define IGNORE_FORMAT_PRE
 #define IGNORE_FORMAT_POST
-#endif
-
-#ifdef _WIN32
-std::wstring WideString(const char *);
 #endif
 
 struct FStringData

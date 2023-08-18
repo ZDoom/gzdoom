@@ -202,11 +202,6 @@ extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern FName MessageBoxClass;
 
-static const char* iwad_folders[] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/", 
-	"materials/", "models/", "fonts/", "brightmaps/"};
-static const char* iwad_reserved[] = { "mapinfo", "zmapinfo", "umapinfo", "gameinfo", "sndinfo", "sndseq", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
-
-
 CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL | CVAR_VIRTUAL)
 {
 	if (netgame)
@@ -1920,8 +1915,9 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 
 void GetReserved(LumpFilterInfo& lfi)
 {
-	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
-	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+	lfi.reservedFolders = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/",
+	"materials/", "models/", "fonts/", "brightmaps/" };
+	lfi.requiredPrefixes = { "mapinfo", "zmapinfo", "umapinfo", "gameinfo", "sndinfo", "sndseq", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 }
 
 static FString CheckGameInfo(TArray<FString> & pwads)
@@ -3065,7 +3061,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 		DPrintf(DMSG_NOTIFY, "%s", text.GetChars());
 		break;
 	}
-	return text.Len();
+	return (int)text.Len();
 }
 //==========================================================================
 //
@@ -3138,9 +3134,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 
 	for (auto& inf : blanket)
 	{
-		if (gameinfo.gametype & inf.match) lfi.gameTypeFilter.Push(inf.name);
+		if (gameinfo.gametype & inf.match) lfi.gameTypeFilter.push_back(inf.name);
 	}
-	lfi.gameTypeFilter.Push(FStringf("game-%s", GameTypeName()));
+	lfi.gameTypeFilter.push_back(FStringf("game-%s", GameTypeName()).GetChars());
 
 	GetReserved(lfi);
 

@@ -68,10 +68,8 @@ FLumpFile::FLumpFile(const char *filename, FileReader &file)
 
 bool FLumpFile::Open(LumpFilterInfo*)
 {
-	FString name(ExtractFileBase(FileName, true));
-
 	Lumps.Resize(1);
-	Lumps[0].LumpNameSetup(name);
+	Lumps[0].LumpNameSetup(ExtractBaseName(FileName.c_str(), true).c_str());
 	Lumps[0].Owner = this;
 	Lumps[0].Position = 0;
 	Lumps[0].LumpSize = (int)Reader.GetLength();

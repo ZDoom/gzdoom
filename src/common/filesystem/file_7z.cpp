@@ -36,9 +36,7 @@
 // Note that 7z made the unwise decision to include windows.h :(
 #include "7z.h"
 #include "7zCrc.h"
-
 #include "resourcefile.h"
-#include "cmdlib.h"
 
 
 
@@ -228,7 +226,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		Archive = NULL;
 		if (res == SZ_ERROR_UNSUPPORTED)
 		{
-			Printf(FSMessageLevel::Error, "%s: Decoder does not support this archive\n", FileName.GetChars());
+			Printf(FSMessageLevel::Error, "%s: Decoder does not support this archive\n", FileName.c_str());
 		}
 		else if (res == SZ_ERROR_MEM)
 		{
@@ -251,8 +249,8 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 	Lumps = new F7ZLump[NumLumps];
 
 	F7ZLump *lump_p = Lumps;
-	TArray<UInt16> nameUTF16;
-	TArray<char> nameASCII;
+	std::u16string nameUTF16;
+	std::string nameASCII;
 
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
@@ -271,19 +269,17 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 			continue;
 		}
 
-		nameUTF16.Resize((unsigned)nameLength);
-		nameASCII.Resize((unsigned)nameLength);
-		SzArEx_GetFileNameUtf16(archPtr, i, &nameUTF16[0]);
+		nameUTF16.resize((unsigned)nameLength);
+		nameASCII.resize((unsigned)nameLength);
+		// note that the file system is not equipped to handle non-ASCII, so don't bother with proper Unicode conversion here.
+		SzArEx_GetFileNameUtf16(archPtr, i, (UInt16*)nameUTF16.data());
 		for (size_t c = 0; c < nameLength; ++c)
 		{
-			nameASCII[c] = static_cast<char>(nameUTF16[c]);
+			nameASCII[c] = tolower(static_cast<char>(nameUTF16[c]));
+			if (nameASCII[c] == '\\') nameASCII[c] = '/';
 		}
-		FixPathSeperator(&nameASCII[0]);
 
-		FString name = &nameASCII[0];
-		name.ToLower();
-
-		lump_p->LumpNameSetup(name);
+		lump_p->LumpNameSetup(nameASCII.c_str());
 		lump_p->LumpSize = static_cast<int>(SzArEx_GetFileSize(archPtr, i));
 		lump_p->Owner = this;
 		lump_p->Flags = LUMPF_FULLPATH|LUMPF_COMPRESSED;
@@ -303,7 +299,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
 		{
-			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName.GetChars());
+			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName.c_str());
 			return false;
 		}
 	}

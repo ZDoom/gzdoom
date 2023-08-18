@@ -233,7 +233,7 @@ bool FileSystem::InitMultipleFiles (TArray<FString> &filenames, LumpFilterInfo* 
 		AddFile (filenames[i], nullptr, filter, Printf, hashfile);
 
 		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
-		FStringf path("filter/%s", Files.Last()->GetHash().GetChars());
+		FStringf path("filter/%s", Files.Last()->GetHash());
 		MoveLumpsInFolder(path);
 	}
 
@@ -1449,9 +1449,9 @@ const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
 		return NULL;
 	}
 
-	name = Files[rfnum]->FileName;
+	name = Files[rfnum]->FileName.c_str();
 	slash = strrchr (name, '/');
-	return (slash != NULL && slash[1] != 0) ? slash+1 : name;
+	return (slash != nullptr && slash[1] != 0) ? slash+1 : name;
 }
 
 //==========================================================================
@@ -1515,7 +1515,7 @@ const char *FileSystem::GetResourceFileFullName (int rfnum) const noexcept
 		return nullptr;
 	}
 
-	return Files[rfnum]->FileName;
+	return Files[rfnum]->FileName.c_str();
 }
 
 

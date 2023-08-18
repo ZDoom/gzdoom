@@ -98,8 +98,8 @@ FGameTexture::~FGameTexture()
 {
 	if (Base != nullptr)
 	{
-		FGameTexture* link = fileSystem.GetLinkedTexture(GetSourceLump());
-		if (link == this) fileSystem.SetLinkedTexture(GetSourceLump(), nullptr);
+		FGameTexture* link = TexMan.GetLinkedTexture(GetSourceLump());
+		if (link == this) TexMan.SetLinkedTexture(GetSourceLump(), nullptr);
 	}
 	if (SoftwareTexture != nullptr)
 	{

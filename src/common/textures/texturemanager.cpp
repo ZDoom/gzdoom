@@ -244,11 +244,11 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		// Any graphic being placed in the zip's root directory can not be found by this.
 		if (strchr(name, '/') || (flags & TEXMAN_ForceLookup))
 		{
-			FGameTexture *const NO_TEXTURE = (FGameTexture*)-1;
+			FGameTexture *const NO_TEXTURE = (FGameTexture*)-1; // marker for lumps we already checked that do not map to a texture.
 			int lump = fileSystem.CheckNumForFullName(name);
 			if (lump >= 0)
 			{
-				FGameTexture *tex = fileSystem.GetLinkedTexture(lump);
+				FGameTexture *tex = GetLinkedTexture(lump);
 				if (tex == NO_TEXTURE) return FTextureID(-1);
 				if (tex != NULL) return tex->GetID();
 				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
@@ -256,13 +256,13 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 				if (tex != NULL)
 				{
 					tex->AddAutoMaterials();
-					fileSystem.SetLinkedTexture(lump, tex);
+					SetLinkedTexture(lump, tex);
 					return AddGameTexture(tex);
 				}
 				else
 				{
 					// mark this lump as having no valid texture so that we don't have to retry creating one later.
-					fileSystem.SetLinkedTexture(lump, NO_TEXTURE);
+					SetLinkedTexture(lump, NO_TEXTURE);
 				}
 			}
 		}
@@ -1626,6 +1626,37 @@ void FTextureManager::Listaliases()
 		Printf("%s\n", s.GetChars());
 	}
 }
+
+//==========================================================================
+//
+// link a texture with a given lump
+//
+//==========================================================================
+
+void FTextureManager::SetLinkedTexture(int lump, FGameTexture* tex)
+{
+	if ((size_t)lump < fileSystem.GetNumEntries())
+	{
+		linkedMap.Insert(lump, tex);
+	}
+}
+
+//==========================================================================
+//
+// retrieve linked texture
+//
+//==========================================================================
+
+FGameTexture* FTextureManager::GetLinkedTexture(int lump)
+{
+	if ((size_t)lump < fileSystem.GetNumEntries())
+	{
+		auto check = linkedMap.CheckKey(lump);
+		if (check) return *check;
+	}
+	return nullptr;
+}
+
 
 //==========================================================================
 //

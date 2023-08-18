@@ -55,7 +55,6 @@
 struct FileSystem::LumpRecord
 {
 	FResourceLump *lump;
-	FGameTexture* linkedTexture;
 	LumpShortName shortName;
 	FString		longName;
 	int			rfnum;
@@ -67,7 +66,6 @@ struct FileSystem::LumpRecord
 	{
 		lump = lmp;
 		rfnum = filenum;
-		linkedTexture = nullptr;
 		flags = 0;
 
 		if (lump->Flags & LUMPF_SHORTNAME)
@@ -746,35 +744,6 @@ int FileSystem::GetResource (int resid, const char *type, int filenum) const
 		throw FileSystemException("GetResource: %d of type %s not found!", resid, type);
 	}
 	return i;
-}
-
-//==========================================================================
-//
-// link a texture with a given lump
-//
-//==========================================================================
-
-void FileSystem::SetLinkedTexture(int lump, FGameTexture *tex)
-{
-	if ((size_t)lump < NumEntries)
-	{
-		FileInfo[lump].linkedTexture = tex;
-	}
-}
-
-//==========================================================================
-//
-// retrieve linked texture
-//
-//==========================================================================
-
-FGameTexture *FileSystem::GetLinkedTexture(int lump)
-{
-	if ((size_t)lump < NumEntries)
-	{
-		return FileInfo[lump].linkedTexture;
-	}
-	return NULL;
 }
 
 //==========================================================================

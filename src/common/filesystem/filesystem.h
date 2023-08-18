@@ -16,7 +16,6 @@
 
 class FResourceFile;
 struct FResourceLump;
-class FGameTexture;
 
 union LumpShortName
 {
@@ -124,10 +123,6 @@ public:
 	inline int CheckNumForFullName(const FString &name, bool trynormal = false, int namespc = ns_global) { return CheckNumForFullName(name.GetChars(), trynormal, namespc); }
 	inline int CheckNumForFullName (const FString &name, int wadfile) { return CheckNumForFullName(name.GetChars(), wadfile); }
 	inline int GetNumForFullName (const FString &name) { return GetNumForFullName(name.GetChars()); }
-
-	void SetLinkedTexture(int lump, FGameTexture *tex);
-	FGameTexture *GetLinkedTexture(int lump);
-
 
 	void ReadFile (int lump, void *dest);
 	TArray<uint8_t> GetFileData(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FileData isn't writable!)

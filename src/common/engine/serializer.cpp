@@ -1135,7 +1135,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			const char *name;
 			auto lump = pic->GetSourceLump();
 
-			if (fileSystem.GetLinkedTexture(lump) == pic)
+			if (TexMan.GetLinkedTexture(lump) == pic)
 			{
 				name = fileSystem.GetFileFullName(lump);
 			}

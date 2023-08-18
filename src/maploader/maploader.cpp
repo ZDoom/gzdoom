@@ -733,45 +733,36 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		if (compressed)
 		{
 			FileReader zip;
-			try
+			if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false, true))
 			{
-				if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
-				{
-					LoadZNodes(zip, type);
-				}
-				else
-				{
-					Printf("Error loading nodes: Corrupt data.\n");
-					return false;
-				}
+				LoadZNodes(zip, type);
+				return true;
 			}
-			catch (const CRecoverableError& err)
+			else
 			{
-				Printf("Error loading nodes: %s.\n", err.what());
-
-				ForceNodeBuild = true;
-				Level->subsectors.Clear();
-				Level->segs.Clear();
-				Level->nodes.Clear();
-				return false;
+				Printf("Error loading nodes: Corrupt data.\n");
 			}
 		}
 		else
 		{
 			LoadZNodes(dalump, type);
+			return true;
 		}
-		return true;
 	}
 	catch (CRecoverableError &error)
 	{
 		Printf("Error loading nodes: %s\n", error.GetMessage());
-
-		ForceNodeBuild = true;
-		Level->subsectors.Clear();
-		Level->segs.Clear();
-		Level->nodes.Clear();
-		return false;
 	}
+	catch (FileSystemException& error)
+	{
+		Printf("Error loading nodes: %s\n", error.what());
+	}
+	// clean up.
+	ForceNodeBuild = true;
+	Level->subsectors.Clear();
+	Level->segs.Clear();
+	Level->nodes.Clear();
+	return false;
 
 }
 
@@ -3349,8 +3340,9 @@ void MapLoader::LoadLightmap(MapData *map)
 		return;
 
 	FileReader fr;
-	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
+	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, METHOD_ZLIB, false, false))
 		return;
+
 
 	int version = fr.ReadInt32();
 	if (version != 0)

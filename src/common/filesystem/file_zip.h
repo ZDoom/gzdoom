@@ -19,7 +19,7 @@ struct FZipLump : public FResourceLump
 	unsigned CRC32;
 
 	virtual FileReader *GetReader();
-	virtual int FillCache();
+	virtual int FillCache() override;
 
 private:
 	void SetLumpAddress();

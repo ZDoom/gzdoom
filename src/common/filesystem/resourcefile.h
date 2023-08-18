@@ -190,7 +190,7 @@ struct FUncompressedLump : public FResourceLump
 	int				Position;
 
 	virtual FileReader *GetReader();
-	virtual int FillCache();
+	virtual int FillCache() override;
 	virtual int GetFileOffset() { return Position; }
 
 };
@@ -213,7 +213,7 @@ struct FExternalLump : public FResourceLump
 	FString Filename;
 
 	FExternalLump(const char *_filename, int filesize = -1);
-	virtual int FillCache();
+	virtual int FillCache() override;
 
 };
 

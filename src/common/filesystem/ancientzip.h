@@ -1,6 +1,5 @@
 #pragma once
 #include "files.h"
-#include "engineerrors.h"
 
 class FZipExploder
 {
@@ -40,12 +39,6 @@ class FZipExploder
 	int DecodeSF(TArray<HuffNode> &decoder, int numvals);
 public:
 	int Explode(unsigned char *out, unsigned int outsize, FileReader &in, unsigned int insize, int flags);
-};
-
-class CExplosionError : public CRecoverableError
-{
-public:
-	CExplosionError(const char *message) : CRecoverableError(message) {}
 };
 
 int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader &in, unsigned int insize);

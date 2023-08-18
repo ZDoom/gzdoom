@@ -1066,8 +1066,6 @@ set (PCH_SOURCES
 	common/utility/m_alloc.cpp
 	common/utility/utf8.cpp
 	common/utility/palette.cpp
-	common/utility/files.cpp
-	common/utility/files_decompress.cpp
 	common/utility/memarena.cpp
 	common/utility/cmdlib.cpp
 	common/utility/configfile.cpp
@@ -1084,19 +1082,6 @@ set (PCH_SOURCES
 	common/thirdparty/libsmackerdec/src/HuffmanVLC.cpp
 	common/thirdparty/libsmackerdec/src/LogError.cpp
 	common/thirdparty/libsmackerdec/src/SmackerDecoder.cpp
-	common/filesystem/filesystem.cpp
-	common/filesystem/ancientzip.cpp
-	common/filesystem/file_7z.cpp
-	common/filesystem/file_grp.cpp
-	common/filesystem/file_lump.cpp
-	common/filesystem/file_rff.cpp
-	common/filesystem/file_wad.cpp
-	common/filesystem/file_zip.cpp
-	common/filesystem/file_pak.cpp
-	common/filesystem/file_whres.cpp
-	common/filesystem/file_ssi.cpp
-	common/filesystem/file_directory.cpp
-	common/filesystem/resourcefile.cpp
 	common/engine/cycler.cpp
 	common/engine/d_event.cpp
 	common/engine/date.cpp
@@ -1220,6 +1205,23 @@ set( ZDOOM_SOURCES
 	common/thirdparty/math/tan.c
 	common/thirdparty/math/tanh.c
 	common/thirdparty/math/fastsin.cpp
+
+	common/filesystem/filesystem.cpp
+	common/filesystem/ancientzip.cpp
+	common/filesystem/file_7z.cpp
+	common/filesystem/file_grp.cpp
+	common/filesystem/file_lump.cpp
+	common/filesystem/file_rff.cpp
+	common/filesystem/file_wad.cpp
+	common/filesystem/file_zip.cpp
+	common/filesystem/file_pak.cpp
+	common/filesystem/file_whres.cpp
+	common/filesystem/file_ssi.cpp
+	common/filesystem/file_directory.cpp
+	common/filesystem/resourcefile.cpp
+	common/filesystem/files.cpp
+	common/filesystem/files_decompress.cpp
+
 )
 
 set( ZDOOM_NONPCH_SOURCES ${ZDOOM_SOURCES} )

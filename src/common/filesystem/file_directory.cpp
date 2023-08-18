@@ -250,10 +250,13 @@ int FDirectoryLump::FillCache()
 	Cache = new char[LumpSize];
 	if (!fr.OpenFile(mFullPath))
 	{
-		memset(Cache, 0, LumpSize);
-		return 0;
+		throw FileSystemException("unable to open file");
 	}
-	fr.Read(Cache, LumpSize);
+	auto read = fr.Read(Cache, LumpSize);
+	if (read != LumpSize)
+	{
+		throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
+	}
 	RefCount = 1;
 	return 1;
 }

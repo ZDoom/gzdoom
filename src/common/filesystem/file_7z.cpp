@@ -168,7 +168,7 @@ struct F7ZLump : public FResourceLump
 {
 	int		Position;
 
-	virtual int FillCache();
+	virtual int FillCache() override;
 
 };
 
@@ -340,7 +340,11 @@ F7ZFile::~F7ZFile()
 int F7ZLump::FillCache()
 {
 	Cache = new char[LumpSize];
-	static_cast<F7ZFile*>(Owner)->Archive->Extract(Position, Cache);
+	SRes code = static_cast<F7ZFile*>(Owner)->Archive->Extract(Position, Cache);
+	if (code != SZ_OK)
+	{
+		throw FileSystemException("Error %d reading from 7z archive", code);
+	}
 	RefCount = 1;
 	return 1;
 }

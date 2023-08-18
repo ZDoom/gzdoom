@@ -34,6 +34,7 @@
 */
 
 #include <time.h>
+#include <stdexcept>
 #include "file_zip.h"
 #include "cmdlib.h"
 
@@ -49,7 +50,7 @@
 //
 //==========================================================================
 
-static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int LumpSize, int CompressedSize, int GPFlags)
+static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int LumpSize, int CompressedSize, int GPFlags, bool exceptions)
 {
 	switch (Method)
 	{
@@ -64,7 +65,7 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int L
 	case METHOD_LZMA:
 	{
 		FileReader frz;
-		if (frz.OpenDecompressor(Reader, LumpSize, Method, false, [](const char* err) { I_Error("%s", err); }))
+		if (frz.OpenDecompressor(Reader, LumpSize, Method, false, exceptions))
 		{
 			frz.Read(Cache, LumpSize);
 		}
@@ -75,7 +76,11 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int L
 	case METHOD_IMPLODE:
 	{
 		FZipExploder exploder;
-		exploder.Explode((unsigned char *)Cache, LumpSize, Reader, CompressedSize, GPFlags);
+		if (exploder.Explode((unsigned char*)Cache, LumpSize, Reader, CompressedSize, GPFlags) == -1)
+		{
+			// decompression failed so zero the cache.
+			memset(Cache, 0, LumpSize);
+		}
 		break;
 	}
 
@@ -96,7 +101,7 @@ bool FCompressedBuffer::Decompress(char *destbuffer)
 {
 	FileReader mr;
 	mr.OpenMemory(mBuffer, mCompressedSize);
-	return UncompressZipLump(destbuffer, mr, mMethod, mSize, mCompressedSize, mZipFlags);
+	return UncompressZipLump(destbuffer, mr, mMethod, mSize, mCompressedSize, mZipFlags, false);
 }
 
 //-----------------------------------------------------------------------
@@ -499,16 +504,7 @@ int FZipLump::FillCache()
 
 	Owner->Reader.Seek(Position, FileReader::SeekSet);
 	Cache = new char[LumpSize];
-	try
-	{
-		UncompressZipLump(Cache, Owner->Reader, Method, LumpSize, CompressedSize, GPFlags);
-	}
-	catch (const CRecoverableError& )
-	{
-		// this cannot propagate the exception but also has no means to handle the error message. Damn...
-		// At least don't return uninitialized memory here.
-		memset(Cache, 0, LumpSize);
-	}
+	UncompressZipLump(Cache, Owner->Reader, Method, LumpSize, CompressedSize, GPFlags, true);
 	RefCount = 1;
 	return 1;
 }

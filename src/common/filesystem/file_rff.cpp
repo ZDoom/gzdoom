@@ -72,7 +72,7 @@ struct RFFLump
 struct FRFFLump : public FUncompressedLump
 {
 	virtual FileReader *GetReader();
-	virtual int FillCache();
+	virtual int FillCache() override;
 
 	uint32_t		IndexNum;
 

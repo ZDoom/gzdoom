@@ -100,13 +100,19 @@ public:
 		if(Compressed)
 		{
 			FileReader lzss;
-			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false, [](const char* err) { I_Error("%s", err); }))
+			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false, true))
 			{
 				lzss.Read(Cache, LumpSize);
 			}
 		}
 		else
-			Owner->Reader.Read(Cache, LumpSize);
+		{
+			auto read = Owner->Reader.Read(Cache, LumpSize);
+			if (read != LumpSize)
+			{
+				throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
+			}
+		}
 
 		RefCount = 1;
 		return 1;

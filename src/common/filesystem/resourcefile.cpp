@@ -193,7 +193,15 @@ void *FResourceLump::Lock()
 	}
 	else if (LumpSize > 0)
 	{
-		FillCache();
+		try
+		{
+			FillCache();
+		}
+		catch (const FileSystemException& err)
+		{
+			// enrich the message with info about this lump.
+			throw FileSystemException("%s, file '%s': %s", getName(), Owner->FileName.GetChars(), err.what());
+		}
 	}
 	return Cache;
 }
@@ -609,7 +617,13 @@ int FUncompressedLump::FillCache()
 
 	Owner->Reader.Seek(Position, FileReader::SeekSet);
 	Cache = new char[LumpSize];
-	Owner->Reader.Read(Cache, LumpSize);
+
+	auto read = Owner->Reader.Read(Cache, LumpSize);
+	if (read != LumpSize)
+	{
+		throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
+	}
+
 	RefCount = 1;
 	return 1;
 }
@@ -672,11 +686,15 @@ int FExternalLump::FillCache()
 
 	if (f.OpenFile(Filename))
 	{
-		f.Read(Cache, LumpSize);
+		auto read = f.Read(Cache, LumpSize);
+		if (read != LumpSize)
+		{
+			throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
+		}
 	}
 	else
 	{
-		memset(Cache, 0, LumpSize);
+		throw FileSystemException("unable to open file");
 	}
 	RefCount = 1;
 	return 1;

@@ -569,7 +569,7 @@ int FileSystem::GetNumForName (const char *name, int space)
 	i = CheckNumForName (name, space);
 
 	if (i == -1)
-		I_Error ("GetNumForName: %s not found!", name);
+		throw FileSystemException("GetNumForName: %s not found!", name);
 
 	return i;
 }
@@ -653,7 +653,7 @@ int FileSystem::GetNumForFullName (const char *name)
 	i = CheckNumForFullName (name);
 
 	if (i == -1)
-		I_Error ("GetNumForFullName: %s not found!", name);
+		throw FileSystemException("GetNumForFullName: %s not found!", name);
 
 	return i;
 }
@@ -743,7 +743,7 @@ int FileSystem::GetResource (int resid, const char *type, int filenum) const
 
 	if (i == -1)
 	{
-		I_Error("GetResource: %d of type %s not found!", resid, type);
+		throw FileSystemException("GetResource: %d of type %s not found!", resid, type);
 	}
 	return i;
 }
@@ -922,19 +922,19 @@ void FileSystem::InitHashChains (void)
 
 LumpShortName& FileSystem::GetShortName(int i)
 {
-	if ((unsigned)i >= NumEntries) I_Error("GetShortName: Invalid index");
+	if ((unsigned)i >= NumEntries) throw FileSystemException("GetShortName: Invalid index");
 	return FileInfo[i].shortName;
 }
 
 FString& FileSystem::GetLongName(int i)
 {
-	if ((unsigned)i >= NumEntries) I_Error("GetLongName: Invalid index");
+	if ((unsigned)i >= NumEntries) throw FileSystemException("GetLongName: Invalid index");
 	return FileInfo[i].longName;
 }
 
 void FileSystem::RenameFile(int num, const char* newfn)
 {
-	if ((unsigned)num >= NumEntries) I_Error("RenameFile: Invalid index");
+	if ((unsigned)num >= NumEntries) throw FileSystemException("RenameFile: Invalid index");
 	FileInfo[num].longName = newfn;
 	// This does not alter the short name - call GetShortname to do that!
 }
@@ -1345,7 +1345,7 @@ TArray<uint8_t> FileSystem::GetFileData(int lump, int pad)
 
 	if (numread != size)
 	{
-		I_Error("GetFileData: only read %ld of %ld on lump %i\n",
+		throw FileSystemException("GetFileData: only read %ld of %ld on lump %i\n",
 			numread, size, lump);
 	}
 	if (pad > 0) memset(&data[size], 0, pad);
@@ -1367,8 +1367,8 @@ void FileSystem::ReadFile (int lump, void *dest)
 
 	if (numread != size)
 	{
-		I_Error ("W_ReadFile: only read %ld of %ld on lump %i\n",
-			numread, size, lump);	
+		throw FileSystemException("W_ReadFile: only read %ld of %ld on '%s'\n",
+			numread, size, GetLongName(lump).GetChars());	
 	}
 }
 
@@ -1399,7 +1399,7 @@ FileReader FileSystem::OpenFileReader(int lump)
 {
 	if ((unsigned)lump >= (unsigned)FileInfo.Size())
 	{
-		I_Error("OpenFileReader: %u >= NumEntries", lump);
+		throw FileSystemException("OpenFileReader: %u >= NumEntries", lump);
 	}
 
 	auto rl = FileInfo[lump].lump;
@@ -1418,7 +1418,7 @@ FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 {
 	if ((unsigned)lump >= (unsigned)FileInfo.Size())
 	{
-		I_Error("ReopenFileReader: %u >= NumEntries", lump);
+		throw FileSystemException("ReopenFileReader: %u >= NumEntries", lump);
 	}
 
 	auto rl = FileInfo[lump].lump;
@@ -1619,7 +1619,7 @@ FString::FString (ELumpNum lumpnum)
 
 	if (numread != size)
 	{
-		I_Error ("ConstructStringFromLump: Only read %ld of %ld bytes on lump %i (%s)\n",
+		throw FileSystemException("ConstructStringFromLump: Only read %ld of %ld bytes on lump %i (%s)\n",
 			numread, size, lumpnum, fileSystem.GetFileFullName((int)lumpnum));
 	}
 }

@@ -39,10 +39,35 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <functional>
 #include "basics.h"
 #include "m_swap.h"
 #include "tarray.h"
+
+class FileSystemException : public std::exception
+{
+protected:
+	static const int MAX_FSERRORTEXT = 1024;
+	char m_Message[MAX_FSERRORTEXT];
+
+public:
+	FileSystemException(const char* error, ...)
+	{
+		va_list argptr;
+		va_start(argptr, error);
+		vsnprintf(m_Message, MAX_FSERRORTEXT, error, argptr);
+		va_end(argptr);
+	}
+	FileSystemException(const char* error, va_list argptr)
+	{
+		vsnprintf(m_Message, MAX_FSERRORTEXT, error, argptr);
+	}
+	char const* what() const noexcept override
+	{
+		return m_Message;
+	}
+};
 
 // Zip compression methods, extended by some internal types to be passed to OpenDecompressor
 enum
@@ -172,7 +197,7 @@ public:
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
 	bool OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
-	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, const std::function<void(const char*)>& cb);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
+	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions = false);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
 	Size Tell() const
 	{
@@ -306,7 +331,7 @@ public:
 
 class DecompressorBase : public FileReaderInterface
 {
-	std::function<void(const char*)> ErrorCallback = nullptr;
+	bool exceptions = false;
 public:
 	// These do not work but need to be defined to satisfy the FileReaderInterface.
 	// They will just error out when called.
@@ -314,11 +339,8 @@ public:
 	long Seek(long offset, int origin) override;
 	char* Gets(char* strbuf, int len) override;
 	void DecompressionError(const char* error, ...) const;
-	void SetErrorCallback(const std::function<void(const char*)>& cb)
-	{
-		ErrorCallback = cb;
-	}
 	void SetOwnsReader();
+	void EnableExceptions(bool on) { exceptions = on; }
 
 protected:
 	FileReader* File = nullptr;

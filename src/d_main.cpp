@@ -1233,13 +1233,21 @@ void D_DoomLoop ()
 				return;
 			}
 		}
-		catch (CRecoverableError &error)
+		catch (const CRecoverableError &error)
 		{
 			if (error.GetMessage ())
 			{
 				Printf (PRINT_NONOTIFY | PRINT_BOLD, "\n%s\n", error.GetMessage());
 			}
 			D_ErrorCleanup ();
+		}
+		catch (const FileSystemException& error) // in case this propagates up to here it should be treated as a recoverable error.
+		{
+			if (error.what())
+			{
+				Printf(PRINT_NONOTIFY | PRINT_BOLD, "\n%s\n", error.what());
+			}
+			D_ErrorCleanup();
 		}
 		catch (CVMAbortException &error)
 		{

@@ -1241,13 +1241,13 @@ static int folderentrycmp(const void *a, const void *b)
 //
 //==========================================================================
 
-unsigned FileSystem::GetFilesInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
+unsigned FileSystem::GetFilesInFolder(const char *inpath, std::vector<FolderEntry> &result, bool atomic) const
 {
 	std::string path = inpath;
 	FixPathSeparator(&path.front());
 	for (auto& c : path) c = tolower(c);
 	if (path.back() != '/') path += '/';
-	result.Clear();
+	result.clear();
 	for (size_t i = 0; i < FileInfo.size(); i++)
 	{
 		if (FileInfo[i].longName.find(path) == 0)
@@ -1256,11 +1256,11 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, TArray<FolderEntry> &r
 			if ((unsigned)fileSystem.CheckNumForFullName(FileInfo[i].longName.c_str()) == i)
 			{
 				FolderEntry fe{ FileInfo[i].longName.c_str(), (uint32_t)i };
-				result.Push(fe);
+				result.push_back(fe);
 			}
 		}
 	}
-	if (result.Size())
+	if (result.size())
 	{
 		int maxfile = -1;
 		if (atomic)
@@ -1272,14 +1272,14 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, TArray<FolderEntry> &r
 				if (thisfile > maxfile) maxfile = thisfile;
 			}
 			// Delete everything from older files.
-			for (int i = result.Size() - 1; i >= 0; i--)
+			for (int i = (int)result.size() - 1; i >= 0; i--)
 			{
-				if (fileSystem.GetFileContainer(result[i].lumpnum) != maxfile) result.Delete(i);
+				if (fileSystem.GetFileContainer(result[i].lumpnum) != maxfile) result.erase(result.begin() + i);
 			}
 		}
-		qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);
+		qsort(result.data(), result.size(), sizeof(FolderEntry), folderentrycmp);
 	}
-	return result.Size();
+	return (unsigned)result.size();
 }
 
 //==========================================================================

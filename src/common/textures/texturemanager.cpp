@@ -1108,7 +1108,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 
 void FTextureManager::AddLocalizedVariants()
 {
-	TArray<FolderEntry> content;
+	std::vector<FolderEntry> content;
 	fileSystem.GetFilesInFolder("localized/textures/", content, false);
 	for (auto &entry : content)
 	{

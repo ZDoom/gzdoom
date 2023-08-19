@@ -144,7 +144,7 @@ public:
 	int GetResourceId(int lump) const;				// Returns the RFF index number for this lump
 	const char* GetResourceType(int lump) const;
 	bool CheckFileName (int lump, const char *name) const;	// [RH] Returns true if the names match
-	unsigned GetFilesInFolder(const char *path, TArray<FolderEntry> &result, bool atomic) const;
+	unsigned GetFilesInFolder(const char *path, std::vector<FolderEntry> &result, bool atomic) const;
 
 	int GetNumEntries() const
 	{

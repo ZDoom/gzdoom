@@ -91,7 +91,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	// Read the font's configuration.
 	// This will not be done for the default fonts, because they are not atomic and the default content does not need it.
 
-	TArray<FolderEntry> folderdata;
+	std::vector<FolderEntry> folderdata;
 	if (filetemplate != nullptr)
 	{
 		FStringf path("fonts/%s/", filetemplate);
@@ -103,12 +103,13 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		{
 			FStringf infpath("fonts/%s/font.inf", filetemplate);
 
-			unsigned index = folderdata.FindEx([=](const FolderEntry &entry)
+			size_t index;
+			for(index = 0; index < folderdata.size(); index++)
 			{
-				return infpath.CompareNoCase(entry.name) == 0;
-			});
+				if (infpath.CompareNoCase(folderdata[i].name) == 0) break;
+			}
 
-			if (index < folderdata.Size())
+			if (index < folderdata.size())
 			{
 				FScanner sc;
 				sc.OpenLumpNum(folderdata[index].lumpnum);
@@ -288,7 +289,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				}
 			}
 		}
-		if (folderdata.Size() > 0)
+		if (folderdata.size() > 0)
 		{
 			// all valid lumps must be named with a hex number that represents its Unicode character index.
 			for (auto &entry : folderdata)
@@ -397,7 +398,7 @@ public:
 	}
 
 };
-void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
+void FFont::ReadSheetFont(std::vector<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
 {
 	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;

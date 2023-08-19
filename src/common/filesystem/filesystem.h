@@ -136,8 +136,6 @@ public:
 	int FileLength (int lump) const;
 	int GetFileOffset (int lump);					// [RH] Returns offset of lump in the wadfile
 	int GetFileFlags (int lump);					// Return the flags for this lump
-	void GetFileShortName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
-	void GetFileShortName (FString &to, int lump) const;
 	const char* GetFileShortName(int lump) const;
 	const char *GetFileFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
 	FString GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name

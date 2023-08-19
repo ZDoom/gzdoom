@@ -351,13 +351,11 @@ void R_InitSpriteDefs ()
 	{
 		if (fileSystem.GetFileNamespace(i) == ns_voxels)
 		{
-			char name[9];
 			size_t namelen;
 			int spin;
 			int sign;
 
-			fileSystem.GetFileShortName(name, i);
-			name[8] = 0;
+			const char* name = fileSystem.GetFileShortName(i);
 			namelen = strlen(name);
 			if (namelen < 4)
 			{ // name is too short
@@ -812,9 +810,7 @@ void R_InitSkins (void)
 			// specified, use whatever immediately follows the specifier lump.
 			if (intname == 0)
 			{
-				char name[9];
-				fileSystem.GetFileShortName (name, base+1);
-				memcpy(&intname, name, 4);
+				memcpy(&intname, fileSystem.GetFileShortName(base + 1), 4);
 			}
 
 			int basens = fileSystem.GetFileNamespace(base);
@@ -845,9 +841,8 @@ void R_InitSkins (void)
 
 				for (k = base + 1; fileSystem.GetFileNamespace(k) == basens; k++)
 				{
-					char lname[9];
+					const char* lname = fileSystem.GetFileShortName(k);
 					uint32_t lnameint;
-					fileSystem.GetFileShortName (lname, k);
 					memcpy(&lnameint, lname, 4);
 					if (lnameint == intname)
 					{
@@ -866,7 +861,7 @@ void R_InitSkins (void)
 					break;
 				}
 
-				fileSystem.GetFileShortName (temp.name, base+1);
+				memcpy(temp.name, fileSystem.GetFileShortName (base+1), 4);
 				temp.name[4] = 0;
 				int sprno = (int)sprites.Push (temp);
 				if (spr==0)	Skins[i].sprite = sprno;

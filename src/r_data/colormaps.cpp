@@ -106,9 +106,7 @@ void R_InitColormaps (bool allowCustomColormap)
 	{
 		if (fileSystem.GetFileNamespace(i) == ns_colormaps)
 		{
-			char name[9];
-			name[8] = 0;
-			fileSystem.GetFileShortName (name, i);
+			auto name = fileSystem.GetFileShortName(i);
 
 			if (fileSystem.CheckNumForName (name, ns_colormaps) == (int)i)
 			{

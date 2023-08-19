@@ -1124,7 +1124,7 @@ static void S_AddSNDINFO (int lump)
 static void S_AddStrifeVoice (int lumpnum)
 {
 	char name[16] = "svox/";
-	fileSystem.GetFileShortName (name+5, lumpnum);
+	strcpy(name + 5, fileSystem.GetFileShortName (lumpnum));
 	S_AddSound (name, lumpnum);
 }
 

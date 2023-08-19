@@ -155,9 +155,8 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 	Height = 200;
 
 	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
-	FString Name;
-	fileSystem.GetFileShortName(Name, lumpnum);
-	if (Name.CompareNoCase("E2END") == 0)
+	auto Name = fileSystem.GetFileShortName(lumpnum);
+	if (stricmp(Name, "E2END") == 0)
 	{
 		mPaletteLump = fileSystem.CheckNumForName("E2PAL");
 		if (fileSystem.FileLength(mPaletteLump) < 768) mPaletteLump = -1;

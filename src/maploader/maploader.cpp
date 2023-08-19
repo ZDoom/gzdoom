@@ -2121,9 +2121,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 
 				if (developer >= DMSG_NOTIFY)
 				{
-					char lumpname[9];
-					lumpname[8] = 0;
-					fileSystem.GetFileShortName(lumpname, lumpnum);
+					const char *lumpname = fileSystem.GetFileShortName(lumpnum);
 					if (*alpha < 0) Printf("%s appears to be additive translucency %d (%d%%)\n", lumpname, -*alpha, -*alpha * 100 / 255);
 					else Printf("%s appears to be translucency %d (%d%%)\n", lumpname, *alpha, *alpha * 100 / 255);
 				}

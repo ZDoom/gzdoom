@@ -2277,8 +2277,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 
 	if (fr == NULL)
 	{
-		fileSystem.GetFileShortName (ModuleName, lumpnum);
-		ModuleName[8] = 0;
+		strcpy(ModuleName, fileSystem.GetFileShortName (lumpnum));
 	}
 	else
 	{

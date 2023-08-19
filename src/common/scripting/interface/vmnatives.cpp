@@ -819,9 +819,7 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpName)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	FString lumpname;
-	fileSystem.GetFileShortName(lumpname, lump);
-	ACTION_RETURN_STRING(lumpname);
+	ACTION_RETURN_STRING(fileSystem.GetFileShortName(lump));
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, GetLumpFullName)

@@ -1095,30 +1095,12 @@ bool FileSystem::CheckFileName (int lump, const char *name)
 //
 //==========================================================================
 
-void FileSystem::GetFileShortName (char *to, int lump) const
-{
-	if ((size_t)lump >= NumEntries)
-		*to = 0;
-	else
-		uppercopy (to, FileInfo[lump].shortName.String);
-}
-
 const char* FileSystem::GetFileShortName(int lump) const
 {
 	if ((size_t)lump >= NumEntries)
 		return nullptr;
 	else
 		return FileInfo[lump].shortName.String;
-}
-
-void FileSystem::GetFileShortName(FString &to, int lump) const
-{
-	if ((size_t)lump >= NumEntries)
-		to = FString();
-	else {
-		to = FileInfo[lump].shortName.String;
-		to.ToUpper();
-	}
 }
 
 //==========================================================================

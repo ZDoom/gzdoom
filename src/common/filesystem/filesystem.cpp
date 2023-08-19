@@ -1130,13 +1130,15 @@ const char *FileSystem::GetFileFullName (int lump, bool returnshort) const
 //
 //==========================================================================
 
-FString FileSystem::GetFileFullPath(int lump) const
+std::string FileSystem::GetFileFullPath(int lump) const
 {
-	FString foo;
+	std::string foo;
 
 	if ((size_t) lump <  NumEntries)
 	{
-		foo << GetResourceFileName(FileInfo[lump].rfnum) << ':' << GetFileFullName(lump);
+		foo = GetResourceFileName(FileInfo[lump].rfnum);
+		foo += ':';
+		foo += +GetFileFullName(lump);
 	}
 	return foo;
 }

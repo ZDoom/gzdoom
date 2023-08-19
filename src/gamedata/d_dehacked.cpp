@@ -3004,7 +3004,7 @@ bool D_LoadDehLump(int lumpnum)
 
 	PatchSize = fileSystem.FileLength(lumpnum);
 
-	PatchName = fileSystem.GetFileFullPath(lumpnum);
+	PatchName = fileSystem.GetFileFullPath(lumpnum).c_str();
 	PatchFile = new char[PatchSize + 1];
 	fileSystem.ReadFile(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character

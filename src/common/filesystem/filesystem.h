@@ -138,7 +138,7 @@ public:
 	int GetFileFlags (int lump);					// Return the flags for this lump
 	const char* GetFileShortName(int lump) const;
 	const char *GetFileFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
-	FString GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
+	std::string GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
 	int GetFileContainer (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetFileNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
 	void SetFileNamespace(int lump, int ns);

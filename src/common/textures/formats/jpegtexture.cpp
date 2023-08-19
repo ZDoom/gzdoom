@@ -287,7 +287,7 @@ PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 		}
 		else
 		{
@@ -382,7 +382,7 @@ PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL)
@@ -426,7 +426,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 		}
 		else
 		{
@@ -479,7 +479,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetFileFullPath(SourceLump).c_str());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	return 0;

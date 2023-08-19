@@ -37,7 +37,7 @@
  */
 bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length)
 {
-	FString objName = fileSystem.GetFileFullPath(lumpnum);
+	auto objName = fileSystem.GetFileFullPath(lumpnum);
 	FString objBuf(buffer, length);
 
 	// Do some replacements before we parse the OBJ string
@@ -101,7 +101,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 		wObjBuf = nullptr;
 		objBuf.UnlockBuffer();
 	}
-	sc.OpenString(objName, objBuf);
+	sc.OpenString(objName.c_str(), objBuf);
 
 	FTextureID curMtl = FNullTextureID();
 	OBJSurface *curSurface = nullptr;

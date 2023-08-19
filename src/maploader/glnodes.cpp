@@ -1001,7 +1001,7 @@ typedef TArray<uint8_t> MemFile;
 static FString CreateCacheName(MapData *map, bool create)
 {
 	FString path = M_GetCachePath(create);
-	FString lumpname = fileSystem.GetFileFullPath(map->lumpnum);
+	FString lumpname = fileSystem.GetFileFullPath(map->lumpnum).c_str();
 	auto separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
 	if (create) CreatePath(path);

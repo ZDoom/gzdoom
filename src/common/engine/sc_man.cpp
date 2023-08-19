@@ -203,7 +203,7 @@ void FScanner :: OpenLumpNum (int lump)
 		FileData mem = fileSystem.ReadFile(lump);
 		ScriptBuffer = mem.GetString();
 	}
-	ScriptName = fileSystem.GetFileFullPath(lump);
+	ScriptName = fileSystem.GetFileFullPath(lump).c_str();
 	LumpNum = lump;
 	PrepareScript ();
 }

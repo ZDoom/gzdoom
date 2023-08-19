@@ -35,7 +35,8 @@
 
 #include <string>
 #include "files.h"
-#include "stb_sprintf.h"
+
+using namespace fs_private;
 
 using namespace fs_private;
 
@@ -477,18 +478,16 @@ long FileWriter::Seek(long offset, int mode)
 
 size_t FileWriter::Printf(const char *fmt, ...)
 {
-	char workbuf[STB_SPRINTF_MIN];
+	char c[300];
 	va_list arglist;
 	va_start(arglist, fmt);
-	auto r = stbsp_vsprintfcb([](const char* cstr, void* data, int len) -> char*
-		{
-			auto fr = (FileWriter*)data;
-			auto writ = fr->Write(cstr, len);
-			return writ == (size_t)len? (char*)cstr : nullptr; // abort if writing caused an error.
-		}, this, workbuf, fmt, arglist);
-
+	auto n = vsnprintf(c, 300, fmt, arglist);
+	std::string buf;
+	buf.resize(n);
+	va_start(arglist, fmt);
+	vsnprintf(&buf.front(), n, fmt, arglist);
 	va_end(arglist);
-	return r;
+	return Write(buf.c_str(), n);
 }
 
 size_t BufferWriter::Write(const void *buffer, size_t len)

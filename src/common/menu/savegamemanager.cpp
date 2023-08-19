@@ -320,10 +320,10 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		{
 			FileReader picreader;
 
-			picreader.OpenMemoryArray([=](TArray<uint8_t> &array)
+			picreader.OpenMemoryArray([=](std::vector<uint8_t> &array)
 			{
 				auto cache = pic->Lock();
-				array.Resize(pic->LumpSize);
+				array.resize(pic->LumpSize);
 				memcpy(&array[0], cache, pic->LumpSize);
 				pic->Unlock();
 				return true;

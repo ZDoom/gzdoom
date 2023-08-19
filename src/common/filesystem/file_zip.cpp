@@ -36,10 +36,7 @@
 #include <time.h>
 #include <stdexcept>
 #include "file_zip.h"
-#include "cmdlib.h"
-
 #include "w_zip.h"
-
 #include "ancientzip.h"
 #include "fs_findfile.h"
 #include "fs_swap.h"

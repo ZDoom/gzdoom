@@ -329,26 +329,26 @@ char *MemoryReader::Gets(char *strbuf, int len)
 
 class MemoryArrayReader : public MemoryReader
 {
-	TArray<uint8_t> buf;
+	std::vector<uint8_t> buf;
 
 public:
 	MemoryArrayReader(const char *buffer, long length)
 	{
 		if (length > 0)
 		{
-			buf.Resize(length);
+			buf.resize(length);
 			memcpy(&buf[0], buffer, length);
 		}
 		UpdateBuffer();
 	}
 
-	TArray<uint8_t> &GetArray() { return buf; }
+	std::vector<uint8_t> &GetArray() { return buf; }
 
 	void UpdateBuffer() 
 	{ 
-		bufptr = (const char*)&buf[0];
+		bufptr = (const char*)buf.data();
 		FilePos = 0;
-		Length = buf.Size();
+		Length = (long)buf.size();
 	}
 };
 
@@ -397,7 +397,7 @@ bool FileReader::OpenMemoryArray(const void *mem, FileReader::Size length)
 	return true;
 }
 
-bool FileReader::OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter)
+bool FileReader::OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter)
 {
 	auto reader = new MemoryArrayReader(nullptr, 0);
 	if (getter(reader->GetArray()))

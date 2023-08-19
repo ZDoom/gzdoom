@@ -41,8 +41,8 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <functional>
-#include "basics.h"
 #include "fs_swap.h"
+
 #include "tarray.h"
 
 class FileSystemException : public std::exception
@@ -196,7 +196,7 @@ public:
 	bool OpenFilePart(FileReader &parent, Size start, Size length);
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
-	bool OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
+	bool OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
 	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions = false);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
 	Size Tell() const

@@ -9,7 +9,6 @@
 
 
 #include "files.h"
-#include "tarray.h"
 #include "cmdlib.h"
 #include "resourcefile.h"
 
@@ -153,7 +152,7 @@ public:
 
 	int GetNumWads() const
 	{
-		return Files.Size();
+		return (int)Files.size();
 	}
 
 	void AddLump(FResourceLump* lump);
@@ -167,10 +166,10 @@ protected:
 
 	struct LumpRecord;
 
-	TArray<FResourceFile *> Files;
+	std::vector<FResourceFile *> Files;
 	std::vector<LumpRecord> FileInfo;
 
-	TArray<uint32_t> Hashes;	// one allocation for all hash lists.
+	std::vector<uint32_t> Hashes;	// one allocation for all hash lists.
 	uint32_t *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
 	uint32_t *NextLumpIndex;
 

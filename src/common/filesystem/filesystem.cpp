@@ -42,9 +42,7 @@
 #include <string.h>
 
 #include "filesystem.h"
-#include "m_crc32.h"
 #include "fs_findfile.h"
-
 #include "md5.hpp"
 
 // MACROS ------------------------------------------------------------------
@@ -203,7 +201,7 @@ FileSystem::~FileSystem ()
 
 void FileSystem::DeleteAll ()
 {
-	Hashes.Clear();
+	Hashes.clear();
 	NumEntries = 0;
 
 	// explicitly delete all manually added lumps.
@@ -212,11 +210,11 @@ void FileSystem::DeleteAll ()
 		if (frec.rfnum == -1) delete frec.lump;
 	}
 	FileInfo.clear();
-	for (int i = Files.Size() - 1; i >= 0; --i)
+	for (int i = (int)Files.size() - 1; i >= 0; --i)
 	{
 		delete Files[i];
 	}
-	Files.Clear();
+	Files.clear();
 }
 
 //==========================================================================
@@ -266,7 +264,7 @@ bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFil
 
 		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
 		std::string path = "filter/%s";
-		path += Files.Last()->GetHash();
+		path += Files.back()->GetHash();
 		MoveLumpsInFolder(path.c_str());
 	}
 
@@ -398,10 +396,10 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 			FResourceLump *lump = resfile->GetLump(i);
 			FileInfo.resize(FileInfo.size() + 1);
 			FileSystem::LumpRecord* lump_p = &FileInfo.back();
-			lump_p->SetFromLump(Files.Size(), lump);
+			lump_p->SetFromLump((int)Files.size(), lump);
 		}
 
-		Files.Push(resfile);
+		Files.push_back(resfile);
 
 		for (uint32_t i=0; i < resfile->LumpCount(); i++)
 		{
@@ -477,7 +475,7 @@ int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
 
 	if (strrchr (name, '/') != NULL)
 	{
-		for (i = 0; i < Files.Size(); ++i)
+		for (i = 0; i < (unsigned)Files.size(); ++i)
 		{
 			if (stricmp (GetResourceFileFullName (i), name) == 0)
 			{
@@ -487,7 +485,7 @@ int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
 	}
 	else
 	{
-		for (i = 0; i < Files.Size(); ++i)
+		for (i = 0; i < (unsigned)Files.size(); ++i)
 		{
 			auto pth = ExtractBaseName(GetResourceFileName(i), true);
 			if (stricmp (pth.c_str(), name) == 0)
@@ -844,9 +842,9 @@ void FileSystem::InitHashChains (void)
 	unsigned int i, j;
 
 	NumEntries = (uint32_t)FileInfo.size();
-	Hashes.Resize(8 * NumEntries);
+	Hashes.resize(8 * NumEntries);
 	// Mark all buckets as empty
-	memset(Hashes.Data(), -1, Hashes.Size() * sizeof(Hashes[0]));
+	memset(Hashes.data(), -1, Hashes.size() * sizeof(Hashes[0]));
 	FirstLumpIndex = &Hashes[0];
 	NextLumpIndex = &Hashes[NumEntries];
 	FirstLumpIndex_FullName = &Hashes[NumEntries * 2];
@@ -887,7 +885,7 @@ void FileSystem::InitHashChains (void)
 		}
 	}
 	FileInfo.shrink_to_fit();
-	Files.ShrinkToFit();
+	Files.shrink_to_fit();
 }
 
 //==========================================================================
@@ -1392,7 +1390,7 @@ FileReader FileSystem::OpenFileReader(const char* name)
 
 FileReader *FileSystem::GetFileReader(int rfnum)
 {
-	if ((uint32_t)rfnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.size())
 	{
 		return NULL;
 	}
@@ -1412,7 +1410,7 @@ const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
 {
 	const char *name, *slash;
 
-	if ((uint32_t)rfnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.size())
 	{
 		return NULL;
 	}
@@ -1429,7 +1427,7 @@ const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
 
 int FileSystem::GetFirstEntry (int rfnum) const noexcept
 {
-	if ((uint32_t)rfnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.size())
 	{
 		return 0;
 	}
@@ -1444,7 +1442,7 @@ int FileSystem::GetFirstEntry (int rfnum) const noexcept
 
 int FileSystem::GetLastEntry (int rfnum) const noexcept
 {
-	if ((uint32_t)rfnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.size())
 	{
 		return 0;
 	}
@@ -1459,7 +1457,7 @@ int FileSystem::GetLastEntry (int rfnum) const noexcept
 
 int FileSystem::GetEntryCount (int rfnum) const noexcept
 {
-	if ((uint32_t)rfnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.size())
 	{
 		return 0;
 	}
@@ -1478,7 +1476,7 @@ int FileSystem::GetEntryCount (int rfnum) const noexcept
 
 const char *FileSystem::GetResourceFileFullName (int rfnum) const noexcept
 {
-	if ((unsigned int)rfnum >= Files.Size())
+	if ((unsigned int)rfnum >= Files.size())
 	{
 		return nullptr;
 	}

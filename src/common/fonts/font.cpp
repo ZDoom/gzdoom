@@ -106,7 +106,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			size_t index;
 			for(index = 0; index < folderdata.size(); index++)
 			{
-				if (infpath.CompareNoCase(folderdata[i].name) == 0) break;
+				if (infpath.CompareNoCase(folderdata[index].name) == 0) break;
 			}
 
 			if (index < folderdata.size())

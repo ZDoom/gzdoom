@@ -236,7 +236,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
 
-	FString name0, name1;
+	std::string name0, name1;
 	bool foundspeciallump = false;
 	bool foundprefix = false;
 
@@ -247,7 +247,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
 		int len = LittleShort(zip_fh->NameLength);
-		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
+		std::string name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
 
 		dirptr += sizeof(FZipCentralDirectoryInfo) +
 			LittleShort(zip_fh->NameLength) +
@@ -261,35 +261,37 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			return false;
 		}
 
-		name.ToLower();
-		if (name.IndexOf("filter/") == 0)
+		for (auto& c : name) c = tolower(c);
+
+		auto vv = name.find("__macosx");
+		if (name.find("filter/") == 0)
 			continue; // 'filter' is a reserved name of the file system.
-		if (name.IndexOf("__macosx") == 0) 
+		if (name.find("__macosx") == 0) 
 			continue; // skip Apple garbage. At this stage only the root folder matters.
-		if (name.IndexOf(".bat") >= 0 || name.IndexOf(".exe") >= 0)
+		if (name.find(".bat") != std::string::npos || name.find(".exe") != std::string::npos)
 			continue; // also ignore executables for this.
 		if (!foundprefix)
 		{
 			// check for special names, if one of these gets found this must be treated as a normal zip.
-			bool isspecial = name.IndexOf("/") < 0 || 
-				(filter && std::find(filter->reservedFolders.begin(), filter->reservedFolders.end(), name.GetChars()) != filter->reservedFolders.end());
+			bool isspecial = name.find("/") == std::string::npos ||
+				(filter && std::find(filter->reservedFolders.begin(), filter->reservedFolders.end(), name) != filter->reservedFolders.end());
 			if (isspecial) break;
-			name0 = name.Left(name.LastIndexOf("/")+1);
-			name1 = name.Left(name.IndexOf("/") + 1);
+			name0 = std::string(name, 0, name.rfind("/")+1);
+			name1 = std::string(name, 0, name.find("/") + 1);
 			foundprefix = true;
 		}
 
-		if (name.IndexOf(name0) != 0)
+		if (name.find(name0) != 0)
 		{
-			if (name1.IsNotEmpty())
+			if (!name1.empty())
 			{
 				name0 = name1;
-				if (name.IndexOf(name0) != 0)
+				if (name.find(name0) != 0)
 				{
 					name0 = "";
 				}
 			}
-			if (name0.IsEmpty()) 
+			if (name0.empty()) 
 				break;
 		}
 		if (!foundspeciallump && filter)
@@ -297,7 +299,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			// at least one of the more common definition lumps must be present.
 			for (auto &p : filter->requiredPrefixes)
 			{ 
-				if (name.IndexOf(name0 + p.c_str()) == 0 || name.LastIndexOf(p.c_str()) == ptrdiff_t(name.Len() - p.length()))
+				if (name.find(name0 + p) == 0 || name.rfind(p) == ptrdiff_t(name.length() - p.length()))
 				{
 					foundspeciallump = true;
 					break;
@@ -315,7 +317,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
 		int len = LittleShort(zip_fh->NameLength);
-		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
+		std::string name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
 		dirptr += sizeof(FZipCentralDirectoryInfo) + 
 				  LittleShort(zip_fh->NameLength) + 
 				  LittleShort(zip_fh->ExtraLength) + 
@@ -328,15 +330,15 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			return false;
 		}
 
-		if (name.IndexOf("__macosx") == 0 || name.IndexOf("__MACOSX") == 0)
+		if (name.find("__macosx") == 0 || name.find("__MACOSX") == 0)
 		{
 			skipped++;
 			continue; // Weed out Apple's resource fork garbage right here because it interferes with safe operation.
 		}
-		if (name0.IsNotEmpty()) name = name.Mid(name0.Len());
+		if (!name0.empty()) name = std::string(name, name0.length());
 
 		// skip Directories
-		if (name.IsEmpty() || (name.Back() == '/' && LittleLong(zip_fh->UncompressedSize32) == 0))
+		if (name.empty() || (name.back() == '/' && LittleLong(zip_fh->UncompressedSize32) == 0))
 		{
 			skipped++;
 			continue;
@@ -351,7 +353,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			zip_fh->Method != METHOD_IMPLODE &&
 			zip_fh->Method != METHOD_SHRINK)
 		{
-			Printf(FSMessageLevel::Error, "%s: '%s' uses an unsupported compression algorithm (#%d).\n", FileName.c_str(), name.GetChars(), zip_fh->Method);
+			Printf(FSMessageLevel::Error, "%s: '%s' uses an unsupported compression algorithm (#%d).\n", FileName.c_str(), name.c_str(), zip_fh->Method);
 			skipped++;
 			continue;
 		}
@@ -359,14 +361,14 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		zip_fh->Flags = LittleShort(zip_fh->Flags);
 		if (zip_fh->Flags & ZF_ENCRYPTED)
 		{
-			Printf(FSMessageLevel::Error, "%s: '%s' is encrypted. Encryption is not supported.\n", FileName.c_str(), name.GetChars());
+			Printf(FSMessageLevel::Error, "%s: '%s' is encrypted. Encryption is not supported.\n", FileName.c_str(), name.c_str());
 			skipped++;
 			continue;
 		}
 
-		FixPathSeperator(name);
-		name.ToLower();
-		
+		FixPathSeparator(&name.front());
+		for (auto& c : name) c = tolower(c);
+
 		uint32_t UncompressedSize =LittleLong(zip_fh->UncompressedSize32);
 		uint32_t CompressedSize = LittleLong(zip_fh->CompressedSize32);
 		uint64_t LocalHeaderOffset = LittleLong(zip_fh->LocalHeaderOffset32);
@@ -386,7 +388,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 					if (zip_64->CompressedSize > 0x7fffffff || zip_64->UncompressedSize > 0x7fffffff)
 					{
 						// The file system is limited to 32 bit file sizes;
-						Printf(FSMessageLevel::Warning, "%s: '%s' is too large.\n", FileName.c_str(), name.GetChars());
+						Printf(FSMessageLevel::Warning, "%s: '%s' is too large.\n", FileName.c_str(), name.c_str());
 						skipped++;
 						continue;
 					}
@@ -397,7 +399,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			}
 		}
 
-		lump_p->LumpNameSetup(name);
+		lump_p->LumpNameSetup(name.c_str());
 		lump_p->LumpSize = UncompressedSize;
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.

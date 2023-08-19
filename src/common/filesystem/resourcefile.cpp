@@ -437,7 +437,7 @@ int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_
 	bool found = FindPrefixRange(filter.c_str(), lumps, lumpsize, max, start, end);
 
 	// Workaround for old Doom filter names (todo: move out of here.)
-	if (!found && filtername.find_first_of("doom.id.doom") == 0)
+	if (!found && filtername.find("doom.id.doom") == 0)
 	{
 		strReplace(filter, "doom.id.doom", "doom.doom");
 		found = FindPrefixRange(filter.c_str(), lumps, lumpsize, max, start, end);

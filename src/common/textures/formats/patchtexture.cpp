@@ -81,7 +81,7 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 	file.Seek(0, FileReader::SeekSet);
 	auto data = file.Read(file.GetLength());
 
-	const patch_t *foo = (const patch_t *)data.Data();
+	const patch_t *foo = (const patch_t *)data.data();
 
 	int height = LittleShort(foo->height);
 	int width = LittleShort(foo->width);
@@ -111,7 +111,7 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 		{
 			// only check this if the texture passed validation.
 			// Here is a good point because we already have a valid buffer of the lump's data.
-			isalpha = checkPatchForAlpha(data.Data(), (uint32_t)file.GetLength());
+			isalpha = checkPatchForAlpha(data.data(), (uint32_t)file.GetLength());
 		}
 		return !gapAtStart;
 	}

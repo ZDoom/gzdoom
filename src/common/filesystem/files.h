@@ -214,28 +214,26 @@ public:
 		return mReader->Read(buffer, (long)len);
 	}
 
-	TArray<uint8_t> Read(size_t len)
+	std::vector<uint8_t> Read(size_t len)
 	{
-		TArray<uint8_t> buffer((int)len, true);
+		std::vector<uint8_t> buffer(len);
 		Size length = mReader->Read(&buffer[0], (long)len);
-		buffer.Clamp((int)length);
+		buffer.resize((size_t)length);
 		return buffer;
 	}
 
-	TArray<uint8_t> Read()
+	std::vector<uint8_t> Read()
 	{
-		TArray<uint8_t> buffer(mReader->Length, true);
-		Size length = mReader->Read(&buffer[0], mReader->Length);
-		if (length < mReader->Length) buffer.Clear();
-		return buffer;
+		return Read(GetLength());
 	}
 
-	TArray<uint8_t> ReadPadded(int padding)
+	std::vector<uint8_t> ReadPadded(size_t padding)
 	{
-		TArray<uint8_t> buffer(mReader->Length + padding, true);
-		Size length = mReader->Read(&buffer[0], mReader->Length);
-		if (length < mReader->Length) buffer.Clear();
-		else memset(buffer.Data() + mReader->Length, 0, padding);
+		auto len = GetLength();
+		std::vector<uint8_t> buffer(len + padding);
+		Size length = mReader->Read(&buffer[0], (long)len);
+		if (length < len) buffer.clear();
+		else memset(buffer.data() + len, 0, padding);
 		return buffer;
 	}
 

@@ -105,7 +105,7 @@ struct anim_t
 //
 //****************************************************************************
 
-int32_t ANIM_LoadAnim(anim_t *anim, uint8_t *buffer, int32_t length);
+int32_t ANIM_LoadAnim(anim_t *anim, uint8_t *buffer, size_t length);
 
 //****************************************************************************
 //

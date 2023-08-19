@@ -1,6 +1,7 @@
 #ifndef __SC_MAN_H__
 #define __SC_MAN_H__
 
+#include <vector>
 #include "zstring.h"
 #include "tarray.h"
 #include "name.h"
@@ -73,6 +74,10 @@ public:
 	void OpenMem(const char *name, const TArray<uint8_t> &buffer)
 	{
 		OpenMem(name, (const char*)buffer.Data(), buffer.Size());
+	}
+	void OpenMem(const char* name, const std::vector<uint8_t>& buffer)
+	{
+		OpenMem(name, (const char*)buffer.data(), (int)buffer.size());
 	}
 	void OpenString(const char *name, FString buffer);
 	void OpenLumpNum(int lump);

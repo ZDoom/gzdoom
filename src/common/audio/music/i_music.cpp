@@ -182,8 +182,8 @@ static void SetupGenMidi()
 	auto data = fileSystem.OpenFileReader(lump);
 
 	auto genmidi = data.Read();
-	if (genmidi.Size() < 8 + 175 * 36 || memcmp(genmidi.Data(), "#OPL_II#", 8)) return;
-	ZMusic_SetGenMidi(genmidi.Data()+8);
+	if (genmidi.size() < 8 + 175 * 36 || memcmp(genmidi.data(), "#OPL_II#", 8)) return;
+	ZMusic_SetGenMidi(genmidi.data()+8);
 }
 
 static void SetupWgOpn()
@@ -337,7 +337,7 @@ static ZMusic_MidiSource GetMIDISource(const char *fn)
 	}
 
 	auto data = wlump.Read();
-	auto source = ZMusic_CreateMIDISource(data.Data(), data.Size(), type);
+	auto source = ZMusic_CreateMIDISource(data.data(), data.size(), type);
 
 	if (source == nullptr)
 	{

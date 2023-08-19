@@ -73,7 +73,7 @@ FImageSource *AnmImage_TryCreate(FileReader & file, int lumpnum)
 	auto buffer = file.ReadPadded(1);
 
 	anim_t anim;
-	if (ANIM_LoadAnim(&anim, buffer.Data(), buffer.Size() - 1) < 0)
+	if (ANIM_LoadAnim(&anim, buffer.data(), buffer.size() - 1) < 0)
 	{
 		return nullptr;
 	}

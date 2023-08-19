@@ -422,27 +422,27 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		{
 			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump);
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump.GetChars());
-			FileData pp_data = fileSystem.ReadFile(pp_lump);
+			FString pp_data = fileSystem.ReadFile(pp_lump).GetString();
 
-			if (pp_data.GetString().IndexOf("ProcessMaterial") < 0 && pp_data.GetString().IndexOf("SetupMaterial") < 0)
+			if (pp_data.IndexOf("ProcessMaterial") < 0 && pp_data.IndexOf("SetupMaterial") < 0)
 			{
 				// this looks like an old custom hardware shader.
 
-				if (pp_data.GetString().IndexOf("GetTexCoord") >= 0)
+				if (pp_data.IndexOf("GetTexCoord") >= 0)
 				{
 					int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultmat2.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultmat2.fp");
 					FileData pl_data = fileSystem.ReadFile(pl_lump);
-					fp_comb << "\n" << pl_data.GetString().GetChars();
+					fp_comb << "\n" << pl_data.GetString();
 				}
 				else
 				{
 					int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultmat.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultmat.fp");
 					FileData pl_data = fileSystem.ReadFile(pl_lump);
-					fp_comb << "\n" << pl_data.GetString().GetChars();
+					fp_comb << "\n" << pl_data.GetString();
 
-					if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
+					if (pp_data.IndexOf("ProcessTexel") < 0)
 					{
 						// this looks like an even older custom hardware shader.
 						// We need to replace the ProcessTexel call to make it work.
@@ -451,7 +451,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 					}
 				}
 
-				if (pp_data.GetString().IndexOf("ProcessLight") >= 0)
+				if (pp_data.IndexOf("ProcessLight") >= 0)
 				{
 					// The ProcessLight signatured changed. Forward to the old one.
 					fp_comb << "\nvec4 ProcessLight(vec4 color);\n";
@@ -459,19 +459,19 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 				}
 			}
 
-			fp_comb << RemoveLegacyUserUniforms(pp_data.GetString()).GetChars();
+			fp_comb << RemoveLegacyUserUniforms(pp_data).GetChars();
 			fp_comb.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
 
-			if (pp_data.GetString().IndexOf("ProcessLight") < 0)
+			if (pp_data.IndexOf("ProcessLight") < 0)
 			{
 				int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultlight.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultlight.fp");
 				FileData pl_data = fileSystem.ReadFile(pl_lump);
-				fp_comb << "\n" << pl_data.GetString().GetChars();
+				fp_comb << "\n" << pl_data.GetString();
 			}
 
 			// ProcessMaterial must be considered broken because it requires the user to fill in data they possibly cannot know all about.
-			if (pp_data.GetString().IndexOf("ProcessMaterial") >= 0 && pp_data.GetString().IndexOf("SetupMaterial") < 0)
+			if (pp_data.IndexOf("ProcessMaterial") >= 0 && pp_data.IndexOf("SetupMaterial") < 0)
 			{
 				// This reactivates the old logic and disables all features that cannot be supported with that method.
 				placeholder << "#define LEGACY_USER_SHADER\n";
@@ -490,7 +490,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		int pp_lump = fileSystem.CheckNumForFullName(light_fragprog, 0);
 		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog.GetChars());
 		FileData pp_data = fileSystem.ReadFile(pp_lump);
-		fp_comb << pp_data.GetString().GetChars() << "\n";
+		fp_comb << pp_data.GetString() << "\n";
 	}
 
 	if (gles.flags & RFL_NO_CLIP_PLANES)

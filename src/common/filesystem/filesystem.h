@@ -35,9 +35,9 @@ public:
 	FileData (const FileData &copy);
 	FileData &operator= (const FileData &copy);
 	~FileData ();
-	void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
+	const void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
 	size_t GetSize () { return Block.Len(); }
-	const FString &GetString () const { return Block; }
+	const char* GetString () const { return Block.GetChars(); }
 
 private:
 	FileData (const FString &source);

@@ -88,7 +88,7 @@ void FShaderProgram::Compile(ShaderType type, const char *lumpName, const char *
 {
 	int lump = fileSystem.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
-	FString code = fileSystem.ReadFile(lump).GetString().GetChars();
+	FString code = fileSystem.ReadFile(lump).GetString();
 	Compile(type, lumpName, code, defines, maxGlslVersion);
 }
 

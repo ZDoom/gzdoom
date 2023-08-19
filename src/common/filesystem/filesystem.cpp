@@ -43,9 +43,12 @@
 #include "m_argv.h"
 #include "cmdlib.h"
 #include "filesystem.h"
+
 #include "m_crc32.h"
-#include "printf.h"
+
+#if __has_include("md5.h")
 #include "md5.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -352,7 +355,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 	if (resfile != NULL)
 	{
-		if (!batchrun && Printf) 
+		if (Printf) 
 			Printf(FSMessageLevel::Message, "adding %s, %d lumps\n", filename, resfile->LumpCount());
 
 		uint32_t lumpstart = FileInfo.Size();
@@ -379,6 +382,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 			}
 		}
 
+#if __has_include("md5.h")
 		if (hashfile)
 		{
 			uint8_t cksum[16];
@@ -423,6 +427,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 				}
 			}
 		}
+#endif
 		return;
 	}
 }
@@ -895,12 +900,6 @@ LumpShortName& FileSystem::GetShortName(int i)
 	return FileInfo[i].shortName;
 }
 
-FString& FileSystem::GetLongName(int i)
-{
-	if ((unsigned)i >= NumEntries) throw FileSystemException("GetLongName: Invalid index");
-	return FileInfo[i].longName;
-}
-
 void FileSystem::RenameFile(int num, const char* newfn)
 {
 	if ((unsigned)num >= NumEntries) throw FileSystemException("RenameFile: Invalid index");
@@ -1311,7 +1310,7 @@ void FileSystem::ReadFile (int lump, void *dest)
 	if (numread != size)
 	{
 		throw FileSystemException("W_ReadFile: only read %ld of %ld on '%s'\n",
-			numread, size, GetLongName(lump).GetChars());	
+			numread, size, FileInfo[lump].longName.GetChars());
 	}
 }
 

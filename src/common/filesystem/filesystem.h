@@ -11,7 +11,6 @@
 #include "files.h"
 #include "tarray.h"
 #include "cmdlib.h"
-#include "zstring.h"
 #include "resourcefile.h"
 
 class FResourceFile;
@@ -85,10 +84,8 @@ public:
 
 	inline int CheckNumForName (const uint8_t *name) { return CheckNumForName ((const char *)name, ns_global); }
 	inline int CheckNumForName (const char *name) { return CheckNumForName (name, ns_global); }
-	inline int CheckNumForName (const FString &name) { return CheckNumForName (name.GetChars()); }
 	inline int CheckNumForName (const uint8_t *name, int ns) { return CheckNumForName ((const char *)name, ns); }
 	inline int GetNumForName (const char *name) { return GetNumForName (name, ns_global); }
-	inline int GetNumForName (const FString &name) { return GetNumForName (name.GetChars(), ns_global); }
 	inline int GetNumForName (const uint8_t *name) { return GetNumForName ((const char *)name); }
 	inline int GetNumForName (const uint8_t *name, int ns) { return GetNumForName ((const char *)name, ns); }
 
@@ -105,24 +102,14 @@ public:
 		return FindFile(name) >= 0;
 	}
 
-	bool FileExists(const FString& name)
-	{
-		return FindFile(name) >= 0;
-	}
-
 	bool FileExists(const std::string& name)
 	{
 		return FindFile(name.c_str()) >= 0;
 	}
 
 	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
-	FString& GetLongName(int i);	// may only be called before the hash chains are set up.
 	void RenameFile(int num, const char* fn);
 	bool CreatePathlessCopy(const char* name, int id, int flags);
-
-	inline int CheckNumForFullName(const FString &name, bool trynormal = false, int namespc = ns_global) { return CheckNumForFullName(name.GetChars(), trynormal, namespc); }
-	inline int CheckNumForFullName (const FString &name, int wadfile) { return CheckNumForFullName(name.GetChars(), wadfile); }
-	inline int GetNumForFullName (const FString &name) { return GetNumForFullName(name.GetChars()); }
 
 	void ReadFile (int lump, void *dest);
 	// These should only be used if the file data really needs padding.

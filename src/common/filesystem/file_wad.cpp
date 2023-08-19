@@ -197,7 +197,7 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		char n[9];
-		uppercopy(n, fileinfo[i].Name);
+		for(int j = 0; j < 8; j++) n[j] = toupper(fileinfo[i].Name[j]);
 		n[8] = 0;
 		// This needs to be done differently. We cannot simply assume that all lumps where the first character's high bit is set are compressed without verification.
 		// This requires explicit toggling for precisely the files that need it.

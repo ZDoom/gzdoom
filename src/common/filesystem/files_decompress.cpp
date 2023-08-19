@@ -43,8 +43,6 @@
 
 #include "files.h"
 
-#include "cmdlib.h"
-
 //==========================================================================
 //
 // DecompressionError
@@ -89,6 +87,19 @@ void DecompressorBase::SetOwnsReader()
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+static const char* ZLibError(int zerr)
+{
+	static const char* const errs[6] = { "Errno", "Stream Error", "Data Error", "Memory Error", "Buffer Error", "Version Error" };
+	if (zerr >= 0 || zerr < -6) return "Unknown";
+	else return errs[-zerr - 1];
+}
+
+//==========================================================================
+//
 // DecompressorZ
 //
 // The zlib wrapper
@@ -124,9 +135,9 @@ public:
 		if (!zip) err = inflateInit (&Stream);
 		else err = inflateInit2 (&Stream, -MAX_WBITS);
 
-		if (err != Z_OK)
+		if (err < Z_OK)
 		{
-			DecompressionError ("DecompressorZ: inflateInit failed: %s\n", M_ZLibError(err).GetChars());
+			DecompressionError ("DecompressorZ: inflateInit failed: %s\n", ZLibError(err));
 			return false;
 		}
 		return true;

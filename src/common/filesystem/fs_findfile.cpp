@@ -106,7 +106,7 @@ static void *FS_FindFirst(const char *const filespec, findstate_t *const fileinf
 	if (slash)
 	{
 		pattern = slash + 1;
-		fileinfo->path = std::string(filespec, slash - filespec + 1);
+		fileinfo->path = std::string(filespec, 0, slash - filespec + 1);
 		dir = fileinfo->path.c_str();
 	}
 	else

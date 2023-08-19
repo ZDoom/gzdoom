@@ -527,7 +527,7 @@ class DecompressorLZSS : public DecompressorBase
 				return false;
 			Stream.AvailIn -= 2;
 
-			uint16_t pos = BigShort(*(uint16_t*)Stream.In);
+			uint16_t pos = fs_private::BigShort(*(uint16_t*)Stream.In);
 			uint8_t len = (pos & 0xF)+1;
 			pos >>= 4;
 			Stream.In += 2;
@@ -551,7 +551,7 @@ class DecompressorLZSS : public DecompressorBase
 				// Partial overlap: Copy in 2 or 3 chunks.
 				do
 				{
-					unsigned int copy = min<unsigned int>(len, pos+1);
+					unsigned int copy = std::min<unsigned int>(len, pos+1);
 					memcpy(Stream.InternalBuffer, copyStart, copy);
 					Stream.InternalBuffer += copy;
 					Stream.InternalOut += copy;
@@ -623,7 +623,7 @@ public:
 					break;
 			}
 
-			unsigned int copy = min<unsigned int>(Stream.InternalOut, AvailOut);
+			unsigned int copy = std::min<unsigned int>(Stream.InternalOut, AvailOut);
 			if(copy > 0)
 			{
 				memcpy(Out, Stream.WindowData, copy);

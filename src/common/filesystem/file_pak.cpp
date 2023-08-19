@@ -34,6 +34,8 @@
 
 #include "resourcefile.h"
 
+using namespace fs_private;
+
 //==========================================================================
 //
 //
@@ -43,14 +45,14 @@
 struct dpackfile_t
 {
 	char	name[56];
-	int		filepos, filelen;
+	uint32_t		filepos, filelen;
 } ;
 
 struct dpackheader_t
 {
-	int		ident;		// == IDPAKHEADER
-	int		dirofs;
-	int		dirlen;
+	uint32_t		ident;		// == IDPAKHEADER
+	uint32_t		dirofs;
+	uint32_t		dirlen;
 } ;
 
 

@@ -37,24 +37,14 @@
 #include "resourcefile.h"
 #include "cmdlib.h"
 
+#include "fs_swap.h"
+
+using namespace fs_private;
 //==========================================================================
 //
 //
 //
 //==========================================================================
-
-struct whresentry
-{
-	int		filepospage, filelen, priority;
-} ;
-
-struct dpackheader_t
-{
-	int		ident;		// == IDPAKHEADER
-	int		dirofs;
-	int		dirlen;
-} ;
-
 
 //==========================================================================
 //

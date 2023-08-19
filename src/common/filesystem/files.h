@@ -42,7 +42,7 @@
 #include <stdarg.h>
 #include <functional>
 #include "basics.h"
-#include "m_swap.h"
+#include "fs_swap.h"
 #include "tarray.h"
 
 class FileSystemException : public std::exception
@@ -268,53 +268,53 @@ public:
 		return v;
 	}
 
+
 	uint16_t ReadUInt16()
 	{
 		uint16_t v = 0;
 		Read(&v, 2);
-		return LittleShort(v);
+		return fs_private::LittleShort(v);
 	}
 
 	int16_t ReadInt16()
 	{
-		int16_t v = 0;
+		return (int16_t)ReadUInt16();
+	}
+
+	int16_t ReadUInt16BE()
+	{
+		uint16_t v = 0;
 		Read(&v, 2);
-		return LittleShort(v);
+		return fs_private::BigShort(v);
 	}
 
 	int16_t ReadInt16BE()
 	{
-		int16_t v = 0;
-		Read(&v, 2);
-		return BigShort(v);
+		return (int16_t)ReadUInt16BE();
 	}
 
 	uint32_t ReadUInt32()
 	{
 		uint32_t v = 0;
 		Read(&v, 4);
-		return LittleLong(v);
+		return fs_private::LittleLong(v);
 	}
 
 	int32_t ReadInt32()
 	{
-		int32_t v = 0;
-		Read(&v, 4);
-		return LittleLong(v);
+		return (int32_t)ReadUInt32();
 	}
 
 	uint32_t ReadUInt32BE()
 	{
 		uint32_t v = 0;
 		Read(&v, 4);
-		return BigLong(v);
+		return fs_private::BigLong(v);
 	}
 
 	int32_t ReadInt32BE()
 	{
-		int32_t v = 0;
-		Read(&v, 4);
-		return BigLong(v);
+		return (int32_t)ReadUInt32BE();
 	}
 
 	uint64_t ReadUInt64()
@@ -368,7 +368,8 @@ public:
 	virtual size_t Write(const void *buffer, size_t len);
 	virtual long Tell();
 	virtual long Seek(long offset, int mode);
-	size_t Printf(const char *fmt, ...) GCCPRINTF(2,3);
+	size_t Printf(const char *fmt, ...);
+
 	virtual void Close()
 	{
 		if (File != NULL) fclose(File);

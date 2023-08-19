@@ -34,6 +34,9 @@
 */
 
 #include "resourcefile.h"
+#include "fs_swap.h"
+
+using namespace fs_private;
 
 //==========================================================================
 //

@@ -37,6 +37,8 @@
 #include "files.h"
 #include "stb_sprintf.h"
 
+using namespace fs_private;
+
 #ifdef _WIN32
 std::wstring toWide(const char* str);
 #endif
@@ -274,7 +276,7 @@ long MemoryReader::Seek(long offset, int origin)
 
 	}
 	if (offset < 0 || offset > Length) return -1;
-	FilePos = clamp<long>(offset, 0, Length);
+	FilePos = std::clamp<long>(offset, 0, Length);
 	return 0;
 }
 

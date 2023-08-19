@@ -41,6 +41,10 @@
 #include "w_zip.h"
 
 #include "ancientzip.h"
+#include "fs_findfile.h"
+#include "fs_swap.h"
+
+using namespace fs_private;
 
 #define BUFREADCOMMENT (0x400)
 
@@ -120,7 +124,7 @@ static uint32_t Zip_FindCentralDir(FileReader &fin, bool* zip64)
 	uint32_t uPosFound=0;
 
 	FileSize = (uint32_t)fin.GetLength();
-	uMaxBack = min<uint32_t>(0xffff, FileSize);
+	uMaxBack = std::min<uint32_t>(0xffff, FileSize);
 
 	uBackRead = 4;
 	while (uBackRead < uMaxBack)
@@ -133,7 +137,7 @@ static uint32_t Zip_FindCentralDir(FileReader &fin, bool* zip64)
 			uBackRead += BUFREADCOMMENT;
 		uReadPos = FileSize - uBackRead;
 
-		uReadSize = min<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
+		uReadSize = std::min<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
 
 		if (fin.Seek(uReadPos, FileReader::SeekSet) != 0) break;
 

@@ -34,6 +34,9 @@
 */
 
 #include "resourcefile.h"
+#include "fs_swap.h"
+
+using namespace fs_private;
 
 //==========================================================================
 //
@@ -217,7 +220,7 @@ int FRFFLump::FillCache()
 
 	if (Flags & LUMPF_COMPRESSED)
 	{
-		int cryptlen = min<int> (LumpSize, 256);
+		int cryptlen = std::min<int> (LumpSize, 256);
 		uint8_t *data = (uint8_t *)Cache;
 
 		for (int i = 0; i < cryptlen; ++i)

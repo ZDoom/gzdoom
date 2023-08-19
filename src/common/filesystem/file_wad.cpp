@@ -36,7 +36,9 @@
 #include <ctype.h>
 #include "resourcefile.h"
 #include "filesystem.h"
-#include "engineerrors.h"
+#include "fs_swap.h"
+
+using namespace fs_private;
 
 
 struct wadinfo_t

@@ -54,12 +54,21 @@
 
 #define NULL_INDEX		(0xffffffff)
 
+static void UpperCopy(char* to, const char* from)
+{
+	int i;
+
+	for (i = 0; i < 8 && from[i]; i++)
+		to[i] = toupper(from[i]);
+	for (; i < 8; i++)
+		to[i] = 0;
+}
 
 struct FileSystem::LumpRecord
 {
 	FResourceLump *lump;
 	LumpShortName shortName;
-	FString		longName;
+	std::string	longName;
 	int			rfnum;
 	int			Namespace;
 	int			resourceId;
@@ -73,7 +82,7 @@ struct FileSystem::LumpRecord
 
 		if (lump->Flags & LUMPF_SHORTNAME)
 		{
-			uppercopy(shortName.String, lump->getName());
+			UpperCopy(shortName.String, lump->getName());
 			shortName.String[8] = 0;
 			longName = "";
 			Namespace = lump->GetNamespace();
@@ -94,42 +103,41 @@ struct FileSystem::LumpRecord
 			// Map some directories to WAD namespaces.
 			// Note that some of these namespaces don't exist in WADS.
 			// CheckNumForName will handle any request for these namespaces accordingly.
-			Namespace = !strncmp(longName.GetChars(), "flats/", 6) ? ns_flats :
-				!strncmp(longName.GetChars(), "textures/", 9) ? ns_newtextures :
-				!strncmp(longName.GetChars(), "hires/", 6) ? ns_hires :
-				!strncmp(longName.GetChars(), "sprites/", 8) ? ns_sprites :
-				!strncmp(longName.GetChars(), "voxels/", 7) ? ns_voxels :
-				!strncmp(longName.GetChars(), "colormaps/", 10) ? ns_colormaps :
-				!strncmp(longName.GetChars(), "acs/", 4) ? ns_acslibrary :
-				!strncmp(longName.GetChars(), "voices/", 7) ? ns_strifevoices :
-				!strncmp(longName.GetChars(), "patches/", 8) ? ns_patches :
-				!strncmp(longName.GetChars(), "graphics/", 9) ? ns_graphics :
-				!strncmp(longName.GetChars(), "sounds/", 7) ? ns_sounds :
-				!strncmp(longName.GetChars(), "music/", 6) ? ns_music :
-				!strchr(longName.GetChars(), '/') ? ns_global :
+			Namespace = !strncmp(longName.c_str(), "flats/", 6) ? ns_flats :
+				!strncmp(longName.c_str(), "textures/", 9) ? ns_newtextures :
+				!strncmp(longName.c_str(), "hires/", 6) ? ns_hires :
+				!strncmp(longName.c_str(), "sprites/", 8) ? ns_sprites :
+				!strncmp(longName.c_str(), "voxels/", 7) ? ns_voxels :
+				!strncmp(longName.c_str(), "colormaps/", 10) ? ns_colormaps :
+				!strncmp(longName.c_str(), "acs/", 4) ? ns_acslibrary :
+				!strncmp(longName.c_str(), "voices/", 7) ? ns_strifevoices :
+				!strncmp(longName.c_str(), "patches/", 8) ? ns_patches :
+				!strncmp(longName.c_str(), "graphics/", 9) ? ns_graphics :
+				!strncmp(longName.c_str(), "sounds/", 7) ? ns_sounds :
+				!strncmp(longName.c_str(), "music/", 6) ? ns_music :
+				!strchr(longName.c_str(), '/') ? ns_global :
 				ns_hidden;
 
 			if (Namespace == ns_hidden) shortName.qword = 0;
 			else
 			{
-				ptrdiff_t encodedResID = longName.LastIndexOf(".{");
-				if (resourceId == -1 && encodedResID >= 0)
+				ptrdiff_t encodedResID = longName.find_last_of(".{");
+				if (resourceId == -1 && encodedResID != std::string::npos)
 				{
-					const char* p = longName.GetChars() + encodedResID;
+					const char* p = longName.c_str() + encodedResID;
 					char* q;
 					int id = (int)strtoull(p+2, &q, 10);	// only decimal numbers allowed here.
 					if (q[0] == '}' && (q[1] == '.' || q[1] == 0))
 					{
-						FString toDelete(p, q - p + 1);
-						longName.Substitute(toDelete, "");
+						longName.erase(longName.begin() + encodedResID, longName.begin() + (q - p) + 1);
 						resourceId = id;
 					}
 				}
-				ptrdiff_t slash = longName.LastIndexOf('/');
-				FString base = (slash >= 0) ? longName.Mid(slash + 1) : longName;
-				auto dot = base.LastIndexOf('.');
-				if (dot >= 0) base.Truncate(dot);
-				uppercopy(shortName.String, base);
+				ptrdiff_t slash = longName.find_last_of('/');
+				std::string base = (slash != std::string::npos) ? longName.c_str() + (slash + 1) : longName.c_str();
+				auto dot = base.find_last_of('.');
+				if (dot != std::string::npos) base.resize(dot);
+				UpperCopy(shortName.String, base.c_str());
 				shortName.String[8] = 0;
 
 				// Since '\' can't be used as a file name's part inside a ZIP
@@ -181,7 +189,7 @@ void FileSystem::DeleteAll ()
 	{
 		if (frec.rfnum == -1) delete frec.lump;
 	}
-	FileInfo.Clear();
+	FileInfo.clear();
 	for (int i = Files.Size() - 1; i >= 0; --i)
 	{
 		delete Files[i];
@@ -240,7 +248,7 @@ bool FileSystem::InitMultipleFiles (TArray<FString> &filenames, LumpFilterInfo* 
 		MoveLumpsInFolder(path);
 	}
 
-	NumEntries = FileInfo.Size();
+	NumEntries = (uint32_t)FileInfo.size();
 	if (NumEntries == 0)
 	{
 		return false;
@@ -262,8 +270,8 @@ bool FileSystem::InitMultipleFiles (TArray<FString> &filenames, LumpFilterInfo* 
 
 void FileSystem::AddLump(FResourceLump *lump)
 {
-	FileSystem::LumpRecord *lumprec = &FileInfo[FileInfo.Reserve(1)];
-	lumprec->SetFromLump(-1, lump);
+	FileInfo.resize(FileInfo.size() + 1);
+	FileInfo.back().SetFromLump(-1, lump);
 }
 
 //-----------------------------------------------------------------------
@@ -278,7 +286,7 @@ int FileSystem::AddExternalFile(const char *filename)
 {
 	FResourceLump *lump = new FExternalLump(filename);
 	AddLump(lump);
-	return FileInfo.Size() - 1;	// later
+	return (int)FileInfo.size() - 1;	// later
 }
 
 //==========================================================================
@@ -295,8 +303,8 @@ int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, in
 	auto newlump = new FMemoryLump(data, size);
 	newlump->LumpNameSetup(fullname);
 	AddLump(newlump);
-	FileInfo.Last().resourceId = id;
-	return FileInfo.Size()-1;
+	FileInfo.back().resourceId = id;
+	return (int)FileInfo.size()-1;
 }
 
 //==========================================================================
@@ -358,13 +366,14 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 		if (Printf) 
 			Printf(FSMessageLevel::Message, "adding %s, %d lumps\n", filename, resfile->LumpCount());
 
-		uint32_t lumpstart = FileInfo.Size();
+		uint32_t lumpstart = (uint32_t)FileInfo.size();
 
 		resfile->SetFirstLump(lumpstart);
 		for (uint32_t i=0; i < resfile->LumpCount(); i++)
 		{
 			FResourceLump *lump = resfile->GetLump(i);
-			FileSystem::LumpRecord *lump_p = &FileInfo[FileInfo.Reserve(1)];
+			FileInfo.resize(FileInfo.size() + 1);
+			FileSystem::LumpRecord* lump_p = &FileInfo.back();
 			lump_p->SetFromLump(Files.Size(), lump);
 		}
 
@@ -503,7 +512,7 @@ int FileSystem::CheckNumForName (const char *name, int space)
 		return -1;
 	}
 
-	uppercopy (uname, name);
+	UpperCopy (uname, name);
 	i = FirstLumpIndex[LumpNameHash (uname) % NumEntries];
 
 	while (i != NULL_INDEX)
@@ -541,7 +550,7 @@ int FileSystem::CheckNumForName (const char *name, int space, int rfnum, bool ex
 		return CheckNumForName (name, space);
 	}
 
-	uppercopy (uname, name);
+	UpperCopy (uname, name);
 	i = FirstLumpIndex[LumpNameHash (uname) % NumEntries];
 
 	// If exact is true if will only find lumps in the same WAD, otherwise
@@ -603,12 +612,12 @@ int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int names
 
 	for (i = fli[MakeKey(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
 	{
-		if (strnicmp(name, FileInfo[i].longName, len)) continue;
+		if (strnicmp(name, FileInfo[i].longName.c_str(), len)) continue;
 		if (FileInfo[i].longName[len] == 0) break;	// this is a full match
 		if (ignoreext && FileInfo[i].longName[len] == '.') 
 		{
 			// is this the last '.' in the last path element, indicating that the remaining part of the name is only an extension?
-			if (strpbrk(FileInfo[i].longName.GetChars() + len + 1, "./") == nullptr) break;	
+			if (strpbrk(FileInfo[i].longName.c_str() + len + 1, "./") == nullptr) break;	
 		}
 	}
 
@@ -633,7 +642,7 @@ int FileSystem::CheckNumForFullName (const char *name, int rfnum)
 	i = FirstLumpIndex_FullName[MakeKey (name) % NumEntries];
 
 	while (i != NULL_INDEX && 
-		(stricmp(name, FileInfo[i].longName) || FileInfo[i].rfnum != rfnum))
+		(stricmp(name, FileInfo[i].longName.c_str()) || FileInfo[i].rfnum != rfnum))
 	{
 		i = NextLumpIndex_FullName[i];
 	}
@@ -684,10 +693,10 @@ int FileSystem::FindFileWithExtensions(const char* name, const char *const *exts
 
 	for (i = fli[MakeKey(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
 	{
-		if (strnicmp(name, FileInfo[i].longName, len)) continue;
+		if (strnicmp(name, FileInfo[i].longName.c_str(), len)) continue;
 		if (FileInfo[i].longName[len] != '.') continue;	// we are looking for extensions but this file doesn't have one.
 
-		auto cp = FileInfo[i].longName.GetChars() + len + 1;
+		auto cp = FileInfo[i].longName.c_str() + len + 1;
 		// is this the last '.' in the last path element, indicating that the remaining part of the name is only an extension?
 		if (strpbrk(cp, "./") != nullptr) continue;	// No, so it cannot be a valid entry.
 
@@ -723,7 +732,7 @@ int FileSystem::FindResource (int resid, const char *type, int filenum) const no
 	{
 		if (filenum > 0 && FileInfo[i].rfnum != filenum) continue;
 		if (FileInfo[i].resourceId != resid) continue;
-		auto extp = strrchr(FileInfo[i].longName, '.');
+		auto extp = strrchr(FileInfo[i].longName.c_str(), '.');
 		if (!extp) continue;
 		if (!stricmp(extp + 1, type)) return i;
 	}
@@ -840,7 +849,7 @@ void FileSystem::InitHashChains (void)
 {
 	unsigned int i, j;
 
-	NumEntries = FileInfo.Size();
+	NumEntries = (uint32_t)FileInfo.size();
 	Hashes.Resize(8 * NumEntries);
 	// Mark all buckets as empty
 	memset(Hashes.Data(), -1, Hashes.Size() * sizeof(Hashes[0]));
@@ -862,18 +871,18 @@ void FileSystem::InitHashChains (void)
 		FirstLumpIndex[j] = i;
 
 		// Do the same for the full paths
-		if (FileInfo[i].longName.IsNotEmpty())
+		if (!FileInfo[i].longName.empty())
 		{
-			j = MakeKey(FileInfo[i].longName) % NumEntries;
+			j = MakeKey(FileInfo[i].longName.c_str()) % NumEntries;
 			NextLumpIndex_FullName[i] = FirstLumpIndex_FullName[j];
 			FirstLumpIndex_FullName[j] = i;
 
-			FString nameNoExt = FileInfo[i].longName;
-			auto dot = nameNoExt.LastIndexOf('.');
-			auto slash = nameNoExt.LastIndexOf('/');
-			if (dot > slash) nameNoExt.Truncate(dot);
+			auto nameNoExt = FileInfo[i].longName;
+			auto dot = nameNoExt.find_last_of('.');
+			auto slash = nameNoExt.find_last_of('/');
+			if ((dot > slash || slash == std::string::npos) && dot != std::string::npos) nameNoExt.resize(dot);
 
-			j = MakeKey(nameNoExt) % NumEntries;
+			j = MakeKey(nameNoExt.c_str()) % NumEntries;
 			NextLumpIndex_NoExt[i] = FirstLumpIndex_NoExt[j];
 			FirstLumpIndex_NoExt[j] = i;
 
@@ -883,7 +892,7 @@ void FileSystem::InitHashChains (void)
 
 		}
 	}
-	FileInfo.ShrinkToFit();
+	FileInfo.shrink_to_fit();
 	Files.ShrinkToFit();
 }
 
@@ -924,25 +933,25 @@ static FResourceLump placeholderLump;
 
 void FileSystem::MoveLumpsInFolder(const char *path)
 {
-	if (FileInfo.Size() == 0)
+	if (FileInfo.size() == 0)
 	{
 		return;
 	}
 
 	auto len = strlen(path);
-	auto rfnum = FileInfo.Last().rfnum;
+	auto rfnum = FileInfo.back().rfnum;
 
-	unsigned i;
-	for (i = 0; i < FileInfo.Size(); i++)
+	size_t i;
+	for (i = 0; i < FileInfo.size(); i++)
 	{
 		auto& li = FileInfo[i];
 		if (li.rfnum >= GetIwadNum()) break;
-		if (li.longName.Left(len).CompareNoCase(path) == 0)
+		if (strnicmp(li.longName.c_str(), path, len) == 0)
 		{
-			FileInfo.Push(li);
+			FileInfo.push_back(li);
 			li.lump = &placeholderLump;			// Make the old entry point to something empty. We cannot delete the lump record here because it'd require adjustment of all indices in the list.
-			auto &ln = FileInfo.Last();
-			ln.lump->LumpNameSetup(ln.longName.Mid(len));
+			auto &ln = FileInfo.back();
+			ln.lump->LumpNameSetup(ln.longName.c_str() + len);
 			ln.SetFromLump(rfnum, ln.lump);
 		}
 	}
@@ -959,6 +968,7 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 
 int FileSystem::FindLump (const char *name, int *lastlump, bool anyns)
 {
+	if (*lastlump >= FileInfo.size()) return -1;
 	union
 	{
 		char name8[8];
@@ -966,15 +976,15 @@ int FileSystem::FindLump (const char *name, int *lastlump, bool anyns)
 	};
 	LumpRecord *lump_p;
 
-	uppercopy (name8, name);
+	UpperCopy (name8, name);
 
 	assert(lastlump != NULL && *lastlump >= 0);
 	lump_p = &FileInfo[*lastlump];
-	while (lump_p < &FileInfo[NumEntries])
+	while (lump_p <= &FileInfo.back())
 	{
 		if ((anyns || lump_p->Namespace == ns_global) && lump_p->shortName.qword == qname)
 		{
-			int lump = int(lump_p - &FileInfo[0]);
+			int lump = int(lump_p - FileInfo.data());
 			*lastlump = lump + 1;
 			return lump;
 		}
@@ -1000,7 +1010,7 @@ int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, in
 
 	assert(lastlump != NULL && *lastlump >= 0);
 	lump_p = &FileInfo[*lastlump];
-	while (lump_p < &FileInfo[NumEntries])
+	while (lump_p <= &FileInfo.back())
 	{
 		if (anyns || lump_p->Namespace == ns_global)
 		{
@@ -1009,7 +1019,7 @@ int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, in
 			{
 				if (!strnicmp(*name, lump_p->shortName.String, 8))
 				{
-					int lump = int(lump_p - &FileInfo[0]);
+					int lump = int(lump_p - FileInfo.data());
 					*lastlump = lump + 1;
 					if (nameindex != NULL) *nameindex = int(name - names);
 					return lump;
@@ -1039,11 +1049,11 @@ int FileSystem::FindLumpFullName(const char* name, int* lastlump, bool noext)
 
 	if (!noext)
 	{
-		while (lump_p < &FileInfo[NumEntries])
+		while (lump_p <= &FileInfo.back())
 		{
-			if (!stricmp(name, lump_p->longName))
+			if (!stricmp(name, lump_p->longName.c_str()))
 			{
-				int lump = int(lump_p - &FileInfo[0]);
+				int lump = int(lump_p - FileInfo.data());
 				*lastlump = lump + 1;
 				return lump;
 			}
@@ -1053,15 +1063,15 @@ int FileSystem::FindLumpFullName(const char* name, int* lastlump, bool noext)
 	else
 	{
 		auto len = strlen(name);
-		while (lump_p < &FileInfo[NumEntries])
+		while (lump_p <= &FileInfo.back())
 		{
-			auto res = strnicmp(name, lump_p->longName, len);
+			auto res = strnicmp(name, lump_p->longName.c_str(), len);
 			if (res == 0)
 			{
-				auto p = lump_p->longName.GetChars() + len;
+				auto p = lump_p->longName.c_str() + len;
 				if (*p == 0 || (*p == '.' && strpbrk(p + 1, "./") == 0))
 				{
-					int lump = int(lump_p - &FileInfo[0]);
+					int lump = int(lump_p - FileInfo.data());
 					*lastlump = lump + 1;
 					return lump;
 				}
@@ -1115,8 +1125,8 @@ const char *FileSystem::GetFileFullName (int lump, bool returnshort) const
 {
 	if ((size_t)lump >= NumEntries)
 		return NULL;
-	else if (FileInfo[lump].longName.IsNotEmpty())
-		return FileInfo[lump].longName;
+	else if (!FileInfo[lump].longName.empty())
+		return FileInfo[lump].longName.c_str();
 	else if (returnshort)
 		return FileInfo[lump].shortName.String;
 	else return nullptr;
@@ -1194,7 +1204,7 @@ const char *FileSystem::GetResourceType(int lump) const
 		return nullptr;
 	else
 	{
-		auto p = strrchr(FileInfo[lump].longName.GetChars(), '.');
+		auto p = strrchr(FileInfo[lump].longName.c_str(), '.');
 		if (!p) return "";	// has no extension
 		if (strchr(p, '/')) return "";	// the '.' is part of a directory.
 		return p + 1;
@@ -1209,7 +1219,7 @@ const char *FileSystem::GetResourceType(int lump) const
 
 int FileSystem::GetFileContainer (int lump) const
 {
-	if ((size_t)lump >= FileInfo.Size())
+	if ((size_t)lump >= FileInfo.size())
 		return -1;
 	return FileInfo[lump].rfnum;
 }
@@ -1244,14 +1254,15 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, TArray<FolderEntry> &r
 	path.ToLower();
 	if (path[path.Len() - 1] != '/') path += '/';
 	result.Clear();
-	for (unsigned i = 0; i < FileInfo.Size(); i++)
+	for (size_t i = 0; i < FileInfo.size(); i++)
 	{
-		if (FileInfo[i].longName.IndexOf(path) == 0)
+		if (FileInfo[i].longName.find(path) == 0)
 		{
 			// Only if it hasn't been replaced.
-			if ((unsigned)fileSystem.CheckNumForFullName(FileInfo[i].longName) == i)
+			if ((unsigned)fileSystem.CheckNumForFullName(FileInfo[i].longName.c_str()) == i)
 			{
-				result.Push({ FileInfo[i].longName.GetChars(), i });
+				FolderEntry fe{ FileInfo[i].longName.c_str(), (uint32_t)i };
+				result.Push(fe);
 			}
 		}
 	}
@@ -1294,7 +1305,7 @@ void FileSystem::ReadFile (int lump, void *dest)
 	if (numread != size)
 	{
 		throw FileSystemException("W_ReadFile: only read %ld of %ld on '%s'\n",
-			numread, size, FileInfo[lump].longName.GetChars());
+			numread, size, FileInfo[lump].longName.c_str());
 	}
 }
 
@@ -1323,7 +1334,7 @@ FileData FileSystem::ReadFile (int lump)
 
 FileReader FileSystem::OpenFileReader(int lump)
 {
-	if ((unsigned)lump >= (unsigned)FileInfo.Size())
+	if ((unsigned)lump >= (unsigned)FileInfo.size())
 	{
 		throw FileSystemException("OpenFileReader: %u >= NumEntries", lump);
 	}
@@ -1342,7 +1353,7 @@ FileReader FileSystem::OpenFileReader(int lump)
 
 FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 {
-	if ((unsigned)lump >= (unsigned)FileInfo.Size())
+	if ((unsigned)lump >= (unsigned)FileInfo.size())
 	{
 		throw FileSystemException("ReopenFileReader: %u >= NumEntries", lump);
 	}
@@ -1492,9 +1503,9 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 	if (lump < 0) return false;		// Does not exist.
 
 	auto oldlump = FileInfo[lump];
-	ptrdiff_t slash = oldlump.longName.LastIndexOf('/');
+	ptrdiff_t slash = oldlump.longName.find_last_of('/');
 
-	if (slash == -1)
+	if (slash == std::string::npos)
 	{
 		FileInfo[lump].flags = LUMPF_FULLPATH;
 		return true;	// already is pathless.
@@ -1502,10 +1513,10 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 
 
 	// just create a new reference to the original data with a different name.
-	oldlump.longName = oldlump.longName.Mid(slash + 1);
+	oldlump.longName.erase(oldlump.longName.begin(), oldlump.longName.begin() + (slash + 1));
 	oldlump.resourceId = id;
 	oldlump.flags = LUMPF_FULLPATH;
-	FileInfo.Push(oldlump);
+	FileInfo.push_back(oldlump);
 	return true;
 }
 

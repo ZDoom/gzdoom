@@ -169,7 +169,7 @@ protected:
 	struct LumpRecord;
 
 	TArray<FResourceFile *> Files;
-	TArray<LumpRecord> FileInfo;
+	std::vector<LumpRecord> FileInfo;
 
 	TArray<uint32_t> Hashes;	// one allocation for all hash lists.
 	uint32_t *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure

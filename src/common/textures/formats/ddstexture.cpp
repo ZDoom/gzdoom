@@ -54,6 +54,7 @@
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"
+#include "m_swap.h"
 
 // Since we want this to compile under Linux too, we need to define this
 // stuff ourselves instead of including a DirectX header.

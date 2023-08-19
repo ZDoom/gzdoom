@@ -38,6 +38,7 @@
 #include "bitmap.h"
 #include "image.h"
 #include "imagehelpers.h"
+#include "m_swap.h"
 
 
 // posts are runs of non masked source pixels

@@ -25,6 +25,7 @@
 #include "model_md3.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "m_swap.h"
 
 #define MAX_QPATH 64
 

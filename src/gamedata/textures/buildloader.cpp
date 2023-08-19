@@ -47,6 +47,7 @@
 #include "texturemanager.h"
 #include "r_translate.h"
 #include "r_data/sprites.h"
+#include "m_swap.h"
 
 //===========================================================================
 //

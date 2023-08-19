@@ -44,6 +44,7 @@
 #include "image.h"
 #include "formats/multipatchtexture.h"
 #include "texturemanager.h"
+#include "m_swap.h"
 
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a

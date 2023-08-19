@@ -41,6 +41,7 @@
 #include "utf8.h"
 #include "fontchars.h"
 #include "texturemanager.h"
+#include "m_swap.h"
 
 #include "fontinternals.h"
 

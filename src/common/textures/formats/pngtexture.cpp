@@ -43,6 +43,7 @@
 #include "printf.h"
 #include "texturemanager.h"
 #include "filesystem.h"
+#include "m_swap.h"
 
 //==========================================================================
 //

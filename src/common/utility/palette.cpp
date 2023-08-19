@@ -39,6 +39,7 @@
 #include "files.h"
 #include "filesystem.h"
 #include "printf.h"
+#include "m_swap.h"
 
 #include "m_png.h"
 

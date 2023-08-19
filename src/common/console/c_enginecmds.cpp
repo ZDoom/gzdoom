@@ -176,6 +176,8 @@ UNSAFE_CCMD (crashout)
 #endif
 
 
+// commented out because it's very poorly implemented (it should not abuse I_ChDir like this!)
+#if 0
 UNSAFE_CCMD (dir)
 {
 	FString dir, path;
@@ -248,6 +250,7 @@ UNSAFE_CCMD (dir)
 
 	I_ChDir(curdir);
 }
+#endif
 
 //==========================================================================
 //

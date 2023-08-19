@@ -1296,32 +1296,6 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, TArray<FolderEntry> &r
 
 //==========================================================================
 //
-// GetFileData
-//
-// Loads the lump into a TArray and returns it.
-//
-//==========================================================================
-
-TArray<uint8_t> FileSystem::GetFileData(int lump, int pad)
-{
-	if ((size_t)lump >= FileInfo.Size())
-		return TArray<uint8_t>();
-
-	auto lumpr = OpenFileReader(lump);
-	auto size = lumpr.GetLength();
-	TArray<uint8_t> data(size + pad, true);
-	auto numread = lumpr.Read(data.Data(), size);
-
-	if (numread != size)
-	{
-		throw FileSystemException("GetFileData: only read %ld of %ld on lump %i\n",
-			numread, size, lump);
-	}
-	if (pad > 0) memset(&data[size], 0, pad);
-	return data;
-}
-//==========================================================================
-//
 // W_ReadFile
 //
 // Loads the lump into the given buffer, which must be >= W_LumpLength().
@@ -1352,7 +1326,7 @@ void FileSystem::ReadFile (int lump, void *dest)
 
 FileData FileSystem::ReadFile (int lump)
 {
-	return FileData(FString(ELumpNum(lump)));
+	return FileData(FString(*this, ELumpNum(lump)));
 }
 
 //==========================================================================
@@ -1578,7 +1552,7 @@ FileData::~FileData ()
 {
 }
 
-FString::FString (ELumpNum lumpnum)
+FString::FString (FileSystem& fileSystem, ELumpNum lumpnum)
 {
 	auto lumpr = fileSystem.OpenFileReader ((int)lumpnum);
 	auto size = lumpr.GetLength ();

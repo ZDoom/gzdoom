@@ -125,16 +125,10 @@ public:
 	inline int GetNumForFullName (const FString &name) { return GetNumForFullName(name.GetChars()); }
 
 	void ReadFile (int lump, void *dest);
-	TArray<uint8_t> GetFileData(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FileData isn't writable!)
+	// These should only be used if the file data really needs padding.
 	FileData ReadFile (int lump);
 	FileData ReadFile (const char *name) { return ReadFile (GetNumForName (name)); }
-
-	inline TArray<uint8_t> LoadFile(const char* name, int padding = 0)
-	{
-		auto lump = FindFile(name);
-		if (lump < 0) return TArray<uint8_t>();
-		return GetFileData(lump, padding);
-	}
+	FileData ReadFileFullName(const char* name) { return ReadFile(GetNumForFullName(name)); }
 
 	FileReader OpenFileReader(int lump);		// opens a reader that redirects to the containing file's one.
 	FileReader ReopenFileReader(int lump, bool alwayscache = false);		// opens an independent reader.

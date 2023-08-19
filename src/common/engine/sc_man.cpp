@@ -136,7 +136,7 @@ void FScanner::Open (const char *name)
 //
 // FScanner :: OpenFile
 //
-// Loads a script from a file. Uses new/delete for memory allocation.
+// Loads a script from a file.
 //
 //==========================================================================
 

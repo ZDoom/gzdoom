@@ -117,6 +117,8 @@ enum ELumpNum
 {
 };
 
+class FileSystem;
+
 class FString
 {
 public:
@@ -146,7 +148,7 @@ public:
 	FString (char head, const FString &tail);
 
 	// Other constructors
-	FString (ELumpNum);	// Create from a lump
+	FString (FileSystem&, ELumpNum);	// Create from a lump
 
 	~FString ();
 

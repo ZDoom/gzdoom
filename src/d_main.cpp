@@ -1934,9 +1934,9 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 		if (num >= 0)
 		{
 			// Found one!
-			auto data = check.GetFileData(num);
+			auto data = check.ReadFile(num);
 			auto wadname = check.GetResourceFileName(check.GetFileContainer(num));
-			return ParseGameInfo(pwads, wadname, (const char*)data.Data(), data.Size());
+			return ParseGameInfo(pwads, wadname, data.GetString(), (int)data.GetSize());
 		}
 	}
 	return "";

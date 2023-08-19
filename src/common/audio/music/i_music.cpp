@@ -179,11 +179,10 @@ static void SetupGenMidi()
 		Printf("No GENMIDI lump found. OPL playback not available.\n");
 		return;
 	}
-	auto data = fileSystem.OpenFileReader(lump);
+	auto genmidi = fileSystem.ReadFile(lump);
 
-	auto genmidi = data.Read();
-	if (genmidi.size() < 8 + 175 * 36 || memcmp(genmidi.data(), "#OPL_II#", 8)) return;
-	ZMusic_SetGenMidi(genmidi.data()+8);
+	if (genmidi.GetSize() < 8 + 175 * 36 || memcmp(genmidi.GetMem(), "#OPL_II#", 8)) return;
+	ZMusic_SetGenMidi((uint8_t*)genmidi.GetString().GetChars() + 8);
 }
 
 static void SetupWgOpn()

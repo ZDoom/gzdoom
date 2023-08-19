@@ -747,6 +747,7 @@ FCompressedBuffer FSerializer::GetCompressedOutput()
 	FCompressedBuffer buff;
 	WriteObjects();
 	EndObject();
+	buff.filename = nullptr;
 	buff.mSize = (unsigned)w->mOutString.GetSize();
 	buff.mZipFlags = 0;
 	buff.mCRC32 = crc32(0, (const Bytef*)w->mOutString.GetString(), buff.mSize);

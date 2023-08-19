@@ -19,7 +19,9 @@ struct FileListEntry
 
 using FileList = std::vector<FileListEntry>;
 
+struct FCompressedBuffer;
 bool ScanDirectory(std::vector<FileListEntry>& list, const char* dirpath, const char* match, bool nosubdir = false, bool readhidden = false);
+bool WriteZip(const char* filename, const FCompressedBuffer* content, size_t contentcount);
 
 inline void FixPathSeparator(char* path)
 {

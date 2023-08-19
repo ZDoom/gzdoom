@@ -593,7 +593,7 @@ static std::pair<uint16_t, uint16_t> time_to_dos(struct tm *time)
 //
 //==========================================================================
 
-int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime)
+static int AppendToZip(FileWriter *zip_file, const FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime)
 {
 	FZipLocalFileHeader local;
 	int position;
@@ -608,7 +608,7 @@ int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &c
 	local.CRC32 = content.mCRC32;
 	local.UncompressedSize = LittleLong(content.mSize);
 	local.CompressedSize = LittleLong(content.mCompressedSize);
-	local.NameLength = LittleShort((unsigned short)strlen(filename));
+	local.NameLength = LittleShort((unsigned short)strlen(content.filename));
 	local.ExtraLength = 0;
 
 	// Fill in local directory header.
@@ -617,7 +617,7 @@ int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &c
 
 	// Write out the header, file name, and file data.
 	if (zip_file->Write(&local, sizeof(local)) != sizeof(local) ||
-		zip_file->Write(filename, strlen(filename)) != strlen(filename) ||
+		zip_file->Write(content.filename, strlen(content.filename)) != strlen(content.filename) ||
 		zip_file->Write(content.mBuffer, content.mCompressedSize) != content.mCompressedSize)
 	{
 		return -1;
@@ -634,7 +634,7 @@ int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &c
 //
 //==========================================================================
 
-int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime, int position)
+int AppendCentralDirectory(FileWriter *zip_file, const FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime, int position)
 {
 	FZipCentralDirectoryInfo dir;
 
@@ -650,23 +650,23 @@ int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompress
 	dir.CRC32 = content.mCRC32;
 	dir.CompressedSize32 = LittleLong(content.mCompressedSize);
 	dir.UncompressedSize32 = LittleLong(content.mSize);
-	dir.NameLength = LittleShort((unsigned short)strlen(filename));
+	dir.NameLength = LittleShort((unsigned short)strlen(content.filename));
 	dir.ExtraLength = 0;
 	dir.CommentLength = 0;
 	dir.StartingDiskNumber = 0;
 	dir.InternalAttributes = 0;
 	dir.ExternalAttributes = 0;
-	dir.LocalHeaderOffset32 = LittleLong(position);
+	dir.LocalHeaderOffset32 = LittleLong((unsigned)position);
 
 	if (zip_file->Write(&dir, sizeof(dir)) != sizeof(dir) ||
-		zip_file->Write(filename,  strlen(filename)) != strlen(filename))
+		zip_file->Write(content.filename,  strlen(content.filename)) != strlen(content.filename))
 	{
 		return -1;
 	}
 	return 0;
 }
 
-bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content)
+bool WriteZip(const char* filename, const FCompressedBuffer* content, size_t contentcount)
 {
 	// try to determine local time
 	struct tm *ltime;
@@ -677,14 +677,12 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 
 	TArray<int> positions;
 
-	if (filenames.Size() != content.Size()) return false;
-
 	auto f = FileWriter::Open(filename);
 	if (f != nullptr)
 	{
-		for (unsigned i = 0; i < filenames.Size(); i++)
+		for (size_t i = 0; i < contentcount; i++)
 		{
-			int pos = AppendToZip(f, filenames[i], content[i], dostime);
+			int pos = AppendToZip(f, content[i], dostime);
 			if (pos == -1)
 			{
 				delete f;
@@ -695,9 +693,9 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		}
 
 		int dirofs = (int)f->Tell();
-		for (unsigned i = 0; i < filenames.Size(); i++)
+		for (size_t i = 0; i < contentcount; i++)
 		{
-			if (AppendCentralDirectory(f, filenames[i], content[i], dostime, positions[i]) < 0)
+			if (AppendCentralDirectory(f, content[i], dostime, positions[i]) < 0)
 			{
 				delete f;
 				remove(filename);
@@ -710,8 +708,8 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		dirend.Magic = ZIP_ENDOFDIR;
 		dirend.DiskNumber = 0;
 		dirend.FirstDisk = 0;
-		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort((uint16_t)filenames.Size());
-		dirend.DirectoryOffset = LittleLong(dirofs);
+		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort((uint16_t)contentcount);
+		dirend.DirectoryOffset = LittleLong((unsigned)dirofs);
 		dirend.DirectorySize = LittleLong((uint32_t)(f->Tell() - dirofs));
 		dirend.ZipCommentLength = 0;
 		if (f->Write(&dirend, sizeof(dirend)) != sizeof(dirend))

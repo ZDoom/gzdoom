@@ -91,6 +91,7 @@ struct FCompressedBuffer
 	int mZipFlags;
 	unsigned mCRC32;
 	char *mBuffer;
+	const char* filename;
 
 	bool Decompress(char *destbuffer);
 	void Clean()

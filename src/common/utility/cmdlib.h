@@ -69,13 +69,6 @@ void CreatePath(const char * fn);
 FString ExpandEnvVars(const char *searchpathstring);
 FString NicePath(const char *path);
 
-struct FFileList
-{
-	FString Filename;
-	bool isDirectory;
-};
-
-bool ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 bool IsAbsPath(const char*);
 FString M_ZLibError(int zerrnum);
 

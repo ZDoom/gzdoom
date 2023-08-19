@@ -164,17 +164,6 @@ protected:
 	void GenerateHash();
 	void PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterInfo *filter);
 
-	void FixPathSeparator(char* path)
-	{
-		while (*path)
-		{
-			if (*path == '\\')
-				*path = '/';
-			path++;
-		}
-	}
-
-
 private:
 	uint32_t FirstLump;
 

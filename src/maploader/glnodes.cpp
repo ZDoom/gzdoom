@@ -60,6 +60,7 @@
 #include "g_levellocals.h"
 #include "i_time.h"
 #include "maploader.h"
+#include "fs_findfile.h"
 
 EXTERN_CVAR(Bool, gl_cachenodes)
 EXTERN_CVAR(Float, gl_cachetime)
@@ -1198,11 +1199,11 @@ bool MapLoader::CheckCachedNodes(MapData *map)
 
 UNSAFE_CCMD(clearnodecache)
 {
-	TArray<FFileList> list;
+	FileList list;
 	FString path = M_GetCachePath(false);
 	path += "/";
 
-	if (!ScanDirectory(list, path))
+	if (!ScanDirectory(list, path, "*", false))
 	{
 		Printf("Unable to scan node cache directory %s\n", path.GetChars());
 		return;
@@ -1210,15 +1211,15 @@ UNSAFE_CCMD(clearnodecache)
 
 	// Scan list backwards so that when we reach a directory
 	// all files within are already deleted.
-	for(int i = list.Size()-1; i >= 0; i--)
+	for(int i = (int)list.size()-1; i >= 0; i--)
 	{
 		if (list[i].isDirectory)
 		{
-			rmdir(list[i].Filename);
+			rmdir(list[i].FilePath.c_str());
 		}
 		else
 		{
-			remove(list[i].Filename);
+			remove(list[i].FilePath.c_str());
 		}
 	}
 

@@ -39,6 +39,8 @@
 #include "resourcefile.h"
 #include "fs_findfile.h"
 
+std::string FS_FullPath(const char* directory);
+
 #ifdef _WIN32
 std::wstring toWide(const char* str);
 #endif
@@ -99,95 +101,41 @@ FDirectory::FDirectory(const char * directory, bool nosubdirflag)
 //
 //==========================================================================
 
-static bool FS_GetFileInfo(const char* pathname, size_t* size)
-{
-#ifndef _WIN32
-	struct stat info;
-	bool res = stat(pathname, &info) == 0;
-#else
-	// Windows must use the wide version of stat to preserve non-ASCII paths.
-	struct _stat64 info;
-	bool res = _wstat64(toWide(pathname).c_str(), &info) == 0;
-#endif
-	if (!res || (info.st_mode & S_IFDIR)) return false;
-	if (size) *size = (size_t)info.st_size;
-	return res;
-}
-
-//==========================================================================
-//
-// Windows version
-//
-//==========================================================================
-
 int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
-	void * handle;
 	int count = 0;
 
-	std::string dirmatch = dirpath;
-	dirmatch += '*';
-	fs_findstate_t find;
-
-	handle = FS_FindFirst(dirmatch.c_str(), &find);
-	if (handle == ((void *)(-1)))
+	FileList list;
+	if (!ScanDirectory(list, dirpath, "*"))
 	{
 		Printf(FSMessageLevel::Error, "Could not scan '%s': %s\n", dirpath, strerror(errno));
 	}
 	else
 	{
-		do
+		for(auto& entry : list)
 		{
-			// FS_FindName only returns the file's name and not its full path
-			auto attr = FS_FindAttr(&find);
-			if (attr & FA_HIDDEN)
+			if (!entry.isDirectory)
 			{
-				// Skip hidden files and directories. (Prevents SVN/Git bookkeeping
-				// info from being included.)
-				continue;
-			}
-			const char* fi = FS_FindName(&find);
-			if (attr &  FA_DIREC)
-			{
-				if (nosubdir || (fi[0] == '.' &&
-								 (fi[1] == '\0' ||
-								  (fi[1] == '.' && fi[2] == '\0'))))
-				{
-					// Do not record . and .. directories.
-					continue;
-				}
-				std::string newdir = dirpath;
-				newdir += fi;
-				newdir += '/';
-				count += AddDirectory(newdir.c_str(), filter, Printf);
-			}
-			else
-			{
-				if (strstr(fi, ".orig") || strstr(fi, ".bak") || strstr(fi, ".cache"))
+				auto fi = entry.FileName;
+				for (auto& c : fi) c = tolower(c);
+				if (strstr(fi.c_str(), ".orig") || strstr(fi.c_str(), ".bak") || strstr(fi.c_str(), ".cache"))
 				{
 					// We shouldn't add backup files to the file system
 					continue;
 				}
-				size_t size = 0;
-				std::string fn = dirpath;
-				fn += fi;
 
-				if (filter->filenamecheck == nullptr || filter->filenamecheck(fi, fn.c_str()))
+				if (filter->filenamecheck == nullptr || filter->filenamecheck(fi.c_str(), entry.FilePath.c_str()))
 				{
-					if (FS_GetFileInfo(fn.c_str(), &size))
+					if (entry.Length > 0x7fffffff)
 					{
-						if (size > 0x7fffffff)
-						{
-							Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", fn.c_str());
-						}
-						AddEntry(fn.c_str(), (int)size);
-						count++;
+						Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", entry.FilePath.c_str());
+						continue;
 					}
+					AddEntry(entry.FilePathRel.c_str(), (int)entry.Length);
+					count++;
 				}
 			}
-
-		} while (FS_FindNext (handle, &find) == 0);
-		FS_FindClose (handle);
+		}
 	}
 	return count;
 }

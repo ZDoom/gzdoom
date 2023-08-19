@@ -46,6 +46,7 @@
 #include "version.h"
 #include "engineerrors.h"
 #include "v_text.h"
+#include "fs_findfile.h"
 #include "findfile.h"
 #include "i_interface.h"
 
@@ -471,36 +472,32 @@ void FIWadManager::CollectSearchPaths()
 
 void FIWadManager::AddIWADCandidates(const char *dir)
 {
-	void *handle;
-	findstate_t findstate;
-	FStringf slasheddir("%s/", dir);
-	FString findmask = slasheddir + "*.*";
-	if ((handle = I_FindFirst(findmask, &findstate)) != (void *)-1)
+	FileList list;
+
+	if (ScanDirectory(list, dir, "*", true))
 	{
-		do
+		for(auto& entry : list)
 		{
-			if (!(I_FindAttr(&findstate) & FA_DIREC))
+			if (!entry.isDirectory)
 			{
-				auto FindName = I_FindName(&findstate);
-				auto p = strrchr(FindName, '.');
+				auto p = strrchr(entry.FileName.c_str(), '.');
 				if (p != nullptr)
 				{
 					// special IWAD extension.
 					if (!stricmp(p, ".iwad") || !stricmp(p, ".ipk3") || !stricmp(p, ".ipk7"))
 					{
-						mFoundWads.Push(FFoundWadInfo{ slasheddir + FindName, "", -1 });
+						mFoundWads.Push(FFoundWadInfo{ entry.FilePath.c_str(), "", -1 });
 					}
 				}
 				for (auto &name : mIWadNames)
 				{
-					if (!stricmp(name, FindName))
+					if (!stricmp(name, entry.FileName.c_str()))
 					{
-						mFoundWads.Push(FFoundWadInfo{ slasheddir + FindName, "", -1 });
+						mFoundWads.Push(FFoundWadInfo{ entry.FilePath.c_str(), "", -1 });
 					}
 				}
 			}
-		} while (I_FindNext(handle, &findstate) == 0);
-		I_FindClose(handle);
+		}
 	}
 }
 

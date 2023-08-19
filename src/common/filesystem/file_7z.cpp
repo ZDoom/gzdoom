@@ -37,6 +37,7 @@
 #include "7z.h"
 #include "7zCrc.h"
 #include "resourcefile.h"
+#include "fs_findfile.h"
 
 
 
@@ -276,8 +277,8 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		for (size_t c = 0; c < nameLength; ++c)
 		{
 			nameASCII[c] = tolower(static_cast<char>(nameUTF16[c]));
-			if (nameASCII[c] == '\\') nameASCII[c] = '/';
 		}
+		FixPathSeparator(&nameASCII.front());
 
 		lump_p->LumpNameSetup(nameASCII.c_str());
 		lump_p->LumpSize = static_cast<int>(SzArEx_GetFileSize(archPtr, i));

@@ -44,7 +44,7 @@
 #include "vm.h"
 #include "i_system.h"
 #include "v_video.h"
-#include "findfile.h"
+#include "fs_findfile.h"
 #include "v_draw.h"
 
 // Save name length limit for old binary formats.
@@ -62,22 +62,16 @@ void FSavegameManager::ReadSaveStrings()
 {
 	if (SaveGames.Size() == 0)
 	{
-		void *filefirst;
-		findstate_t c_file;
 		FString filter;
 
 		LastSaved = LastAccessed = -1;
 		quickSaveSlot = nullptr;
-		filter = G_BuildSaveName("*");
-		filefirst = I_FindFirst(filter.GetChars(), &c_file);
-		if (filefirst != ((void *)(-1)))
+		FileList list;
+		if (ScanDirectory(list, G_GetSavegamesFolder().GetChars(), "*." SAVEGAME_EXT, true))
 		{
-			do
+			for (auto& entry : list)
 			{
-				// I_FindName only returns the file's name and not its full path
-				FString filepath = G_BuildSaveName(I_FindName(&c_file));
-
-				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(filepath, true));
+				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(entry.FilePath.c_str(), true));
 				if (savegame != nullptr)
 				{
 					bool oldVer = false;
@@ -122,89 +116,14 @@ void FSavegameManager::ReadSaveStrings()
 						}
 
 						FSaveGameNode *node = new FSaveGameNode;
-						node->Filename = filepath;
+						node->Filename = entry.FilePath.c_str();
 						node->bOldVersion = oldVer;
 						node->bMissingWads = missing;
 						node->SaveTitle = title;
 						InsertSaveNode(node);
 					}
-
 				}
-				else // check for old formats.
-				{
-					FileReader file;
-					if (file.OpenFile(filepath))
-					{
-						PNGHandle *png;
-						char sig[16];
-						char title[OLDSAVESTRINGSIZE + 1];
-						bool oldVer = true;
-						bool addIt = false;
-						bool missing = false;
-
-						// ZDoom 1.23 betas 21-33 have the savesig first.
-						// Earlier versions have the savesig second.
-						// Later versions have the savegame encapsulated inside a PNG.
-						//
-						// Old savegame versions are always added to the menu so
-						// the user can easily delete them if desired.
-
-						title[OLDSAVESTRINGSIZE] = 0;
-
-						if (nullptr != (png = M_VerifyPNG(file)))
-						{
-							char *ver = M_GetPNGText(png, "ZDoom Save Version");
-							if (ver != nullptr)
-							{
-								// An old version
-								if (!M_GetPNGText(png, "Title", title, OLDSAVESTRINGSIZE))
-								{
-									strncpy(title, I_FindName(&c_file), OLDSAVESTRINGSIZE);
-								}
-								addIt = true;
-								delete[] ver;
-							}
-							delete png;
-						}
-						else
-						{
-							file.Seek(0, FileReader::SeekSet);
-							if (file.Read(sig, 16) == 16)
-							{
-
-								if (strncmp(sig, "ZDOOMSAVE", 9) == 0)
-								{
-									if (file.Read(title, OLDSAVESTRINGSIZE) == OLDSAVESTRINGSIZE)
-									{
-										addIt = true;
-									}
-								}
-								else
-								{
-									memcpy(title, sig, 16);
-									if (file.Read(title + 16, OLDSAVESTRINGSIZE - 16) == OLDSAVESTRINGSIZE - 16 &&
-										file.Read(sig, 16) == 16 &&
-										strncmp(sig, "ZDOOMSAVE", 9) == 0)
-									{
-										addIt = true;
-									}
-								}
-							}
-						}
-
-						if (addIt)
-						{
-							FSaveGameNode *node = new FSaveGameNode;
-							node->Filename = filepath;
-							node->bOldVersion = true;
-							node->bMissingWads = false;
-							node->SaveTitle = title;
-							InsertSaveNode(node);
-						}
-					}
-				}
-			} while (I_FindNext(filefirst, &c_file) == 0);
-			I_FindClose(filefirst);
+			}
 		}
 	}
 }

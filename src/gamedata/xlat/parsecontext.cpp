@@ -323,12 +323,12 @@ void FParseContext::ParseLump(const char *lumpname)
 	}
 
 	// Read the lump into a buffer and add a 0-terminator
-	auto lumpdata = fileSystem.ReadFile(lumpno);
 
 	SourceLine = 0;
 	SourceFile = lumpname;
 
-	const char *sourcep = lumpdata.GetString();
+	FString source = GetStringFromLump(lumpno);
+	const char *sourcep = source.GetChars();
 	while ( (tokentype = GetToken(sourcep, &token)) )
 	{
 		// It is much easier to handle include statements outside the main parser.

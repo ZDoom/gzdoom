@@ -104,7 +104,7 @@ FAnmTexture::FAnmTexture (int lumpnum, int w, int h)
 void FAnmTexture::ReadFrame(uint8_t *pixels, uint8_t *palette)
 {
 	FileData lump = fileSystem.ReadFile (SourceLump);
-	uint8_t *source = (uint8_t *)lump.GetMem(); 
+	auto source = lump.GetBytes(); 
 
 	anim_t anim;
 	if (ANIM_LoadAnim(&anim, source, (int)lump.GetSize()) >= 0)

@@ -200,8 +200,11 @@ void FScanner :: OpenLumpNum (int lump)
 {
 	Close ();
 	{
-		FileData mem = fileSystem.ReadFile(lump);
-		ScriptBuffer = mem.GetString();
+		auto mem = fileSystem.OpenFileReader(lump);
+		auto buff = ScriptBuffer.LockNewBuffer(mem.GetLength());
+		mem.Read(buff, mem.GetLength());
+		buff[mem.GetLength()] = 0;
+		ScriptBuffer.UnlockBuffer();
 	}
 	ScriptName = fileSystem.GetFileFullPath(lump).c_str();
 	LumpNum = lump;

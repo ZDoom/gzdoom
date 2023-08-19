@@ -410,8 +410,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	vp_comb << "#line 1\n";
 	fp_comb << "#line 1\n";
 
-	vp_comb << RemoveLayoutLocationDecl(vp_data.GetString(), "out").GetChars() << "\n";
-	fp_comb << RemoveLayoutLocationDecl(fp_data.GetString(), "in").GetChars() << "\n";
+	vp_comb << RemoveLayoutLocationDecl(GetStringFromLump(vp_lump), "out").GetChars() << "\n";
+	fp_comb << RemoveLayoutLocationDecl(GetStringFromLump(fp_lump), "in").GetChars() << "\n";
 	FString placeholder = "\n";
 
 	if (proc_prog_lump.Len())
@@ -422,7 +422,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		{
 			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump);
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump.GetChars());
-			FString pp_data = fileSystem.ReadFile(pp_lump).GetString();
+			auto ppf = fileSystem.ReadFile(pp_lump);
+			FString pp_data = GetStringFromLump(pp_lump);
 
 			if (pp_data.IndexOf("ProcessMaterial") < 0 && pp_data.IndexOf("SetupMaterial") < 0)
 			{
@@ -432,15 +433,13 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 				{
 					int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultmat2.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultmat2.fp");
-					FileData pl_data = fileSystem.ReadFile(pl_lump);
-					fp_comb << "\n" << pl_data.GetString();
+					fp_comb << "\n" << GetStringFromLump(pl_lump);
 				}
 				else
 				{
 					int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultmat.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultmat.fp");
-					FileData pl_data = fileSystem.ReadFile(pl_lump);
-					fp_comb << "\n" << pl_data.GetString();
+					fp_comb << "\n" << GetStringFromLump(pl_lump);
 
 					if (pp_data.IndexOf("ProcessTexel") < 0)
 					{
@@ -466,8 +465,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 			{
 				int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultlight.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultlight.fp");
-				FileData pl_data = fileSystem.ReadFile(pl_lump);
-				fp_comb << "\n" << pl_data.GetString();
+				fp_comb << "\n" << GetStringFromLump(pl_lump);
 			}
 
 			// ProcessMaterial must be considered broken because it requires the user to fill in data they possibly cannot know all about.
@@ -489,8 +487,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	{
 		int pp_lump = fileSystem.CheckNumForFullName(light_fragprog, 0);
 		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog.GetChars());
-		FileData pp_data = fileSystem.ReadFile(pp_lump);
-		fp_comb << pp_data.GetString() << "\n";
+		fp_comb << GetStringFromLump(pp_lump) << "\n";
 	}
 
 	if (gles.flags & RFL_NO_CLIP_PLANES)

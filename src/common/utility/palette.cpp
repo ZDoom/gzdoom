@@ -681,8 +681,8 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc)
 	}
 
 	auto rgbNames = fileSystem.ReadFile(rgblump);
-	rgb = (char*)rgbNames.GetMem();
-	rgbEnd = rgb + fileSystem.FileLength(rgblump);
+	rgb = rgbNames.GetString();
+	rgbEnd = rgb + rgbNames.GetSize();
 	step = 0;
 	namelen = strlen(name);
 

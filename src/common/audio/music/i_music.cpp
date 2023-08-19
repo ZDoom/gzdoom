@@ -182,7 +182,7 @@ static void SetupGenMidi()
 	auto genmidi = fileSystem.ReadFile(lump);
 
 	if (genmidi.GetSize() < 8 + 175 * 36 || memcmp(genmidi.GetMem(), "#OPL_II#", 8)) return;
-	ZMusic_SetGenMidi((uint8_t*)genmidi.GetString() + 8);
+	ZMusic_SetGenMidi(genmidi.GetBytes() + 8);
 }
 
 static void SetupWgOpn()

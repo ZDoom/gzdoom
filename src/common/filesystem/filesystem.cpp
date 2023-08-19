@@ -40,10 +40,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "m_argv.h"
-#include "cmdlib.h"
 #include "filesystem.h"
-
 #include "m_crc32.h"
 
 #if __has_include("md5.h")
@@ -1320,7 +1317,13 @@ void FileSystem::ReadFile (int lump, void *dest)
 
 FileData FileSystem::ReadFile (int lump)
 {
-	return FileData(FString(*this, ELumpNum(lump)));
+	if ((unsigned)lump >= (unsigned)FileInfo.size())
+	{
+		throw FileSystemException("ReadFile: %u >= NumEntries", lump);
+	}
+	auto lumpp = FileInfo[lump].lump;
+
+	return FileData(lumpp);
 }
 
 //==========================================================================
@@ -1522,10 +1525,6 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 
 // FileData -----------------------------------------------------------------
 
-FileData::FileData ()
-{
-}
-
 FileData::FileData (const FileData &copy)
 {
 	Block = copy.Block;
@@ -1537,29 +1536,15 @@ FileData &FileData::operator = (const FileData &copy)
 	return *this;
 }
 
-FileData::FileData (const FString &source)
-: Block (source)
+FileData::FileData (FResourceLump* lump)
 {
+	auto size = lump->LumpSize;
+	Block.resize(1 + size);
+	memcpy(Block.data(), lump->Lock(), size);
+	Block[size] = 0;
+	lump->Unlock();
 }
 
-FileData::~FileData ()
-{
-}
-
-FString::FString (FileSystem& fileSystem, ELumpNum lumpnum)
-{
-	auto lumpr = fileSystem.OpenFileReader ((int)lumpnum);
-	auto size = lumpr.GetLength ();
-	AllocBuffer (1 + size);
-	auto numread = lumpr.Read (&Chars[0], size);
-	Chars[size] = '\0';
-
-	if (numread != size)
-	{
-		throw FileSystemException("ConstructStringFromLump: Only read %ld of %ld bytes on lump %i (%s)\n",
-			numread, size, lumpnum, fileSystem.GetFileFullName((int)lumpnum));
-	}
-}
 
 //==========================================================================
 //

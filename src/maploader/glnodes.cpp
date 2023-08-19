@@ -754,7 +754,7 @@ static int FindGLNodesInWAD(int labellump)
 				if (fileSystem.GetFileContainer(lump)==wadfile)
 				{
 					FileData mem = fileSystem.ReadFile(lump);
-					if (MatchHeader(fileSystem.GetFileFullName(labellump), (const char *)mem.GetMem())) return lump;
+					if (MatchHeader(fileSystem.GetFileFullName(labellump), mem.GetString())) return lump;
 				}
 			}
 		}

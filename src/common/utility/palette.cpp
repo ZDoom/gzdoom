@@ -663,9 +663,8 @@ int V_GetColorFromString(const char* cstr, FScriptPosition* sc)
 
 FString V_GetColorStringByName(const char* name, FScriptPosition* sc)
 {
-	FileData rgbNames;
-	char* rgbEnd;
-	char* rgb, * endp;
+	const char* rgbEnd;
+	const char* rgb, * endp;
 	int rgblump;
 	int c[3], step;
 	size_t namelen;
@@ -680,7 +679,7 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc)
 		return FString();
 	}
 
-	rgbNames = fileSystem.ReadFile(rgblump);
+	auto rgbNames = fileSystem.ReadFile(rgblump);
 	rgb = (char*)rgbNames.GetMem();
 	rgbEnd = rgb + fileSystem.FileLength(rgblump);
 	step = 0;
@@ -705,7 +704,7 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc)
 		}
 		else if (step < 3)
 		{ // collect RGB values
-			c[step++] = strtoul(rgb, &endp, 10);
+			c[step++] = strtoul(rgb, (char**)&endp, 10);
 			if (endp == rgb)
 			{
 				break;
@@ -930,7 +929,7 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 		return 0;
 	}
 	FileData lump = fileSystem.ReadFile(lumpnum);
-	uint8_t* lumpmem = (uint8_t*)lump.GetMem();
+	auto lumpmem = lump.GetBytes();
 	memset(buffer, 0, 768);
 
 	FileReader fr;

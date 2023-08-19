@@ -431,7 +431,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		else
 		{
 			FileData translump = fileSystem.ReadFile(colorset->Lump);
-			const uint8_t *trans = (const uint8_t *)translump.GetMem();
+			auto trans = translump.GetBytes();
 			for (i = start; i <= end; ++i)
 			{
 				table->Remap[i] = GPalette.Remap[trans[i]];

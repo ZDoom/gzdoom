@@ -85,7 +85,7 @@ static int BuildPaletteTranslation(int lump)
 	}
 
 	FileData data = fileSystem.ReadFile(lump);
-	const uint8_t *ipal = (const uint8_t *)data.GetMem();
+	auto ipal = data.GetBytes();
 	FRemapTable opal;
 
 	bool blood = false;

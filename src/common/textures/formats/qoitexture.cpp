@@ -148,7 +148,7 @@ int FQOITexture::CopyPixels(FBitmap *bmp, int conversion)
 	size_t p = 14, run = 0;
 
 	size_t chunks_len = lump.GetSize() - 8;
-	auto bytes = (const uint8_t*)lump.GetMem();
+	auto bytes = lump.GetBytes();
 
 	for (int h = 0; h < Height; h++)
 	{

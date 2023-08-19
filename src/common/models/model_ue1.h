@@ -70,15 +70,15 @@ private:
 	{
 		uint16_t numframes, framesize;
 	};
-	d3dhead * dhead;
-	d3dpoly * dpolys;
-	a3dhead * ahead;
-	uint32_t * averts;
+	const d3dhead * dhead;
+	const d3dpoly * dpolys;
+	const a3dhead * ahead;
+	const uint32_t * averts;
 	struct dxvert
 	{
 		int16_t x, y, z, pad;
 	};
-	dxvert * dxverts;
+	const dxvert * dxverts;
 
 	// converted data structures
 	struct UE1Vertex

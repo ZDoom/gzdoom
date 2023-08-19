@@ -162,7 +162,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 	int i, j, n;
 
 	FileData lump = fileSystem.ReadFile(lumpnum);	// FileData adds an extra 0 byte to the end.
-	uint8_t *rawvoxel = (uint8_t *)lump.GetMem();
+	auto rawvoxel = lump.GetBytes();
 	int voxelsize = (int)(lump.GetSize()-1);
 
 	// Oh, KVX, why couldn't you have a proper header? We'll just go through

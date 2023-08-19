@@ -29,19 +29,18 @@ union LumpShortName
 class FileData
 {
 public:
-	FileData ();
-
+	FileData () = default;
 	FileData (const FileData &copy);
 	FileData &operator= (const FileData &copy);
-	~FileData ();
-	const void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
-	size_t GetSize () { return Block.Len(); }
-	const char* GetString () const { return Block.GetChars(); }
+	const void *GetMem () { return Block.size() <= 1 ? NULL : (void *)Block.data(); }
+	size_t GetSize () { return Block.size(); }
+	const char* GetString () const { return (const char*)Block.data(); }
+	const uint8_t* GetBytes() const { return Block.data(); }
 
 private:
-	FileData (const FString &source);
+	FileData (FResourceLump* lump);
 
-	FString Block;
+	std::vector<uint8_t> Block;
 
 	friend class FileSystem;
 };

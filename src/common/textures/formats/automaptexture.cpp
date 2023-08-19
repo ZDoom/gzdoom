@@ -93,7 +93,7 @@ PalettedPixels FAutomapTexture::CreatePalettedPixels(int conversion)
 {
 	int x, y;
 	FileData data = fileSystem.ReadFile (SourceLump);
-	const uint8_t *indata = (const uint8_t *)data.GetMem();
+	auto indata = data.GetBytes();
 
 	PalettedPixels Pixels(Width * Height);
 

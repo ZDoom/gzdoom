@@ -21,6 +21,8 @@ struct LumpFilterInfo
 	std::vector<std::string> reservedFolders;
 	std::vector<std::string> requiredPrefixes;
 	std::vector<std::string> embeddings;
+	std::vector<std::string> blockednames;			// File names that will never be accepted (e.g. dehacked.exe for Doom)
+	std::function<bool(const char*, const char*)> filenamecheck;	// for scanning directories, this allows to eliminate unwanted content.
 	std::function<void()> postprocessFunc;
 };
 

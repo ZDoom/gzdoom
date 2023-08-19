@@ -33,18 +33,21 @@
 **
 */
 
+#include <string>
 #include "files.h"
-#include "utf8.h"
 #include "stb_sprintf.h"
 
+#ifdef _WIN32
+std::wstring toWide(const char* str);
+#endif
 
 FILE *myfopen(const char *filename, const char *flags)
 {
 #ifndef _WIN32
 	return fopen(filename, flags);
 #else
-	auto widename = WideString(filename);
-	auto wideflags = WideString(flags);
+	auto widename = toWide(filename);
+	auto wideflags = toWide(flags);
 	return _wfopen(widename.c_str(), wideflags.c_str());
 #endif
 }

@@ -37,8 +37,11 @@
 #include <sys/stat.h>
 
 #include "resourcefile.h"
-#include "cmdlib.h"
-#include "findfile.h"
+#include "fs_findfile.h"
+
+#ifdef _WIN32
+std::wstring toWide(const char* str);
+#endif
 
 //==========================================================================
 //
@@ -51,7 +54,7 @@ struct FDirectoryLump : public FResourceLump
 	FileReader NewReader() override;
 	int FillCache() override;
 
-	FString mFullPath;
+	std::string mFullPath;
 };
 
 
@@ -66,7 +69,7 @@ class FDirectory : public FResourceFile
 	TArray<FDirectoryLump> Lumps;
 	const bool nosubdir;
 
-	int AddDirectory(const char* dirpath, FileSystemMessageFunc Printf);
+	int AddDirectory(const char* dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	void AddEntry(const char *fullpath, int size);
 
 public:
@@ -86,22 +89,9 @@ public:
 FDirectory::FDirectory(const char * directory, bool nosubdirflag)
 	: FResourceFile(""), nosubdir(nosubdirflag)
 {
-	FString dirname;
-
-	#ifdef _WIN32
-		directory = _fullpath(NULL, directory, _MAX_PATH);
-	#else
-		// Todo for Linux: Resolve the path before using it
-	#endif
-	dirname = directory;
-#ifdef _WIN32
-	free((void *)directory);
-#endif
-	dirname.Substitute("\\", "/");
-	if (dirname[dirname.Len()-1] != '/') dirname += '/';
-	FileName = dirname;
+	FileName = FS_FullPath(directory);
+	if (FileName[FileName.length()-1] != '/') FileName += '/';
 }
-
 
 //==========================================================================
 //
@@ -109,16 +99,37 @@ FDirectory::FDirectory(const char * directory, bool nosubdirflag)
 //
 //==========================================================================
 
-int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
+static bool FS_GetFileInfo(const char* pathname, size_t* size)
+{
+#ifndef _WIN32
+	struct stat info;
+	bool res = stat(pathname, &info) == 0;
+#else
+	// Windows must use the wide version of stat to preserve non-ASCII paths.
+	struct _stat64 info;
+	bool res = _wstat64(toWide(pathname).c_str(), &info) == 0;
+#endif
+	if (!res || (info.st_mode & S_IFDIR)) return false;
+	if (size) *size = (size_t)info.st_size;
+	return res;
+}
+
+//==========================================================================
+//
+// Windows version
+//
+//==========================================================================
+
+int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	void * handle;
 	int count = 0;
 
-	FString dirmatch = dirpath;
-	findstate_t find;
+	std::string dirmatch = dirpath;
 	dirmatch += '*';
+	fs_findstate_t find;
 
-	handle = I_FindFirst(dirmatch.GetChars(), &find);
+	handle = FS_FindFirst(dirmatch.c_str(), &find);
 	if (handle == ((void *)(-1)))
 	{
 		Printf(FSMessageLevel::Error, "Could not scan '%s': %s\n", dirpath, strerror(errno));
@@ -127,15 +138,15 @@ int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
 	{
 		do
 		{
-			// I_FindName only returns the file's name and not its full path
-			auto attr = I_FindAttr(&find);
+			// FS_FindName only returns the file's name and not its full path
+			auto attr = FS_FindAttr(&find);
 			if (attr & FA_HIDDEN)
 			{
-				// Skip hidden files and directories. (Prevents SVN bookkeeping
+				// Skip hidden files and directories. (Prevents SVN/Git bookkeeping
 				// info from being included.)
 				continue;
 			}
-			FString fi = I_FindName(&find);
+			const char* fi = FS_FindName(&find);
 			if (attr &  FA_DIREC)
 			{
 				if (nosubdir || (fi[0] == '.' &&
@@ -145,9 +156,10 @@ int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
 					// Do not record . and .. directories.
 					continue;
 				}
-				FString newdir = dirpath;
-				newdir << fi << '/';
-				count += AddDirectory(newdir, Printf);
+				std::string newdir = dirpath;
+				newdir += fi;
+				newdir += '/';
+				count += AddDirectory(newdir.c_str(), filter, Printf);
 			}
 			else
 			{
@@ -157,31 +169,25 @@ int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
 					continue;
 				}
 				size_t size = 0;
-				FString fn = FString(dirpath) + fi;
+				std::string fn = dirpath;
+				fn += fi;
 
-				// The next one is courtesy of EDuke32. :(
-				// Putting cache files in the application directory is very bad style.
-				// Unfortunately, having a garbage file named "texture" present will cause serious problems down the line.
-				if (!stricmp(fi, "textures"))
+				if (filter->filenamecheck == nullptr || filter->filenamecheck(fi, fn.c_str()))
 				{
-					FILE* f = fopen(fn, "rb");
-					if (f)
+					if (FS_GetFileInfo(fn.c_str(), &size))
 					{
-						char check[3]{};
-						fread(check, 1, 3, f);
-						if (!memcmp(check, "LZ4", 3)) continue;
+						if (size > 0x7fffffff)
+						{
+							Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", fn.c_str());
+						}
+						AddEntry(fn.c_str(), (int)size);
+						count++;
 					}
-				}
-
-				if (GetFileInfo(fn, &size, nullptr))
-				{
-					AddEntry(fn, (int)size);
-					count++;
 				}
 			}
 
-		} while (I_FindNext (handle, &find) == 0);
-		I_FindClose (handle);
+		} while (FS_FindNext (handle, &find) == 0);
+		FS_FindClose (handle);
 	}
 	return count;
 }
@@ -194,7 +200,7 @@ int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
 
 bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
-	NumLumps = AddDirectory(FileName.c_str(), Printf);
+	NumLumps = AddDirectory(FileName.c_str(), filter, Printf);
 	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }
@@ -234,7 +240,7 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 FileReader FDirectoryLump::NewReader()
 {
 	FileReader fr;
-	fr.OpenFile(mFullPath);
+	fr.OpenFile(mFullPath.c_str());
 	return fr;
 }
 
@@ -248,7 +254,7 @@ int FDirectoryLump::FillCache()
 {
 	FileReader fr;
 	Cache = new char[LumpSize];
-	if (!fr.OpenFile(mFullPath))
+	if (!fr.OpenFile(mFullPath.c_str()))
 	{
 		throw FileSystemException("unable to open file");
 	}

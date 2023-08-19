@@ -3034,6 +3034,26 @@ static FILE* D_GetHashFile()
 	return hashfile;
 }
 
+// checks if a file within a directory is allowed to be added to the file system.
+static bool FileNameCheck(const char* base, const char* path)
+{
+	// This one is courtesy of EDuke32. :(
+	// Putting cache files in the application directory is very bad style.
+	// Unfortunately, having a garbage file named "textures" present will cause serious problems down the line.
+	if (!strnicmp(base, "textures", 8))
+	{
+		// do not use fopen. The path may contain non-ASCII characters.
+		FileReader f;
+		if (f.OpenFile(path))
+		{
+			char check[3]{};
+			f.Read(check, 3);
+			if (!memcmp(check, "LZ4", 3)) return false;
+		}
+	}
+	return true;
+}
+
 static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 {
 	va_list arg;

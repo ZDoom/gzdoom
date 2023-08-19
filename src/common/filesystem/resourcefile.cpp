@@ -36,9 +36,8 @@
 
 #include <zlib.h>
 #include "resourcefile.h"
-#include "cmdlib.h"
-#include "md5.h"
 
+#include "md5.h"
 
 std::string ExtractBaseName(const char* path, bool include_extension)
 {
@@ -290,9 +289,10 @@ static int nulPrintf(FSMessageLevel msg, const char* fmt, ...)
 FResourceFile *FResourceFile::DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	if (Printf == nullptr) Printf = nulPrintf;
-	for(size_t i = 0; i < countof(funcs) - containeronly; i++)
+	for(auto func : funcs)
 	{
-		FResourceFile *resfile = funcs[i](filename, file, filter, Printf);
+		if (containeronly && func == CheckLump) break;
+		FResourceFile *resfile = func(filename, file, filter, Printf);
 		if (resfile != NULL) return resfile;
 	}
 	return NULL;

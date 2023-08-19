@@ -38,8 +38,6 @@
 
 using namespace fs_private;
 
-using namespace fs_private;
-
 #ifdef _WIN32
 std::wstring toWide(const char* str);
 #endif

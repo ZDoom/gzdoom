@@ -1518,29 +1518,6 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 	return true;
 }
 
-// FileData -----------------------------------------------------------------
-
-FileData::FileData (const FileData &copy)
-{
-	Block = copy.Block;
-}
-
-FileData &FileData::operator = (const FileData &copy)
-{
-	Block = copy.Block;
-	return *this;
-}
-
-FileData::FileData (FResourceLump* lump)
-{
-	auto size = lump->LumpSize;
-	Block.resize(1 + size);
-	memcpy(Block.data(), lump->Lock(), size);
-	Block[size] = 0;
-	lump->Unlock();
-}
-
-
 //==========================================================================
 //
 // PrintLastError

@@ -61,6 +61,16 @@ static void UpperCopy(char* to, const char* from)
 		to[i] = 0;
 }
 
+
+//djb2
+static uint32_t MakeHash(const char* str, size_t length = SIZE_MAX)
+{
+	uint32_t hash = 5381;
+	uint32_t c;
+	while (length-- > 0 && (c = *str++)) hash = hash * 33 + (c | 32);
+	return hash;
+}
+
 static void md5Hash(FileReader& reader, uint8_t* digest) 
 {
 	using namespace fs_private::md5;
@@ -522,7 +532,7 @@ int FileSystem::CheckNumForName (const char *name, int space)
 	}
 
 	UpperCopy (uname, name);
-	i = FirstLumpIndex[LumpNameHash (uname) % NumEntries];
+	i = FirstLumpIndex[MakeHash(uname, 8) % NumEntries];
 
 	while (i != NULL_INDEX)
 	{
@@ -560,7 +570,7 @@ int FileSystem::CheckNumForName (const char *name, int space, int rfnum, bool ex
 	}
 
 	UpperCopy (uname, name);
-	i = FirstLumpIndex[LumpNameHash (uname) % NumEntries];
+	i = FirstLumpIndex[MakeHash (uname, 8) % NumEntries];
 
 	// If exact is true if will only find lumps in the same WAD, otherwise
 	// also those in earlier WADs.
@@ -619,7 +629,7 @@ int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int names
 	uint32_t *nli = ignoreext ? NextLumpIndex_NoExt : NextLumpIndex_FullName;
 	auto len = strlen(name);
 
-	for (i = fli[MakeKey(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
+	for (i = fli[MakeHash(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
 	{
 		if (strnicmp(name, FileInfo[i].longName.c_str(), len)) continue;
 		if (FileInfo[i].longName[len] == 0) break;	// this is a full match
@@ -648,7 +658,7 @@ int FileSystem::CheckNumForFullName (const char *name, int rfnum)
 		return CheckNumForFullName (name);
 	}
 
-	i = FirstLumpIndex_FullName[MakeKey (name) % NumEntries];
+	i = FirstLumpIndex_FullName[MakeHash (name) % NumEntries];
 
 	while (i != NULL_INDEX && 
 		(stricmp(name, FileInfo[i].longName.c_str()) || FileInfo[i].rfnum != rfnum))
@@ -700,7 +710,7 @@ int FileSystem::FindFileWithExtensions(const char* name, const char *const *exts
 	uint32_t* nli = NextLumpIndex_NoExt;
 	auto len = strlen(name);
 
-	for (i = fli[MakeKey(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
+	for (i = fli[MakeHash(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
 	{
 		if (strnicmp(name, FileInfo[i].longName.c_str(), len)) continue;
 		if (FileInfo[i].longName[len] != '.') continue;	// we are looking for extensions but this file doesn't have one.
@@ -822,31 +832,6 @@ int FileSystem::GetFileFlags (int lump)
 
 //==========================================================================
 //
-// LumpNameHash
-//
-// NOTE: s should already be uppercase, in contrast to the BOOM version.
-//
-// Hash function used for lump names.
-// Must be mod'ed with table size.
-// Can be used for any 8-character names.
-//
-//==========================================================================
-
-uint32_t FileSystem::LumpNameHash (const char *s)
-{
-	const uint32_t *table = GetCRCTable ();
-	uint32_t hash = 0xffffffff;
-	int i;
-
-	for (i = 8; i > 0 && *s; --i, ++s)
-	{
-		hash = CRC1 (hash, *s, table);
-	}
-	return hash ^ 0xffffffff;
-}
-
-//==========================================================================
-//
 // InitHashChains
 //
 // Prepares the lumpinfos for hashing.
@@ -875,14 +860,14 @@ void FileSystem::InitHashChains (void)
 	// Now set up the chains
 	for (i = 0; i < (unsigned)NumEntries; i++)
 	{
-		j = LumpNameHash (FileInfo[i].shortName.String) % NumEntries;
+		j = MakeHash (FileInfo[i].shortName.String, 8) % NumEntries;
 		NextLumpIndex[i] = FirstLumpIndex[j];
 		FirstLumpIndex[j] = i;
 
 		// Do the same for the full paths
 		if (!FileInfo[i].longName.empty())
 		{
-			j = MakeKey(FileInfo[i].longName.c_str()) % NumEntries;
+			j = MakeHash(FileInfo[i].longName.c_str()) % NumEntries;
 			NextLumpIndex_FullName[i] = FirstLumpIndex_FullName[j];
 			FirstLumpIndex_FullName[j] = i;
 
@@ -891,7 +876,7 @@ void FileSystem::InitHashChains (void)
 			auto slash = nameNoExt.find_last_of('/');
 			if ((dot > slash || slash == std::string::npos) && dot != std::string::npos) nameNoExt.resize(dot);
 
-			j = MakeKey(nameNoExt.c_str()) % NumEntries;
+			j = MakeHash(nameNoExt.c_str()) % NumEntries;
 			NextLumpIndex_NoExt[i] = FirstLumpIndex_NoExt[j];
 			FirstLumpIndex_NoExt[j] = i;
 

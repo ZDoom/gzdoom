@@ -1,0 +1,51 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "builtin-baseline": "9d47b24eacbd1cd94f139457ef6cd35e5d92cc84",
+    "features":
+    {
+        "vcpkg-libvpx":
+        {
+            "description": "Use libvpx provided by vcpkg on Windows",
+            "dependencies": [
+                {
+                    "name": "libvpx",
+                    "default-features": false,
+                    "platform": "windows & static & staticcrt"
+                }
+            ]
+        },
+        "vcpkg-openal-soft":
+        {
+            "description": "Use openal-soft provided by vcpkg.",
+            "dependencies": [
+                {
+                    "name": "openal-soft",
+                    "default-features": false,
+                    "platform": "!windows | (windows & static & staticcrt)"
+                }
+            ]
+        }
+    },
+    "dependencies": [
+        {
+            "name": "zlib",
+            "platform": "!windows | (windows & static & staticcrt)"
+        },
+        {
+            "name": "libjpeg-turbo",
+            "platform": "!windows | (windows & static & staticcrt)"
+        },
+        {
+            "name": "bzip2",
+            "platform": "!windows | (windows & static & staticcrt)"
+        },
+        {
+            "name": "sdl2",
+            "platform": "!windows & !osx"
+        },
+        {
+            "name": "libvpx",
+            "platform": "!windows"
+        }
+    ]
+}

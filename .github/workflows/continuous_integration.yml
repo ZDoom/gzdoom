@@ -13,19 +13,19 @@ jobs:
         - {
             name: "Visual Studio 2022",
             os: windows-2022,
-            extra_options: "-A x64",
+            extra_options: "-A x64 -DCMAKE_TOOLCHAIN_FILE=build/vcpkg/scripts/buildsystems/vcpkg.cmake",
             build_type: "Release"
           }
         - {
             name: "Visual Studio 2019",
             os: windows-2019,
-            extra_options: "-A x64",
+            extra_options: "-A x64 -DCMAKE_TOOLCHAIN_FILE=build/vcpkg/scripts/buildsystems/vcpkg.cmake",
             build_type: "Release"
           }
         - {
             name: "Visual Studio 2019",
             os: windows-2019,
-            extra_options: "-A x64",
+            extra_options: "-A x64 -DCMAKE_TOOLCHAIN_FILE=build/vcpkg/scripts/buildsystems/vcpkg.cmake",
             build_type: "Debug"
           }
         - {
@@ -90,6 +90,13 @@ jobs:
           wget -q "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${ZMUSIC_PACKAGE}"
           tar -xf "${ZMUSIC_PACKAGE}"
         fi
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      if: runner.os == 'Windows'
+      with:
+        vcpkgDirectory: '${{ github.workspace }}/build/vcpkg'
+        vcpkgGitCommitId: '65c013b9667ff1f58fb8724209227e5a2e761043'
 
     - name: Configure
       shell: bash

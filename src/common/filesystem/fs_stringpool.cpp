@@ -120,7 +120,7 @@ void *StringPool::iAlloc(size_t size)
 
 const char* StringPool::Strdup(const char* str)
 {
-	char* p = (char*)iAlloc((strlen(str) + 15) & ~15 );
+	char* p = (char*)iAlloc((strlen(str) + 8) & ~7 );
 	strcpy(p, str);
 	return p;
 }

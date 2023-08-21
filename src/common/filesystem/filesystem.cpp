@@ -44,6 +44,7 @@
 #include "filesystem.h"
 #include "fs_findfile.h"
 #include "md5.hpp"
+#include "fs_stringpool.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -191,7 +192,8 @@ FileSystem fileSystem;
 
 FileSystem::FileSystem()
 {
-	// Cannot be defaulted! This is needed to initialize the LumpRecord array, which depends on data only available here.
+	stringpool = new StringPool;
+	stringpool->shared = true;	// will be used by all owned resource files.
 }
 
 FileSystem::~FileSystem ()
@@ -323,7 +325,7 @@ int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, in
 	fullname += ':';
 	fullname += type;
 	auto newlump = new FMemoryLump(data, size);
-	newlump->LumpNameSetup(fullname.c_str());
+	newlump->LumpNameSetup(fullname.c_str(), stringpool);
 	AddLump(newlump);
 	FileInfo.back().resourceId = id;
 	return (int)FileInfo.size()-1;
@@ -379,9 +381,9 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 
 	if (!isdir)
-		resfile = FResourceFile::OpenResourceFile(filename, filereader, false, filter, Printf);
+		resfile = FResourceFile::OpenResourceFile(filename, filereader, false, filter, Printf, stringpool);
 	else
-		resfile = FResourceFile::OpenDirectory(filename, filter, Printf);
+		resfile = FResourceFile::OpenDirectory(filename, filter, Printf, stringpool);
 
 	if (resfile != NULL)
 	{
@@ -943,7 +945,7 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 			FileInfo.push_back(li);
 			li.lump = &placeholderLump;			// Make the old entry point to something empty. We cannot delete the lump record here because it'd require adjustment of all indices in the list.
 			auto &ln = FileInfo.back();
-			ln.lump->LumpNameSetup(ln.longName.c_str() + len);
+			ln.lump->LumpNameSetup(ln.longName.c_str() + len, stringpool); // may be able to avoid the string allocation!
 			ln.SetFromLump(rfnum, ln.lump);
 		}
 	}

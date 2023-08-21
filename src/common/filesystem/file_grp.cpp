@@ -73,7 +73,7 @@ struct GrpLump
 class FGrpFile : public FUncompressedFile
 {
 public:
-	FGrpFile(const char * filename, FileReader &file);
+	FGrpFile(const char * filename, FileReader &file, StringPool* sp);
 	bool Open(LumpFilterInfo* filter);
 };
 
@@ -84,8 +84,8 @@ public:
 //
 //==========================================================================
 
-FGrpFile::FGrpFile(const char *filename, FileReader &file)
-: FUncompressedFile(filename, file)
+FGrpFile::FGrpFile(const char *filename, FileReader &file, StringPool* sp)
+: FUncompressedFile(filename, file, sp)
 {
 }
 
@@ -117,7 +117,7 @@ bool FGrpFile::Open(LumpFilterInfo* filter)
 		Position += fileinfo[i].Size;
 		Lumps[i].Flags = 0;
 		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
-		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero);
+		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero, stringpool);
 	}
 	GenerateHash();
 	delete[] fileinfo;
@@ -131,7 +131,7 @@ bool FGrpFile::Open(LumpFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[12];
 
@@ -142,7 +142,7 @@ FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "KenSilverman", 12))
 		{
-			auto rf = new FGrpFile(filename, file);
+			auto rf = new FGrpFile(filename, file, sp);
 			if (rf->Open(filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

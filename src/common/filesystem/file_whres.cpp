@@ -49,7 +49,7 @@ class FWHResFile : public FUncompressedFile
 {
 	std::string basename;
 public:
-	FWHResFile(const char * filename, FileReader &file);
+	FWHResFile(const char * filename, FileReader &file, StringPool* sp);
 	bool Open(LumpFilterInfo* filter);
 };
 
@@ -60,8 +60,8 @@ public:
 //
 //==========================================================================
 
-FWHResFile::FWHResFile(const char *filename, FileReader &file) 
-	: FUncompressedFile(filename, file)
+FWHResFile::FWHResFile(const char *filename, FileReader &file, StringPool* sp)
+	: FUncompressedFile(filename, file, sp)
 {
 	basename = ExtractBaseName(filename, false);
 }
@@ -92,7 +92,7 @@ bool FWHResFile::Open(LumpFilterInfo*)
 		char num[5];
 		snprintf(num, 5, "/%04d", k);
 		std::string synthname = basename + num;
-		Lumps[i].LumpNameSetup(synthname.c_str());
+		Lumps[i].LumpNameSetup(synthname.c_str(), stringpool);
 		Lumps[i].Owner = this;
 		Lumps[i].Position = offset;
 		Lumps[i].LumpSize = length;
@@ -111,7 +111,7 @@ bool FWHResFile::Open(LumpFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	if (file.GetLength() >= 8192) // needs to be at least 8192 to contain one file and the directory.
 	{
@@ -131,7 +131,7 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo
 			if (offset != checkpos || length == 0 || offset + length >= (size_t)size - 4096 ) return nullptr;
 			checkpos += (length+4095) / 4096;
 		}
-		auto rf = new FWHResFile(filename, file);
+		auto rf = new FWHResFile(filename, file, sp);
 		if (rf->Open(filter)) return rf;
 		file = std::move(rf->Reader); // to avoid destruction of reader
 		delete rf;

@@ -3,8 +3,12 @@
 // Storage for all the static strings the file system must hold.
 class StringPool
 {
-public:
+	// do not allow externally defining this.
+	friend class FileSystem;
+	friend class FResourceFile;
+private:
 	StringPool(size_t blocksize = 10*1024) : TopBlock(nullptr), FreeBlocks(nullptr), BlockSize(blocksize) {}
+public:
 	~StringPool();
 	const char* Strdup(const char*);
 

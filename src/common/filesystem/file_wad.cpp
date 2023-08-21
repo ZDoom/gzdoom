@@ -136,7 +136,7 @@ class FWadFile : public FResourceFile
 	void SkinHack (FileSystemMessageFunc Printf);
 
 public:
-	FWadFile(const char * filename, FileReader &file);
+	FWadFile(const char * filename, FileReader &file, StringPool* sp);
 	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 };
@@ -150,8 +150,8 @@ public:
 //
 //==========================================================================
 
-FWadFile::FWadFile(const char *filename, FileReader &file) 
-	: FResourceFile(filename, file)
+FWadFile::FWadFile(const char *filename, FileReader &file, StringPool* sp)
+	: FResourceFile(filename, file, sp)
 {
 }
 
@@ -207,7 +207,7 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 #else
 		Lumps[i].Compressed = false;
 #endif
-		Lumps[i].LumpNameSetup(n);
+		Lumps[i].LumpNameSetup(n, stringpool);
 
 		Lumps[i].Owner = this;
 		Lumps[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
@@ -221,7 +221,7 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 			if (Lumps[i].LumpSize != 0)
 			{
 				Printf(FSMessageLevel::Warning, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName.c_str(), Lumps[i].getName());
-				Lumps[i].LumpNameSetup("");
+				Lumps[i].clearName();
 			}
 			Lumps[i].LumpSize = Lumps[i].Position = 0;
 		}
@@ -420,7 +420,7 @@ void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 
 		if (!strnicmp(lump->getName(), "S_SKIN", 6))
 		{ // Wad has at least one skin.
-			lump->LumpNameSetup("S_SKIN");
+			lump->LumpNameSetup("S_SKIN", nullptr);
 			if (!skinned)
 			{
 				skinned = true;
@@ -464,7 +464,7 @@ void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 //
 //==========================================================================
 
-FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 
@@ -475,7 +475,7 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
-			auto rf = new FWadFile(filename, file);
+			auto rf = new FWadFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

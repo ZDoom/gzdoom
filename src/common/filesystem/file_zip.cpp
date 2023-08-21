@@ -164,8 +164,8 @@ static uint32_t Zip_FindCentralDir(FileReader &fin, bool* zip64)
 //
 //==========================================================================
 
-FZipFile::FZipFile(const char * filename, FileReader &file)
-: FResourceFile(filename, file)
+FZipFile::FZipFile(const char * filename, FileReader &file, StringPool* sp)
+: FResourceFile(filename, file, sp)
 {
 	Lumps = NULL;
 }
@@ -396,7 +396,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			}
 		}
 
-		lump_p->LumpNameSetup(name.c_str());
+		lump_p->LumpNameSetup(name.c_str(), stringpool);
 		lump_p->LumpSize = UncompressedSize;
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.
@@ -532,7 +532,7 @@ int FZipLump::GetFileOffset()
 //
 //==========================================================================
 
-FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 
@@ -543,7 +543,7 @@ FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PK\x3\x4", 4))
 		{
-			auto rf = new FZipFile(filename, file);
+			auto rf = new FZipFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

@@ -204,6 +204,8 @@ protected:
 	int IwadIndex = -1;
 	int MaxIwadIndex = -1;
 
+	StringPool* stringpool;
+
 private:
 	void DeleteAll();
 	void MoveLumpsInFolder(const char *);

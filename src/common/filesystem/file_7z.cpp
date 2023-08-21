@@ -186,7 +186,7 @@ class F7ZFile : public FResourceFile
 	C7zArchive *Archive;
 
 public:
-	F7ZFile(const char * filename, FileReader &filer);
+	F7ZFile(const char * filename, FileReader &filer, StringPool* sp);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual ~F7ZFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
@@ -200,8 +200,8 @@ public:
 //
 //==========================================================================
 
-F7ZFile::F7ZFile(const char * filename, FileReader &filer)
-	: FResourceFile(filename, filer) 
+F7ZFile::F7ZFile(const char * filename, FileReader &filer, StringPool* sp)
+	: FResourceFile(filename, filer, sp) 
 {
 	Lumps = NULL;
 	Archive = NULL;
@@ -280,7 +280,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		}
 		FixPathSeparator(&nameASCII.front());
 
-		lump_p->LumpNameSetup(nameASCII.c_str());
+		lump_p->LumpNameSetup(nameASCII.c_str(), stringpool);
 		lump_p->LumpSize = static_cast<int>(SzArEx_GetFileSize(archPtr, i));
 		lump_p->Owner = this;
 		lump_p->Flags = LUMPF_FULLPATH|LUMPF_COMPRESSED;
@@ -352,7 +352,7 @@ int F7ZLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[k7zSignatureSize];
 
@@ -363,7 +363,7 @@ FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* f
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, k7zSignature, k7zSignatureSize))
 		{
-			auto rf = new F7ZFile(filename, file);
+			auto rf = new F7ZFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader

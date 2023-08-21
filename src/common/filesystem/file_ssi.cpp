@@ -44,7 +44,7 @@
 class FSSIFile : public FUncompressedFile
 {
 public:
-	FSSIFile(const char * filename, FileReader &file);
+	FSSIFile(const char * filename, FileReader &file, StringPool* sp);
 	bool Open(int version, int lumpcount, LumpFilterInfo* filter);
 };
 
@@ -55,8 +55,8 @@ public:
 //
 //==========================================================================
 
-FSSIFile::FSSIFile(const char *filename, FileReader &file)
-: FUncompressedFile(filename, file)
+FSSIFile::FSSIFile(const char *filename, FileReader &file, StringPool* sp)
+: FUncompressedFile(filename, file, sp)
 {
 }
 
@@ -85,7 +85,7 @@ bool FSSIFile::Open(int version, int lumpcount, LumpFilterInfo*)
 		int flength = Reader.ReadInt32();
 
 
-		Lumps[i].LumpNameSetup(fn);
+		Lumps[i].LumpNameSetup(fn, stringpool);
 		Lumps[i].Position = j;
 		Lumps[i].LumpSize = flength;
 		Lumps[i].Owner = this;
@@ -94,7 +94,7 @@ bool FSSIFile::Open(int version, int lumpcount, LumpFilterInfo*)
 		// SSI files can swap the order of the extension's characters - but there's no reliable detection for this and it can be mixed inside the same container, 
 		// so we have no choice but to create another file record for the altered name.
 		std::swap(fn[strlength - 1], fn[strlength - 3]);
-		Lumps[i+1].LumpNameSetup(fn);
+		Lumps[i+1].LumpNameSetup(fn, stringpool);
 		Lumps[i+1].Position = j;
 		Lumps[i+1].LumpSize = flength;
 		Lumps[i+1].Owner = this;
@@ -114,7 +114,7 @@ bool FSSIFile::Open(int version, int lumpcount, LumpFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char zerobuf[72];
 	char buf[72];
@@ -144,7 +144,7 @@ FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* 
 			{
 				if (!skipstring(70)) return nullptr;
 			}
-			auto ssi = new FSSIFile(filename, file);
+			auto ssi = new FSSIFile(filename, file, sp);
 			if (ssi->Open(version, numfiles, filter)) return ssi;
 			file = std::move(ssi->Reader); // to avoid destruction of reader
 			delete ssi;

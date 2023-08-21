@@ -311,9 +311,11 @@ int FileSystem::AddExternalFile(const char *filename)
 
 int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, int size, int id, int flags)
 {
-	FStringf fullname("%s.%s", name, type);
+	std::string fullname = name;
+	fullname += ':';
+	fullname += type;
 	auto newlump = new FMemoryLump(data, size);
-	newlump->LumpNameSetup(fullname);
+	newlump->LumpNameSetup(fullname.c_str());
 	AddLump(newlump);
 	FileInfo.back().resourceId = id;
 	return (int)FileInfo.size()-1;
@@ -338,7 +340,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 	if (filer == nullptr)
 	{
 		// Does this exist? If so, is it a directory?
-		if (!DirEntryExists(filename, &isdir))
+		if (!FS_DirEntryExists(filename, &isdir))
 		{
 			if (Printf)
 			{
@@ -396,10 +398,11 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 			FResourceLump *lump = resfile->GetLump(i);
 			if (lump->Flags & LUMPF_EMBEDDED)
 			{
-				FString path;
-				path.Format("%s:%s", filename, lump->getName());
+				std::string path = filename;
+				path += ':';
+				path += lump->getName();
 				auto embedded = lump->NewReader();
-				AddFile(path, &embedded, filter, Printf, hashfile);
+				AddFile(path.c_str(), &embedded, filter, Printf, hashfile);
 			}
 		}
 
@@ -476,8 +479,8 @@ int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
 	{
 		for (i = 0; i < Files.Size(); ++i)
 		{
-			auto pth = ExtractFileBase(GetResourceFileName(i), true);
-			if (stricmp (pth.GetChars(), name) == 0)
+			auto pth = ExtractBaseName(GetResourceFileName(i), true);
+			if (stricmp (pth.c_str(), name) == 0)
 			{
 				return i;
 			}
@@ -1255,10 +1258,10 @@ static int folderentrycmp(const void *a, const void *b)
 
 unsigned FileSystem::GetFilesInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
 {
-	FString path = inpath;
-	FixPathSeperator(path);
-	path.ToLower();
-	if (path[path.Len() - 1] != '/') path += '/';
+	std::string path = inpath;
+	FixPathSeparator(&path.front());
+	for (auto& c : path) c = tolower(c);
+	if (path.back() != '/') path += '/';
 	result.Clear();
 	for (size_t i = 0; i < FileInfo.size(); i++)
 	{
@@ -1507,11 +1510,11 @@ const char *FileSystem::GetResourceFileFullName (int rfnum) const noexcept
 
 bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 {
-	FString name2=name, type2, path;
+	std::string name2 = name, type2, path;
 
 	// The old code said 'filename' and ignored the path, this looked like a bug.
-	FixPathSeperator(name2);
-	auto lump = FindFile(name2);
+	FixPathSeparator(&name2.front());
+	auto lump = FindFile(name2.c_str());
 	if (lump < 0) return false;		// Does not exist.
 
 	auto oldlump = FileInfo[lump];

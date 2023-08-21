@@ -157,15 +157,6 @@ static int FS_FindClose(void *const handle)
 	return 0;
 }
 
-static bool DirEntryExists(const char* pathname, bool* isdir)
-{
-	if (isdir) *isdir = false;
-	struct stat info;
-	bool res = stat(pathname, &info) == 0;
-	if (isdir) *isdir = !!(info.st_mode & S_IFDIR);
-	return res;
-}
-
 static int FS_FindAttr(findstate_t *const fileinfo)
 {
 	dirent *const ent = fileinfo->namelist[fileinfo->current];
@@ -384,5 +375,32 @@ static bool DoScanDirectory(FileList& list, const char* dirpath, const char* mat
 bool ScanDirectory(std::vector<FileListEntry>& list, const char* dirpath, const char* match, bool nosubdir, bool readhidden)
 {
 	return DoScanDirectory(list, dirpath, match, "", nosubdir, readhidden);
+}
+
+//==========================================================================
+//
+// DirEntryExists
+//
+// Returns true if the given path exists, be it a directory or a file.
+//
+//==========================================================================
+
+bool FS_DirEntryExists(const char* pathname, bool* isdir)
+{
+	if (isdir) *isdir = false;
+	if (pathname == NULL || *pathname == 0)
+		return false;
+
+#ifndef _WIN32
+	struct stat info;
+	bool res = stat(pathname, &info) == 0;
+#else
+	// Windows must use the wide version of stat to preserve non-standard paths.
+	auto wstr = toWide(pathname);
+	struct _stat64 info;
+	bool res = _wstat64(wstr.c_str(), &info) == 0;
+#endif
+	if (isdir) *isdir = !!(info.st_mode & S_IFDIR);
+	return res;
 }
 

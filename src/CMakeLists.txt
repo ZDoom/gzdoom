@@ -1222,6 +1222,7 @@ set( ZDOOM_SOURCES
 	common/filesystem/files.cpp
 	common/filesystem/files_decompress.cpp
 	common/filesystem/fs_findfile.cpp
+	common/filesystem/fs_stringpool.cpp
 
 )
 

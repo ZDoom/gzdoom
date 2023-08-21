@@ -33,7 +33,10 @@
 **
 */
 
-#include "stringpool.h"
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include "fs_stringpool.h"
 
 struct StringPool::Block
 {
@@ -53,12 +56,12 @@ struct StringPool::Block
 
 StringPool::~StringPool()
 {
-	for (Block *next, *block = top; block != nullptr; block = next)
+	for (Block *next, *block = TopBlock; block != nullptr; block = next)
 	{
 		next = block->NextBlock;
 		free(block);
 	}
-	top = nullptr;
+	TopBlock = nullptr;
 }
 
 //==========================================================================
@@ -74,7 +77,7 @@ void *StringPool::Block::Alloc(size_t size)
 		return nullptr;
 	}
 	void *res = Avail;
-	Avail = RoundPointer((char *)Avail + size);
+	Avail = ((char *)Avail + size);
 	return res;
 }
 

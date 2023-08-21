@@ -36,8 +36,7 @@
 
 #include <zlib.h>
 #include "resourcefile.h"
-
-#include "md5.h"
+#include "md5.hpp"
 
 std::string ExtractBaseName(const char* path, bool include_extension)
 {
@@ -358,19 +357,21 @@ int lumpcmp(const void * a, const void * b)
 void FResourceFile::GenerateHash()
 {
 	// hash the lump directory after sorting
+	using namespace fs_private::md5;
 
 	auto n = snprintf(Hash, 48, "%08X-%04X-", (unsigned)Reader.GetLength(), NumLumps);
 
-	MD5Context md5;
+	md5_state_t state;
+	md5_init(&state);
 
 	uint8_t digest[16];
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		auto lump = GetLump(i);
-		md5.Update((const uint8_t*)lump->FullName.c_str(), (unsigned)lump->FullName.length() + 1);
-		md5.Update((const uint8_t*)&lump->LumpSize, 4);
+		md5_append(&state, (const uint8_t*)lump->FullName.c_str(), (unsigned)lump->FullName.length() + 1);
+		md5_append(&state, (const uint8_t*)&lump->LumpSize, 4);
 	}
-	md5.Final(digest);
+	md5_finish(&state, digest);
 	for (auto c : digest)
 	{
 		n += snprintf(Hash + n, 3, "%02X", c);

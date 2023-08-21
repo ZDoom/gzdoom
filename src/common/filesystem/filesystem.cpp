@@ -36,16 +36,16 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <zlib.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 
 #include "filesystem.h"
 #include "m_crc32.h"
+#include "fs_findfile.h"
 
-#if __has_include("md5.h")
-#include "md5.h"
-#endif
+#include "md5.hpp"
 
 // MACROS ------------------------------------------------------------------
 
@@ -60,6 +60,21 @@ static void UpperCopy(char* to, const char* from)
 	for (; i < 8; i++)
 		to[i] = 0;
 }
+
+static void md5Hash(FileReader& reader, uint8_t* digest) 
+{
+	using namespace fs_private::md5;
+
+	md5_state_t state;
+	md5_init(&state);
+	md5_byte_t buffer[4096];
+	while (auto len = reader.Read(buffer, 4096))
+	{
+		md5_append(&state, buffer, len);
+	}
+	md5_finish(&state, digest);
+}
+
 
 struct FileSystem::LumpRecord
 {
@@ -388,7 +403,6 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 			}
 		}
 
-#if __has_include("md5.h")
 		if (hashfile)
 		{
 			uint8_t cksum[16];
@@ -397,10 +411,8 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 			if (filereader.isOpen())
 			{
-				MD5Context md5;
 				filereader.Seek(0, FileReader::SeekSet);
-				md5Update(filereader, md5, (unsigned)filereader.GetLength());
-				md5.Final(cksum);
+				md5Hash(filereader, cksum);
 
 				for (size_t j = 0; j < sizeof(cksum); ++j)
 				{
@@ -419,10 +431,8 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 				if (!(lump->Flags & LUMPF_EMBEDDED))
 				{
-					MD5Context md5;
 					auto reader = lump->NewReader();
-					md5Update(reader, md5, lump->LumpSize);
-					md5.Final(cksum);
+					md5Hash(filereader, cksum);
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)
 					{
@@ -433,7 +443,6 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 				}
 			}
 		}
-#endif
 		return;
 	}
 }

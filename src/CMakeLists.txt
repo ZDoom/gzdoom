@@ -380,6 +380,13 @@ else()
 	message( SEND_ERROR "Could not find libvpx" )
 endif()
 
+if (TARGET WebP::webp)
+	list( APPEND PROJECT_LIBRARIES WebP::webp WebP::webpdemux WebP::libwebpmux )
+	if (TARGET WebP::webpdecoder)
+		list( APPEND PROJECT_LIBRARIES WebP::webpdecoder)
+	endif()
+endif()
+
 include_directories( SYSTEM "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
 
 if( ${HAVE_VM_JIT} )
@@ -1028,6 +1035,7 @@ set (PCH_SOURCES
 	common/textures/formats/anmtexture.cpp
 	common/textures/formats/startscreentexture.cpp
 	common/textures/formats/qoitexture.cpp
+	common/textures/formats/webptexture.cpp
 	common/textures/hires/hqresize.cpp
 	common/models/models_md3.cpp
 	common/models/models_md2.cpp

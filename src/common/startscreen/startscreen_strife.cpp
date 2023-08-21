@@ -39,6 +39,7 @@
 #include "image.h"
 #include "textures.h"
 #include "palettecontainer.h"
+#include "cmdlib.h"
 
 // Strife startup screen
 #define PEASANT_INDEX			0

@@ -207,12 +207,11 @@ void FileSystem::DeleteAll ()
 
 bool FileSystem::InitSingleFile(const char* filename, FileSystemMessageFunc Printf)
 {
-	TArray<FString> filenames;
-	filenames.Push(filename);
+	std::vector<std::string> filenames = { filename };
 	return InitMultipleFiles(filenames, nullptr, Printf);
 }
 
-bool FileSystem::InitMultipleFiles (TArray<FString> &filenames, LumpFilterInfo* filter, FileSystemMessageFunc Printf, bool allowduplicates, FILE* hashfile)
+bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFilterInfo* filter, FileSystemMessageFunc Printf, bool allowduplicates, FILE* hashfile)
 {
 	int numfiles;
 
@@ -223,26 +222,27 @@ bool FileSystem::InitMultipleFiles (TArray<FString> &filenames, LumpFilterInfo* 
 	// first, check for duplicates
 	if (allowduplicates)
 	{
-		for (unsigned i=0;i<filenames.Size(); i++)
+		for (size_t i=0;i<filenames.size(); i++)
 		{
-			for (unsigned j=i+1;j<filenames.Size(); j++)
+			for (size_t j=i+1;j<filenames.size(); j++)
 			{
-				if (strcmp(filenames[i], filenames[j]) == 0)
+				if (filenames[i] == filenames[j])
 				{
-					filenames.Delete(j);
+					filenames.erase(filenames.begin() + j);
 					j--;
 				}
 			}
 		}
 	}
 
-	for(unsigned i=0;i<filenames.Size(); i++)
+	for(size_t i=0;i<filenames.size(); i++)
 	{
-		AddFile (filenames[i], nullptr, filter, Printf, hashfile);
+		AddFile(filenames[i].c_str(), nullptr, filter, Printf, hashfile);
 
 		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
-		FStringf path("filter/%s", Files.Last()->GetHash());
-		MoveLumpsInFolder(path);
+		std::string path = "filter/%s";
+		path += Files.Last()->GetHash();
+		MoveLumpsInFolder(path.c_str());
 	}
 
 	NumEntries = (uint32_t)FileInfo.size();

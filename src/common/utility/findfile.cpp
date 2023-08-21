@@ -47,7 +47,7 @@
 //
 //==========================================================================
 
-bool D_AddFile(TArray<FString>& wadfiles, const char* file, bool check, int position, FConfigFile* config)
+bool D_AddFile(std::vector<std::string>& wadfiles, const char* file, bool check, int position, FConfigFile* config)
 {
 	if (file == nullptr || *file == '\0')
 	{
@@ -111,10 +111,10 @@ bool D_AddFile(TArray<FString>& wadfiles, const char* file, bool check, int posi
 		file = f;
 	}
 
-	FString f = file;
-	FixPathSeperator(f);
-	if (position == -1) wadfiles.Push(f);
-	else wadfiles.Insert(position, f);
+	std::string f = file;
+	for (auto& c : f) if (c == '\\') c = '/';
+	if (position == -1) wadfiles.push_back(f);
+	else wadfiles.insert(wadfiles.begin() + position, f);
 	return true;
 }
 
@@ -124,7 +124,7 @@ bool D_AddFile(TArray<FString>& wadfiles, const char* file, bool check, int posi
 //
 //==========================================================================
 
-void D_AddWildFile(TArray<FString>& wadfiles, const char* value, const char *extension, FConfigFile* config)
+void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const char *extension, FConfigFile* config)
 {
 	if (value == nullptr || *value == '\0')
 	{
@@ -161,7 +161,7 @@ void D_AddWildFile(TArray<FString>& wadfiles, const char* value, const char *ext
 //
 //==========================================================================
 
-void D_AddConfigFiles(TArray<FString>& wadfiles, const char* section, const char* extension, FConfigFile *config)
+void D_AddConfigFiles(std::vector<std::string>& wadfiles, const char* section, const char* extension, FConfigFile *config)
 {
 	if (config && config->SetSection(section))
 	{
@@ -191,7 +191,7 @@ void D_AddConfigFiles(TArray<FString>& wadfiles, const char* section, const char
 //
 //==========================================================================
 
-void D_AddDirectory(TArray<FString>& wadfiles, const char* dir, const char *filespec, FConfigFile* config)
+void D_AddDirectory(std::vector<std::string>& wadfiles, const char* dir, const char *filespec, FConfigFile* config)
 {
 	FileList list;
 	if (ScanDirectory(list, dir, "*.wad", true))

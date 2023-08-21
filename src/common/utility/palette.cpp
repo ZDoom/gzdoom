@@ -40,6 +40,7 @@
 #include "filesystem.h"
 #include "printf.h"
 #include "m_swap.h"
+#include "cmdlib.h"
 
 #include "m_png.h"
 

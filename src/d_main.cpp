@@ -1775,7 +1775,7 @@ FExecList *D_MultiExec (FArgs *list, FExecList *exec)
 	return exec;
 }
 
-static void GetCmdLineFiles(TArray<FString> &wadfiles)
+static void GetCmdLineFiles(std::vector<std::string>& wadfiles)
 {
 	FString *args;
 	int i, argc;
@@ -1788,7 +1788,7 @@ static void GetCmdLineFiles(TArray<FString> &wadfiles)
 }
 
 
-static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char *data, int size)
+static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, const char *data, int size)
 {
 	FScanner sc;
 	FString iwad;
@@ -1920,7 +1920,7 @@ void GetReserved(LumpFilterInfo& lfi)
 	lfi.requiredPrefixes = { "mapinfo", "zmapinfo", "umapinfo", "gameinfo", "sndinfo", "sndseq", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 }
 
-static FString CheckGameInfo(TArray<FString> & pwads)
+static FString CheckGameInfo(std::vector<std::string> & pwads)
 {
 	FileSystem check;
 
@@ -1987,7 +1987,7 @@ static void D_DoomInit()
 //
 //==========================================================================
 
-static void AddAutoloadFiles(const char *autoname, TArray<FString>& allwads)
+static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& allwads)
 {
 	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
@@ -3089,7 +3089,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 //
 //==========================================================================
 
-static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArray<FString>& pwads)
+static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allwads, std::vector<std::string>& pwads)
 {
 	SavegameFolder = iwad_info->Autoname;
 	gameinfo.gametype = iwad_info->gametype;
@@ -3167,7 +3167,11 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		FixMacHexen(fileSystem);
 		FindStrifeTeaserVoices(fileSystem);
 	};
-	allwads.Append(std::move(pwads));
+	allwads.insert(
+		allwads.end(),
+		std::make_move_iterator(pwads.begin()),
+		std::make_move_iterator(pwads.end())
+	);
 
 	bool allowduplicates = Args->CheckParm("-allowduplicates");
 	auto hashfile = D_GetHashFile();
@@ -3175,8 +3179,8 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	{
 		I_FatalError("FileSystem: no files found");
 	}
-	allwads.Clear();
-	allwads.ShrinkToFit();
+	allwads.clear();
+	allwads.shrink_to_fit();
 	SetMapxxFlag();
 
 	D_GrabCVarDefaults(); //parse DEFCVARS
@@ -3708,7 +3712,7 @@ static int D_DoomMain_Internal (void)
 		// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
 		// the IWAD is known.
 
-		TArray<FString> pwads;
+		std::vector<std::string> pwads;
 		GetCmdLineFiles(pwads);
 		FString iwad = CheckGameInfo(pwads);
 
@@ -3716,18 +3720,21 @@ static int D_DoomMain_Internal (void)
 		// restart is initiated without a defined IWAD assume for now that it's not going to change.
 		if (iwad.IsEmpty()) iwad = lastIWAD;
 
-		TArray<FString> allwads;
+		std::vector<std::string> allwads;
 		
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad, optionalwad);
 		if (!iwad_info) return 0;	// user exited the selection popup via cancel button.
-		if ((iwad_info->flags & GI_SHAREWARE) && pwads.Size() > 0)
+		if ((iwad_info->flags & GI_SHAREWARE) && pwads.size() > 0)
 		{
 			I_FatalError ("You cannot -file with the shareware version. Register!");
 		}
 		lastIWAD = iwad;
 
 		int ret = D_InitGame(iwad_info, allwads, pwads);
-		allwads.Reset();
+		pwads.clear();
+		pwads.shrink_to_fit();
+		allwads.clear();
+		allwads.shrink_to_fit();
 		delete iwad_man;	// now we won't need this anymore
 		iwad_man = NULL;
 		if (ret != 0) return ret;

@@ -28,6 +28,7 @@
 #include "filesystem.h"
 #include "engineerrors.h"
 #include "version.h"
+#include "cmdlib.h"
 
 bool VkShaderManager::CompileNextShader()
 {

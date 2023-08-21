@@ -47,6 +47,8 @@
 #include "vectors.h"
 #include "animtexture.h"
 #include "formats/multipatchtexture.h"
+#include "basics.h"
+#include "cmdlib.h"
 
 FTextureManager TexMan;
 

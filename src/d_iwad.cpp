@@ -305,9 +305,9 @@ void GetReserved(LumpFilterInfo& lfi);
 FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
 	FileSystem check;
-	TArray<FString> fns;
-	fns.Push(firstfn);
-	if (optfn) fns.Push(optfn);
+	std::vector<std::string> fns;
+	fns.push_back(firstfn);
+	if (optfn) fns.push_back(optfn);
 
 	if (check.InitMultipleFiles(fns, nullptr, nullptr))
 	{
@@ -388,8 +388,7 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 	LumpFilterInfo lfi;
 	GetReserved(lfi);
 
-	TArray<FString> filenames;
-	filenames.Push(fn);
+	std::vector<std::string> filenames = { fn };
 	if (check.InitMultipleFiles(filenames, &lfi, nullptr))
 	{
 		int num = check.CheckNumForName("IWADINFO");
@@ -552,7 +551,7 @@ void FIWadManager::ValidateIWADs()
 
 static bool havepicked = false;
 
-int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad)
+int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad)
 {
 	const char *iwadparm = Args->CheckValue ("-iwad");
 	FString custwad;
@@ -777,7 +776,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	}
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
-	wadfiles.Clear();
+	wadfiles.clear();
 	D_AddFile (wadfiles, zdoom_wad, true, -1, GameConfig);
 
 	// [SP] Load non-free assets if available. This must be done before the IWAD.
@@ -833,7 +832,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 //
 //==========================================================================
 
-const FIWADInfo *FIWadManager::FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad)
+const FIWADInfo *FIWadManager::FindIWAD(std::vector<std::string>& wadfiles, const char *iwad, const char *basewad, const char *optionalwad)
 {
 	int iwadType = IdentifyVersion(wadfiles, iwad, basewad, optionalwad);
 	if (iwadType == -1) return nullptr;

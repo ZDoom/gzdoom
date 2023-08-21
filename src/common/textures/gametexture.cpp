@@ -49,6 +49,7 @@
 #include "texturemanager.h"
 #include "c_cvars.h"
 #include "hw_material.h"
+#include "cmdlib.h"
 
 FTexture *CreateBrightmapTexture(FImageSource*);
 

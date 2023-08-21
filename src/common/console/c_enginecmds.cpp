@@ -54,6 +54,7 @@
 #include "md5.h"
 #include "i_specialpaths.h"
 #include "i_system.h"
+#include "cmdlib.h"
 
 extern FILE* Logfile;
 

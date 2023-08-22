@@ -124,8 +124,7 @@ PalettedPixels FWebPTexture::CreatePalettedPixels(int conversion)
 int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	WebPDecoderConfig config;
-	auto lump = fileSystem.OpenFileReader(SourceLump);
-	auto bytes = lump.Read();
+	auto bytes = fileSystem.ReadFile(SourceLump);
 
 	if (WebPInitDecoderConfig(&config) == false)
 		return 0;
@@ -137,7 +136,7 @@ int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion)
 	config.output.u.RGBA.stride = bmp->GetPitch();
 	config.output.is_external_memory = 1;
 
-	(void)WebPDecode(bytes.data(), bytes.size(), &config);
+	(void)WebPDecode(bytes.GetBytes(), bytes.GetSize(), &config);
 
 	return 0;
 }

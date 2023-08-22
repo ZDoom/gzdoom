@@ -38,6 +38,7 @@
 
 #include "resourcefile.h"
 #include "fs_findfile.h"
+#include "fs_stringpool.h"
 
 std::string FS_FullPath(const char* directory);
 
@@ -91,8 +92,9 @@ public:
 FDirectory::FDirectory(const char * directory, StringPool* sp, bool nosubdirflag)
 	: FResourceFile("", sp), nosubdir(nosubdirflag)
 {
-	FileName = FS_FullPath(directory);
-	if (FileName[FileName.length()-1] != '/') FileName += '/';
+	auto fn = FS_FullPath(directory);
+	if (fn.back() != '/') fn += '/';
+	File_Name = sp->Strdup(fn.c_str());
 }
 
 //==========================================================================
@@ -148,7 +150,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 
 bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
-	NumLumps = AddDirectory(FileName.c_str(), filter, Printf);
+	NumLumps = AddDirectory(File_Name, filter, Printf);
 	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }
@@ -167,7 +169,7 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 	lump_p->mFullPath = fullpath;
 
 	// [mxd] Convert name to lowercase
-	std::string name = fullpath + FileName.length();
+	std::string name = fullpath + strlen(File_Name);
 	for (auto& c : name) c = tolower(c);
 
 	// The lump's name is only the part relative to the main directory

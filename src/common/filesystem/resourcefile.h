@@ -156,7 +156,7 @@ class FResourceFile
 {
 public:
 	FileReader Reader;
-	std::string FileName;
+	const char* File_Name;
 protected:
 	uint32_t NumLumps;
 	char Hash[48];

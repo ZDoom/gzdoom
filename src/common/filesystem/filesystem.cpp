@@ -1419,7 +1419,7 @@ const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
 		return NULL;
 	}
 
-	name = Files[rfnum]->FileName.c_str();
+	name = Files[rfnum]->File_Name;
 	slash = strrchr (name, '/');
 	return (slash != nullptr && slash[1] != 0) ? slash+1 : name;
 }
@@ -1485,7 +1485,7 @@ const char *FileSystem::GetResourceFileFullName (int rfnum) const noexcept
 		return nullptr;
 	}
 
-	return Files[rfnum]->FileName.c_str();
+	return Files[rfnum]->File_Name;
 }
 
 

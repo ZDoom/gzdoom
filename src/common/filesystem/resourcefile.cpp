@@ -154,7 +154,7 @@ static bool IsWadInFolder(const FResourceFile* const archive, const char* const 
 		return false;
 	}
 
-    const auto dirName = ExtractBaseName(archive->FileName.c_str());
+    const auto dirName = ExtractBaseName(archive->File_Name);
 	const auto fileName = ExtractBaseName(resPath, true);
 	const std::string filePath = dirName + '/' + fileName;
 
@@ -239,7 +239,7 @@ void *FResourceLump::Lock()
 		catch (const FileSystemException& err)
 		{
 			// enrich the message with info about this lump.
-			throw FileSystemException("%s, file '%s': %s", getName(), Owner->FileName.c_str(), err.what());
+			throw FileSystemException("%s, file '%s': %s", getName(), Owner->File_Name, err.what());
 		}
 	}
 	return Cache;
@@ -328,9 +328,9 @@ FResourceFile *FResourceFile::OpenDirectory(const char *filename, LumpFilterInfo
 //==========================================================================
 
 FResourceFile::FResourceFile(const char *filename, StringPool* sp)
-	: FileName(filename)
 {
 	stringpool = sp ? sp : new StringPool;
+	File_Name = stringpool->Strdup(filename);
 }
 
 FResourceFile::FResourceFile(const char *filename, FileReader &r, StringPool* sp)

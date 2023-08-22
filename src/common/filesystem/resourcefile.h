@@ -218,11 +218,12 @@ protected:
 };
 
 
+// should only be used internally.
 struct FExternalLump : public FResourceLump
 {
-	std::string Filename;
+	const char* FileName;
 
-	FExternalLump(const char *_filename, int filesize = -1);
+	FExternalLump(const char *_filename, int filesize, StringPool* sp);
 	virtual int FillCache() override;
 
 };

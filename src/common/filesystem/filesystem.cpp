@@ -307,7 +307,7 @@ void FileSystem::AddLump(FResourceLump *lump)
 
 int FileSystem::AddExternalFile(const char *filename)
 {
-	FResourceLump *lump = new FExternalLump(filename);
+	FResourceLump *lump = new FExternalLump(filename, -1, stringpool);
 	AddLump(lump);
 	return (int)FileInfo.size() - 1;	// later
 }

@@ -692,9 +692,10 @@ FUncompressedFile::FUncompressedFile(const char *filename, FileReader &r, String
 //
 //==========================================================================
 
-FExternalLump::FExternalLump(const char *_filename, int filesize)
-	: Filename(_filename)
+FExternalLump::FExternalLump(const char *_filename, int filesize, StringPool* stringpool)
 {
+	FileName = stringpool->Strdup(_filename);
+
 	if (filesize == -1)
 	{
 		FileReader f;
@@ -727,7 +728,7 @@ int FExternalLump::FillCache()
 	Cache = new char[LumpSize];
 	FileReader f;
 
-	if (f.OpenFile(Filename.c_str()))
+	if (f.OpenFile(FileName))
 	{
 		auto read = f.Read(Cache, LumpSize);
 		if (read != LumpSize)

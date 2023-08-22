@@ -35,6 +35,7 @@
 */
 
 #include "resourcefile.h"
+#include "fs_stringpool.h"
 #include "fs_swap.h"
 
 using namespace fs_private;
@@ -47,7 +48,7 @@ using namespace fs_private;
 
 class FWHResFile : public FUncompressedFile
 {
-	std::string basename;
+	const char* BaseName;
 public:
 	FWHResFile(const char * filename, FileReader &file, StringPool* sp);
 	bool Open(LumpFilterInfo* filter);
@@ -63,7 +64,7 @@ public:
 FWHResFile::FWHResFile(const char *filename, FileReader &file, StringPool* sp)
 	: FUncompressedFile(filename, file, sp)
 {
-	basename = ExtractBaseName(filename, false);
+	BaseName = stringpool->Strdup(ExtractBaseName(filename, false).c_str());
 }
 
 //==========================================================================
@@ -91,7 +92,8 @@ bool FWHResFile::Open(LumpFilterInfo*)
 		if (length == 0) break;
 		char num[5];
 		snprintf(num, 5, "/%04d", k);
-		std::string synthname = basename + num;
+		std::string synthname = BaseName;
+		synthname += num;
 		Lumps[i].LumpNameSetup(synthname.c_str(), stringpool);
 		Lumps[i].Owner = this;
 		Lumps[i].Position = offset;

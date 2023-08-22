@@ -201,7 +201,7 @@ void FMultiPatchTexture::CopyToBlock(uint8_t *dest, int dwidth, int dheight, FIm
 //
 //==========================================================================
 
-PalettedPixels FMultiPatchTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FMultiPatchTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	int numpix = Width * Height;
 	uint8_t blendwork[256];
@@ -278,7 +278,7 @@ PalettedPixels FMultiPatchTexture::CreatePalettedPixels(int conversion)
 //
 //===========================================================================
 
-int FMultiPatchTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FMultiPatchTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	int retv = -1;
 

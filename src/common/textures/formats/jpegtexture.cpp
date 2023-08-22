@@ -184,8 +184,8 @@ class FJPEGTexture : public FImageSource
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
 
-	int CopyPixels(FBitmap *bmp, int conversion) override;
-	PalettedPixels CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 };
 
 //==========================================================================
@@ -259,7 +259,7 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 //
 //==========================================================================
 
-PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump);
 	JSAMPLE *buff = NULL;
@@ -400,7 +400,7 @@ PalettedPixels FJPEGTexture::CreatePalettedPixels(int conversion)
 //
 //===========================================================================
 
-int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	PalEntry pe[256];
 

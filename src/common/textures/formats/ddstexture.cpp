@@ -163,7 +163,7 @@ class FDDSTexture : public FImageSource
 public:
 	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
 
-	PalettedPixels CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 
 protected:
 	uint32_t Format;
@@ -182,7 +182,7 @@ protected:
 	void DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 	void DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode);
 
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 
 	friend class FTexture;
 };
@@ -371,7 +371,7 @@ void FDDSTexture::CalcBitShift (uint32_t mask, uint8_t *lshiftp, uint8_t *rshift
 //
 //==========================================================================
 
-PalettedPixels FDDSTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FDDSTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump);
 
@@ -780,7 +780,7 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 //
 //===========================================================================
 
-int FDDSTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FDDSTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump);
 

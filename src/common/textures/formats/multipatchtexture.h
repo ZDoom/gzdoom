@@ -74,8 +74,8 @@ protected:
 	TexPart *Parts;
 
 	// The getters must optionally redirect if it's a simple one-patch texture.
-	int CopyPixels(FBitmap *bmp, int conversion) override;
-	PalettedPixels CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 	void CopyToBlock(uint8_t *dest, int dwidth, int dheight, FImageSource *source, int xpos, int ypos, int rotate, const uint8_t *translation, int style);
 	void CollectForPrecache(PrecacheInfo &info, bool requiretruecolor) override;
 

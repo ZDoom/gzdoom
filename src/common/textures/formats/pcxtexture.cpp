@@ -83,7 +83,7 @@ class FPCXTexture : public FImageSource
 public:
 	FPCXTexture (int lumpnum, PCXHeader &);
 
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 
 protected:
 	void ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
@@ -91,7 +91,7 @@ protected:
 	void ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr);
 	void ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr, int planes);
 
-	PalettedPixels CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 };
 
 
@@ -344,7 +344,7 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 //
 //==========================================================================
 
-PalettedPixels FPCXTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FPCXTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	uint8_t PaletteMap[256];
 	PCXHeader header;
@@ -432,7 +432,7 @@ PalettedPixels FPCXTexture::CreatePalettedPixels(int conversion)
 //
 //===========================================================================
 
-int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	PalEntry pe[256];
 	PCXHeader header;

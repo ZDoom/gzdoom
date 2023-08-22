@@ -66,7 +66,7 @@ FFontChar2::FFontChar2(int sourcelump, int sourcepos, int width, int height, int
 //
 //==========================================================================
 
-PalettedPixels FFontChar2::CreatePalettedPixels(int)
+PalettedPixels FFontChar2::CreatePalettedPixels(int, int)
 {
 	auto lump = fileSystem.OpenFileReader(SourceLump);
 	int destSize = Width * Height;
@@ -172,7 +172,7 @@ PalettedPixels FFontChar2::CreatePalettedPixels(int)
 	return Pixels;
 }
 
-int FFontChar2::CopyPixels(FBitmap* bmp, int conversion)
+int FFontChar2::CopyPixels(FBitmap* bmp, int conversion, int frame)
 {
 	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
 	auto ppix = CreatePalettedPixels(conversion);

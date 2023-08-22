@@ -67,8 +67,8 @@ class FStbTexture : public FImageSource
 
 public:
 	FStbTexture (int lumpnum, int w, int h);
-	PalettedPixels CreatePalettedPixels(int conversion) override;
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 };
 
 
@@ -117,7 +117,7 @@ FStbTexture::FStbTexture (int lumpnum, int w, int h)
 //
 //==========================================================================
 
-PalettedPixels FStbTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FStbTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	FBitmap bitmap;
 	bitmap.Create(Width, Height);
@@ -156,7 +156,7 @@ PalettedPixels FStbTexture::CreatePalettedPixels(int conversion)
 //
 //==========================================================================
 
-int FStbTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FStbTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump); 
 	int x, y, chan;

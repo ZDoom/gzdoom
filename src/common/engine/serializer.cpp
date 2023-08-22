@@ -57,6 +57,8 @@
 #include "base64.h"
 #include "vm.h"
 
+using namespace FileSys;
+
 extern DObject *WP_NOCHANGE;
 bool save_full = false;	// for testing. Should be removed afterward.
 

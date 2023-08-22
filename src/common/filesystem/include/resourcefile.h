@@ -6,8 +6,10 @@
 #include <limits.h>
 #include <vector>
 #include <string>
-#include "files.h"
+#include "fs_files.h"
 
+namespace FileSys {
+	
 class StringPool;
 std::string ExtractBaseName(const char* path, bool include_extension = false);
 void strReplace(std::string& str, const char* from, const char* to);
@@ -246,7 +248,6 @@ struct FMemoryLump : public FResourceLump
 };
 
 
-
-
+}
 
 #endif

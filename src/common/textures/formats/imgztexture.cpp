@@ -120,7 +120,7 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 
 PalettedPixels FIMGZTexture::CreatePalettedPixels(int conversion)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
+	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto imgz = (const ImageHeader *)lump.GetMem();
 	const uint8_t *data = (const uint8_t *)&imgz[1];
 

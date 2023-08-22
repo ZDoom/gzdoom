@@ -733,7 +733,7 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		if (compressed)
 		{
 			FileReader zip;
-			if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false, true))
+			if (zip.OpenDecompressor(dalump, -1, FileSys::METHOD_ZLIB, false, true))
 			{
 				LoadZNodes(zip, type);
 				return true;
@@ -753,7 +753,7 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 	{
 		Printf("Error loading nodes: %s\n", error.GetMessage());
 	}
-	catch (FileSystemException& error)
+	catch (FileSys::FileSystemException& error)
 	{
 		Printf("Error loading nodes: %s\n", error.what());
 	}
@@ -1157,7 +1157,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 template<class nodetype, class subsectortype>
 bool MapLoader::LoadNodes (MapData * map)
 {
-	FileData	data;
+	FileSys::FileData	data;
 	int 		j;
 	int 		k;
 	nodetype	*mn;
@@ -3338,7 +3338,7 @@ void MapLoader::LoadLightmap(MapData *map)
 		return;
 
 	FileReader fr;
-	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, METHOD_ZLIB, false, false))
+	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, FileSys::METHOD_ZLIB, false, false))
 		return;
 
 

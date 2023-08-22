@@ -3,6 +3,7 @@
 
 #include "resourcefile.h"
 
+namespace FileSys {
 //==========================================================================
 //
 // Zip Lump
@@ -45,5 +46,6 @@ public:
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
+}
 
 #endif

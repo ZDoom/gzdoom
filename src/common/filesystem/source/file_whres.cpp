@@ -1,8 +1,10 @@
 /*
-** file_lump.cpp
+** file_whres.cpp
+**
+** reads a Witchaven/TekWar sound resource file
 **
 **---------------------------------------------------------------------------
-** Copyright 2009 Christoph Oelckers
+** Copyright 2009-2019 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,30 +35,37 @@
 */
 
 #include "resourcefile.h"
+#include "fs_stringpool.h"
+#include "fs_swap.h"
+
+namespace FileSys {
+	using namespace byteswap;
 
 //==========================================================================
 //
-// Single lump
+// WH resource file
 //
 //==========================================================================
 
-class FLumpFile : public FUncompressedFile
+class FWHResFile : public FUncompressedFile
 {
+	const char* BaseName;
 public:
-	FLumpFile(const char * filename, FileReader &file, StringPool* sp);
+	FWHResFile(const char * filename, FileReader &file, StringPool* sp);
 	bool Open(LumpFilterInfo* filter);
 };
 
 
 //==========================================================================
 //
-// FLumpFile::FLumpFile
+//
 //
 //==========================================================================
 
-FLumpFile::FLumpFile(const char *filename, FileReader &file, StringPool* sp)
+FWHResFile::FWHResFile(const char *filename, FileReader &file, StringPool* sp)
 	: FUncompressedFile(filename, file, sp)
 {
+	BaseName = stringpool->Strdup(ExtractBaseName(filename, false).c_str());
 }
 
 //==========================================================================
@@ -65,17 +74,39 @@ FLumpFile::FLumpFile(const char *filename, FileReader &file, StringPool* sp)
 //
 //==========================================================================
 
-bool FLumpFile::Open(LumpFilterInfo*)
+bool FWHResFile::Open(LumpFilterInfo*)
 {
-	Lumps.Resize(1);
-	Lumps[0].LumpNameSetup(ExtractBaseName(FileName, true).c_str(), stringpool);
-	Lumps[0].Owner = this;
-	Lumps[0].Position = 0;
-	Lumps[0].LumpSize = (int)Reader.GetLength();
-	Lumps[0].Flags = 0;
-	NumLumps = 1;
+	uint32_t directory[1024];
+
+	Reader.Seek(-4096, FileReader::SeekEnd);
+	Reader.Read(directory, 4096);
+
+	int nl =1024/3;
+	Lumps.Resize(nl);
+
+
+	int i = 0;
+	for(int k = 0; k < nl; k++)
+	{
+		uint32_t offset = LittleLong(directory[k*3]) * 4096;
+		uint32_t length = LittleLong(directory[k*3+1]);
+		if (length == 0) break;
+		char num[5];
+		snprintf(num, 5, "/%04d", k);
+		std::string synthname = BaseName;
+		synthname += num;
+		Lumps[i].LumpNameSetup(synthname.c_str(), stringpool);
+		Lumps[i].Owner = this;
+		Lumps[i].Position = offset;
+		Lumps[i].LumpSize = length;
+		i++;
+	}
+	NumLumps = i;
+	Lumps.Clamp(NumLumps);
+	Lumps.ShrinkToFit();
 	return true;
 }
+
 
 //==========================================================================
 //
@@ -83,13 +114,32 @@ bool FLumpFile::Open(LumpFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile *CheckLump(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
-	// always succeeds
-	auto rf = new FLumpFile(filename, file, sp);
-	if (rf->Open(filter)) return rf;
-	file = std::move(rf->Reader); // to avoid destruction of reader
-	delete rf;
+	if (file.GetLength() >= 8192) // needs to be at least 8192 to contain one file and the directory.
+	{
+		unsigned directory[1024];
+		int nl =1024/3;
+
+		file.Seek(-4096, FileReader::SeekEnd);
+		file.Read(directory, 4096);
+		auto size = file.GetLength();
+
+		uint32_t checkpos = 0;
+		for(int k = 0; k < nl; k++)
+		{
+			unsigned offset = LittleLong(directory[k*3]);
+			unsigned length = LittleLong(directory[k*3+1]);
+			if (length <= 0 && offset == 0) break;
+			if (offset != checkpos || length == 0 || offset + length >= (size_t)size - 4096 ) return nullptr;
+			checkpos += (length+4095) / 4096;
+		}
+		auto rf = new FWHResFile(filename, file, sp);
+		if (rf->Open(filter)) return rf;
+		file = std::move(rf->Reader); // to avoid destruction of reader
+		delete rf;
+	}
 	return NULL;
 }
-
+ 
+}

@@ -122,6 +122,8 @@
 #include "i_system.h"  // for SHARE_DIR
 #endif // __unix__
 
+using namespace FileSys;
+
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Bool, cl_customizeinvulmap)

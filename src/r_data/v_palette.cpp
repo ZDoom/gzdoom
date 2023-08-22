@@ -44,6 +44,8 @@
 #include "m_png.h"
 #include "v_colortables.h"
 
+using namespace FileSys;
+
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
 

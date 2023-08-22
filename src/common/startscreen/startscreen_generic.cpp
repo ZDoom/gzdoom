@@ -72,7 +72,7 @@ FGenericStartScreen::FGenericStartScreen(int max_progress)
 	: FStartScreen(max_progress)
 {
 	// at this point we do not have a working texture manager yet, so we have to do the lookup via the file system
-	int startup_lump = fileSystem.CheckNumForName("GZDOOM", ns_graphics);
+	int startup_lump = fileSystem.CheckNumForName("GZDOOM", FileSys::ns_graphics);
 
 	StartupBitmap.Create(640, 480);
 	ClearBlock(StartupBitmap, { 0, 0, 0, 255 }, 0, 0, 640, 480);

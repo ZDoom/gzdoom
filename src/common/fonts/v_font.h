@@ -175,7 +175,7 @@ protected:
 
 	void FixXMoves();
 
-	void ReadSheetFont(std::vector<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale);
+	void ReadSheetFont(std::vector<FileSys::FolderEntry> &folderdata, int width, int height, const DVector2 &Scale);
 
 	EFontType Type = EFontType::Unknown;
 	FName AltFontName = NAME_None;

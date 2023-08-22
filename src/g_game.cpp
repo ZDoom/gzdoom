@@ -1981,7 +1981,7 @@ void G_DoLoadGame ()
 		LoadGameError("TXT_COULDNOTREAD");
 		return;
 	}
-	FResourceLump *info = resfile->FindLump("info.json");
+	auto info = resfile->FindLump("info.json");
 	if (info == nullptr)
 	{
 		LoadGameError("TXT_NOINFOJSON");
@@ -2408,7 +2408,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 	}
 
 	auto picdata = savepic.GetBuffer();
-	FCompressedBuffer bufpng = { picdata->Size(), picdata->Size(), METHOD_STORED, 0, static_cast<unsigned int>(crc32(0, &(*picdata)[0], picdata->Size())), (char*)&(*picdata)[0] };
+	FCompressedBuffer bufpng = { picdata->Size(), picdata->Size(), FileSys::METHOD_STORED, 0, static_cast<unsigned int>(crc32(0, &(*picdata)[0], picdata->Size())), (char*)&(*picdata)[0] };
 
 	savegame_content.Push(bufpng);
 	savegame_filenames.Push("savepic.png");

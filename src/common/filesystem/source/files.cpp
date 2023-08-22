@@ -34,10 +34,10 @@
 */
 
 #include <string>
-#include "files.h"
+#include "fs_files.h"
 
-using namespace fs_private;
-
+namespace FileSys {
+	
 #ifdef _WIN32
 std::wstring toWide(const char* str);
 #endif
@@ -493,4 +493,6 @@ size_t BufferWriter::Write(const void *buffer, size_t len)
 	unsigned int ofs = mBuffer.Reserve((unsigned)len);
 	memcpy(&mBuffer[ofs], buffer, len);
 	return len;
+}
+
 }

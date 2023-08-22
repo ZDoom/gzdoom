@@ -40,6 +40,8 @@
 #include "fs_findfile.h"
 #include "fs_stringpool.h"
 
+namespace FileSys {
+	
 std::string FS_FullPath(const char* directory);
 
 #ifdef _WIN32
@@ -231,3 +233,4 @@ FResourceFile *CheckDir(const char *filename, bool nosubdirflag, LumpFilterInfo*
 	return nullptr;
 }
 
+}

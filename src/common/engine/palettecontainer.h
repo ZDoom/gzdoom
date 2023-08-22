@@ -3,8 +3,7 @@
 #include <stdint.h>
 #include "memarena.h"
 #include "palentry.h"
-
-class FileReader;
+#include "files.h"
 
 enum
 {

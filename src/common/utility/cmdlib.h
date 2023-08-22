@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include "zstring.h"
+#include "files.h"
 
 #if !defined(GUID_DEFINED)
 #define GUID_DEFINED
@@ -82,7 +83,6 @@ inline constexpr double Scale(double a, double b, double c)
 	return (a * b) / c;
 }
 
-class FileReader;
 struct MD5Context;
 
 void md5Update(FileReader& file, MD5Context& md5, unsigned len);

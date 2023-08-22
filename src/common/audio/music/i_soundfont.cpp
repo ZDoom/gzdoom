@@ -40,10 +40,9 @@
 #include "i_system.h"
 #include "filereadermusicinterface.h"
 #include <zmusic.h>
-#include "resourcefile.h"
+#include "fs_filesystem.h"
 #include "version.h"
 #include "fs_findfile.h"
-#include "resourcefile.h"
 #include "i_interface.h"
 #include "configfile.h"
 #include "printf.h"
@@ -402,7 +401,7 @@ void FSoundFontManager::CollectSoundfonts()
 		{
 			if (stricmp (key, "Path") == 0)
 			{
-				FileList list;
+				FileSys::FileList list;
 
 				FString dir;
 
@@ -410,7 +409,7 @@ void FSoundFontManager::CollectSoundfonts()
 				FixPathSeperator(dir);
 				if (dir.IsNotEmpty())
 				{
-					if (ScanDirectory(list, dir.GetChars(), "*", true))
+					if (FileSys::ScanDirectory(list, dir.GetChars(), "*", true))
 					{
 						for(auto& entry : list)
 						{

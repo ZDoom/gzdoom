@@ -2596,7 +2596,7 @@ void G_ParseMapInfo (FString basemapinfo)
 			// If that exists we need to skip this one.
 
 			int wad = fileSystem.GetFileContainer(lump);
-			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", FileSys::ns_global, wad, true);
 
 			if (altlump >= 0) continue;
 		}
@@ -2604,9 +2604,9 @@ void G_ParseMapInfo (FString basemapinfo)
 		{
 			// MAPINFO and ZMAPINFO will override UMAPINFO if in the same WAD.
 			int wad = fileSystem.GetFileContainer(lump);
-			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", FileSys::ns_global, wad, true);
 			if (altlump >= 0) continue;
-			altlump = fileSystem.CheckNumForName("MAPINFO", ns_global, wad, true);
+			altlump = fileSystem.CheckNumForName("MAPINFO", FileSys::ns_global, wad, true);
 			if (altlump >= 0) continue;
 		}
 		if (nindex != 2)

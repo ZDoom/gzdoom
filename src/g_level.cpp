@@ -2004,7 +2004,7 @@ void G_ReadSnapshots(FResourceFile *resf)
 
 	for (unsigned j = 0; j < resf->LumpCount(); j++)
 	{
-		FResourceLump * resl = resf->GetLump(j);
+		auto resl = resf->GetLump(j);
 		if (resl != nullptr)
 		{
 			auto name = resl->getName();

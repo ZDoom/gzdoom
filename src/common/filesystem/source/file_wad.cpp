@@ -35,11 +35,11 @@
 
 #include <ctype.h>
 #include "resourcefile.h"
-#include "filesystem.h"
+#include "fs_filesystem.h"
 #include "fs_swap.h"
 
-using namespace fs_private;
-
+namespace FileSys {
+	using namespace byteswap;
 
 struct wadinfo_t
 {
@@ -485,3 +485,4 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* 
 	return NULL;
 }
 
+}

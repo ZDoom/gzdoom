@@ -300,7 +300,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 // Look for IWAD definition lump
 //
 //==========================================================================
-void GetReserved(LumpFilterInfo& lfi);
+void GetReserved(FileSys::LumpFilterInfo& lfi);
 
 FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
@@ -385,7 +385,7 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 {
 	FileSystem check;
 
-	LumpFilterInfo lfi;
+	FileSys::LumpFilterInfo lfi;
 	GetReserved(lfi);
 
 	std::vector<std::string> filenames = { fn };
@@ -471,9 +471,9 @@ void FIWadManager::CollectSearchPaths()
 
 void FIWadManager::AddIWADCandidates(const char *dir)
 {
-	FileList list;
+	FileSys::FileList list;
 
-	if (ScanDirectory(list, dir, "*", true))
+	if (FileSys::ScanDirectory(list, dir, "*", true))
 	{
 		for(auto& entry : list)
 		{

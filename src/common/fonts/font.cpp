@@ -91,7 +91,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	// Read the font's configuration.
 	// This will not be done for the default fonts, because they are not atomic and the default content does not need it.
 
-	std::vector<FolderEntry> folderdata;
+	std::vector<FileSys::FolderEntry> folderdata;
 	if (filetemplate != nullptr)
 	{
 		FStringf path("fonts/%s/", filetemplate);
@@ -398,7 +398,7 @@ public:
 	}
 
 };
-void FFont::ReadSheetFont(std::vector<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
+void FFont::ReadSheetFont(std::vector<FileSys::FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
 {
 	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;

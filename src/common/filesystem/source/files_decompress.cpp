@@ -41,7 +41,10 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "files.h"
+#include "fs_files.h"
+
+namespace FileSys {
+	using namespace byteswap;
 
 //==========================================================================
 //
@@ -538,7 +541,7 @@ class DecompressorLZSS : public DecompressorBase
 				return false;
 			Stream.AvailIn -= 2;
 
-			uint16_t pos = fs_private::BigShort(*(uint16_t*)Stream.In);
+			uint16_t pos = BigShort(*(uint16_t*)Stream.In);
 			uint8_t len = (pos & 0xF)+1;
 			pos >>= 4;
 			Stream.In += 2;
@@ -752,3 +755,4 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 	}
 }
 
+}

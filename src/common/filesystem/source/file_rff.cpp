@@ -36,7 +36,8 @@
 #include "resourcefile.h"
 #include "fs_swap.h"
 
-using namespace fs_private;
+namespace FileSys {
+	using namespace byteswap;
 
 //==========================================================================
 //
@@ -260,4 +261,4 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* 
 }
 
 
-
+}

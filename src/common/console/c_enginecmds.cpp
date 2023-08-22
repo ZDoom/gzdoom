@@ -201,8 +201,8 @@ UNSAFE_CCMD (dir)
 		bpath = path;
 	}
 
-	FileList list;
-	if (!ScanDirectory(list, bpath, base, true))
+	FileSys::FileList list;
+	if (!FileSys::ScanDirectory(list, bpath, base, true))
 	{ 
 		Printf ("Nothing matching %s\n", path.GetChars());
 	}

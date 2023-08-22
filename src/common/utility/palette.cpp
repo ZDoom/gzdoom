@@ -929,7 +929,7 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 	{
 		return 0;
 	}
-	FileData lump = fileSystem.ReadFile(lumpnum);
+	auto lump =  fileSystem.ReadFile(lumpnum);
 	auto lumpmem = lump.GetBytes();
 	memset(buffer, 0, 768);
 

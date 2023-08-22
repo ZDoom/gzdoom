@@ -58,7 +58,7 @@ struct HexDataSource
 	//
 	//==========================================================================
 
-	void ParseDefinition(FResourceLump* font)
+	void ParseDefinition(FileSys::FResourceLump* font)
 	{
 		FScanner sc;
 

@@ -581,7 +581,8 @@ file( GLOB HEADER_FILES
 	common/statusbar/*.h
 	common/fonts/*.h
 	common/objects/*.h
-	common/filesystem/*.h
+	common/filesystem/include/*.h
+	common/filesystem/source/*.h
 	common/platform/posix/cocoa/*.h
 	common/platform/posix/sdl/*.h
 	common/platform/win32/*.h
@@ -1206,23 +1207,23 @@ set( ZDOOM_SOURCES
 	common/thirdparty/math/tanh.c
 	common/thirdparty/math/fastsin.cpp
 
-	common/filesystem/filesystem.cpp
-	common/filesystem/ancientzip.cpp
-	common/filesystem/file_7z.cpp
-	common/filesystem/file_grp.cpp
-	common/filesystem/file_lump.cpp
-	common/filesystem/file_rff.cpp
-	common/filesystem/file_wad.cpp
-	common/filesystem/file_zip.cpp
-	common/filesystem/file_pak.cpp
-	common/filesystem/file_whres.cpp
-	common/filesystem/file_ssi.cpp
-	common/filesystem/file_directory.cpp
-	common/filesystem/resourcefile.cpp
-	common/filesystem/files.cpp
-	common/filesystem/files_decompress.cpp
-	common/filesystem/fs_findfile.cpp
-	common/filesystem/fs_stringpool.cpp
+	common/filesystem/source/filesystem.cpp
+	common/filesystem/source/ancientzip.cpp
+	common/filesystem/source/file_7z.cpp
+	common/filesystem/source/file_grp.cpp
+	common/filesystem/source/file_lump.cpp
+	common/filesystem/source/file_rff.cpp
+	common/filesystem/source/file_wad.cpp
+	common/filesystem/source/file_zip.cpp
+	common/filesystem/source/file_pak.cpp
+	common/filesystem/source/file_whres.cpp
+	common/filesystem/source/file_ssi.cpp
+	common/filesystem/source/file_directory.cpp
+	common/filesystem/source/resourcefile.cpp
+	common/filesystem/source/files.cpp
+	common/filesystem/source/files_decompress.cpp
+	common/filesystem/source/fs_findfile.cpp
+	common/filesystem/source/fs_stringpool.cpp
 
 )
 
@@ -1269,7 +1270,7 @@ include_directories(
 	common/textures/hires
 	common/textures
 	common/models
-	common/filesystem
+	common/filesystem/include
 	common/utility
 	common/console
 	common/engine
@@ -1470,6 +1471,8 @@ source_group("Common\\Objects" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/
 source_group("Common\\Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/menu/.+")
 source_group("Common\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/fonts/.+")
 source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")
+source_group("Common\\File System\\Include" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/include/.+")
+source_group("Common\\File System\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/source/.+")
 source_group("Common\\Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/.+")
 source_group("Common\\Scripting\\Interface" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/interface/.+")
 source_group("Common\\Scripting\\Frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/frontend/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h)

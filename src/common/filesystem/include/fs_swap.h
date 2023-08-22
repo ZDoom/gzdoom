@@ -17,9 +17,9 @@
 #include <libkern/OSByteOrder.h>
 #endif
 
-namespace fs_private
-{
-
+namespace FileSys {
+namespace byteswap {
+	
 #ifdef __APPLE__
 
 inline unsigned short LittleShort(unsigned short x)
@@ -116,6 +116,7 @@ inline unsigned int BigLong (unsigned int x)
 #endif
 
 #endif // __BIG_ENDIAN__
+}
 }
 
 #endif // __M_SWAP_H__

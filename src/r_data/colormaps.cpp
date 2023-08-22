@@ -104,11 +104,11 @@ void R_InitColormaps (bool allowCustomColormap)
 
 	for (uint32_t i = 0; i < NumLumps; i++)
 	{
-		if (fileSystem.GetFileNamespace(i) == ns_colormaps)
+		if (fileSystem.GetFileNamespace(i) == FileSys::ns_colormaps)
 		{
 			auto name = fileSystem.GetFileShortName(i);
 
-			if (fileSystem.CheckNumForName (name, ns_colormaps) == (int)i)
+			if (fileSystem.CheckNumForName (name, FileSys::ns_colormaps) == (int)i)
 			{
 				strncpy(cm.name, name, 8);
 				cm.blend = 0;

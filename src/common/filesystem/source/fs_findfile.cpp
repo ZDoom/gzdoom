@@ -35,7 +35,8 @@
 #include "fs_findfile.h"
 #include <vector>
 
-
+namespace FileSys {
+	
 enum
 {
 	ZPATH_MAX = 260
@@ -404,3 +405,4 @@ bool FS_DirEntryExists(const char* pathname, bool* isdir)
 	return res;
 }
 
+}

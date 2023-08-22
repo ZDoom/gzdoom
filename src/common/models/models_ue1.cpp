@@ -70,9 +70,9 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 void FUE1Model::LoadGeometry()
 {
 	const char *buffer, *buffer2;
-	FileData lump = fileSystem.ReadFile(mDataLump);
+	auto lump =  fileSystem.ReadFile(mDataLump);
 	buffer = lump.GetString();
-	FileData lump2 = fileSystem.ReadFile(mAnivLump);
+	auto lump2 =  fileSystem.ReadFile(mAnivLump);
 	buffer2 = lump2.GetString();
 	// map structures
 	dhead = (const d3dhead*)(buffer);

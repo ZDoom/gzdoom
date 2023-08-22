@@ -349,7 +349,7 @@ void R_InitSpriteDefs ()
 	memset(vhashes.Data(), -1, sizeof(VHasher)*vmax);
 	for (i = 0; i < vmax; ++i)
 	{
-		if (fileSystem.GetFileNamespace(i) == ns_voxels)
+		if (fileSystem.GetFileNamespace(i) == FileSys::ns_voxels)
 		{
 			size_t namelen;
 			int spin;
@@ -715,7 +715,7 @@ void R_InitSkins (void)
 				int lump = fileSystem.CheckNumForName (sc.String, Skins[i].namespc);
 				if (lump == -1)
 				{
-					lump = fileSystem.CheckNumForFullName (sc.String, true, ns_sounds);
+					lump = fileSystem.CheckNumForFullName (sc.String, true, FileSys::ns_sounds);
 				}
 				if (lump != -1)
 				{
@@ -748,7 +748,7 @@ void R_InitSkins (void)
 						sndlumps[j] = fileSystem.CheckNumForName (sc.String, Skins[i].namespc);
 						if (sndlumps[j] == -1)
 						{ // Replacement not found, try finding it in the global namespace
-							sndlumps[j] = fileSystem.CheckNumForFullName (sc.String, true, ns_sounds);
+							sndlumps[j] = fileSystem.CheckNumForFullName (sc.String, true, FileSys::ns_sounds);
 						}
 					}
 				}
@@ -946,7 +946,7 @@ CCMD (skins)
 
 static void R_CreateSkinTranslation (const char *palname)
 {
-	FileData lump = fileSystem.ReadFile (palname);
+	auto lump =  fileSystem.ReadFile (palname);
 	auto otherPal = lump.GetBytes();
  
 	for (int i = 0; i < 256; ++i)
@@ -1016,7 +1016,7 @@ void R_InitSprites ()
 		Skins[i].range0end = basetype->IntVar(NAME_ColorRangeEnd);
 		Skins[i].Scale = basetype->Scale;
 		Skins[i].sprite = basetype->SpawnState->sprite;
-		Skins[i].namespc = ns_global;
+		Skins[i].namespc = FileSys::ns_global;
 
 		PlayerClasses[i].Skins.Push (i);
 

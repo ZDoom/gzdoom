@@ -41,7 +41,7 @@
 #include "colormatcher.h"
 #include "bitmap.h"
 #include "textures.h"
-#include "resourcefile.h"
+#include "fs_filesystem.h"
 #include "image.h"
 #include "animations.h"
 #include "texturemanager.h"
@@ -84,7 +84,7 @@ static int BuildPaletteTranslation(int lump)
 		return false;
 	}
 
-	FileData data = fileSystem.ReadFile(lump);
+	auto data = fileSystem.ReadFile(lump);
 	auto ipal = data.GetBytes();
 	FRemapTable opal;
 

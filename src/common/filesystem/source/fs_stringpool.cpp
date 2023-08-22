@@ -38,6 +38,8 @@
 #include <string.h>
 #include "fs_stringpool.h"
 
+namespace FileSys {
+	
 struct StringPool::Block
 {
 	Block *NextBlock;
@@ -123,4 +125,6 @@ const char* StringPool::Strdup(const char* str)
 	char* p = (char*)iAlloc((strlen(str) + 8) & ~7 );
 	strcpy(p, str);
 	return p;
+}
+
 }

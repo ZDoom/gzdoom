@@ -35,6 +35,7 @@
 
 #include "resourcefile.h"
 
+namespace FileSys {
 //==========================================================================
 //
 // Build GRP file
@@ -151,4 +152,6 @@ FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* 
 		}
 	}
 	return nullptr;
+}
+
 }

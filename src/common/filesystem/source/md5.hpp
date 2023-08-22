@@ -69,7 +69,7 @@
 #include <stddef.h>
 #include <cstring>
 
-namespace fs_private {
+namespace FileSys {
     /// Provides MD5 hashing functionality
     namespace md5 {
 

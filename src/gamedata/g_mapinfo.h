@@ -38,7 +38,6 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "sc_man.h"
-#include "file_zip.h"
 #include "screenjob.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hw_viewpointuniforms.h"
@@ -349,7 +348,7 @@ struct level_info_t
 	FString		AuthorName;
 	int8_t		WallVertLight, WallHorizLight;
 	int			musicorder;
-	FCompressedBuffer	Snapshot;
+	FileSys::FCompressedBuffer	Snapshot;
 	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;

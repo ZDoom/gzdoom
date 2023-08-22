@@ -736,14 +736,14 @@ static int FindGLNodesInWAD(int labellump)
 	glheader.Format("GL_%s", fileSystem.GetFileFullName(labellump));
 	if (glheader.Len()<=8)
 	{
-		int gllabel = fileSystem.CheckNumForName(glheader, ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName(glheader, FileSys::ns_global, wadfile);
 		if (gllabel >= 0) return gllabel;
 	}
 	else
 	{
 		// Before scanning the entire WAD directory let's check first whether
 		// it is necessary.
-		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", FileSys::ns_global, wadfile);
 
 		if (gllabel >= 0)
 		{
@@ -753,7 +753,7 @@ static int FindGLNodesInWAD(int labellump)
 			{
 				if (fileSystem.GetFileContainer(lump)==wadfile)
 				{
-					FileData mem = fileSystem.ReadFile(lump);
+					auto mem = fileSystem.ReadFile(lump);
 					if (MatchHeader(fileSystem.GetFileFullName(labellump), GetStringFromLump(lump))) return lump;
 				}
 			}
@@ -1199,11 +1199,11 @@ bool MapLoader::CheckCachedNodes(MapData *map)
 
 UNSAFE_CCMD(clearnodecache)
 {
-	FileList list;
+	FileSys::FileList list;
 	FString path = M_GetCachePath(false);
 	path += "/";
 
-	if (!ScanDirectory(list, path, "*", false))
+	if (!FileSys::ScanDirectory(list, path, "*", false))
 	{
 		Printf("Unable to scan node cache directory %s\n", path.GetChars());
 		return;

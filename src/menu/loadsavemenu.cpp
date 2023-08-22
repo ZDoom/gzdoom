@@ -66,8 +66,8 @@ void FSavegameManager::ReadSaveStrings()
 
 		LastSaved = LastAccessed = -1;
 		quickSaveSlot = nullptr;
-		FileList list;
-		if (ScanDirectory(list, G_GetSavegamesFolder().GetChars(), "*." SAVEGAME_EXT, true))
+		FileSys::FileList list;
+		if (FileSys::ScanDirectory(list, G_GetSavegamesFolder().GetChars(), "*." SAVEGAME_EXT, true))
 		{
 			for (auto& entry : list)
 			{
@@ -76,7 +76,7 @@ void FSavegameManager::ReadSaveStrings()
 				{
 					bool oldVer = false;
 					bool missing = false;
-					FResourceLump *info = savegame->FindLump("info.json");
+					auto info = savegame->FindLump("info.json");
 					if (info == nullptr)
 					{
 						// savegame info not found. This is not a savegame so leave it alone.

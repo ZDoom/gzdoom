@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 
+namespace FileSys {
+	
 struct FileListEntry
 {
 	std::string FileName;		// file name only
@@ -34,3 +36,4 @@ inline void FixPathSeparator(char* path)
 	}
 }
 
+}

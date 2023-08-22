@@ -41,11 +41,13 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "filesystem.h"
+#include "fs_filesystem.h"
 #include "fs_findfile.h"
 #include "md5.hpp"
 #include "fs_stringpool.h"
 
+namespace FileSys {
+	
 // MACROS ------------------------------------------------------------------
 
 #define NULL_INDEX		(0xffffffff)
@@ -72,7 +74,7 @@ static uint32_t MakeHash(const char* str, size_t length = SIZE_MAX)
 
 static void md5Hash(FileReader& reader, uint8_t* digest) 
 {
-	using namespace fs_private::md5;
+	using namespace md5;
 
 	md5_state_t state;
 	md5_init(&state);
@@ -186,8 +188,6 @@ struct FileSystem::LumpRecord
 static void PrintLastError (FileSystemMessageFunc Printf);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-FileSystem fileSystem;
 
 // CODE --------------------------------------------------------------------
 
@@ -511,7 +511,7 @@ int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
 // and namespace parameter
 //==========================================================================
 
-int FileSystem::CheckNumForName (const char *name, int space)
+int FileSystem::CheckNumForName (const char *name, int space) const
 {
 	union
 	{
@@ -556,7 +556,7 @@ int FileSystem::CheckNumForName (const char *name, int space)
 	return i != NULL_INDEX ? i : -1;
 }
 
-int FileSystem::CheckNumForName (const char *name, int space, int rfnum, bool exact)
+int FileSystem::CheckNumForName (const char *name, int space, int rfnum, bool exact) const
 {
 	union
 	{
@@ -594,7 +594,7 @@ int FileSystem::CheckNumForName (const char *name, int space, int rfnum, bool ex
 //
 //==========================================================================
 
-int FileSystem::GetNumForName (const char *name, int space)
+int FileSystem::GetNumForName (const char *name, int space) const
 {
 	int	i;
 
@@ -617,7 +617,7 @@ int FileSystem::GetNumForName (const char *name, int space)
 //
 //==========================================================================
 
-int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int namespc, bool ignoreext)
+int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int namespc, bool ignoreext) const
 {
 	uint32_t i;
 
@@ -650,7 +650,7 @@ int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int names
 	return -1;
 }
 
-int FileSystem::CheckNumForFullName (const char *name, int rfnum)
+int FileSystem::CheckNumForFullName (const char *name, int rfnum) const
 {
 	uint32_t i;
 
@@ -678,7 +678,7 @@ int FileSystem::CheckNumForFullName (const char *name, int rfnum)
 //
 //==========================================================================
 
-int FileSystem::GetNumForFullName (const char *name)
+int FileSystem::GetNumForFullName (const char *name) const
 {
 	int	i;
 
@@ -698,7 +698,7 @@ int FileSystem::GetNumForFullName (const char *name)
 //
 //==========================================================================
 
-int FileSystem::FindFileWithExtensions(const char* name, const char *const *exts, int count)
+int FileSystem::FindFileWithExtensions(const char* name, const char *const *exts, int count) const
 {
 	uint32_t i;
 
@@ -1254,7 +1254,7 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, std::vector<FolderEntr
 		if (strncmp(FileInfo[i].LongName, path.c_str(), path.length()) == 0)
 		{
 			// Only if it hasn't been replaced.
-			if ((unsigned)fileSystem.CheckNumForFullName(FileInfo[i].LongName) == i)
+			if ((unsigned)CheckNumForFullName(FileInfo[i].LongName) == i)
 			{
 				FolderEntry fe{ FileInfo[i].LongName, (uint32_t)i };
 				result.push_back(fe);
@@ -1269,13 +1269,13 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, std::vector<FolderEntr
 			// Find the highest resource file having content in the given folder.
 			for (auto & entry : result)
 			{
-				int thisfile = fileSystem.GetFileContainer(entry.lumpnum);
+				int thisfile = GetFileContainer(entry.lumpnum);
 				if (thisfile > maxfile) maxfile = thisfile;
 			}
 			// Delete everything from older files.
 			for (int i = (int)result.size() - 1; i >= 0; i--)
 			{
-				if (fileSystem.GetFileContainer(result[i].lumpnum) != maxfile) result.erase(result.begin() + i);
+				if (GetFileContainer(result[i].lumpnum) != maxfile) result.erase(result.begin() + i);
 			}
 		}
 		qsort(result.data(), result.size(), sizeof(FolderEntry), folderentrycmp);
@@ -1364,8 +1364,8 @@ FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 
 	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & LUMPF_COMPRESSED))
 	{
-		int fileno = fileSystem.GetFileContainer(lump);
-		const char *filename = fileSystem.GetResourceFileFullName(fileno);
+		int fileno = GetFileContainer(lump);
+		const char *filename = GetResourceFileFullName(fileno);
 		FileReader fr;
 		if (fr.OpenFile(filename, rl->GetFileOffset(), rl->LumpSize))
 		{
@@ -1578,4 +1578,6 @@ static void PrintLastError (FileSystemMessageFunc Printf)
 FResourceLump* FileSystem::GetFileAt(int no)
 {
 	return FileInfo[no].lump;
+}
+
 }

@@ -164,7 +164,7 @@ FStartupTexture::FStartupTexture (int lumpnum)
 	Height = 480;
 	bUseGamePalette = false;
 	
-	FileData lump = fileSystem.ReadFile (SourceLump);
+	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes();
 
 	// Initialize the bitmap palette.
@@ -233,7 +233,7 @@ void PlanarToChunky(T* dest, const uint8_t* src, const T* remap, int width, int 
 
 PalettedPixels FStartupTexture::CreatePalettedPixels(int conversion)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
+	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes();
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 
@@ -253,7 +253,7 @@ PalettedPixels FStartupTexture::CreatePalettedPixels(int conversion)
 
 int FStartupTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
+	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes();
 	PlanarToChunky((uint32_t*)bmp->GetPixels(), source + 48, startuppalette32, Width, Height);
 	return 0;
@@ -281,7 +281,7 @@ FNotchTexture::FNotchTexture (int lumpnum, int width, int height)
 
 PalettedPixels FNotchTexture::CreatePalettedPixels(int conversion)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
+	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes();
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 
@@ -304,7 +304,7 @@ PalettedPixels FNotchTexture::CreatePalettedPixels(int conversion)
 
 int FNotchTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
+	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes();
 
 	auto Work = (uint32_t*)bmp->GetPixels();
@@ -338,7 +338,7 @@ FStrifeStartupTexture::FStrifeStartupTexture (int lumpnum, int w, int h)
 
 PalettedPixels FStrifeStartupTexture::CreatePalettedPixels(int conversion)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
+	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes();
 	PalettedPixels Pixels(Width*Height);
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);

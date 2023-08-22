@@ -7,6 +7,8 @@
 #define FORCE_PACKED
 #endif
 
+namespace FileSys {
+	
 #pragma pack(1)
 // FZipCentralInfo
 struct FZipEndOfCentralDirectory
@@ -105,4 +107,5 @@ struct FZipLocalFileHeader
 // File header flags.
 #define ZF_ENCRYPTED			0x1
 
+}
 #endif

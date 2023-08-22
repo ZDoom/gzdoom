@@ -46,6 +46,8 @@
 #include <stdlib.h>
 #include "ancientzip.h"
 
+namespace FileSys {
+	
 /****************************************************************
     Bit-I/O variables and routines/macros
 
@@ -432,4 +434,6 @@ int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader &_In, unsign
 		}
 	}
 	return 0;
+}
+
 }

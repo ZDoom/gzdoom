@@ -383,11 +383,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 	int vp_lump = fileSystem.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump.GetChars());
-	FileData vp_data = fileSystem.ReadFile(vp_lump);
+	auto vp_data = fileSystem.ReadFile(vp_lump);
 
 	int fp_lump = fileSystem.CheckNumForFullName(frag_prog_lump, 0);
 	if (fp_lump == -1) I_Error("Unable to load '%s'", frag_prog_lump.GetChars());
-	FileData fp_data = fileSystem.ReadFile(fp_lump);
+	auto fp_data = fileSystem.ReadFile(fp_lump);
 
 
 

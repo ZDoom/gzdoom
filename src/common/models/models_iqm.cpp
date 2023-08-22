@@ -270,7 +270,7 @@ void IQMModel::LoadGeometry()
 {
 	try
 	{
-		FileData lumpdata = fileSystem.ReadFile(mLumpNum);
+		auto lumpdata = fileSystem.ReadFile(mLumpNum);
 		IQMFileReader reader(lumpdata.GetMem(), (int)lumpdata.GetSize());
 
 		Vertices.Resize(NumVertices);

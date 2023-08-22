@@ -41,7 +41,8 @@
 #include "fs_findfile.h"
 #include "fs_swap.h"
 
-using namespace fs_private;
+namespace FileSys {
+	using namespace byteswap;
 
 #define BUFREADCOMMENT (0x400)
 
@@ -719,4 +720,6 @@ bool WriteZip(const char* filename, const FCompressedBuffer* content, size_t con
 		return true;
 	}
 	return false;
+}
+
 }

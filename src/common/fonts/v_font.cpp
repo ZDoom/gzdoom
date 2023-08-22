@@ -109,7 +109,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		int lump = -1;
 		int folderfile = -1;
 
-		std::vector<FolderEntry> folderdata;
+		std::vector<FileSys::FolderEntry> folderdata;
 		FStringf path("fonts/%s/", name);
 
 		// Use a folder-based font only if it comes from a later file than the single lump version.

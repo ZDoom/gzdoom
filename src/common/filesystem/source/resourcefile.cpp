@@ -39,6 +39,8 @@
 #include "md5.hpp"
 #include "fs_stringpool.h"
 
+namespace FileSys {
+	
 std::string ExtractBaseName(const char* path, bool include_extension)
 {
 	const char* src, * dot;
@@ -364,7 +366,7 @@ int lumpcmp(const void * a, const void * b)
 void FResourceFile::GenerateHash()
 {
 	// hash the lump directory after sorting
-	using namespace fs_private::md5;
+	using namespace FileSys::md5;
 
 	auto n = snprintf(Hash, 48, "%08X-%04X-", (unsigned)Reader.GetLength(), NumLumps);
 
@@ -745,4 +747,4 @@ int FExternalLump::FillCache()
 }
 
 
-
+}

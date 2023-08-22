@@ -40,7 +40,8 @@
 #include "fs_findfile.h"
 
 
-
+namespace FileSys {
+	
 //-----------------------------------------------------------------------
 //
 // Interface classes to 7z library
@@ -374,4 +375,4 @@ FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* f
 }
 
 
-
+}

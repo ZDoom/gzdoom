@@ -45,6 +45,8 @@
 
 #include "tarray.h"
 
+namespace FileSys {
+	
 class FileSystemException : public std::exception
 {
 protected:
@@ -271,7 +273,7 @@ public:
 	{
 		uint16_t v = 0;
 		Read(&v, 2);
-		return fs_private::LittleShort(v);
+		return byteswap::LittleShort(v);
 	}
 
 	int16_t ReadInt16()
@@ -283,7 +285,7 @@ public:
 	{
 		uint16_t v = 0;
 		Read(&v, 2);
-		return fs_private::BigShort(v);
+		return byteswap::BigShort(v);
 	}
 
 	int16_t ReadInt16BE()
@@ -295,7 +297,7 @@ public:
 	{
 		uint32_t v = 0;
 		Read(&v, 4);
-		return fs_private::LittleLong(v);
+		return byteswap::LittleLong(v);
 	}
 
 	int32_t ReadInt32()
@@ -307,7 +309,7 @@ public:
 	{
 		uint32_t v = 0;
 		Read(&v, 4);
-		return fs_private::BigLong(v);
+		return byteswap::BigLong(v);
 	}
 
 	int32_t ReadInt32BE()
@@ -394,5 +396,6 @@ public:
 	TArray<unsigned char>&& TakeBuffer() { return std::move(mBuffer); }
 };
 
+}
 
 #endif

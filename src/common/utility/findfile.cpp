@@ -139,11 +139,11 @@ void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const 
 	else 
 	{
 		// Try pattern matching
-		FileList list;
+		FileSys::FileList list;
 		auto path = ExtractFilePath(value);
 		auto name = ExtractFileBase(value, true);
 		if (path.IsEmpty()) path = ".";
-		if (ScanDirectory(list, path, name, true))
+		if (FileSys::ScanDirectory(list, path, name, true))
 		{ 
 			for(auto& entry : list)
 			{
@@ -193,8 +193,8 @@ void D_AddConfigFiles(std::vector<std::string>& wadfiles, const char* section, c
 
 void D_AddDirectory(std::vector<std::string>& wadfiles, const char* dir, const char *filespec, FConfigFile* config)
 {
-	FileList list;
-	if (ScanDirectory(list, dir, "*.wad", true))
+	FileSys::FileList list;
+	if (FileSys::ScanDirectory(list, dir, "*.wad", true))
 	{
 		for (auto& entry : list)
 		{

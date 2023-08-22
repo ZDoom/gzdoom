@@ -430,7 +430,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		}
 		else
 		{
-			FileData translump = fileSystem.ReadFile(colorset->Lump);
+			auto translump = fileSystem.ReadFile(colorset->Lump);
 			auto trans = translump.GetBytes();
 			for (i = start; i <= end; ++i)
 			{
@@ -727,7 +727,7 @@ void R_ParseTrnslate()
 			do
 			{
 				sc.MustGetToken(TK_StringConst);
-				int pallump = fileSystem.CheckNumForFullName(sc.String, true, ns_global);
+				int pallump = fileSystem.CheckNumForFullName(sc.String, true, FileSys::ns_global);
 				if (pallump >= 0)	// 
 				{
 					int start = 0;

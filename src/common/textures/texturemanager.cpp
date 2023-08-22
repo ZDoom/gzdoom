@@ -50,6 +50,7 @@
 #include "basics.h"
 #include "cmdlib.h"
 
+using namespace FileSys;
 FTextureManager TexMan;
 
 

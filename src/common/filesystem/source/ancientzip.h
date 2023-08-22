@@ -1,6 +1,8 @@
 #pragma once
-#include "files.h"
+#include "fs_files.h"
 
+namespace FileSys {
+	
 class FZipExploder
 {
 	unsigned int Hold, Bits;
@@ -42,3 +44,4 @@ public:
 };
 
 int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader &in, unsigned int insize);
+}

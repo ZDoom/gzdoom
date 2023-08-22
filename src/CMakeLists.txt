@@ -321,7 +321,7 @@ add_custom_target( revision_check ALL
 
 set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" "${DRPC_LIBRARIES}")
 
-if (TARGET PkgConfig::libjxl)
+if (TARGET PkgConfig::libjxl AND JPEG_XL)
 	list( APPEND PROJECT_LIBRARIES PkgConfig::libjxl )
 endif()
 
@@ -1240,7 +1240,7 @@ set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS 
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 set_source_files_properties( ${ZDOOM_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
-if (TARGET PkgConfig::libjxl)
+if (TARGET PkgConfig::libjxl AND JPEG_XL)
 	target_compile_definitions(zdoom PRIVATE -DHAVE_JPEGXL=1)
 	target_sources(zdoom PRIVATE common/textures/formats/jpegxltexture.cpp)
 else()

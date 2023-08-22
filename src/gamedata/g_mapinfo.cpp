@@ -1695,6 +1695,7 @@ enum EMIType
 	MITYPE_CLRFLAG3,
 	MITYPE_SCFLAGS3,
 	MITYPE_COMPATFLAG,
+	MITYPE_CLRCOMPATFLAG,
 };
 
 struct MapInfoFlagHandler
@@ -1799,6 +1800,8 @@ MapFlagHandlers[] =
 	{ "avoidmelee",						MITYPE_SETFLAG3,	LEVEL3_AVOIDMELEE, 0 },
 	{ "attenuatelights",				MITYPE_SETFLAG3,	LEVEL3_ATTENUATE, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
+	{ "nopassover",						MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
+	{ "passover",						MITYPE_CLRCOMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
 	{ "compat_limitpain",				MITYPE_COMPATFLAG, COMPATF_LIMITPAIN, 0 },
@@ -1948,6 +1951,13 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 
 			case MITYPE_SCFLAGS3:
 				info.flags3 = (info.flags3 & handler->data2) | handler->data1;
+				break;
+
+			case MITYPE_CLRCOMPATFLAG:
+				info.compatflags &= ~handler->data1;
+				info.compatflags2 &= ~handler->data2;
+				info.compatmask |= handler->data1;
+				info.compatmask2 |= handler->data2;
 				break;
 
 			case MITYPE_COMPATFLAG:

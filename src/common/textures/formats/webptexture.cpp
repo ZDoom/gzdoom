@@ -57,6 +57,12 @@ FImageSource *WebPImage_TryCreate(FileReader &file, int lumpnum)
 	int width = 0, height = 0;
 	int xoff = 0, yoff = 0;
 	file.Seek(0, FileReader::SeekSet);
+
+	uint8_t header[12];
+	if (file.Read(header, 12) != 12) return nullptr;
+	if (memcmp(header, "RIFF", 4) || memcmp(header + 8, "WEBP", 4)) return nullptr;
+
+	file.Seek(0, FileReader::SeekSet);
 	auto bytes = file.Read();
 
 	if (WebPGetInfo(bytes.data(), bytes.size(), &width, &height))
@@ -76,7 +82,7 @@ FImageSource *WebPImage_TryCreate(FileReader &file, int lumpnum)
 		}
 		return new FWebPTexture(lumpnum, width, height, xoff, yoff);
 	}
-	return NULL;
+	return nullptr;
 }
 
 FWebPTexture::FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff)

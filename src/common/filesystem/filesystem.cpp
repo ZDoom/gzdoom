@@ -148,7 +148,7 @@ struct FileSystem::LumpRecord
 				{
 					const char* p = LongName + encodedResID;
 					char* q;
-					int id = (int)strtoull(p+2, &q, 10);	// only decimal numbers allowed here.
+					int id = (int)strtoull(p + 2, &q, 10);	// only decimal numbers allowed here.
 					if (q[0] == '}' && (q[1] == '.' || q[1] == 0))
 					{
 						longName.erase(longName.begin() + encodedResID, longName.begin() + (q - p) + 1);
@@ -156,24 +156,23 @@ struct FileSystem::LumpRecord
 					}
 					LongName = sp->Strdup(longName.c_str());
 				}
-				ptrdiff_t slash = longName.find_last_of('/');
-				std::string base = (slash != std::string::npos) ? LongName + (slash + 1) : LongName;
-				auto dot = base.find_last_of('.');
-				if (dot != std::string::npos) base.resize(dot);
-				UpperCopy(shortName.String, base.c_str());
-				shortName.String[8] = 0;
+			}
+			auto slash = strrchr(LongName, '/');
+			std::string base = slash ? (slash + 1) : LongName;
+			auto dot = base.find_last_of('.');
+			if (dot != std::string::npos) base.resize(dot);
+			UpperCopy(shortName.String, base.c_str());
 
-				// Since '\' can't be used as a file name's part inside a ZIP
-				// we have to work around this for sprites because it is a valid
-				// frame character.
-				if (Namespace == ns_sprites || Namespace == ns_voxels || Namespace == ns_hires)
+			// Since '\' can't be used as a file name's part inside a ZIP
+			// we have to work around this for sprites because it is a valid
+			// frame character.
+			if (Namespace == ns_sprites || Namespace == ns_voxels || Namespace == ns_hires)
+			{
+				char* c;
+
+				while ((c = (char*)memchr(shortName.String, '^', 8)))
 				{
-					char* c;
-
-					while ((c = (char*)memchr(shortName.String, '^', 8)))
-					{
-						*c = '\\';
-					}
+					*c = '\\';
 				}
 			}
 		}

@@ -608,7 +608,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	// Check for symbolic links leading to non-existent files and for files that are unreadable.
 	for (unsigned int i = 0; i < mFoundWads.Size(); i++)
 	{
-		if (!FileExists(mFoundWads[i].mFullPath) || !FileReadable(mFoundWads[i].mFullPath)) mFoundWads.Delete(i);
+		if (!FileExists(mFoundWads[i].mFullPath) || !FileReadable(mFoundWads[i].mFullPath)) mFoundWads.Delete(i--);
 	}
 
 	// Now check if what got collected actually is an IWAD.

@@ -164,7 +164,7 @@ static int FS_FindAttr(findstate_t *const fileinfo)
 	const std::string path = fileinfo->path + ent->d_name;
 	bool isdir;
 
-	if (DirEntryExists(path.c_str(), &isdir))
+	if (FS_DirEntryExists(path.c_str(), &isdir))
 	{
 		return isdir ? FA_DIREC : 0;
 	}

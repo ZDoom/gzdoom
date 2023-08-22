@@ -94,7 +94,7 @@ FDirectory::FDirectory(const char * directory, StringPool* sp, bool nosubdirflag
 {
 	auto fn = FS_FullPath(directory);
 	if (fn.back() != '/') fn += '/';
-	File_Name = sp->Strdup(fn.c_str());
+	FileName = sp->Strdup(fn.c_str());
 }
 
 //==========================================================================
@@ -150,7 +150,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 
 bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
-	NumLumps = AddDirectory(File_Name, filter, Printf);
+	NumLumps = AddDirectory(FileName, filter, Printf);
 	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }
@@ -169,7 +169,7 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 	lump_p->mFullPath = fullpath;
 
 	// [mxd] Convert name to lowercase
-	std::string name = fullpath + strlen(File_Name);
+	std::string name = fullpath + strlen(FileName);
 	for (auto& c : name) c = tolower(c);
 
 	// The lump's name is only the part relative to the main directory

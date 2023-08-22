@@ -180,7 +180,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 
 	if (centraldir == 0)
 	{
-		Printf(FSMessageLevel::Error, "%s: ZIP file corrupt!\n", File_Name);
+		Printf(FSMessageLevel::Error, "%s: ZIP file corrupt!\n", FileName);
 		return false;
 	}
 
@@ -196,7 +196,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		if (info.NumEntries != info.NumEntriesOnAllDisks ||
 			info.FirstDisk != 0 || info.DiskNumber != 0)
 		{
-			Printf(FSMessageLevel::Error, "%s: Multipart Zip files are not supported.\n", File_Name);
+			Printf(FSMessageLevel::Error, "%s: Multipart Zip files are not supported.\n", FileName);
 			return false;
 		}
 		
@@ -215,7 +215,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		if (info.NumEntries != info.NumEntriesOnAllDisks ||
 			info.FirstDisk != 0 || info.DiskNumber != 0)
 		{
-			Printf(FSMessageLevel::Error, "%s: Multipart Zip files are not supported.\n", File_Name);
+			Printf(FSMessageLevel::Error, "%s: Multipart Zip files are not supported.\n", FileName);
 			return false;
 		}
 		
@@ -254,7 +254,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		if (dirptr > ((char*)directory) + dirsize)	// This directory entry goes beyond the end of the file.
 		{
 			free(directory);
-			Printf(FSMessageLevel::Error, "%s: Central directory corrupted.", File_Name);
+			Printf(FSMessageLevel::Error, "%s: Central directory corrupted.", FileName);
 			return false;
 		}
 
@@ -323,7 +323,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		if (dirptr > ((char*)directory) + dirsize)	// This directory entry goes beyond the end of the file.
 		{
 			free(directory);
-			Printf(FSMessageLevel::Error, "%s: Central directory corrupted.", File_Name);
+			Printf(FSMessageLevel::Error, "%s: Central directory corrupted.", FileName);
 			return false;
 		}
 
@@ -350,7 +350,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			zip_fh->Method != METHOD_IMPLODE &&
 			zip_fh->Method != METHOD_SHRINK)
 		{
-			Printf(FSMessageLevel::Error, "%s: '%s' uses an unsupported compression algorithm (#%d).\n", File_Name, name.c_str(), zip_fh->Method);
+			Printf(FSMessageLevel::Error, "%s: '%s' uses an unsupported compression algorithm (#%d).\n", FileName, name.c_str(), zip_fh->Method);
 			skipped++;
 			continue;
 		}
@@ -358,7 +358,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		zip_fh->Flags = LittleShort(zip_fh->Flags);
 		if (zip_fh->Flags & ZF_ENCRYPTED)
 		{
-			Printf(FSMessageLevel::Error, "%s: '%s' is encrypted. Encryption is not supported.\n", File_Name, name.c_str());
+			Printf(FSMessageLevel::Error, "%s: '%s' is encrypted. Encryption is not supported.\n", FileName, name.c_str());
 			skipped++;
 			continue;
 		}
@@ -385,7 +385,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 					if (zip_64->CompressedSize > 0x7fffffff || zip_64->UncompressedSize > 0x7fffffff)
 					{
 						// The file system is limited to 32 bit file sizes;
-						Printf(FSMessageLevel::Warning, "%s: '%s' is too large.\n", File_Name, name.c_str());
+						Printf(FSMessageLevel::Warning, "%s: '%s' is too large.\n", FileName, name.c_str());
 						skipped++;
 						continue;
 					}

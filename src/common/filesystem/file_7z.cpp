@@ -227,7 +227,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		Archive = NULL;
 		if (res == SZ_ERROR_UNSUPPORTED)
 		{
-			Printf(FSMessageLevel::Error, "%s: Decoder does not support this archive\n", File_Name);
+			Printf(FSMessageLevel::Error, "%s: Decoder does not support this archive\n", FileName);
 		}
 		else if (res == SZ_ERROR_MEM)
 		{
@@ -300,7 +300,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
 		{
-			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", File_Name);
+			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName);
 			return false;
 		}
 	}

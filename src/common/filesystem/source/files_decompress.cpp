@@ -46,6 +46,26 @@
 namespace FileSys {
 	using namespace byteswap;
 
+
+class DecompressorBase : public FileReaderInterface
+{
+	bool exceptions = false;
+public:
+	// These do not work but need to be defined to satisfy the FileReaderInterface.
+	// They will just error out when called.
+	long Tell() const override;
+	long Seek(long offset, int origin) override;
+	char* Gets(char* strbuf, int len) override;
+	void DecompressionError(const char* error, ...) const;
+	void SetOwnsReader();
+	void EnableExceptions(bool on) { exceptions = on; }
+
+protected:
+	FileReader* File = nullptr;
+	FileReader OwnedFile;
+};
+
+
 //==========================================================================
 //
 // DecompressionError

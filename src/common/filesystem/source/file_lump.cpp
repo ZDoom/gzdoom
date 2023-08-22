@@ -32,7 +32,7 @@
 **
 */
 
-#include "resourcefile.h"
+#include "resourcefile_internal.h"
 
 namespace FileSys {
 //==========================================================================

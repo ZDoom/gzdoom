@@ -35,9 +35,10 @@
 */
 
 #include <zlib.h>
-#include "resourcefile.h"
+#include "resourcefile_internal.h"
 #include "md5.hpp"
 #include "fs_stringpool.h"
+#include "files_internal.h"
 
 namespace FileSys {
 	

@@ -197,56 +197,6 @@ public:
 	FResourceLump *FindLump(const char *name);
 };
 
-struct FUncompressedLump : public FResourceLump
-{
-	int				Position;
-
-	virtual FileReader *GetReader();
-	virtual int FillCache() override;
-	virtual int GetFileOffset() { return Position; }
-
-};
-
-
-// Base class for uncompressed resource files (WAD, GRP, PAK and single lumps)
-class FUncompressedFile : public FResourceFile
-{
-protected:
-	TArray<FUncompressedLump> Lumps;
-
-	FUncompressedFile(const char *filename, StringPool* sp);
-	FUncompressedFile(const char *filename, FileReader &r, StringPool* sp);
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
-};
-
-
-// should only be used internally.
-struct FExternalLump : public FResourceLump
-{
-	const char* FileName;
-
-	FExternalLump(const char *_filename, int filesize, StringPool* sp);
-	virtual int FillCache() override;
-
-};
-
-struct FMemoryLump : public FResourceLump
-{
-	FMemoryLump(const void* data, int length)
-	{
-		RefCount = INT_MAX / 2;
-		LumpSize = length;
-		Cache = new char[length];
-		memcpy(Cache, data, length);
-	}
-
-	virtual int FillCache() override
-	{
-		RefCount = INT_MAX / 2; // Make sure it never counts down to 0 by resetting it to something high each time it is used.
-		return 1;
-	}
-};
-
 
 }
 

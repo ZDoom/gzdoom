@@ -41,6 +41,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "resourcefile_internal.h"
 #include "fs_filesystem.h"
 #include "fs_findfile.h"
 #include "md5.hpp"
@@ -320,10 +321,21 @@ int FileSystem::AddExternalFile(const char *filename)
 //
 //==========================================================================
 
+struct FMemoryLump : public FResourceLump
+{
+	FMemoryLump(const void* data, int length)
+	{
+		RefCount = -1;
+		LumpSize = length;
+		Cache = new char[length];
+		memcpy(Cache, data, length);
+	}
+};
+
 int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, int size, int id, int flags)
 {
 	std::string fullname = name;
-	fullname += ':';
+	fullname += '.';
 	fullname += type;
 	auto newlump = new FMemoryLump(data, size);
 	newlump->LumpNameSetup(fullname.c_str(), stringpool);

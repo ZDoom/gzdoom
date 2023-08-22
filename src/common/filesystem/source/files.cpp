@@ -34,7 +34,7 @@
 */
 
 #include <string>
-#include "fs_files.h"
+#include "files_internal.h"
 
 namespace FileSys {
 	

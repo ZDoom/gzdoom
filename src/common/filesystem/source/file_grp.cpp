@@ -33,7 +33,7 @@
 **
 */
 
-#include "resourcefile.h"
+#include "resourcefile_internal.h"
 #include "fs_swap.h"
 
 namespace FileSys {

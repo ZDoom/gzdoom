@@ -13,9 +13,6 @@
 
 namespace FileSys {
 	
-class FResourceFile;
-struct FResourceLump;
-
 union LumpShortName
 {
 	char		String[9];

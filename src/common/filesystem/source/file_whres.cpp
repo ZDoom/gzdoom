@@ -34,7 +34,7 @@
 **
 */
 
-#include "resourcefile.h"
+#include "resourcefile_internal.h"
 #include "fs_stringpool.h"
 #include "fs_swap.h"
 

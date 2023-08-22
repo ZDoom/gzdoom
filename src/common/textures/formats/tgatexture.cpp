@@ -80,11 +80,11 @@ class FTGATexture : public FImageSource
 public:
 	FTGATexture (int lumpnum, TGAHeader *);
 
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 
 protected:
 	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
-	PalettedPixels CreatePalettedPixels(int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 };
 
 //==========================================================================
@@ -178,7 +178,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 //
 //==========================================================================
 
-PalettedPixels FTGATexture::CreatePalettedPixels(int conversion)
+PalettedPixels FTGATexture::CreatePalettedPixels(int conversion, int frame)
 {
 	uint8_t PaletteMap[256];
 	auto lump = fileSystem.OpenFileReader (SourceLump);
@@ -385,7 +385,7 @@ PalettedPixels FTGATexture::CreatePalettedPixels(int conversion)
 //
 //===========================================================================
 
-int FTGATexture::CopyPixels(FBitmap *bmp, int conversion)
+int FTGATexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	PalEntry pe[256];
 	auto lump = fileSystem.OpenFileReader (SourceLump);

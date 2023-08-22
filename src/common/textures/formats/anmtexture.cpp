@@ -51,8 +51,8 @@ class FAnmTexture : public FImageSource
 public:
 	FAnmTexture (int lumpnum, int w, int h);
 	void ReadFrame(uint8_t *buffer, uint8_t *palette);
-	PalettedPixels CreatePalettedPixels(int conversion) override;
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 };
 
 
@@ -103,7 +103,7 @@ FAnmTexture::FAnmTexture (int lumpnum, int w, int h)
 
 void FAnmTexture::ReadFrame(uint8_t *pixels, uint8_t *palette)
 {
-	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto lump = fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes(); 
 
 	anim_t anim;
@@ -127,7 +127,7 @@ void FAnmTexture::ReadFrame(uint8_t *pixels, uint8_t *palette)
 //
 //==========================================================================
 
-PalettedPixels FAnmTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FAnmTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	PalettedPixels pixels(Width*Height);
 	uint8_t buffer[64000];
@@ -149,7 +149,7 @@ PalettedPixels FAnmTexture::CreatePalettedPixels(int conversion)
 //
 //==========================================================================
 
-int FAnmTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FAnmTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	uint8_t buffer[64000];
 	uint8_t palette[768];

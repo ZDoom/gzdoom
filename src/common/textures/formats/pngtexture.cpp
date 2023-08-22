@@ -56,8 +56,8 @@ class FPNGTexture : public FImageSource
 public:
 	FPNGTexture (FileReader &lump, int lumpnum, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
 
-	int CopyPixels(FBitmap *bmp, int conversion) override;
-	PalettedPixels CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
@@ -412,7 +412,7 @@ void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 //
 //==========================================================================
 
-PalettedPixels FPNGTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FPNGTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	FileReader *lump;
 	FileReader lfr;
@@ -553,7 +553,7 @@ PalettedPixels FPNGTexture::CreatePalettedPixels(int conversion)
 //
 //===========================================================================
 
-int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
 	PalEntry pe[256];

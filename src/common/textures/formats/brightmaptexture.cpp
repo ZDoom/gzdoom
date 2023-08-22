@@ -43,7 +43,7 @@ class FBrightmapTexture : public FImageSource
 public:
 	FBrightmapTexture (FImageSource *source);
 
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 
 protected:
 	FImageSource *SourcePic;
@@ -65,7 +65,7 @@ FBrightmapTexture::FBrightmapTexture (FImageSource *source)
 	bMasked = false;
 }
 
-int FBrightmapTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FBrightmapTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	SourcePic->CopyTranslatedPixels(bmp, GPalette.GlobalBrightmap.Palette);
 	return 0;

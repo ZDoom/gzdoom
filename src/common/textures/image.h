@@ -67,12 +67,13 @@ protected:
 	int LeftOffset = 0, TopOffset = 0;			// Offsets stored in the image.
 	bool bUseGamePalette = false;				// true if this is an image without its own color set.
 	int ImageID = -1;
+	int NumOfFrames = 1;
 
 	// Internal image creation functions. All external access should go through the cache interface,
 	// so that all code can benefit from future improvements to that.
 
-	virtual PalettedPixels CreatePalettedPixels(int conversion);
-	int CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap);
+	virtual PalettedPixels CreatePalettedPixels(int conversion, int frame = 0);
+	int CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap, int frame = 0);
 
 
 public:
@@ -101,19 +102,25 @@ public:
 	// 'noremap0' will only be looked at by FPatchTexture and forwarded by FMultipatchTexture.
 
 	// Either returns a reference to the cache, or a newly created item. The return of this has to be considered transient. If you need to store the result, use GetPalettedPixels
-	PalettedPixels GetCachedPalettedPixels(int conversion);
+	PalettedPixels GetCachedPalettedPixels(int conversion, int frame = 0);
 
 	// tries to get a buffer from the cache. If not available, create a new one. If further references are pending, create a copy.
-	TArray<uint8_t> GetPalettedPixels(int conversion);
+	TArray<uint8_t> GetPalettedPixels(int conversion, int frame = 0);
 
-	virtual int CopyPixels(FBitmap* bmp, int conversion);
+	virtual int CopyPixels(FBitmap* bmp, int conversion, int frame = 0);
 
-	FBitmap GetCachedBitmap(const PalEntry *remap, int conversion, int *trans = nullptr);
+	FBitmap GetCachedBitmap(const PalEntry *remap, int conversion, int *trans = nullptr, int frame = 0);
 
 	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
 	static FImageSource * GetImage(int lumpnum, bool checkflat);
 
+	// Frame functions
 
+	// Gets number of frames.
+	int GetNumOfFrames() { return NumOfFrames; }
+
+	// Gets duration of frame in miliseconds.
+	virtual int GetDurationOfFrame(int frame) { return 1000; }
 
 	// Conversion option
 	enum EType
@@ -180,8 +187,8 @@ class FBuildTexture : public FImageSource
 {
 public:
 	FBuildTexture(const FString& pathprefix, int tilenum, const uint8_t* pixels, FRemapTable* translation, int width, int height, int left, int top);
-	PalettedPixels CreatePalettedPixels(int conversion) override;
-	int CopyPixels(FBitmap* bmp, int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
+	int CopyPixels(FBitmap* bmp, int conversion, int frame = 0) override;
 
 protected:
 	const uint8_t* RawPixels;
@@ -191,4 +198,4 @@ protected:
 
 class FTexture;
 
-FTexture* CreateImageTexture(FImageSource* img) noexcept;
+FTexture* CreateImageTexture(FImageSource* img, int frame = 0) noexcept;

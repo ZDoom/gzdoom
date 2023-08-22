@@ -98,7 +98,7 @@ public:
 		}
 	}
 
-	PalettedPixels CreatePalettedPixels(int conversion) override
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override
 	{
 		PalettedPixels Pix(512);
 		if (conversion == luminance)
@@ -118,7 +118,7 @@ public:
 		return Pix;
 	}
 
-	int CopyPixels(FBitmap *bmp, int conversion) override
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override
 	{
 		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, GPalette.GrayRamp.Palette);
 		return 0;

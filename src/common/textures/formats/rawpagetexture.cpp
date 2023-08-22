@@ -52,8 +52,8 @@ class FRawPageTexture : public FImageSource
 	int mPaletteLump = -1;
 public:
 	FRawPageTexture (int lumpnum);
-	PalettedPixels CreatePalettedPixels(int conversion) override;
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 };
 
 //==========================================================================
@@ -170,7 +170,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 //
 //==========================================================================
 
-PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	auto lump =  fileSystem.ReadFile (SourceLump);
 	auto source = lump.GetBytes();
@@ -199,7 +199,7 @@ PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion)
 	return Pixels;
 }
 
-int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion);
 	else

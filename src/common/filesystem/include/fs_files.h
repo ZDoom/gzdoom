@@ -194,8 +194,11 @@ public:
 	std::vector<uint8_t> Read(size_t len)
 	{
 		std::vector<uint8_t> buffer(len);
-		Size length = mReader->Read(&buffer[0], (long)len);
-		buffer.resize((size_t)length);
+		if (len > 0)
+		{
+			Size length = mReader->Read(&buffer[0], (long)len);
+			buffer.resize((size_t)length);
+		}
 		return buffer;
 	}
 
@@ -208,9 +211,13 @@ public:
 	{
 		auto len = GetLength();
 		std::vector<uint8_t> buffer(len + padding);
-		Size length = mReader->Read(&buffer[0], (long)len);
-		if (length < len) buffer.clear();
-		else memset(buffer.data() + len, 0, padding);
+		if (len > 0)
+		{
+			Size length = mReader->Read(&buffer[0], (long)len);
+			if (length < len) buffer.clear();
+			else memset(buffer.data() + len, 0, padding);
+		}
+		else buffer[0] = 0;
 		return buffer;
 	}
 

@@ -24,6 +24,17 @@
                     "platform": "!windows | (windows & static & staticcrt)"
                 }
             ]
+        },
+        "vcpkg-libjxl":
+        {
+            "description": "Use libjxl provided by vcpkg.",
+            "dependencies": [
+                {
+                    "name": "libjxl",
+                    "default-features": false,
+                    "platform": "!windows | (windows & static & staticcrt)"
+                }
+            ]
         }
     },
     "dependencies": [

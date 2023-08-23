@@ -40,6 +40,9 @@
 #include "i_system.h"
 #include "fs_findfile.h"
 
+#ifdef __unix__
+#include <sys/stat.h>
+#endif // __unix__
 
 //==========================================================================
 //

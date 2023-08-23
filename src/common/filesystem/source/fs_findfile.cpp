@@ -175,7 +175,7 @@ static int FS_FindAttr(findstate_t *const fileinfo)
 std::string FS_FullPath(const char* directory)
 {
 	// todo
-	return directory
+	return directory;
 }
 
 static size_t FS_GetFileSize(findstate_t* handle, const char* pathname)

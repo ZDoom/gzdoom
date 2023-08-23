@@ -41,6 +41,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <functional>
+#include <vector>
 #include "fs_swap.h"
 
 #include "tarray.h"

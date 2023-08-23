@@ -97,7 +97,7 @@ FWebPTexture::FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff)
 PalettedPixels FWebPTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	FBitmap bitmap;
-	bitmap.Create(Width, Height, frame);
+	bitmap.Create(Width, Height);
 	CopyPixels(&bitmap, conversion);
 	const uint8_t *data = bitmap.GetPixels();
 

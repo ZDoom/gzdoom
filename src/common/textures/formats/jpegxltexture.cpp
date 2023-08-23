@@ -66,7 +66,7 @@ FImageSource *JPEGXLImage_TryCreate(FileReader & file, int lumpnum)
     {
         return nullptr;
     }
-    JxlDecoderSetInput(jxlDecoderPtr, array.Data(), array.Size());
+    JxlDecoderSetInput(jxlDecoderPtr, array.data(), array.size());
     JxlDecoderCloseInput(jxlDecoderPtr);
 
     for (;;)
@@ -162,9 +162,8 @@ int FJPEGXLTexture::CopyPixels(FBitmap *bmp, int conversion)
         return 0;
     }
 
-    auto lump = fileSystem.OpenFileReader(SourceLump);
-	auto array = lump.Read();
-    JxlDecoderSetInput(jxlDecoderPtr, array.Data(), array.Size());
+    auto array = fileSystem.ReadFile(SourceLump);
+    JxlDecoderSetInput(jxlDecoderPtr, array.GetBytes(), array.GetSize());
     JxlDecoderCloseInput(jxlDecoderPtr);
 
     for (;;)

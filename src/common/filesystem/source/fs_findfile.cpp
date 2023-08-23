@@ -63,6 +63,8 @@ enum
 
 #ifndef _WIN32
 
+#include <limits.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fnmatch.h>
 #include <sys/stat.h>
@@ -175,7 +177,11 @@ static int FS_FindAttr(findstate_t *const fileinfo)
 
 std::string FS_FullPath(const char* directory)
 {
-	// todo
+	char fullpath[PATH_MAX];
+
+	if (realpath(directory, fullpath) != nullptr)
+		return fullpath;
+
 	return directory;
 }
 

@@ -1003,7 +1003,7 @@ void FExecList::ExecCommands() const
 	}
 }
 
-void FExecList::AddPullins(TArray<FString> &wads, FConfigFile *config) const
+void FExecList::AddPullins(std::vector<std::string>& wads, FConfigFile *config) const
 {
 	for (unsigned i = 0; i < Pullins.Size(); ++i)
 	{

@@ -297,7 +297,7 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		!node->bOldVersion &&
 		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
 	{
-		FResourceLump *info = resf->FindLump("info.json");
+		auto info = resf->FindLump("info.json");
 		if (info == nullptr)
 		{
 			// this should not happen because the file has already been verified.
@@ -315,15 +315,15 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 
 		SaveCommentString = ExtractSaveComment(arc);
 
-		FResourceLump *pic = resf->FindLump("savepic.png");
+		auto pic = resf->FindLump("savepic.png");
 		if (pic != nullptr)
 		{
 			FileReader picreader;
 
-			picreader.OpenMemoryArray([=](TArray<uint8_t> &array)
+			picreader.OpenMemoryArray([=](std::vector<uint8_t> &array)
 			{
 				auto cache = pic->Lock();
-				array.Resize(pic->LumpSize);
+				array.resize(pic->LumpSize);
 				memcpy(&array[0], cache, pic->LumpSize);
 				pic->Unlock();
 				return true;

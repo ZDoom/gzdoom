@@ -2,8 +2,8 @@
 
 #include "nodebuild.h"
 #include "g_levellocals.h"
+#include "files.h"
 
-class FileReader;
 struct FStrifeDialogueNode;
 struct FStrifeDialogueReply;
 struct Response;

@@ -35,9 +35,11 @@
 
 #include <ctype.h>
 #include "resourcefile.h"
-#include "filesystem.h"
-#include "engineerrors.h"
+#include "fs_filesystem.h"
+#include "fs_swap.h"
 
+namespace FileSys {
+	using namespace byteswap;
 
 struct wadinfo_t
 {
@@ -100,13 +102,19 @@ public:
 		if(Compressed)
 		{
 			FileReader lzss;
-			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false, [](const char* err) { I_Error("%s", err); }))
+			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false, true))
 			{
 				lzss.Read(Cache, LumpSize);
 			}
 		}
 		else
-			Owner->Reader.Read(Cache, LumpSize);
+		{
+			auto read = Owner->Reader.Read(Cache, LumpSize);
+			if (read != LumpSize)
+			{
+				throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
+			}
+		}
 
 		RefCount = 1;
 		return 1;
@@ -128,7 +136,7 @@ class FWadFile : public FResourceFile
 	void SkinHack (FileSystemMessageFunc Printf);
 
 public:
-	FWadFile(const char * filename, FileReader &file);
+	FWadFile(const char * filename, FileReader &file, StringPool* sp);
 	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 };
@@ -142,8 +150,8 @@ public:
 //
 //==========================================================================
 
-FWadFile::FWadFile(const char *filename, FileReader &file) 
-	: FResourceFile(filename, file)
+FWadFile::FWadFile(const char *filename, FileReader &file, StringPool* sp)
+	: FResourceFile(filename, file, sp)
 {
 }
 
@@ -175,7 +183,7 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 		// Check again to detect broken wads
 		if (InfoTableOfs + NumLumps*sizeof(wadlump_t) > (unsigned)wadSize)
 		{
-			Printf(FSMessageLevel::Error, "%s: Bad directory offset.\n", FileName.GetChars());
+			Printf(FSMessageLevel::Error, "%s: Bad directory offset.\n", FileName);
 			return false;
 		}
 	}
@@ -189,17 +197,17 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		char n[9];
-		uppercopy(n, fileinfo[i].Name);
+		for(int j = 0; j < 8; j++) n[j] = toupper(fileinfo[i].Name[j]);
 		n[8] = 0;
 		// This needs to be done differently. We cannot simply assume that all lumps where the first character's high bit is set are compressed without verification.
 		// This requires explicit toggling for precisely the files that need it.
 #if 0
 		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (n[0] & 0x80) == 0x80;
+		n[0] &= ~0x80;
 #else
 		Lumps[i].Compressed = false;
 #endif
-		n[0] &= ~0x80;
-		Lumps[i].LumpNameSetup(n);
+		Lumps[i].LumpNameSetup(n, stringpool);
 
 		Lumps[i].Owner = this;
 		Lumps[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
@@ -212,8 +220,8 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 		{
 			if (Lumps[i].LumpSize != 0)
 			{
-				Printf(FSMessageLevel::Warning, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName.GetChars(), Lumps[i].getName());
-				Lumps[i].LumpNameSetup("");
+				Printf(FSMessageLevel::Warning, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName, Lumps[i].getName());
+				Lumps[i].clearName();
 			}
 			Lumps[i].LumpSize = Lumps[i].Position = 0;
 		}
@@ -297,7 +305,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 	{
 		if (numendmarkers == 0) return;	// no markers found
 
-		Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName.GetChars(), endmarker, startmarker);
+		Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName, endmarker, startmarker);
 
 
 		if (flathack)
@@ -311,7 +319,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
-					Printf(FSMessageLevel::DebugNotify, "%s: Marking %s as potential flat\n", FileName.GetChars(), Lumps[ii].getName());
+					Printf(FSMessageLevel::DebugNotify, "%s: Marking %s as potential flat\n", FileName, Lumps[ii].getName());
 					Lumps[ii].Flags |= LUMPF_MAYBEFLAT;
 				}
 			}
@@ -325,7 +333,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		int start, end;
 		if (markers[i].markertype != 0)
 		{
-			Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName.GetChars(), endmarker, startmarker);
+			Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName, endmarker, startmarker);
 			i++;
 			continue;
 		}
@@ -334,21 +342,21 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		// skip over subsequent x_START markers
 		while (i < markers.Size() && markers[i].markertype == 0)
 		{
-			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName.GetChars(), startmarker);
+			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName, startmarker);
 			i++;
 			continue;
 		}
 		// same for x_END markers
 		while (i < markers.Size()-1 && (markers[i].markertype == 1 && markers[i+1].markertype == 1))
 		{
-			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName.GetChars(), endmarker);
+			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName, endmarker);
 			i++;
 			continue;
 		}
 		// We found a starting marker but no end marker. Ignore this block.
 		if (i >= markers.Size())
 		{
-			Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName.GetChars(), startmarker, endmarker);
+			Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName, startmarker, endmarker);
 			end = NumLumps;
 		}
 		else
@@ -357,14 +365,14 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		}
 
 		// we found a marked block
-		Printf(FSMessageLevel::DebugNotify, "%s: Found %s block at (%d-%d)\n", FileName.GetChars(), startmarker, markers[start].index, end);
+		Printf(FSMessageLevel::DebugNotify, "%s: Found %s block at (%d-%d)\n", FileName, startmarker, markers[start].index, end);
 		for(int j = markers[start].index + 1; j < end; j++)
 		{
 			if (Lumps[j].Namespace != ns_global)
 			{
 				if (!warned)
 				{
-					Printf(FSMessageLevel::Warning, "%s: Overlapping namespaces found (lump %d)\n", FileName.GetChars(), j);
+					Printf(FSMessageLevel::Warning, "%s: Overlapping namespaces found (lump %d)\n", FileName, j);
 				}
 				warned = true;
 			}
@@ -374,7 +382,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				// ignore sprite lumps smaller than 8 bytes (the smallest possible)
 				// in size -- this was used by some dmadds wads
 				// as an 'empty' graphics resource
-				Printf(FSMessageLevel::DebugWarn, "%s: Skipped empty sprite %s (lump %d)\n", FileName.GetChars(), Lumps[j].getName(), j);
+				Printf(FSMessageLevel::DebugWarn, "%s: Skipped empty sprite %s (lump %d)\n", FileName, Lumps[j].getName(), j);
 			}
 			else
 			{
@@ -412,7 +420,7 @@ void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 
 		if (!strnicmp(lump->getName(), "S_SKIN", 6))
 		{ // Wad has at least one skin.
-			lump->LumpNameSetup("S_SKIN");
+			lump->LumpNameSetup("S_SKIN", nullptr);
 			if (!skinned)
 			{
 				skinned = true;
@@ -444,7 +452,7 @@ void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 	}
 	if (skinned && hasmap)
 	{
-		Printf(FSMessageLevel::Attention, "%s: The maps will not be loaded because it has a skin.\n", FileName.GetChars());
+		Printf(FSMessageLevel::Attention, "%s: The maps will not be loaded because it has a skin.\n", FileName);
 		Printf(FSMessageLevel::Attention, "You should remove the skin from the wad to play these maps.\n");
 	}
 }
@@ -456,7 +464,7 @@ void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 //
 //==========================================================================
 
-FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 
@@ -467,7 +475,7 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
-			auto rf = new FWadFile(filename, file);
+			auto rf = new FWadFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
@@ -477,3 +485,4 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* 
 	return NULL;
 }
 
+}

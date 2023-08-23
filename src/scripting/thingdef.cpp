@@ -433,12 +433,12 @@ void ParseScripts()
 		if (FScriptPosition::ErrorCounter > 0)
 		{
 			// Abort if the compiler produced any errors. Also do not compile further lumps, because they very likely miss some stuff.
-			I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(lump).GetChars());
+			I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(lump).c_str());
 		}
 		else if (FScriptPosition::WarnCounter > 0)
 		{
 			// If we got warnings, but no errors, print the information but continue.
-			Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(lump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(lump).c_str());
 		}
 
 	}

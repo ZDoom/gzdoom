@@ -78,7 +78,7 @@ bool FParseContext::FindSym (char *sym, FParseSymbol **val)
 //
 //
 //==========================================================================
-int FParseContext::GetToken (char *&sourcep, FParseToken *yylval)
+int FParseContext::GetToken (const char *&sourcep, FParseToken *yylval)
 {
 	char token[80];
 	int toksize;
@@ -103,7 +103,7 @@ loop:
 			c = *sourcep++;
 			if (c == 'x' || c == 'X')
 			{
-				yylval->val = (int)strtoll(sourcep, &sourcep, 16);
+				yylval->val = (int)strtoll(sourcep, (char**)&sourcep, 16);
 				return TokenTrans[NUM];
 			}
 			else
@@ -118,7 +118,7 @@ loop:
 		if (*endp == '.')
 		{
 			// It's a float
-			yylval->fval = strtod(sourcep, &sourcep);
+			yylval->fval = strtod(sourcep, (char**)& sourcep);
 			return TokenTrans[FLOATVAL];
 		}
 		else
@@ -323,12 +323,12 @@ void FParseContext::ParseLump(const char *lumpname)
 	}
 
 	// Read the lump into a buffer and add a 0-terminator
-	auto lumpdata = fileSystem.GetFileData(lumpno, 1);
 
 	SourceLine = 0;
 	SourceFile = lumpname;
 
-	char *sourcep = (char*)lumpdata.Data();
+	FString source = GetStringFromLump(lumpno);
+	const char *sourcep = source.GetChars();
 	while ( (tokentype = GetToken(sourcep, &token)) )
 	{
 		// It is much easier to handle include statements outside the main parser.

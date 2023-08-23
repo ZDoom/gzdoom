@@ -40,8 +40,8 @@
 #include "i_soundinternal.h"
 #include "zstring.h"
 #include <zmusic.h>
+#include "files.h"
 
-class FileReader;
 struct FSoundChan;
 
 enum EStartSoundFlags

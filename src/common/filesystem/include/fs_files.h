@@ -39,10 +39,37 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <functional>
-#include "basics.h"
-#include "m_swap.h"
+#include "fs_swap.h"
+
 #include "tarray.h"
+
+namespace FileSys {
+	
+class FileSystemException : public std::exception
+{
+protected:
+	static const int MAX_FSERRORTEXT = 1024;
+	char m_Message[MAX_FSERRORTEXT];
+
+public:
+	FileSystemException(const char* error, ...)
+	{
+		va_list argptr;
+		va_start(argptr, error);
+		vsnprintf(m_Message, MAX_FSERRORTEXT, error, argptr);
+		va_end(argptr);
+	}
+	FileSystemException(const char* error, va_list argptr)
+	{
+		vsnprintf(m_Message, MAX_FSERRORTEXT, error, argptr);
+	}
+	char const* what() const noexcept override
+	{
+		return m_Message;
+	}
+};
 
 // Zip compression methods, extended by some internal types to be passed to OpenDecompressor
 enum
@@ -73,31 +100,6 @@ public:
 	virtual const char *GetBuffer() const { return nullptr; }
 	long GetLength () const { return Length; }
 };
-
-class MemoryReader : public FileReaderInterface
-{
-protected:
-	const char * bufptr = nullptr;
-	long FilePos = 0;
-
-	MemoryReader()
-	{}
-
-public:
-	MemoryReader(const char *buffer, long length)
-	{
-		bufptr = buffer;
-		Length = length;
-		FilePos = 0;
-	}
-
-	long Tell() const override;
-	long Seek(long offset, int origin) override;
-	long Read(void *buffer, long len) override;
-	char *Gets(char *strbuf, int len) override;
-	virtual const char *GetBuffer() const override { return bufptr; }
-};
-
 
 struct FResourceLump;
 
@@ -171,8 +173,8 @@ public:
 	bool OpenFilePart(FileReader &parent, Size start, Size length);
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
-	bool OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
-	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, const std::function<void(const char*)>& cb);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
+	bool OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
+	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions = false);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
 	Size Tell() const
 	{
@@ -189,28 +191,33 @@ public:
 		return mReader->Read(buffer, (long)len);
 	}
 
-	TArray<uint8_t> Read(size_t len)
+	std::vector<uint8_t> Read(size_t len)
 	{
-		TArray<uint8_t> buffer((int)len, true);
-		Size length = mReader->Read(&buffer[0], (long)len);
-		buffer.Clamp((int)length);
+		std::vector<uint8_t> buffer(len);
+		if (len > 0)
+		{
+			Size length = mReader->Read(&buffer[0], (long)len);
+			buffer.resize((size_t)length);
+		}
 		return buffer;
 	}
 
-	TArray<uint8_t> Read()
+	std::vector<uint8_t> Read()
 	{
-		TArray<uint8_t> buffer(mReader->Length, true);
-		Size length = mReader->Read(&buffer[0], mReader->Length);
-		if (length < mReader->Length) buffer.Clear();
-		return buffer;
+		return Read(GetLength());
 	}
 
-	TArray<uint8_t> ReadPadded(int padding)
+	std::vector<uint8_t> ReadPadded(size_t padding)
 	{
-		TArray<uint8_t> buffer(mReader->Length + padding, true);
-		Size length = mReader->Read(&buffer[0], mReader->Length);
-		if (length < mReader->Length) buffer.Clear();
-		else memset(buffer.Data() + mReader->Length, 0, padding);
+		auto len = GetLength();
+		std::vector<uint8_t> buffer(len + padding);
+		if (len > 0)
+		{
+			Size length = mReader->Read(&buffer[0], (long)len);
+			if (length < len) buffer.clear();
+			else memset(buffer.data() + len, 0, padding);
+		}
+		else buffer[0] = 0;
 		return buffer;
 	}
 
@@ -243,53 +250,53 @@ public:
 		return v;
 	}
 
+
 	uint16_t ReadUInt16()
 	{
 		uint16_t v = 0;
 		Read(&v, 2);
-		return LittleShort(v);
+		return byteswap::LittleShort(v);
 	}
 
 	int16_t ReadInt16()
 	{
-		int16_t v = 0;
+		return (int16_t)ReadUInt16();
+	}
+
+	int16_t ReadUInt16BE()
+	{
+		uint16_t v = 0;
 		Read(&v, 2);
-		return LittleShort(v);
+		return byteswap::BigShort(v);
 	}
 
 	int16_t ReadInt16BE()
 	{
-		int16_t v = 0;
-		Read(&v, 2);
-		return BigShort(v);
+		return (int16_t)ReadUInt16BE();
 	}
 
 	uint32_t ReadUInt32()
 	{
 		uint32_t v = 0;
 		Read(&v, 4);
-		return LittleLong(v);
+		return byteswap::LittleLong(v);
 	}
 
 	int32_t ReadInt32()
 	{
-		int32_t v = 0;
-		Read(&v, 4);
-		return LittleLong(v);
+		return (int32_t)ReadUInt32();
 	}
 
 	uint32_t ReadUInt32BE()
 	{
 		uint32_t v = 0;
 		Read(&v, 4);
-		return BigLong(v);
+		return byteswap::BigLong(v);
 	}
 
 	int32_t ReadInt32BE()
 	{
-		int32_t v = 0;
-		Read(&v, 4);
-		return BigLong(v);
+		return (int32_t)ReadUInt32BE();
 	}
 
 	uint64_t ReadUInt64()
@@ -302,27 +309,6 @@ public:
 
 
 	friend class FileSystem;
-};
-
-class DecompressorBase : public FileReaderInterface
-{
-	std::function<void(const char*)> ErrorCallback = nullptr;
-public:
-	// These do not work but need to be defined to satisfy the FileReaderInterface.
-	// They will just error out when called.
-	long Tell() const override;
-	long Seek(long offset, int origin) override;
-	char* Gets(char* strbuf, int len) override;
-	void DecompressionError(const char* error, ...) const;
-	void SetErrorCallback(const std::function<void(const char*)>& cb)
-	{
-		ErrorCallback = cb;
-	}
-	void SetOwnsReader();
-
-protected:
-	FileReader* File = nullptr;
-	FileReader OwnedFile;
 };
 
 
@@ -346,7 +332,8 @@ public:
 	virtual size_t Write(const void *buffer, size_t len);
 	virtual long Tell();
 	virtual long Seek(long offset, int mode);
-	size_t Printf(const char *fmt, ...) GCCPRINTF(2,3);
+	size_t Printf(const char *fmt, ...);
+
 	virtual void Close()
 	{
 		if (File != NULL) fclose(File);
@@ -373,5 +360,6 @@ public:
 	TArray<unsigned char>&& TakeBuffer() { return std::move(mBuffer); }
 };
 
+}
 
 #endif

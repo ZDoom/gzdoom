@@ -320,7 +320,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 				}
 			}
 			if (!done)
-				mText = fileSystem.ReadFile(lump).GetString();
+				mText = GetStringFromLump(lump);
 		}
 		else
 		{
@@ -864,7 +864,7 @@ DIntermissionController* F_StartFinale (const char *music, int musicorder, int c
 			int lump = fileSystem.CheckNumForFullName(text, true);
 			if (lump > 0)
 			{
-				textscreen->mText = fileSystem.ReadFile(lump).GetString();
+				textscreen->mText = GetStringFromLump(lump);
 			}
 			else
 			{

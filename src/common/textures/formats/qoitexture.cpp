@@ -140,15 +140,15 @@ int FQOITexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 
 	constexpr auto QOI_COLOR_HASH = [](PalEntry C) { return (C.r * 3 + C.g * 5 + C.b * 7 + C.a * 11); };
 
-	auto lump = fileSystem.OpenFileReader(SourceLump);
-	auto bytes = lump.Read();
-	if (bytes.Size() < 22) return 0;	// error
+	auto lump = fileSystem.ReadFile(SourceLump);
+	if (lump.GetSize() < 22) return 0;	// error
 	PalEntry index[64] = {};
 	PalEntry pe = 0xff000000;
 
 	size_t p = 14, run = 0;
 
-	size_t chunks_len = bytes.Size() - 8;
+	size_t chunks_len = lump.GetSize() - 8;
+	auto bytes = lump.GetBytes();
 
 	for (int h = 0; h < Height; h++)
 	{

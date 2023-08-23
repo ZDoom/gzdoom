@@ -148,7 +148,7 @@ class FSoundFontManager
 {
     TArray<FSoundFontInfo> soundfonts;
 
-    void ProcessOneFile(const FString & fn);
+    void ProcessOneFile(const char* fn);
 
 public:
     void CollectSoundfonts();

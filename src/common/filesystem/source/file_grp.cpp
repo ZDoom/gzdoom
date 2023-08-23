@@ -1,8 +1,9 @@
 /*
-** file_pak.cpp
+** file_grp.cpp
 **
 **---------------------------------------------------------------------------
-** Copyright 2009 Christoph Oelckers
+** Copyright 1998-2009 Randy Heit
+** Copyright 2005-2009 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,7 +33,11 @@
 **
 */
 
-#include "resourcefile.h"
+#include "resourcefile_internal.h"
+#include "fs_swap.h"
+
+namespace FileSys {
+	using namespace byteswap;
 
 //==========================================================================
 //
@@ -40,44 +45,48 @@
 //
 //==========================================================================
 
-struct dpackfile_t
+struct GrpHeader
 {
-	char	name[56];
-	int		filepos, filelen;
-} ;
+	uint32_t		Magic[3];
+	uint32_t		NumLumps;
+};
 
-struct dpackheader_t
+struct GrpLump
 {
-	int		ident;		// == IDPAKHEADER
-	int		dirofs;
-	int		dirlen;
-} ;
+	union
+	{
+		struct
+		{
+			char		Name[12];
+			uint32_t		Size;
+		};
+		char NameWithZero[13];
+	};
+};
 
 
 //==========================================================================
 //
-// Wad file
+// Build GRP file
 //
 //==========================================================================
 
-class FPakFile : public FUncompressedFile
+class FGrpFile : public FUncompressedFile
 {
 public:
-	FPakFile(const char * filename, FileReader &file);
+	FGrpFile(const char * filename, FileReader &file, StringPool* sp);
 	bool Open(LumpFilterInfo* filter);
 };
 
 
 //==========================================================================
 //
-// FWadFile::FWadFile
-//
-// Initializes a WAD file
+// Initializes a Build GRP file
 //
 //==========================================================================
 
-FPakFile::FPakFile(const char *filename, FileReader &file) 
-	: FUncompressedFile(filename, file)
+FGrpFile::FGrpFile(const char *filename, FileReader &file, StringPool* sp)
+: FUncompressedFile(filename, file, sp)
 {
 }
 
@@ -87,31 +96,32 @@ FPakFile::FPakFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FPakFile::Open(LumpFilterInfo* filter)
+bool FGrpFile::Open(LumpFilterInfo* filter)
 {
-	dpackheader_t header;
+	GrpHeader header;
 
 	Reader.Read(&header, sizeof(header));
-	NumLumps = LittleLong(header.dirlen) / sizeof(dpackfile_t);
-	header.dirofs = LittleLong(header.dirofs);
+	NumLumps = LittleLong(header.NumLumps);
 
-	TArray<dpackfile_t> fileinfo(NumLumps, true);
-	Reader.Seek (header.dirofs, FileReader::SeekSet);
-	Reader.Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));
+	GrpLump *fileinfo = new GrpLump[NumLumps];
+	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
 
 	Lumps.Resize(NumLumps);
 
+	int Position = sizeof(GrpHeader) + NumLumps * sizeof(GrpLump);
+
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
-		Lumps[i].LumpNameSetup(fileinfo[i].name);
-		Lumps[i].Flags = LUMPF_FULLPATH;
 		Lumps[i].Owner = this;
-		Lumps[i].Position = LittleLong(fileinfo[i].filepos);
-		Lumps[i].LumpSize = LittleLong(fileinfo[i].filelen);
-		Lumps[i].CheckEmbedded(filter);
+		Lumps[i].Position = Position;
+		Lumps[i].LumpSize = LittleLong(fileinfo[i].Size);
+		Position += fileinfo[i].Size;
+		Lumps[i].Flags = 0;
+		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
+		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero, stringpool);
 	}
 	GenerateHash();
-	PostProcessArchive(&Lumps[0], sizeof(Lumps[0]), filter);
+	delete[] fileinfo;
 	return true;
 }
 
@@ -122,18 +132,18 @@ bool FPakFile::Open(LumpFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
-	char head[4];
+	char head[12];
 
 	if (file.GetLength() >= 12)
 	{
 		file.Seek(0, FileReader::SeekSet);
-		file.Read(&head, 4);
+		file.Read(&head, 12);
 		file.Seek(0, FileReader::SeekSet);
-		if (!memcmp(head, "PACK", 4))
+		if (!memcmp(head, "KenSilverman", 12))
 		{
-			auto rf = new FPakFile(filename, file);
+			auto rf = new FGrpFile(filename, file, sp);
 			if (rf->Open(filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
@@ -143,3 +153,4 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* 
 	return NULL;
 }
 
+}

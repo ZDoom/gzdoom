@@ -50,10 +50,11 @@
 #include "filesystem.h"
 #include "gstrings.h"
 #include "version.h"
-#include "findfile.h"
+#include "fs_findfile.h"
 #include "md5.h"
 #include "i_specialpaths.h"
 #include "i_system.h"
+#include "cmdlib.h"
 
 extern FILE* Logfile;
 
@@ -178,75 +179,44 @@ UNSAFE_CCMD (crashout)
 
 UNSAFE_CCMD (dir)
 {
-	FString dir, path;
-	const char *match;
-	findstate_t c_file;
-	void *file;
-
-	FString curdir = I_GetCWD();
-	if (curdir.IsEmpty())
-	{
-		Printf ("Current path too long\n");
-		return;
-	}
+	FString path;
 
 	if (argv.argc() > 1)
 	{
 		path = NicePath(argv[1]);
-		if (!I_ChDir(path))
-		{
-			match = path;
-			dir = ExtractFilePath(path);
-			if (dir[0] != '\0')
-			{
-				match += dir.Len();
-			}
-			else
-			{
-				dir = "./";
-			}
-			if (match[0] == '\0')
-			{
-				match = "*";
-			}
-			if (!I_ChDir(dir))
-			{
-				Printf ("%s not found\n", dir.GetChars());
-				return;
-			}
-		}
-		else
-		{
-			match = "*";
-			dir = path;
-		}
 	}
 	else
 	{
-		match = "*";
-		dir = curdir;
+		path = I_GetCWD();;
 	}
-	if (dir[dir.Len()-1] != '/')
+	auto base = ExtractFileBase(path, true);
+	FString bpath;
+	if (base.IndexOfAny("*?") >= 0)
 	{
-		dir += '/';
+		bpath = ExtractFilePath(path);
 	}
-
-	if ( (file = I_FindFirst (match, &c_file)) == ((void *)(-1)))
-		Printf ("Nothing matching %s%s\n", dir.GetChars(), match);
 	else
 	{
-		Printf ("Listing of %s%s:\n", dir.GetChars(), match);
-		do
-		{
-			if (I_FindAttr (&c_file) & FA_DIREC)
-				Printf (PRINT_BOLD, "%s <dir>\n", I_FindName (&c_file));
-			else
-				Printf ("%s\n", I_FindName (&c_file));
-		} while (I_FindNext (file, &c_file) == 0);
-		I_FindClose (file);
+		base = "*";
+		bpath = path;
 	}
 
-	I_ChDir(curdir);
+	FileSys::FileList list;
+	if (!FileSys::ScanDirectory(list, bpath, base, true))
+	{ 
+		Printf ("Nothing matching %s\n", path.GetChars());
+	}
+	else
+	{
+		Printf ("Listing of %s:\n", path.GetChars());
+		for(auto& entry : list)
+		{
+			if (entry.isDirectory)
+				Printf (PRINT_BOLD, "%s <dir>\n", entry.FileName.c_str());
+			else
+				Printf ("%s\n", entry.FileName.c_str());
+		}
+	}
 }
 
 //==========================================================================

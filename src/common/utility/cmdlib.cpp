@@ -35,7 +35,8 @@
 
 
 #include "cmdlib.h"
-#include "findfile.h"
+#include "fs_findfile.h"
+#include "filesystem.h"
 #include "files.h"
 #include "md5.h"
 
@@ -896,68 +897,6 @@ FString NicePath(const char *path)
 
 //==========================================================================
 //
-// ScanDirectory
-//
-//==========================================================================
-
-bool ScanDirectory(TArray<FFileList> &list, const char *dirpath)
-{
-	findstate_t find;
-	FString dirmatch;
-
-	dirmatch << dirpath << "*";
-
-	auto handle = I_FindFirst(dirmatch.GetChars(), &find);
-	if (handle == ((void*)(-1)))
-	{
-		return false;
-	}
-	else
-	{
-		do
-		{
-			auto attr = I_FindAttr(&find);
-			if (attr & FA_HIDDEN)
-			{
-				// Skip hidden files and directories. (Prevents SVN bookkeeping
-				// info from being included.)
-				continue;
-			}
-			auto fn = I_FindName(&find);
-
-			if (attr & FA_DIREC)
-			{
-				if (fn[0] == '.' &&
-					(fn[1] == '\0' ||
-					(fn[1] == '.' && fn[2] == '\0')))
-				{
-					// Do not record . and .. directories.
-					continue;
-				}
-
-				FFileList* fl = &list[list.Reserve(1)];
-				fl->Filename << dirpath << fn;
-				fl->isDirectory = true;
-				FString newdir = fl->Filename;
-				newdir << "/";
-				ScanDirectory(list, newdir);
-			}
-			else
-			{
-				FFileList* fl = &list[list.Reserve(1)];
-				fl->Filename << dirpath << fn;
-				fl->isDirectory = false;
-			}
-		} 
-		while (I_FindNext(handle, &find) == 0);
-		I_FindClose(handle);
-	}
-	return true;
-}
-
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -1045,7 +984,7 @@ void md5Update(FileReader& file, MD5Context& md5, unsigned len)
 
 	while (len > 0)
 	{
-		t = min<unsigned>(len, sizeof(readbuf));
+		t = std::min<unsigned>(len, sizeof(readbuf));
 		len -= t;
 		t = (long)file.Read(readbuf, t);
 		md5.Update(readbuf, t);
@@ -1070,3 +1009,17 @@ void uppercopy(char* to, const char* from)
 		to[i] = 0;
 }
 
+//==========================================================================
+//
+// GetStringFromLump
+//
+// Loads a zero terminated string from a lump in the file system
+//==========================================================================
+
+FString GetStringFromLump(int lump)
+{
+	auto fd = fileSystem.ReadFile(lump);
+	FString ScriptBuffer(fd.GetString(), fd.GetSize());
+	ScriptBuffer.Truncate(strlen(ScriptBuffer.GetChars()));	// this is necessary to properly truncate the generated string to not contain 0 bytes.
+	return ScriptBuffer;
+}

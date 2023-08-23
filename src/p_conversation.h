@@ -72,7 +72,5 @@ void P_ResumeConversation ();
 
 void P_ConversationCommand (int netcode, int player, uint8_t **stream);
 
-class FileReader;
-
 
 #endif

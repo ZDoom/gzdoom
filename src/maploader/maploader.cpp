@@ -733,45 +733,36 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		if (compressed)
 		{
 			FileReader zip;
-			try
+			if (zip.OpenDecompressor(dalump, -1, FileSys::METHOD_ZLIB, false, true))
 			{
-				if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
-				{
-					LoadZNodes(zip, type);
-				}
-				else
-				{
-					Printf("Error loading nodes: Corrupt data.\n");
-					return false;
-				}
+				LoadZNodes(zip, type);
+				return true;
 			}
-			catch (const CRecoverableError& err)
+			else
 			{
-				Printf("Error loading nodes: %s.\n", err.what());
-
-				ForceNodeBuild = true;
-				Level->subsectors.Clear();
-				Level->segs.Clear();
-				Level->nodes.Clear();
-				return false;
+				Printf("Error loading nodes: Corrupt data.\n");
 			}
 		}
 		else
 		{
 			LoadZNodes(dalump, type);
+			return true;
 		}
-		return true;
 	}
 	catch (CRecoverableError &error)
 	{
 		Printf("Error loading nodes: %s\n", error.GetMessage());
-
-		ForceNodeBuild = true;
-		Level->subsectors.Clear();
-		Level->segs.Clear();
-		Level->nodes.Clear();
-		return false;
 	}
+	catch (FileSys::FileSystemException& error)
+	{
+		Printf("Error loading nodes: %s\n", error.what());
+	}
+	// clean up.
+	ForceNodeBuild = true;
+	Level->subsectors.Clear();
+	Level->segs.Clear();
+	Level->nodes.Clear();
+	return false;
 
 }
 
@@ -1166,7 +1157,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 template<class nodetype, class subsectortype>
 bool MapLoader::LoadNodes (MapData * map)
 {
-	FileData	data;
+	FileSys::FileData	data;
 	int 		j;
 	int 		k;
 	nodetype	*mn;
@@ -2130,9 +2121,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 
 				if (developer >= DMSG_NOTIFY)
 				{
-					char lumpname[9];
-					lumpname[8] = 0;
-					fileSystem.GetFileShortName(lumpname, lumpnum);
+					const char *lumpname = fileSystem.GetFileShortName(lumpnum);
 					if (*alpha < 0) Printf("%s appears to be additive translucency %d (%d%%)\n", lumpname, -*alpha, -*alpha * 100 / 255);
 					else Printf("%s appears to be translucency %d (%d%%)\n", lumpname, *alpha, *alpha * 100 / 255);
 				}
@@ -3349,8 +3338,9 @@ void MapLoader::LoadLightmap(MapData *map)
 		return;
 
 	FileReader fr;
-	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
+	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, FileSys::METHOD_ZLIB, false, false))
 		return;
+
 
 	int version = fr.ReadInt32();
 	if (version != 0)

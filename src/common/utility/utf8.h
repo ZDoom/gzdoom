@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 int utf8_encode(int32_t codepoint, uint8_t *buffer, int *size);
 int utf8_decode(const uint8_t *src, int *size);
 int GetCharFromString(const uint8_t *&string);

@@ -37,8 +37,16 @@
 #include <sys/stat.h>
 
 #include "resourcefile.h"
-#include "cmdlib.h"
-#include "findfile.h"
+#include "fs_findfile.h"
+#include "fs_stringpool.h"
+
+namespace FileSys {
+	
+std::string FS_FullPath(const char* directory);
+
+#ifdef _WIN32
+std::wstring toWide(const char* str);
+#endif
 
 //==========================================================================
 //
@@ -51,7 +59,7 @@ struct FDirectoryLump : public FResourceLump
 	FileReader NewReader() override;
 	int FillCache() override;
 
-	FString mFullPath;
+	std::string mFullPath;
 };
 
 
@@ -66,11 +74,11 @@ class FDirectory : public FResourceFile
 	TArray<FDirectoryLump> Lumps;
 	const bool nosubdir;
 
-	int AddDirectory(const char* dirpath, FileSystemMessageFunc Printf);
+	int AddDirectory(const char* dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	void AddEntry(const char *fullpath, int size);
 
 public:
-	FDirectory(const char * dirname, bool nosubdirflag = false);
+	FDirectory(const char * dirname, StringPool* sp, bool nosubdirflag = false);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
@@ -83,25 +91,13 @@ public:
 //
 //==========================================================================
 
-FDirectory::FDirectory(const char * directory, bool nosubdirflag)
-: FResourceFile(NULL), nosubdir(nosubdirflag)
+FDirectory::FDirectory(const char * directory, StringPool* sp, bool nosubdirflag)
+	: FResourceFile("", sp), nosubdir(nosubdirflag)
 {
-	FString dirname;
-
-	#ifdef _WIN32
-		directory = _fullpath(NULL, directory, _MAX_PATH);
-	#else
-		// Todo for Linux: Resolve the path before using it
-	#endif
-	dirname = directory;
-#ifdef _WIN32
-	free((void *)directory);
-#endif
-	dirname.Substitute("\\", "/");
-	if (dirname[dirname.Len()-1] != '/') dirname += '/';
-	FileName = dirname;
+	auto fn = FS_FullPath(directory);
+	if (fn.back() != '/') fn += '/';
+	FileName = sp->Strdup(fn.c_str());
 }
-
 
 //==========================================================================
 //
@@ -109,79 +105,41 @@ FDirectory::FDirectory(const char * directory, bool nosubdirflag)
 //
 //==========================================================================
 
-int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
+int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
-	void * handle;
 	int count = 0;
 
-	FString dirmatch = dirpath;
-	findstate_t find;
-	dirmatch += '*';
-
-	handle = I_FindFirst(dirmatch.GetChars(), &find);
-	if (handle == ((void *)(-1)))
+	FileList list;
+	if (!ScanDirectory(list, dirpath, "*"))
 	{
 		Printf(FSMessageLevel::Error, "Could not scan '%s': %s\n", dirpath, strerror(errno));
 	}
 	else
 	{
-		do
+		for(auto& entry : list)
 		{
-			// I_FindName only returns the file's name and not its full path
-			auto attr = I_FindAttr(&find);
-			if (attr & FA_HIDDEN)
+			if (!entry.isDirectory)
 			{
-				// Skip hidden files and directories. (Prevents SVN bookkeeping
-				// info from being included.)
-				continue;
-			}
-			FString fi = I_FindName(&find);
-			if (attr &  FA_DIREC)
-			{
-				if (nosubdir || (fi[0] == '.' &&
-								 (fi[1] == '\0' ||
-								  (fi[1] == '.' && fi[2] == '\0'))))
-				{
-					// Do not record . and .. directories.
-					continue;
-				}
-				FString newdir = dirpath;
-				newdir << fi << '/';
-				count += AddDirectory(newdir, Printf);
-			}
-			else
-			{
-				if (strstr(fi, ".orig") || strstr(fi, ".bak") || strstr(fi, ".cache"))
+				auto fi = entry.FileName;
+				for (auto& c : fi) c = tolower(c);
+				if (strstr(fi.c_str(), ".orig") || strstr(fi.c_str(), ".bak") || strstr(fi.c_str(), ".cache"))
 				{
 					// We shouldn't add backup files to the file system
 					continue;
 				}
-				size_t size = 0;
-				FString fn = FString(dirpath) + fi;
 
-				// The next one is courtesy of EDuke32. :(
-				// Putting cache files in the application directory is very bad style.
-				// Unfortunately, having a garbage file named "texture" present will cause serious problems down the line.
-				if (!stricmp(fi, "textures"))
+				if (filter->filenamecheck == nullptr || filter->filenamecheck(fi.c_str(), entry.FilePath.c_str()))
 				{
-					FILE* f = fopen(fn, "rb");
-					if (f)
+					if (entry.Length > 0x7fffffff)
 					{
-						char check[3]{};
-						fread(check, 1, 3, f);
-						if (!memcmp(check, "LZ4", 3)) continue;
+						Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", entry.FilePath.c_str());
+						continue;
 					}
-				}
-
-				if (GetFileInfo(fn, &size, nullptr))
-				{
-					AddEntry(fn, (int)size);
+					AddEntry(entry.FilePathRel.c_str(), (int)entry.Length);
 					count++;
 				}
 			}
-
-		} while (I_FindNext (handle, &find) == 0);
-		I_FindClose (handle);
+		}
 	}
 	return count;
 }
@@ -194,7 +152,7 @@ int FDirectory::AddDirectory(const char *dirpath, FileSystemMessageFunc Printf)
 
 bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
-	NumLumps = AddDirectory(FileName, Printf);
+	NumLumps = AddDirectory(FileName, filter, Printf);
 	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }
@@ -213,11 +171,11 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 	lump_p->mFullPath = fullpath;
 
 	// [mxd] Convert name to lowercase
-	FString name = fullpath + strlen(FileName);
-	name.ToLower();
+	std::string name = fullpath + strlen(FileName);
+	for (auto& c : name) c = tolower(c);
 
 	// The lump's name is only the part relative to the main directory
-	lump_p->LumpNameSetup(name);
+	lump_p->LumpNameSetup(name.c_str(), stringpool);
 	lump_p->LumpSize = size;
 	lump_p->Owner = this;
 	lump_p->Flags = 0;
@@ -234,7 +192,7 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 FileReader FDirectoryLump::NewReader()
 {
 	FileReader fr;
-	fr.OpenFile(mFullPath);
+	fr.OpenFile(mFullPath.c_str());
 	return fr;
 }
 
@@ -248,12 +206,15 @@ int FDirectoryLump::FillCache()
 {
 	FileReader fr;
 	Cache = new char[LumpSize];
-	if (!fr.OpenFile(mFullPath))
+	if (!fr.OpenFile(mFullPath.c_str()))
 	{
-		memset(Cache, 0, LumpSize);
-		return 0;
+		throw FileSystemException("unable to open file");
 	}
-	fr.Read(Cache, LumpSize);
+	auto read = fr.Read(Cache, LumpSize);
+	if (read != LumpSize)
+	{
+		throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
+	}
 	RefCount = 1;
 	return 1;
 }
@@ -264,11 +225,12 @@ int FDirectoryLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckDir(const char *filename, bool nosubdirflag, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+FResourceFile *CheckDir(const char *filename, bool nosubdirflag, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
-	auto rf = new FDirectory(filename, nosubdirflag);
+	auto rf = new FDirectory(filename, sp, nosubdirflag);
 	if (rf->Open(filter, Printf)) return rf;
 	delete rf;
 	return nullptr;
 }
 
+}

@@ -81,7 +81,7 @@ class DoomSoundEngine : public SoundEngine
 
 	void CalcPosVel(int type, const void* source, const float pt[3], int channum, int chanflags, FSoundID soundid, FVector3* pos, FVector3* vel, FSoundChan *) override;
 	bool ValidatePosVel(int sourcetype, const void* source, const FVector3& pos, const FVector3& vel);
-	TArray<uint8_t> ReadSound(int lumpnum);
+	std::vector<uint8_t> ReadSound(int lumpnum);
 	FSoundID PickReplacement(FSoundID refid);
 	FSoundID ResolveSound(const void *ent, int type, FSoundID soundid, float &attenuation) override;
 	void CacheSound(sfxinfo_t* sfx) override;
@@ -191,7 +191,7 @@ static FileReader OpenMusic(const char* musicname)
 	{
 		int lumpnum;
 		lumpnum = fileSystem.CheckNumForFullName(musicname);
-		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, ns_music);
+		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, FileSys::ns_music);
 		if (lumpnum == -1)
 		{
 			Printf("Music \"%s\" not found\n", musicname);
@@ -237,7 +237,8 @@ void S_Init()
 	TArray<uint8_t> curve;
 	if (curvelump >= 0)
 	{
-		curve = fileSystem.GetFileData(curvelump);
+		curve.Resize(fileSystem.FileLength(curvelump));
+		fileSystem.ReadFile(curvelump, curve.Data());
 	}
 	soundEngine->Init(curve);
 }
@@ -1165,7 +1166,7 @@ bool DoomSoundEngine::ValidatePosVel(int sourcetype, const void* source, const F
 // 
 //==========================================================================
 
-TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
+std::vector<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 {
 	auto wlump = fileSystem.OpenFileReader(lumpnum);
 	return wlump.Read();
@@ -1241,9 +1242,8 @@ void DoomSoundEngine::NoiseDebug()
 		color = (chan->ChanFlags & CHANF_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		fileSystem.GetFileShortName(temp, S_sfx[chan->SoundID.index()].lumpnum);
-		temp[8] = 0;
-		DrawText(twod, NewConsoleFont, color, 0, y, temp, TAG_DONE);
+		auto tname = fileSystem.GetFileShortName(S_sfx[chan->SoundID.index()].lumpnum);
+		DrawText(twod, NewConsoleFont, color, 0, y, tname, TAG_DONE);
 
 		if (!(chan->ChanFlags & CHANF_IS3D))
 		{
@@ -1336,10 +1336,8 @@ ADD_STAT(sounddebug)
 
 void DoomSoundEngine::PrintSoundList()
 {
-	char lumpname[9];
 	unsigned int i;
 
-	lumpname[8] = 0;
 	for (i = 0; i < soundEngine->GetNumSounds(); i++)
 	{
 		const sfxinfo_t* sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
@@ -1359,8 +1357,7 @@ void DoomSoundEngine::PrintSoundList()
 		}
 		else if (S_sfx[i].lumpnum != -1)
 		{
-			fileSystem.GetFileShortName(lumpname, sfx->lumpnum);
-			Printf("%3d. %s (%s)\n", i, sfx->name.GetChars(), lumpname);
+			Printf("%3d. %s (%s)\n", i, sfx->name.GetChars(), fileSystem.GetFileShortName(sfx->lumpnum));
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)
 		{

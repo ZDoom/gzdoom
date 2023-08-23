@@ -346,9 +346,9 @@ void SetDefaultColormap (const char *name)
 		uint8_t unremap[256];
 		uint8_t remap[256];
 
-		lump = fileSystem.CheckNumForFullName (name, true, ns_colormaps);
+		lump = fileSystem.CheckNumForFullName (name, true, FileSys::ns_colormaps);
 		if (lump == -1)
-			lump = fileSystem.CheckNumForName (name, ns_global);
+			lump = fileSystem.CheckNumForName (name, FileSys::ns_global);
 
 		// [RH] If using BUILD's palette, generate the colormap
 		if (lump == -1 || fileSystem.CheckNumForFullName("palette.dat") >= 0 || fileSystem.CheckNumForFullName("blood.pal") >= 0)

@@ -122,6 +122,8 @@
 #include "i_system.h"  // for SHARE_DIR
 #endif // __unix__
 
+using namespace FileSys;
+
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Bool, cl_customizeinvulmap)
@@ -201,11 +203,6 @@ bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern FName MessageBoxClass;
-
-static const char* iwad_folders[] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/", 
-	"materials/", "models/", "fonts/", "brightmaps/"};
-static const char* iwad_reserved[] = { "mapinfo", "zmapinfo", "umapinfo", "gameinfo", "sndinfo", "sndseq", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
-
 
 CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL | CVAR_VIRTUAL)
 {
@@ -1233,13 +1230,21 @@ void D_DoomLoop ()
 				return;
 			}
 		}
-		catch (CRecoverableError &error)
+		catch (const CRecoverableError &error)
 		{
 			if (error.GetMessage ())
 			{
 				Printf (PRINT_NONOTIFY | PRINT_BOLD, "\n%s\n", error.GetMessage());
 			}
 			D_ErrorCleanup ();
+		}
+		catch (const FileSystemException& error) // in case this propagates up to here it should be treated as a recoverable error.
+		{
+			if (error.what())
+			{
+				Printf(PRINT_NONOTIFY | PRINT_BOLD, "\n%s\n", error.what());
+			}
+			D_ErrorCleanup();
 		}
 		catch (CVMAbortException &error)
 		{
@@ -1772,7 +1777,7 @@ FExecList *D_MultiExec (FArgs *list, FExecList *exec)
 	return exec;
 }
 
-static void GetCmdLineFiles(TArray<FString> &wadfiles)
+static void GetCmdLineFiles(std::vector<std::string>& wadfiles)
 {
 	FString *args;
 	int i, argc;
@@ -1785,7 +1790,7 @@ static void GetCmdLineFiles(TArray<FString> &wadfiles)
 }
 
 
-static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char *data, int size)
+static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, const char *data, int size)
 {
 	FScanner sc;
 	FString iwad;
@@ -1912,11 +1917,12 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 
 void GetReserved(LumpFilterInfo& lfi)
 {
-	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
-	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+	lfi.reservedFolders = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/",
+	"materials/", "models/", "fonts/", "brightmaps/" };
+	lfi.requiredPrefixes = { "mapinfo", "zmapinfo", "umapinfo", "gameinfo", "sndinfo", "sndseq", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 }
 
-static FString CheckGameInfo(TArray<FString> & pwads)
+static FString CheckGameInfo(std::vector<std::string> & pwads)
 {
 	FileSystem check;
 
@@ -1930,9 +1936,9 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 		if (num >= 0)
 		{
 			// Found one!
-			auto data = check.GetFileData(num);
+			auto data = check.ReadFile(num);
 			auto wadname = check.GetResourceFileName(check.GetFileContainer(num));
-			return ParseGameInfo(pwads, wadname, (const char*)data.Data(), data.Size());
+			return ParseGameInfo(pwads, wadname, data.GetString(), (int)data.GetSize());
 		}
 	}
 	return "";
@@ -1983,7 +1989,7 @@ static void D_DoomInit()
 //
 //==========================================================================
 
-static void AddAutoloadFiles(const char *autoname, TArray<FString>& allwads)
+static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& allwads)
 {
 	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
@@ -3030,6 +3036,26 @@ static FILE* D_GetHashFile()
 	return hashfile;
 }
 
+// checks if a file within a directory is allowed to be added to the file system.
+static bool FileNameCheck(const char* base, const char* path)
+{
+	// This one is courtesy of EDuke32. :(
+	// Putting cache files in the application directory is very bad style.
+	// Unfortunately, having a garbage file named "textures" present will cause serious problems down the line.
+	if (!strnicmp(base, "textures", 8))
+	{
+		// do not use fopen. The path may contain non-ASCII characters.
+		FileReader f;
+		if (f.OpenFile(path))
+		{
+			char check[3]{};
+			f.Read(check, 3);
+			if (!memcmp(check, "LZ4", 3)) return false;
+		}
+	}
+	return true;
+}
+
 static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 {
 	va_list arg;
@@ -3057,7 +3083,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 		DPrintf(DMSG_NOTIFY, "%s", text.GetChars());
 		break;
 	}
-	return text.Len();
+	return (int)text.Len();
 }
 //==========================================================================
 //
@@ -3065,7 +3091,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 //
 //==========================================================================
 
-static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArray<FString>& pwads)
+static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allwads, std::vector<std::string>& pwads)
 {
 	SavegameFolder = iwad_info->Autoname;
 	gameinfo.gametype = iwad_info->gametype;
@@ -3130,9 +3156,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 
 	for (auto& inf : blanket)
 	{
-		if (gameinfo.gametype & inf.match) lfi.gameTypeFilter.Push(inf.name);
+		if (gameinfo.gametype & inf.match) lfi.gameTypeFilter.push_back(inf.name);
 	}
-	lfi.gameTypeFilter.Push(FStringf("game-%s", GameTypeName()));
+	lfi.gameTypeFilter.push_back(FStringf("game-%s", GameTypeName()).GetChars());
 
 	GetReserved(lfi);
 
@@ -3143,7 +3169,11 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 		FixMacHexen(fileSystem);
 		FindStrifeTeaserVoices(fileSystem);
 	};
-	allwads.Append(std::move(pwads));
+	allwads.insert(
+		allwads.end(),
+		std::make_move_iterator(pwads.begin()),
+		std::make_move_iterator(pwads.end())
+	);
 
 	bool allowduplicates = Args->CheckParm("-allowduplicates");
 	auto hashfile = D_GetHashFile();
@@ -3151,8 +3181,8 @@ static int D_InitGame(const FIWADInfo* iwad_info, TArray<FString>& allwads, TArr
 	{
 		I_FatalError("FileSystem: no files found");
 	}
-	allwads.Clear();
-	allwads.ShrinkToFit();
+	allwads.clear();
+	allwads.shrink_to_fit();
 	SetMapxxFlag();
 
 	D_GrabCVarDefaults(); //parse DEFCVARS
@@ -3684,7 +3714,7 @@ static int D_DoomMain_Internal (void)
 		// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
 		// the IWAD is known.
 
-		TArray<FString> pwads;
+		std::vector<std::string> pwads;
 		GetCmdLineFiles(pwads);
 		FString iwad = CheckGameInfo(pwads);
 
@@ -3692,18 +3722,21 @@ static int D_DoomMain_Internal (void)
 		// restart is initiated without a defined IWAD assume for now that it's not going to change.
 		if (iwad.IsEmpty()) iwad = lastIWAD;
 
-		TArray<FString> allwads;
+		std::vector<std::string> allwads;
 		
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad, optionalwad);
 		if (!iwad_info) return 0;	// user exited the selection popup via cancel button.
-		if ((iwad_info->flags & GI_SHAREWARE) && pwads.Size() > 0)
+		if ((iwad_info->flags & GI_SHAREWARE) && pwads.size() > 0)
 		{
 			I_FatalError ("You cannot -file with the shareware version. Register!");
 		}
 		lastIWAD = iwad;
 
 		int ret = D_InitGame(iwad_info, allwads, pwads);
-		allwads.Reset();
+		pwads.clear();
+		pwads.shrink_to_fit();
+		allwads.clear();
+		allwads.shrink_to_fit();
 		delete iwad_man;	// now we won't need this anymore
 		iwad_man = NULL;
 		if (ret != 0) return ret;

@@ -38,6 +38,7 @@
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"
+#include "m_swap.h"
 
 
 //==========================================================================
@@ -73,7 +74,7 @@ bool CheckIfRaw(FileReader & data, unsigned desiredsize)
 
 	data.Seek(0, FileReader::SeekSet);
 	auto bits = data.Read(data.GetLength());
-	foo = (patch_t *)bits.Data();
+	foo = (patch_t *)bits.data();
 
 	height = LittleShort(foo->height);
 	width = LittleShort(foo->width);
@@ -154,9 +155,8 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 	Height = 200;
 
 	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
-	FString Name;
-	fileSystem.GetFileShortName(Name, lumpnum);
-	if (Name.CompareNoCase("E2END") == 0)
+	auto Name = fileSystem.GetFileShortName(lumpnum);
+	if (stricmp(Name, "E2END") == 0)
 	{
 		mPaletteLump = fileSystem.CheckNumForName("E2PAL");
 		if (fileSystem.FileLength(mPaletteLump) < 768) mPaletteLump = -1;
@@ -172,8 +172,8 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 
 PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion, int frame)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
 
@@ -204,10 +204,10 @@ int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion);
 	else
 	{
-		FileData lump = fileSystem.ReadFile(SourceLump);
-		FileData plump = fileSystem.ReadFile(mPaletteLump);
-		const uint8_t *source = (const uint8_t *)lump.GetMem();
-		const uint8_t *psource = (const uint8_t *)plump.GetMem();
+		auto lump =  fileSystem.ReadFile(SourceLump);
+		auto plump = fileSystem.ReadFile(mPaletteLump);
+		auto source = lump.GetBytes();
+		auto psource = plump.GetBytes();
 		PalEntry paldata[256];
 		for (auto & pe : paldata)
 		{

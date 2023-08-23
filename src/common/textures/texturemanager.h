@@ -88,6 +88,15 @@ public:
 		}
 	}
 
+	//==========================================================================
+	//
+	// link a texture with a given lump
+	//
+	//==========================================================================
+
+	TMap<int, FGameTexture*> linkedMap;
+	void SetLinkedTexture(int lump, FGameTexture* tex);
+	FGameTexture* GetLinkedTexture(int lump);
 
 	enum
 	{

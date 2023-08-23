@@ -57,6 +57,8 @@
 #include "base64.h"
 #include "vm.h"
 
+using namespace FileSys;
+
 extern DObject *WP_NOCHANGE;
 bool save_full = false;	// for testing. Should be removed afterward.
 
@@ -747,6 +749,7 @@ FCompressedBuffer FSerializer::GetCompressedOutput()
 	FCompressedBuffer buff;
 	WriteObjects();
 	EndObject();
+	buff.filename = nullptr;
 	buff.mSize = (unsigned)w->mOutString.GetSize();
 	buff.mZipFlags = 0;
 	buff.mCRC32 = crc32(0, (const Bytef*)w->mOutString.GetString(), buff.mSize);
@@ -1135,7 +1138,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			const char *name;
 			auto lump = pic->GetSourceLump();
 
-			if (fileSystem.GetLinkedTexture(lump) == pic)
+			if (TexMan.GetLinkedTexture(lump) == pic)
 			{
 				name = fileSystem.GetFileFullName(lump);
 			}

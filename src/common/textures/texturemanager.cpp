@@ -47,7 +47,10 @@
 #include "vectors.h"
 #include "animtexture.h"
 #include "formats/multipatchtexture.h"
+#include "basics.h"
+#include "cmdlib.h"
 
+using namespace FileSys;
 FTextureManager TexMan;
 
 
@@ -244,11 +247,11 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		// Any graphic being placed in the zip's root directory can not be found by this.
 		if (strchr(name, '/') || (flags & TEXMAN_ForceLookup))
 		{
-			FGameTexture *const NO_TEXTURE = (FGameTexture*)-1;
+			FGameTexture *const NO_TEXTURE = (FGameTexture*)-1; // marker for lumps we already checked that do not map to a texture.
 			int lump = fileSystem.CheckNumForFullName(name);
 			if (lump >= 0)
 			{
-				FGameTexture *tex = fileSystem.GetLinkedTexture(lump);
+				FGameTexture *tex = GetLinkedTexture(lump);
 				if (tex == NO_TEXTURE) return FTextureID(-1);
 				if (tex != NULL) return tex->GetID();
 				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
@@ -256,13 +259,13 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 				if (tex != NULL)
 				{
 					tex->AddAutoMaterials();
-					fileSystem.SetLinkedTexture(lump, tex);
+					SetLinkedTexture(lump, tex);
 					return AddGameTexture(tex);
 				}
 				else
 				{
 					// mark this lump as having no valid texture so that we don't have to retry creating one later.
-					fileSystem.SetLinkedTexture(lump, NO_TEXTURE);
+					SetLinkedTexture(lump, NO_TEXTURE);
 				}
 			}
 		}
@@ -451,7 +454,7 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 	{
 		FString str;
 		if (!usefullnames)
-			fileSystem.GetFileShortName(str, lumpnum);
+			str = fileSystem.GetFileShortName(lumpnum);
 		else
 		{
 			auto fn = fileSystem.GetFileFullName(lumpnum);
@@ -485,7 +488,7 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 		}
 		else
 		{
-			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", fileSystem.GetFileFullPath(lumpnum).GetChars());
+			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", fileSystem.GetFileFullPath(lumpnum).c_str());
 			return FTextureID(-1);
 		}
 	}
@@ -563,7 +566,6 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 {
 	int firsttx = fileSystem.GetFirstEntry(wadnum);
 	int lasttx = fileSystem.GetLastEntry(wadnum);
-	FString Name;
 
 	if (!usefullnames)
 	{
@@ -574,10 +576,9 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 
 		for (; firsttx <= lasttx; ++firsttx)
 		{
+			auto Name = fileSystem.GetFileShortName(firsttx);
 			if (fileSystem.GetFileNamespace(firsttx) == ns)
 			{
-				fileSystem.GetFileShortName(Name, firsttx);
-
 				if (fileSystem.CheckNumForName(Name, ns) == firsttx)
 				{
 					CreateTexture(firsttx, usetype);
@@ -618,7 +619,6 @@ void FTextureManager::AddHiresTextures (int wadnum)
 	int firsttx = fileSystem.GetFirstEntry(wadnum);
 	int lasttx = fileSystem.GetLastEntry(wadnum);
 
-	FString Name;
 	TArray<FTextureID> tlist;
 
 	if (firsttx == -1 || lasttx == -1)
@@ -630,7 +630,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 	{
 		if (fileSystem.GetFileNamespace(firsttx) == ns_hires)
 		{
-			fileSystem.GetFileShortName (Name, firsttx);
+			auto Name = fileSystem.GetFileShortName(firsttx);
 
 			if (fileSystem.CheckNumForName (Name, ns_hires) == firsttx)
 			{
@@ -682,15 +682,15 @@ void FTextureManager::AddHiresTextures (int wadnum)
 
 void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname, FMultipatchTextureBuilder &build)
 {
-	int remapLump, lastLump;
+	int texLump, lastLump;
 
 	lastLump = 0;
 
-	while ((remapLump = fileSystem.FindLump(lumpname, &lastLump)) != -1)
+	while ((texLump = fileSystem.FindLump(lumpname, &lastLump)) != -1)
 	{
-		if (fileSystem.GetFileContainer(remapLump) == wadnum)
+		if (fileSystem.GetFileContainer(texLump) == wadnum)
 		{
-			ParseTextureDef(remapLump, build);
+			ParseTextureDef(texLump, build);
 		}
 	}
 }
@@ -964,8 +964,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 	for (int i= firsttx; i <= lasttx; i++)
 	{
 		bool skin = false;
-		FString Name;
-		fileSystem.GetFileShortName(Name, i);
+		auto Name = fileSystem.GetFileShortName(i);
 
 		// Ignore anything not in the global namespace
 		int ns = fileSystem.GetFileNamespace(i);
@@ -997,7 +996,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 				if (iwad)
 				{ 
 					// We need to make an exception for font characters of the SmallFont coming from the IWAD to be able to construct the original font.
-					if (Name.IndexOf("STCFN") != 0 && Name.IndexOf("FONTA") != 0) continue;
+					if (strncmp(Name, "STCFN", 5) != 0 && strncmp(Name, "FONTA", 5) != 0) continue;
 					force = true;
 				}
 				else continue;
@@ -1013,7 +1012,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 				if (iwad)
 				{
 					// We need to make an exception for font characters of the SmallFont coming from the IWAD to be able to construct the original font.
-					if (Name.IndexOf("STCFN") != 0 && Name.IndexOf("FONTA") != 0) continue;
+					if (strncmp(Name, "STCFN", 5) != 0 && strncmp(Name, "FONTA", 5) != 0) continue;
 				}
 				else continue;
 			}
@@ -1110,7 +1109,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 
 void FTextureManager::AddLocalizedVariants()
 {
-	TArray<FolderEntry> content;
+	std::vector<FolderEntry> content;
 	fileSystem.GetFilesInFolder("localized/textures/", content, false);
 	for (auto &entry : content)
 	{
@@ -1513,9 +1512,7 @@ void FTextureManager::AdjustSpriteOffsets()
 		if (fileSystem.GetFileContainer(i) > fileSystem.GetMaxIwadNum()) break; // we are past the IWAD
 		if (fileSystem.GetFileNamespace(i) == ns_sprites && fileSystem.GetFileContainer(i) >= fileSystem.GetIwadNum() && fileSystem.GetFileContainer(i) <= fileSystem.GetMaxIwadNum())
 		{
-			char str[9];
-			fileSystem.GetFileShortName(str, i);
-			str[8] = 0;
+			const char *str = fileSystem.GetFileShortName(i);
 			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
 			if (texid.isValid() && fileSystem.GetFileContainer(GetGameTexture(texid)->GetSourceLump()) > fileSystem.GetMaxIwadNum())
 			{
@@ -1626,6 +1623,37 @@ void FTextureManager::Listaliases()
 		Printf("%s\n", s.GetChars());
 	}
 }
+
+//==========================================================================
+//
+// link a texture with a given lump
+//
+//==========================================================================
+
+void FTextureManager::SetLinkedTexture(int lump, FGameTexture* tex)
+{
+	if ((size_t)lump < fileSystem.GetNumEntries())
+	{
+		linkedMap.Insert(lump, tex);
+	}
+}
+
+//==========================================================================
+//
+// retrieve linked texture
+//
+//==========================================================================
+
+FGameTexture* FTextureManager::GetLinkedTexture(int lump)
+{
+	if ((size_t)lump < fileSystem.GetNumEntries())
+	{
+		auto check = linkedMap.CheckKey(lump);
+		if (check) return *check;
+	}
+	return nullptr;
+}
+
 
 //==========================================================================
 //

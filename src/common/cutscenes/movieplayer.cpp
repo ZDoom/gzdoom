@@ -153,7 +153,7 @@ class AnmPlayer : public MoviePlayer
 {
 	// This doesn't need its own class type
 	anim_t anim;
-	TArray<uint8_t> buffer;
+	std::vector<uint8_t> buffer;
 	int numframes = 0;
 	int curframe = 1;
 	int frametime = 0;
@@ -173,7 +173,7 @@ public:
 		buffer = fr.ReadPadded(1);
 		fr.Close();
 
-		if (ANIM_LoadAnim(&anim, buffer.Data(), buffer.Size() - 1) < 0)
+		if (ANIM_LoadAnim(&anim, buffer.data(), buffer.size() - 1) < 0)
 		{
 			return;
 		}
@@ -231,7 +231,6 @@ public:
 
 	~AnmPlayer()
 	{
-		buffer.Reset();
 		animtex.Clean();
 	}
 

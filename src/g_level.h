@@ -3,10 +3,10 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "sc_man.h"
-#include "file_zip.h"
 #include "g_mapinfo.h"
 
 
+using FileSys::FCompressedBuffer;
 extern bool savegamerestore;
 
 void G_InitNew (const char *mapname, bool bTitleLevel);

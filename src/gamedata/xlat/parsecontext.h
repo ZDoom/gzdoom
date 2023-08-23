@@ -146,7 +146,7 @@ struct FParseContext
 	void AddSym (char *sym, int val);
 	bool FindSym (char *sym, FParseSymbol **val);
 	virtual bool FindToken (char *tok, int *type) = 0;
-	int GetToken (char *&sourcep, FParseToken *yylval);
+	int GetToken (const char *&sourcep, FParseToken *yylval);
 	int PrintError (const char *s);
 	void ParseLump(const char *lumpname);
 };

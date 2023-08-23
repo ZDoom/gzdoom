@@ -744,32 +744,33 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 		DPrintf(DMSG_NOTIFY, "Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
 		auto sfxdata = ReadSound(sfx->lumpnum);
-		int size = sfxdata.Size();
+		int size = (int)sfxdata.size();
 		if (size > 8)
 		{
-			int32_t dmxlen = LittleLong(((int32_t *)sfxdata.Data())[1]);
+			auto sfxp = sfxdata.data();
+			int32_t dmxlen = LittleLong(((int32_t *)sfxp)[1]);
 
 			// If the sound is voc, use the custom loader.
-			if (strncmp ((const char *)sfxdata.Data(), "Creative Voice File", 19) == 0)
+			if (memcmp (sfxp, "Creative Voice File", 19) == 0)
 			{
-				sfx->data = GSnd->LoadSoundVoc(sfxdata.Data(), size);
+				sfx->data = GSnd->LoadSoundVoc(sfxp, size);
 			}
 			// If the sound is raw, just load it as such.
 			else if (sfx->bLoadRAW)
 			{
-				sfx->data = GSnd->LoadSoundRaw(sfxdata.Data(), size, sfx->RawRate, 1, 8, sfx->LoopStart);
+				sfx->data = GSnd->LoadSoundRaw(sfxp, size, sfx->RawRate, 1, 8, sfx->LoopStart);
 			}
 			// Otherwise, try the sound as DMX format.
-			else if (((uint8_t *)sfxdata.Data())[0] == 3 && ((uint8_t *)sfxdata.Data())[1] == 0 && dmxlen <= size - 8)
+			else if (((uint8_t *)sfxp)[0] == 3 && ((uint8_t *)sfxp)[1] == 0 && dmxlen <= size - 8)
 			{
-				int frequency = LittleShort(((uint16_t *)sfxdata.Data())[1]);
+				int frequency = LittleShort(((uint16_t *)sfxp)[1]);
 				if (frequency == 0) frequency = 11025;
-				sfx->data = GSnd->LoadSoundRaw(sfxdata.Data()+8, dmxlen, frequency, 1, 8, sfx->LoopStart);
+				sfx->data = GSnd->LoadSoundRaw(sfxp+8, dmxlen, frequency, 1, 8, sfx->LoopStart);
 			}
 			// If that fails, let the sound system try and figure it out.
 			else
 			{
-				sfx->data = GSnd->LoadSound(sfxdata.Data(), size, sfx->LoopStart, sfx->LoopEnd);
+				sfx->data = GSnd->LoadSound(sfxp, size, sfx->LoopStart, sfx->LoopEnd);
 			}
 		}
 

@@ -1129,7 +1129,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 	{
 		PClassActor *info = CreateNewActor(sc, typeName, parentName);
 		info->ActorInfo()->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
-		info->SourceLumpName = fileSystem.GetFileFullPath(sc.LumpNum);
+		info->SourceLumpName = fileSystem.GetFileFullPath(sc.LumpNum).c_str();
 
 		if (!info->SetReplacement(replaceName))
 		{

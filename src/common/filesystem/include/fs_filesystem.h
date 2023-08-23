@@ -8,16 +8,11 @@
 
 
 
-#include "files.h"
-#include "tarray.h"
-#include "cmdlib.h"
-#include "zstring.h"
+#include "fs_files.h"
 #include "resourcefile.h"
 
-class FResourceFile;
-struct FResourceLump;
-class FGameTexture;
-
+namespace FileSys {
+	
 union LumpShortName
 {
 	char		String[9];
@@ -31,19 +26,34 @@ union LumpShortName
 class FileData
 {
 public:
-	FileData ();
+	FileData() { lump = nullptr; }
+	const void *GetMem () { return lump->Cache; }
+	size_t GetSize () { return lump->LumpSize; }
+	const char* GetString () const { return (const char*)lump->Cache; }
+	const uint8_t* GetBytes() const { return (const uint8_t*)lump->Cache; }
 
-	FileData (const FileData &copy);
-	FileData &operator= (const FileData &copy);
-	~FileData ();
-	void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
-	size_t GetSize () { return Block.Len(); }
-	const FString &GetString () const { return Block; }
+	FileData& operator = (const FileData& copy) = delete;
+
+	FileData(const FileData& copy)
+	{
+		lump = copy.lump;
+		lump->Lock();
+	}
+
+	~FileData()
+	{
+		if (lump) lump->Unlock();
+	}
+
 
 private:
-	FileData (const FString &source);
+	FileData(FResourceLump* nlump)
+	{
+		lump = nlump;
+		if (lump) lump->Lock();
+	}
 
-	FString Block;
+	FResourceLump* lump;
 
 	friend class FileSystem;
 };
@@ -68,7 +78,7 @@ public:
 	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
 
 	bool InitSingleFile(const char *filename, FileSystemMessageFunc Printf = nullptr);
-	bool InitMultipleFiles (TArray<FString> &filenames, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, bool allowduplicates = false, FILE* hashfile = nullptr);
+	bool InitMultipleFiles (std::vector<std::string>& filenames, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, bool allowduplicates = false, FILE* hashfile = nullptr);
 	void AddFile (const char *filename, FileReader *wadinfo, LumpFilterInfo* filter, FileSystemMessageFunc Printf, FILE* hashfile);
 	int CheckIfResourceFileLoaded (const char *name) noexcept;
 	void AddAdditionalFile(const char* filename, FileReader* wadinfo = NULL) {}
@@ -80,66 +90,44 @@ public:
 	int GetLastEntry(int wadnum) const noexcept;
     int GetEntryCount(int wadnum) const noexcept;
 
-	int CheckNumForName (const char *name, int namespc);
-	int CheckNumForName (const char *name, int namespc, int wadfile, bool exact = true);
-	int GetNumForName (const char *name, int namespc);
+	int CheckNumForName (const char *name, int namespc) const;
+	int CheckNumForName (const char *name, int namespc, int wadfile, bool exact = true) const;
+	int GetNumForName (const char *name, int namespc) const;
 
-	inline int CheckNumForName (const uint8_t *name) { return CheckNumForName ((const char *)name, ns_global); }
-	inline int CheckNumForName (const char *name) { return CheckNumForName (name, ns_global); }
-	inline int CheckNumForName (const FString &name) { return CheckNumForName (name.GetChars()); }
-	inline int CheckNumForName (const uint8_t *name, int ns) { return CheckNumForName ((const char *)name, ns); }
-	inline int GetNumForName (const char *name) { return GetNumForName (name, ns_global); }
-	inline int GetNumForName (const FString &name) { return GetNumForName (name.GetChars(), ns_global); }
-	inline int GetNumForName (const uint8_t *name) { return GetNumForName ((const char *)name); }
-	inline int GetNumForName (const uint8_t *name, int ns) { return GetNumForName ((const char *)name, ns); }
+	inline int CheckNumForName (const uint8_t *name) const { return CheckNumForName ((const char *)name, ns_global); }
+	inline int CheckNumForName (const char *name) const { return CheckNumForName (name, ns_global); }
+	inline int CheckNumForName (const uint8_t *name, int ns) const { return CheckNumForName ((const char *)name, ns); }
+	inline int GetNumForName (const char *name) const { return GetNumForName (name, ns_global); }
+	inline int GetNumForName (const uint8_t *name) const { return GetNumForName ((const char *)name); }
+	inline int GetNumForName (const uint8_t *name, int ns) const { return GetNumForName ((const char *)name, ns); }
 
-	int CheckNumForFullName (const char *name, bool trynormal = false, int namespc = ns_global, bool ignoreext = false);
-	int CheckNumForFullName (const char *name, int wadfile);
-	int GetNumForFullName (const char *name);
-	int FindFile(const char* name)
+	int CheckNumForFullName (const char *cname, bool trynormal = false, int namespc = ns_global, bool ignoreext = false) const;
+	int CheckNumForFullName (const char *name, int wadfile) const;
+	int GetNumForFullName (const char *name) const;
+	int FindFile(const char* name) const
 	{
 		return CheckNumForFullName(name);
 	}
 
-	bool FileExists(const char* name)
+	bool FileExists(const char* name) const
 	{
 		return FindFile(name) >= 0;
 	}
 
-	bool FileExists(const FString& name)
-	{
-		return FindFile(name) >= 0;
-	}
-
-	bool FileExists(const std::string& name)
+	bool FileExists(const std::string& name) const
 	{
 		return FindFile(name.c_str()) >= 0;
 	}
 
 	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
-	FString& GetLongName(int i);	// may only be called before the hash chains are set up.
 	void RenameFile(int num, const char* fn);
 	bool CreatePathlessCopy(const char* name, int id, int flags);
 
-	inline int CheckNumForFullName(const FString &name, bool trynormal = false, int namespc = ns_global) { return CheckNumForFullName(name.GetChars(), trynormal, namespc); }
-	inline int CheckNumForFullName (const FString &name, int wadfile) { return CheckNumForFullName(name.GetChars(), wadfile); }
-	inline int GetNumForFullName (const FString &name) { return GetNumForFullName(name.GetChars()); }
-
-	void SetLinkedTexture(int lump, FGameTexture *tex);
-	FGameTexture *GetLinkedTexture(int lump);
-
-
 	void ReadFile (int lump, void *dest);
-	TArray<uint8_t> GetFileData(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FileData isn't writable!)
+	// These should only be used if the file data really needs padding.
 	FileData ReadFile (int lump);
 	FileData ReadFile (const char *name) { return ReadFile (GetNumForName (name)); }
-
-	inline TArray<uint8_t> LoadFile(const char* name, int padding = 0)
-	{
-		auto lump = FindFile(name);
-		if (lump < 0) return TArray<uint8_t>();
-		return GetFileData(lump, padding);
-	}
+	FileData ReadFileFullName(const char* name) { return ReadFile(GetNumForFullName(name)); }
 
 	FileReader OpenFileReader(int lump);		// opens a reader that redirects to the containing file's one.
 	FileReader ReopenFileReader(int lump, bool alwayscache = false);		// opens an independent reader.
@@ -150,7 +138,7 @@ public:
 	int FindLumpFullName(const char* name, int* lastlump, bool noext = false);
 	bool CheckFileName (int lump, const char *name);	// [RH] True if lump's name == name
 
-	int FindFileWithExtensions(const char* name, const char* const* exts, int count);
+	int FindFileWithExtensions(const char* name, const char* const* exts, int count) const;
 	int FindResource(int resid, const char* type, int filenum = -1) const noexcept;
 	int GetResource(int resid, const char* type, int filenum = -1) const;
 
@@ -160,18 +148,16 @@ public:
 	int FileLength (int lump) const;
 	int GetFileOffset (int lump);					// [RH] Returns offset of lump in the wadfile
 	int GetFileFlags (int lump);					// Return the flags for this lump
-	void GetFileShortName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
-	void GetFileShortName (FString &to, int lump) const;
 	const char* GetFileShortName(int lump) const;
 	const char *GetFileFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
-	FString GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
+	std::string GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
 	int GetFileContainer (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetFileNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
 	void SetFileNamespace(int lump, int ns);
 	int GetResourceId(int lump) const;				// Returns the RFF index number for this lump
 	const char* GetResourceType(int lump) const;
 	bool CheckFileName (int lump, const char *name) const;	// [RH] Returns true if the names match
-	unsigned GetFilesInFolder(const char *path, TArray<FolderEntry> &result, bool atomic) const;
+	unsigned GetFilesInFolder(const char *path, std::vector<FolderEntry> &result, bool atomic) const;
 
 	int GetNumEntries() const
 	{
@@ -180,7 +166,7 @@ public:
 
 	int GetNumWads() const
 	{
-		return Files.Size();
+		return (int)Files.size();
 	}
 
 	void AddLump(FResourceLump* lump);
@@ -194,10 +180,10 @@ protected:
 
 	struct LumpRecord;
 
-	TArray<FResourceFile *> Files;
-	TArray<LumpRecord> FileInfo;
+	std::vector<FResourceFile *> Files;
+	std::vector<LumpRecord> FileInfo;
 
-	TArray<uint32_t> Hashes;	// one allocation for all hash lists.
+	std::vector<uint32_t> Hashes;	// one allocation for all hash lists.
 	uint32_t *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
 	uint32_t *NextLumpIndex;
 
@@ -216,11 +202,12 @@ protected:
 	int IwadIndex = -1;
 	int MaxIwadIndex = -1;
 
+	StringPool* stringpool;
+
 private:
 	void DeleteAll();
 	void MoveLumpsInFolder(const char *);
 
 };
 
-extern FileSystem fileSystem;
-
+}

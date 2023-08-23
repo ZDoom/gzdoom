@@ -136,7 +136,7 @@ void FScanner::Open (const char *name)
 //
 // FScanner :: OpenFile
 //
-// Loads a script from a file. Uses new/delete for memory allocation.
+// Loads a script from a file.
 //
 //==========================================================================
 
@@ -148,9 +148,9 @@ bool FScanner::OpenFile (const char *name)
 	if (!fr.OpenFile(name)) return false;
 	auto filesize = fr.GetLength();
 	auto filebuff = fr.Read();
-	if (filebuff.Size() == 0 && filesize > 0) return false;
+	if (filebuff.size() == 0 && filesize > 0) return false;
 
-	ScriptBuffer = FString((const char *)filebuff.Data(), filesize);
+	ScriptBuffer = FString((const char *)filebuff.data(), filesize);
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
 	LumpNum = -1;
 	PrepareScript ();
@@ -200,10 +200,13 @@ void FScanner :: OpenLumpNum (int lump)
 {
 	Close ();
 	{
-		FileData mem = fileSystem.ReadFile(lump);
-		ScriptBuffer = mem.GetString();
+		auto mem = fileSystem.OpenFileReader(lump);
+		auto buff = ScriptBuffer.LockNewBuffer(mem.GetLength());
+		mem.Read(buff, mem.GetLength());
+		buff[mem.GetLength()] = 0;
+		ScriptBuffer.UnlockBuffer();
 	}
-	ScriptName = fileSystem.GetFileFullPath(lump);
+	ScriptName = fileSystem.GetFileFullPath(lump).c_str();
 	LumpNum = lump;
 	PrepareScript ();
 }

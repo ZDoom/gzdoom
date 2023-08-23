@@ -164,8 +164,8 @@ FStartupTexture::FStartupTexture (int lumpnum)
 	Height = 480;
 	bUseGamePalette = false;
 	
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes();
 
 	// Initialize the bitmap palette.
 	// the palette is static so that the notches can share it.
@@ -233,8 +233,8 @@ void PlanarToChunky(T* dest, const uint8_t* src, const T* remap, int width, int 
 
 PalettedPixels FStartupTexture::CreatePalettedPixels(int conversion, int frame)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes();
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 
 
@@ -253,8 +253,8 @@ PalettedPixels FStartupTexture::CreatePalettedPixels(int conversion, int frame)
 
 int FStartupTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes();
 	PlanarToChunky((uint32_t*)bmp->GetPixels(), source + 48, startuppalette32, Width, Height);
 	return 0;
 }
@@ -281,8 +281,8 @@ FNotchTexture::FNotchTexture (int lumpnum, int width, int height)
 
 PalettedPixels FNotchTexture::CreatePalettedPixels(int conversion, int frame)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes();
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 
 	TArray<uint8_t> Work(Width*Height, true);
@@ -304,8 +304,8 @@ PalettedPixels FNotchTexture::CreatePalettedPixels(int conversion, int frame)
 
 int FNotchTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes();
 
 	auto Work = (uint32_t*)bmp->GetPixels();
 	for(int i = 0; i < Width * Height / 2; i++)
@@ -338,8 +338,8 @@ FStrifeStartupTexture::FStrifeStartupTexture (int lumpnum, int w, int h)
 
 PalettedPixels FStrifeStartupTexture::CreatePalettedPixels(int conversion, int frame)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes();
 	PalettedPixels Pixels(Width*Height);
 	const uint8_t *remap = ImageHelpers::GetRemap(conversion == luminance);
 	ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), source, Width, Height, Width, remap);

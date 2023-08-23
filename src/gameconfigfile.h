@@ -36,6 +36,7 @@
 
 #include "doomtype.h"
 #include "configfile.h"
+#include "files.h"
 
 class FArgs;
 class FIWadManager;

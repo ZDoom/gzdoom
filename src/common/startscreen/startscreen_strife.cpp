@@ -39,6 +39,7 @@
 #include "image.h"
 #include "textures.h"
 #include "palettecontainer.h"
+#include "cmdlib.h"
 
 // Strife startup screen
 #define PEASANT_INDEX			0
@@ -118,7 +119,7 @@ FStrifeStartScreen::FStrifeStartScreen(int max_progress)
 	// Load the animated overlays.
 	for (size_t i = 0; i < countof(StrifeStartupPicNames); ++i)
 	{
-		int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i], ns_graphics);
+		int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i], FileSys::ns_graphics);
 		if (lumpnum < 0) lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i]);
 
 		if (lumpnum >= 0)

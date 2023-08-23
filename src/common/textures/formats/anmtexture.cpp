@@ -73,7 +73,7 @@ FImageSource *AnmImage_TryCreate(FileReader & file, int lumpnum)
 	auto buffer = file.ReadPadded(1);
 
 	anim_t anim;
-	if (ANIM_LoadAnim(&anim, buffer.Data(), buffer.Size() - 1) < 0)
+	if (ANIM_LoadAnim(&anim, buffer.data(), buffer.size() - 1) < 0)
 	{
 		return nullptr;
 	}
@@ -103,8 +103,8 @@ FAnmTexture::FAnmTexture (int lumpnum, int w, int h)
 
 void FAnmTexture::ReadFrame(uint8_t *pixels, uint8_t *palette)
 {
-	FileData lump = fileSystem.ReadFile (SourceLump);
-	uint8_t *source = (uint8_t *)lump.GetMem();
+	auto lump =  fileSystem.ReadFile (SourceLump);
+	auto source = lump.GetBytes(); 
 
 	anim_t anim;
 	if (ANIM_LoadAnim(&anim, source, (int)lump.GetSize()) >= 0)

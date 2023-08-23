@@ -44,6 +44,7 @@
 
 
 #include <stdlib.h>
+#include <vector>
 #include "basics.h"
 #include "zstring.h"
 #include "tarray.h"
@@ -111,11 +112,10 @@ private:
 	LangMap allStrings;
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
 
-	void LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer);
-	TArray<TArray<FString>> parseCSV(const TArray<uint8_t> &buffer);
-	bool ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer);
+	void LoadLanguage (int lumpnum, const char* buffer, size_t size);
+	TArray<TArray<FString>> parseCSV(const char* buffer, size_t size);
+	bool ParseLanguageCSV(int lumpnum, const char* buffer, size_t size);
 
-	bool LoadLanguageFromSpreadsheet(int lumpnum, const TArray<uint8_t> &buffer);
 	bool readMacros(int lumpnum);
 	void DeleteString(int langid, FName label);
 	void DeleteForLabel(int lumpnum, FName label);

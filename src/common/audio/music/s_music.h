@@ -5,9 +5,9 @@
 #include "zstring.h"
 #include "tarray.h"
 #include "name.h"
+#include "files.h"
 #include <zmusic.h>
 
-class FileReader;
 class SoundStream;
 
 

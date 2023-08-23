@@ -164,9 +164,7 @@ PalettedPixels FFontChar2::CreatePalettedPixels(int, int)
 
 	if (destSize < 0)
 	{
-		char name[9];
-		fileSystem.GetFileShortName(name, SourceLump);
-		name[8] = 0;
+		auto name = fileSystem.GetFileShortName(SourceLump);
 		I_FatalError("The font %s is corrupt", name);
 	}
 	return Pixels;

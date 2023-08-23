@@ -69,26 +69,25 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 
 void FUE1Model::LoadGeometry()
 {
-	FileData lump, lump2;
 	const char *buffer, *buffer2;
-	lump = fileSystem.ReadFile(mDataLump);
-	buffer = (char*)lump.GetMem();
-	lump2 = fileSystem.ReadFile(mAnivLump);
-	buffer2 = (char*)lump2.GetMem();
+	auto lump =  fileSystem.ReadFile(mDataLump);
+	buffer = lump.GetString();
+	auto lump2 =  fileSystem.ReadFile(mAnivLump);
+	buffer2 = lump2.GetString();
 	// map structures
-	dhead = (d3dhead*)(buffer);
-	dpolys = (d3dpoly*)(buffer+sizeof(d3dhead));
-	ahead = (a3dhead*)(buffer2);
+	dhead = (const d3dhead*)(buffer);
+	dpolys = (const d3dpoly*)(buffer+sizeof(d3dhead));
+	ahead = (const a3dhead*)(buffer2);
 	// detect deus ex format
 	if ( (ahead->framesize/dhead->numverts) == 8 )
 	{
-		averts = NULL;
-		dxverts = (dxvert*)(buffer2+sizeof(a3dhead));
+		averts = nullptr;
+		dxverts = (const dxvert*)(buffer2+sizeof(a3dhead));
 	}
 	else
 	{
-		averts = (uint32_t*)(buffer2+sizeof(a3dhead));
-		dxverts = NULL;
+		averts = (const uint32_t*)(buffer2+sizeof(a3dhead));
+		dxverts = nullptr;
 	}
 	// set counters
 	numVerts = dhead->numverts;

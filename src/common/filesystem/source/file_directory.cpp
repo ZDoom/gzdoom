@@ -59,7 +59,7 @@ struct FDirectoryLump : public FResourceLump
 	FileReader NewReader() override;
 	int FillCache() override;
 
-	std::string mFullPath;
+	const char* mFullPath;
 };
 
 
@@ -75,7 +75,7 @@ class FDirectory : public FResourceFile
 	const bool nosubdir;
 
 	int AddDirectory(const char* dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
-	void AddEntry(const char *fullpath, int size);
+	void AddEntry(const char *fullpath, const char* relpath, int size);
 
 public:
 	FDirectory(const char * dirname, StringPool* sp, bool nosubdirflag = false);
@@ -135,7 +135,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 						Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", entry.FilePath.c_str());
 						continue;
 					}
-					AddEntry(entry.FilePathRel.c_str(), (int)entry.Length);
+					AddEntry(entry.FilePath.c_str(), entry.FilePathRel.c_str(), (int)entry.Length);
 					count++;
 				}
 			}
@@ -163,15 +163,15 @@ bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 //
 //==========================================================================
 
-void FDirectory::AddEntry(const char *fullpath, int size)
+void FDirectory::AddEntry(const char *fullpath, const char* relpath, int size)
 {
 	FDirectoryLump *lump_p = &Lumps[Lumps.Reserve(1)];
 
 	// Store the full path here so that we can access the file later, even if it is from a filter directory.
-	lump_p->mFullPath = fullpath;
+	lump_p->mFullPath = stringpool->Strdup(fullpath);
 
 	// [mxd] Convert name to lowercase
-	std::string name = fullpath + strlen(FileName);
+	std::string name = relpath;
 	for (auto& c : name) c = tolower(c);
 
 	// The lump's name is only the part relative to the main directory
@@ -192,7 +192,7 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 FileReader FDirectoryLump::NewReader()
 {
 	FileReader fr;
-	fr.OpenFile(mFullPath.c_str());
+	fr.OpenFile(mFullPath);
 	return fr;
 }
 
@@ -206,7 +206,7 @@ int FDirectoryLump::FillCache()
 {
 	FileReader fr;
 	Cache = new char[LumpSize];
-	if (!fr.OpenFile(mFullPath.c_str()))
+	if (!fr.OpenFile(mFullPath))
 	{
 		throw FileSystemException("unable to open file");
 	}

@@ -1177,7 +1177,7 @@ else()
 	set( NOT_COMPILED_SOURCE_FILES ${NOT_COMPILED_SOURCE_FILES} ${VM_JIT_SOURCES} )
 endif()
 
-set( ZDOOM_SOURCES
+set( GAME_SOURCES
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
 	${SYSTEM_SOURCES}
@@ -1227,8 +1227,8 @@ set( ZDOOM_SOURCES
 
 )
 
-set( ZDOOM_NONPCH_SOURCES ${ZDOOM_SOURCES} )
-list( REMOVE_ITEM ZDOOM_NONPCH_SOURCES ${PCH_SOURCES} )
+set( GAME_NONPCH_SOURCES ${GAME_SOURCES} )
+list( REMOVE_ITEM GAME_NONPCH_SOURCES ${PCH_SOURCES} )
 
 add_executable( zdoom WIN32 MACOSX_BUNDLE ${ZDOOM_SOURCES} )
 
@@ -1238,7 +1238,7 @@ set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_F
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
-set_source_files_properties( ${ZDOOM_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
+set_source_files_properties( ${GAME_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
@@ -1418,9 +1418,9 @@ if( APPLE )
 endif()
 
 if( WIN32 )
-	set( INSTALL_PATH . CACHE STRING "Directory where the zdoom executable will be placed during install." )
+	set( INSTALL_PATH . CACHE STRING "Directory where the executable will be placed during install." )
 else()
-	set( INSTALL_PATH bin CACHE STRING "Directory where the zdoom executable will be placed during install." )
+	set( INSTALL_PATH bin CACHE STRING "Directory where the executable will be placed during install." )
 endif()
 install(TARGETS zdoom
 		DESTINATION ${INSTALL_PATH}

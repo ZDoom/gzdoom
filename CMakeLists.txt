@@ -24,10 +24,6 @@ if (OPENAL_SOFT_VCPKG)
 	list(APPEND VCPKG_MANIFEST_FEATURES "vcpkg-openal-soft")
 endif()
 
-if (NOT DEFINED JPEG_XL OR JPEG_XL)
-	list(APPEND VCPKG_MANIFEST_FEATURES "vcpkg-libjxl")
-endif()
-
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows"))
 	# Force static triplet on Windows
 	set(VCPKG_TARGET_TRIPLET "x64-windows-static")
@@ -46,10 +42,6 @@ endif()
 if (NOT VCPKG_TOOLCHAIN)
 	set(VCPKG_MANIFEST_FEATURES)
 endif()
-
-option(JPEG_XL "Enable JPEG XL support" ON)
-
-include ( FindPkgConfig )
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -227,9 +219,7 @@ find_package( VPX )
 find_package( ZLIB )
 find_package( WebP )
 if (NOT WebP_FOUND)
-	if (NOT PKG_CONFIG_FOUND)
-		message(SEND_ERROR "pkgconfig not found")
-	endif()
+	include(FindPkgConfig)
 	pkg_check_modules(libwebp IMPORTED_TARGET libwebp)
 	if (NOT TARGET PkgConfig::libwebp)
 		message(SEND_ERROR "libwebp not found")
@@ -240,10 +230,6 @@ if (NOT WebP_FOUND)
 	add_library(WebP::webp ALIAS PkgConfig::libwebp)
 	add_library(WebP::webpdemux ALIAS PkgConfig::libwebpdemux)
 	add_library(WebP::libwebpmux ALIAS PkgConfig::libwebpmux)
-endif()
-
-if (PKG_CONFIG_FOUND AND JPEG_XL)
-	pkg_check_modules( libjxl IMPORTED_TARGET libjxl )
 endif()
 
 include( TargetArch )

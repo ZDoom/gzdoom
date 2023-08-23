@@ -49,7 +49,12 @@ endif()
 
 option(JPEG_XL "Enable JPEG XL support" ON)
 
-include ( FindPkgConfig )
+if (VCPKG_TOOLCHAIN AND JPEG_XL)
+	find_package( PkgConfig REQUIRED )
+	set(PKG_CONFIG_FOUND 1)
+else()
+	include ( FindPkgConfig )
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

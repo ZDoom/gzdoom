@@ -30,8 +30,11 @@
             "description": "Use libjxl provided by vcpkg.",
             "dependencies": [
                 {
+                    "name": "pkgconf",
+                    "platform": "windows & static & staticcrt"
+                },
+                {
                     "name": "libjxl",
-                    "default-features": false,
                     "platform": "!windows | (windows & static & staticcrt)"
                 }
             ]

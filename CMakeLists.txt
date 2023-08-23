@@ -49,6 +49,10 @@ endif()
 
 option(JPEG_XL "Enable JPEG XL support" ON)
 
+if (VCPKG_TOOLCHAIN AND WIN32)
+	set(PKG_CONFIG_EXECUTABLE "${VCPKG_INSTALLED_DIR}/x64-windows/tools/pkgconf/pkgconf.exe")
+endif()
+
 if (VCPKG_TOOLCHAIN AND JPEG_XL)
 	find_package( PkgConfig REQUIRED )
 	set(PKG_CONFIG_FOUND 1)

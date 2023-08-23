@@ -47,8 +47,8 @@ class FWebPTexture : public FImageSource
 
 public:
 	FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff);
-	PalettedPixels CreatePalettedPixels(int conversion) override;
-	int CopyPixels(FBitmap *bmp, int conversion) override;
+	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
+	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 };
 
 
@@ -94,10 +94,10 @@ FWebPTexture::FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff)
 	TopOffset = yoff;
 }
 
-PalettedPixels FWebPTexture::CreatePalettedPixels(int conversion)
+PalettedPixels FWebPTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	FBitmap bitmap;
-	bitmap.Create(Width, Height);
+	bitmap.Create(Width, Height, frame);
 	CopyPixels(&bitmap, conversion);
 	const uint8_t *data = bitmap.GetPixels();
 
@@ -127,7 +127,7 @@ PalettedPixels FWebPTexture::CreatePalettedPixels(int conversion)
 	return Pixels;
 }
 
-int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion)
+int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	WebPDecoderConfig config;
 	auto bytes = fileSystem.ReadFile(SourceLump);

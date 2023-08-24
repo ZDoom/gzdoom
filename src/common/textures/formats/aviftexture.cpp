@@ -145,7 +145,6 @@ int FAVIFTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 		return 0;
 
 	decoder->ignoreExif = decoder->ignoreXMP = true;
-	decoder->allowProgressive = decoder->allowIncremental = false;
 
 	avifDecoderSetIO(decoder, (avifIO*)&avifReader);
 	if (avifDecoderParse(decoder) != AVIF_RESULT_OK)

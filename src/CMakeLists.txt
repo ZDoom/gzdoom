@@ -1230,7 +1230,7 @@ set( GAME_SOURCES
 set( GAME_NONPCH_SOURCES ${GAME_SOURCES} )
 list( REMOVE_ITEM GAME_NONPCH_SOURCES ${PCH_SOURCES} )
 
-add_executable( zdoom WIN32 MACOSX_BUNDLE ${ZDOOM_SOURCES} )
+add_executable( zdoom WIN32 MACOSX_BUNDLE ${GAME_SOURCES} )
 
 target_precompile_headers( zdoom PRIVATE g_pch.h )
 

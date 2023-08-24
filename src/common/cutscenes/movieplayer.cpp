@@ -345,6 +345,7 @@ class IvfPlayer : public MoviePlayer
 	int numframes;
 	int lastsoundframe = -1;
 	bool av1 = false;
+	bool vp9 = false;
 public:
 	int soundtrack = -1;
 
@@ -385,9 +386,8 @@ public:
 		else
 #endif
 		{
-			// Todo: Support VP9 as well?
 			vpx_codec_dec_cfg_t cfg = { 1, width, height };
-			if (vpx_codec_dec_init(&codec, &vpx_codec_vp8_dx_algo, &cfg, 0))
+			if (vpx_codec_dec_init(&codec, vp9 ? &vpx_codec_vp9_dx_algo : &vpx_codec_vp8_dx_algo, &cfg, 0))
 			{
 				error.Format("Error initializing VPX codec.\n");
 				failed = true;
@@ -411,7 +411,7 @@ public:
 		uint16_t length = fr.ReadUInt16();
 		if (length != 32) return false;
 		fr.Read(&magic, 4);
-		if (magic != MAKE_ID('V', 'P', '8', '0') && magic != MAKE_ID('A', 'V', '0', '1')) return false;
+		if (magic != MAKE_ID('V', 'P', '8', '0') && magic != MAKE_ID('A', 'V', '0', '1') && magic != MAKE_ID('V', 'P', '9', '0')) return false;
 
 		width = fr.ReadUInt16();
 		height = fr.ReadUInt16();
@@ -441,6 +441,11 @@ public:
 		}
 #endif
 
+		if (magic == MAKE_ID('V', 'P', '9', '0'))
+		{
+			vp9 = true;
+		}
+
 		return true;
 	}
 
@@ -469,7 +474,7 @@ public:
 #endif
 		{
 			if (vpx_codec_decode(&codec, readBuf.Data(), readBuf.Size(), NULL, 0) != VPX_CODEC_OK) return false;
-			if (vpx_codec_control(&codec, VP8D_GET_FRAME_CORRUPTED, &corrupted) != VPX_CODEC_OK) return false;
+			if (!vp9 && vpx_codec_control(&codec, VP8D_GET_FRAME_CORRUPTED, &corrupted) != VPX_CODEC_OK) return false;
 		}
 		return true;
 	}
@@ -987,9 +992,9 @@ MoviePlayer* OpenMovie(const char* filename, TArray<int>& ans, const int* framet
 		return anm;
 	}
 #ifdef HAVE_AV1
-	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12) || !memcmp(id, "DFIF\0\0 \0AV01", 12))
+	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12) || !memcmp(id, "DKIF\0\0 \0VP90", 12) || !memcmp(id, "DFIF\0\0 \0AV01", 12))
 #else
-	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12))
+	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12) || !memcmp(id, "DKIF\0\0 \0VP90", 12))
 #endif
 	{
 		auto anm = new IvfPlayer(fr, ans, frameticks ? frameticks[1] : 0, flags, error);

@@ -332,6 +332,9 @@ FImageSource *TGAImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *StbImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *QOIImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *WebPImage_TryCreate(FileReader &, int lumpnum);
+#ifdef HAVE_AVIF
+FImageSource *AVIFImage_TryCreate(FileReader &, int lumpnum);
+#endif
 FImageSource *AnmImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *RawPageImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *FlatImage_TryCreate(FileReader &, int lumpnum);
@@ -354,6 +357,9 @@ FImageSource * FImageSource::GetImage(int lumpnum, bool isflat)
 		{ StbImage_TryCreate,			false },
 		{ QOIImage_TryCreate, 			false },
 		{ WebPImage_TryCreate,			false },
+#ifdef HAVE_AVIF
+		{ AVIFImage_TryCreate,			false },
+#endif
 		{ TGAImage_TryCreate,			false },
 		{ AnmImage_TryCreate,			false },
 		{ StartupPageImage_TryCreate,	false },

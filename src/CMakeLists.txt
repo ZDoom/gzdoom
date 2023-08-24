@@ -1241,6 +1241,21 @@ set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE
 set_source_files_properties( ${GAME_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
 
+if (TARGET unofficial::aom AND AV1)
+	target_compile_definitions(zdoom PRIVATE -DHAVE_AV1=1)
+	target_link_libraries(zdoom unofficial::aom)
+else()
+	message( STATUS "Compiling without AV1 IVF support" )
+endif()
+
+if (TARGET avif AND AVIF)
+	target_compile_definitions(zdoom PRIVATE -DHAVE_AVIF=1)
+	target_link_libraries(zdoom avif)
+	target_sources(zdoom PRIVATE common/textures/formats/aviftexture.cpp)
+else()
+	message( STATUS "Compiling without AVIF support" )
+endif()
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# [BL] Solaris requires these to be explicitly linked.
 	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} nsl socket)

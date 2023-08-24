@@ -44,6 +44,10 @@
 #include "playmve.h"
 #include <vpx/vpx_decoder.h>
 #include <vpx/vp8dx.h>
+#ifdef HAVE_AV1
+#include <aom/aom_decoder.h>
+#include <aom/aomdx.h>
+#endif
 #include "filesystem.h"
 #include "vm.h"
 #include "printf.h"
@@ -308,7 +312,7 @@ public:
 //
 //---------------------------------------------------------------------------
 
-class VpxPlayer : public MoviePlayer
+class IvfPlayer : public MoviePlayer
 {
 	bool failed = false;
 	FileReader fr;
@@ -324,6 +328,12 @@ class VpxPlayer : public MoviePlayer
 	vpx_codec_ctx_t codec{};
 	vpx_codec_iter_t iter = nullptr;
 
+#ifdef HAVE_AV1
+	// AV1 stuff
+	aom_codec_iter_t av1_iter;
+	aom_codec_ctx_t av1_codec;
+#endif
+
 	uint32_t convnumer;
 	uint32_t convdenom;
 
@@ -334,6 +344,7 @@ class VpxPlayer : public MoviePlayer
 	int framenum = 0;
 	int numframes;
 	int lastsoundframe = -1;
+	bool av1 = false;
 public:
 	int soundtrack = -1;
 
@@ -342,12 +353,12 @@ public:
 		return ZMusic_FillStream(MusicStream, buff, len);
 	}
 	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
-	{ return static_cast<VpxPlayer*>(userdata)->StreamCallback(stream, buff, len); }
+	{ return static_cast<IvfPlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 public:
 	bool isvalid() { return !failed; }
 
-	VpxPlayer(FileReader& fr_, TArray<int>& animSnd_, int flags_, int origframedelay, FString& error) : animSnd(std::move(animSnd_))
+	IvfPlayer(FileReader& fr_, TArray<int>& animSnd_, int flags_, int origframedelay, FString& error) : animSnd(std::move(animSnd_))
 	{
 		fr = std::move(fr_);
 		flags = flags_;
@@ -361,13 +372,26 @@ public:
 
 		Pic.Resize(width * height * 4);
 
-
-		// Todo: Support VP9 as well?
-		vpx_codec_dec_cfg_t cfg = { 1, width, height };
-		if (vpx_codec_dec_init(&codec, &vpx_codec_vp8_dx_algo, &cfg, 0))
+#ifdef HAVE_AV1
+		if (av1)
 		{
-			error.Format("Error initializing VPX codec.\n");
-			failed = true;
+			aom_codec_dec_cfg_t av1_cfg = { 1, width, height, 1 };
+			if (aom_codec_dec_init(&av1_codec, &aom_codec_av1_dx_algo, &av1_cfg, 0))
+			{
+				error.Format("Error initializing AV1 codec.\n");
+				failed = true;
+			}
+		}
+		else
+#endif
+		{
+			// Todo: Support VP9 as well?
+			vpx_codec_dec_cfg_t cfg = { 1, width, height };
+			if (vpx_codec_dec_init(&codec, &vpx_codec_vp8_dx_algo, &cfg, 0))
+			{
+				error.Format("Error initializing VPX codec.\n");
+				failed = true;
+			}
 		}
 	}
 
@@ -387,7 +411,7 @@ public:
 		uint16_t length = fr.ReadUInt16();
 		if (length != 32) return false;
 		fr.Read(&magic, 4);
-		if (magic != MAKE_ID('V', 'P', '8', '0')) return false;
+		if (magic != MAKE_ID('V', 'P', '8', '0') && magic != MAKE_ID('A', 'V', '0', '1')) return false;
 
 		width = fr.ReadUInt16();
 		height = fr.ReadUInt16();
@@ -410,6 +434,13 @@ public:
 		nsecsperframe = int64_t(fpsnumerator) * 1'000'000'000 / fpsdenominator;
 		nextframetime = 0;
 
+#ifdef HAVE_AV1
+		if (magic == MAKE_ID('A', 'V', '0', '1'))
+		{
+			av1 = true;
+		}
+#endif
+
 		return true;
 	}
 
@@ -428,8 +459,18 @@ public:
 
 		readBuf.Resize(framesize);
 		if (fr.Read(readBuf.Data(), framesize) != framesize) return false;
-		if (vpx_codec_decode(&codec, readBuf.Data(), readBuf.Size(), NULL, 0) != VPX_CODEC_OK) return false;
-		if (vpx_codec_control(&codec, VP8D_GET_FRAME_CORRUPTED, &corrupted) != VPX_CODEC_OK) return false;
+#ifdef HAVE_AV1
+		if (av1)
+		{
+			if (aom_codec_decode(&av1_codec, readBuf.Data(), readBuf.Size(), NULL) != AOM_CODEC_OK)
+				return false;
+		}
+		else
+#endif
+		{
+			if (vpx_codec_decode(&codec, readBuf.Data(), readBuf.Size(), NULL, 0) != VPX_CODEC_OK) return false;
+			if (vpx_codec_control(&codec, VP8D_GET_FRAME_CORRUPTED, &corrupted) != VPX_CODEC_OK) return false;
+		}
 		return true;
 	}
 
@@ -461,23 +502,46 @@ public:
 		return img->d_w == width && img->d_h == height? img : nullptr;
 	}
 
+#ifdef HAVE_AV1
+	aom_image_t* GetFrameDataAV1()
+	{
+		aom_image_t *img;
+		do
+		{
+			if (decstate == 0)  // first time / begin
+			{
+				if (!ReadFrame()) return nullptr;
+				decstate = 1;
+			}
+
+			img = aom_codec_get_frame(&av1_codec, &av1_iter);
+			if (img == nullptr)
+			{
+				decstate = 0;
+				iter = nullptr;
+			}
+		} while (img == nullptr);
+
+		return img->d_w == width && img->d_h == height? img : nullptr;
+	}
+#endif
+
 	//---------------------------------------------------------------------------
 	//
 	// 
 	//
 	//---------------------------------------------------------------------------
 
-	void SetPixel(uint8_t* dest, uint8_t y, uint8_t u, uint8_t v)
+	static void SetPixel(uint8_t* dest, uint8_t y, uint8_t u, uint8_t v)
 	{
 		dest[0] = y;
 		dest[1] = u;
 		dest[2] = v;
 	}
 
-	bool CreateNextFrame()
+	template<typename T>
+	void GenerateNextFrame(T* img)
 	{
-		auto img = GetFrameData();
-		if (!img) return false;
 		uint8_t const* const yplane = img->planes[VPX_PLANE_Y];
 		uint8_t const* const uplane = img->planes[VPX_PLANE_U];
 		uint8_t const* const vplane = img->planes[VPX_PLANE_V];
@@ -496,6 +560,24 @@ public:
 				SetPixel(&Pic[(x + y * width) << 2], yplane[ystride * y + x], u, v);
 			}
 		}
+	}
+
+#ifdef HAVE_AV1
+	bool CreateNextFrameAV1()
+	{
+		aom_image_t* img = GetFrameDataAV1();
+		if (!img) return false;
+		GenerateNextFrame<aom_image_t>(img);
+
+		return true;
+	}
+#endif
+
+	bool CreateNextFrame()
+	{
+		vpx_image_t* img = GetFrameData();
+		if (!img) return false;
+		GenerateNextFrame<vpx_image_t>(img);
 
 		return true;
 	}
@@ -563,7 +645,11 @@ public:
 		{
 			nextframetime += nsecsperframe;
 
+#ifdef HAVE_AV1
+			if (!(av1 ? CreateNextFrameAV1() : CreateNextFrame()))
+#else
 			if (!CreateNextFrame())
+#endif
 			{
 				Printf(PRINT_BOLD, "Failed reading next frame\n");
 				stop = true;
@@ -607,14 +693,20 @@ public:
 		if (!nostopsound) soundEngine->StopAllChannels();
 	}
 
-	~VpxPlayer()
+	~IvfPlayer()
 	{
 		if(MusicStream)
 		{
 			AudioTrack.Finish();
 			ZMusic_Close(MusicStream);
 		}
-		vpx_codec_destroy(&codec);
+
+#ifdef HAVE_AV1
+		if (av1)
+			aom_codec_destroy(&av1_codec);
+		else
+#endif
+			vpx_codec_destroy(&codec);
 		animtex.Clean();
 	}
 
@@ -894,9 +986,13 @@ MoviePlayer* OpenMovie(const char* filename, TArray<int>& ans, const int* framet
 		}
 		return anm;
 	}
+#ifdef HAVE_AV1
+	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12) || !memcmp(id, "DFIF\0\0 \0AV01", 12))
+#else
 	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12))
+#endif
 	{
-		auto anm = new VpxPlayer(fr, ans, frameticks ? frameticks[1] : 0, flags, error);
+		auto anm = new IvfPlayer(fr, ans, frameticks ? frameticks[1] : 0, flags, error);
 		if (!anm->isvalid())
 		{
 			delete anm;

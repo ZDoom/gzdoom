@@ -9,7 +9,6 @@
             "dependencies": [
                 {
                     "name": "libvpx",
-                    "default-features": false,
                     "platform": "windows & static & staticcrt"
                 }
             ]
@@ -20,7 +19,30 @@
             "dependencies": [
                 {
                     "name": "openal-soft",
-                    "default-features": false,
+                    "platform": "!windows | (windows & static & staticcrt)"
+                }
+            ]
+        },
+        "vcpkg-libavif":
+        {
+            "description": "Use libavif provided by vcpkg.",
+            "dependencies": [
+                {
+                    "name": "aom",
+                    "platform": "!windows | (windows & static & staticcrt)"
+                },
+                {
+                    "name": "libavif",
+                    "platform": "!windows | (windows & static & staticcrt)"
+                }
+            ]
+        },
+        "vcpkg-aom":
+        {
+            "description": "Use aom provided by vcpkg.",
+            "dependencies": [
+                {
+                    "name": "aom",
                     "platform": "!windows | (windows & static & staticcrt)"
                 }
             ]
@@ -49,6 +71,14 @@
         },
         {
             "name": "libwebp",
+            "platform": "!windows | (windows & static & staticcrt)"
+        },
+        {
+            "name": "aom",
+            "platform": "!windows | (windows & static & staticcrt)"
+        },
+        {
+            "name": "libavif",
             "platform": "!windows | (windows & static & staticcrt)"
         }
     ]

@@ -5,20 +5,24 @@
 #include "bitmap.h"
 #include "memarena.h"
 
+#ifndef MAKE_ID
+#ifndef __BIG_ENDIAN__
+#define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
+#else
+#define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
+#endif
+#endif
+
+using std::min;
+using std::max;
+using std::clamp;
+
+
 class FImageSource;
 using PrecacheInfo = TMap<int, std::pair<int, int>>;
 extern FMemArena ImageArena;
 
-// Doom patch format header
-struct patch_t
-{
-	int16_t			width;			// bounding box size 
-	int16_t			height;
-	int16_t			leftoffset; 	// pixels to the left of origin 
-	int16_t			topoffset;		// pixels below the origin 
-	uint32_t 		columnofs[1];	// only [width] used
-};
-
+// Pixel store wrapper that can either own the pixels itself or refer to an external store.
 struct PalettedPixels
 {
 	friend class FImageSource;

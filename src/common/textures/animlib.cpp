@@ -25,9 +25,9 @@ Modifications for JonoF's port by Jonathon Fowler (jf@jonof.id.au)
 */
 //-------------------------------------------------------------------------
 
+#include <string.h>
 #include "animlib.h"
 #include "m_swap.h"
-#include "m_alloc.h"
 
 //****************************************************************************
 //

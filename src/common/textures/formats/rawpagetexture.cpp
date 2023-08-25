@@ -40,6 +40,16 @@
 #include "image.h"
 #include "m_swap.h"
 
+// Doom patch format header
+struct patch_t
+{
+	int16_t			width;			// bounding box size 
+	int16_t			height;
+	int16_t			leftoffset; 	// pixels to the left of origin 
+	int16_t			topoffset;		// pixels below the origin 
+	uint32_t 		columnofs[1];	// only [width] used
+};
+
 
 //==========================================================================
 //
@@ -201,7 +211,7 @@ PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion, int frame)
 
 int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
-	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion);
+	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion, frame);
 	else
 	{
 		auto lump =  fileSystem.ReadFile(SourceLump);

@@ -41,6 +41,17 @@
 #include "m_swap.h"
 
 
+// Doom patch format header
+struct patch_t
+{
+	int16_t			width;			// bounding box size 
+	int16_t			height;
+	int16_t			leftoffset; 	// pixels to the left of origin 
+	int16_t			topoffset;		// pixels below the origin 
+	uint32_t 		columnofs[1];	// only [width] used
+};
+
+
 // posts are runs of non masked source pixels
 struct column_t
 {
@@ -266,8 +277,8 @@ PalettedPixels FPatchTexture::CreatePalettedPixels(int conversion, int frame)
 
 int FPatchTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
-	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion);
-	else return CopyTranslatedPixels(bmp, GPalette.GrayscaleMap.Palette);
+	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion, frame);
+	else return CopyTranslatedPixels(bmp, GPalette.GrayscaleMap.Palette, frame);
 }
 
 //==========================================================================

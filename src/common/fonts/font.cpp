@@ -422,7 +422,7 @@ void FFont::ReadSheetFont(std::vector<FileSys::FolderEntry> &folderdata, int wid
 
 				FBitmap* sheetimg = &sheetBitmaps[sheetBitmaps.Reserve(1)];
 				sheetimg->Create(tex->GetTexelWidth(), tex->GetTexelHeight());
-				tex->GetTexture()->GetImage()->CopyPixels(sheetimg, FImageSource::normal);
+				tex->GetTexture()->GetImage()->CopyPixels(sheetimg, FImageSource::normal, 0);
 
 				for (int y = 0; y < numtex_y; y++)
 				{

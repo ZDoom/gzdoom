@@ -37,7 +37,6 @@
 #include "zstring.h"
 #include "files.h"
 #include "palentry.h"
-#include "basics.h"
 
 // Screenshot buffer image data types
 enum ESSType

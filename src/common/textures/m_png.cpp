@@ -42,11 +42,13 @@
 #include <malloc.h>		// for alloca()
 #endif
 
-#include "basics.h"
 #include "m_crc32.h"
 #include "m_swap.h"
+#if __has_include("c_cvars.h")
 #include "c_cvars.h"
+#endif
 #include "m_png.h"
+#include "basics.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -103,6 +105,8 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const uint8_
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+// allow this to compile without CVARs.
+#if __has_include("c_cvars.h")
 CUSTOM_CVAR(Int, png_level, 5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
@@ -111,6 +115,10 @@ CUSTOM_CVAR(Int, png_level, 5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 9;
 }
 CVAR(Float, png_gamma, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+#else
+const int png_level = 5;
+const float png_gamma = 0;
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

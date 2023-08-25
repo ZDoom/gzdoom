@@ -45,7 +45,6 @@
 #include "floatrect.h"
 #include "refcounted.h"
 
-typedef TMap<int, bool> SpriteHits;
 class FImageSource;
 class FGameTexture;
 class IHardwareTexture;

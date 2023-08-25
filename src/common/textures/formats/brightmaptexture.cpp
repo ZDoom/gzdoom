@@ -67,7 +67,7 @@ FBrightmapTexture::FBrightmapTexture (FImageSource *source)
 
 int FBrightmapTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
-	SourcePic->CopyTranslatedPixels(bmp, GPalette.GlobalBrightmap.Palette);
+	SourcePic->CopyTranslatedPixels(bmp, GPalette.GlobalBrightmap.Palette, frame);
 	return 0;
 }
 

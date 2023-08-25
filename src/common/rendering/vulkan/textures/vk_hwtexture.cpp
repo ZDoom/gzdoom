@@ -350,13 +350,13 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 
 	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");
 
-	VulkanSampler* sampler = fb->GetSamplerManager()->Get(clampmode);
+	auto* sampler = fb->GetSamplerManager()->Get(clampmode);
 
 	WriteDescriptors update;
 	MaterialLayerInfo *layer;
 	auto systex = static_cast<VkHardwareTexture*>(GetLayer(0, state.mTranslation, &layer));
 	auto systeximage = systex->GetImage(layer->layerTexture, state.mTranslation, layer->scaleFlags);
-	update.AddCombinedImageSampler(descriptor.get(), 0, systeximage->View.get(), sampler, systeximage->Layout);
+	update.AddCombinedImageSampler(descriptor.get(), 0, systeximage->View.get(), fb->GetSamplerManager()->Get(GetLayerFilter(0), clampmode), systeximage->Layout);
 
 	if (!(layer->scaleFlags & CTF_Indexed))
 	{
@@ -364,7 +364,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 		{
 			auto syslayer = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
 			auto syslayerimage = syslayer->GetImage(layer->layerTexture, 0, layer->scaleFlags);
-			update.AddCombinedImageSampler(descriptor.get(), i, syslayerimage->View.get(), sampler, syslayerimage->Layout);
+			update.AddCombinedImageSampler(descriptor.get(), i, syslayerimage->View.get(), fb->GetSamplerManager()->Get(GetLayerFilter(i), clampmode), syslayerimage->Layout);
 		}
 	}
 	else
@@ -373,7 +373,7 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 		{
 			auto syslayer = static_cast<VkHardwareTexture*>(GetLayer(i, translation, &layer));
 			auto syslayerimage = syslayer->GetImage(layer->layerTexture, 0, layer->scaleFlags);
-			update.AddCombinedImageSampler(descriptor.get(), i, syslayerimage->View.get(), sampler, syslayerimage->Layout);
+			update.AddCombinedImageSampler(descriptor.get(), i, syslayerimage->View.get(), fb->GetSamplerManager()->Get(GetLayerFilter(i), clampmode), syslayerimage->Layout);
 		}
 		numLayers = 3;
 	}

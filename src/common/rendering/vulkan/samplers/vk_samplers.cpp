@@ -85,7 +85,7 @@ void VkSamplerManager::ResetHWSamplers()
 
 void VkSamplerManager::CreateHWSamplers()
 {
-	int filter = sysCallbacks.DisableTextureFilter && sysCallbacks.DisableTextureFilter()? 0 : gl_texture_filter;
+	int filter = sysCallbacks.DisableTextureFilter && sysCallbacks.DisableTextureFilter() ? 0 : gl_texture_filter;
 
 	for (int i = CLAMP_NONE; i <= CLAMP_XY; i++)
 	{
@@ -137,15 +137,40 @@ void VkSamplerManager::CreateHWSamplers()
 		.MaxLod(0.25f)
 		.DebugName("VkSamplerManager.mSamplers")
 		.Create(fb->GetDevice());
+
+
+	mOverrideSamplers[int(MaterialLayerSampling::NearestMipLinear)] = SamplerBuilder()
+		.MagFilter(VK_FILTER_NEAREST)
+		.MinFilter(VK_FILTER_LINEAR)
+		.AddressMode(VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT)
+		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
+		.MaxLod(100.0f)
+		.Anisotropy(gl_texture_filter_anisotropic)
+		.Create(fb->GetDevice());
+
+	mOverrideSamplers[int(MaterialLayerSampling::LinearMipLinear)] = SamplerBuilder()
+		.MagFilter(VK_FILTER_LINEAR)
+		.MinFilter(VK_FILTER_LINEAR)
+		.AddressMode(VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT)
+		.MipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR)
+		.MaxLod(100.0f)
+		.Anisotropy(gl_texture_filter_anisotropic)
+		.Create(fb->GetDevice());
 }
 
 void VkSamplerManager::DeleteHWSamplers()
 {
-	for (auto& sampler : mSamplers)
+	auto deleteSamplers = [&](auto& samplers)
 	{
-		if (sampler)
-			fb->GetCommands()->DrawDeleteList->Add(std::move(sampler));
-	}
+		for (auto& sampler : samplers)
+		{
+			if (sampler)
+				fb->GetCommands()->DrawDeleteList->Add(std::move(sampler));
+		}
+	};
+
+	deleteSamplers(mSamplers);
+	deleteSamplers(mOverrideSamplers);
 }
 
 VulkanSampler* VkSamplerManager::Get(PPFilterMode filter, PPWrapMode wrap)

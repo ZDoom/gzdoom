@@ -35,6 +35,14 @@ struct SpritePositioningInfo
 
 };
 
+enum class MaterialLayerSampling
+{
+	Default = -1,
+
+	NearestMipLinear,
+	LinearMipLinear,
+};
+
 struct MaterialLayers
 {
 	float Glossiness;
@@ -46,6 +54,8 @@ struct MaterialLayers
 	FGameTexture* Roughness;
 	FGameTexture* AmbientOcclusion;
 	FGameTexture* CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES];
+
+	MaterialLayerSampling CustomShaderTextureSampling[MAX_CUSTOM_HW_SHADER_TEXTURES];
 };
 
 enum EGameTexFlags
@@ -74,6 +84,8 @@ struct FMaterialLayers
 	RefCountedPtr<FTexture> Roughness;						// Roughness texture for PBR
 	RefCountedPtr<FTexture> AmbientOcclusion;				// Ambient occlusion texture for PBR
 	RefCountedPtr<FTexture> CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES]; // Custom texture maps for custom hardware shaders
+
+	MaterialLayerSampling CustomShaderTextureSampling[MAX_CUSTOM_HW_SHADER_TEXTURES];
 };
 
 // Refactoring helper to allow piece by piece adjustment of the API
@@ -235,7 +247,11 @@ public:
 			if (lay.AmbientOcclusion) Layers->AmbientOcclusion = lay.AmbientOcclusion->GetTexture();
 			for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
 			{
-				if (lay.CustomShaderTextures[i]) Layers->CustomShaderTextures[i] = lay.CustomShaderTextures[i]->GetTexture();
+				if (lay.CustomShaderTextures[i])
+				{
+					Layers->CustomShaderTextureSampling[i] = lay.CustomShaderTextureSampling[i];
+					Layers->CustomShaderTextures[i] = lay.CustomShaderTextures[i]->GetTexture();
+				}
 			}
 		}
 	}

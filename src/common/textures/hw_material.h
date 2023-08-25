@@ -13,6 +13,7 @@ struct MaterialLayerInfo
 	FTexture* layerTexture;
 	int scaleFlags;
 	int clampflags;
+	MaterialLayerSampling layerFiltering;
 };
 
 //===========================================================================
@@ -55,9 +56,9 @@ public:
 		mTextureLayers.Resize(1);
 	}
 
-	void AddTextureLayer(FTexture *tex, bool allowscale)
+	void AddTextureLayer(FTexture *tex, bool allowscale, MaterialLayerSampling filter)
 	{
-		mTextureLayers.Push({ tex, allowscale });
+		mTextureLayers.Push({ tex, allowscale, -1, filter });
 	}
 
 	int NumLayers() const
@@ -66,7 +67,11 @@ public:
 	}
 
 	IHardwareTexture *GetLayer(int i, int translation, MaterialLayerInfo **pLayer = nullptr) const;
-
+	
+	MaterialLayerSampling GetLayerFilter(int index) const
+	{
+		return mTextureLayers[index].layerFiltering;
+	}
 
 	static FMaterial *ValidateTexture(FGameTexture * tex, int scaleflags, bool create = true);
 	const TArray<MaterialLayerInfo> &GetLayerArray() const

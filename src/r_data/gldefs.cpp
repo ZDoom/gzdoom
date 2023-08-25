@@ -1371,6 +1371,7 @@ class GLDefsParser
 				if (tex)
 				{
 					bool okay = false;
+					size_t texIndex = 0;
 					for (size_t i = 0; i < countof(mlay.CustomShaderTextures); i++)
 					{
 						if (!mlay.CustomShaderTextures[i])
@@ -1383,6 +1384,7 @@ class GLDefsParser
 
 							texNameList.Push(textureName);
 							texNameIndex.Push((int)i);
+							texIndex = i;
 							okay = true;
 							break;
 						}
@@ -1390,6 +1392,34 @@ class GLDefsParser
 					if (!okay)
 					{
 						sc.ScriptError("Error: out of texture units in texture '%s'", tex->GetName().GetChars());
+					}
+
+					if (sc.CheckToken('{'))
+					{
+						while (!sc.CheckToken('}'))
+						{
+							sc.MustGetString();
+							if (sc.Compare("filter"))
+							{
+								sc.MustGetString();
+								if (sc.Compare("nearest"))
+								{
+									mlay.CustomShaderTextureSampling[texIndex] = MaterialLayerSampling::NearestMipLinear;
+								}
+								else if (sc.Compare("linear"))
+								{
+									mlay.CustomShaderTextureSampling[texIndex] = MaterialLayerSampling::LinearMipLinear;
+								}
+								else if (sc.Compare("default"))
+								{
+									mlay.CustomShaderTextureSampling[texIndex] = MaterialLayerSampling::Default;
+								}
+								else
+								{
+									sc.ScriptError("Error: unexpected '%s' when reading filter property in texture '%s'\n", sc.String, tex ? tex->GetName().GetChars() : "(null)");
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1758,10 +1788,12 @@ class GLDefsParser
 					}
 					sc.MustGetString();
 					bool okay = false;
+					size_t texIndex = 0;
 					for (size_t i = 0; i < countof(mlay.CustomShaderTextures); i++)
 					{
 						if (!mlay.CustomShaderTextures[i])
 						{
+							mlay.CustomShaderTextureSampling[texIndex] = MaterialLayerSampling::Default;
 							mlay.CustomShaderTextures[i] = TexMan.FindGameTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 							if (!mlay.CustomShaderTextures[i])
 							{
@@ -1770,6 +1802,7 @@ class GLDefsParser
 
 							texNameList.Push(textureName);
 							texNameIndex.Push((int)i);
+							texIndex = i;
 							okay = true;
 							break;
 						}

@@ -52,7 +52,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 	mShaderIndex = SHADER_Default;
 	sourcetex = tx;
 	auto imgtex = tx->GetTexture();
-	mTextureLayers.Push({ imgtex, scaleflags, -1 });
+	mTextureLayers.Push({ imgtex, scaleflags, -1, MaterialLayerSampling::Default });
 
 	if (tx->GetUseType() == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(imgtex)->GetColorFormat() == 0)
 	{
@@ -83,7 +83,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			for (auto &texture : { tx->Layers->Normal.get(), tx->Layers->Specular.get() })
 			{
-				mTextureLayers.Push({ texture, 0, -1 });
+				mTextureLayers.Push({ texture, 0, -1, MaterialLayerSampling::Default });
 			}
 			mShaderIndex = SHADER_Specular;
 		}
@@ -91,7 +91,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			for (auto &texture : { tx->Layers->Normal.get(), tx->Layers->Metallic.get(), tx->Layers->Roughness.get(), tx->Layers->AmbientOcclusion.get() })
 			{
-				mTextureLayers.Push({ texture, 0, -1 });
+				mTextureLayers.Push({ texture, 0, -1, MaterialLayerSampling::Default });
 			}
 			mShaderIndex = SHADER_PBR;
 		}
@@ -101,30 +101,30 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		auto placeholder = TexMan.GameByIndex(1);
 		if (tx->Brightmap.get())
 		{
-			mTextureLayers.Push({ tx->Brightmap.get(), scaleflags, -1 });
+			mTextureLayers.Push({ tx->Brightmap.get(), scaleflags, -1, MaterialLayerSampling::Default });
 			mLayerFlags |= TEXF_Brightmap;
 		}
 		else	
 		{ 
-			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
+			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1, MaterialLayerSampling::Default });
 		}
 		if (tx->Layers && tx->Layers->Detailmap.get())
 		{
-			mTextureLayers.Push({ tx->Layers->Detailmap.get(), 0, CLAMP_NONE });
+			mTextureLayers.Push({ tx->Layers->Detailmap.get(), 0, CLAMP_NONE, MaterialLayerSampling::Default });
 			mLayerFlags |= TEXF_Detailmap;
 		}
 		else
 		{
-			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
+			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1, MaterialLayerSampling::Default });
 		}
 		if (tx->Layers && tx->Layers->Glowmap.get())
 		{
-			mTextureLayers.Push({ tx->Layers->Glowmap.get(), scaleflags, -1 });
+			mTextureLayers.Push({ tx->Layers->Glowmap.get(), scaleflags, -1,  MaterialLayerSampling::Default});
 			mLayerFlags |= TEXF_Glowmap;
 		}
 		else
 		{
-			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1 });
+			mTextureLayers.Push({ placeholder->GetTexture(), 0, -1, MaterialLayerSampling::Default });
 		}
 
 		auto index = tx->GetShaderIndex();
@@ -137,10 +137,13 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 				{
 					if (tx->Layers)
 					{
+						size_t index = 0;
 						for (auto& texture : tx->Layers->CustomShaderTextures)
 						{
-							if (texture == nullptr) continue;
-							mTextureLayers.Push({ texture.get(), 0 });	// scalability should be user-definable.
+							if (texture != nullptr)
+							{
+								mTextureLayers.Push({ texture.get(), 0, -1, tx->Layers->CustomShaderTextureSampling[index++]});	// scalability should be user-definable.
+							}
 						}
 					}
 					mShaderIndex = index;

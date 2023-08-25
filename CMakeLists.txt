@@ -24,6 +24,10 @@ if (OPENAL_SOFT_VCPKG)
 	list(APPEND VCPKG_MANIFEST_FEATURES "vcpkg-openal-soft")
 endif()
 
+if (NOT DEFINED AV1 OR AV1)
+	list(APPEND VCPKG_MANIFEST_FEATURES "vcpkg-av1")
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows"))
 	# Force static triplet on Windows
 	set(VCPKG_TARGET_TRIPLET "x64-windows-static")
@@ -47,6 +51,25 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) 
 
+if (VCPKG_TOOLCHAIN AND WIN32)
+	set(PKG_CONFIG_EXECUTABLE "${VCPKG_INSTALLED_DIR}/x64-windows/tools/pkgconf/pkgconf.exe")
+endif()
+
+option(AV1 "Enable AV1 IVF video and AVIF decoding support" ON)
+
+if (AV1)
+	include(FindPkgConfig)
+	if (PKG_CONFIG_FOUND)
+		pkg_check_modules(dav1d IMPORTED_TARGET dav1d)
+	endif()
+	if (NOT APPLE OR (APPLE AND VCPKG_TOOLCHAIN))
+		find_package(libyuv CONFIG)
+		if (NOT TARGET yuv)
+			find_library(LIBYUV_LIBRARIES NAMES yuv libyuv)
+			find_path(LIBYUV_INCLUDE_DIR libyuv.h)
+		endif()
+	endif()
+endif()
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( FindPackageHandleStandardArgs )
@@ -441,6 +464,10 @@ install(DIRECTORY docs/
 
 option( DYN_OPENAL "Dynamically load OpenAL" ON )
 
+if (AV1 AND (TARGET yuv OR (NOT ${LIBYUV_INCLUDE_DIR} MATCHES "NOTFOUND" AND NOT ${LIBYUV_LIBRARIES} MATCHES "NOTFOUND")))
+	add_subdirectory( libraries/libavif )
+	include_directories( libraries/libavif/ )
+endif()
 add_subdirectory( libraries/lzma )
 add_subdirectory( tools )
 add_subdirectory( wadsrc )

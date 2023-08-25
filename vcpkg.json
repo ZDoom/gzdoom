@@ -24,6 +24,25 @@
                     "platform": "!windows | (windows & static & staticcrt)"
                 }
             ]
+        },
+        "vcpkg-av1":
+        {
+            "description": "Use dav1d provided by vcpkg.",
+            "dependencies": [
+                {
+                    "name": "libyuv",
+                    "platform": "!windows | (windows & static & staticcrt)"
+                },
+                {
+                    "name": "dav1d",
+                    "platform": "!windows | (windows & static & staticcrt)"
+                },
+                {
+                    "name": "pkgconf",
+                    "host": true,
+                    "platform": "windows"
+                }
+            ]
         }
     },
     "dependencies": [

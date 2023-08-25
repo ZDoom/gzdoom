@@ -44,11 +44,16 @@
 #include "playmve.h"
 #include <vpx/vpx_decoder.h>
 #include <vpx/vp8dx.h>
+#ifdef HAVE_AV1
+#include "dav1d/dav1d.h"
+#include "dav1d/picture.h"
+#endif
 #include "filesystem.h"
 #include "vm.h"
 #include "printf.h"
 #include <atomic>
 #include <cmath>
+#include <memory>
 #include <zmusic.h>
 #include "filereadermusicinterface.h"
 
@@ -308,7 +313,7 @@ public:
 //
 //---------------------------------------------------------------------------
 
-class VpxPlayer : public MoviePlayer
+class IvfPlayer : public MoviePlayer
 {
 	bool failed = false;
 	FileReader fr;
@@ -323,6 +328,13 @@ class VpxPlayer : public MoviePlayer
 	TArray<uint8_t> readBuf;
 	vpx_codec_ctx_t codec{};
 	vpx_codec_iter_t iter = nullptr;
+
+#ifdef HAVE_AV1
+	// AV1 stuff.
+	Dav1dContext* av1_decoder;
+	Dav1dData av1_data;
+	bool av1 = false;
+#endif
 
 	uint32_t convnumer;
 	uint32_t convdenom;
@@ -342,12 +354,12 @@ public:
 		return ZMusic_FillStream(MusicStream, buff, len);
 	}
 	static bool StreamCallbackC(SoundStream *stream, void *buff, int len, void *userdata)
-	{ return static_cast<VpxPlayer*>(userdata)->StreamCallback(stream, buff, len); }
+	{ return static_cast<IvfPlayer*>(userdata)->StreamCallback(stream, buff, len); }
 
 public:
 	bool isvalid() { return !failed; }
 
-	VpxPlayer(FileReader& fr_, TArray<int>& animSnd_, int flags_, int origframedelay, FString& error) : animSnd(std::move(animSnd_))
+	IvfPlayer(FileReader& fr_, TArray<int>& animSnd_, int flags_, int origframedelay, FString& error) : animSnd(std::move(animSnd_))
 	{
 		fr = std::move(fr_);
 		flags = flags_;
@@ -361,13 +373,25 @@ public:
 
 		Pic.Resize(width * height * 4);
 
-
-		// Todo: Support VP9 as well?
-		vpx_codec_dec_cfg_t cfg = { 1, width, height };
-		if (vpx_codec_dec_init(&codec, &vpx_codec_vp8_dx_algo, &cfg, 0))
+		if (av1)
 		{
-			error.Format("Error initializing VPX codec.\n");
-			failed = true;
+			Dav1dSettings settings;
+			dav1d_default_settings(&settings);
+			if (dav1d_open(&av1_decoder, &settings) < 0)
+			{
+				error.Format("Error initializing AV1 codec.\n");
+				failed = true;
+			}
+		}
+		else
+		{
+			// Todo: Support VP9 as well?
+			vpx_codec_dec_cfg_t cfg = { 1, width, height };
+			if (vpx_codec_dec_init(&codec, &vpx_codec_vp8_dx_algo, &cfg, 0))
+			{
+				error.Format("Error initializing VPX codec.\n");
+				failed = true;
+			}
 		}
 	}
 
@@ -387,7 +411,7 @@ public:
 		uint16_t length = fr.ReadUInt16();
 		if (length != 32) return false;
 		fr.Read(&magic, 4);
-		if (magic != MAKE_ID('V', 'P', '8', '0')) return false;
+		if (magic != MAKE_ID('V', 'P', '8', '0') && magic != MAKE_ID('A', 'V', '0' ,'1')) return false;
 
 		width = fr.ReadUInt16();
 		height = fr.ReadUInt16();
@@ -410,6 +434,8 @@ public:
 		nsecsperframe = int64_t(fpsnumerator) * 1'000'000'000 / fpsdenominator;
 		nextframetime = 0;
 
+		av1 = !!(magic == MAKE_ID('A', 'V', '0' ,'1'));
+
 		return true;
 	}
 
@@ -428,6 +454,17 @@ public:
 
 		readBuf.Resize(framesize);
 		if (fr.Read(readBuf.Data(), framesize) != framesize) return false;
+#ifdef HAVE_AV1
+		if (av1)
+		{
+			dav1d_data_wrap(&av1_data, readBuf.Data(), readBuf.Size(), [](const uint8_t*, void*) {}, nullptr);
+			auto err = dav1d_send_data(av1_decoder, &av1_data);
+			if (err < 0 && err != DAV1D_ERR(EAGAIN))
+				return false;
+
+			return true;
+		}
+#endif
 		if (vpx_codec_decode(&codec, readBuf.Data(), readBuf.Size(), NULL, 0) != VPX_CODEC_OK) return false;
 		if (vpx_codec_control(&codec, VP8D_GET_FRAME_CORRUPTED, &corrupted) != VPX_CODEC_OK) return false;
 		return true;
@@ -461,6 +498,36 @@ public:
 		return img->d_w == width && img->d_h == height? img : nullptr;
 	}
 
+	std::shared_ptr<Dav1dPicture> GetFrameDataAV1()
+	{
+		std::shared_ptr<Dav1dPicture> img;
+		img.reset(new Dav1dPicture);
+		int err = 0;
+		do
+		{
+			if (decstate == 0)  // first time / begin
+			{
+				if (!ReadFrame()) return nullptr;
+				decstate = 1;
+			}
+
+			memset(img.get(), 0, sizeof(img));
+			err = dav1d_get_picture(av1_decoder, img.get());
+			if (err < 0 && err != DAV1D_ERR(EAGAIN))
+			{
+				dav1d_data_unref(&av1_data);
+				return nullptr;
+			}
+			if (err == DAV1D_ERR(EAGAIN))
+			{
+				decstate = 0;
+				dav1d_data_unref(&av1_data);
+			}
+		} while (err == DAV1D_ERR(EAGAIN));
+
+		return img->p.w == width && img->p.h == height? img : nullptr;
+	}
+
 	//---------------------------------------------------------------------------
 	//
 	// 
@@ -472,6 +539,40 @@ public:
 		dest[0] = y;
 		dest[1] = u;
 		dest[2] = v;
+	}
+
+	bool CreateNextFrameAV1()
+	{
+		auto img = GetFrameDataAV1();
+		if (!img) return false;
+		if (img->p.layout != DAV1D_PIXEL_LAYOUT_I420)
+		{
+			Printf(TEXTCOLOR_RED "Non-YUV420 AV1 IVF files are not supported.\n");
+			dav1d_data_unref(&av1_data);
+			dav1d_picture_unref(img.get());
+			return false;
+		}
+		uint8_t const* const yplane = (uint8_t*)img->data[0];
+		uint8_t const* const uplane = (uint8_t*)img->data[1];
+		uint8_t const* const vplane = (uint8_t*)img->data[2];
+
+		const int ystride = img->stride[0];
+		const int ustride = img->stride[1];
+		const int vstride = img->stride[1];
+
+		for (unsigned int y = 0; y < height; y++)
+		{
+			for (unsigned int x = 0; x < width; x++)
+			{
+				uint8_t u = uplane[ustride * (y >> 1) + (x >> 1)];
+				uint8_t v = vplane[vstride * (y >> 1) + (x >> 1)];
+
+				SetPixel(&Pic[(x + y * width) << 2], yplane[ystride * y + x], u, v);
+			}
+		}
+
+		dav1d_picture_unref(img.get());
+		return true;
 	}
 
 	bool CreateNextFrame()
@@ -563,7 +664,7 @@ public:
 		{
 			nextframetime += nsecsperframe;
 
-			if (!CreateNextFrame())
+			if (!(av1 ? CreateNextFrameAV1() : CreateNextFrame()))
 			{
 				Printf(PRINT_BOLD, "Failed reading next frame\n");
 				stop = true;
@@ -607,14 +708,19 @@ public:
 		if (!nostopsound) soundEngine->StopAllChannels();
 	}
 
-	~VpxPlayer()
+	~IvfPlayer()
 	{
 		if(MusicStream)
 		{
 			AudioTrack.Finish();
 			ZMusic_Close(MusicStream);
 		}
-		vpx_codec_destroy(&codec);
+		if (av1)
+		{
+			dav1d_close(&av1_decoder);
+		}
+		else
+			vpx_codec_destroy(&codec);
 		animtex.Clean();
 	}
 
@@ -894,9 +1000,13 @@ MoviePlayer* OpenMovie(const char* filename, TArray<int>& ans, const int* framet
 		}
 		return anm;
 	}
+#ifdef HAVE_AV1
+	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12) || !memcmp(id, "DKIF\0\0 \0AV01", 12))
+#else
 	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12))
+#endif
 	{
-		auto anm = new VpxPlayer(fr, ans, frameticks ? frameticks[1] : 0, flags, error);
+		auto anm = new IvfPlayer(fr, ans, frameticks ? frameticks[1] : 0, flags, error);
 		if (!anm->isvalid())
 		{
 			delete anm;

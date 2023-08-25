@@ -1255,6 +1255,16 @@ endif()
 
 target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
 
+if (AV1 AND TARGET PkgConfig::dav1d)
+	target_compile_definitions(zdoom PRIVATE HAVE_AV1=1)
+	target_link_libraries(zdoom PkgConfig::dav1d)
+	if (TARGET avif)
+		target_compile_definitions(zdoom PRIVATE HAVE_AVIF=1)
+		target_sources(zdoom PRIVATE common/textures/formats/aviftexture.cpp)
+	    target_link_libraries(zdoom avif)
+	endif()
+endif()
+
 include_directories(
 	BEFORE
 	.

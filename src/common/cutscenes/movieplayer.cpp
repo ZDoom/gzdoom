@@ -436,8 +436,10 @@ public:
 		nsecsperframe = int64_t(fpsnumerator) * 1'000'000'000 / fpsdenominator;
 		nextframetime = 0;
 
+#ifdef HAVE_AV1
 		av1 = !!(magic == MAKE_ID('A', 'V', '0' ,'1'));
-
+#endif
+		
 		return true;
 	}
 
@@ -725,11 +727,13 @@ public:
 			AudioTrack.Finish();
 			ZMusic_Close(MusicStream);
 		}
+#ifdef HAVE_AV1
 		if (av1)
 		{
 			dav1d_close(&av1_decoder);
 		}
 		else
+#endif
 			vpx_codec_destroy(&codec);
 		animtex.Clean();
 	}

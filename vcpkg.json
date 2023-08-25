@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-    "builtin-baseline": "9d47b24eacbd1cd94f139457ef6cd35e5d92cc84",
+    "builtin-baseline": "65c013b9667ff1f58fb8724209227e5a2e761043",
     "features":
     {
         "vcpkg-libvpx":

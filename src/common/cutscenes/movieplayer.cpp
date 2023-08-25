@@ -373,6 +373,7 @@ public:
 
 		Pic.Resize(width * height * 4);
 
+#ifdef HAVE_AV1
 		if (av1)
 		{
 			Dav1dSettings settings;
@@ -384,6 +385,7 @@ public:
 			}
 		}
 		else
+#endif
 		{
 			// Todo: Support VP9 as well?
 			vpx_codec_dec_cfg_t cfg = { 1, width, height };
@@ -498,6 +500,7 @@ public:
 		return img->d_w == width && img->d_h == height? img : nullptr;
 	}
 
+#ifdef HAVE_AV1
 	std::shared_ptr<Dav1dPicture> GetFrameDataAV1()
 	{
 		std::shared_ptr<Dav1dPicture> img;
@@ -527,6 +530,7 @@ public:
 
 		return img->p.w == width && img->p.h == height? img : nullptr;
 	}
+#endif
 
 	//---------------------------------------------------------------------------
 	//
@@ -541,6 +545,7 @@ public:
 		dest[2] = v;
 	}
 
+#ifdef HAVE_AV1
 	bool CreateNextFrameAV1()
 	{
 		auto img = GetFrameDataAV1();
@@ -574,6 +579,7 @@ public:
 		dav1d_picture_unref(img.get());
 		return true;
 	}
+#endif
 
 	bool CreateNextFrame()
 	{
@@ -664,7 +670,11 @@ public:
 		{
 			nextframetime += nsecsperframe;
 
+#ifndef HAVE_AV1
+			if (!CreateNextFrame())
+#else
 			if (!(av1 ? CreateNextFrameAV1() : CreateNextFrame()))
+#endif
 			{
 				Printf(PRINT_BOLD, "Failed reading next frame\n");
 				stop = true;

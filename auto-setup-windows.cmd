@@ -65,9 +65,9 @@ mkdir "%~dp0\build\zmusic\build"
 mkdir "%~dp0\build\vcpkg_installed"
 
 cmake -A x64 -S ./zmusic -B ./zmusic/build ^
-	-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake ^
+	-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ^
 	-DVCPKG_LIBSNDFILE=1 ^
-	-DVCPKG_INSTALLLED_DIR=./vcpkg_installed/
+	-DVCPKG_INSTALLLED_DIR=../vcpkg_installed/
 cmake --build ./zmusic/build --config Release -- -maxcpucount -verbosity:minimal
 
 cmake -A x64 -S .. -B . ^

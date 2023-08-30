@@ -5,6 +5,22 @@
 #include "texturemanager.h"
 #include "playsim/p_lnspec.h"
 
+#include "c_dispatch.h"
+#include "g_levellocals.h"
+
+CCMD(dumplevelmesh)
+{
+	if (level.levelMesh)
+	{
+		level.levelMesh->DumpMesh(FString("levelmesh.obj"));
+		Printf("Level mesh exported.");
+	}
+	else
+	{
+		Printf("No level mesh. Perhaps your level has no lightmap loaded?");
+	}
+}
+
 DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 {
 	for (unsigned int i = 0; i < doomMap.sides.Size(); i++)
@@ -417,4 +433,27 @@ bool DoomLevelMesh::IsDegenerate(const FVector3 &v0, const FVector3 &v1, const F
 	float crossz = ax * by - ay * bx;
 	float crosslengthsqr = crossx * crossx + crossy * crossy + crossz * crossz;
 	return crosslengthsqr <= 1.e-6f;
+}
+
+void DoomLevelMesh::DumpMesh(const FString& filename) const
+{
+	auto f = fopen(filename.GetChars(), "w");
+
+	fprintf(f, "# DoomLevelMesh debug export\n");
+	fprintf(f, "# MeshVertices: %d, MeshElements: %d\n", MeshVertices.Size(), MeshElements.Size());
+
+	double scale = 1 / 100.0;
+
+	for (const auto& v : MeshVertices)
+	{
+		fprintf(f, "v %f %f %f\n", v.X * scale, v.Y * scale, v.Z * scale);
+	}
+
+	const auto s = MeshElements.Size();
+	for (auto i = 0; i + 2 < s; i += 3)
+	{
+		fprintf(f, "f %d %d %d\n", MeshElements[i] + 1, MeshElements[i + 1] + 1, MeshElements[i + 2] + 1);
+	}
+
+	fclose(f);
 }

@@ -38,6 +38,8 @@ public:
 
 	TArray<Surface> Surfaces;
 
+	void DumpMesh(const FString& filename) const;
+
 private:
 	void CreateSubsectorSurfaces(FLevelLocals &doomMap);
 	void CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor);

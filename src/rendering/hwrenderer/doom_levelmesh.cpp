@@ -3,6 +3,7 @@
 #include "doom_levelmesh.h"
 #include "g_levellocals.h"
 #include "texturemanager.h"
+#include "playsim/p_lnspec.h"
 
 DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 {
@@ -83,6 +84,36 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 
 	FVector2 dx(v2.X - v1.X, v2.Y - v1.Y);
 	float distance = dx.Length();
+
+	// line_horizont consumes everything
+	if (side->linedef->special == Line_Horizon && front != back)
+	{
+		Surface surf;
+		surf.type = ST_MIDDLEWALL;
+		surf.typeIndex = typeIndex;
+		surf.bSky = front->GetTexture(sector_t::floor) == skyflatnum || front->GetTexture(sector_t::ceiling) == skyflatnum;
+
+		FVector3 verts[4];
+		verts[0].X = verts[2].X = v1.X;
+		verts[0].Y = verts[2].Y = v1.Y;
+		verts[1].X = verts[3].X = v2.X;
+		verts[1].Y = verts[3].Y = v2.Y;
+		verts[0].Z = v1Bottom;
+		verts[1].Z = v2Bottom;
+		verts[2].Z = v1Top;
+		verts[3].Z = v2Top;
+
+		surf.startVertIndex = MeshVertices.Size();
+		surf.numVerts = 4;
+		MeshVertices.Push(verts[0]);
+		MeshVertices.Push(verts[1]);
+		MeshVertices.Push(verts[2]);
+		MeshVertices.Push(verts[3]);
+
+		surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+		Surfaces.Push(surf);
+		return;
+	}
 
 	if (back)
 	{

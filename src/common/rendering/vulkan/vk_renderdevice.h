@@ -85,6 +85,8 @@ public:
 
 	void WaitForCommands(bool finish) override;
 
+	void ResetRenderStateCache();
+
 	std::mutex ThreadMutex;
 
 private:

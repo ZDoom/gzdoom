@@ -493,6 +493,14 @@ void VulkanRenderDevice::WaitForCommands(bool finish)
 	mCommands->WaitForCommands(finish);
 }
 
+void VulkanRenderDevice::ResetRenderStateCache()
+{
+	for (auto& renderstate : mRenderState)
+	{
+		renderstate->ResetCache();
+	}
+}
+
 void VulkanRenderDevice::PrintStartupLog()
 {
 	const auto &props = mDevice->PhysicalDevice.Properties.Properties;

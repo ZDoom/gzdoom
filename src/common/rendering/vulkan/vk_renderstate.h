@@ -64,6 +64,8 @@ public:
 	void EndRenderPass();
 	void EndFrame();
 
+	void ResetCache();
+
 protected:
 	void Apply(int dt);
 	void ApplyRenderPass(int dt);

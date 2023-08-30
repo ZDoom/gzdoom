@@ -740,6 +740,12 @@ void VkRenderState::EndFrame()
 	mStreamBufferWriter.Reset();
 }
 
+void VkRenderState::ResetCache()
+{
+	mRenderPassSetups.clear();
+	mPipelineLayouts.clear();
+}
+
 void VkRenderState::EnableDrawBuffers(int count, bool apply)
 {
 	if (mRenderTarget.DrawBuffers != count)

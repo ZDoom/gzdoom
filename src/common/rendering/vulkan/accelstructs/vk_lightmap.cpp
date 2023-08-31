@@ -83,7 +83,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			.Execute(cmdbuffer.get());
 
 		VkDeviceSize offset = 0;
-		cmdbuffer->bindVertexBuffers(0, 1, &sceneVertexBuffer->buffer, &offset);
+		cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
 		cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipeline.get());
 		cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 0, raytrace.descriptorSet0.get());
 		cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 1, raytrace.descriptorSet1.get());
@@ -112,18 +112,18 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			if (surface != targetSurface && (maxUV.X < 0.0f || maxUV.Y < 0.0f || minUV.X > 1.0f || minUV.Y > 1.0f))
 				continue; // Bounding box not visible
 
-			int firstLight = sceneLightPos;
-			int firstVertex = sceneVertexPos;
+			int firstLight = lights.Pos;
+			int firstVertex = vertices.Pos;
 			int lightCount = (int)surface->LightList.size();
 			int vertexCount = (int)surface->verts.Size();
-			if (sceneLightPos + lightCount > SceneLightBufferSize || sceneVertexPos + vertexCount > SceneVertexBufferSize)
+			if (lights.Pos + lightCount > lights.BufferSize || vertices.Pos + vertexCount > vertices.BufferSize)
 			{
 				printf(".");
 
 				// Flush scene buffers
 				FinishCommands();
-				sceneLightPos = 0;
-				sceneVertexPos = 0;
+				lights.Pos = 0;
+				vertices.Pos = 0;
 				firstLight = 0;
 				firstVertex = 0;
 				BeginCommands();
@@ -131,19 +131,19 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 
 				printf(".");
 
-				if (sceneLightPos + lightCount > SceneLightBufferSize)
+				if (lights.Pos + lightCount > lights.BufferSize)
 				{
 					throw std::runtime_error("SceneLightBuffer is too small!");
 				}
-				else if (sceneVertexPos + vertexCount > SceneVertexBufferSize)
+				else if (vertices.Pos + vertexCount > vertices.BufferSize)
 				{
 					throw std::runtime_error("SceneVertexBuffer is too small!");
 				}
 			}
-			sceneLightPos += lightCount;
-			sceneVertexPos += vertexCount;
+			lights.Pos += lightCount;
+			vertices.Pos += vertexCount;
 
-			LightInfo* lightinfo = &sceneLights[firstLight];
+			LightInfo* lightinfo = &lights.Lights[firstLight];
 			for (hwrenderer::ThingLight* light : surface->LightList)
 			{
 				lightinfo->Origin = light->Origin;
@@ -166,7 +166,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			pc.LightmapStepY = targetSurface->worldStepY * viewport.height;
 			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pc);
 
-			SceneVertex* vertex = &sceneVertices[firstVertex];
+			SceneVertex* vertex = &vertices.Vertices[firstVertex];
 
 			if (surface->type == hwrenderer::ST_FLOOR || surface->type == hwrenderer::ST_CEILING)
 			{
@@ -213,18 +213,18 @@ void VkLightmap::CreateAtlasImages()
 
 void VkLightmap::UploadUniforms()
 {
-	Uniforms uniforms = {};
-	uniforms.SunDir = mesh->SunDirection;
-	uniforms.SunColor = mesh->SunColor;
-	uniforms.SunIntensity = 1.0f;
+	Uniforms values = {};
+	values.SunDir = mesh->SunDirection;
+	values.SunColor = mesh->SunColor;
+	values.SunIntensity = 1.0f;
 
-	mappedUniforms = (uint8_t*)uniformTransferBuffer->Map(0, uniformStructs * uniformStructStride);
-	*reinterpret_cast<Uniforms*>(mappedUniforms + uniformStructStride * uniformsIndex) = uniforms;
-	uniformTransferBuffer->Unmap();
+	uniforms.Uniforms = (uint8_t*)uniforms.TransferBuffer->Map(0, uniforms.NumStructs * uniforms.StructStride);
+	*reinterpret_cast<Uniforms*>(uniforms.Uniforms + uniforms.StructStride * uniforms.Index) = values;
+	uniforms.TransferBuffer->Unmap();
 
-	cmdbuffer->copyBuffer(uniformTransferBuffer.get(), uniformBuffer.get());
+	cmdbuffer->copyBuffer(uniforms.TransferBuffer.get(), uniforms.Buffer.get());
 	PipelineBarrier()
-		.AddBuffer(uniformBuffer.get(), VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
+		.AddBuffer(uniforms.Buffer.get(), VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
 		.Execute(cmdbuffer.get(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
@@ -243,7 +243,7 @@ void VkLightmap::ResolveAtlasImage(size_t i)
 		.Execute(cmdbuffer.get());
 
 	VkDeviceSize offset = 0;
-	cmdbuffer->bindVertexBuffers(0, 1, &sceneVertexBuffer->buffer, &offset);
+	cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, resolve.pipeline.get());
 
 	auto descriptorSet = resolve.descriptorPool->allocate(resolve.descriptorSetLayout.get());
@@ -269,10 +269,10 @@ void VkLightmap::ResolveAtlasImage(size_t i)
 	pc.LightmapStepY = FVector3(0.0f, 0.0f, 0.0f);
 	cmdbuffer->pushConstants(resolve.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pc);
 
-	int firstVertex = sceneVertexPos;
+	int firstVertex = vertices.Pos;
 	int vertexCount = 4;
-	sceneVertexPos += vertexCount;
-	SceneVertex* vertex = &sceneVertices[firstVertex];
+	vertices.Pos += vertexCount;
+	SceneVertex* vertex = &vertices.Vertices[firstVertex];
 	vertex[0].Position = FVector2(0.0f, 0.0f);
 	vertex[1].Position = FVector2(1.0f, 0.0f);
 	vertex[2].Position = FVector2(1.0f, 1.0f);
@@ -346,26 +346,26 @@ void VkLightmap::CreateShaders()
 		traceprefix += "#define USE_RAYQUERY\r\n";
 	}
 
-	vertShader = ShaderBuilder()
+	shaders.vert = ShaderBuilder()
 		.Type(ShaderType::Vertex)
 		.AddSource("VersionBlock", prefix)
 		.AddSource("vert.glsl", LoadPrivateShaderLump("shaders/lightmap/vert.glsl").GetChars())
-		.DebugName("VkLightmap.VertShader")
-		.Create("VkLightmap.VertShader", fb->GetDevice());
+		.DebugName("VkLightmap.Vert")
+		.Create("VkLightmap.Vert", fb->GetDevice());
 
-	fragShader = ShaderBuilder()
+	shaders.fragRaytrace = ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.AddSource("VersionBlock", traceprefix)
 		.AddSource("frag.glsl", LoadPrivateShaderLump("shaders/lightmap/frag.glsl").GetChars())
-		.DebugName("VkLightmap.FragShader")
-		.Create("VkLightmap.FragShader", fb->GetDevice());
+		.DebugName("VkLightmap.FragRaytrace")
+		.Create("VkLightmap.FragRaytrace", fb->GetDevice());
 
-	fragResolveShader = ShaderBuilder()
+	shaders.fragResolve = ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.AddSource("VersionBlock", prefix)
 		.AddSource("frag_resolve.glsl", LoadPrivateShaderLump("shaders/lightmap/frag_resolve.glsl").GetChars())
-		.DebugName("VkLightmap.FragResolveShader")
-		.Create("VkLightmap.FragResolveShader", fb->GetDevice());
+		.DebugName("VkLightmap.FragResolve")
+		.Create("VkLightmap.FragResolve", fb->GetDevice());
 }
 
 FString VkLightmap::LoadPrivateShaderLump(const char* lumpname)
@@ -431,8 +431,8 @@ void VkLightmap::CreateRaytracePipeline()
 	raytrace.pipeline = GraphicsPipelineBuilder()
 		.Layout(raytrace.pipelineLayout.get())
 		.RenderPass(raytrace.renderPass.get())
-		.AddVertexShader(vertShader.get())
-		.AddFragmentShader(fragShader.get())
+		.AddVertexShader(shaders.vert.get())
+		.AddFragmentShader(shaders.fragRaytrace.get())
 		.AddVertexBufferBinding(0, sizeof(SceneVertex))
 		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(SceneVertex, Position))
 		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN)
@@ -538,8 +538,8 @@ void VkLightmap::CreateResolvePipeline()
 	resolve.pipeline = GraphicsPipelineBuilder()
 		.Layout(resolve.pipelineLayout.get())
 		.RenderPass(resolve.renderPass.get())
-		.AddVertexShader(vertShader.get())
-		.AddFragmentShader(fragResolveShader.get())
+		.AddVertexShader(shaders.vert.get())
+		.AddFragmentShader(shaders.fragResolve.get())
 		.AddVertexBufferBinding(0, sizeof(SceneVertex))
 		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(SceneVertex, Position))
 		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN)
@@ -615,26 +615,26 @@ LightmapImage VkLightmap::CreateImage(int width, int height)
 void VkLightmap::CreateUniformBuffer()
 {
 	VkDeviceSize align = fb->GetDevice()->PhysicalDevice.Properties.Properties.limits.minUniformBufferOffsetAlignment;
-	uniformStructStride = (sizeof(Uniforms) + align - 1) / align * align;
+	uniforms.StructStride = (sizeof(Uniforms) + align - 1) / align * align;
 
-	uniformBuffer = BufferBuilder()
+	uniforms.Buffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-		.Size(uniformStructs * uniformStructStride)
-		.DebugName("uniformBuffer")
+		.Size(uniforms.NumStructs * uniforms.StructStride)
+		.DebugName("LightmapUniformBuffer")
 		.Create(fb->GetDevice());
 
-	uniformTransferBuffer = BufferBuilder()
+	uniforms.TransferBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU)
-		.Size(uniformStructs * uniformStructStride)
-		.DebugName("uniformTransferBuffer")
+		.Size(uniforms.NumStructs * uniforms.StructStride)
+		.DebugName("LightmapUniformTransferBuffer")
 		.Create(fb->GetDevice());
 }
 
 void VkLightmap::CreateSceneVertexBuffer()
 {
-	size_t size = sizeof(SceneVertex) * SceneVertexBufferSize;
+	size_t size = sizeof(SceneVertex) * vertices.BufferSize;
 
-	sceneVertexBuffer = BufferBuilder()
+	vertices.Buffer = BufferBuilder()
 		.Usage(
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
@@ -642,18 +642,18 @@ void VkLightmap::CreateSceneVertexBuffer()
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		.Size(size)
-		.DebugName("SceneVertexBuffer")
+		.DebugName("LightmapVertexBuffer")
 		.Create(fb->GetDevice());
 
-	sceneVertices = (SceneVertex*)sceneVertexBuffer->Map(0, size);
-	sceneVertexPos = 0;
+	vertices.Vertices = (SceneVertex*)vertices.Buffer->Map(0, size);
+	vertices.Pos = 0;
 }
 
 void VkLightmap::CreateSceneLightBuffer()
 {
-	size_t size = sizeof(LightInfo) * SceneLightBufferSize;
+	size_t size = sizeof(LightInfo) * lights.BufferSize;
 
-	sceneLightBuffer = BufferBuilder()
+	lights.Buffer = BufferBuilder()
 		.Usage(
 			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 			VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
@@ -661,9 +661,9 @@ void VkLightmap::CreateSceneLightBuffer()
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 		.Size(size)
-		.DebugName("SceneLightBuffer")
+		.DebugName("LightmapLightBuffer")
 		.Create(fb->GetDevice());
 
-	sceneLights = (LightInfo*)sceneLightBuffer->Map(0, size);
-	sceneLightPos = 0;
+	lights.Lights = (LightInfo*)lights.Buffer->Map(0, size);
+	lights.Pos = 0;
 }

@@ -111,24 +111,39 @@ private:
 
 	bool useRayQuery = true;
 
-	uint8_t* mappedUniforms = nullptr;
-	int uniformsIndex = 0;
-	int uniformStructs = 256;
-	VkDeviceSize uniformStructStride = sizeof(Uniforms);
+	struct
+	{
+		std::unique_ptr<VulkanBuffer> Buffer;
+		std::unique_ptr<VulkanBuffer> TransferBuffer;
 
-	static const int SceneVertexBufferSize = 1 * 1024 * 1024;
-	std::unique_ptr<VulkanBuffer> sceneVertexBuffer;
-	SceneVertex* sceneVertices = nullptr;
-	int sceneVertexPos = 0;
+		uint8_t* Uniforms = nullptr;
+		int Index = 0;
+		int NumStructs = 256;
+		VkDeviceSize StructStride = sizeof(Uniforms);
+	} uniforms;
 
-	static const int SceneLightBufferSize = 2 * 1024 * 1024;
-	std::unique_ptr<VulkanBuffer> sceneLightBuffer;
-	LightInfo* sceneLights = nullptr;
-	int sceneLightPos = 0;
+	struct
+	{
+		static const int BufferSize = 1 * 1024 * 1024;
+		std::unique_ptr<VulkanBuffer> Buffer;
+		SceneVertex* Vertices = nullptr;
+		int Pos = 0;
+	} vertices;
 
-	std::unique_ptr<VulkanShader> vertShader;
-	std::unique_ptr<VulkanShader> fragShader;
-	std::unique_ptr<VulkanShader> fragResolveShader;
+	struct
+	{
+		static const int BufferSize = 2 * 1024 * 1024;
+		std::unique_ptr<VulkanBuffer> Buffer;
+		LightInfo* Lights = nullptr;
+		int Pos = 0;
+	} lights;
+
+	struct
+	{
+		std::unique_ptr<VulkanShader> vert;
+		std::unique_ptr<VulkanShader> fragRaytrace;
+		std::unique_ptr<VulkanShader> fragResolve;
+	} shaders;
 
 	struct
 	{
@@ -153,9 +168,6 @@ private:
 		std::vector<std::unique_ptr<VulkanDescriptorSet>> descriptorSets;
 		std::unique_ptr<VulkanSampler> sampler;
 	} resolve;
-
-	std::unique_ptr<VulkanBuffer> uniformBuffer;
-	std::unique_ptr<VulkanBuffer> uniformTransferBuffer;
 
 	std::unique_ptr<VulkanFence> submitFence;
 	std::unique_ptr<VulkanCommandPool> cmdpool;

@@ -476,9 +476,9 @@ void VulkanRenderDevice::BeginFrame()
 	mDescriptorSetManager->BeginFrame();
 }
 
-void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData, hwrenderer::LevelMesh& mesh)
+void VulkanRenderDevice::GenerateLightmap(TArray<uint16_t>& LMTextureData, int LMTextureSize, hwrenderer::LevelMesh& mesh)
 {
-	if(false && mesh.surfaces.size() > 0)
+	if (false && mesh.surfaces.size() > 0)
 	{
 		Printf("Running VkLightmap.\n");
 
@@ -520,7 +520,10 @@ void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TAr
 			}
 		}
 	}
+}
 
+void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData)
+{
 	if (LMTextureData.Size() > 0)
 	{
 		GetTextureManager()->SetLightmap(LMTextureSize, LMTextureCount, LMTextureData);

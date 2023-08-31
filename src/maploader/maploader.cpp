@@ -3214,7 +3214,9 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->levelMesh = new DoomLevelMesh(*Level);
 	InitLightmap(map);
 
-	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData, *Level->levelMesh);
+	screen->GenerateLightmap(Level->LMTextureData, Level->LMTextureSize, *Level->levelMesh);
+
+	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
 
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{

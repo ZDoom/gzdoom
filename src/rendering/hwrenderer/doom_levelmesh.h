@@ -6,7 +6,7 @@
 #include "vectors.h"
 #include "r_defs.h"
 #include "bounds.h"
-#include "dp_rect_pack.h"
+#include <dp_rect_pack.h>
 
 typedef dp::rect_pack::RectPacker<int> RectPacker;
 

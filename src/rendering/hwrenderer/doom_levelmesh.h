@@ -19,7 +19,7 @@ struct Surface
 	int numVerts;
 	unsigned int startVertIndex;
 	unsigned int startUvIndex;
-	secplane_t plane;
+	FVector4 plane;
 	sector_t *controlSector;
 	bool bSky;
 
@@ -86,13 +86,11 @@ private:
 	static bool IsSkySector(sector_t* sector, int plane);
 	static bool IsControlSector(sector_t* sector);
 
-	static secplane_t ToPlane(const FVector3& pt1, const FVector3& pt2, const FVector3& pt3)
+	static FVector4 ToPlane(const FVector3& pt1, const FVector3& pt2, const FVector3& pt3)
 	{
 		FVector3 n = ((pt2 - pt1) ^ (pt3 - pt2)).Unit();
 		float d = pt1 | n;
-		secplane_t p;
-		p.set(n.X, n.Y, n.Z, d);
-		return p;
+		return FVector4(n.X, n.Y, n.Z, d);
 	}
 
 	static FVector2 ToFVector2(const DVector2& v) { return FVector2((float)v.X, (float)v.Y); }
@@ -110,7 +108,7 @@ private:
 		AXIS_XY
 	};
 
-	static PlaneAxis BestAxis(const secplane_t& p);
+	static PlaneAxis BestAxis(const FVector4& p);
 	BBox GetBoundsFromSurface(const Surface& surface) const;
 
 	inline int AllocUvs(int amount) { return LightmapUvs.Reserve(amount * 2); }

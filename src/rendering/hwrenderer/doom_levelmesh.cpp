@@ -305,14 +305,15 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 	Surface surf;
 	surf.bSky = IsSkySector(sector, sector_t::floor);
 
+	secplane_t plane;
 	if (!is3DFloor)
 	{
-		surf.plane = sector->floorplane;
+		plane = sector->floorplane;
 	}
 	else
 	{
-		surf.plane = sector->ceilingplane;
-		surf.plane.FlipVert();
+		plane = sector->ceilingplane;
+		plane.FlipVert();
 	}
 
 	surf.numVerts = sub->numlines;
@@ -327,12 +328,13 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 
 		verts[j].X = v1.X;
 		verts[j].Y = v1.Y;
-		verts[j].Z = (float)surf.plane.ZatPoint(verts[j]);
+		verts[j].Z = (float)plane.ZatPoint(verts[j]);
 	}
 
 	surf.type = ST_FLOOR;
 	surf.typeIndex = typeIndex;
 	surf.controlSector = is3DFloor ? sector : nullptr;
+	surf.plane = FVector4(plane.Normal().X, plane.Normal().Y, plane.Normal().Z, plane.D);
 
 	Surfaces.Push(surf);
 }
@@ -342,14 +344,15 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub
 	Surface surf;
 	surf.bSky = IsSkySector(sector, sector_t::ceiling);
 
+	secplane_t plane;
 	if (!is3DFloor)
 	{
-		surf.plane = sector->ceilingplane;
+		plane = sector->ceilingplane;
 	}
 	else
 	{
-		surf.plane = sector->floorplane;
-		surf.plane.FlipVert();
+		plane = sector->floorplane;
+		plane.FlipVert();
 	}
 
 	surf.numVerts = sub->numlines;
@@ -364,12 +367,13 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub
 
 		verts[j].X = v1.X;
 		verts[j].Y = v1.Y;
-		verts[j].Z = (float)surf.plane.ZatPoint(verts[j]);
+		verts[j].Z = (float)plane.ZatPoint(verts[j]);
 	}
 
 	surf.type = ST_CEILING;
 	surf.typeIndex = typeIndex;
 	surf.controlSector = is3DFloor ? sector : nullptr;
+	surf.plane = FVector4(plane.Normal().X, plane.Normal().Y, plane.Normal().Z, plane.D);
 
 	Surfaces.Push(surf);
 }
@@ -531,7 +535,7 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		surfaces.push_back(std::move(hwSurface));
 
 		SurfaceInfo info;
-		info.Normal = FVector3(surface.plane.Normal());
+		info.Normal = surface.plane.XYZ();
 		info.PortalIndex = 0;
 		info.SamplingDistance = surface.sampleDimension;
 		info.Sky = surface.bSky;
@@ -662,11 +666,11 @@ BBox DoomLevelMesh::GetBoundsFromSurface(const Surface& surface) const
 	return bounds;
 }
 
-DoomLevelMesh::PlaneAxis DoomLevelMesh::BestAxis(const secplane_t& p)
+DoomLevelMesh::PlaneAxis DoomLevelMesh::BestAxis(const FVector4& p)
 {
-	float na = fabs(float(p.Normal().X));
-	float nb = fabs(float(p.Normal().Y));
-	float nc = fabs(float(p.Normal().Z));
+	float na = fabs(float(p.X));
+	float nb = fabs(float(p.Y));
+	float nc = fabs(float(p.Z));
 
 	// figure out what axis the plane lies on
 	if (na >= nb && na >= nc)
@@ -683,7 +687,6 @@ DoomLevelMesh::PlaneAxis DoomLevelMesh::BestAxis(const secplane_t& p)
 
 void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, Surface& surface)
 {
-	secplane_t* plane;
 	BBox bounds;
 	FVector3 roundedSize;
 	FVector3 tOrigin;
@@ -691,7 +694,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	int height;
 	float d;
 
-	plane = &surface.plane;
+	const FVector4& plane = surface.plane;
 	bounds = GetBoundsFromSurface(surface);
 	surface.bounds = bounds;
 
@@ -712,7 +715,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	FVector3 tCoords[2] = { FVector3(0.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 0.0f) };
 
-	PlaneAxis axis = BestAxis(*plane);
+	PlaneAxis axis = BestAxis(plane);
 
 	switch (axis)
 	{
@@ -770,13 +773,13 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	tOrigin = bounds.min;
 
 	// project tOrigin and tCoords so they lie on the plane
-	d = float(((bounds.min | FVector3(plane->Normal())) - plane->D) / plane->Normal()[axis]); //d = (plane->PointToDist(bounds.min)) / plane->Normal()[axis];
+	d = ((bounds.min | FVector3(plane.X, plane.Y, plane.Z)) - plane.W) / plane[axis]; //d = (plane->PointToDist(bounds.min)) / plane->Normal()[axis];
 	tOrigin[axis] -= d;
 
 	for (int i = 0; i < 2; i++)
 	{
 		tCoords[i].MakeUnit();
-		d = (tCoords[i] | FVector3(plane->Normal())) / plane->Normal()[axis]; //d = dot(tCoords[i], plane->Normal()) / plane->Normal()[axis];
+		d = (tCoords[i] | FVector3(plane.X, plane.Y, plane.Z)) / plane[axis]; //d = dot(tCoords[i], plane->Normal()) / plane->Normal()[axis];
 		tCoords[i][axis] -= d;
 	}
 

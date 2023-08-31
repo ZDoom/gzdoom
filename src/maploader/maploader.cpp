@@ -3338,7 +3338,12 @@ void MapLoader::InitLightmap(MapData* map)
 
 	Level->LMTextureSize = 1024; // TODO cvar
 
+	// TODO read from ZDRayInfoThing
+	Level->SunColor = FVector3(1.f, 1.f, 1.f);
+	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
+
 	Level->LMTextureCount = Level->levelMesh->SetupLightmapUvs(Level->LMTextureSize);
+
 
 	// Debug placeholder stuff
 	{
@@ -3408,6 +3413,19 @@ void MapLoader::InitLightmap(MapData* map)
 							ptr[0] = floatToHalf(0.0f);
 							ptr[1] = floatToHalf(0.0f);
 							ptr[2] = floatToHalf(0.0f);
+						}
+
+						if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX - surface.worldStepY + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
+						{
+							ptr[0] = floatToHalf(Level->SunColor.X);
+							ptr[1] = floatToHalf(Level->SunColor.Y);
+							ptr[2] = floatToHalf(Level->SunColor.Z);
+						}
+						else
+						{
+							ptr[0] = 0;
+							ptr[1] = 0;
+							ptr[2] = 0;
 						}
 					}
 				}

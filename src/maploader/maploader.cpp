@@ -3336,39 +3336,94 @@ void MapLoader::InitLightmap(MapData* map)
 	Level->LMSurfaces.Reset();
 	Level->LMTextureData.Reset();
 
+	Level->LMTextureSize = 1024; // TODO cvar
+
+	Level->LMTextureCount = Level->levelMesh->SetupLightmapUvs(Level->LMTextureSize);
+
 	// Debug placeholder stuff
 	{
-		Level->LMTextureCount = 1;
-		Level->LMTextureSize = 1024;
-
-		auto constructDebugTexture = [&](TArray<uint16_t>& buffer, int width, int height) {
+		auto constructDebugTexture = [&](TArray<uint16_t>& buffer, int layers, int width, int height) {
 			uint16_t* ptr = buffer.Data();
 
-			for (int y = 0; y < height; ++y)
+			for (int i = 0; i < layers; ++i)
 			{
-				for (int x = 0; x < width; ++x)
+				for (int y = 0; y < height; ++y)
 				{
-					*(ptr++) = floatToHalf(float(x) / width);
-					*(ptr++) = floatToHalf(float(y) / height);
-					*(ptr++) = floatToHalf((x + y) % 2 == 0 ? 1.0f : 0.0f);
+					for (int x = 0; x < width; ++x)
+					{
+						/**(ptr++) = floatToHalf(float(x) / width);
+						*(ptr++) = floatToHalf(float(y) / height);
+						*(ptr++) = floatToHalf((x + y) % 2 == 0 ? 1.0f : 0.0f);*/
+						switch (i % 3)
+						{
+						case 0:
+							*(ptr++) = floatToHalf(1.0f);
+							*(ptr++) = floatToHalf(0.0f);
+							*(ptr++) = floatToHalf(0.0f);
+							break;
+						case 1:
+							*(ptr++) = floatToHalf(0.0f);
+							*(ptr++) = floatToHalf(1.0f);
+							*(ptr++) = floatToHalf(0.0f);
+							break;
+						case 2:
+							*(ptr++) = floatToHalf(0.0f);
+							*(ptr++) = floatToHalf(0.0f);
+							*(ptr++) = floatToHalf(1.0f);
+							break;
+						}
+					}
+				}
+			}
+
+			auto get_xy = [&](int page, int x, int y) -> uint16_t*
+			{
+				return buffer.Data() + ((y * width) + x + (height * width * page)) * 3;
+			};
+
+
+			srand(1337);
+			for (auto& surface : Level->levelMesh->Surfaces)
+			{
+				float r;
+				float g;
+				float b;
+
+				r = rand() % 32 / 32.0;
+				g = rand() % 32 / 32.0;
+				b = rand() % 32 / 32.0;
+
+				for (int y = 0; y <= surface.texHeight; ++y)
+				{
+					for (int x = 0; x <= surface.texWidth; ++x)
+					{
+						auto ptr = get_xy(surface.atlasPageIndex, surface.atlasX + x, surface.atlasY + y);
+
+						ptr[0] = floatToHalf(r);
+						ptr[1] = floatToHalf(g);
+						ptr[2] = floatToHalf(b);
+
+						if (x % 4 == 0 || y % 4 == 0)
+						{
+							ptr[0] = floatToHalf(0.0f);
+							ptr[1] = floatToHalf(0.0f);
+							ptr[2] = floatToHalf(0.0f);
+						}
+					}
 				}
 			}
 		};
 
 		int size = Level->LMTextureSize;
-		int layers = 1;
+		int layers = Level->LMTextureCount;
 
 		Level->LMTextureData.Resize(size * size * 3 * layers);
-		constructDebugTexture(Level->LMTextureData, size, size);
+		constructDebugTexture(Level->LMTextureData, Level->LMTextureCount, size, size);
 	}
 
-	for (auto& surface : Level->levelMesh->Surfaces)
-	{
-		Level->levelMesh->BuildSurfaceParams(Level->LMTextureSize, Level->LMTextureSize, surface);
-	}
-
-	Level->LMTexCoords = Level->levelMesh->LightmapUvs;
-
+#if 0
+	Level->LMTexCoords = std::move(Level->levelMesh->LightmapUvs);
+#endif
 
 	// Allocate room for all surfaces
 
@@ -3412,8 +3467,12 @@ void MapLoader::InitLightmap(MapData* map)
 		l.Type = surface.type;
 		l.LightmapNum = 0;
 
-
+#if 0
 		l.TexCoords = &Level->LMTexCoords[surface.startUvIndex];
+#else
+		l.TexCoords = &Level->levelMesh->LightmapUvs[surface.startUvIndex];
+#endif
+		l.LightmapNum = surface.atlasPageIndex;
 
 		if (surface.type == ST_FLOOR || surface.type == ST_CEILING)
 		{

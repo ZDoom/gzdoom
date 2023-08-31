@@ -6,6 +6,9 @@
 #include "vectors.h"
 #include "r_defs.h"
 #include "bounds.h"
+#include "dp_rect_pack.h"
+
+typedef dp::rect_pack::RectPacker<int> RectPacker;
 
 struct FLevelLocals;
 
@@ -39,7 +42,12 @@ struct Surface
 	int texHeight = 0;
 
 	// UV coordinates for the vertices
-	int startUvIndex = -666;
+	int startUvIndex = 0;
+
+	// Pixel coordinates in atlas
+	int atlasPageIndex = 0;
+	int atlasX = 0;
+	int atlasY = 0;
 };
 
 class DoomLevelMesh : public hwrenderer::LevelMesh
@@ -63,6 +71,8 @@ public:
 	TArray<float> LightmapUvs;
 
 	void DumpMesh(const FString& filename) const;
+
+	int SetupLightmapUvs(int lightmapSize);
 
 private:
 	void CreateSubsectorSurfaces(FLevelLocals &doomMap);
@@ -93,35 +103,6 @@ private:
 
 	// WIP internal lightmapper
 
-	BBox GetBoundsFromSurface(const Surface& surface) const
-	{
-		constexpr float M_INFINITY = 1e30; // TODO cleanup
-
-		FVector3 low(M_INFINITY, M_INFINITY, M_INFINITY);
-		FVector3 hi(-M_INFINITY, -M_INFINITY, -M_INFINITY);
-
-		for (int i = int(surface.startVertIndex); i < int(surface.startVertIndex) + surface.numVerts; i++)
-		{
-			for (int j = 0; j < 3; j++)
-			{
-				if (MeshVertices[i][j] < low[j])
-				{
-					low[j] = MeshVertices[i][j];
-				}
-				if (MeshVertices[i][j] > hi[j])
-				{
-					hi[j] = MeshVertices[i][j];
-				}
-			}
-		}
-
-		BBox bounds;
-		bounds.Clear();
-		bounds.min = low;
-		bounds.max = hi;
-		return bounds;
-	}
-
 	enum PlaneAxis
 	{
 		AXIS_YZ = 0,
@@ -129,30 +110,11 @@ private:
 		AXIS_XY
 	};
 
-	inline static PlaneAxis BestAxis(const secplane_t& p)
-	{
-		float na = fabs(float(p.Normal().X));
-		float nb = fabs(float(p.Normal().Y));
-		float nc = fabs(float(p.Normal().Z));
+	static PlaneAxis BestAxis(const secplane_t& p);
+	BBox GetBoundsFromSurface(const Surface& surface) const;
 
-		// figure out what axis the plane lies on
-		if (na >= nb && na >= nc)
-		{
-			return AXIS_YZ;
-		}
-		else if (nb >= na && nb >= nc)
-		{
-			return AXIS_XZ;
-		}
+	inline int AllocUvs(int amount) { return LightmapUvs.Reserve(amount * 2); }
 
-		return AXIS_XY;
-	}
-
-	int AllocUvs(int amount)
-	{
-		return LightmapUvs.Reserve(amount * 2);
-	}
-
-	public:
-		void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, Surface& surface);
+	void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, Surface& surface);
+	void FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, Surface& surface);
 };

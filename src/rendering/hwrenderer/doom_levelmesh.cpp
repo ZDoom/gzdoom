@@ -5,8 +5,10 @@
 #include "texturemanager.h"
 #include "playsim/p_lnspec.h"
 
+
 #include "c_dispatch.h"
 #include "g_levellocals.h"
+
 
 CCMD(dumplevelmesh)
 {
@@ -462,6 +464,125 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 	}
 
 	fclose(f);
+}
+
+int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
+{
+	std::vector<Surface*> sortedSurfaces;
+	sortedSurfaces.reserve(Surfaces.Size());
+
+	for (auto& surface : Surfaces)
+	{
+		BuildSurfaceParams(lightmapSize, lightmapSize, surface);
+		sortedSurfaces.push_back(&surface);
+	}
+
+	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](Surface* a, Surface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });
+
+	RectPacker packer(lightmapSize, lightmapSize, RectPacker::Spacing(0));
+
+	for (Surface* surf : sortedSurfaces)
+	{
+		FinishSurface(lightmapSize, lightmapSize, packer, *surf);
+	}
+
+	return packer.getNumPages();
+}
+
+void DoomLevelMesh::FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, Surface& surface)
+{
+	int sampleWidth = surface.texWidth;
+	int sampleHeight = surface.texHeight;
+
+	auto result = packer.insert(sampleWidth, sampleHeight);
+	int x = result.pos.x, y = result.pos.y;
+	surface.atlasPageIndex = result.pageIndex;
+
+	// calculate final texture coordinates
+	auto uvIndex = surface.startUvIndex;
+	for (int i = 0; i < (int)surface.numVerts; i++)
+	{
+		auto& u = LightmapUvs[++uvIndex];
+		auto& v = LightmapUvs[++uvIndex];
+		u = (u + x) / (float)lightmapTextureWidth;
+		v = (v + y) / (float)lightmapTextureHeight;
+	}
+	
+	surface.atlasX = x;
+	surface.atlasY = y;
+
+#if 0
+	while (result.pageIndex >= textures.size())
+	{
+		textures.push_back(std::make_unique<LightmapTexture>(textureWidth, textureHeight));
+	}
+
+	uint16_t* currentTexture = textures[surface->atlasPageIndex]->Pixels();
+
+	FVector3* colorSamples = surface->texPixels.data();
+	// store results to lightmap texture
+	for (int i = 0; i < sampleHeight; i++)
+	{
+		for (int j = 0; j < sampleWidth; j++)
+		{
+			// get texture offset
+			int offs = ((textureWidth * (i + surface->atlasY)) + surface->atlasX) * 3;
+
+			// convert RGB to bytes
+			currentTexture[offs + j * 3 + 0] = floatToHalf(clamp(colorSamples[i * sampleWidth + j].x, 0.0f, 65000.0f));
+			currentTexture[offs + j * 3 + 1] = floatToHalf(clamp(colorSamples[i * sampleWidth + j].y, 0.0f, 65000.0f));
+			currentTexture[offs + j * 3 + 2] = floatToHalf(clamp(colorSamples[i * sampleWidth + j].z, 0.0f, 65000.0f));
+		}
+	}
+#endif
+}
+
+BBox DoomLevelMesh::GetBoundsFromSurface(const Surface& surface) const
+{
+	constexpr float M_INFINITY = 1e30; // TODO cleanup
+
+	FVector3 low(M_INFINITY, M_INFINITY, M_INFINITY);
+	FVector3 hi(-M_INFINITY, -M_INFINITY, -M_INFINITY);
+
+	for (int i = int(surface.startVertIndex); i < int(surface.startVertIndex) + surface.numVerts; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			if (MeshVertices[i][j] < low[j])
+			{
+				low[j] = MeshVertices[i][j];
+			}
+			if (MeshVertices[i][j] > hi[j])
+			{
+				hi[j] = MeshVertices[i][j];
+			}
+		}
+	}
+
+	BBox bounds;
+	bounds.Clear();
+	bounds.min = low;
+	bounds.max = hi;
+	return bounds;
+}
+
+DoomLevelMesh::PlaneAxis DoomLevelMesh::BestAxis(const secplane_t& p)
+{
+	float na = fabs(float(p.Normal().X));
+	float nb = fabs(float(p.Normal().Y));
+	float nc = fabs(float(p.Normal().Z));
+
+	// figure out what axis the plane lies on
+	if (na >= nb && na >= nc)
+	{
+		return AXIS_YZ;
+	}
+	else if (nb >= na && nb >= nc)
+	{
+		return AXIS_XZ;
+	}
+
+	return AXIS_XY;
 }
 
 void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, Surface& surface)

@@ -491,6 +491,20 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		sortedSurfaces.push_back(&surface);
 	}
 
+	{
+		this->portalInfo.Clear(); // TODO portals
+		
+		PortalInfo portalInfo;
+		hwrenderer::Portal portal;
+
+		for (int i = 0; i < 16; ++i)
+		{
+			portalInfo.transformation[i] = (&portal.transformation[0][0])[i];
+		}
+
+		this->portalInfo.Push(portalInfo);
+	}
+
 	for (const auto& surface : Surfaces)
 	{
 		auto hwSurface = std::make_unique<hwrenderer::Surface>();
@@ -517,6 +531,14 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 
 		// TODO push
 		surfaces.push_back(std::move(hwSurface));
+
+		SurfaceInfo info;
+		info.Normal = FVector3(surface.plane.Normal());
+		info.PortalIndex = 0;
+		info.SamplingDistance = surface.sampleDimension;
+		info.Sky = surface.bSky;
+
+		surfaceInfo.Push(info);
 	}
 
 	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](Surface* a, Surface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });

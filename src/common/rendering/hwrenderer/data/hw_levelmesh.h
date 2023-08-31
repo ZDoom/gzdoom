@@ -22,7 +22,7 @@ struct SurfaceInfo // This is the structure of the buffer inside the shader
 
 struct PortalInfo  // This is the structure of the buffer inside the shader
 {
-	float transformation[16]; // mat4 
+	float transformation[16]; // mat4
 };
 
 namespace hwrenderer

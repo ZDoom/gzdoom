@@ -469,8 +469,6 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	secplane_t* plane;
 	BBox bounds;
 	FVector3 roundedSize;
-	int i;
-	PlaneAxis axis;
 	FVector3 tOrigin;
 	int width;
 	int height;
@@ -482,15 +480,12 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	if (surface.sampleDimension <= 0)
 	{
-		surface.sampleDimension = 1; // TODO change?
+		surface.sampleDimension = 4;
 	}
-
-	surface.sampleDimension = 1;
 	//surface->sampleDimension = Math::RoundPowerOfTwo(surface->sampleDimension);
 
-
 	// round off dimensions
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		bounds.min[i] = surface.sampleDimension * (floor(bounds.min[i] / surface.sampleDimension) - 1);
 		bounds.max[i] = surface.sampleDimension * (ceil(bounds.max[i] / surface.sampleDimension) + 1);
@@ -500,7 +495,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	FVector3 tCoords[2] = { FVector3(0.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 0.0f) };
 
-	axis = BestAxis(*plane);
+	PlaneAxis axis = BestAxis(*plane);
 
 	switch (axis)
 	{
@@ -546,7 +541,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	surface.startUvIndex = AllocUvs(surface.numVerts);
 	auto uv = surface.startUvIndex;
-	for (i = 0; i < surface.numVerts; i++)
+	for (int i = 0; i < surface.numVerts; i++)
 	{
 		FVector3 tDelta = MeshVertices[surface.startVertIndex + i] - surface.translateWorldToLocal;
 
@@ -561,7 +556,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	d = float(((bounds.min | FVector3(plane->Normal())) - plane->D) / plane->Normal()[axis]); //d = (plane->PointToDist(bounds.min)) / plane->Normal()[axis];
 	tOrigin[axis] -= d;
 
-	for (i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		tCoords[i].MakeUnit();
 		d = (tCoords[i] | FVector3(plane->Normal())) / plane->Normal()[axis]; //d = dot(tCoords[i], plane->Normal()) / plane->Normal()[axis];

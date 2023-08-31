@@ -3341,21 +3341,6 @@ void MapLoader::InitLightmap(MapData* map)
 		Level->LMTextureCount = 1;
 		Level->LMTextureSize = 1024;
 
-		for (int i = 0; i < 1024; ++i) // avoid crashing lol
-		{
-			Level->LMTexCoords.Push(0);
-			Level->LMTexCoords.Push(0);
-
-			Level->LMTexCoords.Push(1);
-			Level->LMTexCoords.Push(0);
-
-			Level->LMTexCoords.Push(1);
-			Level->LMTexCoords.Push(1);
-
-			Level->LMTexCoords.Push(0);
-			Level->LMTexCoords.Push(1);
-		}
-
 		auto constructDebugTexture = [&](TArray<uint16_t>& buffer, int width, int height) {
 			uint16_t* ptr = buffer.Data();
 
@@ -3421,15 +3406,13 @@ void MapLoader::InitLightmap(MapData* map)
 	for (auto& surface : Level->levelMesh->Surfaces)
 	{
 		LightmapSurface l;
-		//LightmapSurface& l = Level->LMSurfaces[index++];
 		memset(&l, 0, sizeof(LightmapSurface));
 
 		l.ControlSector = surface.controlSector;
 		l.Type = surface.type;
 		l.LightmapNum = 0;
 
-		//l.TexCoords = &Level->LMTexCoords[0];
-		//l.TexCoords = &Level->levelMesh->LightmapUvs[surface.startUvIndex];
+
 		l.TexCoords = &Level->LMTexCoords[surface.startUvIndex];
 
 		if (surface.type == ST_FLOOR || surface.type == ST_CEILING)
@@ -3443,9 +3426,6 @@ void MapLoader::InitLightmap(MapData* map)
 			l.Side = &Level->sides[surface.typeIndex];
 			SetSideLightmap(l);
 		}
-
-		//Level->LMSurfaces.Push(l);
-
 	}
 
 	Printf("Generated custom lightmap data");

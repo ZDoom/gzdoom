@@ -492,28 +492,25 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		sortedSurfaces.push_back(&surface);
 	}
 
-	{
-		this->portalInfo.Clear(); // TODO portals
-		
-		PortalInfo portalInfo;
-		hwrenderer::Portal portal;
-
-		for (int i = 0; i < 16; ++i)
-		{
-			portalInfo.transformation[i] = (&portal.transformation[0][0])[i];
-		}
-
-		this->portalInfo.Push(portalInfo);
-	}
 
 	for (const auto& surface : Surfaces)
 	{
 		auto hwSurface = std::make_unique<hwrenderer::Surface>();
 
+		for (int i = 0; i < surface.numVerts; ++i)
+		{
+			hwSurface->verts.Push(MeshVertices[surface.startVertIndex + i]);
+		}
+
+		for (int i = 0; i < surface.numVerts; ++i)
+		{
+			hwSurface->uvs.Push(
+				FVector2(LightmapUvs[surface.startUvIndex + i * 2], LightmapUvs[surface.startUvIndex + i * 2 + 1]));
+		}
+
 		hwSurface->boundsMax = surface.bounds.max;
 		hwSurface->boundsMin = surface.bounds.min;
 
-		//	hwSurface->LightList =  // TODO
 		hwSurface->projLocalToU = surface.projLocalToU;
 		hwSurface->projLocalToV = surface.projLocalToV;
 		hwSurface->smoothingGroupIndex = 0;
@@ -527,14 +524,9 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 
 		for (auto& pixel : hwSurface->texPixels)
 		{
-			pixel.X = floatToHalf(0.0);
-			pixel.X = floatToHalf(1.0);
-			pixel.X = floatToHalf(0.0);
-		}
-
-		for (int i = 0; i < surface.numVerts; ++i)
-		{
-			hwSurface->verts.Push(MeshVertices[surface.startVertIndex + i]);
+			pixel.X = 0.0;
+			pixel.Y = 1.0;
+			pixel.Z = 0.0;
 		}
 
 		// TODO push

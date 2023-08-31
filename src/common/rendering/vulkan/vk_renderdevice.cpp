@@ -478,7 +478,7 @@ void VulkanRenderDevice::BeginFrame()
 
 void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData, hwrenderer::LevelMesh& mesh)
 {
-	if(mesh.surfaces.size() > 0)
+	if(false && mesh.surfaces.size() > 0)
 	{
 		Printf("Running VkLightmap.\n");
 
@@ -495,7 +495,7 @@ void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TAr
 		std::sort(mesh.surfaces.begin(), mesh.surfaces.end(), [](const std::unique_ptr<hwrenderer::Surface>& a, const std::unique_ptr<hwrenderer::Surface>& b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });
 
 
-		RectPacker packer(LMTextureSize, LMTextureSize);
+		RectPacker packer(LMTextureSize, LMTextureSize, RectPacker::Spacing(0));
 
 		for (auto& surface : mesh.surfaces)
 		{

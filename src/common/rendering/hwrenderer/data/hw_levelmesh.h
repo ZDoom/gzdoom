@@ -62,7 +62,7 @@ public:
 	// Surface geometry
 	SurfaceType type = ST_UNKNOWN;
 	TArray<FVector3> verts;
-	TArray<FVector3> uvs;
+	TArray<FVector2> uvs;
 	//Plane plane;
 	FVector3 boundsMin, boundsMax;
 
@@ -165,6 +165,20 @@ struct Portal
 class LevelMesh
 {
 public:
+	LevelMesh()
+	{
+		// Default portal
+		PortalInfo portalInfo;
+		hwrenderer::Portal portal;
+
+		for (int i = 0; i < 16; ++i)
+		{
+			portalInfo.transformation[i] = (&portal.transformation[0][0])[i];
+		}
+
+		this->portalInfo.Push(portalInfo);
+	}
+
 	virtual ~LevelMesh() = default;
 
 	TArray<FVector3> MeshVertices;

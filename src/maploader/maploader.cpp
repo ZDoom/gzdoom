@@ -3390,7 +3390,7 @@ void MapLoader::InitLightmap(MapData* map)
 				return buffer.Data() + ((y * width) + x + (height * width * page)) * 3;
 			};
 
-#if 0
+//#if 0
 			srand(1337);
 			for (auto& surface : Level->levelMesh->Surfaces)
 			{
@@ -3419,7 +3419,7 @@ void MapLoader::InitLightmap(MapData* map)
 							ptr[2] = floatToHalf(0.0f);
 						}
 
-						if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX - surface.worldStepY + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
+						/*if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX - surface.worldStepY + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
 						{
 							ptr[0] = floatToHalf(Level->SunColor.X);
 							ptr[1] = floatToHalf(Level->SunColor.Y);
@@ -3430,11 +3430,11 @@ void MapLoader::InitLightmap(MapData* map)
 							ptr[0] = 0;
 							ptr[1] = 0;
 							ptr[2] = 0;
-						}
+						}*/
 					}
 				}
 			}
-#endif
+//#endif
 		};
 
 		int size = Level->LMTextureSize;

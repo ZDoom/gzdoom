@@ -3214,7 +3214,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->levelMesh = new DoomLevelMesh(*Level);
 	InitLightmap(map);
 
-	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
+	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData, *Level->levelMesh);
 
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
@@ -3327,7 +3327,7 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 	}
 }
 
-#include "halffloat.h"
+#include "vulkan/accelstructs/halffloat.h"
 
 void MapLoader::InitLightmap(MapData* map)
 {
@@ -3341,6 +3341,10 @@ void MapLoader::InitLightmap(MapData* map)
 	// TODO read from ZDRayInfoThing
 	Level->SunColor = FVector3(1.f, 1.f, 1.f);
 	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
+
+	// TODO keep only one copy?
+	Level->levelMesh->SunColor = Level->SunColor;
+	Level->levelMesh->SunDirection = Level->SunDirection;
 
 	Level->LMTextureCount = Level->levelMesh->SetupLightmapUvs(Level->LMTextureSize);
 
@@ -3386,7 +3390,7 @@ void MapLoader::InitLightmap(MapData* map)
 				return buffer.Data() + ((y * width) + x + (height * width * page)) * 3;
 			};
 
-
+#if 0
 			srand(1337);
 			for (auto& surface : Level->levelMesh->Surfaces)
 			{
@@ -3394,9 +3398,9 @@ void MapLoader::InitLightmap(MapData* map)
 				float g;
 				float b;
 
-				r = rand() % 32 / 32.0;
-				g = rand() % 32 / 32.0;
-				b = rand() % 32 / 32.0;
+				r = rand() % 32 / 32.0f;
+				g = rand() % 32 / 32.0f;
+				b = rand() % 32 / 32.0f;
 
 				for (int y = 0; y <= surface.texHeight; ++y)
 				{
@@ -3430,6 +3434,7 @@ void MapLoader::InitLightmap(MapData* map)
 					}
 				}
 			}
+#endif
 		};
 
 		int size = Level->LMTextureSize;

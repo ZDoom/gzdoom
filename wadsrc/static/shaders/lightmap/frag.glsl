@@ -170,7 +170,7 @@ float TraceAmbientOcclusion(vec3 origin, vec3 normal)
 {
 	const float minDistance = 0.05;
 	const float aoDistance = 100;
-	const int SampleCount = 2048;
+	const int SampleCount = 128;
 
 	vec3 N = normal;
 	vec3 up = abs(N.x) < abs(N.y) ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);

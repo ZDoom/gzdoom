@@ -24,7 +24,7 @@ struct Surface
 
 	//
 	// Required for internal lightmapper:
-
+	BBox bounds;
 	int sampleDimension = 0;
 
 	// Lightmap world coordinates for the texture

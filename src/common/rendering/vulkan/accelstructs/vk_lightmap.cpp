@@ -1,10 +1,12 @@
  
 #include "vk_lightmap.h"
 #include "vulkan/vk_renderdevice.h"
+#include "vk_raytrace.h"
 #include "zvulkan/vulkanbuilders.h"
 #include "halffloat.h"
 #include "filesystem.h"
 #include "cmdlib.h"
+
 
 VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 {
@@ -90,7 +92,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 		};
 	beginPass();
 
-	for (size_t i = 0; i < mesh->surfaces.Size(); i++)
+	for (size_t i = 0; i < mesh->surfaces.size(); i++)
 	{
 		hwrenderer::Surface* targetSurface = mesh->surfaces[i].get();
 		if (targetSurface->atlasPageIndex != pageIndex)
@@ -157,14 +159,14 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 				lightinfo++;
 			}
 
-			PushConstants pc;
+			LightmapPushConstants pc;
 			pc.LightStart = firstLight;
 			pc.LightEnd = firstLight + lightCount;
 			pc.SurfaceIndex = (int32_t)i;
 			pc.LightmapOrigin = targetSurface->worldOrigin - targetSurface->worldStepX - targetSurface->worldStepY;
 			pc.LightmapStepX = targetSurface->worldStepX * viewport.width;
 			pc.LightmapStepY = targetSurface->worldStepY * viewport.height;
-			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants), &pc);
+			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
 
 			SceneVertex* vertex = &vertices.Vertices[firstVertex];
 
@@ -195,7 +197,7 @@ void VkLightmap::CreateAtlasImages()
 	const int spacing = 3; // Note: the spacing is here to avoid that the resolve sampler finds data from other surface tiles
 	RectPacker packer(atlasImageSize, atlasImageSize, RectPacker::Spacing(spacing));
 
-	for (size_t i = 0; i < mesh->surfaces.Size(); i++)
+	for (size_t i = 0; i < mesh->surfaces.size(); i++)
 	{
 		hwrenderer::Surface* surface = mesh->surfaces[i].get();
 
@@ -260,14 +262,14 @@ void VkLightmap::ResolveAtlasImage(size_t i)
 	viewport.height = (float)atlasImageSize;
 	cmdbuffer->setViewport(0, 1, &viewport);
 
-	PushConstants pc;
+	LightmapPushConstants pc;
 	pc.LightStart = 0;
 	pc.LightEnd = 0;
 	pc.SurfaceIndex = 0;
 	pc.LightmapOrigin = FVector3(0.0f, 0.0f, 0.0f);
 	pc.LightmapStepX = FVector3(0.0f, 0.0f, 0.0f);
 	pc.LightmapStepY = FVector3(0.0f, 0.0f, 0.0f);
-	cmdbuffer->pushConstants(resolve.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pc);
+	cmdbuffer->pushConstants(resolve.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapPushConstants), &pc);
 
 	int firstVertex = vertices.Pos;
 	int vertexCount = 4;
@@ -304,7 +306,7 @@ void VkLightmap::DownloadAtlasImage(size_t pageIndex)
 
 	hvec4* pixels = (hvec4*)atlasImages[pageIndex].Transfer->Map(0, atlasImageSize * atlasImageSize * sizeof(hvec4));
 
-	for (size_t i = 0; i < mesh->surfaces.Size(); i++)
+	for (size_t i = 0; i < mesh->surfaces.size(); i++)
 	{
 		hwrenderer::Surface* surface = mesh->surfaces[i].get();
 		if (surface->atlasPageIndex != pageIndex)
@@ -406,7 +408,7 @@ void VkLightmap::CreateRaytracePipeline()
 	raytrace.pipelineLayout = PipelineLayoutBuilder()
 		.AddSetLayout(raytrace.descriptorSetLayout0.get())
 		.AddSetLayout(raytrace.descriptorSetLayout1.get())
-		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants))
+		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants))
 		.DebugName("raytrace.pipelineLayout")
 		.Create(fb->GetDevice());
 
@@ -476,32 +478,37 @@ void VkLightmap::CreateRaytracePipeline()
 
 void VkLightmap::UpdateAccelStructDescriptors()
 {
-	// To do: fetch this from VkDescriptorSetManager - perhaps manage it all over there?
+	auto nodesBuffer = fb->GetRaytrace()->GetNodeBuffer();
+	auto tlAccelStruct = fb->GetRaytrace()->GetAccelStruct();
+	auto vertexBuffer = fb->GetRaytrace()->GetVertexBuffer();
+	auto indexBuffer = fb->GetRaytrace()->GetIndexBuffer();
+	auto surfaceIndexBuffer = fb->GetRaytrace()->GetSurfaceIndexBuffer();
+	auto surfaceBuffer = fb->GetRaytrace()->GetSurfaceIndexBuffer();
+	auto portalBuffer = fb->GetRaytrace()->GetPortalBuffer();
 
-#if 0
 	if (useRayQuery)
 	{
 		WriteDescriptors()
-			.AddAccelerationStructure(raytrace.descriptorSet1.get(), 0, tlAccelStruct.get())
+			.AddAccelerationStructure(raytrace.descriptorSet1.get(), 0, tlAccelStruct)
 			.Execute(fb->GetDevice());
 	}
 	else
 	{
 		WriteDescriptors()
-			.AddBuffer(raytrace.descriptorSet1.get(), 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, nodesBuffer.get())
-			.AddBuffer(raytrace.descriptorSet1.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, vertexBuffer.get())
-			.AddBuffer(raytrace.descriptorSet1.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, indexBuffer.get())
+			.AddBuffer(raytrace.descriptorSet1.get(), 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, nodesBuffer)
+			.AddBuffer(raytrace.descriptorSet1.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, vertexBuffer)
+			.AddBuffer(raytrace.descriptorSet1.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, indexBuffer)
 			.Execute(fb->GetDevice());
 	}
 
 	WriteDescriptors()
-		.AddBuffer(raytrace.descriptorSet0.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniformBuffer.get(), 0, sizeof(Uniforms))
-		.AddBuffer(raytrace.descriptorSet0.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, surfaceIndexBuffer.get())
-		.AddBuffer(raytrace.descriptorSet0.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, surfaceBuffer.get())
-		.AddBuffer(raytrace.descriptorSet0.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, sceneLightBuffer.get())
-		.AddBuffer(raytrace.descriptorSet0.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, portalBuffer.get())
+		.AddBuffer(raytrace.descriptorSet0.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniforms.Buffer.get(), 0, sizeof(Uniforms))
+		.AddBuffer(raytrace.descriptorSet0.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, surfaceIndexBuffer)
+		.AddBuffer(raytrace.descriptorSet0.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, surfaceBuffer)
+		//.AddBuffer(raytrace.descriptorSet0.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, sceneLightBuffer.get()) // TODO !!!!!!!!!
+		.AddBuffer(raytrace.descriptorSet0.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, portalBuffer)
 		.Execute(fb->GetDevice());
-#endif
+
 }
 
 void VkLightmap::CreateResolvePipeline()
@@ -513,7 +520,7 @@ void VkLightmap::CreateResolvePipeline()
 
 	resolve.pipelineLayout = PipelineLayoutBuilder()
 		.AddSetLayout(resolve.descriptorSetLayout.get())
-		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants))
+		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapPushConstants))
 		.DebugName("resolve.pipelineLayout")
 		.Create(fb->GetDevice());
 

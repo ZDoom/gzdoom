@@ -17,7 +17,7 @@ struct Uniforms
 	float SunIntensity;
 };
 
-struct PushConstants
+struct LightmapPushConstants
 {
 	uint32_t LightStart;
 	uint32_t LightEnd;

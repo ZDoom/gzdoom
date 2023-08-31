@@ -70,6 +70,8 @@ void VkRaytrace::Reset()
 	deletelist->Add(std::move(indexBuffer));
 	deletelist->Add(std::move(transferBuffer));
 	deletelist->Add(std::move(nodesBuffer));
+	deletelist->Add(std::move(surfaceBuffer));
+	deletelist->Add(std::move(portalBuffer));
 	deletelist->Add(std::move(blScratchBuffer));
 	deletelist->Add(std::move(blAccelStructBuffer));
 	deletelist->Add(std::move(blAccelStruct));
@@ -133,10 +135,32 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 		.DebugName("nodesBuffer")
 		.Create(fb->GetDevice());
 
+	surfaceIndexBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+		.Size(Mesh->MeshSurfaces.Size() * sizeof(int))
+		.DebugName("surfaceBuffer")
+		.Create(fb->GetDevice());
+
+	surfaceBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+		.Size(Mesh->surfaces.size() * sizeof(SurfaceInfo))
+		.DebugName("surfaceBuffer")
+		.Create(fb->GetDevice());
+
+	portalBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+		.Size(Mesh->portals.Size() * sizeof(SurfaceInfo))
+		.DebugName("portalBuffer")
+		.Create(fb->GetDevice());
+
+
 	transferBuffer = BufferTransfer()
 		.AddBuffer(vertexBuffer.get(), vertices.data(), vertices.size() * sizeof(FVector4))
 		.AddBuffer(indexBuffer.get(), Mesh->MeshElements.Data(), (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
 		.AddBuffer(nodesBuffer.get(), &nodesHeader, sizeof(CollisionNodeBufferHeader), nodes.data(), nodes.size() * sizeof(CollisionNode))
+		.AddBuffer(surfaceIndexBuffer.get(), &nodesHeader, sizeof(int), Mesh->MeshSurfaces.Data(), Mesh->MeshSurfaces.Size() * sizeof(int))
+		.AddBuffer(surfaceBuffer.get(), Mesh->surfaceInfo.Data(), Mesh->surfaceInfo.Size() * sizeof(SurfaceInfo))
+		.AddBuffer(portalBuffer.get(), Mesh->portalInfo.Data(), Mesh->portalInfo.Size() * sizeof(PortalInfo))
 		.Execute(fb->GetDevice(), fb->GetCommands()->GetTransferCommands());
 
 	PipelineBarrier()

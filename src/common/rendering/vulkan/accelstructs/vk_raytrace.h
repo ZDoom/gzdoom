@@ -37,6 +37,9 @@ public:
 	VulkanBuffer* GetVertexBuffer() { return vertexBuffer.get(); }
 	VulkanBuffer* GetIndexBuffer() { return indexBuffer.get(); }
 	VulkanBuffer* GetNodeBuffer() { return nodesBuffer.get(); }
+	VulkanBuffer* GetSurfaceIndexBuffer() { return surfaceIndexBuffer.get(); }
+	VulkanBuffer* GetSurfaceBuffer() { return surfaceBuffer.get(); }
+	VulkanBuffer* GetPortalBuffer() { return portalBuffer.get(); }
 
 private:
 	void Reset();
@@ -58,6 +61,9 @@ private:
 	std::unique_ptr<VulkanBuffer> indexBuffer;
 	std::unique_ptr<VulkanBuffer> transferBuffer;
 	std::unique_ptr<VulkanBuffer> nodesBuffer;
+	std::unique_ptr<VulkanBuffer> surfaceIndexBuffer;
+	std::unique_ptr<VulkanBuffer> surfaceBuffer;
+	std::unique_ptr<VulkanBuffer> portalBuffer;
 
 	std::unique_ptr<VulkanBuffer> blScratchBuffer;
 	std::unique_ptr<VulkanBuffer> blAccelStructBuffer;

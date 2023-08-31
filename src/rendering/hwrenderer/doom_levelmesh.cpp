@@ -9,6 +9,7 @@
 #include "c_dispatch.h"
 #include "g_levellocals.h"
 
+#include "common/rendering/vulkan/accelstructs/vk_lightmap.h"
 
 CCMD(dumplevelmesh)
 {
@@ -450,7 +451,7 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 	fprintf(f, "# DoomLevelMesh debug export\n");
 	fprintf(f, "# MeshVertices: %d, MeshElements: %d\n", MeshVertices.Size(), MeshElements.Size());
 
-	double scale = 1 / 100.0;
+	double scale = 1 / 10.0;
 
 	for (const auto& v : MeshVertices)
 	{
@@ -459,14 +460,14 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 
 	{
 		const auto s = LightmapUvs.Size();
-		for (int i = 0; i + 1 < s; i += 2)
+		for (unsigned i = 0; i + 1 < s; i += 2)
 		{
 			fprintf(f, "vt %f %f\n", LightmapUvs[i], LightmapUvs[i + 1]);
 		}
 	}
 
 	const auto s = MeshElements.Size();
-	for (auto i = 0; i + 2 < s; i += 3)
+	for (unsigned i = 0; i + 2 < s; i += 3)
 	{
 		// fprintf(f, "f %d %d %d\n", MeshElements[i] + 1, MeshElements[i + 1] + 1, MeshElements[i + 2] + 1);
 		fprintf(f, "f %d/%d %d/%d %d/%d\n",
@@ -488,6 +489,34 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 	{
 		BuildSurfaceParams(lightmapSize, lightmapSize, surface);
 		sortedSurfaces.push_back(&surface);
+	}
+
+	for (const auto& surface : Surfaces)
+	{
+		auto hwSurface = std::make_unique<hwrenderer::Surface>();
+
+		hwSurface->boundsMax = surface.bounds.max;
+		hwSurface->boundsMin = surface.bounds.min;
+		
+		//	hwSurface->LightList =  // TODO
+		hwSurface->projLocalToU = surface.projLocalToU;
+		hwSurface->projLocalToV = surface.projLocalToV;
+		hwSurface->smoothingGroupIndex = -1;
+		hwSurface->texHeight = surface.texHeight;
+		hwSurface->texWidth = surface.texWidth;
+
+		hwSurface->translateWorldToLocal = surface.translateWorldToLocal;
+		hwSurface->type = hwrenderer::SurfaceType(surface.type);
+
+		hwSurface->texPixels.resize(surface.texWidth * surface.texHeight);
+
+		for (int i = 0; i < surface.numVerts; ++i)
+		{
+			hwSurface->verts.Push(MeshVertices[surface.startVertIndex + i]);
+		}
+
+		// TODO push
+		surfaces.push_back(std::move(hwSurface));
 	}
 
 	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](Surface* a, Surface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });
@@ -536,7 +565,7 @@ void DoomLevelMesh::FinishSurface(int lightmapTextureWidth, int lightmapTextureH
 
 	auto result = packer.insert(sampleWidth, sampleHeight);
 	int x = result.pos.x, y = result.pos.y;
-	surface.atlasPageIndex = result.pageIndex;
+	surface.atlasPageIndex = (int)result.pageIndex;
 
 	// calculate final texture coordinates
 	auto uvIndex = surface.startUvIndex;
@@ -637,7 +666,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	plane = &surface.plane;
 	bounds = GetBoundsFromSurface(surface);
-	//surface->bounds = bounds;
+	surface.bounds = bounds;
 
 	if (surface.sampleDimension <= 0)
 	{

@@ -43,6 +43,7 @@
 #include "vulkan/vk_renderstate.h"
 #include "vulkan/vk_postprocess.h"
 #include "vulkan/accelstructs/vk_raytrace.h"
+#include "vulkan/accelstructs/vk_lightmap.h"
 #include "vulkan/pipelines/vk_renderpass.h"
 #include "vulkan/descriptorsets/vk_descriptorset.h"
 #include "vulkan/shaders/vk_shader.h"
@@ -61,6 +62,7 @@
 #include <zvulkan/vulkancompatibledevice.h>
 #include "engineerrors.h"
 #include "c_dispatch.h"
+#include "accelstructs/halffloat.h"
 
 FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames = -1);
 
@@ -474,8 +476,47 @@ void VulkanRenderDevice::BeginFrame()
 	mDescriptorSetManager->BeginFrame();
 }
 
-void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData)
+void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TArray<uint16_t>& LMTextureData, hwrenderer::LevelMesh& mesh)
 {
+	if(mesh.surfaces.size() > 0)
+	{
+		Printf("Running VkLightmap.\n");
+
+		VkLightmap lightmap(this);
+		lightmap.Raytrace(&mesh);
+
+		Printf("Copying data.\n");
+
+		// TODO refactor
+
+		auto clamp = [](float a, float min, float max) -> float { return a < min ? min : a > max ? max : a; };
+
+		RectPacker packer(LMTextureSize, LMTextureSize);
+
+		for (auto& surface : mesh.surfaces)
+		{
+			mesh.FinishSurface(LMTextureSize, LMTextureSize, packer, *surface.get());
+
+			uint16_t* currentTexture = LMTextureData.Data() + (LMTextureSize * LMTextureSize * 3) * surface->atlasPageIndex;
+
+			FVector3* colorSamples = surface->texPixels.data();
+			// store results to lightmap texture
+			for (int i = 0; i < surface->texHeight; i++)
+			{
+				for (int j = 0; j < surface->texWidth; j++)
+				{
+					// get texture offset
+					int offs = ((surface->texWidth * (i + surface->atlasY)) + surface->atlasX) * 3;
+
+					// convert RGB to bytes
+					currentTexture[offs + j * 3 + 0] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].X, 0.0f, 65000.0f));
+					currentTexture[offs + j * 3 + 1] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].Y, 0.0f, 65000.0f));
+					currentTexture[offs + j * 3 + 2] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].Z, 0.0f, 65000.0f));
+				}
+			}
+		}
+	}
+
 	if (LMTextureData.Size() > 0)
 	{
 		GetTextureManager()->SetLightmap(LMTextureSize, LMTextureCount, LMTextureData);

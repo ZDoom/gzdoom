@@ -304,17 +304,6 @@ public:
 	void SetSlopes();
 	void CopySlopes();
 
-	void SetSubsectorLightmap(const LightmapSurface &surface);
-	void SetSideLightmap(const LightmapSurface &surface);
-
-	// Lightmap
-#if 0
-	void LoadLightmap(MapData *map);
-#endif
-	void InitLightmap(MapData* map);
-	void BindLightmapSurfacesToGeometry();
-
-
 	void LoadLevel(MapData *map, const char *lumpname, int position);
 
 	MapLoader(FLevelLocals *lev)

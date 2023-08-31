@@ -42,6 +42,10 @@ private:
 	void CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor);
 	void CreateSideSurfaces(FLevelLocals &doomMap, side_t *side);
 
+	void BindLightmapSurfacesToGeometry(FLevelLocals& doomMap);
+	void SetSubsectorLightmap(const LightmapSurface& surface);
+	void SetSideLightmap(const LightmapSurface& surface);
+
 	static bool IsTopSideSky(sector_t* frontsector, sector_t* backsector, side_t* side);
 	static bool IsTopSideVisible(side_t* side);
 	static bool IsBottomSideVisible(side_t* side);

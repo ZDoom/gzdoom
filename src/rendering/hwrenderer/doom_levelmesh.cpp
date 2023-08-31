@@ -30,6 +30,9 @@ CCMD(dumplevelmesh)
 
 DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 {
+	SunColor = doomMap.SunColor; // TODO keep only one copy?
+	SunDirection = doomMap.SunDirection;
+
 	for (unsigned int i = 0; i < doomMap.sides.Size(); i++)
 	{
 		CreateSideSurfaces(doomMap, &doomMap.sides[i]);
@@ -81,7 +84,124 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 		}
 	}
 
+	BindLightmapSurfacesToGeometry(doomMap);
+
 	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
+}
+
+void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
+{
+	// Allocate room for all surfaces
+
+	unsigned int allSurfaces = 0;
+
+	for (unsigned int i = 0; i < doomMap.sides.Size(); i++)
+		allSurfaces += 4 + doomMap.sides[i].sector->e->XFloor.ffloors.Size();
+
+	for (unsigned int i = 0; i < doomMap.subsectors.Size(); i++)
+		allSurfaces += 2 + doomMap.subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
+
+	doomMap.LMSurfaces.Resize(allSurfaces);
+	memset(&doomMap.LMSurfaces[0], 0, sizeof(LightmapSurface) * allSurfaces);
+
+	// Link the surfaces to sectors, sides and their 3D floors
+
+	unsigned int offset = 0;
+	for (unsigned int i = 0; i < doomMap.sides.Size(); i++)
+	{
+		auto& side = doomMap.sides[i];
+		side.lightmap = &doomMap.LMSurfaces[offset];
+		offset += 4 + side.sector->e->XFloor.ffloors.Size();
+	}
+	for (unsigned int i = 0; i < doomMap.subsectors.Size(); i++)
+	{
+		auto& subsector = doomMap.subsectors[i];
+		unsigned int count = 1 + subsector.sector->e->XFloor.ffloors.Size();
+		subsector.lightmap[0] = &doomMap.LMSurfaces[offset];
+		subsector.lightmap[1] = &doomMap.LMSurfaces[offset + count];
+		offset += count * 2;
+	}
+
+	// Copy and build properties
+	size_t index = 0;
+	for (auto& surface : doomMap.levelMesh->Surfaces)
+	{
+		LightmapSurface l;
+		memset(&l, 0, sizeof(LightmapSurface));
+
+		l.ControlSector = (sector_t*)surface.controlSector;
+		l.Type = surface.type;
+		l.LightmapNum = 0;
+
+		l.TexCoords = (float*)&doomMap.levelMesh->LightmapUvs[surface.startUvIndex];
+
+		l.LightmapNum = surface.atlasPageIndex;
+
+		if (surface.type == hwrenderer::ST_FLOOR || surface.type == hwrenderer::ST_CEILING)
+		{
+			l.Subsector = &doomMap.subsectors[surface.typeIndex];
+			if (l.Subsector->firstline && l.Subsector->firstline->sidedef)
+				l.Subsector->firstline->sidedef->sector->HasLightmaps = true;
+			SetSubsectorLightmap(l);
+		}
+		else
+		{
+			l.Side = &doomMap.sides[surface.typeIndex];
+			SetSideLightmap(l);
+		}
+	}
+}
+
+void DoomLevelMesh::SetSubsectorLightmap(const LightmapSurface& surface)
+{
+	if (!surface.ControlSector)
+	{
+		int index = surface.Type == hwrenderer::ST_CEILING ? 1 : 0;
+		surface.Subsector->lightmap[index][0] = surface;
+	}
+	else
+	{
+		int index = surface.Type == hwrenderer::ST_CEILING ? 0 : 1;
+		const auto& ffloors = surface.Subsector->sector->e->XFloor.ffloors;
+		for (unsigned int i = 0; i < ffloors.Size(); i++)
+		{
+			if (ffloors[i]->model == surface.ControlSector)
+			{
+				surface.Subsector->lightmap[index][i + 1] = surface;
+			}
+		}
+	}
+}
+
+void DoomLevelMesh::SetSideLightmap(const LightmapSurface& surface)
+{
+	if (!surface.ControlSector)
+	{
+		if (surface.Type == hwrenderer::ST_UPPERSIDE)
+		{
+			surface.Side->lightmap[0] = surface;
+		}
+		else if (surface.Type == hwrenderer::ST_MIDDLESIDE)
+		{
+			surface.Side->lightmap[1] = surface;
+			surface.Side->lightmap[2] = surface;
+		}
+		else if (surface.Type == hwrenderer::ST_LOWERSIDE)
+		{
+			surface.Side->lightmap[3] = surface;
+		}
+	}
+	else
+	{
+		const auto& ffloors = surface.Side->sector->e->XFloor.ffloors;
+		for (unsigned int i = 0; i < ffloors.Size(); i++)
+		{
+			if (ffloors[i]->model == surface.ControlSector)
+			{
+				surface.Side->lightmap[4 + i] = surface;
+			}
+		}
+	}
 }
 
 void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)

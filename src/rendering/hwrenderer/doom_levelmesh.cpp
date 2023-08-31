@@ -84,6 +84,8 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 		}
 	}
 
+	// To do: these functions still broken. 
+	SetupLightmapUvs();
 	BindLightmapSurfacesToGeometry(doomMap);
 
 	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
@@ -124,7 +126,7 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 
 	// Copy and build properties
 	size_t index = 0;
-	for (auto& surface : doomMap.levelMesh->Surfaces)
+	for (auto& surface : Surfaces)
 	{
 		LightmapSurface l;
 		memset(&l, 0, sizeof(LightmapSurface));
@@ -133,7 +135,7 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 		l.Type = surface.type;
 		l.LightmapNum = 0;
 
-		l.TexCoords = (float*)&doomMap.levelMesh->LightmapUvs[surface.startUvIndex];
+		l.TexCoords = (float*)&LightmapUvs[surface.startUvIndex];
 
 		l.LightmapNum = surface.atlasPageIndex;
 

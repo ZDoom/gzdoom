@@ -34,8 +34,11 @@ void VkLightmap::Raytrace(hwrenderer::LevelMesh* level)
 
 	UpdateAccelStructDescriptors(); // To do: we only need to do this if the accel struct changes.
 
+	CreateAtlasImages();
+
 	BeginCommands();
 	UploadUniforms();
+
 
 	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
 	{

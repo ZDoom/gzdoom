@@ -482,14 +482,18 @@ void VulkanRenderDevice::InitLightmap(int LMTextureSize, int LMTextureCount, TAr
 	{
 		Printf("Running VkLightmap.\n");
 
-		VkLightmap lightmap(this);
-		lightmap.Raytrace(&mesh);
+		//VkLightmap lightmap(this);
+		//lightmap.Raytrace(&mesh);
 
 		Printf("Copying data.\n");
 
 		// TODO refactor
 
 		auto clamp = [](float a, float min, float max) -> float { return a < min ? min : a > max ? max : a; };
+
+
+		std::sort(mesh.surfaces.begin(), mesh.surfaces.end(), [](const std::unique_ptr<hwrenderer::Surface>& a, const std::unique_ptr<hwrenderer::Surface>& b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });
+
 
 		RectPacker packer(LMTextureSize, LMTextureSize);
 

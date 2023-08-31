@@ -71,6 +71,7 @@ void VkRaytrace::Reset()
 	deletelist->Add(std::move(transferBuffer));
 	deletelist->Add(std::move(nodesBuffer));
 	deletelist->Add(std::move(surfaceBuffer));
+	deletelist->Add(std::move(surfaceIndexBuffer));
 	deletelist->Add(std::move(portalBuffer));
 	deletelist->Add(std::move(blScratchBuffer));
 	deletelist->Add(std::move(blAccelStructBuffer));

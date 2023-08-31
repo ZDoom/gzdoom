@@ -10,6 +10,7 @@
 #include "g_levellocals.h"
 
 #include "common/rendering/vulkan/accelstructs/vk_lightmap.h"
+#include <vulkan/accelstructs/halffloat.h>
 
 CCMD(dumplevelmesh)
 {
@@ -511,11 +512,11 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 
 		hwSurface->boundsMax = surface.bounds.max;
 		hwSurface->boundsMin = surface.bounds.min;
-		
+
 		//	hwSurface->LightList =  // TODO
 		hwSurface->projLocalToU = surface.projLocalToU;
 		hwSurface->projLocalToV = surface.projLocalToV;
-		hwSurface->smoothingGroupIndex = -1;
+		hwSurface->smoothingGroupIndex = 0;
 		hwSurface->texHeight = surface.texHeight;
 		hwSurface->texWidth = surface.texWidth;
 
@@ -523,6 +524,13 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		hwSurface->type = hwrenderer::SurfaceType(surface.type);
 
 		hwSurface->texPixels.resize(surface.texWidth * surface.texHeight);
+
+		for (auto& pixel : hwSurface->texPixels)
+		{
+			pixel.X = floatToHalf(0.0);
+			pixel.X = floatToHalf(1.0);
+			pixel.X = floatToHalf(0.0);
+		}
 
 		for (int i = 0; i < surface.numVerts; ++i)
 		{
@@ -539,6 +547,18 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		info.Sky = surface.bSky;
 
 		surfaceInfo.Push(info);
+
+
+	}
+
+	{
+		hwrenderer::SmoothingGroup smoothing;
+
+		for (auto& surface : surfaces)
+		{
+			smoothing.surfaces.push_back(surface.get());
+		}
+		smoothingGroups.Push(std::move(smoothing));
 	}
 
 	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](Surface* a, Surface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });

@@ -7,7 +7,6 @@
 #include "filesystem.h"
 #include "cmdlib.h"
 
-
 VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 {
 	useRayQuery = fb->GetDevice()->PhysicalDevice.Features.RayQuery.rayQuery;
@@ -95,9 +94,9 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 		};
 	beginPass();
 
-	for (size_t i = 0; i < mesh->surfaces.size(); i++)
+	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
-		hwrenderer::Surface* targetSurface = mesh->surfaces[i].get();
+		hwrenderer::Surface* targetSurface = &mesh->Surfaces[i];
 		if (targetSurface->atlasPageIndex != pageIndex)
 			continue;
 
@@ -123,8 +122,6 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			int vertexCount = (int)surface->verts.Size();
 			if (lights.Pos + lightCount > lights.BufferSize || vertices.Pos + vertexCount > vertices.BufferSize)
 			{
-				printf(".");
-
 				// Flush scene buffers
 				FinishCommands();
 				lights.Pos = 0;
@@ -133,8 +130,6 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 				firstVertex = 0;
 				BeginCommands();
 				beginPass();
-
-				printf(".");
 
 				if (lights.Pos + lightCount > lights.BufferSize)
 				{
@@ -200,9 +195,9 @@ void VkLightmap::CreateAtlasImages()
 	const int spacing = 3; // Note: the spacing is here to avoid that the resolve sampler finds data from other surface tiles
 	RectPacker packer(atlasImageSize, atlasImageSize, RectPacker::Spacing(spacing));
 
-	for (size_t i = 0; i < mesh->surfaces.size(); i++)
+	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
-		hwrenderer::Surface* surface = mesh->surfaces[i].get();
+		hwrenderer::Surface* surface = &mesh->Surfaces[i];
 
 		auto result = packer.insert(surface->texWidth + 2, surface->texHeight + 2);
 		surface->atlasX = result.pos.x + 1;
@@ -309,9 +304,9 @@ void VkLightmap::DownloadAtlasImage(size_t pageIndex)
 
 	hvec4* pixels = (hvec4*)atlasImages[pageIndex].Transfer->Map(0, atlasImageSize * atlasImageSize * sizeof(hvec4));
 
-	for (size_t i = 0; i < mesh->surfaces.size(); i++)
+	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
-		hwrenderer::Surface* surface = mesh->surfaces[i].get();
+		hwrenderer::Surface* surface = &mesh->Surfaces[i];
 		if (surface->atlasPageIndex != pageIndex)
 			continue;
 

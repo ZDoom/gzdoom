@@ -25,18 +25,16 @@ public:
 			return true;
 
 		int surfaceIndex = MeshSurfaces[hit.triangle];
-		const hwrenderer::Surface& surface = Surfaces[surfaceIndex];
-		return surface.bSky;
+		return Surfaces[surfaceIndex].bSky;
 	}
 
-	TArray<hwrenderer::Surface> Surfaces;
 	TArray<FVector2> LightmapUvs;
 
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
 
 	void DumpMesh(const FString& filename) const;
 
-	int SetupLightmapUvs(int lightmapSize);
+	void SetupLightmapUvs();
 
 private:
 	void CreateSubsectorSurfaces(FLevelLocals &doomMap);

@@ -3214,10 +3214,6 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	Level->levelMesh = new DoomLevelMesh(*Level);
 	InitLightmap(map);
 
-	screen->GenerateLightmap(Level->LMTextureData, Level->LMTextureSize, *Level->levelMesh);
-
-	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
-
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (Level->PlayerInGame(i) && Level->Players[i]->mo != nullptr)
@@ -3330,96 +3326,6 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 	}
 }
 
-#include "vulkan/accelstructs/halffloat.h"
-
-void MapLoader::GenerateLightmap(const DoomLevelMesh& mesh, int atlasPages, int atlasWidth, int atlasHeight)
-{
-	Level->LMTextureData.Resize(atlasWidth * atlasHeight * 3 * atlasPages);
-
-	uint16_t* ptr = Level->LMTextureData.Data();
-
-	for (int i = 0; i < atlasPages; ++i)
-	{
-		for (int y = 0; y < atlasWidth; ++y)
-		{
-			for (int x = 0; x < atlasHeight; ++x)
-			{
-				/**(ptr++) = floatToHalf(float(x) / width);
-				*(ptr++) = floatToHalf(float(y) / height);
-				*(ptr++) = floatToHalf((x + y) % 2 == 0 ? 1.0f : 0.0f);*/
-				switch (i % 3)
-				{
-				case 0:
-					*(ptr++) = floatToHalf(1.0f);
-					*(ptr++) = floatToHalf(0.0f);
-					*(ptr++) = floatToHalf(0.0f);
-					break;
-				case 1:
-					*(ptr++) = floatToHalf(0.0f);
-					*(ptr++) = floatToHalf(1.0f);
-					*(ptr++) = floatToHalf(0.0f);
-					break;
-				case 2:
-					*(ptr++) = floatToHalf(0.0f);
-					*(ptr++) = floatToHalf(0.0f);
-					*(ptr++) = floatToHalf(1.0f);
-					break;
-				}
-			}
-		}
-	}
-
-	auto get_xy = [&](int page, int x, int y) -> uint16_t*
-	{
-		return Level->LMTextureData.Data() + ((y * atlasWidth) + x + (atlasHeight * atlasWidth * page)) * 3;
-	};
-
-	//#if 0
-	srand(1337);
-	for (auto& surface : mesh.Surfaces)
-	{
-		float r;
-		float g;
-		float b;
-
-		r = rand() % 32 / 32.0f;
-		g = rand() % 32 / 32.0f;
-		b = rand() % 32 / 32.0f;
-
-		for (int y = 0; y <= surface.texHeight; ++y)
-		{
-			for (int x = 0; x <= surface.texWidth; ++x)
-			{
-				auto ptr = get_xy(surface.atlasPageIndex, surface.atlasX + x, surface.atlasY + y);
-
-				ptr[0] = floatToHalf(r);
-				ptr[1] = floatToHalf(g);
-				ptr[2] = floatToHalf(b);
-
-				if (x % 4 == 0 || y % 4 == 0)
-				{
-					ptr[0] = floatToHalf(0.0f);
-					ptr[1] = floatToHalf(0.0f);
-					ptr[2] = floatToHalf(0.0f);
-				}
-
-				/*if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX * 0.5f - surface.worldStepY * 0.5f + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
-				{
-					ptr[0] = floatToHalf(Level->SunColor.X);
-					ptr[1] = floatToHalf(Level->SunColor.Y);
-					ptr[2] = floatToHalf(Level->SunColor.Z);
-				}
-				else
-				{
-					ptr[0] = 0;
-					ptr[1] = 0;
-					ptr[2] = 0;
-				}*/
-			}
-		}
-	}
-}
-
 void MapLoader::BindLightmapSurfacesToGeometry()
 {
 	// Allocate room for all surfaces
@@ -3487,11 +3393,7 @@ void MapLoader::BindLightmapSurfacesToGeometry()
 void MapLoader::InitLightmap(MapData* map)
 {
 	// We have to reset everything as FLevelLocals is recycled between maps
-	Level->LMTexCoords.Reset();
 	Level->LMSurfaces.Reset();
-	Level->LMTextureData.Reset();
-
-	Level->LMTextureSize = 1024; // TODO cvar
 
 	// TODO read from ZDRayInfoThing
 	Level->SunColor = FVector3(1.f, 1.f, 1.f);
@@ -3500,9 +3402,8 @@ void MapLoader::InitLightmap(MapData* map)
 	Level->levelMesh->SunColor = Level->SunColor; // TODO keep only one copy?
 	Level->levelMesh->SunDirection = Level->SunDirection;
 
-	Level->LMTextureCount = Level->levelMesh->SetupLightmapUvs(Level->LMTextureSize);
+	Level->lightmaps = true;
 
-	GenerateLightmap(*Level->levelMesh, Level->LMTextureCount, Level->LMTextureSize, Level->LMTextureSize);
 	BindLightmapSurfacesToGeometry();
 }
 

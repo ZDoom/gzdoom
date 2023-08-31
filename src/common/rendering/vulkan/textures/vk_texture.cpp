@@ -189,6 +189,35 @@ void VkTextureManager::CreateLightmap()
 	SetLightmap(1, 1, data);
 }
 
+void VkTextureManager::CreateLightmap(int LMTextureSize, int LMTextureCount)
+{
+	int w = LMTextureSize;
+	int h = LMTextureSize;
+	int count = LMTextureCount;
+	int pixelsize = 8;
+
+	Lightmap.Reset(fb);
+
+	Lightmap.Image = ImageBuilder()
+		.Size(w, h, 1, count)
+		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
+		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+		.DebugName("VkRenderBuffers.Lightmap")
+		.Create(fb->GetDevice());
+
+	Lightmap.View = ImageViewBuilder()
+		.Type(VK_IMAGE_VIEW_TYPE_2D_ARRAY)
+		.Image(Lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
+		.DebugName("VkRenderBuffers.LightmapView")
+		.Create(fb->GetDevice());
+
+	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
+
+	VkImageTransition()
+		.AddImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count)
+		.Execute(cmdbuffer);
+}
+
 void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const TArray<uint16_t>& LMTextureData)
 {
 	int w = LMTextureSize;

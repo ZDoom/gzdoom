@@ -454,11 +454,8 @@ public:
 	TArray<FLinePortal> linePortals;
 
 	// Lightmaps
+	bool lightmaps = false;
 	TArray<LightmapSurface> LMSurfaces;
-	TArray<float> LMTexCoords;
-	int LMTextureCount = 0;
-	int LMTextureSize = 0;
-	TArray<uint16_t> LMTextureData;
 	FVector3 SunDirection;
 	FVector3 SunColor;
 

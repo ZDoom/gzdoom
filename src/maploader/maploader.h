@@ -312,7 +312,6 @@ public:
 	void LoadLightmap(MapData *map);
 #endif
 	void InitLightmap(MapData* map);
-	void GenerateLightmap(const DoomLevelMesh& mesh, int atlasPages, int atlasWidth, int atlasHeight);
 	void BindLightmapSurfacesToGeometry();
 
 

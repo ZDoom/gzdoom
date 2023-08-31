@@ -207,9 +207,13 @@ public:
 
 	std::unique_ptr<TriangleMeshShape> Collision;
 
-	std::vector<std::unique_ptr<Surface>> surfaces;
+	TArray<hwrenderer::Surface> Surfaces;
+
 	TArray<SmoothingGroup> smoothingGroups; // TODO fill
 	TArray<Portal> portals; // TODO fill
+
+	int LMTextureCount = 0;
+	int LMTextureSize = 0;
 
 	FVector3 SunDirection;
 	FVector3 SunColor;

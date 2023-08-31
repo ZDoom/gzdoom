@@ -337,7 +337,7 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 	surf.type = hwrenderer::ST_FLOOR;
 	surf.typeIndex = typeIndex;
 	surf.controlSector = is3DFloor ? sector : nullptr;
-	surf.plane = FVector4(plane.Normal().X, plane.Normal().Y, plane.Normal().Z, plane.D);
+	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, (float)plane.D);
 
 	Surfaces.Push(surf);
 }
@@ -376,7 +376,7 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub
 	surf.type = hwrenderer::ST_CEILING;
 	surf.typeIndex = typeIndex;
 	surf.controlSector = is3DFloor ? sector : nullptr;
-	surf.plane = FVector4(plane.Normal().X, plane.Normal().Y, plane.Normal().Z, plane.D);
+	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, (float)plane.D);
 
 	Surfaces.Push(surf);
 }
@@ -487,21 +487,23 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 	fclose(f);
 }
 
-int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
+void DoomLevelMesh::SetupLightmapUvs()
 {
+	LMTextureSize = 1024; // TODO cvar
+
 	std::vector<Surface*> sortedSurfaces;
 	sortedSurfaces.reserve(Surfaces.Size());
 
 	for (auto& surface : Surfaces)
 	{
-		BuildSurfaceParams(lightmapSize, lightmapSize, surface);
+		BuildSurfaceParams(LMTextureSize, LMTextureSize, surface);
 		sortedSurfaces.push_back(&surface);
 	}
 
-
+#if 0
 	for (const auto& surface : Surfaces)
 	{
-		auto hwSurface = std::make_unique<hwrenderer::Surface>();
+		hwrenderer::Surface hwSurface;
 
 		for (int i = 0; i < surface.numVerts; ++i)
 		{
@@ -535,36 +537,37 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		}
 
 		// TODO push
-		surfaces.push_back(std::move(hwSurface));
+		Surfaces.push_back(hwSurface);
 
 		SurfaceInfo info;
 		info.Normal = surface.plane.XYZ();
 		info.PortalIndex = 0;
-		info.SamplingDistance = surface.sampleDimension;
+		info.SamplingDistance = (float)surface.sampleDimension;
 		info.Sky = surface.bSky;
 
 		surfaceInfo.Push(info);
 
 
 	}
+#endif
 
 	{
 		hwrenderer::SmoothingGroup smoothing;
 
-		for (auto& surface : surfaces)
+		for (auto& surface : Surfaces)
 		{
-			smoothing.surfaces.push_back(surface.get());
+			smoothing.surfaces.push_back(&surface);
 		}
 		smoothingGroups.Push(std::move(smoothing));
 	}
 
 	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](Surface* a, Surface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });
 
-	RectPacker packer(lightmapSize, lightmapSize, RectPacker::Spacing(0));
+	RectPacker packer(LMTextureSize, LMTextureSize, RectPacker::Spacing(0));
 
 	for (Surface* surf : sortedSurfaces)
 	{
-		FinishSurface(lightmapSize, lightmapSize, packer, *surf);
+		FinishSurface(LMTextureSize, LMTextureSize, packer, *surf);
 	}
 
 	// You have no idea how long this took me to figure out...
@@ -589,8 +592,7 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		}
 	}
 
-
-	return packer.getNumPages();
+	LMTextureCount = (int)packer.getNumPages();
 }
 
 void DoomLevelMesh::FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, Surface& surface)
@@ -642,7 +644,7 @@ void DoomLevelMesh::FinishSurface(int lightmapTextureWidth, int lightmapTextureH
 
 BBox DoomLevelMesh::GetBoundsFromSurface(const Surface& surface) const
 {
-	constexpr float M_INFINITY = 1e30; // TODO cleanup
+	constexpr float M_INFINITY = 1e30f; // TODO cleanup
 
 	FVector3 low(M_INFINITY, M_INFINITY, M_INFINITY);
 	FVector3 hi(-M_INFINITY, -M_INFINITY, -M_INFINITY);

@@ -83,7 +83,7 @@ public:
 
 	bool TraceSunVisibility(float x, float y, float z)
 	{
-		if (level.LMTextureCount == 0 || !Actor)
+		if (!level.lightmaps || !Actor)
 			return false;
 
 		if (!ActorMoved && CurrentBit < 64)

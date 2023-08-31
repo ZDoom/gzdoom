@@ -499,6 +499,33 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		FinishSurface(lightmapSize, lightmapSize, packer, *surf);
 	}
 
+	// You have no idea how long this took me to figure out...
+
+	// Reorder vertices into renderer format
+	for (Surface& surface : Surfaces)
+	{
+		if (surface.type == ST_FLOOR)
+		{
+			// reverse vertices on floor
+			for (int j = surface.startUvIndex + surface.numVerts * 2 - 2, k = surface.startUvIndex; j > k; j-=2, k+=2)
+			{
+				std::swap(LightmapUvs[k], LightmapUvs[j]);
+				std::swap(LightmapUvs[k + 1], LightmapUvs[j + 1]);
+			}
+		}
+		else if (surface.type != ST_CEILING) // walls
+		{
+			// from 0 1 2 3
+			// to   0 2 1 3
+			std::swap(LightmapUvs[surface.startUvIndex + 2 * 1], LightmapUvs[surface.startUvIndex + 2 * 2]);
+			std::swap(LightmapUvs[surface.startUvIndex + 2 * 2], LightmapUvs[surface.startUvIndex + 2 * 3]);
+
+			std::swap(LightmapUvs[surface.startUvIndex + 2 * 1 + 1], LightmapUvs[surface.startUvIndex + 2 * 2 + 1]);
+			std::swap(LightmapUvs[surface.startUvIndex + 2 * 2 + 1], LightmapUvs[surface.startUvIndex + 2 * 3 + 1]);
+		}
+	}
+
+
 	return packer.getNumPages();
 }
 

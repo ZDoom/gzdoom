@@ -18,6 +18,7 @@ struct Surface
 	int typeIndex;
 	int numVerts;
 	unsigned int startVertIndex;
+	unsigned int startUvIndex;
 	secplane_t plane;
 	sector_t *controlSector;
 	bool bSky;
@@ -29,11 +30,10 @@ struct Surface
 	int texWidth = 0;
 	int texHeight = 0;
 
-	// UV coordinates for the vertices
-	int startUvIndex = 0;
-
 	//
 	// Required for internal lightmapper:
+	//
+
 	BBox bounds;
 	int sampleDimension = 0;
 

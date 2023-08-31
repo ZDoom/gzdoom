@@ -3329,125 +3329,96 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 
 #include "vulkan/accelstructs/halffloat.h"
 
-void MapLoader::InitLightmap(MapData* map)
+void MapLoader::GenerateLightmap(const DoomLevelMesh& mesh, int atlasPages, int atlasWidth, int atlasHeight)
 {
-	// We have to reset everything as FLevelLocals is recycled between maps
-	Level->LMTexCoords.Reset();
-	Level->LMSurfaces.Reset();
-	Level->LMTextureData.Reset();
+	Level->LMTextureData.Resize(atlasWidth * atlasHeight * 3 * atlasPages);
 
-	Level->LMTextureSize = 1024; // TODO cvar
+	uint16_t* ptr = Level->LMTextureData.Data();
 
-	// TODO read from ZDRayInfoThing
-	Level->SunColor = FVector3(1.f, 1.f, 1.f);
-	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
-
-	// TODO keep only one copy?
-	Level->levelMesh->SunColor = Level->SunColor;
-	Level->levelMesh->SunDirection = Level->SunDirection;
-
-	Level->LMTextureCount = Level->levelMesh->SetupLightmapUvs(Level->LMTextureSize);
-
-
-	// Debug placeholder stuff
+	for (int i = 0; i < atlasPages; ++i)
 	{
-		auto constructDebugTexture = [&](TArray<uint16_t>& buffer, int layers, int width, int height) {
-			uint16_t* ptr = buffer.Data();
-
-			for (int i = 0; i < layers; ++i)
+		for (int y = 0; y < atlasWidth; ++y)
+		{
+			for (int x = 0; x < atlasHeight; ++x)
 			{
-				for (int y = 0; y < height; ++y)
+				/**(ptr++) = floatToHalf(float(x) / width);
+				*(ptr++) = floatToHalf(float(y) / height);
+				*(ptr++) = floatToHalf((x + y) % 2 == 0 ? 1.0f : 0.0f);*/
+				switch (i % 3)
 				{
-					for (int x = 0; x < width; ++x)
-					{
-						/**(ptr++) = floatToHalf(float(x) / width);
-						*(ptr++) = floatToHalf(float(y) / height);
-						*(ptr++) = floatToHalf((x + y) % 2 == 0 ? 1.0f : 0.0f);*/
-						switch (i % 3)
-						{
-						case 0:
-							*(ptr++) = floatToHalf(1.0f);
-							*(ptr++) = floatToHalf(0.0f);
-							*(ptr++) = floatToHalf(0.0f);
-							break;
-						case 1:
-							*(ptr++) = floatToHalf(0.0f);
-							*(ptr++) = floatToHalf(1.0f);
-							*(ptr++) = floatToHalf(0.0f);
-							break;
-						case 2:
-							*(ptr++) = floatToHalf(0.0f);
-							*(ptr++) = floatToHalf(0.0f);
-							*(ptr++) = floatToHalf(1.0f);
-							break;
-						}
-					}
+				case 0:
+					*(ptr++) = floatToHalf(1.0f);
+					*(ptr++) = floatToHalf(0.0f);
+					*(ptr++) = floatToHalf(0.0f);
+					break;
+				case 1:
+					*(ptr++) = floatToHalf(0.0f);
+					*(ptr++) = floatToHalf(1.0f);
+					*(ptr++) = floatToHalf(0.0f);
+					break;
+				case 2:
+					*(ptr++) = floatToHalf(0.0f);
+					*(ptr++) = floatToHalf(0.0f);
+					*(ptr++) = floatToHalf(1.0f);
+					break;
 				}
 			}
-
-			auto get_xy = [&](int page, int x, int y) -> uint16_t*
-			{
-				return buffer.Data() + ((y * width) + x + (height * width * page)) * 3;
-			};
-
-//#if 0
-			srand(1337);
-			for (auto& surface : Level->levelMesh->Surfaces)
-			{
-				float r;
-				float g;
-				float b;
-
-				r = rand() % 32 / 32.0f;
-				g = rand() % 32 / 32.0f;
-				b = rand() % 32 / 32.0f;
-
-				for (int y = 0; y <= surface.texHeight; ++y)
-				{
-					for (int x = 0; x <= surface.texWidth; ++x)
-					{
-						auto ptr = get_xy(surface.atlasPageIndex, surface.atlasX + x, surface.atlasY + y);
-
-						ptr[0] = floatToHalf(r);
-						ptr[1] = floatToHalf(g);
-						ptr[2] = floatToHalf(b);
-
-						if (x % 4 == 0 || y % 4 == 0)
-						{
-							ptr[0] = floatToHalf(0.0f);
-							ptr[1] = floatToHalf(0.0f);
-							ptr[2] = floatToHalf(0.0f);
-						}
-
-						/*if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX - surface.worldStepY + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
-						{
-							ptr[0] = floatToHalf(Level->SunColor.X);
-							ptr[1] = floatToHalf(Level->SunColor.Y);
-							ptr[2] = floatToHalf(Level->SunColor.Z);
-						}
-						else
-						{
-							ptr[0] = 0;
-							ptr[1] = 0;
-							ptr[2] = 0;
-						}*/
-					}
-				}
-			}
-//#endif
-		};
-
-		int size = Level->LMTextureSize;
-		int layers = Level->LMTextureCount;
-
-		Level->LMTextureData.Resize(size * size * 3 * layers);
-		constructDebugTexture(Level->LMTextureData, Level->LMTextureCount, size, size);
+		}
 	}
 
-#if 0
-	Level->LMTexCoords = std::move(Level->levelMesh->LightmapUvs);
-#endif
+	auto get_xy = [&](int page, int x, int y) -> uint16_t*
+	{
+		return Level->LMTextureData.Data() + ((y * atlasWidth) + x + (atlasHeight * atlasWidth * page)) * 3;
+	};
 
+	//#if 0
+	srand(1337);
+	for (auto& surface : mesh.Surfaces)
+	{
+		float r;
+		float g;
+		float b;
+
+		r = rand() % 32 / 32.0f;
+		g = rand() % 32 / 32.0f;
+		b = rand() % 32 / 32.0f;
+
+		for (int y = 0; y <= surface.texHeight; ++y)
+		{
+			for (int x = 0; x <= surface.texWidth; ++x)
+			{
+				auto ptr = get_xy(surface.atlasPageIndex, surface.atlasX + x, surface.atlasY + y);
+
+				ptr[0] = floatToHalf(r);
+				ptr[1] = floatToHalf(g);
+				ptr[2] = floatToHalf(b);
+
+				if (x % 4 == 0 || y % 4 == 0)
+				{
+					ptr[0] = floatToHalf(0.0f);
+					ptr[1] = floatToHalf(0.0f);
+					ptr[2] = floatToHalf(0.0f);
+				}
+
+				/*if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX - surface.worldStepY + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
+				{
+					ptr[0] = floatToHalf(Level->SunColor.X);
+					ptr[1] = floatToHalf(Level->SunColor.Y);
+					ptr[2] = floatToHalf(Level->SunColor.Z);
+				}
+				else
+				{
+					ptr[0] = 0;
+					ptr[1] = 0;
+					ptr[2] = 0;
+				}*/
+			}
+		}
+	}
+}
+
+void MapLoader::BindLightmapSurfacesToGeometry()
+{
 	// Allocate room for all surfaces
 
 	unsigned int allSurfaces = 0;
@@ -3490,17 +3461,14 @@ void MapLoader::InitLightmap(MapData* map)
 		l.Type = surface.type;
 		l.LightmapNum = 0;
 
-#if 0
-		l.TexCoords = &Level->LMTexCoords[surface.startUvIndex];
-#else
 		l.TexCoords = &Level->levelMesh->LightmapUvs[surface.startUvIndex];
-#endif
+
 		l.LightmapNum = surface.atlasPageIndex;
 
 		if (surface.type == ST_FLOOR || surface.type == ST_CEILING)
 		{
 			l.Subsector = &Level->subsectors[surface.typeIndex];
-			if(l.Subsector->firstline && l.Subsector->firstline->sidedef)
+			if (l.Subsector->firstline && l.Subsector->firstline->sidedef)
 				l.Subsector->firstline->sidedef->sector->HasLightmaps = true;
 			SetSubsectorLightmap(l);
 		}
@@ -3511,7 +3479,28 @@ void MapLoader::InitLightmap(MapData* map)
 		}
 	}
 
-	Printf("Generated custom lightmap data");
+}
+
+void MapLoader::InitLightmap(MapData* map)
+{
+	// We have to reset everything as FLevelLocals is recycled between maps
+	Level->LMTexCoords.Reset();
+	Level->LMSurfaces.Reset();
+	Level->LMTextureData.Reset();
+
+	Level->LMTextureSize = 1024; // TODO cvar
+
+	// TODO read from ZDRayInfoThing
+	Level->SunColor = FVector3(1.f, 1.f, 1.f);
+	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
+
+	Level->levelMesh->SunColor = Level->SunColor; // TODO keep only one copy?
+	Level->levelMesh->SunDirection = Level->SunDirection;
+
+	Level->LMTextureCount = Level->levelMesh->SetupLightmapUvs(Level->LMTextureSize);
+
+	GenerateLightmap(*Level->levelMesh, Level->LMTextureCount, Level->LMTextureSize, Level->LMTextureSize);
+	BindLightmapSurfacesToGeometry();
 }
 
 #if 0

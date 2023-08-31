@@ -307,10 +307,14 @@ public:
 	void SetSubsectorLightmap(const LightmapSurface &surface);
 	void SetSideLightmap(const LightmapSurface &surface);
 
+	// Lightmap
 #if 0
 	void LoadLightmap(MapData *map);
 #endif
 	void InitLightmap(MapData* map);
+	void GenerateLightmap(const DoomLevelMesh& mesh, int atlasPages, int atlasWidth, int atlasHeight);
+	void BindLightmapSurfacesToGeometry();
+
 
 	void LoadLevel(MapData *map, const char *lumpname, int position);
 

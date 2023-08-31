@@ -457,10 +457,23 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 		fprintf(f, "v %f %f %f\n", v.X * scale, v.Y * scale, v.Z * scale);
 	}
 
+	{
+		const auto s = LightmapUvs.Size();
+		for (int i = 0; i + 1 < s; i += 2)
+		{
+			fprintf(f, "vt %f %f\n", LightmapUvs[i], LightmapUvs[i + 1]);
+		}
+	}
+
 	const auto s = MeshElements.Size();
 	for (auto i = 0; i + 2 < s; i += 3)
 	{
-		fprintf(f, "f %d %d %d\n", MeshElements[i] + 1, MeshElements[i + 1] + 1, MeshElements[i + 2] + 1);
+		// fprintf(f, "f %d %d %d\n", MeshElements[i] + 1, MeshElements[i + 1] + 1, MeshElements[i + 2] + 1);
+		fprintf(f, "f %d/%d %d/%d %d/%d\n",
+			MeshElements[i + 0] + 1, MeshElements[i + 0] + 1,
+			MeshElements[i + 1] + 1, MeshElements[i + 1] + 1,
+			MeshElements[i + 2] + 1, MeshElements[i + 2] + 1);
+
 	}
 
 	fclose(f);
@@ -502,8 +515,8 @@ void DoomLevelMesh::FinishSurface(int lightmapTextureWidth, int lightmapTextureH
 	auto uvIndex = surface.startUvIndex;
 	for (int i = 0; i < (int)surface.numVerts; i++)
 	{
-		auto& u = LightmapUvs[++uvIndex];
-		auto& v = LightmapUvs[++uvIndex];
+		auto& u = LightmapUvs[uvIndex++];
+		auto& v = LightmapUvs[uvIndex++];
 		u = (u + x) / (float)lightmapTextureWidth;
 		v = (v + y) / (float)lightmapTextureHeight;
 	}
@@ -601,7 +614,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	if (surface.sampleDimension <= 0)
 	{
-		surface.sampleDimension = 4;
+		surface.sampleDimension = 16;
 	}
 	//surface->sampleDimension = Math::RoundPowerOfTwo(surface->sampleDimension);
 

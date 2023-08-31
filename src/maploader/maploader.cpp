@@ -3477,7 +3477,8 @@ void MapLoader::InitLightmap(MapData* map)
 		if (surface.type == ST_FLOOR || surface.type == ST_CEILING)
 		{
 			l.Subsector = &Level->subsectors[surface.typeIndex];
-			l.Subsector->firstline->sidedef->sector->HasLightmaps = true;
+			if(l.Subsector->firstline && l.Subsector->firstline->sidedef)
+				l.Subsector->firstline->sidedef->sector->HasLightmaps = true;
 			SetSubsectorLightmap(l);
 		}
 		else

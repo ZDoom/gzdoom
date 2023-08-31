@@ -12,42 +12,6 @@ typedef dp::rect_pack::RectPacker<int> RectPacker;
 
 struct FLevelLocals;
 
-struct Surface
-{
-	SurfaceType type;
-	int typeIndex;
-	int numVerts;
-	unsigned int startVertIndex;
-	unsigned int startUvIndex;
-	FVector4 plane;
-	sector_t *controlSector;
-	bool bSky;
-
-	// Lightmap UV information in pixel size
-	int atlasPageIndex = 0;
-	int atlasX = 0;
-	int atlasY = 0;
-	int texWidth = 0;
-	int texHeight = 0;
-
-	//
-	// Required for internal lightmapper:
-	//
-
-	BBox bounds;
-	int sampleDimension = 0;
-
-	// Lightmap world coordinates for the texture
-	FVector3 worldOrigin = { 0.f, 0.f, 0.f };
-	FVector3 worldStepX = { 0.f, 0.f, 0.f };
-	FVector3 worldStepY = { 0.f, 0.f, 0.f };
-
-	// Calculate world coordinates to UV coordinates
-	FVector3 translateWorldToLocal = { 0.f, 0.f, 0.f };
-	FVector3 projLocalToU = { 0.f, 0.f, 0.f };
-	FVector3 projLocalToV = { 0.f, 0.f, 0.f };
-};
-
 class DoomLevelMesh : public hwrenderer::LevelMesh
 {
 public:
@@ -61,11 +25,11 @@ public:
 			return true;
 
 		int surfaceIndex = MeshSurfaces[hit.triangle];
-		const Surface& surface = Surfaces[surfaceIndex];
+		const hwrenderer::Surface& surface = Surfaces[surfaceIndex];
 		return surface.bSky;
 	}
 
-	TArray<Surface> Surfaces;
+	TArray<hwrenderer::Surface> Surfaces;
 	TArray<FVector2> LightmapUvs;
 
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
@@ -109,10 +73,10 @@ private:
 	};
 
 	static PlaneAxis BestAxis(const FVector4& p);
-	BBox GetBoundsFromSurface(const Surface& surface) const;
+	BBox GetBoundsFromSurface(const hwrenderer::Surface& surface) const;
 
 	inline int AllocUvs(int amount) { return LightmapUvs.Reserve(amount * 2); }
 
-	void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, Surface& surface);
-	void FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, Surface& surface);
+	void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, hwrenderer::Surface& surface);
+	void FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, hwrenderer::Surface& surface);
 };

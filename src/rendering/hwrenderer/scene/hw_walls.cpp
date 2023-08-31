@@ -1016,7 +1016,7 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	}
 
 	texcoord* srclightuv;
-	if (lightmap && lightmap->Type != ST_NULL)
+	if (lightmap && lightmap->Type != hwrenderer::ST_UNKNOWN)
 	{
 		srclightuv = (texcoord*)lightmap->TexCoords;
 		lindex = (float)lightmap->LightmapNum;
@@ -1721,7 +1721,7 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, FRenderState& state, seg_t * seg, F3DF
 		CheckTexturePosition(&tci);
 
 		texcoord* srclightuv;
-		if (lightmap && lightmap->Type != ST_NULL)
+		if (lightmap && lightmap->Type != hwrenderer::ST_UNKNOWN)
 		{
 			srclightuv = (texcoord*)lightmap->TexCoords;
 			lindex = (float)lightmap->LightmapNum;

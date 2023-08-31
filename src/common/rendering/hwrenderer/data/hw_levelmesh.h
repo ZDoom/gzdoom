@@ -56,42 +56,58 @@ enum SurfaceType
 	ST_FLOOR
 };
 
-class Surface
+struct Surface
 {
-public:
-	// Surface geometry
 	SurfaceType type = ST_UNKNOWN;
+	int typeIndex;
+	int numVerts;
+	unsigned int startVertIndex;
+	unsigned int startUvIndex;
+	FVector4 plane;
+	void* controlSector; // type is sector_t
+	bool bSky;
+
+	// Lightmap UV information in pixel size
+	int atlasPageIndex = 0;
+	int atlasX = 0;
+	int atlasY = 0;
+	int texWidth = 0;
+	int texHeight = 0;
+
+	//
+	// Required for internal lightmapper:
+	//
+
+	BBox bounds;
+	int sampleDimension = 0;
+
+	// Lightmap world coordinates for the texture
+	FVector3 worldOrigin = { 0.f, 0.f, 0.f };
+	FVector3 worldStepX = { 0.f, 0.f, 0.f };
+	FVector3 worldStepY = { 0.f, 0.f, 0.f };
+
+	// Calculate world coordinates to UV coordinates
+	FVector3 translateWorldToLocal = { 0.f, 0.f, 0.f };
+	FVector3 projLocalToU = { 0.f, 0.f, 0.f };
+	FVector3 projLocalToV = { 0.f, 0.f, 0.f };
+
+	// Smoothing group surface is to be rendered with
+	int smoothingGroupIndex = -1;
+
+	//
+	// VkLightmap extra stuff that I dislike:
+	//
 	TArray<FVector3> verts;
 	TArray<FVector2> uvs;
-	//Plane plane;
 	FVector3 boundsMin, boundsMax;
 
 	// Touching light sources
 	std::vector<ThingLight*> LightList;
 
-	// Lightmap world coordinates for the texture
-	FVector3 worldOrigin = { 0.0f, 0.0f, 0.0f };
-	FVector3 worldStepX = { 0.0f, 0.0f, 0.0f };
-	FVector3 worldStepY = { 0.0f, 0.0f, 0.0f };
-
-	// Calculate world coordinates to UV coordinates
-	FVector3 translateWorldToLocal = { 0.0f, 0.0f, 0.0f };
-	FVector3 projLocalToU = { 0.0f, 0.0f, 0.0f };
-	FVector3 projLocalToV = { 0.0f, 0.0f, 0.0f };
-
 	// Output lightmap for the surface
-	int texWidth = 0;
-	int texHeight = 0;
 	std::vector<FVector3> texPixels;
-
-	// Placement in final texture atlas
-	int atlasPageIndex = -1;
-	int atlasX = 0;
-	int atlasY = 0;
-
-	// Smoothing group surface is to be rendered with
-	int smoothingGroupIndex = -1;
 };
+
 
 struct SmoothingGroup
 {

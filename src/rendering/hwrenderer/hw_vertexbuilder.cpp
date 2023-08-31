@@ -240,7 +240,7 @@ static int CreateIndexedSectorVerticesLM(FRenderState& renderstate, sector_t* se
 	{
 		subsector_t* sub = sec->subsectors[i];
 		LightmapSurface* lightmap = &sub->lightmap[h][lightmapIndex];
-		if (lightmap->Type != ST_NULL)
+		if (lightmap->Type != hwrenderer::ST_UNKNOWN)
 		{
 			float* luvs = lightmap->TexCoords;
 			int lindex = lightmap->LightmapNum;

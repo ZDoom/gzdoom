@@ -3277,16 +3277,17 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 //
 //==========================================================================
 
+
 void MapLoader::SetSubsectorLightmap(const LightmapSurface &surface)
 {
 	if (!surface.ControlSector)
 	{
-		int index = surface.Type == ST_CEILING ? 1 : 0;
+		int index = surface.Type == hwrenderer::ST_CEILING ? 1 : 0;
 		surface.Subsector->lightmap[index][0] = surface;
 	}
 	else
 	{
-		int index = surface.Type == ST_CEILING ? 0 : 1;
+		int index = surface.Type == hwrenderer::ST_CEILING ? 0 : 1;
 		const auto &ffloors = surface.Subsector->sector->e->XFloor.ffloors;
 		for (unsigned int i = 0; i < ffloors.Size(); i++)
 		{
@@ -3302,16 +3303,16 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 {
 	if (!surface.ControlSector)
 	{
-		if (surface.Type == ST_UPPERWALL)
+		if (surface.Type == hwrenderer::ST_UPPERSIDE)
 		{
 			surface.Side->lightmap[0] = surface;
 		}
-		else if (surface.Type == ST_MIDDLEWALL)
+		else if (surface.Type == hwrenderer::ST_MIDDLESIDE)
 		{
 			surface.Side->lightmap[1] = surface;
 			surface.Side->lightmap[2] = surface;
 		}
-		else if (surface.Type == ST_LOWERWALL)
+		else if (surface.Type == hwrenderer::ST_LOWERSIDE)
 		{
 			surface.Side->lightmap[3] = surface;
 		}
@@ -3459,7 +3460,7 @@ void MapLoader::BindLightmapSurfacesToGeometry()
 		LightmapSurface l;
 		memset(&l, 0, sizeof(LightmapSurface));
 
-		l.ControlSector = surface.controlSector;
+		l.ControlSector = (sector_t*)surface.controlSector;
 		l.Type = surface.type;
 		l.LightmapNum = 0;
 
@@ -3467,7 +3468,7 @@ void MapLoader::BindLightmapSurfacesToGeometry()
 
 		l.LightmapNum = surface.atlasPageIndex;
 
-		if (surface.type == ST_FLOOR || surface.type == ST_CEILING)
+		if (surface.type == hwrenderer::ST_FLOOR || surface.type == hwrenderer::ST_CEILING)
 		{
 			l.Subsector = &Level->subsectors[surface.typeIndex];
 			if (l.Subsector->firstline && l.Subsector->firstline->sidedef)

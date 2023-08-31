@@ -41,6 +41,7 @@
 #include "p_terrain.h"
 
 #include "hwrenderer/data/buffers.h"
+#include "hwrenderer/data/hw_levelmesh.h"
 
 // Some more or less basic data types
 // we depend on.
@@ -1689,19 +1690,9 @@ struct FMiniBSP
 
 // Lightmap data
 
-enum SurfaceType
-{
-	ST_NULL,
-	ST_MIDDLEWALL,
-	ST_UPPERWALL,
-	ST_LOWERWALL,
-	ST_CEILING,
-	ST_FLOOR
-};
-
 struct LightmapSurface
 {
-	SurfaceType Type;
+	hwrenderer::SurfaceType Type;
 	subsector_t *Subsector;
 	side_t *Side;
 	sector_t *ControlSector;

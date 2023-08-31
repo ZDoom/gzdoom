@@ -12,6 +12,9 @@
 #include "common/rendering/vulkan/accelstructs/vk_lightmap.h"
 #include <vulkan/accelstructs/halffloat.h>
 
+using hwrenderer::Surface;
+using hwrenderer::SurfaceType;
+
 CCMD(dumplevelmesh)
 {
 	if (level.levelMesh)
@@ -36,7 +39,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 
 	for (size_t i = 0; i < Surfaces.Size(); i++)
 	{
-		const Surface &s = Surfaces[i];
+		const auto &s = Surfaces[i];
 		int numVerts = s.numVerts;
 		unsigned int pos = s.startVertIndex;
 		FVector3* verts = &MeshVertices[pos];
@@ -46,7 +49,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 			MeshUVIndex.Push(j);
 		}
 
-		if (s.type == ST_FLOOR || s.type == ST_CEILING)
+		if (s.type == hwrenderer::ST_FLOOR || s.type == hwrenderer::ST_CEILING)
 		{
 			for (int j = 2; j < numVerts; j++)
 			{
@@ -59,7 +62,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 				}
 			}
 		}
-		else if (s.type == ST_MIDDLEWALL || s.type == ST_UPPERWALL || s.type == ST_LOWERWALL)
+		else if (s.type == hwrenderer::ST_MIDDLESIDE || s.type == hwrenderer::ST_UPPERSIDE || s.type == hwrenderer::ST_LOWERSIDE)
 		{
 			if (!IsDegenerate(verts[0], verts[1], verts[2]))
 			{
@@ -109,7 +112,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 	if (side->linedef->special == Line_Horizon && front != back)
 	{
 		Surface surf;
-		surf.type = ST_MIDDLEWALL;
+		surf.type = hwrenderer::ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
 		surf.bSky = front->GetTexture(sector_t::floor) == skyflatnum || front->GetTexture(sector_t::ceiling) == skyflatnum;
 
@@ -155,7 +158,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				continue;
 
 			Surface surf;
-			surf.type = ST_MIDDLEWALL;
+			surf.type = hwrenderer::ST_MIDDLESIDE;
 			surf.typeIndex = typeIndex;
 			surf.controlSector = xfloor->model;
 			surf.bSky = false;
@@ -216,7 +219,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[3]);
 
 				surf.plane = ToPlane(verts[0], verts[1], verts[2]);
-				surf.type = ST_LOWERWALL;
+				surf.type = hwrenderer::ST_LOWERSIDE;
 				surf.typeIndex = typeIndex;
 				surf.bSky = false;
 				surf.controlSector = nullptr;
@@ -254,7 +257,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[3]);
 
 				surf.plane = ToPlane(verts[0], verts[1], verts[2]);
-				surf.type = ST_UPPERWALL;
+				surf.type = hwrenderer::ST_UPPERSIDE;
 				surf.typeIndex = typeIndex;
 				surf.bSky = bSky;
 				surf.controlSector = nullptr;
@@ -292,7 +295,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		MeshVertices.Push(verts[3]);
 
 		surf.plane = ToPlane(verts[0], verts[1], verts[2]);
-		surf.type = ST_MIDDLEWALL;
+		surf.type = hwrenderer::ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
 		surf.controlSector = nullptr;
 
@@ -331,7 +334,7 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 		verts[j].Z = (float)plane.ZatPoint(verts[j]);
 	}
 
-	surf.type = ST_FLOOR;
+	surf.type = hwrenderer::ST_FLOOR;
 	surf.typeIndex = typeIndex;
 	surf.controlSector = is3DFloor ? sector : nullptr;
 	surf.plane = FVector4(plane.Normal().X, plane.Normal().Y, plane.Normal().Z, plane.D);
@@ -370,7 +373,7 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub
 		verts[j].Z = (float)plane.ZatPoint(verts[j]);
 	}
 
-	surf.type = ST_CEILING;
+	surf.type = hwrenderer::ST_CEILING;
 	surf.typeIndex = typeIndex;
 	surf.controlSector = is3DFloor ? sector : nullptr;
 	surf.plane = FVector4(plane.Normal().X, plane.Normal().Y, plane.Normal().Z, plane.D);
@@ -569,7 +572,7 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 	// Reorder vertices into renderer format
 	for (Surface& surface : Surfaces)
 	{
-		if (surface.type == ST_FLOOR)
+		if (surface.type == hwrenderer::ST_FLOOR)
 		{
 			// reverse vertices on floor
 			for (int j = surface.startUvIndex + surface.numVerts - 1, k = surface.startUvIndex; j > k; j--, k++)
@@ -577,7 +580,7 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 				std::swap(LightmapUvs[k], LightmapUvs[j]);
 			}
 		}
-		else if (surface.type != ST_CEILING) // walls
+		else if (surface.type != hwrenderer::ST_CEILING) // walls
 		{
 			// from 0 1 2 3
 			// to   0 2 1 3

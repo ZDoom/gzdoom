@@ -460,10 +460,9 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 	}
 
 	{
-		const auto s = LightmapUvs.Size();
-		for (unsigned i = 0; i + 1 < s; i += 2)
+		for (const auto& uv : LightmapUvs)
 		{
-			fprintf(f, "vt %f %f\n", LightmapUvs[i], LightmapUvs[i + 1]);
+			fprintf(f, "vt %f %f\n", uv.X, uv.Y);
 		}
 	}
 
@@ -504,8 +503,7 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 
 		for (int i = 0; i < surface.numVerts; ++i)
 		{
-			hwSurface->uvs.Push(
-				FVector2(LightmapUvs[surface.startUvIndex + i * 2], LightmapUvs[surface.startUvIndex + i * 2 + 1]));
+			hwSurface->uvs.Push(LightmapUvs[surface.startUvIndex + i]);
 		}
 
 		hwSurface->boundsMax = surface.bounds.max;
@@ -570,21 +568,17 @@ int DoomLevelMesh::SetupLightmapUvs(int lightmapSize)
 		if (surface.type == ST_FLOOR)
 		{
 			// reverse vertices on floor
-			for (int j = surface.startUvIndex + surface.numVerts * 2 - 2, k = surface.startUvIndex; j > k; j-=2, k+=2)
+			for (int j = surface.startUvIndex + surface.numVerts - 1, k = surface.startUvIndex; j > k; j--, k++)
 			{
 				std::swap(LightmapUvs[k], LightmapUvs[j]);
-				std::swap(LightmapUvs[k + 1], LightmapUvs[j + 1]);
 			}
 		}
 		else if (surface.type != ST_CEILING) // walls
 		{
 			// from 0 1 2 3
 			// to   0 2 1 3
-			std::swap(LightmapUvs[surface.startUvIndex + 2 * 1], LightmapUvs[surface.startUvIndex + 2 * 2]);
-			std::swap(LightmapUvs[surface.startUvIndex + 2 * 2], LightmapUvs[surface.startUvIndex + 2 * 3]);
-
-			std::swap(LightmapUvs[surface.startUvIndex + 2 * 1 + 1], LightmapUvs[surface.startUvIndex + 2 * 2 + 1]);
-			std::swap(LightmapUvs[surface.startUvIndex + 2 * 2 + 1], LightmapUvs[surface.startUvIndex + 2 * 3 + 1]);
+			std::swap(LightmapUvs[surface.startUvIndex + 1], LightmapUvs[surface.startUvIndex + 2]);
+			std::swap(LightmapUvs[surface.startUvIndex + 2], LightmapUvs[surface.startUvIndex + 3]);
 		}
 	}
 
@@ -602,11 +596,10 @@ void DoomLevelMesh::FinishSurface(int lightmapTextureWidth, int lightmapTextureH
 	surface.atlasPageIndex = (int)result.pageIndex;
 
 	// calculate final texture coordinates
-	auto uvIndex = surface.startUvIndex;
 	for (int i = 0; i < (int)surface.numVerts; i++)
 	{
-		auto& u = LightmapUvs[uvIndex++];
-		auto& v = LightmapUvs[uvIndex++];
+		auto& u = LightmapUvs[surface.startUvIndex + i].X;
+		auto& v = LightmapUvs[surface.startUvIndex + i].Y;
 		u = (u + x) / (float)lightmapTextureWidth;
 		v = (v + y) / (float)lightmapTextureHeight;
 	}
@@ -764,13 +757,13 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	surface.projLocalToV = tCoords[1];
 
 	surface.startUvIndex = AllocUvs(surface.numVerts);
-	auto uv = surface.startUvIndex;
+
 	for (int i = 0; i < surface.numVerts; i++)
 	{
 		FVector3 tDelta = MeshVertices[surface.startVertIndex + i] - surface.translateWorldToLocal;
 
-		LightmapUvs[uv++] = (tDelta | surface.projLocalToU);
-		LightmapUvs[uv++] = (tDelta | surface.projLocalToV);
+		LightmapUvs[surface.startUvIndex + i].X = (tDelta | surface.projLocalToU);
+		LightmapUvs[surface.startUvIndex + i].Y = (tDelta | surface.projLocalToV);
 	}
 
 

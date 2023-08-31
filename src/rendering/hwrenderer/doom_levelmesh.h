@@ -68,7 +68,7 @@ public:
 	}
 
 	TArray<Surface> Surfaces;
-	TArray<float> LightmapUvs;
+	TArray<FVector2> LightmapUvs;
 
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
 

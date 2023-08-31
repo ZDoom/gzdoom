@@ -1062,6 +1062,7 @@ set (PCH_SOURCES
 	common/utility/s_playlist.cpp
 	common/utility/name.cpp
 	common/utility/r_memory.cpp
+	common/utility/bounds.cpp
 	common/thirdparty/base64.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp

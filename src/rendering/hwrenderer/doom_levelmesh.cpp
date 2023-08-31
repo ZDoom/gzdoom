@@ -463,3 +463,115 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 
 	fclose(f);
 }
+
+void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, Surface& surface)
+{
+	secplane_t* plane;
+	BBox bounds;
+	FVector3 roundedSize;
+	int i;
+	PlaneAxis axis;
+	FVector3 tOrigin;
+	int width;
+	int height;
+	float d;
+
+	plane = &surface.plane;
+	bounds = GetBoundsFromSurface(surface);
+	//surface->bounds = bounds;
+
+	if (surface.sampleDimension <= 0)
+	{
+		surface.sampleDimension = 1; // TODO change?
+	}
+
+	surface.sampleDimension = 1;
+	//surface->sampleDimension = Math::RoundPowerOfTwo(surface->sampleDimension);
+
+
+	// round off dimensions
+	for (i = 0; i < 3; i++)
+	{
+		bounds.min[i] = surface.sampleDimension * (floor(bounds.min[i] / surface.sampleDimension) - 1);
+		bounds.max[i] = surface.sampleDimension * (ceil(bounds.max[i] / surface.sampleDimension) + 1);
+
+		roundedSize[i] = (bounds.max[i] - bounds.min[i]) / surface.sampleDimension;
+	}
+
+	FVector3 tCoords[2] = { FVector3(0.0f, 0.0f, 0.0f), FVector3(0.0f, 0.0f, 0.0f) };
+
+	axis = BestAxis(*plane);
+
+	switch (axis)
+	{
+	case AXIS_YZ:
+		width = (int)roundedSize.Y;
+		height = (int)roundedSize.Z;
+		tCoords[0].Y = 1.0f / surface.sampleDimension;
+		tCoords[1].Z = 1.0f / surface.sampleDimension;
+		break;
+
+	case AXIS_XZ:
+		width = (int)roundedSize.X;
+		height = (int)roundedSize.Z;
+		tCoords[0].X = 1.0f / surface.sampleDimension;
+		tCoords[1].Z = 1.0f / surface.sampleDimension;
+		break;
+
+	case AXIS_XY:
+		width = (int)roundedSize.X;
+		height = (int)roundedSize.Y;
+		tCoords[0].X = 1.0f / surface.sampleDimension;
+		tCoords[1].Y = 1.0f / surface.sampleDimension;
+		break;
+	}
+
+	// clamp width
+	if (width > lightMapTextureWidth - 2)
+	{
+		tCoords[0] *= ((float)(lightMapTextureWidth - 2) / (float)width);
+		width = (lightMapTextureWidth - 2);
+	}
+
+	// clamp height
+	if (height > lightMapTextureHeight - 2)
+	{
+		tCoords[1] *= ((float)(lightMapTextureHeight - 2) / (float)height);
+		height = (lightMapTextureHeight - 2);
+	}
+
+	surface.translateWorldToLocal = bounds.min;
+	surface.projLocalToU = tCoords[0];
+	surface.projLocalToV = tCoords[1];
+
+	surface.startUvIndex = AllocUvs(surface.numVerts);
+	auto uv = surface.startUvIndex;
+	for (i = 0; i < surface.numVerts; i++)
+	{
+		FVector3 tDelta = MeshVertices[surface.startVertIndex + i] - surface.translateWorldToLocal;
+
+		LightmapUvs[uv++] = (tDelta | surface.projLocalToU);
+		LightmapUvs[uv++] = (tDelta | surface.projLocalToV);
+	}
+
+
+	tOrigin = bounds.min;
+
+	// project tOrigin and tCoords so they lie on the plane
+	d = float(((bounds.min | FVector3(plane->Normal())) - plane->D) / plane->Normal()[axis]); //d = (plane->PointToDist(bounds.min)) / plane->Normal()[axis];
+	tOrigin[axis] -= d;
+
+	for (i = 0; i < 2; i++)
+	{
+		tCoords[i].MakeUnit();
+		d = (tCoords[i] | FVector3(plane->Normal())) / plane->Normal()[axis]; //d = dot(tCoords[i], plane->Normal()) / plane->Normal()[axis];
+		tCoords[i][axis] -= d;
+	}
+
+	surface.texWidth = width;
+	surface.texHeight = height;
+	//surface->texPixels.resize(width * height);
+	surface.worldOrigin = tOrigin;
+	surface.worldStepX = tCoords[0] * (float)surface.sampleDimension;
+	surface.worldStepY = tCoords[1] * (float)surface.sampleDimension;
+}

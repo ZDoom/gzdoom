@@ -3205,10 +3205,16 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	SpawnThings(position);
 
 	// Load and link lightmaps - must be done after P_Spawn3DFloors (and SpawnThings? Potentially for baking static model actors?)
+#if 0
 	if (!ForceNodeBuild)
 	{
 		LoadLightmap(map);
 	}
+#endif
+	Level->levelMesh = new DoomLevelMesh(*Level);
+	InitLightmap(map);
+
+	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
 
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
@@ -3246,8 +3252,6 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	CreateVBO(*screen->RenderState(0), Level->sectors);
 	meshcache.Clear();
 
-	screen->InitLightmap(Level->LMTextureSize, Level->LMTextureCount, Level->LMTextureData);
-
 	for (auto &sec : Level->sectors)
 	{
 		P_Recalculate3DFloors(&sec);
@@ -3263,7 +3267,6 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 
 	Level->aabbTree = new DoomLevelAABBTree(Level);
-	Level->levelMesh = new DoomLevelMesh(*Level);
 }
 
 //==========================================================================
@@ -3324,14 +3327,140 @@ void MapLoader::SetSideLightmap(const LightmapSurface &surface)
 	}
 }
 
-void MapLoader::LoadLightmap(MapData *map)
+#include "halffloat.h"
+
+void MapLoader::InitLightmap(MapData* map)
 {
 	// We have to reset everything as FLevelLocals is recycled between maps
 	Level->LMTexCoords.Reset();
 	Level->LMSurfaces.Reset();
 	Level->LMTextureData.Reset();
+
+	// Debug placeholder stuff
+	{
+		Level->LMTextureCount = 1;
+		Level->LMTextureSize = 1024;
+
+		for (int i = 0; i < 1024; ++i) // avoid crashing lol
+		{
+			Level->LMTexCoords.Push(0);
+			Level->LMTexCoords.Push(0);
+
+			Level->LMTexCoords.Push(1);
+			Level->LMTexCoords.Push(0);
+
+			Level->LMTexCoords.Push(1);
+			Level->LMTexCoords.Push(1);
+
+			Level->LMTexCoords.Push(0);
+			Level->LMTexCoords.Push(1);
+		}
+
+		auto constructDebugTexture = [&](TArray<uint16_t>& buffer, int width, int height) {
+			uint16_t* ptr = buffer.Data();
+
+			for (int y = 0; y < height; ++y)
+			{
+				for (int x = 0; x < width; ++x)
+				{
+					*(ptr++) = floatToHalf(float(x) / width);
+					*(ptr++) = floatToHalf(float(y) / height);
+					*(ptr++) = floatToHalf((x + y) % 2 == 0 ? 1.0f : 0.0f);
+				}
+			}
+		};
+
+		int size = Level->LMTextureSize;
+		int layers = 1;
+
+		Level->LMTextureData.Resize(size * size * 3 * layers);
+		constructDebugTexture(Level->LMTextureData, size, size);
+	}
+
+	for (auto& surface : Level->levelMesh->Surfaces)
+	{
+		Level->levelMesh->BuildSurfaceParams(Level->LMTextureSize, Level->LMTextureSize, surface);
+	}
+
+	Level->LMTexCoords = Level->levelMesh->LightmapUvs;
+
+
+	// Allocate room for all surfaces
+
+	unsigned int allSurfaces = 0;
+
+	for (unsigned int i = 0; i < Level->sides.Size(); i++)
+		allSurfaces += 4 + Level->sides[i].sector->e->XFloor.ffloors.Size();
+
+	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+		allSurfaces += 2 + Level->subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
+
+	Level->LMSurfaces.Resize(allSurfaces);
+	memset(&Level->LMSurfaces[0], 0, sizeof(LightmapSurface) * allSurfaces);
+
+	// Link the surfaces to sectors, sides and their 3D floors
+
+	unsigned int offset = 0;
+	for (unsigned int i = 0; i < Level->sides.Size(); i++)
+	{
+		auto& side = Level->sides[i];
+		side.lightmap = &Level->LMSurfaces[offset];
+		offset += 4 + side.sector->e->XFloor.ffloors.Size();
+	}
+	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
+	{
+		auto& subsector = Level->subsectors[i];
+		unsigned int count = 1 + subsector.sector->e->XFloor.ffloors.Size();
+		subsector.lightmap[0] = &Level->LMSurfaces[offset];
+		subsector.lightmap[1] = &Level->LMSurfaces[offset + count];
+		offset += count * 2;
+	}
+
+	// Copy and build properties
+	size_t index = 0;
+	for (auto& surface : Level->levelMesh->Surfaces)
+	{
+		LightmapSurface l;
+		//LightmapSurface& l = Level->LMSurfaces[index++];
+		memset(&l, 0, sizeof(LightmapSurface));
+
+		l.ControlSector = surface.controlSector;
+		l.Type = surface.type;
+		l.LightmapNum = 0;
+
+		//l.TexCoords = &Level->LMTexCoords[0];
+		//l.TexCoords = &Level->levelMesh->LightmapUvs[surface.startUvIndex];
+		l.TexCoords = &Level->LMTexCoords[surface.startUvIndex];
+
+		if (surface.type == ST_FLOOR || surface.type == ST_CEILING)
+		{
+			l.Subsector = &Level->subsectors[surface.typeIndex];
+			l.Subsector->firstline->sidedef->sector->HasLightmaps = true;
+			SetSubsectorLightmap(l);
+		}
+		else
+		{
+			l.Side = &Level->sides[surface.typeIndex];
+			SetSideLightmap(l);
+		}
+
+		//Level->LMSurfaces.Push(l);
+
+	}
+
+	Printf("Generated custom lightmap data");
+}
+
+#if 0
+void MapLoader::LoadLightmap(MapData *map)
+{
+	Level->LMTexCoords.Reset();
+	Level->LMSurfaces.Reset();
+	Level->LMTextureData.Reset();
 	Level->LMTextureCount = 0;
 	Level->LMTextureSize = 0;
+
+	// We have to reset everything as FLevelLocals is recycled between maps
 
 	//if (!Args->CheckParm("-enablelightmaps"))
 	//	return;		// this feature is still too early WIP to allow general access
@@ -3459,3 +3588,4 @@ void MapLoader::LoadLightmap(MapData *map)
 		data[i] += data[i - 1];
 #endif
 }
+#endif

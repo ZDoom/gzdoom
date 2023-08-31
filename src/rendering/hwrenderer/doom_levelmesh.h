@@ -5,6 +5,7 @@
 #include "tarray.h"
 #include "vectors.h"
 #include "r_defs.h"
+#include "bounds.h"
 
 struct FLevelLocals;
 
@@ -17,6 +18,28 @@ struct Surface
 	secplane_t plane;
 	sector_t *controlSector;
 	bool bSky;
+
+	//
+	// Required for internal lightmapper:
+
+	int sampleDimension = 0;
+
+	// Lightmap world coordinates for the texture
+	FVector3 worldOrigin = { 0.f, 0.f, 0.f };
+	FVector3 worldStepX = { 0.f, 0.f, 0.f };
+	FVector3 worldStepY = { 0.f, 0.f, 0.f };
+
+	// Calculate world coordinates to UV coordinates
+	FVector3 translateWorldToLocal = { 0.f, 0.f, 0.f };
+	FVector3 projLocalToU = { 0.f, 0.f, 0.f };
+	FVector3 projLocalToV = { 0.f, 0.f, 0.f };
+
+	// Output lightmap for the surface
+	int texWidth = 0;
+	int texHeight = 0;
+
+	// UV coordinates for the vertices
+	int startUvIndex = -666;
 };
 
 class DoomLevelMesh : public hwrenderer::LevelMesh
@@ -37,6 +60,7 @@ public:
 	}
 
 	TArray<Surface> Surfaces;
+	TArray<float> LightmapUvs;
 
 	void DumpMesh(const FString& filename) const;
 
@@ -66,4 +90,69 @@ private:
 	static FVector4 ToFVector4(const DVector4& v) { return FVector4((float)v.X, (float)v.Y, (float)v.Z, (float)v.W); }
 
 	static bool IsDegenerate(const FVector3 &v0, const FVector3 &v1, const FVector3 &v2);
+
+	// WIP internal lightmapper
+
+	BBox GetBoundsFromSurface(const Surface& surface) const
+	{
+		constexpr float M_INFINITY = 1e30; // TODO cleanup
+
+		FVector3 low(M_INFINITY, M_INFINITY, M_INFINITY);
+		FVector3 hi(-M_INFINITY, -M_INFINITY, -M_INFINITY);
+
+		for (int i = int(surface.startVertIndex); i < int(surface.startVertIndex) + surface.numVerts; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if (MeshVertices[i][j] < low[j])
+				{
+					low[j] = MeshVertices[i][j];
+				}
+				if (MeshVertices[i][j] > hi[j])
+				{
+					hi[j] = MeshVertices[i][j];
+				}
+			}
+		}
+
+		BBox bounds;
+		bounds.Clear();
+		bounds.min = low;
+		bounds.max = hi;
+		return bounds;
+	}
+
+	enum PlaneAxis
+	{
+		AXIS_YZ = 0,
+		AXIS_XZ,
+		AXIS_XY
+	};
+
+	inline static PlaneAxis BestAxis(const secplane_t& p)
+	{
+		float na = fabs(float(p.Normal().X));
+		float nb = fabs(float(p.Normal().Y));
+		float nc = fabs(float(p.Normal().Z));
+
+		// figure out what axis the plane lies on
+		if (na >= nb && na >= nc)
+		{
+			return AXIS_YZ;
+		}
+		else if (nb >= na && nb >= nc)
+		{
+			return AXIS_XZ;
+		}
+
+		return AXIS_XY;
+	}
+
+	int AllocUvs(int amount)
+	{
+		return LightmapUvs.Reserve(amount * 2);
+	}
+
+	public:
+		void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, Surface& surface);
 };

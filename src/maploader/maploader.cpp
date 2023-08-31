@@ -3402,7 +3402,7 @@ void MapLoader::GenerateLightmap(const DoomLevelMesh& mesh, int atlasPages, int 
 					ptr[2] = floatToHalf(0.0f);
 				}
 
-				/*if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX - surface.worldStepY + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
+				if (Level->levelMesh->TraceSky(surface.worldOrigin - surface.worldStepX * 0.5f - surface.worldStepY * 0.5f + surface.worldStepX * x + surface.worldStepY * y + FVector3(surface.plane.Normal()), Level->SunDirection, 32000.0f))
 				{
 					ptr[0] = floatToHalf(Level->SunColor.X);
 					ptr[1] = floatToHalf(Level->SunColor.Y);
@@ -3413,7 +3413,7 @@ void MapLoader::GenerateLightmap(const DoomLevelMesh& mesh, int atlasPages, int 
 					ptr[0] = 0;
 					ptr[1] = 0;
 					ptr[2] = 0;
-				}*/
+				}
 			}
 		}
 	}

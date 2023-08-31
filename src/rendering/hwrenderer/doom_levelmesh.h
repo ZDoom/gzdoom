@@ -22,6 +22,16 @@ struct Surface
 	sector_t *controlSector;
 	bool bSky;
 
+	// Lightmap UV information in pixel size
+	int atlasPageIndex = 0;
+	int atlasX = 0;
+	int atlasY = 0;
+	int texWidth = 0;
+	int texHeight = 0;
+
+	// UV coordinates for the vertices
+	int startUvIndex = 0;
+
 	//
 	// Required for internal lightmapper:
 	BBox bounds;
@@ -36,18 +46,6 @@ struct Surface
 	FVector3 translateWorldToLocal = { 0.f, 0.f, 0.f };
 	FVector3 projLocalToU = { 0.f, 0.f, 0.f };
 	FVector3 projLocalToV = { 0.f, 0.f, 0.f };
-
-	// Output lightmap for the surface
-	int texWidth = 0;
-	int texHeight = 0;
-
-	// UV coordinates for the vertices
-	int startUvIndex = 0;
-
-	// Pixel coordinates in atlas
-	int atlasPageIndex = 0;
-	int atlasX = 0;
-	int atlasY = 0;
 };
 
 class DoomLevelMesh : public hwrenderer::LevelMesh

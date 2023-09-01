@@ -1040,7 +1040,8 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, NameAllKeys)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(array, TArray<int>);
-	auto buffer = C_NameKeys(array->Data(), array->Size(), true);
+	PARAM_BOOL(color);
+	auto buffer = C_NameKeys(array->Data(), array->Size(), color);
 	ACTION_RETURN_STRING(buffer);
 }
 

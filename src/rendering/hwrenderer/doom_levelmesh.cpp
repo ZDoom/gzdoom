@@ -622,62 +622,36 @@ void DoomLevelMesh::SetupLightmapUvs()
 		sortedSurfaces.push_back(&surface);
 	}
 
-#if 0
-	for (const auto& surface : Surfaces)
+	// VkLightmapper old ZDRay properties
+	for (auto& surface : Surfaces)
 	{
-		hwrenderer::Surface hwSurface;
+		for (int i = 0; i < surface.numVerts; ++i)
+		{
+			surface.verts.Push(MeshVertices[surface.startVertIndex + i]);
+		}
 
 		for (int i = 0; i < surface.numVerts; ++i)
 		{
-			hwSurface->verts.Push(MeshVertices[surface.startVertIndex + i]);
+			surface.uvs.Push(LightmapUvs[surface.startUvIndex + i]);
 		}
 
-		for (int i = 0; i < surface.numVerts; ++i)
-		{
-			hwSurface->uvs.Push(LightmapUvs[surface.startUvIndex + i]);
-		}
-
-		hwSurface->boundsMax = surface.bounds.max;
-		hwSurface->boundsMin = surface.bounds.min;
-
-		hwSurface->projLocalToU = surface.projLocalToU;
-		hwSurface->projLocalToV = surface.projLocalToV;
-		hwSurface->smoothingGroupIndex = 0;
-		hwSurface->texHeight = surface.texHeight;
-		hwSurface->texWidth = surface.texWidth;
-
-		hwSurface->translateWorldToLocal = surface.translateWorldToLocal;
-		hwSurface->type = hwrenderer::SurfaceType(surface.type);
-
-		hwSurface->texPixels.resize(surface.texWidth * surface.texHeight);
-
-		for (auto& pixel : hwSurface->texPixels)
-		{
-			pixel.X = 0.0;
-			pixel.Y = 1.0;
-			pixel.Z = 0.0;
-		}
-
-		// TODO push
-		Surfaces.push_back(hwSurface);
+		surface.texPixels.resize(surface.texWidth * surface.texHeight);
 
 		SurfaceInfo info;
 		info.Normal = surface.plane.XYZ();
 		info.PortalIndex = 0;
 		info.SamplingDistance = (float)surface.sampleDimension;
 		info.Sky = surface.bSky;
-
 		surfaceInfo.Push(info);
-
-
 	}
-#endif
 
 	{
 		hwrenderer::SmoothingGroup smoothing;
 
 		for (auto& surface : Surfaces)
 		{
+			surface.smoothingGroupIndex = 0;
+
 			smoothing.surfaces.push_back(&surface);
 		}
 		smoothingGroups.Push(std::move(smoothing));
@@ -912,7 +886,6 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	surface.texWidth = width;
 	surface.texHeight = height;
-	//surface->texPixels.resize(width * height);
 	surface.worldOrigin = tOrigin;
 	surface.worldStepX = tCoords[0] * (float)surface.sampleDimension;
 	surface.worldStepY = tCoords[1] * (float)surface.sampleDimension;

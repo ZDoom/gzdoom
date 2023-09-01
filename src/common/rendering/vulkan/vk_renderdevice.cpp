@@ -553,21 +553,13 @@ void VulkanRenderDevice::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 		Printf("Copying data.\n");
 
 		// TODO refactor
-
 		auto clamp = [](float a, float min, float max) -> float { return a < min ? min : a > max ? max : a; };
-
-		// BUG: This is a destructive action as it reorders the surfaces array that is indexed by MeshSurfaces
-		std::sort(mesh->Surfaces.begin(), mesh->Surfaces.end(), [](const hwrenderer::Surface& a, const hwrenderer::Surface& b) { return a.texHeight != b.texHeight ? a.texHeight > b.texHeight : a.texWidth > b.texWidth; });
-
-		RectPacker packer(mesh->LMTextureSize, mesh->LMTextureSize, RectPacker::Spacing(0));
 
 		TArray<uint16_t> LMTextureData;
 		LMTextureData.Resize(mesh->LMTextureSize * mesh->LMTextureSize * mesh->LMTextureCount * 3);
 
 		for (auto& surface : mesh->Surfaces)
 		{
-			mesh->FinishSurface(mesh->LMTextureSize, mesh->LMTextureSize, packer, surface);
-
 			uint16_t* currentTexture = LMTextureData.Data() + (mesh->LMTextureSize * mesh->LMTextureSize * 3) * surface.atlasPageIndex;
 
 			FVector3* colorSamples = surface.texPixels.data();

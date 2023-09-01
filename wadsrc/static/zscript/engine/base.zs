@@ -506,7 +506,7 @@ class Shape2D : Object native
 
 class Canvas : Object native abstract
 {
-	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1, bool alpha = false);
 	native void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
 
 	native vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
@@ -523,7 +523,7 @@ class Canvas : Object native abstract
 	native int, int, int, int GetClipRect();
 	native double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
 	native Vector2 SetOffset(double x, double y);
-	native void ClearScreen(color col = 0);
+	native void ClearScreen(color col = color(255, 0, 0, 0));
 	native void SetScreenFade(double factor);
 
 	native void EnableStencil(bool on);
@@ -539,7 +539,7 @@ struct Screen native
 	native static int GetWidth();
 	native static int GetHeight();
 	native static Vector2 GetTextScreenSize();
-	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
+	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1, bool alpha = false);
 	native static void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);

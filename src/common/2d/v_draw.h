@@ -288,7 +288,7 @@ void DrawBorder(F2DDrawer* drawer, FTextureID, int x1, int y1, int x2, int y2);
 void DrawFrame(F2DDrawer* twod, PalEntry color, int left, int top, int width, int height, int thickness);
 
 // Set an area to a specified color
-void ClearRect(F2DDrawer* drawer, int left, int top, int right, int bottom, int palcolor, uint32_t color);
+void ClearRect(F2DDrawer* drawer, int left, int top, int right, int bottom, int palcolor, uint32_t color, bool alpha = false);
 
 void VirtualToRealCoords(F2DDrawer* drawer, double& x, double& y, double& w, double& h, double vwidth, double vheight, bool vbottom = false, bool handleaspect = true);
 

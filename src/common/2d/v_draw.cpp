@@ -451,7 +451,8 @@ DEFINE_ACTION_FUNCTION(_Screen, ClearScreen)
 DEFINE_ACTION_FUNCTION(FCanvas, ClearScreen)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);
-	self->Drawer.ClearScreen();
+	PARAM_COLOR(color);
+	self->Drawer.AddColorOnlyQuad(0, 0, self->Drawer.GetWidth(), self->Drawer.GetHeight(), color, &LegacyRenderStyles[STYLE_Source]);
 	self->Tex->NeedUpdate();
 	return 0;
 }
@@ -1635,7 +1636,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawThickLine)
 //
 //==========================================================================
 
-void ClearRect(F2DDrawer *drawer, int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void ClearRect(F2DDrawer *drawer, int left, int top, int right, int bottom, int palcolor, uint32_t color, bool alpha)
 {
 	auto clipleft = drawer->clipleft;
 	auto cliptop = drawer->cliptop;
@@ -1667,9 +1668,9 @@ void ClearRect(F2DDrawer *drawer, int left, int top, int right, int bottom, int 
 
 	if (palcolor >= 0 && color == 0)
 	{
-		color = GPalette.BaseColors[palcolor] | 0xff000000;
+		color = GPalette.BaseColors[palcolor];
 	}
-	drawer->AddColorOnlyQuad(left, top, right - left, bottom - top, color | 0xFF000000, nullptr);
+	drawer->AddColorOnlyQuad(left, top, right - left, bottom - top, alpha ? color : (color | 0xFF000000), nullptr);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, Clear)
@@ -1681,8 +1682,9 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 	PARAM_INT(y2);
 	PARAM_INT(color);
 	PARAM_INT(palcol);
+	PARAM_BOOL(alpha);
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	ClearRect(twod, x1, y1, x2, y2, palcol, color);
+	ClearRect(twod, x1, y1, x2, y2, palcol, color, alpha);
 	return 0;
 }
 
@@ -1695,7 +1697,8 @@ DEFINE_ACTION_FUNCTION(FCanvas, Clear)
 	PARAM_INT(y2);
 	PARAM_INT(color);
 	PARAM_INT(palcol);
-	ClearRect(&self->Drawer, x1, y1, x2, y2, palcol, color);
+	PARAM_BOOL(alpha);
+	ClearRect(&self->Drawer, x1, y1, x2, y2, palcol, color, alpha);
 	self->Tex->NeedUpdate();
 	return 0;
 }

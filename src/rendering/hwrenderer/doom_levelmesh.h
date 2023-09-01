@@ -77,7 +77,7 @@ private:
 	static PlaneAxis BestAxis(const FVector4& p);
 	BBox GetBoundsFromSurface(const hwrenderer::Surface& surface) const;
 
-	inline int AllocUvs(int amount) { return LightmapUvs.Reserve(amount * 2); }
+	inline int AllocUvs(int amount) { return LightmapUvs.Reserve(amount); }
 
 	void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, hwrenderer::Surface& surface);
 	void FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, hwrenderer::Surface& surface);

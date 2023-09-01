@@ -569,7 +569,7 @@ void VulkanRenderDevice::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 				for (int j = 0; j < surface.texWidth; j++)
 				{
 					// get texture offset
-					int offs = ((surface.texWidth * (i + surface.atlasY)) + surface.atlasX) * 3;
+					int offs = ((mesh->LMTextureSize * (i + surface.atlasY)) + surface.atlasX) * 3;
 
 					// convert RGB to bytes
 					currentTexture[offs + j * 3 + 0] = floatToHalf(clamp(colorSamples[i * surface.texWidth + j].X, 0.0f, 65000.0f));

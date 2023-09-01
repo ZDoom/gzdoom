@@ -106,6 +106,11 @@ struct Surface
 
 	// Output lightmap for the surface
 	std::vector<FVector3> texPixels;
+
+	// Lightmapper has a lot of additional padding around the borders
+	int lightmapperAtlasPage = -1;
+	int lightmapperAtlasX = -1;
+	int lightmapperAtlasY = -1;
 };
 
 
@@ -222,29 +227,6 @@ public:
 	{
 		FVector3 end = start + direction * std::max(maxDist - 10.0f, 0.0f);
 		return !TriangleMeshShape::find_any_hit(Collision.get(), start, end);
-	}
-
-	inline void FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, Surface& surface)
-	{
-		int sampleWidth = surface.texWidth;
-		int sampleHeight = surface.texHeight;
-
-		auto result = packer.insert(sampleWidth, sampleHeight);
-		int x = result.pos.x, y = result.pos.y;
-		surface.atlasPageIndex = (int)result.pageIndex;
-
-		// calculate final texture coordinates
-		for (unsigned i = 0; i < surface.uvs.Size(); i++)
-		{
-			auto& u = surface.uvs[i].X;
-			auto& v = surface.uvs[i].Y;
-			u = (u + x) / (float)lightmapTextureWidth;
-			v = (v + y) / (float)lightmapTextureHeight;
-		}
-
-		surface.atlasX = x;
-		surface.atlasY = y;
-
 	}
 };
 

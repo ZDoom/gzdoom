@@ -50,6 +50,11 @@ void VkLightmap::Raytrace(hwrenderer::LevelMesh* level)
 	}
 
 	FinishCommands();
+
+	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
+	{
+		DownloadAtlasImage(pageIndex);
+	}
 }
 
 void VkLightmap::BeginCommands()
@@ -97,13 +102,13 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
 		hwrenderer::Surface* targetSurface = &mesh->Surfaces[i];
-		if (targetSurface->atlasPageIndex != pageIndex)
+		if (targetSurface->lightmapperAtlasPage != pageIndex)
 			continue;
 
 		VkViewport viewport = {};
 		viewport.maxDepth = 1;
-		viewport.x = (float)targetSurface->atlasX - 1;
-		viewport.y = (float)targetSurface->atlasY - 1;
+		viewport.x = (float)targetSurface->lightmapperAtlasX - 1;
+		viewport.y = (float)targetSurface->lightmapperAtlasY - 1;
 		viewport.width = (float)(targetSurface->texWidth + 2);
 		viewport.height = (float)(targetSurface->texHeight + 2);
 		cmdbuffer->setViewport(0, 1, &viewport);
@@ -200,9 +205,9 @@ void VkLightmap::CreateAtlasImages()
 		hwrenderer::Surface* surface = &mesh->Surfaces[i];
 
 		auto result = packer.insert(surface->texWidth + 2, surface->texHeight + 2);
-		surface->atlasX = result.pos.x + 1;
-		surface->atlasY = result.pos.y + 1;
-		surface->atlasPageIndex = (int)result.pageIndex;
+		surface->lightmapperAtlasX = result.pos.x + 1;
+		surface->lightmapperAtlasY = result.pos.y + 1;
+		surface->lightmapperAtlasPage = (int)result.pageIndex;
 	}
 
 	for (size_t pageIndex = 0; pageIndex < packer.getNumPages(); pageIndex++)
@@ -307,18 +312,18 @@ void VkLightmap::DownloadAtlasImage(size_t pageIndex)
 	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
 		hwrenderer::Surface* surface = &mesh->Surfaces[i];
-		if (surface->atlasPageIndex != pageIndex)
+		if (surface->lightmapperAtlasPage != pageIndex)
 			continue;
 
-		int atlasX = surface->atlasX;
-		int atlasY = surface->atlasY;
+		int lightmapperAtlasX = surface->lightmapperAtlasX;
+		int lightmapperAtlasY = surface->lightmapperAtlasY;
 		int sampleWidth = surface->texWidth;
 		int sampleHeight = surface->texHeight;
 
 		for (int y = 0; y < sampleHeight; y++)
 		{
 			FVector3* dest = &surface->texPixels[y * sampleWidth];
-			hvec4* src = &pixels[atlasX + (atlasY + y) * atlasImageSize];
+			hvec4* src = &pixels[lightmapperAtlasX + (lightmapperAtlasY + y) * atlasImageSize];
 			for (int x = 0; x < sampleWidth; x++)
 			{
 				dest[x] = src[x].xyz();

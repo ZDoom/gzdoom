@@ -155,7 +155,7 @@ public:
 	virtual bool IsVulkan() { return false; }
 	virtual bool IsPoly() { return false; }
 	virtual bool CompileNextShader() { return true; }
-	virtual void SetLevelMesh(hwrenderer::LevelMesh *mesh) { }
+	virtual void SetLevelMesh(LevelMesh *mesh) { }
 	bool allowSSBO() const
 	{
 #ifndef HW_BLOCK_SSBO

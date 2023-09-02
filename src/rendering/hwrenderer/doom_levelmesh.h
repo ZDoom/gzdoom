@@ -12,7 +12,7 @@ typedef dp::rect_pack::RectPacker<int> RectPacker;
 
 struct FLevelLocals;
 
-class DoomLevelMesh : public hwrenderer::LevelMesh
+class DoomLevelMesh : public LevelMesh
 {
 public:
 	DoomLevelMesh(FLevelLocals &doomMap);
@@ -75,10 +75,10 @@ private:
 	};
 
 	static PlaneAxis BestAxis(const FVector4& p);
-	BBox GetBoundsFromSurface(const hwrenderer::Surface& surface) const;
+	BBox GetBoundsFromSurface(const LevelMeshSurface& surface) const;
 
 	inline int AllocUvs(int amount) { return LightmapUvs.Reserve(amount); }
 
-	void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, hwrenderer::Surface& surface);
-	void FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, hwrenderer::Surface& surface);
+	void BuildSurfaceParams(int lightMapTextureWidth, int lightMapTextureHeight, LevelMeshSurface& surface);
+	void FinishSurface(int lightmapTextureWidth, int lightmapTextureHeight, RectPacker& packer, LevelMeshSurface& surface);
 };

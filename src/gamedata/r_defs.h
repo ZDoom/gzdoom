@@ -1692,7 +1692,7 @@ struct FMiniBSP
 
 struct LightmapSurface
 {
-	hwrenderer::SurfaceType Type;
+	LevelMeshSurfaceType Type;
 	subsector_t *Subsector;
 	side_t *Side;
 	sector_t *ControlSector;

@@ -31,7 +31,7 @@ VkLightmap::~VkLightmap()
 		lights.Buffer->Unmap();
 }
 
-void VkLightmap::Raytrace(hwrenderer::LevelMesh* level)
+void VkLightmap::Raytrace(LevelMesh* level)
 {
 	mesh = level;
 
@@ -105,7 +105,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 
 	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
-		hwrenderer::Surface* targetSurface = &mesh->Surfaces[i];
+		LevelMeshSurface* targetSurface = &mesh->Surfaces[i];
 		if (targetSurface->lightmapperAtlasPage != pageIndex)
 			continue;
 
@@ -118,7 +118,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 		cmdbuffer->setViewport(0, 1, &viewport);
 
 		// Paint all surfaces part of the smoothing group into the surface
-		for (hwrenderer::Surface* surface : mesh->smoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
+		for (LevelMeshSurface* surface : mesh->SmoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
 		{
 			FVector2 minUV = ToUV(surface->boundsMin, targetSurface);
 			FVector2 maxUV = ToUV(surface->boundsMax, targetSurface);
@@ -153,7 +153,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			vertices.Pos += vertexCount;
 
 			LightInfo* lightinfo = &lights.Lights[firstLight];
-			for (hwrenderer::ThingLight* light : surface->LightList)
+			for (LevelMeshLight* light : surface->LightList)
 			{
 				lightinfo->Origin = light->Origin;
 				lightinfo->RelativeOrigin = light->RelativeOrigin;
@@ -177,7 +177,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 
 			SceneVertex* vertex = &vertices.Vertices[firstVertex];
 
-			if (surface->type == hwrenderer::ST_FLOOR || surface->type == hwrenderer::ST_CEILING)
+			if (surface->type == ST_FLOOR || surface->type == ST_CEILING)
 			{
 				for (int idx = 0; idx < vertexCount; idx++)
 				{
@@ -206,7 +206,7 @@ void VkLightmap::CreateAtlasImages()
 
 	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
-		hwrenderer::Surface* surface = &mesh->Surfaces[i];
+		LevelMeshSurface* surface = &mesh->Surfaces[i];
 
 		auto result = packer.insert(surface->texWidth + 2, surface->texHeight + 2);
 		surface->lightmapperAtlasX = result.pos.x + 1;
@@ -315,7 +315,7 @@ void VkLightmap::DownloadAtlasImage(size_t pageIndex)
 
 	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
 	{
-		hwrenderer::Surface* surface = &mesh->Surfaces[i];
+		LevelMeshSurface* surface = &mesh->Surfaces[i];
 		if (surface->lightmapperAtlasPage != pageIndex)
 			continue;
 
@@ -337,7 +337,7 @@ void VkLightmap::DownloadAtlasImage(size_t pageIndex)
 	atlasImages[pageIndex].Transfer->Unmap();
 }
 
-FVector2 VkLightmap::ToUV(const FVector3& vert, const hwrenderer::Surface* targetSurface)
+FVector2 VkLightmap::ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface)
 {
 	FVector3 localPos = vert - targetSurface->translateWorldToLocal;
 	float u = (1.0f + (localPos | targetSurface->projLocalToU)) / (targetSurface->texWidth + 2);

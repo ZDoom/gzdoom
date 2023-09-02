@@ -46,7 +46,7 @@ class VkRaytrace
 public:
 	VkRaytrace(VulkanRenderDevice* fb);
 
-	void SetLevelMesh(hwrenderer::LevelMesh* mesh);
+	void SetLevelMesh(LevelMesh* mesh);
 
 	VulkanAccelerationStructure* GetAccelStruct() { return tlAccelStruct.get(); }
 	VulkanBuffer* GetVertexBuffer() { return vertexBuffer.get(); }
@@ -69,8 +69,8 @@ private:
 
 	bool useRayQuery = true;
 
-	hwrenderer::LevelMesh NullMesh;
-	hwrenderer::LevelMesh* Mesh = nullptr;
+	LevelMesh NullMesh;
+	LevelMesh* Mesh = nullptr;
 
 	std::unique_ptr<VulkanBuffer> vertexBuffer;
 	std::unique_ptr<VulkanBuffer> indexBuffer;

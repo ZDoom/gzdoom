@@ -532,11 +532,11 @@ void VulkanRenderDevice::PrintStartupLog()
 	Printf("Min. uniform buffer offset alignment: %" PRIu64 "\n", limits.minUniformBufferOffsetAlignment);
 }
 
-void VulkanRenderDevice::SetLevelMesh(hwrenderer::LevelMesh* mesh)
+void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 {
 	mRaytrace->SetLevelMesh(mesh);
 
-	static hwrenderer::LevelMesh* lastMesh = nullptr; // Temp hack; Since this function is called every frame we only want to do this once
+	static LevelMesh* lastMesh = nullptr; // Temp hack; Since this function is called every frame we only want to do this once
 	if (lastMesh != mesh && mesh->Surfaces.Size() > 0)
 	{
 		lastMesh = mesh;

@@ -50,7 +50,7 @@ VkRaytrace::VkRaytrace(VulkanRenderDevice* fb) : fb(fb)
 	SetLevelMesh(nullptr);
 }
 
-void VkRaytrace::SetLevelMesh(hwrenderer::LevelMesh* mesh)
+void VkRaytrace::SetLevelMesh(LevelMesh* mesh)
 {
 	if (!mesh)
 		mesh = &NullMesh;
@@ -107,7 +107,7 @@ void VkRaytrace::CreateBuffers()
 	nodesHeader.root = Mesh->Collision->get_root();
 
 	TArray<PortalInfo> portalInfo;
-	for (auto& portal : Mesh->portals)
+	for (auto& portal : Mesh->Portals)
 	{
 		PortalInfo info;
 		info.transformation = portal.transformation;

@@ -79,7 +79,7 @@ public:
 	VkLightmap(VulkanRenderDevice* fb);
 	~VkLightmap();
 
-	void Raytrace(hwrenderer::LevelMesh* level);
+	void Raytrace(LevelMesh* level);
 
 private:
 	void UpdateAccelStructDescriptors();
@@ -102,12 +102,12 @@ private:
 	void CreateSceneVertexBuffer();
 	void CreateSceneLightBuffer();
 
-	static FVector2 ToUV(const FVector3& vert, const hwrenderer::Surface* targetSurface);
+	static FVector2 ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface);
 
 	static FString LoadPrivateShaderLump(const char* lumpname);
 
 	VulkanRenderDevice* fb = nullptr;
-	hwrenderer::LevelMesh* mesh = nullptr;
+	LevelMesh* mesh = nullptr;
 
 	bool useRayQuery = true;
 

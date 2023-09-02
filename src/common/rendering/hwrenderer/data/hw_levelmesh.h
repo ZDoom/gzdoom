@@ -12,10 +12,7 @@
 
 typedef dp::rect_pack::RectPacker<int> RectPacker;
 
-namespace hwrenderer
-{
-
-class ThingLight
+class LevelMeshLight
 {
 public:
 	FVector3 Origin;
@@ -28,7 +25,7 @@ public:
 	FVector3 Color;
 };
 
-enum SurfaceType
+enum LevelMeshSurfaceType
 {
 	ST_UNKNOWN,
 	ST_MIDDLESIDE,
@@ -38,9 +35,9 @@ enum SurfaceType
 	ST_FLOOR
 };
 
-struct Surface
+struct LevelMeshSurface
 {
-	SurfaceType type = ST_UNKNOWN;
+	LevelMeshSurfaceType type = ST_UNKNOWN;
 	int typeIndex;
 	int numVerts;
 	unsigned int startVertIndex;
@@ -84,7 +81,7 @@ struct Surface
 	FVector3 boundsMin, boundsMax;
 
 	// Touching light sources
-	std::vector<ThingLight*> LightList;
+	std::vector<LevelMeshLight*> LightList;
 
 	// Output lightmap for the surface
 	std::vector<FVector3> texPixels;
@@ -96,16 +93,16 @@ struct Surface
 };
 
 
-struct SmoothingGroup
+struct LevelMeshSmoothingGroup
 {
 	FVector4 plane = FVector4(0, 0, 1, 0);
 	int sectorGroup = 0;
-	std::vector<Surface*> surfaces;
+	std::vector<LevelMeshSurface*> surfaces;
 };
 
-struct Portal
+struct LevelMeshPortal
 {
-	Portal() { transformation.loadIdentity(); }
+	LevelMeshPortal() { transformation.loadIdentity(); }
 
 	VSMatrix transformation;
 
@@ -125,27 +122,27 @@ struct Portal
 	}
 
 	// Checks only transformation
-	inline bool IsInverseTransformationPortal(const Portal& portal) const
+	inline bool IsInverseTransformationPortal(const LevelMeshPortal& portal) const
 	{
 		auto diff = portal.TransformPosition(TransformPosition(FVector3(0, 0, 0)));
 		return abs(diff.X) < 0.001 && abs(diff.Y) < 0.001 && abs(diff.Z) < 0.001;
 	}
 
 	// Checks only transformation
-	inline bool IsEqualTransformationPortal(const Portal& portal) const
+	inline bool IsEqualTransformationPortal(const LevelMeshPortal& portal) const
 	{
 		auto diff = portal.TransformPosition(FVector3(0, 0, 0)) - TransformPosition(FVector3(0, 0, 0));
 		return (abs(diff.X) < 0.001 && abs(diff.Y) < 0.001 && abs(diff.Z) < 0.001);
 	}
 
 	// Checks transformation, source and destiantion sector groups
-	inline bool IsEqualPortal(const Portal& portal) const
+	inline bool IsEqualPortal(const LevelMeshPortal& portal) const
 	{
 		return sourceSectorGroup == portal.sourceSectorGroup && targetSectorGroup == portal.targetSectorGroup && IsEqualTransformationPortal(portal);
 	}
 
 	// Checks transformation, source and destiantion sector groups
-	inline bool IsInversePortal(const Portal& portal) const
+	inline bool IsInversePortal(const LevelMeshPortal& portal) const
 	{
 		return sourceSectorGroup == portal.targetSectorGroup && targetSectorGroup == portal.sourceSectorGroup && IsInverseTransformationPortal(portal);
 	}
@@ -157,8 +154,8 @@ public:
 	LevelMesh()
 	{
 		// Default portal
-		hwrenderer::Portal portal;
-		portals.Push(portal);
+		LevelMeshPortal portal;
+		Portals.Push(portal);
 	}
 
 	virtual ~LevelMesh() = default;
@@ -170,16 +167,16 @@ public:
 
 	std::unique_ptr<TriangleMeshShape> Collision;
 
-	TArray<hwrenderer::Surface> Surfaces;
+	TArray<LevelMeshSurface> Surfaces;
 
-	TArray<SmoothingGroup> smoothingGroups; // TODO fill
-	TArray<Portal> portals; // TODO fill
+	TArray<LevelMeshSmoothingGroup> SmoothingGroups; // TODO fill
+	TArray<LevelMeshPortal> Portals; // TODO fill
 
 	int LMTextureCount = 0;
 	int LMTextureSize = 0;
 
-	FVector3 SunDirection;
-	FVector3 SunColor;
+	FVector3 SunDirection = FVector3(0.0f, 0.0f, -1.0f);
+	FVector3 SunColor = FVector3(0.0f, 0.0f, 0.0f);
 
 	bool Trace(const FVector3& start, FVector3 direction, float maxDist)
 	{
@@ -187,5 +184,3 @@ public:
 		return !TriangleMeshShape::find_any_hit(Collision.get(), start, end);
 	}
 };
-
-} // namespace

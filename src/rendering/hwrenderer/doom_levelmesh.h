@@ -12,6 +12,11 @@ typedef dp::rect_pack::RectPacker<int> RectPacker;
 
 struct FLevelLocals;
 
+struct DoomLevelMeshSurface : public LevelMeshSurface
+{
+	sector_t* controlSector;
+};
+
 class DoomLevelMesh : public LevelMesh
 {
 public:
@@ -27,6 +32,11 @@ public:
 		int surfaceIndex = MeshSurfaceIndexes[hit.triangle];
 		return Surfaces[surfaceIndex].bSky;
 	}
+
+	LevelMeshSurface* GetSurface(int index) override { return &Surfaces[index]; }
+	int GetSurfaceCount() override { return Surfaces.Size(); }
+
+	TArray<DoomLevelMeshSurface> Surfaces;
 
 	TArray<FVector2> LightmapUvs;
 

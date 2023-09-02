@@ -230,7 +230,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 	// line_horizont consumes everything
 	if (side->linedef->special == Line_Horizon && front != back)
 	{
-		LevelMeshSurface surf;
+		DoomLevelMeshSurface surf;
 		surf.type = ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
 		surf.bSky = front->GetTexture(sector_t::floor) == skyflatnum || front->GetTexture(sector_t::ceiling) == skyflatnum;
@@ -276,7 +276,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 			if (bothSides)
 				continue;
 
-			LevelMeshSurface surf;
+			DoomLevelMeshSurface surf;
 			surf.type = ST_MIDDLESIDE;
 			surf.typeIndex = typeIndex;
 			surf.controlSector = xfloor->model;
@@ -318,7 +318,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		{
 			if (IsBottomSideVisible(side))
 			{
-				LevelMeshSurface surf;
+				DoomLevelMeshSurface surf;
 
 				FVector3 verts[4];
 				verts[0].X = verts[2].X = v1.X;
@@ -356,7 +356,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 			bool bSky = IsTopSideSky(front, back, side);
 			if (bSky || IsTopSideVisible(side))
 			{
-				LevelMeshSurface surf;
+				DoomLevelMeshSurface surf;
 
 				FVector3 verts[4];
 				verts[0].X = verts[2].X = v1.X;
@@ -392,7 +392,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 	// middle seg
 	if (back == nullptr)
 	{
-		LevelMeshSurface surf;
+		DoomLevelMeshSurface surf;
 		surf.bSky = false;
 
 		FVector3 verts[4];
@@ -424,7 +424,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 
 void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor)
 {
-	LevelMeshSurface surf;
+	DoomLevelMeshSurface surf;
 	surf.bSky = IsSkySector(sector, sector_t::floor);
 
 	secplane_t plane;
@@ -463,7 +463,7 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 
 void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor)
 {
-	LevelMeshSurface surf;
+	DoomLevelMeshSurface surf;
 	surf.bSky = IsSkySector(sector, sector_t::ceiling);
 
 	secplane_t plane;

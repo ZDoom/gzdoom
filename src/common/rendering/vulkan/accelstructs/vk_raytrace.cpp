@@ -115,13 +115,15 @@ void VkRaytrace::CreateBuffers()
 	}
 
 	TArray<SurfaceInfo> surfaceInfo;
-	for (auto& surface : Mesh->Surfaces)
+	for (int i = 0, count = Mesh->GetSurfaceCount(); i < count; i++)
 	{
+		LevelMeshSurface* surface = Mesh->GetSurface(i);
+
 		SurfaceInfo info;
-		info.Normal = surface.plane.XYZ();
+		info.Normal = surface->plane.XYZ();
 		info.PortalIndex = 0;
-		info.SamplingDistance = (float)surface.sampleDimension;
-		info.Sky = surface.bSky;
+		info.SamplingDistance = (float)surface->sampleDimension;
+		info.Sky = surface->bSky;
 		surfaceInfo.Push(info);
 	}
 

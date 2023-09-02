@@ -43,7 +43,6 @@ struct LevelMeshSurface
 	unsigned int startVertIndex;
 	unsigned int startUvIndex;
 	FVector4 plane;
-	void* controlSector; // type is sector_t
 	bool bSky;
 
 	// Lightmap UV information in pixel size
@@ -167,7 +166,8 @@ public:
 
 	std::unique_ptr<TriangleMeshShape> Collision;
 
-	TArray<LevelMeshSurface> Surfaces;
+	virtual LevelMeshSurface* GetSurface(int index) { return nullptr; }
+	virtual int GetSurfaceCount() { return 0; }
 
 	TArray<LevelMeshSmoothingGroup> SmoothingGroups; // TODO fill
 	TArray<LevelMeshPortal> Portals; // TODO fill

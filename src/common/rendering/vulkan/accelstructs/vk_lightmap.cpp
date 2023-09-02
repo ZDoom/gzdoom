@@ -103,9 +103,9 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 		};
 	beginPass();
 
-	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
+	for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
 	{
-		LevelMeshSurface* targetSurface = &mesh->Surfaces[i];
+		LevelMeshSurface* targetSurface = mesh->GetSurface(i);
 		if (targetSurface->lightmapperAtlasPage != pageIndex)
 			continue;
 
@@ -204,9 +204,9 @@ void VkLightmap::CreateAtlasImages()
 	const int spacing = 3; // Note: the spacing is here to avoid that the resolve sampler finds data from other surface tiles
 	RectPacker packer(atlasImageSize, atlasImageSize, RectPacker::Spacing(spacing));
 
-	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
+	for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
 	{
-		LevelMeshSurface* surface = &mesh->Surfaces[i];
+		LevelMeshSurface* surface = mesh->GetSurface(i);
 
 		auto result = packer.insert(surface->texWidth + 2, surface->texHeight + 2);
 		surface->lightmapperAtlasX = result.pos.x + 1;
@@ -313,9 +313,9 @@ void VkLightmap::DownloadAtlasImage(size_t pageIndex)
 
 	hvec4* pixels = (hvec4*)atlasImages[pageIndex].Transfer->Map(0, atlasImageSize * atlasImageSize * sizeof(hvec4));
 
-	for (unsigned int i = 0; i < mesh->Surfaces.Size(); i++)
+	for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
 	{
-		LevelMeshSurface* surface = &mesh->Surfaces[i];
+		LevelMeshSurface* surface = mesh->GetSurface(i);
 		if (surface->lightmapperAtlasPage != pageIndex)
 			continue;
 

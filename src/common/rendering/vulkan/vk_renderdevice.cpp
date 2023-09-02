@@ -537,7 +537,7 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 	mRaytrace->SetLevelMesh(mesh);
 
 	static LevelMesh* lastMesh = nullptr; // Temp hack; Since this function is called every frame we only want to do this once
-	if (lastMesh != mesh && mesh->Surfaces.Size() > 0)
+	if (lastMesh != mesh && mesh->GetSurfaceCount() > 0)
 	{
 		lastMesh = mesh;
 
@@ -561,23 +561,25 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 		TArray<uint16_t> LMTextureData;
 		LMTextureData.Resize(mesh->LMTextureSize * mesh->LMTextureSize * mesh->LMTextureCount * 3);
 
-		for (auto& surface : mesh->Surfaces)
+		for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
 		{
-			uint16_t* currentTexture = LMTextureData.Data() + (mesh->LMTextureSize * mesh->LMTextureSize * 3) * surface.atlasPageIndex;
+			LevelMeshSurface* surface = mesh->GetSurface(i);
 
-			FVector3* colorSamples = surface.texPixels.data();
+			uint16_t* currentTexture = LMTextureData.Data() + (mesh->LMTextureSize * mesh->LMTextureSize * 3) * surface->atlasPageIndex;
+
+			FVector3* colorSamples = surface->texPixels.data();
 			// store results to lightmap texture
-			for (int i = 0; i < surface.texHeight; i++)
+			for (int i = 0; i < surface->texHeight; i++)
 			{
-				for (int j = 0; j < surface.texWidth; j++)
+				for (int j = 0; j < surface->texWidth; j++)
 				{
 					// get texture offset
-					int offs = ((mesh->LMTextureSize * (i + surface.atlasY)) + surface.atlasX) * 3;
+					int offs = ((mesh->LMTextureSize * (i + surface->atlasY)) + surface->atlasX) * 3;
 
 					// convert RGB to bytes
-					currentTexture[offs + j * 3 + 0] = floatToHalf(clamp(colorSamples[i * surface.texWidth + j].X, 0.0f, 65000.0f));
-					currentTexture[offs + j * 3 + 1] = floatToHalf(clamp(colorSamples[i * surface.texWidth + j].Y, 0.0f, 65000.0f));
-					currentTexture[offs + j * 3 + 2] = floatToHalf(clamp(colorSamples[i * surface.texWidth + j].Z, 0.0f, 65000.0f));
+					currentTexture[offs + j * 3 + 0] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].X, 0.0f, 65000.0f));
+					currentTexture[offs + j * 3 + 1] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].Y, 0.0f, 65000.0f));
+					currentTexture[offs + j * 3 + 2] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].Z, 0.0f, 65000.0f));
 				}
 			}
 		}

@@ -205,7 +205,7 @@ public:
 	TArray<FVector3> MeshVertices;
 	TArray<int> MeshUVIndex;
 	TArray<uint32_t> MeshElements;
-	TArray<int> MeshSurfaces;
+	TArray<int> MeshSurfaceIndexes;
 
 	TArray<SurfaceInfo> surfaceInfo;
 	TArray<PortalInfo> portalInfo;

@@ -24,7 +24,7 @@ public:
 		if (hit.fraction == 1.0f)
 			return true;
 
-		int surfaceIndex = MeshSurfaces[hit.triangle];
+		int surfaceIndex = MeshSurfaceIndexes[hit.triangle];
 		return Surfaces[surfaceIndex].bSky;
 	}
 

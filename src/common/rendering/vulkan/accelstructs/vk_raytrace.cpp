@@ -138,7 +138,7 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 
 	surfaceIndexBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-		.Size(Mesh->MeshSurfaces.Size() * sizeof(int))
+		.Size(Mesh->MeshSurfaceIndexes.Size() * sizeof(int))
 		.DebugName("surfaceBuffer")
 		.Create(fb->GetDevice());
 
@@ -158,7 +158,7 @@ void VkRaytrace::CreateVertexAndIndexBuffers()
 		.AddBuffer(vertexBuffer.get(), vertices.data(), vertices.size() * sizeof(FVector4))
 		.AddBuffer(indexBuffer.get(), Mesh->MeshElements.Data(), (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
 		.AddBuffer(nodesBuffer.get(), &nodesHeader, sizeof(CollisionNodeBufferHeader), nodes.data(), nodes.size() * sizeof(CollisionNode))
-		.AddBuffer(surfaceIndexBuffer.get(), Mesh->MeshSurfaces.Data(), Mesh->MeshSurfaces.Size() * sizeof(int))
+		.AddBuffer(surfaceIndexBuffer.get(), Mesh->MeshSurfaceIndexes.Data(), Mesh->MeshSurfaceIndexes.Size() * sizeof(int))
 		.AddBuffer(surfaceBuffer.get(), Mesh->surfaceInfo.Data(), Mesh->surfaceInfo.Size() * sizeof(SurfaceInfo))
 		.AddBuffer(portalBuffer.get(), Mesh->portalInfo.Data(), Mesh->portalInfo.Size() * sizeof(PortalInfo))
 		.Execute(fb->GetDevice(), fb->GetCommands()->GetTransferCommands());

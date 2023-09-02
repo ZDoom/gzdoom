@@ -61,7 +61,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 					MeshElements.Push(pos);
 					MeshElements.Push(pos + j - 1);
 					MeshElements.Push(pos + j);
-					MeshSurfaces.Push((int)i);
+					MeshSurfaceIndexes.Push((int)i);
 				}
 			}
 		}
@@ -72,14 +72,14 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 				MeshElements.Push(pos + 0);
 				MeshElements.Push(pos + 1);
 				MeshElements.Push(pos + 2);
-				MeshSurfaces.Push((int)i);
+				MeshSurfaceIndexes.Push((int)i);
 			}
 			if (!IsDegenerate(verts[1], verts[2], verts[3]))
 			{
 				MeshElements.Push(pos + 3);
 				MeshElements.Push(pos + 2);
 				MeshElements.Push(pos + 1);
-				MeshSurfaces.Push((int)i);
+				MeshSurfaceIndexes.Push((int)i);
 			}
 		}
 	}

@@ -25,6 +25,10 @@ VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 
 VkLightmap::~VkLightmap()
 {
+	if (vertices.Buffer)
+		vertices.Buffer->Unmap();
+	if (lights.Buffer)
+		lights.Buffer->Unmap();
 }
 
 void VkLightmap::Raytrace(hwrenderer::LevelMesh* level)

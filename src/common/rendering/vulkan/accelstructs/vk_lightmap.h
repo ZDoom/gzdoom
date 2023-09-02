@@ -84,9 +84,6 @@ public:
 private:
 	void UpdateAccelStructDescriptors();
 
-	void BeginCommands();
-	void FinishCommands();
-
 	void UploadUniforms();
 	void CreateAtlasImages();
 	void RenderAtlasImage(size_t pageIndex);
@@ -168,10 +165,6 @@ private:
 		std::vector<std::unique_ptr<VulkanDescriptorSet>> descriptorSets;
 		std::unique_ptr<VulkanSampler> sampler;
 	} resolve;
-
-	std::unique_ptr<VulkanFence> submitFence;
-	std::unique_ptr<VulkanCommandPool> cmdpool;
-	std::unique_ptr<VulkanCommandBuffer> cmdbuffer;
 
 	std::vector<LightmapImage> atlasImages;
 	static const int atlasImageSize = 2048;

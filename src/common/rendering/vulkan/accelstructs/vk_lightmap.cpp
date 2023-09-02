@@ -1,6 +1,7 @@
  
 #include "vk_lightmap.h"
 #include "vulkan/vk_renderdevice.h"
+#include "vulkan/commands/vk_commandbuffer.h"
 #include "vk_raytrace.h"
 #include "zvulkan/vulkanbuilders.h"
 #include "halffloat.h"
@@ -10,9 +11,6 @@
 VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 {
 	useRayQuery = fb->GetDevice()->PhysicalDevice.Features.RayQuery.rayQuery;
-
-	submitFence = std::make_unique<VulkanFence>(fb->GetDevice());
-	cmdpool = std::make_unique<VulkanCommandPool>(fb->GetDevice(), fb->GetDevice()->GraphicsFamily);
 
 	CreateUniformBuffer();
 	CreateSceneVertexBuffer();
@@ -39,7 +37,6 @@ void VkLightmap::Raytrace(LevelMesh* level)
 
 	CreateAtlasImages();
 
-	BeginCommands();
 	UploadUniforms();
 
 
@@ -53,7 +50,7 @@ void VkLightmap::Raytrace(LevelMesh* level)
 		ResolveAtlasImage(pageIndex);
 	}
 
-	FinishCommands();
+	fb->GetCommands()->WaitForCommands(false);
 
 	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
 	{
@@ -61,39 +58,18 @@ void VkLightmap::Raytrace(LevelMesh* level)
 	}
 }
 
-void VkLightmap::BeginCommands()
-{
-	cmdbuffer = cmdpool->createBuffer();
-	cmdbuffer->begin();
-}
-
-void VkLightmap::FinishCommands()
-{
-	cmdbuffer->end();
-
-	QueueSubmit()
-		.AddCommandBuffer(cmdbuffer.get())
-		.Execute(fb->GetDevice(), fb->GetDevice()->GraphicsQueue, submitFence.get());
-
-	VkResult result = vkWaitForFences(fb->GetDevice()->device, 1, &submitFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkWaitForFences failed");
-	result = vkResetFences(fb->GetDevice()->device, 1, &submitFence->fence);
-	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkResetFences failed");
-	cmdbuffer.reset();
-}
-
 void VkLightmap::RenderAtlasImage(size_t pageIndex)
 {
 	LightmapImage& img = atlasImages[pageIndex];
 
 	const auto beginPass = [&]() {
+		auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
+
 		RenderPassBegin()
 			.RenderPass(raytrace.renderPass.get())
 			.RenderArea(0, 0, atlasImageSize, atlasImageSize)
 			.Framebuffer(img.raytrace.Framebuffer.get())
-			.Execute(cmdbuffer.get());
+			.Execute(cmdbuffer);
 
 		VkDeviceSize offset = 0;
 		cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
@@ -115,7 +91,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 		viewport.y = (float)targetSurface->lightmapperAtlasY - 1;
 		viewport.width = (float)(targetSurface->texWidth + 2);
 		viewport.height = (float)(targetSurface->texHeight + 2);
-		cmdbuffer->setViewport(0, 1, &viewport);
+		fb->GetCommands()->GetTransferCommands()->setViewport(0, 1, &viewport);
 
 		// Paint all surfaces part of the smoothing group into the surface
 		for (LevelMeshSurface* surface : mesh->SmoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
@@ -132,13 +108,14 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			if (lights.Pos + lightCount > lights.BufferSize || vertices.Pos + vertexCount > vertices.BufferSize)
 			{
 				// Flush scene buffers
-				FinishCommands();
+				fb->GetCommands()->WaitForCommands(false);
 				lights.Pos = 0;
 				vertices.Pos = 0;
 				firstLight = 0;
 				firstVertex = 0;
-				BeginCommands();
 				beginPass();
+
+				fb->GetCommands()->GetTransferCommands()->setViewport(0, 1, &viewport);
 
 				if (lights.Pos + lightCount > lights.BufferSize)
 				{
@@ -173,7 +150,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			pc.LightmapOrigin = targetSurface->worldOrigin - targetSurface->worldStepX - targetSurface->worldStepY;
 			pc.LightmapStepX = targetSurface->worldStepX * viewport.width;
 			pc.LightmapStepY = targetSurface->worldStepY * viewport.height;
-			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
+			fb->GetCommands()->GetTransferCommands()->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
 
 			SceneVertex* vertex = &vertices.Vertices[firstVertex];
 
@@ -192,11 +169,11 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 				(vertex++)->Position = ToUV(surface->verts[1], targetSurface);
 			}
 
-			cmdbuffer->draw(vertexCount, 1, firstVertex, 0);
+			fb->GetCommands()->GetTransferCommands()->draw(vertexCount, 1, firstVertex, 0);
 		}
 	}
 
-	cmdbuffer->endRenderPass();
+	fb->GetCommands()->GetTransferCommands()->endRenderPass();
 }
 
 void VkLightmap::CreateAtlasImages()
@@ -231,25 +208,28 @@ void VkLightmap::UploadUniforms()
 	*reinterpret_cast<Uniforms*>(uniforms.Uniforms + uniforms.StructStride * uniforms.Index) = values;
 	uniforms.TransferBuffer->Unmap();
 
+	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 	cmdbuffer->copyBuffer(uniforms.TransferBuffer.get(), uniforms.Buffer.get());
 	PipelineBarrier()
 		.AddBuffer(uniforms.Buffer.get(), VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
-		.Execute(cmdbuffer.get(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		.Execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 void VkLightmap::ResolveAtlasImage(size_t i)
 {
 	LightmapImage& img = atlasImages[i];
 
+	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
+
 	PipelineBarrier()
 		.AddImage(img.raytrace.Image.get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
-		.Execute(cmdbuffer.get(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	RenderPassBegin()
 		.RenderPass(resolve.renderPass.get())
 		.RenderArea(0, 0, atlasImageSize, atlasImageSize)
 		.Framebuffer(img.resolve.Framebuffer.get())
-		.Execute(cmdbuffer.get());
+		.Execute(cmdbuffer);
 
 	VkDeviceSize offset = 0;
 	cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
@@ -292,7 +272,7 @@ void VkLightmap::ResolveAtlasImage(size_t i)
 
 	PipelineBarrier()
 		.AddImage(img.resolve.Image.get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT)
-		.Execute(cmdbuffer.get(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+		.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
 	VkBufferImageCopy region = {};
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

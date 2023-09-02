@@ -522,6 +522,21 @@ object Candlestick
     frame CAND { light CANDLE }
 }
 
+// Floating Skull Rock
+pulselight SKULLROCK
+{
+    color 0.5 0.4 0.1
+    offset 0 5 0
+    size 60
+    secondarysize 40
+    interval 0.6
+	attenuate 1
+}
+object FloatingSkull
+{
+    frame FSKU { light SKULLROCK }
+}
+
 // ----------------
 // -- Doom Items --
 // ----------------
@@ -575,12 +590,15 @@ object InvulnerabilitySphere
 }
 
 // Blur Sphere
-pointlight BLURSPHERE1
+pulselight BLURSPHERE1
 {
-    color 0.5 0.5 0.5
-    size 60
+    color 0.6 0.6 0.6
+    size 40
+    secondarysize 35
     offset 0 16 0
+        subtractive 1
 	attenuate 1
+        interval 0.3
 }
 
 object BlurSphere
@@ -670,20 +688,36 @@ object RedSkull
 // Both armor pickups have a big red blinking light in the middle
 pointlight GREENARMOR2
 {
-    color 0.4 0.0 0.0
+    color 0.1 0.2 0.0
     size 40
 	attenuate 1
     offset 0 10 0
 }
+pointlight REDARMOR
+{
+    color 0.2 0.0 0.0
+    size 40
+	attenuate 1
+    offset 0 10 0
+}
+pointlight ARMORLITE
+{
+    color 0.4 0.0 0.0
+    size 10
+	attenuate 1
+    offset 0 20 0
+}
 
 object GreenArmor
 {
-    frame ARM1B { light GREENARMOR2 }
+    frame ARM1 { light GREENARMOR2 }
+    frame ARM1B { light ARMORLITE }
 }
 
 object BlueArmor
 {
-    frame ARM2B { light GREENARMOR2 }
+    frame ARM2 { light REDARMOR }
+    frame ARM2B { light ARMORLITE }
 }
 
 

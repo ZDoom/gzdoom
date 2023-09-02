@@ -536,8 +536,11 @@ void VulkanRenderDevice::SetLevelMesh(hwrenderer::LevelMesh* mesh)
 {
 	mRaytrace->SetLevelMesh(mesh);
 
-	if (mesh->Surfaces.Size() > 0)
+	static hwrenderer::LevelMesh* lastMesh = nullptr; // Temp hack; Since this function is called every frame we only want to do this once
+	if (lastMesh != mesh && mesh->Surfaces.Size() > 0)
 	{
+		lastMesh = mesh;
+
 #if 0	// To do: GetLightmap()->Raytrace should output directly to the lightmap texture instead of forcing us to download it to the CPU first
 
 		GetTextureManager()->CreateLightmap(mesh->LMTextureSize, mesh->LMTextureCount);

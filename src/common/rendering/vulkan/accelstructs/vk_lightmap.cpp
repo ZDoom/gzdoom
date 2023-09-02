@@ -481,35 +481,27 @@ void VkLightmap::CreateRaytracePipeline()
 
 void VkLightmap::UpdateAccelStructDescriptors()
 {
-	auto nodesBuffer = fb->GetRaytrace()->GetNodeBuffer();
-	auto tlAccelStruct = fb->GetRaytrace()->GetAccelStruct();
-	auto vertexBuffer = fb->GetRaytrace()->GetVertexBuffer();
-	auto indexBuffer = fb->GetRaytrace()->GetIndexBuffer();
-	auto surfaceIndexBuffer = fb->GetRaytrace()->GetSurfaceIndexBuffer();
-	auto surfaceBuffer = fb->GetRaytrace()->GetSurfaceIndexBuffer();
-	auto portalBuffer = fb->GetRaytrace()->GetPortalBuffer();
-
 	if (useRayQuery)
 	{
 		WriteDescriptors()
-			.AddAccelerationStructure(raytrace.descriptorSet1.get(), 0, tlAccelStruct)
+			.AddAccelerationStructure(raytrace.descriptorSet1.get(), 0, fb->GetRaytrace()->GetAccelStruct())
 			.Execute(fb->GetDevice());
 	}
 	else
 	{
 		WriteDescriptors()
-			.AddBuffer(raytrace.descriptorSet1.get(), 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, nodesBuffer)
-			.AddBuffer(raytrace.descriptorSet1.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, vertexBuffer)
-			.AddBuffer(raytrace.descriptorSet1.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, indexBuffer)
+			.AddBuffer(raytrace.descriptorSet1.get(), 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetNodeBuffer())
+			.AddBuffer(raytrace.descriptorSet1.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetVertexBuffer())
+			.AddBuffer(raytrace.descriptorSet1.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetIndexBuffer())
 			.Execute(fb->GetDevice());
 	}
 
 	WriteDescriptors()
 		.AddBuffer(raytrace.descriptorSet0.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uniforms.Buffer.get(), 0, sizeof(Uniforms))
-		.AddBuffer(raytrace.descriptorSet0.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, surfaceIndexBuffer)
-		.AddBuffer(raytrace.descriptorSet0.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, surfaceBuffer)
-		//.AddBuffer(raytrace.descriptorSet0.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, sceneLightBuffer.get()) // TODO !!!!!!!!!
-		.AddBuffer(raytrace.descriptorSet0.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, portalBuffer)
+		.AddBuffer(raytrace.descriptorSet0.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetSurfaceIndexBuffer())
+		.AddBuffer(raytrace.descriptorSet0.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetSurfaceBuffer())
+		.AddBuffer(raytrace.descriptorSet0.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, lights.Buffer.get())
+		.AddBuffer(raytrace.descriptorSet0.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetPortalBuffer())
 		.Execute(fb->GetDevice());
 
 }

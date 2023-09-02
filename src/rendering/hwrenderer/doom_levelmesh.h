@@ -14,7 +14,11 @@ struct FLevelLocals;
 
 struct DoomLevelMeshSurface : public LevelMeshSurface
 {
-	sector_t* controlSector;
+	subsector_t* Subsector;
+	side_t* Side;
+	sector_t* ControlSector;
+	uint32_t LightmapNum; // To do: same as atlasPageIndex. Delete one of them!
+	float* TexCoords;
 };
 
 class DoomLevelMesh : public LevelMesh
@@ -53,8 +57,8 @@ private:
 	void CreateSideSurfaces(FLevelLocals &doomMap, side_t *side);
 
 	void BindLightmapSurfacesToGeometry(FLevelLocals& doomMap);
-	void SetSubsectorLightmap(const LightmapSurface& surface);
-	void SetSideLightmap(const LightmapSurface& surface);
+	void SetSubsectorLightmap(DoomLevelMeshSurface* surface);
+	void SetSideLightmap(DoomLevelMeshSurface* surface);
 
 	static bool IsTopSideSky(sector_t* frontsector, sector_t* backsector, side_t* side);
 	static bool IsTopSideVisible(side_t* side);

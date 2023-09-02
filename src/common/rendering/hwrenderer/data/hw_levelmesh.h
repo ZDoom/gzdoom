@@ -37,7 +37,7 @@ enum LevelMeshSurfaceType
 
 struct LevelMeshSurface
 {
-	LevelMeshSurfaceType type = ST_UNKNOWN;
+	LevelMeshSurfaceType Type = ST_UNKNOWN;
 	int typeIndex;
 	int numVerts;
 	unsigned int startVertIndex;

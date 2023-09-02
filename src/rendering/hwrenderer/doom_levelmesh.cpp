@@ -49,7 +49,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 			MeshUVIndex.Push(j);
 		}
 
-		if (s.type == ST_FLOOR || s.type == ST_CEILING)
+		if (s.Type == ST_FLOOR || s.Type == ST_CEILING)
 		{
 			for (int j = 2; j < numVerts; j++)
 			{
@@ -62,7 +62,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 				}
 			}
 		}
-		else if (s.type == ST_MIDDLESIDE || s.type == ST_UPPERSIDE || s.type == ST_LOWERSIDE)
+		else if (s.Type == ST_MIDDLESIDE || s.Type == ST_UPPERSIDE || s.Type == ST_LOWERSIDE)
 		{
 			if (!IsDegenerate(verts[0], verts[1], verts[2]))
 			{
@@ -81,7 +81,6 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 		}
 	}
 
-	// To do: these functions still broken. 
 	SetupLightmapUvs();
 	BindLightmapSurfacesToGeometry(doomMap);
 
@@ -101,7 +100,7 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 		allSurfaces += 2 + doomMap.subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
 
 	doomMap.LMSurfaces.Resize(allSurfaces);
-	memset(&doomMap.LMSurfaces[0], 0, sizeof(LightmapSurface) * allSurfaces);
+	memset(&doomMap.LMSurfaces[0], 0, sizeof(DoomLevelMeshSurface*) * allSurfaces);
 
 	// Link the surfaces to sectors, sides and their 3D floors
 
@@ -125,79 +124,72 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 	size_t index = 0;
 	for (auto& surface : Surfaces)
 	{
-		LightmapSurface l;
-		memset(&l, 0, sizeof(LightmapSurface));
+		surface.TexCoords = (float*)&LightmapUvs[surface.startUvIndex];
 
-		l.ControlSector = (sector_t*)surface.controlSector;
-		l.Type = surface.type;
-		l.LightmapNum = 0;
+		surface.LightmapNum = surface.atlasPageIndex;
 
-		l.TexCoords = (float*)&LightmapUvs[surface.startUvIndex];
-
-		l.LightmapNum = surface.atlasPageIndex;
-
-		if (surface.type == ST_FLOOR || surface.type == ST_CEILING)
+		if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
 		{
-			l.Subsector = &doomMap.subsectors[surface.typeIndex];
-			if (l.Subsector->firstline && l.Subsector->firstline->sidedef)
-				l.Subsector->firstline->sidedef->sector->HasLightmaps = true;
-			SetSubsectorLightmap(l);
+			surface.Subsector = &doomMap.subsectors[surface.typeIndex];
+			if (surface.Subsector->firstline && surface.Subsector->firstline->sidedef)
+				surface.Subsector->firstline->sidedef->sector->HasLightmaps = true;
+			SetSubsectorLightmap(&surface);
 		}
 		else
 		{
-			l.Side = &doomMap.sides[surface.typeIndex];
-			SetSideLightmap(l);
+			surface.Side = &doomMap.sides[surface.typeIndex];
+			SetSideLightmap(&surface);
 		}
 	}
 }
 
-void DoomLevelMesh::SetSubsectorLightmap(const LightmapSurface& surface)
+void DoomLevelMesh::SetSubsectorLightmap(DoomLevelMeshSurface* surface)
 {
-	if (!surface.ControlSector)
+	if (!surface->ControlSector)
 	{
-		int index = surface.Type == ST_CEILING ? 1 : 0;
-		surface.Subsector->lightmap[index][0] = surface;
+		int index = surface->Type == ST_CEILING ? 1 : 0;
+		surface->Subsector->lightmap[index][0] = surface;
 	}
 	else
 	{
-		int index = surface.Type == ST_CEILING ? 0 : 1;
-		const auto& ffloors = surface.Subsector->sector->e->XFloor.ffloors;
+		int index = surface->Type == ST_CEILING ? 0 : 1;
+		const auto& ffloors = surface->Subsector->sector->e->XFloor.ffloors;
 		for (unsigned int i = 0; i < ffloors.Size(); i++)
 		{
-			if (ffloors[i]->model == surface.ControlSector)
+			if (ffloors[i]->model == surface->ControlSector)
 			{
-				surface.Subsector->lightmap[index][i + 1] = surface;
+				surface->Subsector->lightmap[index][i + 1] = surface;
 			}
 		}
 	}
 }
 
-void DoomLevelMesh::SetSideLightmap(const LightmapSurface& surface)
+void DoomLevelMesh::SetSideLightmap(DoomLevelMeshSurface* surface)
 {
-	if (!surface.ControlSector)
+	if (!surface->ControlSector)
 	{
-		if (surface.Type == ST_UPPERSIDE)
+		if (surface->Type == ST_UPPERSIDE)
 		{
-			surface.Side->lightmap[0] = surface;
+			surface->Side->lightmap[0] = surface;
 		}
-		else if (surface.Type == ST_MIDDLESIDE)
+		else if (surface->Type == ST_MIDDLESIDE)
 		{
-			surface.Side->lightmap[1] = surface;
-			surface.Side->lightmap[2] = surface;
+			surface->Side->lightmap[1] = surface;
+			surface->Side->lightmap[2] = surface;
 		}
-		else if (surface.Type == ST_LOWERSIDE)
+		else if (surface->Type == ST_LOWERSIDE)
 		{
-			surface.Side->lightmap[3] = surface;
+			surface->Side->lightmap[3] = surface;
 		}
 	}
 	else
 	{
-		const auto& ffloors = surface.Side->sector->e->XFloor.ffloors;
+		const auto& ffloors = surface->Side->sector->e->XFloor.ffloors;
 		for (unsigned int i = 0; i < ffloors.Size(); i++)
 		{
-			if (ffloors[i]->model == surface.ControlSector)
+			if (ffloors[i]->model == surface->ControlSector)
 			{
-				surface.Side->lightmap[4 + i] = surface;
+				surface->Side->lightmap[4 + i] = surface;
 			}
 		}
 	}
@@ -231,7 +223,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 	if (side->linedef->special == Line_Horizon && front != back)
 	{
 		DoomLevelMeshSurface surf;
-		surf.type = ST_MIDDLESIDE;
+		surf.Type = ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
 		surf.bSky = front->GetTexture(sector_t::floor) == skyflatnum || front->GetTexture(sector_t::ceiling) == skyflatnum;
 
@@ -277,9 +269,9 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				continue;
 
 			DoomLevelMeshSurface surf;
-			surf.type = ST_MIDDLESIDE;
+			surf.Type = ST_MIDDLESIDE;
 			surf.typeIndex = typeIndex;
-			surf.controlSector = xfloor->model;
+			surf.ControlSector = xfloor->model;
 			surf.bSky = false;
 
 			FVector3 verts[4];
@@ -338,10 +330,10 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[3]);
 
 				surf.plane = ToPlane(verts[0], verts[1], verts[2]);
-				surf.type = ST_LOWERSIDE;
+				surf.Type = ST_LOWERSIDE;
 				surf.typeIndex = typeIndex;
 				surf.bSky = false;
-				surf.controlSector = nullptr;
+				surf.ControlSector = nullptr;
 
 				Surfaces.Push(surf);
 			}
@@ -376,10 +368,10 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[3]);
 
 				surf.plane = ToPlane(verts[0], verts[1], verts[2]);
-				surf.type = ST_UPPERSIDE;
+				surf.Type = ST_UPPERSIDE;
 				surf.typeIndex = typeIndex;
 				surf.bSky = bSky;
-				surf.controlSector = nullptr;
+				surf.ControlSector = nullptr;
 
 				Surfaces.Push(surf);
 			}
@@ -414,9 +406,9 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		MeshVertices.Push(verts[3]);
 
 		surf.plane = ToPlane(verts[0], verts[1], verts[2]);
-		surf.type = ST_MIDDLESIDE;
+		surf.Type = ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
-		surf.controlSector = nullptr;
+		surf.ControlSector = nullptr;
 
 		Surfaces.Push(surf);
 	}
@@ -453,9 +445,9 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 		verts[j].Z = (float)plane.ZatPoint(verts[j]);
 	}
 
-	surf.type = ST_FLOOR;
+	surf.Type = ST_FLOOR;
 	surf.typeIndex = typeIndex;
-	surf.controlSector = is3DFloor ? sector : nullptr;
+	surf.ControlSector = is3DFloor ? sector : nullptr;
 	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, (float)plane.D);
 
 	Surfaces.Push(surf);
@@ -492,9 +484,9 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub
 		verts[j].Z = (float)plane.ZatPoint(verts[j]);
 	}
 
-	surf.type = ST_CEILING;
+	surf.Type = ST_CEILING;
 	surf.typeIndex = typeIndex;
-	surf.controlSector = is3DFloor ? sector : nullptr;
+	surf.ControlSector = is3DFloor ? sector : nullptr;
 	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, (float)plane.D);
 
 	Surfaces.Push(surf);
@@ -661,7 +653,7 @@ void DoomLevelMesh::SetupLightmapUvs()
 	// Reorder vertices into renderer format
 	for (LevelMeshSurface& surface : Surfaces)
 	{
-		if (surface.type == ST_FLOOR)
+		if (surface.Type == ST_FLOOR)
 		{
 			// reverse vertices on floor
 			for (int j = surface.startUvIndex + surface.numVerts - 1, k = surface.startUvIndex; j > k; j--, k++)
@@ -669,7 +661,7 @@ void DoomLevelMesh::SetupLightmapUvs()
 				std::swap(LightmapUvs[k], LightmapUvs[j]);
 			}
 		}
-		else if (surface.type != ST_CEILING) // walls
+		else if (surface.Type != ST_CEILING) // walls
 		{
 			// from 0 1 2 3
 			// to   0 2 1 3

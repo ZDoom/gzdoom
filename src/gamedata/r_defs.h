@@ -61,7 +61,7 @@ struct sector_t;
 class AActor;
 struct FSection;
 struct FLevelLocals;
-struct LightmapSurface;
+struct DoomLevelMeshSurface;
 
 const uint16_t NO_INDEX = 0xffffu;
 const uint32_t NO_SIDE = 0xffffffffu;
@@ -1228,7 +1228,7 @@ struct side_t
 	uint16_t	Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
-	LightmapSurface* lightmap;
+	DoomLevelMeshSurface** lightmap; // all mesh surfaces belonging to this sidedef. Used for lightmapping
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
 	int numsegs;
 	int sidenum;
@@ -1643,7 +1643,7 @@ struct subsector_t
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
 
-	LightmapSurface *lightmap[2];
+	DoomLevelMeshSurface** lightmap[2]; // all mesh surfaces belonging to this subsector. Used for lightmapping
 };
 
 
@@ -1686,18 +1686,6 @@ struct FMiniBSP
 	TArray<seg_t> Segs;
 	TArray<subsector_t> Subsectors;
 	TArray<vertex_t> Verts;
-};
-
-// Lightmap data
-
-struct LightmapSurface
-{
-	LevelMeshSurfaceType Type;
-	subsector_t *Subsector;
-	side_t *Side;
-	sector_t *ControlSector;
-	uint32_t LightmapNum;
-	float *TexCoords;
 };
 
 //

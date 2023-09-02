@@ -1264,7 +1264,7 @@ void HWWall::DoTexture(HWDrawInfo *di, FRenderState& state, int _type,seg_t * se
 
 	if (seg->sidedef->lightmap && type >= RENDERWALL_TOP && type <= RENDERWALL_BOTTOM)
 	{
-		lightmap = &seg->sidedef->lightmap[type - RENDERWALL_TOP];
+		lightmap = seg->sidedef->lightmap[type - RENDERWALL_TOP];
 	}
 	else
 	{
@@ -1654,12 +1654,9 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, FRenderState& state, seg_t * seg, F3DF
 
 	lightmap = nullptr;
 	if (seg->sidedef == seg->linedef->sidedef[0])
-		lightmap = seg->linedef->sidedef[1]->lightmap;
+		lightmap = seg->linedef->sidedef[1]->lightmap[4 + roverIndex];
 	else
-		lightmap = seg->linedef->sidedef[0]->lightmap;
-
-	if (lightmap)
-		lightmap += 4 + roverIndex;
+		lightmap = seg->linedef->sidedef[0]->lightmap[4 + roverIndex];
 
 	if (rover->flags&FF_FOG)
 	{

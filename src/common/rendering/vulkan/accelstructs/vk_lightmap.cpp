@@ -177,7 +177,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 
 			SceneVertex* vertex = &vertices.Vertices[firstVertex];
 
-			if (surface->type == ST_FLOOR || surface->type == ST_CEILING)
+			if (surface->Type == ST_FLOOR || surface->Type == ST_CEILING)
 			{
 				for (int idx = 0; idx < vertexCount; idx++)
 				{

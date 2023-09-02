@@ -456,6 +456,15 @@ DEFINE_ACTION_FUNCTION(FCanvas, ClearScreen)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FCanvas, ClearScreenToColor)
+{
+	PARAM_SELF_PROLOGUE(FCanvas);
+	PARAM_COLOR(color);
+	self->Drawer.AddColorOnlyQuad(0, 0, self->Drawer.GetWidth(), self->Drawer.GetHeight(), color, &LegacyRenderStyles[STYLE_Source]);
+	self->Tex->NeedUpdate();
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(_Screen, SetScreenFade)
 {
 	PARAM_PROLOGUE;

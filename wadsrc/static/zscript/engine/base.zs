@@ -523,7 +523,8 @@ class Canvas : Object native abstract
 	native int, int, int, int GetClipRect();
 	native double, double, double, double GetFullscreenRect(double vwidth, double vheight, int fsmode);
 	native Vector2 SetOffset(double x, double y);
-	native void ClearScreen(color col = 0);
+	deprecated("4.11", "use ClearScreenToColor() instead") native void ClearScreen(color col = 0);
+	native void ClearScreenToColor(color col = 0);
 	native void SetScreenFade(double factor);
 
 	native void EnableStencil(bool on);

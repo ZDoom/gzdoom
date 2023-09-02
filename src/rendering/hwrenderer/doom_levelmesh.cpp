@@ -636,13 +636,6 @@ void DoomLevelMesh::SetupLightmapUvs()
 		}
 
 		surface.texPixels.resize(surface.texWidth * surface.texHeight);
-
-		SurfaceInfo info;
-		info.Normal = surface.plane.XYZ();
-		info.PortalIndex = 0;
-		info.SamplingDistance = (float)surface.sampleDimension;
-		info.Sky = surface.bSky;
-		surfaceInfo.Push(info);
 	}
 
 	{

@@ -5,33 +5,15 @@
 #include "vectors.h"
 #include "hw_collision.h"
 #include "bounds.h"
+#include "common/utility/matrix.h"
 #include <memory>
 
 #include <dp_rect_pack.h>
 
 typedef dp::rect_pack::RectPacker<int> RectPacker;
 
-struct SurfaceInfo // This is the structure of the buffer inside the shader
-{
-	FVector3 Normal;
-	float Sky;
-	float SamplingDistance;
-	uint32_t PortalIndex;
-	float Padding1, Padding2;
-};
-
-struct PortalInfo  // This is the structure of the buffer inside the shader
-{
-	float transformation[16]; // mat4
-};
-
 namespace hwrenderer
 {
-
-// Note: this is just the current layout needed to get VkLightmap/GPURaytracer from zdray to compile within this project.
-//
-// The surface actually class needs to be moved up DoomLevelMesh, since this can't otherwise be accessed in the common part of the codebase shared with Raze.
-// Ideally, we'd undoomify it as much as possible, so Raze in theory also would be able to declare an raytracing acceleration structure for dynlights and lightmaps
 
 class ThingLight
 {
@@ -123,36 +105,22 @@ struct SmoothingGroup
 
 struct Portal
 {
-	float transformation[4][4] = {
-		{1, 0, 0, 0},
-		{0, 1, 0, 0},
-		{0, 0, 1, 0},
-		{0, 0, 0, 1}
-	};
+	Portal() { transformation.loadIdentity(); }
+
+	VSMatrix transformation;
 
 	int sourceSectorGroup = 0;
 	int targetSectorGroup = 0;
 
-	inline FVector4 Mat4Vec4Mul(const FVector4& vec) const
-	{
-		FVector4 result(0.0f, 0.0f, 0.0f, 0.0f);
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				result[i] += transformation[i][j] * vec[j];
-			}
-		}
-		return result;
-	}
-
 	inline FVector3 TransformPosition(const FVector3& pos) const
 	{
-		auto v = Mat4Vec4Mul(FVector4(pos, 1.0));
+		auto v = transformation * FVector4(pos, 1.0);
 		return FVector3(v.X, v.Y, v.Z);
 	}
 
 	inline FVector3 TransformRotation(const FVector3& dir) const
 	{
-		auto v = Mat4Vec4Mul(FVector4(dir, 0.0));
+		auto v = transformation * FVector4(dir, 0.0);
 		return FVector3(v.X, v.Y, v.Z);
 	}
 
@@ -189,15 +157,8 @@ public:
 	LevelMesh()
 	{
 		// Default portal
-		PortalInfo portalInfo;
 		hwrenderer::Portal portal;
-
-		for (int i = 0; i < 16; ++i)
-		{
-			portalInfo.transformation[i] = (&portal.transformation[0][0])[i];
-		}
-
-		this->portalInfo.Push(portalInfo);
+		portals.Push(portal);
 	}
 
 	virtual ~LevelMesh() = default;
@@ -206,9 +167,6 @@ public:
 	TArray<int> MeshUVIndex;
 	TArray<uint32_t> MeshElements;
 	TArray<int> MeshSurfaceIndexes;
-
-	TArray<SurfaceInfo> surfaceInfo;
-	TArray<PortalInfo> portalInfo;
 
 	std::unique_ptr<TriangleMeshShape> Collision;
 

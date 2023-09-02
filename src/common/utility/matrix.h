@@ -29,6 +29,10 @@ typedef double FLOATTYPE;
 typedef float FLOATTYPE;
 #endif
 
+#ifndef NO_SSE
+#include <emmintrin.h>
+#endif
+
 class VSMatrix {
 
 	public:
@@ -101,6 +105,32 @@ class VSMatrix {
 		}
 		bool inverseMatrix(VSMatrix &result);
 		void transpose();
+
+		FVector4 operator *(const FVector4& v) const
+		{
+			#ifdef NO_SSE
+			FVector4 result;
+			result.x = mMatrix[0 * 4 + 0] * v.X + mMatrix[1 * 4 + 0] * v.Y + mMatrix[2 * 4 + 0] * v.Z + mMatrix[3 * 4 + 0] * v.W;
+			result.y = mMatrix[0 * 4 + 1] * v.X + mMatrix[1 * 4 + 1] * v.Y + mMatrix[2 * 4 + 1] * v.Z + mMatrix[3 * 4 + 1] * v.W;
+			result.z = mMatrix[0 * 4 + 2] * v.X + mMatrix[1 * 4 + 2] * v.Y + mMatrix[2 * 4 + 2] * v.Z + mMatrix[3 * 4 + 2] * v.W;
+			result.w = mMatrix[0 * 4 + 3] * v.X + mMatrix[1 * 4 + 3] * v.Y + mMatrix[2 * 4 + 3] * v.Z + mMatrix[3 * 4 + 3] * v.W;
+			return result;
+			#else
+			__m128 m0 = _mm_loadu_ps(mMatrix);
+			__m128 m1 = _mm_loadu_ps(mMatrix + 4);
+			__m128 m2 = _mm_loadu_ps(mMatrix + 8);
+			__m128 m3 = _mm_loadu_ps(mMatrix + 12);
+			__m128 mv = _mm_loadu_ps(&v.X);
+			m0 = _mm_mul_ps(m0, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(0, 0, 0, 0)));
+			m1 = _mm_mul_ps(m1, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(1, 1, 1, 1)));
+			m2 = _mm_mul_ps(m2, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(2, 2, 2, 2)));
+			m3 = _mm_mul_ps(m3, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(3, 3, 3, 3)));
+			mv = _mm_add_ps(_mm_add_ps(_mm_add_ps(m0, m1), m2), m3);
+			FVector4 result;
+			_mm_storeu_ps(&result.X, mv);
+			return result;
+			#endif
+		}
 
 	protected:
 		static void crossProduct(const FLOATTYPE *a, const FLOATTYPE *b, FLOATTYPE *res);
@@ -184,7 +214,7 @@ public:
 		*this = (*this) * m1;
 	}
 
-	Matrix3x4 operator *(const Matrix3x4 &other)
+	Matrix3x4 operator *(const Matrix3x4 &other) const
 	{
 		Matrix3x4 result;
 
@@ -206,7 +236,7 @@ public:
 		return result;
 	}
 
-	FVector3 operator *(const FVector3 &vec)
+	FVector3 operator *(const FVector3 &vec) const
 	{
 		FVector3 result;
 

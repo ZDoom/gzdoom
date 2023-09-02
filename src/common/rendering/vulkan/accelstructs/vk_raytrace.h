@@ -3,6 +3,7 @@
 
 #include "zvulkan/vulkanobjects.h"
 #include "hw_levelmesh.h"
+#include "common/utility/matrix.h"
 
 class VulkanRenderDevice;
 
@@ -26,6 +27,20 @@ struct CollisionNode
 	int padding3;
 };
 
+struct SurfaceInfo
+{
+	FVector3 Normal;
+	float Sky;
+	float SamplingDistance;
+	uint32_t PortalIndex;
+	float Padding1, Padding2;
+};
+
+struct PortalInfo
+{
+	VSMatrix transformation;
+};
+
 class VkRaytrace
 {
 public:
@@ -44,7 +59,7 @@ public:
 private:
 	void Reset();
 	void CreateVulkanObjects();
-	void CreateVertexAndIndexBuffers();
+	void CreateBuffers();
 	void CreateBottomLevelAccelerationStructure();
 	void CreateTopLevelAccelerationStructure();
 

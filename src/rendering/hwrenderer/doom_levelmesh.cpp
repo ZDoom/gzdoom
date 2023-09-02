@@ -627,17 +627,7 @@ void DoomLevelMesh::SetupLightmapUvs()
 		surface.texPixels.resize(surface.texWidth * surface.texHeight);
 	}
 
-	{
-		LevelMeshSmoothingGroup smoothing;
-
-		for (auto& surface : Surfaces)
-		{
-			surface.smoothingGroupIndex = 0;
-
-			smoothing.surfaces.push_back(&surface);
-		}
-		SmoothingGroups.Push(std::move(smoothing));
-	}
+	BuildSmoothingGroups();
 
 	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](LevelMeshSurface* a, LevelMeshSurface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });
 

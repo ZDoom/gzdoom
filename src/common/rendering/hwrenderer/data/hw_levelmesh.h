@@ -56,6 +56,8 @@ struct LevelMeshSurface
 	// Required for internal lightmapper:
 	//
 
+	int sectorGroup = 0;
+
 	BBox bounds;
 	int sampleDimension = 0;
 
@@ -182,5 +184,50 @@ public:
 	{
 		FVector3 end = start + direction * std::max(maxDist - 10.0f, 0.0f);
 		return !TriangleMeshShape::find_any_hit(Collision.get(), start, end);
+	}
+
+	void BuildSmoothingGroups()
+	{
+		for (size_t i = 0, count = GetSurfaceCount(); i < count; i++)
+		{
+			auto surface = GetSurface(i);
+
+			// Is this surface in the same plane as an existing smoothing group?
+			int smoothingGroupIndex = -1;
+
+			for (size_t j = 0; j < SmoothingGroups.Size(); j++)
+			{
+				if (surface->sectorGroup == SmoothingGroups[j].sectorGroup)
+				{
+					float direction = std::abs((SmoothingGroups[j].plane.XYZ() | surface->plane.XYZ()));
+					if (direction >= 0.9999f && direction <= 1.001f)
+					{
+						auto point = (surface->plane.XYZ() * surface->plane.W);
+						auto planeDistance = (SmoothingGroups[j].plane.XYZ() | point) - SmoothingGroups[j].plane.W;
+
+						float dist = std::abs(planeDistance);
+						if (dist <= 0.01f)
+						{
+							smoothingGroupIndex = (int)j;
+							break;
+						}
+					}
+				}
+			}
+
+			// Surface is in a new plane. Create a smoothing group for it
+			if (smoothingGroupIndex == -1)
+			{
+				smoothingGroupIndex = SmoothingGroups.Size();
+
+				LevelMeshSmoothingGroup group;
+				group.plane = surface->plane;
+				group.sectorGroup = surface->sectorGroup;
+				SmoothingGroups.Push(group);
+			}
+
+			SmoothingGroups[smoothingGroupIndex].surfaces.push_back(surface);
+			surface->smoothingGroupIndex = smoothingGroupIndex;
+		}
 	}
 };

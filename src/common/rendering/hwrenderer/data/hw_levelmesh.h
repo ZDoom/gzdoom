@@ -83,9 +83,7 @@ struct LevelMeshSurface
 
 	// Touching light sources
 	std::vector<LevelMeshLight*> LightList;
-
-	// Output lightmap for the surface
-	std::vector<FVector3> texPixels;
+	std::vector<LevelMeshLight> LightListBuffer;
 
 	// Lightmapper has a lot of additional padding around the borders
 	int lightmapperAtlasPage = -1;

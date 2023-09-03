@@ -6,6 +6,7 @@
 #include "playsim/p_lnspec.h"
 #include "c_dispatch.h"
 #include "g_levellocals.h"
+#include "a_dynlight.h"
 #include "common/rendering/vulkan/accelstructs/vk_lightmap.h"
 #include <vulkan/accelstructs/halffloat.h>
 
@@ -159,6 +160,8 @@ void DoomLevelMesh::SetSubsectorLightmap(DoomLevelMeshSurface* surface)
 			}
 		}
 	}
+
+	CreateLightList(surface, surface->Subsector->section->lighthead, surface->Subsector->sector->PortalGroup);
 }
 
 void DoomLevelMesh::SetSideLightmap(DoomLevelMeshSurface* surface)
@@ -190,6 +193,54 @@ void DoomLevelMesh::SetSideLightmap(DoomLevelMeshSurface* surface)
 			}
 		}
 	}
+
+	CreateLightList(surface, surface->Side->lighthead, surface->Side->sector->PortalGroup);
+}
+
+void DoomLevelMesh::CreateLightList(DoomLevelMeshSurface* surface, FLightNode* node, int portalgroup)
+{
+	while (node)
+	{
+		FDynamicLight* light = node->lightsource;
+
+		DVector3 pos = light->PosRelative(portalgroup);
+
+		LevelMeshLight meshlight;
+		meshlight.Origin = { (float)pos.X, (float)pos.Z, (float)pos.Y };
+		meshlight.RelativeOrigin = meshlight.Origin; // ?? what is the difference between this and Origin?
+		meshlight.Radius = (float)light->GetRadius();
+		meshlight.Intensity = 1.0f;
+		if (light->IsSpot())
+		{
+			meshlight.InnerAngleCos = (float)light->pSpotInnerAngle->Cos();
+			meshlight.OuterAngleCos = (float)light->pSpotOuterAngle->Cos();
+
+			DAngle negPitch = -*light->pPitch;
+			DAngle Angle = light->target->Angles.Yaw;
+			double xzLen = negPitch.Cos();
+			meshlight.SpotDir.X = float(-Angle.Cos() * xzLen);
+			meshlight.SpotDir.Y = float(-negPitch.Sin());
+			meshlight.SpotDir.Z = float(-Angle.Sin() * xzLen);
+		}
+		else
+		{
+			meshlight.InnerAngleCos = -1.0f;
+			meshlight.OuterAngleCos = -1.0f;
+			meshlight.SpotDir.X = 0.0f;
+			meshlight.SpotDir.Y = 0.0f;
+			meshlight.SpotDir.Z = 0.0f;
+		}
+		meshlight.Color.X = light->GetRed() * (1.0f / 255.0f);
+		meshlight.Color.Y = light->GetGreen() * (1.0f / 255.0f);
+		meshlight.Color.Z = light->GetBlue() * (1.0f / 255.0f);
+
+		surface->LightListBuffer.push_back(meshlight);
+
+		node = node->nextLight;
+	}
+
+	for (auto& silly : surface->LightListBuffer)
+		surface->LightList.push_back(&silly);
 }
 
 void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
@@ -620,8 +671,6 @@ void DoomLevelMesh::SetupLightmapUvs()
 		{
 			surface.uvs.Push(LightmapUvs[surface.startUvIndex + i]);
 		}
-
-		surface.texPixels.resize(surface.texWidth * surface.texHeight);
 	}
 
 	BuildSmoothingGroups();

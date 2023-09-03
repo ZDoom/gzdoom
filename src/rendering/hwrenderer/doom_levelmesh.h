@@ -60,6 +60,8 @@ private:
 	void SetSubsectorLightmap(DoomLevelMeshSurface* surface);
 	void SetSideLightmap(DoomLevelMeshSurface* surface);
 
+	void CreateLightList(DoomLevelMeshSurface* surface, FLightNode* lighthead, int portalgroup);
+
 	static bool IsTopSideSky(sector_t* frontsector, sector_t* backsector, side_t* side);
 	static bool IsTopSideVisible(side_t* side);
 	static bool IsBottomSideVisible(side_t* side);

@@ -46,8 +46,6 @@ struct LightmapImage
 		std::unique_ptr<VulkanImageView> View;
 		std::unique_ptr<VulkanFramebuffer> Framebuffer;
 	} resolve;
-
-	std::unique_ptr<VulkanBuffer> Transfer;
 };
 
 struct SceneVertex
@@ -88,7 +86,6 @@ private:
 	void CreateAtlasImages();
 	void RenderAtlasImage(size_t pageIndex);
 	void ResolveAtlasImage(size_t pageIndex);
-	void DownloadAtlasImage(size_t pageIndex);
 
 	LightmapImage CreateImage(int width, int height);
 

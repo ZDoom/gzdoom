@@ -188,7 +188,7 @@ public:
 
 	void BuildSmoothingGroups()
 	{
-		for (size_t i = 0, count = GetSurfaceCount(); i < count; i++)
+		for (int i = 0, count = GetSurfaceCount(); i < count; i++)
 		{
 			auto surface = GetSurface(i);
 

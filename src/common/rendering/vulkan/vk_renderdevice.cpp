@@ -62,7 +62,6 @@
 #include <zvulkan/vulkancompatibledevice.h>
 #include "engineerrors.h"
 #include "c_dispatch.h"
-#include "accelstructs/halffloat.h"
 
 FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames = -1);
 
@@ -541,51 +540,8 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 	{
 		lastMesh = mesh;
 
-#if 0	// To do: GetLightmap()->Raytrace should output directly to the lightmap texture instead of forcing us to download it to the CPU first
-
 		GetTextureManager()->CreateLightmap(mesh->LMTextureSize, mesh->LMTextureCount);
-		GetCommands()->WaitForCommands(false);
 		GetLightmap()->Raytrace(mesh);
-
-#else	// Temporary version using the old zdray Raytracer code as-is
-
-		Printf("Running VkLightmap.\n");
-
-		GetLightmap()->Raytrace(mesh);
-
-		Printf("Copying data.\n");
-
-		// TODO refactor
-		auto clamp = [](float a, float min, float max) -> float { return a < min ? min : a > max ? max : a; };
-
-		TArray<uint16_t> LMTextureData;
-		LMTextureData.Resize(mesh->LMTextureSize * mesh->LMTextureSize * mesh->LMTextureCount * 3);
-
-		for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
-		{
-			LevelMeshSurface* surface = mesh->GetSurface(i);
-
-			uint16_t* currentTexture = LMTextureData.Data() + (mesh->LMTextureSize * mesh->LMTextureSize * 3) * surface->atlasPageIndex;
-
-			FVector3* colorSamples = surface->texPixels.data();
-			// store results to lightmap texture
-			for (int i = 0; i < surface->texHeight; i++)
-			{
-				for (int j = 0; j < surface->texWidth; j++)
-				{
-					// get texture offset
-					int offs = ((mesh->LMTextureSize * (i + surface->atlasY)) + surface->atlasX) * 3;
-
-					// convert RGB to bytes
-					currentTexture[offs + j * 3 + 0] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].X, 0.0f, 65000.0f));
-					currentTexture[offs + j * 3 + 1] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].Y, 0.0f, 65000.0f));
-					currentTexture[offs + j * 3 + 2] = floatToHalf(clamp(colorSamples[i * surface->texWidth + j].Z, 0.0f, 65000.0f));
-				}
-			}
-		}
-
-		GetTextureManager()->SetLightmap(mesh->LMTextureSize, mesh->LMTextureCount, LMTextureData);
-#endif
 	}
 }
 

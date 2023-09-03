@@ -1,6 +1,7 @@
  
 #include "vk_lightmap.h"
 #include "vulkan/vk_renderdevice.h"
+#include "vulkan/textures/vk_texture.h"
 #include "vulkan/commands/vk_commandbuffer.h"
 #include "vk_raytrace.h"
 #include "zvulkan/vulkanbuilders.h"
@@ -48,13 +49,6 @@ void VkLightmap::Raytrace(LevelMesh* level)
 	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
 	{
 		ResolveAtlasImage(pageIndex);
-	}
-
-	fb->GetCommands()->WaitForCommands(false);
-
-	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
-	{
-		DownloadAtlasImage(pageIndex);
 	}
 }
 
@@ -215,9 +209,9 @@ void VkLightmap::UploadUniforms()
 		.Execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
-void VkLightmap::ResolveAtlasImage(size_t i)
+void VkLightmap::ResolveAtlasImage(size_t pageIndex)
 {
-	LightmapImage& img = atlasImages[i];
+	LightmapImage& img = atlasImages[pageIndex];
 
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
@@ -270,51 +264,42 @@ void VkLightmap::ResolveAtlasImage(size_t i)
 
 	cmdbuffer->endRenderPass();
 
-	PipelineBarrier()
-		.AddImage(img.resolve.Image.get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT)
-		.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-
-	VkBufferImageCopy region = {};
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.layerCount = 1;
-	region.imageExtent.width = atlasImageSize;
-	region.imageExtent.height = atlasImageSize;
-	region.imageExtent.depth = 1;
-	cmdbuffer->copyImageToBuffer(img.resolve.Image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, img.Transfer->buffer, 1, &region);
-}
-
-void VkLightmap::DownloadAtlasImage(size_t pageIndex)
-{
-	struct hvec4
-	{
-		unsigned short x, y, z, w;
-		FVector3 xyz() { return FVector3(halfToFloat(x), halfToFloat(y), halfToFloat(z)); }
-	};
-
-	hvec4* pixels = (hvec4*)atlasImages[pageIndex].Transfer->Map(0, atlasImageSize * atlasImageSize * sizeof(hvec4));
-
+	std::vector<VkImageCopy> regions;
 	for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
 	{
 		LevelMeshSurface* surface = mesh->GetSurface(i);
 		if (surface->lightmapperAtlasPage != pageIndex)
 			continue;
 
-		int lightmapperAtlasX = surface->lightmapperAtlasX;
-		int lightmapperAtlasY = surface->lightmapperAtlasY;
-		int sampleWidth = surface->texWidth;
-		int sampleHeight = surface->texHeight;
-
-		for (int y = 0; y < sampleHeight; y++)
-		{
-			FVector3* dest = &surface->texPixels[y * sampleWidth];
-			hvec4* src = &pixels[lightmapperAtlasX + (lightmapperAtlasY + y) * atlasImageSize];
-			for (int x = 0; x < sampleWidth; x++)
-			{
-				dest[x] = src[x].xyz();
-			}
-		}
+		VkImageCopy region = {};
+		region.srcOffset.x = surface->lightmapperAtlasX;
+		region.srcOffset.y = surface->lightmapperAtlasY;
+		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.srcSubresource.layerCount = 1;
+		region.dstOffset.x = surface->atlasX;
+		region.dstOffset.y = surface->atlasY;
+		region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.dstSubresource.layerCount = 1;
+		region.dstSubresource.baseArrayLayer = surface->atlasPageIndex;
+		region.extent.width = surface->texWidth;
+		region.extent.height = surface->texHeight;
+		region.extent.depth = 1;
+		regions.push_back(region);
 	}
-	atlasImages[pageIndex].Transfer->Unmap();
+
+	if (!regions.empty())
+	{
+		PipelineBarrier()
+			.AddImage(img.resolve.Image.get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT)
+			.AddImage(fb->GetTextureManager()->Lightmap.Image.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, (int)pageIndex, 1)
+			.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		cmdbuffer->copyImage(img.resolve.Image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, fb->GetTextureManager()->Lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (uint32_t)regions.size(), regions.data());
+
+		PipelineBarrier()
+			.AddImage(fb->GetTextureManager()->Lightmap.Image.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, (int)pageIndex, 1)
+			.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	}
 }
 
 FVector2 VkLightmap::ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface)
@@ -587,12 +572,6 @@ LightmapImage VkLightmap::CreateImage(int width, int height)
 		.Size(width, height)
 		.AddAttachment(img.resolve.View.get())
 		.DebugName("LightmapImage.resolve.Framebuffer")
-		.Create(fb->GetDevice());
-
-	img.Transfer = BufferBuilder()
-		.Size(width * height * sizeof(FVector4))
-		.Usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
-		.DebugName("LightmapImage.Transfer")
 		.Create(fb->GetDevice());
 
 	return img;

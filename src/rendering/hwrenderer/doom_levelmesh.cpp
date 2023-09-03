@@ -14,7 +14,7 @@ CCMD(dumplevelmesh)
 {
 	if (level.levelMesh)
 	{
-		level.levelMesh->DumpMesh(FString("levelmesh.obj"));
+		level.levelMesh->DumpMesh(FString("levelmesh.obj"), FString("levelmesh.mtl"));
 		Printf("Level mesh exported.");
 	}
 	else
@@ -624,12 +624,13 @@ bool DoomLevelMesh::IsDegenerate(const FVector3 &v0, const FVector3 &v1, const F
 	return crosslengthsqr <= 1.e-6f;
 }
 
-void DoomLevelMesh::DumpMesh(const FString& filename) const
+void DoomLevelMesh::DumpMesh(const FString& objFilename, const FString& mtlFilename) const
 {
-	auto f = fopen(filename.GetChars(), "w");
+	auto f = fopen(objFilename.GetChars(), "w");
 
 	fprintf(f, "# DoomLevelMesh debug export\n");
-	fprintf(f, "# MeshVertices: %d, MeshElements: %d\n", MeshVertices.Size(), MeshElements.Size());
+	fprintf(f, "# MeshVertices: %u, MeshElements: %u, Surfaces: %u\n", MeshVertices.Size(), MeshElements.Size(), Surfaces.Size());
+	fprintf(f, "mtllib %s\n", mtlFilename.GetChars());
 
 	double scale = 1 / 10.0;
 
@@ -645,15 +646,90 @@ void DoomLevelMesh::DumpMesh(const FString& filename) const
 		}
 	}
 
-	const auto s = MeshElements.Size();
-	for (unsigned i = 0; i + 2 < s; i += 3)
+	auto name = [](LevelMeshSurfaceType type) -> const char* {
+		switch (type)
+		{
+		case ST_CEILING:
+			return "ceiling";
+		case ST_FLOOR:
+			return "floor";
+		case ST_LOWERSIDE:
+			return "lowerside";
+		case ST_UPPERSIDE:
+			return "upperside";
+		case ST_MIDDLESIDE:
+			return "middleside";
+		case ST_UNKNOWN:
+			return "unknown";
+		default:
+			break;
+		}
+		return "error";
+	};
+
+
+	uint32_t lastSurfaceIndex = -1;
+
+
+	bool useErrorMaterial = false;
+	int highestUsedAtlasPage = -1;
+
+	for (unsigned i = 0, count = MeshElements.Size(); i + 2 < count; i += 3)
 	{
+		auto index = MeshSurfaceIndexes[i / 3];
+
+		if(index != lastSurfaceIndex)
+		{
+			lastSurfaceIndex = index;
+
+			if (unsigned(index) >= Surfaces.Size())
+			{
+				fprintf(f, "o Surface[%d] (bad index)\n", index);
+				fprintf(f, "usemtl error\n");
+
+				useErrorMaterial = true;
+			}
+			else
+			{
+				const auto& surface = Surfaces[index];
+				fprintf(f, "o Surface[%d] %s %d%s\n", index, name(surface.Type), surface.typeIndex, surface.bSky ? " sky" : "");
+				fprintf(f, "usemtl lightmap%d\n", surface.atlasPageIndex);
+
+				if (surface.atlasPageIndex > highestUsedAtlasPage)
+				{
+					highestUsedAtlasPage = surface.atlasPageIndex;
+				}
+			}
+		}
+
 		// fprintf(f, "f %d %d %d\n", MeshElements[i] + 1, MeshElements[i + 1] + 1, MeshElements[i + 2] + 1);
 		fprintf(f, "f %d/%d %d/%d %d/%d\n",
 			MeshElements[i + 0] + 1, MeshElements[i + 0] + 1,
 			MeshElements[i + 1] + 1, MeshElements[i + 1] + 1,
 			MeshElements[i + 2] + 1, MeshElements[i + 2] + 1);
 
+	}
+
+	fclose(f);
+
+	// material
+
+	f = fopen(mtlFilename.GetChars(), "w");
+
+	fprintf(f, "# DoomLevelMesh debug export\n");
+
+	if (useErrorMaterial)
+	{
+		fprintf(f, "# Surface indices that are referenced, but do not exists in the 'Surface' array\n");
+		fprintf(f, "newmtl error\nKa 1 0 0\nKd 1 0 0\nKs 1 0 0\n");
+	}
+
+	for (int page = 0; page <= highestUsedAtlasPage; ++page)
+	{
+		fprintf(f, "newmtl lightmap%d\n", page);
+		fprintf(f, "Ka 1 1 1\nKd 1 1 1\nKs 0 0 0\n");
+		fprintf(f, "map_Ka lightmap%d.png\n", page);
+		fprintf(f, "map_Kd lightmap%d.png\n", page);
 	}
 
 	fclose(f);

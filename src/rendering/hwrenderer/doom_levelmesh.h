@@ -48,7 +48,7 @@ public:
 
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
 
-	void DumpMesh(const FString& filename) const;
+	void DumpMesh(const FString& objFilename, const FString& mtlFilename) const;
 
 	void SetupLightmapUvs();
 

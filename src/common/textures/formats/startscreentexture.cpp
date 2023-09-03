@@ -60,7 +60,7 @@ public:
 		Height = srcdata.GetHeight();
 		bUseGamePalette = false;
 	}
-	int CopyPixels(FBitmap* bmp, int conversion, int frame = 0)
+	int CopyPixels(FBitmap* bmp, int conversion, int frame = 0) override
 	{
 		bmp->Blit(0, 0, info);
 		return 0;

@@ -390,7 +390,7 @@ public:
 		Y = y;
 	}
 
-	int CopyPixels(FBitmap* dest, int conversion)
+	int CopyPixels(FBitmap* dest, int conversion, int frame = 0) override
 	{
 		auto& pic = sheetBitmaps[baseSheet];
 		dest->CopyPixelDataRGB(0, 0, pic.GetPixels() + 4 * (X + pic.GetWidth() * Y), Width, Height, 4, pic.GetWidth() * 4, 0, CF_BGRA);

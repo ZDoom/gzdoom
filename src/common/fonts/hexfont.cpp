@@ -110,7 +110,7 @@ public:
 	FHexFontChar(uint8_t *sourcedata, int swidth, int width, int height);
 
 	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
-	int CopyPixels(FBitmap* bmp, int conversion, int frame = 0);
+	int CopyPixels(FBitmap* bmp, int conversion, int frame = 0) override;
 
 protected:
 	int SourceWidth;
@@ -191,7 +191,7 @@ public:
 	FHexFontChar2(uint8_t *sourcedata, int swidth, int width, int height);
 
 	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
-	int CopyPixels(FBitmap* bmp, int conversion, int frame = 0);
+	int CopyPixels(FBitmap* bmp, int conversion, int frame = 0) override;
 };
 
 

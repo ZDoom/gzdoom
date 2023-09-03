@@ -67,6 +67,13 @@ struct TGAHeader
 	uint8_t		img_desc;
 };
 
+struct TGAFooter
+{
+	uint32_t 	ext_offset;
+	uint32_t 	dev_area_offset;
+	char		signature[18]; // Must contain "TRUEVISION-XFILE." followed by a NUL character.
+};
+
 #pragma pack()
 
 //==========================================================================
@@ -78,7 +85,7 @@ struct TGAHeader
 class FTGATexture : public FImageSource
 {
 public:
-	FTGATexture (int lumpnum, TGAHeader *);
+	FTGATexture (int lumpnum, TGAHeader *, int xoff, int yoff);
 
 	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 
@@ -96,6 +103,8 @@ protected:
 FImageSource *TGAImage_TryCreate(FileReader & file, int lumpnum)
 {
 	TGAHeader hdr;
+	int xoffset = 0;
+	int yoffset = 0;
 
 	if (file.GetLength() < (long)sizeof(hdr)) return NULL;
 
@@ -118,7 +127,26 @@ FImageSource *TGAImage_TryCreate(FileReader & file, int lumpnum)
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
 
-	return new FTGATexture(lumpnum, &hdr);
+	// Seek to the end of the file to read the footer.
+	TGAFooter ftr;
+	file.Seek(file.GetLength() - sizeof(ftr), FileReader::SeekSet);
+	file.Read((uint8_t*)&ftr, sizeof(ftr));
+	
+	if (!memcmp(ftr.signature, (const void*)"TRUEVISION-XFILE.", sizeof("TRUEVISION-XFILE.")))
+	{
+		if (file.Seek(ftr.dev_area_offset, FileReader::SeekSet) != -1)
+		{
+			// Developer area signature is "grAbOffset", followed by 2 little-endian signed 16-bit integers.
+			auto signature = file.Read(sizeof("grAbOffset") - 1);
+			if (signature.size() == (sizeof("grAbOffset") - 1) && !memcmp(signature.data(), "grAbOffset", sizeof("grAbOffset") - 1))
+			{
+				xoffset = file.ReadInt16();
+				yoffset = file.ReadInt16();
+			}
+		}
+	}
+
+	return new FTGATexture(lumpnum, &hdr, xoffset, yoffset);
 }
 
 //==========================================================================
@@ -127,11 +155,13 @@ FImageSource *TGAImage_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
+FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr, int xoff, int yoff)
 : FImageSource(lumpnum)
 {
 	Width = hdr->width;
 	Height = hdr->height;
+	LeftOffset = xoff;
+	TopOffset = yoff;
 	// Alpha channel is used only for 32 bit RGBA and paletted images with RGBA palettes.
 	bMasked = (hdr->img_desc&15)==8 && (hdr->bpp==32 || (hdr->img_type==1 && hdr->cm_size==32));
 }

@@ -85,6 +85,21 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
 }
 
+void DoomLevelMesh::UpdateLightLists()
+{
+	for (auto& surface : Surfaces)
+	{
+		if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
+		{
+			CreateLightList(&surface, surface.Subsector->section->lighthead, surface.Subsector->sector->PortalGroup);
+		}
+		else
+		{
+			CreateLightList(&surface, surface.Side->lighthead, surface.Side->sector->PortalGroup);
+		}
+	}
+}
+
 void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 {
 	// Allocate room for all surfaces
@@ -119,7 +134,6 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 	}
 
 	// Copy and build properties
-	size_t index = 0;
 	for (auto& surface : Surfaces)
 	{
 		surface.TexCoords = (float*)&LightmapUvs[surface.startUvIndex];
@@ -160,8 +174,6 @@ void DoomLevelMesh::SetSubsectorLightmap(DoomLevelMeshSurface* surface)
 			}
 		}
 	}
-
-	CreateLightList(surface, surface->Subsector->section->lighthead, surface->Subsector->sector->PortalGroup);
 }
 
 void DoomLevelMesh::SetSideLightmap(DoomLevelMeshSurface* surface)
@@ -193,12 +205,13 @@ void DoomLevelMesh::SetSideLightmap(DoomLevelMeshSurface* surface)
 			}
 		}
 	}
-
-	CreateLightList(surface, surface->Side->lighthead, surface->Side->sector->PortalGroup);
 }
 
 void DoomLevelMesh::CreateLightList(DoomLevelMeshSurface* surface, FLightNode* node, int portalgroup)
 {
+	surface->LightListBuffer.clear();
+	surface->LightList.clear();
+
 	while (node)
 	{
 		FDynamicLight* light = node->lightsource;
@@ -206,7 +219,7 @@ void DoomLevelMesh::CreateLightList(DoomLevelMeshSurface* surface, FLightNode* n
 		DVector3 pos = light->PosRelative(portalgroup);
 
 		LevelMeshLight meshlight;
-		meshlight.Origin = { (float)pos.X, (float)pos.Z, (float)pos.Y };
+		meshlight.Origin = { (float)pos.X, (float)pos.Y, (float)pos.Z };
 		meshlight.RelativeOrigin = meshlight.Origin; // ?? what is the difference between this and Origin?
 		meshlight.Radius = (float)light->GetRadius();
 		meshlight.Intensity = 1.0f;

@@ -540,6 +540,8 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 	{
 		lastMesh = mesh;
 
+		mesh->UpdateLightLists();
+
 		GetTextureManager()->CreateLightmap(mesh->LMTextureSize, mesh->LMTextureCount);
 		GetLightmap()->Raytrace(mesh);
 	}

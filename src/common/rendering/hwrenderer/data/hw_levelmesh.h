@@ -169,6 +169,8 @@ public:
 	virtual LevelMeshSurface* GetSurface(int index) { return nullptr; }
 	virtual int GetSurfaceCount() { return 0; }
 
+	virtual void UpdateLightLists() { }
+
 	TArray<LevelMeshSmoothingGroup> SmoothingGroups; // TODO fill
 	TArray<LevelMeshPortal> Portals; // TODO fill
 

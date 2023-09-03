@@ -37,6 +37,8 @@ public:
 		return Surfaces[surfaceIndex].bSky;
 	}
 
+	void UpdateLightLists() override;
+
 	LevelMeshSurface* GetSurface(int index) override { return &Surfaces[index]; }
 	int GetSurfaceCount() override { return Surfaces.Size(); }
 

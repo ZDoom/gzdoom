@@ -34,12 +34,9 @@ void VkLightmap::Raytrace(LevelMesh* level)
 {
 	mesh = level;
 
-	UpdateAccelStructDescriptors(); // To do: we only need to do this if the accel struct changes.
-
+	UpdateAccelStructDescriptors();
 	CreateAtlasImages();
-
 	UploadUniforms();
-
 
 	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
 	{
@@ -50,6 +47,21 @@ void VkLightmap::Raytrace(LevelMesh* level)
 	{
 		ResolveAtlasImage(pageIndex);
 	}
+
+	for (LightmapImage& image : atlasImages)
+	{
+		fb->GetCommands()->TransferDeleteList->Add(std::move(image.raytrace.Image));
+		fb->GetCommands()->TransferDeleteList->Add(std::move(image.raytrace.View));
+		fb->GetCommands()->TransferDeleteList->Add(std::move(image.raytrace.Framebuffer));
+		fb->GetCommands()->TransferDeleteList->Add(std::move(image.resolve.Image));
+		fb->GetCommands()->TransferDeleteList->Add(std::move(image.resolve.View));
+		fb->GetCommands()->TransferDeleteList->Add(std::move(image.resolve.Framebuffer));
+	}
+	atlasImages.clear();
+
+	for (auto& set : resolve.descriptorSets)
+		fb->GetCommands()->TransferDeleteList->Add(std::move(set));
+	resolve.descriptorSets.clear();
 }
 
 void VkLightmap::RenderAtlasImage(size_t pageIndex)

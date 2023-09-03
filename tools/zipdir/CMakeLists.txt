@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.1.0 )
+cmake_minimum_required( VERSION 3.16 )
 
 if( NOT CMAKE_CROSSCOMPILING )
 	include_directories( SYSTEM "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" )

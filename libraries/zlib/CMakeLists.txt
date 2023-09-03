@@ -1,4 +1,3 @@
-cmake_minimum_required( VERSION 3.1.0 )
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 make_release_only()

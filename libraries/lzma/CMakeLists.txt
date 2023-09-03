@@ -1,5 +1,3 @@
-cmake_minimum_required( VERSION 3.1.0 )
-
 make_release_only()
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_PPMD_SUPPPORT" )

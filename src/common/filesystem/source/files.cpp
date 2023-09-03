@@ -481,11 +481,11 @@ size_t FileWriter::Printf(const char *fmt, ...)
 	va_start(arglist, fmt);
 	auto n = vsnprintf(c, 300, fmt, arglist);
 	std::string buf;
-	buf.resize(n);
+	buf.resize(n + 1);
 	va_start(arglist, fmt);
-	vsnprintf(&buf.front(), n, fmt, arglist);
+	vsnprintf(&buf.front(), n + 1, fmt, arglist);
 	va_end(arglist);
-	return Write(buf.c_str(), n);
+	return Write(buf.c_str(), strlen(buf.c_str()));	// Make sure we write no null bytes.
 }
 
 size_t BufferWriter::Write(const void *buffer, size_t len)

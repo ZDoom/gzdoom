@@ -4,11 +4,8 @@
 #include "g_levellocals.h"
 #include "texturemanager.h"
 #include "playsim/p_lnspec.h"
-
-
 #include "c_dispatch.h"
 #include "g_levellocals.h"
-
 #include "common/rendering/vulkan/accelstructs/vk_lightmap.h"
 #include <vulkan/accelstructs/halffloat.h>
 
@@ -683,31 +680,6 @@ void DoomLevelMesh::FinishSurface(int lightmapTextureWidth, int lightmapTextureH
 	
 	surface.atlasX = x;
 	surface.atlasY = y;
-
-#if 0
-	while (result.pageIndex >= textures.size())
-	{
-		textures.push_back(std::make_unique<LightmapTexture>(textureWidth, textureHeight));
-	}
-
-	uint16_t* currentTexture = textures[surface->atlasPageIndex]->Pixels();
-
-	FVector3* colorSamples = surface->texPixels.data();
-	// store results to lightmap texture
-	for (int i = 0; i < sampleHeight; i++)
-	{
-		for (int j = 0; j < sampleWidth; j++)
-		{
-			// get texture offset
-			int offs = ((textureWidth * (i + surface->atlasY)) + surface->atlasX) * 3;
-
-			// convert RGB to bytes
-			currentTexture[offs + j * 3 + 0] = floatToHalf(clamp(colorSamples[i * sampleWidth + j].x, 0.0f, 65000.0f));
-			currentTexture[offs + j * 3 + 1] = floatToHalf(clamp(colorSamples[i * sampleWidth + j].y, 0.0f, 65000.0f));
-			currentTexture[offs + j * 3 + 2] = floatToHalf(clamp(colorSamples[i * sampleWidth + j].z, 0.0f, 65000.0f));
-		}
-	}
-#endif
 }
 
 BBox DoomLevelMesh::GetBoundsFromSurface(const LevelMeshSurface& surface) const

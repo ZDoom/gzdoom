@@ -36,9 +36,8 @@
 #define STB_IMAGE_IMPLEMENTATION    
 #define STBI_NO_STDIO
 // Undefine formats we do not want to support here.
-#define STBI_NO_JPEG
 //#define STBI_NO_PNG we need PNG for 16 bit channel images. Regular ones still use our own, more flexible decoder.
-#define STBI_NO_TGA
+#define STBI_NO_TGA // we could use that but our own loader has better palette support.
 #define STBI_NO_PSD
 #define STBI_NO_HDR
 #define STBI_NO_PNM

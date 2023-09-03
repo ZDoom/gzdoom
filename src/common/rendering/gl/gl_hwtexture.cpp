@@ -45,6 +45,7 @@
 #include "gl_renderstate.h"
 #include "gl_samplers.h"
 #include "gl_hwtexture.h"
+#include "printf.h"
 
 namespace OpenGLRenderer
 {

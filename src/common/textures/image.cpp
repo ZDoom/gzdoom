@@ -325,7 +325,6 @@ struct TexCreateInfo
 
 FImageSource *IMGZImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PNGImage_TryCreate(FileReader &, int lumpnum);
-FImageSource *JPEGImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *DDSImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PCXImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *TGAImage_TryCreate(FileReader &, int lumpnum);
@@ -348,7 +347,6 @@ FImageSource * FImageSource::GetImage(int lumpnum, bool isflat)
 	static TexCreateInfo CreateInfo[] = {
 		{ IMGZImage_TryCreate,			false },
 		{ PNGImage_TryCreate,			false },
-		{ JPEGImage_TryCreate,			false },
 		{ DDSImage_TryCreate,			false },
 		{ PCXImage_TryCreate,			false },
 		{ StbImage_TryCreate,			false },

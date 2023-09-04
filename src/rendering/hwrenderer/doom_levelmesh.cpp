@@ -509,7 +509,7 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 	surf.Type = ST_FLOOR;
 	surf.typeIndex = typeIndex;
 	surf.ControlSector = is3DFloor ? sector : nullptr;
-	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, (float)plane.D);
+	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, -(float)plane.D);
 
 	Surfaces.Push(surf);
 }
@@ -548,7 +548,7 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub
 	surf.Type = ST_CEILING;
 	surf.typeIndex = typeIndex;
 	surf.ControlSector = is3DFloor ? sector : nullptr;
-	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, (float)plane.D);
+	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, -(float)plane.D);
 
 	Surfaces.Push(surf);
 }

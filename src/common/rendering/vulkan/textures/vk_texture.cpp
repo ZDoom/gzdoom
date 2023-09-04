@@ -189,8 +189,14 @@ void VkTextureManager::CreateLightmap()
 	SetLightmap(1, 1, data);
 }
 
-void VkTextureManager::CreateLightmap(int LMTextureSize, int LMTextureCount)
+void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCount)
 {
+	if (LMTextureSize == newLMTextureSize && LMTextureCount == newLMTextureCount)
+		return;
+
+	LMTextureSize = newLMTextureSize;
+	LMTextureCount = newLMTextureCount;
+
 	int w = LMTextureSize;
 	int h = LMTextureSize;
 	int count = LMTextureCount;

@@ -40,6 +40,8 @@ public:
 
 	VkTextureImage Shadowmap;
 	VkTextureImage Lightmap;
+	int LMTextureSize = 0;
+	int LMTextureCount = 0;
 
 private:
 	void CreateNullTexture();

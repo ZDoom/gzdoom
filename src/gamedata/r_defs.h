@@ -657,6 +657,7 @@ struct sector_t
 		float GlowHeight;
 		FTextureID Texture;
 		TextureManipulation TextureFx;
+		uint16_t LightmapSampleDistance;
 	};
 
 
@@ -1204,6 +1205,7 @@ struct side_t
 		TextureManipulation TextureFx;
 		PalEntry SpecialColors[2];
 		PalEntry AdditiveColor;
+		uint16_t LightmapSampleDistance;
 
 
 		void InitFrom(const part &other)
@@ -1490,6 +1492,8 @@ struct line_t : public linebase_t
 	int			health;		// [ZZ] for destructible geometry (0 = no special behavior)
 	int			healthgroup; // [ZZ] this is the "destructible object" id
 	int			linenum;
+
+	uint16_t	LightmapSampleDistance[3]; // Used only as storage during map loading.
 
 	void setAlpha(double a)
 	{

@@ -2938,6 +2938,42 @@ void MapLoader::CalcIndices()
 //
 //==========================================================================
 
+void MapLoader::InitLevelMesh()
+{
+	Level->SunColor = FVector3(1.f, 1.f, 1.f);
+	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
+
+	// Propagate sample distance where it isn't yet set
+	for (auto& line : Level->lines)
+	{
+		if (line.LightmapSampleDistance[0] || line.LightmapSampleDistance[1] || line.LightmapSampleDistance[2])
+		{
+			for (int i = 0; i < 2; ++i)
+			{
+				if (auto sidedef = line.sidedef[i])
+				{
+					for (int j = 0; j < 3; ++j)
+					{
+						if (!sidedef->textures[j].LightmapSampleDistance)
+						{
+							sidedef->textures[j].LightmapSampleDistance = line.LightmapSampleDistance[j];
+						}
+					}
+				}
+			}
+		}
+	}
+
+	Level->levelMesh = new DoomLevelMesh(*Level);
+	Level->lightmaps = true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 {
 	const int *oldvertextable  = nullptr;
@@ -3204,12 +3240,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	SpawnThings(position);
 
-	// TODO read from ZDRayInfoThing
-	Level->SunColor = FVector3(1.f, 1.f, 1.f);
-	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
-
-	Level->levelMesh = new DoomLevelMesh(*Level);
-	Level->lightmaps = true;
+	InitLevelMesh();
 
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{

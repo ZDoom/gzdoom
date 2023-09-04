@@ -178,6 +178,7 @@ public:
 
 	FVector3 SunDirection = FVector3(0.0f, 0.0f, -1.0f);
 	FVector3 SunColor = FVector3(0.0f, 0.0f, 0.0f);
+	uint16_t LightmapSampleDistance = 16;
 
 	bool Trace(const FVector3& start, FVector3 direction, float maxDist)
 	{

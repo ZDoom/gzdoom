@@ -754,9 +754,31 @@ public:
 				break;
 
 			case NAME_lm_suncolor:
+				CHECK_N(Zd | Zdt)
+				if (CheckInt(key) < 0 || CheckInt(key) > 0xFFFFFF)
+				{
+					DPrintf(DMSG_WARNING, "Sun Color '%x' is out of range %s\n", CheckInt(key));
+				}
+				else
+				{
+					auto n = uint32_t(CheckInt(key));
+					Level->SunColor = FVector3(float((n >> 16) & 0xFF) / 0xFF, float((n >> 8) & 0xFF) / 0xFF, float(n & 0xFF) / 0xFF);
+				}
+				break;
 			case NAME_lm_sampledistance:
 				CHECK_N(Zd | Zdt)
-					break;
+				if (CheckInt(key) >= 0 && CheckInt(key) <= 0xFFFF)
+				{
+					Level->LightmapSampleDistance = CheckInt(key);
+				}
+				else
+				{
+					DPrintf(DMSG_WARNING, "Can't set the global lm_sampledistance to %s\n", key.GetChars());
+				}
+				break;
+			case NAME_lm_gridsize:
+				CHECK_N(Zd | Zdt)
+				break;
 
 			default:
 				CHECK_N(Zd | Zdt)
@@ -804,6 +826,15 @@ public:
 		{
 			th->special = 0;
 			memset(th->args, 0, sizeof (th->args));
+		}
+
+		if (th->EdNum == 9890) // ZDRAY INFO thing
+		{
+			FAngle angle = FAngle::fromDeg(float(th->angle));
+			FAngle pitch = FAngle::fromDeg(float(th->pitch));
+
+			auto pc = pitch.Cos();
+			Level->SunDirection = -FVector3 { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() }; // [RaveYard]: is there a dedicated function for this?
 		}
 	}
 

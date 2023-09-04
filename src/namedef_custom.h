@@ -857,5 +857,6 @@ xx(lm_sampledist_floor)
 xx(lm_sampledist_ceiling)
 xx(lm_suncolor)
 xx(lm_sampledistance)
+xx(lm_gridsize)
 
 xx(Corona)

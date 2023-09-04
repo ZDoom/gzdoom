@@ -458,6 +458,7 @@ public:
 	TArray<DoomLevelMeshSurface*> LMSurfaces;
 	FVector3 SunDirection;
 	FVector3 SunColor;
+	uint16_t LightmapSampleDistance;
 
 	// Portal information.
 	FDisplacementTable Displacements;

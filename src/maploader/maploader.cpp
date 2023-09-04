@@ -2940,9 +2940,6 @@ void MapLoader::CalcIndices()
 
 void MapLoader::InitLevelMesh()
 {
-	Level->SunColor = FVector3(1.f, 1.f, 1.f);
-	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
-
 	// Propagate sample distance where it isn't yet set
 	for (auto& line : Level->lines)
 	{
@@ -2977,6 +2974,11 @@ void MapLoader::InitLevelMesh()
 void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 {
 	const int *oldvertextable  = nullptr;
+
+	// Reset defaults for lightmapping
+	Level->SunColor = FVector3(1.f, 1.f, 1.f);
+	Level->SunDirection = FVector3(0.45f, 0.3f, 0.9f);
+	Level->LightmapSampleDistance = 16;
 
 	// note: most of this ordering is important 
 	ForceNodeBuild = gennodes;

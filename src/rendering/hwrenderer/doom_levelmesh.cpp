@@ -27,6 +27,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 {
 	SunColor = doomMap.SunColor; // TODO keep only one copy?
 	SunDirection = doomMap.SunDirection;
+	LightmapSampleDistance = doomMap.LightmapSampleDistance;
 
 	for (unsigned int i = 0; i < doomMap.sides.Size(); i++)
 	{
@@ -890,7 +891,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	if (surface.sampleDimension <= 0)
 	{
-		surface.sampleDimension = 16;
+		surface.sampleDimension = LightmapSampleDistance;
 	}
 	//surface->sampleDimension = Math::RoundPowerOfTwo(surface->sampleDimension);
 

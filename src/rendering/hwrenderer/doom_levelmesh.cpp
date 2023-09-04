@@ -893,7 +893,17 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	{
 		surface.sampleDimension = LightmapSampleDistance;
 	}
-	//surface->sampleDimension = Math::RoundPowerOfTwo(surface->sampleDimension);
+
+	{
+		// Round to nearest power of two
+		uint32_t n = uint16_t(surface.sampleDimension);
+		n |= n >> 1;
+		n |= n >> 2;
+		n |= n >> 4;
+		n |= n >> 8;
+		++n;
+		surface.sampleDimension = uint16_t(n) ? uint16_t(n) : uint16_t(0xFFFF);
+	}
 
 	// round off dimensions
 	for (int i = 0; i < 3; i++)

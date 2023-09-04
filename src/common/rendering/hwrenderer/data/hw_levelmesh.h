@@ -59,7 +59,7 @@ struct LevelMeshSurface
 	int sectorGroup = 0;
 
 	BBox bounds;
-	int sampleDimension = 0;
+	uint16_t sampleDimension = 0;
 
 	// Lightmap world coordinates for the texture
 	FVector3 worldOrigin = { 0.f, 0.f, 0.f };

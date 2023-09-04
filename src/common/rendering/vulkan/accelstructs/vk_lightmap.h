@@ -45,6 +45,7 @@ struct LightmapImage
 		std::unique_ptr<VulkanImage> Image;
 		std::unique_ptr<VulkanImageView> View;
 		std::unique_ptr<VulkanFramebuffer> Framebuffer;
+		std::unique_ptr<VulkanDescriptorSet> DescriptorSet;
 	} resolve;
 };
 
@@ -159,7 +160,6 @@ private:
 		std::unique_ptr<VulkanPipeline> pipeline;
 		std::unique_ptr<VulkanRenderPass> renderPass;
 		std::unique_ptr<VulkanDescriptorPool> descriptorPool;
-		std::vector<std::unique_ptr<VulkanDescriptorSet>> descriptorSets;
 		std::unique_ptr<VulkanSampler> sampler;
 	} resolve;
 

@@ -32,10 +32,15 @@ VkLightmap::~VkLightmap()
 
 void VkLightmap::Raytrace(LevelMesh* level)
 {
+	bool newLevel = (mesh != level);
 	mesh = level;
 
-	UpdateAccelStructDescriptors();
-	CreateAtlasImages();
+	if (newLevel)
+	{
+		UpdateAccelStructDescriptors();
+		CreateAtlasImages();
+	}
+
 	UploadUniforms();
 
 	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
@@ -47,21 +52,6 @@ void VkLightmap::Raytrace(LevelMesh* level)
 	{
 		ResolveAtlasImage(pageIndex);
 	}
-
-	for (LightmapImage& image : atlasImages)
-	{
-		fb->GetCommands()->TransferDeleteList->Add(std::move(image.raytrace.Image));
-		fb->GetCommands()->TransferDeleteList->Add(std::move(image.raytrace.View));
-		fb->GetCommands()->TransferDeleteList->Add(std::move(image.raytrace.Framebuffer));
-		fb->GetCommands()->TransferDeleteList->Add(std::move(image.resolve.Image));
-		fb->GetCommands()->TransferDeleteList->Add(std::move(image.resolve.View));
-		fb->GetCommands()->TransferDeleteList->Add(std::move(image.resolve.Framebuffer));
-	}
-	atlasImages.clear();
-
-	for (auto& set : resolve.descriptorSets)
-		fb->GetCommands()->TransferDeleteList->Add(std::move(set));
-	resolve.descriptorSets.clear();
 }
 
 void VkLightmap::RenderAtlasImage(size_t pageIndex)
@@ -197,7 +187,7 @@ void VkLightmap::CreateAtlasImages()
 		surface->lightmapperAtlasPage = (int)result.pageIndex;
 	}
 
-	for (size_t pageIndex = 0; pageIndex < packer.getNumPages(); pageIndex++)
+	for (size_t pageIndex = atlasImages.size(); pageIndex < packer.getNumPages(); pageIndex++)
 	{
 		atlasImages.push_back(CreateImage(atlasImageSize, atlasImageSize));
 	}
@@ -240,14 +230,7 @@ void VkLightmap::ResolveAtlasImage(size_t pageIndex)
 	VkDeviceSize offset = 0;
 	cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, resolve.pipeline.get());
-
-	auto descriptorSet = resolve.descriptorPool->allocate(resolve.descriptorSetLayout.get());
-	descriptorSet->SetDebugName("resolve.descriptorSet");
-	WriteDescriptors()
-		.AddCombinedImageSampler(descriptorSet.get(), 0, img.raytrace.View.get(), resolve.sampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-		.Execute(fb->GetDevice());
-	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, resolve.pipelineLayout.get(), 0, descriptorSet.get());
-	resolve.descriptorSets.push_back(std::move(descriptorSet));
+	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, resolve.pipelineLayout.get(), 0, img.resolve.DescriptorSet.get());
 
 	VkViewport viewport = {};
 	viewport.maxDepth = 1;
@@ -585,6 +568,13 @@ LightmapImage VkLightmap::CreateImage(int width, int height)
 		.AddAttachment(img.resolve.View.get())
 		.DebugName("LightmapImage.resolve.Framebuffer")
 		.Create(fb->GetDevice());
+
+	img.resolve.DescriptorSet = resolve.descriptorPool->allocate(resolve.descriptorSetLayout.get());
+	img.resolve.DescriptorSet->SetDebugName("resolve.descriptorSet");
+
+	WriteDescriptors()
+		.AddCombinedImageSampler(img.resolve.DescriptorSet.get(), 0, img.raytrace.View.get(), resolve.sampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		.Execute(fb->GetDevice());
 
 	return img;
 }

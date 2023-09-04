@@ -79,7 +79,6 @@ struct LevelMeshSurface
 	//
 	TArray<FVector3> verts;
 	TArray<FVector2> uvs;
-	FVector3 boundsMin, boundsMax;
 
 	// Touching light sources
 	std::vector<LevelMeshLight*> LightList;

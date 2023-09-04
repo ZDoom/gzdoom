@@ -102,8 +102,8 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 		// Paint all surfaces part of the smoothing group into the surface
 		for (LevelMeshSurface* surface : mesh->SmoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
 		{
-			FVector2 minUV = ToUV(surface->boundsMin, targetSurface);
-			FVector2 maxUV = ToUV(surface->boundsMax, targetSurface);
+			FVector2 minUV = ToUV(surface->bounds.min, targetSurface);
+			FVector2 maxUV = ToUV(surface->bounds.max, targetSurface);
 			if (surface != targetSurface && (maxUV.X < 0.0f || maxUV.Y < 0.0f || minUV.X > 1.0f || minUV.Y > 1.0f))
 				continue; // Bounding box not visible
 

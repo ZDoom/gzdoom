@@ -68,6 +68,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			.RenderPass(raytrace.renderPass.get())
 			.RenderArea(0, 0, atlasImageSize, atlasImageSize)
 			.Framebuffer(img.raytrace.Framebuffer.get())
+			.AddClearColor(0.0f, 0.0f, 0.0f, 0.0f)
 			.Execute(cmdbuffer);
 
 		VkDeviceSize offset = 0;
@@ -504,7 +505,7 @@ void VkLightmap::CreateRaytracePipeline()
 		.AddAttachment(
 			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VK_SAMPLE_COUNT_4_BIT,
-			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			VK_ATTACHMENT_LOAD_OP_CLEAR,
 			VK_ATTACHMENT_STORE_OP_STORE,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)

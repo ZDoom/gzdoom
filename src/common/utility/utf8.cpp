@@ -413,7 +413,7 @@ int getAlternative(int code)
 		case 0x41e: return 'O';
 		case 0x420: return 'P';
 		case 0x421: return 'C';
-		case 0x423: return 'T';
+		case 0x422: return 'T';
 		case 0x425: return 'X';
 		case 0x430: return 'a';
 		case 0x435: return 'e';

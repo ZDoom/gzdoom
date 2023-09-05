@@ -202,20 +202,26 @@ static size_t FS_GetFileSize(findstate_t* handle, const char* pathname)
 std::wstring toWide(const char* str)
 {
 	int len = (int)strlen(str);
-	int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, len, nullptr, 0);
 	std::wstring wide;
-	wide.resize(size_needed);
-	MultiByteToWideChar(CP_UTF8, 0, str, len, &wide.front(), size_needed);
+	if (len > 0)
+	{
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, len, nullptr, 0);
+		wide.resize(size_needed);
+		MultiByteToWideChar(CP_UTF8, 0, str, len, &wide.front(), size_needed);
+	}
 	return wide;
 }
 
 static std::string toUtf8(const wchar_t* str)
 {
 	auto len = wcslen(str);
-	int size_needed = WideCharToMultiByte(CP_UTF8, 0, str, (int)len, nullptr, 0, nullptr, nullptr);
 	std::string utf8;
-	utf8.resize(size_needed);
-	WideCharToMultiByte(CP_UTF8, 0, str, (int)len, &utf8.front(), size_needed, nullptr, nullptr);
+	if (len > 0)
+	{
+		int size_needed = WideCharToMultiByte(CP_UTF8, 0, str, (int)len, nullptr, 0, nullptr, nullptr);
+		utf8.resize(size_needed);
+		WideCharToMultiByte(CP_UTF8, 0, str, (int)len, &utf8.front(), size_needed, nullptr, nullptr);
+	}
 	return utf8;
 }
 

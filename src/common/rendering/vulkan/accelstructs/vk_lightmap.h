@@ -158,7 +158,8 @@ private:
 		std::unique_ptr<VulkanDescriptorSetLayout> descriptorSetLayout1;
 		std::unique_ptr<VulkanPipelineLayout> pipelineLayout;
 		std::unique_ptr<VulkanPipeline> pipeline;
-		std::unique_ptr<VulkanRenderPass> renderPass;
+		std::unique_ptr<VulkanRenderPass> renderPassBegin;
+		std::unique_ptr<VulkanRenderPass> renderPassContinue;
 		std::unique_ptr<VulkanDescriptorPool> descriptorPool0;
 		std::unique_ptr<VulkanDescriptorPool> descriptorPool1;
 		std::unique_ptr<VulkanDescriptorSet> descriptorSet0;

@@ -61,11 +61,12 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 {
 	LightmapImage& img = atlasImages[pageIndex];
 
-	const auto beginPass = [&]() {
+	// Begin with clear
+	{
 		auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
 		RenderPassBegin()
-			.RenderPass(raytrace.renderPass.get())
+			.RenderPass(raytrace.renderPassBegin.get())
 			.RenderArea(0, 0, atlasImageSize, atlasImageSize)
 			.Framebuffer(img.raytrace.Framebuffer.get())
 			.AddClearColor(0.0f, 0.0f, 0.0f, 0.0f)
@@ -76,8 +77,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 		cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipeline.get());
 		cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 0, raytrace.descriptorSet0.get());
 		cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 1, raytrace.descriptorSet1.get());
-		};
-	beginPass();
+	}
 
 	for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
 	{
@@ -113,9 +113,23 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 				vertices.Pos = 0;
 				firstLight = 0;
 				firstVertex = 0;
-				beginPass();
 
-				fb->GetCommands()->GetTransferCommands()->setViewport(0, 1, &viewport);
+				// Begin without clear
+				auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
+
+				RenderPassBegin()
+					.RenderPass(raytrace.renderPassContinue.get())
+					.RenderArea(0, 0, atlasImageSize, atlasImageSize)
+					.Framebuffer(img.raytrace.Framebuffer.get())
+					.Execute(cmdbuffer);
+
+				VkDeviceSize offset = 0;
+				cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
+				cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipeline.get());
+				cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 0, raytrace.descriptorSet0.get());
+				cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 1, raytrace.descriptorSet1.get());
+
+				cmdbuffer->setViewport(0, 1, &viewport);
 
 				if (lights.Pos + lightCount > lights.BufferSize)
 				{
@@ -501,7 +515,7 @@ void VkLightmap::CreateRaytracePipeline()
 		.DebugName("raytrace.pipelineLayout")
 		.Create(fb->GetDevice());
 
-	raytrace.renderPass = RenderPassBuilder()
+	raytrace.renderPassBegin = RenderPassBuilder()
 		.AddAttachment(
 			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VK_SAMPLE_COUNT_4_BIT,
@@ -516,12 +530,30 @@ void VkLightmap::CreateRaytracePipeline()
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT)
-		.DebugName("raytrace.renderpass")
+		.DebugName("raytrace.renderPassBegin")
+		.Create(fb->GetDevice());
+
+	raytrace.renderPassContinue = RenderPassBuilder()
+		.AddAttachment(
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_SAMPLE_COUNT_4_BIT,
+			VK_ATTACHMENT_LOAD_OP_LOAD,
+			VK_ATTACHMENT_STORE_OP_STORE,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		.AddSubpass()
+		.AddSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		.AddExternalSubpassDependency(
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT)
+		.DebugName("raytrace.renderPassContinue")
 		.Create(fb->GetDevice());
 
 	raytrace.pipeline = GraphicsPipelineBuilder()
 		.Layout(raytrace.pipelineLayout.get())
-		.RenderPass(raytrace.renderPass.get())
+		.RenderPass(raytrace.renderPassBegin.get())
 		.AddVertexShader(shaders.vert.get())
 		.AddFragmentShader(shaders.fragRaytrace.get())
 		.AddVertexBufferBinding(0, sizeof(SceneVertex))
@@ -725,7 +757,7 @@ LightmapImage VkLightmap::CreateImage(int width, int height)
 		.Create(fb->GetDevice());
 
 	img.raytrace.Framebuffer = FramebufferBuilder()
-		.RenderPass(raytrace.renderPass.get())
+		.RenderPass(raytrace.renderPassBegin.get())
 		.Size(width, height)
 		.AddAttachment(img.raytrace.View.get())
 		.DebugName("LightmapImage.raytrace.Framebuffer")

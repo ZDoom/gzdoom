@@ -114,7 +114,7 @@ void DoomLevelMesh::CreatePortals()
 				if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
 				{
 					auto d = surface.Subsector->sector->GetPortalDisplacement(surface.Type == ST_FLOOR ? sector_t::floor : sector_t::ceiling);
-					matrix.translate(d.X, d.Y, 0);
+					matrix.translate((float)d.X, (float)d.Y, 0.0f);
 				}
 				else if(surface.Type == ST_MIDDLESIDE)
 				{
@@ -146,8 +146,8 @@ void DoomLevelMesh::CreatePortals()
 								z = tz - sz;
 							}
 
-							matrix.rotate(sourceLine->getPortalAngleDiff().Degrees(), 0, 0, 1.0);
-							matrix.translate(targetXYZ.X - sourceXYZ.X, targetXYZ.Y - sourceXYZ.Y, z);
+							matrix.rotate((float)sourceLine->getPortalAngleDiff().Degrees(), 0.0f, 0.0f, 1.0f);
+							matrix.translate((float)(targetXYZ.X - sourceXYZ.X), (float)(targetXYZ.Y - sourceXYZ.Y), (float)z);
 						}
 					}
 				}

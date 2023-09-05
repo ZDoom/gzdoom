@@ -47,6 +47,14 @@ struct LightmapImage
 		std::unique_ptr<VulkanFramebuffer> Framebuffer;
 		std::unique_ptr<VulkanDescriptorSet> DescriptorSet;
 	} resolve;
+
+	struct
+	{
+		std::unique_ptr<VulkanImage> Image;
+		std::unique_ptr<VulkanImageView> View;
+		std::unique_ptr<VulkanFramebuffer> Framebuffer;
+		std::unique_ptr<VulkanDescriptorSet> DescriptorSet[2];
+	} blur;
 };
 
 struct SceneVertex
@@ -87,12 +95,15 @@ private:
 	void CreateAtlasImages();
 	void RenderAtlasImage(size_t pageIndex);
 	void ResolveAtlasImage(size_t pageIndex);
+	void BlurAtlasImage(size_t pageIndex);
+	void CopyAtlasImageResult(size_t pageIndex);
 
 	LightmapImage CreateImage(int width, int height);
 
 	void CreateShaders();
 	void CreateRaytracePipeline();
 	void CreateResolvePipeline();
+	void CreateBlurPipeline();
 	void CreateUniformBuffer();
 	void CreateSceneVertexBuffer();
 	void CreateSceneLightBuffer();
@@ -138,6 +149,7 @@ private:
 		std::unique_ptr<VulkanShader> vert;
 		std::unique_ptr<VulkanShader> fragRaytrace;
 		std::unique_ptr<VulkanShader> fragResolve;
+		std::unique_ptr<VulkanShader> fragBlur[2];
 	} shaders;
 
 	struct
@@ -162,6 +174,16 @@ private:
 		std::unique_ptr<VulkanDescriptorPool> descriptorPool;
 		std::unique_ptr<VulkanSampler> sampler;
 	} resolve;
+
+	struct
+	{
+		std::unique_ptr<VulkanDescriptorSetLayout> descriptorSetLayout;
+		std::unique_ptr<VulkanPipelineLayout> pipelineLayout;
+		std::unique_ptr<VulkanPipeline> pipeline[2];
+		std::unique_ptr<VulkanRenderPass> renderPass;
+		std::unique_ptr<VulkanDescriptorPool> descriptorPool;
+		std::unique_ptr<VulkanSampler> sampler;
+	} blur;
 
 	std::vector<LightmapImage> atlasImages;
 	static const int atlasImageSize = 2048;

@@ -93,31 +93,76 @@ void DoomLevelMesh::CreatePortals()
 
 	for (auto& surface : Surfaces)
 	{
-		auto displacement = [&]() {
+		bool hasPortal = [&]() {
 			if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
 			{
-				auto d = surface.Subsector->sector->GetPortalDisplacement(surface.Type == ST_FLOOR ? sector_t::floor : sector_t::ceiling);
-				return FVector3(d.X, d.Y, 0);
+				return !surface.Subsector->sector->GetPortalDisplacement(surface.Type == ST_FLOOR ? sector_t::floor : sector_t::ceiling).isZero();
 			}
-			else if(surface.Type == ST_MIDDLESIDE)
+			else if (surface.Type == ST_MIDDLESIDE)
 			{
-				auto d = surface.Side->linedef->getPortalDisplacement();
-				return FVector3(d.X, d.Y, 0);
+				return surface.Side->linedef->isLinePortal();
 			}
-			return FVector3(0, 0, 0);
+			return false; // It'll take eternity to get lower/upper side portals into the ZDoom family.
 		}();
 
-		if (!displacement.isZero())
+		if (hasPortal)
 		{
-			LevelMeshPortal transformation;
-			transformation.transformation.translate(displacement.X, displacement.Y, displacement.Z);
+			auto transformation = [&]() {
+				VSMatrix matrix;
+				matrix.loadIdentity();
 
-			auto& index = transformationIndices[transformation];
+				if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
+				{
+					auto d = surface.Subsector->sector->GetPortalDisplacement(surface.Type == ST_FLOOR ? sector_t::floor : sector_t::ceiling);
+					matrix.translate(d.X, d.Y, 0);
+				}
+				else if(surface.Type == ST_MIDDLESIDE)
+				{
+					auto sourceLine = surface.Side->linedef;
+
+					if (sourceLine->isLinePortal())
+					{
+						auto targetLine = sourceLine->getPortalDestination();
+						if (targetLine && sourceLine->frontsector && targetLine->frontsector)
+						{
+							double z = 0;
+
+							// auto xy = surface.Side->linedef->getPortalDisplacement(); // Works only for static portals... ugh
+							auto sourceXYZ = DVector2((sourceLine->v1->fX() + sourceLine->v2->fX()) / 2, (sourceLine->v2->fY() + sourceLine->v1->fY()) / 2);
+							auto targetXYZ = DVector2((targetLine->v1->fX() + targetLine->v2->fX()) / 2, (targetLine->v2->fY() + targetLine->v1->fY()) / 2);
+
+							// floor or ceiling alignment
+							auto alignment = surface.Side->linedef->GetLevel()->linePortals[surface.Side->linedef->portalindex].mAlign;
+							if (alignment != PORG_ABSOLUTE)
+							{
+								int plane = alignment == PORG_FLOOR ? 1 : 0;
+
+								auto& sourcePlane = plane ? sourceLine->frontsector->floorplane : sourceLine->frontsector->ceilingplane;
+								auto& targetPlane = plane ? targetLine->frontsector->floorplane : targetLine->frontsector->ceilingplane;
+
+								auto tz = targetPlane.ZatPoint(targetXYZ);
+								auto sz = sourcePlane.ZatPoint(sourceXYZ);
+
+								z = tz - sz;
+							}
+
+							matrix.rotate(sourceLine->getPortalAngleDiff().Degrees(), 0, 0, 1.0);
+							matrix.translate(targetXYZ.X - sourceXYZ.X, targetXYZ.Y - sourceXYZ.Y, z);
+						}
+					}
+				}
+				return matrix;
+			}();
+
+			LevelMeshPortal portal;
+			portal.transformation = transformation;
+
+			auto& index = transformationIndices[portal];
 
 			if (index == 0) // new transformation was created
 			{
 				index = Portals.Size();
-				Portals.Push(transformation);
+				Portals.Push(portal);
 			}
 
 			surface.portalIndex = index;
@@ -323,6 +368,42 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 
 	FVector2 dx(v2.X - v1.X, v2.Y - v1.Y);
 	float distance = dx.Length();
+
+
+	// line portal
+	if (side->linedef->getPortal() && side->linedef->frontsector == front)
+	{
+		float texWidth = 128.0f;
+		float texHeight = 128.0f;
+
+		DoomLevelMeshSurface surf;
+		surf.Type = ST_MIDDLESIDE;
+		surf.typeIndex = typeIndex;
+		surf.bSky = front->GetTexture(sector_t::floor) == skyflatnum || front->GetTexture(sector_t::ceiling) == skyflatnum;
+		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;
+
+		FVector3 verts[4];
+		verts[0].X = verts[2].X = v1.X;
+		verts[0].Y = verts[2].Y = v1.Y;
+		verts[1].X = verts[3].X = v2.X;
+		verts[1].Y = verts[3].Y = v2.Y;
+		verts[0].Z = v1Bottom;
+		verts[1].Z = v2Bottom;
+		verts[2].Z = v1Top;
+		verts[3].Z = v2Top;
+
+
+		surf.startVertIndex = MeshVertices.Size();
+		surf.numVerts = 4;
+		MeshVertices.Push(verts[0]);
+		MeshVertices.Push(verts[1]);
+		MeshVertices.Push(verts[2]);
+		MeshVertices.Push(verts[3]);
+
+		surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+		Surfaces.Push(surf);
+		return;
+	}
 
 	// line_horizont consumes everything
 	if (side->linedef->special == Line_Horizon && front != back)

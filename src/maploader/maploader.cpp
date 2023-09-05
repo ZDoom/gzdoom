@@ -3242,8 +3242,6 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	SpawnThings(position);
 
-	InitLevelMesh();
-
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (Level->PlayerInGame(i) && Level->Players[i]->mo != nullptr)
@@ -3259,6 +3257,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	// set up world state
 	SpawnSpecials();
+
+	InitLevelMesh();
 
 	// disable reflective planes on sloped sectors.
 	for (auto &sec : Level->sectors)

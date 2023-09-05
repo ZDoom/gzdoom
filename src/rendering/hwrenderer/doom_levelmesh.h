@@ -52,6 +52,7 @@ public:
 
 	void SetupLightmapUvs();
 
+	void CreatePortals();
 private:
 	void CreateSubsectorSurfaces(FLevelLocals &doomMap);
 	void CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor);

@@ -121,7 +121,7 @@ void VkRaytrace::CreateBuffers()
 
 		SurfaceInfo info;
 		info.Normal = surface->plane.XYZ();
-		info.PortalIndex = 0;
+		info.PortalIndex = surface->portalIndex;
 		info.SamplingDistance = (float)surface->sampleDimension;
 		info.Sky = surface->bSky;
 		surfaceInfo.Push(info);

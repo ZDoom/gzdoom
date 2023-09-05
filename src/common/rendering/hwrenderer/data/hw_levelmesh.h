@@ -55,7 +55,9 @@ struct LevelMeshSurface
 	//
 	// Required for internal lightmapper:
 	//
-
+	
+	// int portalDestinationIndex = -1; // line or sector index
+	int portalIndex = 0;
 	int sectorGroup = 0;
 
 	BBox bounds;
@@ -145,6 +147,25 @@ struct LevelMeshPortal
 		return sourceSectorGroup == portal.targetSectorGroup && targetSectorGroup == portal.sourceSectorGroup && IsInverseTransformationPortal(portal);
 	}
 };
+
+// for use with std::set to recursively go through portals and skip returning portals
+struct RecursivePortalComparator
+{
+	bool operator()(const LevelMeshPortal& a, const LevelMeshPortal& b) const
+	{
+		return !a.IsInversePortal(b) && std::memcmp(&a.transformation, &b.transformation, sizeof(VSMatrix)) < 0;
+	}
+};
+
+// for use with std::map to reject portals which have the same effect for light rays
+struct IdenticalPortalComparator
+{
+	bool operator()(const LevelMeshPortal& a, const LevelMeshPortal& b) const
+	{
+		return !a.IsEqualPortal(b) && std::memcmp(&a.transformation, &b.transformation, sizeof(VSMatrix)) < 0;
+	}
+};
+
 
 class LevelMesh
 {

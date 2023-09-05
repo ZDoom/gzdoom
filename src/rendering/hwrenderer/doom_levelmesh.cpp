@@ -86,6 +86,49 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
 }
 
+void DoomLevelMesh::CreatePortals()
+{
+	std::map<LevelMeshPortal, int, IdenticalPortalComparator> transformationIndices; // TODO use the list of portals from the level to avoids duplicates?
+	transformationIndices.emplace(LevelMeshPortal{}, 0); // first portal is an identity matrix
+
+	for (auto& surface : Surfaces)
+	{
+		auto displacement = [&]() {
+			if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
+			{
+				auto d = surface.Subsector->sector->GetPortalDisplacement(surface.Type == ST_FLOOR ? sector_t::floor : sector_t::ceiling);
+				return FVector3(d.X, d.Y, 0);
+			}
+			else if(surface.Type == ST_MIDDLESIDE)
+			{
+				auto d = surface.Side->linedef->getPortalDisplacement();
+				return FVector3(d.X, d.Y, 0);
+			}
+			return FVector3(0, 0, 0);
+		}();
+
+		if (!displacement.isZero())
+		{
+			LevelMeshPortal transformation;
+			transformation.transformation.translate(displacement.X, displacement.Y, displacement.Z);
+
+			auto& index = transformationIndices[transformation];
+
+			if (index == 0) // new transformation was created
+			{
+				index = Portals.Size();
+				Portals.Push(transformation);
+			}
+
+			surface.portalIndex = index;
+		}
+		else
+		{
+			surface.portalIndex = 0;
+		}
+	}
+}
+
 void DoomLevelMesh::UpdateLightLists()
 {
 	for (auto& surface : Surfaces)

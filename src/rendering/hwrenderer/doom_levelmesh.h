@@ -8,6 +8,8 @@
 #include "bounds.h"
 #include <dp_rect_pack.h>
 
+#include <set>
+
 typedef dp::rect_pack::RectPacker<int> RectPacker;
 
 struct FLevelLocals;
@@ -43,7 +45,7 @@ public:
 	int GetSurfaceCount() override { return Surfaces.Size(); }
 
 	TArray<DoomLevelMeshSurface> Surfaces;
-
+	std::vector<std::unique_ptr<LevelMeshLight>> Lights;
 	TArray<FVector2> LightmapUvs;
 
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
@@ -63,7 +65,9 @@ private:
 	void SetSubsectorLightmap(DoomLevelMeshSurface* surface);
 	void SetSideLightmap(DoomLevelMeshSurface* surface);
 
-	void CreateLightList(DoomLevelMeshSurface* surface, FLightNode* lighthead, int portalgroup);
+	void PropagateLight(const LevelMeshLight* light, std::set<LevelMeshPortal, RecursivePortalComparator>& touchedPortals, int lightPropagationRecursiveDepth);
+	void CreateLightList();
+
 
 	static bool IsTopSideSky(sector_t* frontsector, sector_t* backsector, side_t* side);
 	static bool IsTopSideVisible(side_t* side);

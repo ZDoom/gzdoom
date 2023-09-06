@@ -56,7 +56,6 @@ struct LevelMeshSurface
 	// Required for internal lightmapper:
 	//
 	
-	// int portalDestinationIndex = -1; // line or sector index
 	int portalIndex = 0;
 	int sectorGroup = 0;
 
@@ -83,8 +82,7 @@ struct LevelMeshSurface
 	TArray<FVector2> uvs;
 
 	// Touching light sources
-	std::vector<LevelMeshLight*> LightList;
-	std::vector<LevelMeshLight> LightListBuffer;
+	std::vector<const LevelMeshLight*> LightList;
 
 	// Lightmapper has a lot of additional padding around the borders
 	int lightmapperAtlasPage = -1;

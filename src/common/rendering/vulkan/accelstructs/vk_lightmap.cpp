@@ -144,7 +144,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex)
 			vertices.Pos += vertexCount;
 
 			LightInfo* lightinfo = &lights.Lights[firstLight];
-			for (LevelMeshLight* light : surface->LightList)
+			for (const LevelMeshLight* light : surface->LightList)
 			{
 				lightinfo->Origin = light->Origin;
 				lightinfo->RelativeOrigin = light->RelativeOrigin;

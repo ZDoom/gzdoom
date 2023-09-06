@@ -303,7 +303,7 @@ FName MapLoader::CheckCompatibility(MapData *map)
 		}
 		if (gameinfo.flags & GI_NOSECTIONMERGE)
 		{
-			Level->ib_compatflags |= BCOMPATF_NOSECTIONMERGE;
+			//Level->ib_compatflags |= BCOMPATF_NOSECTIONMERGE;
 		}
 	}
 

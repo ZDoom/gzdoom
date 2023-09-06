@@ -199,10 +199,50 @@ public:
 	FVector3 SunColor = FVector3(0.0f, 0.0f, 0.0f);
 	uint16_t LightmapSampleDistance = 16;
 
-	bool Trace(const FVector3& start, FVector3 direction, float maxDist)
+	LevelMeshSurface* Trace(const FVector3& start, FVector3 direction, float maxDist)
 	{
-		FVector3 end = start + direction * std::max(maxDist - 10.0f, 0.0f);
-		return !TriangleMeshShape::find_any_hit(Collision.get(), start, end);
+		maxDist = std::max(maxDist - 10.0f, 0.0f);
+
+		FVector3 origin = start;
+		FVector3 end;
+
+		auto collision = Collision.get();
+
+		LevelMeshSurface* hitSurface = nullptr;
+
+		while (true)
+		{
+			end = origin + direction * maxDist;
+
+			auto hit = TriangleMeshShape::find_first_hit(collision, origin, end);
+
+			if (hit.triangle < 0)
+			{
+				return nullptr;
+			}
+
+			hitSurface = GetSurface(MeshSurfaceIndexes[hit.triangle]);
+			auto portal = hitSurface->portalIndex;
+
+			if (!portal)
+			{
+				break;
+			}
+
+			auto& transformation = Portals[portal];
+
+			auto travelDist = hit.fraction * maxDist + 2.0f;
+			if (travelDist >= maxDist)
+			{
+				break;
+			}
+
+			origin = transformation.TransformPosition(origin + direction * travelDist);
+			direction = transformation.TransformRotation(direction);
+			maxDist -= travelDist;
+		}
+
+		return hitSurface; // I hit something
 	}
 
 	void BuildSmoothingGroups()

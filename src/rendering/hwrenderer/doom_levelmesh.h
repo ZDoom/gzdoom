@@ -31,12 +31,8 @@ public:
 	bool TraceSky(const FVector3& start, FVector3 direction, float dist)
 	{
 		FVector3 end = start + direction * dist;
-		TraceHit hit = TriangleMeshShape::find_first_hit(Collision.get(), start, end);
-		if (hit.fraction == 1.0f)
-			return true;
-
-		int surfaceIndex = MeshSurfaceIndexes[hit.triangle];
-		return Surfaces[surfaceIndex].bSky;
+		auto surface = Trace(start, direction, dist);
+		return surface && surface->bSky;
 	}
 
 	void UpdateLightLists() override;

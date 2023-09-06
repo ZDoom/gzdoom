@@ -74,7 +74,7 @@ public:
 		}
 		else
 		{
-			bool traceResult = level.levelMesh->Trace(FVector3((float)light->Pos.X, (float)light->Pos.Y, (float)light->Pos.Z), FVector3(-L.X, -L.Y, -L.Z), dist);
+			bool traceResult = !level.levelMesh->Trace(FVector3((float)light->Pos.X, (float)light->Pos.Y, (float)light->Pos.Z), FVector3(-L.X, -L.Y, -L.Z), dist);
 			Actor->StaticLightsTraceCache.Bits |= ((uint64_t)traceResult) << CurrentBit;
 			CurrentBit++;
 			return traceResult;

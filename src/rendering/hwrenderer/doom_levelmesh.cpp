@@ -313,7 +313,7 @@ void DoomLevelMesh::CreateLightList(DoomLevelMeshSurface* surface, FLightNode* n
 			meshlight.Origin = { (float)pos.X, (float)pos.Y, (float)pos.Z };
 			meshlight.RelativeOrigin = meshlight.Origin; // ?? what is the difference between this and Origin?
 			meshlight.Radius = (float)light->GetRadius();
-			meshlight.Intensity = 1.0f;
+			meshlight.Intensity = light->target->Alpha;
 			if (light->IsSpot())
 			{
 				meshlight.InnerAngleCos = (float)light->pSpotInnerAngle->Cos();

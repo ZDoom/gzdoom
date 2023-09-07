@@ -192,6 +192,10 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 	}
 	state.SetLightIndex(dynlightindex);
 
+	for (auto& subsector : section->subsectors)
+	{
+		state.PushVisibleSurface(subsector->lightmap[ceiling ? 1 : 0][0]);
+	}
 
 	state.DrawIndexed(DT_Triangles, iboindex + section->vertexindex, section->vertexcount);
 	flatvertices += section->vertexcount;

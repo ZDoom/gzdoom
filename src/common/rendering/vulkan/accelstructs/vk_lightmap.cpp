@@ -31,6 +31,17 @@ VkLightmap::~VkLightmap()
 		lights.Buffer->Unmap();
 }
 
+static int lastSurfaceCount;
+
+ADD_STAT(lightmapper)
+{
+	FString out;
+	
+	out.Format("Last batch surface count: %d", lastSurfaceCount);
+
+	return out;
+}
+
 void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& surfaces)
 {
 	bool newLevel = (mesh != level);
@@ -42,7 +53,14 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 		CreateAtlasImages();
 	}
 
+	for (auto surface : surfaces)
+	{
+		surface->needsUpdate = false;
+	}
+
 	UploadUniforms();
+
+	lastSurfaceCount = surfaces.Size();
 
 	for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
 	{
@@ -53,7 +71,7 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 	{
 		ResolveAtlasImage(pageIndex);
 		BlurAtlasImage(pageIndex);
-		CopyAtlasImageResult(pageIndex);
+		CopyAtlasImageResult(pageIndex, surfaces);
 	}
 }
 
@@ -375,14 +393,14 @@ void VkLightmap::BlurAtlasImage(size_t pageIndex)
 	}
 }
 
-void VkLightmap::CopyAtlasImageResult(size_t pageIndex)
+void VkLightmap::CopyAtlasImageResult(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces)
 {
 	LightmapImage& img = atlasImages[pageIndex];
 
 	std::vector<VkImageCopy> regions;
-	for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
+	for (int i = 0, count = surfaces.Size(); i < count; i++)
 	{
-		LevelMeshSurface* surface = mesh->GetSurface(i);
+		LevelMeshSurface* surface = surfaces[i];
 		if (surface->lightmapperAtlasPage != pageIndex)
 			continue;
 

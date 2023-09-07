@@ -531,17 +531,20 @@ void VulkanRenderDevice::PrintStartupLog()
 	Printf("Min. uniform buffer offset alignment: %" PRIu64 "\n", limits.minUniformBufferOffsetAlignment);
 }
 
+LevelMesh* lastMesh = nullptr; // Temp hack; Since this function is called every frame we only want to do this once
+
 void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 {
 	mRaytrace->SetLevelMesh(mesh);
 
-	static LevelMesh* lastMesh = nullptr; // Temp hack; Since this function is called every frame we only want to do this once
 	if (lastMesh != mesh && mesh->GetSurfaceCount() > 0)
 	{
 		lastMesh = mesh;
 
 		mesh->UpdateLightLists();
+		GetTextureManager()->CreateLightmap(mesh->LMTextureSize, mesh->LMTextureCount);
 
+#if 0 // full lightmap generation
 		TArray<LevelMeshSurface*> surfaces;
 		surfaces.Reserve(mesh->GetSurfaceCount());
 		for (unsigned i = 0, count = mesh->GetSurfaceCount(); i < count; ++i)
@@ -549,8 +552,23 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 			surfaces[i] = mesh->GetSurface(i);
 		}
 
-		GetTextureManager()->CreateLightmap(mesh->LMTextureSize, mesh->LMTextureCount);
 		GetLightmap()->Raytrace(mesh, surfaces);
+#else
+		GetLightmap()->Raytrace(mesh, {});
+#endif
+	}
+}
+
+void VulkanRenderDevice::UpdateLightmaps(const TArray<LevelMeshSurface*>& surfaces)
+{
+	if (surfaces.Size() > 0)
+	{
+		auto levelMesh = lastMesh; // There's nothing more permanent than a temporary solution
+
+		if (levelMesh)
+		{
+			GetLightmap()->Raytrace(levelMesh, surfaces);
+		}
 	}
 }
 

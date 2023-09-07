@@ -96,7 +96,7 @@ private:
 	void RenderAtlasImage(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces);
 	void ResolveAtlasImage(size_t pageIndex);
 	void BlurAtlasImage(size_t pageIndex);
-	void CopyAtlasImageResult(size_t pageIndex);
+	void CopyAtlasImageResult(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces);
 
 	LightmapImage CreateImage(int width, int height);
 

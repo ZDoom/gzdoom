@@ -3,6 +3,7 @@
 #include "vectors.h"
 #include "matrix.h"
 #include "hw_material.h"
+#include "hw_levelmesh.h"
 #include "texmanip.h"
 #include "version.h"
 #include "i_interface.h"
@@ -257,6 +258,7 @@ protected:
 
 	EPassType mPassType = NORMAL_PASS;
 
+	TArray<LevelMeshSurface*> mActiveLightmapSurfaces;
 public:
 
 	uint64_t firstFrame = 0;
@@ -727,6 +729,22 @@ public:
 		matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 		matrices.CalcDependencies();
 		return SetViewpoint(matrices);
+	}
+
+	inline void PushVisibleSurface(LevelMeshSurface* surface)
+	{
+		if(surface && surface->needsUpdate && mActiveLightmapSurfaces.Find(surface) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
+			mActiveLightmapSurfaces.Push(surface);
+	}
+
+	inline const auto& GetVisibleSurfaceList() const
+	{
+		return mActiveLightmapSurfaces;
+	}
+
+	inline void ClearVisibleSurfaceList()
+	{
+		mActiveLightmapSurfaces.Clear();
 	}
 
 	// API-dependent render interface

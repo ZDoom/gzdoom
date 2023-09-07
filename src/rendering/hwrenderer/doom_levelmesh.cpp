@@ -23,6 +23,18 @@ CCMD(dumplevelmesh)
 	}
 }
 
+CCMD(invalidatelightmap)
+{
+	int count = 0;
+	for (auto& surface : level.levelMesh->Surfaces)
+	{
+		if (!surface.needsUpdate)
+			++count;
+		surface.needsUpdate = true;
+	}
+	Printf("Marked %d out of %d surfaces for update.\n", count, level.levelMesh->Surfaces.Size());
+}
+
 DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 {
 	SunColor = doomMap.SunColor; // TODO keep only one copy?

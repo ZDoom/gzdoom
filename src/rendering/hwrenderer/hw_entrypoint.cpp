@@ -124,6 +124,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 		screen->mShadowMap->SetCollectLights(nullptr);
 	}
 
+	RenderState.ClearVisibleSurfaceList();
 	screen->SetLevelMesh(camera->Level->levelMesh);
 
 	static HWDrawContext mainthread_drawctx;
@@ -196,6 +197,8 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 		if (eyeCount - eye_ix > 1)
 			screen->NextEye(eyeCount);
 	}
+
+	screen->UpdateLightmaps(RenderState.GetVisibleSurfaceList());
 
 	return mainvp.sector;
 }

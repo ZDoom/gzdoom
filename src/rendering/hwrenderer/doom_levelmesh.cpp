@@ -470,7 +470,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		MeshVertices.Push(verts[2]);
 		MeshVertices.Push(verts[3]);
 
-		surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 		Surfaces.Push(surf);
 		return;
 	}
@@ -501,7 +501,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		MeshVertices.Push(verts[2]);
 		MeshVertices.Push(verts[3]);
 
-		surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 		Surfaces.Push(surf);
 		return;
 	}
@@ -549,7 +549,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 			MeshVertices.Push(verts[2]);
 			MeshVertices.Push(verts[3]);
 
-			surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+			surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 			Surfaces.Push(surf);
 		}
 
@@ -587,7 +587,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[2]);
 				MeshVertices.Push(verts[3]);
 
-				surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+				surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 				surf.Type = ST_LOWERSIDE;
 				surf.typeIndex = typeIndex;
 				surf.bSky = false;
@@ -626,7 +626,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[2]);
 				MeshVertices.Push(verts[3]);
 
-				surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+				surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 				surf.Type = ST_UPPERSIDE;
 				surf.typeIndex = typeIndex;
 				surf.bSky = bSky;
@@ -665,7 +665,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		MeshVertices.Push(verts[2]);
 		MeshVertices.Push(verts[3]);
 
-		surf.plane = ToPlane(verts[0], verts[1], verts[2]);
+		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 		surf.Type = ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
 		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;

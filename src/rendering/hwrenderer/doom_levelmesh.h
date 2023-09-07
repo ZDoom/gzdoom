@@ -78,6 +78,20 @@ private:
 		return FVector4(n.X, n.Y, n.Z, d);
 	}
 
+	static FVector4 ToPlane(const FVector3& pt1, const FVector3& pt2, const FVector3& pt3, const FVector3& pt4)
+	{
+		if (pt1.ApproximatelyEquals(pt3))
+		{
+			return ToPlane(pt1, pt2, pt4);
+		}
+		else if(pt1.ApproximatelyEquals(pt2) || pt2.ApproximatelyEquals(pt3))
+		{
+			return ToPlane(pt1, pt3, pt4);
+		}
+
+		return ToPlane(pt1, pt2, pt3);
+	}
+
 	static FVector2 ToFVector2(const DVector2& v) { return FVector2((float)v.X, (float)v.Y); }
 	static FVector3 ToFVector3(const DVector3& v) { return FVector3((float)v.X, (float)v.Y, (float)v.Z); }
 	static FVector4 ToFVector4(const DVector4& v) { return FVector4((float)v.X, (float)v.Y, (float)v.Z, (float)v.W); }

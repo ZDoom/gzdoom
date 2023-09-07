@@ -5,7 +5,11 @@
 #define VK_USE_PLATFORM_MACOS_MVK
 #define VK_USE_PLATFORM_METAL_EXT
 #else
+#if defined(VULKAN_USE_XLIB)
 #define VK_USE_PLATFORM_XLIB_KHR
+#elif defined(VULKAN_USE_WAYLAND)
+#define VK_USE_PLATFORM_WAYLAND_KHR
+#endif
 #endif
 
 /* This file is part of volk library; see volk.h for version/license details */

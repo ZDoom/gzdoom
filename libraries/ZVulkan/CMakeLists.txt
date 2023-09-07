@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.15)
 project(zvulkan)
 
+option( VULKAN_USE_XLIB "Use Vulkan xlib (X11) WSI integration" ON )
+option( VULKAN_USE_WAYLAND "Use Vulkan Wayland WSI integration" OFF )
+
+if ( VULKAN_USE_XLIB )
+	add_definitions( -DVULKAN_USE_XLIB=1 )
+else()
+	if (VULKAN_USE_WAYLAND)
+		add_definitions( -DVULKAN_USE_WAYLAND=1 )
+	endif()
+endif()
+
 set(ZVULKAN_SOURCES
 	src/vulkanbuilders.cpp
 	src/vulkandevice.cpp

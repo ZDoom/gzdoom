@@ -347,7 +347,11 @@ void HWWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
 		MakeVertices(di, state, !!(flags & HWWall::HWF_TRANSLUCENT));
 	}
 
-	state.PushVisibleSurface(lightmap);
+	if (lightmap)
+	{
+		state.PushVisibleSurface(lightmap - &seg->Subsector->sector->Level->levelMesh->Surfaces[0], lightmap);
+	}
+
 	state.SetNormal(glseg.Normal());
 	if (!translucent)
 	{

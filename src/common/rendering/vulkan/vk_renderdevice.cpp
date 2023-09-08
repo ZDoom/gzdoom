@@ -559,15 +559,15 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 	}
 }
 
-void VulkanRenderDevice::UpdateLightmaps(const TArray<LevelMeshSurface*>& surfaces)
+void VulkanRenderDevice::UpdateLightmaps(const TArray<int>& surfaceIndices)
 {
-	if (surfaces.Size() > 0)
+	if (surfaceIndices.Size() > 0)
 	{
 		auto levelMesh = lastMesh; // There's nothing more permanent than a temporary solution
 
 		if (levelMesh)
 		{
-			GetLightmap()->Raytrace(levelMesh, surfaces);
+			GetLightmap()->Raytrace(levelMesh, surfaceIndices);
 		}
 	}
 }

@@ -86,17 +86,17 @@ public:
 	VkLightmap(VulkanRenderDevice* fb);
 	~VkLightmap();
 
-	void Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& surfaces);
+	void Raytrace(LevelMesh* level, const TArray<int>& surfaceIndices);
 
 private:
 	void UpdateAccelStructDescriptors();
 
 	void UploadUniforms();
 	void CreateAtlasImages();
-	void RenderAtlasImage(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces);
+	void RenderAtlasImage(size_t pageIndex, const TArray<int>& surfaceIndices);
 	void ResolveAtlasImage(size_t pageIndex);
 	void BlurAtlasImage(size_t pageIndex);
-	void CopyAtlasImageResult(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces);
+	void CopyAtlasImageResult(size_t pageIndex, const TArray<int>& surfaceIndices);
 
 	LightmapImage CreateImage(int width, int height);
 

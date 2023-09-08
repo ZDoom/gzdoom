@@ -258,7 +258,7 @@ protected:
 
 	EPassType mPassType = NORMAL_PASS;
 
-	TArray<LevelMeshSurface*> mActiveLightmapSurfaces;
+	TArray<int> mActiveLightmapSurfaces;
 public:
 
 	uint64_t firstFrame = 0;
@@ -731,10 +731,10 @@ public:
 		return SetViewpoint(matrices);
 	}
 
-	inline void PushVisibleSurface(LevelMeshSurface* surface)
+	inline void PushVisibleSurface(int surfaceIndex, LevelMeshSurface* surface)
 	{
-		if(surface && surface->needsUpdate && mActiveLightmapSurfaces.Find(surface) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
-			mActiveLightmapSurfaces.Push(surface);
+		if(surface->needsUpdate && mActiveLightmapSurfaces.Find(surfaceIndex) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
+			mActiveLightmapSurfaces.Push(surfaceIndex);
 	}
 
 	inline const auto& GetVisibleSurfaceList() const

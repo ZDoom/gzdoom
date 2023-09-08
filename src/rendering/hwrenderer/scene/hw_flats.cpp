@@ -194,7 +194,11 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 
 	for (auto& subsector : section->subsectors)
 	{
-		state.PushVisibleSurface(subsector->lightmap[ceiling ? 1 : 0][0]);
+		auto lightmap = subsector->lightmap[ceiling ? 1 : 0][0];
+		if (lightmap)
+		{
+			state.PushVisibleSurface(lightmap - &subsector->sector->Level->levelMesh->Surfaces[0], lightmap);
+		}
 	}
 
 	state.DrawIndexed(DT_Triangles, iboindex + section->vertexindex, section->vertexcount);

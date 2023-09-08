@@ -32,13 +32,13 @@ VkLightmap::~VkLightmap()
 }
 
 static int lastSurfaceCount;
+static glcycle_t lightmapRaytrace;
+static glcycle_t lightmapRaytraceLast;
 
 ADD_STAT(lightmapper)
 {
 	FString out;
-	
-	out.Format("Last batch surface count: %d", lastSurfaceCount);
-
+	out.Format("last: %.3fms\ntotal: %3.fms\nLast batch surface count: %d", lightmapRaytraceLast.TimeMS(), lightmapRaytrace.TimeMS(), lastSurfaceCount);
 	return out;
 }
 
@@ -46,6 +46,12 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 {
 	bool newLevel = (mesh != level);
 	mesh = level;
+
+	lightmapRaytrace.active = true;
+	lightmapRaytraceLast.active = true;
+
+	lightmapRaytrace.Clock();
+	lightmapRaytraceLast.ResetAndClock();
 
 	if (newLevel)
 	{
@@ -73,6 +79,9 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 		BlurAtlasImage(pageIndex);
 		CopyAtlasImageResult(pageIndex, surfaces);
 	}
+
+	lightmapRaytrace.Unclock();
+	lightmapRaytraceLast.Unclock();
 }
 
 void VkLightmap::RenderAtlasImage(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces)

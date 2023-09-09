@@ -200,7 +200,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 	}
 
 	auto& list = RenderState.GetVisibleSurfaceList();
-	if (list.Size() <= lm_background_updates)
+	if (list.Size() < lm_background_updates)
 	{
 		int index = 0;
 		for (auto& e : level.levelMesh->Surfaces)

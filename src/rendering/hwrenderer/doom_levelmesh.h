@@ -27,6 +27,9 @@ class DoomLevelMesh : public LevelMesh
 {
 public:
 	DoomLevelMesh(FLevelLocals &doomMap);
+	
+	void CreatePortals();
+	void DumpMesh(const FString& objFilename, const FString& mtlFilename) const;
 
 	bool TraceSky(const FVector3& start, FVector3 direction, float dist)
 	{
@@ -40,17 +43,15 @@ public:
 	LevelMeshSurface* GetSurface(int index) override { return &Surfaces[index]; }
 	int GetSurfaceCount() override { return Surfaces.Size(); }
 
+
 	TArray<DoomLevelMeshSurface> Surfaces;
 	std::vector<std::unique_ptr<LevelMeshLight>> Lights;
 	TArray<FVector2> LightmapUvs;
-
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
 
-	void DumpMesh(const FString& objFilename, const FString& mtlFilename) const;
+	// runtime utility variables
+	TMap<sector_t*, TArray<DoomLevelMeshSurface*>> XFloorToSurface;
 
-	void SetupLightmapUvs();
-
-	void CreatePortals();
 private:
 	void CreateSubsectorSurfaces(FLevelLocals &doomMap);
 	void CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor);
@@ -61,6 +62,7 @@ private:
 	void SetSubsectorLightmap(DoomLevelMeshSurface* surface);
 	void SetSideLightmap(DoomLevelMeshSurface* surface);
 
+	void SetupLightmapUvs();
 	void PropagateLight(const LevelMeshLight* light, std::set<LevelMeshPortal, RecursivePortalComparator>& touchedPortals, int lightPropagationRecursiveDepth);
 	void CreateLightList();
 

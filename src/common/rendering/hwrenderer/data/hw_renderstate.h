@@ -735,7 +735,7 @@ public:
 
 	inline void PushVisibleSurface(int surfaceIndex, LevelMeshSurface* surface)
 	{
-		if(surface->needsUpdate && mActiveLightmapSurfaces.Size() < lm_max_updates && mActiveLightmapSurfaces.Find(surfaceIndex) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
+		if(surface->needsUpdate && mActiveLightmapSurfaces.Size() < unsigned(lm_max_updates) && mActiveLightmapSurfaces.Find(surfaceIndex) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
 			mActiveLightmapSurfaces.Push(surfaceIndex);
 	}
 

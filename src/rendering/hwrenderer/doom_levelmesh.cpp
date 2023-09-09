@@ -98,6 +98,15 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 	BindLightmapSurfacesToGeometry(doomMap);
 
 	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
+
+	// Runtime stuff
+	for (auto& surface : Surfaces)
+	{
+		if ((surface.Type == ST_FLOOR || surface.Type == ST_CEILING) && surface.ControlSector)
+		{
+			XFloorToSurface[surface.ControlSector].Push(&surface);
+		}
+	}
 }
 
 void DoomLevelMesh::CreatePortals()

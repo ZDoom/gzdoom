@@ -192,12 +192,24 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 	}
 	state.SetLightIndex(dynlightindex);
 
+	const auto* lm = &sector->Level->levelMesh->Surfaces[0]; // temporay hack on top of a temporary hack
+
 	for (auto& subsector : section->subsectors)
 	{
-		auto lightmap = subsector->lightmap[ceiling ? 1 : 0][0];
-		if (lightmap)
+		if (auto lightmap = subsector->lightmap[ceiling ? 1 : 0][0])
 		{
-			state.PushVisibleSurface(lightmap - &subsector->sector->Level->levelMesh->Surfaces[0], lightmap);
+			state.PushVisibleSurface(lightmap - lm, lightmap);
+		}
+	}
+
+	if (auto subsectors = sector->Level->levelMesh->XFloorToSurface.CheckKey(sector))
+	{
+		for (auto* surface : *subsectors)
+		{
+			if (surface)
+			{
+				state.PushVisibleSurface(surface - lm, surface);
+			}
 		}
 	}
 

@@ -104,7 +104,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 	{
 		if ((surface.Type == ST_FLOOR || surface.Type == ST_CEILING) && surface.ControlSector)
 		{
-			XFloorToSurface[surface.ControlSector].Push(&surface);
+			XFloorToSurface[surface.Subsector->sector].Push(&surface);
 		}
 	}
 }

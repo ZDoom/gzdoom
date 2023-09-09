@@ -191,28 +191,6 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 		SetupLights(di, state, section->lighthead, lightdata, sector->PortalGroup);
 	}
 	state.SetLightIndex(dynlightindex);
-
-	const auto* lm = &sector->Level->levelMesh->Surfaces[0]; // temporay hack on top of a temporary hack
-
-	for (auto& subsector : section->subsectors)
-	{
-		if (auto lightmap = subsector->lightmap[ceiling ? 1 : 0][0])
-		{
-			state.PushVisibleSurface(lightmap - lm, lightmap);
-		}
-	}
-
-	if (auto subsectors = sector->Level->levelMesh->XFloorToSurface.CheckKey(sector))
-	{
-		for (auto* surface : *subsectors)
-		{
-			if (surface)
-			{
-				state.PushVisibleSurface(surface - lm, surface);
-			}
-		}
-	}
-
 	state.DrawIndexed(DT_Triangles, iboindex + section->vertexindex, section->vertexcount);
 	flatvertices += section->vertexcount;
 	flatprimitives++;
@@ -522,6 +500,31 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 	uint8_t sink;
 	uint8_t &srf = hacktype? sink : di->section_renderflags[di->Level->sections.SectionIndex(section)];
     const auto &vp = di->Viewpoint;
+
+	//
+	// Lightmaps
+	//
+
+	const auto* lm = &sector->Level->levelMesh->Surfaces[0]; // temporay hack on top of a temporary hack
+
+	for (auto& subsector : section->subsectors)
+	{
+		if (auto lightmap = subsector->lightmap[ceiling ? 1 : 0][0])
+		{
+			state.PushVisibleSurface(lightmap - lm, lightmap);
+		}
+	}
+
+	if (auto subsectors = sector->Level->levelMesh->XFloorToSurface.CheckKey(sector))
+	{
+		for (auto* surface : *subsectors)
+		{
+			if (surface)
+			{
+				state.PushVisibleSurface(surface - lm, surface);
+			}
+		}
+	}
 
 	//
 	//

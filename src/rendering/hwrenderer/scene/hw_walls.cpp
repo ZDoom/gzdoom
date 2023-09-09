@@ -347,11 +347,6 @@ void HWWall::DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent)
 		MakeVertices(di, state, !!(flags & HWWall::HWF_TRANSLUCENT));
 	}
 
-	if (lightmap)
-	{
-		state.PushVisibleSurface(lightmap - &seg->Subsector->sector->Level->levelMesh->Surfaces[0], lightmap);
-	}
-
 	state.SetNormal(glseg.Normal());
 	if (!translucent)
 	{
@@ -1270,6 +1265,10 @@ void HWWall::DoTexture(HWDrawInfo *di, FRenderState& state, int _type,seg_t * se
 	if (seg->sidedef->lightmap && type >= RENDERWALL_TOP && type <= RENDERWALL_BOTTOM)
 	{
 		lightmap = seg->sidedef->lightmap[type - RENDERWALL_TOP];
+		if (lightmap)
+		{
+			state.PushVisibleSurface(lightmap - &seg->Subsector->sector->Level->levelMesh->Surfaces[0], lightmap);
+		}
 	}
 	else
 	{

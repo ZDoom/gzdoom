@@ -51,7 +51,6 @@
 #include "hwrenderer/scene/hw_drawcontext.h"
 #include "hw_vrmodes.h"
 
-EXTERN_CVAR(Int, lm_background_updates);
 EXTERN_CVAR(Bool, cl_capfps)
 extern bool NoInterpolateView;
 
@@ -97,34 +96,6 @@ void CollectLights(FLevelLocals* Level)
 	}
 }
 
-void UpdateLightmaps(DFrameBuffer* screen, FRenderState& RenderState)
-{
-
-	// Lightmapping stuff
-	auto& list = RenderState.GetVisibleSurfaceList();
-	auto size = RenderState.GetVisibleSurfaceListCount();
-
-	list.Resize(min(list.Size(), unsigned(size)));
-
-	if (size < lm_background_updates)
-	{
-		int index = 0;
-		for (auto& e : level.levelMesh->Surfaces)
-		{
-			if (e.needsUpdate)
-			{
-				list.Push(index);
-
-				if (list.Size() >= lm_background_updates)
-					break;
-			}
-			++index;
-		}
-	}
-
-	screen->UpdateLightmaps(list);
-}
-
 //-----------------------------------------------------------------------------
 //
 // Renders one viewpoint in a scene
@@ -152,7 +123,6 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 		screen->mShadowMap->SetCollectLights(nullptr);
 	}
 
-	RenderState.ClearVisibleSurfaceList();
 	screen->SetLevelMesh(camera->Level->levelMesh);
 
 	static HWDrawContext mainthread_drawctx;
@@ -225,8 +195,6 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 		if (eyeCount - eye_ix > 1)
 			screen->NextEye(eyeCount);
 	}
-
-	UpdateLightmaps(screen, RenderState);
 
 	return mainvp.sector;
 }

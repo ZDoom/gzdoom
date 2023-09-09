@@ -35,6 +35,8 @@ CCMD(invalidatelightmap)
 	Printf("Marked %d out of %d surfaces for update.\n", count, level.levelMesh->Surfaces.Size());
 }
 
+EXTERN_CVAR(Float, lm_scale);
+
 DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 {
 	SunColor = doomMap.SunColor; // TODO keep only one copy?
@@ -1099,6 +1101,8 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	{
 		surface.sampleDimension = LightmapSampleDistance;
 	}
+
+	surface.sampleDimension = uint16_t(max(int(roundf(float(surface.sampleDimension) / max(1.0f / 4, float(lm_scale)))), 1));
 
 	{
 		// Round to nearest power of two

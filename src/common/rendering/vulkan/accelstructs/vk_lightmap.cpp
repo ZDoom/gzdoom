@@ -22,7 +22,7 @@ ADD_STAT(lightmapper)
 
 CVAR(Int, lm_background_updates, 8, CVAR_NOSAVE);
 CVAR(Int, lm_max_updates, 128, CVAR_NOSAVE);
-
+CVAR(Float, lm_scale, 1.0, CVAR_NOSAVE);
 
 VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 {

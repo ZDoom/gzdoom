@@ -10,6 +10,8 @@
 #include "hw_viewpointuniforms.h"
 #include "hw_cvars.h"
 
+#include <atomic>
+
 EXTERN_CVAR(Int, lm_max_updates);
 
 struct FColormap;
@@ -260,13 +262,17 @@ protected:
 
 	EPassType mPassType = NORMAL_PASS;
 
-	TArray<int> mActiveLightmapSurfaces;
+	std::atomic<unsigned> mActiveLightmapSurfaceBufferIndex;
+	TArray<int> mActiveLightmapSurfacesBuffer;
 public:
 
 	uint64_t firstFrame = 0;
 
 	void Reset()
 	{
+		mActiveLightmapSurfaceBufferIndex = { 0 };
+		mActiveLightmapSurfacesBuffer.Resize(lm_max_updates);
+
 		mTextureEnabled = true;
 		mBrightmapEnabled = mGradientEnabled = mFogEnabled = mGlowEnabled = false;
 		mFogColor = 0xffffffff;
@@ -735,18 +741,31 @@ public:
 
 	inline void PushVisibleSurface(int surfaceIndex, LevelMeshSurface* surface)
 	{
-		if(surface->needsUpdate && mActiveLightmapSurfaces.Size() < unsigned(lm_max_updates) && mActiveLightmapSurfaces.Find(surfaceIndex) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
-			mActiveLightmapSurfaces.Push(surfaceIndex);
+		if (surface->needsUpdate) // TODO atomic? 
+		{
+			int index = mActiveLightmapSurfaceBufferIndex.fetch_add(1);
+			if (index < mActiveLightmapSurfacesBuffer.Size())
+			{
+				mActiveLightmapSurfacesBuffer[index] = surfaceIndex;
+				surface->needsUpdate = false;
+			}
+		}
 	}
 
 	inline auto& GetVisibleSurfaceList()
 	{
-		return mActiveLightmapSurfaces;
+		return mActiveLightmapSurfacesBuffer;
+	}
+
+	inline unsigned GetVisibleSurfaceListCount() const
+	{
+		return mActiveLightmapSurfaceBufferIndex;
 	}
 
 	inline void ClearVisibleSurfaceList()
 	{
-		mActiveLightmapSurfaces.Clear();
+		mActiveLightmapSurfacesBuffer.Resize(lm_max_updates);
+		mActiveLightmapSurfaceBufferIndex = 0;
 	}
 
 	// API-dependent render interface

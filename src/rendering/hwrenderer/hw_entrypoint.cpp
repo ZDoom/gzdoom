@@ -97,6 +97,33 @@ void CollectLights(FLevelLocals* Level)
 	}
 }
 
+void UpdateLightmaps(DFrameBuffer* screen, FRenderState& RenderState)
+{
+
+	// Lightmapping stuff
+	auto& list = RenderState.GetVisibleSurfaceList();
+	auto size = RenderState.GetVisibleSurfaceListCount();
+
+	list.Resize(min(list.Size(), unsigned(size)));
+
+	if (size < lm_background_updates)
+	{
+		int index = 0;
+		for (auto& e : level.levelMesh->Surfaces)
+		{
+			if (e.needsUpdate)
+			{
+				list.Push(index);
+
+				if (list.Size() >= lm_background_updates)
+					break;
+			}
+			++index;
+		}
+	}
+
+	screen->UpdateLightmaps(list);
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -199,24 +226,7 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 			screen->NextEye(eyeCount);
 	}
 
-	auto& list = RenderState.GetVisibleSurfaceList();
-	if (list.Size() < lm_background_updates)
-	{
-		int index = 0;
-		for (auto& e : level.levelMesh->Surfaces)
-		{
-			if (e.needsUpdate)
-			{
-				list.Push(index);
-
-				if(list.Size() >= lm_background_updates)
-					break;
-			}
-			++index;
-		}
-	}
-
-	screen->UpdateLightmaps(list);
+	UpdateLightmaps(screen, RenderState);
 
 	return mainvp.sector;
 }

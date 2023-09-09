@@ -55,6 +55,10 @@ struct LightmapImage
 		std::unique_ptr<VulkanFramebuffer> Framebuffer;
 		std::unique_ptr<VulkanDescriptorSet> DescriptorSet[2];
 	} blur;
+
+	// how much of the page is used?
+	uint16_t pageMaxX = 0;
+	uint16_t pageMaxY = 0;
 };
 
 struct SceneVertex
@@ -92,7 +96,7 @@ private:
 	void UpdateAccelStructDescriptors();
 
 	void UploadUniforms();
-	void CreateAtlasImages();
+	void CreateAtlasImages(const TArray<int>& surfaceIndices);
 	void RenderAtlasImage(size_t pageIndex, const TArray<int>& surfaceIndices);
 	void ResolveAtlasImage(size_t pageIndex);
 	void BlurAtlasImage(size_t pageIndex);

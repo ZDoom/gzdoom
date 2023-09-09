@@ -10,6 +10,8 @@
 #include "hw_viewpointuniforms.h"
 #include "hw_cvars.h"
 
+EXTERN_CVAR(Int, lm_max_updates);
+
 struct FColormap;
 class IBuffer;
 struct HWViewpointUniforms;
@@ -733,11 +735,11 @@ public:
 
 	inline void PushVisibleSurface(int surfaceIndex, LevelMeshSurface* surface)
 	{
-		if(surface->needsUpdate && mActiveLightmapSurfaces.Find(surfaceIndex) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
+		if(surface->needsUpdate && mActiveLightmapSurfaces.Size() < lm_max_updates && mActiveLightmapSurfaces.Find(surfaceIndex) >= mActiveLightmapSurfaces.Size()) // yikes, how awful
 			mActiveLightmapSurfaces.Push(surfaceIndex);
 	}
 
-	inline const auto& GetVisibleSurfaceList() const
+	inline auto& GetVisibleSurfaceList()
 	{
 		return mActiveLightmapSurfaces;
 	}

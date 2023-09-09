@@ -51,6 +51,7 @@
 #include "hwrenderer/scene/hw_drawcontext.h"
 #include "hw_vrmodes.h"
 
+EXTERN_CVAR(Int, lm_background_updates);
 EXTERN_CVAR(Bool, cl_capfps)
 extern bool NoInterpolateView;
 
@@ -198,7 +199,24 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 			screen->NextEye(eyeCount);
 	}
 
-	screen->UpdateLightmaps(RenderState.GetVisibleSurfaceList());
+	auto& list = RenderState.GetVisibleSurfaceList();
+	if (list.Size() <= lm_background_updates)
+	{
+		int index = 0;
+		for (auto& e : level.levelMesh->Surfaces)
+		{
+			if (e.needsUpdate)
+			{
+				list.Push(index);
+
+				if(list.Size() >= lm_background_updates)
+					break;
+			}
+			++index;
+		}
+	}
+
+	screen->UpdateLightmaps(list);
 
 	return mainvp.sector;
 }

@@ -507,11 +507,14 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 
 	const auto* lm = &sector->Level->levelMesh->Surfaces[0]; // temporay hack on top of a temporary hack
 
-	for (auto& subsector : section->subsectors)
+	for (int i = 0, count = sector->subsectorcount; i < count; ++i)
 	{
-		if (auto lightmap = subsector->lightmap[ceiling ? 1 : 0][0])
+		for (int plane = 0; plane < 2; ++plane)
 		{
-			state.PushVisibleSurface(lightmap - lm, lightmap);
+			if (auto lightmap = sector->subsectors[i]->lightmap[plane][0])
+			{
+				state.PushVisibleSurface(lightmap - lm, lightmap);
+			}
 		}
 	}
 

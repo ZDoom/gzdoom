@@ -283,7 +283,7 @@ void DoomLevelMesh::CreateLightList()
 						meshlight.Origin = { (float)pos.X, (float)pos.Y, (float)pos.Z };
 						meshlight.RelativeOrigin = meshlight.Origin;
 						meshlight.Radius = (float)light->GetRadius();
-						meshlight.Intensity = light->target->Alpha;
+						meshlight.Intensity = (float)light->target->Alpha;
 						if (light->IsSpot())
 						{
 							meshlight.InnerAngleCos = (float)light->pSpotInnerAngle->Cos();
@@ -320,7 +320,7 @@ void DoomLevelMesh::CreateLightList()
 	std::set<LevelMeshPortal, RecursivePortalComparator> touchedPortals;
 	touchedPortals.insert(Portals[0]);
 
-	for (int i = 0, count = Lights.size(); i < count; ++i) // The array expands as the lights are duplicated/propagated
+	for (int i = 0, count = (int)Lights.size(); i < count; ++i) // The array expands as the lights are duplicated/propagated
 	{
 		PropagateLight(Lights[i].get(), touchedPortals, 0);
 	}

@@ -187,7 +187,7 @@ public:
 	std::unique_ptr<TriangleMeshShape> Collision;
 
 	virtual LevelMeshSurface* GetSurface(int index) { return nullptr; }
-	virtual unsigned GetSurfaceIndex(const LevelMeshSurface* surface) const { return unsigned(-1); }
+	virtual unsigned int GetSurfaceIndex(const LevelMeshSurface* surface) const { return 0xffffffff; }
 	virtual int GetSurfaceCount() { return 0; }
 
 	virtual void UpdateLightLists() { }

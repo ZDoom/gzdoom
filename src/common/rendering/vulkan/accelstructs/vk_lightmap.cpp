@@ -46,10 +46,6 @@ VkLightmap::~VkLightmap()
 		lights.Buffer->Unmap();
 }
 
-#if 0
-#include <set>
-#endif
-
 void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& surfaces)
 {
 	bool newLevel = (mesh != level);
@@ -72,30 +68,6 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 
 		CreateAtlasImages(surfaces);
 
-#if 0 // SmoothGroups
-		TArray<int> allSurfaces;
-
-		std::set<int> s;
-
-		for (auto& surface : surfaceIndices)
-		{
-			s.insert(mesh->GetSurface(surface)->smoothingGroupIndex);
-		}
-
-		for (int i = 0, count = level->GetSurfaceCount(); i < count; ++i)
-		{
-			auto surface = level->GetSurface(i);
-
-			if (s.find(surface->smoothingGroupIndex) != s.end())
-			{
-				allSurfaces.Push(i);
-				surface->needsUpdate = false;
-			}
-		}
-#else
-		const auto& allSurfaces = surfaces;
-#endif
-
 		for (auto& surface : surfaces)
 		{
 			surface->needsUpdate = false; // it may have been set to false already, but lightmapper ultimately decides so
@@ -103,13 +75,13 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 
 		UploadUniforms();
 
-		lastSurfaceCount = allSurfaces.Size();
+		lastSurfaceCount = surfaces.Size();
 
 		for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
 		{
 			if (atlasImages[pageIndex].pageMaxX && atlasImages[pageIndex].pageMaxY)
 			{
-				RenderAtlasImage(pageIndex, allSurfaces);
+				RenderAtlasImage(pageIndex, surfaces);
 			}
 		}
 
@@ -119,7 +91,7 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 			{
 				ResolveAtlasImage(pageIndex);
 				BlurAtlasImage(pageIndex);
-				CopyAtlasImageResult(pageIndex, allSurfaces);
+				CopyAtlasImageResult(pageIndex, surfaces);
 			}
 		}
 
@@ -277,9 +249,6 @@ void VkLightmap::CreateAtlasImages(const TArray<LevelMeshSurface*>& surfaces)
 	for (int i = 0, count = surfaces.Size(); i < count; i++)
 	{
 		LevelMeshSurface* surface = surfaces[i];
-	//for (int i = 0, count = mesh->GetSurfaceCount(); i < count; i++)
-	//{
-	//	LevelMeshSurface* surface = mesh->GetSurface(i);
 
 		auto result = packer.insert(surface->texWidth + 2, surface->texHeight + 2);
 		surface->lightmapperAtlasX = result.pos.x + 1;

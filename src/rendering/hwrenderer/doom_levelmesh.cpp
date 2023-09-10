@@ -1118,7 +1118,7 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 		n |= n >> 2;
 		n |= n >> 4;
 		n |= n >> 8;
-		++n;
+		n = (n + 1) >> 1;
 		surface.sampleDimension = uint16_t(n) ? uint16_t(n) : uint16_t(0xFFFF);
 	}
 

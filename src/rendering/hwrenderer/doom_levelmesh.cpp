@@ -369,8 +369,6 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 	{
 		surface.TexCoords = (float*)&LightmapUvs[surface.startUvIndex];
 
-		surface.LightmapNum = surface.atlasPageIndex;
-
 		if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
 		{
 			surface.Subsector = &doomMap.subsectors[surface.typeIndex];

@@ -243,7 +243,7 @@ static int CreateIndexedSectorVerticesLM(FRenderState& renderstate, sector_t* se
 		if (lightmap && lightmap->Type != ST_UNKNOWN) // lightmap may be missing if the subsector is degenerate triangle
 		{
 			float* luvs = lightmap->TexCoords;
-			int lindex = lightmap->LightmapNum;
+			int lindex = lightmap->atlasPageIndex;
 			for (unsigned int j = 0; j < sub->numlines; j++)
 			{
 				SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[j].v1, plane, luvs[j * 2], luvs[j * 2 + 1], lindex);

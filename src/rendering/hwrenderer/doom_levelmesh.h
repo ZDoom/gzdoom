@@ -16,10 +16,9 @@ struct FLevelLocals;
 
 struct DoomLevelMeshSurface : public LevelMeshSurface
 {
-	subsector_t* Subsector;
-	side_t* Side;
-	sector_t* ControlSector;
-	uint32_t LightmapNum; // To do: same as atlasPageIndex. Delete one of them!
+	subsector_t* Subsector = nullptr;
+	side_t* Side = nullptr;
+	sector_t* ControlSector = nullptr;
 	float* TexCoords;
 };
 

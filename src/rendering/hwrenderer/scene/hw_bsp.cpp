@@ -867,17 +867,15 @@ void UpdateLightmaps(DFrameBuffer* screen, FRenderState& RenderState)
 
 	if (size < lm_background_updates)
 	{
-		int index = 0;
 		for (auto& e : level.levelMesh->Surfaces)
 		{
 			if (e.needsUpdate)
 			{
-				list.Push(index);
+				list.Push(&e);
 
 				if (list.Size() >= lm_background_updates)
 					break;
 			}
-			++index;
 		}
 	}
 

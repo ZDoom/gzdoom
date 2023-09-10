@@ -263,7 +263,7 @@ protected:
 	EPassType mPassType = NORMAL_PASS;
 
 	std::atomic<unsigned> mActiveLightmapSurfaceBufferIndex;
-	TArray<int> mActiveLightmapSurfacesBuffer;
+	TArray<LevelMeshSurface*> mActiveLightmapSurfacesBuffer;
 public:
 
 	uint64_t firstFrame = 0;
@@ -746,7 +746,7 @@ public:
 			int index = mActiveLightmapSurfaceBufferIndex.fetch_add(1);
 			if (index < mActiveLightmapSurfacesBuffer.Size())
 			{
-				mActiveLightmapSurfacesBuffer[index] = surfaceIndex;
+				mActiveLightmapSurfacesBuffer[index] = surface;
 				surface->needsUpdate = false;
 			}
 		}

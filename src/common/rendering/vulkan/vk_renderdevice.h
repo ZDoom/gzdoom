@@ -63,7 +63,7 @@ public:
 	void AmbientOccludeScene(float m5) override;
 	void SetSceneRenderTarget(bool useSSAO) override;
 	void SetLevelMesh(LevelMesh* mesh) override;
-	void UpdateLightmaps(const TArray<int>& surfaceIndices) override;
+	void UpdateLightmaps(const TArray<LevelMeshSurface*>& surfaces) override;
 	void SetShadowMaps(const TArray<float>& lights, hwrenderer::LevelAABBTree* tree, bool newTree) override;
 	void SetSaveBuffers(bool yes) override;
 	void ImageTransitionScene(bool unknown) override;

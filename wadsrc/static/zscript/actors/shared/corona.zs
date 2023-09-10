@@ -9,8 +9,7 @@
  * will draw the Spawn state's sprite in screen space.
  * 
  * The corona will be drawn with the actor's render style and alpha. It
- * defaults to the "Add" RenderStyle, but feel free to change to whatever
- * you want.
+ * defaults to the "Add" RenderStyle, but can be changed to any render style.
  * 
  * The actor's scale can also be used to influence the size of the corona
  * on screen.
@@ -27,7 +26,7 @@
  * 
  *****************************************************************************/
 
-class Corona : Actor native
+class Corona : Actor abstract native
 {
 	Default
 	{

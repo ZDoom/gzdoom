@@ -96,6 +96,11 @@ void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& sur
 		const auto& allSurfaces = surfaces;
 #endif
 
+		for (auto& surface : surfaces)
+		{
+			surface->needsUpdate = false; // it may have been set to false already, but lightmapper ultimately decides so
+		}
+
 		UploadUniforms();
 
 		lastSurfaceCount = allSurfaces.Size();

@@ -40,6 +40,7 @@ public:
 	void UpdateLightLists() override;
 
 	LevelMeshSurface* GetSurface(int index) override { return &Surfaces[index]; }
+	unsigned GetSurfaceIndex(const LevelMeshSurface* surface) const { return std::distance(reinterpret_cast<const DoomLevelMeshSurface*>(&Surfaces[0]), reinterpret_cast<const DoomLevelMeshSurface*>(surface)); }
 	int GetSurfaceCount() override { return Surfaces.Size(); }
 
 

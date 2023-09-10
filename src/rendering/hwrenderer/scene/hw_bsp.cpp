@@ -865,7 +865,7 @@ void UpdateLightmaps(DFrameBuffer* screen, FRenderState& RenderState)
 
 	list.Resize(min(list.Size(), unsigned(size)));
 
-	if (size < lm_background_updates)
+	if (size < unsigned(lm_background_updates))
 	{
 		for (auto& e : level.levelMesh->Surfaces)
 		{
@@ -873,7 +873,7 @@ void UpdateLightmaps(DFrameBuffer* screen, FRenderState& RenderState)
 			{
 				list.Push(&e);
 
-				if (list.Size() >= lm_background_updates)
+				if (list.Size() >= unsigned(lm_background_updates))
 					break;
 			}
 		}

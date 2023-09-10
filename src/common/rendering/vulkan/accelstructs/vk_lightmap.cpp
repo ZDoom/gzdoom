@@ -231,7 +231,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex, const TArray<LevelMeshSurfac
 			LightmapPushConstants pc;
 			pc.LightStart = firstLight;
 			pc.LightEnd = firstLight + lightCount;
-			pc.SurfaceIndex = (int32_t)std::distance((char*)mesh->GetSurface(0), (char*)targetSurface) / 288;
+			pc.SurfaceIndex = mesh->GetSurfaceIndex(targetSurface);
 			pc.LightmapOrigin = targetSurface->worldOrigin - targetSurface->worldStepX - targetSurface->worldStepY;
 			pc.LightmapStepX = targetSurface->worldStepX * viewport.width;
 			pc.LightmapStepY = targetSurface->worldStepY * viewport.height;

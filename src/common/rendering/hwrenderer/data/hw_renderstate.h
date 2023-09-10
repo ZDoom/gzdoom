@@ -739,11 +739,11 @@ public:
 		return SetViewpoint(matrices);
 	}
 
-	inline void PushVisibleSurface(int surfaceIndex, LevelMeshSurface* surface)
+	inline void PushVisibleSurface(LevelMeshSurface* surface)
 	{
 		if (surface->needsUpdate) // TODO atomic? 
 		{
-			int index = mActiveLightmapSurfaceBufferIndex.fetch_add(1);
+			auto index = mActiveLightmapSurfaceBufferIndex.fetch_add(1);
 			if (index < mActiveLightmapSurfacesBuffer.Size())
 			{
 				mActiveLightmapSurfacesBuffer[index] = surface;

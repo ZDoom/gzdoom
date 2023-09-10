@@ -505,15 +505,13 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 	// Lightmaps
 	//
 
-	const auto* lm = &sector->Level->levelMesh->Surfaces[0]; // temporay hack on top of a temporary hack
-
 	for (int i = 0, count = sector->subsectorcount; i < count; ++i)
 	{
 		for (int plane = 0; plane < 2; ++plane)
 		{
 			if (auto lightmap = sector->subsectors[i]->lightmap[plane][0])
 			{
-				state.PushVisibleSurface(lightmap - lm, lightmap);
+				state.PushVisibleSurface(lightmap);
 			}
 		}
 	}
@@ -524,7 +522,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 		{
 			if (surface)
 			{
-				state.PushVisibleSurface(surface - lm, surface);
+				state.PushVisibleSurface(surface);
 			}
 		}
 	}

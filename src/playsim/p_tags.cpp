@@ -111,7 +111,7 @@ void FTagManager::RemoveLineIDs(int line)
 		{
 			while (allIDs[start].target == line)
 			{
-				allTags[start].tag = allTags[start].target = -1;
+				allIDs[start].tag = allIDs[start].target = -1;
 				start++;
 			}
 		}
@@ -371,12 +371,12 @@ int FTagManager::CountLineIDs(const line_t *line)
 
 	if (LineHasIDs(i))
 	{
-		const int n = allTags.Size();
+		const int n = allIDs.Size();
 
 		int j = startForLine[i];
 		int c = 0;
 
-		while(j < n && allTags[j].target == i)
+		while(j < n && allIDs[j].target == i)
 		{
 			j++;
 			c++;
@@ -394,11 +394,11 @@ int FTagManager::GetLineID(const line_t *line, int index)
 
 	if (LineHasIDs(i))
 	{
-		const int n = allTags.Size();
+		const int n = allIDs.Size();
 
 		int j = startForLine[i] + index;
 
-		return (j < n && allTags[j].target == i) ? allTags[j].tag : 0;
+		return (j < n && allIDs[j].target == i) ? allIDs[j].tag : 0;
 	}
 
 	return 0;

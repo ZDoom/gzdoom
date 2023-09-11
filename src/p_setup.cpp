@@ -475,6 +475,8 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	loader.LoadLevel(map, Level->MapName.GetChars(), position);
 	delete map;
 
+	screen->SetLevelMesh(Level->levelMesh);
+
 	// if deathmatch, randomly spawn the active players
 	if (deathmatch)
 	{

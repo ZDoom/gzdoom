@@ -123,8 +123,6 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 		screen->mShadowMap->SetCollectLights(nullptr);
 	}
 
-	screen->SetLevelMesh(camera->Level->levelMesh);
-
 	static HWDrawContext mainthread_drawctx;
 
 	hw_ClearFakeFlat(&mainthread_drawctx);

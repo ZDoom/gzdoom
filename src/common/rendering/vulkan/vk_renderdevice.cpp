@@ -537,7 +537,7 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 {
 	mRaytrace->SetLevelMesh(mesh);
 
-	if (lastMesh != mesh && mesh->GetSurfaceCount() > 0)
+	if (mesh->GetSurfaceCount() > 0)
 	{
 		lastMesh = mesh;
 

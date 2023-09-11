@@ -55,12 +55,9 @@ void VkRaytrace::SetLevelMesh(LevelMesh* mesh)
 	if (!mesh)
 		mesh = &NullMesh;
 
-	if (mesh != Mesh)
-	{
-		Reset();
-		Mesh = mesh;
-		CreateVulkanObjects();
-	}
+	Reset();
+	Mesh = mesh;
+	CreateVulkanObjects();
 }
 
 void VkRaytrace::Reset()

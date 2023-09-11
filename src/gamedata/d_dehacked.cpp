@@ -1067,11 +1067,6 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 	
 	bool returnsState = codepointer == 6;
 	
-	// Fakey fake script position thingamajig. Because NULL cannot be used instead.
-	// Even if the lump was parsed by an FScanner, there would hardly be a way to
-	// identify which line is troublesome.
-	FScriptPosition *pos = new FScriptPosition(FString("DEHACKED"), 0);
-	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
 	sym = dyn_cast<PFunction>(PClass::FindActor(NAME_Weapon)->FindSymbol(FName(MBFCodePointers[codepointer].name), true));

@@ -475,6 +475,7 @@ void VulkanRenderDevice::BeginFrame()
 		{
 			levelMesh->UpdateLightLists();
 			GetTextureManager()->CreateLightmap(levelMesh->LMTextureSize, levelMesh->LMTextureCount);
+			GetLightmap()->SetLevelMesh(levelMesh);
 
 #if 0 // full lightmap generation
 			TArray<LevelMeshSurface*> surfaces;
@@ -484,9 +485,7 @@ void VulkanRenderDevice::BeginFrame()
 				surfaces[i] = mesh->GetSurface(i);
 			}
 
-			GetLightmap()->Raytrace(mesh, surfaces);
-#else
-			GetLightmap()->Raytrace(levelMesh, {});
+			GetLightmap()->Raytrace(surfaces);
 #endif
 		}
 	}
@@ -564,12 +563,9 @@ void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 
 void VulkanRenderDevice::UpdateLightmaps(const TArray<LevelMeshSurface*>& surfaces)
 {
-	if (surfaces.Size() > 0)
+	if (surfaces.Size() > 0 && levelMesh)
 	{
-		if (levelMesh)
-		{
-			GetLightmap()->Raytrace(levelMesh, surfaces);
-		}
+		GetLightmap()->Raytrace(surfaces);
 	}
 }
 

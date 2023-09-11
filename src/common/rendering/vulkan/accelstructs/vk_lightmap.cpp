@@ -46,18 +46,17 @@ VkLightmap::~VkLightmap()
 		lights.Buffer->Unmap();
 }
 
-void VkLightmap::Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& surfaces)
+void VkLightmap::SetLevelMesh(LevelMesh* level)
 {
-	bool newLevel = (mesh != level);
 	mesh = level;
-	if (newLevel)
-	{
-		UpdateAccelStructDescriptors();
+	UpdateAccelStructDescriptors();
 
-		lightmapRaytrace.Reset();
-		lightmapRaytraceLast.Reset();
-	}
+	lightmapRaytrace.Reset();
+	lightmapRaytraceLast.Reset();
+}
 
+void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
+{
 	if (surfaces.Size())
 	{
 		lightmapRaytrace.active = true;

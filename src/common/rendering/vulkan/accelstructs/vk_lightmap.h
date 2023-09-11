@@ -90,8 +90,8 @@ public:
 	VkLightmap(VulkanRenderDevice* fb);
 	~VkLightmap();
 
-	void Raytrace(LevelMesh* level, const TArray<LevelMeshSurface*>& surfaces);
-
+	void Raytrace(const TArray<LevelMeshSurface*>& surfaces);
+	void SetLevelMesh(LevelMesh* level);
 private:
 	void UpdateAccelStructDescriptors();
 

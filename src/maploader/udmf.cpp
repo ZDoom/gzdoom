@@ -755,7 +755,6 @@ public:
 
 			case NAME_lm_suncolor:
 			case NAME_lm_sampledistance:
-			case NAME_lm_gridsize:
 				CHECK_N(Zd | Zdt)
 					break;
 
@@ -1129,9 +1128,6 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
-			case NAME_lm_lightcolorline:
-			case NAME_lm_lightintensityline:
-			case NAME_lm_lightdistanceline:
 			case NAME_lm_sampledist_line:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
@@ -1481,9 +1477,6 @@ public:
 					sd->Flags |= WALLF_EXTCOLOR;
 				break;
 
-			case NAME_lm_lightcolorline:
-			case NAME_lm_lightintensityline:
-			case NAME_lm_lightdistanceline:
 			case NAME_lm_sampledist_line:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
@@ -1999,12 +1992,6 @@ public:
 					sec->health3dgroup = CheckInt(key);
 					break;
 
-				case NAME_lm_lightcolorfloor:
-				case NAME_lm_lightintensityfloor:
-				case NAME_lm_lightdistancefloor:
-				case NAME_lm_lightcolorceiling:
-				case NAME_lm_lightintensityceiling:
-				case NAME_lm_lightdistanceceiling:
 				case NAME_lm_sampledist_floor:
 				case NAME_lm_sampledist_ceiling:
 					CHECK_N(Zd | Zdt)

@@ -152,6 +152,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
       For lines with ACS specials (80-86 and 226), if arg0str is present and non-null, it
       will be used as the name of the script to execute, and arg0 will be ignored.
+
+      lm_sampledist_line = <int>;    // ZDRay customizable sampling distance for this line. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_top = <int>;     // ZDRay customizable sampling distance for this line's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_mid = <int>;     // ZDRay customizable sampling distance for this line's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_bot = <int>;     // ZDRay customizable sampling distance for this line's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
    }
 
    sidedef
@@ -221,6 +226,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       colorization_top = <int>;     // Sets a colorization record for the upper texture. Colorization records must be defined in TEXTURES.
       colorization_mid = <int>;     // Sets a colorization record for the middle texture. Colorization records must be defined in TEXTURES.
       colorization_bottom = <int>;  // Sets a colorization record for the lower texture. Colorization records must be defined in TEXTURES.
+
+      lm_sampledist_line = <int>;   // ZDRay customizable sampling distance for this sidedef. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_top = <int>;    // ZDRay customizable sampling distance for this sidedef's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_mid = <int>;    // ZDRay customizable sampling distance for this sidedef's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_bot = <int>;    // ZDRay customizable sampling distance for this sidedef's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0	  
    }
 
    sector
@@ -326,6 +336,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       for Doom format maps so any map converter converting to the ZDoomTranslated namespace should
       set this flag for each tagged sector.
 
+      lm_sampledist_floor = <int>;      // ZDRay customizable sampling distance for this sector's floor. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_ceiling = <int>;    // ZDRay customizable sampling distance for this sector's ceiling. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
    }
 
    thing
@@ -355,6 +367,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       scaley = <float>;         // Vertical scaling on thing. Default = 0 (ignored).
       scale = <float>;          // Vertical and horizontal scaling on thing. Default = 0 (ignored).
       floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
+
+      lm_sampledistance = <int>;    // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 16
+      lm_suncolor = <string>;       // ZDRay lightmap sun color in hex. Default: "FFFFFF"
 
       * Note about arg0str
 
@@ -518,6 +533,9 @@ Blocklandmonsters MBF21 flag
 
 1.33 06.11.2021
 Added separate light levels for sidedef tiers (top/mid/bottom)
+
+1.34 09.11.2023
+Added/updated ZDRay/lightmap-related properties.
 
 ===============================================================================
 EOF

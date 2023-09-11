@@ -151,6 +151,7 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex, const TArray<LevelMeshSurfac
 			if (lights.Pos + lightCount > lights.BufferSize || vertices.Pos + vertexCount > vertices.BufferSize)
 			{
 				// Flush scene buffers
+				fb->GetCommands()->GetTransferCommands()->endRenderPass();
 				fb->GetCommands()->WaitForCommands(false);
 				lights.Pos = 0;
 				vertices.Pos = 0;

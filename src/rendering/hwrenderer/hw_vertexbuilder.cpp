@@ -236,44 +236,52 @@ static int CreateIndexedSectorVerticesLM(FRenderState& renderstate, sector_t* se
 	int idx = ibo_data.Reserve((pos - 2 * sec->subsectorcount) * 3);
 
 	// Create the actual vertices.
-	for (i = 0, pos = 0; i < sec->subsectorcount; i++)
+	auto sections = sec->Level->sections.SectionsForSector(sec);
+	pos = 0;
+	for(auto& section : sections)
 	{
-		subsector_t* sub = sec->subsectors[i];
-		DoomLevelMeshSurface* lightmap = sub->lightmap[h][lightmapIndex];
-		if (lightmap && lightmap->Type != ST_UNKNOWN) // lightmap may be missing if the subsector is degenerate triangle
+		for(auto& sub : section.subsectors)
 		{
-			float* luvs = lightmap->TexCoords;
-			int lindex = lightmap->atlasPageIndex;
-			for (unsigned int j = 0; j < sub->numlines; j++)
+			// vertices
+			DoomLevelMeshSurface* lightmap = sub->lightmap[h][lightmapIndex];
+			if (lightmap && lightmap->Type != ST_UNKNOWN) // lightmap may be missing if the subsector is degenerate triangle
 			{
-				SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[j].v1, plane, luvs[j * 2], luvs[j * 2 + 1], lindex);
-				vbo_shadowdata[vi + pos].z += diff;
-				pos++;
+				float* luvs = lightmap->TexCoords;
+				int lindex = lightmap->atlasPageIndex;
+				for (unsigned int j = 0; j < sub->numlines; j++)
+				{
+					SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[j].v1, plane, luvs[j * 2], luvs[j * 2 + 1], lindex);
+					vbo_shadowdata[vi + pos].z += diff;
+					pos++;
+				}
 			}
-		}
-		else
-		{
-			for (unsigned int j = 0; j < sub->numlines; j++)
+			else
 			{
-				SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[j].v1, plane);
-				vbo_shadowdata[vi + pos].z += diff;
-				pos++;
+				for (unsigned int j = 0; j < sub->numlines; j++)
+				{
+					SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[j].v1, plane);
+					vbo_shadowdata[vi + pos].z += diff;
+					pos++;
+				}
 			}
 		}
 	}
 
 	// Create the indices for the subsectors
-	for (i = 0, pos = 0; i < sec->subsectorcount; i++)
+	pos = 0;
+	for (auto& section : sections)
 	{
-		subsector_t* sub = sec->subsectors[i];
-		int firstndx = vi + pos;
-		for (unsigned int k = 2; k < sub->numlines; k++)
+		for (auto& sub : section.subsectors)
 		{
-			ibo_data[idx++] = firstndx;
-			ibo_data[idx++] = firstndx + k - 1;
-			ibo_data[idx++] = firstndx + k;
+			int firstndx = vi + pos;
+			for (unsigned int k = 2; k < sub->numlines; k++)
+			{
+				ibo_data[idx++] = firstndx;
+				ibo_data[idx++] = firstndx + k - 1;
+				ibo_data[idx++] = firstndx + k;
+			}
+			pos += sub->numlines;
 		}
-		pos += sec->subsectors[i]->numlines;
 	}
 
 	sec->ibocount = ibo_data.Size() - rt;

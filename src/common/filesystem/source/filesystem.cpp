@@ -981,13 +981,16 @@ int FileSystem::FindLump (const char *name, int *lastlump, bool anyns)
 		char name8[8];
 		uint64_t qname;
 	};
-	LumpRecord *lump_p;
 
 	UpperCopy (name8, name);
 
 	assert(lastlump != NULL && *lastlump >= 0);
-	lump_p = &FileInfo[*lastlump];
-	while (lump_p <= &FileInfo.back())
+
+	const LumpRecord * last = FileInfo.data() + FileInfo.size();
+
+	LumpRecord * lump_p = FileInfo.data() + *lastlump;
+
+	while (lump_p < last)
 	{
 		if ((anyns || lump_p->Namespace == ns_global) && lump_p->shortName.qword == qname)
 		{
@@ -1013,11 +1016,13 @@ int FileSystem::FindLump (const char *name, int *lastlump, bool anyns)
 
 int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, int *nameindex)
 {
-	LumpRecord *lump_p;
-
 	assert(lastlump != NULL && *lastlump >= 0);
-	lump_p = &FileInfo[*lastlump];
-	while (lump_p <= &FileInfo.back())
+
+	const LumpRecord * last = FileInfo.data() + FileInfo.size();
+
+	LumpRecord * lump_p = FileInfo.data() + *lastlump;
+
+	while (lump_p < last)
 	{
 		if (anyns || lump_p->Namespace == ns_global)
 		{
@@ -1052,11 +1057,14 @@ int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, in
 int FileSystem::FindLumpFullName(const char* name, int* lastlump, bool noext)
 {
 	assert(lastlump != NULL && *lastlump >= 0);
-	auto lump_p = &FileInfo[*lastlump];
+
+	const LumpRecord * last = FileInfo.data() + FileInfo.size();
+
+	LumpRecord * lump_p = FileInfo.data() + *lastlump;
 
 	if (!noext)
 	{
-		while (lump_p <= &FileInfo.back())
+		while (lump_p < last)
 		{
 			if (!stricmp(name, lump_p->LongName))
 			{

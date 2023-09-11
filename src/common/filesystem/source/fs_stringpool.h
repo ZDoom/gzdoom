@@ -8,7 +8,7 @@ class StringPool
 	friend class FileSystem;
 	friend class FResourceFile;
 private:
-	StringPool(size_t blocksize = 10*1024) : TopBlock(nullptr), FreeBlocks(nullptr), BlockSize(blocksize) {}
+	StringPool(bool _shared, size_t blocksize = 10*1024) : TopBlock(nullptr), FreeBlocks(nullptr), BlockSize(blocksize), shared(_shared) {}
 public:
 	~StringPool();
 	const char* Strdup(const char*);

@@ -194,7 +194,7 @@ static void PrintLastError (FileSystemMessageFunc Printf);
 
 FileSystem::FileSystem()
 {
-	stringpool = new StringPool;
+	stringpool = new StringPool(true);
 	stringpool->shared = true;	// will be used by all owned resource files.
 }
 
@@ -219,6 +219,8 @@ void FileSystem::DeleteAll ()
 		delete Files[i];
 	}
 	Files.clear();
+	delete stringpool;
+	stringpool = nullptr;
 }
 
 //==========================================================================

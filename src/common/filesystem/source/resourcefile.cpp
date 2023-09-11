@@ -332,7 +332,7 @@ FResourceFile *FResourceFile::OpenDirectory(const char *filename, LumpFilterInfo
 
 FResourceFile::FResourceFile(const char *filename, StringPool* sp)
 {
-	stringpool = sp ? sp : new StringPool;
+	stringpool = sp ? sp : new StringPool(false);
 	FileName = stringpool->Strdup(filename);
 }
 

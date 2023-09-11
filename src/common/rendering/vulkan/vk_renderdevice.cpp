@@ -466,6 +466,31 @@ TArray<uint8_t> VulkanRenderDevice::GetScreenshotBuffer(int &pitch, ESSType &col
 
 void VulkanRenderDevice::BeginFrame()
 {
+	if (levelMeshChanged)
+	{
+		levelMeshChanged = false;
+		mRaytrace->SetLevelMesh(levelMesh);
+
+		if (levelMesh && levelMesh->GetSurfaceCount() > 0)
+		{
+			levelMesh->UpdateLightLists();
+			GetTextureManager()->CreateLightmap(levelMesh->LMTextureSize, levelMesh->LMTextureCount);
+
+#if 0 // full lightmap generation
+			TArray<LevelMeshSurface*> surfaces;
+			surfaces.Reserve(mesh->GetSurfaceCount());
+			for (unsigned i = 0, count = mesh->GetSurfaceCount(); i < count; ++i)
+			{
+				surfaces[i] = mesh->GetSurface(i);
+			}
+
+			GetLightmap()->Raytrace(mesh, surfaces);
+#else
+			GetLightmap()->Raytrace(levelMesh, {});
+#endif
+		}
+	}
+
 	SetViewportRects(nullptr);
 	mCommands->BeginFrame();
 	mTextureManager->BeginFrame();
@@ -531,40 +556,16 @@ void VulkanRenderDevice::PrintStartupLog()
 	Printf("Min. uniform buffer offset alignment: %" PRIu64 "\n", limits.minUniformBufferOffsetAlignment);
 }
 
-LevelMesh* lastMesh = nullptr; // Temp hack; Since this function is called every frame we only want to do this once
-
 void VulkanRenderDevice::SetLevelMesh(LevelMesh* mesh)
 {
-	mRaytrace->SetLevelMesh(mesh);
-
-	if (mesh->GetSurfaceCount() > 0)
-	{
-		lastMesh = mesh;
-
-		mesh->UpdateLightLists();
-		GetTextureManager()->CreateLightmap(mesh->LMTextureSize, mesh->LMTextureCount);
-
-#if 0 // full lightmap generation
-		TArray<LevelMeshSurface*> surfaces;
-		surfaces.Reserve(mesh->GetSurfaceCount());
-		for (unsigned i = 0, count = mesh->GetSurfaceCount(); i < count; ++i)
-		{
-			surfaces[i] = mesh->GetSurface(i);
-		}
-
-		GetLightmap()->Raytrace(mesh, surfaces);
-#else
-		GetLightmap()->Raytrace(mesh, {});
-#endif
-	}
+	levelMesh = mesh;
+	levelMeshChanged = true;
 }
 
 void VulkanRenderDevice::UpdateLightmaps(const TArray<LevelMeshSurface*>& surfaces)
 {
 	if (surfaces.Size() > 0)
 	{
-		auto levelMesh = lastMesh; // There's nothing more permanent than a temporary solution
-
 		if (levelMesh)
 		{
 			GetLightmap()->Raytrace(levelMesh, surfaces);

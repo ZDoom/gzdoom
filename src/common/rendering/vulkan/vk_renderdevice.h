@@ -115,6 +115,9 @@ private:
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
 
 	bool mVSync = false;
+
+	LevelMesh* levelMesh = nullptr;
+	bool levelMeshChanged = true;
 };
 
 class CVulkanError : public CEngineError

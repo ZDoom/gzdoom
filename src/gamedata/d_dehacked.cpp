@@ -1218,6 +1218,7 @@ static int PatchThing (int thingy)
 	else
 	{
 		DPrintf (DMSG_SPAMMY, "Thing %d\n", thingy);
+		type = thingytype;
 		info = GetDefaultByType (type);
 		ednum = &type->ActorInfo()->DoomEdNum;
 	}
@@ -2929,6 +2930,7 @@ static int PatchSoundNames (int dummy)
 
 	while ((result = GetLine()) == 1)
 	{
+		stripwhite(Line2);
 		FString newname = skipwhite (Line2);
 		ReplaceSoundName((int)strtoll(Line1, nullptr, 10), newname);
 		DPrintf (DMSG_SPAMMY, "Sound %d set to:\n%s\n", Line1, newname.GetChars());
@@ -2945,6 +2947,7 @@ static int PatchSpriteNames (int dummy)
 		
 		while ((result = GetLine()) == 1)
 		{
+			stripwhite(Line2);
 			FString newname = skipwhite (Line2);
 			if (newname.Len() != 4)
 			{
@@ -2961,10 +2964,10 @@ static int PatchSpriteNames (int dummy)
 				{
 					OrgSprNames[o] = nulname;
 				}
-				int v = GetSpriteIndex(newname);
-				memcpy(OrgSprNames[line1val].c, sprites[v].name, 5);
 			}
-			
+			int v = GetSpriteIndex(newname);
+			memcpy(OrgSprNames[line1val].c, sprites[v].name, 5);
+
 			DPrintf (DMSG_SPAMMY, "Sprite %d set to:\n%s\n", Line1, newname.GetChars());
 		}
 		
@@ -3297,16 +3300,15 @@ static void UnloadDehSupp ()
 		MBFParamStates.ShrinkToFit();
 		MBFCodePointers.Clear();
 		MBFCodePointers.ShrinkToFit();
-		// StateMap is not freed here, because if you load a second
+		// OrgSprNames and StateMap are not freed here, because if you load a second
 		// dehacked patch through some means other than including it
-		// in the first patch, it won't see the state information
+		// in the first patch, it won't see the state/sprite information
 		// that was altered by the first. So we need to keep the
 		// StateMap around until all patches have been applied.
 		DehUseCount = 0;
 		Actions.Reset();
 		OrgHeights.Reset();
 		CodePConv.Reset();
-		OrgSprNames.Reset();
 		SoundMap.Reset();
 		InfoNames.Reset();
 		BitNames.Reset();
@@ -3419,6 +3421,7 @@ static bool LoadDehSupp ()
 			}
 			else if (sc.Compare("OrgSprNames"))
 			{
+				bool addit = OrgSprNames.Size() == 0;
 				sc.MustGetStringName("{");
 				while (!sc.CheckString("}"))
 				{
@@ -3438,7 +3441,7 @@ static bool LoadDehSupp ()
 					{
 						sc.ScriptError("Invalid sprite name '%s' (must be 4 characters)", sc.String);
 					}
-					OrgSprNames.Push(s);
+					if (addit) OrgSprNames.Push(s);
 					if (sc.CheckString("}")) break;
 					sc.MustGetStringName(",");
 				}
@@ -3725,6 +3728,7 @@ void FinishDehPatch ()
 	}
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
 	StateMap.Reset();
+	OrgSprNames.Reset();
 	TouchedActors.Reset();
 	EnglishStrings.Clear();
 	GStrings.SetOverrideStrings(std::move(DehStrings));

@@ -293,8 +293,8 @@ void DoomLevelMesh::CreateLightList()
 							DAngle Angle = light->target->Angles.Yaw;
 							double xzLen = negPitch.Cos();
 							meshlight.SpotDir.X = float(-Angle.Cos() * xzLen);
-							meshlight.SpotDir.Y = float(-negPitch.Sin());
-							meshlight.SpotDir.Z = float(-Angle.Sin() * xzLen);
+							meshlight.SpotDir.Y = float(-Angle.Sin() * xzLen);
+							meshlight.SpotDir.Z = float(-negPitch.Sin());
 						}
 						else
 						{

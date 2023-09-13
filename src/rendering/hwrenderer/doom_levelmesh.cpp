@@ -95,18 +95,8 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 	}
 
 	SetupLightmapUvs();
-	BindLightmapSurfacesToGeometry(doomMap);
 
 	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
-
-	// Runtime stuff
-	for (auto& surface : Surfaces)
-	{
-		if ((surface.Type == ST_FLOOR || surface.Type == ST_CEILING) && surface.ControlSector)
-		{
-			XFloorToSurface[surface.Subsector->sector].Push(&surface);
-		}
-	}
 }
 
 void DoomLevelMesh::CreatePortals()
@@ -380,6 +370,15 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 		{
 			surface.Side = &doomMap.sides[surface.typeIndex];
 			SetSideLightmap(&surface);
+		}
+	}
+
+	// Runtime helper
+	for (auto& surface : Surfaces)
+	{
+		if ((surface.Type == ST_FLOOR || surface.Type == ST_CEILING) && surface.ControlSector)
+		{
+			XFloorToSurface[surface.Subsector->sector].Push(&surface);
 		}
 	}
 }

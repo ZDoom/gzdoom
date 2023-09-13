@@ -835,6 +835,7 @@ public:
 
 			auto pc = pitch.Cos();
 			Level->SunDirection = -FVector3 { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() }; // [RaveYard]: is there a dedicated function for this?
+			Level->lightmaps = true;
 		}
 	}
 

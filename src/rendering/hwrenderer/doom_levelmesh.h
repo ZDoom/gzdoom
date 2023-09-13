@@ -29,6 +29,7 @@ public:
 	
 	void CreatePortals();
 	void DumpMesh(const FString& objFilename, const FString& mtlFilename) const;
+	void BindLightmapSurfacesToGeometry(FLevelLocals& doomMap);
 
 	bool TraceSky(const FVector3& start, FVector3 direction, float dist)
 	{
@@ -58,7 +59,6 @@ private:
 	void CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor);
 	void CreateSideSurfaces(FLevelLocals &doomMap, side_t *side);
 
-	void BindLightmapSurfacesToGeometry(FLevelLocals& doomMap);
 	void SetSubsectorLightmap(DoomLevelMeshSurface* surface);
 	void SetSideLightmap(DoomLevelMeshSurface* surface);
 

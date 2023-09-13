@@ -504,25 +504,27 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 	//
 	// Lightmaps
 	//
-
-	for (int i = 0, count = sector->subsectorcount; i < count; ++i)
+	if (level.lightmaps)
 	{
-		for (int plane = 0; plane < 2; ++plane)
+		for (int i = 0, count = sector->subsectorcount; i < count; ++i)
 		{
-			if (auto lightmap = sector->subsectors[i]->lightmap[plane][0])
+			for (int plane = 0; plane < 2; ++plane)
 			{
-				state.PushVisibleSurface(lightmap);
+				if (auto lightmap = sector->subsectors[i]->lightmap[plane][0])
+				{
+					state.PushVisibleSurface(lightmap);
+				}
 			}
 		}
-	}
 
-	if (auto subsectors = sector->Level->levelMesh->XFloorToSurface.CheckKey(sector))
-	{
-		for (auto* surface : *subsectors)
+		if (auto subsectors = sector->Level->levelMesh->XFloorToSurface.CheckKey(sector))
 		{
-			if (surface)
+			for (auto* surface : *subsectors)
 			{
-				state.PushVisibleSurface(surface);
+				if (surface)
+				{
+					state.PushVisibleSurface(surface);
+				}
 			}
 		}
 	}

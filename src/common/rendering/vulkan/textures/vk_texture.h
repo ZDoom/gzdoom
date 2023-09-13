@@ -23,7 +23,7 @@ public:
 
 	void BeginFrame();
 
-	void CreateLightmap(int LMTextureSize, int LMTextureCount);
+	void CreateLightmap(int newLMTextureSize, int newLMTextureCount, TArray<uint16_t>&& newPixelData);
 	void SetLightmap(int LMTextureSize, int LMTextureCount, const TArray<uint16_t>& LMTextureData);
 
 	VkTextureImage* GetTexture(const PPTextureType& type, PPTexture* tex);

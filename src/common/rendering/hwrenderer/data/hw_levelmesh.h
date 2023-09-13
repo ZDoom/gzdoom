@@ -192,11 +192,12 @@ public:
 
 	virtual void UpdateLightLists() { }
 
-	TArray<LevelMeshSmoothingGroup> SmoothingGroups; // TODO fill
-	TArray<LevelMeshPortal> Portals; // TODO fill
+	TArray<LevelMeshSmoothingGroup> SmoothingGroups;
+	TArray<LevelMeshPortal> Portals;
 
 	int LMTextureCount = 0;
 	int LMTextureSize = 0;
+	TArray<uint16_t> LMTextureData; // TODO better place for this?
 
 	FVector3 SunDirection = FVector3(0.0f, 0.0f, -1.0f);
 	FVector3 SunColor = FVector3(0.0f, 0.0f, 0.0f);

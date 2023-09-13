@@ -189,17 +189,17 @@ void VkTextureManager::CreateLightmap()
 	SetLightmap(1, 1, data);
 }
 
-void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCount)
+void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCount, TArray<uint16_t>&& newPixelData)
 {
 	if (LMTextureSize == newLMTextureSize && LMTextureCount == newLMTextureCount)
 		return;
 
 	LMTextureSize = newLMTextureSize;
 	LMTextureCount = newLMTextureCount;
-
-	int w = LMTextureSize;
-	int h = LMTextureSize;
-	int count = LMTextureCount;
+	
+	int w = newLMTextureSize;
+	int h = newLMTextureSize;
+	int count = newLMTextureCount;
 	int pixelsize = 8;
 
 	Lightmap.Reset(fb);
@@ -218,6 +218,47 @@ void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCoun
 		.Create(fb->GetDevice());
 
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
+
+	if (newPixelData.Size() >= w * h * count * 3)
+	{
+		assert(newPixelData.Size() == w * h * count * 3);
+
+		int totalSize = w * h * count * pixelsize;
+
+		auto stagingBuffer = BufferBuilder()
+			.Size(totalSize)
+			.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+			.DebugName("VkHardwareTexture.mStagingBuffer")
+			.Create(fb->GetDevice());
+
+		uint16_t one = 0x3c00; // half-float 1.0
+		const uint16_t* src = newPixelData.Data();
+		uint16_t* data = (uint16_t*)stagingBuffer->Map(0, totalSize);
+		for (int i = w * h * count; i > 0; i--)
+		{
+			*(data++) = *(src++);
+			*(data++) = *(src++);
+			*(data++) = *(src++);
+			*(data++) = one;
+		}
+		stagingBuffer->Unmap();
+
+		VkImageTransition()
+			.AddImage(&Lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, 0, count)
+			.Execute(cmdbuffer);
+
+		VkBufferImageCopy region = {};
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.layerCount = count;
+		region.imageExtent.depth = 1;
+		region.imageExtent.width = w;
+		region.imageExtent.height = h;
+		cmdbuffer->copyBufferToImage(stagingBuffer->buffer, Lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		fb->GetCommands()->TransferDeleteList->Add(std::move(stagingBuffer));
+	
+		newPixelData.Clear();
+	}
 
 	VkImageTransition()
 		.AddImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count)

@@ -304,7 +304,8 @@ public:
 	void SetSlopes();
 	void CopySlopes();
 
-	void InitLevelMesh();
+	void InitLevelMesh(MapData* map);
+	void LoadLightmap(MapData* map);
 
 	void LoadLevel(MapData *map, const char *lumpname, int position);
 

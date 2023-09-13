@@ -2696,6 +2696,8 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
+				// Note that A_CPosAttack needs to be remapped because it differs from the original and cannot be renamed anymore.
+				if (!symname.CompareNoCase("A_CPosAttack")) symname = "A_CPosAttackDehacked";
 				PFunction *sym = dyn_cast<PFunction>(PClass::FindActor(NAME_Weapon)->FindSymbol(symname, true));
 				if (sym == NULL)
 				{
@@ -3371,7 +3373,8 @@ static bool LoadDehSupp ()
 						// all relevant code pointers are either defined in Weapon
 						// or Actor so this will find all of them.
 						FString name = "A_";
-						name << sc.String;
+						if (sc.Compare("CPosAttack")) name << "CPosAttackDehacked";
+						else name << sc.String;
 						PFunction *sym = dyn_cast<PFunction>(wcls->FindSymbol(name, true));
 						if (sym == NULL)
 						{

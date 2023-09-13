@@ -100,6 +100,7 @@ enum
 
 	// For DrawText calls:
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
+	DTA_Localize,		// localize text
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
 
@@ -194,6 +195,7 @@ struct DrawParms
 	int monospace;
 	int spacing;
 	int maxstrlen;
+	bool localize;
 	bool fortext;
 	bool virtBottom;
 	bool burn;
@@ -266,7 +268,7 @@ enum
 };
 
 template<class T>
-bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, int type, PalEntry fill = ~0u, double fillalpha = 0.0);
+bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, int type, PalEntry fill = ~0u, double fillalpha = 0.0, bool scriptDifferences = false);
 
 template<class T>
 void DrawTextCommon(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, const T* string, DrawParms& parms);

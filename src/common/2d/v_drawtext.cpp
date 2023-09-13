@@ -380,6 +380,7 @@ void DrawText(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double 
 	{
 		return;
 	}
+	const char *txt = (parms.localize && string[0] == '$') ? GStrings(&string[1]) : string;
 	DrawTextCommon(drawer, font, normalcolor, x, y, (const uint8_t*)string, parms);
 }
 
@@ -399,24 +400,27 @@ void DrawText(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double 
 	{
 		return;
 	}
+	// [Gutawer] right now nothing needs the char32_t version to have localisation support, and i don't know how to do it
+	assert(parms.localize == false);
 	DrawTextCommon(drawer, font, normalcolor, x, y, string, parms);
 }
 
 
-void DrawText(F2DDrawer *drawer, FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args)
+void DrawText(F2DDrawer *drawer, FFont *font, int normalcolor, double x, double y, const FString& string, VMVa_List &args)
 {
 	DrawParms parms;
 
-	if (font == NULL || string == NULL)
+	if (font == NULL)
 		return;
 
 	uint32_t tag = ListGetInt(args);
-	bool res = ParseDrawTextureTags(drawer, nullptr, 0, 0, tag, args, &parms, DrawTexture_Text);
+	bool res = ParseDrawTextureTags(drawer, nullptr, 0, 0, tag, args, &parms, DrawTexture_Text, ~0u, 0.0, true);
 	if (!res)
 	{
 		return;
 	}
-	DrawTextCommon(drawer, font, normalcolor, x, y, (const uint8_t*)string, parms);
+	const char *txt = (parms.localize && string[0] == '$') ? GStrings(&string[1]) : string.GetChars();
+	DrawTextCommon(drawer, font, normalcolor, x, y, (uint8_t*)txt, parms);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawText)
@@ -432,8 +436,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawText)
 
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	VMVa_List args = { param + 5, 0, numparam - 6, va_reginfo + 5 };
-	const char *txt = chr[0] == '$' ? GStrings(&chr[1]) : chr.GetChars();
-	DrawText(twod, font, cr, x, y, txt, args);
+	DrawText(twod, font, cr, x, y, chr, args);
 	return 0;
 }
 
@@ -450,8 +453,7 @@ DEFINE_ACTION_FUNCTION(FCanvas, DrawText)
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
 	VMVa_List args = { param + 6, 0, numparam - 7, va_reginfo + 6 };
-	const char *txt = chr[0] == '$' ? GStrings(&chr[1]) : chr.GetChars();
-	DrawText(&self->Drawer, font, cr, x, y, txt, args);
+	DrawText(&self->Drawer, font, cr, x, y, chr, args);
 	self->Tex->NeedUpdate();
 	return 0;
 }

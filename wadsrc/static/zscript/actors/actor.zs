@@ -1321,7 +1321,7 @@ class Actor : Thinker native
 	{
 		if (DeathSound)
 		{
-			A_StartSound(DeathSound, CHAN_VOICE, CHANF_DEFAULT, 1, bBoss? ATTN_NONE : ATTN_NORM);
+			A_StartSound(DeathSound, CHAN_VOICE, CHANF_DEFAULT, 1, bBoss || bFullvolDeath? ATTN_NONE : ATTN_NORM);
 		}
 	}
 

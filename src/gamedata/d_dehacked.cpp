@@ -1148,7 +1148,7 @@ static const struct DehFlags2 deh_mobjflags_mbf21[] = {
   {"RANGEHALF",      [](AActor* defaults) { defaults->flags4 |= MF4_MISSILEMORE; }}, // use half distance for missile attack probability
   {"NOTHRESHOLD",    [](AActor* defaults) { defaults->flags4 |= MF4_QUICKTORETALIATE; }}, // no targeting threshold
   {"LONGMELEE",      [](AActor* defaults) { defaults->meleethreshold = 196; }}, // long melee range
-  {"BOSS",           [](AActor* defaults) { defaults->flags2 |= MF2_BOSS; }}, // full volume see / death sound + splash immunity
+  {"BOSS",           [](AActor* defaults) { defaults->flags2 |= MF2_BOSS; defaults->flags3 |= MF3_NORADIUSDMG; }}, // full volume see / death sound + splash immunity
   {"MAP07BOSS1",     [](AActor* defaults) { defaults->flags8 |= MF8_MAP07BOSS1; }}, // Tag 666 "boss" on doom 2 map 7
   {"MAP07BOSS2",     [](AActor* defaults) { defaults->flags8 |= MF8_MAP07BOSS2; }}, // Tag 667 "boss" on doom 2 map 7
   {"E1M8BOSS",       [](AActor* defaults) { defaults->flags8 |= MF8_E1M8BOSS; }}, // E1M8 boss
@@ -3890,6 +3890,18 @@ void ClearCountkill(AActor* a)
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
 }
 
+void SetBoss(AActor* a)
+{
+	a->flags2 |= MF2_BOSS;
+	a->flags3 |= MF3_NORADIUSDMG;
+}
+
+void ClearBoss(AActor* a)
+{
+	a->flags2 &= ~MF2_BOSS;
+	a->flags3 &= ~MF3_NORADIUSDMG;
+}
+
 void SetCountitem(AActor* a)
 {
 	if (!(a->flags & MF_COUNTITEM))
@@ -4087,7 +4099,7 @@ static FlagHandler flag2handlers[32] = {
 	F4(MF4_MISSILEMORE),
 	F4(MF4_QUICKTORETALIATE),
 	DEPF(DEPF_LONGMELEERANGE),
-	F2(MF2_BOSS),
+	{ SetBoss, ClearBoss, [](AActor* a)->bool { return a->flags2 & MF2_BOSS; } },
 	F8(MF8_MAP07BOSS1),
 	F8(MF8_MAP07BOSS2),
 	F8(MF8_E1M8BOSS),

@@ -96,7 +96,7 @@ FDirectory::FDirectory(const char * directory, StringPool* sp, bool nosubdirflag
 {
 	auto fn = FS_FullPath(directory);
 	if (fn.back() != '/') fn += '/';
-	FileName = sp->Strdup(fn.c_str());
+	FileName = stringpool->Strdup(fn.c_str());
 }
 
 //==========================================================================

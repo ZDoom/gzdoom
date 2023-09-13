@@ -65,6 +65,7 @@ extern MusicAliasMap MusicAliases;
 // [RH] S_sfx "maintenance" routines
 void S_ClearSoundData();
 void S_ParseSndInfo (bool redefine);
+void S_LockLocalSndinfo();
 
 bool S_AreSoundsEquivalent (AActor *actor, FSoundID id1, FSoundID id2);
 FSoundID S_LookupPlayerSound (const char *playerclass, int gender, FSoundID refid);

@@ -270,7 +270,7 @@ struct MBFParamState
 	FSoundID GetSoundArg(int i, int def = 0)
 	{
 		int num = argsused & (1 << i) ? (int)args[i] : def;
-		return DehFindSound(num-1, true);
+		return DehFindSound(num-1);
 	}
 
 	double GetFloatArg(int i, double def = 0)

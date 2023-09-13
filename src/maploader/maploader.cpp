@@ -3111,7 +3111,7 @@ void MapLoader::LoadLightmap(MapData* map)
 	fr.Read(&zdrayUvs[0], numTexCoords * 2 * sizeof(float));
 
 	// Load lightmap textures
-	Level->levelMesh->LMTextureData.Resize(Level->levelMesh->LMTextureCount* Level->levelMesh->LMTextureSize * Level->levelMesh->LMTextureSize * 3);
+	Level->levelMesh->LMTextureData.Resize(Level->levelMesh->LMTextureCount * Level->levelMesh->LMTextureSize * Level->levelMesh->LMTextureSize * 3);
 
 	TArray<uint16_t> textureData;
 	textureData.Resize((numTexBytes + 1) / 2);
@@ -3145,7 +3145,9 @@ void MapLoader::LoadLightmap(MapData* map)
 		int dstPage = realSurface.atlasPageIndex;
 		
 		// Sanity checks
-		if (srcMinX < 0 || srcMinY < 0 || dstX < 0 || dstY < 0 || srcMaxX >= textureSize || srcMaxY >= textureSize || dstX + srcW >= textureSize || dstY + srcH >= textureSize || srcPage >= numTextures || dstPage >= Level->levelMesh->LMTextureCount)
+		if (srcMinX < 0 || srcMinY < 0 || srcMaxX > textureSize || srcMaxY > textureSize ||
+			dstX < 0 || dstY < 0 || dstX + srcW > Level->levelMesh->LMTextureSize || dstY + srcH > Level->levelMesh->LMTextureSize ||
+			srcPage >= numTextures || dstPage >= Level->levelMesh->LMTextureCount)
 		{
 			errors = true;
 			if (developer >= 1)

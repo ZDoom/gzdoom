@@ -695,19 +695,19 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 	}
 }
 
-void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor)
+void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, sector_t *controlSector, int typeIndex)
 {
 	DoomLevelMeshSurface surf;
 	surf.bSky = IsSkySector(sector, sector_t::floor);
 
 	secplane_t plane;
-	if (!is3DFloor)
+	if (!controlSector)
 	{
 		plane = sector->floorplane;
 	}
 	else
 	{
-		plane = sector->ceilingplane;
+		plane = controlSector->ceilingplane;
 		plane.FlipVert();
 	}
 
@@ -728,26 +728,26 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 
 	surf.Type = ST_FLOOR;
 	surf.typeIndex = typeIndex;
-	surf.sampleDimension = sector->planes[sector_t::floor].LightmapSampleDistance;
-	surf.ControlSector = is3DFloor ? sector : nullptr;
+	surf.sampleDimension = (controlSector ? controlSector : sector)->planes[sector_t::floor].LightmapSampleDistance;
+	surf.ControlSector = controlSector;
 	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, -(float)plane.D);
 
 	Surfaces.Push(surf);
 }
 
-void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, int typeIndex, bool is3DFloor)
+void DoomLevelMesh::CreateCeilingSurface(FLevelLocals& doomMap, subsector_t* sub, sector_t* sector, sector_t* controlSector, int typeIndex)
 {
 	DoomLevelMeshSurface surf;
 	surf.bSky = IsSkySector(sector, sector_t::ceiling);
 
 	secplane_t plane;
-	if (!is3DFloor)
+	if (!controlSector)
 	{
 		plane = sector->ceilingplane;
 	}
 	else
 	{
-		plane = sector->floorplane;
+		plane = controlSector->floorplane;
 		plane.FlipVert();
 	}
 
@@ -768,8 +768,8 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals &doomMap, subsector_t *sub
 
 	surf.Type = ST_CEILING;
 	surf.typeIndex = typeIndex;
-	surf.sampleDimension = sector->planes[sector_t::ceiling].LightmapSampleDistance;
-	surf.ControlSector = is3DFloor ? sector : nullptr;
+	surf.sampleDimension = (controlSector ? controlSector : sector)->planes[sector_t::ceiling].LightmapSampleDistance;
+	surf.ControlSector = controlSector;
 	surf.plane = FVector4((float)plane.Normal().X, (float)plane.Normal().Y, (float)plane.Normal().Z, -(float)plane.D);
 
 	Surfaces.Push(surf);
@@ -790,13 +790,13 @@ void DoomLevelMesh::CreateSubsectorSurfaces(FLevelLocals &doomMap)
 		if (!sector || IsControlSector(sector))
 			continue;
 
-		CreateFloorSurface(doomMap, sub, sector, i, false);
-		CreateCeilingSurface(doomMap, sub, sector, i, false);
+		CreateFloorSurface(doomMap, sub, sector, nullptr, i);
+		CreateCeilingSurface(doomMap, sub, sector, nullptr, i);
 
 		for (unsigned int j = 0; j < sector->e->XFloor.ffloors.Size(); j++)
 		{
-			CreateFloorSurface(doomMap, sub, sector->e->XFloor.ffloors[j]->model, i, true);
-			CreateCeilingSurface(doomMap, sub, sector->e->XFloor.ffloors[j]->model, i, true);
+			CreateFloorSurface(doomMap, sub, sector, sector->e->XFloor.ffloors[j]->model, i);
+			CreateCeilingSurface(doomMap, sub, sector, sector->e->XFloor.ffloors[j]->model, i);
 		}
 	}
 }

@@ -191,7 +191,7 @@ void VkTextureManager::CreateLightmap()
 
 void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCount, TArray<uint16_t>&& newPixelData)
 {
-	if (LMTextureSize == newLMTextureSize && LMTextureCount == newLMTextureCount)
+	if (LMTextureSize == newLMTextureSize && LMTextureCount == newLMTextureCount && newPixelData.Size() == 0)
 		return;
 
 	LMTextureSize = newLMTextureSize;

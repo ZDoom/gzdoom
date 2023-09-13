@@ -3083,6 +3083,11 @@ void MapLoader::LoadLightmap(MapData* map)
 
 	TArray<DoomLevelMeshSurface> zdraySurfaces;
 
+	for (auto& surface : Level->levelMesh->Surfaces)
+	{
+		surface.needsUpdate = false; // let's consider everything valid until we make a mistake trying to change this surface
+	}
+
 	for (uint32_t i = 0; i < numSurfaces; i++)
 	{
 		LevelMeshSurfaceType type = (LevelMeshSurfaceType)fr.ReadUInt32();
@@ -3204,6 +3209,7 @@ void MapLoader::LoadLightmap(MapData* map)
 			{
 				Printf("Can't remap lightmap surface ((%d, %d), (%d, %d), %d) -> ((%d, %d), (%d, %d), %d)\n", srcMinX, srcMinY, srcMaxX, srcMaxY, srcPage, dstX, dstY, dstX + srcW, dstY + srcH, dstPage);
 			}
+			realSurface.needsUpdate = true;
 			continue;
 		}
 
@@ -3223,13 +3229,25 @@ void MapLoader::LoadLightmap(MapData* map)
 				dst[dstIndex + 2] = src[index + 2];
 			}
 		}
+	}
 
-		realSurface.needsUpdate = false; // this surface is good
+	if (developer >= 3)
+	{
+		int loadedSurfaces = 0;
+		for (auto& surface : Level->levelMesh->Surfaces)
+		{
+			if (!surface.needsUpdate)
+			{
+				loadedSurfaces++;
+			}
+		}
+
+		Printf(PRINT_HIGH, "%d/%d surfaces were successfully loaded from lightmap.\n", loadedSurfaces, Level->levelMesh->Surfaces.Size());
 	}
 
 	if (errors && developer <= 0)
 	{
-		Printf(PRINT_HIGH, "Pre-calculated LIGHTMAP surfaces do not match current level surfaces. Restart this level with 'developer 1' for further details.\nPerhaps you forget to rebuild lightmaps after modifying the map?");
+		Printf(PRINT_HIGH, "Pre-calculated LIGHTMAP surfaces do not match current level surfaces. Restart this level with 'developer 1' for further details.\nPerhaps you forget to rebuild lightmaps after modifying the map?\n");
 	}
 #if 0
 	// Apply compression predictor

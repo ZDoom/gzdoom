@@ -1856,6 +1856,15 @@ CCMD(snd_listdrivers)
 	GSnd->PrintDriversList();
 }
 
+CCMD(listsounds)
+{
+	for (unsigned i = 1; i < soundEngine->GetNumSounds(); i++)
+	{
+		auto S_sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
+		Printf("%04d: %s\n", i, S_sfx->name.GetChars());
+	}
+}
+
 ADD_STAT(sound)
 {
 	return GSnd->GatherStats();

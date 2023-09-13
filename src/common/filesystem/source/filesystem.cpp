@@ -194,8 +194,6 @@ static void PrintLastError (FileSystemMessageFunc Printf);
 
 FileSystem::FileSystem()
 {
-	stringpool = new StringPool(true);
-	stringpool->shared = true;	// will be used by all owned resource files.
 }
 
 FileSystem::~FileSystem ()
@@ -219,7 +217,7 @@ void FileSystem::DeleteAll ()
 		delete Files[i];
 	}
 	Files.clear();
-	delete stringpool;
+	if (stringpool != nullptr) delete stringpool;
 	stringpool = nullptr;
 }
 
@@ -247,6 +245,9 @@ bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFil
 	// open all the files, load headers, and count lumps
 	DeleteAll();
 	numfiles = 0;
+
+	stringpool = new StringPool(true);
+	stringpool->shared = true;	// will be used by all owned resource files.
 
 	// first, check for duplicates
 	if (allowduplicates)

@@ -202,7 +202,7 @@ protected:
 	int IwadIndex = -1;
 	int MaxIwadIndex = -1;
 
-	StringPool* stringpool;
+	StringPool* stringpool = nullptr;
 
 private:
 	void DeleteAll();

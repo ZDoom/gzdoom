@@ -3024,46 +3024,6 @@ void MapLoader::LoadLightmap(MapData* map)
 	Level->SunDirection = FVector3(sunDir);
 	Level->SunColor = FVector3(sunColor);
 
-	/*if (numSubsectors != Level->subsectors.Size())
-	{
-		Printf(PRINT_HIGH, "LoadLightmap: subsector count for level doesn't match (%d in wad vs %d in engine)\n", (int)numSubsectors, (int)Level->subsectors.Size());
-	}*/
-
-	//Level->LMTexCoords.Resize(numTexCoords * 2);
-
-	// Allocate room for all surfaces
-
-#if 0
-	unsigned int allSurfaces = 0;
-
-	for (unsigned int i = 0; i < Level->sides.Size(); i++)
-		allSurfaces += 4 + Level->sides[i].sector->e->XFloor.ffloors.Size();
-
-	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
-		allSurfaces += 2 + Level->subsectors[i].sector->e->XFloor.ffloors.Size() * 2;
-
-	Level->LMSurfaces.Resize(allSurfaces);
-	memset(&Level->LMSurfaces[0], 0, sizeof(LightmapSurface) * allSurfaces);
-
-	// Link the surfaces to sectors, sides and their 3D floors
-
-	unsigned int offset = 0;
-	for (unsigned int i = 0; i < Level->sides.Size(); i++)
-	{
-		auto& side = Level->sides[i];
-		side.lightmap = &Level->LMSurfaces[offset];
-		offset += 4 + side.sector->e->XFloor.ffloors.Size();
-	}
-	for (unsigned int i = 0; i < Level->subsectors.Size(); i++)
-	{
-		auto& subsector = Level->subsectors[i];
-		unsigned int count = 1 + subsector.sector->e->XFloor.ffloors.Size();
-		subsector.lightmap[0] = &Level->LMSurfaces[offset];
-		subsector.lightmap[1] = &Level->LMSurfaces[offset + count];
-		offset += count * 2;
-	}
-#endif
-
 	bool errors = false;
 
 	// Load the surfaces we have lightmap data for
@@ -3103,7 +3063,7 @@ void MapLoader::LoadLightmap(MapData* map)
 		if (i >= Level->levelMesh->Surfaces.Size())
 		{
 			errors = true;
-			if (*developer >= 1)
+			if (developer >= 1)
 			{
 				Printf(PRINT_HIGH, "Lightmap lump surface index %d is out of bounds\n", i);
 			}
@@ -3124,7 +3084,7 @@ void MapLoader::LoadLightmap(MapData* map)
 			else
 			{
 				errors = true;
-				if (*developer >= 1)
+				if (developer >= 1)
 				{
 					Printf(PRINT_HIGH, "Lightmap lump surface %d mismatch. Couldn't find surface type:%d, typeindex:%d, controlsector:%d\n", i, type, typeIndex, controlSectorIndex);
 				}
@@ -3142,22 +3102,7 @@ void MapLoader::LoadLightmap(MapData* map)
 		surface.numVerts = levelSurface->numVerts;
 		surface.atlasPageIndex = lightmapNum;
 
-
 		zdraySurfaces.Push(surface);
-
-#if 0
-		if (type == ST_CEILING || type == ST_FLOOR)
-		{
-			surface.Subsector = &Level->subsectors[typeIndex];
-			surface.Subsector->firstline->sidedef->sector->HasLightmaps = true;
-			SetSubsectorLightmap(surface);
-		}
-		else if (type != ST_NULL)
-		{
-			surface.Side = &Level->sides[typeIndex];
-			SetSideLightmap(surface);
-		}
-#endif
 	}
 
 	// Load texture coordinates	
@@ -3195,8 +3140,6 @@ void MapLoader::LoadLightmap(MapData* map)
 		int srcW = srcMaxX - srcMinX;
 		int srcH = srcMaxY - srcMinY;
 
-		// Now let's check
-
 		int dstX = realSurface.atlasX;
 		int dstY = realSurface.atlasY;
 		int dstPage = realSurface.atlasPageIndex;
@@ -3205,7 +3148,7 @@ void MapLoader::LoadLightmap(MapData* map)
 		if (srcMinX < 0 || srcMinY < 0 || dstX < 0 || dstY < 0 || srcMaxX >= textureSize || srcMaxY >= textureSize || dstX + srcW >= textureSize || dstY + srcH >= textureSize || srcPage >= numTextures || dstPage >= Level->levelMesh->LMTextureCount)
 		{
 			errors = true;
-			if (*developer >= 1)
+			if (developer >= 1)
 			{
 				Printf("Can't remap lightmap surface ((%d, %d), (%d, %d), %d) -> ((%d, %d), (%d, %d), %d)\n", srcMinX, srcMinY, srcMaxX, srcMaxY, srcPage, dstX, dstY, dstX + srcW, dstY + srcH, dstPage);
 			}
@@ -3249,11 +3192,6 @@ void MapLoader::LoadLightmap(MapData* map)
 	{
 		Printf(PRINT_HIGH, "Pre-calculated LIGHTMAP surfaces do not match current level surfaces. Restart this level with 'developer 1' for further details.\nPerhaps you forget to rebuild lightmaps after modifying the map?\n");
 	}
-#if 0
-	// Apply compression predictor
-	for (uint32_t i = 1; i < numTexBytes; i++)
-		data[i] += data[i - 1];
-#endif
 }
 
 //==========================================================================

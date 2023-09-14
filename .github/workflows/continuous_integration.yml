@@ -96,7 +96,7 @@ jobs:
       if: runner.os == 'Windows'
       with:
         vcpkgDirectory: '${{ github.workspace }}/build/vcpkg'
-        vcpkgGitCommitId: '65c013b9667ff1f58fb8724209227e5a2e761043'
+        vcpkgGitCommitId: '2c401863dd54a640aeb26ed736c55489c079323b'
 
     - name: Configure
       shell: bash

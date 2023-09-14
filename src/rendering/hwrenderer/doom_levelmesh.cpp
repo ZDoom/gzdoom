@@ -10,21 +10,87 @@
 #include "common/rendering/vulkan/accelstructs/vk_lightmap.h"
 #include <vulkan/accelstructs/halffloat.h>
 
+void PrintMissingLevelMesh()
+{
+	Printf("No level mesh. Perhaps your level has no lightmap loaded?\n");
+}
+
+void PrintNoLightmaps()
+{
+	Printf("Lightmap is not enabled in this level.\n");
+}
+
+ADD_STAT(lightmap)
+{
+	FString out;
+	if (level.levelMesh && level.lightmaps)
+	{
+		auto* mesh = level.levelMesh;
+
+		uint32_t usedPixels = 0;
+		uint32_t updatesNeeded = 0;
+		uint32_t skies = 0;
+		uint32_t pixelsTbd = 0;
+		for (auto& surface : mesh->Surfaces)
+		{
+			uint32_t area = surface.texWidth * surface.texHeight;
+
+			if (surface.needsUpdate)
+			{
+				pixelsTbd += area;
+				updatesNeeded++;
+			}
+
+			if (surface.bSky)
+			{
+				skies++;
+			}
+
+			usedPixels += area;
+		}
+
+		uint32_t atlasPixelCount = level.levelMesh->LMTextureSize * level.levelMesh->LMTextureSize * level.levelMesh->LMTextureCount;
+
+		out.Format("Surfaces: %u (sky: %u, awaiting updates: %u)\nSurface pixel area to update: %u\nSurface pixel area: %u\nAtlas pixel area:   %u\nAtlas efficiency: %.4f%%",
+			mesh->Surfaces.Size(), skies, updatesNeeded,
+			pixelsTbd,
+			usedPixels,
+			atlasPixelCount,
+			float(usedPixels) / float(atlasPixelCount) * 100.0f );
+	}
+	else
+	{
+		out.Format("No level mesh.");
+	}
+	return out;
+}
+
 CCMD(dumplevelmesh)
 {
 	if (level.levelMesh)
 	{
 		level.levelMesh->DumpMesh(FString("levelmesh.obj"), FString("levelmesh.mtl"));
-		Printf("Level mesh exported.");
+		Printf("Level mesh exported.\n");
 	}
 	else
 	{
-		Printf("No level mesh. Perhaps your level has no lightmap loaded?");
+		PrintMissingLevelMesh();
 	}
 }
 
 CCMD(invalidatelightmap)
 {
+	if (!level.levelMesh)
+	{
+		PrintMissingLevelMesh();
+		return;
+	}
+	if (!level.lightmaps)
+	{
+		PrintNoLightmaps();
+		return;
+	}
+
 	int count = 0;
 	for (auto& surface : level.levelMesh->Surfaces)
 	{
@@ -33,6 +99,63 @@ CCMD(invalidatelightmap)
 		surface.needsUpdate = true;
 	}
 	Printf("Marked %d out of %d surfaces for update.\n", count, level.levelMesh->Surfaces.Size());
+}
+
+CCMD(lightmapinfo)
+{
+	if (!level.levelMesh)
+	{
+		PrintMissingLevelMesh();
+		return;
+	}
+	if (!level.lightmaps)
+	{
+		PrintNoLightmaps();
+		return;
+	}
+}
+
+CCMD(surfaceinfo)
+{
+	auto* mesh = level.levelMesh;
+	if (!mesh)
+	{
+		PrintMissingLevelMesh();
+		return;
+	}
+	
+	auto pov = players[consoleplayer].mo;
+
+	if (!pov)
+	{
+		Printf("players[consoleplayer].mo is null.\n");
+		return;
+	}
+
+	auto posXYZ = FVector3(pov->Pos());
+	posXYZ.Z = players[consoleplayer].viewz;
+
+	auto angle = pov->Angles.Yaw;
+	auto pitch = pov->Angles.Pitch;
+
+	auto pc = float(pitch.Cos());
+	auto dir = FVector3{ pc * float(angle.Cos()), pc * float(angle.Sin()), -float(pitch.Sin()) }; // No seriously, is there a dedication function for this?
+
+	const auto surface = (DoomLevelMeshSurface*)mesh->Trace(posXYZ, dir, 32000.0f);
+
+	if (surface)
+	{
+		Printf("Surface %d (%p)\n    Type: %d, TypeIndex: %d, ControlSector: %d\n", mesh->GetSurfaceIndex(surface), surface, surface->Type, surface->typeIndex, surface->ControlSector ? surface->ControlSector->Index() : -1);
+		Printf("    Atlas page: %d, x:%d, y:%d\n", surface->atlasPageIndex, surface->atlasX, surface->atlasY);
+		Printf("    Pixels: %dx%d (area: %d)\n", surface->texWidth, surface->texHeight, surface->texWidth * surface->texHeight);
+		Printf("    Sample dimension: %d\n", surface->sampleDimension);
+		Printf("    Needs update?: %d\n", surface->needsUpdate);
+	}
+	else
+	{
+		Printf("No surface was hit.\n");
+		return;
+	}
 }
 
 EXTERN_CVAR(Float, lm_scale);

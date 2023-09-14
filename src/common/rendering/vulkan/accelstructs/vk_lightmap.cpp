@@ -13,10 +13,13 @@ static int lastSurfaceCount;
 static glcycle_t lightmapRaytrace;
 static glcycle_t lightmapRaytraceLast;
 
+static uint32_t lastPixelCount;
+static uint32_t totalPixelCount;
+
 ADD_STAT(lightmapper)
 {
 	FString out;
-	out.Format("last: %.3fms\ntotal: %3.fms\nLast batch surface count: %d", lightmapRaytraceLast.TimeMS(), lightmapRaytrace.TimeMS(), lastSurfaceCount);
+	out.Format("last: %.3fms\ntotal: %3.fms\nLast batch surface count: %d\nLast batch pixel count: %u\nTotal pixel count: %u", lightmapRaytraceLast.TimeMS(), lightmapRaytrace.TimeMS(), lastSurfaceCount, lastPixelCount, totalPixelCount);
 	return out;
 }
 
@@ -53,6 +56,9 @@ void VkLightmap::SetLevelMesh(LevelMesh* level)
 
 	lightmapRaytrace.Reset();
 	lightmapRaytraceLast.Reset();
+	totalPixelCount = 0;
+	lastPixelCount = 0;
+	lastSurfaceCount = 0;
 }
 
 void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
@@ -67,14 +73,19 @@ void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
 
 		CreateAtlasImages(surfaces);
 
+		uint32_t pixels = 0;
+
 		for (auto& surface : surfaces)
 		{
 			surface->needsUpdate = false; // it may have been set to false already, but lightmapper ultimately decides so
+			pixels += surface->texHeight * surface->texWidth;
 		}
 
 		UploadUniforms();
 
 		lastSurfaceCount = surfaces.Size();
+		lastPixelCount = pixels;
+		totalPixelCount += pixels;
 
 		for (size_t pageIndex = 0; pageIndex < atlasImages.size(); pageIndex++)
 		{

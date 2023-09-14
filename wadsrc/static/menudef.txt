@@ -1462,6 +1462,7 @@ OptionMenu MapColorMenuOverlay protected
 	ColorPicker "$MAPCOLORMNU_INTRALEVELCOLOR",			"am_ovtelecolor"
 	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_ovinterlevelcolor"
 	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_ovsecretsectorcolor"
+	ColorPicker "$MAPCOLORMNU_UNEXPLOREDSECRETCOLOR",	"am_ovunexploredsecretcolor"
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_ovspecialwallcolor"
 	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_ovportalcolor"
 }

@@ -607,13 +607,14 @@ void FGameConfigFile::DoGlobalSetup ()
 					var->SetGenericRep(v, CVAR_Float);
 				}
 			}
-			if (last < 225)
+			if (last < 226)
 			{
 				if (const auto var = FindCVar("gl_lightmode", NULL))
 				{
 					UCVarValue v = var->GetGenericRep(CVAR_Int);
-					v.Int /= 8; // all legacy modes map to 0, ZDoom software to 1 and Vanilla software to 2.
-					var->SetGenericRep(v, CVAR_Int);
+					if (last < 225) v.Int = v.Int == 16 ? 2 : v.Int == 8 ? 1 : 0;
+					auto newvar = FindCVar("hw_lightmode", NULL);
+					if (newvar != nullptr) newvar->SetGenericRep(v.Int, CVAR_Int);
 				}
 			}
 		}

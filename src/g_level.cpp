@@ -151,7 +151,7 @@ CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL) // this is just for testi
 	if (self > 5 || self < -1) self = -1;
 }
 
-CUSTOM_CVAR(Int, gl_lightmode, 1, CVAR_ARCHIVE | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, hw_lightmode, 1, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	if (self < 0 || self > 2) self = 2;
 }
@@ -166,8 +166,8 @@ ELightMode getRealLightmode(FLevelLocals* Level, bool for3d)
 	}
 	if (lightmode == ELightMode::Doom && for3d)
 	{
-		if (gl_lightmode == 1) lightmode = ELightMode::ZDoomSoftware;
-		else if (gl_lightmode == 2) lightmode = ELightMode::DoomSoftware;
+		if (hw_lightmode == 1) lightmode = ELightMode::ZDoomSoftware;
+		else if (hw_lightmode == 2) lightmode = ELightMode::DoomSoftware;
 	}
 	return lightmode;
 }

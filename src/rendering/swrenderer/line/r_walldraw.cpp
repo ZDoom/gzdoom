@@ -108,7 +108,7 @@ namespace swrenderer
 			{
 				for (int j = x1; j < x2; ++j)
 				{
-					down[j] = clamp(most3.ScreenY[j], up[j], dwal[j]);
+					down[j] = max(min(most3.ScreenY[j], up[j]), dwal[j]); // this cannot use clamp due to failing range checks.
 				}
 				ProcessNormalWall(up, down, texcoords);
 				up = down;

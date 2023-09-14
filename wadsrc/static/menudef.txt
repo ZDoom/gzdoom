@@ -2615,7 +2615,7 @@ OptionMenu "OpenGLOptions" protected
 	Submenu "$GLPREFMNU_VRMODE",				"VR3DMenu"
 	Submenu "$GLMNU_POSTPROCESS",				"PostProcessMenu"
 	StaticText " "
-	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
+	Option "$GLPREFMNU_SECLIGHTMODE",			hw_lightmode,					"LightingModes"
 	Option "$GLPREFMNU_SWLMBANDED",				gl_bandedswlight,				"OnOff"
 	Option "$GLPREFMNU_FOGMODE",				gl_fogmode,						"FogMode"
 	Option "$GLPREFMNU_FOGFORCEFULLBRIGHT",		gl_brightfog,					"YesNo"

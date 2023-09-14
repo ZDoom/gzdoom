@@ -153,8 +153,7 @@ PalEntry HWDrawInfo::CalcLightColor(int light, PalEntry pe, int blendfactor)
 //
 //	Rules for fog:
 //
-//  1. If bit 4 of gl_lightmode is set always use the level's fog density. 
-//     This is what Legacy's GL render does.
+//  1. If lightmode is DoomLegacy, always use the level's fog density. 
 //	2. black fog means no fog and always uses the distfogtable based on the level's fog density setting
 //	3. If outside fog is defined and the current fog color is the same as the outside fog
 //	   the engine always uses the outside fog density to make the fog uniform across the Level->

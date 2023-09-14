@@ -93,6 +93,10 @@ struct LevelMeshSurface
 	int lightmapperAtlasY = -1;
 };
 
+inline float IsInFrontOfPlane(const FVector4& plane, const FVector3& point)
+{
+	return (plane.X * point.X + plane.Y * point.Y + plane.Z * point.Z) >= plane.W;
+}
 
 struct LevelMeshSmoothingGroup
 {

@@ -127,6 +127,9 @@ void VkLightmap::RenderAtlasImage(size_t pageIndex, const TArray<LevelMeshSurfac
 		if (targetSurface->lightmapperAtlasPage != pageIndex)
 			continue;
 
+		if (targetSurface->LightList.empty() && (targetSurface->plane.XYZ() | mesh->SunDirection) < 0.0f) // No lights, no sun //TODO fill the area with black pixels skipping blur and resolve pass
+			continue;
+
 		VkViewport viewport = {};
 		viewport.maxDepth = 1;
 		viewport.x = (float)targetSurface->lightmapperAtlasX - 1;

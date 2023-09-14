@@ -204,6 +204,7 @@ void DoomLevelMesh::PropagateLight(const LevelMeshLight* light, std::set<LevelMe
 
 		// TODO skip any surface which isn't physically connected to the sector group in which the light resides
 		//if (light-> == surface.sectorGroup)
+		if (IsInFrontOfPlane(surface.plane, light->RelativeOrigin))
 		{
 			if (surface.portalIndex >= 0)
 			{

@@ -191,7 +191,7 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	return NicePath("$HOME/" GAME_DIR "/");
+	return NicePath("$HOME/" GAME_DIR "/savegames/");
 }
 
 //===========================================================================

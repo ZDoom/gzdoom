@@ -430,7 +430,6 @@ enum DrawTextureTags
 
 	// For DrawText calls only:
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
-	DTA_Localize,		// localize drawn string
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
 
@@ -463,6 +462,7 @@ enum DrawTextureTags
 	DTA_Indexed,			// Use an indexed texture combined with the given translation.
 	DTA_CleanTop,			// Like DTA_Clean but aligns to the top of the screen instead of the center.
 	DTA_NoOffset,			// Ignore 2D drawer's offset.
+	DTA_Localize,		// localize drawn string, for DrawText only
 
 };
 

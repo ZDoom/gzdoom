@@ -2963,17 +2963,20 @@ void MapLoader::InitLevelMesh(MapData* map)
 			}
 		}
 	}
-	
-	// Last chance to make up our mind whether to use lightmaps or not
-	if (!Level->lightmaps)
+
+	if (map->Size(ML_LIGHTMAP))
 	{
-		if (map->Size(ML_LIGHTMAP))
+		// Arbitrary ZDRay limit. This will break lightmap lump loading if not enforced.
+		Level->LightmapSampleDistance = Level->LightmapSampleDistance < 8 ? 8 : Level->LightmapSampleDistance;
+
+		if (!Level->lightmaps) // We are unfortunately missing ZDRayInfo
 		{
-			Level->lightmaps = true;
 			Printf(PRINT_HIGH, "InitLevelMesh: The level contains LIGHTMAP, but no ZDRayInfo thing was detected in the level.\n");
 		}
-
-		Level->lightmaps = *genlightmaps;
+	}
+	else
+	{
+		Level->lightmaps = Level->lightmaps || *genlightmaps; // Allow lightmapping in non-lightmapped levels.
 	}
 
 	// Levelmesh and lightmap binding/loading

@@ -501,7 +501,7 @@ namespace swrenderer
 		double rowoffset = lineseg->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
 
-		fixed_t xoffset = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
+		fixed_t xoffset = xs_Fix<16>::ToFix(lineseg->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
 		if (rowoffset < 0)
 		{
 			rowoffset += pic->GetHeight();
@@ -633,7 +633,7 @@ namespace swrenderer
 
 	fixed_t ProjectedWallTexcoords::GetXOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart)
 	{
-		fixed_t TextureOffsetU = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(texpart));
+		fixed_t TextureOffsetU = xs_Fix<16>::ToFix(lineseg->sidedef->GetTextureXOffset(texpart));
 		double xscale = GetXScale(lineseg->sidedef, tex, texpart);
 
 		fixed_t xoffset;

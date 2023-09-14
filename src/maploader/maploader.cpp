@@ -3160,6 +3160,17 @@ void MapLoader::LoadLightmap(MapData* map)
 			continue;
 		}
 
+		if (realSurface.texWidth != surface.width || realSurface.texHeight != surface.height)
+		{
+			errors = true;
+			if (developer >= 1)
+			{
+				Printf("Surface size mismatch: Attempting to remap %dx%d to %dx%d pixel area.\n", surface.width, surface.height, realSurface.texWidth, realSurface.texHeight);
+			}
+			realSurface.needsUpdate = true;
+			continue;
+		}
+
 		if (developer >= 5)
 		{
 			Printf("Mapping lightmap surface pixels[%u] (count: %u) -> ((x:%d, y:%d), (x2:%d, y2:%d), page:%d) area: %u\n",

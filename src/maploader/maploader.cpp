@@ -86,6 +86,8 @@
 #include "scene/hw_meshcache.h"
 #include "version.h"
 
+#include "vulkan/accelstructs/halffloat.h"
+
 enum
 {
 	MISSING_TEXTURE_WARN_LIMIT = 20
@@ -3003,26 +3005,23 @@ void MapLoader::LoadLightmap(MapData* map)
 		Printf(PRINT_HIGH, "LoadLightmap: This is an old unsupported alpha version of the lightmap lump. Please rebuild the map with a newer version of zdray.\n");
 		return;
 	}
-	if (version != 1)
+	if (version == 1)
+	{
+		Printf(PRINT_HIGH, "LoadLightmap: This is an old unsupported version of the lightmap lump. Please rebuild the map with a newer version of zdray.\n");
+		return;
+	}
+	if (version != 2)
 	{
 		Printf(PRINT_HIGH, "LoadLightmap: unsupported lightmap lump version\n");
 		return;
 	}
 
-	uint16_t textureSize = fr.ReadUInt16();
-	uint16_t numTextures = fr.ReadUInt16();
 	uint32_t numSurfaces = fr.ReadUInt32();
+	uint32_t numTexPixels = fr.ReadUInt32();
 	uint32_t numTexCoords = fr.ReadUInt32();
-	uint32_t numSubsectors = fr.ReadUInt32();
-	uint32_t numTexBytes = numTextures * textureSize * textureSize * 3 * 2;
-	if (numSurfaces == 0 || numTexCoords == 0 || numTexBytes == 0)
-		return;
 
-	float sunDir[3], sunColor[3];
-	fr.Read(sunDir, sizeof(float) * 3);
-	fr.Read(sunColor, sizeof(float) * 3);
-	Level->SunDirection = FVector3(sunDir);
-	Level->SunColor = FVector3(sunColor);
+	if (numSurfaces == 0 || numTexCoords == 0 || numTexPixels == 0)
+		return;
 
 	bool errors = false;
 
@@ -3041,7 +3040,21 @@ void MapLoader::LoadLightmap(MapData* map)
 		return 0xffffffff;
 	};
 
-	TArray<DoomLevelMeshSurface> zdraySurfaces;
+	auto getControlSector = [&](uint32_t index)
+	{
+		return index < Level->sectors.Size() ? &Level->sectors[index] : nullptr;
+	};
+
+	struct SurfaceEntry // V2 entries
+	{
+		uint32_t type, typeIndex;
+		uint32_t controlSector; // 0xFFFFFFFF is none
+		uint16_t width, height; // in pixels
+		uint32_t pixelsOffset; // offset in pixels array
+		uint32_t uvCount, uvOffset;
+	};
+
+	TArray<SurfaceEntry> zdraySurfaces;
 
 	for (auto& surface : Level->levelMesh->Surfaces)
 	{
@@ -3050,13 +3063,17 @@ void MapLoader::LoadLightmap(MapData* map)
 
 	for (uint32_t i = 0; i < numSurfaces; i++)
 	{
-		LevelMeshSurfaceType type = (LevelMeshSurfaceType)fr.ReadUInt32();
-		uint32_t typeIndex = fr.ReadUInt32();
-		uint32_t controlSectorIndex = fr.ReadUInt32();
-		uint32_t lightmapNum = fr.ReadUInt32();
-		uint32_t firstTexCoord = fr.ReadUInt32();
+		SurfaceEntry surface;
+		surface.type = fr.ReadUInt32();
+		surface.typeIndex = fr.ReadUInt32();
+		surface.controlSector = fr.ReadUInt32();
+		surface.width = fr.ReadUInt16();
+		surface.height = fr.ReadUInt16();
+		surface.pixelsOffset = fr.ReadUInt32();
+		surface.uvCount = fr.ReadUInt32();
+		surface.uvOffset = fr.ReadUInt32();
 
-		auto controlSector = controlSectorIndex < Level->sectors.Size() ? &Level->sectors[controlSectorIndex] : nullptr;
+		auto controlSector = getControlSector(surface.controlSector);
 
 		// Check against the internal levelmesh
 
@@ -3070,12 +3087,11 @@ void MapLoader::LoadLightmap(MapData* map)
 			continue;
 		}
 
-
 		auto levelSurface = &Level->levelMesh->Surfaces[i];
 
-		if (levelSurface->Type != type || levelSurface->typeIndex != typeIndex || levelSurface->ControlSector != controlSector)
+		if (levelSurface->Type != surface.type || levelSurface->typeIndex != surface.typeIndex || levelSurface->ControlSector != controlSector)
 		{
-			auto internalIndex = findSurfaceIndex(type, typeIndex, controlSector);
+			auto internalIndex = findSurfaceIndex(surface.type, surface.typeIndex, controlSector);
 
 			if (internalIndex < Level->levelMesh->Surfaces.Size())
 			{
@@ -3086,24 +3102,21 @@ void MapLoader::LoadLightmap(MapData* map)
 				errors = true;
 				if (developer >= 1)
 				{
-					Printf(PRINT_HIGH, "Lightmap lump surface %d mismatch. Couldn't find surface type:%d, typeindex:%d, controlsector:%d\n", i, type, typeIndex, controlSectorIndex);
+					Printf(PRINT_HIGH, "Lightmap lump surface %d mismatch. Couldn't find surface type:%d, typeindex:%d, controlsector:%d\n", i, surface.type, surface.typeIndex, surface.controlSector);
 				}
 				// TODO detailed printout
 				continue;
 			}
 		}
 
-		DoomLevelMeshSurface surface;
-
-		surface.startUvIndex = firstTexCoord;
-		surface.typeIndex = typeIndex;
-		surface.ControlSector = controlSector;
-		surface.Type = type;
-		surface.numVerts = levelSurface->numVerts;
-		surface.atlasPageIndex = lightmapNum;
-
 		zdraySurfaces.Push(surface);
 	}
+
+	// Load pixels
+	TArray<uint16_t> textureData;
+	textureData.Resize(numTexPixels * 3);
+	uint8_t* data = (uint8_t*)&textureData[0];
+	fr.Read(data, numTexPixels * 3 * sizeof(uint16_t));
 
 	// Load texture coordinates	
 	TArray<FVector2> zdrayUvs;
@@ -3113,65 +3126,64 @@ void MapLoader::LoadLightmap(MapData* map)
 	// Load lightmap textures
 	Level->levelMesh->LMTextureData.Resize(Level->levelMesh->LMTextureCount * Level->levelMesh->LMTextureSize * Level->levelMesh->LMTextureSize * 3);
 
-	TArray<uint16_t> textureData;
-	textureData.Resize((numTexBytes + 1) / 2);
-	uint8_t* data = (uint8_t*)&textureData[0];
-	fr.Read(data, numTexBytes);
+	for (auto& pixel : Level->levelMesh->LMTextureData)
+	{
+		pixel = floatToHalf(0.0);
+	}
 
-	// Remap the ZDRay atlas into internal lightmapper
+	auto textureSize = Level->levelMesh->LMTextureSize;
+
+	// Map surface pixels into atlas
 	for (auto& surface : zdraySurfaces)
 	{
-		auto& realSurface = Level->levelMesh->Surfaces[findSurfaceIndex(surface.Type, surface.typeIndex, surface.ControlSector)];
-
-		// what are the pixel boundaries in the atlas?
-		BBox bbox;
-		for (int i = 0; i < surface.numVerts; ++i)
-		{
-			auto& uv = zdrayUvs[surface.startUvIndex + i];
-			bbox.AddPoint(FVector3(uv.X, uv.Y, 0));
-		}
+		auto& realSurface = Level->levelMesh->Surfaces[findSurfaceIndex(surface.type, surface.typeIndex, getControlSector(surface.controlSector))];
 
 		// calculate pixel positions
-		int srcMinX = (int)floorf(bbox.min.X * textureSize - 1.0f);
-		int srcMinY = (int)floorf(bbox.min.Y * textureSize - 1.0f);
-		int srcMaxX = (int)ceilf(bbox.max.X * textureSize + 1.0f);
-		int srcMaxY = (int)ceilf(bbox.max.Y * textureSize + 1.0f);
-		int srcPage = surface.atlasPageIndex;
-		int srcW = srcMaxX - srcMinX;
-		int srcH = srcMaxY - srcMinY;
+		uint32_t srcPixelOffset = surface.pixelsOffset;
 
 		int dstX = realSurface.atlasX;
 		int dstY = realSurface.atlasY;
 		int dstPage = realSurface.atlasPageIndex;
-		
+
 		// Sanity checks
-		if (srcMinX < 0 || srcMinY < 0 || srcMaxX > textureSize || srcMaxY > textureSize ||
-			dstX < 0 || dstY < 0 || dstX + srcW > Level->levelMesh->LMTextureSize || dstY + srcH > Level->levelMesh->LMTextureSize ||
-			srcPage >= numTextures || dstPage >= Level->levelMesh->LMTextureCount)
+		if (dstX < 0 || dstY < 0 || dstX + surface.width > textureSize || dstY + surface.height > textureSize || dstPage >= Level->levelMesh->LMTextureCount)
 		{
 			errors = true;
 			if (developer >= 1)
 			{
-				Printf("Can't remap lightmap surface ((%d, %d), (%d, %d), %d) -> ((%d, %d), (%d, %d), %d)\n", srcMinX, srcMinY, srcMaxX, srcMaxY, srcPage, dstX, dstY, dstX + srcW, dstY + srcH, dstPage);
+				Printf("Can't map lightmap surface pixels[%u] -> ((x:%d, y:%d), (x2:%d, y2:%d), page:%d)\n", srcPixelOffset, dstX, dstY, dstX + surface.width, dstY + surface.height, dstPage);
 			}
 			realSurface.needsUpdate = true;
 			continue;
 		}
 
-		// copy pixels
-		uint16_t* src = &textureData[0];
-		uint16_t* dst = &Level->levelMesh->LMTextureData[0];
-
-		for (int y = srcMinY, y2 = dstY; y < srcMaxY; ++y, ++y2)
+		if (developer >= 4)
 		{
-			for (int x = srcMinX, x2 = dstX; x < srcMaxX; ++x, ++x2)
-			{
-				int index = (x + y * textureSize + srcPage * textureSize * textureSize) * 3;
-				int dstIndex = (x2 + y2 * textureSize + dstPage * textureSize * textureSize) * 3;
+			Printf("Mapping lightmap surface pixels[%u] (count: %u) -> ((x:%d, y:%d), (x2:%d, y2:%d), page:%d) area: %u\n",
+				srcPixelOffset, surface.width * surface.height * 3,
+				dstX, dstY,
+				dstX + realSurface.texWidth, dstY + realSurface.texHeight,
+				dstPage,
+				realSurface.Area() * 3);
+		}
 
-				dst[dstIndex] = src[index];
-				dst[dstIndex + 1] = src[index + 1];
-				dst[dstIndex + 2] = src[index + 2];
+		// copy pixels
+		uint16_t* src = &textureData[srcPixelOffset];
+		uint16_t* dst = &Level->levelMesh->LMTextureData[dstPage * textureSize * textureSize * 3];
+
+		uint32_t srcIndex = 0;
+
+		for (int y = 0; y < surface.height; ++y)
+		{
+			for (int x = 0; x < surface.width; ++x)
+			{
+				uint32_t dstIndex = (dstX + x + (dstY + y) * textureSize) * 3;
+
+				dst[dstIndex] = src[srcIndex];
+				dst[dstIndex + 1] = src[srcIndex + 1];
+				dst[dstIndex + 2] = src[srcIndex + 2];
+
+				srcIndex += 3;
 			}
 		}
 	}

@@ -698,7 +698,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 			}
 			EndArray();
 
-			assert(!founderrors);
 			if (founderrors)
 			{
 				Printf(TEXTCOLOR_RED "Failed to restore all objects in savegame\n");

@@ -87,7 +87,6 @@ struct LevelMeshSurface
 	// VkLightmap extra stuff that I dislike:
 	//
 	TArray<FVector3> verts;
-	TArray<FVector2> uvs;
 
 	// Touching light sources
 	std::vector<const LevelMeshLight*> LightList;

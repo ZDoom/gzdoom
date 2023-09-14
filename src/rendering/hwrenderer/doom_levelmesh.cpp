@@ -97,7 +97,7 @@ CCMD(surfaceinfo)
 	}
 
 	auto posXYZ = FVector3(pov->Pos());
-	posXYZ.Z = players[consoleplayer].viewz;
+	posXYZ.Z = float(players[consoleplayer].viewz);
 	auto angle = pov->Angles.Yaw;
 	auto pitch = pov->Angles.Pitch;
 
@@ -401,6 +401,28 @@ void DoomLevelMesh::UpdateLightLists()
 
 void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 {
+	// You have no idea how long this took me to figure out...
+
+	// Reorder vertices into renderer format
+	for (LevelMeshSurface& surface : Surfaces)
+	{
+		if (surface.Type == ST_FLOOR)
+		{
+			// reverse vertices on floor
+			for (int j = surface.startUvIndex + surface.numVerts - 1, k = surface.startUvIndex; j > k; j--, k++)
+			{
+				std::swap(LightmapUvs[k], LightmapUvs[j]);
+			}
+		}
+		else if (surface.Type != ST_CEILING) // walls
+		{
+			// from 0 1 2 3
+			// to   0 2 1 3
+			std::swap(LightmapUvs[surface.startUvIndex + 1], LightmapUvs[surface.startUvIndex + 2]);
+			std::swap(LightmapUvs[surface.startUvIndex + 2], LightmapUvs[surface.startUvIndex + 3]);
+		}
+	}
+
 	// Allocate room for all surfaces
 
 	unsigned int allSurfaces = 0;
@@ -1064,11 +1086,6 @@ void DoomLevelMesh::SetupLightmapUvs()
 		{
 			surface.verts.Push(MeshVertices[surface.startVertIndex + i]);
 		}
-
-		for (int i = 0; i < surface.numVerts; ++i)
-		{
-			surface.uvs.Push(LightmapUvs[surface.startUvIndex + i]);
-		}
 	}
 
 	BuildSmoothingGroups();
@@ -1080,28 +1097,6 @@ void DoomLevelMesh::SetupLightmapUvs()
 	for (LevelMeshSurface* surf : sortedSurfaces)
 	{
 		FinishSurface(LMTextureSize, LMTextureSize, packer, *surf);
-	}
-
-	// You have no idea how long this took me to figure out...
-
-	// Reorder vertices into renderer format
-	for (LevelMeshSurface& surface : Surfaces)
-	{
-		if (surface.Type == ST_FLOOR)
-		{
-			// reverse vertices on floor
-			for (int j = surface.startUvIndex + surface.numVerts - 1, k = surface.startUvIndex; j > k; j--, k++)
-			{
-				std::swap(LightmapUvs[k], LightmapUvs[j]);
-			}
-		}
-		else if (surface.Type != ST_CEILING) // walls
-		{
-			// from 0 1 2 3
-			// to   0 2 1 3
-			std::swap(LightmapUvs[surface.startUvIndex + 1], LightmapUvs[surface.startUvIndex + 2]);
-			std::swap(LightmapUvs[surface.startUvIndex + 2], LightmapUvs[surface.startUvIndex + 3]);
-		}
 	}
 
 	LMTextureCount = (int)packer.getNumPages();

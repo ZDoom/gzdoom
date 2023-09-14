@@ -3157,7 +3157,7 @@ void MapLoader::LoadLightmap(MapData* map)
 			continue;
 		}
 
-		if (developer >= 4)
+		if (developer >= 5)
 		{
 			Printf("Mapping lightmap surface pixels[%u] (count: %u) -> ((x:%d, y:%d), (x2:%d, y2:%d), page:%d) area: %u\n",
 				srcPixelOffset, surface.width * surface.height * 3,
@@ -3184,6 +3184,32 @@ void MapLoader::LoadLightmap(MapData* map)
 				dst[dstIndex + 2] = src[srcIndex + 2];
 
 				srcIndex += 3;
+			}
+		}
+	}
+
+	// Use UVs from the lightmap
+	for (auto& surface : zdraySurfaces)
+	{
+		auto& realSurface = Level->levelMesh->Surfaces[findSurfaceIndex(surface.type, surface.typeIndex, getControlSector(surface.controlSector))];
+
+		auto* UVs = &Level->levelMesh->LightmapUvs[realSurface.startUvIndex];
+		auto* newUVs = &zdrayUvs[surface.uvOffset];
+
+		for (uint32_t i = 0; i < surface.uvCount; ++i)
+		{
+			if (developer >= 5)
+			{
+				Printf("Old UV: %.6f %.6f (w:%d, h:%d) (x:%d, y:%d), Lump UVs %.3f %.3f\n", UVs[i].X, UVs[i].Y, realSurface.texWidth, realSurface.texHeight, realSurface.atlasX, realSurface.atlasY, newUVs[i].X, newUVs[i].Y);
+			}
+
+			// Finish surface
+			UVs[i].X = (newUVs[i].X + realSurface.atlasX) / textureSize;
+			UVs[i].Y = (newUVs[i].Y + realSurface.atlasY) / textureSize;
+
+			if (developer >= 5)
+			{
+				Printf("New UV: %.6f %.6f\n", UVs[i].X, UVs[i].Y);
 			}
 		}
 	}

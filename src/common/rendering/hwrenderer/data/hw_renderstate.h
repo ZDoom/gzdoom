@@ -741,7 +741,7 @@ public:
 
 	inline void PushVisibleSurface(LevelMeshSurface* surface)
 	{
-		if (surface->needsUpdate) // TODO atomic? 
+		if (surface->needsUpdate && !surface->portalIndex && !surface->bSky) // TODO atomic?
 		{
 			auto index = mActiveLightmapSurfaceBufferIndex.fetch_add(1);
 			if (index < mActiveLightmapSurfacesBuffer.Size())

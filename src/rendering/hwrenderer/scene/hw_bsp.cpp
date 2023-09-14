@@ -869,7 +869,7 @@ void UpdateLightmaps(DFrameBuffer* screen, FRenderState& RenderState)
 	{
 		for (auto& e : level.levelMesh->Surfaces)
 		{
-			if (e.needsUpdate && !e.bSky)
+			if (e.needsUpdate && !e.bSky && !e.portalIndex)
 			{
 				list.Push(&e);
 

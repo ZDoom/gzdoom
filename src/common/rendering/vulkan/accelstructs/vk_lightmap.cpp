@@ -78,7 +78,7 @@ void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
 		for (auto& surface : surfaces)
 		{
 			surface->needsUpdate = false; // it may have been set to false already, but lightmapper ultimately decides so
-			pixels += surface->texHeight * surface->texWidth;
+			pixels += surface->Area();
 		}
 
 		UploadUniforms();

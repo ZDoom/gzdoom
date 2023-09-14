@@ -79,6 +79,11 @@ struct LevelMeshSurface
 	int smoothingGroupIndex = -1;
 
 	//
+	// Utility/Info
+	//
+	inline uint32_t Area() const { return texWidth * texHeight; }
+
+	//
 	// VkLightmap extra stuff that I dislike:
 	//
 	TArray<FVector3> verts;
@@ -171,6 +176,15 @@ struct IdenticalPortalComparator
 	}
 };
 
+struct LevelMeshSurfaceStats
+{
+	struct Stats
+	{
+		uint32_t total = 0, dirty = 0, sky = 0;
+	};
+
+	Stats surfaces, pixels;
+};
 
 class LevelMesh
 {
@@ -200,10 +214,41 @@ public:
 	TArray<LevelMeshSmoothingGroup> SmoothingGroups;
 	TArray<LevelMeshPortal> Portals;
 
+	// Lightmap atlas
 	int LMTextureCount = 0;
 	int LMTextureSize = 0;
 	TArray<uint16_t> LMTextureData; // TODO better place for this?
 
+	inline uint32_t AtlasPixelCount() const { return uint32_t(LMTextureCount * LMTextureSize * LMTextureSize); }
+	inline LevelMeshSurfaceStats GatherSurfacePixelStats() //const
+	{
+		LevelMeshSurfaceStats stats;
+
+		int count = GetSurfaceCount();
+		for (int i = 0; i < count; ++i)
+		{
+			const auto* surface = GetSurface(i);
+			auto area = surface->Area();
+
+			stats.pixels.total += area;
+
+			if (surface->needsUpdate)
+			{
+				stats.surfaces.dirty++;
+				stats.pixels.dirty += area;
+			}
+			if (surface->bSky)
+			{
+				stats.surfaces.sky++;
+				stats.pixels.sky += area;
+			}
+		}
+
+		stats.surfaces.total = count;
+		return stats;
+	}
+
+	// Map defaults
 	FVector3 SunDirection = FVector3(0.0f, 0.0f, -1.0f);
 	FVector3 SunColor = FVector3(0.0f, 0.0f, 0.0f);
 	uint16_t LightmapSampleDistance = 16;

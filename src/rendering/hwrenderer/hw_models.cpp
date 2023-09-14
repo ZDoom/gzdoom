@@ -82,6 +82,7 @@ void FHWModelRenderer::EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf)
 void FHWModelRenderer::BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
 	state.SetDepthFunc(DF_LEqual);
+	state.SetDepthClamp(true);
 
 	// [BB] In case the model should be rendered translucent, do back face culling.
 	// This solves a few of the problems caused by the lack of depth sorting.

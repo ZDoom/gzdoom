@@ -3023,6 +3023,11 @@ void MapLoader::LoadLightmap(MapData* map)
 	uint32_t numTexPixels = fr.ReadUInt32();
 	uint32_t numTexCoords = fr.ReadUInt32();
 
+	if (developer >= 5)
+	{
+		Printf("LoadLightmap: Surfaces: %u, Pixels: %u, UVs: %u\n", numSurfaces, numTexPixels, numTexCoords);
+	}
+
 	if (numSurfaces == 0 || numTexCoords == 0 || numTexPixels == 0)
 		return;
 
@@ -3057,6 +3062,7 @@ void MapLoader::LoadLightmap(MapData* map)
 		uint32_t uvCount, uvOffset;
 	};
 
+	TMap<DoomLevelMeshSurface*, int> detectedSurfaces;
 	TArray<SurfaceEntry> zdraySurfaces;
 
 	for (auto& surface : Level->levelMesh->Surfaces)
@@ -3112,7 +3118,24 @@ void MapLoader::LoadLightmap(MapData* map)
 			}
 		}
 
-		zdraySurfaces.Push(surface);
+		if (auto ptr = detectedSurfaces.CheckKey(levelSurface))
+		{
+			(*ptr)++;
+			if (developer >= 1)
+			{
+				Printf(PRINT_HIGH, "Lightmap lump surface index %d is referencing surface %d (ref count: %d). Surface type:%d, typeindex:%d, controlsector:%d\n", i, Level->levelMesh->GetSurfaceIndex(levelSurface), ptr, surface.type, surface.typeIndex, surface.controlSector);
+			}
+		}
+		else
+		{
+			detectedSurfaces.Insert(levelSurface, 1);
+			zdraySurfaces.Push(surface);
+		}
+	}
+
+	if (developer >= 1)
+	{
+		Printf("Lightmap contains %d surfaces out of which %d were successfully matched.\n", numSurfaces, zdraySurfaces.Size());
 	}
 
 	// Load pixels
@@ -3127,26 +3150,74 @@ void MapLoader::LoadLightmap(MapData* map)
 	fr.Read(&zdrayUvs[0], numTexCoords * 2 * sizeof(float));
 
 	// Load lightmap textures
-	Level->levelMesh->LMTextureData.Resize(Level->levelMesh->LMTextureCount * Level->levelMesh->LMTextureSize * Level->levelMesh->LMTextureSize * 3);
+	const auto textureSize = Level->levelMesh->LMTextureSize;
+	Level->levelMesh->LMTextureData.Resize(Level->levelMesh->LMTextureCount * textureSize * textureSize * 3);
 
-	for (auto& pixel : Level->levelMesh->LMTextureData)
+	auto pixels = &Level->levelMesh->LMTextureData[0];
+	for (int i = 0, count = Level->levelMesh->LMTextureData.Size(); i < count; i += 3)
 	{
-		pixel = floatToHalf(0.0);
+		pixels[i] = floatToHalf(0.0);
+		pixels[i + 1] = floatToHalf(0.0);
+		pixels[i + 2] = floatToHalf(0.0);
 	}
 
-	auto textureSize = Level->levelMesh->LMTextureSize;
+#if 0 // debug surface mapping
+	for (auto& surface : Level->levelMesh->Surfaces)
+	{
+		int dstX = surface.atlasX;
+		int dstY = surface.atlasY;
+		int dstPage = surface.atlasPageIndex;
+
+		// copy pixels
+		uint16_t* dst = &Level->levelMesh->LMTextureData[dstPage * textureSize * textureSize * 3];
+
+		uint32_t srcIndex = 0;
+
+		if (auto ptr = detectedSurfaces.CheckKey(&surface))
+		{
+			for (int y = 0; y < surface.texHeight; ++y)
+			{
+				for (int x = 0; x < surface.texWidth; ++x)
+				{
+					uint32_t dstIndex = uint32_t(dstX + x + (dstY + y) * textureSize) * 3;
+
+					dst[dstIndex] = floatToHalf(1.0);
+					dst[dstIndex + 1] = floatToHalf(0.0);
+					dst[dstIndex + 2] = floatToHalf(0.0);
+				}
+			}
+		}
+		else
+		{
+			for (int y = 0; y < surface.texHeight; ++y)
+			{
+				for (int x = 0; x < surface.texWidth; ++x)
+				{
+					uint32_t dstIndex = uint32_t(dstX + x + (dstY + y) * textureSize) * 3;
+
+					dst[dstIndex] = floatToHalf(0.0);
+					dst[dstIndex + 1] = floatToHalf(0.0);
+					dst[dstIndex + 2] = floatToHalf(0.0);
+				}
+			}
+		}
+	}
+#endif
 
 	// Map surface pixels into atlas
+	int index = -1;
 	for (auto& surface : zdraySurfaces)
 	{
+		++index; // for debug output
+
 		auto& realSurface = Level->levelMesh->Surfaces[findSurfaceIndex(surface.type, surface.typeIndex, getControlSector(surface.controlSector))];
 
 		// calculate pixel positions
-		uint32_t srcPixelOffset = surface.pixelsOffset;
+		const uint32_t srcPixelOffset = surface.pixelsOffset;
 
-		int dstX = realSurface.atlasX;
-		int dstY = realSurface.atlasY;
-		int dstPage = realSurface.atlasPageIndex;
+		const int dstX = realSurface.atlasX;
+		const int dstY = realSurface.atlasY;
+		const int dstPage = realSurface.atlasPageIndex;
 
 		// Sanity checks
 		if (dstX < 0 || dstY < 0 || dstX + surface.width > textureSize || dstY + surface.height > textureSize || dstPage >= Level->levelMesh->LMTextureCount)
@@ -3154,7 +3225,7 @@ void MapLoader::LoadLightmap(MapData* map)
 			errors = true;
 			if (developer >= 1)
 			{
-				Printf("Can't map lightmap surface pixels[%u] -> ((x:%d, y:%d), (x2:%d, y2:%d), page:%d)\n", srcPixelOffset, dstX, dstY, dstX + surface.width, dstY + surface.height, dstPage);
+				Printf("Can't map lightmap surface %d pixels[%u] -> ((x:%d, y:%d), (x2:%d, y2:%d), page:%d)\n", index, srcPixelOffset, dstX, dstY, dstX + surface.width, dstY + surface.height, dstPage);
 			}
 			realSurface.needsUpdate = true;
 			continue;
@@ -3182,22 +3253,23 @@ void MapLoader::LoadLightmap(MapData* map)
 		}
 
 		// copy pixels
-		uint16_t* src = &textureData[srcPixelOffset];
-		uint16_t* dst = &Level->levelMesh->LMTextureData[dstPage * textureSize * textureSize * 3];
-
 		uint32_t srcIndex = 0;
+		uint16_t* src = &textureData[srcPixelOffset];
 
-		for (int y = 0; y < surface.height; ++y)
+		uint16_t* dst = &Level->levelMesh->LMTextureData[realSurface.atlasPageIndex * textureSize * textureSize * 3];
+
+		int endY = realSurface.atlasY + realSurface.texHeight;
+		int endX = realSurface.atlasX + realSurface.texWidth;
+
+		for (int y = realSurface.atlasY; y < endY; ++y)
 		{
-			for (int x = 0; x < surface.width; ++x)
+			for (int x = realSurface.atlasX; x < endX; ++x)
 			{
-				uint32_t dstIndex = (dstX + x + (dstY + y) * textureSize) * 3;
+				uint32_t dstIndex = uint32_t(x + (y * textureSize)) * 3;
 
-				dst[dstIndex] = src[srcIndex];
-				dst[dstIndex + 1] = src[srcIndex + 1];
-				dst[dstIndex + 2] = src[srcIndex + 2];
-
-				srcIndex += 3;
+				dst[dstIndex] = src[srcIndex++];
+				dst[dstIndex + 1] = src[srcIndex++];
+				dst[dstIndex + 2] = src[srcIndex++];
 			}
 		}
 	}
@@ -3212,6 +3284,8 @@ void MapLoader::LoadLightmap(MapData* map)
 
 		for (uint32_t i = 0; i < surface.uvCount; ++i)
 		{
+			FVector2 oldUv = UVs[i];
+
 			if (developer >= 5)
 			{
 				Printf("Old UV: %.6f %.6f (w:%d, h:%d) (x:%d, y:%d), Lump UVs %.3f %.3f\n", UVs[i].X, UVs[i].Y, realSurface.texWidth, realSurface.texHeight, realSurface.atlasX, realSurface.atlasY, newUVs[i].X, newUVs[i].Y);
@@ -3223,7 +3297,10 @@ void MapLoader::LoadLightmap(MapData* map)
 
 			if (developer >= 5)
 			{
-				Printf("New UV: %.6f %.6f\n", UVs[i].X, UVs[i].Y);
+				if (abs(oldUv.X - UVs[i].X) >= 0.0000001f || abs(oldUv.Y - UVs[i].Y) >= 0.0000001f)
+				{
+					Printf("New UV: %.6f %.6f\n", UVs[i].X, UVs[i].Y);
+				}
 			}
 		}
 	}

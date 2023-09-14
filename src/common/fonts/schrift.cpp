@@ -29,7 +29,7 @@
 # define WIN32_LEAN_AND_MEAN 1
 # include <windows.h>
 #else
-# define _POSIX_C_SOURCE 1
+//# define _POSIX_C_SOURCE 1
 # include <fcntl.h>
 # include <sys/mman.h>
 # include <sys/stat.h>
@@ -125,7 +125,7 @@ struct SFT_Font
 
 /* function declarations */
 /* generic utility functions */
-static void *reallocarray(void *optr, size_t nmemb, size_t size);
+static void *schrift_reallocarray(void *optr, size_t nmemb, size_t size);
 static inline int fast_floor(double x);
 static inline int fast_ceil (double x);
 /* file loading */
@@ -406,11 +406,11 @@ failure:
  * if both s1 < MUL_NO_OVERFLOW and s2 < MUL_NO_OVERFLOW */
 #define MUL_NO_OVERFLOW	((size_t)1 << (sizeof(size_t) * 4))
 
-/* OpenBSD's reallocarray() standard libary function.
+/* OpenBSD's schrift_reallocarray() standard libary function.
  * A wrapper for realloc() that takes two size args like calloc().
  * Useful because it eliminates common integer overflow bugs. */
 static void *
-reallocarray(void *optr, size_t nmemb, size_t size)
+schrift_reallocarray(void *optr, size_t nmemb, size_t size)
 {
 	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
@@ -497,7 +497,7 @@ map_file(SFT_Font *font, const char *filename)
 {
 	struct stat info;
 	int fd;
-	font->memory = MAP_FAILED;
+	font->memory = reinterpret_cast<const uint8_t*>(MAP_FAILED);
 	font->size   = 0;
 	font->source = SrcMapping;
 	if ((fd = open(filename, O_RDONLY)) < 0) {
@@ -508,7 +508,7 @@ map_file(SFT_Font *font, const char *filename)
 		return -1;
 	}
 	/* FIXME do some basic validation on info.st_size maybe - it is signed for example, so it *could* be negative .. */
-	font->memory = mmap(NULL, (size_t) info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	font->memory = reinterpret_cast<const uint8_t*>(mmap(NULL, (size_t) info.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
 	font->size   = (uint_fast32_t) info.st_size;
 	close(fd);
 	return font->memory == MAP_FAILED ? -1 : 0;
@@ -636,7 +636,7 @@ grow_points(Outline *outl)
 	if (outl->capPoints > UINT16_MAX / 2)
 		return -1;
 	cap = (uint_fast16_t) (2U * outl->capPoints);
-	if (!(mem = reallocarray(outl->points, cap, sizeof *outl->points)))
+	if (!(mem = schrift_reallocarray(outl->points, cap, sizeof *outl->points)))
 		return -1;
 	outl->capPoints = (uint_least16_t) cap;
 	outl->points    = (Point*)mem;
@@ -652,7 +652,7 @@ grow_curves(Outline *outl)
 	if (outl->capCurves > UINT16_MAX / 2)
 		return -1;
 	cap = (uint_fast16_t) (2U * outl->capCurves);
-	if (!(mem = reallocarray(outl->curves, cap, sizeof *outl->curves)))
+	if (!(mem = schrift_reallocarray(outl->curves, cap, sizeof *outl->curves)))
 		return -1;
 	outl->capCurves = (uint_least16_t) cap;
 	outl->curves    = (Curve*)mem;
@@ -668,7 +668,7 @@ grow_lines(Outline *outl)
 	if (outl->capLines > UINT16_MAX / 2)
 		return -1;
 	cap = (uint_fast16_t) (2U * outl->capLines);
-	if (!(mem = reallocarray(outl->lines, cap, sizeof *outl->lines)))
+	if (!(mem = schrift_reallocarray(outl->lines, cap, sizeof *outl->lines)))
 		return -1;
 	outl->capLines = (uint_least16_t) cap;
 	outl->lines    = (Line*)mem;
@@ -1431,7 +1431,7 @@ draw_line(Raster buf, Point origin, Point goal)
 	struct { int x, y; } pixel;
 	struct { int x, y; } dir;
 	int step, numSteps = 0;
-	Cell *restrict cptr, cell;
+	Cell *cptr = NULL, cell;
 
 	delta.x = goal.x - origin.x;
 	delta.y = goal.y - origin.y;

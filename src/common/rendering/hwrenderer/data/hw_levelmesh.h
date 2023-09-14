@@ -7,6 +7,7 @@
 #include "bounds.h"
 #include "common/utility/matrix.h"
 #include <memory>
+#include <cstring>
 
 #include <dp_rect_pack.h>
 

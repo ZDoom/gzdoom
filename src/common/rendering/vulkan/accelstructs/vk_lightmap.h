@@ -134,7 +134,7 @@ private:
 
 	struct
 	{
-		static const int BufferSize = 1 * 1024 * 1024;
+		const int BufferSize = 1 * 1024 * 1024;
 		std::unique_ptr<VulkanBuffer> Buffer;
 		SceneVertex* Vertices = nullptr;
 		int Pos = 0;
@@ -142,7 +142,7 @@ private:
 
 	struct
 	{
-		static const int BufferSize = 2 * 1024 * 1024;
+		const int BufferSize = 2 * 1024 * 1024;
 		std::unique_ptr<VulkanBuffer> Buffer;
 		LightInfo* Lights = nullptr;
 		int Pos = 0;

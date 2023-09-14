@@ -20,8 +20,8 @@ public:
 		FFlatVertex* Vertices = nullptr;
 		unsigned int ShadowDataSize = 0;
 		unsigned int CurIndex = 0;
-		static const unsigned int BUFFER_SIZE = 2000000;
-		static const unsigned int BUFFER_SIZE_TO_USE = BUFFER_SIZE - 500;
+		const unsigned int BUFFER_SIZE = 2000000;
+		const unsigned int BUFFER_SIZE_TO_USE = BUFFER_SIZE - 500;
 		std::unique_ptr<VulkanBuffer> IndexBuffer;
 	} Flatbuffer;
 

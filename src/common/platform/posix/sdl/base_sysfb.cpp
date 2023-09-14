@@ -206,11 +206,6 @@ SDLVideo::SDLVideo ()
 
 #ifdef HAVE_VULKAN
 	Priv::CreateWindow(SDL_WINDOW_VULKAN | SDL_WINDOW_HIDDEN | (vid_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
-
-	if (Priv::window == nullptr)
-	{
-		Priv::vulkanEnabled = false;
-	}
 #endif
 }
 

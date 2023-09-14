@@ -527,6 +527,23 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 				}
 			}
 		}
+
+		if (sector->e->XFloor.ffloors.Size())
+		{
+			for (auto* floor : sector->e->XFloor.ffloors)
+			{
+				if (auto sides = sector->Level->levelMesh->XFloorToSurfaceSides.CheckKey(floor->model))
+				{
+					for (auto* surface : *sides)
+					{
+						if (surface)
+						{
+							state.PushVisibleSurface(surface);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	//

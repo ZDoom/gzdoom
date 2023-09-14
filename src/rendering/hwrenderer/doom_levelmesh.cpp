@@ -377,9 +377,16 @@ void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 	// Runtime helper
 	for (auto& surface : Surfaces)
 	{
-		if ((surface.Type == ST_FLOOR || surface.Type == ST_CEILING) && surface.ControlSector)
+		if (surface.ControlSector)
 		{
-			XFloorToSurface[surface.Subsector->sector].Push(&surface);
+			if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
+			{
+				XFloorToSurface[surface.Subsector->sector].Push(&surface);
+			}
+			else if (surface.Type == ST_MIDDLESIDE)
+			{
+				XFloorToSurfaceSides[surface.ControlSector].Push(&surface);
+			}
 		}
 	}
 }

@@ -51,7 +51,8 @@ public:
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
 
 	// runtime utility variables
-	TMap<sector_t*, TArray<DoomLevelMeshSurface*>> XFloorToSurface;
+	TMap<const sector_t*, TArray<DoomLevelMeshSurface*>> XFloorToSurface;
+	TMap<const sector_t*, TArray<DoomLevelMeshSurface*>> XFloorToSurfaceSides;
 
 private:
 	void CreateSubsectorSurfaces(FLevelLocals &doomMap);

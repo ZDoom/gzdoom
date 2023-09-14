@@ -699,17 +699,18 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, sector_t *sector, sector_t *controlSector, int typeIndex)
 {
 	DoomLevelMeshSurface surf;
-	surf.bSky = IsSkySector(sector, sector_t::floor);
 
 	secplane_t plane;
 	if (!controlSector)
 	{
 		plane = sector->floorplane;
+		surf.bSky = IsSkySector(sector, sector_t::floor);
 	}
 	else
 	{
 		plane = controlSector->ceilingplane;
 		plane.FlipVert();
+		surf.bSky = false;
 	}
 
 	surf.numVerts = sub->numlines;
@@ -739,17 +740,18 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 void DoomLevelMesh::CreateCeilingSurface(FLevelLocals& doomMap, subsector_t* sub, sector_t* sector, sector_t* controlSector, int typeIndex)
 {
 	DoomLevelMeshSurface surf;
-	surf.bSky = IsSkySector(sector, sector_t::ceiling);
 
 	secplane_t plane;
 	if (!controlSector)
 	{
 		plane = sector->ceilingplane;
+		surf.bSky = IsSkySector(sector, sector_t::ceiling);
 	}
 	else
 	{
 		plane = controlSector->floorplane;
 		plane.FlipVert();
+		surf.bSky = false;
 	}
 
 	surf.numVerts = sub->numlines;

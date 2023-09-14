@@ -417,7 +417,7 @@ int PrintString (int iprintlevel, const char *outline)
 
 	if (!conbuffer) return 0;	// when called too early
 	int printlevel = iprintlevel & PRINT_TYPES;
-	if (printlevel < msglevel || *outline == '\0')
+	if (*outline == '\0')
 	{
 		return 0;
 	}
@@ -434,7 +434,10 @@ int PrintString (int iprintlevel, const char *outline)
 			conbuffer->AddText(printlevel, outline);
 			if (vidactive && screen && !(iprintlevel & PRINT_NONOTIFY) && NotifyStrings)
 			{
-				NotifyStrings->AddString(iprintlevel, outline);
+				if (printlevel >= msglevel)
+				{
+					NotifyStrings->AddString(iprintlevel, outline);
+				}
 			}
 		}
 		if (Logfile != nullptr && !(iprintlevel & PRINT_NOLOG))

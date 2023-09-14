@@ -127,6 +127,7 @@ static FCompatOption Options[] =
 	{ "noslopeid",				BCOMPATF_NOSLOPEID, SLOT_BCOMPAT },
 	{ "clipmidtex",				BCOMPATF_CLIPMIDTEX, SLOT_BCOMPAT },
 	{ "nosectionmerge",			BCOMPATF_NOSECTIONMERGE, SLOT_BCOMPAT },
+	{ "nomirrors",				BCOMPATF_NOMIRRORS, SLOT_BCOMPAT },
 
 
 	// list copied from g_mapinfo.cpp

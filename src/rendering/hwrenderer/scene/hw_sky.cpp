@@ -155,7 +155,7 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 			break;
 		}
 	}
-	else if (allowreflect && sector->GetReflect(plane) > 0)
+	else if (allowreflect && sector->GetReflect(plane) > 0 && !(di->Level->ib_compatflags & BCOMPATF_NOMIRRORS))
 	{
         auto vpz = di->Viewpoint.Pos.Z;
 		if ((plane == sector_t::ceiling && vpz > sector->ceilingplane.fD()) ||

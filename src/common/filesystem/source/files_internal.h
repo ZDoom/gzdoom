@@ -8,23 +8,23 @@ class MemoryReader : public FileReaderInterface
 {
 protected:
 	const char * bufptr = nullptr;
-	long FilePos = 0;
+	ptrdiff_t FilePos = 0;
 
 	MemoryReader()
 	{}
 
 public:
-	MemoryReader(const char *buffer, long length)
+	MemoryReader(const char *buffer, ptrdiff_t length)
 	{
 		bufptr = buffer;
 		Length = length;
 		FilePos = 0;
 	}
 
-	long Tell() const override;
-	long Seek(long offset, int origin) override;
-	long Read(void *buffer, long len) override;
-	char *Gets(char *strbuf, int len) override;
+	ptrdiff_t Tell() const override;
+	ptrdiff_t Seek(ptrdiff_t offset, int origin) override;
+	ptrdiff_t Read(void *buffer, ptrdiff_t len) override;
+	char *Gets(char *strbuf, ptrdiff_t len) override;
 	virtual const char *GetBuffer() const override { return bufptr; }
 };
 

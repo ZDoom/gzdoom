@@ -53,9 +53,9 @@ class DecompressorBase : public FileReaderInterface
 public:
 	// These do not work but need to be defined to satisfy the FileReaderInterface.
 	// They will just error out when called.
-	long Tell() const override;
-	long Seek(long offset, int origin) override;
-	char* Gets(char* strbuf, int len) override;
+	ptrdiff_t Tell() const override;
+	ptrdiff_t Seek(ptrdiff_t offset, int origin) override;
+	char* Gets(char* strbuf, ptrdiff_t len) override;
 	void DecompressionError(const char* error, ...) const;
 	void SetOwnsReader();
 	void EnableExceptions(bool on) { exceptions = on; }
@@ -86,17 +86,17 @@ void DecompressorBase::DecompressionError(const char *error, ...) const
 	}
 }
 
-long DecompressorBase::Tell () const
+ptrdiff_t DecompressorBase::Tell () const
 {
 	DecompressionError("Cannot get position of decompressor stream");
 	return 0;
 }
-long DecompressorBase::Seek (long offset, int origin)
+ptrdiff_t DecompressorBase::Seek (ptrdiff_t offset, int origin)
 {
 	DecompressionError("Cannot seek in decompressor stream");
 	return 0;
 }
-char *DecompressorBase::Gets(char *strbuf, int len)
+char *DecompressorBase::Gets(char *strbuf, ptrdiff_t len)
 {
 	DecompressionError("Cannot use Gets on decompressor stream");
 	return nullptr;
@@ -171,7 +171,7 @@ public:
 		inflateEnd (&Stream);
 	}
 
-	long Read (void *buffer, long len) override
+	ptrdiff_t Read (void *buffer, ptrdiff_t len) override
 	{
 		int err;
 
@@ -180,18 +180,25 @@ public:
 			DecompressionError("File not open");
 			return 0;
 		}
+		if (len == 0) return 0;
 
-		Stream.next_out = (Bytef *)buffer;
-		Stream.avail_out = len;
-
-		do
+		while (len > 0)
 		{
-			err = inflate (&Stream, Z_SYNC_FLUSH);
-			if (Stream.avail_in == 0 && !SawEOF)
+			Stream.next_out = (Bytef*)buffer;
+			auto rlen = std::min<ptrdiff_t>(len, 0x40000000);
+			Stream.avail_out = rlen;
+			buffer = Stream.next_out + rlen;
+			len -= rlen;
+
+			do
 			{
-				FillBuffer ();
-			}
-		} while (err == Z_OK && Stream.avail_out != 0);
+				err = inflate(&Stream, Z_SYNC_FLUSH);
+				if (Stream.avail_in == 0 && !SawEOF)
+				{
+					FillBuffer();
+				}
+			} while (err == Z_OK && Stream.avail_out != 0);
+		}
 
 		if (err != Z_OK && err != Z_STREAM_END)
 		{
@@ -278,28 +285,36 @@ public:
 		BZ2_bzDecompressEnd (&Stream);
 	}
 
-	long Read (void *buffer, long len) override
+	ptrdiff_t Read (void *buffer, ptrdiff_t len) override
 	{
 		if (File == nullptr)
 		{
 			DecompressionError("File not open");
 			return 0;
 		}
+		if (len == 0) return 0;
 
-		int err;
+		int err = BZ_OK;
 
 		stupidGlobal = this;
-		Stream.next_out = (char *)buffer;
-		Stream.avail_out = len;
 
-		do
+		while (len > 0)
 		{
-			err = BZ2_bzDecompress(&Stream);
-			if (Stream.avail_in == 0 && !SawEOF)
+			Stream.next_out = (char*)buffer;
+			auto rlen = std::min<ptrdiff_t>(len, 0x40000000);
+			Stream.avail_out = rlen;
+			buffer = Stream.next_out + rlen;
+			len -= rlen;
+
+			do
 			{
-				FillBuffer ();
-			}
-		} while (err == BZ_OK && Stream.avail_out != 0);
+				err = BZ2_bzDecompress(&Stream);
+				if (Stream.avail_in == 0 && !SawEOF)
+				{
+					FillBuffer();
+				}
+			} while (err == BZ_OK && Stream.avail_out != 0);
+		}
 
 		if (err != BZ_OK && err != BZ_STREAM_END)
 		{
@@ -419,7 +434,7 @@ public:
 		LzmaDec_Free(&Stream, &g_Alloc);
 	}
 
-	long Read (void *buffer, long len) override
+	ptrdiff_t Read (void *buffer, ptrdiff_t len) override
 	{
 		if (File == nullptr)
 		{
@@ -639,11 +654,12 @@ public:
 	{
 	}
 
-	long Read(void *buffer, long len) override
+	ptrdiff_t Read(void *buffer, ptrdiff_t len) override
 	{
+		if (len > 0xffffffff) len = 0xffffffff;	// this format cannot be larger than 4GB.
 
 		uint8_t *Out = (uint8_t*)buffer;
-		long AvailOut = len;
+		unsigned AvailOut = len;
 
 		do
 		{
@@ -754,7 +770,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 			dec->SetOwnsReader();
 		}
 
-		dec->Length = (long)length;
+		dec->Length = length;
 		if (!seekable)
 		{
 			Close();

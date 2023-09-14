@@ -92,14 +92,14 @@ class FileReader;
 class FileReaderInterface
 {
 public:
-	long Length = -1;
+	ptrdiff_t Length = -1;
 	virtual ~FileReaderInterface() {}
-	virtual long Tell () const = 0;
-	virtual long Seek (long offset, int origin) = 0;
-	virtual long Read (void *buffer, long len) = 0;
-	virtual char *Gets(char *strbuf, int len) = 0;
+	virtual ptrdiff_t Tell () const = 0;
+	virtual ptrdiff_t Seek (ptrdiff_t offset, int origin) = 0;
+	virtual ptrdiff_t Read (void *buffer, ptrdiff_t len) = 0;
+	virtual char *Gets(char *strbuf, ptrdiff_t len) = 0;
 	virtual const char *GetBuffer() const { return nullptr; }
-	long GetLength () const { return Length; }
+	ptrdiff_t GetLength () const { return Length; }
 };
 
 struct FResourceLump;
@@ -184,12 +184,12 @@ public:
 
 	Size Seek(Size offset, ESeek origin)
 	{
-		return mReader->Seek((long)offset, origin);
+		return mReader->Seek(offset, origin);
 	}
 
 	Size Read(void *buffer, Size len) const
 	{
-		return mReader->Read(buffer, (long)len);
+		return mReader->Read(buffer, len);
 	}
 
 	std::vector<uint8_t> Read(size_t len)
@@ -197,7 +197,7 @@ public:
 		std::vector<uint8_t> buffer(len);
 		if (len > 0)
 		{
-			Size length = mReader->Read(&buffer[0], (long)len);
+			Size length = mReader->Read(&buffer[0], len);
 			buffer.resize((size_t)length);
 		}
 		return buffer;
@@ -214,7 +214,7 @@ public:
 		std::vector<uint8_t> buffer(len + padding);
 		if (len > 0)
 		{
-			Size length = mReader->Read(&buffer[0], (long)len);
+			Size length = mReader->Read(&buffer[0], len);
 			if (length < len) buffer.clear();
 			else memset(buffer.data() + len, 0, padding);
 		}
@@ -224,7 +224,7 @@ public:
 
 	char *Gets(char *strbuf, Size len)
 	{
-		return mReader->Gets(strbuf, (int)len);
+		return mReader->Gets(strbuf, len);
 	}
 
 	const char *GetBuffer()
@@ -331,8 +331,8 @@ public:
 	static FileWriter *Open(const char *filename);
 
 	virtual size_t Write(const void *buffer, size_t len);
-	virtual long Tell();
-	virtual long Seek(long offset, int mode);
+	virtual ptrdiff_t Tell();
+	virtual ptrdiff_t Seek(ptrdiff_t offset, int mode);
 	size_t Printf(const char *fmt, ...);
 
 	virtual void Close()

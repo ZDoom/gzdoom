@@ -53,6 +53,10 @@ FILE *myfopen(const char *filename, const char *flags)
 #endif
 }
 
+#ifdef _WIN32
+#define fseek _fseeki64
+#define ftell _ftelli64
+#endif
 
 //==========================================================================
 //
@@ -65,8 +69,8 @@ FILE *myfopen(const char *filename, const char *flags)
 class StdFileReader : public FileReaderInterface
 {
 	FILE *File = nullptr;
-	long StartPos = 0;
-	long FilePos = 0;
+	ptrdiff_t StartPos = 0;
+	ptrdiff_t FilePos = 0;
 
 public:
 	StdFileReader()
@@ -81,7 +85,7 @@ public:
 		File = nullptr;
 	}
 
-	bool Open(const char *filename, long startpos = 0, long len = -1)
+	bool Open(const char *filename, ptrdiff_t startpos = 0, ptrdiff_t len = -1)
 	{
 		File = myfopen(filename, "rb");
 		if (File == nullptr) return false;
@@ -93,12 +97,12 @@ public:
 		return true;
 	}
 
-	long Tell() const override
+	ptrdiff_t Tell() const override
 	{
 		return FilePos - StartPos;
 	}
 
-	long Seek(long offset, int origin) override
+	ptrdiff_t Seek(ptrdiff_t offset, int origin) override
 	{
 		if (origin == SEEK_SET)
 		{
@@ -122,7 +126,7 @@ public:
 		return -1;
 	}
 
-	long Read(void *buffer, long len) override
+	ptrdiff_t Read(void *buffer, ptrdiff_t len) override
 	{
 		assert(len >= 0);
 		if (len <= 0) return 0;
@@ -130,16 +134,16 @@ public:
 		{
 			len = Length - FilePos + StartPos;
 		}
-		len = (long)fread(buffer, 1, len, File);
+		len = fread(buffer, 1, len, File);
 		FilePos += len;
 		return len;
 	}
 
-	char *Gets(char *strbuf, int len) override
+	char *Gets(char *strbuf, ptrdiff_t len) override
 	{
-		if (len <= 0 || FilePos >= StartPos + Length) return NULL;
+		if (len <= 0 || len > 0x7fffffff || FilePos >= StartPos + Length) return nullptr;
 		char *p = fgets(strbuf, len, File);
-		if (p != NULL)
+		if (p != nullptr)
 		{
 			int old = FilePos;
 			FilePos = ftell(File);
@@ -152,9 +156,9 @@ public:
 	}
 
 private:
-	long CalcFileLen() const
+	ptrdiff_t CalcFileLen() const
 	{
-		long endpos;
+		ptrdiff_t endpos;
 
 		fseek(File, 0, SEEK_END);
 		endpos = ftell(File);
@@ -174,11 +178,11 @@ private:
 class FileReaderRedirect : public FileReaderInterface
 {
 	FileReader *mReader = nullptr;
-	long StartPos = 0;
-	long FilePos = 0;
+	ptrdiff_t StartPos = 0;
+	ptrdiff_t FilePos = 0;
 
 public:
-	FileReaderRedirect(FileReader &parent, long start, long length)
+	FileReaderRedirect(FileReader &parent, ptrdiff_t start, ptrdiff_t length)
 	{
 		mReader = &parent;
 		FilePos = start;
@@ -187,12 +191,12 @@ public:
 		Seek(0, SEEK_SET);
 	}
 
-	virtual long Tell() const override
+	virtual ptrdiff_t Tell() const override
 	{
 		return FilePos - StartPos;
 	}
 
-	virtual long Seek(long offset, int origin) override
+	virtual ptrdiff_t Seek(ptrdiff_t offset, int origin) override
 	{
 		switch (origin)
 		{
@@ -205,7 +209,7 @@ public:
 			break;
 
 		case SEEK_CUR:
-			offset += (long)mReader->Tell();
+			offset += mReader->Tell();
 			break;
 		}
 		if (offset < StartPos || offset > StartPos + Length) return -1;	// out of scope
@@ -217,7 +221,7 @@ public:
 		return -1;
 	}
 
-	virtual long Read(void *buffer, long len) override
+	virtual ptrdiff_t Read(void *buffer, ptrdiff_t len) override
 	{
 		assert(len >= 0);
 		if (len <= 0) return 0;
@@ -225,19 +229,19 @@ public:
 		{
 			len = Length - FilePos + StartPos;
 		}
-		len = (long)mReader->Read(buffer, len);
+		len = mReader->Read(buffer, len);
 		FilePos += len;
 		return len;
 	}
 
-	virtual char *Gets(char *strbuf, int len) override
+	virtual char *Gets(char *strbuf, ptrdiff_t len) override
 	{
-		if (len <= 0 || FilePos >= StartPos + Length) return NULL;
+		if (len <= 0 || FilePos >= StartPos + Length) return nullptr;
 		char *p = mReader->Gets(strbuf, len);
-		if (p != NULL)
+		if (p != nullptr)
 		{
 			int old = FilePos;
-			FilePos = (long)mReader->Tell();
+			FilePos = mReader->Tell();
 			if (FilePos - StartPos > Length)
 			{
 				strbuf[Length - old + StartPos] = 0;
@@ -256,12 +260,12 @@ public:
 //
 //==========================================================================
 
-long MemoryReader::Tell() const
+ptrdiff_t MemoryReader::Tell() const
 {
 	return FilePos;
 }
 
-long MemoryReader::Seek(long offset, int origin)
+ptrdiff_t MemoryReader::Seek(ptrdiff_t offset, int origin)
 {
 	switch (origin)
 	{
@@ -275,11 +279,11 @@ long MemoryReader::Seek(long offset, int origin)
 
 	}
 	if (offset < 0 || offset > Length) return -1;
-	FilePos = std::clamp<long>(offset, 0, Length);
+	FilePos = std::clamp<ptrdiff_t>(offset, 0, Length);
 	return 0;
 }
 
-long MemoryReader::Read(void *buffer, long len)
+ptrdiff_t MemoryReader::Read(void *buffer, ptrdiff_t len)
 {
 	if (len>Length - FilePos) len = Length - FilePos;
 	if (len<0) len = 0;
@@ -288,10 +292,10 @@ long MemoryReader::Read(void *buffer, long len)
 	return len;
 }
 
-char *MemoryReader::Gets(char *strbuf, int len)
+char *MemoryReader::Gets(char *strbuf, ptrdiff_t len)
 {
 	if (len>Length - FilePos) len = Length - FilePos;
-	if (len <= 0) return NULL;
+	if (len <= 0) return nullptr;
 
 	char *p = strbuf;
 	while (len > 1)
@@ -313,7 +317,7 @@ char *MemoryReader::Gets(char *strbuf, int len)
 		}
 		FilePos++;
 	}
-	if (p == strbuf) return NULL;
+	if (p == strbuf) return nullptr;
 	*p++ = 0;
 	return strbuf;
 }
@@ -331,7 +335,7 @@ class MemoryArrayReader : public MemoryReader
 	std::vector<uint8_t> buf;
 
 public:
-	MemoryArrayReader(const char *buffer, long length)
+	MemoryArrayReader(const char *buffer, ptrdiff_t length)
 	{
 		if (length > 0)
 		{
@@ -347,7 +351,7 @@ public:
 	{ 
 		bufptr = (const char*)buf.data();
 		FilePos = 0;
-		Length = (long)buf.size();
+		Length = buf.size();
 	}
 };
 
@@ -364,7 +368,7 @@ public:
 bool FileReader::OpenFile(const char *filename, FileReader::Size start, FileReader::Size length)
 {
 	auto reader = new StdFileReader;
-	if (!reader->Open(filename, (long)start, (long)length))
+	if (!reader->Open(filename, start, length))
 	{
 		delete reader;
 		return false;
@@ -376,7 +380,7 @@ bool FileReader::OpenFile(const char *filename, FileReader::Size start, FileRead
 
 bool FileReader::OpenFilePart(FileReader &parent, FileReader::Size start, FileReader::Size length)
 {
-	auto reader = new FileReaderRedirect(parent, (long)start, (long)length);
+	auto reader = new FileReaderRedirect(parent, start, length);
 	Close();
 	mReader = reader;
 	return true;
@@ -385,14 +389,14 @@ bool FileReader::OpenFilePart(FileReader &parent, FileReader::Size start, FileRe
 bool FileReader::OpenMemory(const void *mem, FileReader::Size length)
 {
 	Close();
-	mReader = new MemoryReader((const char *)mem, (long)length);
+	mReader = new MemoryReader((const char *)mem, length);
 	return true;
 }
 
 bool FileReader::OpenMemoryArray(const void *mem, FileReader::Size length)
 {
 	Close();
-	mReader = new MemoryArrayReader((const char *)mem, (long)length);
+	mReader = new MemoryArrayReader((const char *)mem, length);
 	return true;
 }
 
@@ -424,7 +428,7 @@ bool FileReader::OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> gett
 bool FileWriter::OpenDirect(const char *filename)
 {
 	File = myfopen(filename, "wb");
-	return (File != NULL);
+	return (File != nullptr);
 }
 
 FileWriter *FileWriter::Open(const char *filename)
@@ -435,12 +439,12 @@ FileWriter *FileWriter::Open(const char *filename)
 		return fwrit;
 	}
 	delete fwrit;
-	return NULL;
+	return nullptr;
 }
 
 size_t FileWriter::Write(const void *buffer, size_t len)
 {
-	if (File != NULL)
+	if (File != nullptr)
 	{
 		return fwrite(buffer, 1, len, File);
 	}
@@ -450,9 +454,9 @@ size_t FileWriter::Write(const void *buffer, size_t len)
 	}
 }
 
-long FileWriter::Tell()
+ptrdiff_t FileWriter::Tell()
 {
-	if (File != NULL)
+	if (File != nullptr)
 	{
 		return ftell(File);
 	}
@@ -462,9 +466,9 @@ long FileWriter::Tell()
 	}
 }
 
-long FileWriter::Seek(long offset, int mode)
+ptrdiff_t FileWriter::Seek(ptrdiff_t offset, int mode)
 {
-	if (File != NULL)
+	if (File != nullptr)
 	{
 		return fseek(File, offset, mode);
 	}
@@ -485,7 +489,7 @@ size_t FileWriter::Printf(const char *fmt, ...)
 	va_start(arglist, fmt);
 	vsnprintf(&buf.front(), n + 1, fmt, arglist);
 	va_end(arglist);
-	return Write(buf.c_str(), strlen(buf.c_str()));	// Make sure we write no null bytes.
+	return Write(buf.c_str(), strlen(buf.c_str()));	// Make sure we write no nullptr bytes.
 }
 
 size_t BufferWriter::Write(const void *buffer, size_t len)

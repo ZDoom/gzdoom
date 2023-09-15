@@ -221,7 +221,7 @@ void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCoun
 
 	if (newPixelData.Size() >= (size_t)w * h * count * 3)
 	{
-		assert(newPixelData.Size() == w * h * count * 3);
+		assert(newPixelData.Size() == (size_t)w * h * count * 3);
 
 		int totalSize = w * h * count * pixelsize;
 

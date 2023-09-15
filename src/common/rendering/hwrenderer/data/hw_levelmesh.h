@@ -54,6 +54,7 @@ struct LevelMeshSurface
 	int texHeight = 0;
 
 	bool needsUpdate = true;
+	bool alreadyInVisibleList = false;
 
 	//
 	// Required for internal lightmapper:
@@ -83,18 +84,8 @@ struct LevelMeshSurface
 	//
 	inline uint32_t Area() const { return texWidth * texHeight; }
 
-	//
-	// VkLightmap extra stuff that I dislike:
-	//
-	TArray<FVector3> verts;
-
 	// Touching light sources
 	std::vector<const LevelMeshLight*> LightList;
-
-	// Lightmapper has a lot of additional padding around the borders
-	int lightmapperAtlasPage = -1;
-	int lightmapperAtlasX = -1;
-	int lightmapperAtlasY = -1;
 };
 
 inline float IsInFrontOfPlane(const FVector4& plane, const FVector3& point)

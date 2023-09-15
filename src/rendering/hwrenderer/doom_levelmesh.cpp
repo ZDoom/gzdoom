@@ -1079,15 +1079,6 @@ void DoomLevelMesh::SetupLightmapUvs()
 		sortedSurfaces.push_back(&surface);
 	}
 
-	// VkLightmapper old ZDRay properties
-	for (auto& surface : Surfaces)
-	{
-		for (int i = 0; i < surface.numVerts; ++i)
-		{
-			surface.verts.Push(MeshVertices[surface.startVertIndex + i]);
-		}
-	}
-
 	BuildSmoothingGroups();
 
 	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](LevelMeshSurface* a, LevelMeshSurface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });

@@ -31,7 +31,7 @@ struct LightmapPushConstants
 	float PushPadding4;
 };
 
-struct LightmapImage
+struct LightmapBakeImage
 {
 	struct
 	{
@@ -56,9 +56,9 @@ struct LightmapImage
 		std::unique_ptr<VulkanDescriptorSet> DescriptorSet[2];
 	} blur;
 
-	// how much of the page is used?
-	uint16_t pageMaxX = 0;
-	uint16_t pageMaxY = 0;
+	// how much of the image is used for the baking
+	uint16_t maxX = 0;
+	uint16_t maxY = 0;
 };
 
 struct SceneVertex
@@ -82,6 +82,14 @@ struct LightInfo
 	float Padding3;
 };
 
+struct SelectedSurface
+{
+	LevelMeshSurface* Surface = nullptr;
+	int X = -1;
+	int Y = -1;
+	bool Rendered = false;
+};
+
 static_assert(sizeof(LightInfo) == sizeof(float) * 20);
 
 class VkLightmap
@@ -92,17 +100,16 @@ public:
 
 	void Raytrace(const TArray<LevelMeshSurface*>& surfaces);
 	void SetLevelMesh(LevelMesh* level);
+
 private:
-	void UpdateAccelStructDescriptors();
-
+	void SelectSurfaces(const TArray<LevelMeshSurface*>& surfaces);
 	void UploadUniforms();
-	void CreateAtlasImages(const TArray<LevelMeshSurface*>& surfaces);
-	void RenderAtlasImage(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces);
-	void ResolveAtlasImage(size_t pageIndex);
-	void BlurAtlasImage(size_t pageIndex);
-	void CopyAtlasImageResult(size_t pageIndex, const TArray<LevelMeshSurface*>& surfaces);
+	void RenderBakeImage();
+	void ResolveBakeImage();
+	void BlurBakeImage();
+	void CopyBakeImageResult();
 
-	LightmapImage CreateImage(int width, int height);
+	void UpdateAccelStructDescriptors();
 
 	void CreateShaders();
 	void CreateRaytracePipeline();
@@ -111,6 +118,7 @@ private:
 	void CreateUniformBuffer();
 	void CreateSceneVertexBuffer();
 	void CreateSceneLightBuffer();
+	void CreateBakeImage();
 
 	static FVector2 ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface);
 
@@ -120,6 +128,8 @@ private:
 	LevelMesh* mesh = nullptr;
 
 	bool useRayQuery = true;
+
+	TArray<SelectedSurface> selectedSurfaces;
 
 	struct
 	{
@@ -162,8 +172,7 @@ private:
 		std::unique_ptr<VulkanDescriptorSetLayout> descriptorSetLayout1;
 		std::unique_ptr<VulkanPipelineLayout> pipelineLayout;
 		std::unique_ptr<VulkanPipeline> pipeline;
-		std::unique_ptr<VulkanRenderPass> renderPassBegin;
-		std::unique_ptr<VulkanRenderPass> renderPassContinue;
+		std::unique_ptr<VulkanRenderPass> renderPass;
 		std::unique_ptr<VulkanDescriptorPool> descriptorPool0;
 		std::unique_ptr<VulkanDescriptorPool> descriptorPool1;
 		std::unique_ptr<VulkanDescriptorSet> descriptorSet0;
@@ -190,6 +199,6 @@ private:
 		std::unique_ptr<VulkanSampler> sampler;
 	} blur;
 
-	std::vector<LightmapImage> atlasImages;
-	static const int atlasImageSize = 2048;
+	LightmapBakeImage bakeImage;
+	static const int bakeImageSize = 2048;
 };

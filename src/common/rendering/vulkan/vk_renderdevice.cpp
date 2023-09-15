@@ -476,17 +476,6 @@ void VulkanRenderDevice::BeginFrame()
 			levelMesh->UpdateLightLists();
 			GetTextureManager()->CreateLightmap(levelMesh->LMTextureSize, levelMesh->LMTextureCount, std::move(levelMesh->LMTextureData));
 			GetLightmap()->SetLevelMesh(levelMesh);
-
-#if 0 // full lightmap generation
-			TArray<LevelMeshSurface*> surfaces;
-			surfaces.Reserve(mesh->GetSurfaceCount());
-			for (unsigned i = 0, count = mesh->GetSurfaceCount(); i < count; ++i)
-			{
-				surfaces[i] = mesh->GetSurface(i);
-			}
-
-			GetLightmap()->Raytrace(surfaces);
-#endif
 		}
 	}
 

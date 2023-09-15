@@ -207,7 +207,7 @@ struct HWDrawInfo
 			return;
 		}
 
-		if (!surface->portalIndex && !surface->bSky)
+		if (surface->needsUpdate && !surface->portalIndex && !surface->bSky)
 		{
 			VisibleSurfaces.Push(surface);
 		}

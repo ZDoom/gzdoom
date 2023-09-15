@@ -48,6 +48,7 @@ class PlayerPawn : Actor
 	color 		DamageFade;				// [CW] Fades for when you are being damaged.
 	double		FlyBob;					// [B] Fly bobbing mulitplier
 	double		ViewBob;				// [SP] ViewBob Multiplier
+	double		ViewBobSpeed;			// [AA] ViewBob speed multiplier
 	double		WaterClimbSpeed;		// [B] Speed when climbing up walls in water
 	double		FullHeight;
 	double		curBob;
@@ -79,6 +80,7 @@ class PlayerPawn : Actor
 	property TeleportFreezeTime: TeleportFreezeTime;
 	property FlyBob: FlyBob;
 	property ViewBob: ViewBob;
+	property ViewBobSpeed: ViewBobSpeed;
 	property WaterClimbSpeed : WaterClimbSpeed;
 	
 	flagdef NoThrustWhenInvul: PlayerFlags, 0;
@@ -128,6 +130,7 @@ class PlayerPawn : Actor
 		Player.AirCapacity 1;
 		Player.FlyBob 1;
 		Player.ViewBob 1;
+		Player.ViewBobSpeed 20;
 		Player.WaterClimbSpeed 3.5;
 		Player.TeleportFreezeTime 18;
 		Obituary "$OB_MPDEFAULT";
@@ -619,7 +622,7 @@ class PlayerPawn : Actor
 		}
 		else
 		{
-			angle = Level.maptime / (20 * TICRATE / 35.) * 360.;
+			angle = Level.maptime / (ViewBobSpeed * TICRATE / 35.) * 360.;
 			bob = player.bob * sin(angle) * (waterlevel > 1 ? 0.25f : 0.5f);
 		}
 

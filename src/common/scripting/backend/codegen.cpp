@@ -2606,7 +2606,6 @@ FxExpression *FxAssignSelf::Resolve(FCompileContext &ctx)
 
 ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
 {
-	assert(ValueType == Assignment->ValueType);
 	ExpEmit pointer = Assignment->Address; // FxAssign should have already emitted it
 	if (!pointer.Target)
 	{

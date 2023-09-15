@@ -365,6 +365,7 @@ void System_M_Dim()
 
 static void M_Quit()
 {
+	DeleteScreenJob();
 	S_StopAllChannels();
 	S_StopMusic(true);
 	CleanSWDrawer();

@@ -105,18 +105,10 @@ protected:
 FStrifeStartScreen::FStrifeStartScreen(int max_progress)
 	: FStartScreen(max_progress)
 {
-	// at this point we do not have a working texture manager yet, so we have to do the lookup via the file system
-
-	int startup_lump = fileSystem.CheckNumForName("STARTUP0");
-
-	if (startup_lump < 0)
-	{
-		I_Error("bad startscreen assets");
-	}
-
 	StartupBitmap.Create(320, 200);
 
-	// Load the animated overlays.
+	// at this point we do not have a working texture manager yet, so we have to do the lookup via the file system
+	// Load the background and animated overlays.
 	for (size_t i = 0; i < countof(StrifeStartupPicNames); ++i)
 	{
 		int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i], FileSys::ns_graphics);

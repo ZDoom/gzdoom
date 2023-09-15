@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.15 - 14.12.2010
+Universal Doom Map Format ZDoom extensions v1.33 15.09.2023
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -118,6 +118,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       blockuse = <bool>;          // Line blocks all use actions
       blocksight = <bool>;        // Line blocks monster line of sight
       blockhitscan = <bool>;      // Line blocks hitscan attacks
+      blockfloaters = <bool>;     // Line blocks floating monsters' movement.
+      blocklandmonsters = <bool>; // Line blocks walking monsters' movement.
       locknumber = <int>;         // Line special is locked
       arg0str = <string>;         // Alternate string-based version of arg0
       moreids = <string>;         // Additional line IDs, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
@@ -534,8 +536,11 @@ Blocklandmonsters MBF21 flag
 1.33 06.11.2021
 Added separate light levels for sidedef tiers (top/mid/bottom)
 
-1.34 09.11.2023
+1.34 11.09.2023
 Added/updated ZDRay/lightmap-related properties.
+
+1.35 15.09.2023
+fixed omissions: Blocklandmonsters and Blockfloaters line flags.
 
 ===============================================================================
 EOF

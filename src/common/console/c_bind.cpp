@@ -836,7 +836,7 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 		if (ev->type == EV_KeyDown)
 		{ // Key pressed for a normal press
 			binding = binds->GetBinding(ev->data1);
-			DClickTime[ev->data1] = nowtime + 571;
+			if (doublebinds != nullptr) DClickTime[ev->data1] = nowtime + 571;
 		}
 		else if (doublebinds != nullptr && DClicked[ev->data1])
 		{ // Key released from a double click

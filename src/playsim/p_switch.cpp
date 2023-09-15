@@ -199,7 +199,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 			? (user->Top() >= open.top)
 			: (user->Top() > open.top);
 	}
-	else if ((TexAnim.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
+	if ((TexAnim.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
 		// Check 3D floors on back side
 		{
@@ -223,7 +223,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 			? (user->Z() <= open.bottom)
 			: (user->Z() < open.bottom);
 	}
-	else if ((flags & ML_3DMIDTEX) || (TexAnim.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
+	if ((flags & ML_3DMIDTEX) || (TexAnim.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
 	{
 		// 3DMIDTEX lines will force a mid texture check if no switch is found on this line
 		// to keep compatibility with Eternity's implementation.

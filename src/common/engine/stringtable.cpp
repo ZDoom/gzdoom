@@ -51,6 +51,7 @@ void FStringTable::LoadStrings (const char *language)
 {
 	int lastlump, lump;
 
+	allStrings.Clear();
 	lastlump = 0;
 	while ((lump = fileSystem.FindLump("LMACROS", &lastlump)) != -1)
 	{

@@ -3734,7 +3734,8 @@ void FinishDehPatch ()
 	OrgSprNames.Reset();
 	TouchedActors.Reset();
 	EnglishStrings.Clear();
-	GStrings.SetOverrideStrings(std::move(DehStrings));
+	GStrings.SetOverrideStrings(DehStrings);
+	DehStrings.Clear();
 
 	// Now it gets nasty: We have to fiddle around with the weapons' ammo use info to make Doom's original
 	// ammo consumption work as intended.

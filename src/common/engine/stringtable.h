@@ -87,7 +87,7 @@ public:
 	void LoadStrings(const char *language);
 	void UpdateLanguage(const char* language);
 	StringMap GetDefaultStrings() { return allStrings[default_table]; }	// Dehacked needs these for comparison
-	void SetOverrideStrings(StringMap && map)
+	void SetOverrideStrings(StringMap & map)
 	{
 		allStrings.Insert(override_table, map);
 		UpdateLanguage(nullptr);

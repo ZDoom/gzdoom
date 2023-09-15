@@ -219,7 +219,7 @@ void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCoun
 
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
-	if (newPixelData.Size() >= w * h * count * 3)
+	if (newPixelData.Size() >= (size_t)w * h * count * 3)
 	{
 		assert(newPixelData.Size() == w * h * count * 3);
 

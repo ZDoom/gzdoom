@@ -52,7 +52,6 @@ CVAR(Bool, gl_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR(Float, r_actorspriteshadowdist)
 EXTERN_CVAR(Bool, gl_meshcache)
-EXTERN_CVAR(Int, lm_background_updates);
 
 thread_local bool isWorkerThread;
 ctpl::thread_pool renderPool(1);
@@ -857,35 +856,8 @@ void HWDrawInfo::RenderBSPNode (void *node, FRenderState& state)
 	DoSubsector ((subsector_t *)((uint8_t *)node - 1), state);
 }
 
-void UpdateLightmaps(DFrameBuffer* screen, FRenderState& RenderState)
-{
-	// Lightmapping stuff
-	auto& list = RenderState.GetVisibleSurfaceList();
-	auto size = RenderState.GetVisibleSurfaceListCount();
-
-	list.Resize(min(list.Size(), unsigned(size)));
-
-	if (size < unsigned(lm_background_updates))
-	{
-		for (auto& e : level.levelMesh->Surfaces)
-		{
-			if (e.needsUpdate && !e.bSky && !e.portalIndex)
-			{
-				list.Push(&e);
-
-				if (list.Size() >= unsigned(lm_background_updates))
-					break;
-			}
-		}
-	}
-
-	screen->UpdateLightmaps(list);
-}
-
 void HWDrawInfo::RenderBSP(void *node, bool drawpsprites, FRenderState& state)
 {
-	state.ClearVisibleSurfaceList();
-
 	Bsp.Clock();
 
 	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
@@ -920,6 +892,4 @@ void HWDrawInfo::RenderBSP(void *node, bool drawpsprites, FRenderState& state)
 
 	if (drawpsprites)
 		PreparePlayerSprites(Viewpoint.sector, in_area, state);
-
-	UpdateLightmaps(screen, state);
 }

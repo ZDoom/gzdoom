@@ -1267,7 +1267,7 @@ void HWWall::DoTexture(HWDrawInfo *di, FRenderState& state, int _type,seg_t * se
 		lightmap = seg->sidedef->lightmap[type - RENDERWALL_TOP];
 		if (lightmap)
 		{
-			state.PushVisibleSurface(lightmap);
+			di->PushVisibleSurface(lightmap);
 		}
 	}
 	else

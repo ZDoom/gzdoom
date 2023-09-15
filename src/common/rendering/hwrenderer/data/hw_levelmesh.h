@@ -53,8 +53,8 @@ struct LevelMeshSurface
 	int texWidth = 0;
 	int texHeight = 0;
 
+	// True if the surface needs to be rendered into the lightmap texture before it can be used
 	bool needsUpdate = true;
-	bool alreadyInVisibleList = false;
 
 	//
 	// Required for internal lightmapper:

@@ -148,6 +148,7 @@ struct HWDrawInfo
 	TArray<HWDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 	TArray<ACorona*> Coronas;
+	TArray<LevelMeshSurface*> VisibleSurfaces;
 	uint64_t LastFrameTime = 0;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
@@ -196,6 +197,20 @@ struct HWDrawInfo
 	{
 		VPUniforms.mClipLine = { (float)line->v1->fX(), (float)line->v1->fY(), (float)line->Delta().X, (float)line->Delta().Y };
 		VPUniforms.mClipHeight = 0;
+	}
+
+	void PushVisibleSurface(LevelMeshSurface* surface)
+	{
+		if (outer)
+		{
+			outer->PushVisibleSurface(surface);
+			return;
+		}
+
+		if (!surface->portalIndex && !surface->bSky)
+		{
+			VisibleSurfaces.Push(surface);
+		}
 	}
 
 	HWPortal * FindPortal(const void * src);
@@ -335,6 +350,8 @@ private:
 	void AddPolyobjs(subsector_t* sub, FRenderState& state);
 	void AddLines(subsector_t* sub, sector_t* sector, FRenderState& state);
 	void AddSpecialPortalLines(subsector_t* sub, sector_t* sector, linebase_t* line, FRenderState& state);
+
+	void UpdateLightmaps();
 };
 
 void CleanSWDrawer();

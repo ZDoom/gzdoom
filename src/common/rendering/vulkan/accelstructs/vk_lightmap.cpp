@@ -100,8 +100,8 @@ void VkLightmap::SelectSurfaces(const TArray<LevelMeshSurface*>& surfaces)
 	{
 		LevelMeshSurface* surface = surfaces[i];
 
-		// All surfaces needs to be updated until we rendered them.
-		surface->needsUpdate = true;
+		if (!surface->needsUpdate)
+			continue;
 
 		// Only grab surfaces until our bake texture is full
 		auto result = packer.insert(surface->texWidth + 2, surface->texHeight + 2);
@@ -115,6 +115,8 @@ void VkLightmap::SelectSurfaces(const TArray<LevelMeshSurface*>& surfaces)
 
 			bakeImage.maxX = std::max<uint16_t>(bakeImage.maxX, uint16_t(selected.X + surface->texWidth + spacing));
 			bakeImage.maxY = std::max<uint16_t>(bakeImage.maxY, uint16_t(selected.Y + surface->texHeight + spacing));
+
+			surface->needsUpdate = false;
 		}
 	}
 }
@@ -227,7 +229,14 @@ void VkLightmap::RenderBakeImage()
 		}
 
 		if (buffersFull)
+		{
+			while (i < count)
+			{
+				selectedSurfaces[i].Surface->needsUpdate = true;
+				i++;
+			}
 			break;
+		}
 
 		selectedSurface.Rendered = true;
 	}
@@ -422,9 +431,6 @@ void VkLightmap::CopyBakeImageResult()
 			region.extent.depth = 1;
 			regions.push_back(region);
 			seenPages.insert(surface->atlasPageIndex);
-
-			// We rendered this surface. Does not need an update anymore.
-			surface->needsUpdate = false;
 
 			pixels += surface->Area();
 			lastSurfaceCount++;

@@ -32,7 +32,7 @@ ADD_STAT(lightmap)
 	auto stats = levelMesh->GatherSurfacePixelStats();
 
 	out.Format("Surfaces: %u (sky: %u, awaiting updates: %u)\nSurface pixel area to update: %u\nSurface pixel area: %u\nAtlas pixel area:   %u\nAtlas efficiency: %.4f%%",
-		stats.surfaces.total, stats.surfaces.sky, stats.surfaces.dirty,
+		stats.surfaces.total, stats.surfaces.sky, std::max(stats.surfaces.dirty - stats.surfaces.sky, (uint32_t)0),
 		stats.pixels.dirty,
 		stats.pixels.total,
 		atlasPixelCount,

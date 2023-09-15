@@ -512,7 +512,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 			{
 				if (auto lightmap = sector->subsectors[i]->lightmap[plane][0])
 				{
-					state.PushVisibleSurface(lightmap);
+					di->PushVisibleSurface(lightmap);
 				}
 			}
 		}
@@ -523,7 +523,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 			{
 				if (surface)
 				{
-					state.PushVisibleSurface(surface);
+					di->PushVisibleSurface(surface);
 				}
 			}
 		}
@@ -538,7 +538,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, FRenderState& state, sector_t * front
 					{
 						if (surface)
 						{
-							state.PushVisibleSurface(surface);
+							di->PushVisibleSurface(surface);
 						}
 					}
 				}

@@ -1016,10 +1016,10 @@ void uppercopy(char* to, const char* from)
 // Loads a zero terminated string from a lump in the file system
 //==========================================================================
 
-FString GetStringFromLump(int lump)
+FString GetStringFromLump(int lump, bool zerotruncate)
 {
 	auto fd = fileSystem.ReadFile(lump);
 	FString ScriptBuffer(fd.GetString(), fd.GetSize());
-	ScriptBuffer.Truncate(strlen(ScriptBuffer.GetChars()));	// this is necessary to properly truncate the generated string to not contain 0 bytes.
+	if (zerotruncate) ScriptBuffer.Truncate(strlen(ScriptBuffer.GetChars()));	// this is necessary to properly truncate the generated string to not contain 0 bytes.
 	return ScriptBuffer;
 }

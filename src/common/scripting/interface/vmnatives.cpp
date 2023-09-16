@@ -844,7 +844,7 @@ DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
 	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetNumEntries();
-	ACTION_RETURN_STRING(isLumpValid ? GetStringFromLump(lump) : FString());
+	ACTION_RETURN_STRING(isLumpValid ? GetStringFromLump(lump, false) : FString());
 }
 
 //==========================================================================

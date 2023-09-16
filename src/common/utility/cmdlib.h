@@ -87,7 +87,7 @@ struct MD5Context;
 
 void md5Update(FileReader& file, MD5Context& md5, unsigned len);
 void uppercopy(char* to, const char* from);
-FString GetStringFromLump(int lump);
+FString GetStringFromLump(int lump, bool zerotruncate = true);
 
 inline void fillshort(void* buff, size_t count, uint16_t clear)
 {

@@ -1,3 +1,4 @@
+
 struct VisStyle
 {
 	bool			Invert;
@@ -9,6 +10,13 @@ class Inventory : Actor
 {
 	const BLINKTHRESHOLD = (4*32);
 	const BONUSADD = 6;
+
+	enum EPreHandlePickupResult
+	{
+		PRE_HANDLE_PICKUP_PASS,
+		PRE_HANDLE_PICKUP_FALSE,
+		PRE_HANDLE_PICKUP_TRUE
+	}
 
 	deprecated("3.7") private int ItemFlags;
 	Actor Owner;						// Who owns this item? NULL if it's still a pickup.
@@ -387,6 +395,41 @@ class Inventory : Actor
 
 	//===========================================================================
 	//
+	// Inventory :: PreHandlePickup
+	//
+	// Called unconditionally in TryPickup() before HandlePickup(), allowing
+	// to process all items even their HandlePickup() call returns true.
+	//
+	//===========================================================================
+	
+	virtual EPreHandlePickupResult PreHandlePickup(Inventory item)
+	{
+		return PRE_HANDLE_PICKUP_PASS;
+	}
+	
+	//===========================================================================
+	//
+	// Inventory :: CallPreHandlePickup
+	//
+	// Runs all PreHandlePickup methods in the chain
+	//
+	//===========================================================================
+	
+	virtual EPreHandlePickupResult CallPreHandlePickup(Inventory item)
+	{       
+		let me = self;
+        while (me != null)
+        {
+			EPreHandlePickupResult result = me.PreHandlePickup(item);
+            if (result != PRE_HANDLE_PICKUP_PASS)
+				return result;
+            me = me.Inv;
+        }
+		return PRE_HANDLE_PICKUP_PASS;
+	}
+
+	//===========================================================================
+	//
 	// Inventory :: HandlePickup
 	//
 	// Returns true if the pickup was handled (or should not happen at all),
@@ -453,8 +496,17 @@ class Inventory : Actor
 		// to indicate that self item has been picked up. If the item cannot be
 		// picked up, then it leaves the flag cleared.
 
-		bPickupGood = false;
-		if (toucher.Inv != NULL && toucher.Inv.CallHandlePickup (self))
+		// [AA] If PreHandlePickup() returns PASS, the item will be processed
+		// as usual. If it returns FALSE, it'll block processing with
+		// HandlePickup(). Otherwise if it returns TRUE or if HandlePickup()
+		// returns true, it'll be processed.
+		let tInv = toucher.Inv;
+		EPreHandlePickupResult preHandled = PRE_HANDLE_PICKUP_PASS;
+		if (tInv != NULL)
+		{
+			preHandled = tInv.CallPreHandlePickup(self);
+		}
+        if (preHandled != PRE_HANDLE_PICKUP_FALSE && (preHandled == PRE_HANDLE_PICKUP_TRUE || (tInv != NULL  && tInv.CallHandlePickup (self))))
 		{
 			// Let something else the player is holding intercept the pickup.
 			if (!bPickupGood)

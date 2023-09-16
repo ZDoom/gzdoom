@@ -76,10 +76,19 @@ class Health : Inventory
 	override bool TryPickup (in out Actor other)
 	{
 		PrevHealth = other.player != NULL ? other.player.health : other.health;
+		
+		// [AA] Allows pre-handling of health pickups similarly to how it's
+		// done in Inventory, except the final success depends on the
+		// GiveBody() call, rather than CallHandlePickup() call:
+        EPreHandlePickupResult preHandled = PRE_HANDLE_PICKUP_PASS;
+        if (other.Inv != NULL)
+        {
+            preHandled = other.Inv.CallPreHandlePickup(self);
+        }
 
 		// P_GiveBody adds one new feature, applied only if it is possible to pick up negative health:
-		// Negative values are treated as positive percentages, ie Amount -100 means 100% health, ignoring max amount.
-		if (other.GiveBody(Amount, MaxAmount))
+		// Negative values are treated as positive percentages, ie Amount -100 means 100% health, ignoring max amount.		
+        if (preHandled != PRE_HANDLE_PICKUP_FALSE && (preHandled == PRE_HANDLE_PICKUP_TRUE || other.GiveBody(Amount, MaxAmount)))
 		{
 			GoAwayAndDie();
 			return true;

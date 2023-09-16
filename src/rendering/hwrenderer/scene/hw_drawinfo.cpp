@@ -431,6 +431,11 @@ void HWDrawInfo::UpdateLightmaps()
 		}
 	}
 
+	if (lm_always_update) // To do: this is stupid, but it lets us see the move for now!
+	{
+		level.levelMesh->UpdateLightLists();
+	}
+
 	screen->UpdateLightmaps(VisibleSurfaces);
 }
 

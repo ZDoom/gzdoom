@@ -213,7 +213,7 @@ void Draw2D(F2DDrawer* drawer, FRenderState& state, int x, int y, int width, int
 			state.SetIndexBuffer(buffers.GetBufferObjects().second);
 			state.DrawIndexed(DT_Triangles, 0, cmd.shape2DIndexCount);
 			state.SetVertexBuffer(vb.GetBufferObjects().first);
-			state.SetVertexBuffer(vb.GetBufferObjects().second);
+			state.SetIndexBuffer(vb.GetBufferObjects().second);
 			if (cmd.shape2DCommandCounter == cmd.shape2DBufInfo->lastCommand)
 			{
 				cmd.shape2DBufInfo->lastCommand = -1;

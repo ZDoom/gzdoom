@@ -195,9 +195,12 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 			}
 		}
 
-		return (user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
+		if ((user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
 			? (user->Top() >= open.top)
-			: (user->Top() > open.top);
+			: (user->Top() > open.top))
+		{
+			return true;
+		}
 	}
 	if ((TexAnim.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
@@ -219,9 +222,12 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 			}
 		}
 
-		return (user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
+		if ((user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
 			? (user->Z() <= open.bottom)
-			: (user->Z() < open.bottom);
+			: (user->Z() < open.bottom))
+		{
+			return true;
+		}
 	}
 	if ((flags & ML_3DMIDTEX) || (TexAnim.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
 	{

@@ -151,7 +151,7 @@ CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL) // this is just for testi
 	if (self > 5 || self < -1) self = -1;
 }
 
-CUSTOM_CVAR(Int, gl_lightmode, 1, CVAR_ARCHIVE)
+CUSTOM_CVARD(Int, gl_lightmode, 1, CVAR_ARCHIVE, "Select lighting mode. 2 is vanilla accurate, 1 is accurate to the ZDoom software renderer and 0 is a less demanding non-shader implementation")
 {
 	if (self < 0 || self > 2) self = 1;
 }

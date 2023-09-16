@@ -2060,6 +2060,7 @@ public:
 			DVector3 n = DVector3(cp[0], cp[1], cp[2]).Unit();
 			sec->ceilingplane.set(n.X, n.Y, n.Z, cp[3]);
 		}
+		sec->CheckOverlap();
 
 		if (lightcolor == ~0u && fadecolor == ~0u && desaturation == -1 && fogdensity == -1)
 		{

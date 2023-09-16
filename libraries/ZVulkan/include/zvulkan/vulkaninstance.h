@@ -31,14 +31,22 @@ public:
 	VkPhysicalDeviceDescriptorIndexingFeatures DescriptorIndexing = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT };
 };
 
+class VulkanDeviceProperties
+{
+public:
+	VkPhysicalDeviceProperties Properties = {};
+	VkPhysicalDeviceMemoryProperties Memory = {};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR AccelerationStructure = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR };
+	VkPhysicalDeviceDescriptorIndexingProperties DescriptorIndexing = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
+};
+
 class VulkanPhysicalDevice
 {
 public:
 	VkPhysicalDevice Device = VK_NULL_HANDLE;
 	std::vector<VkExtensionProperties> Extensions;
 	std::vector<VkQueueFamilyProperties> QueueFamilies;
-	VkPhysicalDeviceProperties Properties = {};
-	VkPhysicalDeviceMemoryProperties MemoryProperties = {};
+	VulkanDeviceProperties Properties;
 	VulkanDeviceFeatures Features;
 };
 

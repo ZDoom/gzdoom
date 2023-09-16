@@ -241,7 +241,7 @@ void VkCommandBufferManager::UpdateGpuStats()
 	if (mNextTimestampQuery > 0)
 		mTimestampQueryPool->getResults(0, mNextTimestampQuery, sizeof(uint64_t) * mNextTimestampQuery, timestamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 
-	double timestampPeriod = fb->device->PhysicalDevice.Properties.limits.timestampPeriod;
+	double timestampPeriod = fb->device->PhysicalDevice.Properties.Properties.limits.timestampPeriod;
 
 	gpuStatOutput = "";
 	for (auto& q : timeElapsedQueries)

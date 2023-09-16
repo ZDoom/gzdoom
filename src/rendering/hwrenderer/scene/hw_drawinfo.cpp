@@ -415,7 +415,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites, FRenderState& state)
 
 void HWDrawInfo::UpdateLightmaps()
 {
-	if (VisibleSurfaces.Size() < unsigned(lm_background_updates))
+	if (!outer && VisibleSurfaces.Size() < unsigned(lm_background_updates))
 	{
 		for (auto& e : level.levelMesh->Surfaces)
 		{

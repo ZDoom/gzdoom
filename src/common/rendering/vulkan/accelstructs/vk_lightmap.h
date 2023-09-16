@@ -98,6 +98,7 @@ public:
 	VkLightmap(VulkanRenderDevice* fb);
 	~VkLightmap();
 
+	void BeginFrame();
 	void Raytrace(const TArray<LevelMeshSurface*>& surfaces);
 	void SetLevelMesh(LevelMesh* level);
 

@@ -487,6 +487,7 @@ void VulkanRenderDevice::BeginFrame()
 	for (auto& renderstate : mRenderState)
 		renderstate->BeginFrame();
 	mDescriptorSetManager->BeginFrame();
+	mLightmap->BeginFrame();
 }
 
 void VulkanRenderDevice::Draw2D()

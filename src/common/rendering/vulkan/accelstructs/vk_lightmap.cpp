@@ -62,6 +62,12 @@ void VkLightmap::SetLevelMesh(LevelMesh* level)
 	lastSurfaceCount = 0;
 }
 
+void VkLightmap::BeginFrame()
+{
+	lights.Pos = 0;
+	vertices.Pos = 0;
+}
+
 void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
 {
 	if (surfaces.Size())
@@ -137,9 +143,6 @@ void VkLightmap::RenderBakeImage()
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipeline.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 0, raytrace.descriptorSet0.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 1, raytrace.descriptorSet1.get());
-
-	lights.Pos = 0;
-	vertices.Pos = 0;
 
 	for (int i = 0, count = selectedSurfaces.Size(); i < count; i++)
 	{
@@ -407,7 +410,6 @@ void VkLightmap::BlurBakeImage()
 void VkLightmap::CopyBakeImageResult()
 {
 	uint32_t pixels = 0;
-	uint32_t surfacesRenderer = 0;
 
 	std::set<int> seenPages;
 	std::vector<VkImageCopy> regions;
@@ -434,11 +436,10 @@ void VkLightmap::CopyBakeImageResult()
 			seenPages.insert(surface->atlasPageIndex);
 
 			pixels += surface->Area();
-			surfacesRenderer++;
+			lastSurfaceCount++;
 		}
 	}
 
-	lastSurfaceCount = surfacesRenderer;
 	lastPixelCount = pixels;
 	totalPixelCount += pixels;
 

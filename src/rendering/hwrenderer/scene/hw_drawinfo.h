@@ -10,6 +10,8 @@
 #include "hw_weapon.h"
 #include "hw_drawlist.h"
 
+EXTERN_CVAR(Bool, lm_always_update);
+
 enum EDrawMode
 {
 	DM_MAINVIEW,
@@ -205,6 +207,11 @@ struct HWDrawInfo
 		{
 			outer->PushVisibleSurface(surface);
 			return;
+		}
+
+		if (lm_always_update)
+		{
+			surface->needsUpdate = true;
 		}
 
 		if (surface->needsUpdate && !surface->portalIndex && !surface->bSky)

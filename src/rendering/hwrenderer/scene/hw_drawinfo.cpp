@@ -52,6 +52,8 @@
 EXTERN_CVAR(Float, r_visibility)
 EXTERN_CVAR(Int, lm_background_updates);
 
+CVAR(Bool, lm_always_update, false, 0)
+
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
 CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

@@ -410,7 +410,7 @@ void VkLightmap::BlurBakeImage()
 void VkLightmap::CopyBakeImageResult()
 {
 	uint32_t pixels = 0;
-
+	lastSurfaceCount = 0;
 	std::set<int> seenPages;
 	std::vector<VkImageCopy> regions;
 	for (int i = 0, count = selectedSurfaces.Size(); i < count; i++)

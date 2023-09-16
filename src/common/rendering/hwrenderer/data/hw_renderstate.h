@@ -12,8 +12,6 @@
 
 #include <atomic>
 
-EXTERN_CVAR(Int, lm_max_updates);
-
 struct FColormap;
 class IBuffer;
 struct HWViewpointUniforms;

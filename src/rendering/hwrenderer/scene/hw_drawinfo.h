@@ -11,6 +11,7 @@
 #include "hw_drawlist.h"
 
 EXTERN_CVAR(Bool, lm_always_update);
+EXTERN_CVAR(Int, lm_max_updates);
 
 enum EDrawMode
 {
@@ -212,6 +213,10 @@ struct HWDrawInfo
 		if (lm_always_update)
 		{
 			surface->needsUpdate = true;
+		}
+		else if (VisibleSurfaces.Size() >= lm_max_updates)
+		{
+			return;
 		}
 
 		if (surface->needsUpdate && !surface->portalIndex && !surface->bSky)

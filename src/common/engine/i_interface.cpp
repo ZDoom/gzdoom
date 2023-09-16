@@ -25,7 +25,7 @@ FStartupInfo GameStartupInfo;
 
 CVAR(Bool, queryiwad, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(String, defaultiwad, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Bool, vid_fps, false, 0)
+CVAR(Bool, vid_fps, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR(Bool, ui_generic)
 

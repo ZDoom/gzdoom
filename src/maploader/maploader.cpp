@@ -426,7 +426,7 @@ void MapLoader::LoadVertexes(MapData * map)
 
 	if (numvertexes == 0)
 	{
-		I_Error("Map has no vertices.\n");
+		I_Error("Map has no vertices.");
 	}
 
 	// Allocate memory for buffer.
@@ -497,6 +497,11 @@ void MapLoader::LoadGLZSegs (FileReader &data, int type)
 			uint32_t partner = data.ReadUInt32();
 			uint32_t line;
 
+			if (partner != 0xffffffffu && partner >= Level->segs.Size())
+			{
+				I_Error("partner seg index out of range for subsector %d, seg %d", i, j);
+			}
+
 			if (type >= 2)
 			{
 				line = data.ReadUInt32();
@@ -563,7 +568,7 @@ void MapLoader::LoadZNodes(FileReader &data, int glnodes)
 	if (orgVerts > Level->vertexes.Size())
 	{ // These nodes are based on a map with more vertex data than we have.
 	  // We can't use them.
-		throw CRecoverableError("Incorrect number of vertexes in nodes.\n");
+		I_Error("Incorrect number of vertexes in nodes.");
 	}
 	auto oldvertexes = &Level->vertexes[0];
 	if (orgVerts + newVerts != Level->vertexes.Size())
@@ -606,7 +611,7 @@ void MapLoader::LoadZNodes(FileReader &data, int glnodes)
 	// segs used by subsectors.
 	if (numSegs != currSeg)
 	{
-		throw CRecoverableError("Incorrect number of segs in nodes.\n");
+		I_Error("Incorrect number of segs in nodes.");
 	}
 
 	Level->segs.Alloc(numSegs);
@@ -758,6 +763,7 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		Printf("Error loading nodes: %s\n", error.what());
 	}
 	// clean up.
+	Printf("The BSP will be rebuilt\n");
 	ForceNodeBuild = true;
 	Level->subsectors.Clear();
 	Level->segs.Clear();
@@ -1654,7 +1660,7 @@ void MapLoader::FinishLoadingLineDefs ()
 	}
 	else
 	{
-		I_Error ("%d sidedefs is not enough\n", sidecount);
+		I_Error ("%d sidedefs is not enough", sidecount);
 	}
 }
 
@@ -2695,7 +2701,7 @@ void MapLoader::GroupLines (bool buildmap)
 	}
 	if (flaggedNoFronts)
 	{
-		I_Error ("You need to fix these lines to play this map.\n");
+		I_Error ("You need to fix these lines to play this map.");
 	}
 
 	// build line tables for each sector
@@ -3086,8 +3092,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 			}
 		}
 
-		// If loading the regular nodes failed try GL nodes before considering a rebuild
-		if (!NodesLoaded)
+		// If loading the regular nodes failed try GL nodes before considering a rebuild (unless a rebuild was already asked for)
+		if (!NodesLoaded && !ForceNodeBuild)
 		{
 			if (LoadGLNodes(map))
 				reloop = true;

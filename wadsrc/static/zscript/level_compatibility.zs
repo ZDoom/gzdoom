@@ -2158,6 +2158,12 @@ class LevelCompatibility : LevelPostProcessor
 				SetThingEdNum(59, 3);
 				break;
 			}
+
+			case '3F0965ADCEB2F4A7BF46FADF6DD941B0': // phocas2.wad map01
+			{
+				SetThingEdNum(699, 9044);
+				break;
+			}
 		}
 	}
 }

@@ -407,6 +407,7 @@ void VkLightmap::BlurBakeImage()
 void VkLightmap::CopyBakeImageResult()
 {
 	uint32_t pixels = 0;
+	uint32_t surfacesRenderer = 0;
 
 	std::set<int> seenPages;
 	std::vector<VkImageCopy> regions;
@@ -433,10 +434,11 @@ void VkLightmap::CopyBakeImageResult()
 			seenPages.insert(surface->atlasPageIndex);
 
 			pixels += surface->Area();
-			lastSurfaceCount++;
+			surfacesRenderer++;
 		}
 	}
 
+	lastSurfaceCount = surfacesRenderer;
 	lastPixelCount = pixels;
 	totalPixelCount += pixels;
 

@@ -151,9 +151,9 @@ CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL) // this is just for testi
 	if (self > 5 || self < -1) self = -1;
 }
 
-CUSTOM_CVAR(Int, gl_lightmode, 1, CVAR_ARCHIVE | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, gl_lightmode, 1, CVAR_ARCHIVE)
 {
-	if (self < 0 || self > 2) self = 2;
+	if (self < 0 || self > 2) self = 1;
 }
 
 ELightMode getRealLightmode(FLevelLocals* Level, bool for3d)

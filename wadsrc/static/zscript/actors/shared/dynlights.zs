@@ -442,25 +442,6 @@ class SpotLightFlickerRandomAttenuated : SpotLightFlickerRandom
 	}
 }
 
-class PointLightTraceAttenuated : PointLightAttenuated
-{
-	Default
-	{
-		+DYNAMICLIGHT.TRACE
-		+DYNAMICLIGHT.DONTLIGHTMAP
-	}
-}
-
-class SpotLightTraceAttenuated : SpotLightAttenuated
-{
-	Default
-	{
-		+DYNAMICLIGHT.TRACE
-		+DYNAMICLIGHT.DONTLIGHTMAP
-	}
-}
-
-
 class VavoomLight : DynamicLight 
 {
 	Default
@@ -501,4 +482,58 @@ class VavoomLightColor : VavoomLight
 	}
 }
 
+//==========================================================================
+//
+// ZDRay Lights
+//
+//==========================================================================
 
+// to reduce copy/pasting
+mixin class TraceLightDefaults
+{
+	Default
+	{
+		+DYNAMICLIGHT.TRACE
+		+DYNAMICLIGHT.DONTLIGHTMAP
+	}
+}
+
+class PointLightTraceAttenuated : PointLightAttenuated
+{
+	mixin TraceLightDefaults;
+}
+
+class PointLightPulseTraceAttenuated : PointLightPulseAttenuated
+{
+	mixin TraceLightDefaults;
+}
+
+class PointLightFlickerTraceAttenuated : PointLightFlickerAttenuated
+{
+	mixin TraceLightDefaults;
+}
+
+class PointLightFlickerRandomTraceAttenuated : PointLightFlickerRandomAttenuated
+{
+	mixin TraceLightDefaults;
+}
+
+class SpotLightTraceAttenuated : SpotLightAttenuated
+{
+	mixin TraceLightDefaults;
+}
+
+class SpotLightPulseTraceAttenuated : SpotLightPulseAttenuated
+{
+	mixin TraceLightDefaults;
+}
+
+class SpotLightFlickerTraceAttenuated : SpotLightFlickerAttenuated
+{
+	mixin TraceLightDefaults;
+}
+
+class SpotLightFlickerRandomTraceAttenuated : SpotLightFlickerRandomAttenuated
+{
+	mixin TraceLightDefaults;
+}

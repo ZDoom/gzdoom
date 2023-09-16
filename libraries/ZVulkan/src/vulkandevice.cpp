@@ -33,18 +33,20 @@ VulkanDevice::~VulkanDevice()
 	ReleaseResources();
 }
 
-bool VulkanDevice::SupportsDeviceExtension(const char* ext) const
+bool VulkanDevice::SupportsExtension(const char* ext) const
 {
-	return EnabledDeviceExtensions.find(ext) != EnabledDeviceExtensions.end();
+	return
+		EnabledDeviceExtensions.find(ext) != EnabledDeviceExtensions.end() ||
+		Instance->EnabledExtensions.find(ext) != Instance->EnabledExtensions.end();
 }
 
 void VulkanDevice::CreateAllocator()
 {
 	VmaAllocatorCreateInfo allocinfo = {};
 	allocinfo.vulkanApiVersion = Instance->ApiVersion;
-	if (SupportsDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && SupportsDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+	if (SupportsExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && SupportsExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
 		allocinfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
-	if (SupportsDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+	if (SupportsExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
 		allocinfo.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 	allocinfo.physicalDevice = PhysicalDevice.Device;
 	allocinfo.device = device;
@@ -91,7 +93,7 @@ void VulkanDevice::CreateDevice()
 	deviceFeatures2.features = EnabledFeatures.Features;
 
 	void** next = const_cast<void**>(&deviceCreateInfo.pNext);
-	if (SupportsDeviceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+	if (SupportsExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
 		*next = &deviceFeatures2;
 		next = &deviceFeatures2.pNext;
@@ -101,22 +103,22 @@ void VulkanDevice::CreateDevice()
 		deviceCreateInfo.pEnabledFeatures = &deviceFeatures2.features;
 	}
 
-	if (SupportsDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+	if (SupportsExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
 	{
 		*next = &EnabledFeatures.BufferDeviceAddress;
 		next = &EnabledFeatures.BufferDeviceAddress.pNext;
 	}
-	if (SupportsDeviceExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
+	if (SupportsExtension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
 	{
 		*next = &EnabledFeatures.AccelerationStructure;
 		next = &EnabledFeatures.AccelerationStructure.pNext;
 	}
-	if (SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+	if (SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME))
 	{
 		*next = &EnabledFeatures.RayQuery;
 		next = &EnabledFeatures.RayQuery.pNext;
 	}
-	if (SupportsDeviceExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
+	if (SupportsExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME))
 	{
 		*next = &EnabledFeatures.DescriptorIndexing;
 		next = &EnabledFeatures.DescriptorIndexing.pNext;

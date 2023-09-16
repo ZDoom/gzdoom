@@ -128,29 +128,143 @@ ShaderBuilder::ShaderBuilder()
 {
 }
 
-ShaderBuilder& ShaderBuilder::VertexShader(const std::string& c)
+ShaderBuilder& ShaderBuilder::Type(ShaderType type)
 {
-	code = c;
-	stage = EShLanguage::EShLangVertex;
+	switch (type)
+	{
+	case ShaderType::Vertex: stage = EShLanguage::EShLangVertex; break;
+	case ShaderType::TessControl: stage = EShLanguage::EShLangTessControl; break;
+	case ShaderType::TessEvaluation: stage = EShLanguage::EShLangTessEvaluation; break;
+	case ShaderType::Geometry: stage = EShLanguage::EShLangGeometry; break;
+	case ShaderType::Fragment: stage = EShLanguage::EShLangFragment; break;
+	case ShaderType::Compute: stage = EShLanguage::EShLangCompute; break;
+	}
 	return *this;
 }
 
-ShaderBuilder& ShaderBuilder::FragmentShader(const std::string& c)
+ShaderBuilder& ShaderBuilder::AddSource(const std::string& name, const std::string& code)
 {
-	code = c;
-	stage = EShLanguage::EShLangFragment;
+	sources.push_back({ name, code });
 	return *this;
 }
+
+ShaderBuilder& ShaderBuilder::OnIncludeSystem(std::function<ShaderIncludeResult(std::string headerName, std::string includerName, size_t inclusionDepth)> onIncludeSystem)
+{
+	this->onIncludeSystem = std::move(onIncludeSystem);
+	return *this;
+}
+
+ShaderBuilder& ShaderBuilder::OnIncludeLocal(std::function<ShaderIncludeResult(std::string headerName, std::string includerName, size_t inclusionDepth)> onIncludeLocal)
+{
+	this->onIncludeLocal = std::move(onIncludeLocal);
+	return *this;
+}
+
+class ShaderBuilderIncluderImpl : public glslang::TShader::Includer
+{
+public:
+	ShaderBuilderIncluderImpl(ShaderBuilder* shaderBuilder) : shaderBuilder(shaderBuilder)
+	{
+	}
+
+	IncludeResult* includeSystem(const char* headerName, const char* includerName, size_t inclusionDepth) override
+	{
+		if (!shaderBuilder->onIncludeSystem)
+		{
+			return nullptr;
+		}
+
+		try
+		{
+			std::unique_ptr<ShaderIncludeResult> result;
+			try
+			{
+				result = std::make_unique<ShaderIncludeResult>(shaderBuilder->onIncludeSystem(headerName, includerName, inclusionDepth));
+			}
+			catch (const std::exception& e)
+			{
+				result = std::make_unique<ShaderIncludeResult>(e.what());
+			}
+
+			if (!result || (result->name.empty() && result->text.empty()))
+			{
+				return nullptr;
+			}
+
+			IncludeResult* outer = new IncludeResult(result->name, result->text.data(), result->text.size(), result.get());
+			result.release();
+			return outer;
+		}
+		catch (...)
+		{
+			return nullptr;
+		}
+	}
+
+	IncludeResult* includeLocal(const char* headerName, const char* includerName, size_t inclusionDepth) override
+	{
+		if (!shaderBuilder->onIncludeLocal)
+		{
+			return nullptr;
+		}
+
+		try
+		{
+			std::unique_ptr<ShaderIncludeResult> result;
+			try
+			{
+				result = std::make_unique<ShaderIncludeResult>(shaderBuilder->onIncludeLocal(headerName, includerName, inclusionDepth));
+			}
+			catch (const std::exception& e)
+			{
+				result = std::make_unique<ShaderIncludeResult>(e.what());
+			}
+
+			if (!result || (result->name.empty() && result->text.empty()))
+			{
+				return nullptr;
+			}
+
+			IncludeResult* outer = new IncludeResult(result->name, result->text.data(), result->text.size(), result.get());
+			result.release();
+			return outer;
+		}
+		catch (...)
+		{
+			return nullptr;
+		}
+	}
+
+	void releaseInclude(IncludeResult* result) override
+	{
+		if (result)
+		{
+			delete (ShaderIncludeResult*)result->userData;
+			delete result;
+		}
+	}
+
+private:
+	ShaderBuilder* shaderBuilder = nullptr;
+};
 
 std::unique_ptr<VulkanShader> ShaderBuilder::Create(const char *shadername, VulkanDevice *device)
 {
 	EShLanguage stage = (EShLanguage)this->stage;
-	const char *sources[] = { code.c_str() };
+
+	std::vector<const char*> namesC, sourcesC;
+	std::vector<int> lengthsC;
+	for (const auto& s : sources)
+	{
+		namesC.push_back(s.first.c_str());
+		sourcesC.push_back(s.second.c_str());
+		lengthsC.push_back((int)s.second.size());
+	}
 
 	TBuiltInResource resources = DefaultTBuiltInResource;
 
 	glslang::TShader shader(stage);
-	shader.setStrings(sources, 1);
+	shader.setStringsWithLengthsAndNames(sourcesC.data(), lengthsC.data(), namesC.data(), (int)sources.size());
 	shader.setEnvInput(glslang::EShSourceGlsl, stage, glslang::EShClientVulkan, 100);
     if (device->Instance->ApiVersion >= VK_API_VERSION_1_2)
     {
@@ -162,7 +276,9 @@ std::unique_ptr<VulkanShader> ShaderBuilder::Create(const char *shadername, Vulk
         shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
         shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
     }
-	bool compileSuccess = shader.parse(&resources, 110, false, EShMsgVulkanRules);
+
+	ShaderBuilderIncluderImpl includer(this);
+	bool compileSuccess = shader.parse(&resources, 110, false, EShMsgVulkanRules, includer);
 	if (!compileSuccess)
 	{
 		throw std::runtime_error(std::string("Shader compile failed: ") + shader.getInfoLog());
@@ -527,13 +643,27 @@ BufferBuilder& BufferBuilder::MemoryType(VkMemoryPropertyFlags requiredFlags, Vk
 	return *this;
 }
 
+BufferBuilder& BufferBuilder::MinAlignment(VkDeviceSize memoryAlignment)
+{
+	minAlignment = memoryAlignment;
+	return *this;
+}
+
 std::unique_ptr<VulkanBuffer> BufferBuilder::Create(VulkanDevice* device)
 {
 	VkBuffer buffer;
 	VmaAllocation allocation;
 
-	VkResult result = vmaCreateBuffer(device->allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
-	CheckVulkanError(result, "Could not allocate memory for vulkan buffer");
+	if (minAlignment == 0)
+	{
+		VkResult result = vmaCreateBuffer(device->allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
+		CheckVulkanError(result, "Could not allocate memory for vulkan buffer");
+	}
+	else
+	{
+		VkResult result = vmaCreateBufferWithAlignment(device->allocator, &bufferInfo, &allocInfo, minAlignment, &buffer, &allocation, nullptr);
+		CheckVulkanError(result, "Could not allocate memory for vulkan buffer");
+	}
 
 	auto obj = std::make_unique<VulkanBuffer>(device, buffer, allocation, bufferInfo.size);
 	if (debugName)
@@ -1175,9 +1305,9 @@ std::unique_ptr<VulkanPipelineCache> PipelineCacheBuilder::Create(VulkanDevice* 
 	{
 		VkPipelineCacheHeaderVersionOne* header = (VkPipelineCacheHeaderVersionOne*)initData.data();
 		if (header->headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_ONE &&
-			header->vendorID == device->PhysicalDevice.Properties.vendorID &&
-			header->deviceID == device->PhysicalDevice.Properties.deviceID &&
-			memcmp(header->pipelineCacheUUID, device->PhysicalDevice.Properties.pipelineCacheUUID, VK_UUID_SIZE) == 0)
+			header->vendorID == device->PhysicalDevice.Properties.Properties.vendorID &&
+			header->deviceID == device->PhysicalDevice.Properties.Properties.deviceID &&
+			memcmp(header->pipelineCacheUUID, device->PhysicalDevice.Properties.Properties.pipelineCacheUUID, VK_UUID_SIZE) == 0)
 		{
 			pipelineCacheInfo.pInitialData = initData.data();
 			pipelineCacheInfo.initialDataSize = initData.size();
@@ -1329,12 +1459,12 @@ PipelineBarrier& PipelineBarrier::AddBuffer(VulkanBuffer* buffer, VkDeviceSize o
 	return *this;
 }
 
-PipelineBarrier& PipelineBarrier::AddImage(VulkanImage* image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask, int baseMipLevel, int levelCount)
+PipelineBarrier& PipelineBarrier::AddImage(VulkanImage* image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask, int baseMipLevel, int levelCount, int baseArrayLayer, int layerCount)
 {
-	return AddImage(image->image, oldLayout, newLayout, srcAccessMask, dstAccessMask, aspectMask, baseMipLevel, levelCount);
+	return AddImage(image->image, oldLayout, newLayout, srcAccessMask, dstAccessMask, aspectMask, baseMipLevel, levelCount, baseArrayLayer, layerCount);
 }
 
-PipelineBarrier& PipelineBarrier::AddImage(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask, int baseMipLevel, int levelCount)
+PipelineBarrier& PipelineBarrier::AddImage(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask, int baseMipLevel, int levelCount, int baseArrayLayer, int layerCount)
 {
 	VkImageMemoryBarrier barrier = { };
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1348,8 +1478,8 @@ PipelineBarrier& PipelineBarrier::AddImage(VkImage image, VkImageLayout oldLayou
 	barrier.subresourceRange.aspectMask = aspectMask;
 	barrier.subresourceRange.baseMipLevel = baseMipLevel;
 	barrier.subresourceRange.levelCount = levelCount;
-	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.baseArrayLayer = baseArrayLayer;
+	barrier.subresourceRange.layerCount = layerCount;
 	imageMemoryBarriers.push_back(barrier);
 	return *this;
 }
@@ -1767,13 +1897,13 @@ std::vector<VulkanCompatibleDevice> VulkanDeviceBuilder::FindDevices(const std::
 	{
 		// Sort by GPU type first. This will ensure the "best" device is most likely to map to vk_device 0
 		static const int typeSort[] = { 4, 1, 0, 2, 3 };
-		int sortA = a.Device->Properties.deviceType < 5 ? typeSort[a.Device->Properties.deviceType] : (int)a.Device->Properties.deviceType;
-		int sortB = b.Device->Properties.deviceType < 5 ? typeSort[b.Device->Properties.deviceType] : (int)b.Device->Properties.deviceType;
+		int sortA = a.Device->Properties.Properties.deviceType < 5 ? typeSort[a.Device->Properties.Properties.deviceType] : (int)a.Device->Properties.Properties.deviceType;
+		int sortB = b.Device->Properties.Properties.deviceType < 5 ? typeSort[b.Device->Properties.Properties.deviceType] : (int)b.Device->Properties.Properties.deviceType;
 		if (sortA != sortB)
 			return sortA < sortB;
 
 		// Then sort by the device's unique ID so that vk_device uses a consistent order
-		int sortUUID = memcmp(a.Device->Properties.pipelineCacheUUID, b.Device->Properties.pipelineCacheUUID, VK_UUID_SIZE);
+		int sortUUID = memcmp(a.Device->Properties.Properties.pipelineCacheUUID, b.Device->Properties.Properties.pipelineCacheUUID, VK_UUID_SIZE);
 		return sortUUID < 0;
 	};
 	std::stable_sort(supportedDevices.begin(), supportedDevices.end(), sortFunc);

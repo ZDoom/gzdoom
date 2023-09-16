@@ -72,21 +72,6 @@ EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
 
-CCMD(vk_memstats)
-{
-	if (screen->IsVulkan())
-	{
-		VmaStats stats = {};
-		vmaCalculateStats(static_cast<VulkanRenderDevice*>(screen)->device->allocator, &stats);
-		Printf("Allocated objects: %d, used bytes: %d MB\n", (int)stats.total.allocationCount, (int)stats.total.usedBytes / (1024 * 1024));
-		Printf("Unused range count: %d, unused bytes: %d MB\n", (int)stats.total.unusedRangeCount, (int)stats.total.unusedBytes / (1024 * 1024));
-	}
-	else
-	{
-		Printf("Vulkan is not the current render device\n");
-	}
-}
-
 CVAR(Bool, vk_raytrace, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 // Physical device info
@@ -108,7 +93,7 @@ CCMD(vk_listdevices)
 {
 	for (size_t i = 0; i < SupportedDevices.size(); i++)
 	{
-		Printf("#%d - %s\n", (int)i, SupportedDevices[i].Device->Properties.deviceName);
+		Printf("#%d - %s\n", (int)i, SupportedDevices[i].Device->Properties.Properties.deviceName);
 	}
 }
 
@@ -179,7 +164,7 @@ void VulkanRenderDevice::InitializeState()
 	}
 
 	// Use the same names here as OpenGL returns.
-	switch (device->PhysicalDevice.Properties.vendorID)
+	switch (device->PhysicalDevice.Properties.Properties.vendorID)
 	{
 	case 0x1002: vendorstring = "ATI Technologies Inc.";     break;
 	case 0x10DE: vendorstring = "NVIDIA Corporation";  break;
@@ -189,8 +174,8 @@ void VulkanRenderDevice::InitializeState()
 
 	hwcaps = RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
 	glslversion = 4.50f;
-	uniformblockalignment = (unsigned int)device->PhysicalDevice.Properties.limits.minUniformBufferOffsetAlignment;
-	maxuniformblock = device->PhysicalDevice.Properties.limits.maxUniformBufferRange;
+	uniformblockalignment = (unsigned int)device->PhysicalDevice.Properties.Properties.limits.minUniformBufferOffsetAlignment;
+	maxuniformblock = device->PhysicalDevice.Properties.Properties.limits.maxUniformBufferRange;
 
 	mCommands.reset(new VkCommandBufferManager(this));
 
@@ -293,8 +278,7 @@ void VulkanRenderDevice::PostProcessScene(bool swscene, int fixedcm, float flash
 
 const char* VulkanRenderDevice::DeviceName() const
 {
-	const auto &props = device->PhysicalDevice.Properties;
-	return props.deviceName;
+	return device->PhysicalDevice.Properties.Properties.deviceName;
 }
 
 void VulkanRenderDevice::SetVSync(bool vsync)
@@ -513,7 +497,7 @@ unsigned int VulkanRenderDevice::GetLightBufferBlockSize() const
 
 void VulkanRenderDevice::PrintStartupLog()
 {
-	const auto &props = device->PhysicalDevice.Properties;
+	const auto &props = device->PhysicalDevice.Properties.Properties;
 
 	FString deviceType;
 	switch (props.deviceType)
@@ -585,5 +569,5 @@ void VulkanRenderDevice::SetSceneRenderTarget(bool useSSAO)
 
 bool VulkanRenderDevice::RaytracingEnabled()
 {
-	return vk_raytrace && device->SupportsDeviceExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+	return vk_raytrace && device->SupportsExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 }

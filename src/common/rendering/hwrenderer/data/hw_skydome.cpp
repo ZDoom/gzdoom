@@ -178,6 +178,8 @@ void FSkyVertexBuffer::SkyVertexDoom(int r, int c, bool zflip)
 	vert.y = z - 1.f;
 	vert.z = pos.Y;
 
+	vert.lindex = -1;
+
 	mVertices.Push(vert);
 }
 
@@ -209,6 +211,8 @@ void FSkyVertexBuffer::SkyVertexBuild(int r, int c, bool zflip)
 	vert.x = pos.X;
 	vert.y = z - 1.f;
 	vert.z = pos.Y;
+
+	vert.lindex = -1;
 
 	mVertices.Push(vert);
 }

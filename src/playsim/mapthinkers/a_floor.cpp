@@ -811,7 +811,7 @@ bool FLevelLocals::EV_DoDonut (int tag, line_t *line, double pillarspeed, double
 		if (!s2)								// note lowest numbered line around
 			continue;							// pillar must be two-sided
 
-		if (!(compatflags2 & COMPATF2_FLOORMOVE) && s2->PlaneMoving(sector_t::floor))
+		if (!(i_compatflags2 & COMPATF2_FLOORMOVE) && s2->PlaneMoving(sector_t::floor))
 			continue;
 
 		for (auto ln : s2->Lines)

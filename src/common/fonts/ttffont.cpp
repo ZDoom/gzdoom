@@ -1,3 +1,4 @@
+#include <cmath>
 
 #include "engineerrors.h"
 #include "textures.h"

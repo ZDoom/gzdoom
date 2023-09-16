@@ -110,10 +110,10 @@ class VSMatrix {
 		{
 			#ifdef NO_SSE
 			FVector4 result;
-			result.x = mMatrix[0 * 4 + 0] * v.X + mMatrix[1 * 4 + 0] * v.Y + mMatrix[2 * 4 + 0] * v.Z + mMatrix[3 * 4 + 0] * v.W;
-			result.y = mMatrix[0 * 4 + 1] * v.X + mMatrix[1 * 4 + 1] * v.Y + mMatrix[2 * 4 + 1] * v.Z + mMatrix[3 * 4 + 1] * v.W;
-			result.z = mMatrix[0 * 4 + 2] * v.X + mMatrix[1 * 4 + 2] * v.Y + mMatrix[2 * 4 + 2] * v.Z + mMatrix[3 * 4 + 2] * v.W;
-			result.w = mMatrix[0 * 4 + 3] * v.X + mMatrix[1 * 4 + 3] * v.Y + mMatrix[2 * 4 + 3] * v.Z + mMatrix[3 * 4 + 3] * v.W;
+			result.X = mMatrix[0 * 4 + 0] * v.X + mMatrix[1 * 4 + 0] * v.Y + mMatrix[2 * 4 + 0] * v.Z + mMatrix[3 * 4 + 0] * v.W;
+			result.Y = mMatrix[0 * 4 + 1] * v.X + mMatrix[1 * 4 + 1] * v.Y + mMatrix[2 * 4 + 1] * v.Z + mMatrix[3 * 4 + 1] * v.W;
+			result.Z = mMatrix[0 * 4 + 2] * v.X + mMatrix[1 * 4 + 2] * v.Y + mMatrix[2 * 4 + 2] * v.Z + mMatrix[3 * 4 + 2] * v.W;
+			result.W = mMatrix[0 * 4 + 3] * v.X + mMatrix[1 * 4 + 3] * v.Y + mMatrix[2 * 4 + 3] * v.Z + mMatrix[3 * 4 + 3] * v.W;
 			return result;
 			#else
 			__m128 m0 = _mm_loadu_ps(mMatrix);

@@ -418,13 +418,13 @@ class Inventory : Actor
 	virtual EPreHandlePickupResult CallPreHandlePickup(Inventory item)
 	{       
 		let me = self;
-        while (me != null)
-        {
+		while (me != null)
+		{
 			EPreHandlePickupResult result = me.PreHandlePickup(item);
-            if (result != PRE_HANDLE_PICKUP_PASS)
+			if (result != PRE_HANDLE_PICKUP_PASS)
 				return result;
-            me = me.Inv;
-        }
+			me = me.Inv;
+		}
 		return PRE_HANDLE_PICKUP_PASS;
 	}
 
@@ -506,7 +506,7 @@ class Inventory : Actor
 		{
 			preHandled = tInv.CallPreHandlePickup(self);
 		}
-        if (preHandled != PRE_HANDLE_PICKUP_FALSE && (preHandled == PRE_HANDLE_PICKUP_TRUE || (tInv != NULL  && tInv.CallHandlePickup (self))))
+		if (preHandled != PRE_HANDLE_PICKUP_FALSE && (preHandled == PRE_HANDLE_PICKUP_TRUE || (tInv != NULL  && tInv.CallHandlePickup (self))))
 		{
 			// Let something else the player is holding intercept the pickup.
 			if (!bPickupGood)

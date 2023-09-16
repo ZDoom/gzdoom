@@ -2295,8 +2295,8 @@ static void PutSaveComment (FSerializer &arc)
 	comment.AppendFormat("K: %d/%d - I: %d/%d - S: %d/%d\n", primaryLevel->killed_monsters, primaryLevel->total_monsters, primaryLevel->found_items, primaryLevel->total_items, primaryLevel->found_secrets, primaryLevel->total_secrets);
 
 	// Append player health and armor
-	const char *const health = GStrings("SAVECOMMENT_HEALTH");
-	const char *const armor = GStrings("SAVECOMMENT_ARMOR");
+	const char* const health = "Health";// GStrings("SAVECOMMENT_HEALTH");
+	const char* const armor = "Armor"; // GStrings("SAVECOMMENT_ARMOR");
 	int armorAmount = 0;
 	auto basicArmorItem = primaryLevel->Players[consoleplayer]->mo->FindInventory(NAME_BasicArmor);
 	if (basicArmorItem) {

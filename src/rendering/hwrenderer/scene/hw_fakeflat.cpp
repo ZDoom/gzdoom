@@ -224,9 +224,9 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 			if (fakesectorbuffer && fakesectorbuffer[sec->sectornum]) return fakesectorbuffer[sec->sectornum];
 			auto dest = localcopy? localcopy : allocateSector(sec);
 			*dest = *sec;
-			dest->ceilingplane = sec->floorplane;
-			dest->ceilingplane.FlipVert();
-			dest->planes[sector_t::ceiling].TexZ = dest->planes[sector_t::floor].TexZ;
+			dest->floorplane = sec->ceilingplane;
+			dest->floorplane.FlipVert();
+			dest->planes[sector_t::floor].TexZ = dest->planes[sector_t::ceiling].TexZ;
 			dest->ClearPortal(sector_t::ceiling);
 			dest->ClearPortal(sector_t::floor);
 			return dest;

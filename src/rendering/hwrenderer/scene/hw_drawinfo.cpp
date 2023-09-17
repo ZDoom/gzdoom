@@ -44,7 +44,6 @@
 #include "hw_clipper.h"
 #include "hw_meshcache.h"
 #include "v_draw.h"
-#include "a_corona.h"
 #include "texturemanager.h"
 #include "actorinlines.h"
 #include "g_levellocals.h"
@@ -571,7 +570,7 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 
 }
 
-void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona, double dist)
+void HWDrawInfo::DrawCorona(FRenderState& state, AActor* corona, float coronaFade, double dist)
 {
 	spriteframe_t* sprframe = &SpriteFrames[sprites[corona->sprite].spriteframes + (size_t)corona->SpawnState->GetFrame()];
 	FTextureID patch = sprframe->Texture[0];
@@ -591,7 +590,7 @@ void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona, double dist)
 	float screenX = halfViewportWidth + clipPos.X * invW * halfViewportWidth;
 	float screenY = halfViewportHeight - clipPos.Y * invW * halfViewportHeight;
 
-	float alpha = corona->CoronaFade * float(corona->Alpha);
+	float alpha = coronaFade * float(corona->Alpha);
 
 	// distance-based fade - looks better IMO
 	float distNearFadeStart = float(corona->RenderRadius()) * 0.1f;
@@ -661,8 +660,10 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 	float timeElapsed = (screen->FrameTime - LastFrameTime) / 1000.0f;
 	LastFrameTime = screen->FrameTime;
 
-	for (ACorona* corona : Coronas)
+	for (auto& coronap : Coronas)
 	{
+		auto corona = coronap.first;
+		auto& coronaFade = coronap.second;
 		auto cPos = corona->Vec3Offset(0., 0., corona->Height * 0.5);
 		DVector3 direction = Viewpoint.Pos - cPos;
 		double dist = direction.Length();
@@ -677,15 +678,15 @@ void HWDrawInfo::DrawCoronas(FRenderState& state)
 		FTraceResults results;
 		if (!Trace(cPos, corona->Sector, direction, dist, MF_SOLID, ML_BLOCKEVERYTHING, corona, results, 0, CheckForViewpointActor, &Viewpoint))
 		{
-			corona->CoronaFade = std::min(corona->CoronaFade + timeElapsed * fadeSpeed, 1.0f);
+			coronaFade = std::min(coronaFade + timeElapsed * fadeSpeed, 1.0f);
 		}
 		else
 		{
-			corona->CoronaFade = std::max(corona->CoronaFade - timeElapsed * fadeSpeed, 0.0f);
+			coronaFade = std::max(coronaFade - timeElapsed * fadeSpeed, 0.0f);
 		}
 
-		if (corona->CoronaFade > 0.0f)
-			DrawCorona(state, corona, dist);
+		if (coronaFade > 0.0f)
+			DrawCorona(state, corona, coronaFade, dist);
 	}
 
 	state.SetTextureMode(TM_NORMAL);

@@ -150,7 +150,7 @@ struct HWDrawInfo
 	TArray<HWPortal *> Portals;
 	TArray<HWDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
-	TArray<ACorona*> Coronas;
+	TArray<std::pair<AActor*, float>> Coronas;
 	TArray<LevelMeshSurface*> VisibleSurfaces;
 	uint64_t LastFrameTime = 0;
 
@@ -288,7 +288,7 @@ struct HWDrawInfo
 	void DrawDecals(FRenderState &state, TArray<HWDecal *> &decals);
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 	void DrawCoronas(FRenderState& state);
-	void DrawCorona(FRenderState& state, ACorona* corona, double dist);
+	void DrawCorona(FRenderState& state, AActor* corona, float coronaFade, double dist);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs, FRenderState& state);
     void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);

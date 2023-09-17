@@ -26,7 +26,7 @@
  * 
  *****************************************************************************/
 
-class Corona : Actor abstract native
+class Corona : Actor abstract
 {
 	Default
 	{

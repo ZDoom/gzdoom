@@ -33,7 +33,6 @@
 #include "r_sky.h"
 #include "r_utility.h"
 #include "a_pickups.h"
-#include "a_corona.h"
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "events.h"
@@ -763,7 +762,7 @@ void HWSprite::Process(HWDrawInfo *di, FRenderState& state, AActor* thing, secto
 
 	if (thing->IsKindOf(NAME_Corona))
 	{
-		di->Coronas.Push(static_cast<ACorona*>(thing));
+		di->Coronas.Push(std::make_pair(thing, 0));
 		return;
 	}
 

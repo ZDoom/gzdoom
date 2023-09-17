@@ -158,18 +158,17 @@ CUSTOM_CVARD(Int, gl_lightmode, 1, CVAR_ARCHIVE, "Select lighting mode. 2 is van
 
 ELightMode getRealLightmode(FLevelLocals* Level, bool for3d)
 {
-	auto lightmode = Level->info->lightmode;
-	if (lightmode == ELightMode::NotSet)
-	{
-		if (gl_maplightmode != -1) lightmode = (ELightMode)*gl_maplightmode;
-		else lightmode = ELightMode::Doom;
-	}
-	if (lightmode == ELightMode::Doom && for3d)
-	{
-		if (gl_lightmode == 1) lightmode = ELightMode::ZDoomSoftware;
-		else if (gl_lightmode == 2) lightmode = ELightMode::DoomSoftware;
-	}
-	return lightmode;
+	// The rules are:
+	// 1) if the map sets a proper light mode, it is taken unconditionally.
+	if (Level->info->lightmode != ELightMode::NotSet) return Level->info->lightmode;
+	// 2) if the user sets gl_maplightmode, this is being used.
+	if (gl_maplightmode != -1) return (ELightMode)*gl_maplightmode;
+	// 3) if not for 3D use lightmode Doom. This is for the automap where the software light modes do not work
+	if (!for3d) return ELightMode::Doom;
+	// otherwise use lightmode Doom or software lighting based on user preferences.
+	if (gl_lightmode == 1) return ELightMode::ZDoomSoftware;
+	else if (gl_lightmode == 2) return ELightMode::DoomSoftware;
+	return ELightMode::Doom;
 }
 
 CVAR(Int, sv_alwaystally, 0, CVAR_SERVERINFO)

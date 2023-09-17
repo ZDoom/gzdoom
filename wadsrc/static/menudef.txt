@@ -356,12 +356,12 @@ DefaultOptionMenu
 OptionMenu "OptionsMenu" protected
 {
 	Title "$OPTMNU_TITLE"
-	Submenu "Input Options",			"InputMenu"
-	Submenu "Gameplay Options",			"GameplayMenu"
+	Submenu "$OPTMNU_INPUT",			"InputMenu"
+	Submenu "$OPTMNU_GAMEPLAY",			"GameplayMenu"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
-	Submenu "Multiplayer Options",		"MultiplayerMenu"
-	Submenu "System Options",			"SystemMenu"
+	Submenu "$OPTMNU_MULTIPLAYER",		"MultiplayerMenu"
+	Submenu "$OPTMNU_SYSTEM",			"SystemMenu"
 	StaticText " "
 	Submenu "$OS_TITLE", "os_Menu"
 }
@@ -374,7 +374,7 @@ OptionMenu "OptionsMenu" protected
 
 OptionMenu "InputMenu" protected
 {
-	Title "Input Options"
+	Title "$OPTMNU_INPUT"
 	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
 	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
@@ -406,7 +406,7 @@ OptionMenu "InputMenu" protected
 
 OptionMenu "GameplayMenu" protected
 {
-	Title "Gameplay Options"
+	Title "$OPTMNU_GAMEPLAY"
 
 	Option "$MISCMNU_NOCHEATS",					"nocheats", "OnOff"
 	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
@@ -429,7 +429,7 @@ OptionMenu "GameplayMenu" protected
 
 OptionMenu "MultiplayerMenu" protected
 {
-	Title "Multiplayer Options"
+	Title "$OPTMNU_MULTIPLAYER"
 
 	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
 	Submenu "$GMPLYMNU_DEATHMATCH",		"DeathmatchOptions"
@@ -447,7 +447,7 @@ OptionMenu "MultiplayerMenu" protected
 
 OptionMenu "SystemMenu" protected
 {
-	Title "System Options"
+	Title "$OPTMNU_SYSTEM"
 
 	SafeCommand	"$OPTMNU_DEFAULTS",		"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
@@ -1009,7 +1009,7 @@ OptionMenu "AdvDisplayOptions" protected
 	Submenu "$GLPREFMNU_VRMODE",				"VR3DMenu"
 	IfOption(SWRender)
 	{
-		Submenu "Software Renderer",				"SWROptions"
+		Submenu "$OPTMNU_SWRENDERER",				"SWROptions"
 	}
 }
 
@@ -1043,6 +1043,7 @@ OptionMenu "AppearOptions" protected
 
 OptionMenu "SWROptions" protected
 {
+	Title "$OPTMNU_SWRENDERER"
 	Option "$TCMNU_DYNLIGHTS",					"r_dynlights", "OnOff"
 	Option "$DSPLYMNU_BLENDMETHOD",				"r_blendmethod", "BlendMethods"
 	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
@@ -1056,7 +1057,7 @@ OptionMenu "SWROptions" protected
 
 OptionMenu "LightOptions" protected
 {
-	Title "Light Options"
+	Title "$OPTMNU_LIGHT"
 
 	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
 	Option "$GLPREFMNU_FOGMODE",				gl_fogmode,						"FogMode"
@@ -1087,7 +1088,7 @@ OptionMenu "LightOptions" protected
 
 OptionMenu "SpriteOptions" protected
 {
-	Title "Sprite Options"
+	Title "$OPTMNU_SPRITE"
 
 	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
 	Option "$DSPLYMNU_SPRITESHADOW",			"r_actorspriteshadow", "SpriteShadowModes"

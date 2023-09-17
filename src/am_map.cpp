@@ -1547,11 +1547,13 @@ void DAutomap::Ticker ()
 	if (!automapactive)
 		return;
 
+#ifdef UNFRIENDLY_OPTIONS
 	if ((primaryLevel->flags9 & LEVEL9_NOAUTOMAP))
 	{
 		AM_ToggleMap();
 		return;
 	}
+#endif
 
 	amclock++;
 }
@@ -3455,8 +3457,10 @@ void AM_ToggleMap()
 	if (!primaryLevel || !primaryLevel->automap)
 		return;
 
+#ifdef UNFRIENDLY_OPTIONS
 	if (!automapactive && (primaryLevel->flags9 & LEVEL9_NOAUTOMAP))
 		return;
+#endif
 
 	if (!automapactive)
 	{

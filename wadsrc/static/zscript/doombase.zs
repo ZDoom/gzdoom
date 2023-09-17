@@ -472,8 +472,9 @@ struct LevelLocals native
 	native readonly int compatflags2;
 	native readonly LevelInfo info;
 
-	native bool nousersave;
-	native bool noautomap;
+	// 'unfriendly' options not accessible by default.
+	//native bool nousersave;
+	//native bool noautomap;
 
 	native String GetUDMFString(int type, int index, Name key);
 	native int GetUDMFInt(int type, int index, Name key);

@@ -253,11 +253,13 @@ bool M_SetSpecialMenu(FName& menu, int param)
 			return false;
 		}
 
+#ifdef UNFRIENDLY_OPTIONS
 		if ((primaryLevel->flags9 & LEVEL9_NOUSERSAVE))
 		{
 			M_StartMessage(GStrings("SAVEDEAD"), 1);
 			return false;
 		}
+#endif
 
 		break;
 

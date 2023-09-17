@@ -2197,8 +2197,10 @@ CUSTOM_CVAR (Int, quicksaverotationcount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void G_DoAutoSave ()
 {
+#ifdef UNFRIENDLY_OPTIONS
 	if ((primaryLevel->flags9 & LEVEL9_NOUSERSAVE))
 		return;
+#endif
 
 	FString description;
 	FString file;

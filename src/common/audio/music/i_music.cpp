@@ -37,7 +37,7 @@
 #include <sys/wait.h>
 #endif
 
-#include <zlib.h>
+#include <miniz.h>
 
 #include <zmusic.h>
 #include "filesystem.h"

@@ -42,7 +42,7 @@
 
 #endif
 
-#include <zlib.h>
+#include <miniz.h>
 
 #include "m_argv.h"
 #include "c_dispatch.h"

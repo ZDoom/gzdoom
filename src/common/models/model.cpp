@@ -25,6 +25,7 @@
 ** General model handling code
 **
 **/
+#include <stddef.h> // offsetof() macro.
 
 #include "filesystem.h"
 #include "cmdlib.h"
@@ -132,17 +133,7 @@ FTextureID LoadSkin(const char * path, const char * fn)
 
 int ModelFrameHash(FSpriteModelFrame * smf)
 {
-	const uint32_t *table = GetCRCTable ();
-	uint32_t hash = 0xffffffff;
-
-	const char * s = (const char *)(&smf->type);	// this uses type, sprite and frame for hashing
-	const char * se= (const char *)(&smf->hashnext);
-
-	for (; s<se; s++)
-	{
-		hash = CRC1 (hash, *s, table);
-	}
-	return hash ^ 0xffffffff;
+	return crc32(0, (const unsigned char *)(&smf->type), offsetof(FSpriteModelFrame, hashnext) - offsetof(FSpriteModelFrame, type));
 }
 
 //===========================================================================

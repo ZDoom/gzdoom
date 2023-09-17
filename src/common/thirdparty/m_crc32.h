@@ -32,12 +32,11 @@
 **
 */
 #pragma once 
-#include <zlib.h>
+#include <miniz.h>
 #include <stdint.h>
 
-// zlib includes some CRC32 stuff, so just use that
+// miniz includes some CRC32 stuff, so just use that
 
-inline const uint32_t *GetCRCTable () { return (const uint32_t *)get_crc_table(); }
 inline uint32_t CalcCRC32 (const uint8_t *buf, unsigned int len)
 {
 	return crc32 (0, buf, len);

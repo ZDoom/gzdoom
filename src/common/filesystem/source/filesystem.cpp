@@ -36,7 +36,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <zlib.h>
+#include <miniz.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>

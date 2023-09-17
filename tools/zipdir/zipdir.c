@@ -46,7 +46,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <time.h>
-#include "zlib.h"
+#include <miniz.h>
 #include "bzlib.h"
 #include "LzmaEnc.h"
 #include "7zVersion.h"

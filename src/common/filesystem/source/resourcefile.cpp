@@ -34,7 +34,7 @@
 **
 */
 
-#include <zlib.h>
+#include <miniz.h>
 #include "resourcefile_internal.h"
 #include "md5.hpp"
 #include "fs_stringpool.h"

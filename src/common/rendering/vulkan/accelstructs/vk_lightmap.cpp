@@ -4,6 +4,7 @@
 #include "zvulkan/vulkanbuilders.h"
 #include "halffloat.h"
 #include "filesystem.h"
+#include "cmdlib.h"
 
 VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 {
@@ -371,8 +372,7 @@ FString VkLightmap::LoadPrivateShaderLump(const char* lumpname)
 {
 	int lump = fileSystem.CheckNumForFullName(lumpname, 0);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	auto data = fileSystem.ReadFile(lump);
-	return data.GetString();
+	return GetStringFromLump(lump);
 }
 
 void VkLightmap::CreateRaytracePipeline()

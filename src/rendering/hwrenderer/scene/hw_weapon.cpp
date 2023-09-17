@@ -689,7 +689,7 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area, F
 	VMFunction * ModifyBobLayer = nullptr;
 	DVector2 bobxy = DVector2(weap.bobx , weap.boby);
 
-	if(weap.weapon && weap.weapon->GetCaller())
+	if(weap.weapon)
 	{
 		if(auto caller = weap.weapon->GetCaller())
 		{

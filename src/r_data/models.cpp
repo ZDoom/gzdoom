@@ -231,7 +231,7 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 	}
 
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale / fovscale);
+	objectToWorldMatrix.scale((psp->Flags & PSPF_FLIP) ? -smf->xscale : smf->xscale, smf->zscale, smf->yscale / fovscale);
 
 	// Aplying model offsets (model offsets do not depend on model scalings).
 	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);

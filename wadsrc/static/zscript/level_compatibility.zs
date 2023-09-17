@@ -2161,9 +2161,17 @@ class LevelCompatibility : LevelPostProcessor
 
 			case '3F0965ADCEB2F4A7BF46FADF6DD941B0': // phocas2.wad map01
 			{
+				// turn map spot into teleport dest.
 				SetThingEdNum(699, 9044);
 				break;
 			}
+			
+			case 'C8E727FFBA0BA445666C80340BF3D0AC': // god_.WAD E1M2
+			{
+				// fix bad skill flags for a monster that's required to be killed.
+				SetThingSkills(1184, 1);
+				break;
+			}			
 		}
 	}
 }

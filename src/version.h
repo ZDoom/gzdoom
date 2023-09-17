@@ -41,25 +41,25 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "5.0pre"
+#define VERSIONSTR "1.0pre"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 5,0,9999,0
-#define RC_PRODUCTVERSION 5,0,9999,0
+#define RC_FILEVERSION 1,0,9999,0
+#define RC_PRODUCTVERSION 1,0,9999,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
 
 // These are for content versioning.
-#define VER_MAJOR 5
+#define VER_MAJOR 1
 #define VER_MINOR 0
 #define VER_REVISION 0
 
 // These are for zscript versioning.
-#define ZSCRIPT_VER_MAJOR 5
-#define ZSCRIPT_VER_MINOR 0
+#define ZSCRIPT_VER_MAJOR 4
+#define ZSCRIPT_VER_MINOR 11
 #define ZSCRIPT_VER_REVISION 0
 
-// This should always refer to the GZDoom version a derived port is based on and not reflect the derived port's version number!
-#define ENG_MAJOR 5
+// This should always refer to the VkDoom version a derived port is based on and not reflect the derived port's version number!
+#define ENG_MAJOR 1
 #define ENG_MINOR 0
 #define ENG_REVISION 0
 
@@ -97,16 +97,16 @@ const char *GetVersionString();
 #define SAVEVER 4560
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "GZDOOM"
-#define BASEWAD "gzdoom.pk3"
+#define GAMESIG "VKDOOM"
+#define BASEWAD "vkdoom.pk3"
 #define OPTIONALWAD "game_support.pk3"
 #define GZDOOM 1
 #define VR3D_ENABLED
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "GZDoom"
-#define WGAMENAME L"GZDoom"
-#define GAMENAMELOWERCASE "gzdoom"
+#define GAMENAME "VKDoom"
+#define WGAMENAME L"VKDoom"
+#define GAMENAMELOWERCASE "vkdoom"
 //#define FORUM_URL "http://forum.zdoom.org/"
 //#define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"
 

@@ -1388,9 +1388,9 @@ enum ELevelFlags
 	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
 	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
 
-	LEVEL9_NOUSERSAVE			= 0x00000001,
-	LEVEL9_NOAUTOMAP			= 0x00000002,
-	LEVEL9_NOAUTOSAVEONENTER	= 0x00000004,	// don't make an autosave when entering a map
+	VKDLEVELFLAG_NOUSERSAVE			= 0x00000001,
+	VKDLEVELFLAG_NOAUTOMAP			= 0x00000002,
+	VKDLEVELFLAG_NOAUTOSAVEONENTER	= 0x00000004,	// don't make an autosave when entering a map
 };
 
 // [RH] Compatibility flags.

@@ -3998,6 +3998,22 @@ void I_UpdateWindowTitle()
 	I_SetWindowTitle(copy.Data());
 }
 
+CCMD(fs_dir)
+{
+	int numfiles = fileSystem.GetNumEntries();
+
+	for (int i = 0; i < numfiles; i++)
+	{
+		auto container = fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(i));
+		auto fn1 = fileSystem.GetFileFullName(i);
+		auto fns = fileSystem.GetFileShortName(i);
+		auto fnid = fileSystem.GetResourceId(i);
+		auto length = fileSystem.FileLength(i);
+		bool hidden = fileSystem.FindFile(fn1) != i;
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
+	}
+}
+
 #ifdef _WIN32
 // For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
 // Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
@@ -4029,20 +4045,4 @@ void UpdateVRModes(bool considerQuadBuffered)
 		filteredValues.Push(mode);
 	}
 	vals = filteredValues;
-}
-
-CCMD(fs_dir)
-{
-	int numfiles = fileSystem.GetNumEntries();
-
-	for (int i = 0; i < numfiles; i++)
-	{
-		auto container = fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(i));
-		auto fn1 = fileSystem.GetFileFullName(i);
-		auto fns = fileSystem.GetFileShortName(i);
-		auto fnid = fileSystem.GetResourceId(i);
-		auto length = fileSystem.FileLength(i);
-		bool hidden = fileSystem.FindFile(fn1) != i;
-		Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
-	}
 }

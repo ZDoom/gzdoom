@@ -250,7 +250,7 @@ void level_info_t::Reset()
 	else
 		flags2 = LEVEL2_LAXMONSTERACTIVATION;
 	flags3 = 0;
-	flags9 = 0;
+	vkdflags = 0;
 	Music = "";
 	LevelName = "";
 	AuthorName = "";
@@ -1695,9 +1695,9 @@ enum EMIType
 	MITYPE_SETFLAG3,
 	MITYPE_CLRFLAG3,
 	MITYPE_SCFLAGS3,
-	MITYPE_SETFLAG9,
-	MITYPE_CLRFLAG9,
-	MITYPE_SCFLAGS9,
+	MITYPE_SETVKDFLAG,
+	MITYPE_CLRVKDFLAG,
+	MITYPE_SCVKDFLAGS,
 	MITYPE_COMPATFLAG,
 	MITYPE_CLRCOMPATFLAG,
 };
@@ -1796,9 +1796,6 @@ MapFlagHandlers[] =
 	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
 	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
 	{ "forceworldpanning",				MITYPE_SETFLAG3,	LEVEL3_FORCEWORLDPANNING, 0 },
-	{ "nousersave",						MITYPE_SETFLAG9,	LEVEL9_NOUSERSAVE, 0 },
-	{ "noautomap",						MITYPE_SETFLAG9,	LEVEL9_NOAUTOMAP, 0 },
-	{ "noautosaveonenter",				MITYPE_SETFLAG9,	LEVEL9_NOAUTOSAVEONENTER, 0 },
 	{ "propermonsterfallingdamage",		MITYPE_SETFLAG3,	LEVEL3_PROPERMONSTERFALLINGDAMAGE, 0 },
 	{ "disableshadowmap",				MITYPE_SETFLAG3,	LEVEL3_NOSHADOWMAP, 0 },
 	{ "enableshadowmap",				MITYPE_CLRFLAG3,	LEVEL3_NOSHADOWMAP, 0 },
@@ -1806,6 +1803,9 @@ MapFlagHandlers[] =
 	{ "disableskyboxao",				MITYPE_CLRFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "avoidmelee",						MITYPE_SETFLAG3,	LEVEL3_AVOIDMELEE, 0 },
 	{ "attenuatelights",				MITYPE_SETFLAG3,	LEVEL3_ATTENUATE, 0 },
+	{ "nousersave",						MITYPE_SETVKDFLAG,	VKDLEVELFLAG_NOUSERSAVE, 0 },
+	{ "noautomap",						MITYPE_SETVKDFLAG,	VKDLEVELFLAG_NOAUTOMAP, 0 },
+	{ "noautosaveonenter",				MITYPE_SETVKDFLAG,	VKDLEVELFLAG_NOAUTOSAVEONENTER, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "nopassover",						MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
 	{ "passover",						MITYPE_CLRCOMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
@@ -1960,27 +1960,27 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				info.flags3 = (info.flags3 & handler->data2) | handler->data1;
 				break;
 
-			case MITYPE_SETFLAG9:
+			case MITYPE_SETVKDFLAG:
 				if (!CheckAssign())
 				{
-					info.flags9 |= handler->data1;
+					info.vkdflags |= handler->data1;
 				}
 				else
 				{
 					sc.MustGetNumber();
-					if (sc.Number) info.flags9 |= handler->data1;
-					else info.flags9 &= ~handler->data1;
+					if (sc.Number) info.vkdflags |= handler->data1;
+					else info.vkdflags &= ~handler->data1;
 				}
-				info.flags9 |= handler->data2;
+				info.vkdflags |= handler->data2;
 				break;
 
-			case MITYPE_CLRFLAG9:
-				info.flags9 &= ~handler->data1;
-				info.flags9 |= handler->data2;
+			case MITYPE_CLRVKDFLAG:
+				info.vkdflags &= ~handler->data1;
+				info.vkdflags |= handler->data2;
 				break;
 
-			case MITYPE_SCFLAGS9:
-				info.flags9 = (info.flags9 & handler->data2) | handler->data1;
+			case MITYPE_SCVKDFLAGS:
+				info.vkdflags = (info.vkdflags & handler->data2) | handler->data1;
 				break;
 
 			case MITYPE_CLRCOMPATFLAG:

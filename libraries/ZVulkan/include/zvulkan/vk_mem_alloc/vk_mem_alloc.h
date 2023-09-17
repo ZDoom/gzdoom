@@ -121,7 +121,6 @@ for user-defined purpose without allocating any real GPU memory.
 See documentation chapter: \ref statistics.
 */
 
-
 #ifdef __cplusplus
 #include <cstdio>
 extern "C" {

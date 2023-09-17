@@ -1521,11 +1521,9 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 
-#ifdef UNFRIENDLY_OPTIONS
 	// [Nash] allow modder control of autosaving
 	if (changeflags & CHANGELEVEL_NOAUTOSAVE)
 		autosave = false;
-#endif
 
 	// [RH] Always save the game when entering a new 
 	if (autosave && !savegamerestore && disableautosave < 1)
@@ -1807,7 +1805,7 @@ void FLevelLocals::Init()
 	flags = 0;
 	flags2 = 0;
 	flags3 = 0;
-	flags9 = 0;
+	vkdflags = 0;
 	ImpactDecalCount = 0;
 	frozenstate = 0;
 
@@ -1856,7 +1854,7 @@ void FLevelLocals::Init()
 	flags |= info->flags;
 	flags2 |= info->flags2;
 	flags3 |= info->flags3;
-	flags9 |= info->flags9;
+	vkdflags |= info->vkdflags;
 	levelnum = info->levelnum;
 	Music = info->Music;
 	musicorder = info->musicorder;

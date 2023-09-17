@@ -59,8 +59,8 @@ IMPLEMENT_CLASS(DHUDFont, false, false);
 
 CVAR(Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
 CVAR(Int, crosshairhealth, 2, CVAR_ARCHIVE);
-CVARD(Float, crosshairscale, 0.3f, CVAR_ARCHIVE, "changes the size of the crosshair");
-CVAR(Bool, crosshairgrow, false, CVAR_ARCHIVE);
+CVARD(Float, crosshairscale, 0.2f, CVAR_ARCHIVE, "changes the size of the crosshair");
+CVAR(Bool, crosshairgrow, true, CVAR_ARCHIVE);
 
 CUSTOM_CVARD(Float, hud_scalefactor, 1.f, CVAR_ARCHIVE, "changes the hud scale")
 {

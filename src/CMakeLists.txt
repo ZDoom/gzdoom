@@ -319,7 +319,7 @@ add_custom_target( revision_check ALL
 
 # required libraries
 
-set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ZLIB_LIBRARIES}" "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" "${DRPC_LIBRARIES}")
+set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} miniz "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" "${DRPC_LIBRARIES}")
 if (HAVE_VULKAN)
 	list( APPEND PROJECT_LIBRARIES "zvulkan" )
 endif()
@@ -387,7 +387,7 @@ if (TARGET WebP::webp)
 	endif()
 endif()
 
-include_directories( SYSTEM "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
+include_directories( SYSTEM "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )

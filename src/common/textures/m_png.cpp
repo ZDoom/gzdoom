@@ -36,7 +36,7 @@
 
 #include <algorithm>
 #include <stdlib.h>
-#include <zlib.h>
+#include <miniz.h>
 #include <stdint.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()

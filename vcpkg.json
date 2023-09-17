@@ -28,10 +28,6 @@
     },
     "dependencies": [
         {
-            "name": "zlib",
-            "platform": "!windows | (windows & static & staticcrt)"
-        },
-        {
             "name": "bzip2",
             "platform": "!windows | (windows & static & staticcrt)"
         },

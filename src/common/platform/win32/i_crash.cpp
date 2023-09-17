@@ -68,7 +68,7 @@
 #include "i_mainwindow.h"
 
 #include <time.h>
-#include <zlib.h>
+#include <miniz.h>
 
 // MACROS ------------------------------------------------------------------
 

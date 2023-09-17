@@ -38,9 +38,9 @@ extern int sys_ostype;
 #include "gl_interface.h"
 #include "printf.h"
 
-CVAR(Int, sys_statsenabled49, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
-CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
-CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
+CVAR(Int, anonstats_enabled411, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
+CVAR(String, anonstats_host, "gzstats.drdteam.org", CVAR_NOSET)
+CVAR(Int, anonstats_port, 80, CVAR_NOSET)
 
 #define CHECKVERSION 490
 #define CHECKVERSIONSTR "490"
@@ -73,9 +73,6 @@ FString URLencode(const char *s)
 
 bool I_HTTPRequest(const char* request)
 {
-	if ((*sys_statshost)[0] == 0)
-		return false; // no host, disable
-
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
@@ -84,20 +81,20 @@ bool I_HTTPRequest(const char* request)
 	}
 	SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	struct hostent *host;
-	host = gethostbyname(sys_statshost);
+	host = gethostbyname(anonstats_host);
 	if (host == nullptr)
 	{
 		DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
 		return false;
 	}
 	SOCKADDR_IN SockAddr;
-	SockAddr.sin_port = htons(sys_statsport);
+	SockAddr.sin_port = htons(anonstats_port);
 	SockAddr.sin_family = AF_INET;
 	SockAddr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
-	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *sys_statshost);
+	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *anonstats_host);
 	if (connect(Socket, (SOCKADDR*)(&SockAddr), sizeof(SockAddr)) != 0)
 	{
-		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *sys_statshost);
+		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *anonstats_host);
 		return false;
 	}
 	send(Socket, request, (int)strlen(request), 0);
@@ -119,14 +116,14 @@ bool I_HTTPRequest(const char* request)
 #else
 bool I_HTTPRequest(const char* request)
 {
-	if ((*sys_statshost)[0] == 0)
+	if ((*anonstats_host)[0] == 0)
 		return false; // no host, disable
 
 	int sockfd, portno, n;
 		struct sockaddr_in serv_addr;
 		struct hostent *server;
 
-		portno = sys_statsport;
+		portno = anonstats_port;
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (sockfd < 0)
@@ -135,7 +132,7 @@ bool I_HTTPRequest(const char* request)
 		return false;
 	}
 
-	server = gethostbyname(sys_statshost);
+	server = gethostbyname(anonstats_host);
 	if (server == NULL)
 	{
 		DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
@@ -148,10 +145,10 @@ bool I_HTTPRequest(const char* request)
 		  server->h_length);
 	serv_addr.sin_port = htons(portno);
 
-	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *sys_statshost);
+	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *anonstats_host);
 	if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
-		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *sys_statshost);
+		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *anonstats_host);
 		return false;
 	}
 
@@ -294,7 +291,7 @@ void D_DoAnonStats()
 {
 #ifndef _DEBUG
 	// Do not repeat if already sent.
-	if (sys_statsenabled49 != 1 || sentstats_hwr_done >= CHECKVERSION)
+	if (anonstats_enabled411 != 1 || sentstats_hwr_done >= CHECKVERSION)
 	{
 		return;
 	}
@@ -307,7 +304,7 @@ void D_DoAnonStats()
 
 	static char requeststring[1024];
 	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202109.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), *sys_statshost, GAMENAME, VERSIONSTR);
+		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 #if 1//ndef _DEBUG
 	// Don't send info in debug builds
@@ -320,7 +317,7 @@ void D_DoAnonStats()
 
 void D_ConfirmSendStats()
 {
-	if (sys_statsenabled49 >= 0)
+	if (anonstats_enabled411 >= 0)
 	{
 		return;
 	}
@@ -376,7 +373,7 @@ void D_ConfirmSendStats()
 	enabled.Int = SDL_ShowMessageBox(&messageboxdata, &buttonid) == 0 && buttonid == 0;
 #endif // _WIN32
 
-	sys_statsenabled49->ForceSet(enabled, CVAR_Int);
+	anonstats_enabled411->ForceSet(enabled, CVAR_Int);
 }
 
 #endif // NO_SEND_STATS

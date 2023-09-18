@@ -201,9 +201,6 @@ void VkLightmap::RenderBakeImage()
 			pc.TileY = (float)selectedSurface.Y;
 			pc.SurfaceIndex = mesh->GetSurfaceIndex(targetSurface);
 			pc.TextureSize = (float)bakeImageSize;
-			pc.LightmapOrigin = targetSurface->worldOrigin - targetSurface->worldStepX - targetSurface->worldStepY;
-			pc.LightmapStepX = targetSurface->worldStepX * viewport.width;
-			pc.LightmapStepY = targetSurface->worldStepY * viewport.height;
 			pc.TileWidth = (float)targetSurface->texWidth;
 			pc.TileHeight = (float)targetSurface->texHeight;
 			pc.WorldToLocal = targetSurface->translateWorldToLocal;

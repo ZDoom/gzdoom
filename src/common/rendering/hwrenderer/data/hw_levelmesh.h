@@ -68,11 +68,6 @@ struct LevelMeshSurface
 	BBox bounds;
 	uint16_t sampleDimension = 0;
 
-	// Lightmap world coordinates for the texture
-	FVector3 worldOrigin = { 0.f, 0.f, 0.f };
-	FVector3 worldStepX = { 0.f, 0.f, 0.f };
-	FVector3 worldStepY = { 0.f, 0.f, 0.f };
-
 	// Calculate world coordinates to UV coordinates
 	FVector3 translateWorldToLocal = { 0.f, 0.f, 0.f };
 	FVector3 projLocalToU = { 0.f, 0.f, 0.f };

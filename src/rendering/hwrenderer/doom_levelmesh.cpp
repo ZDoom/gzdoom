@@ -1194,7 +1194,6 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 {
 	BBox bounds;
 	FVector3 roundedSize;
-	FVector3 tOrigin;
 	int width;
 	int height;
 	float d;
@@ -1287,11 +1286,8 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	}
 
 
-	tOrigin = bounds.min;
-
-	// project tOrigin and tCoords so they lie on the plane
+	// project tCoords so they lie on the plane
 	d = ((bounds.min | FVector3(plane.X, plane.Y, plane.Z)) - plane.W) / plane[axis]; //d = (plane->PointToDist(bounds.min)) / plane->Normal()[axis];
-	tOrigin[axis] -= d;
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -1302,7 +1298,4 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	surface.texWidth = width;
 	surface.texHeight = height;
-	surface.worldOrigin = tOrigin;
-	surface.worldStepX = tCoords[0] * (float)surface.sampleDimension;
-	surface.worldStepY = tCoords[1] * (float)surface.sampleDimension;
 }

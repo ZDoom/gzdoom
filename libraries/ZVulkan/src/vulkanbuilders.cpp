@@ -1,4 +1,3 @@
-#include <stdexcept>
 #include "vulkanbuilders.h"
 #include "vulkansurface.h"
 #include "vulkancompatibledevice.h"
@@ -281,7 +280,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::Create(const char *shadername, Vulk
 	bool compileSuccess = shader.parse(&resources, 110, false, EShMsgVulkanRules, includer);
 	if (!compileSuccess)
 	{
-		throw std::runtime_error(std::string("Shader compile failed: ") + shader.getInfoLog());
+		VulkanError((std::string("Shader compile failed: ") + shader.getInfoLog()).c_str());
 	}
 
 	glslang::TProgram program;
@@ -289,13 +288,13 @@ std::unique_ptr<VulkanShader> ShaderBuilder::Create(const char *shadername, Vulk
 	bool linkSuccess = program.link(EShMsgDefault);
 	if (!linkSuccess)
 	{
-		throw std::runtime_error(std::string("Shader link failed: ") + program.getInfoLog());
+		VulkanError((std::string("Shader link failed: ") + program.getInfoLog()).c_str());
 	}
 
 	glslang::TIntermediate *intermediate = program.getIntermediate(stage);
 	if (!intermediate)
 	{
-		throw std::runtime_error("Internal shader compiler error");
+		VulkanError("Internal shader compiler error");
 	}
 
 	glslang::SpvOptions spvOptions;
@@ -315,7 +314,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::Create(const char *shadername, Vulk
 	VkShaderModule shaderModule;
 	VkResult result = vkCreateShaderModule(device->device, &createInfo, nullptr, &shaderModule);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("Could not create vulkan shader module");
+		VulkanError("Could not create vulkan shader module");
 
 	auto obj = std::make_unique<VulkanShader>(device, shaderModule);
 	if (debugName)
@@ -704,7 +703,7 @@ std::unique_ptr<VulkanAccelerationStructure> AccelerationStructureBuilder::Creat
 	VkAccelerationStructureKHR hande = {};
 	VkResult result = vkCreateAccelerationStructureKHR(device->device, &createInfo, nullptr, &hande);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkCreateAccelerationStructureKHR failed");
+		VulkanError("vkCreateAccelerationStructureKHR failed");
 	auto obj = std::make_unique<VulkanAccelerationStructure>(device, hande);
 	if (debugName)
 		obj->SetDebugName(debugName);

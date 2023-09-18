@@ -34,13 +34,13 @@ void VulkanSwapChain::Create(int width, int height, int imageCount, bool vsync, 
 		uint32_t imageCount;
 		VkResult result = vkGetSwapchainImagesKHR(device->device, swapchain, &imageCount, nullptr);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetSwapchainImagesKHR failed");
+			VulkanError("vkGetSwapchainImagesKHR failed");
 
 		std::vector<VkImage> swapchainImages;
 		swapchainImages.resize(imageCount);
 		result = vkGetSwapchainImagesKHR(device->device, swapchain, &imageCount, swapchainImages.data());
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetSwapchainImagesKHR failed (2)");
+			VulkanError("vkGetSwapchainImagesKHR failed (2)");
 
 		for (VkImage vkimage : swapchainImages)
 		{
@@ -103,7 +103,7 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 	}
 
 	if (caps.PresentModes.empty())
-		throw std::runtime_error("No surface present modes supported");
+		VulkanError("No surface present modes supported");
 
 	bool supportsFifoRelaxed = std::find(caps.PresentModes.begin(), caps.PresentModes.end(), VK_PRESENT_MODE_FIFO_RELAXED_KHR) != caps.PresentModes.end();
 	bool supportsMailbox = std::find(caps.PresentModes.begin(), caps.PresentModes.end(), VK_PRESENT_MODE_MAILBOX_KHR) != caps.PresentModes.end();
@@ -241,7 +241,8 @@ int VulkanSwapChain::AcquireImage(VulkanSemaphore* semaphore, VulkanFence* fence
 	}
 	else
 	{
-		throw std::runtime_error("Failed to acquire next image!");
+		VulkanError("Failed to acquire next image!");
+		return -1;
 	}
 }
 
@@ -270,15 +271,15 @@ void VulkanSwapChain::QueuePresent(int imageIndex, VulkanSemaphore* semaphore)
 		// The spec says we can recover from this.
 		// However, if we are out of memory it is better to crash now than in some other weird place further away from the source of the problem.
 
-		throw std::runtime_error("vkQueuePresentKHR failed: out of memory");
+		VulkanError("vkQueuePresentKHR failed: out of memory");
 	}
 	else if (result == VK_ERROR_DEVICE_LOST)
 	{
-		throw std::runtime_error("vkQueuePresentKHR failed: device lost");
+		VulkanError("vkQueuePresentKHR failed: device lost");
 	}
 	else
 	{
-		throw std::runtime_error("vkQueuePresentKHR failed");
+		VulkanError("vkQueuePresentKHR failed");
 	}
 }
 
@@ -332,7 +333,7 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 
 		VkResult result = vkGetPhysicalDeviceSurfaceCapabilities2KHR(device->PhysicalDevice.Device, &surfaceInfo, &caps2);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilities2KHR failed");
+			VulkanError("vkGetPhysicalDeviceSurfaceCapabilities2KHR failed");
 
 		caps.Capabilites = caps2.surfaceCapabilities;
 	}
@@ -340,7 +341,7 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 	{
 		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->PhysicalDevice.Device, device->Surface->Surface, &caps.Capabilites);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
+			VulkanError("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
 	}
 
 #ifdef WIN32
@@ -351,14 +352,14 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 		uint32_t presentModeCount = 0;
 		VkResult result = vkGetPhysicalDeviceSurfacePresentModes2EXT(device->PhysicalDevice.Device, &surfaceInfo, &presentModeCount, nullptr);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModes2EXT failed");
+			VulkanError("vkGetPhysicalDeviceSurfacePresentModes2EXT failed");
 
 		if (presentModeCount > 0)
 		{
 			caps.PresentModes.resize(presentModeCount);
 			result = vkGetPhysicalDeviceSurfacePresentModes2EXT(device->PhysicalDevice.Device, &surfaceInfo, &presentModeCount, caps.PresentModes.data());
 			if (result != VK_SUCCESS)
-				throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModes2EXT failed");
+				VulkanError("vkGetPhysicalDeviceSurfacePresentModes2EXT failed");
 		}
 	}
 	else
@@ -367,14 +368,14 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 		uint32_t presentModeCount = 0;
 		VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->PhysicalDevice.Device, device->Surface->Surface, &presentModeCount, nullptr);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
+			VulkanError("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
 
 		if (presentModeCount > 0)
 		{
 			caps.PresentModes.resize(presentModeCount);
 			result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->PhysicalDevice.Device, device->Surface->Surface, &presentModeCount, caps.PresentModes.data());
 			if (result != VK_SUCCESS)
-				throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
+				VulkanError("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
 		}
 	}
 
@@ -383,14 +384,14 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 		uint32_t surfaceFormatCount = 0;
 		VkResult result = vkGetPhysicalDeviceSurfaceFormats2KHR(device->PhysicalDevice.Device, &surfaceInfo, &surfaceFormatCount, nullptr);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormats2KHR failed");
+			VulkanError("vkGetPhysicalDeviceSurfaceFormats2KHR failed");
 
 		if (surfaceFormatCount > 0)
 		{
 			std::vector<VkSurfaceFormat2KHR> formats(surfaceFormatCount, { VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR });
 			result = vkGetPhysicalDeviceSurfaceFormats2KHR(device->PhysicalDevice.Device, &surfaceInfo, &surfaceFormatCount, formats.data());
 			if (result != VK_SUCCESS)
-				throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormats2KHR failed");
+				VulkanError("vkGetPhysicalDeviceSurfaceFormats2KHR failed");
 
 			for (VkSurfaceFormat2KHR& fmt : formats)
 				caps.Formats.push_back(fmt.surfaceFormat);
@@ -401,14 +402,14 @@ VulkanSurfaceCapabilities VulkanSwapChain::GetSurfaceCapabilities(bool exclusive
 		uint32_t surfaceFormatCount = 0;
 		VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->PhysicalDevice.Device, device->Surface->Surface, &surfaceFormatCount, nullptr);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
+			VulkanError("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
 		
 		if (surfaceFormatCount > 0)
 		{
 			caps.Formats.resize(surfaceFormatCount);
 			result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->PhysicalDevice.Device, device->Surface->Surface, &surfaceFormatCount, caps.Formats.data());
 			if (result != VK_SUCCESS)
-				throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
+				VulkanError("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
 		}
 	}
 

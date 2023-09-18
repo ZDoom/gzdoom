@@ -200,6 +200,7 @@ void VkLightmap::RenderBakeImage()
 				}
 
 				surface->LightListPos = lights.Pos;
+				surface->LightListResetCounter = lights.ResetCounter;
 
 				LightInfo* lightinfo = &lights.Lights[lights.Pos];
 				for (const LevelMeshLight* light : surface->LightList)

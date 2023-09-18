@@ -1658,9 +1658,9 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, FRenderState& state, seg_t * seg, F3DF
 
 	lightmap = nullptr;
 	if (seg->sidedef == seg->linedef->sidedef[0])
-		lightmap = seg->linedef->sidedef[1]->lightmap[4 + roverIndex];
+		lightmap = seg->linedef->sidedef[1]->lightmap ? seg->linedef->sidedef[1]->lightmap[4 + roverIndex] : nullptr;
 	else
-		lightmap = seg->linedef->sidedef[0]->lightmap[4 + roverIndex];
+		lightmap = seg->linedef->sidedef[0]->lightmap ? seg->linedef->sidedef[0]->lightmap[4 + roverIndex] : nullptr;
 
 	if (rover->flags&FF_FOG)
 	{

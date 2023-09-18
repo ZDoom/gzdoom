@@ -121,7 +121,7 @@ struct C7zArchive
 		file.Seek(0, FileReader::SeekSet);
 		LookToRead2_CreateVTable(&LookStream, false);
 		LookStream.realStream = &ArchiveStream.s;
-		LookToRead2_Init(&LookStream);
+		LookToRead2_INIT(&LookStream);
 		LookStream.bufSize = sizeof(StreamBuffer);
 		LookStream.buf = StreamBuffer;
 		SzArEx_Init(&DB);

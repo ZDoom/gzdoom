@@ -81,6 +81,7 @@ enum
 	METHOD_DEFLATE = 8,
 	METHOD_BZIP2 = 12,
 	METHOD_LZMA = 14,
+	METHOD_XZ = 95,
 	METHOD_PPMD = 98,
 	METHOD_LZSS = 1337,	// not used in Zips - this is for Console Doom compression
 	METHOD_ZLIB = 1338,	// Zlib stream with header, used by compressed nodes.

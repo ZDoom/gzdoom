@@ -1,7 +1,7 @@
 
 layout(set = 0, binding = 0) uniform sampler2DMS tex;
 
-layout(location = 0) in vec3 worldpos;
+layout(location = 0) in vec2 TexCoord;
 layout(location = 0) out vec4 fragcolor;
 
 vec4 samplePixel(ivec2 pos, int count)

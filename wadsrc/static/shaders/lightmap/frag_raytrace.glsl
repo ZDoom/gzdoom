@@ -80,6 +80,16 @@ layout(push_constant) uniform PushConstants
 	float PushPadding3;
 	vec3 LightmapStepY;
 	float PushPadding4;
+	vec3 WorldToLocal;
+	float PushPadding5;
+	vec3 ProjLocalToU;
+	float PushPadding6;
+	vec3 ProjLocalToV;
+	float PushPadding7;
+	int TileX;
+	int TileY;
+	int TileWidth;
+	int TileHeight;
 };
 
 layout(location = 0) centroid in vec3 worldpos;

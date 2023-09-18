@@ -205,10 +205,17 @@ void VkLightmap::RenderBakeImage()
 			LightmapPushConstants pc;
 			pc.LightStart = firstLight;
 			pc.LightEnd = firstLight + lightCount;
+			pc.TileX = selectedSurface.X;
+			pc.TileY = selectedSurface.Y;
 			pc.SurfaceIndex = mesh->GetSurfaceIndex(targetSurface);
 			pc.LightmapOrigin = targetSurface->worldOrigin - targetSurface->worldStepX - targetSurface->worldStepY;
 			pc.LightmapStepX = targetSurface->worldStepX * viewport.width;
 			pc.LightmapStepY = targetSurface->worldStepY * viewport.height;
+			pc.TileWidth = targetSurface->texWidth;
+			pc.TileHeight = targetSurface->texHeight;
+			pc.WorldToLocal = targetSurface->translateWorldToLocal;
+			pc.ProjLocalToU = targetSurface->projLocalToU;
+			pc.ProjLocalToV = targetSurface->projLocalToV;
 			fb->GetCommands()->GetTransferCommands()->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
 
 			SceneVertex* vertex = &vertices.Vertices[firstVertex];
@@ -217,15 +224,15 @@ void VkLightmap::RenderBakeImage()
 			{
 				for (int idx = 0; idx < vertexCount; idx++)
 				{
-					(vertex++)->Position = ToUV(mesh->MeshVertices[surface->startVertIndex + idx], targetSurface);
+					(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + idx];
 				}
 			}
 			else
 			{
-				(vertex++)->Position = ToUV(mesh->MeshVertices[surface->startVertIndex + 0], targetSurface);
-				(vertex++)->Position = ToUV(mesh->MeshVertices[surface->startVertIndex + 2], targetSurface);
-				(vertex++)->Position = ToUV(mesh->MeshVertices[surface->startVertIndex + 3], targetSurface);
-				(vertex++)->Position = ToUV(mesh->MeshVertices[surface->startVertIndex + 1], targetSurface);
+				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 0];
+				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 2];
+				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 3];
+				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 1];
 			}
 
 			fb->GetCommands()->GetTransferCommands()->draw(vertexCount, 1, firstVertex, 0);
@@ -290,24 +297,7 @@ void VkLightmap::ResolveBakeImage()
 	viewport.height = (float)bakeImage.maxY;
 	cmdbuffer->setViewport(0, 1, &viewport);
 
-	LightmapPushConstants pc;
-	pc.LightStart = 0;
-	pc.LightEnd = 0;
-	pc.SurfaceIndex = 0;
-	pc.LightmapOrigin = FVector3(0.0f, 0.0f, 0.0f);
-	pc.LightmapStepX = FVector3(0.0f, 0.0f, 0.0f);
-	pc.LightmapStepY = FVector3(0.0f, 0.0f, 0.0f);
-	cmdbuffer->pushConstants(resolve.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapPushConstants), &pc);
-
-	int firstVertex = vertices.Pos;
-	int vertexCount = 4;
-	vertices.Pos += vertexCount;
-	SceneVertex* vertex = &vertices.Vertices[firstVertex];
-	vertex[0].Position = FVector2(0.0f, 0.0f);
-	vertex[1].Position = FVector2(1.0f, 0.0f);
-	vertex[2].Position = FVector2(1.0f, 1.0f);
-	vertex[3].Position = FVector2(0.0f, 1.0f);
-	cmdbuffer->draw(vertexCount, 1, firstVertex, 0);
+	cmdbuffer->draw(3, 1, 0, 0);
 
 	cmdbuffer->endRenderPass();
 }
@@ -339,24 +329,7 @@ void VkLightmap::BlurBakeImage()
 		viewport.height = (float)bakeImage.maxY;
 		cmdbuffer->setViewport(0, 1, &viewport);
 
-		LightmapPushConstants pc;
-		pc.LightStart = 0;
-		pc.LightEnd = 0;
-		pc.SurfaceIndex = 0;
-		pc.LightmapOrigin = FVector3(0.0f, 0.0f, 0.0f);
-		pc.LightmapStepX = FVector3(0.0f, 0.0f, 0.0f);
-		pc.LightmapStepY = FVector3(0.0f, 0.0f, 0.0f);
-		cmdbuffer->pushConstants(blur.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapPushConstants), &pc);
-
-		int firstVertex = vertices.Pos;
-		int vertexCount = 4;
-		vertices.Pos += vertexCount;
-		SceneVertex* vertex = &vertices.Vertices[firstVertex];
-		vertex[0].Position = FVector2(0.0f, 0.0f);
-		vertex[1].Position = FVector2(1.0f, 0.0f);
-		vertex[2].Position = FVector2(1.0f, 1.0f);
-		vertex[3].Position = FVector2(0.0f, 1.0f);
-		cmdbuffer->draw(vertexCount, 1, firstVertex, 0);
+		cmdbuffer->draw(3, 1, 0, 0);
 
 		cmdbuffer->endRenderPass();
 	}
@@ -384,24 +357,7 @@ void VkLightmap::BlurBakeImage()
 		viewport.height = (float)bakeImage.maxY;
 		cmdbuffer->setViewport(0, 1, &viewport);
 
-		LightmapPushConstants pc;
-		pc.LightStart = 0;
-		pc.LightEnd = 0;
-		pc.SurfaceIndex = 0;
-		pc.LightmapOrigin = FVector3(0.0f, 0.0f, 0.0f);
-		pc.LightmapStepX = FVector3(0.0f, 0.0f, 0.0f);
-		pc.LightmapStepY = FVector3(0.0f, 0.0f, 0.0f);
-		cmdbuffer->pushConstants(blur.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapPushConstants), &pc);
-
-		int firstVertex = vertices.Pos;
-		int vertexCount = 4;
-		vertices.Pos += vertexCount;
-		SceneVertex* vertex = &vertices.Vertices[firstVertex];
-		vertex[0].Position = FVector2(0.0f, 0.0f);
-		vertex[1].Position = FVector2(1.0f, 0.0f);
-		vertex[2].Position = FVector2(1.0f, 1.0f);
-		vertex[3].Position = FVector2(0.0f, 1.0f);
-		cmdbuffer->draw(vertexCount, 1, firstVertex, 0);
+		cmdbuffer->draw(3, 1, 0, 0);
 
 		cmdbuffer->endRenderPass();
 	}
@@ -480,17 +436,24 @@ void VkLightmap::CreateShaders()
 		traceprefix += "#define USE_RAYQUERY\r\n";
 	}
 
-	shaders.vert = ShaderBuilder()
+	shaders.vertRaytrace = ShaderBuilder()
 		.Type(ShaderType::Vertex)
 		.AddSource("VersionBlock", prefix)
-		.AddSource("vert.glsl", LoadPrivateShaderLump("shaders/lightmap/vert.glsl").GetChars())
-		.DebugName("VkLightmap.Vert")
-		.Create("VkLightmap.Vert", fb->GetDevice());
+		.AddSource("vert_raytrace.glsl", LoadPrivateShaderLump("shaders/lightmap/vert_raytrace.glsl").GetChars())
+		.DebugName("VkLightmap.VertRaytrace")
+		.Create("VkLightmap.VertRaytrace", fb->GetDevice());
+
+	shaders.vertScreenquad = ShaderBuilder()
+		.Type(ShaderType::Vertex)
+		.AddSource("VersionBlock", prefix)
+		.AddSource("vert_screenquad.glsl", LoadPrivateShaderLump("shaders/lightmap/vert_screenquad.glsl").GetChars())
+		.DebugName("VkLightmap.VertScreenquad")
+		.Create("VkLightmap.VertScreenquad", fb->GetDevice());
 
 	shaders.fragRaytrace = ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.AddSource("VersionBlock", traceprefix)
-		.AddSource("frag.glsl", LoadPrivateShaderLump("shaders/lightmap/frag.glsl").GetChars())
+		.AddSource("frag.glsl", LoadPrivateShaderLump("shaders/lightmap/frag_raytrace.glsl").GetChars())
 		.DebugName("VkLightmap.FragRaytrace")
 		.Create("VkLightmap.FragRaytrace", fb->GetDevice());
 
@@ -579,10 +542,10 @@ void VkLightmap::CreateRaytracePipeline()
 	raytrace.pipeline = GraphicsPipelineBuilder()
 		.Layout(raytrace.pipelineLayout.get())
 		.RenderPass(raytrace.renderPass.get())
-		.AddVertexShader(shaders.vert.get())
+		.AddVertexShader(shaders.vertRaytrace.get())
 		.AddFragmentShader(shaders.fragRaytrace.get())
 		.AddVertexBufferBinding(0, sizeof(SceneVertex))
-		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(SceneVertex, Position))
+		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SceneVertex, Position))
 		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN)
 		.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
 		.RasterizationSamples(VK_SAMPLE_COUNT_4_BIT)
@@ -683,11 +646,9 @@ void VkLightmap::CreateResolvePipeline()
 	resolve.pipeline = GraphicsPipelineBuilder()
 		.Layout(resolve.pipelineLayout.get())
 		.RenderPass(resolve.renderPass.get())
-		.AddVertexShader(shaders.vert.get())
+		.AddVertexShader(shaders.vertScreenquad.get())
 		.AddFragmentShader(shaders.fragResolve.get())
-		.AddVertexBufferBinding(0, sizeof(SceneVertex))
-		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(SceneVertex, Position))
-		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN)
+		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 		.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
 		.Viewport(0.0f, 0.0f, 0.0f, 0.0f)
 		.Scissor(0, 0, 4096, 4096)
@@ -741,11 +702,9 @@ void VkLightmap::CreateBlurPipeline()
 		blur.pipeline[i] = GraphicsPipelineBuilder()
 			.Layout(blur.pipelineLayout.get())
 			.RenderPass(blur.renderPass.get())
-			.AddVertexShader(shaders.vert.get())
+			.AddVertexShader(shaders.vertScreenquad.get())
 			.AddFragmentShader(shaders.fragBlur[i].get())
-			.AddVertexBufferBinding(0, sizeof(SceneVertex))
-			.AddVertexAttribute(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(SceneVertex, Position))
-			.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN)
+			.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 			.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
 			.Viewport(0.0f, 0.0f, 0.0f, 0.0f)
 			.Scissor(0, 0, 4096, 4096)

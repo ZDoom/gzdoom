@@ -29,6 +29,16 @@ struct LightmapPushConstants
 	float PushPadding3;
 	FVector3 LightmapStepY;
 	float PushPadding4;
+	FVector3 WorldToLocal;
+	float PushPadding5;
+	FVector3 ProjLocalToU;
+	float PushPadding6;
+	FVector3 ProjLocalToV;
+	float PushPadding7;
+	int32_t TileX;
+	int32_t TileY;
+	int32_t TileWidth;
+	int32_t TileHeight;
 };
 
 struct LightmapBakeImage
@@ -63,7 +73,7 @@ struct LightmapBakeImage
 
 struct SceneVertex
 {
-	FVector2 Position;
+	FVector3 Position;
 };
 
 struct LightInfo
@@ -161,7 +171,8 @@ private:
 
 	struct
 	{
-		std::unique_ptr<VulkanShader> vert;
+		std::unique_ptr<VulkanShader> vertRaytrace;
+		std::unique_ptr<VulkanShader> vertScreenquad;
 		std::unique_ptr<VulkanShader> fragRaytrace;
 		std::unique_ptr<VulkanShader> fragResolve;
 		std::unique_ptr<VulkanShader> fragBlur[2];

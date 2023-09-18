@@ -10,17 +10,31 @@
 #include "common/rendering/vulkan/accelstructs/vk_lightmap.h"
 #include <vulkan/accelstructs/halffloat.h>
 
-void PrintMissingLevelMesh() { Printf("No level mesh. Perhaps your level has no lightmap loaded?\n"); }
-void PrintNoLightmap() { Printf("Lightmap is not enabled in this level.\n"); }
+static bool RequireLevelMesh()
+{
+	if (level.levelMesh)
+		return true;
 
-#define GET_LEVELMESH() auto* levelMesh = level.levelMesh
-#define REQUIRE_LEVELMESH(returnValue) GET_LEVELMESH(); do { if(!levelMesh) { PrintMissingLevelMesh(); return returnValue ; } } while(false)
-#define REQUIRE_LIGHTMAP(returnValue) REQUIRE_LEVELMESH(returnValue); do { if(!level.lightmaps) { PrintNoLightmap(); return returnValue ; } } while(false)
+	Printf("No level mesh. Perhaps your level has no lightmap loaded?\n");
+	return false;
+}
+
+static bool RequireLightmap()
+{
+	if (!RequireLevelMesh())
+		return false;
+
+	if (level.lightmaps)
+		return true;
+
+	Printf("Lightmap is not enabled in this level.\n");
+	return false;
+}
 
 ADD_STAT(lightmap)
 {
 	FString out;
-	GET_LEVELMESH();
+	DoomLevelMesh* levelMesh = level.levelMesh;
 
 	if (!levelMesh || !level.lightmaps)
 	{
@@ -43,30 +57,30 @@ ADD_STAT(lightmap)
 
 CCMD(dumplevelmesh)
 {
-	REQUIRE_LEVELMESH();
-	levelMesh->DumpMesh(FString("levelmesh.obj"), FString("levelmesh.mtl"));
+	if (!RequireLevelMesh()) return;
+	level.levelMesh->DumpMesh(FString("levelmesh.obj"), FString("levelmesh.mtl"));
 	Printf("Level mesh exported.\n");
 }
 
 CCMD(invalidatelightmap)
 {
-	REQUIRE_LIGHTMAP();
+	if (!RequireLightmap()) return;
 
 	int count = 0;
-	for (auto& surface : levelMesh->Surfaces)
+	for (auto& surface : level.levelMesh->Surfaces)
 	{
 		if (!surface.needsUpdate)
 			++count;
 		surface.needsUpdate = true;
 	}
-	Printf("Marked %d out of %d surfaces for update.\n", count, levelMesh->Surfaces.Size());
+	Printf("Marked %d out of %d surfaces for update.\n", count, level.levelMesh->Surfaces.Size());
 }
 
 void PrintSurfaceInfo(const DoomLevelMeshSurface* surface)
 {
-	REQUIRE_LEVELMESH();
+	if (!RequireLevelMesh()) return;
 
-	Printf("Surface %d (%p)\n    Type: %d, TypeIndex: %d, ControlSector: %d\n", levelMesh->GetSurfaceIndex(surface), surface, surface->Type, surface->typeIndex, surface->ControlSector ? surface->ControlSector->Index() : -1);
+	Printf("Surface %d (%p)\n    Type: %d, TypeIndex: %d, ControlSector: %d\n", level.levelMesh->GetSurfaceIndex(surface), surface, surface->Type, surface->typeIndex, surface->ControlSector ? surface->ControlSector->Index() : -1);
 	Printf("    Atlas page: %d, x:%d, y:%d\n", surface->atlasPageIndex, surface->atlasX, surface->atlasY);
 	Printf("    Pixels: %dx%d (area: %d)\n", surface->texWidth, surface->texHeight, surface->Area());
 	Printf("    Sample dimension: %d\n", surface->sampleDimension);
@@ -87,7 +101,7 @@ DVector3 RayDir(DAngle angle, DAngle pitch)
 
 CCMD(surfaceinfo)
 {
-	REQUIRE_LEVELMESH();
+	if (!RequireLevelMesh()) return;
 
 	auto pov = players[consoleplayer].mo;
 	if (!pov)
@@ -101,7 +115,7 @@ CCMD(surfaceinfo)
 	auto angle = pov->Angles.Yaw;
 	auto pitch = pov->Angles.Pitch;
 
-	const auto surface = (DoomLevelMeshSurface*)levelMesh->Trace(posXYZ, FVector3(RayDir(angle, pitch)), 32000.0f);
+	const auto surface = (DoomLevelMeshSurface*)level.levelMesh->Trace(posXYZ, FVector3(RayDir(angle, pitch)), 32000.0f);
 	if (surface)
 	{
 		PrintSurfaceInfo(surface);

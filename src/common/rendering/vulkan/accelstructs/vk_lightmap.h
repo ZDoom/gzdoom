@@ -127,7 +127,6 @@ private:
 	void CreateResolvePipeline();
 	void CreateBlurPipeline();
 	void CreateUniformBuffer();
-	void CreateSceneVertexBuffer();
 	void CreateSceneLightBuffer();
 	void CreateBakeImage();
 
@@ -152,14 +151,6 @@ private:
 		int NumStructs = 256;
 		VkDeviceSize StructStride = sizeof(Uniforms);
 	} uniforms;
-
-	struct
-	{
-		const int BufferSize = 1 * 1024 * 1024;
-		std::unique_ptr<VulkanBuffer> Buffer;
-		SceneVertex* Vertices = nullptr;
-		int Pos = 0;
-	} vertices;
 
 	struct
 	{

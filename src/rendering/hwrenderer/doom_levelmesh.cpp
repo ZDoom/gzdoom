@@ -129,7 +129,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 
 	for (size_t i = 0; i < Surfaces.Size(); i++)
 	{
-		const auto &s = Surfaces[i];
+		DoomLevelMeshSurface &s = Surfaces[i];
 		int numVerts = s.numVerts;
 		unsigned int pos = s.startVertIndex;
 		FVector3* verts = &MeshVertices[pos];
@@ -138,6 +138,9 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 		{
 			MeshUVIndex.Push(j);
 		}
+
+		s.startElementIndex = MeshElements.Size();
+		s.numElements = 0;
 
 		if (s.Type == ST_FLOOR || s.Type == ST_CEILING)
 		{
@@ -149,6 +152,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 					MeshElements.Push(pos + j - 1);
 					MeshElements.Push(pos + j);
 					MeshSurfaceIndexes.Push((int)i);
+					s.numElements += 3;
 				}
 			}
 		}
@@ -160,6 +164,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 				MeshElements.Push(pos + 1);
 				MeshElements.Push(pos + 2);
 				MeshSurfaceIndexes.Push((int)i);
+				s.numElements += 3;
 			}
 			if (!IsDegenerate(verts[1], verts[2], verts[3]))
 			{
@@ -167,6 +172,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 				MeshElements.Push(pos + 2);
 				MeshElements.Push(pos + 1);
 				MeshSurfaceIndexes.Push((int)i);
+				s.numElements += 3;
 			}
 		}
 	}

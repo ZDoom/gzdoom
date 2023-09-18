@@ -32,7 +32,6 @@ VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 	useRayQuery = fb->GetDevice()->PhysicalDevice.Features.RayQuery.rayQuery;
 
 	CreateUniformBuffer();
-	CreateSceneVertexBuffer();
 	CreateSceneLightBuffer();
 
 	CreateShaders();
@@ -44,8 +43,6 @@ VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 
 VkLightmap::~VkLightmap()
 {
-	if (vertices.Buffer)
-		vertices.Buffer->Unmap();
 	if (lights.Buffer)
 		lights.Buffer->Unmap();
 }
@@ -65,7 +62,6 @@ void VkLightmap::SetLevelMesh(LevelMesh* level)
 void VkLightmap::BeginFrame()
 {
 	lights.Pos = 0;
-	vertices.Pos = 0;
 }
 
 void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
@@ -139,7 +135,8 @@ void VkLightmap::RenderBakeImage()
 		.Execute(cmdbuffer);
 
 	VkDeviceSize offset = 0;
-	cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
+	cmdbuffer->bindVertexBuffers(0, 1, &fb->GetRaytrace()->GetVertexBuffer()->buffer, &offset);
+	cmdbuffer->bindIndexBuffer(fb->GetRaytrace()->GetIndexBuffer()->buffer, 0, VK_INDEX_TYPE_UINT32);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipeline.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 0, raytrace.descriptorSet0.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 1, raytrace.descriptorSet1.get());
@@ -174,19 +171,16 @@ void VkLightmap::RenderBakeImage()
 				continue; // Bounding box not visible
 
 			int lightCount = (int)surface->LightList.size();
-			int vertexCount = surface->numVerts;
 
-			if (lights.Pos + lightCount > lights.BufferSize || vertices.Pos + vertexCount > vertices.BufferSize)
+			if (lights.Pos + lightCount > lights.BufferSize)
 			{
-				// Our vertex or light buffer is full. Postpone the rest.
+				// Our light buffer is full. Postpone the rest.
 				buffersFull = true;
 				break;
 			}
 
 			int firstLight = lights.Pos;
-			int firstVertex = vertices.Pos;
 			lights.Pos += lightCount;
-			vertices.Pos += vertexCount;
 
 			LightInfo* lightinfo = &lights.Lights[firstLight];
 			for (const LevelMeshLight* light : surface->LightList)
@@ -218,24 +212,7 @@ void VkLightmap::RenderBakeImage()
 			pc.ProjLocalToV = targetSurface->projLocalToV;
 			fb->GetCommands()->GetTransferCommands()->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
 
-			SceneVertex* vertex = &vertices.Vertices[firstVertex];
-
-			if (surface->Type == ST_FLOOR || surface->Type == ST_CEILING)
-			{
-				for (int idx = 0; idx < vertexCount; idx++)
-				{
-					(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + idx];
-				}
-			}
-			else
-			{
-				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 0];
-				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 2];
-				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 3];
-				(vertex++)->Position = mesh->MeshVertices[surface->startVertIndex + 1];
-			}
-
-			fb->GetCommands()->GetTransferCommands()->draw(vertexCount, 1, firstVertex, 0);
+			fb->GetCommands()->GetTransferCommands()->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
 		}
 
 		if (buffersFull)
@@ -286,8 +263,6 @@ void VkLightmap::ResolveBakeImage()
 		.Framebuffer(bakeImage.resolve.Framebuffer.get())
 		.Execute(cmdbuffer);
 
-	VkDeviceSize offset = 0;
-	cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, resolve.pipeline.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, resolve.pipelineLayout.get(), 0, bakeImage.resolve.DescriptorSet.get());
 
@@ -318,8 +293,6 @@ void VkLightmap::BlurBakeImage()
 			.Framebuffer(bakeImage.blur.Framebuffer.get())
 			.Execute(cmdbuffer);
 
-		VkDeviceSize offset = 0;
-		cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
 		cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, blur.pipeline[0].get());
 		cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, blur.pipelineLayout.get(), 0, bakeImage.blur.DescriptorSet[0].get());
 
@@ -346,8 +319,6 @@ void VkLightmap::BlurBakeImage()
 			.Framebuffer(bakeImage.resolve.Framebuffer.get())
 			.Execute(cmdbuffer);
 
-		VkDeviceSize offset = 0;
-		cmdbuffer->bindVertexBuffers(0, 1, &vertices.Buffer->buffer, &offset);
 		cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, blur.pipeline[1].get());
 		cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, blur.pipelineLayout.get(), 0, bakeImage.blur.DescriptorSet[1].get());
 
@@ -544,9 +515,9 @@ void VkLightmap::CreateRaytracePipeline()
 		.RenderPass(raytrace.renderPass.get())
 		.AddVertexShader(shaders.vertRaytrace.get())
 		.AddFragmentShader(shaders.fragRaytrace.get())
-		.AddVertexBufferBinding(0, sizeof(SceneVertex))
-		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SceneVertex, Position))
-		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN)
+		.AddVertexBufferBinding(0, sizeof(FVector4))
+		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0)
+		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 		.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
 		.RasterizationSamples(VK_SAMPLE_COUNT_4_BIT)
 		.Viewport(0.0f, 0.0f, 0.0f, 0.0f)
@@ -819,25 +790,6 @@ void VkLightmap::CreateUniformBuffer()
 		.Size(uniforms.NumStructs * uniforms.StructStride)
 		.DebugName("LightmapUniformTransferBuffer")
 		.Create(fb->GetDevice());
-}
-
-void VkLightmap::CreateSceneVertexBuffer()
-{
-	size_t size = sizeof(SceneVertex) * vertices.BufferSize;
-
-	vertices.Buffer = BufferBuilder()
-		.Usage(
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
-		.MemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		.Size(size)
-		.DebugName("LightmapVertexBuffer")
-		.Create(fb->GetDevice());
-
-	vertices.Vertices = (SceneVertex*)vertices.Buffer->Map(0, size);
-	vertices.Pos = 0;
 }
 
 void VkLightmap::CreateSceneLightBuffer()

@@ -43,6 +43,8 @@ struct LevelMeshSurface
 	int numVerts;
 	unsigned int startVertIndex;
 	unsigned int startUvIndex;
+	unsigned int startElementIndex;
+	unsigned int numElements;
 	FVector4 plane;
 	bool bSky;
 

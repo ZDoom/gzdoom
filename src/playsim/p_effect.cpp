@@ -34,6 +34,12 @@
 ** more useful.
 */
 
+#if __has_include(<execution>) && (!__APPLE__ || _LIBCPP_HAS_PARALLEL_ALGORITHMS)
+
+	#include <execution>
+
+#endif
+
 #include "doomtype.h"
 #include "doomstat.h"
 
@@ -53,6 +59,8 @@
 
 #include "hwrenderer/scene/hw_drawstructs.h"
 
+#include "i_time.h"
+
 #ifdef _MSC_VER
 #pragma warning(disable: 6011) // dereference null pointer in thinker iterator
 #endif
@@ -62,6 +70,8 @@ CVAR (Bool, r_rail_smartspiral, false, CVAR_ARCHIVE);
 CVAR (Int, r_rail_spiralsparsity, 1, CVAR_ARCHIVE);
 CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_particles, true, 0);
+CVAR (Bool, r_particles_multithreaded, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 EXTERN_CVAR(Int, r_maxparticles);
 
 FRandom pr_railtrail("RailTrail");
@@ -106,104 +116,77 @@ static const struct ColorList {
 	{NULL, 0, 0, 0 }
 };
 
+static_assert(std::is_trivially_copyable_v<particle_t>);
+
+static int ParticleCount;
+static float ParticleThinkMs;
+static float ParticleThinkMsAvg[5];
+static uint64_t ParticleCreateNs;
+static float ParticleCreateMsAvg[5];
+static int ticAvgPos = 0;
+
+ADD_STAT(particles)
+{
+	FString str;
+	float ParticleCreateMs = ParticleCreateNs / 1000000.0f;
+	str.Format(
+		"Particle Count: %d, Particle Think Time: %.2f ms, Particle Create Time: %.2f ms\n"
+		"Average Particle Think Time (6tic): %.2f ms, Average Particle Create Time (6tic): %.2f ms\n"
+		, ParticleCount, ParticleThinkMs, ParticleCreateMs,
+		((ParticleThinkMsAvg[0] + ParticleThinkMsAvg[1] + ParticleThinkMsAvg[2] + ParticleThinkMsAvg[3] + ParticleThinkMsAvg[4] + ParticleThinkMs) / 6.0f),
+		((ParticleCreateMsAvg[0] + ParticleCreateMsAvg[1] + ParticleCreateMsAvg[2] + ParticleCreateMsAvg[3] + ParticleCreateMsAvg[4] + ParticleCreateMs) / 6.0f)
+		);
+	return str;
+}
+
+static int NumParticles;
+
 inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 {
-	particle_t *result = nullptr;
-	// [MC] Thanks to RaveYard and randi for helping me with this addition.
-	// Array's filled up
-	if (Level->InactiveParticles == NO_PARTICLE)
+	if(NumParticles > 0)
 	{
-		if (replace)
+		uint64_t start = I_nsTime();
+		if(ParticleCount == NumParticles)
 		{
-			result = &Level->Particles[Level->OldestParticle];
-
-			// There should be NO_PARTICLE for the oldest's tnext
-			if (result->tprev != NO_PARTICLE)
-			{
-				// tnext: youngest to oldest
-				// tprev: oldest to youngest
-				
-				// 2nd oldest -> oldest
-				particle_t *nbottom = &Level->Particles[result->tprev];
-				nbottom->tnext = NO_PARTICLE;
-
-				// now oldest becomes youngest
-				Level->OldestParticle = result->tprev;
-				result->tnext = Level->ActiveParticles;
-				result->tprev = NO_PARTICLE;
-				Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
-
-				// youngest -> 2nd youngest
-				particle_t* ntop = &Level->Particles[result->tnext];
-				ntop->tprev = Level->ActiveParticles;
-			}
-			// [MC] Future proof this by resetting everything when replacing a particle.
-			auto tnext = result->tnext;
-			auto tprev = result->tprev;
-			*result = {};
-			result->tnext = tnext;
-			result->tprev = tprev;
+			if(!replace) return nullptr;
+			Level->Particles.pop_front();
 		}
-		return result;
+		else
+		{
+			ParticleCount++;
+		}
+		Level->Particles.push_back({});
+		ParticleCreateNs += (I_nsTime() - start);
+		return &*Level->Particles.rbegin();
 	}
-	
-	// Array isn't full.
-	uint32_t current = Level->ActiveParticles;
-	result = &Level->Particles[Level->InactiveParticles];
-	Level->InactiveParticles = result->tnext;
-	result->tnext = current;
-	result->tprev = NO_PARTICLE;
-	Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
-
-	if (current != NO_PARTICLE) // More than one active particles
-	{
-		particle_t* next = &Level->Particles[current];
-		next->tprev = Level->ActiveParticles;
-	}
-	else // Just one active particle
-	{
-		Level->OldestParticle = Level->ActiveParticles;
-	}
-	return result;
+	return nullptr;
 }
 
 //
 // [RH] Particle functions
 //
-void P_InitParticles (FLevelLocals *);
 
 void P_InitParticles (FLevelLocals *Level)
 {
-	const char *i;
 	int num;
 
-	if ((i = Args->CheckValue ("-numparticles")))
+	if (const char *i; (i = Args->CheckValue ("-numparticles")))
+	{
 		num = atoi (i);
-	// [BC] Use r_maxparticles now.
+	}
 	else
+	{
+		// [BC] Use r_maxparticles now.
 		num = r_maxparticles;
+	}
 
 	// This should be good, but eh...
-	int NumParticles = clamp<int>(num, 100, 65535);
-
-	Level->Particles.Resize(NumParticles);
-	P_ClearParticles (Level);
+	NumParticles = clamp<int>(num, ABSOLUTE_MIN_PARTICLES, ABSOLUTE_MAX_PARTICLES);
 }
 
 void P_ClearParticles (FLevelLocals *Level)
 {
-	int i = 0;
-	Level->OldestParticle = NO_PARTICLE;
-	Level->ActiveParticles = NO_PARTICLE;
-	Level->InactiveParticles = 0;
-	for (auto &p : Level->Particles)
-	{
-		p = {};
-		p.tprev = i - 1;
-		p.tnext = ++i;
-	}
-	Level->Particles.Last().tnext = NO_PARTICLE;
-	Level->Particles.Data()->tprev = NO_PARTICLE;
+	Level->Particles.clear();
 }
 
 // Group particles by subsectors. Because particles are always
@@ -214,9 +197,10 @@ void P_ClearParticles (FLevelLocals *Level)
 void P_FindParticleSubsectors (FLevelLocals *Level)
 {
 	// [MC] Hitch a ride on particle subsectors since VisualThinkers are effectively using the same kind of system.
-	for (uint32_t i = 0; i < Level->subsectors.Size(); i++)
+	for(uint32_t i = 0; i < Level->subsectors.Size(); i++)
 	{
 		Level->subsectors[i].sprites.Clear();
+		Level->subsectors[i].particles.Clear();
 	}
 	// [MC] Not too happy about using an iterator for this but I can't think of another way to handle it.
 	// At least it's on its own statnum for maximum efficiency.
@@ -229,24 +213,20 @@ void P_FindParticleSubsectors (FLevelLocals *Level)
 		sp->PT.subsector->sprites.Push(sp);
 	}
 	// End VisualThinker hitching. Now onto the particles. 
-	if (Level->ParticlesInSubsec.Size() < Level->subsectors.Size())
-	{
-		Level->ParticlesInSubsec.Reserve (Level->subsectors.Size() - Level->ParticlesInSubsec.Size());
-	}
-
-	fillshort (&Level->ParticlesInSubsec[0], Level->subsectors.Size(), NO_PARTICLE);
 
 	if (!r_particles)
 	{
 		return;
 	}
-	for (uint16_t i = Level->ActiveParticles; i != NO_PARTICLE; i = Level->Particles[i].tnext)
+
+	auto end = Level->Particles.end();
+	
+	for(auto it = Level->Particles.begin(); it != end; it++)
 	{
+		particle_t * p = &*it;
 		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (Level->Particles[i].subsector == nullptr) Level->Particles[i].subsector = Level->PointInRenderSubsector(Level->Particles[i].Pos);
-		int ssnum = Level->Particles[i].subsector->Index();
-		Level->Particles[i].snext = Level->ParticlesInSubsec[ssnum];
-		Level->ParticlesInSubsec[ssnum] = i;
+		if (p->subsector == nullptr) p->subsector = Level->PointInRenderSubsector(p->Pos);
+		p->subsector->particles.Push(p);
 	}
 }
 
@@ -287,80 +267,93 @@ void P_InitEffects ()
 	blood2 = ParticleColor(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 }
 
+// [RL0] true = particle should be deleted
+bool P_ThinkParticle(FLevelLocals * Level, particle_t &particle)
+{
+    if (Level->isFrozen() && !(particle.flags &SPF_NOTIMEFREEZE))
+    {
+        if(particle.flags & SPF_LOCAL_ANIM)
+        {
+            particle.animData.SwitchTic++;
+        }
+        return false;
+    }
+    
+	auto oldtrans = particle.alpha;
+	particle.alpha -= particle.fadestep;
+	particle.size += particle.sizestep;
+	if(particle.alpha <= 0 || oldtrans < particle.alpha || --particle.ttl <= 0 || (particle.size <= 0))
+	{ // The particle has expired, so free it
+		return true;
+	}
+    
+    // Handle crossing a line portal
+	DVector2 newxy = Level->GetPortalOffsetPosition(particle.Pos.X, particle.Pos.Y, particle.Vel.X, particle.Vel.Y);
+	particle.Pos.X = newxy.X;
+	particle.Pos.Y = newxy.Y;
+	particle.Pos.Z += particle.Vel.Z;
+	particle.Vel += particle.Acc;
+    
+	if(particle.flags & SPF_ROLL)
+	{
+		particle.Roll += particle.RollVel;
+		particle.RollVel += particle.RollAcc;
+	}
+
+	particle.subsector = Level->PointInRenderSubsector(particle.Pos);
+	sector_t *s = particle.subsector->sector;
+	// Handle crossing a sector portal.
+	if (!s->PortalBlocksMovement(sector_t::ceiling))
+	{
+		if (particle.Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
+		{
+			particle.Pos += s->GetPortalDisplacement(sector_t::ceiling);
+			particle.subsector = NULL;
+		}
+	}
+
+	else if (!s->PortalBlocksMovement(sector_t::floor))
+	{
+		if (particle.Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
+		{
+			particle.Pos += s->GetPortalDisplacement(sector_t::floor);
+			particle.subsector = NULL;
+		}
+	}
+	return false;
+}
+
 void P_ThinkParticles (FLevelLocals *Level)
 {
-	int i = Level->ActiveParticles;
-	particle_t *particle = nullptr, *prev = nullptr;
-	while (i != NO_PARTICLE)
+	uint64_t startNs = I_nsTime();
+	std::deque<particle_t>::iterator newEnd;
+#if __has_include(<execution>) && (!__APPLE__ || _LIBCPP_HAS_PARALLEL_ALGORITHMS)
+	if(r_particles_multithreaded)
 	{
-		particle = &Level->Particles[i];
-		i = particle->tnext;
-		if (Level->isFrozen() && !(particle->flags &SPF_NOTIMEFREEZE))
+		newEnd = std::remove_if(std::execution::par_unseq, Level->Particles.begin(), Level->Particles.end(), [Level](particle_t &p)
 		{
-			if(particle->flags & SPF_LOCAL_ANIM)
-			{
-				particle->animData.SwitchTic++;
-			}
-
-			prev = particle;
-			continue;
-		}
-		
-		auto oldtrans = particle->alpha;
-		particle->alpha -= particle->fadestep;
-		particle->size += particle->sizestep;
-		if (particle->alpha <= 0 || oldtrans < particle->alpha || --particle->ttl <= 0 || (particle->size <= 0))
-		{ // The particle has expired, so free it
-			*particle = {};
-			if (prev)
-				prev->tnext = i;
-			else
-				Level->ActiveParticles = i;
-
-			if (i != NO_PARTICLE)
-			{
-				particle_t *next = &Level->Particles[i];
-				next->tprev = particle->tprev;
-			}
-			particle->tnext = Level->InactiveParticles;
-			Level->InactiveParticles = (int)(particle - Level->Particles.Data());
-			continue;
-		}
-
-		// Handle crossing a line portal
-		DVector2 newxy = Level->GetPortalOffsetPosition(particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
-		particle->Pos.X = newxy.X;
-		particle->Pos.Y = newxy.Y;
-		particle->Pos.Z += particle->Vel.Z;
-		particle->Vel += particle->Acc;
-
-		if(particle->flags & SPF_ROLL)
-		{
-			particle->Roll += particle->RollVel;
-			particle->RollVel += particle->RollAcc;
-		}
-		
-		particle->subsector = Level->PointInRenderSubsector(particle->Pos);
-		sector_t *s = particle->subsector->sector;
-		// Handle crossing a sector portal.
-		if (!s->PortalBlocksMovement(sector_t::ceiling))
-		{
-			if (particle->Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
-			{
-				particle->Pos += s->GetPortalDisplacement(sector_t::ceiling);
-				particle->subsector = NULL;
-			}
-		}
-		else if (!s->PortalBlocksMovement(sector_t::floor))
-		{
-			if (particle->Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
-			{
-				particle->Pos += s->GetPortalDisplacement(sector_t::floor);
-				particle->subsector = NULL;
-			}
-		}
-		prev = particle;
+			return P_ThinkParticle(Level, p);
+		});
 	}
+	else
+#endif
+	{
+		newEnd = std::remove_if(Level->Particles.begin(), Level->Particles.end(), [Level](particle_t &p)
+		{
+			return P_ThinkParticle(Level, p);
+		});
+	}
+	
+	Level->Particles.resize(newEnd - Level->Particles.begin());
+	ParticleCount = (int)Level->Particles.size();
+
+	ParticleThinkMsAvg[ticAvgPos] = ParticleThinkMs;
+	ParticleCreateMsAvg[ticAvgPos] = ParticleCreateNs / 1000000.0f;
+
+	ticAvgPos = (ticAvgPos + 1) % 5;
+
+	ParticleThinkMs = ( I_nsTime() - startNs) / 1000000.0f;
+	ParticleCreateNs = 0;
 }
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
@@ -375,16 +368,16 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Acc = FVector3(accel);
 		particle->color = ParticleColor(color);
 		particle->alpha = float(startalpha);
-		if (fadestep < 0) particle->fadestep = FADEFROMTTL(lifetime);
-		else particle->fadestep = float(fadestep);
+		particle->fadestep = (fadestep < 0) ? FADEFROMTTL(lifetime) : float(fadestep);
 		particle->ttl = lifetime;
 		particle->size = size;
 		particle->sizestep = sizestep;
+		particle->subsector = nullptr;
 		particle->texture = texture;
 		particle->style = style;
-		particle->Roll = startroll;
-		particle->RollVel = rollvel;
-		particle->RollAcc = rollacc;
+		particle->Roll = (float)startroll;
+		particle->RollVel = (float)rollvel;
+		particle->RollAcc = (float)rollacc;
 		particle->flags = flags;
 		if(flags & SPF_LOCAL_ANIM)
 		{
@@ -409,6 +402,8 @@ particle_t *JitterParticle (FLevelLocals *Level, int ttl, double drift)
 
 	if (particle) {
 		int i;
+
+		*particle = {};
 
 		// Set initial velocities
 		for (i = 3; i; i--)
@@ -636,6 +631,7 @@ void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle 
 
 		if (!p)
 			break;
+		*p = {};
 
 		p->ttl = 12;
 		p->fadestep = FADEFROMTTL(12);
@@ -789,6 +785,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 
 			if (!p)
 				return;
+			*p = {};
 
 			int spiralduration = (duration == 0) ? TICRATE : duration;
 

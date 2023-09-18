@@ -35,6 +35,8 @@
 
 #pragma once
 
+#include <deque>
+
 #include "doomdata.h"
 #include "g_level.h"
 #include "r_defs.h"
@@ -668,11 +670,8 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
-	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with SPF_REPLACE
-	uint32_t			ActiveParticles;
-	uint32_t			InactiveParticles;
-	TArray<particle_t>	Particles;
-	TArray<uint16_t>	ParticlesInSubsec;
+	std::deque<particle_t>	Particles;
+
 	FThinkerCollection Thinkers;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level

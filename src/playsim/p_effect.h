@@ -33,6 +33,9 @@
 
 #pragma once
 
+#define ABSOLUTE_MAX_PARTICLES 65535
+#define ABSOLUTE_MIN_PARTICLES 100
+
 #include "vectors.h"
 #include "doomdef.h"
 #include "renderstyle.h"
@@ -89,7 +92,7 @@ struct particle_t
 
 static_assert(sizeof(particle_t) == 128);
 
-const uint16_t NO_PARTICLE = 0xffff;
+const uint32_t NO_PARTICLE = 0xffffffff;
 
 void P_InitParticles(FLevelLocals *);
 void P_ClearParticles (FLevelLocals *Level);

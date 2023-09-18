@@ -3035,14 +3035,22 @@ void MapLoader::LoadLightmap(MapData* map)
 
 	// Load the surfaces we have lightmap data for
 
-	// TODO more optimized way:
+	const int surfaceTypes = 5; // ST_CEILING, ST_FLOOR, etc.
+	TMap<int, TArray<DoomLevelMeshSurface*>> surfaceGroups[surfaceTypes]; // Let's assume there is only a handful of 3d floor surfaces matching the same typeIndex
+
 	auto findSurfaceIndex = [&](int type, int index, const sector_t* sec) {
-		const auto& surfaces = Level->levelMesh->Surfaces;
-		for (unsigned i = 0, count = surfaces.Size(); i < count; ++i)
+		const auto* surfaces = surfaceGroups[type - 1].CheckKey(index);
+
+		if (surfaces)
 		{
-			if (surfaces[i].Type == type && surfaces[i].typeIndex == index && sec == surfaces[i].ControlSector)
+			for (unsigned i = 0, count = surfaces->Size(); i < count; ++i)
 			{
-				return i;
+				const auto surface = (*surfaces)[i];
+
+				if (surface->ControlSector == sec)
+				{
+					return Level->levelMesh->GetSurfaceIndex(surface);
+				}
 			}
 		}
 		return 0xffffffff;
@@ -3060,14 +3068,28 @@ void MapLoader::LoadLightmap(MapData* map)
 		uint16_t width, height; // in pixels
 		uint32_t pixelsOffset; // offset in pixels array
 		uint32_t uvCount, uvOffset;
+
+		DoomLevelMeshSurface* targetSurface;
 	};
 
 	TMap<DoomLevelMeshSurface*, int> detectedSurfaces;
-	TArray<SurfaceEntry> zdraySurfaces;
+	TArray<SurfaceEntry> zdraySurfaces; // TODO reserve ahead of time 'numSurfaces'
 
 	for (auto& surface : Level->levelMesh->Surfaces)
 	{
 		surface.needsUpdate = false; // let's consider everything valid until we make a mistake trying to change this surface
+
+		if (surface.Type > ST_UNKNOWN && surface.Type <= ST_FLOOR)
+		{
+			if (auto list = surfaceGroups[surface.Type - 1].CheckKey(surface.typeIndex))
+			{
+				list->Push(&surface);
+			}
+			else
+			{
+				surfaceGroups[surface.Type - 1].InsertNew(surface.typeIndex).Push(&surface);
+			}
+		}
 	}
 
 	for (uint32_t i = 0; i < numSurfaces; i++)
@@ -3085,6 +3107,16 @@ void MapLoader::LoadLightmap(MapData* map)
 		auto controlSector = getControlSector(surface.controlSector);
 
 		// Check against the internal levelmesh
+
+		if (surface.type <= ST_UNKNOWN || surface.type > ST_FLOOR)
+		{
+			errors = true;
+			if (developer >= 1)
+			{
+				Printf(PRINT_HIGH, "Lightmap lump surface index %d uses invalid type %d\n", i, surface.type);
+			}
+			continue;
+		}
 
 		if (i >= Level->levelMesh->Surfaces.Size())
 		{
@@ -3123,11 +3155,12 @@ void MapLoader::LoadLightmap(MapData* map)
 			(*ptr)++;
 			if (developer >= 1)
 			{
-				Printf(PRINT_HIGH, "Lightmap lump surface index %d is referencing surface %d (ref count: %d). Surface type:%d, typeindex:%d, controlsector:%d\n", i, Level->levelMesh->GetSurfaceIndex(levelSurface), ptr, surface.type, surface.typeIndex, surface.controlSector);
+				Printf(PRINT_HIGH, "Lightmap lump surface index %d is referencing surface %d (ref count: %d). Surface type:%d, typeindex:%d, controlsector:%d\n", i, Level->levelMesh->GetSurfaceIndex(levelSurface), *ptr, surface.type, surface.typeIndex, surface.controlSector);
 			}
 		}
 		else
 		{
+			surface.targetSurface = levelSurface;
 			detectedSurfaces.Insert(levelSurface, 1);
 			zdraySurfaces.Push(surface);
 		}
@@ -3210,7 +3243,7 @@ void MapLoader::LoadLightmap(MapData* map)
 	{
 		++index; // for debug output
 
-		auto& realSurface = Level->levelMesh->Surfaces[findSurfaceIndex(surface.type, surface.typeIndex, getControlSector(surface.controlSector))];
+		auto& realSurface = *surface.targetSurface;
 
 		// calculate pixel positions
 		const uint32_t srcPixelOffset = surface.pixelsOffset;

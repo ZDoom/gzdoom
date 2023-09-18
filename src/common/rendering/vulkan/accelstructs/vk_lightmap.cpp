@@ -62,6 +62,7 @@ void VkLightmap::SetLevelMesh(LevelMesh* level)
 void VkLightmap::BeginFrame()
 {
 	lights.Pos = 0;
+	lights.ResetCounter++;
 }
 
 void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
@@ -158,55 +159,67 @@ void VkLightmap::RenderBakeImage()
 			continue;
 		}
 
+		LightmapPushConstants pc;
+		pc.TileX = (float)selectedSurface.X;
+		pc.TileY = (float)selectedSurface.Y;
+		pc.SurfaceIndex = mesh->GetSurfaceIndex(targetSurface);
+		pc.TextureSize = (float)bakeImageSize;
+		pc.TileWidth = (float)targetSurface->texWidth;
+		pc.TileHeight = (float)targetSurface->texHeight;
+		pc.WorldToLocal = targetSurface->translateWorldToLocal;
+		pc.ProjLocalToU = targetSurface->projLocalToU;
+		pc.ProjLocalToV = targetSurface->projLocalToV;
+
 		bool buffersFull = false;
 
-		// Paint all surfaces part of the smoothing group into the surface
-		for (LevelMeshSurface* surface : mesh->SmoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
+		if (targetSurface->tileSurfaces.Size() == 0) // To do: move this to where we set up the smoothing groups as we don't need the groups after this step
 		{
-			FVector2 minUV = ToUV(surface->bounds.min, targetSurface);
-			FVector2 maxUV = ToUV(surface->bounds.max, targetSurface);
-			if (surface != targetSurface && (maxUV.X < 0.0f || maxUV.Y < 0.0f || minUV.X > 1.0f || minUV.Y > 1.0f))
-				continue; // Bounding box not visible
+			for (LevelMeshSurface* surface : mesh->SmoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
+			{
+				FVector2 minUV = ToUV(surface->bounds.min, targetSurface);
+				FVector2 maxUV = ToUV(surface->bounds.max, targetSurface);
+				if (surface != targetSurface && (maxUV.X < 0.0f || maxUV.Y < 0.0f || minUV.X > 1.0f || minUV.Y > 1.0f))
+					continue; // Bounding box not visible
 
+				targetSurface->tileSurfaces.Push(surface);
+			}
+		}
+
+		// Paint all surfaces visible in the tile
+		for (LevelMeshSurface* surface : targetSurface->tileSurfaces)
+		{
 			int lightCount = (int)surface->LightList.size();
 
-			if (lights.Pos + lightCount > lights.BufferSize)
+			if (surface->LightListResetCounter != lights.ResetCounter)
 			{
-				// Our light buffer is full. Postpone the rest.
-				buffersFull = true;
-				break;
+				if (lights.Pos + lightCount > lights.BufferSize)
+				{
+					// Our light buffer is full. Postpone the rest.
+					buffersFull = true;
+					break;
+				}
+
+				surface->LightListPos = lights.Pos;
+
+				LightInfo* lightinfo = &lights.Lights[lights.Pos];
+				for (const LevelMeshLight* light : surface->LightList)
+				{
+					lightinfo->Origin = light->Origin;
+					lightinfo->RelativeOrigin = light->RelativeOrigin;
+					lightinfo->Radius = light->Radius;
+					lightinfo->Intensity = light->Intensity;
+					lightinfo->InnerAngleCos = light->InnerAngleCos;
+					lightinfo->OuterAngleCos = light->OuterAngleCos;
+					lightinfo->SpotDir = light->SpotDir;
+					lightinfo->Color = light->Color;
+					lightinfo++;
+				}
+
+				lights.Pos += lightCount;
 			}
 
-			int firstLight = lights.Pos;
-			lights.Pos += lightCount;
-
-			LightInfo* lightinfo = &lights.Lights[firstLight];
-			for (const LevelMeshLight* light : surface->LightList)
-			{
-				lightinfo->Origin = light->Origin;
-				lightinfo->RelativeOrigin = light->RelativeOrigin;
-				lightinfo->Radius = light->Radius;
-				lightinfo->Intensity = light->Intensity;
-				lightinfo->InnerAngleCos = light->InnerAngleCos;
-				lightinfo->OuterAngleCos = light->OuterAngleCos;
-				lightinfo->SpotDir = light->SpotDir;
-				lightinfo->Color = light->Color;
-				lightinfo++;
-			}
-
-			LightmapPushConstants pc;
-			pc.LightStart = firstLight;
-			pc.LightEnd = firstLight + lightCount;
-			pc.TileX = (float)selectedSurface.X;
-			pc.TileY = (float)selectedSurface.Y;
-			pc.SurfaceIndex = mesh->GetSurfaceIndex(targetSurface);
-			pc.TextureSize = (float)bakeImageSize;
-			pc.TileWidth = (float)targetSurface->texWidth;
-			pc.TileHeight = (float)targetSurface->texHeight;
-			pc.WorldToLocal = targetSurface->translateWorldToLocal;
-			pc.ProjLocalToU = targetSurface->projLocalToU;
-			pc.ProjLocalToV = targetSurface->projLocalToV;
-
+			pc.LightStart = surface->LightListPos;
+			pc.LightEnd = pc.LightStart + lightCount;
 			fb->GetCommands()->GetTransferCommands()->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
 			fb->GetCommands()->GetTransferCommands()->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
 		}

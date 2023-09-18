@@ -65,11 +65,6 @@ struct LightmapBakeImage
 	uint16_t maxY = 0;
 };
 
-struct SceneVertex
-{
-	FVector3 Position;
-};
-
 struct LightInfo
 {
 	FVector3 Origin;
@@ -152,6 +147,7 @@ private:
 		std::unique_ptr<VulkanBuffer> Buffer;
 		LightInfo* Lights = nullptr;
 		int Pos = 0;
+		int ResetCounter = 0;
 	} lights;
 
 	struct

@@ -76,6 +76,9 @@ struct LevelMeshSurface
 	// Smoothing group surface is to be rendered with
 	int smoothingGroupIndex = -1;
 
+	// Surfaces that are visible within the lightmap tile
+	TArray<LevelMeshSurface*> tileSurfaces;
+
 	//
 	// Utility/Info
 	//
@@ -83,6 +86,9 @@ struct LevelMeshSurface
 
 	// Touching light sources
 	std::vector<const LevelMeshLight*> LightList;
+
+	int LightListPos = -1;
+	int LightListResetCounter = -1;
 };
 
 inline float IsInFrontOfPlane(const FVector4& plane, const FVector3& point)

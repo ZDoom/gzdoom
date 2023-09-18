@@ -594,16 +594,17 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
 {
 	SetupSprite.Clock();
-	for (int i = Level->ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Level->Particles[i].snext)
+	for (uint32_t i = 0; i < sub->particles.Size(); i++)
 	{
+		particle_t * p = sub->particles[i];
 		if (mClipPortal)
 		{
-			int clipres = mClipPortal->ClipPoint(Level->Particles[i].Pos);
+			int clipres = mClipPortal->ClipPoint(p->Pos);
 			if (clipres == PClip_InFront) continue;
 		}
 
 		HWSprite sprite;
-		sprite.ProcessParticle(this, &Level->Particles[i], front);
+		sprite.ProcessParticle(this, p, front);
 	}
 	SetupSprite.Unclock();
 }
@@ -666,7 +667,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 	}
 
 	// [RH] Add particles
-	if (gl_render_things && Level->ParticlesInSubsec[sub->Index()] != NO_PARTICLE)
+	if (gl_render_things && sub->particles.Size() > 0)
 	{
 		if (multithread)
 		{

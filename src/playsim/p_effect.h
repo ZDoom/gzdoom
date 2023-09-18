@@ -33,6 +33,9 @@
 
 #pragma once
 
+#define ABSOLUTE_MAX_PARTICLES 65535
+#define ABSOLUTE_MIN_PARTICLES 100
+
 #include "vectors.h"
 #include "doomdef.h"
 #include "renderstyle.h"
@@ -69,13 +72,12 @@ struct particle_t
     int        color;
     FTextureID texture;
     ERenderStyle style;
-    double Roll, RollVel, RollAcc;
-    uint16_t    tnext, snext, tprev;
+    float Roll, RollVel, RollAcc;
     uint8_t    bright;
 	uint8_t flags;
 };
 
-const uint16_t NO_PARTICLE = 0xffff;
+const uint32_t NO_PARTICLE = 0xffffffff;
 
 void P_InitParticles(FLevelLocals *);
 void P_ClearParticles (FLevelLocals *Level);

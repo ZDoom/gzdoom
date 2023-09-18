@@ -299,7 +299,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	}
 	Level->Particles.Resize(last_alive + 1);
 
-	last_alive = Level->ReplaceableParticles.size() - 1;
+	last_alive = ((int)Level->ReplaceableParticles.size()) - 1;
 	for(int i = last_alive; i > 0; i--)
 	{
 		particle_t * p = &Level->ReplaceableParticles[i];
@@ -312,7 +312,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 
 	Level->ReplaceableParticles.resize(last_alive + 1);
 
-	ParticleCount = Level->Particles.Size() + Level->ReplaceableParticles.size();
+	ParticleCount = Level->Particles.Size() + (int)Level->ReplaceableParticles.size();
 }
 
 enum PSFlag

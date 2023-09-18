@@ -1070,16 +1070,23 @@ void DoomLevelMesh::SetupLightmapUvs()
 {
 	LMTextureSize = 1024; // TODO cvar
 
+	for (auto& surface : Surfaces)
+	{
+		BuildSurfaceParams(LMTextureSize, LMTextureSize, surface);
+	}
+
+	BuildSmoothingGroups();
+}
+
+void DoomLevelMesh::PackLightmapAtlas()
+{
 	std::vector<LevelMeshSurface*> sortedSurfaces;
 	sortedSurfaces.reserve(Surfaces.Size());
 
 	for (auto& surface : Surfaces)
 	{
-		BuildSurfaceParams(LMTextureSize, LMTextureSize, surface);
 		sortedSurfaces.push_back(&surface);
 	}
-
-	BuildSmoothingGroups();
 
 	std::sort(sortedSurfaces.begin(), sortedSurfaces.end(), [](LevelMeshSurface* a, LevelMeshSurface* b) { return a->texHeight != b->texHeight ? a->texHeight > b->texHeight : a->texWidth > b->texWidth; });
 

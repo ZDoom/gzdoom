@@ -214,7 +214,7 @@ struct HWDrawInfo
 		{
 			surface->needsUpdate = true;
 		}
-		else if (VisibleSurfaces.Size() >= lm_max_updates)
+		else if (VisibleSurfaces.Size() >= unsigned(lm_max_updates))
 		{
 			return;
 		}

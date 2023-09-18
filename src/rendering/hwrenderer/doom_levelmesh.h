@@ -30,6 +30,7 @@ public:
 	void CreatePortals();
 	void DumpMesh(const FString& objFilename, const FString& mtlFilename) const;
 	void BindLightmapSurfacesToGeometry(FLevelLocals& doomMap);
+	void PackLightmapAtlas();
 
 	bool TraceSky(const FVector3& start, FVector3 direction, float dist)
 	{

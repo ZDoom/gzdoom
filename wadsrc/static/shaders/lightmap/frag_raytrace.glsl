@@ -75,7 +75,7 @@ layout(push_constant) uniform PushConstants
 	int SurfaceIndex;
 	int PushPadding1;
 	vec3 LightmapOrigin;
-	float PushPadding2;
+	float TextureSize;
 	vec3 LightmapStepX;
 	float PushPadding3;
 	vec3 LightmapStepY;
@@ -86,10 +86,10 @@ layout(push_constant) uniform PushConstants
 	float PushPadding6;
 	vec3 ProjLocalToV;
 	float PushPadding7;
-	int TileX;
-	int TileY;
-	int TileWidth;
-	int TileHeight;
+	float TileX;
+	float TileY;
+	float TileWidth;
+	float TileHeight;
 };
 
 layout(location = 0) centroid in vec3 worldpos;

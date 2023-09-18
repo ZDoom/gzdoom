@@ -24,7 +24,7 @@ struct LightmapPushConstants
 	int32_t SurfaceIndex;
 	int32_t PushPadding1;
 	FVector3 LightmapOrigin;
-	float PushPadding2;
+	float TextureSize;
 	FVector3 LightmapStepX;
 	float PushPadding3;
 	FVector3 LightmapStepY;
@@ -35,10 +35,10 @@ struct LightmapPushConstants
 	float PushPadding6;
 	FVector3 ProjLocalToV;
 	float PushPadding7;
-	int32_t TileX;
-	int32_t TileY;
-	int32_t TileWidth;
-	int32_t TileHeight;
+	float TileX;
+	float TileY;
+	float TileWidth;
+	float TileHeight;
 };
 
 struct LightmapBakeImage

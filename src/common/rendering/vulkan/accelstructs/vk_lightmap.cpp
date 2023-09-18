@@ -141,6 +141,12 @@ void VkLightmap::RenderBakeImage()
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 0, raytrace.descriptorSet0.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 1, raytrace.descriptorSet1.get());
 
+	VkViewport viewport = {};
+	viewport.maxDepth = 1;
+	viewport.width = (float)bakeImageSize;
+	viewport.height = (float)bakeImageSize;
+	fb->GetCommands()->GetTransferCommands()->setViewport(0, 1, &viewport);
+
 	for (int i = 0, count = selectedSurfaces.Size(); i < count; i++)
 	{
 		auto& selectedSurface = selectedSurfaces[i];
@@ -151,14 +157,6 @@ void VkLightmap::RenderBakeImage()
 			selectedSurface.Rendered = true;
 			continue;
 		}
-
-		VkViewport viewport = {};
-		viewport.maxDepth = 1;
-		viewport.x = (float)selectedSurface.X - 1;
-		viewport.y = (float)selectedSurface.Y - 1;
-		viewport.width = (float)(targetSurface->texWidth + 2);
-		viewport.height = (float)(targetSurface->texHeight + 2);
-		fb->GetCommands()->GetTransferCommands()->setViewport(0, 1, &viewport);
 
 		bool buffersFull = false;
 
@@ -199,19 +197,20 @@ void VkLightmap::RenderBakeImage()
 			LightmapPushConstants pc;
 			pc.LightStart = firstLight;
 			pc.LightEnd = firstLight + lightCount;
-			pc.TileX = selectedSurface.X;
-			pc.TileY = selectedSurface.Y;
+			pc.TileX = (float)selectedSurface.X;
+			pc.TileY = (float)selectedSurface.Y;
 			pc.SurfaceIndex = mesh->GetSurfaceIndex(targetSurface);
+			pc.TextureSize = (float)bakeImageSize;
 			pc.LightmapOrigin = targetSurface->worldOrigin - targetSurface->worldStepX - targetSurface->worldStepY;
 			pc.LightmapStepX = targetSurface->worldStepX * viewport.width;
 			pc.LightmapStepY = targetSurface->worldStepY * viewport.height;
-			pc.TileWidth = targetSurface->texWidth;
-			pc.TileHeight = targetSurface->texHeight;
+			pc.TileWidth = (float)targetSurface->texWidth;
+			pc.TileHeight = (float)targetSurface->texHeight;
 			pc.WorldToLocal = targetSurface->translateWorldToLocal;
 			pc.ProjLocalToU = targetSurface->projLocalToU;
 			pc.ProjLocalToV = targetSurface->projLocalToV;
-			fb->GetCommands()->GetTransferCommands()->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
 
+			fb->GetCommands()->GetTransferCommands()->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
 			fb->GetCommands()->GetTransferCommands()->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
 		}
 

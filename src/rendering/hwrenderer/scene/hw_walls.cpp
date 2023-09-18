@@ -1329,6 +1329,11 @@ void HWWall::DoMidTexture(HWDrawInfo *di, FRenderState& state, seg_t * seg, bool
 	//
 	if (texture)
 	{
+		if (auto lightmapPtr = seg->sidedef->lightmap)
+		{
+			lightmap = lightmapPtr[side_t::mid];
+		}
+
 		// Align the texture to the ORIGINAL sector's height!!
 		// At this point slopes don't matter because they don't affect the texture's z-position
 

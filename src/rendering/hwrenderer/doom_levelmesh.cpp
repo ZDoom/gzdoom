@@ -653,6 +653,104 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		return;
 	}
 
+	// middle seg
+	if (back == nullptr)
+	{
+		DoomLevelMeshSurface surf;
+		surf.bSky = false;
+
+		FVector3 verts[4];
+		verts[0].X = verts[2].X = v1.X;
+		verts[0].Y = verts[2].Y = v1.Y;
+		verts[1].X = verts[3].X = v2.X;
+		verts[1].Y = verts[3].Y = v2.Y;
+		verts[0].Z = v1Bottom;
+		verts[1].Z = v2Bottom;
+		verts[2].Z = v1Top;
+		verts[3].Z = v2Top;
+
+		surf.startVertIndex = MeshVertices.Size();
+		surf.numVerts = 4;
+		surf.bSky = false;
+		MeshVertices.Push(verts[0]);
+		MeshVertices.Push(verts[1]);
+		MeshVertices.Push(verts[2]);
+		MeshVertices.Push(verts[3]);
+
+		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
+		surf.Type = ST_MIDDLESIDE;
+		surf.typeIndex = typeIndex;
+		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;
+		surf.ControlSector = nullptr;
+
+		Surfaces.Push(surf);
+	}
+	else if (side->textures[side_t::mid].texture.isValid())
+	{
+		// mid texture
+		DoomLevelMeshSurface surf;
+		surf.bSky = false;
+
+		FVector3 verts[4];
+		verts[0].X = verts[2].X = v1.X;
+		verts[0].Y = verts[2].Y = v1.Y;
+		verts[1].X = verts[3].X = v2.X;
+		verts[1].Y = verts[3].Y = v2.Y;
+
+		const auto& texture = side->textures[side_t::mid].texture;
+
+		if ((side->Flags & WALLF_WRAP_MIDTEX) || (side->linedef->flags & WALLF_WRAP_MIDTEX))
+		{
+			verts[0].Z = v1Bottom;
+			verts[1].Z = v2Bottom;
+			verts[2].Z = v1Top;
+			verts[3].Z = v2Top;
+		}
+		else
+		{
+			int offset = 0;
+
+			auto gameTexture = TexMan.GetGameTexture(texture);
+
+			float mid1Top = gameTexture->GetDisplayHeight();
+			float mid2Top = gameTexture->GetDisplayHeight();
+			float mid1Bottom = 0;
+			float mid2Bottom = 0;
+
+			float yTextureOffset = side->textures[side_t::mid].yOffset / gameTexture->GetScaleY();
+
+			if (side->linedef->flags & ML_DONTPEGBOTTOM)
+			{
+				yTextureOffset += side->sector->planes[sector_t::floor].TexZ;
+			}
+			else
+			{
+				yTextureOffset += side->sector->planes[sector_t::ceiling].TexZ - gameTexture->GetDisplayHeight();
+			}
+
+			verts[0].Z = min(max(yTextureOffset + mid1Bottom, v1Bottom), v1Top);
+			verts[1].Z = min(max(yTextureOffset + mid2Bottom, v2Bottom), v2Top);
+			verts[2].Z = max(min(yTextureOffset + mid1Top, v1Top), v1Bottom);
+			verts[3].Z = max(min(yTextureOffset + mid2Top, v2Top), v2Bottom);
+		}
+
+		surf.startVertIndex = MeshVertices.Size();
+		surf.numVerts = 4;
+		surf.bSky = false;
+		MeshVertices.Push(verts[0]);
+		MeshVertices.Push(verts[1]);
+		MeshVertices.Push(verts[2]);
+		MeshVertices.Push(verts[3]);
+
+		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
+		surf.Type = ST_MIDDLESIDE;
+		surf.typeIndex = typeIndex;
+		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;
+		surf.ControlSector = nullptr;
+
+		Surfaces.Push(surf);
+	}
+
 	if (back)
 	{
 		for (unsigned int j = 0; j < front->e->XFloor.ffloors.Size(); j++)
@@ -786,39 +884,6 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 			v1Top = v1TopBack;
 			v2Top = v2TopBack;
 		}
-	}
-
-	// middle seg
-	if (back == nullptr)
-	{
-		DoomLevelMeshSurface surf;
-		surf.bSky = false;
-
-		FVector3 verts[4];
-		verts[0].X = verts[2].X = v1.X;
-		verts[0].Y = verts[2].Y = v1.Y;
-		verts[1].X = verts[3].X = v2.X;
-		verts[1].Y = verts[3].Y = v2.Y;
-		verts[0].Z = v1Bottom;
-		verts[1].Z = v2Bottom;
-		verts[2].Z = v1Top;
-		verts[3].Z = v2Top;
-
-		surf.startVertIndex = MeshVertices.Size();
-		surf.numVerts = 4;
-		surf.bSky = false;
-		MeshVertices.Push(verts[0]);
-		MeshVertices.Push(verts[1]);
-		MeshVertices.Push(verts[2]);
-		MeshVertices.Push(verts[3]);
-
-		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
-		surf.Type = ST_MIDDLESIDE;
-		surf.typeIndex = typeIndex;
-		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;
-		surf.ControlSector = nullptr;
-
-		Surfaces.Push(surf);
 	}
 }
 

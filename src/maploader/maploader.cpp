@@ -3369,6 +3369,8 @@ bool MapLoader::LoadLightmap(MapData* map)
 	{
 		Printf(PRINT_HIGH, "Pre-calculated LIGHTMAP surfaces do not match current level surfaces. Restart this level with 'developer 1' for further details.\nPerhaps you forget to rebuild lightmaps after modifying the map?\n");
 	}
+
+	return true;
 }
 
 //==========================================================================

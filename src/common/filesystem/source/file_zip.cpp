@@ -65,6 +65,7 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int L
 	case METHOD_DEFLATE:
 	case METHOD_BZIP2:
 	case METHOD_LZMA:
+	case METHOD_XZ:
 	{
 		FileReader frz;
 		if (frz.OpenDecompressor(Reader, LumpSize, Method, false, exceptions))
@@ -349,7 +350,8 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			zip_fh->Method != METHOD_LZMA &&
 			zip_fh->Method != METHOD_BZIP2 &&
 			zip_fh->Method != METHOD_IMPLODE &&
-			zip_fh->Method != METHOD_SHRINK)
+			zip_fh->Method != METHOD_SHRINK &&
+			zip_fh->Method != METHOD_XZ)
 		{
 			Printf(FSMessageLevel::Error, "%s: '%s' uses an unsupported compression algorithm (#%d).\n", FileName, name.c_str(), zip_fh->Method);
 			skipped++;

@@ -292,7 +292,7 @@ struct TraceResults native
 
 	native Sector CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
 	native vector3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
-	native Sector Crossed3DWater;		// For 3D floor-based deep water
+	native F3DFloor Crossed3DWater;	// For 3D floor-based deep water
 	native vector3 Crossed3DWaterPos;
 }
 

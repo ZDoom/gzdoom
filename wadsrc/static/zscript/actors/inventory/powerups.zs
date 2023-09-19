@@ -956,7 +956,7 @@ class PowerFlight : Powerup
 		Owner.bNoGravity = true;
 		if (Owner.pos.Z <= Owner.floorz)
 		{
-			Owner.Vel.Z = 4;;	// thrust the player in the air a bit
+			Owner.Vel.Z = 4;	// thrust the player in the air a bit
 		}
 		if (Owner.Vel.Z <= -35)
 		{ // stop falling scream

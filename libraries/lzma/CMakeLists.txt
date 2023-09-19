@@ -1,6 +1,6 @@
 make_release_only()
 
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_PPMD_SUPPPORT" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DZ7_PPMD_SUPPPORT" )
 
 find_package(Threads)
 

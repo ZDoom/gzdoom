@@ -26,8 +26,8 @@ void main()
 
 	// Project to position relative to tile
 	vec3 localPos = aPosition - WorldToLocal;
-	float x = 1.0 + dot(localPos, ProjLocalToU);
-	float y = 1.0 + dot(localPos, ProjLocalToV);
+	float x = dot(localPos, ProjLocalToU);
+	float y = dot(localPos, ProjLocalToV);
 
 	// Find the position in the output texture
 	gl_Position = vec4(vec2(TileX + x, TileY + y) / TextureSize * 2.0 - 1.0, 0.0, 1.0);

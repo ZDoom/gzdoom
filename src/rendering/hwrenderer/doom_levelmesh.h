@@ -51,11 +51,16 @@ public:
 	TArray<FVector2> LightmapUvs;
 	static_assert(alignof(FVector2) == alignof(float[2]) && sizeof(FVector2) == sizeof(float) * 2);
 
+	// utility
+	TArray<int> sectorGroup; // index is sector, value is sectorGroup
+
 	// runtime utility variables
 	TMap<const sector_t*, TArray<DoomLevelMeshSurface*>> XFloorToSurface;
 	TMap<const sector_t*, TArray<DoomLevelMeshSurface*>> XFloorToSurfaceSides;
 
 private:
+	void BuildSectorGroups(const FLevelLocals& doomMap);
+
 	void CreateSubsectorSurfaces(FLevelLocals &doomMap);
 	void CreateCeilingSurface(FLevelLocals& doomMap, subsector_t* sub, sector_t* sector, sector_t* controlSector, int typeIndex);
 	void CreateFloorSurface(FLevelLocals& doomMap, subsector_t* sub, sector_t* sector, sector_t* controlSector, int typeIndex);

@@ -24,6 +24,7 @@ public:
 	float OuterAngleCos;
 	FVector3 SpotDir;
 	FVector3 Color;
+	int SectorGroup;
 };
 
 enum LevelMeshSurfaceType

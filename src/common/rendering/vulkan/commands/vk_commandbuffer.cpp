@@ -25,6 +25,7 @@
 #include "vulkan/vk_renderstate.h"
 #include "vulkan/vk_postprocess.h"
 #include "vulkan/framebuffers/vk_framebuffer.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
 #include <zvulkan/vulkanswapchain.h>
 #include <zvulkan/vulkanbuilders.h>
 #include "hw_clock.h"
@@ -150,6 +151,8 @@ void VkCommandBufferManager::FlushCommands(VulkanCommandBuffer** commands, size_
 
 void VkCommandBufferManager::FlushCommands(bool finish, bool lastsubmit, bool uploadOnly)
 {
+	fb->GetDescriptorSetManager()->UpdateBindlessDescriptorSet();
+
 	if (!uploadOnly)
 		fb->GetRenderState(0)->EndRenderPass();
 

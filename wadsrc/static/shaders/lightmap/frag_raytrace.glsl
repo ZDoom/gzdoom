@@ -68,6 +68,8 @@ layout(set = 0, binding = 2) buffer SurfaceBuffer { SurfaceInfo surfaces[]; };
 layout(set = 0, binding = 3) buffer LightBuffer { LightInfo lights[]; };
 layout(set = 0, binding = 4) buffer PortalBuffer { PortalInfo portals[]; };
 
+layout(set = 2, binding = 0) uniform sampler2D textures[];
+
 layout(push_constant) uniform PushConstants
 {
 	uint LightStart;

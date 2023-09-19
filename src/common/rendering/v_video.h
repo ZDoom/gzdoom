@@ -249,6 +249,9 @@ public:
 	virtual void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect&)> renderFunc) {}
 	virtual void SetActiveRenderTarget() {}
 
+	// Get the array index for the material in the textures array accessible from shaders
+	virtual int GetBindlessTextureIndex(FMaterial* material, int clampmode, int translation) { return -1; }
+
 	// Screen wiping
 	virtual FTexture *WipeStartScreen();
 	virtual FTexture *WipeEndScreen();

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "zvulkan/vulkanobjects.h"
+#include "zvulkan/vulkanbuilders.h"
 #include <list>
 #include "tarray.h"
 
@@ -24,10 +25,12 @@ public:
 	VulkanDescriptorSetLayout* GetRSBufferSetLayout() { return RSBufferSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetFixedSetLayout() { return FixedSetLayout.get(); }
 	VulkanDescriptorSetLayout* GetTextureSetLayout(int numLayers);
+	VulkanDescriptorSetLayout* GetBindlessSetLayout() { return BindlessDescriptorSetLayout.get(); }
 
 	VulkanDescriptorSet* GetRSBufferDescriptorSet(int threadIndex) { return RSBufferSets[threadIndex].get(); }
 	VulkanDescriptorSet* GetFixedDescriptorSet() { return FixedSet.get(); }
 	VulkanDescriptorSet* GetNullTextureDescriptorSet();
+	VulkanDescriptorSet* GetBindlessDescriptorSet() { return BindlessDescriptorSet.get(); }
 
 	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 
@@ -36,11 +39,15 @@ public:
 	void AddMaterial(VkMaterial* texture);
 	void RemoveMaterial(VkMaterial* texture);
 
+	void UpdateBindlessDescriptorSet();
+	int AddBindlessTextureIndex(VulkanImageView* imageview, VulkanSampler* sampler);
+
 private:
 	void CreateRSBufferSetLayout();
 	void CreateFixedSetLayout();
 	void CreateRSBufferPool();
 	void CreateFixedSetPool();
+	void CreateBindlessDescriptorSet();
 	void UpdateFixedSet();
 
 	std::unique_ptr<VulkanDescriptorSet> AllocatePPDescriptorSet(VulkanDescriptorSetLayout* layout);
@@ -66,5 +73,12 @@ private:
 
 	std::list<VkMaterial*> Materials;
 
+	std::unique_ptr<VulkanDescriptorPool> BindlessDescriptorPool;
+	std::unique_ptr<VulkanDescriptorSet> BindlessDescriptorSet;
+	std::unique_ptr<VulkanDescriptorSetLayout> BindlessDescriptorSetLayout;
+	WriteDescriptors WriteBindless;
+	int NextBindlessIndex = 0;
+
 	static const int maxSets = 100;
+	static const int MaxBindlessTextures = 16536;
 };

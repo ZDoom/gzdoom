@@ -44,6 +44,7 @@ VkDescriptorSetManager::VkDescriptorSetManager(VulkanRenderDevice* fb) : fb(fb)
 	CreateFixedSetLayout();
 	CreateRSBufferPool();
 	CreateFixedSetPool();
+	CreateBindlessDescriptorSet();
 }
 
 VkDescriptorSetManager::~VkDescriptorSetManager()
@@ -126,6 +127,9 @@ void VkDescriptorSetManager::ResetHWTextureSets()
 	TextureDescriptorPools.clear();
 	TextureDescriptorSetsLeft = 0;
 	TextureDescriptorsLeft = 0;
+
+	WriteBindless = WriteDescriptors();
+	NextBindlessIndex = 0;
 }
 
 VulkanDescriptorSet* VkDescriptorSetManager::GetNullTextureDescriptorSet()
@@ -305,4 +309,39 @@ void VkDescriptorSetManager::CreateFixedSetPool()
 	poolbuilder.MaxSets(maxSets);
 	poolbuilder.DebugName("VkDescriptorSetManager.FixedDescriptorPool");
 	FixedDescriptorPool = poolbuilder.Create(fb->GetDevice());
+}
+
+void VkDescriptorSetManager::CreateBindlessDescriptorSet()
+{
+	BindlessDescriptorPool = DescriptorPoolBuilder()
+		.Flags(VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT)
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MaxBindlessTextures)
+		.MaxSets(MaxBindlessTextures)
+		.DebugName("BindlessDescriptorPool")
+		.Create(fb->GetDevice());
+
+	BindlessDescriptorSetLayout = DescriptorSetLayoutBuilder()
+		.Flags(VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT)
+		.AddBinding(
+			0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			MaxBindlessTextures,
+			VK_SHADER_STAGE_FRAGMENT_BIT,
+			VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT)
+		.DebugName("BindlessDescriptorSetLayout")
+		.Create(fb->GetDevice());
+
+	BindlessDescriptorSet = BindlessDescriptorPool->allocate(BindlessDescriptorSetLayout.get(), MaxBindlessTextures);
+}
+
+void VkDescriptorSetManager::UpdateBindlessDescriptorSet()
+{
+	WriteBindless.Execute(fb->GetDevice());
+	WriteBindless = WriteDescriptors();
+}
+
+int VkDescriptorSetManager::AddBindlessTextureIndex(VulkanImageView* imageview, VulkanSampler* sampler)
+{
+	int index = NextBindlessIndex++;
+	WriteBindless.AddCombinedImageSampler(BindlessDescriptorSet.get(), 0, index, imageview, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	return index;
 }

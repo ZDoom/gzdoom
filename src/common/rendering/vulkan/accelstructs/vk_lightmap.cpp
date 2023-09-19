@@ -3,6 +3,7 @@
 #include "vulkan/vk_renderdevice.h"
 #include "vulkan/textures/vk_texture.h"
 #include "vulkan/commands/vk_commandbuffer.h"
+#include "vulkan/descriptorsets/vk_descriptorset.h"
 #include "vk_raytrace.h"
 #include "zvulkan/vulkanbuilders.h"
 #include "halffloat.h"
@@ -141,6 +142,7 @@ void VkLightmap::RenderBakeImage()
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipeline.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 0, raytrace.descriptorSet0.get());
 	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 1, raytrace.descriptorSet1.get());
+	cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, raytrace.pipelineLayout.get(), 2, fb->GetDescriptorSetManager()->GetBindlessDescriptorSet());
 
 	VkViewport viewport = {};
 	viewport.maxDepth = 1;
@@ -498,6 +500,7 @@ void VkLightmap::CreateRaytracePipeline()
 	raytrace.pipelineLayout = PipelineLayoutBuilder()
 		.AddSetLayout(raytrace.descriptorSetLayout0.get())
 		.AddSetLayout(raytrace.descriptorSetLayout1.get())
+		.AddSetLayout(fb->GetDescriptorSetManager()->GetBindlessSetLayout())
 		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants))
 		.DebugName("raytrace.pipelineLayout")
 		.Create(fb->GetDevice());

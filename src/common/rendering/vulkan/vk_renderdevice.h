@@ -87,6 +87,8 @@ public:
 
 	void WaitForCommands(bool finish) override;
 
+	int GetBindlessTextureIndex(FMaterial* material, int clampmode, int translation) override;
+
 	void ResetRenderStateCache();
 
 	std::mutex ThreadMutex;

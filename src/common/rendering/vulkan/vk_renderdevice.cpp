@@ -120,10 +120,20 @@ VulkanRenderDevice::VulkanRenderDevice(void *hMonitor, bool fullscreen, std::sha
 {
 	VulkanDeviceBuilder builder;
 	builder.OptionalRayQuery();
+	builder.RequireExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 	builder.Surface(surface);
 	builder.SelectDevice(vk_device);
 	SupportedDevices = builder.FindDevices(surface->Instance);
 	mDevice = builder.Create(surface->Instance);
+
+	bool supportsBindless =
+		mDevice->EnabledFeatures.DescriptorIndexing.descriptorBindingPartiallyBound &&
+		mDevice->EnabledFeatures.DescriptorIndexing.runtimeDescriptorArray &&
+		mDevice->EnabledFeatures.DescriptorIndexing.shaderSampledImageArrayNonUniformIndexing;
+	if (!supportsBindless)
+	{
+		I_FatalError("This GPU does not support the minimum requirements of this application");
+	}
 }
 
 VulkanRenderDevice::~VulkanRenderDevice()
@@ -606,4 +616,13 @@ void VulkanRenderDevice::SetSceneRenderTarget(bool useSSAO)
 	{
 		renderstate->SetRenderTarget(&GetBuffers()->SceneColor, GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
 	}
+}
+
+int VulkanRenderDevice::GetBindlessTextureIndex(FMaterial* material, int clampmode, int translation)
+{
+	FMaterialState materialState;
+	materialState.mMaterial = material;
+	materialState.mClampMode = clampmode;
+	materialState.mTranslation = translation;
+	return static_cast<VkMaterial*>(material)->GetBindlessIndex(materialState);
 }

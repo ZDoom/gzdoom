@@ -1852,6 +1852,7 @@ std::vector<VulkanCompatibleDevice> VulkanDeviceBuilder::FindDevices(const std::
 		enabledFeatures.DescriptorIndexing.descriptorBindingPartiallyBound = deviceFeatures.DescriptorIndexing.descriptorBindingPartiallyBound;
 		enabledFeatures.DescriptorIndexing.descriptorBindingSampledImageUpdateAfterBind = deviceFeatures.DescriptorIndexing.descriptorBindingSampledImageUpdateAfterBind;
 		enabledFeatures.DescriptorIndexing.descriptorBindingVariableDescriptorCount = deviceFeatures.DescriptorIndexing.descriptorBindingVariableDescriptorCount;
+		enabledFeatures.DescriptorIndexing.shaderSampledImageArrayNonUniformIndexing = deviceFeatures.DescriptorIndexing.shaderSampledImageArrayNonUniformIndexing;
 
 		// Figure out which queue can present
 		if (surface)

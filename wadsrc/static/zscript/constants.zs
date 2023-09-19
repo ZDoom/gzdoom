@@ -1456,3 +1456,9 @@ const M_2_PI     = 0.63661977236758134308; // 2/pi
 const M_2_SQRTPI = 1.12837916709551257390; // 2/sqrt(pi)
 const M_SQRT2    = 1.41421356237309504880; // sqrt(2)
 const M_SQRT1_2  = 0.70710678118654752440; // 1/sqrt(2)
+
+// Used by Actor.FallAndSink
+const WATER_SINK_FACTOR         = 0.125;
+const WATER_SINK_SMALL_FACTOR   = 0.25;
+const WATER_SINK_SPEED          = 0.5;
+const WATER_JUMP_SPEED          = 3.5;

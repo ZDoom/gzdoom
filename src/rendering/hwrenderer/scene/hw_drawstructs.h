@@ -79,7 +79,7 @@ struct HWSectorPlane
 	FVector2 Offs;
 	FVector2 Scale;
 
-	void GetFromSector(sector_t * sec, int ceiling)
+	void GetFromSector(const sector_t * sec, int ceiling)
 	{
 		Offs.X = (float)sec->GetXOffset(ceiling);
 		Offs.Y = (float)sec->GetYOffset(ceiling);

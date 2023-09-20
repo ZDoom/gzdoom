@@ -1016,6 +1016,11 @@ public:
 		return pos == floor? floorplane:ceilingplane;
 	}
 
+	const secplane_t& GetSecPlane(int pos) const
+	{
+		return pos == floor ? floorplane : ceilingplane;
+	}
+
 	bool isSecret() const
 	{
 		return !!(Flags & SECF_SECRET);

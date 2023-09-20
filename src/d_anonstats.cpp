@@ -48,6 +48,7 @@ CVAR(Int, anonstats_port, 80, CVAR_NOSET)
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();
+extern int vkversion;
 
 
 
@@ -243,7 +244,7 @@ static int GetCoreInfo()
 
 static int GetRenderInfo()
 {
-	if (screen->Backend() == 0) return 1;
+	if (screen->Backend() == 2) return 1;
 	if (screen->Backend() == 1) return 4;
 	auto info = gl_getInfo();
 	if (!info.second)
@@ -255,7 +256,7 @@ static int GetRenderInfo()
 
 static int GetGLVersion()
 {
-	if (screen->Backend() == 1) return 50;
+	if (screen->Backend() == 1) return vkversion;
 	auto info = gl_getInfo();
 	return int(info.first * 10);
 }

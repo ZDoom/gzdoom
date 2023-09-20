@@ -512,7 +512,7 @@ int TraceFirstHitTriangleNoPortal(vec3 origin, float tmin, vec3 dir, float tmax,
 vec4 alphaBlend(vec4 a, vec4 b)
 {
 	float na = a.w + b.w * (1.0 - a.w);
-	return vec4((a.xyz * a.w + b.xyz * b.w * (1.0 - a.w)) / na, na);
+	return vec4((a.xyz * a.w + b.xyz * b.w * (1.0 - a.w)) / na, max(0.001, na));
 }
 
 vec4 blend(vec4 a, vec4 b)
@@ -536,6 +536,7 @@ int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out fl
 
 		if(surface.PortalIndex == 0)
 		{
+#if defined(USE_RAYQUERY)
 			int index = primitiveID * 3;
 			vec2 uv = vertices[elements[index + 0]].uv * primitiveWeights.x + vertices[elements[index + 1]].uv * primitiveWeights.y + vertices[elements[index + 2]].uv * primitiveWeights.z;
 
@@ -553,6 +554,9 @@ int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out fl
 			}
 
 			rayColor = blend(color, rayColor) * (1.0 - color.w);
+#else
+			break;
+#endif
 		}
 
 		// Portal was hit: Apply transformation onto the ray
@@ -598,6 +602,7 @@ bool TracePoint(vec3 origin, vec3 target, float tmin, vec3 dir, float tmax)
 
 		if (surface.PortalIndex == 0)
 		{
+#if defined(USE_RAYQUERY)
 			int index = primitiveID * 3;
 			vec2 uv = vertices[elements[index + 0]].uv * primitiveWeights.x + vertices[elements[index + 1]].uv * primitiveWeights.y + vertices[elements[index + 2]].uv * primitiveWeights.z;
 
@@ -615,6 +620,10 @@ bool TracePoint(vec3 origin, vec3 target, float tmin, vec3 dir, float tmax)
 			}
 
 			rayColor = blend(color, rayColor) * (1.0 - color.w);
+#else
+			rayColor.w = 0; // I suspect some rays are escaping out of bounds
+			break;
+#endif
 		}
 
 		if(dot(surface.Normal, dir) >= 0.0)

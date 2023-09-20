@@ -66,10 +66,12 @@ private:
 	void CreateFloorSurface(FLevelLocals& doomMap, subsector_t* sub, sector_t* sector, sector_t* controlSector, int typeIndex);
 	void CreateSideSurfaces(FLevelLocals &doomMap, side_t *side);
 
+	void CreateSurfaceTextureUVs(FLevelLocals& doomMap);
+
 	void SetSubsectorLightmap(DoomLevelMeshSurface* surface);
 	void SetSideLightmap(DoomLevelMeshSurface* surface);
 
-	void SetupLightmapUvs();
+	void SetupLightmapUvs(FLevelLocals& doomMap);
 	void PropagateLight(const LevelMeshLight* light, std::set<LevelMeshPortal, RecursivePortalComparator>& touchedPortals, int lightPropagationRecursiveDepth);
 	void CreateLightList();
 

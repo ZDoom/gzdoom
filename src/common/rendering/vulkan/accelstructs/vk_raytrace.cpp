@@ -25,6 +25,8 @@
 #include "vulkan/vk_renderdevice.h"
 #include "vulkan/commands/vk_commandbuffer.h"
 #include "hw_levelmesh.h"
+#include "hw_material.h"
+#include "texturemanager.h"
 
 VkRaytrace::VkRaytrace(VulkanRenderDevice* fb) : fb(fb)
 {
@@ -42,6 +44,9 @@ VkRaytrace::VkRaytrace(VulkanRenderDevice* fb) : fb(fb)
 	NullMesh.MeshVertices.Push({ -1.0f, -1.0f,  1.0f });
 	NullMesh.MeshVertices.Push({ -1.0f,  1.0f,  1.0f });
 	NullMesh.MeshVertices.Push({ 1.0f,  1.0f,  1.0f });
+
+	NullMesh.MeshVertexUVs.Resize(NullMesh.MeshVertices.Size());
+
 	for (int i = 0; i < 3 * 4; i++)
 		NullMesh.MeshElements.Push(i);
 
@@ -95,10 +100,11 @@ void VkRaytrace::CreateBuffers()
 	std::vector<CollisionNode> nodes = CreateCollisionNodes();
 
 	// std430 alignment rules forces us to convert the vec3 to a vec4
-	std::vector<FVector4> vertices;
+	std::vector<SurfaceVertex> vertices;
 	vertices.reserve(Mesh->MeshVertices.Size());
-	for (const FVector3& v : Mesh->MeshVertices)
-		vertices.push_back({ v, 1.0f });
+	for (int i = 0, count = Mesh->MeshVertices.Size(); i < count; ++i)
+		//vertices.push_back({ { Mesh->MeshVertices[i], 1.0f } });
+		vertices.push_back({ { Mesh->MeshVertices[i], 1.0f }, Mesh->MeshVertexUVs[i], float(i), i + 10000.0f});
 
 	CollisionNodeBufferHeader nodesHeader;
 	nodesHeader.root = Mesh->Collision->get_root();
@@ -121,6 +127,13 @@ void VkRaytrace::CreateBuffers()
 		info.PortalIndex = surface->portalIndex;
 		info.SamplingDistance = (float)surface->sampleDimension;
 		info.Sky = surface->bSky;
+
+		if (surface->texture.isValid())
+		{
+			auto mat = FMaterial::ValidateTexture(TexMan.GetGameTexture(surface->texture), 0);
+			info.TextureIndex = fb->GetBindlessTextureIndex(mat, CLAMP_NONE, 0);
+		}
+
 		surfaceInfo.Push(info);
 	}
 
@@ -132,7 +145,7 @@ void VkRaytrace::CreateBuffers()
 				VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
 				VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR : 0) |
 			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
-		.Size(vertices.size() * sizeof(FVector4))
+		.Size(vertices.size() * sizeof(SurfaceVertex))
 		.DebugName("vertexBuffer")
 		.Create(fb->GetDevice());
 
@@ -173,7 +186,7 @@ void VkRaytrace::CreateBuffers()
 		.Create(fb->GetDevice());
 
 	transferBuffer = BufferTransfer()
-		.AddBuffer(vertexBuffer.get(), vertices.data(), vertices.size() * sizeof(FVector4))
+		.AddBuffer(vertexBuffer.get(), vertices.data(), vertices.size() * sizeof(SurfaceVertex))
 		.AddBuffer(indexBuffer.get(), Mesh->MeshElements.Data(), (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
 		.AddBuffer(nodesBuffer.get(), &nodesHeader, sizeof(CollisionNodeBufferHeader), nodes.data(), nodes.size() * sizeof(CollisionNode))
 		.AddBuffer(surfaceIndexBuffer.get(), Mesh->MeshSurfaceIndexes.Data(), Mesh->MeshSurfaceIndexes.Size() * sizeof(int))
@@ -184,6 +197,11 @@ void VkRaytrace::CreateBuffers()
 	PipelineBarrier()
 		.AddMemory(VK_ACCESS_TRANSFER_WRITE_BIT, useRayQuery ? VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR : VK_ACCESS_SHADER_READ_BIT)
 		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, useRayQuery ? VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+	if(useRayQuery)
+		PipelineBarrier()
+			.AddMemory(VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
+			.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 void VkRaytrace::CreateBottomLevelAccelerationStructure()
@@ -199,7 +217,7 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	accelStructBLDesc.geometry.triangles = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR };
 	accelStructBLDesc.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
 	accelStructBLDesc.geometry.triangles.vertexData.deviceAddress = vertexBuffer->GetDeviceAddress();
-	accelStructBLDesc.geometry.triangles.vertexStride = sizeof(FVector4);
+	accelStructBLDesc.geometry.triangles.vertexStride = sizeof(SurfaceVertex);
 	accelStructBLDesc.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
 	accelStructBLDesc.geometry.triangles.indexData.deviceAddress = indexBuffer->GetDeviceAddress();
 	accelStructBLDesc.geometry.triangles.maxVertex = Mesh->MeshVertices.Size() - 1;

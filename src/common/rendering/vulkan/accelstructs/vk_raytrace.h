@@ -33,6 +33,14 @@ struct SurfaceInfo
 	float Sky;
 	float SamplingDistance;
 	uint32_t PortalIndex;
+	int32_t TextureIndex;
+	float Padding;
+};
+
+struct SurfaceVertex
+{
+	FVector4 pos;
+	FVector2 uv;
 	float Padding1, Padding2;
 };
 

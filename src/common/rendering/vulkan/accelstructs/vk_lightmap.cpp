@@ -413,6 +413,7 @@ void VkLightmap::CreateShaders()
 {
 	std::string prefix = "#version 460\r\n";
 	std::string traceprefix = "#version 460\r\n";
+	traceprefix += "#extension GL_EXT_nonuniform_qualifier : enable\r\n";
 	if (useRayQuery)
 	{
 		traceprefix += "#extension GL_EXT_ray_query : require\r\n";
@@ -484,6 +485,7 @@ void VkLightmap::CreateRaytracePipeline()
 	{
 		raytrace.descriptorSetLayout1 = DescriptorSetLayoutBuilder()
 			.AddBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.AddBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.DebugName("raytrace.descriptorSetLayout1")
 			.Create(fb->GetDevice());
 	}
@@ -528,7 +530,7 @@ void VkLightmap::CreateRaytracePipeline()
 		.RenderPass(raytrace.renderPass.get())
 		.AddVertexShader(shaders.vertRaytrace.get())
 		.AddFragmentShader(shaders.fragRaytrace.get())
-		.AddVertexBufferBinding(0, sizeof(FVector4))
+		.AddVertexBufferBinding(0, sizeof(SurfaceVertex))
 		.AddVertexAttribute(0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0)
 		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 		.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
@@ -549,6 +551,7 @@ void VkLightmap::CreateRaytracePipeline()
 	{
 		raytrace.descriptorPool1 = DescriptorPoolBuilder()
 			.AddPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1)
+			.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)
 			.MaxSets(1)
 			.DebugName("raytrace.descriptorPool1")
 			.Create(fb->GetDevice());
@@ -575,6 +578,7 @@ void VkLightmap::UpdateAccelStructDescriptors()
 	{
 		WriteDescriptors()
 			.AddAccelerationStructure(raytrace.descriptorSet1.get(), 0, fb->GetRaytrace()->GetAccelStruct())
+			.AddBuffer(raytrace.descriptorSet1.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetVertexBuffer())
 			.Execute(fb->GetDevice());
 	}
 	else

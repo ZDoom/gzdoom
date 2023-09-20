@@ -21,7 +21,19 @@ layout(std430, set = 1, binding = 0) buffer NodeBuffer
 	int nodebufferPadding3;
 	CollisionNode nodes[];
 };
-layout(std430, set = 1, binding = 1) buffer VertexBuffer { vec4 vertices[]; };
+#endif
+
+struct SurfaceVertex
+{
+	vec4 pos;
+	vec2 uv;
+	float Padding1, Padding2;
+};
+
+layout(std430, set = 1, binding = 1) buffer VertexBuffer { SurfaceVertex vertices[]; };
+
+#if defined(USE_RAYQUERY)
+#else
 layout(std430, set = 1, binding = 2) buffer ElementBuffer { int elements[]; };
 #endif
 
@@ -39,7 +51,8 @@ struct SurfaceInfo
 	float Sky;
 	float SamplingDistance;
 	uint PortalIndex;
-	float Padding1, Padding2;
+	int TextureIndex;
+	float Padding2;
 };
 
 struct PortalInfo
@@ -101,6 +114,8 @@ bool TraceAnyHit(vec3 origin, float tmin, vec3 dir, float tmax);
 bool TracePoint(vec3 origin, vec3 target, float tmin, vec3 dir, float tmax);
 int TraceFirstHitTriangle(vec3 origin, float tmin, vec3 dir, float tmax);
 int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out float t);
+
+vec3 primitiveWeights;
 
 void main()
 {
@@ -241,6 +256,10 @@ int TraceFirstHitTriangleNoPortal(vec3 origin, float tmin, vec3 dir, float tmax,
 	if (rayQueryGetIntersectionTypeEXT(rayQuery, true) == gl_RayQueryCommittedIntersectionTriangleEXT)
 	{
 		t = rayQueryGetIntersectionTEXT(rayQuery, true);
+
+		primitiveWeights.xy = rayQueryGetIntersectionBarycentricsEXT(rayQuery, true);
+		primitiveWeights.z = 1.0 - primitiveWeights.x - primitiveWeights.y;
+
 		return rayQueryGetIntersectionPrimitiveIndexEXT(rayQuery, true);
 	}
 	else
@@ -310,9 +329,9 @@ float intersect_triangle_ray(RayBBox ray, int a, out float barycentricB, out flo
 	int start_element = nodes[a].element_index;
 
 	vec3 p[3];
-	p[0] = vertices[elements[start_element]].xyz;
-	p[1] = vertices[elements[start_element + 1]].xyz;
-	p[2] = vertices[elements[start_element + 2]].xyz;
+	p[0] = vertices[elements[start_element]].pos.xyz;
+	p[1] = vertices[elements[start_element + 1]].pos.xyz;
+	p[2] = vertices[elements[start_element + 2]].pos.xyz;
 
 	// Moeller-Trumbore ray-triangle intersection algorithm:
 
@@ -363,6 +382,10 @@ float intersect_triangle_ray(RayBBox ray, int a, out float barycentricB, out flo
 	// Return hit location on triangle in barycentric coordinates
 	barycentricB = u;
 	barycentricC = v;
+
+	primitiveWeights.x = u;
+	primitiveWeights.y = v;
+	primitiveWeights.z = 1.0 - u - v;
 	
 	return t;
 }

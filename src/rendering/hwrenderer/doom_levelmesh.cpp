@@ -196,7 +196,7 @@ DoomLevelMesh::DoomLevelMesh(FLevelLocals &doomMap)
 		}
 	}
 
-	SetupLightmapUvs();
+	SetupLightmapUvs(doomMap);
 
 	Collision = std::make_unique<TriangleMeshShape>(MeshVertices.Data(), MeshVertices.Size(), MeshElements.Data(), MeshElements.Size());
 }
@@ -760,12 +760,15 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		MeshVertices.Push(verts[2]);
 		MeshVertices.Push(verts[3]);
 
+		MeshVertexUVs.Reserve(4); // TODO implement
+
 		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 		surf.Type = ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
 		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;
 		surf.ControlSector = nullptr;
 		surf.sectorGroup = sectorGroup[front->Index()];
+		surf.texture = side->textures[side_t::mid].texture;
 
 		Surfaces.Push(surf);
 	}
@@ -879,8 +882,11 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 			MeshVertices.Push(verts[2]);
 			MeshVertices.Push(verts[3]);
 
+			MeshVertexUVs.Reserve(4); // TODO implement
+
 			surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 			surf.sectorGroup = sectorGroup[front->Index()];
+			surf.texture = side->textures[side_t::mid].texture;
 
 			Surfaces.Push(surf);
 		}
@@ -919,6 +925,8 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[2]);
 				MeshVertices.Push(verts[3]);
 
+				MeshVertexUVs.Reserve(4); // TODO implement
+
 				surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 				surf.Type = ST_LOWERSIDE;
 				surf.typeIndex = typeIndex;
@@ -926,6 +934,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				surf.sampleDimension = side->textures[side_t::bottom].LightmapSampleDistance;
 				surf.ControlSector = nullptr;
 				surf.sectorGroup = sectorGroup[front->Index()];
+				surf.texture = side->textures[side_t::bottom].texture;
 
 				Surfaces.Push(surf);
 			}
@@ -959,6 +968,8 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				MeshVertices.Push(verts[2]);
 				MeshVertices.Push(verts[3]);
 
+				MeshVertexUVs.Reserve(4); // TODO implement
+
 				surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 				surf.Type = ST_UPPERSIDE;
 				surf.typeIndex = typeIndex;
@@ -966,6 +977,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 				surf.sampleDimension = side->textures[side_t::top].LightmapSampleDistance;
 				surf.ControlSector = nullptr;
 				surf.sectorGroup = sectorGroup[front->Index()];
+				surf.texture = side->textures[side_t::top].texture;
 
 				Surfaces.Push(surf);
 			}
@@ -995,8 +1007,17 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 
 	surf.numVerts = sub->numlines;
 	surf.startVertIndex = MeshVertices.Size();
+	surf.texture = (controlSector ? controlSector : sector)->planes[sector_t::floor].Texture;
+
+	auto txt = TexMan.GetGameTexture(surf.texture);
+	auto w = txt->GetDisplayWidth();
+	auto h = txt->GetDisplayHeight();
+
 	MeshVertices.Resize(surf.startVertIndex + surf.numVerts);
+	MeshVertexUVs.Resize(surf.startVertIndex + surf.numVerts);
+
 	FVector3* verts = &MeshVertices[surf.startVertIndex];
+	FVector2* uvs = &MeshVertexUVs[surf.startVertIndex];
 
 	for (int j = 0; j < surf.numVerts; j++)
 	{
@@ -1006,6 +1027,8 @@ void DoomLevelMesh::CreateFloorSurface(FLevelLocals &doomMap, subsector_t *sub, 
 		verts[j].X = v1.X;
 		verts[j].Y = v1.Y;
 		verts[j].Z = (float)plane.ZatPoint(verts[j]);
+
+		uvs[j] = FVector2(v1.X / w, v1.Y / h); // TODO rotation and offset
 	}
 
 	surf.Type = ST_FLOOR;
@@ -1037,8 +1060,17 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals& doomMap, subsector_t* sub
 
 	surf.numVerts = sub->numlines;
 	surf.startVertIndex = MeshVertices.Size();
+	surf.texture = (controlSector ? controlSector : sector)->planes[sector_t::ceiling].Texture;
+
+	auto txt = TexMan.GetGameTexture(surf.texture);
+	auto w = txt->GetDisplayWidth();
+	auto h = txt->GetDisplayHeight();
+
 	MeshVertices.Resize(surf.startVertIndex + surf.numVerts);
+	MeshVertexUVs.Resize(surf.startVertIndex + surf.numVerts);
+
 	FVector3* verts = &MeshVertices[surf.startVertIndex];
+	FVector2* uvs = &MeshVertexUVs[surf.startVertIndex];
 
 	for (int j = 0; j < surf.numVerts; j++)
 	{
@@ -1048,6 +1080,8 @@ void DoomLevelMesh::CreateCeilingSurface(FLevelLocals& doomMap, subsector_t* sub
 		verts[j].X = v1.X;
 		verts[j].Y = v1.Y;
 		verts[j].Z = (float)plane.ZatPoint(verts[j]);
+
+		uvs[j] = FVector2(v1.X / w, v1.Y / h); // TODO rotation and offset
 	}
 
 	surf.Type = ST_CEILING;
@@ -1242,7 +1276,7 @@ void DoomLevelMesh::DumpMesh(const FString& objFilename, const FString& mtlFilen
 	fclose(f);
 }
 
-void DoomLevelMesh::SetupLightmapUvs()
+void DoomLevelMesh::SetupLightmapUvs(FLevelLocals& doomMap)
 {
 	LMTextureSize = 1024; // TODO cvar
 
@@ -1252,6 +1286,8 @@ void DoomLevelMesh::SetupLightmapUvs()
 	}
 
 	BuildSmoothingGroups();
+
+	CreateSurfaceTextureUVs(doomMap);
 }
 
 void DoomLevelMesh::PackLightmapAtlas()
@@ -1454,4 +1490,39 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 
 	surface.texWidth = width;
 	surface.texHeight = height;
+}
+
+void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
+{
+	auto toUv = [](const DoomLevelMeshSurface* targetSurface, FVector3 vert) {
+		FVector3 localPos = vert - targetSurface->translateWorldToLocal;
+		float u = (1.0f + (localPos | targetSurface->projLocalToU)) / (targetSurface->texWidth + 2);
+		float v = (1.0f + (localPos | targetSurface->projLocalToV)) / (targetSurface->texHeight + 2);
+		return FVector2(u, v);
+	};
+
+	for (auto& surface : Surfaces)
+	{
+		if (surface.texture.isValid())
+		{
+			const FVector3* verts = &MeshVertices[surface.startVertIndex];
+			FVector2* uvs = &MeshVertexUVs[surface.startVertIndex];
+		
+			const auto gtxt = TexMan.GetGameTexture(surface.texture);
+
+			if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
+			{
+			}
+			else
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					uvs[surface.atlasPageIndex + i] = verts[i] - verts[0];
+
+					uvs[surface.atlasPageIndex + i].X /= gtxt->GetDisplayWidth();
+					uvs[surface.atlasPageIndex + i].Y /= gtxt->GetDisplayHeight();
+				}
+			}
+		}
+	}
 }

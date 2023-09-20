@@ -8,8 +8,10 @@
 #include "common/utility/matrix.h"
 #include <memory>
 #include <cstring>
+#include "textureid.h"
 
 #include <dp_rect_pack.h>
+
 
 typedef dp::rect_pack::RectPacker<int> RectPacker;
 
@@ -62,6 +64,8 @@ struct LevelMeshSurface
 	//
 	// Required for internal lightmapper:
 	//
+
+	FTextureID texture = FNullTextureID();
 	
 	int portalIndex = 0;
 	int sectorGroup = 0;
@@ -193,6 +197,7 @@ public:
 	virtual ~LevelMesh() = default;
 
 	TArray<FVector3> MeshVertices;
+	TArray<FVector2> MeshVertexUVs;
 	TArray<int> MeshUVIndex;
 	TArray<uint32_t> MeshElements;
 	TArray<int> MeshSurfaceIndexes;

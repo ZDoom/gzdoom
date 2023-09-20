@@ -103,7 +103,6 @@ void VkRaytrace::CreateBuffers()
 	std::vector<SurfaceVertex> vertices;
 	vertices.reserve(Mesh->MeshVertices.Size());
 	for (int i = 0, count = Mesh->MeshVertices.Size(); i < count; ++i)
-		//vertices.push_back({ { Mesh->MeshVertices[i], 1.0f } });
 		vertices.push_back({ { Mesh->MeshVertices[i], 1.0f }, Mesh->MeshVertexUVs[i], float(i), i + 10000.0f});
 
 	CollisionNodeBufferHeader nodesHeader;
@@ -132,6 +131,10 @@ void VkRaytrace::CreateBuffers()
 		{
 			auto mat = FMaterial::ValidateTexture(TexMan.GetGameTexture(surface->texture), 0);
 			info.TextureIndex = fb->GetBindlessTextureIndex(mat, CLAMP_NONE, 0);
+		}
+		else
+		{
+			info.TextureIndex = -1;
 		}
 
 		surfaceInfo.Push(info);
@@ -197,11 +200,6 @@ void VkRaytrace::CreateBuffers()
 	PipelineBarrier()
 		.AddMemory(VK_ACCESS_TRANSFER_WRITE_BIT, useRayQuery ? VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR : VK_ACCESS_SHADER_READ_BIT)
 		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, useRayQuery ? VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
-	/*if (useRayQuery)
-		PipelineBarrier()
-			.AddMemory(VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT)
-			.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);*/
 }
 
 void VkRaytrace::CreateBottomLevelAccelerationStructure()

@@ -524,6 +524,11 @@ int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out fl
 			int index = primitiveID * 3;
 			vec2 uv = vertices[elements[index + 0]].uv * primitiveWeights.x + vertices[elements[index + 1]].uv * primitiveWeights.y + vertices[elements[index + 2]].uv * primitiveWeights.z;
 
+			if (surface.TextureIndex < 0)
+			{
+				break;
+			}
+
 			if (texture(textures[surface.TextureIndex], uv).w > 0.9)
 			{
 				break;

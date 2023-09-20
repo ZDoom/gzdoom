@@ -148,7 +148,7 @@ void VkLightmap::RenderBakeImage()
 	viewport.maxDepth = 1;
 	viewport.width = (float)bakeImageSize;
 	viewport.height = (float)bakeImageSize;
-	fb->GetCommands()->GetTransferCommands()->setViewport(0, 1, &viewport);
+	cmdbuffer->setViewport(0, 1, &viewport);
 
 	for (int i = 0, count = selectedSurfaces.Size(); i < count; i++)
 	{
@@ -223,8 +223,8 @@ void VkLightmap::RenderBakeImage()
 
 			pc.LightStart = surface->LightListPos;
 			pc.LightEnd = pc.LightStart + lightCount;
-			fb->GetCommands()->GetTransferCommands()->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
-			fb->GetCommands()->GetTransferCommands()->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
+			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
+			cmdbuffer->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
 		}
 
 		if (buffersFull)
@@ -240,7 +240,7 @@ void VkLightmap::RenderBakeImage()
 		selectedSurface.Rendered = true;
 	}
 
-	fb->GetCommands()->GetTransferCommands()->endRenderPass();
+	cmdbuffer->endRenderPass();
 }
 
 void VkLightmap::UploadUniforms()
@@ -437,7 +437,7 @@ void VkLightmap::CreateShaders()
 	shaders.fragRaytrace = ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.AddSource("VersionBlock", traceprefix)
-		.AddSource("frag.glsl", LoadPrivateShaderLump("shaders/lightmap/frag_raytrace.glsl").GetChars())
+		.AddSource("frag_raytrace.glsl", LoadPrivateShaderLump("shaders/lightmap/frag_raytrace.glsl").GetChars())
 		.DebugName("VkLightmap.FragRaytrace")
 		.Create("VkLightmap.FragRaytrace", fb->GetDevice());
 

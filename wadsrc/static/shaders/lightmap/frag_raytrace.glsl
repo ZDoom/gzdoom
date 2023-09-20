@@ -48,7 +48,7 @@ struct SurfaceInfo
 	float SamplingDistance;
 	uint PortalIndex;
 	int TextureIndex;
-	float Padding2;
+	float Alpha;
 };
 
 struct PortalInfo
@@ -112,6 +112,7 @@ int TraceFirstHitTriangle(vec3 origin, float tmin, vec3 dir, float tmax);
 int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out float t);
 
 vec3 primitiveWeights;
+vec4 rayColor;
 
 void main()
 {
@@ -158,9 +159,10 @@ vec3 TraceLight(vec3 origin, vec3 normal, LightInfo light)
 		float attenuation = distAttenuation * angleAttenuation * spotAttenuation;
 		if (attenuation > 0.0)
 		{
+			rayColor = vec4(light.Color.rgb, 1.0);
 			if(TracePoint(origin, light.Origin, minDistance, dir, dist))
 			{
-				incoming.rgb += light.Color * (attenuation * light.Intensity);
+				incoming.rgb += (rayColor.rgb * rayColor.w) * (attenuation * light.Intensity);
 			}
 		}
 	}
@@ -174,11 +176,13 @@ vec3 TraceSunLight(vec3 origin)
 	vec3 incoming = vec3(0.0);
 	const float dist = 32768.0;
 
+	rayColor = vec4(SunColor.rgb * SunIntensity, 1.0);
+
 	int primitiveID = TraceFirstHitTriangle(origin, minDistance, SunDir, dist);
 	if (primitiveID != -1)
 	{
 		SurfaceInfo surface = surfaces[surfaceIndices[primitiveID]];
-		incoming.rgb += SunColor * SunIntensity * surface.Sky;
+		incoming.rgb = rayColor.rgb * rayColor.w * surface.Sky;
 	}
 	return incoming;
 }
@@ -505,6 +509,17 @@ int TraceFirstHitTriangleNoPortal(vec3 origin, float tmin, vec3 dir, float tmax,
 
 #endif
 
+vec4 alphaBlend(vec4 a, vec4 b)
+{
+	float na = a.w + b.w * (1.0 - a.w);
+	return vec4((a.xyz * a.w + b.xyz * b.w * (1.0 - a.w)) / na, na);
+}
+
+vec4 blend(vec4 a, vec4 b)
+{
+	return alphaBlend(a, b);
+}
+
 int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out float t)
 {
 	int primitiveID;
@@ -529,10 +544,15 @@ int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out fl
 				break;
 			}
 
-			if (texture(textures[surface.TextureIndex], uv).w > 0.9)
+			vec4 color = texture(textures[surface.TextureIndex], uv);
+			color.w *= surface.Alpha;
+
+			if (color.w > 0.999 || rayColor.rgb == vec3(0))
 			{
 				break;
 			}
+
+			rayColor = blend(color, rayColor) * (1.0 - color.w);
 		}
 
 		// Portal was hit: Apply transformation onto the ray
@@ -576,9 +596,25 @@ bool TracePoint(vec3 origin, vec3 target, float tmin, vec3 dir, float tmax)
 
 		SurfaceInfo surface = surfaces[surfaceIndices[primitiveID]];
 
-		if(surface.PortalIndex == 0)
+		if (surface.PortalIndex == 0)
 		{
-			break;
+			int index = primitiveID * 3;
+			vec2 uv = vertices[elements[index + 0]].uv * primitiveWeights.x + vertices[elements[index + 1]].uv * primitiveWeights.y + vertices[elements[index + 2]].uv * primitiveWeights.z;
+
+			if (surface.TextureIndex < 0)
+			{
+				break;
+			}
+
+			vec4 color = texture(textures[surface.TextureIndex], uv);
+			color.w *= surface.Alpha;
+
+			if (color.w > 0.999 || rayColor.rgb == vec3(0))
+			{
+				break;
+			}
+
+			rayColor = blend(color, rayColor) * (1.0 - color.w);
 		}
 
 		if(dot(surface.Normal, dir) >= 0.0)

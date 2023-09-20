@@ -137,6 +137,8 @@ void VkRaytrace::CreateBuffers()
 			info.TextureIndex = -1;
 		}
 
+		info.Alpha = surface->alpha;
+
 		surfaceInfo.Push(info);
 	}
 

@@ -34,7 +34,7 @@ struct SurfaceInfo
 	float SamplingDistance;
 	uint32_t PortalIndex;
 	int32_t TextureIndex;
-	float Padding;
+	float Alpha;
 };
 
 struct SurfaceVertex

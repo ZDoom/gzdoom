@@ -845,6 +845,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		surf.ControlSector = nullptr;
 		surf.sectorGroup = sectorGroup[front->Index()];
 		surf.texture = texture;
+		surf.alpha = float(side->linedef->alpha);
 
 		Surfaces.Push(surf);
 	}

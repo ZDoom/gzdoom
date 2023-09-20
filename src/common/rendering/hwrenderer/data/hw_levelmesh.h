@@ -66,6 +66,7 @@ struct LevelMeshSurface
 	//
 
 	FTextureID texture = FNullTextureID();
+	float alpha = 1.0;
 	
 	int portalIndex = 0;
 	int sectorGroup = 0;

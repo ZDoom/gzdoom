@@ -18,9 +18,9 @@ void D_ConfirmSendStats()
 #include <winsock2.h>
 extern const char* sys_ostype;
 #else
+extern FString sys_ostype;
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
-extern FString sys_ostype;
 #else // !__APPLE__
 #include <SDL.h>
 #endif // __APPLE__

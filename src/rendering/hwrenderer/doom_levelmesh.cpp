@@ -835,6 +835,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;
 		surf.ControlSector = nullptr;
 		surf.sectorGroup = sectorGroup[front->Index()];
+		surf.texture = texture;
 
 		Surfaces.Push(surf);
 	}
@@ -1492,6 +1493,9 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 	surface.texHeight = height;
 }
 
+// hw_flats.cpp
+VSMatrix GetPlaneTextureRotationMatrix(FGameTexture* gltexture, const sector_t* sector, int plane);
+
 void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
 {
 	auto toUv = [](const DoomLevelMeshSurface* targetSurface, FVector3 vert) {
@@ -1510,19 +1514,25 @@ void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
 		
 			const auto gtxt = TexMan.GetGameTexture(surface.texture);
 
+			const auto w = gtxt->GetDisplayWidth();
+			const auto h = gtxt->GetDisplayHeight();
+
 			if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
 			{
+				auto ceiling = surface.Type == ST_FLOOR ? sector_t::floor : sector_t::ceiling;
+				auto mat = GetPlaneTextureRotationMatrix(gtxt, doomMap.subsectors[surface.typeIndex].sector, ceiling);
+
 				for (int i = 0; i < surface.numVerts; ++i)
 				{
-					uvs[surface.atlasPageIndex + 0] = verts[0].XY() * (1.0f / 64.0f);
+					uvs[i] = (mat * FVector4(verts[i].X / 64.f, -verts[i].Y / 64.f, 0.f, 1.f)).XY(); // The magic 64.f and negative Y is based on SetFlatVertex
 				}
 			}
 			else
 			{
-				uvs[surface.atlasPageIndex + 0] = FVector2(0, 1); //toUv(&surface, verts[0] - verts[0]);
-				uvs[surface.atlasPageIndex + 1] = FVector2(1, 1); //toUv(&surface, verts[0] - verts[0]);
-				uvs[surface.atlasPageIndex + 2] = FVector2(0, 0); //toUv(&surface, verts[0] - verts[0]);
-				uvs[surface.atlasPageIndex + 3] = FVector2(1, 0); //toUv(&surface, verts[0] - verts[0]);
+				uvs[0] = FVector2(0, 1); //toUv(&surface, verts[0] - verts[0]);
+				uvs[1] = FVector2(1, 1); //toUv(&surface, verts[0] - verts[0]);
+				uvs[2] = FVector2(0, 0); //toUv(&surface, verts[0] - verts[0]);
+				uvs[3] = FVector2(1, 0); //toUv(&surface, verts[0] - verts[0]);
 			}
 		}
 	}

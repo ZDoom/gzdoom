@@ -824,12 +824,21 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		surf.startVertIndex = MeshVertices.Size();
 		surf.numVerts = 4;
 		surf.bSky = false;
-		MeshVertices.Push(verts[0]);
-		MeshVertices.Push(verts[1]);
-		MeshVertices.Push(verts[2]);
-		MeshVertices.Push(verts[3]);
-
 		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
+
+		if (side->linedef->sidedef[0] != side)
+		{
+			surf.plane = -surf.plane;
+			surf.plane.W = -surf.plane.W;
+		}
+
+		auto offset = surf.plane.XYZ() * 0.05; // for better accuracy when raytracing mid-textures from each side
+
+		MeshVertices.Push(verts[0] + offset);
+		MeshVertices.Push(verts[1] + offset);
+		MeshVertices.Push(verts[2] + offset);
+		MeshVertices.Push(verts[3] + offset);
+
 		surf.Type = ST_MIDDLESIDE;
 		surf.typeIndex = typeIndex;
 		surf.sampleDimension = side->textures[side_t::mid].LightmapSampleDistance;
@@ -1496,14 +1505,34 @@ void DoomLevelMesh::BuildSurfaceParams(int lightMapTextureWidth, int lightMapTex
 // hw_flats.cpp
 VSMatrix GetPlaneTextureRotationMatrix(FGameTexture* gltexture, const sector_t* sector, int plane);
 
+// hw_walls.cpp
+void GetTexCoordInfo(FGameTexture* tex, FTexCoordInfo* tci, side_t* side, int texpos);
+
 void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
 {
 	auto toUv = [](const DoomLevelMeshSurface* targetSurface, FVector3 vert) {
 		FVector3 localPos = vert - targetSurface->translateWorldToLocal;
+		
 		float u = (1.0f + (localPos | targetSurface->projLocalToU)) / (targetSurface->texWidth + 2);
 		float v = (1.0f + (localPos | targetSurface->projLocalToV)) / (targetSurface->texHeight + 2);
-		return FVector2(u, v);
+		
+		return FVector2(u, 1.0f - v);
 	};
+
+	auto texPosition = [](LevelMeshSurfaceType surfaceType) {
+		switch (surfaceType)
+		{
+		case ST_UPPERSIDE:
+			return side_t::top;
+		case ST_LOWERSIDE:
+			return side_t::bottom;
+		default:
+			break;
+		}
+		return side_t::mid;
+	};
+
+	FTexCoordInfo tci;
 
 	for (auto& surface : Surfaces)
 	{
@@ -1513,9 +1542,6 @@ void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
 			FVector2* uvs = &MeshVertexUVs[surface.startVertIndex];
 		
 			const auto gtxt = TexMan.GetGameTexture(surface.texture);
-
-			const auto w = gtxt->GetDisplayWidth();
-			const auto h = gtxt->GetDisplayHeight();
 
 			if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
 			{
@@ -1529,10 +1555,42 @@ void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
 			}
 			else
 			{
-				uvs[0] = FVector2(0, 1); //toUv(&surface, verts[0] - verts[0]);
-				uvs[1] = FVector2(1, 1); //toUv(&surface, verts[0] - verts[0]);
-				uvs[2] = FVector2(0, 0); //toUv(&surface, verts[0] - verts[0]);
-				uvs[3] = FVector2(1, 0); //toUv(&surface, verts[0] - verts[0]);
+				const auto w = gtxt->GetDisplayWidth();
+				const auto h = gtxt->GetDisplayHeight();
+
+				FVector3 relativeVerts[4];
+
+				for (int i = 0; i < 4; ++i)
+				{
+					relativeVerts[i] = verts[i] - verts[0];
+				
+					uvs[i] = toUv(&surface, verts[i]);
+				}
+
+				// shift the uv based on the surface type and anchor
+				/*const*/ auto* side = &doomMap.sides[surface.typeIndex];
+				const auto* line = side->linedef;
+				const auto* sector = side->sector;
+				const auto* otherSector = line->frontsector == sector ? line->backsector : line->frontsector;
+
+				float anchorZ = 0.f;
+				float anchorU = 0.f;
+
+				GetTexCoordInfo(gtxt, &tci, side, texPosition(surface.Type));
+
+				// Lastly, offsets are applied
+
+				const float sideHeight = max(relativeVerts[1].Z, max(relativeVerts[1].Z, relativeVerts[2].Z)) - min(relativeVerts[1].Z, min(relativeVerts[1].Z, relativeVerts[2].Z));
+
+				auto a = line->v2->fPos() - line->v1->fPos();
+				for (int i = 0; i < 4; ++i)
+				{
+					uvs[i].X = tci.FloatToTexU(uvs[i].X * a.Length() + side->textures[side_t::mid].xOffset);
+					uvs[i].Y = tci.FloatToTexV(uvs[i].Y * sideHeight + side->textures[side_t::mid].yOffset);
+					//uvs[i].Y = tci.FloatToTexU(0);
+					//uvs[i].X = uvs[i].X * repeatsU + anchorU / w;
+					//uvs[i].Y = uvs[i].Y * repeatsV + anchorZ / h;
+				}
 			}
 		}
 	}

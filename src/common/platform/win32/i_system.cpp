@@ -128,7 +128,7 @@ double PerfToSec, PerfToMillisec;
 
 UINT TimerPeriod;
 
-int sys_ostype = 0;
+const char* sys_ostype = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -168,12 +168,10 @@ void I_DetectOS(void)
 			if (info.dwMinorVersion == 0)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "Vista" : "Server 2008";
-				sys_ostype = 2; // legacy OS
 			}
 			else if (info.dwMinorVersion == 1)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "7" : "Server 2008 R2";
-				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 2)	
 			{
@@ -181,12 +179,10 @@ void I_DetectOS(void)
 				// the highest version of Windows you support, which will also be the
 				// highest version of Windows this function returns.
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8" : "Server 2012";
-				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 3)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8.1" : "Server 2012 R2";
-				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 4)
 			{
@@ -196,7 +192,6 @@ void I_DetectOS(void)
 		else if (info.dwMajorVersion == 10)
 		{
 			osname = (info.wProductType == VER_NT_WORKSTATION) ? (info.dwBuildNumber >= 22000 ? "11 (or higher)" : "10") : "Server 2016 (or higher)";
-			sys_ostype = 3; // modern OS
 		}
 		break;
 
@@ -209,6 +204,8 @@ void I_DetectOS(void)
 			osname,
 			info.dwMajorVersion, info.dwMinorVersion,
 			info.dwBuildNumber, info.szCSDVersion);
+
+	sys_ostype = osname;
 }
 
 //==========================================================================

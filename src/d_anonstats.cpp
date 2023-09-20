@@ -1,4 +1,4 @@
-#define NO_SEND_STATS
+//#define NO_SEND_STATS
 #ifdef NO_SEND_STATS
 
 void D_DoAnonStats()
@@ -16,10 +16,11 @@ void D_ConfirmSendStats()
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
-extern int sys_ostype;
+extern const char* sys_ostype;
 #else
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
+extern FString sys_ostype;
 #else // !__APPLE__
 #include <SDL.h>
 #endif // __APPLE__
@@ -168,48 +169,28 @@ bool I_HTTPRequest(const char* request)
 }
 #endif
 
-static int GetOSVersion()
+static FString GetOSVersion()
 {
 #ifdef _WIN32
 #ifndef _M_ARM64
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		BOOL res;
-		if (IsWow64Process(GetCurrentProcess(), &res) && res)
-		{
-			return 1;
-		}
-		return 0;
-	}
-	else
-	{
-		if (sys_ostype == 2) return 2;
-		else return 3;
-	}
+	return FStringf("Windows %s", sys_ostype);
 #else
-	return 4;
+	return FStringf("Windows %s ARM", sys_ostype);
 #endif
 
 #elif defined __APPLE__
 
 #if defined(__aarch64__)
-	return 6;
+	return sys_ostype + " ARM";
 #else
-	return 5;
+	return sys_ostype + " x64";
 #endif
 
 #else // fall-through linux stuff here
 #ifdef __arm__
-	return 9;
+	return sys_ostype + " ARM";
 #else
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		return 7;
-	}
-	else
-	{
-		return 8;
-	}
+	return sys_ostype;
 #endif
 
 

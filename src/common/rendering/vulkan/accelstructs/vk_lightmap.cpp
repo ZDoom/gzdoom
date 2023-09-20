@@ -486,6 +486,7 @@ void VkLightmap::CreateRaytracePipeline()
 		raytrace.descriptorSetLayout1 = DescriptorSetLayoutBuilder()
 			.AddBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.AddBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.AddBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.DebugName("raytrace.descriptorSetLayout1")
 			.Create(fb->GetDevice());
 	}
@@ -579,6 +580,7 @@ void VkLightmap::UpdateAccelStructDescriptors()
 		WriteDescriptors()
 			.AddAccelerationStructure(raytrace.descriptorSet1.get(), 0, fb->GetRaytrace()->GetAccelStruct())
 			.AddBuffer(raytrace.descriptorSet1.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetVertexBuffer())
+			.AddBuffer(raytrace.descriptorSet1.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetIndexBuffer())
 			.Execute(fb->GetDevice());
 	}
 	else

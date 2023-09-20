@@ -31,11 +31,7 @@ struct SurfaceVertex
 };
 
 layout(std430, set = 1, binding = 1) buffer VertexBuffer { SurfaceVertex vertices[]; };
-
-#if defined(USE_RAYQUERY)
-#else
 layout(std430, set = 1, binding = 2) buffer ElementBuffer { int elements[]; };
-#endif
 
 layout(set = 0, binding = 0) uniform Uniforms
 {
@@ -259,6 +255,8 @@ int TraceFirstHitTriangleNoPortal(vec3 origin, float tmin, vec3 dir, float tmax,
 
 		primitiveWeights.xy = rayQueryGetIntersectionBarycentricsEXT(rayQuery, true);
 		primitiveWeights.z = 1.0 - primitiveWeights.x - primitiveWeights.y;
+
+		primitiveWeights = vec3(primitiveWeights.z, primitiveWeights.x, primitiveWeights.y);
 
 		return rayQueryGetIntersectionPrimitiveIndexEXT(rayQuery, true);
 	}

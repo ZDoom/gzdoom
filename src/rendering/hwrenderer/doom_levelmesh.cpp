@@ -1512,16 +1512,17 @@ void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
 
 			if (surface.Type == ST_FLOOR || surface.Type == ST_CEILING)
 			{
+				for (int i = 0; i < surface.numVerts; ++i)
+				{
+					uvs[surface.atlasPageIndex + 0] = verts[0].XY() * (1.0f / 64.0f);
+				}
 			}
 			else
 			{
-				for (int i = 0; i < 4; ++i)
-				{
-					uvs[surface.atlasPageIndex + i] = verts[i] - verts[0];
-
-					uvs[surface.atlasPageIndex + i].X /= gtxt->GetDisplayWidth();
-					uvs[surface.atlasPageIndex + i].Y /= gtxt->GetDisplayHeight();
-				}
+				uvs[surface.atlasPageIndex + 0] = FVector2(0, 1); //toUv(&surface, verts[0] - verts[0]);
+				uvs[surface.atlasPageIndex + 1] = FVector2(1, 1); //toUv(&surface, verts[0] - verts[0]);
+				uvs[surface.atlasPageIndex + 2] = FVector2(0, 0); //toUv(&surface, verts[0] - verts[0]);
+				uvs[surface.atlasPageIndex + 3] = FVector2(1, 0); //toUv(&surface, verts[0] - verts[0]);
 			}
 		}
 	}

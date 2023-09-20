@@ -799,8 +799,8 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 
 			auto gameTexture = TexMan.GetGameTexture(texture);
 
-			float mid1Top = gameTexture->GetDisplayHeight();
-			float mid2Top = gameTexture->GetDisplayHeight();
+			float mid1Top = gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale;
+			float mid2Top = gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale;
 			float mid1Bottom = 0;
 			float mid2Bottom = 0;
 
@@ -812,7 +812,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 			}
 			else
 			{
-				yTextureOffset += side->sector->planes[sector_t::ceiling].TexZ - gameTexture->GetDisplayHeight();
+				yTextureOffset += side->sector->planes[sector_t::ceiling].TexZ - gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale;
 			}
 
 			verts[0].Z = min(max(yTextureOffset + mid1Bottom, v1Bottom), v1Top);

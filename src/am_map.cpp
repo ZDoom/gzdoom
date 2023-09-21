@@ -1846,9 +1846,10 @@ void DAutomap::collectPath ()
 		constexpr int MIN_DISTANCE_BETWEEN_POINTS = 32;
 		if (abs(last_line.b.x - pos.X) >= MIN_DISTANCE_BETWEEN_POINTS || abs(last_line.b.y - pos.Y) >= MIN_DISTANCE_BETWEEN_POINTS)
 		{
-			// If the distance between two points is very high, the player has likely teleported so no path should be drawn between the points.
-			constexpr int MAX_DISTANCE_BETWEEN_TICKS = 100;
-			if (abs(last_line.b.x - pos.X) >= MAX_DISTANCE_BETWEEN_TICKS || abs(last_line.b.y - pos.Y) >= MAX_DISTANCE_BETWEEN_TICKS)
+			// If the player's velocity is lower than the distance between the last two ticks (with some tolerance),
+			// the player has likely teleported so no path should be drawn between the points.
+			constexpr float EPSILON = 10.0;
+			if ((pos - last_tick_pos).Length() > (players[consoleplayer].camera->VelXYToSpeed() + EPSILON))
 			{
 				ml.a.x = pos.X;
 				ml.a.y = pos.Y;
@@ -1862,7 +1863,7 @@ void DAutomap::collectPath ()
 			ml.b.x = pos.X;
 			ml.b.y = pos.Y;
 
-			if (path_history.Size() > am_pathlength)
+			if (path_history.Size() > uint32_t(am_pathlength))
 			{
 				// Path is too long; remove the oldest lines.
 				path_history.Delete(0);
@@ -1879,6 +1880,8 @@ void DAutomap::collectPath ()
 		ml.b.y = pos.Y;
 		path_history.Push(ml);
 	}
+
+	last_tick_pos = players[consoleplayer].camera->InterpolatedPosition(r_viewpoint.TicFrac);
 }
 
 //=============================================================================

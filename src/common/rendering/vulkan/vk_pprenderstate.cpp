@@ -43,12 +43,12 @@ VkPPRenderState::VkPPRenderState(VulkanRenderDevice* fb) : fb(fb)
 
 void VkPPRenderState::PushGroup(const FString &name)
 {
-	fb->GetCommands()->PushGroup(name);
+	fb->GetCommands()->PushGroup(fb->GetCommands()->GetDrawCommands(), name);
 }
 
 void VkPPRenderState::PopGroup()
 {
-	fb->GetCommands()->PopGroup();
+	fb->GetCommands()->PopGroup(fb->GetCommands()->GetDrawCommands());
 }
 
 void VkPPRenderState::Draw()

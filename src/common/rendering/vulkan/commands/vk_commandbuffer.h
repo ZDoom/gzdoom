@@ -25,8 +25,8 @@ public:
 	void WaitForCommands(bool finish) { WaitForCommands(finish, false); }
 	void WaitForCommands(bool finish, bool uploadOnly);
 
-	void PushGroup(const FString& name);
-	void PopGroup();
+	void PushGroup(VulkanCommandBuffer* cmdbuffer, const FString& name);
+	void PopGroup(VulkanCommandBuffer* cmdbuffer);
 	void UpdateGpuStats();
 
 	class DeleteList

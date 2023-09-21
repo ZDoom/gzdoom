@@ -2275,9 +2275,6 @@ static void PutSaveWads (FSerializer &arc)
 	}
 }
 
-EXTERN_CVAR(Bool, hud_showmonsters)
-EXTERN_CVAR(Bool, hud_showitems)
-EXTERN_CVAR(Bool, hud_showsecrets)
 static void PutSaveComment (FSerializer &arc)
 {
 	int levelTime;
@@ -2292,47 +2289,7 @@ static void PutSaveComment (FSerializer &arc)
 	// Append elapsed time
 	const char *const time = GStrings("SAVECOMMENT_TIME");
 	levelTime = primaryLevel->time / TICRATE;
-	comment.AppendFormat("%s: %02d:%02d:%02d\n", time, levelTime/3600, (levelTime%3600)/60, levelTime%60);
-
-	// Append kills/items/secrets (only if visible on HUD to avoid spoiling levels)
-	bool hasStatOnLine = false;
-	if (hud_showmonsters) {
-		comment.AppendFormat("K: %d/%d", primaryLevel->killed_monsters, primaryLevel->total_monsters);
-		hasStatOnLine = true;
-	}
-	if (hud_showitems) {
-		if (hasStatOnLine) {
-			comment.AppendFormat(" - ");
-		}
-		comment.AppendFormat("I: %d/%d", primaryLevel->found_items, primaryLevel->total_items);
-		hasStatOnLine = true;
-	}
-	if (hud_showsecrets) {
-		if (hasStatOnLine) {
-			comment.AppendFormat(" - ");
-		}
-		comment.AppendFormat("S: %d/%d", primaryLevel->found_secrets, primaryLevel->total_secrets);
-		hasStatOnLine = true;
-	}
-
-	if (hasStatOnLine) {
-		comment.AppendFormat("\n");
-	}
-
-	// Append player health and armor
-	const char* const health = "Health";// GStrings("SAVECOMMENT_HEALTH");
-	const char* const armor = "Armor"; // GStrings("SAVECOMMENT_ARMOR");
-	int armorAmount = 0;
-	auto basicArmorItem = primaryLevel->Players[consoleplayer]->mo->FindInventory(NAME_BasicArmor);
-	if (basicArmorItem) {
-		armorAmount += basicArmorItem->IntVar(NAME_Amount);
-	}
-	auto hexenArmorItem = primaryLevel->Players[consoleplayer]->mo->FindInventory(NAME_HexenArmor);
-	if (hexenArmorItem) {
-		double *Slots = (double*)hexenArmorItem->ScriptVar(NAME_Slots, nullptr);
-		armorAmount += Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
-	}
-	comment.AppendFormat("%s: %d - %s: %d", health, primaryLevel->Players[consoleplayer]->mo->health, armor, armorAmount);
+	comment.AppendFormat("%s: %02d:%02d:%02d", time, levelTime/3600, (levelTime%3600)/60, levelTime%60);
 
 	// Write out the comment
 	arc.AddString("Comment", comment);

@@ -17,7 +17,7 @@ struct Uniforms
 	float SunIntensity;
 };
 
-struct LightmapPushConstants
+struct LightmapRaytracePC
 {
 	uint32_t LightStart;
 	uint32_t LightEnd;
@@ -33,6 +33,14 @@ struct LightmapPushConstants
 	float TileY;
 	float TileWidth;
 	float TileHeight;
+};
+
+struct LightmapCopyPC
+{
+	int SrcTexSize;
+	int DestTexSize;
+	int Padding1;
+	int Padding2;
 };
 
 struct LightmapBakeImage
@@ -59,6 +67,11 @@ struct LightmapBakeImage
 		std::unique_ptr<VulkanFramebuffer> Framebuffer;
 		std::unique_ptr<VulkanDescriptorSet> DescriptorSet[2];
 	} blur;
+
+	struct
+	{
+		std::unique_ptr<VulkanDescriptorSet> DescriptorSet;
+	} copy;
 
 	// how much of the image is used for the baking
 	uint16_t maxX = 0;
@@ -91,6 +104,20 @@ struct SelectedSurface
 
 static_assert(sizeof(LightInfo) == sizeof(float) * 20);
 
+struct CopyTileInfo
+{
+	int SrcPosX;
+	int SrcPosY;
+	int DestPosX;
+	int DestPosY;
+	int TileWidth;
+	int TileHeight;
+	int Padding1;
+	int Padding2;
+};
+
+static_assert(sizeof(CopyTileInfo) == sizeof(int32_t) * 8);
+
 class VkLightmap
 {
 public:
@@ -104,10 +131,10 @@ public:
 private:
 	void SelectSurfaces(const TArray<LevelMeshSurface*>& surfaces);
 	void UploadUniforms();
-	void RenderBakeImage();
-	void ResolveBakeImage();
-	void BlurBakeImage();
-	void CopyBakeImageResult();
+	void Render();
+	void Resolve();
+	void Blur();
+	void CopyResult();
 
 	void UpdateAccelStructDescriptors();
 
@@ -115,8 +142,10 @@ private:
 	void CreateRaytracePipeline();
 	void CreateResolvePipeline();
 	void CreateBlurPipeline();
+	void CreateCopyPipeline();
 	void CreateUniformBuffer();
-	void CreateSceneLightBuffer();
+	void CreateLightBuffer();
+	void CreateTileBuffer();
 	void CreateBakeImage();
 
 	static FVector2 ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface);
@@ -129,6 +158,7 @@ private:
 	bool useRayQuery = true;
 
 	TArray<SelectedSurface> selectedSurfaces;
+	TArray<TArray<SelectedSurface*>> copylists;
 
 	struct
 	{
@@ -152,11 +182,20 @@ private:
 
 	struct
 	{
+		const int BufferSize = 100'000;
+		std::unique_ptr<VulkanBuffer> Buffer;
+		CopyTileInfo* Tiles = nullptr;
+	} copytiles;
+
+	struct
+	{
 		std::unique_ptr<VulkanShader> vertRaytrace;
 		std::unique_ptr<VulkanShader> vertScreenquad;
+		std::unique_ptr<VulkanShader> vertCopy;
 		std::unique_ptr<VulkanShader> fragRaytrace;
 		std::unique_ptr<VulkanShader> fragResolve;
 		std::unique_ptr<VulkanShader> fragBlur[2];
+		std::unique_ptr<VulkanShader> fragCopy;
 	} shaders;
 
 	struct
@@ -191,6 +230,16 @@ private:
 		std::unique_ptr<VulkanDescriptorPool> descriptorPool;
 		std::unique_ptr<VulkanSampler> sampler;
 	} blur;
+
+	struct
+	{
+		std::unique_ptr<VulkanDescriptorSetLayout> descriptorSetLayout;
+		std::unique_ptr<VulkanPipelineLayout> pipelineLayout;
+		std::unique_ptr<VulkanPipeline> pipeline;
+		std::unique_ptr<VulkanRenderPass> renderPass;
+		std::unique_ptr<VulkanDescriptorPool> descriptorPool;
+		std::unique_ptr<VulkanSampler> sampler;
+	} copy;
 
 	LightmapBakeImage bakeImage;
 	static const int bakeImageSize = 2048;

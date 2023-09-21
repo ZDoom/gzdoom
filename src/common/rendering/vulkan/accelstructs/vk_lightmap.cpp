@@ -11,16 +11,14 @@
 #include "cmdlib.h"
 
 static int lastSurfaceCount;
-static glcycle_t lightmapRaytrace;
 static glcycle_t lightmapRaytraceLast;
 
 static uint32_t lastPixelCount;
-static uint32_t totalPixelCount;
 
 ADD_STAT(lightmapper)
 {
 	FString out;
-	out.Format("last: %.3fms\ntotal: %3.fms\nLast batch surface count: %d\nLast batch pixel count: %u\nTotal pixel count: %u", lightmapRaytraceLast.TimeMS(), lightmapRaytrace.TimeMS(), lastSurfaceCount, lastPixelCount, totalPixelCount);
+	out.Format("CPU time: %.3fms\nSurface count: %d\nPixel count: %u K", lightmapRaytraceLast.TimeMS(), lastSurfaceCount, lastPixelCount / 1024);
 	return out;
 }
 
@@ -33,12 +31,14 @@ VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 	useRayQuery = fb->GetDevice()->PhysicalDevice.Features.RayQuery.rayQuery;
 
 	CreateUniformBuffer();
-	CreateSceneLightBuffer();
+	CreateLightBuffer();
+	CreateTileBuffer();
 
 	CreateShaders();
 	CreateRaytracePipeline();
 	CreateResolvePipeline();
 	CreateBlurPipeline();
+	CreateCopyPipeline();
 	CreateBakeImage();
 }
 
@@ -46,6 +46,8 @@ VkLightmap::~VkLightmap()
 {
 	if (lights.Buffer)
 		lights.Buffer->Unmap();
+	if (copytiles.Buffer)
+		copytiles.Buffer->Unmap();
 }
 
 void VkLightmap::SetLevelMesh(LevelMesh* level)
@@ -53,9 +55,7 @@ void VkLightmap::SetLevelMesh(LevelMesh* level)
 	mesh = level;
 	UpdateAccelStructDescriptors();
 
-	lightmapRaytrace.Reset();
 	lightmapRaytraceLast.Reset();
-	totalPixelCount = 0;
 	lastPixelCount = 0;
 	lastSurfaceCount = 0;
 }
@@ -70,10 +70,8 @@ void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
 {
 	if (surfaces.Size())
 	{
-		lightmapRaytrace.active = true;
 		lightmapRaytraceLast.active = true;
 
-		lightmapRaytrace.Clock();
 		lightmapRaytraceLast.ResetAndClock();
 
 		SelectSurfaces(surfaces);
@@ -82,15 +80,14 @@ void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
 			fb->GetCommands()->PushGroup(fb->GetCommands()->GetTransferCommands(), "lightmap.total");
 
 			UploadUniforms();
-			RenderBakeImage();
-			ResolveBakeImage();
-			BlurBakeImage();
-			CopyBakeImageResult();
+			Render();
+			Resolve();
+			Blur();
+			CopyResult();
 
 			fb->GetCommands()->PopGroup(fb->GetCommands()->GetTransferCommands());
 		}
 
-		lightmapRaytrace.Unclock();
 		lightmapRaytraceLast.Unclock();
 	}
 }
@@ -129,7 +126,7 @@ void VkLightmap::SelectSurfaces(const TArray<LevelMeshSurface*>& surfaces)
 	}
 }
 
-void VkLightmap::RenderBakeImage()
+void VkLightmap::Render()
 {
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
@@ -167,7 +164,7 @@ void VkLightmap::RenderBakeImage()
 			continue;
 		}
 
-		LightmapPushConstants pc;
+		LightmapRaytracePC pc;
 		pc.TileX = (float)selectedSurface.X;
 		pc.TileY = (float)selectedSurface.Y;
 		pc.SurfaceIndex = mesh->GetSurfaceIndex(targetSurface);
@@ -229,7 +226,7 @@ void VkLightmap::RenderBakeImage()
 
 			pc.LightStart = surface->LightListPos;
 			pc.LightEnd = pc.LightStart + lightCount;
-			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants), &pc);
+			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapRaytracePC), &pc);
 			cmdbuffer->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
 		}
 
@@ -269,7 +266,7 @@ void VkLightmap::UploadUniforms()
 		.Execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
-void VkLightmap::ResolveBakeImage()
+void VkLightmap::Resolve()
 {
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
@@ -301,7 +298,7 @@ void VkLightmap::ResolveBakeImage()
 	fb->GetCommands()->PopGroup(cmdbuffer);
 }
 
-void VkLightmap::BlurBakeImage()
+void VkLightmap::Blur()
 {
 	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
 
@@ -362,63 +359,127 @@ void VkLightmap::BlurBakeImage()
 	fb->GetCommands()->PopGroup(cmdbuffer);
 }
 
-void VkLightmap::CopyBakeImageResult()
+void VkLightmap::CopyResult()
 {
+	// Sort by destination
 	uint32_t pixels = 0;
 	lastSurfaceCount = 0;
-	std::set<int> seenPages;
-	std::vector<VkImageCopy> regions;
+	for (auto& list : copylists) list.Clear();
 	for (int i = 0, count = selectedSurfaces.Size(); i < count; i++)
 	{
 		auto& selected = selectedSurfaces[i];
 		if (selected.Rendered)
 		{
-			LevelMeshSurface* surface = selected.Surface;
-			VkImageCopy region = {};
-			region.srcOffset.x = selected.X;
-			region.srcOffset.y = selected.Y;
-			region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.srcSubresource.layerCount = 1;
-			region.dstOffset.x = surface->atlasX;
-			region.dstOffset.y = surface->atlasY;
-			region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.dstSubresource.layerCount = 1;
-			region.dstSubresource.baseArrayLayer = surface->atlasPageIndex;
-			region.extent.width = surface->texWidth;
-			region.extent.height = surface->texHeight;
-			region.extent.depth = 1;
-			regions.push_back(region);
-			seenPages.insert(surface->atlasPageIndex);
+			unsigned int pageIndex = (unsigned int)selected.Surface->atlasPageIndex;
+			if (pageIndex >= copylists.Size())
+			{
+				copylists.Resize(pageIndex + 1);
+			}
+			copylists[pageIndex].Push(&selected);
 
-			pixels += surface->Area();
+			pixels += selected.Surface->Area();
 			lastSurfaceCount++;
 		}
 	}
-
 	lastPixelCount = pixels;
-	totalPixelCount += pixels;
 
-	if (!regions.empty())
+	if (pixels == 0)
+		return;
+
+	VkTextureImage* destTexture = &fb->GetTextureManager()->Lightmap;
+	int destSize = fb->GetTextureManager()->LMTextureSize;
+
+	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
+
+	fb->GetCommands()->PushGroup(cmdbuffer, "lightmap.copy");
+
+	// Transition lightmap destination images to be used as framebuffers and the resolve image as sampling source
+	PipelineBarrier barrier0;
+	barrier0.AddImage(bakeImage.resolve.Image.get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+	for (unsigned int i = 0, count = copylists.Size(); i < count; i++)
 	{
-		auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
-
-		fb->GetCommands()->PushGroup(cmdbuffer, "lightmap.copy");
-
-		PipelineBarrier barrier0;
-		barrier0.AddImage(bakeImage.resolve.Image.get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-		for (int pageIndex : seenPages)
-			barrier0.AddImage(fb->GetTextureManager()->Lightmap.Image.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, pageIndex, 1);
-		barrier0.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-
-		cmdbuffer->copyImage(bakeImage.resolve.Image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, fb->GetTextureManager()->Lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (uint32_t)regions.size(), regions.data());
-
-		PipelineBarrier barrier1;
-		for (int pageIndex : seenPages)
-			barrier1.AddImage(fb->GetTextureManager()->Lightmap.Image.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, pageIndex, 1);
-		barrier1.Execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
-		fb->GetCommands()->PopGroup(cmdbuffer);
+		if (copylists[i].Size() > 0)
+			barrier0.AddImage(destTexture->Image.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, i, 1);
 	}
+	barrier0.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+	// Copy into the lightmap images
+	int start = 0;
+	int pos = 0;
+	for (unsigned int i = 0, count = copylists.Size(); i < count; i++)
+	{
+		auto& list = copylists[i];
+		if (list.Size() == 0)
+			continue;
+
+		// Create framebuffer object if it doesn't exist
+		if (i >= destTexture->LMFramebuffers.size())
+		{
+			destTexture->LMFramebuffers.resize(i + 1);
+		}
+
+		auto& framebuffer = destTexture->LMFramebuffers[i];
+		if (!framebuffer)
+		{
+			framebuffer = FramebufferBuilder()
+				.RenderPass(copy.renderPass.get())
+				.Size(destSize, destSize)
+				.AddAttachment(destTexture->View.get())
+				.DebugName("LMFramebuffer")
+				.Create(fb->GetDevice());
+		}
+
+		// Copy the tile positions into a storage buffer for the vertex shader to read
+		start = pos;
+		for (SelectedSurface* selected : list)
+		{
+			LevelMeshSurface* surface = selected->Surface;
+
+			CopyTileInfo* copyinfo = &copytiles.Tiles[pos++];
+			copyinfo->SrcPosX = selected->X;
+			copyinfo->SrcPosY = selected->Y;
+			copyinfo->DestPosX = surface->atlasX;
+			copyinfo->DestPosY = surface->atlasY;
+			copyinfo->TileWidth = surface->texWidth;
+			copyinfo->TileHeight = surface->texHeight;
+		}
+
+		// Draw the tiles. One instance per tile.
+		RenderPassBegin()
+			.RenderPass(copy.renderPass.get())
+			.RenderArea(0, 0, destSize, destSize)
+			.Framebuffer(framebuffer.get())
+			.Execute(cmdbuffer);
+
+		cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, copy.pipeline.get());
+		cmdbuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, copy.pipelineLayout.get(), 0, bakeImage.copy.DescriptorSet.get());
+
+		VkViewport viewport = {};
+		viewport.maxDepth = 1;
+		viewport.width = (float)destSize;
+		viewport.height = (float)destSize;
+		cmdbuffer->setViewport(0, 1, &viewport);
+
+		LightmapCopyPC pc;
+		pc.SrcTexSize = bakeImageSize;
+		pc.DestTexSize = destSize;
+		cmdbuffer->pushConstants(copy.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapCopyPC), &pc);
+
+		cmdbuffer->draw(4, pos - start, 0, start);
+
+		cmdbuffer->endRenderPass();
+	}
+
+	// Transition lightmap destination images back to be used for fragment shader sampling
+	PipelineBarrier barrier1;
+	for (unsigned int i = 0, count = copylists.Size(); i < count; i++)
+	{
+		if (copylists[i].Size() > 0)
+			barrier1.AddImage(destTexture->Image.get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, i, 1);
+	}
+	barrier1.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+	fb->GetCommands()->PopGroup(cmdbuffer);
 }
 
 FVector2 VkLightmap::ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface)
@@ -454,6 +515,13 @@ void VkLightmap::CreateShaders()
 		.DebugName("VkLightmap.VertScreenquad")
 		.Create("VkLightmap.VertScreenquad", fb->GetDevice());
 
+	shaders.vertCopy = ShaderBuilder()
+		.Type(ShaderType::Vertex)
+		.AddSource("VersionBlock", prefix)
+		.AddSource("vert_copy.glsl", LoadPrivateShaderLump("shaders/lightmap/vert_copy.glsl").GetChars())
+		.DebugName("VkLightmap.VertCopy")
+		.Create("VkLightmap.VertCopy", fb->GetDevice());
+
 	shaders.fragRaytrace = ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.AddSource("VersionBlock", traceprefix)
@@ -481,6 +549,13 @@ void VkLightmap::CreateShaders()
 		.AddSource("frag_blur.glsl", LoadPrivateShaderLump("shaders/lightmap/frag_blur.glsl").GetChars())
 		.DebugName("VkLightmap.FragBlur")
 		.Create("VkLightmap.FragBlur", fb->GetDevice());
+
+	shaders.fragCopy = ShaderBuilder()
+		.Type(ShaderType::Fragment)
+		.AddSource("VersionBlock", prefix)
+		.AddSource("frag_copy.glsl", LoadPrivateShaderLump("shaders/lightmap/frag_copy.glsl").GetChars())
+		.DebugName("VkLightmap.FragCopy")
+		.Create("VkLightmap.FragCopy", fb->GetDevice());
 }
 
 FString VkLightmap::LoadPrivateShaderLump(const char* lumpname)
@@ -524,7 +599,7 @@ void VkLightmap::CreateRaytracePipeline()
 		.AddSetLayout(raytrace.descriptorSetLayout0.get())
 		.AddSetLayout(raytrace.descriptorSetLayout1.get())
 		.AddSetLayout(fb->GetDescriptorSetManager()->GetBindlessSetLayout())
-		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapPushConstants))
+		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapRaytracePC))
 		.DebugName("raytrace.pipelineLayout")
 		.Create(fb->GetDevice());
 
@@ -631,7 +706,6 @@ void VkLightmap::CreateResolvePipeline()
 
 	resolve.pipelineLayout = PipelineLayoutBuilder()
 		.AddSetLayout(resolve.descriptorSetLayout.get())
-		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapPushConstants))
 		.DebugName("resolve.pipelineLayout")
 		.Create(fb->GetDevice());
 
@@ -666,8 +740,8 @@ void VkLightmap::CreateResolvePipeline()
 		.Create(fb->GetDevice());
 
 	resolve.descriptorPool = DescriptorPoolBuilder()
-		.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 256)
-		.MaxSets(256)
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+		.MaxSets(1)
 		.DebugName("resolve.descriptorPool")
 		.Create(fb->GetDevice());
 
@@ -685,7 +759,6 @@ void VkLightmap::CreateBlurPipeline()
 
 	blur.pipelineLayout = PipelineLayoutBuilder()
 		.AddSetLayout(blur.descriptorSetLayout.get())
-		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapPushConstants))
 		.DebugName("blur.pipelineLayout")
 		.Create(fb->GetDevice());
 
@@ -723,13 +796,68 @@ void VkLightmap::CreateBlurPipeline()
 	}
 
 	blur.descriptorPool = DescriptorPoolBuilder()
-		.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 256)
-		.MaxSets(256)
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
+		.MaxSets(2)
 		.DebugName("blur.descriptorPool")
 		.Create(fb->GetDevice());
 
 	blur.sampler = SamplerBuilder()
 		.DebugName("blur.Sampler")
+		.Create(fb->GetDevice());
+}
+
+void VkLightmap::CreateCopyPipeline()
+{
+	copy.descriptorSetLayout = DescriptorSetLayoutBuilder()
+		.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+		.AddBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
+		.DebugName("copy.descriptorSetLayout")
+		.Create(fb->GetDevice());
+
+	copy.pipelineLayout = PipelineLayoutBuilder()
+		.AddSetLayout(copy.descriptorSetLayout.get())
+		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightmapCopyPC))
+		.DebugName("copy.pipelineLayout")
+		.Create(fb->GetDevice());
+
+	copy.renderPass = RenderPassBuilder()
+		.AddAttachment(
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_SAMPLE_COUNT_1_BIT,
+			VK_ATTACHMENT_LOAD_OP_LOAD,
+			VK_ATTACHMENT_STORE_OP_STORE,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		.AddSubpass()
+		.AddSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		.AddExternalSubpassDependency(
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_READ_BIT)
+		.DebugName("copy.renderpass")
+		.Create(fb->GetDevice());
+
+	copy.pipeline = GraphicsPipelineBuilder()
+		.Layout(copy.pipelineLayout.get())
+		.RenderPass(copy.renderPass.get())
+		.AddVertexShader(shaders.vertCopy.get())
+		.AddFragmentShader(shaders.fragCopy.get())
+		.Topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP)
+		.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
+		.Viewport(0.0f, 0.0f, 0.0f, 0.0f)
+		.Scissor(0, 0, 4096, 4096)
+		.DebugName("copy.pipeline")
+		.Create(fb->GetDevice());
+
+	copy.descriptorPool = DescriptorPoolBuilder()
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 256)
+		.MaxSets(256)
+		.DebugName("copy.descriptorPool")
+		.Create(fb->GetDevice());
+
+	copy.sampler = SamplerBuilder()
+		.DebugName("copy.Sampler")
 		.Create(fb->GetDevice());
 }
 
@@ -806,10 +934,15 @@ void VkLightmap::CreateBakeImage()
 	bakeImage.blur.DescriptorSet[1] = blur.descriptorPool->allocate(blur.descriptorSetLayout.get());
 	bakeImage.blur.DescriptorSet[1]->SetDebugName("blur.descriptorSet");
 
+	bakeImage.copy.DescriptorSet = copy.descriptorPool->allocate(copy.descriptorSetLayout.get());
+	bakeImage.copy.DescriptorSet->SetDebugName("copy.descriptorSet");
+
 	WriteDescriptors()
 		.AddCombinedImageSampler(bakeImage.resolve.DescriptorSet.get(), 0, bakeImage.raytrace.View.get(), resolve.sampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		.AddCombinedImageSampler(bakeImage.blur.DescriptorSet[0].get(), 0, bakeImage.resolve.View.get(), blur.sampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		.AddCombinedImageSampler(bakeImage.blur.DescriptorSet[1].get(), 0, bakeImage.blur.View.get(), blur.sampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		.AddCombinedImageSampler(bakeImage.copy.DescriptorSet.get(), 0, bakeImage.resolve.View.get(), blur.sampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		.AddBuffer(bakeImage.copy.DescriptorSet.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, copytiles.Buffer.get())
 		.Execute(fb->GetDevice());
 }
 
@@ -831,7 +964,7 @@ void VkLightmap::CreateUniformBuffer()
 		.Create(fb->GetDevice());
 }
 
-void VkLightmap::CreateSceneLightBuffer()
+void VkLightmap::CreateLightBuffer()
 {
 	size_t size = sizeof(LightInfo) * lights.BufferSize;
 
@@ -848,4 +981,22 @@ void VkLightmap::CreateSceneLightBuffer()
 
 	lights.Lights = (LightInfo*)lights.Buffer->Map(0, size);
 	lights.Pos = 0;
+}
+
+void VkLightmap::CreateTileBuffer()
+{
+	size_t size = sizeof(CopyTileInfo) * copytiles.BufferSize;
+
+	copytiles.Buffer = BufferBuilder()
+		.Usage(
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
+		.MemoryType(
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		.Size(size)
+		.DebugName("CopyTileBuffer")
+		.Create(fb->GetDevice());
+
+	copytiles.Tiles = (CopyTileInfo*)copytiles.Buffer->Map(0, size);
 }

@@ -185,8 +185,7 @@ void VkTextureManager::CreateLightmap()
 	data.Push(0);
 	data.Push(0);
 	data.Push(0);
-	data.Push(0x3c00); // half-float 1.0
-	SetLightmap(1, 1, data);
+	CreateLightmap(1, 1, std::move(data));
 }
 
 void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCount, TArray<uint16_t>&& newPixelData)
@@ -207,7 +206,7 @@ void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCoun
 	Lightmap.Image = ImageBuilder()
 		.Size(w, h, 1, count)
 		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
-		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
 		.DebugName("VkRenderBuffers.Lightmap")
 		.Create(fb->GetDevice());
 
@@ -263,67 +262,4 @@ void VkTextureManager::CreateLightmap(int newLMTextureSize, int newLMTextureCoun
 	VkImageTransition()
 		.AddImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count)
 		.Execute(cmdbuffer);
-}
-
-void VkTextureManager::SetLightmap(int LMTextureSize, int LMTextureCount, const TArray<uint16_t>& LMTextureData)
-{
-	int w = LMTextureSize;
-	int h = LMTextureSize;
-	int count = LMTextureCount;
-	int pixelsize = 8;
-
-	Lightmap.Reset(fb);
-
-	Lightmap.Image = ImageBuilder()
-		.Size(w, h, 1, count)
-		.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
-		.Usage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-		.DebugName("VkRenderBuffers.Lightmap")
-		.Create(fb->GetDevice());
-
-	Lightmap.View = ImageViewBuilder()
-		.Type(VK_IMAGE_VIEW_TYPE_2D_ARRAY)
-		.Image(Lightmap.Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT)
-		.DebugName("VkRenderBuffers.LightmapView")
-		.Create(fb->GetDevice());
-
-	auto cmdbuffer = fb->GetCommands()->GetTransferCommands();
-
-	int totalSize = w * h * count * pixelsize;
-
-	auto stagingBuffer = BufferBuilder()
-		.Size(totalSize)
-		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
-		.DebugName("VkHardwareTexture.mStagingBuffer")
-		.Create(fb->GetDevice());
-
-	uint16_t one = 0x3c00; // half-float 1.0
-	const uint16_t* src = LMTextureData.Data();
-	uint16_t* data = (uint16_t*)stagingBuffer->Map(0, totalSize);
-	for (int i = w * h * count; i > 0; i--)
-	{
-		*(data++) = *(src++);
-		*(data++) = *(src++);
-		*(data++) = *(src++);
-		*(data++) = one;
-	}
-	stagingBuffer->Unmap();
-
-	VkImageTransition()
-		.AddImage(&Lightmap, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, 0, count)
-		.Execute(cmdbuffer);
-
-	VkBufferImageCopy region = {};
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.layerCount = count;
-	region.imageExtent.depth = 1;
-	region.imageExtent.width = w;
-	region.imageExtent.height = h;
-	cmdbuffer->copyBufferToImage(stagingBuffer->buffer, Lightmap.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-	VkImageTransition()
-		.AddImage(&Lightmap, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false, 0, count)
-		.Execute(cmdbuffer);
-
-	fb->GetCommands()->TransferDeleteList->Add(std::move(stagingBuffer));
 }

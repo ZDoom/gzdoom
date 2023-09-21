@@ -127,7 +127,7 @@ void main()
 	}
 
 #if defined(USE_RAYQUERY) // The non-rtx version of TraceFirstHitTriangle is too slow to do AO without the shader getting killed ;(
-	incoming.rgb *= TraceAmbientOcclusion(origin, normal);
+	//incoming.rgb *= TraceAmbientOcclusion(origin, normal);
 #endif
 
 	fragcolor = vec4(incoming, 1.0);

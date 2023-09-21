@@ -71,6 +71,12 @@ FString URLencode(const char *s)
 	return out;
 }
 
+// accept FString inputs too
+FString URLencode(FString s)
+{
+	return URLencode(s.GetChars());
+}
+
 #ifdef _WIN32
 
 bool I_HTTPRequest(const char* request)
@@ -285,8 +291,8 @@ void D_DoAnonStats()
 
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202309.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202309.py?render=%i&cores=%i&os=%s&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
+		GetRenderInfo(), GetCoreInfo(), URLencode(GetOSVersion()).GetChars(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 #if 1//ndef _DEBUG
 	// Don't send info in debug builds

@@ -1332,6 +1332,10 @@ void HWWall::DoMidTexture(HWDrawInfo *di, FRenderState& state, seg_t * seg, bool
 		if (auto lightmapPtr = seg->sidedef->lightmap)
 		{
 			lightmap = lightmapPtr[side_t::mid];
+			if (lightmap)
+			{
+				di->PushVisibleSurface(lightmap);
+			}
 		}
 
 		// Align the texture to the ORIGINAL sector's height!!

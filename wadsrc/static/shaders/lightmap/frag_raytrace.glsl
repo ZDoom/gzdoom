@@ -512,9 +512,16 @@ vec4 alphaBlend(vec4 a, vec4 b)
 	return vec4((a.xyz * a.w + b.xyz * b.w * (1.0 - a.w)) / na, max(0.001, na));
 }
 
+vec4 BeerLambertSimple(vec4 medium, vec4 ray_color) // based on Beer-Lambert law
+{
+	float z = medium.w;
+	ray_color.rgb *= exp(-medium.rgb * vec3(z));
+	return ray_color;
+}
+
 vec4 blend(vec4 a, vec4 b)
 {
-	return alphaBlend(a, b);
+	return BeerLambertSimple(vec4(1.0 - a.rgb, a.w), b);
 }
 
 int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out float t)
@@ -550,7 +557,7 @@ int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out fl
 				break;
 			}
 
-			rayColor = blend(color, rayColor) * (1.0 - color.w);
+			rayColor = blend(color, rayColor);
 #else
 			break;
 #endif
@@ -616,7 +623,7 @@ bool TracePoint(vec3 origin, vec3 target, float tmin, vec3 dir, float tmax)
 				break;
 			}
 
-			rayColor = blend(color, rayColor) * (1.0 - color.w);
+			rayColor = blend(color, rayColor);
 #else
 			rayColor.w = 0; // I suspect some rays are escaping out of bounds
 			break;

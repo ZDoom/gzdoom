@@ -14,14 +14,11 @@ add_library( lzma STATIC
 	C/7zDec.c
 	C/7zFile.c
 	C/7zStream.c
-	C/Aes.c
-	C/AesOpt.c
 	C/Alloc.c
 	C/Bcj2.c
 	C/Bcj2Enc.c
 	C/Bra.c
 	C/Bra86.c
-	C/BraIA64.c
 	C/CpuArch.c
 	C/Delta.c
 	C/DllSecur.c
@@ -31,8 +28,6 @@ add_library( lzma STATIC
 	C/Lzma2Dec.c
 	C/Lzma2DecMt.c
 	C/Lzma2Enc.c
-	C/Lzma86Dec.c
-	C/Lzma86Enc.c
 	C/LzmaDec.c
 	C/LzmaEnc.c
 	C/LzmaLib.c

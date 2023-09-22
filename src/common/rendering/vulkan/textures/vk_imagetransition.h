@@ -22,6 +22,9 @@ public:
 		for (auto& framebuffer : LMFramebuffers)
 			deletelist->Add(std::move(framebuffer));
 		LMFramebuffers.clear();
+		for (auto& view : LMViews)
+			deletelist->Add(std::move(view));
+		LMViews.clear();
 		deletelist->Add(std::move(DepthOnlyView));
 		deletelist->Add(std::move(View));
 		deletelist->Add(std::move(Image));
@@ -36,6 +39,7 @@ public:
 	VkImageAspectFlags AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	std::unique_ptr<VulkanFramebuffer> PPFramebuffer;
 	std::map<VkRenderPassKey, std::unique_ptr<VulkanFramebuffer>> RSFramebuffers;
+	std::vector<std::unique_ptr<VulkanImageView>> LMViews;
 	std::vector<std::unique_ptr<VulkanFramebuffer>> LMFramebuffers;
 };
 

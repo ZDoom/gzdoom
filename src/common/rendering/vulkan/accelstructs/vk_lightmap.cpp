@@ -415,16 +415,27 @@ void VkLightmap::CopyResult()
 		// Create framebuffer object if it doesn't exist
 		if (i >= destTexture->LMFramebuffers.size())
 		{
+			destTexture->LMViews.resize(i + 1);
 			destTexture->LMFramebuffers.resize(i + 1);
 		}
 
 		auto& framebuffer = destTexture->LMFramebuffers[i];
 		if (!framebuffer)
 		{
+			auto& view = destTexture->LMViews[i];
+			if (!view)
+			{
+				view = ImageViewBuilder()
+					.Type(VK_IMAGE_VIEW_TYPE_2D)
+					.Image(destTexture->Image.get(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT, 0, i, 1, 1)
+					.DebugName("LMView")
+					.Create(fb->GetDevice());
+			}
+
 			framebuffer = FramebufferBuilder()
 				.RenderPass(copy.renderPass.get())
 				.Size(destSize, destSize)
-				.AddAttachment(destTexture->View.get())
+				.AddAttachment(view.get())
 				.DebugName("LMFramebuffer")
 				.Create(fb->GetDevice());
 		}

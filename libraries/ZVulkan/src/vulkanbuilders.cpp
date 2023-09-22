@@ -504,13 +504,15 @@ ImageViewBuilder& ImageViewBuilder::Type(VkImageViewType type)
 	return *this;
 }
 
-ImageViewBuilder& ImageViewBuilder::Image(VulkanImage* image, VkFormat format, VkImageAspectFlags aspectMask)
+ImageViewBuilder& ImageViewBuilder::Image(VulkanImage* image, VkFormat format, VkImageAspectFlags aspectMask, int mipLevel, int arrayLayer, int levelCount, int layerCount)
 {
 	viewInfo.image = image->image;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.levelCount = image->mipLevels;
+	viewInfo.subresourceRange.levelCount = levelCount == 0 ? image->mipLevels : levelCount;
 	viewInfo.subresourceRange.aspectMask = aspectMask;
-	viewInfo.subresourceRange.layerCount = image->layerCount;
+	viewInfo.subresourceRange.layerCount = layerCount == 0 ? image->layerCount : layerCount;
+	viewInfo.subresourceRange.baseMipLevel = mipLevel;
+	viewInfo.subresourceRange.baseArrayLayer = arrayLayer;
 	return *this;
 }
 

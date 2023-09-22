@@ -144,7 +144,7 @@ public:
 	ImageViewBuilder();
 
 	ImageViewBuilder& Type(VkImageViewType type);
-	ImageViewBuilder& Image(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT);
+	ImageViewBuilder& Image(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int mipLevel = 0, int arrayLayer = 0, int levelCount = 0, int layerCount = 0);
 	ImageViewBuilder& DebugName(const char* name) { debugName = name; return *this; }
 
 	std::unique_ptr<VulkanImageView> Create(VulkanDevice *device);

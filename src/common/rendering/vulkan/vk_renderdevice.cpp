@@ -483,7 +483,6 @@ void VulkanRenderDevice::BeginFrame()
 
 		if (levelMesh && levelMesh->GetSurfaceCount() > 0)
 		{
-			levelMesh->UpdateLightLists();
 			GetTextureManager()->CreateLightmap(levelMesh->LMTextureSize, levelMesh->LMTextureCount, std::move(levelMesh->LMTextureData));
 			GetLightmap()->SetLevelMesh(levelMesh);
 		}

@@ -30,6 +30,8 @@ VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 {
 	useRayQuery = fb->GetDevice()->PhysicalDevice.Features.RayQuery.rayQuery;
 
+	templightlist.Resize(128);
+
 	CreateUniformBuffer();
 	CreateLightBuffer();
 	CreateTileBuffer();
@@ -158,11 +160,11 @@ void VkLightmap::Render()
 		auto& selectedSurface = selectedSurfaces[i];
 		LevelMeshSurface* targetSurface = selectedSurface.Surface;
 
-		if (targetSurface->LightList.empty() && (targetSurface->plane.XYZ() | mesh->SunDirection) < 0.0f) // No lights, no sun
+		/*if (targetSurface->LightList.empty() && (targetSurface->plane.XYZ() | mesh->SunDirection) < 0.0f) // No lights, no sun
 		{
 			selectedSurface.Rendered = true;
 			continue;
-		}
+		}*/
 
 		LightmapRaytracePC pc;
 		pc.TileX = (float)selectedSurface.X;
@@ -193,10 +195,10 @@ void VkLightmap::Render()
 		// Paint all surfaces visible in the tile
 		for (LevelMeshSurface* surface : targetSurface->tileSurfaces)
 		{
-			int lightCount = (int)surface->LightList.size();
-
 			if (surface->LightListResetCounter != lights.ResetCounter)
 			{
+				int lightCount = mesh->AddSurfaceLights(surface, templightlist.Data(), (int)templightlist.Size());
+
 				if (lights.Pos + lightCount > lights.BufferSize)
 				{
 					// Our light buffer is full. Postpone the rest.
@@ -205,11 +207,13 @@ void VkLightmap::Render()
 				}
 
 				surface->LightListPos = lights.Pos;
+				surface->LightListCount = lightCount;
 				surface->LightListResetCounter = lights.ResetCounter;
 
 				LightInfo* lightinfo = &lights.Lights[lights.Pos];
-				for (const LevelMeshLight* light : surface->LightList)
+				for (int i = 0; i < lightCount; i++)
 				{
+					const LevelMeshLight* light = &templightlist[i];
 					lightinfo->Origin = light->Origin;
 					lightinfo->RelativeOrigin = light->RelativeOrigin;
 					lightinfo->Radius = light->Radius;
@@ -225,7 +229,7 @@ void VkLightmap::Render()
 			}
 
 			pc.LightStart = surface->LightListPos;
-			pc.LightEnd = pc.LightStart + lightCount;
+			pc.LightEnd = pc.LightStart + surface->LightListCount;
 			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapRaytracePC), &pc);
 			cmdbuffer->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
 		}

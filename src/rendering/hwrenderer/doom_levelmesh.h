@@ -39,12 +39,11 @@ public:
 		return surface && surface->bSky;
 	}
 
-	void UpdateLightLists() override;
+	int AddSurfaceLights(const LevelMeshSurface* surface, LevelMeshLight* list, int listMaxSize) override;
 
 	LevelMeshSurface* GetSurface(int index) override { return &Surfaces[index]; }
 	unsigned int GetSurfaceIndex(const LevelMeshSurface* surface) const override { return (unsigned int)(ptrdiff_t)(static_cast<const DoomLevelMeshSurface*>(surface) - Surfaces.Data()); }
 	int GetSurfaceCount() override { return Surfaces.Size(); }
-
 
 	TArray<DoomLevelMeshSurface> Surfaces;
 	std::vector<std::unique_ptr<LevelMeshLight>> Lights;
@@ -72,9 +71,6 @@ private:
 	void SetSideLightmap(DoomLevelMeshSurface* surface);
 
 	void SetupLightmapUvs(FLevelLocals& doomMap);
-	void PropagateLight(const LevelMeshLight* light, std::set<LevelMeshPortal, RecursivePortalComparator>& touchedPortals, int lightPropagationRecursiveDepth);
-	void CreateLightList();
-
 
 	static bool IsTopSideSky(sector_t* frontsector, sector_t* backsector, side_t* side);
 	static bool IsTopSideVisible(side_t* side);

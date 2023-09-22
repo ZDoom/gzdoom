@@ -363,6 +363,72 @@ void DoomLevelMesh::CreatePortals()
 	}
 }
 
+int DoomLevelMesh::AddSurfaceLights(const LevelMeshSurface* surface, LevelMeshLight* list, int listMaxSize)
+{
+	const DoomLevelMeshSurface* doomsurf = static_cast<const DoomLevelMeshSurface*>(surface);
+
+	FLightNode* node = nullptr;
+	if (doomsurf->Type == ST_FLOOR || doomsurf->Type == ST_CEILING)
+	{
+		node = doomsurf->Subsector->section->lighthead;
+	}
+	else if (doomsurf->Type == ST_MIDDLESIDE || doomsurf->Type == ST_UPPERSIDE || doomsurf->Type == ST_LOWERSIDE)
+	{
+		node = doomsurf->Side->lighthead;
+	}
+	if (!node)
+		return 0;
+
+	int listpos = 0;
+	while (node && listpos < listMaxSize)
+	{
+		FDynamicLight* light = node->lightsource;
+		if (light && light->Trace())
+		{
+			DVector3 pos = light->Pos; //light->PosRelative(portalgroup);
+
+			LevelMeshLight& meshlight = list[listpos++];
+			meshlight.Origin = { (float)pos.X, (float)pos.Y, (float)pos.Z };
+			meshlight.RelativeOrigin = meshlight.Origin;
+			meshlight.Radius = (float)light->GetRadius();
+			meshlight.Intensity = (float)light->target->Alpha;
+			if (light->IsSpot())
+			{
+				meshlight.InnerAngleCos = (float)light->pSpotInnerAngle->Cos();
+				meshlight.OuterAngleCos = (float)light->pSpotOuterAngle->Cos();
+
+				DAngle negPitch = -*light->pPitch;
+				DAngle Angle = light->target->Angles.Yaw;
+				double xzLen = negPitch.Cos();
+				meshlight.SpotDir.X = float(-Angle.Cos() * xzLen);
+				meshlight.SpotDir.Y = float(-Angle.Sin() * xzLen);
+				meshlight.SpotDir.Z = float(-negPitch.Sin());
+			}
+			else
+			{
+				meshlight.InnerAngleCos = -1.0f;
+				meshlight.OuterAngleCos = -1.0f;
+				meshlight.SpotDir.X = 0.0f;
+				meshlight.SpotDir.Y = 0.0f;
+				meshlight.SpotDir.Z = 0.0f;
+			}
+			meshlight.Color.X = light->GetRed() * (1.0f / 255.0f);
+			meshlight.Color.Y = light->GetGreen() * (1.0f / 255.0f);
+			meshlight.Color.Z = light->GetBlue() * (1.0f / 255.0f);
+
+			if (light->Sector)
+				meshlight.SectorGroup = sectorGroup[light->Sector->Index()];
+			else
+				meshlight.SectorGroup = 0;
+		}
+
+		node = node->nextLight;
+	}
+
+	return listpos;
+}
+
+#if 0
 void DoomLevelMesh::PropagateLight(const LevelMeshLight* light, std::set<LevelMeshPortal, RecursivePortalComparator>& touchedPortals, int lightPropagationRecursiveDepth)
 {
 	if (++lightPropagationRecursiveDepth > 32) // TODO is this too much?
@@ -495,11 +561,7 @@ void DoomLevelMesh::CreateLightList()
 		PropagateLight(Lights[i].get(), touchedPortals, 0);
 	}
 }
-
-void DoomLevelMesh::UpdateLightLists()
-{
-	CreateLightList(); // full recreation
-}
+#endif
 
 void DoomLevelMesh::BindLightmapSurfacesToGeometry(FLevelLocals& doomMap)
 {

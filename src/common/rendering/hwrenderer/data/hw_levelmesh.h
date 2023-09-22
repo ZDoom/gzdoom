@@ -90,10 +90,8 @@ struct LevelMeshSurface
 	//
 	inline uint32_t Area() const { return texWidth * texHeight; }
 
-	// Touching light sources
-	std::vector<const LevelMeshLight*> LightList;
-
 	int LightListPos = -1;
+	int LightListCount = 0;
 	int LightListResetCounter = -1;
 };
 
@@ -209,7 +207,7 @@ public:
 	virtual unsigned int GetSurfaceIndex(const LevelMeshSurface* surface) const { return 0xffffffff; }
 	virtual int GetSurfaceCount() { return 0; }
 
-	virtual void UpdateLightLists() { }
+	virtual int AddSurfaceLights(const LevelMeshSurface* surface, LevelMeshLight* list, int listMaxSize) { return 0; }
 
 	TArray<LevelMeshSmoothingGroup> SmoothingGroups;
 	TArray<LevelMeshPortal> Portals;

@@ -159,6 +159,7 @@ private:
 
 	TArray<SelectedSurface> selectedSurfaces;
 	TArray<TArray<SelectedSurface*>> copylists;
+	TArray<LevelMeshLight> templightlist;
 
 	struct
 	{

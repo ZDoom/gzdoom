@@ -312,7 +312,7 @@ public:
 			{
 				if (surface->sectorGroup == SmoothingGroups[j].sectorGroup)
 				{
-					float direction = std::abs((SmoothingGroups[j].plane.XYZ() | surface->plane.XYZ()));
+					float direction = SmoothingGroups[j].plane.XYZ() | surface->plane.XYZ();
 					if (direction >= 0.9999f && direction <= 1.001f)
 					{
 						auto point = (surface->plane.XYZ() * surface->plane.W);

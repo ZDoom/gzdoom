@@ -260,8 +260,6 @@ int TraceFirstHitTriangleNoPortal(vec3 origin, float tmin, vec3 dir, float tmax,
 		primitiveWeights.xy = rayQueryGetIntersectionBarycentricsEXT(rayQuery, true);
 		primitiveWeights.z = 1.0 - primitiveWeights.x - primitiveWeights.y;
 
-		primitiveWeights = vec3(primitiveWeights.z, primitiveWeights.x, primitiveWeights.y);
-
 		return rayQueryGetIntersectionPrimitiveIndexEXT(rayQuery, true);
 	}
 	else
@@ -348,8 +346,8 @@ float intersect_triangle_ray(RayBBox ray, int a, out float barycentricB, out flo
 	float det = dot(e1, P);
 
 	// Backface check
-	//if (det < 0.0f)
-	//	return 1.0f;
+	if (det < 0.0f)
+		return 1.0f;
 
 	// If determinant is near zero, ray lies in plane of triangle
 	if (det > -FLT_EPSILON && det < FLT_EPSILON)
@@ -384,11 +382,6 @@ float intersect_triangle_ray(RayBBox ray, int a, out float barycentricB, out flo
 	// Return hit location on triangle in barycentric coordinates
 	barycentricB = u;
 	barycentricC = v;
-
-	primitiveWeights.x = u;
-	primitiveWeights.y = v;
-	primitiveWeights.z = 1.0 - u - v;
-	
 	return t;
 }
 
@@ -464,6 +457,10 @@ TraceHit find_first_hit(RayBBox ray)
 				float t = intersect_triangle_ray(ray, a, baryB, baryC);
 				if (t < hit.fraction)
 				{
+					primitiveWeights.x = baryB;
+					primitiveWeights.y = baryC;
+					primitiveWeights.z = 1.0 - baryB - baryC;
+
 					hit.fraction = t;
 					hit.triangle = nodes[a].element_index / 3;
 					hit.b = baryB;
@@ -538,7 +535,7 @@ int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out fl
 		{
 #if defined(USE_RAYQUERY)
 			int index = primitiveID * 3;
-			vec2 uv = vertices[elements[index + 0]].uv * primitiveWeights.x + vertices[elements[index + 1]].uv * primitiveWeights.y + vertices[elements[index + 2]].uv * primitiveWeights.z;
+			vec2 uv = vertices[elements[index + 1]].uv * primitiveWeights.x + vertices[elements[index + 2]].uv * primitiveWeights.y + vertices[elements[index + 0]].uv * primitiveWeights.z;
 
 			if (surface.TextureIndex < 0)
 			{
@@ -548,7 +545,7 @@ int TraceFirstHitTriangleT(vec3 origin, float tmin, vec3 dir, float tmax, out fl
 			vec4 color = texture(textures[surface.TextureIndex], uv);
 			color.w *= surface.Alpha;
 
-			if (color.w > 0.999 || rayColor.rgb == vec3(0))
+			if (color.w > 0.999 || all(lessThan(rayColor.rgb, vec3(0.001))))
 			{
 				break;
 			}
@@ -604,7 +601,7 @@ bool TracePoint(vec3 origin, vec3 target, float tmin, vec3 dir, float tmax)
 		{
 #if defined(USE_RAYQUERY)
 			int index = primitiveID * 3;
-			vec2 uv = vertices[elements[index + 0]].uv * primitiveWeights.x + vertices[elements[index + 1]].uv * primitiveWeights.y + vertices[elements[index + 2]].uv * primitiveWeights.z;
+			vec2 uv = vertices[elements[index + 1]].uv * primitiveWeights.x + vertices[elements[index + 2]].uv * primitiveWeights.y + vertices[elements[index + 0]].uv * primitiveWeights.z;
 
 			if (surface.TextureIndex < 0)
 			{
@@ -614,7 +611,7 @@ bool TracePoint(vec3 origin, vec3 target, float tmin, vec3 dir, float tmax)
 			vec4 color = texture(textures[surface.TextureIndex], uv);
 			color.w *= surface.Alpha;
 
-			if (color.w > 0.999 || rayColor.rgb == vec3(0))
+			if (color.w > 0.999 || all(lessThan(rayColor.rgb, vec3(0.001))))
 			{
 				break;
 			}

@@ -80,6 +80,8 @@ void PrintSurfaceInfo(const DoomLevelMeshSurface* surface)
 {
 	if (!RequireLevelMesh()) return;
 
+	auto gameTexture = TexMan.GameByIndex(surface->texture.GetIndex());
+
 	Printf("Surface %d (%p)\n    Type: %d, TypeIndex: %d, ControlSector: %d\n", level.levelMesh->GetSurfaceIndex(surface), surface, surface->Type, surface->typeIndex, surface->ControlSector ? surface->ControlSector->Index() : -1);
 	Printf("    Atlas page: %d, x:%d, y:%d\n", surface->atlasPageIndex, surface->atlasX, surface->atlasY);
 	Printf("    Pixels: %dx%d (area: %d)\n", surface->texWidth, surface->texHeight, surface->Area());
@@ -87,7 +89,8 @@ void PrintSurfaceInfo(const DoomLevelMeshSurface* surface)
 	Printf("    Needs update?: %d\n", surface->needsUpdate);
 	Printf("    Sector group: %d\n", surface->sectorGroup);
 	Printf("    Smoothing group: %d\n", surface->smoothingGroupIndex);
-
+	Printf("    Texture: '%s' (id=%d)\n", gameTexture ? gameTexture->GetName().GetChars() : "<nullptr>", surface->texture.GetIndex());
+	Printf("    Alpha: %f\n", surface->alpha);
 }
 
 FVector3 RayDir(FAngle angle, FAngle pitch)
@@ -826,13 +829,13 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		surf.bSky = false;
 		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 
+		auto offset = FVector3(surf.plane.XYZ()) * 0.05; // for better accuracy when raytracing mid-textures from each side
+
 		if (side->linedef->sidedef[0] != side)
 		{
 			surf.plane = -surf.plane;
 			surf.plane.W = -surf.plane.W;
 		}
-
-		auto offset = surf.plane.XYZ() * 0.05; // for better accuracy when raytracing mid-textures from each side
 
 		MeshVertices.Push(verts[0] + offset);
 		MeshVertices.Push(verts[1] + offset);

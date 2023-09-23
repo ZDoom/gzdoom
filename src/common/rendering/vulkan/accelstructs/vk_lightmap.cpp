@@ -35,6 +35,7 @@ VkLightmap::VkLightmap(VulkanRenderDevice* fb) : fb(fb)
 	CreateUniformBuffer();
 	CreateLightBuffer();
 	CreateTileBuffer();
+	CreateDrawIndexedBuffer();
 
 	CreateShaders();
 	CreateRaytracePipeline();
@@ -50,6 +51,10 @@ VkLightmap::~VkLightmap()
 		lights.Buffer->Unmap();
 	if (copytiles.Buffer)
 		copytiles.Buffer->Unmap();
+	if (drawindexed.CommandsBuffer)
+		drawindexed.CommandsBuffer->Unmap();
+	if (drawindexed.ConstantsBuffer)
+		drawindexed.ConstantsBuffer->Unmap();
 }
 
 void VkLightmap::SetLevelMesh(LevelMesh* level)
@@ -66,6 +71,7 @@ void VkLightmap::BeginFrame()
 {
 	lights.Pos = 0;
 	lights.ResetCounter++;
+	drawindexed.Pos = 0;
 }
 
 void VkLightmap::Raytrace(const TArray<LevelMeshSurface*>& surfaces)
@@ -230,8 +236,21 @@ void VkLightmap::Render()
 
 			pc.LightStart = surface->LightListPos;
 			pc.LightEnd = pc.LightStart + surface->LightListCount;
+
+#ifdef USE_DRAWINDIRECT
+			VkDrawIndexedIndirectCommand cmd;
+			cmd.indexCount = surface->numElements;
+			cmd.instanceCount = 1;
+			cmd.firstIndex = surface->startElementIndex;
+			cmd.vertexOffset = 0;
+			cmd.firstInstance = pos;
+			drawindexed.Constants[drawindexed.Pos] = pc;
+			drawindexed.Commands[drawindexed.Pos] = cmd;
+			drawindexed.Pos++;
+#else
 			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapRaytracePC), &pc);
 			cmdbuffer->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);
+#endif
 		}
 
 		if (buffersFull)
@@ -246,6 +265,10 @@ void VkLightmap::Render()
 
 		selectedSurface.Rendered = true;
 	}
+
+#ifdef USE_DRAWINDIRECT
+	cmdbuffer->drawIndexedIndirect(drawindexed.CommandsBuffer->buffer, 0, drawindexed.Pos, sizeof(VkDrawIndexedIndirectCommand));
+#endif
 
 	cmdbuffer->endRenderPass();
 
@@ -515,6 +538,9 @@ void VkLightmap::CreateShaders()
 		traceprefix += "#extension GL_EXT_ray_query : require\r\n";
 		traceprefix += "#define USE_RAYQUERY\r\n";
 	}
+#ifdef USE_DRAWINDIRECT
+	traceprefix += "#define USE_DRAWINDIRECT\r\n";
+#endif
 
 	shaders.vertRaytrace = ShaderBuilder()
 		.Type(ShaderType::Vertex)
@@ -588,6 +614,9 @@ void VkLightmap::CreateRaytracePipeline()
 		.AddBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
 		.AddBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
 		.AddBinding(4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+#ifdef USE_DRAWINDIRECT
+		.AddBinding(5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+#endif
 		.DebugName("raytrace.descriptorSetLayout0")
 		.Create(fb->GetDevice());
 
@@ -614,7 +643,9 @@ void VkLightmap::CreateRaytracePipeline()
 		.AddSetLayout(raytrace.descriptorSetLayout0.get())
 		.AddSetLayout(raytrace.descriptorSetLayout1.get())
 		.AddSetLayout(fb->GetDescriptorSetManager()->GetBindlessSetLayout())
+#ifndef USE_DRAWINDIRECT
 		.AddPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapRaytracePC))
+#endif
 		.DebugName("raytrace.pipelineLayout")
 		.Create(fb->GetDevice());
 
@@ -653,7 +684,7 @@ void VkLightmap::CreateRaytracePipeline()
 
 	raytrace.descriptorPool0 = DescriptorPoolBuilder()
 		.AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
-		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4)
+		.AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5)
 		.MaxSets(1)
 		.DebugName("raytrace.descriptorPool0")
 		.Create(fb->GetDevice());
@@ -708,8 +739,10 @@ void VkLightmap::UpdateAccelStructDescriptors()
 		.AddBuffer(raytrace.descriptorSet0.get(), 2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetSurfaceBuffer())
 		.AddBuffer(raytrace.descriptorSet0.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, lights.Buffer.get())
 		.AddBuffer(raytrace.descriptorSet0.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetPortalBuffer())
+#ifdef USE_DRAWINDIRECT
+		.AddBuffer(raytrace.descriptorSet0.get(), 5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, drawindexed.ConstantsBuffer.get(), 0, BufferSize * sizeof(LightmapRaytracePC))
+#endif
 		.Execute(fb->GetDevice());
-
 }
 
 void VkLightmap::CreateResolvePipeline()
@@ -1014,4 +1047,35 @@ void VkLightmap::CreateTileBuffer()
 		.Create(fb->GetDevice());
 
 	copytiles.Tiles = (CopyTileInfo*)copytiles.Buffer->Map(0, size);
+}
+
+void VkLightmap::CreateDrawIndexedBuffer()
+{
+	size_t size1 = sizeof(VkDrawIndexedIndirectCommand) * drawindexed.BufferSize;
+	size_t size2 = sizeof(LightmapRaytracePC) * drawindexed.BufferSize;
+
+	drawindexed.CommandsBuffer = BufferBuilder()
+		.Usage(
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
+		.MemoryType(
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		.Size(size1)
+		.DebugName("DrawIndexed.CommandsBuffer")
+		.Create(fb->GetDevice());
+
+	drawindexed.ConstantsBuffer = BufferBuilder()
+		.Usage(
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
+		.MemoryType(
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		.Size(size2)
+		.DebugName("DrawIndexed.ConstantsBuffer")
+		.Create(fb->GetDevice());
+
+	drawindexed.Commands = (VkDrawIndexedIndirectCommand*)drawindexed.CommandsBuffer->Map(0, size1);
+	drawindexed.Constants = (LightmapRaytracePC*)drawindexed.ConstantsBuffer->Map(0, size2);
 }

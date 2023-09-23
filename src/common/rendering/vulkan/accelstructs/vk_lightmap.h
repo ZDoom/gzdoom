@@ -146,6 +146,7 @@ private:
 	void CreateUniformBuffer();
 	void CreateLightBuffer();
 	void CreateTileBuffer();
+	void CreateDrawIndexedBuffer();
 	void CreateBakeImage();
 
 	static FVector2 ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface);
@@ -187,6 +188,16 @@ private:
 		std::unique_ptr<VulkanBuffer> Buffer;
 		CopyTileInfo* Tiles = nullptr;
 	} copytiles;
+
+	struct
+	{
+		const int BufferSize = 100'000;
+		std::unique_ptr<VulkanBuffer> CommandsBuffer;
+		std::unique_ptr<VulkanBuffer> ConstantsBuffer;
+		VkDrawIndexedIndirectCommand* Commands = nullptr;
+		LightmapRaytracePC* Constants = nullptr;
+		int Pos = 0;
+	} drawindexed;
 
 	struct
 	{

@@ -974,7 +974,8 @@ DZSprite::DZSprite()
 {
 	PT = {};
 	Pos = Vel = Prev = { 0,0,0 };
-	Scale = Offset = { 0,0 };
+	Offset = { 0, 0 };
+	Scale = { 1, 1 };
 	Roll = 0;
 	Alpha = 1.0;
 	Style = 0;
@@ -983,9 +984,16 @@ DZSprite::DZSprite()
 	sub = nullptr;
 }
 
+void DZSprite::CallPostBeginPlay()
+{
+	if (Level) Level->TotalZSprites++; // Must happen no matter what.
+	Super::CallPostBeginPlay();
+}
+
 void DZSprite::OnDestroy()
 {
-	Printf("Poof\n");
+	if (Level) Level->TotalZSprites--; // Same here.
+	Printf("Poof - %d\n", Level->TotalZSprites);
 	Super::OnDestroy();
 }
 
@@ -1089,6 +1097,7 @@ void DZSprite::Tick()
 	PT.flags = Flags;
 	PT.bright = !!(Flags & SPF_FULLBRIGHT);
 	PT.subsector = sub;
+	//Printf("%d %d %d\n", int(PT.Pos.X), int(PT.Pos.Y), int(PT.Pos.Z));
 }
 
 void DZSprite::Serialize(FSerializer& arc)

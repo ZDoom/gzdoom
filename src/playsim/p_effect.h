@@ -165,6 +165,7 @@ class DZSprite : public DThinker
 
 public:
 	DZSprite();
+	void CallPostBeginPlay() override;
 	void OnDestroy() override;
 	/*
 	~DZSprite() override;

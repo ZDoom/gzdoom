@@ -594,31 +594,34 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
 {
 	SetupSprite.Clock();
+	if (Level->TotalZSprites > 0)
 	{
 		auto it = Level->GetThinkerIterator<DZSprite>(NAME_None, STAT_SPRITE);
 		DZSprite *par = nullptr;
-		while (par = it.Next())
+		while ((par = it.Next()) != nullptr)
 		{
 			if (mClipPortal)
 			{
 				int clipres = mClipPortal->ClipPoint(par->PT.Pos);
 				if (clipres == PClip_InFront) continue;
 			}
-
 			HWSprite sprite;
 			sprite.ProcessParticle(this, &par->PT, front);
 		}
 	}
-	for (int i = Level->ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Level->Particles[i].snext)
+	if (Level->ParticlesInSubsec[sub->Index()] != NO_PARTICLE)
 	{
-		if (mClipPortal)
+		for (int i = Level->ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Level->Particles[i].snext)
 		{
-			int clipres = mClipPortal->ClipPoint(Level->Particles[i].Pos);
-			if (clipres == PClip_InFront) continue;
-		}
+			if (mClipPortal)
+			{
+				int clipres = mClipPortal->ClipPoint(Level->Particles[i].Pos);
+				if (clipres == PClip_InFront) continue;
+			}
 
-		HWSprite sprite;
-		sprite.ProcessParticle(this, &Level->Particles[i], front);
+			HWSprite sprite;
+			sprite.ProcessParticle(this, &Level->Particles[i], front);
+		}
 	}
 	SetupSprite.Unclock();
 }
@@ -681,7 +684,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 	}
 
 	// [RH] Add particles
-	if (gl_render_things && Level->ParticlesInSubsec[sub->Index()] != NO_PARTICLE)
+	if (gl_render_things && (Level->TotalZSprites > 0 || Level->ParticlesInSubsec[sub->Index()] != NO_PARTICLE))
 	{
 		if (multithread)
 		{

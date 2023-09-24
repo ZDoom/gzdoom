@@ -49,6 +49,7 @@
 #include "vm.h"
 #include "actorinlines.h"
 #include "g_game.h"
+#include "serializer_doom.h"
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_rail_smartspiral, false, CVAR_ARCHIVE);
@@ -271,7 +272,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (Level->isFrozen() && !(particle->flags &PT_NOTIMEFREEZE))
+		if (Level->isFrozen() && !(particle->flags &SPF_NOTIMEFREEZE))
 		{
 			prev = particle;
 			continue;
@@ -305,7 +306,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
 
-		if(particle->flags & PT_DOROLL)
+		if(particle->flags & SPF_ROLL)
 		{
 			particle->Roll += particle->RollVel;
 			particle->RollVel += particle->RollAcc;
@@ -334,19 +335,11 @@ void P_ThinkParticles (FLevelLocals *Level)
 	}
 }
 
-enum PSFlag
-{
-	PS_FULLBRIGHT =		    1,
-	PS_NOTIMEFREEZE =	    1 << 5,
-	PS_ROLL =			    1 << 6,
-	PS_REPLACE =		    1 << 7,
-	PS_NO_XY_BILLBOARD =	1 << 8,
-};
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
 	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
 {
-	particle_t *particle = NewParticle(Level, !!(flags & PS_REPLACE));
+	particle_t *particle = NewParticle(Level, !!(flags & SPF_REPLACE));
 
 	if (particle)
 	{
@@ -358,7 +351,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		if (fadestep < 0) particle->fadestep = FADEFROMTTL(lifetime);
 		else particle->fadestep = float(fadestep);
 		particle->ttl = lifetime;
-		particle->bright = !!(flags & PS_FULLBRIGHT);
+		particle->bright = !!(flags & SPF_FULLBRIGHT);
 		particle->size = size;
 		particle->sizestep = sizestep;
 		particle->texture = texture;
@@ -366,18 +359,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Roll = startroll;
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
-		if(flags & PS_NOTIMEFREEZE)
-		{
-			particle->flags |= PT_NOTIMEFREEZE;
-		}
-		if(flags & PS_ROLL)
-		{
-			particle->flags |= PT_DOROLL;
-		}
-		if(flags & PS_NO_XY_BILLBOARD)
-		{
-			particle->flags |= PT_NOXYBILLBOARD;
-		}
+		particle->flags = flags;
 	}
 }
 
@@ -979,3 +961,220 @@ void P_DisconnectEffect (AActor *actor)
 		p->size = 4;
 	}
 }
+
+//===========================================================================
+// 
+// ZScript Sprite (DZSprite)
+// Concept by Major Cooke
+// Most code borrowed by Actor and particles above
+// 
+//===========================================================================
+
+DZSprite::DZSprite()
+{
+//	particle_t par = {};
+//	PT = &par;
+//	memset(&PT, 0, sizeof(PT));
+	PT = {};
+	Pos = Vel = Prev = { 0,0,0 };
+	Scale = Offset = { 0,0 };
+	Roll = Alpha = 0;
+	Style = 0;
+	Texture = FTextureID();
+	Translation = Flags = 0;
+	sub = nullptr;
+}
+/*
+void DZSprite::OnDestroy()
+{
+	assert(PT != nullptr || PT == nullptr);
+	M_Free(&PT);
+	Super::OnDestroy();
+}
+*/
+DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type, FSpawnZSpriteParams* params)
+{
+	if (type == nullptr)
+		return nullptr;
+	else if (type->bAbstract)
+	{
+		Printf("Attempt to spawn an instance of abstract ZSprite class %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+	else if (!type->IsDescendantOf(RUNTIME_CLASS(DZSprite)))
+	{
+		Printf("Attempt to spawn class not inherent to ZSprite: %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+	else if (!params->Texture.isValid())
+	{
+		Printf("Attempt to spawn a ZSprite class without a valid texture");
+		return nullptr;
+	}
+
+	DZSprite *zs = static_cast<DZSprite*>(Level->CreateThinker(type));
+
+	if (zs)
+	{
+		zs->Pos = params->Pos;
+		zs->Vel = params->Vel;
+		zs->Alpha = params->Alpha;
+		zs->Roll = params->Roll;
+		zs->Scale = params->Scale;
+		zs->Texture = params->Texture;
+		zs->Style = params->Style;
+		zs->Flags = params->Flags;
+	}
+	return zs;
+}
+
+
+// This runs just like Actor's, make sure to call Super.Tick().
+void DZSprite::Tick()
+{
+	if (ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	// There won't be a standard particle for this, it's only for graphics.
+	if (!Texture.isValid()) 
+	{	
+		Destroy();
+		return;
+	}
+
+	if (IsFrozen())
+		return;
+	
+	Prev = Pos;
+	// Handle crossing a line portal
+	DVector2 newxy = Level->GetPortalOffsetPosition(Pos.X, Pos.Y, Vel.X, Vel.Y);
+	Pos.X = newxy.X;
+	Pos.Y = newxy.Y;
+	Pos.Z += Vel.Z;
+
+	sub = Level->PointInRenderSubsector(Pos);
+	sector_t* s = sub->sector;
+	// Handle crossing a sector portal.
+	if (!s->PortalBlocksMovement(sector_t::ceiling))
+	{
+		if (Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
+		{
+			Pos += s->GetPortalDisplacement(sector_t::ceiling);
+			sub = nullptr;
+		}
+	}
+	else if (!s->PortalBlocksMovement(sector_t::floor))
+	{
+		if (Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
+		{
+			Pos += s->GetPortalDisplacement(sector_t::floor);
+			sub = nullptr;
+		}
+	}
+
+	// Interpolation is done in a predictive manner instead of trying to do it like
+	// actors, so that will be skipped until HWSprite is equipped to handle this.
+	PT.Pos = Pos;
+	PT.Roll = Roll;
+	PT.size = Scale.X; // short term
+	PT.alpha = Alpha;
+	PT.texture = Texture;
+	PT.style = ERenderStyle(Style);
+	PT.flags = Flags;
+	PT.bright = !!(Flags & SPF_FULLBRIGHT);
+	PT.subsector = sub;
+}
+
+void DZSprite::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+
+	arc
+		("pos", Pos)
+		("vel", Vel)
+		("prev", Prev)
+		("scale", Scale)
+		("roll", Roll)
+		("offset", Offset)
+		("alpha", Alpha)
+		("texture", Texture)
+		("style", Style)
+		("translation", Translation)
+		("flags", Flags);
+		
+}
+
+static DZSprite* SpawnZSprite(FLevelLocals* Level, PClass* type, FSpawnZSpriteParams* params)
+{
+	return DZSprite::NewZSprite(Level, type, params);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnZSprite, SpawnZSprite)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_CLASS_NOT_NULL(type, DZSprite);
+	PARAM_POINTER(p, FSpawnZSpriteParams);
+	DZSprite* zs = SpawnZSprite(self, type, p);
+	ACTION_RETURN_OBJECT(zs);
+}
+
+void DZSprite::SetTranslation(FName trname)
+{
+	// There is no constant for the empty name...
+	if (trname.GetChars()[0] == 0)
+	{
+		// '' removes it
+		Translation = 0;
+		return;
+	}
+
+	int tnum = R_FindCustomTranslation(trname);
+	if (tnum >= 0)
+	{
+		Translation = tnum;
+	}
+	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, SetTranslation)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_NAME(trans);
+	self->SetTranslation(trans);
+	return 0;
+}
+
+bool DZSprite::IsFrozen()
+{
+	return (Level->isFrozen() && !(Flags & SPF_NOTIMEFREEZE));
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, IsFrozen)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	ACTION_RETURN_BOOL(self->IsFrozen());
+}
+
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Pos);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Vel);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Scale);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Offset);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Roll);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Alpha);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Texture);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Translation);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Style);
+DEFINE_FIELD_X(FSpawnZSpriteParams, FSpawnZSpriteParams, Flags);
+
+IMPLEMENT_CLASS(DZSprite, false, false);
+DEFINE_FIELD(DZSprite, Pos);
+DEFINE_FIELD(DZSprite, Vel);
+DEFINE_FIELD(DZSprite, Prev);
+DEFINE_FIELD(DZSprite, Scale);
+DEFINE_FIELD(DZSprite, Offset);
+DEFINE_FIELD(DZSprite, Roll);
+DEFINE_FIELD(DZSprite, Alpha);
+DEFINE_FIELD(DZSprite, Texture);
+DEFINE_FIELD(DZSprite, Style); 
+DEFINE_FIELD(DZSprite, Translation);
+DEFINE_FIELD(DZSprite, Flags);

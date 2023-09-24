@@ -383,7 +383,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	}
 	
 	// [BB] Billboard stuff
-	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & PT_NOXYBILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
+	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & SPF_NO_XY_BILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& di->mViewActor != nullptr
 		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
 
@@ -391,7 +391,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	// [Nash] has +ROLLSPRITE
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 
-	const bool drawRollParticle = (particle != nullptr && particle->flags & PT_DOROLL);
+	const bool drawRollParticle = (particle != nullptr && particle->flags & SPF_ROLL);
 
 
 	// [fgsfds] check sprite type mask
@@ -1245,7 +1245,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector)//, int shade, int fakeside)
 {
-	if (particle->alpha==0) return;
+	if (particle->alpha <= 0) return;
 
 	lightlevel = hw_ClampLight(sector->GetSpriteLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
@@ -1339,7 +1339,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 
     const auto &vp = di->Viewpoint;
 	double timefrac = vp.TicFrac;
-	if (paused || di->Level->isFrozen())
+	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
 		timefrac = 0.;
 	float xvf = (particle->Vel.X) * timefrac;
 	float yvf = (particle->Vel.Y) * timefrac;
@@ -1349,7 +1349,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	y = float(particle->Pos.Y) + yvf;
 	z = float(particle->Pos.Z) + zvf;
 
-	if(particle->flags & PT_DOROLL)
+	if(particle->flags & SPF_ROLL)
 	{
 		float rvf = (particle->RollVel) * timefrac;
 		Angles.Roll = TAngle<double>::fromDeg(particle->Roll + rvf);
@@ -1361,13 +1361,13 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	else factor = 1 / 7.f;
 	float scalefac=particle->size * factor;
 
-	float viewvecX = vp.ViewVector.X;
-	float viewvecY = vp.ViewVector.Y;
+	float viewvecX = vp.ViewVector.X * scalefac;
+	float viewvecY = vp.ViewVector.Y * scalefac;
 
-	x1=x+viewvecY*scalefac;
-	x2=x-viewvecY*scalefac;
-	y1=y-viewvecX*scalefac;
-	y2=y+viewvecX*scalefac;
+	x1=x+viewvecY;
+	x2=x-viewvecY;
+	y1=y-viewvecX;
+	y2=y+viewvecX;
 	z1=z-scalefac;
 	z2=z+scalefac;
 

@@ -36,6 +36,7 @@
 #include "vectors.h"
 #include "doomdef.h"
 #include "renderstyle.h"
+#include "dthinker.h"
 
 enum
 {
@@ -52,9 +53,15 @@ struct FLevelLocals;
 
 enum EParticleFlags
 {
-    PT_NOTIMEFREEZE = 1,
-	PT_DOROLL = 1 << 1,
-	PT_NOXYBILLBOARD = 1 << 2,
+	SPF_FULLBRIGHT =		1,
+	SPF_RELPOS =			1 << 1,
+	SPF_RELVEL =			1 << 2,
+	SPF_RELACCEL =			1 << 3,
+	SPF_RELANG =			1 << 4,
+	SPF_NOTIMEFREEZE =		1 << 5,
+	SPF_ROLL =				1 << 6,
+	SPF_REPLACE =           1 << 7,
+	SPF_NO_XY_BILLBOARD =	1 << 8,
 };
 
 struct particle_t
@@ -71,8 +78,8 @@ struct particle_t
     ERenderStyle style;
     double Roll, RollVel, RollAcc;
     uint16_t    tnext, snext, tprev;
-    uint8_t    bright;
-	uint8_t flags;
+    bool    bright;
+	uint32_t flags;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;
@@ -130,3 +137,72 @@ void P_DrawSplash (FLevelLocals *Level, int count, const DVector3 &pos, DAngle a
 void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle angle, int updown, int kind);
 void P_DisconnectEffect (AActor *actor);
 
+//===========================================================================
+// 
+// Particles Expanded
+// by Major Cooke
+// 
+//===========================================================================
+
+struct FSpawnZSpriteParams
+{
+	DVector3		Pos, Vel;
+	DVector2		Scale, Offset;
+	double			Roll;
+	double			Alpha;
+
+	FTextureID		Texture; // For whenever particles don't have states.
+	int				Style;
+	uint32_t		Translation;
+
+	uint32_t		Flags;
+
+};
+
+class DZSprite : public DThinker
+{
+	DECLARE_CLASS(DZSprite, DThinker);
+
+public:
+	DZSprite();
+	/*
+	void OnDestroy() override;
+	~DZSprite() override;
+	*/
+	// TO DO: Enable states for this class
+/*
+	int32_t			tics;				// state tic counter
+	int				sprite;				// used to find patch_t and flip value
+	uint8_t			frame;				// sprite frame to draw
+
+	FState			*State;
+	FState			*SpawnState;
+*/
+
+	DVector3		Pos, Vel, Prev;
+	DVector2		Scale, Offset;
+	double			Roll;
+	double			Alpha;
+
+	// Style will be changed to FRenderStyle when taken off of particle_t.
+	// ERenderStyle is an enum and isn't handled by the serializer, but the F variant is.
+	int				Style;
+	FTextureID		Texture;
+	uint32_t		Translation;
+
+	uint32_t		Flags;
+
+	
+	particle_t		PT;	// ONLY used for injecting into HWDrawInfo::RenderParticles.
+	subsector_t		*sub;
+
+
+	static DZSprite* NewZSprite(FLevelLocals* Level, PClass* type, FSpawnZSpriteParams *params);
+	void SetTranslation(FName trname);
+	bool IsFrozen();
+
+public:
+	void Tick() override;
+	void Serialize(FSerializer& arc) override;
+
+};

@@ -802,6 +802,10 @@ void InitThingdef()
 	auto fspp = NewStruct("FSpawnParticleParams", nullptr);
 	fspp->Size = sizeof(FSpawnParticleParams);
 	fspp->Align = alignof(FSpawnParticleParams);
+
+	auto fzs = NewStruct("FSpawnZSpriteParams", nullptr);
+	fzs->Size = sizeof(FSpawnZSpriteParams);
+	fzs->Align = alignof(FSpawnZSpriteParams);
 }
 
 void SynthesizeFlagFields()

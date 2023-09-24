@@ -594,6 +594,21 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
 {
 	SetupSprite.Clock();
+	{
+		auto it = Level->GetThinkerIterator<DZSprite>(NAME_None, STAT_SPRITE);
+		DZSprite *par = nullptr;
+		while (par = it.Next())
+		{
+			if (mClipPortal)
+			{
+				int clipres = mClipPortal->ClipPoint(par->PT.Pos);
+				if (clipres == PClip_InFront) continue;
+			}
+
+			HWSprite sprite;
+			sprite.ProcessParticle(this, &par->PT, front);
+		}
+	}
 	for (int i = Level->ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Level->Particles[i].snext)
 	{
 		if (mClipPortal)

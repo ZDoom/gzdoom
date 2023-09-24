@@ -427,6 +427,8 @@ public:
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned;
+		if (thinker->IsKindOf(RUNTIME_CLASS(DZSprite))) // [MC] This absolutely must happen for this class!
+			statnum = STAT_SPRITE;
 		Thinkers.Link(thinker, statnum);
 		thinker->Level = this;
 		return thinker;
@@ -665,7 +667,7 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
-	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with PS_REPLACE
+	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with SPF_REPLACE
 	uint32_t			ActiveParticles;
 	uint32_t			InactiveParticles;
 	TArray<particle_t>	Particles;

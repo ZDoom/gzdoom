@@ -39,6 +39,7 @@
 #include "fcolormap.h"
 #include "r_sky.h"
 #include "p_terrain.h"
+#include "p_effect.h"
 
 #include "hwrenderer/data/buffers.h"
 
@@ -1662,7 +1663,7 @@ struct subsector_t
 	int Index() const { return subsectornum; }
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
-
+	TArray<DZSprite *> sprites;
 	LightmapSurface *lightmap[2];
 };
 

@@ -49,6 +49,11 @@
 #include "vm.h"
 #include "actorinlines.h"
 #include "g_game.h"
+#include "serializer_doom.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable: 6011) // dereference null pointer in thinker iterator
+#endif
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_rail_smartspiral, false, CVAR_ARCHIVE);
@@ -202,9 +207,27 @@ void P_ClearParticles (FLevelLocals *Level)
 // Group particles by subsectors. Because particles are always
 // in motion, there is little benefit to caching this information
 // from one frame to the next.
+// [MC] ZSprites hitches a ride here
 
 void P_FindParticleSubsectors (FLevelLocals *Level)
 {
+	// [MC] Hitch a ride on particle subsectors since ZSprites are effectively using the same kind of system.
+	for (uint32_t i = 0; i < Level->subsectors.Size(); i++)
+	{
+		Level->subsectors[i].sprites.Clear();
+	}
+	// [MC] Not too happy about using an iterator for this but I can't think of another way to handle it.
+	// At least it's on its own statnum for maximum efficiency.
+	auto it = Level->GetThinkerIterator<DZSprite>(NAME_None, STAT_SPRITE);
+	DZSprite* sp;
+	while (sp = it.Next())
+	{
+		if (sp->sub == nullptr)
+			sp->sub = Level->PointInRenderSubsector(sp->Pos);
+
+		sp->sub->sprites.Push(sp);
+	}
+	// End ZSprite hitching. Now onto the particles. 
 	if (Level->ParticlesInSubsec.Size() < Level->subsectors.Size())
 	{
 		Level->ParticlesInSubsec.Reserve (Level->subsectors.Size() - Level->ParticlesInSubsec.Size());
@@ -271,7 +294,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (Level->isFrozen() && !(particle->flags &PT_NOTIMEFREEZE))
+		if (Level->isFrozen() && !(particle->flags &SPF_NOTIMEFREEZE))
 		{
 			prev = particle;
 			continue;
@@ -305,7 +328,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
 
-		if(particle->flags & PT_DOROLL)
+		if(particle->flags & SPF_ROLL)
 		{
 			particle->Roll += particle->RollVel;
 			particle->RollVel += particle->RollAcc;
@@ -334,19 +357,10 @@ void P_ThinkParticles (FLevelLocals *Level)
 	}
 }
 
-enum PSFlag
-{
-	PS_FULLBRIGHT =		    1,
-	PS_NOTIMEFREEZE =	    1 << 5,
-	PS_ROLL =			    1 << 6,
-	PS_REPLACE =		    1 << 7,
-	PS_NO_XY_BILLBOARD =	1 << 8,
-};
-
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
 	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
 {
-	particle_t *particle = NewParticle(Level, !!(flags & PS_REPLACE));
+	particle_t *particle = NewParticle(Level, !!(flags & SPF_REPLACE));
 
 	if (particle)
 	{
@@ -358,7 +372,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		if (fadestep < 0) particle->fadestep = FADEFROMTTL(lifetime);
 		else particle->fadestep = float(fadestep);
 		particle->ttl = lifetime;
-		particle->bright = !!(flags & PS_FULLBRIGHT);
+		particle->bright = !!(flags & SPF_FULLBRIGHT);
 		particle->size = size;
 		particle->sizestep = sizestep;
 		particle->texture = texture;
@@ -366,18 +380,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Roll = startroll;
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
-		if(flags & PS_NOTIMEFREEZE)
-		{
-			particle->flags |= PT_NOTIMEFREEZE;
-		}
-		if(flags & PS_ROLL)
-		{
-			particle->flags |= PT_DOROLL;
-		}
-		if(flags & PS_NO_XY_BILLBOARD)
-		{
-			particle->flags |= PT_NOXYBILLBOARD;
-		}
+		particle->flags = flags;
 	}
 }
 
@@ -979,3 +982,264 @@ void P_DisconnectEffect (AActor *actor)
 		p->size = 4;
 	}
 }
+
+//===========================================================================
+// 
+// ZScript Sprite (DZSprite)
+// Concept by Major Cooke
+// Most code borrowed by Actor and particles above
+// 
+//===========================================================================
+
+DZSprite::DZSprite()
+{
+	PT = {};
+	PT.sprite = this;
+	Pos = Vel = {0,0,0};
+	Offset = {0,0};
+	Scale = {1,1};
+	Roll = 0.0;
+	Alpha = 1.0;
+	LightLevel = -1;
+	Texture = FTextureID();
+	Style = STYLE_Normal;
+	Translation = Flags = 0;
+	sub = nullptr;
+	cursector = nullptr;
+}
+
+void DZSprite::CallPostBeginPlay()
+{
+	PT.texture = Texture;
+	Super::CallPostBeginPlay();
+}
+
+void DZSprite::OnDestroy()
+{
+	PT.alpha = 0.0; // stops all rendering.
+	spr = nullptr;
+	Super::OnDestroy();
+}
+
+DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type)
+{
+	if (type == nullptr)
+		return nullptr;
+	else if (type->bAbstract)
+	{
+		Printf("Attempt to spawn an instance of abstract ZSprite class %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+	else if (!type->IsDescendantOf(RUNTIME_CLASS(DZSprite)))
+	{
+		Printf("Attempt to spawn class not inherent to ZSprite: %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+
+	DZSprite *zs = static_cast<DZSprite*>(Level->CreateThinker(type, STAT_SPRITE));
+
+	return zs;
+}
+
+static DZSprite* SpawnZSprite(FLevelLocals* Level, PClass* type)
+{
+	return DZSprite::NewZSprite(Level, type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnZSprite, SpawnZSprite)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_CLASS_NOT_NULL(type, DZSprite);
+	DZSprite* zs = SpawnZSprite(self, type);
+	ACTION_RETURN_OBJECT(zs);
+}
+
+
+// This runs just like Actor's, make sure to call Super.Tick() in ZScript.
+void DZSprite::Tick()
+{
+	if (ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	// There won't be a standard particle for this, it's only for graphics.
+	if (!Texture.isValid()) 
+	{	
+		Printf("No valid texture, destroyed");
+		Destroy();
+		return;
+	}
+
+	if (isFrozen())
+		return;
+	
+	Prev = Pos;
+	PrevRoll = Roll;
+	// Handle crossing a line portal
+	DVector2 newxy = Level->GetPortalOffsetPosition(Pos.X, Pos.Y, Vel.X, Vel.Y);
+	Pos.X = newxy.X;
+	Pos.Y = newxy.Y;
+	Pos.Z += Vel.Z;
+
+	sub = Level->PointInRenderSubsector(Pos);
+	cursector = sub->sector;
+	// Handle crossing a sector portal.
+	if (!cursector->PortalBlocksMovement(sector_t::ceiling))
+	{
+		if (Pos.Z > cursector->GetPortalPlaneZ(sector_t::ceiling))
+		{
+			Pos += cursector->GetPortalDisplacement(sector_t::ceiling);
+			sub = nullptr;
+			cursector = nullptr;
+		}
+	}
+	else if (!cursector->PortalBlocksMovement(sector_t::floor))
+	{
+		if (Pos.Z < cursector->GetPortalPlaneZ(sector_t::floor))
+		{
+			Pos += cursector->GetPortalDisplacement(sector_t::floor);
+			sub = nullptr;
+			cursector = nullptr;
+		}
+	}
+	PT.color = 0xffffff;
+	PT.Pos = Pos;
+	PT.Vel = Vel;
+	PT.Roll = Roll;
+	PT.size = Scale.X;
+	PT.alpha = Alpha;
+	PT.texture = Texture;
+	PT.style = ERenderStyle(GetRenderStyle());
+	PT.flags = Flags;
+	PT.subsector = sub;
+	PT.sprite = this;
+}
+
+int DZSprite::GetLightLevel(sector_t* rendersector) const
+{
+	int lightlevel = rendersector->GetSpriteLight();
+
+	if (bAddLightLevel)
+	{
+		lightlevel += LightLevel;
+	}
+	else if (LightLevel > -1)
+	{
+		lightlevel = LightLevel;
+	}
+	return lightlevel;
+}
+
+FVector3 DZSprite::InterpolatedPosition(double ticFrac) const
+{
+	if (bDontInterpolate) return FVector3(Pos);
+
+	DVector3 proc = Prev + (ticFrac * (Pos - Prev));
+	return FVector3(proc);
+
+}
+
+float DZSprite::InterpolatedRoll(double ticFrac) const
+{
+	if (bDontInterpolate) return Roll;
+
+	return float(PrevRoll + (Roll - PrevRoll) * ticFrac);
+}
+
+
+
+void DZSprite::SetTranslation(FName trname)
+{
+	// There is no constant for the empty name...
+	if (trname.GetChars()[0] == 0)
+	{
+		// '' removes it
+		Translation = 0;
+		return;
+	}
+
+	int tnum = R_FindCustomTranslation(trname);
+	if (tnum >= 0)
+	{
+		Translation = tnum;
+	}
+	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, SetTranslation)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_NAME(trans);
+	self->SetTranslation(trans);
+	return 0;
+}
+
+bool DZSprite::isFrozen()
+{
+	return (Level->isFrozen() && !(Flags & SPF_NOTIMEFREEZE));
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, IsFrozen)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	ACTION_RETURN_BOOL(self->isFrozen());
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, SetRenderStyle)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_INT(mode);
+
+	self->Style = ERenderStyle(mode);
+	return 0;
+}
+
+int DZSprite::GetRenderStyle()
+{
+	for (unsigned i = 0; i < STYLE_Count; i++)
+	{
+		if (Style == LegacyRenderStyles[i]) return i;
+	}
+	return -1;
+}
+
+void DZSprite::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+
+	arc
+		("pos", Pos)
+		("vel", Vel)
+		("prev", Prev)
+		("scale", Scale)
+		("roll", Roll)
+		("offset", Offset)
+		("alpha", Alpha)
+		("texture", Texture)
+		("style", Style)
+		("translation", Translation)
+		("cursector", cursector)
+		("flipx", bXFlip)
+		("flipy", bYFlip)
+		("dontinterpolate", bDontInterpolate)
+		("addlightlevel", bAddLightLevel)
+		("flags", Flags);
+		
+}
+
+IMPLEMENT_CLASS(DZSprite, false, false);
+DEFINE_FIELD(DZSprite, Pos);
+DEFINE_FIELD(DZSprite, Vel);
+DEFINE_FIELD(DZSprite, Prev);
+DEFINE_FIELD(DZSprite, Scale);
+DEFINE_FIELD(DZSprite, Offset);
+DEFINE_FIELD(DZSprite, Roll);
+DEFINE_FIELD(DZSprite, Alpha);
+DEFINE_FIELD(DZSprite, Texture);
+DEFINE_FIELD(DZSprite, Translation);
+DEFINE_FIELD(DZSprite, Flags);
+DEFINE_FIELD(DZSprite, LightLevel);
+DEFINE_FIELD(DZSprite, cursector);
+DEFINE_FIELD(DZSprite, bXFlip);
+DEFINE_FIELD(DZSprite, bYFlip);
+DEFINE_FIELD(DZSprite, bDontInterpolate);
+DEFINE_FIELD(DZSprite, bAddLightLevel);

@@ -275,6 +275,52 @@ static void D_DoHTTPRequest(const char *request)
 	}
 }
 
+
+static FString GetDeviceName()
+{
+	FString device = screen->DeviceName();
+	if (device.Compare("AMD Radeon(TM) Graphics") == 0 ||
+		device.Compare("Intel(R) UHD Graphics") == 0 ||
+		//device.Compare("Intel(R) HD Graphics") == 0 || these are not that interesting so leave them alone
+		device.Compare("Intel(R) Iris(R) Plus Graphics") == 0 ||
+		device.Compare("Intel(R) Iris(R) Xe Graphics") == 0 ||
+		device.Compare("Radeon RX Vega") == 0 ||
+		device.Compare("AMD Radeon Series") == 0)
+	{
+		// for these anonymous series names add the CPU name to get an idea what GPU we really have
+		auto ci = DumpCPUInfo(&CPU, true);
+		device.AppendFormat(" * %s", ci.GetChars());
+	}
+	// cleanse the GPU info string to allow better searches on the database.
+	device.Substitute("/SSE2", "");
+	device.Substitute("/PCIe", "");
+	device.Substitute("/PCI", "");
+	device.Substitute("(TM) ", "");
+	device.Substitute("Mesa ", "");
+	device.Substitute("DRI ", "");
+	auto pos = device.IndexOf("Intel(R)");
+	if (pos >= 0)
+	{
+		device.Substitute("(R) ", "");
+		auto pos = device.IndexOf("(");
+		if (pos >= 0) device.Truncate(pos);
+	}
+
+	auto pos = device.IndexOf("(LLVM");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf("(DRM");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf("(RADV");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf(", LLVM");
+	if (pos >= 0)
+	{
+		device.Truncate(pos);
+		device << ')';
+	}
+	device.StripLeftRight();
+	return device;
+}
 void D_DoAnonStats()
 {
 #ifndef _DEBUG
@@ -292,7 +338,7 @@ void D_DoAnonStats()
 
 	static char requeststring[1024];
 	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202309.py?render=%i&cores=%i&os=%s&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
-		GetRenderInfo(), GetCoreInfo(), URLencode(GetOSVersion()).GetChars(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
+		GetRenderInfo(), GetCoreInfo(), URLencode(GetOSVersion()).GetChars(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(GetDeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 #if 1//ndef _DEBUG
 	// Don't send info in debug builds

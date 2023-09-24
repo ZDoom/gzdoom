@@ -161,7 +161,7 @@ void CheckCPUID(CPUInfo *cpu)
 	}
 }
 
-FString DumpCPUInfo(const CPUInfo *cpu)
+FString DumpCPUInfo(const CPUInfo *cpu, bool brief)
 {
 	char cpustring[4*4*3+1];
 

@@ -972,26 +972,23 @@ void P_DisconnectEffect (AActor *actor)
 
 DZSprite::DZSprite()
 {
-//	particle_t par = {};
-//	PT = &par;
-//	memset(&PT, 0, sizeof(PT));
 	PT = {};
 	Pos = Vel = Prev = { 0,0,0 };
 	Scale = Offset = { 0,0 };
-	Roll = Alpha = 0;
+	Roll = 0;
+	Alpha = 1.0;
 	Style = 0;
 	Texture = FTextureID();
 	Translation = Flags = 0;
 	sub = nullptr;
 }
-/*
+
 void DZSprite::OnDestroy()
 {
-	assert(PT != nullptr || PT == nullptr);
-	M_Free(&PT);
+	Printf("Poof\n");
 	Super::OnDestroy();
 }
-*/
+
 DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type, FSpawnZSpriteParams* params)
 {
 	if (type == nullptr)
@@ -1012,7 +1009,7 @@ DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type, FSpawnZSpriteP
 		return nullptr;
 	}
 
-	DZSprite *zs = static_cast<DZSprite*>(Level->CreateThinker(type));
+	DZSprite *zs = static_cast<DZSprite*>(Level->CreateThinker(type, STAT_SPRITE));
 
 	if (zs)
 	{
@@ -1024,6 +1021,14 @@ DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type, FSpawnZSpriteP
 		zs->Texture = params->Texture;
 		zs->Style = params->Style;
 		zs->Flags = params->Flags;
+		zs->PT.Pos = zs->Pos;
+		zs->PT.Roll = zs->Roll;
+		zs->PT.size = zs->Scale.X; // short term
+		zs->PT.alpha = zs->Alpha;
+		zs->PT.texture = zs->Texture;
+		zs->PT.style = ERenderStyle(zs->Style);
+		zs->PT.flags = zs->Flags;
+		zs->PT.bright = !!(zs->Flags & SPF_FULLBRIGHT);
 	}
 	return zs;
 }
@@ -1038,6 +1043,7 @@ void DZSprite::Tick()
 	// There won't be a standard particle for this, it's only for graphics.
 	if (!Texture.isValid()) 
 	{	
+		Printf("No valid texture, destroyed");
 		Destroy();
 		return;
 	}
@@ -1077,7 +1083,7 @@ void DZSprite::Tick()
 	PT.Pos = Pos;
 	PT.Roll = Roll;
 	PT.size = Scale.X; // short term
-	PT.alpha = Alpha;
+	PT.alpha = float(Alpha);
 	PT.texture = Texture;
 	PT.style = ERenderStyle(Style);
 	PT.flags = Flags;

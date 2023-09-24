@@ -165,8 +165,8 @@ class DZSprite : public DThinker
 
 public:
 	DZSprite();
-	/*
 	void OnDestroy() override;
+	/*
 	~DZSprite() override;
 	*/
 	// TO DO: Enable states for this class

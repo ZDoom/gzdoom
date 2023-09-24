@@ -56,20 +56,21 @@ public:
 
 	void SetLevelMesh(LevelMesh* mesh);
 
-	VulkanAccelerationStructure* GetAccelStruct() { return tlAccelStruct.get(); }
-	VulkanBuffer* GetVertexBuffer() { return vertexBuffer.get(); }
-	VulkanBuffer* GetIndexBuffer() { return indexBuffer.get(); }
-	VulkanBuffer* GetNodeBuffer() { return nodesBuffer.get(); }
-	VulkanBuffer* GetSurfaceIndexBuffer() { return surfaceIndexBuffer.get(); }
-	VulkanBuffer* GetSurfaceBuffer() { return surfaceBuffer.get(); }
-	VulkanBuffer* GetPortalBuffer() { return portalBuffer.get(); }
+	VulkanAccelerationStructure* GetAccelStruct() { return TopLevelAS.AccelStruct.get(); }
+	VulkanBuffer* GetVertexBuffer() { return VertexBuffer.get(); }
+	VulkanBuffer* GetIndexBuffer() { return IndexBuffer.get(); }
+	VulkanBuffer* GetNodeBuffer() { return NodeBuffer.get(); }
+	VulkanBuffer* GetSurfaceIndexBuffer() { return SurfaceIndexBuffer.get(); }
+	VulkanBuffer* GetSurfaceBuffer() { return SurfaceBuffer.get(); }
+	VulkanBuffer* GetPortalBuffer() { return PortalBuffer.get(); }
 
 private:
 	void Reset();
 	void CreateVulkanObjects();
 	void CreateBuffers();
-	void CreateBottomLevelAccelerationStructure();
-	void CreateTopLevelAccelerationStructure();
+	void CreateStaticBLAS();
+	void CreateDynamicBLAS();
+	void CreateTopLevelAS();
 
 	std::vector<CollisionNode> CreateCollisionNodes();
 
@@ -80,23 +81,36 @@ private:
 	LevelMesh NullMesh;
 	LevelMesh* Mesh = nullptr;
 
-	std::unique_ptr<VulkanBuffer> vertexBuffer;
-	std::unique_ptr<VulkanBuffer> indexBuffer;
-	std::unique_ptr<VulkanBuffer> transferBuffer;
-	std::unique_ptr<VulkanBuffer> nodesBuffer;
-	std::unique_ptr<VulkanBuffer> surfaceIndexBuffer;
-	std::unique_ptr<VulkanBuffer> surfaceBuffer;
-	std::unique_ptr<VulkanBuffer> portalBuffer;
+	std::unique_ptr<VulkanBuffer> VertexBuffer;
+	std::unique_ptr<VulkanBuffer> IndexBuffer;
+	std::unique_ptr<VulkanBuffer> SurfaceIndexBuffer;
+	std::unique_ptr<VulkanBuffer> SurfaceBuffer;
+	std::unique_ptr<VulkanBuffer> PortalBuffer;
 
-	std::unique_ptr<VulkanBuffer> blScratchBuffer;
-	std::unique_ptr<VulkanBuffer> blAccelStructBuffer;
-	std::unique_ptr<VulkanAccelerationStructure> blAccelStruct;
+	std::unique_ptr<VulkanBuffer> NodeBuffer;
 
-	std::unique_ptr<VulkanBuffer> tlTransferBuffer;
-	std::unique_ptr<VulkanBuffer> tlScratchBuffer;
-	std::unique_ptr<VulkanBuffer> tlInstanceBuffer;
-	std::unique_ptr<VulkanBuffer> tlAccelStructBuffer;
-	std::unique_ptr<VulkanAccelerationStructure> tlAccelStruct;
+	struct
+	{
+		std::unique_ptr<VulkanBuffer> ScratchBuffer;
+		std::unique_ptr<VulkanBuffer> AccelStructBuffer;
+		std::unique_ptr<VulkanAccelerationStructure> AccelStruct;
+	} StaticBLAS;
+
+	struct
+	{
+		std::unique_ptr<VulkanBuffer> ScratchBuffer;
+		std::unique_ptr<VulkanBuffer> AccelStructBuffer;
+		std::unique_ptr<VulkanAccelerationStructure> AccelStruct;
+	} DynamicBLAS;
+
+	struct
+	{
+		std::unique_ptr<VulkanBuffer> TransferBuffer;
+		std::unique_ptr<VulkanBuffer> ScratchBuffer;
+		std::unique_ptr<VulkanBuffer> InstanceBuffer;
+		std::unique_ptr<VulkanBuffer> AccelStructBuffer;
+		std::unique_ptr<VulkanAccelerationStructure> AccelStruct;
+	} TopLevelAS;
 };
 
 class BufferTransfer

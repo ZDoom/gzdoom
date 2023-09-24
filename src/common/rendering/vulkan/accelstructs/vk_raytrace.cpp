@@ -68,21 +68,20 @@ void VkRaytrace::SetLevelMesh(LevelMesh* mesh)
 void VkRaytrace::Reset()
 {
 	auto deletelist = fb->GetCommands()->DrawDeleteList.get();
-	deletelist->Add(std::move(vertexBuffer));
-	deletelist->Add(std::move(indexBuffer));
-	deletelist->Add(std::move(transferBuffer));
-	deletelist->Add(std::move(nodesBuffer));
-	deletelist->Add(std::move(surfaceBuffer));
-	deletelist->Add(std::move(surfaceIndexBuffer));
-	deletelist->Add(std::move(portalBuffer));
-	deletelist->Add(std::move(blScratchBuffer));
-	deletelist->Add(std::move(blAccelStructBuffer));
-	deletelist->Add(std::move(blAccelStruct));
-	deletelist->Add(std::move(tlTransferBuffer));
-	deletelist->Add(std::move(tlScratchBuffer));
-	deletelist->Add(std::move(tlInstanceBuffer));
-	deletelist->Add(std::move(tlAccelStructBuffer));
-	deletelist->Add(std::move(tlAccelStruct));
+	deletelist->Add(std::move(VertexBuffer));
+	deletelist->Add(std::move(IndexBuffer));
+	deletelist->Add(std::move(NodeBuffer));
+	deletelist->Add(std::move(SurfaceBuffer));
+	deletelist->Add(std::move(SurfaceIndexBuffer));
+	deletelist->Add(std::move(PortalBuffer));
+	deletelist->Add(std::move(StaticBLAS.ScratchBuffer));
+	deletelist->Add(std::move(StaticBLAS.AccelStructBuffer));
+	deletelist->Add(std::move(StaticBLAS.AccelStruct));
+	deletelist->Add(std::move(TopLevelAS.TransferBuffer));
+	deletelist->Add(std::move(TopLevelAS.ScratchBuffer));
+	deletelist->Add(std::move(TopLevelAS.InstanceBuffer));
+	deletelist->Add(std::move(TopLevelAS.AccelStructBuffer));
+	deletelist->Add(std::move(TopLevelAS.AccelStruct));
 }
 
 void VkRaytrace::CreateVulkanObjects()
@@ -90,8 +89,9 @@ void VkRaytrace::CreateVulkanObjects()
 	CreateBuffers();
 	if (useRayQuery)
 	{
-		CreateBottomLevelAccelerationStructure();
-		CreateTopLevelAccelerationStructure();
+		CreateStaticBLAS();
+		CreateDynamicBLAS();
+		CreateTopLevelAS();
 	}
 }
 
@@ -142,7 +142,7 @@ void VkRaytrace::CreateBuffers()
 		surfaceInfo.Push(info);
 	}
 
-	vertexBuffer = BufferBuilder()
+	VertexBuffer = BufferBuilder()
 		.Usage(
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -151,10 +151,10 @@ void VkRaytrace::CreateBuffers()
 				VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR : 0) |
 			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size(vertices.size() * sizeof(SurfaceVertex))
-		.DebugName("vertexBuffer")
+		.DebugName("VertexBuffer")
 		.Create(fb->GetDevice());
 
-	indexBuffer = BufferBuilder()
+	IndexBuffer = BufferBuilder()
 		.Usage(
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -163,48 +163,50 @@ void VkRaytrace::CreateBuffers()
 				VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR : 0) |
 			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size((size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
-		.DebugName("indexBuffer")
+		.DebugName("IndexBuffer")
 		.Create(fb->GetDevice());
 
-	nodesBuffer = BufferBuilder()
+	NodeBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 		.Size(sizeof(CollisionNodeBufferHeader) + nodes.size() * sizeof(CollisionNode))
-		.DebugName("nodesBuffer")
+		.DebugName("NodeBuffer")
 		.Create(fb->GetDevice());
 
-	surfaceIndexBuffer = BufferBuilder()
+	SurfaceIndexBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 		.Size(Mesh->MeshSurfaceIndexes.Size() * sizeof(int))
-		.DebugName("surfaceBuffer")
+		.DebugName("SurfaceBuffer")
 		.Create(fb->GetDevice());
 
-	surfaceBuffer = BufferBuilder()
+	SurfaceBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 		.Size(surfaceInfo.Size() * sizeof(SurfaceInfo))
-		.DebugName("surfaceBuffer")
+		.DebugName("SurfaceBuffer")
 		.Create(fb->GetDevice());
 
-	portalBuffer = BufferBuilder()
+	PortalBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
 		.Size(portalInfo.Size() * sizeof(PortalInfo))
-		.DebugName("portalBuffer")
+		.DebugName("PortalBuffer")
 		.Create(fb->GetDevice());
 
-	transferBuffer = BufferTransfer()
-		.AddBuffer(vertexBuffer.get(), vertices.data(), vertices.size() * sizeof(SurfaceVertex))
-		.AddBuffer(indexBuffer.get(), Mesh->MeshElements.Data(), (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
-		.AddBuffer(nodesBuffer.get(), &nodesHeader, sizeof(CollisionNodeBufferHeader), nodes.data(), nodes.size() * sizeof(CollisionNode))
-		.AddBuffer(surfaceIndexBuffer.get(), Mesh->MeshSurfaceIndexes.Data(), Mesh->MeshSurfaceIndexes.Size() * sizeof(int))
-		.AddBuffer(surfaceBuffer.get(), surfaceInfo.Data(), surfaceInfo.Size() * sizeof(SurfaceInfo))
-		.AddBuffer(portalBuffer.get(), portalInfo.Data(), portalInfo.Size() * sizeof(PortalInfo))
+	auto transferBuffer = BufferTransfer()
+		.AddBuffer(VertexBuffer.get(), vertices.data(), vertices.size() * sizeof(SurfaceVertex))
+		.AddBuffer(IndexBuffer.get(), Mesh->MeshElements.Data(), (size_t)Mesh->MeshElements.Size() * sizeof(uint32_t))
+		.AddBuffer(NodeBuffer.get(), &nodesHeader, sizeof(CollisionNodeBufferHeader), nodes.data(), nodes.size() * sizeof(CollisionNode))
+		.AddBuffer(SurfaceIndexBuffer.get(), Mesh->MeshSurfaceIndexes.Data(), Mesh->MeshSurfaceIndexes.Size() * sizeof(int))
+		.AddBuffer(SurfaceBuffer.get(), surfaceInfo.Data(), surfaceInfo.Size() * sizeof(SurfaceInfo))
+		.AddBuffer(PortalBuffer.get(), portalInfo.Data(), portalInfo.Size() * sizeof(PortalInfo))
 		.Execute(fb->GetDevice(), fb->GetCommands()->GetTransferCommands());
+
+	fb->GetCommands()->TransferDeleteList->Add(std::move(transferBuffer));
 
 	PipelineBarrier()
 		.AddMemory(VK_ACCESS_TRANSFER_WRITE_BIT, useRayQuery ? VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR : VK_ACCESS_SHADER_READ_BIT)
 		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, useRayQuery ? VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
-void VkRaytrace::CreateBottomLevelAccelerationStructure()
+void VkRaytrace::CreateStaticBLAS()
 {
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
 	VkAccelerationStructureGeometryKHR accelStructBLDesc = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
@@ -216,10 +218,10 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	accelStructBLDesc.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 	accelStructBLDesc.geometry.triangles = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR };
 	accelStructBLDesc.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
-	accelStructBLDesc.geometry.triangles.vertexData.deviceAddress = vertexBuffer->GetDeviceAddress();
+	accelStructBLDesc.geometry.triangles.vertexData.deviceAddress = VertexBuffer->GetDeviceAddress();
 	accelStructBLDesc.geometry.triangles.vertexStride = sizeof(SurfaceVertex);
 	accelStructBLDesc.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-	accelStructBLDesc.geometry.triangles.indexData.deviceAddress = indexBuffer->GetDeviceAddress();
+	accelStructBLDesc.geometry.triangles.indexData.deviceAddress = IndexBuffer->GetDeviceAddress();
 	accelStructBLDesc.geometry.triangles.maxVertex = Mesh->MeshVertices.Size() - 1;
 
 	buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
@@ -233,27 +235,27 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 	VkAccelerationStructureBuildSizesInfoKHR sizeInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 	vkGetAccelerationStructureBuildSizesKHR(fb->GetDevice()->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &maxPrimitiveCount, &sizeInfo);
 
-	blAccelStructBuffer = BufferBuilder()
+	StaticBLAS.AccelStructBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
 		.Size(sizeInfo.accelerationStructureSize)
-		.DebugName("blAccelStructBuffer")
+		.DebugName("StaticBLAS.AccelStructBuffer")
 		.Create(fb->GetDevice());
 
-	blAccelStruct = AccelerationStructureBuilder()
+	StaticBLAS.AccelStruct = AccelerationStructureBuilder()
 		.Type(VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR)
-		.Buffer(blAccelStructBuffer.get(), sizeInfo.accelerationStructureSize)
-		.DebugName("blAccelStruct")
+		.Buffer(StaticBLAS.AccelStructBuffer.get(), sizeInfo.accelerationStructureSize)
+		.DebugName("StaticBLAS.AccelStruct")
 		.Create(fb->GetDevice());
 
-	blScratchBuffer = BufferBuilder()
+	StaticBLAS.ScratchBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size(sizeInfo.buildScratchSize)
 		.MinAlignment(fb->GetDevice()->PhysicalDevice.Properties.AccelerationStructure.minAccelerationStructureScratchOffsetAlignment)
-		.DebugName("blScratchBuffer")
+		.DebugName("StaticBLAS.ScratchBuffer")
 		.Create(fb->GetDevice());
 
-	buildInfo.dstAccelerationStructure = blAccelStruct->accelstruct;
-	buildInfo.scratchData.deviceAddress = blScratchBuffer->GetDeviceAddress();
+	buildInfo.dstAccelerationStructure = StaticBLAS.AccelStruct->accelstruct;
+	buildInfo.scratchData.deviceAddress = StaticBLAS.ScratchBuffer->GetDeviceAddress();
 	rangeInfo.primitiveCount = maxPrimitiveCount;
 
 	fb->GetCommands()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
@@ -264,33 +266,104 @@ void VkRaytrace::CreateBottomLevelAccelerationStructure()
 		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR);
 }
 
-void VkRaytrace::CreateTopLevelAccelerationStructure()
+void VkRaytrace::CreateDynamicBLAS()
 {
-	VkAccelerationStructureInstanceKHR instance = {};
-	instance.transform.matrix[0][0] = 1.0f;
-	instance.transform.matrix[1][1] = 1.0f;
-	instance.transform.matrix[2][2] = 1.0f;
-	instance.mask = 0xff;
-	instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-	instance.accelerationStructureReference = blAccelStruct->GetDeviceAddress();
+#ifdef USE_DYNAMIC_BLAS
+	VkAccelerationStructureBuildGeometryInfoKHR buildInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+	VkAccelerationStructureGeometryKHR accelStructBLDesc = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
+	VkAccelerationStructureGeometryKHR* geometries[] = { &accelStructBLDesc };
+	VkAccelerationStructureBuildRangeInfoKHR rangeInfo = {};
+	VkAccelerationStructureBuildRangeInfoKHR* rangeInfos[] = { &rangeInfo };
 
-	tlTransferBuffer = BufferBuilder()
+	accelStructBLDesc.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+	accelStructBLDesc.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	accelStructBLDesc.geometry.triangles = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR };
+	accelStructBLDesc.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
+	accelStructBLDesc.geometry.triangles.vertexData.deviceAddress = VertexBuffer->GetDeviceAddress();
+	accelStructBLDesc.geometry.triangles.vertexStride = sizeof(SurfaceVertex);
+	accelStructBLDesc.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+	accelStructBLDesc.geometry.triangles.indexData.deviceAddress = IndexBuffer->GetDeviceAddress();
+	accelStructBLDesc.geometry.triangles.maxVertex = Mesh->MeshVertices.Size() - 1;
+
+	buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+	buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+	buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+	buildInfo.geometryCount = 1;
+	buildInfo.ppGeometries = geometries;
+
+	uint32_t maxPrimitiveCount = Mesh->MeshElements.Size() / 3;
+
+	VkAccelerationStructureBuildSizesInfoKHR sizeInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
+	vkGetAccelerationStructureBuildSizesKHR(fb->GetDevice()->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &maxPrimitiveCount, &sizeInfo);
+
+	DynamicBLAS.AccelStructBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+		.Size(sizeInfo.accelerationStructureSize)
+		.DebugName("DynamicBLAS.AccelStructBuffer")
+		.Create(fb->GetDevice());
+
+	DynamicBLAS.AccelStruct = AccelerationStructureBuilder()
+		.Type(VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR)
+		.Buffer(DynamicBLAS.AccelStructBuffer.get(), sizeInfo.accelerationStructureSize)
+		.DebugName("DynamicBLAS.AccelStruct")
+		.Create(fb->GetDevice());
+
+	DynamicBLAS.ScratchBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		.Size(sizeInfo.buildScratchSize)
+		.MinAlignment(fb->GetDevice()->PhysicalDevice.Properties.AccelerationStructure.minAccelerationStructureScratchOffsetAlignment)
+		.DebugName("DynamicBLAS.ScratchBuffer")
+		.Create(fb->GetDevice());
+
+	buildInfo.dstAccelerationStructure = DynamicBLAS.AccelStruct->accelstruct;
+	buildInfo.scratchData.deviceAddress = DynamicBLAS.ScratchBuffer->GetDeviceAddress();
+	rangeInfo.primitiveCount = maxPrimitiveCount;
+
+	fb->GetCommands()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);
+
+	// Finish building before using it as input to a toplevel accel structure
+	PipelineBarrier()
+		.AddMemory(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR, VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR)
+		.Execute(fb->GetCommands()->GetTransferCommands(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR);
+#endif
+}
+
+void VkRaytrace::CreateTopLevelAS()
+{
+	VkAccelerationStructureInstanceKHR instances[2] = {};
+	instances[0].transform.matrix[0][0] = 1.0f;
+	instances[0].transform.matrix[1][1] = 1.0f;
+	instances[0].transform.matrix[2][2] = 1.0f;
+	instances[0].mask = 0xff;
+	instances[0].flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+	instances[0].accelerationStructureReference = StaticBLAS.AccelStruct->GetDeviceAddress();
+
+#ifdef USE_DYNAMIC_BLAS
+	instances[1].transform.matrix[0][0] = 1.0f;
+	instances[1].transform.matrix[1][1] = 1.0f;
+	instances[1].transform.matrix[2][2] = 1.0f;
+	instances[1].mask = 0xff;
+	instances[1].flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+	instances[1].accelerationStructureReference = DynamicBLAS.AccelStruct->GetDeviceAddress();
+#endif
+
+	TopLevelAS.TransferBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
-		.Size(sizeof(VkAccelerationStructureInstanceKHR))
-		.DebugName("tlTransferBuffer")
+		.Size(sizeof(VkAccelerationStructureInstanceKHR) * 2)
+		.DebugName("TopLevelAS.TransferBuffer")
 		.Create(fb->GetDevice());
 
-	auto data = (uint8_t*)tlTransferBuffer->Map(0, sizeof(VkAccelerationStructureInstanceKHR));
-	memcpy(data, &instance, sizeof(VkAccelerationStructureInstanceKHR));
-	tlTransferBuffer->Unmap();
+	auto data = (uint8_t*)TopLevelAS.TransferBuffer->Map(0, sizeof(VkAccelerationStructureInstanceKHR) * 2);
+	memcpy(data, instances, sizeof(VkAccelerationStructureInstanceKHR) * 2);
+	TopLevelAS.TransferBuffer->Unmap();
 
-	tlInstanceBuffer = BufferBuilder()
+	TopLevelAS.InstanceBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-		.Size(sizeof(VkAccelerationStructureInstanceKHR))
-		.DebugName("tlInstanceBuffer")
+		.Size(sizeof(VkAccelerationStructureInstanceKHR) * 2)
+		.DebugName("TopLevelAS.InstanceBuffer")
 		.Create(fb->GetDevice());
 
-	fb->GetCommands()->GetTransferCommands()->copyBuffer(tlTransferBuffer.get(), tlInstanceBuffer.get());
+	fb->GetCommands()->GetTransferCommands()->copyBuffer(TopLevelAS.TransferBuffer.get(), TopLevelAS.InstanceBuffer.get());
 
 	// Finish transfering before using it as input
 	PipelineBarrier()
@@ -306,39 +379,43 @@ void VkRaytrace::CreateTopLevelAccelerationStructure()
 	buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 	buildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 	buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+#ifdef USE_DYNAMIC_BLAS
+	buildInfo.geometryCount = 2;
+#else
 	buildInfo.geometryCount = 1;
+#endif
 	buildInfo.ppGeometries = geometries;
 
 	accelStructTLDesc.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
 	accelStructTLDesc.geometry.instances = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR };
-	accelStructTLDesc.geometry.instances.data.deviceAddress = tlInstanceBuffer->GetDeviceAddress();
+	accelStructTLDesc.geometry.instances.data.deviceAddress = TopLevelAS.InstanceBuffer->GetDeviceAddress();
 
-	uint32_t maxInstanceCount = 1;
+	uint32_t maxInstanceCount = 2;
 
 	VkAccelerationStructureBuildSizesInfoKHR sizeInfo = { VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 	vkGetAccelerationStructureBuildSizesKHR(fb->GetDevice()->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &buildInfo, &maxInstanceCount, &sizeInfo);
 
-	tlAccelStructBuffer = BufferBuilder()
+	TopLevelAS.AccelStructBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
 		.Size(sizeInfo.accelerationStructureSize)
-		.DebugName("tlAccelStructBuffer")
+		.DebugName("TopLevelAS.AccelStructBuffer")
 		.Create(fb->GetDevice());
 
-	tlAccelStruct = AccelerationStructureBuilder()
+	TopLevelAS.AccelStruct = AccelerationStructureBuilder()
 		.Type(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR)
-		.Buffer(tlAccelStructBuffer.get(), sizeInfo.accelerationStructureSize)
-		.DebugName("tlAccelStruct")
+		.Buffer(TopLevelAS.AccelStructBuffer.get(), sizeInfo.accelerationStructureSize)
+		.DebugName("TopLevelAS.AccelStruct")
 		.Create(fb->GetDevice());
 
-	tlScratchBuffer = BufferBuilder()
+	TopLevelAS.ScratchBuffer = BufferBuilder()
 		.Usage(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		.Size(sizeInfo.buildScratchSize)
 		.MinAlignment(fb->GetDevice()->PhysicalDevice.Properties.AccelerationStructure.minAccelerationStructureScratchOffsetAlignment)
-		.DebugName("tlScratchBuffer")
+		.DebugName("TopLevelAS.ScratchBuffer")
 		.Create(fb->GetDevice());
 
-	buildInfo.dstAccelerationStructure = tlAccelStruct->accelstruct;
-	buildInfo.scratchData.deviceAddress = tlScratchBuffer->GetDeviceAddress();
+	buildInfo.dstAccelerationStructure = TopLevelAS.AccelStruct->accelstruct;
+	buildInfo.scratchData.deviceAddress = TopLevelAS.ScratchBuffer->GetDeviceAddress();
 	rangeInfo.primitiveCount = 1;
 
 	fb->GetCommands()->GetTransferCommands()->buildAccelerationStructures(1, &buildInfo, rangeInfos);

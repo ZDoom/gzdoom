@@ -306,7 +306,7 @@ static FString GetDeviceName()
 		if (pos >= 0) device.Truncate(pos);
 	}
 
-	auto pos = device.IndexOf("(LLVM");
+	pos = device.IndexOf("(LLVM");
 	if (pos >= 0) device.Truncate(pos);
 	pos = device.IndexOf("(DRM");
 	if (pos >= 0) device.Truncate(pos);

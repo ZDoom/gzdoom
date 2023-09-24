@@ -10,6 +10,7 @@ xx(Object)
 xx(Actor)
 xx(Class)
 xx(Thinker)
+xx(ZSprite)
 xx(Crosshairs)
 
 xx(Untranslated)

@@ -249,6 +249,13 @@ void VkLightmap::Render()
 			drawindexed.Constants[drawindexed.Pos] = pc;
 			drawindexed.Commands[drawindexed.Pos] = cmd;
 			drawindexed.Pos++;
+
+			if (drawindexed.Pos == drawindexed.BufferSize)
+			{
+				// Our indirect draw buffer is full. Postpone the rest.
+				buffersFull = true;
+				break;
+			}
 #else
 			cmdbuffer->pushConstants(raytrace.pipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LightmapRaytracePC), &pc);
 			cmdbuffer->drawIndexed(surface->numElements, 1, surface->startElementIndex, 0, 0);

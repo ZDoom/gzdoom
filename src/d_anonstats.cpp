@@ -1,4 +1,4 @@
-//#define NO_SEND_STATS
+#define NO_SEND_STATS
 #ifdef NO_SEND_STATS
 
 void D_DoAnonStats()
@@ -306,7 +306,7 @@ static FString GetDeviceName()
 		if (pos >= 0) device.Truncate(pos);
 	}
 
-	auto pos = device.IndexOf("(LLVM");
+	pos = device.IndexOf("(LLVM");
 	if (pos >= 0) device.Truncate(pos);
 	pos = device.IndexOf("(DRM");
 	if (pos >= 0) device.Truncate(pos);

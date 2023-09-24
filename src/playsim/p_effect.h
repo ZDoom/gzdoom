@@ -36,6 +36,7 @@
 #include "vectors.h"
 #include "doomdef.h"
 #include "renderstyle.h"
+#include "dthinker.h"
 
 enum
 {
@@ -130,3 +131,59 @@ void P_DrawSplash (FLevelLocals *Level, int count, const DVector3 &pos, DAngle a
 void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle angle, int updown, int kind);
 void P_DisconnectEffect (AActor *actor);
 
+//===========================================================================
+// 
+// Particles Expanded
+// by Major Cooke
+// 
+//===========================================================================
+
+enum EDZSpriteFlags
+{
+	DZF_BRIGHT =		1,
+	DZF_ROLL =			1 << 1,
+	DZF_YBILLBOARD =	1 << 2,
+	DZF_NOTIMEFREEZE =	1 << 3,
+};
+
+class DZSprite : public DThinker
+{
+	DECLARE_CLASS(DZSprite, DThinker);
+
+public:
+	DZSprite();
+	void CallPostBeginPlay() override;
+	void OnDestroy() override;
+	// TO DO: Enable states for this class
+/*
+	int32_t			tics;				// state tic counter
+	int				sprite;				// used to find patch_t and flip value
+	uint8_t			frame;				// sprite frame to draw
+
+	FState			*State;
+	FState			*SpawnState;
+*/
+
+	DVector3		Pos, Vel, Prev;
+	DVector2		Scale, Offset;
+	double			Roll;
+	double			Alpha;
+
+	FRenderStyle	Style;
+	FTextureID		Texture;
+	uint32_t		Translation;
+
+	uint32_t		Flags;
+
+	subsector_t		*sub;
+
+
+	static DZSprite* NewZSprite(FLevelLocals* Level, PClass* type);
+	void SetTranslation(FName trname);
+	bool IsFrozen();
+
+public:
+	void Tick() override;
+	void Serialize(FSerializer& arc) override;
+
+};

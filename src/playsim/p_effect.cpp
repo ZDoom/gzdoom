@@ -49,6 +49,7 @@
 #include "vm.h"
 #include "actorinlines.h"
 #include "g_game.h"
+#include "serializer_doom.h"
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_rail_smartspiral, false, CVAR_ARCHIVE);
@@ -979,3 +980,182 @@ void P_DisconnectEffect (AActor *actor)
 		p->size = 4;
 	}
 }
+
+//===========================================================================
+// 
+// ZScript Sprite (DZSprite)
+// Concept by Major Cooke
+// Most code borrowed by Actor and particles above
+// 
+//===========================================================================
+
+DZSprite::DZSprite() = default;
+
+void DZSprite::CallPostBeginPlay()
+{
+	if (Level) Level->TotalZSprites++; // Must happen no matter what.
+	Super::CallPostBeginPlay();
+}
+
+void DZSprite::OnDestroy()
+{
+	if (Level) Level->TotalZSprites--; // Same here.
+	Printf("Poof - %d\n", Level->TotalZSprites);
+	Super::OnDestroy();
+}
+
+DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type)
+{
+	if (type == nullptr)
+		return nullptr;
+	else if (type->bAbstract)
+	{
+		Printf("Attempt to spawn an instance of abstract ZSprite class %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+	else if (!type->IsDescendantOf(RUNTIME_CLASS(DZSprite)))
+	{
+		Printf("Attempt to spawn class not inherent to ZSprite: %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+
+	DZSprite *zs = static_cast<DZSprite*>(Level->CreateThinker(type, STAT_SPRITE));
+
+	return zs;
+}
+
+
+// This runs just like Actor's, make sure to call Super.Tick().
+void DZSprite::Tick()
+{
+	if (ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	// There won't be a standard particle for this, it's only for graphics.
+	if (!Texture.isValid()) 
+	{	
+		Printf("No valid texture, destroyed");
+		Destroy();
+		return;
+	}
+
+	if (IsFrozen())
+		return;
+	
+	Prev = Pos;
+	// Handle crossing a line portal
+	DVector2 newxy = Level->GetPortalOffsetPosition(Pos.X, Pos.Y, Vel.X, Vel.Y);
+	Pos.X = newxy.X;
+	Pos.Y = newxy.Y;
+	Pos.Z += Vel.Z;
+
+	sub = Level->PointInRenderSubsector(Pos);
+	sector_t* s = sub->sector;
+	// Handle crossing a sector portal.
+	if (!s->PortalBlocksMovement(sector_t::ceiling))
+	{
+		if (Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
+		{
+			Pos += s->GetPortalDisplacement(sector_t::ceiling);
+			sub = nullptr;
+		}
+	}
+	else if (!s->PortalBlocksMovement(sector_t::floor))
+	{
+		if (Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
+		{
+			Pos += s->GetPortalDisplacement(sector_t::floor);
+			sub = nullptr;
+		}
+	}
+}
+
+void DZSprite::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+
+	arc
+		("pos", Pos)
+		("vel", Vel)
+		("prev", Prev)
+		("scale", Scale)
+		("roll", Roll)
+		("offset", Offset)
+		("alpha", Alpha)
+		("texture", Texture)
+		("style", Style)
+		("translation", Translation)
+		("flags", Flags);
+		
+}
+
+static DZSprite* SpawnZSprite(FLevelLocals* Level, PClass* type)
+{
+	return DZSprite::NewZSprite(Level, type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnZSprite, SpawnZSprite)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_CLASS_NOT_NULL(type, DZSprite);
+	DZSprite* zs = SpawnZSprite(self, type);
+	ACTION_RETURN_OBJECT(zs);
+}
+
+void DZSprite::SetTranslation(FName trname)
+{
+	// There is no constant for the empty name...
+	if (trname.GetChars()[0] == 0)
+	{
+		// '' removes it
+		Translation = 0;
+		return;
+	}
+
+	int tnum = R_FindCustomTranslation(trname);
+	if (tnum >= 0)
+	{
+		Translation = tnum;
+	}
+	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, SetTranslation)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_NAME(trans);
+	self->SetTranslation(trans);
+	return 0;
+}
+
+bool DZSprite::IsFrozen()
+{
+	return (Level->isFrozen() && !(Flags & DZF_NOTIMEFREEZE));
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, IsFrozen)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	ACTION_RETURN_BOOL(self->IsFrozen());
+}
+
+DEFINE_ACTION_FUNCTION(DZSprite, SetRenderStyle)
+{
+	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_INT(mode);
+
+	self->Style = ERenderStyle(mode);
+	return 0;
+}
+
+IMPLEMENT_CLASS(DZSprite, false, false);
+DEFINE_FIELD(DZSprite, Pos);
+DEFINE_FIELD(DZSprite, Vel);
+DEFINE_FIELD(DZSprite, Prev);
+DEFINE_FIELD(DZSprite, Scale);
+DEFINE_FIELD(DZSprite, Offset);
+DEFINE_FIELD(DZSprite, Roll);
+DEFINE_FIELD(DZSprite, Alpha);
+DEFINE_FIELD(DZSprite, Texture);
+DEFINE_FIELD(DZSprite, Translation);
+DEFINE_FIELD(DZSprite, Flags);

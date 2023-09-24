@@ -77,7 +77,33 @@ layout(set = 0, binding = 2) buffer SurfaceBuffer { SurfaceInfo surfaces[]; };
 layout(set = 0, binding = 3) buffer LightBuffer { LightInfo lights[]; };
 layout(set = 0, binding = 4) buffer PortalBuffer { PortalInfo portals[]; };
 
-layout(set = 2, binding = 0) uniform sampler2D textures[];
+#if defined(USE_DRAWINDIRECT)
+
+struct LightmapRaytracePC
+{
+	uint LightStart;
+	uint LightEnd;
+	int SurfaceIndex;
+	int PushPadding1;
+	vec3 WorldToLocal;
+	float TextureSize;
+	vec3 ProjLocalToU;
+	float PushPadding2;
+	vec3 ProjLocalToV;
+	float PushPadding3;
+	float TileX;
+	float TileY;
+	float TileWidth;
+	float TileHeight;
+};
+
+layout(std430, set = 0, binding = 5) buffer ConstantsBuffer { LightmapRaytracePC constants[]; };
+
+layout(location = 1) in flat int InstanceIndex;
+
+int SurfaceIndex;
+
+#else
 
 layout(push_constant) uniform PushConstants
 {
@@ -96,6 +122,10 @@ layout(push_constant) uniform PushConstants
 	float TileWidth;
 	float TileHeight;
 };
+
+#endif
+
+layout(set = 2, binding = 0) uniform sampler2D textures[];
 
 layout(location = 0) centroid in vec3 worldpos;
 layout(location = 0) out vec4 fragcolor;
@@ -116,6 +146,12 @@ vec4 rayColor;
 
 void main()
 {
+#if defined(USE_DRAWINDIRECT)
+	uint LightStart = constants[InstanceIndex].LightStart;
+	uint LightEnd = constants[InstanceIndex].LightEnd;
+	SurfaceIndex = constants[InstanceIndex].SurfaceIndex;
+#endif
+
 	vec3 normal = surfaces[SurfaceIndex].Normal;
 	vec3 origin = worldpos + normal * 0.1;
 

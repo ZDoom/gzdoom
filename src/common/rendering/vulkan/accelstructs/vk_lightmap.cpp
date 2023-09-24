@@ -10,6 +10,8 @@
 #include "filesystem.h"
 #include "cmdlib.h"
 
+#define USE_DRAWINDIRECT
+
 static int lastSurfaceCount;
 static glcycle_t lightmapRaytraceLast;
 
@@ -243,7 +245,7 @@ void VkLightmap::Render()
 			cmd.instanceCount = 1;
 			cmd.firstIndex = surface->startElementIndex;
 			cmd.vertexOffset = 0;
-			cmd.firstInstance = pos;
+			cmd.firstInstance = drawindexed.Pos;
 			drawindexed.Constants[drawindexed.Pos] = pc;
 			drawindexed.Commands[drawindexed.Pos] = cmd;
 			drawindexed.Pos++;
@@ -539,6 +541,7 @@ void VkLightmap::CreateShaders()
 		traceprefix += "#define USE_RAYQUERY\r\n";
 	}
 #ifdef USE_DRAWINDIRECT
+	prefix += "#define USE_DRAWINDIRECT\r\n";
 	traceprefix += "#define USE_DRAWINDIRECT\r\n";
 #endif
 
@@ -740,7 +743,7 @@ void VkLightmap::UpdateAccelStructDescriptors()
 		.AddBuffer(raytrace.descriptorSet0.get(), 3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, lights.Buffer.get())
 		.AddBuffer(raytrace.descriptorSet0.get(), 4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->GetRaytrace()->GetPortalBuffer())
 #ifdef USE_DRAWINDIRECT
-		.AddBuffer(raytrace.descriptorSet0.get(), 5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, drawindexed.ConstantsBuffer.get(), 0, BufferSize * sizeof(LightmapRaytracePC))
+		.AddBuffer(raytrace.descriptorSet0.get(), 5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, drawindexed.ConstantsBuffer.get(), 0, drawindexed.BufferSize * sizeof(LightmapRaytracePC))
 #endif
 		.Execute(fb->GetDevice());
 }
@@ -1056,7 +1059,7 @@ void VkLightmap::CreateDrawIndexedBuffer()
 
 	drawindexed.CommandsBuffer = BufferBuilder()
 		.Usage(
-			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
 			VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT)
 		.MemoryType(
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,

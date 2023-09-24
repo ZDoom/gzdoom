@@ -1000,7 +1000,6 @@ void DZSprite::CallPostBeginPlay()
 void DZSprite::OnDestroy()
 {
 	if (Level) Level->TotalZSprites--; // Same here.
-	Printf("Poof - %d\n", Level->TotalZSprites);
 	Super::OnDestroy();
 }
 

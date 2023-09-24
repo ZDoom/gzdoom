@@ -510,7 +510,7 @@ public:
 	int ib_compatflags = 0;
 	int i_compatflags = 0;
 	int i_compatflags2 = 0;
-	int TotalZSprites = 0;
+	int TotalZSprites = 0; // Don't run the iterator in the renderer if < 1.
 	DSectorMarker *SectorMarker;
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.

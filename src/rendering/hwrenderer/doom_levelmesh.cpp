@@ -864,20 +864,20 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 
 			auto gameTexture = TexMan.GetGameTexture(texture);
 
-			float mid1Top = gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale;
-			float mid2Top = gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale;
+			float mid1Top = (float)(gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale);
+			float mid2Top = (float)(gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale);
 			float mid1Bottom = 0;
 			float mid2Bottom = 0;
 
-			float yTextureOffset = side->textures[side_t::mid].yOffset / gameTexture->GetScaleY();
+			float yTextureOffset = (float)(side->textures[side_t::mid].yOffset / gameTexture->GetScaleY());
 
 			if (side->linedef->flags & ML_DONTPEGBOTTOM)
 			{
-				yTextureOffset += side->sector->planes[sector_t::floor].TexZ;
+				yTextureOffset += (float)side->sector->planes[sector_t::floor].TexZ;
 			}
 			else
 			{
-				yTextureOffset += side->sector->planes[sector_t::ceiling].TexZ - gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale;
+				yTextureOffset += (float)(side->sector->planes[sector_t::ceiling].TexZ - gameTexture->GetDisplayHeight() / side->textures[side_t::mid].yScale);
 			}
 
 			verts[0].Z = min(max(yTextureOffset + mid1Bottom, v1Bottom), v1Top);
@@ -891,7 +891,7 @@ void DoomLevelMesh::CreateSideSurfaces(FLevelLocals &doomMap, side_t *side)
 		surf.bSky = false;
 		surf.plane = ToPlane(verts[0], verts[1], verts[2], verts[3]);
 
-		auto offset = FVector3(surf.plane.XYZ()) * 0.05; // for better accuracy when raytracing mid-textures from each side
+		FVector3 offset = surf.plane.XYZ() * 0.05f; // for better accuracy when raytracing mid-textures from each side
 
 		if (side->linedef->sidedef[0] != side)
 		{
@@ -1651,8 +1651,8 @@ void DoomLevelMesh::CreateSurfaceTextureUVs(FLevelLocals& doomMap)
 				auto a = line->v2->fPos() - line->v1->fPos();
 				for (int i = 0; i < 4; ++i)
 				{
-					uvs[i].X = tci.FloatToTexU(uvs[i].X * a.Length() + side->textures[side_t::mid].xOffset);
-					uvs[i].Y = tci.FloatToTexV(uvs[i].Y * sideHeight + side->textures[side_t::mid].yOffset);
+					uvs[i].X = tci.FloatToTexU((float)(uvs[i].X * a.Length() + side->textures[side_t::mid].xOffset));
+					uvs[i].Y = tci.FloatToTexV((float)(uvs[i].Y * sideHeight + side->textures[side_t::mid].yOffset));
 					//uvs[i].Y = tci.FloatToTexU(0);
 					//uvs[i].X = uvs[i].X * repeatsU + anchorU / w;
 					//uvs[i].Y = uvs[i].Y * repeatsV + anchorZ / h;

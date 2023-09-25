@@ -187,19 +187,6 @@ void VkLightmap::Render()
 
 		bool buffersFull = false;
 
-		if (targetSurface->tileSurfaces.Size() == 0) // To do: move this to where we set up the smoothing groups as we don't need the groups after this step
-		{
-			for (LevelMeshSurface* surface : mesh->SmoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
-			{
-				FVector2 minUV = ToUV(surface->bounds.min, targetSurface);
-				FVector2 maxUV = ToUV(surface->bounds.max, targetSurface);
-				if (surface != targetSurface && (maxUV.X < 0.0f || maxUV.Y < 0.0f || minUV.X > 1.0f || minUV.Y > 1.0f))
-					continue; // Bounding box not visible
-
-				targetSurface->tileSurfaces.Push(surface);
-			}
-		}
-
 		// Paint all surfaces visible in the tile
 		for (LevelMeshSurface* surface : targetSurface->tileSurfaces)
 		{
@@ -527,14 +514,6 @@ void VkLightmap::CopyResult()
 	barrier1.Execute(cmdbuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	fb->GetCommands()->PopGroup(cmdbuffer);
-}
-
-FVector2 VkLightmap::ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface)
-{
-	FVector3 localPos = vert - targetSurface->translateWorldToLocal;
-	float u = (1.0f + (localPos | targetSurface->projLocalToU)) / (targetSurface->texWidth + 2);
-	float v = (1.0f + (localPos | targetSurface->projLocalToV)) / (targetSurface->texHeight + 2);
-	return FVector2(u, v);
 }
 
 void VkLightmap::CreateShaders()

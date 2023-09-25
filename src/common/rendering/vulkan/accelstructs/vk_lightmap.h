@@ -149,8 +149,6 @@ private:
 	void CreateDrawIndexedBuffer();
 	void CreateBakeImage();
 
-	static FVector2 ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface);
-
 	static FString LoadPrivateShaderLump(const char* lumpname);
 
 	VulkanRenderDevice* fb = nullptr;

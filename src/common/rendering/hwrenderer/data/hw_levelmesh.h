@@ -209,7 +209,6 @@ public:
 
 	virtual int AddSurfaceLights(const LevelMeshSurface* surface, LevelMeshLight* list, int listMaxSize) { return 0; }
 
-	TArray<LevelMeshSmoothingGroup> SmoothingGroups;
 	TArray<LevelMeshPortal> Portals;
 
 	// Lightmap atlas
@@ -297,8 +296,11 @@ public:
 		return hitSurface; // I hit something
 	}
 
+protected:
 	void BuildSmoothingGroups()
 	{
+		TArray<LevelMeshSmoothingGroup> SmoothingGroups;
+
 		for (int i = 0, count = GetSurfaceCount(); i < count; i++)
 		{
 			auto surface = GetSurface(i);
@@ -340,5 +342,27 @@ public:
 			SmoothingGroups[smoothingGroupIndex].surfaces.push_back(surface);
 			surface->smoothingGroupIndex = smoothingGroupIndex;
 		}
+
+		for (int i = 0, count = GetSurfaceCount(); i < count; i++)
+		{
+			auto targetSurface = GetSurface(i);
+			for (LevelMeshSurface* surface : SmoothingGroups[targetSurface->smoothingGroupIndex].surfaces)
+			{
+				FVector2 minUV = ToUV(surface->bounds.min, targetSurface);
+				FVector2 maxUV = ToUV(surface->bounds.max, targetSurface);
+				if (surface != targetSurface && (maxUV.X < 0.0f || maxUV.Y < 0.0f || minUV.X > 1.0f || minUV.Y > 1.0f))
+					continue; // Bounding box not visible
+
+				targetSurface->tileSurfaces.Push(surface);
+			}
+		}
+	}
+
+	FVector2 ToUV(const FVector3& vert, const LevelMeshSurface* targetSurface)
+	{
+		FVector3 localPos = vert - targetSurface->translateWorldToLocal;
+		float u = (1.0f + (localPos | targetSurface->projLocalToU)) / (targetSurface->texWidth + 2);
+		float v = (1.0f + (localPos | targetSurface->projLocalToV)) / (targetSurface->texHeight + 2);
+		return FVector2(u, v);
 	}
 };

@@ -134,15 +134,15 @@ static PClassActor* FindInfoName(int index, bool mustexist = false)
 	{
 		FStringf name("~Dsdhacked~%d", index);
 		auto cls = PClass::FindActor(name);
-		if (cls)
-		{
-			GetDefaultByType(cls)->flags8 |= MF8_RETARGETAFTERSLAM; // This flag is not a ZDoom default, but it must be a Dehacked default.
-			return cls;
-		}
 		if (!mustexist)
 		{
 			cls = static_cast<PClassActor*>(RUNTIME_CLASS(AActor)->CreateDerivedClass(name.GetChars(), (unsigned)sizeof(AActor)));
 			NewClassType(cls, -1);	// This needs a VM type to work as intended.
+			cls->InitializeDefaults();
+		}
+		if (cls)
+		{
+			GetDefaultByType(cls)->flags8 |= MF8_RETARGETAFTERSLAM; // This flag is not a ZDoom default, but it must be a Dehacked default.
 			return cls;
 		}
 	}

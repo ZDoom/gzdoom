@@ -53,11 +53,17 @@ struct FLevelLocals;
 
 enum EParticleFlags
 {
-    PT_NOTIMEFREEZE = 1,
-	PT_DOROLL = 1 << 1,
-	PT_NOXYBILLBOARD = 1 << 2,
+	SPF_FULLBRIGHT =		1,
+	SPF_RELPOS =			1 << 1,
+	SPF_RELVEL =			1 << 2,
+	SPF_RELACCEL =			1 << 3,
+	SPF_RELANG =			1 << 4,
+	SPF_NOTIMEFREEZE =		1 << 5,
+	SPF_ROLL =				1 << 6,
+	SPF_REPLACE =			1 << 7,
+	SPF_NO_XY_BILLBOARD =	1 << 8,
 };
-
+class DZSprite;
 struct particle_t
 {
     DVector3 Pos;
@@ -72,8 +78,9 @@ struct particle_t
     ERenderStyle style;
     double Roll, RollVel, RollAcc;
     uint16_t    tnext, snext, tprev;
-    uint8_t    bright;
-	uint8_t flags;
+    bool    bright;
+	uint16_t flags;
+	DZSprite *sprite;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;
@@ -138,14 +145,6 @@ void P_DisconnectEffect (AActor *actor);
 // 
 //===========================================================================
 
-enum EDZSpriteFlags
-{
-	DZF_BRIGHT =		1,
-	DZF_ROLL =			1 << 1,
-	DZF_YBILLBOARD =	1 << 2,
-	DZF_NOTIMEFREEZE =	1 << 3,
-};
-
 class DZSprite : public DThinker
 {
 	DECLARE_CLASS(DZSprite, DThinker);
@@ -154,32 +153,26 @@ public:
 	DZSprite();
 	void CallPostBeginPlay() override;
 	void OnDestroy() override;
-	// TO DO: Enable states for this class
-/*
-	int32_t			tics;				// state tic counter
-	int				sprite;				// used to find patch_t and flip value
-	uint8_t			frame;				// sprite frame to draw
-
-	FState			*State;
-	FState			*SpawnState;
-*/
 
 	DVector3		Pos, Vel, Prev;
 	DVector2		Scale, Offset;
 	double			Roll;
 	double			Alpha;
+	int16_t			LightLevel;
 
 	FRenderStyle	Style;
 	FTextureID		Texture;
 	uint32_t		Translation;
 
-	uint32_t		Flags;
+	uint16_t		Flags;
 
 	subsector_t		*sub;
+	particle_t		PT;
 
 
 	static DZSprite* NewZSprite(FLevelLocals* Level, PClass* type);
 	void SetTranslation(FName trname);
+	int GetRenderStyle();
 	bool IsFrozen();
 
 public:

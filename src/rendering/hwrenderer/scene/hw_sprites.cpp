@@ -101,9 +101,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 	bool additivefog = false;
 	bool foglayer = false;
 	int rel = fullbright ? 0 : getExtraLight();
-	auto &vp = di->Viewpoint;
-
-	const bool UseActorLight = (actor && actor->LightLevel > -1);
+	auto &vp = di->Viewpoint;	
 
 	if (translucent)
 	{
@@ -383,7 +381,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	}
 	
 	// [BB] Billboard stuff
-	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & PT_NOXYBILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
+	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & SPF_NO_XY_BILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& di->mViewActor != nullptr
 		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
 
@@ -391,7 +389,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	// [Nash] has +ROLLSPRITE
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 
-	const bool drawRollParticle = (particle != nullptr && particle->flags & PT_DOROLL);
+	const bool drawRollParticle = (particle != nullptr && particle->flags & SPF_ROLL);
 
 
 	// [fgsfds] check sprite type mask
@@ -1245,10 +1243,22 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector)//, int shade, int fakeside)
 {
-	if (particle->alpha==0) return;
+	if (!particle || particle->alpha <= 0)
+		return;
 
 	lightlevel = hw_ClampLight(sector->GetSpriteLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
+
+	trans = particle->alpha;
+	OverrideShader = 0;
+	modelframe = nullptr;
+	texture = nullptr;
+	topclip = LARGE_VALUE;
+	bottomclip = -LARGE_VALUE;
+	index = 0;
+	actor = nullptr;
+	this->particle = particle;
+	fullbright = particle->bright;
 
 	if (di->isFullbrightScene()) 
 	{
@@ -1284,8 +1294,6 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		Colormap.ClearColor();
 	}
 
-	trans=particle->alpha;
-
 	if(particle->style != STYLE_None)
 	{
 		RenderStyle = particle->style;
@@ -1295,16 +1303,8 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		RenderStyle = STYLE_Translucent;
 	}
 
-	OverrideShader = 0;
-
 	ThingColor = particle->color;
 	ThingColor.a = 255;
-
-	modelframe=nullptr;
-	texture=nullptr;
-	topclip = LARGE_VALUE;
-	bottomclip = -LARGE_VALUE;
-	index = 0;
 
 	bool has_texture = !particle->texture.isNull();
 
@@ -1349,7 +1349,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	y = float(particle->Pos.Y) + yvf;
 	z = float(particle->Pos.Z) + zvf;
 
-	if(particle->flags & PT_DOROLL)
+	if(particle->flags & SPF_ROLL)
 	{
 		float rvf = (particle->RollVel) * timefrac;
 		Angles.Roll = TAngle<double>::fromDeg(particle->Roll + rvf);
@@ -1361,21 +1361,17 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	else factor = 1 / 7.f;
 	float scalefac=particle->size * factor;
 
-	float viewvecX = vp.ViewVector.X;
-	float viewvecY = vp.ViewVector.Y;
+	float viewvecX = vp.ViewVector.X * scalefac;
+	float viewvecY = vp.ViewVector.Y * scalefac;
 
-	x1=x+viewvecY*scalefac;
-	x2=x-viewvecY*scalefac;
-	y1=y-viewvecX*scalefac;
-	y2=y+viewvecX*scalefac;
+	x1=x+viewvecY;
+	x2=x-viewvecY;
+	y1=y-viewvecX;
+	y2=y+viewvecX;
 	z1=z-scalefac;
 	z2=z+scalefac;
 
 	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
-
-	actor=nullptr;
-	this->particle=particle;
-	fullbright = !!particle->bright;
 	
 	// [BB] Translucent particles have to be rendered without the alpha test.
 	if (particle_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;

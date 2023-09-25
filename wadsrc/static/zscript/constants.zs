@@ -707,14 +707,6 @@ enum EParticleFlags
 	SPF_RELATIVE =	SPF_RELPOS|SPF_RELVEL|SPF_RELACCEL|SPF_RELANG
 };
 
-enum EDZSpriteFlags
-{
-	DZF_BRIGHT =		1,
-	DZF_ROLL =			1 << 1,
-	DZF_YBILLBOARD =	1 << 2,
-	DZF_NOTIMEFREEZE =	1 << 3,
-};
-
 //Flags for A_FaceMovementDirection
 enum EMovementFlags
 {

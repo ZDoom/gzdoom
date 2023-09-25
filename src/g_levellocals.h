@@ -510,7 +510,7 @@ public:
 	int ib_compatflags = 0;
 	int i_compatflags = 0;
 	int i_compatflags2 = 0;
-	int TotalZSprites = 0; // Don't run the iterator in the renderer if < 1.
+	
 	DSectorMarker *SectorMarker;
 
 	uint8_t		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
@@ -654,7 +654,7 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
-	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with PS_REPLACE
+	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with SPF_REPLACE
 	uint32_t			ActiveParticles;
 	uint32_t			InactiveParticles;
 	TArray<particle_t>	Particles;

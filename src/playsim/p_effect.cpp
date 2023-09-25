@@ -206,6 +206,21 @@ void P_ClearParticles (FLevelLocals *Level)
 
 void P_FindParticleSubsectors (FLevelLocals *Level)
 {
+	for (uint32_t i = 0; i < Level->subsectors.Size(); i++)
+	{
+		Level->subsectors[i].sprites.Clear();
+	}
+
+	auto it = Level->GetThinkerIterator<DZSprite>(NAME_None, STAT_SPRITE);
+	DZSprite* sp = nullptr;
+	while (sp = it.Next())
+	{
+		if (sp->sub == nullptr)
+			sp->sub = Level->PointInRenderSubsector(sp->Pos);
+
+		sp->sub->sprites.Push(sp);
+	}
+
 	if (Level->ParticlesInSubsec.Size() < Level->subsectors.Size())
 	{
 		Level->ParticlesInSubsec.Reserve (Level->subsectors.Size() - Level->ParticlesInSubsec.Size());
@@ -272,7 +287,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (Level->isFrozen() && !(particle->flags &PT_NOTIMEFREEZE))
+		if (Level->isFrozen() && !(particle->flags &SPF_NOTIMEFREEZE))
 		{
 			prev = particle;
 			continue;
@@ -306,7 +321,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
 
-		if(particle->flags & PT_DOROLL)
+		if(particle->flags & SPF_ROLL)
 		{
 			particle->Roll += particle->RollVel;
 			particle->RollVel += particle->RollAcc;
@@ -335,19 +350,10 @@ void P_ThinkParticles (FLevelLocals *Level)
 	}
 }
 
-enum PSFlag
-{
-	PS_FULLBRIGHT =		    1,
-	PS_NOTIMEFREEZE =	    1 << 5,
-	PS_ROLL =			    1 << 6,
-	PS_REPLACE =		    1 << 7,
-	PS_NO_XY_BILLBOARD =	1 << 8,
-};
-
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
 	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
 {
-	particle_t *particle = NewParticle(Level, !!(flags & PS_REPLACE));
+	particle_t *particle = NewParticle(Level, !!(flags & SPF_REPLACE));
 
 	if (particle)
 	{
@@ -359,7 +365,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		if (fadestep < 0) particle->fadestep = FADEFROMTTL(lifetime);
 		else particle->fadestep = float(fadestep);
 		particle->ttl = lifetime;
-		particle->bright = !!(flags & PS_FULLBRIGHT);
+		particle->bright = !!(flags & SPF_FULLBRIGHT);
 		particle->size = size;
 		particle->sizestep = sizestep;
 		particle->texture = texture;
@@ -367,18 +373,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Roll = startroll;
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
-		if(flags & PS_NOTIMEFREEZE)
-		{
-			particle->flags |= PT_NOTIMEFREEZE;
-		}
-		if(flags & PS_ROLL)
-		{
-			particle->flags |= PT_DOROLL;
-		}
-		if(flags & PS_NO_XY_BILLBOARD)
-		{
-			particle->flags |= PT_NOXYBILLBOARD;
-		}
+		particle->flags = flags;
 	}
 }
 
@@ -989,17 +984,31 @@ void P_DisconnectEffect (AActor *actor)
 // 
 //===========================================================================
 
-DZSprite::DZSprite() = default;
+DZSprite::DZSprite()
+{
+	PT = {};
+	PT.sprite = this;
+	Pos = Vel = {0,0,0};
+	Offset = {0,0};
+	Scale = {1,1};
+	Roll = 0.0;
+	Alpha = 1.0;
+	LightLevel = -1;
+	Texture = FTextureID();
+	Style = STYLE_Normal;
+	Translation = Flags = 0;
+	sub = nullptr;
+}
 
 void DZSprite::CallPostBeginPlay()
 {
-	if (Level) Level->TotalZSprites++; // Must happen no matter what.
+	PT.texture = Texture;
 	Super::CallPostBeginPlay();
 }
 
 void DZSprite::OnDestroy()
 {
-	if (Level) Level->TotalZSprites--; // Same here.
+	PT.alpha = 0.0; //
 	Super::OnDestroy();
 }
 
@@ -1023,8 +1032,21 @@ DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type)
 	return zs;
 }
 
+static DZSprite* SpawnZSprite(FLevelLocals* Level, PClass* type)
+{
+	return DZSprite::NewZSprite(Level, type);
+}
 
-// This runs just like Actor's, make sure to call Super.Tick().
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnZSprite, SpawnZSprite)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_CLASS_NOT_NULL(type, DZSprite);
+	DZSprite* zs = SpawnZSprite(self, type);
+	ACTION_RETURN_OBJECT(zs);
+}
+
+
+// This runs just like Actor's, make sure to call Super.Tick() in ZScript.
 void DZSprite::Tick()
 {
 	if (ObjectFlags & OF_EuthanizeMe)
@@ -1067,6 +1089,17 @@ void DZSprite::Tick()
 			sub = nullptr;
 		}
 	}
+	PT.color = 0xffffff;
+	PT.Pos = Pos;
+	PT.Vel = Vel;
+	PT.Roll = Roll;
+	PT.size = Scale.X;
+	PT.alpha = Alpha;
+	PT.texture = Texture;
+	PT.style = ERenderStyle(GetRenderStyle());
+	PT.flags = Flags;
+	PT.subsector = sub;
+	PT.sprite = this;
 }
 
 void DZSprite::Serialize(FSerializer& arc)
@@ -1086,19 +1119,6 @@ void DZSprite::Serialize(FSerializer& arc)
 		("translation", Translation)
 		("flags", Flags);
 		
-}
-
-static DZSprite* SpawnZSprite(FLevelLocals* Level, PClass* type)
-{
-	return DZSprite::NewZSprite(Level, type);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnZSprite, SpawnZSprite)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_CLASS_NOT_NULL(type, DZSprite);
-	DZSprite* zs = SpawnZSprite(self, type);
-	ACTION_RETURN_OBJECT(zs);
 }
 
 void DZSprite::SetTranslation(FName trname)
@@ -1129,7 +1149,7 @@ DEFINE_ACTION_FUNCTION(DZSprite, SetTranslation)
 
 bool DZSprite::IsFrozen()
 {
-	return (Level->isFrozen() && !(Flags & DZF_NOTIMEFREEZE));
+	return (Level->isFrozen() && !(Flags & SPF_NOTIMEFREEZE));
 }
 
 DEFINE_ACTION_FUNCTION(DZSprite, IsFrozen)
@@ -1147,6 +1167,15 @@ DEFINE_ACTION_FUNCTION(DZSprite, SetRenderStyle)
 	return 0;
 }
 
+int DZSprite::GetRenderStyle()
+{
+	for (unsigned i = 0; i < STYLE_Count; i++)
+	{
+		if (Style == LegacyRenderStyles[i]) return i;
+	}
+	return -1;
+}
+
 IMPLEMENT_CLASS(DZSprite, false, false);
 DEFINE_FIELD(DZSprite, Pos);
 DEFINE_FIELD(DZSprite, Vel);
@@ -1158,3 +1187,4 @@ DEFINE_FIELD(DZSprite, Alpha);
 DEFINE_FIELD(DZSprite, Texture);
 DEFINE_FIELD(DZSprite, Translation);
 DEFINE_FIELD(DZSprite, Flags);
+DEFINE_FIELD(DZSprite, LightLevel);

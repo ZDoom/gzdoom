@@ -557,7 +557,7 @@ static FState *FindState (int statenum, bool mustexist)
 	{
 		if (stateacc <= statenum && stateacc + StateMap[i].StateSpan > statenum)
 		{
-			if (StateMap[i].State != NULL)
+			if (StateMap[i].State != nullptr)
 			{
 				if (StateMap[i].OwnerIsPickup)
 				{
@@ -565,23 +565,28 @@ static FState *FindState (int statenum, bool mustexist)
 				}
 				return StateMap[i].State + statenum - stateacc;
 			}
-			else return NULL;
+			else break;
 		}
 		stateacc += StateMap[i].StateSpan;
 	}
-	if (dsdhacked && !mustexist)
+	if (dsdhacked)
 	{
 		auto p = dehExtStates.CheckKey(statenum);
 		if (p) return *p;
-		auto state = (FState*)ClassDataAllocator.Alloc(sizeof(FState));
-		dehExtStates.Insert(statenum, state);
-		memset(state, 0, sizeof(*state));
-		state->Tics = -1;
-		state->NextState = state;
-		state->DehIndex = statenum;
+		if (!mustexist)
+		{
+			auto state = (FState*)ClassDataAllocator.Alloc(sizeof(FState));
+			dehExtStates.Insert(statenum, state);
+			memset(state, 0, sizeof(*state));
+			state->Tics = -1;
+			state->NextState = state;
+			state->DehIndex = statenum;
+			state->UseFlags = SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM; 
+			return state;
+		}
 
 	}
-	return NULL;
+	return nullptr;
 }
 
 int FindStyle (const char *namestr)
@@ -1832,7 +1837,7 @@ static int PatchFrame (int frameNum)
 	int tics, misc1, frame;
 	FState *info, dummy;
 
-	info = FindState (frameNum);
+	info = FindState (frameNum, false);
 	if (info)
 	{
 		DPrintf (DMSG_SPAMMY, "Frame %d\n", frameNum);

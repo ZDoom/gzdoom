@@ -166,6 +166,7 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 	wadinfo_t header;
 	uint32_t InfoTableOfs;
 	bool isBigEndian = false; // Little endian is assumed until proven otherwise
+	bool maybeCompressed = false;
 	auto wadSize = Reader.GetLength();
 
 	Reader.Read(&header, sizeof(header));
@@ -194,19 +195,22 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 
 	Lumps.Resize(NumLumps);
 
+	// Compressed lumps need to be accounted for only if the last lump in it is "ENDOFWAD" and has same offset as the one preceding it.
+	if (NumLumps >= 2 && !strnicmp(fileinfo[NumLumps - 1].Name, "ENDOFWAD", 8)
+		&& fileinfo[NumLumps - 1].FilePos == fileinfo[NumLumps - 2].FilePos)
+	{
+		maybeCompressed = true;
+	}
+
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		char n[9];
 		for(int j = 0; j < 8; j++) n[j] = toupper(fileinfo[i].Name[j]);
 		n[8] = 0;
-		// This needs to be done differently. We cannot simply assume that all lumps where the first character's high bit is set are compressed without verification.
-		// This requires explicit toggling for precisely the files that need it.
-#if 0
-		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (n[0] & 0x80) == 0x80;
-		n[0] &= ~0x80;
-#else
-		Lumps[i].Compressed = false;
-#endif
+		Lumps[i].Compressed = maybeCompressed ? !!(n[0] & 0x80) : false;
+		if (Lumps[i].Compressed)
+			n[0] &= ~0x80;
+
 		Lumps[i].LumpNameSetup(n, stringpool);
 
 		Lumps[i].Owner = this;

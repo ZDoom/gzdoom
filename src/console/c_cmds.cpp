@@ -1304,7 +1304,7 @@ CCMD (mapinfo)
 		return;
 	}
 
-	Printf("[ Map Info For: '%s' ]\n\n", myLevel->MapName);
+	Printf("[ Map Info For: '%s' ]\n\n", myLevel->MapName.GetChars());
 
 	if (myLevel->LevelName.IsNotEmpty())
 		Printf("           LevelName: %s\n", testlocalised(myLevel->LevelName));
@@ -1316,10 +1316,10 @@ CCMD (mapinfo)
 		Printf("            LevelNum: %i\n", myLevel->levelnum);
 
 	if (myLevel->NextMap.IsNotEmpty())
-		Printf("                Next: %s\n", myLevel->NextMap);
+		Printf("                Next: %s\n", myLevel->NextMap.GetChars());
 
 	if (myLevel->NextSecretMap.IsNotEmpty())
-		Printf("          SecretNext: %s\n", myLevel->NextSecretMap);
+		Printf("          SecretNext: %s\n", myLevel->NextSecretMap.GetChars());
 
 	if (myLevel->Music.IsNotEmpty())
 		Printf("               Music: %s\n", testlocalised(myLevel->Music));
@@ -1330,13 +1330,13 @@ CCMD (mapinfo)
 		Printf("     Redirect (Item): %s\n", myLevel->RedirectType.GetChars());
 
 	if (myLevel->RedirectMapName.IsNotEmpty())
-		Printf("      Redirect (Map): %s\n", myLevel->RedirectMapName);
+		Printf("      Redirect (Map): %s\n", myLevel->RedirectMapName.GetChars());
 
 	if (myLevel->RedirectCVAR.GetChars())
 		Printf("CVAR_Redirect (CVAR): %s\n", myLevel->RedirectCVAR.GetChars());
 
 	if (myLevel->RedirectCVARMapName.IsNotEmpty())
-		Printf(" CVAR_Redirect (Map): %s\n", myLevel->RedirectCVARMapName);
+		Printf(" CVAR_Redirect (Map): %s\n", myLevel->RedirectCVARMapName.GetChars());
 
 		Printf("           LightMode: %i\n", (int8_t)myLevel->lightmode);
 
@@ -1344,7 +1344,7 @@ CCMD (mapinfo)
 	{
 		level_info_t *check = myLevel->CheckLevelRedirect();
 		if (check)
-			Printf("Level IS currently being redirected to '%s'!\n", check->MapName);
+			Printf("Level IS currently being redirected to '%s'!\n", check->MapName.GetChars());
 		else
 			Printf("Level is currently NOT being redirected!\n");
 	}

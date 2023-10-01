@@ -1110,7 +1110,7 @@ CCMD(secret)
 				{
 					FString levelname;
 					level_info_t *info = FindLevelInfo(mapname);
-					const char *ln = !(info->flags & LEVEL_LOOKUPLEVELNAME)? info->LevelName.GetChars() : GStrings[info->LevelName.GetChars()];
+					const char* ln = info->LookupLevelName();
 					levelname.Format("%s - %s", mapname, ln);
 					Printf(TEXTCOLOR_YELLOW "%s\n", levelname.GetChars());
 					size_t llen = levelname.Len();
@@ -1307,7 +1307,7 @@ CCMD (mapinfo)
 	Printf("[ Map Info For: '%s' ]\n\n", myLevel->MapName.GetChars());
 
 	if (myLevel->LevelName.IsNotEmpty())
-		Printf("           LevelName: %s\n", testlocalised(myLevel->LevelName));
+		Printf("           LevelName: %s\n", myLevel->LookupLevelName());
 
 	if (myLevel->AuthorName.IsNotEmpty())
 		Printf("          AuthorName: %s\n", testlocalised(myLevel->AuthorName));
@@ -1322,7 +1322,7 @@ CCMD (mapinfo)
 		Printf("          SecretNext: %s\n", myLevel->NextSecretMap.GetChars());
 
 	if (myLevel->Music.IsNotEmpty())
-		Printf("               Music: %s\n", testlocalised(myLevel->Music));
+		Printf("               Music: %s%s\n", myLevel->Music[0] == '$'? "D_" : "", testlocalised(myLevel->Music));
 
 		Printf("        PixelStretch: %f\n", myLevel->pixelstretch);
 

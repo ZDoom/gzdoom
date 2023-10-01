@@ -122,6 +122,7 @@ xx(TK_Null,					"'null'")
 xx(TK_Global,				"'global'")
 xx(TK_Stop,					"'stop'")
 xx(TK_Include,				"'include'")
+xx(TK_Sealed,				"'sealed'")
 
 xx(TK_Is,					"'is'")
 xx(TK_Replaces,				"'replaces'")

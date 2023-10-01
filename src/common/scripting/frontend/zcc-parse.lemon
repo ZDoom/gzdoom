@@ -78,6 +78,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 	struct ClassFlagsBlock {
 		VM_UWORD Flags;
 		ZCC_Identifier *Replaces;
+		ZCC_Identifier *Sealed;
 		VersionInfo Version;
 	};
 
@@ -242,6 +243,7 @@ class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 	head->ParentName = B;
 	head->Flags = C.Flags;
 	head->Replaces = C.Replaces;
+	head->Sealed = C.Sealed;
 	head->Version = C.Version;
 	head->Type = nullptr;
 	head->Symbol = nullptr;
@@ -253,13 +255,15 @@ class_ancestry(X) ::= .						{ X = NULL; }
 class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 
 %type class_flags{ClassFlagsBlock}
-class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; }
-class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
-class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); }
+class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; X.Sealed = NULL; }
+class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; }
+class_flags(X) ::= class_flags(A) FINAL.					{ X.Flags = A.Flags | ZCC_Final; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed;}
+class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; X.Version = A.Version; X.Sealed = A.Sealed; }
+class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) SEALED LPAREN states_opt(B) RPAREN.		{ X.Flags = A.Flags | ZCC_Sealed; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = B; }
 
 /*----- Dottable Identifier -----*/
 // This can be either a single identifier or two identifiers connected by a .

@@ -64,6 +64,7 @@ enum
 	ZCC_VirtualScope	= 1 << 20,
 	ZCC_Version			= 1 << 21,
 	ZCC_Internal		= 1 << 22,
+	ZCC_Sealed			= 1 << 23,
 };
 
 // Function parameter modifiers
@@ -251,6 +252,7 @@ struct ZCC_Class : ZCC_Struct
 {
 	ZCC_Identifier *ParentName;
 	ZCC_Identifier *Replaces;
+	ZCC_Identifier *Sealed;
 
 	PClass *CType() { return static_cast<PClassType *>(Type)->Descriptor; }
 };

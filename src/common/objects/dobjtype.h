@@ -66,11 +66,14 @@ public:
 	bool				 bRuntimeClass = false;	// class was defined at run-time, not compile-time
 	bool				 bDecorateClass = false;	// may be subject to some idiosyncracies due to DECORATE backwards compatibility
 	bool				 bAbstract = false;
+	bool				 bSealed = false;
+	bool				 bFinal = false;
 	bool				 bOptional = false;
 	TArray<VMFunction*>	 Virtuals;	// virtual function table
 	TArray<FTypeAndOffset> MetaInits;
 	TArray<FTypeAndOffset> SpecialInits;
 	TArray<PField *> Fields;
+	TArray<FName> SealedRestriction;
 	PClassType			*VMType = nullptr;
 
 	void (*ConstructNative)(void *);

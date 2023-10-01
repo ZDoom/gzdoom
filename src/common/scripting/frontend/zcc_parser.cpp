@@ -232,6 +232,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Out,			ZCC_OUT);
 	TOKENDEF (TK_Super,			ZCC_SUPER);
 	TOKENDEF (TK_Null,			ZCC_NULLPTR);
+	TOKENDEF (TK_Sealed,		ZCC_SEALED);
 	TOKENDEF ('~',				ZCC_TILDE);
 	TOKENDEF ('!',				ZCC_BANG);
 	TOKENDEF (TK_SizeOf,		ZCC_SIZEOF);

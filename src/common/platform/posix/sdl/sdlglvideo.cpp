@@ -315,7 +315,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 	if (fb == nullptr)
 	{
 #ifdef HAVE_GLES2
-		if (V_GetBackend() == 2)
+		if (V_GetBackend() != 0)
 			fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 		else
 #endif

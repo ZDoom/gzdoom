@@ -109,7 +109,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer()
 	SystemGLFrameBuffer *fb;
 
 #ifdef HAVE_GLES2
-	if (V_GetBackend() == 2)
+	if (V_GetBackend() != 0)
 		fb = new OpenGLESRenderer::OpenGLFrameBuffer(m_hMonitor, vid_fullscreen);
 	else
 #endif

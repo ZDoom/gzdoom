@@ -1307,7 +1307,7 @@ CCMD (mapinfo)
 	Printf("[ Map Info For: '%s' ]\n\n", myLevel->MapName.GetChars());
 
 	if (myLevel->LevelName.IsNotEmpty())
-		Printf("           LevelName: %s\n", myLevel->LookupLevelName());
+		Printf("           LevelName: %s\n", myLevel->LookupLevelName().GetChars());
 
 	if (myLevel->AuthorName.IsNotEmpty())
 		Printf("          AuthorName: %s\n", testlocalised(myLevel->AuthorName));

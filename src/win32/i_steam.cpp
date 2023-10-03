@@ -354,7 +354,7 @@ TArray<FString> I_GetSteamPath()
 			return result;
 	}
 
-	TArray<FString> paths = ParseSteamRegistry(steamPath + "/config/config.vdf");
+	TArray<FString> paths = ParseSteamRegistry((steamPath + "/config/config.vdf").GetChars());
 
 	for(FString &path : paths)
 	{

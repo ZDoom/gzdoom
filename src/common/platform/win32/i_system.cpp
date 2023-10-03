@@ -409,9 +409,9 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
 		{
-			const char *filepart = strrchr(WadList[i].Path, '/');
+			const char *filepart = strrchr(WadList[i].Path.GetChars(), '/');
 			if (filepart == NULL)
-				filepart = WadList[i].Path;
+				filepart = WadList[i].Path.GetChars();
 			else
 				filepart++;
 

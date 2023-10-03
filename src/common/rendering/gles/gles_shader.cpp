@@ -119,7 +119,7 @@ static FString CalcProgramBinaryChecksum(const FString &vertex, const FString &f
 static FString CreateProgramCacheName(bool create)
 {
 	FString path = M_GetCachePath(create);
-	if (create) CreatePath(path);
+	if (create) CreatePath(path.GetChars());
 	path << "/shadercache.zdsc";
 	return path;
 }
@@ -135,7 +135,7 @@ static void LoadShaders()
 	{
 		FString path = CreateProgramCacheName(false);
 		FileReader fr;
-		if (!fr.OpenFile(path))
+		if (!fr.OpenFile(path.GetChars()))
 			I_Error("Could not open shader file");
 
 		char magic[4];
@@ -176,7 +176,7 @@ static void LoadShaders()
 static void SaveShaders()
 {
 	FString path = CreateProgramCacheName(true);
-	std::unique_ptr<FileWriter> fw(FileWriter::Open(path));
+	std::unique_ptr<FileWriter> fw(FileWriter::Open(path.GetChars()));
 	if (fw)
 	{
 		uint32_t count = (uint32_t)ShaderCache.size();
@@ -234,7 +234,7 @@ bool FShader::Configure(const char* name, const char* vert_prog_lump, const char
 void FShader::LoadVariant()
 {
 	//mDefinesBase
-	Load(mName.GetChars(), mVertProg, mFragProg, mFragProg2, mLightProg, mDefinesBase);
+	Load(mName.GetChars(), mVertProg.GetChars(), mFragProg.GetChars(), mFragProg2.GetChars(), mLightProg.GetChars(), mDefinesBase.GetChars());
 }
 
 bool FShader::Load(const char * name, const char * vert_prog_lump_, const char * frag_prog_lump_, const char * proc_prog_lump_, const char * light_fragprog_, const char * defines)
@@ -381,11 +381,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	i_data += "#define NPOT_EMULATION\nuniform vec2 uNpotEmulation;\n";
 #endif
 
-	int vp_lump = fileSystem.CheckNumForFullName(vert_prog_lump, 0);
+	int vp_lump = fileSystem.CheckNumForFullName(vert_prog_lump.GetChars(), 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump.GetChars());
 	auto vp_data = fileSystem.ReadFile(vp_lump);
 
-	int fp_lump = fileSystem.CheckNumForFullName(frag_prog_lump, 0);
+	int fp_lump = fileSystem.CheckNumForFullName(frag_prog_lump.GetChars(), 0);
 	if (fp_lump == -1) I_Error("Unable to load '%s'", frag_prog_lump.GetChars());
 	auto fp_data = fileSystem.ReadFile(fp_lump);
 
@@ -418,9 +418,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	{
 		fp_comb << "#line 1\n";
 
-		if (*proc_prog_lump != '#')
+		if (proc_prog_lump[0] != '#')
 		{
-			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump);
+			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump.GetChars());
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump.GetChars());
 			auto ppf = fileSystem.ReadFile(pp_lump);
 			FString pp_data = GetStringFromLump(pp_lump);
@@ -485,7 +485,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 	if (light_fragprog.Len())
 	{
-		int pp_lump = fileSystem.CheckNumForFullName(light_fragprog, 0);
+		int pp_lump = fileSystem.CheckNumForFullName(light_fragprog.GetChars(), 0);
 		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog.GetChars());
 		fp_comb << GetStringFromLump(pp_lump) << "\n";
 	}
@@ -722,8 +722,7 @@ bool FShader::Bind(ShaderFlavourData& flavour)
 
 		//Printf("Shader: %s, %08x %s", mFragProg2.GetChars(), tag, variantConfig.GetChars());
 
-		Load(mName.GetChars(), mVertProg, mFragProg, mFragProg2, mLightProg, mDefinesBase + variantConfig);
-
+		Load(mName.GetChars(), mVertProg.GetChars(), mFragProg.GetChars(), mFragProg2.GetChars(), mLightProg.GetChars(), (mDefinesBase + variantConfig).GetChars());
 		variants.insert(std::make_pair(tag, cur));
 	}
 	else

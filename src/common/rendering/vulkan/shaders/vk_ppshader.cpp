@@ -67,7 +67,7 @@ void VkPPShader::Reset()
 
 FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defines, int version)
 {
-	int lump = fileSystem.CheckNumForFullName(lumpName);
+	int lump = fileSystem.CheckNumForFullName(lumpName.GetChars());
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName.GetChars());
 	auto sp = fileSystem.ReadFile(lump);
 	FString code = GetStringFromLump(lump);

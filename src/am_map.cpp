@@ -792,9 +792,9 @@ void FMapInfoParser::ParseAMColors(bool overlay)
 				{
 					sc.MustGetToken(TK_StringConst);
 					FString color = sc.String;
-					FString colorName = V_GetColorStringByName(color);
+					FString colorName = V_GetColorStringByName(color.GetChars());
 					if(!colorName.IsEmpty()) color = colorName;
-					int colorval = V_GetColorFromString(color);
+					int colorval = V_GetColorFromString(color.GetChars());
 					cset.c[i].FromRGB(RPART(colorval), GPART(colorval), BPART(colorval)); 
 					colorset = true;
 					break;
@@ -872,10 +872,10 @@ void AM_StaticInit()
 	CheatKey.Clear();
 	EasyKey.Clear();
 
-	if (gameinfo.mMapArrow.IsNotEmpty()) AM_ParseArrow(MapArrow, gameinfo.mMapArrow);
-	if (gameinfo.mCheatMapArrow.IsNotEmpty()) AM_ParseArrow(CheatMapArrow, gameinfo.mCheatMapArrow);
-	AM_ParseArrow(CheatKey, gameinfo.mCheatKey);
-	AM_ParseArrow(EasyKey, gameinfo.mEasyKey);
+	if (gameinfo.mMapArrow.IsNotEmpty()) AM_ParseArrow(MapArrow, gameinfo.mMapArrow.GetChars());
+	if (gameinfo.mCheatMapArrow.IsNotEmpty()) AM_ParseArrow(CheatMapArrow, gameinfo.mCheatMapArrow.GetChars());
+	AM_ParseArrow(CheatKey, gameinfo.mCheatKey.GetChars());
+	AM_ParseArrow(EasyKey, gameinfo.mEasyKey.GetChars());
 	if (MapArrow.Size() == 0) I_FatalError("No automap arrow defined");
 
 	char namebuf[9];
@@ -1360,7 +1360,7 @@ void DAutomap::LevelInit ()
 	}
 	else
 	{
-		mapback = TexMan.CheckForTexture(Level->info->MapBackground, ETextureType::MiscPatch);
+		mapback = TexMan.CheckForTexture(Level->info->MapBackground.GetChars(), ETextureType::MiscPatch);
 	}
 
 	clearMarks();

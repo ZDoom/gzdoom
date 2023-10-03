@@ -273,7 +273,7 @@ void FSoftwareRenderer::SetColormap(FLevelLocals *Level)
 	NormalLight.ChangeFade(Level->fadeto);
 	if (Level->fadeto == 0)
 	{
-		SetDefaultColormap(Level->info->FadeTable);
+		SetDefaultColormap(Level->info->FadeTable.GetChars());
 	}
 }
 

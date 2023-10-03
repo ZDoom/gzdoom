@@ -91,7 +91,7 @@ bool IsPortable()
 
 	// A portable INI means that this storage location should also be portable if the file can be written to.
 	FStringf path("%s" GAMENAMELOWERCASE "_portable.ini", progdir.GetChars());
-	if (FileExists(path))
+	if (FileExists(path.GetChars()))
 	{
 		file = CreateFile(path.WideString().c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -145,7 +145,7 @@ FString M_GetAppDataPath(bool create)
 	path += "/" GAMENAMELOWERCASE;
 	if (create)
 	{
-		CreatePath(path);
+		CreatePath(path.GetChars());
 	}
 	return path;
 }
@@ -167,7 +167,7 @@ FString M_GetCachePath(bool create)
 	path += "/zdoom/cache";
 	if (create)
 	{
-		CreatePath(path);
+		CreatePath(path.GetChars());
 	}
 	return path;
 }
@@ -217,7 +217,7 @@ FString M_GetOldConfigPath(int& type)
 		}
 		path << GAMENAMELOWERCASE "-" << FString(uname) << ".ini";
 		type = 0;
-		if (FileExists(path))
+		if (FileExists(path.GetChars()))
 			return path;
 	}
 
@@ -226,7 +226,7 @@ FString M_GetOldConfigPath(int& type)
 	path = GetKnownFolder(CSIDL_APPDATA, FOLDERID_RoamingAppData, true);
 	path += "/" GAME_DIR "/" GAMENAMELOWERCASE ".ini";
 	type = 1;
-	if (FileExists(path))
+	if (FileExists(path.GetChars()))
 		return path;
 
 	return "";
@@ -283,9 +283,9 @@ FString M_GetConfigPath(bool for_reading)
 	// Construct a user-specific config name
 	FString path = GetKnownFolder(CSIDL_APPDATA, FOLDERID_Documents, true);
 	path += "/My Games/" GAME_DIR;
-	CreatePath(path);
+	CreatePath(path.GetChars());
 	path += "/" GAMENAMELOWERCASE ".ini";
-	if (!for_reading || FileExists(path))
+	if (!for_reading || FileExists(path.GetChars()))
 		return path;
 
 	// No config was found in the accepted locations. 
@@ -305,7 +305,7 @@ FString M_GetConfigPath(bool for_reading)
 				isportable = true;
 			}
 		}
-		bool res = MoveFileExW(WideString(oldpath).c_str(), WideString(path).c_str(), MOVEFILE_COPY_ALLOWED);
+		bool res = MoveFileExW(WideString(oldpath.GetChars()).c_str(), WideString(path.GetChars()).c_str(), MOVEFILE_COPY_ALLOWED);
 		if (res) return path;
 		else return oldpath;	// if we cannot move, just use the config where it was. It won't be written back, though and never be used again if a new one gets saved.
 	}
@@ -314,7 +314,7 @@ FString M_GetConfigPath(bool for_reading)
 	// If we are reading the config file, check if it exists. If not, fallback to base version.
 	if (for_reading)
 	{
-		if (!FileExists(path))
+		if (!FileExists(path.GetChars()))
 		{
 			path = progdir;
 			path << GAMENAMELOWERCASE ".ini";
@@ -351,7 +351,7 @@ FString M_GetScreenshotsPath()
 		path = GetKnownFolder(CSIDL_MYPICTURES, FOLDERID_Pictures, true);
 		path << "/Screenshots/" GAMENAME "/";
 	}
-	CreatePath(path);
+	CreatePath(path.GetChars());
 	return path;
 }
 
@@ -402,7 +402,7 @@ FString M_GetDocumentsPath()
 		// I assume since this isn't a standard folder, it doesn't have a localized name either.
 		path = GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true);
 		path << "/My Games/" GAMENAME "/";
-		CreatePath(path);
+		CreatePath(path.GetChars());
 	}
 	return path;
 }

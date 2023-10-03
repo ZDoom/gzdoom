@@ -1394,7 +1394,7 @@ FxExpression *FxColorCast::Resolve(FCompileContext &ctx)
 			}
 			else
 			{
-				FxExpression *x = new FxConstant(V_GetColor(constval.GetString(), &ScriptPosition), ScriptPosition);
+				FxExpression *x = new FxConstant(V_GetColor(constval.GetString().GetChars(), &ScriptPosition), ScriptPosition);
 				delete this;
 				return x;
 			}
@@ -1474,7 +1474,7 @@ FxExpression *FxSoundCast::Resolve(FCompileContext &ctx)
 		if (basex->isConstant())
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-			FxExpression *x = new FxConstant(S_FindSound(constval.GetString()), ScriptPosition);
+			FxExpression *x = new FxConstant(S_FindSound(constval.GetString().GetChars()), ScriptPosition);
 			delete this;
 			return x;
 		}
@@ -1552,7 +1552,7 @@ FxExpression *FxFontCast::Resolve(FCompileContext &ctx)
 	else if ((basex->ValueType == TypeString || basex->ValueType == TypeName) && basex->isConstant())
 	{
 		ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-		FFont *font = V_GetFont(constval.GetString());
+		FFont *font = V_GetFont(constval.GetString().GetChars());
 		// Font must exist. Most internal functions working with fonts do not like null pointers.
 		// If checking is needed scripts will have to call Font.GetFont themselves.
 		if (font == nullptr)

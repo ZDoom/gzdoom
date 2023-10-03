@@ -723,9 +723,9 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 	width = sc.Number;
 	sc.MustGetNumber ();
 	height = sc.Number;
-	FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Flat, texflags);
+	FTextureID picnum = TexMan.CheckForTexture (picname.GetChars(), ETextureType::Flat, texflags);
 	auto canvas = new FCanvasTexture(width, height);
-	FGameTexture *viewer = MakeGameTexture(canvas, picname, ETextureType::Wall);
+	FGameTexture *viewer = MakeGameTexture(canvas, picname.GetChars(), ETextureType::Wall);
 	if (picnum.Exists())
 	{
 		auto oldtex = TexMan.GameTexture(picnum);
@@ -805,7 +805,7 @@ void FTextureAnimator::FixAnimations ()
 			bool noremap = false;
 			const char *name;
 
-			name = TexMan.GameTexture(anim->BasePic)->GetName();
+			name = TexMan.GameTexture(anim->BasePic)->GetName().GetChars();
 			nodecals = TexMan.GameTexture(anim->BasePic)->allowNoDecals();
 			for (j = 0; j < anim->NumFrames; ++j)
 			{

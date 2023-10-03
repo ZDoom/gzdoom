@@ -487,7 +487,7 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 	{
 		if (lock->check(owner)) return true;
 		if (quiet) return false;
-		failtext = remote? lock->RemoteMsg : lock->Message;
+		failtext = remote? lock->RemoteMsg.GetChars() : lock->Message.GetChars();
 		failsound = &lock->locksound[0];
 		numfailsounds = lock->locksound.Size();
 	}

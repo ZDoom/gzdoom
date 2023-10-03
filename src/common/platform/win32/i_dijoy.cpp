@@ -898,7 +898,7 @@ const char *FDInputJoystick::GetAxisName(int axis)
 {
 	if (unsigned(axis) < Axes.Size())
 	{
-		return Axes[axis].Name;
+		return Axes[axis].Name.GetChars();
 	}
 	return "Invalid";
 }

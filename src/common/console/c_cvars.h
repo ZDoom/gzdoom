@@ -412,8 +412,8 @@ public:
 
 	const char *operator= (const char *stringrep)
 		{ UCVarValue val; val.String = const_cast<char *>(stringrep); SetGenericRep (val, CVAR_String); return stringrep; }
-	inline operator const char * () const { return mValue; }
-	inline const char *operator *() const { return mValue; }
+	inline operator const char * () const { return mValue.GetChars(); }
+	inline const char *operator *() const { return mValue.GetChars(); }
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);

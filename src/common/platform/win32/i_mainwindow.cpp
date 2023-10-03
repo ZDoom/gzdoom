@@ -738,7 +738,7 @@ void MainWindow::FlushBufferedConsoleStuff()
 {
 	for (unsigned i = 0; i < bufferedConsoleStuff.Size(); i++)
 	{
-		DoPrintStr(bufferedConsoleStuff[i]);
+		DoPrintStr(bufferedConsoleStuff[i].GetChars());
 	}
 	bufferedConsoleStuff.Clear();
 }

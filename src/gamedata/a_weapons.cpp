@@ -408,9 +408,9 @@ void FWeaponSlots::LocalSetup(PClassActor *type)
 	{
 		FString sectionclass(WeaponSection);
 		sectionclass << '.' << type->TypeName.GetChars();
-		if (RestoreSlots(GameConfig, sectionclass) == 0)
+		if (RestoreSlots(GameConfig, sectionclass.GetChars()) == 0)
 		{
-			RestoreSlots(GameConfig, WeaponSection);
+			RestoreSlots(GameConfig, WeaponSection.GetChars());
 		}
 	}
 	else
@@ -504,7 +504,7 @@ int FWeaponSlots::RestoreSlots(FConfigFile *config, const char *section)
 	int slotsread = 0;
 
 	section_name += ".Weapons";
-	if (!config->SetSection(section_name))
+	if (!config->SetSection(section_name.GetChars()))
 	{
 		return 0;
 	}
@@ -742,7 +742,7 @@ void P_PlaybackKeyConfWeapons(FWeaponSlots *slots)
 	PlayingKeyConf = slots;
 	for (unsigned int i = 0; i < KeyConfWeapons.Size(); ++i)
 	{
-		AddCommandString(KeyConfWeapons[i]);
+		AddCommandString(KeyConfWeapons[i].GetChars());
 	}
 	PlayingKeyConf = nullptr;
 }

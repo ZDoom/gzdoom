@@ -92,7 +92,7 @@ static FxExpression *CustomTypeCast(FxTypeCast *func, FCompileContext &ctx)
 				delete func;
 				return nullptr;
 			}
-			FxExpression *x = new FxMultiNameState(s, basex->ScriptPosition);
+			FxExpression *x = new FxMultiNameState(s.GetChars(), basex->ScriptPosition);
 			x = x->Resolve(ctx);
 			basex = nullptr;
 			delete func;
@@ -811,10 +811,10 @@ FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPositi
 
 	if (scopeindex >= 0)
 	{
-		scopename = FName(statestring, scopeindex, false);
+		scopename = FName(statestring.GetChars(), scopeindex, false);
 		statestring = statestring.Right((ptrdiff_t)statestring.Len() - scopeindex - 2);
 	}
-	names = MakeStateNameList(statestring);
+	names = MakeStateNameList(statestring.GetChars());
 	names.Insert(0, scopename);
 	scope = checkclass;
 }

@@ -528,7 +528,7 @@ void CreatePath(const char *fn)
 	{
 		FString name(fn);
 		name += '/';
-		DoCreatePath(name);
+		DoCreatePath(name.GetChars());
 	}
 	else
 	{
@@ -805,13 +805,13 @@ FString ExpandEnvVars(const char *searchpathstring)
 		if (length != 0)
 		{
 			FString varname = FString(dollar + 1, length);
-			if (stricmp(varname, "progdir") == 0)
+			if (varname.Compare("progdir") == 0)
 			{
 				out += progdir;
 			}
 			else
 			{
-				char *varvalue = getenv(varname);
+				char *varvalue = getenv(varname.GetChars());
 				if ( (varvalue != NULL) && (strlen(varvalue) != 0) )
 				{
 					out += varvalue;

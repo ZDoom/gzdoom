@@ -73,12 +73,12 @@ bool VkShaderManager::CompileNextShader()
 	{
 		// user shaders
 		
-		const FString& name = ExtractFileBase(usershaders[i].shader);
+		const FString& name = ExtractFileBase(usershaders[i].shader.GetChars());
 		FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
 
 		VkShaderProgram prog;
-		prog.vert = LoadVertShader(name, mainvp, defines);
-		prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, compilePass == GBUFFER_PASS);
+		prog.vert = LoadVertShader(name, mainvp, defines.GetChars());
+		prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader.GetChars(), defaultshaders[usershaders[i].shaderType].lightfunc, defines.GetChars(), true, compilePass == GBUFFER_PASS);
 		mMaterialShaders[compilePass].push_back(std::move(prog));
 
 		compileIndex++;

@@ -165,7 +165,7 @@ void FShaderProgram::Link(const char *name)
 		glUseProgram(mProgram);
 		for (auto &uni : samplerstobind)
 		{
-			auto index = glGetUniformLocation(mProgram, uni.first);
+			auto index = glGetUniformLocation(mProgram, uni.first.GetChars());
 			if (index >= 0)
 			{
 				glUniform1i(index, uni.second);
@@ -266,8 +266,8 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	FString prolog = Uniforms.CreateDeclaration("Uniforms", PresentUniforms::Desc());
 
 	mShader.reset(new FShaderProgram());
-	mShader->Compile(FShaderProgram::Vertex, "shaders_gles/pp/screenquad.vp", prolog, 330);
-	mShader->Compile(FShaderProgram::Fragment, vtx_shader_name, prolog, 330);
+	mShader->Compile(FShaderProgram::Vertex, "shaders_gles/pp/screenquad.vp", prolog.GetChars(), 330);
+	mShader->Compile(FShaderProgram::Fragment, vtx_shader_name, prolog.GetChars(), 330);
 	mShader->Link(program_name);
 	mShader->Bind();
 	Uniforms.Init();

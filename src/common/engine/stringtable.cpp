@@ -165,10 +165,7 @@ bool FStringTable::readMacros(int lumpnum)
 	for (unsigned i = 1; i < data.Size(); i++)
 	{
 		auto macroname = data[i][0];
-		auto language = data[i][1];
-		if (macroname.IsEmpty() || language.IsEmpty()) continue;
-		FStringf combined_name("%s/%s", language.GetChars(), macroname.GetChars());
-		FName name = combined_name.GetChars();
+		FName name = macroname.GetChars();
 
 		StringMacro macro;
 
@@ -446,9 +443,8 @@ void FStringTable::InsertString(int lumpnum, int langid, FName label, const FStr
 			break;
 		}
 		FString macroname(te.strings[0].GetChars() + index + 2, endindex - index - 2);
-		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
 		FStringf replacee("@[%s]", macroname.GetChars());
-		FName lookupname(lookupstr.GetChars(), true);
+		FName lookupname(macroname.GetChars(), true);
 		auto replace = allMacros.CheckKey(lookupname);
 		for (int i = 0; i < 4; i++)
 		{

@@ -1410,7 +1410,9 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	rendered_sprites++;
 }
 
-// [MC] ZSprites are to be rendered akin to actor sprites. 
+// [MC] ZSprites are to be rendered akin to actor sprites. The reason this whole system
+// is hitching a ride on particle_t is because of the large number of checks with 
+// HWSprite elsewhere in the draw lists.
 void HWSprite::AdjustZSprite(HWDrawInfo* di, DZSprite* spr, sector_t* sector)
 {
 	translation = spr->Translation;

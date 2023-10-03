@@ -155,6 +155,8 @@ public:
 	double			Roll, PrevRoll, Alpha;
 	int16_t			LightLevel;
 
+	int				scolor;
+
 	FRenderStyle	Style;
 	FTextureID		Texture;
 	uint32_t		Translation;
@@ -186,6 +188,7 @@ public:
 	float InterpolatedRoll(double ticFrac) const;
 
 	void Tick() override;
+	void UpdateSpriteInfo();
 	void Serialize(FSerializer& arc) override;
 
 };

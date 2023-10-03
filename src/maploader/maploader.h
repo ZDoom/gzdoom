@@ -212,6 +212,10 @@ private:
 	void Spawn3DFloors ();
 
 	void SetTexture(side_t *side, int position, const char *name, FMissingTextureTracker &track);
+	void SetTexture(side_t* side, int position, const FString& name, FMissingTextureTracker& track)
+	{
+		SetTexture(side, position, name.GetChars(), track);
+	}
 	void SetTexture(sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate);
 	void SetTexture(side_t *side, int position, uint32_t *blend, const char *name);
 	void SetTextureNoErr(side_t *side, int position, uint32_t *color, const char *name, bool *validcolor, bool isFog);

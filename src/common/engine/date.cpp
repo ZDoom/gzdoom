@@ -224,7 +224,7 @@ static void FormatTime(const FString& timeForm, int timeVal, FString* result)
 	if (timeinfo != nullptr)
 	{
 		char timeString[1024];
-		if (strftime(timeString, sizeof(timeString), timeForm, timeinfo))
+		if (strftime(timeString, sizeof(timeString), timeForm.GetChars(), timeinfo))
 			*result = timeString;
 	}
 }

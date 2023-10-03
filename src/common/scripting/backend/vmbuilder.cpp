@@ -790,7 +790,7 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo
 	it.PrintableName = name;
 	it.Function = new VMScriptFunction;
 	it.Function->Name = functype->SymbolName;
-	it.Function->QualifiedName = it.Function->PrintableName = ClassDataAllocator.Strdup(name);
+	it.Function->QualifiedName = it.Function->PrintableName = ClassDataAllocator.Strdup(name.GetChars());
 	it.Function->ImplicitArgs = functype->GetImplicitArgs();
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
@@ -1148,7 +1148,7 @@ void VMDisassemblyDumper::Write(VMScriptFunction *sfunc, const FString &fname)
 
 		assert(sfunc != nullptr);
 
-		DumpFunction(dump, sfunc, fname, (int)fname.Len());
+		DumpFunction(dump, sfunc, fname.GetChars(), (int)fname.Len());
 		codesize += sfunc->CodeSize;
 		datasize += sfunc->LineInfoCount * sizeof(FStatementInfo) + sfunc->ExtraSpace + sfunc->NumKonstD * sizeof(int) +
 			sfunc->NumKonstA * sizeof(void*) + sfunc->NumKonstF * sizeof(double) + sfunc->NumKonstS * sizeof(FString);

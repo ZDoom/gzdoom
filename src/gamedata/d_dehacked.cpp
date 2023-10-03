@@ -154,7 +154,7 @@ static FSoundID DehFindSound(int index,bool mustexist = false)
 	if (index < 0) return NO_SOUND;
 	if (index < (int) SoundMap.Size()) return SoundMap[index];
 	FStringf name("~dsdhacked/#%d", index);
-	if (dsdhacked && !mustexist) return soundEngine->FindSoundTentative(name);
+	if (dsdhacked && !mustexist) return soundEngine->FindSoundTentative(name.GetChars());
 	return NO_SOUND;
 }
 
@@ -165,7 +165,7 @@ static void ReplaceSoundName(int index, const char* newname)
 	if (snd == NO_SOUND) return;
 	auto sfx = soundEngine->GetWritableSfx(snd);
 	FStringf dsname("ds%s", newname);
-	sfx->lumpnum = fileSystem.CheckNumForName(dsname, FileSys::ns_sounds);
+	sfx->lumpnum = fileSystem.CheckNumForName(dsname.GetChars(), FileSys::ns_sounds);
 	sfx->bTentative = false;
 	sfx->bRandomHeader = false;
 	sfx->bLoadRAW = false;
@@ -1118,7 +1118,7 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 		sfunc->NumArgs = numargs;
 		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
-		sfunc->PrintableName = ClassDataAllocator.Strdup(FStringf("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2));
+		sfunc->PrintableName = ClassDataAllocator.Strdup(FStringf("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2).GetChars());
 
 		disasmdump.Write(sfunc, sfunc->PrintableName);
 
@@ -2939,7 +2939,7 @@ static int PatchSoundNames (int dummy)
 	{
 		stripwhite(Line2);
 		FString newname = skipwhite (Line2);
-		ReplaceSoundName((int)strtoll(Line1, nullptr, 10), newname);
+		ReplaceSoundName((int)strtoll(Line1, nullptr, 10), newname.GetChars());
 		DPrintf (DMSG_SPAMMY, "Sound %d set to:\n%s\n", Line1, newname.GetChars());
 	}
 
@@ -2972,7 +2972,7 @@ static int PatchSpriteNames (int dummy)
 					OrgSprNames[o] = nulname;
 				}
 			}
-			int v = GetSpriteIndex(newname);
+			int v = GetSpriteIndex(newname.GetChars());
 			memcpy(OrgSprNames[line1val].c, sprites[v].name, 5);
 
 			DPrintf (DMSG_SPAMMY, "Sprite %d set to:\n%s\n", Line1, newname.GetChars());
@@ -3028,15 +3028,15 @@ static int DoInclude (int dummy)
 
 		// Try looking for the included file in the same directory
 		// as the patch before looking in the current file.
-		const char *lastSlash = strrchr(savepatchname, '/');
+		const char *lastSlash = strrchr(savepatchname.GetChars(), '/');
 		char *path = data;
 
 		if (lastSlash != NULL)
 		{
-			size_t pathlen = lastSlash - savepatchname + strlen (data) + 2;
+			size_t pathlen = lastSlash - savepatchname.GetChars() + strlen (data) + 2;
 			path = new char[pathlen];
-			strncpy (path, savepatchname, (lastSlash - savepatchname) + 1);
-			strcpy (path + (lastSlash - savepatchname) + 1, data);
+			strncpy (path, savepatchname.GetChars(), (lastSlash - savepatchname.GetChars()) + 1);
+			strcpy (path + (lastSlash - savepatchname.GetChars()) + 1, data);
 			if (!FileExists (path))
 			{
 				delete[] path;
@@ -3171,7 +3171,7 @@ bool D_LoadDehFile(const char *patchfile)
 			// some WAD may need it. Should be deleted if it can
 			// be confirmed that nothing uses this case.
 			FString filebase(ExtractFileBase(patchfile));
-			lumpnum = fileSystem.CheckNumForName(filebase);
+			lumpnum = fileSystem.CheckNumForName(filebase.GetChars());
 		}
 		if (lumpnum >= 0)
 		{

@@ -97,7 +97,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		FStringf path("fonts/%s/", filetemplate);
 		// If a name template is given, collect data from all resource files.
 		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
-		fileSystem.GetFilesInFolder(path, folderdata, nametemplate == nullptr);
+		fileSystem.GetFilesInFolder(path.GetChars(), folderdata, nametemplate == nullptr);
 
 		//if (nametemplate == nullptr)
 		{
@@ -231,8 +231,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
 						FStringf c120(nametemplate, 120);
 						FStringf c122(nametemplate, 122);
-						if (!TexMan.CheckForTexture(c120, ETextureType::MiscPatch).isValid() ||
-							!TexMan.CheckForTexture(c122, ETextureType::MiscPatch).isValid())
+						if (!TexMan.CheckForTexture(c120.GetChars(), ETextureType::MiscPatch).isValid() ||
+							!TexMan.CheckForTexture(c122.GetChars(), ETextureType::MiscPatch).isValid())
 						{
 							// insert the incorrectly named '|' graphic in its correct position.
 							position = 124;

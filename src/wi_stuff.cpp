@@ -281,20 +281,20 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	if (!isenterpic) tilebackground = false;
 	texture.SetInvalid();
 
-	level_info_t* li = FindLevelInfo(wbs->current);
+	level_info_t* li = FindLevelInfo(wbs->current.GetChars());
 	if (li != nullptr)
 	{
-		exitpic = li->ExitPic;
+		exitpic = li->ExitPic.GetChars();
 		if (li->ExitPic.IsNotEmpty()) tilebackground = false;
 	}
 	lumpname = exitpic;
 
 	if (isenterpic)
 	{
-		level_info_t* li = FindLevelInfo(wbs->next);
+		level_info_t* li = FindLevelInfo(wbs->next.GetChars());
 		if (li != NULL)
 		{
-			lumpname = li->EnterPic;
+			lumpname = li->EnterPic.GetChars();
 			if (li->EnterPic.IsNotEmpty()) tilebackground = false;
 		}
 	}
@@ -309,7 +309,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		case GAME_Doom:
 			if (!(gameinfo.flags & GI_MAPxx))
 			{
-				const char* levelname = isenterpic ? wbs->next : wbs->current;
+				const char* levelname = isenterpic ? wbs->next.GetChars() : wbs->current.GetChars();
 				if (IsExMy(levelname))
 				{
 					mysnprintf(buffer, countof(buffer), "$IN_EPI%c", levelname[1]);
@@ -331,10 +331,10 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					if (!(gameinfo.flags & GI_MAPxx))
 					{
 						// not if the last level is not from the first 3 episodes
-						if (!IsExMy(wbs->current)) return false;
+						if (!IsExMy(wbs->current.GetChars())) return false;
 
 						// not if the next level is one of the first 3 episodes
-						if (IsExMy(wbs->next)) return false;
+						if (IsExMy(wbs->next.GetChars())) return false;
 					}
 				}
 				lumpname = "INTERPIC";
@@ -345,7 +345,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		case GAME_Heretic:
 			if (isenterpic)
 			{
-				if (IsExMy(wbs->next))
+				if (IsExMy(wbs->next.GetChars()))
 				{
 					mysnprintf(buffer, countof(buffer), "$IN_HTC%c", wbs->next[1]);
 					lumpname = buffer;
@@ -369,7 +369,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		default:
 			// Strife doesn't have an intermission pic so choose something neutral.
 			if (isenterpic) return false;
-			lumpname = gameinfo.BorderFlat;
+			lumpname = gameinfo.BorderFlat.GetChars();
 			tilebackground = true;
 			break;
 		}
@@ -664,38 +664,38 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		switch (a->type & ANIM_CONDITION)
 		{
 		case ANIM_IFVISITED:
-			li = FindLevelInfo(a->LevelName);
+			li = FindLevelInfo(a->LevelName.GetChars());
 			if (li == NULL || !(li->flags & LEVEL_VISITED)) continue;
 			break;
 
 		case ANIM_IFNOTVISITED:
-			li = FindLevelInfo(a->LevelName);
+			li = FindLevelInfo(a->LevelName.GetChars());
 			if (li == NULL || (li->flags & LEVEL_VISITED)) continue;
 			break;
 
 			// StatCount means 'leaving' - everything else means 'entering'!
 		case ANIM_IFENTERING:
-			if (state == StatCount || strnicmp(a->LevelName, wbs->next, 8)) continue;
+			if (state == StatCount || a->LevelName.CompareNoCase(wbs->next, 8)) continue;
 			break;
 
 		case ANIM_IFNOTENTERING:
-			if (state != StatCount && !strnicmp(a->LevelName, wbs->next, 8)) continue;
+			if (state != StatCount && !a->LevelName.CompareNoCase(wbs->next, 8)) continue;
 			break;
 
 		case ANIM_IFLEAVING:
-			if (state != StatCount || strnicmp(a->LevelName, wbs->current, 8)) continue;
+			if (state != StatCount || a->LevelName.CompareNoCase(wbs->current, 8)) continue;
 			break;
 
 		case ANIM_IFNOTLEAVING:
-			if (state == StatCount && !strnicmp(a->LevelName, wbs->current, 8)) continue;
+			if (state == StatCount && !a->LevelName.CompareNoCase(wbs->current, 8)) continue;
 			break;
 
 		case ANIM_IFTRAVELLING:
-			if (strnicmp(a->LevelName2, wbs->current, 8) || strnicmp(a->LevelName, wbs->next, 8)) continue;
+			if (a->LevelName2.CompareNoCase(wbs->current, 8) || a->LevelName.CompareNoCase(wbs->next, 8)) continue;
 			break;
 
 		case ANIM_IFNOTTRAVELLING:
-			if (!strnicmp(a->LevelName2, wbs->current, 8) && !strnicmp(a->LevelName, wbs->next, 8)) continue;
+			if (!a->LevelName2.CompareNoCase(wbs->current, 8) && !a->LevelName.CompareNoCase(wbs->next, 8)) continue;
 			break;
 		}
 		if (a->ctr >= 0)
@@ -707,7 +707,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	{
 		for (i = 0; i<lnodes.Size(); i++)
 		{
-			level_info_t * li = FindLevelInfo(lnodes[i].Level);
+			level_info_t * li = FindLevelInfo(lnodes[i].Level.GetChars());
 			if (li && li->flags & LEVEL_VISITED) drawOnLnode(i, &splat, 1, animwidth, animheight);  // draw a splat on taken cities.
 		}
 	}
@@ -715,7 +715,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	// draw flashing ptr
 	if (snl_pointeron && yah.Size())
 	{
-		unsigned int v = MapToIndex(wbs->next);
+		unsigned int v = MapToIndex(wbs->next.GetChars());
 		// Draw only if it points to a valid level on the current screen!
 		if (v<lnodes.Size()) drawOnLnode(v, &yah[0], yah.Size(), animwidth, animheight);
 	}

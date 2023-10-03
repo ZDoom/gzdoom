@@ -376,7 +376,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			AddDecal (decalName, decalNum, newdecal);
+			AddDecal(decalName.GetChars(), decalNum, newdecal);
 			break;
 		}
 		switch (sc.MustMatchString (DecalKeywords))
@@ -577,7 +577,7 @@ void FDecalLib::ParseFader (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			FDecalFaderAnim *fader = new FDecalFaderAnim (faderName);
+			FDecalFaderAnim *fader = new FDecalFaderAnim (faderName.GetChars());
 			fader->DecayStart = startTime;
 			fader->DecayTime = decayTime;
 			Animators.Push (fader);
@@ -617,7 +617,7 @@ void FDecalLib::ParseStretcher (FScanner &sc)
 		{
 			if (goalX >= 0 || goalY >= 0)
 			{
-				FDecalStretcherAnim *stretcher = new FDecalStretcherAnim (stretcherName);
+				FDecalStretcherAnim *stretcher = new FDecalStretcherAnim (stretcherName.GetChars());
 				stretcher->StretchStart = startTime;
 				stretcher->StretchTime = takeTime;
 				stretcher->GoalX = goalX;
@@ -668,7 +668,7 @@ void FDecalLib::ParseSlider (FScanner &sc)
 		{
 			if ((/*distX |*/ distY) != 0)
 			{
-				FDecalSliderAnim *slider = new FDecalSliderAnim (sliderName);
+				FDecalSliderAnim *slider = new FDecalSliderAnim (sliderName.GetChars());
 				slider->SlideStart = startTime;
 				slider->SlideTime = takeTime;
 				/*slider->DistX = distX;*/
@@ -719,7 +719,7 @@ void FDecalLib::ParseColorchanger (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			FDecalColorerAnim *fader = new FDecalColorerAnim (faderName);
+			FDecalColorerAnim *fader = new FDecalColorerAnim (faderName.GetChars());
 			fader->DecayStart = startTime;
 			fader->DecayTime = decayTime;
 			fader->GoalColor = goal;
@@ -772,7 +772,7 @@ void FDecalLib::ParseCombiner (FScanner &sc)
 
 	if (last > first)
 	{
-		FDecalCombinerAnim *combiner = new FDecalCombinerAnim (combinerName);
+		FDecalCombinerAnim *combiner = new FDecalCombinerAnim (combinerName.GetChars());
 		combiner->FirstAnimator = (int)first;
 		combiner->NumAnimators = (int)(last - first);
 		Animators.Push (combiner);

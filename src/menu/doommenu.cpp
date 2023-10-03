@@ -221,7 +221,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		NewGameStartupInfo.Skill = param;
 		LastSkill = param;
 
-		const char *msg = AllSkills[param].MustConfirmText;
+		const char *msg = AllSkills[param].MustConfirmText.GetChars();
 		if (*msg==0) msg = GStrings("NIGHTMARE");
 		M_StartMessage (msg, 0, NAME_StartgameConfirmed);
 		return false;
@@ -287,7 +287,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 	{
 		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame && !demoplayback)
 		{
-			M_StartMessage((*desc)->mNetgameMessage, 1);
+			M_StartMessage((*desc)->mNetgameMessage.GetChars(), 1);
 			return false;
 		}
 	}
@@ -389,7 +389,7 @@ CCMD (menu_quit)
 
 	const size_t messageindex = static_cast<size_t>(gametic) % gameinfo.quitmessages.Size();
 	FString EndString;
-	const char *msg = gameinfo.quitmessages[messageindex];
+	const char *msg = gameinfo.quitmessages[messageindex].GetChars();
 	if (msg[0] == '$')
 	{
 		if (msg[1] == '*')

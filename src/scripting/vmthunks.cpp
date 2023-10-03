@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
 
 static void SetCameraTextureAspectRatio(const FString &texturename, double aspectScale, bool useTextureRatio)
 {
-	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	FTextureID textureid = TexMan.CheckForTexture(texturename.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 	if (textureid.isValid())
 	{
 		// Only proceed if the texture actually has a canvas.
@@ -1026,7 +1026,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetEnvironment(sector_t *self, const FString &env)
  {
-	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(env.GetChars());
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironment, SetEnvironment)
@@ -1723,7 +1723,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
  // This is needed to convert the strings to char pointers.
  static void ReplaceTextures(FLevelLocals *self, const FString &from, const FString &to, int flags)
  {
-	 self->ReplaceTextures(from, to, flags);
+	 self->ReplaceTextures(from.GetChars(), to.GetChars(), flags);
  }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
@@ -1732,7 +1732,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 	PARAM_STRING(from);
 	PARAM_STRING(to);
 	PARAM_INT(flags);
-	self->ReplaceTextures(from, to, flags);
+	self->ReplaceTextures(from.GetChars(), to.GetChars(), flags);
 	return 0;
 }
 
@@ -2097,7 +2097,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Draw, SBar_Draw)
 
 static void SetMugshotState(DBaseStatusBar *self, const FString &statename, bool wait, bool reset)
 {
-	self->mugshot.SetState(statename, wait, reset);
+	self->mugshot.SetState(statename.GetChars(), wait, reset);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetMugshotState, SetMugshotState)
@@ -2106,7 +2106,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetMugshotState, SetMugshotState)
 	PARAM_STRING(statename);
 	PARAM_BOOL(wait);
 	PARAM_BOOL(reset);
-	self->mugshot.SetState(statename, wait, reset);
+	self->mugshot.SetState(statename.GetChars(), wait, reset);
 	return 0;
 }
 
@@ -2201,7 +2201,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, ReceivedWeapon, ReceivedWeapon)
 
 static int GetMugshot(DBaseStatusBar *self, int accuracy, int stateflags, const FString &def_face)
 {
-	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
+	auto tex = self->mugshot.GetFace(self->CPlayer, def_face.GetChars(), accuracy, (FMugShot::StateFlags)stateflags);
 	return (tex ? tex->GetID().GetIndex() : -1);
 }
 
@@ -2614,7 +2614,7 @@ DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
 	PARAM_INT(order);
 	PARAM_BOOL(looping);
 	PARAM_BOOL(force);
-	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
+	ACTION_RETURN_BOOL(S_ChangeMusic(music.GetChars(), order, looping, force));
 }
 
 

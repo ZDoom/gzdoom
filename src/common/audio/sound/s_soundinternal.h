@@ -426,4 +426,9 @@ inline FSoundID S_FindSound(const char* name)
 	return soundEngine->FindSound(name);
 }
 
+inline FSoundID S_FindSound(const FString& name)
+{
+	return soundEngine->FindSound(name.GetChars());
+}
+
 int SoundEnabled();

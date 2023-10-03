@@ -360,7 +360,7 @@ int FIWadManager::ScanIWAD (const char *iwad)
 			if (full && strnicmp(full, "maps/", 5) == 0)
 			{
 				FString mapname(&full[5], strcspn(&full[5], "."));
-				CheckFileName(mapname);
+				CheckFileName(mapname.GetChars());
 			}
 		}
 	}
@@ -490,7 +490,7 @@ void FIWadManager::AddIWADCandidates(const char *dir)
 				}
 				for (auto &name : mIWadNames)
 				{
-					if (!stricmp(name, entry.FileName.c_str()))
+					if (!name.CompareNoCase(entry.FileName.c_str()))
 					{
 						mFoundWads.Push(FFoundWadInfo{ entry.FilePath.c_str(), "", -1 });
 					}
@@ -515,14 +515,14 @@ void FIWadManager::ValidateIWADs()
 	for (auto &p : mFoundWads)
 	{
 		int index;
-		auto x = strrchr(p.mFullPath, '.');
+		auto x = strrchr(p.mFullPath.GetChars(), '.');
 		if (x != nullptr && (!stricmp(x, ".iwad") || !stricmp(x, ".ipk3") || !stricmp(x, ".ipk7")))
 		{
-			index = CheckIWADInfo(p.mFullPath);
+			index = CheckIWADInfo(p.mFullPath.GetChars());
 		}
 		else
 		{
-			index = ScanIWAD(p.mFullPath);
+			index = ScanIWAD(p.mFullPath.GetChars());
 		}
 		p.mInfoIndex = index;
 	}
@@ -561,7 +561,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	// Collect all IWADs in the search path
 	for (auto &dir : mSearchPaths)
 	{
-		AddIWADCandidates(dir);
+		AddIWADCandidates(dir.GetChars());
 	}
 	unsigned numFoundWads = mFoundWads.Size();
 
@@ -608,7 +608,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	// Check for symbolic links leading to non-existent files and for files that are unreadable.
 	for (unsigned int i = 0; i < mFoundWads.Size(); i++)
 	{
-		if (!FileExists(mFoundWads[i].mFullPath) || !FileReadable(mFoundWads[i].mFullPath)) mFoundWads.Delete(i--);
+		if (!FileExists(mFoundWads[i].mFullPath) || !FileReadable(mFoundWads[i].mFullPath.GetChars())) mFoundWads.Delete(i--);
 	}
 
 	// Now check if what got collected actually is an IWAD.
@@ -729,7 +729,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 			for (unsigned i = 0; i < picks.Size(); ++i)
 			{
 				FString &basename = mIWadInfos[picks[i].mInfoIndex].Name;
-				if (stricmp(basename, defaultiwad) == 0)
+				if (basename.CompareNoCase(defaultiwad) == 0)
 				{
 					pick = i;
 					break;
@@ -745,7 +745,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				{
 					WadStuff stuff;
 					stuff.Name = mIWadInfos[found.mInfoIndex].Name;
-					stuff.Path = ExtractFileBase(found.mFullPath);
+					stuff.Path = ExtractFileBase(found.mFullPath.GetChars());
 					wads.Push(stuff);
 				}
 				int flags = 0;;
@@ -764,7 +764,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 					autoloadwidescreen = !!(flags & 8);
 
 					// The newly selected IWAD becomes the new default
-					defaultiwad = mIWadInfos[picks[pick].mInfoIndex].Name;
+					defaultiwad = mIWadInfos[picks[pick].mInfoIndex].Name.GetChars();
 				}
 				else
 				{
@@ -789,10 +789,10 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	fileSystem.SetIwadNum(iwadnum);
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{
-		D_AddFile (wadfiles, picks[pick].mRequiredPath, true, -1, GameConfig);
+		D_AddFile (wadfiles, picks[pick].mRequiredPath.GetChars(), true, -1, GameConfig);
 		iwadnum++;
 	}
-	D_AddFile (wadfiles, picks[pick].mFullPath, true, -1, GameConfig);
+	D_AddFile (wadfiles, picks[pick].mFullPath.GetChars(), true, -1, GameConfig);
 	fileSystem.SetMaxIwadNum(iwadnum);
 
 	auto info = mIWadInfos[picks[pick].mInfoIndex];
@@ -813,7 +813,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				path = FString(picks[pick].mFullPath.GetChars(), lastslash + 1);
 			}
 			path += info.Load[i];
-			D_AddFile(wadfiles, path, true, -1, GameConfig);
+			D_AddFile(wadfiles, path.GetChars(), true, -1, GameConfig);
 		}
 		else
 		{

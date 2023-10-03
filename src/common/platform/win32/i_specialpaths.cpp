@@ -91,7 +91,7 @@ bool IsPortable()
 
 	// A portable INI means that this storage location should also be portable if the file can be written to.
 	FStringf path("%s" GAMENAMELOWERCASE "_portable.ini", progdir.GetChars());
-	if (FileExists(path.GetChars()))
+	if (FileExists(path))
 	{
 		file = CreateFile(path.WideString().c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -217,7 +217,7 @@ FString M_GetOldConfigPath(int& type)
 		}
 		path << GAMENAMELOWERCASE "-" << FString(uname) << ".ini";
 		type = 0;
-		if (FileExists(path.GetChars()))
+		if (FileExists(path))
 			return path;
 	}
 
@@ -226,7 +226,7 @@ FString M_GetOldConfigPath(int& type)
 	path = GetKnownFolder(CSIDL_APPDATA, FOLDERID_RoamingAppData, true);
 	path += "/" GAME_DIR "/" GAMENAMELOWERCASE ".ini";
 	type = 1;
-	if (FileExists(path.GetChars()))
+	if (FileExists(path))
 		return path;
 
 	return "";
@@ -285,7 +285,7 @@ FString M_GetConfigPath(bool for_reading)
 	path += "/My Games/" GAME_DIR;
 	CreatePath(path.GetChars());
 	path += "/" GAMENAMELOWERCASE ".ini";
-	if (!for_reading || FileExists(path.GetChars()))
+	if (!for_reading || FileExists(path))
 		return path;
 
 	// No config was found in the accepted locations. 
@@ -314,7 +314,7 @@ FString M_GetConfigPath(bool for_reading)
 	// If we are reading the config file, check if it exists. If not, fallback to base version.
 	if (for_reading)
 	{
-		if (!FileExists(path.GetChars()))
+		if (!FileExists(path))
 		{
 			path = progdir;
 			path << GAMENAMELOWERCASE ".ini";

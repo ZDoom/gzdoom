@@ -309,12 +309,12 @@ CCMD (idclev)
 		// Catch invalid maps.
 		mapname = CalcMapName (epsd, map);
 
-		if (!P_CheckMapData(mapname))
+		if (!P_CheckMapData(mapname.GetChars()))
 			return;
 
 		// So be it.
 		Printf ("%s\n", GStrings("STSTR_CLEV"));
-      	G_DeferedInitNew (mapname);
+      	G_DeferedInitNew (mapname.GetChars());
 		//players[0].health = 0;		// Force reset
 	}
 }
@@ -334,11 +334,11 @@ CCMD (hxvisit)
 		{
 			// Just because it's in MAPINFO doesn't mean it's in the wad.
 
-			if (P_CheckMapData(mapname))
+			if (P_CheckMapData(mapname.GetChars()))
 			{
 				// So be it.
 				Printf ("%s\n", GStrings("STSTR_CLEV"));
-      			G_DeferedInitNew (mapname);
+      			G_DeferedInitNew (mapname.GetChars());
 				return;
 			}
 		}
@@ -686,8 +686,8 @@ UNSAFE_CCMD (load)
 		return;
 	}
 #endif
-	fname = G_BuildSaveName(fname);
-	G_LoadGame (fname);
+	fname = G_BuildSaveName(fname.GetChars());
+	G_LoadGame (fname.GetChars());
 }
 
 //==========================================================================
@@ -725,8 +725,8 @@ UNSAFE_CCMD(save)
 		return;
 	}
 #endif
-    fname = G_BuildSaveName(fname);
-	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
+    fname = G_BuildSaveName(fname.GetChars());
+	G_SaveGame (fname.GetChars(), argv.argc() > 2 ? argv[2] : argv[1]);
 }
 
 
@@ -971,7 +971,7 @@ CCMD(nextmap)
 	
 	if (primaryLevel->NextMap.Len() > 0 && primaryLevel->NextMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(primaryLevel->NextMap);
+		G_DeferedInitNew(primaryLevel->NextMap.GetChars());
 	}
 	else
 	{
@@ -995,7 +995,7 @@ CCMD(nextsecret)
 
 	if (primaryLevel->NextSecretMap.Len() > 0 && primaryLevel->NextSecretMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(primaryLevel->NextSecretMap);
+		G_DeferedInitNew(primaryLevel->NextSecretMap.GetChars());
 	}
 	else
 	{
@@ -1085,7 +1085,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 CCMD(secret)
 {
 	const char *mapname = argv.argc() < 2? primaryLevel->MapName.GetChars() : argv[1];
-	bool thislevel = !stricmp(mapname, primaryLevel->MapName);
+	bool thislevel = !stricmp(mapname, primaryLevel->MapName.GetChars());
 	bool foundsome = false;
 
 	int lumpno=fileSystem.CheckNumForName("SECRETS");
@@ -1105,13 +1105,13 @@ CCMD(secret)
 		{
 			if (readbuffer[0] == '[')
 			{
-				inlevel = !strnicmp(readbuffer, maphdr, maphdr.Len());
+				inlevel = !strnicmp(readbuffer, maphdr.GetChars(), maphdr.Len());
 				if (!foundsome)
 				{
 					FString levelname;
 					level_info_t *info = FindLevelInfo(mapname);
-					const char* ln = info->LookupLevelName();
-					levelname.Format("%s - %s", mapname, ln);
+					FString ln = info->LookupLevelName();
+					levelname.Format("%s - %s", mapname, ln.GetChars());
 					Printf(TEXTCOLOR_YELLOW "%s\n", levelname.GetChars());
 					size_t llen = levelname.Len();
 					levelname = "";
@@ -1132,7 +1132,7 @@ CCMD(secret)
 					// line complete so print it.
 					linebuild.Substitute("\r", "");
 					linebuild.StripRight(" \t\n");
-					PrintSecretString(linebuild, thislevel);
+					PrintSecretString(linebuild.GetChars(), thislevel);
 					linebuild = "";
 				}
 			}
@@ -1209,11 +1209,11 @@ CCMD(idmus)
 				map = CalcMapName(argv[1][0] - '0', argv[1][1] - '0');
 			}
 
-			if ((info = FindLevelInfo(map)))
+			if ((info = FindLevelInfo(map.GetChars())))
 			{
 				if (info->Music.IsNotEmpty())
 				{
-					S_ChangeMusic(info->Music, info->musicorder);
+					S_ChangeMusic(info->Music.GetChars(), info->musicorder);
 					Printf("%s\n", GStrings("STSTR_MUS"));
 				}
 			}
@@ -1310,7 +1310,7 @@ CCMD (mapinfo)
 		Printf("           LevelName: %s\n", myLevel->LookupLevelName().GetChars());
 
 	if (myLevel->AuthorName.IsNotEmpty())
-		Printf("          AuthorName: %s\n", testlocalised(myLevel->AuthorName));
+		Printf("          AuthorName: %s\n", testlocalised(myLevel->AuthorName.GetChars()));
 
 	if (myLevel->levelnum)
 		Printf("            LevelNum: %i\n", myLevel->levelnum);
@@ -1322,7 +1322,7 @@ CCMD (mapinfo)
 		Printf("          SecretNext: %s\n", myLevel->NextSecretMap.GetChars());
 
 	if (myLevel->Music.IsNotEmpty())
-		Printf("               Music: %s%s\n", myLevel->Music[0] == '$'? "D_" : "", testlocalised(myLevel->Music));
+		Printf("               Music: %s%s\n", myLevel->Music[0] == '$'? "D_" : "", testlocalised(myLevel->Music.GetChars()));
 
 		Printf("        PixelStretch: %f\n", myLevel->pixelstretch);
 

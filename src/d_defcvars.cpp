@@ -81,17 +81,17 @@ void D_GrabCVarDefaults()
 				CurrentFindCVar.ToLower();
 
 				// these two got renamed
-				if (strcmp(CurrentFindCVar, "gamma") == 0)
+				if (CurrentFindCVar.Compare("gamma") == 0)
 				{
 					CurrentFindCVar = "vid_gamma";
 				}
-				if (strcmp(CurrentFindCVar, "fullscreen") == 0)
+				if (CurrentFindCVar.Compare("fullscreen") == 0)
 				{
 					CurrentFindCVar = "vid_fullscreen";
 				}
 
 				// this was removed
-				if (strcmp(CurrentFindCVar, "cd_drive") == 0)
+				if (CurrentFindCVar.Compare("cd_drive") == 0)
 					break;
 			}
 			if (lumpversion < 221)
@@ -100,9 +100,9 @@ void D_GrabCVarDefaults()
 				// this one doesn't matter as much, since it depended on platform-specific values,
 				// and is something the user should change anyhow, so, let's just throw this value
 				// out.
-				if (strcmp(CurrentFindCVar, "mouse_sensitivity") == 0)
+				if (CurrentFindCVar.Compare("mouse_sensitivity") == 0)
 					break;
-				if (strcmp(CurrentFindCVar, "m_noprescale") == 0)
+				if (CurrentFindCVar.Compare("m_noprescale") == 0)
 					break;
 			}
 
@@ -132,7 +132,7 @@ void D_GrabCVarDefaults()
 			SHOULD_BLACKLIST(anonstats_host)
 			SHOULD_BLACKLIST(sentstats_hwr_done)
 
-			var = FindCVar(CurrentFindCVar, NULL);
+			var = FindCVar(CurrentFindCVar.GetChars(), NULL);
 
 			if (blacklisted)
 			{

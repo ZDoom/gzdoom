@@ -316,7 +316,7 @@ FileReader FLumpPatchSetReader::OpenFile(const char *name)
 	FString path;
 	if (IsAbsPath(name)) return FileReader();	// no absolute paths in the lump directory.
 	path = mBasePath + name;
-	auto index = fileSystem.CheckNumForFullName(path);
+	auto index = fileSystem.CheckNumForFullName(path.GetChars());
 	if (index < 0) return FileReader();
 	return fileSystem.ReopenFileReader(index);
 }
@@ -426,7 +426,7 @@ void FSoundFontManager::CollectSoundfonts()
 
 	if (soundfonts.Size() == 0)
 	{
-		ProcessOneFile(NicePath("$PROGDIR/soundfonts/" GAMENAMELOWERCASE ".sf2"));
+		ProcessOneFile(NicePath("$PROGDIR/soundfonts/" GAMENAMELOWERCASE ".sf2").GetChars());
 	}
 }
 

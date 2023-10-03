@@ -34,6 +34,10 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
 
 bool FileExists (const char *filename);
+inline bool FileExists(const FString& filename)
+{
+	return FileExists(filename.GetChars());
+}
 bool FileReadable (const char *filename);
 bool DirExists(const char *filename);
 bool DirEntryExists (const char *pathname, bool *isdir = nullptr);

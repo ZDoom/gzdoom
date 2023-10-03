@@ -79,7 +79,7 @@ public:
 		if (--TicsLeft == 0)
 		{
 			UnsafeExecutionScope scope(IsUnsafe);
-			AddCommandString(Command);
+			AddCommandString(Command.GetChars());
 			return true;
 		}
 		return false;
@@ -101,7 +101,7 @@ public:
 	{
 		if (Text.IsNotEmpty() && Command != nullptr)
 		{
-			FCommandLine args(Text);
+			FCommandLine args(Text.GetChars());
 			Command->Run(args, 0);
 		}
 		return true;
@@ -301,7 +301,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{ // Get the variable's value
-				if (var->GetDescription().Len()) Printf("%s\n", GStrings.localize(var->GetDescription()));
+				if (var->GetDescription().Len()) Printf("%s\n", GStrings.localize(var->GetDescription().GetChars()));
 				Printf ("\"%s\" is \"%s\" ", var->GetName(), var->GetHumanString());
 				Printf ("(default: \"%s\")\n", var->GetHumanStringDefault());
 			}
@@ -400,7 +400,7 @@ static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *na
 	*prev = NULL;
 	while (start)
 	{
-		comp = strnicmp (start->m_Name, name, namelen);
+		comp = start->m_Name.CompareNoCase(name, namelen);
 		if (comp > 0)
 			return NULL;
 		else if (comp == 0 && start->m_Name[namelen] == 0)
@@ -424,10 +424,10 @@ bool FConsoleCommand::AddToHash (FConsoleCommand **table)
 	unsigned int key;
 	FConsoleCommand *insert, **bucket;
 
-	key = MakeKey (m_Name);
+	key = MakeKey (m_Name.GetChars());
 	bucket = &table[key % HASH_SIZE];
 
-	if (ScanChainForName (*bucket, m_Name, strlen (m_Name), &insert))
+	if (ScanChainForName (*bucket, m_Name.GetChars(), m_Name.Len(), &insert))
 	{
 		return false;
 	}
@@ -477,7 +477,7 @@ FConsoleCommand::~FConsoleCommand ()
 	*m_Prev = m_Next;
 	if (m_Next)
 		m_Next->m_Prev = m_Prev;
-	C_RemoveTabCommand (m_Name);
+	C_RemoveTabCommand (m_Name.GetChars());
 }
 
 void FConsoleCommand::Run(FCommandLine &argv, int key)
@@ -530,7 +530,7 @@ FString BuildString (int argc, FString *argv)
 			{ // It's an empty argument, we need to convert it to '""'
 				buf << "\"\" ";
 			}
-			else if (strchr(argv[arg], '"'))
+			else if (strchr(argv[arg].GetChars(), '"'))
 			{ // If it contains one or more quotes, we need to escape them.
 				buf << '"';
 				ptrdiff_t substr_start = 0, quotepos;
@@ -545,7 +545,7 @@ FString BuildString (int argc, FString *argv)
 				}
 				buf << argv[arg].Mid(substr_start) << "\" ";
 			}
-			else if (strchr(argv[arg], ' '))
+			else if (strchr(argv[arg].GetChars(), ' '))
 			{ // If it contains a space, it needs to be quoted.
 				buf << '"' << argv[arg] << "\" ";
 			}
@@ -674,7 +674,7 @@ static int DumpHash (FConsoleCommand **table, bool aliases, const char *pattern=
 		cmd = table[bucket];
 		while (cmd)
 		{
-			if (CheckWildcards (pattern, cmd->m_Name))
+			if (CheckWildcards (pattern, cmd->m_Name.GetChars()))
 			{
 				if (cmd->IsAlias())
 				{
@@ -712,8 +712,8 @@ void FConsoleAlias::Archive (FConfigFile *f)
 {
 	if (f != NULL && !m_Command[0].IsEmpty())
 	{
-		f->SetValueForKey ("Name", m_Name, true);
-		f->SetValueForKey ("Command", m_Command[0], true);
+		f->SetValueForKey ("Name", m_Name.GetChars(), true);
+		f->SetValueForKey ("Command", m_Command[0].GetChars(), true);
 	}
 }
 
@@ -923,7 +923,7 @@ void FConsoleAlias::Run (FCommandLine &args, int key)
 	}
 
 	bRunning = true;
-	AddCommandString (mycommand, key);
+	AddCommandString (mycommand.GetChars(), key);
 	bRunning = false;
 	if (m_Command[index].IsEmpty())
 	{ // The alias is unchanged, so put the command back so it can be used again.
@@ -999,7 +999,7 @@ void FExecList::ExecCommands() const
 {
 	for (unsigned i = 0; i < Commands.Size(); ++i)
 	{
-		AddCommandString(Commands[i]);
+		AddCommandString(Commands[i].GetChars());
 	}
 }
 
@@ -1007,7 +1007,7 @@ void FExecList::AddPullins(std::vector<std::string>& wads, FConfigFile *config) 
 {
 	for (unsigned i = 0; i < Pullins.Size(); ++i)
 	{
-		D_AddFile(wads, Pullins[i], true, -1, config);
+		D_AddFile(wads, Pullins[i].GetChars(), true, -1, config);
 	}
 }
 

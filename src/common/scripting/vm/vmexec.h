@@ -2117,7 +2117,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_S2Co:
 		ASSERTD(a); ASSERTS(b);
-		reg.d[a] = V_GetColor(reg.s[b]);
+		reg.d[a] = V_GetColor(reg.s[b].GetChars());
 		break;
 
 	case CAST_Co2S:

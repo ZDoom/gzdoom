@@ -113,7 +113,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		FStringf path("fonts/%s/", name);
 
 		// Use a folder-based font only if it comes from a later file than the single lump version.
-		if (fileSystem.GetFilesInFolder(path, folderdata, true))
+		if (fileSystem.GetFilesInFolder(path.GetChars(), folderdata, true))
 		{
 			// This assumes that any custom font comes in one piece and not distributed across multiple resource files.
 			folderfile = fileSystem.GetFileContainer(folderdata[0].lumpnum);
@@ -300,7 +300,7 @@ void V_InitCustomFonts()
 			}
 			if (format == 1)
 			{
-				FFont *fnt = new FFont (namebuffer, templatebuf, nullptr, first, count, start, llump, spacewidth, donttranslate);
+				FFont *fnt = new FFont(namebuffer.GetChars(), templatebuf.GetChars(), nullptr, first, count, start, llump, spacewidth, donttranslate);
 				fnt->SetCursor(cursor);
 				fnt->SetKerning(kerning);
 				if (ignoreoffsets) fnt->ClearOffsets();
@@ -326,7 +326,7 @@ void V_InitCustomFonts()
 				if (count > 0)
 				{
 					FFont *CreateSpecialFont (const char *name, int first, int count, FGameTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
-					FFont *fnt = CreateSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump, donttranslate);
+					FFont *fnt = CreateSpecialFont(namebuffer.GetChars(), first, count, &lumplist[first], notranslate, llump, donttranslate);
 					fnt->SetCursor(cursor);
 					fnt->SetKerning(kerning);
 					if (spacewidth >= 0) fnt->SpaceWidth = spacewidth;

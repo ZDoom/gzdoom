@@ -279,7 +279,7 @@ const char *UDMFParserBase::CheckString(FName key)
 	{
 		sc.ScriptMessage("String value expected for key '%s'", key.GetChars());
 	}
-	return parsedString;
+	return parsedString.GetChars();
 }
 
 //===========================================================================

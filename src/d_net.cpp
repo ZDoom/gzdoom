@@ -1535,7 +1535,7 @@ bool DoArbitrate (void *userdata)
 		netbuffer[1] = (uint8_t)doomcom.ticdup;
 		netbuffer[2] = NetMode;
 		stream = &netbuffer[3];
-		WriteString (startmap, &stream);
+		WriteString (startmap.GetChars(), &stream);
 		WriteLong (rngseed, &stream);
 		C_WriteCVars (&stream, CVAR_SERVERINFO, true);
 
@@ -2452,8 +2452,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			{
 				// Paths sent over the network will be valid for the system that sent
 				// the save command. For other systems, the path needs to be changed.
-				FString basename = ExtractFileBase(savegamefile, true);
-				savegamefile = G_BuildSaveName (basename);
+				FString basename = ExtractFileBase(savegamefile.GetChars(), true);
+				savegamefile = G_BuildSaveName (basename.GetChars());
 			}
 		}
 		gameaction = ga_savegame;
@@ -2732,7 +2732,7 @@ static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int al
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(pawn->Level, pawn, NULL, snum, primaryLevel->MapName, arg, min<int>(countof(arg), argn), ACS_NET | always);
+	P_StartScript(pawn->Level, pawn, NULL, snum, primaryLevel->MapName.GetChars(), arg, min<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, uint8_t **stream)

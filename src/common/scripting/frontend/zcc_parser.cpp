@@ -471,7 +471,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 	ParseSingleFile(&sc, nullptr, lumpnum, parser, state);
 	for (unsigned i = 0; i < Includes.Size(); i++)
 	{
-		lumpnum = fileSystem.CheckNumForFullName(Includes[i], true);
+		lumpnum = fileSystem.CheckNumForFullName(Includes[i].GetChars(), true);
 		if (lumpnum == -1)
 		{
 			IncludeLocs[i].Message(MSG_ERROR, "Include script lump %s not found", Includes[i].GetChars());
@@ -518,7 +518,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 		FString filename = fileSystem.GetFileFullPath(baselump).c_str();
 		filename.ReplaceChars(":\\/?|", '.');
 		filename << ".ast";
-		FileWriter *ff = FileWriter::Open(filename);
+		FileWriter *ff = FileWriter::Open(filename.GetChars());
 		if (ff != NULL)
 		{
 			ff->Write(ast.GetChars(), ast.Len());

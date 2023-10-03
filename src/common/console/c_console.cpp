@@ -295,7 +295,7 @@ void C_DeinitConsole ()
 	while (cmd != NULL)
 	{
 		GameAtExit *next = cmd->Next;
-		AddCommandString (cmd->Command);
+		AddCommandString (cmd->Command.GetChars());
 		delete cmd;
 		cmd = next;
 	}
@@ -661,11 +661,11 @@ void C_DrawConsole ()
 			{
 				if (textScale == 1)
 				{
-					DrawText(twod, CurrentConsoleFont, CR_TAN, LEFTMARGIN, offset + lines * CurrentConsoleFont->GetHeight(), p->Text, TAG_DONE);
+					DrawText(twod, CurrentConsoleFont, CR_TAN, LEFTMARGIN, offset + lines * CurrentConsoleFont->GetHeight(), p->Text.GetChars(), TAG_DONE);
 				}
 				else
 				{
-					DrawText(twod, CurrentConsoleFont, CR_TAN, LEFTMARGIN, offset + lines * CurrentConsoleFont->GetHeight(), p->Text,
+					DrawText(twod, CurrentConsoleFont, CR_TAN, LEFTMARGIN, offset + lines * CurrentConsoleFont->GetHeight(), p->Text.GetChars(),
 						DTA_VirtualWidth, twod->GetWidth() / textScale,
 						DTA_VirtualHeight, twod->GetHeight() / textScale,
 						DTA_KeepRatio, true, TAG_DONE);
@@ -1012,7 +1012,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			}
 			HistPos = NULL;
 			buffer.SetString("");
-			AddCommandString(bufferText);
+			AddCommandString(bufferText.GetChars());
 			TabbedLast = false;
 			TabbedList = false;
 			break;
@@ -1060,7 +1060,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				{ // copy to clipboard
 					if (buffer.TextLength() > 0)
 					{
-						I_PutInClipboard(buffer.GetText());
+						I_PutInClipboard(buffer.GetText().GetChars());
 					}
 				}
 				else

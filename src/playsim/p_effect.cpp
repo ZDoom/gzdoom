@@ -1006,6 +1006,7 @@ DZSprite::DZSprite()
 	Translation = Flags = 0;
 	sub = nullptr;
 	cursector = nullptr;
+	scolor = 0xffffff;
 }
 
 void DZSprite::CallPostBeginPlay()
@@ -1054,6 +1055,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnZSprite, SpawnZSprite)
 	ACTION_RETURN_OBJECT(zs);
 }
 
+void DZSprite::UpdateSpriteInfo()
+{
+	PT.color = scolor;
+	PT.Pos = Pos;
+	PT.Vel = Vel;
+	PT.Roll = Roll;
+	PT.alpha = Alpha;
+	PT.texture = Texture;
+	PT.style = ERenderStyle(GetRenderStyle());
+	PT.flags = Flags;
+	PT.subsector = sub;
+	PT.sprite = this;
+}
 
 // This runs just like Actor's, make sure to call Super.Tick() in ZScript.
 void DZSprite::Tick()
@@ -1070,8 +1084,10 @@ void DZSprite::Tick()
 	}
 
 	if (isFrozen())
+	{	// needed here because it won't retroactively update like actors do.
+		UpdateSpriteInfo(); 
 		return;
-	
+	}
 	Prev = Pos;
 	PrevRoll = Roll;
 	// Handle crossing a line portal
@@ -1101,17 +1117,7 @@ void DZSprite::Tick()
 			cursector = nullptr;
 		}
 	}
-	PT.color = 0xffffff;
-	PT.Pos = Pos;
-	PT.Vel = Vel;
-	PT.Roll = Roll;
-	PT.size = Scale.X;
-	PT.alpha = Alpha;
-	PT.texture = Texture;
-	PT.style = ERenderStyle(GetRenderStyle());
-	PT.flags = Flags;
-	PT.subsector = sub;
-	PT.sprite = this;
+	UpdateSpriteInfo();
 }
 
 int DZSprite::GetLightLevel(sector_t* rendersector) const
@@ -1218,6 +1224,7 @@ void DZSprite::Serialize(FSerializer& arc)
 		("style", Style)
 		("translation", Translation)
 		("cursector", cursector)
+		("scolor", scolor)
 		("flipx", bXFlip)
 		("flipy", bYFlip)
 		("dontinterpolate", bDontInterpolate)
@@ -1239,6 +1246,7 @@ DEFINE_FIELD(DZSprite, Texture);
 DEFINE_FIELD(DZSprite, Translation);
 DEFINE_FIELD(DZSprite, Flags);
 DEFINE_FIELD(DZSprite, LightLevel);
+DEFINE_FIELD(DZSprite, scolor);
 DEFINE_FIELD(DZSprite, cursector);
 DEFINE_FIELD(DZSprite, bXFlip);
 DEFINE_FIELD(DZSprite, bYFlip);

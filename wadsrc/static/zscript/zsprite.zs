@@ -10,6 +10,7 @@ Class ZSprite : Thinker native
 	native bool			bXFlip, bYFlip,
 						bDontInterpolate,
 						bAddLightLevel;
+	native Color		scolor;
 
 	native Sector		CurSector; // can be null!
 

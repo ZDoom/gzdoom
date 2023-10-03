@@ -1222,6 +1222,7 @@ void DZSprite::Serialize(FSerializer& arc)
 		("flipy", bYFlip)
 		("dontinterpolate", bDontInterpolate)
 		("addlightlevel", bAddLightLevel)
+		("lightlevel", LightLevel)
 		("flags", Flags);
 		
 }

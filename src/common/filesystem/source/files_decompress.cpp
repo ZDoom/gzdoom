@@ -402,7 +402,7 @@ public:
 		OutProcessed = 0;
 
 		// Read zip LZMA properties header
-		if (File->Read(header, sizeof(header)) < (long)sizeof(header))
+		if (File->Read(header, sizeof(header)) < (ptrdiff_t)sizeof(header))
 		{
 			DecompressionError("DecompressorLZMA: File too short\n");
 			return false;
@@ -488,7 +488,7 @@ public:
 			return 0;
 		}
 
-		return (long)(next_out - (Byte *)buffer);
+		return (ptrdiff_t)(next_out - (Byte *)buffer);
 	}
 
 	void FillBuffer ()
@@ -698,7 +698,7 @@ public:
 		while(AvailOut && Stream.State != STREAM_FINAL);
 
 		assert(AvailOut == 0);
-		return (long)(Out - (uint8_t*)buffer);
+		return (ptrdiff_t)(Out - (uint8_t*)buffer);
 	}
 };
 

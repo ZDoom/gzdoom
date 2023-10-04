@@ -107,7 +107,7 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di, FRenderState &state)
 
 	if (gl_portalinfo)
 	{
-		indent.Truncate(long(indent.Len()-2));
+		indent.Truncate(indent.Len()-2);
 		Printf("%s}\n", indent.GetChars());
 		if (indent.Len() == 0) gl_portalinfo = false;
 	}

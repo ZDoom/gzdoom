@@ -537,7 +537,7 @@ FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* 
 {
 	char head[4];
 
-	if (file.GetLength() >= (long)sizeof(FZipLocalFileHeader))
+	if (file.GetLength() >= (ptrdiff_t)sizeof(FZipLocalFileHeader))
 	{
 		file.Seek(0, FileReader::SeekSet);
 		file.Read(&head, 4);

@@ -65,7 +65,7 @@ struct CZDFileInStream
 	static SRes Read(const ISeekInStream *pp, void *buf, size_t *size)
 	{
 		CZDFileInStream *p = (CZDFileInStream *)pp;
-		auto numread = p->File.Read(buf, (long)*size);
+		auto numread = p->File.Read(buf, (ptrdiff_t)*size);
 		if (numread < 0)
 		{
 			*size = 0;
@@ -96,7 +96,7 @@ struct CZDFileInStream
 		{
 			return 1;
 		}
-		res = (int)p->File.Seek((long)*pos, move_method);
+		res = (int)p->File.Seek((ptrdiff_t)*pos, move_method);
 		*pos = p->File.Tell();
 		return res;
 	}

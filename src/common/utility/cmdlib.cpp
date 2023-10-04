@@ -986,7 +986,7 @@ void md5Update(FileReader& file, MD5Context& md5, unsigned len)
 	{
 		t = std::min<unsigned>(len, sizeof(readbuf));
 		len -= t;
-		t = (long)file.Read(readbuf, t);
+		t = (unsigned)file.Read(readbuf, t);
 		md5.Update(readbuf, t);
 	}
 }

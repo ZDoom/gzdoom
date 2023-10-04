@@ -2413,7 +2413,7 @@ void RenameNerve(FileSystem& fileSystem)
 			continue;
 		}
 		for (int icheck = 0; icheck < numnerveversions; icheck++)
-			if (fr->GetLength() == (long)nervesize[icheck])
+			if (fr->GetLength() == (ptrdiff_t)nervesize[icheck])
 				isizecheck = icheck;
 		if (isizecheck == -1)
 		{
@@ -2474,9 +2474,9 @@ void FixMacHexen(FileSystem& fileSystem)
 	FileReader* reader = fileSystem.GetFileReader(fileSystem.GetIwadNum());
 	auto iwadSize = reader->GetLength();
 
-	static const long DEMO_SIZE = 13596228;
-	static const long BETA_SIZE = 13749984;
-	static const long FULL_SIZE = 21078584;
+	static const ptrdiff_t DEMO_SIZE = 13596228;
+	static const ptrdiff_t BETA_SIZE = 13749984;
+	static const ptrdiff_t FULL_SIZE = 21078584;
 
 	if (DEMO_SIZE != iwadSize
 		&& BETA_SIZE != iwadSize

@@ -1049,7 +1049,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 			}
 			else if (string[1] == 'T' || string[1] == 't')
 			{
-				long tid = (long)strtoll(string+2, (char**)&string, 10);
+				int tid = (int)strtoll(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
 				auto it = primaryLevel->GetActorIterator(tid);
 				AActor *actor;

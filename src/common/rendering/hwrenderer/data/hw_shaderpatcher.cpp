@@ -246,7 +246,7 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 
 		// keyword following the declaration?
 		bool keywordFound = true;
-		long i;
+		ptrdiff_t i;
 		for (i = 0; inoutkeyword[i] != 0; i++)
 		{
 			if (chars[endIndex + i] != inoutkeyword[i])

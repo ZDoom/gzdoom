@@ -603,7 +603,7 @@ ptrdiff_t FString::LastIndexOfAny (const FString &charset) const
 
 ptrdiff_t FString::LastIndexOfAny (const char *charset) const
 {
-	return LastIndexOfAny (charset, long(Len()));
+	return LastIndexOfAny (charset, ptrdiff_t(Len()));
 }
 
 ptrdiff_t FString::LastIndexOfAny (const FString &charset, ptrdiff_t endIndex) const

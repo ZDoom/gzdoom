@@ -97,7 +97,7 @@ FImageSource *TGAImage_TryCreate(FileReader & file, int lumpnum)
 {
 	TGAHeader hdr;
 
-	if (file.GetLength() < (long)sizeof(hdr)) return NULL;
+	if (file.GetLength() < (ptrdiff_t)sizeof(hdr)) return NULL;
 
 	file.Seek(0, FileReader::SeekSet);
 	file.Read(&hdr, sizeof(hdr));

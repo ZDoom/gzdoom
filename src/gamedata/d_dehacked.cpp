@@ -1400,7 +1400,7 @@ static int PatchThing (int thingy)
 			{
 				if (IsNum(strval))
 				{
-					value |= (unsigned long)strtoll(strval, NULL, 10);
+					value |= (uint32_t)strtoll(strval, NULL, 10);
 					vchanged = true;
 				}
 				else
@@ -1526,7 +1526,7 @@ static int PatchThing (int thingy)
 				{
 					if (IsNum (strval))
 					{
-						value[0] |= (unsigned long)strtoll(strval, NULL, 10);
+						value[0] |= (uint32_t)strtoll(strval, NULL, 10);
 						vchanged[0] = true;
 					}
 					else
@@ -1918,7 +1918,7 @@ static int PatchFrame (int frameNum)
 			{
 				if (IsNum(strval))
 				{
-					value |= (unsigned long)strtoll(strval, NULL, 10);
+					value |= (uint32_t)strtoll(strval, NULL, 10);
 					vchanged = true;
 				}
 				else
@@ -2223,7 +2223,7 @@ static int PatchWeapon (int weapNum)
 			{
 				if (IsNum(strval))
 				{
-					value |= (unsigned long)strtoll(strval, NULL, 10);
+					value |= (uint32_t)strtoll(strval, NULL, 10);
 					vchanged = true;
 				}
 				else
@@ -3713,8 +3713,10 @@ void FinishDehPatch ()
 
 		type->ActorInfo()->Replacement = subclass;
 		subclass->ActorInfo()->Replacee = type;
+		subclass->ActorInfo()->LightAssociations = type->ActorInfo()->LightAssociations;
 		// If this actor was already replaced by another actor, copy that
 		// replacement over to this item.
+
 		if (old_replacement != NULL)
 		{
 			subclass->ActorInfo()->Replacement = old_replacement;

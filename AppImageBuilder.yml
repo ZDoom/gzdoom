@@ -17,7 +17,9 @@ AppDir:
     - sourceline: deb http://us.archive.ubuntu.com/ubuntu/ jammy-updates main restricted
     include: []
   files:
-    include: []
+    include:
+    - /usr/lib/x86_64-linux-gnu/libbz2.*
+    - /usr/lib/x86_64-linux-gnu/libopenal.*
     exclude:
     - usr/share/man
     - usr/share/doc/*/README.*

@@ -142,10 +142,10 @@ public:
 	char *Gets(char *strbuf, ptrdiff_t len) override
 	{
 		if (len <= 0 || len > 0x7fffffff || FilePos >= StartPos + Length) return nullptr;
-		char *p = fgets(strbuf, len, File);
+		char *p = fgets(strbuf, (int)len, File);
 		if (p != nullptr)
 		{
-			int old = FilePos;
+			ptrdiff_t old = FilePos;
 			FilePos = ftell(File);
 			if (FilePos - StartPos > Length)
 			{
@@ -240,7 +240,7 @@ public:
 		char *p = mReader->Gets(strbuf, len);
 		if (p != nullptr)
 		{
-			int old = FilePos;
+			ptrdiff_t old = FilePos;
 			FilePos = mReader->Tell();
 			if (FilePos - StartPos > Length)
 			{

@@ -960,13 +960,13 @@ public:
 
 	double Distance2DSquared(AActor *other, bool absolute = false)
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
 		return (Pos().XY() - otherpos).LengthSquared();
 	}
 
 	double Distance2D(AActor *other, bool absolute = false) const
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
 		return (Pos().XY() - otherpos).Length();
 	}
 
@@ -997,19 +997,19 @@ public:
 
 	DAngle AngleTo(AActor *other, bool absolute = false)
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
 		return VecToAngle(otherpos - Pos().XY());
 	}
 
 	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
 		return VecToAngle(otherpos - Pos() + DVector2(oxofs, oyofs));
 	}
 
 	DVector2 Vec2To(AActor *other) const
 	{
-		return other->PosRelative(this) - Pos();
+		return other->PosRelative(this).XY() - Pos().XY();
 	}
 
 	DVector3 Vec3To(AActor *other) const

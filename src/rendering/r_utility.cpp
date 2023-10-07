@@ -528,7 +528,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 						nviewz -= totalzdiff - zdiff;
 						oviewangle += adiff;
 						nviewangle -= totaladiff - adiff;
-						DVector2 viewpos = start.pos + (fragfrac * (end.pos - start.pos));
+						DVector2 viewpos = start.pos.XY() + (fragfrac * (end.pos - start.pos).XY());
 						viewpoint.Pos = { viewpos, oviewz + Frac * (nviewz - oviewz) };
 						break;
 					}

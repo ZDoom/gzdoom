@@ -91,8 +91,8 @@ bool FWHResFile::Open(LumpFilterInfo*)
 		uint32_t offset = LittleLong(directory[k*3]) * 4096;
 		uint32_t length = LittleLong(directory[k*3+1]);
 		if (length == 0) break;
-		char num[5];
-		snprintf(num, 5, "/%04d", k);
+		char num[6];
+		snprintf(num, 6, "/%04d", k);
 		std::string synthname = BaseName;
 		synthname += num;
 		Lumps[i].LumpNameSetup(synthname.c_str(), stringpool);

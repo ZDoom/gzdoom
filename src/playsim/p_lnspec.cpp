@@ -175,7 +175,7 @@ FUNC(LS_Polyobj_MoveToSpot)
 	auto iterator = Level->GetActorIterator(arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos(), false);
+	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos().XY(), false);
 }
 
 FUNC(LS_Polyobj_DoorSwing)
@@ -226,7 +226,7 @@ FUNC(LS_Polyobj_OR_MoveToSpot)
 	auto iterator = Level->GetActorIterator(arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos(), true);
+	return EV_MovePolyTo (Level, ln, arg0, SPEED(arg1), spot->Pos().XY(), true);
 }
 
 FUNC(LS_Polyobj_Stop)

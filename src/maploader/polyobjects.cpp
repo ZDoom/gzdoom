@@ -364,7 +364,7 @@ void MapLoader::PO_Init (void)
 		if (type >= SMT_PolySpawn && type <= SMT_PolySpawnHurt)
 		{ 
 			// Polyobj StartSpot Pt.
-			Level->Polyobjects[polyIndex].StartSpot.pos = polythings[i]->pos;
+			Level->Polyobjects[polyIndex].StartSpot.pos = polythings[i]->pos.XY();
 			SpawnPolyobj(polyIndex, polythings[i]->angle, type);
 			polyIndex++;
 		} 
@@ -375,7 +375,7 @@ void MapLoader::PO_Init (void)
 		if (type == SMT_PolyAnchor)
 		{ 
 			// Polyobj Anchor Pt.
-			TranslateToStartSpot (polythings[i]->angle, polythings[i]->pos);
+			TranslateToStartSpot (polythings[i]->angle, polythings[i]->pos.XY());
 		}
 	}
 

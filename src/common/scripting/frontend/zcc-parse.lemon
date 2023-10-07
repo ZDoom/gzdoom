@@ -378,6 +378,15 @@ flag_def(X) ::= FLAGDEF(T) IDENTIFIER(A) COLON IDENTIFIER(B) COMMA INTCONST(C) S
 	X = def;
 }
 
+flag_def(X) ::= FLAGDEF(T) INTERNAL IDENTIFIER(A) COLON IDENTIFIER(B) COMMA INTCONST(C) SEMICOLON.
+{
+	NEW_AST_NODE(FlagDef,def,T);
+	def->NodeName = A.Name();
+	def->RefName = B.Name();
+	def->BitValue = C.Int | 0x10000;
+	X = def;
+}
+
 
 identifier_list(X) ::= IDENTIFIER(A).
 {
@@ -437,6 +446,7 @@ struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= flag_def(A).						{ X = A; /*X-overwrites-A*/ }
 
 /*----- Constant Definition ------*/
 /* Like UnrealScript, a constant's type is implied by its value's type. */

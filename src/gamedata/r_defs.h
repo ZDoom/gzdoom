@@ -364,9 +364,19 @@ public:
 		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
 	}
 
+	double ZatPoint(const DVector3& pos) const
+	{
+		return (D + normal.X * pos.X + normal.Y * pos.Y) * negiC;
+	}
+
 	double ZatPoint(const FVector2 &pos) const
 	{
 		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
+	}
+
+	double ZatPoint(const FVector3& pos) const
+	{
+		return (D + normal.X * pos.X + normal.Y * pos.Y) * negiC;
 	}
 
 	double ZatPoint(const vertex_t *v) const

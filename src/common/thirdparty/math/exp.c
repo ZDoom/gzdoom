@@ -164,12 +164,11 @@ static short sc2[] = {0x3eb7,0xf7d1,0xcf79,0xabca};
 
 extern double LOGE2, LOG2E, MAXLOG, MINLOG, MAXNUM;
 
-double c_exp(x)
-double x;
+double c_exp(double x)
 {
 double px, xx;
 int n;
-double polevl(), floor(), ldexp();
+double polevl(double, void *, int), floor(double), ldexp(double, int);
 
 if( x > MAXLOG)
 	{

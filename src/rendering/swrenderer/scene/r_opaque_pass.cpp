@@ -853,7 +853,7 @@ namespace swrenderer
 			node_t *bsp = (node_t *)node;
 
 			// Decide which side the view point is on.
-			int side = R_PointOnSide(Thread->Viewport->viewpoint.Pos, bsp);
+			int side = R_PointOnSide(Thread->Viewport->viewpoint.Pos.XY(), bsp);
 
 			// Recursively divide front space (toward the viewer).
 			RenderBSPNode(bsp->children[side]);

@@ -147,7 +147,7 @@ struct FileSystem::LumpRecord
 			{
 				std::string longName = LongName;
 				ptrdiff_t encodedResID = longName.find_last_of(".{");
-				if (resourceId == -1 && encodedResID != std::string::npos)
+				if (resourceId == -1 && (size_t)encodedResID != std::string::npos)
 				{
 					const char* p = LongName + encodedResID;
 					char* q;
@@ -978,7 +978,7 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 
 int FileSystem::FindLump (const char *name, int *lastlump, bool anyns)
 {
-	if (*lastlump >= FileInfo.size()) return -1;
+	if ((size_t)*lastlump >= FileInfo.size()) return -1;
 	union
 	{
 		char name8[8];

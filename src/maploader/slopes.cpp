@@ -424,7 +424,7 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 		if (mt->info != NULL && mt->info->Type == NULL &&
 			(mt->info->Special == SMT_CopyFloorPlane || mt->info->Special == SMT_CopyCeilingPlane))
 		{
-			CopyPlane (mt->args[0], mt->pos, mt->info->Special == SMT_CopyCeilingPlane);
+			CopyPlane (mt->args[0], mt->pos.XY(), mt->info->Special == SMT_CopyCeilingPlane);
 			mt->EdNum = 0;
 		}
 	}

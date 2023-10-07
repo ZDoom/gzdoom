@@ -415,7 +415,7 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterI
 	ptrdiff_t lastpos = -1;
 	std::string file;
 	std::string& LumpFilter = filter->dotFilter;
-	while ((len = LumpFilter.find_first_of('.', lastpos+1)) != LumpFilter.npos)
+	while (size_t(len = LumpFilter.find_first_of('.', lastpos+1)) != LumpFilter.npos)
 	{
 		max -= FilterLumps(std::string(LumpFilter, 0, len), lumps, lumpsize, max);
 		lastpos = len;

@@ -703,7 +703,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			AActor *mo = player->camera;
 			double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
 			r = clamp<double>(r, 0., 1.);
-			seg.soundpos = seg.start + r * seg.dir;
+			seg.soundpos = seg.start.XY() + r * seg.dir.XY();
 			seg.sounddist = (seg.soundpos - mo->Pos()).LengthSquared();
 		}
 		else

@@ -127,7 +127,7 @@ public:
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
 		sightstart = t1->PosRelative(task->portalgroup);
-		sightend = t2->PosRelative(task->portalgroup);
+		sightend = t2->PosRelative(task->portalgroup).XY();
 		sightstart.Z += t1->Height * 0.75;
 
 		portalgroup = task->portalgroup;

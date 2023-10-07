@@ -452,6 +452,11 @@ void ZCCCompiler::ProcessStruct(ZCC_Struct *cnode, PSymbolTreeNode *treenode, ZC
 			}
 			break;
 
+		case AST_FlagDef:
+			cls->FlagDefs.Push(static_cast<ZCC_FlagDef*>(node));
+			break;
+
+
 		default:
 			assert(0 && "Unhandled AST node type");
 			break;

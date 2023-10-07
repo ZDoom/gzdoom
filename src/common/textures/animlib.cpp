@@ -222,7 +222,7 @@ int32_t ANIM_LoadAnim(anim_t *anim, const uint8_t *buffer, size_t length)
 	if (memcmp(buffer, "LPF ", 4)) return -1;
 
 	length -= sizeof(lpfileheader)+128+768;
-	if (length < 0)
+	if ((signed)length < 0)
 		return -1;
 
 	anim->curlpnum = 0xffff;
@@ -244,7 +244,7 @@ int32_t ANIM_LoadAnim(anim_t *anim, const uint8_t *buffer, size_t length)
 	lpheader.framesPerSecond = LittleShort(lpheader.framesPerSecond);
 
 	length -= lpheader.nLps * sizeof(lp_descriptor);
-	if (length < 0)
+	if ((signed)length < 0)
 		return -2;
 
 	buffer += sizeof(lpfileheader)+128;

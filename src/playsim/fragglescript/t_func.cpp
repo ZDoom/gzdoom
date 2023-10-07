@@ -2714,7 +2714,7 @@ void FParser::SF_MoveCamera(void)
 		double targetheight = floatvalue(t_argv[2]);
 		double movespeed = floatvalue(t_argv[3]);
 		DVector3 campos = cam->Pos();
-		DVector3 targpos = DVector3(target->Pos(), targetheight);
+		DVector3 targpos = DVector3(target->Pos().XY(), targetheight);
 		DVector3 movement = targpos - campos;
 		double movelen = movement.Length();
 

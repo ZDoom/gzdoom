@@ -59,7 +59,7 @@ FImageSource *QOIImage_TryCreate(FileReader &file, int lumpnum)
 {
 	QOIHeader header;
 
-	if (file.GetLength() < (sizeof(header) + 8))
+	if ((size_t)file.GetLength() < (sizeof(header) + 8))
 	{
 		return nullptr;
 	}
@@ -86,7 +86,7 @@ FQOITexture::FQOITexture(int lumpnum, QOIHeader& header)
 	LeftOffset = TopOffset = 0;
 	Width = header.width;
 	Height = header.height;
-	if (header.channels == 3) bMasked = bTranslucent = false;
+	if (header.channels == 3) bMasked = (bTranslucent = false);
 }
 
 PalettedPixels FQOITexture::CreatePalettedPixels(int conversion, int frame)

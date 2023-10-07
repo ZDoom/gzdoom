@@ -176,7 +176,7 @@ public:
 
 	ptrdiff_t Read (void *buffer, ptrdiff_t len) override
 	{
-		int err;
+		int err = 0;
 
 		if (File == nullptr)
 		{
@@ -188,7 +188,7 @@ public:
 		while (len > 0)
 		{
 			Stream.next_out = (Bytef*)buffer;
-			auto rlen = std::min<ptrdiff_t>(len, 0x40000000);
+			unsigned rlen = (unsigned)std::min<ptrdiff_t>(len, 0x40000000);
 			Stream.avail_out = rlen;
 			buffer = Stream.next_out + rlen;
 			len -= rlen;
@@ -304,7 +304,7 @@ public:
 		while (len > 0)
 		{
 			Stream.next_out = (char*)buffer;
-			auto rlen = std::min<ptrdiff_t>(len, 0x40000000);
+			unsigned rlen = (unsigned)std::min<ptrdiff_t>(len, 0x40000000);
 			Stream.avail_out = rlen;
 			buffer = Stream.next_out + rlen;
 			len -= rlen;
@@ -798,7 +798,7 @@ public:
 		if (len > 0xffffffff) len = 0xffffffff;	// this format cannot be larger than 4GB.
 
 		uint8_t *Out = (uint8_t*)buffer;
-		unsigned AvailOut = len;
+		ptrdiff_t AvailOut = len;
 
 		do
 		{
@@ -812,7 +812,7 @@ public:
 					break;
 			}
 
-			unsigned int copy = std::min<unsigned int>(Stream.InternalOut, AvailOut);
+			unsigned int copy = (unsigned)std::min<ptrdiff_t>(Stream.InternalOut, AvailOut);
 			if(copy > 0)
 			{
 				memcpy(Out, Stream.WindowData, copy);

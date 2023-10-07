@@ -79,8 +79,7 @@ int isnan(), isfinite();
 #endif
 extern double MAXLOG, INFINITY, LOGE2;
 
-double c_cosh(x)
-double x;
+double c_cosh(double x)
 {
 double y;
 

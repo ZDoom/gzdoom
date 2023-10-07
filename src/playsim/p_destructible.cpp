@@ -716,7 +716,7 @@ bool P_ProjectileHitLinedef(AActor* mo, line_t* line)
 		}
 	}
 
-	int wside = P_PointOnLineSide(mo->Pos(), line);
+	int wside = P_PointOnLineSide(mo->Pos().XY(), line);
 	int oside = !wside;
 	side_t* otherside = line->sidedef[oside];
 	// check if hit upper or lower part

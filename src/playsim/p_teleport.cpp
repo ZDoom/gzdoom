@@ -60,7 +60,7 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 	else
 	{
 		double fogDelta = mobj->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		mo = Spawn(mobj->Level, (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos, pos.Z + fogDelta), ALLOW_REPLACE);
+		mo = Spawn(mobj->Level, (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), pos.plusZ(fogDelta), ALLOW_REPLACE);
 	}
 
 	if (mo != NULL && setTarget)
@@ -414,7 +414,7 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 	{
 		badangle = DAngle::fromDeg(0.01);
 	}
-	if (P_Teleport (thing, DVector3(searcher->Pos(), z), searcher->Angles.Yaw + badangle, flags))
+	if (P_Teleport (thing, DVector3(searcher->Pos().XY(), z), searcher->Angles.Yaw + badangle, flags))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (line)
@@ -658,7 +658,7 @@ bool FLevelLocals::EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
 {
 	DAngle an = dest->Angles.Yaw - source->Angles.Yaw;
-	DVector2 off = victim->Pos() - source->Pos();
+	DVector2 off = victim->Pos().XY() - source->Pos().XY();
 	DAngle offAngle = victim->Angles.Yaw - source->Angles.Yaw;
 	DVector2 newp = { off.X * an.Cos() - off.Y * an.Sin(), off.X * an.Sin() + off.Y * an.Cos() };
 	double z = floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z();

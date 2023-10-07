@@ -298,7 +298,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			// at least one of the more common definition lumps must be present.
 			for (auto &p : filter->requiredPrefixes)
 			{ 
-				if (name.find(name0 + p) == 0 || name.rfind(p) == ptrdiff_t(name.length() - p.length()))
+				if (name.find(name0 + p) == 0 || name.rfind(p) == size_t(name.length() - p.length()))
 				{
 					foundspeciallump = true;
 					break;

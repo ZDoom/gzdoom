@@ -1632,7 +1632,7 @@ void FTextureManager::Listaliases()
 
 void FTextureManager::SetLinkedTexture(int lump, FGameTexture* tex)
 {
-	if ((size_t)lump < fileSystem.GetNumEntries())
+	if (lump < fileSystem.GetNumEntries())
 	{
 		linkedMap.Insert(lump, tex);
 	}
@@ -1646,7 +1646,7 @@ void FTextureManager::SetLinkedTexture(int lump, FGameTexture* tex)
 
 FGameTexture* FTextureManager::GetLinkedTexture(int lump)
 {
-	if ((size_t)lump < fileSystem.GetNumEntries())
+	if (lump < fileSystem.GetNumEntries())
 	{
 		auto check = linkedMap.CheckKey(lump);
 		if (check) return *check;
